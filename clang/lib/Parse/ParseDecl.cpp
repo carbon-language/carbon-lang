@@ -759,7 +759,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
     for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
       FieldDeclarator &FD = FieldDeclarators[i];
       // Install the declarator into the current TagDecl.
-      DeclTy *Field = Actions.ActOnField(CurScope, TagDecl,
+      DeclTy *Field = Actions.ActOnField(CurScope,
                                          DS.getSourceRange().getBegin(),
                                          FD.D, FD.BitfieldSize);
       FieldDecls.push_back(Field);

@@ -235,15 +235,18 @@ private:
   virtual DeclTy *ActOnTag(Scope *S, unsigned TagType, TagKind TK,
                            SourceLocation KWLoc, IdentifierInfo *Name,
                            SourceLocation NameLoc, AttributeList *Attr);
-  virtual DeclTy *ActOnField(Scope *S, DeclTy *TagDecl,SourceLocation DeclStart,
+  virtual DeclTy *ActOnField(Scope *S, SourceLocation DeclStart,
                              Declarator &D, ExprTy *BitfieldWidth);
-                                      
+  
+  virtual DeclTy *ActOnIvar(Scope *S, SourceLocation DeclStart,
+                            Declarator &D, ExprTy *BitfieldWidth,
+                            tok::ObjCKeywordKind visibility = tok::objc_not_keyword);
+
   // This is used for both record definitions and ObjC interface declarations.
   virtual void ActOnFields(Scope* S,
                            SourceLocation RecLoc, DeclTy *TagDecl,
                            DeclTy **Fields, unsigned NumFields,
-                           SourceLocation LBrac, SourceLocation RBrac,
-                           tok::ObjCKeywordKind *visibility = 0);
+                           SourceLocation LBrac, SourceLocation RBrac);
   virtual DeclTy *ActOnEnumConstant(Scope *S, DeclTy *EnumDecl,
                                     DeclTy *LastEnumConstant,
                                     SourceLocation IdLoc, IdentifierInfo *Id,

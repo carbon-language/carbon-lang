@@ -1419,12 +1419,11 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
 
 /// ActOnField - Each field of a struct/union/class is passed into this in order
 /// to create a FieldDecl object for it.
-Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *tagDecl,
+Sema::DeclTy *Sema::ActOnField(Scope *S,
                                SourceLocation DeclStart, 
                                Declarator &D, ExprTy *BitfieldWidth) {
   IdentifierInfo *II = D.getIdentifier();
   Expr *BitWidth = (Expr*)BitfieldWidth;
-  Decl *TagDecl = static_cast<Decl *>(tagDecl);
   SourceLocation Loc = DeclStart;
   if (II) Loc = D.getIdentifierLoc();
   
@@ -1460,19 +1459,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *tagDecl,
   // FIXME: Chain fielddecls together.
   FieldDecl *NewFD;
   
-  if (isa<RecordDecl>(TagDecl))
-    NewFD = FieldDecl::Create(Context, Loc, II, T, BitWidth);
-  else if (isa<ObjCInterfaceDecl>(TagDecl) ||
-           isa<ObjCImplementationDecl>(TagDecl) ||
-           isa<ObjCCategoryDecl>(TagDecl) ||
-           // FIXME: ivars are currently used to model properties, and
-           // properties can appear within a protocol.
-           // See corresponding FIXME in DeclObjC.h:ObjCPropertyDecl.
-           isa<ObjCProtocolDecl>(TagDecl))
-    NewFD = ObjCIvarDecl::Create(Context, Loc, II, T);
-  else
-    assert(0 && "Sema::ActOnField(): Unknown TagDecl");
-    
+  NewFD = FieldDecl::Create(Context, Loc, II, T, BitWidth);
   HandleDeclAttributes(NewFD, D.getDeclSpec().getAttributes(),
                        D.getAttributes());
 
@@ -1494,11 +1481,66 @@ TranslateIvarVisibility(tok::ObjCKeywordKind ivarVisibility) {
   }
 }
 
+/// ActOnIvar - Each field of a struct/union/class is passed into this in order
+/// to create an IvarDecl object for it.
+Sema::DeclTy *Sema::ActOnIvar(Scope *S,
+                               SourceLocation DeclStart, 
+                               Declarator &D, ExprTy *BitfieldWidth,
+                              tok::ObjCKeywordKind visibility) {
+  IdentifierInfo *II = D.getIdentifier();
+  Expr *BitWidth = (Expr*)BitfieldWidth;
+  SourceLocation Loc = DeclStart;
+  if (II) Loc = D.getIdentifierLoc();
+  
+  // FIXME: Unnamed fields can be handled in various different ways, for
+  // example, unnamed unions inject all members into the struct namespace!
+  
+  
+  if (BitWidth) {
+    // TODO: Validate.
+    //printf("WARNING: BITFIELDS IGNORED!\n");
+    
+    // 6.7.2.1p3
+    // 6.7.2.1p4
+    
+  } else {
+    // Not a bitfield.
+    
+    // validate II.
+    
+  }
+  
+  QualType T = GetTypeForDeclarator(D, S);
+  assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
+  bool InvalidDecl = false;
+  
+  // C99 6.7.2.1p8: A member of a structure or union may have any type other
+  // than a variably modified type.
+  if (T->isVariablyModifiedType()) {
+    // FIXME: This diagnostic needs work
+    Diag(Loc, diag::err_typecheck_illegal_vla, Loc);
+    InvalidDecl = true;
+  }
+  
+  ObjCIvarDecl *NewID;
+  
+  NewID = ObjCIvarDecl::Create(Context, Loc, II, T);
+  
+  HandleDeclAttributes(NewID, D.getDeclSpec().getAttributes(),
+                       D.getAttributes());
+  
+  if (D.getInvalidType() || InvalidDecl)
+    NewID->setInvalidDecl();
+  // If we have visibility info, make sure the AST is set accordingly.
+  if (visibility != tok::objc_not_keyword)
+    NewID ->setAccessControl(TranslateIvarVisibility(visibility));
+  return NewID;
+}
+
 void Sema::ActOnFields(Scope* S,
                        SourceLocation RecLoc, DeclTy *RecDecl,
                        DeclTy **Fields, unsigned NumFields,
-                       SourceLocation LBrac, SourceLocation RBrac,
-                       tok::ObjCKeywordKind *visibility) {
+                       SourceLocation LBrac, SourceLocation RBrac) {
   Decl *EnclosingDecl = static_cast<Decl*>(RecDecl);
   assert(EnclosingDecl && "missing record or interface decl");
   RecordDecl *Record = dyn_cast<RecordDecl>(EnclosingDecl);
@@ -1529,11 +1571,6 @@ void Sema::ActOnFields(Scope* S,
     
     // Get the type for the field.
     Type *FDTy = FD->getType().getTypePtr();
-    
-    // If we have visibility info, make sure the AST is set accordingly.
-    if (visibility)
-      cast<ObjCIvarDecl>(FD)->setAccessControl(
-                                TranslateIvarVisibility(visibility[i]));
       
     // C99 6.7.2.1p2 - A field may not be a function type.
     if (FDTy->isFunctionType()) {

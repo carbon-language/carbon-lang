@@ -397,9 +397,9 @@ Parser::DeclTy *Parser::ParseObjCPropertyDecl(DeclTy *interfaceDecl,
   for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
     FieldDeclarator &FD = FieldDeclarators[i];
     // Install the declarator into interfaceDecl.
-    DeclTy *Field = Actions.ActOnField(CurScope, interfaceDecl,
+    DeclTy *Field = Actions.ActOnIvar(CurScope,
                                        DS.getSourceRange().getBegin(),
-                                       FD.D, FD.BitfieldSize);
+                                      FD.D, FD.BitfieldSize);
     PropertyDecls.push_back(Field);
   }
   
@@ -772,7 +772,6 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl,
                                              SourceLocation atLoc) {
   assert(Tok.is(tok::l_brace) && "expected {");
   llvm::SmallVector<DeclTy*, 32> AllIvarDecls;
-  llvm::SmallVector<tok::ObjCKeywordKind, 32> AllVisibilities;
   llvm::SmallVector<FieldDeclarator, 8> FieldDeclarators;
 
   SourceLocation LBraceLoc = ConsumeBrace(); // the "{"
@@ -815,11 +814,10 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl,
     for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
       FieldDeclarator &FD = FieldDeclarators[i];
       // Install the declarator into interfaceDecl.
-      DeclTy *Field = Actions.ActOnField(CurScope, interfaceDecl,
+      DeclTy *Field = Actions.ActOnIvar(CurScope,
                                          DS.getSourceRange().getBegin(),
-                                         FD.D, FD.BitfieldSize);
+                                         FD.D, FD.BitfieldSize, visibility);
       AllIvarDecls.push_back(Field);
-      AllVisibilities.push_back(visibility);
     }
     
     if (Tok.is(tok::semi)) {
@@ -838,7 +836,7 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl,
   // for code rewriting tools that need to be aware of the empty list.
   Actions.ActOnFields(CurScope, atLoc, interfaceDecl,
                       &AllIvarDecls[0], AllIvarDecls.size(),
-                      LBraceLoc, RBraceLoc, &AllVisibilities[0]);
+                      LBraceLoc, RBraceLoc);
   return;
 }
 

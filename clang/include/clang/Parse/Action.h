@@ -194,14 +194,21 @@ public:
     return 0;
   }
   
-  virtual DeclTy *ActOnField(Scope *S, DeclTy *TagDecl,SourceLocation DeclStart,
+  virtual DeclTy *ActOnField(Scope *S, SourceLocation DeclStart,
                              Declarator &D, ExprTy *BitfieldWidth) {
     return 0;
   }
+  
+  virtual DeclTy *ActOnIvar(Scope *S, SourceLocation DeclStart,
+                            Declarator &D, ExprTy *BitfieldWidth,
+                            tok::ObjCKeywordKind visibility = tok::objc_not_keyword) {
+    return 0;
+  }
+  
   virtual void ActOnFields(Scope* S, SourceLocation RecLoc, DeclTy *TagDecl,
                            DeclTy **Fields, unsigned NumFields, 
-                           SourceLocation LBrac, SourceLocation RBrac,
-                           tok::ObjCKeywordKind *visibility = 0) {}
+                           SourceLocation LBrac, SourceLocation RBrac) {}
+  
   virtual DeclTy *ActOnEnumConstant(Scope *S, DeclTy *EnumDecl,
                                     DeclTy *LastEnumConstant,
                                     SourceLocation IdLoc, IdentifierInfo *Id,
