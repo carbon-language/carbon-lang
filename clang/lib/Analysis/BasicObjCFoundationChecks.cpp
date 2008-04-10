@@ -84,6 +84,13 @@ public:
     
     virtual ~Report() {}
     
+    virtual const char* getDescription() const { return s; }
+    
+    virtual void getRanges(const SourceRange*& B, const SourceRange*& E) const {
+      B = &R;
+      E = B+1;
+    }
+    
     virtual PathDiagnosticPiece* getEndPath(ASTContext& Ctx,
                                             ExplodedNode<ValueState> *N) const {
       

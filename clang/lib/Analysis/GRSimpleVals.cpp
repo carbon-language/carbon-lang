@@ -135,7 +135,7 @@ public:
   virtual void EmitWarnings(BugReporter& BR) {
     GRExprEngine& Eng = BR.getEngine();
     GenericEmitWarnings(BR, *this, Eng.undef_results_begin(),
-                        Eng.undef_results_begin());
+                        Eng.undef_results_end());
   }
 };
   
@@ -152,7 +152,7 @@ public:
   virtual void EmitWarnings(BugReporter& BR) {
     GRExprEngine& Eng = BR.getEngine();
     GenericEmitWarnings(BR, *this, Eng.bad_calls_begin(),
-                        Eng.bad_calls_begin());
+                        Eng.bad_calls_end());
   }
 };
   
@@ -214,7 +214,7 @@ public:
     GRExprEngine& Eng = BR.getEngine();
     
     for (GRExprEngine::UndefArgsTy::iterator I=Eng.msg_expr_undef_arg_begin(),
-         E = Eng.msg_expr_undef_arg_begin(); I!=E; ++I) {
+         E = Eng.msg_expr_undef_arg_end(); I!=E; ++I) {
       
       // Generate a report for this bug.
       Report report(*this, I->second);
@@ -283,7 +283,7 @@ public:
   virtual void EmitWarnings(BugReporter& BR) {
     GRExprEngine& Eng = BR.getEngine();
     GenericEmitWarnings(BR, *this, Eng.ret_stackaddr_begin(),
-                        Eng.ret_stackaddr_begin());
+                        Eng.ret_stackaddr_end());
   }
 };
   

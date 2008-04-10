@@ -51,7 +51,10 @@ public:
   const BugType& getBugType() const { return Desc; }
     
   const char* getName() const { return getBugType().getName(); }
-  const char* getDescription() const { return getBugType().getDescription(); }
+
+  virtual const char* getDescription() const {
+    return getBugType().getDescription();
+  }
   
   virtual PathDiagnosticPiece* getEndPath(ASTContext& Ctx,
                                           ExplodedNode<ValueState> *N) const;
