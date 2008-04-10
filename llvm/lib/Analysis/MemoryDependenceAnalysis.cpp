@@ -298,7 +298,7 @@ void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
 }
 
 /// getDependency - Return the instruction on which a memory operation
-/// depends.  The local paramter indicates if the query should only
+/// depends.  The local parameter indicates if the query should only
 /// evaluate dependencies within the same basic block.
 Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
                                                      Instruction* start,
