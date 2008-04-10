@@ -616,6 +616,11 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
   }
   case tgtok::l_paren: {         // Value ::= '(' IDValue DagArgList ')'
     Lex.Lex();   // eat the '('
+    if (Lex.getCode() != tgtok::Id) {
+      TokError("expected identifier in dag init");
+      return 0;
+    }
+    
     Init *Operator = ParseIDValue(CurRec);
     if (Operator == 0) return 0;
     
