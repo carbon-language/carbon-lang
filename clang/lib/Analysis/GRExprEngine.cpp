@@ -678,6 +678,8 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
       
       unsigned size = Dst.size();
       
+      SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+      
       EvalCall(Dst, CE, cast<LVal>(L), *DI);
       
       if (!Builder->BuildSinks && Dst.size() == size)

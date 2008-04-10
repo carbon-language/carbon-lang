@@ -48,7 +48,8 @@ namespace {
   
 class RetEffect {
 public:
-  enum Kind { Alias = 0x0, OwnedSymbol = 0x1, NotOwnedSymbol = 0x2 };
+  enum Kind { NoRet = 0x0, Alias = 0x1, OwnedSymbol = 0x2,
+              NotOwnedSymbol = 0x3 };
 
 private:
   unsigned Data;
@@ -68,6 +69,8 @@ public:
   static RetEffect MakeOwned() { return RetEffect(OwnedSymbol, 0); }
   
   static RetEffect MakeNotOwned() { return RetEffect(NotOwnedSymbol, 0); }
+  
+  static RetEffect MakeNoRet() { return RetEffect(NoRet, 0); }
   
   operator Kind() const { return getKind(); }
   
@@ -133,6 +136,10 @@ class CFRefSummaryManager {
   
   CFRefSummary* getPersistentSummary(ArgEffects* AE, RetEffect RE);
   
+  CFRefSummary* getDoNothingSummary(unsigned Args);
+  void FillDoNothing(unsigned Args);
+
+  
 public:
   CFRefSummaryManager(ASTContext& ctx) : Ctx(ctx) {}
   ~CFRefSummaryManager();
@@ -158,8 +165,6 @@ CFRefSummaryManager::~CFRefSummaryManager() {
 
 ArgEffects* CFRefSummaryManager::getArgEffects() {
 
-  assert (!ScratchArgs.empty());
-  
   llvm::FoldingSetNodeID profile;
   profile.Add(ScratchArgs);
   void* InsertPos;
@@ -314,20 +319,22 @@ CFRefSummary* CFRefSummaryManager::getCannedCFSummary(FunctionTypeProto* FT,
     // CFRetain: the return type should also be "CFTypeRef".
     if (RetTy.getTypePtr() != ArgT)
       return NULL;
+    
+    // The function's interface checks out.  Generate a canned summary.    
+    assert (ScratchArgs.empty());
+    ScratchArgs.push_back(IncRef);
+    return getPersistentSummary(getArgEffects(), RetEffect::MakeAlias(0));
   }
   else {
     // CFRelease: the return type should be void.
     
     if (RetTy != Ctx.VoidTy)
       return NULL;
-  }
     
-  // The function's interface checks out.  Generate a canned summary.
-  
-  assert (ScratchArgs.empty());
-  ScratchArgs.push_back(isRetain ? IncRef : DecRef);
-  
-  return getPersistentSummary(getArgEffects(), RetEffect::MakeAlias(0));
+    assert (ScratchArgs.empty());
+    ScratchArgs.push_back(DecRef);
+    return getPersistentSummary(getArgEffects(), RetEffect::MakeNoRet());
+  }
 }
 
 static bool isCFRefType(QualType T) {
@@ -354,21 +361,28 @@ static bool isCFRefType(QualType T) {
   return true;
 }
   
+void CFRefSummaryManager::FillDoNothing(unsigned Args) {
+  for (unsigned i = 0; i != Args; ++i)
+    ScratchArgs.push_back(DoNothing);
+}
+
+CFRefSummary* CFRefSummaryManager::getDoNothingSummary(unsigned Args) {
+  FillDoNothing(Args);
+  return getPersistentSummary(getArgEffects(), RetEffect::MakeNoRet());  
+}
 
 CFRefSummary*
 CFRefSummaryManager::getCFSummaryCreateRule(FunctionTypeProto* FT) {
  
   if (!isCFRefType(FT->getResultType()))
-    return NULL;
+    return getDoNothingSummary(FT->getNumArgs());
 
   assert (ScratchArgs.empty());
   
   // FIXME: Add special-cases for functions that retain/release.  For now
   //  just handle the default case.
   
-  for (unsigned i = 0, n = FT->getNumArgs(); i != n; ++i)
-    ScratchArgs.push_back(DoNothing);
-  
+  FillDoNothing(FT->getNumArgs());  
   return getPersistentSummary(getArgEffects(), RetEffect::MakeOwned());
 }
 
@@ -376,16 +390,14 @@ CFRefSummary*
 CFRefSummaryManager::getCFSummaryGetRule(FunctionTypeProto* FT) {
   
   if (!isCFRefType(FT->getResultType()))
-    return NULL;
+    return getDoNothingSummary(FT->getNumArgs());
   
   assert (ScratchArgs.empty());
   
   // FIXME: Add special-cases for functions that retain/release.  For now
   //  just handle the default case.
   
-  for (unsigned i = 0, n = FT->getNumArgs(); i != n; ++i)
-    ScratchArgs.push_back(DoNothing);
-  
+  FillDoNothing(FT->getNumArgs());  
   return getPersistentSummary(getArgEffects(), RetEffect::MakeNotOwned());
 }
 
@@ -711,11 +723,11 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
     
   if (hasError) {
     St = StateMgr.getPersistentState(StVals);
-    GRExprEngine::NodeTy* N = Builder.generateNode(CE, St, Pred);
+    
+    Builder.BuildSinks = true;
+    GRExprEngine::NodeTy* N  = Builder.MakeNode(Dst, CE, Pred, St);
 
     if (N) {
-      N->markAsSink();
-      
       switch (hasError) {
         default: assert(false);
         case RefVal::ErrorUseAfterRelease:
@@ -741,6 +753,9 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
     default:
       assert (false && "Unhandled RetEffect."); break;
     
+    case RetEffect::NoRet:
+      break;
+      
     case RetEffect::Alias: {
       unsigned idx = RE.getValue();
       assert (idx < CE->getNumArgs());
@@ -810,7 +825,8 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
           assert(false);
 
         case RefVal::Owned:
-          V = RefVal::makeOwned(V.getCount()+1); break;
+          V = RefVal::makeOwned(V.getCount()+1);
+          break;
                     
         case RefVal::NotOwned:
           V = RefVal::makeNotOwned(V.getCount()+1);
@@ -821,6 +837,8 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
           hasError = V.getKind();
           break;
       }
+      
+      break;
       
     case DecRef:
       switch (V.getKind()) {
@@ -851,6 +869,8 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
           hasError = V.getKind();
           break;          
       }
+      
+      break;
   }
 
   return RefBFactory.Add(B, sym, V);
