@@ -665,14 +665,14 @@ void Parser::ParseStructDeclaration(DeclTy *TagDecl,
   
   // Parse the common specifier-qualifiers-list piece.
   DeclSpec DS;
-  SourceLocation SpecQualLoc = Tok.getLocation();
+  SourceLocation DSStart = Tok.getLocation();
   ParseSpecifierQualifierList(DS);
   // TODO: Does specifier-qualifier list correctly check that *something* is
   // specified?
   
   // If there are no declarators, issue a warning.
   if (Tok.is(tok::semi)) {
-    Diag(SpecQualLoc, diag::w_no_declarators);
+    Diag(DSStart, diag::w_no_declarators);
     return;
   }
 
@@ -689,11 +689,10 @@ void Parser::ParseStructDeclaration(DeclTy *TagDecl,
     if (Tok.is(tok::colon)) {
       ConsumeToken();
       ExprResult Res = ParseConstantExpression();
-      if (Res.isInvalid) {
+      if (Res.isInvalid)
         SkipUntil(tok::semi, true, true);
-      } else {
+      else
         BitfieldSize = Res.Val;
-      }
     }
     
     // If attributes exist after the declarator, parse them.
@@ -701,7 +700,8 @@ void Parser::ParseStructDeclaration(DeclTy *TagDecl,
       DeclaratorInfo.AddAttributes(ParseAttributes());
     
     // Install the declarator into the current TagDecl.
-    DeclTy *Field = Actions.ActOnField(CurScope, TagDecl, SpecQualLoc,
+    DeclTy *Field = Actions.ActOnField(CurScope, TagDecl,
+                                       DS.getSourceRange().getBegin(),
                                        DeclaratorInfo, BitfieldSize);
     FieldDecls.push_back(Field);
     
