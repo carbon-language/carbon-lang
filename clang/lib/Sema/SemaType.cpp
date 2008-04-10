@@ -394,7 +394,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         llvm::SmallVector<QualType, 16> ArgTys;
         
         for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
-          QualType ArgTy = ((ParmVarDecl *)FTI.ArgInfo[i].Param)->getType();
+          ParmVarDecl *Param = (ParmVarDecl *)FTI.ArgInfo[i].Param;
+          QualType ArgTy = Param->getType();
           assert(!ArgTy.isNull() && "Couldn't parse type?");
           //
           // Perform the default function/array conversion (C99 6.7.5.3p[7,8]).
@@ -425,13 +426,13 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
             if (FTI.NumArgs != 1 || FTI.isVariadic) {
               Diag(DeclType.Loc, diag::err_void_only_param);
               ArgTy = Context.IntTy;
-              ((ParmVarDecl *)FTI.ArgInfo[i].Param)->setType(ArgTy);
+              Param->setType(ArgTy);
             } else if (FTI.ArgInfo[i].Ident) {
               // Reject, but continue to parse 'int(void abc)'.
               Diag(FTI.ArgInfo[i].IdentLoc,
                    diag::err_param_with_void_type);
               ArgTy = Context.IntTy;
-              ((ParmVarDecl *)FTI.ArgInfo[i].Param)->setType(ArgTy);
+              Param->setType(ArgTy);
             } else {
               // Reject, but continue to parse 'float(const void)'.
               if (ArgTy.getCVRQualifiers())

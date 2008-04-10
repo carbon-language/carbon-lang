@@ -352,6 +352,7 @@ public:
     return ParamInfo[i];
   }
   void setParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
+  unsigned getMinRequiredArguments() const;
 
   QualType getResultType() const { 
     return cast<FunctionType>(getType())->getResultType();

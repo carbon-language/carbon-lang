@@ -10,3 +10,18 @@ void i()
   f(0, 1);
   f(0, 1, 2);
 }
+
+
+int f1(int i, int i, int j) { // expected-error {{redefinition of parameter 'i'}}
+  i = 17;
+  return j;
+} 
+
+int x;
+void g(int x, int y = x); // expected-error {{default argument references parameter 'x'}}
+
+void h()
+{
+   int i;
+   extern void h2(int x = sizeof(i)); // expected-error {{default argument references local variable 'i' of enclosing function}}
+}

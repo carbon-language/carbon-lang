@@ -47,3 +47,13 @@ typedef int sometype;
 int a(sometype, y) {return 0;}  /* expected-warning {{declaration specifier missing, defaulting to 'int'}} */
 
 
+
+
+void bar (void *); 
+void f11 (z)       /* expected-error {{may not have 'void' type}} */
+void z; 
+{ bar (&z); }
+
+typedef void T;
+void foo(T); /* expected-warning {{empty parameter list defined with a typedef of 'void' is a C99 feature}} */
+

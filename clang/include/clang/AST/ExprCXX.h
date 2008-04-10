@@ -149,7 +149,9 @@ namespace clang {
     Expr *getExpr() { return Param->getDefaultArg(); }
 
     virtual SourceRange getSourceRange() const {
-      return Param->getDefaultArg()->getSourceRange();
+      // Default argument expressions have no represntation in the
+      // source, so they have an empty source range.
+      return SourceRange();
     }
 
     static bool classof(const Stmt *T) {

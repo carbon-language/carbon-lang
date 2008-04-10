@@ -58,7 +58,7 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   CreateImplicitParameter(FnBodyScope, PI.Ident, PI.IdentLoc, 
                           Context.getObjCSelType());
 
-  // Introduce all of the othe parameters into this scope  
+  // Introduce all of the other parameters into this scope.
   for (unsigned i = 0, e = MDecl->getNumParams(); i != e; ++i) {
     ParmVarDecl *PDecl = MDecl->getParamDecl(i);
     IdentifierInfo *II = PDecl->getIdentifier();

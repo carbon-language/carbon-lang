@@ -48,8 +48,8 @@ Stmt::child_iterator CXXThrowExpr::child_end() {
 
 // CXXDefaultArgExpr
 Stmt::child_iterator CXXDefaultArgExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(Param->getDefaultArg());
+  return child_iterator();
 }
 Stmt::child_iterator CXXDefaultArgExpr::child_end() {
-  return reinterpret_cast<Stmt**>(Param->getDefaultArg())+1;
+  return child_iterator();
 }

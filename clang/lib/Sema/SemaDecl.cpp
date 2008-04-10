@@ -833,17 +833,21 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   
       // Check for C99 6.7.5.3p10 - foo(void) is a non-varargs
       // function that takes no arguments, not a function that takes a
-      // single void argument.  FIXME: Is this really the right place
-      // to check for this? C++ says that the parameter list (void) is
-      // the same as an empty parameter list, whereas the parameter
-      // list (T) (with T typedef'd to void) is not. For C++, this
-      // should be handled in the parser. Check C89 and C99 standards
-      // to see what the correct behavior is.
+      // single void argument.
       if (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
           FTI.ArgInfo[0].Param &&
           !((ParmVarDecl*)FTI.ArgInfo[0].Param)->getType().getCVRQualifiers() &&
           ((ParmVarDecl*)FTI.ArgInfo[0].Param)->getType()->isVoidType()) {
         // empty arg list, don't push any params.
+        ParmVarDecl *Param = (ParmVarDecl*)FTI.ArgInfo[0].Param;
+
+        // In C++ and C89, the empty parameter-type-list must be
+        // spelled "void"; a typedef of void is not permitted. 
+        if (!getLangOptions().C99 &&
+            Param->getType() != Context.VoidTy) {
+          Diag(Param->getLocation(), diag::ext_param_typedef_of_void);
+        }
+
       } else {
         for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
           Params.push_back((ParmVarDecl *)FTI.ArgInfo[i].Param);

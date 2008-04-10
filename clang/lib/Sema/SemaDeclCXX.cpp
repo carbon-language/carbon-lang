@@ -14,11 +14,79 @@
 #include "Sema.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/Support/Compiler.h"
 
 using namespace clang;
 
+//===----------------------------------------------------------------------===//
+// CheckDefaultArgumentVisitor
+//===----------------------------------------------------------------------===//
+
+/// CheckDefaultArgumentVisitor - Traverses the default argument of a
+/// parameter to determine whether it contains any ill-formed
+/// subexpressions. For example, this will diagnose the use of local
+/// variables or parameters within the default argument expression.
+class VISIBILITY_HIDDEN CheckDefaultArgumentVisitor 
+  : public StmtVisitor<CheckDefaultArgumentVisitor, bool>
+{
+  Sema *S;
+
+public:
+  explicit CheckDefaultArgumentVisitor(Sema *s) : S(s) {}
+
+  bool VisitExpr(Expr *Node);
+  bool VisitDeclRefExpr(DeclRefExpr *DRE);
+};
+
+/// VisitExpr - Visit all of the children of this expression.
+bool CheckDefaultArgumentVisitor::VisitExpr(Expr *Node) {
+  bool IsInvalid = false;
+  for (Stmt::child_iterator first = Node->child_begin(), 
+                            last = Node->child_end();
+       first != last; ++first)
+    IsInvalid |= Visit(*first);
+
+  return IsInvalid;
+}
+
+/// VisitDeclRefExpr - Visit a reference to a declaration, to
+/// determine whether this declaration can be used in the default
+/// argument expression.
+bool CheckDefaultArgumentVisitor::VisitDeclRefExpr(DeclRefExpr *DRE) {
+  ValueDecl *Decl = DRE->getDecl();
+  if (ParmVarDecl *Param = dyn_cast<ParmVarDecl>(Decl)) {
+    // C++ [dcl.fct.default]p9
+    //   Default arguments are evaluated each time the function is
+    //   called. The order of evaluation of function arguments is
+    //   unspecified. Consequently, parameters of a function shall not
+    //   be used in default argument expressions, even if they are not
+    //   evaluated. Parameters of a function declared before a default
+    //   argument expression are in scope and can hide namespace and
+    //   class member names.
+    return S->Diag(DRE->getSourceRange().getBegin(), 
+                   diag::err_param_default_argument_references_param,
+                   Param->getName());
+  } else if (BlockVarDecl *BlockVar = dyn_cast<BlockVarDecl>(Decl)) {
+    // C++ [dcl.fct.default]p7
+    //   Local variables shall not be used in default argument
+    //   expressions.
+    return S->Diag(DRE->getSourceRange().getBegin(), 
+                   diag::err_param_default_argument_references_local,
+                   BlockVar->getName());
+  }
+
+  // FIXME: when Clang has support for member functions, "this"
+  // will also need to be diagnosted.
+
+  return false;
+}
+
+/// ActOnParamDefaultArgument - Check whether the default argument
+/// provided for a function parameter is well-formed. If so, attach it
+/// to the parameter declaration.
 void
 Sema::ActOnParamDefaultArgument(DeclTy *param, SourceLocation EqualLoc, 
                                 ExprTy *defarg) {
@@ -65,6 +133,11 @@ Sema::ActOnParamDefaultArgument(DeclTy *param, SourceLocation EqualLoc,
   //   parameter pack. If it is specified in a
   //   parameter-declaration-clause, it shall not occur within a
   //   declarator or abstract-declarator of a parameter-declaration.
+
+  // Check that the default argument is well-formed
+  CheckDefaultArgumentVisitor DefaultArgChecker(this);
+  if (DefaultArgChecker.Visit(DefaultArg.get()))
+    return;
 
   // Okay: add the default argument to the parameter
   Param->setDefaultArg(DefaultArg.take());

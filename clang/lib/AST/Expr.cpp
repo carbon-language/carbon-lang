@@ -1021,7 +1021,8 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
     // Accept ((void*)0) as a null pointer constant, as many other
     // implementations do.
     return PE->getSubExpr()->isNullPointerConstant(Ctx);
-  } else if (const CXXDefaultArgExpr *DefaultArg = dyn_cast<CXXDefaultArgExpr>(this)) {
+  } else if (const CXXDefaultArgExpr *DefaultArg 
+               = dyn_cast<CXXDefaultArgExpr>(this)) {
     // See through default argument expressions
     return DefaultArg->getExpr()->isNullPointerConstant(Ctx);
   }

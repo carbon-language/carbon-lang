@@ -1235,7 +1235,8 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 /// [C++]   declaration-specifiers declarator '=' assignment-expression
 /// [GNU]   declaration-specifiers declarator attributes
 ///         declaration-specifiers abstract-declarator[opt] 
-/// [C++]   declaration-specifiers abstract-declarator[opt] '=' assignment-expression
+/// [C++]   declaration-specifiers abstract-declarator[opt] 
+///           '=' assignment-expression
 /// [GNU]   declaration-specifiers abstract-declarator[opt] attributes
 ///
 void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D) {

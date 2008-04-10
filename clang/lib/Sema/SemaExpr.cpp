@@ -596,7 +596,6 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
   Expr **Args = reinterpret_cast<Expr**>(args);
   assert(Fn && "no function call expression");
   FunctionDecl *FDecl = NULL;
-  unsigned NumArgsPassed = NumArgs;
 
   // Promote the function operand.
   UsualUnaryConversions(Fn);
@@ -609,9 +608,7 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
 
   // Make the call expr early, before semantic checks.  This guarantees cleanup
   // of arguments and function on error.
-  if (getLangOptions().CPlusPlus && FDecl && NumArgs < FDecl->getNumParams())
-    NumArgsPassed = FDecl->getNumParams();
-  llvm::OwningPtr<CallExpr> TheCall(new CallExpr(Fn, Args, NumArgsPassed,
+  llvm::OwningPtr<CallExpr> TheCall(new CallExpr(Fn, Args, NumArgs,
                                                  Context.BoolTy, RParenLoc));
   
   // C99 6.5.2.2p1 - "The expression that denotes the called function shall have
@@ -637,11 +634,10 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
     // If too few arguments are available (and we don't have default
     // arguments for the remaining parameters), don't make the call.
     if (NumArgs < NumArgsInProto) {
-      if (getLangOptions().CPlusPlus && 
-          FDecl &&
-          FDecl->getParamDecl(NumArgs)->getDefaultArg()) {
+      if (FDecl && NumArgs >= FDecl->getMinRequiredArguments()) {
         // Use default arguments for missing arguments
         NumArgsToCheck = NumArgsInProto;
+        TheCall->setNumArgs(NumArgsInProto);
       } else
         return Diag(RParenLoc, diag::err_typecheck_call_too_few_args,
                     Fn->getSourceRange());

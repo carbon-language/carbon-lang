@@ -385,6 +385,19 @@ void FunctionDecl::setParams(ParmVarDecl **NewParamInfo, unsigned NumParams) {
   }
 }
 
+/// getMinRequiredArguments - Returns the minimum number of arguments
+/// needed to call this function. This may be fewer than the number of
+/// function parameters, if some of the parameters have default
+/// arguments.
+unsigned FunctionDecl::getMinRequiredArguments() const {
+  unsigned NumRequiredArgs = getNumParams();
+  while (NumRequiredArgs > 0
+         && getParamDecl(NumRequiredArgs-1)->getDefaultArg())
+    --NumRequiredArgs;
+
+  return NumRequiredArgs;
+}
+
 //===----------------------------------------------------------------------===//
 // RecordDecl Implementation
 //===----------------------------------------------------------------------===//
