@@ -632,8 +632,8 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
     return;
 
   unsigned LastUseIdx;
-  MachineOperand *LastUse =
-    lastRegisterUse(LR->start, CopyIdx-1, li.reg, LastUseIdx);
+  MachineOperand *LastUse = lastRegisterUse(LR->start, CopyIdx-1, li.reg,
+                                            LastUseIdx);
   if (LastUse) {
     // There are uses before the copy, just shorten the live range to the end
     // of last use.
@@ -714,29 +714,48 @@ bool SimpleRegisterCoalescing::CanCoalesceWithImpDef(MachineInstr *CopyMI,
 /// identity copies so they will be removed.
 void SimpleRegisterCoalescing::RemoveCopiesFromValNo(LiveInterval &li,
                                                      VNInfo *VNI) {
-  for (MachineRegisterInfo::use_iterator UI = mri_->use_begin(li.reg),
-         UE = mri_->use_end(); UI != UE;) {
-    MachineInstr *UseMI = &*UI;
-    ++UI;
-    if (JoinedCopies.count(UseMI))
+  MachineInstr *ImpDef = NULL;
+  MachineOperand *LastUse = NULL;
+  unsigned LastUseIdx = li_->getUseIndex(VNI->def);
+  for (MachineRegisterInfo::reg_iterator RI = mri_->reg_begin(li.reg),
+         RE = mri_->reg_end(); RI != RE;) {
+    MachineOperand *MO = &RI.getOperand();
+    MachineInstr *MI = &*RI;
+    ++RI;
+    if (MO->isDef()) {
+      if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
+        assert(!ImpDef && "Multiple implicit_def defining same register?");
+        ImpDef = MI;
+      }
       continue;
-    unsigned UseIdx = li_->getUseIndex(li_->getInstructionIndex(UseMI));
+    }
+    if (JoinedCopies.count(MI))
+      continue;
+    unsigned UseIdx = li_->getUseIndex(li_->getInstructionIndex(MI));
     LiveInterval::iterator ULR = li.FindLiveRangeContaining(UseIdx);
     if (ULR->valno != VNI)
       continue;
-    if (UseMI->getOpcode() == TargetInstrInfo::INSERT_SUBREG)
-      continue;
     // If the use is a copy, turn it into an identity copy.
     unsigned SrcReg, DstReg;
-    if (!tii_->isMoveInstr(*UseMI, SrcReg, DstReg) || SrcReg != li.reg)
-      assert(0 && "Unexpected use of implicit def!");
-    // Each UseMI may have multiple uses of this register. Change them all.
-    for (unsigned i = 0, e = UseMI->getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = UseMI->getOperand(i);
-      if (MO.isReg() && MO.getReg() == li.reg)
-        MO.setReg(DstReg);
+    if (tii_->isMoveInstr(*MI, SrcReg, DstReg) && SrcReg == li.reg) {
+      // Each use MI may have multiple uses of this register. Change them all.
+      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+        MachineOperand &MO = MI->getOperand(i);
+        if (MO.isReg() && MO.getReg() == li.reg)
+          MO.setReg(DstReg);
+      }
+      JoinedCopies.insert(MI);
+    } else if (UseIdx > LastUseIdx) {
+      LastUseIdx = UseIdx;
+      LastUse = MO;
     }
-    JoinedCopies.insert(UseMI);
+  }
+  if (LastUse)
+    LastUse->setIsKill();
+  else {
+    // Remove dead implicit_def.
+    li_->RemoveMachineInstrFromMaps(ImpDef);
+    ImpDef->eraseFromParent();
   }
 }
 
@@ -1874,7 +1893,6 @@ SimpleRegisterCoalescing::TurnCopyIntoImpDef(MachineBasicBlock::iterator &I,
       assert(DefMI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF);
       li_->RemoveMachineInstrFromMaps(DefMI);
       DefMI->eraseFromParent();
-      ++numPeep;
     }
   }
   ++I;
