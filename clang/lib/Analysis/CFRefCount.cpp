@@ -885,14 +885,11 @@ void CheckCFRefCount(CFG& cfg, Decl& CD, ASTContext& Ctx,
   if (Diag.hasErrorOccurred())
     return;
   
-  // FIXME: Refactor some day so this becomes a single function invocation.
   GRExprEngine Eng(cfg, CD, Ctx);
   CFRefCount TF;
   Eng.setTransferFunctions(TF);
   Eng.ExecuteWorkList();
-  
-  // FIXME: Emit warnings.
-
+  Eng.EmitWarnings(Diag, PD);
 }
 
 } // end clang namespace
