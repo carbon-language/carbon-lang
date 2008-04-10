@@ -282,8 +282,8 @@ void AddStandardCompilePasses(PassManager &PM) {
   addPass(PM, createIndVarSimplifyPass());       // Canonicalize indvars
   addPass(PM, createLoopUnrollPass());           // Unroll small loops
   addPass(PM, createInstructionCombiningPass()); // Clean up after the unroller
-  addPass(PM, createMemCpyOptPass());            // Remove unneeded memcpy's
   addPass(PM, createGVNPass());                  // Remove redundancies
+  addPass(PM, createMemCpyOptPass());            // Remove memcpy / form memset
   addPass(PM, createSCCPPass());                 // Constant prop with SCCP
 
   // Run instcombine after redundancy elimination to exploit opportunities
