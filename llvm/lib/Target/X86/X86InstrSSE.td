@@ -2305,6 +2305,16 @@ def MOVZQI2PQIrr : RPDI<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR64:$src),
                                  MOVL_shuffle_mask)))]>;
 }
 
+// Handle the v2f64 form of 'MOVZQI2PQIrr' for PR2108.  FIXME: this would be
+// better written as a dag combine xform.
+let AddedComplexity = 15 in
+def : Pat<(v2f64 (vector_shuffle immAllZerosV_bc,
+                                  (v2f64 (scalar_to_vector 
+                                       (f64 (bitconvert GR64:$src)))),
+                                  MOVL_shuffle_mask)),
+          (MOVZQI2PQIrr GR64:$src)>, Requires<[HasSSE3]>;
+          
+
 let AddedComplexity = 20 in {
 def MOVZDI2PDIrm : PDI<0x6E, MRMSrcMem, (outs VR128:$dst), (ins i32mem:$src),
                        "movd\t{$src, $dst|$dst, $src}",
