@@ -716,7 +716,6 @@ void SimpleRegisterCoalescing::RemoveCopiesFromValNo(LiveInterval &li,
                                                      VNInfo *VNI) {
   for (MachineRegisterInfo::use_iterator UI = mri_->use_begin(li.reg),
          UE = mri_->use_end(); UI != UE;) {
-    MachineOperand &UseMO = UI.getOperand();
     MachineInstr *UseMI = &*UI;
     ++UI;
     if (JoinedCopies.count(UseMI))
@@ -731,7 +730,12 @@ void SimpleRegisterCoalescing::RemoveCopiesFromValNo(LiveInterval &li,
     unsigned SrcReg, DstReg;
     if (!tii_->isMoveInstr(*UseMI, SrcReg, DstReg) || SrcReg != li.reg)
       assert(0 && "Unexpected use of implicit def!");
-    UseMO.setReg(DstReg);
+    // Each UseMI may have multiple uses of this register. Change them all.
+    for (unsigned i = 0, e = UseMI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = UseMI->getOperand(i);
+      if (MO.isReg() && MO.getReg() == li.reg)
+        MO.setReg(DstReg);
+    }
     JoinedCopies.insert(UseMI);
   }
 }
