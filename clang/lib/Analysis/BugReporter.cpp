@@ -358,8 +358,18 @@ void BugReporter::EmitWarning(BugReport& R, ExplodedNode<ValueState>* N) {
   if (!S)
     return;
   
-  SourceRange Range = S->getSourceRange();
+  const SourceRange *Beg, *End;
+  R.getRanges(Beg, End);
   
-  Diag.Report(FullSourceLoc(S->getLocStart(), Ctx.getSourceManager()),
-              ErrorDiag, NULL, 0, &Range, 1);   
+  if (Beg == End) {
+    SourceRange Range = S->getSourceRange();
+    
+    Diag.Report(FullSourceLoc(S->getLocStart(), Ctx.getSourceManager()),
+                ErrorDiag, NULL, 0, &Range, 1);   
+    
+  }
+  else
+    Diag.Report(FullSourceLoc(S->getLocStart(), Ctx.getSourceManager()),
+                ErrorDiag, NULL, 0, Beg, End - Beg);
+  
 }
