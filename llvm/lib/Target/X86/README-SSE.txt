@@ -428,6 +428,54 @@ entry:
 
 //===---------------------------------------------------------------------===//
 
+Consider (PR2108):
+
+#include <xmmintrin.h>
+__m128i doload64(unsigned long long x) { return _mm_loadl_epi64(&x);}
+__m128i doload64_2(unsigned long long *x) { return _mm_loadl_epi64(x);}
+
+These are very similar routines, but we generate significantly worse code for
+the first one on x86-32:
+
+_doload64:
+	subl	$12, %esp
+	movl	20(%esp), %eax
+	movl	%eax, 4(%esp)
+	movl	16(%esp), %eax
+	movl	%eax, (%esp)
+	movsd	(%esp), %xmm0
+	addl	$12, %esp
+	ret
+_doload64_2:
+	movl	4(%esp), %eax
+	movsd	(%eax), %xmm0
+	ret
+
+The problem is that the argument lowering logic splits the i64 argument into
+2x i32 loads early, the f64 insert doesn't match.  Here's a reduced testcase:
+
+define fastcc double @doload64(i64 %x) nounwind  {
+entry:
+	%tmp717 = bitcast i64 %x to double		; <double> [#uses=1]
+	ret double %tmp717
+}
+
+compiles to:
+
+_doload64:
+	subl	$12, %esp
+	movl	20(%esp), %eax
+	movl	%eax, 4(%esp)
+	movl	16(%esp), %eax
+	movl	%eax, (%esp)
+	movsd	(%esp), %xmm0
+	addl	$12, %esp
+	ret
+
+instead of movsd from the stack.
+
+//===---------------------------------------------------------------------===//
+
 __m128d test1( __m128d A, __m128d B) {
   return _mm_shuffle_pd(A, B, 0x3);
 }
