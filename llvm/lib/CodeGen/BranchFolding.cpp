@@ -27,6 +27,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -78,6 +79,7 @@ namespace {
     bool OptimizeBranches(MachineFunction &MF);
     void OptimizeBlock(MachineBasicBlock *MBB);
     void RemoveDeadBlock(MachineBasicBlock *MBB);
+    bool OptimizeImpDefsBlock(MachineBasicBlock *MBB);
     
     bool CanFallThrough(MachineBasicBlock *CurBB);
     bool CanFallThrough(MachineBasicBlock *CurBB, bool BranchUnAnalyzable,
@@ -117,9 +119,62 @@ void BranchFolder::RemoveDeadBlock(MachineBasicBlock *MBB) {
   MF->getBasicBlockList().erase(MBB);
 }
 
+/// OptimizeImpDefsBlock - If a basic block is just a bunch of implicit_def
+/// followed by terminators, and if the implicitly defined registers are not
+/// used by the terminators, remove those implicit_def's. e.g.
+/// BB1:
+///   r0 = implicit_def
+///   r1 = implicit_def
+///   br
+/// This block can be optimized away later if the implicit instructions are
+/// removed.
+bool BranchFolder::OptimizeImpDefsBlock(MachineBasicBlock *MBB) {
+  SmallSet<unsigned, 4> ImpDefRegs;
+  MachineBasicBlock::iterator I = MBB->begin();
+  while (I != MBB->end()) {
+    if (I->getOpcode() != TargetInstrInfo::IMPLICIT_DEF)
+      break;
+    unsigned Reg = I->getOperand(0).getReg();
+    ImpDefRegs.insert(Reg);
+    for (const unsigned *SubRegs = RegInfo->getSubRegisters(Reg);
+         unsigned SubReg = *SubRegs; ++SubRegs)
+      ImpDefRegs.insert(SubReg);
+    ++I;
+  }
+  if (ImpDefRegs.empty())
+    return false;
+
+  MachineBasicBlock::iterator FirstTerm = I;
+  while (I != MBB->end()) {
+    if (!TII->isUnpredicatedTerminator(I))
+      return false;
+    // See if it uses any of the implicitly defined registers.
+    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = I->getOperand(i);
+      if (!MO.isReg() || !MO.isUse())
+        continue;
+      unsigned Reg = MO.getReg();
+      if (ImpDefRegs.count(Reg))
+        return false;
+    }
+    ++I;
+  }
+
+  I = MBB->begin();
+  while (I != FirstTerm) {
+    MachineInstr *ImpDefMI = &*I;
+    ++I;
+    MBB->erase(ImpDefMI);
+  }
+
+  return true;
+}
+
 bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   if (!TII) return false;
+
+  RegInfo = MF.getTarget().getRegisterInfo();
 
   // Fix CFG.  The later algorithms expect it to be right.
   bool EverMadeChange = false;
@@ -128,9 +183,9 @@ bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
     std::vector<MachineOperand> Cond;
     if (!TII->AnalyzeBranch(*MBB, TBB, FBB, Cond))
       EverMadeChange |= MBB->CorrectExtraCFGEdges(TBB, FBB, !Cond.empty());
+    EverMadeChange |= OptimizeImpDefsBlock(MBB);
   }
 
-  RegInfo = MF.getTarget().getRegisterInfo();
   RS = RegInfo->requiresRegisterScavenging(MF) ? new RegScavenger() : NULL;
 
   MMI = getAnalysisToUpdate<MachineModuleInfo>();
