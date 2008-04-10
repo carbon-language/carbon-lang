@@ -31,7 +31,7 @@ namespace clang {
 class Parser {
   Preprocessor &PP;
   
-  /// Tok - The current token we are peeking head.  All parsing methods assume
+  /// Tok - The current token we are peeking ahead.  All parsing methods assume
   /// that this is valid.
   Token Tok;
   
