@@ -55,5 +55,7 @@ void z;
 { bar (&z); }
 
 typedef void T;
-void foo(T); /* expected-warning {{empty parameter list defined with a typedef of 'void' is a C99 feature}} */
+void foo(T); /* typedef for void is allowed */
+
+void foo(void) {}
 

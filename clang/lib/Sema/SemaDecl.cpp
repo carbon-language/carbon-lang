@@ -841,9 +841,9 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
         // empty arg list, don't push any params.
         ParmVarDecl *Param = (ParmVarDecl*)FTI.ArgInfo[0].Param;
 
-        // In C++ and C89, the empty parameter-type-list must be
-        // spelled "void"; a typedef of void is not permitted. 
-        if (!getLangOptions().C99 &&
+        // In C++, the empty parameter-type-list must be spelled "void"; a
+        // typedef of void is not permitted.
+        if (getLangOptions().CPlusPlus &&
             Param->getType() != Context.VoidTy) {
           Diag(Param->getLocation(), diag::ext_param_typedef_of_void);
         }

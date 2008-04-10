@@ -621,7 +621,7 @@ DIAG(err_no_matching_param, ERROR,
 DIAG(ext_param_not_declared, EXTENSION,
      "parameter '%0' was not declared, defaulting to type 'int'")
 DIAG(ext_param_typedef_of_void, EXTENSION,
-     "empty parameter list defined with a typedef of 'void' is a C99 feature")
+     "empty parameter list defined with a typedef of 'void' not allowed in C++")
 DIAG(err_param_default_argument, ERROR,
      "C does not support default arguments")
 DIAG(err_param_default_argument_redefinition, ERROR,
