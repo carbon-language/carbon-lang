@@ -693,9 +693,13 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
           break;
         }
       }
-    }
-    else if (isa<LVal>(V)) // Nuke all arguments passed by reference.
+    }  
+    else if (isa<LVal>(V)) { // Nuke all arguments passed by reference.
+      
+      // FIXME: This is basically copy-and-paste from GRSimpleVals.  We 
+      //  should compose behavior, not copy it.
       StateMgr.Unbind(StVals, cast<LVal>(V));
+    }
   }    
     
   if (hasError) {
@@ -733,6 +737,8 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
     case RetEffect::NoRet:
     
       // Make up a symbol for the return value (not reference counted).
+      // FIXME: This is basically copy-and-paste from GRSimpleVals.  We 
+      //  should compose behavior, not copy it.
       
       if (CE->getType() != Eng.getContext().VoidTy) {    
         unsigned Count = Builder.getCurrentBlockCount();
