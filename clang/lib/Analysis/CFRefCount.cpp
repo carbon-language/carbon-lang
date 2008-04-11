@@ -538,8 +538,8 @@ class VISIBILITY_HIDDEN CFRefCount : public GRSimpleVals {
   typedef llvm::ImmutableMap<SymbolID, RefVal> RefBindings;
   typedef RefBindings::Factory RefBFactoryTy;
   
-  typedef llvm::SmallPtrSet<GRExprEngine::NodeTy*,2> UseAfterReleasesTy;
-  typedef llvm::SmallPtrSet<GRExprEngine::NodeTy*,2> ReleasesNotOwnedTy;
+  typedef llvm::DenseMap<GRExprEngine::NodeTy*,Expr*> UseAfterReleasesTy;
+  typedef llvm::DenseMap<GRExprEngine::NodeTy*,Expr*> ReleasesNotOwnedTy;
   
   class BindingsPrinter : public ValueState::CheckerStatePrinter {
   public:
@@ -704,8 +704,10 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
   
   unsigned idx = 0;
   
-  for (CallExpr::arg_iterator I=CE->arg_begin(), E=CE->arg_end();
-        I!=E; ++I, ++idx) {
+  Expr* ErrorExpr = NULL;
+  
+  for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
+        I != E; ++I, ++idx) {
     
     RVal V = StateMgr.GetRVal(St, *I);
     
@@ -716,7 +718,11 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
       if (RefBindings::TreeTy* T = B.SlimFind(Sym)) {
         B = Update(B, Sym, T->getValue().second, Summ->getArg(idx), hasError);
         SetRefBindings(StVals, B);
-        if (hasError) break;
+        
+        if (hasError) {
+          ErrorExpr = *I;
+          break;
+        }
       }
     }
   }    
@@ -731,11 +737,11 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
       switch (hasError) {
         default: assert(false);
         case RefVal::ErrorUseAfterRelease:
-          UseAfterReleases.insert(N);
+          UseAfterReleases[N] = ErrorExpr;
           break;
           
         case RefVal::ErrorReleaseNotOwned:
-          ReleasesNotOwned.insert(N);
+          ReleasesNotOwned[N] = ErrorExpr;
           break;
       }
     }
@@ -886,8 +892,9 @@ void UseAfterRelease::EmitWarnings(BugReporter& BR) {
   for (CFRefCount::use_after_iterator I = TF.use_after_begin(),
         E = TF.use_after_end(); I != E; ++I) {
     
-    BugReport report(*this);
-    BR.EmitPathWarning(report, *I);    
+    RangedBugReport report(*this);
+    report.addRange(I->second->getSourceRange());    
+    BR.EmitPathWarning(report, I->first);    
   }
 }
 
@@ -896,8 +903,10 @@ void BadRelease::EmitWarnings(BugReporter& BR) {
   for (CFRefCount::bad_release_iterator I = TF.bad_release_begin(),
        E = TF.bad_release_end(); I != E; ++I) {
     
-    BugReport report(*this);
-    BR.EmitPathWarning(report, *I);    
+    RangedBugReport report(*this);
+    report.addRange(I->second->getSourceRange());    
+    BR.EmitPathWarning(report, I->first); 
+
   }  
 }
 
