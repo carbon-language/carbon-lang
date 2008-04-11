@@ -28,6 +28,8 @@ using namespace clang;
 BugReporter::~BugReporter() {}
 BugType::~BugType() {}
 BugReport::~BugReport() {}
+RangedBugReport::~RangedBugReport() {}
+
 ExplodedGraph<ValueState>& BugReporter::getGraph() { return Eng.getGraph(); }
 
 static inline Stmt* GetStmt(const ProgramPoint& P) {

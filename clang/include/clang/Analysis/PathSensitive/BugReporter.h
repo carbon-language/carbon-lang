@@ -68,6 +68,28 @@ public:
                                          ASTContext& Ctx);
 };
   
+  class RangedBugReport : public BugReport {
+  std::vector<SourceRange> Ranges;
+public:
+  RangedBugReport(const BugType& D) : BugReport(D) {}
+  virtual ~RangedBugReport();
+  
+  void addRange(SourceRange R) { Ranges.push_back(R); }
+  
+  virtual void getRanges(const SourceRange*& beg,           
+                         const SourceRange*& end) const {
+    
+    if (Ranges.empty()) {
+      beg = NULL;
+      end = NULL;
+    }
+    else {
+      beg = &Ranges[0];
+      end = beg + Ranges.size();
+    }
+  }
+};
+  
 class BugReporter {
   llvm::SmallPtrSet<void*,10> CachedErrors;
   Diagnostic& Diag;
