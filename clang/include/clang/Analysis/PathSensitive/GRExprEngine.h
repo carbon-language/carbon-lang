@@ -367,7 +367,9 @@ public:
   
   /// ProcessEndPath - Called by GRCoreEngine.  Used to generate end-of-path
   ///  nodes when the control reaches the end of a function.
-  void ProcessEndPath(EndPathNodeBuilder& builder) {}
+  void ProcessEndPath(EndPathNodeBuilder& builder) {
+    TF->EvalEndPath(*this, builder);
+  }
   
   ValueStateManager& getStateManager() { return StateMgr; }
   const ValueStateManager& getStateManger() const { return StateMgr; }

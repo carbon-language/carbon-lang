@@ -65,6 +65,11 @@ public:
                         GRStmtNodeBuilder<ValueState>& Builder,
                         CallExpr* CE, LVal L,
                         ExplodedNode<ValueState>* Pred) = 0;
+  
+  // End-of-path.
+  
+  virtual void EvalEndPath(GRExprEngine& Engine,
+                           GREndPathNodeBuilder<ValueState>& Builder) {}
 };
   
 } // end clang namespace
