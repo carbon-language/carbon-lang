@@ -16,6 +16,7 @@
 		1ABC36940C7A4BDC006DB0AB /* CGBuiltin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */; };
 		351318600CD14468006B66F7 /* DeclSerialization.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3513185F0CD14468006B66F7 /* DeclSerialization.cpp */; };
 		35260CA50C7F75C000D66CE9 /* ExprCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35260CA40C7F75C000D66CE9 /* ExprCXX.cpp */; };
+		352712510DAFE54700C76352 /* IdentifierResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352712500DAFE54700C76352 /* IdentifierResolver.cpp */; };
 		352981090CC58344008B5E84 /* SerializationTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352981080CC58344008B5E84 /* SerializationTest.cpp */; };
 		356EF9B50C8F7DDF006650F5 /* LiveVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */; };
 		35707EFE0CD0F5CC000B2204 /* SourceLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */; };
@@ -257,6 +258,8 @@
 		1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CGBuiltin.cpp; path = lib/CodeGen/CGBuiltin.cpp; sourceTree = "<group>"; };
 		3513185F0CD14468006B66F7 /* DeclSerialization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeclSerialization.cpp; path = lib/AST/DeclSerialization.cpp; sourceTree = "<group>"; };
 		35260CA40C7F75C000D66CE9 /* ExprCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ExprCXX.cpp; path = lib/AST/ExprCXX.cpp; sourceTree = "<group>"; };
+		3527124F0DAFE54700C76352 /* IdentifierResolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IdentifierResolver.h; path = lib/Sema/IdentifierResolver.h; sourceTree = "<group>"; };
+		352712500DAFE54700C76352 /* IdentifierResolver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IdentifierResolver.cpp; path = lib/Sema/IdentifierResolver.cpp; sourceTree = "<group>"; };
 		352981080CC58344008B5E84 /* SerializationTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SerializationTest.cpp; path = Driver/SerializationTest.cpp; sourceTree = "<group>"; };
 		352C19DC0CA321C80045DB98 /* CFGRecStmtDeclVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGRecStmtDeclVisitor.h; path = clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h; sourceTree = "<group>"; };
 		352C19DD0CA321C80045DB98 /* CFGRecStmtVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGRecStmtVisitor.h; path = clang/Analysis/Visitors/CFGRecStmtVisitor.h; sourceTree = "<group>"; };
@@ -648,6 +651,8 @@
 		DE67E7070C020EAB00F66BC5 /* Sema */ = {
 			isa = PBXGroup;
 			children = (
+				3527124F0DAFE54700C76352 /* IdentifierResolver.h */,
+				352712500DAFE54700C76352 /* IdentifierResolver.cpp */,
 				DE67E7190C020F4F00F66BC5 /* ParseAST.cpp */,
 				DE67E7140C020EDF00F66BC5 /* Sema.h */,
 				35A2B8610CF8FFA300E6C317 /* SemaUtil.h */,
@@ -1053,6 +1058,7 @@
 				3593790A0DA48ABA0043B19C /* BugReporter.cpp in Sources */,
 				DECAB0950DA684C500E13CCB /* CGObjCEtoile.cpp in Sources */,
 				35EF67700DAD1D2C00B19414 /* SemaDeclCXX.cpp in Sources */,
+				352712510DAFE54700C76352 /* IdentifierResolver.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
