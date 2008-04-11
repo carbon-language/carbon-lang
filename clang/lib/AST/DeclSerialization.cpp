@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "llvm/Bitcode/Serialize.h"
@@ -198,8 +199,9 @@ void VarDecl::ReadImpl(Deserializer& D, ASTContext& C) {
 //===----------------------------------------------------------------------===//
 
 BlockVarDecl* BlockVarDecl::CreateImpl(Deserializer& D, ASTContext& C) {  
-  BlockVarDecl* decl = 
-    new BlockVarDecl(0, SourceLocation(),NULL,QualType(),None,NULL);
+  void *Mem = C.getAllocator().Allocate<BlockVarDecl>();
+  BlockVarDecl* decl =
+    new (Mem) BlockVarDecl(0, SourceLocation(), NULL, QualType(), None, NULL);
  
   decl->VarDecl::ReadImpl(D, C);
   
@@ -211,8 +213,9 @@ BlockVarDecl* BlockVarDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 //===----------------------------------------------------------------------===//
 
 FileVarDecl* FileVarDecl::CreateImpl(Deserializer& D, ASTContext& C) {
+  void *Mem = C.getAllocator().Allocate<FileVarDecl>();
   FileVarDecl* decl =
-    new FileVarDecl(0, SourceLocation(),NULL,QualType(),None,NULL);
+    new (Mem) FileVarDecl(0, SourceLocation(), NULL, QualType(), None, NULL);
   
   decl->VarDecl::ReadImpl(D, C);
 
@@ -230,8 +233,9 @@ void ParmVarDecl::EmitImpl(llvm::Serializer& S) const {
 }
 
 ParmVarDecl* ParmVarDecl::CreateImpl(Deserializer& D, ASTContext& C) {
-  ParmVarDecl* decl =
-    new ParmVarDecl(0, SourceLocation(), NULL, QualType(), None, NULL, NULL);
+  void *Mem = C.getAllocator().Allocate<ParmVarDecl>();
+  ParmVarDecl* decl = new (Mem)
+    ParmVarDecl(0, SourceLocation(), NULL, QualType(), None, NULL, NULL);
   
   decl->VarDecl::ReadImpl(D, C);
   decl->objcDeclQualifier = static_cast<ObjCDeclQualifier>(D.ReadInt());
@@ -251,7 +255,8 @@ void EnumDecl::EmitImpl(Serializer& S) const {
 }
 
 EnumDecl* EnumDecl::CreateImpl(Deserializer& D, ASTContext& C) {
-  EnumDecl* decl = new EnumDecl(0, SourceLocation(),NULL,NULL);
+  void *Mem = C.getAllocator().Allocate<EnumDecl>();
+  EnumDecl* decl = new (Mem) EnumDecl(0, SourceLocation(), NULL, NULL);
   
   decl->ScopedDecl::ReadInRec(D, C);
   decl->setDefinition(D.ReadBool());
@@ -282,9 +287,9 @@ EnumConstantDecl* EnumConstantDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   llvm::APSInt val(1);
   D.Read(val);
   
-  EnumConstantDecl* decl = 
-    new EnumConstantDecl(0, SourceLocation(),NULL,QualType(),NULL,
-                         val,NULL);
+  void *Mem = C.getAllocator().Allocate<EnumConstantDecl>();
+  EnumConstantDecl* decl = new (Mem)
+    EnumConstantDecl(0, SourceLocation(), NULL, QualType(), NULL, val, NULL);
   
   decl->ValueDecl::ReadInRec(D, C);
   
@@ -308,7 +313,8 @@ void FieldDecl::EmitImpl(Serializer& S) const {
 }
 
 FieldDecl* FieldDecl::CreateImpl(Deserializer& D, ASTContext& C) {
-  FieldDecl* decl = new FieldDecl(SourceLocation(), NULL, QualType(), 0);
+  void *Mem = C.getAllocator().Allocate<FieldDecl>();
+  FieldDecl* decl = new (Mem) FieldDecl(SourceLocation(), NULL, QualType(), 0);
   decl->DeclType.ReadBackpatch(D);  
   decl->ReadInRec(D, C);
   decl->BitWidth = D.ReadOwnedPtr<Expr>(C);
@@ -343,8 +349,9 @@ FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   StorageClass SClass = static_cast<StorageClass>(D.ReadInt());
   bool IsInline = D.ReadBool();
   
-  FunctionDecl* decl =
-    new FunctionDecl(0, SourceLocation(),NULL,QualType(),SClass, IsInline, 0);
+  void *Mem = C.getAllocator().Allocate<FunctionDecl>();
+  FunctionDecl* decl = new (Mem)
+    FunctionDecl(0, SourceLocation(), NULL, QualType(), SClass, IsInline, 0);
   
   decl->ValueDecl::ReadInRec(D, C);
   D.ReadPtr(decl->DeclChain);
@@ -390,7 +397,8 @@ void RecordDecl::EmitImpl(Serializer& S) const {
 RecordDecl* RecordDecl::CreateImpl(Decl::Kind DK, Deserializer& D,
                                    ASTContext& C) {
 
-  RecordDecl* decl = new RecordDecl(DK,0,SourceLocation(),NULL,NULL);
+  void *Mem = C.getAllocator().Allocate<RecordDecl>();
+  RecordDecl* decl = new (Mem) RecordDecl(DK, 0, SourceLocation(), NULL, NULL);
     
   decl->ScopedDecl::ReadInRec(D, C);
   decl->setDefinition(D.ReadBool());
@@ -426,7 +434,8 @@ void TypedefDecl::EmitImpl(Serializer& S) const {
 TypedefDecl* TypedefDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   QualType T = QualType::ReadVal(D);
   
-  TypedefDecl* decl = new TypedefDecl(0, SourceLocation(),NULL,T,NULL);
+  void *Mem = C.getAllocator().Allocate<TypedefDecl>();
+  TypedefDecl* decl = new (Mem) TypedefDecl(0, SourceLocation(), NULL, T, NULL);
   
   decl->ScopedDecl::ReadInRec(D, C);
   decl->ScopedDecl::ReadOutRec(D, C);
@@ -461,7 +470,8 @@ void FileScopeAsmDecl::EmitImpl(llvm::Serializer& S) const
 }
 
 FileScopeAsmDecl* FileScopeAsmDecl::CreateImpl(Deserializer& D, ASTContext& C) { 
-  FileScopeAsmDecl* decl = new FileScopeAsmDecl(SourceLocation(), 0);
+  void *Mem = C.getAllocator().Allocate<FileScopeAsmDecl>();
+  FileScopeAsmDecl* decl = new (Mem) FileScopeAsmDecl(SourceLocation(), 0);
 
   decl->Decl::ReadInRec(D, C);
   decl->AsmString = cast<StringLiteral>(D.ReadOwnedPtr<Expr>(C));
