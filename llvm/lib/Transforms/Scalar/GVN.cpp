@@ -159,7 +159,6 @@ namespace {
       void erase(Value* v);
       unsigned size();
       void setAliasAnalysis(AliasAnalysis* A) { AA = A; }
-      uint32_t hash_operand(Value* v);
   };
 }
 
@@ -283,14 +282,6 @@ Expression::ExpressionOpcode ValueTable::getOpcode(CastInst* C) {
   }
 }
 
-uint32_t ValueTable::hash_operand(Value* v) {
-  if (CallInst* CI = dyn_cast<CallInst>(v))
-    if (!AA->doesNotAccessMemory(CI))
-      return nextValueNumber++;
-  
-  return lookup_or_add(v);
-}
-
 Expression ValueTable::create_expression(CallInst* C) {
   Expression e;
   
@@ -303,7 +294,7 @@ Expression ValueTable::create_expression(CallInst* C) {
   
   for (CallInst::op_iterator I = C->op_begin()+1, E = C->op_end();
        I != E; ++I)
-    e.varargs.push_back(hash_operand(*I));
+    e.varargs.push_back(lookup_or_add(*I));
   
   return e;
 }
@@ -311,8 +302,8 @@ Expression ValueTable::create_expression(CallInst* C) {
 Expression ValueTable::create_expression(BinaryOperator* BO) {
   Expression e;
     
-  e.firstVN = hash_operand(BO->getOperand(0));
-  e.secondVN = hash_operand(BO->getOperand(1));
+  e.firstVN = lookup_or_add(BO->getOperand(0));
+  e.secondVN = lookup_or_add(BO->getOperand(1));
   e.thirdVN = 0;
   e.function = 0;
   e.type = BO->getType();
@@ -324,8 +315,8 @@ Expression ValueTable::create_expression(BinaryOperator* BO) {
 Expression ValueTable::create_expression(CmpInst* C) {
   Expression e;
     
-  e.firstVN = hash_operand(C->getOperand(0));
-  e.secondVN = hash_operand(C->getOperand(1));
+  e.firstVN = lookup_or_add(C->getOperand(0));
+  e.secondVN = lookup_or_add(C->getOperand(1));
   e.thirdVN = 0;
   e.function = 0;
   e.type = C->getType();
@@ -337,7 +328,7 @@ Expression ValueTable::create_expression(CmpInst* C) {
 Expression ValueTable::create_expression(CastInst* C) {
   Expression e;
     
-  e.firstVN = hash_operand(C->getOperand(0));
+  e.firstVN = lookup_or_add(C->getOperand(0));
   e.secondVN = 0;
   e.thirdVN = 0;
   e.function = 0;
@@ -350,9 +341,9 @@ Expression ValueTable::create_expression(CastInst* C) {
 Expression ValueTable::create_expression(ShuffleVectorInst* S) {
   Expression e;
     
-  e.firstVN = hash_operand(S->getOperand(0));
-  e.secondVN = hash_operand(S->getOperand(1));
-  e.thirdVN = hash_operand(S->getOperand(2));
+  e.firstVN = lookup_or_add(S->getOperand(0));
+  e.secondVN = lookup_or_add(S->getOperand(1));
+  e.thirdVN = lookup_or_add(S->getOperand(2));
   e.function = 0;
   e.type = S->getType();
   e.opcode = Expression::SHUFFLE;
@@ -363,8 +354,8 @@ Expression ValueTable::create_expression(ShuffleVectorInst* S) {
 Expression ValueTable::create_expression(ExtractElementInst* E) {
   Expression e;
     
-  e.firstVN = hash_operand(E->getOperand(0));
-  e.secondVN = hash_operand(E->getOperand(1));
+  e.firstVN = lookup_or_add(E->getOperand(0));
+  e.secondVN = lookup_or_add(E->getOperand(1));
   e.thirdVN = 0;
   e.function = 0;
   e.type = E->getType();
@@ -376,9 +367,9 @@ Expression ValueTable::create_expression(ExtractElementInst* E) {
 Expression ValueTable::create_expression(InsertElementInst* I) {
   Expression e;
     
-  e.firstVN = hash_operand(I->getOperand(0));
-  e.secondVN = hash_operand(I->getOperand(1));
-  e.thirdVN = hash_operand(I->getOperand(2));
+  e.firstVN = lookup_or_add(I->getOperand(0));
+  e.secondVN = lookup_or_add(I->getOperand(1));
+  e.thirdVN = lookup_or_add(I->getOperand(2));
   e.function = 0;
   e.type = I->getType();
   e.opcode = Expression::INSERT;
@@ -389,9 +380,9 @@ Expression ValueTable::create_expression(InsertElementInst* I) {
 Expression ValueTable::create_expression(SelectInst* I) {
   Expression e;
     
-  e.firstVN = hash_operand(I->getCondition());
-  e.secondVN = hash_operand(I->getTrueValue());
-  e.thirdVN = hash_operand(I->getFalseValue());
+  e.firstVN = lookup_or_add(I->getCondition());
+  e.secondVN = lookup_or_add(I->getTrueValue());
+  e.thirdVN = lookup_or_add(I->getFalseValue());
   e.function = 0;
   e.type = I->getType();
   e.opcode = Expression::SELECT;
@@ -402,7 +393,7 @@ Expression ValueTable::create_expression(SelectInst* I) {
 Expression ValueTable::create_expression(GetElementPtrInst* G) {
   Expression e;
     
-  e.firstVN = hash_operand(G->getPointerOperand());
+  e.firstVN = lookup_or_add(G->getPointerOperand());
   e.secondVN = 0;
   e.thirdVN = 0;
   e.function = 0;
@@ -411,7 +402,7 @@ Expression ValueTable::create_expression(GetElementPtrInst* G) {
   
   for (GetElementPtrInst::op_iterator I = G->idx_begin(), E = G->idx_end();
        I != E; ++I)
-    e.varargs.push_back(hash_operand(*I));
+    e.varargs.push_back(lookup_or_add(*I));
   
   return e;
 }
@@ -428,7 +419,7 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
     return VI->second;
   
   if (CallInst* C = dyn_cast<CallInst>(V)) {
-    if (AA->onlyReadsMemory(C)) { // includes doesNotAccessMemory
+    if (AA->doesNotAccessMemory(C)) {
       Expression e = create_expression(C);
     
       DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
