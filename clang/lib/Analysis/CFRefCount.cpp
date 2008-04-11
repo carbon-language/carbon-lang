@@ -136,7 +136,6 @@ class CFRefSummaryManager {
   
   CFRefSummary* getPersistentSummary(ArgEffects* AE, RetEffect RE);
   
-  CFRefSummary* getDoNothingSummary(unsigned Args);
   void FillDoNothing(unsigned Args);
 
   
@@ -366,16 +365,12 @@ void CFRefSummaryManager::FillDoNothing(unsigned Args) {
     ScratchArgs.push_back(DoNothing);
 }
 
-CFRefSummary* CFRefSummaryManager::getDoNothingSummary(unsigned Args) {
-  FillDoNothing(Args);
-  return getPersistentSummary(getArgEffects(), RetEffect::MakeNoRet());  
-}
 
 CFRefSummary*
 CFRefSummaryManager::getCFSummaryCreateRule(FunctionTypeProto* FT) {
  
   if (!isCFRefType(FT->getResultType()))
-    return getDoNothingSummary(FT->getNumArgs());
+    return NULL;
 
   assert (ScratchArgs.empty());
   
@@ -389,8 +384,16 @@ CFRefSummaryManager::getCFSummaryCreateRule(FunctionTypeProto* FT) {
 CFRefSummary*
 CFRefSummaryManager::getCFSummaryGetRule(FunctionTypeProto* FT) {
   
-  if (!isCFRefType(FT->getResultType()))
-    return getDoNothingSummary(FT->getNumArgs());
+  QualType RetTy = FT->getResultType();
+  
+  // FIXME: For now we assume that all pointer types returned are referenced
+  // counted.  Since this is the "Get" rule, we assume non-ownership, which
+  // works fine for things that are not reference counted.  We do this because
+  // some generic data structures return "void*".  We need something better
+  // in the future.
+  
+  if (!isCFRefType(RetTy) && !RetTy->isPointerType())
+    return NULL;
   
   assert (ScratchArgs.empty());
   
@@ -659,7 +662,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
   RefVal::Kind hasError = (RefVal::Kind) 0;
   
   if (!Summ) {
-    
+#if 0
     // This function has no summary.  Invalidate all reference-count state
     // for arguments passed to this function, and also nuke the values of
     // arguments passed-by-reference.
@@ -698,6 +701,10 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
     
     Builder.MakeNode(Dst, CE, Pred, St);
     return;
+#else
+    GRSimpleVals::EvalCall(Dst, Eng, Builder, CE, L, Pred);
+    return;
+#endif
   }
   
   // This function has a summary.  Evaluate the effect of the arguments.
