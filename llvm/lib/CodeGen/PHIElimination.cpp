@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -126,6 +127,13 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
   return true;
 }
 
+static bool isSourceDefinedByImplicitDef(MachineInstr *MPhi, unsigned SrcIdx,
+                                         MachineRegisterInfo  *MRI) {
+  unsigned SrcReg = MPhi->getOperand(SrcIdx*2+1).getReg();
+  MachineInstr *DefMI = MRI->getVRegDef(SrcReg);
+  return DefMI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF;
+}
+
 /// LowerAtomicPHINode - Lower the PHI node at the top of the specified block,
 /// under the assuption that it needs to be lowered in a way that supports
 /// atomic execution of PHIs.  This lowering method is always correct all of the
@@ -135,6 +143,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
   // Unlink the PHI node from the basic block, but don't delete the PHI yet.
   MachineInstr *MPhi = MBB.remove(MBB.begin());
 
+  unsigned NumSrcs = (MPhi->getNumOperands() - 1) / 2;
   unsigned DestReg = MPhi->getOperand(0).getReg();
 
   // Create a new register for the incoming PHI arguments.
@@ -147,7 +156,12 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
   // into the phi node destination.
   //
   const TargetInstrInfo *TII = MF.getTarget().getInstrInfo();
-  TII->copyRegToReg(MBB, AfterPHIsIt, DestReg, IncomingReg, RC, RC);
+  if (NumSrcs == 1 && isSourceDefinedByImplicitDef(MPhi, 0, MRI))
+    // If the only source of a PHI node is an implicit_def, just emit an
+    // implicit_def instead of a copy.
+    BuildMI(MBB, AfterPHIsIt, TII->get(TargetInstrInfo::IMPLICIT_DEF), DestReg);
+  else
+    TII->copyRegToReg(MBB, AfterPHIsIt, DestReg, IncomingReg, RC, RC);
 
   // Update live variable information if there is any...
   LiveVariables *LV = getAnalysisToUpdate<LiveVariables>();
@@ -189,13 +203,13 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
   // the IncomingReg register in the corresponding predecessor basic block.
   //
   SmallPtrSet<MachineBasicBlock*, 8> MBBsInsertedInto;
-  for (int i = MPhi->getNumOperands() - 1; i >= 2; i-=2) {
-    unsigned SrcReg = MPhi->getOperand(i-1).getReg();
+  for (int i = NumSrcs - 1; i >= 0; --i) {
+    unsigned SrcReg = MPhi->getOperand(i*2+1).getReg();
     assert(TargetRegisterInfo::isVirtualRegister(SrcReg) &&
            "Machine PHI Operands must all be virtual registers!");
 
     // If source is defined by an implicit def, there is no need to insert
-    // a copy.
+    // a copy unless it's the only source.
     MachineInstr *DefMI = MRI->getVRegDef(SrcReg);
     if (DefMI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
       ImpDefs.insert(DefMI);
@@ -204,7 +218,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
 
     // Get the MachineBasicBlock equivalent of the BasicBlock that is the
     // source path the PHI.
-    MachineBasicBlock &opBlock = *MPhi->getOperand(i).getMBB();
+    MachineBasicBlock &opBlock = *MPhi->getOperand(i*2+2).getMBB();
 
     // Check to make sure we haven't already emitted the copy for this block.
     // This can happen because PHI nodes may have multiple entries for the
