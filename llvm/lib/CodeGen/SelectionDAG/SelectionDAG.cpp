@@ -3507,7 +3507,7 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
     for (; Op != E; ++Op) {
       if (*Op == From) {
         From.Val->removeUser(Op-User->op_begin(), User);
-	*Op = To;
+        *Op = To;
         Op->setUser(User);
         To.Val->addUser(Op-User->op_begin(), User);
       }
