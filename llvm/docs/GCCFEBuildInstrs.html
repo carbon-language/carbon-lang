@@ -92,21 +92,23 @@ top-level <tt>README.LLVM</tt> file, adding ",ada" to EXTRALANGS, for example:
       systems without some work.</p></li>
   <li><p>The build requires having a compiler that supports Ada, C and C++.
       The Ada front-end is written in Ada so an Ada compiler is needed to
-      build it.  Appropriate Ada compilers are gcc-4.2 (or earlier) or the
-      <a href="http://libre.adacore.com/">2006 GNAT GPL Edition</a>
-      (or earlier).  As a general rule, the Ada compiler used for the
-      build must not be more recent than the Ada compiler it is building.
-      This is why the build fails with gcc-4.3 and the 2007 GNAT GPL Edition.
+      build it.  Compilers known to work with the
+      <a href="http://llvm.org/releases/download.html">LLVM 2.2 release</a>
+      are <a href="http://gcc.gnu.org/releases.html">gcc-4.2</a> and the
+      <a href="http://libre.adacore.com/">2005 GNAT GPL Edition</a>.
+      <a href="GettingStarted.html#checkout">LLVM from subversion</a>
+      also works with the
+      <a href="http://libre.adacore.com/">2006 and 2007 GNAT GPL Editions</a>.
       The LLVM parts of llvm-gcc are written in C++ so a C++ compiler is
       needed to build them.  The rest of gcc is written in C.
       Some linux distributions provide a version of gcc that supports all
       three languages (the Ada part often comes as an add-on package to
       the rest of gcc).  Otherwise it is possible to combine two versions
       of gcc, one that supports Ada and C (such as the
-      <a href="http://libre.adacore.com/">2006 GNAT GPL Edition</a>)
+      <a href="http://libre.adacore.com/">2005 GNAT GPL Edition</a>)
       and another which supports C++, see below.</p></li>
   <li><p>Because the Ada front-end is experimental, it is wise to build the
-      compiler with checking enabled.  This causes it to run slower, but
+      compiler with checking enabled.  This causes it to run much slower, but
       helps catch mistakes in the compiler (please report any problems using
       <a href="http://llvm.org/bugs">LLVM bugzilla</a>).</p></li>
 </ol>
