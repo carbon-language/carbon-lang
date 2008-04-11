@@ -243,7 +243,7 @@ private:
   
   virtual DeclTy *ActOnIvar(Scope *S, SourceLocation DeclStart,
                             Declarator &D, ExprTy *BitfieldWidth,
-                            tok::ObjCKeywordKind visibility = tok::objc_not_keyword);
+                            tok::ObjCKeywordKind visibility);
 
   // This is used for both record definitions and ObjC interface declarations.
   virtual void ActOnFields(Scope* S,

@@ -201,7 +201,7 @@ public:
   
   virtual DeclTy *ActOnIvar(Scope *S, SourceLocation DeclStart,
                             Declarator &D, ExprTy *BitfieldWidth,
-                            tok::ObjCKeywordKind visibility = tok::objc_not_keyword) {
+                            tok::ObjCKeywordKind visibility) {
     return 0;
   }
   

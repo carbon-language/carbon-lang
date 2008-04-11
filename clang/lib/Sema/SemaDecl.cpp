@@ -1426,9 +1426,8 @@ Sema::DeclTy *Sema::ActOnField(Scope *S,
     InvalidDecl = true;
   }
   // FIXME: Chain fielddecls together.
-  FieldDecl *NewFD;
+  FieldDecl *NewFD = FieldDecl::Create(Context, Loc, II, T, BitWidth);
   
-  NewFD = FieldDecl::Create(Context, Loc, II, T, BitWidth);
   HandleDeclAttributes(NewFD, D.getDeclSpec().getAttributes(),
                        D.getAttributes());
 
@@ -1450,12 +1449,12 @@ TranslateIvarVisibility(tok::ObjCKeywordKind ivarVisibility) {
   }
 }
 
-/// ActOnIvar - Each field of a struct/union/class is passed into this in order
-/// to create an IvarDecl object for it.
+/// ActOnIvar - Each ivar field of an objective-c class is passed into this 
+/// in order to create an IvarDecl object for it.
 Sema::DeclTy *Sema::ActOnIvar(Scope *S,
-                               SourceLocation DeclStart, 
-                               Declarator &D, ExprTy *BitfieldWidth,
-                              tok::ObjCKeywordKind visibility) {
+                              SourceLocation DeclStart, 
+                              Declarator &D, ExprTy *BitfieldWidth,
+                              tok::ObjCKeywordKind Visibility) {
   IdentifierInfo *II = D.getIdentifier();
   Expr *BitWidth = (Expr*)BitfieldWidth;
   SourceLocation Loc = DeclStart;
@@ -1491,9 +1490,7 @@ Sema::DeclTy *Sema::ActOnIvar(Scope *S,
     InvalidDecl = true;
   }
   
-  ObjCIvarDecl *NewID;
-  
-  NewID = ObjCIvarDecl::Create(Context, Loc, II, T);
+  ObjCIvarDecl *NewID = ObjCIvarDecl::Create(Context, Loc, II, T);
   
   HandleDeclAttributes(NewID, D.getDeclSpec().getAttributes(),
                        D.getAttributes());
@@ -1501,8 +1498,8 @@ Sema::DeclTy *Sema::ActOnIvar(Scope *S,
   if (D.getInvalidType() || InvalidDecl)
     NewID->setInvalidDecl();
   // If we have visibility info, make sure the AST is set accordingly.
-  if (visibility != tok::objc_not_keyword)
-    NewID ->setAccessControl(TranslateIvarVisibility(visibility));
+  if (Visibility != tok::objc_not_keyword)
+    NewID->setAccessControl(TranslateIvarVisibility(Visibility));
   return NewID;
 }
 

@@ -399,7 +399,8 @@ Parser::DeclTy *Parser::ParseObjCPropertyDecl(DeclTy *interfaceDecl,
     // Install the declarator into interfaceDecl.
     DeclTy *Field = Actions.ActOnIvar(CurScope,
                                        DS.getSourceRange().getBegin(),
-                                      FD.D, FD.BitfieldSize);
+                                      FD.D, FD.BitfieldSize, 
+                                      tok::objc_not_keyword);
     PropertyDecls.push_back(Field);
   }
   
