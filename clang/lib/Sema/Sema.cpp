@@ -48,14 +48,14 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   
   // Add the built-in ObjC types.
   t = cast<TypedefType>(Context.getObjCIdType().getTypePtr());
-  t->getDecl()->getIdentifier()->setFETokenInfo(t->getDecl());
+  IdResolver.AddDecl(t->getDecl(), S);
   TUScope->AddDecl(t->getDecl());
   t = cast<TypedefType>(Context.getObjCClassType().getTypePtr());
-  t->getDecl()->getIdentifier()->setFETokenInfo(t->getDecl());
+  IdResolver.AddDecl(t->getDecl(), S);
   TUScope->AddDecl(t->getDecl());
   ObjCInterfaceType *it = cast<ObjCInterfaceType>(Context.getObjCProtoType());
   ObjCInterfaceDecl *IDecl = it->getDecl();
-  IDecl->getIdentifier()->setFETokenInfo(IDecl);
+  IdResolver.AddDecl(IDecl, S);
   TUScope->AddDecl(IDecl);
   
   // Synthesize "typedef struct objc_selector *SEL;"
@@ -63,7 +63,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
                                           SourceLocation(), 
                                           &Context.Idents.get("objc_selector"),
                                           0);
-  SelTag->getIdentifier()->setFETokenInfo(SelTag);
+  IdResolver.AddDecl(SelTag, S);
   TUScope->AddDecl(SelTag);
   
   QualType SelT = Context.getPointerType(Context.getTagDeclType(SelTag));
@@ -71,7 +71,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
                                                 SourceLocation(),
                                                 &Context.Idents.get("SEL"),
                                                 SelT, 0);
-  SelTypedef->getIdentifier()->setFETokenInfo(SelTypedef);
+  IdResolver.AddDecl(SelTypedef, S);
   TUScope->AddDecl(SelTypedef);
   Context.setObjCSelType(SelTypedef);
 }

@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_AST_SEMA_H
 #define LLVM_CLANG_AST_SEMA_H
 
+#include "IdentifierResolver.h"
 #include "clang/Parse/Action.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/ADT/SmallVector.h"
@@ -112,6 +113,8 @@ class Sema : public Action {
   typedef llvm::DenseMap<const IdentifierInfo*, 
                          ObjCCompatibleAliasDecl*> ObjCAliasTy;
   ObjCAliasTy ObjCAliasDecls;
+
+  IdentifierResolver IdResolver;
 
   // Enum values used by KnownFunctionIDs (see below).
   enum {

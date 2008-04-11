@@ -63,8 +63,7 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
     ParmVarDecl *PDecl = MDecl->getParamDecl(i);
     IdentifierInfo *II = PDecl->getIdentifier();
     if (II) {
-      PDecl->setNext(II->getFETokenInfo<ScopedDecl>());
-      II->setFETokenInfo(PDecl);
+      IdResolver.AddDecl(PDecl, FnBodyScope);
       FnBodyScope->AddDecl(PDecl);
     }
   }
@@ -925,4 +924,6 @@ Sema::DeclTy *Sema::ActOnAddObjCProperties(SourceLocation AtLoc,
   
   return PDecl;
 }
+
+
 

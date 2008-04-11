@@ -65,23 +65,9 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
     IdentifierInfo *II = D->getIdentifier();
     if (!II) continue;
     
-    // Unlink this decl from the identifier.  Because the scope contains decls
-    // in an unordered collection, and because we have multiple identifier
-    // namespaces (e.g. tag, normal, label),the decl may not be the first entry.
-    if (II->getFETokenInfo<Decl>() == D) {
-      // Normal case, no multiple decls in different namespaces.
-      II->setFETokenInfo(D->getNext());
-    } else {
-      // Scan ahead.  There are only three namespaces in C, so this loop can
-      // never execute more than 3 times.
-      ScopedDecl *SomeDecl = II->getFETokenInfo<ScopedDecl>();
-      while (SomeDecl->getNext() != D) {
-        SomeDecl = SomeDecl->getNext();
-        assert(SomeDecl && "Didn't find this decl on its identifier's chain!");
-      }
-      SomeDecl->setNext(D->getNext());
-    }
-    
+    // Unlink this decl from the identifier.
+    IdResolver.RemoveDecl(D);
+
     // This will have to be revisited for C++: there we want to nest stuff in
     // namespace decls etc.  Even for C, we might want a top-level translation
     // unit decl or something.
@@ -111,14 +97,13 @@ Decl *Sema::LookupDecl(const IdentifierInfo *II, unsigned NSI,
                        Scope *S, bool enableLazyBuiltinCreation) {
   if (II == 0) return 0;
   Decl::IdentifierNamespace NS = (Decl::IdentifierNamespace)NSI;
-  
+
   // Scan up the scope chain looking for a decl that matches this identifier
   // that is in the appropriate namespace.  This search should not take long, as
   // shadowing of names is uncommon, and deep shadowing is extremely uncommon.
-  for (ScopedDecl *D = II->getFETokenInfo<ScopedDecl>(); D; D = D->getNext())
-    if (D->getIdentifierNamespace() == NS)
-      return D;
-  
+  NamedDecl *ND = IdResolver.Lookup(II, NS);
+  if (ND) return ND;
+
   // If we didn't find a use of this identifier, and if the identifier
   // corresponds to a compiler builtin, create the decl object for the builtin
   // now, injecting it into translation unit scope, and return it.
@@ -171,23 +156,12 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
                                            SourceLocation(), II, R,
                                            FunctionDecl::Extern, false, 0);
   
-  // Find translation-unit scope to insert this function into.
-  if (Scope *FnS = S->getFnParent())
-    S = FnS->getParent();   // Skip all scopes in a function at once.
-  while (S->getParent())
-    S = S->getParent();
-  S->AddDecl(New);
+  // TUScope is the translation-unit scope to insert this function into.
+  TUScope->AddDecl(New);
   
   // Add this decl to the end of the identifier info.
-  if (ScopedDecl *LastDecl = II->getFETokenInfo<ScopedDecl>()) {
-    // Scan until we find the last (outermost) decl in the id chain. 
-    while (LastDecl->getNext())
-      LastDecl = LastDecl->getNext();
-    // Insert before (outside) it.
-    LastDecl->setNext(New);
-  } else {
-    II->setFETokenInfo(New);
-  }    
+  IdResolver.AddGlobalDecl(New);
+
   return New;
 }
 
@@ -456,8 +430,7 @@ Sema::CreateImplicitParameter(Scope *S, IdentifierInfo *Id,
   ParmVarDecl *New = ParmVarDecl::Create(Context, CurContext, IdLoc, Id, Type, 
                                          VarDecl::None, 0, 0);
   if (Id) {
-    New->setNext(Id->getFETokenInfo<ScopedDecl>());
-    Id->setFETokenInfo(New);
+    IdResolver.AddDecl(New, S);
     S->AddDecl(New);
   }
 
@@ -924,8 +897,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   
   // If this has an identifier, add it to the scope stack.
   if (II) {
-    New->setNext(II->getFETokenInfo<ScopedDecl>());
-    II->setFETokenInfo(New);
+    IdResolver.AddDecl(New, S);
     S->AddDecl(New);
   }
   // If any semantic error occurred, mark the decl as invalid.
@@ -1146,8 +1118,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
     New->setInvalidDecl();
     
   if (II) {
-    New->setNext(II->getFETokenInfo<ScopedDecl>());
-    II->setFETokenInfo(New);
+    IdResolver.AddDecl(New, S);
     S->AddDecl(New);
   }
 
@@ -1213,9 +1184,8 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   for (unsigned p = 0, NumParams = FD->getNumParams(); p < NumParams; ++p) {
     ParmVarDecl *Param = FD->getParamDecl(p);
     // If this has an identifier, add it to the scope stack.
-    if (IdentifierInfo *II = Param->getIdentifier()) {
-      Param->setNext(II->getFETokenInfo<ScopedDecl>());
-      II->setFETokenInfo(Param);
+    if (Param->getIdentifier()) {
+      IdResolver.AddDecl(Param, FnBodyScope);
       FnBodyScope->AddDecl(Param);
     }
   }
@@ -1408,8 +1378,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
       S = S->getParent();
     
     // Add it to the decl chain.
-    New->setNext(Name->getFETokenInfo<ScopedDecl>());
-    Name->setFETokenInfo(New);
+    IdResolver.AddDecl(New, S);
     S->AddDecl(New);
   }
   
@@ -1752,8 +1721,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
                              LastEnumConst);
   
   // Register this decl in the current scope stack.
-  New->setNext(Id->getFETokenInfo<ScopedDecl>());
-  Id->setFETokenInfo(New);
+  IdResolver.AddDecl(New, S);
   S->AddDecl(New);
   return New;
 }
