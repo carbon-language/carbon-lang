@@ -519,7 +519,6 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     DOUT <<  tri_->getName(physReg) << '\n';
     // Note the register is not really in use.
     vrm_->assignVirt2Phys(cur->reg, physReg);
-    handled_.push_back(cur);
     return;
   }
 
@@ -539,7 +538,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     if (vni->def && vni->def != ~1U && vni->def != ~0U) {
       MachineInstr *CopyMI = li_->getInstructionFromIndex(vni->def);
       unsigned SrcReg, DstReg;
-      if (tii_->isMoveInstr(*CopyMI, SrcReg, DstReg)) {
+      if (CopyMI && tii_->isMoveInstr(*CopyMI, SrcReg, DstReg)) {
         unsigned Reg = 0;
         if (TargetRegisterInfo::isPhysicalRegister(SrcReg))
           Reg = SrcReg;
