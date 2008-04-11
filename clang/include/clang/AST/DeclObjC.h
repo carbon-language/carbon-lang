@@ -235,12 +235,15 @@ class ObjCInterfaceDecl : public NamedDecl, public DeclContext {
   bool ForwardDecl:1; // declared with @class.
   bool InternalInterface:1; // true - no @interface for @implementation
   
+  SourceLocation ClassLoc; // location of the class identifier.
+  SourceLocation SuperClassLoc; // location of the super class identifier.
   SourceLocation EndLoc; // marks the '>', '}', or identifier.
   SourceLocation AtEndLoc; // marks the end of the entire interface.
 
   ObjCInterfaceDecl(SourceLocation atLoc,
                     unsigned numRefProtos,
-                    IdentifierInfo *Id, bool FD, bool isInternal)
+                    IdentifierInfo *Id, SourceLocation CLoc,
+                    bool FD, bool isInternal)
     : NamedDecl(ObjCInterface, atLoc, Id), DeclContext(ObjCInterface),
       TypeForDecl(0), SuperClass(0),
       ReferencedProtocols(0), NumReferencedProtocols(0), Ivars(0), 
@@ -248,14 +251,17 @@ class ObjCInterfaceDecl : public NamedDecl, public DeclContext {
       InstanceMethods(0), NumInstanceMethods(0), 
       ClassMethods(0), NumClassMethods(0),
       CategoryList(0), PropertyDecl(0), NumPropertyDecl(0),
-      ForwardDecl(FD), InternalInterface(isInternal) {
+      ForwardDecl(FD), InternalInterface(isInternal),
+      ClassLoc(CLoc) {
         AllocIntfRefProtocols(numRefProtos);
       }
 public:
 
   static ObjCInterfaceDecl *Create(ASTContext &C,
                                    SourceLocation atLoc,
-                                   unsigned numRefProtos, IdentifierInfo *Id,
+                                   unsigned numRefProtos, 
+                                   IdentifierInfo *Id, 
+                                   SourceLocation ClassLoc = SourceLocation(),
                                    bool ForwardDecl = false,
                                    bool isInternal = false);
   
@@ -362,6 +368,10 @@ public:
   SourceLocation getLocStart() const { return getLocation(); } // '@'interface
   SourceLocation getLocEnd() const { return EndLoc; }
   void setLocEnd(SourceLocation LE) { EndLoc = LE; };
+  
+  SourceLocation getClassLoc() const { return ClassLoc; }
+  void setSuperClassLoc(SourceLocation Loc) { SuperClassLoc = Loc; }
+  SourceLocation getSuperClassLoc() const { return SuperClassLoc; }
   
   // We also need to record the @end location.
   SourceLocation getAtEndLoc() const { return AtEndLoc; }

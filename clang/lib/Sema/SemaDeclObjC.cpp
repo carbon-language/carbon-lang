@@ -98,7 +98,7 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
   }
   else {
     IDecl = ObjCInterfaceDecl::Create(Context, AtInterfaceLoc, NumProtocols,
-                                      ClassName);
+                                      ClassName, ClassLoc);
   
     ObjCInterfaceDecls[ClassName] = IDecl;
     // Remember that this needs to be removed when the scope is popped.
@@ -126,6 +126,7 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
       }
     }
     IDecl->setSuperClass(SuperClassEntry);
+    IDecl->setSuperClassLoc(SuperLoc);
     IDecl->setLocEnd(SuperLoc);
   } else { // we have a root class.
     IDecl->setLocEnd(ClassLoc);
@@ -383,7 +384,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
     // Legacy case of @implementation with no corresponding @interface.
     // Build, chain & install the interface decl into the identifier.
     IDecl = ObjCInterfaceDecl::Create(Context, AtClassImplLoc, 0, ClassName, 
-                                      false, true);
+                                      ClassLoc, false, true);
     ObjCInterfaceDecls[ClassName] = IDecl;
     IDecl->setSuperClass(SDecl);
     IDecl->setLocEnd(ClassLoc);
@@ -591,7 +592,7 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl); 
     if (!IDecl) {  // Not already seen?  Make a forward decl.
       IDecl = ObjCInterfaceDecl::Create(Context, AtClassLoc, 0, IdentList[i],
-                                        true);
+                                        SourceLocation(), true);
       ObjCInterfaceDecls[IdentList[i]] = IDecl;
 
       // Remember that this needs to be removed when the scope is popped.

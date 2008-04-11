@@ -37,11 +37,12 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
 ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
                                              SourceLocation atLoc,
                                              unsigned numRefProtos,
-                                             IdentifierInfo *Id,
+                                             IdentifierInfo *Id, 
+                                             SourceLocation ClassLoc,
                                              bool ForwardDecl, bool isInternal){
   void *Mem = C.getAllocator().Allocate<ObjCInterfaceDecl>();
   return new (Mem) ObjCInterfaceDecl(atLoc, numRefProtos,
-                                     Id, ForwardDecl,
+                                     Id, ClassLoc, ForwardDecl,
                                      isInternal);
 }
 

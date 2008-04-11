@@ -112,7 +112,8 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
     // Synthesize "@class Protocol;
     ObjCInterfaceDecl *ProtocolDecl =
       ObjCInterfaceDecl::Create(Context, SourceLocation(), 0, 
-                                &Context.Idents.get("Protocol"), true);
+                                &Context.Idents.get("Protocol"), 
+                                SourceLocation(), true);
     Context.setObjCProtoType(Context.getObjCInterfaceType(ProtocolDecl));
     
     // Synthesize "typedef struct objc_object { Class isa; } *id;"
