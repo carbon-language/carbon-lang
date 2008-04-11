@@ -60,8 +60,14 @@ static void InitOutputBuffer(const std::string& Output) {
   if (!Output.size() || Output == "-")
     OutputFILE = stdout;
   else {
-    OutputFILE = fopen(Output.c_str(), "w+");
     OutputFilename = Output;
+    OutputFILE = fopen(Output.c_str(), "w+");
+    
+    if (OutputFILE == 0) {
+      fprintf(stderr, "Error opening output file '%s'.\n", Output.c_str());
+      exit(1);
+    }
+    
   }
 
   assert(OutputFILE && "failed to open output file");
@@ -73,11 +79,13 @@ static void InitOutputBuffer(const std::string& Output) {
   if (!Output.size() || Output == "-")
     OutputFD = STDOUT_FILENO;
   else {
-    OutputFD = open(Output.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0644);
     OutputFilename = Output;
+    OutputFD = open(Output.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0644);
+    if (OutputFD < 0) {
+      fprintf(stderr, "Error opening output file '%s'.\n", Output.c_str());
+      exit(1);
+    }
   }
-
-  assert(OutputFD >= 0 && "failed to open output file");
 #endif
 }
 
