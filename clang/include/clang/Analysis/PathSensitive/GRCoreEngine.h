@@ -28,6 +28,7 @@ class GRStmtNodeBuilderImpl;
 class GRBranchNodeBuilderImpl;
 class GRIndirectGotoNodeBuilderImpl;
 class GRSwitchNodeBuilderImpl;
+class GREndPathNodeBuilderImpl;
 class GRWorkList;
 
 //===----------------------------------------------------------------------===//
@@ -45,6 +46,7 @@ protected:
   friend class GRBranchNodeBuilderImpl;
   friend class GRIndirectGotoNodeBuilderImpl;
   friend class GRSwitchNodeBuilderImpl;
+  friend class GREndPathNodeBuilderImpl;
   
   typedef llvm::DenseMap<Stmt*,Stmt*> ParentMapTy;
     
@@ -86,7 +88,7 @@ protected:
   void HandleBranch(Expr* Cond, Stmt* Term, CFGBlock* B,
                     ExplodedNodeImpl* Pred);  
   
-  virtual void* ProcessEOP(CFGBlock* Blk, void* State) = 0;  
+  virtual void ProcessEndPath(GREndPathNodeBuilderImpl& Builder) = 0;  
   
   virtual bool ProcessBlockEntrance(CFGBlock* Blk, void* State,
                                     GRBlockCounter BC) = 0;
@@ -487,6 +489,65 @@ public:
     return static_cast<StateTy*>(NB.getState());
   }    
 };
+  
+
+class GREndPathNodeBuilderImpl {
+  GRCoreEngineImpl& Eng;
+  CFGBlock& B;
+  ExplodedNodeImpl* Pred;  
+  bool HasGeneratedNode;
+  
+public:
+  GREndPathNodeBuilderImpl(CFGBlock* b, ExplodedNodeImpl* N,
+                           GRCoreEngineImpl* e)
+    : Eng(*e), B(*b), Pred(N), HasGeneratedNode(false) {}      
+  
+  ~GREndPathNodeBuilderImpl();
+  
+  ExplodedNodeImpl* getPredecessor() const { return Pred; }
+    
+  GRBlockCounter getBlockCounter() const { return Eng.WList->getBlockCounter();}
+  
+  unsigned getCurrentBlockCount() const {
+    return getBlockCounter().getNumVisited(B.getBlockID());
+  }  
+  
+  ExplodedNodeImpl* generateNodeImpl(void* State);
+    
+  CFGBlock* getBlock() const { return &B; }
+};
+
+
+template<typename STATE>
+class GREndPathNodeBuilder  {
+  typedef STATE                   StateTy;
+  typedef ExplodedNode<StateTy>   NodeTy;
+  
+  GREndPathNodeBuilderImpl& NB;
+  
+public:
+  GREndPathNodeBuilder(GREndPathNodeBuilderImpl& nb) : NB(nb) {}
+  
+  NodeTy* getPredecessor() const {
+    return static_cast<NodeTy*>(NB.getPredecessor());
+  }
+  
+  GRBlockCounter getBlockCounter() const {
+    return NB.getBlockCounter();
+  }  
+  
+  unsigned getCurrentBlockCount() const {
+    return NB.getCurrentBlockCount();
+  }
+  
+  StateTy* getState() const {
+    return getPredecessor()->getState();
+  }
+  
+  NodeTy* MakeNode(StateTy* St) {  
+    return static_cast<NodeTy*>(NB.generateNodeImpl(St));
+  }
+};
 
   
 template<typename SUBENGINE>
@@ -504,9 +565,9 @@ protected:
     return SubEngine.getInitialState();
   }
   
-  virtual void* ProcessEOP(CFGBlock* Blk, void* State) {
-    // FIXME: Perform dispatch to adjust state.
-    return State;
+  virtual void ProcessEndPath(GREndPathNodeBuilderImpl& BuilderImpl) {
+    GREndPathNodeBuilder<StateTy> Builder(BuilderImpl);
+    SubEngine.ProcessEndPath(Builder);
   }
   
   virtual void ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& BuilderImpl) {

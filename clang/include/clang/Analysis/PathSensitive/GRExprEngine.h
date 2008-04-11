@@ -39,6 +39,7 @@ public:
   typedef GRBranchNodeBuilder<StateTy>        BranchNodeBuilder;
   typedef GRIndirectGotoNodeBuilder<StateTy>  IndirectGotoNodeBuilder;
   typedef GRSwitchNodeBuilder<StateTy>        SwitchNodeBuilder;
+  typedef GREndPathNodeBuilder<StateTy>       EndPathNodeBuilder;
   typedef ExplodedNodeSet<StateTy>            NodeSet;
   
     
@@ -364,6 +365,9 @@ public:
   ///  nodes by processing the 'effects' of a switch statement.
   void ProcessSwitch(SwitchNodeBuilder& builder);
   
+  /// ProcessEndPath - Called by GRCoreEngine.  Used to generate end-of-path
+  ///  nodes when the control reaches the end of a function.
+  void ProcessEndPath(EndPathNodeBuilder& builder) {}
   
   ValueStateManager& getStateManager() { return StateMgr; }
   const ValueStateManager& getStateManger() const { return StateMgr; }

@@ -30,12 +30,14 @@ namespace clang {
 
 class GRCoreEngineImpl;
 class ExplodedNodeImpl;
+class CFG;
+class ASTContext;
+
 class GRStmtNodeBuilderImpl;
 class GRBranchNodeBuilderImpl;
 class GRIndirectGotoNodeBuilderImpl;
 class GRSwitchNodeBuilderImpl;
-class CFG;
-class ASTContext;
+class GREndPathNodebuilderImpl;  
 
 class ExplodedNodeImpl : public llvm::FoldingSetNode {
 protected:
@@ -45,6 +47,7 @@ protected:
   friend class GRBranchNodeBuilderImpl;
   friend class GRIndirectGotoNodeBuilderImpl;
   friend class GRSwitchNodeBuilderImpl;
+  friend class GREndPathNodeBuilderImpl;  
   
   class NodeGroup {
     enum { Size1 = 0x0, SizeOther = 0x1, AuxFlag = 0x2, Mask = 0x3 };
@@ -199,6 +202,7 @@ protected:
   friend class GRBranchNodeBuilderImpl;
   friend class GRIndirectGotoNodeBuilderImpl;
   friend class GRSwitchNodeBuilderImpl;
+  friend class GREndPathNodeBuilderImpl;
   
   // Type definitions.
   typedef llvm::SmallVector<ExplodedNodeImpl*,2>    RootsTy;

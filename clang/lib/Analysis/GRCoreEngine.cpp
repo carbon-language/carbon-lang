@@ -124,16 +124,10 @@ void GRCoreEngineImpl::HandleBlockEdge(const BlockEdge& L,
     assert (getCFG().getExit().size() == 0 
             && "EXIT block cannot contain Stmts.");
 
-    // Process the final state transition.    
-    void* State = ProcessEOP(Blk, Pred->State);
+    // Process the final state transition.
+    GREndPathNodeBuilderImpl Builder(Blk, Pred, this);
+    ProcessEndPath(Builder);
 
-    bool IsNew;
-    ExplodedNodeImpl* Node = G->getNodeImpl(BlockEntrance(Blk), State, &IsNew);
-    Node->addPredecessor(Pred);
-    
-    // If the node was freshly created, mark it as an "End-Of-Path" node.
-    if (IsNew) G->addEndOfPath(Node); 
-    
     // This path is done. Don't enqueue any more nodes.
     return;
   }
@@ -441,4 +435,28 @@ GRSwitchNodeBuilderImpl::generateDefaultCaseNodeImpl(void* St, bool isSink) {
   }
   
   return NULL;
+}
+
+GREndPathNodeBuilderImpl::~GREndPathNodeBuilderImpl() {
+  // Auto-generate an EOP node if one has not been generated.
+  if (!HasGeneratedNode) generateNodeImpl(Pred->State);
+}
+
+ExplodedNodeImpl* GREndPathNodeBuilderImpl::generateNodeImpl(void* State) {
+  HasGeneratedNode = true;
+    
+  bool IsNew;
+  
+  ExplodedNodeImpl* Node =
+    Eng.G->getNodeImpl(BlockEntrance(&B), Pred->State, &IsNew);
+  
+
+  Node->addPredecessor(Pred);
+  
+  if (IsNew) {
+    Node->markAsSink();
+    Eng.G->addEndOfPath(Node);
+  }
+  
+  return Node;
 }
