@@ -121,6 +121,11 @@ namespace llvm {
       retain();
     }
 
+    IntrusiveRefCntPtr& operator=(const IntrusiveRefCntPtr& S) {
+      replace(S.getPtr());
+      return *this;
+    }
+
     template <class X>
     IntrusiveRefCntPtr& operator=(const IntrusiveRefCntPtr<X>& S) {
       replace(S.getPtr());
@@ -140,7 +145,7 @@ namespace llvm {
 
     T* getPtr() const { return Obj; }
 
-    typedef T * IntrusiveRefCntPtr::*unspecified_bool_type;
+    typedef T* (IntrusiveRefCntPtr::*unspecified_bool_type) () const;
     operator unspecified_bool_type() const {
       return Obj == 0 ? 0 : &IntrusiveRefCntPtr::getPtr;
     }
@@ -156,7 +161,7 @@ namespace llvm {
     void release() { if (Obj) Obj->Release(); }
 
     void replace(T* S) {
-      this_type(S).swap(this);
+      this_type(S).swap(*this);
     }
   };
 
