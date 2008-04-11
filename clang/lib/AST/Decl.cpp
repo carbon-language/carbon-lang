@@ -329,6 +329,10 @@ const Attr *Decl::getAttrs() const {
   return (*DeclAttrs)[this];
 }
 
+void Decl::Destroy(ASTContext& C) const {
+  C.getAllocator().Deallocate((void *)this);
+}
+
 //===----------------------------------------------------------------------===//
 // DeclContext Implementation
 //===----------------------------------------------------------------------===//

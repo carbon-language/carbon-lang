@@ -179,6 +179,9 @@ public:
   /// Create - Deserialize a Decl from Bitcode.
   static Decl* Create(llvm::Deserializer& D, ASTContext& C);
 
+  /// Destroy - Call destructors and release memory.
+  void Destroy(ASTContext& C) const;
+
 protected:
   /// EmitImpl - Provides the subclass-specific serialization logic for
   ///   serializing out a decl.

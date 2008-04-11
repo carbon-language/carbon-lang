@@ -32,7 +32,7 @@ enum { BasicMetadataBlock = 1,
 
 TranslationUnit::~TranslationUnit() {
   for (iterator I=begin(), E=end(); I!=E; ++I) 
-    delete *I;
+    (*I)->Destroy(*Context);
 }
 
 bool clang::EmitASTBitcodeFile(const TranslationUnit& TU, 
