@@ -632,6 +632,14 @@ void CFRefCount::BindingsPrinter::PrintCheckerState(std::ostream& Out,
   }
 }
 
+static inline ArgEffect GetArgE(CFRefSummary* Summ, unsigned idx) {
+  return Summ ? Summ->getArg(idx) : DoNothing;
+}
+
+static inline RetEffect GetRetE(CFRefSummary* Summ) {
+  return Summ ? Summ->getRet() : RetEffect::MakeNoRet();
+}
+
 void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
                           GRExprEngine& Eng,
                           GRStmtNodeBuilder<ValueState>& Builder,
@@ -660,53 +668,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
   
   ValueState StVals = *St;
   RefVal::Kind hasError = (RefVal::Kind) 0;
-  
-  if (!Summ) {
-#if 0
-    // This function has no summary.  Invalidate all reference-count state
-    // for arguments passed to this function, and also nuke the values of
-    // arguments passed-by-reference.
-    
-    ValueState StVals = *St;
-    
-    for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
-         I != E; ++I) {
-      
-      RVal V = StateMgr.GetRVal(St, *I);
-      
-      if (isa<lval::SymbolVal>(V)) {
-        SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
-        RefBindings B = GetRefBindings(StVals);
-        SetRefBindings(StVals, Remove(B, Sym));
-      }
-            
-      if (isa<LVal>(V))
-        StateMgr.Unbind(StVals, cast<LVal>(V));
-    }
-    
-    St = StateMgr.getPersistentState(StVals);
-    
-    // Make up a symbol for the return value of this function.
-    
-    if (CE->getType() != Eng.getContext().VoidTy) {    
-      unsigned Count = Builder.getCurrentBlockCount();
-      SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(CE, Count);
-      
-      RVal X = CE->getType()->isPointerType() 
-      ? cast<RVal>(lval::SymbolVal(Sym)) 
-      : cast<RVal>(nonlval::SymbolVal(Sym));
-      
-      St = StateMgr.SetRVal(St, CE, X, Eng.getCFG().isBlkExpr(CE), false);
-    }      
-    
-    Builder.MakeNode(Dst, CE, Pred, St);
-    return;
-#else
-    GRSimpleVals::EvalCall(Dst, Eng, Builder, CE, L, Pred);
-    return;
-#endif
-  }
-  
+ 
   // This function has a summary.  Evaluate the effect of the arguments.
   
   unsigned idx = 0;
@@ -720,10 +682,10 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
     
     if (isa<lval::SymbolVal>(V)) {
       SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
-      RefBindings B = GetRefBindings(StVals);
-
+      RefBindings B = GetRefBindings(StVals);      
+      
       if (RefBindings::TreeTy* T = B.SlimFind(Sym)) {
-        B = Update(B, Sym, T->getValue().second, Summ->getArg(idx), hasError);
+        B = Update(B, Sym, T->getValue().second, GetArgE(Summ, idx), hasError);
         SetRefBindings(StVals, B);
         
         if (hasError) {
@@ -732,6 +694,8 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
         }
       }
     }
+    else if (isa<LVal>(V)) // Nuke all arguments passed by reference.
+      StateMgr.Unbind(StVals, cast<LVal>(V));
   }    
     
   if (hasError) {
@@ -758,7 +722,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
 
   // Finally, consult the summary for the return value.
   
-  RetEffect RE = Summ->getRet();
+  RetEffect RE = GetRetE(Summ);
   St = StateMgr.getPersistentState(StVals);
 
   
@@ -767,6 +731,20 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
       assert (false && "Unhandled RetEffect."); break;
     
     case RetEffect::NoRet:
+    
+      // Make up a symbol for the return value (not reference counted).
+      
+      if (CE->getType() != Eng.getContext().VoidTy) {    
+        unsigned Count = Builder.getCurrentBlockCount();
+        SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(CE, Count);
+        
+        RVal X = CE->getType()->isPointerType() 
+          ? cast<RVal>(lval::SymbolVal(Sym)) 
+          : cast<RVal>(nonlval::SymbolVal(Sym));
+        
+        St = StateMgr.SetRVal(St, CE, X, Eng.getCFG().isBlkExpr(CE), false);
+      }      
+      
       break;
       
     case RetEffect::Alias: {
