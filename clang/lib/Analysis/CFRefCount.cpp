@@ -63,7 +63,7 @@ public:
     assert(getKind() == Alias);
     return Data >> 2;
   }
-  
+    
   static RetEffect MakeAlias(unsigned Idx) { return RetEffect(Alias, Idx); }
   
   static RetEffect MakeOwned() { return RetEffect(OwnedSymbol, 0); }
@@ -485,6 +485,10 @@ public:
   
   static bool isError(Kind k) { return k >= ErrorUseAfterRelease; }
   
+  bool isOwned() const {
+    return getKind() == Owned;
+  }
+  
   static RefVal makeOwned(unsigned Count = 0) {
     return RefVal(Owned, Count);
   }
@@ -595,6 +599,11 @@ public:
                         GRStmtNodeBuilder<ValueState>& Builder,
                         CallExpr* CE, LVal L,
                         ExplodedNode<ValueState>* Pred);  
+  
+  // End-of-path.
+  
+  virtual void EvalEndPath(GRExprEngine& Engine,
+                           GREndPathNodeBuilder<ValueState>& Builder);
   
   // Error iterators.
 
@@ -793,6 +802,25 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
   }
       
   Builder.MakeNode(Dst, CE, Pred, St);
+}
+
+// End-of-path.
+
+void CFRefCount::EvalEndPath(GRExprEngine& Engine,
+                             GREndPathNodeBuilder<ValueState>& Builder) {
+  
+  RefBindings B = GetRefBindings(*Builder.getState());
+  
+  // Scan the set of bindings for symbols that are in the Owned state.
+  
+  for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I)
+    if ((*I).second.isOwned()) {
+      
+      // FIXME: Register an error with the diagnostic engine.  Since we
+      //  don't have a Stmt* here, we need some extra machinery to get
+      //  a sourcelocation.
+    
+    }
 }
 
 
