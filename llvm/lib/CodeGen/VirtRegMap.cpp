@@ -21,6 +21,7 @@
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -69,6 +70,8 @@ VirtRegMap::VirtRegMap(MachineFunction &mf)
     Virt2SplitKillMap(0), ReMatMap(NULL), ReMatId(MAX_STACK_SLOT+1),
     LowSpillSlot(NO_STACK_SLOT), HighSpillSlot(NO_STACK_SLOT) {
   SpillSlotToUsesMap.resize(8);
+  ImplicitDefed.resize(MF.getRegInfo().getLastVirtReg()+1-
+                       TargetRegisterInfo::FirstVirtualRegister);
   grow();
 }
 
@@ -80,6 +83,7 @@ void VirtRegMap::grow() {
   Virt2SplitMap.grow(LastVirtReg);
   Virt2SplitKillMap.grow(LastVirtReg);
   ReMatMap.grow(LastVirtReg);
+  ImplicitDefed.resize(LastVirtReg-TargetRegisterInfo::FirstVirtualRegister+1);
 }
 
 int VirtRegMap::assignVirt2StackSlot(unsigned virtReg) {
@@ -1155,6 +1159,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
       // We want to process implicit virtual register uses first.
       if (MO.isImplicit())
+        // If the virtual register is implicitly defined, emit a implicit_def
+        // before so scavenger knows it's "defined".
         VirtUseOps.insert(VirtUseOps.begin(), i);
       else
         VirtUseOps.push_back(i);
@@ -1177,6 +1183,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           ReusedOperands.markClobbered(Phys);
         unsigned RReg = SubIdx ? TRI->getSubReg(Phys, SubIdx) : Phys;
         MI.getOperand(i).setReg(RReg);
+        if (VRM.isImplicitlyDefined(VirtReg))
+          BuildMI(MBB, MI, TII->get(TargetInstrInfo::IMPLICIT_DEF), RReg);
         continue;
       }
       

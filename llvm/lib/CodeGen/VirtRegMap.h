@@ -18,6 +18,7 @@
 #define LLVM_CODEGEN_VIRTREGMAP_H
 
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -115,6 +116,10 @@ namespace llvm {
 
     /// SpillSlotToUsesMap - Records uses for each register spill slot.
     SmallVector<SmallPtrSet<MachineInstr*, 4>, 8> SpillSlotToUsesMap;
+
+    /// ImplicitDefed - One bit for each virtual register. If set it indicates
+    /// the register is implicitly defined.
+    BitVector ImplicitDefed;
 
     VirtRegMap(const VirtRegMap&);     // DO NOT IMPLEMENT
     void operator=(const VirtRegMap&); // DO NOT IMPLEMENT
@@ -380,6 +385,16 @@ namespace llvm {
     bool isSpillSlotUsed(int FrameIndex) const {
       assert(FrameIndex >= 0 && "Spill slot index should not be negative!");
       return !SpillSlotToUsesMap[FrameIndex-LowSpillSlot].empty();
+    }
+
+    /// @brief Mark the specified register as being implicitly defined.
+    void setIsImplicitlyDefined(unsigned VirtReg) {
+      ImplicitDefed.set(VirtReg-TargetRegisterInfo::FirstVirtualRegister);
+    }
+
+    /// @brief Returns true if the virtual register is implicitly defined.
+    bool isImplicitlyDefined(unsigned VirtReg) const {
+      return ImplicitDefed[VirtReg-TargetRegisterInfo::FirstVirtualRegister];
     }
 
     /// @brief Updates information about the specified virtual register's value

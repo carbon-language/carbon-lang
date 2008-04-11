@@ -1319,19 +1319,37 @@ void LiveIntervals::eraseRestoreInfo(int Id, int index, unsigned vr,
       Restores[i].index = -1;
 }
 
-/// removeSpilledImpDefs - Remove IMPLICIT_DEF instructions which are being
-/// spilled.
-void LiveIntervals::removeSpilledImpDefs(const LiveInterval &li,
-                                         VirtRegMap &vrm) {
+/// handleSpilledImpDefs - Remove IMPLICIT_DEF instructions which are being
+/// spilled and create empty intervals for their uses.
+void
+LiveIntervals::handleSpilledImpDefs(const LiveInterval &li, VirtRegMap &vrm,
+                                    const TargetRegisterClass* rc,
+                                    std::vector<LiveInterval*> &NewLIs) {
   for (MachineRegisterInfo::reg_iterator ri = mri_->reg_begin(li.reg),
          re = mri_->reg_end(); ri != re; ) {
+    MachineOperand &O = ri.getOperand();
     MachineInstr *MI = &*ri;
     ++ri;
-    if (MI->getOpcode() != TargetInstrInfo::IMPLICIT_DEF)
-      continue;
-    RemoveMachineInstrFromMaps(MI);
-    vrm.RemoveMachineInstrFromMaps(MI);
-    MI->eraseFromParent();
+    if (O.isDef()) {
+      assert(MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF &&
+             "Register def was not rewritten?");
+      RemoveMachineInstrFromMaps(MI);
+      vrm.RemoveMachineInstrFromMaps(MI);
+      MI->eraseFromParent();
+    } else {
+      // This must be an use of an implicit_def so it's not part of the live
+      // interval. Create a new empty live interval for it.
+      // FIXME: Can we simply erase some of the instructions? e.g. Stores?
+      unsigned NewVReg = mri_->createVirtualRegister(rc);
+      vrm.grow();
+      vrm.setIsImplicitlyDefined(NewVReg);
+      NewLIs.push_back(&getOrCreateInterval(NewVReg));
+      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+        MachineOperand &MO = MI->getOperand(i);
+        if (MO.isReg() && MO.getReg() == li.reg)
+          MO.setReg(NewVReg);
+      }
+    }
   }
 }
 
@@ -1415,7 +1433,7 @@ addIntervalsForSpills(const LiveInterval &li,
       IsFirstRange = false;
     }
 
-    removeSpilledImpDefs(li, vrm);
+    handleSpilledImpDefs(li, vrm, rc, NewLIs);
     return NewLIs;
   }
 
@@ -1485,7 +1503,7 @@ addIntervalsForSpills(const LiveInterval &li,
 
   // Insert spills / restores if we are splitting.
   if (!TrySplit) {
-    removeSpilledImpDefs(li, vrm);
+    handleSpilledImpDefs(li, vrm, rc, NewLIs);
     return NewLIs;
   }
 
@@ -1640,7 +1658,7 @@ addIntervalsForSpills(const LiveInterval &li,
     }
   }
 
-  removeSpilledImpDefs(li, vrm);
+  handleSpilledImpDefs(li, vrm, rc, RetNewLIs);
   return RetNewLIs;
 }
 
