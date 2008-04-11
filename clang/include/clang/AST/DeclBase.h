@@ -118,12 +118,10 @@ protected:
     HasAttrs(false) {
     if (Decl::CollectingStats()) addDeclKind(DK);
   }
-  
-public:
-  // TODO: This should probably be made protected once derived classes have
-  // destructors.
+
   virtual ~Decl();
-  
+
+public:
   SourceLocation getLocation() const { return Loc; }
   void setLocation(SourceLocation L) { Loc = L; }
 

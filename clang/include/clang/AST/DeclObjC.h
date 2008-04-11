@@ -103,7 +103,7 @@ private:
     SelName(SelInfo), MethodDeclType(T), 
     ParamInfo(0), NumMethodParams(0),
     MethodAttrs(M), EndLoc(endLoc), Body(0), SelfDecl(0) {}
-  virtual ~ObjCMethodDecl();
+  ~ObjCMethodDecl();
 public:
 
   static ObjCMethodDecl *Create(ASTContext &C,
@@ -175,6 +175,8 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ObjCMethod; }
   static bool classof(const ObjCMethodDecl *D) { return true; }
+
+  friend void Decl::Destroy(ASTContext& C) const;
 };
   
 /// ObjCInterfaceDecl - Represents an ObjC class declaration. For example:

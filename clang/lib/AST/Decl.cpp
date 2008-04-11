@@ -329,9 +329,42 @@ const Attr *Decl::getAttrs() const {
   return (*DeclAttrs)[this];
 }
 
+#define CASE(KIND) case KIND: cast<KIND##Decl>(this)->~KIND##Decl(); break
+
 void Decl::Destroy(ASTContext& C) const {
+  switch (getKind()) {
+  CASE(Field);
+  CASE(ObjCIvar);
+  CASE(ObjCCategory);
+  CASE(ObjCCategoryImpl);
+  CASE(ObjCImplementation);
+  CASE(ObjCProtocol);
+  CASE(ObjCProperty);
+  CASE(Typedef);
+  CASE(Enum);
+  CASE(EnumConstant);
+  CASE(Function);
+  CASE(BlockVar);
+  CASE(FileVar);
+  CASE(ParmVar);
+  CASE(ObjCInterface);
+  CASE(ObjCCompatibleAlias);
+  CASE(ObjCMethod);
+  CASE(ObjCClass);
+  CASE(ObjCForwardProtocol);
+  CASE(LinkageSpec);
+
+  case Struct: case Union: case Class:
+    cast<RecordDecl>(this)->~RecordDecl();
+    break;
+
+  default: assert(0 && "Unknown decl kind!");
+  }
+
   C.getAllocator().Deallocate((void *)this);
 }
+
+#undef CASE
 
 //===----------------------------------------------------------------------===//
 // DeclContext Implementation

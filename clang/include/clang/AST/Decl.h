@@ -372,6 +372,7 @@ protected:
   static FunctionDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
   
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
+  friend void Decl::Destroy(ASTContext& C) const;
 };
 
 
@@ -452,6 +453,7 @@ protected:
   static EnumConstantDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
   
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
+  friend void Decl::Destroy(ASTContext& C) const;
 };
 
 
@@ -504,6 +506,7 @@ protected:
   static TypedefDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
   
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
+  friend void Decl::Destroy(ASTContext& C) const;
 };
 
 
