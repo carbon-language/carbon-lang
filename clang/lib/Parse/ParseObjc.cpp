@@ -392,26 +392,15 @@ Parser::DeclTy *Parser::ParseObjCPropertyDecl(DeclTy *interfaceDecl,
   DeclSpec DS;
   llvm::SmallVector<FieldDeclarator, 8> FieldDeclarators;
   ParseStructDeclaration(DS, FieldDeclarators);
-  
-  // Convert them all to fields.
-  for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
-    FieldDeclarator &FD = FieldDeclarators[i];
-    // Install the declarator into interfaceDecl.
-    DeclTy *Field = Actions.ActOnIvar(CurScope,
-                                       DS.getSourceRange().getBegin(),
-                                      FD.D, FD.BitfieldSize, 
-                                      tok::objc_not_keyword);
-    PropertyDecls.push_back(Field);
-  }
-  
+    
   if (Tok.is(tok::semi)) 
     ConsumeToken();
   else {
     Diag(Tok, diag::err_expected_semi_decl_list);
     SkipUntil(tok::r_brace, true, true);
   }
-  return Actions.ActOnAddObjCProperties(AtLoc,  &PropertyDecls[0],
-                                        PropertyDecls.size(), OCDS);
+  return Actions.ActOnAddObjCProperties(CurScope, AtLoc, &FieldDeclarators[0],
+                                        FieldDeclarators.size(), OCDS);
 }
 
 ///   objc-method-proto:

@@ -27,6 +27,7 @@ class ObjCMethodDecl;
 class ObjCProtocolDecl;
 class ObjCCategoryDecl;
 class ObjCPropertyDecl;
+class FieldDeclarator;
 
 /// ObjCMethodDecl - Represents an instance or class method declaration.
 /// ObjC methods can be declared within 4 contexts: class interfaces,
@@ -833,7 +834,7 @@ public:
 /// from the class interface to the class implementation (but I digress:-)
 ///
 class ObjCImplementationDecl : public NamedDecl {
-  /// Class interface for this category implementation
+  /// Class interface for this implementation
   ObjCInterfaceDecl *ClassInterface;
   
   /// Implementation Class's super class.
@@ -954,33 +955,32 @@ public:
     OBJC_PR_setter    = 0x80
   };
 private:
+  QualType DeclType;
   // List of property name declarations
-  // FIXME: Property is not an ivar.
-  ObjCIvarDecl **PropertyDecls;
+  NamedDecl **PropertyDecls;
   unsigned NumPropertyDecls;
   unsigned PropertyAttributes : 8;
   
   IdentifierInfo *GetterName;    // getter name of NULL if no getter
   IdentifierInfo *SetterName;    // setter name of NULL if no setter
   
-  ObjCPropertyDecl(SourceLocation L)
-    : Decl(ObjCProperty, L), PropertyDecls(0), NumPropertyDecls(0),
+  ObjCPropertyDecl(SourceLocation L, QualType T)
+    : Decl(ObjCProperty, L), DeclType(T),
+      PropertyDecls(0), NumPropertyDecls(0),
       PropertyAttributes(OBJC_PR_noattr), GetterName(0), SetterName(0) {}
 public:
-  static ObjCPropertyDecl *Create(ASTContext &C, SourceLocation L);
-  
-  typedef ObjCIvarDecl * const *propdecl_iterator;
+  static ObjCPropertyDecl *Create(ASTContext &C, SourceLocation L, QualType T);
+  QualType getType() const { return DeclType; }
+  typedef NamedDecl * const *propdecl_iterator;
   propdecl_iterator propdecl_begin() const { return PropertyDecls; }
   propdecl_iterator propdecl_end() const {
     return PropertyDecls+NumPropertyDecls; 
   }
   unsigned propdecl_size() const { return NumPropertyDecls; }
   bool propdecl_empty() const { return NumPropertyDecls == 0; }
-
-  /// setPropertyDeclLists - Set the property decl list to the specified array
-  /// of decls.
-  void setPropertyDeclLists(ObjCIvarDecl **Properties, unsigned NumProp);
-  
+  NamedDecl **getPropertyDecls() { return PropertyDecls; }
+  void setNumPropertyDecls(unsigned num) { NumPropertyDecls = num; }
+  void setPropertyDecls(NamedDecl **Nd) { PropertyDecls = Nd; }
   PropertyAttributeKind getPropertyAttributes() const {
     return PropertyAttributeKind(PropertyAttributes);
   }

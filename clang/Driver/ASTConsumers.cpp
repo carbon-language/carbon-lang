@@ -320,7 +320,7 @@ void DeclPrinter::PrintObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
       ObjCPropertyDecl::propdecl_iterator
         I = PDecl->propdecl_begin(), E = PDecl->propdecl_end();
       
-      Out << ' ' << (*I)->getType().getAsString()
+      Out << ' ' << PDecl->getType().getAsString()
           << ' ' << (*I)->getName();
     
       for (++I; I != E; ++I)

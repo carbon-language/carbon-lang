@@ -643,11 +643,10 @@ public:
                       DeclTy **allMethods = 0, unsigned allNum = 0,
                       DeclTy **allProperties = 0, unsigned pNum = 0);
   
-  virtual DeclTy *ActOnAddObjCProperties(SourceLocation AtLoc, 
-                                         DeclTy **allProperties,
+  virtual DeclTy *ActOnAddObjCProperties(Scope *S, SourceLocation AtLoc, 
+                                         FieldDeclarator *allProperties,
                                          unsigned NumProperties,
-                                         ObjCDeclSpec &DS);
-  
+                                         ObjCDeclSpec &ODS);  
   virtual DeclTy *ActOnMethodDeclaration(
     SourceLocation BeginLoc, // location of the + or -.
     SourceLocation EndLoc,   // location of the ; or {.

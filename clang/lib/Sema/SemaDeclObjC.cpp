@@ -886,43 +886,52 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   return ObjCMethod;
 }
 
-Sema::DeclTy *Sema::ActOnAddObjCProperties(SourceLocation AtLoc, 
-                                           DeclTy **allProperties,
-                                           unsigned NumProperties, 
-                                           ObjCDeclSpec &DS) {
-  ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, AtLoc);
+Sema::DeclTy *Sema::ActOnAddObjCProperties(Scope *S, SourceLocation AtLoc, 
+                                           FieldDeclarator *propertyDeclarators,
+                                           unsigned NumPropertyDeclarators, 
+                                           ObjCDeclSpec &ODS) {
+  FieldDeclarator &FD = propertyDeclarators[0];
+  QualType T = GetTypeForDeclarator(FD.D, S);
+  ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, AtLoc, T);
   
-  if (DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_readonly)
+  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_readonly)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readonly);
   
-  if (DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_getter) {
+  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_getter) {
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_getter);
-    PDecl->setGetterName(DS.getGetterName());
+    PDecl->setGetterName(ODS.getGetterName());
   }
   
-  if (DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_setter) {
+  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_setter) {
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_setter);
-    PDecl->setSetterName(DS.getSetterName());
+    PDecl->setSetterName(ODS.getSetterName());
   }
   
-  if (DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_assign)
+  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_assign)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_assign);
   
-  if (DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_readwrite)
+  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_readwrite)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readwrite);
   
-  if (DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_retain)
+  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_retain)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_retain);
   
-  if (DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_copy)
+  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_copy)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
   
-  if (DS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_nonatomic)
+  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_nonatomic)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_nonatomic);
   
-  if (NumProperties != 0)
-    PDecl->setPropertyDeclLists((ObjCIvarDecl**)allProperties, NumProperties);
-  
+  if (NumPropertyDeclarators != 0) {
+    NamedDecl **propertyName = new NamedDecl*[NumPropertyDeclarators];
+    PDecl->setPropertyDecls(propertyName);
+    PDecl->setNumPropertyDecls(NumPropertyDeclarators);
+    for (unsigned i = 0; i < NumPropertyDeclarators; i++) {
+      Declarator &D = propertyDeclarators[i].D;
+      propertyName[i] = new NamedDecl(Decl::ObjCProperty, 
+                                      D.getIdentifierLoc(), D.getIdentifier());
+    }
+  }
   return PDecl;
 }
 

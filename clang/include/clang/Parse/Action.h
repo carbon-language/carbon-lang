@@ -24,6 +24,7 @@ namespace clang {
   class ObjCDeclSpec;
   class Declarator;
   class AttributeList;
+  class FieldDeclarator;
   // Parse.
   class Scope;
   class Action;
@@ -648,8 +649,9 @@ public:
     return;
   }
   // ActOnAddObjCProperties - called to build one property AST
-  virtual DeclTy *ActOnAddObjCProperties (SourceLocation AtLoc,
-    DeclTy **allProperties, unsigned NumProperties, ObjCDeclSpec &DS) {
+  virtual DeclTy *ActOnAddObjCProperties (Scope *S, SourceLocation AtLoc,
+    FieldDeclarator *PropertyDeclarators, unsigned NumPropertyDeclarators, 
+    ObjCDeclSpec &ODS) {
     return 0;
   }
                                      
