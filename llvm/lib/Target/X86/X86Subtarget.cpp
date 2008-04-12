@@ -26,6 +26,10 @@ AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::Unset),
     clEnumValN(X86Subtarget::Intel, "intel", "  Emit Intel-style assembly"),
     clEnumValEnd));
 
+cl::opt<unsigned>
+StackAlignment("stack-alignment", cl::init(0),
+               cl::desc("Override default stack alignment"));
+
 
 /// True if accessing the GV requires an extra load. For Windows, dllimported
 /// symbols are indirect, loading the value at address GV rather then the
@@ -316,4 +320,7 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
       TargetType == isWindows ||
       (TargetType == isELF && Is64Bit))
     stackAlignment = 16;
+
+  if (StackAlignment)
+    stackAlignment = StackAlignment;
 }
