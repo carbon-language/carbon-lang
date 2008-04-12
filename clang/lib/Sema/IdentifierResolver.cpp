@@ -190,7 +190,7 @@ NamedDecl *IdentifierResolver::Lookup(const IdentifierInfo *II, unsigned NSI) {
 /// The decl must already be part of the decl chain.
 void IdDeclInfo::RemoveShadowed(NamedDecl *D) {
   assert(D && "null decl passed");
-  assert(ShadowedDecls.size() > 0 &&
+  assert(!ShadowedDecls.empty() &&
          "Didn't find this decl on its identifier's chain!");
 
   // common case
@@ -223,7 +223,7 @@ IdDeclInfo &IdentifierResolver::IdDeclInfoMap::operator[](IdentifierInfo *II) {
 
   if (CurIndex == VECTOR_SIZE) {
     // Add a IdDeclInfo vector 'pool'
-    IDIVecs.resize(IDIVecs.size() + 1);
+    IDIVecs.push_back(std::vector<IdDeclInfo>());
     // Fill the vector
     IDIVecs.back().resize(VECTOR_SIZE);
     CurIndex = 0;
