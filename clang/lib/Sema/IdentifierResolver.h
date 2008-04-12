@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the IdentifierResolver class,which is used for lexical
+// This file defines the IdentifierResolver class, which is used for lexical
 // scoped lookup, based on identifier.
 //
 //===----------------------------------------------------------------------===//
@@ -21,20 +21,20 @@ namespace clang {
   class Scope;
 
 /// IdentifierResolver - Keeps track of shadowed decls on enclosing scopes.
-/// it manages the shadowing chains of identifiers and implements efficent decl
+/// It manages the shadowing chains of identifiers and implements efficent decl
 /// lookup based on an identifier.
 class IdentifierResolver {
 public:
   IdentifierResolver();
   ~IdentifierResolver();
 
-  /// AddDecl - Link the decl to its shadowed decl chain
+  /// AddDecl - Link the decl to its shadowed decl chain.
   void AddDecl(NamedDecl *D, Scope *S);
 
-  /// AddGlobalDecl - Link the decl at the top of the shadowed decl chain
+  /// AddGlobalDecl - Link the decl at the top of the shadowed decl chain.
   void AddGlobalDecl(NamedDecl *D);
 
-  /// RemoveDecl - Unlink the decl from its shadowed decl chain
+  /// RemoveDecl - Unlink the decl from its shadowed decl chain.
   /// The decl must already be part of the decl chain.
   void RemoveDecl(NamedDecl *D);
 
