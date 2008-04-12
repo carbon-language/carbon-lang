@@ -23,8 +23,6 @@
 #include <string>
 #include "clang/Rewrite/DeltaTree.h"
 
-//#define USE_VECTOR 1
-
 namespace clang {
   class SourceManager;
   class Rewriter;
@@ -38,13 +36,9 @@ namespace clang {
 /// locations after the insertion point have to be mapped.
 class RewriteBuffer {
   friend class Rewriter;
-#ifdef USE_VECTOR
   /// Deltas - Keep track of all the deltas in the source code due to insertions
-  /// and deletions.  These are kept in sorted order based on the FileLoc.
-  std::vector<SourceDelta> Deltas;
-#else
+  /// and deletions.
   DeltaTree Deltas;
-#endif
   
   /// Buffer - This is the actual buffer itself.  Note that using a vector or
   /// string is a horribly inefficient way to do this, we should use a rope
@@ -69,12 +63,16 @@ private:  // Methods only usable by Rewriter.
   /// RewriteBuffer.  If AfterInserts is true and if the OrigOffset indicates a
   /// position where text is inserted, the location returned will be after any
   /// inserted text at the position.
-  unsigned getMappedOffset(unsigned OrigOffset, bool AfterInserts = false)const;
-  
+  unsigned getMappedOffset(unsigned OrigOffset,
+                           bool AfterInserts = false) const{
+    return Deltas.getDeltaAt(OrigOffset+AfterInserts)+OrigOffset;
+  }
   
   /// AddDelta - When a change is made that shifts around the text buffer, this
   /// method is used to record that info.
-  void AddDelta(unsigned OrigOffset, int Change);
+  void AddDelta(unsigned OrigOffset, int Change) {
+    return Deltas.AddDelta(OrigOffset, Change);
+  }
   
   /// RemoveText - Remove the specified text.
   void RemoveText(unsigned OrigOffset, unsigned Size);
