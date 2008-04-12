@@ -171,6 +171,7 @@
 		DEF2F0100C6CFED5000C4259 /* SemaChecking.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF2F00F0C6CFED5000C4259 /* SemaChecking.cpp */; };
 		DEF7D9F70C9C8B1A0001F598 /* Rewriter.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEF7D9F60C9C8B1A0001F598 /* Rewriter.h */; };
 		DEF7D9F90C9C8B1D0001F598 /* Rewriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEF7D9F80C9C8B1D0001F598 /* Rewriter.cpp */; };
+		DEFFECA70DB1546600B4E7C3 /* DeltaTree.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEFFECA60DB1546600B4E7C3 /* DeltaTree.cpp */; };
 		F0226FD20C18084500141F42 /* TextDiagnosticPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F0226FD00C18084500141F42 /* TextDiagnosticPrinter.cpp */; };
 		F0226FD30C18084500141F42 /* TextDiagnosticPrinter.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = F0226FD10C18084500141F42 /* TextDiagnosticPrinter.h */; };
 /* End PBXBuildFile section */
@@ -458,6 +459,7 @@
 		DEF7D9F60C9C8B1A0001F598 /* Rewriter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Rewriter.h; path = clang/Rewrite/Rewriter.h; sourceTree = "<group>"; };
 		DEF7D9F80C9C8B1D0001F598 /* Rewriter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Rewriter.cpp; path = lib/Rewrite/Rewriter.cpp; sourceTree = "<group>"; };
 		DEFFECA30DB093D100B4E7C3 /* DeltaTree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DeltaTree.h; path = clang/Rewrite/DeltaTree.h; sourceTree = "<group>"; };
+		DEFFECA60DB1546600B4E7C3 /* DeltaTree.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeltaTree.cpp; path = lib/Rewrite/DeltaTree.cpp; sourceTree = "<group>"; };
 		F0226FD00C18084500141F42 /* TextDiagnosticPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnosticPrinter.cpp; path = Driver/TextDiagnosticPrinter.cpp; sourceTree = "<group>"; };
 		F0226FD10C18084500141F42 /* TextDiagnosticPrinter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = TextDiagnosticPrinter.h; path = Driver/TextDiagnosticPrinter.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -902,6 +904,7 @@
 		DEF7D9F50C9C8B0C0001F598 /* Rewrite */ = {
 			isa = PBXGroup;
 			children = (
+				DEFFECA60DB1546600B4E7C3 /* DeltaTree.cpp */,
 				72D16C1E0D9975C400E6DA4A /* HTMLRewrite.cpp */,
 				DEF7D9F80C9C8B1D0001F598 /* Rewriter.cpp */,
 			);
@@ -1061,6 +1064,7 @@
 				DECAB0950DA684C500E13CCB /* CGObjCEtoile.cpp in Sources */,
 				35EF67700DAD1D2C00B19414 /* SemaDeclCXX.cpp in Sources */,
 				352712510DAFE54700C76352 /* IdentifierResolver.cpp in Sources */,
+				DEFFECA70DB1546600B4E7C3 /* DeltaTree.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
