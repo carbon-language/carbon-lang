@@ -2621,7 +2621,7 @@ def XCHG8  : I<0x86, Pseudo, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
 // ConstantPool GlobalAddress, ExternalSymbol, and JumpTable
 def : Pat<(i32 (X86Wrapper tconstpool  :$dst)), (MOV32ri tconstpool  :$dst)>;
 def : Pat<(i32 (X86Wrapper tjumptable  :$dst)), (MOV32ri tjumptable  :$dst)>;
-def : Pat<(i32 (X86Wrapper tglobaltlsaddr:$dst)), (MOV32ri tglobaltlsaddr:$dst)>;
+def : Pat<(i32 (X86Wrapper tglobaltlsaddr:$dst)),(MOV32ri tglobaltlsaddr:$dst)>;
 def : Pat<(i32 (X86Wrapper tglobaladdr :$dst)), (MOV32ri tglobaladdr :$dst)>;
 def : Pat<(i32 (X86Wrapper texternalsym:$dst)), (MOV32ri texternalsym:$dst)>;
 
