@@ -17,6 +17,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/CallingConv.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -2385,28 +2386,357 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   return getNode(Opcode, VT, Ops, 5);
 }
 
-SDOperand SelectionDAG::getMemcpy(SDOperand Chain, SDOperand Dest,
-                                  SDOperand Src, SDOperand Size,
-                                  SDOperand Align,
-                                  SDOperand AlwaysInline) {
-  SDOperand Ops[] = { Chain, Dest, Src, Size, Align, AlwaysInline };
-  return getNode(ISD::MEMCPY, MVT::Other, Ops, 6);
+/// getMemsetValue - Vectorized representation of the memset value
+/// operand.
+static SDOperand getMemsetValue(SDOperand Value, MVT::ValueType VT,
+                                SelectionDAG &DAG) {
+  MVT::ValueType CurVT = VT;
+  if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Value)) {
+    uint64_t Val   = C->getValue() & 255;
+    unsigned Shift = 8;
+    while (CurVT != MVT::i8) {
+      Val = (Val << Shift) | Val;
+      Shift <<= 1;
+      CurVT = (MVT::ValueType)((unsigned)CurVT - 1);
+    }
+    return DAG.getConstant(Val, VT);
+  } else {
+    Value = DAG.getNode(ISD::ZERO_EXTEND, VT, Value);
+    unsigned Shift = 8;
+    while (CurVT != MVT::i8) {
+      Value =
+        DAG.getNode(ISD::OR, VT,
+                    DAG.getNode(ISD::SHL, VT, Value,
+                                DAG.getConstant(Shift, MVT::i8)), Value);
+      Shift <<= 1;
+      CurVT = (MVT::ValueType)((unsigned)CurVT - 1);
+    }
+
+    return Value;
+  }
 }
 
-SDOperand SelectionDAG::getMemmove(SDOperand Chain, SDOperand Dest,
-                                  SDOperand Src, SDOperand Size,
-                                  SDOperand Align,
-                                  SDOperand AlwaysInline) {
-  SDOperand Ops[] = { Chain, Dest, Src, Size, Align, AlwaysInline };
-  return getNode(ISD::MEMMOVE, MVT::Other, Ops, 6);
+/// getMemsetStringVal - Similar to getMemsetValue. Except this is only
+/// used when a memcpy is turned into a memset when the source is a constant
+/// string ptr.
+static SDOperand getMemsetStringVal(MVT::ValueType VT,
+                                    SelectionDAG &DAG,
+                                    const TargetLowering &TLI,
+                                    std::string &Str, unsigned Offset) {
+  uint64_t Val = 0;
+  unsigned MSB = MVT::getSizeInBits(VT) / 8;
+  if (TLI.isLittleEndian())
+    Offset = Offset + MSB - 1;
+  for (unsigned i = 0; i != MSB; ++i) {
+    Val = (Val << 8) | (unsigned char)Str[Offset];
+    Offset += TLI.isLittleEndian() ? -1 : 1;
+  }
+  return DAG.getConstant(Val, VT);
 }
 
-SDOperand SelectionDAG::getMemset(SDOperand Chain, SDOperand Dest,
+/// getMemBasePlusOffset - Returns base and offset node for the 
+static SDOperand getMemBasePlusOffset(SDOperand Base, unsigned Offset,
+                                      SelectionDAG &DAG) {
+  MVT::ValueType VT = Base.getValueType();
+  return DAG.getNode(ISD::ADD, VT, Base, DAG.getConstant(Offset, VT));
+}
+
+/// MeetsMaxMemopRequirement - Determines if the number of memory ops required
+/// to replace the memset / memcpy is below the threshold. It also returns the
+/// types of the sequence of memory ops to perform memset / memcpy.
+static bool MeetsMaxMemopRequirement(std::vector<MVT::ValueType> &MemOps,
+                                     unsigned Limit, uint64_t Size,
+                                     unsigned Align,
+                                     const TargetLowering &TLI) {
+  MVT::ValueType VT;
+
+  if (TLI.allowsUnalignedMemoryAccesses()) {
+    VT = MVT::i64;
+  } else {
+    switch (Align & 7) {
+    case 0:
+      VT = MVT::i64;
+      break;
+    case 4:
+      VT = MVT::i32;
+      break;
+    case 2:
+      VT = MVT::i16;
+      break;
+    default:
+      VT = MVT::i8;
+      break;
+    }
+  }
+
+  MVT::ValueType LVT = MVT::i64;
+  while (!TLI.isTypeLegal(LVT))
+    LVT = (MVT::ValueType)((unsigned)LVT - 1);
+  assert(MVT::isInteger(LVT));
+
+  if (VT > LVT)
+    VT = LVT;
+
+  unsigned NumMemOps = 0;
+  while (Size != 0) {
+    unsigned VTSize = MVT::getSizeInBits(VT) / 8;
+    while (VTSize > Size) {
+      VT = (MVT::ValueType)((unsigned)VT - 1);
+      VTSize >>= 1;
+    }
+    assert(MVT::isInteger(VT));
+
+    if (++NumMemOps > Limit)
+      return false;
+    MemOps.push_back(VT);
+    Size -= VTSize;
+  }
+
+  return true;
+}
+
+static SDOperand getMemcpyLoadsAndStores(SelectionDAG &DAG,
+                                         SDOperand Chain, SDOperand Dst,
+                                         SDOperand Src, uint64_t Size,
+                                         unsigned Align,
+                                         bool AlwaysInline,
+                                         Value *DstSV, uint64_t DstOff,
+                                         Value *SrcSV, uint64_t SrcOff) {
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+
+  // Expand memcpy to a series of store ops if the size operand falls below
+  // a certain threshold.
+  std::vector<MVT::ValueType> MemOps;
+  uint64_t Limit = -1;
+  if (!AlwaysInline)
+    Limit = TLI.getMaxStoresPerMemcpy();
+  if (!MeetsMaxMemopRequirement(MemOps, Limit, Size, Align, TLI))
+    return SDOperand();
+
+  SmallVector<SDOperand, 8> OutChains;
+
+  unsigned NumMemOps = MemOps.size();
+  unsigned SrcDelta = 0;
+  GlobalAddressSDNode *G = NULL;
+  std::string Str;
+  bool CopyFromStr = false;
+
+  if (Src.getOpcode() == ISD::GlobalAddress)
+    G = cast<GlobalAddressSDNode>(Src);
+  else if (Src.getOpcode() == ISD::ADD &&
+           Src.getOperand(0).getOpcode() == ISD::GlobalAddress &&
+           Src.getOperand(1).getOpcode() == ISD::Constant) {
+    G = cast<GlobalAddressSDNode>(Src.getOperand(0));
+    SrcDelta = cast<ConstantSDNode>(Src.getOperand(1))->getValue();
+  }
+  if (G) {
+    GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
+    if (GV && GV->isConstant()) {
+      Str = GV->getStringValue(false);
+      if (!Str.empty()) {
+        CopyFromStr = true;
+        SrcOff += SrcDelta;
+      }
+    }
+  }
+
+  for (unsigned i = 0; i < NumMemOps; i++) {
+    MVT::ValueType VT = MemOps[i];
+    unsigned VTSize = MVT::getSizeInBits(VT) / 8;
+    SDOperand Value, Store;
+
+    if (CopyFromStr) {
+      Value = getMemsetStringVal(VT, DAG, TLI, Str, SrcOff);
+      Store =
+        DAG.getStore(Chain, Value,
+                     getMemBasePlusOffset(Dst, DstOff, DAG),
+                     DstSV, DstOff);
+    } else {
+      Value = DAG.getLoad(VT, Chain,
+                          getMemBasePlusOffset(Src, SrcOff, DAG),
+                          SrcSV, SrcOff, false, Align);
+      Store =
+        DAG.getStore(Chain, Value,
+                     getMemBasePlusOffset(Dst, DstOff, DAG),
+                     DstSV, DstOff, false, Align);
+    }
+    OutChains.push_back(Store);
+    SrcOff += VTSize;
+    DstOff += VTSize;
+  }
+
+  return DAG.getNode(ISD::TokenFactor, MVT::Other,
+                     &OutChains[0], OutChains.size());
+}
+
+static SDOperand getMemsetStores(SelectionDAG &DAG,
+                                 SDOperand Chain, SDOperand Dst,
+                                 SDOperand Src, uint64_t Size,
+                                 unsigned Align,
+                                 Value *DstSV, uint64_t DstOff) {
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+
+  // Expand memset to a series of load/store ops if the size operand
+  // falls below a certain threshold.
+  std::vector<MVT::ValueType> MemOps;
+  if (!MeetsMaxMemopRequirement(MemOps, TLI.getMaxStoresPerMemset(),
+                                Size, Align, TLI))
+    return SDOperand();
+
+  SmallVector<SDOperand, 8> OutChains;
+
+  unsigned NumMemOps = MemOps.size();
+  for (unsigned i = 0; i < NumMemOps; i++) {
+    MVT::ValueType VT = MemOps[i];
+    unsigned VTSize = MVT::getSizeInBits(VT) / 8;
+    SDOperand Value = getMemsetValue(Src, VT, DAG);
+    SDOperand Store = DAG.getStore(Chain, Value,
+                                   getMemBasePlusOffset(Dst, DstOff, DAG),
+                                   DstSV, DstOff);
+    OutChains.push_back(Store);
+    DstOff += VTSize;
+  }
+
+  return DAG.getNode(ISD::TokenFactor, MVT::Other,
+                     &OutChains[0], OutChains.size());
+}
+
+SDOperand SelectionDAG::getMemcpy(SDOperand Chain, SDOperand Dst,
                                   SDOperand Src, SDOperand Size,
-                                  SDOperand Align,
-                                  SDOperand AlwaysInline) {
-  SDOperand Ops[] = { Chain, Dest, Src, Size, Align, AlwaysInline };
-  return getNode(ISD::MEMSET, MVT::Other, Ops, 6);
+                                  unsigned Align, bool AlwaysInline,
+                                  Value *DstSV, uint64_t DstOff,
+                                  Value *SrcSV, uint64_t SrcOff) {
+
+  // Check to see if we should lower the memcpy to loads and stores first.
+  // For cases within the target-specified limits, this is the best choice.
+  ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
+  if (ConstantSize) {
+    // Memcpy with size zero? Just return the original chain.
+    if (ConstantSize->isNullValue())
+      return Chain;
+
+    SDOperand Result =
+      getMemcpyLoadsAndStores(*this, Chain, Dst, Src, ConstantSize->getValue(),
+                              Align, false, DstSV, DstOff, SrcSV, SrcOff);
+    if (Result.Val)
+      return Result;
+  }
+
+  // Then check to see if we should lower the memcpy with target-specific
+  // code. If the target chooses to do this, this is the next best.
+  SDOperand Result =
+    TLI.EmitTargetCodeForMemcpy(*this, Chain, Dst, Src, Size, Align,
+                                AlwaysInline,
+                                DstSV, DstOff, SrcSV, SrcOff);
+  if (Result.Val)
+    return Result;
+
+  // If we really need inline code and the target declined to provide it,
+  // use a (potentially long) sequence of loads and stores.
+  if (AlwaysInline) {
+    assert(ConstantSize && "AlwaysInline requires a constant size!");
+    return getMemcpyLoadsAndStores(*this, Chain, Dst, Src,
+                                   ConstantSize->getValue(), Align, true,
+                                   DstSV, DstOff, SrcSV, SrcOff);
+  }
+
+  // Emit a library call.
+  TargetLowering::ArgListTy Args;
+  TargetLowering::ArgListEntry Entry;
+  Entry.Ty = TLI.getTargetData()->getIntPtrType();
+  Entry.Node = Dst; Args.push_back(Entry);
+  Entry.Node = Src; Args.push_back(Entry);
+  Entry.Node = Size; Args.push_back(Entry);
+  std::pair<SDOperand,SDOperand> CallResult =
+    TLI.LowerCallTo(Chain, Type::VoidTy,
+                    false, false, false, CallingConv::C, false,
+                    getExternalSymbol("memcpy", TLI.getPointerTy()),
+                    Args, *this);
+  return CallResult.second;
+}
+
+SDOperand SelectionDAG::getMemmove(SDOperand Chain, SDOperand Dst,
+                                   SDOperand Src, SDOperand Size,
+                                   unsigned Align,
+                                   Value *DstSV, uint64_t DstOff,
+                                   Value *SrcSV, uint64_t SrcOff) {
+
+  // TODO: Optimize small memmove cases with simple loads and stores,
+  // ensuring that all loads precede all stores. This can cause severe
+  // register pressure, so targets should be careful with the size limit.
+
+  // Then check to see if we should lower the memmove with target-specific
+  // code. If the target chooses to do this, this is the next best.
+  SDOperand Result =
+    TLI.EmitTargetCodeForMemmove(*this, Chain, Dst, Src, Size, Align,
+                                 DstSV, DstOff, SrcSV, SrcOff);
+  if (Result.Val)
+    return Result;
+
+  // Emit a library call.
+  TargetLowering::ArgListTy Args;
+  TargetLowering::ArgListEntry Entry;
+  Entry.Ty = TLI.getTargetData()->getIntPtrType();
+  Entry.Node = Dst; Args.push_back(Entry);
+  Entry.Node = Src; Args.push_back(Entry);
+  Entry.Node = Size; Args.push_back(Entry);
+  std::pair<SDOperand,SDOperand> CallResult =
+    TLI.LowerCallTo(Chain, Type::VoidTy,
+                    false, false, false, CallingConv::C, false,
+                    getExternalSymbol("memmove", TLI.getPointerTy()),
+                    Args, *this);
+  return CallResult.second;
+}
+
+SDOperand SelectionDAG::getMemset(SDOperand Chain, SDOperand Dst,
+                                  SDOperand Src, SDOperand Size,
+                                  unsigned Align,
+                                  Value *DstSV, uint64_t DstOff) {
+
+  // Check to see if we should lower the memset to stores first.
+  // For cases within the target-specified limits, this is the best choice.
+  ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
+  if (ConstantSize) {
+    // Memset with size zero? Just return the original chain.
+    if (ConstantSize->isNullValue())
+      return Chain;
+
+    SDOperand Result =
+      getMemsetStores(*this, Chain, Dst, Src, ConstantSize->getValue(), Align,
+                      DstSV, DstOff);
+    if (Result.Val)
+      return Result;
+  }
+
+  // Then check to see if we should lower the memset with target-specific
+  // code. If the target chooses to do this, this is the next best.
+  SDOperand Result =
+    TLI.EmitTargetCodeForMemset(*this, Chain, Dst, Src, Size, Align,
+                                DstSV, DstOff);
+  if (Result.Val)
+    return Result;
+
+  // Emit a library call.
+  const Type *IntPtrTy = TLI.getTargetData()->getIntPtrType();
+  TargetLowering::ArgListTy Args;
+  TargetLowering::ArgListEntry Entry;
+  Entry.Node = Dst; Entry.Ty = IntPtrTy;
+  Args.push_back(Entry);
+  // Extend or truncate the argument to be an i32 value for the call.
+  if (Src.getValueType() > MVT::i32)
+    Src = getNode(ISD::TRUNCATE, MVT::i32, Src);
+  else
+    Src = getNode(ISD::ZERO_EXTEND, MVT::i32, Src);
+  Entry.Node = Src; Entry.Ty = Type::Int32Ty; Entry.isSExt = true;
+  Args.push_back(Entry);
+  Entry.Node = Size; Entry.Ty = IntPtrTy; Entry.isSExt = false;
+  Args.push_back(Entry);
+  std::pair<SDOperand,SDOperand> CallResult =
+    TLI.LowerCallTo(Chain, Type::VoidTy,
+                    false, false, false, CallingConv::C, false,
+                    getExternalSymbol("memset", TLI.getPointerTy()),
+                    Args, *this);
+  return CallResult.second;
 }
 
 SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain, 
@@ -4008,11 +4338,6 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::STACKSAVE:          return "stacksave";
   case ISD::STACKRESTORE:       return "stackrestore";
   case ISD::TRAP:               return "trap";
-
-  // Block memory operations.
-  case ISD::MEMSET:  return "memset";
-  case ISD::MEMCPY:  return "memcpy";
-  case ISD::MEMMOVE: return "memmove";
 
   // Bit manipulation
   case ISD::BSWAP:   return "bswap";

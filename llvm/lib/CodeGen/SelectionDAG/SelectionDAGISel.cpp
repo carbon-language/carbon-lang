@@ -647,8 +647,6 @@ public:
   void visitVAEnd(CallInst &I);
   void visitVACopy(CallInst &I);
 
-  void visitMemIntrinsic(CallInst &I, unsigned Op);
-
   void visitGetResult(GetResultInst &I);
 
   void visitUserOp1(Instruction &I) {
@@ -2737,18 +2735,48 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return "_longjmp"+!TLI.usesUnderscoreLongJmp();
     break;
   case Intrinsic::memcpy_i32:
-  case Intrinsic::memcpy_i64:
-    visitMemIntrinsic(I, ISD::MEMCPY);
+  case Intrinsic::memcpy_i64: {
+    SDOperand Op1 = getValue(I.getOperand(1));
+    SDOperand Op2 = getValue(I.getOperand(2));
+    SDOperand Op3 = getValue(I.getOperand(3));
+    unsigned Align = cast<ConstantInt>(I.getOperand(4))->getZExtValue();
+    DAG.setRoot(DAG.getMemcpy(getRoot(), Op1, Op2, Op3, Align, false,
+                              I.getOperand(1), 0, I.getOperand(2), 0));
     return 0;
+  }
   case Intrinsic::memset_i32:
-  case Intrinsic::memset_i64:
-    visitMemIntrinsic(I, ISD::MEMSET);
+  case Intrinsic::memset_i64: {
+    SDOperand Op1 = getValue(I.getOperand(1));
+    SDOperand Op2 = getValue(I.getOperand(2));
+    SDOperand Op3 = getValue(I.getOperand(3));
+    unsigned Align = cast<ConstantInt>(I.getOperand(4))->getZExtValue();
+    DAG.setRoot(DAG.getMemset(getRoot(), Op1, Op2, Op3, Align,
+                              I.getOperand(1), 0));
     return 0;
+  }
   case Intrinsic::memmove_i32:
-  case Intrinsic::memmove_i64:
-    visitMemIntrinsic(I, ISD::MEMMOVE);
+  case Intrinsic::memmove_i64: {
+    SDOperand Op1 = getValue(I.getOperand(1));
+    SDOperand Op2 = getValue(I.getOperand(2));
+    SDOperand Op3 = getValue(I.getOperand(3));
+    unsigned Align = cast<ConstantInt>(I.getOperand(4))->getZExtValue();
+
+    // If the source and destination are known to not be aliases, we can
+    // lower memmove as memcpy.
+    uint64_t Size = -1ULL;
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op3))
+      Size = C->getValue();
+    if (AA.alias(I.getOperand(1), Size, I.getOperand(2), Size) ==
+        AliasAnalysis::NoAlias) {
+      DAG.setRoot(DAG.getMemcpy(getRoot(), Op1, Op2, Op3, Align, false,
+                                I.getOperand(1), 0, I.getOperand(2), 0));
+      return 0;
+    }
+
+    DAG.setRoot(DAG.getMemmove(getRoot(), Op1, Op2, Op3, Align,
+                               I.getOperand(1), 0, I.getOperand(2), 0));
     return 0;
-    
+  }
   case Intrinsic::dbg_stoppoint: {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
     DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
@@ -4340,242 +4368,6 @@ SDOperand TargetLowering::CustomPromoteOperation(SDOperand Op,
   assert(0 && "CustomPromoteOperation not implemented for this target!");
   abort();
   return SDOperand();
-}
-
-/// getMemsetValue - Vectorized representation of the memset value
-/// operand.
-static SDOperand getMemsetValue(SDOperand Value, MVT::ValueType VT,
-                                SelectionDAG &DAG) {
-  MVT::ValueType CurVT = VT;
-  if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Value)) {
-    uint64_t Val   = C->getValue() & 255;
-    unsigned Shift = 8;
-    while (CurVT != MVT::i8) {
-      Val = (Val << Shift) | Val;
-      Shift <<= 1;
-      CurVT = (MVT::ValueType)((unsigned)CurVT - 1);
-    }
-    return DAG.getConstant(Val, VT);
-  } else {
-    Value = DAG.getNode(ISD::ZERO_EXTEND, VT, Value);
-    unsigned Shift = 8;
-    while (CurVT != MVT::i8) {
-      Value =
-        DAG.getNode(ISD::OR, VT,
-                    DAG.getNode(ISD::SHL, VT, Value,
-                                DAG.getConstant(Shift, MVT::i8)), Value);
-      Shift <<= 1;
-      CurVT = (MVT::ValueType)((unsigned)CurVT - 1);
-    }
-
-    return Value;
-  }
-}
-
-/// getMemsetStringVal - Similar to getMemsetValue. Except this is only
-/// used when a memcpy is turned into a memset when the source is a constant
-/// string ptr.
-static SDOperand getMemsetStringVal(MVT::ValueType VT,
-                                    SelectionDAG &DAG, TargetLowering &TLI,
-                                    std::string &Str, unsigned Offset) {
-  uint64_t Val = 0;
-  unsigned MSB = MVT::getSizeInBits(VT) / 8;
-  if (TLI.isLittleEndian())
-    Offset = Offset + MSB - 1;
-  for (unsigned i = 0; i != MSB; ++i) {
-    Val = (Val << 8) | (unsigned char)Str[Offset];
-    Offset += TLI.isLittleEndian() ? -1 : 1;
-  }
-  return DAG.getConstant(Val, VT);
-}
-
-/// getMemBasePlusOffset - Returns base and offset node for the 
-static SDOperand getMemBasePlusOffset(SDOperand Base, unsigned Offset,
-                                      SelectionDAG &DAG, TargetLowering &TLI) {
-  MVT::ValueType VT = Base.getValueType();
-  return DAG.getNode(ISD::ADD, VT, Base, DAG.getConstant(Offset, VT));
-}
-
-/// MeetsMaxMemopRequirement - Determines if the number of memory ops required
-/// to replace the memset / memcpy is below the threshold. It also returns the
-/// types of the sequence of  memory ops to perform memset / memcpy.
-static bool MeetsMaxMemopRequirement(std::vector<MVT::ValueType> &MemOps,
-                                     unsigned Limit, uint64_t Size,
-                                     unsigned Align, TargetLowering &TLI) {
-  MVT::ValueType VT;
-
-  if (TLI.allowsUnalignedMemoryAccesses()) {
-    VT = MVT::i64;
-  } else {
-    switch (Align & 7) {
-    case 0:
-      VT = MVT::i64;
-      break;
-    case 4:
-      VT = MVT::i32;
-      break;
-    case 2:
-      VT = MVT::i16;
-      break;
-    default:
-      VT = MVT::i8;
-      break;
-    }
-  }
-
-  MVT::ValueType LVT = MVT::i64;
-  while (!TLI.isTypeLegal(LVT))
-    LVT = (MVT::ValueType)((unsigned)LVT - 1);
-  assert(MVT::isInteger(LVT));
-
-  if (VT > LVT)
-    VT = LVT;
-
-  unsigned NumMemOps = 0;
-  while (Size != 0) {
-    unsigned VTSize = MVT::getSizeInBits(VT) / 8;
-    while (VTSize > Size) {
-      VT = (MVT::ValueType)((unsigned)VT - 1);
-      VTSize >>= 1;
-    }
-    assert(MVT::isInteger(VT));
-
-    if (++NumMemOps > Limit)
-      return false;
-    MemOps.push_back(VT);
-    Size -= VTSize;
-  }
-
-  return true;
-}
-
-void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
-  SDOperand Op1 = getValue(I.getOperand(1));
-  SDOperand Op2 = getValue(I.getOperand(2));
-  SDOperand Op3 = getValue(I.getOperand(3));
-  SDOperand Op4 = getValue(I.getOperand(4));
-  unsigned Align = (unsigned)cast<ConstantSDNode>(Op4)->getValue();
-  if (Align == 0) Align = 1;
-
-  // If the source and destination are known to not be aliases, we can
-  // lower memmove as memcpy.
-  if (Op == ISD::MEMMOVE) {
-    uint64_t Size = -1ULL;
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op3))
-      Size = C->getValue();
-    if (AA.alias(I.getOperand(1), Size, I.getOperand(2), Size) ==
-        AliasAnalysis::NoAlias)
-      Op = ISD::MEMCPY;
-  }
-
-  if (ConstantSDNode *Size = dyn_cast<ConstantSDNode>(Op3)) {
-    std::vector<MVT::ValueType> MemOps;
-
-    // Expand memset / memcpy to a series of load / store ops
-    // if the size operand falls below a certain threshold.
-    SmallVector<SDOperand, 8> OutChains;
-    switch (Op) {
-    default: break;  // Do nothing for now.
-    case ISD::MEMSET: {
-      if (MeetsMaxMemopRequirement(MemOps, TLI.getMaxStoresPerMemset(),
-                                   Size->getValue(), Align, TLI)) {
-        unsigned NumMemOps = MemOps.size();
-        unsigned Offset = 0;
-        for (unsigned i = 0; i < NumMemOps; i++) {
-          MVT::ValueType VT = MemOps[i];
-          unsigned VTSize = MVT::getSizeInBits(VT) / 8;
-          SDOperand Value = getMemsetValue(Op2, VT, DAG);
-          SDOperand Store = DAG.getStore(getRoot(), Value,
-                                    getMemBasePlusOffset(Op1, Offset, DAG, TLI),
-                                         I.getOperand(1), Offset);
-          OutChains.push_back(Store);
-          Offset += VTSize;
-        }
-      }
-      break;
-    }
-    case ISD::MEMCPY: {
-      if (MeetsMaxMemopRequirement(MemOps, TLI.getMaxStoresPerMemcpy(),
-                                   Size->getValue(), Align, TLI)) {
-        unsigned NumMemOps = MemOps.size();
-        unsigned SrcOff = 0, DstOff = 0, SrcDelta = 0;
-        GlobalAddressSDNode *G = NULL;
-        std::string Str;
-        bool CopyFromStr = false;
-
-        if (Op2.getOpcode() == ISD::GlobalAddress)
-          G = cast<GlobalAddressSDNode>(Op2);
-        else if (Op2.getOpcode() == ISD::ADD &&
-                 Op2.getOperand(0).getOpcode() == ISD::GlobalAddress &&
-                 Op2.getOperand(1).getOpcode() == ISD::Constant) {
-          G = cast<GlobalAddressSDNode>(Op2.getOperand(0));
-          SrcDelta = cast<ConstantSDNode>(Op2.getOperand(1))->getValue();
-        }
-        if (G) {
-          GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
-          if (GV && GV->isConstant()) {
-            Str = GV->getStringValue(false);
-            if (!Str.empty()) {
-              CopyFromStr = true;
-              SrcOff += SrcDelta;
-            }
-          }
-        }
-
-        for (unsigned i = 0; i < NumMemOps; i++) {
-          MVT::ValueType VT = MemOps[i];
-          unsigned VTSize = MVT::getSizeInBits(VT) / 8;
-          SDOperand Value, Chain, Store;
-
-          if (CopyFromStr) {
-            Value = getMemsetStringVal(VT, DAG, TLI, Str, SrcOff);
-            Chain = getRoot();
-            Store =
-              DAG.getStore(Chain, Value,
-                           getMemBasePlusOffset(Op1, DstOff, DAG, TLI),
-                           I.getOperand(1), DstOff);
-          } else {
-            Value = DAG.getLoad(VT, getRoot(),
-                                getMemBasePlusOffset(Op2, SrcOff, DAG, TLI),
-                                I.getOperand(2), SrcOff, false, Align);
-            Chain = Value.getValue(1);
-            Store =
-              DAG.getStore(Chain, Value,
-                           getMemBasePlusOffset(Op1, DstOff, DAG, TLI),
-                           I.getOperand(1), DstOff, false, Align);
-          }
-          OutChains.push_back(Store);
-          SrcOff += VTSize;
-          DstOff += VTSize;
-        }
-      }
-      break;
-    }
-    }
-
-    if (!OutChains.empty()) {
-      DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other,
-                  &OutChains[0], OutChains.size()));
-      return;
-    }
-  }
-
-  SDOperand AlwaysInline = DAG.getConstant(0, MVT::i1);
-  SDOperand Node;
-  switch(Op) {
-    default:
-      assert(0 && "Unknown Op");
-    case ISD::MEMCPY:
-      Node = DAG.getMemcpy(getRoot(), Op1, Op2, Op3, Op4, AlwaysInline);
-      break;
-    case ISD::MEMMOVE:
-      Node = DAG.getMemmove(getRoot(), Op1, Op2, Op3, Op4, AlwaysInline);
-      break;
-    case ISD::MEMSET:
-      Node = DAG.getMemset(getRoot(), Op1, Op2, Op3, Op4, AlwaysInline);
-      break;
-  }
-  DAG.setRoot(Node);
 }
 
 //===----------------------------------------------------------------------===//

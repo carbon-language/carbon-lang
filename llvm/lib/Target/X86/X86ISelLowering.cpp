@@ -206,7 +206,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::BRCOND           , MVT::Other, Custom);
   setOperationAction(ISD::BR_CC            , MVT::Other, Expand);
   setOperationAction(ISD::SELECT_CC        , MVT::Other, Expand);
-  setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
   if (Subtarget->is64Bit())
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i32, Legal);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Legal);
@@ -281,9 +280,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SRA_PARTS     , MVT::i64  , Custom);
     setOperationAction(ISD::SRL_PARTS     , MVT::i64  , Custom);
   }
-  // X86 wants to expand memset / memcpy itself.
-  setOperationAction(ISD::MEMSET          , MVT::Other, Custom);
-  setOperationAction(ISD::MEMCPY          , MVT::Other, Custom);
 
   if (Subtarget->hasSSE1())
     setOperationAction(ISD::PREFETCH      , MVT::Other, Legal);
@@ -1113,10 +1109,10 @@ CopyTailCallClobberedArgumentsToVRegs(SDOperand Chain,
 static SDOperand 
 CreateCopyOfByValArgument(SDOperand Src, SDOperand Dst, SDOperand Chain,
                           ISD::ArgFlagsTy Flags, SelectionDAG &DAG) {
-  SDOperand AlignNode    = DAG.getConstant(Flags.getByValAlign(), MVT::i32);
   SDOperand SizeNode     = DAG.getConstant(Flags.getByValSize(), MVT::i32);
-  SDOperand AlwaysInline = DAG.getConstant(1, MVT::i32);
-  return DAG.getMemcpy(Chain, Dst, Src, SizeNode, AlignNode, AlwaysInline);
+  return DAG.getMemcpy(Chain, Dst, Src, SizeNode, Flags.getByValAlign(),
+                       /*AlwaysInline=*/true,
+                       NULL, 0, NULL, 0);
 }
 
 SDOperand X86TargetLowering::LowerMemArgument(SDOperand Op, SelectionDAG &DAG,
@@ -4557,52 +4553,51 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDOperand Op,
   return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops1, 2);
 }
 
-SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
-  SDOperand InFlag(0, 0);
-  SDOperand Chain = Op.getOperand(0);
-  unsigned Align =
-    (unsigned)cast<ConstantSDNode>(Op.getOperand(4))->getValue();
-  if (Align == 0) Align = 1;
+SDOperand
+X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
+                                           SDOperand Chain,
+                                           SDOperand Dst, SDOperand Src,
+                                           SDOperand Size, unsigned Align,
+                                           Value *DstSV, uint64_t DstOff) {
+  ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
 
-  ConstantSDNode *I = dyn_cast<ConstantSDNode>(Op.getOperand(3));
-  // If not DWORD aligned or size is more than the threshold, call memset.
-  // The libc version is likely to be faster for these cases. It can use the
-  // address value and run time information about the CPU.
-  if ((Align & 3) != 0 ||
-      (I && I->getValue() > Subtarget->getMaxInlineSizeThreshold())) {
+  /// If not DWORD aligned or size is more than the threshold, call the library.
+  /// The libc version is likely to be faster for these cases. It can use the
+  /// address value and run time information about the CPU.
+  if ((Align & 3) == 0 ||
+      !ConstantSize ||
+      ConstantSize->getValue() > getSubtarget()->getMaxInlineSizeThreshold()) {
+    SDOperand InFlag(0, 0);
 
     // Check to see if there is a specialized entry-point for memory zeroing.
-    ConstantSDNode *V = dyn_cast<ConstantSDNode>(Op.getOperand(2));
-    const char *bzeroEntry = 
-      V && V->isNullValue() ? Subtarget->getBZeroEntry() : 0;
-
-    MVT::ValueType IntPtr = getPointerTy();
-    const Type *IntPtrTy = getTargetData()->getIntPtrType();
-    TargetLowering::ArgListTy Args; 
-    TargetLowering::ArgListEntry Entry;
-    Entry.Node = Op.getOperand(1);
-    Entry.Ty = IntPtrTy;
-    Args.push_back(Entry);
-
-    if (!bzeroEntry) {
-      // Extend the unsigned i8 argument to be an int value for the call.
-      Entry.Node = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Op.getOperand(2));
+    ConstantSDNode *V = dyn_cast<ConstantSDNode>(Src);
+    if (const char *bzeroEntry = 
+          V && V->isNullValue() ? Subtarget->getBZeroEntry() : 0) {
+      MVT::ValueType IntPtr = getPointerTy();
+      const Type *IntPtrTy = getTargetData()->getIntPtrType();
+      TargetLowering::ArgListTy Args; 
+      TargetLowering::ArgListEntry Entry;
+      Entry.Node = Dst;
       Entry.Ty = IntPtrTy;
       Args.push_back(Entry);
+      Entry.Node = Size;
+      Args.push_back(Entry);
+      std::pair<SDOperand,SDOperand> CallResult =
+        LowerCallTo(Chain, Type::VoidTy, false, false, false, CallingConv::C,
+                    false, DAG.getExternalSymbol(bzeroEntry, IntPtr),
+                    Args, DAG);
+      return CallResult.second;
     }
 
-    Entry.Node = Op.getOperand(3);
-    Args.push_back(Entry);
-    const char *Name = bzeroEntry ? bzeroEntry : "memset";
-    std::pair<SDOperand,SDOperand> CallResult =
-      LowerCallTo(Chain, Type::VoidTy, false, false, false, CallingConv::C,
-                  false, DAG.getExternalSymbol(Name, IntPtr), Args, DAG);
-    return CallResult.second;
+    // Otherwise have the target-independent code call memset.
+    return SDOperand();
   }
 
+  uint64_t SizeVal = ConstantSize->getValue();
+  SDOperand InFlag(0, 0);
   MVT::ValueType AVT;
   SDOperand Count;
-  ConstantSDNode *ValC = dyn_cast<ConstantSDNode>(Op.getOperand(2));
+  ConstantSDNode *ValC = dyn_cast<ConstantSDNode>(Src);
   unsigned BytesLeft = 0;
   bool TwoRepStos = false;
   if (ValC) {
@@ -4630,22 +4625,14 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
       default:  // Byte aligned
         AVT = MVT::i8;
         ValReg = X86::AL;
-        Count = Op.getOperand(3);
+        Count = Size;
         break;
     }
 
     if (AVT > MVT::i8) {
-      if (I) {
-        unsigned UBytes = MVT::getSizeInBits(AVT) / 8;
-        Count = DAG.getIntPtrConstant(I->getValue() / UBytes);
-        BytesLeft = I->getValue() % UBytes;
-      } else {
-        assert(AVT >= MVT::i32 &&
-               "Do not use rep;stos if not at least DWORD aligned");
-        Count = DAG.getNode(ISD::SRL, Op.getOperand(3).getValueType(),
-                            Op.getOperand(3), DAG.getConstant(2, MVT::i8));
-        TwoRepStos = true;
-      }
+      unsigned UBytes = MVT::getSizeInBits(AVT) / 8;
+      Count = DAG.getIntPtrConstant(SizeVal / UBytes);
+      BytesLeft = SizeVal % UBytes;
     }
 
     Chain  = DAG.getCopyToReg(Chain, ValReg, DAG.getConstant(Val, AVT),
@@ -4653,8 +4640,8 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
     InFlag = Chain.getValue(1);
   } else {
     AVT = MVT::i8;
-    Count  = Op.getOperand(3);
-    Chain  = DAG.getCopyToReg(Chain, X86::AL, Op.getOperand(2), InFlag);
+    Count  = Size;
+    Chain  = DAG.getCopyToReg(Chain, X86::AL, Src, InFlag);
     InFlag = Chain.getValue(1);
   }
 
@@ -4662,7 +4649,7 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
                             Count, InFlag);
   InFlag = Chain.getValue(1);
   Chain  = DAG.getCopyToReg(Chain, Subtarget->is64Bit() ? X86::RDI : X86::EDI,
-                            Op.getOperand(1), InFlag);
+                            Dst, InFlag);
   InFlag = Chain.getValue(1);
 
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
@@ -4674,7 +4661,7 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
 
   if (TwoRepStos) {
     InFlag = Chain.getValue(1);
-    Count = Op.getOperand(3);
+    Count  = Size;
     MVT::ValueType CVT = Count.getValueType();
     SDOperand Left = DAG.getNode(ISD::AND, CVT, Count,
                                DAG.getConstant((AVT == MVT::i64) ? 7 : 3, CVT));
@@ -4688,79 +4675,68 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
     Ops.push_back(InFlag);
     Chain  = DAG.getNode(X86ISD::REP_STOS, Tys, &Ops[0], Ops.size());
   } else if (BytesLeft) {
-    // Issue stores for the last 1 - 7 bytes.
-    SDOperand Value;
-    unsigned Val = ValC->getValue() & 255;
-    unsigned Offset = I->getValue() - BytesLeft;
-    SDOperand DstAddr = Op.getOperand(1);
-    MVT::ValueType AddrVT = DstAddr.getValueType();
-    if (BytesLeft >= 4) {
-      Val = (Val << 8)  | Val;
-      Val = (Val << 16) | Val;
-      Value = DAG.getConstant(Val, MVT::i32);
-      Chain = DAG.getStore(Chain, Value,
-                           DAG.getNode(ISD::ADD, AddrVT, DstAddr,
-                                       DAG.getConstant(Offset, AddrVT)),
-                           NULL, 0);
-      BytesLeft -= 4;
-      Offset += 4;
-    }
-    if (BytesLeft >= 2) {
-      Value = DAG.getConstant((Val << 8) | Val, MVT::i16);
-      Chain = DAG.getStore(Chain, Value,
-                           DAG.getNode(ISD::ADD, AddrVT, DstAddr,
-                                       DAG.getConstant(Offset, AddrVT)),
-                           NULL, 0);
-      BytesLeft -= 2;
-      Offset += 2;
-    }
-    if (BytesLeft == 1) {
-      Value = DAG.getConstant(Val, MVT::i8);
-      Chain = DAG.getStore(Chain, Value,
-                           DAG.getNode(ISD::ADD, AddrVT, DstAddr,
-                                       DAG.getConstant(Offset, AddrVT)),
-                           NULL, 0);
-    }
+    // Handle the last 1 - 7 bytes.
+    unsigned Offset = SizeVal - BytesLeft;
+    MVT::ValueType AddrVT = Dst.getValueType();
+    MVT::ValueType SizeVT = Size.getValueType();
+
+    Chain = DAG.getMemset(Chain,
+                          DAG.getNode(ISD::ADD, AddrVT, Dst,
+                                      DAG.getConstant(Offset, AddrVT)),
+                          Src,
+                          DAG.getConstant(BytesLeft, SizeVT),
+                          Align, DstSV, Offset);
   }
 
+  // TODO: Use a Tokenfactor, as in memcpy, instead of a single chain.
   return Chain;
 }
 
-SDOperand X86TargetLowering::LowerMEMCPYInline(SDOperand Chain,
-                                               SDOperand Dest,
-                                               SDOperand Source,
-                                               unsigned Size,
-                                               unsigned Align,
-                                               SelectionDAG &DAG) {
+SDOperand
+X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
+                                           SDOperand Chain,
+                                           SDOperand Dst, SDOperand Src,
+                                           SDOperand Size, unsigned Align,
+                                           bool AlwaysInline,
+                                           Value *DstSV, uint64_t DstOff,
+                                           Value *SrcSV, uint64_t SrcOff){
+  
+  // This requires the copy size to be a constant, preferrably
+  // within a subtarget-specific limit.
+  ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
+  if (!ConstantSize)
+    return SDOperand();
+  uint64_t SizeVal = ConstantSize->getValue();
+  if (!AlwaysInline && SizeVal > getSubtarget()->getMaxInlineSizeThreshold())
+    return SDOperand();
+
+  SmallVector<SDOperand, 4> Results;
+
   MVT::ValueType AVT;
   unsigned BytesLeft = 0;
-  switch (Align & 3) {
-    case 2:   // WORD aligned
-      AVT = MVT::i16;
-      break;
-    case 0:  // DWORD aligned
-      AVT = MVT::i32;
-      if (Subtarget->is64Bit() && ((Align & 0x7) == 0))  // QWORD aligned
-        AVT = MVT::i64;
-      break;
-    default:  // Byte aligned
-      AVT = MVT::i8;
-      break;
-  }
+  if (Align >= 8 && Subtarget->is64Bit())
+    AVT = MVT::i64;
+  else if (Align >= 4)
+    AVT = MVT::i32;
+  else if (Align >= 2)
+    AVT = MVT::i16;
+  else
+    AVT = MVT::i8;
 
   unsigned UBytes = MVT::getSizeInBits(AVT) / 8;
-  SDOperand Count = DAG.getIntPtrConstant(Size / UBytes);
-  BytesLeft = Size % UBytes;
+  unsigned CountVal = SizeVal / UBytes;
+  SDOperand Count = DAG.getIntPtrConstant(CountVal);
+  BytesLeft = SizeVal % UBytes;
 
   SDOperand InFlag(0, 0);
   Chain  = DAG.getCopyToReg(Chain, Subtarget->is64Bit() ? X86::RCX : X86::ECX,
                             Count, InFlag);
   InFlag = Chain.getValue(1);
   Chain  = DAG.getCopyToReg(Chain, Subtarget->is64Bit() ? X86::RDI : X86::EDI,
-                            Dest, InFlag);
+                            Dst, InFlag);
   InFlag = Chain.getValue(1);
   Chain  = DAG.getCopyToReg(Chain, Subtarget->is64Bit() ? X86::RSI : X86::ESI,
-                            Source, InFlag);
+                            Src, InFlag);
   InFlag = Chain.getValue(1);
 
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
@@ -4768,57 +4744,28 @@ SDOperand X86TargetLowering::LowerMEMCPYInline(SDOperand Chain,
   Ops.push_back(Chain);
   Ops.push_back(DAG.getValueType(AVT));
   Ops.push_back(InFlag);
-  Chain = DAG.getNode(X86ISD::REP_MOVS, Tys, &Ops[0], Ops.size());
+  Results.push_back(DAG.getNode(X86ISD::REP_MOVS, Tys, &Ops[0], Ops.size()));
 
   if (BytesLeft) {
-    // Issue loads and stores for the last 1 - 7 bytes.
-    unsigned Offset = Size - BytesLeft;
-    SDOperand DstAddr = Dest;
-    MVT::ValueType DstVT = DstAddr.getValueType();
-    SDOperand SrcAddr = Source;
-    MVT::ValueType SrcVT = SrcAddr.getValueType();
-    SDOperand Value;
-    if (BytesLeft >= 4) {
-      Value = DAG.getLoad(MVT::i32, Chain,
-                          DAG.getNode(ISD::ADD, SrcVT, SrcAddr,
-                                      DAG.getConstant(Offset, SrcVT)),
-                          NULL, 0);
-      Chain = Value.getValue(1);
-      Chain = DAG.getStore(Chain, Value,
-                           DAG.getNode(ISD::ADD, DstVT, DstAddr,
-                                       DAG.getConstant(Offset, DstVT)),
-                           NULL, 0);
-      BytesLeft -= 4;
-      Offset += 4;
-    }
-    if (BytesLeft >= 2) {
-      Value = DAG.getLoad(MVT::i16, Chain,
-                          DAG.getNode(ISD::ADD, SrcVT, SrcAddr,
-                                      DAG.getConstant(Offset, SrcVT)),
-                          NULL, 0);
-      Chain = Value.getValue(1);
-      Chain = DAG.getStore(Chain, Value,
-                           DAG.getNode(ISD::ADD, DstVT, DstAddr,
-                                       DAG.getConstant(Offset, DstVT)),
-                           NULL, 0);
-      BytesLeft -= 2;
-      Offset += 2;
-    }
+    // Handle the last 1 - 7 bytes.
+    unsigned Offset = SizeVal - BytesLeft;
+    MVT::ValueType DstVT = Dst.getValueType();
+    MVT::ValueType SrcVT = Src.getValueType();
+    MVT::ValueType SizeVT = Size.getValueType();
 
-    if (BytesLeft == 1) {
-      Value = DAG.getLoad(MVT::i8, Chain,
-                          DAG.getNode(ISD::ADD, SrcVT, SrcAddr,
-                                      DAG.getConstant(Offset, SrcVT)),
-                          NULL, 0);
-      Chain = Value.getValue(1);
-      Chain = DAG.getStore(Chain, Value,
-                           DAG.getNode(ISD::ADD, DstVT, DstAddr,
-                                       DAG.getConstant(Offset, DstVT)),
-                           NULL, 0);
-    }
+    Results.push_back(DAG.getMemcpy(Chain, 
+                                    DAG.getNode(ISD::ADD, DstVT, Dst,
+                                                DAG.getConstant(Offset,
+                                                                DstVT)),
+                                    DAG.getNode(ISD::ADD, SrcVT, Src,
+                                                DAG.getConstant(Offset,
+                                                                SrcVT)),
+                                    DAG.getConstant(BytesLeft, SizeVT),
+                                    Align, AlwaysInline,
+                                    DstSV, Offset, SrcSV, Offset));
   }
 
-  return Chain;
+  return DAG.getNode(ISD::TokenFactor, MVT::Other, &Results[0], Results.size());
 }
 
 /// Expand the result of: i64,outchain = READCYCLECOUNTER inchain
@@ -5430,8 +5377,6 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::CALL:               return LowerCALL(Op, DAG);
   case ISD::RET:                return LowerRET(Op, DAG);
   case ISD::FORMAL_ARGUMENTS:   return LowerFORMAL_ARGUMENTS(Op, DAG);
-  case ISD::MEMSET:             return LowerMEMSET(Op, DAG);
-  case ISD::MEMCPY:             return LowerMEMCPY(Op, DAG);
   case ISD::VASTART:            return LowerVASTART(Op, DAG);
   case ISD::VACOPY:             return LowerVACOPY(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);

@@ -1,7 +1,15 @@
 ; RUN: llvm-as < %s | llc -march=x86-64 | grep rep.movsw | count 2
 ; RUN: llvm-as < %s | llc -march=x86 | grep rep.movsl	 | count 2
 
-%struct.s = type { i16, i16, i16, i16, i16, i16 }
+%struct.s = type { i16, i16, i16, i16, i16, i16, i16, i16,
+                   i16, i16, i16, i16, i16, i16, i16, i16,
+                   i16, i16, i16, i16, i16, i16, i16, i16,
+                   i16, i16, i16, i16, i16, i16, i16, i16,
+                   i16, i16, i16, i16, i16, i16, i16, i16,
+                   i16, i16, i16, i16, i16, i16, i16, i16,
+                   i16, i16, i16, i16, i16, i16, i16, i16,
+                   i16, i16, i16, i16, i16, i16, i16, i16,
+                   i16 }
 
 
 define void @g(i16 signext  %a1, i16 signext  %a2, i16 signext  %a3,

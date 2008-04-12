@@ -87,10 +87,6 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::SDIV     , MVT::i64, Custom);
   setOperationAction(ISD::UDIV     , MVT::i64, Custom);
 
-  setOperationAction(ISD::MEMMOVE  , MVT::Other, Expand);
-  setOperationAction(ISD::MEMSET   , MVT::Other, Expand);
-  setOperationAction(ISD::MEMCPY   , MVT::Other, Expand);
-  
   // We don't support sin/cos/sqrt/pow
   setOperationAction(ISD::FSIN , MVT::f64, Expand);
   setOperationAction(ISD::FCOS , MVT::f64, Expand);

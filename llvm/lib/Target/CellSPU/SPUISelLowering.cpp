@@ -175,9 +175,6 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::SELECT_CC,    MVT::Other, Expand);  
 
   // SPU has no intrinsics for these particular operations:
-  setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
-  setOperationAction(ISD::MEMSET, MVT::Other, Expand);
-  setOperationAction(ISD::MEMCPY, MVT::Other, Expand);
   setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
 
   // PowerPC has no SREM/UREM instructions

@@ -165,7 +165,6 @@ private:
   // Common routines.
   SDOperand BitConvertToInteger(SDOperand Op);
   SDOperand CreateStackStoreLoad(SDOperand Op, MVT::ValueType DestVT);
-  SDOperand HandleMemIntrinsic(SDNode *N);
   SDOperand JoinIntegers(SDOperand Lo, SDOperand Hi);
   void SplitInteger(SDOperand Op, SDOperand &Lo, SDOperand &Hi);
   void SplitInteger(SDOperand Op, MVT::ValueType LoVT, MVT::ValueType HiVT,

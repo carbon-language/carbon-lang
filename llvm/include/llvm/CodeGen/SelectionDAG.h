@@ -323,17 +323,20 @@ public:
   SDOperand getNode(unsigned Opcode, SDVTList VTs,
                     const SDOperand *Ops, unsigned NumOps);
 
-  SDOperand getMemcpy(SDOperand Chain, SDOperand Dest, SDOperand Src,
-                      SDOperand Size, SDOperand Align,
-                      SDOperand AlwaysInline);
+  SDOperand getMemcpy(SDOperand Chain, SDOperand Dst, SDOperand Src,
+                      SDOperand Size, unsigned Align,
+                      bool AlwaysInline,
+                      Value *DstSV, uint64_t DstOff,
+                      Value *SrcSV, uint64_t SrcOff);
 
-  SDOperand getMemmove(SDOperand Chain, SDOperand Dest, SDOperand Src,
-                      SDOperand Size, SDOperand Align,
-                      SDOperand AlwaysInline);
+  SDOperand getMemmove(SDOperand Chain, SDOperand Dst, SDOperand Src,
+                      SDOperand Size, unsigned Align,
+                      Value *DstSV, uint64_t DstOff,
+                      Value *SrcSV, uint64_t SrcOff);
 
-  SDOperand getMemset(SDOperand Chain, SDOperand Dest, SDOperand Src,
-                      SDOperand Size, SDOperand Align,
-                      SDOperand AlwaysInline);
+  SDOperand getMemset(SDOperand Chain, SDOperand Dst, SDOperand Src,
+                      SDOperand Size, unsigned Align,
+                      Value *DstSV, uint64_t DstOff);
 
   /// getSetCC - Helper function to make it easier to build SetCC's if you just
   /// have an ISD::CondCode instead of an SDOperand.

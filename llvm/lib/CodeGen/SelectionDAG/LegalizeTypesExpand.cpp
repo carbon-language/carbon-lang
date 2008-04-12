@@ -946,9 +946,6 @@ bool DAGTypeLegalizer::ExpandOperand(SDNode *N, unsigned OpNo) {
     case ISD::STORE:
       Res = ExpandOperand_STORE(cast<StoreSDNode>(N), OpNo);
       break;
-    case ISD::MEMSET:
-    case ISD::MEMCPY:
-    case ISD::MEMMOVE:     Res = HandleMemIntrinsic(N); break;
 
     case ISD::BUILD_VECTOR: Res = ExpandOperand_BUILD_VECTOR(N); break;
     }

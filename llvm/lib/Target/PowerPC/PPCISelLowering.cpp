@@ -78,9 +78,6 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::FP_ROUND_INREG, MVT::ppcf128, Custom);
 
   // PowerPC has no intrinsics for these particular operations
-  setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
-  setOperationAction(ISD::MEMSET, MVT::Other, Expand);
-  setOperationAction(ISD::MEMCPY, MVT::Other, Expand);
   setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
 
   // PowerPC has no SREM/UREM instructions
@@ -1735,10 +1732,9 @@ static SDOperand
 CreateCopyOfByValArgument(SDOperand Src, SDOperand Dst, SDOperand Chain,
                           ISD::ArgFlagsTy Flags, SelectionDAG &DAG,
                           unsigned Size) {
-  SDOperand AlignNode    = DAG.getConstant(Flags.getByValAlign(), MVT::i32);
-  SDOperand SizeNode     = DAG.getConstant(Size, MVT::i32);
-  SDOperand AlwaysInline = DAG.getConstant(0, MVT::i32);
-  return DAG.getMemcpy(Chain, Dst, Src, SizeNode, AlignNode, AlwaysInline);
+  SDOperand SizeNode = DAG.getConstant(Size, MVT::i32);
+  return DAG.getMemcpy(Chain, Dst, Src, SizeNode, Flags.getByValAlign(), false,
+                       NULL, 0, NULL, 0);
 }
 
 SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,

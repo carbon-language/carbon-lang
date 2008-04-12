@@ -570,9 +570,6 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SELECT_CC, MVT::f64, Custom);
   
   // SPARC has no intrinsics for these particular operations.
-  setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
-  setOperationAction(ISD::MEMSET, MVT::Other, Expand);
-  setOperationAction(ISD::MEMCPY, MVT::Other, Expand);
   setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
 
   setOperationAction(ISD::FSIN , MVT::f64, Expand);

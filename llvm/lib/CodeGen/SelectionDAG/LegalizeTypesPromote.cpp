@@ -447,9 +447,6 @@ bool DAGTypeLegalizer::PromoteOperand(SDNode *N, unsigned OpNo) {
 
   case ISD::STORE:       Res = PromoteOperand_STORE(cast<StoreSDNode>(N),
                                                     OpNo); break;
-  case ISD::MEMSET:
-  case ISD::MEMCPY:
-  case ISD::MEMMOVE:     Res = HandleMemIntrinsic(N); break;
 
   case ISD::BUILD_VECTOR: Res = PromoteOperand_BUILD_VECTOR(N); break;
   case ISD::INSERT_VECTOR_ELT:

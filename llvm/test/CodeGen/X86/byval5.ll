@@ -1,7 +1,23 @@
 ; RUN: llvm-as < %s | llc -march=x86-64 | grep rep.movsb | count 2
 ; RUN: llvm-as < %s | llc -march=x86 | grep rep.movsl	 | count 2
 
-%struct.s = type { i8, i8, i8, i8, i8, i8 }
+%struct.s = type { i8, i8, i8, i8, i8, i8, i8, i8,
+                   i8, i8, i8, i8, i8, i8, i8, i8,
+                   i8, i8, i8, i8, i8, i8, i8, i8,
+                   i8, i8, i8, i8, i8, i8, i8, i8,
+                   i8, i8, i8, i8, i8, i8, i8, i8,
+                   i8, i8, i8, i8, i8, i8, i8, i8,
+                   i8, i8, i8, i8, i8, i8, i8, i8,
+                   i8, i8, i8, i8, i8, i8, i8, i8,
+                   i8, i8, i8, i8, i8, i8, i8, i8,
+                   i8, i8, i8, i8, i8, i8, i8, i8,
+                   i8, i8, i8, i8, i8, i8, i8, i8,
+                   i8, i8, i8, i8, i8, i8, i8, i8,
+                   i8, i8, i8, i8, i8, i8, i8, i8,
+                   i8, i8, i8, i8, i8, i8, i8, i8,
+                   i8, i8, i8, i8, i8, i8, i8, i8,
+                   i8, i8, i8, i8, i8, i8, i8, i8,
+                   i8 }
 
 
 define void @g(i8 signext  %a1, i8 signext  %a2, i8 signext  %a3,

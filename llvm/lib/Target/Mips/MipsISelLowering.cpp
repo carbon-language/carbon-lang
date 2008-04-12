@@ -80,9 +80,6 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
   // Mips not supported intrinsics.
-  setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
-  setOperationAction(ISD::MEMSET, MVT::Other, Expand);
-  setOperationAction(ISD::MEMCPY, MVT::Other, Expand);
   setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
 
   setOperationAction(ISD::CTPOP, MVT::i32, Expand);

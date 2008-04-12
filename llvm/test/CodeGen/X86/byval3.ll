@@ -1,7 +1,11 @@
 ; RUN: llvm-as < %s | llc -march=x86-64 | grep rep.movsl | count 2
 ; RUN: llvm-as < %s | llc -march=x86 | grep rep.movsl | count 2
 
-%struct.s = type { i32, i32, i32, i32, i32, i32 }
+%struct.s = type { i32, i32, i32, i32, i32, i32, i32, i32,
+                   i32, i32, i32, i32, i32, i32, i32, i32,
+                   i32, i32, i32, i32, i32, i32, i32, i32,
+                   i32, i32, i32, i32, i32, i32, i32, i32,
+                   i32 }
 
 define void @g(i32 %a1, i32 %a2, i32 %a3, i32 %a4, i32 %a5, i32 %a6) {
 entry:

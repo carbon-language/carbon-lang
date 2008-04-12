@@ -22,6 +22,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetSubtarget.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -2842,123 +2843,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     break;
-  case ISD::MEMSET:
-  case ISD::MEMCPY:
-  case ISD::MEMMOVE: {
-    Tmp1 = LegalizeOp(Node->getOperand(0));      // Chain
-    Tmp2 = LegalizeOp(Node->getOperand(1));      // Pointer
-
-    if (Node->getOpcode() == ISD::MEMSET) {      // memset = ubyte
-      switch (getTypeAction(Node->getOperand(2).getValueType())) {
-      case Expand: assert(0 && "Cannot expand a byte!");
-      case Legal:
-        Tmp3 = LegalizeOp(Node->getOperand(2));
-        break;
-      case Promote:
-        Tmp3 = PromoteOp(Node->getOperand(2));
-        break;
-      }
-    } else {
-      Tmp3 = LegalizeOp(Node->getOperand(2));    // memcpy/move = pointer,
-    }
-
-    SDOperand Tmp4;
-    switch (getTypeAction(Node->getOperand(3).getValueType())) {
-    case Expand: {
-      // Length is too big, just take the lo-part of the length.
-      SDOperand HiPart;
-      ExpandOp(Node->getOperand(3), Tmp4, HiPart);
-      break;
-    }
-    case Legal:
-      Tmp4 = LegalizeOp(Node->getOperand(3));
-      break;
-    case Promote:
-      Tmp4 = PromoteOp(Node->getOperand(3));
-      break;
-    }
-
-    SDOperand Tmp5;
-    switch (getTypeAction(Node->getOperand(4).getValueType())) {  // uint
-    case Expand: assert(0 && "Cannot expand this yet!");
-    case Legal:
-      Tmp5 = LegalizeOp(Node->getOperand(4));
-      break;
-    case Promote:
-      Tmp5 = PromoteOp(Node->getOperand(4));
-      break;
-    }
-
-    SDOperand Tmp6;
-    switch (getTypeAction(Node->getOperand(5).getValueType())) {  // bool
-    case Expand: assert(0 && "Cannot expand this yet!");
-    case Legal:
-      Tmp6 = LegalizeOp(Node->getOperand(5));
-      break;
-    case Promote:
-      Tmp6 = PromoteOp(Node->getOperand(5));
-      break;
-    }
-
-    switch (TLI.getOperationAction(Node->getOpcode(), MVT::Other)) {
-    default: assert(0 && "This action not implemented for this operation!");
-    case TargetLowering::Custom:
-      isCustom = true;
-      // FALLTHROUGH
-    case TargetLowering::Legal: {
-      SDOperand Ops[] = { Tmp1, Tmp2, Tmp3, Tmp4, Tmp5, Tmp6 };
-      Result = DAG.UpdateNodeOperands(Result, Ops, 6);
-      if (isCustom) {
-        Tmp1 = TLI.LowerOperation(Result, DAG);
-        if (Tmp1.Val) Result = Tmp1;
-      }
-      break;
-    }
-    case TargetLowering::Expand: {
-      // Otherwise, the target does not support this operation.  Lower the
-      // operation to an explicit libcall as appropriate.
-      MVT::ValueType IntPtr = TLI.getPointerTy();
-      const Type *IntPtrTy = TLI.getTargetData()->getIntPtrType();
-      TargetLowering::ArgListTy Args;
-      TargetLowering::ArgListEntry Entry;
-
-      const char *FnName = 0;
-      if (Node->getOpcode() == ISD::MEMSET) {
-        Entry.Node = Tmp2; Entry.Ty = IntPtrTy;
-        Args.push_back(Entry);
-        // Extend the (previously legalized) ubyte argument to be an int value
-        // for the call.
-        if (Tmp3.getValueType() > MVT::i32)
-          Tmp3 = DAG.getNode(ISD::TRUNCATE, MVT::i32, Tmp3);
-        else
-          Tmp3 = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Tmp3);
-        Entry.Node = Tmp3; Entry.Ty = Type::Int32Ty; Entry.isSExt = true;
-        Args.push_back(Entry);
-        Entry.Node = Tmp4; Entry.Ty = IntPtrTy; Entry.isSExt = false;
-        Args.push_back(Entry);
-
-        FnName = "memset";
-      } else if (Node->getOpcode() == ISD::MEMCPY ||
-                 Node->getOpcode() == ISD::MEMMOVE) {
-        Entry.Ty = IntPtrTy;
-        Entry.Node = Tmp2; Args.push_back(Entry);
-        Entry.Node = Tmp3; Args.push_back(Entry);
-        Entry.Node = Tmp4; Args.push_back(Entry);
-        FnName = Node->getOpcode() == ISD::MEMMOVE ? "memmove" : "memcpy";
-      } else {
-        assert(0 && "Unknown op!");
-      }
-
-      std::pair<SDOperand,SDOperand> CallResult =
-        TLI.LowerCallTo(Tmp1, Type::VoidTy,
-                        false, false, false, CallingConv::C, false,
-                        DAG.getExternalSymbol(FnName, IntPtr), Args, DAG);
-      Result = CallResult.second;
-      break;
-    }
-    }
-    break;
-  }
 
   case ISD::SHL_PARTS:
   case ISD::SRA_PARTS:

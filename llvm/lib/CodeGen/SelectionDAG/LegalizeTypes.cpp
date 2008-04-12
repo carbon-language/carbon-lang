@@ -439,51 +439,6 @@ SDOperand DAGTypeLegalizer::CreateStackStoreLoad(SDOperand Op,
   return DAG.getLoad(DestVT, Store, FIPtr, NULL, 0);
 }
 
-/// HandleMemIntrinsic - This handles memcpy/memset/memmove with invalid
-/// operands.  This promotes or expands the operands as required.
-SDOperand DAGTypeLegalizer::HandleMemIntrinsic(SDNode *N) {
-  // The chain and pointer [operands #0 and #1] are always valid types.
-  SDOperand Chain = N->getOperand(0);
-  SDOperand Ptr   = N->getOperand(1);
-  SDOperand Op2   = N->getOperand(2);
-  
-  // Op #2 is either a value (memset) or a pointer.  Promote it if required.
-  switch (getTypeAction(Op2.getValueType())) {
-  default: assert(0 && "Unknown action for pointer/value operand");
-  case Legal: break;
-  case Promote: Op2 = GetPromotedOp(Op2); break;
-  }
-
-  // The length could have any action required.
-  SDOperand Length = N->getOperand(3);
-  switch (getTypeAction(Length.getValueType())) {
-  default: assert(0 && "Unknown action for memop operand");
-  case Legal: break;
-  case Promote: Length = GetPromotedZExtOp(Length); break;
-  case Expand:
-    SDOperand Dummy;  // discard the high part.
-    GetExpandedOp(Length, Length, Dummy);
-    break;
-  }
-
-  SDOperand Align = N->getOperand(4);
-  switch (getTypeAction(Align.getValueType())) {
-  default: assert(0 && "Unknown action for memop operand");
-  case Legal: break;
-  case Promote: Align = GetPromotedZExtOp(Align); break;
-  }
-
-  SDOperand AlwaysInline = N->getOperand(5);
-  switch (getTypeAction(AlwaysInline.getValueType())) {
-  default: assert(0 && "Unknown action for memop operand");
-  case Legal: break;
-  case Promote: AlwaysInline = GetPromotedZExtOp(AlwaysInline); break;
-  }
-
-  SDOperand Ops[] = { Chain, Ptr, Op2, Length, Align, AlwaysInline };
-  return DAG.UpdateNodeOperands(SDOperand(N, 0), Ops, 6);
-}
-
 /// JoinIntegers - Build an integer with low bits Lo and high bits Hi.
 SDOperand DAGTypeLegalizer::JoinIntegers(SDOperand Lo, SDOperand Hi) {
   MVT::ValueType LVT = Lo.getValueType();

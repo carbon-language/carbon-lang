@@ -497,14 +497,6 @@ namespace ISD {
     // it returns an output chain.
     STACKRESTORE,
     
-    // MEMSET/MEMCPY/MEMMOVE - The first operand is the chain. The following
-    // correspond to the operands of the LLVM intrinsic functions and the last
-    // one is AlwaysInline.  The only result is a token chain.  The alignment
-    // argument is guaranteed to be a Constant node.
-    MEMSET,
-    MEMMOVE,
-    MEMCPY,
-
     // CALLSEQ_START/CALLSEQ_END - These operators mark the beginning and end of
     // a call sequence, and carry arbitrary information that target might want
     // to know.  The first operand is a chain, the rest are specified by the

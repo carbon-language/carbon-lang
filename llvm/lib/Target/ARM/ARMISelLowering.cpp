@@ -197,11 +197,6 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::GLOBAL_OFFSET_TABLE, MVT::i32, Custom);
   setOperationAction(ISD::GlobalTLSAddress, MVT::i32, Custom);
 
-  // Expand mem operations genericly.
-  setOperationAction(ISD::MEMSET          , MVT::Other, Expand);
-  setOperationAction(ISD::MEMCPY          , MVT::Other, Custom);
-  setOperationAction(ISD::MEMMOVE         , MVT::Other, Expand);
-
   // Use the default implementation.
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
   setOperationAction(ISD::VAARG             , MVT::Other, Expand);
@@ -1246,18 +1241,30 @@ static SDOperand LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(ARMISD::CNEG, VT, AbsVal, AbsVal, ARMCC, CCR, Cmp);
 }
 
-SDOperand ARMTargetLowering::LowerMEMCPYInline(SDOperand Chain,
-                                               SDOperand Dest,
-                                               SDOperand Source,
-                                               unsigned Size,
-                                               unsigned Align,
-                                               SelectionDAG &DAG) {
+SDOperand
+ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
+                                           SDOperand Chain,
+                                           SDOperand Dst, SDOperand Src,
+                                           SDOperand Size, unsigned Align,
+                                           bool AlwaysInline,
+                                           Value *DstSV, uint64_t DstOff,
+                                           Value *SrcSV, uint64_t SrcOff){
   // Do repeated 4-byte loads and stores. To be improved.
-  assert((Align & 3) == 0 && "Expected 4-byte aligned addresses!");
-  unsigned BytesLeft = Size & 3;
-  unsigned NumMemOps = Size >> 2;
+  // This requires 4-byte alignment.
+  if ((Align & 3) != 0)
+    return SDOperand();
+  // This requires the copy size to be a constant, preferrably
+  // within a subtarget-specific limit.
+  ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
+  if (!ConstantSize)
+    return SDOperand();
+  uint64_t SizeVal = ConstantSize->getValue();
+  if (!AlwaysInline && SizeVal > getSubtarget()->getMaxInlineSizeThreshold())
+    return SDOperand();
+
+  unsigned BytesLeft = SizeVal & 3;
+  unsigned NumMemOps = SizeVal >> 2;
   unsigned EmittedNumMemOps = 0;
-  unsigned SrcOff = 0, DstOff = 0;
   MVT::ValueType VT = MVT::i32;
   unsigned VTSize = 4;
   unsigned i = 0;
@@ -1272,9 +1279,9 @@ SDOperand ARMTargetLowering::LowerMEMCPYInline(SDOperand Chain,
     for (i = 0;
          i < MAX_LOADS_IN_LDM && EmittedNumMemOps + i < NumMemOps; ++i) {
       Loads[i] = DAG.getLoad(VT, Chain,
-                             DAG.getNode(ISD::ADD, MVT::i32, Source,
+                             DAG.getNode(ISD::ADD, MVT::i32, Src,
                                          DAG.getConstant(SrcOff, MVT::i32)),
-                             NULL, 0);
+                             SrcSV, SrcOff);
       TFOps[i] = Loads[i].getValue(1);
       SrcOff += VTSize;
     }
@@ -1283,9 +1290,9 @@ SDOperand ARMTargetLowering::LowerMEMCPYInline(SDOperand Chain,
     for (i = 0;
          i < MAX_LOADS_IN_LDM && EmittedNumMemOps + i < NumMemOps; ++i) {
       TFOps[i] = DAG.getStore(Chain, Loads[i],
-                           DAG.getNode(ISD::ADD, MVT::i32, Dest, 
+                           DAG.getNode(ISD::ADD, MVT::i32, Dst, 
                                        DAG.getConstant(DstOff, MVT::i32)),
-                           NULL, 0);
+                           DstSV, DstOff);
       DstOff += VTSize;
     }
     Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &TFOps[0], i);
@@ -1309,9 +1316,9 @@ SDOperand ARMTargetLowering::LowerMEMCPYInline(SDOperand Chain,
     }
 
     Loads[i] = DAG.getLoad(VT, Chain,
-                           DAG.getNode(ISD::ADD, MVT::i32, Source,
+                           DAG.getNode(ISD::ADD, MVT::i32, Src,
                                        DAG.getConstant(SrcOff, MVT::i32)),
-                           NULL, 0);
+                           SrcSV, SrcOff);
     TFOps[i] = Loads[i].getValue(1);
     ++i;
     SrcOff += VTSize;
@@ -1331,9 +1338,9 @@ SDOperand ARMTargetLowering::LowerMEMCPYInline(SDOperand Chain,
     }
 
     TFOps[i] = DAG.getStore(Chain, Loads[i],
-                            DAG.getNode(ISD::ADD, MVT::i32, Dest, 
+                            DAG.getNode(ISD::ADD, MVT::i32, Dst, 
                                         DAG.getConstant(DstOff, MVT::i32)),
-                            NULL, 0);
+                            DstSV, DstOff);
     ++i;
     DstOff += VTSize;
     BytesLeft -= VTSize;
@@ -1409,7 +1416,6 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::RETURNADDR:    break;
   case ISD::FRAMEADDR:     break;
   case ISD::GLOBAL_OFFSET_TABLE: return LowerGLOBAL_OFFSET_TABLE(Op, DAG);
-  case ISD::MEMCPY:        return LowerMEMCPY(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
       
       

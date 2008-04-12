@@ -17,7 +17,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/CallingConv.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/ADT/StringExtras.h"
@@ -233,59 +233,6 @@ TargetLowering::TargetLowering(TargetMachine &tm)
 }
 
 TargetLowering::~TargetLowering() {}
-
-
-SDOperand TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
-  assert(getSubtarget() && "Subtarget not defined");
-  SDOperand ChainOp = Op.getOperand(0);
-  SDOperand DestOp = Op.getOperand(1);
-  SDOperand SourceOp = Op.getOperand(2);
-  SDOperand CountOp = Op.getOperand(3);
-  SDOperand AlignOp = Op.getOperand(4);
-  SDOperand AlwaysInlineOp = Op.getOperand(5);
-
-  bool AlwaysInline = (bool)cast<ConstantSDNode>(AlwaysInlineOp)->getValue();
-  unsigned Align = (unsigned)cast<ConstantSDNode>(AlignOp)->getValue();
-  if (Align == 0) Align = 1;
-
-  // If size is unknown, call memcpy.
-  ConstantSDNode *I = dyn_cast<ConstantSDNode>(CountOp);
-  if (!I) {
-    assert(!AlwaysInline && "Cannot inline copy of unknown size");
-    return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
-  }
-
-  // If not DWORD aligned or if size is more than threshold, then call memcpy.
-  // The libc version is likely to be faster for the following cases. It can
-  // use the address value and run time information about the CPU.
-  // With glibc 2.6.1 on a core 2, coping an array of 100M longs was 30% faster
-  unsigned Size = I->getValue();
-  if (AlwaysInline ||
-      (Size <= getSubtarget()->getMaxInlineSizeThreshold() &&
-       (Align & 3) == 0))
-    return LowerMEMCPYInline(ChainOp, DestOp, SourceOp, Size, Align, DAG);
-  return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
-}
-
-
-SDOperand TargetLowering::LowerMEMCPYCall(SDOperand Chain,
-                                          SDOperand Dest,
-                                          SDOperand Source,
-                                          SDOperand Count,
-                                          SelectionDAG &DAG) {
-  MVT::ValueType IntPtr = getPointerTy();
-  TargetLowering::ArgListTy Args;
-  TargetLowering::ArgListEntry Entry;
-  Entry.Ty = getTargetData()->getIntPtrType();
-  Entry.Node = Dest; Args.push_back(Entry);
-  Entry.Node = Source; Args.push_back(Entry);
-  Entry.Node = Count; Args.push_back(Entry);
-  std::pair<SDOperand,SDOperand> CallResult =
-      LowerCallTo(Chain, Type::VoidTy, false, false, false, CallingConv::C,
-                  false, DAG.getExternalSymbol("memcpy", IntPtr), Args, DAG);
-  return CallResult.second;
-}
-
 
 /// computeRegisterProperties - Once all of the register classes are added,
 /// this allows us to compute derived properties we expose.

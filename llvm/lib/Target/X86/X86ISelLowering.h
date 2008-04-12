@@ -441,8 +441,8 @@ namespace llvm {
                                                    SDOperand Ret, 
                                                    SelectionDAG &DAG) const;
 
-    virtual const TargetSubtarget* getSubtarget() {
-      return static_cast<const TargetSubtarget*>(Subtarget);
+    virtual const X86Subtarget* getSubtarget() {
+      return Subtarget;
     }
 
     /// isScalarFPTypeInSSEReg - Return true if the specified scalar FP type is
@@ -512,9 +512,6 @@ namespace llvm {
     SDOperand LowerSELECT(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerBRCOND(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerMEMSET(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerMEMCPYInline(SDOperand Dest, SDOperand Source,
-                                SDOperand Chain, unsigned Size, unsigned Align,
-                                SelectionDAG &DAG);
     SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG);
@@ -535,6 +532,19 @@ namespace llvm {
     SDNode *ExpandFP_TO_SINT(SDNode *N, SelectionDAG &DAG);
     SDNode *ExpandREADCYCLECOUNTER(SDNode *N, SelectionDAG &DAG);
     SDNode *ExpandATOMIC_LCS(SDNode *N, SelectionDAG &DAG);
+
+    SDOperand EmitTargetCodeForMemset(SelectionDAG &DAG,
+                                      SDOperand Chain,
+                                      SDOperand Dst, SDOperand Src,
+                                      SDOperand Size, unsigned Align,
+                                      Value *DstSV, uint64_t DstOff);
+    SDOperand EmitTargetCodeForMemcpy(SelectionDAG &DAG,
+                                      SDOperand Chain,
+                                      SDOperand Dst, SDOperand Src,
+                                      SDOperand Size, unsigned Align,
+                                      bool AlwaysInline,
+                                      Value *DstSV, uint64_t DstOff,
+                                      Value *SrcSV, uint64_t SrcOff);
   };
 }
 

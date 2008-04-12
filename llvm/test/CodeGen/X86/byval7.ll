@@ -1,6 +1,7 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah | grep add | grep 16
 
-	%struct.S = type { <2 x i64> }
+	%struct.S = type { <2 x i64>, <2 x i64>, <2 x i64>, <2 x i64>,
+                           <2 x i64> }
 
 define i32 @main() nounwind  {
 entry:

@@ -62,6 +62,8 @@ protected:
   ///
   ARMSubtarget(const Module &M, const std::string &FS, bool thumb);
 
+  /// getMaxInlineSizeThreshold - Returns the maximum memset / memcpy size
+  /// that still makes it profitable to inline the call.
   unsigned getMaxInlineSizeThreshold() const {
     // FIXME: For now, we don't lower memcpy's to loads / stores for Thumb.
     // Change this once Thumb ldmia / stmia support is added.

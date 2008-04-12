@@ -948,17 +948,60 @@ public:
               SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
 
 
-  virtual SDOperand LowerMEMCPY(SDOperand Op, SelectionDAG &DAG);
-  virtual SDOperand LowerMEMCPYCall(SDOperand Chain, SDOperand Dest,
-                                    SDOperand Source, SDOperand Count,
-                                    SelectionDAG &DAG);
-  virtual SDOperand LowerMEMCPYInline(SDOperand Chain, SDOperand Dest,
-                                      SDOperand Source, unsigned Size,
-                                      unsigned Align, SelectionDAG &DAG) {
-    assert(0 && "Not Implemented");
-    return SDOperand();   // this is here to silence compiler errors
+  /// EmitTargetCodeForMemcpy - Emit target-specific code that performs a
+  /// memcpy. This can be used by targets to provide code sequences for cases
+  /// that don't fit the target's parameters for simple loads/stores and can be
+  /// more efficient than using a library call. This function can return a null
+  /// SDOperand if the target declines to use inline code and a different
+  /// lowering strategy should be used.
+  /// 
+  /// If AlwaysInline is true, the size is constant and the target should not
+  /// emit any calls and is strongly encouraged to attempt to emit inline code
+  /// even if it is beyond the usual threshold because this intrinsic is being
+  /// expanded in a place where calls are not feasible (e.g. within the prologue
+  /// for another call). If the target chooses to decline an AlwaysInline
+  /// request here, legalize will resort to using simple loads and stores.
+  virtual SDOperand
+  EmitTargetCodeForMemcpy(SelectionDAG &DAG,
+                          SDOperand Chain,
+                          SDOperand Op1, SDOperand Op2,
+                          SDOperand Op3, unsigned Align,
+                          bool AlwaysInline,
+                          Value *DstSV, uint64_t DstOff,
+                          Value *SrcSV, uint64_t SrcOff) {
+    return SDOperand();
   }
 
+  /// EmitTargetCodeForMemmove - Emit target-specific code that performs a
+  /// memmove. This can be used by targets to provide code sequences for cases
+  /// that don't fit the target's parameters for simple loads/stores and can be
+  /// more efficient than using a library call. This function can return a null
+  /// SDOperand if the target declines to use code and a different lowering
+  /// strategy should be used.
+  virtual SDOperand
+  EmitTargetCodeForMemmove(SelectionDAG &DAG,
+                           SDOperand Chain,
+                           SDOperand Op1, SDOperand Op2,
+                           SDOperand Op3, unsigned Align,
+                           Value *DstSV, uint64_t DstOff,
+                           Value *SrcSV, uint64_t SrcOff) {
+    return SDOperand();
+  }
+
+  /// EmitTargetCodeForMemset - Emit target-specific code that performs a
+  /// memset. This can be used by targets to provide code sequences for cases
+  /// that don't fit the target's parameters for simple stores and can be more
+  /// efficient than using a library call. This function can return a null
+  /// SDOperand if the target declines to use code and a different lowering
+  /// strategy should be used.
+  virtual SDOperand
+  EmitTargetCodeForMemset(SelectionDAG &DAG,
+                          SDOperand Chain,
+                          SDOperand Op1, SDOperand Op2,
+                          SDOperand Op3, unsigned Align,
+                          Value *DstSV, uint64_t DstOff) {
+    return SDOperand();
+  }
 
   /// LowerOperation - This callback is invoked for operations that are 
   /// unsupported by the target, which are registered to use 'custom' lowering,

@@ -119,8 +119,8 @@ namespace llvm {
     getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                       MVT::ValueType VT) const;
 
-    virtual const TargetSubtarget* getSubtarget() {
-      return static_cast<const TargetSubtarget*>(Subtarget);
+    virtual const ARMSubtarget* getSubtarget() {
+      return Subtarget;
     }
 
   private:
@@ -143,11 +143,14 @@ namespace llvm {
     SDOperand LowerGLOBAL_OFFSET_TABLE(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerBR_JT(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerMEMCPYInline(SDOperand Chain, SDOperand Dest,
-                                SDOperand Source, unsigned Size,
-                                unsigned Align, SelectionDAG &DAG);
 
-
+    SDOperand EmitTargetCodeForMemcpy(SelectionDAG &DAG,
+                                      SDOperand Chain,
+                                      SDOperand Dst, SDOperand Src,
+                                      SDOperand Size, unsigned Align,
+                                      bool AlwaysInline,
+                                      Value *DstSV, uint64_t DstOff,
+                                      Value *SrcSV, uint64_t SrcOff);
   };
 }
 
