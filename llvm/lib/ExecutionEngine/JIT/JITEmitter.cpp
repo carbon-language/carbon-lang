@@ -233,8 +233,7 @@ unsigned JITResolver::getGOTIndexForAddr(void* addr) {
   if (!idx) {
     idx = ++nextGOTIndex;
     revGOTMap[addr] = idx;
-    DOUT << "Adding GOT entry " << idx
-         << " for addr " << addr << "\n";
+    DOUT << "Adding GOT entry " << idx << " for addr " << addr << "\n";
   }
   return idx;
 }
@@ -746,10 +745,14 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
     ? CPE.Val.MachineCPVal->getType() : CPE.Val.ConstVal->getType();
   Size += TheJIT->getTargetData()->getABITypeSize(Ty);
 
-  ConstantPoolBase = allocateSpace(Size, 1 << MCP->getConstantPoolAlignment());
+  unsigned Align = 1 << MCP->getConstantPoolAlignment();
+  ConstantPoolBase = allocateSpace(Size, Align);
   ConstantPool = MCP;
 
   if (ConstantPoolBase == 0) return;  // Buffer overflow.
+
+  DOUT << "JIT: Emitted constant pool at [" << ConstantPoolBase
+       << "] (size: " << Size << ", alignment: " << Align << ")\n";
 
   // Initialize the memory for all of the constant pool entries.
   for (unsigned i = 0, e = Constants.size(); i != e; ++i) {
@@ -761,6 +764,7 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
       abort();
     }
     TheJIT->InitializeMemory(Constants[i].Val.ConstVal, CAddr);
+    DOUT << "JIT:   CP" << i << " at [" << CAddr << "]\n";
   }
 }
 
