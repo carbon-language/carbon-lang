@@ -123,6 +123,10 @@ int Process::GetCurrentGroupId() {
   return getgid();
 }
 
+#ifdef HAVE_MACH_MACH_H
+#include <mach/mach.h>
+#endif
+
 // Some LLVM programs such as bugpoint produce core files as a normal part of
 // their operation. To prevent the disk from filling up, this function
 // does what's necessary to prevent their generation.
@@ -134,7 +138,27 @@ void Process::PreventCoreFiles() {
 #endif
 
 #ifdef HAVE_MACH_MACH_H
-  // Disable crash reporting on Mac OS X.
+  // Disable crash reporting on Mac OS X 10.0-10.4
+
+  // get information about the original set of exception ports for the task
+  mach_msg_type_number_t Count = 0;
+  exception_mask_t OriginalMasks[EXC_TYPES_COUNT];
+  exception_port_t OriginalPorts[EXC_TYPES_COUNT];
+  exception_behavior_t OriginalBehaviors[EXC_TYPES_COUNT];
+  thread_state_flavor_t OriginalFlavors[EXC_TYPES_COUNT];
+  kern_return_t err = 
+    task_get_exception_ports(mach_task_self(), EXC_MASK_ALL, OriginalMasks,
+                             &Count, OriginalPorts, OriginalBehaviors,
+                             OriginalFlavors);
+  if (err == KERN_SUCCESS) {
+    // replace each with MACH_PORT_NULL.
+    for (unsigned i = 0; i != Count; ++i)
+      task_set_exception_ports(mach_task_self(), OriginalMasks[i], 
+                               MACH_PORT_NULL, OriginalBehaviors[i],
+                               OriginalFlavors[i]);
+  }
+
+  // Disable crash reporting on Mac OS X 10.5
   signal(SIGABRT, _exit);
   signal(SIGILL,  _exit);
   signal(SIGFPE,  _exit);
