@@ -1343,13 +1343,6 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D) {
         ConsumeToken();
         
         // Parse the default argument
-        // FIXME: For C++, name lookup from within the default argument 
-        // should be able to find parameter names, but we haven't put them
-        // in the scope. This means that we will accept ill-formed code
-        // such as:
-        //
-        //   int x;
-        //   void f(int x = x) { }
         ExprResult DefArgResult = ParseAssignmentExpression();
         if (DefArgResult.isInvalid) {
           SkipUntil(tok::comma, tok::r_paren, true, true);

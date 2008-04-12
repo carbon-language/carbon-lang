@@ -425,7 +425,7 @@ void FunctionDecl::setParams(ParmVarDecl **NewParamInfo, unsigned NumParams) {
 /// getMinRequiredArguments - Returns the minimum number of arguments
 /// needed to call this function. This may be fewer than the number of
 /// function parameters, if some of the parameters have default
-/// arguments.
+/// arguments (in C++).
 unsigned FunctionDecl::getMinRequiredArguments() const {
   unsigned NumRequiredArgs = getNumParams();
   while (NumRequiredArgs > 0

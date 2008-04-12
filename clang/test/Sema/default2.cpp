@@ -25,3 +25,5 @@ void h()
    int i;
    extern void h2(int x = sizeof(i)); // expected-error {{default argument references local variable 'i' of enclosing function}}
 }
+
+void g2(int x, int y, int z = x + y); // expected-error {{default argument references parameter 'x'}} expected-error {{default argument references parameter 'y'}}
