@@ -51,6 +51,12 @@ void Sema::PopDeclContext() {
   CurContext = CurContext->getParent();
 }
 
+/// Add this decl to the scope shadowed decl chains.
+void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
+  IdResolver.AddDecl(D, S);
+  S->AddDecl(D);
+}
+
 void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
   if (S->decl_empty()) return;
   assert((S->getFlags() & Scope::DeclScope) &&"Scope shouldn't contain decls!");
@@ -429,10 +435,8 @@ Sema::CreateImplicitParameter(Scope *S, IdentifierInfo *Id,
                               SourceLocation IdLoc, QualType Type) {
   ParmVarDecl *New = ParmVarDecl::Create(Context, CurContext, IdLoc, Id, Type, 
                                          VarDecl::None, 0, 0);
-  if (Id) {
-    IdResolver.AddDecl(New, S);
-    S->AddDecl(New);
-  }
+  if (Id)
+    PushOnScopeChains(New, S);
 
   return New;
 }
@@ -896,10 +900,8 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   }
   
   // If this has an identifier, add it to the scope stack.
-  if (II) {
-    IdResolver.AddDecl(New, S);
-    S->AddDecl(New);
-  }
+  if (II)
+    PushOnScopeChains(New, S);
   // If any semantic error occurred, mark the decl as invalid.
   if (D.getInvalidType() || InvalidDecl)
     New->setInvalidDecl();
@@ -1117,10 +1119,8 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   if (D.getInvalidType())
     New->setInvalidDecl();
     
-  if (II) {
-    IdResolver.AddDecl(New, S);
-    S->AddDecl(New);
-  }
+  if (II)
+    PushOnScopeChains(New, S);
 
   HandleDeclAttributes(New, D.getAttributes(), 0);
   return New;
@@ -1184,10 +1184,8 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   for (unsigned p = 0, NumParams = FD->getNumParams(); p < NumParams; ++p) {
     ParmVarDecl *Param = FD->getParamDecl(p);
     // If this has an identifier, add it to the scope stack.
-    if (Param->getIdentifier()) {
-      IdResolver.AddDecl(Param, FnBodyScope);
-      FnBodyScope->AddDecl(Param);
-    }
+    if (Param->getIdentifier())
+      PushOnScopeChains(Param, FnBodyScope);
   }
 
   return FD;
@@ -1378,8 +1376,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
       S = S->getParent();
     
     // Add it to the decl chain.
-    IdResolver.AddDecl(New, S);
-    S->AddDecl(New);
+    PushOnScopeChains(New, S);
   }
   
   HandleDeclAttributes(New, Attr, 0);
@@ -1718,8 +1715,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
                              LastEnumConst);
   
   // Register this decl in the current scope stack.
-  IdResolver.AddDecl(New, S);
-  S->AddDecl(New);
+  PushOnScopeChains(New, S);
   return New;
 }
 

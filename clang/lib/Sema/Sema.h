@@ -261,6 +261,9 @@ private:
   void PushDeclContext(DeclContext *CD);
   void PopDeclContext();
 
+  /// Add this decl to the scope shadowed decl chains.
+  void PushOnScopeChains(NamedDecl *D, Scope *S);
+
   /// Subroutines of ActOnDeclarator().
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
                                 ScopedDecl *LastDecl);

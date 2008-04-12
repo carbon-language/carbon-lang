@@ -48,31 +48,26 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   
   // Add the built-in ObjC types.
   t = cast<TypedefType>(Context.getObjCIdType().getTypePtr());
-  IdResolver.AddDecl(t->getDecl(), S);
-  TUScope->AddDecl(t->getDecl());
+  PushOnScopeChains(t->getDecl(), TUScope);
   t = cast<TypedefType>(Context.getObjCClassType().getTypePtr());
-  IdResolver.AddDecl(t->getDecl(), S);
-  TUScope->AddDecl(t->getDecl());
+  PushOnScopeChains(t->getDecl(), TUScope);
   ObjCInterfaceType *it = cast<ObjCInterfaceType>(Context.getObjCProtoType());
   ObjCInterfaceDecl *IDecl = it->getDecl();
-  IdResolver.AddDecl(IDecl, S);
-  TUScope->AddDecl(IDecl);
+  PushOnScopeChains(IDecl, TUScope);
   
   // Synthesize "typedef struct objc_selector *SEL;"
   RecordDecl *SelTag = RecordDecl::Create(Context, Decl::Struct, CurContext,
                                           SourceLocation(), 
                                           &Context.Idents.get("objc_selector"),
                                           0);
-  IdResolver.AddDecl(SelTag, S);
-  TUScope->AddDecl(SelTag);
+  PushOnScopeChains(SelTag, TUScope);
   
   QualType SelT = Context.getPointerType(Context.getTagDeclType(SelTag));
   TypedefDecl *SelTypedef = TypedefDecl::Create(Context, CurContext,
                                                 SourceLocation(),
                                                 &Context.Idents.get("SEL"),
                                                 SelT, 0);
-  IdResolver.AddDecl(SelTypedef, S);
-  TUScope->AddDecl(SelTypedef);
+  PushOnScopeChains(SelTypedef, TUScope);
   Context.setObjCSelType(SelTypedef);
 }
 
