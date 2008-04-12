@@ -19,12 +19,16 @@
 #include <sstream>
 using namespace clang;
 
+
 /// getMappedOffset - Given an offset into the original SourceBuffer that this
 /// RewriteBuffer is based on, map it into the offset space of the
 /// RewriteBuffer.
 unsigned RewriteBuffer::getMappedOffset(unsigned OrigOffset,
                                         bool AfterInserts) const {
-  unsigned ResultOffset = OrigOffset;
+  unsigned ResultOffset = 0;
+#if !defined(USE_VECTOR)
+  ResultOffset += Deltas.getDeltaAt(OrigOffset+AfterInserts);
+#else
   unsigned DeltaIdx = 0;
   
   // Move past any deltas that are relevant.
@@ -37,13 +41,19 @@ unsigned RewriteBuffer::getMappedOffset(unsigned OrigOffset,
     for (; DeltaIdx != Deltas.size() &&
          OrigOffset == Deltas[DeltaIdx].FileLoc; ++DeltaIdx)
       ResultOffset += Deltas[DeltaIdx].Delta;
+#endif
   
-  return ResultOffset;
+ // printf("Map: %d/%d -> %d\n", OrigOffset, AfterInserts, ResultOffset);
+  return ResultOffset+OrigOffset;
 }
 
 /// AddDelta - When a change is made that shifts around the text buffer, this
 /// method is used to record that info.
 void RewriteBuffer::AddDelta(unsigned OrigOffset, int Change) {
+ // printf("AddDelta: %d/%d\n", OrigOffset, Change);
+#if !defined(USE_VECTOR)
+  return Deltas.AddDelta(OrigOffset, Change);
+#else
   assert(Change != 0 && "Not changing anything");
   unsigned DeltaIdx = 0;
   
@@ -82,6 +92,7 @@ void RewriteBuffer::AddDelta(unsigned OrigOffset, int Change) {
   // If it is now dead, remove it.
   if (Deltas[DeltaIdx].Delta == 0)
     Deltas.erase(Deltas.begin()+DeltaIdx);
+#endif
 }
 
 

@@ -457,6 +457,7 @@
 		DEF2F00F0C6CFED5000C4259 /* SemaChecking.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = SemaChecking.cpp; path = lib/Sema/SemaChecking.cpp; sourceTree = "<group>"; };
 		DEF7D9F60C9C8B1A0001F598 /* Rewriter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Rewriter.h; path = clang/Rewrite/Rewriter.h; sourceTree = "<group>"; };
 		DEF7D9F80C9C8B1D0001F598 /* Rewriter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Rewriter.cpp; path = lib/Rewrite/Rewriter.cpp; sourceTree = "<group>"; };
+		DEFFECA30DB093D100B4E7C3 /* DeltaTree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DeltaTree.h; path = clang/Rewrite/DeltaTree.h; sourceTree = "<group>"; };
 		F0226FD00C18084500141F42 /* TextDiagnosticPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = TextDiagnosticPrinter.cpp; path = Driver/TextDiagnosticPrinter.cpp; sourceTree = "<group>"; };
 		F0226FD10C18084500141F42 /* TextDiagnosticPrinter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = TextDiagnosticPrinter.h; path = Driver/TextDiagnosticPrinter.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -890,6 +891,7 @@
 		DEF7D9F40C9C8B020001F598 /* Rewrite */ = {
 			isa = PBXGroup;
 			children = (
+				DEFFECA30DB093D100B4E7C3 /* DeltaTree.h */,
 				35F2BE7B0DAC2963006E7668 /* HTMLRewrite.h */,
 				DEF7D9F60C9C8B1A0001F598 /* Rewriter.h */,
 				DE53370B0CE2D96F00D9A028 /* RewriteRope.h */,

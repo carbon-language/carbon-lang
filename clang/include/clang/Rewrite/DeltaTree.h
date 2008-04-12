@@ -1,0 +1,418 @@
+//===--- DeltaTree.h - B-Tree for Rewrite Delta tracking --------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file defines the DeltaTree class.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef CLANG_REWRITE_DELTATREE_H
+#define CLANG_REWRITE_DELTATREE_H
+
+#include "llvm/Support/Casting.h"
+
+namespace clang {
+  using llvm::cast;
+  using llvm::dyn_cast;
+  class DeltaTreeInteriorNode;
+  
+  /// SourceDelta - As code in the original input buffer is added and deleted,
+  /// SourceDelta records are used to keep track of how the input SourceLocation
+  /// object is mapped into the output buffer.
+  struct SourceDelta {
+    unsigned FileLoc;
+    int Delta;
+    
+    static SourceDelta get(unsigned Loc, int D) {
+      SourceDelta Delta;
+      Delta.FileLoc = Loc;
+      Delta.Delta = D;
+      return Delta;
+    }
+  };
+  
+  /// The DeltaTree class is a multiway search tree (BTree) structure with some
+  /// fancy features.  B-Trees are are generally more memory and cache efficient
+  /// than binary trees, because they store multiple keys/values in each node.
+  ///
+  /// DeltaTree implements a key/value mapping from FileIndex to Delta, allowing
+  /// fast lookup by FileIndex.  However, an added (important) bonus is that it
+  /// can also efficiently tell us the full accumulated delta for a specific
+  /// file offset as well, without traversing the whole tree.
+  ///
+  /// The nodes of the tree are made up of instances of two classes:
+  /// DeltaTreeNode and DeltaTreeInteriorNode.  The later subclasses the
+  /// former and adds children pointers.  Each node knows the full delta of all
+  /// entries (recursively) contained inside of it, which allows us to get the
+  /// full delta implied by a whole subtree in constant time.
+  
+  /// DeltaTreeNode - The common part of all nodes.
+  ///
+  class DeltaTreeNode {
+    friend class DeltaTreeInteriorNode;
+    
+    /// WidthFactor - This controls the number of K/V slots held in the BTree:
+    /// how wide it is.  Each level of the BTree is guaranteed to have at least
+    /// WidthFactor-1 K/V pairs (unless the whole tree is less full than that)
+    /// and may have at most 2*WidthFactor-1 K/V pairs.
+    enum { WidthFactor = 8 };
+    
+    /// Values - This tracks the SourceDelta's currently in this node.
+    ///
+    SourceDelta Values[2*WidthFactor-1];
+    
+    /// NumValuesUsed - This tracks the number of values this node currently
+    /// holds.
+    unsigned char NumValuesUsed;
+    
+    /// IsLeaf - This is true if this is a leaf of the btree.  If false, this is
+    /// an interior node, and is actually an instance of DeltaTreeInteriorNode.
+    bool IsLeaf;
+    
+    /// FullDelta - This is the full delta of all the values in this node and
+    /// all children nodes.
+    int FullDelta;
+  public:
+    DeltaTreeNode(bool isLeaf = true)
+      : NumValuesUsed(0), IsLeaf(isLeaf), FullDelta(0) {}
+    
+    bool isLeaf() const { return IsLeaf; }
+    int getFullDelta() const { return FullDelta; }
+    bool isFull() const { return NumValuesUsed == 2*WidthFactor-1; }
+    
+    unsigned getNumValuesUsed() const { return NumValuesUsed; }
+    const SourceDelta &getValue(unsigned i) const {
+      assert(i < NumValuesUsed && "Invalid value #");
+      return Values[i];
+    }
+    SourceDelta &getValue(unsigned i) {
+      assert(i < NumValuesUsed && "Invalid value #");
+      return Values[i];
+    }
+
+    /// AddDeltaNonFull - Add a delta to this tree and/or it's children, knowing
+    /// that this node is not currently full.
+    void AddDeltaNonFull(unsigned FileIndex, int Delta);
+    
+    /// RecomputeFullDeltaLocally - Recompute the FullDelta field by doing a
+    /// local walk over our contained deltas.
+    void RecomputeFullDeltaLocally();
+    
+    void Destroy();
+    
+    static inline bool classof(const DeltaTreeNode *) { return true; }
+  };
+  
+  /// DeltaTreeInteriorNode - When isLeaf = false, a node has child pointers.
+  /// This class tracks them.
+  class DeltaTreeInteriorNode : public DeltaTreeNode {
+    DeltaTreeNode *Children[2*WidthFactor];
+    ~DeltaTreeInteriorNode() {
+      for (unsigned i = 0, e = NumValuesUsed+1; i != e; ++i)
+        Children[i]->Destroy();
+    }
+    friend class DeltaTreeNode;
+  public:
+    DeltaTreeInteriorNode() : DeltaTreeNode(false /*nonleaf*/) {}
+
+    DeltaTreeInteriorNode(DeltaTreeNode *FirstChild)
+      : DeltaTreeNode(false /*nonleaf*/) {
+      FullDelta = FirstChild->FullDelta;
+      Children[0] = FirstChild;
+    }
+    
+    const DeltaTreeNode *getChild(unsigned i) const {
+      assert(i < getNumValuesUsed()+1 && "Invalid child");
+      return Children[i];
+    }
+    DeltaTreeNode *getChild(unsigned i) {
+      assert(i < getNumValuesUsed()+1 && "Invalid child");
+      return Children[i];
+    }
+    
+    static inline bool classof(const DeltaTreeInteriorNode *) { return true; }
+    static inline bool classof(const DeltaTreeNode *N) { return !N->isLeaf(); }
+  private:
+    void SplitChild(unsigned ChildNo);
+  };
+  
+  /// Destroy - A 'virtual' destructor.
+  inline void DeltaTreeNode::Destroy() {
+    if (isLeaf())
+      delete this;
+    else
+      delete cast<DeltaTreeInteriorNode>(this);
+  }
+  
+  /// RecomputeFullDeltaLocally - Recompute the FullDelta field by doing a
+  /// local walk over our contained deltas.
+  inline void DeltaTreeNode::RecomputeFullDeltaLocally() {
+    int NewFullDelta = 0;
+    for (unsigned i = 0, e = getNumValuesUsed(); i != e; ++i)
+      NewFullDelta += Values[i].Delta;
+    if (DeltaTreeInteriorNode *IN = dyn_cast<DeltaTreeInteriorNode>(this))
+      for (unsigned i = 0, e = getNumValuesUsed()+1; i != e; ++i)
+        NewFullDelta += IN->getChild(i)->getFullDelta();
+    FullDelta = NewFullDelta;
+  }
+  
+
+  /// AddDeltaNonFull - Add a delta to this tree and/or it's children, knowing
+  /// that this node is not currently full.
+  inline void DeltaTreeNode::AddDeltaNonFull(unsigned FileIndex, int Delta) {
+    assert(!isFull() && "AddDeltaNonFull on a full tree?");
+    
+    // Maintain full delta for this node.
+    FullDelta += Delta;
+
+    // Find the insertion point, the first delta whose index is >= FileIndex.
+    unsigned i = 0, e = getNumValuesUsed();
+    while (i != e && FileIndex > getValue(i).FileLoc)
+      ++i;
+
+    // If we found an a record for exactly this file index, just merge this
+    // value into the preexisting record and finish early.
+    if (i != e && getValue(i).FileLoc == FileIndex) {
+      // NOTE: Delta could drop to zero here.  This means that the next delta
+      // entry is useless and could be removed.  Supporting erases is
+      // significantly more complex though, so we just leave an entry with
+      // Delta=0 in the tree.
+      Values[i].Delta += Delta;
+      return;
+    }
+    
+    if (DeltaTreeInteriorNode *IN = dyn_cast<DeltaTreeInteriorNode>(this)) {
+      // Insertion into an interior node propagates the value down to a child.
+      DeltaTreeNode *Child = IN->getChild(i);
+
+      // If the child tree is full, split it, pulling an element up into our
+      // node.
+      if (Child->isFull()) {
+        IN->SplitChild(i);
+        SourceDelta &MedianVal = getValue(i);
+        
+        // If the median value we pulled up is exactly our insert position, add
+        // the delta and return.
+        if (MedianVal.FileLoc == FileIndex) {
+          MedianVal.Delta += Delta;
+          return;
+        }
+        
+        // If the median value pulled up is less than our current search point,
+        // include those deltas and search down the RHS now.
+        if (MedianVal.FileLoc < FileIndex)
+          Child = IN->getChild(i+1);
+      }
+      
+      Child->AddDeltaNonFull(FileIndex, Delta);
+    } else {
+      // For an insertion into a non-full leaf node, just insert the value in
+      // its sorted position.  This requires moving later values over.
+      if (i != e)
+        memmove(&Values[i+1], &Values[i], sizeof(Values[0])*(e-i));
+      Values[i] = SourceDelta::get(FileIndex, Delta);
+      ++NumValuesUsed;
+    }
+  }
+  
+  /// SplitChild - At this point, we know that the current node is not full and
+  /// that the specified child of this node is.  Split the child in half at its
+  /// median, propagating one value up into us.  Child may be either an interior
+  /// or leaf node.
+  inline void DeltaTreeInteriorNode::SplitChild(unsigned ChildNo) {
+    //printf("SplitChild: %p %d\n", (void*)this, ChildNo);
+
+    DeltaTreeNode *Child = getChild(ChildNo);
+    assert(!isFull() && Child->isFull() && "Inconsistent constraints");
+    
+    // Since the child is full, it contains 2*WidthFactor-1 values.  We move
+    // the first 'WidthFactor-1' values to the LHS child (which we leave in the
+    // original child), propagate one value up into us, and move the last
+    // 'WidthFactor-1' values into thew RHS child.
+    
+    // Create the new child node.
+    DeltaTreeNode *NewNode;
+    if (DeltaTreeInteriorNode *CIN = dyn_cast<DeltaTreeInteriorNode>(Child)) {
+      // If the child is an interior node, also move over 'WidthFactor' grand
+      // children into the new node.
+      NewNode = new DeltaTreeInteriorNode();
+      memcpy(&((DeltaTreeInteriorNode*)NewNode)->Children[0],
+             &CIN->Children[WidthFactor],
+             WidthFactor*sizeof(CIN->Children[0]));
+    } else {
+      // Just create the child node.
+      NewNode = new DeltaTreeNode();
+    }
+    
+    // Move over the last 'WidthFactor-1' values from Child to NewNode.
+    memcpy(&NewNode->Values[0], &Child->Values[WidthFactor],
+           (WidthFactor-1)*sizeof(Child->Values[0]));
+    
+    // Decrease the number of values in the two children.
+    NewNode->NumValuesUsed = Child->NumValuesUsed = WidthFactor-1;
+    
+    // Recompute the two children's full delta.  Our delta hasn't changed, but
+    // their delta has.
+    NewNode->RecomputeFullDeltaLocally();
+    Child->RecomputeFullDeltaLocally();
+    
+    // Now that we have two nodes and a new element, insert the median value
+    // into ourself by moving all the later values/children down, then inserting
+    // the new one.
+    if (getNumValuesUsed() != ChildNo)
+      memmove(&Children[ChildNo+2], &Children[ChildNo+1], 
+              (getNumValuesUsed()-ChildNo)*sizeof(Children[0]));
+    Children[ChildNo+1] = NewNode;
+    
+    if (getNumValuesUsed() != ChildNo)
+      memmove(&Values[ChildNo+1], &Values[ChildNo],
+              (getNumValuesUsed()-ChildNo)*sizeof(Values[0]));
+    Values[ChildNo] = Child->Values[WidthFactor-1];
+    ++NumValuesUsed;
+  }
+
+   
+  
+  /// DeltaTree - a multiway search tree (BTree) structure with some fancy
+  /// features.  B-Trees are are generally more memory and cache efficient than
+  /// binary trees, because they store multiple keys/values in each node.  This
+  /// implements a key/value mapping from index to delta, and allows fast lookup
+  /// on index.  However, an added (important) bonus is that it can also
+  /// efficiently tell us the full accumulated delta for a specific file offset
+  /// as well, without traversing the whole tree.
+  class DeltaTree {
+    DeltaTreeNode *Root;
+    void operator=(const DeltaTree&); // DO NOT IMPLEMENT
+  public:
+    DeltaTree() {
+      Root = new DeltaTreeNode();
+    }
+    DeltaTree(const DeltaTree &RHS) {
+      // Currently we only support copying when the RHS is empty.
+      assert(RHS.empty() && "Can only copy empty tree");
+      Root = new DeltaTreeNode();
+    }
+
+    ~DeltaTree() {
+      Root->Destroy();
+    }
+    
+    bool empty() const {
+      return Root->getNumValuesUsed() == 0;
+    }
+    
+    /// getDeltaAt - Return the accumulated delta at the specified file offset.
+    /// This includes all insertions or delections that occurred *before* the
+    /// specified file index.
+    int getDeltaAt(unsigned FileIndex) const {
+      const DeltaTreeNode *Node = Root;
+
+      int Result = 0;
+
+      // Walk down the tree.
+      while (1) {
+        // For all nodes, include any local deltas before the specified file
+        // index by summing them up directly.  Keep track of how many were
+        // included.
+        unsigned NumValsGreater = 0;
+        for (unsigned e = Node->getNumValuesUsed(); NumValsGreater != e;
+             ++NumValsGreater) {
+          const SourceDelta &Val = Node->getValue(NumValsGreater);
+          
+          if (Val.FileLoc >= FileIndex)
+            break;
+          Result += Val.Delta;
+        }
+      
+        // If we have an interior node, include information about children and
+        // recurse.  Otherwise, if we have a leaf, we're done.
+        const DeltaTreeInteriorNode *IN = dyn_cast<DeltaTreeInteriorNode>(Node);
+        if (!IN) return Result;
+
+        // Include any children to the left of the values we skipped, all of
+        // their deltas should be included as well.
+        for (unsigned i = 0; i != NumValsGreater; ++i)
+          Result += IN->getChild(i)->getFullDelta();
+        
+        // If we found exactly the value we were looking for, break off the
+        // search early.  There is no need to search the RHS of the value for
+        // partial results.
+        if (NumValsGreater != Node->getNumValuesUsed() &&
+            Node->getValue(NumValsGreater).FileLoc == FileIndex)
+          return Result;
+        
+        // Otherwise, traverse down the tree.  The selected subtree may be
+        // partially included in the range.
+        Node = IN->getChild(NumValsGreater);
+      }
+      // NOT REACHED.
+    }
+        
+
+    /// AddDelta - When a change is made that shifts around the text buffer,
+    /// this method is used to record that info.  It inserts a delta of 'Delta'
+    /// into the current DeltaTree at offset FileIndex.
+    void AddDelta(unsigned FileIndex, int Delta) {
+      assert(Delta && "Adding a noop?");
+      //printf("Add: %d %d\n", FileIndex, Delta);
+      //if (FileIndex == 9251)
+        //printf("Here\n");
+
+      // If the root is full, create a new dummy (non-empty) interior node that
+      // points to it, allowing the old root to be split.
+      if (Root->isFull())
+        Root = new DeltaTreeInteriorNode(Root);
+      
+      Root->AddDeltaNonFull(FileIndex, Delta);
+      
+      //VerifyTree(Root);
+    }
+    
+    void VerifyTree(const DeltaTreeNode *N) const {
+      const DeltaTreeInteriorNode *IN = dyn_cast<DeltaTreeInteriorNode>(N);
+      if (IN == 0) {
+        // Verify leaves, just ensure that FullDelta matches up and the elements
+        // are in proper order.
+        int FullDelta = 0;
+        for (unsigned i = 0, e = N->getNumValuesUsed(); i != e; ++i) {
+          if (i)
+            assert(N->getValue(i-1).FileLoc < N->getValue(i).FileLoc);
+          FullDelta += N->getValue(i).Delta;
+        }
+        assert(FullDelta == N->getFullDelta());
+        return;
+      }
+      
+      // Verify interior nodes: Ensure that FullDelta matches up and the
+      // elements are in proper order and the children are in proper order.
+      int FullDelta = 0;
+      for (unsigned i = 0, e = IN->getNumValuesUsed(); i != e; ++i) {
+        const SourceDelta &IVal = N->getValue(i);
+        const DeltaTreeNode *IChild = IN->getChild(i);
+        if (i)
+          assert(IN->getValue(i-1).FileLoc < IVal.FileLoc);
+        FullDelta += IVal.Delta;
+        FullDelta += IChild->getFullDelta();
+        
+        // The largest value in child #i should be smaller than FileLoc.
+        assert(IChild->getValue(IChild->getNumValuesUsed()-1).FileLoc <
+               IVal.FileLoc);
+
+        // The smallest value in child #i+1 should be larger than FileLoc.
+        assert(IN->getChild(i+1)->getValue(0).FileLoc > IVal.FileLoc);
+        VerifyTree(IChild);
+      }
+      
+      FullDelta += IN->getChild(IN->getNumValuesUsed())->getFullDelta();
+
+      assert(FullDelta == N->getFullDelta());
+    }
+  };
+}  // end namespace llvm
+
+#endif

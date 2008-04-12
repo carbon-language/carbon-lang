@@ -21,28 +21,15 @@
 #include <vector>
 #include <cstring>
 #include <string>
+#include "clang/Rewrite/DeltaTree.h"
+
+//#define USE_VECTOR 1
 
 namespace clang {
   class SourceManager;
   class Rewriter;
   class Stmt;
   
-/// SourceDelta - As code in the original input buffer is added and deleted,
-/// SourceDelta records are used to keep track of how the input SourceLocation
-/// object is mapped into the output buffer.
-struct SourceDelta {
-  unsigned FileLoc;
-  int Delta;
-  
-  static SourceDelta get(unsigned Loc, int D) {
-    SourceDelta Delta;
-    Delta.FileLoc = Loc;
-    Delta.Delta = D;
-    return Delta;
-  }
-};
-
-
 /// RewriteBuffer - As code is rewritten, SourceBuffer's from the original
 /// input with modifications get a new RewriteBuffer associated with them.  The
 /// RewriteBuffer captures the modified text itself as well as information used
@@ -51,9 +38,13 @@ struct SourceDelta {
 /// locations after the insertion point have to be mapped.
 class RewriteBuffer {
   friend class Rewriter;
+#ifdef USE_VECTOR
   /// Deltas - Keep track of all the deltas in the source code due to insertions
   /// and deletions.  These are kept in sorted order based on the FileLoc.
   std::vector<SourceDelta> Deltas;
+#else
+  DeltaTree Deltas;
+#endif
   
   /// Buffer - This is the actual buffer itself.  Note that using a vector or
   /// string is a horribly inefficient way to do this, we should use a rope
