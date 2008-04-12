@@ -1,5 +1,9 @@
 ; RUN: llvm-as < %s | llc -march=x86 -tailcallopt | grep TAILCALL
-%struct.s = type { i32, i32, i32 }
+; check for the 2 byval moves
+; RUN: llvm-as < %s | llc -march=x86 -tailcallopt | grep rep | wc -l | grep 2
+%struct.s = type {i32, i32, i32, i32, i32, i32, i32, i32,
+                  i32, i32, i32, i32, i32, i32, i32, i32,
+                  i32, i32, i32, i32, i32, i32, i32, i32 }
 
 define  fastcc i32 @tailcallee(%struct.s* byval %a) {
 entry:
