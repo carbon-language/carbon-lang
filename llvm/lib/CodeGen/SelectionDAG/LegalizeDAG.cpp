@@ -196,7 +196,7 @@ private:
 
   void LegalizeSetCCOperands(SDOperand &LHS, SDOperand &RHS, SDOperand &CC);
     
-  SDOperand ExpandLibCall(const char *Name, SDNode *Node, bool isSigned,
+  SDOperand ExpandLibCall(RTLIB::Libcall LC, SDNode *Node, bool isSigned,
                           SDOperand &Hi);
   SDOperand ExpandIntToFP(bool isSigned, MVT::ValueType DestTy,
                           SDOperand Source);
@@ -2992,7 +2992,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
       if (LC != RTLIB::UNKNOWN_LIBCALL) {
         SDOperand Dummy;
-        Result = ExpandLibCall(TLI.getLibcallName(LC), Node, isSigned, Dummy);
+        Result = ExpandLibCall(LC, Node, isSigned, Dummy);
         break;
       }
 
@@ -3195,7 +3195,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           RTLIB::Libcall LC = Node->getOpcode() == ISD::UREM
             ? RTLIB::UREM_I32 : RTLIB::SREM_I32;
           SDOperand Dummy;
-          Result = ExpandLibCall(TLI.getLibcallName(LC), Node, isSigned, Dummy);
+          Result = ExpandLibCall(LC, Node, isSigned, Dummy);
         }
       } else {
         assert(MVT::isFloatingPoint(VT) &&
@@ -3207,8 +3207,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           RTLIB::Libcall LC = GetFPLibCall(VT, RTLIB::REM_F32, RTLIB::REM_F64,
                                            RTLIB::REM_F80, RTLIB::REM_PPCF128);
           SDOperand Dummy;
-          Result = ExpandLibCall(TLI.getLibcallName(LC), Node,
-                                 false/*sign irrelevant*/, Dummy);
+          Result = ExpandLibCall(LC, Node, false/*sign irrelevant*/, Dummy);
         }
       }
       break;
@@ -3493,8 +3492,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         default: assert(0 && "Unreachable!");
         }
         SDOperand Dummy;
-        Result = ExpandLibCall(TLI.getLibcallName(LC), Node,
-                               false/*sign irrelevant*/, Dummy);
+        Result = ExpandLibCall(LC, Node, false/*sign irrelevant*/, Dummy);
         break;
       }
       }
@@ -3514,8 +3512,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     RTLIB::Libcall LC = GetFPLibCall(VT, RTLIB::POWI_F32, RTLIB::POWI_F64,
                                      RTLIB::POWI_F80, RTLIB::POWI_PPCF128);
     SDOperand Dummy;
-    Result = ExpandLibCall(TLI.getLibcallName(LC), Node,
-                           false/*sign irrelevant*/, Dummy);
+    Result = ExpandLibCall(LC, Node, false/*sign irrelevant*/, Dummy);
     break;
   }
   case ISD::BIT_CONVERT:
@@ -3789,8 +3786,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       default: assert(0 && "Unreachable!");
       }
       SDOperand Dummy;
-      Result = ExpandLibCall(TLI.getLibcallName(LC), Node,
-                             false/*sign irrelevant*/, Dummy);
+      Result = ExpandLibCall(LC, Node, false/*sign irrelevant*/, Dummy);
       break;
     }
     case Promote:
@@ -4669,7 +4665,7 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
       }
       
       SDOperand Dummy;
-      Tmp1 = ExpandLibCall(TLI.getLibcallName(LC1),
+      Tmp1 = ExpandLibCall(LC1,
                            DAG.getNode(ISD::MERGE_VALUES, VT, LHS, RHS).Val, 
                            false /*sign irrelevant*/, Dummy);
       Tmp2 = DAG.getConstant(0, MVT::i32);
@@ -4677,8 +4673,8 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
       if (LC2 != RTLIB::UNKNOWN_LIBCALL) {
         Tmp1 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(Tmp1), Tmp1, Tmp2,
                            CC);
-        LHS = ExpandLibCall(TLI.getLibcallName(LC2),
-                            DAG.getNode(ISD::MERGE_VALUES, VT, LHS, RHS).Val, 
+        LHS = ExpandLibCall(LC2,
+                            DAG.getNode(ISD::MERGE_VALUES, VT, LHS, RHS).Val,
                             false /*sign irrelevant*/, Dummy);
         Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(LHS), LHS, Tmp2,
                            DAG.getCondCode(TLI.getCmpLibcallCC(LC2)));
@@ -5202,7 +5198,7 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
 // does not fit into a register, return the lo part and set the hi part to the
 // by-reg argument.  If it does fit into a single register, return the result
 // and leave the Hi part unset.
-SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
+SDOperand SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
                                               bool isSigned, SDOperand &Hi) {
   assert(!IsLegalizingCall && "Cannot overlap legalization of calls!");
   // The input chain to this libcall is the entry node of the function. 
@@ -5220,7 +5216,8 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
     Entry.isZExt = !isSigned;
     Args.push_back(Entry);
   }
-  SDOperand Callee = DAG.getExternalSymbol(Name, TLI.getPointerTy());
+  SDOperand Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
+                                           TLI.getPointerTy());
 
   // Splice the libcall in wherever FindInputOutputChains tells us to.
   const Type *RetTy = MVT::getTypeForValueType(Node->getValueType(0));
@@ -5371,8 +5368,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   assert(TLI.getLibcallName(LC) && "Don't know how to expand this SINT_TO_FP!");
   Source = DAG.getNode(ISD::SINT_TO_FP, DestTy, Source);
   SDOperand HiPart;
-  SDOperand Result = ExpandLibCall(TLI.getLibcallName(LC), Source.Val, isSigned,
-                                   HiPart);
+  SDOperand Result = ExpandLibCall(LC, Source.Val, isSigned, HiPart);
   if (Result.getValueType() != DestTy && HiPart.Val)
     Result = DAG.getNode(ISD::BUILD_PAIR, DestTy, Result, HiPart);
   return Result;
@@ -6131,8 +6127,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
         LC = RTLIB::FPTOSINT_F80_I64;
       else if (Node->getOperand(0).getValueType() == MVT::ppcf128)
         LC = RTLIB::FPTOSINT_PPCF128_I64;
-      Lo = ExpandLibCall(TLI.getLibcallName(LC), Node,
-                         false/*sign irrelevant*/, Hi);
+      Lo = ExpandLibCall(LC, Node, false/*sign irrelevant*/, Hi);
     } else if (VT == MVT::i128) {
       if (Node->getOperand(0).getValueType() == MVT::f32)
         LC = RTLIB::FPTOSINT_F32_I128;
@@ -6142,8 +6137,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
         LC = RTLIB::FPTOSINT_F80_I128;
       else if (Node->getOperand(0).getValueType() == MVT::ppcf128)
         LC = RTLIB::FPTOSINT_PPCF128_I128;
-      Lo = ExpandLibCall(TLI.getLibcallName(LC), Node,
-                         false/*sign irrelevant*/, Hi);
+      Lo = ExpandLibCall(LC, Node, false/*sign irrelevant*/, Hi);
     } else {
       assert(0 && "Unexpected uint-to-fp conversion!");
     }
@@ -6178,8 +6172,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
         LC = RTLIB::FPTOUINT_F80_I64;
       else if (Node->getOperand(0).getValueType() == MVT::ppcf128)
         LC = RTLIB::FPTOUINT_PPCF128_I64;
-      Lo = ExpandLibCall(TLI.getLibcallName(LC), Node,
-                         false/*sign irrelevant*/, Hi);
+      Lo = ExpandLibCall(LC, Node, false/*sign irrelevant*/, Hi);
     } else if (VT == MVT::i128) {
       if (Node->getOperand(0).getValueType() == MVT::f32)
         LC = RTLIB::FPTOUINT_F32_I128;
@@ -6189,8 +6182,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
         LC = RTLIB::FPTOUINT_F80_I128;
       else if (Node->getOperand(0).getValueType() == MVT::ppcf128)
         LC = RTLIB::FPTOUINT_PPCF128_I128;
-      Lo = ExpandLibCall(TLI.getLibcallName(LC), Node,
-                         false/*sign irrelevant*/, Hi);
+      Lo = ExpandLibCall(LC, Node, false/*sign irrelevant*/, Hi);
     } else {
       assert(0 && "Unexpected uint-to-fp conversion!");
     }
@@ -6243,8 +6235,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     }
 
     // Otherwise, emit a libcall.
-    Lo = ExpandLibCall(TLI.getLibcallName(RTLIB::SHL_I64), Node,
-                       false/*left shift=unsigned*/, Hi);
+    Lo = ExpandLibCall(RTLIB::SHL_I64, Node, false/*left shift=unsigned*/, Hi);
     break;
   }
 
@@ -6276,8 +6267,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     }
 
     // Otherwise, emit a libcall.
-    Lo = ExpandLibCall(TLI.getLibcallName(RTLIB::SRA_I64), Node,
-                       true/*ashr is signed*/, Hi);
+    Lo = ExpandLibCall(RTLIB::SRA_I64, Node, true/*ashr is signed*/, Hi);
     break;
   }
 
@@ -6309,8 +6299,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     }
 
     // Otherwise, emit a libcall.
-    Lo = ExpandLibCall(TLI.getLibcallName(RTLIB::SRL_I64), Node,
-                       false/*lshr is unsigned*/, Hi);
+    Lo = ExpandLibCall(RTLIB::SRL_I64, Node, false/*lshr is unsigned*/, Hi);
     break;
   }
 
@@ -6467,49 +6456,48 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     }
 
     // If nothing else, we can make a libcall.
-    Lo = ExpandLibCall(TLI.getLibcallName(RTLIB::MUL_I64), Node,
-                       false/*sign irrelevant*/, Hi);
+    Lo = ExpandLibCall(RTLIB::MUL_I64, Node, false/*sign irrelevant*/, Hi);
     break;
   }
   case ISD::SDIV:
-    Lo = ExpandLibCall(TLI.getLibcallName(RTLIB::SDIV_I64), Node, true, Hi);
+    Lo = ExpandLibCall(RTLIB::SDIV_I64, Node, true, Hi);
     break;
   case ISD::UDIV:
-    Lo = ExpandLibCall(TLI.getLibcallName(RTLIB::UDIV_I64), Node, true, Hi);
+    Lo = ExpandLibCall(RTLIB::UDIV_I64, Node, true, Hi);
     break;
   case ISD::SREM:
-    Lo = ExpandLibCall(TLI.getLibcallName(RTLIB::SREM_I64), Node, true, Hi);
+    Lo = ExpandLibCall(RTLIB::SREM_I64, Node, true, Hi);
     break;
   case ISD::UREM:
-    Lo = ExpandLibCall(TLI.getLibcallName(RTLIB::UREM_I64), Node, true, Hi);
+    Lo = ExpandLibCall(RTLIB::UREM_I64, Node, true, Hi);
     break;
 
   case ISD::FADD:
-    Lo = ExpandLibCall(TLI.getLibcallName(GetFPLibCall(VT, RTLIB::ADD_F32,
-                                                       RTLIB::ADD_F64,
-                                                       RTLIB::ADD_F80,
-                                                       RTLIB::ADD_PPCF128)),
+    Lo = ExpandLibCall(GetFPLibCall(VT, RTLIB::ADD_F32,
+                                        RTLIB::ADD_F64,
+                                        RTLIB::ADD_F80,
+                                        RTLIB::ADD_PPCF128),
                        Node, false, Hi);
     break;
   case ISD::FSUB:
-    Lo = ExpandLibCall(TLI.getLibcallName(GetFPLibCall(VT, RTLIB::SUB_F32,
-                                                       RTLIB::SUB_F64,
-                                                       RTLIB::SUB_F80,
-                                                       RTLIB::SUB_PPCF128)),
+    Lo = ExpandLibCall(GetFPLibCall(VT, RTLIB::SUB_F32,
+                                        RTLIB::SUB_F64,
+                                        RTLIB::SUB_F80,
+                                        RTLIB::SUB_PPCF128),
                        Node, false, Hi);
     break;
   case ISD::FMUL:
-    Lo = ExpandLibCall(TLI.getLibcallName(GetFPLibCall(VT, RTLIB::MUL_F32,
-                                                       RTLIB::MUL_F64,
-                                                       RTLIB::MUL_F80,
-                                                       RTLIB::MUL_PPCF128)),
+    Lo = ExpandLibCall(GetFPLibCall(VT, RTLIB::MUL_F32,
+                                        RTLIB::MUL_F64,
+                                        RTLIB::MUL_F80,
+                                        RTLIB::MUL_PPCF128),
                        Node, false, Hi);
     break;
   case ISD::FDIV:
-    Lo = ExpandLibCall(TLI.getLibcallName(GetFPLibCall(VT, RTLIB::DIV_F32,
-                                                       RTLIB::DIV_F64,
-                                                       RTLIB::DIV_F80,
-                                                       RTLIB::DIV_PPCF128)),
+    Lo = ExpandLibCall(GetFPLibCall(VT, RTLIB::DIV_F32,
+                                        RTLIB::DIV_F64,
+                                        RTLIB::DIV_F80,
+                                        RTLIB::DIV_PPCF128),
                        Node, false, Hi);
     break;
   case ISD::FP_EXTEND:
@@ -6524,16 +6512,16 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       Lo = DAG.getConstantFP(APFloat(APInt(64, 1, &zero)), MVT::f64);
       break;
     }
-    Lo = ExpandLibCall(TLI.getLibcallName(RTLIB::FPEXT_F32_F64), Node, true,Hi);
+    Lo = ExpandLibCall(RTLIB::FPEXT_F32_F64, Node, true, Hi);
     break;
   case ISD::FP_ROUND:
-    Lo = ExpandLibCall(TLI.getLibcallName(RTLIB::FPROUND_F64_F32),Node,true,Hi);
+    Lo = ExpandLibCall(RTLIB::FPROUND_F64_F32, Node, true, Hi);
     break;
   case ISD::FPOWI:
-    Lo = ExpandLibCall(TLI.getLibcallName(GetFPLibCall(VT, RTLIB::POWI_F32,
-                                                       RTLIB::POWI_F64,
-                                                       RTLIB::POWI_F80,
-                                                       RTLIB::POWI_PPCF128)),
+    Lo = ExpandLibCall(GetFPLibCall(VT, RTLIB::POWI_F32,
+                                        RTLIB::POWI_F64,
+                                        RTLIB::POWI_F80,
+                                        RTLIB::POWI_PPCF128),
                        Node, false, Hi);
     break;
   case ISD::FSQRT:
@@ -6555,7 +6543,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       break;
     default: assert(0 && "Unreachable!");
     }
-    Lo = ExpandLibCall(TLI.getLibcallName(LC), Node, false, Hi);
+    Lo = ExpandLibCall(LC, Node, false, Hi);
     break;
   }
   case ISD::FABS: {
