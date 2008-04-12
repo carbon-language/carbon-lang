@@ -289,7 +289,9 @@ void DeltaTreeInteriorNode::SplitChild(unsigned ChildNo) {
 //                        DeltaTree Implementation
 //===----------------------------------------------------------------------===//
 
+//#define VERIFY_TREE
 
+#ifdef VERIFY_TREE
 /// VerifyTree - Walk the btree performing assertions on various properties to
 /// verify consistency.  This is useful for debugging new changes to the tree.
 static void VerifyTree(const DeltaTreeNode *N) {
@@ -331,6 +333,7 @@ static void VerifyTree(const DeltaTreeNode *N) {
   
   assert(FullDelta == N->getFullDelta());
 }
+#endif  // VERIFY_TREE
 
 static DeltaTreeNode *getRoot(void *Root) {
   return (DeltaTreeNode*)Root;
@@ -411,6 +414,8 @@ void DeltaTree::AddDelta(unsigned FileIndex, int Delta) {
   
   getRoot(Root)->AddDeltaNonFull(FileIndex, Delta);
   
-  //VerifyTree(Root);
+#ifdef VERIFY_TREE
+  VerifyTree(Root);
+#endif
 }
 
