@@ -4621,7 +4621,7 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
         ValReg = X86::EAX;
         Val = (Val << 8)  | Val;
         Val = (Val << 16) | Val;
-        if (Subtarget->is64Bit() && ((Align & 0xF) == 0)) {  // QWORD aligned
+        if (Subtarget->is64Bit() && ((Align & 0x7) == 0)) {  // QWORD aligned
           AVT = MVT::i64;
           ValReg = X86::RAX;
           Val = (Val << 32) | Val;
@@ -4740,7 +4740,7 @@ SDOperand X86TargetLowering::LowerMEMCPYInline(SDOperand Chain,
       break;
     case 0:  // DWORD aligned
       AVT = MVT::i32;
-      if (Subtarget->is64Bit() && ((Align & 0xF) == 0))  // QWORD aligned
+      if (Subtarget->is64Bit() && ((Align & 0x7) == 0))  // QWORD aligned
         AVT = MVT::i64;
       break;
     default:  // Byte aligned
