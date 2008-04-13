@@ -370,17 +370,17 @@ static void AddFunctionToSymbolTable(const char *FnName,
   // If we have space in the table, reallocate the table.
   if (SymTabPtr->NumSymbols >= SymTabPtr->NumAllocated) {
     // If we don't have space, reallocate the table.
-    unsigned NewSize = std::min(64U, SymTabPtr->NumAllocated*2);
+    unsigned NewSize = std::max(64U, SymTabPtr->NumAllocated*2);
     JitSymbolEntry *NewSymbols = new JitSymbolEntry[NewSize];
     JitSymbolEntry *OldSymbols = SymTabPtr->Symbols;
     
     // Copy the old entries over.
     memcpy(NewSymbols, OldSymbols,
-           SymTabPtr->NumAllocated*sizeof(JitSymbolEntry));
+           SymTabPtr->NumSymbols*sizeof(OldSymbols[0]));
     
     // Swap the new symbols in, delete the old ones.
     SymTabPtr->Symbols = NewSymbols;
-    SymTabPtr->NumSymbols = NewSize;
+    SymTabPtr->NumAllocated = NewSize;
     delete [] OldSymbols;
   }
   
