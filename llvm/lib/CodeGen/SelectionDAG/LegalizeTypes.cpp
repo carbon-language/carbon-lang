@@ -267,6 +267,51 @@ void DAGTypeLegalizer::AnalyzeNewNode(SDNode *&N) {
     Worklist.push_back(N);
 }
 
+void DAGTypeLegalizer::SanityCheck(SDNode *N) {
+  for (SmallVector<SDNode*, 128>::iterator I = Worklist.begin(),
+       E = Worklist.end(); I != E; ++I)
+    assert(*I != N);
+
+  for (DenseMap<SDOperandImpl, SDOperand>::iterator I = ReplacedNodes.begin(),
+       E = ReplacedNodes.end(); I != E; ++I) {
+    assert(I->first.Val != N);
+    assert(I->second.Val != N);
+  }
+
+  for (DenseMap<SDOperandImpl, SDOperand>::iterator I = PromotedNodes.begin(),
+       E = PromotedNodes.end(); I != E; ++I) {
+    assert(I->first.Val != N);
+    assert(I->second.Val != N);
+  }
+
+  for (DenseMap<SDOperandImpl, SDOperand>::iterator
+       I = FloatToIntedNodes.begin(),
+       E = FloatToIntedNodes.end(); I != E; ++I) {
+    assert(I->first.Val != N);
+    assert(I->second.Val != N);
+  }
+
+  for (DenseMap<SDOperandImpl, SDOperand>::iterator I = ScalarizedNodes.begin(),
+       E = ScalarizedNodes.end(); I != E; ++I) {
+    assert(I->first.Val != N);
+    assert(I->second.Val != N);
+  }
+
+  for (DenseMap<SDOperandImpl, std::pair<SDOperand, SDOperand> >::iterator
+       I = ExpandedNodes.begin(), E = ExpandedNodes.end(); I != E; ++I) {
+    assert(I->first.Val != N);
+    assert(I->second.first.Val != N);
+    assert(I->second.second.Val != N);
+  }
+
+  for (DenseMap<SDOperandImpl, std::pair<SDOperand, SDOperand> >::iterator
+       I = SplitNodes.begin(), E = SplitNodes.end(); I != E; ++I) {
+    assert(I->first.Val != N);
+    assert(I->second.first.Val != N);
+    assert(I->second.second.Val != N);
+  }
+}
+
 namespace {
   /// NodeUpdateListener - This class is a DAGUpdateListener that listens for
   /// updates to nodes and recomputes their ready state.
@@ -281,6 +326,9 @@ namespace {
       assert(N->getNodeId() != DAGTypeLegalizer::Processed &&
              N->getNodeId() != DAGTypeLegalizer::ReadyToProcess &&
              "RAUW deleted processed node!");
+#ifndef NDEBUG
+      DTL.SanityCheck(N);
+#endif
     }
 
     virtual void NodeUpdated(SDNode *N) {
