@@ -451,7 +451,6 @@ private:
   bool ParseTag(DeclTy *&Decl, unsigned TagType, SourceLocation StartLoc);
   void ParseEnumSpecifier(DeclSpec &DS);
   void ParseEnumBody(SourceLocation StartLoc, DeclTy *TagDecl);
-  void ParseStructUnionSpecifier(DeclSpec &DS);
   void ParseStructUnionBody(SourceLocation StartLoc, unsigned TagType,
                             DeclTy *TagDecl);
   void ParseStructDeclaration(DeclSpec &DS,
@@ -482,6 +481,15 @@ private:
   DeclTy *ParseNamespace(unsigned Context);
   DeclTy *ParseLinkage(unsigned Context);
 
+  //===--------------------------------------------------------------------===//
+  // C++ 9: classes [class] and C structs/unions.
+  void ParseClassSpecifier(DeclSpec &DS);
+
+  //===--------------------------------------------------------------------===//
+  // C++ 10: Derived classes [class.derived]
+  void ParseBaseClause(DeclTy *ClassDecl);
+  bool ParseBaseSpecifier(DeclTy *ClassDecl);
+  AccessSpecifier getAccessSpecifierIfPresent();
 };
 
 }  // end namespace clang

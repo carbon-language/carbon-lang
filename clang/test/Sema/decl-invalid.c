@@ -1,6 +1,6 @@
 // RUN: clang %s -fsyntax-only -verify
 
-typedef union <anonymous> __mbstate_t;  // expected-error: {{expected identifier or}}
+typedef union <anonymous> __mbstate_t;  // expected-error: {{declaration of anonymous union must be a definition}}
 
 
 // PR2017

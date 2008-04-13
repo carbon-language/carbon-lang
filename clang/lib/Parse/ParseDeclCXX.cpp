@@ -11,9 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Basic/Diagnostic.h"
+#include "clang/Parse/DeclSpec.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/Scope.h"
-#include "clang/Basic/Diagnostic.h"
 using namespace clang;
 
 /// ParseNamespace - We know that the current token is a namespace keyword. This
@@ -116,4 +117,234 @@ Parser::DeclTy *Parser::ParseLinkage(unsigned Context) {
     return 0;
 
   return Actions.ActOnLinkageSpec(Loc, LBrace, RBrace, LangBufPtr, StrSize, D);
+}
+
+/// ParseClassSpecifier - Parse a C++ class-specifier [C++ class] or
+/// elaborated-type-specifier [C++ dcl.type.elab]; we can't tell which
+/// until we reach the start of a definition or see a token that
+/// cannot start a definition.
+///
+///       class-specifier: [C++ class]
+///         class-head '{' member-specification[opt] '}'
+///         class-head '{' member-specification[opt] '}' attributes[opt]
+///       class-head:
+///         class-key identifier[opt] base-clause[opt]
+///         class-key nested-name-specifier identifier base-clause[opt]
+///         class-key nested-name-specifier[opt] simple-template-id
+///                          base-clause[opt]
+/// [GNU]   class-key attributes[opt] identifier[opt] base-clause[opt]
+/// [GNU]   class-key attributes[opt] nested-name-specifier 
+///                          identifier base-clause[opt]
+/// [GNU]   class-key attributes[opt] nested-name-specifier[opt] 
+///                          simple-template-id base-clause[opt]
+///       class-key:
+///         'class'
+///         'struct'
+///         'union'
+///
+///       elaborated-type-specifier: [C++ dcl.type.elab]
+///         class-key ::[opt] nested-name-specifier[opt] identifier 
+///         class-key ::[opt] nested-name-specifier[opt] 'template'[opt] 
+///                          simple-template-id 
+///
+///  Note that the C++ class-specifier and elaborated-type-specifier,
+///  together, subsume the C99 struct-or-union-specifier:
+///
+///       struct-or-union-specifier: [C99 6.7.2.1]
+///         struct-or-union identifier[opt] '{' struct-contents '}'
+///         struct-or-union identifier
+/// [GNU]   struct-or-union attributes[opt] identifier[opt] '{' struct-contents
+///                                                         '}' attributes[opt]
+/// [GNU]   struct-or-union attributes[opt] identifier
+///       struct-or-union:
+///         'struct'
+///         'union'
+void Parser::ParseClassSpecifier(DeclSpec &DS) {
+  assert((Tok.is(tok::kw_class) || 
+          Tok.is(tok::kw_struct) || 
+          Tok.is(tok::kw_union)) &&
+         "Not a class specifier");
+  DeclSpec::TST TagType =
+    Tok.is(tok::kw_class) ? DeclSpec::TST_class : 
+    Tok.is(tok::kw_struct) ? DeclSpec::TST_struct : 
+    DeclSpec::TST_union;
+
+  SourceLocation StartLoc = ConsumeToken();
+
+  AttributeList *Attr = 0;
+  // If attributes exist after tag, parse them.
+  if (Tok.is(tok::kw___attribute))
+    Attr = ParseAttributes();
+
+  // FIXME: Parse the (optional) nested-name-specifier.
+
+  // Parse the (optional) class name.
+  // FIXME: Alternatively, parse a simple-template-id.
+  IdentifierInfo *Name = 0;
+  SourceLocation NameLoc;
+  if (Tok.is(tok::identifier)) {
+    Name = Tok.getIdentifierInfo();
+    NameLoc = ConsumeToken();
+  }
+
+  // There are three options here.  If we have 'struct foo;', then
+  // this is a forward declaration.  If we have 'struct foo {...' or
+  // 'struct fo :...' then this is a definition. Otherwise we have
+  // something like 'struct foo xyz', a reference.
+  Action::TagKind TK;
+  if (Tok.is(tok::l_brace) || (getLang().CPlusPlus && Tok.is(tok::colon)))
+    TK = Action::TK_Definition;
+  else if (Tok.is(tok::semi))
+    TK = Action::TK_Declaration;
+  else
+    TK = Action::TK_Reference;
+
+  if (!Name && TK != Action::TK_Definition) {
+    // We have a declaration or reference to an anonymous class.
+    Diag(StartLoc, diag::err_anon_type_definition, 
+         DeclSpec::getSpecifierName(TagType));
+
+    // Skip the rest of this declarator, up until the comma or semicolon.
+    SkipUntil(tok::comma, true);
+    return;
+  }
+
+  // Parse the tag portion of this.
+  DeclTy *TagDecl = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, Name, 
+                                     NameLoc, Attr);
+
+  // Parse the optional base clause (C++ only).
+  if (getLang().CPlusPlus && Tok.is(tok::colon)) {
+    ParseBaseClause(TagDecl);
+  }
+
+  // If there is a body, parse it and inform the actions module.
+  if (Tok.is(tok::l_brace))
+    ParseStructUnionBody(StartLoc, TagType, TagDecl);
+  else if (TK == Action::TK_Definition) {
+    // FIXME: Complain that we have a base-specifier list but no
+    // definition.
+    Diag(Tok.getLocation(), diag::err_expected_lbrace);
+  }
+
+  const char *PrevSpec = 0;
+  if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, TagDecl))
+    Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
+}
+
+/// ParseBaseClause - Parse the base-clause of a C++ class [C++ class.derived]. 
+///
+///       base-clause : [C++ class.derived]
+///         ':' base-specifier-list
+///       base-specifier-list:
+///         base-specifier '...'[opt]
+///         base-specifier-list ',' base-specifier '...'[opt]
+void Parser::ParseBaseClause(DeclTy *ClassDecl)
+{
+  assert(Tok.is(tok::colon) && "Not a base clause");
+  ConsumeToken();
+
+  while (true) {
+    // Parse a base-specifier.
+    if (ParseBaseSpecifier(ClassDecl)) {
+      // Skip the rest of this base specifier, up until the comma or
+      // opening brace.
+      SkipUntil(tok::comma, tok::l_brace);
+    }
+
+    // If the next token is a comma, consume it and keep reading
+    // base-specifiers.
+    if (Tok.isNot(tok::comma)) break;
+    
+    // Consume the comma.
+    ConsumeToken();
+  }
+}
+
+/// ParseBaseSpecifier - Parse a C++ base-specifier. A base-specifier is
+/// one entry in the base class list of a class specifier, for example:
+///    class foo : public bar, virtual private baz {
+/// 'public bar' and 'virtual private baz' are each base-specifiers.
+///
+///       base-specifier: [C++ class.derived]
+///         ::[opt] nested-name-specifier[opt] class-name
+///         'virtual' access-specifier[opt] ::[opt] nested-name-specifier[opt]
+///                        class-name
+///         access-specifier 'virtual'[opt] ::[opt] nested-name-specifier[opt]
+///                        class-name
+bool Parser::ParseBaseSpecifier(DeclTy *ClassDecl)
+{
+  bool IsVirtual = false;
+  SourceLocation StartLoc = Tok.getLocation();
+
+  // Parse the 'virtual' keyword.
+  if (Tok.is(tok::kw_virtual))  {
+    ConsumeToken();
+    IsVirtual = true;
+  }
+
+  // Parse an (optional) access specifier.
+  AccessSpecifier Access = getAccessSpecifierIfPresent();
+  if (Access)
+    ConsumeToken();
+  
+  // Parse the 'virtual' keyword (again!), in case it came after the
+  // access specifier.
+  if (Tok.is(tok::kw_virtual))  {
+    SourceLocation VirtualLoc = ConsumeToken();
+    if (IsVirtual) {
+      // Complain about duplicate 'virtual'
+      Diag(VirtualLoc, diag::err_dup_virtual);
+    }
+
+    IsVirtual = true;
+  }
+
+  // FIXME: Parse optional '::' and optional nested-name-specifier.
+
+  // Parse the class-name.
+  // FIXME: Alternatively, parse a simple-template-id.
+  if (Tok.isNot(tok::identifier)) {
+    Diag(Tok.getLocation(), diag::err_expected_class_name);
+    return true;
+  }
+
+  // We have an identifier; check whether it is actually a type.
+  DeclTy *BaseType = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope);
+  if (!BaseType) {
+    Diag(Tok.getLocation(), diag::err_expected_class_name);
+    return true;
+  }
+
+  // The location of the base class itself.
+  SourceLocation BaseLoc = Tok.getLocation();
+  
+  // Find the complete source range for the base-specifier.  
+  SourceRange Range(StartLoc, BaseLoc);
+  
+  // Consume the identifier token (finally!).
+  ConsumeToken();
+  
+  // Notify semantic analysis that we have parsed a complete
+  // base-specifier.
+  Actions.ActOnBaseSpecifier(ClassDecl, Range, IsVirtual, Access, BaseType,
+                             BaseLoc);
+  return false;
+}
+
+/// getAccessSpecifierIfPresent - Determine whether the next token is
+/// a C++ access-specifier.
+///
+///       access-specifier: [C++ class.derived]
+///         'private'
+///         'protected'
+///         'public'
+AccessSpecifier Parser::getAccessSpecifierIfPresent()
+{
+  switch (Tok.getKind()) {
+  default: return AS_none;
+  case tok::kw_private: return AS_private;
+  case tok::kw_protected: return AS_protected;
+  case tok::kw_public: return AS_public;
+  }
 }

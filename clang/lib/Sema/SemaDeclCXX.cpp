@@ -13,6 +13,7 @@
 
 #include "Sema.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Type.h"
@@ -233,4 +234,52 @@ void Sema::CheckCXXDefaultArguments(FunctionDecl *FD) {
       }
     }
   }
+}
+
+/// ActOnBaseSpecifier - Parsed a base specifier. A base specifier is
+/// one entry in the base class list of a class specifier, for
+/// example: 
+///    class foo : public bar, virtual private baz { 
+/// 'public bar' and 'virtual private baz' are each base-specifiers.
+void Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
+                              bool Virtual, AccessSpecifier Access,
+                              DeclTy *basetype, SourceLocation BaseLoc) {
+  RecordDecl *Decl = (RecordDecl*)classdecl;
+  QualType BaseType = Context.getTypeDeclType((TypeDecl*)basetype);
+
+  // Base specifiers must be record types.
+  if (!BaseType->isRecordType()) {
+    Diag(BaseLoc, diag::err_base_must_be_class, SpecifierRange);
+    return;
+  }
+
+  // C++ [class.union]p1:
+  //   A union shall not be used as a base class.
+  if (BaseType->isUnionType()) {
+    Diag(BaseLoc, diag::err_union_as_base_class, SpecifierRange);
+    return;
+  }
+
+  // C++ [class.union]p1:
+  //   A union shall not have base classes.
+  if (Decl->getKind() == Decl::Union) {
+    Diag(Decl->getLocation(), diag::err_base_clause_on_union,
+         SpecifierRange);
+    Decl->setInvalidDecl();
+    return;
+  }
+
+  // C++ [class.derived]p2:
+  //   The class-name in a base-specifier shall not be an incompletely
+  //   defined class.
+  if (BaseType->isIncompleteType()) {
+    Diag(BaseLoc, diag::err_incomplete_base_class, SpecifierRange);
+    return;
+  }
+
+  // FIXME: C++ [class.mi]p3:
+  //   A class shall not be specified as a direct base class of a
+  //   derived class more than once.
+
+  // FIXME: Attach base class to the record.
 }

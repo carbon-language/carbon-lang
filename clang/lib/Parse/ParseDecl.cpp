@@ -519,7 +519,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     case tok::kw_class:
     case tok::kw_struct:
     case tok::kw_union:
-      ParseStructUnionSpecifier(DS);
+      ParseClassSpecifier(DS);
       continue;
     case tok::kw_enum:
       ParseEnumSpecifier(DS);
@@ -606,42 +606,6 @@ bool Parser::ParseTag(DeclTy *&Decl, unsigned TagType, SourceLocation StartLoc){
     TK = Action::TK_Reference;
   Decl = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, Name, NameLoc, Attr);
   return false;
-}
-
-
-/// ParseStructUnionSpecifier
-///       struct-or-union-specifier: [C99 6.7.2.1]
-///         struct-or-union identifier[opt] '{' struct-contents '}'
-///         struct-or-union identifier
-/// [GNU]   struct-or-union attributes[opt] identifier[opt] '{' struct-contents
-///                                                         '}' attributes[opt]
-/// [GNU]   struct-or-union attributes[opt] identifier
-///       struct-or-union:
-///         'struct'
-///         'union'
-///
-void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
-  assert((Tok.is(tok::kw_class) || 
-          Tok.is(tok::kw_struct) || 
-          Tok.is(tok::kw_union)) &&
-         "Not a class/struct/union specifier");
-  DeclSpec::TST TagType =
-    Tok.is(tok::kw_class) ? DeclSpec::TST_class :
-    Tok.is(tok::kw_union) ? DeclSpec::TST_union : DeclSpec::TST_struct;
-  SourceLocation StartLoc = ConsumeToken();
-
-  // Parse the tag portion of this.
-  DeclTy *TagDecl;
-  if (ParseTag(TagDecl, TagType, StartLoc))
-    return;
-  
-  // If there is a body, parse it and inform the actions module.
-  if (Tok.is(tok::l_brace))
-    ParseStructUnionBody(StartLoc, TagType, TagDecl);
-
-  const char *PrevSpec = 0;
-  if (DS.SetTypeSpecType(TagType, StartLoc, PrevSpec, TagDecl))
-    Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
 }
 
 /// ParseStructDeclaration - Parse a struct declaration without the terminating
@@ -736,7 +700,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
   
   // Empty structs are an extension in C (C99 6.7.2.1p7), but are allowed in
   // C++.
-  if (Tok.is(tok::r_brace))
+  if (Tok.is(tok::r_brace) && !getLang().CPlusPlus)
     Diag(Tok, diag::ext_empty_struct_union_enum, 
          DeclSpec::getSpecifierName((DeclSpec::TST)TagType));
 

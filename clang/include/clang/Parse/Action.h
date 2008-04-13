@@ -17,6 +17,7 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/TokenKinds.h"
+#include "clang/Parse/AccessSpecifier.h"
 
 namespace clang {
   // Semantic.
@@ -545,6 +546,14 @@ public:
                                    ExprTy *Op = 0) {
     return 0;
   }
+
+  //===---------------------------- C++ Classes ---------------------------===//
+  /// ActOnBaseSpecifier - Parsed a base specifier
+  virtual void ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
+                                  bool Virtual, AccessSpecifier Access,
+                                  DeclTy *basetype, SourceLocation BaseLoc) {
+  }
+
   //===----------------------- Obj-C Declarations -------------------------===//
   
   // ActOnStartClassInterface - this action is called immediately after parsing

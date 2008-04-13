@@ -588,7 +588,16 @@ public:
                                                  SourceLocation ProtoLoc,
                                                  SourceLocation LParenLoc,
                                                  SourceLocation RParenLoc);
+
+  //===--------------------------------------------------------------------===//
+  // C++ Classes
+  //
+  /// ActOnBaseSpecifier - Parsed a base specifier
+  virtual void ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
+                                  bool Virtual, AccessSpecifier Access,
+                                  DeclTy *basetype, SourceLocation BaseLoc);
   
+
   // Objective-C declarations.
   virtual DeclTy *ActOnStartClassInterface(
                     SourceLocation AtInterafceLoc,
