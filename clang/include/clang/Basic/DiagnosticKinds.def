@@ -207,8 +207,10 @@ DIAG(err_pp_division_by_zero, ERROR,
      "division by zero in preprocessor expression")
 DIAG(err_pp_remainder_by_zero, ERROR,
      "remainder by zero in preprocessor expression")
-DIAG(err_pp_expr_bad_token, ERROR,
-     "token is not valid in preprocessor expressions")
+DIAG(err_pp_expr_bad_token_binop, ERROR,
+     "token is not a valid binary operator in a preprocessor subexpression")
+DIAG(err_pp_expr_bad_token_start_expr, ERROR,
+     "invalid token at start of a preprocessor expression")
 DIAG(err_pp_invalid_poison, ERROR,
      "can only poison identifier tokens")
 DIAG(err_pp_used_poisoned_id, ERROR,

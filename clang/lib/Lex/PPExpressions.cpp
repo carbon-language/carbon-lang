@@ -131,7 +131,7 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
   
   switch (PeekTok.getKind()) {
   default:  // Non-value token.
-    PP.Diag(PeekTok, diag::err_pp_expr_bad_token);
+    PP.Diag(PeekTok, diag::err_pp_expr_bad_token_start_expr);
     return true;
   case tok::eom:
   case tok::r_paren:
@@ -349,7 +349,7 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
   unsigned PeekPrec = getPrecedence(PeekTok.getKind());
   // If this token isn't valid, report the error.
   if (PeekPrec == ~0U) {
-    PP.Diag(PeekTok, diag::err_pp_expr_bad_token);
+    PP.Diag(PeekTok, diag::err_pp_expr_bad_token_binop);
     return true;
   }
   
@@ -392,7 +392,7 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
 
     // If this token isn't valid, report the error.
     if (PeekPrec == ~0U) {
-      PP.Diag(PeekTok, diag::err_pp_expr_bad_token);
+      PP.Diag(PeekTok, diag::err_pp_expr_bad_token_binop);
       return true;
     }
     
