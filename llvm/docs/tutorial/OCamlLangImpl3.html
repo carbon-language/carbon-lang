@@ -108,7 +108,7 @@ top-level structure that the LLVM IR uses to contain code.</p>
 
 <p>The <tt>Codegen.builder</tt> object is a helper object that makes it easy to
 generate LLVM instructions.  Instances of the <a
-href="http://llvm.org/doxygen/LLVMBuilder_8h-source.html"><tt>LLVMBuilder</tt></a>
+href="http://llvm.org/doxygen/IRBuilder_8h-source.html"><tt>IRBuilder</tt></a>
 class keep track of the current place to insert instructions and has methods to
 create new instructions.</p>
 
@@ -194,7 +194,7 @@ code, we do a simple switch on the opcode to create the right LLVM instruction.
 </p>
 
 <p>In the example above, the LLVM builder class is starting to show its value.
-LLVMBuilder knows where to insert the newly created instruction, all you have to
+IRBuilder knows where to insert the newly created instruction, all you have to
 do is specify what instruction to create (e.g. with <tt>Llvm.create_add</tt>),
 which operands to use (<tt>lhs</tt> and <tt>rhs</tt> here) and optionally
 provide a name for the generated instruction.</p>

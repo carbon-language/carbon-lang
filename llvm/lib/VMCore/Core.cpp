@@ -962,7 +962,7 @@ LLVMBasicBlockRef LLVMGetIncomingBlock(LLVMValueRef PhiNode, unsigned Index) {
 /*===-- Instruction builders ----------------------------------------------===*/
 
 LLVMBuilderRef LLVMCreateBuilder() {
-  return wrap(new LLVMFoldingBuilder());
+  return wrap(new IRBuilder());
 }
 
 void LLVMPositionBuilder(LLVMBuilderRef Builder, LLVMBasicBlockRef Block,

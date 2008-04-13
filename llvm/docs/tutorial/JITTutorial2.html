@@ -56,7 +56,7 @@ unsigned gcd(unsigned x, unsigned y) {
 #include &lt;llvm/PassManager.h&gt;
 #include &lt;llvm/Analysis/Verifier.h&gt;
 #include &lt;llvm/Assembly/PrintModulePass.h&gt;
-#include &lt;llvm/Support/LLVMBuilder.h&gt;
+#include &lt;llvm/Support/IRBuilder.h&gt;
 
 using namespace llvm;
 
@@ -110,13 +110,13 @@ Module* makeLLVMModule() {
 
 <div class="doc_code">
 <pre>
-  LLVMBuilder builder(entry);
+  IRBuilder builder(entry);
   Value* xEqualsY = builder.CreateICmpEQ(x, y, &quot;tmp&quot;);
   builder.CreateCondBr(xEqualsY, ret, cond_false);
 </pre>
 </div>
 
-<p>Our next block, <code>ret</code>, is pretty simple: it just returns the value of <code>x</code>.  Recall that this block is only reached if <code>x == y</code>, so this is the correct behavior.  Notice that instead of creating a new <code>LLVMBuilder</code> for each block, we can use <code>SetInsertPoint</code> to retarget our existing one.  This saves on construction and memory allocation costs.</p>
+<p>Our next block, <code>ret</code>, is pretty simple: it just returns the value of <code>x</code>.  Recall that this block is only reached if <code>x == y</code>, so this is the correct behavior.  Notice that instead of creating a new <code>IRBuilder</code> for each block, we can use <code>SetInsertPoint</code> to retarget our existing one.  This saves on construction and memory allocation costs.</p>
 
 <div class="doc_code">
 <pre>

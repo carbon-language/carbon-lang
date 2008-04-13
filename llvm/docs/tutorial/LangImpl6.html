@@ -827,7 +827,7 @@ if/then/else and for expressions..  To build this example, use:
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Support/LLVMBuilder.h"
+#include "llvm/Support/IRBuilder.h"
 #include &lt;cstdio&gt;
 #include &lt;string&gt;
 #include &lt;map&gt;
@@ -1357,7 +1357,7 @@ static PrototypeAST *ParseExtern() {
 //===----------------------------------------------------------------------===//
 
 static Module *TheModule;
-static LLVMFoldingBuilder Builder;
+static IRBuilder Builder;
 static std::map&lt;std::string, Value*&gt; NamedValues;
 static FunctionPassManager *TheFPM;
 

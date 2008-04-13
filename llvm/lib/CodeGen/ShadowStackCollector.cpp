@@ -31,7 +31,7 @@
 #include "llvm/CodeGen/Collector.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
-#include "llvm/Support/LLVMBuilder.h"
+#include "llvm/Support/IRBuilder.h"
 
 using namespace llvm;
 
@@ -61,9 +61,9 @@ namespace {
     Constant *GetFrameMap(Function &F);
     const Type* GetConcreteStackEntryType(Function &F);
     void CollectRoots(Function &F);
-    static GetElementPtrInst *CreateGEP(LLVMBuilder &B, Value *BasePtr,
+    static GetElementPtrInst *CreateGEP(IRBuilder &B, Value *BasePtr,
                                         int Idx1, const char *Name);
-    static GetElementPtrInst *CreateGEP(LLVMBuilder &B, Value *BasePtr,
+    static GetElementPtrInst *CreateGEP(IRBuilder &B, Value *BasePtr,
                                         int Idx1, int Idx2, const char *Name);
   };
   
@@ -86,13 +86,13 @@ namespace {
     // State.
     int State;
     Function::iterator StateBB, StateE;
-    LLVMBuilder Builder;
+    IRBuilder Builder;
     
   public:
     EscapeEnumerator(Function &F, const char *N = "cleanup")
       : F(F), CleanupBBName(N), State(0) {}
     
-    LLVMBuilder *Next() {
+    IRBuilder *Next() {
       switch (State) {
       default:
         return 0;
@@ -339,20 +339,28 @@ void ShadowStackCollector::CollectRoots(Function &F) {
 }
 
 GetElementPtrInst *
-ShadowStackCollector::CreateGEP(LLVMBuilder &B, Value *BasePtr,
+ShadowStackCollector::CreateGEP(IRBuilder &B, Value *BasePtr,
                                 int Idx, int Idx2, const char *Name) {
   Value *Indices[] = { ConstantInt::get(Type::Int32Ty, 0),
                        ConstantInt::get(Type::Int32Ty, Idx),
                        ConstantInt::get(Type::Int32Ty, Idx2) };
-  return B.CreateGEP(BasePtr, Indices, Indices + 3, Name);
+  Value* Val = B.CreateGEP(BasePtr, Indices, Indices + 3, Name);
+    
+  assert(isa<GetElementPtrInst>(Val) && "Unexpected folded constant");
+    
+  return dyn_cast<GetElementPtrInst>(Val);
 }
 
 GetElementPtrInst *
-ShadowStackCollector::CreateGEP(LLVMBuilder &B, Value *BasePtr,
+ShadowStackCollector::CreateGEP(IRBuilder &B, Value *BasePtr,
                                 int Idx, const char *Name) {
   Value *Indices[] = { ConstantInt::get(Type::Int32Ty, 0),
                        ConstantInt::get(Type::Int32Ty, Idx) };
-  return B.CreateGEP(BasePtr, Indices, Indices + 2, Name);
+  Value *Val = B.CreateGEP(BasePtr, Indices, Indices + 2, Name);
+    
+  assert(isa<GetElementPtrInst>(Val) && "Unexpected folded constant");
+
+  return dyn_cast<GetElementPtrInst>(Val);
 }
 
 /// runOnFunction - Insert code to maintain the shadow stack.
@@ -371,7 +379,7 @@ bool ShadowStackCollector::performCustomLowering(Function &F) {
   
   // Build the shadow stack entry at the very start of the function.
   BasicBlock::iterator IP = F.getEntryBlock().begin();
-  LLVMBuilder AtEntry(IP->getParent(), IP);
+  IRBuilder AtEntry(IP->getParent(), IP);
   
   Instruction *StackEntry   = AtEntry.CreateAlloca(ConcreteStackEntryTy, 0,
                                                    "gc_frame");
@@ -409,7 +417,7 @@ bool ShadowStackCollector::performCustomLowering(Function &F) {
   
   // For each instruction that escapes...
   EscapeEnumerator EE(F, "gc_cleanup");
-  while (LLVMBuilder *AtExit = EE.Next()) {
+  while (IRBuilder *AtExit = EE.Next()) {
     // Pop the entry from the shadow stack. Don't reuse CurrentHead from
     // AtEntry, since that would make the value live for the entire function.
     Instruction *EntryNextPtr2 = CreateGEP(*AtExit, StackEntry, 0, 0,

@@ -400,7 +400,7 @@ other two blocks are created, but aren't yet inserted into the function.</p>
 
 <p>Once the blocks are created, we can emit the conditional branch that chooses
 between them.  Note that creating new blocks does not implicitly affect the
-LLVMBuilder, so it is still inserting into the block that the condition
+IRBuilder, so it is still inserting into the block that the condition
 went into.  Also note that it is creating a branch to the "then" block and the
 "else" block, even though the "else" block isn't inserted into the function yet.
 This is all ok: it is the standard way that LLVM supports forward 
@@ -907,7 +907,7 @@ if/then/else and for expressions..  To build this example, use:
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Support/LLVMBuilder.h"
+#include "llvm/Support/IRBuilder.h"
 #include &lt;cstdio&gt;
 #include &lt;string&gt;
 #include &lt;map&gt;
@@ -1352,7 +1352,7 @@ static PrototypeAST *ParseExtern() {
 //===----------------------------------------------------------------------===//
 
 static Module *TheModule;
-static LLVMFoldingBuilder Builder;
+static IRBuilder Builder;
 static std::map&lt;std::string, Value*&gt; NamedValues;
 static FunctionPassManager *TheFPM;
 

@@ -56,45 +56,8 @@ Folding</a></div>
 
 <p>
 Our demonstration for Chapter 3 is elegant and easy to extend.  Unfortunately,
-it does not produce wonderful code.  For example, when compiling simple code,
-we don't get obvious optimizations:</p>
-
-<div class="doc_code">
-<pre>
-ready&gt; <b>def test(x) 1+2+x;</b>
-Read function definition:
-define double @test(double %x) {
-entry:
-        %addtmp = add double 1.000000e+00, 2.000000e+00
-        %addtmp1 = add double %addtmp, %x
-        ret double %addtmp1
-}
-</pre>
-</div>
-
-<p>This code is a very, very literal transcription of the AST built by parsing
-the input. As such, this transcription lacks optimizations like constant folding (we'd like to get "<tt>add x, 3.0</tt>" in the example above) as well as other more important
-optimizations.  Constant folding, in particular, is a very common and very
-important optimization: so much so that many language implementors implement
-constant folding support in their AST representation.</p>
-
-<p>With LLVM, you don't need this support in the AST.  Since all calls to build LLVM IR go through
-the LLVM builder, it would be nice if the builder itself checked to see if there
-was a constant folding opportunity when you call it.  If so, it could just do
-the constant fold and return the constant instead of creating an instruction.
-This is exactly what the <tt>LLVMFoldingBuilder</tt> class does.  Lets make one
-change:
-
-<div class="doc_code">
-<pre>
-static LLVMFoldingBuilder Builder;
-</pre>
-</div>
-
-<p>All we did was switch from <tt>LLVMBuilder</tt> to 
-<tt>LLVMFoldingBuilder</tt>.  Though we change no other code, we now have all of our
-instructions implicitly constant folded without us having to do anything
-about it.  For example, the input above now compiles to:</p>
+it does not produce wonderful code.  The IRBuilder, however, does give us
+obvious optimizations when compiling simple code:</p>
 
 <div class="doc_code">
 <pre>
@@ -108,14 +71,39 @@ entry:
 </pre>
 </div>
 
+<p>This code is not a literal transcription of the AST built by parsing the 
+input. That would be:
+
+<div class="doc_code">
+<pre>
+ready&gt; <b>def test(x) 1+2+x;</b>
+Read function definition:
+define double @test(double %x) {
+entry:
+        %addtmp = add double 2.000000e+00, 1.000000e+00
+        %addtmp1 = add double %addtmp, %x
+        ret double %addtmp1
+}
+</pre>
+</div>
+
+Constant folding, as seen above, in particular, is a very common and very
+important optimization: so much so that many language implementors implement
+constant folding support in their AST representation.</p>
+
+<p>With LLVM, you don't need this support in the AST.  Since all calls to build 
+LLVM IR go through the LLVM IR builder, the builder itself checked to see if 
+there was a constant folding opportunity when you call it.  If so, it just does 
+the constant fold and return the constant instead of creating an instruction.
+
 <p>Well, that was easy :).  In practice, we recommend always using
-<tt>LLVMFoldingBuilder</tt> when generating code like this.  It has no
+<tt>IRBuilder</tt> when generating code like this.  It has no
 "syntactic overhead" for its use (you don't have to uglify your compiler with
 constant checks everywhere) and it can dramatically reduce the amount of
 LLVM IR that is generated in some cases (particular for languages with a macro
 preprocessor or that use a lot of constants).</p>
 
-<p>On the other hand, the <tt>LLVMFoldingBuilder</tt> is limited by the fact
+<p>On the other hand, the <tt>IRBuilder</tt> is limited by the fact
 that it does all of its analysis inline with the code as it is built.  If you
 take a slightly more complex example:</p>
 
@@ -525,7 +513,7 @@ LLVM JIT and optimizer.  To build this example, use:
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Support/LLVMBuilder.h"
+#include "llvm/Support/IRBuilder.h"
 #include &lt;cstdio&gt;
 #include &lt;string&gt;
 #include &lt;map&gt;
@@ -868,7 +856,7 @@ static PrototypeAST *ParseExtern() {
 //===----------------------------------------------------------------------===//
 
 static Module *TheModule;
-static LLVMFoldingBuilder Builder;
+static IRBuilder Builder;
 static std::map&lt;std::string, Value*&gt; NamedValues;
 static FunctionPassManager *TheFPM;
 

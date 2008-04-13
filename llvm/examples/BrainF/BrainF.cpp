@@ -71,7 +71,7 @@ void BrainF::header() {
   brainf_func = cast<Function>(module->
     getOrInsertFunction("brainf", Type::VoidTy, NULL));
 
-  builder = new LLVMBuilder(BasicBlock::Create(label, brainf_func));
+  builder = new IRBuilder(BasicBlock::Create(label, brainf_func));
 
   //%arr = malloc i8, i32 %d
   ConstantInt *val_mem = ConstantInt::get(APInt(32, memtotal));
@@ -193,7 +193,7 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb) {
           Value *tape_0 = getchar_call;
 
           //%tape.%d = trunc i32 %tape.%d to i8
-          TruncInst *tape_1 = builder->
+          Value *tape_1 = builder->
             CreateTrunc(tape_0, IntegerType::Int8Ty, tapereg);
 
           //store i8 %tape.%d, i8 *%head.%d
@@ -207,7 +207,7 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb) {
           LoadInst *tape_0 = builder->CreateLoad(curhead, tapereg);
 
           //%tape.%d = sext i8 %tape.%d to i32
-          SExtInst *tape_1 = builder->
+          Value *tape_1 = builder->
             CreateSExt(tape_0, IntegerType::Int32Ty, tapereg);
 
           //call i32 @putchar(i32 %tape.%d)
@@ -232,15 +232,15 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb) {
           if (comflag & flag_arraybounds)
           {
             //%test.%d = icmp uge i8 *%head.%d, %arrmax
-            ICmpInst *test_0 = builder->
+            Value *test_0 = builder->
               CreateICmpUGE(curhead, ptr_arrmax, testreg);
 
             //%test.%d = icmp ult i8 *%head.%d, %arr
-            ICmpInst *test_1 = builder->
+            Value *test_1 = builder->
               CreateICmpULT(curhead, ptr_arr, testreg);
 
             //%test.%d = or i1 %test.%d, %test.%d
-            BinaryOperator *test_2 = builder->
+            Value *test_2 = builder->
               CreateOr(test_0, test_1, testreg);
 
             //br i1 %test.%d, label %main.%d, label %main.%d
@@ -259,7 +259,7 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb) {
           LoadInst *tape_0 = builder->CreateLoad(curhead, tapereg);
 
           //%tape.%d = add i8 %tape.%d, %d
-          BinaryOperator *tape_1 = builder->
+          Value *tape_1 = builder->
             CreateAdd(tape_0, ConstantInt::get(APInt(8, curvalue)), tapereg);
 
           //store i8 %tape.%d, i8 *%head.%d\n"

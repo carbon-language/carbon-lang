@@ -455,7 +455,7 @@ to create the PHI node and set up the block/value pairs for the PHI.</p>
 
 <p>Once the blocks are created, we can emit the conditional branch that chooses
 between them.  Note that creating new blocks does not implicitly affect the
-LLVMBuilder, so it is still inserting into the block that the condition
+IRBuilder, so it is still inserting into the block that the condition
 went into.  This is why we needed to save the "start" block.</p>
 
 <div class="doc_code">

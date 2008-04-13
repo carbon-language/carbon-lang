@@ -60,7 +60,7 @@ entry:
 #include &lt;llvm/CallingConv.h&gt;
 #include &lt;llvm/Analysis/Verifier.h&gt;
 #include &lt;llvm/Assembly/PrintModulePass.h&gt;
-#include &lt;llvm/Support/LLVMBuilder.h&gt;
+#include &lt;llvm/Support/IRBuilder.h&gt;
 </pre>
 </div>
 
@@ -143,11 +143,11 @@ Module* makeLLVMModule() {
 <div class="doc_code">
 <pre>
   BasicBlock* block = new BasicBlock("entry", mul_add);
-  LLVMBuilder builder(block);
+  IRBuilder builder(block);
 </pre>
 </div>
 
-<p>We create a new basic block, as you might expect, by calling its constructor.  All we need to tell it is its name and the function to which it belongs.  In addition, we’re creating an <code>LLVMBuilder</code> object, which is a convenience interface for creating instructions and appending them to the end of a block.  Instructions can be created through their constructors as well, but some of their interfaces are quite complicated.  Unless you need a lot of control, using <code>LLVMBuilder</code> will make your life simpler.</p>
+<p>We create a new basic block, as you might expect, by calling its constructor.  All we need to tell it is its name and the function to which it belongs.  In addition, we’re creating an <code>IRBuilder</code> object, which is a convenience interface for creating instructions and appending them to the end of a block.  Instructions can be created through their constructors as well, but some of their interfaces are quite complicated.  Unless you need a lot of control, using <code>IRBuilder</code> will make your life simpler.</p>
 
 <div class="doc_code">
 <pre>
@@ -163,7 +163,7 @@ Module* makeLLVMModule() {
 </pre>
 </div>
 
-<p>The final step in creating our function is to create the instructions that make it up.  Our <code>mul_add</code> function is composed of just three instructions: a multiply, an add, and a return.  <code>LLVMBuilder</code> gives us a simple interface for constructing these instructions and appending them to the “entry” block.  Each of the calls to <code>LLVMBuilder</code> returns a <code>Value*</code> that represents the value yielded by the instruction.  You’ll also notice that, above, <code>x</code>, <code>y</code>, and <code>z</code> are also <code>Value*</code>’s, so it’s clear that instructions operate on <code>Value*</code>’s.</p>
+<p>The final step in creating our function is to create the instructions that make it up.  Our <code>mul_add</code> function is composed of just three instructions: a multiply, an add, and a return.  <code>IRBuilder</code> gives us a simple interface for constructing these instructions and appending them to the “entry” block.  Each of the calls to <code>IRBuilder</code> returns a <code>Value*</code> that represents the value yielded by the instruction.  You’ll also notice that, above, <code>x</code>, <code>y</code>, and <code>z</code> are also <code>Value*</code>’s, so it’s clear that instructions operate on <code>Value*</code>’s.</p>
 
 <p>And that’s it!  Now you can compile and run your code, and get a wonderful textual print out of the LLVM IR we saw at the beginning.  To compile, use the following command line as a guide:</p>
 

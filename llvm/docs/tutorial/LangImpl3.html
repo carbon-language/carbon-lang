@@ -111,7 +111,7 @@ undeclared parameter):</p>
 Value *ErrorV(const char *Str) { Error(Str); return 0; }
 
 static Module *TheModule;
-static LLVMBuilder Builder;
+static IRBuilder Builder;
 static std::map&lt;std::string, Value*&gt; NamedValues;
 </pre>
 </div>
@@ -123,7 +123,7 @@ uses to contain code.</p>
 
 <p>The <tt>Builder</tt> object is a helper object that makes it easy to generate
 LLVM instructions.  Instances of the <a 
-href="http://llvm.org/doxygen/LLVMBuilder_8h-source.html"><tt>LLVMBuilder</tt></a> 
+href="http://llvm.org/doxygen/IRBuilder_8h-source.html"><tt>IRBuilder</tt></a> 
 class keep track of the current place to insert instructions and has methods to
 create new instructions.</p>
 
@@ -216,7 +216,7 @@ code, we do a simple switch on the opcode to create the right LLVM instruction.
 </p>
 
 <p>In the example above, the LLVM builder class is starting to show its value.  
-LLVMBuilder knows where to insert the newly created instruction, all you have to
+IRBuilder knows where to insert the newly created instruction, all you have to
 do is specify what instruction to create (e.g. with <tt>CreateAdd</tt>), which
 operands to use (<tt>L</tt> and <tt>R</tt> here) and optionally provide a name
 for the generated instruction.</p>
@@ -680,7 +680,7 @@ our makefile/command line about which options to use:</p>
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Support/LLVMBuilder.h"
+#include "llvm/Support/IRBuilder.h"
 #include &lt;cstdio&gt;
 #include &lt;string&gt;
 #include &lt;map&gt;
@@ -1023,7 +1023,7 @@ static PrototypeAST *ParseExtern() {
 //===----------------------------------------------------------------------===//
 
 static Module *TheModule;
-static LLVMBuilder Builder;
+static IRBuilder Builder;
 static std::map&lt;std::string, Value*&gt; NamedValues;
 
 Value *ErrorV(const char *Str) { Error(Str); return 0; }

@@ -422,14 +422,14 @@ function:</p>
 /// the function.  This is used for mutable variables etc.
 static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
                                           const std::string &amp;VarName) {
-  LLVMBuilder TmpB(&amp;TheFunction-&gt;getEntryBlock(),
-                   TheFunction-&gt;getEntryBlock().begin());
+  IRBuilder TmpB(&amp;TheFunction-&gt;getEntryBlock(),
+                 TheFunction-&gt;getEntryBlock().begin());
   return TmpB.CreateAlloca(Type::DoubleTy, 0, VarName.c_str());
 }
 </pre>
 </div>
 
-<p>This funny looking code creates an LLVMBuilder object that is pointing at
+<p>This funny looking code creates an IRBuilder object that is pointing at
 the first instruction (.begin()) of the entry block.  It then creates an alloca
 with the expected name and returns it.  Because all values in Kaleidoscope are
 doubles, there is no need to pass in a type to use.</p>
@@ -1009,7 +1009,7 @@ variables and var/in support.  To build this example, use:
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Support/LLVMBuilder.h"
+#include "llvm/Support/IRBuilder.h"
 #include &lt;cstdio&gt;
 #include &lt;string&gt;
 #include &lt;map&gt;
@@ -1605,7 +1605,7 @@ static PrototypeAST *ParseExtern() {
 //===----------------------------------------------------------------------===//
 
 static Module *TheModule;
-static LLVMFoldingBuilder Builder;
+static IRBuilder Builder;
 static std::map&lt;std::string, AllocaInst*&gt; NamedValues;
 static FunctionPassManager *TheFPM;
 
@@ -1615,8 +1615,8 @@ Value *ErrorV(const char *Str) { Error(Str); return 0; }
 /// the function.  This is used for mutable variables etc.
 static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
                                           const std::string &amp;VarName) {
-  LLVMBuilder TmpB(&amp;TheFunction-&gt;getEntryBlock(),
-                   TheFunction-&gt;getEntryBlock().begin());
+  IRBuilder TmpB(&amp;TheFunction-&gt;getEntryBlock(),
+                 TheFunction-&gt;getEntryBlock().begin());
   return TmpB.CreateAlloca(Type::DoubleTy, 0, VarName.c_str());
 }
 

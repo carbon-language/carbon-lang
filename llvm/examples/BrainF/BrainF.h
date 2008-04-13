@@ -16,7 +16,7 @@
 #define BRAINF_H
 
 #include "llvm/Module.h"
-#include "llvm/Support/LLVMBuilder.h"
+#include "llvm/Support/IRBuilder.h"
 
 using namespace llvm;
 
@@ -84,7 +84,7 @@ class BrainF {
     BasicBlock *aberrorbb;
 
     /// Variables
-    LLVMBuilder *builder;
+    IRBuilder *builder;
     Value *curhead;
 };
 

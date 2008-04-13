@@ -38,7 +38,7 @@
 /* Need these includes to support the LLVM 'cast' template for the C++ 'wrap' 
    and 'unwrap' conversion functions. */
 #include "llvm/Module.h"
-#include "llvm/Support/LLVMBuilder.h"
+#include "llvm/Support/IRBuilder.h"
 
 extern "C" {
 #endif
@@ -689,7 +689,7 @@ namespace llvm {
   DEFINE_ISA_CONVERSION_FUNCTIONS   (Value,              LLVMValueRef         )
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Module,             LLVMModuleRef        )
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(BasicBlock,         LLVMBasicBlockRef    )
-  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LLVMFoldingBuilder, LLVMBuilderRef       )
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(IRBuilder,          LLVMBuilderRef       )
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(PATypeHolder,       LLVMTypeHandleRef    )
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ModuleProvider,     LLVMModuleProviderRef)
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(MemoryBuffer,       LLVMMemoryBufferRef  )

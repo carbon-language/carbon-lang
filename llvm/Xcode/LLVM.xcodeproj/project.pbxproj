@@ -162,7 +162,6 @@
 		9F7794280C73CB6100551F9C /* MipsTargetMachine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MipsTargetMachine.h; sourceTree = "<group>"; };
 		9F77942F0C73CB7900551F9C /* MSILWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MSILWriter.cpp; sourceTree = "<group>"; };
 		9F7794300C73CB7900551F9C /* MSILWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MSILWriter.h; sourceTree = "<group>"; };
-		9F7794870C73D51000551F9C /* LLVMBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LLVMBuilder.h; sourceTree = "<group>"; };
 		9F7794880C73D51000551F9C /* MemoryBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MemoryBuffer.h; sourceTree = "<group>"; };
 		9F7794890C73D51000551F9C /* Streams.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Streams.h; sourceTree = "<group>"; };
 		9F7C23E50CB81C2100498408 /* Analysis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Analysis.h; sourceTree = "<group>"; };
@@ -1071,6 +1070,32 @@
 		DE8170AB08CFB44D0093BDEF /* TableGenBackend.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TableGenBackend.cpp; sourceTree = "<group>"; };
 		DE8170AC08CFB44D0093BDEF /* TableGenBackend.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TableGenBackend.h; sourceTree = "<group>"; };
 		DEFAB19D0959E9A100E0AB42 /* DwarfWriter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = DwarfWriter.h; path = ../include/llvm/CodeGen/DwarfWriter.h; sourceTree = SOURCE_ROOT; };
+		F22627320DAE34D10008F441 /* index.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
+		F22627330DAE34D20008F441 /* JITTutorial1.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = JITTutorial1.html; sourceTree = "<group>"; };
+		F22627340DAE34D20008F441 /* JITTutorial2-1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "JITTutorial2-1.png"; sourceTree = "<group>"; };
+		F22627350DAE34D20008F441 /* JITTutorial2.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = JITTutorial2.html; sourceTree = "<group>"; };
+		F22627360DAE34D20008F441 /* LangImpl1.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = LangImpl1.html; sourceTree = "<group>"; };
+		F22627370DAE34D20008F441 /* LangImpl2.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = LangImpl2.html; sourceTree = "<group>"; };
+		F22627380DAE34D20008F441 /* LangImpl3.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = LangImpl3.html; sourceTree = "<group>"; };
+		F22627390DAE34D20008F441 /* LangImpl4.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = LangImpl4.html; sourceTree = "<group>"; };
+		F226273A0DAE34D20008F441 /* LangImpl5-cfg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "LangImpl5-cfg.png"; sourceTree = "<group>"; };
+		F226273B0DAE34D20008F441 /* LangImpl5.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = LangImpl5.html; sourceTree = "<group>"; };
+		F226273C0DAE34D20008F441 /* LangImpl6.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = LangImpl6.html; sourceTree = "<group>"; };
+		F226273D0DAE34D20008F441 /* LangImpl7.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = LangImpl7.html; sourceTree = "<group>"; };
+		F226273E0DAE34D20008F441 /* LangImpl8.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = LangImpl8.html; sourceTree = "<group>"; };
+		F226273F0DAE34D20008F441 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		F22627400DAE34D20008F441 /* OCamlLangImpl1.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = OCamlLangImpl1.html; sourceTree = "<group>"; };
+		F22627410DAE34D20008F441 /* OCamlLangImpl2.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = OCamlLangImpl2.html; sourceTree = "<group>"; };
+		F22627420DAE34D20008F441 /* OCamlLangImpl3.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = OCamlLangImpl3.html; sourceTree = "<group>"; };
+		F22627430DAE34D20008F441 /* OCamlLangImpl4.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = OCamlLangImpl4.html; sourceTree = "<group>"; };
+		F22627440DAE34D20008F441 /* OCamlLangImpl5.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = OCamlLangImpl5.html; sourceTree = "<group>"; };
+		F22627450DAE34D20008F441 /* OCamlLangImpl6.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = OCamlLangImpl6.html; sourceTree = "<group>"; };
+		F22627460DAE34D20008F441 /* OCamlLangImpl7.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = OCamlLangImpl7.html; sourceTree = "<group>"; };
+		F22761DF0DAD09CD003D8065 /* BrainF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BrainF.cpp; path = BrainF/BrainF.cpp; sourceTree = "<group>"; };
+		F22761E00DAD09CD003D8065 /* BrainF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BrainF.h; path = BrainF/BrainF.h; sourceTree = "<group>"; };
+		F22761E10DAD09CD003D8065 /* BrainFDriver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BrainFDriver.cpp; path = BrainF/BrainFDriver.cpp; sourceTree = "<group>"; };
+		F27C8CE90DAD2EF900A33844 /* IRBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IRBuilder.h; sourceTree = "<group>"; };
+		F27C8CFF0DAD307700A33844 /* ShadowStackCollector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ShadowStackCollector.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -1580,6 +1605,7 @@
 		DE66ED3E08ABEC2A00323D32 /* lib/CodeGen */ = {
 			isa = PBXGroup;
 			children = (
+				F27C8CFF0DAD307700A33844 /* ShadowStackCollector.cpp */,
 				754221420D171DFC00DDB61B /* MachineLICM.cpp */,
 				9FE450AB0C77AB6100C4FEA4 /* README.txt */,
 				DE66ED8308ABEC2B00323D32 /* SelectionDAG */,
@@ -2417,6 +2443,7 @@
 		DE66F26E08ABF03200323D32 /* Support */ = {
 			isa = PBXGroup;
 			children = (
+				F27C8CE90DAD2EF900A33844 /* IRBuilder.h */,
 				DE66F27008ABF03200323D32 /* AIXDataTypesFix.h */,
 				9F5B90CE0D0CE89300CDFDEA /* AlignOf.h */,
 				CF8F1B430B64F74400BB4199 /* Allocator.h */,
@@ -2440,7 +2467,6 @@
 				DE66F28108ABF03200323D32 /* InstIterator.h */,
 				DE66F28208ABF03200323D32 /* InstVisitor.h */,
 				DE66F28308ABF03200323D32 /* LeakDetector.h */,
-				9F7794870C73D51000551F9C /* LLVMBuilder.h */,
 				CF8F1B460B64F74400BB4199 /* ManagedStatic.h */,
 				DE66F28408ABF03200323D32 /* Mangler.h */,
 				DE66F28508ABF03200323D32 /* MathExtras.h */,
@@ -2631,6 +2657,7 @@
 		DE66F38D08ABF35C00323D32 /* docs */ = {
 			isa = PBXGroup;
 			children = (
+				F22627310DAE34D10008F441 /* tutorial */,
 				DE66F38F08ABF35C00323D32 /* AliasAnalysis.html */,
 				DE66F39008ABF35C00323D32 /* Bugpoint.html */,
 				DE66F39208ABF35C00323D32 /* GCCFEBuildInstrs.html */,
@@ -2717,6 +2744,9 @@
 		DE66F3FD08ABF37000323D32 /* examples */ = {
 			isa = PBXGroup;
 			children = (
+				F22761DF0DAD09CD003D8065 /* BrainF.cpp */,
+				F22761E00DAD09CD003D8065 /* BrainF.h */,
+				F22761E10DAD09CD003D8065 /* BrainFDriver.cpp */,
 				DE66F40E08ABF37000323D32 /* fibonacci.cpp */,
 				DE66F41508ABF37000323D32 /* HowToUseJIT.cpp */,
 				DE66F41E08ABF37000323D32 /* ModuleMaker.cpp */,
@@ -2769,6 +2799,34 @@
 				CF490E2F0907BBF80072DB1C /* SubtargetEmitter.h */,
 			);
 			path = TableGen;
+			sourceTree = "<group>";
+		};
+		F22627310DAE34D10008F441 /* tutorial */ = {
+			isa = PBXGroup;
+			children = (
+				F22627320DAE34D10008F441 /* index.html */,
+				F22627330DAE34D20008F441 /* JITTutorial1.html */,
+				F22627340DAE34D20008F441 /* JITTutorial2-1.png */,
+				F22627350DAE34D20008F441 /* JITTutorial2.html */,
+				F22627360DAE34D20008F441 /* LangImpl1.html */,
+				F22627370DAE34D20008F441 /* LangImpl2.html */,
+				F22627380DAE34D20008F441 /* LangImpl3.html */,
+				F22627390DAE34D20008F441 /* LangImpl4.html */,
+				F226273A0DAE34D20008F441 /* LangImpl5-cfg.png */,
+				F226273B0DAE34D20008F441 /* LangImpl5.html */,
+				F226273C0DAE34D20008F441 /* LangImpl6.html */,
+				F226273D0DAE34D20008F441 /* LangImpl7.html */,
+				F226273E0DAE34D20008F441 /* LangImpl8.html */,
+				F226273F0DAE34D20008F441 /* Makefile */,
+				F22627400DAE34D20008F441 /* OCamlLangImpl1.html */,
+				F22627410DAE34D20008F441 /* OCamlLangImpl2.html */,
+				F22627420DAE34D20008F441 /* OCamlLangImpl3.html */,
+				F22627430DAE34D20008F441 /* OCamlLangImpl4.html */,
+				F22627440DAE34D20008F441 /* OCamlLangImpl5.html */,
+				F22627450DAE34D20008F441 /* OCamlLangImpl6.html */,
+				F22627460DAE34D20008F441 /* OCamlLangImpl7.html */,
+			);
+			path = tutorial;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
