@@ -329,7 +329,10 @@ const Attr *Decl::getAttrs() const {
   return (*DeclAttrs)[this];
 }
 
-#define CASE(KIND) case KIND: cast<KIND##Decl>(this)->~KIND##Decl(); break
+#define CASE(KIND) \
+  case KIND: \
+    static_cast<KIND##Decl *>(const_cast<Decl *>(this))->~KIND##Decl(); \
+    break
 
 void Decl::Destroy(ASTContext& C) const {
   switch (getKind()) {
@@ -355,7 +358,7 @@ void Decl::Destroy(ASTContext& C) const {
   CASE(LinkageSpec);
 
   case Struct: case Union: case Class:
-    cast<RecordDecl>(this)->~RecordDecl();
+    static_cast<RecordDecl *>(const_cast<Decl *>(this))->~RecordDecl();
     break;
 
   default: assert(0 && "Unknown decl kind!");
