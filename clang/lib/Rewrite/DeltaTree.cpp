@@ -56,6 +56,14 @@ namespace {
   };
 } // end anonymous namespace
 
+
+struct InsertResult {
+  DeltaTreeNode *LHS, *RHS;
+  SourceDelta Split;
+  InsertResult() : LHS(0) {}
+};
+
+
 namespace {
   /// DeltaTreeNode - The common part of all nodes.
   ///
@@ -85,7 +93,7 @@ namespace {
     int FullDelta;
   public:
     DeltaTreeNode(bool isLeaf = true)
-    : NumValuesUsed(0), IsLeaf(isLeaf), FullDelta(0) {}
+      : NumValuesUsed(0), IsLeaf(isLeaf), FullDelta(0) {}
     
     bool isLeaf() const { return IsLeaf; }
     int getFullDelta() const { return FullDelta; }
@@ -100,6 +108,9 @@ namespace {
       assert(i < NumValuesUsed && "Invalid value #");
       return Values[i];
     }
+    
+    void DoSplit(InsertResult &InsertRes);
+    
     
     /// AddDeltaNonFull - Add a delta to this tree and/or it's children, knowing
     /// that this node is not currently full.
@@ -238,36 +249,8 @@ void DeltaTreeInteriorNode::SplitChild(unsigned ChildNo) {
   DeltaTreeNode *Child = getChild(ChildNo);
   assert(!isFull() && Child->isFull() && "Inconsistent constraints");
   
-  // Since the child is full, it contains 2*WidthFactor-1 values.  We move
-  // the first 'WidthFactor-1' values to the LHS child (which we leave in the
-  // original child), propagate one value up into us, and move the last
-  // 'WidthFactor-1' values into thew RHS child.
-  
-  // Create the new child node.
-  DeltaTreeNode *NewNode;
-  if (DeltaTreeInteriorNode *CIN = dyn_cast<DeltaTreeInteriorNode>(Child)) {
-    // If the child is an interior node, also move over 'WidthFactor' grand
-    // children into the new node.
-    NewNode = new DeltaTreeInteriorNode();
-    memcpy(&((DeltaTreeInteriorNode*)NewNode)->Children[0],
-           &CIN->Children[WidthFactor],
-           WidthFactor*sizeof(CIN->Children[0]));
-  } else {
-    // Just create the child node.
-    NewNode = new DeltaTreeNode();
-  }
-  
-  // Move over the last 'WidthFactor-1' values from Child to NewNode.
-  memcpy(&NewNode->Values[0], &Child->Values[WidthFactor],
-         (WidthFactor-1)*sizeof(Child->Values[0]));
-  
-  // Decrease the number of values in the two children.
-  NewNode->NumValuesUsed = Child->NumValuesUsed = WidthFactor-1;
-  
-  // Recompute the two children's full delta.  Our delta hasn't changed, but
-  // their delta has.
-  NewNode->RecomputeFullDeltaLocally();
-  Child->RecomputeFullDeltaLocally();
+  InsertResult SplitRes;
+  Child->DoSplit(SplitRes);
   
   // Now that we have two nodes and a new element, insert the median value
   // into ourself by moving all the later values/children down, then inserting
@@ -275,14 +258,54 @@ void DeltaTreeInteriorNode::SplitChild(unsigned ChildNo) {
   if (getNumValuesUsed() != ChildNo)
     memmove(&Children[ChildNo+2], &Children[ChildNo+1], 
             (getNumValuesUsed()-ChildNo)*sizeof(Children[0]));
-  Children[ChildNo+1] = NewNode;
+  Children[ChildNo] = SplitRes.LHS;
+  Children[ChildNo+1] = SplitRes.RHS;
   
   if (getNumValuesUsed() != ChildNo)
     memmove(&Values[ChildNo+1], &Values[ChildNo],
             (getNumValuesUsed()-ChildNo)*sizeof(Values[0]));
-  Values[ChildNo] = Child->Values[WidthFactor-1];
+  Values[ChildNo] = SplitRes.Split;
   ++NumValuesUsed;
 }
+
+void DeltaTreeNode::DoSplit(InsertResult &InsertRes) {
+  assert(isFull() && "Why split a non-full node?");
+  
+  // Since this node is full, it contains 2*WidthFactor-1 values.  We move
+  // the first 'WidthFactor-1' values to the LHS child (which we leave in this
+  // node), propagate one value up, and move the last 'WidthFactor-1' values
+  // into the RHS child.
+  
+  // Create the new child node.
+  DeltaTreeNode *NewNode;
+  if (DeltaTreeInteriorNode *IN = dyn_cast<DeltaTreeInteriorNode>(this)) {
+    // If this is an interior node, also move over 'WidthFactor' children
+    // into the new node.
+    DeltaTreeInteriorNode *New = new DeltaTreeInteriorNode();
+    memcpy(&New->Children[0], &IN->Children[WidthFactor],
+           WidthFactor*sizeof(IN->Children[0]));
+    NewNode = New;
+  } else {
+    // Just create the new leaf node.
+    NewNode = new DeltaTreeNode();
+  }
+  
+  // Move over the last 'WidthFactor-1' values from here to NewNode.
+  memcpy(&NewNode->Values[0], &Values[WidthFactor],
+         (WidthFactor-1)*sizeof(Values[0]));
+  
+  // Decrease the number of values in the two nodes.
+  NewNode->NumValuesUsed = NumValuesUsed = WidthFactor-1;
+  
+  // Recompute the two nodes' full delta.
+  NewNode->RecomputeFullDeltaLocally();
+  RecomputeFullDeltaLocally();
+  
+  InsertRes.LHS = this;
+  InsertRes.RHS = NewNode;
+  InsertRes.Split = Values[WidthFactor-1];
+}
+
 
 
 //===----------------------------------------------------------------------===//
@@ -406,16 +429,17 @@ int DeltaTree::getDeltaAt(unsigned FileIndex) const {
 /// into the current DeltaTree at offset FileIndex.
 void DeltaTree::AddDelta(unsigned FileIndex, int Delta) {
   assert(Delta && "Adding a noop?");
+  DeltaTreeNode *MyRoot = getRoot(Root);
   
   // If the root is full, create a new dummy (non-empty) interior node that
   // points to it, allowing the old root to be split.
-  if (getRoot(Root)->isFull())
-    Root = new DeltaTreeInteriorNode(getRoot(Root));
+  if (MyRoot->isFull())
+    Root = MyRoot = new DeltaTreeInteriorNode(MyRoot);
   
-  getRoot(Root)->AddDeltaNonFull(FileIndex, Delta);
+  MyRoot->AddDeltaNonFull(FileIndex, Delta);
   
 #ifdef VERIFY_TREE
-  VerifyTree(Root);
+  VerifyTree(MyRoot);
 #endif
 }
 
