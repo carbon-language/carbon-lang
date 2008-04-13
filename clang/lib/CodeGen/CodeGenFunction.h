@@ -17,7 +17,7 @@
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/LLVMBuilder.h"
+#include "llvm/Support/IRBuilder.h"
 #include <vector>
 
 namespace llvm {
@@ -244,7 +244,7 @@ public:
   TargetInfo &Target;
   
   typedef std::pair<llvm::Value *, llvm::Value *> ComplexPairTy;
-  llvm::LLVMFoldingBuilder Builder;
+  llvm::IRBuilder Builder;
   
   // Holds the Decl for the current function or method
   const Decl *CurFuncDecl;

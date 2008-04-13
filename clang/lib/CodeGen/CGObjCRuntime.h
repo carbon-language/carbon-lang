@@ -17,7 +17,7 @@
 #define CLANG_CODEGEN_OBCJRUNTIME_H
 
 namespace llvm {
-  class LLVMFoldingBuilder;
+  class IRBuilder;
   class Constant;
   class Type;
   class Value;
@@ -35,7 +35,7 @@ public:
   virtual ~CGObjCRuntime();
   
   /// Generate an Objective-C message send operation
-  virtual llvm::Value *generateMessageSend(llvm::LLVMFoldingBuilder &Builder,
+  virtual llvm::Value *generateMessageSend(llvm::IRBuilder &Builder,
                                            const llvm::Type *ReturnTy,
                                            llvm::Value *Sender,
                                            llvm::Value *Receiver,

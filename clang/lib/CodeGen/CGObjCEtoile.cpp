@@ -14,7 +14,7 @@
 #include "CGObjCRuntime.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/LLVMBuilder.h"
+#include "llvm/Support/IRBuilder.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace {
@@ -36,14 +36,14 @@ public:
   CGObjCEtoile(llvm::Module &Mp,
     const llvm::Type *LLVMIntType,
     const llvm::Type *LLVMLongType);
-  virtual llvm::Value *generateMessageSend(llvm::LLVMFoldingBuilder &Builder,
+  virtual llvm::Value *generateMessageSend(llvm::IRBuilder &Builder,
                                            const llvm::Type *ReturnTy,
                                            llvm::Value *Sender,
                                            llvm::Value *Receiver,
                                            llvm::Value *Selector,
                                            llvm::Value** ArgV,
                                            unsigned ArgC);
-  llvm::Value *getSelector(llvm::LLVMFoldingBuilder &Builder,
+  llvm::Value *getSelector(llvm::IRBuilder &Builder,
       llvm::Value *SelName,
       llvm::Value *SelTypes);
   virtual llvm::Function *MethodPreamble(const llvm::Type *ReturnTy,
@@ -117,7 +117,7 @@ CGObjCEtoile::CGObjCEtoile(llvm::Module &M,
 }
 
 /// Looks up the selector for the specified name / type pair.
-llvm::Value *CGObjCEtoile::getSelector(llvm::LLVMFoldingBuilder &Builder,
+llvm::Value *CGObjCEtoile::getSelector(llvm::IRBuilder &Builder,
     llvm::Value *SelName,
     llvm::Value *SelTypes)
 {
@@ -137,23 +137,20 @@ llvm::Value *CGObjCEtoile::getSelector(llvm::LLVMFoldingBuilder &Builder,
   return Builder.CreateCall(SelFunction, Args.begin(), Args.end());
 }
 
-static void SetField(llvm::LLVMFoldingBuilder &Builder,
-                     llvm::Value *Structure, 
-                     unsigned Index, 
-                     llvm::Value *Value) {
+static void SetField(llvm::IRBuilder &Builder, llvm::Value *Structure, 
+                     unsigned Index,  llvm::Value *Value) {
     llvm::Value *element_ptr = Builder.CreateStructGEP(Structure, Index);
     Builder.CreateStore(Value, element_ptr);
 }
 // Generate code for a message send expression on the Etoile runtime.
 // BIG FAT WARNING: Much of this code will need factoring out later.
-llvm::Value *CGObjCEtoile::generateMessageSend(
-                                            llvm::LLVMFoldingBuilder &Builder,
-                                            const llvm::Type *ReturnTy,
-                                            llvm::Value *Sender,
-                                            llvm::Value *Receiver,
-                                            llvm::Value *Selector,
-                                            llvm::Value** ArgV,
-                                            unsigned ArgC) {
+llvm::Value *CGObjCEtoile::generateMessageSend(llvm::IRBuilder &Builder,
+                                               const llvm::Type *ReturnTy,
+                                               llvm::Value *Sender,
+                                               llvm::Value *Receiver,
+                                               llvm::Value *Selector,
+                                               llvm::Value** ArgV,
+                                               unsigned ArgC) {
   // FIXME: Selectors should be statically cached, not looked up on every call.
   llvm::Value *cmd = getSelector(Builder, Selector, 0);
   // TODO: [Polymorphic] inline caching

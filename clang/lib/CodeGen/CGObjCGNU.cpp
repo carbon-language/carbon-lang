@@ -14,7 +14,7 @@
 #include "CGObjCRuntime.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/LLVMBuilder.h"
+#include "llvm/Support/IRBuilder.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace {
@@ -33,14 +33,14 @@ public:
   CGObjCGNU(llvm::Module &Mp,
     const llvm::Type *LLVMIntType,
     const llvm::Type *LLVMLongType);
-  virtual llvm::Value *generateMessageSend(llvm::LLVMFoldingBuilder &Builder,
+  virtual llvm::Value *generateMessageSend(llvm::IRBuilder &Builder,
                                            const llvm::Type *ReturnTy,
                                            llvm::Value *Sender,
                                            llvm::Value *Receiver,
                                            llvm::Value *Selector,
                                            llvm::Value** ArgV,
                                            unsigned ArgC);
-  llvm::Value *getSelector(llvm::LLVMFoldingBuilder &Builder,
+  llvm::Value *getSelector(llvm::IRBuilder &Builder,
       llvm::Value *SelName,
       llvm::Value *SelTypes);
   virtual llvm::Function *MethodPreamble(const llvm::Type *ReturnTy,
@@ -88,7 +88,7 @@ CGObjCGNU::CGObjCGNU(llvm::Module &M,
 
 /// Looks up the selector for the specified name / type pair.
 // FIXME: Selectors should be statically cached, not looked up on every call.
-llvm::Value *CGObjCGNU::getSelector(llvm::LLVMFoldingBuilder &Builder,
+llvm::Value *CGObjCGNU::getSelector(llvm::IRBuilder &Builder,
     llvm::Value *SelName,
     llvm::Value *SelTypes)
 {
@@ -119,7 +119,7 @@ llvm::Value *CGObjCGNU::getSelector(llvm::LLVMFoldingBuilder &Builder,
 // FIXME: Much of this code will need factoring out later.
 // TODO: This should take a sender argument (pointer to self in the calling
 // context)
-llvm::Value *CGObjCGNU::generateMessageSend(llvm::LLVMFoldingBuilder &Builder,
+llvm::Value *CGObjCGNU::generateMessageSend(llvm::IRBuilder &Builder,
                                             const llvm::Type *ReturnTy,
                                             llvm::Value *Sender,
                                             llvm::Value *Receiver,
