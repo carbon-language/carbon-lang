@@ -930,7 +930,7 @@ static bool LinkFunctionBody(Function *Dest, Function *Src,
   Function::arg_iterator DI = Dest->arg_begin();
   for (Function::arg_iterator I = Src->arg_begin(), E = Src->arg_end();
        I != E; ++I, ++DI) {
-    DI->setName(I->getName());  // Copy the name information over...
+    DI->takeName(I);  // Copy the name information over...
 
     // Add a mapping to our local map
     ValueMap[I] = DI;

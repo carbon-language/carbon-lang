@@ -657,7 +657,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
       for (Function::arg_iterator
              I = newMain->arg_begin(), E = newMain->arg_end(),
              OI = oldMain->arg_begin(); I != E; ++I, ++OI) {
-        I->setName(OI->getName());    // Copy argument names from oldMain
+        I->takeName(OI);    // Copy argument names from oldMain
         args.push_back(I);
       }
 

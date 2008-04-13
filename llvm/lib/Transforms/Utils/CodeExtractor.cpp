@@ -317,7 +317,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   if (!AggregateArgs) {
     AI = newFunction->arg_begin();
     for (unsigned i = 0, e = inputs.size(); i != e; ++i, ++AI)
-      AI->setName(inputs[i]->getName());
+      AI->takeName(inputs[i]);
     for (unsigned i = 0, e = outputs.size(); i != e; ++i, ++AI)
       AI->setName(outputs[i]->getName()+".out");
   }
