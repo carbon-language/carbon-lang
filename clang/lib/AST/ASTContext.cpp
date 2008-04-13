@@ -788,6 +788,28 @@ QualType ASTContext::getFunctionType(QualType ResultTy, QualType *ArgArray,
   return QualType(FTP, 0);
 }
 
+/// getTypeDeclType - Return the unique reference to the type for the
+/// specified type declaration.
+QualType ASTContext::getTypeDeclType(TypeDecl *Decl) {
+  if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
+  
+  if (TypedefDecl *Typedef = dyn_cast_or_null<TypedefDecl>(Decl))
+    return getTypedefType(Typedef);
+  else if (ObjCInterfaceDecl *ObjCInterface 
+             = dyn_cast_or_null<ObjCInterfaceDecl>(Decl))
+    return getObjCInterfaceType(ObjCInterface);
+  else if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Decl)) {
+    Decl->TypeForDecl = new RecordType(Record);
+    Types.push_back(Decl->TypeForDecl);
+    return QualType(Decl->TypeForDecl, 0);
+  } else if (EnumDecl *Enum = dyn_cast_or_null<EnumDecl>(Decl)) {
+    Decl->TypeForDecl = new EnumType(Enum);
+    Types.push_back(Decl->TypeForDecl);
+    return QualType(Decl->TypeForDecl, 0);    
+  } else
+    assert(false && "TypeDecl without a type?");
+}
+
 /// getTypedefType - Return the unique reference to the type for the
 /// specified typename decl.
 QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
@@ -913,15 +935,7 @@ QualType ASTContext::getTypeOfType(QualType tofType) {
 /// specified TagDecl (struct/union/class/enum) decl.
 QualType ASTContext::getTagDeclType(TagDecl *Decl) {
   assert (Decl);
-
-  // The decl stores the type cache.
-  if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
-  
-  TagType* T = new TagType(Decl, QualType());
-  Types.push_back(T);  
-  Decl->TypeForDecl = T;
-
-  return QualType(T, 0);
+  return getTypeDeclType(Decl);
 }
 
 /// getSizeType - Return the unique type for "size_t" (C99 7.17), the result 

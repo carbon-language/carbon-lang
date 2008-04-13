@@ -994,10 +994,11 @@ public:
 
 class TagType : public Type {
   TagDecl *decl;
+
+protected:
   TagType(TagDecl *D, QualType can) : Type(Tagged, can), decl(D) {}
-  friend class ASTContext;  // ASTContext creates these.
-public:
-    
+
+public:   
   TagDecl *getDecl() const { return decl; }
   
   virtual void getAsStringInternal(std::string &InnerString) const;
@@ -1014,7 +1015,8 @@ protected:
 /// RecordType - This is a helper class that allows the use of isa/cast/dyncast
 /// to detect TagType objects of structs/unions/classes.
 class RecordType : public TagType {
-  RecordType(); // DO NOT IMPLEMENT
+  explicit RecordType(RecordDecl *D) : TagType(cast<TagDecl>(D), QualType()) { }
+  friend class ASTContext;   // ASTContext creates these.
 public:
     
   RecordDecl *getDecl() const {
@@ -1040,7 +1042,8 @@ public:
 /// EnumType - This is a helper class that allows the use of isa/cast/dyncast
 /// to detect TagType objects of enums.
 class EnumType : public TagType {
-  EnumType(); // DO NOT IMPLEMENT
+  explicit EnumType(EnumDecl *D) : TagType(cast<TagDecl>(D), QualType()) { }
+  friend class ASTContext;   // ASTContext creates these.
 public:
     
   EnumDecl *getDecl() const {

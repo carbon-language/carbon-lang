@@ -105,7 +105,7 @@ QualType Sema::ConvertDeclSpecToType(DeclSpec &DS) {
            DS.getTypeSpecSign() == 0 &&
            "Can't handle qualifiers on typedef names yet!");
     // TypeQuals handled by caller.
-    Result = Context.getTagDeclType(cast<TagDecl>(D));
+    Result = Context.getTypeDeclType(cast<TypeDecl>(D));
     break;
   }    
   case DeclSpec::TST_typedef: {
@@ -114,6 +114,7 @@ QualType Sema::ConvertDeclSpecToType(DeclSpec &DS) {
     assert(DS.getTypeSpecWidth() == 0 && DS.getTypeSpecComplex() == 0 &&
            DS.getTypeSpecSign() == 0 &&
            "Can't handle qualifiers on typedef names yet!");
+
     // FIXME: Adding a TST_objcInterface clause doesn't seem ideal, so
     // we have this "hack" for now... 
     if (ObjCInterfaceDecl *ObjCIntDecl = dyn_cast<ObjCInterfaceDecl>(D)) {
@@ -140,7 +141,7 @@ QualType Sema::ConvertDeclSpecToType(DeclSpec &DS) {
       }
     }
     // TypeQuals handled by caller.
-    Result = Context.getTypedefType(cast<TypedefDecl>(D));
+    Result = Context.getTypeDeclType(dyn_cast<TypeDecl>(D));
     break;
   }
   case DeclSpec::TST_typeofType:

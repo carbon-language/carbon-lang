@@ -35,7 +35,9 @@ using namespace clang;
 Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) {
   Decl *IIDecl = LookupDecl(&II, Decl::IDNS_Ordinary, S, false);
 
-  if (IIDecl && (isa<TypedefDecl>(IIDecl) || isa<ObjCInterfaceDecl>(IIDecl)))
+  if (IIDecl && (isa<TypedefDecl>(IIDecl) || 
+                 isa<ObjCInterfaceDecl>(IIDecl) ||
+                 isa<TagDecl>(IIDecl)))
     return IIDecl;
   return 0;
 }
@@ -102,7 +104,9 @@ ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
 Decl *Sema::LookupDecl(const IdentifierInfo *II, unsigned NSI,
                        Scope *S, bool enableLazyBuiltinCreation) {
   if (II == 0) return 0;
-  Decl::IdentifierNamespace NS = (Decl::IdentifierNamespace)NSI;
+  unsigned NS = NSI;
+  if (getLangOptions().CPlusPlus && (NS & Decl::IDNS_Ordinary))
+    NS |= Decl::IDNS_Tag;
 
   // Scan up the scope chain looking for a decl that matches this identifier
   // that is in the appropriate namespace.  This search should not take long, as
@@ -113,7 +117,7 @@ Decl *Sema::LookupDecl(const IdentifierInfo *II, unsigned NSI,
   // If we didn't find a use of this identifier, and if the identifier
   // corresponds to a compiler builtin, create the decl object for the builtin
   // now, injecting it into translation unit scope, and return it.
-  if (NS == Decl::IDNS_Ordinary) {
+  if (NS & Decl::IDNS_Ordinary) {
     if (enableLazyBuiltinCreation) {
       // If this is a builtin on this (or all) targets, create the decl.
       if (unsigned BuiltinID = II->getBuiltinID())
@@ -746,7 +750,13 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   Decl *PrevDecl = LookupDecl(II, Decl::IDNS_Ordinary, S);
   ScopedDecl *New;
   bool InvalidDecl = false;
-  
+ 
+  // In C++, the previous declaration we find might be a tag type
+  // (class or enum). In this case, the new declaration will hide the
+  // tag type. 
+  if (PrevDecl && PrevDecl->getIdentifierNamespace() == Decl::IDNS_Tag)
+    PrevDecl = 0;
+
   QualType R = GetTypeForDeclarator(D, S);
   assert(!R.isNull() && "GetTypeForDeclarator() returned null type");
 

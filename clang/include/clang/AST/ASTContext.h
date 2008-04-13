@@ -176,7 +176,11 @@ public:
   /// list.  isVariadic indicates whether the argument list includes '...'.
   QualType getFunctionType(QualType ResultTy, QualType *ArgArray,
                            unsigned NumArgs, bool isVariadic);
-  
+
+  /// getTypeDeclType - Return the unique reference to the type for
+  /// the specified type declaration.
+  QualType getTypeDeclType(TypeDecl *Decl);
+
   /// getTypedefType - Return the unique reference to the type for the
   /// specified typename decl.
   QualType getTypedefType(TypedefDecl *Decl);

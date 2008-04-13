@@ -80,12 +80,14 @@ public:
   };
 
   /// IdentifierNamespace - According to C99 6.2.3, there are four namespaces,
-  /// labels, tags, members and ordinary identifiers.
+  /// labels, tags, members and ordinary identifiers. These are meant
+  /// as bitmasks, so that searches in C++ can look into the "tag" namespace
+  /// during ordinary lookup.
   enum IdentifierNamespace {
-    IDNS_Label,
-    IDNS_Tag,
-    IDNS_Member,
-    IDNS_Ordinary
+    IDNS_Label = 0x1,
+    IDNS_Tag = 0x2,
+    IDNS_Member = 0x4,
+    IDNS_Ordinary = 0x8
   };
   
   /// ObjCDeclQualifier - Qualifier used on types in method declarations

@@ -38,8 +38,8 @@ public:
   /// The decl must already be part of the decl chain.
   void RemoveDecl(NamedDecl *D);
 
-  /// Lookup - Find the non-shadowed decl that belongs to a particular
-  /// Decl::IdentifierNamespace.
+  /// Lookup - Find the non-shadowed decl that belongs to one or more
+  /// of the specified Decl::IdentifierNamespaces.
   NamedDecl *Lookup(const IdentifierInfo *II, unsigned NSI);
 
 private:

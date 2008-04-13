@@ -15,6 +15,7 @@
 #include "IdentifierResolver.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/AST/Decl.h"
+#include "clang/Parse/Scope.h"
 #include <list>
 #include <vector>
 
@@ -113,6 +114,25 @@ void IdentifierResolver::AddDecl(NamedDecl *D, Scope *S) {
   } else
     IDI = toIdDeclInfo(Ptr);
 
+  // C++ [basic.scope]p4:
+  //   -- exactly one declaration shall declare a class name or
+  //   enumeration name that is not a typedef name and the other
+  //   declarations shall all refer to the same object or
+  //   enumerator, or all refer to functions and function templates;
+  //   in this case the class name or enumeration name is hidden.
+  if (isa<TagDecl>(D)) {
+    // We are pushing the name of a tag (enum or class).
+    IdDeclInfo::ShadowedIter TopIter = IDI->shadowed_end() - 1;
+    if (S->isDeclScope(*TopIter)) {
+      // There is already a declaration with the same name in the same
+      // scope. It must be found before we find the new declaration,
+      // so swap the order on the shadowed declaration stack.
+      NamedDecl *Temp = *TopIter;
+      *TopIter = D;
+      D = Temp;
+    }
+  }
+
   IDI->PushShadowed(D);
 }
 
@@ -159,16 +179,15 @@ void IdentifierResolver::RemoveDecl(NamedDecl *D) {
 
 /// Lookup - Find the non-shadowed decl that belongs to a particular
 /// Decl::IdentifierNamespace.
-NamedDecl *IdentifierResolver::Lookup(const IdentifierInfo *II, unsigned NSI) {
+NamedDecl *IdentifierResolver::Lookup(const IdentifierInfo *II, unsigned NS) {
   assert(II && "null param passed");
-  Decl::IdentifierNamespace NS = (Decl::IdentifierNamespace)NSI;
   void *Ptr = II->getFETokenInfo<void>();
 
   if (!Ptr) return NULL;
 
   if (isDeclPtr(Ptr)) {
     NamedDecl *D = static_cast<NamedDecl*>(Ptr);
-    return (D->getIdentifierNamespace() == NS) ? D : NULL;
+    return (D->getIdentifierNamespace() & NS) ? D : NULL;
   }
 
   IdDeclInfo *IDI = toIdDeclInfo(Ptr);
@@ -178,7 +197,7 @@ NamedDecl *IdentifierResolver::Lookup(const IdentifierInfo *II, unsigned NSI) {
   for (IdDeclInfo::ShadowedIter SI = IDI->shadowed_end();
        SI != IDI->shadowed_begin(); --SI) {
     NamedDecl *D = *(SI-1);
-    if (D->getIdentifierNamespace() == NS)
+    if (D->getIdentifierNamespace() & NS)
       return D;
   }
 
