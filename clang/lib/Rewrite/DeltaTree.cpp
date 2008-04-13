@@ -14,6 +14,7 @@
 #include "clang/Rewrite/DeltaTree.h"
 #include "llvm/Support/Casting.h"
 #include <cstring>
+#include <cstdio>
 using namespace clang;
 using llvm::cast;
 using llvm::dyn_cast;
@@ -60,7 +61,6 @@ namespace {
 struct InsertResult {
   DeltaTreeNode *LHS, *RHS;
   SourceDelta Split;
-  InsertResult() : LHS(0) {}
 };
 
 
@@ -109,12 +109,14 @@ namespace {
       return Values[i];
     }
     
+    /// DoInsertion - Do an insertion of the specified FileIndex/Delta pair into
+    /// this node.  If insertion is easy, do it and return false.  Otherwise,
+    /// split the node, populate InsertRes with info about the split, and return
+    /// true.
+    bool DoInsertion(unsigned FileIndex, int Delta, InsertResult *InsertRes);
+
     void DoSplit(InsertResult &InsertRes);
     
-    
-    /// AddDeltaNonFull - Add a delta to this tree and/or it's children, knowing
-    /// that this node is not currently full.
-    void AddDeltaNonFull(unsigned FileIndex, int Delta);
     
     /// RecomputeFullDeltaLocally - Recompute the FullDelta field by doing a
     /// local walk over our contained deltas.
@@ -145,6 +147,15 @@ namespace {
       Children[0] = FirstChild;
     }
     
+    DeltaTreeInteriorNode(const InsertResult &IR) 
+      : DeltaTreeNode(false /*nonleaf*/) {
+      Children[0] = IR.LHS;
+      Children[1] = IR.RHS;
+      Values[0] = IR.Split;
+      FullDelta = IR.LHS->getFullDelta()+IR.RHS->getFullDelta()+IR.Split.Delta;
+      NumValuesUsed = 1;
+    }
+    
     const DeltaTreeNode *getChild(unsigned i) const {
       assert(i < getNumValuesUsed()+1 && "Invalid child");
       return Children[i];
@@ -156,8 +167,6 @@ namespace {
     
     static inline bool classof(const DeltaTreeInteriorNode *) { return true; }
     static inline bool classof(const DeltaTreeNode *N) { return !N->isLeaf(); }
-  private:
-    void SplitChild(unsigned ChildNo);
   };
 }
 
@@ -182,12 +191,12 @@ void DeltaTreeNode::RecomputeFullDeltaLocally() {
   FullDelta = NewFullDelta;
 }
 
-
-/// AddDeltaNonFull - Add a delta to this tree and/or it's children, knowing
-/// that this node is not currently full.
-void DeltaTreeNode::AddDeltaNonFull(unsigned FileIndex, int Delta) {
-  assert(!isFull() && "AddDeltaNonFull on a full tree?");
-  
+/// DoInsertion - Do an insertion of the specified FileIndex/Delta pair into
+/// this node.  If insertion is easy, do it and return false.  Otherwise,
+/// split the node, populate InsertRes with info about the split, and return
+/// true.
+bool DeltaTreeNode::DoInsertion(unsigned FileIndex, int Delta, 
+                                InsertResult *InsertRes) {
   // Maintain full delta for this node.
   FullDelta += Delta;
   
@@ -197,77 +206,109 @@ void DeltaTreeNode::AddDeltaNonFull(unsigned FileIndex, int Delta) {
     ++i;
   
   // If we found an a record for exactly this file index, just merge this
-  // value into the preexisting record and finish early.
+  // value into the pre-existing record and finish early.
   if (i != e && getValue(i).FileLoc == FileIndex) {
-    // NOTE: Delta could drop to zero here.  This means that the next delta
-    // entry is useless and could be removed.  Supporting erases is
-    // significantly more complex though, so we just leave an entry with
-    // Delta=0 in the tree.
+    // NOTE: Delta could drop to zero here.  This means that the delta entry is
+    // useless and could be removed.  Supporting erases is more complex than
+    // leaving an entry with Delta=0, so we just leave an entry with Delta=0 in
+    // the tree.
     Values[i].Delta += Delta;
-    return;
+    return false;
   }
-  
-  if (DeltaTreeInteriorNode *IN = dyn_cast<DeltaTreeInteriorNode>(this)) {
-    // Insertion into an interior node propagates the value down to a child.
-    DeltaTreeNode *Child = IN->getChild(i);
-    
-    // If the child tree is full, split it, pulling an element up into our
-    // node.
-    if (Child->isFull()) {
-      IN->SplitChild(i);
-      SourceDelta &MedianVal = getValue(i);
-      
-      // If the median value we pulled up is exactly our insert position, add
-      // the delta and return.
-      if (MedianVal.FileLoc == FileIndex) {
-        MedianVal.Delta += Delta;
-        return;
-      }
-      
-      // If the median value pulled up is less than our current search point,
-      // include those deltas and search down the RHS now.
-      if (MedianVal.FileLoc < FileIndex)
-        Child = IN->getChild(i+1);
+
+  // Otherwise, we found an insertion point, and we know that the value at the
+  // specified index is > FileIndex.  Handle the leaf case first.
+  if (isLeaf()) {
+    if (!isFull()) {
+      // For an insertion into a non-full leaf node, just insert the value in
+      // its sorted position.  This requires moving later values over.
+      if (i != e)
+        memmove(&Values[i+1], &Values[i], sizeof(Values[0])*(e-i));
+      Values[i] = SourceDelta::get(FileIndex, Delta);
+      ++NumValuesUsed;
+      return false;
     }
     
-    Child->AddDeltaNonFull(FileIndex, Delta);
-  } else {
-    // For an insertion into a non-full leaf node, just insert the value in
-    // its sorted position.  This requires moving later values over.
-    if (i != e)
-      memmove(&Values[i+1], &Values[i], sizeof(Values[0])*(e-i));
-    Values[i] = SourceDelta::get(FileIndex, Delta);
-    ++NumValuesUsed;
+    // Otherwise, if this is leaf is full, split the node at its median, insert
+    // the value into one of the children, and return the result.
+    assert(InsertRes && "No result location specified");
+    DoSplit(*InsertRes);
+    
+    if (InsertRes->Split.FileLoc > FileIndex)
+      InsertRes->LHS->DoInsertion(FileIndex, Delta, 0 /*can't fail*/);
+    else
+      InsertRes->RHS->DoInsertion(FileIndex, Delta, 0 /*can't fail*/);
+    return true;
   }
+ 
+  // Otherwise, this is an interior node.  Send the request down the tree.
+  DeltaTreeInteriorNode *IN = cast<DeltaTreeInteriorNode>(this);
+  if (!IN->Children[i]->DoInsertion(FileIndex, Delta, InsertRes))
+    return false; // If there was space in the child, just return.
+
+  // Okay, this split the subtree, producing a new value and two children to
+  // insert here.  If this node is non-full, we can just insert it directly.
+  if (!isFull()) {
+    // Now that we have two nodes and a new element, insert the perclated value
+    // into ourself by moving all the later values/children down, then inserting
+    // the new one.
+    if (i != e)
+      memmove(&IN->Children[i+2], &IN->Children[i+1],
+              (e-i)*sizeof(IN->Children[0]));
+    IN->Children[i] = InsertRes->LHS;
+    IN->Children[i+1] = InsertRes->RHS;
+    
+    if (e != i)
+      memmove(&Values[i+1], &Values[i], (e-i)*sizeof(Values[0]));
+    Values[i] = InsertRes->Split;
+    ++NumValuesUsed;
+    return false;
+  }
+  
+  // Finally, if this interior node was full and a node is percolated up, split
+  // ourself and return that up the chain.  Start by saving all our info to
+  // avoid having the split clobber it.
+  IN->Children[i] = InsertRes->LHS;
+  DeltaTreeNode *SubRHS = InsertRes->RHS;
+  SourceDelta SubSplit = InsertRes->Split;
+  
+  // Do the split.
+  DoSplit(*InsertRes);
+
+  // Figure out where to insert SubRHS/NewSplit.
+  DeltaTreeInteriorNode *InsertSide;
+  if (SubSplit.FileLoc < InsertRes->Split.FileLoc)
+    InsertSide = cast<DeltaTreeInteriorNode>(InsertRes->LHS);
+  else
+    InsertSide = cast<DeltaTreeInteriorNode>(InsertRes->RHS);
+  
+  // We now have a non-empty interior node 'InsertSide' to insert 
+  // SubRHS/SubSplit into.  Find out where to insert SubSplit.
+  
+  // Find the insertion point, the first delta whose index is >SubSplit.FileLoc.
+  i = 0; e = InsertSide->getNumValuesUsed();
+  while (i != e && SubSplit.FileLoc > InsertSide->getValue(i).FileLoc)
+    ++i;
+  
+  // Now we know that i is the place to insert the split value into.  Insert it
+  // and the child right after it.
+  if (i != e)
+    memmove(&InsertSide->Children[i+2], &InsertSide->Children[i+1],
+            (e-i)*sizeof(IN->Children[0]));
+  InsertSide->Children[i+1] = SubRHS;
+  
+  if (e != i)
+    memmove(&InsertSide->Values[i+1], &InsertSide->Values[i],
+            (e-i)*sizeof(Values[0]));
+  InsertSide->Values[i] = SubSplit;
+  ++InsertSide->NumValuesUsed;
+  InsertSide->FullDelta += SubSplit.Delta + SubRHS->getFullDelta();
+  return true;
 }
 
-/// SplitChild - At this point, we know that the current node is not full and
-/// that the specified child of this node is.  Split the child in half at its
-/// median, propagating one value up into us.  Child may be either an interior
-/// or leaf node.
-void DeltaTreeInteriorNode::SplitChild(unsigned ChildNo) {
-  DeltaTreeNode *Child = getChild(ChildNo);
-  assert(!isFull() && Child->isFull() && "Inconsistent constraints");
-  
-  InsertResult SplitRes;
-  Child->DoSplit(SplitRes);
-  
-  // Now that we have two nodes and a new element, insert the median value
-  // into ourself by moving all the later values/children down, then inserting
-  // the new one.
-  if (getNumValuesUsed() != ChildNo)
-    memmove(&Children[ChildNo+2], &Children[ChildNo+1], 
-            (getNumValuesUsed()-ChildNo)*sizeof(Children[0]));
-  Children[ChildNo] = SplitRes.LHS;
-  Children[ChildNo+1] = SplitRes.RHS;
-  
-  if (getNumValuesUsed() != ChildNo)
-    memmove(&Values[ChildNo+1], &Values[ChildNo],
-            (getNumValuesUsed()-ChildNo)*sizeof(Values[0]));
-  Values[ChildNo] = SplitRes.Split;
-  ++NumValuesUsed;
-}
-
+/// DoSplit - Split the currently full node (which has 2*WidthFactor-1 values)
+/// into two subtrees each with "WidthFactor-1" values and a pivot value.
+/// Return the pieces in InsertRes.
 void DeltaTreeNode::DoSplit(InsertResult &InsertRes) {
   assert(isFull() && "Why split a non-full node?");
   
@@ -423,7 +464,6 @@ int DeltaTree::getDeltaAt(unsigned FileIndex) const {
   // NOT REACHED.
 }
 
-
 /// AddDelta - When a change is made that shifts around the text buffer,
 /// this method is used to record that info.  It inserts a delta of 'Delta'
 /// into the current DeltaTree at offset FileIndex.
@@ -431,12 +471,10 @@ void DeltaTree::AddDelta(unsigned FileIndex, int Delta) {
   assert(Delta && "Adding a noop?");
   DeltaTreeNode *MyRoot = getRoot(Root);
   
-  // If the root is full, create a new dummy (non-empty) interior node that
-  // points to it, allowing the old root to be split.
-  if (MyRoot->isFull())
-    Root = MyRoot = new DeltaTreeInteriorNode(MyRoot);
-  
-  MyRoot->AddDeltaNonFull(FileIndex, Delta);
+  InsertResult InsertRes;
+  if (MyRoot->DoInsertion(FileIndex, Delta, &InsertRes)) {
+    Root = MyRoot = new DeltaTreeInteriorNode(InsertRes);
+  }
   
 #ifdef VERIFY_TREE
   VerifyTree(MyRoot);
