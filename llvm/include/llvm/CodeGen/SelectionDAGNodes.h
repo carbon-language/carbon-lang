@@ -1734,6 +1734,8 @@ namespace ISD {
     static const uint64_t NestOffs       = 5;
     static const uint64_t ByValAlign     = 0xFULL << 6; //< Struct alignment
     static const uint64_t ByValAlignOffs = 6;
+    static const uint64_t Divided        = 1ULL << 10;
+    static const uint64_t DividedOffs    = 10;
     static const uint64_t OrigAlign      = 0x1FULL<<27;
     static const uint64_t OrigAlignOffs  = 27;
     static const uint64_t ByValSize      = 0xffffffffULL << 32; //< Struct size
@@ -1770,6 +1772,9 @@ namespace ISD {
       Flags = (Flags & ~ByValAlign) |
         (uint64_t(Log2_32(A) + 1) << ByValAlignOffs);
     }
+            
+    bool isDivided()   const { return Flags & Divided; }
+    void setDivided()  { Flags |= One << DividedOffs; }
 
     unsigned getOrigAlign() const {
       return (One << ((Flags & OrigAlign) >> OrigAlignOffs)) / 2;

@@ -4162,8 +4162,11 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     unsigned NumRegs = getNumRegisters(VT);
     for (unsigned i = 0; i != NumRegs; ++i) {
       RetVals.push_back(RegisterVT);
+
+      if (NumRegs > 1 && i == 0)
+        Flags.setDivided();
       // if it isn't first piece, alignment must be 1
-      if (i > 0)
+      else if (i > 0)
         Flags.setOrigAlign(1);
       Ops.push_back(DAG.getArgFlags(Flags));
     }
@@ -4285,7 +4288,9 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     for (unsigned i = 0; i != NumParts; ++i) {
       // if it isn't first piece, alignment must be 1
       ISD::ArgFlagsTy MyFlags = Flags;
-      if (i != 0)
+      if (NumParts > 1 && i == 0)
+        MyFlags.setDivided();
+      else if (i != 0)
         MyFlags.setOrigAlign(1);
 
       Ops.push_back(Parts[i]);

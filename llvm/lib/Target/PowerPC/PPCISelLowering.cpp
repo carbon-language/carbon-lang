@@ -1410,7 +1410,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
   // 
   // In the ELF 32 ABI, GPRs and stack are double word align: an argument
   // represented with two words (long long or double) must be copied to an
-  // even GPR_idx value or to an even ArgOffset value.  TODO: implement this.
+  // even GPR_idx value or to an even ArgOffset value.
 
   SmallVector<SDOperand, 8> MemOps;
 
@@ -1423,7 +1423,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
     ISD::ArgFlagsTy Flags =
       cast<ARG_FLAGSSDNode>(Op.getOperand(ArgNo+3))->getArgFlags();
     // See if next argument requires stack alignment in ELF
-    bool Expand = false; // TODO: implement this.
+    bool Align = Flags.isDivided(); 
 
     unsigned CurArgOffset = ArgOffset;
 
@@ -1435,7 +1435,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
       ObjSize = Flags.getByValSize();
       ArgSize = ((ObjSize + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
       // Double word align in ELF
-      if (Expand && isELF32_ABI) GPR_idx += (GPR_idx % 2);
+      if (Align && isELF32_ABI) GPR_idx += (GPR_idx % 2);
       // Objects of size 1 and 2 are right justified, everything else is
       // left justified.  This means the memory address is adjusted forwards.
       if (ObjSize==1 || ObjSize==2) {
@@ -1487,7 +1487,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
     case MVT::i32:
       if (!isPPC64) {
         // Double word align in ELF
-        if (Expand && isELF32_ABI) GPR_idx += (GPR_idx % 2);
+        if (Align && isELF32_ABI) GPR_idx += (GPR_idx % 2);
 
         if (GPR_idx != Num_GPR_Regs) {
           unsigned VReg = RegInfo.createVirtualRegister(&PPC::GPRCRegClass);
@@ -1499,7 +1499,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
           ArgSize = PtrByteSize;
         }
         // Stack align in ELF
-        if (needsLoad && Expand && isELF32_ABI) 
+        if (needsLoad && Align && isELF32_ABI) 
           ArgOffset += ((ArgOffset/4) % 2) * PtrByteSize;
         // All int arguments reserve stack space in Macho ABI.
         if (isMachoABI || needsLoad) ArgOffset += PtrByteSize;
@@ -1556,7 +1556,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
       }
       
       // Stack align in ELF
-      if (needsLoad && Expand && isELF32_ABI)
+      if (needsLoad && Align && isELF32_ABI)
         ArgOffset += ((ArgOffset/4) % 2) * PtrByteSize;
       // All FP arguments reserve stack space in Macho ABI.
       if (isMachoABI || needsLoad) ArgOffset += isPPC64 ? 8 : ObjSize;
@@ -1855,14 +1855,14 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
     ISD::ArgFlagsTy Flags =
       cast<ARG_FLAGSSDNode>(Op.getOperand(5+2*i+1))->getArgFlags();
     // See if next argument requires stack alignment in ELF
-    bool Expand = false; // TODO: implement this.
+    bool Align = Flags.isDivided();
 
     // PtrOff will be used to store the current argument to the stack if a
     // register cannot be found for it.
     SDOperand PtrOff;
     
     // Stack align in ELF 32
-    if (isELF32_ABI && Expand)
+    if (isELF32_ABI && Align)
       PtrOff = DAG.getConstant(ArgOffset + ((ArgOffset/4) % 2) * PtrByteSize,
                                StackPtr.getValueType());
     else
@@ -1881,7 +1881,7 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
     // FIXME memcpy is used way more than necessary.  Correctness first.
     if (Flags.isByVal()) {
       unsigned Size = Flags.getByValSize();
-      if (isELF32_ABI && Expand) GPR_idx += (GPR_idx % 2);
+      if (isELF32_ABI && Align) GPR_idx += (GPR_idx % 2);
       if (Size==1 || Size==2) {
         // Very small objects are passed right-justified.
         // Everything else is passed left-justified.
@@ -1942,7 +1942,7 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
     case MVT::i32:
     case MVT::i64:
       // Double word align in ELF
-      if (isELF32_ABI && Expand) GPR_idx += (GPR_idx % 2);
+      if (isELF32_ABI && Align) GPR_idx += (GPR_idx % 2);
       if (GPR_idx != NumGPRs) {
         RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Arg));
       } else {
@@ -1951,7 +1951,7 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
       }
       if (inMem || isMachoABI) {
         // Stack align in ELF
-        if (isELF32_ABI && Expand)
+        if (isELF32_ABI && Align)
           ArgOffset += ((ArgOffset/4) % 2) * PtrByteSize;
 
         ArgOffset += PtrByteSize;
@@ -1999,7 +1999,7 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
       }
       if (inMem || isMachoABI) {
         // Stack align in ELF
-        if (isELF32_ABI && Expand)
+        if (isELF32_ABI && Align)
           ArgOffset += ((ArgOffset/4) % 2) * PtrByteSize;
         if (isPPC64)
           ArgOffset += 8;
