@@ -547,7 +547,7 @@ public:
   }
   //===----------------------- Obj-C Declarations -------------------------===//
   
-  // ActOnStartClassInterface - this action is called immdiately after parsing
+  // ActOnStartClassInterface - this action is called immediately after parsing
   // the prologue for a class interface (before parsing the instance 
   // variables). Instance variables are processed by ActOnFields().
   virtual DeclTy *ActOnStartClassInterface(
