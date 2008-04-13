@@ -103,13 +103,13 @@ public:
     return I->second;
   }
 
-  //Returns the CallGraphNode which is used to represent undetermined calls 
-  // into the callgraph.  Override this if you want behavioural inheritance.
+  /// Returns the CallGraphNode which is used to represent undetermined calls 
+  /// into the callgraph.  Override this if you want behavioral inheritance.
   virtual CallGraphNode* getExternalCallingNode() const { return 0; }
   
-  //Return the root/main method in the module, or some other root node, such
-  // as the externalcallingnode.  Overload these if you behavioural 
-  // inheritance.
+  /// Return the root/main method in the module, or some other root node, such
+  /// as the externalcallingnode.  Overload these if you behavioral 
+  /// inheritance.
   virtual CallGraphNode* getRoot() { return 0; }
   virtual const CallGraphNode* getRoot() const { return 0; }
   
@@ -227,6 +227,11 @@ public:
   /// used sparingly.
   void removeCallEdgeTo(CallGraphNode *Callee);
 
+  /// removeCallEdgeFor - This method removes the edge in the node for the
+  /// specified call site.  Note that this method takes linear time, so it
+  /// should be used sparingly.
+  void removeCallEdgeFor(CallSite CS);
+  
   /// removeAnyCallEdgeTo - This method removes any call edges from this node to
   /// the specified callee function.  This takes more time to execute than
   /// removeCallEdgeTo, so it should not be used unless necessary.

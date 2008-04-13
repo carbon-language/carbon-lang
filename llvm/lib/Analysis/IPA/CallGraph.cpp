@@ -293,6 +293,20 @@ void CallGraphNode::removeCallEdgeTo(CallGraphNode *Callee) {
   }
 }
 
+/// removeCallEdgeFor - This method removes the edge in the node for the
+/// specified call site.  Note that this method takes linear time, so it
+/// should be used sparingly.
+void CallGraphNode::removeCallEdgeFor(CallSite CS) {
+  for (unsigned i = CalledFunctions.size(); ; --i) {
+    assert(i && "Cannot find callee to remove!");
+    if (CalledFunctions[i-1].first == CS) {
+      CalledFunctions.erase(CalledFunctions.begin()+i-1);
+      return;
+    }
+  }
+}
+
+
 // removeAnyCallEdgeTo - This method removes any call edges from this node to
 // the specified callee function.  This takes more time to execute than
 // removeCallEdgeTo, so it should not be used unless necessary.
