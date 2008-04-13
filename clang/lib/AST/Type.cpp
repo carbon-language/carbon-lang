@@ -60,6 +60,12 @@ bool Type::isDerivedType() const {
   }
 }
 
+bool Type::isClassType() const {
+  if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType))
+    if (RT->getDecl()->getKind() == Decl::Class)
+      return true;
+  return false;
+}
 bool Type::isStructureType() const {
   if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType))
     if (RT->getDecl()->getKind() == Decl::Struct)

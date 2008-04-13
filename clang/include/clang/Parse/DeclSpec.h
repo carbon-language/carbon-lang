@@ -73,6 +73,7 @@ public:
     TST_enum,
     TST_union,
     TST_struct,
+    TST_class,        // C++ class type
     TST_typedef,
     TST_typeofType,
     TST_typeofExpr
@@ -106,7 +107,7 @@ private:
   /*TSW*/unsigned TypeSpecWidth : 2;
   /*TSC*/unsigned TypeSpecComplex : 2;
   /*TSS*/unsigned TypeSpecSign : 2;
-  /*TST*/unsigned TypeSpecType : 4;
+  /*TST*/unsigned TypeSpecType : 5;
   
   // type-qualifiers
   unsigned TypeQualifiers : 3;  // Bitwise OR of TQ.

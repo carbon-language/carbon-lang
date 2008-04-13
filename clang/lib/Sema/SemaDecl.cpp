@@ -1299,7 +1299,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   default: assert(0 && "Unknown tag type!");
   case DeclSpec::TST_struct: Kind = Decl::Struct; break;
   case DeclSpec::TST_union:  Kind = Decl::Union; break;
-//case DeclSpec::TST_class:  Kind = Decl::Class; break;
+  case DeclSpec::TST_class:  Kind = Decl::Class; break;
   case DeclSpec::TST_enum:   Kind = Decl::Enum; break;
   }
   

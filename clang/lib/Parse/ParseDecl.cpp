@@ -515,7 +515,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     case tok::kw__Decimal128:
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_decimal128, Loc, PrevSpec);
       break;
-      
+
+    case tok::kw_class:
     case tok::kw_struct:
     case tok::kw_union:
       ParseStructUnionSpecifier(DS);
@@ -620,9 +621,12 @@ bool Parser::ParseTag(DeclTy *&Decl, unsigned TagType, SourceLocation StartLoc){
 ///         'union'
 ///
 void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
-  assert((Tok.is(tok::kw_struct) || Tok.is(tok::kw_union)) &&
-         "Not a struct/union specifier");
+  assert((Tok.is(tok::kw_class) || 
+          Tok.is(tok::kw_struct) || 
+          Tok.is(tok::kw_union)) &&
+         "Not a class/struct/union specifier");
   DeclSpec::TST TagType =
+    Tok.is(tok::kw_class) ? DeclSpec::TST_class :
     Tok.is(tok::kw_union) ? DeclSpec::TST_union : DeclSpec::TST_struct;
   SourceLocation StartLoc = ConsumeToken();
 
@@ -923,7 +927,8 @@ bool Parser::isTypeSpecifierQualifier() const {
   case tok::kw__Decimal64:
   case tok::kw__Decimal128:
     
-    // struct-or-union-specifier
+    // struct-or-union-specifier (C99) or class-specifier (C++)
+  case tok::kw_class:
   case tok::kw_struct:
   case tok::kw_union:
     // enum-specifier
@@ -973,7 +978,8 @@ bool Parser::isDeclarationSpecifier() const {
   case tok::kw__Decimal64:
   case tok::kw__Decimal128:
   
-    // struct-or-union-specifier
+    // struct-or-union-specifier (C99) or class-specifier (C++)
+  case tok::kw_class:
   case tok::kw_struct:
   case tok::kw_union:
     // enum-specifier

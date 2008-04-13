@@ -315,6 +315,7 @@ public:
   bool isFunctionPointerType() const;
   bool isArrayType() const;
   bool isRecordType() const;
+  bool isClassType() const;   
   bool isStructureType() const;   
   bool isUnionType() const;
   bool isComplexIntegerType() const;            // GCC _Complex integer type.
