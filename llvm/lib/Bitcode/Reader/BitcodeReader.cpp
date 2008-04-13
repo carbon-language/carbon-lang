@@ -1476,7 +1476,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       if (!Ty) return Error("Invalid PHI record");
       
       PHINode *PN = PHINode::Create(Ty);
-      PN->reserveOperandSpace(Record.size()-1);
+      PN->reserveOperandSpace((Record.size()-1)/2);
       
       for (unsigned i = 0, e = Record.size()-1; i != e; i += 2) {
         Value *V = getFnValueByID(Record[1+i], Ty);
