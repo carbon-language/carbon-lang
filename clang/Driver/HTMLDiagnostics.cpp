@@ -47,7 +47,7 @@ public:
   void HandlePiece(Rewriter& R, const PathDiagnosticPiece& P,
                    unsigned num, unsigned max);
   
-  void HighlightRange(Rewriter& R, SourceRange Range, unsigned MainFileID);
+  void HighlightRange(Rewriter& R, SourceRange Range);
 };
   
 } // end anonymous namespace
@@ -222,13 +222,11 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R,
   
   SourceManager& SM = R.getSourceMgr();
   FullSourceLoc LPos = Pos.getLogicalLoc();
-  unsigned FileID = LPos.getLocation().getFileID();
+  unsigned FileID = SM.getCanonicalFileID(LPos.getLocation());
   
   assert (&LPos.getManager() == &SM && "SourceManagers are different!");
   
-  unsigned MainFileID = SM.getMainFileID();
-  
-  if (FileID != MainFileID)
+  if (!SM.isFromMainFile(LPos.getLocation()))
     return;
   
   // Compute the column number.  Rewind from the current position to the start
@@ -277,34 +275,33 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R,
   
   for (const SourceRange *I = P.ranges_begin(), *E = P.ranges_end();
         I != E; ++I)
-    HighlightRange(R, *I, MainFileID);
+    HighlightRange(R, *I);
 }
 
-void HTMLDiagnostics::HighlightRange(Rewriter& R, SourceRange Range,
-                                     unsigned MainFileID) {
+void HTMLDiagnostics::HighlightRange(Rewriter& R, SourceRange Range) {
   
-  SourceManager& SourceMgr = R.getSourceMgr();
+  SourceManager& SM = R.getSourceMgr();
   
-  SourceLocation LogicalStart = SourceMgr.getLogicalLoc(Range.getBegin());
-  unsigned StartLineNo = SourceMgr.getLineNumber(LogicalStart);
+  SourceLocation LogicalStart = SM.getLogicalLoc(Range.getBegin());
+  unsigned StartLineNo = SM.getLineNumber(LogicalStart);
   
-  SourceLocation LogicalEnd = SourceMgr.getLogicalLoc(Range.getEnd());
-  unsigned EndLineNo = SourceMgr.getLineNumber(LogicalEnd);
+  SourceLocation LogicalEnd = SM.getLogicalLoc(Range.getEnd());
+  unsigned EndLineNo = SM.getLineNumber(LogicalEnd);
   
   if (EndLineNo < StartLineNo)
     return;
   
-  if (LogicalStart.getFileID() != MainFileID ||
-      LogicalEnd.getFileID() != MainFileID)
+  if (!SM.isFromMainFile(LogicalStart) ||
+      !SM.isFromMainFile(LogicalEnd))
     return;
     
   // Compute the column number of the end.
-  unsigned EndColNo = SourceMgr.getColumnNumber(LogicalEnd);
+  unsigned EndColNo = SM.getColumnNumber(LogicalEnd);
   unsigned OldEndColNo = EndColNo;
 
   if (EndColNo) {
     // Add in the length of the token, so that we cover multi-char tokens.
-    EndColNo += Lexer::MeasureTokenLength(Range.getEnd(), SourceMgr);
+    EndColNo += Lexer::MeasureTokenLength(Range.getEnd(), SM);
   }
   
   // Highlight the range.  Make the span tag the outermost tag for the
@@ -323,16 +320,17 @@ void HTMLDiagnostics::HighlightRange(Rewriter& R, SourceRange Range,
   
   // Add in </span><span> tags for intermediate lines.
   
-  const llvm::MemoryBuffer *Buf = R.getSourceMgr().getBuffer(MainFileID);
+  unsigned FileID = SM.getCanonicalFileID(LogicalStart);
+  const llvm::MemoryBuffer *Buf = R.getSourceMgr().getBuffer(FileID);
 
-  unsigned Pos = SourceMgr.getFullFilePos(LogicalStart);
-  unsigned EndPos = SourceMgr.getFullFilePos(E);  
+  unsigned Pos = SM.getFullFilePos(LogicalStart);
+  unsigned EndPos = SM.getFullFilePos(E);  
   const char* buf = Buf->getBufferStart();
   
   for (; Pos != EndPos; ++Pos) {
     
-    SourceLocation L = SourceLocation::getFileLoc(MainFileID, Pos);
-    unsigned Col = SourceMgr.getColumnNumber(L);
+    SourceLocation L = SourceLocation::getFileLoc(FileID, Pos);
+    unsigned Col = SM.getColumnNumber(L);
     
     if (Col == 1) {
       
@@ -367,7 +365,7 @@ void HTMLDiagnostics::HighlightRange(Rewriter& R, SourceRange Range,
       
       // This line contains text that we should highlight.
       // Ignore leading whitespace.
-      L = SourceLocation::getFileLoc(MainFileID, Pos);
+      L = SourceLocation::getFileLoc(FileID, Pos);
       R.InsertCStrAfter(L, "<span class=\"mrange\">");
     }
     else if (buf[Pos] == '\n')
