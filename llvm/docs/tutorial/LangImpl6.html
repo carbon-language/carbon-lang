@@ -1085,7 +1085,7 @@ static ExprAST *ParseIdentifierExpr() {
       if (CurTok == ')') break;
       
       if (CurTok != ',')
-        return Error("Expected ')'");
+        return Error("Expected ')' or ',' in argument list");
       getNextToken();
     }
   }
