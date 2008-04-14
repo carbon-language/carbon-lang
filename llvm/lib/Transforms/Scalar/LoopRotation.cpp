@@ -226,7 +226,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
     // If this instruction is using a value from same basic block then
     // update it to use value from cloned instruction.
     Instruction *C = In->clone();
-    C->takeName(In);
+    C->setName(In->getName());
     OrigPreHeader->getInstList().push_back(C);
 
     for (unsigned opi = 0, e = In->getNumOperands(); opi != e; ++opi) {

@@ -179,8 +179,8 @@ BasicBlock *LoopUnroll::FoldBlockIntoPredecessor(BasicBlock *BB) {
   BB->eraseFromParent();
 
   // Inherit predecessor's name if it exists...
-  if (BB->hasName() && !OnlyPred->hasName())
-    OnlyPred->takeName(BB);
+  if (!OldName.empty() && !OnlyPred->hasName())
+    OnlyPred->setName(OldName);
 
   return OnlyPred;
 }

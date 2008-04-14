@@ -317,7 +317,7 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
   //
   for (; BI != DestBlock->end(); ++BI) {
     Instruction *New = BI->clone();
-    New->takeName(BI);
+    New->setName(BI->getName());
     SourceBlock->getInstList().push_back(New);
     ValueMapping[BI] = New;
   }
