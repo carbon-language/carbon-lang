@@ -292,6 +292,12 @@ bool AliasSetTracker::add(FreeInst *FI) {
   return NewPtr;
 }
 
+bool AliasSetTracker::add(VAArgInst *VAAI) {
+  bool NewPtr;
+  addPointer(VAAI->getOperand(0), ~0, AliasSet::ModRef, NewPtr);
+  return NewPtr;
+}
+
 
 bool AliasSetTracker::add(CallSite CS) {
   if (AA.doesNotAccessMemory(CS))
@@ -321,6 +327,8 @@ bool AliasSetTracker::add(Instruction *I) {
     return add(II);
   else if (FreeInst *FI = dyn_cast<FreeInst>(I))
     return add(FI);
+  else if (VAArgInst *VAAI = dyn_cast<VAArgInst>(I))
+    return add(VAAI);
   return true;
 }
 
@@ -414,6 +422,13 @@ bool AliasSetTracker::remove(FreeInst *FI) {
   return true;
 }
 
+bool AliasSetTracker::remove(VAArgInst *VAAI) {
+  AliasSet *AS = findAliasSetForPointer(VAAI->getOperand(0), ~0);
+  if (!AS) return false;
+  remove(*AS);
+  return true;
+}
+
 bool AliasSetTracker::remove(CallSite CS) {
   if (AA.doesNotAccessMemory(CS))
     return false; // doesn't alias anything
@@ -434,6 +449,8 @@ bool AliasSetTracker::remove(Instruction *I) {
     return remove(CI);
   else if (FreeInst *FI = dyn_cast<FreeInst>(I))
     return remove(FI);
+  else if (VAArgInst *VAAI = dyn_cast<VAArgInst>(I))
+    return remove(VAAI);
   return true;
 }
 
