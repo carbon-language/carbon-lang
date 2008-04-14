@@ -19,18 +19,7 @@ using llvm::dyn_cast;
 using llvm::cast;
 
 
-//===----------------------------------------------------------------------===//
-// InsertResult Class
-//===----------------------------------------------------------------------===//
-
 /// This is an adapted B+ Tree, ... erases don't keep the tree balanced.
-
-namespace {
-  class RopePieceBTreeNode;
-  struct InsertResult {
-    RopePieceBTreeNode *LHS, *RHS;
-  };
-} // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
 // RopePieceBTreeNode Class
@@ -65,16 +54,19 @@ namespace {
     
     /// split - Split the range containing the specified offset so that we are
     /// guaranteed that there is a place to do an insertion at the specified
-    /// offset.  The offset is relative, so "0" is the start of the node.  This
-    /// returns true if the insertion could not be done in place, and returns
-    /// information in 'Res' about the piece that is percolated up.
-    bool split(unsigned Offset, InsertResult *Res);
+    /// offset.  The offset is relative, so "0" is the start of the node.
+    ///
+    /// If there is no space in this subtree for the extra piece, the extra tree
+    /// node is returned and must be inserted into a parent.
+    RopePieceBTreeNode *split(unsigned Offset);
     
     /// insert - Insert the specified ropepiece into this tree node at the
     /// specified offset.  The offset is relative, so "0" is the start of the
-    /// node.  This returns true if the insertion could not be done in place,
-    /// and returns information in 'Res' about the piece that is percolated up.
-    bool insert(unsigned Offset, const RopePiece &R, InsertResult *Res);
+    /// node.
+    ///
+    /// If there is no space in this subtree for the extra piece, the extra tree
+    /// node is returned and must be inserted into a parent.
+    RopePieceBTreeNode *insert(unsigned Offset, const RopePiece &R);
     
     /// erase - Remove NumBytes from this node at the specified offset.  We are
     /// guaranteed that there is a split at Offset.
@@ -132,16 +124,19 @@ namespace {
     
     /// split - Split the range containing the specified offset so that we are
     /// guaranteed that there is a place to do an insertion at the specified
-    /// offset.  The offset is relative, so "0" is the start of the node.  This
-    /// returns true if the insertion could not be done in place, and returns
-    /// information in 'Res' about the piece that is percolated up.
-    bool split(unsigned Offset, InsertResult *Res);
+    /// offset.  The offset is relative, so "0" is the start of the node.
+    ///
+    /// If there is no space in this subtree for the extra piece, the extra tree
+    /// node is returned and must be inserted into a parent.
+    RopePieceBTreeNode *split(unsigned Offset);
     
     /// insert - Insert the specified ropepiece into this tree node at the
     /// specified offset.  The offset is relative, so "0" is the start of the
-    /// node.  This returns true if the insertion could not be done in place,
-    /// and returns information in 'Res' about the piece that is percolated up.
-    bool insert(unsigned Offset, const RopePiece &R, InsertResult *Res);
+    /// node.
+    ///
+    /// If there is no space in this subtree for the extra piece, the extra tree
+    /// node is returned and must be inserted into a parent.
+    RopePieceBTreeNode *insert(unsigned Offset, const RopePiece &R);
     
     
     /// erase - Remove NumBytes from this node at the specified offset.  We are
@@ -157,15 +152,16 @@ namespace {
 
 /// split - Split the range containing the specified offset so that we are
 /// guaranteed that there is a place to do an insertion at the specified
-/// offset.  The offset is relative, so "0" is the start of the node.  This
-/// returns true if the insertion could not be done in place, and returns
-/// information in 'Res' about the piece that is percolated up.
-bool RopePieceBTreeLeaf::split(unsigned Offset, InsertResult *Res) {
+/// offset.  The offset is relative, so "0" is the start of the node.
+///
+/// If there is no space in this subtree for the extra piece, the extra tree
+/// node is returned and must be inserted into a parent.
+RopePieceBTreeNode *RopePieceBTreeLeaf::split(unsigned Offset) {
   // Find the insertion point.  We are guaranteed that there is a split at the
   // specified offset so find it.
   if (Offset == 0 || Offset == size()) {
     // Fastpath for a common case.  There is already a splitpoint at the end.
-    return false;
+    return 0;
   }
   
   // Find the piece that this offset lands in.
@@ -179,7 +175,7 @@ bool RopePieceBTreeLeaf::split(unsigned Offset, InsertResult *Res) {
   // If there is already a split point at the specified offset, just return
   // success.
   if (PieceOffs == Offset)
-    return false;
+    return 0;
   
   // Otherwise, we need to split piece 'i' at Offset-PieceOffs.  Convert Offset
   // to being Piece relative.
@@ -192,16 +188,17 @@ bool RopePieceBTreeLeaf::split(unsigned Offset, InsertResult *Res) {
   Pieces[i].EndOffs = Pieces[i].StartOffs+IntraPieceOffset;
   Size += Pieces[i].size();
   
-  return insert(Offset, Tail, Res);
+  return insert(Offset, Tail);
 }
 
 
 /// insert - Insert the specified RopePiece into this tree node at the
-/// specified offset.  The offset is relative, so "0" is the start of the
-/// node.  This returns true if the insertion could not be done in place, and
-/// returns information in 'Res' about the piece that is percolated up.
-bool RopePieceBTreeLeaf::insert(unsigned Offset, const RopePiece &R,
-                                InsertResult *Res) {
+/// specified offset.  The offset is relative, so "0" is the start of the node.
+///
+/// If there is no space in this subtree for the extra piece, the extra tree
+/// node is returned and must be inserted into a parent.
+RopePieceBTreeNode *RopePieceBTreeLeaf::insert(unsigned Offset,
+                                               const RopePiece &R) {
   // If this node is not full, insert the piece.
   if (!isFull()) {
     // Find the insertion point.  We are guaranteed that there is a split at the
@@ -224,7 +221,7 @@ bool RopePieceBTreeLeaf::insert(unsigned Offset, const RopePiece &R,
     Pieces[i] = R;
     ++NumPieces;
     Size += R.size();
-    return false;
+    return 0;
   }
   
   // Otherwise, if this is leaf is full, split it in two halves.  Since this
@@ -252,15 +249,12 @@ bool RopePieceBTreeLeaf::insert(unsigned Offset, const RopePiece &R,
   NewNode->setNextLeafInOrder(this->getNextLeafInOrder());
   this->setNextLeafInOrder(NewNode);
   
-  assert(Res && "No result location specified");
-  Res->LHS = this;
-  Res->RHS = NewNode;
-  
+  // These insertions can't fail.
   if (this->size() >= Offset)
-    this->insert(Offset, R, 0 /*can't fail*/);
+    this->insert(Offset, R);
   else
-    NewNode->insert(Offset - this->size(), R, 0 /*can't fail*/);
-  return true;
+    NewNode->insert(Offset - this->size(), R);
+  return NewNode;
 }
 
 /// erase - Remove NumBytes from this node at the specified offset.  We are
@@ -356,21 +350,24 @@ namespace {
     
     /// split - Split the range containing the specified offset so that we are
     /// guaranteed that there is a place to do an insertion at the specified
-    /// offset.  The offset is relative, so "0" is the start of the node.  This
-    /// returns true if the insertion could not be done in place, and returns
-    /// information in 'Res' about the piece that is percolated up.
-    bool split(unsigned Offset, InsertResult *Res);
+    /// offset.  The offset is relative, so "0" is the start of the node.
+    ///
+    /// If there is no space in this subtree for the extra piece, the extra tree
+    /// node is returned and must be inserted into a parent.
+    RopePieceBTreeNode *split(unsigned Offset);
     
     
     /// insert - Insert the specified ropepiece into this tree node at the
     /// specified offset.  The offset is relative, so "0" is the start of the
-    /// node.  This returns true if the insertion could not be done in place,
-    /// and returns information in 'Res' about the piece that is percolated up.
-    bool insert(unsigned Offset, const RopePiece &R, InsertResult *Res);
+    /// node.
+    ///
+    /// If there is no space in this subtree for the extra piece, the extra tree
+    /// node is returned and must be inserted into a parent.
+    RopePieceBTreeNode *insert(unsigned Offset, const RopePiece &R);
     
     /// HandleChildPiece - A child propagated an insertion result up to us.
     /// Insert the new child, and/or propagate the result further up the tree.
-    bool HandleChildPiece(unsigned i, InsertResult &Res);
+    RopePieceBTreeNode *HandleChildPiece(unsigned i, RopePieceBTreeNode *RHS);
     
     /// erase - Remove NumBytes from this node at the specified offset.  We are
     /// guaranteed that there is a split at Offset.
@@ -385,13 +382,14 @@ namespace {
 
 /// split - Split the range containing the specified offset so that we are
 /// guaranteed that there is a place to do an insertion at the specified
-/// offset.  The offset is relative, so "0" is the start of the node.  This
-/// returns true if the insertion could not be done in place, and returns
-/// information in 'Res' about the piece that is percolated up.
-bool RopePieceBTreeInterior::split(unsigned Offset, InsertResult *Res) {
+/// offset.  The offset is relative, so "0" is the start of the node.
+///
+/// If there is no space in this subtree for the extra piece, the extra tree
+/// node is returned and must be inserted into a parent.
+RopePieceBTreeNode *RopePieceBTreeInterior::split(unsigned Offset) {
   // Figure out which child to split.
   if (Offset == 0 || Offset == size())
-    return false;  // If we have an exact offset, we're already split.
+    return 0;  // If we have an exact offset, we're already split.
   
   unsigned ChildOffset = 0;
   unsigned i = 0;
@@ -400,20 +398,22 @@ bool RopePieceBTreeInterior::split(unsigned Offset, InsertResult *Res) {
   
   // If already split there, we're done.
   if (ChildOffset == Offset)
-    return false;
+    return 0;
   
   // Otherwise, recursively split the child.
-  if (getChild(i)->split(Offset-ChildOffset, Res)) 
-    return HandleChildPiece(i, *Res);
-  return false;  // Done!
+  if (RopePieceBTreeNode *RHS = getChild(i)->split(Offset-ChildOffset)) 
+    return HandleChildPiece(i, RHS);
+  return 0;  // Done!
 }
 
 /// insert - Insert the specified ropepiece into this tree node at the
 /// specified offset.  The offset is relative, so "0" is the start of the
-/// node.  This returns true if the insertion could not be done in place, and
-/// returns information in 'Res' about the piece that is percolated up.
-bool RopePieceBTreeInterior::insert(unsigned Offset, const RopePiece &R,
-                                    InsertResult *Res) {
+/// node.
+///
+/// If there is no space in this subtree for the extra piece, the extra tree
+/// node is returned and must be inserted into a parent.
+RopePieceBTreeNode *RopePieceBTreeInterior::insert(unsigned Offset,
+                                                   const RopePiece &R) {
   // Find the insertion point.  We are guaranteed that there is a split at the
   // specified offset so find it.
   unsigned i = 0, e = getNumChildren();
@@ -431,24 +431,24 @@ bool RopePieceBTreeInterior::insert(unsigned Offset, const RopePiece &R,
   Size += R.size();
   
   // Insert at the end of this child.
-  if (getChild(i)->insert(Offset-ChildOffs, R, Res))
-    return HandleChildPiece(i, *Res);
+  if (RopePieceBTreeNode *RHS = getChild(i)->insert(Offset-ChildOffs, R))
+    return HandleChildPiece(i, RHS);
   
-  return false;
+  return 0;
 }
 
 /// HandleChildPiece - A child propagated an insertion result up to us.
 /// Insert the new child, and/or propagate the result further up the tree.
-bool RopePieceBTreeInterior::HandleChildPiece(unsigned i, InsertResult &Res) {
+RopePieceBTreeNode *
+RopePieceBTreeInterior::HandleChildPiece(unsigned i, RopePieceBTreeNode *RHS) {
   // Otherwise the child propagated a subtree up to us as a new child.  See if
   // we have space for it here.
   if (!isFull()) {
-    // Replace child 'i' with the two children specified in Res.
+    // Insert RHS after child 'i'.
     if (i + 1 != getNumChildren())
       memmove(&Children[i+2], &Children[i+1],
               (getNumChildren()-i-1)*sizeof(Children[0]));
-    Children[i] = Res.LHS;
-    Children[i+1] = Res.RHS;
+    Children[i+1] = RHS;
     ++NumChildren;
     return false;
   }
@@ -467,18 +467,16 @@ bool RopePieceBTreeInterior::HandleChildPiece(unsigned i, InsertResult &Res) {
   NewNode->NumChildren = NumChildren = WidthFactor;
   
   // Finally, insert the two new children in the side the can (now) hold them.
+  // These insertions can't fail.
   if (i < WidthFactor)
-    this->HandleChildPiece(i, Res);
+    this->HandleChildPiece(i, RHS);
   else
-    NewNode->HandleChildPiece(i-WidthFactor, Res);
+    NewNode->HandleChildPiece(i-WidthFactor, RHS);
   
   // Recompute the two nodes' size.
   NewNode->FullRecomputeSizeLocally();
   FullRecomputeSizeLocally();
-  
-  Res.LHS = this;
-  Res.RHS = NewNode;
-  return true;
+  return NewNode;
 }
 
 /// erase - Remove NumBytes from this node at the specified offset.  We are
@@ -538,25 +536,29 @@ void RopePieceBTreeNode::Destroy() {
 
 /// split - Split the range containing the specified offset so that we are
 /// guaranteed that there is a place to do an insertion at the specified
-/// offset.  The offset is relative, so "0" is the start of the node.  This
-/// returns true if the insertion could not be done in place, and returns
-/// information in 'Res' about the piece that is percolated up.
-bool RopePieceBTreeNode::split(unsigned Offset, InsertResult *Res) {
+/// offset.  The offset is relative, so "0" is the start of the node.
+///
+/// If there is no space in this subtree for the extra piece, the extra tree
+/// node is returned and must be inserted into a parent.
+RopePieceBTreeNode *RopePieceBTreeNode::split(unsigned Offset) {
   assert(Offset <= size() && "Invalid offset to split!");
   if (RopePieceBTreeLeaf *Leaf = dyn_cast<RopePieceBTreeLeaf>(this))
-    return Leaf->split(Offset, Res);
-  return cast<RopePieceBTreeInterior>(this)->split(Offset, Res);
+    return Leaf->split(Offset);
+  return cast<RopePieceBTreeInterior>(this)->split(Offset);
 }
 
 /// insert - Insert the specified ropepiece into this tree node at the
 /// specified offset.  The offset is relative, so "0" is the start of the
 /// node.
-bool RopePieceBTreeNode::insert(unsigned Offset, const RopePiece &R,
-                                InsertResult *Res) {
+///
+/// If there is no space in this subtree for the extra piece, the extra tree
+/// node is returned and must be inserted into a parent.
+RopePieceBTreeNode *RopePieceBTreeNode::insert(unsigned Offset,
+                                               const RopePiece &R) {
   assert(Offset <= size() && "Invalid offset to insert!");
   if (RopePieceBTreeLeaf *Leaf = dyn_cast<RopePieceBTreeLeaf>(this))
-    return Leaf->insert(Offset, R, Res);
-  return cast<RopePieceBTreeInterior>(this)->insert(Offset, R, Res);
+    return Leaf->insert(Offset, R);
+  return cast<RopePieceBTreeInterior>(this)->insert(Offset, R);
 }
 
 /// erase - Remove NumBytes from this node at the specified offset.  We are
@@ -652,21 +654,19 @@ void RopePieceBTree::clear() {
 }
 
 void RopePieceBTree::insert(unsigned Offset, const RopePiece &R) {
-  InsertResult Result;
   // #1. Split at Offset.
-  if (getRoot(Root)->split(Offset, &Result))
-    Root = new RopePieceBTreeInterior(Result.LHS, Result.RHS);
+  if (RopePieceBTreeNode *RHS = getRoot(Root)->split(Offset))
+    Root = new RopePieceBTreeInterior(getRoot(Root), RHS);
   
   // #2. Do the insertion.
-  if (getRoot(Root)->insert(Offset, R, &Result))
-    Root = new RopePieceBTreeInterior(Result.LHS, Result.RHS);
+  if (RopePieceBTreeNode *RHS = getRoot(Root)->insert(Offset, R))
+    Root = new RopePieceBTreeInterior(getRoot(Root), RHS);
 }
 
 void RopePieceBTree::erase(unsigned Offset, unsigned NumBytes) {
-  InsertResult Result;
   // #1. Split at Offset.
-  if (getRoot(Root)->split(Offset, &Result))
-    Root = new RopePieceBTreeInterior(Result.LHS, Result.RHS);
+  if (RopePieceBTreeNode *RHS = getRoot(Root)->split(Offset))
+    Root = new RopePieceBTreeInterior(getRoot(Root), RHS);
   
   // #2. Do the erasing.
   getRoot(Root)->erase(Offset, NumBytes);
@@ -691,7 +691,7 @@ RopePiece RewriteRope::MakeRopeString(const char *Start, const char *End) {
   if (Len > AllocChunkSize) {
     unsigned Size = End-Start+sizeof(RopeRefCountString)-1;
     RopeRefCountString *Res = 
-    reinterpret_cast<RopeRefCountString *>(new char[Size]);
+      reinterpret_cast<RopeRefCountString *>(new char[Size]);
     Res->RefCount = 0;
     memcpy(Res->Data, Start, End-Start);
     return RopePiece(Res, 0, End-Start);
