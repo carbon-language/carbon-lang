@@ -123,7 +123,7 @@ void IdentifierResolver::AddDecl(NamedDecl *D, Scope *S) {
   //   declarations shall all refer to the same object or
   //   enumerator, or all refer to functions and function templates;
   //   in this case the class name or enumeration name is hidden.
-  if (isa<TagDecl>(D)) {
+  if (isa<TagDecl>(D) && IDI->shadowed_end() != IDI->shadowed_begin()) {
     // We are pushing the name of a tag (enum or class).
     IdDeclInfo::ShadowedIter TopIter = IDI->shadowed_end() - 1;
     if (S->isDeclScope(*TopIter)) {
