@@ -221,7 +221,9 @@ void Diagnostic::Report(DiagnosticClient* C,
   
   if (DiagLevel >= Diagnostic::Error) {
     ErrorOccurred = true;
-    ++NumErrors;
+    
+    if (C == &Client)
+      ++NumErrors;
   }
 
   // Finally, report it.
@@ -230,7 +232,9 @@ void Diagnostic::Report(DiagnosticClient* C,
   
   C->HandleDiagnostic(*this, DiagLevel, Pos, (diag::kind)DiagID,
                       Strs, NumStrs, Ranges, NumRanges);
-  ++NumDiagnostics;
+  
+  if (C == &Client)
+    ++NumDiagnostics;
 }
 
 DiagnosticClient::~DiagnosticClient() {}
