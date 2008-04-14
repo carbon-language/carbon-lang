@@ -1,4 +1,4 @@
-//===--- RewriteTest.cpp - Playground for the code rewriter ---------------===//
+//===--- HTMLPrint.cpp - Playground for the HTML code rewriter ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
