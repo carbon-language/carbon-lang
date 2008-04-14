@@ -132,6 +132,7 @@
 		DEC8D9910A9433CD00353FCA /* Decl.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8D9900A9433CD00353FCA /* Decl.h */; };
 		DEC8D9A40A94346E00353FCA /* AST.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8D9A30A94346E00353FCA /* AST.h */; };
 		DECAB0950DA684C500E13CCB /* CGObjCEtoile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DECAB0940DA684C500E13CCB /* CGObjCEtoile.cpp */; };
+		DECAB0D00DB3C84200E13CCB /* RewriteRope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DECAB0CF0DB3C84200E13CCB /* RewriteRope.cpp */; };
 		DED626C90AE0C065001E80A4 /* TargetInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED626C80AE0C065001E80A4 /* TargetInfo.cpp */; };
 		DED62ABB0AE2EDF1001E80A4 /* Decl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */; };
 		DED676D10B6C786700AAD4A3 /* Builtins.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED676D00B6C786700AAD4A3 /* Builtins.def */; };
@@ -419,6 +420,7 @@
 		DEC8D9900A9433CD00353FCA /* Decl.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Decl.h; path = clang/AST/Decl.h; sourceTree = "<group>"; };
 		DEC8D9A30A94346E00353FCA /* AST.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AST.h; path = clang/AST/AST.h; sourceTree = "<group>"; };
 		DECAB0940DA684C500E13CCB /* CGObjCEtoile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CGObjCEtoile.cpp; path = lib/CodeGen/CGObjCEtoile.cpp; sourceTree = "<group>"; };
+		DECAB0CF0DB3C84200E13CCB /* RewriteRope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteRope.cpp; path = lib/Rewrite/RewriteRope.cpp; sourceTree = "<group>"; };
 		DED626C80AE0C065001E80A4 /* TargetInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TargetInfo.cpp; sourceTree = "<group>"; };
 		DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Decl.cpp; path = lib/AST/Decl.cpp; sourceTree = "<group>"; tabWidth = 8; usesTabs = 0; };
 		DED676D00B6C786700AAD4A3 /* Builtins.def */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = Builtins.def; path = clang/AST/Builtins.def; sourceTree = "<group>"; };
@@ -907,6 +909,7 @@
 				DEFFECA60DB1546600B4E7C3 /* DeltaTree.cpp */,
 				72D16C1E0D9975C400E6DA4A /* HTMLRewrite.cpp */,
 				DEF7D9F80C9C8B1D0001F598 /* Rewriter.cpp */,
+				DECAB0CF0DB3C84200E13CCB /* RewriteRope.cpp */,
 			);
 			name = Rewrite;
 			sourceTree = "<group>";
@@ -1065,6 +1068,7 @@
 				35EF67700DAD1D2C00B19414 /* SemaDeclCXX.cpp in Sources */,
 				352712510DAFE54700C76352 /* IdentifierResolver.cpp in Sources */,
 				DEFFECA70DB1546600B4E7C3 /* DeltaTree.cpp in Sources */,
+				DECAB0D00DB3C84200E13CCB /* RewriteRope.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
