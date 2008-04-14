@@ -7,7 +7,7 @@ CFAbsoluteTime f1() {
   CFDateRef date = CFDateCreate(NULL, t);
   CFRetain(date);
   CFRelease(date);
-  t = CFDateGetAbsoluteTime(date);
+  CFDateGetAbsoluteTime(date);
   CFRelease(date);
   t = CFDateGetAbsoluteTime(date);   // expected-warning{{Reference-counted object is used after it is released.}}
   return t;

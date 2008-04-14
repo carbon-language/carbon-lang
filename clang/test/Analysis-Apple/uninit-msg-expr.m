@@ -3,14 +3,14 @@
 #include <Foundation/NSString.h>
 #include <Foundation/NSArray.h>
 
-void f1() {
+unsigned f1() {
   NSString *aString;
-  unsigned i = [aString length]; // expected-warning {{Receiver in message expression is an uninitialized value}}
+  return [aString length]; // expected-warning {{Receiver in message expression is an uninitialized value}}
 }
 
-void f2() {
+unsigned f2() {
   NSString *aString = nil;
-  unsigned i = [aString length]; // no-warning
+  return [aString length]; // no-warning
 }
 
 void f3() {
