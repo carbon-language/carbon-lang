@@ -430,7 +430,7 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
 bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
                                       SmallPtrSet<Instruction*,16> &Processed) {
   if (!I->getType()->isInteger() && !isa<PointerType>(I->getType()))
-      return false;   // Void and FP expressions cannot be reduced.
+    return false;   // Void and FP expressions cannot be reduced.
   if (!Processed.insert(I))
     return true;    // Instruction already handled.
   
@@ -1072,7 +1072,7 @@ static bool PartitionByIsUseOfPostIncrementedValue(const BasedUser &Val) {
   return Val.isUseOfPostIncrementedValue;
 }
 
-/// isNonConstantNegative - REturn true if the specified scev is negated, but
+/// isNonConstantNegative - Return true if the specified scev is negated, but
 /// not a constant.
 static bool isNonConstantNegative(const SCEVHandle &Expr) {
   SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(Expr);
@@ -1367,7 +1367,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
         // We want this constant emitted into the preheader! This is just
         // using cast as a copy so BitCast (no-op cast) is appropriate
         BaseV = new BitCastInst(BaseV, BaseV->getType(), "preheaderinsert",
-                             PreInsertPt);       
+                                PreInsertPt);       
       }
     }
 
