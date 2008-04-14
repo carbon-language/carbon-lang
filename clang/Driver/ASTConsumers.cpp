@@ -670,7 +670,7 @@ void CheckerConsumer::VisitCFG(CFG& C, Decl& CD) {
   if (!Loc.isFileID())
     return;
   
-  if (!AnalyzeAll && Loc.getFileID() != Ctx->getSourceManager().getMainFileID())
+  if (!AnalyzeAll && !Ctx->getSourceManager().isFromMainFile(Loc))
     return;
   
   // Lazily create the diagnostic client.
