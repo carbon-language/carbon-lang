@@ -64,6 +64,8 @@ void DAGTypeLegalizer::ExpandResult(SDNode *N, unsigned ResNo) {
   case ISD::TRUNCATE:    ExpandResult_TRUNCATE(N, Lo, Hi); break;
   case ISD::BIT_CONVERT: ExpandResult_BIT_CONVERT(N, Lo, Hi); break;
   case ISD::SIGN_EXTEND_INREG: ExpandResult_SIGN_EXTEND_INREG(N, Lo, Hi); break;
+  case ISD::FP_TO_SINT:  ExpandResult_FP_TO_SINT(N, Lo, Hi); break;
+  case ISD::FP_TO_UINT:  ExpandResult_FP_TO_UINT(N, Lo, Hi); break;
   case ISD::LOAD:        ExpandResult_LOAD(cast<LoadSDNode>(N), Lo, Hi); break;
     
   case ISD::AND:
@@ -79,6 +81,10 @@ void DAGTypeLegalizer::ExpandResult(SDNode *N, unsigned ResNo) {
   case ISD::SELECT:      ExpandResult_SELECT(N, Lo, Hi); break;
   case ISD::SELECT_CC:   ExpandResult_SELECT_CC(N, Lo, Hi); break;
   case ISD::MUL:         ExpandResult_MUL(N, Lo, Hi); break;
+  case ISD::SDIV:        ExpandResult_SDIV(N, Lo, Hi); break;
+  case ISD::SREM:        ExpandResult_SREM(N, Lo, Hi); break;
+  case ISD::UDIV:        ExpandResult_UDIV(N, Lo, Hi); break;
+  case ISD::UREM:        ExpandResult_UREM(N, Lo, Hi); break;
   case ISD::SHL:
   case ISD::SRA:
   case ISD::SRL:         ExpandResult_Shift(N, Lo, Hi); break;
@@ -313,6 +319,62 @@ ExpandResult_SIGN_EXTEND_INREG(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
     Hi = DAG.getNode(ISD::SIGN_EXTEND_INREG, Hi.getValueType(), Hi,
                      DAG.getValueType(MVT::getIntegerType(ExcessBits)));
   }
+}
+
+void DAGTypeLegalizer::ExpandResult_FP_TO_SINT(SDNode *N, SDOperand &Lo,
+                                               SDOperand &Hi) {
+  MVT::ValueType VT = N->getValueType(0);
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+  if (VT == MVT::i64) {
+    if (N->getOperand(0).getValueType() == MVT::f32)
+      LC = RTLIB::FPTOSINT_F32_I64;
+    else if (N->getOperand(0).getValueType() == MVT::f64)
+      LC = RTLIB::FPTOSINT_F64_I64;
+    else if (N->getOperand(0).getValueType() == MVT::f80)
+      LC = RTLIB::FPTOSINT_F80_I64;
+    else if (N->getOperand(0).getValueType() == MVT::ppcf128)
+      LC = RTLIB::FPTOSINT_PPCF128_I64;
+  } else if (VT == MVT::i128) {
+    if (N->getOperand(0).getValueType() == MVT::f32)
+      LC = RTLIB::FPTOSINT_F32_I128;
+    else if (N->getOperand(0).getValueType() == MVT::f64)
+      LC = RTLIB::FPTOSINT_F64_I128;
+    else if (N->getOperand(0).getValueType() == MVT::f80)
+      LC = RTLIB::FPTOSINT_F80_I128;
+    else if (N->getOperand(0).getValueType() == MVT::ppcf128)
+      LC = RTLIB::FPTOSINT_PPCF128_I128;
+  } else {
+    assert(0 && "Unexpected fp-to-sint conversion!");
+  }
+  SplitInteger(MakeLibCall(LC, N, true/*sign irrelevant*/), Lo, Hi);
+}
+
+void DAGTypeLegalizer::ExpandResult_FP_TO_UINT(SDNode *N, SDOperand &Lo,
+                                               SDOperand &Hi) {
+  MVT::ValueType VT = N->getValueType(0);
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+  if (VT == MVT::i64) {
+    if (N->getOperand(0).getValueType() == MVT::f32)
+      LC = RTLIB::FPTOUINT_F32_I64;
+    else if (N->getOperand(0).getValueType() == MVT::f64)
+      LC = RTLIB::FPTOUINT_F64_I64;
+    else if (N->getOperand(0).getValueType() == MVT::f80)
+      LC = RTLIB::FPTOUINT_F80_I64;
+    else if (N->getOperand(0).getValueType() == MVT::ppcf128)
+      LC = RTLIB::FPTOUINT_PPCF128_I64;
+  } else if (VT == MVT::i128) {
+    if (N->getOperand(0).getValueType() == MVT::f32)
+      LC = RTLIB::FPTOUINT_F32_I128;
+    else if (N->getOperand(0).getValueType() == MVT::f64)
+      LC = RTLIB::FPTOUINT_F64_I128;
+    else if (N->getOperand(0).getValueType() == MVT::f80)
+      LC = RTLIB::FPTOUINT_F80_I128;
+    else if (N->getOperand(0).getValueType() == MVT::ppcf128)
+      LC = RTLIB::FPTOUINT_PPCF128_I128;
+  } else {
+    assert(0 && "Unexpected fp-to-uint conversion!");
+  }
+  SplitInteger(MakeLibCall(LC, N, false/*sign irrelevant*/), Lo, Hi);
 }
 
 void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
@@ -614,6 +676,29 @@ void DAGTypeLegalizer::ExpandResult_MUL(SDNode *N,
 #endif
 }  
 
+void DAGTypeLegalizer::ExpandResult_SDIV(SDNode *N,
+                                         SDOperand &Lo, SDOperand &Hi) {
+  assert(N->getValueType(0) == MVT::i64 && "Unsupported sdiv!");
+  SplitInteger(MakeLibCall(RTLIB::SDIV_I64, N, true), Lo, Hi);
+}
+
+void DAGTypeLegalizer::ExpandResult_SREM(SDNode *N,
+                                         SDOperand &Lo, SDOperand &Hi) {
+  assert(N->getValueType(0) == MVT::i64 && "Unsupported srem!");
+  SplitInteger(MakeLibCall(RTLIB::SREM_I64, N, true), Lo, Hi);
+}
+
+void DAGTypeLegalizer::ExpandResult_UDIV(SDNode *N,
+                                         SDOperand &Lo, SDOperand &Hi) {
+  assert(N->getValueType(0) == MVT::i64 && "Unsupported udiv!");
+  SplitInteger(MakeLibCall(RTLIB::UDIV_I64, N, false), Lo, Hi);
+}
+
+void DAGTypeLegalizer::ExpandResult_UREM(SDNode *N,
+                                         SDOperand &Lo, SDOperand &Hi) {
+  assert(N->getValueType(0) == MVT::i64 && "Unsupported urem!");
+  SplitInteger(MakeLibCall(RTLIB::UREM_I64, N, false), Lo, Hi);
+}
 
 void DAGTypeLegalizer::ExpandResult_Shift(SDNode *N,
                                           SDOperand &Lo, SDOperand &Hi) {

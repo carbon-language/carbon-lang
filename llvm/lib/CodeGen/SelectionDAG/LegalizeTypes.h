@@ -169,6 +169,7 @@ private:
   void SplitInteger(SDOperand Op, SDOperand &Lo, SDOperand &Hi);
   void SplitInteger(SDOperand Op, MVT::ValueType LoVT, MVT::ValueType HiVT,
                     SDOperand &Lo, SDOperand &Hi);
+  SDOperand MakeLibCall(RTLIB::Libcall LC, SDNode *N, bool isSigned);
 
   //===--------------------------------------------------------------------===//
   // Promotion Support: LegalizeTypesPromote.cpp
@@ -262,6 +263,8 @@ private:
   void ExpandResult_TRUNCATE   (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_UNDEF      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_ZERO_EXTEND(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_FP_TO_SINT (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_FP_TO_UINT (SDNode *N, SDOperand &Lo, SDOperand &Hi);
 
   void ExpandResult_Logical    (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_BSWAP      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
@@ -271,6 +274,10 @@ private:
   void ExpandResult_SELECT     (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_SELECT_CC  (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_MUL        (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_SDIV       (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_SREM       (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_UDIV       (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_UREM       (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_Shift      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   
   void ExpandShiftByConstant(SDNode *N, unsigned Amt, 
