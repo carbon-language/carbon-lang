@@ -952,7 +952,7 @@ public:
   /// memcpy. This can be used by targets to provide code sequences for cases
   /// that don't fit the target's parameters for simple loads/stores and can be
   /// more efficient than using a library call. This function can return a null
-  /// SDOperand if the target declines to use inline code and a different
+  /// SDOperand if the target declines to use custom code and a different
   /// lowering strategy should be used.
   /// 
   /// If AlwaysInline is true, the size is constant and the target should not
@@ -976,8 +976,8 @@ public:
   /// memmove. This can be used by targets to provide code sequences for cases
   /// that don't fit the target's parameters for simple loads/stores and can be
   /// more efficient than using a library call. This function can return a null
-  /// SDOperand if the target declines to use code and a different lowering
-  /// strategy should be used.
+  /// SDOperand if the target declines to use custom code and a different
+  /// lowering strategy should be used.
   virtual SDOperand
   EmitTargetCodeForMemmove(SelectionDAG &DAG,
                            SDOperand Chain,
@@ -992,8 +992,8 @@ public:
   /// memset. This can be used by targets to provide code sequences for cases
   /// that don't fit the target's parameters for simple stores and can be more
   /// efficient than using a library call. This function can return a null
-  /// SDOperand if the target declines to use code and a different lowering
-  /// strategy should be used.
+  /// SDOperand if the target declines to use custom code and a different
+  /// lowering strategy should be used.
   virtual SDOperand
   EmitTargetCodeForMemset(SelectionDAG &DAG,
                           SDOperand Chain,
