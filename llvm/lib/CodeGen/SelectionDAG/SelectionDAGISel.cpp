@@ -4162,13 +4162,13 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     unsigned NumRegs = getNumRegisters(VT);
     for (unsigned i = 0; i != NumRegs; ++i) {
       RetVals.push_back(RegisterVT);
-
+      ISD::ArgFlagsTy MyFlags = Flags;
       if (NumRegs > 1 && i == 0)
-        Flags.setDivided();
+        MyFlags.setDivided();
       // if it isn't first piece, alignment must be 1
       else if (i > 0)
-        Flags.setOrigAlign(1);
-      Ops.push_back(DAG.getArgFlags(Flags));
+        MyFlags.setOrigAlign(1);
+      Ops.push_back(DAG.getArgFlags(MyFlags));
     }
   }
 
