@@ -266,6 +266,7 @@ bool Instruction::isTrapping(unsigned op) {
   case Store:
   case Call:
   case Invoke:
+  case VAArg:
     return true;
   default:
     return false;
