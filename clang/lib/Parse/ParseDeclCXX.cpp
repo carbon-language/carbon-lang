@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Parse/Parser.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Parse/DeclSpec.h"
-#include "clang/Parse/Parser.h"
 #include "clang/Parse/Scope.h"
 using namespace clang;
 
@@ -339,7 +339,7 @@ bool Parser::ParseBaseSpecifier(DeclTy *ClassDecl)
 ///         'private'
 ///         'protected'
 ///         'public'
-AccessSpecifier Parser::getAccessSpecifierIfPresent()
+AccessSpecifier Parser::getAccessSpecifierIfPresent() const
 {
   switch (Tok.getKind()) {
   default: return AS_none;

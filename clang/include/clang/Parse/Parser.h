@@ -489,7 +489,7 @@ private:
   // C++ 10: Derived classes [class.derived]
   void ParseBaseClause(DeclTy *ClassDecl);
   bool ParseBaseSpecifier(DeclTy *ClassDecl);
-  AccessSpecifier getAccessSpecifierIfPresent();
+  AccessSpecifier getAccessSpecifierIfPresent() const;
 };
 
 }  // end namespace clang
