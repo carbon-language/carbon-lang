@@ -146,19 +146,32 @@ static llvm::cl::opt<std::string>
 OutputFile("o",
  llvm::cl::value_desc("path"),
  llvm::cl::desc("Specify output file (for --serialize, this is a directory)"));
-                          
+
+//===----------------------------------------------------------------------===//
+// Diagnostic Options
+//===----------------------------------------------------------------------===//
+
 static llvm::cl::opt<bool>
 VerifyDiagnostics("verify",
                   llvm::cl::desc("Verify emitted diagnostics and warnings."));
-
-static llvm::cl::opt<bool>
-VisualizeEG("visualize-egraph",
-            llvm::cl::desc("Display static analysis Exploded Graph."));
 
 static llvm::cl::opt<std::string>
 HTMLDiag("html-diags",
          llvm::cl::desc("Generate HTML to report diagnostics"),
          llvm::cl::value_desc("HTML directory"));
+
+//===----------------------------------------------------------------------===//
+// Analyzer Options
+//===----------------------------------------------------------------------===//
+
+static llvm::cl::opt<bool>
+VisualizeEG("visualize-egraph",
+            llvm::cl::desc("Display static analysis Exploded Graph."));
+
+static llvm::cl::opt<bool>
+AnalyzeAll("checker-opt-analyze-headers",
+    llvm::cl::desc("Force the static analyzer to analyze "
+                   "functions defined in header files."));
 
 //===----------------------------------------------------------------------===//
 // Language Options
@@ -1057,11 +1070,11 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       
     case AnalysisGRSimpleVals:
       return CreateGRSimpleVals(Diag, AnalyzeSpecificFunction, OutputFile,
-                                VisualizeEG, TrimGraph);
+                                VisualizeEG, TrimGraph, AnalyzeAll);
       
     case CheckerCFRef:
       return CreateCFRefChecker(Diag, AnalyzeSpecificFunction, OutputFile,
-                                VisualizeEG, TrimGraph);
+                                VisualizeEG, TrimGraph, AnalyzeAll);
       
     case TestSerialization:
       return CreateSerializationTest(Diag, FileMgr, LangOpts);

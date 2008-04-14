@@ -44,13 +44,13 @@ ASTConsumer *CreateUnitValsChecker(Diagnostic &Diags);
   
 ASTConsumer *CreateGRSimpleVals(Diagnostic &Diags,
                                 const std::string& Function,
-                                const std::string& HTMLDir,
-                                bool Visualize = false, bool TrimGraph = false);
+                                const std::string& HTMLDir, bool Visualize,
+                                bool TrimGraph, bool AnalyzeAll);
   
 ASTConsumer *CreateCFRefChecker(Diagnostic &Diags,
                                 const std::string& Function,
-                                const std::string& HTMLDir,
-                                bool Visualize = false, bool TrimGraph = false);
+                                const std::string& HTMLDir, bool Visualize,
+                                bool TrimGraph, bool AnalyzeAll);
 
 ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
                                     const std::string& OutFile,
