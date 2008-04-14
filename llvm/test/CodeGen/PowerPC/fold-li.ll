@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -unwind-tables-optional | \
+; RUN: llvm-as < %s | llc -march=ppc32  | \
 ; RUN:   grep -v align | not grep li
 
 ;; Test that immediates are folded into these instructions correctly.

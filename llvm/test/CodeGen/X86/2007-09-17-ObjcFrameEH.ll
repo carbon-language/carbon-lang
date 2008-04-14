@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mtriple=i686-apple-darwin -enable-eh -unwind-tables-optional | grep {isNullOrNil].eh"} | count 2
+; RUN: llvm-as < %s | llc -march=x86 -mtriple=i686-apple-darwin -enable-eh  | grep {isNullOrNil].eh"} | count 2
 
 	%struct.NSString = type {  }
 	%struct._objc__method_prototype_list = type opaque

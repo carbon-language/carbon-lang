@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -stats -unwind-tables-optional |&\
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -stats  |&\
 ; RUN:     grep {asm-printer} | grep 32
 
 target datalayout = "e-p:32:32"
