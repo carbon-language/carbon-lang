@@ -1848,7 +1848,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   unsigned OpOpcode = Operand.Val->getOpcode();
   switch (Opcode) {
   case ISD::TokenFactor:
-    return Operand;         // Factor of one node?  No factor.
+  case ISD::MERGE_VALUES:
+    return Operand;         // Factor or merge of one node?  No need.
   case ISD::FP_ROUND: assert(0 && "Invalid method to make FP_ROUND node");
   case ISD::FP_EXTEND:
     assert(MVT::isFloatingPoint(VT) &&
