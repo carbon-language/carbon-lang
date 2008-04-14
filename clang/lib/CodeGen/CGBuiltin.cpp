@@ -258,39 +258,66 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   default: return 0;
   case X86::BI__builtin_ia32_mulps:
     return Builder.CreateMul(Ops[0], Ops[1], "mulps");
+  case X86::BI__builtin_ia32_mulpd:
+    return Builder.CreateMul(Ops[0], Ops[1], "mulpd");
   case X86::BI__builtin_ia32_pand:
+  case X86::BI__builtin_ia32_pand128:
     return Builder.CreateAnd(Ops[0], Ops[1], "pand");
   case X86::BI__builtin_ia32_por:
-    return Builder.CreateAnd(Ops[0], Ops[1], "por");
+  case X86::BI__builtin_ia32_por128:
+    return Builder.CreateOr(Ops[0], Ops[1], "por");
   case X86::BI__builtin_ia32_pxor:
-    return Builder.CreateAnd(Ops[0], Ops[1], "pxor");
-  case X86::BI__builtin_ia32_pandn: {
+  case X86::BI__builtin_ia32_pxor128:
+    return Builder.CreateXor(Ops[0], Ops[1], "pxor");
+  case X86::BI__builtin_ia32_pandn:
+  case X86::BI__builtin_ia32_pandn128:
     Ops[0] = Builder.CreateNot(Ops[0], "tmp");
     return Builder.CreateAnd(Ops[0], Ops[1], "pandn");
-  }
   case X86::BI__builtin_ia32_paddb:
+  case X86::BI__builtin_ia32_paddb128:
   case X86::BI__builtin_ia32_paddd:
+  case X86::BI__builtin_ia32_paddd128:
   case X86::BI__builtin_ia32_paddq:
+  case X86::BI__builtin_ia32_paddq128:
   case X86::BI__builtin_ia32_paddw:
+  case X86::BI__builtin_ia32_paddw128:
   case X86::BI__builtin_ia32_addps:
+  case X86::BI__builtin_ia32_addpd:
     return Builder.CreateAdd(Ops[0], Ops[1], "add");
   case X86::BI__builtin_ia32_psubb:
+  case X86::BI__builtin_ia32_psubb128:
   case X86::BI__builtin_ia32_psubd:
+  case X86::BI__builtin_ia32_psubd128:
   case X86::BI__builtin_ia32_psubq:
+  case X86::BI__builtin_ia32_psubq128:
   case X86::BI__builtin_ia32_psubw:
+  case X86::BI__builtin_ia32_psubw128:
   case X86::BI__builtin_ia32_subps:
+  case X86::BI__builtin_ia32_subpd:
     return Builder.CreateSub(Ops[0], Ops[1], "sub");
   case X86::BI__builtin_ia32_divps:
     return Builder.CreateFDiv(Ops[0], Ops[1], "divps");
+  case X86::BI__builtin_ia32_divpd:
+    return Builder.CreateFDiv(Ops[0], Ops[1], "divpd");
   case X86::BI__builtin_ia32_pmullw:
+  case X86::BI__builtin_ia32_pmullw128:
     return Builder.CreateMul(Ops[0], Ops[1], "pmul");
   case X86::BI__builtin_ia32_punpckhbw:
     return EmitShuffleVector(Ops[0], Ops[1], 4, 12, 5, 13, 6, 14, 7, 15,
                              "punpckhbw");
+  case X86::BI__builtin_ia32_punpckhbw128:
+    return EmitShuffleVector(Ops[0], Ops[1],  8, 24,  9, 25, 10, 26, 11, 27,
+                                             12, 28, 13, 29, 14, 30, 15, 31,
+                             "punpckhbw");
   case X86::BI__builtin_ia32_punpckhwd:
     return EmitShuffleVector(Ops[0], Ops[1], 2, 6, 3, 7, "punpckhwd");
+  case X86::BI__builtin_ia32_punpckhwd128:
+    return EmitShuffleVector(Ops[0], Ops[1], 4, 12, 5, 13, 6, 14, 7, 15,
+                             "punpckhwd");
   case X86::BI__builtin_ia32_punpckhdq:
     return EmitShuffleVector(Ops[0], Ops[1], 1, 3, "punpckhdq");
+  case X86::BI__builtin_ia32_punpckhdq128:
+    return EmitShuffleVector(Ops[0], Ops[1], 2, 6, 3, 7, "punpckhdq");
   case X86::BI__builtin_ia32_punpcklbw:
     return EmitShuffleVector(Ops[0], Ops[1], 0, 8, 1, 9, 2, 10, 3, 11,
                              "punpcklbw");
@@ -298,6 +325,63 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return EmitShuffleVector(Ops[0], Ops[1], 0, 4, 1, 5, "punpcklwd");
   case X86::BI__builtin_ia32_punpckldq:
     return EmitShuffleVector(Ops[0], Ops[1], 0, 2, "punpckldq");
+  case X86::BI__builtin_ia32_punpckldq128:
+    return EmitShuffleVector(Ops[0], Ops[1], 0, 4, 1, 5, "punpckldq");
+  case X86::BI__builtin_ia32_pslldi128: 
+  case X86::BI__builtin_ia32_psllqi128:
+  case X86::BI__builtin_ia32_psllwi128: 
+  case X86::BI__builtin_ia32_psradi128:
+  case X86::BI__builtin_ia32_psrawi128:
+  case X86::BI__builtin_ia32_psrldi128:
+  case X86::BI__builtin_ia32_psrlqi128:
+  case X86::BI__builtin_ia32_psrlwi128: {
+    Ops[1] = Builder.CreateZExt(Ops[1], llvm::Type::Int64Ty, "zext");
+    const llvm::Type *Ty = llvm::VectorType::get(llvm::Type::Int64Ty, 2);
+    llvm::Value *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
+    Ops[1] = Builder.CreateInsertElement(llvm::UndefValue::get(Ty),
+                                         Ops[1], Zero, "insert");
+    Ops[1] = Builder.CreateBitCast(Ops[1], Ops[0]->getType(), "bitcast");
+    const char *name = 0;
+    Intrinsic::ID ID = Intrinsic::not_intrinsic;
+    
+    switch (BuiltinID) {
+    default: assert(0 && "Unsupported shift intrinsic!");
+    case X86::BI__builtin_ia32_pslldi128:
+      name = "pslldi";
+      ID = Intrinsic::x86_sse2_psll_d;
+      break;
+    case X86::BI__builtin_ia32_psllqi128:
+      name = "psllqi";
+      ID = Intrinsic::x86_sse2_psll_q;
+      break;
+    case X86::BI__builtin_ia32_psllwi128:
+      name = "psllwi";
+      ID = Intrinsic::x86_sse2_psll_w;
+      break;
+    case X86::BI__builtin_ia32_psradi128:
+      name = "psradi";
+      ID = Intrinsic::x86_sse2_psra_d;
+      break;
+    case X86::BI__builtin_ia32_psrawi128:
+      name = "psrawi";
+      ID = Intrinsic::x86_sse2_psra_w;
+      break;
+    case X86::BI__builtin_ia32_psrldi128:
+      name = "psrldi";
+      ID = Intrinsic::x86_sse2_psrl_d;
+      break;
+    case X86::BI__builtin_ia32_psrlqi128:
+      name = "psrlqi";
+      ID = Intrinsic::x86_sse2_psrl_q;
+      break;
+    case X86::BI__builtin_ia32_psrlwi128:
+      name = "psrlwi";
+      ID = Intrinsic::x86_sse2_psrl_w;
+      break;
+    }
+    llvm::Function *F = CGM.getIntrinsic(ID);
+    return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), name);  
+  }
   case X86::BI__builtin_ia32_pslldi: 
   case X86::BI__builtin_ia32_psllqi:
   case X86::BI__builtin_ia32_psllwi: 
@@ -346,6 +430,38 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
       name = "psrlwi";
       ID = Intrinsic::x86_mmx_psrl_w;
       break;
+    case X86::BI__builtin_ia32_pslldi128:
+      name = "pslldi";
+      ID = Intrinsic::x86_sse2_psll_d;
+      break;
+    case X86::BI__builtin_ia32_psllqi128:
+      name = "psllqi";
+      ID = Intrinsic::x86_sse2_psll_q;
+      break;
+    case X86::BI__builtin_ia32_psllwi128:
+      name = "psllwi";
+      ID = Intrinsic::x86_sse2_psll_w;
+      break;
+    case X86::BI__builtin_ia32_psradi128:
+      name = "psradi";
+      ID = Intrinsic::x86_sse2_psra_d;
+      break;
+    case X86::BI__builtin_ia32_psrawi128:
+      name = "psrawi";
+      ID = Intrinsic::x86_sse2_psra_w;
+      break;
+    case X86::BI__builtin_ia32_psrldi128:
+      name = "psrldi";
+      ID = Intrinsic::x86_sse2_psrl_d;
+      break;
+    case X86::BI__builtin_ia32_psrlqi128:
+      name = "psrlqi";
+      ID = Intrinsic::x86_sse2_psrl_q;
+      break;
+    case X86::BI__builtin_ia32_psrlwi128:
+      name = "psrlwi";
+      ID = Intrinsic::x86_sse2_psrl_w;
+      break;
     }
     llvm::Function *F = CGM.getIntrinsic(ID);
     return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), name);  
@@ -362,109 +478,183 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_vec_init_v2si:
     return EmitVector(&Ops[0], Ops.size());
   case X86::BI__builtin_ia32_vec_ext_v2si:
+  case X86::BI__builtin_ia32_vec_ext_v2di:
+  case X86::BI__builtin_ia32_vec_ext_v4sf:
+  case X86::BI__builtin_ia32_vec_ext_v4si:
+  case X86::BI__builtin_ia32_vec_ext_v2df:
     return Builder.CreateExtractElement(Ops[0], Ops[1], "result");
   case X86::BI__builtin_ia32_cmpordss:
+  case X86::BI__builtin_ia32_cmpordsd:
   case X86::BI__builtin_ia32_cmpunordss:
-  case X86::BI__builtin_ia32_cmpeqss: 
-  case X86::BI__builtin_ia32_cmpltss: 
+  case X86::BI__builtin_ia32_cmpunordsd:
+  case X86::BI__builtin_ia32_cmpeqss:
+  case X86::BI__builtin_ia32_cmpeqsd:
+  case X86::BI__builtin_ia32_cmpltss:
+  case X86::BI__builtin_ia32_cmpltsd:
   case X86::BI__builtin_ia32_cmpless:
+  case X86::BI__builtin_ia32_cmplesd:
   case X86::BI__builtin_ia32_cmpneqss:
-  case X86::BI__builtin_ia32_cmpnltss: 
-  case X86::BI__builtin_ia32_cmpnless: {
+  case X86::BI__builtin_ia32_cmpneqsd:
+  case X86::BI__builtin_ia32_cmpnltss:
+  case X86::BI__builtin_ia32_cmpnltsd:
+  case X86::BI__builtin_ia32_cmpnless:
+  case X86::BI__builtin_ia32_cmpnlesd: {
     unsigned i = 0;
     const char *name = 0;
     switch (BuiltinID) {
     default: assert(0 && "Unknown compare builtin!");
     case X86::BI__builtin_ia32_cmpeqss:
+    case X86::BI__builtin_ia32_cmpeqsd:
       i = 0;
-      name = "cmpeqss";
+      name = "cmpeq";
       break;
     case X86::BI__builtin_ia32_cmpltss:
+    case X86::BI__builtin_ia32_cmpltsd:
       i = 1;
-      name = "cmpltss";
+      name = "cmplt";
       break;
     case X86::BI__builtin_ia32_cmpless:
+    case X86::BI__builtin_ia32_cmplesd:
       i = 2;
-      name = "cmpless";
+      name = "cmple";
       break;
     case X86::BI__builtin_ia32_cmpunordss:
+    case X86::BI__builtin_ia32_cmpunordsd:
       i = 3;
-      name = "cmpunordss";
+      name = "cmpunord";
       break;
     case X86::BI__builtin_ia32_cmpneqss:
+    case X86::BI__builtin_ia32_cmpneqsd:
       i = 4;
-      name = "cmpneqss";
+      name = "cmpneq";
       break;
     case X86::BI__builtin_ia32_cmpnltss:
+    case X86::BI__builtin_ia32_cmpnltsd:
       i = 5;
-      name = "cmpntlss";
+      name = "cmpntl";
       break;
     case X86::BI__builtin_ia32_cmpnless:
+    case X86::BI__builtin_ia32_cmpnlesd:
       i = 6;
-      name = "cmpnless";
+      name = "cmpnle";
       break;
     case X86::BI__builtin_ia32_cmpordss:
+    case X86::BI__builtin_ia32_cmpordsd:
       i = 7;
-      name = "cmpordss";
+      name = "cmpord";
       break;
     }
 
+    llvm::Function *F;
+    if (cast<llvm::VectorType>(Ops[0]->getType())->getElementType() ==
+        llvm::Type::FloatTy)
+      F = CGM.getIntrinsic(Intrinsic::x86_sse_cmp_ss);
+    else
+      F = CGM.getIntrinsic(Intrinsic::x86_sse2_cmp_sd);
+
     Ops.push_back(llvm::ConstantInt::get(llvm::Type::Int8Ty, i));
-    llvm::Function *F = CGM.getIntrinsic(Intrinsic::x86_sse_cmp_ss);
     return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), name);
   }
+  case X86::BI__builtin_ia32_ldmxcsr: {
+    llvm::Type *PtrTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+    Value *One = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
+    Value *Tmp = Builder.CreateAlloca(llvm::Type::Int32Ty, One, "tmp");
+    One = Builder.CreateBitCast(Tmp, PtrTy);
+    Builder.CreateStore(Ops[0], Tmp);
+    return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::x86_sse_ldmxcsr),
+                             &One, &One+1);
+  }
+  case X86::BI__builtin_ia32_stmxcsr: {
+    llvm::Type *PtrTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+    Value *One = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
+    Value *Tmp = Builder.CreateAlloca(llvm::Type::Int32Ty, One, "tmp");
+    One = Builder.CreateBitCast(Tmp, PtrTy);
+    One = Builder.CreateCall(CGM.getIntrinsic(Intrinsic::x86_sse_stmxcsr),
+                             &One, &One+1);
+    return Builder.CreateLoad(Tmp, "stmxcsr");
+  }
   case X86::BI__builtin_ia32_cmpordps:
+  case X86::BI__builtin_ia32_cmpordpd:
   case X86::BI__builtin_ia32_cmpunordps:
+  case X86::BI__builtin_ia32_cmpunordpd:
   case X86::BI__builtin_ia32_cmpeqps: 
+  case X86::BI__builtin_ia32_cmpeqpd: 
   case X86::BI__builtin_ia32_cmpltps: 
+  case X86::BI__builtin_ia32_cmpltpd: 
   case X86::BI__builtin_ia32_cmpleps:
+  case X86::BI__builtin_ia32_cmplepd:
   case X86::BI__builtin_ia32_cmpneqps:
+  case X86::BI__builtin_ia32_cmpneqpd:
   case X86::BI__builtin_ia32_cmpngtps:
+  case X86::BI__builtin_ia32_cmpngtpd:
   case X86::BI__builtin_ia32_cmpnltps: 
+  case X86::BI__builtin_ia32_cmpnltpd: 
   case X86::BI__builtin_ia32_cmpgtps:
+  case X86::BI__builtin_ia32_cmpgtpd:
   case X86::BI__builtin_ia32_cmpgeps:
+  case X86::BI__builtin_ia32_cmpgepd:
   case X86::BI__builtin_ia32_cmpngeps:
-  case X86::BI__builtin_ia32_cmpnleps: {
+  case X86::BI__builtin_ia32_cmpngepd:
+  case X86::BI__builtin_ia32_cmpnleps: 
+  case X86::BI__builtin_ia32_cmpnlepd: {
     unsigned i = 0;
     const char *name = 0;
     bool ShouldSwap = false;
     switch (BuiltinID) {
     default: assert(0 && "Unknown compare builtin!");
-    case X86::BI__builtin_ia32_cmpeqps:    i = 0; name = "cmpeqps"; break;
-    case X86::BI__builtin_ia32_cmpltps:    i = 1; name = "cmpltps"; break;
-    case X86::BI__builtin_ia32_cmpleps:    i = 2; name = "cmpleps"; break;
-    case X86::BI__builtin_ia32_cmpunordps: i = 3; name = "cmpunordps"; break;
-    case X86::BI__builtin_ia32_cmpneqps:   i = 4; name = "cmpneqps"; break;
-    case X86::BI__builtin_ia32_cmpnltps:   i = 5; name = "cmpntlps"; break;
-    case X86::BI__builtin_ia32_cmpnleps:   i = 6; name = "cmpnleps"; break;
-    case X86::BI__builtin_ia32_cmpordps:   i = 7; name = "cmpordps"; break;
+    case X86::BI__builtin_ia32_cmpeqps:
+    case X86::BI__builtin_ia32_cmpeqpd:    i = 0; name = "cmpeq"; break;
+    case X86::BI__builtin_ia32_cmpltps:
+    case X86::BI__builtin_ia32_cmpltpd:    i = 1; name = "cmplt"; break;
+    case X86::BI__builtin_ia32_cmpleps:
+    case X86::BI__builtin_ia32_cmplepd:    i = 2; name = "cmple"; break;
+    case X86::BI__builtin_ia32_cmpunordps:
+    case X86::BI__builtin_ia32_cmpunordpd: i = 3; name = "cmpunord"; break;
+    case X86::BI__builtin_ia32_cmpneqps:
+    case X86::BI__builtin_ia32_cmpneqpd:   i = 4; name = "cmpneq"; break;
+    case X86::BI__builtin_ia32_cmpnltps:
+    case X86::BI__builtin_ia32_cmpnltpd:   i = 5; name = "cmpntl"; break;
+    case X86::BI__builtin_ia32_cmpnleps:
+    case X86::BI__builtin_ia32_cmpnlepd:   i = 6; name = "cmpnle"; break;
+    case X86::BI__builtin_ia32_cmpordps:
+    case X86::BI__builtin_ia32_cmpordpd:   i = 7; name = "cmpord"; break;
     case X86::BI__builtin_ia32_cmpgtps:
+    case X86::BI__builtin_ia32_cmpgtpd:
       ShouldSwap = true;
       i = 1;
-      name = "cmpgtps";
+      name = "cmpgt";
       break;
     case X86::BI__builtin_ia32_cmpgeps:
+    case X86::BI__builtin_ia32_cmpgepd:
       i = 2;
-      name = "cmpgeps";
+      name = "cmpge";
       ShouldSwap = true;
       break;
     case X86::BI__builtin_ia32_cmpngtps:
+    case X86::BI__builtin_ia32_cmpngtpd:
       i = 5;
-      name = "cmpngtps";
+      name = "cmpngt";
       ShouldSwap = true;
       break;
     case X86::BI__builtin_ia32_cmpngeps:
+    case X86::BI__builtin_ia32_cmpngepd:
       i = 6;
-      name = "cmpngeps";
+      name = "cmpnge";
       ShouldSwap = true;
       break;
     }
 
     if (ShouldSwap)
       std::swap(Ops[0], Ops[1]);
+
+    llvm::Function *F;
+    if (cast<llvm::VectorType>(Ops[0]->getType())->getElementType() ==
+        llvm::Type::FloatTy)
+      F = CGM.getIntrinsic(Intrinsic::x86_sse_cmp_ps);
+    else
+      F = CGM.getIntrinsic(Intrinsic::x86_sse2_cmp_pd);
     
     Ops.push_back(llvm::ConstantInt::get(llvm::Type::Int8Ty, i));
-    llvm::Function *F = CGM.getIntrinsic(Intrinsic::x86_sse_cmp_ps);
     return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), name);
   }
   case X86::BI__builtin_ia32_movss:
@@ -483,6 +673,116 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_punpcklwd128:
     return EmitShuffleVector(Ops[0], Ops[1], 0, 8, 1, 9, 2, 10, 3, 11,
                              "punpcklwd");
+  case X86::BI__builtin_ia32_movlhps:
+    return EmitShuffleVector(Ops[0], Ops[1], 0, 1, 4, 5, "movlhps");
+  case X86::BI__builtin_ia32_movhlps:
+    return EmitShuffleVector(Ops[0], Ops[1], 6, 7, 2, 3, "movhlps");
+  case X86::BI__builtin_ia32_unpckhps:
+    return EmitShuffleVector(Ops[0], Ops[1], 2, 6, 3, 7, "unpckhps");
+  case X86::BI__builtin_ia32_unpcklps:
+    return EmitShuffleVector(Ops[0], Ops[1], 0, 4, 1, 5, "unpcklps");
+  case X86::BI__builtin_ia32_movqv4si: {
+    llvm::Type *Ty = llvm::VectorType::get(llvm::Type::Int64Ty, 2);
+    return Builder.CreateBitCast(Ops[0], Ty);
+  }
+  case X86::BI__builtin_ia32_loadlps:
+  case X86::BI__builtin_ia32_loadhps: {
+    // FIXME: This should probably be represented as 
+    // shuffle (dst, (v4f32 (insert undef, (load i64), 0)), shuf mask hi/lo)
+    const llvm::Type *EltTy = llvm::Type::DoubleTy;
+    const llvm::Type *VecTy = llvm::VectorType::get(EltTy, 2);
+    const llvm::Type *OrigTy = Ops[0]->getType();
+    unsigned Index = BuiltinID == X86::BI__builtin_ia32_loadlps ? 0 : 1;
+    llvm::Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, Index);
+    Ops[1] = Builder.CreateBitCast(Ops[1], llvm::PointerType::getUnqual(EltTy));
+    Ops[1] = Builder.CreateLoad(Ops[1], "tmp");
+    Ops[0] = Builder.CreateBitCast(Ops[0], VecTy, "cast");
+    Ops[0] = Builder.CreateInsertElement(Ops[0], Ops[1], Idx, "loadps");
+    return Builder.CreateBitCast(Ops[0], OrigTy, "loadps");
+  }
+  case X86::BI__builtin_ia32_storehps:
+  case X86::BI__builtin_ia32_storelps: {
+    const llvm::Type *EltTy = llvm::Type::Int64Ty;
+    llvm::Type *PtrTy = llvm::PointerType::getUnqual(EltTy);
+    llvm::Type *VecTy = llvm::VectorType::get(EltTy, 2);
+    
+    // cast val v2i64
+    Ops[1] = Builder.CreateBitCast(Ops[1], VecTy, "cast");
+    
+    // extract (0, 1)
+    unsigned Index = BuiltinID == X86::BI__builtin_ia32_storelps ? 0 : 1;
+    llvm::Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, Index);
+    Ops[1] = Builder.CreateExtractElement(Ops[1], Idx, "extract");
+
+    // cast pointer to i64 & store
+    Ops[0] = Builder.CreateBitCast(Ops[0], PtrTy);
+    return Builder.CreateStore(Ops[1], Ops[0]);
+  }
+  case X86::BI__builtin_ia32_loadlv4si: {
+    // load i64
+    const llvm::Type *EltTy = llvm::Type::Int64Ty;
+    llvm::Type *PtrTy = llvm::PointerType::getUnqual(EltTy);
+    Ops[0] = Builder.CreateBitCast(Ops[0], PtrTy);
+    Ops[0] = Builder.CreateLoad(Ops[0], "load");
+    
+    // scalar to vector: insert i64 into 2 x i64 undef
+    llvm::Type *VecTy = llvm::VectorType::get(EltTy, 2);
+    llvm::Value *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
+    Ops[0] = Builder.CreateInsertElement(llvm::UndefValue::get(VecTy),
+                                         Ops[0], Zero, "s2v");
+
+    // shuffle into zero vector.
+    std::vector<llvm::Constant *>Elts;
+    Elts.resize(2, llvm::ConstantInt::get(EltTy, 0));
+    llvm::Value *ZV = ConstantVector::get(Elts);
+    Ops[0] = EmitShuffleVector(ZV, Ops[0], 2, 1, "loadl");
+    
+    // bitcast to result.
+    return Builder.CreateBitCast(Ops[0], 
+                                 llvm::VectorType::get(llvm::Type::Int32Ty, 4));
+  }
+  case X86::BI__builtin_ia32_andps:
+  case X86::BI__builtin_ia32_andpd:
+  case X86::BI__builtin_ia32_andnps:
+  case X86::BI__builtin_ia32_andnpd:
+  case X86::BI__builtin_ia32_orps:
+  case X86::BI__builtin_ia32_orpd:
+  case X86::BI__builtin_ia32_xorpd:
+  case X86::BI__builtin_ia32_xorps: {
+    const llvm::Type *ITy = llvm::VectorType::get(llvm::Type::Int32Ty, 4);
+    const llvm::Type *FTy = Ops[0]->getType();
+    Ops[0] = Builder.CreateBitCast(Ops[0], ITy, "bitcast");
+    Ops[1] = Builder.CreateBitCast(Ops[1], ITy, "bitcast");
+    switch (BuiltinID) {
+    case X86::BI__builtin_ia32_andps:
+      Ops[0] = Builder.CreateAnd(Ops[0], Ops[1], "andps");
+      break;
+    case X86::BI__builtin_ia32_andpd:
+      Ops[0] = Builder.CreateAnd(Ops[0], Ops[1], "andpd");
+      break;
+    case X86::BI__builtin_ia32_andnps:
+      Ops[0] = Builder.CreateNot(Ops[0], "not");
+      Ops[0] = Builder.CreateAnd(Ops[0], Ops[1], "andnps");
+      break;
+    case X86::BI__builtin_ia32_andnpd:
+      Ops[0] = Builder.CreateNot(Ops[0], "not");
+      Ops[0] = Builder.CreateAnd(Ops[0], Ops[1], "andnpd");
+      break;
+    case X86::BI__builtin_ia32_orps:
+      Ops[0] = Builder.CreateOr(Ops[0], Ops[1], "orps");
+      break;
+    case X86::BI__builtin_ia32_orpd:
+      Ops[0] = Builder.CreateOr(Ops[0], Ops[1], "orpd");
+      break;
+    case X86::BI__builtin_ia32_xorps:
+      Ops[0] = Builder.CreateXor(Ops[0], Ops[1], "xorps");
+      break;
+    case X86::BI__builtin_ia32_xorpd:
+      Ops[0] = Builder.CreateXor(Ops[0], Ops[1], "xorpd");
+      break;
+    }
+    return Builder.CreateBitCast(Ops[0], FTy, "bitcast");
+  }
   }
 }
 
