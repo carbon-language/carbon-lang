@@ -102,7 +102,7 @@ namespace {
     /// efficient in-order forward iteration of the tree without traversal.
     const RopePieceBTreeLeaf *NextLeaf;
   public:
-    RopePieceBTreeLeaf() : RopePieceBTreeNode(true), NextLeaf(0) {}
+    RopePieceBTreeLeaf() : RopePieceBTreeNode(true), NumPieces(0), NextLeaf(0){}
     
     bool isFull() const { return NumPieces == 2*WidthFactor; }
     
@@ -324,7 +324,7 @@ namespace {
     unsigned char NumChildren;
     RopePieceBTreeNode *Children[2*WidthFactor];
   public:
-    RopePieceBTreeInterior() : RopePieceBTreeNode(false) {}
+    RopePieceBTreeInterior() : RopePieceBTreeNode(false), NumChildren(0) {}
     
     RopePieceBTreeInterior(RopePieceBTreeNode *LHS, RopePieceBTreeNode *RHS)
     : RopePieceBTreeNode(false) {
