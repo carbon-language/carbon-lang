@@ -53,7 +53,7 @@ namespace {
     /// is an instance of RopePieceBTreeInterior.
     bool IsLeaf;
     
-    RopePieceBTreeNode(bool isLeaf) : IsLeaf(isLeaf) {}
+    RopePieceBTreeNode(bool isLeaf) : Size(0), IsLeaf(isLeaf) {}
     ~RopePieceBTreeNode() {}
   public:
     
