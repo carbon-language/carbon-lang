@@ -657,17 +657,15 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
   
   ValueStateManager& StateMgr = Eng.getStateManager();
   
-  // FIXME: Support calls to things other than lval::FuncVal.  At the very
-  //  least we should stop tracking ref-state for ref-counted objects passed
-  //  to these functions.
-  
-  assert (isa<lval::FuncVal>(L) && "Not yet implemented.");
+  CFRefSummary* Summ = NULL;
   
   // Get the summary.
 
-  lval::FuncVal FV = cast<lval::FuncVal>(L);
-  FunctionDecl* FD = FV.getDecl();
-  CFRefSummary* Summ = Summaries.getSummary(FD, Eng.getContext());
+  if (isa<lval::FuncVal>(L)) {  
+    lval::FuncVal FV = cast<lval::FuncVal>(L);
+    FunctionDecl* FD = FV.getDecl();
+    Summ = Summaries.getSummary(FD, Eng.getContext());
+  }
 
   // Get the state.
   
