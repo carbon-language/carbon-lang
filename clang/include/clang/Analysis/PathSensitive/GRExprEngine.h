@@ -189,6 +189,11 @@ public:
   
   void ViewGraph(NodeTy** Beg, NodeTy** End);
   
+  /// getLiveness - Returned computed live-variables information for the
+  ///  analyzed function.  
+  const LiveVariables& getLiveness() const { return Liveness; }  
+  LiveVariables& getLiveness() { return Liveness; }
+  
   /// getInitialState - Return the initial state used for the root vertex
   ///  in the ExplodedGraph.
   ValueState* getInitialState();

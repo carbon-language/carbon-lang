@@ -44,8 +44,8 @@ void GenericEmitWarnings(BugReporter& BR, const BugType& D,
                          ITER I, ITER E) {
   
   for (; I != E; ++I) {
-    BugReport R(D);    
-    BR.EmitPathWarning(R, GetNode(I));
+    BugReport R(D, GetNode(I));    
+    BR.EmitPathWarning(R);
   }
 }
 
@@ -159,20 +159,6 @@ public:
   
   
 class VISIBILITY_HIDDEN BadArg : public BugType {
-protected:
-  
-  class Report : public BugReport {
-    const SourceRange R;
-  public:
-    Report(BugType& D, Expr* E) : BugReport(D), R(E->getSourceRange()) {}
-    virtual ~Report() {}
-
-    virtual void getRanges(const SourceRange*& B, const SourceRange*& E) const {
-      B = &R;
-      E = B+1;
-    }
-  };
-    
 public:
   
   virtual ~BadArg() {}
@@ -192,10 +178,11 @@ public:
          E = Eng.undef_arg_end(); I!=E; ++I) {
       
       // Generate a report for this bug.
-      Report report(*this, I->second);
+      RangedBugReport report(*this, I->first);
+      report.addRange(I->second->getSourceRange());
 
       // Emit the warning.
-      BR.EmitPathWarning(report, I->first);
+      BR.EmitPathWarning(report);
     }
 
   }
@@ -218,35 +205,16 @@ public:
          E = Eng.msg_expr_undef_arg_end(); I!=E; ++I) {
       
       // Generate a report for this bug.
-      Report report(*this, I->second);
+      RangedBugReport report(*this, I->first);
+      report.addRange(I->second->getSourceRange());
       
       // Emit the warning.
-      BR.EmitPathWarning(report, I->first);
-    }
-    
+      BR.EmitPathWarning(report);
+    }    
   }
 };
 
 class VISIBILITY_HIDDEN BadReceiver : public BugType {
-  
-  class Report : public BugReport {
-    SourceRange R;
-  public:
-    Report(BugType& D, ExplodedNode<ValueState> *N) : BugReport(D) {      
-      Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
-      Expr* E = cast<ObjCMessageExpr>(S)->getReceiver();
-      assert (E && "Receiver cannot be NULL");
-      R = E->getSourceRange();
-    }
-    
-    virtual ~Report() {}
-    
-    virtual void getRanges(const SourceRange*& B, const SourceRange*& E) const {
-      B = &R;
-      E = B+1;
-    }
-  };
-
 public:  
   virtual const char* getName() const {
     return "bad receiver";
@@ -263,10 +231,16 @@ public:
          E = Eng.undef_receivers_end(); I!=E; ++I) {
           
       // Generate a report for this bug.
-      Report report(*this, *I);
+      RangedBugReport report(*this, *I);
+      
+      ExplodedNode<ValueState>* N = *I;
+      Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
+      Expr* E = cast<ObjCMessageExpr>(S)->getReceiver();
+      assert (E && "Receiver cannot be NULL");
+      report.addRange(E->getSourceRange());
       
       // Emit the warning.
-      BR.EmitPathWarning(report, *I);
+      BR.EmitPathWarning(report);
     }    
   }
 };
@@ -291,6 +265,8 @@ public:
 } // end anonymous namespace
 
 void GRSimpleVals::RegisterChecks(GRExprEngine& Eng) {
+  
+  // Path-sensitive checks.
   Eng.Register(new NullDeref());
   Eng.Register(new UndefDeref());
   Eng.Register(new UndefBranch());
@@ -301,6 +277,9 @@ void GRSimpleVals::RegisterChecks(GRExprEngine& Eng) {
   Eng.Register(new BadArg());
   Eng.Register(new BadMsgExprArg());
   Eng.Register(new BadReceiver());
+  
+  // Flow-sensitive checks.
+  Eng.Register(MakeDeadStoresChecker());  
   
   // Add extra checkers.
 

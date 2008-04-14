@@ -911,9 +911,9 @@ void UseAfterRelease::EmitWarnings(BugReporter& BR) {
   for (CFRefCount::use_after_iterator I = TF.use_after_begin(),
         E = TF.use_after_end(); I != E; ++I) {
     
-    RangedBugReport report(*this);
+    RangedBugReport report(*this, I->first);
     report.addRange(I->second->getSourceRange());    
-    BR.EmitPathWarning(report, I->first);    
+    BR.EmitPathWarning(report);    
   }
 }
 
@@ -922,9 +922,9 @@ void BadRelease::EmitWarnings(BugReporter& BR) {
   for (CFRefCount::bad_release_iterator I = TF.bad_release_begin(),
        E = TF.bad_release_end(); I != E; ++I) {
     
-    RangedBugReport report(*this);
+    RangedBugReport report(*this, I->first);
     report.addRange(I->second->getSourceRange());    
-    BR.EmitPathWarning(report, I->first); 
+    BR.EmitPathWarning(report); 
 
   }  
 }

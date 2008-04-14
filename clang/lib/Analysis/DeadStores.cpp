@@ -15,6 +15,8 @@
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/Visitors/CFGRecStmtVisitor.h"
+#include "clang/Analysis/PathSensitive/BugReporter.h"
+#include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/ASTContext.h"
 #include "llvm/Support/Compiler.h"
@@ -26,8 +28,11 @@ namespace {
 class VISIBILITY_HIDDEN DeadStoreObs : public LiveVariables::ObserverTy {
   ASTContext &Ctx;
   Diagnostic &Diags;
+  DiagnosticClient &Client;
 public:
-  DeadStoreObs(ASTContext &ctx,Diagnostic &diags) : Ctx(ctx), Diags(diags){}    
+  DeadStoreObs(ASTContext &ctx, Diagnostic &diags, DiagnosticClient &client)
+    : Ctx(ctx), Diags(diags), Client(client) {}    
+  
   virtual ~DeadStoreObs() {}
   
   virtual void ObserveStmt(Stmt* S,
@@ -41,7 +46,8 @@ public:
         if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))
           if (VD->hasLocalStorage() && !Live(VD,AD)) {
             SourceRange R = B->getRHS()->getSourceRange();
-            Diags.Report(Ctx.getFullLoc(DR->getSourceRange().getBegin()),
+            Diags.Report(&Client,
+                         Ctx.getFullLoc(DR->getSourceRange().getBegin()),
                          diag::warn_dead_store, 0, 0, &R, 1);                                                                        
         }
     }
@@ -63,7 +69,8 @@ public:
               if (!E->isConstantExpr(Ctx,NULL)) {
                 // Flag a warning.
                 SourceRange R = E->getSourceRange();
-                Diags.Report(Ctx.getFullLoc(V->getLocation()),
+                Diags.Report(&Client,
+                             Ctx.getFullLoc(V->getLocation()),
                              diag::warn_dead_store, 0, 0, &R, 1);
               }
             }
@@ -74,14 +81,103 @@ public:
   
 } // end anonymous namespace
 
-namespace clang {
+//===----------------------------------------------------------------------===//
+// Driver function to invoke the Dead-Stores checker on a CFG.
+//===----------------------------------------------------------------------===//
 
-void CheckDeadStores(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags) {
-  
+void clang::CheckDeadStores(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags) {  
   LiveVariables L(cfg);
   L.runOnCFG(cfg);
-  DeadStoreObs A(Ctx, Diags);
+  DeadStoreObs A(Ctx, Diags, Diags.getClient());
   L.runOnAllBlocks(cfg, &A);
 }
 
-} // end namespace clang
+//===----------------------------------------------------------------------===//
+// BugReporter-based invocation of the Dead-Stores checker.
+//===----------------------------------------------------------------------===//
+  
+namespace {
+
+class VISIBILITY_HIDDEN DiagBugReport : public RangedBugReport {
+  std::list<std::string> Strs;
+  FullSourceLoc L;
+public:
+  DiagBugReport(const BugType& D, FullSourceLoc l) :
+    RangedBugReport(D, NULL), L(l) {}
+  
+  virtual ~DiagBugReport() {}
+  virtual FullSourceLoc getLocation(SourceManager&) { return L; }
+  
+  void addString(const std::string& s) { Strs.push_back(s); }  
+  
+  typedef std::list<std::string>::const_iterator str_iterator;
+  str_iterator str_begin() const { return Strs.begin(); }
+  str_iterator str_end() const { return Strs.end(); }
+};
+  
+class VISIBILITY_HIDDEN DiagCollector : public DiagnosticClient {
+  std::list<DiagBugReport> Reports;
+  const BugType& D;
+public:
+  DiagCollector(BugType& d) : D(d) {}
+  
+  virtual ~DiagCollector() {}
+  
+  virtual void HandleDiagnostic(Diagnostic &Diags, 
+                                Diagnostic::Level DiagLevel,
+                                FullSourceLoc Pos,
+                                diag::kind ID,
+                                const std::string *Strs,
+                                unsigned NumStrs,
+                                const SourceRange *Ranges, 
+                                unsigned NumRanges) {
+    
+    // FIXME: Use a map from diag::kind to BugType, instead of having just
+    //  one BugType.
+    
+    Reports.push_back(DiagBugReport(D, Pos));
+    DiagBugReport& R = Reports.back();
+    
+    for ( ; NumRanges ; --NumRanges, ++Ranges)
+      R.addRange(*Ranges);
+    
+    for ( ; NumStrs ; --NumStrs, ++Strs)
+      R.addString(*Strs);    
+  }
+  
+  // Iterators.
+  
+  typedef std::list<DiagBugReport>::iterator iterator;
+  iterator begin() { return Reports.begin(); }
+  iterator end() { return Reports.end(); }
+};
+  
+class VISIBILITY_HIDDEN DeadStoresChecker : public BugType {
+public:
+  virtual const char* getName() const {
+    return "dead store";
+  }
+  
+  virtual const char* getDescription() const {
+    return "Value stored to variable is never used.";
+  }
+  
+  virtual void EmitWarnings(BugReporter& BR) {
+    
+    // Run the dead store checker and collect the diagnostics.
+    DiagCollector C(*this);    
+    DeadStoreObs A(BR.getContext(), BR.getDiagnostic(), C);
+    GRExprEngine& Eng = BR.getEngine();
+    Eng.getLiveness().runOnAllBlocks(Eng.getCFG(), &A);
+    
+    // Emit the bug reports.
+    
+    for (DiagCollector::iterator I = C.begin(), E = C.end(); I != E; ++I)
+      BR.EmitWarning(*I);    
+  }
+};
+} // end anonymous namespace
+
+BugType* clang::MakeDeadStoresChecker() {
+  return new DeadStoresChecker();
+}

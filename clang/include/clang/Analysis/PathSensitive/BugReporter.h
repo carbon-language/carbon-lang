@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_BUGREPORTER
 #define LLVM_CLANG_ANALYSIS_BUGREPORTER
 
+#include "clang/Basic/SourceLocation.h"
 #include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -29,6 +30,7 @@ class Diagnostic;
 class BugReporter;
 class GRExprEngine;
 class ValueState;
+class Stmt;
   
 class BugType {
 public:
@@ -42,13 +44,18 @@ public:
 };
   
 class BugReport {
-  const BugType& Desc;  
+  const BugType& Desc;
+  ExplodedNode<ValueState> *N;
   
 public:
-  BugReport(const BugType& D) : Desc(D) {}
+  BugReport(const BugType& D, ExplodedNode<ValueState> *n) : Desc(D), N(n) {}
   virtual ~BugReport();
   
   const BugType& getBugType() const { return Desc; }
+  
+  ExplodedNode<ValueState>* getEndNode() const { return N; }
+  
+  Stmt* getStmt() const;
     
   const char* getName() const { return getBugType().getName(); }
 
@@ -56,8 +63,9 @@ public:
     return getBugType().getDescription();
   }
   
-  virtual PathDiagnosticPiece* getEndPath(ASTContext& Ctx,
-                                          ExplodedNode<ValueState> *N) const;
+  virtual PathDiagnosticPiece* getEndPath(ASTContext& Ctx) const;
+  
+  virtual FullSourceLoc getLocation(SourceManager& Mgr);
   
   virtual void getRanges(const SourceRange*& beg,
                          const SourceRange*& end) const;
@@ -68,10 +76,12 @@ public:
                                          ASTContext& Ctx);
 };
   
-  class RangedBugReport : public BugReport {
+class RangedBugReport : public BugReport {
   std::vector<SourceRange> Ranges;
 public:
-  RangedBugReport(const BugType& D) : BugReport(D) {}
+  RangedBugReport(const BugType& D, ExplodedNode<ValueState> *n)
+    : BugReport(D, n) {}
+  
   virtual ~RangedBugReport();
   
   void addRange(SourceRange R) { Ranges.push_back(R); }
@@ -114,16 +124,15 @@ public:
 
   GRExprEngine& getEngine() { return Eng; }
   
-  void EmitPathWarning(BugReport& R, ExplodedNode<ValueState>* N);
+  void EmitPathWarning(BugReport& R);
   
-  void EmitWarning(BugReport& R, ExplodedNode<ValueState>* N);
+  void EmitWarning(BugReport& R);
   
   void clearCache() { CachedErrors.clear(); }
   
   bool IsCached(ExplodedNode<ValueState>* N);
   
-  void GeneratePathDiagnostic(PathDiagnostic& PD, BugReport& R,
-                              ExplodedNode<ValueState>* N);
+  void GeneratePathDiagnostic(PathDiagnostic& PD, BugReport& R);
 };
   
 } // end clang namespace

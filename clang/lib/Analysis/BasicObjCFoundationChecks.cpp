@@ -68,7 +68,9 @@ public:
     SourceRange R;
   public:
     
-    Report(NilArg& Desc, ObjCMessageExpr* ME, unsigned Arg) : BugReport(Desc) {
+    Report(NilArg& Desc, ExplodedNode<ValueState>* N, 
+           ObjCMessageExpr* ME, unsigned Arg)
+      : BugReport(Desc, N) {
       
       Expr* E = ME->getArg(Arg);
       R = E->getSourceRange();
@@ -90,22 +92,6 @@ public:
       B = &R;
       E = B+1;
     }
-    
-    virtual PathDiagnosticPiece* getEndPath(ASTContext& Ctx,
-                                            ExplodedNode<ValueState> *N) const {
-      
-      Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
-      
-      if (!S)
-        return NULL;
-      
-      FullSourceLoc L(S->getLocStart(), Ctx.getSourceManager());
-      PathDiagnosticPiece* P = new PathDiagnosticPiece(L, s);
-      
-      P->addRange(R);
-      
-      return P;
-    }
   };  
 };
 
@@ -115,7 +101,7 @@ class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
   ASTContext &Ctx;
   ValueStateManager* VMgr;
   
-  typedef std::vector<std::pair<NodeTy*,BugReport*> > ErrorsTy;
+  typedef std::vector<BugReport*> ErrorsTy;
   ErrorsTy Errors;
       
   RVal GetRVal(ValueState* St, Expr* E) { return VMgr->GetRVal(St, E); }
@@ -134,7 +120,7 @@ public:
       
   virtual ~BasicObjCFoundationChecks() {
     for (ErrorsTy::iterator I = Errors.begin(), E = Errors.end(); I!=E; ++I)
-      delete I->second;    
+      delete *I;    
   }
   
   virtual bool Audit(ExplodedNode<ValueState>* N);
@@ -143,12 +129,12 @@ public:
   
 private:
   
-  void AddError(NodeTy* N, BugReport* R) {
-    Errors.push_back(std::make_pair(N, R));
+  void AddError(BugReport* R) {
+    Errors.push_back(R);
   }
   
   void WarnNilArg(NodeTy* N, ObjCMessageExpr* ME, unsigned Arg) {
-    AddError(N, new NilArg::Report(Desc, ME, Arg));
+    AddError(new NilArg::Report(Desc, N, ME, Arg));
   }
 };
   
@@ -203,9 +189,8 @@ static inline bool isNil(RVal X) {
 
 void BasicObjCFoundationChecks::EmitWarnings(BugReporter& BR) {    
                  
-  for (ErrorsTy::iterator I=Errors.begin(), E=Errors.end(); I!=E; ++I)
-    
-    BR.EmitPathWarning(*I->second, I->first);
+  for (ErrorsTy::iterator I=Errors.begin(), E=Errors.end(); I!=E; ++I)    
+    BR.EmitPathWarning(**I);
 }
 
 bool BasicObjCFoundationChecks::CheckNilArg(NodeTy* N, unsigned Arg) {

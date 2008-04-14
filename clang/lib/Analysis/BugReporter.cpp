@@ -52,11 +52,13 @@ static inline Stmt* GetStmt(const CFGBlock* B) {
   return (*B)[0];
 }
 
-
-PathDiagnosticPiece*
-BugReport::getEndPath(ASTContext& Ctx, ExplodedNode<ValueState> *N) const {
+Stmt* BugReport::getStmt() const {
+  return N ? GetStmt(N->getLocation()) : NULL;
+}
   
-  Stmt* S = GetStmt(N->getLocation());
+PathDiagnosticPiece* BugReport::getEndPath(ASTContext& Ctx) const {
+  
+  Stmt* S = getStmt();
   
   if (!S)
     return NULL;
@@ -83,9 +85,22 @@ BugReport::getEndPath(ASTContext& Ctx, ExplodedNode<ValueState> *N) const {
 }
 
 void BugReport::getRanges(const SourceRange*& beg,
-                          const SourceRange*& end) const {
+                          const SourceRange*& end) const {  
   beg = NULL;
   end = NULL;
+}
+
+FullSourceLoc BugReport::getLocation(SourceManager& Mgr) {
+  
+  if (!N)
+    return FullSourceLoc();
+  
+  Stmt* S = GetStmt(N->getLocation());
+  
+  if (!S)
+    return FullSourceLoc();
+  
+  return FullSourceLoc(S->getLocStart(), Mgr);
 }
 
 PathDiagnosticPiece* BugReport::VisitNode(ExplodedNode<ValueState>* N,
@@ -96,10 +111,13 @@ PathDiagnosticPiece* BugReport::VisitNode(ExplodedNode<ValueState>* N,
 }
 
 void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
-                                         BugReport& R,
-                                         ExplodedNode<ValueState>* N) {
+                                         BugReport& R) {
 
-  if (PathDiagnosticPiece* Piece = R.getEndPath(Ctx,N))
+  ExplodedNode<ValueState>* N = R.getEndNode();
+  
+  assert (N && "Path diagnostic requires a ExplodedNode.");
+  
+  if (PathDiagnosticPiece* Piece = R.getEndPath(Ctx))
     PD.push_back(Piece);
   else
     return;
@@ -325,10 +343,12 @@ bool BugReporter::IsCached(ExplodedNode<ValueState>* N) {
   return false;
 }
 
-void BugReporter::EmitPathWarning(BugReport& R, ExplodedNode<ValueState>* N) {
+void BugReporter::EmitPathWarning(BugReport& R) {
   
-  if (!PD) {
-    EmitWarning(R, N);
+  ExplodedNode<ValueState>* N = R.getEndNode();
+  
+  if (!PD || !N) {
+    EmitWarning(R);
     return;
   }
   
@@ -336,15 +356,17 @@ void BugReporter::EmitPathWarning(BugReport& R, ExplodedNode<ValueState>* N) {
     return;
   
   PathDiagnostic D(R.getName());  
-  GeneratePathDiagnostic(D, R, N);
+  GeneratePathDiagnostic(D, R);
   
   if (!D.empty())  
     PD->HandlePathDiagnostic(D);
 }
 
+void BugReporter::EmitWarning(BugReport& R) {  
 
-void BugReporter::EmitWarning(BugReport& R, ExplodedNode<ValueState>* N) {  
-  if (IsCached(N))
+  ExplodedNode<ValueState>* N = R.getEndNode();
+  
+  if (N && IsCached(N))
     return;
   
   std::ostringstream os;
@@ -355,23 +377,9 @@ void BugReporter::EmitWarning(BugReport& R, ExplodedNode<ValueState>* N) {
 
   // FIXME: Add support for multiple ranges.
   
-  Stmt* S = GetStmt(N->getLocation());
-  
-  if (!S)
-    return;
-  
+  FullSourceLoc L = R.getLocation(Ctx.getSourceManager());
+
   const SourceRange *Beg, *End;
   R.getRanges(Beg, End);
-  
-  if (Beg == End) {
-    SourceRange Range = S->getSourceRange();
-    
-    Diag.Report(FullSourceLoc(S->getLocStart(), Ctx.getSourceManager()),
-                ErrorDiag, NULL, 0, &Range, 1);   
-    
-  }
-  else
-    Diag.Report(FullSourceLoc(S->getLocStart(), Ctx.getSourceManager()),
-                ErrorDiag, NULL, 0, Beg, End - Beg);
-  
+  Diag.Report(L, ErrorDiag, NULL, 0, Beg, End - Beg);
 }
