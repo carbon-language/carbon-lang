@@ -384,7 +384,7 @@ void RewriteTest::HandleTopLevelDecl(Decl *D) {
     RewriteForwardProtocolDecl(FP);
   }
   // If we have a decl in the main file, see if we should rewrite it.
-  if (SM->getDecomposedFileLoc(Loc).first == MainFileID)
+  if (SM->isFromMainFile(Loc))
     return HandleDeclInMainFile(D);
 }
 
