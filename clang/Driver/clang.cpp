@@ -598,14 +598,17 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
       return 0;
     }
   }
-  
+
   // Add macros from the command line.
-  // FIXME: Should traverse the #define/#undef lists in parallel.
-  for (unsigned i = 0, e = D_macros.size(); i != e; ++i)
-    DefineBuiltinMacro(PredefineBuffer, D_macros[i].c_str());
-  for (unsigned i = 0, e = U_macros.size(); i != e; ++i)
-    DefineBuiltinMacro(PredefineBuffer, U_macros[i].c_str(), "#undef ");
-  
+  unsigned d = 0, D = D_macros.size();
+  unsigned u = 0, U = U_macros.size();
+  while (d < D || u < U) {
+    if (u == U || (d < D && D_macros.getPosition(d) < U_macros.getPosition(u)))
+      DefineBuiltinMacro(PredefineBuffer, D_macros[d++].c_str());
+    else
+      DefineBuiltinMacro(PredefineBuffer, U_macros[u++].c_str(), "#undef ");
+  }
+
   // FIXME: Read any files specified by -imacros.
   
   // Add implicit #includes from -include.
