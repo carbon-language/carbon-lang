@@ -157,15 +157,12 @@ void HTMLDiagnostic::HandleDiagnostic(Diagnostic &Diags,
   SourceManager& SM = R.getSourceMgr();
   
   FullSourceLoc LPos = Pos.getLogicalLoc();
-  unsigned FileID = LPos.getLocation().getFileID();
+  unsigned FileID = SM.getCanonicalFileID(LPos.getLocation());
   
   assert (&LPos.getManager() == &SM && "SourceManagers are different!");
   
-  unsigned MainFileID = SM.getMainFileID();
-  
-  if (FileID != MainFileID)
+  if (!SM.isFromMainFile(LPos.getLocation()))
     return;
-  
   
   // Compute the column number.  Rewind from the current position to the start
   // of the line.
@@ -228,13 +225,12 @@ void HTMLDiagnostic::HandleDiagnostic(Diagnostic &Diags,
 
     ++Ranges;
     
-    if (B.getFileID() != MainFileID || E.getFileID() != MainFileID)
+    if (!SM.isFromMainFile(B) || !SM.isFromMainFile(E))
       continue;
     
     // Highlight the range.  Make the span tag the outermost tag for the
     // selected range.
     R.InsertCStrBefore(B, "<span class=\"mrange\">");
     R.InsertCStrAfter(E, "</span>");
-  }
-  
+  }  
 }
