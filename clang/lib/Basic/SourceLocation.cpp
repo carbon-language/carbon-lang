@@ -88,3 +88,7 @@ const llvm::MemoryBuffer* FullSourceLoc::getBuffer() const {
   assert (isValid());
   return SrcMgr->getBuffer(Loc.getFileID());
 }
+
+unsigned FullSourceLoc::getCanonicalFileID() const {
+  return SrcMgr->getCanonicalFileID(Loc);
+}

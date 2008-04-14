@@ -371,7 +371,15 @@ public:
   const FileEntry* getFileEntryForID(unsigned id) const {
     return getContentCache(id)->Entry;
   }
-    
+  
+  /// getCanonicalFileID - Return the canonical FileID for a SourceLocation.
+  ///  A file can have multiple FileIDs if it is large enough to be broken
+  ///  into multiple chunks.  This method returns the unique FileID without
+  ///  chunk information for a given SourceLocation.  Use this method when
+  ///  you want to compare FileIDs across SourceLocations.
+  unsigned getCanonicalFileID(SourceLocation PhysLoc) const {
+    return getDecomposedFileLoc(PhysLoc).first;
+  }    
   
   /// getDecomposedFileLoc - Decompose the specified file location into a raw
   /// FileID + Offset pair.  The first element is the FileID, the second is the
@@ -398,6 +406,18 @@ public:
   unsigned getFullFilePos(SourceLocation PhysLoc) const {
     return getDecomposedFileLoc(PhysLoc).second;
   }
+  
+  /// isFromSameFile - Returns true if both SourceLocations correspond to
+  ///  the same file.
+  bool isFromSameFile(SourceLocation Loc1, SourceLocation Loc2) const {
+    return getCanonicalFileID(Loc1) == getCanonicalFileID(Loc2);
+  }
+  
+  /// isFromMainFile - Returns true if the file of provided SourceLocation is
+  ///   the main file.
+  bool isFromMainFile(SourceLocation Loc) const {
+    return getCanonicalFileID(Loc) == getMainFileID();
+  } 
   
   /// PrintStats - Print statistics to stderr.
   ///
