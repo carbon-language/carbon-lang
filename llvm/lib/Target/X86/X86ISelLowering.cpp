@@ -4664,7 +4664,7 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
                                            SDOperand Chain,
                                            SDOperand Dst, SDOperand Src,
                                            SDOperand Size, unsigned Align,
-                                           Value *DstSV, uint64_t DstOff) {
+                                           const Value *DstSV, uint64_t DstOff) {
   ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
 
   /// If not DWORD aligned or size is more than the threshold, call the library.
@@ -4804,8 +4804,8 @@ X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
                                            SDOperand Dst, SDOperand Src,
                                            SDOperand Size, unsigned Align,
                                            bool AlwaysInline,
-                                           Value *DstSV, uint64_t DstOff,
-                                           Value *SrcSV, uint64_t SrcOff){
+                                           const Value *DstSV, uint64_t DstOff,
+                                           const Value *SrcSV, uint64_t SrcOff){
   
   // This requires the copy size to be a constant, preferrably
   // within a subtarget-specific limit.

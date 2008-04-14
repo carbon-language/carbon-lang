@@ -2500,8 +2500,8 @@ static SDOperand getMemcpyLoadsAndStores(SelectionDAG &DAG,
                                          SDOperand Src, uint64_t Size,
                                          unsigned Align,
                                          bool AlwaysInline,
-                                         Value *DstSV, uint64_t DstOff,
-                                         Value *SrcSV, uint64_t SrcOff) {
+                                         const Value *DstSV, uint64_t DstOff,
+                                         const Value *SrcSV, uint64_t SrcOff) {
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
   // Expand memcpy to a series of store ops if the size operand falls below
@@ -2573,7 +2573,7 @@ static SDOperand getMemsetStores(SelectionDAG &DAG,
                                  SDOperand Chain, SDOperand Dst,
                                  SDOperand Src, uint64_t Size,
                                  unsigned Align,
-                                 Value *DstSV, uint64_t DstOff) {
+                                 const Value *DstSV, uint64_t DstOff) {
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
   // Expand memset to a series of load/store ops if the size operand
@@ -2604,8 +2604,8 @@ static SDOperand getMemsetStores(SelectionDAG &DAG,
 SDOperand SelectionDAG::getMemcpy(SDOperand Chain, SDOperand Dst,
                                   SDOperand Src, SDOperand Size,
                                   unsigned Align, bool AlwaysInline,
-                                  Value *DstSV, uint64_t DstOff,
-                                  Value *SrcSV, uint64_t SrcOff) {
+                                  const Value *DstSV, uint64_t DstOff,
+                                  const Value *SrcSV, uint64_t SrcOff) {
 
   // Check to see if we should lower the memcpy to loads and stores first.
   // For cases within the target-specified limits, this is the best choice.
@@ -2658,8 +2658,8 @@ SDOperand SelectionDAG::getMemcpy(SDOperand Chain, SDOperand Dst,
 SDOperand SelectionDAG::getMemmove(SDOperand Chain, SDOperand Dst,
                                    SDOperand Src, SDOperand Size,
                                    unsigned Align,
-                                   Value *DstSV, uint64_t DstOff,
-                                   Value *SrcSV, uint64_t SrcOff) {
+                                   const Value *DstSV, uint64_t DstOff,
+                                   const Value *SrcSV, uint64_t SrcOff) {
 
   // TODO: Optimize small memmove cases with simple loads and stores,
   // ensuring that all loads precede all stores. This can cause severe
@@ -2691,7 +2691,7 @@ SDOperand SelectionDAG::getMemmove(SDOperand Chain, SDOperand Dst,
 SDOperand SelectionDAG::getMemset(SDOperand Chain, SDOperand Dst,
                                   SDOperand Src, SDOperand Size,
                                   unsigned Align,
-                                  Value *DstSV, uint64_t DstOff) {
+                                  const Value *DstSV, uint64_t DstOff) {
 
   // Check to see if we should lower the memset to stores first.
   // For cases within the target-specified limits, this is the best choice.

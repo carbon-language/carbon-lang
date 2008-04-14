@@ -1247,8 +1247,8 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
                                            SDOperand Dst, SDOperand Src,
                                            SDOperand Size, unsigned Align,
                                            bool AlwaysInline,
-                                           Value *DstSV, uint64_t DstOff,
-                                           Value *SrcSV, uint64_t SrcOff){
+                                           const Value *DstSV, uint64_t DstOff,
+                                           const Value *SrcSV, uint64_t SrcOff){
   // Do repeated 4-byte loads and stores. To be improved.
   // This requires 4-byte alignment.
   if ((Align & 3) != 0)

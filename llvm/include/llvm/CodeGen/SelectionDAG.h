@@ -326,17 +326,17 @@ public:
   SDOperand getMemcpy(SDOperand Chain, SDOperand Dst, SDOperand Src,
                       SDOperand Size, unsigned Align,
                       bool AlwaysInline,
-                      Value *DstSV, uint64_t DstOff,
-                      Value *SrcSV, uint64_t SrcOff);
+                      const Value *DstSV, uint64_t DstOff,
+                      const Value *SrcSV, uint64_t SrcOff);
 
   SDOperand getMemmove(SDOperand Chain, SDOperand Dst, SDOperand Src,
                       SDOperand Size, unsigned Align,
-                      Value *DstSV, uint64_t DstOff,
-                      Value *SrcSV, uint64_t SrcOff);
+                      const Value *DstSV, uint64_t DstOff,
+                      const Value *SrcSV, uint64_t SrcOff);
 
   SDOperand getMemset(SDOperand Chain, SDOperand Dst, SDOperand Src,
                       SDOperand Size, unsigned Align,
-                      Value *DstSV, uint64_t DstOff);
+                      const Value *DstSV, uint64_t DstOff);
 
   /// getSetCC - Helper function to make it easier to build SetCC's if you just
   /// have an ISD::CondCode instead of an SDOperand.

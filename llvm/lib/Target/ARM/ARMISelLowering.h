@@ -149,8 +149,8 @@ namespace llvm {
                                       SDOperand Dst, SDOperand Src,
                                       SDOperand Size, unsigned Align,
                                       bool AlwaysInline,
-                                      Value *DstSV, uint64_t DstOff,
-                                      Value *SrcSV, uint64_t SrcOff);
+                                      const Value *DstSV, uint64_t DstOff,
+                                      const Value *SrcSV, uint64_t SrcOff);
   };
 }
 

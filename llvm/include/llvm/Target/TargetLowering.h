@@ -967,8 +967,8 @@ public:
                           SDOperand Op1, SDOperand Op2,
                           SDOperand Op3, unsigned Align,
                           bool AlwaysInline,
-                          Value *DstSV, uint64_t DstOff,
-                          Value *SrcSV, uint64_t SrcOff) {
+                          const Value *DstSV, uint64_t DstOff,
+                          const Value *SrcSV, uint64_t SrcOff) {
     return SDOperand();
   }
 
@@ -983,8 +983,8 @@ public:
                            SDOperand Chain,
                            SDOperand Op1, SDOperand Op2,
                            SDOperand Op3, unsigned Align,
-                           Value *DstSV, uint64_t DstOff,
-                           Value *SrcSV, uint64_t SrcOff) {
+                           const Value *DstSV, uint64_t DstOff,
+                           const Value *SrcSV, uint64_t SrcOff) {
     return SDOperand();
   }
 
@@ -999,7 +999,7 @@ public:
                           SDOperand Chain,
                           SDOperand Op1, SDOperand Op2,
                           SDOperand Op3, unsigned Align,
-                          Value *DstSV, uint64_t DstOff) {
+                          const Value *DstSV, uint64_t DstOff) {
     return SDOperand();
   }
 

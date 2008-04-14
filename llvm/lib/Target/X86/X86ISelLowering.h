@@ -550,14 +550,14 @@ namespace llvm {
                                       SDOperand Chain,
                                       SDOperand Dst, SDOperand Src,
                                       SDOperand Size, unsigned Align,
-                                      Value *DstSV, uint64_t DstOff);
+                                      const Value *DstSV, uint64_t DstOff);
     SDOperand EmitTargetCodeForMemcpy(SelectionDAG &DAG,
                                       SDOperand Chain,
                                       SDOperand Dst, SDOperand Src,
                                       SDOperand Size, unsigned Align,
                                       bool AlwaysInline,
-                                      Value *DstSV, uint64_t DstOff,
-                                      Value *SrcSV, uint64_t SrcOff);
+                                      const Value *DstSV, uint64_t DstOff,
+                                      const Value *SrcSV, uint64_t SrcOff);
   };
 }
 
