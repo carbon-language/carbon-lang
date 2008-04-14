@@ -456,6 +456,7 @@ namespace llvm {
     unsigned getOperand() const { return Operand; }
     const SUnit *getNode() const { return Node; }
     bool isCtrlDep() const { return Node->Preds[Operand].isCtrl; }
+    bool isSpecialDep() const { return Node->Preds[Operand].isSpecial; }
   };
 
   template <> struct GraphTraits<SUnit*> {
