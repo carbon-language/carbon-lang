@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		035611E20DB40C8100D2EF2A /* RewriteObjC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 035611E10DB40C8100D2EF2A /* RewriteObjC.cpp */; };
 		03F50AC60D416EAA00B9CF60 /* Targets.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 03F50AC50D416EAA00B9CF60 /* Targets.cpp */; };
 		1A30A9E90B93A4C800201A91 /* ExprCXX.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 1A30A9E80B93A4C800201A91 /* ExprCXX.h */; };
 		1A376A2D0D4AED9B002A1C52 /* CGExprConstant.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A376A2C0D4AED9B002A1C52 /* CGExprConstant.cpp */; };
@@ -122,7 +123,6 @@
 		DE928B7F0C0A615600231DA4 /* CodeGenModule.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE928B7E0C0A615600231DA4 /* CodeGenModule.cpp */; };
 		DE928B810C0A615B00231DA4 /* CodeGenFunction.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE928B800C0A615B00231DA4 /* CodeGenFunction.h */; };
 		DE928B830C0A616000231DA4 /* CodeGenFunction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE928B820C0A616000231DA4 /* CodeGenFunction.cpp */; };
-		DEA9778A0CBE87EB00F872F9 /* RewriteTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEA977890CBE87EB00F872F9 /* RewriteTest.cpp */; };
 		DEAEE98B0A5A2B970045101B /* MultipleIncludeOpt.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */; };
 		DEAEED4B0A5AF89A0045101B /* NOTES.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEAEED4A0A5AF89A0045101B /* NOTES.txt */; };
 		DEB0AEB90C2087A700718A22 /* TextDiagnostics.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEB0AEB80C2087A700718A22 /* TextDiagnostics.h */; };
@@ -247,6 +247,7 @@
 
 /* Begin PBXFileReference section */
 		035611470DA6A45C00D2EF2A /* DeclBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DeclBase.h; path = clang/AST/DeclBase.h; sourceTree = "<group>"; };
+		035611E10DB40C8100D2EF2A /* RewriteObjC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteObjC.cpp; path = Driver/RewriteObjC.cpp; sourceTree = "<group>"; };
 		03F50AC50D416EAA00B9CF60 /* Targets.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Targets.cpp; sourceTree = "<group>"; };
 		1A30A9E80B93A4C800201A91 /* ExprCXX.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ExprCXX.h; path = clang/AST/ExprCXX.h; sourceTree = "<group>"; };
 		1A376A2C0D4AED9B002A1C52 /* CGExprConstant.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CGExprConstant.cpp; path = lib/CodeGen/CGExprConstant.cpp; sourceTree = "<group>"; };
@@ -410,7 +411,6 @@
 		DE928B7E0C0A615600231DA4 /* CodeGenModule.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenModule.cpp; path = lib/CodeGen/CodeGenModule.cpp; sourceTree = "<group>"; };
 		DE928B800C0A615B00231DA4 /* CodeGenFunction.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = CodeGenFunction.h; path = lib/CodeGen/CodeGenFunction.h; sourceTree = "<group>"; };
 		DE928B820C0A616000231DA4 /* CodeGenFunction.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenFunction.cpp; path = lib/CodeGen/CodeGenFunction.cpp; sourceTree = "<group>"; };
-		DEA977890CBE87EB00F872F9 /* RewriteTest.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteTest.cpp; path = Driver/RewriteTest.cpp; sourceTree = "<group>"; };
 		DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MultipleIncludeOpt.h; sourceTree = "<group>"; };
 		DEAEED4A0A5AF89A0045101B /* NOTES.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = NOTES.txt; sourceTree = "<group>"; };
 		DEB0AEB80C2087A700718A22 /* TextDiagnostics.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = TextDiagnostics.h; path = Driver/TextDiagnostics.h; sourceTree = "<group>"; };
@@ -720,6 +720,7 @@
 		DEAEECAE0A5AF0FA0045101B /* Driver */ = {
 			isa = PBXGroup;
 			children = (
+				035611E10DB40C8100D2EF2A /* RewriteObjC.cpp */,
 				DE5932CD0AD60FF400BC794C /* clang.cpp */,
 				DE5932CE0AD60FF400BC794C /* clang.h */,
 				DE3985780CB8ADC800223765 /* ASTConsumers.h */,
@@ -727,7 +728,6 @@
 				DE38CF150D8C9DE000A273B6 /* DiagChecker.cpp */,
 				DE5932CF0AD60FF400BC794C /* PrintParserCallbacks.cpp */,
 				DE5932D00AD60FF400BC794C /* PrintPreprocessedOutput.cpp */,
-				DEA977890CBE87EB00F872F9 /* RewriteTest.cpp */,
 				352981080CC58344008B5E84 /* SerializationTest.cpp */,
 				3574BC290D9B531D00DF491A /* HTMLDiagnostics.h */,
 				3574BC2A0D9B531D00DF491A /* HTMLDiagnostics.cpp */,
@@ -1022,7 +1022,6 @@
 				35CFFE000CA1CBCB00E6F2BE /* StmtViz.cpp in Sources */,
 				DE39857B0CB8ADCB00223765 /* ASTConsumers.cpp in Sources */,
 				DE3986F40CB8D50C00223765 /* IdentifierTable.cpp in Sources */,
-				DEA9778A0CBE87EB00F872F9 /* RewriteTest.cpp in Sources */,
 				352981090CC58344008B5E84 /* SerializationTest.cpp in Sources */,
 				35847BE50CC7DBAF00C40FFF /* StmtIterator.cpp in Sources */,
 				35707EFE0CD0F5CC000B2204 /* SourceLocation.cpp in Sources */,
@@ -1069,6 +1068,7 @@
 				352712510DAFE54700C76352 /* IdentifierResolver.cpp in Sources */,
 				DEFFECA70DB1546600B4E7C3 /* DeltaTree.cpp in Sources */,
 				DECAB0D00DB3C84200E13CCB /* RewriteRope.cpp in Sources */,
+				035611E20DB40C8100D2EF2A /* RewriteObjC.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
