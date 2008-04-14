@@ -369,17 +369,29 @@ void BugReporter::EmitWarning(BugReport& R) {
   if (N && IsCached(N))
     return;
   
-  std::ostringstream os;
-  os << "[CHECKER] " << R.getDescription();
-  
-  unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning,
-                                            os.str().c_str());
-
-  // FIXME: Add support for multiple ranges.
-  
   FullSourceLoc L = R.getLocation(Ctx.getSourceManager());
-
+  
   const SourceRange *Beg, *End;
   R.getRanges(Beg, End);
-  Diag.Report(L, ErrorDiag, NULL, 0, Beg, End - Beg);
+  
+  if (!PD) {
+  
+    std::ostringstream os;
+    os << "[CHECKER] " << R.getDescription();
+    
+    unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning,
+                                              os.str().c_str());
+    
+    Diag.Report(L, ErrorDiag, NULL, 0, Beg, End - Beg);    
+  }
+  else {    
+    PathDiagnostic D(R.getName());
+    PathDiagnosticPiece* piece = new PathDiagnosticPiece(L, R.getDescription());
+    
+    for ( ; Beg != End; ++Beg)
+      piece->addRange(*Beg);
+    
+    D.push_back(piece);    
+    PD->HandlePathDiagnostic(D);
+  }
 }
