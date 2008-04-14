@@ -431,7 +431,7 @@ namespace {
   /// than the complexity of the RHS.  This comparator is used to canonicalize
   /// expressions.
   struct VISIBILITY_HIDDEN SCEVComplexityCompare {
-    bool operator()(SCEV *LHS, SCEV *RHS) {
+    bool operator()(const SCEV *LHS, const SCEV *RHS) const {
       return LHS->getSCEVType() < RHS->getSCEVType();
     }
   };
@@ -452,7 +452,7 @@ static void GroupByComplexity(std::vector<SCEVHandle> &Ops) {
   if (Ops.size() == 2) {
     // This is the common case, which also happens to be trivially simple.
     // Special case it.
-    if (Ops[0]->getSCEVType() > Ops[1]->getSCEVType())
+    if (SCEVComplexityCompare()(Ops[1], Ops[0]))
       std::swap(Ops[0], Ops[1]);
     return;
   }
