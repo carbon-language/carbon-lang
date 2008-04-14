@@ -27,12 +27,7 @@ void RewriteBuffer::RemoveText(unsigned OrigOffset, unsigned Size) {
   assert(RealOffset+Size < Buffer.size() && "Invalid location");
   
   // Remove the dead characters.
-#ifdef USE_ROPE_VECTOR
-  RewriteRope::iterator I = Buffer.getAtOffset(RealOffset);
-  Buffer.erase(I, I+Size);
-#else
   Buffer.erase(RealOffset, Size);
-#endif
 
   // Add a delta so that future changes are offset correctly.
   AddDelta(OrigOffset, -Size);
@@ -46,15 +41,7 @@ void RewriteBuffer::InsertText(unsigned OrigOffset,
   if (StrLen == 0) return;
 
   unsigned RealOffset = getMappedOffset(OrigOffset, InsertAfter);
-
-#ifdef USE_ROPE_VECTOR
-  assert(RealOffset <= Buffer.size() && "Invalid location");
-
-  // Insert the new characters.
-  Buffer.insert(Buffer.getAtOffset(RealOffset), StrData, StrData+StrLen);
-#else
   Buffer.insert(RealOffset, StrData, StrData+StrLen);
-#endif
   
   // Add a delta so that future changes are offset correctly.
   AddDelta(OrigOffset, StrLen);
@@ -66,30 +53,8 @@ void RewriteBuffer::InsertText(unsigned OrigOffset,
 void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
                                 const char *NewStr, unsigned NewLength) {
   unsigned RealOffset = getMappedOffset(OrigOffset, true);
-#ifdef USE_ROPE_VECTOR
-  assert(RealOffset+OrigLength <= Buffer.size() && "Invalid location");
-
-  // Overwrite the common piece.
-  unsigned CommonLength = std::min(OrigLength, NewLength);
-  std::copy(NewStr, NewStr+CommonLength, Buffer.getAtOffset(RealOffset));
-  
-  // If replacing without shifting around, just overwrite the text.
-  if (OrigLength == NewLength)
-    return;
-
-  // If inserting more than existed before, this is like an insertion.
-  if (NewLength > OrigLength) {
-    Buffer.insert(Buffer.getAtOffset(RealOffset+OrigLength),
-                  NewStr+OrigLength, NewStr+NewLength);
-  } else {
-    // If inserting less than existed before, this is like a removal.
-    RewriteRope::iterator I = Buffer.getAtOffset(RealOffset+NewLength);
-    Buffer.erase(I, I+(OrigLength-NewLength));
-  }
-#else
   Buffer.erase(RealOffset, OrigLength);
   Buffer.insert(RealOffset, NewStr, NewStr+NewLength);
-#endif
   if (OrigLength != NewLength)
     AddDelta(OrigOffset, NewLength-OrigLength);
 }
