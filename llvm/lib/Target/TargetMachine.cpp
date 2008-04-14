@@ -31,7 +31,7 @@ namespace llvm {
   bool UseSoftFloat;
   bool NoZerosInBSS;
   bool ExceptionHandling;
-  bool UnwindTablesOptional;
+  bool UnwindTablesMandatory;
   Reloc::Model RelocationModel;
   CodeModel::Model CMModel;
   bool PerformTailCallOpt;
@@ -85,9 +85,9 @@ namespace {
                cl::location(ExceptionHandling),
                cl::init(false));
   cl::opt<bool, true>
-  DisableUnwindTables("unwind-tables-optional",
-               cl::desc("Generate unwinding tables only for functions that require them"),
-               cl::location(UnwindTablesOptional),
+  EnableUnwindTables("unwind-tables",
+               cl::desc("Generate unwinding tables for all functions"),
+               cl::location(UnwindTablesMandatory),
                cl::init(false));
 
   cl::opt<llvm::Reloc::Model, true>

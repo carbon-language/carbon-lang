@@ -949,7 +949,7 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
   bool needsFrameMoves = (MMI && MMI->hasDebugInfo()) ||
        !MF.getFunction()->doesNotThrow() ||
-       !UnwindTablesOptional;
+       UnwindTablesMandatory;
   
   // Prepare for frame info.
   unsigned FrameLabelId = 0;

@@ -74,10 +74,9 @@ namespace llvm {
   /// be emitted.
   extern bool ExceptionHandling;
 
-  /// UnwindTablesOptional - This flag indicates that unwind tables need not
-  /// be emitted for all functions.  Exception handling may still require them
-  /// for some functions.
-  extern bool UnwindTablesOptional;
+  /// UnwindTablesMandatory - This flag indicates that unwind tables should
+  /// be emitted for all functions.
+  extern bool UnwindTablesMandatory;
 
   /// PerformTailCallOpt - This flag is enabled when -tailcallopt is specified
   /// on the commandline. When the flag is on, the target will perform tail call
