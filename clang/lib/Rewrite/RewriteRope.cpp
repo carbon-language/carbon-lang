@@ -13,6 +13,7 @@
 
 #include "clang/Rewrite/RewriteRope.h"
 #include "llvm/Support/Casting.h"
+#include <algorithm>
 using namespace clang;
 using llvm::dyn_cast;
 using llvm::cast;
@@ -670,3 +671,49 @@ void RopePieceBTree::erase(unsigned Offset, unsigned NumBytes) {
   // #2. Do the erasing.
   getRoot(Root)->erase(Offset, NumBytes);
 }
+
+//===----------------------------------------------------------------------===//
+// RewriteRope Implementation
+//===----------------------------------------------------------------------===//
+
+RopePiece RewriteRope::MakeRopeString(const char *Start, const char *End) {
+  unsigned Len = End-Start;
+  
+  // If we have space for this string in the current alloc buffer, use it.
+  if (AllocOffs+Len <= AllocChunkSize) {
+    memcpy(AllocBuffer->Data+AllocOffs, Start, Len);
+    AllocOffs += Len;
+    return RopePiece(AllocBuffer, AllocOffs-Len, AllocOffs);
+  }
+  
+  // If we don't have enough room because this specific allocation is huge,
+  // just allocate a new rope piece for it alone.
+  if (Len > AllocChunkSize) {
+    unsigned Size = End-Start+sizeof(RopeRefCountString)-1;
+    RopeRefCountString *Res = 
+    reinterpret_cast<RopeRefCountString *>(new char[Size]);
+    Res->RefCount = 0;
+    memcpy(Res->Data, Start, End-Start);
+    return RopePiece(Res, 0, End-Start);
+  }
+  
+  // Otherwise, this was a small request but we just don't have space for it
+  // Make a new chunk and share it with later allocations.
+  
+  // If we had an old allocation, drop our reference to it.
+  if (AllocBuffer && --AllocBuffer->RefCount == 0)
+    delete [] (char*)AllocBuffer;
+  
+  unsigned AllocSize = sizeof(RopeRefCountString)-1+AllocChunkSize;
+  AllocBuffer = reinterpret_cast<RopeRefCountString *>(new char[AllocSize]);
+  AllocBuffer->RefCount = 0;
+  memcpy(AllocBuffer->Data, Start, Len);
+  AllocOffs = Len;
+  
+  // Start out the new allocation with a refcount of 1, since we have an
+  // internal reference to it.
+  AllocBuffer->addRef();
+  return RopePiece(AllocBuffer, 0, Len);
+}
+
+

@@ -22,7 +22,10 @@ namespace clang {
   // RopeRefCountString Class
   //===--------------------------------------------------------------------===//
   
-  /// RopeRefCountString
+  /// RopeRefCountString - This struct is allocated with 'new char[]' from the
+  /// heap, and represents a reference counted chunk of string data.  When its
+  /// ref count drops to zero, it is delete[]'d.  This is primarily managed
+  /// through the RopePiece class below.
   struct RopeRefCountString {
     unsigned RefCount;
     char Data[1];  //  Variable sized.
@@ -41,6 +44,14 @@ namespace clang {
   // RopePiece Class
   //===--------------------------------------------------------------------===//
   
+  /// RopePiece - This class represents a view into a RopeRefCountString object.
+  /// This allows references to string data to be efficiently chopped up and
+  /// moved around without having to push around the string data itself.
+  ///
+  /// For example, we could have a 1M RopePiece and want to insert something
+  /// into the middle of it.  To do this, we split it into two RopePiece objects
+  /// that both refer to the same underlying RopeRefCountString (just with
+  /// different offsets) which is a nice constant time operation.
   struct RopePiece {
     RopeRefCountString *StrData;
     unsigned StartOffs;
@@ -49,11 +60,11 @@ namespace clang {
     RopePiece() : StrData(0), StartOffs(0), EndOffs(0) {}
     
     RopePiece(RopeRefCountString *Str, unsigned Start, unsigned End)
-    : StrData(Str), StartOffs(Start), EndOffs(End) {
+      : StrData(Str), StartOffs(Start), EndOffs(End) {
       StrData->addRef();
     }
     RopePiece(const RopePiece &RP)
-    : StrData(RP.StrData), StartOffs(RP.StartOffs), EndOffs(RP.EndOffs) {
+      : StrData(RP.StrData), StartOffs(RP.StartOffs), EndOffs(RP.EndOffs) {
       StrData->addRef();
     }
     
@@ -85,7 +96,10 @@ namespace clang {
   // RopePieceBTreeIterator Class
   //===--------------------------------------------------------------------===//
   
-  /// RopePieceBTreeIterator - Provide read-only forward iteration.
+  /// RopePieceBTreeIterator - This class provides read-only forward iteration
+  /// over bytes that are in a RopePieceBTree.  This first iterates over bytes
+  /// in a RopePiece, then iterates over RopePiece's in a RopePieceBTreeLeaf,
+  /// then iterates over RopePieceBTreeLeaf's in a RopePieceBTree.
   class RopePieceBTreeIterator :
       public forward_iterator<const char, ptrdiff_t> {
     /// CurNode - The current B+Tree node that we are inspecting.
@@ -95,7 +109,6 @@ namespace clang {
     const RopePiece *CurPiece;
     /// CurChar - The current byte in the RopePiece we are pointing to.
     unsigned CurChar;
-    friend class RewriteRope;
   public:
     // begin iterator.
     RopePieceBTreeIterator(const void /*RopePieceBTreeNode*/ *N);
@@ -120,11 +133,9 @@ namespace clang {
         MoveToNextPiece();
       return *this;
     }
-        
     inline RopePieceBTreeIterator operator++(int) { // Postincrement
       RopePieceBTreeIterator tmp = *this; ++*this; return tmp;
     }
-        
   private:
     void MoveToNextPiece();
   };
@@ -158,7 +169,9 @@ namespace clang {
   // RewriteRope Class
   //===--------------------------------------------------------------------===//
   
-/// RewriteRope - A powerful string class, todo generalize this.
+/// RewriteRope - A powerful string class.  This class supports extremely
+/// efficient insertions and deletions into the middle of it, even for
+/// ridiculously long strings.
 class RewriteRope {
   RopePieceBTree Chunks;
   
@@ -205,45 +218,7 @@ public:
   }
 
 private:
-  RopePiece MakeRopeString(const char *Start, const char *End) {
-    unsigned Len = End-Start;
-    
-    // If we have space for this string in the current alloc buffer, use it.
-    if (AllocOffs+Len <= AllocChunkSize) {
-      memcpy(AllocBuffer->Data+AllocOffs, Start, Len);
-      AllocOffs += Len;
-      return RopePiece(AllocBuffer, AllocOffs-Len, AllocOffs);
-    }
-
-    // If we don't have enough room because this specific allocation is huge,
-    // just allocate a new rope piece for it alone.
-    if (Len > AllocChunkSize) {
-      unsigned Size = End-Start+sizeof(RopeRefCountString)-1;
-      RopeRefCountString *Res = 
-        reinterpret_cast<RopeRefCountString *>(new char[Size]);
-      Res->RefCount = 0;
-      memcpy(Res->Data, Start, End-Start);
-      return RopePiece(Res, 0, End-Start);
-    }
-    
-    // Otherwise, this was a small request but we just don't have space for it
-    // Make a new chunk and share it with later allocations.
-    
-    // If we had an old allocation, drop our reference to it.
-    if (AllocBuffer && --AllocBuffer->RefCount == 0)
-      delete [] (char*)AllocBuffer;
-    
-    unsigned AllocSize = sizeof(RopeRefCountString)-1+AllocChunkSize;
-    AllocBuffer = reinterpret_cast<RopeRefCountString *>(new char[AllocSize]);
-    AllocBuffer->RefCount = 0;
-    memcpy(AllocBuffer->Data, Start, Len);
-    AllocOffs = Len;
-    
-    // Start out the new allocation with a refcount of 1, since we have an
-    // internal reference to it.
-    AllocBuffer->addRef();
-    return RopePiece(AllocBuffer, 0, Len);
-  }
+  RopePiece MakeRopeString(const char *Start, const char *End);
 };
   
 } // end namespace clang
