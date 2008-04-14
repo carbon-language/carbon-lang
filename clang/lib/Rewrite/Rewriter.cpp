@@ -27,8 +27,12 @@ void RewriteBuffer::RemoveText(unsigned OrigOffset, unsigned Size) {
   assert(RealOffset+Size < Buffer.size() && "Invalid location");
   
   // Remove the dead characters.
+#ifdef USE_ROPE_VECTOR
   RewriteRope::iterator I = Buffer.getAtOffset(RealOffset);
   Buffer.erase(I, I+Size);
+#else
+  Buffer.erase(RealOffset, Size);
+#endif
 
   // Add a delta so that future changes are offset correctly.
   AddDelta(OrigOffset, -Size);
@@ -40,23 +44,29 @@ void RewriteBuffer::InsertText(unsigned OrigOffset,
   
   // Nothing to insert, exit early.
   if (StrLen == 0) return;
-  
+
   unsigned RealOffset = getMappedOffset(OrigOffset, InsertAfter);
+
+#ifdef USE_ROPE_VECTOR
   assert(RealOffset <= Buffer.size() && "Invalid location");
 
   // Insert the new characters.
   Buffer.insert(Buffer.getAtOffset(RealOffset), StrData, StrData+StrLen);
+#else
+  Buffer.insert(RealOffset, StrData, StrData+StrLen);
+#endif
   
   // Add a delta so that future changes are offset correctly.
   AddDelta(OrigOffset, StrLen);
 }
 
 /// ReplaceText - This method replaces a range of characters in the input
-/// buffer with a new string.  This is effectively a combined "remove/insert"
+/// buffer with a new string.  This is effectively a combined "remove+insert"
 /// operation.
 void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
                                 const char *NewStr, unsigned NewLength) {
   unsigned RealOffset = getMappedOffset(OrigOffset, true);
+#ifdef USE_ROPE_VECTOR
   assert(RealOffset+OrigLength <= Buffer.size() && "Invalid location");
 
   // Overwrite the common piece.
@@ -76,7 +86,12 @@ void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
     RewriteRope::iterator I = Buffer.getAtOffset(RealOffset+NewLength);
     Buffer.erase(I, I+(OrigLength-NewLength));
   }
-  AddDelta(OrigOffset, NewLength-OrigLength);
+#else
+  Buffer.erase(RealOffset, OrigLength);
+  Buffer.insert(RealOffset, NewStr, NewStr+NewLength);
+#endif
+  if (OrigLength != NewLength)
+    AddDelta(OrigOffset, NewLength-OrigLength);
 }
 
 

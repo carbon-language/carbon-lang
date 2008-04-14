@@ -58,10 +58,12 @@ namespace {
 } // end anonymous namespace
 
 
-struct InsertResult {
-  DeltaTreeNode *LHS, *RHS;
-  SourceDelta Split;
-};
+namespace {
+  struct InsertResult {
+    DeltaTreeNode *LHS, *RHS;
+    SourceDelta Split;
+  };
+} // end anonymous namespace
 
 
 namespace {
@@ -72,8 +74,8 @@ namespace {
     
     /// WidthFactor - This controls the number of K/V slots held in the BTree:
     /// how wide it is.  Each level of the BTree is guaranteed to have at least
-    /// WidthFactor-1 K/V pairs (unless the whole tree is less full than that)
-    /// and may have at most 2*WidthFactor-1 K/V pairs.
+    /// WidthFactor-1 K/V pairs (except the root) and may have at most
+    /// 2*WidthFactor-1 K/V pairs.
     enum { WidthFactor = 8 };
     
     /// Values - This tracks the SourceDelta's currently in this node.
