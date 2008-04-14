@@ -564,7 +564,7 @@ FinishIdentifier:
 }
 
 
-/// LexNumericConstant - Lex the remainer of a integer or floating point
+/// LexNumericConstant - Lex the remainder of a integer or floating point
 /// constant. From[-1] is the first character lexed.  Return the end of the
 /// constant.
 void Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
