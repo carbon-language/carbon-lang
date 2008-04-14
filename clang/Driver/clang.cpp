@@ -61,7 +61,7 @@ Stats("print-stats",
       llvm::cl::desc("Print performance metrics and statistics"));
 
 enum ProgActions {
-  RewriteTest,                  // Rewriter testing stuff.
+  RewriteObjC,                  // ObjC->C Rewriter.
   HTMLTest,                     // HTML displayer testing stuff.
   EmitLLVM,                     // Emit a .ll file.
   EmitBC,                       // Emit a .bc file.
@@ -134,7 +134,7 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Build ASTs then convert to LLVM, emit .bc file"),
              clEnumValN(SerializeAST, "serialize",
                         "Build ASTs and emit .ast file"),
-             clEnumValN(RewriteTest, "rewrite-test",
+             clEnumValN(RewriteObjC, "rewrite-objc",
                         "Playground for the code rewriter"),
              clEnumValN(HTMLTest, "html-test",
                         "Playground for the HTML displayer"),
@@ -1088,7 +1088,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       // FIXME: Allow user to tailor where the file is written.
       return CreateASTSerializer(InFile, OutputFile, Diag, LangOpts);
       
-    case RewriteTest:
+    case RewriteObjC:
       return CreateCodeRewriterTest(InFile, OutputFile, Diag, LangOpts);
   }
 }

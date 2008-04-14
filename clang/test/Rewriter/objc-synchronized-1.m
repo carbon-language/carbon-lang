@@ -1,4 +1,4 @@
-// RUN: clang -rewrite-test %s -o=-
+// RUN: clang -rewrite-objc %s -o=-
 
 id SYNCH_EXPR();
 void SYNCH_BODY();

@@ -1,4 +1,4 @@
-// RUN: clang -rewrite-test %s -o=-
+// RUN: clang -rewrite-objc %s -o=-
 
 @interface Foo @end
 @interface GARF @end
