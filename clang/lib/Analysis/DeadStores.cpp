@@ -39,6 +39,10 @@ public:
                            const LiveVariables::AnalysisDataTy& AD,
                            const LiveVariables::ValTy& Live) {
     
+    // Skip statements in macros.
+    if (S->getLocStart().isMacroID())
+      return;
+    
     if (BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {    
       if (!B->isAssignmentOp()) return; // Skip non-assignments.
       
