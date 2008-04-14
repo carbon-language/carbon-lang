@@ -24,7 +24,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/System/Path.h"
-#include <sstream>RewriteObjC
+#include <sstream>
 #include <fstream>
 using namespace clang;
 using llvm::utostr;
