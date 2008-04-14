@@ -43,8 +43,9 @@ public:
   NamedDecl *Lookup(const IdentifierInfo *II, unsigned NSI);
 
 private:
-  class IdDeclInfoMap;
-  IdDeclInfoMap &IdDeclInfos;
+  // An instance of IdDeclInfoMap class, that's hidden away in the
+  // implementation file.
+  void *IdDeclInfos;
 };
 
 } // end namespace clang

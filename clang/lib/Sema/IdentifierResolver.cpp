@@ -69,13 +69,11 @@ public:
   void RemoveShadowed(NamedDecl *D);
 };
 
-} // end anonymous namespace
-
 
 /// IdDeclInfoMap - Associates IdDeclInfos with Identifiers.
 /// Allocates 'pools' (vectors of IdDeclInfos) to avoid allocating each
 /// individual IdDeclInfo to heap.
-class IdentifierResolver::IdDeclInfoMap {
+class IdDeclInfoMap {
   static const unsigned int VECTOR_SIZE = 512;
   // Holds vectors of IdDeclInfos that serve as 'pools'.
   // New vectors are added when the current one is full.
@@ -90,9 +88,13 @@ public:
   IdDeclInfo &operator[](IdentifierInfo *II);
 };
 
+} // end anonymous namespace
 
-IdentifierResolver::IdentifierResolver() : IdDeclInfos(*new IdDeclInfoMap) {}
-IdentifierResolver::~IdentifierResolver() { delete &IdDeclInfos; }
+
+IdentifierResolver::IdentifierResolver() : IdDeclInfos(new IdDeclInfoMap) {}
+IdentifierResolver::~IdentifierResolver() {
+  delete static_cast<IdDeclInfoMap*>(IdDeclInfos);
+}
 
 /// AddDecl - Link the decl to its shadowed decl chain.
 void IdentifierResolver::AddDecl(NamedDecl *D, Scope *S) {
@@ -109,7 +111,8 @@ void IdentifierResolver::AddDecl(NamedDecl *D, Scope *S) {
 
   if (isDeclPtr(Ptr)) {
     II->setFETokenInfo(NULL);
-    IDI = &IdDeclInfos[II];
+    IdDeclInfoMap &Map = *static_cast<IdDeclInfoMap*>(IdDeclInfos);
+    IDI = &Map[II];
     IDI->PushShadowed(static_cast<NamedDecl*>(Ptr));
   } else
     IDI = toIdDeclInfo(Ptr);
@@ -151,7 +154,8 @@ void IdentifierResolver::AddGlobalDecl(NamedDecl *D) {
 
   if (isDeclPtr(Ptr)) {
     II->setFETokenInfo(NULL);
-    IDI = &IdDeclInfos[II];
+    IdDeclInfoMap &Map = *static_cast<IdDeclInfoMap*>(IdDeclInfos);
+    IDI = &Map[II];
     IDI->PushShadowed(static_cast<NamedDecl*>(Ptr));
   } else
     IDI = toIdDeclInfo(Ptr);
@@ -231,7 +235,7 @@ void IdDeclInfo::RemoveShadowed(NamedDecl *D) {
 
 /// Returns the IdDeclInfo associated to the IdentifierInfo.
 /// It creates a new IdDeclInfo if one was not created before for this id.
-IdDeclInfo &IdentifierResolver::IdDeclInfoMap::operator[](IdentifierInfo *II) {
+IdDeclInfo &IdDeclInfoMap::operator[](IdentifierInfo *II) {
   assert (II && "null IdentifierInfo passed");
   void *Ptr = II->getFETokenInfo<void>();
 
