@@ -54,8 +54,11 @@ public:
     else if(DeclStmt* DS = dyn_cast<DeclStmt>(S))
       // Iterate through the decls.  Warn if any initializers are complex
       // expressions that are not live (never used).
-      for (VarDecl* V = cast<VarDecl>(DS->getDecl()); V != NULL ; 
-                    V = cast_or_null<VarDecl>(V->getNextDeclarator())) {
+      for (ScopedDecl* SD = DS->getDecl(); SD; SD = SD->getNextDeclarator()) {        
+        
+        VarDecl* V = dyn_cast<VarDecl>(SD);
+        if (!V) continue;
+        
         if (V->hasLocalStorage())
           if (Expr* E = V->getInit()) {
             if (!Live(DS->getDecl(),AD)) {
