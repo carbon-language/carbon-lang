@@ -27,7 +27,6 @@ class ObjCMethodDecl;
 class ObjCProtocolDecl;
 class ObjCCategoryDecl;
 class ObjCPropertyDecl;
-class FieldDeclarator;
 
 /// ObjCMethodDecl - Represents an instance or class method declaration.
 /// ObjC methods can be declared within 4 contexts: class interfaces,
@@ -940,8 +939,12 @@ public:
   static bool classof(const ObjCCompatibleAliasDecl *D) { return true; }
   
 };
-  
-class ObjCPropertyDecl : public Decl {
+
+/// ObjCPropertyDecl - Represents one property declaration in an interface.
+/// For example:
+/// @property (assign, readwrite) int MyProperty;
+///
+class ObjCPropertyDecl : public NamedDecl {
 public:
   enum PropertyAttributeKind {
     OBJC_PR_noattr    = 0x00, 
@@ -956,31 +959,18 @@ public:
   };
 private:
   QualType DeclType;
-  // List of property name declarations
-  NamedDecl **PropertyDecls;
-  unsigned NumPropertyDecls;
   unsigned PropertyAttributes : 8;
   
   IdentifierInfo *GetterName;    // getter name of NULL if no getter
   IdentifierInfo *SetterName;    // setter name of NULL if no setter
   
-  ObjCPropertyDecl(SourceLocation L, QualType T)
-    : Decl(ObjCProperty, L), DeclType(T),
-      PropertyDecls(0), NumPropertyDecls(0),
+  ObjCPropertyDecl(SourceLocation L, IdentifierInfo *Id, QualType T)
+    : NamedDecl(ObjCProperty, L, Id), DeclType(T),
       PropertyAttributes(OBJC_PR_noattr), GetterName(0), SetterName(0) {}
 public:
-  static ObjCPropertyDecl *Create(ASTContext &C, SourceLocation L, QualType T);
+  static ObjCPropertyDecl *Create(ASTContext &C, SourceLocation L, 
+                                  IdentifierInfo *Id, QualType T);
   QualType getType() const { return DeclType; }
-  typedef NamedDecl * const *propdecl_iterator;
-  propdecl_iterator propdecl_begin() const { return PropertyDecls; }
-  propdecl_iterator propdecl_end() const {
-    return PropertyDecls+NumPropertyDecls; 
-  }
-  unsigned propdecl_size() const { return NumPropertyDecls; }
-  bool propdecl_empty() const { return NumPropertyDecls == 0; }
-  NamedDecl **getPropertyDecls() { return PropertyDecls; }
-  void setNumPropertyDecls(unsigned num) { NumPropertyDecls = num; }
-  void setPropertyDecls(NamedDecl **Nd) { PropertyDecls = Nd; }
   PropertyAttributeKind getPropertyAttributes() const {
     return PropertyAttributeKind(PropertyAttributes);
   }

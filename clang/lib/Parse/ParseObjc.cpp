@@ -248,7 +248,32 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
         if (contextKey != tok::objc_protocol)
           Diag(AtLoc, diag::err_objc_protocol_optional);
       } else if (ocKind == tok::objc_property) {
-        allProperties.push_back(ParseObjCPropertyDecl(interfaceDecl, AtLoc));
+        ObjCDeclSpec OCDS;
+        ConsumeToken(); // the "property" identifier
+        // Parse property attribute list, if any. 
+        if (Tok.is(tok::l_paren)) {
+          // property has attribute list.
+          ParseObjCPropertyAttribute(OCDS);
+        }
+        // Parse all the comma separated declarators.
+        DeclSpec DS;
+        llvm::SmallVector<FieldDeclarator, 8> FieldDeclarators;
+        ParseStructDeclaration(DS, FieldDeclarators);
+        
+        if (Tok.is(tok::semi)) 
+          ConsumeToken();
+        else {
+          Diag(Tok, diag::err_expected_semi_decl_list);
+          SkipUntil(tok::r_brace, true, true);
+        }
+        // Convert them all to property declarations.
+        for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
+          FieldDeclarator &FD = FieldDeclarators[i];
+          // Install the property declarator into interfaceDecl.
+          DeclTy *Property = Actions.ActOnProperty(CurScope,
+                               DS.getSourceRange().getBegin(), FD, OCDS);
+          allProperties.push_back(Property);
+        }
         continue;
       } else {
         Diag(Tok, diag::err_objc_illegal_interface_qual);
@@ -368,39 +393,6 @@ void Parser::ParseObjCPropertyAttribute (ObjCDeclSpec &DS) {
     Diag(loc, diag::err_objc_expected_property_attr);
     SkipUntil(tok::r_paren); // recover from error inside attribute list
   }
-}
-
-///   Main routine to parse property declaration.
-///
-///   @property property-attr-decl[opt] property-component-decl ';'
-///
-Parser::DeclTy *Parser::ParseObjCPropertyDecl(DeclTy *interfaceDecl, 
-                                              SourceLocation AtLoc) {
-  assert(Tok.isObjCAtKeyword(tok::objc_property) &&
-         "ParseObjCPropertyDecl(): Expected @property");
-  ObjCDeclSpec OCDS;
-  ConsumeToken(); // the "property" identifier
-  // Parse property attribute list, if any. 
-  if (Tok.is(tok::l_paren)) {
-    // property has attribute list.
-    ParseObjCPropertyAttribute(OCDS);
-  }
-  // Parse declaration portion of @property.
-  llvm::SmallVector<DeclTy*, 8> PropertyDecls;
-  
-  // Parse all the comma separated declarators.
-  DeclSpec DS;
-  llvm::SmallVector<FieldDeclarator, 8> FieldDeclarators;
-  ParseStructDeclaration(DS, FieldDeclarators);
-    
-  if (Tok.is(tok::semi)) 
-    ConsumeToken();
-  else {
-    Diag(Tok, diag::err_expected_semi_decl_list);
-    SkipUntil(tok::r_brace, true, true);
-  }
-  return Actions.ActOnAddObjCProperties(CurScope, AtLoc, &FieldDeclarators[0],
-                                        FieldDeclarators.size(), OCDS);
 }
 
 ///   objc-method-proto:

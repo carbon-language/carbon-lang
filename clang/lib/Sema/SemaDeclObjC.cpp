@@ -886,13 +886,12 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   return ObjCMethod;
 }
 
-Sema::DeclTy *Sema::ActOnAddObjCProperties(Scope *S, SourceLocation AtLoc, 
-                                           FieldDeclarator *propertyDeclarators,
-                                           unsigned NumPropertyDeclarators, 
-                                           ObjCDeclSpec &ODS) {
-  FieldDeclarator &FD = propertyDeclarators[0];
+Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc, 
+                                  FieldDeclarator &FD,
+                                  ObjCDeclSpec &ODS) {
   QualType T = GetTypeForDeclarator(FD.D, S);
-  ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, AtLoc, T);
+  ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, AtLoc, 
+                                                     FD.D.getIdentifier(), T);
   
   if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_readonly)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readonly);
@@ -922,16 +921,6 @@ Sema::DeclTy *Sema::ActOnAddObjCProperties(Scope *S, SourceLocation AtLoc,
   if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_nonatomic)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_nonatomic);
   
-  if (NumPropertyDeclarators != 0) {
-    NamedDecl **propertyName = new NamedDecl*[NumPropertyDeclarators];
-    PDecl->setPropertyDecls(propertyName);
-    PDecl->setNumPropertyDecls(NumPropertyDeclarators);
-    for (unsigned i = 0; i < NumPropertyDeclarators; i++) {
-      Declarator &D = propertyDeclarators[i].D;
-      propertyName[i] = new NamedDecl(Decl::ObjCProperty, 
-                                      D.getIdentifierLoc(), D.getIdentifier());
-    }
-  }
   return PDecl;
 }
 
