@@ -209,6 +209,9 @@ void Diagnostic::Report(DiagnosticClient* C,
   // If the client doesn't care about this message, don't issue it.
   if (DiagLevel == Diagnostic::Ignored)
     return;
+  
+  // Set the diagnostic client if it isn't set already.
+  if (!C) C = &Client;
 
   // If this is not an error and we are in a system header, ignore it.  We have
   // to check on the original class here, because we also want to ignore
@@ -227,8 +230,6 @@ void Diagnostic::Report(DiagnosticClient* C,
   }
 
   // Finally, report it.
-  
-  if (!C) C = &Client;
   
   C->HandleDiagnostic(*this, DiagLevel, Pos, (diag::kind)DiagID,
                       Strs, NumStrs, Ranges, NumRanges);
