@@ -27,7 +27,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <cstdlib>
-#include <sstream>
 using namespace llvm;
 
 // Handle the Pass registration stuff necessary to use TargetData's.

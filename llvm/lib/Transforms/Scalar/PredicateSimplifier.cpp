@@ -101,7 +101,6 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include <algorithm>
 #include <deque>
-#include <sstream>
 #include <stack>
 using namespace llvm;
 
