@@ -114,10 +114,10 @@ void TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
     // until we either find a DeclRefExpr or some non-DeclRefExpr
     // expression.
     if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E->IgnoreParens())) 
-      if (isa<VarDecl>(DR->getDecl())) {
-        // Treat the --/++ operator as a kill.  Note that the variable
-        // is still live, just its value has been changed.
+      if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl())) {
+        // Treat the --/++ operator as a kill.
         if (AD.Observer) { AD.Observer->ObserverKill(DR); }
+        LiveState(VD, AD) = Alive;
         return VisitDeclRefExpr(DR);
       }
 
