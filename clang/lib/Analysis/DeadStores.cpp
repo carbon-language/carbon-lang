@@ -166,7 +166,7 @@ public:
   }
   
   virtual const char* getDescription() const {
-    return "Value stored to variable is never used.";
+    return "Value stored to variable is never subsequently read.";
   }
   
   virtual void EmitWarnings(BugReporter& BR) {
