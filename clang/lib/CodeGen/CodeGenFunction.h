@@ -70,7 +70,7 @@ namespace clang {
   class ObjCIvarRefExpr;
   class MemberExpr;
 
-  class BlockVarDecl;
+  class VarDecl;
   class EnumConstantDecl;
   class ParmVarDecl;
   class FieldDecl;
@@ -344,16 +344,16 @@ public:
   const CGRecordLayout *getCGRecordLayout(CodeGenTypes &CGT, QualType RTy);
 
   /// GetAddrOfStaticLocalVar - Return the address of a static local variable.
-  llvm::Constant *GetAddrOfStaticLocalVar(const BlockVarDecl *BVD);
+  llvm::Constant *GetAddrOfStaticLocalVar(const VarDecl *BVD);
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//
   
   void EmitDecl(const Decl &D);
   void EmitEnumConstantDecl(const EnumConstantDecl &D);
-  void EmitBlockVarDecl(const BlockVarDecl &D);
-  void EmitLocalBlockVarDecl(const BlockVarDecl &D);
-  void EmitStaticBlockVarDecl(const BlockVarDecl &D);
+  void EmitBlockVarDecl(const VarDecl &D);
+  void EmitLocalBlockVarDecl(const VarDecl &D);
+  void EmitStaticBlockVarDecl(const VarDecl &D);
   void EmitParmDecl(const ParmVarDecl &D, llvm::Value *Arg);
   
   //===--------------------------------------------------------------------===//

@@ -55,9 +55,7 @@ public:
     //       ValueDecl
                EnumConstant,
                Function,
-    //         VarDecl
-                 BlockVar,
-                 FileVar,
+               Var,
                  ParmVar,
          ObjCInterface,
          ObjCCompatibleAlias,
@@ -76,7 +74,7 @@ public:
     TagFirst    = Enum         , TagLast    = Class,
     RecordFirst = Struct       , RecordLast = Class,
     ValueFirst  = EnumConstant , ValueLast  = ParmVar,
-    VarFirst    = BlockVar     , VarLast    = ParmVar
+    VarFirst    = Var          , VarLast    = ParmVar
   };
 
   /// IdentifierNamespace - According to C99 6.2.3, there are four namespaces,
@@ -151,8 +149,7 @@ public:
     default: assert(0 && "Unknown decl kind!");
     case Typedef:
     case Function:
-    case BlockVar:
-    case FileVar:
+    case Var:
     case ParmVar:
     case EnumConstant:
     case ObjCInterface:

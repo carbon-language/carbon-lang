@@ -74,13 +74,14 @@ namespace {
       return S->Diag(DRE->getSourceRange().getBegin(), 
                      diag::err_param_default_argument_references_param,
                      Param->getName(), DefaultArg->getSourceRange());
-    } else if (BlockVarDecl *BlockVar = dyn_cast<BlockVarDecl>(Decl)) {
+    } else if (VarDecl *VDecl = dyn_cast<VarDecl>(Decl)) {
       // C++ [dcl.fct.default]p7
       //   Local variables shall not be used in default argument
       //   expressions.
-      return S->Diag(DRE->getSourceRange().getBegin(), 
-                     diag::err_param_default_argument_references_local,
-                     BlockVar->getName(), DefaultArg->getSourceRange());
+      if (VDecl->isBlockVarDecl())
+        return S->Diag(DRE->getSourceRange().getBegin(), 
+                       diag::err_param_default_argument_references_local,
+                       VDecl->getName(), DefaultArg->getSourceRange());
     }
 
     // FIXME: when Clang has support for member functions, "this"

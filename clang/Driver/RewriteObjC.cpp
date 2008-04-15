@@ -70,7 +70,7 @@ namespace {
     FunctionDecl *SuperContructorFunctionDecl;
       
     // ObjC string constant support.
-    FileVarDecl *ConstantStringClassReference;
+    VarDecl *ConstantStringClassReference;
     RecordDecl *NSStringRecord;
     
     // ObjC foreach break/continue generation support.
@@ -367,7 +367,7 @@ void RewriteObjC::HandleTopLevelDecl(Decl *D) {
   // Look for built-in declarations that we need to refer during the rewrite.
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     RewriteFunctionDecl(FD);
-  } else if (FileVarDecl *FVD = dyn_cast<FileVarDecl>(D)) {
+  } else if (VarDecl *FVD = dyn_cast<VarDecl>(D)) {
     // declared in <Foundation/NSString.h>
     if (strcmp(FVD->getName(), "_NSConstantStringClassReference") == 0) {
       ConstantStringClassReference = FVD;
@@ -1776,9 +1776,9 @@ Stmt *RewriteObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   // The minus 2 removes the begin/end double quotes.
   Preamble += utostr(prettyBuf.str().size()-2) + "};\n";
   
-  FileVarDecl *NewVD = FileVarDecl::Create(*Context, NULL, SourceLocation(), 
-                                       &Context->Idents.get(S.c_str()), strType, 
-                                       VarDecl::Static, NULL);
+  VarDecl *NewVD = VarDecl::Create(*Context, NULL, SourceLocation(), 
+                                    &Context->Idents.get(S.c_str()), strType, 
+                                    VarDecl::Static, NULL);
   DeclRefExpr *DRE = new DeclRefExpr(NewVD, strType, SourceLocation());
   Expr *Unop = new UnaryOperator(DRE, UnaryOperator::AddrOf,
                                  Context->getPointerType(DRE->getType()), 

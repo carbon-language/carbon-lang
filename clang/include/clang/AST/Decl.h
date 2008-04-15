@@ -146,6 +146,10 @@ protected:
           StorageClass SC, ScopedDecl *PrevDecl)
     : ValueDecl(DK, CD, L, Id, T, PrevDecl), Init(0) { SClass = SC; }
 public:
+  static VarDecl *Create(ASTContext &C, DeclContext *CD,
+                         SourceLocation L, IdentifierInfo *Id,
+                         QualType T, StorageClass S, ScopedDecl *PrevDecl);
+  
   StorageClass getStorageClass() const { return (StorageClass)SClass; }
 
   const Expr *getInit() const { return Init; }
@@ -156,7 +160,7 @@ public:
   ///  is a non-static local variable.
   bool hasLocalStorage() const {
     if (getStorageClass() == None)
-      return getKind() != FileVar;
+      return !isFileVarDecl();
     
     // Return true for:  Auto, Register.
     // Return false for: Extern, Static, PrivateExtern.
@@ -168,6 +172,29 @@ public:
   ///  have local storage.  This includs all global variables as well
   ///  as static variables declared within a function.
   bool hasGlobalStorage() const { return !hasLocalStorage(); }
+
+  /// isBlockVarDecl - Returns true for local variable declarations.  Note that
+  /// this includes static variables inside of functions.
+  ///
+  ///   void foo() { int x; static int y; extern int z; }
+  ///
+  bool isBlockVarDecl() const {
+    if (getKind() != Decl::Var)
+      return false;
+    if (DeclContext *DC = getDeclContext())
+      return DC->isFunctionOrMethod();
+    return false;
+  }
+  
+  /// isFileVarDecl - Returns true for file scoped variable declaration.
+  bool isFileVarDecl() const {
+    if (getKind() != Decl::Var)
+      return false;
+    // FIXME: change when TranlationUnitDecl is added as a declaration context.
+    if (!getDeclContext())
+      return true;
+    return false;
+  }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -187,56 +214,9 @@ protected:
   
   /// ReadImpl - Deserialize this VarDecl. Called by subclasses.
   virtual void ReadImpl(llvm::Deserializer& D, ASTContext& C);
-};
-
-/// BlockVarDecl - Represent a local variable declaration.  Note that this
-/// includes static variables inside of functions.
-///
-///   void foo() { int x; static int y; extern int z; }
-///
-class BlockVarDecl : public VarDecl {
-  BlockVarDecl(DeclContext *CD, SourceLocation L,
-               IdentifierInfo *Id, QualType T, StorageClass S,
-               ScopedDecl *PrevDecl)
-    : VarDecl(BlockVar, CD, L, Id, T, S, PrevDecl) {}
-public:
-  static BlockVarDecl *Create(ASTContext &C, DeclContext *CD, SourceLocation L,
-                              IdentifierInfo *Id, QualType T, StorageClass S,
-                              ScopedDecl *PrevDecl);
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == BlockVar; }
-  static bool classof(const BlockVarDecl *D) { return true; }  
-
-protected:
-  /// CreateImpl - Deserialize a BlockVarDecl.  Called by Decl::Create.
-  static BlockVarDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
-
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
-};
-
-/// FileVarDecl - Represent a file scoped variable declaration. This
-/// will allow us to reason about external variable declarations and tentative 
-/// definitions (C99 6.9.2p2) using our type system (without storing a
-/// pointer to the decl's scope, which is transient).
-class FileVarDecl : public VarDecl {
-  FileVarDecl(DeclContext *CD, SourceLocation L,
-              IdentifierInfo *Id, QualType T, StorageClass S,
-              ScopedDecl *PrevDecl)
-    : VarDecl(FileVar, CD, L, Id, T, S, PrevDecl) {}
-public:
-  static FileVarDecl *Create(ASTContext &C, DeclContext *CD,
-                             SourceLocation L, IdentifierInfo *Id,
-                             QualType T, StorageClass S, ScopedDecl *PrevDecl);
   
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == FileVar; }
-  static bool classof(const FileVarDecl *D) { return true; }
-
-protected:
-  /// CreateImpl - Deserialize a FileVarDecl.  Called by Decl::Create.
-  static FileVarDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
-
-  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
+  /// CreateImpl - Deserialize a VarDecl.  Called by Decl::Create.
+  static VarDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 /// ParmVarDecl - Represent a parameter to a function.

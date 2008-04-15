@@ -288,7 +288,7 @@ llvm::Constant *CodeGenModule::EmitGlobalInit(const Expr *Expr) {
   return EmitConstantExpr(Expr);
 }
 
-void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
+void CodeGenModule::EmitGlobalVar(const VarDecl *D) {
   // If this is just a forward declaration of the variable, don't emit it now,
   // allow it to be emitted lazily on its first use.
   if (D->getStorageClass() == VarDecl::Extern && D->getInit() == 0)
@@ -352,9 +352,10 @@ void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
 
 /// EmitGlobalVarDeclarator - Emit all the global vars attached to the specified
 /// declarator chain.
-void CodeGenModule::EmitGlobalVarDeclarator(const FileVarDecl *D) {
-  for (; D; D = cast_or_null<FileVarDecl>(D->getNextDeclarator()))
-    EmitGlobalVar(D);
+void CodeGenModule::EmitGlobalVarDeclarator(const VarDecl *D) {
+  for (; D; D = cast_or_null<VarDecl>(D->getNextDeclarator()))
+    if (D->isFileVarDecl())
+      EmitGlobalVar(D);
 }
 
 void CodeGenModule::UpdateCompletedType(const TagDecl *TD) {

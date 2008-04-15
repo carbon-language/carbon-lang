@@ -63,8 +63,9 @@ namespace {
       
       if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
         Builder->EmitFunction(FD);
-      } else if (FileVarDecl *FVD = dyn_cast<FileVarDecl>(D)) {
-        Builder->EmitGlobalVarDeclarator(FVD);
+      } else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+        if (VD->isFileVarDecl())
+          Builder->EmitGlobalVarDeclarator(VD);
       } else if (isa<ObjCClassDecl>(D) || isa<ObjCCategoryDecl>(D)) {
         // Forward declaration.  Only used for type checking.
       } else if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)){

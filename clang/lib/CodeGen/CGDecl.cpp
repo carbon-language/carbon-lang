@@ -23,8 +23,6 @@ using namespace CodeGen;
 void CodeGenFunction::EmitDecl(const Decl &D) {
   switch (D.getKind()) {
   default: assert(0 && "Unknown decl kind!");
-  case Decl::FileVar:
-    assert(0 && "Should not see file-scope variables inside a function!");
   case Decl::ParmVar:
     assert(0 && "Parmdecls should not be in declstmts!");
   case Decl::Typedef:   // typedef int X;
@@ -36,8 +34,11 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
     // None of these decls require codegen support.
     return;
     
-  case Decl::BlockVar:
-    return EmitBlockVarDecl(cast<BlockVarDecl>(D));
+  case Decl::Var:
+    if (cast<VarDecl>(D).isBlockVarDecl())
+      return EmitBlockVarDecl(cast<VarDecl>(D));
+    assert(0 && "Should not see file-scope variables inside a function!");
+  
   case Decl::EnumConstant:
     return EmitEnumConstantDecl(cast<EnumConstantDecl>(D));
   }
@@ -49,7 +50,7 @@ void CodeGenFunction::EmitEnumConstantDecl(const EnumConstantDecl &D) {
 
 /// EmitBlockVarDecl - This method handles emission of any variable declaration
 /// inside a function, including static vars etc.
-void CodeGenFunction::EmitBlockVarDecl(const BlockVarDecl &D) {
+void CodeGenFunction::EmitBlockVarDecl(const VarDecl &D) {
   switch (D.getStorageClass()) {
   case VarDecl::Static:
     return EmitStaticBlockVarDecl(D);
@@ -65,7 +66,7 @@ void CodeGenFunction::EmitBlockVarDecl(const BlockVarDecl &D) {
   }
 }
 
-void CodeGenFunction::EmitStaticBlockVarDecl(const BlockVarDecl &D) {
+void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   QualType Ty = D.getType();
   assert(Ty->isConstantSizeType() && "VLAs can't be static");
   
@@ -99,7 +100,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const BlockVarDecl &D) {
 /// EmitLocalBlockVarDecl - Emit code and set up an entry in LocalDeclMap for a
 /// variable declaration with auto, register, or no storage class specifier.
 /// These turn into simple stack objects.
-void CodeGenFunction::EmitLocalBlockVarDecl(const BlockVarDecl &D) {
+void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   QualType Ty = D.getType();
 
   llvm::Value *DeclPtr;

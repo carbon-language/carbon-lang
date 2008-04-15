@@ -41,8 +41,8 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
       assert (false && "Not implemented.");
       break;
 
-    case BlockVar:
-      return BlockVarDecl::CreateImpl(D, C);
+    case Var:
+      return VarDecl::CreateImpl(D, C);
       
     case Enum:
       return EnumDecl::CreateImpl(D, C);
@@ -52,9 +52,6 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
       
     case Field:
       return FieldDecl::CreateImpl(D, C);
-      
-    case FileVar:
-      return FileVarDecl::CreateImpl(D, C);
       
     case ParmVar:
       return ParmVarDecl::CreateImpl(D, C);
@@ -195,13 +192,13 @@ void VarDecl::ReadImpl(Deserializer& D, ASTContext& C) {
 }
 
 //===----------------------------------------------------------------------===//
-//      BlockVarDecl Serialization.
+//      VarDecl Serialization.
 //===----------------------------------------------------------------------===//
 
-BlockVarDecl* BlockVarDecl::CreateImpl(Deserializer& D, ASTContext& C) {  
-  void *Mem = C.getAllocator().Allocate<BlockVarDecl>();
-  BlockVarDecl* decl =
-    new (Mem) BlockVarDecl(0, SourceLocation(), NULL, QualType(), None, NULL);
+VarDecl* VarDecl::CreateImpl(Deserializer& D, ASTContext& C) {  
+  void *Mem = C.getAllocator().Allocate<VarDecl>();
+  VarDecl* decl =
+    new (Mem) VarDecl(Var, 0, SourceLocation(), NULL, QualType(), None, NULL);
  
   decl->VarDecl::ReadImpl(D, C);
   
@@ -209,21 +206,7 @@ BlockVarDecl* BlockVarDecl::CreateImpl(Deserializer& D, ASTContext& C) {
 }
 
 //===----------------------------------------------------------------------===//
-//      FileVarDecl Serialization.
-//===----------------------------------------------------------------------===//
-
-FileVarDecl* FileVarDecl::CreateImpl(Deserializer& D, ASTContext& C) {
-  void *Mem = C.getAllocator().Allocate<FileVarDecl>();
-  FileVarDecl* decl =
-    new (Mem) FileVarDecl(0, SourceLocation(), NULL, QualType(), None, NULL);
-  
-  decl->VarDecl::ReadImpl(D, C);
-
-  return decl;
-}
-
-//===----------------------------------------------------------------------===//
-//      ParmDecl Serialization.
+//      ParmVarDecl Serialization.
 //===----------------------------------------------------------------------===//
 
 void ParmVarDecl::EmitImpl(llvm::Serializer& S) const {

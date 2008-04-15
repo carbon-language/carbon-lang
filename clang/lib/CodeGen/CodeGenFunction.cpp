@@ -42,7 +42,7 @@ llvm::BasicBlock *CodeGenFunction::getBasicBlockForLabel(const LabelStmt *S) {
 }
 
 llvm::Constant *
-CodeGenFunction::GetAddrOfStaticLocalVar(const BlockVarDecl *BVD) {
+CodeGenFunction::GetAddrOfStaticLocalVar(const VarDecl *BVD) {
   return cast<llvm::Constant>(LocalDeclMap[BVD]);
 }
 

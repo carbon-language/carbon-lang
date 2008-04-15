@@ -37,7 +37,6 @@ namespace clang {
   class ValueDecl;
   class VarDecl;
   class TypeDecl;
-  class FileVarDecl;
   struct LangOptions;
   class Diagnostic;
     
@@ -103,8 +102,8 @@ public:
 
   void EmitObjCMethod(const ObjCMethodDecl *OMD);
   void EmitFunction(const FunctionDecl *FD);
-  void EmitGlobalVar(const FileVarDecl *D);
-  void EmitGlobalVarDeclarator(const FileVarDecl *D);
+  void EmitGlobalVar(const VarDecl *D);
+  void EmitGlobalVarDeclarator(const VarDecl *D);
   void UpdateCompletedType(const TagDecl *D);
   llvm::Constant *EmitGlobalInit(const Expr *E);
   llvm::Constant *EmitConstantExpr(const Expr *E, CodeGenFunction *CGF = 0);

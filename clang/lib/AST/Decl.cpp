@@ -24,8 +24,7 @@ using namespace clang;
 
 // temporary statistics gathering
 static unsigned nFuncs = 0;
-static unsigned nBlockVars = 0;
-static unsigned nFileVars = 0;
+static unsigned nVars = 0;
 static unsigned nParmVars = 0;
 static unsigned nSUC = 0;
 static unsigned nEnumConst = 0;
@@ -59,8 +58,7 @@ const char *Decl::getDeclKindName() const {
   default: assert(0 && "Unknown decl kind!");
   case Typedef:             return "Typedef";
   case Function:            return "Function";
-  case BlockVar:            return "BlockVar";
-  case FileVar:             return "FileVar";
+  case Var:                 return "Var";
   case ParmVar:             return "ParmVar";
   case EnumConstant:        return "EnumConstant";
   case ObjCInterface:       return "ObjCInterface";
@@ -84,17 +82,14 @@ bool Decl::CollectingStats(bool Enable) {
 void Decl::PrintStats() {
   fprintf(stderr, "*** Decl Stats:\n");
   fprintf(stderr, "  %d decls total.\n", 
-          int(nFuncs+nBlockVars+nFileVars+nParmVars+nFieldDecls+nSUC+
+          int(nFuncs+nVars+nParmVars+nFieldDecls+nSUC+
               nEnumDecls+nEnumConst+nTypedef+nInterfaceDecls+nClassDecls+
               nMethodDecls+nProtocolDecls+nCategoryDecls+nIvarDecls));
   fprintf(stderr, "    %d function decls, %d each (%d bytes)\n", 
           nFuncs, (int)sizeof(FunctionDecl), int(nFuncs*sizeof(FunctionDecl)));
-  fprintf(stderr, "    %d block variable decls, %d each (%d bytes)\n", 
-          nBlockVars, (int)sizeof(BlockVarDecl), 
-          int(nBlockVars*sizeof(BlockVarDecl)));
-  fprintf(stderr, "    %d file variable decls, %d each (%d bytes)\n", 
-          nFileVars, (int)sizeof(FileVarDecl), 
-          int(nFileVars*sizeof(FileVarDecl)));
+  fprintf(stderr, "    %d variable decls, %d each (%d bytes)\n", 
+          nVars, (int)sizeof(VarDecl), 
+          int(nVars*sizeof(VarDecl)));
   fprintf(stderr, "    %d parameter variable decls, %d each (%d bytes)\n", 
           nParmVars, (int)sizeof(ParmVarDecl),
           int(nParmVars*sizeof(ParmVarDecl)));
@@ -152,8 +147,8 @@ void Decl::PrintStats() {
           int(nObjCPropertyDecl*sizeof(ObjCPropertyDecl)));
   
   fprintf(stderr, "Total bytes = %d\n", 
-          int(nFuncs*sizeof(FunctionDecl)+nBlockVars*sizeof(BlockVarDecl)+
-              nFileVars*sizeof(FileVarDecl)+nParmVars*sizeof(ParmVarDecl)+
+          int(nFuncs*sizeof(FunctionDecl)+
+              nVars*sizeof(VarDecl)+nParmVars*sizeof(ParmVarDecl)+
               nFieldDecls*sizeof(FieldDecl)+nSUC*sizeof(RecordDecl)+
               nEnumDecls*sizeof(EnumDecl)+nEnumConst*sizeof(EnumConstantDecl)+
               nTypedef*sizeof(TypedefDecl)+
@@ -177,8 +172,7 @@ void Decl::addDeclKind(Kind k) {
   switch (k) {
   case Typedef:             nTypedef++; break;
   case Function:            nFuncs++; break;
-  case BlockVar:            nBlockVars++; break;
-  case FileVar:             nFileVars++; break;
+  case Var:                 nVars++; break;
   case ParmVar:             nParmVars++; break;
   case EnumConstant:        nEnumConst++; break;
   case Field:               nFieldDecls++; break;
@@ -204,22 +198,14 @@ void Decl::addDeclKind(Kind k) {
 // Decl Allocation/Deallocation Method Implementations
 //===----------------------------------------------------------------------===//
 
-BlockVarDecl *BlockVarDecl::Create(ASTContext &C, DeclContext *CD,
-                                   SourceLocation L,
-                                   IdentifierInfo *Id, QualType T,
-                                   StorageClass S, ScopedDecl *PrevDecl) {
-  void *Mem = C.getAllocator().Allocate<BlockVarDecl>();
-  return new (Mem) BlockVarDecl(CD, L, Id, T, S, PrevDecl);
+VarDecl *VarDecl::Create(ASTContext &C, DeclContext *CD,
+                         SourceLocation L,
+                         IdentifierInfo *Id, QualType T,
+                         StorageClass S, ScopedDecl *PrevDecl) {
+  void *Mem = C.getAllocator().Allocate<VarDecl>();
+  return new (Mem) VarDecl(Var, CD, L, Id, T, S, PrevDecl);
 }
 
-
-FileVarDecl *FileVarDecl::Create(ASTContext &C, DeclContext *CD,
-                                 SourceLocation L, IdentifierInfo *Id,
-                                 QualType T, StorageClass S,
-                                 ScopedDecl *PrevDecl) {
-  void *Mem = C.getAllocator().Allocate<FileVarDecl>();
-  return new (Mem) FileVarDecl(CD, L, Id, T, S, PrevDecl);
-}
 
 ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *CD,
                                  SourceLocation L, IdentifierInfo *Id,
@@ -347,8 +333,7 @@ void Decl::Destroy(ASTContext& C) const {
   CASE(Enum);
   CASE(EnumConstant);
   CASE(Function);
-  CASE(BlockVar);
-  CASE(FileVar);
+  CASE(Var);
   CASE(ParmVar);
   CASE(ObjCInterface);
   CASE(ObjCCompatibleAlias);

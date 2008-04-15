@@ -738,7 +738,7 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, GRExprEngine::NodeTy* Pred,
         // In this context, Static => Local variable.
         
         assert (!VD->getStorageClass() == VarDecl::Static ||
-                !isa<FileVarDecl>(VD));
+                !VD->isFileVarDecl());
         
         // If there is no initializer, set the value of the
         // variable to "Undefined".

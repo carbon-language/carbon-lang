@@ -51,7 +51,7 @@ public:
   struct ObserverTy {
     virtual ~ObserverTy();
     virtual void ObserveDeclRefExpr(ValTy& Val, AnalysisDataTy& AD, 
-                                    DeclRefExpr* DR, BlockVarDecl* VD) = 0;
+                                    DeclRefExpr* DR, VarDecl* VD) = 0;
   };  
 };
 

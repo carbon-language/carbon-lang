@@ -36,7 +36,7 @@ class VISIBILITY_HIDDEN RegisterDecls
 public:
   RegisterDecls(UninitializedValues::AnalysisDataTy& ad) :  AD(ad) {}
   
-  void VisitBlockVarDecl(BlockVarDecl* VD) { AD.Register(VD); }
+  void VisitBlockVarDecl(VarDecl* VD) { AD.Register(VD); }
   CFG& getCFG() { return AD.getCFG(); }
 };
   
@@ -80,14 +80,16 @@ public:
     
   void VisitTerminator(Stmt* T) { }
   
-  BlockVarDecl* FindBlockVarDecl(Stmt* S);
+  VarDecl* FindBlockVarDecl(Stmt* S);
 };
   
 static const bool Initialized = true;
 static const bool Uninitialized = false;  
 
 bool TransferFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
-  if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(DR->getDecl())) {
+  // FIXME: Ted, can this be simplified?
+  VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl());
+  if (VD && VD->isBlockVarDecl()) {
     if (AD.Observer) AD.Observer->ObserveDeclRefExpr(V,AD,DR,VD);
      
     // Pseudo-hack to prevent cascade of warnings.  If an accessed variable
@@ -101,13 +103,15 @@ bool TransferFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
   else return Initialized;
 }
 
-BlockVarDecl* TransferFuncs::FindBlockVarDecl(Stmt *S) {
+VarDecl* TransferFuncs::FindBlockVarDecl(Stmt *S) {
   for (;;)
     if (ParenExpr* P = dyn_cast<ParenExpr>(S)) {
       S = P->getSubExpr(); continue;
     }
     else if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S)) {
-      if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(DR->getDecl()))
+      // FIXME: Ted, can this be simplified?
+      VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl());
+      if (VD->isBlockVarDecl())
         return VD;
       else
         return NULL;
@@ -116,7 +120,9 @@ BlockVarDecl* TransferFuncs::FindBlockVarDecl(Stmt *S) {
 }
 
 bool TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
-  if (BlockVarDecl* VD = FindBlockVarDecl(B->getLHS()))
+  // FIXME: Ted, can this be simplified?
+  VarDecl* VD = FindBlockVarDecl(B->getLHS());
+  if (VD && VD->isBlockVarDecl())
     if (B->isAssignmentOp()) {
       if (B->getOpcode() == BinaryOperator::Assign)
         return V(VD,AD) = Visit(B->getRHS());
@@ -128,8 +134,9 @@ bool TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
 }
 
 bool TransferFuncs::VisitDeclStmt(DeclStmt* S) {
-  for (ScopedDecl* D = S->getDecl(); D != NULL; D = D->getNextDeclarator())
-    if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(D)) {
+  for (ScopedDecl* D = S->getDecl(); D != NULL; D = D->getNextDeclarator()) {
+    VarDecl *VD = dyn_cast<VarDecl>(D);
+    if (VD && VD->isBlockVarDecl()) {
       if (Stmt* I = VD->getInit()) 
         V(VD,AD) = AD.FullUninitTaint ? V(cast<Expr>(I),AD) : Initialized;
       else {
@@ -149,10 +156,10 @@ bool TransferFuncs::VisitDeclStmt(DeclStmt* S) {
           V(VD,AD) = Uninitialized;
       }
     }
-      
+  }
   return Uninitialized; // Value is never consumed.
 }
-
+  
 bool TransferFuncs::VisitCallExpr(CallExpr* C) {
   VisitChildren(C);
   return Initialized;
@@ -161,9 +168,9 @@ bool TransferFuncs::VisitCallExpr(CallExpr* C) {
 bool TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
   switch (U->getOpcode()) {
     case UnaryOperator::AddrOf:
-      if (BlockVarDecl* VD = FindBlockVarDecl(U->getSubExpr()))
+      VarDecl* VD = FindBlockVarDecl(U->getSubExpr());
+      if (VD && VD->isBlockVarDecl())
         return V(VD,AD) = Initialized;
-      
       break;
     
     case UnaryOperator::SizeOf:
@@ -240,7 +247,7 @@ class VISIBILITY_HIDDEN UninitializedValuesChecker
     
   ASTContext &Ctx;
   Diagnostic &Diags;
-  llvm::SmallPtrSet<BlockVarDecl*,10> AlreadyWarned;
+  llvm::SmallPtrSet<VarDecl*,10> AlreadyWarned;
   
 public:
   UninitializedValuesChecker(ASTContext &ctx, Diagnostic &diags)
@@ -248,7 +255,7 @@ public:
     
   virtual void ObserveDeclRefExpr(UninitializedValues::ValTy& V,
                                   UninitializedValues::AnalysisDataTy& AD,
-                                  DeclRefExpr* DR, BlockVarDecl* VD) {
+                                  DeclRefExpr* DR, VarDecl* VD) {
 
     assert ( AD.isTracked(VD) && "Unknown VarDecl.");
     

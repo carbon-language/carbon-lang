@@ -372,26 +372,23 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
     return New;
   }
   // We've verified the types match, now handle "tentative" definitions.
-  FileVarDecl *OldFSDecl = dyn_cast<FileVarDecl>(Old);
-  FileVarDecl *NewFSDecl = dyn_cast<FileVarDecl>(New);
-  
-  if (OldFSDecl && NewFSDecl) {
+  if (Old->isFileVarDecl() && New->isFileVarDecl()) {
     // Handle C "tentative" external object definitions (C99 6.9.2).
     bool OldIsTentative = false;
     bool NewIsTentative = false;
     
-    if (!OldFSDecl->getInit() &&
-        (OldFSDecl->getStorageClass() == VarDecl::None ||
-         OldFSDecl->getStorageClass() == VarDecl::Static))
+    if (!Old->getInit() &&
+        (Old->getStorageClass() == VarDecl::None ||
+         Old->getStorageClass() == VarDecl::Static))
       OldIsTentative = true;
       
     // FIXME: this check doesn't work (since the initializer hasn't been
     // attached yet). This check should be moved to FinalizeDeclaratorGroup.
     // Unfortunately, by the time we get to FinializeDeclaratorGroup, we've 
     // thrown out the old decl.
-    if (!NewFSDecl->getInit() &&
-        (NewFSDecl->getStorageClass() == VarDecl::None ||
-         NewFSDecl->getStorageClass() == VarDecl::Static))
+    if (!New->getInit() &&
+        (New->getStorageClass() == VarDecl::None ||
+         New->getStorageClass() == VarDecl::Static))
       ; // change to NewIsTentative = true; once the code is moved.
     
     if (NewIsTentative || OldIsTentative)
@@ -880,13 +877,11 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
              R.getAsString());
         InvalidDecl = true;
       }
-      NewVD = FileVarDecl::Create(Context, CurContext, D.getIdentifierLoc(),
-                                  II, R, SC,
-                                  LastDeclarator);
+      NewVD = VarDecl::Create(Context, CurContext, D.getIdentifierLoc(),
+                              II, R, SC, LastDeclarator);
     } else {
-      NewVD = BlockVarDecl::Create(Context, CurContext, D.getIdentifierLoc(),
-                                   II, R, SC,
-                                   LastDeclarator);
+      NewVD = VarDecl::Create(Context, CurContext, D.getIdentifierLoc(),
+                              II, R, SC, LastDeclarator);
     }
     // Handle attributes prior to checking for duplicates in MergeVarDecl
     HandleDeclAttributes(NewVD, D.getDeclSpec().getAttributes(),
@@ -952,23 +947,23 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
   // Get the decls type and save a reference for later, since
   // CheckInitializerTypes may change it.
   QualType DclT = VDecl->getType(), SavT = DclT;
-  if (BlockVarDecl *BVD = dyn_cast<BlockVarDecl>(VDecl)) {
-    VarDecl::StorageClass SC = BVD->getStorageClass();
+  if (VDecl->isBlockVarDecl()) {
+    VarDecl::StorageClass SC = VDecl->getStorageClass();
     if (SC == VarDecl::Extern) { // C99 6.7.8p5
       Diag(VDecl->getLocation(), diag::err_block_extern_cant_init);
-      BVD->setInvalidDecl();
-    } else if (!BVD->isInvalidDecl()) {
+      VDecl->setInvalidDecl();
+    } else if (!VDecl->isInvalidDecl()) {
       if (CheckInitializerTypes(Init, DclT))
-        BVD->setInvalidDecl();
+        VDecl->setInvalidDecl();
       if (SC == VarDecl::Static) // C99 6.7.8p4.
         CheckForConstantInitializer(Init, DclT);
     }
-  } else if (FileVarDecl *FVD = dyn_cast<FileVarDecl>(VDecl)) {
-    if (FVD->getStorageClass() == VarDecl::Extern)
+  } else if (VDecl->isFileVarDecl()) {
+    if (VDecl->getStorageClass() == VarDecl::Extern)
       Diag(VDecl->getLocation(), diag::warn_extern_init);
-    if (!FVD->isInvalidDecl())
+    if (!VDecl->isInvalidDecl())
       if (CheckInitializerTypes(Init, DclT))
-        FVD->setInvalidDecl();
+        VDecl->setInvalidDecl();
     
     // C99 6.7.8p4. All file scoped initializers need to be constant.
     CheckForConstantInitializer(Init, DclT);
@@ -1012,13 +1007,12 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     VarDecl *IDecl = dyn_cast<VarDecl>(ID);
     if (!IDecl)
       continue;
-    FileVarDecl *FVD = dyn_cast<FileVarDecl>(IDecl);
-    BlockVarDecl *BVD = dyn_cast<BlockVarDecl>(IDecl);
     QualType T = IDecl->getType();
     
     // C99 6.7.5.2p2: If an identifier is declared to be an object with 
     // static storage duration, it shall not have a variable length array.
-    if ((FVD || BVD) && IDecl->getStorageClass() == VarDecl::Static) {
+    if ((IDecl->isFileVarDecl() || IDecl->isBlockVarDecl()) && 
+        IDecl->getStorageClass() == VarDecl::Static) {
       if (T->getAsVariableArrayType()) {
         Diag(IDecl->getLocation(), diag::err_typecheck_illegal_vla);
         IDecl->setInvalidDecl();
@@ -1026,7 +1020,8 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     }
     // Block scope. C99 6.7p7: If an identifier for an object is declared with
     // no linkage (C99 6.2.2p6), the type for the object shall be complete...
-    if (BVD && IDecl->getStorageClass() != VarDecl::Extern) {
+    if (IDecl->isBlockVarDecl() && 
+        IDecl->getStorageClass() != VarDecl::Extern) {
       if (T->isIncompleteType() && !IDecl->isInvalidDecl()) {
         Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type,
              T.getAsString());
@@ -1038,8 +1033,9 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     // storage-class specifier or with the storage-class specifier "static",
     // constitutes a tentative definition. Note: A tentative definition with
     // external linkage is valid (C99 6.2.2p5).
-    if (FVD && !FVD->getInit() && (FVD->getStorageClass() == VarDecl::Static || 
-                                   FVD->getStorageClass() == VarDecl::None)) {
+    if (IDecl && !IDecl->getInit() && 
+        (IDecl->getStorageClass() == VarDecl::Static || 
+         IDecl->getStorageClass() == VarDecl::None)) {
       if (T->isIncompleteArrayType()) {
         // C99 6.9.2 (p2, p5): Implicit initialization causes an incomplete
         // array to be completed. Don't issue a diagnostic.

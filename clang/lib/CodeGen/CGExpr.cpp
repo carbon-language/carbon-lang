@@ -338,20 +338,20 @@ void CodeGenFunction::EmitStoreThroughOCUComponentLValue(RValue Src, LValue Dst,
 
 
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
-  const ValueDecl *D = E->getDecl();
-  if (isa<BlockVarDecl>(D) || isa<ParmVarDecl>(D)) {
-    const VarDecl *VD = cast<VarDecl>(D);
+  const VarDecl *VD = dyn_cast<VarDecl>(E->getDecl());
+  
+  if (VD && (VD->isBlockVarDecl() || isa<ParmVarDecl>(VD))) {
     if (VD->getStorageClass() == VarDecl::Extern)
       return LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD, false));
     else {
-      llvm::Value *V = LocalDeclMap[D];
+      llvm::Value *V = LocalDeclMap[VD];
       assert(V && "BlockVarDecl not entered in LocalDeclMap?");
       return LValue::MakeAddr(V);
     }
-  } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+  } else if (VD && VD->isFileVarDecl()) {
+    return LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD, false));
+  } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl())) {
     return LValue::MakeAddr(CGM.GetAddrOfFunctionDecl(FD, false));
-  } else if (const FileVarDecl *FVD = dyn_cast<FileVarDecl>(D)) {
-    return LValue::MakeAddr(CGM.GetAddrOfGlobalVar(FVD, false));
   }
   assert(0 && "Unimp declref");
   //an invalid LValue, but the assert will

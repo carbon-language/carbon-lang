@@ -521,10 +521,10 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
     // C99 6.8.5p3: The declaration part of a 'for' statement shall only declare
     // identifiers for objects having storage class 'auto' or 'register'.
     for (ScopedDecl *D = DS->getDecl(); D; D = D->getNextDeclarator()) {
-      BlockVarDecl *BVD = dyn_cast<BlockVarDecl>(D);
-      if (BVD && !BVD->hasLocalStorage())
-        BVD = 0;
-      if (BVD == 0)
+      VarDecl *VD = dyn_cast<VarDecl>(D);
+      if (VD && VD->isBlockVarDecl() && !VD->hasLocalStorage())
+        VD = 0;
+      if (VD == 0)
         Diag(dyn_cast<ScopedDecl>(D)->getLocation(), 
              diag::err_non_variable_decl_in_for);
       // FIXME: mark decl erroneous!
@@ -556,13 +556,12 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
       // C99 6.8.5p3: The declaration part of a 'for' statement shall only declare
       // identifiers for objects having storage class 'auto' or 'register'.
       ScopedDecl *D = DS->getDecl();
-      BlockVarDecl *BVD = cast<BlockVarDecl>(D);
-      if (!BVD->hasLocalStorage())
-        return Diag(BVD->getLocation(), diag::err_non_variable_decl_in_for);
+      VarDecl *VD = cast<VarDecl>(D);
+      if (VD->isBlockVarDecl() && !VD->hasLocalStorage())
+        return Diag(VD->getLocation(), diag::err_non_variable_decl_in_for);
       if (D->getNextDeclarator())
         return Diag(D->getLocation(), diag::err_toomany_element_decls);
-    }
-    else
+    } else
       FirstType = static_cast<Expr*>(first)->getType();
     if (!isObjCObjectPointerType(FirstType))
         Diag(ForLoc, diag::err_selector_element_type,

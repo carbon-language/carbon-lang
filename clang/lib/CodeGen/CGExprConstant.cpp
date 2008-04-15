@@ -541,11 +541,13 @@ public:
       ValueDecl *Decl = cast<DeclRefExpr>(E)->getDecl();
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Decl))
         return CGM.GetAddrOfFunctionDecl(FD, false);
-      if (const FileVarDecl* VD = dyn_cast<FileVarDecl>(Decl))
-        return CGM.GetAddrOfGlobalVar(VD, false);
-      if (const BlockVarDecl* BVD = dyn_cast<BlockVarDecl>(Decl)) {
-        assert(CGF && "Can't access static local vars without CGF");
-        return CGF->GetAddrOfStaticLocalVar(BVD);
+      if (const VarDecl* VD = dyn_cast<VarDecl>(Decl)) {
+        if (VD->isFileVarDecl())
+          return CGM.GetAddrOfGlobalVar(VD, false);
+        else if (VD->isBlockVarDecl()) {
+          assert(CGF && "Can't access static local vars without CGF");
+          return CGF->GetAddrOfStaticLocalVar(VD);
+        }
       }
       break;
     }
