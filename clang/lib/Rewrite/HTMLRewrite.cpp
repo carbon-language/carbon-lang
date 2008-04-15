@@ -193,7 +193,7 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
       "<style type=\"text/css\">\n"
       " body { color:#000000; background-color:#ffffff }\n"
       " body { font-family:Helvetica, sans-serif; font-size:10pt }\n"
-      " h1 { font-size:12pt }\n"
+      " h1 { font-size:14pt }\n"
       " .code { border-spacing:0px; width:100%; }\n"
       " .code { font-family: \"Andale Mono\", monospace; font-size:10pt }\n"
       " .code { line-height: 1.2em }\n"
@@ -213,6 +213,15 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
       " .mrange { background-color:#dfddf3 }\n"
       " .mrange { border-bottom:1px solid #6F9DBE }\n"
       " .PathIndex { font-weight: bold }\n"
+      " table.simpletable {\n"
+      "   padding: 5px;\n"
+      "   font-size:12pt;\n"
+      "   margin:20px;\n"
+      "   border-collapse: collapse; border-spacing: 0px;\n"
+      " }\n"
+      " td.rowname {\n"
+      "   text-align:right; font-weight:bold; color:#444444;\n"
+      "   padding-right:2ex; }\n"
       "</style>\n</head>\n<body>");
 
   // Generate footer

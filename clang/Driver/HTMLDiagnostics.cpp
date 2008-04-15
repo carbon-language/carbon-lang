@@ -124,14 +124,26 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
   if (DirName == ".")
     DirName = llvm::sys::Path::GetCurrentDirectory().toString();
     
-  // Add the name of the file as an <h1> tag.
-
+  // Add the name of the file as an <h1> tag.  
+  
   {
     std::ostringstream os;
     
-    os << "<h1>" << html::EscapeText(DirName)
-       << "/"    << html::EscapeText(Entry->getName()) << "</h1>\n";
-
+    os << "<h3>Bug Summary</h3>\n<table class=\"simpletable\">\n"
+          "<tr><td class=\"rowname\">File:</td><td>"
+       << html::EscapeText(DirName)
+       << html::EscapeText(Entry->getName())
+       << "</td></tr>\n<tr><td class=\"rowname\">Location:</td><td>"
+          "<a href=\"#EndPath\">line "      
+       << (*D.rbegin()).getLocation().getLogicalLineNumber()
+       << ", column "
+       << (*D.rbegin()).getLocation().getLogicalColumnNumber()
+       << "</a></td></tr>\n"
+          "<tr><td class=\"rowname\">Description:</td><td>"
+       << D.getDescription()
+       << "</td></tr>\n</table>\n"
+          "<h3>Annotated Source Code</h3>\n";
+    
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
   }
   
