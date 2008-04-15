@@ -1766,7 +1766,8 @@ namespace ISD {
     void setNest()  { Flags |= One << NestOffs; }
 
     unsigned getByValAlign() const {
-      return (One << ((Flags & ByValAlign) >> ByValAlignOffs)) / 2;
+      return (unsigned) 
+        ((One << ((Flags & ByValAlign) >> ByValAlignOffs)) / 2);
     }
     void setByValAlign(unsigned A) {
       Flags = (Flags & ~ByValAlign) |
@@ -1777,7 +1778,8 @@ namespace ISD {
     void setSplit()  { Flags |= One << SplitOffs; }
 
     unsigned getOrigAlign() const {
-      return (One << ((Flags & OrigAlign) >> OrigAlignOffs)) / 2;
+      return (unsigned)
+        ((One << ((Flags & OrigAlign) >> OrigAlignOffs)) / 2);
     }
     void setOrigAlign(unsigned A) {
       Flags = (Flags & ~OrigAlign) |
@@ -1785,7 +1787,7 @@ namespace ISD {
     }
 
     unsigned getByValSize() const {
-      return (Flags & ByValSize) >> ByValSizeOffs;
+      return (unsigned)((Flags & ByValSize) >> ByValSizeOffs);
     }
     void setByValSize(unsigned S) {
       Flags = (Flags & ~ByValSize) | (uint64_t(S) << ByValSizeOffs);
