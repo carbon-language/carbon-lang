@@ -29,3 +29,10 @@ void f4(int k) {
     
   k = 2;  // expected-warning {{value stored to variable is never used}}
 }
+
+void f5() {
+
+  int x = 4; // no-warning
+  int *p = &x; // expected-warning{{value stored to variable is never used}}
+
+}
