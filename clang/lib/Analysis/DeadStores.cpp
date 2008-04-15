@@ -65,7 +65,7 @@ public:
         
         if (V->hasLocalStorage())
           if (Expr* E = V->getInit()) {
-            if (!Live(DS->getDecl(),AD)) {
+            if (!Live(V, AD)) {
               // Special case: check for initializations with constants.
               //
               //  e.g. : int x = 0;
