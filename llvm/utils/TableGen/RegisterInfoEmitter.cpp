@@ -153,6 +153,20 @@ static void addSubSuperReg(Record *R, Record *S,
       addSubSuperReg(R, *I, SubRegs, SuperRegs, Aliases);
 }
 
+class RegisterSorter {
+private:
+  std::map<Record*, std::set<Record*> > &RegisterSubRegs;
+
+public:
+  RegisterSorter(std::map<Record*, std::set<Record*> > &RS)
+    : RegisterSubRegs(RS) {};
+
+  bool operator()(Record *RegA, Record *RegB) {
+    // B is sub-register of A.
+    return RegisterSubRegs.count(RegA) && RegisterSubRegs[RegA].count(RegB);
+  }
+};
+
 // RegisterInfoEmitter::run - Main register file description emitter.
 //
 void RegisterInfoEmitter::run(std::ostream &OS) {
@@ -474,9 +488,14 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   for (std::map<Record*, std::set<Record*> >::iterator
          I = RegisterSubRegs.begin(), E = RegisterSubRegs.end(); I != E; ++I) {
     OS << "  const unsigned " << I->first->getName() << "_SubRegsSet[] = { ";
+    std::vector<Record*> SubRegsVector;
     for (std::set<Record*>::iterator ASI = I->second.begin(),
            E = I->second.end(); ASI != E; ++ASI)
-      OS << getQualifiedName(*ASI) << ", ";
+      SubRegsVector.push_back(*ASI);
+    RegisterSorter RS(RegisterSubRegs);
+    std::stable_sort(SubRegsVector.begin(), SubRegsVector.end(), RS);
+    for (unsigned i = 0, e = SubRegsVector.size(); i != e; ++i)
+      OS << getQualifiedName(SubRegsVector[i]) << ", ";
     OS << "0 };\n";
   }
 
@@ -505,9 +524,15 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   for (std::map<Record*, std::set<Record*> >::iterator
          I = RegisterSuperRegs.begin(), E = RegisterSuperRegs.end(); I != E; ++I) {
     OS << "  const unsigned " << I->first->getName() << "_SuperRegsSet[] = { ";
+
+    std::vector<Record*> SuperRegsVector;
     for (std::set<Record*>::iterator ASI = I->second.begin(),
            E = I->second.end(); ASI != E; ++ASI)
-      OS << getQualifiedName(*ASI) << ", ";
+      SuperRegsVector.push_back(*ASI);
+    RegisterSorter RS(RegisterSubRegs);
+    std::stable_sort(SuperRegsVector.begin(), SuperRegsVector.end(), RS);
+    for (unsigned i = 0, e = SuperRegsVector.size(); i != e; ++i)
+      OS << getQualifiedName(SuperRegsVector[i]) << ", ";
     OS << "0 };\n";
   }
 

@@ -353,9 +353,10 @@ public:
     return get(RegNo).AliasSet;
   }
 
-  /// getSubRegisters - Return the set of registers that are sub-registers of
+  /// getSubRegisters - Return the list of registers that are sub-registers of
   /// the specified register, or a null list of there are none. The list
-  /// returned is zero terminated.
+  /// returned is zero terminated and sorted according to super-sub register
+  /// relations. e.g. X86::RAX's sub-register list is EAX, AX, AL, AH.
   ///
   const unsigned *getSubRegisters(unsigned RegNo) const {
     return get(RegNo).SubRegs;
@@ -369,9 +370,10 @@ public:
     return get(RegNo).ImmSubRegs;
   }
 
-  /// getSuperRegisters - Return the set of registers that are super-registers
+  /// getSuperRegisters - Return the list of registers that are super-registers
   /// of the specified register, or a null list of there are none. The list
-  /// returned is zero terminated.
+  /// returned is zero terminated and sorted according to super-sub register
+  /// relations. e.g. X86::AL's super-register list is RAX, EAX, AX.
   ///
   const unsigned *getSuperRegisters(unsigned RegNo) const {
     return get(RegNo).SuperRegs;
