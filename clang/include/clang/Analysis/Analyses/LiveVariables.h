@@ -28,6 +28,8 @@ struct LiveVariables_ValueTypes {
 
   struct ObserverTy;
 
+  // We keep dataflow state for declarations and block-level expressions;
+  typedef ExprDeclBitVector_Types::ValTy ValTy;
 
   // We need to keep track of both declarations and CFGBlock-level expressions,
   // (so that we don't explore such expressions twice).  We also want
@@ -36,12 +38,10 @@ struct LiveVariables_ValueTypes {
   
   struct AnalysisDataTy : public ExprDeclBitVector_Types::AnalysisDataTy {
     ObserverTy* Observer;
+    ValTy AlwaysLive;
     
     AnalysisDataTy() : Observer(NULL) {}
   };
-
-    // We only keep actual dataflow state for declarations.
-  typedef ExprDeclBitVector_Types::ValTy ValTy;
   
   //===-----------------------------------------------------===//
   // ObserverTy - Observer for uninitialized values queries.
@@ -61,6 +61,8 @@ struct LiveVariables_ValueTypes {
 
 class LiveVariables : public DataflowValues<LiveVariables_ValueTypes,
                                             dataflow::backward_analysis_tag> {
+                                              
+                                              
 public:
   typedef LiveVariables_ValueTypes::ObserverTy ObserverTy;
     

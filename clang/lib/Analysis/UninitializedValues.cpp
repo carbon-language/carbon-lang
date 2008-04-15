@@ -58,13 +58,15 @@ class VISIBILITY_HIDDEN TransferFuncs
   UninitializedValues::ValTy V;
   UninitializedValues::AnalysisDataTy& AD;
 public:
-  TransferFuncs(UninitializedValues::AnalysisDataTy& ad) : AD(ad) {
-    V.resetValues(AD);
-  }
+  TransferFuncs(UninitializedValues::AnalysisDataTy& ad) : AD(ad) {}
   
   UninitializedValues::ValTy& getVal() { return V; }
   CFG& getCFG() { return AD.getCFG(); }
   
+  void SetTopValue(UninitializedValues::ValTy& X) {
+    X.resetValues(AD);
+  }
+    
   bool VisitDeclRefExpr(DeclRefExpr* DR);
   bool VisitBinaryOperator(BinaryOperator* B);
   bool VisitUnaryOperator(UnaryOperator* U);
@@ -76,7 +78,7 @@ public:
   bool Visit(Stmt *S);
   bool BlockStmt_VisitExpr(Expr* E);
     
-  void VisitTerminator(Stmt* T) { Visit(T); }
+  void VisitTerminator(Stmt* T) { }
   
   BlockVarDecl* FindBlockVarDecl(Stmt* S);
 };
@@ -216,12 +218,9 @@ bool TransferFuncs::BlockStmt_VisitExpr(Expr* E) {
 //  In our transfer functions we take the approach that any
 //  combination of unintialized values, e.g. Unitialized + ___ = Unitialized.
 //
-//  Merges take the opposite approach.
-//
-//  In the merge of dataflow values we prefer unsoundness, and
-//  prefer false negatives to false positives.  At merges, if a value for a
-//  tracked Decl is EVER initialized in any of the predecessors we treat it as
-//  initialized at the confluence point.
+//  Merges take the same approach, preferring soundness.  At a confluence point,
+//  if any predecessor has a variable marked uninitialized, the value is
+//  uninitialized at the confluence point.
 //===----------------------------------------------------------------------===//      
 
 namespace {

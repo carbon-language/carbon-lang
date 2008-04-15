@@ -19,12 +19,20 @@
 #include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
 #include "clang/Analysis/FlowSensitive/DataflowSolver.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 
 #include <string.h>
 #include <stdio.h>
 
 using namespace clang;
+
+//===----------------------------------------------------------------------===//
+// Useful constants.
+//===----------------------------------------------------------------------===//      
+
+static const bool Alive = true;
+static const bool Dead = false; 
 
 //===----------------------------------------------------------------------===//
 // Dataflow initialization logic.
@@ -35,9 +43,49 @@ class VISIBILITY_HIDDEN RegisterDecls
   : public CFGRecStmtDeclVisitor<RegisterDecls> {
     
   LiveVariables::AnalysisDataTy& AD;
+  
+  typedef llvm::SmallVector<VarDecl*, 20> AlwaysLiveTy;
+  AlwaysLiveTy AlwaysLive;
+
+    
 public:
-  RegisterDecls(LiveVariables::AnalysisDataTy& ad) : AD(ad) {}  
-  void VisitVarDecl(VarDecl* VD) { AD.Register(VD); }
+  RegisterDecls(LiveVariables::AnalysisDataTy& ad) : AD(ad) {}
+
+  ~RegisterDecls() {
+
+    AD.AlwaysLive.resetValues(AD);
+    
+    for (AlwaysLiveTy::iterator I = AlwaysLive.begin(), E = AlwaysLive.end();
+         I != E; ++ I)       
+      AD.AlwaysLive(*I, AD) = Alive;      
+  }
+
+  void VisitVarDecl(VarDecl* VD) {
+    // Register the VarDecl for tracking.
+    AD.Register(VD);
+    
+    // Does the variable have global storage?  If so, it is always live.
+    if (VD->hasGlobalStorage())
+      AlwaysLive.push_back(VD);    
+  }
+  
+  void VisitUnaryOperator(UnaryOperator* U) {
+    // Check for '&'.  Any VarDecl whose value has its address-taken we
+    // treat as always being live (flow-insensitive).
+
+    Expr* E = U->getSubExpr()->IgnoreParenCasts();
+    
+    if (U->getOpcode() == UnaryOperator::AddrOf)
+      if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E))
+        if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl())) {
+          AD.Register(VD);
+          AlwaysLive.push_back(VD);
+          return;
+        }
+      
+    Visit(E);
+  }
+    
   CFG& getCFG() { return AD.getCFG(); }
 };
 } // end anonymous namespace
@@ -55,9 +103,6 @@ LiveVariables::LiveVariables(CFG& cfg) {
 //===----------------------------------------------------------------------===//      
 
 namespace {
-  
-static const bool Alive = true;
-static const bool Dead = false;  
 
 class VISIBILITY_HIDDEN TransferFuncs : public CFGRecStmtVisitor<TransferFuncs>{
   LiveVariables::AnalysisDataTy& AD;
@@ -75,6 +120,11 @@ public:
   void VisitUnaryOperator(UnaryOperator* U);
   void Visit(Stmt *S);  
   void VisitTerminator(Stmt* S); 
+  
+  void SetTopValue(LiveVariables::ValTy& V) {
+    V = AD.AlwaysLive;    
+  }
+  
 };
       
 void TransferFuncs::Visit(Stmt *S) {
@@ -151,7 +201,11 @@ void TransferFuncs::VisitAssign(BinaryOperator* B) {
 
   // Assigning to a variable?
   if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(LHS->IgnoreParens())) {
-    LiveState(DR->getDecl(), AD) = Dead;
+    
+    // Update liveness inforamtion.
+    unsigned bit = AD.getIdx(DR->getDecl());
+    LiveState.getDeclBit(bit) = Dead | AD.AlwaysLive.getDeclBit(bit);
+    
     if (AD.Observer) { AD.Observer->ObserverKill(DR); }
     
     // Handle things like +=, etc., which also generate "uses"
@@ -170,7 +224,10 @@ void TransferFuncs::VisitDeclStmt(DeclStmt* DS) {
   // possibly be live before they are declared.
   for (ScopedDecl* D = DS->getDecl(); D != NULL; D = D->getNextDeclarator())
     if (VarDecl* VD = dyn_cast<VarDecl>(D)) {
-      LiveState(D, AD) = Dead;
+      
+      // Update liveness information.
+      unsigned bit = AD.getIdx(VD);
+      LiveState.getDeclBit(bit) = Dead | AD.AlwaysLive.getDeclBit(bit);
       
       if (Expr* Init = VD->getInit())
         Visit(Init);
