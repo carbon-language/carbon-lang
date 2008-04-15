@@ -75,6 +75,8 @@ public:
   
   bool Visit(Stmt *S);
   bool BlockStmt_VisitExpr(Expr* E);
+    
+  void VisitTerminator(Stmt* T) { Visit(T); }
   
   BlockVarDecl* FindBlockVarDecl(Stmt* S);
 };

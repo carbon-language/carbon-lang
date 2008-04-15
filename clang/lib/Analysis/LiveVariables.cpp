@@ -73,7 +73,8 @@ public:
   void VisitAssign(BinaryOperator* B);
   void VisitDeclStmt(DeclStmt* DS);
   void VisitUnaryOperator(UnaryOperator* U);
-  void Visit(Stmt *S);
+  void Visit(Stmt *S);  
+  void VisitTerminator(Stmt* S); 
 };
       
 void TransferFuncs::Visit(Stmt *S) {
@@ -90,6 +91,23 @@ void TransferFuncs::Visit(Stmt *S) {
     // For block-level expressions, mark that they are live.
     LiveState(S,AD) = Alive;
 }
+  
+void TransferFuncs::VisitTerminator(Stmt* S) {
+  return;
+  
+  for (Stmt::child_iterator I = S->child_begin(), E = S->child_end();
+       I != E; ++I) {
+    
+    Stmt* Child = *I;
+    if (!Child) continue;
+    
+    if (getCFG().isBlkExpr(Child)) {
+      LiveState(Child, AD) = Alive;
+      return;  // Only one "condition" expression.
+    }
+  }
+}
+
 
 void TransferFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
   if (VarDecl* V = dyn_cast<VarDecl>(DR->getDecl())) 

@@ -159,7 +159,7 @@ public:
 
     if (I != M.end()) {
       TF.getVal().copyValues(I->second);
-      ProcessBlock(B, recordStmtValues);
+      ProcessBlock(B, recordStmtValues, AnalysisDirTag());
     }
   }
   
@@ -192,7 +192,7 @@ private:
     while (!WorkList.isEmpty()) {
       const CFGBlock* B = WorkList.dequeue();
       ProcessMerge(cfg,B);
-      ProcessBlock(B, recordStmtValues);
+      ProcessBlock(B, recordStmtValues, AnalysisDirTag());
       UpdateEdges(cfg,B,TF.getVal());
     }
   }
@@ -230,11 +230,23 @@ private:
     
     // Set the data for the block.
     D.getBlockDataMap()[B].copyValues(V);
-  }
-  
+  }  
 
   /// ProcessBlock - Process the transfer functions for a given block.
-  void ProcessBlock(const CFGBlock* B, bool recordStmtValues) {
+  void ProcessBlock(const CFGBlock* B, bool recordStmtValues,
+                    dataflow::forward_analysis_tag) {
+    
+    for (StmtItr I=ItrTraits::StmtBegin(B), E=ItrTraits::StmtEnd(B); I!=E;++I)
+      ProcessStmt(*I, recordStmtValues, AnalysisDirTag());
+    
+    if (Stmt* Term = (Stmt*) B->getTerminator()) TF.VisitTerminator(Term);  
+  }
+  
+  void ProcessBlock(const CFGBlock* B, bool recordStmtValues,
+                    dataflow::backward_analysis_tag) {
+    
+    if (Stmt* Term = (Stmt*) B->getTerminator()) TF.VisitTerminator(Term);
+
     for (StmtItr I=ItrTraits::StmtBegin(B), E=ItrTraits::StmtEnd(B); I!=E;++I)
       ProcessStmt(*I, recordStmtValues, AnalysisDirTag());
   }
