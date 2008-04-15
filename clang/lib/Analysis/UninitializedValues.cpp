@@ -36,7 +36,7 @@ class VISIBILITY_HIDDEN RegisterDecls
 public:
   RegisterDecls(UninitializedValues::AnalysisDataTy& ad) :  AD(ad) {}
   
-  void VisitBlockVarDecl(VarDecl* VD) { AD.Register(VD); }
+  void VisitVarDecl(VarDecl* VD) { AD.Register(VD); }
   CFG& getCFG() { return AD.getCFG(); }
 };
   
