@@ -55,6 +55,7 @@ public:
     switch (D->getKind()) {
         DISPATCH_CASE(Function,FunctionDecl)
         DISPATCH_CASE(Var,VarDecl)
+        DISPATCH_CASE(ParmVar,ParmVarDecl)       // FIXME: (same)
         DISPATCH_CASE(EnumConstant,EnumConstantDecl)
         DISPATCH_CASE(Typedef,TypedefDecl)
         DISPATCH_CASE(Struct,RecordDecl)    // FIXME: Refine.  VisitStructDecl?
