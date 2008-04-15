@@ -600,6 +600,18 @@ public:
                         CallExpr* CE, LVal L,
                         ExplodedNode<ValueState>* Pred);  
   
+  virtual void EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
+                                   GRExprEngine& Engine,
+                                   GRStmtNodeBuilder<ValueState>& Builder,
+                                   ObjCMessageExpr* ME,
+                                   ExplodedNode<ValueState>* Pred);
+  
+  bool EvalObjCMessageExprAux(ExplodedNodeSet<ValueState>& Dst,
+                              GRExprEngine& Engine,
+                              GRStmtNodeBuilder<ValueState>& Builder,
+                              ObjCMessageExpr* ME,
+                              ExplodedNode<ValueState>* Pred);
+
   // End-of-path.
   
   virtual void EvalEndPath(GRExprEngine& Engine,
@@ -800,6 +812,34 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
   }
       
   Builder.MakeNode(Dst, CE, Pred, St);
+}
+
+
+void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
+                                     GRExprEngine& Eng,
+                                     GRStmtNodeBuilder<ValueState>& Builder,
+                                     ObjCMessageExpr* ME,
+                                     ExplodedNode<ValueState>* Pred) {
+  
+  if (EvalObjCMessageExprAux(Dst, Eng, Builder, ME, Pred))
+    GRSimpleVals::EvalObjCMessageExpr(Dst, Eng, Builder, ME, Pred);
+}
+
+bool CFRefCount::EvalObjCMessageExprAux(ExplodedNodeSet<ValueState>& Dst,
+                                        GRExprEngine& Eng,
+                                        GRStmtNodeBuilder<ValueState>& Builder,
+                                        ObjCMessageExpr* ME,
+                                        ExplodedNode<ValueState>* Pred) {
+    
+  // Handle "toll-free bridging."  Eventually we will want to track the
+  // underlying object type associated.
+  
+  Selector S = ME->getSelector();
+  
+  if (!S.isUnarySelector())
+    return true;
+
+  return true; // FIXME: change to return false when more is implemented.
 }
 
 // End-of-path.
