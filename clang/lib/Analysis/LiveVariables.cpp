@@ -110,14 +110,13 @@ void TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
   case UnaryOperator::PostDec:
   case UnaryOperator::PreInc:
   case UnaryOperator::PreDec:
-  case UnaryOperator::AddrOf:
     // Walk through the subexpressions, blasting through ParenExprs
     // until we either find a DeclRefExpr or some non-DeclRefExpr
     // expression.
     if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E->IgnoreParens())) 
-      if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl())) {        
-        // Treat the --/++/& operator as a kill.
-        LiveState(VD, AD) = Dead;
+      if (isa<VarDecl>(DR->getDecl())) {
+        // Treat the --/++ operator as a kill.  Note that the variable
+        // is still live, just its value has been changed.
         if (AD.Observer) { AD.Observer->ObserverKill(DR); }
         return VisitDeclRefExpr(DR);
       }
@@ -134,7 +133,7 @@ void TransferFuncs::VisitAssign(BinaryOperator* B) {
 
   // Assigning to a variable?
   if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(LHS->IgnoreParens())) {
-    LiveState(DR->getDecl(),AD) = Dead;
+    LiveState(DR->getDecl(), AD) = Dead;
     if (AD.Observer) { AD.Observer->ObserverKill(DR); }
     
     // Handle things like +=, etc., which also generate "uses"
@@ -153,7 +152,7 @@ void TransferFuncs::VisitDeclStmt(DeclStmt* DS) {
   // possibly be live before they are declared.
   for (ScopedDecl* D = DS->getDecl(); D != NULL; D = D->getNextDeclarator())
     if (VarDecl* VD = dyn_cast<VarDecl>(D)) {
-      LiveState(D,AD) = Dead;
+      LiveState(D, AD) = Dead;
       
       if (Expr* Init = VD->getInit())
         Visit(Init);
