@@ -228,7 +228,7 @@ public:
     GRExprEngine& Eng = BR.getEngine();
     
     for (GRExprEngine::UndefReceiversTy::iterator I=Eng.undef_receivers_begin(),
-         E = Eng.undef_receivers_end(); I!=E; ++I) {
+         End = Eng.undef_receivers_end(); I!=End; ++I) {
           
       // Generate a report for this bug.
       RangedBugReport report(*this, *I);
