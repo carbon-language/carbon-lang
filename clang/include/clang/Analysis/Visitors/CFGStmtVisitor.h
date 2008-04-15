@@ -118,6 +118,26 @@ public:
     
   /// VisitChildren: Call "Visit" on each child of S.
   void VisitChildren(Stmt* S) {
+    
+    switch (S->getStmtClass()) {
+      default:
+        break;
+        
+      case Stmt::StmtExprClass: {
+        CompoundStmt* CS = cast<StmtExpr>(S)->getSubStmt();
+        if (CS->body_empty()) return;
+        static_cast<ImplClass*>(this)->Visit(CS->body_back());
+        return;
+      }
+        
+      case Stmt::BinaryOperatorClass: {
+        BinaryOperator* B = cast<BinaryOperator>(S);
+        if (B->getOpcode() != BinaryOperator::Comma) break;
+        static_cast<ImplClass*>(this)->Visit(B->getRHS());
+        return;
+      }
+    }
+        
     for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I != E;++I)
       if (*I) static_cast<ImplClass*>(this)->Visit(*I);    
   }
