@@ -59,9 +59,11 @@ echo DARWIN_VERS = $DARWIN_VERS
 # If the user has CC set in their environment unset it now
 unset CC
 
-DT_HOME=$DEST_DIR//Developer/usr
+DT_HOME=$DEST_DIR/Developer/usr
+DEST_ROOT="/Developer$DEST_ROOT"
 if [ "x$DEVELOPER_BIN" != "x" ]; then
-DT_HOME=$DEST_DIR/$DEVELOPER_DIR/usr
+    DT_HOME=$DEST_DIR/$DEVELOPER_DIR/usr
+    DEST_ROOT="/$DEVELOPER_DIR$DEST_ROOT"
 fi
 
 ################################################################################
