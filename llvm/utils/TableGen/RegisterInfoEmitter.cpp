@@ -21,6 +21,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Streams.h"
 #include <set>
+#include <algorithm>
 using namespace llvm;
 
 // runEnums - Print out enum values for all of the registers.

@@ -143,7 +143,22 @@ bool LowerInvoke::doInitialization(Module &M) {
                                       Constant::getNullValue(PtrJBList),
                                       "llvm.sjljeh.jblist", &M);
     }
+
+// VisualStudio defines setjmp as _setjmp via #include <csetjmp> / <setjmp.h>, 
+// so it looks like Intrinsic::_setjmp
+#if defined(_MSC_VER) && defined(setjmp)
+#define setjmp_undefined_for_visual_studio
+#undef setjmp
+#endif
+
     SetJmpFn = Intrinsic::getDeclaration(&M, Intrinsic::setjmp);
+
+#if defined(_MSC_VER) && defined(setjmp_undefined_for_visual_studio)
+// let's return it to _setjmp state in case anyone ever needs it after this 
+// point under VisualStudio
+#define setjmp _setjmp 
+#endif
+
     LongJmpFn = Intrinsic::getDeclaration(&M, Intrinsic::longjmp);
   }
 
