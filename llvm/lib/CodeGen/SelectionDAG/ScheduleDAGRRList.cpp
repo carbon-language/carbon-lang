@@ -239,7 +239,8 @@ void ScheduleDAGRRList::Schedule() {
 /// possible. It will be commuted when it is translated to a MI.
 void ScheduleDAGRRList::CommuteNodesToReducePressure() {
   SmallPtrSet<SUnit*, 4> OperandSeen;
-  for (unsigned i = Sequence.size()-1; i != 0; --i) {  // Ignore first node.
+  for (unsigned i = Sequence.size(); i != 0; ) {
+    --i;
     SUnit *SU = Sequence[i];
     if (!SU || !SU->Node) continue;
     if (SU->isCommutable) {
@@ -311,11 +312,8 @@ void ScheduleDAGRRList::ReleasePred(SUnit *PredSU, bool isChain,
 #endif
   
   if (PredSU->NumSuccsLeft == 0) {
-    // EntryToken has to go last!  Special case it here.
-    if (!PredSU->Node || PredSU->Node->getOpcode() != ISD::EntryToken) {
-      PredSU->isAvailable = true;
-      AvailableQueue->push(PredSU);
-    }
+    PredSU->isAvailable = true;
+    AvailableQueue->push(PredSU);
   }
 }
 
@@ -735,9 +733,10 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
                                  I->isCtrl, I->isSpecial));
     }
 
-    RemovePred(SU, ChainPred, true, false);
-    if (isNewLoad) {
-      AddPred(LoadSU,ChainPred, true, false);
+    if (ChainPred) {
+      RemovePred(SU, ChainPred, true, false);
+      if (isNewLoad)
+        AddPred(LoadSU, ChainPred, true, false);
     }
     for (unsigned i = 0, e = LoadPreds.size(); i != e; ++i) {
       SDep *Pred = &LoadPreds[i];
@@ -941,9 +940,12 @@ bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU,
 void ScheduleDAGRRList::ListScheduleBottomUp() {
   unsigned CurCycle = 0;
   // Add root to Available queue.
-  SUnit *RootSU = SUnitMap[DAG.getRoot().Val].front();
-  RootSU->isAvailable = true;
-  AvailableQueue->push(RootSU);
+  if (!SUnits.empty()) {
+    SUnit *RootSU = SUnitMap[DAG.getRoot().Val].front();
+    assert(RootSU->Succs.empty() && "Graph root shouldn't have successors!");
+    RootSU->isAvailable = true;
+    AvailableQueue->push(RootSU);
+  }
 
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back.  Schedule the node.
@@ -1066,12 +1068,6 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
     ++CurCycle;
   }
 
-  // Add entry node last
-  if (DAG.getEntryNode().Val != DAG.getRoot().Val) {
-    SUnit *Entry = SUnitMap[DAG.getEntryNode().Val].front();
-    Sequence.push_back(Entry);
-  }
-
   // Reverse the order if it is bottom up.
   std::reverse(Sequence.begin(), Sequence.end());
   
@@ -1079,16 +1075,30 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
 #ifndef NDEBUG
   // Verify that all SUnits were scheduled.
   bool AnyNotSched = false;
+  unsigned DeadNodes = 0;
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
-    if (SUnits[i].NumSuccsLeft != 0) {
+    if (!SUnits[i].isScheduled) {
+      if (SUnits[i].NumPreds == 0 && SUnits[i].NumSuccs == 0) {
+        ++DeadNodes;
+        continue;
+      }
       if (!AnyNotSched)
         cerr << "*** List scheduling failed! ***\n";
       SUnits[i].dump(&DAG);
       cerr << "has not been scheduled!\n";
       AnyNotSched = true;
     }
+    if (SUnits[i].NumSuccsLeft != 0) {
+      if (!AnyNotSched)
+        cerr << "*** List scheduling failed! ***\n";
+      SUnits[i].dump(&DAG);
+      cerr << "has successors left!\n";
+      AnyNotSched = true;
+    }
   }
   assert(!AnyNotSched);
+  assert(Sequence.size() + DeadNodes == SUnits.size() &&
+         "The number of nodes scheduled doesn't match the expected number!");
 #endif
 }
 
@@ -1145,22 +1155,16 @@ void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
 /// schedulers.
 void ScheduleDAGRRList::ListScheduleTopDown() {
   unsigned CurCycle = 0;
-  SUnit *Entry = SUnitMap[DAG.getEntryNode().Val].front();
 
   // All leaves to Available queue.
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
     // It is available if it has no predecessors.
-    if (SUnits[i].Preds.empty() && &SUnits[i] != Entry) {
+    if (SUnits[i].Preds.empty()) {
       AvailableQueue->push(&SUnits[i]);
       SUnits[i].isAvailable = true;
     }
   }
   
-  // Emit the entry node first.
-  ScheduleNodeTopDown(Entry, CurCycle);
-  Sequence.push_back(Entry);
-  ++CurCycle;
-
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back.  Schedule the node.
   std::vector<SUnit*> NotReady;
@@ -1181,23 +1185,37 @@ void ScheduleDAGRRList::ListScheduleTopDown() {
       ScheduleNodeTopDown(CurSU, CurCycle);
       Sequence.push_back(CurSU);
     }
-    CurCycle++;
+    ++CurCycle;
   }
   
   
 #ifndef NDEBUG
   // Verify that all SUnits were scheduled.
   bool AnyNotSched = false;
+  unsigned DeadNodes = 0;
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
     if (!SUnits[i].isScheduled) {
+      if (SUnits[i].NumPreds == 0 && SUnits[i].NumSuccs == 0) {
+        ++DeadNodes;
+        continue;
+      }
       if (!AnyNotSched)
         cerr << "*** List scheduling failed! ***\n";
       SUnits[i].dump(&DAG);
       cerr << "has not been scheduled!\n";
       AnyNotSched = true;
     }
+    if (SUnits[i].NumPredsLeft != 0) {
+      if (!AnyNotSched)
+        cerr << "*** List scheduling failed! ***\n";
+      SUnits[i].dump(&DAG);
+      cerr << "has predecessors left!\n";
+      AnyNotSched = true;
+    }
   }
   assert(!AnyNotSched);
+  assert(Sequence.size() + DeadNodes == SUnits.size() &&
+         "The number of nodes scheduled doesn't match the expected number!");
 #endif
 }
 

@@ -863,8 +863,11 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
       Node->dump(&DAG);
 #endif
       assert(0 && "This target-independent node should have been selected!");
-    case ISD::EntryToken: // fall thru
-    case ISD::TokenFactor:
+      break;
+    case ISD::EntryToken:
+      assert(0 && "EntryToken should have been excluded from the schedule!");
+      break;
+    case ISD::TokenFactor: // fall thru
     case ISD::LABEL:
     case ISD::DECLARE:
     case ISD::SRCVALUE:

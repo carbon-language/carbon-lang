@@ -164,20 +164,15 @@ void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
 /// schedulers.
 void ScheduleDAGList::ListScheduleTopDown() {
   unsigned CurCycle = 0;
-  SUnit *Entry = SUnitMap[DAG.getEntryNode().Val].front();
 
   // All leaves to Available queue.
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
     // It is available if it has no predecessors.
-    if (SUnits[i].Preds.empty() && &SUnits[i] != Entry) {
+    if (SUnits[i].Preds.empty()) {
       AvailableQueue->push(&SUnits[i]);
       SUnits[i].isAvailable = SUnits[i].isPending = true;
     }
   }
-  
-  // Emit the entry node first.
-  ScheduleNodeTopDown(Entry, CurCycle);
-  HazardRec->EmitInstruction(Entry->Node);
   
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back.  Schedule the node.
