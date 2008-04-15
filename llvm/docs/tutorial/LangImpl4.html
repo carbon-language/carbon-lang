@@ -123,7 +123,7 @@ entry:
 
 <p>In this case, the LHS and RHS of the multiplication are the same value.  We'd
 really like to see this generate "<tt>tmp = x+3; result = tmp*tmp;</tt>" instead
-of computing "<tt>x*3</tt>" twice.</p>
+of computing "<tt>x+3</tt>" twice.</p>
 
 <p>Unfortunately, no amount of local analysis will be able to detect and correct
 this.  This requires two transformations: reassociation of expressions (to 
