@@ -4164,7 +4164,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       RetVals.push_back(RegisterVT);
       ISD::ArgFlagsTy MyFlags = Flags;
       if (NumRegs > 1 && i == 0)
-        MyFlags.setDivided();
+        MyFlags.setSplit();
       // if it isn't first piece, alignment must be 1
       else if (i > 0)
         MyFlags.setOrigAlign(1);
@@ -4289,7 +4289,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       // if it isn't first piece, alignment must be 1
       ISD::ArgFlagsTy MyFlags = Flags;
       if (NumParts > 1 && i == 0)
-        MyFlags.setDivided();
+        MyFlags.setSplit();
       else if (i != 0)
         MyFlags.setOrigAlign(1);
 

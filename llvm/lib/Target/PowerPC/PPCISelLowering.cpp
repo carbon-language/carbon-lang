@@ -1423,7 +1423,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
     ISD::ArgFlagsTy Flags =
       cast<ARG_FLAGSSDNode>(Op.getOperand(ArgNo+3))->getArgFlags();
     // See if next argument requires stack alignment in ELF
-    bool Align = Flags.isDivided(); 
+    bool Align = Flags.isSplit(); 
 
     unsigned CurArgOffset = ArgOffset;
 
@@ -1855,7 +1855,7 @@ SDOperand PPCTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG,
     ISD::ArgFlagsTy Flags =
       cast<ARG_FLAGSSDNode>(Op.getOperand(5+2*i+1))->getArgFlags();
     // See if next argument requires stack alignment in ELF
-    bool Align = Flags.isDivided();
+    bool Align = Flags.isSplit();
 
     // PtrOff will be used to store the current argument to the stack if a
     // register cannot be found for it.
