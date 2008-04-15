@@ -457,7 +457,7 @@ int DeltaTree::getDeltaAt(unsigned FileIndex) const {
     // partial results.
     if (NumValsGreater != Node->getNumValuesUsed() &&
         Node->getValue(NumValsGreater).FileLoc == FileIndex)
-      return Result;
+      return Result+IN->getChild(NumValsGreater)->getFullDelta();
     
     // Otherwise, traverse down the tree.  The selected subtree may be
     // partially included in the range.
