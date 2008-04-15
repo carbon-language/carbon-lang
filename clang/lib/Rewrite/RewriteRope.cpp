@@ -18,14 +18,61 @@ using namespace clang;
 using llvm::dyn_cast;
 using llvm::cast;
 
+/// RewriteRope is a "strong" string class, designed to make insertions and
+/// deletions in the middle of the string nearly constant time (really, they are
+/// O(log N), but with a very low constant factor).
+///
+/// The implementation of this datastructure is a conceptual linear sequence of
+/// RopePiece elements.  Each RopePiece represents a view on a separately
+/// allocated and reference counted string.  This means that splitting a very
+/// long string can be done in constant time by splitting a RopePiece that
+/// references the whole string into two rope pieces that reference each half.
+/// Once split, another string can be inserted in between the two halves by
+/// inserting a RopePiece in between the two others.  All of this is very
+/// inexpensive: it takes time proportional to the number of RopePieces, not the
+/// length of the strings they represent.
+///
+/// While a linear sequences of RopePieces is the conceptual model, the actual
+/// implementation captures them in an adapted B+ Tree.  Using a B+ tree (which
+/// is a tree that keeps the values in the leaves and has where each node
+/// contains a reasonable number of pointers to children/values) allows us to
+/// maintain efficient operation when the RewriteRope contains a *huge* number
+/// of RopePieces.  The basic idea of the B+ Tree is that it allows us to find
+/// the RopePiece corresponding to some offset very efficiently, and it
+/// automatically balances itself on insertions of RopePieces (which can happen
+/// for both insertions and erases of string ranges).
+///
+/// The one wrinkle on the theory is that we don't attempt to keep the tree
+/// properly balanced when erases happen.  Erases of string data can both insert
+/// new RopePieces (e.g. when the middle of some other rope piece is deleted,
+/// which results in two rope pieces, which is just like an insert) or it can
+/// reduce the number of RopePieces maintained by the B+Tree.  In the case when
+/// the number of RopePieces is reduced, we don't attempt to maintain the
+/// standard 'invariant' that each node in the tree contains at least
+/// 'WidthFactor' children/values.  For our use cases, this doesn't seem to
+/// matter.
+///
+/// The implementation below is primarily implemented in terms of three classes:
+///   RopePieceBTreeNode - Common base class for:
+///
+///     RopePieceBTreeLeaf - Directly manages up to '2*WidthFactor' RopePiece
+///          nodes.  This directly represents a chunk of the string with those
+///          RopePieces contatenated.
+///     RopePieceBTreeInterior - An interior node in the B+ Tree, which manages
+///          up to '2*WidthFactor' other nodes in the tree.
 
-/// This is an adapted B+ Tree, ... erases don't keep the tree balanced.
 
 //===----------------------------------------------------------------------===//
 // RopePieceBTreeNode Class
 //===----------------------------------------------------------------------===//
 
 namespace {
+  /// RopePieceBTreeNode - Common base class of RopePieceBTreeLeaf and
+  /// RopePieceBTreeInterior.  This provides some 'virtual' dispatching methods
+  /// and a flag that determines which subclass the instance is.  Also
+  /// important, this node knows the full extend of the node, including any
+  /// children that it has.  This allows efficient skipping over entire subtrees
+  /// when looking for an offset in the BTree.
   class RopePieceBTreeNode {
   protected:
     /// WidthFactor - This controls the number of K/V slots held in the BTree:
@@ -82,6 +129,13 @@ namespace {
 //===----------------------------------------------------------------------===//
 
 namespace {
+  /// RopePieceBTreeLeaf - Directly manages up to '2*WidthFactor' RopePiece
+  /// nodes.  This directly represents a chunk of the string with those
+  /// RopePieces contatenated.  Since this is a B+Tree, all values (in this case
+  /// instances of RopePiece) are stored in leaves like this.  To make iteration
+  /// over the leaves efficient, they maintain a singly linked list through the
+  /// NextLeaf field.  This allows the B+Tree forward iterator to be constant
+  /// time for all increments.
   class RopePieceBTreeLeaf : public RopePieceBTreeNode {
     /// NumPieces - This holds the number of rope pieces currently active in the
     /// Pieces array.
@@ -116,6 +170,8 @@ namespace {
     const RopePieceBTreeLeaf *getNextLeafInOrder() const { return NextLeaf; }
     void setNextLeafInOrder(const RopePieceBTreeLeaf *NL) { NextLeaf = NL; }
     
+    /// FullRecomputeSizeLocally - This method recomputes the 'Size' field by
+    /// summing the size of all RopePieces.
     void FullRecomputeSizeLocally() {
       Size = 0;
       for (unsigned i = 0, e = getNumPieces(); i != e; ++i)
@@ -312,7 +368,8 @@ void RopePieceBTreeLeaf::erase(unsigned Offset, unsigned NumBytes) {
 //===----------------------------------------------------------------------===//
 
 namespace {
-  // Holds up to 2*WidthFactor children.
+  /// RopePieceBTreeInterior - This represents an interior node in the B+Tree,
+  /// which holds up to 2*WidthFactor pointers to child nodes.
   class RopePieceBTreeInterior : public RopePieceBTreeNode {
     /// NumChildren - This holds the number of children currently active in the
     /// Children array.
@@ -341,6 +398,8 @@ namespace {
       return Children[i];
     }
     
+    /// FullRecomputeSizeLocally - Recompute the Size field of this node by
+    /// summing up the sizes of the child nodes.
     void FullRecomputeSizeLocally() {
       Size = 0;
       for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
@@ -676,6 +735,10 @@ void RopePieceBTree::erase(unsigned Offset, unsigned NumBytes) {
 // RewriteRope Implementation
 //===----------------------------------------------------------------------===//
 
+/// MakeRopeString - This copies the specified byte range into some instance of
+/// RopeRefCountString, and return a RopePiece that represents it.  This uses
+/// the AllocBuffer object to aggregate requests for small strings into one
+/// allocation instead of doing tons of tiny allocations.
 RopePiece RewriteRope::MakeRopeString(const char *Start, const char *End) {
   unsigned Len = End-Start;
   
