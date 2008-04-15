@@ -594,7 +594,12 @@ protected:
   
   void EvalCall(NodeSet& Dst, CallExpr* CE, LVal L, NodeTy* Pred) {
     assert (Builder && "GRStmtNodeBuilder must be defined.");    
-    return TF->EvalCall(Dst, *this, *Builder, CE, L, Pred);
+    TF->EvalCall(Dst, *this, *Builder, CE, L, Pred);
+  }
+  
+  void EvalObjCMessageExpr(NodeSet& Dst, ObjCMessageExpr* ME, NodeTy* Pred) {    
+    assert (Builder && "GRStmtNodeBuilder must be defined.");
+    TF->EvalObjCMessageExpr(Dst, *this, *Builder, ME, Pred);
   }
   
   ValueState* MarkBranch(ValueState* St, Stmt* Terminator, bool branchTaken);

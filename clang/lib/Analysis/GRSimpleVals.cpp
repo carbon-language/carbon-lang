@@ -552,7 +552,7 @@ RVal GRSimpleVals::EvalNE(GRExprEngine& Eng, LVal L, LVal R) {
 }
 
 //===----------------------------------------------------------------------===//
-// Transfer function for Function Calls.
+// Transfer function for function calls.
 //===----------------------------------------------------------------------===//
 
 void GRSimpleVals::EvalCall(ExplodedNodeSet<ValueState>& Dst,
@@ -589,4 +589,33 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<ValueState>& Dst,
   }  
     
   Builder.MakeNode(Dst, CE, Pred, St);
+}
+
+//===----------------------------------------------------------------------===//
+// Transfer function for Objective-C message expressions.
+//===----------------------------------------------------------------------===//
+
+void GRSimpleVals::EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
+                                       GRExprEngine& Eng,
+                                       GRStmtNodeBuilder<ValueState>& Builder,
+                                       ObjCMessageExpr* ME,
+                                       ExplodedNode<ValueState>* Pred) {
+  
+  
+  // The basic transfer function logic for message expressions does nothing.
+  // We just invalidate all arguments passed in by references.
+  
+  ValueStateManager& StateMgr = Eng.getStateManager();
+  ValueState* St = Builder.GetState(Pred);
+  
+  for (ObjCMessageExpr::arg_iterator I = ME->arg_begin(), E = ME->arg_end();
+       I != E; ++I) {
+    
+    RVal V = StateMgr.GetRVal(St, *I);
+    
+    if (isa<LVal>(V))
+      St = StateMgr.SetRVal(St, cast<LVal>(V), UnknownVal());
+  }
+  
+  Builder.MakeNode(Dst, ME, Pred, St);
 }

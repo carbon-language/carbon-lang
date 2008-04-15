@@ -63,6 +63,14 @@ public:
                         CallExpr* CE, LVal L,
                         ExplodedNode<ValueState>* Pred);
   
+  virtual void EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
+                                   GRExprEngine& Engine,
+                                   GRStmtNodeBuilder<ValueState>& Builder,
+                                   ObjCMessageExpr* ME,
+                                   ExplodedNode<ValueState>* Pred);
+  
+  
+  
   static void GeneratePathDiagnostic(PathDiagnostic& PD, ASTContext& Ctx,
                                      ExplodedNode<ValueState>* N);
   

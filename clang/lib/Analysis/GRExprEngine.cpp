@@ -23,22 +23,14 @@
 #include <sstream>
 #endif
 
-// SaveAndRestore - A utility class that uses RIIA to save and restore
-//  the value of a variable.
-template<typename T>
-struct VISIBILITY_HIDDEN SaveAndRestore {
-  SaveAndRestore(T& x) : X(x), old_value(x) {}
-  ~SaveAndRestore() { X = old_value; }
-  T get() { return old_value; }
-  
-  T& X;
-  T old_value;
-};
-
 using namespace clang;
 using llvm::dyn_cast;
 using llvm::cast;
 using llvm::APSInt;
+
+//===----------------------------------------------------------------------===//
+// Engine construction and deletion.
+//===----------------------------------------------------------------------===//
 
 
 GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx)
@@ -69,6 +61,22 @@ GRExprEngine::~GRExprEngine() {
        I != E; ++I)
     delete *I;  
 }
+
+//===----------------------------------------------------------------------===//
+// Utility methods.
+//===----------------------------------------------------------------------===//
+
+// SaveAndRestore - A utility class that uses RIIA to save and restore
+//  the value of a variable.
+template<typename T>
+struct VISIBILITY_HIDDEN SaveAndRestore {
+  SaveAndRestore(T& x) : X(x), old_value(x) {}
+  ~SaveAndRestore() { X = old_value; }
+  T get() { return old_value; }
+  
+  T& X;
+  T old_value;
+};
 
 void GRExprEngine::EmitWarnings(Diagnostic& Diag, PathDiagnosticClient* PD) {
   for (bug_type_iterator I = bug_types_begin(), E = bug_types_end(); I!=E; ++I){
@@ -140,6 +148,208 @@ ValueState* GRExprEngine::SetRVal(ValueState* St, Expr* Ex, RVal V) {
   return StateMgr.SetRVal(St, Ex, V, isBlkExpr, false);
 }
 
+//===----------------------------------------------------------------------===//
+// Top-level transfer function logic (Dispatcher).
+//===----------------------------------------------------------------------===//
+
+void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
+  
+  Builder = &builder;
+  StmtEntryNode = builder.getLastNode();
+  CurrentStmt = S;
+  NodeSet Dst;
+  
+  // Set up our simple checks.
+  
+  // FIXME: This can probably be installed directly in GRCoreEngine, obviating
+  //  the need to do a copy every time we hit a block-level statement.
+  
+  if (!MsgExprChecks.empty())
+    Builder->setObjCMsgExprAuditors((GRAuditor<ValueState>**) &MsgExprChecks[0],
+         (GRAuditor<ValueState>**) (&MsgExprChecks[0] + MsgExprChecks.size()));
+  
+  
+  if (!CallChecks.empty())
+    Builder->setCallExprAuditors((GRAuditor<ValueState>**) &CallChecks[0],
+         (GRAuditor<ValueState>**) (&CallChecks[0] + CallChecks.size()));
+  
+  // Create the cleaned state.
+  
+  CleanedState = StateMgr.RemoveDeadBindings(StmtEntryNode->getState(),
+                                             CurrentStmt, Liveness);
+  
+  Builder->SetCleanedState(CleanedState);
+  
+  // Visit the statement.
+  
+  Visit(S, StmtEntryNode, Dst);
+  
+  // If no nodes were generated, generate a new node that has all the
+  // dead mappings removed.
+  
+  if (Dst.size() == 1 && *Dst.begin() == StmtEntryNode)
+    builder.generateNode(S, GetState(StmtEntryNode), StmtEntryNode);
+  
+  // NULL out these variables to cleanup.
+  
+  CurrentStmt = NULL;
+  StmtEntryNode = NULL;
+  Builder = NULL;
+  CleanedState = NULL;
+}
+
+void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
+  
+  // FIXME: add metadata to the CFG so that we can disable
+  //  this check when we KNOW that there is no block-level subexpression.
+  //  The motivation is that this check requires a hashtable lookup.
+  
+  if (S != CurrentStmt && getCFG().isBlkExpr(S)) {
+    Dst.Add(Pred);
+    return;
+  }
+  
+  switch (S->getStmtClass()) {
+      
+    default:
+      // Cases we intentionally have "default" handle:
+      //   AddrLabelExpr, IntegerLiteral, CharacterLiteral
+      
+      Dst.Add(Pred); // No-op. Simply propagate the current state unchanged.
+      break;
+      
+    case Stmt::AsmStmtClass:
+      VisitAsmStmt(cast<AsmStmt>(S), Pred, Dst);
+      break;
+      
+    case Stmt::BinaryOperatorClass: {
+      BinaryOperator* B = cast<BinaryOperator>(S);
+      
+      if (B->isLogicalOp()) {
+        VisitLogicalExpr(B, Pred, Dst);
+        break;
+      }
+      else if (B->getOpcode() == BinaryOperator::Comma) {
+        ValueState* St = GetState(Pred);
+        MakeNode(Dst, B, Pred, SetRVal(St, B, GetRVal(St, B->getRHS())));
+        break;
+      }
+      
+      VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
+      break;
+    }
+      
+    case Stmt::CallExprClass: {
+      CallExpr* C = cast<CallExpr>(S);
+      VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst);
+      break;      
+    }
+      
+    case Stmt::CastExprClass: {
+      CastExpr* C = cast<CastExpr>(S);
+      VisitCast(C, C->getSubExpr(), Pred, Dst);
+      break;
+    }
+      
+      // FIXME: ChooseExpr is really a constant.  We need to fix
+      //        the CFG do not model them as explicit control-flow.
+      
+    case Stmt::ChooseExprClass: { // __builtin_choose_expr
+      ChooseExpr* C = cast<ChooseExpr>(S);
+      VisitGuardedExpr(C, C->getLHS(), C->getRHS(), Pred, Dst);
+      break;
+    }
+      
+    case Stmt::CompoundAssignOperatorClass:
+      VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
+      break;
+      
+    case Stmt::ConditionalOperatorClass: { // '?' operator
+      ConditionalOperator* C = cast<ConditionalOperator>(S);
+      VisitGuardedExpr(C, C->getLHS(), C->getRHS(), Pred, Dst);
+      break;
+    }
+      
+    case Stmt::DeclRefExprClass:
+      VisitDeclRefExpr(cast<DeclRefExpr>(S), Pred, Dst);
+      break;
+      
+    case Stmt::DeclStmtClass:
+      VisitDeclStmt(cast<DeclStmt>(S), Pred, Dst);
+      break;
+      
+    case Stmt::ImplicitCastExprClass: {
+      ImplicitCastExpr* C = cast<ImplicitCastExpr>(S);
+      VisitCast(C, C->getSubExpr(), Pred, Dst);
+      break;
+    }
+      
+    case Stmt::ObjCMessageExprClass: {
+      VisitObjCMessageExpr(cast<ObjCMessageExpr>(S), Pred, Dst);
+      break;
+    }
+      
+    case Stmt::ParenExprClass:
+      Visit(cast<ParenExpr>(S)->getSubExpr(), Pred, Dst);
+      break;
+      
+    case Stmt::SizeOfAlignOfTypeExprClass:
+      VisitSizeOfAlignOfTypeExpr(cast<SizeOfAlignOfTypeExpr>(S), Pred, Dst);
+      break;
+      
+    case Stmt::StmtExprClass: {
+      StmtExpr* SE = cast<StmtExpr>(S);
+      
+      ValueState* St = GetState(Pred);
+      
+      // FIXME: Not certain if we can have empty StmtExprs.  If so, we should
+      // probably just remove these from the CFG.
+      assert (!SE->getSubStmt()->body_empty());
+      
+      if (Expr* LastExpr = dyn_cast<Expr>(*SE->getSubStmt()->body_rbegin()))
+        MakeNode(Dst, SE, Pred, SetRVal(St, SE, GetRVal(St, LastExpr)));
+      else
+        Dst.Add(Pred);
+      
+      break;
+    }
+      
+      // FIXME: We may wish to always bind state to ReturnStmts so
+      //  that users can quickly query what was the state at the
+      //  exit points of a function.
+      
+    case Stmt::ReturnStmtClass:
+      VisitReturnStmt(cast<ReturnStmt>(S), Pred, Dst); break;
+      
+    case Stmt::UnaryOperatorClass: {
+      UnaryOperator* U = cast<UnaryOperator>(S);
+      
+      switch (U->getOpcode()) {
+        case UnaryOperator::Deref: VisitDeref(U, Pred, Dst); break;
+        case UnaryOperator::Plus:  Visit(U->getSubExpr(), Pred, Dst); break;
+        case UnaryOperator::SizeOf: VisitSizeOfExpr(U, Pred, Dst); break;
+        default: VisitUnaryOperator(U, Pred, Dst); break;
+      }
+      
+      break;
+    }
+  }
+}
+
+//===----------------------------------------------------------------------===//
+// Block entrance.  (Update counters).
+//===----------------------------------------------------------------------===//
+
+bool GRExprEngine::ProcessBlockEntrance(CFGBlock* B, ValueState*,
+                                        GRBlockCounter BC) {
+  
+  return BC.getNumVisited(B->getBlockID()) < 3;
+}
+
+//===----------------------------------------------------------------------===//
+// Branch processing.
+//===----------------------------------------------------------------------===//
+
 ValueState* GRExprEngine::MarkBranch(ValueState* St, Stmt* Terminator,
                                      bool branchTaken) {
   
@@ -194,12 +404,6 @@ ValueState* GRExprEngine::MarkBranch(ValueState* St, Stmt* Terminator,
   }
 }
 
-bool GRExprEngine::ProcessBlockEntrance(CFGBlock* B, ValueState*,
-                                        GRBlockCounter BC) {
-  
-  return BC.getNumVisited(B->getBlockID()) < 3;
-}
-
 void GRExprEngine::ProcessBranch(Expr* Condition, Stmt* Term,
                                  BranchNodeBuilder& builder) {
 
@@ -236,7 +440,6 @@ void GRExprEngine::ProcessBranch(Expr* Condition, Stmt* Term,
     }      
   }
     
-
   // Process the true branch.
 
   bool isFeasible = false;  
@@ -301,6 +504,27 @@ void GRExprEngine::ProcessIndirectGoto(IndirectGotoNodeBuilder& builder) {
   
   for (iterator I=builder.begin(), E=builder.end(); I != E; ++I)
     builder.generateNode(I, St);
+}
+
+
+void GRExprEngine::VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R,
+                                    NodeTy* Pred, NodeSet& Dst) {
+  
+  assert (Ex == CurrentStmt && getCFG().isBlkExpr(Ex));
+  
+  ValueState* St = GetState(Pred);
+  RVal X = GetBlkExprRVal(St, Ex);
+  
+  assert (X.isUndef());
+  
+  Expr* SE = (Expr*) cast<UndefinedVal>(X).getData();
+  
+  assert (SE);
+  
+  X = GetBlkExprRVal(St, SE);
+  
+  // Make sure that we invalidate the previous binding.
+  MakeNode(Dst, Ex, Pred, StateMgr.SetRVal(St, Ex, X, true, true));
 }
 
 /// ProcessSwitch - Called by GRCoreEngine.  Used to generate successor
@@ -401,6 +625,9 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
   builder.generateDefaultCaseNode(DefaultSt);
 }
 
+//===----------------------------------------------------------------------===//
+// Transfer functions: logical operations ('&&', '||').
+//===----------------------------------------------------------------------===//
 
 void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
                                     NodeSet& Dst) {
@@ -461,51 +688,9 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
   }
 }
  
-
-void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
-
-  Builder = &builder;
-  StmtEntryNode = builder.getLastNode();
-  CurrentStmt = S;
-  NodeSet Dst;
-  
-  // Set up our simple checks.
-  
-  if (!MsgExprChecks.empty())
-    Builder->setObjCMsgExprAuditors(
-      (GRAuditor<ValueState>**) &MsgExprChecks[0],
-      (GRAuditor<ValueState>**) (&MsgExprChecks[0] + MsgExprChecks.size()));
-
-  
-  if (!CallChecks.empty())
-    Builder->setCallExprAuditors(
-      (GRAuditor<ValueState>**) &CallChecks[0],
-      (GRAuditor<ValueState>**) (&CallChecks[0] + CallChecks.size()));
-  
-  // Create the cleaned state.
-
-  CleanedState = StateMgr.RemoveDeadBindings(StmtEntryNode->getState(),
-                                             CurrentStmt, Liveness);
-  
-  Builder->SetCleanedState(CleanedState);
-
-  // Visit the statement.
-
-  Visit(S, StmtEntryNode, Dst);
-
-  // If no nodes were generated, generate a new node that has all the
-  // dead mappings removed.
-  
-  if (Dst.size() == 1 && *Dst.begin() == StmtEntryNode)
-    builder.generateNode(S, GetState(StmtEntryNode), StmtEntryNode);
-  
-  // NULL out these variables to cleanup.
-  
-  CurrentStmt = NULL;
-  StmtEntryNode = NULL;
-  Builder = NULL;
-  CleanedState = NULL;
-}
+//===----------------------------------------------------------------------===//
+// Transfer functions: DeclRefExprs (loads, getting l-values).
+//===----------------------------------------------------------------------===//
 
 void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
 
@@ -522,6 +707,10 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
   RVal Y = isa<lval::DeclVal>(X) ? GetRVal(St, cast<lval::DeclVal>(X)) : X;
   MakeNode(Dst, D, Pred, SetBlkExprRVal(St, D, Y));
 }
+
+//===----------------------------------------------------------------------===//
+// Transfer function: Function calls.
+//===----------------------------------------------------------------------===//
 
 void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
                              CallExpr::arg_iterator AI,
@@ -682,11 +871,119 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
       
       EvalCall(Dst, CE, cast<LVal>(L), *DI);
       
+      // Handle the case where no nodes where generated.  Auto-generate that
+      // contains the updated state if we aren't generating sinks.
+      
       if (!Builder->BuildSinks && Dst.size() == size)
         MakeNode(Dst, CE, *DI, St);
     }
   }
 }
+
+//===----------------------------------------------------------------------===//
+// Transfer function: Objective-C message expressions.
+//===----------------------------------------------------------------------===//
+
+void GRExprEngine::VisitObjCMessageExpr(ObjCMessageExpr* ME, NodeTy* Pred,
+                                        NodeSet& Dst){
+  
+  VisitObjCMessageExprArgHelper(ME, ME->arg_begin(), ME->arg_end(),
+                                Pred, Dst);
+}  
+
+void GRExprEngine::VisitObjCMessageExprArgHelper(ObjCMessageExpr* ME,
+                                                 ObjCMessageExpr::arg_iterator AI,
+                                                 ObjCMessageExpr::arg_iterator AE,
+                                                 NodeTy* Pred, NodeSet& Dst) {
+  if (AI == AE) {
+    
+    // Process the receiver.
+    
+    if (Expr* Receiver = ME->getReceiver()) {
+      NodeSet Tmp;
+      Visit(Receiver, Pred, Tmp);
+      
+      for (NodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
+        VisitObjCMessageExprDispatchHelper(ME, *NI, Dst);
+      
+      return;
+    }
+    
+    VisitObjCMessageExprDispatchHelper(ME, Pred, Dst);
+    return;
+  }
+  
+  NodeSet Tmp;
+  Visit(*AI, Pred, Tmp);
+  
+  ++AI;
+  
+  for (NodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
+    VisitObjCMessageExprArgHelper(ME, AI, AE, *NI, Dst);
+}
+
+void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
+                                                      NodeTy* Pred,
+                                                      NodeSet& Dst) {
+  
+  // FIXME: More logic for the processing the method call. 
+  
+  ValueState* St = GetState(Pred);
+  
+  if (Expr* Receiver = ME->getReceiver()) {
+    
+    RVal L = GetRVal(St, Receiver);
+    
+    // Check for undefined control-flow or calls to NULL.
+    
+    if (L.isUndef()) {
+      NodeTy* N = Builder->generateNode(ME, St, Pred);
+      
+      if (N) {
+        N->markAsSink();
+        UndefReceivers.insert(N);
+      }
+      
+      return;
+    }
+  }
+  
+  // Check for any arguments that are uninitialized/undefined.
+  
+  for (ObjCMessageExpr::arg_iterator I = ME->arg_begin(), E = ME->arg_end();
+       I != E; ++I) {
+    
+    if (GetRVal(St, *I).isUndef()) {
+      
+      // Generate an error node for passing an uninitialized/undefined value
+      // as an argument to a message expression.  This node is a sink.
+      NodeTy* N = Builder->generateNode(ME, St, Pred);
+      
+      if (N) {
+        N->markAsSink();
+        MsgExprUndefArgs[N] = *I;
+      }
+      
+      return;
+    }    
+  }    
+  // Dispatch to plug-in transfer function.
+  
+  unsigned size = Dst.size();
+  SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+  
+  EvalObjCMessageExpr(Dst, ME, Pred);
+  
+  // Handle the case where no nodes where generated.  Auto-generate that
+  // contains the updated state if we aren't generating sinks.
+  
+  if (!Builder->BuildSinks && Dst.size() == size)
+    MakeNode(Dst, ME, Pred, St);
+}
+
+//===----------------------------------------------------------------------===//
+// Transfer functions: Miscellaneous statements.
+//===----------------------------------------------------------------------===//
 
 void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
   
@@ -788,25 +1085,6 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, GRExprEngine::NodeTy* Pred,
 }
 
 
-void GRExprEngine::VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R,
-                                   NodeTy* Pred, NodeSet& Dst) {
-  
-  assert (Ex == CurrentStmt && getCFG().isBlkExpr(Ex));
-
-  ValueState* St = GetState(Pred);
-  RVal X = GetBlkExprRVal(St, Ex);
-  
-  assert (X.isUndef());
-  
-  Expr* SE = (Expr*) cast<UndefinedVal>(X).getData();
-  
-  assert (SE);
-    
-  X = GetBlkExprRVal(St, SE);
-  
-  // Make sure that we invalidate the previous binding.
-  MakeNode(Dst, Ex, Pred, StateMgr.SetRVal(St, Ex, X, true, true));
-}
 
 /// VisitSizeOfAlignOfTypeExpr - Transfer function for sizeof(type).
 void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex,
@@ -1158,102 +1436,6 @@ void GRExprEngine::VisitAsmStmtHelperInputs(AsmStmt* A,
     VisitAsmStmtHelperInputs(A, I, E, *NI, Dst);
 }
 
-
-void GRExprEngine::VisitObjCMessageExpr(ObjCMessageExpr* ME, NodeTy* Pred,
-                                        NodeSet& Dst){
-  VisitObjCMessageExprArgHelper(ME, ME->arg_begin(), ME->arg_end(), Pred, Dst);
-}  
-
-void GRExprEngine::VisitObjCMessageExprArgHelper(ObjCMessageExpr* ME,
-                                              ObjCMessageExpr::arg_iterator AI,
-                                              ObjCMessageExpr::arg_iterator AE,
-                                              NodeTy* Pred, NodeSet& Dst) {
-  if (AI == AE) {
-    
-    // Process the receiver.
-    
-    if (Expr* Receiver = ME->getReceiver()) {
-      NodeSet Tmp;
-      Visit(Receiver, Pred, Tmp);
-            
-      for (NodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
-        VisitObjCMessageExprDispatchHelper(ME, *NI, Dst);
-      
-      return;
-    }
-    
-    VisitObjCMessageExprDispatchHelper(ME, Pred, Dst);
-    return;
-  }
-  
-  NodeSet Tmp;
-  Visit(*AI, Pred, Tmp);
-  
-  ++AI;
-  
-  for (NodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
-    VisitObjCMessageExprArgHelper(ME, AI, AE, *NI, Dst);
-}
-
-void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
-                                                 NodeTy* Pred, NodeSet& Dst) {
-  
-  
-  // FIXME: More logic for the processing the method call. 
-  
-  ValueState* St = GetState(Pred);
-  
-  if (Expr* Receiver = ME->getReceiver()) {
-  
-    RVal L = GetRVal(St, Receiver);
-    
-    // Check for undefined control-flow or calls to NULL.
-    
-    if (L.isUndef()) {
-      NodeTy* N = Builder->generateNode(ME, St, Pred);
-      
-      if (N) {
-        N->markAsSink();
-        UndefReceivers.insert(N);
-      }
-      
-      return;
-    }
-  }
-    
-  // Check for any arguments that are uninitialized/undefined.
-  
-  for (ObjCMessageExpr::arg_iterator I = ME->arg_begin(), E = ME->arg_end();
-       I != E; ++I) {
-    
-    if (GetRVal(St, *I).isUndef()) {
-      
-      NodeTy* N = Builder->generateNode(ME, St, Pred);
-      
-      if (N) {
-        N->markAsSink();
-        MsgExprUndefArgs[N] = *I;
-      }
-      
-      return;
-    }    
-  }
-  
-  // FIXME: Eventually we will properly handle the effects of a message
-  //  expr.  For now invalidate all arguments passed in by references.
-  
-  for (ObjCMessageExpr::arg_iterator I = ME->arg_begin(), E = ME->arg_end();
-       I != E; ++I) {
-    
-    RVal V = GetRVal(St, *I);
-    
-    if (isa<LVal>(V))
-      St = SetRVal(St, cast<LVal>(V), UnknownVal());
-  }
-  
-  MakeNode(Dst, ME, Pred, St);
-}
-
 void GRExprEngine::VisitReturnStmt(ReturnStmt* S, NodeTy* Pred, NodeSet& Dst) {
 
   Expr* R = S->getRetValue();
@@ -1298,6 +1480,10 @@ void GRExprEngine::VisitReturnStmt(ReturnStmt* S, NodeTy* Pred, NodeSet& Dst) {
   else
     Visit(R, Pred, Dst);
 }
+
+//===----------------------------------------------------------------------===//
+// Transfer functions: Binary operators.
+//===----------------------------------------------------------------------===//
 
 void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
                                        GRExprEngine::NodeTy* Pred,
@@ -1613,143 +1799,6 @@ void GRExprEngine::HandleUndefinedStore(Stmt* S, NodeTy* Pred) {
   UndefStores.insert(N);
 }
 
-void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
-
-  // FIXME: add metadata to the CFG so that we can disable
-  //  this check when we KNOW that there is no block-level subexpression.
-  //  The motivation is that this check requires a hashtable lookup.
-
-  if (S != CurrentStmt && getCFG().isBlkExpr(S)) {
-    Dst.Add(Pred);
-    return;
-  }
-
-  switch (S->getStmtClass()) {
-      
-    default:
-      // Cases we intentionally have "default" handle:
-      //   AddrLabelExpr, IntegerLiteral, CharacterLiteral
-      
-      Dst.Add(Pred); // No-op. Simply propagate the current state unchanged.
-      break;
-      
-    case Stmt::AsmStmtClass:
-      VisitAsmStmt(cast<AsmStmt>(S), Pred, Dst);
-      break;
-                                                       
-    case Stmt::BinaryOperatorClass: {
-      BinaryOperator* B = cast<BinaryOperator>(S);
- 
-      if (B->isLogicalOp()) {
-        VisitLogicalExpr(B, Pred, Dst);
-        break;
-      }
-      else if (B->getOpcode() == BinaryOperator::Comma) {
-        ValueState* St = GetState(Pred);
-        MakeNode(Dst, B, Pred, SetRVal(St, B, GetRVal(St, B->getRHS())));
-        break;
-      }
-      
-      VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
-      break;
-    }
-      
-    case Stmt::CallExprClass: {
-      CallExpr* C = cast<CallExpr>(S);
-      VisitCall(C, Pred, C->arg_begin(), C->arg_end(), Dst);
-      break;      
-    }
-
-    case Stmt::CastExprClass: {
-      CastExpr* C = cast<CastExpr>(S);
-      VisitCast(C, C->getSubExpr(), Pred, Dst);
-      break;
-    }
-
-      // FIXME: ChooseExpr is really a constant.  We need to fix
-      //        the CFG do not model them as explicit control-flow.
-      
-    case Stmt::ChooseExprClass: { // __builtin_choose_expr
-      ChooseExpr* C = cast<ChooseExpr>(S);
-      VisitGuardedExpr(C, C->getLHS(), C->getRHS(), Pred, Dst);
-      break;
-    }
-      
-    case Stmt::CompoundAssignOperatorClass:
-      VisitBinaryOperator(cast<BinaryOperator>(S), Pred, Dst);
-      break;
-      
-    case Stmt::ConditionalOperatorClass: { // '?' operator
-      ConditionalOperator* C = cast<ConditionalOperator>(S);
-      VisitGuardedExpr(C, C->getLHS(), C->getRHS(), Pred, Dst);
-      break;
-    }
-      
-    case Stmt::DeclRefExprClass:
-      VisitDeclRefExpr(cast<DeclRefExpr>(S), Pred, Dst);
-      break;
-      
-    case Stmt::DeclStmtClass:
-      VisitDeclStmt(cast<DeclStmt>(S), Pred, Dst);
-      break;
-      
-    case Stmt::ImplicitCastExprClass: {
-      ImplicitCastExpr* C = cast<ImplicitCastExpr>(S);
-      VisitCast(C, C->getSubExpr(), Pred, Dst);
-      break;
-    }
-      
-    case Stmt::ObjCMessageExprClass: {
-      VisitObjCMessageExpr(cast<ObjCMessageExpr>(S), Pred, Dst);
-      break;
-    }
-
-    case Stmt::ParenExprClass:
-      Visit(cast<ParenExpr>(S)->getSubExpr(), Pred, Dst);
-      break;
-      
-    case Stmt::SizeOfAlignOfTypeExprClass:
-      VisitSizeOfAlignOfTypeExpr(cast<SizeOfAlignOfTypeExpr>(S), Pred, Dst);
-      break;
-      
-    case Stmt::StmtExprClass: {
-      StmtExpr* SE = cast<StmtExpr>(S);
-      
-      ValueState* St = GetState(Pred);
-      
-      // FIXME: Not certain if we can have empty StmtExprs.  If so, we should
-      // probably just remove these from the CFG.
-      assert (!SE->getSubStmt()->body_empty());
-
-      if (Expr* LastExpr = dyn_cast<Expr>(*SE->getSubStmt()->body_rbegin()))
-        MakeNode(Dst, SE, Pred, SetRVal(St, SE, GetRVal(St, LastExpr)));
-      else
-        Dst.Add(Pred);
-      
-      break;
-    }
-      
-      // FIXME: We may wish to always bind state to ReturnStmts so
-      //  that users can quickly query what was the state at the
-      //  exit points of a function.
-      
-    case Stmt::ReturnStmtClass:
-      VisitReturnStmt(cast<ReturnStmt>(S), Pred, Dst); break;
-      
-    case Stmt::UnaryOperatorClass: {
-      UnaryOperator* U = cast<UnaryOperator>(S);
-      
-      switch (U->getOpcode()) {
-        case UnaryOperator::Deref: VisitDeref(U, Pred, Dst); break;
-        case UnaryOperator::Plus:  Visit(U->getSubExpr(), Pred, Dst); break;
-        case UnaryOperator::SizeOf: VisitSizeOfExpr(U, Pred, Dst); break;
-        default: VisitUnaryOperator(U, Pred, Dst); break;
-      }
-      
-      break;
-    }
-  }
-}
 
 //===----------------------------------------------------------------------===//
 // "Assume" logic.

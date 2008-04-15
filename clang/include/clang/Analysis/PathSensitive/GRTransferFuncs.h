@@ -66,6 +66,12 @@ public:
                         CallExpr* CE, LVal L,
                         ExplodedNode<ValueState>* Pred) = 0;
   
+  virtual void EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
+                                   GRExprEngine& Engine,
+                                   GRStmtNodeBuilder<ValueState>& Builder,
+                                   ObjCMessageExpr* ME,
+                                   ExplodedNode<ValueState>* Pred) = 0;
+  
   // End-of-path.
   
   virtual void EvalEndPath(GRExprEngine& Engine,
