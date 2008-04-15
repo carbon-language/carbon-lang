@@ -167,6 +167,10 @@ def MMX_MOVD64to64rr : MMXRI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR64:$src),
                              "movd\t{$src, $dst|$dst, $src}", []>;
 
 let neverHasSideEffects = 1 in
+def MMX_MOVD64from64rr : MMXRI<0x6E, MRMSrcReg, (outs GR64:$dst), (ins VR64:$src),
+                               "movd\t{$src, $dst|$dst, $src}", []>;
+
+let neverHasSideEffects = 1 in
 def MMX_MOVQ64rr : MMXI<0x6F, MRMSrcReg, (outs VR64:$dst), (ins VR64:$src),
                         "movq\t{$src, $dst|$dst, $src}", []>;
 let isSimpleLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
@@ -548,6 +552,14 @@ def : Pat<(v4i16 (bitconvert (i64 GR64:$src))),
           (MMX_MOVD64to64rr GR64:$src)>;
 def : Pat<(v8i8  (bitconvert (i64 GR64:$src))),
           (MMX_MOVD64to64rr GR64:$src)>;
+def : Pat<(i64 (bitconvert (v1i64 VR64:$src))),
+          (MMX_MOVD64from64rr VR64:$src)>;
+def : Pat<(i64 (bitconvert (v2i32 VR64:$src))),
+          (MMX_MOVD64from64rr VR64:$src)>;
+def : Pat<(i64 (bitconvert (v4i16 VR64:$src))),
+          (MMX_MOVD64from64rr VR64:$src)>;
+def : Pat<(i64  (bitconvert (v8i8 VR64:$src))),
+          (MMX_MOVD64from64rr VR64:$src)>;
 
 // Move scalar to XMM zero-extended
 // movd to XMM register zero-extends
