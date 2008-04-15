@@ -121,6 +121,7 @@ void DeclPrinter::PrintFunctionDeclStart(FunctionDecl *FD) {
   case FunctionDecl::None: break;
   case FunctionDecl::Extern: Out << "extern "; break;
   case FunctionDecl::Static: Out << "static "; break;
+  case FunctionDecl::PrivateExtern: Out << "__private_extern__ "; break;
   }
   
   if (FD->isInline())
