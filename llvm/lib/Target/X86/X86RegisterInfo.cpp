@@ -84,7 +84,7 @@ int X86RegisterInfo::getDwarfRegNum(unsigned RegNo, bool isEH) const {
 // getX86RegNum - This function maps LLVM register identifiers to their X86
 // specific numbering, which is used in various places encoding instructions.
 //
-unsigned X86RegisterInfo::getX86RegNum(unsigned RegNo) const {
+unsigned X86RegisterInfo::getX86RegNum(unsigned RegNo) {
   switch(RegNo) {
   case X86::RAX: case X86::EAX: case X86::AX: case X86::AL: return N86::EAX;
   case X86::RCX: case X86::ECX: case X86::CX: case X86::CL: return N86::ECX;

@@ -368,7 +368,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
     for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
          I != E; ++I) {
       // Add instruction size to MBBSize.
-      MBBSize += ARM::GetInstSize(I);
+      MBBSize += TII->GetInstSizeInBytes(I);
 
       int Opc = I->getOpcode();
       if (I->getDesc().isBranch()) {
@@ -519,7 +519,7 @@ unsigned ARMConstantIslands::GetOffsetOf(MachineInstr *MI) const {
   for (MachineBasicBlock::iterator I = MBB->begin(); ; ++I) {
     assert(I != MBB->end() && "Didn't find MI in its own basic block?");
     if (&*I == MI) return Offset;
-    Offset += ARM::GetInstSize(I);
+    Offset += TII->GetInstSizeInBytes(I);
   }
 }
 
@@ -617,7 +617,7 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   unsigned NewBBSize = 0;
   for (MachineBasicBlock::iterator I = NewBB->begin(), E = NewBB->end();
        I != E; ++I)
-    NewBBSize += ARM::GetInstSize(I);
+    NewBBSize += TII->GetInstSizeInBytes(I);
   
   unsigned OrigBBI = OrigBB->getNumber();
   unsigned NewBBI = NewBB->getNumber();
@@ -968,9 +968,9 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
     MachineBasicBlock::iterator MI = UserMI;
     ++MI;
     unsigned CPUIndex = CPUserIndex+1;
-    for (unsigned Offset = UserOffset+ARM::GetInstSize(UserMI);
+    for (unsigned Offset = UserOffset+TII->GetInstSizeInBytes(UserMI);
          Offset < BaseInsertOffset;
-         Offset += ARM::GetInstSize(MI),
+         Offset += TII->GetInstSizeInBytes(MI),
             MI = next(MI)) {
       if (CPUIndex < CPUsers.size() && CPUsers[CPUIndex].MI == MI) {
         if (!OffsetIsInRange(Offset, EndInsertOffset, 
@@ -1225,7 +1225,7 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
     SplitBlockBeforeInstr(MI);
     // No need for the branch to the next block. We're adding a unconditional
     // branch to the destination.
-    int delta = ARM::GetInstSize(&MBB->back());
+    int delta = TII->GetInstSizeInBytes(&MBB->back());
     BBSizes[MBB->getNumber()] -= delta;
     MachineBasicBlock* SplitBB = next(MachineFunction::iterator(MBB));
     AdjustBBOffsetsAfter(SplitBB, -delta);
@@ -1243,18 +1243,18 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
   BuildMI(MBB, TII->get(MI->getOpcode())).addMBB(NextBB)
     .addImm(CC).addReg(CCReg);
   Br.MI = &MBB->back();
-  BBSizes[MBB->getNumber()] += ARM::GetInstSize(&MBB->back());
+  BBSizes[MBB->getNumber()] += TII->GetInstSizeInBytes(&MBB->back());
   BuildMI(MBB, TII->get(Br.UncondBr)).addMBB(DestBB);
-  BBSizes[MBB->getNumber()] += ARM::GetInstSize(&MBB->back());
+  BBSizes[MBB->getNumber()] += TII->GetInstSizeInBytes(&MBB->back());
   unsigned MaxDisp = getUnconditionalBrDisp(Br.UncondBr);
   ImmBranches.push_back(ImmBranch(&MBB->back(), MaxDisp, false, Br.UncondBr));
 
   // Remove the old conditional branch.  It may or may not still be in MBB.
-  BBSizes[MI->getParent()->getNumber()] -= ARM::GetInstSize(MI);
+  BBSizes[MI->getParent()->getNumber()] -= TII->GetInstSizeInBytes(MI);
   MI->eraseFromParent();
 
   // The net size change is an addition of one unconditional branch.
-  int delta = ARM::GetInstSize(&MBB->back());
+  int delta = TII->GetInstSizeInBytes(&MBB->back());
   AdjustBBOffsetsAfter(MBB, delta);
   return true;
 }

@@ -92,8 +92,6 @@ namespace {
                           intptr_t PCAdj = 0);
 
     unsigned getX86RegNum(unsigned RegNo) const;
-    bool isX86_64ExtendedReg(const MachineOperand &MO);
-    unsigned determineREX(const MachineInstr &MI);
 
     bool gvNeedsLazyPtr(const GlobalValue *GV);
   };
@@ -405,139 +403,6 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
   }
 }
 
-static unsigned sizeOfImm(const TargetInstrDesc *Desc) {
-  switch (Desc->TSFlags & X86II::ImmMask) {
-  case X86II::Imm8:   return 1;
-  case X86II::Imm16:  return 2;
-  case X86II::Imm32:  return 4;
-  case X86II::Imm64:  return 8;
-  default: assert(0 && "Immediate size not set!");
-    return 0;
-  }
-}
-
-/// isX86_64ExtendedReg - Is the MachineOperand a x86-64 extended register?
-/// e.g. r8, xmm8, etc.
-bool Emitter::isX86_64ExtendedReg(const MachineOperand &MO) {
-  if (!MO.isRegister()) return false;
-  switch (MO.getReg()) {
-  default: break;
-  case X86::R8:    case X86::R9:    case X86::R10:   case X86::R11:
-  case X86::R12:   case X86::R13:   case X86::R14:   case X86::R15:
-  case X86::R8D:   case X86::R9D:   case X86::R10D:  case X86::R11D:
-  case X86::R12D:  case X86::R13D:  case X86::R14D:  case X86::R15D:
-  case X86::R8W:   case X86::R9W:   case X86::R10W:  case X86::R11W:
-  case X86::R12W:  case X86::R13W:  case X86::R14W:  case X86::R15W:
-  case X86::R8B:   case X86::R9B:   case X86::R10B:  case X86::R11B:
-  case X86::R12B:  case X86::R13B:  case X86::R14B:  case X86::R15B:
-  case X86::XMM8:  case X86::XMM9:  case X86::XMM10: case X86::XMM11:
-  case X86::XMM12: case X86::XMM13: case X86::XMM14: case X86::XMM15:
-    return true;
-  }
-  return false;
-}
-
-inline static bool isX86_64NonExtLowByteReg(unsigned reg) {
-  return (reg == X86::SPL || reg == X86::BPL ||
-          reg == X86::SIL || reg == X86::DIL);
-}
-
-/// determineREX - Determine if the MachineInstr has to be encoded with a X86-64
-/// REX prefix which specifies 1) 64-bit instructions, 2) non-default operand
-/// size, and 3) use of X86-64 extended registers.
-unsigned Emitter::determineREX(const MachineInstr &MI) {
-  unsigned REX = 0;
-  const TargetInstrDesc &Desc = MI.getDesc();
-
-  // Pseudo instructions do not need REX prefix byte.
-  if ((Desc.TSFlags & X86II::FormMask) == X86II::Pseudo)
-    return 0;
-  if (Desc.TSFlags & X86II::REX_W)
-    REX |= 1 << 3;
-
-  unsigned NumOps = Desc.getNumOperands();
-  if (NumOps) {
-    bool isTwoAddr = NumOps > 1 &&
-      Desc.getOperandConstraint(1, TOI::TIED_TO) != -1;
-
-    // If it accesses SPL, BPL, SIL, or DIL, then it requires a 0x40 REX prefix.
-    unsigned i = isTwoAddr ? 1 : 0;
-    for (unsigned e = NumOps; i != e; ++i) {
-      const MachineOperand& MO = MI.getOperand(i);
-      if (MO.isRegister()) {
-        unsigned Reg = MO.getReg();
-        if (isX86_64NonExtLowByteReg(Reg))
-          REX |= 0x40;
-      }
-    }
-
-    switch (Desc.TSFlags & X86II::FormMask) {
-    case X86II::MRMInitReg:
-      if (isX86_64ExtendedReg(MI.getOperand(0)))
-        REX |= (1 << 0) | (1 << 2);
-      break;
-    case X86II::MRMSrcReg: {
-      if (isX86_64ExtendedReg(MI.getOperand(0)))
-        REX |= 1 << 2;
-      i = isTwoAddr ? 2 : 1;
-      for (unsigned e = NumOps; i != e; ++i) {
-        const MachineOperand& MO = MI.getOperand(i);
-        if (isX86_64ExtendedReg(MO))
-          REX |= 1 << 0;
-      }
-      break;
-    }
-    case X86II::MRMSrcMem: {
-      if (isX86_64ExtendedReg(MI.getOperand(0)))
-        REX |= 1 << 2;
-      unsigned Bit = 0;
-      i = isTwoAddr ? 2 : 1;
-      for (; i != NumOps; ++i) {
-        const MachineOperand& MO = MI.getOperand(i);
-        if (MO.isRegister()) {
-          if (isX86_64ExtendedReg(MO))
-            REX |= 1 << Bit;
-          Bit++;
-        }
-      }
-      break;
-    }
-    case X86II::MRM0m: case X86II::MRM1m:
-    case X86II::MRM2m: case X86II::MRM3m:
-    case X86II::MRM4m: case X86II::MRM5m:
-    case X86II::MRM6m: case X86II::MRM7m:
-    case X86II::MRMDestMem: {
-      unsigned e = isTwoAddr ? 5 : 4;
-      i = isTwoAddr ? 1 : 0;
-      if (NumOps > e && isX86_64ExtendedReg(MI.getOperand(e)))
-        REX |= 1 << 2;
-      unsigned Bit = 0;
-      for (; i != e; ++i) {
-        const MachineOperand& MO = MI.getOperand(i);
-        if (MO.isRegister()) {
-          if (isX86_64ExtendedReg(MO))
-            REX |= 1 << Bit;
-          Bit++;
-        }
-      }
-      break;
-    }
-    default: {
-      if (isX86_64ExtendedReg(MI.getOperand(0)))
-        REX |= 1 << 0;
-      i = isTwoAddr ? 2 : 1;
-      for (unsigned e = NumOps; i != e; ++i) {
-        const MachineOperand& MO = MI.getOperand(i);
-        if (isX86_64ExtendedReg(MO))
-          REX |= 1 << 2;
-      }
-      break;
-    }
-    }
-  }
-  return REX;
-}
-
 void Emitter::emitInstruction(const MachineInstr &MI,
                               const TargetInstrDesc *Desc) {
   DOUT << MI;
@@ -584,7 +449,7 @@ void Emitter::emitInstruction(const MachineInstr &MI,
 
   if (Is64BitMode) {
     // REX prefix
-    unsigned REX = determineREX(MI);
+    unsigned REX = X86InstrInfo::determineREX(MI);
     if (REX)
       MCE.emitByte(0x40 | REX);
   }
@@ -632,7 +497,7 @@ void Emitter::emitInstruction(const MachineInstr &MI,
     case X86::MOVPC32r: {
       // This emits the "call" portion of this pseudo instruction.
       MCE.emitByte(BaseOpcode);
-      emitConstant(0, sizeOfImm(Desc));
+      emitConstant(0, X86InstrInfo::sizeOfImm(Desc));
       // Remember PIC base.
       PICBaseOffset = MCE.getCurrentPCOffset();
       X86JITInfo *JTI = dynamic_cast<X86JITInfo*>(TM.getJITInfo());
@@ -657,7 +522,7 @@ void Emitter::emitInstruction(const MachineInstr &MI,
       } else if (MO.isExternalSymbol()) {
         emitExternalSymbolAddress(MO.getSymbolName(), X86::reloc_pcrel_word);
       } else if (MO.isImmediate()) {
-        emitConstant(MO.getImm(), sizeOfImm(Desc));
+        emitConstant(MO.getImm(), X86InstrInfo::sizeOfImm(Desc));
       } else {
         assert(0 && "Unknown RawFrm operand!");
       }
@@ -669,7 +534,7 @@ void Emitter::emitInstruction(const MachineInstr &MI,
     
     if (CurOp != NumOps) {
       const MachineOperand &MO1 = MI.getOperand(CurOp++);
-      unsigned Size = sizeOfImm(Desc);
+      unsigned Size = X86InstrInfo::sizeOfImm(Desc);
       if (MO1.isImmediate())
         emitConstant(MO1.getImm(), Size);
       else {
@@ -698,7 +563,7 @@ void Emitter::emitInstruction(const MachineInstr &MI,
                      getX86RegNum(MI.getOperand(CurOp+1).getReg()));
     CurOp += 2;
     if (CurOp != NumOps)
-      emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
+      emitConstant(MI.getOperand(CurOp++).getImm(), X86InstrInfo::sizeOfImm(Desc));
     break;
   }
   case X86II::MRMDestMem: {
@@ -706,7 +571,7 @@ void Emitter::emitInstruction(const MachineInstr &MI,
     emitMemModRMByte(MI, CurOp, getX86RegNum(MI.getOperand(CurOp+4).getReg()));
     CurOp += 5;
     if (CurOp != NumOps)
-      emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
+      emitConstant(MI.getOperand(CurOp++).getImm(), X86InstrInfo::sizeOfImm(Desc));
     break;
   }
 
@@ -716,18 +581,18 @@ void Emitter::emitInstruction(const MachineInstr &MI,
                      getX86RegNum(MI.getOperand(CurOp).getReg()));
     CurOp += 2;
     if (CurOp != NumOps)
-      emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
+      emitConstant(MI.getOperand(CurOp++).getImm(), X86InstrInfo::sizeOfImm(Desc));
     break;
 
   case X86II::MRMSrcMem: {
-    intptr_t PCAdj = (CurOp+5 != NumOps) ? sizeOfImm(Desc) : 0;
+    intptr_t PCAdj = (CurOp+5 != NumOps) ? X86InstrInfo::sizeOfImm(Desc) : 0;
 
     MCE.emitByte(BaseOpcode);
     emitMemModRMByte(MI, CurOp+1, getX86RegNum(MI.getOperand(CurOp).getReg()),
                      PCAdj);
     CurOp += 5;
     if (CurOp != NumOps)
-      emitConstant(MI.getOperand(CurOp++).getImm(), sizeOfImm(Desc));
+      emitConstant(MI.getOperand(CurOp++).getImm(), X86InstrInfo::sizeOfImm(Desc));
     break;
   }
 
@@ -741,7 +606,7 @@ void Emitter::emitInstruction(const MachineInstr &MI,
 
     if (CurOp != NumOps) {
       const MachineOperand &MO1 = MI.getOperand(CurOp++);
-      unsigned Size = sizeOfImm(Desc);
+      unsigned Size = X86InstrInfo::sizeOfImm(Desc);
       if (MO1.isImmediate())
         emitConstant(MO1.getImm(), Size);
       else {
@@ -769,7 +634,7 @@ void Emitter::emitInstruction(const MachineInstr &MI,
   case X86II::MRM4m: case X86II::MRM5m:
   case X86II::MRM6m: case X86II::MRM7m: {
     intptr_t PCAdj = (CurOp+4 != NumOps) ?
-      (MI.getOperand(CurOp+4).isImmediate() ? sizeOfImm(Desc) : 4) : 0;
+      (MI.getOperand(CurOp+4).isImmediate() ? X86InstrInfo::sizeOfImm(Desc) : 4) : 0;
 
     MCE.emitByte(BaseOpcode);
     emitMemModRMByte(MI, CurOp, (Desc->TSFlags & X86II::FormMask)-X86II::MRM0m,
@@ -778,7 +643,7 @@ void Emitter::emitInstruction(const MachineInstr &MI,
 
     if (CurOp != NumOps) {
       const MachineOperand &MO = MI.getOperand(CurOp++);
-      unsigned Size = sizeOfImm(Desc);
+      unsigned Size = X86InstrInfo::sizeOfImm(Desc);
       if (MO.isImmediate())
         emitConstant(MO.getImm(), Size);
       else {

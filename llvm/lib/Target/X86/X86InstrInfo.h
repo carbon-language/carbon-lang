@@ -15,6 +15,7 @@
 #define X86INSTRUCTIONINFO_H
 
 #include "llvm/Target/TargetInstrInfo.h"
+#include "X86.h"
 #include "X86RegisterInfo.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -380,6 +381,20 @@ public:
   unsigned char getBaseOpcodeFor(unsigned Opcode) const {
     return getBaseOpcodeFor(&get(Opcode));
   }
+  
+  static bool isX86_64NonExtLowByteReg(unsigned reg) {
+    return (reg == X86::SPL || reg == X86::BPL ||
+          reg == X86::SIL || reg == X86::DIL);
+  }
+  
+  static unsigned sizeOfImm(const TargetInstrDesc *Desc);
+  static unsigned getX86RegNum(unsigned RegNo);
+  static bool isX86_64ExtendedReg(const MachineOperand &MO);
+  static unsigned determineREX(const MachineInstr &MI);
+
+  /// GetInstSize - Returns the size of the specified MachineInstr.
+  ///
+  virtual unsigned GetInstSizeInBytes(const MachineInstr *MI) const;
 
 private:
   MachineInstr* foldMemoryOperand(MachineInstr* MI,

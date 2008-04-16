@@ -225,18 +225,12 @@ public:
 
   virtual bool DefinesPredicate(MachineInstr *MI,
                                 std::vector<MachineOperand> &Pred) const;
+    
+  /// GetInstSize - Returns the size of the specified MachineInstr.
+  ///
+  virtual unsigned GetInstSizeInBytes(const MachineInstr* MI) const;
 };
 
-  // Utility routines
-  namespace ARM {
-    /// GetInstSize - Returns the size of the specified MachineInstr.
-    ///
-    unsigned GetInstSize(MachineInstr *MI);
-
-    /// GetFunctionSize - Returns the size of the specified MachineFunction.
-    ///
-    unsigned GetFunctionSize(MachineFunction &MF);
-  }
 }
 
 #endif

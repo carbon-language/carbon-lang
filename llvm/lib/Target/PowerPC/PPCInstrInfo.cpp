@@ -20,6 +20,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Target/TargetAsmInfo.h"
 using namespace llvm;
 
 extern cl::opt<bool> EnablePPC32RS;  // FIXME (64-bit): See PPCRegisterInfo.cpp.
@@ -723,4 +724,22 @@ ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
   // Leave the CR# the same, but invert the condition.
   Cond[0].setImm(PPC::InvertPredicate((PPC::Predicate)Cond[0].getImm()));
   return false;
+}
+
+/// GetInstSize - Return the number of bytes of code the specified
+/// instruction may be.  This returns the maximum number of bytes.
+///
+unsigned PPCInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
+  switch (MI->getOpcode()) {
+  case PPC::INLINEASM: {       // Inline Asm: Variable size.
+    const MachineFunction *MF = MI->getParent()->getParent();
+    const char *AsmStr = MI->getOperand(0).getSymbolName();
+    return MF->getTarget().getTargetAsmInfo()->getInlineAsmLength(AsmStr);
+  }
+  case PPC::LABEL: {
+    return 0;
+  }
+  default:
+    return 4; // PowerPC instructions are all 4 bytes
+  }
 }

@@ -948,7 +948,7 @@ ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   bool ForceLRSpill = false;
   if (!LRSpilled && AFI->isThumbFunction()) {
-    unsigned FnSize = ARM::GetFunctionSize(MF);
+    unsigned FnSize = TII.GetFunctionSizeInBytes(MF);
     // Force LR to be spilled if the Thumb function size is > 2048. This enables
     // use of BL to implement far jump. If it turns out that it's not needed
     // then the branch fix up path will undo it.

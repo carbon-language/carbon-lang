@@ -22,7 +22,6 @@
 #include "PPCPredicates.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MathExtras.h"
@@ -54,25 +53,6 @@ FunctionPass *llvm::createPPCBranchSelectionPass() {
   return new PPCBSel();
 }
 
-/// getNumBytesForInstruction - Return the number of bytes of code the specified
-/// instruction may be.  This returns the maximum number of bytes.
-///
-static unsigned getNumBytesForInstruction(MachineInstr *MI) {
-  switch (MI->getOpcode()) {
-  case PPC::INLINEASM: {       // Inline Asm: Variable size.
-    MachineFunction *MF = MI->getParent()->getParent();
-    const char *AsmStr = MI->getOperand(0).getSymbolName();
-    return MF->getTarget().getTargetAsmInfo()->getInlineAsmLength(AsmStr);
-  }
-  case PPC::LABEL: {
-    return 0;
-  }
-  default:
-    return 4; // PowerPC instructions are all 4 bytes
-  }
-}
-
-
 bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
   const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
   // Give the blocks of the function a dense, in-order, numbering.
@@ -88,7 +68,7 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
     unsigned BlockSize = 0;
     for (MachineBasicBlock::iterator MBBI = MBB->begin(), EE = MBB->end();
          MBBI != EE; ++MBBI)
-      BlockSize += getNumBytesForInstruction(MBBI);
+      BlockSize += TII->GetInstSizeInBytes(MBBI);
     
     BlockSizes[MBB->getNumber()] = BlockSize;
     FuncSize += BlockSize;
@@ -124,7 +104,7 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
       for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
            I != E; ++I) {
         if (I->getOpcode() != PPC::BCC || I->getOperand(2).isImmediate()) {
-          MBBStartOffset += getNumBytesForInstruction(I);
+          MBBStartOffset += TII->GetInstSizeInBytes(I);
           continue;
         }
         

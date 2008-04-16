@@ -388,6 +388,18 @@ public:
     abort();
     return 0; // Must return a value in order to compile with VS 2005
   }
+
+  /// GetInstSize - Returns the size of the specified Instruction.
+  /// 
+  virtual unsigned GetInstSizeInBytes(const MachineInstr *MI) const {
+    assert(0 && "Target didn't implement TargetInstrInfo::GetInstSize!");
+    return 0;
+  }
+
+  /// GetFunctionSizeInBytes - Returns the size of the specified MachineFunction.
+  /// 
+  virtual unsigned GetFunctionSizeInBytes(const MachineFunction &MF) const = 0;
+
 };
 
 /// TargetInstrInfoImpl - This is the default implementation of
@@ -408,6 +420,7 @@ public:
                              MachineBasicBlock::iterator MI,
                              unsigned DestReg,
                              const MachineInstr *Orig) const;
+  virtual unsigned GetFunctionSizeInBytes(const MachineFunction &MF) const;
 };
 
 } // End llvm namespace

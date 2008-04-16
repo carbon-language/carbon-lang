@@ -155,6 +155,11 @@ public:
   
   virtual bool BlockHasNoFallThrough(MachineBasicBlock &MBB) const;
   virtual bool ReverseBranchCondition(std::vector<MachineOperand> &Cond) const;
+  
+  /// GetInstSize - Return the number of bytes of code the specified
+  /// instruction may be.  This returns the maximum number of bytes.
+  ///
+  virtual unsigned GetInstSizeInBytes(const MachineInstr *MI) const;
 };
 
 }

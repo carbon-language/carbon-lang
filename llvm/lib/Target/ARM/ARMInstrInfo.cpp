@@ -877,8 +877,8 @@ static unsigned getNumJTEntries(const std::vector<MachineJumpTableEntry> &JT,
 
 /// GetInstSize - Return the size of the specified MachineInstr.
 ///
-unsigned ARM::GetInstSize(MachineInstr *MI) {
-  MachineBasicBlock &MBB = *MI->getParent();
+unsigned ARMInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
+  const MachineBasicBlock &MBB = *MI->getParent();
   const MachineFunction *MF = MBB.getParent();
   const TargetAsmInfo *TAI = MF->getTarget().getTargetAsmInfo();
 
@@ -937,17 +937,3 @@ unsigned ARM::GetInstSize(MachineInstr *MI) {
   }
   return 0; // Not reached
 }
-
-/// GetFunctionSize - Returns the size of the specified MachineFunction.
-///
-unsigned ARM::GetFunctionSize(MachineFunction &MF) {
-  unsigned FnSize = 0;
-  for (MachineFunction::iterator MBBI = MF.begin(), E = MF.end();
-       MBBI != E; ++MBBI) {
-    MachineBasicBlock &MBB = *MBBI;
-    for (MachineBasicBlock::iterator I = MBB.begin(),E = MBB.end(); I != E; ++I)
-      FnSize += ARM::GetInstSize(I);
-  }
-  return FnSize;
-}
-
