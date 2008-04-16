@@ -527,7 +527,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
           Out << (unsigned char)(nibble + '0');
         else
           Out << (unsigned char)(nibble - 10 + 'A');
-        if (shiftcount == 0) {
+        if (shiftcount == 0 && j+4 < width) {
           word = *(++p);
           shiftcount = 64;
           if (width-j-4 < 64)
