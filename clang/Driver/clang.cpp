@@ -1033,6 +1033,7 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA){
 static ASTConsumer* CreateASTConsumer(const std::string& InFile,
                                       Diagnostic& Diag, FileManager& FileMgr, 
                                       const LangOptions& LangOpts,
+                                      Preprocessor *PP,
                                       llvm::Module *&DestModule) {
   switch (ProgAction) {
     default:
@@ -1048,7 +1049,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       return CreateASTViewer();   
       
     case EmitHTML:
-      return CreateHTMLPrinter(OutputFile, Diag);
+      return CreateHTMLPrinter(OutputFile, Diag, PP);
       
     case ParseCFGDump:
     case ParseCFGView:
@@ -1099,10 +1100,8 @@ static void ProcessInputFile(Preprocessor &PP, const std::string &InFile) {
   
   switch (ProgAction) {
   default:
-    Consumer = CreateASTConsumer(InFile,
-                                 PP.getDiagnostics(),
-                                 PP.getFileManager(),
-                                 PP.getLangOptions(),
+    Consumer = CreateASTConsumer(InFile, PP.getDiagnostics(),
+                                 PP.getFileManager(), PP.getLangOptions(), &PP,
                                  CodeGenModule);
     
     if (!Consumer) {      
@@ -1242,7 +1241,7 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
   // translation unit, rather than InFile.
   llvm::Module *DestModule;
   llvm::OwningPtr<ASTConsumer>
-    Consumer(CreateASTConsumer(InFile, Diag, FileMgr, TU->getLangOpts(),
+    Consumer(CreateASTConsumer(InFile, Diag, FileMgr, TU->getLangOpts(), 0,
                                DestModule));
   
   if (!Consumer) {      

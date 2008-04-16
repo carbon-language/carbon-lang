@@ -27,6 +27,7 @@ class ASTConsumer;
 class Diagnostic;
 class FileManager;
 struct LangOptions;
+class Preprocessor;
 
 ASTConsumer *CreateASTPrinter(std::ostream* OS = NULL);
 
@@ -57,7 +58,8 @@ ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
                                     Diagnostic &Diags,
                                     const LangOptions &LOpts);
 
-  ASTConsumer* CreateHTMLPrinter(const std::string &OutFile, Diagnostic &D);
+ASTConsumer* CreateHTMLPrinter(const std::string &OutFile, Diagnostic &D,
+                               Preprocessor *PP);
 
 ASTConsumer *CreateSerializationTest(Diagnostic &Diags,
                                      FileManager& FMgr, 

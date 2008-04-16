@@ -14,11 +14,11 @@
 
 #include "clang/Rewrite/Rewriter.h"
 #include "clang/Rewrite/HTMLRewrite.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <sstream>
-
 using namespace clang;
 
 void html::EscapeText(Rewriter& R, unsigned FileID,
@@ -176,7 +176,6 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
   SourceLocation EndLoc = SourceLocation::getFileLoc(FileID, FileEnd-FileStart);
 
   // Generate header
-
   R.InsertCStrBefore(StartLoc,
       "<html>\n<head>\n"
       "<style type=\"text/css\">\n"
@@ -186,6 +185,7 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
       " .code { border-spacing:0px; width:100%; }\n"
       " .code { font-family: \"Andale Mono\", monospace; font-size:10pt }\n"
       " .code { line-height: 1.2em }\n"
+      " .comment { color:#A0A0A0 }\n"
       " .num { width:2.5em; padding-right:2ex; background-color:#eeeeee }\n"
       " .num { text-align:right; font-size: smaller }\n"
       " .num { color:#444444 }\n"
@@ -216,4 +216,45 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
   // Generate footer
   
   R.InsertCStrAfter(EndLoc, "</body></html>\n");
+}
+
+/// SyntaxHighlight - Relex the specified FileID and annotate the HTML with
+/// information about keywords, macro expansions etc.  This uses the macro
+/// table state from the end of the file, so it won't be perfectly perfect,
+/// but it will be reasonably close.
+void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
+  RewriteBuffer &RB = R.getEditBuffer(FileID);
+
+  // Inform the preprocessor that we want to retain comments as tokens, so we 
+  // can highlight them.
+  PP.SetCommentRetentionState(true, false);
+ 
+  // Start parsing the specified input file.
+  PP.EnterMainSourceFile();
+
+  // Lex all the tokens.
+  const SourceManager &SourceMgr = PP.getSourceManager();
+  Token Tok;
+  do {
+    PP.Lex(Tok);
+    // Ignore tokens whose logical location was not the main file.
+    SourceLocation LLoc = SourceMgr.getLogicalLoc(Tok.getLocation());
+    std::pair<unsigned, unsigned> LLocInfo = 
+      SourceMgr.getDecomposedFileLoc(LLoc);
+    
+    if (LLocInfo.first != FileID)
+      continue;
+    
+    unsigned TokOffs = LLocInfo.second;
+    unsigned TokLen = Tok.getLength();
+    switch (Tok.getKind()) {
+    default: break;
+    case tok::comment:
+      RB.InsertTextAfter(TokOffs, "<span class='comment'>",
+                         strlen("<span class='comment'>"));
+      RB.InsertTextBefore(TokOffs+TokLen, "</span>", strlen("</span>"));
+      break;
+    }
+    
+  } while (Tok.isNot(tok::eof));
 }

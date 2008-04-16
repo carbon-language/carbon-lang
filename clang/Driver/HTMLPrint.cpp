@@ -30,9 +30,10 @@ namespace {
     Rewriter R;
     std::string OutFilename;
     Diagnostic &Diags;
+    Preprocessor *PP;
   public:
-    HTMLPrinter(const std::string &OutFile, Diagnostic &D)
-      : OutFilename(OutFile), Diags(D) {}
+    HTMLPrinter(const std::string &OutFile, Diagnostic &D, Preprocessor *pp)
+      : OutFilename(OutFile), Diags(D), PP(pp) {}
     virtual ~HTMLPrinter();
     
     void Initialize(ASTContext &context);
@@ -40,8 +41,8 @@ namespace {
 }
 
 ASTConsumer* clang::CreateHTMLPrinter(const std::string &OutFile, 
-                                      Diagnostic &D) {
-  return new HTMLPrinter(OutFile, D);
+                                      Diagnostic &D, Preprocessor *PP) {
+  return new HTMLPrinter(OutFile, D, PP);
 }
 
 void HTMLPrinter::Initialize(ASTContext &context) {
@@ -58,6 +59,12 @@ HTMLPrinter::~HTMLPrinter() {
   html::AddLineNumbers(R, FileID);
   html::AddHeaderFooterInternalBuiltinCSS(R, FileID);
 
+  // If we have a preprocessor, relex the file and syntax hilight.  We might not
+  // have a preprocessor if we come from a deserialized AST file, for example.
+  if (PP)
+    html::SyntaxHighlight(R, FileID, *PP);
+  
+  
   // Open the output.
   FILE *OutputFILE;
   if (OutFilename.empty() || OutFilename == "-")

@@ -21,6 +21,7 @@
 namespace clang {
   
 class Rewriter;
+class Preprocessor;
   
 namespace html {
 
@@ -42,7 +43,12 @@ namespace html {
   void AddLineNumbers(Rewriter& R, unsigned FileID);  
   
   void AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID);
-  
+
+  /// SyntaxHighlight - Relex the specified FileID and annotate the HTML with
+  /// information about keywords, macro expansions etc.  This uses the macro
+  /// table state from the end of the file, so it won't be perfectly perfect,
+  /// but it will be reasonably close.
+  void SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP);
 
 } // end html namespace
 } // end clang namespace
