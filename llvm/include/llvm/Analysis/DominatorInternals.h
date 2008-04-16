@@ -42,7 +42,7 @@ unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
   // documentation purposes.
 #if 0
   InfoRec &VInfo = DT.Info[DT.Roots[i]];
-  VInfo.Semi = ++N;
+  VInfo.DFSNum = VInfo.Semi = ++N;
   VInfo.Label = V;
 
   Vertex.push_back(V);        // Vertex[n] = V;
@@ -58,6 +58,8 @@ unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
     }
   }
 #else
+  bool IsChilOfArtificialExit = (N != 0);
+
   std::vector<std::pair<typename GraphT::NodeType*,
                         typename GraphT::ChildIteratorType> > Worklist;
   Worklist.push_back(std::make_pair(V, GraphT::child_begin(V)));
@@ -65,19 +67,29 @@ unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
     typename GraphT::NodeType* BB = Worklist.back().first;
     typename GraphT::ChildIteratorType NextSucc = Worklist.back().second;
 
+    typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &BBInfo =
+                                                                    DT.Info[BB];
+
     // First time we visited this BB?
     if (NextSucc == GraphT::child_begin(BB)) {
-      typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &BBInfo =
-                                                                    DT.Info[BB];
-      BBInfo.Semi = ++N;
+      BBInfo.DFSNum = BBInfo.Semi = ++N;
       BBInfo.Label = BB;
 
       DT.Vertex.push_back(BB);       // Vertex[n] = V;
       //BBInfo[V].Ancestor = 0;   // Ancestor[n] = 0
       //BBInfo[V].Child = 0;      // Child[v] = 0
       BBInfo.Size = 1;            // Size[v] = 1
+
+      if (IsChilOfArtificialExit)
+        BBInfo.Parent = 1;
+
+      IsChilOfArtificialExit = false;
     }
-    
+
+    // store the DFS number of the current BB - the reference to BBInfo might
+    // get invalidated when processing the successors.
+    unsigned BBDFSNum = BBInfo.DFSNum;
+
     // If we are done with this block, remove it from the worklist.
     if (NextSucc == GraphT::child_end(BB)) {
       Worklist.pop_back();
@@ -93,7 +105,7 @@ unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
     typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &SuccVInfo =
                                                                   DT.Info[Succ];
     if (SuccVInfo.Semi == 0) {
-      SuccVInfo.Parent = BB;
+      SuccVInfo.Parent = BBDFSNum;
       Worklist.push_back(std::make_pair(Succ, GraphT::child_begin(Succ)));
     }
   }
@@ -106,9 +118,8 @@ void Compress(DominatorTreeBase<typename GraphT::NodeType>& DT,
               typename GraphT::NodeType *VIn) {
   std::vector<typename GraphT::NodeType*> Work;
   SmallPtrSet<typename GraphT::NodeType*, 32> Visited;
-  typename GraphT::NodeType* VInAncestor = DT.Info[VIn].Ancestor;
   typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &VInVAInfo =
-                                                           DT.Info[VInAncestor];
+                                      DT.Info[DT.Vertex[DT.Info[VIn].Ancestor]];
 
   if (VInVAInfo.Ancestor != 0)
     Work.push_back(VIn);
@@ -117,7 +128,7 @@ void Compress(DominatorTreeBase<typename GraphT::NodeType>& DT,
     typename GraphT::NodeType* V = Work.back();
     typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &VInfo =
                                                                      DT.Info[V];
-    typename GraphT::NodeType* VAncestor = VInfo.Ancestor;
+    typename GraphT::NodeType* VAncestor = DT.Vertex[VInfo.Ancestor];
     typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &VAInfo =
                                                              DT.Info[VAncestor];
 
@@ -168,11 +179,11 @@ typename GraphT::NodeType* Eval(DominatorTreeBase<typename GraphT::NodeType>& DT
 
 template<class GraphT>
 void Link(DominatorTreeBase<typename GraphT::NodeType>& DT,
-          typename GraphT::NodeType* V, typename GraphT::NodeType* W,
+          unsigned DFSNumV, typename GraphT::NodeType* W,
         typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &WInfo) {
 #if !BALANCE_IDOM_TREE
   // Higher-complexity but faster implementation
-  WInfo.Ancestor = V;
+  WInfo.Ancestor = DFSNumV;
 #else
   // Lower-complexity but slower implementation
   GraphT::NodeType* WLabel = WInfo.Label;
@@ -220,10 +231,30 @@ template<class FuncT, class NodeT>
 void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
                FuncT& F) {
   typedef GraphTraits<NodeT> GraphT;
-  
+
+  unsigned N = 0;
+
+  // Add a node for the root.  This node might be the actual root, if there is
+  // one exit block, or it may be the virtual exit (denoted by (BasicBlock *)0)
+  // which postdominates all real exits if there are multiple exit blocks.
+  typename GraphT::NodeType* Root = DT.Roots.size() == 1 ? DT.Roots[0]
+                   : 0;
+  bool MultipleRoots = (DT.Roots.size() > 1);
+
+  if (MultipleRoots) {
+    typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &BBInfo =
+        DT.Info[NULL];
+    BBInfo.DFSNum = BBInfo.Semi = ++N;
+    BBInfo.Label = NULL;
+
+    DT.Vertex.push_back(NULL);       // Vertex[n] = V;
+      //BBInfo[V].Ancestor = 0;   // Ancestor[n] = 0
+      //BBInfo[V].Child = 0;      // Child[v] = 0
+    BBInfo.Size = 1;            // Size[v] = 1
+  }
+
   // Step #1: Number blocks in depth-first order and initialize variables used
   // in later stages of the algorithm.
-  unsigned N = 0;
   for (unsigned i = 0, e = DT.Roots.size(); i != e; ++i)
     N = DFSPass<GraphT>(DT, DT.Roots[i], N);
 
@@ -233,19 +264,34 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
                                                                      DT.Info[W];
 
     // Step #2: Calculate the semidominators of all vertices
+    bool HasChildOutsideDFS = false;
+
+    // initialize the semi dominator to point to the parent node
+    WInfo.Semi = WInfo.Parent;
     for (typename GraphTraits<Inverse<NodeT> >::ChildIteratorType CI =
          GraphTraits<Inverse<NodeT> >::child_begin(W),
-         E = GraphTraits<Inverse<NodeT> >::child_end(W); CI != E; ++CI)
+         E = GraphTraits<Inverse<NodeT> >::child_end(W); CI != E; ++CI) {
       if (DT.Info.count(*CI)) {  // Only if this predecessor is reachable!
         unsigned SemiU = DT.Info[Eval<GraphT>(DT, *CI)].Semi;
         if (SemiU < WInfo.Semi)
           WInfo.Semi = SemiU;
       }
+      else {
+        // if the child has no DFS number it is not post-dominated by any exit, 
+        // and so is the current block.
+        HasChildOutsideDFS = true;
+      }
+    }
+
+    // if some child has no DFS number it is not post-dominated by any exit, 
+    // and so is the current block.
+    if (DT.isPostDominator() && HasChildOutsideDFS)
+      WInfo.Semi = 0;
 
     DT.Info[DT.Vertex[WInfo.Semi]].Bucket.push_back(W);
 
-    typename GraphT::NodeType* WParent = WInfo.Parent;
-    Link<GraphT>(DT, WParent, W, WInfo);
+    typename GraphT::NodeType* WParent = DT.Vertex[WInfo.Parent];
+    Link<GraphT>(DT, WInfo.Parent, W, WInfo);
 
     // Step #3: Implicitly define the immediate dominator of vertices
     std::vector<typename GraphT::NodeType*> &WParentBucket =
@@ -271,29 +317,39 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
   // Add a node for the root.  This node might be the actual root, if there is
   // one exit block, or it may be the virtual exit (denoted by (BasicBlock *)0)
   // which postdominates all real exits if there are multiple exit blocks.
-  typename GraphT::NodeType* Root = DT.Roots.size() == 1 ? DT.Roots[0]
-                                                         : 0;
   DT.DomTreeNodes[Root] = DT.RootNode =
                         new DomTreeNodeBase<typename GraphT::NodeType>(Root, 0);
   
   // Loop over all of the reachable blocks in the function...
-  for (typename FuncT::iterator I = F.begin(), E = F.end(); I != E; ++I)
-    if (typename GraphT::NodeType* ImmDom = DT.getIDom(I)) {
-      // Reachable block.
-      DomTreeNodeBase<typename GraphT::NodeType> *BBNode = DT.DomTreeNodes[I];
-      if (BBNode) continue;  // Haven't calculated this node yet?
+  for (unsigned i = 2; i <= N; ++i) {
+    typename GraphT::NodeType* W = DT.Vertex[i];
 
-      // Get or calculate the node for the immediate dominator
-      DomTreeNodeBase<typename GraphT::NodeType> *IDomNode =
+    DomTreeNodeBase<typename GraphT::NodeType> *BBNode = DT.DomTreeNodes[W];
+    if (BBNode) continue;  // Haven't calculated this node yet?
+
+    typename GraphT::NodeType* ImmDom = DT.getIDom(W);
+
+    // skip all non root nodes that have no dominator - this occures with 
+    // infinite loops.
+    if (!ImmDom && std::count(DT.Roots.begin(), DT.Roots.end(), W) == 0)
+      continue;
+
+    // Get or calculate the node for the immediate dominator
+    DomTreeNodeBase<typename GraphT::NodeType> *IDomNode =
                                                      DT.getNodeForBlock(ImmDom);
 
-      // Add a new tree node for this BasicBlock, and link it as a child of
-      // IDomNode
-      DomTreeNodeBase<typename GraphT::NodeType> *C =
-                    new DomTreeNodeBase<typename GraphT::NodeType>(I, IDomNode);
-      DT.DomTreeNodes[I] = IDomNode->addChild(C);
-    }
-  
+    // skip all children that are dominated by a non root node that, by itself,
+    // has no dominator.
+    if (!IDomNode)
+      continue;
+
+    // Add a new tree node for this BasicBlock, and link it as a child of
+    // IDomNode
+    DomTreeNodeBase<typename GraphT::NodeType> *C =
+                    new DomTreeNodeBase<typename GraphT::NodeType>(W, IDomNode);
+    DT.DomTreeNodes[W] = IDomNode->addChild(C);
+  }
+
   // Free temporary memory used to construct idom's
   DT.IDoms.clear();
   DT.Info.clear();

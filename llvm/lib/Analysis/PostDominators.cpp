@@ -11,9 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "postdomtree"
+
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/Analysis/DominatorInternals.h"
@@ -30,6 +33,7 @@ F("postdomtree", "Post-Dominator Tree Construction", true, true);
 
 bool PostDominatorTree::runOnFunction(Function &F) {
   DT->recalculate(F);
+  DEBUG(DT->dump());
   return false;
 }
 

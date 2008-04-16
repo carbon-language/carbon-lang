@@ -182,13 +182,16 @@ protected:
   unsigned int SlowQueries;
   // Information record used during immediate dominators computation.
   struct InfoRec {
+    unsigned DFSNum;
     unsigned Semi;
     unsigned Size;
-    NodeT *Label, *Parent, *Child, *Ancestor;
+    NodeT *Label, *Child;
+    unsigned Parent, Ancestor;
 
     std::vector<NodeT*> Bucket;
 
-    InfoRec() : Semi(0), Size(0), Label(0), Parent(0), Child(0), Ancestor(0) {}
+    InfoRec() : DFSNum(0), Semi(0), Size(0), Label(0), Child(0), Parent(0),
+                Ancestor(0) {}
   };
 
   DenseMap<NodeT*, NodeT*> IDoms;
@@ -544,8 +547,7 @@ protected:
 
   template<class GraphT>
   friend void Link(DominatorTreeBase<typename GraphT::NodeType>& DT,
-                   typename GraphT::NodeType* V,
-                   typename GraphT::NodeType* W,
+                   unsigned DFSNumV, typename GraphT::NodeType* W,
          typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &WInfo);
   
   template<class GraphT>
@@ -602,7 +604,17 @@ protected:
     // Haven't calculated this node yet?  Get or calculate the node for the
     // immediate dominator.
     NodeT *IDom = getIDom(BB);
+
+    // skip all non root nodes that have no dominator
+    if (!IDom && std::count(this->Roots.begin(), this->Roots.end(), BB) == 0)
+      return NULL;
+
     DomTreeNodeBase<NodeT> *IDomNode = getNodeForBlock(IDom);
+
+    // skip all nodes that are dominated by a non root node that, by itself,
+    // has no dominator.
+    if (!IDomNode)
+      return NULL;
 
     // Add a new tree node for this BasicBlock, and link it as a child of
     // IDomNode
@@ -616,9 +628,7 @@ protected:
   }
   
   inline void addRoot(NodeT* BB) {
-    // Unreachable block is not a root node.
-    if (!isa<UnreachableInst>(&BB->back()))
-      this->Roots.push_back(BB);
+    this->Roots.push_back(BB);
   }
   
 public:

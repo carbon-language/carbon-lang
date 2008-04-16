@@ -14,9 +14,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "domtree"
+
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -58,7 +61,7 @@ E("domtree", "Dominator Tree Construction", true, true);
 
 bool DominatorTree::runOnFunction(Function &F) {
   DT->recalculate(F);
-  
+  DEBUG(DT->dump());
   return false;
 }
 
