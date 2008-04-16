@@ -15,6 +15,7 @@
 #include "clang/Rewrite/Rewriter.h"
 #include "clang/Rewrite/HTMLRewrite.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <sstream>
 
@@ -113,17 +114,18 @@ std::string html::EscapeText(const std::string& s, bool EscapeSpaces,
 
 static void AddLineNumber(Rewriter& R, unsigned LineNo,
                           SourceLocation B, SourceLocation E) {
-    
-  std::ostringstream os;
-  os << "<tr><td class=\"num\" id=\"LN" << LineNo << "\">" 
-     << LineNo << "</td><td class=\"line\">";
-
+  llvm::SmallString<100> Str;
+  Str += "<tr><td class=\"num\" id=\"LN";
+  Str.append_uint(LineNo);
+  Str += "\">";
+  Str.append_uint(LineNo);
+  Str += "</td><td class=\"line\">";
+  
   if (B == E) { // Handle empty lines.
-    os << " </td></tr>";
-    R.InsertStrBefore(B, os.str());
-  }
-  else {
-    R.InsertStrBefore(B, os.str());
+    Str += " </td></tr>";
+    R.InsertTextBefore(B, &Str[0], Str.size());
+  } else {
+    R.InsertTextBefore(B, &Str[0], Str.size());
     R.InsertCStrBefore(E, "</td></tr>");
   }
 }
