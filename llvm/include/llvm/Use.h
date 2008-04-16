@@ -136,7 +136,7 @@ public:
     _Self tmp = *this; ++*this; return tmp;
   }
 
-  // Retrieve a reference to the current SCC
+  // Retrieve a reference to the current User
   UserTy *operator*() const {
     assert(U && "Cannot increment end iterator!");
     return U->getUser();
