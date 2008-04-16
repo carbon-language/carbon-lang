@@ -108,7 +108,9 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     }
 
     // Set the MBB2IdxMap entry for this MBB.
-    MBB2IdxMap[MBB->getNumber()] = std::make_pair(StartIdx, MIIndex - 1);
+    MBB2IdxMap[MBB->getNumber()] = (StartIdx == MIIndex)
+      ? std::make_pair(StartIdx, StartIdx)  // Empty MBB
+      : std::make_pair(StartIdx, MIIndex - 1);
     Idx2MBBMap.push_back(std::make_pair(StartIdx, MBB));
   }
   std::sort(Idx2MBBMap.begin(), Idx2MBBMap.end(), Idx2MBBCompare());
