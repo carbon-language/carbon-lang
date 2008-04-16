@@ -237,7 +237,7 @@ void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
   
   // Inform the preprocessor that we want to retain comments as tokens, so we 
   // can highlight them.
-  //PP.SetCommentRetentionState(true, false);
+  L.SetCommentRetentionState(true);
  
   // Lex all the tokens in raw mode, to avoid entering #includes or expanding
   // macros.

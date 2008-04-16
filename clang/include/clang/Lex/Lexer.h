@@ -154,6 +154,13 @@ public:
     return BufferPtr == BufferEnd; 
   }
   
+  /// SetCommentRetentionMode - Change the comment retention mode of the lexer
+  /// to the specified mode.  This is really only useful when lexing in raw
+  /// mode, because otherwise the lexer needs to manage this.
+  void SetCommentRetentionState(bool Mode) { 
+    KeepCommentMode = Mode;
+  }
+  
   /// ReadToEndOfLine - Read the rest of the current preprocessor line as an
   /// uninterpreted string.  This switches the lexer out of directive mode.
   std::string ReadToEndOfLine();
