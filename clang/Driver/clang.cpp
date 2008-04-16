@@ -918,8 +918,10 @@ static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
 
       // Fedora 8
       AddPath("/usr/include/c++/4.1.2", System, true, false, false, Headers);
-      AddPath("/usr/include/c++/4.1.2/i386-redhat-linux", System, true, false, false, Headers);
-      AddPath("/usr/include/c++/4.1.2/backward", System, true, false, false, Headers);
+      AddPath("/usr/include/c++/4.1.2/i386-redhat-linux", System, true, false,
+              false, Headers);
+      AddPath("/usr/include/c++/4.1.2/backward", System, true, false, false, 
+              Headers);
     }
     
     AddPath("/usr/local/include", System, false, false, false, Headers);
@@ -1046,7 +1048,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       return CreateASTViewer();   
       
     case EmitHTML:
-      return CreateHTMLPrinter();
+      return CreateHTMLPrinter(OutputFile, Diag);
       
     case ParseCFGDump:
     case ParseCFGView:
