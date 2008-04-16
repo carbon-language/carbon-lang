@@ -228,42 +228,42 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
 void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
   RewriteBuffer &RB = R.getEditBuffer(FileID);
 
+  const SourceManager &SourceMgr = PP.getSourceManager();
+  std::pair<const char*, const char*> File = SourceMgr.getBufferData(FileID);
+  const char *BufferStart = File.first;
+  
+  Lexer L(SourceLocation::getFileLoc(FileID, 0), PP.getLangOptions(),
+          File.first, File.second);
+  
   // Inform the preprocessor that we want to retain comments as tokens, so we 
   // can highlight them.
-  PP.SetCommentRetentionState(true, false);
+  //PP.SetCommentRetentionState(true, false);
  
-  // Start parsing the specified input file.
-  PP.EnterMainSourceFile();
-
   // Lex all the tokens in raw mode, to avoid entering #includes or expanding
   // macros.
-  const SourceManager &SourceMgr = PP.getSourceManager();
   Token Tok;
-  PP.LexUnexpandedToken(Tok);
+  L.LexRawToken(Tok);
   
-  // Skip tokens from the predefine buffer or whatever else.
-  // Consume all of the tokens that come from the predefines buffer.  Those
-  // should not be emitted into the output and are guaranteed to be at the
-  // start.
-  while (Tok.isNot(tok::eof) && Tok.getLocation().isFileID() &&
-         SourceMgr.getCanonicalFileID(Tok.getLocation()) != FileID)
-    PP.LexUnexpandedToken(Tok);
-
   while (Tok.isNot(tok::eof)) {
     // Since we are lexing unexpanded tokens, all tokens are from the main
     // FileID.
     unsigned TokOffs = SourceMgr.getFullFilePos(Tok.getLocation());
     unsigned TokLen = Tok.getLength();
     switch (Tok.getKind()) {
-    default:
-      // If this is a pp-identifier, but not a real identifier it must be a
-      // keyword.
-      if (Tok.getIdentifierInfo() && Tok.isNot(tok::identifier)) {
+    default: break;
+    case tok::identifier: {
+      // Fill in Result.IdentifierInfo, looking up the identifier in the
+      // identifier table.
+      IdentifierInfo *II = PP.LookUpIdentifierInfo(Tok, BufferStart+TokOffs);
+        
+      // If this is a pp-identifier, for a keyword, highlight it as such.
+      if (II->getTokenID() != tok::identifier) {
         RB.InsertTextAfter(TokOffs, "<span class='keyword'>",
                            strlen("<span class='keyword'>"));
         RB.InsertTextBefore(TokOffs+TokLen, "</span>", strlen("</span>"));
       }
       break;
+    }
     case tok::comment:
       RB.InsertTextAfter(TokOffs, "<span class='comment'>",
                          strlen("<span class='comment'>"));
@@ -285,9 +285,8 @@ void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
       break;
     }
     
-    PP.LexUnexpandedToken(Tok);
+    L.LexRawToken(Tok);
   }
-  PP.SetCommentRetentionState(false, false);
 }
 
 /// HighlightMacros - This uses the macro table state from the end of the
