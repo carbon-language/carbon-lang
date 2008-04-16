@@ -294,17 +294,6 @@ namespace llvm {
     unsigned getShufflePSHUFLWImmediate(SDNode *N);
   }
 
-  namespace X86 {
-   /// X86_64SRet - These represent different ways to implement x86_64 struct
-   /// returns call results.
-   enum X86_64SRet {
-     InMemory,    // Really is sret, returns in memory.
-     InGPR64,     // Returns in a pair of 64-bit integer registers.
-     InSSE,       // Returns in a pair of SSE registers.
-     InX87        // Returns in a pair of f80 X87 registers.
-   };
-  }
-
   //===--------------------------------------------------------------------===//
   //  X86TargetLowering - X86 Implementation of the TargetLowering interface
   class X86TargetLowering : public TargetLowering {
