@@ -1,5 +1,6 @@
 ; RUN: llvm-as < %s |   opt -adce | llvm-dis | grep switch
 ; PR 1564
+; XFAIL: *
   
 define fastcc void @out() {
     start:
