@@ -602,13 +602,10 @@ protected:
     TF->EvalObjCMessageExpr(Dst, *this, *Builder, ME, Pred);
   }
   
-  void VisitStore(NodeSet& Dst, Expr* E, NodeTy* Pred, ValueState* St,
+  void EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred, ValueState* St,
                  RVal TargetLV, RVal Val);
   
-  void EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred, ValueState* St,
-                 RVal TargetLV, RVal Val) {
-    TF->EvalStore(Dst, *this, *Builder, E, Pred, St, TargetLV, Val);
-  }
+  void EvalReturn(NodeSet& Dst, ReturnStmt* s, NodeTy* Pred);  
   
   ValueState* MarkBranch(ValueState* St, Stmt* Terminator, bool branchTaken);
 };

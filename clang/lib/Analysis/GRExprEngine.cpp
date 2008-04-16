@@ -708,8 +708,8 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
   MakeNode(Dst, D, Pred, SetBlkExprRVal(St, D, Y));
 }
 
-void GRExprEngine::VisitStore(NodeSet& Dst, Expr* E, NodeTy* Pred,
-                              ValueState* St, RVal TargetLV, RVal Val) {
+void GRExprEngine::EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred,
+                             ValueState* St, RVal TargetLV, RVal Val) {
   
   assert (Builder && "GRStmtNodeBuilder must be defined.");
   
@@ -718,7 +718,7 @@ void GRExprEngine::VisitStore(NodeSet& Dst, Expr* E, NodeTy* Pred,
   
   assert (!TargetLV.isUndef());
   
-  EvalStore(Dst, E, Pred, St, TargetLV, Val);
+  TF->EvalStore(Dst, *this, *Builder, E, Pred, St, TargetLV, Val);
   
   // Handle the case where no nodes where generated.  Auto-generate that
   // contains the updated state if we aren't generating sinks.
@@ -1456,15 +1456,31 @@ void GRExprEngine::VisitAsmStmtHelperInputs(AsmStmt* A,
     VisitAsmStmtHelperInputs(A, I, E, *NI, Dst);
 }
 
+void GRExprEngine::EvalReturn(NodeSet& Dst, ReturnStmt* S, NodeTy* Pred) {
+  assert (Builder && "GRStmtNodeBuilder must be defined.");
+  
+  unsigned size = Dst.size();  
+  SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+  
+  TF->EvalReturn(Dst, *this, *Builder, S, Pred);
+  
+  // Handle the case where no nodes where generated.  Auto-generate that
+  // contains the updated state if we aren't generating sinks.
+  
+  if (!Builder->BuildSinks && Dst.size() == size)
+    MakeNode(Dst, S, Pred, GetState(Pred));
+}
+
 void GRExprEngine::VisitReturnStmt(ReturnStmt* S, NodeTy* Pred, NodeSet& Dst) {
 
   Expr* R = S->getRetValue();
   
   if (!R) {
-    Dst.Add(Pred);
+    EvalReturn(Dst, S, Pred);
     return;
   }
-  
+
+  NodeSet DstRet;
   QualType T = R->getType();
   
   if (T->isPointerLikeType()) {
@@ -1494,11 +1510,14 @@ void GRExprEngine::VisitReturnStmt(ReturnStmt* S, NodeTy* Pred, NodeSet& Dst) {
         }
       }
       
-      Dst.Add(*I);
+      DstRet.Add(*I);
     }
   }
   else
-    Visit(R, Pred, Dst);
+    Visit(R, Pred, DstRet);
+  
+  for (NodeSet::iterator I=DstRet.begin(), E=DstRet.end(); I!=E; ++I)
+    EvalReturn(Dst, S, *I);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1649,7 +1668,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           // Simulate the effects of a "store":  bind the value of the RHS
           // to the L-Value represented by the LHS.
 
-          VisitStore(Dst, B, N2, SetRVal(St, B, RightV),
+          EvalStore(Dst, B, N2, SetRVal(St, B, RightV),
                      LeftV, RightV);
           
           continue;
@@ -1799,7 +1818,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           }
           
           //          St = SetRVal(SetRVal(St, B, Result), LeftLV, Result);          
-          VisitStore(Dst, B, N2, SetRVal(St, B, Result), LeftLV, Result);
+          EvalStore(Dst, B, N2, SetRVal(St, B, Result), LeftLV, Result);
           continue;
         }
       }

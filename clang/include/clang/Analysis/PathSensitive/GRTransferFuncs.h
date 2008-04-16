@@ -64,13 +64,13 @@ public:
                         GRExprEngine& Engine,
                         GRStmtNodeBuilder<ValueState>& Builder,
                         CallExpr* CE, LVal L,
-                        ExplodedNode<ValueState>* Pred) = 0;
+                        ExplodedNode<ValueState>* Pred) {}
   
   virtual void EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
                                    GRExprEngine& Engine,
                                    GRStmtNodeBuilder<ValueState>& Builder,
                                    ObjCMessageExpr* ME,
-                                   ExplodedNode<ValueState>* Pred) = 0;
+                                   ExplodedNode<ValueState>* Pred) {}
   
   // Stores.
   
@@ -88,6 +88,14 @@ public:
   
   virtual void EvalEndPath(GRExprEngine& Engine,
                            GREndPathNodeBuilder<ValueState>& Builder) {}
+  
+  // Return statements.
+  
+  virtual void EvalReturn(ExplodedNodeSet<ValueState>& Dst,
+                          GRExprEngine& Engine,
+                          GRStmtNodeBuilder<ValueState>& Builder,
+                          ReturnStmt* S,
+                          ExplodedNode<ValueState>* Pred) {}
 };
   
 } // end clang namespace
