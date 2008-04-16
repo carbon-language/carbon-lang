@@ -28,8 +28,8 @@ namespace sys {
   /// platform independent and eliminates many of the unix-specific fields.
   /// However, to support llvm-ar, the mode, user, and group fields are
   /// retained. These pertain to unix security and may not have a meaningful
-  /// value on non-Unix platforms. However, the other fields fields should 
-  /// always be applicable on all platforms.  The structure is filled in by 
+  /// value on non-Unix platforms. However, the other fields fields should
+  /// always be applicable on all platforms.  The structure is filled in by
   /// the PathWithStatus class.
   /// @brief File status structure
   class FileStatus {
@@ -45,7 +45,7 @@ namespace sys {
 
     FileStatus() : fileSize(0), modTime(0,0), mode(0777), user(999),
                    group(999), uniqueID(0), isDir(false), isFile(false) { }
-    
+
     TimeValue getTimestamp() const { return modTime; }
     uint64_t getSize() const { return fileSize; }
     uint32_t getMode() const { return mode; }
@@ -148,7 +148,7 @@ namespace sys {
       /// constructor must provide the same result as GetRootDirectory.
       /// @brief Construct a path to the current user's "home" directory
       static Path GetUserHomeDirectory();
-      
+
       /// Construct a path to the current directory for the current process.
       /// @returns The current working directory.
       /// @brief Returns the current working directory.
@@ -161,7 +161,7 @@ namespace sys {
       /// @returns The dynamic link library suffix for the current platform.
       /// @brief Return the dynamic link library suffix.
       static std::string GetDLLSuffix();
-    
+
       /// GetMainExecutable - Return the path to the main executable, given the
       /// value of argv[0] from program startup and the address of main itself.
       static Path GetMainExecutable(const char *argv0, void *MainAddr);
@@ -177,20 +177,20 @@ namespace sys {
 
       /// This constructor will accept a std::string as a path. No checking is
       /// done on this path to determine if it is valid. To determine validity
-      /// of the path, use the isValid method. 
+      /// of the path, use the isValid method.
       /// @param p The path to assign.
       /// @brief Construct a Path from a string.
       explicit Path(const std::string& p) : path(p) {}
 
       /// This constructor will accept a character range as a path.  No checking
       /// is done on this path to determine if it is valid.  To determine
-      /// validity of the path, use the isValid method. 
+      /// validity of the path, use the isValid method.
       /// @param StrStart A pointer to the first character of the path name
       /// @param StrLen The length of the path name at StrStart
       /// @brief Construct a Path from a string.
       explicit Path(const char *StrStart, unsigned StrLen)
         : path(StrStart, StrStart+StrLen) {}
-      
+
     /// @}
     /// @name Operators
     /// @{
@@ -240,10 +240,10 @@ namespace sys {
       /// @brief Determine if a path is syntactically valid or not.
       bool isValid() const;
 
-      /// This function determines if the contents of the path name are empty. 
+      /// This function determines if the contents of the path name are empty.
       /// That is, the path name has a zero length. This does NOT determine if
-      /// if the file is empty. To get the length of the file itself, Use the 
-      /// PathWithStatus::getFileStatus() method and then the getSize() method 
+      /// if the file is empty. To get the length of the file itself, Use the
+      /// PathWithStatus::getFileStatus() method and then the getSize() method
       /// on the returned FileStatus object.
       /// @returns true iff the path is empty.
       /// @brief Determines if the path name is empty (invalid).
@@ -269,7 +269,7 @@ namespace sys {
       /// @returns std::string containing the basename of the path
       /// @brief Get the base name of the path
       std::string getBasename() const;
-    
+
       /// This function strips off the suffix of the path beginning with the
       /// path separator ('/' on Unix, '\' on Windows) and returns the result.
       std::string getDirname() const;
@@ -286,9 +286,12 @@ namespace sys {
       /// @returns a 'C' string containing the path name.
       /// @brief Returns the path as a C string.
       const char *c_str() const { return path.c_str(); }
-  
+
       /// size - Return the length in bytes of this path name.
       unsigned size() const { return path.size(); }
+
+      /// empty - Returns true if the path is empty.
+      unsigned empty() const { return path.empty(); }
 
     /// @}
     /// @name Disk Accessors
@@ -303,7 +306,7 @@ namespace sys {
       bool isRootDirectory() const;
 
       /// This function determines if the path name is absolute, as opposed to
-      /// relative. 
+      /// relative.
       /// @brief Determine if the path is absolute.
       bool isAbsolute() const;
 
@@ -336,7 +339,7 @@ namespace sys {
       /// bitcode files.
       /// @brief Determine if the path references a bitcode file.
       bool isBitcodeFile() const;
-      
+
       /// This function determines if the path name in the object references a
       /// native Dynamic Library (shared library, shared object) by looking at
       /// the file's magic number. The Path object must reference a file, not a
@@ -345,7 +348,7 @@ namespace sys {
       /// shared library.
       /// @brief Determine if the path reference a dynamic library.
       bool isDynamicLibrary() const;
-    
+
       /// This function determines if the path name references an existing file
       /// or directory in the file system.
       /// @returns true if the pathname references an existing file or
@@ -354,12 +357,12 @@ namespace sys {
       /// the file system.
       bool exists() const;
 
-      /// This function determines if the path name refences an 
+      /// This function determines if the path name refences an
       /// existing directory.
       /// @returns true if the pathname references an existing directory.
       /// @brief Determins if the path is a directory in the file system.
       bool isDirectory() const;
-    
+
       /// This function determines if the path name references a readable file
       /// or directory in the file system. This function checks for
       /// the existence and readability (by the current program) of the file
@@ -494,9 +497,9 @@ namespace sys {
       /// created. The created directory will have no entries.
       /// @returns true if the directory could not be created, false otherwise
       /// @brief Create the directory this Path refers to.
-      bool createDirectoryOnDisk( 
-        bool create_parents = false, ///<  Determines whether non-existent 
-           ///< directory components other than the last one (the "parents") 
+      bool createDirectoryOnDisk(
+        bool create_parents = false, ///<  Determines whether non-existent
+           ///< directory components other than the last one (the "parents")
            ///< are created or not.
         std::string* ErrMsg = 0 ///< Optional place to put error messages.
       );
@@ -518,11 +521,11 @@ namespace sys {
       /// file is created.  Note that this will both change the Path object
       /// *and* create the corresponding file. This function will ensure that
       /// the newly generated temporary file name is unique in the file system.
-      /// @returns true if the file couldn't be created, false otherwise. 
+      /// @returns true if the file couldn't be created, false otherwise.
       /// @brief Create a unique temporary file
       bool createTemporaryFileOnDisk(
-        bool reuse_current = false, ///< When set to true, this parameter 
-          ///< indicates that if the current file name does not exist then 
+        bool reuse_current = false, ///< When set to true, this parameter
+          ///< indicates that if the current file name does not exist then
           ///< it will be used without modification.
         std::string* ErrMsg = 0 ///< Optional place to put error messages
       );
@@ -548,8 +551,8 @@ namespace sys {
       /// @brief Removes the file or directory from the filesystem.
       bool eraseFromDisk(bool destroy_contents = false,
                          std::string *Err = 0) const;
-    
-    
+
+
       /// MapInFilePages - This is a low level system API to map in the file
       /// that is currently opened as FD into the current processes' address
       /// space for read only access.  This function may return null on failure
@@ -560,23 +563,23 @@ namespace sys {
       ///     present.
       ///  3) The pages must be contiguous.
       ///
-      /// This API is not intended for general use, clients should use 
+      /// This API is not intended for general use, clients should use
       /// MemoryBuffer::getFile instead.
       static const char *MapInFilePages(int FD, uint64_t FileSize);
-    
+
       /// UnMapFilePages - Free pages mapped into the current process by
       /// MapInFilePages.
-      /// 
-      /// This API is not intended for general use, clients should use 
+      ///
+      /// This API is not intended for general use, clients should use
       /// MemoryBuffer::getFile instead.
       static void UnMapFilePages(const char *Base, uint64_t FileSize);
-    
+
     /// @}
     /// @name Data
     /// @{
     protected:
       mutable std::string path;   ///< Storage for the path name.
-            
+
 
     /// @}
   };
@@ -592,23 +595,23 @@ namespace sys {
   class PathWithStatus : public Path {
     /// @name Constructors
     /// @{
-    public: 
+    public:
       /// @brief Default constructor
       PathWithStatus() : Path(), status(), fsIsValid(false) {}
 
       /// @brief Copy constructor
-      PathWithStatus(const PathWithStatus &that) 
-        : Path(static_cast<const Path&>(that)), status(that.status), 
+      PathWithStatus(const PathWithStatus &that)
+        : Path(static_cast<const Path&>(that)), status(that.status),
            fsIsValid(that.fsIsValid) {}
 
       /// This constructor allows construction from a Path object
       /// @brief Path constructor
-      PathWithStatus(const Path &other) 
+      PathWithStatus(const Path &other)
         : Path(other), status(), fsIsValid(false) {}
 
       /// This constructor will accept a std::string as a path. No checking is
       /// done on this path to determine if it is valid. To determine validity
-      /// of the path, use the isValid method. 
+      /// of the path, use the isValid method.
       /// @brief Construct a Path from a string.
       explicit PathWithStatus(
         const std::string& p ///< The path to assign.
@@ -616,7 +619,7 @@ namespace sys {
 
       /// This constructor will accept a character range as a path.  No checking
       /// is done on this path to determine if it is valid.  To determine
-      /// validity of the path, use the isValid method. 
+      /// validity of the path, use the isValid method.
       /// @brief Construct a Path from a string.
       explicit PathWithStatus(
         const char *StrStart,  ///< Pointer to the first character of the path
@@ -704,7 +707,7 @@ namespace sys {
 }
 
 std::ostream& operator<<(std::ostream& strm, const sys::Path& aPath);
-inline std::ostream& operator<<(std::ostream& strm, 
+inline std::ostream& operator<<(std::ostream& strm,
                                 const sys::PathWithStatus& aPath) {
   strm << static_cast<const sys::Path&>(aPath);
   return strm;
