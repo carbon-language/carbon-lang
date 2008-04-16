@@ -82,12 +82,13 @@ public:
   /// have constant pools, the can only use the other emitByte*/emitWord*
   /// methods.
   ///
-  virtual void startFunctionStub(unsigned StubSize, unsigned Alignment = 1) = 0;
+  virtual void startFunctionStub(const GlobalValue* F, unsigned StubSize,
+                                 unsigned Alignment = 1) = 0;
 
   /// finishFunctionStub - This callback is invoked to terminate a function
   /// stub.
   ///
-  virtual void *finishFunctionStub(const Function *F) = 0;
+  virtual void *finishFunctionStub(const GlobalValue* F) = 0;
 
   /// emitByte - This callback is invoked when a byte needs to be written to the
   /// output stream.

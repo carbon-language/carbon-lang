@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "jit"
 #include "AlphaJITInfo.h"
 #include "AlphaRelocations.h"
+#include "llvm/Function.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Config/alloca.h"
 #include "llvm/Support/Debug.h"
@@ -190,16 +191,17 @@ extern "C" {
 #endif
 }
 
-void *AlphaJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
+void *AlphaJITInfo::emitFunctionStub(const Function* F, void *Fn,
+                                     MachineCodeEmitter &MCE) {
   //assert(Fn == AlphaCompilationCallback && "Where are you going?\n");
   //Do things in a stupid slow way!
-  MCE.startFunctionStub(19*4);
+  MCE.startFunctionStub(F, 19*4);
   void* Addr = (void*)(intptr_t)MCE.getCurrentPCValue();
   for (int x = 0; x < 19; ++ x)
     MCE.emitWordLE(0);
   EmitBranchToAt(Addr, Fn);
   DOUT << "Emitting Stub to " << Fn << " at [" << Addr << "]\n";
-  return MCE.finishFunctionStub(0);
+  return MCE.finishFunctionStub(F);
 }
 
 TargetJITInfo::LazyResolverFn

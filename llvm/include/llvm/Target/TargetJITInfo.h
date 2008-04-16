@@ -23,6 +23,7 @@
 
 namespace llvm {
   class Function;
+  class GlobalValue;
   class MachineBasicBlock;
   class MachineCodeEmitter;
   class MachineRelocation;
@@ -41,8 +42,9 @@ namespace llvm {
     virtual void replaceMachineCodeForFunction(void *Old, void *New) = 0;
 
     /// emitGlobalValueLazyPtr - Use the specified MachineCodeEmitter object to
-    /// emit a lazy pointer which contains the address of the specified GV.
-    virtual void *emitGlobalValueLazyPtr(void *GV, MachineCodeEmitter &MCE) {
+    /// emit a lazy pointer which contains the address of the specified ptr.
+    virtual void *emitGlobalValueLazyPtr(const GlobalValue* GV, void *ptr,
+                                         MachineCodeEmitter &MCE) {
       assert(0 && "This target doesn't implement emitGlobalValueLazyPtr!");
       return 0;
     }
@@ -50,7 +52,8 @@ namespace llvm {
     /// emitFunctionStub - Use the specified MachineCodeEmitter object to emit a
     /// small native function that simply calls the function at the specified
     /// address.  Return the address of the resultant function.
-    virtual void *emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
+    virtual void *emitFunctionStub(const Function* F, void *Fn,
+                                   MachineCodeEmitter &MCE) {
       assert(0 && "This target doesn't implement emitFunctionStub!");
       return 0;
     }

@@ -14,6 +14,7 @@
 #ifndef X86JITINFO_H
 #define X86JITINFO_H
 
+#include "llvm/Function.h"
 #include "llvm/Target/TargetJITInfo.h"
 
 namespace llvm {
@@ -33,13 +34,15 @@ namespace llvm {
     virtual void replaceMachineCodeForFunction(void *Old, void *New);
 
     /// emitGlobalValueLazyPtr - Use the specified MachineCodeEmitter object to
-    /// emit a lazy pointer which contains the address of the specified GV.
-    virtual void *emitGlobalValueLazyPtr(void *GV, MachineCodeEmitter &MCE);
+    /// emit a lazy pointer which contains the address of the specified ptr.
+    virtual void *emitGlobalValueLazyPtr(const GlobalValue* GV, void *ptr,
+                                         MachineCodeEmitter &MCE);
 
     /// emitFunctionStub - Use the specified MachineCodeEmitter object to emit a
     /// small native function that simply calls the function at the specified
     /// address.
-    virtual void *emitFunctionStub(void *Fn, MachineCodeEmitter &MCE);
+    virtual void *emitFunctionStub(const Function* F, void *Fn,
+                                   MachineCodeEmitter &MCE);
 
     /// getPICJumpTableEntry - Returns the value of the jumptable entry for the
     /// specific basic block.

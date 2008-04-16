@@ -34,7 +34,8 @@ namespace llvm {
     /// emitFunctionStub - Use the specified MachineCodeEmitter object to emit a
     /// small native function that simply calls the function at the specified
     /// address.
-    virtual void *emitFunctionStub(void *Fn, MachineCodeEmitter &MCE);
+    virtual void *emitFunctionStub(const Function* F, void *Fn,
+                                   MachineCodeEmitter &MCE);
 
     /// getLazyResolverFunction - Expose the lazy resolver to the JIT.
     virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);

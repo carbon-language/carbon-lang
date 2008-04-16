@@ -74,7 +74,8 @@ public:
   /// thunk for it.  The stub should be "close" to the current function body,
   /// but should not be included in the 'actualsize' returned by
   /// startFunctionBody.
-  virtual unsigned char *allocateStub(unsigned StubSize, unsigned Alignment) =0;
+  virtual unsigned char *allocateStub(const GlobalValue* F, unsigned StubSize,
+                                      unsigned Alignment) =0;
   
   
   /// endFunctionBody - This method is called when the JIT is done codegen'ing

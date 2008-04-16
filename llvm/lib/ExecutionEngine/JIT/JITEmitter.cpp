@@ -175,7 +175,7 @@ void *JITResolver::getFunctionStub(Function *F) {
 
   // Otherwise, codegen a new stub.  For now, the stub will call the lazy
   // resolver function.
-  Stub = TheJIT->getJITInfo().emitFunctionStub(Actual,
+  Stub = TheJIT->getJITInfo().emitFunctionStub(F, Actual,
                                                *TheJIT->getCodeEmitter());
 
   if (Actual != (void*)(intptr_t)LazyResolverFn) {
@@ -204,7 +204,7 @@ void *JITResolver::getGlobalValueLazyPtr(GlobalValue *GV, void *GVAddress) {
   if (LazyPtr) return LazyPtr;
 
   // Otherwise, codegen a new lazy pointer.
-  LazyPtr = TheJIT->getJITInfo().emitGlobalValueLazyPtr(GVAddress,
+  LazyPtr = TheJIT->getJITInfo().emitGlobalValueLazyPtr(GV, GVAddress,
                                                     *TheJIT->getCodeEmitter());
 
   DOUT << "JIT: Stub emitted at [" << LazyPtr << "] for GV '"
@@ -220,7 +220,7 @@ void *JITResolver::getExternalFunctionStub(void *FnAddr) {
   void *&Stub = ExternalFnToStubMap[FnAddr];
   if (Stub) return Stub;
 
-  Stub = TheJIT->getJITInfo().emitFunctionStub(FnAddr,
+  Stub = TheJIT->getJITInfo().emitFunctionStub(0, FnAddr,
                                                *TheJIT->getCodeEmitter());
 
   DOUT << "JIT: Stub emitted at [" << Stub
@@ -503,8 +503,9 @@ namespace {
     void initJumpTableInfo(MachineJumpTableInfo *MJTI);
     void emitJumpTableInfo(MachineJumpTableInfo *MJTI);
     
-    virtual void startFunctionStub(unsigned StubSize, unsigned Alignment = 1);
-    virtual void* finishFunctionStub(const Function *F);
+    virtual void startFunctionStub(const GlobalValue* F, unsigned StubSize,
+                                   unsigned Alignment = 1);
+    virtual void* finishFunctionStub(const GlobalValue *F);
 
     virtual void addRelocation(const MachineRelocation &MR) {
       Relocations.push_back(MR);
@@ -822,16 +823,17 @@ void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI) {
   }
 }
 
-void JITEmitter::startFunctionStub(unsigned StubSize, unsigned Alignment) {
+void JITEmitter::startFunctionStub(const GlobalValue* F, unsigned StubSize,
+                                   unsigned Alignment) {
   SavedBufferBegin = BufferBegin;
   SavedBufferEnd = BufferEnd;
   SavedCurBufferPtr = CurBufferPtr;
   
-  BufferBegin = CurBufferPtr = MemMgr->allocateStub(StubSize, Alignment);
+  BufferBegin = CurBufferPtr = MemMgr->allocateStub(F, StubSize, Alignment);
   BufferEnd = BufferBegin+StubSize+1;
 }
 
-void *JITEmitter::finishFunctionStub(const Function *F) {
+void *JITEmitter::finishFunctionStub(const GlobalValue* F) {
   NumBytes += getCurrentPCOffset();
   std::swap(SavedBufferBegin, BufferBegin);
   BufferEnd = SavedBufferEnd;

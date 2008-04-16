@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/GlobalValue.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/System/Memory.h"
@@ -265,7 +266,8 @@ namespace {
 
     void AllocateGOT();
 
-    unsigned char *allocateStub(unsigned StubSize, unsigned Alignment);
+    unsigned char *allocateStub(const GlobalValue* F, unsigned StubSize,
+                                unsigned Alignment);
     
     /// startFunctionBody - When a function starts, allocate a block of free
     /// executable memory, returning a pointer to it and its actual size.
@@ -438,7 +440,8 @@ DefaultJITMemoryManager::~DefaultJITMemoryManager() {
   Blocks.clear();
 }
 
-unsigned char *DefaultJITMemoryManager::allocateStub(unsigned StubSize,
+unsigned char *DefaultJITMemoryManager::allocateStub(const GlobalValue* F,
+                                                     unsigned StubSize,
                                                      unsigned Alignment) {
   CurStubPtr -= StubSize;
   CurStubPtr = (unsigned char*)(((intptr_t)CurStubPtr) &

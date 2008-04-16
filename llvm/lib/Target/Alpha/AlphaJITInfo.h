@@ -29,7 +29,8 @@ namespace llvm {
     explicit AlphaJITInfo(TargetMachine &tm) : TM(tm)
     { useGOT = true; }
 
-    virtual void *emitFunctionStub(void *Fn, MachineCodeEmitter &MCE);
+    virtual void *emitFunctionStub(const Function* F, void *Fn,
+                                   MachineCodeEmitter &MCE);
     virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);
     virtual void relocate(void *Function, MachineRelocation *MR,
                           unsigned NumRelocs, unsigned char* GOTBase);

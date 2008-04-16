@@ -15,6 +15,7 @@
 #include "ARMJITInfo.h"
 #include "ARMRelocations.h"
 #include "ARMSubtarget.h"
+#include "llvm/Function.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Config/alloca.h"
 #include <cstdlib>
@@ -93,20 +94,21 @@ ARMJITInfo::getLazyResolverFunction(JITCompilerFn F) {
   return ARMCompilationCallback;
 }
 
-void *ARMJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
+void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
+                                   MachineCodeEmitter &MCE) {
   unsigned addr = (intptr_t)Fn;
   // If this is just a call to an external function, emit a branch instead of a
   // call.  The code is the same except for one bit of the last instruction.
   if (Fn != (void*)(intptr_t)ARMCompilationCallback) {
     // branch to the corresponding function addr
     // the stub is 8-byte size and 4-aligned
-    MCE.startFunctionStub(8, 4);
+    MCE.startFunctionStub(F, 8, 4);
     MCE.emitWordLE(0xE51FF004); // LDR PC, [PC,#-4]
     MCE.emitWordLE(addr);       // addr of function
   } else {
     // branch and link to the corresponding function addr
     // the stub is 20-byte size and 4-aligned
-    MCE.startFunctionStub(20, 4);
+    MCE.startFunctionStub(F, 20, 4);
     MCE.emitWordLE(0xE92D4800); // STMFD SP!, [R11, LR]
     MCE.emitWordLE(0xE28FE004); // ADD LR, PC, #4
     MCE.emitWordLE(0xE51FF004); // LDR PC, [PC,#-4]
@@ -114,7 +116,7 @@ void *ARMJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
     MCE.emitWordLE(0xE8BD8800); // LDMFD SP!, [R11, PC]
   }
 
-  return MCE.finishFunctionStub(0);
+  return MCE.finishFunctionStub(F);
 }
 
 /// relocate - Before the JIT can run a block of code that has been emitted,

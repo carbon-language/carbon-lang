@@ -15,6 +15,7 @@
 #include "PPCJITInfo.h"
 #include "PPCRelocations.h"
 #include "PPCTargetMachine.h"
+#include "llvm/Function.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Config/alloca.h"
 #include "llvm/Support/Debug.h"
@@ -338,12 +339,13 @@ defined(__APPLE__)
 #endif
 }
 
-void *PPCJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
+void *PPCJITInfo::emitFunctionStub(const Function* F, void *Fn,
+                                   MachineCodeEmitter &MCE) {
   // If this is just a call to an external function, emit a branch instead of a
   // call.  The code is the same except for one bit of the last instruction.
   if (Fn != (void*)(intptr_t)PPC32CompilationCallback && 
       Fn != (void*)(intptr_t)PPC64CompilationCallback) {
-    MCE.startFunctionStub(7*4);
+    MCE.startFunctionStub(F, 7*4);
     intptr_t Addr = (intptr_t)MCE.getCurrentPCValue();
     MCE.emitWordBE(0);
     MCE.emitWordBE(0);
@@ -354,10 +356,10 @@ void *PPCJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
     MCE.emitWordBE(0);
     EmitBranchToAt(Addr, (intptr_t)Fn, false, is64Bit);
     SyncICache((void*)Addr, 7*4);
-    return MCE.finishFunctionStub(0);
+    return MCE.finishFunctionStub(F);
   }
 
-  MCE.startFunctionStub(10*4);
+  MCE.startFunctionStub(F, 10*4);
   intptr_t Addr = (intptr_t)MCE.getCurrentPCValue();
   if (is64Bit) {
     MCE.emitWordBE(0xf821ffb1);     // stdu r1,-80(r1)
@@ -382,7 +384,7 @@ void *PPCJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
   MCE.emitWordBE(0);
   EmitBranchToAt(BranchAddr, (intptr_t)Fn, true, is64Bit);
   SyncICache((void*)Addr, 10*4);
-  return MCE.finishFunctionStub(0);
+  return MCE.finishFunctionStub(F);
 }
 
 
