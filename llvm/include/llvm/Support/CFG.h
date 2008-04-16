@@ -36,8 +36,11 @@ public:
 
   inline void advancePastNonPreds() {
     // Loop to ignore non predecessor uses (for example PHI nodes)...
-    while (!It.atEnd() && !isa<TerminatorInst>(*It) && !isa<BasicBlock>(*It))
+    while (!It.atEnd()) {
+      if (isa<TerminatorInst>(*It) || isa<BasicBlock>(*It))
+	break;
       ++It;
+    }
   }
 
   inline PredIterator(_Ptr *bb) : It(bb->use_begin()) {
