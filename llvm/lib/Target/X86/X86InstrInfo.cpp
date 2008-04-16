@@ -831,6 +831,14 @@ void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator I,
                                  unsigned DestReg,
                                  const MachineInstr *Orig) const {
+  unsigned SubIdx = Orig->getOperand(0).isReg()
+    ? Orig->getOperand(0).getSubReg() : 0;
+  bool ChangeSubIdx = SubIdx != 0;
+  if (SubIdx && TargetRegisterInfo::isPhysicalRegister(DestReg)) {
+    DestReg = RI.getSubReg(DestReg, SubIdx);
+    SubIdx = 0;
+  }
+
   // MOV32r0 etc. are implemented with xor which clobbers condition code.
   // Re-materialize them as movri instructions to avoid side effects.
   switch (Orig->getOpcode()) {
@@ -852,6 +860,11 @@ void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
     MBB.insert(I, MI);
     break;
   }
+  }
+
+  if (ChangeSubIdx) {
+    MachineInstr *NewMI = prior(I);
+    NewMI->getOperand(0).setSubReg(SubIdx);
   }
 }
 
