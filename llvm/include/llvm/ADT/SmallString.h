@@ -53,6 +53,47 @@ public:
     this->push_back(C);
     return *this;
   }
+
+  SmallString &append_uint_32(uint32_t N) {
+    char Buffer[20];
+    char *BufPtr = Buffer+19;
+    
+    if (N == 0) *--BufPtr = '0';  // Handle special case.
+    
+    while (N) {
+      *--BufPtr = '0' + char(N % 10);
+      N /= 10;
+    }
+    this->append(BufPtr, Buffer+20);
+    return *this;
+  }
+  
+  SmallString &append_uint(uint64_t N) {
+    if (N == uint32_t(N))
+      return append_uint_32(uint32_t(N));
+    
+    char Buffer[40];
+    char *BufPtr = Buffer+39;
+    
+    if (N == 0) *--BufPtr = '0';  // Handle special case...
+    
+    while (N) {
+      *--BufPtr = '0' + char(N % 10);
+      N /= 10;
+    }
+
+    this->append(BufPtr, Buffer+40);
+    return *this;
+  }
+  
+  SmallString &append_sint(int64_t N) {
+    // TODO, wrong for minint64.
+    if (N < 0) {
+      this->push_back('-');
+      N = -N;
+    }
+    return append_uint(N);
+  }
   
 };
   
