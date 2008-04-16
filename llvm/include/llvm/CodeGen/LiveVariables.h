@@ -134,25 +134,15 @@ private:   // Intermediate data structures
 
   const TargetRegisterInfo *TRI;
 
-  // PhysRegInfo - Keep track of which instruction was the last def/use of a
+  // PhysRegInfo - Keep track of which instruction was the last def of a
   // physical register. This is a purely local property, because all physical
   // register references are presumed dead across basic blocks.
-  MachineInstr **PhysRegInfo;
+  MachineInstr **PhysRegDef;
 
-  // PhysRegUsed - Keep track of whether the physical register has been used
-  // after its last definition. This is local property.
-  bool          *PhysRegUsed;
-
-  // PhysRegPartUse - Keep track of which instruction was the last partial use
-  // of a physical register (e.g. on X86 a def of EAX followed by a use of AX).
-  // This is a purely local property.
-  MachineInstr **PhysRegPartUse;
-
-  // PhysRegPartDef - Keep track of a list of instructions which "partially"
-  // defined the physical register (e.g. on X86 AX partially defines EAX).
-  // These are turned into use/mod/write if there is a use of the register
-  // later in the same block. This is local property.
-  SmallVector<MachineInstr*, 4> *PhysRegPartDef;
+  // PhysRegInfo - Keep track of which instruction was the last use of a
+  // physical register. This is a purely local property, because all physical
+  // register references are presumed dead across basic blocks.
+  MachineInstr **PhysRegUse;
 
   SmallVector<unsigned, 4> *PHIVarInfo;
 
@@ -160,22 +150,21 @@ private:   // Intermediate data structures
   // current basic block.
   DenseMap<MachineInstr*, unsigned> DistanceMap;
 
-  void addRegisterKills(unsigned Reg, MachineInstr *MI,
-                        SmallSet<unsigned, 4> &SubKills);
-
   /// HandlePhysRegKill - Add kills of Reg and its sub-registers to the
   /// uses. Pay special attention to the sub-register uses which may come below
   /// the last use of the whole register.
-  bool HandlePhysRegKill(unsigned Reg, const MachineInstr *MI,
-                         SmallSet<unsigned, 4> &SubKills);
-  bool HandlePhysRegKill(unsigned Reg, MachineInstr *MI);
+  bool HandlePhysRegKill(unsigned Reg);
+
   void HandlePhysRegUse(unsigned Reg, MachineInstr *MI);
   void HandlePhysRegDef(unsigned Reg, MachineInstr *MI);
 
+  /// FindLastPartialDef - Return the last partial def of the specified register.
+  /// Also returns the sub-register that's defined.
+  MachineInstr *FindLastPartialDef(unsigned Reg, unsigned &PartDefReg);
+
   /// hasRegisterUseBelow - Return true if the specified register is used after
   /// the current instruction and before it's next definition.
-  bool hasRegisterUseBelow(unsigned Reg,
-                           MachineBasicBlock::iterator I,
+  bool hasRegisterUseBelow(unsigned Reg, MachineBasicBlock::iterator I,
                            MachineBasicBlock *MBB);
 
   /// analyzePHINodes - Gather information about the PHI nodes in here. In
