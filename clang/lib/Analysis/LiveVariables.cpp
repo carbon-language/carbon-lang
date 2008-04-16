@@ -119,7 +119,7 @@ public:
   void VisitDeclStmt(DeclStmt* DS);
   void VisitUnaryOperator(UnaryOperator* U);
   void Visit(Stmt *S);  
-  void VisitTerminator(Stmt* S); 
+  void VisitTerminator(CFGBlock* B); 
   
   void SetTopValue(LiveVariables::ValTy& V) {
     V = AD.AlwaysLive;    
@@ -142,55 +142,12 @@ void TransferFuncs::Visit(Stmt *S) {
     LiveState(S,AD) = Alive;
 }
   
-void TransferFuncs::VisitTerminator(Stmt* S) {
-  
-  Expr* E = NULL;
-  
-  switch (S->getStmtClass()) {
-    default:
-      return;
-      
-    case Stmt::ForStmtClass:
-      E = cast<ForStmt>(S)->getCond();
-      break;
-      
-    case Stmt::WhileStmtClass:
-      E = cast<WhileStmt>(S)->getCond();
-      break;
-      
-    case Stmt::DoStmtClass:
-      E = cast<DoStmt>(S)->getCond();
-      break;
-      
-    case Stmt::IfStmtClass:
-      E = cast<IfStmt>(S)->getCond();
-      break;
-      
-    case Stmt::ChooseExprClass:
-      E = cast<ChooseExpr>(S)->getCond();
-      break;
-      
-    case Stmt::IndirectGotoStmtClass:
-      E = cast<IndirectGotoStmt>(S)->getTarget();
-      break;
-      
-    case Stmt::SwitchStmtClass:
-      E = cast<SwitchStmt>(S)->getCond();
-      break;
-      
-    case Stmt::ConditionalOperatorClass:
-      E = cast<ConditionalOperator>(S)->getCond();
-      break;
-      
-    case Stmt::BinaryOperatorClass: // '&&' and '||'
-      E = cast<BinaryOperator>(S)->getLHS();
-      break;      
-  }
-  
+void TransferFuncs::VisitTerminator(CFGBlock* B) {
+    
+  const Expr* E = B->getTerminatorCondition();
+
   if (!E)
     return;
-  
-  E = E->IgnoreParens();
   
   assert (getCFG().isBlkExpr(E));
   LiveState(E, AD) = Alive;

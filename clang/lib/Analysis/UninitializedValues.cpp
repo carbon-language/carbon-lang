@@ -78,7 +78,7 @@ public:
   bool Visit(Stmt *S);
   bool BlockStmt_VisitExpr(Expr* E);
     
-  void VisitTerminator(Stmt* T) { }
+  void VisitTerminator(CFGBlock* B) { }
 };
   
 static const bool Initialized = true;

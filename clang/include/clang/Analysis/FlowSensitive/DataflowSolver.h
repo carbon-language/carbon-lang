@@ -259,13 +259,13 @@ private:
     for (StmtItr I=ItrTraits::StmtBegin(B), E=ItrTraits::StmtEnd(B); I!=E;++I)
       ProcessStmt(*I, recordStmtValues, AnalysisDirTag());
     
-    if (Stmt* Term = (Stmt*) B->getTerminator()) TF.VisitTerminator(Term);  
+    TF.VisitTerminator(const_cast<CFGBlock*>(B));  
   }
   
   void ProcessBlock(const CFGBlock* B, bool recordStmtValues,
                     dataflow::backward_analysis_tag) {
     
-    if (Stmt* Term = (Stmt*) B->getTerminator()) TF.VisitTerminator(Term);
+    TF.VisitTerminator(const_cast<CFGBlock*>(B));
 
     for (StmtItr I=ItrTraits::StmtBegin(B), E=ItrTraits::StmtEnd(B); I!=E;++I)
       ProcessStmt(*I, recordStmtValues, AnalysisDirTag());

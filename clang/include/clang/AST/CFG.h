@@ -152,6 +152,12 @@ public:
   Stmt* getTerminator() { return Terminator; }
   const Stmt* getTerminator() const { return Terminator; }
   
+  Expr* getTerminatorCondition();
+  
+  const Expr* getTerminatorCondition() const {
+    return const_cast<CFGBlock*>(this)->getTerminatorCondition();
+  }
+  
   Stmt* getLabel() { return Label; }
   const Stmt* getLabel() const { return Label; }
   

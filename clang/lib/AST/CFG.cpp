@@ -108,30 +108,30 @@ public:
   CFGBlock* VisitDoStmt(DoStmt* D);
   CFGBlock* VisitContinueStmt(ContinueStmt* C);
   CFGBlock* VisitBreakStmt(BreakStmt* B);
-  CFGBlock* VisitSwitchStmt(SwitchStmt* S);
-  CFGBlock* VisitCaseStmt(CaseStmt* S);
+  CFGBlock* VisitSwitchStmt(SwitchStmt* Terminator);
+  CFGBlock* VisitCaseStmt(CaseStmt* Terminator);
   CFGBlock* VisitDefaultStmt(DefaultStmt* D);
   CFGBlock* VisitIndirectGotoStmt(IndirectGotoStmt* I);
   
   // FIXME: Add support for ObjC-specific control-flow structures.
   
-  CFGBlock* VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
+  CFGBlock* VisitObjCForCollectionStmt(ObjCForCollectionStmt* Terminator) {
     badCFG = true;
     return Block;
   }
   
-  CFGBlock* VisitObjCAtTryStmt(ObjCAtTryStmt* S) {
+  CFGBlock* VisitObjCAtTryStmt(ObjCAtTryStmt* Terminator) {
     badCFG = true;
     return Block;
   }
   
 private:
   CFGBlock* createBlock(bool add_successor = true);
-  CFGBlock* addStmt(Stmt* S);
-  CFGBlock* WalkAST(Stmt* S, bool AlwaysAddStmt);
-  CFGBlock* WalkAST_VisitChildren(Stmt* S);
+  CFGBlock* addStmt(Stmt* Terminator);
+  CFGBlock* WalkAST(Stmt* Terminator, bool AlwaysAddStmt);
+  CFGBlock* WalkAST_VisitChildren(Stmt* Terminator);
   CFGBlock* WalkAST_VisitDeclSubExprs(StmtIterator& I);
-  CFGBlock* WalkAST_VisitStmtExpr(StmtExpr* S);
+  CFGBlock* WalkAST_VisitStmtExpr(StmtExpr* Terminator);
   void FinishBlock(CFGBlock* B);
   
   bool badCFG;
@@ -236,18 +236,18 @@ void CFGBuilder::FinishBlock(CFGBlock* B) {
 ///  the necessary blocks for such expressions.  It returns the "topmost" block
 ///  of the created blocks, or the original value of "Block" when this method
 ///  was called if no additional blocks are created.
-CFGBlock* CFGBuilder::addStmt(Stmt* S) {
+CFGBlock* CFGBuilder::addStmt(Stmt* Terminator) {
   if (!Block) Block = createBlock();
-  return WalkAST(S,true);
+  return WalkAST(Terminator,true);
 }
 
 /// WalkAST - Used by addStmt to walk the subtree of a statement and
 ///   add extra blocks for ternary operators, &&, and ||.  We also
 ///   process "," and DeclStmts (which may contain nested control-flow).
-CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {    
-  switch (S->getStmtClass()) {
+CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {    
+  switch (Terminator->getStmtClass()) {
     case Stmt::ConditionalOperatorClass: {
-      ConditionalOperator* C = cast<ConditionalOperator>(S);
+      ConditionalOperator* C = cast<ConditionalOperator>(Terminator);
 
       // Create the confluence block that will "merge" the results
       // of the ternary expression.
@@ -299,7 +299,7 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
     }
     
     case Stmt::ChooseExprClass: {
-      ChooseExpr* C = cast<ChooseExpr>(S);      
+      ChooseExpr* C = cast<ChooseExpr>(Terminator);      
       
       CFGBlock* ConfluenceBlock = (Block) ? Block : createBlock();  
       ConfluenceBlock->appendStmt(C);
@@ -323,32 +323,32 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
     }
 
     case Stmt::DeclStmtClass: {
-      ScopedDecl* D = cast<DeclStmt>(S)->getDecl();
-      Block->appendStmt(S);
+      ScopedDecl* D = cast<DeclStmt>(Terminator)->getDecl();
+      Block->appendStmt(Terminator);
       
       StmtIterator I(D);
       return WalkAST_VisitDeclSubExprs(I);
     }
       
     case Stmt::AddrLabelExprClass: {
-      AddrLabelExpr* A = cast<AddrLabelExpr>(S);
+      AddrLabelExpr* A = cast<AddrLabelExpr>(Terminator);
       AddressTakenLabels.insert(A->getLabel());
       
-      if (AlwaysAddStmt) Block->appendStmt(S);
+      if (AlwaysAddStmt) Block->appendStmt(Terminator);
       return Block;
     }
     
     case Stmt::StmtExprClass:
-      return WalkAST_VisitStmtExpr(cast<StmtExpr>(S));
+      return WalkAST_VisitStmtExpr(cast<StmtExpr>(Terminator));
 
     case Stmt::UnaryOperatorClass: {
-      UnaryOperator* U = cast<UnaryOperator>(S);
+      UnaryOperator* U = cast<UnaryOperator>(Terminator);
       
       // sizeof(expressions).  For such expressions,
       // the subexpression is not really evaluated, so
       // we don't care about control-flow within the sizeof.
       if (U->getOpcode() == UnaryOperator::SizeOf) {
-        Block->appendStmt(S);
+        Block->appendStmt(Terminator);
         return Block;
       }
       
@@ -356,7 +356,7 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
     }
       
     case Stmt::BinaryOperatorClass: {
-      BinaryOperator* B = cast<BinaryOperator>(S);
+      BinaryOperator* B = cast<BinaryOperator>(Terminator);
 
       if (B->isLogicalOp()) { // && or ||
         CFGBlock* ConfluenceBlock = (Block) ? Block : createBlock();  
@@ -397,14 +397,14 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
     }
       
     case Stmt::ParenExprClass:
-      return WalkAST(cast<ParenExpr>(S)->getSubExpr(), AlwaysAddStmt);
+      return WalkAST(cast<ParenExpr>(Terminator)->getSubExpr(), AlwaysAddStmt);
     
     default:
       break;
   };
       
-  if (AlwaysAddStmt) Block->appendStmt(S);
-  return WalkAST_VisitChildren(S);
+  if (AlwaysAddStmt) Block->appendStmt(Terminator);
+  return WalkAST_VisitChildren(Terminator);
 }
 
 /// WalkAST_VisitDeclSubExprs - Utility method to handle Decls contained in
@@ -416,13 +416,13 @@ CFGBlock* CFGBuilder::WalkAST_VisitDeclSubExprs(StmtIterator& I) {
   if (I == StmtIterator())
     return Block;
   
-  Stmt* S = *I;
+  Stmt* Terminator = *I;
   ++I;
   WalkAST_VisitDeclSubExprs(I);
     
   // Optimization: Don't create separate block-level statements for literals.
   
-  switch (S->getStmtClass()) {
+  switch (Terminator->getStmtClass()) {
     case Stmt::IntegerLiteralClass:
     case Stmt::CharacterLiteralClass:
     case Stmt::StringLiteralClass:
@@ -431,7 +431,7 @@ CFGBlock* CFGBuilder::WalkAST_VisitDeclSubExprs(StmtIterator& I) {
       // All other cases.
       
     default:
-      Block = addStmt(S);
+      Block = addStmt(Terminator);
   }
   
   return Block;
@@ -439,9 +439,9 @@ CFGBlock* CFGBuilder::WalkAST_VisitDeclSubExprs(StmtIterator& I) {
 
 /// WalkAST_VisitChildren - Utility method to call WalkAST on the
 ///  children of a Stmt.
-CFGBlock* CFGBuilder::WalkAST_VisitChildren(Stmt* S) {
+CFGBlock* CFGBuilder::WalkAST_VisitChildren(Stmt* Terminator) {
   CFGBlock* B = Block;
-  for (Stmt::child_iterator I = S->child_begin(), E = S->child_end() ;
+  for (Stmt::child_iterator I = Terminator->child_begin(), E = Terminator->child_end() ;
        I != E; ++I)
     if (*I) B = WalkAST(*I);
   
@@ -450,9 +450,9 @@ CFGBlock* CFGBuilder::WalkAST_VisitChildren(Stmt* S) {
 
 /// WalkAST_VisitStmtExpr - Utility method to handle (nested) statement
 ///  expressions (a GCC extension).
-CFGBlock* CFGBuilder::WalkAST_VisitStmtExpr(StmtExpr* S) {
-  Block->appendStmt(S);
-  return VisitCompoundStmt(S->getSubStmt());  
+CFGBlock* CFGBuilder::WalkAST_VisitStmtExpr(StmtExpr* Terminator) {
+  Block->appendStmt(Terminator);
+  return VisitCompoundStmt(Terminator->getSubStmt());  
 }
 
 /// VisitStmt - Handle statements with no branching control flow.
@@ -900,7 +900,7 @@ CFGBlock* CFGBuilder::VisitBreakStmt(BreakStmt* B) {
   return Block;  
 }
 
-CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* S) {
+CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
   // "switch" is a control-flow statement.  Thus we stop processing the
   // current block.    
   CFGBlock* SwitchSuccessor = NULL;
@@ -932,9 +932,9 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* S) {
   // When visiting the body, the case statements should automatically get
   // linked up to the switch.  We also don't keep a pointer to the body,
   // since all control-flow from the switch goes to case/default statements.
-  assert (S->getBody() && "switch must contain a non-NULL body");
+  assert (Terminator->getBody() && "switch must contain a non-NULL body");
   Block = NULL;
-  CFGBlock *BodyBlock = Visit(S->getBody());
+  CFGBlock *BodyBlock = Visit(Terminator->getBody());
   if (Block) FinishBlock(BodyBlock);
 
   // If we have no "default:" case, the default transition is to the
@@ -942,24 +942,24 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* S) {
   SwitchTerminatedBlock->addSuccessor(DefaultCaseBlock);
   
   // Add the terminator and condition in the switch block.
-  SwitchTerminatedBlock->setTerminator(S);
-  assert (S->getCond() && "switch condition must be non-NULL");
+  SwitchTerminatedBlock->setTerminator(Terminator);
+  assert (Terminator->getCond() && "switch condition must be non-NULL");
   Block = SwitchTerminatedBlock;
   
-  return addStmt(S->getCond());
+  return addStmt(Terminator->getCond());
 }
 
-CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* S) {
+CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* Terminator) {
   // CaseStmts are essentially labels, so they are the
   // first statement in a block.      
 
-  if (S->getSubStmt()) Visit(S->getSubStmt());
+  if (Terminator->getSubStmt()) Visit(Terminator->getSubStmt());
   CFGBlock* CaseBlock = Block;
   if (!CaseBlock) CaseBlock = createBlock();  
     
   // Cases statements partition blocks, so this is the top of
   // the basic block we were processing (the "case XXX:" is the label).
-  CaseBlock->setLabel(S);
+  CaseBlock->setLabel(Terminator);
   FinishBlock(CaseBlock);
   
   // Add this block to the list of successors for the block with the
@@ -976,14 +976,14 @@ CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* S) {
   return CaseBlock;
 }
   
-CFGBlock* CFGBuilder::VisitDefaultStmt(DefaultStmt* S) {
-  if (S->getSubStmt()) Visit(S->getSubStmt());
+CFGBlock* CFGBuilder::VisitDefaultStmt(DefaultStmt* Terminator) {
+  if (Terminator->getSubStmt()) Visit(Terminator->getSubStmt());
   DefaultCaseBlock = Block;
   if (!DefaultCaseBlock) DefaultCaseBlock = createBlock();  
   
   // Default statements partition blocks, so this is the top of
   // the basic block we were processing (the "default:" is the label).
-  DefaultCaseBlock->setLabel(S);
+  DefaultCaseBlock->setLabel(Terminator);
   FinishBlock(DefaultCaseBlock);
 
   // Unlike case statements, we don't add the default block to the
@@ -1059,11 +1059,11 @@ namespace {
   typedef llvm::DenseMap<const Stmt*,unsigned> BlkExprMapTy;
 }
 
-static void FindSubExprAssignments(Stmt* S, llvm::SmallPtrSet<Expr*,50>& Set) {
-  if (!S)
+static void FindSubExprAssignments(Stmt* Terminator, llvm::SmallPtrSet<Expr*,50>& Set) {
+  if (!Terminator)
     return;
   
-  for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I!=E; ++I) {
+  for (Stmt::child_iterator I=Terminator->child_begin(), E=Terminator->child_end(); I!=E; ++I) {
     if (!*I) continue;
     
     if (BinaryOperator* B = dyn_cast<BinaryOperator>(*I))
@@ -1077,30 +1077,34 @@ static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
   BlkExprMapTy* M = new BlkExprMapTy();
   
   // Look for assignments that are used as subexpressions.  These are the
-  // only assignments that we want to register as a block-level expression.
+  // only assignments that we want to *possibly* register as a block-level
+  // expression.  Basically, if an assignment occurs both in a subexpression
+  // and at the block-level, it is a block-level expression.
   llvm::SmallPtrSet<Expr*,50> SubExprAssignments;
   
   for (CFG::iterator I=cfg.begin(), E=cfg.end(); I != E; ++I)
     for (CFGBlock::iterator BI=I->begin(), EI=I->end(); BI != EI; ++BI)
       FindSubExprAssignments(*BI, SubExprAssignments);
 
-  // Iterate over the statements again on identify the Expr* and Stmt* at
-  // the block-level that are block-level expressions.
-  for (CFG::iterator I=cfg.begin(), E=cfg.end(); I != E; ++I)
+  for (CFG::iterator I=cfg.begin(), E=cfg.end(); I != E; ++I) {
+    
+    // Iterate over the statements again on identify the Expr* and Stmt* at
+    // the block-level that are block-level expressions.
+
     for (CFGBlock::iterator BI=I->begin(), EI=I->end(); BI != EI; ++BI)
-      if (Expr* E = dyn_cast<Expr>(*BI)) {
+      if (Expr* Exp = dyn_cast<Expr>(*BI)) {
         
-        if (BinaryOperator* B = dyn_cast<BinaryOperator>(E)) {
+        if (BinaryOperator* B = dyn_cast<BinaryOperator>(Exp)) {
           // Assignment expressions that are not nested within another
           // expression are really "statements" whose value is never
           // used by another expression.
-          if (B->isAssignmentOp() && !SubExprAssignments.count(E))
+          if (B->isAssignmentOp() && !SubExprAssignments.count(Exp))
             continue;
         }
-        else if (const StmtExpr* S = dyn_cast<StmtExpr>(E)) {
+        else if (const StmtExpr* Terminator = dyn_cast<StmtExpr>(Exp)) {
           // Special handling for statement expressions.  The last statement
           // in the statement expression is also a block-level expr.
-          const CompoundStmt* C = S->getSubStmt();
+          const CompoundStmt* C = Terminator->getSubStmt();
           if (!C->body_empty()) {
             unsigned x = M->size();
             (*M)[C->body_back()] = x;
@@ -1108,8 +1112,18 @@ static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
         }
 
         unsigned x = M->size();
-        (*M)[E] = x;
+        (*M)[Exp] = x;
       }
+    
+    // Look at terminators.  The condition is a block-level expression.
+    
+    Expr* Exp = I->getTerminatorCondition();
+    
+    if (Exp && M->find(Exp) == M->end()) {
+        unsigned x = M->size();
+        (*M)[Exp] = x;
+    }
+  }
     
   return M;
 }
@@ -1182,9 +1196,9 @@ public:
   void setBlockID(signed i) { CurrentBlock = i; }
   void setStmtID(unsigned i) { CurrentStmt = i; }
   
-  virtual bool handledStmt(Stmt* S, std::ostream& OS) {
+  virtual bool handledStmt(Stmt* Terminator, std::ostream& OS) {
     
-    StmtMapTy::iterator I = StmtMap.find(S);
+    StmtMapTy::iterator I = StmtMap.find(Terminator);
 
     if (I == StmtMap.end())
       return false;
@@ -1213,7 +1227,7 @@ public:
   }
   
   // Default case.
-  void VisitStmt(Stmt* S) { S->printPretty(OS); }
+  void VisitStmt(Stmt* Terminator) { Terminator->printPretty(OS); }
   
   void VisitForStmt(ForStmt* F) {
     OS << "for (" ;
@@ -1235,9 +1249,9 @@ public:
     if (Stmt* C = D->getCond()) C->printPretty(OS,Helper);
   }
   
-  void VisitSwitchStmt(SwitchStmt* S) {
+  void VisitSwitchStmt(SwitchStmt* Terminator) {
     OS << "switch ";
-    S->getCond()->printPretty(OS,Helper);
+    Terminator->getCond()->printPretty(OS,Helper);
   }
   
   void VisitConditionalOperator(ConditionalOperator* C) {
@@ -1282,10 +1296,10 @@ public:
 };
   
   
-void print_stmt(std::ostream&OS, StmtPrinterHelper* Helper, Stmt* S) {    
+void print_stmt(std::ostream&OS, StmtPrinterHelper* Helper, Stmt* Terminator) {    
   if (Helper) {
     // special printing for statement-expressions.
-    if (StmtExpr* SE = dyn_cast<StmtExpr>(S)) {
+    if (StmtExpr* SE = dyn_cast<StmtExpr>(Terminator)) {
       CompoundStmt* Sub = SE->getSubStmt();
       
       if (Sub->child_begin() != Sub->child_end()) {
@@ -1297,7 +1311,7 @@ void print_stmt(std::ostream&OS, StmtPrinterHelper* Helper, Stmt* S) {
     }
     
     // special printing for comma expressions.
-    if (BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
+    if (BinaryOperator* B = dyn_cast<BinaryOperator>(Terminator)) {
       if (B->getOpcode() == BinaryOperator::Comma) {
         OS << "... , ";
         Helper->handledStmt(B->getRHS(),OS);
@@ -1307,10 +1321,10 @@ void print_stmt(std::ostream&OS, StmtPrinterHelper* Helper, Stmt* S) {
     }  
   }
   
-  S->printPretty(OS, Helper);
+  Terminator->printPretty(OS, Helper);
   
   // Expressions need a newline.
-  if (isa<Expr>(S)) OS << '\n';
+  if (isa<Expr>(Terminator)) OS << '\n';
 }
   
 void print_block(std::ostream& OS, const CFG* cfg, const CFGBlock& B,
@@ -1331,14 +1345,14 @@ void print_block(std::ostream& OS, const CFG* cfg, const CFGBlock& B,
     OS << " ]\n";
  
   // Print the label of this block.
-  if (Stmt* S = const_cast<Stmt*>(B.getLabel())) {
+  if (Stmt* Terminator = const_cast<Stmt*>(B.getLabel())) {
 
     if (print_edges)
       OS << "    ";
   
-    if (LabelStmt* L = dyn_cast<LabelStmt>(S))
+    if (LabelStmt* L = dyn_cast<LabelStmt>(Terminator))
       OS << L->getName();
-    else if (CaseStmt* C = dyn_cast<CaseStmt>(S)) {
+    else if (CaseStmt* C = dyn_cast<CaseStmt>(Terminator)) {
       OS << "case ";
       C->getLHS()->printPretty(OS);
       if (C->getRHS()) {
@@ -1346,7 +1360,7 @@ void print_block(std::ostream& OS, const CFG* cfg, const CFGBlock& B,
         C->getRHS()->printPretty(OS);
       }
     }  
-    else if (isa<DefaultStmt>(S))
+    else if (isa<DefaultStmt>(Terminator))
       OS << "default";
     else
       assert(false && "Invalid label statement in CFGBlock.");
@@ -1459,6 +1473,57 @@ void CFGBlock::print(std::ostream& OS, const CFG* cfg) const {
 void CFGBlock::printTerminator(std::ostream& OS) const {  
   CFGBlockTerminatorPrint TPrinter(OS,NULL);
   TPrinter.Visit(const_cast<Stmt*>(getTerminator()));
+}
+
+Expr* CFGBlock::getTerminatorCondition() {
+  
+  if (!Terminator)
+    return NULL;
+  
+  Expr* E = NULL;
+  
+  switch (Terminator->getStmtClass()) {
+    default:
+      break;
+      
+    case Stmt::ForStmtClass:
+      E = cast<ForStmt>(Terminator)->getCond();
+      break;
+      
+    case Stmt::WhileStmtClass:
+      E = cast<WhileStmt>(Terminator)->getCond();
+      break;
+      
+    case Stmt::DoStmtClass:
+      E = cast<DoStmt>(Terminator)->getCond();
+      break;
+      
+    case Stmt::IfStmtClass:
+      E = cast<IfStmt>(Terminator)->getCond();
+      break;
+      
+    case Stmt::ChooseExprClass:
+      E = cast<ChooseExpr>(Terminator)->getCond();
+      break;
+      
+    case Stmt::IndirectGotoStmtClass:
+      E = cast<IndirectGotoStmt>(Terminator)->getTarget();
+      break;
+      
+    case Stmt::SwitchStmtClass:
+      E = cast<SwitchStmt>(Terminator)->getCond();
+      break;
+      
+    case Stmt::ConditionalOperatorClass:
+      E = cast<ConditionalOperator>(Terminator)->getCond();
+      break;
+      
+    case Stmt::BinaryOperatorClass: // '&&' and '||'
+      E = cast<BinaryOperator>(Terminator)->getLHS();
+      break;      
+  }
+  
+  return E ? E->IgnoreParens() : NULL;
 }
 
 
