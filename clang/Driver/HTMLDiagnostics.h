@@ -18,8 +18,10 @@
 
 namespace clang {
   class PathDiagnosticClient;
+  class Preprocessor;
   
-  PathDiagnosticClient* CreateHTMLDiagnosticClient(const std::string& prefix);
+  PathDiagnosticClient* CreateHTMLDiagnosticClient(const std::string& prefix,
+                                                   Preprocessor* PP);
 }
 
 #endif

@@ -1066,11 +1066,11 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       return CreateUnitValsChecker(Diag);
       
     case AnalysisGRSimpleVals:
-      return CreateGRSimpleVals(Diag, AnalyzeSpecificFunction, OutputFile,
+      return CreateGRSimpleVals(Diag, PP, AnalyzeSpecificFunction, OutputFile,
                                 VisualizeEG, TrimGraph, AnalyzeAll);
       
     case CheckerCFRef:
-      return CreateCFRefChecker(Diag, AnalyzeSpecificFunction, OutputFile,
+      return CreateCFRefChecker(Diag, PP, AnalyzeSpecificFunction, OutputFile,
                                 VisualizeEG, TrimGraph, AnalyzeAll);
       
     case TestSerialization:
@@ -1290,7 +1290,7 @@ int main(int argc, char **argv) {
   TextDiagnostics* TextDiagClient = NULL;
   
   if (!HTMLDiag.empty()) {
-    DiagClient.reset(CreateHTMLDiagnosticClient(HTMLDiag));
+    DiagClient.reset(CreateHTMLDiagnosticClient(HTMLDiag, NULL));
   }
   else { // Use Text diagnostics.
     if (!VerifyDiagnostics) {

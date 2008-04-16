@@ -624,7 +624,7 @@ ASTConsumer *clang::CreateUnitValsChecker(Diagnostic &Diags) {
 }
 
 //===----------------------------------------------------------------------===//
-// CheckeRConsumer - Generic Driver for running intra-procedural path-sensitive
+// CheckerConsumer - Generic Driver for running intra-procedural path-sensitive
 //  analyses.
 
 namespace {
@@ -633,16 +633,18 @@ class CheckerConsumer : public CFGVisitor {
 protected:
   Diagnostic &Diags;
   ASTContext* Ctx;
+  Preprocessor* PP;
   const std::string& HTMLDir;
   bool Visualize;
   bool TrimGraph;
   llvm::OwningPtr<PathDiagnosticClient> PD;
   bool AnalyzeAll;
 public:
-  CheckerConsumer(Diagnostic &diags, const std::string& fname,
-            const std::string& htmldir,
-            bool visualize, bool trim, bool analyzeAll)
-    : CFGVisitor(fname), Diags(diags), HTMLDir(htmldir),
+  CheckerConsumer(Diagnostic &diags, Preprocessor* pp,
+                  const std::string& fname,
+                  const std::string& htmldir,
+                  bool visualize, bool trim, bool analyzeAll)
+    : CFGVisitor(fname), Diags(diags), PP(pp), HTMLDir(htmldir),
       Visualize(visualize), TrimGraph(trim), AnalyzeAll(analyzeAll) {}
   
   virtual void Initialize(ASTContext &Context) { Ctx = &Context; }    
@@ -670,7 +672,7 @@ void CheckerConsumer::VisitCFG(CFG& C, Decl& CD) {
   // Lazily create the diagnostic client.
   
   if (!HTMLDir.empty() && PD.get() == NULL)
-    PD.reset(CreateHTMLDiagnosticClient(HTMLDir));
+    PD.reset(CreateHTMLDiagnosticClient(HTMLDir, PP));
   
 
   if (!Visualize) {
@@ -716,10 +718,10 @@ void CheckerConsumer::VisitCFG(CFG& C, Decl& CD) {
 namespace {
 class GRSimpleValsVisitor : public CheckerConsumer {
 public:
-  GRSimpleValsVisitor(Diagnostic &diags, const std::string& fname,
-                      const std::string& htmldir,
+  GRSimpleValsVisitor(Diagnostic &diags, Preprocessor* pp,
+                      const std::string& fname, const std::string& htmldir,
                       bool visualize, bool trim, bool analyzeAll)
-  : CheckerConsumer(diags, fname, htmldir, visualize, trim, analyzeAll) {}
+  : CheckerConsumer(diags, pp, fname, htmldir, visualize, trim, analyzeAll) {}
 
   virtual const char* getCheckerName() { return "GRSimpleVals"; }
   
@@ -730,12 +732,13 @@ public:
 } // end anonymous namespace
 
 ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags,
+                                       Preprocessor* PP,
                                        const std::string& FunctionName,
                                        const std::string& HTMLDir,
                                        bool Visualize, bool TrimGraph,
                                        bool AnalyzeAll) {
   
-  return new GRSimpleValsVisitor(Diags, FunctionName, HTMLDir,
+  return new GRSimpleValsVisitor(Diags, PP, FunctionName, HTMLDir,
                                  Visualize, TrimGraph, AnalyzeAll);
 }
 
@@ -746,10 +749,11 @@ ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags,
 namespace {
 class CFRefCountCheckerVisitor : public CheckerConsumer {
 public:
-  CFRefCountCheckerVisitor(Diagnostic &diags, const std::string& fname,
-                      const std::string& htmldir,
-                      bool visualize, bool trim, bool analyzeAll)
-  : CheckerConsumer(diags, fname, htmldir, visualize, trim, analyzeAll) {}
+  CFRefCountCheckerVisitor(Diagnostic &diags, Preprocessor* pp,
+                           const std::string& fname,
+                           const std::string& htmldir,
+                           bool visualize, bool trim, bool analyzeAll)
+  : CheckerConsumer(diags, pp, fname, htmldir, visualize, trim, analyzeAll) {}
   
   virtual const char* getCheckerName() { return "CFRefCountChecker"; }
   
@@ -760,12 +764,13 @@ public:
 } // end anonymous namespace
 
 ASTConsumer* clang::CreateCFRefChecker(Diagnostic &Diags,
+                                       Preprocessor* PP,
                                        const std::string& FunctionName,
                                        const std::string& HTMLDir,
                                        bool Visualize, bool TrimGraph,
                                        bool AnalyzeAll) {
   
-  return new CFRefCountCheckerVisitor(Diags, FunctionName, HTMLDir,
+  return new CFRefCountCheckerVisitor(Diags, PP, FunctionName, HTMLDir,
                                       Visualize, TrimGraph, AnalyzeAll);
 }
 

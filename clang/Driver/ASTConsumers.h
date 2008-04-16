@@ -44,11 +44,13 @@ ASTConsumer *CreateDeadStoreChecker(Diagnostic &Diags);
 ASTConsumer *CreateUnitValsChecker(Diagnostic &Diags);
   
 ASTConsumer *CreateGRSimpleVals(Diagnostic &Diags,
+                                Preprocessor* PP,
                                 const std::string& Function,
                                 const std::string& HTMLDir, bool Visualize,
                                 bool TrimGraph, bool AnalyzeAll);
   
 ASTConsumer *CreateCFRefChecker(Diagnostic &Diags,
+                                Preprocessor* PP,
                                 const std::string& Function,
                                 const std::string& HTMLDir, bool Visualize,
                                 bool TrimGraph, bool AnalyzeAll);

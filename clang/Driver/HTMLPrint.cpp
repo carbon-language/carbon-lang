@@ -59,8 +59,10 @@ HTMLPrinter::~HTMLPrinter() {
   html::AddLineNumbers(R, FileID);
   html::AddHeaderFooterInternalBuiltinCSS(R, FileID);
 
-  // If we have a preprocessor, relex the file and syntax hilight.  We might not
-  // have a preprocessor if we come from a deserialized AST file, for example.
+  // If we have a preprocessor, relex the file and syntax highlight.
+  // We might not have a preprocessor if we come from a deserialized AST file,
+  // for example.
+  
   if (PP) {
     html::SyntaxHighlight(R, FileID, *PP);
     html::HighlightMacros(R, FileID, *PP);

@@ -37,8 +37,9 @@ namespace {
 class VISIBILITY_HIDDEN HTMLDiagnostics : public PathDiagnosticClient {
   llvm::sys::Path Directory, FilePrefix;
   bool createdDir, noDir;
+  Preprocessor* PP;
 public:
-  HTMLDiagnostics(const std::string& prefix);
+  HTMLDiagnostics(const std::string& prefix, Preprocessor* pp = NULL);
 
   virtual ~HTMLDiagnostics() {}
   
@@ -52,17 +53,18 @@ public:
   
 } // end anonymous namespace
 
-HTMLDiagnostics::HTMLDiagnostics(const std::string& prefix)
-  : Directory(prefix), FilePrefix(prefix), createdDir(false), noDir(false) {
+HTMLDiagnostics::HTMLDiagnostics(const std::string& prefix, Preprocessor* pp)
+  : Directory(prefix), FilePrefix(prefix), createdDir(false), noDir(false),
+    PP(pp) {
   
   // All html files begin with "report" 
   FilePrefix.appendComponent("report");
 }
 
 PathDiagnosticClient*
-clang::CreateHTMLDiagnosticClient(const std::string& prefix) {
+clang::CreateHTMLDiagnosticClient(const std::string& prefix, Preprocessor* PP) {
   
-  return new HTMLDiagnostics(prefix);
+  return new HTMLDiagnostics(prefix, PP);
 }
 
 //===----------------------------------------------------------------------===//
@@ -115,6 +117,15 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
   unsigned FileID = R.getSourceMgr().getMainFileID();
   html::EscapeText(R, FileID);
   html::AddLineNumbers(R, FileID);
+  
+  // If we have a preprocessor, relex the file and syntax highlight.
+  // We might not have a preprocessor if we come from a deserialized AST file,
+  // for example.
+  
+  if (PP) {
+    html::SyntaxHighlight(R, FileID, *PP);
+    html::HighlightMacros(R, FileID, *PP);
+  }
   
   // Get the full directory name of the analyzed file.
 
