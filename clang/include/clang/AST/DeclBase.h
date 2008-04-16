@@ -62,6 +62,7 @@ public:
          ObjCMethod,
          ObjCClass,
          ObjCForwardProtocol,
+         ObjCPropertyImpl,
          LinkageSpec,
    FileScopeAsm,
   

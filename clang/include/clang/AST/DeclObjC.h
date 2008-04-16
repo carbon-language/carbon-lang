@@ -999,5 +999,45 @@ public:
   static bool classof(const ObjCPropertyDecl *D) { return true; }
 };
 
+/// ObjCPropertyImplDecl - Represents implementation declaration of a property 
+/// in a class or category implementation block. For example:
+/// @synthesize prop1 = ivar1;
+///
+class ObjCPropertyImplDecl : public Decl {
+public:
+  enum PropertyImplKind {
+    OBJC_PR_IMPL_None,
+    OBJC_PR_IMPL_SYNTHSIZE,
+    OBJC_PR_IMPL_DYNAMIC
+  };
+private:
+  /// Property declaration being implemented
+  ObjCPropertyDecl *PropertyDecl;
+  PropertyImplKind PropertyImplementation;
+  /// Null for @dynamic. Required for @synthesize.
+  ObjCIvarDecl *PropertyIvarDecl;
+public:
+  ObjCPropertyImplDecl(SourceLocation L)
+  : Decl(ObjCPropertyImpl, L), PropertyDecl(0), 
+  PropertyImplementation(OBJC_PR_IMPL_None), PropertyIvarDecl(0) {}
+
+  void setPropertyDecl(ObjCPropertyDecl *property) { PropertyDecl = property; }
+  ObjCPropertyDecl *getPropertyDecl() const { return PropertyDecl; }
+  
+  void setImplKind (PropertyImplKind propImplKind) 
+    { PropertyImplementation = propImplKind; }
+  PropertyImplKind getPropertyImplementation() const 
+    { return PropertyImplementation; }
+  
+  void setPropertyIvarDecl(ObjCIvarDecl *ivarDecl) 
+    { PropertyIvarDecl = ivarDecl; }
+  ObjCIvarDecl *getPropertyIvarDecl() { return PropertyIvarDecl; }
+  
+  static bool classof(const Decl *D) {
+    return D->getKind() == ObjCPropertyImpl;
+  }
+  static bool classof(const ObjCPropertyImplDecl *D) { return true; }  
+};
+
 }  // end namespace clang
 #endif

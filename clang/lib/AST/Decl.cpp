@@ -42,6 +42,7 @@ static unsigned nObjCImplementationDecls = 0;
 static unsigned nObjCCategoryImpl = 0;
 static unsigned nObjCCompatibleAlias = 0;
 static unsigned nObjCPropertyDecl = 0;
+static unsigned nObjCPropertyImplDecl = 0;
 static unsigned nLinkageSpecDecl = 0;
 static unsigned nFileScopeAsmDecl = 0;
 
@@ -146,6 +147,10 @@ void Decl::PrintStats() {
           nObjCPropertyDecl, (int)sizeof(ObjCPropertyDecl),
           int(nObjCPropertyDecl*sizeof(ObjCPropertyDecl)));
   
+  fprintf(stderr, "    %d property implementation decls, %d each (%d bytes)\n", 
+          nObjCPropertyImplDecl, (int)sizeof(ObjCPropertyImplDecl),
+          int(nObjCPropertyImplDecl*sizeof(ObjCPropertyImplDecl)));
+  
   fprintf(stderr, "Total bytes = %d\n", 
           int(nFuncs*sizeof(FunctionDecl)+
               nVars*sizeof(VarDecl)+nParmVars*sizeof(ParmVarDecl)+
@@ -163,6 +168,7 @@ void Decl::PrintStats() {
               nObjCCategoryImpl*sizeof(ObjCCategoryImplDecl)+
               nObjCCompatibleAlias*sizeof(ObjCCompatibleAliasDecl)+
               nObjCPropertyDecl*sizeof(ObjCPropertyDecl)+
+              nObjCPropertyImplDecl*sizeof(ObjCPropertyImplDecl)+
               nLinkageSpecDecl*sizeof(LinkageSpecDecl)+
               nFileScopeAsmDecl*sizeof(FileScopeAsmDecl)));
     
@@ -189,6 +195,7 @@ void Decl::addDeclKind(Kind k) {
   case ObjCCategoryImpl:    nObjCCategoryImpl++; break;
   case ObjCCompatibleAlias: nObjCCompatibleAlias++; break;
   case ObjCProperty:        nObjCPropertyDecl++; break;
+  case ObjCPropertyImpl:    nObjCPropertyImplDecl++; break;
   case LinkageSpec:         nLinkageSpecDecl++; break;
   case FileScopeAsm:        nFileScopeAsmDecl++; break;
   }
