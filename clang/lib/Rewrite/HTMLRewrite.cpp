@@ -21,6 +21,38 @@
 #include <sstream>
 using namespace clang;
 
+/// HighlightRange - Highlight a range in the source code with the specified
+/// start/end tags.  B/E must be in the same file.  This ensures that
+/// start/end tags are placed at the start/end of each line if the range is
+/// multiline.
+void html::HighlightRange(Rewriter &R, SourceLocation B, SourceLocation E,
+                          const char *StartTag, const char *EndTag) {
+  SourceManager &SM = R.getSourceMgr();
+  B = SM.getLogicalLoc(B);
+  E = SM.getLogicalLoc(E);
+  unsigned FileID = SM.getCanonicalFileID(B);
+  assert(SM.getCanonicalFileID(E) == FileID && "B/E not in the same file!");
+
+  unsigned BOffset = SM.getFullFilePos(B);
+  unsigned EOffset = SM.getFullFilePos(E);
+  
+  // Include the whole end token in the range.
+  EOffset += Lexer::MeasureTokenLength(E, R.getSourceMgr());
+  
+  HighlightRange(R.getEditBuffer(FileID), BOffset, EOffset,
+                 SM.getBufferData(FileID).first, StartTag, EndTag);
+}
+
+/// HighlightRange - This is the same as the above method, but takes
+/// decomposed file locations.
+void html::HighlightRange(RewriteBuffer &RB, unsigned B, unsigned E,
+                          const char *BufferStart,
+                          const char *StartTag, const char *EndTag) {
+  RB.InsertTextAfter(B, StartTag, strlen(StartTag));
+  RB.InsertTextBefore(E, EndTag, strlen(EndTag));
+  
+}
+
 void html::EscapeText(Rewriter& R, unsigned FileID,
                       bool EscapeSpaces, bool ReplaceTabs) {
   
@@ -185,7 +217,7 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
       " .code { border-spacing:0px; width:100%; }\n"
       " .code { font-family: \"Andale Mono\", monospace; font-size:10pt }\n"
       " .code { line-height: 1.2em }\n"
-      " .comment { color: #A0A0A0 }\n"
+      " .comment { color: #A0A0A0; font-style: oblique }\n"
       " .keyword { color: #FF00FF }\n"
       " .directive { color: #FFFF00 }\n"
       " .macro { color: #FF0000; background-color:#FFC0C0 }\n"
@@ -257,17 +289,14 @@ void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
       IdentifierInfo *II = PP.LookUpIdentifierInfo(Tok, BufferStart+TokOffs);
         
       // If this is a pp-identifier, for a keyword, highlight it as such.
-      if (II->getTokenID() != tok::identifier) {
-        RB.InsertTextAfter(TokOffs, "<span class='keyword'>",
-                           strlen("<span class='keyword'>"));
-        RB.InsertTextBefore(TokOffs+TokLen, "</span>", strlen("</span>"));
-      }
+      if (II->getTokenID() != tok::identifier)
+        HighlightRange(RB, TokOffs, TokOffs+TokLen, BufferStart,
+                       "<span class='keyword'>", "</span>");
       break;
     }
     case tok::comment:
-      RB.InsertTextAfter(TokOffs, "<span class='comment'>",
-                         strlen("<span class='comment'>"));
-      RB.InsertTextBefore(TokOffs+TokLen, "</span>", strlen("</span>"));
+      HighlightRange(RB, TokOffs, TokOffs+TokLen, BufferStart,
+                     "<span class='comment'>", "</span>");
       break;
     case tok::hash:
       // FIXME: This isn't working because we're not in raw mode in the lexer.
@@ -275,12 +304,11 @@ void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
         
       // If this is a preprocessor directive, all tokens to end of line are too.
       if (Tok.isAtStartOfLine()) {
-        RB.InsertTextAfter(TokOffs, "<span class='directive'>",
-                           strlen("<span class='directive'>"));
         // Find end of line.  This is a hack.
         const char *LineEnd = SourceMgr.getCharacterData(Tok.getLocation());
         unsigned TokEnd = TokOffs+strcspn(LineEnd, "\n\r");
-        RB.InsertTextBefore(TokEnd, "</span>", strlen("</span>"));
+        HighlightRange(RB, TokOffs, TokEnd, BufferStart,
+                       "<span class='directive'>", "</span>");
       }
       break;
     }

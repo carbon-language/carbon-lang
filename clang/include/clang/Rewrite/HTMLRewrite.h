@@ -25,6 +25,19 @@ class Preprocessor;
   
 namespace html {
 
+  /// HighlightRange - Highlight a range in the source code with the specified
+  /// start/end tags.  B/E must be in the same file.  This ensures that
+  /// start/end tags are placed at the start/end of each line if the range is
+  /// multiline.
+  void HighlightRange(Rewriter &R, SourceLocation B, SourceLocation E,
+                      const char *StartTag, const char *EndTag);
+  
+  /// HighlightRange - This is the same as the above method, but takes
+  /// decomposed file locations.
+  void HighlightRange(RewriteBuffer &RB, unsigned B, unsigned E,
+                      const char *BufferStart,
+                      const char *StartTag, const char *EndTag);
+  
   /// EscapeText - HTMLize a specified file so that special characters are
   /// are translated so that they are not interpreted as HTML tags.  In this
   /// version tabs are not replaced with spaces by default, as this can
@@ -55,6 +68,7 @@ namespace html {
   void HighlightMacros(Rewriter &R, unsigned FileID, Preprocessor &PP);
   
 
+  
 } // end html namespace
 } // end clang namespace
 
