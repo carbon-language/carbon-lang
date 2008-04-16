@@ -603,10 +603,10 @@ protected:
   }
   
   void VisitStore(NodeSet& Dst, Expr* E, NodeTy* Pred, ValueState* St,
-                 LVal TargetLV, RVal Val);
+                 RVal TargetLV, RVal Val);
   
   void EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred, ValueState* St,
-                 LVal TargetLV, RVal Val) {
+                 RVal TargetLV, RVal Val) {
     TF->EvalStore(Dst, *this, *Builder, E, Pred, St, TargetLV, Val);
   }
   

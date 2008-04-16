@@ -455,13 +455,8 @@ namespace {
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
-// Transfer functions.
+// Reference-counting logic (typestate + counts).
 //===----------------------------------------------------------------------===//
-
-static inline Selector GetUnarySelector(const char* name, ASTContext& Ctx) {
-  IdentifierInfo* II = &Ctx.Idents.get(name);
-  return Ctx.Selectors.getSelector(0, &II);
-}
 
 namespace {
   
@@ -543,6 +538,15 @@ void RefVal::print(std::ostream& Out) const {
   }
 }
   
+//===----------------------------------------------------------------------===//
+// Transfer functions.
+//===----------------------------------------------------------------------===//
+
+static inline Selector GetUnarySelector(const char* name, ASTContext& Ctx) {
+  IdentifierInfo* II = &Ctx.Idents.get(name);
+  return Ctx.Selectors.getSelector(0, &II);
+}
+  
 class VISIBILITY_HIDDEN CFRefCount : public GRSimpleVals {
   
   // Type definitions.
@@ -597,6 +601,7 @@ class VISIBILITY_HIDDEN CFRefCount : public GRSimpleVals {
                     RefVal::Kind hasErr);
   
 public:
+  
   CFRefCount(ASTContext& Ctx)
     : Summaries(Ctx),
       RetainSelector(GetUnarySelector("retain", Ctx)),
@@ -630,6 +635,13 @@ public:
                               ObjCMessageExpr* ME,
                               ExplodedNode<ValueState>* Pred);
 
+  // Stores.
+  
+  virtual void EvalStore(ExplodedNodeSet<ValueState>& Dst,
+                         GRExprEngine& Engine,
+                         GRStmtNodeBuilder<ValueState>& Builder,
+                         Expr* E, ExplodedNode<ValueState>* Pred,
+                         ValueState* St, RVal TargetLV, RVal Val);
   // End-of-path.
   
   virtual void EvalEndPath(GRExprEngine& Engine,
@@ -914,6 +926,49 @@ bool CFRefCount::EvalObjCMessageExprAux(ExplodedNodeSet<ValueState>& Dst,
     Builder.MakeNode(Dst, ME, Pred, St);
 
   return false;
+}
+
+// Stores.
+
+void CFRefCount::EvalStore(ExplodedNodeSet<ValueState>& Dst,
+                           GRExprEngine& Eng,
+                           GRStmtNodeBuilder<ValueState>& Builder,
+                           Expr* E, ExplodedNode<ValueState>* Pred,
+                           ValueState* St, RVal TargetLV, RVal Val) {
+  
+  // Check if we have a binding for "Val" and if we are storing it to something
+  // we don't understand or otherwise the value "escapes" the function.
+  
+  if (!isa<lval::SymbolVal>(Val))
+    return;
+  
+  // Are we storing to something that causes the value to "escape"?
+  
+  bool escapes = false;
+  
+  if (!isa<lval::DeclVal>(TargetLV))
+    escapes = true;
+  else
+    escapes = cast<lval::DeclVal>(TargetLV).getDecl()->hasGlobalStorage();
+  
+  if (!escapes)
+    return;
+  
+  SymbolID Sym = cast<lval::SymbolVal>(Val).getSymbol();
+  RefBindings B = GetRefBindings(*St);
+  RefBindings::TreeTy* T = B.SlimFind(Sym);
+  
+  if (!T)
+    return;
+  
+  // Nuke the binding.
+  
+  ValueState StImpl = *St;
+  StImpl.CheckerState = RefBFactory.Remove(B, Sym).getRoot();
+  St = Eng.getStateManager().getPersistentState(StImpl);
+  
+  // Hand of the remaining logic to the parent implementation.
+  GRSimpleVals::EvalStore(Dst, Eng, Builder, E, Pred, St, TargetLV, Val);
 }
 
 // End-of-path.

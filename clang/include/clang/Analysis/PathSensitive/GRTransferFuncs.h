@@ -74,11 +74,14 @@ public:
   
   // Stores.
   
+  /// EvalStore - Evaluate the effects of a store, creating a new node
+  ///  the represents the effect of binding 'Val' to the location 'TargetLV'.
+  //   TargetLV is guaranteed to either be an UnknownVal or an LVal.
   virtual void EvalStore(ExplodedNodeSet<ValueState>& Dst,
                          GRExprEngine& Engine,
                          GRStmtNodeBuilder<ValueState>& Builder,
                          Expr* E, ExplodedNode<ValueState>* Pred,
-                         ValueState* St, LVal TargetLV, RVal Val) {}
+                         ValueState* St, RVal TargetLV, RVal Val);
                          
   
   // End-of-path.

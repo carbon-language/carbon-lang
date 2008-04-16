@@ -709,12 +709,14 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
 }
 
 void GRExprEngine::VisitStore(NodeSet& Dst, Expr* E, NodeTy* Pred,
-                              ValueState* St, LVal TargetLV, RVal Val) {
+                              ValueState* St, RVal TargetLV, RVal Val) {
   
   assert (Builder && "GRStmtNodeBuilder must be defined.");
   
   unsigned size = Dst.size();  
   SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+  
+  assert (!TargetLV.isUndef());
   
   EvalStore(Dst, E, Pred, St, TargetLV, Val);
   
@@ -722,7 +724,8 @@ void GRExprEngine::VisitStore(NodeSet& Dst, Expr* E, NodeTy* Pred,
   // contains the updated state if we aren't generating sinks.
   
   if (!Builder->BuildSinks && Dst.size() == size)
-    MakeNode(Dst, E, Pred, SetRVal(St, TargetLV, Val));    
+    TF->GRTransferFuncs::EvalStore(Dst, *this, *Builder, E, Pred, St,
+                                   TargetLV, Val);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1643,21 +1646,12 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
                      : cast<RVal>(nonlval::SymbolVal(Sym));            
           }
           
-          // Even if the LHS evaluates to an unknown L-Value, the entire
-          // expression still evaluates to the RHS.
-          
-          if (LeftV.isUnknown()) {
-            St = SetRVal(St, B, RightV);
-            break;
-          }
-          
           // Simulate the effects of a "store":  bind the value of the RHS
           // to the L-Value represented by the LHS.
 
           VisitStore(Dst, B, N2, SetRVal(St, B, RightV),
-                    cast<LVal>(LeftV), RightV);
+                     LeftV, RightV);
           
-//          St = SetRVal(SetRVal(St, B, RightV), cast<LVal>(LeftV), RightV);
           continue;
         }
 
