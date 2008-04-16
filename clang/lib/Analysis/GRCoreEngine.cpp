@@ -448,7 +448,7 @@ ExplodedNodeImpl* GREndPathNodeBuilderImpl::generateNodeImpl(void* State) {
   bool IsNew;
   
   ExplodedNodeImpl* Node =
-    Eng.G->getNodeImpl(BlockEntrance(&B), Pred->State, &IsNew);
+    Eng.G->getNodeImpl(BlockEntrance(&B), State, &IsNew);
   
 
   Node->addPredecessor(Pred);
