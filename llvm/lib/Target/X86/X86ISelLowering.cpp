@@ -3833,11 +3833,13 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT_SSE4(SDOperand Op,
   } else if (VT == MVT::f32) {
     // EXTRACTPS outputs to a GPR32 register which will require a movd to copy
     // the result back to FR32 register. It's only worth matching if the
-    // result has a single use which is a store.
+    // result has a single use which is a store or a bitcast to i32.
     if (!Op.hasOneUse())
       return SDOperand();
     SDNode *User = Op.Val->use_begin()->getUser();
-    if (User->getOpcode() != ISD::STORE)
+    if (User->getOpcode() != ISD::STORE &&
+        (User->getOpcode() != ISD::BIT_CONVERT ||
+         User->getValueType(0) != MVT::i32))
       return SDOperand();
     SDOperand Extract = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i32,
                     DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, Op.getOperand(0)),
