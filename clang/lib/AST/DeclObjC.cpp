@@ -198,7 +198,7 @@ void ObjCInterfaceDecl::addProperties(ObjCPropertyDecl **Properties,
 }                                   
 
 /// addProperties - Insert property declaration AST nodes into
-/// ObjCProtocolDecl's PropertyDecl field.
+/// ObjCCategoryDecl's PropertyDecl field.
 ///
 void ObjCCategoryDecl::addProperties(ObjCPropertyDecl **Properties, 
                                      unsigned NumProperties) {
