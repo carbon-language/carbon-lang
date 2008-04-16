@@ -273,39 +273,39 @@ void DAGTypeLegalizer::SanityCheck(SDNode *N) {
        E = Worklist.end(); I != E; ++I)
     assert(*I != N);
 
-  for (DenseMap<SDOperandImpl, SDOperand>::iterator I = ReplacedNodes.begin(),
+  for (DenseMap<SDOperand, SDOperand>::iterator I = ReplacedNodes.begin(),
        E = ReplacedNodes.end(); I != E; ++I) {
     assert(I->first.Val != N);
     assert(I->second.Val != N);
   }
 
-  for (DenseMap<SDOperandImpl, SDOperand>::iterator I = PromotedNodes.begin(),
+  for (DenseMap<SDOperand, SDOperand>::iterator I = PromotedNodes.begin(),
        E = PromotedNodes.end(); I != E; ++I) {
     assert(I->first.Val != N);
     assert(I->second.Val != N);
   }
 
-  for (DenseMap<SDOperandImpl, SDOperand>::iterator
+  for (DenseMap<SDOperand, SDOperand>::iterator
        I = FloatToIntedNodes.begin(),
        E = FloatToIntedNodes.end(); I != E; ++I) {
     assert(I->first.Val != N);
     assert(I->second.Val != N);
   }
 
-  for (DenseMap<SDOperandImpl, SDOperand>::iterator I = ScalarizedNodes.begin(),
+  for (DenseMap<SDOperand, SDOperand>::iterator I = ScalarizedNodes.begin(),
        E = ScalarizedNodes.end(); I != E; ++I) {
     assert(I->first.Val != N);
     assert(I->second.Val != N);
   }
 
-  for (DenseMap<SDOperandImpl, std::pair<SDOperand, SDOperand> >::iterator
+  for (DenseMap<SDOperand, std::pair<SDOperand, SDOperand> >::iterator
        I = ExpandedNodes.begin(), E = ExpandedNodes.end(); I != E; ++I) {
     assert(I->first.Val != N);
     assert(I->second.first.Val != N);
     assert(I->second.second.Val != N);
   }
 
-  for (DenseMap<SDOperandImpl, std::pair<SDOperand, SDOperand> >::iterator
+  for (DenseMap<SDOperand, std::pair<SDOperand, SDOperand> >::iterator
        I = SplitNodes.begin(), E = SplitNodes.end(); I != E; ++I) {
     assert(I->first.Val != N);
     assert(I->second.first.Val != N);
@@ -393,7 +393,7 @@ void DAGTypeLegalizer::ReplaceNodeWith(SDNode *From, SDNode *To) {
 /// RemapNode - If the specified value was already legalized to another value,
 /// replace it by that value.
 void DAGTypeLegalizer::RemapNode(SDOperand &N) {
-  DenseMap<SDOperandImpl, SDOperand>::iterator I = ReplacedNodes.find(N);
+  DenseMap<SDOperand, SDOperand>::iterator I = ReplacedNodes.find(N);
   if (I != ReplacedNodes.end()) {
     // Use path compression to speed up future lookups if values get multiply
     // replaced with other values.

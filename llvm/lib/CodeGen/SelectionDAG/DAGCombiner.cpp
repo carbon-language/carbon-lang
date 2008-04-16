@@ -3880,7 +3880,8 @@ SDOperand DAGCombiner::visitFP_EXTEND(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
   
   // If this is fp_round(fpextend), don't fold it, allow ourselves to be folded.
-  if (N->hasOneUse() && (N->use_begin())->getOpcode() == ISD::FP_ROUND)
+  if (N->hasOneUse() && 
+      N->use_begin()->getSDOperand().getOpcode() == ISD::FP_ROUND)
     return SDOperand();
 
   // fold (fp_extend c1fp) -> c1fp

@@ -86,17 +86,17 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
   /// LegalizedNodes - For nodes that are of legal width, and that have more
   /// than one use, this map indicates what regularized operand to use.  This
   /// allows us to avoid legalizing the same thing more than once.
-  DenseMap<SDOperandImpl, SDOperand> LegalizedNodes;
+  DenseMap<SDOperand, SDOperand> LegalizedNodes;
 
   /// PromotedNodes - For nodes that are below legal width, and that have more
   /// than one use, this map indicates what promoted value to use.  This allows
   /// us to avoid promoting the same thing more than once.
-  DenseMap<SDOperandImpl, SDOperand> PromotedNodes;
+  DenseMap<SDOperand, SDOperand> PromotedNodes;
 
   /// ExpandedNodes - For nodes that need to be expanded this map indicates
   /// which which operands are the expanded version of the input.  This allows
   /// us to avoid expanding the same node more than once.
-  DenseMap<SDOperandImpl, std::pair<SDOperand, SDOperand> > ExpandedNodes;
+  DenseMap<SDOperand, std::pair<SDOperand, SDOperand> > ExpandedNodes;
 
   /// SplitNodes - For vector nodes that need to be split, this map indicates
   /// which which operands are the split version of the input.  This allows us
@@ -784,7 +784,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
   // Note that LegalizeOp may be reentered even from single-use nodes, which
   // means that we always must cache transformed nodes.
-  DenseMap<SDOperandImpl, SDOperand>::iterator I = LegalizedNodes.find(Op);
+  DenseMap<SDOperand, SDOperand>::iterator I = LegalizedNodes.find(Op);
   if (I != LegalizedNodes.end()) return I->second;
 
   SDOperand Tmp1, Tmp2, Tmp3, Tmp4;
@@ -1600,7 +1600,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     // will cause this node to be legalized as well as handling libcalls right.
     if (LastCALLSEQ_END.Val != Node) {
       LegalizeOp(SDOperand(FindCallStartFromCallEnd(Node), 0));
-      DenseMap<SDOperandImpl, SDOperand>::iterator I = LegalizedNodes.find(Op);
+      DenseMap<SDOperand, SDOperand>::iterator I = LegalizedNodes.find(Op);
       assert(I != LegalizedNodes.end() &&
              "Legalizing the call start should have legalized this node!");
       return I->second;
@@ -4016,7 +4016,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   SDOperand Result;
   SDNode *Node = Op.Val;
 
-  DenseMap<SDOperandImpl, SDOperand>::iterator I = PromotedNodes.find(Op);
+  DenseMap<SDOperand, SDOperand>::iterator I = PromotedNodes.find(Op);
   if (I != PromotedNodes.end()) return I->second;
 
   switch (Node->getOpcode()) {
@@ -5721,7 +5721,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
          "Cannot expand to FP value or to larger int value!");
 
   // See if we already expanded it.
-  DenseMap<SDOperandImpl, std::pair<SDOperand, SDOperand> >::iterator I
+  DenseMap<SDOperand, std::pair<SDOperand, SDOperand> >::iterator I
     = ExpandedNodes.find(Op);
   if (I != ExpandedNodes.end()) {
     Lo = I->second.first;

@@ -400,7 +400,7 @@ static const TargetRegisterClass *getInstrOperandRegClass(
 
 void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
                                   unsigned InstanceNo, unsigned SrcReg,
-                                  DenseMap<SDOperandImpl, unsigned> &VRBaseMap) {
+                                  DenseMap<SDOperand, unsigned> &VRBaseMap) {
   unsigned VRBase = 0;
   if (TargetRegisterInfo::isVirtualRegister(SrcReg)) {
     // Just use the input register directly!
@@ -488,7 +488,7 @@ unsigned ScheduleDAG::getDstOfOnlyCopyToRegUse(SDNode *Node,
 
 void ScheduleDAG::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
                                  const TargetInstrDesc &II,
-                                 DenseMap<SDOperandImpl, unsigned> &VRBaseMap) {
+                                 DenseMap<SDOperand, unsigned> &VRBaseMap) {
   assert(Node->getTargetOpcode() != TargetInstrInfo::IMPLICIT_DEF &&
          "IMPLICIT_DEF should have been handled as a special case elsewhere!");
 
@@ -529,7 +529,7 @@ void ScheduleDAG::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
 /// getVR - Return the virtual register corresponding to the specified result
 /// of the specified node.
 unsigned ScheduleDAG::getVR(SDOperand Op,
-                            DenseMap<SDOperandImpl, unsigned> &VRBaseMap) {
+                            DenseMap<SDOperand, unsigned> &VRBaseMap) {
   if (Op.isTargetOpcode() &&
       Op.getTargetOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
     // Add an IMPLICIT_DEF instruction before every use.
@@ -544,7 +544,7 @@ unsigned ScheduleDAG::getVR(SDOperand Op,
     return VReg;
   }
 
-  DenseMap<SDOperandImpl, unsigned>::iterator I = VRBaseMap.find(Op);
+  DenseMap<SDOperand, unsigned>::iterator I = VRBaseMap.find(Op);
   assert(I != VRBaseMap.end() && "Node emitted out of order - late");
   return I->second;
 }
@@ -557,7 +557,7 @@ unsigned ScheduleDAG::getVR(SDOperand Op,
 void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
                              unsigned IIOpNum,
                              const TargetInstrDesc *II,
-                             DenseMap<SDOperandImpl, unsigned> &VRBaseMap) {
+                             DenseMap<SDOperand, unsigned> &VRBaseMap) {
   if (Op.isTargetOpcode()) {
     // Note that this case is redundant with the final else block, but we
     // include it because it is the most common and it makes the logic
@@ -688,7 +688,7 @@ static const TargetRegisterClass *getSuperregRegisterClass(
 /// EmitSubregNode - Generate machine code for subreg nodes.
 ///
 void ScheduleDAG::EmitSubregNode(SDNode *Node, 
-                           DenseMap<SDOperandImpl, unsigned> &VRBaseMap) {
+                           DenseMap<SDOperand, unsigned> &VRBaseMap) {
   unsigned VRBase = 0;
   unsigned Opc = Node->getTargetOpcode();
   
@@ -779,7 +779,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
 /// EmitNode - Generate machine code for an node and needed dependencies.
 ///
 void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
-                           DenseMap<SDOperandImpl, unsigned> &VRBaseMap) {
+                           DenseMap<SDOperand, unsigned> &VRBaseMap) {
   // If machine instruction
   if (Node->isTargetOpcode()) {
     unsigned Opc = Node->getTargetOpcode();
@@ -1102,7 +1102,7 @@ void ScheduleDAG::EmitSchedule() {
   }
 
   // Finally, emit the code for all of the scheduled instructions.
-  DenseMap<SDOperandImpl, unsigned> VRBaseMap;
+  DenseMap<SDOperand, unsigned> VRBaseMap;
   DenseMap<SUnit*, unsigned> CopyVRBaseMap;
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
     SUnit *SU = Sequence[i];

@@ -304,11 +304,11 @@ public:
                     SDOperand N1, SDOperand N2, SDOperand N3, SDOperand N4,
                     SDOperand N5);
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT,
-                    const SDOperand *Ops, unsigned NumOps);
+                    SDOperandPtr Ops, unsigned NumOps);
   SDOperand getNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
-                    const SDOperand *Ops, unsigned NumOps);
+                    SDOperandPtr Ops, unsigned NumOps);
   SDOperand getNode(unsigned Opcode, const MVT::ValueType *VTs, unsigned NumVTs,
-                    const SDOperand *Ops, unsigned NumOps);
+                    SDOperandPtr Ops, unsigned NumOps);
   SDOperand getNode(unsigned Opcode, SDVTList VTs);
   SDOperand getNode(unsigned Opcode, SDVTList VTs, SDOperand N);
   SDOperand getNode(unsigned Opcode, SDVTList VTs,
@@ -321,7 +321,7 @@ public:
                     SDOperand N1, SDOperand N2, SDOperand N3, SDOperand N4,
                     SDOperand N5);
   SDOperand getNode(unsigned Opcode, SDVTList VTs,
-                    const SDOperand *Ops, unsigned NumOps);
+                    SDOperandPtr Ops, unsigned NumOps);
 
   SDOperand getMemcpy(SDOperand Chain, SDOperand Dst, SDOperand Src,
                       SDOperand Size, unsigned Align,
@@ -420,7 +420,7 @@ public:
                                SDOperand Op3, SDOperand Op4);
   SDOperand UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2,
                                SDOperand Op3, SDOperand Op4, SDOperand Op5);
-  SDOperand UpdateNodeOperands(SDOperand N, SDOperand *Ops, unsigned NumOps);
+  SDOperand UpdateNodeOperands(SDOperand N, SDOperandPtr Ops, unsigned NumOps);
   
   /// SelectNodeTo - These are used for target selectors to *mutate* the
   /// specified node to have the specified return type, Target opcode, and
@@ -435,7 +435,7 @@ public:
   SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
                        SDOperand Op1, SDOperand Op2, SDOperand Op3);
   SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT,
-                        const SDOperand *Ops, unsigned NumOps);
+                       SDOperandPtr Ops, unsigned NumOps);
   SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1, 
                        MVT::ValueType VT2, SDOperand Op1, SDOperand Op2);
   SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1,
@@ -457,7 +457,7 @@ public:
   SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT,
                         SDOperand Op1, SDOperand Op2, SDOperand Op3);
   SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT,
-                        const SDOperand *Ops, unsigned NumOps);
+                        SDOperandPtr Ops, unsigned NumOps);
   SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1,
                         MVT::ValueType VT2);
   SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1,
@@ -469,7 +469,7 @@ public:
                         SDOperand Op3);
   SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1, 
                         MVT::ValueType VT2,
-                        const SDOperand *Ops, unsigned NumOps);
+                        SDOperandPtr Ops, unsigned NumOps);
   SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1,
                         MVT::ValueType VT2, MVT::ValueType VT3,
                         SDOperand Op1, SDOperand Op2);
@@ -478,18 +478,18 @@ public:
                         SDOperand Op1, SDOperand Op2, SDOperand Op3);
   SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1, 
                         MVT::ValueType VT2, MVT::ValueType VT3,
-                        const SDOperand *Ops, unsigned NumOps);
+                        SDOperandPtr Ops, unsigned NumOps);
   SDNode *getTargetNode(unsigned Opcode, MVT::ValueType VT1, 
                         MVT::ValueType VT2, MVT::ValueType VT3,
                         MVT::ValueType VT4,
-                        const SDOperand *Ops, unsigned NumOps);
+                        SDOperandPtr Ops, unsigned NumOps);
   SDNode *getTargetNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
-                        const SDOperand *Ops, unsigned NumOps);
+                        SDOperandPtr Ops, unsigned NumOps);
 
   /// getNodeIfExists - Get the specified node if it's already available, or
   /// else return NULL.
   SDNode *getNodeIfExists(unsigned Opcode, SDVTList VTs,
-                          const SDOperand *Ops, unsigned NumOps);
+                          SDOperandPtr Ops, unsigned NumOps);
   
   /// DAGUpdateListener - Clients of various APIs that cause global effects on
   /// the DAG can optionally implement this interface.  This allows the clients
@@ -519,7 +519,7 @@ public:
                           DAGUpdateListener *UpdateListener = 0);
   void ReplaceAllUsesWith(SDNode *From, SDNode *To,
                           DAGUpdateListener *UpdateListener = 0);
-  void ReplaceAllUsesWith(SDNode *From, const SDOperand *To,
+  void ReplaceAllUsesWith(SDNode *From, SDOperandPtr To,
                           DAGUpdateListener *UpdateListener = 0);
 
   /// ReplaceAllUsesOfValueWith - Replace any uses of From with To, leaving
@@ -606,7 +606,7 @@ private:
   SDNode *FindModifiedNodeSlot(SDNode *N, SDOperand Op, void *&InsertPos);
   SDNode *FindModifiedNodeSlot(SDNode *N, SDOperand Op1, SDOperand Op2,
                                void *&InsertPos);
-  SDNode *FindModifiedNodeSlot(SDNode *N, const SDOperand *Ops, unsigned NumOps,
+  SDNode *FindModifiedNodeSlot(SDNode *N, SDOperandPtr Ops, unsigned NumOps,
                                void *&InsertPos);
 
   void DeleteNodeNotInCSEMaps(SDNode *N);

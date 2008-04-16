@@ -110,27 +110,27 @@ private:
 
   /// PromotedNodes - For nodes that are below legal width, this map indicates
   /// what promoted value to use.
-  DenseMap<SDOperandImpl, SDOperand> PromotedNodes;
+  DenseMap<SDOperand, SDOperand> PromotedNodes;
   
   /// ExpandedNodes - For nodes that need to be expanded this map indicates
   /// which operands are the expanded version of the input.
-  DenseMap<SDOperandImpl, std::pair<SDOperand, SDOperand> > ExpandedNodes;
+  DenseMap<SDOperand, std::pair<SDOperand, SDOperand> > ExpandedNodes;
 
   /// FloatToIntedNodes - For floating point nodes converted to integers of
   /// the same size, this map indicates the converted value to use.
-  DenseMap<SDOperandImpl, SDOperand> FloatToIntedNodes;
+  DenseMap<SDOperand, SDOperand> FloatToIntedNodes;
 
   /// ScalarizedNodes - For nodes that are <1 x ty>, this map indicates the
   /// scalar value of type 'ty' to use.
-  DenseMap<SDOperandImpl, SDOperand> ScalarizedNodes;
+  DenseMap<SDOperand, SDOperand> ScalarizedNodes;
 
   /// SplitNodes - For nodes that need to be split this map indicates
   /// which operands are the expanded version of the input.
-  DenseMap<SDOperandImpl, std::pair<SDOperand, SDOperand> > SplitNodes;
+  DenseMap<SDOperand, std::pair<SDOperand, SDOperand> > SplitNodes;
   
   /// ReplacedNodes - For nodes that have been replaced with another,
   /// indicates the replacement node to use.
-  DenseMap<SDOperandImpl, SDOperand> ReplacedNodes;
+  DenseMap<SDOperand, SDOperand> ReplacedNodes;
 
   /// Worklist - This defines a worklist of nodes to process.  In order to be
   /// pushed onto this worklist, all operands of a node must have already been
