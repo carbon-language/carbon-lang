@@ -553,7 +553,6 @@ static void removeRange(LiveInterval &li, unsigned Start, unsigned End,
 static void removeIntervalIfEmpty(LiveInterval &li, LiveIntervals *li_,
                                   const TargetRegisterInfo *tri_) {
   if (li.empty()) {
-    li_->removeInterval(li.reg);
     if (TargetRegisterInfo::isPhysicalRegister(li.reg))
       for (const unsigned* SR = tri_->getSubRegisters(li.reg); *SR; ++SR) {
         if (!li_->hasInterval(*SR))
@@ -562,6 +561,7 @@ static void removeIntervalIfEmpty(LiveInterval &li, LiveIntervals *li_,
         if (sli.empty())
           li_->removeInterval(*SR);
       }
+    li_->removeInterval(li.reg);
   }
 }
 
