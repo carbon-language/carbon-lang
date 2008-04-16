@@ -1290,6 +1290,10 @@ int main(int argc, char **argv) {
   TextDiagnostics* TextDiagClient = NULL;
   
   if (!HTMLDiag.empty()) {
+    
+    // FIXME: The HTMLDiagnosticClient uses the Preprocessor for
+    //  (optional) syntax highlighting, but we don't have a preprocessor yet.
+    //  Fix this dependency later.
     DiagClient.reset(CreateHTMLDiagnosticClient(HTMLDiag, NULL));
   }
   else { // Use Text diagnostics.
