@@ -395,7 +395,7 @@ X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
 void *X86JITInfo::emitGlobalValueLazyPtr(const GlobalValue* GV, void *ptr,
                                          MachineCodeEmitter &MCE) {
 #if defined (X86_64_JIT)
-  MCE.startFunctionStub(8, 8);
+  MCE.startFunctionStub(GV, 8, 8);
   MCE.emitWordLE(((unsigned *)&ptr)[0]);
   MCE.emitWordLE(((unsigned *)&ptr)[1]);
 #else
