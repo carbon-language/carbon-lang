@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
+#include "clang/AST/Stmt.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -103,18 +104,30 @@ ExplodedGraphImpl* ExplodedGraphImpl::Trim(ExplodedNodeImpl** BeginSources,
     // Enqueue the source nodes to the first worklist. 
     
     std::list<std::pair<ExplodedNodeImpl*, ExplodedNodeImpl*> > WL1;
+    std::list<std::pair<ExplodedNodeImpl*, ExplodedNodeImpl*> > WL1_Loops;
   
     for (ExplodedNodeImpl** I = BeginSources; I != EndSources; ++I)
       WL1.push_back(std::make_pair(*I, *I));
     
     // Process the worklist.
 
-    while (!WL1.empty()) {
+    while (! (WL1.empty() && WL1_Loops.empty())) {
       
-      ExplodedNodeImpl* N = WL1.back().first;
-      ExplodedNodeImpl* Src = WL1.back().second;
+      ExplodedNodeImpl *N, *Src;
+
+      // Only dequeue from the "loops" worklist if WL1 has no items.
+      // Thus we prioritize for paths that don't span loop boundaries.
       
-      WL1.pop_back();
+      if (WL1.empty()) {
+        N = WL1_Loops.back().first;
+        Src = WL1_Loops.back().second;
+        WL1_Loops.pop_back();
+      }
+      else {
+        N = WL1.back().first;
+        Src = WL1.back().second;
+        WL1.pop_back();
+      }      
       
       if (Pass1.find(N) != Pass1.end())
         continue;
@@ -152,8 +165,24 @@ ExplodedGraphImpl* ExplodedGraphImpl::Trim(ExplodedNodeImpl** BeginSources,
       
       if (VisitPreds)
         for (ExplodedNodeImpl** I=N->Preds.begin(), **E=N->Preds.end();
-             I!=E; ++I)
+             I!=E; ++I) {
+          
+          ProgramPoint P = Src->getLocation();
+          
+          if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P))
+            if (Stmt* T = BE->getSrc()->getTerminator())
+              switch (T->getStmtClass()) {
+                default: break;
+                case Stmt::ForStmtClass:
+                case Stmt::WhileStmtClass:
+                case Stmt::DoStmtClass:
+                  WL1_Loops.push_front(std::make_pair(*I, Src));
+                  continue;
+                  
+              }
+          
           WL1.push_front(std::make_pair(*I, Src));
+        }
     }
   }
   
