@@ -231,10 +231,10 @@ public:
     return InfoPtr & ArgFlags;
   }
   /// operator==/!= - Indicate whether the specified selectors are identical.
-  bool operator==(const Selector &RHS) const {
+  bool operator==(Selector RHS) const {
     return InfoPtr == RHS.InfoPtr;
   }
-  bool operator!=(const Selector &RHS) const {
+  bool operator!=(Selector RHS) const {
     return InfoPtr != RHS.InfoPtr;
   }
   void *getAsOpaquePtr() const {

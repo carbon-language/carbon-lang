@@ -1393,8 +1393,7 @@ public:
   : Expr(ObjCSelectorExprClass, T), SelName(selInfo), 
   AtLoc(at), RParenLoc(rp) {}
   
-  const Selector &getSelector() const { return SelName; }
-  Selector &getSelector() { return SelName; }
+  Selector getSelector() const { return SelName; }
   
   SourceLocation getAtLoc() const { return AtLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
@@ -1518,7 +1517,6 @@ public:
   Expr *getReceiver() { return SubExprs[RECEIVER]; }
   
   Selector getSelector() const { return SelName; }
-  Selector &getSelector() { return SelName; }
 
   const ObjCMethodDecl *getMethodDecl() const { return MethodProto; }
   ObjCMethodDecl *getMethodDecl() { return MethodProto; }

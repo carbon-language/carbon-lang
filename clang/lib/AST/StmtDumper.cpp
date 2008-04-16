@@ -441,7 +441,7 @@ void StmtDumper::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
   DumpExpr(Node);
   
   fprintf(F, " ");
-  Selector &selector = Node->getSelector();
+  Selector selector = Node->getSelector();
   fprintf(F, "%s", selector.getName().c_str());
 }
 

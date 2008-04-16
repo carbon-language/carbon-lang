@@ -822,7 +822,7 @@ void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
   Expr *receiver = Mess->getReceiver();
   if (receiver) PrintExpr(receiver);
   else OS << Mess->getClassName()->getName();
-  Selector &selector = Mess->getSelector();
+  Selector selector = Mess->getSelector();
   if (selector.isUnarySelector()) {
     OS << " " << selector.getIdentifierInfoForSlot(0)->getName();
   } else {
