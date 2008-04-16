@@ -187,6 +187,7 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
       " .code { line-height: 1.2em }\n"
       " .comment { color: #A0A0A0 }\n"
       " .keyword { color: #FF00FF }\n"
+      " .directive { color: #FFFF00 }\n"
       " .macro { color: #FF0000; background-color:#FFC0C0 }\n"
       " .num { width:2.5em; padding-right:2ex; background-color:#eeeeee }\n"
       " .num { text-align:right; font-size: smaller }\n"
@@ -238,17 +239,20 @@ void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
   // macros.
   const SourceManager &SourceMgr = PP.getSourceManager();
   Token Tok;
-  do {
+  PP.LexUnexpandedToken(Tok);
+  
+  // Skip tokens from the predefine buffer or whatever else.
+  // Consume all of the tokens that come from the predefines buffer.  Those
+  // should not be emitted into the output and are guaranteed to be at the
+  // start.
+  while (Tok.isNot(tok::eof) && Tok.getLocation().isFileID() &&
+         SourceMgr.getCanonicalFileID(Tok.getLocation()) != FileID)
     PP.LexUnexpandedToken(Tok);
-    // Ignore tokens whose logical location was not the main file.
-    SourceLocation LLoc = SourceMgr.getLogicalLoc(Tok.getLocation());
-    std::pair<unsigned, unsigned> LLocInfo = 
-      SourceMgr.getDecomposedFileLoc(LLoc);
-    
-    if (LLocInfo.first != FileID)
-      continue;
-    
-    unsigned TokOffs = LLocInfo.second;
+
+  while (Tok.isNot(tok::eof)) {
+    // Since we are lexing unexpanded tokens, all tokens are from the main
+    // FileID.
+    unsigned TokOffs = SourceMgr.getFullFilePos(Tok.getLocation());
     unsigned TokLen = Tok.getLength();
     switch (Tok.getKind()) {
     default:
@@ -265,9 +269,24 @@ void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
                          strlen("<span class='comment'>"));
       RB.InsertTextBefore(TokOffs+TokLen, "</span>", strlen("</span>"));
       break;
+    case tok::hash:
+      // FIXME: This isn't working because we're not in raw mode in the lexer.
+      // Just cons up our own lexer here?
+        
+      // If this is a preprocessor directive, all tokens to end of line are too.
+      if (Tok.isAtStartOfLine()) {
+        RB.InsertTextAfter(TokOffs, "<span class='directive'>",
+                           strlen("<span class='directive'>"));
+        // Find end of line.  This is a hack.
+        const char *LineEnd = SourceMgr.getCharacterData(Tok.getLocation());
+        unsigned TokEnd = TokOffs+strcspn(LineEnd, "\n\r");
+        RB.InsertTextBefore(TokEnd, "</span>", strlen("</span>"));
+      }
+      break;
     }
     
-  } while (Tok.isNot(tok::eof));
+    PP.LexUnexpandedToken(Tok);
+  }
   PP.SetCommentRetentionState(false, false);
 }
 
