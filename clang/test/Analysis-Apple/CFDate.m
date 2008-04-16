@@ -25,3 +25,42 @@ CFAbsoluteTime f2() {
   return t;
 }
 
+
+NSDate* global_x;
+
+  // Test to see if we supresss an error when we store the pointer
+  // to a global.
+  
+CFAbsoluteTime f3() {
+  CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
+  CFDateRef date = CFDateCreate(NULL, t);  
+  [((NSDate*) date) retain];
+  CFRelease(date);
+  CFDateGetAbsoluteTime(date); // no-warning
+  global_x = (NSDate*) date;  
+  [((NSDate*) date) release];
+  t = CFDateGetAbsoluteTime(date);   // no-warning
+  return t;
+}
+
+// Test to see if we supresss an error when we store the pointer
+// to a struct.
+
+struct foo {
+  NSDate* f;
+};
+
+CFAbsoluteTime f4() {
+  struct foo x;
+  
+  CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
+  CFDateRef date = CFDateCreate(NULL, t);  
+  [((NSDate*) date) retain];
+  CFRelease(date);
+  CFDateGetAbsoluteTime(date); // no-warning
+  x.f = (NSDate*) date;  
+  [((NSDate*) date) release];
+  t = CFDateGetAbsoluteTime(date);   // no-warning
+  return t;
+}
+
