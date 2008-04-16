@@ -75,35 +75,35 @@ std::string html::EscapeText(const std::string& s, bool EscapeSpaces,
   for (unsigned i = 0 ; i < len; ++i) {
     
     char c = s[i];
-    
     switch (c) {
-      default:
-        os << c; break;
-        
-      case ' ':
-        if (EscapeSpaces) os << "&nbsp;";
-        else os << ' ';
+    default:
+      os << c; break;
+      
+    case ' ':
+      if (EscapeSpaces) os << "&nbsp;";
+      else os << ' ';
+      break;
+      
+      case '\t':
+        if (ReplaceTabs)
+          for (unsigned i = 0; i < 4; ++i)
+            os << "&nbsp;";
+        else 
+          os << c;
+      
         break;
-        
-        case '\t':
-          if (ReplaceTabs)
-            for (unsigned i = 0; i < 4; ++i)
-              os << "&nbsp;";
-          else os << c;
-        
-          break;
-        
-        case '<': os << "&lt;"; break;
-        case '>': os << "&gt;"; break;
-        case '&': os << "&amp;"; break;
+      
+      case '<': os << "&lt;"; break;
+      case '>': os << "&gt;"; break;
+      case '&': os << "&amp;"; break;
     }
   }
   
   return os.str();
 }
 
-static void AddLineNumber(Rewriter& R, unsigned LineNo,
-                          SourceLocation B, SourceLocation E) {
+static void AddLineNumber(RewriteBuffer &RB, unsigned LineNo,
+                          unsigned B, unsigned E) {
   llvm::SmallString<100> Str;
   Str += "<tr><td class=\"num\" id=\"LN";
   Str.append_uint(LineNo);
@@ -113,10 +113,10 @@ static void AddLineNumber(Rewriter& R, unsigned LineNo,
   
   if (B == E) { // Handle empty lines.
     Str += " </td></tr>";
-    R.InsertTextBefore(B, &Str[0], Str.size());
+    RB.InsertTextBefore(B, &Str[0], Str.size());
   } else {
-    R.InsertTextBefore(B, &Str[0], Str.size());
-    R.InsertCStrBefore(E, "</td></tr>");
+    RB.InsertTextBefore(B, &Str[0], Str.size());
+    RB.InsertTextBefore(E, "</td></tr>", strlen("</td></tr>"));
   }
 }
 
@@ -126,6 +126,7 @@ void html::AddLineNumbers(Rewriter& R, unsigned FileID) {
   const char* FileBeg = Buf->getBufferStart();
   const char* FileEnd = Buf->getBufferEnd();
   const char* C = FileBeg;
+  RewriteBuffer &RB = R.getEditBuffer(FileID);
   
   assert (C <= FileEnd);
   
@@ -155,18 +156,14 @@ void html::AddLineNumbers(Rewriter& R, unsigned FileID) {
       ++FilePos;
     }
     
-    AddLineNumber(R, LineNo,
-                  SourceLocation::getFileLoc(FileID, LineStartPos),
-                  SourceLocation::getFileLoc(FileID, LineEndPos));    
+    AddLineNumber(RB, LineNo, LineStartPos, LineEndPos);
   }
   
-  // Add one big div tag that surrounds all of the code.
+  // Add one big table tag that surrounds all of the code.
+  RB.InsertTextBefore(0, "<table class=\"code\">\n",
+                      strlen("<table class=\"code\">\n"));
   
-  R.InsertCStrBefore(SourceLocation::getFileLoc(FileID, 0),
-                     "<table class=\"code\">\n");
-  
-  R.InsertCStrAfter(SourceLocation::getFileLoc(FileID, FileEnd - FileBeg),
-                    "</table>");
+  RB.InsertTextAfter(FileEnd - FileBeg, "</table>", strlen("</table>"));
 }
 
 void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
