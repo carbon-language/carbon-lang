@@ -458,6 +458,11 @@ namespace {
 // Transfer functions.
 //===----------------------------------------------------------------------===//
 
+static inline Selector GetUnarySelector(const char* name, ASTContext& Ctx) {
+  IdentifierInfo* II = &Ctx.Idents.get(name);
+  return Ctx.Selectors.getSelector(0, &II);
+}
+
 namespace {
   
 class VISIBILITY_HIDDEN RefVal {
@@ -564,26 +569,39 @@ class VISIBILITY_HIDDEN CFRefCount : public GRSimpleVals {
   
   BindingsPrinter Printer;
   
+  Selector RetainSelector;
+  Selector ReleaseSelector;
+
   // Private methods.
-    
+
   static RefBindings GetRefBindings(ValueState& StImpl) {
     return RefBindings((RefBindings::TreeTy*) StImpl.CheckerState);
   }
-  
+
   static void SetRefBindings(ValueState& StImpl, RefBindings B) {
     StImpl.CheckerState = B.getRoot();
   }
-  
+
   RefBindings Remove(RefBindings B, SymbolID sym) {
     return RefBFactory.Remove(B, sym);
   }
   
   RefBindings Update(RefBindings B, SymbolID sym, RefVal V, ArgEffect E,
-                     RefVal::Kind& hasError);
- 
+                     RefVal::Kind& hasErr);
+  
+  void ProcessError(ExplodedNodeSet<ValueState>& Dst,
+                    GRStmtNodeBuilder<ValueState>& Builder,
+                    Expr* NodeExpr, Expr* ErrorExpr,                        
+                    ExplodedNode<ValueState>* Pred,
+                    ValueState* St,
+                    RefVal::Kind hasErr);
   
 public:
-  CFRefCount(ASTContext& Ctx) : Summaries(Ctx) {}
+  CFRefCount(ASTContext& Ctx)
+    : Summaries(Ctx),
+      RetainSelector(GetUnarySelector("retain", Ctx)),
+      ReleaseSelector(GetUnarySelector("release", Ctx)) {}
+  
   virtual ~CFRefCount() {}
   
   virtual void RegisterChecks(GRExprEngine& Eng);
@@ -661,6 +679,29 @@ static inline RetEffect GetRetE(CFRefSummary* Summ) {
   return Summ ? Summ->getRet() : RetEffect::MakeNoRet();
 }
 
+void CFRefCount::ProcessError(ExplodedNodeSet<ValueState>& Dst,
+                              GRStmtNodeBuilder<ValueState>& Builder,
+                              Expr* NodeExpr, Expr* ErrorExpr,                        
+                              ExplodedNode<ValueState>* Pred,
+                              ValueState* St,
+                              RefVal::Kind hasErr) {
+  Builder.BuildSinks = true;
+  GRExprEngine::NodeTy* N  = Builder.MakeNode(Dst, NodeExpr, Pred, St);
+
+  if (!N) return;
+    
+  switch (hasErr) {
+    default: assert(false);
+    case RefVal::ErrorUseAfterRelease:
+      UseAfterReleases[N] = ErrorExpr;
+      break;
+      
+    case RefVal::ErrorReleaseNotOwned:
+      ReleasesNotOwned[N] = ErrorExpr;
+      break;
+  }
+}
+
 void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
                           GRExprEngine& Eng,
                           GRStmtNodeBuilder<ValueState>& Builder,
@@ -686,7 +727,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
   // Evaluate the effects of the call.
   
   ValueState StVals = *St;
-  RefVal::Kind hasError = (RefVal::Kind) 0;
+  RefVal::Kind hasErr = (RefVal::Kind) 0;
  
   // This function has a summary.  Evaluate the effect of the arguments.
   
@@ -704,10 +745,10 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
       RefBindings B = GetRefBindings(StVals);      
       
       if (RefBindings::TreeTy* T = B.SlimFind(Sym)) {
-        B = Update(B, Sym, T->getValue().second, GetArgE(Summ, idx), hasError);
+        B = Update(B, Sym, T->getValue().second, GetArgE(Summ, idx), hasErr);
         SetRefBindings(StVals, B);
         
-        if (hasError) {
+        if (hasErr) {
           ErrorExpr = *I;
           break;
         }
@@ -720,34 +761,17 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
       StateMgr.Unbind(StVals, cast<LVal>(V));
     }
   }    
+  
+  St = StateMgr.getPersistentState(StVals);
     
-  if (hasError) {
-    St = StateMgr.getPersistentState(StVals);
-    
-    Builder.BuildSinks = true;
-    GRExprEngine::NodeTy* N  = Builder.MakeNode(Dst, CE, Pred, St);
-
-    if (N) {
-      switch (hasError) {
-        default: assert(false);
-        case RefVal::ErrorUseAfterRelease:
-          UseAfterReleases[N] = ErrorExpr;
-          break;
-          
-        case RefVal::ErrorReleaseNotOwned:
-          ReleasesNotOwned[N] = ErrorExpr;
-          break;
-      }
-    }
-    
+  if (hasErr) {
+    ProcessError(Dst, Builder, CE, ErrorExpr, Pred, St, hasErr);
     return;
   }
-
+    
   // Finally, consult the summary for the return value.
   
   RetEffect RE = GetRetE(Summ);
-  St = StateMgr.getPersistentState(StVals);
-
   
   switch (RE.getKind()) {
     default:
@@ -831,15 +855,65 @@ bool CFRefCount::EvalObjCMessageExprAux(ExplodedNodeSet<ValueState>& Dst,
                                         ObjCMessageExpr* ME,
                                         ExplodedNode<ValueState>* Pred) {
     
-  // Handle "toll-free bridging."  Eventually we will want to track the
-  // underlying object type associated.
+  // Handle "toll-free bridging" of calls to "Release" and "Retain".
+  
+  // FIXME: track the underlying object type associated so that we can
+  //  flag illegal uses of toll-free bridging (or at least handle it
+  //  at casts).
   
   Selector S = ME->getSelector();
   
   if (!S.isUnarySelector())
     return true;
 
-  return true; // FIXME: change to return false when more is implemented.
+  Expr* Receiver = ME->getReceiver();
+  
+  if (!Receiver)
+    return true;
+
+  // Check if we are calling "Retain" or "Release".
+  
+  bool isRetain = false;
+  
+  if (S == RetainSelector)
+    isRetain = true;
+  else if (S != ReleaseSelector)
+    return true;
+  
+  // We have "Retain" or "Release".  Get the reference binding.
+  
+  ValueStateManager& StateMgr = Eng.getStateManager();
+  ValueState* St = Builder.GetState(Pred);
+  RVal V = StateMgr.GetRVal(St, Receiver);
+  
+  if (!isa<lval::SymbolVal>(V))
+    return true;
+
+  SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
+  RefBindings B = GetRefBindings(*St);
+  
+  RefBindings::TreeTy* T = B.SlimFind(Sym);
+  
+  if (!T)
+    return true;
+  
+  RefVal::Kind hasErr = (RefVal::Kind) 0;
+  B = Update(B, Sym, T->getValue().second, isRetain ? IncRef : DecRef, hasErr);
+
+  // Create a new state with the updated bindings.
+  
+  ValueState StVals = *St;
+  SetRefBindings(StVals, B);
+  St = StateMgr.getPersistentState(StVals);
+  
+  // Create an error node if it exists.
+  
+  if (hasErr)
+    ProcessError(Dst, Builder, ME, Receiver, Pred, St, hasErr);
+  else
+    Builder.MakeNode(Dst, ME, Pred, St);
+
+  return false;
 }
 
 // End-of-path.
@@ -864,7 +938,7 @@ void CFRefCount::EvalEndPath(GRExprEngine& Engine,
 
 CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
                                            RefVal V, ArgEffect E,
-                                           RefVal::Kind& hasError) {
+                                           RefVal::Kind& hasErr) {
   
   // FIXME: This dispatch can potentially be sped up by unifiying it into
   //  a single switch statement.  Opt for simplicity for now.
@@ -876,7 +950,7 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
     case DoNothing:
       if (V.getKind() == RefVal::Released) {
         V = RefVal::makeUseAfterRelease();        
-        hasError = V.getKind();
+        hasErr = V.getKind();
         break;
       }
       
@@ -897,7 +971,7 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
           
         case RefVal::Released:
           V = RefVal::makeUseAfterRelease();
-          hasError = V.getKind();
+          hasErr = V.getKind();
           break;
       }
       
@@ -921,7 +995,7 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
             V = RefVal::makeNotOwned(Count);
           else {
             V = RefVal::makeReleaseNotOwned();
-            hasError = V.getKind();
+            hasErr = V.getKind();
           }
           
           break;
@@ -929,7 +1003,7 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
 
         case RefVal::Released:
           V = RefVal::makeUseAfterRelease();
-          hasError = V.getKind();
+          hasErr = V.getKind();
           break;          
       }
       
