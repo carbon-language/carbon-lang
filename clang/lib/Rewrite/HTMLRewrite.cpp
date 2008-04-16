@@ -186,6 +186,7 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
       " .code { font-family: \"Andale Mono\", monospace; font-size:10pt }\n"
       " .code { line-height: 1.2em }\n"
       " .comment { color: #A0A0A0 }\n"
+      " .keyword { color: #FF00FF }\n"
       " .macro { color: #FF0000; background-color:#FFC0C0 }\n"
       " .num { width:2.5em; padding-right:2ex; background-color:#eeeeee }\n"
       " .num { text-align:right; font-size: smaller }\n"
@@ -250,9 +251,15 @@ void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
     unsigned TokOffs = LLocInfo.second;
     unsigned TokLen = Tok.getLength();
     switch (Tok.getKind()) {
-    default: break;
-      // FIXME: Add keywords here.
-        
+    default:
+      // If this is a pp-identifier, but not a real identifier it must be a
+      // keyword.
+      if (Tok.getIdentifierInfo() && Tok.isNot(tok::identifier)) {
+        RB.InsertTextAfter(TokOffs, "<span class='keyword'>",
+                           strlen("<span class='keyword'>"));
+        RB.InsertTextBefore(TokOffs+TokLen, "</span>", strlen("</span>"));
+      }
+      break;
     case tok::comment:
       RB.InsertTextAfter(TokOffs, "<span class='comment'>",
                          strlen("<span class='comment'>"));
