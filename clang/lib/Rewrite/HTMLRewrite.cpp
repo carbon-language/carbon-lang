@@ -185,7 +185,8 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
       " .code { border-spacing:0px; width:100%; }\n"
       " .code { font-family: \"Andale Mono\", monospace; font-size:10pt }\n"
       " .code { line-height: 1.2em }\n"
-      " .comment { color:#A0A0A0 }\n"
+      " .comment { color: #A0A0A0 }\n"
+      " .macro { color: #FF0000; background-color:#FFC0C0 }\n"
       " .num { width:2.5em; padding-right:2ex; background-color:#eeeeee }\n"
       " .num { text-align:right; font-size: smaller }\n"
       " .num { color:#444444 }\n"
@@ -232,11 +233,12 @@ void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
   // Start parsing the specified input file.
   PP.EnterMainSourceFile();
 
-  // Lex all the tokens.
+  // Lex all the tokens in raw mode, to avoid entering #includes or expanding
+  // macros.
   const SourceManager &SourceMgr = PP.getSourceManager();
   Token Tok;
   do {
-    PP.Lex(Tok);
+    PP.LexUnexpandedToken(Tok);
     // Ignore tokens whose logical location was not the main file.
     SourceLocation LLoc = SourceMgr.getLogicalLoc(Tok.getLocation());
     std::pair<unsigned, unsigned> LLocInfo = 
@@ -249,6 +251,8 @@ void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
     unsigned TokLen = Tok.getLength();
     switch (Tok.getKind()) {
     default: break;
+      // FIXME: Add keywords here.
+        
     case tok::comment:
       RB.InsertTextAfter(TokOffs, "<span class='comment'>",
                          strlen("<span class='comment'>"));
@@ -257,4 +261,66 @@ void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
     }
     
   } while (Tok.isNot(tok::eof));
+  PP.SetCommentRetentionState(false, false);
 }
+
+/// HighlightMacros - This uses the macro table state from the end of the
+/// file, to reexpand macros and insert (into the HTML) information about the
+/// macro expansions.  This won't be perfectly perfect, but it will be
+/// reasonably close.
+void html::HighlightMacros(Rewriter &R, unsigned FileID, Preprocessor &PP) {
+  RewriteBuffer &RB = R.getEditBuffer(FileID);
+  
+  // Inform the preprocessor that we don't want comments.
+  PP.SetCommentRetentionState(false, false);
+  
+  // Start parsing the specified input file.
+  PP.EnterMainSourceFile();
+  
+  // Lex all the tokens.
+  const SourceManager &SourceMgr = PP.getSourceManager();
+  Token Tok;
+  PP.Lex(Tok);
+  while (Tok.isNot(tok::eof)) {
+    // Ignore non-macro tokens.
+    if (!Tok.getLocation().isMacroID()) {
+      PP.Lex(Tok);
+      continue;
+    }
+    
+    // Ignore tokens whose logical location was not the main file.
+    SourceLocation LLoc = SourceMgr.getLogicalLoc(Tok.getLocation());
+    std::pair<unsigned, unsigned> LLocInfo = 
+      SourceMgr.getDecomposedFileLoc(LLoc);
+    
+    if (LLocInfo.first != FileID) {
+      PP.Lex(Tok);
+      continue;
+    }
+    
+    // Okay, we have the first token of a macro expansion: highlight the
+    // instantiation.
+  
+    // Get the size of current macro call itself.
+    // FIXME: This should highlight the args of a function-like
+    // macro, using a heuristic.
+    unsigned TokLen = Lexer::MeasureTokenLength(LLoc, SourceMgr);
+    
+    unsigned TokOffs = LLocInfo.second;
+    RB.InsertTextAfter(TokOffs, "<span class='macro'>",
+                       strlen("<span class='macro'>"));
+    RB.InsertTextBefore(TokOffs+TokLen, "</span>", strlen("</span>"));
+    
+    // Okay, eat this token, getting the next one.
+    PP.Lex(Tok);
+    
+    // Skip all the rest of the tokens that are part of this macro
+    // instantiation.  It would be really nice to pop up a window with all the
+    // spelling of the tokens or something.
+    while (!Tok.is(tok::eof) &&
+           SourceMgr.getLogicalLoc(Tok.getLocation()) == LLoc)
+      PP.Lex(Tok);
+  }
+}
+
+

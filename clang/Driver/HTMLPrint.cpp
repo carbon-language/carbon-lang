@@ -61,8 +61,10 @@ HTMLPrinter::~HTMLPrinter() {
 
   // If we have a preprocessor, relex the file and syntax hilight.  We might not
   // have a preprocessor if we come from a deserialized AST file, for example.
-  if (PP)
+  if (PP) {
     html::SyntaxHighlight(R, FileID, *PP);
+    html::HighlightMacros(R, FileID, *PP);
+  }
   
   
   // Open the output.

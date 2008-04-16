@@ -45,10 +45,15 @@ namespace html {
   void AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID);
 
   /// SyntaxHighlight - Relex the specified FileID and annotate the HTML with
-  /// information about keywords, macro expansions etc.  This uses the macro
-  /// table state from the end of the file, so it won't be perfectly perfect,
-  /// but it will be reasonably close.
+  /// information about keywords, comments, etc.
   void SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP);
+
+  /// HighlightMacros - This uses the macro table state from the end of the
+  /// file, to reexpand macros and insert (into the HTML) information about the
+  /// macro expansions.  This won't be perfectly perfect, but it will be
+  /// reasonably close.
+  void HighlightMacros(Rewriter &R, unsigned FileID, Preprocessor &PP);
+  
 
 } // end html namespace
 } // end clang namespace
