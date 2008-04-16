@@ -246,7 +246,8 @@ int main(int argc, char **argv) {
     PM.run(mod);
   } else {
     // Build up all of the passes that we want to do to the module.
-    FunctionPassManager Passes(new ExistingModuleProvider(M.get()));
+    ExistingModuleProvider Provider(M.release());
+    FunctionPassManager Passes(&Provider);
     Passes.add(new TargetData(*Target.getTargetData()));
     
 #ifndef NDEBUG
