@@ -203,8 +203,14 @@ public:
       RewriteBuffers.find(FileID);
     return I == RewriteBuffers.end() ? 0 : &I->second;
   }
-private:
+
+  /// getEditBuffer - This is like getRewriteBufferFor, but always returns a
+  /// buffer, and allows you to write on it directly.  This is useful if you
+  /// want efficient low-level access to apis for scribbling on one specific
+  /// FileID's buffer.
   RewriteBuffer &getEditBuffer(unsigned FileID);
+
+private:
   unsigned getLocationOffsetAndFileID(SourceLocation Loc,
                                       unsigned &FileID) const;
 };
