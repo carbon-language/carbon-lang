@@ -51,30 +51,6 @@ public:
   iterator end() const { return Buffer.end(); }
   unsigned size() const { return Buffer.size(); }
   
-private:  // Methods only usable by Rewriter.
-  
-  /// Initialize - Start this rewrite buffer out with a copy of the unmodified
-  /// input buffer.
-  void Initialize(const char *BufStart, const char *BufEnd) {
-    Buffer.assign(BufStart, BufEnd);
-  }
-  
-  /// getMappedOffset - Given an offset into the original SourceBuffer that this
-  /// RewriteBuffer is based on, map it into the offset space of the
-  /// RewriteBuffer.  If AfterInserts is true and if the OrigOffset indicates a
-  /// position where text is inserted, the location returned will be after any
-  /// inserted text at the position.
-  unsigned getMappedOffset(unsigned OrigOffset,
-                           bool AfterInserts = false) const{
-    return Deltas.getDeltaAt(OrigOffset+AfterInserts)+OrigOffset;
-  }
-  
-  /// AddDelta - When a change is made that shifts around the text buffer, this
-  /// method is used to record that info.
-  void AddDelta(unsigned OrigOffset, int Change) {
-    return Deltas.AddDelta(OrigOffset, Change);
-  }
-  
   /// RemoveText - Remove the specified text.
   void RemoveText(unsigned OrigOffset, unsigned Size);
   
@@ -110,6 +86,29 @@ private:  // Methods only usable by Rewriter.
   void ReplaceText(unsigned OrigOffset, unsigned OrigLength,
                    const char *NewStr, unsigned NewLength);
   
+private:  // Methods only usable by Rewriter.
+  
+  /// Initialize - Start this rewrite buffer out with a copy of the unmodified
+  /// input buffer.
+  void Initialize(const char *BufStart, const char *BufEnd) {
+    Buffer.assign(BufStart, BufEnd);
+  }
+  
+  /// getMappedOffset - Given an offset into the original SourceBuffer that this
+  /// RewriteBuffer is based on, map it into the offset space of the
+  /// RewriteBuffer.  If AfterInserts is true and if the OrigOffset indicates a
+  /// position where text is inserted, the location returned will be after any
+  /// inserted text at the position.
+  unsigned getMappedOffset(unsigned OrigOffset,
+                           bool AfterInserts = false) const{
+    return Deltas.getDeltaAt(OrigOffset+AfterInserts)+OrigOffset;
+  }
+  
+  /// AddDelta - When a change is made that shifts around the text buffer, this
+  /// method is used to record that info.
+  void AddDelta(unsigned OrigOffset, int Change) {
+    return Deltas.AddDelta(OrigOffset, Change);
+  }
 };
   
 

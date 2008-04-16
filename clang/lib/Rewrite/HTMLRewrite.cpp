@@ -30,49 +30,38 @@ void html::EscapeText(Rewriter& R, unsigned FileID,
   
   assert (C <= FileEnd);
   
+  RewriteBuffer &RB = R.getEditBuffer(FileID);
+  
   for (unsigned FilePos = 0; C != FileEnd ; ++C, ++FilePos) {
       
     switch (*C) {
-      default: break;
-        
-      case ' ':
-        if (EscapeSpaces) {
-          SourceLocation Loc = SourceLocation::getFileLoc(FileID, FilePos);
-          R.ReplaceText(Loc, 1, "&nbsp;", 6);
-        }
-        break;
+    default: break;
+      
+    case ' ':
+      if (EscapeSpaces)
+        RB.ReplaceText(FilePos, 1, "&nbsp;", 6);
+      break;
 
-      case '\t': {
-        if (!ReplaceTabs)
-          break;
-        
-        SourceLocation Loc = SourceLocation::getFileLoc(FileID, FilePos);
-        
-        if (EscapeSpaces)
-          R.ReplaceText(Loc, 1, "&nbsp;&nbsp;&nbsp;&nbsp;", 6*4);
-        else
-          R.ReplaceText(Loc, 1, "    ", 4);
-        
+    case '\t':
+      if (!ReplaceTabs)
         break;
-      }
-        
-      case '<': {
-        SourceLocation Loc = SourceLocation::getFileLoc(FileID, FilePos);
-        R.ReplaceText(Loc, 1, "&lt;", 4);
-        break;
-      }
-        
-      case '>': {
-        SourceLocation Loc = SourceLocation::getFileLoc(FileID, FilePos);
-        R.ReplaceText(Loc, 1, "&gt;", 4);
-        break;
-      }
-        
-      case '&': {
-        SourceLocation Loc = SourceLocation::getFileLoc(FileID, FilePos);
-        R.ReplaceText(Loc, 1, "&amp;", 5);
-        break;
-      }
+      if (EscapeSpaces)
+        RB.ReplaceText(FilePos, 1, "&nbsp;&nbsp;&nbsp;&nbsp;", 6*4);
+      else
+        RB.ReplaceText(FilePos, 1, "    ", 4);
+      break;
+      
+    case '<':
+      RB.ReplaceText(FilePos, 1, "&lt;", 4);
+      break;
+      
+    case '>':
+      RB.ReplaceText(FilePos, 1, "&gt;", 4);
+      break;
+      
+    case '&':
+      RB.ReplaceText(FilePos, 1, "&amp;", 5);
+      break;
     }
   }
 }
@@ -98,7 +87,8 @@ std::string html::EscapeText(const std::string& s, bool EscapeSpaces,
         
         case '\t':
           if (ReplaceTabs)
-            for (unsigned i = 0; i < 4; ++i) os << "&nbsp;";
+            for (unsigned i = 0; i < 4; ++i)
+              os << "&nbsp;";
           else os << c;
         
           break;
