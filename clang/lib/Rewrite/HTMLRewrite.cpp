@@ -261,7 +261,7 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
       " .code { line-height: 1.2em }\n"
       " .comment { color: #A0A0A0; font-style: oblique }\n"
       " .keyword { color: #FF00FF }\n"
-      " .directive { color: #FFFF00 }\n"
+      " .directive { color: #00A000 }\n"
       " .macro { color: #FF0000; background-color:#FFC0C0 }\n"
       " .num { width:2.5em; padding-right:2ex; background-color:#eeeeee }\n"
       " .num { text-align:right; font-size: smaller }\n"
@@ -340,19 +340,27 @@ void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
       HighlightRange(RB, TokOffs, TokOffs+TokLen, BufferStart,
                      "<span class='comment'>", "</span>");
       break;
-    case tok::hash:
-      // FIXME: This isn't working because we're not in raw mode in the lexer.
-      // Just cons up our own lexer here?
-        
+    case tok::hash: {
       // If this is a preprocessor directive, all tokens to end of line are too.
-      if (Tok.isAtStartOfLine()) {
-        // Find end of line.  This is a hack.
-        const char *LineEnd = SourceMgr.getCharacterData(Tok.getLocation());
-        unsigned TokEnd = TokOffs+strcspn(LineEnd, "\n\r");
-        HighlightRange(RB, TokOffs, TokEnd, BufferStart,
-                       "<span class='directive'>", "</span>");
+      if (!Tok.isAtStartOfLine())
+        break;
+        
+      // Eat all of the tokens until we get to the next one at the start of
+      // line.
+      unsigned TokEnd = TokOffs+TokLen;
+      L.LexRawToken(Tok);
+      while (!Tok.isAtStartOfLine() && Tok.isNot(tok::eof)) {
+        TokEnd = SourceMgr.getFullFilePos(Tok.getLocation())+Tok.getLength();
+        L.LexRawToken(Tok);
       }
-      break;
+      
+      // Find end of line.  This is a hack.
+      HighlightRange(RB, TokOffs, TokEnd, BufferStart,
+                     "<span class='directive'>", "</span>");
+      
+      // Don't skip the next token.
+      continue;
+    }
     }
     
     L.LexRawToken(Tok);
