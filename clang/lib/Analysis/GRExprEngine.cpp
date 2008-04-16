@@ -1637,8 +1637,11 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           // Simulate the effects of a "store":  bind the value of the RHS
           // to the L-Value represented by the LHS.
 
-          St = SetRVal(SetRVal(St, B, RightV), cast<LVal>(LeftV), RightV);
-          break;
+          EvalStore(Dst, B, N2, SetRVal(St, B, RightV),
+                    cast<LVal>(LeftV), RightV);
+          
+//          St = SetRVal(SetRVal(St, B, RightV), cast<LVal>(LeftV), RightV);
+          continue;
         }
 
           // Compound assignment operators.
@@ -1784,7 +1787,9 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
             continue;
           }
           
-          St = SetRVal(SetRVal(St, B, Result), LeftLV, Result);
+          //          St = SetRVal(SetRVal(St, B, Result), LeftLV, Result);          
+          EvalStore(Dst, B, N2, SetRVal(St, B, Result), LeftLV, Result);
+          continue;
         }
       }
     
