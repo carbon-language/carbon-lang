@@ -560,8 +560,8 @@ static void removeRange(LiveInterval &li, unsigned Start, unsigned End,
 
 /// removeIntervalIfEmpty - Check if the live interval of a physical register
 /// is empty, if so remove it and also remove the empty intervals of its
-/// sub-registers.
-static void removeIntervalIfEmpty(LiveInterval &li, LiveIntervals *li_,
+/// sub-registers. Return true if live interval is removed.
+static bool removeIntervalIfEmpty(LiveInterval &li, LiveIntervals *li_,
                                   const TargetRegisterInfo *tri_) {
   if (li.empty()) {
     if (TargetRegisterInfo::isPhysicalRegister(li.reg))
@@ -573,25 +573,28 @@ static void removeIntervalIfEmpty(LiveInterval &li, LiveIntervals *li_,
           li_->removeInterval(*SR);
       }
     li_->removeInterval(li.reg);
+    return true;
   }
+  return false;
 }
 
 /// ShortenDeadCopyLiveRange - Shorten a live range defined by a dead copy.
-///
-void SimpleRegisterCoalescing::ShortenDeadCopyLiveRange(LiveInterval &li,
+/// Return true if live interval is removed.
+bool SimpleRegisterCoalescing::ShortenDeadCopyLiveRange(LiveInterval &li,
                                                         MachineInstr *CopyMI) {
   unsigned CopyIdx = li_->getInstructionIndex(CopyMI);
   LiveInterval::iterator MLR =
     li.FindLiveRangeContaining(li_->getDefIndex(CopyIdx));
   if (MLR == li.end())
-    return;  // Already removed by ShortenDeadCopySrcLiveRange.
+    return false;  // Already removed by ShortenDeadCopySrcLiveRange.
   unsigned RemoveStart = MLR->start;
   unsigned RemoveEnd = MLR->end;
   // Remove the liverange that's defined by this.
   if (RemoveEnd == li_->getDefIndex(CopyIdx)+1) {
     removeRange(li, RemoveStart, RemoveEnd, li_, tri_);
-    removeIntervalIfEmpty(li, li_, tri_);
+    return removeIntervalIfEmpty(li, li_, tri_);
   }
+  return false;
 }
 
 /// PropagateDeadness - Propagate the dead marker to the instruction which
@@ -614,8 +617,8 @@ static void PropagateDeadness(LiveInterval &li, MachineInstr *CopyMI,
 /// ShortenDeadCopyLiveRange - Shorten a live range as it's artificially
 /// extended by a dead copy. Mark the last use (if any) of the val# as kill
 /// as ends the live range there. If there isn't another use, then this
-/// live range is dead.
-void
+/// live range is dead. Return true if live interval is removed.
+bool
 SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
                                                       MachineInstr *CopyMI) {
   unsigned CopyIdx = li_->getInstructionIndex(CopyMI);
@@ -627,20 +630,19 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
     mf_->begin()->removeLiveIn(li.reg);
     const LiveRange *LR = li.getLiveRangeContaining(CopyIdx);
     removeRange(li, LR->start, LR->end, li_, tri_);
-    removeIntervalIfEmpty(li, li_, tri_);
-    return;
+    return removeIntervalIfEmpty(li, li_, tri_);
   }
 
   LiveInterval::iterator LR = li.FindLiveRangeContaining(CopyIdx-1);
   if (LR == li.end())
     // Livein but defined by a phi.
-    return;
+    return false;
 
   unsigned RemoveStart = LR->start;
   unsigned RemoveEnd = li_->getDefIndex(CopyIdx)+1;
   if (LR->end > RemoveEnd)
     // More uses past this copy? Nothing to do.
-    return;
+    return false;
 
   unsigned LastUseIdx;
   MachineOperand *LastUse = lastRegisterUse(LR->start, CopyIdx-1, li.reg,
@@ -658,7 +660,7 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
       int DeadIdx = LastUseMI->findRegisterDefOperandIdx(li.reg, false, tri_);
       LastUseMI->getOperand(DeadIdx).setIsDead();
     }
-    return;
+    return false;
   }
 
   // Is it livein?
@@ -678,7 +680,7 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
     PropagateDeadness(li, CopyMI, RemoveStart, li_, tri_);
 
   removeRange(li, RemoveStart, LR->end, li_, tri_);
-  removeIntervalIfEmpty(li, li_, tri_);
+  return removeIntervalIfEmpty(li, li_, tri_);
 }
 
 /// CanCoalesceWithImpDef - Returns true if the specified copy instruction
@@ -1952,8 +1954,8 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
       }
       if (CopyMI->registerDefIsDead(DstReg)) {
         LiveInterval &li = li_->getInterval(DstReg);
-        ShortenDeadCopySrcLiveRange(li, CopyMI);
-        ShortenDeadCopyLiveRange(li, CopyMI);
+        if (!ShortenDeadCopySrcLiveRange(li, CopyMI))
+          ShortenDeadCopyLiveRange(li, CopyMI);
       }
       li_->RemoveMachineInstrFromMaps(*I);
       (*I)->eraseFromParent();
@@ -1979,8 +1981,8 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
           // If def of this move instruction is dead, remove its live range
           // from the dstination register's live interval.
           if (mii->registerDefIsDead(dstReg)) {
-            ShortenDeadCopySrcLiveRange(RegInt, mii);
-            ShortenDeadCopyLiveRange(RegInt, mii);
+            if (!ShortenDeadCopySrcLiveRange(RegInt, mii))
+              ShortenDeadCopyLiveRange(RegInt, mii);
           }
         }
         li_->RemoveMachineInstrFromMaps(mii);
