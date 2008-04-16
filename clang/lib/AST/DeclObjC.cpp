@@ -185,8 +185,8 @@ void ObjCInterfaceDecl::addMethods(ObjCMethodDecl **insMethods,
   AtEndLoc = endLoc;
 }
 
-/// addMethods - Insert instance and methods declarations into
-/// ObjCInterfaceDecl's InsMethods and ClsMethods fields.
+/// addProperties - Insert property declaration AST nodes into
+/// ObjCInterfaceDecl's PropertyDecl field.
 ///
 void ObjCInterfaceDecl::addProperties(ObjCPropertyDecl **Properties, 
                                       unsigned NumProperties) {
@@ -196,6 +196,18 @@ void ObjCInterfaceDecl::addProperties(ObjCPropertyDecl **Properties,
   PropertyDecl = new ObjCPropertyDecl*[NumProperties];
   memcpy(PropertyDecl, Properties, NumProperties*sizeof(ObjCPropertyDecl*));
 }                                   
+
+/// addProperties - Insert property declaration AST nodes into
+/// ObjCProtocolDecl's PropertyDecl field.
+///
+void ObjCCategoryDecl::addProperties(ObjCPropertyDecl **Properties, 
+                                     unsigned NumProperties) {
+  if (NumProperties == 0) return;
+  
+  NumPropertyDecl = NumProperties;
+  PropertyDecl = new ObjCPropertyDecl*[NumProperties];
+  memcpy(PropertyDecl, Properties, NumProperties*sizeof(ObjCPropertyDecl*));
+}
 
 /// addMethods - Insert instance and methods declarations into
 /// ObjCProtocolDecl's ProtoInsMethods and ProtoClsMethods fields.

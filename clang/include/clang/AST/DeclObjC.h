@@ -672,6 +672,10 @@ class ObjCCategoryDecl : public NamedDecl {
   /// Next category belonging to this class
   ObjCCategoryDecl *NextClassCategory;
   
+  /// category properties
+  ObjCPropertyDecl **PropertyDecl;  // Null if no property
+  unsigned NumPropertyDecl;  // 0 if none  
+  
   SourceLocation EndLoc; // marks the '>' or identifier.
   SourceLocation AtEndLoc; // marks the end of the entire interface.
   
@@ -680,7 +684,7 @@ class ObjCCategoryDecl : public NamedDecl {
       ClassInterface(0), ReferencedProtocols(0), NumReferencedProtocols(0),
       InstanceMethods(0), NumInstanceMethods(0),
       ClassMethods(0), NumClassMethods(0),
-      NextClassCategory(0) {
+      NextClassCategory(0), PropertyDecl(0),  NumPropertyDecl(0) {
   }
 public:
   
@@ -705,6 +709,11 @@ public:
   unsigned getNumInstanceMethods() const { return NumInstanceMethods; }
   unsigned getNumClassMethods() const { return NumClassMethods; }
 
+  void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
+  unsigned getNumPropertyDecl() const { return NumPropertyDecl; }
+  
+  ObjCPropertyDecl * const * getPropertyDecl() const { return PropertyDecl; }
+  
   typedef ObjCMethodDecl * const * instmeth_iterator;
   instmeth_iterator instmeth_begin() const { return InstanceMethods; }
   instmeth_iterator instmeth_end() const {

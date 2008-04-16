@@ -699,6 +699,9 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
   if (pNum != 0)
     if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(ClassDecl))
       IDecl->addProperties((ObjCPropertyDecl**)allProperties, pNum);
+    else
+      if (ObjCCategoryDecl *CDecl = dyn_cast<ObjCCategoryDecl>(ClassDecl))
+        CDecl->addProperties((ObjCPropertyDecl**)allProperties, pNum);
   
   for (unsigned i = 0; i < allNum; i++ ) {
     ObjCMethodDecl *Method =
