@@ -143,21 +143,58 @@ void TransferFuncs::Visit(Stmt *S) {
 }
   
 void TransferFuncs::VisitTerminator(Stmt* S) {
-  return;
   
-  for (Stmt::child_iterator I = S->child_begin(), E = S->child_end();
-       I != E; ++I) {
-    
-    Stmt* Child = *I;
-    if (!Child) continue;
-    
-    if (getCFG().isBlkExpr(Child)) {
-      LiveState(Child, AD) = Alive;
-      return;  // Only one "condition" expression.
-    }
+  Expr* E = NULL;
+  
+  switch (S->getStmtClass()) {
+    default:
+      return;
+      
+    case Stmt::ForStmtClass:
+      E = cast<ForStmt>(S)->getCond();
+      break;
+      
+    case Stmt::WhileStmtClass:
+      E = cast<WhileStmt>(S)->getCond();
+      break;
+      
+    case Stmt::DoStmtClass:
+      E = cast<DoStmt>(S)->getCond();
+      break;
+      
+    case Stmt::IfStmtClass:
+      E = cast<IfStmt>(S)->getCond();
+      break;
+      
+    case Stmt::ChooseExprClass:
+      E = cast<ChooseExpr>(S)->getCond();
+      break;
+      
+    case Stmt::IndirectGotoStmtClass:
+      E = cast<IndirectGotoStmt>(S)->getTarget();
+      break;
+      
+    case Stmt::SwitchStmtClass:
+      E = cast<SwitchStmt>(S)->getCond();
+      break;
+      
+    case Stmt::ConditionalOperatorClass:
+      E = cast<ConditionalOperator>(S)->getCond();
+      break;
+      
+    case Stmt::BinaryOperatorClass: // '&&' and '||'
+      E = cast<BinaryOperator>(S)->getLHS();
+      break;      
   }
+  
+  if (!E)
+    return;
+  
+  E = E->IgnoreParens();
+  
+  assert (getCFG().isBlkExpr(E));
+  LiveState(E, AD) = Alive;
 }
-
 
 void TransferFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
   if (VarDecl* V = dyn_cast<VarDecl>(DR->getDecl())) 
