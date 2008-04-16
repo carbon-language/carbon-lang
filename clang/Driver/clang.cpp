@@ -135,10 +135,7 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
              clEnumValN(SerializeAST, "serialize",
                         "Build ASTs and emit .ast file"),
              clEnumValN(RewriteObjC, "rewrite-objc",
-                        "Playground for the code rewriter"),
-             clEnumValN(HTMLTest, "html-test",
-                        "Playground for the HTML displayer"),
-                            
+                        "Playground for the code rewriter"),                            
              clEnumValEnd));
 
 
@@ -1050,9 +1047,6 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       
     case EmitHTML:
       return CreateHTMLPrinter();
-      
-    case HTMLTest:
-      return CreateHTMLTest();
       
     case ParseCFGDump:
     case ParseCFGView:
