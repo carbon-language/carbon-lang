@@ -34,6 +34,7 @@
 		35D55B270D81D8C60092E734 /* BasicValueFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35D55B240D81D8C60092E734 /* BasicValueFactory.cpp */; };
 		35D55B280D81D8C60092E734 /* CFRefCount.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35D55B250D81D8C60092E734 /* CFRefCount.cpp */; };
 		35EF67700DAD1D2C00B19414 /* SemaDeclCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35EF676F0DAD1D2C00B19414 /* SemaDeclCXX.cpp */; };
+		35EFEFB60DB67ED60020783D /* GRTransferFuncs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */; };
 		35F8D0D60D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35F8D0D50D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp */; };
 		72D16C1F0D9975C400E6DA4A /* HTMLRewrite.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 72D16C1E0D9975C400E6DA4A /* HTMLRewrite.cpp */; };
 		72D16C220D9975EA00E6DA4A /* HTMLPrint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 72D16C210D9975EA00E6DA4A /* HTMLPrint.cpp */; };
@@ -299,6 +300,7 @@
 		35D55B250D81D8C60092E734 /* CFRefCount.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CFRefCount.cpp; path = lib/Analysis/CFRefCount.cpp; sourceTree = "<group>"; };
 		35D55B290D81D8E50092E734 /* BasicValueFactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BasicValueFactory.h; path = clang/Analysis/PathSensitive/BasicValueFactory.h; sourceTree = "<group>"; };
 		35EF676F0DAD1D2C00B19414 /* SemaDeclCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaDeclCXX.cpp; path = lib/Sema/SemaDeclCXX.cpp; sourceTree = "<group>"; };
+		35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRTransferFuncs.cpp; path = lib/Analysis/GRTransferFuncs.cpp; sourceTree = "<group>"; };
 		35F2BE7B0DAC2963006E7668 /* HTMLRewrite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTMLRewrite.h; path = clang/Rewrite/HTMLRewrite.h; sourceTree = "<group>"; };
 		35F8D0CA0D9B7E8200D91C5E /* GRSimpleAPICheck.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRSimpleAPICheck.h; path = clang/Analysis/PathSensitive/GRSimpleAPICheck.h; sourceTree = "<group>"; };
 		35F8D0CB0D9B7E8200D91C5E /* GRAuditor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRAuditor.h; path = clang/Analysis/PathSensitive/GRAuditor.h; sourceTree = "<group>"; };
@@ -541,6 +543,7 @@
 		356EF9B30C8F7DCA006650F5 /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
+				35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */,
 				359379090DA48ABA0043B19C /* BugReporter.cpp */,
 				356B89760D9BFDC100CBEBE9 /* BasicObjCFoundationChecks.h */,
 				35F8D0D50D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp */,
@@ -1069,6 +1072,7 @@
 				DEFFECA70DB1546600B4E7C3 /* DeltaTree.cpp in Sources */,
 				DECAB0D00DB3C84200E13CCB /* RewriteRope.cpp in Sources */,
 				035611E20DB40C8100D2EF2A /* RewriteObjC.cpp in Sources */,
+				35EFEFB60DB67ED60020783D /* GRTransferFuncs.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
