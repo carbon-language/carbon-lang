@@ -56,8 +56,10 @@ HTMLPrinter::~HTMLPrinter() {
   // Emit the HTML.
   
   if (const RewriteBuffer *RewriteBuf = R.getRewriteBufferFor(FileID)) {
-    std::string S(RewriteBuf->begin(), RewriteBuf->end());
-    printf("%s\n", S.c_str());
+    char *Buffer = (char*)malloc(RewriteBuf->size());
+    std::copy(RewriteBuf->begin(), RewriteBuf->end(), Buffer);
+    fwrite(Buffer, 1, RewriteBuf->size(), stdout);
+    free(Buffer);
   }
 }
 

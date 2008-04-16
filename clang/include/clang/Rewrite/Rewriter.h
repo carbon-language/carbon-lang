@@ -49,6 +49,7 @@ public:
   typedef BufferTy::const_iterator iterator;
   iterator begin() const { return Buffer.begin(); }
   iterator end() const { return Buffer.end(); }
+  unsigned size() const { return Buffer.size(); }
   
 private:  // Methods only usable by Rewriter.
   
