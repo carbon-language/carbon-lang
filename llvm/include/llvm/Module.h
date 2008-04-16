@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-/// @file This file contains the declarations for the Module class. 
+/// @file This file contains the declarations for the Module class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -54,9 +54,9 @@ template<> struct ilist_traits<GlobalAlias>
 };
 
 /// A Module instance is used to store all the information related to an
-/// LLVM module. Modules are the top level container of all other LLVM 
+/// LLVM module. Modules are the top level container of all other LLVM
 /// Intermediate Representation (IR) objects. Each module directly contains a
-/// list of globals variables, a list of functions, a list of libraries (or 
+/// list of globals variables, a list of functions, a list of libraries (or
 /// other modules) this module depends on, a symbol table, and various data
 /// about the target's characteristics.
 ///
@@ -108,7 +108,7 @@ public:
 private:
   GlobalListType GlobalList;     ///< The Global Variables in the module
   FunctionListType FunctionList; ///< The Functions in the module
-  AliasListType AliasList;       ///< The Aliases in the module  
+  AliasListType AliasList;       ///< The Aliases in the module
   LibraryListType LibraryList;   ///< The Libraries needed by the module
   std::string GlobalScopeAsm;    ///< Inline Asm at global scope.
   ValueSymbolTable *ValSymTab;   ///< Symbol table for values
@@ -173,14 +173,14 @@ public:
 
   /// Set the module-scope inline assembly blocks.
   void setModuleInlineAsm(const std::string &Asm) { GlobalScopeAsm = Asm; }
-  
+
   /// Append to the module-scope inline assembly blocks, automatically
   /// appending a newline to the end.
   void appendModuleInlineAsm(const std::string &Asm) {
     GlobalScopeAsm += Asm;
     GlobalScopeAsm += '\n';
   }
-  
+
 /// @}
 /// @name Function Accessors
 /// @{
@@ -211,14 +211,14 @@ public:
   Function *getFunction(const std::string &Name) const;
 
 /// @}
-/// @name Global Variable Accessors 
+/// @name Global Variable Accessors
 /// @{
 public:
   /// getGlobalVariable - Look up the specified global variable in the module
   /// symbol table.  If it does not exist, return null. If AllowInternal is set
   /// to true, this function will return types that have InternalLinkage. By
   /// default, these types are not returned.
-  GlobalVariable *getGlobalVariable(const std::string &Name, 
+  GlobalVariable *getGlobalVariable(const std::string &Name,
                                     bool AllowInternal = false) const;
 
   /// getNamedGlobal - Return the first global variable in the module with the
@@ -229,14 +229,14 @@ public:
   }
 
 /// @}
-/// @name Global Variable Accessors 
+/// @name Global Alias Accessors
 /// @{
 public:
-  /// getNamedGlobal - Return the first global alias in the module with the
+  /// getNamedAlias - Return the first global alias in the module with the
   /// specified name, of arbitrary type.  This method returns null if a global
   /// with the specified name is not found.
   GlobalAlias *getNamedAlias(const std::string &Name) const;
-  
+
 /// @}
 /// @name Type Accessors
 /// @{
@@ -312,7 +312,7 @@ public:
   bool                    empty() const { return FunctionList.empty(); }
 
 /// @}
-/// @name Dependent Library Iteration 
+/// @name Dependent Library Iteration
 /// @{
 public:
   /// @brief Get a constant iterator to beginning of dependent library list.
@@ -360,10 +360,10 @@ public:
   /// Dump the module to std::cerr (for debugging).
   void dump() const;
   /// This function causes all the subinstructions to "let go" of all references
-  /// that they are maintaining.  This allows one to 'delete' a whole class at 
-  /// a time, even though there may be circular references... first all 
-  /// references are dropped, and all use counts go to zero.  Then everything 
-  /// is delete'd for real.  Note that no operations are valid on an object 
+  /// that they are maintaining.  This allows one to 'delete' a whole class at
+  /// a time, even though there may be circular references... first all
+  /// references are dropped, and all use counts go to zero.  Then everything
+  /// is delete'd for real.  Note that no operations are valid on an object
   /// that has "dropped all references", except operator delete.
   void dropAllReferences();
 /// @}
@@ -403,17 +403,17 @@ ilist_traits<GlobalAlias>::getSymTab(Module *M) {
   return M ? &M->getValueSymbolTable() : 0;
 }
 
-inline int 
+inline int
 ilist_traits<Function>::getListOffset() {
   return Module::getFunctionListOffset();
 }
 
-inline int 
+inline int
 ilist_traits<GlobalVariable>::getListOffset() {
   return Module::getGlobalVariableListOffset();
 }
 
-inline int 
+inline int
 ilist_traits<GlobalAlias>::getListOffset() {
   return Module::getAliasListOffset();
 }
