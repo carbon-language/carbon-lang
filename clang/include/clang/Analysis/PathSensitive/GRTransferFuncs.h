@@ -32,7 +32,7 @@ public:
     return NULL;
   }
   
-  virtual void RegisterChecks(GRExprEngine& Eng) {}
+  virtual void RegisterChecks(GRExprEngine& Eng);
   
   // Casts.
   
@@ -71,6 +71,15 @@ public:
                                    GRStmtNodeBuilder<ValueState>& Builder,
                                    ObjCMessageExpr* ME,
                                    ExplodedNode<ValueState>* Pred) = 0;
+  
+  // Stores.
+  
+  virtual void EvalStore(ExplodedNodeSet<ValueState>& Dst,
+                         GRExprEngine& Engine,
+                         GRStmtNodeBuilder<ValueState>& Builder,
+                         Expr* E, ExplodedNode<ValueState>* Pred,
+                         ValueState* St, LVal TargetLV, RVal Val) {}
+                         
   
   // End-of-path.
   

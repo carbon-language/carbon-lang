@@ -602,11 +602,12 @@ protected:
     TF->EvalObjCMessageExpr(Dst, *this, *Builder, ME, Pred);
   }
   
+  void VisitStore(NodeSet& Dst, Expr* E, NodeTy* Pred, ValueState* St,
+                 LVal TargetLV, RVal Val);
+  
   void EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred, ValueState* St,
                  LVal TargetLV, RVal Val) {
-    
-    assert (Builder && "GRStmtNodeBuilder must be defined.");
-    MakeNode(Dst, E, Pred, SetRVal(St, TargetLV, Val));    
+    TF->EvalStore(Dst, *this, *Builder, E, Pred, St, TargetLV, Val);
   }
   
   ValueState* MarkBranch(ValueState* St, Stmt* Terminator, bool branchTaken);

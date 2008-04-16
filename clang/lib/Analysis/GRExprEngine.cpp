@@ -689,7 +689,7 @@ void GRExprEngine::VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred,
 }
  
 //===----------------------------------------------------------------------===//
-// Transfer functions: DeclRefExprs (loads, getting l-values).
+// Transfer functions: Loads and stores.
 //===----------------------------------------------------------------------===//
 
 void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
@@ -706,6 +706,23 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
   RVal X = RVal::MakeVal(BasicVals, D);
   RVal Y = isa<lval::DeclVal>(X) ? GetRVal(St, cast<lval::DeclVal>(X)) : X;
   MakeNode(Dst, D, Pred, SetBlkExprRVal(St, D, Y));
+}
+
+void GRExprEngine::VisitStore(NodeSet& Dst, Expr* E, NodeTy* Pred,
+                              ValueState* St, LVal TargetLV, RVal Val) {
+  
+  assert (Builder && "GRStmtNodeBuilder must be defined.");
+  
+  unsigned size = Dst.size();  
+  SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+  
+  EvalStore(Dst, E, Pred, St, TargetLV, Val);
+  
+  // Handle the case where no nodes where generated.  Auto-generate that
+  // contains the updated state if we aren't generating sinks.
+  
+  if (!Builder->BuildSinks && Dst.size() == size)
+    MakeNode(Dst, E, Pred, SetRVal(St, TargetLV, Val));    
 }
 
 //===----------------------------------------------------------------------===//
@@ -1637,7 +1654,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           // Simulate the effects of a "store":  bind the value of the RHS
           // to the L-Value represented by the LHS.
 
-          EvalStore(Dst, B, N2, SetRVal(St, B, RightV),
+          VisitStore(Dst, B, N2, SetRVal(St, B, RightV),
                     cast<LVal>(LeftV), RightV);
           
 //          St = SetRVal(SetRVal(St, B, RightV), cast<LVal>(LeftV), RightV);
@@ -1788,7 +1805,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           }
           
           //          St = SetRVal(SetRVal(St, B, Result), LeftLV, Result);          
-          EvalStore(Dst, B, N2, SetRVal(St, B, Result), LeftLV, Result);
+          VisitStore(Dst, B, N2, SetRVal(St, B, Result), LeftLV, Result);
           continue;
         }
       }
