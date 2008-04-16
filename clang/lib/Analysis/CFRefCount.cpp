@@ -472,9 +472,10 @@ class VISIBILITY_HIDDEN RefVal {
   }
 
 public:  
+  
   enum Kind { Owned = 0, NotOwned = 1, Released = 2,
-              ErrorUseAfterRelease = 3, ErrorReleaseNotOwned = 4 };
-    
+              ErrorUseAfterRelease = 3, ErrorReleaseNotOwned = 4,
+              ErrorLeak = 5 };    
   
   Kind getKind() const { return (Kind) (Data & 0x7); }
 
@@ -485,8 +486,14 @@ public:
   
   static bool isError(Kind k) { return k >= ErrorUseAfterRelease; }
   
+  static bool isLeak(Kind k) { return k == ErrorLeak; }
+  
   bool isOwned() const {
     return getKind() == Owned;
+  }
+  
+  bool isNotOwned() const {
+    return getKind() == NotOwned;
   }
   
   static RefVal makeOwned(unsigned Count = 0) {
@@ -497,6 +504,7 @@ public:
     return RefVal(NotOwned, Count);
   }
   
+  static RefVal makeLeak() { return RefVal(ErrorLeak); }  
   static RefVal makeReleased() { return RefVal(Released); }
   static RefVal makeUseAfterRelease() { return RefVal(ErrorUseAfterRelease); }
   static RefVal makeReleaseNotOwned() { return RefVal(ErrorReleaseNotOwned); }
@@ -528,6 +536,10 @@ void RefVal::print(std::ostream& Out) const {
       Out << "Released";
       break;
       
+    case ErrorLeak:
+      Out << "Leaked";
+      break;            
+      
     case ErrorUseAfterRelease:
       Out << "Use-After-Release [ERROR]";
       break;
@@ -556,6 +568,10 @@ class VISIBILITY_HIDDEN CFRefCount : public GRSimpleVals {
   
   typedef llvm::DenseMap<GRExprEngine::NodeTy*,Expr*> UseAfterReleasesTy;
   typedef llvm::DenseMap<GRExprEngine::NodeTy*,Expr*> ReleasesNotOwnedTy;
+
+  typedef llvm::SmallVector<std::pair<SymbolID, ExplodedNode<ValueState>*>, 2>
+          LeaksTy;
+  
   
   class BindingsPrinter : public ValueState::CheckerStatePrinter {
   public:
@@ -570,6 +586,7 @@ class VISIBILITY_HIDDEN CFRefCount : public GRSimpleVals {
      
   UseAfterReleasesTy UseAfterReleases;
   ReleasesNotOwnedTy ReleasesNotOwned;
+  LeaksTy            Leaks;
   
   BindingsPrinter Printer;
   
@@ -593,12 +610,18 @@ class VISIBILITY_HIDDEN CFRefCount : public GRSimpleVals {
   RefBindings Update(RefBindings B, SymbolID sym, RefVal V, ArgEffect E,
                      RefVal::Kind& hasErr);
   
-  void ProcessError(ExplodedNodeSet<ValueState>& Dst,
-                    GRStmtNodeBuilder<ValueState>& Builder,
-                    Expr* NodeExpr, Expr* ErrorExpr,                        
-                    ExplodedNode<ValueState>* Pred,
-                    ValueState* St,
-                    RefVal::Kind hasErr);
+  void ProcessNonLeakError(ExplodedNodeSet<ValueState>& Dst,
+                           GRStmtNodeBuilder<ValueState>& Builder,
+                           Expr* NodeExpr, Expr* ErrorExpr,                        
+                           ExplodedNode<ValueState>* Pred,
+                           ValueState* St,
+                           RefVal::Kind hasErr);
+  
+  ValueState* HandleSymbolDeath(ValueStateManager& VMgr, ValueState* St,
+                                SymbolID sid, RefVal V, bool& hasLeak);
+  
+  ValueState* NukeBinding(ValueStateManager& VMgr, ValueState* St,
+                          SymbolID sid);
   
 public:
   
@@ -691,12 +714,12 @@ static inline RetEffect GetRetE(CFRefSummary* Summ) {
   return Summ ? Summ->getRet() : RetEffect::MakeNoRet();
 }
 
-void CFRefCount::ProcessError(ExplodedNodeSet<ValueState>& Dst,
-                              GRStmtNodeBuilder<ValueState>& Builder,
-                              Expr* NodeExpr, Expr* ErrorExpr,                        
-                              ExplodedNode<ValueState>* Pred,
-                              ValueState* St,
-                              RefVal::Kind hasErr) {
+void CFRefCount::ProcessNonLeakError(ExplodedNodeSet<ValueState>& Dst,
+                                     GRStmtNodeBuilder<ValueState>& Builder,
+                                     Expr* NodeExpr, Expr* ErrorExpr,                        
+                                     ExplodedNode<ValueState>* Pred,
+                                     ValueState* St,
+                                     RefVal::Kind hasErr) {
   Builder.BuildSinks = true;
   GRExprEngine::NodeTy* N  = Builder.MakeNode(Dst, NodeExpr, Pred, St);
 
@@ -777,7 +800,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
   St = StateMgr.getPersistentState(StVals);
     
   if (hasErr) {
-    ProcessError(Dst, Builder, CE, ErrorExpr, Pred, St, hasErr);
+    ProcessNonLeakError(Dst, Builder, CE, ErrorExpr, Pred, St, hasErr);
     return;
   }
     
@@ -921,7 +944,7 @@ bool CFRefCount::EvalObjCMessageExprAux(ExplodedNodeSet<ValueState>& Dst,
   // Create an error node if it exists.
   
   if (hasErr)
-    ProcessError(Dst, Builder, ME, Receiver, Pred, St, hasErr);
+    ProcessNonLeakError(Dst, Builder, ME, Receiver, Pred, St, hasErr);
   else
     Builder.MakeNode(Dst, ME, Pred, St);
 
@@ -961,33 +984,63 @@ void CFRefCount::EvalStore(ExplodedNodeSet<ValueState>& Dst,
   if (!T)
     return;
   
-  // Nuke the binding.
-  
-  ValueState StImpl = *St;
-  StImpl.CheckerState = RefBFactory.Remove(B, Sym).getRoot();
-  St = Eng.getStateManager().getPersistentState(StImpl);
+  // Nuke the binding.  
+  St = NukeBinding(Eng.getStateManager(), St, Sym);
   
   // Hand of the remaining logic to the parent implementation.
   GRSimpleVals::EvalStore(Dst, Eng, Builder, E, Pred, St, TargetLV, Val);
 }
 
+
+ValueState* CFRefCount::NukeBinding(ValueStateManager& VMgr, ValueState* St,
+                                    SymbolID sid) {
+  ValueState StImpl = *St;
+  RefBindings B = GetRefBindings(StImpl);
+  StImpl.CheckerState = RefBFactory.Remove(B, sid).getRoot();
+  return VMgr.getPersistentState(StImpl);
+}
+
 // End-of-path.
 
-void CFRefCount::EvalEndPath(GRExprEngine& Engine,
+
+
+ValueState* CFRefCount::HandleSymbolDeath(ValueStateManager& VMgr,
+                                          ValueState* St, SymbolID sid,
+                                          RefVal V, bool& hasLeak) {
+    
+  hasLeak = V.isOwned() || V.isNotOwned() && V.getCount() > 0;
+
+  if (!hasLeak)
+    return NukeBinding(VMgr, St, sid);
+  
+  RefBindings B = GetRefBindings(*St);
+  ValueState StImpl = *St;  
+  StImpl.CheckerState = RefBFactory.Add(B, sid, RefVal::makeLeak()).getRoot();
+  return VMgr.getPersistentState(StImpl);
+}
+
+void CFRefCount::EvalEndPath(GRExprEngine& Eng,
                              GREndPathNodeBuilder<ValueState>& Builder) {
   
-  RefBindings B = GetRefBindings(*Builder.getState());
+  ValueState* St = Builder.getState();
+  RefBindings B = GetRefBindings(*St);
   
-  // Scan the set of bindings for symbols that are in the Owned state.
+  llvm::SmallVector<SymbolID, 10> Leaked;
   
-  for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I)
-    if ((*I).second.isOwned()) {
-      
-      // FIXME: Register an error with the diagnostic engine.  Since we
-      //  don't have a Stmt* here, we need some extra machinery to get
-      //  a sourcelocation.
+  for (RefBindings::iterator I = B.begin(), E = B.end(); I != E; ++I) {
+    bool hasLeak = false;
     
-    }
+    St = HandleSymbolDeath(Eng.getStateManager(), St,
+                           (*I).first, (*I).second, hasLeak);
+    
+    if (hasLeak) Leaked.push_back((*I).first);
+  }
+      
+  ExplodedNode<ValueState>* N = Builder.MakeNode(St);
+  
+  for (llvm::SmallVector<SymbolID, 10>::iterator I=Leaked.begin(),
+       E = Leaked.end(); I != E; ++I)
+    Leaks.push_back(std::make_pair(*I, N));
 }
 
 
