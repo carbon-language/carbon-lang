@@ -79,50 +79,47 @@ public:
   bool BlockStmt_VisitExpr(Expr* E);
     
   void VisitTerminator(Stmt* T) { }
-  
-  VarDecl* FindBlockVarDecl(Stmt* S);
 };
   
 static const bool Initialized = true;
 static const bool Uninitialized = false;  
 
 bool TransferFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
-  // FIXME: Ted, can this be simplified?
-  VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl());
-  if (VD && VD->isBlockVarDecl()) {
-    if (AD.Observer) AD.Observer->ObserveDeclRefExpr(V,AD,DR,VD);
+  
+  if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))
+    if (VD->isBlockVarDecl()) {
+      
+      if (AD.Observer)
+        AD.Observer->ObserveDeclRefExpr(V, AD, DR, VD);
      
-    // Pseudo-hack to prevent cascade of warnings.  If an accessed variable
-    // is uninitialized, then we are already going to flag a warning for
-    // this variable, which a "source" of uninitialized values.
-    // We can otherwise do a full "taint" of uninitialized values.  The
-    // client has both options by toggling AD.FullUninitTaint.
+      // Pseudo-hack to prevent cascade of warnings.  If an accessed variable
+      // is uninitialized, then we are already going to flag a warning for
+      // this variable, which a "source" of uninitialized values.
+      // We can otherwise do a full "taint" of uninitialized values.  The
+      // client has both options by toggling AD.FullUninitTaint.
 
-    return AD.FullUninitTaint ? V(VD,AD) : Initialized;
-  }
-  else return Initialized;
+      if (AD.FullUninitTaint)
+        return V(VD,AD);
+    }
+  
+  return Initialized;
 }
 
-VarDecl* TransferFuncs::FindBlockVarDecl(Stmt *S) {
-  for (;;)
-    if (ParenExpr* P = dyn_cast<ParenExpr>(S)) {
-      S = P->getSubExpr(); continue;
-    }
-    else if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S)) {
-      // FIXME: Ted, can this be simplified?
-      VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl());
-      if (VD->isBlockVarDecl())
-        return VD;
-      else
-        return NULL;
-    }
-    else return NULL;
+static VarDecl* FindBlockVarDecl(Expr* E) {
+  
+  // Blast through casts and parentheses to find any DeclRefExprs that
+  // refer to a block VarDecl.
+  
+  if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E->IgnoreParenCasts()))
+    if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))      
+      if (VD->isBlockVarDecl()) return VD;
+
+  return NULL;
 }
 
 bool TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
-  // FIXME: Ted, can this be simplified?
-  VarDecl* VD = FindBlockVarDecl(B->getLHS());
-  if (VD && VD->isBlockVarDecl())
+
+  if (VarDecl* VD = FindBlockVarDecl(B->getLHS()))
     if (B->isAssignmentOp()) {
       if (B->getOpcode() == BinaryOperator::Assign)
         return V(VD,AD) = Visit(B->getRHS());
