@@ -4731,7 +4731,7 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
       default:  // Byte aligned
         AVT = MVT::i8;
         ValReg = X86::AL;
-        Count = Size;
+        Count = DAG.getIntPtrConstant(SizeVal);
         break;
     }
 
@@ -4746,7 +4746,7 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
     InFlag = Chain.getValue(1);
   } else {
     AVT = MVT::i8;
-    Count  = Size;
+    Count  = DAG.getIntPtrConstant(SizeVal);
     Chain  = DAG.getCopyToReg(Chain, X86::AL, Src, InFlag);
     InFlag = Chain.getValue(1);
   }
