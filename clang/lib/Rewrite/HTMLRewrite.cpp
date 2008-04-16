@@ -21,6 +21,7 @@
 #include <sstream>
 using namespace clang;
 
+
 /// HighlightRange - Highlight a range in the source code with the specified
 /// start/end tags.  B/E must be in the same file.  This ensures that
 /// start/end tags are placed at the start/end of each line if the range is
@@ -48,9 +49,50 @@ void html::HighlightRange(Rewriter &R, SourceLocation B, SourceLocation E,
 void html::HighlightRange(RewriteBuffer &RB, unsigned B, unsigned E,
                           const char *BufferStart,
                           const char *StartTag, const char *EndTag) {
+  // Insert the tag at the absolute start/end of the range.
   RB.InsertTextAfter(B, StartTag, strlen(StartTag));
   RB.InsertTextBefore(E, EndTag, strlen(EndTag));
   
+  // Scan the range to see if there is a \r or \n.  If so, and if the line is
+  // not blank, insert tags on that line as well.
+  bool HadOpenTag = true;
+  
+  unsigned LastNonWhiteSpace = B;
+  for (unsigned i = B; i != E; ++i) {
+    switch (BufferStart[i]) {
+    case '\r':
+    case '\n':
+      // Okay, we found a newline in the range.  If we have an open tag, we need
+      // to insert a close tag at the first non-whitespace before the newline.
+      if (HadOpenTag)
+        RB.InsertTextBefore(LastNonWhiteSpace+1, EndTag, strlen(EndTag));
+        
+      // Instead of inserting an open tag immediately after the newline, we
+      // wait until we see a non-whitespace character.  This prevents us from
+      // inserting tags around blank lines, and also allows the open tag to
+      // be put *after* whitespace on a non-blank line.
+      HadOpenTag = false;
+      break;
+    case '\0':
+    case ' ':
+    case '\t':
+    case '\f':
+    case '\v':
+      // Ignore whitespace.
+      break;
+    
+    default:
+      // If there is no tag open, do it now.
+      if (!HadOpenTag) {
+        RB.InsertTextAfter(i, StartTag, strlen(StartTag));
+        HadOpenTag = true;
+      }
+        
+      // Remember this character.
+      LastNonWhiteSpace = i;
+      break;
+    }
+  }
 }
 
 void html::EscapeText(Rewriter& R, unsigned FileID,

@@ -24,13 +24,22 @@ class Rewriter;
 class Preprocessor;
   
 namespace html {
-
+  
   /// HighlightRange - Highlight a range in the source code with the specified
   /// start/end tags.  B/E must be in the same file.  This ensures that
   /// start/end tags are placed at the start/end of each line if the range is
   /// multiline.
   void HighlightRange(Rewriter &R, SourceLocation B, SourceLocation E,
                       const char *StartTag, const char *EndTag);
+  
+  /// HighlightRange - Highlight a range in the source code with the specified
+  /// start/end tags.  The Start/end of the range must be in the same file.  
+  /// This ensures that start/end tags are placed at the start/end of each line
+  /// if the range is multiline.
+  inline void HighlightRange(Rewriter &R, SourceRange Range,
+                             const char *StartTag, const char *EndTag) {
+    HighlightRange(R, Range.getBegin(), Range.getEnd(), StartTag, EndTag);
+  }
   
   /// HighlightRange - This is the same as the above method, but takes
   /// decomposed file locations.
