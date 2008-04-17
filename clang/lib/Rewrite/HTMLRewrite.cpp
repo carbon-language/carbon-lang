@@ -120,9 +120,9 @@ void html::EscapeText(Rewriter& R, unsigned FileID,
       if (!ReplaceTabs)
         break;
       if (EscapeSpaces)
-        RB.ReplaceText(FilePos, 1, "&nbsp;&nbsp;&nbsp;&nbsp;", 6*4);
+        RB.ReplaceText(FilePos, 1, "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", 6*8);
       else
-        RB.ReplaceText(FilePos, 1, "    ", 4);
+        RB.ReplaceText(FilePos, 1, "        ", 8);
       break;
       
     case '<':
@@ -262,7 +262,14 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
       " .comment { color: #A0A0A0; font-style: oblique }\n"
       " .keyword { color: #FF00FF }\n"
       " .directive { color: #00A000 }\n"
-      " .macro { color: #FF0000; background-color:#FFC0C0 }\n"
+      // Macro expansions.
+      " .expansion { display: block; border: 2px solid #FF0000; padding: 2px;"
+          "background-color:#FFF0F0;"
+          "  -webkit-border-radius:5px;  -webkit-box-shadow:1px 1px 7px #000; "
+          "position: absolute; top: -1em; left:10em } \n"
+      " .macro { color: #FF0000; background-color:#FFC0C0;"
+             // Macros are position: relative to provide base for expansions.
+             " position: relative }\n"
       " .num { width:2.5em; padding-right:2ex; background-color:#eeeeee }\n"
       " .num { text-align:right; font-size: smaller }\n"
       " .num { color:#444444 }\n"
@@ -410,9 +417,13 @@ void html::HighlightMacros(Rewriter &R, unsigned FileID, Preprocessor &PP) {
     unsigned TokLen = Lexer::MeasureTokenLength(LLoc, SourceMgr);
     
     unsigned TokOffs = LLocInfo.second;
+    // Highlight the macro invocation itself.
     RB.InsertTextAfter(TokOffs, "<span class='macro'>",
                        strlen("<span class='macro'>"));
     RB.InsertTextBefore(TokOffs+TokLen, "</span>", strlen("</span>"));
+    
+    std::string Expansion = PP.getSpelling(Tok);
+    unsigned LineLen = Expansion.size();
     
     // Okay, eat this token, getting the next one.
     PP.Lex(Tok);
@@ -421,8 +432,22 @@ void html::HighlightMacros(Rewriter &R, unsigned FileID, Preprocessor &PP) {
     // instantiation.  It would be really nice to pop up a window with all the
     // spelling of the tokens or something.
     while (!Tok.is(tok::eof) &&
-           SourceMgr.getLogicalLoc(Tok.getLocation()) == LLoc)
+           SourceMgr.getLogicalLoc(Tok.getLocation()) == LLoc) {
+      // Insert a newline if the macro expansion is getting large.
+      if (LineLen > 60) {
+        Expansion += "<br>";
+        LineLen = 0;
+      }
+      
+      LineLen -= Expansion.size();
+      Expansion += ' ' + PP.getSpelling(Tok);
+      LineLen += Expansion.size();
       PP.Lex(Tok);
+    }
+
+    // Insert the information about the expansion inside the macro span.
+    Expansion = "<span class='expansion'>" + Expansion + "</span>";
+    RB.InsertTextBefore(TokOffs+TokLen, Expansion.c_str(), Expansion.size());
   }
 }
 
