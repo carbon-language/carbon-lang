@@ -55,7 +55,6 @@ HTMLPrinter::~HTMLPrinter() {
 
   // Format the file.
   unsigned FileID = R.getSourceMgr().getMainFileID();
-  html::EscapeText(R, FileID, false, true);
   html::AddLineNumbers(R, FileID);
   html::AddHeaderFooterInternalBuiltinCSS(R, FileID);
 
@@ -67,6 +66,7 @@ HTMLPrinter::~HTMLPrinter() {
     html::SyntaxHighlight(R, FileID, *PP);
     html::HighlightMacros(R, FileID, *PP);
   }
+  html::EscapeText(R, FileID, false, true);
   
   
   // Open the output.
