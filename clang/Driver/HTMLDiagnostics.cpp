@@ -124,7 +124,7 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
   
   if (PP) {
     html::SyntaxHighlight(R, FileID, *PP);
-    html::HighlightMacros(R, FileID, *PP);
+    // html::HighlightMacros(R, FileID, *PP);
   }
   
   // Get the full directory name of the analyzed file.
