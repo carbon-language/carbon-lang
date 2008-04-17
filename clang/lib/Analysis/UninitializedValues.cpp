@@ -164,11 +164,12 @@ bool TransferFuncs::VisitCallExpr(CallExpr* C) {
 
 bool TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
   switch (U->getOpcode()) {
-    case UnaryOperator::AddrOf:
+    case UnaryOperator::AddrOf: {
       VarDecl* VD = FindBlockVarDecl(U->getSubExpr());
       if (VD && VD->isBlockVarDecl())
         return V(VD,AD) = Initialized;
       break;
+    }
     
     case UnaryOperator::SizeOf:
       return Initialized;
