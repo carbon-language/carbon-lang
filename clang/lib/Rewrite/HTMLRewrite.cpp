@@ -120,7 +120,8 @@ void html::EscapeText(Rewriter& R, unsigned FileID,
       if (!ReplaceTabs)
         break;
       if (EscapeSpaces)
-        RB.ReplaceText(FilePos, 1, "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", 6*8);
+        RB.ReplaceText(FilePos, 1, "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+                       "&nbsp;&nbsp;&nbsp;", 6*8);
       else
         RB.ReplaceText(FilePos, 1, "        ", 8);
       break;
@@ -269,7 +270,7 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
       " .macro:hover .expansion { display: block; border: 2px solid #FF0000; "
           "padding: 2px; background-color:#FFF0F0;"
           "  -webkit-border-radius:5px;  -webkit-box-shadow:1px 1px 7px #000; "
-          "position: absolute; top: -1em; left:10em } \n"
+          "position: absolute; top: -1em; left:10em; z-index: 1 } \n"
       " .macro { color: #FF0000; background-color:#FFC0C0;"
              // Macros are position: relative to provide base for expansions.
              " position: relative }\n"
