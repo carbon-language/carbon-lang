@@ -3283,8 +3283,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // output, returning the chain.
       const Value *VD = cast<SrcValueSDNode>(Node->getOperand(3))->getValue();
       const Value *VS = cast<SrcValueSDNode>(Node->getOperand(4))->getValue();
-      Tmp4 = DAG.getLoad(TLI.getPointerTy(), Tmp1, Tmp3, VD, 0);
-      Result = DAG.getStore(Tmp4.getValue(1), Tmp4, Tmp2, VS, 0);
+      Tmp4 = DAG.getLoad(TLI.getPointerTy(), Tmp1, Tmp3, VS, 0);
+      Result = DAG.getStore(Tmp4.getValue(1), Tmp4, Tmp2, VD, 0);
       break;
     }
     break;
