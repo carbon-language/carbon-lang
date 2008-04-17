@@ -63,7 +63,8 @@ public:
     return getBugType().getDescription();
   }
   
-  virtual PathDiagnosticPiece* getEndPath(ASTContext& Ctx) const;
+  virtual PathDiagnosticPiece* getEndPath(BugReporter& BR,
+                                          ExplodedNode<ValueState>* N) const;
   
   virtual FullSourceLoc getLocation(SourceManager& Mgr);
   
@@ -123,6 +124,8 @@ public:
   ExplodedGraph<ValueState>& getGraph();
 
   GRExprEngine& getEngine() { return Eng; }
+  
+  CFG& getCFG() { return getGraph().getCFG(); }
   
   void EmitPathWarning(BugReport& R);
   

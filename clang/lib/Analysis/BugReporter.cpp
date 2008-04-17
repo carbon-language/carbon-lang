@@ -55,15 +55,44 @@ static inline Stmt* GetStmt(const CFGBlock* B) {
 Stmt* BugReport::getStmt() const {
   return N ? GetStmt(N->getLocation()) : NULL;
 }
+
+static inline ExplodedNode<ValueState>*
+GetNextNode(ExplodedNode<ValueState>* N) {
+  return N->pred_empty() ? NULL : *(N->pred_begin());
+}
   
-PathDiagnosticPiece* BugReport::getEndPath(ASTContext& Ctx) const {
   
-  Stmt* S = getStmt();
+static Stmt* GetLastStmt(ExplodedNode<ValueState>* N) {
+  assert (isa<BlockEntrance>(N->getLocation()));
+  
+  for (N = GetNextNode(N); N; N = GetNextNode(N)) {
+    
+    ProgramPoint P = N->getLocation();
+    
+    if (PostStmt* PS = dyn_cast<PostStmt>(&P))
+      return PS->getStmt();
+  }
+  
+  return NULL;
+}
+
+PathDiagnosticPiece*
+BugReport::getEndPath(BugReporter& BR,
+                      ExplodedNode<ValueState>* EndPathNode) const {
+  
+  ProgramPoint ProgP = EndPathNode->getLocation();  
+  Stmt *S = NULL;
+  
+  if (BlockEntrance* BE = dyn_cast<BlockEntrance>(&ProgP))
+    if (BE->getBlock() == &BR.getCFG().getExit())
+      S = GetLastStmt(EndPathNode);
+  if (!S)
+    S = GetStmt(ProgP);      
   
   if (!S)
     return NULL;
   
-  FullSourceLoc L(S->getLocStart(), Ctx.getSourceManager());  
+  FullSourceLoc L(S->getLocStart(), BR.getContext().getSourceManager());  
 
   PathDiagnosticPiece* P =
     new PathDiagnosticPiece(L, getDescription());
@@ -113,26 +142,18 @@ PathDiagnosticPiece* BugReport::VisitNode(ExplodedNode<ValueState>* N,
 void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
                                          BugReport& R) {
 
-  ExplodedNode<ValueState>* N = R.getEndNode();
-  
+  ExplodedNode<ValueState>* N = R.getEndNode();  
   assert (N && "Path diagnostic requires a ExplodedNode.");
   
-  if (PathDiagnosticPiece* Piece = R.getEndPath(Ctx))
-    PD.push_back(Piece);
-  else
-    return;
-  
-  SourceManager& SMgr = Ctx.getSourceManager();
-  
   llvm::OwningPtr<ExplodedGraph<ValueState> > GTrim(getGraph().Trim(&N, &N+1));
-  
+
   // Find the sink in the trimmed graph.
   // FIXME: Should we eventually have a sink iterator?
   
   ExplodedNode<ValueState>* NewN = 0;
   
   for (ExplodedGraph<ValueState>::node_iterator
-        I = GTrim->nodes_begin(), E = GTrim->nodes_end(); I != E; ++I) {
+       I = GTrim->nodes_begin(), E = GTrim->nodes_end(); I != E; ++I) {
     
     if (I->isSink()) {
       NewN = &*I;
@@ -144,15 +165,22 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   assert (NewN->getLocation() == N->getLocation());
   
   N = NewN;
+    
+  if (PathDiagnosticPiece* Piece = R.getEndPath(*this, N))
+    PD.push_back(Piece);
+  else
+    return;
   
   ExplodedNode<ValueState>* NextNode = N->pred_empty() 
                                        ? NULL : *(N->pred_begin());
+  
+  SourceManager& SMgr = Ctx.getSourceManager();
   
   while (NextNode) {
     
     ExplodedNode<ValueState>* LastNode = N;
     N = NextNode;    
-    NextNode = N->pred_empty() ? NULL : *(N->pred_begin());
+    NextNode = GetNextNode(N);
     
     ProgramPoint P = N->getLocation();
     
