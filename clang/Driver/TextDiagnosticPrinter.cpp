@@ -18,7 +18,6 @@
 #include "clang/Lex/Lexer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Streams.h"
 #include <string>
 using namespace clang;
 
@@ -40,8 +39,8 @@ PrintIncludeStack(FullSourceLoc Pos) {
   PrintIncludeStack(Pos.getIncludeLoc());
   unsigned LineNo = Pos.getLineNumber();
   
-  llvm::cerr << "In file included from " << Pos.getSourceName()
-             << ":" << LineNo << ":\n";
+  OS << "In file included from " << Pos.getSourceName()
+     << ":" << LineNo << ":\n";
 }
 
 /// HighlightRange - Given a SourceRange and a line number, highlight (with ~'s)
@@ -141,23 +140,22 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
            *LineEnd != '\n' && *LineEnd != '\r')
       ++LineEnd;
   
-    llvm::cerr << Buffer->getBufferIdentifier() 
-               << ":" << LineNo << ":";
+    OS << Buffer->getBufferIdentifier() << ":" << LineNo << ":";
     if (ColNo && !NoShowColumn) 
-      llvm::cerr << ColNo << ":";
-    llvm::cerr << " ";
+      OS << ColNo << ":";
+    OS << " ";
   }
   
   switch (Level) {
   default: assert(0 && "Unknown diagnostic type!");
-  case Diagnostic::Note:    llvm::cerr << "note: "; break;
-  case Diagnostic::Warning: llvm::cerr << "warning: "; break;
-  case Diagnostic::Error:   llvm::cerr << "error: "; break;
-  case Diagnostic::Fatal:   llvm::cerr << "fatal error: "; break;
+  case Diagnostic::Note:    OS << "note: "; break;
+  case Diagnostic::Warning: OS << "warning: "; break;
+  case Diagnostic::Error:   OS << "error: "; break;
+  case Diagnostic::Fatal:   OS << "fatal error: "; break;
     break;
   }
   
-  llvm::cerr << FormatDiagnostic(Diags, Level, ID, Strs, NumStrs) << "\n";
+  OS << FormatDiagnostic(Diags, Level, ID, Strs, NumStrs) << "\n";
   
   if (!NoCaretDiagnostics && Pos.isValid() && ((LastLoc != Pos) || Ranges)) {
     // Cache the LastLoc, it allows us to omit duplicate source/caret spewage.
@@ -205,7 +203,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
       CaratLine.erase(CaratLine.end()-1);
     
     // Emit what we have computed.
-    llvm::cerr << SourceLine << "\n";
-    llvm::cerr << CaratLine << "\n";
+    OS << SourceLine << "\n";
+    OS << CaratLine << "\n";
   }
 }

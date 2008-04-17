@@ -17,6 +17,7 @@
 
 #include "TextDiagnostics.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/Support/Streams.h"
 
 namespace clang {
 class SourceManager;
@@ -24,8 +25,9 @@ class SourceManager;
 class TextDiagnosticPrinter : public TextDiagnostics {
   FullSourceLoc LastWarningLoc;
   FullSourceLoc LastLoc;
+  llvm::OStream OS;
 public:
-  TextDiagnosticPrinter() {}
+  TextDiagnosticPrinter(llvm::OStream &os = llvm::cerr) : OS(os) {}
 
   void PrintIncludeStack(FullSourceLoc Pos);
 
