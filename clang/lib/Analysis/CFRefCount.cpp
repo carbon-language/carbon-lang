@@ -461,6 +461,22 @@ namespace {
     virtual void EmitWarnings(BugReporter& BR);
   };
   
+  class VISIBILITY_HIDDEN Leak : public CFRefBug {
+  public:
+    Leak(CFRefCount& tf) : CFRefBug(tf) {}
+    
+    virtual const char* getName() const {
+      return "(CoreFoundation) Memory Leak";
+    }
+    
+    virtual const char* getDescription() const {
+      return "The CoreFoundation object has an excessive reference count and"
+             "\nis leaked after this statement.";
+    }
+    
+    virtual void EmitWarnings(BugReporter& BR);
+  };
+  
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
@@ -740,12 +756,16 @@ public:
 
   typedef UseAfterReleasesTy::iterator use_after_iterator;  
   typedef ReleasesNotOwnedTy::iterator bad_release_iterator;
+  typedef LeaksTy::iterator            leaks_iterator;
   
   use_after_iterator use_after_begin() { return UseAfterReleases.begin(); }
   use_after_iterator use_after_end() { return UseAfterReleases.end(); }
   
   bad_release_iterator bad_release_begin() { return ReleasesNotOwned.begin(); }
   bad_release_iterator bad_release_end() { return ReleasesNotOwned.end(); }
+  
+  leaks_iterator leaks_begin() { return Leaks.begin(); }
+  leaks_iterator leaks_end() { return Leaks.end(); }
 };
 
 } // end anonymous namespace
@@ -754,6 +774,7 @@ void CFRefCount::RegisterChecks(GRExprEngine& Eng) {
   GRSimpleVals::RegisterChecks(Eng);
   Eng.Register(new UseAfterRelease(*this));
   Eng.Register(new BadRelease(*this));
+  Eng.Register(new Leak(*this));
 }
 
 
@@ -1273,6 +1294,16 @@ void BadRelease::EmitWarnings(BugReporter& BR) {
     report.addRange(I->second->getSourceRange());    
     BR.EmitPathWarning(report); 
 
+  }  
+}
+
+void Leak::EmitWarnings(BugReporter& BR) {
+  
+  for (CFRefCount::leaks_iterator I = TF.leaks_begin(),
+       E = TF.leaks_end(); I != E; ++I) {
+    
+    BugReport report(*this, I->second);
+    BR.EmitPathWarning(report);     
   }  
 }
 
