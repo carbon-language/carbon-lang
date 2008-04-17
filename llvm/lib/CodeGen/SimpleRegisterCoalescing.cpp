@@ -613,10 +613,10 @@ static void PropagateDeadness(LiveInterval &li, MachineInstr *CopyMI,
   }
 }
 
-/// ShortenDeadCopyLiveRange - Shorten a live range as it's artificially
-/// extended by a dead copy. Mark the last use (if any) of the val# as kill
-/// as ends the live range there. If there isn't another use, then this
-/// live range is dead. Return true if live interval is removed.
+/// ShortenDeadCopySrcLiveRange - Shorten a live range as it's artificially
+/// extended by a dead copy. Mark the last use (if any) of the val# as kill as
+/// ends the live range there. If there isn't another use, then this live range
+/// is dead. Return true if live interval is removed.
 bool
 SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
                                                       MachineInstr *CopyMI) {
