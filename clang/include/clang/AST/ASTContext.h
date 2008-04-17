@@ -75,6 +75,8 @@ class ASTContext {
   QualType ObjCConstantStringType;
   RecordDecl *CFConstantStringTypeDecl;
 
+  TranslationUnitDecl *TUDecl;
+
   SourceManager &SourceMgr;
   llvm::MallocAllocator Allocator;
 public:
@@ -88,7 +90,9 @@ public:
   FullSourceLoc getFullLoc(SourceLocation Loc) const { 
     return FullSourceLoc(Loc,SourceMgr);
   }
-  
+
+  TranslationUnitDecl *getTranslationUnitDecl() const { return TUDecl; }
+
   /// This is intentionally not serialized.  It is populated by the
   /// ASTContext ctor, and there are no external pointers/references to
   /// internal variables of BuiltinInfo.
@@ -113,6 +117,7 @@ public:
     if (size_reserve > 0) Types.reserve(size_reserve);    
     InitBuiltinTypes();
     BuiltinInfo.InitializeBuiltins(idents, Target);
+    TUDecl = TranslationUnitDecl::Create(*this);
   }
 
   ~ASTContext();

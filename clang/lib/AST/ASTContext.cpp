@@ -1175,7 +1175,7 @@ int ASTContext::getIntegerTypeOrder(QualType LHS, QualType RHS) {
 QualType ASTContext::getCFConstantStringType() {
   if (!CFConstantStringTypeDecl) {
     CFConstantStringTypeDecl = 
-      RecordDecl::Create(*this, Decl::Struct, NULL, SourceLocation(), 
+      RecordDecl::Create(*this, Decl::Struct, TUDecl, SourceLocation(), 
                          &Idents.get("NSConstantString"), 0);
     QualType FieldTypes[4];
   
@@ -1727,6 +1727,8 @@ void ASTContext::Emit(llvm::Serializer& S) const {
                                           I!=E;++I)    
     (*I)->Emit(S);
 
+  S.EmitOwnedPtr(TUDecl);
+
   // FIXME: S.EmitOwnedPtr(CFConstantStringTypeDecl);
 }
 
@@ -1743,6 +1745,8 @@ ASTContext* ASTContext::Create(llvm::Deserializer& D) {
   for (unsigned i = 0; i < size_reserve; ++i)
     Type::Create(*A,i,D);
   
+  A->TUDecl = cast<TranslationUnitDecl>(D.ReadOwnedPtr<Decl>(*A));
+
   // FIXME: A->CFConstantStringTypeDecl = D.ReadOwnedPtr<RecordDecl>();
   
   return A;

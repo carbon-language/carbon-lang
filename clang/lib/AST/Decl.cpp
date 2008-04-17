@@ -198,12 +198,18 @@ void Decl::addDeclKind(Kind k) {
   case ObjCPropertyImpl:    nObjCPropertyImplDecl++; break;
   case LinkageSpec:         nLinkageSpecDecl++; break;
   case FileScopeAsm:        nFileScopeAsmDecl++; break;
+  case TranslationUnit:     break;
   }
 }
 
 //===----------------------------------------------------------------------===//
 // Decl Allocation/Deallocation Method Implementations
 //===----------------------------------------------------------------------===//
+
+TranslationUnitDecl *TranslationUnitDecl::Create(ASTContext &C) {
+  void *Mem = C.getAllocator().Allocate<TranslationUnitDecl>();
+  return new (Mem) TranslationUnitDecl();
+}
 
 VarDecl *VarDecl::Create(ASTContext &C, DeclContext *CD,
                          SourceLocation L,
@@ -212,7 +218,6 @@ VarDecl *VarDecl::Create(ASTContext &C, DeclContext *CD,
   void *Mem = C.getAllocator().Allocate<VarDecl>();
   return new (Mem) VarDecl(Var, CD, L, Id, T, S, PrevDecl);
 }
-
 
 ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *CD,
                                  SourceLocation L, IdentifierInfo *Id,
@@ -329,6 +334,7 @@ const Attr *Decl::getAttrs() const {
 
 void Decl::Destroy(ASTContext& C) const {
   switch (getKind()) {
+  CASE(TranslationUnit);
   CASE(Field);
   CASE(ObjCIvar);
   CASE(ObjCCategory);

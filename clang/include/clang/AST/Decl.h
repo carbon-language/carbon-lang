@@ -22,6 +22,30 @@ class Stmt;
 class StringLiteral;
 class IdentifierInfo;
 
+/// TranslationUnitDecl - The top declaration context.
+/// FIXME: The TranslationUnit class should probably be modified to serve as
+/// the top decl context. It would have ownership of the top decls so that the
+/// AST is self-contained and easily de/serializable.
+class TranslationUnitDecl : public Decl, public DeclContext {
+  TranslationUnitDecl()
+    : Decl(TranslationUnit, SourceLocation()),
+      DeclContext(TranslationUnit) {}
+public:
+  static TranslationUnitDecl *Create(ASTContext &C);
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return D->getKind() == TranslationUnit; }
+  static bool classof(const TranslationUnitDecl *D) { return true; }  
+
+protected:
+  /// EmitImpl - Serialize this TranslationUnitDecl. Called by Decl::Emit.
+  virtual void EmitImpl(llvm::Serializer& S) const;
+
+  /// CreateImpl - Deserialize a TranslationUnitDecl.  Called by Decl::Create.
+  static TranslationUnitDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+
+  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
+};
+
 /// NamedDecl - This represents a decl with an identifier for a name.  Many
 /// decls have names, but not ObjCMethodDecl, @class, etc.
 class NamedDecl : public Decl {
@@ -190,8 +214,7 @@ public:
   bool isFileVarDecl() const {
     if (getKind() != Decl::Var)
       return false;
-    // FIXME: change when TranlationUnitDecl is added as a declaration context.
-    if (!getDeclContext())
+    if (isa<TranslationUnitDecl>(getDeclContext()))
       return true;
     return false;
   }

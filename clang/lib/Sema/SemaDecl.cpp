@@ -43,14 +43,18 @@ Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) {
 }
 
 void Sema::PushDeclContext(DeclContext *CD) {
-  assert(CD->getParent() == CurContext &&
+  assert( ( (CD->isFunctionOrMethod() && isa<TranslationUnitDecl>(CurContext))
+            || CD->getParent() == CurContext ) &&
       "The next DeclContext should be directly contained in the current one.");
   CurContext = CD;
 }
 
 void Sema::PopDeclContext() {
   assert(CurContext && "DeclContext imbalance!");
-  CurContext = CurContext->getParent();
+  // If CurContext is a ObjC method, getParent() will return NULL.
+  CurContext = CurContext->isFunctionOrMethod()
+               ? Context.getTranslationUnitDecl()
+                 :  CurContext->getParent();
 }
 
 /// Add this decl to the scope shadowed decl chains.

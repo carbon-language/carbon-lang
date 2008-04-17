@@ -41,6 +41,9 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
       assert (false && "Not implemented.");
       break;
 
+    case TranslationUnit:
+      return TranslationUnitDecl::CreateImpl(D, C);
+
     case Var:
       return VarDecl::CreateImpl(D, C);
       
@@ -189,6 +192,26 @@ void VarDecl::EmitImpl(Serializer& S) const {
 void VarDecl::ReadImpl(Deserializer& D, ASTContext& C) {
   ReadInRec(D, C);
   ReadOutRec(D, C);
+}
+
+//===----------------------------------------------------------------------===//
+//      TranslationUnitDecl Serialization.
+//===----------------------------------------------------------------------===//
+
+void TranslationUnitDecl::EmitImpl(llvm::Serializer& S) const
+{
+  Decl::EmitInRec(S);
+}
+
+TranslationUnitDecl* TranslationUnitDecl::CreateImpl(Deserializer& D,
+                                                     ASTContext& C) {  
+  void *Mem = C.getAllocator().Allocate<TranslationUnitDecl>();
+  TranslationUnitDecl* decl =
+    new (Mem) TranslationUnitDecl();
+ 
+  decl->Decl::ReadInRec(D, C);
+  
+  return decl;
 }
 
 //===----------------------------------------------------------------------===//

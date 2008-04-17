@@ -42,6 +42,7 @@ bool Sema::isObjCObjectPointerType(QualType type) const {
 
 void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TUScope = S;
+  CurContext = Context.getTranslationUnitDecl();
   if (!PP.getLangOptions().ObjC1) return;
   
   TypedefType *t;
@@ -93,14 +94,16 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
   // FIXME: Move this initialization up to Sema::ActOnTranslationUnitScope()
   // and make sure the decls get inserted into TUScope!
   if (PP.getLangOptions().ObjC1) {
+    TranslationUnitDecl *TUDecl = Context.getTranslationUnitDecl();
+
     // Synthesize "typedef struct objc_class *Class;"
     RecordDecl *ClassTag = RecordDecl::Create(Context, Decl::Struct,
-                                              NULL,
+                                              TUDecl,
                                               SourceLocation(),
                                               &IT.get("objc_class"), 0);
     QualType ClassT = Context.getPointerType(Context.getTagDeclType(ClassTag));
     TypedefDecl *ClassTypedef = 
-      TypedefDecl::Create(Context, NULL, SourceLocation(),
+      TypedefDecl::Create(Context, TUDecl, SourceLocation(),
                           &Context.Idents.get("Class"), ClassT, 0);
     Context.setObjCClassType(ClassTypedef);
     
@@ -113,14 +116,14 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
     
     // Synthesize "typedef struct objc_object { Class isa; } *id;"
     RecordDecl *ObjectTag = 
-      RecordDecl::Create(Context, Decl::Struct, NULL,
+      RecordDecl::Create(Context, Decl::Struct, TUDecl,
                          SourceLocation(),
                          &IT.get("objc_object"), 0);
     FieldDecl *IsaDecl = FieldDecl::Create(Context, SourceLocation(), 0,
                                            Context.getObjCClassType());
     ObjectTag->defineBody(&IsaDecl, 1);
     QualType ObjT = Context.getPointerType(Context.getTagDeclType(ObjectTag));
-    TypedefDecl *IdTypedef = TypedefDecl::Create(Context, NULL,
+    TypedefDecl *IdTypedef = TypedefDecl::Create(Context, TUDecl,
                                                  SourceLocation(),
                                                  &Context.Idents.get("id"),
                                                  ObjT, 0);

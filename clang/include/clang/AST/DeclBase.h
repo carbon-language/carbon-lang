@@ -19,6 +19,7 @@
 #include "clang/Basic/SourceLocation.h"
 
 namespace clang {
+class TranslationUnitDecl;
 class FunctionDecl;
 class ObjCMethodDecl;
 class EnumDecl;
@@ -35,6 +36,7 @@ public:
     // enums below.   The commented out names are abstract class names.
     
     // Decl
+         TranslationUnit,
     //   NamedDecl
            Field,
              ObjCIvar,
@@ -195,6 +197,7 @@ protected:
 /// DeclContext - This is used only as base class of specific decl types that
 /// can act as declaration contexts. These decls are:
 ///
+///   TranslationUnitDecl
 ///   FunctionDecl
 ///   ObjCMethodDecl
 ///   EnumDecl
@@ -216,6 +219,8 @@ class DeclContext {
   static To *CastTo(const From *D) {
     Decl::Kind DK = KindTrait<From>::getKind(D);
     switch(DK) {
+      case Decl::TranslationUnit:
+        return static_cast<TranslationUnitDecl*>(const_cast<From*>(D));
       case Decl::Function:
         return static_cast<FunctionDecl*>(const_cast<From*>(D));
       case Decl::ObjCMethod:
@@ -256,6 +261,7 @@ public:
 
   static bool classof(const Decl *D) {
     switch (D->getKind()) {
+      case Decl::TranslationUnit:
       case Decl::Function:
       case Decl::ObjCMethod:
       case Decl::ObjCInterface:
@@ -266,6 +272,7 @@ public:
     }
   }
   static bool classof(const DeclContext *D) { return true; }
+  static bool classof(const TranslationUnitDecl *D) { return true; }
   static bool classof(const FunctionDecl *D) { return true; }
   static bool classof(const ObjCMethodDecl *D) { return true; }
   static bool classof(const EnumDecl *D) { return true; }
