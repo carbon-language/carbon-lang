@@ -2548,70 +2548,70 @@ def EH_RETURN   : I<0xC3, RawFrm, (outs), (ins GR32:$addr),
 
 let Defs = [EAX, EFLAGS], Uses = [EAX] in {
 def CMPXCHG32 : I<0xB1, Pseudo, (outs), (ins i32mem:$ptr, GR32:$swap),
-               "cmpxchg{l} $swap,$ptr", []>, TB;
+               "cmpxchg{l}\t{$swap, $ptr|$ptr, $swap}", []>, TB;
 def LCMPXCHG32 : I<0xB1, Pseudo, (outs), (ins i32mem:$ptr, GR32:$swap),
-               "lock cmpxchg{l} $swap,$ptr",
+               "lock cmpxchg{l}\t{$swap, $ptr|$ptr, $swap}",
                [(X86cas addr:$ptr, GR32:$swap, 4)]>, TB, LOCK;
 }
 let Defs = [EAX, EBX, ECX, EDX, EFLAGS], Uses = [EAX, EBX, ECX, EDX] in {
 def CMPXCHG8B : I<0xC7, Pseudo, (outs), (ins i32mem:$ptr),
-               "cmpxchg8b $ptr", []>, TB;
+               "cmpxchg8b\t$ptr", []>, TB;
 def LCMPXCHG8B : I<0xC7, Pseudo, (outs), (ins i32mem:$ptr),
-               "lock cmpxchg8b $ptr",
+               "lock cmpxchg8b\t$ptr",
                [(X86cas8 addr:$ptr)]>, TB, LOCK;
 }
 
 let Defs = [AX, EFLAGS], Uses = [AX] in {
 def CMPXCHG16 : I<0xB1, Pseudo, (outs), (ins i16mem:$ptr, GR16:$swap),
-               "cmpxchg{w} $swap,($ptr)", []>, TB, OpSize;
+               "cmpxchg{w}\t{$swap, $ptr|$ptr, $swap}", []>, TB, OpSize;
 def LCMPXCHG16 : I<0xB1, Pseudo, (outs), (ins i16mem:$ptr, GR16:$swap),
-               "lock cmpxchg{w} $swap,$ptr",
+               "lock cmpxchg{w}\t{$swap, $ptr|$ptr, $swap}",
                [(X86cas addr:$ptr, GR16:$swap, 2)]>, TB, OpSize, LOCK;
 }
 let Defs = [AL, EFLAGS], Uses = [AL] in {
 def CMPXCHG8 : I<0xB0, Pseudo, (outs), (ins i8mem:$ptr, GR8:$swap),
-               "cmpxchg{b} $swap,($ptr)", []>, TB;
+               "cmpxchg{b}\t{$swap, $ptr|$ptr, $swap}", []>, TB;
 def LCMPXCHG8 : I<0xB0, Pseudo, (outs), (ins i8mem:$ptr, GR8:$swap),
-               "lock cmpxchg{b} $swap,$ptr",
+               "lock cmpxchg{b}\t{$swap, $ptr|$ptr, $swap}",
                [(X86cas addr:$ptr, GR8:$swap, 1)]>, TB, LOCK;
 }
 
 let Constraints = "$val = $dst", Defs = [EFLAGS] in {
 def LXADD32 : I<0xC1, Pseudo, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
-               "lock xadd{l} $val, $ptr", 
+               "lock xadd{l}\t{$val, $ptr|$ptr, $val}", 
                [(set GR32:$dst, (atomic_las_32 addr:$ptr, GR32:$val))]>,
                 TB, LOCK;
 def LXADD16 : I<0xC1, Pseudo, (outs GR16:$dst), (ins i16mem:$ptr, GR16:$val),
-               "lock xadd{w} $val, $ptr", 
+               "lock xadd{w}\t{$val, $ptr|$ptr, $val}", 
                [(set GR16:$dst, (atomic_las_16 addr:$ptr, GR16:$val))]>,
                 TB, OpSize, LOCK;
 def LXADD8  : I<0xC0, Pseudo, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
-               "lock xadd{b} $val, $ptr", 
+               "lock xadd{b}\t{$val, $ptr|$ptr, $val}", 
                [(set GR8:$dst, (atomic_las_8 addr:$ptr, GR8:$val))]>,
                 TB, LOCK;
 def XADD32 : I<0xC1, Pseudo, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
-               "xadd{l} $val, $ptr", []>, TB;
+               "xadd{l}\t{$val, $ptr|$ptr, $val}", []>, TB;
 def XADD16 : I<0xC1, Pseudo, (outs GR16:$dst), (ins i16mem:$ptr, GR16:$val),
-               "xadd{w} $val, $ptr", []>, TB, OpSize;
+               "xadd{w}\t{$val, $ptr|$ptr, $val}", []>, TB, OpSize;
 def XADD8  : I<0xC0, Pseudo, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
-               "xadd{b} $val, $ptr", []>, TB;
+               "xadd{b}\t{$val, $ptr|$ptr, $val}", []>, TB;
 
 def LXCHG32 : I<0x87, Pseudo, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
-               "lock xchg{l} $val, $ptr", 
+               "lock xchg{l}\t{$val, $ptr|$ptr, $val}", 
                [(set GR32:$dst, (atomic_swap_32 addr:$ptr, GR32:$val))]>, LOCK;
 def LXCHG16 : I<0x87, Pseudo, (outs GR16:$dst), (ins i16mem:$ptr, GR16:$val),
-               "lock xchg{w} $val, $ptr", 
+               "lock xchg{w}\t{$val, $ptr|$ptr, $val}", 
                [(set GR16:$dst, (atomic_swap_16 addr:$ptr, GR16:$val))]>, 
                 OpSize, LOCK;
 def LXCHG8  : I<0x86, Pseudo, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
-               "lock xchg{b} $val, $ptr", 
+               "lock xchg{b}\t{$val, $ptr|$ptr, $val}", 
                [(set GR8:$dst, (atomic_swap_8 addr:$ptr, GR8:$val))]>, LOCK;
 def XCHG32 : I<0x87, Pseudo, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
-               "xchg{l} $val, $ptr", []>;
+               "xchg{l}\t{$val, $ptr|$ptr, $val}", []>;
 def XCHG16 : I<0x87, Pseudo, (outs GR16:$dst), (ins i16mem:$ptr, GR16:$val),
-               "xchg{w} $val, $ptr", []>, OpSize;
+               "xchg{w}\t{$val, $ptr|$ptr, $val}", []>, OpSize;
 def XCHG8  : I<0x86, Pseudo, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
-               "xchg{b} $val, $ptr", []>;
+               "xchg{b}\t{$val, $ptr|$ptr, $val}", []>;
 }
 
 //===----------------------------------------------------------------------===//
