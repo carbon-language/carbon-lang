@@ -329,69 +329,11 @@ void HTMLDiagnostics::HighlightRange(Rewriter& R, SourceRange Range) {
   
   // Highlight the range.  Make the span tag the outermost tag for the
   // selected range.
-  
-  SourceLocation E =
-    LogicalEnd.getFileLocWithOffset(OldEndColNo > EndColNo
-                                    ? -(OldEndColNo - EndColNo)
-                                    : EndColNo - OldEndColNo);
-  
-  R.InsertCStrBefore(LogicalStart, "<span class=\"mrange\">");
-  R.InsertCStrAfter(E, "</span>");
-  
-  if (EndLineNo == StartLineNo)
-    return;
-  
-  // Add in </span><span> tags for intermediate lines.
-  
-  unsigned FileID = SM.getCanonicalFileID(LogicalStart);
-  const llvm::MemoryBuffer *Buf = R.getSourceMgr().getBuffer(FileID);
-
-  unsigned Pos = SM.getFullFilePos(LogicalStart);
-  unsigned EndPos = SM.getFullFilePos(E);  
-  const char* buf = Buf->getBufferStart();
-  
-  for (; Pos != EndPos; ++Pos) {
     
-    SourceLocation L = SourceLocation::getFileLoc(FileID, Pos);
-    unsigned Col = SM.getColumnNumber(L);
-    
-    if (Col == 1) {
-      
-      // Start if a new line.  Scan to see if we hit anything that is not
-      // whitespace or a newline.
-      
-      unsigned PosTmp = Pos;
-      bool NewLine = false;
-      
-      for ( ; PosTmp != EndPos ; ++PosTmp) {
-        switch (buf[PosTmp]) {
-          case ' ':
-          case '\t': continue;
-          case '\n':
-            NewLine = true;
-            break;
-          default:
-            break;
-        }
-        
-        break;
-      }
-      
-      if (PosTmp == EndPos)
-        break;
-      
-      Pos = PosTmp;
-
-      // Don't highlight a blank line.
-      if (NewLine)
-        continue;
-      
-      // This line contains text that we should highlight.
-      // Ignore leading whitespace.
-      L = SourceLocation::getFileLoc(FileID, Pos);
-      R.InsertCStrAfter(L, "<span class=\"mrange\">");
-    }
-    else if (buf[Pos] == '\n')
-      R.InsertCStrBefore(L, "</span>");
-  }
+  SourceLocation E = LogicalEnd.getFileLocWithOffset(OldEndColNo > EndColNo
+                                                     ? -(OldEndColNo - EndColNo)
+                                                     : EndColNo - OldEndColNo);
+  
+  html::HighlightRange(R, LogicalStart, E,
+                       "<span class=\"mrange\">", "</span>");
 }
