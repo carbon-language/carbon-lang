@@ -451,11 +451,12 @@ void html::HighlightMacros(Rewriter &R, unsigned FileID,
       }
       
       LineLen -= Expansion.size();
-      Expansion += ' ' + PP->getSpelling(Tok);
+      // Escape any special characters in the token text.
+      Expansion += ' ' + EscapeText(PP->getSpelling(Tok));
       LineLen += Expansion.size();
       PP->Lex(Tok);
     }
-
+    
     // Insert the information about the expansion inside the macro span.
     Expansion = "<span class='expansion'>" + Expansion + "</span>";
     RB.InsertTextBefore(TokOffs+TokLen, Expansion.c_str(), Expansion.size());
