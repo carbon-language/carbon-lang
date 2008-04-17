@@ -879,34 +879,19 @@ template<> struct simplify_type<const SDOperand> {
 /// the SDOperand.
 class SDUse {
   SDOperand Operand;
-  /// parent - Parent node of this operand.
-  SDNode    *parent;
+  /// User - Parent node of this operand.
+  SDNode    *User;
   /// Prev, next - Pointers to the uses list of the SDNode referred by 
   /// this operand.
   SDUse **Prev, *Next;
 public:
   friend class SDNode;
-  SDUse(): Operand(), parent(NULL), Prev(NULL), Next(NULL) {}
+  SDUse(): Operand(), User(NULL), Prev(NULL), Next(NULL) {}
 
   SDUse(SDNode *val, unsigned resno) : 
-    Operand(val,resno), parent(NULL), Prev(NULL), Next(NULL) {}
-
-
-  SDUse& operator= (SDOperand& Op) {
-      Operand = Op;
-      Next = NULL;
-      Prev = NULL;
-      return *this;
-  }
+    Operand(val,resno), User(NULL), Prev(NULL), Next(NULL) {}
 
   SDUse& operator= (const SDOperand& Op) {
-      Operand = Op;
-      Next = NULL;
-      Prev = NULL;
-      return *this;
-  }
-
-  SDUse& operator= (SDUse& Op) {
       Operand = Op;
       Next = NULL;
       Prev = NULL;
@@ -922,9 +907,9 @@ public:
 
   SDUse * getNext() { return Next; }
 
-  SDNode *getUser() { return parent; }
+  SDNode *getUser() { return User; }
 
-  void setUser(SDNode *p) { parent = p; }
+  void setUser(SDNode *p) { User = p; }
 
   operator SDOperand() const { return Operand; }
 
@@ -975,7 +960,7 @@ template<> struct simplify_type<const SDUse> {
 };
 
 
-/// SDOperandPtr - A helper SDOperand poiner class, that can handle
+/// SDOperandPtr - A helper SDOperand pointer class, that can handle
 /// arrays of SDUse and arrays of SDOperand objects. This is required
 /// in many places inside the SelectionDAG.
 /// 
