@@ -251,7 +251,9 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
 
   // Generate header
   R.InsertCStrBefore(StartLoc,
-      "<html>\n<head>\n"
+      "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" "
+      "\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">"
+      "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n"
       "<style type=\"text/css\">\n"
       " body { color:#000000; background-color:#ffffff }\n"
       " body { font-family:Helvetica, sans-serif; font-size:10pt }\n"
@@ -263,8 +265,9 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
       " .keyword { color: #FF00FF }\n"
       " .directive { color: #00A000 }\n"
       // Macro expansions.
-      " .expansion { display: block; border: 2px solid #FF0000; padding: 2px;"
-          "background-color:#FFF0F0;"
+      " .expansion { display: none; }\n"
+      " .macro:hover .expansion { display: block; border: 2px solid #FF0000; "
+          "padding: 2px; background-color:#FFF0F0;"
           "  -webkit-border-radius:5px;  -webkit-box-shadow:1px 1px 7px #000; "
           "position: absolute; top: -1em; left:10em } \n"
       " .macro { color: #FF0000; background-color:#FFC0C0;"
