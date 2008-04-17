@@ -28,6 +28,8 @@ class Diagnostic;
 class FileManager;
 struct LangOptions;
 class Preprocessor;
+class PreprocessorFactory;
+
 
 ASTConsumer *CreateASTPrinter(std::ostream* OS = NULL);
 
@@ -44,13 +46,13 @@ ASTConsumer *CreateDeadStoreChecker(Diagnostic &Diags);
 ASTConsumer *CreateUnitValsChecker(Diagnostic &Diags);
   
 ASTConsumer *CreateGRSimpleVals(Diagnostic &Diags,
-                                Preprocessor* PP,
+                                Preprocessor* PP, PreprocessorFactory* PPF,
                                 const std::string& Function,
                                 const std::string& HTMLDir, bool Visualize,
                                 bool TrimGraph, bool AnalyzeAll);
   
 ASTConsumer *CreateCFRefChecker(Diagnostic &Diags,
-                                Preprocessor* PP,
+                                Preprocessor* PP, PreprocessorFactory* PPF,
                                 const std::string& Function,
                                 const std::string& HTMLDir, bool Visualize,
                                 bool TrimGraph, bool AnalyzeAll);
@@ -61,7 +63,7 @@ ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
                                     const LangOptions &LOpts);
 
 ASTConsumer* CreateHTMLPrinter(const std::string &OutFile, Diagnostic &D,
-                               Preprocessor *PP);
+                               Preprocessor *PP, PreprocessorFactory* PPF);
 
 ASTConsumer *CreateSerializationTest(Diagnostic &Diags,
                                      FileManager& FMgr, 

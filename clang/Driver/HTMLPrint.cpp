@@ -31,9 +31,11 @@ namespace {
     std::string OutFilename;
     Diagnostic &Diags;
     Preprocessor *PP;
+    PreprocessorFactory *PPF;
   public:
-    HTMLPrinter(const std::string &OutFile, Diagnostic &D, Preprocessor *pp)
-      : OutFilename(OutFile), Diags(D), PP(pp) {}
+    HTMLPrinter(const std::string &OutFile, Diagnostic &D, Preprocessor *pp,
+                PreprocessorFactory* ppf)
+      : OutFilename(OutFile), Diags(D), PP(pp), PPF(ppf) {}
     virtual ~HTMLPrinter();
     
     void Initialize(ASTContext &context);
@@ -41,8 +43,10 @@ namespace {
 }
 
 ASTConsumer* clang::CreateHTMLPrinter(const std::string &OutFile, 
-                                      Diagnostic &D, Preprocessor *PP) {
-  return new HTMLPrinter(OutFile, D, PP);
+                                      Diagnostic &D, Preprocessor *PP,
+                                      PreprocessorFactory* PPF) {
+  
+  return new HTMLPrinter(OutFile, D, PP, PPF);
 }
 
 void HTMLPrinter::Initialize(ASTContext &context) {
@@ -62,12 +66,9 @@ HTMLPrinter::~HTMLPrinter() {
   // We might not have a preprocessor if we come from a deserialized AST file,
   // for example.
   
-  if (PP) {
-    html::SyntaxHighlight(R, FileID, *PP);
-    html::HighlightMacros(R, FileID, *PP);
-  }
+  if (PP) html::SyntaxHighlight(R, FileID, *PP);
+  if (PPF) html::HighlightMacros(R, FileID, *PPF);  
   html::EscapeText(R, FileID, false, true);
-  
   
   // Open the output.
   FILE *OutputFILE;

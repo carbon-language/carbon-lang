@@ -48,6 +48,7 @@
 #include "llvm/System/Path.h"
 #include <memory>
 #include <fstream>
+#include <algorithm>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -586,26 +587,31 @@ static void AddImplicitInclude(std::vector<char> &Buf, const std::string &File){
 /// input file. If a failure happens, it returns 0.
 ///
 static unsigned InitializePreprocessor(Preprocessor &PP,
+                                       bool InitializeSourceMgr, 
                                        const std::string &InFile,
                                        std::vector<char> &PredefineBuffer) {
   
+
   FileManager &FileMgr = PP.getFileManager();
   
   // Figure out where to get and map in the main file.
   SourceManager &SourceMgr = PP.getSourceManager();
-  if (InFile != "-") {
-    const FileEntry *File = FileMgr.getFile(InFile);
-    if (File) SourceMgr.createMainFileID(File, SourceLocation());
-    if (SourceMgr.getMainFileID() == 0) {
-      fprintf(stderr, "Error reading '%s'!\n",InFile.c_str());
-      return 0;
-    }
-  } else {
-    llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
-    if (SB) SourceMgr.createMainFileIDForMemBuffer(SB);
-    if (SourceMgr.getMainFileID() == 0) {
-      fprintf(stderr, "Error reading standard input!  Empty?\n");
-      return 0;
+
+  if (InitializeSourceMgr) {
+    if (InFile != "-") {
+      const FileEntry *File = FileMgr.getFile(InFile);
+      if (File) SourceMgr.createMainFileID(File, SourceLocation());
+      if (SourceMgr.getMainFileID() == 0) {
+        fprintf(stderr, "Error reading '%s'!\n",InFile.c_str());
+        return 0;
+      }
+    } else {
+      llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
+      if (SB) SourceMgr.createMainFileIDForMemBuffer(SB);
+      if (SourceMgr.getMainFileID() == 0) {
+        fprintf(stderr, "Error reading standard input!  Empty?\n");
+        return 0;
+      }
     }
   }
 
@@ -625,9 +631,13 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
   for (unsigned i = 0, e = ImplicitIncludes.size(); i != e; ++i)
     AddImplicitInclude(PredefineBuffer, ImplicitIncludes[i]);
   
-  // Null terminate PredefinedBuffer and add it.
+  // Null terminate PredefinedBuffer and add it.  We actually need to make a
+  // copy because PP will own the string.
   PredefineBuffer.push_back(0);
-  PP.setPredefines(&PredefineBuffer[0]);
+  
+  char* predefines = new char[PredefineBuffer.size()];
+  std::copy(PredefineBuffer.begin(), PredefineBuffer.end(), predefines);
+  PP.setPredefines(predefines);
   
   // Once we've read this, we're done.
   return SourceMgr.getMainFileID();
@@ -1015,23 +1025,41 @@ static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
 
 namespace {
 class VISIBILITY_HIDDEN DriverPreprocessorFactory : public PreprocessorFactory {
+  const std::string &InFile;
   Diagnostic        &Diags;
   const LangOptions &LangInfo;
   TargetInfo        &Target;
   SourceManager     &SourceMgr;
   HeaderSearch      &HeaderInfo;
-
+  std::vector<char> PredefineBuffer;
+  bool              InitializeSourceMgr;
+  
 public:
-  DriverPreprocessorFactory(Diagnostic &diags, const LangOptions &opts,
+  DriverPreprocessorFactory(const std::string &infile,
+                            Diagnostic &diags, const LangOptions &opts,
                             TargetInfo &target, SourceManager &SM,
                             HeaderSearch &Headers)  
-  : Diags(diags), LangInfo(opts), Target(target),
-    SourceMgr(SM), HeaderInfo(Headers) {}
+  : InFile(infile), Diags(diags), LangInfo(opts), Target(target),
+    SourceMgr(SM), HeaderInfo(Headers), InitializeSourceMgr(true) {}
+  
   
   virtual ~DriverPreprocessorFactory() {}
   
   virtual Preprocessor* CreatePreprocessor() {
-    return new Preprocessor(Diags, LangInfo, Target, SourceMgr, HeaderInfo);
+    PredefineBuffer.clear();
+
+    Preprocessor* PP = new Preprocessor(Diags, LangInfo, Target,
+                                        SourceMgr, HeaderInfo);
+    
+    if (!InitializePreprocessor(*PP, InitializeSourceMgr, InFile,
+                                PredefineBuffer)) {
+      delete PP;
+      return NULL;
+    }
+    
+    InitializeSourceMgr = false;
+    
+    return PP;
   }
 };
 }
@@ -1060,6 +1088,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
                                       Diagnostic& Diag, FileManager& FileMgr, 
                                       const LangOptions& LangOpts,
                                       Preprocessor *PP,
+                                      PreprocessorFactory *PPF,
                                       llvm::Module *&DestModule) {
   switch (ProgAction) {
     default:
@@ -1075,7 +1104,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       return CreateASTViewer();   
       
     case EmitHTML:
-      return CreateHTMLPrinter(OutputFile, Diag, PP);
+      return CreateHTMLPrinter(OutputFile, Diag, PP, PPF);
       
     case ParseCFGDump:
     case ParseCFGView:
@@ -1092,12 +1121,12 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       return CreateUnitValsChecker(Diag);
       
     case AnalysisGRSimpleVals:
-      return CreateGRSimpleVals(Diag, PP, AnalyzeSpecificFunction, OutputFile,
-                                VisualizeEG, TrimGraph, AnalyzeAll);
+      return CreateGRSimpleVals(Diag, PP, PPF, AnalyzeSpecificFunction,
+                                OutputFile, VisualizeEG, TrimGraph, AnalyzeAll);
       
     case CheckerCFRef:
-      return CreateCFRefChecker(Diag, PP, AnalyzeSpecificFunction, OutputFile,
-                                VisualizeEG, TrimGraph, AnalyzeAll);
+      return CreateCFRefChecker(Diag, PP, PPF, AnalyzeSpecificFunction,
+                                OutputFile, VisualizeEG, TrimGraph, AnalyzeAll);
       
     case TestSerialization:
       return CreateSerializationTest(Diag, FileMgr, LangOpts);
@@ -1118,7 +1147,8 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
 
 /// ProcessInputFile - Process a single input file with the specified state.
 ///
-static void ProcessInputFile(Preprocessor &PP, const std::string &InFile) {
+static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
+                             const std::string &InFile) {
 
   ASTConsumer* Consumer = NULL;
   bool ClearSourceMgr = false;
@@ -1128,7 +1158,7 @@ static void ProcessInputFile(Preprocessor &PP, const std::string &InFile) {
   default:
     Consumer = CreateASTConsumer(InFile, PP.getDiagnostics(),
                                  PP.getFileManager(), PP.getLangOptions(), &PP,
-                                 CodeGenModule);
+                                 &PPF, CodeGenModule);
     
     if (!Consumer) {      
       fprintf(stderr, "Unexpected program action!\n");
@@ -1267,7 +1297,7 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
   // translation unit, rather than InFile.
   llvm::Module *DestModule;
   llvm::OwningPtr<ASTConsumer>
-    Consumer(CreateASTConsumer(InFile, Diag, FileMgr, TU->getLangOpts(), 0,
+    Consumer(CreateASTConsumer(InFile, Diag, FileMgr, TU->getLangOpts(), 0, 0,
                                DestModule));
   
   if (!Consumer) {      
@@ -1320,7 +1350,7 @@ int main(int argc, char **argv) {
     // FIXME: The HTMLDiagnosticClient uses the Preprocessor for
     //  (optional) syntax highlighting, but we don't have a preprocessor yet.
     //  Fix this dependency later.
-    DiagClient.reset(CreateHTMLDiagnosticClient(HTMLDiag, NULL));
+    DiagClient.reset(CreateHTMLDiagnosticClient(HTMLDiag, 0, 0));
   }
   else { // Use Text diagnostics.
     if (!VerifyDiagnostics) {
@@ -1387,16 +1417,15 @@ int main(int argc, char **argv) {
       InitializeIncludePaths(argv[0], HeaderInfo, FileMgr, LangInfo);
       
       // Set up the preprocessor with these options.
-      DriverPreprocessorFactory PPFactory(Diags, LangInfo, *Target,
+      DriverPreprocessorFactory PPFactory(InFile, Diags, LangInfo, *Target,
                                           SourceMgr, HeaderInfo);
       
       llvm::OwningPtr<Preprocessor> PP(PPFactory.CreatePreprocessor());
             
-      std::vector<char> PredefineBuffer;
-      if (!InitializePreprocessor(*PP, InFile, PredefineBuffer))
+      if (!PP)
         continue;
       
-      ProcessInputFile(*PP, InFile);
+      ProcessInputFile(*PP, PPFactory, InFile);
       HeaderInfo.ClearFileInfo();
       
       if (Stats)

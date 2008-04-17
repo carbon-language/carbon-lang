@@ -22,6 +22,7 @@ namespace clang {
   
 class Rewriter;
 class Preprocessor;
+class PreprocessorFactory;
   
 namespace html {
   
@@ -74,7 +75,7 @@ namespace html {
   /// file, to reexpand macros and insert (into the HTML) information about the
   /// macro expansions.  This won't be perfectly perfect, but it will be
   /// reasonably close.
-  void HighlightMacros(Rewriter &R, unsigned FileID, Preprocessor &PP);
+  void HighlightMacros(Rewriter &R, unsigned FileID, PreprocessorFactory &PPF);
   
 
   

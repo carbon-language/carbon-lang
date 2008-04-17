@@ -196,6 +196,8 @@ public:
   ///
   void setMacroInfo(IdentifierInfo *II, MacroInfo *MI);
   
+  /// setPredefines - Set the predefines for this Preprocessor.
+  ///  The Preprocessor assumes ownership of this pointer.
   void setPredefines(const char *P) {
     Predefines = P;
   }

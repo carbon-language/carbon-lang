@@ -649,17 +649,18 @@ protected:
   Diagnostic &Diags;
   ASTContext* Ctx;
   Preprocessor* PP;
+  PreprocessorFactory* PPF;
   const std::string& HTMLDir;
   bool Visualize;
   bool TrimGraph;
   llvm::OwningPtr<PathDiagnosticClient> PD;
   bool AnalyzeAll;
 public:
-  CheckerConsumer(Diagnostic &diags, Preprocessor* pp,
+  CheckerConsumer(Diagnostic &diags, Preprocessor* pp, PreprocessorFactory* ppf,
                   const std::string& fname,
                   const std::string& htmldir,
                   bool visualize, bool trim, bool analyzeAll)
-    : CFGVisitor(fname), Diags(diags), PP(pp), HTMLDir(htmldir),
+    : CFGVisitor(fname), Diags(diags), PP(pp), PPF(ppf), HTMLDir(htmldir),
       Visualize(visualize), TrimGraph(trim), AnalyzeAll(analyzeAll) {}
   
   virtual void Initialize(ASTContext &Context) { Ctx = &Context; }    
@@ -687,7 +688,7 @@ void CheckerConsumer::VisitCFG(CFG& C, Decl& CD) {
   // Lazily create the diagnostic client.
   
   if (!HTMLDir.empty() && PD.get() == NULL)
-    PD.reset(CreateHTMLDiagnosticClient(HTMLDir, PP));
+    PD.reset(CreateHTMLDiagnosticClient(HTMLDir, PP, PPF));
   
 
   if (!Visualize) {
@@ -734,9 +735,11 @@ namespace {
 class GRSimpleValsVisitor : public CheckerConsumer {
 public:
   GRSimpleValsVisitor(Diagnostic &diags, Preprocessor* pp,
+                      PreprocessorFactory* ppf,
                       const std::string& fname, const std::string& htmldir,
                       bool visualize, bool trim, bool analyzeAll)
-  : CheckerConsumer(diags, pp, fname, htmldir, visualize, trim, analyzeAll) {}
+  : CheckerConsumer(diags, pp, ppf, fname, htmldir, visualize,
+                    trim, analyzeAll) {}
 
   virtual const char* getCheckerName() { return "GRSimpleVals"; }
   
@@ -748,12 +751,13 @@ public:
 
 ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags,
                                        Preprocessor* PP,
+                                       PreprocessorFactory* PPF,
                                        const std::string& FunctionName,
                                        const std::string& HTMLDir,
                                        bool Visualize, bool TrimGraph,
                                        bool AnalyzeAll) {
   
-  return new GRSimpleValsVisitor(Diags, PP, FunctionName, HTMLDir,
+  return new GRSimpleValsVisitor(Diags, PP, PPF, FunctionName, HTMLDir,
                                  Visualize, TrimGraph, AnalyzeAll);
 }
 
@@ -765,10 +769,12 @@ namespace {
 class CFRefCountCheckerVisitor : public CheckerConsumer {
 public:
   CFRefCountCheckerVisitor(Diagnostic &diags, Preprocessor* pp,
+                           PreprocessorFactory* ppf,
                            const std::string& fname,
                            const std::string& htmldir,
                            bool visualize, bool trim, bool analyzeAll)
-  : CheckerConsumer(diags, pp, fname, htmldir, visualize, trim, analyzeAll) {}
+  : CheckerConsumer(diags, pp, ppf, fname, htmldir, visualize,
+                    trim, analyzeAll) {}
   
   virtual const char* getCheckerName() { return "CFRefCountChecker"; }
   
@@ -780,12 +786,13 @@ public:
 
 ASTConsumer* clang::CreateCFRefChecker(Diagnostic &Diags,
                                        Preprocessor* PP,
+                                       PreprocessorFactory* PPF,
                                        const std::string& FunctionName,
                                        const std::string& HTMLDir,
                                        bool Visualize, bool TrimGraph,
                                        bool AnalyzeAll) {
   
-  return new CFRefCountCheckerVisitor(Diags, PP, FunctionName, HTMLDir,
+  return new CFRefCountCheckerVisitor(Diags, PP, PPF, FunctionName, HTMLDir,
                                       Visualize, TrimGraph, AnalyzeAll);
 }
 

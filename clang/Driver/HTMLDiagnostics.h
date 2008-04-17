@@ -17,11 +17,15 @@
 #include <string>
 
 namespace clang {
-  class PathDiagnosticClient;
-  class Preprocessor;
+
+class PathDiagnosticClient;
+class Preprocessor;
+class PreprocessorFactory;
+
   
-  PathDiagnosticClient* CreateHTMLDiagnosticClient(const std::string& prefix,
-                                                   Preprocessor* PP);
+PathDiagnosticClient* CreateHTMLDiagnosticClient(const std::string& prefix,
+                                                 Preprocessor* PP,
+                                                 PreprocessorFactory* PPF);
 }
 
 #endif
