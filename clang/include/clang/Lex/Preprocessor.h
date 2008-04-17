@@ -524,6 +524,14 @@ public:
   void HandlePragmaDependency(Token &DependencyTok);
 };
 
+/// PreprocessorFactory - A generic factory interface for lazily creating
+///  Preprocessor objects on-demand when they are needed.
+class PreprocessorFactory {
+public:
+  virtual ~PreprocessorFactory();
+  virtual Preprocessor* CreatePreprocessor() = 0;  
+};
+  
 }  // end namespace clang
 
 #endif
