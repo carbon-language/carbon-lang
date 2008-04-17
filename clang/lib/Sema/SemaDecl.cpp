@@ -166,7 +166,8 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
     InitBuiltinVaListType();
     
   QualType R = Context.BuiltinInfo.GetBuiltinType(BID, Context);  
-  FunctionDecl *New = FunctionDecl::Create(Context, CurContext,
+  FunctionDecl *New = FunctionDecl::Create(Context,
+                                           Context.getTranslationUnitDecl(),
                                            SourceLocation(), II, R,
                                            FunctionDecl::Extern, false, 0);
   
