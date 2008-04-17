@@ -457,15 +457,14 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
     MachineOperand &O = I.getOperand();
     MachineInstr *UseMI = &*I;
     ++I;
+    unsigned OldSubIdx = O.getSubReg();
     if (DstIsPhys) {
-      unsigned UseSubIdx = O.getSubReg();
       unsigned UseDstReg = DstReg;
-      if (UseSubIdx)
-        UseDstReg = tri_->getSubReg(DstReg, UseSubIdx);
+      if (OldSubIdx)
+          UseDstReg = tri_->getSubReg(DstReg, OldSubIdx);
       O.setReg(UseDstReg);
       O.setSubReg(0);
     } else {
-      unsigned OldSubIdx = O.getSubReg();
       // Sub-register indexes goes from small to large. e.g.
       // RAX: 0 -> AL, 1 -> AH, 2 -> AX, 3 -> EAX
       // EAX: 0 -> AL, 1 -> AH, 2 -> AX
@@ -849,10 +848,20 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     if (SrcIsPhys && isExtSubReg) {
       // r1024 = EXTRACT_SUBREG EAX, 0 then r1024 is really going to be
       // coalesced with AX.
-      SrcReg = tri_->getSubReg(SrcReg, SubIdx);
+      unsigned DstSubIdx = CopyMI->getOperand(0).getSubReg();
+      assert(!DstSubIdx || DstSubIdx == SubIdx);
+      if (DstSubIdx != SubIdx)
+        // r1024<2> = EXTRACT_SUBREG EAX, 0. Then r1024 has already been
+        // coalesced to an INSERT_SUBREG so the subreg indices cancel out.
+        SrcReg = tri_->getSubReg(SrcReg, SubIdx);
       SubIdx = 0;
     } else if (DstIsPhys && isInsSubReg) {
       // EAX = INSERT_SUBREG EAX, r1024, 0
+      unsigned SrcSubIdx = CopyMI->getOperand(2).getSubReg();
+      assert(!SrcSubIdx || SrcSubIdx == SubIdx);
+      if (SrcSubIdx != SubIdx)
+        // EAX = INSERT_SUBREG EAX, r1024<2>, 0 Then r1024 has already been
+        // coalesced to an EXTRACT_SUBREG so the subreg indices cancel out.
       DstReg = tri_->getSubReg(DstReg, SubIdx);
       SubIdx = 0;
     } else if ((DstIsPhys && isExtSubReg) || (SrcIsPhys && isInsSubReg)) {
