@@ -849,20 +849,28 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       // r1024 = EXTRACT_SUBREG EAX, 0 then r1024 is really going to be
       // coalesced with AX.
       unsigned DstSubIdx = CopyMI->getOperand(0).getSubReg();
-      assert(!DstSubIdx || DstSubIdx == SubIdx);
-      if (DstSubIdx != SubIdx)
-        // r1024<2> = EXTRACT_SUBREG EAX, 0. Then r1024 has already been
-        // coalesced to an INSERT_SUBREG so the subreg indices cancel out.
+      if (DstSubIdx) {
+        // r1024<2> = EXTRACT_SUBREG EAX, 2. Then r1024 has already been
+        // coalesced to a larger register so the subreg indices cancel out.
+        if (DstSubIdx != SubIdx) {
+          DOUT << "\t Sub-register indices mismatch.\n";
+          return false; // Not coalescable.
+        }
+      } else
         SrcReg = tri_->getSubReg(SrcReg, SubIdx);
       SubIdx = 0;
     } else if (DstIsPhys && isInsSubReg) {
       // EAX = INSERT_SUBREG EAX, r1024, 0
       unsigned SrcSubIdx = CopyMI->getOperand(2).getSubReg();
-      assert(!SrcSubIdx || SrcSubIdx == SubIdx);
-      if (SrcSubIdx != SubIdx)
-        // EAX = INSERT_SUBREG EAX, r1024<2>, 0 Then r1024 has already been
-        // coalesced to an EXTRACT_SUBREG so the subreg indices cancel out.
-      DstReg = tri_->getSubReg(DstReg, SubIdx);
+      if (SrcSubIdx) {
+        // EAX = INSERT_SUBREG EAX, r1024<2>, 2 Then r1024 has already been
+        // coalesced to a larger register so the subreg indices cancel out.
+        if (SrcSubIdx != SubIdx) {
+          DOUT << "\t Sub-register indices mismatch.\n";
+          return false; // Not coalescable.
+        }
+      } else
+        DstReg = tri_->getSubReg(DstReg, SubIdx);
       SubIdx = 0;
     } else if ((DstIsPhys && isExtSubReg) || (SrcIsPhys && isInsSubReg)) {
       // If this is a extract_subreg where dst is a physical register, e.g.
@@ -870,6 +878,11 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       // then create and update the actual physical register allocated to RHS.
       // Ditto for
       // reg1024 = INSERT_SUBREG r1024, cl, 1
+      if (CopyMI->getOperand(1).getSubReg()) {
+        DOUT << "\tSrc of extract_ / insert_subreg already coalesced with reg"
+             << " of a super-class.\n";
+        return false; // Not coalescable.
+      }
       const TargetRegisterClass *RC =
         mri_->getRegClass(isExtSubReg ? SrcReg : DstReg);
       if (isExtSubReg) {
@@ -899,24 +912,38 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         }
       SubIdx = 0;
     } else {
-      unsigned LargeReg = isExtSubReg ? SrcReg : DstReg;
-      unsigned SmallReg = isExtSubReg ? DstReg : SrcReg;
-      unsigned LargeRegSize =
-        li_->getInterval(LargeReg).getSize() / InstrSlots::NUM;
-      unsigned SmallRegSize =
-        li_->getInterval(SmallReg).getSize() / InstrSlots::NUM;
-      const TargetRegisterClass *RC = mri_->getRegClass(SmallReg);
-      unsigned Threshold = allocatableRCRegs_[RC].count();
-      // Be conservative. If both sides are virtual registers, do not coalesce
-      // if this will cause a high use density interval to target a smaller set
-      // of registers.
-      if (SmallRegSize > Threshold || LargeRegSize > Threshold) {
-        LiveVariables::VarInfo &svi = lv_->getVarInfo(LargeReg);
-        LiveVariables::VarInfo &dvi = lv_->getVarInfo(SmallReg);
-        if ((float)dvi.NumUses / SmallRegSize <
-            (float)svi.NumUses / LargeRegSize) {
-          Again = true;  // May be possible to coalesce later.
-          return false;
+      unsigned OldSubIdx = isExtSubReg ? CopyMI->getOperand(0).getSubReg()
+        : CopyMI->getOperand(2).getSubReg();
+      if (OldSubIdx) {
+        if (OldSubIdx == SubIdx)
+          // r1024<2> = EXTRACT_SUBREG r1025, 2. Then r1024 has already been
+          // coalesced to a larger register so the subreg indices cancel out.
+          SubIdx = 0;
+        else {
+          DOUT << "\t Sub-register indices mismatch.\n";
+          return false; // Not coalescable.
+        }
+      }
+      if (SubIdx) {
+        unsigned LargeReg = isExtSubReg ? SrcReg : DstReg;
+        unsigned SmallReg = isExtSubReg ? DstReg : SrcReg;
+        unsigned LargeRegSize =
+          li_->getInterval(LargeReg).getSize() / InstrSlots::NUM;
+        unsigned SmallRegSize =
+          li_->getInterval(SmallReg).getSize() / InstrSlots::NUM;
+        const TargetRegisterClass *RC = mri_->getRegClass(SmallReg);
+        unsigned Threshold = allocatableRCRegs_[RC].count();
+        // Be conservative. If both sides are virtual registers, do not coalesce
+        // if this will cause a high use density interval to target a smaller
+        // set of registers.
+        if (SmallRegSize > Threshold || LargeRegSize > Threshold) {
+          LiveVariables::VarInfo &svi = lv_->getVarInfo(LargeReg);
+          LiveVariables::VarInfo &dvi = lv_->getVarInfo(SmallReg);
+          if ((float)dvi.NumUses / SmallRegSize <
+              (float)svi.NumUses / LargeRegSize) {
+            Again = true;  // May be possible to coalesce later.
+            return false;
+          }
         }
       }
     }
