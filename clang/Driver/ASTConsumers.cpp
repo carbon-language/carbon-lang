@@ -52,6 +52,7 @@ namespace {
     void PrintObjCCategoryImplDecl(ObjCCategoryImplDecl *PID);    
     void PrintObjCCategoryDecl(ObjCCategoryDecl *PID);    
     void PrintObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *AID);
+    void PrintObjCPropertyDecl(ObjCPropertyDecl *PD);
   };
 } // end anonymous namespace
 
@@ -264,65 +265,9 @@ void DeclPrinter::PrintObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
     Out << "}\n";
   }
   
-  int NumProperties = OID->getNumPropertyDecl();
-  if (NumProperties > 0) {
-    for (int i = 0; i < NumProperties; i++) {
-      ObjCPropertyDecl *PDecl = OID->getPropertyDecl()[i];
-      Out << "@property";
-      if (PDecl->getPropertyAttributes() != ObjCPropertyDecl::OBJC_PR_noattr) {
-        bool first = true;
-        Out << " (";
-        if (PDecl->getPropertyAttributes() & 
-            ObjCPropertyDecl::OBJC_PR_readonly) {
-          Out << (first ? ' ' : ',') << "readonly";
-          first = false;
-        }
-        
-        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_getter) {
-          Out << (first ? ' ' : ',') << "getter = "
-              << PDecl->getGetterName()->getName();
-          first = false;
-        }
-        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_setter) {
-          Out << (first ? ' ' : ',') << "setter = "
-              << PDecl->getSetterName()->getName();
-          first = false;
-        }
-        
-        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_assign) {
-          Out << (first ? ' ' : ',') << "assign";
-          first = false;
-        }
-        
-        if (PDecl->getPropertyAttributes() &
-            ObjCPropertyDecl::OBJC_PR_readwrite) {
-          Out << (first ? ' ' : ',') << "readwrite";
-          first = false;
-        }
-        
-        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_retain) {
-          Out << (first ? ' ' : ',') << "retain";
-          first = false;
-        }
-        
-        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_copy) {
-          Out << (first ? ' ' : ',') << "copy";
-          first = false;
-        }
-        
-        if (PDecl->getPropertyAttributes() & 
-            ObjCPropertyDecl::OBJC_PR_nonatomic) {
-          Out << (first ? ' ' : ',') << "nonatomic";
-          first = false;
-        }
-        Out << " )";
-      }
-      Out << ' ' << PDecl->getType().getAsString()
-          << ' ' << PDecl->getName();
-      
-      Out << ";\n";
-    }
-  }
+  for (ObjCInterfaceDecl::classprop_iterator I = OID->classprop_begin(),
+       E = OID->classprop_end(); I != E; ++I)
+    PrintObjCPropertyDecl(*I);
   
   Out << "@end\n";
   // FIXME: implement the rest...
@@ -330,6 +275,11 @@ void DeclPrinter::PrintObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
 
 void DeclPrinter::PrintObjCProtocolDecl(ObjCProtocolDecl *PID) {
   Out << "@protocol " << PID->getName() << '\n';
+  
+  for (ObjCProtocolDecl::classprop_iterator I = PID->classprop_begin(),
+       E = PID->classprop_end(); I != E; ++I)
+    PrintObjCPropertyDecl(*I);
+  Out << "@end\n";
   // FIXME: implement the rest...
 }
 
@@ -346,66 +296,9 @@ void DeclPrinter::PrintObjCCategoryDecl(ObjCCategoryDecl *PID) {
       << PID->getClassInterface()->getName()
       << '(' << PID->getName() << ");\n";
   // Output property declarations.
-  int NumProperties = PID->getNumPropertyDecl();
-  if (NumProperties > 0) {
-    for (int i = 0; i < NumProperties; i++) {
-      ObjCPropertyDecl *PDecl = PID->getPropertyDecl()[i];
-      Out << "@property";
-      if (PDecl->getPropertyAttributes() != ObjCPropertyDecl::OBJC_PR_noattr) {
-        bool first = true;
-        Out << " (";
-        if (PDecl->getPropertyAttributes() & 
-            ObjCPropertyDecl::OBJC_PR_readonly) {
-          Out << (first ? ' ' : ',') << "readonly";
-          first = false;
-        }
-        
-        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_getter) {
-          Out << (first ? ' ' : ',') << "getter = "
-          << PDecl->getGetterName()->getName();
-          first = false;
-        }
-        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_setter) {
-          Out << (first ? ' ' : ',') << "setter = "
-          << PDecl->getSetterName()->getName();
-          first = false;
-        }
-        
-        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_assign) {
-          Out << (first ? ' ' : ',') << "assign";
-          first = false;
-        }
-        
-        if (PDecl->getPropertyAttributes() &
-            ObjCPropertyDecl::OBJC_PR_readwrite) {
-          Out << (first ? ' ' : ',') << "readwrite";
-          first = false;
-        }
-        
-        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_retain) {
-          Out << (first ? ' ' : ',') << "retain";
-          first = false;
-        }
-        
-        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_copy) {
-          Out << (first ? ' ' : ',') << "copy";
-          first = false;
-        }
-        
-        if (PDecl->getPropertyAttributes() & 
-            ObjCPropertyDecl::OBJC_PR_nonatomic) {
-          Out << (first ? ' ' : ',') << "nonatomic";
-          first = false;
-        }
-        Out << " )";
-      }
-      Out << ' ' << PDecl->getType().getAsString()
-      << ' ' << PDecl->getName();
-      
-      Out << ";\n";
-    }
-  }
-  
+  for (ObjCCategoryDecl::classprop_iterator I = PID->classprop_begin(),
+       E = PID->classprop_end(); I != E; ++I)
+    PrintObjCPropertyDecl(*I);
   Out << "@end\n";
   
   // FIXME: implement the rest...
@@ -416,6 +309,65 @@ void DeclPrinter::PrintObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *AID) {
       << ' ' << AID->getClassInterface()->getName() << ";\n";  
 }
 
+/// PrintObjCPropertyDecl - print a property declaration.
+///
+void DeclPrinter::PrintObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
+    
+  Out << "@property";
+  if (PDecl->getPropertyAttributes() != ObjCPropertyDecl::OBJC_PR_noattr) {
+    bool first = true;
+    Out << " (";
+    if (PDecl->getPropertyAttributes() & 
+        ObjCPropertyDecl::OBJC_PR_readonly) {
+      Out << (first ? ' ' : ',') << "readonly";
+      first = false;
+  }
+      
+  if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_getter) {
+    Out << (first ? ' ' : ',') << "getter = "
+    << PDecl->getGetterName()->getName();
+    first = false;
+  }
+  if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_setter) {
+    Out << (first ? ' ' : ',') << "setter = "
+    << PDecl->getSetterName()->getName();
+    first = false;
+  }
+      
+  if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_assign) {
+    Out << (first ? ' ' : ',') << "assign";
+    first = false;
+  }
+      
+  if (PDecl->getPropertyAttributes() &
+      ObjCPropertyDecl::OBJC_PR_readwrite) {
+    Out << (first ? ' ' : ',') << "readwrite";
+    first = false;
+  }
+      
+  if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_retain) {
+    Out << (first ? ' ' : ',') << "retain";
+    first = false;
+  }
+      
+  if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_copy) {
+    Out << (first ? ' ' : ',') << "copy";
+    first = false;
+  }
+      
+  if (PDecl->getPropertyAttributes() & 
+      ObjCPropertyDecl::OBJC_PR_nonatomic) {
+    Out << (first ? ' ' : ',') << "nonatomic";
+    first = false;
+  }
+  Out << " )";
+  }
+  Out << ' ' << PDecl->getType().getAsString()
+  << ' ' << PDecl->getName();
+    
+  Out << ";\n";
+}
+    
 //===----------------------------------------------------------------------===//
 /// ASTPrinter - Pretty-printer of ASTs
 

@@ -198,6 +198,18 @@ void ObjCInterfaceDecl::addProperties(ObjCPropertyDecl **Properties,
 }                                   
 
 /// addProperties - Insert property declaration AST nodes into
+/// ObjCProtocolDecl's PropertyDecl field.
+///
+void ObjCProtocolDecl::addProperties(ObjCPropertyDecl **Properties, 
+                                     unsigned NumProperties) {
+  if (NumProperties == 0) return;
+  
+  NumPropertyDecl = NumProperties;
+  PropertyDecl = new ObjCPropertyDecl*[NumProperties];
+  memcpy(PropertyDecl, Properties, NumProperties*sizeof(ObjCPropertyDecl*));
+}
+
+/// addProperties - Insert property declaration AST nodes into
 /// ObjCCategoryDecl's PropertyDecl field.
 ///
 void ObjCCategoryDecl::addProperties(ObjCPropertyDecl **Properties, 

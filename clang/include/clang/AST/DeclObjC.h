@@ -309,6 +309,11 @@ public:
   
   void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
   
+  typedef ObjCPropertyDecl * const * classprop_iterator;
+  classprop_iterator classprop_begin() const { return PropertyDecl; }
+  classprop_iterator classprop_end() const {
+    return PropertyDecl+NumPropertyDecl;
+  }
   
   bool isForwardDecl() const { return ForwardDecl; }
   void setForwardDecl(bool val) { ForwardDecl = val; }
@@ -463,7 +468,11 @@ class ObjCProtocolDecl : public NamedDecl {
   /// protocol class methods
   ObjCMethodDecl **ClassMethods;  // Null if not defined
   unsigned NumClassMethods;  // 0 if none
-
+  
+  /// protocol properties
+  ObjCPropertyDecl **PropertyDecl;  // Null if no property
+  unsigned NumPropertyDecl;  // 0 if none
+  
   bool isForwardProtoDecl; // declared with @protocol.
   
   SourceLocation EndLoc; // marks the '>' or identifier.
@@ -474,6 +483,7 @@ class ObjCProtocolDecl : public NamedDecl {
       ReferencedProtocols(0), NumReferencedProtocols(0),
       InstanceMethods(0), NumInstanceMethods(0), 
       ClassMethods(0), NumClassMethods(0),
+      PropertyDecl(0), NumPropertyDecl(0),
       isForwardProtoDecl(true) {
     AllocReferencedProtocols(numRefProtos);
   }
@@ -504,6 +514,19 @@ public:
   unsigned getNumReferencedProtocols() const { return NumReferencedProtocols; }
   unsigned getNumInstanceMethods() const { return NumInstanceMethods; }
   unsigned getNumClassMethods() const { return NumClassMethods; }
+  
+  unsigned getNumPropertyDecl() const { return NumPropertyDecl; }
+  
+  ObjCPropertyDecl * const * getPropertyDecl() const { return PropertyDecl; }
+  ObjCPropertyDecl **getPropertyDecl() { return PropertyDecl; }
+  
+  void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
+  
+  typedef ObjCPropertyDecl * const * classprop_iterator;
+  classprop_iterator classprop_begin() const { return PropertyDecl; }
+  classprop_iterator classprop_end() const {
+    return PropertyDecl+NumPropertyDecl;
+  }
 
   typedef ObjCMethodDecl * const * instmeth_iterator;
   instmeth_iterator instmeth_begin() const { return InstanceMethods; }
@@ -709,10 +732,17 @@ public:
   unsigned getNumInstanceMethods() const { return NumInstanceMethods; }
   unsigned getNumClassMethods() const { return NumClassMethods; }
 
-  void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
   unsigned getNumPropertyDecl() const { return NumPropertyDecl; }
   
   ObjCPropertyDecl * const * getPropertyDecl() const { return PropertyDecl; }
+  
+  void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
+  
+  typedef ObjCPropertyDecl * const * classprop_iterator;
+  classprop_iterator classprop_begin() const { return PropertyDecl; }
+  classprop_iterator classprop_end() const {
+    return PropertyDecl+NumPropertyDecl;
+  }
   
   typedef ObjCMethodDecl * const * instmeth_iterator;
   instmeth_iterator instmeth_begin() const { return InstanceMethods; }

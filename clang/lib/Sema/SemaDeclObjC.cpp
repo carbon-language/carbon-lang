@@ -695,13 +695,15 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
          || isa<ObjCProtocolDecl>(ClassDecl);
   bool checkIdenticalMethods = isa<ObjCImplementationDecl>(ClassDecl);
   
-  // TODO: property declaration in category and protocols.
   if (pNum != 0)
     if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(ClassDecl))
       IDecl->addProperties((ObjCPropertyDecl**)allProperties, pNum);
+    else if (ObjCCategoryDecl *CDecl = dyn_cast<ObjCCategoryDecl>(ClassDecl))
+      CDecl->addProperties((ObjCPropertyDecl**)allProperties, pNum);
+    else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(ClassDecl))
+          PDecl->addProperties((ObjCPropertyDecl**)allProperties, pNum);
     else
-      if (ObjCCategoryDecl *CDecl = dyn_cast<ObjCCategoryDecl>(ClassDecl))
-        CDecl->addProperties((ObjCPropertyDecl**)allProperties, pNum);
+      assert(false && "ActOnAtEnd - property declaration misplaced");
   
   for (unsigned i = 0; i < allNum; i++ ) {
     ObjCMethodDecl *Method =
