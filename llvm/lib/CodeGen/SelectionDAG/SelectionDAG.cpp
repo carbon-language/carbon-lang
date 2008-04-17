@@ -337,7 +337,7 @@ static void AddNodeIDOperands(FoldingSetNodeID &ID,
 
 static void AddNodeIDNode(FoldingSetNodeID &ID,
                           unsigned short OpC, SDVTList VTList, 
-                          const SDOperand *OpList, unsigned N) {
+                          SDOperandPtr OpList, unsigned N) {
   AddNodeIDOpcode(ID, OpC);
   AddNodeIDValueTypes(ID, VTList);
   AddNodeIDOperands(ID, OpList, N);
@@ -3342,7 +3342,7 @@ UpdateNodeOperands(SDOperand InN, SDOperandPtr Ops, unsigned NumOps) {
 /// opcode, types, and operands to the specified value.  This should only be
 /// used by the SelectionDAG class.
 void SDNode::MorphNodeTo(unsigned Opc, SDVTList L,
-                         const SDOperand *Ops, unsigned NumOps) {
+                         SDOperandPtr Ops, unsigned NumOps) {
   NodeType = Opc;
   ValueList = L.VTs;
   NumValues = L.NumVTs;
@@ -3393,7 +3393,7 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
    
   RemoveNodeFromCSEMaps(N);
   
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, 0, 0);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, SDOperandPtr(), 0);
 
   CSEMap.InsertNode(N, IP);
   return N;
@@ -3951,7 +3951,7 @@ void AtomicSDNode::ANCHOR() {}
 
 HandleSDNode::~HandleSDNode() {
   SDVTList VTs = { 0, 0 };
-  MorphNodeTo(ISD::HANDLENODE, VTs, 0, 0);  // Drops operand uses.
+  MorphNodeTo(ISD::HANDLENODE, VTs, SDOperandPtr(), 0);  // Drops operand uses.
 }
 
 GlobalAddressSDNode::GlobalAddressSDNode(bool isTarget, const GlobalValue *GA,

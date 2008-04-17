@@ -968,6 +968,8 @@ class SDOperandPtr {
   const SDOperand *ptr; // The pointer to the SDOperand object
   int object_size;      // The size of the object containg the SDOperand
 public:
+  SDOperandPtr() : ptr(0), object_size(0) {}
+
   SDOperandPtr(SDUse * use_ptr) { 
     ptr = &use_ptr->getSDOperand(); 
     object_size = sizeof(SDUse); 
@@ -976,12 +978,6 @@ public:
   SDOperandPtr(const SDOperand * op_ptr) { 
     ptr = op_ptr; 
     object_size = sizeof(SDOperand); 
-  }
-
-  operator const SDOperand *() const {
-    assert(object_size == sizeof(SDOperand) && 
-           "Only SDOperand can be converted");
-    return ptr;
   }
 
   const SDOperand operator *() { return *ptr; }
@@ -1300,7 +1296,7 @@ protected:
   /// opcode, types, and operands to the specified value.  This should only be
   /// used by the SelectionDAG class.
   void MorphNodeTo(unsigned Opc, SDVTList L,
-                   const SDOperand *Ops, unsigned NumOps);
+                   SDOperandPtr Ops, unsigned NumOps);
   
   void addUser(unsigned i, SDNode *User) {
     assert(User->OperandList[i].getUser() && "Node without parent");
