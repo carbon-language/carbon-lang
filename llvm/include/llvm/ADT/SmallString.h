@@ -15,6 +15,7 @@
 #define LLVM_ADT_SMALLSTRING_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/DataTypes.h"
 #include <cstring>
 
 namespace llvm {
