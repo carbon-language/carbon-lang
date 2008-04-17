@@ -134,8 +134,7 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
     } else if (isa<CallInst>(QI)) {
       AliasAnalysis::ModRefBehavior result =
                    AA.getModRefBehavior(CallSite::get(QI));
-      if (result != AliasAnalysis::DoesNotAccessMemory &&
-          result != AliasAnalysis::OnlyReadsMemory) {
+      if (result != AliasAnalysis::DoesNotAccessMemory) {
         if (!start && !block) {
           cachedResult.first = QI;
           cachedResult.second = true;

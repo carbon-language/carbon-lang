@@ -135,6 +135,7 @@ namespace {
       DenseMap<Value*, uint32_t> valueNumbering;
       DenseMap<Expression, uint32_t> expressionNumbering;
       AliasAnalysis* AA;
+      MemoryDependenceAnalysis* MD;
   
       uint32_t nextValueNumber;
     
@@ -159,6 +160,7 @@ namespace {
       void erase(Value* v);
       unsigned size();
       void setAliasAnalysis(AliasAnalysis* A) { AA = A; }
+      void setMemDep(MemoryDependenceAnalysis* M) { MD = M; }
   };
 }
 
@@ -432,6 +434,33 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
       
         return nextValueNumber++;
       }
+    } else if (AA->onlyReadsMemory(C)) {
+      Expression e = create_expression(C);
+      
+      Instruction* dep = MD->getDependency(C);
+      
+      if (dep == MemoryDependenceAnalysis::NonLocal ||
+          !isa<CallInst>(dep)) {
+        expressionNumbering.insert(std::make_pair(e, nextValueNumber));
+        valueNumbering.insert(std::make_pair(V, nextValueNumber));
+      
+        return nextValueNumber++;
+      }
+      
+      CallInst* cdep = cast<CallInst>(dep);
+      Expression d_exp = create_expression(cdep);
+      
+      if (e != d_exp) {
+        expressionNumbering.insert(std::make_pair(e, nextValueNumber));
+        valueNumbering.insert(std::make_pair(V, nextValueNumber));
+      
+        return nextValueNumber++;
+      } else {
+        uint32_t v = expressionNumbering[d_exp];
+        valueNumbering.insert(std::make_pair(V, v));
+        return v;
+      }
+      
     } else {
       valueNumbering.insert(std::make_pair(V, nextValueNumber));
       return nextValueNumber++;
@@ -993,22 +1022,6 @@ bool GVN::processInstruction(Instruction *I, ValueNumberedSet &currAvail,
   } else if (currAvail.test(num)) {
     Value* repl = find_leader(currAvail, num);
     
-    if (CallInst* CI = dyn_cast<CallInst>(I)) {
-      AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
-      if (!AA.doesNotAccessMemory(CI)) {
-        MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
-        if (cast<Instruction>(repl)->getParent() != CI->getParent() ||
-            MD.getDependency(CI) != MD.getDependency(cast<CallInst>(repl))) {
-          // There must be an intervening may-alias store, so nothing from
-          // this point on will be able to be replaced with the preceding call
-          currAvail.erase(repl);
-          currAvail.insert(I);
-          
-          return false;
-        }
-      }
-    }
-    
     // Remove it!
     MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
     MD.removeInstruction(I);
@@ -1030,6 +1043,7 @@ bool GVN::processInstruction(Instruction *I, ValueNumberedSet &currAvail,
 //
 bool GVN::runOnFunction(Function& F) {
   VN.setAliasAnalysis(&getAnalysis<AliasAnalysis>());
+  VN.setMemDep(&getAnalysis<MemoryDependenceAnalysis>());
   
   bool changed = false;
   bool shouldContinue = true;

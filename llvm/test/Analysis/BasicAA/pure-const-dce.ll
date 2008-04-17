@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -basicaa -gvn | llvm-dis | grep TestConst | count 2
-; RUN: llvm-as < %s | opt -basicaa -gvn | llvm-dis | grep TestPure  | count 4
+; RUN: llvm-as < %s | opt -basicaa -gvn | llvm-dis | grep TestPure  | count 3
 ; RUN: llvm-as < %s | opt -basicaa -gvn | llvm-dis | grep TestNone  | count 4
 @g = global i32 0		; <i32*> [#uses=1]
 
