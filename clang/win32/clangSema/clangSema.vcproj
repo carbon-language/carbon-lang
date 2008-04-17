@@ -153,6 +153,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\..\lib\Sema\IdentifierResolver.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Sema\ParseAST.cpp"
 				>
 			</File>
@@ -166,6 +170,10 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Sema\SemaDecl.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Sema\SemaDeclCXX.cpp"
 				>
 			</File>
 			<File

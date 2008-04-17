@@ -214,7 +214,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Driver\RewriteTest.cpp"
+				RelativePath="..\..\Driver\RewriteObjC.cpp"
 				>
 			</File>
 			<File

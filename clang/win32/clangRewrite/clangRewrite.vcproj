@@ -149,11 +149,19 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\..\lib\Rewrite\DeltaTree.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Rewrite\HTMLRewrite.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\lib\Rewrite\Rewriter.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Rewrite\RewriteRope.cpp"
 				>
 			</File>
 		</Filter>

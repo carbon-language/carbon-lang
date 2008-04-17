@@ -193,6 +193,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\GRTransferFuncs.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\LiveVariables.cpp"
 				>
 			</File>
