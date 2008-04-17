@@ -268,10 +268,10 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
       // Macro expansions.
       " .expansion { display: none; }\n"
       " .macro:hover .expansion { display: block; border: 2px solid #FF0000; "
-          "padding: 2px; background-color:#FFF0F0;"
+          "padding: 2px; background-color:#FFF0F0; font-weight: normal; "
           "  -webkit-border-radius:5px;  -webkit-box-shadow:1px 1px 7px #000; "
           "position: absolute; top: -1em; left:10em; z-index: 1 } \n"
-      " .macro { color: #FF0000; background-color:#FFC0C0;"
+      " .macro { color: #FF0000; font-weight: bold;"
              // Macros are position: relative to provide base for expansions.
              " position: relative }\n"
       " .num { width:2.5em; padding-right:2ex; background-color:#eeeeee }\n"
