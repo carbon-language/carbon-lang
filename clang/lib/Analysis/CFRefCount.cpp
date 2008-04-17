@@ -27,6 +27,15 @@
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
+// Utility functions.
+//===----------------------------------------------------------------------===//
+
+static inline Selector GetUnarySelector(const char* name, ASTContext& Ctx) {
+  IdentifierInfo* II = &Ctx.Idents.get(name);
+  return Ctx.Selectors.getSelector(0, &II);
+}
+
+//===----------------------------------------------------------------------===//
 // Symbolic Evaluation of Reference Counting Logic
 //===----------------------------------------------------------------------===//
 
@@ -429,7 +438,7 @@ namespace {
     }
     virtual const char* getDescription() const {
       return "(CoreFoundation) Reference-counted object is used"
-      " after it is released.";
+             " after it is released.";
     }
     
     virtual void EmitWarnings(BugReporter& BR);
@@ -445,8 +454,8 @@ namespace {
     }
     virtual const char* getDescription() const {
       return "Incorrect decrement of the reference count of a "
-      "CoreFoundation object:\n"
-      "The object is not owned at this point by the caller.";
+             "CoreFoundation object:\n"
+             "The object is not owned at this point by the caller.";
     }
     
     virtual void EmitWarnings(BugReporter& BR);
@@ -461,28 +470,35 @@ namespace {
 namespace {
   
 class VISIBILITY_HIDDEN RefVal {
-  unsigned Data;
+public:  
   
-  RefVal(unsigned K, unsigned D) : Data((D << 3) | K) {
-    assert ((K & ~0x7) == 0x0);
-  }
+  enum Kind {
+    Owned = 0, // Owning reference.    
+    NotOwned,  // Reference is not owned by still valid (not freed).    
+    Released,  // Object has been released.
+    ReturnedOwned, // Returned object passes ownership to caller.
+    ReturnedNotOwned, // Return object does not pass ownership to caller.
+    ErrorUseAfterRelease, // Object used after released.    
+    ErrorReleaseNotOwned, // Release of an object that was not owned.
+    ErrorLeak  // A memory leak due to excessive reference counts.
+  };
   
-  RefVal(unsigned K) : Data(K) {
-    assert ((K & ~0x7) == 0x0);
-  }
+private:
+  
+  Kind kind;
+  unsigned Cnt;
+    
+  RefVal(Kind k, unsigned cnt) : kind(k), Cnt(cnt) {}
+  
+  RefVal(Kind k) : kind(k), Cnt(0) {}
 
 public:  
   
-  enum Kind { Owned = 0, NotOwned = 1, Released = 2,
-              ErrorUseAfterRelease = 3, ErrorReleaseNotOwned = 4,
-              ErrorLeak = 5 };    
-  
-  Kind getKind() const { return (Kind) (Data & 0x7); }
+  Kind getKind() const { return kind; }
 
-  unsigned getCount() const {
-    assert (getKind() == Owned || getKind() == NotOwned);
-    return Data >> 3;
-  }
+  unsigned getCount() const { return Cnt; }
+  
+  // Useful predicates.
   
   static bool isError(Kind k) { return k >= ErrorUseAfterRelease; }
   
@@ -496,6 +512,21 @@ public:
     return getKind() == NotOwned;
   }
   
+  bool isReturnedOwned() const {
+    return getKind() == ReturnedOwned;
+  }
+  
+  bool isReturnedNotOwned() const {
+    return getKind() == ReturnedNotOwned;
+  }
+  
+  bool isNonLeakError() const {
+    Kind k = getKind();
+    return isError(k) && !isLeak(k);
+  }
+  
+  // State creation: normal state.
+  
   static RefVal makeOwned(unsigned Count = 0) {
     return RefVal(Owned, Count);
   }
@@ -503,15 +534,33 @@ public:
   static RefVal makeNotOwned(unsigned Count = 0) {
     return RefVal(NotOwned, Count);
   }
+
+  static RefVal makeReturnedOwned(unsigned Count) {
+    return RefVal(ReturnedOwned, Count);
+  }
+  
+  static RefVal makeReturnedNotOwned() {
+    return RefVal(ReturnedNotOwned);
+  }
+  
+  // State creation: errors.
   
   static RefVal makeLeak() { return RefVal(ErrorLeak); }  
   static RefVal makeReleased() { return RefVal(Released); }
   static RefVal makeUseAfterRelease() { return RefVal(ErrorUseAfterRelease); }
   static RefVal makeReleaseNotOwned() { return RefVal(ErrorReleaseNotOwned); }
+    
+  // Comparison, profiling, and pretty-printing.
   
-  bool operator==(const RefVal& X) const { return Data == X.Data; }
-  void Profile(llvm::FoldingSetNodeID& ID) const { ID.AddInteger(Data); }
+  bool operator==(const RefVal& X) const {
+    return kind == X.kind && Cnt == X.Cnt;
+  }
   
+  void Profile(llvm::FoldingSetNodeID& ID) const {
+    ID.AddInteger((unsigned) kind);
+    ID.AddInteger(Cnt);
+  }
+
   void print(std::ostream& Out) const;
 };
   
@@ -526,12 +575,26 @@ void RefVal::print(std::ostream& Out) const {
     }
       
     case NotOwned: {
-      Out << "Not-Owned";
+      Out << "NotOwned";
       unsigned cnt = getCount();
       if (cnt) Out << " (+ " << cnt << ")";
       break;
     }
       
+    case ReturnedOwned: { 
+      Out << "ReturnedOwned";
+      unsigned cnt = getCount();
+      if (cnt) Out << " (+ " << cnt << ")";
+      break;
+    }
+      
+    case ReturnedNotOwned: {
+      Out << "ReturnedNotOwned";
+      unsigned cnt = getCount();
+      if (cnt) Out << " (+ " << cnt << ")";
+      break;
+    }
+            
     case Released:
       Out << "Released";
       break;
@@ -554,11 +617,6 @@ void RefVal::print(std::ostream& Out) const {
 // Transfer functions.
 //===----------------------------------------------------------------------===//
 
-static inline Selector GetUnarySelector(const char* name, ASTContext& Ctx) {
-  IdentifierInfo* II = &Ctx.Idents.get(name);
-  return Ctx.Selectors.getSelector(0, &II);
-}
-  
 class VISIBILITY_HIDDEN CFRefCount : public GRSimpleVals {
   
   // Type definitions.
@@ -669,6 +727,14 @@ public:
   
   virtual void EvalEndPath(GRExprEngine& Engine,
                            GREndPathNodeBuilder<ValueState>& Builder);
+  
+  // Return statements.
+  
+  virtual void EvalReturn(ExplodedNodeSet<ValueState>& Dst,
+                          GRExprEngine& Engine,
+                          GRStmtNodeBuilder<ValueState>& Builder,
+                          ReturnStmt* S,
+                          ExplodedNode<ValueState>* Pred);
   
   // Error iterators.
 
@@ -1008,7 +1074,8 @@ ValueState* CFRefCount::HandleSymbolDeath(ValueStateManager& VMgr,
                                           ValueState* St, SymbolID sid,
                                           RefVal V, bool& hasLeak) {
     
-  hasLeak = V.isOwned() || V.isNotOwned() && V.getCount() > 0;
+  hasLeak = V.isOwned() || 
+            ((V.isNotOwned() || V.isReturnedOwned()) && V.getCount() > 0);
 
   if (!hasLeak)
     return NukeBinding(VMgr, St, sid);
@@ -1041,6 +1108,66 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
   for (llvm::SmallVector<SymbolID, 10>::iterator I=Leaked.begin(),
        E = Leaked.end(); I != E; ++I)
     Leaks.push_back(std::make_pair(*I, N));
+}
+
+ // Return statements.
+
+void CFRefCount::EvalReturn(ExplodedNodeSet<ValueState>& Dst,
+                            GRExprEngine& Eng,
+                            GRStmtNodeBuilder<ValueState>& Builder,
+                            ReturnStmt* S,
+                            ExplodedNode<ValueState>* Pred) {
+  
+  Expr* RetE = S->getRetValue();
+  if (!RetE) return;
+  
+  ValueStateManager& StateMgr = Eng.getStateManager();
+  ValueState* St = Builder.GetState(Pred);
+  RVal V = StateMgr.GetRVal(St, RetE);
+  
+  if (!isa<lval::SymbolVal>(V))
+    return;
+  
+  // Get the reference count binding (if any).
+  SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
+  RefBindings B = GetRefBindings(*St);
+  RefBindings::TreeTy* T = B.SlimFind(Sym);
+  
+  if (!T)
+    return;
+  
+  // Change the reference count.
+  
+  RefVal X = T->getValue().second;  
+  
+  switch (X.getKind()) {
+      
+    case RefVal::Owned: { 
+      unsigned cnt = X.getCount();
+      X = RefVal::makeReturnedOwned(cnt);
+      break;
+    }
+      
+    case RefVal::NotOwned: {
+      unsigned cnt = X.getCount();
+      X = cnt ? RefVal::makeReturnedOwned(cnt - 1)
+              : RefVal::makeReturnedNotOwned();
+      break;
+    }
+      
+    default: 
+      // None of the error states should be possible at this point.
+      // A symbol could not have been leaked (yet) if we are returning it
+      // (and thus it is still live), and the other errors are hard errors.
+      assert(false);
+      return;
+  }
+  
+  // Update the binding.
+
+  ValueState StImpl = *St;
+  StImpl.CheckerState = RefBFactory.Add(B, Sym, X).getRoot();        
+  Builder.MakeNode(Dst, S, Pred, StateMgr.getPersistentState(StImpl));
 }
 
 
@@ -1091,16 +1218,16 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
           assert (false);
           
         case RefVal::Owned: {
-          signed Count = ((signed) V.getCount()) - 1;
-          V = Count >= 0 ? RefVal::makeOwned(Count) : RefVal::makeReleased();
+          unsigned Count = V.getCount();
+          V = Count > 0 ? RefVal::makeOwned(Count - 1) : RefVal::makeReleased();
           break;
         }
           
         case RefVal::NotOwned: {
-          signed Count = ((signed) V.getCount()) - 1;
+          unsigned Count = V.getCount();
           
-          if (Count >= 0)
-            V = RefVal::makeNotOwned(Count);
+          if (Count > 0)
+            V = RefVal::makeNotOwned(Count - 1);
           else {
             V = RefVal::makeReleaseNotOwned();
             hasErr = V.getKind();
