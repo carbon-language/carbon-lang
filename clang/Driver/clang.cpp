@@ -1009,6 +1009,32 @@ static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
   }
 }
 
+//===----------------------------------------------------------------------===//
+// Driver PreprocessorFactory - For lazily generating preprocessors ...
+//===----------------------------------------------------------------------===//
+
+namespace {
+class VISIBILITY_HIDDEN DriverPreprocessorFactory : public PreprocessorFactory {
+  Diagnostic        &Diags;
+  const LangOptions &LangInfo;
+  TargetInfo        &Target;
+  SourceManager     &SourceMgr;
+  HeaderSearch      &HeaderInfo;
+
+public:
+  DriverPreprocessorFactory(Diagnostic &diags, const LangOptions &opts,
+                            TargetInfo &target, SourceManager &SM,
+                            HeaderSearch &Headers)  
+  : Diags(diags), LangInfo(opts), Target(target),
+    SourceMgr(SM), HeaderInfo(Headers) {}
+  
+  virtual ~DriverPreprocessorFactory() {}
+  
+  virtual Preprocessor* CreatePreprocessor() {
+    return new Preprocessor(Diags, LangInfo, Target, SourceMgr, HeaderInfo);
+  }
+};
+}
 
 //===----------------------------------------------------------------------===//
 // Basic Parser driver
@@ -1361,13 +1387,16 @@ int main(int argc, char **argv) {
       InitializeIncludePaths(argv[0], HeaderInfo, FileMgr, LangInfo);
       
       // Set up the preprocessor with these options.
-      Preprocessor PP(Diags, LangInfo, *Target, SourceMgr, HeaderInfo);
+      DriverPreprocessorFactory PPFactory(Diags, LangInfo, *Target,
+                                          SourceMgr, HeaderInfo);
       
+      llvm::OwningPtr<Preprocessor> PP(PPFactory.CreatePreprocessor());
+            
       std::vector<char> PredefineBuffer;
-      if (!InitializePreprocessor(PP, InFile, PredefineBuffer))
+      if (!InitializePreprocessor(*PP, InFile, PredefineBuffer))
         continue;
       
-      ProcessInputFile(PP, InFile);
+      ProcessInputFile(*PP, InFile);
       HeaderInfo.ClearFileInfo();
       
       if (Stats)
