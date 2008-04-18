@@ -44,7 +44,7 @@ public:
   enum Kind {
     UnknownAttribute,
     AT_vector_size,
-    AT_ocu_vector_type,
+    AT_ext_vector_type,
     AT_address_space,
     AT_aligned,
     AT_packed,

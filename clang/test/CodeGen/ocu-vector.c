@@ -1,7 +1,7 @@
 // RUN: clang -emit-llvm %s
 
-typedef __attribute__(( ocu_vector_type(4) )) float float4;
-typedef __attribute__(( ocu_vector_type(2) )) float float2;
+typedef __attribute__(( ext_vector_type(4) )) float float4;
+typedef __attribute__(( ext_vector_type(2) )) float float2;
 
 float4 foo = (float4){ 1.0, 2.0, 3.0, 4.0 };
 

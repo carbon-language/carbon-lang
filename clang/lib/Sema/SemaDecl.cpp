@@ -1928,12 +1928,12 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *Attr) {
         tDecl->setUnderlyingType(newType);
     }
     break;
-  case AttributeList::AT_ocu_vector_type:
+  case AttributeList::AT_ext_vector_type:
     if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New))
-      HandleOCUVectorTypeAttribute(tDecl, Attr);
+      HandleExtVectorTypeAttribute(tDecl, Attr);
     else
       Diag(Attr->getLoc(), 
-           diag::err_typecheck_ocu_vector_not_typedef);
+           diag::err_typecheck_ext_vector_not_typedef);
     break;
   case AttributeList::AT_address_space:
     if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New)) {
@@ -2009,7 +2009,7 @@ void Sema::HandleDeclAttributes(Decl *New, AttributeList *declspec_prefix,
   }
 }
 
-void Sema::HandleOCUVectorTypeAttribute(TypedefDecl *tDecl, 
+void Sema::HandleExtVectorTypeAttribute(TypedefDecl *tDecl, 
                                         AttributeList *rawAttr) {
   QualType curType = tDecl->getUnderlyingType();
   // check the attribute arguments.
@@ -2022,7 +2022,7 @@ void Sema::HandleOCUVectorTypeAttribute(TypedefDecl *tDecl,
   llvm::APSInt vecSize(32);
   if (!sizeExpr->isIntegerConstantExpr(vecSize, Context)) {
     Diag(rawAttr->getLoc(), diag::err_attribute_argument_not_int,
-         "ocu_vector_type", sizeExpr->getSourceRange());
+         "ext_vector_type", sizeExpr->getSourceRange());
     return;
   }
   // unlike gcc's vector_size attribute, we do not allow vectors to be defined
@@ -2043,9 +2043,9 @@ void Sema::HandleOCUVectorTypeAttribute(TypedefDecl *tDecl,
     return;
   }
   // Instantiate/Install the vector type, the number of elements is > 0.
-  tDecl->setUnderlyingType(Context.getOCUVectorType(curType, vectorSize));
+  tDecl->setUnderlyingType(Context.getExtVectorType(curType, vectorSize));
   // Remember this typedef decl, we will need it later for diagnostics.
-  OCUVectorDecls.push_back(tDecl);
+  ExtVectorDecls.push_back(tDecl);
 }
 
 QualType Sema::HandleVectorTypeAttribute(QualType curType, 

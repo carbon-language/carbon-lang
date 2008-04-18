@@ -62,7 +62,7 @@ namespace clang {
   class BinaryOperator;
   class CompoundAssignOperator;
   class ArraySubscriptExpr;
-  class OCUVectorElementExpr;
+  class ExtVectorElementExpr;
   class ConditionalOperator;
   class ChooseExpr;
   class PreDefinedExpr;
@@ -155,14 +155,14 @@ class LValue {
     Simple,       // This is a normal l-value, use getAddress().
     VectorElt,    // This is a vector element l-value (V[i]), use getVector*
     BitField,     // This is a bitfield l-value, use getBitfield*.
-    OCUVectorElt  // This is an ocu vector subset, use getOCUVectorComp
+    ExtVectorElt  // This is an extended vector subset, use getExtVectorComp
   } LVType;
   
   llvm::Value *V;
   
   union {
     llvm::Value *VectorIdx;   // Index into a vector subscript: V[i]
-    unsigned VectorElts;      // Encoded OCUVector element subset: V.xyx
+    unsigned VectorElts;      // Encoded ExtVector element subset: V.xyx
     struct {
       unsigned short StartBit;
       unsigned short Size;
@@ -173,17 +173,17 @@ public:
   bool isSimple() const { return LVType == Simple; }
   bool isVectorElt() const { return LVType == VectorElt; }
   bool isBitfield() const { return LVType == BitField; }
-  bool isOCUVectorElt() const { return LVType == OCUVectorElt; }
+  bool isExtVectorElt() const { return LVType == ExtVectorElt; }
   
   // simple lvalue
   llvm::Value *getAddress() const { assert(isSimple()); return V; }
   // vector elt lvalue
   llvm::Value *getVectorAddr() const { assert(isVectorElt()); return V; }
   llvm::Value *getVectorIdx() const { assert(isVectorElt()); return VectorIdx; }
-  // ocu vector elements.
-  llvm::Value *getOCUVectorAddr() const { assert(isOCUVectorElt()); return V; }
-  unsigned getOCUVectorElts() const {
-    assert(isOCUVectorElt());
+  // extended vector elements.
+  llvm::Value *getExtVectorAddr() const { assert(isExtVectorElt()); return V; }
+  unsigned getExtVectorElts() const {
+    assert(isExtVectorElt());
     return VectorElts;
   }
   // bitfield lvalue
@@ -216,9 +216,9 @@ public:
     return R;
   }
   
-  static LValue MakeOCUVectorElt(llvm::Value *Vec, unsigned Elements) {
+  static LValue MakeExtVectorElt(llvm::Value *Vec, unsigned Elements) {
     LValue R;
-    R.LVType = OCUVectorElt;
+    R.LVType = ExtVectorElt;
     R.V = Vec;
     R.VectorElts = Elements;
     return R;
@@ -405,7 +405,7 @@ public:
   /// this method emits the address of the lvalue, then loads the result as an
   /// rvalue, returning the rvalue.
   RValue EmitLoadOfLValue(LValue V, QualType LVType);
-  RValue EmitLoadOfOCUElementLValue(LValue V, QualType LVType);
+  RValue EmitLoadOfExtVectorElementLValue(LValue V, QualType LVType);
   RValue EmitLoadOfBitfieldLValue(LValue LV, QualType ExprType);
 
   
@@ -413,7 +413,8 @@ public:
   /// lvalue, where both are guaranteed to the have the same type, and that type
   /// is 'Ty'.
   void EmitStoreThroughLValue(RValue Src, LValue Dst, QualType Ty);
-  void EmitStoreThroughOCUComponentLValue(RValue Src, LValue Dst, QualType Ty);
+  void EmitStoreThroughExtVectorComponentLValue(RValue Src, LValue Dst,
+                                                QualType Ty);
   void EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst, QualType Ty);
    
   // Note: only availabe for agg return types
@@ -424,7 +425,7 @@ public:
   LValue EmitPreDefinedLValue(const PreDefinedExpr *E);
   LValue EmitUnaryOpLValue(const UnaryOperator *E);
   LValue EmitArraySubscriptExpr(const ArraySubscriptExpr *E);
-  LValue EmitOCUVectorElementExpr(const OCUVectorElementExpr *E);
+  LValue EmitExtVectorElementExpr(const ExtVectorElementExpr *E);
   LValue EmitMemberExpr(const MemberExpr *E);
 
   LValue EmitLValueForField(llvm::Value* Base, FieldDecl* Field,

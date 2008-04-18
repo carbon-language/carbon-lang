@@ -396,8 +396,8 @@ Expr::isLvalueResult Expr::isLvalue() const {
     return cast<ParenExpr>(this)->getSubExpr()->isLvalue();
   case CompoundLiteralExprClass: // C99 6.5.2.5p5
     return LV_Valid;
-  case OCUVectorElementExprClass:
-    if (cast<OCUVectorElementExpr>(this)->containsDuplicateElements())
+  case ExtVectorElementExprClass:
+    if (cast<ExtVectorElementExpr>(this)->containsDuplicateElements())
       return LV_DuplicateVectorComponents;
     return LV_Valid;
   case ObjCIvarRefExprClass: // ObjC instance variables are lvalues.
@@ -1037,29 +1037,29 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
   return isIntegerConstantExpr(Val, Ctx, 0, true) && Val == 0;
 }
 
-unsigned OCUVectorElementExpr::getNumElements() const {
+unsigned ExtVectorElementExpr::getNumElements() const {
   return strlen(Accessor.getName());
 }
 
 
 /// getComponentType - Determine whether the components of this access are
 /// "point" "color" or "texture" elements.
-OCUVectorElementExpr::ElementType 
-OCUVectorElementExpr::getElementType() const {
+ExtVectorElementExpr::ElementType 
+ExtVectorElementExpr::getElementType() const {
   // derive the component type, no need to waste space.
   const char *compStr = Accessor.getName();
   
-  if (OCUVectorType::getPointAccessorIdx(*compStr) != -1) return Point;
-  if (OCUVectorType::getColorAccessorIdx(*compStr) != -1) return Color;
+  if (ExtVectorType::getPointAccessorIdx(*compStr) != -1) return Point;
+  if (ExtVectorType::getColorAccessorIdx(*compStr) != -1) return Color;
   
-  assert(OCUVectorType::getTextureAccessorIdx(*compStr) != -1 &&
+  assert(ExtVectorType::getTextureAccessorIdx(*compStr) != -1 &&
          "getComponentType(): Illegal accessor");
   return Texture;
 }
 
 /// containsDuplicateElements - Return true if any element access is
 /// repeated.
-bool OCUVectorElementExpr::containsDuplicateElements() const {
+bool ExtVectorElementExpr::containsDuplicateElements() const {
   const char *compStr = Accessor.getName();
   unsigned length = strlen(compStr);
   
@@ -1073,7 +1073,7 @@ bool OCUVectorElementExpr::containsDuplicateElements() const {
 }
 
 /// getEncodedElementAccess - We encode fields with two bits per component.
-unsigned OCUVectorElementExpr::getEncodedElementAccess() const {
+unsigned ExtVectorElementExpr::getEncodedElementAccess() const {
   const char *compStr = Accessor.getName();
   unsigned length = getNumElements();
 
@@ -1081,7 +1081,7 @@ unsigned OCUVectorElementExpr::getEncodedElementAccess() const {
   
   while (length--) {
     Result <<= 2;
-    int Idx = OCUVectorType::getAccessorIdx(compStr[length]);
+    int Idx = ExtVectorType::getAccessorIdx(compStr[length]);
     assert(Idx != -1 && "Invalid accessor letter");
     Result |= Idx;
   }
@@ -1268,11 +1268,11 @@ Stmt::child_iterator MemberExpr::child_end() {
   return reinterpret_cast<Stmt**>(&Base)+1;
 }
 
-// OCUVectorElementExpr
-Stmt::child_iterator OCUVectorElementExpr::child_begin() {
+// ExtVectorElementExpr
+Stmt::child_iterator ExtVectorElementExpr::child_begin() {
   return reinterpret_cast<Stmt**>(&Base);
 }
-Stmt::child_iterator OCUVectorElementExpr::child_end() {
+Stmt::child_iterator ExtVectorElementExpr::child_end() {
   return reinterpret_cast<Stmt**>(&Base)+1;
 }
 

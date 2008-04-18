@@ -258,7 +258,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     const llvm::Type *EltTy = ConvertTypeRecursive(A.getElementType());
     return llvm::ArrayType::get(EltTy, A.getSize().getZExtValue());
   }
-  case Type::OCUVector:
+  case Type::ExtVector:
   case Type::Vector: {
     const VectorType &VT = cast<VectorType>(Ty);
     return llvm::VectorType::get(ConvertTypeRecursive(VT.getElementType()),

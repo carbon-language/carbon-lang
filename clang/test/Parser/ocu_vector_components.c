@@ -1,8 +1,8 @@
 // RUN: clang -fsyntax-only -verify %s
 
-typedef __attribute__(( ocu_vector_type(2) )) float float2;
-typedef __attribute__(( ocu_vector_type(3) )) float float3;
-typedef __attribute__(( ocu_vector_type(4) )) float float4;
+typedef __attribute__(( ext_vector_type(2) )) float float2;
+typedef __attribute__(( ext_vector_type(3) )) float float3;
+typedef __attribute__(( ext_vector_type(4) )) float float4;
 
 static void test() {
     float2 vec2, vec2_2;

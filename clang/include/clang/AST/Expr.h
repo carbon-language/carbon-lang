@@ -691,11 +691,11 @@ public:
   static MemberExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
-/// OCUVectorElementExpr - This represents access to specific elements of a
+/// ExtVectorElementExpr - This represents access to specific elements of a
 /// vector, and may occur on the left hand side or right hand side.  For example
-/// the following is legal:  "V.xy = V.zw" if V is a 4 element ocu vector.
+/// the following is legal:  "V.xy = V.zw" if V is a 4 element extended vector.
 ///
-class OCUVectorElementExpr : public Expr {
+class ExtVectorElementExpr : public Expr {
   Expr *Base;
   IdentifierInfo &Accessor;
   SourceLocation AccessorLoc;
@@ -705,9 +705,9 @@ public:
     Color,   // rgba
     Texture  // stpq
   };
-  OCUVectorElementExpr(QualType ty, Expr *base, IdentifierInfo &accessor,
+  ExtVectorElementExpr(QualType ty, Expr *base, IdentifierInfo &accessor,
                        SourceLocation loc)
-    : Expr(OCUVectorElementExprClass, ty), 
+    : Expr(ExtVectorElementExprClass, ty), 
       Base(base), Accessor(accessor), AccessorLoc(loc) {}
                      
   const Expr *getBase() const { return Base; }
@@ -743,9 +743,9 @@ public:
   }
   
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == OCUVectorElementExprClass; 
+    return T->getStmtClass() == ExtVectorElementExprClass; 
   }
-  static bool classof(const OCUVectorElementExpr *) { return true; }
+  static bool classof(const ExtVectorElementExpr *) { return true; }
   
   // Iterators
   virtual child_iterator child_begin();

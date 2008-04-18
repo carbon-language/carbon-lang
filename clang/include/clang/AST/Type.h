@@ -50,7 +50,7 @@ namespace clang {
   class ComplexType;
   class TagType;
   class FunctionType;
-  class OCUVectorType;
+  class ExtVectorType;
   class BuiltinType;
   class ObjCInterfaceType;
   class ObjCQualifiedIdType;
@@ -223,7 +223,7 @@ public:
   enum TypeClass {
     Builtin, Complex, Pointer, Reference, 
     ConstantArray, VariableArray, IncompleteArray,
-    Vector, OCUVector,
+    Vector, ExtVector,
     FunctionNoProto, FunctionProto,
     TypeName, Tagged, ASQual,
     ObjCInterface, ObjCQualifiedInterface,
@@ -320,7 +320,7 @@ public:
   bool isUnionType() const;
   bool isComplexIntegerType() const;            // GCC _Complex integer type.
   bool isVectorType() const;                    // GCC vector type.
-  bool isOCUVectorType() const;                 // OCU vector type.
+  bool isExtVectorType() const;                 // Extended vector type.
   bool isObjCInterfaceType() const;             // NSString or NSString<foo>
   bool isObjCQualifiedInterfaceType() const;    // NSString<foo>
   bool isObjCQualifiedIdType() const;           // id<foo>
@@ -343,7 +343,7 @@ public:
   const VectorType *getAsVectorType() const; // GCC vector type.
   const ComplexType *getAsComplexType() const;
   const ComplexType *getAsComplexIntegerType() const; // GCC complex int type.
-  const OCUVectorType *getAsOCUVectorType() const; // OCU vector type.
+  const ExtVectorType *getAsExtVectorType() const; // Extended vector type.
   const ObjCInterfaceType *getAsObjCInterfaceType() const;
   const ObjCQualifiedInterfaceType *getAsObjCQualifiedInterfaceType() const;
   const ObjCQualifiedIdType *getAsObjCQualifiedIdType() const;
@@ -758,19 +758,19 @@ public:
     ID.AddInteger(TypeClass);
   }
   static bool classof(const Type *T) { 
-    return T->getTypeClass() == Vector || T->getTypeClass() == OCUVector; 
+    return T->getTypeClass() == Vector || T->getTypeClass() == ExtVector; 
   }
   static bool classof(const VectorType *) { return true; }
 };
 
-/// OCUVectorType - Extended vector type. This type is created using
-/// __attribute__((ocu_vector_type(n)), where "n" is the number of elements.
-/// Unlike vector_size, ocu_vector_type is only allowed on typedef's. This
+/// ExtVectorType - Extended vector type. This type is created using
+/// __attribute__((ext_vector_type(n)), where "n" is the number of elements.
+/// Unlike vector_size, ext_vector_type is only allowed on typedef's. This
 /// class enables syntactic extensions, like Vector Components for accessing
 /// points, colors, and textures (modeled after OpenGL Shading Language).
-class OCUVectorType : public VectorType {
-  OCUVectorType(QualType vecType, unsigned nElements, QualType canonType) :
-    VectorType(OCUVector, vecType, nElements, canonType) {} 
+class ExtVectorType : public VectorType {
+  ExtVectorType(QualType vecType, unsigned nElements, QualType canonType) :
+    VectorType(ExtVector, vecType, nElements, canonType) {} 
   friend class ASTContext;  // ASTContext creates these.
 public:
   static int getPointAccessorIdx(char c) {
@@ -815,9 +815,9 @@ public:
   virtual void getAsStringInternal(std::string &InnerString) const;
 
   static bool classof(const Type *T) { 
-    return T->getTypeClass() == OCUVector; 
+    return T->getTypeClass() == ExtVector; 
   }
-  static bool classof(const OCUVectorType *) { return true; }
+  static bool classof(const ExtVectorType *) { return true; }
 };
 
 /// FunctionType - C99 6.7.5.3 - Function Declarators.  This is the common base
@@ -1225,8 +1225,8 @@ inline bool Type::isAnyComplexType() const {
 inline bool Type::isVectorType() const {
   return isa<VectorType>(CanonicalType.getUnqualifiedType());
 }
-inline bool Type::isOCUVectorType() const {
-  return isa<OCUVectorType>(CanonicalType.getUnqualifiedType());
+inline bool Type::isExtVectorType() const {
+  return isa<ExtVectorType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isObjCInterfaceType() const {
   return isa<ObjCInterfaceType>(CanonicalType);

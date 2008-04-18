@@ -88,7 +88,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     if (!memcmp(Str, "address_space", 13)) return AT_address_space;
     break;
   case 15:
-    if (!memcmp(Str, "ocu_vector_type", 15)) return AT_ocu_vector_type;
+    if (!memcmp(Str, "ext_vector_type", 15)) return AT_ext_vector_type;
     break;
   case 18:
     if (!memcmp(Str, "warn_unused_result", 18)) return AT_warn_unused_result;

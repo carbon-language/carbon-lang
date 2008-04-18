@@ -169,9 +169,10 @@ public:
   /// the specified element type and size. VectorType must be a built-in type.
   QualType getVectorType(QualType VectorType, unsigned NumElts);
 
-  /// getOCUVectorType - Return the unique reference to an OCU vector type of
-  /// the specified element type and size. VectorType must be a built-in type.
-  QualType getOCUVectorType(QualType VectorType, unsigned NumElts);
+  /// getExtVectorType - Return the unique reference to an extended vector type
+  /// of the specified element type and size.  VectorType must be a built-in
+  /// type.
+  QualType getExtVectorType(QualType VectorType, unsigned NumElts);
 
   /// getFunctionTypeNoProto - Return a K&R style C function type like 'int()'.
   ///

@@ -429,7 +429,7 @@ ActOnArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
     
     // Component access limited to variables (reject vec4.rg[1]).
     if (!isa<DeclRefExpr>(BaseExpr) && !isa<ArraySubscriptExpr>(BaseExpr)) 
-      return Diag(LLoc, diag::err_ocuvector_component_access, 
+      return Diag(LLoc, diag::err_ext_vector_component_access, 
                   SourceRange(LLoc, RLoc));
     // FIXME: need to deal with const...
     ResultType = VTy->getElementType();
@@ -455,14 +455,14 @@ ActOnArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
 }
 
 QualType Sema::
-CheckOCUVectorComponent(QualType baseType, SourceLocation OpLoc,
+CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
                         IdentifierInfo &CompName, SourceLocation CompLoc) {
-  const OCUVectorType *vecType = baseType->getAsOCUVectorType();
+  const ExtVectorType *vecType = baseType->getAsExtVectorType();
   
   // The vector accessor can't exceed the number of elements.
   const char *compStr = CompName.getName();
   if (strlen(compStr) > vecType->getNumElements()) {
-    Diag(OpLoc, diag::err_ocuvector_component_exceeds_length, 
+    Diag(OpLoc, diag::err_ext_vector_component_exceeds_length, 
                 baseType.getAsString(), SourceRange(CompLoc));
     return QualType();
   }
@@ -484,7 +484,7 @@ CheckOCUVectorComponent(QualType baseType, SourceLocation OpLoc,
   if (*compStr) { 
     // We didn't get to the end of the string. This means the component names
     // didn't come from the same set *or* we encountered an illegal name.
-    Diag(OpLoc, diag::err_ocuvector_component_name_illegal, 
+    Diag(OpLoc, diag::err_ext_vector_component_name_illegal, 
          std::string(compStr,compStr+1), SourceRange(CompLoc));
     return QualType();
   }
@@ -499,7 +499,7 @@ CheckOCUVectorComponent(QualType baseType, SourceLocation OpLoc,
   if (*compStr) { 
     // We didn't get to the end of the string. This means a component accessor
     // exceeds the number of elements in the vector.
-    Diag(OpLoc, diag::err_ocuvector_component_exceeds_length, 
+    Diag(OpLoc, diag::err_ext_vector_component_exceeds_length, 
                 baseType.getAsString(), SourceRange(CompLoc));
     return QualType();
   }
@@ -510,12 +510,12 @@ CheckOCUVectorComponent(QualType baseType, SourceLocation OpLoc,
   if (CompSize == 1)
     return vecType->getElementType();
     
-  QualType VT = Context.getOCUVectorType(vecType->getElementType(), CompSize);
+  QualType VT = Context.getExtVectorType(vecType->getElementType(), CompSize);
   // Now look up the TypeDefDecl from the vector type. Without this, 
-  // diagostics look bad. We want OCU vector types to appear built-in.
-  for (unsigned i = 0, E = OCUVectorDecls.size(); i != E; ++i) {
-    if (OCUVectorDecls[i]->getUnderlyingType() == VT)
-      return Context.getTypedefType(OCUVectorDecls[i]);
+  // diagostics look bad. We want extended vector types to appear built-in.
+  for (unsigned i = 0, E = ExtVectorDecls.size(); i != E; ++i) {
+    if (ExtVectorDecls[i]->getUnderlyingType() == VT)
+      return Context.getTypedefType(ExtVectorDecls[i]);
   }
   return VT; // should never get here (a typedef type should always be found).
 }
@@ -540,7 +540,7 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
       return Diag(OpLoc, diag::err_typecheck_member_reference_arrow,
                   SourceRange(MemberLoc));
   }
-  // The base type is either a record or an OCUVectorType.
+  // The base type is either a record or an ExtVectorType.
   if (const RecordType *RTy = BaseType->getAsRecordType()) {
     RecordDecl *RDecl = RTy->getDecl();
     if (RTy->isIncompleteType())
@@ -561,15 +561,15 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
 
     return new MemberExpr(BaseExpr, OpKind==tok::arrow, MemberDecl,
                           MemberLoc, MemberType);
-  } else if (BaseType->isOCUVectorType() && OpKind == tok::period) {
+  } else if (BaseType->isExtVectorType() && OpKind == tok::period) {
     // Component access limited to variables (reject vec4.rg.g).
     if (!isa<DeclRefExpr>(BaseExpr) && !isa<ArraySubscriptExpr>(BaseExpr))
-      return Diag(OpLoc, diag::err_ocuvector_component_access, 
+      return Diag(OpLoc, diag::err_ext_vector_component_access, 
                   SourceRange(MemberLoc));
-    QualType ret = CheckOCUVectorComponent(BaseType, OpLoc, Member, MemberLoc);
+    QualType ret = CheckExtVectorComponent(BaseType, OpLoc, Member, MemberLoc);
     if (ret.isNull())
       return true;
-    return new OCUVectorElementExpr(ret, BaseExpr, Member, MemberLoc);
+    return new ExtVectorElementExpr(ret, BaseExpr, Member, MemberLoc);
   } else if (BaseType->isObjCInterfaceType()) {
     ObjCInterfaceDecl *IFace;
     if (isa<ObjCInterfaceType>(BaseType.getCanonicalType()))
@@ -1208,8 +1208,8 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   }
 
   if (isa<VectorType>(lhsType) || isa<VectorType>(rhsType)) {
-    // For OCUVector, allow vector splats; float -> <n x float>
-    if (const OCUVectorType *LV = dyn_cast<OCUVectorType>(lhsType)) {
+    // For ExtVector, allow vector splats; float -> <n x float>
+    if (const ExtVectorType *LV = dyn_cast<ExtVectorType>(lhsType)) {
       if (LV->getElementType().getTypePtr() == rhsType.getTypePtr())
         return Compatible;
     }
@@ -1310,9 +1310,9 @@ inline QualType Sema::CheckVectorOperands(SourceLocation loc, Expr *&lex,
   if (lhsType == rhsType)
     return lhsType;
 
-  // if the lhs is an ocu vector and the rhs is a scalar of the same type,
+  // if the lhs is an extended vector and the rhs is a scalar of the same type,
   // promote the rhs to the vector type.
-  if (const OCUVectorType *V = lhsType->getAsOCUVectorType()) {
+  if (const ExtVectorType *V = lhsType->getAsExtVectorType()) {
     if (V->getElementType().getCanonicalType().getTypePtr()
         == rhsType.getCanonicalType().getTypePtr()) {
       ImpCastExprToType(rex, lhsType);
@@ -1320,9 +1320,9 @@ inline QualType Sema::CheckVectorOperands(SourceLocation loc, Expr *&lex,
     }
   }
 
-  // if the rhs is an ocu vector and the lhs is a scalar of the same type,
+  // if the rhs is an extended vector and the lhs is a scalar of the same type,
   // promote the lhs to the vector type.
-  if (const OCUVectorType *V = rhsType->getAsOCUVectorType()) {
+  if (const ExtVectorType *V = rhsType->getAsExtVectorType()) {
     if (V->getElementType().getCanonicalType().getTypePtr()
         == lhsType.getCanonicalType().getTypePtr()) {
       ImpCastExprToType(lex, rhsType);

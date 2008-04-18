@@ -128,7 +128,7 @@ public:
   Value *VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) { return EmitLoadOfLValue(E);}
   Value *VisitArraySubscriptExpr(ArraySubscriptExpr *E);
   Value *VisitMemberExpr(Expr *E)           { return EmitLoadOfLValue(E); }
-  Value *VisitOCUVectorElementExpr(Expr *E) { return EmitLoadOfLValue(E); }
+  Value *VisitExtVectorElementExpr(Expr *E) { return EmitLoadOfLValue(E); }
   Value *VisitStringLiteral(Expr *E)  { return EmitLValue(E).getAddress(); }
   Value *VisitPreDefinedExpr(Expr *E) { return EmitLValue(E).getAddress(); }
 
@@ -379,8 +379,8 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     return Builder.CreatePtrToInt(Src, DstTy, "conv");
   }
   
-  // A scalar source can be splatted to an OCU vector of the same element type
-  if (DstType->isOCUVectorType() && !isa<VectorType>(SrcType) &&
+  // A scalar can be splatted to an extended vector of the same element type
+  if (DstType->isExtVectorType() && !isa<VectorType>(SrcType) &&
       cast<llvm::VectorType>(DstTy)->getElementType() == Src->getType())
     return CGF.EmitVector(&Src, DstType->getAsVectorType()->getNumElements(), 
                           true);

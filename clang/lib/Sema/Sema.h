@@ -51,7 +51,7 @@ namespace clang {
   class ArrayType;
   class LabelStmt;
   class SwitchStmt;
-  class OCUVectorType;
+  class ExtVectorType;
   class TypedefDecl;
   class ObjCInterfaceDecl;
   class ObjCCompatibleAliasDecl;
@@ -85,10 +85,10 @@ class Sema : public Action {
   
   llvm::SmallVector<SwitchStmt*, 8> SwitchStack;
   
-  /// OCUVectorDecls - This is a list all the OCU vector types. This allows
-  /// us to associate a raw vector type with one of the OCU type names.
+  /// ExtVectorDecls - This is a list all the extended vector types. This allows
+  /// us to associate a raw vector type with one of the ext_vector type names.
   /// This is only necessary for issuing pretty diagnostics.
-  llvm::SmallVector<TypedefDecl*, 24> OCUVectorDecls;
+  llvm::SmallVector<TypedefDecl*, 24> ExtVectorDecls;
 
   /// ObjCImplementations - Keep track of all of the classes with
   /// @implementation's, so that we can emit errors on duplicates.
@@ -307,7 +307,7 @@ private:
   // for the variable, measured in bytes. If curType and rawAttr are well
   // formed, this routine will return a new vector type.
   QualType HandleVectorTypeAttribute(QualType curType, AttributeList *rawAttr);
-  void HandleOCUVectorTypeAttribute(TypedefDecl *d, AttributeList *rawAttr);
+  void HandleExtVectorTypeAttribute(TypedefDecl *d, AttributeList *rawAttr);
   
   void HandleAlignedAttribute(Decl *d, AttributeList *rawAttr);
   void HandlePackedAttribute(Decl *d, AttributeList *rawAttr);
@@ -821,7 +821,7 @@ private:
   QualType CheckRealImagOperand(Expr *&Op, SourceLocation OpLoc);
   
   /// type checking primary expressions.
-  QualType CheckOCUVectorComponent(QualType baseType, SourceLocation OpLoc,
+  QualType CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
                                    IdentifierInfo &Comp, SourceLocation CmpLoc);
   
   /// type checking declaration initializers (C99 6.7.8)

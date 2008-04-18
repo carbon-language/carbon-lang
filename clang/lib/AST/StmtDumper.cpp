@@ -124,7 +124,7 @@ namespace  {
     void VisitUnaryOperator(UnaryOperator *Node);
     void VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node);
     void VisitMemberExpr(MemberExpr *Node);
-    void VisitOCUVectorElementExpr(OCUVectorElementExpr *Node);
+    void VisitExtVectorElementExpr(ExtVectorElementExpr *Node);
     void VisitBinaryOperator(BinaryOperator *Node);
     void VisitCompoundAssignOperator(CompoundAssignOperator *Node);
     void VisitAddrLabelExpr(AddrLabelExpr *Node);
@@ -377,7 +377,7 @@ void StmtDumper::VisitMemberExpr(MemberExpr *Node) {
   fprintf(F, " %s%s %p", Node->isArrow() ? "->" : ".",
           Node->getMemberDecl()->getName(), (void*)Node->getMemberDecl());
 }
-void StmtDumper::VisitOCUVectorElementExpr(OCUVectorElementExpr *Node) {
+void StmtDumper::VisitExtVectorElementExpr(ExtVectorElementExpr *Node) {
   DumpExpr(Node);
   fprintf(F, " %s", Node->getAccessor().getName());
 }

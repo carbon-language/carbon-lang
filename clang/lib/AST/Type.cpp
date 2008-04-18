@@ -416,22 +416,22 @@ const VectorType *Type::getAsVectorType() const {
   return getDesugaredType()->getAsVectorType();
 }
 
-const OCUVectorType *Type::getAsOCUVectorType() const {
+const ExtVectorType *Type::getAsExtVectorType() const {
   // Are we directly an OpenCU vector type?
-  if (const OCUVectorType *VTy = dyn_cast<OCUVectorType>(this))
+  if (const ExtVectorType *VTy = dyn_cast<ExtVectorType>(this))
     return VTy;
   
   // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<OCUVectorType>(CanonicalType)) {  
+  if (!isa<ExtVectorType>(CanonicalType)) {  
     // Look through type qualifiers
-    if (isa<OCUVectorType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsOCUVectorType();
+    if (isa<ExtVectorType>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAsExtVectorType();
     return 0;
   }
 
-  // If this is a typedef for an ocuvector type, strip the typedef off without
-  // losing all typedef information.
-  return getDesugaredType()->getAsOCUVectorType();
+  // If this is a typedef for an extended vector type, strip the typedef off
+  // without losing all typedef information.
+  return getDesugaredType()->getAsExtVectorType();
 }
 
 const ObjCInterfaceType *Type::getAsObjCInterfaceType() const {
@@ -903,8 +903,8 @@ void VectorType::getAsStringInternal(std::string &S) const {
   ElementType.getAsStringInternal(S);
 }
 
-void OCUVectorType::getAsStringInternal(std::string &S) const {
-  S += " __attribute__((ocu_vector_type(";
+void ExtVectorType::getAsStringInternal(std::string &S) const {
+  S += " __attribute__((ext_vector_type(";
   S += llvm::utostr_32(NumElements);
   S += ")))";
   ElementType.getAsStringInternal(S);

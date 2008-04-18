@@ -200,7 +200,7 @@ ASTContext::getTypeInfo(QualType T) {
     Align = EltInfo.second;
     break;
   }
-  case Type::OCUVector:
+  case Type::ExtVector:
   case Type::Vector: {
     std::pair<uint64_t, unsigned> EltInfo = 
       getTypeInfo(cast<VectorType>(T)->getElementType());
@@ -678,17 +678,17 @@ QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts) {
   return QualType(New, 0);
 }
 
-/// getOCUVectorType - Return the unique reference to an OCU vector type of
+/// getExtVectorType - Return the unique reference to an extended vector type of
 /// the specified element type and size. VectorType must be a built-in type.
-QualType ASTContext::getOCUVectorType(QualType vecType, unsigned NumElts) {
+QualType ASTContext::getExtVectorType(QualType vecType, unsigned NumElts) {
   BuiltinType *baseType;
   
   baseType = dyn_cast<BuiltinType>(getCanonicalType(vecType).getTypePtr());
-  assert(baseType != 0 && "getOCUVectorType(): Expecting a built-in type");
+  assert(baseType != 0 && "getExtVectorType(): Expecting a built-in type");
          
   // Check if we've already instantiated a vector of this type.
   llvm::FoldingSetNodeID ID;
-  VectorType::Profile(ID, vecType, NumElts, Type::OCUVector);      
+  VectorType::Profile(ID, vecType, NumElts, Type::ExtVector);      
   void *InsertPos = 0;
   if (VectorType *VTP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(VTP, 0);
@@ -697,13 +697,13 @@ QualType ASTContext::getOCUVectorType(QualType vecType, unsigned NumElts) {
   // so fill in the canonical type field.
   QualType Canonical;
   if (!vecType->isCanonical()) {
-    Canonical = getOCUVectorType(getCanonicalType(vecType), NumElts);
+    Canonical = getExtVectorType(getCanonicalType(vecType), NumElts);
     
     // Get the new insert position for the node we care about.
     VectorType *NewIP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewIP == 0 && "Shouldn't be in the map!");
   }
-  OCUVectorType *New = new OCUVectorType(vecType, NumElts, Canonical);
+  ExtVectorType *New = new ExtVectorType(vecType, NumElts, Canonical);
   VectorTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
   return QualType(New, 0);
@@ -1646,9 +1646,9 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
   if (RHSClass == Type::VariableArray || RHSClass == Type::IncompleteArray)
     RHSClass = Type::ConstantArray;
   
-  // Canonicalize OCUVector -> Vector.
-  if (LHSClass == Type::OCUVector) LHSClass = Type::Vector;
-  if (RHSClass == Type::OCUVector) RHSClass = Type::Vector;
+  // Canonicalize ExtVector -> Vector.
+  if (LHSClass == Type::ExtVector) LHSClass = Type::Vector;
+  if (RHSClass == Type::ExtVector) RHSClass = Type::Vector;
   
   // Consider qualified interfaces and interfaces the same.
   if (LHSClass == Type::ObjCQualifiedInterface) LHSClass = Type::ObjCInterface;
