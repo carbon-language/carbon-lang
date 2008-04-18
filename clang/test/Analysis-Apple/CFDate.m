@@ -64,3 +64,23 @@ CFAbsoluteTime f4() {
   return t;
 }
 
+// Test a leak.
+
+CFAbsoluteTime f5(int x) {  
+  CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
+  CFDateRef date = CFDateCreate(NULL, t);
+  
+  if (x)
+    CFRelease(date);
+
+  return t; // expected-warning{{leak}}
+}
+
+// Test a leak involving the return.
+
+CFDateRef f6(int x) {  
+  CFDateRef date = CFDateCreate(NULL, CFAbsoluteTimeGetCurrent());
+  CFRetain(date);
+  return date; // expected-warning{{leak}}
+}
+
