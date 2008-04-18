@@ -1980,8 +1980,7 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
     break;
   }
   case ICmpInst::ICMP_UGT: {
-    SCEVHandle TC = HowManyLessThans(SE.getNegativeSCEV(LHS),
-                                     SE.getNegativeSCEV(RHS), L, false);
+    SCEVHandle TC = HowFarToZero(SE.getMinusSCEV(LHS, RHS), L);
     if (!isa<SCEVCouldNotCompute>(TC)) return TC;
     break;
   }
