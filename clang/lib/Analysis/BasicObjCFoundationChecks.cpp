@@ -54,7 +54,7 @@ static const char* GetReceiverNameType(ObjCMessageExpr* ME) {
 
 namespace {
   
-class VISIBILITY_HIDDEN NilArg : public BugType {
+class VISIBILITY_HIDDEN NilArg : public BugTypeCacheLocation {
 public:
   virtual ~NilArg() {}
   

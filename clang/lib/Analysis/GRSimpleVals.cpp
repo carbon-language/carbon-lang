@@ -40,8 +40,7 @@ ExplodedNode<ValueState>* GetNode(GRExprEngine::undef_arg_iterator I) {
 }
 
 template <typename ITER>
-void GenericEmitWarnings(BugReporter& BR, const BugType& D,
-                         ITER I, ITER E) {
+void GenericEmitWarnings(BugReporter& BR, BugType& D, ITER I, ITER E) {
   
   for (; I != E; ++I) {
     BugReport R(D, GetNode(I));    
@@ -55,7 +54,7 @@ void GenericEmitWarnings(BugReporter& BR, const BugType& D,
 
 namespace {
   
-class VISIBILITY_HIDDEN NullDeref : public BugType {
+class VISIBILITY_HIDDEN NullDeref : public BugTypeCacheLocation {
 public:
   virtual const char* getName() const {
     return "null dereference";
@@ -72,7 +71,7 @@ public:
   }
 };
 
-class VISIBILITY_HIDDEN UndefDeref : public BugType {
+class VISIBILITY_HIDDEN UndefDeref : public BugTypeCacheLocation {
 public:
   virtual const char* getName() const {
     return "bad dereference";
@@ -89,7 +88,7 @@ public:
   }
 };
   
-class VISIBILITY_HIDDEN UndefBranch : public BugType {
+class VISIBILITY_HIDDEN UndefBranch : public BugTypeCacheLocation {
 public:
   virtual const char* getName() const {
     return "uninitialized value";
@@ -106,7 +105,7 @@ public:
   }
 };
   
-class VISIBILITY_HIDDEN DivZero : public BugType {
+class VISIBILITY_HIDDEN DivZero : public BugTypeCacheLocation {
 public:
   virtual const char* getName() const {
     return "divide-by-zero";
@@ -123,7 +122,7 @@ public:
   }
 };
 
-class VISIBILITY_HIDDEN UndefResult : public BugType {
+class VISIBILITY_HIDDEN UndefResult : public BugTypeCacheLocation {
 public:
   virtual const char* getName() const {
     return "undefined result";
@@ -140,7 +139,7 @@ public:
   }
 };
   
-class VISIBILITY_HIDDEN BadCall : public BugType {
+class VISIBILITY_HIDDEN BadCall : public BugTypeCacheLocation {
 public:
   virtual const char* getName() const {
     return "invalid function call";
@@ -158,7 +157,7 @@ public:
 };
   
   
-class VISIBILITY_HIDDEN BadArg : public BugType {
+class VISIBILITY_HIDDEN BadArg : public BugTypeCacheLocation {
 public:
   
   virtual ~BadArg() {}
@@ -214,7 +213,7 @@ public:
   }
 };
 
-class VISIBILITY_HIDDEN BadReceiver : public BugType {
+class VISIBILITY_HIDDEN BadReceiver : public BugTypeCacheLocation {
 public:  
   virtual const char* getName() const {
     return "bad receiver";
@@ -245,7 +244,7 @@ public:
   }
 };
   
-class VISIBILITY_HIDDEN RetStack : public BugType {
+class VISIBILITY_HIDDEN RetStack : public BugTypeCacheLocation {
 public:
   virtual const char* getName() const {
     return "return of stack address";

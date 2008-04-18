@@ -357,12 +357,14 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   }
 }
 
-bool BugReporter::IsCached(ExplodedNode<ValueState>* N) {
+bool BugTypeCacheLocation::isCached(BugReport& R) {
+  
+  ExplodedNode<ValueState>* N = R.getEndNode();
   
   if (!N)
     return false;
-  
-  // HACK: Cache the location of the error.  Don't emit the same
+
+  // Cache the location of the error.  Don't emit the same
   // warning for the same error type that occurs at the same program
   // location but along a different path.
   
@@ -371,14 +373,13 @@ bool BugReporter::IsCached(ExplodedNode<ValueState>* N) {
   if (CachedErrors.count(p))
     return true;
   
-  CachedErrors.insert(p);
-  
+  CachedErrors.insert(p);  
   return false;
 }
 
 void BugReporter::EmitWarning(BugReport& R) {
 
-  if (IsCached(R.getEndNode()))
+  if (R.getBugType().isCached(R))
     return;
 
   PathDiagnostic D(R.getName());  

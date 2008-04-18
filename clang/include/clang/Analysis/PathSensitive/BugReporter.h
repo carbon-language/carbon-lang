@@ -32,6 +32,7 @@ class BugReporter;
 class GRExprEngine;
 class ValueState;
 class Stmt;
+class BugReport;
   
 class BugType {
 public:
@@ -43,17 +44,29 @@ public:
       
   virtual void EmitWarnings(BugReporter& BR) {}
   virtual void GetErrorNodes(std::vector<ExplodedNode<ValueState>*>& Nodes) {}
+  
+  virtual bool isCached(BugReport& R) = 0;
 };
   
+class BugTypeCacheLocation : public BugType {
+  llvm::SmallPtrSet<void*,10> CachedErrors;
+public:
+  BugTypeCacheLocation() {}
+  virtual ~BugTypeCacheLocation() {}  
+  virtual bool isCached(BugReport& R);
+};
+  
+  
 class BugReport {
-  const BugType& Desc;
+  BugType& Desc;
   ExplodedNode<ValueState> *N;
   
 public:
-  BugReport(const BugType& D, ExplodedNode<ValueState> *n) : Desc(D), N(n) {}
+  BugReport(BugType& D, ExplodedNode<ValueState> *n) : Desc(D), N(n) {}
   virtual ~BugReport();
   
   const BugType& getBugType() const { return Desc; }
+  BugType& getBugType() { return Desc; }
   
   ExplodedNode<ValueState>* getEndNode() const { return N; }
   
@@ -82,7 +95,7 @@ public:
 class RangedBugReport : public BugReport {
   std::vector<SourceRange> Ranges;
 public:
-  RangedBugReport(const BugType& D, ExplodedNode<ValueState> *n)
+  RangedBugReport(BugType& D, ExplodedNode<ValueState> *n)
     : BugReport(D, n) {}
   
   virtual ~RangedBugReport();
@@ -104,7 +117,6 @@ public:
 };
   
 class BugReporter {
-  llvm::SmallPtrSet<void*,10> CachedErrors;
   Diagnostic& Diag;
   PathDiagnosticClient* PD;
   ASTContext& Ctx;
@@ -130,10 +142,6 @@ public:
   CFG& getCFG() { return getGraph().getCFG(); }
   
   void EmitWarning(BugReport& R);
-    
-  void clearCache() { CachedErrors.clear(); }
-  
-  bool IsCached(ExplodedNode<ValueState>* N);
   
   void GeneratePathDiagnostic(PathDiagnostic& PD, BugReport& R);
 };

@@ -1268,7 +1268,7 @@ namespace {
   // Bug Descriptions. //
   //===-------------===//  
   
-  class VISIBILITY_HIDDEN CFRefBug : public BugType {
+  class VISIBILITY_HIDDEN CFRefBug : public BugTypeCacheLocation {
   protected:
     CFRefCount& TF;
     
@@ -1331,7 +1331,7 @@ namespace {
   class VISIBILITY_HIDDEN CFRefReport : public RangedBugReport {
     SymbolID Sym;
   public:
-    CFRefReport(const BugType& D, ExplodedNode<ValueState> *n, SymbolID sym)
+    CFRefReport(BugType& D, ExplodedNode<ValueState> *n, SymbolID sym)
       : RangedBugReport(D, n), Sym(sym) {}
         
     virtual ~CFRefReport() {}

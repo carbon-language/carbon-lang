@@ -109,7 +109,7 @@ class VISIBILITY_HIDDEN DiagBugReport : public RangedBugReport {
   std::list<std::string> Strs;
   FullSourceLoc L;
 public:
-  DiagBugReport(const BugType& D, FullSourceLoc l) :
+  DiagBugReport(BugType& D, FullSourceLoc l) :
     RangedBugReport(D, NULL), L(l) {}
   
   virtual ~DiagBugReport() {}
@@ -124,7 +124,7 @@ public:
   
 class VISIBILITY_HIDDEN DiagCollector : public DiagnosticClient {
   std::list<DiagBugReport> Reports;
-  const BugType& D;
+  BugType& D;
 public:
   DiagCollector(BugType& d) : D(d) {}
   
@@ -159,7 +159,7 @@ public:
   iterator end() { return Reports.end(); }
 };
   
-class VISIBILITY_HIDDEN DeadStoresChecker : public BugType {
+class VISIBILITY_HIDDEN DeadStoresChecker : public BugTypeCacheLocation {
 public:
   virtual const char* getName() const {
     return "dead store";
