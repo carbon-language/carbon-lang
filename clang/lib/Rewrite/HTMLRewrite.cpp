@@ -107,37 +107,47 @@ void html::EscapeText(Rewriter& R, unsigned FileID,
   assert (C <= FileEnd);
   
   RewriteBuffer &RB = R.getEditBuffer(FileID);
-  
+
+  unsigned ColNo = 0;
   for (unsigned FilePos = 0; C != FileEnd ; ++C, ++FilePos) {
-      
     switch (*C) {
-    default: break;
+    default: ++ColNo; break;
+    case '\n':
+    case '\r':
+      ColNo = 0;
+      break;
       
     case ' ':
       if (EscapeSpaces)
         RB.ReplaceText(FilePos, 1, "&nbsp;", 6);
+      ++ColNo;
       break;
 
-    case '\t':
+    case '\t': {
       if (!ReplaceTabs)
         break;
+      unsigned NumSpaces = 8-(ColNo&7);
       if (EscapeSpaces)
         RB.ReplaceText(FilePos, 1, "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
-                       "&nbsp;&nbsp;&nbsp;", 6*8);
+                       "&nbsp;&nbsp;&nbsp;", 6*NumSpaces);
       else
-        RB.ReplaceText(FilePos, 1, "        ", 8);
+        RB.ReplaceText(FilePos, 1, "        ", NumSpaces);
+      ColNo += NumSpaces;
       break;
-      
+    }
     case '<':
       RB.ReplaceText(FilePos, 1, "&lt;", 4);
+      ++ColNo;
       break;
       
     case '>':
       RB.ReplaceText(FilePos, 1, "&gt;", 4);
+      ++ColNo;
       break;
       
     case '&':
       RB.ReplaceText(FilePos, 1, "&amp;", 5);
+      ++ColNo;
       break;
     }
   }
