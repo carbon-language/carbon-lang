@@ -359,6 +359,9 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
 
 bool BugReporter::IsCached(ExplodedNode<ValueState>* N) {
   
+  if (!N)
+    return false;
+  
   // HACK: Cache the location of the error.  Don't emit the same
   // warning for the same error type that occurs at the same program
   // location but along a different path.
