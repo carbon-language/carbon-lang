@@ -613,6 +613,19 @@ static void PropagateDeadness(LiveInterval &li, MachineInstr *CopyMI,
   }
 }
 
+/// isSameOrFallThroughBB - Return true if MBB == SuccMBB or MBB simply
+/// fallthoughs to SuccMBB.
+static bool isSameOrFallThroughBB(MachineBasicBlock *MBB,
+                                  MachineBasicBlock *SuccMBB,
+                                  const TargetInstrInfo *tii_) {
+  if (MBB == SuccMBB)
+    return true;
+  MachineBasicBlock *TBB = 0, *FBB = 0;
+  std::vector<MachineOperand> Cond;
+  return !tii_->AnalyzeBranch(*MBB, TBB, FBB, Cond) && !TBB && !FBB &&
+    MBB->isSuccessor(SuccMBB);
+}
+
 /// ShortenDeadCopySrcLiveRange - Shorten a live range as it's artificially
 /// extended by a dead copy. Mark the last use (if any) of the val# as kill as
 /// ends the live range there. If there isn't another use, then this live range
@@ -643,14 +656,29 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
     // More uses past this copy? Nothing to do.
     return false;
 
+  MachineBasicBlock *CopyMBB = CopyMI->getParent();
+  unsigned MBBStart = li_->getMBBStartIdx(CopyMBB);
   unsigned LastUseIdx;
   MachineOperand *LastUse = lastRegisterUse(LR->start, CopyIdx-1, li.reg,
                                             LastUseIdx);
   if (LastUse) {
+    MachineInstr *LastUseMI = LastUse->getParent();
+    if (!isSameOrFallThroughBB(LastUseMI->getParent(), CopyMBB, tii_)) {
+      // r1024 = op
+      // ...
+      // BB1:
+      //       = r1024
+      //
+      // BB2:
+      // r1025<dead> = r1024<kill>
+      if (MBBStart < LR->end)
+        removeRange(li, MBBStart, LR->end, li_, tri_);
+      return false;
+    }
+
     // There are uses before the copy, just shorten the live range to the end
     // of last use.
     LastUse->setIsKill();
-    MachineInstr *LastUseMI = LastUse->getParent();
     removeRange(li, li_->getDefIndex(LastUseIdx), LR->end, li_, tri_);
     unsigned SrcReg, DstReg;
     if (tii_->isMoveInstr(*LastUseMI, SrcReg, DstReg) &&
@@ -663,8 +691,6 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
   }
 
   // Is it livein?
-  MachineBasicBlock *CopyMBB = CopyMI->getParent();
-  unsigned MBBStart = li_->getMBBStartIdx(CopyMBB);
   if (LR->start <= MBBStart && LR->end > MBBStart) {
     if (LR->start == 0) {
       assert(TargetRegisterInfo::isPhysicalRegister(li.reg));
