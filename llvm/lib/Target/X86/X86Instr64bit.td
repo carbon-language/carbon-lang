@@ -1107,29 +1107,20 @@ def MOV64ri64i32 : Ii32<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64i32imm:$src),
 // Atomic Instructions
 //===----------------------------------------------------------------------===//
 
-//FIXME: Please check the format Pseudo is certainly wrong, but the opcode and
-//       prefixes should be correct
-
 let Defs = [RAX, EFLAGS], Uses = [RAX] in {
-def CMPXCHG64 : RI<0xB1, Pseudo, (outs), (ins i64mem:$ptr, GR64:$swap),
-               "cmpxchgq $swap,$ptr", []>, TB;
-def LCMPXCHG64 : RI<0xB1, Pseudo, (outs), (ins i64mem:$ptr, GR64:$swap),
+def LCMPXCHG64 : RI<0xB1, MRMDestMem, (outs), (ins i64mem:$ptr, GR64:$swap),
                "lock cmpxchgq $swap,$ptr",
                [(X86cas addr:$ptr, GR64:$swap, 8)]>, TB, LOCK;
 }
 
 let Constraints = "$val = $dst", Defs = [EFLAGS] in {
-def LXADD64 : RI<0xC1, Pseudo, (outs GR64:$dst), (ins i64mem:$ptr, GR64:$val),
+def LXADD64 : RI<0xC1, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$ptr,GR64:$val),
                "lock xadd $val, $ptr", 
                [(set GR64:$dst, (atomic_las_64 addr:$ptr, GR64:$val))]>,
                 TB, LOCK;
-def XADD64 : RI<0xC1, Pseudo, (outs GR64:$dst), (ins i64mem:$ptr, GR64:$val),
-               "xadd $val, $ptr", []>, TB;
-def LXCHG64 : RI<0x87, Pseudo, (outs GR64:$dst), (ins i64mem:$ptr, GR64:$val),
+def LXCHG64 : RI<0x87, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$ptr,GR64:$val),
                "lock xchg $val, $ptr", 
                [(set GR64:$dst, (atomic_swap_64 addr:$ptr, GR64:$val))]>, LOCK;
-def XCHG64 : RI<0x87, Pseudo, (outs GR64:$dst), (ins i64mem:$ptr, GR64:$val),
-               "xchg $val, $ptr", []>;
 }
 
 

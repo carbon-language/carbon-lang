@@ -471,7 +471,10 @@ void Emitter::emitInstruction(const MachineInstr &MI,
   unsigned NumOps = Desc->getNumOperands();
   unsigned CurOp = 0;
   if (NumOps > 1 && Desc->getOperandConstraint(1, TOI::TIED_TO) != -1)
-    CurOp++;
+    ++CurOp;
+  else if (NumOps > 2 && Desc->getOperandConstraint(NumOps-1, TOI::TIED_TO)== 0)
+    // Skip the last source operand that is tied_to the dest reg. e.g. LXADD32
+    --NumOps;
 
   unsigned char BaseOpcode = II->getBaseOpcodeFor(Desc);
   switch (Desc->TSFlags & X86II::FormMask) {
