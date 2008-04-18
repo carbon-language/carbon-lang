@@ -116,14 +116,45 @@ sub SetHtmlEnv {
 }
 
 ##----------------------------------------------------------------------------##
+# ComputeDigest - Compute a digest of the specified file.
+##----------------------------------------------------------------------------##
+
+sub ComputeDigest {
+  my $FName = shift;
+  die "Cannot read $FName" if (! -r $FName);  
+  my $Result = `sha1sum -b $FName`;
+  my @Output = split /\s+/,$Result;
+  die "Bad output from sha1sum" if (scalar(@Output) != 2);
+  return $Output[0];
+}
+
+##----------------------------------------------------------------------------##
 # ScanFile - Scan a report file for various identifying attributes.
 ##----------------------------------------------------------------------------##
+
+# Sometimes a source file is scanned more than once, and thus produces
+# multiple error reports.  We use a cache to solve this problem.
+
+my %AlreadyScanned;
 
 sub ScanFile {
   
   my $Index = shift;
   my $Dir = shift;
   my $FName = shift;
+  
+  # Compute a digest for the report file.  Determine if we have already
+  # scanned a file that looks just like it.
+  
+  my $digest = ComputeDigest("$Dir/$FName");
+
+  if (defined($AlreadyScanned{$digest})) {
+    # Redundant file.  Remove it.
+    `rm -f $Dir/$FName`;
+    return;
+  }
+  
+  $AlreadyScanned{$digest} = 1;
   
   open(IN, "$Dir/$FName") or die "$Prog: Cannot open '$Dir/$FName'\n";
 
