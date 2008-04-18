@@ -74,7 +74,7 @@ def analyze(args,language,output,files,verbose,htmldir):
       command = 'cp'.split()
       args = command + files + target.split()      
     else:
-      command = 'clang -checker-simple'.split()
+      command = 'clang -checker-cfref'.split()
       args = command + args;
       
       if htmldir is not None:
