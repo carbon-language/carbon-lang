@@ -447,9 +447,15 @@ protected:
   
   ValueState* Assume(ValueState* St, LVal Cond, bool Assumption,
                      bool& isFeasible);
-  
+                     
+  ValueState* AssumeAux(ValueState* St, LVal Cond, bool Assumption,
+                        bool& isFeasible);
+
   ValueState* Assume(ValueState* St, NonLVal Cond, bool Assumption,
                      bool& isFeasible);
+  
+  ValueState* AssumeAux(ValueState* St, NonLVal Cond, bool Assumption,
+                        bool& isFeasible);
   
   ValueState* AssumeSymNE(ValueState* St, SymbolID sym, const llvm::APSInt& V,
                           bool& isFeasible);

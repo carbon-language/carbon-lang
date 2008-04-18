@@ -1840,13 +1840,20 @@ void GRExprEngine::HandleUndefinedStore(Stmt* S, NodeTy* Pred) {
 //===----------------------------------------------------------------------===//
 
 ValueState* GRExprEngine::Assume(ValueState* St, LVal Cond,
-                                           bool Assumption, 
-                                           bool& isFeasible) {
+                                 bool Assumption, bool& isFeasible) {
+                                             
+  St = AssumeAux(St, Cond, Assumption, isFeasible);
+  return isFeasible ? St : TF->EvalAssume(St, Cond, Assumption);
+}
+
+ValueState* GRExprEngine::AssumeAux(ValueState* St, LVal Cond,
+                                    bool Assumption, bool& isFeasible) {
+                                       
   switch (Cond.getSubKind()) {
     default:
       assert (false && "'Assume' not implemented for this LVal.");
       return St;
-      
+
     case lval::SymbolValKind:
       if (Assumption)
         return AssumeSymNE(St, cast<lval::SymbolVal>(Cond).getSymbol(),
@@ -1854,8 +1861,8 @@ ValueState* GRExprEngine::Assume(ValueState* St, LVal Cond,
       else
         return AssumeSymEQ(St, cast<lval::SymbolVal>(Cond).getSymbol(),
                            BasicVals.getZeroWithPtrWidth(), isFeasible);
-      
-      
+
+
     case lval::DeclValKind:
     case lval::FuncValKind:
     case lval::GotoLabelKind:
@@ -1871,8 +1878,14 @@ ValueState* GRExprEngine::Assume(ValueState* St, LVal Cond,
 }
 
 ValueState* GRExprEngine::Assume(ValueState* St, NonLVal Cond,
-                                         bool Assumption, 
-                                         bool& isFeasible) {  
+                                 bool Assumption, bool& isFeasible) {
+
+  St = AssumeAux(St, Cond, Assumption, isFeasible);
+  return isFeasible ? St : TF->EvalAssume(St, Cond, Assumption);
+}
+
+ValueState* GRExprEngine::AssumeAux(ValueState* St, NonLVal Cond,
+                                    bool Assumption, bool& isFeasible) {  
   switch (Cond.getSubKind()) {
     default:
       assert (false && "'Assume' not implemented for this NonLVal.");

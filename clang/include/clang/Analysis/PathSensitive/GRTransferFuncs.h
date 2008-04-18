@@ -96,6 +96,16 @@ public:
                           GRStmtNodeBuilder<ValueState>& Builder,
                           ReturnStmt* S,
                           ExplodedNode<ValueState>* Pred) {}
+
+  // Assumptions.
+  
+  virtual ValueState* EvalAssume(ValueState* St, NonLVal Cond, bool Assumption){
+    return St;
+  }
+  
+  virtual ValueState* EvalAssume(ValueState* St, LVal Cond, bool Assumption) {
+    return St;
+  }
 };
   
 } // end clang namespace
