@@ -4954,26 +4954,16 @@ SDOperand X86TargetLowering::LowerVASTART(SDOperand Op, SelectionDAG &DAG) {
 
 SDOperand X86TargetLowering::LowerVACOPY(SDOperand Op, SelectionDAG &DAG) {
   // X86-64 va_list is a struct { i32, i32, i8*, i8* }.
+  assert(Subtarget->is64Bit() && "This code only handles 64-bit va_copy!");
   SDOperand Chain = Op.getOperand(0);
   SDOperand DstPtr = Op.getOperand(1);
   SDOperand SrcPtr = Op.getOperand(2);
   const Value *DstSV = cast<SrcValueSDNode>(Op.getOperand(3))->getValue();
   const Value *SrcSV = cast<SrcValueSDNode>(Op.getOperand(4))->getValue();
 
-  SrcPtr = DAG.getLoad(getPointerTy(), Chain, SrcPtr, SrcSV, 0);
-  Chain = SrcPtr.getValue(1);
-  for (unsigned i = 0; i < 3; ++i) {
-    SDOperand Val = DAG.getLoad(MVT::i64, Chain, SrcPtr, SrcSV, 0);
-    Chain = Val.getValue(1);
-    Chain = DAG.getStore(Chain, Val, DstPtr, DstSV, 0);
-    if (i == 2)
-      break;
-    SrcPtr = DAG.getNode(ISD::ADD, getPointerTy(), SrcPtr, 
-                         DAG.getIntPtrConstant(8));
-    DstPtr = DAG.getNode(ISD::ADD, getPointerTy(), DstPtr, 
-                         DAG.getIntPtrConstant(8));
-  }
-  return Chain;
+  return DAG.getMemcpy(Chain, DstPtr, SrcPtr,
+                       DAG.getIntPtrConstant(24), 8, false,
+                       DstSV, 0, SrcSV, 0);
 }
 
 SDOperand
