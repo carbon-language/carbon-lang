@@ -1843,7 +1843,9 @@ ValueState* GRExprEngine::Assume(ValueState* St, LVal Cond,
                                  bool Assumption, bool& isFeasible) {
                                              
   St = AssumeAux(St, Cond, Assumption, isFeasible);
-  return isFeasible ? St : TF->EvalAssume(St, Cond, Assumption);
+  
+  return isFeasible ? TF->EvalAssume(*this, St, Cond, Assumption, isFeasible)
+                    : St;
 }
 
 ValueState* GRExprEngine::AssumeAux(ValueState* St, LVal Cond,
@@ -1881,7 +1883,9 @@ ValueState* GRExprEngine::Assume(ValueState* St, NonLVal Cond,
                                  bool Assumption, bool& isFeasible) {
 
   St = AssumeAux(St, Cond, Assumption, isFeasible);
-  return isFeasible ? St : TF->EvalAssume(St, Cond, Assumption);
+
+  return isFeasible ? TF->EvalAssume(*this, St, Cond, Assumption, isFeasible)
+                    : St;
 }
 
 ValueState* GRExprEngine::AssumeAux(ValueState* St, NonLVal Cond,
@@ -2258,7 +2262,7 @@ GetGraphNode<llvm::DenseMap<GRExprEngine::NodeTy*, Expr*>::iterator>
 }
 
 template <typename ITERATOR>
-static void AddSources(llvm::SmallVector<GRExprEngine::NodeTy*, 10>& Sources,
+static void AddSources(std::vector<GRExprEngine::NodeTy*>& Sources,
                        ITERATOR I, ITERATOR E) {
   
   llvm::SmallPtrSet<void*,10> CachedSources;
@@ -2280,7 +2284,9 @@ static void AddSources(llvm::SmallVector<GRExprEngine::NodeTy*, 10>& Sources,
 void GRExprEngine::ViewGraph(bool trim) {
 #ifndef NDEBUG  
   if (trim) {
-    llvm::SmallVector<NodeTy*, 10> Src;
+    std::vector<NodeTy*> Src;
+    
+    // Fixme: Migrate over to the new way of adding nodes.
     AddSources(Src, null_derefs_begin(), null_derefs_end());
     AddSources(Src, undef_derefs_begin(), undef_derefs_end());
     AddSources(Src, explicit_bad_divides_begin(), explicit_bad_divides_end());
@@ -2288,6 +2294,11 @@ void GRExprEngine::ViewGraph(bool trim) {
     AddSources(Src, bad_calls_begin(), bad_calls_end());
     AddSources(Src, undef_arg_begin(), undef_arg_end());
     AddSources(Src, undef_branches_begin(), undef_branches_end());
+    
+    // The new way.
+    for (BugTypeSet::iterator I=BugTypes.begin(), E=BugTypes.end(); I!=E; ++I)
+      (*I)->GetErrorNodes(Src);
+      
     
     ViewGraph(&Src[0], &Src[0]+Src.size());
   }

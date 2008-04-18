@@ -99,11 +99,8 @@ public:
 
   // Assumptions.
   
-  virtual ValueState* EvalAssume(ValueState* St, NonLVal Cond, bool Assumption){
-    return St;
-  }
-  
-  virtual ValueState* EvalAssume(ValueState* St, LVal Cond, bool Assumption) {
+  virtual ValueState* EvalAssume(GRExprEngine& Engine, ValueState* St,
+                                 RVal Cond, bool Assumption, bool& isFeasible) {
     return St;
   }
 };

@@ -19,6 +19,7 @@
 #include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include <vector>
 
 namespace clang {
   
@@ -41,6 +42,7 @@ public:
   virtual const char* getDescription() const { return getName(); }
       
   virtual void EmitWarnings(BugReporter& BR) {}
+  virtual void GetErrorNodes(std::vector<ExplodedNode<ValueState>*>& Nodes) {}
 };
   
 class BugReport {

@@ -693,7 +693,12 @@ public:
                           GRStmtNodeBuilder<ValueState>& Builder,
                           ReturnStmt* S,
                           ExplodedNode<ValueState>* Pred);
-  
+
+  // Assumptions.
+
+  virtual ValueState* EvalAssume(GRExprEngine& Engine, ValueState* St,
+                                 RVal Cond, bool Assumption, bool& isFeasible);
+
   // Error iterators.
 
   typedef UseAfterReleasesTy::iterator use_after_iterator;  
@@ -1029,8 +1034,6 @@ ValueState* CFRefCount::NukeBinding(ValueStateManager& VMgr, ValueState* St,
 
 // End-of-path.
 
-
-
 ValueState* CFRefCount::HandleSymbolDeath(ValueStateManager& VMgr,
                                           ValueState* St, SymbolID sid,
                                           RefVal V, bool& hasLeak) {
@@ -1066,9 +1069,9 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
       
   ExplodedNode<ValueState>* N = Builder.MakeNode(St);  
   
-  if (!N)
+  if (!N || Leaked.empty())
     return;
-  
+    
   std::vector<SymbolID>*& LeaksAtNode = Leaks[N];
   assert (!LeaksAtNode);
   LeaksAtNode = new std::vector<SymbolID>();
@@ -1138,6 +1141,44 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<ValueState>& Dst,
   Builder.MakeNode(Dst, S, Pred, StateMgr.getPersistentState(StImpl));
 }
 
+// Assumptions.
+
+ValueState* CFRefCount::EvalAssume(GRExprEngine& Eng, ValueState* St,
+                                   RVal Cond, bool Assumption,
+                                   bool& isFeasible) {
+
+  // FIXME: We may add to the interface of EvalAssume the list of symbols
+  //  whose assumptions have changed.  For now we just iterate through the
+  //  bindings and check if any of the tracked symbols are NULL.  This isn't
+  //  too bad since the number of symbols we will track in practice are 
+  //  probably small and EvalAssume is only called at branches and a few
+  //  other places.
+    
+  RefBindings B = GetRefBindings(*St);
+  
+  if (B.isEmpty())
+    return St;
+  
+  bool changed = false;
+
+  for (RefBindings::iterator I=B.begin(), E=B.end(); I!=E; ++I) {    
+
+    // Check if the symbol is null (or equal to any constant).
+    // If this is the case, stop tracking the symbol.
+  
+    if (St->getSymVal(I.getKey())) {
+      changed = true;
+      B = RefBFactory.Remove(B, I.getKey());
+    }
+  }
+  
+  if (!changed)
+    return St;
+  
+  ValueState StImpl = *St;
+  StImpl.CheckerState = B.getRoot();
+  return Eng.getStateManager().getPersistentState(StImpl);
+}
 
 CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
                                            RefVal V, ArgEffect E,
@@ -1280,6 +1321,7 @@ namespace {
     }
     
     virtual void EmitWarnings(BugReporter& BR);
+    virtual void GetErrorNodes(std::vector<ExplodedNode<ValueState>*>& Nodes);    
   };
   
   //===---------===//
@@ -1463,6 +1505,12 @@ void Leak::EmitWarnings(BugReporter& BR) {
       BR.EmitWarning(report);
     }
   }  
+}
+
+void Leak::GetErrorNodes(std::vector<ExplodedNode<ValueState>*>& Nodes) {
+  for (CFRefCount::leaks_iterator I=TF.leaks_begin(), E=TF.leaks_end();
+       I!=E; ++I)
+    Nodes.push_back(I->first);
 }
 
 //===----------------------------------------------------------------------===//
