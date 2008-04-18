@@ -720,12 +720,14 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
   for (unsigned i = 0; i < OMD->getNumParams(); i++) {
     ParmVarDecl *PDecl = OMD->getParamDecl(i);
     ResultStr += ", ";
-    if (PDecl->getType()->isObjCQualifiedIdType())
-      ResultStr += "id";
-    else
-      ResultStr += PDecl->getType().getAsString();
-    ResultStr += " ";
-    ResultStr += PDecl->getName();
+    if (PDecl->getType()->isObjCQualifiedIdType()) {
+      ResultStr += "id ";
+      ResultStr += PDecl->getName();
+    } else {
+      std::string Name = PDecl->getName();
+      PDecl->getType().getAsStringInternal(Name);
+      ResultStr += Name;
+    }
   }
   if (OMD->isVariadic())
     ResultStr += ", ...";
