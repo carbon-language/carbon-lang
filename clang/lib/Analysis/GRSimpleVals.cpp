@@ -45,7 +45,7 @@ void GenericEmitWarnings(BugReporter& BR, const BugType& D,
   
   for (; I != E; ++I) {
     BugReport R(D, GetNode(I));    
-    BR.EmitPathWarning(R);
+    BR.EmitWarning(R);
   }
 }
 
@@ -182,7 +182,7 @@ public:
       report.addRange(I->second->getSourceRange());
 
       // Emit the warning.
-      BR.EmitPathWarning(report);
+      BR.EmitWarning(report);
     }
 
   }
@@ -209,7 +209,7 @@ public:
       report.addRange(I->second->getSourceRange());
       
       // Emit the warning.
-      BR.EmitPathWarning(report);
+      BR.EmitWarning(report);
     }    
   }
 };
@@ -240,7 +240,7 @@ public:
       report.addRange(E->getSourceRange());
       
       // Emit the warning.
-      BR.EmitPathWarning(report);
+      BR.EmitWarning(report);
     }    
   }
 };

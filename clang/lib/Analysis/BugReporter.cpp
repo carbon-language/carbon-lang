@@ -142,8 +142,10 @@ PathDiagnosticPiece* BugReport::VisitNode(ExplodedNode<ValueState>* N,
 void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
                                          BugReport& R) {
 
-  ExplodedNode<ValueState>* N = R.getEndNode();  
-  assert (N && "Path diagnostic requires a ExplodedNode.");
+  ExplodedNode<ValueState>* N = R.getEndNode();
+
+  if (!N)
+    return;
   
   llvm::OwningPtr<ExplodedGraph<ValueState> > GTrim(getGraph().Trim(&N, &N+1));
 
@@ -371,55 +373,51 @@ bool BugReporter::IsCached(ExplodedNode<ValueState>* N) {
   return false;
 }
 
-void BugReporter::EmitPathWarning(BugReport& R) {
-  
-  ExplodedNode<ValueState>* N = R.getEndNode();
-  
-  if (!PD || !N) {
-    EmitWarning(R);
+void BugReporter::EmitWarning(BugReport& R) {
+
+  if (IsCached(R.getEndNode()))
     return;
-  }
-  
-  if (IsCached(N))
-    return;
-  
+
   PathDiagnostic D(R.getName());  
   GeneratePathDiagnostic(D, R);
+
+  // Emit a full diagnostic for the path if we have a PathDiagnosticClient.
   
-  if (!D.empty())  
+  if (PD && !D.empty()) { 
     PD->HandlePathDiagnostic(D);
-}
-
-void BugReporter::EmitWarning(BugReport& R) {  
-
-  ExplodedNode<ValueState>* N = R.getEndNode();
+    return;    
+  }
   
-  if (N && IsCached(N))
-    return;
+  // We don't have a PathDiagnosticClient, but we can still emit a single
+  // line diagnostic.  Determine the location.
   
-  FullSourceLoc L = R.getLocation(Ctx.getSourceManager());
+  FullSourceLoc L = D.empty() ? R.getLocation(Ctx.getSourceManager())
+                               : D.back()->getLocation();
+  
+  
+  // Determine the range.
   
   const SourceRange *Beg, *End;
-  R.getRanges(Beg, End);
   
-  if (!PD) {
+  if (!D.empty()) {
+    Beg = D.back()->ranges_begin();
+    End = D.back()->ranges_end();
+  }
+  else  
+    R.getRanges(Beg, End);
+
+  // Compute the message.
   
-    std::ostringstream os;
-    os << "[CHECKER] " << R.getDescription();
-    
-    unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning,
-                                              os.str().c_str());
-    
-    Diag.Report(L, ErrorDiag, NULL, 0, Beg, End - Beg);    
-  }
-  else {    
-    PathDiagnostic D(R.getName());
-    PathDiagnosticPiece* piece = new PathDiagnosticPiece(L, R.getDescription());
-    
-    for ( ; Beg != End; ++Beg)
-      piece->addRange(*Beg);
-    
-    D.push_back(piece);    
-    PD->HandlePathDiagnostic(D);
-  }
+  std::ostringstream os;  
+  os << "[CHECKER] ";
+  
+  if (D.empty())
+    os << R.getDescription();
+  else
+    os << D.back()->getString();
+  
+  unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning,
+                                            os.str().c_str());
+      
+  Diag.Report(L, ErrorDiag, NULL, 0, Beg, End - Beg);    
 }

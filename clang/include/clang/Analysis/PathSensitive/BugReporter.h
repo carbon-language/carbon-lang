@@ -127,10 +127,8 @@ public:
   
   CFG& getCFG() { return getGraph().getCFG(); }
   
-  void EmitPathWarning(BugReport& R);
-  
   void EmitWarning(BugReport& R);
-  
+    
   void clearCache() { CachedErrors.clear(); }
   
   bool IsCached(ExplodedNode<ValueState>* N);

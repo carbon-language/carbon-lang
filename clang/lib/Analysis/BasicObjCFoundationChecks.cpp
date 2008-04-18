@@ -190,7 +190,7 @@ static inline bool isNil(RVal X) {
 void BasicObjCFoundationChecks::EmitWarnings(BugReporter& BR) {    
                  
   for (ErrorsTy::iterator I=Errors.begin(), E=Errors.end(); I!=E; ++I)    
-    BR.EmitPathWarning(**I);
+    BR.EmitWarning(**I);
 }
 
 bool BasicObjCFoundationChecks::CheckNilArg(NodeTy* N, unsigned Arg) {

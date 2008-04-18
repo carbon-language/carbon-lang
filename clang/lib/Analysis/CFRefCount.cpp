@@ -1281,7 +1281,7 @@ void UseAfterRelease::EmitWarnings(BugReporter& BR) {
     
     RangedBugReport report(*this, I->first);
     report.addRange(I->second->getSourceRange());    
-    BR.EmitPathWarning(report);    
+    BR.EmitWarning(report);    
   }
 }
 
@@ -1292,7 +1292,7 @@ void BadRelease::EmitWarnings(BugReporter& BR) {
     
     RangedBugReport report(*this, I->first);
     report.addRange(I->second->getSourceRange());    
-    BR.EmitPathWarning(report); 
+    BR.EmitWarning(report); 
 
   }  
 }
@@ -1303,7 +1303,7 @@ void Leak::EmitWarnings(BugReporter& BR) {
        E = TF.leaks_end(); I != E; ++I) {
     
     BugReport report(*this, I->second);
-    BR.EmitPathWarning(report);     
+    BR.EmitWarning(report);     
   }  
 }
 
