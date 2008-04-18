@@ -2268,10 +2268,14 @@ void Sema::HandleNothrowAttribute(Decl *d, AttributeList *rawAttr) {
 }
 
 static const FunctionTypeProto *getFunctionProto(Decl *d) {
-  ValueDecl *decl = dyn_cast<ValueDecl>(d);
-  if (!decl) return 0;
+  QualType Ty;
 
-  QualType Ty = decl->getType();
+  if (ValueDecl *decl = dyn_cast<ValueDecl>(d))
+    Ty = decl->getType();
+  else if (FieldDecl *decl = dyn_cast<FieldDecl>(d))
+    Ty = decl->getType();
+  else
+    return 0;
 
   if (Ty->isFunctionPointerType()) {
     const PointerType *PtrTy = Ty->getAsPointerType();

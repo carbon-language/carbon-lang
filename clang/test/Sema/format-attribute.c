@@ -17,3 +17,8 @@ void z(char *str, int c, ...) __attribute__((format(strftime, 1,2))); // expecte
 
 int (*f_ptr)(char*,...) __attribute__((format(printf, 1,2))); // no-error
 int (*f2_ptr)(double,...) __attribute__((format(printf, 1, 2))); // expected-error {{format argument not a string type}}
+
+struct _mystruct {
+  int (*printf)(const char *format, ...) __attribute__((__format__(printf, 1, 2))); // no-error
+  int (*printf2)(double format, ...) __attribute__((__format__(printf, 1, 2))); // expected-error {{format argument not a string type}}
+};
