@@ -126,8 +126,6 @@ class GRStmtNodeBuilderImpl {
   const unsigned Idx;
   ExplodedNodeImpl* Pred;
   ExplodedNodeImpl* LastNode;  
-  bool HasGeneratedNode;
-  bool Populated;
   
   typedef llvm::SmallPtrSet<ExplodedNodeImpl*,5> DeferredTy;
   DeferredTy Deferred;
@@ -164,8 +162,6 @@ public:
   Stmt* getStmt() const { return B[Idx]; }
   
   CFGBlock* getBlock() const { return &B; }
-  
-  bool hasGeneratedNode() const { return HasGeneratedNode; }
 };
   
   
@@ -183,12 +179,11 @@ class GRStmtNodeBuilder  {
 public:
   GRStmtNodeBuilder(GRStmtNodeBuilderImpl& nb) : NB(nb),
     CallExprAuditBeg(0), CallExprAuditEnd(0),
-    ObjCMsgExprAuditBeg(0), ObjCMsgExprAuditEnd(0),  BuildSinks(false) {
+    ObjCMsgExprAuditBeg(0), ObjCMsgExprAuditEnd(0),
+    BuildSinks(false), HasGeneratedNode(false) {
       
     CleanedState = getLastNode()->getState();
   }
-  
-  bool hasGeneratedNode() const { return NB.hasGeneratedNode(); }
   
   void setObjCMsgExprAuditors(GRAuditor<StateTy> **B,
                               GRAuditor<StateTy> **E) {
@@ -207,10 +202,12 @@ public:
   }
   
   NodeTy* generateNode(Stmt* S, StateTy* St, NodeTy* Pred) {
+    HasGeneratedNode = true;
     return static_cast<NodeTy*>(NB.generateNodeImpl(S, St, Pred));
   }
   
   NodeTy* generateNode(Stmt* S, StateTy* St) {
+    HasGeneratedNode = true;
     return static_cast<NodeTy*>(NB.generateNodeImpl(S, St));    
   }
   
@@ -275,7 +272,8 @@ public:
     return N;
   }
   
-  bool BuildSinks;  
+  bool BuildSinks;
+  bool HasGeneratedNode;
 };
   
 class GRBranchNodeBuilderImpl {

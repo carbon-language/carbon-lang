@@ -286,7 +286,7 @@ void GRCoreEngineImpl::GenerateNode(const ProgramPoint& Loc, void* State,
 
 GRStmtNodeBuilderImpl::GRStmtNodeBuilderImpl(CFGBlock* b, unsigned idx,
                                      ExplodedNodeImpl* N, GRCoreEngineImpl* e)
-  : Eng(*e), B(*b), Idx(idx), Pred(N), LastNode(N), Populated(false) {
+  : Eng(*e), B(*b), Idx(idx), Pred(N), LastNode(N) {
   Deferred.insert(N);
 }
 
@@ -323,8 +323,6 @@ ExplodedNodeImpl* GRStmtNodeBuilderImpl::generateNodeImpl(Stmt* S, void* State,
   ExplodedNodeImpl* N = Eng.G->getNodeImpl(PostStmt(S), State, &IsNew);
   N->addPredecessor(Pred);
   Deferred.erase(Pred);
-  
-  HasGeneratedNode = true;
   
   if (IsNew) {
     Deferred.insert(N);

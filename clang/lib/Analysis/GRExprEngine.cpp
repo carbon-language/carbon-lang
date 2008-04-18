@@ -188,7 +188,7 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   // dead mappings removed.
   
   if (Dst.size() == 1 && *Dst.begin() == StmtEntryNode && 
-      !Builder->hasGeneratedNode())
+      !Builder->HasGeneratedNode)
     builder.generateNode(S, GetState(StmtEntryNode), StmtEntryNode);
   
   // NULL out these variables to cleanup.
@@ -715,7 +715,11 @@ void GRExprEngine::EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred,
   assert (Builder && "GRStmtNodeBuilder must be defined.");
   
   unsigned size = Dst.size();  
-  SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+
+  SaveAndRestore<bool> OldSink(Builder->BuildSinks),
+                       OldHasGen(Builder->HasGeneratedNode);
+
+  Builder->HasGeneratedNode = false;
   
   assert (!TargetLV.isUndef());
   
@@ -724,7 +728,7 @@ void GRExprEngine::EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred,
   // Handle the case where no nodes where generated.  Auto-generate that
   // contains the updated state if we aren't generating sinks.
   
-  if (!Builder->BuildSinks && Dst.size() == size)
+  if (!Builder->BuildSinks && Dst.size() == size && !Builder->HasGeneratedNode)
     TF->GRTransferFuncs::EvalStore(Dst, *this, *Builder, E, Pred, St,
                                    TargetLV, Val);
 }
@@ -888,14 +892,18 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
       
       unsigned size = Dst.size();
       
-      SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+      SaveAndRestore<bool> OldSink(Builder->BuildSinks),
+                           OldHasGen(Builder->HasGeneratedNode);
       
+      Builder->HasGeneratedNode = false;
+
       EvalCall(Dst, CE, cast<LVal>(L), *DI);
       
       // Handle the case where no nodes where generated.  Auto-generate that
       // contains the updated state if we aren't generating sinks.
       
-      if (!Builder->BuildSinks && Dst.size() == size)
+      if (!Builder->BuildSinks && Dst.size() == size &&
+          !Builder->HasGeneratedNode)
         MakeNode(Dst, CE, *DI, St);
     }
   }
@@ -991,14 +999,18 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
   // Dispatch to plug-in transfer function.
   
   unsigned size = Dst.size();
-  SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+
+  SaveAndRestore<bool> OldSink(Builder->BuildSinks),
+                       OldHasGen(Builder->HasGeneratedNode);
   
+  Builder->HasGeneratedNode = false;
+ 
   EvalObjCMessageExpr(Dst, ME, Pred);
   
   // Handle the case where no nodes where generated.  Auto-generate that
   // contains the updated state if we aren't generating sinks.
   
-  if (!Builder->BuildSinks && Dst.size() == size)
+  if (!Builder->BuildSinks && Dst.size() == size && !Builder->HasGeneratedNode)
     MakeNode(Dst, ME, Pred, St);
 }
 
@@ -1461,14 +1473,17 @@ void GRExprEngine::EvalReturn(NodeSet& Dst, ReturnStmt* S, NodeTy* Pred) {
   assert (Builder && "GRStmtNodeBuilder must be defined.");
   
   unsigned size = Dst.size();  
-  SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+
+  SaveAndRestore<bool> OldSink(Builder->BuildSinks),
+                       OldHasGen(Builder->HasGeneratedNode);
   
+  Builder->HasGeneratedNode = false;
+
   TF->EvalReturn(Dst, *this, *Builder, S, Pred);
   
-  // Handle the case where no nodes where generated.  Auto-generate that
-  // contains the updated state if we aren't generating sinks.
+  // Handle the case where no nodes where generated.
   
-  if (!Builder->BuildSinks && Dst.size() == size)
+  if (!Builder->BuildSinks && Dst.size() == size && !Builder->HasGeneratedNode)
     MakeNode(Dst, S, Pred, GetState(Pred));
 }
 
