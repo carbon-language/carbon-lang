@@ -1371,8 +1371,14 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<ValueState>* N,
       else
         os << "Reference count incremented.";
       
-      if (CurrV.getCount())
-        os << " Object has +" << CurrV.getCount() << " reference count.";
+      if (CurrV.getCount()) {
+        os << " Object has +" << CurrV.getCount();
+        
+        if (CurrV.getCount() > 1)
+          os << " reference counts.";
+        else
+          os << " reference count.";
+      }
       
       Msg = os.str().c_str();
       
