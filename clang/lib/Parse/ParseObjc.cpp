@@ -1031,13 +1031,15 @@ Parser::DeclTy *Parser::ParseObjCAtAliasDeclaration(SourceLocation atLoc) {
 Parser::DeclTy *Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_synthesize) &&
          "ParseObjCPropertyDynamic(): Expected '@synthesize'");
-  SourceLocation loc = ConsumeToken(); // consume dynamic
+  SourceLocation loc = ConsumeToken(); // consume synthesize
   if (Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected_ident);
     return 0;
   }
   while (Tok.is(tok::identifier)) {
-    ConsumeToken(); // consume property name
+    IdentifierInfo *propertyIvar = 0;
+    IdentifierInfo *propertyId = Tok.getIdentifierInfo();
+    SourceLocation propertyLoc = ConsumeToken(); // consume property name
     if (Tok.is(tok::equal)) {
       // property '=' ivar-name
       ConsumeToken(); // consume '='
@@ -1045,8 +1047,11 @@ Parser::DeclTy *Parser::ParseObjCPropertySynthesize(SourceLocation atLoc) {
         Diag(Tok, diag::err_expected_ident);
         break;
       }
+      propertyIvar = Tok.getIdentifierInfo();
       ConsumeToken(); // consume ivar-name
     }
+    Actions.ActOnPropertyImplDecl(atLoc, propertyLoc, true, ObjCImpDecl,
+                                  propertyId, propertyIvar);
     if (Tok.isNot(tok::comma))
       break;
     ConsumeToken(); // consume ','

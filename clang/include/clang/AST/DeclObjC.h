@@ -27,6 +27,7 @@ class ObjCMethodDecl;
 class ObjCProtocolDecl;
 class ObjCCategoryDecl;
 class ObjCPropertyDecl;
+class ObjCPropertyImplDecl;
 
 /// ObjCMethodDecl - Represents an instance or class method declaration.
 /// ObjC methods can be declared within 4 contexts: class interfaces,
@@ -807,6 +808,9 @@ class ObjCCategoryImplDecl : public NamedDecl {
   
   /// implemented class methods
   llvm::SmallVector<ObjCMethodDecl*, 32> ClassMethods;
+  
+  /// Propertys' being implemented
+  llvm::SmallVector<ObjCPropertyImplDecl*, 8> PropertyImplementations;
 
   SourceLocation EndLoc;  
 
@@ -829,13 +833,20 @@ public:
   }
   void addClassMethod(ObjCMethodDecl *method) {
     ClassMethods.push_back(method);
-  }    
+  }   
   // Get the instance method definition for this implementation.
   ObjCMethodDecl *getInstanceMethod(Selector Sel);
   
   // Get the class method definition for this implementation.
   ObjCMethodDecl *getClassMethod(Selector Sel);
+  
+  void addPropertyImplementation(ObjCPropertyImplDecl *property) {
+    PropertyImplementations.push_back(property);
+  }
 
+  unsigned getNumPropertyImplementations() const
+  { return PropertyImplementations.size(); }
+  
   typedef llvm::SmallVector<ObjCMethodDecl*, 32>::const_iterator
     instmeth_iterator;
   instmeth_iterator instmeth_begin() const { return InstanceMethods.begin(); }
@@ -888,6 +899,9 @@ class ObjCImplementationDecl : public NamedDecl {
   /// implemented class methods
   llvm::SmallVector<ObjCMethodDecl*, 32> ClassMethods;
 
+  /// Propertys' being implemented
+  llvm::SmallVector<ObjCPropertyImplDecl*, 8> PropertyImplementations;
+  
   SourceLocation EndLoc;
 
   ObjCImplementationDecl(SourceLocation L, IdentifierInfo *Id,
@@ -912,6 +926,11 @@ public:
   void addClassMethod(ObjCMethodDecl *method) {
     ClassMethods.push_back(method);
   }    
+  
+  void addPropertyImplementation(ObjCPropertyImplDecl *property) {
+    PropertyImplementations.push_back(property);
+  } 
+  
   // Location information, modeled after the Stmt API. 
   SourceLocation getLocStart() const { return getLocation(); }
   SourceLocation getLocEnd() const { return EndLoc; }
@@ -926,6 +945,9 @@ public:
   
   unsigned getNumInstanceMethods() const { return InstanceMethods.size(); }
   unsigned getNumClassMethods() const { return ClassMethods.size(); }
+  
+  unsigned getNumPropertyImplementations() const 
+    { return PropertyImplementations.size(); }
 
   typedef llvm::SmallVector<ObjCMethodDecl*, 32>::const_iterator
        instmeth_iterator;
@@ -1041,14 +1063,15 @@ public:
     OBJC_PR_IMPL_DYNAMIC
   };
 private:
+  SourceLocation AtLoc;   // location of @syntheisze or @dynamic
   /// Property declaration being implemented
   ObjCPropertyDecl *PropertyDecl;
   PropertyImplKind PropertyImplementation;
   /// Null for @dynamic. Required for @synthesize.
   ObjCIvarDecl *PropertyIvarDecl;
 public:
-  ObjCPropertyImplDecl(SourceLocation L)
-  : Decl(ObjCPropertyImpl, L), PropertyDecl(0), 
+  ObjCPropertyImplDecl(SourceLocation atLoc, SourceLocation L)
+  : Decl(ObjCPropertyImpl, L), AtLoc(atLoc), PropertyDecl(0), 
   PropertyImplementation(OBJC_PR_IMPL_None), PropertyIvarDecl(0) {}
 
   void setPropertyDecl(ObjCPropertyDecl *property) { PropertyDecl = property; }

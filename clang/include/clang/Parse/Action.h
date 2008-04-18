@@ -626,6 +626,18 @@ public:
     SourceLocation CatLoc) {
     return 0;
   }  
+  // ActOnPropertyImplDecl - called for every property implementation
+  virtual DeclTy *ActOnPropertyImplDecl(
+   SourceLocation AtLoc,              // location of the @syntheize/@dynamic
+   SourceLocation PropertyNameLoc,    // location for the property name
+   bool ImplKind,                     // true for @synthesize, false for
+                                      // @dynamic
+   DeclTy *ClassImplDecl,             // class or category implementation
+   IdentifierInfo *propertyId,        // name of property
+   IdentifierInfo *propertyIvar) {    // name of the ivar
+    return 0;
+  }
+
   // ActOnMethodDeclaration - called for all method declarations. 
   virtual DeclTy *ActOnMethodDeclaration(
     SourceLocation BeginLoc,   // location of the + or -.
