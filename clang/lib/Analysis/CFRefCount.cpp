@@ -23,6 +23,7 @@
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/Support/Compiler.h"
 #include <ostream>
+#include <sstream>
 
 using namespace clang;
 
@@ -1235,11 +1236,11 @@ namespace {
     UseAfterRelease(CFRefCount& tf) : CFRefBug(tf) {}
     
     virtual const char* getName() const {
-      return "(CoreFoundation) use-after-release";
+      return "Core Foundation: Use-After-Release";
     }
     virtual const char* getDescription() const {
-      return "(CoreFoundation) Reference-counted object is used"
-      " after it is released.";
+      return "Reference-counted object is used"
+             " after it is released.";
     }
     
     virtual void EmitWarnings(BugReporter& BR);
@@ -1251,11 +1252,11 @@ namespace {
     BadRelease(CFRefCount& tf) : CFRefBug(tf) {}
     
     virtual const char* getName() const {
-      return "(CoreFoundation) release of non-owned object";
+      return "Core Foundation: Release of non-owned object";
     }
     virtual const char* getDescription() const {
       return "Incorrect decrement of the reference count of a "
-      "CoreFoundation object:\n"
+      "CoreFoundation object: "
       "The object is not owned at this point by the caller.";
     }
     
@@ -1267,12 +1268,11 @@ namespace {
     Leak(CFRefCount& tf) : CFRefBug(tf) {}
     
     virtual const char* getName() const {
-      return "(CoreFoundation) Memory Leak";
+      return "Core Foundation: Memory Leak";
     }
     
     virtual const char* getDescription() const {
-      return "The CoreFoundation object has an excessive reference count and"
-      "\nis leaked after this statement.";
+      return "Object leaked.";
     }
     
     virtual void EmitWarnings(BugReporter& BR);
@@ -1320,10 +1320,102 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<ValueState>* N,
   CFRefCount::RefBindings PrevB = CFRefCount::GetRefBindings(*PrevSt);
   CFRefCount::RefBindings CurrB = CFRefCount::GetRefBindings(*CurrSt);
   
+  CFRefCount::RefBindings::TreeTy* PrevT = PrevB.SlimFind(Sym);
+  CFRefCount::RefBindings::TreeTy* CurrT = CurrB.SlimFind(Sym);
   
+  if (!CurrT)
+    return NULL;  
   
+  const char* Msg = NULL;  
+  RefVal CurrV = CurrB.SlimFind(Sym)->getValue().second;
   
-  return NULL;
+  if (!PrevT) {
+    
+    // Check for the point where we start tracking the value.
+    
+    if (CurrV.isOwned())
+      Msg = "Function call returns 'Owned' Core Foundation object.";
+    else {
+      assert (CurrV.isNotOwned());
+      Msg = "Function call returns 'Non-Owned' Core Foundation object.";
+    }
+
+    Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();    
+    FullSourceLoc Pos(S->getLocStart(), BR.getContext().getSourceManager());
+    PathDiagnosticPiece* P = new PathDiagnosticPiece(Pos, Msg);
+    
+    if (Expr* Exp = dyn_cast<Expr>(S))
+      P->addRange(Exp->getSourceRange());
+    
+    return P;    
+  }
+  
+  // Determine if the typestate has changed.
+  
+  RefVal PrevV = PrevB.SlimFind(Sym)->getValue().second;
+  
+  if (PrevV == CurrV)
+    return NULL;
+  
+  // The typestate has changed.
+  
+  std::ostringstream os;
+  
+  switch (CurrV.getKind()) {
+    case RefVal::Owned:
+    case RefVal::NotOwned:
+      assert (PrevV.getKind() == CurrV.getKind());
+      
+      if (PrevV.getCount() > CurrV.getCount())
+        os << "Reference count decremented.";
+      else
+        os << "Reference count incremented.";
+      
+      if (CurrV.getCount())
+        os << " Object has +" << CurrV.getCount() << " reference counts.";
+      
+      Msg = os.str().c_str();
+      
+      break;
+      
+    case RefVal::Released:
+      Msg = "Object released.";
+      break;
+      
+    case RefVal::ReturnedOwned:
+      Msg = "Object returned to caller.  "
+            "Caller gets ownership of object.";
+      break;
+      
+    case RefVal::ReturnedNotOwned:
+      Msg = "Object returned to caller.  "
+            "Caller does not get ownership of object.";
+      break;
+
+    default:
+      return NULL;
+  }
+  
+  Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();    
+  FullSourceLoc Pos(S->getLocStart(), BR.getContext().getSourceManager());
+  PathDiagnosticPiece* P = new PathDiagnosticPiece(Pos, Msg);
+  
+  // Add the range by scanning the children of the statement for any bindings
+  // to Sym.
+  
+  ValueStateManager& VSM = BR.getEngine().getStateManager();
+  
+  for (Stmt::child_iterator I = S->child_begin(), E = S->child_end(); I!=E; ++I)
+    if (Expr* Exp = dyn_cast_or_null<Expr>(*I)) {
+      RVal X = VSM.GetRVal(CurrSt, Exp);
+      
+      if (lval::SymbolVal* SV = dyn_cast<lval::SymbolVal>(&X))
+        if (SV->getSymbol() == Sym) {
+          P->addRange(Exp->getSourceRange()); break;
+        }
+    }
+  
+  return P;
 }
 
 void UseAfterRelease::EmitWarnings(BugReporter& BR) {
