@@ -410,21 +410,29 @@ void BugReporter::EmitWarning(BugReport& R) {
   else  
     R.getRanges(Beg, End);
 
-  // Compute the message.
-  
-  std::ostringstream os;  
-  os << "[CHECKER] ";
-  
-  if (D.empty())
-    os << R.getDescription();
-  else
-    os << D.back()->getString();
-  
-  unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning,
-                                            os.str().c_str());
-  
-  if (PD)
-    Diag.Report(PD, L, ErrorDiag, NULL, 0, Beg, End - Beg);    
-  else
-    Diag.Report(L, ErrorDiag, NULL, 0, Beg, End - Beg);    
+  if (PD) {
+    PathDiagnostic D(R.getName());
+    PathDiagnosticPiece* piece = new PathDiagnosticPiece(L, R.getDescription());
+
+    for ( ; Beg != End; ++Beg)
+      piece->addRange(*Beg);
+
+    D.push_back(piece);    
+    PD->HandlePathDiagnostic(D);
+  }
+  else {
+    std::ostringstream os;  
+    os << "[CHECKER] ";
+    
+    if (D.empty())
+      os << R.getDescription();
+    else
+      os << D.back()->getString();
+    
+    
+    unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning,
+                                              os.str().c_str());
+
+    Diag.Report(L, ErrorDiag, NULL, 0, Beg, End - Beg);
+  }
 }
