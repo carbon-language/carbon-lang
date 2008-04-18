@@ -326,15 +326,13 @@ void HTMLDiagnostics::HighlightRange(Rewriter& R, SourceRange Range) {
 
   if (EndColNo) {
     // Add in the length of the token, so that we cover multi-char tokens.
-    EndColNo += Lexer::MeasureTokenLength(Range.getEnd(), SM);
+    EndColNo += Lexer::MeasureTokenLength(Range.getEnd(), SM) - 1;
   }
   
   // Highlight the range.  Make the span tag the outermost tag for the
   // selected range.
     
-  SourceLocation E = LogicalEnd.getFileLocWithOffset(OldEndColNo > EndColNo
-                                                     ? -(OldEndColNo - EndColNo)
-                                                     : EndColNo - OldEndColNo);
+  SourceLocation E = LogicalEnd.getFileLocWithOffset(EndColNo - OldEndColNo);
   
   html::HighlightRange(R, LogicalStart, E,
                        "<span class=\"mrange\">", "</span>");
