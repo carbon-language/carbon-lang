@@ -36,6 +36,8 @@ protected:
   // values are specified by the TargetInfo constructor.
   bool CharIsSigned;
   unsigned WCharWidth, WCharAlign;
+  unsigned DoubleWidth, DoubleAlign;
+  
   const llvm::fltSemantics *FloatFormat, *DoubleFormat, *LongDoubleFormat;
 
   // TargetInfo Constructor.  Default initializes all fields.
@@ -103,8 +105,8 @@ public:
   const llvm::fltSemantics *getFloatFormat() const { return FloatFormat; }
 
   /// getDoubleWidth/Align/Format - Return the size/align/format of 'double'.
-  unsigned getDoubleWidth() const { return 64; } // FIXME
-  unsigned getDoubleAlign() const { return 32; } // FIXME
+  unsigned getDoubleWidth() const { return DoubleWidth; }
+  unsigned getDoubleAlign() const { return DoubleAlign; }
   const llvm::fltSemantics *getDoubleFormat() const { return DoubleFormat; }
 
   /// getLongDoubleWidth/Align/Format - Return the size/align/format of 'long

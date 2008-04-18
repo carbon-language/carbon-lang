@@ -215,7 +215,9 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
         static_cast<unsigned>(Context.getTypeSize(T)));
       
     case BuiltinType::Float:      return llvm::Type::FloatTy;
-    case BuiltinType::Double:     return llvm::Type::DoubleTy;
+    case BuiltinType::Double:
+      return (Context.Target.getDoubleFormat() == &llvm::APFloat::IEEEdouble) ? 
+        llvm::Type::DoubleTy : llvm::Type::FloatTy;
     case BuiltinType::LongDouble:
       // FIXME: mapping long double onto double.
       return llvm::Type::DoubleTy;
