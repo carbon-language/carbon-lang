@@ -44,6 +44,7 @@ CodeGenModule::~CodeGenModule() {
   if (ObjCInitFunction)
     AddGlobalCtor(ObjCInitFunction);
   EmitGlobalCtors();
+  EmitAnnotations();
   delete Runtime;
 }
 
@@ -122,6 +123,22 @@ void CodeGenModule::EmitGlobalCtors() {
 }
 
 
+
+void CodeGenModule::EmitAnnotations() {
+  if (Annotations.empty())
+    return;
+
+  // Create a new global variable for the ConstantStruct in the Module.
+  llvm::Constant *Array =
+  llvm::ConstantArray::get(llvm::ArrayType::get(Annotations[0]->getType(),
+                                                Annotations.size()),
+                           Annotations);
+  llvm::GlobalValue *gv = 
+  new llvm::GlobalVariable(Array->getType(), false,  
+                           llvm::GlobalValue::AppendingLinkage, Array, 
+                           "llvm.global.annotations", &TheModule);
+  gv->setSection("llvm.metadata");
+}
 
 /// ReplaceMapValuesWith - This is a really slow and bad function that
 /// searches for any entries in GlobalDeclMap that point to OldVal, changing

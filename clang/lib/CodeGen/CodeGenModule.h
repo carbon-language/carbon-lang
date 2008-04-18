@@ -59,6 +59,7 @@ class CodeGenModule {
   llvm::Function *MemSetFn;
   llvm::DenseMap<const Decl*, llvm::Constant*> GlobalDeclMap;
   std::vector<llvm::Constant*> GlobalCtors;
+  std::vector<llvm::Constant*> Annotations;
     
   llvm::StringMap<llvm::Constant*> CFConstantStringMap;
   llvm::StringMap<llvm::Constant*> ConstantStringMap;
@@ -99,6 +100,8 @@ public:
   
   void AddGlobalCtor(llvm::Function * Ctor);
   void EmitGlobalCtors(void);
+  void AddAnnotation(llvm::Constant *C) { Annotations.push_back(C); }
+  void EmitAnnotations(void);
 
   void EmitObjCMethod(const ObjCMethodDecl *OMD);
   void EmitFunction(const FunctionDecl *FD);
