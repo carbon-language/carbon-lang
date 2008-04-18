@@ -414,72 +414,6 @@ CFRefSummaryManager::getCFSummaryGetRule(FunctionTypeProto* FT) {
 }
 
 //===----------------------------------------------------------------------===//
-// Bug Descriptions.
-//===----------------------------------------------------------------------===//
-
-namespace {
-  
-  class CFRefCount;
-  
-  class VISIBILITY_HIDDEN CFRefBug : public BugType {
-  protected:
-    CFRefCount& TF;
-    
-  public:
-    CFRefBug(CFRefCount& tf) : TF(tf) {}
-  };
-  
-  class VISIBILITY_HIDDEN UseAfterRelease : public CFRefBug {
-  public:
-    UseAfterRelease(CFRefCount& tf) : CFRefBug(tf) {}
-    
-    virtual const char* getName() const {
-      return "(CoreFoundation) use-after-release";
-    }
-    virtual const char* getDescription() const {
-      return "(CoreFoundation) Reference-counted object is used"
-             " after it is released.";
-    }
-    
-    virtual void EmitWarnings(BugReporter& BR);
-    
-  };
-  
-  class VISIBILITY_HIDDEN BadRelease : public CFRefBug {
-  public:
-    BadRelease(CFRefCount& tf) : CFRefBug(tf) {}
-    
-    virtual const char* getName() const {
-      return "(CoreFoundation) release of non-owned object";
-    }
-    virtual const char* getDescription() const {
-      return "Incorrect decrement of the reference count of a "
-             "CoreFoundation object:\n"
-             "The object is not owned at this point by the caller.";
-    }
-    
-    virtual void EmitWarnings(BugReporter& BR);
-  };
-  
-  class VISIBILITY_HIDDEN Leak : public CFRefBug {
-  public:
-    Leak(CFRefCount& tf) : CFRefBug(tf) {}
-    
-    virtual const char* getName() const {
-      return "(CoreFoundation) Memory Leak";
-    }
-    
-    virtual const char* getDescription() const {
-      return "The CoreFoundation object has an excessive reference count and"
-             "\nis leaked after this statement.";
-    }
-    
-    virtual void EmitWarnings(BugReporter& BR);
-  };
-  
-} // end anonymous namespace
-
-//===----------------------------------------------------------------------===//
 // Reference-counting logic (typestate + counts).
 //===----------------------------------------------------------------------===//
 
@@ -634,25 +568,27 @@ void RefVal::print(std::ostream& Out) const {
 //===----------------------------------------------------------------------===//
 
 class VISIBILITY_HIDDEN CFRefCount : public GRSimpleVals {
-  
+public:
   // Type definitions.
   
   typedef llvm::ImmutableMap<SymbolID, RefVal> RefBindings;
   typedef RefBindings::Factory RefBFactoryTy;
   
-  typedef llvm::DenseMap<GRExprEngine::NodeTy*,Expr*> UseAfterReleasesTy;
-  typedef llvm::DenseMap<GRExprEngine::NodeTy*,Expr*> ReleasesNotOwnedTy;
-
-  typedef llvm::SmallVector<std::pair<SymbolID, ExplodedNode<ValueState>*>, 2>
+  typedef llvm::DenseMap<GRExprEngine::NodeTy*,std::pair<Expr*, SymbolID> >
+          ReleasesNotOwnedTy;
+  
+  typedef ReleasesNotOwnedTy UseAfterReleasesTy;
+    
+  typedef llvm::DenseMap<GRExprEngine::NodeTy*, std::vector<SymbolID>*>
           LeaksTy;
-  
-  
+
   class BindingsPrinter : public ValueState::CheckerStatePrinter {
   public:
     virtual void PrintCheckerState(std::ostream& Out, void* State,
                                    const char* nl, const char* sep);
   };
-  
+
+private:
   // Instance variables.
   
   CFRefSummaryManager Summaries;
@@ -667,12 +603,14 @@ class VISIBILITY_HIDDEN CFRefCount : public GRSimpleVals {
   Selector RetainSelector;
   Selector ReleaseSelector;
 
-  // Private methods.
-
+public:
+  
   static RefBindings GetRefBindings(ValueState& StImpl) {
     return RefBindings((RefBindings::TreeTy*) StImpl.CheckerState);
   }
 
+private:
+  
   static void SetRefBindings(ValueState& StImpl, RefBindings B) {
     StImpl.CheckerState = B.getRoot();
   }
@@ -689,7 +627,7 @@ class VISIBILITY_HIDDEN CFRefCount : public GRSimpleVals {
                            Expr* NodeExpr, Expr* ErrorExpr,                        
                            ExplodedNode<ValueState>* Pred,
                            ValueState* St,
-                           RefVal::Kind hasErr);
+                           RefVal::Kind hasErr, SymbolID Sym);
   
   ValueState* HandleSymbolDeath(ValueStateManager& VMgr, ValueState* St,
                                 SymbolID sid, RefVal V, bool& hasLeak);
@@ -704,7 +642,10 @@ public:
       RetainSelector(GetUnarySelector("retain", Ctx)),
       ReleaseSelector(GetUnarySelector("release", Ctx)) {}
   
-  virtual ~CFRefCount() {}
+  virtual ~CFRefCount() {
+    for (LeaksTy::iterator I = Leaks.begin(), E = Leaks.end(); I!=E; ++I)
+      delete I->second;
+  }
   
   virtual void RegisterChecks(GRExprEngine& Eng);
  
@@ -770,12 +711,7 @@ public:
 
 } // end anonymous namespace
 
-void CFRefCount::RegisterChecks(GRExprEngine& Eng) {
-  GRSimpleVals::RegisterChecks(Eng);
-  Eng.Register(new UseAfterRelease(*this));
-  Eng.Register(new BadRelease(*this));
-  Eng.Register(new Leak(*this));
-}
+
 
 
 void CFRefCount::BindingsPrinter::PrintCheckerState(std::ostream& Out,
@@ -806,7 +742,7 @@ void CFRefCount::ProcessNonLeakError(ExplodedNodeSet<ValueState>& Dst,
                                      Expr* NodeExpr, Expr* ErrorExpr,                        
                                      ExplodedNode<ValueState>* Pred,
                                      ValueState* St,
-                                     RefVal::Kind hasErr) {
+                                     RefVal::Kind hasErr, SymbolID Sym) {
   Builder.BuildSinks = true;
   GRExprEngine::NodeTy* N  = Builder.MakeNode(Dst, NodeExpr, Pred, St);
 
@@ -815,11 +751,11 @@ void CFRefCount::ProcessNonLeakError(ExplodedNodeSet<ValueState>& Dst,
   switch (hasErr) {
     default: assert(false);
     case RefVal::ErrorUseAfterRelease:
-      UseAfterReleases[N] = ErrorExpr;
+      UseAfterReleases[N] = std::make_pair(ErrorExpr, Sym);
       break;
       
     case RefVal::ErrorReleaseNotOwned:
-      ReleasesNotOwned[N] = ErrorExpr;
+      ReleasesNotOwned[N] = std::make_pair(ErrorExpr, Sym);
       break;
   }
 }
@@ -856,6 +792,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
   unsigned idx = 0;
   
   Expr* ErrorExpr = NULL;
+  SymbolID ErrorSym = 0;                                        
   
   for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
         I != E; ++I, ++idx) {
@@ -872,6 +809,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
         
         if (hasErr) {
           ErrorExpr = *I;
+          ErrorSym = T->getValue().first;
           break;
         }
       }
@@ -887,7 +825,8 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
   St = StateMgr.getPersistentState(StVals);
     
   if (hasErr) {
-    ProcessNonLeakError(Dst, Builder, CE, ErrorExpr, Pred, St, hasErr);
+    ProcessNonLeakError(Dst, Builder, CE, ErrorExpr, Pred, St,
+                        hasErr, ErrorSym);
     return;
   }
     
@@ -1031,7 +970,7 @@ bool CFRefCount::EvalObjCMessageExprAux(ExplodedNodeSet<ValueState>& Dst,
   // Create an error node if it exists.
   
   if (hasErr)
-    ProcessNonLeakError(Dst, Builder, ME, Receiver, Pred, St, hasErr);
+    ProcessNonLeakError(Dst, Builder, ME, Receiver, Pred, St, hasErr, Sym);
   else
     Builder.MakeNode(Dst, ME, Pred, St);
 
@@ -1124,11 +1063,14 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
     if (hasLeak) Leaked.push_back((*I).first);
   }
       
-  ExplodedNode<ValueState>* N = Builder.MakeNode(St);
+  ExplodedNode<ValueState>* N = Builder.MakeNode(St);  
+  std::vector<SymbolID>*& LeaksAtNode = Leaks[N];
+  assert (!LeaksAtNode);
+  LeaksAtNode = new std::vector<SymbolID>();
   
   for (llvm::SmallVector<SymbolID, 10>::iterator I=Leaked.begin(),
        E = Leaked.end(); I != E; ++I)
-    Leaks.push_back(std::make_pair(*I, N));
+    (*LeaksAtNode).push_back(*I);
 }
 
  // Return statements.
@@ -1274,13 +1216,123 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
 // Error reporting.
 //===----------------------------------------------------------------------===//
 
+namespace {
+  
+  //===-------------===//
+  // Bug Descriptions. //
+  //===-------------===//  
+  
+  class VISIBILITY_HIDDEN CFRefBug : public BugType {
+  protected:
+    CFRefCount& TF;
+    
+  public:
+    CFRefBug(CFRefCount& tf) : TF(tf) {}
+  };
+  
+  class VISIBILITY_HIDDEN UseAfterRelease : public CFRefBug {
+  public:
+    UseAfterRelease(CFRefCount& tf) : CFRefBug(tf) {}
+    
+    virtual const char* getName() const {
+      return "(CoreFoundation) use-after-release";
+    }
+    virtual const char* getDescription() const {
+      return "(CoreFoundation) Reference-counted object is used"
+      " after it is released.";
+    }
+    
+    virtual void EmitWarnings(BugReporter& BR);
+    
+  };
+  
+  class VISIBILITY_HIDDEN BadRelease : public CFRefBug {
+  public:
+    BadRelease(CFRefCount& tf) : CFRefBug(tf) {}
+    
+    virtual const char* getName() const {
+      return "(CoreFoundation) release of non-owned object";
+    }
+    virtual const char* getDescription() const {
+      return "Incorrect decrement of the reference count of a "
+      "CoreFoundation object:\n"
+      "The object is not owned at this point by the caller.";
+    }
+    
+    virtual void EmitWarnings(BugReporter& BR);
+  };
+  
+  class VISIBILITY_HIDDEN Leak : public CFRefBug {
+  public:
+    Leak(CFRefCount& tf) : CFRefBug(tf) {}
+    
+    virtual const char* getName() const {
+      return "(CoreFoundation) Memory Leak";
+    }
+    
+    virtual const char* getDescription() const {
+      return "The CoreFoundation object has an excessive reference count and"
+      "\nis leaked after this statement.";
+    }
+    
+    virtual void EmitWarnings(BugReporter& BR);
+  };
+  
+  //===---------===//
+  // Bug Reports.  //
+  //===---------===//
+  
+  class VISIBILITY_HIDDEN CFRefReport : public RangedBugReport {
+    SymbolID Sym;
+  public:
+    CFRefReport(const BugType& D, ExplodedNode<ValueState> *n, SymbolID sym)
+      : RangedBugReport(D, n), Sym(sym) {}
+        
+    virtual ~CFRefReport() {}
+    
+    
+    virtual PathDiagnosticPiece* VisitNode(ExplodedNode<ValueState>* N,
+                                           ExplodedNode<ValueState>* PrevN,
+                                           ExplodedGraph<ValueState>& G,
+                                           BugReporter& BR);
+  };
+  
+  
+} // end anonymous namespace
+
+void CFRefCount::RegisterChecks(GRExprEngine& Eng) {
+  GRSimpleVals::RegisterChecks(Eng);
+  Eng.Register(new UseAfterRelease(*this));
+  Eng.Register(new BadRelease(*this));
+  Eng.Register(new Leak(*this));
+}
+
+PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<ValueState>* N,
+                                            ExplodedNode<ValueState>* PrevN,
+                                            ExplodedGraph<ValueState>& G,
+                                            BugReporter& BR) {
+
+  // Check if the type state has changed.
+  
+  ValueState* PrevSt = PrevN->getState();
+  ValueState* CurrSt = N->getState();
+  
+  CFRefCount::RefBindings PrevB = CFRefCount::GetRefBindings(*PrevSt);
+  CFRefCount::RefBindings CurrB = CFRefCount::GetRefBindings(*CurrSt);
+  
+  
+  
+  
+  return NULL;
+}
+
 void UseAfterRelease::EmitWarnings(BugReporter& BR) {
 
   for (CFRefCount::use_after_iterator I = TF.use_after_begin(),
         E = TF.use_after_end(); I != E; ++I) {
     
-    RangedBugReport report(*this, I->first);
-    report.addRange(I->second->getSourceRange());    
+    CFRefReport report(*this, I->first, I->second.second);
+    report.addRange(I->second.first->getSourceRange());    
     BR.EmitWarning(report);    
   }
 }
@@ -1290,10 +1342,9 @@ void BadRelease::EmitWarnings(BugReporter& BR) {
   for (CFRefCount::bad_release_iterator I = TF.bad_release_begin(),
        E = TF.bad_release_end(); I != E; ++I) {
     
-    RangedBugReport report(*this, I->first);
-    report.addRange(I->second->getSourceRange());    
-    BR.EmitWarning(report); 
-
+    CFRefReport report(*this, I->first, I->second.second);
+    report.addRange(I->second.first->getSourceRange());    
+    BR.EmitWarning(report);    
   }  
 }
 
@@ -1302,8 +1353,13 @@ void Leak::EmitWarnings(BugReporter& BR) {
   for (CFRefCount::leaks_iterator I = TF.leaks_begin(),
        E = TF.leaks_end(); I != E; ++I) {
     
-    BugReport report(*this, I->second);
-    BR.EmitWarning(report);     
+    std::vector<SymbolID>& SymV = *(I->second);
+    unsigned n = SymV.size();
+    
+    for (unsigned i = 0; i < n; ++i) {
+      CFRefReport report(*this, I->first, SymV[i]);
+      BR.EmitWarning(report);
+    }
   }  
 }
 

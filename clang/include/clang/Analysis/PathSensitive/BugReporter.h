@@ -74,7 +74,7 @@ public:
   virtual PathDiagnosticPiece* VisitNode(ExplodedNode<ValueState>* N,
                                          ExplodedNode<ValueState>* PrevN,
                                          ExplodedGraph<ValueState>& G,
-                                         ASTContext& Ctx);
+                                         BugReporter& BR);
 };
   
 class RangedBugReport : public BugReport {

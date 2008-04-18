@@ -135,7 +135,7 @@ FullSourceLoc BugReport::getLocation(SourceManager& Mgr) {
 PathDiagnosticPiece* BugReport::VisitNode(ExplodedNode<ValueState>* N,
                                           ExplodedNode<ValueState>* PrevN,
                                           ExplodedGraph<ValueState>& G,
-                                          ASTContext& Ctx) {
+                                          BugReporter& BR) {
   return NULL;
 }
 
@@ -352,7 +352,7 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
       }
     }
     else
-      if (PathDiagnosticPiece* piece = R.VisitNode(N, NextNode, *GTrim, Ctx))
+      if (PathDiagnosticPiece* piece = R.VisitNode(N, NextNode, *GTrim, *this))
         PD.push_front(piece);
   }
 }
