@@ -254,9 +254,8 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
 
   // Generate header
   R.InsertCStrBefore(StartLoc,
-      "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" "
-      "\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">"
-      "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n"
+      "<!doctype html>\n" // Use HTML 5 doctype
+      "<html>\n<head>\n"
       "<style type=\"text/css\">\n"
       " body { color:#000000; background-color:#ffffff }\n"
       " body { font-family:Helvetica, sans-serif; font-size:10pt }\n"
