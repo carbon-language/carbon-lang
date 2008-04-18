@@ -422,6 +422,9 @@ void BugReporter::EmitWarning(BugReport& R) {
   
   unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning,
                                             os.str().c_str());
-      
-  Diag.Report(L, ErrorDiag, NULL, 0, Beg, End - Beg);    
+  
+  if (PD)
+    Diag.Report(PD, L, ErrorDiag, NULL, 0, Beg, End - Beg);    
+  else
+    Diag.Report(L, ErrorDiag, NULL, 0, Beg, End - Beg);    
 }
