@@ -372,7 +372,7 @@ public:
   
   const Expr *getSubExpr() const { return Val; }
   Expr *getSubExpr() { return Val; }
-  SourceRange getSourceRange() const { return SourceRange(L, R); }
+  virtual SourceRange getSourceRange() const { return SourceRange(L, R); }
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ParenExprClass; 
@@ -484,7 +484,10 @@ public:
   QualType getArgumentType() const { return Ty; }
   
   SourceLocation getOperatorLoc() const { return OpLoc; }
-  SourceRange getSourceRange() const { return SourceRange(OpLoc, RParenLoc); }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(OpLoc, RParenLoc);
+  }
 
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == SizeOfAlignOfTypeExprClass; 
@@ -546,11 +549,11 @@ public:
   const Expr *getIdx() const {
     return (getRHS()->getType()->isIntegerType()) ? getRHS() : getLHS(); 
   }  
-
   
-  SourceRange getSourceRange() const { 
+  virtual SourceRange getSourceRange() const { 
     return SourceRange(getLHS()->getLocStart(), RBracketLoc);
   }
+  
   virtual SourceLocation getExprLoc() const { return RBracketLoc; }
 
   static bool classof(const Stmt *T) { 
@@ -634,7 +637,8 @@ public:
   bool isBuiltinConstantExpr() const;
   
   SourceLocation getRParenLoc() const { return RParenLoc; }
-  SourceRange getSourceRange() const { 
+
+  virtual SourceRange getSourceRange() const { 
     return SourceRange(getCallee()->getLocStart(), RParenLoc);
   }
   
@@ -671,6 +675,7 @@ public:
   virtual SourceRange getSourceRange() const {
     return SourceRange(getBase()->getLocStart(), MemberLoc);
   }
+  
   virtual SourceLocation getExprLoc() const { return MemberLoc; }
 
   static bool classof(const Stmt *T) { 
@@ -736,6 +741,7 @@ public:
   virtual SourceRange getSourceRange() const {
     return SourceRange(getBase()->getLocStart(), AccessorLoc);
   }
+  
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == OCUVectorElementExprClass; 
   }
@@ -1366,7 +1372,9 @@ public:
   SourceLocation getAtLoc() const { return AtLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
   
-  SourceRange getSourceRange() const { return SourceRange(AtLoc, RParenLoc); }
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(AtLoc, RParenLoc);
+  }
 
   QualType getEncodedType() const { return EncType; }
 
@@ -1397,7 +1405,10 @@ public:
   
   SourceLocation getAtLoc() const { return AtLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
-  SourceRange getSourceRange() const { return SourceRange(AtLoc, RParenLoc); }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(AtLoc, RParenLoc);
+  }
   
   /// getNumArgs - Return the number of actual arguments to this call.
   unsigned getNumArgs() const { return SelName.getNumArgs(); }
@@ -1429,7 +1440,10 @@ public:
     
   SourceLocation getAtLoc() const { return AtLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
-  SourceRange getSourceRange() const { return SourceRange(AtLoc, RParenLoc); }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(AtLoc, RParenLoc);
+  }
         
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCProtocolExprClass;
@@ -1541,7 +1555,10 @@ public:
     assert(Arg < NumArgs && "Arg access out of range!");
     SubExprs[Arg+ARGS_START] = ArgExpr;
   }
-  SourceRange getSourceRange() const { return SourceRange(LBracloc, RBracloc); }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(LBracloc, RBracloc);
+  }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCMessageExprClass;
