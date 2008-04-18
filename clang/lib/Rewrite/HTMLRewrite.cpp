@@ -393,28 +393,24 @@ void html::SyntaxHighlight(Rewriter &R, unsigned FileID, Preprocessor &PP) {
 /// file, to reexpand macros and insert (into the HTML) information about the
 /// macro expansions.  This won't be perfectly perfect, but it will be
 /// reasonably close.
-void html::HighlightMacros(Rewriter &R, unsigned FileID,
-                           PreprocessorFactory &PPF) {
-  
-  llvm::OwningPtr<Preprocessor> PP(PPF.CreatePreprocessor());
-  
+void html::HighlightMacros(Rewriter &R, unsigned FileID, Preprocessor& PP) {
   
   RewriteBuffer &RB = R.getEditBuffer(FileID);
   
   // Inform the preprocessor that we don't want comments.
-  PP->SetCommentRetentionState(false, false);
+  PP.SetCommentRetentionState(false, false);
   
   // Start parsing the specified input file.
-  PP->EnterMainSourceFile();
+  PP.EnterMainSourceFile();
   
   // Lex all the tokens.
-  const SourceManager &SourceMgr = PP->getSourceManager();
+  const SourceManager &SourceMgr = PP.getSourceManager();
   Token Tok;
-  PP->Lex(Tok);
+  PP.Lex(Tok);
   while (Tok.isNot(tok::eof)) {
     // Ignore non-macro tokens.
     if (!Tok.getLocation().isMacroID()) {
-      PP->Lex(Tok);
+      PP.Lex(Tok);
       continue;
     }
     
@@ -424,7 +420,7 @@ void html::HighlightMacros(Rewriter &R, unsigned FileID,
       SourceMgr.getDecomposedFileLoc(LLoc);
     
     if (LLocInfo.first != FileID) {
-      PP->Lex(Tok);
+      PP.Lex(Tok);
       continue;
     }
     
@@ -442,11 +438,11 @@ void html::HighlightMacros(Rewriter &R, unsigned FileID,
                        strlen("<span class='macro'>"));
     RB.InsertTextBefore(TokOffs+TokLen, "</span>", strlen("</span>"));
     
-    std::string Expansion = PP->getSpelling(Tok);
+    std::string Expansion = PP.getSpelling(Tok);
     unsigned LineLen = Expansion.size();
     
     // Okay, eat this token, getting the next one.
-    PP->Lex(Tok);
+    PP.Lex(Tok);
     
     // Skip all the rest of the tokens that are part of this macro
     // instantiation.  It would be really nice to pop up a window with all the
@@ -461,9 +457,9 @@ void html::HighlightMacros(Rewriter &R, unsigned FileID,
       
       LineLen -= Expansion.size();
       // Escape any special characters in the token text.
-      Expansion += ' ' + EscapeText(PP->getSpelling(Tok));
+      Expansion += ' ' + EscapeText(PP.getSpelling(Tok));
       LineLen += Expansion.size();
-      PP->Lex(Tok);
+      PP.Lex(Tok);
     }
     
     // Insert the information about the expansion inside the macro span.
@@ -472,4 +468,9 @@ void html::HighlightMacros(Rewriter &R, unsigned FileID,
   }
 }
 
-
+void html::HighlightMacros(Rewriter &R, unsigned FileID,
+                           PreprocessorFactory &PPF) {
+  
+  llvm::OwningPtr<Preprocessor> PP(PPF.CreatePreprocessor());
+  HighlightMacros(R, FileID, *PP);
+}
