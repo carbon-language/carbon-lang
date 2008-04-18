@@ -977,7 +977,7 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
       return 0;
     }
     ObjCCategoryDecl *Categories;
-    for (ObjCCategoryDecl *Categories = IDecl->getCategoryList();
+    for (Categories = IDecl->getCategoryList();
          Categories; Categories = Categories->getNextClassCategory())
       if (Categories->getIdentifier() == CatImplClass->getIdentifier())
         break;
