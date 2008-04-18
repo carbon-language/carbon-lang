@@ -846,13 +846,12 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
         }
       }
     }
+  } else { // we are outside a method.
+    if (IV->isFreeIvar())
+      assert(1 && "Cannot have a free standing ivar outside a method");
+    // Explicit ivar refs do not need to be rewritten. Do nothing.
   }
-  // FIXME: Implement public ivar access from a function.
-  Expr *Replacement = new MemberExpr(IV->getBase(), true, D, 
-                                     IV->getLocation(), D->getType());
-  ReplaceStmt(IV, Replacement);
-  delete IV;
-  return Replacement;
+  return IV;
 }
 
 //===----------------------------------------------------------------------===//
