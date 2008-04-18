@@ -93,6 +93,7 @@ SDOperand DAGTypeLegalizer::ScalarizeRes_UNDEF(SDNode *N) {
 }
 
 SDOperand DAGTypeLegalizer::ScalarizeRes_LOAD(LoadSDNode *N) {
+  // FIXME: Add support for indexed loads.
   SDOperand Result = DAG.getLoad(MVT::getVectorElementType(N->getValueType(0)),
                                  N->getChain(), N->getBasePtr(), 
                                  N->getSrcValue(), N->getSrcValueOffset(),
@@ -224,6 +225,7 @@ SDOperand DAGTypeLegalizer::ScalarizeOp_EXTRACT_VECTOR_ELT(SDNode *N) {
 /// ScalarizeOp_STORE - If the value to store is a vector that needs to be
 /// scalarized, it must be <1 x ty>.  Just store the element.
 SDOperand DAGTypeLegalizer::ScalarizeOp_STORE(StoreSDNode *N, unsigned OpNo) {
+  // FIXME: Add support for indexed stores.
   assert(OpNo == 1 && "Do not know how to scalarize this operand!");
   return DAG.getStore(N->getChain(), GetScalarizedOp(N->getOperand(1)),
                       N->getBasePtr(), N->getSrcValue(), N->getSrcValueOffset(),

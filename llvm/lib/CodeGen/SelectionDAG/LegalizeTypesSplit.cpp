@@ -126,6 +126,7 @@ void DAGTypeLegalizer::SplitRes_UNDEF(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
 
 void DAGTypeLegalizer::SplitRes_LOAD(LoadSDNode *LD, 
                                      SDOperand &Lo, SDOperand &Hi) {
+  // FIXME: Add support for indexed loads.
   MVT::ValueType LoVT, HiVT;
   GetSplitDestVTs(LD->getValueType(0), LoVT, HiVT);
   
@@ -398,6 +399,7 @@ bool DAGTypeLegalizer::SplitOperand(SDNode *N, unsigned OpNo) {
 }
 
 SDOperand DAGTypeLegalizer::SplitOp_STORE(StoreSDNode *N, unsigned OpNo) {
+  // FIXME: Add support for indexed stores.
   assert(OpNo == 1 && "Can only split the stored value");
   
   SDOperand Ch  = N->getChain();

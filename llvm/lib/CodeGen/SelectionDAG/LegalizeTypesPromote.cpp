@@ -193,6 +193,7 @@ SDOperand DAGTypeLegalizer::PromoteResult_SETCC(SDNode *N) {
 }
 
 SDOperand DAGTypeLegalizer::PromoteResult_LOAD(LoadSDNode *N) {
+  // FIXME: Add support for indexed loads.
   MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   ISD::LoadExtType ExtType =
     ISD::isNON_EXTLoad(N) ? ISD::EXTLOAD : N->getExtensionType();
@@ -637,6 +638,7 @@ void DAGTypeLegalizer::PromoteSetCCOperands(SDOperand &NewLHS,SDOperand &NewRHS,
 }
 
 SDOperand DAGTypeLegalizer::PromoteOperand_STORE(StoreSDNode *N, unsigned OpNo){
+  // FIXME: Add support for indexed stores.
   SDOperand Ch = N->getChain(), Ptr = N->getBasePtr();
   int SVOffset = N->getSrcValueOffset();
   unsigned Alignment = N->getAlignment();
