@@ -537,8 +537,16 @@ my $Cmd = "$RealBin/ccc-analyzer";
 
 die "$Prog: Executable 'ccc-analyzer' does not exist at '$Cmd'\n"
   if (! -x $Cmd);
+  
+my $Clang = "$RealBin/clang";
+
+if (! -x $Clang) {
+  print "$Prog: 'clang' executable not found in '$RealBin'.  Using 'clang' from path.\n";
+  $Clang = "clang";
+}
 
 $ENV{'CC'} = $Cmd;
+$ENV{'CLANG'} = $Clang;
 
 if ($Verbose >= 2) {
   $ENV{'CCC_ANALYZER_VERBOSE'} = 1;

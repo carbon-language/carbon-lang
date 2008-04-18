@@ -37,10 +37,6 @@ def run(args):
     if code:
         sys.exit(code)
 
-def preprocess(args):
-    command = 'clang -E'.split()
-    run(command + args)
-
 def compile(args):
   # We MUST print to stderr.  Some clients use the stdout output of
   # gcc for various purposes.
@@ -54,7 +50,7 @@ def remove_pch_extension(path):
           return path
       return path[:i]
 
-def analyze(args,language,output,files,verbose,htmldir):
+def analyze(clang, args,language,output,files,verbose,htmldir):
     if language.find("c++") > 0:
       return
   
@@ -74,7 +70,7 @@ def analyze(args,language,output,files,verbose,htmldir):
       command = 'cp'.split()
       args = command + files + target.split()      
     else:
-      command = 'clang -checker-cfref'.split()
+      command = clang.split() + '-checker-cfref'.split()
       args = command + args;
       
       if htmldir is not None:
@@ -133,9 +129,16 @@ def main(args):
     language = ''
     
     verbose = 0
+    clang = "clang"
+    
     
     if os.environ.get('CCC_ANALYZER_VERBOSE') is not None:
       verbose =1
+      
+    clang_env = os.environ.get('CLANG') 
+    
+    if clang_env is not None:
+      clang = clang_env
     
     htmldir = os.environ.get('CCC_ANALYZER_HTML')
       
@@ -236,7 +239,7 @@ def main(args):
             if language != 'unknown':
               analyze_args = analyze_args + [ '-x', language ]
             analyze_args = analyze_args + compile_opts
-            analyze(analyze_args, language, output, files, verbose, htmldir)
+            analyze(clang, analyze_args, language, output, files, verbose, htmldir)
         compile(args)
 
 
