@@ -324,61 +324,64 @@ ExpandResult_SIGN_EXTEND_INREG(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
 void DAGTypeLegalizer::ExpandResult_FP_TO_SINT(SDNode *N, SDOperand &Lo,
                                                SDOperand &Hi) {
   MVT::ValueType VT = N->getValueType(0);
+  SDOperand Op = N->getOperand(0);
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
   if (VT == MVT::i64) {
-    if (N->getOperand(0).getValueType() == MVT::f32)
+    if (Op.getValueType() == MVT::f32)
       LC = RTLIB::FPTOSINT_F32_I64;
-    else if (N->getOperand(0).getValueType() == MVT::f64)
+    else if (Op.getValueType() == MVT::f64)
       LC = RTLIB::FPTOSINT_F64_I64;
-    else if (N->getOperand(0).getValueType() == MVT::f80)
+    else if (Op.getValueType() == MVT::f80)
       LC = RTLIB::FPTOSINT_F80_I64;
-    else if (N->getOperand(0).getValueType() == MVT::ppcf128)
+    else if (Op.getValueType() == MVT::ppcf128)
       LC = RTLIB::FPTOSINT_PPCF128_I64;
   } else if (VT == MVT::i128) {
-    if (N->getOperand(0).getValueType() == MVT::f32)
+    if (Op.getValueType() == MVT::f32)
       LC = RTLIB::FPTOSINT_F32_I128;
-    else if (N->getOperand(0).getValueType() == MVT::f64)
+    else if (Op.getValueType() == MVT::f64)
       LC = RTLIB::FPTOSINT_F64_I128;
-    else if (N->getOperand(0).getValueType() == MVT::f80)
+    else if (Op.getValueType() == MVT::f80)
       LC = RTLIB::FPTOSINT_F80_I128;
-    else if (N->getOperand(0).getValueType() == MVT::ppcf128)
+    else if (Op.getValueType() == MVT::ppcf128)
       LC = RTLIB::FPTOSINT_PPCF128_I128;
   } else {
     assert(0 && "Unexpected fp-to-sint conversion!");
   }
-  SplitInteger(MakeLibCall(LC, N, true/*sign irrelevant*/), Lo, Hi);
+  SplitInteger(MakeLibCall(LC, VT, &Op, 1, true/*sign irrelevant*/), Lo, Hi);
 }
 
 void DAGTypeLegalizer::ExpandResult_FP_TO_UINT(SDNode *N, SDOperand &Lo,
                                                SDOperand &Hi) {
   MVT::ValueType VT = N->getValueType(0);
+  SDOperand Op = N->getOperand(0);
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
   if (VT == MVT::i64) {
-    if (N->getOperand(0).getValueType() == MVT::f32)
+    if (Op.getValueType() == MVT::f32)
       LC = RTLIB::FPTOUINT_F32_I64;
-    else if (N->getOperand(0).getValueType() == MVT::f64)
+    else if (Op.getValueType() == MVT::f64)
       LC = RTLIB::FPTOUINT_F64_I64;
-    else if (N->getOperand(0).getValueType() == MVT::f80)
+    else if (Op.getValueType() == MVT::f80)
       LC = RTLIB::FPTOUINT_F80_I64;
-    else if (N->getOperand(0).getValueType() == MVT::ppcf128)
+    else if (Op.getValueType() == MVT::ppcf128)
       LC = RTLIB::FPTOUINT_PPCF128_I64;
   } else if (VT == MVT::i128) {
-    if (N->getOperand(0).getValueType() == MVT::f32)
+    if (Op.getValueType() == MVT::f32)
       LC = RTLIB::FPTOUINT_F32_I128;
-    else if (N->getOperand(0).getValueType() == MVT::f64)
+    else if (Op.getValueType() == MVT::f64)
       LC = RTLIB::FPTOUINT_F64_I128;
-    else if (N->getOperand(0).getValueType() == MVT::f80)
+    else if (Op.getValueType() == MVT::f80)
       LC = RTLIB::FPTOUINT_F80_I128;
-    else if (N->getOperand(0).getValueType() == MVT::ppcf128)
+    else if (Op.getValueType() == MVT::ppcf128)
       LC = RTLIB::FPTOUINT_PPCF128_I128;
   } else {
     assert(0 && "Unexpected fp-to-uint conversion!");
   }
-  SplitInteger(MakeLibCall(LC, N, false/*sign irrelevant*/), Lo, Hi);
+  SplitInteger(MakeLibCall(LC, VT, &Op, 1, false/*sign irrelevant*/), Lo, Hi);
 }
 
 void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
                                          SDOperand &Lo, SDOperand &Hi) {
+  // FIXME: Add support for indexed loads.
   MVT::ValueType VT = N->getValueType(0);
   MVT::ValueType NVT = TLI.getTypeToTransformTo(VT);
   SDOperand Ch  = N->getChain();    // Legalize the chain.
@@ -518,9 +521,6 @@ void DAGTypeLegalizer::ExpandResult_SELECT(SDNode *N,
   GetExpandedOp(N->getOperand(1), LL, LH);
   GetExpandedOp(N->getOperand(2), RL, RH);
   Lo = DAG.getNode(ISD::SELECT, LL.getValueType(), N->getOperand(0), LL, RL);
-  
-  assert(N->getOperand(0).getValueType() != MVT::f32 &&
-         "FIXME: softfp shouldn't use expand!");
   Hi = DAG.getNode(ISD::SELECT, LL.getValueType(), N->getOperand(0), LH, RH);
 }
 
@@ -531,9 +531,6 @@ void DAGTypeLegalizer::ExpandResult_SELECT_CC(SDNode *N,
   GetExpandedOp(N->getOperand(3), RL, RH);
   Lo = DAG.getNode(ISD::SELECT_CC, LL.getValueType(), N->getOperand(0), 
                    N->getOperand(1), LL, RL, N->getOperand(4));
-  
-  assert(N->getOperand(0).getValueType() != MVT::f32 &&
-         "FIXME: softfp shouldn't use expand!");
   Hi = DAG.getNode(ISD::SELECT_CC, LL.getValueType(), N->getOperand(0), 
                    N->getOperand(1), LH, RH, N->getOperand(4));
 }
@@ -667,37 +664,43 @@ void DAGTypeLegalizer::ExpandResult_MUL(SDNode *N,
       return;
     }
   }
-  
-  abort();
-#if 0 // FIXME!
+
   // If nothing else, we can make a libcall.
-  Lo = ExpandLibCall(TLI.getLibcallName(RTLIB::MUL_I64), N,
-                     false/*sign irrelevant*/, Hi);
-#endif
-}  
+  SDOperand Ops[2] = { N->getOperand(0), N->getOperand(1) };
+  SplitInteger(MakeLibCall(RTLIB::MUL_I64, VT, Ops, 2, true/*sign irrelevant*/),
+               Lo, Hi);
+}
 
 void DAGTypeLegalizer::ExpandResult_SDIV(SDNode *N,
                                          SDOperand &Lo, SDOperand &Hi) {
   assert(N->getValueType(0) == MVT::i64 && "Unsupported sdiv!");
-  SplitInteger(MakeLibCall(RTLIB::SDIV_I64, N, true), Lo, Hi);
+  SDOperand Ops[2] = { N->getOperand(0), N->getOperand(1) };
+  SplitInteger(MakeLibCall(RTLIB::SDIV_I64, N->getValueType(0), Ops, 2, true),
+               Lo, Hi);
 }
 
 void DAGTypeLegalizer::ExpandResult_SREM(SDNode *N,
                                          SDOperand &Lo, SDOperand &Hi) {
   assert(N->getValueType(0) == MVT::i64 && "Unsupported srem!");
-  SplitInteger(MakeLibCall(RTLIB::SREM_I64, N, true), Lo, Hi);
+  SDOperand Ops[2] = { N->getOperand(0), N->getOperand(1) };
+  SplitInteger(MakeLibCall(RTLIB::SREM_I64, N->getValueType(0), Ops, 2, true),
+               Lo, Hi);
 }
 
 void DAGTypeLegalizer::ExpandResult_UDIV(SDNode *N,
                                          SDOperand &Lo, SDOperand &Hi) {
   assert(N->getValueType(0) == MVT::i64 && "Unsupported udiv!");
-  SplitInteger(MakeLibCall(RTLIB::UDIV_I64, N, false), Lo, Hi);
+  SDOperand Ops[2] = { N->getOperand(0), N->getOperand(1) };
+  SplitInteger(MakeLibCall(RTLIB::UDIV_I64, N->getValueType(0), Ops, 2, false),
+               Lo, Hi);
 }
 
 void DAGTypeLegalizer::ExpandResult_UREM(SDNode *N,
                                          SDOperand &Lo, SDOperand &Hi) {
   assert(N->getValueType(0) == MVT::i64 && "Unsupported urem!");
-  SplitInteger(MakeLibCall(RTLIB::UREM_I64, N, false), Lo, Hi);
+  SDOperand Ops[2] = { N->getOperand(0), N->getOperand(1) };
+  SplitInteger(MakeLibCall(RTLIB::UREM_I64, N->getValueType(0), Ops, 2, false),
+               Lo, Hi);
 }
 
 void DAGTypeLegalizer::ExpandResult_Shift(SDNode *N,
@@ -716,11 +719,11 @@ void DAGTypeLegalizer::ExpandResult_Shift(SDNode *N,
   
   // If this target supports shift_PARTS, use it.  First, map to the _PARTS opc.
   unsigned PartsOpc;
-  if (N->getOpcode() == ISD::SHL)
+  if (N->getOpcode() == ISD::SHL) {
     PartsOpc = ISD::SHL_PARTS;
-  else if (N->getOpcode() == ISD::SRL)
+  } else if (N->getOpcode() == ISD::SRL) {
     PartsOpc = ISD::SRL_PARTS;
-  else {
+  } else {
     assert(N->getOpcode() == ISD::SRA && "Unknown shift!");
     PartsOpc = ISD::SRA_PARTS;
   }
@@ -741,16 +744,27 @@ void DAGTypeLegalizer::ExpandResult_Shift(SDNode *N,
     Hi = Lo.getValue(1);
     return;
   }
-  
-  abort();
-#if 0 // FIXME!
+
   // Otherwise, emit a libcall.
-  unsigned RuntimeCode = ; // SRL -> SRL_I64 etc.
-  bool Signed = ;
-  Lo = ExpandLibCall(TLI.getLibcallName(RTLIB::SRL_I64), N,
-                     false/*lshr is unsigned*/, Hi);
-#endif
-}  
+  assert(VT == MVT::i64 && "Unsupported shift!");
+
+  RTLIB::Libcall LC;
+  bool isSigned;
+  if (N->getOpcode() == ISD::SHL) {
+    LC = RTLIB::SHL_I64;
+    isSigned = false; /*sign irrelevant*/
+  } else if (N->getOpcode() == ISD::SRL) {
+    LC = RTLIB::SRL_I64;
+    isSigned = false;
+  } else {
+    assert(N->getOpcode() == ISD::SRA && "Unknown shift!");
+    LC = RTLIB::SRA_I64;
+    isSigned = true;
+  }
+
+  SDOperand Ops[2] = { N->getOperand(0), N->getOperand(1) };
+  SplitInteger(MakeLibCall(LC, VT, Ops, 2, isSigned), Lo, Hi);
+}
 
 void DAGTypeLegalizer::ExpandResult_CTLZ(SDNode *N,
                                          SDOperand &Lo, SDOperand &Hi) {
@@ -1106,7 +1120,7 @@ SDOperand DAGTypeLegalizer::ExpandOperand_SINT_TO_FP(SDOperand Source,
     break;   // The target lowered this.
   }
   
-  RTLIB::Libcall LC;
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
   if (SourceVT == MVT::i64) {
     if (DestTy == MVT::f32)
       LC = RTLIB::SINTTOFP_I64_F32;
@@ -1128,15 +1142,10 @@ SDOperand DAGTypeLegalizer::ExpandOperand_SINT_TO_FP(SDOperand Source,
   } else {
     assert(0 && "Unknown int value type!");
   }
-  
-  assert(0 && "FIXME: no libcalls yet!");
-  abort();
-#if 0
-  assert(TLI.getLibcallName(LC) && "Don't know how to expand this SINT_TO_FP!");
-  Source = DAG.getNode(ISD::SINT_TO_FP, DestTy, Source);
-  SDOperand UnusedHiPart;
-  return ExpandLibCall(TLI.getLibcallName(LC), Source.Val, true, UnusedHiPart);
-#endif
+
+  assert(LC != RTLIB::UNKNOWN_LIBCALL &&
+         "Don't know how to expand this SINT_TO_FP!");
+  return MakeLibCall(LC, DestTy, &Source, 1, true);
 }
 
 SDOperand DAGTypeLegalizer::ExpandOperand_UINT_TO_FP(SDOperand Source, 
@@ -1224,12 +1233,8 @@ void DAGTypeLegalizer::ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
   SDOperand LHSLo, LHSHi, RHSLo, RHSHi;
   GetExpandedOp(NewLHS, LHSLo, LHSHi);
   GetExpandedOp(NewRHS, RHSLo, RHSHi);
-  
+
   MVT::ValueType VT = NewLHS.getValueType();
-  if (VT == MVT::f32 || VT == MVT::f64) {
-    assert(0 && "FIXME: softfp not implemented yet! should be promote not exp");
-  }
-  
   if (VT == MVT::ppcf128) {
     // FIXME:  This generated code sucks.  We want to generate
     //         FCMP crN, hi1, hi2
@@ -1247,8 +1252,7 @@ void DAGTypeLegalizer::ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
     NewRHS = SDOperand();   // LHS is the result, not a compare.
     return;
   }
-  
-  
+
   if (CCCode == ISD::SETEQ || CCCode == ISD::SETNE) {
     if (RHSLo == RHSHi)
       if (ConstantSDNode *RHSCST = dyn_cast<ConstantSDNode>(RHSLo))
@@ -1336,6 +1340,7 @@ void DAGTypeLegalizer::ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
 }
 
 SDOperand DAGTypeLegalizer::ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo) {
+  // FIXME: Add support for indexed stores.
   assert(OpNo == 1 && "Can only expand the stored value so far");
 
   MVT::ValueType VT = N->getOperand(1).getValueType();

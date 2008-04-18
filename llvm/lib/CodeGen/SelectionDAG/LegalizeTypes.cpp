@@ -525,15 +525,18 @@ void DAGTypeLegalizer::SplitInteger(SDOperand Op,
   SplitInteger(Op, HalfVT, HalfVT, Lo, Hi);
 }
 
-/// MakeLibCall - Expand a node into a libcall and return the result.
-SDOperand DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, SDNode *N,
+/// MakeLibCall - Generate a libcall taking the given operands as arguments and
+/// returning a result of type RetVT.
+SDOperand DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, MVT::ValueType RetVT,
+                                        const SDOperand *Ops, unsigned NumOps,
                                         bool isSigned) {
   TargetLowering::ArgListTy Args;
+  Args.reserve(NumOps);
+
   TargetLowering::ArgListEntry Entry;
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-    MVT::ValueType ArgVT = N->getOperand(i).getValueType();
-    Entry.Node = N->getOperand(i);
-    Entry.Ty = MVT::getTypeForValueType(ArgVT);
+  for (unsigned i = 0; i != NumOps; ++i) {
+    Entry.Node = Ops[i];
+    Entry.Ty = MVT::getTypeForValueType(Entry.Node.getValueType());
     Entry.isSExt = isSigned;
     Entry.isZExt = !isSigned;
     Args.push_back(Entry);
@@ -541,7 +544,7 @@ SDOperand DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, SDNode *N,
   SDOperand Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
                                            TLI.getPointerTy());
 
-  const Type *RetTy = MVT::getTypeForValueType(N->getValueType(0));
+  const Type *RetTy = MVT::getTypeForValueType(RetVT);
   std::pair<SDOperand,SDOperand> CallInfo =
     TLI.LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
                     CallingConv::C, false, Callee, Args, DAG);

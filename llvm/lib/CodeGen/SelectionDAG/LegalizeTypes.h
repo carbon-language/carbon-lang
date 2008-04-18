@@ -169,7 +169,8 @@ private:
   void SplitInteger(SDOperand Op, SDOperand &Lo, SDOperand &Hi);
   void SplitInteger(SDOperand Op, MVT::ValueType LoVT, MVT::ValueType HiVT,
                     SDOperand &Lo, SDOperand &Hi);
-  SDOperand MakeLibCall(RTLIB::Libcall LC, SDNode *N, bool isSigned);
+  SDOperand MakeLibCall(RTLIB::Libcall LC, MVT::ValueType RetVT,
+                        const SDOperand *Ops, unsigned NumOps, bool isSigned);
 
   //===--------------------------------------------------------------------===//
   // Promotion Support: LegalizeTypesPromote.cpp
