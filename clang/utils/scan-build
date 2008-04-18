@@ -156,6 +156,10 @@ sub ScanFile {
   
   $AlreadyScanned{$digest} = 1;
   
+  # At this point the report file is not word readable.  Make it happen.
+  `chmod 644 $Dir/$FName`;
+  
+  # Scan the report file for tags.
   open(IN, "$Dir/$FName") or die "$Prog: Cannot open '$Dir/$FName'\n";
 
   my $BugDesc = "";
@@ -208,8 +212,10 @@ sub CopyJS {
 sub Postprocess {
   
   my $Dir = shift;
+  my $BaseDir = shift;
   
   die "No directory specified." if (!defined($Dir));
+  die "No base directory specified." if (!defined($BaseDir));
   
   if (! -d $Dir) {
     return;
@@ -363,6 +369,10 @@ ENDTEXT
   close(OUT);
   
   CopyJS($Dir);
+  
+  # Make sure $Dir and $BaseDir is world readable/executable.
+  `chmod 755 $Dir`;
+  `chmod 755 $BaseDir`;
 }
 
 ##----------------------------------------------------------------------------##
@@ -516,6 +526,7 @@ if (!defined($HtmlDir)) {
   }
 }
 
+my $BaseDir = $HtmlDir;
 $HtmlDir = GetHTMLRunDir($HtmlDir);
 
 # Set the appropriate environment variables.
@@ -539,7 +550,7 @@ RunBuildCommand(\@ARGV, $IgnoreErrors);
 
 # Postprocess the HTML directory.
 
-Postprocess($HtmlDir);
+Postprocess($HtmlDir, $BaseDir);
 
 if ($ViewResults and -r "$HtmlDir/index.html") {
   # Only works on Mac OS X (for now).
