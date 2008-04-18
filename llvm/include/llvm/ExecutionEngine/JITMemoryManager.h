@@ -26,8 +26,9 @@ namespace llvm {
 class JITMemoryManager {
 protected:
   bool HasGOT;
+  bool SizeRequired;
 public:
-  JITMemoryManager() : HasGOT(false) {}
+  JITMemoryManager() : HasGOT(false), SizeRequired(false) {}
   virtual ~JITMemoryManager();
   
   /// CreateDefaultMemManager - This is used to create the default
@@ -53,6 +54,12 @@ public:
   /// return a pointer to its base.
   virtual unsigned char *getGOTBase() const = 0;
   
+  /// RequireSize - If the memory manager requires to know the size of the
+  /// objects to be emitted
+  bool RequiresSize() const {
+    return SizeRequired;
+  }
+
   //===--------------------------------------------------------------------===//
   // Main Allocation Functions
   //===--------------------------------------------------------------------===//

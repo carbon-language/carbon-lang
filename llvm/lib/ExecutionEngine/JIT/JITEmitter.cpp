@@ -32,6 +32,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/System/Disassembler.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
 using namespace llvm;
@@ -597,9 +598,65 @@ void *JITEmitter::getPointerToGVLazyPtr(GlobalValue *V, void *Reference,
   return Resolver.getGlobalValueLazyPtr(V, GVAddress);
 }
 
+static unsigned GetConstantPoolSizeInBytes(MachineConstantPool *MCP) {
+  const std::vector<MachineConstantPoolEntry> &Constants = MCP->getConstants();
+  if (Constants.empty()) return 0;
+
+  MachineConstantPoolEntry CPE = Constants.back();
+  unsigned Size = CPE.Offset;
+  const Type *Ty = CPE.isMachineConstantPoolEntry()
+    ? CPE.Val.MachineCPVal->getType() : CPE.Val.ConstVal->getType();
+  Size += TheJIT->getTargetData()->getABITypeSize(Ty);
+  return Size;
+}
+
+static unsigned GetJumpTableSizeInBytes(MachineJumpTableInfo *MJTI) {
+  const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
+  if (JT.empty()) return 0;
+  
+  unsigned NumEntries = 0;
+  for (unsigned i = 0, e = JT.size(); i != e; ++i)
+    NumEntries += JT[i].MBBs.size();
+
+  unsigned EntrySize = MJTI->getEntrySize();
+
+  return NumEntries * EntrySize;
+}
+
+static void AddAlignment(uintptr_t& Size, unsigned Alignment) {
+  if (Alignment == 0) Alignment = 1;
+  Size = (Size + Alignment - 1) & (Alignment - 1);
+}
 
 void JITEmitter::startFunction(MachineFunction &F) {
-  uintptr_t ActualSize;
+  uintptr_t ActualSize = 0;
+  if (MemMgr->RequiresSize()) {
+    const TargetInstrInfo* TII = F.getTarget().getInstrInfo();
+    MachineJumpTableInfo *MJTI = F.getJumpTableInfo();
+    MachineConstantPool *MCP = F.getConstantPool();
+    
+    // Ensure the constant pool/jump table info is at least 4-byte aligned.
+    AddAlignment(ActualSize, 16);
+    
+    // Add the alignment of the constant pool
+    AddAlignment(ActualSize, 1 << MCP->getConstantPoolAlignment());
+
+    // Add the constant pool size
+    ActualSize += GetConstantPoolSizeInBytes(MCP);
+
+    // Add the aligment of the jump table info
+    AddAlignment(ActualSize, MJTI->getAlignment());
+
+    // Add the jump table size
+    ActualSize += GetJumpTableSizeInBytes(MJTI);
+    
+    // Add the alignment for the function
+    AddAlignment(ActualSize, std::max(F.getFunction()->getAlignment(), 8U));
+
+    // Add the function size
+    ActualSize += TII->GetFunctionSizeInBytes(F);
+  }
+
   BufferBegin = CurBufferPtr = MemMgr->startFunctionBody(F.getFunction(),
                                                          ActualSize);
   BufferEnd = BufferBegin+ActualSize;
@@ -714,10 +771,14 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
          << sys::disassembleBuffer(FnStart, FnEnd-FnStart, (uintptr_t)FnStart);
 #endif
   if (ExceptionHandling) {
-    uintptr_t ActualSize;
+    uintptr_t ActualSize = 0;
     SavedBufferBegin = BufferBegin;
     SavedBufferEnd = BufferEnd;
     SavedCurBufferPtr = CurBufferPtr;
+    
+    if (MemMgr->RequiresSize()) {
+      ActualSize = DE->GetDwarfTableSize(F, *this, FnStart, FnEnd);
+    }
 
     BufferBegin = CurBufferPtr = MemMgr->startExceptionTable(F.getFunction(),
                                                              ActualSize);

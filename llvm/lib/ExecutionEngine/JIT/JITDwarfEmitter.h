@@ -35,9 +35,6 @@ class JITDwarfEmitter {
   bool needsIndirectEncoding;
   bool stackGrowthDirection;
   
-public:
-  JITDwarfEmitter(JIT& jit);
-
   unsigned char* EmitExceptionTable(MachineFunction* MF,
                                     unsigned char* StartFunction, 
                                     unsigned char* EndFunction);
@@ -53,16 +50,36 @@ public:
                              unsigned char* EndFunction,
                              unsigned char* ExceptionTable);
     
+  unsigned GetExceptionTableSize(MachineFunction* MF);
+  
+  unsigned GetFrameMovesSize(intptr_t BaseLabelPtr, 
+                             const std::vector<MachineMove> &Moves);
+    
+  unsigned GetCommonEHFrameSize(const Function* Personality);
 
+  unsigned GetEHFrameSize(const Function* Personality, 
+                          unsigned char* StartFunction); 
+    
+public:
+  
+  JITDwarfEmitter(JIT& jit);
+  
   unsigned char* EmitDwarfTable(MachineFunction& F, 
                                 MachineCodeEmitter& MCE,
                                 unsigned char* StartFunction,
                                 unsigned char* EndFunction);
   
+  
+  unsigned GetDwarfTableSize(MachineFunction& F, 
+                             MachineCodeEmitter& MCE,
+                             unsigned char* StartFunction,
+                             unsigned char* EndFunction);
+
   void setModuleInfo(MachineModuleInfo* Info) {
     MMI = Info;
   }
 };
+
 
 } // end namespace llvm
 
