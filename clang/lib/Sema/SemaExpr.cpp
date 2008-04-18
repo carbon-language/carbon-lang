@@ -2168,10 +2168,13 @@ Sema::ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond,
 /// arguments in FnType.
 static bool ExprsMatchFnType(Expr **Args, const FunctionTypeProto *FnType) {
   unsigned NumParams = FnType->getNumArgs();
-  for (unsigned i = 0; i != NumParams; ++i)
-    if (Args[i]->getType().getCanonicalType() != 
-        FnType->getArgType(i).getCanonicalType())
+  for (unsigned i = 0; i != NumParams; ++i) {
+    QualType ExprTy = Args[i]->getType().getCanonicalType();
+    QualType ParmTy = FnType->getArgType(i).getCanonicalType();
+
+    if (ExprTy.getUnqualifiedType() != ParmTy.getUnqualifiedType())
       return false;
+  }
   return true;
 }
 
