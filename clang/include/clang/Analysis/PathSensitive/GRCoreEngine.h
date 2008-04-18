@@ -164,6 +164,8 @@ public:
   Stmt* getStmt() const { return B[Idx]; }
   
   CFGBlock* getBlock() const { return &B; }
+  
+  bool hasGeneratedNode() const { return HasGeneratedNode; }
 };
   
   
@@ -185,6 +187,8 @@ public:
       
     CleanedState = getLastNode()->getState();
   }
+  
+  bool hasGeneratedNode() const { return NB.hasGeneratedNode(); }
   
   void setObjCMsgExprAuditors(GRAuditor<StateTy> **B,
                               GRAuditor<StateTy> **E) {

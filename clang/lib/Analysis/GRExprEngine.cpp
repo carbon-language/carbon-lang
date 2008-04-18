@@ -187,7 +187,8 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   // If no nodes were generated, generate a new node that has all the
   // dead mappings removed.
   
-  if (Dst.size() == 1 && *Dst.begin() == StmtEntryNode)
+  if (Dst.size() == 1 && *Dst.begin() == StmtEntryNode && 
+      !Builder->hasGeneratedNode())
     builder.generateNode(S, GetState(StmtEntryNode), StmtEntryNode);
   
   // NULL out these variables to cleanup.
