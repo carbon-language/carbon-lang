@@ -316,8 +316,13 @@ private:
   void FloatToIntResult(SDNode *N, unsigned OpNo);
   SDOperand FloatToIntRes_BIT_CONVERT(SDNode *N);
   SDOperand FloatToIntRes_BUILD_PAIR(SDNode *N);
+  SDOperand FloatToIntRes_ConstantFP(ConstantFPSDNode *N);
+  SDOperand FloatToIntRes_FADD(SDNode *N);
   SDOperand FloatToIntRes_FCOPYSIGN(SDNode *N);
+  SDOperand FloatToIntRes_FMUL(SDNode *N);
+  SDOperand FloatToIntRes_FSUB(SDNode *N);
   SDOperand FloatToIntRes_LOAD(SDNode *N);
+  SDOperand FloatToIntRes_XINT_TO_FP(SDNode *N);
 
   // Operand Float to Integer Conversion.
   bool FloatToIntOperand(SDNode *N, unsigned OpNo);

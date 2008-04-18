@@ -11,11 +11,28 @@
 // is the act of turning a computation in an invalid floating point type into
 // a computation in an integer type of the same size.  For example, turning
 // f32 arithmetic into operations using i32.  Also known as "soft float".
+// The result is equivalent to bitcasting the float value to the integer type.
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/DerivedTypes.h"
 #include "LegalizeTypes.h"
 using namespace llvm;
+
+/// GetFPLibCall - Return the right libcall for the given floating point type.
+static RTLIB::Libcall GetFPLibCall(MVT::ValueType VT,
+                                   RTLIB::Libcall Call_F32,
+                                   RTLIB::Libcall Call_F64,
+                                   RTLIB::Libcall Call_F80,
+                                   RTLIB::Libcall Call_PPCF128) {
+  return
+    VT == MVT::f32 ? Call_F32 :
+    VT == MVT::f64 ? Call_F64 :
+    VT == MVT::f80 ? Call_F80 :
+    VT == MVT::ppcf128 ? Call_PPCF128 :
+    RTLIB::UNKNOWN_LIBCALL;
+}
 
 //===----------------------------------------------------------------------===//
 //  Result Float to Integer Conversion.
@@ -52,8 +69,17 @@ void DAGTypeLegalizer::FloatToIntResult(SDNode *N, unsigned ResNo) {
 
     case ISD::BIT_CONVERT: R = FloatToIntRes_BIT_CONVERT(N); break;
     case ISD::BUILD_PAIR:  R = FloatToIntRes_BUILD_PAIR(N); break;
+    case ISD::ConstantFP:
+      R = FloatToIntRes_ConstantFP(cast<ConstantFPSDNode>(N));
+      break;
     case ISD::FCOPYSIGN:   R = FloatToIntRes_FCOPYSIGN(N); break;
     case ISD::LOAD:        R = FloatToIntRes_LOAD(N); break;
+    case ISD::SINT_TO_FP:
+    case ISD::UINT_TO_FP:  R = FloatToIntRes_XINT_TO_FP(N); break;
+
+    case ISD::FADD: R = FloatToIntRes_FADD(N); break;
+    case ISD::FMUL: R = FloatToIntRes_FMUL(N); break;
+    case ISD::FSUB: R = FloatToIntRes_FSUB(N); break;
   }
 
   // If R is null, the sub-method took care of registering the result.
@@ -71,6 +97,23 @@ SDOperand DAGTypeLegalizer::FloatToIntRes_BUILD_PAIR(SDNode *N) {
                      TLI.getTypeToTransformTo(N->getValueType(0)),
                      BitConvertToInteger(N->getOperand(0)),
                      BitConvertToInteger(N->getOperand(1)));
+}
+
+SDOperand DAGTypeLegalizer::FloatToIntRes_ConstantFP(ConstantFPSDNode *N) {
+  return DAG.getConstant(N->getValueAPF().convertToAPInt(),
+                         TLI.getTypeToTransformTo(N->getValueType(0)));
+}
+
+SDOperand DAGTypeLegalizer::FloatToIntRes_FADD(SDNode *N) {
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  SDOperand Ops[2] = { GetIntegerOp(N->getOperand(0)),
+                       GetIntegerOp(N->getOperand(1)) };
+  return MakeLibCall(GetFPLibCall(N->getValueType(0),
+                                  RTLIB::ADD_F32,
+                                  RTLIB::ADD_F64,
+                                  RTLIB::ADD_F80,
+                                  RTLIB::ADD_PPCF128),
+                     NVT, Ops, 2, false/*sign irrelevant*/);
 }
 
 SDOperand DAGTypeLegalizer::FloatToIntRes_FCOPYSIGN(SDNode *N) {
@@ -112,14 +155,148 @@ SDOperand DAGTypeLegalizer::FloatToIntRes_FCOPYSIGN(SDNode *N) {
   return DAG.getNode(ISD::OR, LVT, LHS, SignBit);
 }
 
-SDOperand DAGTypeLegalizer::FloatToIntRes_LOAD(SDNode *N) {
+SDOperand DAGTypeLegalizer::FloatToIntRes_FMUL(SDNode *N) {
   MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
-  LoadSDNode *L = cast<LoadSDNode>(N);
+  SDOperand Ops[2] = { GetIntegerOp(N->getOperand(0)),
+                       GetIntegerOp(N->getOperand(1)) };
+  return MakeLibCall(GetFPLibCall(N->getValueType(0),
+                                  RTLIB::MUL_F32,
+                                  RTLIB::MUL_F64,
+                                  RTLIB::MUL_F80,
+                                  RTLIB::MUL_PPCF128),
+                     NVT, Ops, 2, false/*sign irrelevant*/);
+}
 
-  return DAG.getLoad(L->getAddressingMode(), L->getExtensionType(),
-                     NVT, L->getChain(), L->getBasePtr(), L->getOffset(),
-                     L->getSrcValue(), L->getSrcValueOffset(),
-                     L->getMemoryVT(), L->isVolatile(), L->getAlignment());
+SDOperand DAGTypeLegalizer::FloatToIntRes_FSUB(SDNode *N) {
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  SDOperand Ops[2] = { GetIntegerOp(N->getOperand(0)),
+                       GetIntegerOp(N->getOperand(1)) };
+  return MakeLibCall(GetFPLibCall(N->getValueType(0),
+                                  RTLIB::SUB_F32,
+                                  RTLIB::SUB_F64,
+                                  RTLIB::SUB_F80,
+                                  RTLIB::SUB_PPCF128),
+                     NVT, Ops, 2, false/*sign irrelevant*/);
+}
+
+SDOperand DAGTypeLegalizer::FloatToIntRes_LOAD(SDNode *N) {
+  LoadSDNode *L = cast<LoadSDNode>(N);
+  MVT::ValueType VT = N->getValueType(0);
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(VT);
+
+  if (L->getExtensionType() == ISD::NON_EXTLOAD)
+     return DAG.getLoad(L->getAddressingMode(), L->getExtensionType(),
+                        NVT, L->getChain(), L->getBasePtr(), L->getOffset(),
+                        L->getSrcValue(), L->getSrcValueOffset(), NVT,
+                        L->isVolatile(), L->getAlignment());
+
+  // Do a non-extending load followed by FP_EXTEND.
+  SDOperand NL = DAG.getLoad(L->getAddressingMode(), ISD::NON_EXTLOAD,
+                             L->getMemoryVT(), L->getChain(),
+                             L->getBasePtr(), L->getOffset(),
+                             L->getSrcValue(), L->getSrcValueOffset(),
+                             L->getMemoryVT(),
+                             L->isVolatile(), L->getAlignment());
+  return BitConvertToInteger(DAG.getNode(ISD::FP_EXTEND, VT, NL));
+}
+
+SDOperand DAGTypeLegalizer::FloatToIntRes_XINT_TO_FP(SDNode *N) {
+  bool isSigned = N->getOpcode() == ISD::SINT_TO_FP;
+  MVT::ValueType DestVT = N->getValueType(0);
+  SDOperand Op = N->getOperand(0);
+
+  if (Op.getValueType() == MVT::i32) {
+    // simple 32-bit [signed|unsigned] integer to float/double expansion
+
+    // Get the stack frame index of a 8 byte buffer.
+    SDOperand StackSlot = DAG.CreateStackTemporary(MVT::f64);
+
+    // word offset constant for Hi/Lo address computation
+    SDOperand Offset = DAG.getConstant(MVT::getSizeInBits(MVT::i32) / 8,
+                                       TLI.getPointerTy());
+    // set up Hi and Lo (into buffer) address based on endian
+    SDOperand Hi = StackSlot;
+    SDOperand Lo = DAG.getNode(ISD::ADD, TLI.getPointerTy(), StackSlot, Offset);
+    if (TLI.isLittleEndian())
+      std::swap(Hi, Lo);
+
+    // if signed map to unsigned space
+    SDOperand OpMapped;
+    if (isSigned) {
+      // constant used to invert sign bit (signed to unsigned mapping)
+      SDOperand SignBit = DAG.getConstant(0x80000000u, MVT::i32);
+      OpMapped = DAG.getNode(ISD::XOR, MVT::i32, Op, SignBit);
+    } else {
+      OpMapped = Op;
+    }
+    // store the lo of the constructed double - based on integer input
+    SDOperand Store1 = DAG.getStore(DAG.getEntryNode(),
+                                    OpMapped, Lo, NULL, 0);
+    // initial hi portion of constructed double
+    SDOperand InitialHi = DAG.getConstant(0x43300000u, MVT::i32);
+    // store the hi of the constructed double - biased exponent
+    SDOperand Store2=DAG.getStore(Store1, InitialHi, Hi, NULL, 0);
+    // load the constructed double
+    SDOperand Load = DAG.getLoad(MVT::f64, Store2, StackSlot, NULL, 0);
+    // FP constant to bias correct the final result
+    SDOperand Bias = DAG.getConstantFP(isSigned ?
+                                            BitsToDouble(0x4330000080000000ULL)
+                                          : BitsToDouble(0x4330000000000000ULL),
+                                     MVT::f64);
+    // subtract the bias
+    SDOperand Sub = DAG.getNode(ISD::FSUB, MVT::f64, Load, Bias);
+    // final result
+    SDOperand Result;
+    // handle final rounding
+    if (DestVT == MVT::f64) {
+      // do nothing
+      Result = Sub;
+    } else if (MVT::getSizeInBits(DestVT) < MVT::getSizeInBits(MVT::f64)) {
+      Result = DAG.getNode(ISD::FP_ROUND, DestVT, Sub,
+                           DAG.getIntPtrConstant(0));
+    } else if (MVT::getSizeInBits(DestVT) > MVT::getSizeInBits(MVT::f64)) {
+      Result = DAG.getNode(ISD::FP_EXTEND, DestVT, Sub);
+    }
+    return BitConvertToInteger(Result);
+  }
+  assert(!isSigned && "Legalize cannot Expand SINT_TO_FP for i64 yet");
+  SDOperand Tmp1 = DAG.getNode(ISD::SINT_TO_FP, DestVT, Op);
+
+  SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultType(Op), Op,
+                                   DAG.getConstant(0, Op.getValueType()),
+                                   ISD::SETLT);
+  SDOperand Zero = DAG.getIntPtrConstant(0), Four = DAG.getIntPtrConstant(4);
+  SDOperand CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
+                                    SignSet, Four, Zero);
+
+  // If the sign bit of the integer is set, the large number will be treated
+  // as a negative number.  To counteract this, the dynamic code adds an
+  // offset depending on the data type.
+  uint64_t FF;
+  switch (Op.getValueType()) {
+  default: assert(0 && "Unsupported integer type!");
+  case MVT::i8 : FF = 0x43800000ULL; break;  // 2^8  (as a float)
+  case MVT::i16: FF = 0x47800000ULL; break;  // 2^16 (as a float)
+  case MVT::i32: FF = 0x4F800000ULL; break;  // 2^32 (as a float)
+  case MVT::i64: FF = 0x5F800000ULL; break;  // 2^64 (as a float)
+  }
+  if (TLI.isLittleEndian()) FF <<= 32;
+  static Constant *FudgeFactor = ConstantInt::get(Type::Int64Ty, FF);
+
+  SDOperand CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
+  CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
+  SDOperand FudgeInReg;
+  if (DestVT == MVT::f32)
+    FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx,
+                             PseudoSourceValue::getConstantPool(), 0);
+  else {
+    FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, DestVT,
+                                DAG.getEntryNode(), CPIdx,
+                                PseudoSourceValue::getConstantPool(), 0,
+                                MVT::f32);
+  }
+
+  return BitConvertToInteger(DAG.getNode(ISD::FADD, DestVT, Tmp1, FudgeInReg));
 }
 
 
