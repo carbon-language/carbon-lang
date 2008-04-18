@@ -156,7 +156,7 @@ sub ScanFile {
   
   $AlreadyScanned{$digest} = 1;
   
-  # At this point the report file is not word readable.  Make it happen.
+  # At this point the report file is not world readable.  Make it happen.
   `chmod 644 $Dir/$FName`;
   
   # Scan the report file for tags.
