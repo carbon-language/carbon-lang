@@ -2539,7 +2539,7 @@ void RewriteObjC::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
     
     for (int i = 1; i < NumProtocols; i++) {
       ObjCProtocolDecl *PDecl = Protocols[i];
-      Result += "\t ,(struct _objc_protocol_list*)&_OBJC_PROTOCOL_";
+      Result += "\t ,&_OBJC_PROTOCOL_";
       Result += PDecl->getName();
       Result += "\n";
     }
