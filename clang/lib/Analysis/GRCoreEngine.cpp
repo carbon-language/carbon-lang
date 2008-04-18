@@ -456,7 +456,8 @@ ExplodedNodeImpl* GREndPathNodeBuilderImpl::generateNodeImpl(void* State) {
   if (IsNew) {
     Node->markAsSink();
     Eng.G->addEndOfPath(Node);
+    return Node;
   }
   
-  return Node;
+  return NULL;
 }

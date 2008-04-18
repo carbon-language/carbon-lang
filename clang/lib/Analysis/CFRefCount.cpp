@@ -1065,6 +1065,10 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
   }
       
   ExplodedNode<ValueState>* N = Builder.MakeNode(St);  
+  
+  if (!N)
+    return;
+  
   std::vector<SymbolID>*& LeaksAtNode = Leaks[N];
   assert (!LeaksAtNode);
   LeaksAtNode = new std::vector<SymbolID>();
