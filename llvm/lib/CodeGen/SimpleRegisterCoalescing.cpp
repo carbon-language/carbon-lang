@@ -466,8 +466,8 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
       O.setSubReg(0);
     } else {
       // Sub-register indexes goes from small to large. e.g.
-      // RAX: 0 -> AL, 1 -> AH, 2 -> AX, 3 -> EAX
-      // EAX: 0 -> AL, 1 -> AH, 2 -> AX
+      // RAX: 1 -> AL, 2 -> AX, 3 -> EAX
+      // EAX: 1 -> AL, 2 -> AX
       // So RAX's sub-register 2 is AX, RAX's sub-regsiter 3 is EAX, whose
       // sub-register 2 is also AX.
       if (SubIdx && OldSubIdx && SubIdx != OldSubIdx)
