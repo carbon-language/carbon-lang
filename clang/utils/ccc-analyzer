@@ -37,7 +37,7 @@ def run(args):
     if code:
         sys.exit(code)
 
-def compile(args):
+def compile(args,verbose):
   # We MUST print to stderr.  Some clients use the stdout output of
   # gcc for various purposes.
   print >> sys.stderr, '\n'
@@ -175,7 +175,7 @@ def main(args):
             compile_opts.append(arg)
 
         # Options with one argument that should pass through
-        if arg in ['-include']:
+        if arg in ['-include', '-isysroot']:
             compile_opts.append(arg)
             compile_opts.append(args[i+1])
             i += 1
@@ -187,7 +187,7 @@ def main(args):
             link_opts.append(arg)
 
         # Options with one argument that should pass through
-        if arg in ['-framework']:
+        if arg in ['-framework', '-isysroot']:
             link_opts.append(arg)
             link_opts.append(args[i+1])
             i += 1
