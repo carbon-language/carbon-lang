@@ -588,10 +588,7 @@ static void AddImplicitInclude(std::vector<char> &Buf, const std::string &File){
 ///
 static unsigned InitializePreprocessor(Preprocessor &PP,
                                        bool InitializeSourceMgr, 
-                                       const std::string &InFile,
-                                       std::vector<char> &PredefineBuffer) {
-  
-
+                                       const std::string &InFile) {
   FileManager &FileMgr = PP.getFileManager();
   
   // Figure out where to get and map in the main file.
@@ -615,6 +612,8 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
     }
   }
 
+  std::vector<char> PredefineBuffer;
+
   // Add macros from the command line.
   unsigned d = 0, D = D_macros.size();
   unsigned u = 0, U = U_macros.size();
@@ -631,13 +630,9 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
   for (unsigned i = 0, e = ImplicitIncludes.size(); i != e; ++i)
     AddImplicitInclude(PredefineBuffer, ImplicitIncludes[i]);
   
-  // Null terminate PredefinedBuffer and add it.  We actually need to make a
-  // copy because PP will own the string.
+  // Null terminate PredefinedBuffer and add it.
   PredefineBuffer.push_back(0);
-  
-  char* predefines = new char[PredefineBuffer.size()];
-  std::copy(PredefineBuffer.begin(), PredefineBuffer.end(), predefines);
-  PP.setPredefines(predefines);
+  PP.setPredefines(&PredefineBuffer[0]);
   
   // Once we've read this, we're done.
   return SourceMgr.getMainFileID();
@@ -1031,7 +1026,6 @@ class VISIBILITY_HIDDEN DriverPreprocessorFactory : public PreprocessorFactory {
   TargetInfo        &Target;
   SourceManager     &SourceMgr;
   HeaderSearch      &HeaderInfo;
-  std::vector<char> PredefineBuffer;
   bool              InitializeSourceMgr;
   
 public:
@@ -1046,19 +1040,15 @@ public:
   virtual ~DriverPreprocessorFactory() {}
   
   virtual Preprocessor* CreatePreprocessor() {
-    PredefineBuffer.clear();
-
     Preprocessor* PP = new Preprocessor(Diags, LangInfo, Target,
                                         SourceMgr, HeaderInfo);
     
-    if (!InitializePreprocessor(*PP, InitializeSourceMgr, InFile,
-                                PredefineBuffer)) {
+    if (!InitializePreprocessor(*PP, InitializeSourceMgr, InFile)) {
       delete PP;
       return NULL;
     }
     
     InitializeSourceMgr = false;
-    
     return PP;
   }
 };

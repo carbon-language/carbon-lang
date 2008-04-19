@@ -67,7 +67,7 @@ HTMLPrinter::~HTMLPrinter() {
   // for example.
   
   if (PP) html::SyntaxHighlight(R, FileID, *PP);
-  if (PPF) html::HighlightMacros(R, FileID, *PP);  
+  if (PPF) html::HighlightMacros(R, FileID, *PP);
   html::EscapeText(R, FileID, false, true);
   
   // Open the output.

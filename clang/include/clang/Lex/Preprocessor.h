@@ -130,9 +130,9 @@ class Preprocessor {
   unsigned NumFastMacroExpanded, NumTokenPaste, NumFastTokenPaste;
   unsigned NumSkipped;
   
-  /// Predefines - This pointer, if non-null, are the predefined macros that 
-  /// preprocessor should use from the command line etc.
-  const char *Predefines;
+  /// Predefines - This string is the predefined macros that preprocessor
+  /// should use from the command line etc.
+  std::string Predefines;
   
   /// TokenLexerCache - Cache macro expanders to reduce malloc traffic.
   enum { TokenLexerCacheSize = 8 };
@@ -196,11 +196,10 @@ public:
   ///
   void setMacroInfo(IdentifierInfo *II, MacroInfo *MI);
   
-  /// setPredefines - Set the predefines for this Preprocessor.
-  ///  The Preprocessor assumes ownership of this pointer.
-  void setPredefines(const char *P) {
-    Predefines = P;
-  }
+  /// setPredefines - Set the predefines for this Preprocessor.  These
+  /// predefines are automatically injected when parsing the main file.
+  void setPredefines(const char *P) { Predefines = P; }
+  void setPredefines(const std::string &P) { Predefines = P; }
   
   /// getIdentifierInfo - Return information about the specified preprocessor
   /// identifier token.  The version of this method that takes two character

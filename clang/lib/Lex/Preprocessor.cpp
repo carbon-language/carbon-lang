@@ -72,8 +72,6 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   // This gets unpoisoned where it is allowed.
   (Ident__VA_ARGS__ = getIdentifierInfo("__VA_ARGS__"))->setIsPoisoned();
   
-  Predefines = 0;
-  
   // Initialize the pragma handlers.
   PragmaHandlers = new PragmaNamespace(0);
   RegisterBuiltinPragmas();
@@ -112,8 +110,6 @@ Preprocessor::~Preprocessor() {
   delete ScratchBuf;
 
   delete Callbacks;
-  
-  delete [] Predefines;
 }
 
 /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
@@ -463,7 +459,7 @@ void Preprocessor::EnterMainSourceFile() {
   InitializePredefinedMacros(*this, PrologFile);
   
   // Add on the predefines from the driver.
-  PrologFile.insert(PrologFile.end(), Predefines,Predefines+strlen(Predefines));
+  PrologFile.insert(PrologFile.end(), Predefines.begin(), Predefines.end());
   
   // Memory buffer must end with a null byte!
   PrologFile.push_back(0);
