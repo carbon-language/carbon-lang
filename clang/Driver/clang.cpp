@@ -583,12 +583,11 @@ static void AddImplicitInclude(std::vector<char> &Buf, const std::string &File){
 
 
 /// InitializePreprocessor - Initialize the preprocessor getting it and the
-/// environment ready to process a single file. This returns the file ID for the
-/// input file. If a failure happens, it returns 0.
+/// environment ready to process a single file. This returns true on error.
 ///
-static unsigned InitializePreprocessor(Preprocessor &PP,
-                                       bool InitializeSourceMgr, 
-                                       const std::string &InFile) {
+static bool InitializePreprocessor(Preprocessor &PP,
+                                   bool InitializeSourceMgr, 
+                                   const std::string &InFile) {
   FileManager &FileMgr = PP.getFileManager();
   
   // Figure out where to get and map in the main file.
@@ -600,14 +599,14 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
       if (File) SourceMgr.createMainFileID(File, SourceLocation());
       if (SourceMgr.getMainFileID() == 0) {
         fprintf(stderr, "Error reading '%s'!\n",InFile.c_str());
-        return 0;
+        return true;
       }
     } else {
       llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
       if (SB) SourceMgr.createMainFileIDForMemBuffer(SB);
       if (SourceMgr.getMainFileID() == 0) {
         fprintf(stderr, "Error reading standard input!  Empty?\n");
-        return 0;
+        return true;
       }
     }
   }
@@ -635,7 +634,7 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
   PP.setPredefines(&PredefineBuffer[0]);
   
   // Once we've read this, we're done.
-  return SourceMgr.getMainFileID();
+  return false;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1043,7 +1042,7 @@ public:
     Preprocessor* PP = new Preprocessor(Diags, LangInfo, Target,
                                         SourceMgr, HeaderInfo);
     
-    if (!InitializePreprocessor(*PP, InitializeSourceMgr, InFile)) {
+    if (InitializePreprocessor(*PP, InitializeSourceMgr, InFile)) {
       delete PP;
       return NULL;
     }
@@ -1058,7 +1057,7 @@ public:
 // Basic Parser driver
 //===----------------------------------------------------------------------===//
 
-static void ParseFile(Preprocessor &PP, MinimalAction *PA){
+static void ParseFile(Preprocessor &PP, MinimalAction *PA) {
   Parser P(PP, *PA);
   PP.EnterMainSourceFile();
   
