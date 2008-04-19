@@ -98,11 +98,11 @@ Module* makeLLVMModule() {
 
 <div class="doc_code">
 <pre>
-  BasicBlock* entry = new BasicBlock(&quot;entry&quot;, gcd);
-  BasicBlock* ret = new BasicBlock(&quot;return&quot;, gcd);
-  BasicBlock* cond_false = new BasicBlock(&quot;cond_false&quot;, gcd);
-  BasicBlock* cond_true = new BasicBlock(&quot;cond_true&quot;, gcd);
-  BasicBlock* cond_false_2 = new BasicBlock(&quot;cond_false&quot;, gcd);
+  BasicBlock* entry = BasicBlock::Create(&quot;entry&quot;, gcd);
+  BasicBlock* ret = BasicBlock::Create(&quot;return&quot;, gcd);
+  BasicBlock* cond_false = BasicBlock::Create(&quot;cond_false&quot;, gcd);
+  BasicBlock* cond_true = BasicBlock::Create(&quot;cond_true&quot;, gcd);
+  BasicBlock* cond_false_2 = BasicBlock::Create(&quot;cond_false&quot;, gcd);
 </pre>
 </div>
 

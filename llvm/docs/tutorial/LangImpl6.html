@@ -321,7 +321,7 @@ Function *FunctionAST::Codegen() {
     BinopPrecedence[Proto->getOperatorName()] = Proto->getBinaryPrecedence();</b>
   
   // Create a new basic block to start insertion into.
-  BasicBlock *BB = new BasicBlock("entry", TheFunction);
+  BasicBlock *BB = BasicBlock::Create("entry", TheFunction);
   Builder.SetInsertPoint(BB);
   
   if (Value *RetVal = Body-&gt;Codegen()) {
@@ -1442,9 +1442,9 @@ Value *IfExprAST::Codegen() {
   
   // Create blocks for the then and else cases.  Insert the 'then' block at the
   // end of the function.
-  BasicBlock *ThenBB = new BasicBlock("then", TheFunction);
-  BasicBlock *ElseBB = new BasicBlock("else");
-  BasicBlock *MergeBB = new BasicBlock("ifcont");
+  BasicBlock *ThenBB = BasicBlock::Create("then", TheFunction);
+  BasicBlock *ElseBB = BasicBlock::Create("else");
+  BasicBlock *MergeBB = BasicBlock::Create("ifcont");
   
   Builder.CreateCondBr(CondV, ThenBB, ElseBB);
   
@@ -1504,7 +1504,7 @@ Value *ForExprAST::Codegen() {
   // block.
   Function *TheFunction = Builder.GetInsertBlock()-&gt;getParent();
   BasicBlock *PreheaderBB = Builder.GetInsertBlock();
-  BasicBlock *LoopBB = new BasicBlock("loop", TheFunction);
+  BasicBlock *LoopBB = BasicBlock::Create("loop", TheFunction);
   
   // Insert an explicit fall through from the current block to the LoopBB.
   Builder.CreateBr(LoopBB);
@@ -1550,7 +1550,7 @@ Value *ForExprAST::Codegen() {
   
   // Create the "after loop" block and insert it.
   BasicBlock *LoopEndBB = Builder.GetInsertBlock();
-  BasicBlock *AfterBB = new BasicBlock("afterloop", TheFunction);
+  BasicBlock *AfterBB = BasicBlock::Create("afterloop", TheFunction);
   
   // Insert the conditional branch into the end of LoopEndBB.
   Builder.CreateCondBr(EndCond, LoopBB, AfterBB);
@@ -1577,7 +1577,7 @@ Function *PrototypeAST::Codegen() {
   std::vector&lt;const Type*&gt; Doubles(Args.size(), Type::DoubleTy);
   FunctionType *FT = FunctionType::get(Type::DoubleTy, Doubles, false);
   
-  Function *F = new Function(FT, Function::ExternalLinkage, Name, TheModule);
+  Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule);
   
   // If F conflicted, there was already something named 'Name'.  If it has a
   // body, don't allow redefinition or reextern.
@@ -1624,7 +1624,7 @@ Function *FunctionAST::Codegen() {
     BinopPrecedence[Proto-&gt;getOperatorName()] = Proto-&gt;getBinaryPrecedence();
   
   // Create a new basic block to start insertion into.
-  BasicBlock *BB = new BasicBlock("entry", TheFunction);
+  BasicBlock *BB = BasicBlock::Create("entry", TheFunction);
   Builder.SetInsertPoint(BB);
   
   if (Value *RetVal = Body-&gt;Codegen()) {

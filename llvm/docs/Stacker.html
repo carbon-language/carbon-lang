@@ -219,8 +219,8 @@ should be constructed. In general, here's what I learned:
 </ol>
 <p>The foregoing is such an important principal, its worth making an idiom:</p>
 <pre>
-BasicBlock* bb = new BasicBlock();
-bb->getInstList().push_back( new Branch( ... ) );
+BasicBlock* bb = BasicBlock::Create();
+bb->getInstList().push_back( BranchInst::Create( ... ) );
 new Instruction(..., bb->getTerminator() );
 </pre>
 <p>To make this clear, consider the typical if-then-else statement
@@ -232,16 +232,16 @@ BasicBlock*
 MyCompiler::handle_if( BasicBlock* bb, ICmpInst* condition )
 {
     // Create the blocks to contain code in the structure of if/then/else
-    BasicBlock* then_bb = new BasicBlock(); 
-    BasicBlock* else_bb = new BasicBlock();
-    BasicBlock* exit_bb = new BasicBlock();
+    BasicBlock* then_bb = BasicBlock::Create(); 
+    BasicBlock* else_bb = BasicBlock::Create();
+    BasicBlock* exit_bb = BasicBlock::Create();
 
     // Insert the branch instruction for the "if"
-    bb->getInstList().push_back( new BranchInst( then_bb, else_bb, condition ) );
+    bb->getInstList().push_back( BranchInst::Create( then_bb, else_bb, condition ) );
 
     // Set up the terminating instructions
-    then->getInstList().push_back( new BranchInst( exit_bb ) );
-    else->getInstList().push_back( new BranchInst( exit_bb ) );
+    then->getInstList().push_back( BranchInst::Create( exit_bb ) );
+    else->getInstList().push_back( BranchInst::Create( exit_bb ) );
 
     // Fill in the then part .. details excised for brevity
     this->fill_in( then_bb );
@@ -310,7 +310,7 @@ things, this leads to the idiom:
 std::vector&lt;Value*&gt; index_vector;
 index_vector.push_back( ConstantInt::get( Type::LongTy, 0 );
 // ... push other indices ...
-GetElementPtrInst* gep = new GetElementPtrInst( ptr, index_vector );
+GetElementPtrInst* gep = GetElementPtrInst::Create( ptr, index_vector );
 </pre>
 <p>For example, suppose we have a global variable whose type is [24 x int]. The
 variable itself represents a <em>pointer</em> to that array. To subscript the

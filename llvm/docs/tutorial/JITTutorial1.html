@@ -142,7 +142,7 @@ Module* makeLLVMModule() {
 
 <div class="doc_code">
 <pre>
-  BasicBlock* block = new BasicBlock("entry", mul_add);
+  BasicBlock* block = BasicBlock::Create("entry", mul_add);
   IRBuilder builder(block);
 </pre>
 </div>

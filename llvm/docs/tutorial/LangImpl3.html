@@ -306,7 +306,7 @@ Function *PrototypeAST::Codegen() {
   std::vector&lt;const Type*&gt; Doubles(Args.size(), Type::DoubleTy);
   FunctionType *FT = FunctionType::get(Type::DoubleTy, Doubles, false);
   
-  Function *F = new Function(FT, Function::ExternalLinkage, Name, TheModule);
+  Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule);
 </pre>
 </div>
 
@@ -435,7 +435,7 @@ is an LLVM Function object that is ready to go for us.</p>
 <div class="doc_code">
 <pre>
   // Create a new basic block to start insertion into.
-  BasicBlock *BB = new BasicBlock("entry", TheFunction);
+  BasicBlock *BB = BasicBlock::Create("entry", TheFunction);
   Builder.SetInsertPoint(BB);
   
   if (Value *RetVal = Body-&gt;Codegen()) {
@@ -1079,7 +1079,7 @@ Function *PrototypeAST::Codegen() {
   std::vector&lt;const Type*&gt; Doubles(Args.size(), Type::DoubleTy);
   FunctionType *FT = FunctionType::get(Type::DoubleTy, Doubles, false);
   
-  Function *F = new Function(FT, Function::ExternalLinkage, Name, TheModule);
+  Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule);
   
   // If F conflicted, there was already something named 'Name'.  If it has a
   // body, don't allow redefinition or reextern.
@@ -1122,7 +1122,7 @@ Function *FunctionAST::Codegen() {
     return 0;
   
   // Create a new basic block to start insertion into.
-  BasicBlock *BB = new BasicBlock("entry", TheFunction);
+  BasicBlock *BB = BasicBlock::Create("entry", TheFunction);
   Builder.SetInsertPoint(BB);
   
   if (Value *RetVal = Body-&gt;Codegen()) {
