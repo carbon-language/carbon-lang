@@ -519,56 +519,50 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
     }
   }
 
-  if (const ConstantExpr *CE1 = dyn_cast<ConstantExpr>(C1)) {
-    if (isa<ConstantExpr>(C2)) {
-      // There are many possible foldings we could do here.  We should probably
-      // at least fold add of a pointer with an integer into the appropriate
-      // getelementptr.  This will improve alias analysis a bit.
-    } else {
-      // Just implement a couple of simple identities.
-      switch (Opcode) {
-      case Instruction::Add:
-        if (C2->isNullValue()) return const_cast<Constant*>(C1);  // X + 0 == X
-        break;
-      case Instruction::Sub:
-        if (C2->isNullValue()) return const_cast<Constant*>(C1);  // X - 0 == X
-        break;
-      case Instruction::Mul:
-        if (C2->isNullValue()) return const_cast<Constant*>(C2);  // X * 0 == 0
-        if (const ConstantInt *CI = dyn_cast<ConstantInt>(C2))
-          if (CI->equalsInt(1))
-            return const_cast<Constant*>(C1);                     // X * 1 == X
-        break;
-      case Instruction::UDiv:
-      case Instruction::SDiv:
-        if (const ConstantInt *CI = dyn_cast<ConstantInt>(C2))
-          if (CI->equalsInt(1))
-            return const_cast<Constant*>(C1);                     // X / 1 == X
-        break;
-      case Instruction::URem:
-      case Instruction::SRem:
-        if (const ConstantInt *CI = dyn_cast<ConstantInt>(C2))
-          if (CI->equalsInt(1))
-            return Constant::getNullValue(CI->getType());         // X % 1 == 0
-        break;
-      case Instruction::And:
-        if (const ConstantInt *CI = dyn_cast<ConstantInt>(C2)) {
-          if (CI->isZero()) return const_cast<Constant*>(C2);     // X & 0 == 0
-          if (CI->isAllOnesValue())
-            return const_cast<Constant*>(C1);                     // X & -1 == X
-          
-          // (zext i32 to i64) & 4294967295 -> (zext i32 to i64)
-          if (CE1->getOpcode() == Instruction::ZExt) {
-            APInt PossiblySetBits
-              = cast<IntegerType>(CE1->getOperand(0)->getType())->getMask();
-            PossiblySetBits.zext(C1->getType()->getPrimitiveSizeInBits());
-            if ((PossiblySetBits & CI->getValue()) == PossiblySetBits)
-              return const_cast<Constant*>(C1);
-          }
+  // Handle simplifications of the RHS when a constant int.
+  if (const ConstantInt *CI2 = dyn_cast<ConstantInt>(C2)) {
+    switch (Opcode) {
+    case Instruction::Add:
+      if (CI2->equalsInt(0)) return const_cast<Constant*>(C1);  // X + 0 == X
+      break;
+    case Instruction::Sub:
+      if (CI2->equalsInt(0)) return const_cast<Constant*>(C1);  // X - 0 == X
+      break;
+    case Instruction::Mul:
+      if (CI2->equalsInt(0)) return const_cast<Constant*>(C2);  // X * 0 == 0
+      if (CI2->equalsInt(1))
+        return const_cast<Constant*>(C1);                       // X * 1 == X
+      break;
+    case Instruction::UDiv:
+    case Instruction::SDiv:
+      if (CI2->equalsInt(1))
+        return const_cast<Constant*>(C1);                     // X / 1 == X
+      break;
+    case Instruction::URem:
+    case Instruction::SRem:
+      if (CI2->equalsInt(1))
+        return Constant::getNullValue(CI2->getType());        // X % 1 == 0
+      break;
+    case Instruction::And:
+      if (CI2->isZero()) return const_cast<Constant*>(C2);    // X & 0 == 0
+      if (CI2->isAllOnesValue())
+        return const_cast<Constant*>(C1);                     // X & -1 == X
+      
+      // (zext i32 to i64) & 4294967295 -> (zext i32 to i64)
+      if (const ConstantExpr *CE1 = dyn_cast<ConstantExpr>(C1)) {
+        if (CE1->getOpcode() == Instruction::ZExt) {
+          unsigned DstWidth = CI2->getType()->getBitWidth();
+          unsigned SrcWidth =
+            CE1->getOperand(0)->getType()->getPrimitiveSizeInBits();
+          APInt PossiblySetBits(APInt::getLowBitsSet(DstWidth, SrcWidth));
+          if ((PossiblySetBits & CI2->getValue()) == PossiblySetBits)
+            return const_cast<Constant*>(C1);
         }
-        if (CE1->isCast() && isa<GlobalValue>(CE1->getOperand(0))) {
+        
+        if (CE1->getOpcode() == Instruction::PtrToInt && 
+            isa<GlobalValue>(CE1->getOperand(0))) {
           GlobalValue *CPR = cast<GlobalValue>(CE1->getOperand(0));
-
+        
           // Functions are at least 4-byte aligned.  If and'ing the address of a
           // function with a constant < 4, fold it to zero.
           if (const ConstantInt *CI = dyn_cast<ConstantInt>(C2))
@@ -576,24 +570,30 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
                 isa<Function>(CPR))
               return Constant::getNullValue(CI->getType());
         }
-        break;
-      case Instruction::Or:
-        if (C2->isNullValue()) return const_cast<Constant*>(C1);  // X | 0 == X
-        if (const ConstantInt *CI = dyn_cast<ConstantInt>(C2))
-          if (CI->isAllOnesValue())
-            return const_cast<Constant*>(C2);  // X | -1 == -1
-        break;
-      case Instruction::Xor:
-        if (C2->isNullValue()) return const_cast<Constant*>(C1);  // X ^ 0 == X
-        break;
-      case Instruction::AShr:
-        // ashr (zext C to Ty), C2 -> lshr (zext C, CSA), C2
+      }
+      break;
+    case Instruction::Or:
+      if (CI2->equalsInt(0)) return const_cast<Constant*>(C1);  // X | 0 == X
+      if (CI2->isAllOnesValue())
+        return const_cast<Constant*>(C2);  // X | -1 == -1
+      break;
+    case Instruction::Xor:
+      if (CI2->equalsInt(0)) return const_cast<Constant*>(C1);  // X ^ 0 == X
+      break;
+    case Instruction::AShr:
+      // ashr (zext C to Ty), C2 -> lshr (zext C, CSA), C2
+      if (const ConstantExpr *CE1 = dyn_cast<ConstantExpr>(C1))
         if (CE1->getOpcode() == Instruction::ZExt)  // Top bits known zero.
           return ConstantExpr::getLShr(const_cast<Constant*>(C1),
                                        const_cast<Constant*>(C2));
-        break;
-      }
+      break;
     }
+  }
+  
+  if (isa<ConstantExpr>(C1)) {
+    // There are many possible foldings we could do here.  We should probably
+    // at least fold add of a pointer with an integer into the appropriate
+    // getelementptr.  This will improve alias analysis a bit.
   } else if (isa<ConstantExpr>(C2)) {
     // If C2 is a constant expr and C1 isn't, flop them around and fold the
     // other way if possible.
