@@ -125,8 +125,8 @@ sub ComputeDigest {
   die "Cannot read $FName" if (! -r $FName);  
   
   # Use Digest::MD5.  We don't have to be cryptographically secure.  We're
-  # just looking for duplicate files that come from a non-maliciious source.
-  # We use Digest::MD5 becomes it is a standard Perl module that should
+  # just looking for duplicate files that come from a non-malicious source.
+  # We use Digest::MD5 because it is a standard Perl module that should
   # come bundled on most systems.
   
   open(FILE, $FName) or die "Cannot open $FName.";
