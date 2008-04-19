@@ -726,31 +726,31 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
     if ((CP1 != NULL || isa<ConstantAggregateZero>(C1)) &&
         (CP2 != NULL || isa<ConstantAggregateZero>(C2))) {
       switch (Opcode) {
-        default:
-          break;
-        case Instruction::Add: 
+      default:
+        break;
+      case Instruction::Add: 
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getAdd);
-        case Instruction::Sub: 
+      case Instruction::Sub: 
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getSub);
-        case Instruction::Mul: 
+      case Instruction::Mul: 
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getMul);
-        case Instruction::UDiv:
+      case Instruction::UDiv:
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getUDiv);
-        case Instruction::SDiv:
+      case Instruction::SDiv:
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getSDiv);
-        case Instruction::FDiv:
+      case Instruction::FDiv:
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getFDiv);
-        case Instruction::URem:
+      case Instruction::URem:
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getURem);
-        case Instruction::SRem:
+      case Instruction::SRem:
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getSRem);
-        case Instruction::FRem:
+      case Instruction::FRem:
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getFRem);
-        case Instruction::And: 
+      case Instruction::And: 
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getAnd);
-        case Instruction::Or:  
+      case Instruction::Or:  
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getOr);
-        case Instruction::Xor: 
+      case Instruction::Xor: 
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getXor);
       }
     }
