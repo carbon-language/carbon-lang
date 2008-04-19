@@ -1118,9 +1118,9 @@ def LXADD64 : RI<0xC1, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$ptr,GR64:$val),
                "lock xadd $val, $ptr", 
                [(set GR64:$dst, (atomic_las_64 addr:$ptr, GR64:$val))]>,
                 TB, LOCK;
-def LXCHG64 : RI<0x87, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$ptr,GR64:$val),
-               "lock xchg $val, $ptr", 
-               [(set GR64:$dst, (atomic_swap_64 addr:$ptr, GR64:$val))]>, LOCK;
+def XCHG64rm : RI<0x87, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$ptr,GR64:$val),
+                  "xchg $val, $ptr", 
+                  [(set GR64:$dst, (atomic_swap_64 addr:$ptr, GR64:$val))]>;
 }
 
 
