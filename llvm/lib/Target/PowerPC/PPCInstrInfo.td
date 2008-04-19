@@ -42,14 +42,14 @@ def SDT_PPCstbrx : SDTypeProfile<0, 4, [
   SDTCisVT<0, i32>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
 ]>;
 
-def SDT_PPClwarx : SDTypeProfile<1, 2, [
-  SDTCisVT<0, i32>, SDTCisPtrTy<1>, SDTCisVT<2, i32>
+def SDT_PPClarx : SDTypeProfile<1, 2, [
+  SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisVT<2, i32>
 ]>;
-def SDT_PPCstwcx : SDTypeProfile<0, 3, [
-  SDTCisVT<0, i32>, SDTCisPtrTy<1>, SDTCisVT<2, i32>
+def SDT_PPCstcx : SDTypeProfile<0, 3, [
+  SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisVT<2, i32>
 ]>;
 def SDT_PPCcmp_unres : SDTypeProfile<0, 3, [
-  SDTCisVT<0, i32>, SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>
+  SDTCisSameAs<0, 1>, SDTCisInt<1>, SDTCisVT<2, i32>
 ]>;
 
 //===----------------------------------------------------------------------===//
@@ -132,10 +132,10 @@ def PPClbrx       : SDNode<"PPCISD::LBRX", SDT_PPClbrx,
 def PPCstbrx      : SDNode<"PPCISD::STBRX", SDT_PPCstbrx,
                            [SDNPHasChain, SDNPMayStore]>;
 
-def PPClwarx      : SDNode<"PPCISD::LWARX", SDT_PPClwarx,
-                           [SDNPHasChain, SDNPMayLoad]>;
-def PPCstwcx      : SDNode<"PPCISD::STWCX", SDT_PPCstwcx,
-                           [SDNPHasChain, SDNPMayStore]>;
+def PPClarx      : SDNode<"PPCISD::LARX", SDT_PPClarx,
+                          [SDNPHasChain, SDNPMayLoad]>;
+def PPCstcx      : SDNode<"PPCISD::STCX", SDT_PPCstcx,
+                          [SDNPHasChain, SDNPMayStore]>;
 def PPCcmp_unres  : SDNode<"PPCISD::CMP_UNRESERVE", SDT_PPCcmp_unres,
                            [SDNPHasChain]>;
 
@@ -482,19 +482,19 @@ def DCBZL  : DCB_Form<1014, 1, (outs), (ins memrr:$dst),
 // Atomic operations.
 def LWARX : Pseudo<(outs GPRC:$rD), (ins memrr:$ptr, i32imm:$label),
                    "\nLa${label}_entry:\n\tlwarx $rD, $ptr",
-                   [(set GPRC:$rD, (PPClwarx xoaddr:$ptr, imm:$label))]>;
+                   [(set GPRC:$rD, (PPClarx xoaddr:$ptr, imm:$label))]>;
 
 let Defs = [CR0] in {
 def STWCX : Pseudo<(outs), (ins GPRC:$rS, memrr:$dst, i32imm:$label),
-                   "stwcx. $rS, $dst\n\tbne- La${label}_entry\nLa${label}_exit:",
-                   [(PPCstwcx GPRC:$rS, xoaddr:$dst, imm:$label)]>;
+                  "stwcx. $rS, $dst\n\tbne- La${label}_entry\nLa${label}_exit:",
+                   [(PPCstcx GPRC:$rS, xoaddr:$dst, imm:$label)]>;
 
 def CMP_UNRESw : Pseudo<(outs), (ins GPRC:$rA, GPRC:$rB, i32imm:$label),
                          "cmpw $rA, $rB\n\tbne- La${label}_exit",
                          [(PPCcmp_unres GPRC:$rA, GPRC:$rB, imm:$label)]>;
 def CMP_UNRESwi : Pseudo<(outs), (ins GPRC:$rA, s16imm:$imm, i32imm:$label),
                          "cmpwi $rA, $imm\n\tbne- La${label}_exit",
-                         [(PPCcmp_unres GPRC:$rA, imm:$imm, imm:$label)]>;
+                         [(PPCcmp_unres GPRC:$rA, immSExt16:$imm, imm:$label)]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1265,8 +1265,8 @@ def : Pat<(extloadf32 xaddr:$src),
           (FMRSD (LFSX xaddr:$src))>;
 
 // Atomic operations
-def : Pat<(PPCcmp_unres imm:$imm, GPRC:$rA, imm:$label),
-          (CMP_UNRESwi GPRC:$rA, imm:$imm, imm:$label)>;
+def : Pat<(PPCcmp_unres immSExt16:$imm, GPRC:$rA, imm:$label),
+          (CMP_UNRESwi GPRC:$rA, immSExt16:$imm, imm:$label)>;
 
 include "PPCInstrAltivec.td"
 include "PPCInstr64Bit.td"

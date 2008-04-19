@@ -206,6 +206,11 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::ATOMIC_LAS        , MVT::i32  , Custom);
   setOperationAction(ISD::ATOMIC_LCS        , MVT::i32  , Custom);
   setOperationAction(ISD::ATOMIC_SWAP       , MVT::i32  , Custom);
+  if (TM.getSubtarget<PPCSubtarget>().has64BitSupport()) {
+    setOperationAction(ISD::ATOMIC_LAS      , MVT::i64  , Custom);
+    setOperationAction(ISD::ATOMIC_LCS      , MVT::i64  , Custom);
+    setOperationAction(ISD::ATOMIC_SWAP     , MVT::i64  , Custom);
+  }
 
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
@@ -398,8 +403,8 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::VCMPo:         return "PPCISD::VCMPo";
   case PPCISD::LBRX:          return "PPCISD::LBRX";
   case PPCISD::STBRX:         return "PPCISD::STBRX";
-  case PPCISD::LWARX:         return "PPCISD::LWARX";
-  case PPCISD::STWCX:         return "PPCISD::STWCX";
+  case PPCISD::LARX:          return "PPCISD::LARX";
+  case PPCISD::STCX:          return "PPCISD::STCX";
   case PPCISD::CMP_UNRESERVE: return "PPCISD::CMP_UNRESERVE";
   case PPCISD::COND_BRANCH:   return "PPCISD::COND_BRANCH";
   case PPCISD::MFFS:          return "PPCISD::MFFS";
@@ -2304,7 +2309,7 @@ SDOperand PPCTargetLowering::LowerDYNAMIC_STACKALLOC(SDOperand Op,
 }
 
 SDOperand PPCTargetLowering::LowerAtomicLAS(SDOperand Op, SelectionDAG &DAG) {
-  MVT::ValueType VT = Op.getValueType();
+  MVT::ValueType VT = Op.Val->getValueType(0);
   SDOperand Chain   = Op.getOperand(0);
   SDOperand Ptr     = Op.getOperand(1);
   SDOperand Incr    = Op.getOperand(2);
@@ -2316,11 +2321,11 @@ SDOperand PPCTargetLowering::LowerAtomicLAS(SDOperand Op, SelectionDAG &DAG) {
 
   SDOperand Label  = DAG.getConstant(PPCAtomicLabelIndex++, MVT::i32);
   SDOperand Ops[] = {
-    Chain,  // Chain
-    Ptr,    // Ptr
-    Label,  // Label
+    Chain,               // Chain
+    Ptr,                 // Ptr
+    Label,               // Label
   };
-  SDOperand Load = DAG.getNode(PPCISD::LWARX, VTs, Ops, 3);
+  SDOperand Load = DAG.getNode(PPCISD::LARX, VTs, Ops, 3);
   Chain = Load.getValue(1);
 
   // Compute new value.
@@ -2328,19 +2333,19 @@ SDOperand PPCTargetLowering::LowerAtomicLAS(SDOperand Op, SelectionDAG &DAG) {
 
   // Issue a "store and check".
   SDOperand Ops2[] = {
-    Chain,  // Chain
-    NewVal, // Value
-    Ptr,    // Ptr
-    Label,  // Label
+    Chain,               // Chain
+    NewVal,              // Value
+    Ptr,                 // Ptr
+    Label,               // Label
   };
-  SDOperand Store = DAG.getNode(PPCISD::STWCX, MVT::Other, Ops2, 4);
+  SDOperand Store = DAG.getNode(PPCISD::STCX, MVT::Other, Ops2, 4);
   SDOperand OutOps[] = { Load, Store };
   return DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(VT, MVT::Other),
                      OutOps, 2);
 }
 
 SDOperand PPCTargetLowering::LowerAtomicLCS(SDOperand Op, SelectionDAG &DAG) {
-  MVT::ValueType VT = Op.getValueType();
+  MVT::ValueType VT = Op.Val->getValueType(0);
   SDOperand Chain   = Op.getOperand(0);
   SDOperand Ptr     = Op.getOperand(1);
   SDOperand NewVal  = Op.getOperand(2);
@@ -2353,37 +2358,37 @@ SDOperand PPCTargetLowering::LowerAtomicLCS(SDOperand Op, SelectionDAG &DAG) {
 
   SDOperand Label  = DAG.getConstant(PPCAtomicLabelIndex++, MVT::i32);
   SDOperand Ops[] = {
-    Chain,  // Chain
-    Ptr,    // Ptr
-    Label,  // Label
+    Chain,               // Chain
+    Ptr,                 // Ptr
+    Label,               // Label
   };
-  SDOperand Load = DAG.getNode(PPCISD::LWARX, VTs, Ops, 3);
+  SDOperand Load = DAG.getNode(PPCISD::LARX, VTs, Ops, 3);
   Chain = Load.getValue(1);
 
   // Compare and unreserve if not equal.
   SDOperand Ops2[] = {
-    Chain,  // Chain
-    OldVal, // Old value
-    Load,   // Value in memory
-    Label,  // Label
+    Chain,               // Chain
+    OldVal,              // Old value
+    Load,                // Value in memory
+    Label,               // Label
   };
   Chain = DAG.getNode(PPCISD::CMP_UNRESERVE, MVT::Other, Ops2, 4);
 
   // Issue a "store and check".
   SDOperand Ops3[] = {
-    Chain,  // Chain
-    NewVal, // Value
-    Ptr,    // Ptr
-    Label,  // Label
+    Chain,               // Chain
+    NewVal,              // Value
+    Ptr,                 // Ptr
+    Label,               // Label
   };
-  SDOperand Store = DAG.getNode(PPCISD::STWCX, MVT::Other, Ops3, 4);
+  SDOperand Store = DAG.getNode(PPCISD::STCX, MVT::Other, Ops3, 4);
   SDOperand OutOps[] = { Load, Store };
   return DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(VT, MVT::Other),
                      OutOps, 2);
 }
 
 SDOperand PPCTargetLowering::LowerAtomicSWAP(SDOperand Op, SelectionDAG &DAG) {
-  MVT::ValueType VT = Op.getValueType();
+  MVT::ValueType VT = Op.Val->getValueType(0);
   SDOperand Chain   = Op.getOperand(0);
   SDOperand Ptr     = Op.getOperand(1);
   SDOperand NewVal  = Op.getOperand(2);
@@ -2395,21 +2400,21 @@ SDOperand PPCTargetLowering::LowerAtomicSWAP(SDOperand Op, SelectionDAG &DAG) {
 
   SDOperand Label  = DAG.getConstant(PPCAtomicLabelIndex++, MVT::i32);
   SDOperand Ops[] = {
-    Chain,  // Chain
-    Ptr,    // Ptr
-    Label,  // Label
+    Chain,               // Chain
+    Ptr,                 // Ptr
+    Label,               // Label
   };
-  SDOperand Load = DAG.getNode(PPCISD::LWARX, VTs, Ops, 3);
+  SDOperand Load = DAG.getNode(PPCISD::LARX, VTs, Ops, 3);
   Chain = Load.getValue(1);
 
   // Issue a "store and check".
   SDOperand Ops2[] = {
-    Chain,  // Chain
-    NewVal, // Value
-    Ptr,    // Ptr
-    Label,  // Label
+    Chain,               // Chain
+    NewVal,              // Value
+    Ptr,                 // Ptr
+    Label,               // Label
   };
-  SDOperand Store = DAG.getNode(PPCISD::STWCX, MVT::Other, Ops2, 4);
+  SDOperand Store = DAG.getNode(PPCISD::STCX, MVT::Other, Ops2, 4);
   SDOperand OutOps[] = { Load, Store };
   return DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(VT, MVT::Other),
                      OutOps, 2);

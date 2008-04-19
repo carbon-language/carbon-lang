@@ -152,13 +152,13 @@ namespace llvm {
       /// MTFSF = F8RC, INFLAG - This moves the register into the FPSCR.
       MTFSF,
 
-      /// LWARX = This corresponds to PPC lwarx instrcution: load word and
+      /// LARX = This corresponds to PPC l{w|d}arx instrcution: load and
       /// reserve indexed. This is used to implement atomic operations.
-      LWARX,
+      LARX,
 
-      /// STWCX = This corresponds to PPC stwcx. instrcution: store word
-      /// conditional indexed. This is used to implement atomic operations.
-      STWCX,
+      /// STCX = This corresponds to PPC stcx. instrcution: store conditional
+      /// indexed. This is used to implement atomic operations.
+      STCX,
 
       /// CMP_UNRESERVE = Test for equality and "unreserve" if not true. This
       /// is used to implement atomic operations.

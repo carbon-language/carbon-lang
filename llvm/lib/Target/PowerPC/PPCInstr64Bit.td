@@ -116,6 +116,25 @@ def : Pat<(PPCcall_ELF (i64 tglobaladdr:$dst)),
 def : Pat<(PPCcall_ELF (i64 texternalsym:$dst)),
           (BL8_ELF texternalsym:$dst)>;
 
+
+// Atomic operations.
+def LDARX : Pseudo<(outs G8RC:$rD), (ins memrr:$ptr, i32imm:$label),
+                   "\nLa${label}_entry:\n\tldarx $rD, $ptr",
+                   [(set G8RC:$rD, (PPClarx xoaddr:$ptr, imm:$label))]>;
+
+let Defs = [CR0] in {
+def STDCX : Pseudo<(outs), (ins G8RC:$rS, memrr:$dst, i32imm:$label),
+                  "stdcx. $rS, $dst\n\tbne- La${label}_entry\nLa${label}_exit:",
+                   [(PPCstcx G8RC:$rS, xoaddr:$dst, imm:$label)]>;
+
+def CMP_UNRESd : Pseudo<(outs), (ins G8RC:$rA, G8RC:$rB, i32imm:$label),
+                         "cmpd $rA, $rB\n\tbne- La${label}_exit",
+                         [(PPCcmp_unres G8RC:$rA, G8RC:$rB, imm:$label)]>;
+def CMP_UNRESdi : Pseudo<(outs), (ins G8RC:$rA, s16imm64:$imm, i32imm:$label),
+                         "cmpdi $rA, $imm\n\tbne- La${label}_exit",
+                         [(PPCcmp_unres G8RC:$rA, immSExt16:$imm, imm:$label)]>;
+}
+
 //===----------------------------------------------------------------------===//
 // 64-bit SPR manipulation instrs.
 
