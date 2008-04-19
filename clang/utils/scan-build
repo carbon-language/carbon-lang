@@ -16,6 +16,7 @@ use strict;
 use warnings;
 use File::Temp qw/ :mktemp /;
 use FindBin qw($RealBin);
+use Digest::MD5;
 
 my $Verbose = 0;       # Verbose output from this script.
 my $Prog = "scan-build";
@@ -122,10 +123,20 @@ sub SetHtmlEnv {
 sub ComputeDigest {
   my $FName = shift;
   die "Cannot read $FName" if (! -r $FName);  
-  my $Result = `sha1sum -b $FName`;
-  my @Output = split /\s+/,$Result;
-  die "Bad output from sha1sum" if (scalar(@Output) != 2);
-  return $Output[0];
+  
+  # Use Digest::MD5.  We don't have to be cryptographically secure.  We're
+  # just looking for duplicate files that come from a non-maliciious source.
+  # We use Digest::MD5 becomes it is a standard Perl module that should
+  # come bundled on most systems.
+  
+  open(FILE, $FName) or die "Cannot open $FName.";
+  binmode FILE;
+  my $Result = Digest::MD5->new->addfile(*FILE)->hexdigest;
+  close(FILE);
+  
+  # Return the digest.
+  
+  return $Result;
 }
 
 ##----------------------------------------------------------------------------##
