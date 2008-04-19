@@ -150,7 +150,19 @@ namespace llvm {
       FADDRTZ,
 
       /// MTFSF = F8RC, INFLAG - This moves the register into the FPSCR.
-      MTFSF
+      MTFSF,
+
+      /// LWARX = This corresponds to PPC lwarx instrcution: load word and
+      /// reserve indexed. This is used to implement atomic operations.
+      LWARX,
+
+      /// STWCX = This corresponds to PPC stwcx. instrcution: store word
+      /// conditional indexed. This is used to implement atomic operations.
+      STWCX,
+
+      /// CMP_UNRESERVE = Test for equality and "unreserve" if not true. This
+      /// is used to implement atomic operations.
+      CMP_UNRESERVE
     };
   }
 
@@ -296,6 +308,11 @@ namespace llvm {
     /// the offset of the target addressing mode.
     virtual bool isLegalAddressImmediate(GlobalValue *GV) const;
 
+  private:
+    /// PPCAtomicLabelIndex - Keep track the number of PPC atomic labels.
+    ///
+    unsigned PPCAtomicLabelIndex;
+
     SDOperand LowerRETURNADDR(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFRAMEADDR(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG);
@@ -324,6 +341,9 @@ namespace llvm {
     SDOperand LowerDYNAMIC_STACKALLOC(SDOperand Op, SelectionDAG &DAG,
                                       const PPCSubtarget &Subtarget);
     SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerAtomicLAS(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerAtomicLCS(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerAtomicSWAP(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFP_ROUND_INREG(SDOperand Op, SelectionDAG &DAG);
