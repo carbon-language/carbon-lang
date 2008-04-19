@@ -1351,6 +1351,7 @@ Types
     // FIXME: remove in LLVM 3.0.
     const Type* RetTy = *$1;
     if (!(RetTy->isFirstClassType() || RetTy == Type::VoidTy ||
+          isa<StructType>(RetTy) ||
           isa<OpaqueType>(RetTy)))
       GEN_ERROR("LLVM Functions cannot return aggregates");
 
