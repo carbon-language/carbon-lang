@@ -39,7 +39,11 @@ static ObjCInterfaceType* GetReceiverType(ObjCMessageExpr* ME) {
   // FIXME: Cleanup
   QualType X = Receiver->getType();
   Type* TP = X.getTypePtr();
-  assert (TP->isPointerType());
+  
+  // FIXME: Why can this not be a pointer type?
+  //  assert (TP->isPointerType());
+  if (!TP->isPointerType())
+    return NULL;
   
   const PointerType* T = TP->getAsPointerType();
   
