@@ -548,8 +548,8 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       if (CI2->isAllOnesValue())
         return const_cast<Constant*>(C1);                     // X & -1 == X
       
-      // (zext i32 to i64) & 4294967295 -> (zext i32 to i64)
       if (const ConstantExpr *CE1 = dyn_cast<ConstantExpr>(C1)) {
+        // (zext i32 to i64) & 4294967295 -> (zext i32 to i64)
         if (CE1->getOpcode() == Instruction::ZExt) {
           unsigned DstWidth = CI2->getType()->getBitWidth();
           unsigned SrcWidth =
@@ -559,16 +559,25 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
             return const_cast<Constant*>(C1);
         }
         
+        // If and'ing the address of a global with a constant, fold it.
         if (CE1->getOpcode() == Instruction::PtrToInt && 
             isa<GlobalValue>(CE1->getOperand(0))) {
-          GlobalValue *CPR = cast<GlobalValue>(CE1->getOperand(0));
+          GlobalValue *GV = cast<GlobalValue>(CE1->getOperand(0));
         
-          // Functions are at least 4-byte aligned.  If and'ing the address of a
-          // function with a constant < 4, fold it to zero.
-          if (const ConstantInt *CI = dyn_cast<ConstantInt>(C2))
-            if (CI->getValue().ult(APInt(CI->getType()->getBitWidth(),4)) && 
-                isa<Function>(CPR))
-              return Constant::getNullValue(CI->getType());
+          // Functions are at least 4-byte aligned.
+          unsigned GVAlign = GV->getAlignment();
+          if (isa<Function>(GV))
+            GVAlign = std::max(GVAlign, 4U);
+          
+          if (GVAlign > 1) {
+            unsigned DstWidth = CI2->getType()->getBitWidth();
+            unsigned SrcWidth = std::min(SrcWidth, Log2_32(GVAlign));
+            APInt BitsNotSet(APInt::getLowBitsSet(DstWidth, SrcWidth));
+
+            // If checking bits we know are clear, return zero.
+            if ((CI2->getValue() & BitsNotSet) == CI2->getValue())
+              return Constant::getNullValue(CI2->getType());
+          }
         }
       }
       break;
