@@ -2017,7 +2017,7 @@ primarily used to implement exception handling.</p>
 
 <h5>Semantics:</h5>
 
-<p>The '<tt>unwind</tt>' intrinsic causes execution of the current function to
+<p>The '<tt>unwind</tt>' instruction causes execution of the current function to
 immediately halt.  The dynamic call stack is then searched for the first <a
 href="#i_invoke"><tt>invoke</tt></a> instruction on the call stack.  Once found,
 execution continues at the "exceptional" destination block specified by the
@@ -2337,7 +2337,8 @@ the left a specified number of bits.</p>
 <h5>Arguments:</h5>
 
 <p>Both arguments to the '<tt>shl</tt>' instruction must be the same <a
- href="#t_integer">integer</a> type.</p>
+ href="#t_integer">integer</a> type.  '<tt>var2</tt>' is treated as an
+unsigned value.</p>
  
 <h5>Semantics:</h5>
 
@@ -2366,7 +2367,8 @@ operand shifted to the right a specified number of bits with zero fill.</p>
 
 <h5>Arguments:</h5>
 <p>Both arguments to the '<tt>lshr</tt>' instruction must be the same 
-<a href="#t_integer">integer</a> type.</p>
+<a href="#t_integer">integer</a> type.  '<tt>var2</tt>' is treated as an
+unsigned value.</p>
 
 <h5>Semantics:</h5>
 
@@ -2400,7 +2402,8 @@ operand shifted to the right a specified number of bits with sign extension.</p>
 
 <h5>Arguments:</h5>
 <p>Both arguments to the '<tt>ashr</tt>' instruction must be the same 
-<a href="#t_integer">integer</a> type.</p>
+<a href="#t_integer">integer</a> type.  '<tt>var2</tt>' is treated as an
+unsigned value.</p>
 
 <h5>Semantics:</h5>
 <p>This instruction always performs an arithmetic shift right operation, 
@@ -2796,8 +2799,8 @@ choose to align the allocation on any convenient boundary.</p>
 <h5>Semantics:</h5>
 
 <p>Memory is allocated using the system "<tt>malloc</tt>" function, and
-a pointer is returned.  Allocating zero bytes is undefined.  The result is null
-if there is insufficient memory available.</p>
+a pointer is returned.  The result of a zero byte allocattion is undefined.  The
+result is null if there is insufficient memory available.</p>
 
 <h5>Example:</h5>
 
@@ -2839,7 +2842,7 @@ instruction.</p>
 <h5>Semantics:</h5>
 
 <p>Access to the memory pointed to by the pointer is no longer defined
-after this instruction executes.  If the pointer is null, the result is
+after this instruction executes.  If the pointer is null, the behavior is
 undefined.</p>
 
 <h5>Example:</h5>
@@ -2884,7 +2887,8 @@ can choose to align the allocation on any convenient boundary.</p>
 
 <h5>Semantics:</h5>
 
-<p>Memory is allocated; a pointer is returned.  '<tt>alloca</tt>'d
+<p>Memory is allocated; a pointer is returned.  The operation is undefiend if
+there is insufficient stack space for the allocation.  '<tt>alloca</tt>'d
 memory is automatically released when the function returns.  The '<tt>alloca</tt>'
 instruction is commonly used to represent automatic variables that must
 have an address available.  When the function returns (either with the <tt><a
