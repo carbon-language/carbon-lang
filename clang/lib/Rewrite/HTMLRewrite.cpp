@@ -122,7 +122,11 @@ void html::EscapeText(Rewriter& R, unsigned FileID,
         RB.ReplaceText(FilePos, 1, "&nbsp;", 6);
       ++ColNo;
       break;
-
+    case '\f':
+      RB.ReplaceText(FilePos, 1, "<hr>", 4);
+      ColNo = 0;
+      break;
+        
     case '\t': {
       if (!ReplaceTabs)
         break;
