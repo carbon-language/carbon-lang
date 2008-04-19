@@ -2543,6 +2543,21 @@ def EH_RETURN   : I<0xC3, RawFrm, (outs), (ins GR32:$addr),
 // Atomic support
 //
 
+// Atomic swap. These are just normal xchg instructions. But since a memory
+// operand is referenced, the atomicity is ensured.
+let Constraints = "$val = $dst", Defs = [EFLAGS] in {
+def XCHG32rm : I<0x87, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
+               "xchg{l}\t{$val, $ptr|$ptr, $val}", 
+               [(set GR32:$dst, (atomic_swap_32 addr:$ptr, GR32:$val))]>;
+def XCHG16rm : I<0x87, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$ptr, GR16:$val),
+               "xchg{w}\t{$val, $ptr|$ptr, $val}", 
+               [(set GR16:$dst, (atomic_swap_16 addr:$ptr, GR16:$val))]>, 
+                OpSize;
+def XCHG8rm  : I<0x86, MRMSrcMem, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
+               "xchg{b}\t{$val, $ptr|$ptr, $val}", 
+               [(set GR8:$dst, (atomic_swap_8 addr:$ptr, GR8:$val))]>;
+}
+
 // Atomic compare and swap.
 let Defs = [EAX, EFLAGS], Uses = [EAX] in {
 def LCMPXCHG32 : I<0xB1, MRMDestMem, (outs), (ins i32mem:$ptr, GR32:$swap),
@@ -2564,20 +2579,6 @@ let Defs = [AL, EFLAGS], Uses = [AL] in {
 def LCMPXCHG8 : I<0xB0, MRMDestMem, (outs), (ins i8mem:$ptr, GR8:$swap),
                "lock cmpxchg{b}\t{$swap, $ptr|$ptr, $swap}",
                [(X86cas addr:$ptr, GR8:$swap, 1)]>, TB, LOCK;
-}
-
-// Atomic swap
-let Constraints = "$val = $dst", Defs = [EFLAGS] in {
-def LXCHG32 : I<0x87, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
-               "lock xchg{l}\t{$val, $ptr|$ptr, $val}", 
-               [(set GR32:$dst, (atomic_swap_32 addr:$ptr, GR32:$val))]>, LOCK;
-def LXCHG16 : I<0x87, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$ptr, GR16:$val),
-               "lock xchg{w}\t{$val, $ptr|$ptr, $val}", 
-               [(set GR16:$dst, (atomic_swap_16 addr:$ptr, GR16:$val))]>, 
-                OpSize, LOCK;
-def LXCHG8  : I<0x86, MRMSrcMem, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
-               "lock xchg{b}\t{$val, $ptr|$ptr, $val}", 
-               [(set GR8:$dst, (atomic_swap_8 addr:$ptr, GR8:$val))]>, LOCK;
 }
 
 // Atomic exchange and add
