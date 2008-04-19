@@ -17,6 +17,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
@@ -305,6 +306,50 @@ llvm::Constant *CodeGenModule::EmitGlobalInit(const Expr *Expr) {
   return EmitConstantExpr(Expr);
 }
 
+/// EmitAnnotateAttr - Generate the llvm::ConstantStruct which contains the 
+/// annotation information for a given GlobalValue.  The annotation struct is
+/// {i8 *, i8 *, i8 *, i32}.  The first field is a constant expression, the 
+/// GlobalValue being annotated.  The second filed is thee constant string 
+/// created from the AnnotateAttr's annotation.  The third field is a constant 
+/// string containing the name of the translation unit.  The fourth field is
+/// the line number in the file of the annotated value declaration.
+///
+/// FIXME: this does not unique the annotation string constants, as llvm-gcc
+///        appears to.
+///
+llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV, 
+                                                const AnnotateAttr *AA,
+                                                unsigned LineNo) {
+  llvm::Module *M = &getModule();
+
+  // get [N x i8] constants for the annotation string, and the filename string
+  // which are the 2nd and 3rd elements of the global annotation structure.
+  const llvm::Type *SBP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  llvm::Constant *anno = llvm::ConstantArray::get(AA->getAnnotation(), true);
+  llvm::Constant *unit = llvm::ConstantArray::get(M->getModuleIdentifier(),
+                                                  true);
+
+  // Get the two global values corresponding to the ConstantArrays we just
+  // created to hold the bytes of the strings.
+  llvm::GlobalValue *annoGV = 
+  new llvm::GlobalVariable(anno->getType(), false,
+                           llvm::GlobalValue::InternalLinkage, anno,
+                           GV->getName() + ".str", M);
+  // translation unit name string, emitted into the llvm.metadata section.
+  llvm::GlobalValue *unitGV =
+  new llvm::GlobalVariable(unit->getType(), false,
+                           llvm::GlobalValue::InternalLinkage, unit, ".str", M);
+
+  // Create the ConstantStruct that is the global annotion.
+  llvm::Constant *Fields[4] = {
+    llvm::ConstantExpr::getBitCast(GV, SBP),
+    llvm::ConstantExpr::getBitCast(annoGV, SBP),
+    llvm::ConstantExpr::getBitCast(unitGV, SBP),
+    llvm::ConstantInt::get(llvm::Type::Int32Ty, LineNo)
+  };
+  return llvm::ConstantStruct::get(Fields, 4, false);
+}
+
 void CodeGenModule::EmitGlobalVar(const VarDecl *D) {
   // If this is just a forward declaration of the variable, don't emit it now,
   // allow it to be emitted lazily on its first use.
@@ -328,6 +373,12 @@ void CodeGenModule::EmitGlobalVar(const VarDecl *D) {
 
   if (!Init)
     Init = EmitGlobalInit(D->getInit());
+
+  if (const AnnotateAttr *AA = D->getAttr<AnnotateAttr>()) {
+    SourceManager &SM = Context.getSourceManager();
+    AddAnnotation(EmitAnnotateAttr(GV, AA,
+                                   SM.getLogicalLineNumber(D->getLocation())));
+  }
 
   assert(GV->getType()->getElementType() == Init->getType() &&
          "Initializer codegen type mismatch!");

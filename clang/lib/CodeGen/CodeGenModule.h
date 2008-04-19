@@ -23,7 +23,7 @@ namespace llvm {
   class Module;
   class Constant;
   class Function;
-  class GlobalVariable;
+  class GlobalValue;
   class TargetData;
 }
 
@@ -39,6 +39,7 @@ namespace clang {
   class TypeDecl;
   struct LangOptions;
   class Diagnostic;
+  class AnnotateAttr;
     
 namespace CodeGen {
 
@@ -110,6 +111,8 @@ public:
   void UpdateCompletedType(const TagDecl *D);
   llvm::Constant *EmitGlobalInit(const Expr *E);
   llvm::Constant *EmitConstantExpr(const Expr *E, CodeGenFunction *CGF = 0);
+  llvm::Constant *EmitAnnotateAttr(llvm::GlobalValue *GV,
+                                   const AnnotateAttr *AA, unsigned LineNo);
     
   /// WarnUnsupported - Print out a warning that codegen doesn't support the
   /// specified stmt yet.

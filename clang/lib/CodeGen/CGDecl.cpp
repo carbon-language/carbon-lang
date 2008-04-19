@@ -14,6 +14,7 @@
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "clang/AST/AST.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Type.h"
 using namespace clang;
@@ -82,19 +83,26 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   }
 
   assert(Init && "Unable to create initialiser for static decl");
-  
+
   std::string ContextName;
   if (const FunctionDecl * FD = dyn_cast<FunctionDecl>(CurFuncDecl))
     ContextName = FD->getName();
   else
     assert(0 && "Unknown context for block var decl"); // FIXME Handle objc.
-  
-  DMEntry = 
-    new llvm::GlobalVariable(LTy, false, 
-                            llvm::GlobalValue::InternalLinkage,
+
+  llvm::GlobalValue *GV = 
+    new llvm::GlobalVariable(LTy, false, llvm::GlobalValue::InternalLinkage,
                              Init, ContextName + "." + D.getName(),
-                             &CGM.getModule(), 0,
-                             Ty.getAddressSpace());
+                             &CGM.getModule(), 0, Ty.getAddressSpace());
+
+  if (const AnnotateAttr *AA = D.getAttr<AnnotateAttr>()) {
+    SourceManager &SM = CGM.getContext().getSourceManager();
+    llvm::Constant *Ann =
+      CGM.EmitAnnotateAttr(GV, AA, SM.getLogicalLineNumber(D.getLocation()));
+    CGM.AddAnnotation(Ann);
+  }
+
+  DMEntry = GV;
 }
   
 /// EmitLocalBlockVarDecl - Emit code and set up an entry in LocalDeclMap for a
