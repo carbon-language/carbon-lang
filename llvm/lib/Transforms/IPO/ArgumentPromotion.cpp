@@ -17,9 +17,10 @@
 //
 // This pass also handles aggregate arguments that are passed into a function,
 // scalarizing them if the elements of the aggregate are only loaded.  Note that
-// it refuses to scalarize aggregates which would require passing in more than
+// by default it refuses to scalarize aggregates which would require passing in more than
 // three operands to the function, because passing thousands of operands for a
-// large array or structure is unprofitable!
+// large array or structure is unprofitable! This limit is can be configured or
+// disabled, however.
 //
 // Note that this transformation could also be done for arguments that are only
 // stored to (returning the value instead), but does not currently.  This case
@@ -65,7 +66,7 @@ namespace {
 
     virtual bool runOnSCC(const std::vector<CallGraphNode *> &SCC);
     static char ID; // Pass identification, replacement for typeid
-    ArgPromotion() : CallGraphSCCPass((intptr_t)&ID) {}
+    ArgPromotion(unsigned maxElements = 3) : CallGraphSCCPass((intptr_t)&ID), maxElements(maxElements) {}
 
   private:
     bool PromoteArguments(CallGraphNode *CGN);
@@ -73,6 +74,8 @@ namespace {
     Function *DoPromotion(Function *F, 
                           SmallPtrSet<Argument*, 8> &ArgsToPromote,
                           SmallPtrSet<Argument*, 8> &ByValArgsToTransform);
+	/// The maximum number of elements to expand, or 0 for unlimited.
+	unsigned maxElements;
   };
 
   char ArgPromotion::ID = 0;
@@ -80,8 +83,8 @@ namespace {
                                "Promote 'by reference' arguments to scalars");
 }
 
-Pass *llvm::createArgumentPromotionPass() {
-  return new ArgPromotion();
+Pass *llvm::createArgumentPromotionPass(unsigned maxElements) {
+  return new ArgPromotion(maxElements);
 }
 
 bool ArgPromotion::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
@@ -145,7 +148,11 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
     if (isByVal) {
       const Type *AgTy = cast<PointerType>(PtrArg->getType())->getElementType();
       if (const StructType *STy = dyn_cast<StructType>(AgTy))
-        if (STy->getNumElements() <= 3) {
+        if (maxElements > 0 && STy->getNumElements() > maxElements) {
+          DOUT << "argpromotion disable promoting argument '"
+               << PtrArg->getName() << "' because it would require adding more "
+               << "than " << maxElements << " arguments to the function.\n";
+        } else {
           // If all the elements are first class types, we can promote it.
           bool AllSimple = true;
           for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
@@ -278,12 +285,12 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
       // to do.
       if (std::find(GEPIndices.begin(), GEPIndices.end(), Operands) ==
           GEPIndices.end()) {
-        if (GEPIndices.size() == 3) {
+        if (maxElements > 0 && GEPIndices.size() == maxElements) {
           DOUT << "argpromotion disable promoting argument '"
                << Arg->getName() << "' because it would require adding more "
-               << "than 3 arguments to the function.\n";
-          // We limit aggregate promotion to only promoting up to three elements
-          // of the aggregate.
+               << "than " << maxElements << " arguments to the function.\n";
+          // We limit aggregate promotion to only promoting up to a fixed number
+		  // of elements of the aggregate.
           return false;
         }
         GEPIndices.push_back(Operands);
