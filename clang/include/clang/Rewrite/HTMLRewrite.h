@@ -49,12 +49,9 @@ namespace html {
                       const char *StartTag, const char *EndTag);
   
   /// EscapeText - HTMLize a specified file so that special characters are
-  /// are translated so that they are not interpreted as HTML tags.  In this
-  /// version tabs are not replaced with spaces by default, as this can
-  /// introduce a serious performance overhead as the amount of replaced
-  /// text can be very large.
+  /// are translated so that they are not interpreted as HTML tags.
   void EscapeText(Rewriter& R, unsigned FileID,
-                  bool EscapeSpaces = false, bool ReplacesTabs = false);
+                  bool EscapeSpaces = false, bool ReplacesTabs = true);
 
   /// EscapeText - HTMLized the provided string so that special characters
   ///  in 's' are not interpreted as HTML tags.  Unlike the version of

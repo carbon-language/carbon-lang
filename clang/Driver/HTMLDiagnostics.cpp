@@ -224,13 +224,8 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
   
   // Emit the HTML to disk.
 
-  for (RewriteBuffer::iterator I = Buf->begin(), E = Buf->end(); I!=E; ++I) {
-    // Expand tabs.
-    if (*I == '\t')
-      os << "   ";
-    else  
+  for (RewriteBuffer::iterator I = Buf->begin(), E = Buf->end(); I!=E; ++I)
       os << *I;
-  }
 }
 
 void HTMLDiagnostics::HandlePiece(Rewriter& R,
