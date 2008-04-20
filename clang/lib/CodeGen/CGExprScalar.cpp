@@ -14,6 +14,7 @@
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "clang/AST/AST.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
@@ -42,7 +43,6 @@ class VISIBILITY_HIDDEN ScalarExprEmitter
   CodeGenFunction &CGF;
   llvm::IRBuilder &Builder;
   CGObjCRuntime *Runtime;
-
 
 public:
 
@@ -602,14 +602,15 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
     if (isa<llvm::IntegerType>(InVal->getType()))
       NextVal = llvm::ConstantInt::get(InVal->getType(), AmountVal);
     else if (InVal->getType() == llvm::Type::FloatTy)
-      // FIXME: Handle long double.
       NextVal = 
         llvm::ConstantFP::get(llvm::APFloat(static_cast<float>(AmountVal)));
-    else {
-      // FIXME: Handle long double.
-      assert(InVal->getType() == llvm::Type::DoubleTy);
+    else if (InVal->getType() == llvm::Type::DoubleTy)
       NextVal = 
         llvm::ConstantFP::get(llvm::APFloat(static_cast<double>(AmountVal)));
+    else {
+      llvm::APFloat F(static_cast<float>(AmountVal));
+      F.convert(*CGF.Target.getLongDoubleFormat(), llvm::APFloat::rmTowardZero);
+      NextVal = llvm::ConstantFP::get(F);
     }
     NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
   }
