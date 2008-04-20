@@ -199,6 +199,13 @@ FunctionPass *createTailDuplicationPass();
 
 //===----------------------------------------------------------------------===//
 //
+// JumpThreading - Thread control through mult-pred/multi-succ blocks where some
+// preds always go to some succ.
+//
+FunctionPass *createJumpThreadingPass();
+  
+  //===----------------------------------------------------------------------===//
+//
 // CFGSimplification - Merge basic blocks, eliminate unreachable blocks,
 // simplify terminator instructions, etc...
 //

@@ -103,6 +103,7 @@ namespace {
       (void) llvm::createStripDeadPrototypesPass();
       (void) llvm::createTailCallEliminationPass();
       (void) llvm::createTailDuplicationPass();
+      (void) llvm::createJumpThreadingPass();
       (void) llvm::createUnifyFunctionExitNodesPass();
       (void) llvm::createCondPropagationPass();
       (void) llvm::createNullProfilerRSPass();
