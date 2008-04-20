@@ -201,12 +201,21 @@ Parser::ExprResult Parser::ParseInitializer() {
       SubElt = ParseInitializerWithPotentialDesignator();
 
     // If we couldn't parse the subelement, bail out.
-    if (SubElt.isInvalid) {
-      InitExprsOk = false;
-      SkipUntil(tok::r_brace, false, true);
-      break;
-    } else
+    if (!SubElt.isInvalid) {
       InitExprs.push_back(SubElt.Val);
+    } else {
+      InitExprsOk = false;
+      
+      // We have two ways to try to recover from this error: if the code looks
+      // gramatically ok (i.e. we have a comma comming up) try to continue
+      // parsing the rest of the initializer.  This allows us to emit
+      // diagnostics for later elements that we find.  If we don't see a comma,
+      // assume there is a parse error, and just skip to recover.
+      if (Tok.isNot(tok::comma)) {
+        SkipUntil(tok::r_brace, false, true);
+        break;
+      }
+    }
       
     // If we don't have a comma continued list, we're done.
     if (Tok.isNot(tok::comma)) break;
@@ -220,6 +229,11 @@ Parser::ExprResult Parser::ParseInitializer() {
   if (InitExprsOk && Tok.is(tok::r_brace))
     return Actions.ActOnInitList(LBraceLoc, &InitExprs[0], InitExprs.size(), 
                                  ConsumeBrace());
+  
+  // Delete any parsed subexpressions.
+  for (unsigned i = 0, e = InitExprs.size(); i != e; ++i)
+    Actions.DeleteExpr(InitExprs[i]);
+  
   // Match the '}'.
   MatchRHSPunctuation(tok::r_brace, LBraceLoc);
   return ExprResult(true); // an error occurred.
