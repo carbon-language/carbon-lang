@@ -1678,6 +1678,7 @@ APFloat::convert(const fltSemantics &toSemantics,
   opStatus fs;
 
   assertArithmeticOK(*semantics);
+  assertArithmeticOK(toSemantics);
   lostFraction = lfExactlyZero;
   newPartCount = partCountForBits(toSemantics.precision + 1);
   oldPartCount = partCount();
