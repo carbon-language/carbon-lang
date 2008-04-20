@@ -348,6 +348,8 @@ static bool ClassImplementsProtocol(ObjCProtocolDecl *lProto,
   return false;
 }
 
+/// ObjCQualifiedIdTypesAreCompatible - We know that one of lhs/rhs is an
+/// ObjCQualifiedIDType.
 bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
                                              bool compare) {
   // Allow id<P..> and an 'id' or void* type in all cases.
@@ -361,24 +363,30 @@ bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
       return true;
   }
   
-  const ObjCQualifiedInterfaceType *lhsQI = 0;
-  const ObjCQualifiedInterfaceType *rhsQI = 0;
-  ObjCInterfaceDecl *lhsID = 0;
-  ObjCInterfaceDecl *rhsID = 0;
-  const ObjCQualifiedIdType *lhsQID = lhs->getAsObjCQualifiedIdType();
-  const ObjCQualifiedIdType *rhsQID = rhs->getAsObjCQualifiedIdType();
-  
-  if (lhsQID) {
-    if (!rhsQID && rhs->isPointerType()) {
+  if (const ObjCQualifiedIdType *lhsQID = lhs->getAsObjCQualifiedIdType()) {
+    const ObjCQualifiedIdType *rhsQID = rhs->getAsObjCQualifiedIdType();
+    const ObjCQualifiedInterfaceType *rhsQI = 0;
+    if (!rhsQID) {
+      // Not comparing two ObjCQualifiedIdType's?
+      if (!rhs->isPointerType()) return false;
       QualType rtype = rhs->getAsPointerType()->getPointeeType();
+
       rhsQI = rtype->getAsObjCQualifiedInterfaceType();
-      if (!rhsQI) {
-        if (const ObjCInterfaceType *IT = rtype->getAsObjCInterfaceType())
-          rhsID = IT->getDecl();
-      }
+      if (rhsQI == 0) {
+        // If the RHS is an interface pointer ('NSString*'), handle it.
+        if (const ObjCInterfaceType *IT = rtype->getAsObjCInterfaceType()) {
+          ObjCInterfaceDecl *rhsID = IT->getDecl();
+          for (unsigned i = 0; i != lhsQID->getNumProtocols(); ++i) {
+            // when comparing an id<P> on lhs with a static type on rhs,
+            // see if static class implements all of id's protocols, directly or
+            // through its super class and categories.
+            if (!ClassImplementsProtocol(lhsQID->getProtocols(i), rhsID, true))
+              return false;
+          }
+          return true;
+        }
+      }      
     }
-    if (!rhsQI && !rhsQID && !rhsID)
-      return false;
     
     ObjCQualifiedIdType::qual_iterator RHSProtoI, RHSProtoE;
     if (rhsQI) {
@@ -387,6 +395,8 @@ bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
     } else if (rhsQID) {
       RHSProtoI = rhsQID->qual_begin();
       RHSProtoE = rhsQID->qual_end();
+    } else {
+      return false;
     }
     
     for (unsigned i =0; i < lhsQID->getNumProtocols(); i++) {
@@ -396,71 +406,60 @@ bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
       // when comparing an id<P> on lhs with a static type on rhs,
       // see if static class implements all of id's protocols, directly or
       // through its super class and categories.
-      if (rhsID) {
-        if (ClassImplementsProtocol(lhsProto, rhsID, true))
-          match = true;
-      } else {
-        for (; RHSProtoI != RHSProtoE; ++RHSProtoI) {
-          ObjCProtocolDecl *rhsProto = *RHSProtoI;
-          if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
-              compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto)) {
-            match = true;
-            break;
-          }
-        }
-      }
-      if (!match)
-        return false;
-    }    
-  } else if (rhsQID) {
-    if (!lhsQID && lhs->isPointerType()) {
-      QualType ltype = lhs->getAsPointerType()->getPointeeType();
-      lhsQI = ltype->getAsObjCQualifiedInterfaceType();
-      if (!lhsQI) {
-        if (const ObjCInterfaceType *IT = ltype->getAsObjCInterfaceType())
-          lhsID = IT->getDecl();
-      }
-    }
-    if (!lhsQI && !lhsQID && !lhsID)
-      return false;
-    
-    ObjCQualifiedIdType::qual_iterator LHSProtoI, LHSProtoE;
-    if (lhsQI) {
-      LHSProtoI = lhsQI->qual_begin();
-      LHSProtoE = lhsQI->qual_end();
-    } else if (lhsQID) {
-      LHSProtoI = lhsQID->qual_begin();
-      LHSProtoE = lhsQID->qual_end();
-    }
-    
-    bool match = false;
-    // for static type vs. qualified 'id' type, check that class implements
-    // one of 'id's protocols.
-    if (lhsID) {
-      for (unsigned j = 0; j < rhsQID->getNumProtocols(); j++) {
-        ObjCProtocolDecl *rhsProto = rhsQID->getProtocols(j);
-        if (ClassImplementsProtocol(rhsProto, lhsID, compare)) {
+      for (; RHSProtoI != RHSProtoE; ++RHSProtoI) {
+        ObjCProtocolDecl *rhsProto = *RHSProtoI;
+        if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
+            compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto)) {
           match = true;
           break;
         }
       }
-    } else {
-      for (; LHSProtoI != LHSProtoE; ++LHSProtoI) {
-        match = false;
-        ObjCProtocolDecl *lhsProto = *LHSProtoI;
-        for (unsigned j = 0; j < rhsQID->getNumProtocols(); j++) {
-          ObjCProtocolDecl *rhsProto = rhsQID->getProtocols(j);
-          if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
+      if (!match)
+        return false;
+    }
+    
+    return true;
+  }
+  
+  const ObjCQualifiedIdType *rhsQID = rhs->getAsObjCQualifiedIdType();
+  assert(rhsQID && "One of the LHS/RHS should be id<x>");
+    
+  if (!lhs->isPointerType())
+    return false;
+  
+  QualType ltype = lhs->getAsPointerType()->getPointeeType();
+  if (const ObjCQualifiedInterfaceType *lhsQI =
+         ltype->getAsObjCQualifiedInterfaceType()) {
+    ObjCQualifiedIdType::qual_iterator LHSProtoI = lhsQI->qual_begin();
+    ObjCQualifiedIdType::qual_iterator LHSProtoE = lhsQI->qual_end();
+    for (; LHSProtoI != LHSProtoE; ++LHSProtoI) {
+      bool match = false;
+      ObjCProtocolDecl *lhsProto = *LHSProtoI;
+      for (unsigned j = 0; j < rhsQID->getNumProtocols(); j++) {
+        ObjCProtocolDecl *rhsProto = rhsQID->getProtocols(j);
+        if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
             compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto)) {
-            match = true;
-            break;
-          }
+          match = true;
+          break;
         }
       }
+      if (!match)
+        return false;
     }
-    if (!match)
-      return false;
+    return true;
   }
-  return true;  
+  
+  if (const ObjCInterfaceType *IT = ltype->getAsObjCInterfaceType()) {
+    // for static type vs. qualified 'id' type, check that class implements
+    // all of 'id's protocols.
+    ObjCInterfaceDecl *lhsID = IT->getDecl();
+    for (unsigned j = 0; j < rhsQID->getNumProtocols(); j++) {
+      ObjCProtocolDecl *rhsProto = rhsQID->getProtocols(j);
+      if (!ClassImplementsProtocol(rhsProto, lhsID, compare))
+        return false;
+    }
+    return true;
+  }
+  return false;
 }
 
