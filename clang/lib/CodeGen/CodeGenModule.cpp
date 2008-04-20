@@ -44,6 +44,7 @@ CodeGenModule::~CodeGenModule() {
   llvm::Function *ObjCInitFunction = Runtime->ModuleInitFunction();
   if (ObjCInitFunction)
     AddGlobalCtor(ObjCInitFunction);
+  EmitStatics();
   EmitGlobalCtors();
   EmitAnnotations();
   delete Runtime;
@@ -167,8 +168,8 @@ llvm::Constant *CodeGenModule::GetAddrOfFunctionDecl(const FunctionDecl *D,
   // If it doesn't already exist, just create and return an entry.
   if (F == 0) {
     // FIXME: param attributes for sext/zext etc.
-    F = llvm::Function::Create(FTy, llvm::Function::ExternalLinkage, D->getName(),
-                           &getModule());
+    F = llvm::Function::Create(FTy, llvm::Function::ExternalLinkage,
+                               D->getName(), &getModule());
 
     // Set the appropriate calling convention for the Function.
     if (D->getAttr<FastCallAttr>())
@@ -298,8 +299,58 @@ void CodeGenModule::EmitObjCMethod(const ObjCMethodDecl *OMD) {
 
 void CodeGenModule::EmitFunction(const FunctionDecl *FD) {
   // If this is not a prototype, emit the body.
-  if (FD->getBody())
+  if (FD->getBody()) {
+    // If the function is a static, defer code generation until later so we can
+    // easily omit unused statics.
+    if (FD->getStorageClass() == FunctionDecl::Static) {
+      StaticDecls.push_back(FD);
+      return;
+    }
     CodeGenFunction(*this).GenerateCode(FD);
+  }
+}
+
+void CodeGenModule::EmitStatics() {
+  // Emit code for each used static decl encountered.  Since a previously unused
+  // static decl may become used during the generation of code for a static
+  // function, iterate until no changes are made.
+  bool Changed;
+  do {
+    Changed = false;
+    for (unsigned i = 0, e = StaticDecls.size(); i != e; ++i) {
+      // Check the map of used decls for our static. If not found, continue.
+      const Decl *D = StaticDecls[i];
+      if (GlobalDeclMap[D] == 0)
+        continue;
+      
+      // If this is a function decl, generate code for the static function if it
+      // has a body.  Otherwise, we must have a var decl for a static global
+      // variable.
+      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+        if (FD->getBody())
+          CodeGenFunction(*this).GenerateCode(FD);
+      } else {
+        const VarDecl *VD = cast<VarDecl>(D);
+        EmitGlobalVarInit(VD);
+      }
+      // Erase the used decl from the list.
+      StaticDecls[i] = StaticDecls.back();
+      StaticDecls.pop_back();
+      --i;
+      --e;
+      
+      // Remember that we made a change.
+      Changed = true;
+    }
+  } while (Changed);
+  
+  // Warn about all statics that are still unused at end of code generation.
+  for (unsigned i = 0, e = StaticDecls.size(); i != e; ++i) {
+    const Decl *D = StaticDecls[i];
+    std::string Msg = cast<NamedDecl>(D)->getName();
+    getDiags().Report(Context.getFullLoc(D->getLocation()), 
+                      diag::warn_unused_static, &Msg, 1);
+  }
 }
 
 llvm::Constant *CodeGenModule::EmitGlobalInit(const Expr *Expr) {
@@ -351,11 +402,22 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
 }
 
 void CodeGenModule::EmitGlobalVar(const VarDecl *D) {
+  // If the VarDecl is a static, defer code generation until later so we can
+  // easily omit unused statics.
+  if (D->getStorageClass() == VarDecl::Static) {
+    StaticDecls.push_back(D);
+    return;
+  }
+
   // If this is just a forward declaration of the variable, don't emit it now,
   // allow it to be emitted lazily on its first use.
   if (D->getStorageClass() == VarDecl::Extern && D->getInit() == 0)
     return;
   
+  EmitGlobalVarInit(D);
+}
+
+void CodeGenModule::EmitGlobalVarInit(const VarDecl *D) {
   // Get the global, forcing it to be a direct reference.
   llvm::GlobalVariable *GV = 
     cast<llvm::GlobalVariable>(GetAddrOfGlobalVar(D, true));
@@ -468,8 +530,9 @@ llvm::Function *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
   }
 
   // FIXME: param attributes for sext/zext etc.
-  return FunctionSlot = llvm::Function::Create(Ty, llvm::Function::ExternalLinkage,
-                                           Name, &getModule());
+  return FunctionSlot = 
+    llvm::Function::Create(Ty, llvm::Function::ExternalLinkage, Name,
+                           &getModule());
 }
 
 llvm::Function *CodeGenModule::getIntrinsic(unsigned IID,const llvm::Type **Tys,

@@ -1036,4 +1036,10 @@ DIAG(ext_return_missing_expr, EXTENSION,
 DIAG(ext_return_has_expr, EXTENSION,
      "void function '%0' should not return a value")
 
+//===----------------------------------------------------------------------===//
+// Codegen
+//===----------------------------------------------------------------------===//
+
+DIAG(warn_unused_static, WARNING, "static '%0' defined but not used")
+
 #undef DIAG
