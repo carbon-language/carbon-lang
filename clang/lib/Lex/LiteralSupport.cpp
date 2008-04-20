@@ -224,7 +224,8 @@ NumericLiteralParser(const char *begin, const char *end,
       }
       // A binary exponent can appear with or with a '.'. If dotted, the
       // binary exponent is required. 
-      if ((*s == 'p' || *s == 'P') && PP.getLangOptions().HexFloats) { 
+      if ((*s == 'p' || *s == 'P') && PP.getLangOptions().HexFloats) {
+        const char *Exponent = s;
         s++;
         saw_exponent = true;
         if (*s == '+' || *s == '-')  s++; // sign
@@ -232,7 +233,7 @@ NumericLiteralParser(const char *begin, const char *end,
         if (first_non_digit != s) {
           s = first_non_digit;
         } else {
-          Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
+          Diag(PP.AdvanceToTokenCharacter(TokLoc, Exponent-begin),
                diag::err_exponent_has_no_digits);
           return;
         }
@@ -275,6 +276,7 @@ NumericLiteralParser(const char *begin, const char *end,
         s = SkipDigits(s);
       }
       if (*s == 'e' || *s == 'E') { // exponent
+        const char *Exponent = s;
         s++;
         radix = 10;
         saw_exponent = true;
@@ -283,7 +285,7 @@ NumericLiteralParser(const char *begin, const char *end,
         if (first_non_digit != s) {
           s = first_non_digit;
         } else {
-          Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin), 
+          Diag(PP.AdvanceToTokenCharacter(TokLoc, Exponent-begin), 
                diag::err_exponent_has_no_digits);
           return;
         }
@@ -304,6 +306,7 @@ NumericLiteralParser(const char *begin, const char *end,
       s = SkipDigits(s);
     } 
     if (*s == 'e' || *s == 'E') { // exponent
+      const char *Exponent = s;
       s++;
       saw_exponent = true;
       if (*s == '+' || *s == '-')  s++; // sign
@@ -311,7 +314,7 @@ NumericLiteralParser(const char *begin, const char *end,
       if (first_non_digit != s) {
         s = first_non_digit;
       } else {
-        Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
+        Diag(PP.AdvanceToTokenCharacter(TokLoc, Exponent-begin),
              diag::err_exponent_has_no_digits);
         return;
       }
