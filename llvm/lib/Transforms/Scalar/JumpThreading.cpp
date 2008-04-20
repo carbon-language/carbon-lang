@@ -134,15 +134,30 @@ bool JumpThreading::ThreadBlock(BasicBlock &BB) {
   PHINode *PN = dyn_cast<PHINode>(Condition);
   if (!PN || PN->getParent() != &BB) return false;
   
+  // See if the phi node has any constant values.  If so, we can determine where
+  // the corresponding predecessor will branch.
+  unsigned PredNo = ~0U;
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+    if (isa<ConstantInt>(PN->getIncomingValue(i))) {
+      PredNo = i;
+      break;
+    }
+  }
+  
+  // If no incoming value has a constant, we don't know the destination of any
+  // predecessors.
+  if (PredNo == ~0U)
+    return false;
+  
   // See if the cost of duplicating this block is low enough.
   unsigned JumpThreadCost = getJumpThreadDuplicationCost(BB);
   if (JumpThreadCost > Threshold) {
     DOUT << "  Not threading BB '" << BB.getNameStart()
-         << "': Cost is too high: " << JumpThreadCost << "\n";
+         << "' - Cost is too high: " << JumpThreadCost << "\n";
     return false;
   }
 
-  DOUT << "  Threading BB '" << BB.getNameStart() << "'.  Cost is : "
+  DOUT << "  Threading BB '" << BB.getNameStart() << "'.  Cost is: "
        << JumpThreadCost << "\n";
   
   return false;
