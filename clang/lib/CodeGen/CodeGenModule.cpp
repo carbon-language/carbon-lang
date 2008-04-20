@@ -303,6 +303,19 @@ void CodeGenModule::EmitFunction(const FunctionDecl *FD) {
     // If the function is a static, defer code generation until later so we can
     // easily omit unused statics.
     if (FD->getStorageClass() == FunctionDecl::Static) {
+      // We need to check the Module here to see if GetAddrOfFunctionDecl() has
+      // already added this function to the Module because the address of the
+      // function's prototype was taken.  If this is the case, call 
+      // GetAddrOfFunctionDecl to insert the static FunctionDecl into the used
+      // GlobalDeclsMap, so that EmitStatics will generate code for it later.
+      //
+      // Example:
+      // static int foo();
+      // int bar() { return foo(); }
+      // static int foo() { return 5; }
+      if (getModule().getFunction(FD->getName()))
+        GetAddrOfFunctionDecl(FD, true);
+
       StaticDecls.push_back(FD);
       return;
     }
@@ -320,7 +333,7 @@ void CodeGenModule::EmitStatics() {
     for (unsigned i = 0, e = StaticDecls.size(); i != e; ++i) {
       // Check the map of used decls for our static. If not found, continue.
       const Decl *D = StaticDecls[i];
-      if (GlobalDeclMap[D] == 0)
+      if (!GlobalDeclMap.count(D))
         continue;
       
       // If this is a function decl, generate code for the static function if it
@@ -330,8 +343,7 @@ void CodeGenModule::EmitStatics() {
         if (FD->getBody())
           CodeGenFunction(*this).GenerateCode(FD);
       } else {
-        const VarDecl *VD = cast<VarDecl>(D);
-        EmitGlobalVarInit(VD);
+        EmitGlobalVarInit(cast<VarDecl>(D));
       }
       // Erase the used decl from the list.
       StaticDecls[i] = StaticDecls.back();
@@ -346,8 +358,8 @@ void CodeGenModule::EmitStatics() {
   
   // Warn about all statics that are still unused at end of code generation.
   for (unsigned i = 0, e = StaticDecls.size(); i != e; ++i) {
-    const Decl *D = StaticDecls[i];
-    std::string Msg = cast<NamedDecl>(D)->getName();
+    const NamedDecl *D = StaticDecls[i];
+    std::string Msg = D->getName();
     getDiags().Report(Context.getFullLoc(D->getLocation()), 
                       diag::warn_unused_static, &Msg, 1);
   }

@@ -34,9 +34,8 @@ namespace clang {
   class Decl;
   class Expr;
   class Stmt;
-  class ValueDecl;
+  class NamedDecl;
   class VarDecl;
-  class TypeDecl;
   struct LangOptions;
   class Diagnostic;
   class AnnotateAttr;
@@ -59,7 +58,7 @@ class CodeGenModule {
   llvm::Function *MemCpyFn;
   llvm::Function *MemSetFn;
   llvm::DenseMap<const Decl*, llvm::Constant*> GlobalDeclMap;
-  std::vector<const Decl*> StaticDecls;
+  std::vector<const NamedDecl*> StaticDecls;
   
   std::vector<llvm::Constant*> GlobalCtors;
   std::vector<llvm::Constant*> Annotations;
