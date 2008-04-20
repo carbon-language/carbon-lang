@@ -408,12 +408,12 @@ static Value *getExistingVal(const Type *Ty, const ValID &D) {
       GenerateError("FP constant invalid for type");
       return 0;
     }
-    // Lexer has no type info, so builds all float and double  FP constants 
+    // Lexer has no type info, so builds all float and double FP constants 
     // as double.  Fix this here.  Long double does not need this.
     if (&D.ConstPoolFP->getSemantics() == &APFloat::IEEEdouble &&
         Ty==Type::FloatTy)
       D.ConstPoolFP->convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven);
-    return ConstantFP::get(Ty, *D.ConstPoolFP);
+    return ConstantFP::get(*D.ConstPoolFP);
 
   case ValID::ConstNullVal:      // Is it a null value?
     if (!isa<PointerType>(Ty)) {
@@ -1867,7 +1867,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     // as double.  Fix this here.  Long double is done right.
     if (&$2->getSemantics()==&APFloat::IEEEdouble && $1==Type::FloatTy)
       $2->convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven);
-    $$ = ConstantFP::get($1, *$2);
+    $$ = ConstantFP::get(*$2);
     delete $2;
     CHECK_FOR_ERROR
   };
