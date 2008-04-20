@@ -54,9 +54,9 @@ public:
   /// return a pointer to its base.
   virtual unsigned char *getGOTBase() const = 0;
   
-  /// RequireSize - If the memory manager requires to know the size of the
+  /// NeedsExactSize - If the memory manager requires to know the size of the
   /// objects to be emitted
-  bool RequiresSize() const {
+  bool NeedsExactSize() const {
     return SizeRequired;
   }
 

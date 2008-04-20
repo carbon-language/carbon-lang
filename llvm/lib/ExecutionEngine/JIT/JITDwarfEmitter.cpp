@@ -61,8 +61,9 @@ unsigned char* JITDwarfEmitter::EmitDwarfTable(MachineFunction& F,
 }
 
 
-void JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
-                                     const std::vector<MachineMove> &Moves) {
+void 
+JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
+                                const std::vector<MachineMove> &Moves) const {
   unsigned PointerSize = TD->getPointerSize();
   int stackGrowth = stackGrowthDirection == TargetFrameInfo::StackGrowsUp ?
           PointerSize : -PointerSize;
@@ -206,7 +207,7 @@ struct CallSiteEntry {
 
 unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
                                          unsigned char* StartFunction,
-                                         unsigned char* EndFunction) {
+                                         unsigned char* EndFunction) const {
   // Map all labels and get rid of any dead landing pads.
   MMI->TidyLandingPads();
 
@@ -517,7 +518,8 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
   return DwarfExceptionTable;
 }
 
-unsigned char* JITDwarfEmitter::EmitCommonEHFrame(const Function* Personality) {
+unsigned char*
+JITDwarfEmitter::EmitCommonEHFrame(const Function* Personality) const {
   unsigned PointerSize = TD->getPointerSize();
   int stackGrowth = stackGrowthDirection == TargetFrameInfo::StackGrowsUp ?
           PointerSize : -PointerSize;
@@ -570,11 +572,12 @@ unsigned char* JITDwarfEmitter::EmitCommonEHFrame(const Function* Personality) {
 }
 
 
-unsigned char* JITDwarfEmitter::EmitEHFrame(const Function* Personality,
-                                            unsigned char* StartCommonPtr,
-                                            unsigned char* StartFunction, 
-                                            unsigned char* EndFunction,
-                                            unsigned char* ExceptionTable) {
+unsigned char*
+JITDwarfEmitter::EmitEHFrame(const Function* Personality,
+                             unsigned char* StartCommonPtr,
+                             unsigned char* StartFunction, 
+                             unsigned char* EndFunction,
+                             unsigned char* ExceptionTable) const {
   unsigned PointerSize = TD->getPointerSize();
   
   // EH frame header.
@@ -635,7 +638,7 @@ unsigned char* JITDwarfEmitter::EmitEHFrame(const Function* Personality,
   return StartEHPtr;
 }
 
-unsigned JITDwarfEmitter::GetDwarfTableSize(MachineFunction& F, 
+unsigned JITDwarfEmitter::GetDwarfTableSizeInBytes(MachineFunction& F,
                                          MachineCodeEmitter& mce,
                                          unsigned char* StartFunction,
                                          unsigned char* EndFunction) {
@@ -647,56 +650,26 @@ unsigned JITDwarfEmitter::GetDwarfTableSize(MachineFunction& F,
   MCE = &mce;
   unsigned FinalSize = 0;
   
-  FinalSize += GetExceptionTableSize(&F);
+  FinalSize += GetExceptionTableSizeInBytes(&F);
       
   const std::vector<Function *> Personalities = MMI->getPersonalities();
-  FinalSize += GetCommonEHFrameSize(Personalities[MMI->getPersonalityIndex()]);
+  FinalSize += GetCommonEHFrameSizeInBytes(Personalities[MMI->getPersonalityIndex()]);
 
-  FinalSize += GetEHFrameSize(Personalities[MMI->getPersonalityIndex()], StartFunction);
+  FinalSize += GetEHFrameSizeInBytes(Personalities[MMI->getPersonalityIndex()], StartFunction);
   
   return FinalSize;
 }
 
-/// AddAlignment - Add the specified alignment.
-static void AddAlignment(unsigned& FinalSize, unsigned Alignment) {
+/// RoundUpToAlign - Add the specified alignment to FinalSize and returns
+/// the new value.
+static unsigned RoundUpToAlign(unsigned FinalSize, unsigned Alignment) {
   if (Alignment == 0) Alignment = 1;
-  FinalSize = (FinalSize + Alignment - 1) & ~(Alignment - 1);
+  return (FinalSize + Alignment - 1) & ~(Alignment - 1);
 }
   
-
-/// SizeULEB128Bytes - Gives the size of the ULEB128.
-static unsigned SizeULEB128Bytes(unsigned Value) {
-  unsigned FinalSize = 0;
-  do {
-    Value >>= 7;
-    ++FinalSize;
-  } while (Value);
-  return FinalSize;
-}
-  
-/// SizeSLEB128Bytes - Gives the size of the SLEB128.
-static unsigned SizeSLEB128Bytes(int Value) {
-  int Sign = Value >> (8 * sizeof(Value) - 1);
-  bool IsMore;
-  unsigned FinalSize = 0;
-
-  do {
-    unsigned char Byte = Value & 0x7f;
-    Value >>= 7;
-    IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
-    ++FinalSize;
-  } while (IsMore);
-  
-  return FinalSize;
-}
-
-/// SizeString - Gives the size of the string.
-static unsigned SizeString(const std::string &String) {
-  return String.size() + 1;
-}
-
-unsigned JITDwarfEmitter::GetEHFrameSize(const Function* Personality,
-                                         unsigned char* StartFunction) { 
+unsigned
+JITDwarfEmitter::GetEHFrameSizeInBytes(const Function* Personality,
+                                       unsigned char* StartFunction) const { 
   unsigned PointerSize = TD->getPointerSize();
   unsigned FinalSize = 0;
   // EH frame header.
@@ -706,17 +679,18 @@ unsigned JITDwarfEmitter::GetEHFrameSize(const Function* Personality,
   // If there is a personality and landing pads then point to the language
   // specific data area in the exception table.
   if (MMI->getPersonalityIndex()) {
-    FinalSize += SizeULEB128Bytes(4);     
+    FinalSize += AsmPrinter::SizeULEB128(4); 
     FinalSize += PointerSize;
   } else {
-    FinalSize += SizeULEB128Bytes(0);
+    FinalSize += AsmPrinter::SizeULEB128(0);
   }
       
   // Indicate locations of function specific  callee saved registers in
   // frame.
-  FinalSize += GetFrameMovesSize((intptr_t)StartFunction, MMI->getFrameMoves());
+  FinalSize += GetFrameMovesSizeInBytes((intptr_t)StartFunction,
+                                        MMI->getFrameMoves());
       
-  AddAlignment(FinalSize, 4);
+  FinalSize = RoundUpToAlign(FinalSize, 4);
   
   // Double zeroes for the unwind runtime
   FinalSize += 2 * PointerSize;
@@ -724,7 +698,8 @@ unsigned JITDwarfEmitter::GetEHFrameSize(const Function* Personality,
   return FinalSize;
 }
 
-unsigned JITDwarfEmitter::GetCommonEHFrameSize(const Function* Personality) {
+unsigned JITDwarfEmitter::GetCommonEHFrameSizeInBytes(const Function* Personality) 
+  const {
 
   unsigned PointerSize = TD->getPointerSize();
   int stackGrowth = stackGrowthDirection == TargetFrameInfo::StackGrowsUp ?
@@ -734,37 +709,37 @@ unsigned JITDwarfEmitter::GetCommonEHFrameSize(const Function* Personality) {
   FinalSize += PointerSize;
   FinalSize += 4;
   FinalSize += 1;
-  FinalSize += SizeString(Personality ? "zPLR" : "zR");
-  FinalSize += SizeULEB128Bytes(1);
-  FinalSize += SizeSLEB128Bytes(stackGrowth);
+  FinalSize += Personality ? 5 : 3; // "zPLR" or "zR"
+  FinalSize += AsmPrinter::SizeULEB128(1);
+  FinalSize += AsmPrinter::SizeSLEB128(stackGrowth);
   FinalSize += 1;
   
   if (Personality) {
-    FinalSize += SizeULEB128Bytes(7);
+    FinalSize += AsmPrinter::SizeULEB128(7);
     
     // Encoding
     FinalSize+= 1;
     //Personality
     FinalSize += PointerSize;
     
-    FinalSize += SizeULEB128Bytes(dwarf::DW_EH_PE_pcrel);
-    FinalSize += SizeULEB128Bytes(dwarf::DW_EH_PE_pcrel);
+    FinalSize += AsmPrinter::SizeULEB128(dwarf::DW_EH_PE_pcrel);
+    FinalSize += AsmPrinter::SizeULEB128(dwarf::DW_EH_PE_pcrel);
       
   } else {
-    FinalSize += SizeULEB128Bytes(1);
-    FinalSize += SizeULEB128Bytes(dwarf::DW_EH_PE_pcrel);
+    FinalSize += AsmPrinter::SizeULEB128(1);
+    FinalSize += AsmPrinter::SizeULEB128(dwarf::DW_EH_PE_pcrel);
   }
 
   std::vector<MachineMove> Moves;
   RI->getInitialFrameState(Moves);
-  FinalSize += GetFrameMovesSize(0, Moves);
-  AddAlignment(FinalSize, 4);
+  FinalSize += GetFrameMovesSizeInBytes(0, Moves);
+  FinalSize = RoundUpToAlign(FinalSize, 4);
   return FinalSize;
 }
 
 unsigned
-JITDwarfEmitter::GetFrameMovesSize(intptr_t BaseLabelPtr,
-                                   const std::vector<MachineMove> &Moves) {
+JITDwarfEmitter::GetFrameMovesSizeInBytes(intptr_t BaseLabelPtr,
+                                  const std::vector<MachineMove> &Moves) const {
   unsigned PointerSize = TD->getPointerSize();
   int stackGrowth = stackGrowthDirection == TargetFrameInfo::StackGrowsUp ?
           PointerSize : -PointerSize;
@@ -803,22 +778,22 @@ JITDwarfEmitter::GetFrameMovesSize(intptr_t BaseLabelPtr,
           ++FinalSize;
         } else {
           ++FinalSize;
-          FinalSize +=
-            SizeULEB128Bytes(RI->getDwarfRegNum(Src.getRegister(), true));
+          unsigned RegNum = RI->getDwarfRegNum(Src.getRegister(), true);
+          FinalSize += AsmPrinter::SizeULEB128(RegNum);
         }
         
         int Offset = -Src.getOffset();
         
-        FinalSize += SizeULEB128Bytes(Offset);
+        FinalSize += AsmPrinter::SizeULEB128(Offset);
       } else {
         assert(0 && "Machine move no supported yet.");
       }
     } else if (Src.isRegister() &&
       Src.getRegister() == MachineLocation::VirtualFP) {
       if (Dst.isRegister()) {
-        ++FinalSize; 
-        FinalSize +=
-          SizeULEB128Bytes(RI->getDwarfRegNum(Dst.getRegister(), true));
+        ++FinalSize;
+        unsigned RegNum = RI->getDwarfRegNum(Dst.getRegister(), true);
+        FinalSize += AsmPrinter::SizeULEB128(RegNum);
       } else {
         assert(0 && "Machine move no supported yet.");
       }
@@ -828,22 +803,23 @@ JITDwarfEmitter::GetFrameMovesSize(intptr_t BaseLabelPtr,
       
       if (Offset < 0) {
         ++FinalSize;
-        FinalSize += SizeULEB128Bytes(Reg);
-        FinalSize += SizeSLEB128Bytes(Offset);
+        FinalSize += AsmPrinter::SizeULEB128(Reg);
+        FinalSize += AsmPrinter::SizeSLEB128(Offset);
       } else if (Reg < 64) {
         ++FinalSize;
-        FinalSize += SizeULEB128Bytes(Offset);
+        FinalSize += AsmPrinter::SizeULEB128(Offset);
       } else {
         ++FinalSize;
-        FinalSize += SizeULEB128Bytes(Reg);
-        FinalSize += SizeULEB128Bytes(Offset);
+        FinalSize += AsmPrinter::SizeULEB128(Reg);
+        FinalSize += AsmPrinter::SizeULEB128(Offset);
       }
     }
   }
   return FinalSize;
 }
 
-unsigned JITDwarfEmitter::GetExceptionTableSize(MachineFunction* MF) {
+unsigned 
+JITDwarfEmitter::GetExceptionTableSizeInBytes(MachineFunction* MF) const {
   unsigned FinalSize = 0;
 
   // Map all labels and get rid of any dead landing pads.
@@ -1040,7 +1016,7 @@ unsigned JITDwarfEmitter::GetExceptionTableSize(MachineFunction* MF) {
   unsigned SizeAlign = (4 - TotalSize) & 3;
 
   // Begin the exception table.
-  AddAlignment(FinalSize, 4);
+  FinalSize = RoundUpToAlign(FinalSize, 4);
   for (unsigned i = 0; i != SizeAlign; ++i) {
     ++FinalSize;
   }
@@ -1072,7 +1048,7 @@ unsigned JITDwarfEmitter::GetExceptionTableSize(MachineFunction* MF) {
     // Asm->EOL("Landing pad");
     FinalSize += PointerSize;
 
-    FinalSize += SizeULEB128Bytes(S.Action);
+    FinalSize += AsmPrinter::SizeULEB128(S.Action);
     // Asm->EOL("Action");
   }
 
@@ -1081,9 +1057,9 @@ unsigned JITDwarfEmitter::GetExceptionTableSize(MachineFunction* MF) {
     ActionEntry &Action = Actions[I];
 
     //Asm->EOL("TypeInfo index");
-    FinalSize += SizeSLEB128Bytes(Action.ValueForTypeID);
+    FinalSize += AsmPrinter::SizeSLEB128(Action.ValueForTypeID);
     //Asm->EOL("Next action");
-    FinalSize += SizeSLEB128Bytes(Action.NextAction);
+    FinalSize += AsmPrinter::SizeSLEB128(Action.NextAction);
   }
 
   // Emit the type ids.
@@ -1095,11 +1071,11 @@ unsigned JITDwarfEmitter::GetExceptionTableSize(MachineFunction* MF) {
   // Emit the filter typeids.
   for (unsigned j = 0, M = FilterIds.size(); j < M; ++j) {
     unsigned TypeID = FilterIds[j];
-    FinalSize += SizeULEB128Bytes(TypeID);
+    FinalSize += AsmPrinter::SizeULEB128(TypeID);
     //Asm->EOL("Filter TypeInfo index");
   }
   
-  AddAlignment(FinalSize, 4);
+  FinalSize = RoundUpToAlign(FinalSize, 4);
 
   return FinalSize;
 }

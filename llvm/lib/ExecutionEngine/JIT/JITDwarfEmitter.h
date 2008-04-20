@@ -37,28 +37,29 @@ class JITDwarfEmitter {
   
   unsigned char* EmitExceptionTable(MachineFunction* MF,
                                     unsigned char* StartFunction, 
-                                    unsigned char* EndFunction);
+                                    unsigned char* EndFunction) const;
 
   void EmitFrameMoves(intptr_t BaseLabelPtr, 
-                      const std::vector<MachineMove> &Moves);
+                      const std::vector<MachineMove> &Moves) const;
     
-  unsigned char* EmitCommonEHFrame(const Function* Personality);
+  unsigned char* EmitCommonEHFrame(const Function* Personality) const;
 
   unsigned char* EmitEHFrame(const Function* Personality, 
                              unsigned char* StartBufferPtr,
                              unsigned char* StartFunction, 
                              unsigned char* EndFunction,
-                             unsigned char* ExceptionTable);
+                             unsigned char* ExceptionTable) const;
     
-  unsigned GetExceptionTableSize(MachineFunction* MF);
+  unsigned GetExceptionTableSizeInBytes(MachineFunction* MF) const;
   
-  unsigned GetFrameMovesSize(intptr_t BaseLabelPtr, 
-                             const std::vector<MachineMove> &Moves);
+  unsigned
+    GetFrameMovesSizeInBytes(intptr_t BaseLabelPtr, 
+                             const std::vector<MachineMove> &Moves) const;
     
-  unsigned GetCommonEHFrameSize(const Function* Personality);
+  unsigned GetCommonEHFrameSizeInBytes(const Function* Personality) const;
 
-  unsigned GetEHFrameSize(const Function* Personality, 
-                          unsigned char* StartFunction); 
+  unsigned GetEHFrameSizeInBytes(const Function* Personality, 
+                                 unsigned char* StartFunction) const; 
     
 public:
   
@@ -70,10 +71,10 @@ public:
                                 unsigned char* EndFunction);
   
   
-  unsigned GetDwarfTableSize(MachineFunction& F, 
-                             MachineCodeEmitter& MCE,
-                             unsigned char* StartFunction,
-                             unsigned char* EndFunction);
+  unsigned GetDwarfTableSizeInBytes(MachineFunction& F, 
+                                    MachineCodeEmitter& MCE,
+                                    unsigned char* StartFunction,
+                                    unsigned char* EndFunction);
 
   void setModuleInfo(MachineModuleInfo* Info) {
     MMI = Info;

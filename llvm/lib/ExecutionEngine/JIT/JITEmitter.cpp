@@ -630,7 +630,7 @@ static void AddAlignment(uintptr_t& Size, unsigned Alignment) {
 
 void JITEmitter::startFunction(MachineFunction &F) {
   uintptr_t ActualSize = 0;
-  if (MemMgr->RequiresSize()) {
+  if (MemMgr->NeedsExactSize()) {
     const TargetInstrInfo* TII = F.getTarget().getInstrInfo();
     MachineJumpTableInfo *MJTI = F.getJumpTableInfo();
     MachineConstantPool *MCP = F.getConstantPool();
@@ -776,8 +776,8 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     SavedBufferEnd = BufferEnd;
     SavedCurBufferPtr = CurBufferPtr;
     
-    if (MemMgr->RequiresSize()) {
-      ActualSize = DE->GetDwarfTableSize(F, *this, FnStart, FnEnd);
+    if (MemMgr->NeedsExactSize()) {
+      ActualSize = DE->GetDwarfTableSizeInBytes(F, *this, FnStart, FnEnd);
     }
 
     BufferBegin = CurBufferPtr = MemMgr->startExceptionTable(F.getFunction(),
