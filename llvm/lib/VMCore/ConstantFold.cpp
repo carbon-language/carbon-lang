@@ -599,44 +599,12 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
     }
   }
   
-  if (isa<ConstantExpr>(C1)) {
-    // There are many possible foldings we could do here.  We should probably
-    // at least fold add of a pointer with an integer into the appropriate
-    // getelementptr.  This will improve alias analysis a bit.
-  } else if (isa<ConstantExpr>(C2)) {
-    // If C2 is a constant expr and C1 isn't, flop them around and fold the
-    // other way if possible.
-    switch (Opcode) {
-    case Instruction::Add:
-    case Instruction::Mul:
-    case Instruction::And:
-    case Instruction::Or:
-    case Instruction::Xor:
-      // No change of opcode required.
-      return ConstantFoldBinaryInstruction(Opcode, C2, C1);
-
-    case Instruction::Shl:
-    case Instruction::LShr:
-    case Instruction::AShr:
-    case Instruction::Sub:
-    case Instruction::SDiv:
-    case Instruction::UDiv:
-    case Instruction::FDiv:
-    case Instruction::URem:
-    case Instruction::SRem:
-    case Instruction::FRem:
-    default:  // These instructions cannot be flopped around.
-      return 0;
-    }
-  }
-
-  // At this point we know neither constant is an UndefValue nor a ConstantExpr
-  // so look at directly computing the value.
+  // At this point we know neither constant is an UndefValue.
   if (const ConstantInt *CI1 = dyn_cast<ConstantInt>(C1)) {
     if (const ConstantInt *CI2 = dyn_cast<ConstantInt>(C2)) {
       using namespace APIntOps;
-      APInt C1V = CI1->getValue();
-      APInt C2V = CI2->getValue();
+      const APInt &C1V = CI1->getValue();
+      const APInt &C2V = CI2->getValue();
       switch (Opcode) {
       default:
         break;
@@ -672,30 +640,27 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
         return ConstantInt::get(C1V | C2V);
       case Instruction::Xor:
         return ConstantInt::get(C1V ^ C2V);
-      case Instruction::Shl:
-        if (uint32_t shiftAmt = C2V.getZExtValue()) {
-          if (shiftAmt < C1V.getBitWidth())
-            return ConstantInt::get(C1V.shl(shiftAmt));
-          else
-            return UndefValue::get(C1->getType()); // too big shift is undef
-        }
-        return const_cast<ConstantInt*>(CI1); // Zero shift is identity
-      case Instruction::LShr:
-        if (uint32_t shiftAmt = C2V.getZExtValue()) {
-          if (shiftAmt < C1V.getBitWidth())
-            return ConstantInt::get(C1V.lshr(shiftAmt));
-          else
-            return UndefValue::get(C1->getType()); // too big shift is undef
-        }
-        return const_cast<ConstantInt*>(CI1); // Zero shift is identity
-      case Instruction::AShr:
-        if (uint32_t shiftAmt = C2V.getZExtValue()) {
-          if (shiftAmt < C1V.getBitWidth())
-            return ConstantInt::get(C1V.ashr(shiftAmt));
-          else
-            return UndefValue::get(C1->getType()); // too big shift is undef
-        }
-        return const_cast<ConstantInt*>(CI1); // Zero shift is identity
+      case Instruction::Shl: {
+        uint32_t shiftAmt = C2V.getZExtValue();
+        if (shiftAmt < C1V.getBitWidth())
+          return ConstantInt::get(C1V.shl(shiftAmt));
+        else
+          return UndefValue::get(C1->getType()); // too big shift is undef
+      }
+      case Instruction::LShr: {
+        uint32_t shiftAmt = C2V.getZExtValue();
+        if (shiftAmt < C1V.getBitWidth())
+          return ConstantInt::get(C1V.lshr(shiftAmt));
+        else
+          return UndefValue::get(C1->getType()); // too big shift is undef
+      }
+      case Instruction::AShr: {
+        uint32_t shiftAmt = C2V.getZExtValue();
+        if (shiftAmt < C1V.getBitWidth())
+          return ConstantInt::get(C1V.ashr(shiftAmt));
+        else
+          return UndefValue::get(C1->getType()); // too big shift is undef
+      }
       }
     }
   } else if (const ConstantFP *CFP1 = dyn_cast<ConstantFP>(C1)) {
@@ -769,7 +734,38 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
     }
   }
 
-  // We don't know how to fold this
+  if (isa<ConstantExpr>(C1)) {
+    // There are many possible foldings we could do here.  We should probably
+    // at least fold add of a pointer with an integer into the appropriate
+    // getelementptr.  This will improve alias analysis a bit.
+  } else if (isa<ConstantExpr>(C2)) {
+    // If C2 is a constant expr and C1 isn't, flop them around and fold the
+    // other way if possible.
+    switch (Opcode) {
+    case Instruction::Add:
+    case Instruction::Mul:
+    case Instruction::And:
+    case Instruction::Or:
+    case Instruction::Xor:
+      // No change of opcode required.
+      return ConstantFoldBinaryInstruction(Opcode, C2, C1);
+      
+    case Instruction::Shl:
+    case Instruction::LShr:
+    case Instruction::AShr:
+    case Instruction::Sub:
+    case Instruction::SDiv:
+    case Instruction::UDiv:
+    case Instruction::FDiv:
+    case Instruction::URem:
+    case Instruction::SRem:
+    case Instruction::FRem:
+    default:  // These instructions cannot be flopped around.
+      break;
+    }
+  }
+  
+  // We don't know how to fold this.
   return 0;
 }
 
