@@ -150,7 +150,7 @@ static Constant *FoldBitCast(Constant *V, const Type *DestTy) {
     if (DestTy->isFloatingPoint()) {
       assert((DestTy == Type::DoubleTy || DestTy == Type::FloatTy) && 
              "Unknown FP type!");
-      return ConstantFP::get(DestTy, APFloat(CI->getValue()));
+      return ConstantFP::get(APFloat(CI->getValue()));
     }
     // Otherwise, can't fold this (vector?)
     return 0;
@@ -220,7 +220,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
                   DestTy == Type::FP128Ty ? APFloat::IEEEquad :
                   APFloat::Bogus,
                   APFloat::rmNearestTiesToEven);
-      return ConstantFP::get(DestTy, Val);
+      return ConstantFP::get(Val);
     }
     return 0; // Can't fold.
   case Instruction::FPToUI: 
@@ -262,7 +262,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       (void)apf.convertFromAPInt(api, 
                                  opc==Instruction::SIToFP,
                                  APFloat::rmNearestTiesToEven);
-      return ConstantFP::get(DestTy, apf);
+      return ConstantFP::get(apf);
     }
     if (const ConstantVector *CV = dyn_cast<ConstantVector>(V)) {
       std::vector<Constant*> res;
@@ -703,30 +703,34 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       APFloat C1V = CFP1->getValueAPF();
       APFloat C2V = CFP2->getValueAPF();
       APFloat C3V = C1V;  // copy for modification
-      bool isDouble = CFP1->getType()==Type::DoubleTy;
       switch (Opcode) {
       default:                   
         break;
       case Instruction::Add:
         (void)C3V.add(C2V, APFloat::rmNearestTiesToEven);
-        return ConstantFP::get(CFP1->getType(), C3V);
+        return ConstantFP::get(C3V);
       case Instruction::Sub:     
         (void)C3V.subtract(C2V, APFloat::rmNearestTiesToEven);
-        return ConstantFP::get(CFP1->getType(), C3V);
+        return ConstantFP::get(C3V);
       case Instruction::Mul:
         (void)C3V.multiply(C2V, APFloat::rmNearestTiesToEven);
-        return ConstantFP::get(CFP1->getType(), C3V);
+        return ConstantFP::get(C3V);
       case Instruction::FDiv:
         (void)C3V.divide(C2V, APFloat::rmNearestTiesToEven);
-        return ConstantFP::get(CFP1->getType(), C3V);
+        return ConstantFP::get(C3V);
       case Instruction::FRem:
-        if (C2V.isZero())
+        if (C2V.isZero()) {
           // IEEE 754, Section 7.1, #5
-          return ConstantFP::get(CFP1->getType(), isDouble ?
-                            APFloat(std::numeric_limits<double>::quiet_NaN()) :
-                            APFloat(std::numeric_limits<float>::quiet_NaN()));
+          if (CFP1->getType() == Type::DoubleTy)
+            return ConstantFP::get(APFloat(std::numeric_limits<double>::
+                                           quiet_NaN()));
+          if (CFP1->getType() == Type::FloatTy)
+            return ConstantFP::get(APFloat(std::numeric_limits<float>::
+                                           quiet_NaN()));
+          break;
+        }
         (void)C3V.mod(C2V, APFloat::rmNearestTiesToEven);
-        return ConstantFP::get(CFP1->getType(), C3V);
+        return ConstantFP::get(C3V);
       }
     }
   } else if (const VectorType *VTy = dyn_cast<VectorType>(C1->getType())) {

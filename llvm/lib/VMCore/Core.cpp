@@ -307,12 +307,11 @@ static const fltSemantics &SemanticsForType(Type *Ty) {
 LLVMValueRef LLVMConstReal(LLVMTypeRef RealTy, double N) {
   APFloat APN(N);
   APN.convert(SemanticsForType(unwrap(RealTy)), APFloat::rmNearestTiesToEven);
-  return wrap(ConstantFP::get(unwrap(RealTy), APN));
+  return wrap(ConstantFP::get(APN));
 }
 
 LLVMValueRef LLVMConstRealOfString(LLVMTypeRef RealTy, const char *Text) {
-  return wrap(ConstantFP::get(unwrap(RealTy),
-                              APFloat(SemanticsForType(unwrap(RealTy)), Text)));
+  return wrap(ConstantFP::get(APFloat(SemanticsForType(unwrap(RealTy)), Text)));
 }
 
 /*--.. Operations on composite constants ...................................--*/
