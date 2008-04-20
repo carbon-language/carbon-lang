@@ -2670,6 +2670,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
 
   case X86II::AddRegFrm:
     ++FinalSize;
+    ++CurOp;
     
     if (CurOp != NumOps) {
       const MachineOperand &MO1 = MI.getOperand(CurOp++);
@@ -2696,16 +2697,20 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
     ++FinalSize; 
     FinalSize += sizeRegModRMByte();
     CurOp += 2;
-    if (CurOp != NumOps)
+    if (CurOp != NumOps) {
+      ++CurOp;
       FinalSize += sizeConstant(X86InstrInfo::sizeOfImm(Desc));
+    }
     break;
   }
   case X86II::MRMDestMem: {
     ++FinalSize;
     FinalSize += getMemModRMByteSize(MI, CurOp, IsPIC, Is64BitMode);
     CurOp += 5;
-    if (CurOp != NumOps)
+    if (CurOp != NumOps) {
+      ++CurOp;
       FinalSize += sizeConstant(X86InstrInfo::sizeOfImm(Desc));
+    }
     break;
   }
 
@@ -2713,8 +2718,10 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
     ++FinalSize;
     FinalSize += sizeRegModRMByte();
     CurOp += 2;
-    if (CurOp != NumOps)
+    if (CurOp != NumOps) {
+      ++CurOp;
       FinalSize += sizeConstant(X86InstrInfo::sizeOfImm(Desc));
+    }
     break;
 
   case X86II::MRMSrcMem: {
@@ -2722,8 +2729,10 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
     ++FinalSize;
     FinalSize += getMemModRMByteSize(MI, CurOp+1, IsPIC, Is64BitMode);
     CurOp += 5;
-    if (CurOp != NumOps)
+    if (CurOp != NumOps) {
+      ++CurOp;
       FinalSize += sizeConstant(X86InstrInfo::sizeOfImm(Desc));
+    }
     break;
   }
 
@@ -2732,6 +2741,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
   case X86II::MRM4r: case X86II::MRM5r:
   case X86II::MRM6r: case X86II::MRM7r:
     ++FinalSize;
+    ++CurOp;
     FinalSize += sizeRegModRMByte();
 
     if (CurOp != NumOps) {
