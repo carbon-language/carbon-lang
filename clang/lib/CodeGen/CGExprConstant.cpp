@@ -50,7 +50,7 @@ public:
     return llvm::ConstantInt::get(E->getValue());
   }
   llvm::Constant *VisitFloatingLiteral(const FloatingLiteral *E) {
-    return llvm::ConstantFP::get(ConvertType(E->getType()), E->getValue());
+    return llvm::ConstantFP::get(E->getValue());
   }
   llvm::Constant *VisitCharacterLiteral(const CharacterLiteral *E) {
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());

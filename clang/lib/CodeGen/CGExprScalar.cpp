@@ -101,7 +101,7 @@ public:
     return llvm::ConstantInt::get(E->getValue());
   }
   Value *VisitFloatingLiteral(const FloatingLiteral *E) {
-    return llvm::ConstantFP::get(ConvertType(E->getType()), E->getValue());
+    return llvm::ConstantFP::get(E->getValue());
   }
   Value *VisitCharacterLiteral(const CharacterLiteral *E) {
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
@@ -604,14 +604,12 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
     else if (InVal->getType() == llvm::Type::FloatTy)
       // FIXME: Handle long double.
       NextVal = 
-        llvm::ConstantFP::get(InVal->getType(),
-                              llvm::APFloat(static_cast<float>(AmountVal)));
+        llvm::ConstantFP::get(llvm::APFloat(static_cast<float>(AmountVal)));
     else {
       // FIXME: Handle long double.
       assert(InVal->getType() == llvm::Type::DoubleTy);
       NextVal = 
-        llvm::ConstantFP::get(InVal->getType(),
-                              llvm::APFloat(static_cast<double>(AmountVal)));
+        llvm::ConstantFP::get(llvm::APFloat(static_cast<double>(AmountVal)));
     }
     NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
   }
