@@ -1500,7 +1500,10 @@ public:
   /// We leave the version with the double argument here because it's just so
   /// convenient to write "2.0" and the like.  Without this function we'd 
   /// have to duplicate its logic everywhere it's called.
-  bool isExactlyValue(double V) const { 
+  bool isExactlyValue(double V) const {
+    // convert is not supported on this type
+    if (&Value.getSemantics() == &APFloat::PPCDoubleDouble)
+      return false;
     APFloat Tmp(V);
     Tmp.convert(Value.getSemantics(), APFloat::rmNearestTiesToEven);
     return isExactlyValue(Tmp);

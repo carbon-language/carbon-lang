@@ -74,12 +74,9 @@ bool ConstantFPSDNode::isValueValidForType(MVT::ValueType VT,
                                            const APFloat& Val) {
   assert(MVT::isFloatingPoint(VT) && "Can only convert between FP types");
   
-  // Anything can be extended to ppc long double.
-  if (VT == MVT::ppcf128)
-    return true;
-  
-  // PPC long double cannot be shrunk to anything though.
-  if (&Val.getSemantics() == &APFloat::PPCDoubleDouble)
+  // PPC long double cannot be converted to any other type.
+  if (VT == MVT::ppcf128 ||
+      &Val.getSemantics() == &APFloat::PPCDoubleDouble)
     return false;
   
   // convert modifies in place, so make a copy.
