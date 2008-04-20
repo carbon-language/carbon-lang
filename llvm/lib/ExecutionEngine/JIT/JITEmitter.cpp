@@ -623,9 +623,10 @@ static unsigned GetJumpTableSizeInBytes(MachineJumpTableInfo *MJTI) {
   return NumEntries * EntrySize;
 }
 
-static void AddAlignment(uintptr_t& Size, unsigned Alignment) {
+static uintptr_t RoundUpToAlign(uintptr_t Size, unsigned Alignment) {
   if (Alignment == 0) Alignment = 1;
-  Size = (Size + Alignment - 1) & (Alignment - 1);
+  // Since we do not know where the buffer will be allocated, be pessimistic. 
+  return Size + Alignment;
 }
 
 void JITEmitter::startFunction(MachineFunction &F) {
@@ -636,22 +637,24 @@ void JITEmitter::startFunction(MachineFunction &F) {
     MachineConstantPool *MCP = F.getConstantPool();
     
     // Ensure the constant pool/jump table info is at least 4-byte aligned.
-    AddAlignment(ActualSize, 16);
+    ActualSize = RoundUpToAlign(ActualSize, 16);
     
     // Add the alignment of the constant pool
-    AddAlignment(ActualSize, 1 << MCP->getConstantPoolAlignment());
+    ActualSize = RoundUpToAlign(ActualSize, 
+                                1 << MCP->getConstantPoolAlignment());
 
     // Add the constant pool size
     ActualSize += GetConstantPoolSizeInBytes(MCP);
 
     // Add the aligment of the jump table info
-    AddAlignment(ActualSize, MJTI->getAlignment());
+    ActualSize = RoundUpToAlign(ActualSize, MJTI->getAlignment());
 
     // Add the jump table size
     ActualSize += GetJumpTableSizeInBytes(MJTI);
     
     // Add the alignment for the function
-    AddAlignment(ActualSize, std::max(F.getFunction()->getAlignment(), 8U));
+    ActualSize = RoundUpToAlign(ActualSize,
+                                std::max(F.getFunction()->getAlignment(), 8U));
 
     // Add the function size
     ActualSize += TII->GetFunctionSizeInBytes(F);

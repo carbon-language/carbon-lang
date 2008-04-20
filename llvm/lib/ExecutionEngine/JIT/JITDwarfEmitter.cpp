@@ -664,7 +664,8 @@ unsigned JITDwarfEmitter::GetDwarfTableSizeInBytes(MachineFunction& F,
 /// the new value.
 static unsigned RoundUpToAlign(unsigned FinalSize, unsigned Alignment) {
   if (Alignment == 0) Alignment = 1;
-  return (FinalSize + Alignment - 1) & ~(Alignment - 1);
+  // Since we do not know where the buffer will be allocated, be pessimistic.
+  return FinalSize + Alignment;
 }
   
 unsigned
