@@ -229,14 +229,16 @@ NumericLiteralParser(const char *begin, const char *end,
         saw_exponent = true;
         if (*s == '+' || *s == '-')  s++; // sign
         const char *first_non_digit = SkipDigits(s);
-        if (first_non_digit == s) {
-          Diag(TokLoc, diag::err_exponent_has_no_digits);
-          return;
-        } else {
+        if (first_non_digit != s) {
           s = first_non_digit;
+        } else {
+          Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
+               diag::err_exponent_has_no_digits);
+          return;
         }
       } else if (saw_period) {
-        Diag(TokLoc, diag::err_hexconstant_requires_exponent);
+        Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
+             diag::err_hexconstant_requires_exponent);
         return;
       }
     } else if (*s == 'b' || *s == 'B') {
@@ -248,7 +250,8 @@ NumericLiteralParser(const char *begin, const char *end,
       if (s == ThisTokEnd) {
         // Done.
       } else if (isxdigit(*s)) {
-        Diag(TokLoc, diag::err_invalid_binary_digit, std::string(s, s+1));
+        Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
+             diag::err_invalid_binary_digit, std::string(s, s+1));
         return;
       }
       PP.Diag(TokLoc, diag::ext_binary_literal);
@@ -262,8 +265,8 @@ NumericLiteralParser(const char *begin, const char *end,
       if (s == ThisTokEnd) {
         // Done.
       } else if (isxdigit(*s) && !(*s == 'e' || *s == 'E')) {
-        TokLoc = PP.AdvanceToTokenCharacter(TokLoc, s-begin);
-        Diag(TokLoc, diag::err_invalid_octal_digit, std::string(s, s+1));
+        Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
+             diag::err_invalid_octal_digit, std::string(s, s+1));
         return;
       } else if (*s == '.') {
         s++;
@@ -277,11 +280,12 @@ NumericLiteralParser(const char *begin, const char *end,
         saw_exponent = true;
         if (*s == '+' || *s == '-')  s++; // sign
         const char *first_non_digit = SkipDigits(s);
-        if (first_non_digit == s) {
-          Diag(TokLoc, diag::err_exponent_has_no_digits);
-          return;
-        } else {
+        if (first_non_digit != s) {
           s = first_non_digit;
+        } else {
+          Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin), 
+               diag::err_exponent_has_no_digits);
+          return;
         }
       }
     }
@@ -291,7 +295,8 @@ NumericLiteralParser(const char *begin, const char *end,
     if (s == ThisTokEnd) {
       // Done.
     } else if (isxdigit(*s) && !(*s == 'e' || *s == 'E')) {
-      Diag(TokLoc, diag::err_invalid_decimal_digit, std::string(s, s+1));
+      Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
+           diag::err_invalid_decimal_digit, std::string(s, s+1));
       return;
     } else if (*s == '.') {
       s++;
@@ -303,11 +308,12 @@ NumericLiteralParser(const char *begin, const char *end,
       saw_exponent = true;
       if (*s == '+' || *s == '-')  s++; // sign
       const char *first_non_digit = SkipDigits(s);
-      if (first_non_digit == s) {
-        Diag(TokLoc, diag::err_exponent_has_no_digits);
-        return;
-      } else {
+      if (first_non_digit != s) {
         s = first_non_digit;
+      } else {
+        Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
+             diag::err_exponent_has_no_digits);
+        return;
       }
     }
   }
@@ -393,9 +399,9 @@ NumericLiteralParser(const char *begin, const char *end,
   
   // Report an error if there are any.
   if (s != ThisTokEnd) {
-    TokLoc = PP.AdvanceToTokenCharacter(TokLoc, s-begin);
-    Diag(TokLoc, isFPConstant ? diag::err_invalid_suffix_float_constant :
-                                diag::err_invalid_suffix_integer_constant, 
+    Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
+         isFPConstant ? diag::err_invalid_suffix_float_constant :
+                        diag::err_invalid_suffix_integer_constant, 
          std::string(SuffixBegin, ThisTokEnd));
     return;
   }
