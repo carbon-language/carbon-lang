@@ -264,40 +264,10 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
   // this reason, we spill all values that are used outside of the tail to the
   // stack.
   for (BasicBlock::iterator I = DestBlock->begin(); I != DestBlock->end(); ++I)
-    for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
-         ++UI) {
-      bool ShouldDemote = false;
-      if (cast<Instruction>(*UI)->getParent() != DestBlock) {
-        // We must allow our successors to use tail values in their PHI nodes
-        // (if the incoming value corresponds to the tail block).
-        if (PHINode *PN = dyn_cast<PHINode>(*UI)) {
-          for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-            if (PN->getIncomingValue(i) == I &&
-                PN->getIncomingBlock(i) != DestBlock) {
-              ShouldDemote = true;
-              break;
-            }
-
-        } else {
-          ShouldDemote = true;
-        }
-      } else if (PHINode *PN = dyn_cast<PHINode>(cast<Instruction>(*UI))) {
-        // If the user of this instruction is a PHI node in the current block,
-        // which has an entry from another block using the value, spill it.
-        for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-          if (PN->getIncomingValue(i) == I &&
-              PN->getIncomingBlock(i) != DestBlock) {
-            ShouldDemote = true;
-            break;
-          }
-      }
-
-      if (ShouldDemote) {
-        // We found a use outside of the tail.  Create a new stack slot to
-        // break this inter-block usage pattern.
-        DemoteRegToStack(*I);
-        break;
-      }
+    if (I->isUsedOutsideOfBlock(DestBlock)) {
+      // We found a use outside of the tail.  Create a new stack slot to
+      // break this inter-block usage pattern.
+      DemoteRegToStack(*I);
     }
 
   // We are going to have to map operands from the original block B to the new
