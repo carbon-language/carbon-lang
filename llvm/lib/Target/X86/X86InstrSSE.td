@@ -2312,7 +2312,7 @@ def : Pat<(v2f64 (vector_shuffle immAllZerosV_bc,
                                   (v2f64 (scalar_to_vector 
                                        (f64 (bitconvert GR64:$src)))),
                                   MOVL_shuffle_mask)),
-          (MOVZQI2PQIrr GR64:$src)>, Requires<[HasSSE3]>;
+          (MOVZQI2PQIrr GR64:$src)>, Requires<[HasSSE2]>;
           
 
 let AddedComplexity = 20 in {
