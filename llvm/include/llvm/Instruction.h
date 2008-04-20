@@ -72,6 +72,13 @@ public:
   /// @brief Determine if one instruction is the same operation as another.
   bool isSameOperationAs(Instruction *I) const;
 
+  /// isUsedOutsideOfBlock - Return true if there are any uses of this
+  /// instruction in blocks other than the specified block.  Note that PHI nodes
+  /// are considered to evaluate their operands in the corresponding predecessor
+  /// block.
+  bool isUsedOutsideOfBlock(const BasicBlock *BB) const;
+  
+  
   /// use_back - Specialize the methods defined in Value, as we know that an
   /// instruction can only be used by other instructions.
   Instruction       *use_back()       { return cast<Instruction>(*use_begin());}

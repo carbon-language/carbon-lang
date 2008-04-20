@@ -198,6 +198,29 @@ bool Instruction::isSameOperationAs(Instruction *I) const {
   return true;
 }
 
+/// isUsedOutsideOfBlock - Return true if there are any uses of I outside of the
+/// specified block.  Note that PHI nodes are considered to evaluate their
+/// operands in the corresponding predecessor block.
+bool Instruction::isUsedOutsideOfBlock(const BasicBlock *BB) const {
+  for (use_const_iterator UI = use_begin(), E = use_end(); UI != E; ++UI) {
+    // PHI nodes uses values in the corresponding predecessor block.  For other
+    // instructions, just check to see whether the parent of the use matches up.
+    const PHINode *PN = dyn_cast<PHINode>(*UI);
+    if (PN == 0) {
+      if (cast<Instruction>(*UI)->getParent() != BB)
+        return true;
+      continue;
+    }
+    
+    unsigned UseOperand = UI.getOperandNo();
+    if (PN->getIncomingBlock(UseOperand/2) != BB)
+      return true;
+  }
+  return false;    
+}
+
+
+
 /// mayWriteToMemory - Return true if this instruction may modify memory.
 ///
 bool Instruction::mayWriteToMemory() const {
