@@ -4368,14 +4368,13 @@ SDOperand X86TargetLowering::LowerFABS(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType EltVT = VT;
   if (MVT::isVector(VT))
     EltVT = MVT::getVectorElementType(VT);
-  const Type *OpNTy =  MVT::getTypeForValueType(EltVT);
   std::vector<Constant*> CV;
   if (EltVT == MVT::f64) {
-    Constant *C = ConstantFP::get(OpNTy, APFloat(APInt(64, ~(1ULL << 63))));
+    Constant *C = ConstantFP::get(APFloat(APInt(64, ~(1ULL << 63))));
     CV.push_back(C);
     CV.push_back(C);
   } else {
-    Constant *C = ConstantFP::get(OpNTy, APFloat(APInt(32, ~(1U << 31))));
+    Constant *C = ConstantFP::get(APFloat(APInt(32, ~(1U << 31))));
     CV.push_back(C);
     CV.push_back(C);
     CV.push_back(C);
@@ -4397,14 +4396,13 @@ SDOperand X86TargetLowering::LowerFNEG(SDOperand Op, SelectionDAG &DAG) {
     EltVT = MVT::getVectorElementType(VT);
     EltNum = MVT::getVectorNumElements(VT);
   }
-  const Type *OpNTy =  MVT::getTypeForValueType(EltVT);
   std::vector<Constant*> CV;
   if (EltVT == MVT::f64) {
-    Constant *C = ConstantFP::get(OpNTy, APFloat(APInt(64, 1ULL << 63)));
+    Constant *C = ConstantFP::get(APFloat(APInt(64, 1ULL << 63)));
     CV.push_back(C);
     CV.push_back(C);
   } else {
-    Constant *C = ConstantFP::get(OpNTy, APFloat(APInt(32, 1U << 31)));
+    Constant *C = ConstantFP::get(APFloat(APInt(32, 1U << 31)));
     CV.push_back(C);
     CV.push_back(C);
     CV.push_back(C);
@@ -4430,19 +4428,16 @@ SDOperand X86TargetLowering::LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Op1 = Op.getOperand(1);
   MVT::ValueType VT = Op.getValueType();
   MVT::ValueType SrcVT = Op1.getValueType();
-  const Type *SrcTy =  MVT::getTypeForValueType(SrcVT);
 
   // If second operand is smaller, extend it first.
   if (MVT::getSizeInBits(SrcVT) < MVT::getSizeInBits(VT)) {
     Op1 = DAG.getNode(ISD::FP_EXTEND, VT, Op1);
     SrcVT = VT;
-    SrcTy = MVT::getTypeForValueType(SrcVT);
   }
   // And if it is bigger, shrink it first.
   if (MVT::getSizeInBits(SrcVT) > MVT::getSizeInBits(VT)) {
     Op1 = DAG.getNode(ISD::FP_ROUND, VT, Op1, DAG.getIntPtrConstant(1));
     SrcVT = VT;
-    SrcTy = MVT::getTypeForValueType(SrcVT);
   }
 
   // At this point the operands and the result should have the same
@@ -4451,13 +4446,13 @@ SDOperand X86TargetLowering::LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
   // First get the sign bit of second operand.
   std::vector<Constant*> CV;
   if (SrcVT == MVT::f64) {
-    CV.push_back(ConstantFP::get(SrcTy, APFloat(APInt(64, 1ULL << 63))));
-    CV.push_back(ConstantFP::get(SrcTy, APFloat(APInt(64, 0))));
+    CV.push_back(ConstantFP::get(APFloat(APInt(64, 1ULL << 63))));
+    CV.push_back(ConstantFP::get(APFloat(APInt(64, 0))));
   } else {
-    CV.push_back(ConstantFP::get(SrcTy, APFloat(APInt(32, 1U << 31))));
-    CV.push_back(ConstantFP::get(SrcTy, APFloat(APInt(32, 0))));
-    CV.push_back(ConstantFP::get(SrcTy, APFloat(APInt(32, 0))));
-    CV.push_back(ConstantFP::get(SrcTy, APFloat(APInt(32, 0))));
+    CV.push_back(ConstantFP::get(APFloat(APInt(32, 1U << 31))));
+    CV.push_back(ConstantFP::get(APFloat(APInt(32, 0))));
+    CV.push_back(ConstantFP::get(APFloat(APInt(32, 0))));
+    CV.push_back(ConstantFP::get(APFloat(APInt(32, 0))));
   }
   Constant *C = ConstantVector::get(CV);
   SDOperand CPIdx = DAG.getConstantPool(C, getPointerTy(), 4);
@@ -4480,13 +4475,13 @@ SDOperand X86TargetLowering::LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
   // Clear first operand sign bit.
   CV.clear();
   if (VT == MVT::f64) {
-    CV.push_back(ConstantFP::get(SrcTy, APFloat(APInt(64, ~(1ULL << 63)))));
-    CV.push_back(ConstantFP::get(SrcTy, APFloat(APInt(64, 0))));
+    CV.push_back(ConstantFP::get(APFloat(APInt(64, ~(1ULL << 63)))));
+    CV.push_back(ConstantFP::get(APFloat(APInt(64, 0))));
   } else {
-    CV.push_back(ConstantFP::get(SrcTy, APFloat(APInt(32, ~(1U << 31)))));
-    CV.push_back(ConstantFP::get(SrcTy, APFloat(APInt(32, 0))));
-    CV.push_back(ConstantFP::get(SrcTy, APFloat(APInt(32, 0))));
-    CV.push_back(ConstantFP::get(SrcTy, APFloat(APInt(32, 0))));
+    CV.push_back(ConstantFP::get(APFloat(APInt(32, ~(1U << 31)))));
+    CV.push_back(ConstantFP::get(APFloat(APInt(32, 0))));
+    CV.push_back(ConstantFP::get(APFloat(APInt(32, 0))));
+    CV.push_back(ConstantFP::get(APFloat(APInt(32, 0))));
   }
   C = ConstantVector::get(CV);
   CPIdx = DAG.getConstantPool(C, getPointerTy(), 4);

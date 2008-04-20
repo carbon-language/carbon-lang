@@ -593,10 +593,9 @@ static Constant *ConstantFoldFP(double (*NativeFP)(double), double V,
   }
   
   if (Ty == Type::FloatTy)
-    return ConstantFP::get(Ty, APFloat((float)V));
-  
+    return ConstantFP::get(APFloat((float)V));
   if (Ty == Type::DoubleTy)
-    return ConstantFP::get(Ty, APFloat(V));
+    return ConstantFP::get(APFloat(V));
   assert(0 && "Can only constant fold float/double");
 }
 
@@ -611,9 +610,9 @@ static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
   }
   
   if (Ty == Type::FloatTy)
-    return ConstantFP::get(Ty, APFloat((float)V));
+    return ConstantFP::get(APFloat((float)V));
   if (Ty == Type::DoubleTy)
-    return ConstantFP::get(Ty, APFloat(V));
+    return ConstantFP::get(APFloat(V));
   assert(0 && "Can only constant fold float/double");
 }
 
@@ -678,8 +677,7 @@ llvm::ConstantFoldCall(Function *F,
           if (V >= -0.0)
             return ConstantFoldFP(sqrt, V, Ty);
           else // Undefined
-            return ConstantFP::get(Ty, Ty==Type::FloatTy ? APFloat(0.0f) :
-                                   APFloat(0.0));
+            return Constant::getNullValue(Ty);
         }
         break;
       case 's':
@@ -734,11 +732,11 @@ llvm::ConstantFoldCall(Function *F,
         }
       } else if (ConstantInt *Op2C = dyn_cast<ConstantInt>(Operands[1])) {
         if (!strcmp(Str, "llvm.powi.f32")) {
-          return ConstantFP::get(Ty, APFloat((float)std::pow((float)Op1V,
-                                              (int)Op2C->getZExtValue())));
+          return ConstantFP::get(APFloat((float)std::pow((float)Op1V,
+                                                 (int)Op2C->getZExtValue())));
         } else if (!strcmp(Str, "llvm.powi.f64")) {
-          return ConstantFP::get(Ty, APFloat((double)std::pow((double)Op1V,
-                                              (int)Op2C->getZExtValue())));
+          return ConstantFP::get(APFloat((double)std::pow((double)Op1V,
+                                                 (int)Op2C->getZExtValue())));
         }
       }
     }

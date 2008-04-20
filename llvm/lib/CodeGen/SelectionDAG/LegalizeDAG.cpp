@@ -491,8 +491,7 @@ static SDOperand ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
   // an FP extending load is the same cost as a normal load (such as on the x87
   // fp stack or PPC FP unit).
   MVT::ValueType VT = CFP->getValueType(0);
-  ConstantFP *LLVMC = ConstantFP::get(MVT::getTypeForValueType(VT),
-                                      CFP->getValueAPF());
+  ConstantFP *LLVMC = ConstantFP::get(CFP->getValueAPF());
   if (!UseCP) {
     if (VT!=MVT::f64 && VT!=MVT::f32)
       assert(0 && "Invalid type expansion");
@@ -4901,18 +4900,18 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   // If all elements are constants, create a load from the constant pool.
   if (isConstant) {
     MVT::ValueType VT = Node->getValueType(0);
-    const Type *OpNTy = 
-      MVT::getTypeForValueType(Node->getOperand(0).getValueType());
     std::vector<Constant*> CV;
     for (unsigned i = 0, e = NumElems; i != e; ++i) {
       if (ConstantFPSDNode *V = 
           dyn_cast<ConstantFPSDNode>(Node->getOperand(i))) {
-        CV.push_back(ConstantFP::get(OpNTy, V->getValueAPF()));
+        CV.push_back(ConstantFP::get(V->getValueAPF()));
       } else if (ConstantSDNode *V = 
-                 dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
-        CV.push_back(ConstantInt::get(OpNTy, V->getValue()));
+                   dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
+        CV.push_back(ConstantInt::get(V->getAPIntValue()));
       } else {
         assert(Node->getOperand(i).getOpcode() == ISD::UNDEF);
+        const Type *OpNTy = 
+          MVT::getTypeForValueType(Node->getOperand(0).getValueType());
         CV.push_back(UndefValue::get(OpNTy));
       }
     }

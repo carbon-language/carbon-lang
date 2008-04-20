@@ -7560,11 +7560,10 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
 
 /// FitsInFPType - Return a Constant* for the specified FP constant if it fits
 /// in the specified FP type without changing its value.
-static Constant *FitsInFPType(ConstantFP *CFP, const Type *FPTy, 
-                              const fltSemantics &Sem) {
+static Constant *FitsInFPType(ConstantFP *CFP, const fltSemantics &Sem) {
   APFloat F = CFP->getValueAPF();
   if (F.convert(Sem, APFloat::rmNearestTiesToEven) == APFloat::opOK)
-    return ConstantFP::get(FPTy, F);
+    return ConstantFP::get(F);
   return 0;
 }
 
@@ -7582,11 +7581,11 @@ static Value *LookThroughFPExtensions(Value *V) {
     if (CFP->getType() == Type::PPC_FP128Ty)
       return V;  // No constant folding of this.
     // See if the value can be truncated to float and then reextended.
-    if (Value *V = FitsInFPType(CFP, Type::FloatTy, APFloat::IEEEsingle))
+    if (Value *V = FitsInFPType(CFP, APFloat::IEEEsingle))
       return V;
     if (CFP->getType() == Type::DoubleTy)
       return V;  // Won't shrink.
-    if (Value *V = FitsInFPType(CFP, Type::DoubleTy, APFloat::IEEEdouble))
+    if (Value *V = FitsInFPType(CFP, APFloat::IEEEdouble))
       return V;
     // Don't try to shrink to various long double types.
   }

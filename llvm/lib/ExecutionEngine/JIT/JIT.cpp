@@ -235,22 +235,26 @@ GenericValue JIT::runFunction(Function *F,
     const GenericValue &AV = ArgValues[i];
     switch (ArgTy->getTypeID()) {
     default: assert(0 && "Unknown argument type for function call!");
-    case Type::IntegerTyID: C = ConstantInt::get(AV.IntVal); break;
-    case Type::FloatTyID:   C = ConstantFP ::get(ArgTy, APFloat(AV.FloatVal));
-                            break;
-    case Type::DoubleTyID:  C = ConstantFP ::get(ArgTy, APFloat(AV.DoubleVal));
-                            break;
+    case Type::IntegerTyID:
+        C = ConstantInt::get(AV.IntVal);
+        break;
+    case Type::FloatTyID:
+        C = ConstantFP::get(APFloat(AV.FloatVal));
+        break;
+    case Type::DoubleTyID:
+        C = ConstantFP::get(APFloat(AV.DoubleVal));
+        break;
     case Type::PPC_FP128TyID:
     case Type::X86_FP80TyID:
-    case Type::FP128TyID:   C = ConstantFP ::get(ArgTy, APFloat(AV.IntVal));
-                            break;
+    case Type::FP128TyID:
+        C = ConstantFP::get(APFloat(AV.IntVal));
+        break;
     case Type::PointerTyID:
       void *ArgPtr = GVTOP(AV);
-      if (sizeof(void*) == 4) {
+      if (sizeof(void*) == 4)
         C = ConstantInt::get(Type::Int32Ty, (int)(intptr_t)ArgPtr);
-      } else {
+      else
         C = ConstantInt::get(Type::Int64Ty, (intptr_t)ArgPtr);
-      }
       C = ConstantExpr::getIntToPtr(C, ArgTy);  // Cast the integer to pointer
       break;
     }
