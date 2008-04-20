@@ -301,7 +301,6 @@ void JIT::runJITOnFunction(Function *F) {
 /// specified function, compiling it if neccesary.
 ///
 void *JIT::getPointerToFunction(Function *F) {
-  MutexGuard locked(lock);
 
   if (void *Addr = getPointerToGlobalIfAvailable(F))
     return Addr;   // Check if function already code gen'd
@@ -326,7 +325,13 @@ void *JIT::getPointerToFunction(Function *F) {
       abort();
     }
   }
+  
+  if (void *Addr = getPointerToGlobalIfAvailable(F)) {
+    return Addr;
+  }
 
+  MutexGuard locked(lock);
+  
   if (F->isDeclaration()) {
     void *Addr = getPointerToNamedFunction(F->getName());
     addGlobalMapping(F, Addr);
