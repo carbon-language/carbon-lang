@@ -517,7 +517,7 @@ void AliasSetTracker::copyValue(Value *From, Value *To) {
 
 void AliasSet::print(std::ostream &OS) const {
   OS << "  AliasSet[" << (void*)this << "," << RefCount << "] ";
-  OS << (AliasTy == MustAlias ? "must" : "may ") << " alias, ";
+  OS << (AliasTy == MustAlias ? "must" : "may") << " alias, ";
   switch (AccessTy) {
   case NoModRef: OS << "No access "; break;
   case Refs    : OS << "Ref       "; break;
