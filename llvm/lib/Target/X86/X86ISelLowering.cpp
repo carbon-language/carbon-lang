@@ -875,6 +875,25 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
     Chain = DAG.getCopyToReg(Chain, VA.getLocReg(), ValToCopy, Flag);
     Flag = Chain.getValue(1);
   }
+
+  // The x86-64 ABI for returning structs by value requires that we copy
+  // the sret argument into %rax for the return. We saved the argument into
+  // a virtual register in the entry block, so now we copy the value out
+  // and into %rax.
+  if (Subtarget->is64Bit() &&
+      DAG.getMachineFunction().getFunction()->hasStructRetAttr()) {
+    MachineFunction &MF = DAG.getMachineFunction();
+    X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
+    unsigned Reg = FuncInfo->getSRetReturnReg();
+    if (!Reg) {
+      Reg = MF.getRegInfo().createVirtualRegister(getRegClassFor(MVT::i64));
+      FuncInfo->setSRetReturnReg(Reg);
+    }
+    SDOperand Val = DAG.getCopyFromReg(Chain, Reg, getPointerTy());
+
+    Chain = DAG.getCopyToReg(Chain, X86::RAX, Val, Flag);
+    Flag = Chain.getValue(1);
+  }
   
   RetOps[0] = Chain;  // Update chain.
 
@@ -1223,6 +1242,21 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
       assert(VA.isMemLoc());
       ArgValues.push_back(LowerMemArgument(Op, DAG, VA, MFI, CC, Root, i));
     }
+  }
+
+  // The x86-64 ABI for returning structs by value requires that we copy
+  // the sret argument into %rax for the return. Save the argument into
+  // a virtual register so that we can access it from the return points.
+  if (Is64Bit && DAG.getMachineFunction().getFunction()->hasStructRetAttr()) {
+    MachineFunction &MF = DAG.getMachineFunction();
+    X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
+    unsigned Reg = FuncInfo->getSRetReturnReg();
+    if (!Reg) {
+      Reg = MF.getRegInfo().createVirtualRegister(getRegClassFor(MVT::i64));
+      FuncInfo->setSRetReturnReg(Reg);
+    }
+    SDOperand Copy = DAG.getCopyToReg(DAG.getEntryNode(), Reg, ArgValues[0]);
+    Root = DAG.getNode(ISD::TokenFactor, MVT::Other, Copy, Root);
   }
 
   unsigned StackSize = CCInfo.getNextStackOffset();

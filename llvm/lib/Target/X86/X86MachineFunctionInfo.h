@@ -53,20 +53,27 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// the returnaddr can be savely move to this area
   int TailCallReturnAddrDelta;
 
+  /// SRetReturnReg - Some subtargets require that sret lowering includes
+  /// returning the value of the returned struct in a register. This field
+  /// holds the virtual register into which the sret argument is passed.
+  unsigned SRetReturnReg;
+
 public:
   X86MachineFunctionInfo() : ForceFramePointer(false),
                              CalleeSavedFrameSize(0),
                              BytesToPopOnReturn(0),
                              DecorationStyle(None),
                              ReturnAddrIndex(0),
-                             TailCallReturnAddrDelta(0) {}
+                             TailCallReturnAddrDelta(0),
+                             SRetReturnReg(0) {}
   
   X86MachineFunctionInfo(MachineFunction &MF) : ForceFramePointer(false),
                                                 CalleeSavedFrameSize(0),
                                                 BytesToPopOnReturn(0),
                                                 DecorationStyle(None),
                                                 ReturnAddrIndex(0),
-                                                TailCallReturnAddrDelta(0) {}
+                                                TailCallReturnAddrDelta(0),
+                                                SRetReturnReg(0) {}
   
   bool getForceFramePointer() const { return ForceFramePointer;} 
   void setForceFramePointer(bool forceFP) { ForceFramePointer = forceFP; }
@@ -85,6 +92,9 @@ public:
 
   int getTCReturnAddrDelta() const { return TailCallReturnAddrDelta; }
   void setTCReturnAddrDelta(int delta) {TailCallReturnAddrDelta = delta;}
+
+  unsigned getSRetReturnReg() const { return SRetReturnReg; }
+  void setSRetReturnReg(unsigned Reg) { SRetReturnReg = Reg; }
 };
 } // End llvm namespace
 

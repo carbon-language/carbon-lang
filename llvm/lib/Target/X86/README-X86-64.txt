@@ -236,3 +236,24 @@ on the result of the movb).
 
 //===---------------------------------------------------------------------===//
 
+The x86-64 ABI for hidden-argument struct returns requires that the
+incoming value of %rdi be copied into %rax by the callee upon return.
+
+The idea is that it saves callers from having to remember this value,
+which would often require a callee-saved register. Callees usually
+need to keep this value live for most of their body anyway, so it
+doesn't add a significant burden on them.
+
+We currently implement this in codegen, however this is suboptimal
+because it means that it would be quite awkward to implement the
+optimization for callers.
+
+A better implementation would be to relax the LLVM IR rules for sret
+arguments to allow a function with an sret argument to have a non-void
+return type, and to have the front-end to set up the sret argument value
+as the return value of the function. The front-end could more easily
+emit uses of the returned struct value to be in terms of the function's
+lowered return value, and it would free non-C frontends from a
+complication only required by a C-based ABI.
+
+//===---------------------------------------------------------------------===//
