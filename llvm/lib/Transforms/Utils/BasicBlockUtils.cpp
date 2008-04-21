@@ -17,6 +17,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Constant.h"
 #include "llvm/Type.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/Dominators.h"
 #include <algorithm>
@@ -186,4 +187,104 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
     DF->splitBlock(Old);
     
   return New;
+}
+
+
+/// SplitBlockPredecessors - This method transforms BB by introducing a new
+/// basic block into the function, and moving some of the predecessors of BB to
+/// be predecessors of the new block.  The new predecessors are indicated by the
+/// Preds array, which has NumPreds elements in it.  The new block is given a
+/// suffix of 'Suffix'.
+///
+/// This currently updates the LLVM IR, AliasAnalysis, DominatorTree and
+/// DominanceFrontier, but no other analyses.
+BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB, 
+                                         BasicBlock *const *Preds,
+                                         unsigned NumPreds, const char *Suffix,
+                                         Pass *P) {
+  // Create new basic block, insert right before the original block.
+  BasicBlock *NewBB =
+    BasicBlock::Create(BB->getName()+Suffix, BB->getParent(), BB);
+  
+  // The new block unconditionally branches to the old block.
+  BranchInst *BI = BranchInst::Create(BB, NewBB);
+  
+  // Move the edges from Preds to point to NewBB instead of BB.
+  for (unsigned i = 0; i != NumPreds; ++i) {
+    Preds[i]->getTerminator()->replaceUsesOfWith(BB, NewBB);
+    
+    if (Preds[i]->getUnwindDest() == BB)
+      Preds[i]->setUnwindDest(NewBB);
+  }
+  
+  // Update dominator tree and dominator frontier if available.
+  DominatorTree *DT = P ? P->getAnalysisToUpdate<DominatorTree>() : 0;
+  if (DT)
+    DT->splitBlock(NewBB);
+  if (DominanceFrontier *DF = P ? P->getAnalysisToUpdate<DominanceFrontier>():0)
+    DF->splitBlock(NewBB);
+  AliasAnalysis *AA = P ? P->getAnalysisToUpdate<AliasAnalysis>() : 0;
+  
+  
+  // Insert a new PHI node into NewBB for every PHI node in BB and that new PHI
+  // node becomes an incoming value for BB's phi node.  However, if the Preds
+  // list is empty, we need to insert dummy entries into the PHI nodes in BB to
+  // account for the newly created predecessor.
+  if (NumPreds == 0) {
+    // Insert dummy values as the incoming value.
+    for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ++I)
+      cast<PHINode>(I)->addIncoming(UndefValue::get(I->getType()), NewBB);
+    return NewBB;
+  }
+  
+  // Otherwise, create a new PHI node in NewBB for each PHI node in BB.
+  for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ) {
+    PHINode *PN = cast<PHINode>(I++);
+    
+    // Check to see if all of the values coming in are the same.  If so, we
+    // don't need to create a new PHI node.
+    Value *InVal = PN->getIncomingValueForBlock(Preds[0]);
+    for (unsigned i = 1; i != NumPreds; ++i)
+      if (InVal != PN->getIncomingValueForBlock(Preds[i])) {
+        InVal = 0;
+        break;
+      }
+    
+    if (InVal) {
+      // If all incoming values for the new PHI would be the same, just don't
+      // make a new PHI.  Instead, just remove the incoming values from the old
+      // PHI.
+      for (unsigned i = 0; i != NumPreds; ++i)
+        PN->removeIncomingValue(Preds[i], false);
+    } else {
+      // If the values coming into the block are not the same, we need a PHI.
+      // Create the new PHI node, insert it into NewBB at the end of the block
+      PHINode *NewPHI =
+        PHINode::Create(PN->getType(), PN->getName()+".ph", BI);
+      if (AA) AA->copyValue(PN, NewPHI);
+      
+      // Move all of the PHI values for 'Preds' to the new PHI.
+      for (unsigned i = 0; i != NumPreds; ++i) {
+        Value *V = PN->removeIncomingValue(Preds[i], false);
+        NewPHI->addIncoming(V, Preds[i]);
+      }
+      InVal = NewPHI;
+    }
+    
+    // Add an incoming value to the PHI node in the loop for the preheader
+    // edge.
+    PN->addIncoming(InVal, NewBB);
+    
+    // Check to see if we can eliminate this phi node.
+    if (Value *V = PN->hasConstantValue(DT != 0)) {
+      Instruction *I = dyn_cast<Instruction>(V);
+      if (!I || DT == 0 || DT->dominates(I, PN)) {
+        PN->replaceAllUsesWith(V);
+        if (AA) AA->deleteValue(PN);
+        PN->eraseFromParent();
+      }
+    }
+  }
+  
+  return NewBB;
 }

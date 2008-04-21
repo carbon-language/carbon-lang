@@ -120,6 +120,19 @@ BasicBlock *SplitEdge(BasicBlock *From, BasicBlock *To, Pass *P);
 /// the loop info is updated.
 ///
 BasicBlock *SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P);
+ 
+/// SplitBlockPredecessors - This method transforms BB by introducing a new
+/// basic block into the function, and moving some of the predecessors of BB to
+/// be predecessors of the new block.  The new predecessors are indicated by the
+/// Preds array, which has NumPreds elements in it.  The new block is given a
+/// suffix of 'Suffix'.  This function returns the new block.
+///
+/// This currently updates the LLVM IR, AliasAnalysis, DominatorTree and
+/// DominanceFrontier, but no other analyses.
+BasicBlock *SplitBlockPredecessors(BasicBlock *BB, BasicBlock *const *Preds,
+                                   unsigned NumPreds, const char *Suffix,
+                                   Pass *P = 0);
+  
 } // End llvm namespace
 
 #endif

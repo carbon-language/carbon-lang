@@ -41,6 +41,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/SetOperations.h"
@@ -86,14 +87,12 @@ namespace {
 
   private:
     bool ProcessLoop(Loop *L);
-    BasicBlock *SplitBlockPredecessors(BasicBlock *BB, const char *Suffix,
-                                       const std::vector<BasicBlock*> &Preds);
     BasicBlock *RewriteLoopExitBlock(Loop *L, BasicBlock *Exit);
     void InsertPreheaderForLoop(Loop *L);
     Loop *SeparateNestedLoop(Loop *L);
     void InsertUniqueBackedgeBlock(Loop *L);
     void PlaceSplitBlockCarefully(BasicBlock *NewBB,
-                                  std::vector<BasicBlock*> &SplitPreds,
+                                  SmallVectorImpl<BasicBlock*> &SplitPreds,
                                   Loop *L);
   };
 
@@ -260,103 +259,6 @@ ReprocessLoop:
   return Changed;
 }
 
-/// SplitBlockPredecessors - Split the specified block into two blocks.  We want
-/// to move the predecessors specified in the Preds list to point to the new
-/// block, leaving the remaining predecessors pointing to BB.  This method
-/// updates the SSA PHINode's, AliasAnalysis, DominatorTree and
-/// DominanceFrontier, but no other analyses.
-///
-BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
-                                                 const char *Suffix,
-                                       const std::vector<BasicBlock*> &Preds) {
-
-  // Create new basic block, insert right before the original block.
-  BasicBlock *NewBB =
-    BasicBlock::Create(BB->getName()+Suffix, BB->getParent(), BB);
-
-  // The preheader first gets an unconditional branch to the loop header.
-  BranchInst *BI = BranchInst::Create(BB, NewBB);
-
-  // Move the edges from Preds to point to NewBB instead of BB.
-  for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
-    Preds[i]->getTerminator()->replaceUsesOfWith(BB, NewBB);
-    
-    if (Preds[i]->getUnwindDest() == BB)
-      Preds[i]->setUnwindDest(NewBB);
-  }
-  
-  // Update dominator tree and dominator frontier if available.
-  DT->splitBlock(NewBB);
-  if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>())
-    DF->splitBlock(NewBB);
-  
-  // For every PHI node in the block, insert a PHI node into NewBB where the
-  // incoming values from the out of loop edges are moved to NewBB.  We have two
-  // possible cases here.  If the loop is dead, we just insert dummy entries
-  // into the PHI nodes for the new edge.  If the loop is not dead, we move the
-  // incoming edges in BB into new PHI nodes in NewBB.
-  //
-  if (Preds.empty()) {  // Is the loop obviously dead?
-    // Insert dummy values as the incoming value.
-    for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ++I)
-      cast<PHINode>(I)->addIncoming(UndefValue::get(I->getType()), NewBB);
-    
-    return NewBB;
-  }
-  
-  // Check to see if the values being merged into the new block need PHI
-  // nodes.  If so, insert them.
-  for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ) {
-    PHINode *PN = cast<PHINode>(I);
-    ++I;
-
-    // Check to see if all of the values coming in are the same.  If so, we
-    // don't need to create a new PHI node.
-    Value *InVal = PN->getIncomingValueForBlock(Preds[0]);
-    for (unsigned i = 1, e = Preds.size(); i != e; ++i)
-      if (InVal != PN->getIncomingValueForBlock(Preds[i])) {
-        InVal = 0;
-        break;
-      }
-
-    // If the values coming into the block are not the same, we need a PHI.
-    if (InVal == 0) {
-      // Create the new PHI node, insert it into NewBB at the end of the block
-      PHINode *NewPHI =
-        PHINode::Create(PN->getType(), PN->getName()+".ph", BI);
-      if (AA) AA->copyValue(PN, NewPHI);
-
-      // Move all of the edges from blocks outside the loop to the new PHI
-      for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
-        Value *V = PN->removeIncomingValue(Preds[i], false);
-        NewPHI->addIncoming(V, Preds[i]);
-      }
-      InVal = NewPHI;
-    } else {
-      // Remove all of the edges coming into the PHI nodes from outside of the
-      // block.
-      for (unsigned i = 0, e = Preds.size(); i != e; ++i)
-        PN->removeIncomingValue(Preds[i], false);
-    }
-
-    // Add an incoming value to the PHI node in the loop for the preheader
-    // edge.
-    PN->addIncoming(InVal, NewBB);
-
-    // Can we eliminate this phi node now?
-    if (Value *V = PN->hasConstantValue(true)) {
-      Instruction *I = dyn_cast<Instruction>(V);
-      if (!I || DT->dominates(I, PN)) {
-        PN->replaceAllUsesWith(V);
-        if (AA) AA->deleteValue(PN);
-        PN->eraseFromParent();
-      }
-    }
-  }
-
-  return NewBB;
-}
-
 /// InsertPreheaderForLoop - Once we discover that a loop doesn't have a
 /// preheader, this method is called to insert one.  This method has two phases:
 /// preheader insertion and analysis updating.
@@ -365,7 +267,7 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
   BasicBlock *Header = L->getHeader();
 
   // Compute the set of predecessors of the loop that are not in the loop.
-  std::vector<BasicBlock*> OutsideBlocks;
+  SmallVector<BasicBlock*, 8> OutsideBlocks;
   for (pred_iterator PI = pred_begin(Header), PE = pred_end(Header);
        PI != PE; ++PI)
     if (!L->contains(*PI))           // Coming in from outside the loop?
@@ -373,7 +275,8 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
 
   // Split out the loop pre-header.
   BasicBlock *NewBB =
-    SplitBlockPredecessors(Header, ".preheader", OutsideBlocks);
+    SplitBlockPredecessors(Header, &OutsideBlocks[0], OutsideBlocks.size(),
+                           ".preheader", this);
   
 
   //===--------------------------------------------------------------------===//
@@ -393,13 +296,15 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
 /// blocks.  This method is used to split exit blocks that have predecessors
 /// outside of the loop.
 BasicBlock *LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
-  std::vector<BasicBlock*> LoopBlocks;
+  SmallVector<BasicBlock*, 8> LoopBlocks;
   for (pred_iterator I = pred_begin(Exit), E = pred_end(Exit); I != E; ++I)
     if (L->contains(*I))
       LoopBlocks.push_back(*I);
 
   assert(!LoopBlocks.empty() && "No edges coming in from outside the loop?");
-  BasicBlock *NewBB = SplitBlockPredecessors(Exit, ".loopexit", LoopBlocks);
+  BasicBlock *NewBB = SplitBlockPredecessors(Exit, &LoopBlocks[0], 
+                                             LoopBlocks.size(), ".loopexit",
+                                             this);
 
   // Update Loop Information - we know that the new block will be in whichever
   // loop the Exit block is in.  Note that it may not be in that immediate loop,
@@ -464,7 +369,7 @@ static PHINode *FindPHIToPartitionLoops(Loop *L, DominatorTree *DT,
 // right after some 'outside block' block.  This prevents the preheader from
 // being placed inside the loop body, e.g. when the loop hasn't been rotated.
 void LoopSimplify::PlaceSplitBlockCarefully(BasicBlock *NewBB,
-                                            std::vector<BasicBlock*>&SplitPreds,
+                                       SmallVectorImpl<BasicBlock*> &SplitPreds,
                                             Loop *L) {
   // Check to see if NewBB is already well placed.
   Function::iterator BBI = NewBB; --BBI;
@@ -522,14 +427,16 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
   // Pull out all predecessors that have varying values in the loop.  This
   // handles the case when a PHI node has multiple instances of itself as
   // arguments.
-  std::vector<BasicBlock*> OuterLoopPreds;
+  SmallVector<BasicBlock*, 8> OuterLoopPreds;
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
     if (PN->getIncomingValue(i) != PN ||
         !L->contains(PN->getIncomingBlock(i)))
       OuterLoopPreds.push_back(PN->getIncomingBlock(i));
 
   BasicBlock *Header = L->getHeader();
-  BasicBlock *NewBB = SplitBlockPredecessors(Header, ".outer", OuterLoopPreds);
+  BasicBlock *NewBB = SplitBlockPredecessors(Header, &OuterLoopPreds[0],
+                                             OuterLoopPreds.size(),
+                                             ".outer", this);
 
   // Make sure that NewBB is put someplace intelligent, which doesn't mess up
   // code layout too horribly.
