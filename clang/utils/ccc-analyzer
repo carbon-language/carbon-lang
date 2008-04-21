@@ -37,7 +37,7 @@ def run(args):
     if code:
         sys.exit(code)
 
-def compile(args,verbose):
+def compile(args):
   # We MUST print to stderr.  Some clients use the stdout output of
   # gcc for various purposes.
   print >> sys.stderr, '\n'
