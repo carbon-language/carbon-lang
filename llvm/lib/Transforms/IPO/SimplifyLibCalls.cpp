@@ -1390,7 +1390,7 @@ public:
       
       // If the result of the fprintf call is used, we can't do this.
       // TODO: we should insert a strlen call.
-      if (!CI->use_empty())
+      if (!CI->use_empty() || !isa<PointerType>(CI->getOperand(3)->getType()))
         return false;
       
       // fprintf(file,"%s",str) -> fputs(str,file)
