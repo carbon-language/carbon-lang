@@ -115,12 +115,12 @@ namespace {
         LoopProcessWorklist.erase(I);
     }
 
-    /// Split all of the edges from inside the loop to their exit blocks.  Update
-    /// the appropriate Phi nodes as we do so.
+    /// Split all of the edges from inside the loop to their exit blocks.
+    /// Update the appropriate Phi nodes as we do so.
     void SplitExitEdges(Loop *L, const SmallVector<BasicBlock *, 8> &ExitBlocks,
                         SmallVector<BasicBlock *, 8> &MiddleBlocks);
 
-    /// If BB's dominance frontier  has a member that is not part of loop L then 
+    /// If BB's dominance frontier  has a member that is not part of loop L then
     /// remove it. Add NewDFMember in BB's dominance frontier.
     void ReplaceLoopExternalDFMember(Loop *L, BasicBlock *BB,
                                      BasicBlock *NewDFMember);
@@ -644,10 +644,10 @@ void LoopUnswitch::ReplaceLoopExternalDFMember(Loop *L, BasicBlock *BB,
   DF->addToFrontier(DFI, NewDFMember);
 }
 
-/// SplitExitEdges -
-/// Split all of the edges from inside the loop to their exit blocks.  Update
-/// the appropriate Phi nodes as we do so.
-void LoopUnswitch::SplitExitEdges(Loop *L, const SmallVector<BasicBlock *, 8> &ExitBlocks,
+/// SplitExitEdges - Split all of the edges from inside the loop to their exit
+/// blocks.  Update the appropriate Phi nodes as we do so.
+void LoopUnswitch::SplitExitEdges(Loop *L, 
+                                 const SmallVector<BasicBlock *, 8> &ExitBlocks,
                                   SmallVector<BasicBlock *, 8> &MiddleBlocks) {
 
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
@@ -854,8 +854,8 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
       //   If LBB's dominance frontier includes DFMember 
       //      such that DFMember is also a member of LoopDF then
       //         - Remove DFMember from LBB's dominance frontier
-      //         - Copy loop exiting blocks', that are dominated by BB, dominance frontier
-      //           member in BB's dominance frontier
+      //         - Copy loop exiting blocks', that are dominated by BB,
+      //           dominance frontier member in BB's dominance frontier
 
       DominanceFrontier::iterator LBBI = DF->find(LBB);
       DominanceFrontier::iterator NBBI = DF->find(NBB);
@@ -874,7 +874,8 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
         
         // If LBB dominates loop exits then insert loop exit block's DF
         // into B's DF.
-        for(SmallVector<BasicBlock *, 4>::iterator LExitI = ExitingBlocks.begin(),
+        for(SmallVector<BasicBlock *, 4>::iterator 
+              LExitI = ExitingBlocks.begin(),
               LExitE = ExitingBlocks.end(); LExitI != LExitE; ++LExitI) {
           BasicBlock *E = *LExitI;
           
@@ -892,7 +893,8 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
           removeB = true;
         }
         
-        // If B's replacement is inserted in DF then now is the time to remove B.
+        // If B's replacement is inserted in DF then now is the time to remove
+        // B.
         if (removeB) {
           DF->removeFromFrontier(LBBI, B);
           if (L->contains(B))
@@ -1158,7 +1160,7 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
               BranchInst::Create(Split, SI->getSuccessor(i),
                                  ConstantInt::getTrue(), OldTerm);
 
-              LPM->deleteSimpleAnalysisValue(Old->getTerminator(), L);                
+              LPM->deleteSimpleAnalysisValue(Old->getTerminator(), L);
               Old->getTerminator()->eraseFromParent();
               
               PHINode *PN;
