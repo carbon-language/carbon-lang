@@ -1,6 +1,6 @@
 // RUN: %llvmgcc %s -S -fnested-functions -o - | grep {sret *%agg.result}
 
-struct X { int m, n, o, p; };
+struct X { long m, n, o, p; };
 
 struct X p(int n) {
   struct X c(int m) {
