@@ -167,7 +167,7 @@ def MMX_MOVD64to64rr : MMXRI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR64:$src),
                              "movd\t{$src, $dst|$dst, $src}", []>;
 
 let neverHasSideEffects = 1 in
-def MMX_MOVD64from64rr : MMXRI<0x6E, MRMSrcReg, (outs GR64:$dst), (ins VR64:$src),
+def MMX_MOVD64from64rr : MMXRI<0x7E, MRMSrcReg, (outs GR64:$dst), (ins VR64:$src),
                                "movd\t{$src, $dst|$dst, $src}", []>;
 
 let neverHasSideEffects = 1 in
