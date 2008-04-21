@@ -14,23 +14,14 @@
 
 #define DEBUG_TYPE "memcpyopt"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Function.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Instructions.h"
 #include "llvm/ParameterAttributes.h"
-#include "llvm/Value.h"
-#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
-#include "llvm/Support/CFG.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Target/TargetData.h"
@@ -39,13 +30,6 @@ using namespace llvm;
 
 STATISTIC(NumMemCpyInstr, "Number of memcpy instructions deleted");
 STATISTIC(NumMemSetInfer, "Number of memsets inferred");
-
-namespace {
-  cl::opt<bool>
-  FormMemSet("form-memset-from-stores",
-             cl::desc("Transform straight-line stores to memsets"),
-             cl::init(true), cl::Hidden);
-}
 
 /// isBytewiseValue - If the specified value can be set by repeating the same
 /// byte in memory, return the i8 value that it is represented with.  This is
@@ -332,13 +316,9 @@ namespace {
     }
   
     // Helper fuctions
-    bool processInstruction(Instruction* I,
-                            SmallVectorImpl<Instruction*> &toErase);
-    bool processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase);
-    bool processMemCpy(MemCpyInst* M, MemCpyInst* MDep,
-                       SmallVectorImpl<Instruction*> &toErase);
-    bool performCallSlotOptzn(MemCpyInst* cpy, CallInst* C,
-                              SmallVectorImpl<Instruction*> &toErase);
+    bool processStore(StoreInst *SI, BasicBlock::iterator& BBI);
+    bool processMemCpy(MemCpyInst* M);
+    bool performCallSlotOptzn(MemCpyInst* cpy, CallInst* C);
     bool iterateOnFunction(Function &F);
   };
   
@@ -357,8 +337,7 @@ static RegisterPass<MemCpyOpt> X("memcpyopt",
 /// some other patterns to fold away.  In particular, this looks for stores to
 /// neighboring locations of memory.  If it sees enough consequtive ones
 /// (currently 4) it attempts to merge them together into a memcpy/memset.
-bool MemCpyOpt::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toErase) {
-  if (!FormMemSet) return false;
+bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator& BBI) {
   if (SI->isVolatile()) return false;
   
   // There are two cases that are interesting for this code to handle: memcpy
@@ -473,8 +452,13 @@ bool MemCpyOpt::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toEra
             cerr << *Range.TheStores[i];
           cerr << "With: " << *C); C=C;
   
+    // Don't invalidate the iterator
+    BBI = BI;
+  
     // Zap all the stores.
-    toErase.append(Range.TheStores.begin(), Range.TheStores.end());
+    for (SmallVector<StoreInst*, 16>::const_iterator SI = Range.TheStores.begin(),
+         SE = Range.TheStores.end(); SI != SE; ++SI)
+      (*SI)->eraseFromParent();
     ++NumMemSetInfer;
     MadeChange = true;
   }
@@ -486,8 +470,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, SmallVectorImpl<Instruction*> &toEra
 /// performCallSlotOptzn - takes a memcpy and a call that it depends on,
 /// and checks for the possibility of a call slot optimization by having
 /// the call write its result directly into the destination of the memcpy.
-bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C,
-                               SmallVectorImpl<Instruction*> &toErase) {
+bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
   // The general transformation to keep in mind is
   //
   //   call @func(..., src, ...)
@@ -612,7 +595,8 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C,
 
   // Remove the memcpy
   MD.removeInstruction(cpy);
-  toErase.push_back(cpy);
+  cpy->eraseFromParent();
+  NumMemCpyInstr++;
 
   return true;
 }
@@ -621,8 +605,23 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C,
 /// copies X to Y, and memcpy B which copies Y to Z, then we can rewrite B to be
 /// a memcpy from X to Z (or potentially a memmove, depending on circumstances).
 ///  This allows later passes to remove the first memcpy altogether.
-bool MemCpyOpt::processMemCpy(MemCpyInst* M, MemCpyInst* MDep,
-                        SmallVectorImpl<Instruction*> &toErase) {
+bool MemCpyOpt::processMemCpy(MemCpyInst* M) {
+  MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
+
+  // The are two possible optimizations we can do for memcpy:
+  //   a) memcpy-memcpy xform which exposes redundance for DSE
+  //   b) call-memcpy xform for return slot optimization
+  Instruction* dep = MD.getDependency(M);
+  if (dep == MemoryDependenceAnalysis::None ||
+      dep == MemoryDependenceAnalysis::NonLocal)
+    return false;
+  else if (CallInst* C = dyn_cast<CallInst>(dep))
+    return performCallSlotOptzn(M, C);
+  else if (!isa<MemCpyInst>(dep))
+    return false;
+  
+  MemCpyInst* MDep = cast<MemCpyInst>(dep);
+  
   // We can only transforms memcpy's where the dest of one is the source of the
   // other
   if (M->getSource() != MDep->getDest())
@@ -667,41 +666,16 @@ bool MemCpyOpt::processMemCpy(MemCpyInst* M, MemCpyInst* MDep,
   
   CallInst* C = CallInst::Create(MemCpyFun, args.begin(), args.end(), "", M);
   
-  MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   if (MD.getDependency(C) == MDep) {
     MD.dropInstruction(M);
-    toErase.push_back(M);
+    M->eraseFromParent();
     return true;
   }
   
   MD.removeInstruction(C);
-  toErase.push_back(C);
-  return false;
-}
-
-/// processInstruction - When calculating availability, handle an instruction
-/// by inserting it into the appropriate sets
-bool MemCpyOpt::processInstruction(Instruction *I,
-                                   SmallVectorImpl<Instruction*> &toErase) {
-  if (StoreInst *SI = dyn_cast<StoreInst>(I))
-    return processStore(SI, toErase);
+  C->eraseFromParent();
   
-  if (MemCpyInst* M = dyn_cast<MemCpyInst>(I)) {
-    MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
-
-    // The are two possible optimizations we can do for memcpy:
-    //   a) memcpy-memcpy xform which exposes redundance for DSE
-    //   b) call-memcpy xform for return slot optimization
-    Instruction* dep = MD.getDependency(M);
-    if (dep == MemoryDependenceAnalysis::None ||
-        dep == MemoryDependenceAnalysis::NonLocal)
-      return false;
-    if (MemCpyInst *MemCpy = dyn_cast<MemCpyInst>(dep))
-      return processMemCpy(M, MemCpy, toErase);
-    if (CallInst* C = dyn_cast<CallInst>(dep))
-      return performCallSlotOptzn(M, C, toErase);
-    return false;
-  }
+  NumMemCpyInstr++;
   
   return false;
 }
@@ -726,42 +700,20 @@ bool MemCpyOpt::runOnFunction(Function& F) {
 // MemCpyOpt::iterateOnFunction - Executes one iteration of GVN
 bool MemCpyOpt::iterateOnFunction(Function &F) {
   bool changed_function = false;
-  
-  DominatorTree &DT = getAnalysis<DominatorTree>();   
-  
-  SmallVector<Instruction*, 8> toErase;
 
-  // Top-down walk of the dominator tree
-  for (df_iterator<DomTreeNode*> DI = df_begin(DT.getRootNode()),
-         E = df_end(DT.getRootNode()); DI != E; ++DI) {
-
-    BasicBlock* BB = DI->getBlock();
+  // Walk all instruction in the function
+  for (Function::iterator BB = F.begin(), BBE = F.end(); BB != BBE; ++BB) {
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
          BI != BE;) {
-      changed_function |= processInstruction(BI, toErase);
-      if (toErase.empty()) {
-        ++BI;
-        continue;
+      // Avoid invalidating the iterator
+      Instruction* I = BI++;
+      
+      if (StoreInst *SI = dyn_cast<StoreInst>(I))
+        changed_function |= processStore(SI, BI);
+
+      if (MemCpyInst* M = dyn_cast<MemCpyInst>(I)) {
+        changed_function |= processMemCpy(M);
       }
-      
-      // If we need some instructions deleted, do it now.
-      NumMemCpyInstr += toErase.size();
-      
-      // Avoid iterator invalidation.
-      bool AtStart = BI == BB->begin();
-      if (!AtStart)
-        --BI;
-
-      for (SmallVector<Instruction*, 4>::iterator I = toErase.begin(),
-           E = toErase.end(); I != E; ++I)
-        (*I)->eraseFromParent();
-
-      if (AtStart)
-        BI = BB->begin();
-      else
-        ++BI;
-      
-      toErase.clear();
     }
   }
   
