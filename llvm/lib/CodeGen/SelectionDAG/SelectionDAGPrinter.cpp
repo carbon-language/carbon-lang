@@ -301,7 +301,8 @@ namespace llvm {
     static void addCustomGraphFeatures(ScheduleDAG *G,
                                        GraphWriter<ScheduleDAG*> &GW) {
       GW.emitSimpleNode(0, "plaintext=circle", "GraphRoot");
-      if (G->DAG.getRoot().Val)
+      if (G->DAG.getRoot().Val &&
+          G->SUnitMap.find(G->DAG.getRoot().Val) != G->SUnitMap.end())
         GW.emitEdge(0, -1, G->SUnitMap[G->DAG.getRoot().Val].front(), -1, "");
     }
   };
