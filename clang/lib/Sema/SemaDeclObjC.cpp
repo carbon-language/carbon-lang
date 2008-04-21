@@ -929,9 +929,9 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   return PDecl;
 }
 
-/// ActOnPropertyImplDecl - This routine performas semantic checks and
-/// build the AST node for a property implementation declaration; declared
-/// as @synthesize ot @dynamic
+/// ActOnPropertyImplDecl - This routine performs semantic checks and
+/// builds the AST node for a property implementation declaration; declared
+/// as @synthesize or @dynamic.
 ///
 Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc, 
                                           SourceLocation PropertyLoc,
@@ -957,17 +957,11 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
       return 0;
     }
     // Look for this property declaration in the @implementation's @interface
-    ObjCInterfaceDecl::classprop_iterator I,E;
-    for (I = IDecl->classprop_begin(),
-         E = IDecl->classprop_end(); I != E; ++I) {
-      property = *I;
-      if (property->getIdentifier() == PropertyId)
-        break;
-    }
-    if (I == E) {
-      Diag(PropertyLoc, diag::error_bad_property_decl, IDecl->getName());
+    property = IDecl->FindPropertyDeclaration(PropertyId);
+    if (!property) {
+       Diag(PropertyLoc, diag::error_bad_property_decl, IDecl->getName());
       return 0;
-    }    
+    }
   }
   else if (ObjCCategoryImplDecl* CatImplClass = 
             dyn_cast<ObjCCategoryImplDecl>(ClassImpDecl)) {
@@ -976,26 +970,18 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
       Diag(AtLoc, diag::error_missing_property_interface);
       return 0;
     }
-    ObjCCategoryDecl *Categories;
-    for (Categories = IDecl->getCategoryList();
-         Categories; Categories = Categories->getNextClassCategory())
-      if (Categories->getIdentifier() == CatImplClass->getIdentifier())
-        break;
+    ObjCCategoryDecl *Category = 
+      IDecl->FindCategoryDeclaration(CatImplClass->getIdentifier());
+    
     // If category for this implementation not found, it is an error which
     // has already been reported eralier.
-    if (!Categories)
+    if (!Category)
       return 0;
     // Look for this property declaration in @implementation's category
-    ObjCCategoryDecl::classprop_iterator I,E;
-    for (I = Categories->classprop_begin(),
-         E = Categories->classprop_end(); I != E; ++I) {
-      property = *I;
-      if (property->getIdentifier() == PropertyId)
-        break;
-    }
-    if (I == E) {
+    property = Category->FindPropertyDeclaration(PropertyId);
+    if (!property) {
       Diag(PropertyLoc, diag::error_bad_property_decl, 
-           Categories->getName());
+           Category->getName());
       return 0;
     }
   }
@@ -1012,14 +998,7 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
       return 0;
     }
     // Check that this is a previously declared 'ivar' in 'IDecl' interface
-    ObjCInterfaceDecl::ivar_iterator IVI, IVE;
-    for (IVI = IDecl->ivar_begin(), IVE = IDecl->ivar_end(); 
-         IVI != IVE; ++IVI) {
-      ObjCIvarDecl* ImplIvar = (*IVI);
-      if (ImplIvar->getIdentifier() == PropertyIvar)
-        break;
-    }
-    if (IVI == IVE) {
+    if (!IDecl->FindIvarDeclaration(PropertyIvar)) {
       Diag(PropertyLoc, diag::error_missing_property_ivar_decl);
       return 0;
     }

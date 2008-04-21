@@ -628,7 +628,7 @@ public:
   }  
   // ActOnPropertyImplDecl - called for every property implementation
   virtual DeclTy *ActOnPropertyImplDecl(
-   SourceLocation AtLoc,              // location of the @syntheize/@dynamic
+   SourceLocation AtLoc,              // location of the @synthesize/@dynamic
    SourceLocation PropertyNameLoc,    // location for the property name
    bool ImplKind,                     // true for @synthesize, false for
                                       // @dynamic

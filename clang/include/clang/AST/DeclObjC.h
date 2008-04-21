@@ -281,6 +281,10 @@ public:
   }
   unsigned getNumIntfRefProtocols() const { return NumReferencedProtocols; }
   
+  ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
+  ObjCCategoryDecl *FindCategoryDeclaration(IdentifierInfo *CategoryId) const;
+  ObjCIvarDecl *FindIvarDeclaration(IdentifierInfo *IvarId) const;
+  
   typedef ObjCIvarDecl * const *ivar_iterator;
   ivar_iterator ivar_begin() const { return Ivars; }
   ivar_iterator ivar_end() const { return Ivars + ivar_size();}
@@ -739,6 +743,8 @@ public:
   
   void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
   
+  ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
+  
   typedef ObjCPropertyDecl * const * classprop_iterator;
   classprop_iterator classprop_begin() const { return PropertyDecl; }
   classprop_iterator classprop_end() const {
@@ -798,7 +804,17 @@ public:
 };
 
 /// ObjCCategoryImplDecl - An object of this class encapsulates a category 
-/// @implementation declaration.
+/// @implementation declaration. If a category class has declaration of a 
+/// property, its implementation must be specified in the category's 
+/// @implementation declaration. Example:
+/// @interface I @end
+/// @interface I(CATEGORY)
+///    @property int p1, d1;
+/// @end
+/// @implementation I(CATEGORY)
+///  @dynamic p1,d1;
+/// @end
+///
 class ObjCCategoryImplDecl : public NamedDecl {
   /// Class interface for this category implementation
   ObjCInterfaceDecl *ClassInterface;
@@ -809,7 +825,7 @@ class ObjCCategoryImplDecl : public NamedDecl {
   /// implemented class methods
   llvm::SmallVector<ObjCMethodDecl*, 32> ClassMethods;
   
-  /// Propertys' being implemented
+  /// Property Implementations in this category
   llvm::SmallVector<ObjCPropertyImplDecl*, 8> PropertyImplementations;
 
   SourceLocation EndLoc;  
@@ -846,6 +862,16 @@ public:
 
   unsigned getNumPropertyImplementations() const
   { return PropertyImplementations.size(); }
+  
+  
+  typedef llvm::SmallVector<ObjCPropertyImplDecl*, 8>::const_iterator
+    propimpl_iterator;
+  propimpl_iterator propimpl_begin() const { 
+    return PropertyImplementations.begin(); 
+  }
+  propimpl_iterator propimpl_end() const { 
+    return PropertyImplementations.end(); 
+  }
   
   typedef llvm::SmallVector<ObjCMethodDecl*, 32>::const_iterator
     instmeth_iterator;
@@ -930,6 +956,14 @@ public:
   void addPropertyImplementation(ObjCPropertyImplDecl *property) {
     PropertyImplementations.push_back(property);
   } 
+  typedef llvm::SmallVector<ObjCPropertyImplDecl*, 8>::const_iterator
+  propimpl_iterator;
+  propimpl_iterator propimpl_begin() const { 
+    return PropertyImplementations.begin(); 
+  }
+  propimpl_iterator propimpl_end() const { 
+    return PropertyImplementations.end(); 
+  }
   
   // Location information, modeled after the Stmt API. 
   SourceLocation getLocStart() const { return getLocation(); }
@@ -1063,7 +1097,7 @@ public:
     OBJC_PR_IMPL_DYNAMIC
   };
 private:
-  SourceLocation AtLoc;   // location of @syntheisze or @dynamic
+  SourceLocation AtLoc;   // location of @synthesize or @dynamic
   /// Property declaration being implemented
   ObjCPropertyDecl *PropertyDecl;
   PropertyImplKind PropertyImplementation;

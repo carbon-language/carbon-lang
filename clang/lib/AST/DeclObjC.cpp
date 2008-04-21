@@ -137,6 +137,47 @@ ObjCMethodDecl::~ObjCMethodDecl() {
   delete[] ParamInfo;
 }
 
+/// FindPropertyDeclaration - Finds declaration of the property given its name
+/// in 'PropertyId' and returns it. It returns 0, if not found.
+///
+ObjCPropertyDecl *
+  ObjCInterfaceDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
+  for (ObjCInterfaceDecl::classprop_iterator I = classprop_begin(),
+       E = classprop_end(); I != E; ++I) {
+    ObjCPropertyDecl *property = *I;
+    if (property->getIdentifier() == PropertyId)
+      return property;
+  }
+  return 0;
+}
+
+/// FindCategoryDeclaration - Finds category declaration in the list of
+/// categories for this class and returns it. Name of the category is passed
+/// in 'CategoryId'. If category not found, return 0;
+///
+ObjCCategoryDecl *
+  ObjCInterfaceDecl::FindCategoryDeclaration(IdentifierInfo *CategoryId) const {
+    for (ObjCCategoryDecl *Category = getCategoryList();
+         Category; Category = Category->getNextClassCategory())
+      if (Category->getIdentifier() == CategoryId)
+        return Category;
+    return 0;
+}
+
+/// FindIvarDeclaration - Find an Ivar declaration in this class given its
+/// name in 'IvarId'. On failure to find, return 0;
+///
+ObjCIvarDecl *
+  ObjCInterfaceDecl::FindIvarDeclaration(IdentifierInfo *IvarId) const {
+  for (ObjCInterfaceDecl::ivar_iterator IVI = ivar_begin(), 
+       IVE = ivar_end(); IVI != IVE; ++IVI) {
+    ObjCIvarDecl* Ivar = (*IVI);
+    if (Ivar->getIdentifier() == IvarId)
+      return Ivar;
+  }
+  return 0;
+}
+
 /// ObjCAddInstanceVariablesToClass - Inserts instance variables
 /// into ObjCInterfaceDecl's fields.
 ///
@@ -272,6 +313,20 @@ void ObjCCategoryDecl::addMethods(ObjCMethodDecl **insMethods,
     memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjCMethodDecl*));
   }
   AtEndLoc = endLoc;
+}
+
+/// FindPropertyDeclaration - Finds declaration of the property given its name
+/// in 'PropertyId' and returns it. It returns 0, if not found.
+///
+ObjCPropertyDecl *
+ObjCCategoryDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
+  for (ObjCCategoryDecl::classprop_iterator I = classprop_begin(),
+       E = classprop_end(); I != E; ++I) {
+    ObjCPropertyDecl *property = *I;
+    if (property->getIdentifier() == PropertyId)
+      return property;
+  }
+  return 0;
 }
 
 ObjCIvarDecl *ObjCInterfaceDecl::lookupInstanceVariable(
