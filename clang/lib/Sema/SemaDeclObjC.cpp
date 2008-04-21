@@ -998,14 +998,13 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
   // Check that we have a valid, previously declared ivar for @synthesize
   if (Synthesize) {
     // @synthesize
-    if (!PropertyIvar) {
-      Diag(PropertyLoc, diag::error_property_ivar_decl);
-      return 0;
-    }
+    if (!PropertyIvar)
+      PropertyIvar = PropertyId;
     // Check that this is a previously declared 'ivar' in 'IDecl' interface
     ObjCIvarDecl *Ivar = IDecl->FindIvarDeclaration(PropertyIvar);
     if (!Ivar) {
-      Diag(PropertyLoc, diag::error_missing_property_ivar_decl);
+      Diag(PropertyLoc, diag::error_missing_property_ivar_decl, 
+           PropertyId->getName());
       return 0;
     }
     // Check that type of property and its ivar match. 

@@ -3,9 +3,11 @@
 @interface I 
 {
 	int IVAR;
+	int name;
 }
 @property int d1;
 @property id  prop_id;
+@property int name;
 @end
 
 @interface I(CAT)
@@ -13,10 +15,11 @@
 @end
 
 @implementation I
-@synthesize d1;		// expected-error {{property synthesize requires specification of an ivar}}
-@dynamic    bad;	// expected-error {{property implementation must have its declaration in the class 'I'}}
-@synthesize prop_id;	// expected-error {{property synthesize requires specification of an ivar}}
+@synthesize d1;		// expected-error {{synthesized property 'd1' must either be named the same as}}
+@dynamic    bad;	// expected-error {{property implementation must have its declaration in interface 'I'}}
+@synthesize prop_id;	// expected-error {{synthesized property 'prop_id' must either be named the same}}
 @synthesize prop_id = IVAR;	// expected-error {{type of property 'prop_id'  does not match type of ivar 'IVAR'}}
+@synthesize name;	// OK! property with same name as an accessible ivar of same name
 @end
 
 @implementation I(CAT)
@@ -25,7 +28,7 @@
 @end
 
 @implementation E	// expected-warning {{cannot find interface declaration for 'E'}}
-@dynamic d;		// expected-error {{property implementation must have its declaration in the class 'E'}}
+@dynamic d;		// expected-error {{property implementation must have its declaration in interface 'E'}}
 @end
 
 @implementation Q(MYCAT)  // expected-error {{cannot find interface declaration for 'Q'}}
