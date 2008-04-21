@@ -295,7 +295,7 @@ static void getX86Defines(std::vector<char> &Defs, bool is64Bit) {
   Define(Defs, "__LDBL_MIN__", "3.36210314311209350626e-4932L");
 }
 
-/// getX86Defines - Return a set of the X86-specific #defines that are
+/// getARMDefines - Return a set of the ARM-specific #defines that are
 /// not tied to a specific subtarget.
 static void getARMDefines(std::vector<char> &Defs) {
   // Target identification.
