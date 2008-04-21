@@ -295,6 +295,84 @@ static void getX86Defines(std::vector<char> &Defs, bool is64Bit) {
   Define(Defs, "__LDBL_MIN__", "3.36210314311209350626e-4932L");
 }
 
+/// getX86Defines - Return a set of the X86-specific #defines that are
+/// not tied to a specific subtarget.
+static void getARMDefines(std::vector<char> &Defs) {
+  // Target identification.
+  Define(Defs, "__arm");
+  Define(Defs, "__arm__");
+  
+  // Target properties.
+  Define(Defs, "__LITTLE_ENDIAN__");
+  
+  Define(Defs, "__INTMAX_MAX__", "9223372036854775807LL");
+  Define(Defs, "__INTMAX_TYPE__", "long long int");
+  Define(Defs, "__LONG_MAX__", "2147483647L");
+  Define(Defs, "__PTRDIFF_TYPE__", "int");
+  Define(Defs, "__UINTMAX_TYPE__", "long long unsigned int");
+  Define(Defs, "__SIZE_TYPE__", "long unsigned int");
+  
+  Define(Defs, "__CHAR_BIT__", "8");
+  Define(Defs, "__INT_MAX__", "2147483647");
+  Define(Defs, "__LONG_LONG_MAX__", "9223372036854775807LL");
+  Define(Defs, "__SCHAR_MAX__", "127");
+  Define(Defs, "__SHRT_MAX__", "32767");
+  
+  // Subtarget options.  [hard coded to v6 for now]
+  Define(Defs, "__ARM_ARCH_6K__");
+  Define(Defs, "__ARMEL__");
+  Define(Defs, "__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__", "20000");
+  
+  Define(Defs, "__WCHAR_MAX__", "2147483647");
+  Define(Defs, "__WCHAR_TYPE__", "int");
+  Define(Defs, "__WINT_TYPE__", "int");
+  Define(Defs, "__DECIMAL_DIG__", "17");
+  Define(Defs, "__FLT_RADIX__", "2");
+
+  // Float macros.
+  Define(Defs, "__FLT_DENORM_MIN__", "1.40129846e-45F");
+  Define(Defs, "__FLT_DIG__", "6");
+  Define(Defs, "__FLT_EPSILON__", "1.19209290e-7F");
+  Define(Defs, "__FLT_EVAL_METHOD__", "0");
+  Define(Defs, "__FLT_HAS_INFINITY__");
+  Define(Defs, "__FLT_HAS_QUIET_NAN__");
+  Define(Defs, "__FLT_MANT_DIG__", "24");
+  Define(Defs, "__FLT_MAX_10_EXP__", "38");
+  Define(Defs, "__FLT_MAX_EXP__", "128");
+  Define(Defs, "__FLT_MAX__", "3.40282347e+38F");
+  Define(Defs, "__FLT_MIN_10_EXP__", "(-37)");
+  Define(Defs, "__FLT_MIN_EXP__", "(-125)");
+  Define(Defs, "__FLT_MIN__", "1.17549435e-38F");
+  
+  // Double macros.
+  Define(Defs, "__DBL_DENORM_MIN__", "4.9406564584124654e-324");
+  Define(Defs, "__DBL_DIG__", "15");
+  Define(Defs, "__DBL_EPSILON__", "2.2204460492503131e-16");
+  Define(Defs, "__DBL_HAS_INFINITY__");
+  Define(Defs, "__DBL_HAS_QUIET_NAN__");
+  Define(Defs, "__DBL_MANT_DIG__", "53");
+  Define(Defs, "__DBL_MAX_10_EXP__", "308");
+  Define(Defs, "__DBL_MAX_EXP__", "1024");
+  Define(Defs, "__DBL_MAX__", "1.7976931348623157e+308");
+  Define(Defs, "__DBL_MIN_10_EXP__", "(-307)");
+  Define(Defs, "__DBL_MIN_EXP__", "(-1021)");
+  Define(Defs, "__DBL_MIN__", "2.2250738585072014e-308");
+  
+  // 64-bit Long double macros (same as double).
+  Define(Defs, "__LDBL_DENORM_MIN__", "4.9406564584124654e-324");
+  Define(Defs, "__LDBL_DIG__", "15");
+  Define(Defs, "__LDBL_EPSILON__", "2.2204460492503131e-16");
+  Define(Defs, "__LDBL_HAS_INFINITY__");
+  Define(Defs, "__LDBL_HAS_QUIET_NAN__");
+  Define(Defs, "__LDBL_MANT_DIG__", "53");
+  Define(Defs, "__LDBL_MAX_10_EXP__", "308");
+  Define(Defs, "__LDBL_MAX_EXP__", "1024");
+  Define(Defs, "__LDBL_MAX__", "1.7976931348623157e+308");
+  Define(Defs, "__LDBL_MIN_10_EXP__", "(-307)");
+  Define(Defs, "__LDBL_MIN_EXP__", "(-1021)");
+  Define(Defs, "__LDBL_MIN__", "2.2250738585072014e-308");
+}
+
 static const char* getI386VAListDeclaration() {
   return "typedef char* __builtin_va_list;";
 }
@@ -320,6 +398,9 @@ static const char* getPPCVAListDeclaration() {
     "} __builtin_va_list[1];";
 }
 
+static const char* getARMVAListDeclaration() {
+  return "typedef char* __builtin_va_list;";
+}
 
 /// PPC builtin info.
 namespace clang {
@@ -521,6 +602,15 @@ namespace X86 {
   }
   
 } // End namespace X86
+  
+  
+/// ARM builtin info.
+namespace ARM {
+  const char *getTargetPrefix() {
+    return "arm";
+  }
+} // End namespace ARM
+
 } // end namespace clang.
 
 //===----------------------------------------------------------------------===//
@@ -684,6 +774,45 @@ public:
 };
 } // end anonymous namespace.
 
+
+namespace {
+class DarwinARMTargetInfo : public DarwinTargetInfo {
+public:
+  DarwinARMTargetInfo(const std::string& triple) :DarwinTargetInfo(triple) {}
+  
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
+    DarwinTargetInfo::getTargetDefines(Defines);
+    getARMDefines(Defines);
+  }
+  virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                 unsigned &NumRecords) const {
+    NumRecords = 0;
+  }
+  virtual const char *getVAListDeclaration() const {
+    return getARMVAListDeclaration();
+  }
+  virtual const char *getTargetPrefix() const {
+    return ARM::getTargetPrefix();
+  }
+  
+  virtual void getGCCRegNames(const char * const *&Names, 
+                              unsigned &NumNames) const {
+    NumNames = 0;
+  }
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
+                                unsigned &NumAliases) const {
+    NumAliases = 0;
+  }
+  virtual bool validateAsmConstraint(char c,
+                                     TargetInfo::ConstraintInfo &Info) const {
+    return false;
+  }
+  virtual const char *getClobbers() const {
+    return "";
+  }
+};
+} // end anonymous namespace.
+
 namespace {
 class SolarisSparcV8TargetInfo : public SolarisTargetInfo {
 public:
@@ -743,6 +872,9 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
   if (T.find("ppc64-") == 0 || T.find("powerpc64-") == 0)
     return new DarwinPPC64TargetInfo(T);
   
+  if (T.find("armv6-") == 0 || T.find("arm-") == 0)
+    return new DarwinARMTargetInfo(T);
+
   if (T.find("sparc-") == 0)
     return new SolarisSparcV8TargetInfo(T); // ugly hack
   
