@@ -14,5 +14,5 @@ int f2(struct foo_struct* p) {
   if (p)
     p->x = 1;
     
-  return p->x++;
+  return p->x++; // expected-warning{{Dereference of null pointer.}}
 }
