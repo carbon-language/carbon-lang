@@ -162,7 +162,7 @@ void Optimize(Module* M) {
 
     // The IPO passes may leave cruft around.  Clean up after them.
     addPass(Passes, createInstructionCombiningPass());
-
+    addPass(Passes, createJumpThreadingPass());        // Thread jumps.
     addPass(Passes, createScalarReplAggregatesPass()); // Break up allocas
 
     // Run a few AA driven optimizations here and now, to cleanup the code.
@@ -175,6 +175,8 @@ void Optimize(Module* M) {
 
     // Cleanup and simplify the code after the scalar optimizations.
     addPass(Passes, createInstructionCombiningPass());
+
+    addPass(Passes, createJumpThreadingPass());        // Thread jumps.
 
     // Delete basic blocks, which optimization passes may have killed...
     addPass(Passes, createCFGSimplificationPass());
