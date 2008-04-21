@@ -142,7 +142,7 @@ bool JumpThreading::ThreadBlock(BasicBlock *BB) {
     return false; // Must be an invoke.
   
   // If the terminator of this block is branching on a constant, simplify the
-  // terminator to an unconditional branch.  This can occur do to threading in
+  // terminator to an unconditional branch.  This can occur due to threading in
   // other blocks.
   if (isa<ConstantInt>(Condition)) {
     DOUT << "  In block '" << BB->getNameStart()
