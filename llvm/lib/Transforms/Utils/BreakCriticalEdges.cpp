@@ -114,12 +114,12 @@ bool llvm::isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
   return false;
 }
 
-// SplitCriticalEdge - If this edge is a critical edge, insert a new node to
-// split the critical edge.  This will update DominatorTree, and DominatorFrontier 
-// information if it is available, thus calling this pass will not invalidate 
-// any of them.  This returns true if the edge was split, false otherwise. 
-// This ensures that all edges to that dest go to one block instead of each 
-// going to a different block.
+/// SplitCriticalEdge - If this edge is a critical edge, insert a new node to
+/// split the critical edge.  This will update DominatorTree and
+/// DominatorFrontier  information if it is available, thus calling this pass
+/// will not invalidate  any of them.  This returns true if the edge was split,
+/// false otherwise.  This ensures that all edges to that dest go to one block
+/// instead of each going to a different block.
 //
 bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
                              bool MergeIdenticalEdges) {
