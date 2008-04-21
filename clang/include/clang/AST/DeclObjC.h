@@ -1066,6 +1066,8 @@ public:
   static ObjCPropertyDecl *Create(ASTContext &C, SourceLocation L, 
                                   IdentifierInfo *Id, QualType T);
   QualType getType() const { return DeclType; }
+  QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
+  
   PropertyAttributeKind getPropertyAttributes() const {
     return PropertyAttributeKind(PropertyAttributes);
   }

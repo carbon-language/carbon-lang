@@ -1077,7 +1077,11 @@ Parser::DeclTy *Parser::ParseObjCPropertyDynamic(SourceLocation atLoc) {
     return 0;
   }
   while (Tok.is(tok::identifier)) {
-    ConsumeToken(); // consume property name
+    IdentifierInfo *propertyId = Tok.getIdentifierInfo();
+    SourceLocation propertyLoc = ConsumeToken(); // consume property name
+    Actions.ActOnPropertyImplDecl(atLoc, propertyLoc, false, ObjCImpDecl,
+                                  propertyId, 0);
+
     if (Tok.isNot(tok::comma))
       break;
     ConsumeToken(); // consume ','

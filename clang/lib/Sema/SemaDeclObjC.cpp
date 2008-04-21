@@ -952,10 +952,11 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
   if (ObjCImplementationDecl *IC = 
         dyn_cast<ObjCImplementationDecl>(ClassImpDecl)) {
     IDecl = getObjCInterfaceDecl(IC->getIdentifier());
-    if (!IDecl) {
-      Diag(AtLoc, diag::error_missing_property_interface);
-      return 0;
-    }
+    // We always synthesize an interface for an implementation
+    // without an interface decl. So, IDecl is always non-zero.
+    assert(IDecl && 
+           "ActOnPropertyImplDecl - @implementation without @interface");
+    
     // Look for this property declaration in the @implementation's @interface
     property = IDecl->FindPropertyDeclaration(PropertyId);
     if (!property) {
@@ -965,6 +966,10 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
   }
   else if (ObjCCategoryImplDecl* CatImplClass = 
             dyn_cast<ObjCCategoryImplDecl>(ClassImpDecl)) {
+    if (Synthesize) {
+      Diag(AtLoc, diag::error_synthesize_category_decl);
+      return 0;
+    }    
     IDecl = CatImplClass->getClassInterface();
     if (!IDecl) {
       Diag(AtLoc, diag::error_missing_property_interface);
@@ -980,7 +985,7 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     // Look for this property declaration in @implementation's category
     property = Category->FindPropertyDeclaration(PropertyId);
     if (!property) {
-      Diag(PropertyLoc, diag::error_bad_property_decl, 
+      Diag(PropertyLoc, diag::error_bad_category_property_decl, 
            Category->getName());
       return 0;
     }
@@ -998,16 +1003,23 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
       return 0;
     }
     // Check that this is a previously declared 'ivar' in 'IDecl' interface
-    if (!IDecl->FindIvarDeclaration(PropertyIvar)) {
+    ObjCIvarDecl *Ivar = IDecl->FindIvarDeclaration(PropertyIvar);
+    if (!Ivar) {
       Diag(PropertyLoc, diag::error_missing_property_ivar_decl);
       return 0;
     }
+    // Check that type of property and its ivar match. 
+    if (Ivar->getCanonicalType() != property->getCanonicalType()) {
+      Diag(PropertyLoc, diag::error_property_ivar_type, property->getName(),
+           Ivar->getName());
+      return 0;
+    }
+      
   } else if (PropertyIvar) {
     // @dynamic
     Diag(PropertyLoc, diag::error_dynamic_property_ivar_decl);
     return 0;
   }
-  // TODO: More diagnostics go here !!
   assert (property && "ActOnPropertyImplDecl - property declaration missing");
   // TODO: Build the property implementation AST, pushes it into its 
   // class/cateogory implementation's vector of property implementations

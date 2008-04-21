@@ -492,15 +492,21 @@ DIAG(error_missing_property_context, ERROR,
 DIAG(error_bad_property_context, ERROR,
      "property implementation must be in a class or category implementation")
 DIAG(error_bad_property_decl, ERROR,
-     "property implementation must have the declaration in the class '%0'")
+     "property implementation must have its declaration in the class '%0'")
+DIAG(error_bad_category_property_decl, ERROR,
+     "property implementation must have its declaration in the category '%0'")
 DIAG(error_property_ivar_decl, ERROR,
      "property synthesize requires specification of an ivar")
 DIAG(error_dynamic_property_ivar_decl, ERROR,
      "dynamic property can not have ivar specification")
 DIAG(error_missing_property_interface, ERROR,
-     "property implementation in a class/category implementation with no interface")
+     "property implementation in a category with no category declaration")
 DIAG(error_missing_property_ivar_decl, ERROR,
      "property synthesize requires a previously declared ivar")
+DIAG(error_synthesize_category_decl, ERROR,
+     "@synthesize not allowed in a category's implementation")
+DIAG(error_property_ivar_type, ERROR,
+     "type of property '%0'  does not match type of ivar '%1'") 
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis
