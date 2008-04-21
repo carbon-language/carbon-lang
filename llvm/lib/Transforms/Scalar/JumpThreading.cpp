@@ -17,6 +17,7 @@
 #include "llvm/Pass.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
@@ -194,10 +195,21 @@ bool JumpThreading::ThreadBlock(BasicBlock *BB) {
     SuccBB = SI->getSuccessor(SI->findCaseValue(PredCst));
   }
   
-  // TODO: If there are multiple preds with the same incoming value for the PHI,
-  // factor them together so we get one thread block for the whole group.  This
-  // is important for things like "phi i1 [true, true, false, true, x]" where
-  // we only need to clone the block for the true blocks once.
+  // If there are multiple preds with the same incoming value for the PHI,
+  // factor them together so we get one block to thread for the whole group.
+  // This is important for things like "phi i1 [true, true, false, true, x]"
+  // where we only need to clone the block for the true blocks once.
+  SmallVector<BasicBlock*, 16> CommonPreds;
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+    if (PN->getIncomingValue(i) == PredCst)
+      CommonPreds.push_back(PN->getIncomingBlock(i));
+  if (CommonPreds.size() != 1) {
+    DOUT << "  Factoring out " << CommonPreds.size()
+         << " common predecessors.\n";
+    PredBB = SplitBlockPredecessors(BB, &CommonPreds[0], CommonPreds.size(),
+                                    ".thr_comm", this);
+  }
+  
   
   DOUT << "  Threading edge from '" << PredBB->getNameStart() << "' to '"
        << SuccBB->getNameStart() << "' with cost: " << JumpThreadCost
