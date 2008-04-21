@@ -263,17 +263,18 @@ ReprocessLoop:
 /// SplitBlockPredecessors - Split the specified block into two blocks.  We want
 /// to move the predecessors specified in the Preds list to point to the new
 /// block, leaving the remaining predecessors pointing to BB.  This method
-/// updates the SSA PHINode's and AliasAnalysis, but no other analyses.
+/// updates the SSA PHINode's, AliasAnalysis, DominatorTree and
+/// DominanceFrontier, but no other analyses.
 ///
 BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
                                                  const char *Suffix,
                                        const std::vector<BasicBlock*> &Preds) {
 
-  // Create new basic block, insert right before the original block...
+  // Create new basic block, insert right before the original block.
   BasicBlock *NewBB =
     BasicBlock::Create(BB->getName()+Suffix, BB->getParent(), BB);
 
-  // The preheader first gets an unconditional branch to the loop header...
+  // The preheader first gets an unconditional branch to the loop header.
   BranchInst *BI = BranchInst::Create(BB, NewBB);
 
   // For every PHI node in the block, insert a PHI node into NewBB where the
@@ -288,6 +289,11 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
       // Insert dummy values as the incoming value...
       PN->addIncoming(Constant::getNullValue(PN->getType()), NewBB);
     }
+    
+    DT->splitBlock(NewBB);
+    if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>())
+      DF->splitBlock(NewBB);
+    
     return NewBB;
   }
   
@@ -336,7 +342,7 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
       // If I is in NewBB, the Dominator call will fail, because NewBB isn't
       // registered in DominatorTree yet.  Handle this case explicitly.
       if (!I || (I->getParent() != NewBB &&
-                 getAnalysis<DominatorTree>().dominates(I, PN))) {
+                 DT->dominates(I, PN))) {
         PN->replaceAllUsesWith(V);
         if (AA) AA->deleteValue(PN);
         BB->getInstList().erase(PN);
@@ -357,6 +363,10 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
       Preds[i]->setUnwindDest(NewBB);
   }
 
+  DT->splitBlock(NewBB);
+  if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>())
+    DF->splitBlock(NewBB);
+  
   return NewBB;
 }
 
@@ -387,10 +397,6 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
   if (Loop *Parent = L->getParentLoop())
     Parent->addBasicBlockToLoop(NewBB, LI->getBase());
 
-  DT->splitBlock(NewBB);
-  if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>())
-    DF->splitBlock(NewBB);
-
   // Make sure that NewBB is put someplace intelligent, which doesn't mess up
   // code layout too horribly.
   PlaceSplitBlockCarefully(NewBB, OutsideBlocks, L);
@@ -418,11 +424,6 @@ BasicBlock *LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
     SuccLoop = SuccLoop->getParentLoop();
   if (SuccLoop)
     SuccLoop->addBasicBlockToLoop(NewBB, LI->getBase());
-
-  // Update Dominator Information
-  DT->splitBlock(NewBB);
-  if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>())
-    DF->splitBlock(NewBB);
 
   return NewBB;
 }
@@ -542,11 +543,6 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
 
   BasicBlock *Header = L->getHeader();
   BasicBlock *NewBB = SplitBlockPredecessors(Header, ".outer", OuterLoopPreds);
-
-  // Update dominator information
-  DT->splitBlock(NewBB);
-  if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>())
-    DF->splitBlock(NewBB);
 
   // Make sure that NewBB is put someplace intelligent, which doesn't mess up
   // code layout too horribly.
