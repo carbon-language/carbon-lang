@@ -162,7 +162,7 @@ def main(args):
             link_opts.append(arg)
         
         # Options with one argument that should be ignored
-        if arg in ['--param', '-arch', '-u']:
+        if arg in ['--param', '-u']:
             i += 1
 
         # Prefix matches for the compile mode
@@ -175,7 +175,7 @@ def main(args):
             compile_opts.append(arg)
 
         # Options with one argument that should pass through
-        if arg in ['-include', '-isysroot']:
+        if arg in ['-include', '-isysroot', '-arch']:
             compile_opts.append(arg)
             compile_opts.append(args[i+1])
             i += 1
@@ -187,7 +187,7 @@ def main(args):
             link_opts.append(arg)
 
         # Options with one argument that should pass through
-        if arg in ['-framework', '-isysroot']:
+        if arg in ['-framework', '-isysroot', '-arch']:
             link_opts.append(arg)
             link_opts.append(args[i+1])
             i += 1
