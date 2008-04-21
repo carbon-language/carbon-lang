@@ -370,7 +370,7 @@ bool LTOCodeGenerator::generateAssemblyCode(std::ostream& out, std::string& errM
 
     // The IPO passes may leave cruft around.  Clean up after them.
     passes.add(createInstructionCombiningPass());
-
+    passes.add(createJumpThreadingPass());        // Thread jumps.
     passes.add(createScalarReplAggregatesPass()); // Break up allocas
 
     // Run a few AA driven optimizations here and now, to cleanup the code.
@@ -383,6 +383,8 @@ bool LTOCodeGenerator::generateAssemblyCode(std::ostream& out, std::string& errM
 
     // Cleanup and simplify the code after the scalar optimizations.
     passes.add(createInstructionCombiningPass());
+
+    passes.add(createJumpThreadingPass());        // Thread jumps.
 
     // Delete basic blocks, which optimization passes may have killed...
     passes.add(createCFGSimplificationPass());
