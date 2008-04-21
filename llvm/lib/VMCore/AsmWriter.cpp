@@ -1131,7 +1131,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   if (F->isDeclaration()) {
     Out << "\n";
   } else {
-    Out << " {\n";
+    Out << " {";
 
     // Output all of its basic blocks... for the function
     for (Function::const_iterator I = F->begin(), E = F->end(); I != E; ++I)
