@@ -479,6 +479,13 @@ protected:
   ///  other functions that handle specific kinds of statements.
   void Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst);
   
+  /// VisitLVal - Similar to Visit, but the specified expression is assummed
+  ///  to be evaluated under the context where it evaluates to an LVal.  For
+  ///  example, if Ex is a DeclRefExpr, under Visit Ex would evaluate to the
+  ///  value bound to Ex in the symbolic state, while under VisitLVal it would
+  ///  evaluate to an LVal representing the location of the referred Decl.
+  void VisitLVal(Expr* Ex, NodeTy* Pred, NodeSet& Dst);
+  
   /// VisitAsmStmt - Transfer function logic for inline asm.
   void VisitAsmStmt(AsmStmt* A, NodeTy* Pred, NodeSet& Dst);
   
@@ -494,13 +501,40 @@ protected:
   
   /// VisitBinaryOperator - Transfer function logic for binary operators.
   void VisitBinaryOperator(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);
-  
-  void VisitLVal(Expr* Ex, NodeTy* Pred, NodeSet& Dst);
+
   
   /// VisitCall - Transfer function for function calls.
   void VisitCall(CallExpr* CE, NodeTy* Pred,
                  CallExpr::arg_iterator AI, CallExpr::arg_iterator AE,
                  NodeSet& Dst);
+  
+  /// VisitCast - Transfer function logic for all casts (implicit and explicit).
+  void VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst);  
+  
+  /// VisitDeclRefExpr - Transfer function logic for DeclRefExprs.
+  void VisitDeclRefExpr(DeclRefExpr* DR, NodeTy* Pred, NodeSet& Dst); 
+  
+  /// VisitDeclStmt - Transfer function logic for DeclStmts.
+  void VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst); 
+  
+  void VisitDeref(UnaryOperator* U, NodeTy* Pred, NodeSet& Dst,
+                  bool GetLVal = false);
+  
+  void VisitDeref(Expr* Ex, RVal V, ValueState* St, NodeTy* Pred, NodeSet& Dst,
+                  bool GetLVal);
+  
+  /// VisitGuardedExpr - Transfer function logic for ?, __builtin_choose
+  void VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R, NodeTy* Pred, NodeSet& Dst);
+  
+  /// VisitLogicalExpr - Transfer function logic for '&&', '||'
+  void VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);
+  
+  /// VisitMemberExpr - Transfer function for member expressions.
+  void VisitMemberExpr(MemberExpr* M, NodeTy* Pred, NodeSet& Dst, bool asLVal);
+  
+  void VisitMemberExprField(MemberExpr* M, Expr* Base, NodeTy* Pred,
+                            NodeSet& Dst, bool asLVal);
+    
   
   /// VisitObjCMessageExpr - Transfer function for ObjC message expressions.
   void VisitObjCMessageExpr(ObjCMessageExpr* ME, NodeTy* Pred, NodeSet& Dst);
@@ -512,21 +546,6 @@ protected:
   
   void VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME, NodeTy* Pred,
                                           NodeSet& Dst);
-  
-  /// VisitCast - Transfer function logic for all casts (implicit and explicit).
-  void VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst);  
-  
-  /// VisitDeclRefExpr - Transfer function logic for DeclRefExprs.
-  void VisitDeclRefExpr(DeclRefExpr* DR, NodeTy* Pred, NodeSet& Dst); 
-  
-  /// VisitDeclStmt - Transfer function logic for DeclStmts.
-  void VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst); 
-  
-  /// VisitGuardedExpr - Transfer function logic for ?, __builtin_choose
-  void VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R, NodeTy* Pred, NodeSet& Dst);
-  
-  /// VisitLogicalExpr - Transfer function logic for '&&', '||'
-  void VisitLogicalExpr(BinaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
   /// VisitReturnStmt - Transfer function logic for return statements.
   void VisitReturnStmt(ReturnStmt* R, NodeTy* Pred, NodeSet& Dst);
@@ -541,8 +560,8 @@ protected:
   /// VisitUnaryOperator - Transfer function logic for unary operators.
   void VisitUnaryOperator(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst);
   
-  void VisitDeref(UnaryOperator* U, NodeTy* Pred, NodeSet& Dst,
-                  bool GetLVal = false);
+  
+  
   
   RVal EvalCast(RVal X, QualType CastT) {
     if (X.isUnknownOrUndef())
@@ -553,6 +572,8 @@ protected:
     else
       return TF->EvalCast(*this, cast<NonLVal>(X), CastT);
   }
+  
+
   
   RVal EvalMinus(UnaryOperator* U, RVal X) {
     return X.isValid() ? TF->EvalMinus(*this, U, cast<NonLVal>(X)) : X;

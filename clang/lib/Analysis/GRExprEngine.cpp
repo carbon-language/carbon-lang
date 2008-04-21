@@ -285,6 +285,11 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       break;
     }
       
+    case Stmt::MemberExprClass: {
+      VisitMemberExpr(cast<MemberExpr>(S), Pred, Dst, false);
+      break;
+    }
+      
     case Stmt::ObjCMessageExprClass: {
       VisitObjCMessageExpr(cast<ObjCMessageExpr>(S), Pred, Dst);
       break;
@@ -707,6 +712,36 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
   RVal X = RVal::MakeVal(BasicVals, D);
   RVal Y = isa<lval::DeclVal>(X) ? GetRVal(St, cast<lval::DeclVal>(X)) : X;
   MakeNode(Dst, D, Pred, SetBlkExprRVal(St, D, Y));
+}
+
+/// VisitMemberExpr - Transfer function for member expressions.
+void GRExprEngine::VisitMemberExpr(MemberExpr* M, NodeTy* Pred,
+                                   NodeSet& Dst, bool asLVal) {
+  
+  Expr* Base = M->getBase()->IgnoreParens();
+
+  NodeSet Tmp;
+  VisitLVal(Base, Pred, Tmp);
+  
+  if (Base->getType()->isPointerType()) {
+    NodeSet Tmp2;
+    
+    for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
+      ValueState* St = GetState(*I);      
+      VisitDeref(Base, GetRVal(St, Base), St, *I, Tmp2, true);
+    }
+    
+    for (NodeSet::iterator I=Tmp2.begin(), E=Tmp2.end(); I!=E; ++I)
+      VisitMemberExprField(M, Base, *I, Dst, asLVal);
+  }
+  else
+    for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I)
+      VisitMemberExprField(M, Base, *I, Dst, asLVal);
+}
+
+void GRExprEngine::VisitMemberExprField(MemberExpr* M, Expr* Base, NodeTy* Pred,
+                                        NodeSet& Dst, bool asLVal) {
+  Dst.Add(Pred);  
 }
 
 void GRExprEngine::EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred,
@@ -1149,9 +1184,9 @@ void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex,
 
 void GRExprEngine::VisitDeref(UnaryOperator* U, NodeTy* Pred,
                               NodeSet& Dst, bool GetLVal) {
-
+  
   Expr* Ex = U->getSubExpr()->IgnoreParens();
-    
+  
   NodeSet DstTmp;
   
   if (isa<DeclRefExpr>(Ex))
@@ -1160,82 +1195,80 @@ void GRExprEngine::VisitDeref(UnaryOperator* U, NodeTy* Pred,
     Visit(Ex, Pred, DstTmp);
   
   for (NodeSet::iterator I = DstTmp.begin(), DE = DstTmp.end(); I != DE; ++I) {
-
-    NodeTy* N = *I;
-    ValueState* St = GetState(N);
-    
-    // FIXME: Bifurcate when dereferencing a symbolic with no constraints?
-    
+    ValueState* St = GetState(Pred);
     RVal V = GetRVal(St, Ex);
-    
-    // Check for dereferences of undefined values.
-    
-    if (V.isUndef()) {
-      
-      NodeTy* Succ = Builder->generateNode(U, St, N);
-      
-      if (Succ) {
-        Succ->markAsSink();
-        UndefDeref.insert(Succ);
-      }
-      
-      continue;
+    VisitDeref(U, V, St, Pred, Dst, GetLVal);
+  }
+}
+
+void GRExprEngine::VisitDeref(Expr* Ex, RVal V, ValueState* St, NodeTy* Pred,
+                              NodeSet& Dst, bool GetLVal) {
+  
+  // Check for dereferences of undefined values.
+  
+  if (V.isUndef()) {
+    if (NodeTy* Succ = Builder->generateNode(Ex, St, Pred)) {
+      Succ->markAsSink();
+      UndefDeref.insert(Succ);
     }
     
-    // Check for dereferences of unknown values.  Treat as No-Ops.
+    return;
+  }
+  
+  // Check for dereferences of unknown values.  Treat as No-Ops.
+  
+  if (V.isUnknown()) {
+    Dst.Add(Pred);
+    return;
+  }
+  
+  // After a dereference, one of two possible situations arise:
+  //  (1) A crash, because the pointer was NULL.
+  //  (2) The pointer is not NULL, and the dereference works.
+  // 
+  // We add these assumptions.
+  
+  LVal LV = cast<LVal>(V);    
+  bool isFeasibleNotNull;
+  
+  // "Assume" that the pointer is Not-NULL.
+  
+  ValueState* StNotNull = Assume(St, LV, true, isFeasibleNotNull);
+  
+  if (isFeasibleNotNull) {
     
-    if (V.isUnknown()) {
-      Dst.Add(N);
-      continue;
+    if (GetLVal)
+      MakeNode(Dst, Ex, Pred, SetRVal(StNotNull, Ex, LV));
+    else {
+      
+      // FIXME: Currently symbolic analysis "generates" new symbols
+      //  for the contents of values.  We need a better approach.
+      
+      MakeNode(Dst, Ex, Pred,
+               SetRVal(StNotNull, Ex, GetRVal(StNotNull, LV, Ex->getType())));
     }
+  }
+  
+  bool isFeasibleNull;
+  
+  // Now "assume" that the pointer is NULL.
+  
+  ValueState* StNull = Assume(St, LV, false, isFeasibleNull);
+  
+  if (isFeasibleNull) {
     
-    // After a dereference, one of two possible situations arise:
-    //  (1) A crash, because the pointer was NULL.
-    //  (2) The pointer is not NULL, and the dereference works.
-    // 
-    // We add these assumptions.
+    // We don't use "MakeNode" here because the node will be a sink
+    // and we have no intention of processing it later.
     
-    LVal LV = cast<LVal>(V);    
-    bool isFeasibleNotNull;
+    NodeTy* NullNode = Builder->generateNode(Ex, StNull, Pred);
     
-    // "Assume" that the pointer is Not-NULL.
-    
-    ValueState* StNotNull = Assume(St, LV, true, isFeasibleNotNull);
-    
-    if (isFeasibleNotNull) {
-
-      if (GetLVal) MakeNode(Dst, U, N, SetRVal(StNotNull, U, LV));
-      else {
-        
-        // FIXME: Currently symbolic analysis "generates" new symbols
-        //  for the contents of values.  We need a better approach.
+    if (NullNode) {
       
-        MakeNode(Dst, U, N, SetRVal(StNotNull, U,
-                                  GetRVal(StNotNull, LV, U->getType())));
-      }
+      NullNode->markAsSink();
+      
+      if (isFeasibleNotNull) ImplicitNullDeref.insert(NullNode);
+      else ExplicitNullDeref.insert(NullNode);
     }
-    
-    bool isFeasibleNull;
-    
-    // Now "assume" that the pointer is NULL.
-    
-    ValueState* StNull = Assume(St, LV, false, isFeasibleNull);
-    
-    if (isFeasibleNull) {
-      
-      // We don't use "MakeNode" here because the node will be a sink
-      // and we have no intention of processing it later.
-
-      NodeTy* NullNode = Builder->generateNode(U, StNull, N);
-      
-      if (NullNode) {
-
-        NullNode->markAsSink();
-        
-        if (isFeasibleNotNull) ImplicitNullDeref.insert(NullNode);
-        else ExplicitNullDeref.insert(NullNode);
-      }
-    }    
   }
 }
 
@@ -1387,23 +1420,36 @@ void GRExprEngine::VisitSizeOfExpr(UnaryOperator* U, NodeTy* Pred,
 
 void GRExprEngine::VisitLVal(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
 
+  Ex = Ex->IgnoreParens();
+
   if (Ex != CurrentStmt && getCFG().isBlkExpr(Ex)) {
     Dst.Add(Pred);
     return;
   }
   
-  Ex = Ex->IgnoreParens();
-  
-  if (isa<DeclRefExpr>(Ex)) {
-    Dst.Add(Pred);
-    return;
-  }
-  
-  if (UnaryOperator* U = dyn_cast<UnaryOperator>(Ex))
-    if (U->getOpcode() == UnaryOperator::Deref) {
-      VisitDeref(U, Pred, Dst, true);
+  switch (Ex->getStmtClass()) {
+    default:
+      break;
+      
+    case Stmt::DeclRefExprClass:
+      Dst.Add(Pred);
       return;
+      
+    case Stmt::UnaryOperatorClass: {
+      UnaryOperator* U = cast<UnaryOperator>(Ex);
+      
+      if (U->getOpcode() == UnaryOperator::Deref) {
+        VisitDeref(U, Pred, Dst, true);
+        return;
+      }
+      
+      break;
     }
+      
+    case Stmt::MemberExprClass:
+      VisitMemberExpr(cast<MemberExpr>(Ex), Pred, Dst, true);
+      return;
+  }
   
   Visit(Ex, Pred, Dst);
 }
