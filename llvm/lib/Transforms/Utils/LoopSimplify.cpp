@@ -277,6 +277,19 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
   // The preheader first gets an unconditional branch to the loop header.
   BranchInst *BI = BranchInst::Create(BB, NewBB);
 
+  // Move the edges from Preds to point to NewBB instead of BB.
+  for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
+    Preds[i]->getTerminator()->replaceUsesOfWith(BB, NewBB);
+    
+    if (Preds[i]->getUnwindDest() == BB)
+      Preds[i]->setUnwindDest(NewBB);
+  }
+  
+  // Update dominator tree and dominator frontier if available.
+  DT->splitBlock(NewBB);
+  if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>())
+    DF->splitBlock(NewBB);
+  
   // For every PHI node in the block, insert a PHI node into NewBB where the
   // incoming values from the out of loop edges are moved to NewBB.  We have two
   // possible cases here.  If the loop is dead, we just insert dummy entries
@@ -284,15 +297,9 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
   // incoming edges in BB into new PHI nodes in NewBB.
   //
   if (Preds.empty()) {  // Is the loop obviously dead?
-    for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ++I) {
-      PHINode *PN = cast<PHINode>(I);
-      // Insert dummy values as the incoming value...
-      PN->addIncoming(Constant::getNullValue(PN->getType()), NewBB);
-    }
-    
-    DT->splitBlock(NewBB);
-    if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>())
-      DF->splitBlock(NewBB);
+    // Insert dummy values as the incoming value.
+    for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ++I)
+      cast<PHINode>(I)->addIncoming(UndefValue::get(I->getType()), NewBB);
     
     return NewBB;
   }
@@ -339,34 +346,14 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
     // Can we eliminate this phi node now?
     if (Value *V = PN->hasConstantValue(true)) {
       Instruction *I = dyn_cast<Instruction>(V);
-      // If I is in NewBB, the Dominator call will fail, because NewBB isn't
-      // registered in DominatorTree yet.  Handle this case explicitly.
-      if (!I || (I->getParent() != NewBB &&
-                 DT->dominates(I, PN))) {
+      if (!I || DT->dominates(I, PN)) {
         PN->replaceAllUsesWith(V);
         if (AA) AA->deleteValue(PN);
-        BB->getInstList().erase(PN);
+        PN->eraseFromParent();
       }
     }
   }
 
-  // Now that the PHI nodes are updated, actually move the edges from
-  // Preds to point to NewBB instead of BB.
-  //
-  for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
-    TerminatorInst *TI = Preds[i]->getTerminator();
-    for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s)
-      if (TI->getSuccessor(s) == BB)
-        TI->setSuccessor(s, NewBB);
-
-    if (Preds[i]->getUnwindDest() == BB)
-      Preds[i]->setUnwindDest(NewBB);
-  }
-
-  DT->splitBlock(NewBB);
-  if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>())
-    DF->splitBlock(NewBB);
-  
   return NewBB;
 }
 
