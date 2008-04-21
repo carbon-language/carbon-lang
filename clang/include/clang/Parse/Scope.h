@@ -113,7 +113,7 @@ public:
   void AddDecl(Action::DeclTy *D) {
     DeclsInScope.insert(D);
   }
-  
+
   /// isDeclScope - Return true if this is the scope that the specified decl is
   /// declared in.
   bool isDeclScope(Action::DeclTy *D) {

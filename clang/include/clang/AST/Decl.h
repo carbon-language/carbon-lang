@@ -288,8 +288,17 @@ protected:
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
 };
 
-/// FunctionDecl - An instance of this class is created to represent a function
-/// declaration or definition.
+/// FunctionDecl - An instance of this class is created to represent a
+/// function declaration or definition. 
+///
+/// Since a given function can be declared several times in a program,
+/// there may be several FunctionDecls that correspond to that
+/// function. Only one of those FunctionDecls will be found when
+/// traversing the list of declarations in the context of the
+/// FunctionDecl (e.g., the translation unit); this FunctionDecl
+/// contains all of the information known about the function. Other,
+/// previous declarations of the function are available via the
+/// getPreviousDeclaration() chain. 
 class FunctionDecl : public ValueDecl, public DeclContext {
 public:
   enum StorageClass {
@@ -313,13 +322,25 @@ private:
   bool IsInline : 1;
   bool IsImplicit : 1;
   
+  /// PreviousDeclaration - A link to the previous declaration of this
+  /// same function, NULL if this is the first declaration. For
+  /// example, in the following code, the PreviousDeclaration can be
+  /// traversed several times to see all three declarations of the
+  /// function "f", the last of which is also a definition.
+  ///
+  ///   int f(int x, int y = 1);
+  ///   int f(int x = 0, int y);
+  ///   int f(int x, int y) { return x + y; }
+  FunctionDecl *PreviousDeclaration;
+
   FunctionDecl(DeclContext *CD, SourceLocation L,
                IdentifierInfo *Id, QualType T,
                StorageClass S, bool isInline, ScopedDecl *PrevDecl)
     : ValueDecl(Function, CD, L, Id, T, PrevDecl), 
       DeclContext(Function),
       ParamInfo(0), Body(0), DeclChain(0), SClass(S), 
-      IsInline(isInline), IsImplicit(0) {}
+      IsInline(isInline), IsImplicit(0), PreviousDeclaration(0) {}
+
   virtual ~FunctionDecl();
 public:
   static FunctionDecl *Create(ASTContext &C, DeclContext *CD, SourceLocation L,
@@ -327,7 +348,23 @@ public:
                               StorageClass S = None, bool isInline = false, 
                               ScopedDecl *PrevDecl = 0);
   
-  Stmt *getBody() const { return Body; }
+  /// getBody - Retrieve the body (definition) of the function. The
+  /// function body might be in any of the (re-)declarations of this
+  /// function. The variant that accepts a FunctionDecl pointer will
+  /// set that function declaration to the actual declaration
+  /// containing the body (if there is one).
+  Stmt *getBody(const FunctionDecl *&Definition) const;
+  Stmt *getBody() const { 
+    const FunctionDecl* Definition;
+    return getBody(Definition);
+  }
+
+  /// isThisDeclarationADefinition - Returns whether this specific
+  /// declaration of the function is also a definition. This does not
+  /// determine whether the function has been defined (e.g., in a
+  /// previous definition); for that information, use getBody.
+  bool isThisDeclarationADefinition() const { return Body != 0; }
+
   void setBody(Stmt *B) { Body = B; }
   
   bool isImplicit() { return IsImplicit; }
@@ -335,6 +372,12 @@ public:
   
   ScopedDecl *getDeclChain() const { return DeclChain; }
   void setDeclChain(ScopedDecl *D) { DeclChain = D; }
+
+  /// getPreviousDeclaration - Return the previous declaration of this
+  /// function.
+  const FunctionDecl *getPreviousDeclaration() const {
+    return PreviousDeclaration;
+  }
 
   // Iterator access to formal parameters.
   unsigned param_size() const { return getNumParams(); }
@@ -367,7 +410,11 @@ public:
   }
   StorageClass getStorageClass() const { return StorageClass(SClass); }
   bool isInline() const { return IsInline; }
-    
+   
+  /// AddRedeclaration - Adds the function declaration FD as a
+  /// redeclaration of this function.
+  void AddRedeclaration(FunctionDecl *FD);
+ 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Function; }
   static bool classof(const FunctionDecl *D) { return true; }

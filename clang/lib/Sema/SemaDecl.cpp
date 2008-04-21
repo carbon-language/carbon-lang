@@ -256,8 +256,10 @@ static void MergeAttributes(Decl *New, Decl *Old) {
 /// declarator D which has the same name and scope as a previous
 /// declaration 'Old'.  Figure out how to resolve this situation,
 /// merging decls or emitting diagnostics as appropriate.
-///
-FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
+/// Redeclaration will be set true if thisNew is a redeclaration OldD.
+FunctionDecl *
+Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
+  Redeclaration = false;
   // Verify the old decl was also a function.
   FunctionDecl *Old = dyn_cast<FunctionDecl>(OldD);
   if (!Old) {
@@ -267,28 +269,31 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     return New;
   }
   
-  MergeAttributes(New, Old);
-
   QualType OldQType = Context.getCanonicalType(Old->getType());
   QualType NewQType = Context.getCanonicalType(New->getType());
   
   // C++ [dcl.fct]p3:
   //   All declarations for a function shall agree exactly in both the
   //   return type and the parameter-type-list.
-  if (getLangOptions().CPlusPlus && OldQType == NewQType)
+  if (getLangOptions().CPlusPlus && OldQType == NewQType) {
+    MergeAttributes(New, Old);
+    Redeclaration = true;
     return MergeCXXFunctionDecl(New, Old);
+  }
 
   // C: Function types need to be compatible, not identical. This handles
   // duplicate function decls like "void f(int); void f(enum X);" properly.
   if (!getLangOptions().CPlusPlus &&
       Context.functionTypesAreCompatible(OldQType, NewQType)) {
+    MergeAttributes(New, Old);
+    Redeclaration = true;
     return New;
   }
 
   // A function that has already been declared has been redeclared or defined
   // with a different type- show appropriate diagnostic
   diag::kind PrevDiag;
-  if (Old->getBody())
+  if (Old->isThisDeclarationADefinition())
     PrevDiag = diag::err_previous_definition;
   else if (Old->isImplicit())
     PrevDiag = diag::err_previous_implicit_declaration;
@@ -848,8 +853,18 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     // Merge the decl with the existing one if appropriate. Since C functions
     // are in a flat namespace, make sure we consider decls in outer scopes.
     if (PrevDecl) {
-      NewFD = MergeFunctionDecl(NewFD, PrevDecl);
+      bool Redeclaration = false;
+      NewFD = MergeFunctionDecl(NewFD, PrevDecl, Redeclaration);
       if (NewFD == 0) return 0;
+      if (Redeclaration) {
+        // Note that the new declaration is a redeclaration of the
+        // older declaration. Then return the older declaration: the
+        // new one is only kept within the set of previous
+        // declarations for this function.
+        FunctionDecl *OldFD = (FunctionDecl *)PrevDecl;
+        OldFD->AddRedeclaration(NewFD);
+        return OldFD;
+      }
     }
     New = NewFD;
 
@@ -1177,10 +1192,11 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   Decl *PrevDcl = LookupDecl(D.getIdentifier(), Decl::IDNS_Ordinary,
                              GlobalScope);
   if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(PrevDcl)) {
-    if (FD->getBody()) {
+    const FunctionDecl *Definition;
+    if (FD->getBody(Definition)) {
       Diag(D.getIdentifierLoc(), diag::err_redefinition, 
            D.getIdentifier()->getName());
-      Diag(FD->getLocation(), diag::err_previous_definition);
+      Diag(Definition->getLocation(), diag::err_previous_definition);
     }
   }
   Decl *decl = static_cast<Decl*>(ActOnDeclarator(GlobalScope, D, 0));

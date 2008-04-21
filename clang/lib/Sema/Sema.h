@@ -268,7 +268,8 @@ private:
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
                                 ScopedDecl *LastDecl);
   TypedefDecl *MergeTypeDefDecl(TypedefDecl *New, Decl *Old);
-  FunctionDecl *MergeFunctionDecl(FunctionDecl *New, Decl *Old);
+  FunctionDecl *MergeFunctionDecl(FunctionDecl *New, Decl *Old, 
+                                  bool &Redeclaration);
   VarDecl *MergeVarDecl(VarDecl *New, Decl *Old);
   FunctionDecl *MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old);
 

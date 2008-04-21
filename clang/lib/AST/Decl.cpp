@@ -403,6 +403,18 @@ const char *NamedDecl::getName() const {
 FunctionDecl::~FunctionDecl() {
   delete[] ParamInfo;
   delete Body;
+  delete PreviousDeclaration;
+}
+
+Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
+  for (const FunctionDecl *FD = this; FD != 0; FD = FD->PreviousDeclaration) {
+    if (FD->Body) {
+      Definition = FD;
+      return FD->Body;
+    }
+  }
+
+  return 0;
 }
 
 unsigned FunctionDecl::getNumParams() const {
@@ -434,6 +446,71 @@ unsigned FunctionDecl::getMinRequiredArguments() const {
     --NumRequiredArgs;
 
   return NumRequiredArgs;
+}
+
+/// AddRedeclaration - Specifies that this function declaration has been
+/// redeclared by the function declaration FD. FD must be a
+/// redeclaration of this based on the semantics of the language being
+/// translated ("compatible" function types in C, same signatures in
+/// C++). 
+void FunctionDecl::AddRedeclaration(FunctionDecl *FD) {
+  assert(FD->PreviousDeclaration == 0 && 
+         "Redeclaration already has a previous declaration!");
+
+  // Insert FD into the list of previous declarations of this
+  // function.
+  FD->PreviousDeclaration = this->PreviousDeclaration;
+  this->PreviousDeclaration = FD;
+
+  // Swap the contents of this function declaration and FD. This
+  // effectively transforms the original declaration into the most
+  // recent declaration, so that all references to this declaration
+  // remain valid (and have information from *all* declarations),
+  // while retaining all of the information about previous
+  // declarations as well.
+
+  // Swap parameters, so that the most recent parameter names and
+  // exact types (e.g., enum vs int) show up in the original
+  // declaration.
+  ParmVarDecl **thisParamInfo = this->ParamInfo;
+  this->ParamInfo = FD->ParamInfo;
+  FD->ParamInfo = thisParamInfo;
+  
+  // Swap the function body: all declarations share the same function
+  // body, but we keep track of who actually defined that function
+  // body by keeping the pointer to the body stored in that node.
+  Stmt *thisBody = this->Body;
+  this->Body = FD->Body;
+  FD->Body = thisBody;
+
+  // Swap type information: this is important because in C, later
+  // declarations can provide slightly different types (enum vs. int,
+  // for example).
+  QualType thisType = this->getType();
+  this->setType(FD->getType());
+  FD->setType(thisType);
+
+  // Swap location information: this allows us to produce diagnostics
+  // later on that reference the most recent declaration (which has
+  // the most information!) while retaining the location of previous
+  // declarations (good for "redefinition" diagnostics).
+  SourceLocation thisLocation = this->getLocation();
+  this->setLocation(FD->getLocation());
+  FD->setLocation(thisLocation);
+  
+  // Swap attributes. FD will have the union of the attributes from
+  // all previous declarations.
+  if (DeclAttrs) {
+    Attr *thisAttr = (*DeclAttrs)[this];
+    (*DeclAttrs)[this] = (*DeclAttrs)[FD];
+    (*DeclAttrs)[FD] = thisAttr;
+  }
+
+  // If any declaration is inline, the function is inline.
+  this->IsInline |= FD->IsInline;
+
+  // FIXME: Is this the right way to handle storage specifiers?
+  if (FD->SClass) this->SClass = FD->SClass;
 }
 
 //===----------------------------------------------------------------------===//
