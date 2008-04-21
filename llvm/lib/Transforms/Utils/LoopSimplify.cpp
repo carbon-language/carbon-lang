@@ -263,14 +263,15 @@ ReprocessLoop:
 /// SplitBlockPredecessors - Split the specified block into two blocks.  We want
 /// to move the predecessors specified in the Preds list to point to the new
 /// block, leaving the remaining predecessors pointing to BB.  This method
-/// updates the SSA PHINode's, but no other analyses.
+/// updates the SSA PHINode's and AliasAnalysis, but no other analyses.
 ///
 BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
                                                  const char *Suffix,
                                        const std::vector<BasicBlock*> &Preds) {
 
   // Create new basic block, insert right before the original block...
-  BasicBlock *NewBB = BasicBlock::Create(BB->getName()+Suffix, BB->getParent(), BB);
+  BasicBlock *NewBB =
+    BasicBlock::Create(BB->getName()+Suffix, BB->getParent(), BB);
 
   // The preheader first gets an unconditional branch to the loop header...
   BranchInst *BI = BranchInst::Create(BB, NewBB);
@@ -281,78 +282,79 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
   // into the PHI nodes for the new edge.  If the loop is not dead, we move the
   // incoming edges in BB into new PHI nodes in NewBB.
   //
-  if (!Preds.empty()) {  // Is the loop not obviously dead?
-    // Check to see if the values being merged into the new block need PHI
-    // nodes.  If so, insert them.
-    for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ) {
-      PHINode *PN = cast<PHINode>(I);
-      ++I;
-
-      // Check to see if all of the values coming in are the same.  If so, we
-      // don't need to create a new PHI node.
-      Value *InVal = PN->getIncomingValueForBlock(Preds[0]);
-      for (unsigned i = 1, e = Preds.size(); i != e; ++i)
-        if (InVal != PN->getIncomingValueForBlock(Preds[i])) {
-          InVal = 0;
-          break;
-        }
-
-      // If the values coming into the block are not the same, we need a PHI.
-      if (InVal == 0) {
-        // Create the new PHI node, insert it into NewBB at the end of the block
-        PHINode *NewPHI = PHINode::Create(PN->getType(), PN->getName()+".ph", BI);
-        if (AA) AA->copyValue(PN, NewPHI);
-
-        // Move all of the edges from blocks outside the loop to the new PHI
-        for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
-          Value *V = PN->removeIncomingValue(Preds[i], false);
-          NewPHI->addIncoming(V, Preds[i]);
-        }
-        InVal = NewPHI;
-      } else {
-        // Remove all of the edges coming into the PHI nodes from outside of the
-        // block.
-        for (unsigned i = 0, e = Preds.size(); i != e; ++i)
-          PN->removeIncomingValue(Preds[i], false);
-      }
-
-      // Add an incoming value to the PHI node in the loop for the preheader
-      // edge.
-      PN->addIncoming(InVal, NewBB);
-
-      // Can we eliminate this phi node now?
-      if (Value *V = PN->hasConstantValue(true)) {
-        Instruction *I = dyn_cast<Instruction>(V);
-        // If I is in NewBB, the Dominator call will fail, because NewBB isn't
-        // registered in DominatorTree yet.  Handle this case explicitly.
-        if (!I || (I->getParent() != NewBB &&
-                   getAnalysis<DominatorTree>().dominates(I, PN))) {
-          PN->replaceAllUsesWith(V);
-          if (AA) AA->deleteValue(PN);
-          BB->getInstList().erase(PN);
-        }
-      }
-    }
-
-    // Now that the PHI nodes are updated, actually move the edges from
-    // Preds to point to NewBB instead of BB.
-    //
-    for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
-      TerminatorInst *TI = Preds[i]->getTerminator();
-      for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s)
-        if (TI->getSuccessor(s) == BB)
-          TI->setSuccessor(s, NewBB);
-
-      if (Preds[i]->getUnwindDest() == BB)
-        Preds[i]->setUnwindDest(NewBB);
-    }
-
-  } else {                       // Otherwise the loop is dead...
+  if (Preds.empty()) {  // Is the loop obviously dead?
     for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ++I) {
       PHINode *PN = cast<PHINode>(I);
       // Insert dummy values as the incoming value...
       PN->addIncoming(Constant::getNullValue(PN->getType()), NewBB);
     }
+    return NewBB;
+  }
+  
+  // Check to see if the values being merged into the new block need PHI
+  // nodes.  If so, insert them.
+  for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ) {
+    PHINode *PN = cast<PHINode>(I);
+    ++I;
+
+    // Check to see if all of the values coming in are the same.  If so, we
+    // don't need to create a new PHI node.
+    Value *InVal = PN->getIncomingValueForBlock(Preds[0]);
+    for (unsigned i = 1, e = Preds.size(); i != e; ++i)
+      if (InVal != PN->getIncomingValueForBlock(Preds[i])) {
+        InVal = 0;
+        break;
+      }
+
+    // If the values coming into the block are not the same, we need a PHI.
+    if (InVal == 0) {
+      // Create the new PHI node, insert it into NewBB at the end of the block
+      PHINode *NewPHI =
+        PHINode::Create(PN->getType(), PN->getName()+".ph", BI);
+      if (AA) AA->copyValue(PN, NewPHI);
+
+      // Move all of the edges from blocks outside the loop to the new PHI
+      for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
+        Value *V = PN->removeIncomingValue(Preds[i], false);
+        NewPHI->addIncoming(V, Preds[i]);
+      }
+      InVal = NewPHI;
+    } else {
+      // Remove all of the edges coming into the PHI nodes from outside of the
+      // block.
+      for (unsigned i = 0, e = Preds.size(); i != e; ++i)
+        PN->removeIncomingValue(Preds[i], false);
+    }
+
+    // Add an incoming value to the PHI node in the loop for the preheader
+    // edge.
+    PN->addIncoming(InVal, NewBB);
+
+    // Can we eliminate this phi node now?
+    if (Value *V = PN->hasConstantValue(true)) {
+      Instruction *I = dyn_cast<Instruction>(V);
+      // If I is in NewBB, the Dominator call will fail, because NewBB isn't
+      // registered in DominatorTree yet.  Handle this case explicitly.
+      if (!I || (I->getParent() != NewBB &&
+                 getAnalysis<DominatorTree>().dominates(I, PN))) {
+        PN->replaceAllUsesWith(V);
+        if (AA) AA->deleteValue(PN);
+        BB->getInstList().erase(PN);
+      }
+    }
+  }
+
+  // Now that the PHI nodes are updated, actually move the edges from
+  // Preds to point to NewBB instead of BB.
+  //
+  for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
+    TerminatorInst *TI = Preds[i]->getTerminator();
+    for (unsigned s = 0, e = TI->getNumSuccessors(); s != e; ++s)
+      if (TI->getSuccessor(s) == BB)
+        TI->setSuccessor(s, NewBB);
+
+    if (Preds[i]->getUnwindDest() == BB)
+      Preds[i]->setUnwindDest(NewBB);
   }
 
   return NewBB;
