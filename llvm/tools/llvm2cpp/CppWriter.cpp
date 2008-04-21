@@ -1315,7 +1315,7 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
     case Instruction::PHI: {
       const PHINode* phi = cast<PHINode>(I);
 
-      Out << "PHINode* " << iName << " = new PHINode("
+      Out << "PHINode* " << iName << " = PHINode::Create("
           << getCppName(phi->getType()) << ", \"";
       printEscapedString(phi->getName());
       Out << "\", " << bbname << ");";
