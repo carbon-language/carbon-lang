@@ -148,6 +148,8 @@ ObjCPropertyDecl *
     if (property->getIdentifier() == PropertyId)
       return property;
   }
+  if (getSuperClass())
+    return getSuperClass()->FindPropertyDeclaration(PropertyId);
   return 0;
 }
 
@@ -175,6 +177,8 @@ ObjCIvarDecl *
     if (Ivar->getIdentifier() == IvarId)
       return Ivar;
   }
+  if (getSuperClass())
+    return getSuperClass()->FindIvarDeclaration(IvarId);
   return 0;
 }
 
