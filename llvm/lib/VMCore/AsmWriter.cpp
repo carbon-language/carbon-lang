@@ -1164,7 +1164,7 @@ void AssemblyWriter::printArgument(const Argument *Arg,
 ///
 void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   if (BB->hasName())              // Print out the label if it exists...
-    Out << getLLVMName(BB->getName(), LabelPrefix) << ':';
+    Out << '\n' << getLLVMName(BB->getName(), LabelPrefix) << ':';
 
   if (const BasicBlock* unwindDest = BB->getUnwindDest()) {
     if (BB->hasName())
@@ -1175,7 +1175,7 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   }
 
   if (!BB->hasName() && !BB->use_empty()) { // Don't print block # of no uses...
-    Out << "; <label>:";
+    Out << "\n; <label>:";
     int Slot = Machine.getLocalSlot(BB);
     if (Slot != -1)
       Out << Slot;
