@@ -1656,3 +1656,38 @@ extending to the fall through). The register pressure in the loop isn't high
 enough to warrant the spill.
 
 Also check why xmm7 is not used at all in the function.
+
+//===---------------------------------------------------------------------===//
+
+Legalize loses track of the fact that bools are always zero extended when in
+memory.  This causes us to compile abort_gzip (from 164.gzip) from:
+
+target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
+target triple = "i386-apple-darwin8"
+@in_exit.4870.b = internal global i1 false		; <i1*> [#uses=2]
+define fastcc void @abort_gzip() noreturn nounwind  {
+entry:
+	%tmp.b.i = load i1* @in_exit.4870.b		; <i1> [#uses=1]
+	br i1 %tmp.b.i, label %bb.i, label %bb4.i
+bb.i:		; preds = %entry
+	tail call void @exit( i32 1 ) noreturn nounwind 
+	unreachable
+bb4.i:		; preds = %entry
+	store i1 true, i1* @in_exit.4870.b
+	tail call void @exit( i32 1 ) noreturn nounwind 
+	unreachable
+}
+declare void @exit(i32) noreturn nounwind 
+
+into:
+
+_abort_gzip:
+	subl	$12, %esp
+	movb	_in_exit.4870.b, %al
+	notb	%al
+	testb	$1, %al
+	jne	LBB1_2	## bb4.i
+LBB1_1:	## bb.i
+  ...
+
+//===---------------------------------------------------------------------===//
