@@ -211,29 +211,29 @@ TranslationUnitDecl *TranslationUnitDecl::Create(ASTContext &C) {
   return new (Mem) TranslationUnitDecl();
 }
 
-VarDecl *VarDecl::Create(ASTContext &C, DeclContext *CD,
+VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC,
                          SourceLocation L,
                          IdentifierInfo *Id, QualType T,
                          StorageClass S, ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<VarDecl>();
-  return new (Mem) VarDecl(Var, CD, L, Id, T, S, PrevDecl);
+  return new (Mem) VarDecl(Var, DC, L, Id, T, S, PrevDecl);
 }
 
-ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *CD,
+ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation L, IdentifierInfo *Id,
                                  QualType T, StorageClass S,
                                  Expr *DefArg, ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<ParmVarDecl>();
-  return new (Mem) ParmVarDecl(CD, L, Id, T, S, DefArg, PrevDecl);
+  return new (Mem) ParmVarDecl(DC, L, Id, T, S, DefArg, PrevDecl);
 }
 
-FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *CD,
+FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation L, 
                                    IdentifierInfo *Id, QualType T, 
                                    StorageClass S, bool isInline, 
                                    ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<FunctionDecl>();
-  return new (Mem) FunctionDecl(CD, L, Id, T, S, isInline, PrevDecl);
+  return new (Mem) FunctionDecl(DC, L, Id, T, S, isInline, PrevDecl);
 }
 
 FieldDecl *FieldDecl::Create(ASTContext &C, SourceLocation L,
@@ -252,26 +252,26 @@ EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,
   return new (Mem) EnumConstantDecl(CD, L, Id, T, E, V, PrevDecl);
 }
 
-TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *CD,
+TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation L,
                                  IdentifierInfo *Id, QualType T,
                                  ScopedDecl *PD) {
   void *Mem = C.getAllocator().Allocate<TypedefDecl>();
-  return new (Mem) TypedefDecl(CD, L, Id, T, PD);
+  return new (Mem) TypedefDecl(DC, L, Id, T, PD);
 }
 
-EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *CD, SourceLocation L,
+EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                            IdentifierInfo *Id,
                            ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<EnumDecl>();
-  return new (Mem) EnumDecl(CD, L, Id, PrevDecl);
+  return new (Mem) EnumDecl(DC, L, Id, PrevDecl);
 }
 
-RecordDecl *RecordDecl::Create(ASTContext &C, Kind DK, DeclContext *CD,
+RecordDecl *RecordDecl::Create(ASTContext &C, Kind DK, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id,
                                ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<RecordDecl>();
-  return new (Mem) RecordDecl(DK, CD, L, Id, PrevDecl);
+  return new (Mem) RecordDecl(DK, DC, L, Id, PrevDecl);
 }
 
 FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C,

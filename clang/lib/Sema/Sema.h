@@ -258,7 +258,7 @@ private:
                              DeclTy **Elements, unsigned NumElements);
 private:
   /// Set the current declaration context until it gets popped.
-  void PushDeclContext(DeclContext *CD);
+  void PushDeclContext(DeclContext *DC);
   void PopDeclContext();
 
   /// Add this decl to the scope shadowed decl chains.

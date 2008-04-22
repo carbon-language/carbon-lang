@@ -115,7 +115,7 @@ void ScopedDecl::ReadInRec(Deserializer& D, ASTContext& C) {
   D.ReadPtr(Next);                                  // From ScopedDecl.
   Decl *TmpD;
   D.ReadPtr(TmpD);                                  // From ScopedDecl.
-  CtxDecl = cast_or_null<DeclContext>(TmpD);
+  DeclCtx = cast_or_null<DeclContext>(TmpD);
 }
     
   //===------------------------------------------------------------===//

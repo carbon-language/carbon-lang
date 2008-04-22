@@ -82,15 +82,15 @@ class ScopedDecl : public NamedDecl {
   ///
   ScopedDecl *Next;
 
-  DeclContext *CtxDecl;
+  DeclContext *DeclCtx;
 
 protected:
-  ScopedDecl(Kind DK, DeclContext *CD, SourceLocation L,
+  ScopedDecl(Kind DK, DeclContext *DC, SourceLocation L,
              IdentifierInfo *Id, ScopedDecl *PrevDecl)
-    : NamedDecl(DK, L, Id), NextDeclarator(PrevDecl), Next(0), CtxDecl(CD) {}
+    : NamedDecl(DK, L, Id), NextDeclarator(PrevDecl), Next(0), DeclCtx(DC) {}
   
 public:
-  DeclContext *getDeclContext() const { return CtxDecl; }
+  DeclContext *getDeclContext() const { return DeclCtx; }
 
   ScopedDecl *getNext() const { return Next; }
   void setNext(ScopedDecl *N) { Next = N; }
@@ -134,9 +134,9 @@ class ValueDecl : public ScopedDecl {
   QualType DeclType;
 
 protected:
-  ValueDecl(Kind DK, DeclContext *CD, SourceLocation L,
+  ValueDecl(Kind DK, DeclContext *DC, SourceLocation L,
             IdentifierInfo *Id, QualType T, ScopedDecl *PrevDecl) 
-    : ScopedDecl(DK, CD, L, Id, PrevDecl), DeclType(T) {}
+    : ScopedDecl(DK, DC, L, Id, PrevDecl), DeclType(T) {}
 public:
   QualType getType() const { return DeclType; }
   void setType(QualType newType) { DeclType = newType; }
@@ -166,11 +166,11 @@ private:
   
   friend class StmtIteratorBase;
 protected:
-  VarDecl(Kind DK, DeclContext *CD, SourceLocation L, IdentifierInfo *Id, QualType T,
+  VarDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id, QualType T,
           StorageClass SC, ScopedDecl *PrevDecl)
-    : ValueDecl(DK, CD, L, Id, T, PrevDecl), Init(0) { SClass = SC; }
+    : ValueDecl(DK, DC, L, Id, T, PrevDecl), Init(0) { SClass = SC; }
 public:
-  static VarDecl *Create(ASTContext &C, DeclContext *CD,
+  static VarDecl *Create(ASTContext &C, DeclContext *DC,
                          SourceLocation L, IdentifierInfo *Id,
                          QualType T, StorageClass S, ScopedDecl *PrevDecl);
   
@@ -252,14 +252,14 @@ class ParmVarDecl : public VarDecl {
   /// Default argument, if any.  [C++ Only]
   Expr *DefaultArg;
 
-  ParmVarDecl(DeclContext *CD, SourceLocation L,
+  ParmVarDecl(DeclContext *DC, SourceLocation L,
               IdentifierInfo *Id, QualType T, StorageClass S,
               Expr *DefArg, ScopedDecl *PrevDecl)
-    : VarDecl(ParmVar, CD, L, Id, T, S, PrevDecl), 
+    : VarDecl(ParmVar, DC, L, Id, T, S, PrevDecl), 
       objcDeclQualifier(OBJC_TQ_None), DefaultArg(DefArg) {}
 
 public:
-  static ParmVarDecl *Create(ASTContext &C, DeclContext *CD,
+  static ParmVarDecl *Create(ASTContext &C, DeclContext *DC,
                              SourceLocation L,IdentifierInfo *Id,
                              QualType T, StorageClass S, Expr *DefArg,
                              ScopedDecl *PrevDecl);
@@ -333,17 +333,17 @@ private:
   ///   int f(int x, int y) { return x + y; }
   FunctionDecl *PreviousDeclaration;
 
-  FunctionDecl(DeclContext *CD, SourceLocation L,
+  FunctionDecl(DeclContext *DC, SourceLocation L,
                IdentifierInfo *Id, QualType T,
                StorageClass S, bool isInline, ScopedDecl *PrevDecl)
-    : ValueDecl(Function, CD, L, Id, T, PrevDecl), 
+    : ValueDecl(Function, DC, L, Id, T, PrevDecl), 
       DeclContext(Function),
       ParamInfo(0), Body(0), DeclChain(0), SClass(S), 
       IsInline(isInline), IsImplicit(0), PreviousDeclaration(0) {}
 
   virtual ~FunctionDecl();
 public:
-  static FunctionDecl *Create(ASTContext &C, DeclContext *CD, SourceLocation L,
+  static FunctionDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                               IdentifierInfo *Id, QualType T, 
                               StorageClass S = None, bool isInline = false, 
                               ScopedDecl *PrevDecl = 0);
@@ -475,14 +475,14 @@ class EnumConstantDecl : public ValueDecl {
   Expr *Init; // an integer constant expression
   llvm::APSInt Val; // The value.
 protected:
-  EnumConstantDecl(DeclContext *CD, SourceLocation L,
+  EnumConstantDecl(DeclContext *DC, SourceLocation L,
                    IdentifierInfo *Id, QualType T, Expr *E,
                    const llvm::APSInt &V, ScopedDecl *PrevDecl)
-    : ValueDecl(EnumConstant, CD, L, Id, T, PrevDecl), Init(E), Val(V) {}
+    : ValueDecl(EnumConstant, DC, L, Id, T, PrevDecl), Init(E), Val(V) {}
   ~EnumConstantDecl() {}
 public:
 
-  static EnumConstantDecl *Create(ASTContext &C, EnumDecl *CD,
+  static EnumConstantDecl *Create(ASTContext &C, EnumDecl *DC,
                                   SourceLocation L, IdentifierInfo *Id,
                                   QualType T, Expr *E,
                                   const llvm::APSInt &V, ScopedDecl *PrevDecl);
@@ -521,9 +521,9 @@ class TypeDecl : public ScopedDecl {
   Type *TypeForDecl;
   friend class ASTContext;
 protected:
-  TypeDecl(Kind DK, DeclContext *CD, SourceLocation L,
+  TypeDecl(Kind DK, DeclContext *DC, SourceLocation L,
            IdentifierInfo *Id, ScopedDecl *PrevDecl)
-    : ScopedDecl(DK, CD, L, Id, PrevDecl), TypeForDecl(0) {}
+    : ScopedDecl(DK, DC, L, Id, PrevDecl), TypeForDecl(0) {}
 public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -536,13 +536,13 @@ public:
 class TypedefDecl : public TypeDecl {
   /// UnderlyingType - This is the type the typedef is set to.
   QualType UnderlyingType;
-  TypedefDecl(DeclContext *CD, SourceLocation L,
+  TypedefDecl(DeclContext *DC, SourceLocation L,
               IdentifierInfo *Id, QualType T, ScopedDecl *PD) 
-    : TypeDecl(Typedef, CD, L, Id, PD), UnderlyingType(T) {}
+    : TypeDecl(Typedef, DC, L, Id, PD), UnderlyingType(T) {}
   ~TypedefDecl() {}
 public:
   
-  static TypedefDecl *Create(ASTContext &C, DeclContext *CD,
+  static TypedefDecl *Create(ASTContext &C, DeclContext *DC,
                              SourceLocation L,IdentifierInfo *Id,
                              QualType T, ScopedDecl *PD);
   
@@ -571,9 +571,9 @@ class TagDecl : public TypeDecl {
   /// it is a declaration ("struct foo;").
   bool IsDefinition : 1;
 protected:
-  TagDecl(Kind DK, DeclContext *CD, SourceLocation L,
+  TagDecl(Kind DK, DeclContext *DC, SourceLocation L,
           IdentifierInfo *Id, ScopedDecl *PrevDecl)
-    : TypeDecl(DK, CD, L, Id, PrevDecl) {
+    : TypeDecl(DK, DC, L, Id, PrevDecl) {
     IsDefinition = false;
   }
 public:
@@ -614,14 +614,14 @@ class EnumDecl : public TagDecl, public DeclContext {
   /// have a different type than this does.
   QualType IntegerType;
   
-  EnumDecl(DeclContext *CD, SourceLocation L,
+  EnumDecl(DeclContext *DC, SourceLocation L,
            IdentifierInfo *Id, ScopedDecl *PrevDecl)
-    : TagDecl(Enum, CD, L, Id, PrevDecl), DeclContext(Enum) {
+    : TagDecl(Enum, DC, L, Id, PrevDecl), DeclContext(Enum) {
       ElementList = 0;
       IntegerType = QualType();
     }
 public:
-  static EnumDecl *Create(ASTContext &C, DeclContext *CD,
+  static EnumDecl *Create(ASTContext &C, DeclContext *DC,
                           SourceLocation L, IdentifierInfo *Id,
                           ScopedDecl *PrevDecl);
   
@@ -674,8 +674,8 @@ class RecordDecl : public TagDecl {
   FieldDecl **Members;   // Null if not defined.
   int NumMembers;   // -1 if not defined.
   
-  RecordDecl(Kind DK, DeclContext *CD, SourceLocation L, IdentifierInfo *Id, 
-             ScopedDecl *PrevDecl) : TagDecl(DK, CD, L, Id, PrevDecl) {
+  RecordDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id, 
+             ScopedDecl *PrevDecl) : TagDecl(DK, DC, L, Id, PrevDecl) {
     HasFlexibleArrayMember = false;
     assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
     Members = 0;
@@ -683,7 +683,7 @@ class RecordDecl : public TagDecl {
   }
 public:
   
-  static RecordDecl *Create(ASTContext &C, Kind DK, DeclContext *CD,
+  static RecordDecl *Create(ASTContext &C, Kind DK, DeclContext *DC,
                             SourceLocation L, IdentifierInfo *Id,
                             ScopedDecl *PrevDecl);
   

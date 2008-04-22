@@ -42,11 +42,11 @@ Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) {
   return 0;
 }
 
-void Sema::PushDeclContext(DeclContext *CD) {
-  assert( ( (CD->isFunctionOrMethod() && isa<TranslationUnitDecl>(CurContext))
-            || CD->getParent() == CurContext ) &&
+void Sema::PushDeclContext(DeclContext *DC) {
+  assert( ( (DC->isFunctionOrMethod() && isa<TranslationUnitDecl>(CurContext))
+            || DC->getParent() == CurContext ) &&
       "The next DeclContext should be directly contained in the current one.");
-  CurContext = CD;
+  CurContext = DC;
 }
 
 void Sema::PopDeclContext() {
