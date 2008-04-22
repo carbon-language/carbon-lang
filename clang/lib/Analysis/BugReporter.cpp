@@ -232,9 +232,7 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
           
           switch (S->getStmtClass()) {
             default:
-              continue;
-              
-            case Stmt::DefaultStmtClass: {
+            case Stmt::DefaultStmtClass: {              
               
               os << "Control jumps to the 'default' case at line "
                  << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
