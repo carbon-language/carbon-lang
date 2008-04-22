@@ -486,6 +486,10 @@ protected:
   ///  evaluate to an LVal representing the location of the referred Decl.
   void VisitLVal(Expr* Ex, NodeTy* Pred, NodeSet& Dst);
   
+  /// VisitArraySubscriptExpr - Transfer function for array accesses.
+  void VisitArraySubscriptExpr(ArraySubscriptExpr* Ex, NodeTy* Pred,
+                               NodeSet& Dst, bool asLVal);
+  
   /// VisitAsmStmt - Transfer function logic for inline asm.
   void VisitAsmStmt(AsmStmt* A, NodeTy* Pred, NodeSet& Dst);
   
