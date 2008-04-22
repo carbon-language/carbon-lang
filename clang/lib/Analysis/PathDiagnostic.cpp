@@ -31,7 +31,7 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic &Diags,
   
   // Create a PathDiagnostic with a single piece.
   
-  PathDiagnostic D;
+  PathDiagnostic* D = new PathDiagnostic();
   
   // Ripped from TextDiagnostics::FormatDiagnostic.  Perhaps we should
   // centralize it somewhere?
@@ -68,7 +68,7 @@ void PathDiagnosticClient::HandleDiagnostic(Diagnostic &Diags,
     ++Ranges;
   }
   
-  D.push_front(P);
+  D->push_front(P);
 
   HandlePathDiagnostic(D);  
 }

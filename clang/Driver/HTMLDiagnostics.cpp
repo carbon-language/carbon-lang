@@ -39,18 +39,21 @@ class VISIBILITY_HIDDEN HTMLDiagnostics : public PathDiagnosticClient {
   bool createdDir, noDir;
   Preprocessor* PP;
   PreprocessorFactory* PPF;
+  std::vector<const PathDiagnostic*> BatchedDiags;  
 public:
   HTMLDiagnostics(const std::string& prefix, Preprocessor* pp,
                   PreprocessorFactory* ppf);
 
-  virtual ~HTMLDiagnostics() {}
+  virtual ~HTMLDiagnostics();
   
-  virtual void HandlePathDiagnostic(const PathDiagnostic& D);
+  virtual void HandlePathDiagnostic(const PathDiagnostic* D);
   
   void HandlePiece(Rewriter& R, const PathDiagnosticPiece& P,
                    unsigned num, unsigned max);
   
   void HighlightRange(Rewriter& R, SourceRange Range);
+
+  void ReportDiag(const PathDiagnostic& D);
 };
   
 } // end anonymous namespace
@@ -75,10 +78,29 @@ clang::CreateHTMLDiagnosticClient(const std::string& prefix, Preprocessor* PP,
 // Report processing.
 //===----------------------------------------------------------------------===//
 
-void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
-
-  if (D.empty())
+void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic* D) {
+  if (!D)
     return;
+  
+  if (D->empty()) {
+    delete D;
+    return;
+  }
+  
+  BatchedDiags.push_back(D);
+}
+
+HTMLDiagnostics::~HTMLDiagnostics() {
+  
+  while (!BatchedDiags.empty()) {
+    const PathDiagnostic* D = BatchedDiags.back();
+    BatchedDiags.pop_back();
+    ReportDiag(*D);
+    delete D;
+  }  
+}
+
+void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   
   // Create the HTML directory if it is missing.
   
@@ -127,7 +149,13 @@ void HTMLDiagnostics::HandlePathDiagnostic(const PathDiagnostic& D) {
   // for example.
   
   if (PP) html::SyntaxHighlight(R, FileID, *PP);
-  if (PPF) html::HighlightMacros(R, FileID, *PPF);
+
+  // FIXME: We eventually want to use PPF to create a fresh Preprocessor,
+  //  once we have worked out the bugs.
+  //
+  // if (PPF) html::HighlightMacros(R, FileID, *PPF);
+  //
+  if (PP) html::HighlightMacros(R, FileID, *PP);
   
   // Get the full directory name of the analyzed file.
 

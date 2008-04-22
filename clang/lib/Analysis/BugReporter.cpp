@@ -382,52 +382,51 @@ void BugReporter::EmitWarning(BugReport& R) {
   if (R.getBugType().isCached(R))
     return;
 
-  PathDiagnostic D(R.getName());  
-  GeneratePathDiagnostic(D, R);
+  llvm::OwningPtr<PathDiagnostic> D(new PathDiagnostic(R.getName()));
+  GeneratePathDiagnostic(*D.get(), R);
 
   // Emit a full diagnostic for the path if we have a PathDiagnosticClient.
   
-  if (PD && !D.empty()) { 
-    PD->HandlePathDiagnostic(D);
+  if (PD && !D->empty()) { 
+    PD->HandlePathDiagnostic(D.take());
     return;    
   }
   
   // We don't have a PathDiagnosticClient, but we can still emit a single
   // line diagnostic.  Determine the location.
   
-  FullSourceLoc L = D.empty() ? R.getLocation(Ctx.getSourceManager())
-                               : D.back()->getLocation();
+  FullSourceLoc L = D->empty() ? R.getLocation(Ctx.getSourceManager())
+                               : D->back()->getLocation();
   
   
   // Determine the range.
   
   const SourceRange *Beg, *End;
   
-  if (!D.empty()) {
-    Beg = D.back()->ranges_begin();
-    End = D.back()->ranges_end();
+  if (!D->empty()) {
+    Beg = D->back()->ranges_begin();
+    End = D->back()->ranges_end();
   }
   else  
     R.getRanges(Beg, End);
 
   if (PD) {
-    PathDiagnostic D(R.getName());
     PathDiagnosticPiece* piece = new PathDiagnosticPiece(L, R.getDescription());
 
     for ( ; Beg != End; ++Beg)
       piece->addRange(*Beg);
 
-    D.push_back(piece);    
-    PD->HandlePathDiagnostic(D);
+    D->push_back(piece);    
+    PD->HandlePathDiagnostic(D.take());
   }
   else {
     std::ostringstream os;  
     os << "[CHECKER] ";
     
-    if (D.empty())
+    if (D->empty())
       os << R.getDescription();
     else
-      os << D.back()->getString();
+      os << D->back()->getString();
     
     
     unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning,

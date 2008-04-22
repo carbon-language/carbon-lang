@@ -181,7 +181,7 @@ public:
                                 const SourceRange *Ranges, 
                                 unsigned NumRanges);
     
-  virtual void HandlePathDiagnostic(const PathDiagnostic& D) = 0;
+  virtual void HandlePathDiagnostic(const PathDiagnostic* D) = 0;
 };
 
 } //end clang namespace
