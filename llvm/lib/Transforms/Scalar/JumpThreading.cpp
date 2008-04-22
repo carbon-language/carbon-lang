@@ -57,6 +57,8 @@ namespace {
     bool runOnFunction(Function &F);
     bool ThreadBlock(BasicBlock *BB);
     void ThreadEdge(BasicBlock *BB, BasicBlock *PredBB, BasicBlock *SuccBB);
+    
+    bool ProcessJumpOnPHI(PHINode *PN);
   };
   char JumpThreading::ID = 0;
   RegisterPass<JumpThreading> X("jump-threading", "Jump Threading");
@@ -158,8 +160,17 @@ bool JumpThreading::ThreadBlock(BasicBlock *BB) {
 
   // See if this is a phi node in the current block.
   PHINode *PN = dyn_cast<PHINode>(Condition);
-  if (!PN || PN->getParent() != BB) return false;
+  if (PN && PN->getParent() == BB)
+    return ProcessJumpOnPHI(PN);
   
+  return false;
+}
+
+/// ProcessJumpOnPHI - We have a conditional branch of switch on a PHI node in
+/// the current block.  See if there are any simplifications we can do based on
+/// inputs to the phi node.
+/// 
+bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
   // See if the phi node has any constant values.  If so, we can determine where
   // the corresponding predecessor will branch.
   unsigned PredNo = ~0U;
@@ -177,6 +188,7 @@ bool JumpThreading::ThreadBlock(BasicBlock *BB) {
     return false;
   
   // See if the cost of duplicating this block is low enough.
+  BasicBlock *BB = PN->getParent();
   unsigned JumpThreadCost = getJumpThreadDuplicationCost(BB);
   if (JumpThreadCost > Threshold) {
     DOUT << "  Not threading BB '" << BB->getNameStart()
@@ -209,7 +221,6 @@ bool JumpThreading::ThreadBlock(BasicBlock *BB) {
     PredBB = SplitBlockPredecessors(BB, &CommonPreds[0], CommonPreds.size(),
                                     ".thr_comm", this);
   }
-  
   
   DOUT << "  Threading edge from '" << PredBB->getNameStart() << "' to '"
        << SuccBB->getNameStart() << "' with cost: " << JumpThreadCost
