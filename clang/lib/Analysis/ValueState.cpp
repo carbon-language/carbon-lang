@@ -277,12 +277,7 @@ RVal ValueStateManager::GetRVal(ValueState* St, Expr* E) {
           return UnknownVal();
           
         QualType ST = C->getSubExpr()->getType();
-        
-        if (CT == ST || (CT->isPointerType() && ST->isFunctionType())) {
-          E = C->getSubExpr();
-          continue;
-        }
-        
+
         break;
       }
         
@@ -293,11 +288,6 @@ RVal ValueStateManager::GetRVal(ValueState* St, Expr* E) {
         
         if (CT->isVoidType())
           return UnknownVal();
-        
-        if (CT == ST || (CT->isPointerType() && ST->isFunctionType())) {
-          E = C->getSubExpr();
-          continue;
-        }
         
         break;
       }

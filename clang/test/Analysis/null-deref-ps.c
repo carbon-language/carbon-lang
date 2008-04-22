@@ -1,5 +1,7 @@
 // RUN: clang -checker-simple -verify %s
 
+#include<stdint.h>
+
 void f1(int *p) {  
   if (p) *p = 1;
   else *p = 0; // expected-warning{{ereference}}
@@ -27,3 +29,13 @@ int f3(char* x) {
   return x[i+1]; // expected-warning{{Dereference of null pointer.}}
 }
 
+int f4(int *p) {
+  
+  uintptr_t x = p;
+  
+  if (x)
+    return 1;
+    
+  int *q = (int*) x;
+  return *q; // expected-warning{{Dereference of null pointer.}}
+}

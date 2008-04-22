@@ -163,7 +163,8 @@ public:
 
 namespace nonlval {
   
-enum Kind { ConcreteIntKind, SymbolValKind, SymIntConstraintValKind };
+enum Kind { ConcreteIntKind, SymbolValKind, SymIntConstraintValKind,
+            LValAsIntegerKind };
 
 class SymbolVal : public NonLVal {
 public:
@@ -227,6 +228,40 @@ public:
   
   static inline bool classof(const NonLVal* V) {
     return V->getSubKind() == ConcreteIntKind;
+  }
+};
+  
+class LValAsInteger : public NonLVal {
+  LValAsInteger(const std::pair<RVal, unsigned>& data) :
+    NonLVal(LValAsIntegerKind, &data) {}
+  
+public:
+    
+  LVal getLVal() const {
+    return cast<LVal>(((std::pair<RVal, unsigned>*) Data)->first);
+  }
+  
+  const LVal& getPersistentLVal() const {
+    return cast<LVal>(((std::pair<RVal, unsigned>*) Data)->first);
+  }    
+  
+  unsigned getNumBits() const {
+    return ((std::pair<RVal, unsigned>*) Data)->second;
+  }
+  
+  // Implement isa<T> support.
+  static inline bool classof(const RVal* V) {
+    return V->getBaseKind() == NonLValKind &&
+           V->getSubKind() == LValAsIntegerKind;
+  }
+  
+  static inline bool classof(const NonLVal* V) {
+    return V->getSubKind() == LValAsIntegerKind;
+  }
+  
+  static inline LValAsInteger Make(BasicValueFactory& Vals, LVal V,
+                                   unsigned Bits) {    
+    return LValAsInteger(Vals.getPersistentSizedRVal(V, Bits));
   }
 };
   

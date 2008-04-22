@@ -35,6 +35,10 @@ RVal::symbol_iterator RVal::symbol_begin() const {
     
     return (symbol_iterator) &C.getSymbol();
   }
+  else if (isa<nonlval::LValAsInteger>(this)) {
+    const nonlval::LValAsInteger& V = cast<nonlval::LValAsInteger>(*this);
+    return  V.getPersistentLVal().symbol_begin();
+  }
   
   return NULL;
 }
@@ -345,7 +349,14 @@ void NonLVal::print(std::ostream& Out) const {
         Out << 'U';
       
       break;
-    }  
+    }
+    
+    case nonlval::LValAsIntegerKind: {
+      const nonlval::LValAsInteger& C = *cast<nonlval::LValAsInteger>(this);
+      C.getLVal().print(Out);
+      Out << " [as " << C.getNumBits() << " bit integer]";
+      break;
+    }
       
     default:
       assert (false && "Pretty-printed not implemented for this NonLVal.");

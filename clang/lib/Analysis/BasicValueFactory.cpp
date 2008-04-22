@@ -14,8 +14,23 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/PathSensitive/BasicValueFactory.h"
+#include "clang/Analysis/PathSensitive/RValues.h"
 
 using namespace clang;
+
+typedef std::pair<RVal, unsigned> SizedRVal;
+
+namespace llvm {
+template<> struct FoldingSetTrait<SizedRVal> {
+  static inline void Profile(const SizedRVal& X, llvm::FoldingSetNodeID& ID) {
+    X.first.Profile(ID);
+    ID.AddInteger(X.second);
+  }
+};
+}
+
+typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<SizedRVal> >
+  PersistentRValsTy;
 
 BasicValueFactory::~BasicValueFactory() {
   // Note that the dstor for the contents of APSIntSet will never be called,
@@ -23,6 +38,8 @@ BasicValueFactory::~BasicValueFactory() {
   // frees an aux. memory allocated to represent very large constants.
   for (APSIntSetTy::iterator I=APSIntSet.begin(), E=APSIntSet.end(); I!=E; ++I)
     I->getValue().~APSInt();
+  
+  delete (PersistentRValsTy*) PersistentRVals;  
 }
 
 const llvm::APSInt& BasicValueFactory::getValue(const llvm::APSInt& X) {
@@ -164,4 +181,30 @@ BasicValueFactory::EvaluateAPSInt(BinaryOperator::Opcode Op,
     case BinaryOperator::Xor:
       return &getValue( V1 ^ V2 );
   }
+}
+
+
+const std::pair<RVal, unsigned>&
+BasicValueFactory::getPersistentSizedRVal(const RVal& V, unsigned Bits) {
+  
+  // Lazily create the folding set.
+  if (!PersistentRVals) PersistentRVals = new PersistentRValsTy();
+    
+  llvm::FoldingSetNodeID ID;
+  void* InsertPos;
+  V.Profile(ID);
+  ID.AddInteger(Bits);
+  
+  PersistentRValsTy& Map = *((PersistentRValsTy*) PersistentRVals);
+  
+  typedef llvm::FoldingSetNodeWrapper<SizedRVal> FoldNodeTy;
+  FoldNodeTy* P = Map.FindNodeOrInsertPos(ID, InsertPos);
+  
+  if (!P) {  
+    P = (FoldNodeTy*) BPAlloc.Allocate<FoldNodeTy>();
+    new (P) FoldNodeTy(std::make_pair(V, Bits));
+    Map.InsertNode(P, InsertPos);
+  }
+
+  return *P;
 }

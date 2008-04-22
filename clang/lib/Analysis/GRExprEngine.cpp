@@ -1102,10 +1102,8 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
   else
     Visit(Ex, Pred, S1);
   
-  // Check for redundant casts or casting to "void"
-  if (T->isVoidType() ||
-      Ex->getType() == T || 
-      (T->isPointerType() && Ex->getType()->isFunctionType())) {
+  // Check for casting to "void".
+  if (T->isVoidType()) {
     
     for (NodeSet::iterator I1 = S1.begin(), E1 = S1.end(); I1 != E1; ++I1)
       Dst.Add(*I1);
@@ -1113,11 +1111,54 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
     return;
   }
   
+  // FIXME: The rest of this should probably just go into EvalCall, and
+  //   let the transfer function object be responsible for constructing
+  //   nodes.
+  
+  QualType ExTy = Ex->getType();
+  
   for (NodeSet::iterator I1 = S1.begin(), E1 = S1.end(); I1 != E1; ++I1) {
     NodeTy* N = *I1;
     ValueState* St = GetState(N);
-    
     RVal V = T->isReferenceType() ? GetLVal(St, Ex) : GetRVal(St, Ex);
+
+    // Unknown?
+    
+    if (V.isUnknown()) {
+      Dst.Add(N);
+      continue;
+    }
+    
+    // Undefined?
+    
+    if (V.isUndef()) {
+      MakeNode(Dst, CastE, N, SetRVal(St, CastE, V));
+      continue;
+    }
+  
+    // Check for casts from pointers to integers.
+    if (T->isIntegerType() && ExTy->isPointerType()) {
+      unsigned bits = getContext().getTypeSize(ExTy);
+    
+      // FIXME: Determine if the number of bits of the target type is 
+      // equal or exceeds the number of bits to store the pointer value.
+      // If not, flag an error.
+      
+      V = nonlval::LValAsInteger::Make(BasicVals, cast<LVal>(V), bits);
+      MakeNode(Dst, CastE, N, SetRVal(St, CastE, V));
+      continue;
+    }
+    
+    // Check for casts from integers to pointers.
+    if (T->isPointerType() && ExTy->isIntegerType())
+      if (nonlval::LValAsInteger *LV = dyn_cast<nonlval::LValAsInteger>(&V)) {
+        // Just unpackage the lval and return it.
+        V = LV->getLVal();
+        MakeNode(Dst, CastE, N, SetRVal(St, CastE, V));
+        continue;
+      }
+    
+    // All other cases.
     
     MakeNode(Dst, CastE, N, SetRVal(St, CastE, EvalCast(V, CastE->getType())));
   }
@@ -2023,6 +2064,11 @@ ValueState* GRExprEngine::AssumeAux(ValueState* St, NonLVal Cond,
       bool b = cast<nonlval::ConcreteInt>(Cond).getValue() != 0;
       isFeasible = b ? Assumption : !Assumption;      
       return St;
+    }
+      
+    case nonlval::LValAsIntegerKind: {
+      return AssumeAux(St, cast<nonlval::LValAsInteger>(Cond).getLVal(),
+                       Assumption, isFeasible);
     }
   }
 }

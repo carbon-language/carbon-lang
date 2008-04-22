@@ -27,22 +27,26 @@ namespace llvm {
 
 namespace clang {
   
+class RVal;
+  
 class BasicValueFactory {
   typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<llvm::APSInt> >
           APSIntSetTy;
 
   typedef llvm::FoldingSet<SymIntConstraint>
           SymIntCSetTy;
+  
 
   ASTContext& Ctx;
   llvm::BumpPtrAllocator& BPAlloc;
 
   APSIntSetTy   APSIntSet;
   SymIntCSetTy  SymIntCSet;
+  void*         PersistentRVals;
 
 public:
   BasicValueFactory(ASTContext& ctx, llvm::BumpPtrAllocator& Alloc) 
-  : Ctx(ctx), BPAlloc(Alloc) {}
+  : Ctx(ctx), BPAlloc(Alloc), PersistentRVals(0) {}
 
   ~BasicValueFactory();
 
@@ -66,6 +70,9 @@ public:
   const llvm::APSInt* EvaluateAPSInt(BinaryOperator::Opcode Op,
                                      const llvm::APSInt& V1,
                                      const llvm::APSInt& V2);
+  
+  const std::pair<RVal, unsigned>&
+  getPersistentSizedRVal(const RVal& V, unsigned Bits);
 };
 
 } // end clang namespace
