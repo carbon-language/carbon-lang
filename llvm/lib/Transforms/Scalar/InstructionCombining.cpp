@@ -4950,7 +4950,6 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
 /// 
 static Value *EvaluateGEPOffsetExpression(User *GEP, Instruction &I,
                                           InstCombiner &IC) {
-//  return 0;
   TargetData &TD = IC.getTargetData();
   gep_type_iterator GTI = gep_type_begin(GEP);
 
