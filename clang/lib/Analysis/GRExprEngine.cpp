@@ -1164,74 +1164,104 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
   }
 }
 
-void GRExprEngine::VisitDeclStmt(DeclStmt* DS, GRExprEngine::NodeTy* Pred,
-                                 GRExprEngine::NodeSet& Dst) {
+void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {  
+  VisitDeclStmtAux(DS, DS->getDecl(), Pred, Dst);
+}
+
+void GRExprEngine::VisitDeclStmtAux(DeclStmt* DS, ScopedDecl* D,
+                                    NodeTy* Pred, NodeSet& Dst) {
+
+  if (!D)
+    return;
   
-  ValueState* St = GetState(Pred);
+  if (!isa<VarDecl>(D)) {
+    VisitDeclStmtAux(DS, D->getNextDeclarator(), Pred, Dst);
+    return;
+  }
   
-  for (const ScopedDecl* D = DS->getDecl(); D; D = D->getNextDeclarator())
-    if (const VarDecl* VD = dyn_cast<VarDecl>(D)) {
+  const VarDecl* VD = dyn_cast<VarDecl>(D);
+  
+  // FIXME: Add support for local arrays.
+  if (VD->getType()->isArrayType()) {
+    VisitDeclStmtAux(DS, D->getNextDeclarator(), Pred, Dst);
+    return;
+  }
+  
+  Expr* Ex = const_cast<Expr*>(VD->getInit());
+
+  // FIXME: static variables may have an initializer, but the second
+  //  time a function is called those values may not be current.
+  NodeSet Tmp;
+
+  if (Ex) Visit(Ex, Pred, Tmp);
+  if (Tmp.empty()) Tmp.Add(Pred);
+  
+  for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
       
-      // FIXME: Add support for local arrays.
-      if (VD->getType()->isArrayType())
-        continue;
+    ValueState* St = GetState(*I);
+
+    if (!Ex && VD->hasGlobalStorage()) {
       
-      const Expr* Ex = VD->getInit();
+      // Handle variables with global storage and no initializers.
       
-      if (!VD->hasGlobalStorage() || VD->getStorageClass() == VarDecl::Static) {
+      // FIXME: static variables may have an initializer, but the second
+      //  time a function is called those values may not be current.
+      
+      
+      // In this context, Static => Local variable.
+      
+      assert (!VD->getStorageClass() == VarDecl::Static ||
+              !VD->isFileVarDecl());
+      
+      // If there is no initializer, set the value of the
+      // variable to "Undefined".
+      
+      if (VD->getStorageClass() == VarDecl::Static) {
+          
+        // C99: 6.7.8 Initialization
+        //  If an object that has static storage duration is not initialized
+        //  explicitly, then: 
+        //   —if it has pointer type, it is initialized to a null pointer; 
+        //   —if it has arithmetic type, it is initialized to (positive or 
+        //     unsigned) zero; 
         
-        // In this context, Static => Local variable.
-        
-        assert (!VD->getStorageClass() == VarDecl::Static ||
-                !VD->isFileVarDecl());
-        
-        // If there is no initializer, set the value of the
-        // variable to "Undefined".
-        //
-        // FIXME: static variables may have an initializer, but the second
-        //  time a function is called those values may not be current.
+        // FIXME: Handle structs.  Now we treat their values as unknown.
 
         QualType T = VD->getType();
         
-        if ( VD->getStorageClass() == VarDecl::Static) {
+        if (T->isPointerType())          
+          St = SetRVal(St, lval::DeclVal(VD),
+                       lval::ConcreteInt(BasicVals.getValue(0, T)));
+        else if (T->isIntegerType())
+          St = SetRVal(St, lval::DeclVal(VD),
+                       nonlval::ConcreteInt(BasicVals.getValue(0, T)));          
           
-          // C99: 6.7.8 Initialization
-          //  If an object that has static storage duration is not initialized
-          //  explicitly, then: 
-          //   —if it has pointer type, it is initialized to a null pointer; 
-          //   —if it has arithmetic type, it is initialized to (positive or 
-          //     unsigned) zero; 
-          
-          // FIXME: Handle structs.  Now we treat their values as unknown.
-          
-          if (T->isPointerType()) {
-            
-            St = SetRVal(St, lval::DeclVal(VD),
-                         lval::ConcreteInt(BasicVals.getValue(0, T)));
-          }
-          else if (T->isIntegerType()) {
-            
-            St = SetRVal(St, lval::DeclVal(VD),
-                         nonlval::ConcreteInt(BasicVals.getValue(0, T)));
-          }
-          
-
-        }
-        else {
-          
-          // FIXME: Handle structs.  Now we treat them as unknown.  What
-          //  we need to do is treat their members as unknown.
-          
-          if (T->isPointerType() || T->isIntegerType())
-            St = SetRVal(St, lval::DeclVal(VD),
-                         Ex ? GetRVal(St, Ex) : UndefinedVal());
-        }
+        // FIXME: Handle structs.  Now we treat them as unknown.  What
+        //  we need to do is treat their members as unknown.
       }
     }
+    else {
+      
+      // FIXME: Handle structs.  Now we treat them as unknown.  What
+      //  we need to do is treat their members as unknown.
 
-  MakeNode(Dst, DS, Pred, St);
+      QualType T = VD->getType();
+
+      if (T->isPointerType() || T->isIntegerType())
+        St = SetRVal(St, lval::DeclVal(VD),
+                     Ex ? GetRVal(St, Ex) : UndefinedVal());
+    }
+
+    // Create a new node.  We don't really need to create a new NodeSet
+    // here, but it simplifies things and doesn't cost much.
+    NodeSet Tmp2;    
+    MakeNode(Tmp2, DS, *I, St);
+    if (Tmp2.empty()) Tmp2.Add(*I);
+    
+    for (NodeSet::iterator I2=Tmp2.begin(), E2=Tmp2.end(); I2!=E2; ++I2)
+      VisitDeclStmtAux(DS, D->getNextDeclarator(), *I2, Dst);
+  }
 }
-
 
 
 /// VisitSizeOfAlignOfTypeExpr - Transfer function for sizeof(type).

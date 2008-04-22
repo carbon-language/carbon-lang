@@ -521,6 +521,9 @@ protected:
   /// VisitDeclStmt - Transfer function logic for DeclStmts.
   void VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst); 
   
+  void VisitDeclStmtAux(DeclStmt* DS, ScopedDecl* D,
+                        NodeTy* Pred, NodeSet& Dst);
+  
   void VisitDeref(UnaryOperator* U, NodeTy* Pred, NodeSet& Dst,
                   bool GetLVal = false);
   
