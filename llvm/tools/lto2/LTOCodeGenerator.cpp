@@ -377,6 +377,7 @@ bool LTOCodeGenerator::generateAssemblyCode(std::ostream& out, std::string& errM
     passes.add(createGlobalsModRefPass());      // IP alias analysis
 
     passes.add(createLICMPass());               // Hoist loop invariants
+    passes.add(createMemCpyOptPass());  // Remove dead memcpy's
     passes.add(createGVNPass());               // Remove common subexprs
     passes.add(createDeadStoreEliminationPass()); // Nuke dead stores
 
