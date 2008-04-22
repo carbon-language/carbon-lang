@@ -882,6 +882,10 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
           case 5:
             if (!memcmp(s, "panic", 5)) Builder->BuildSinks = true;
             break;
+          
+          case 6:
+            if (!memcmp(s, "Assert", 6)) Builder->BuildSinks = true;
+            break;
         }
       }
     }
