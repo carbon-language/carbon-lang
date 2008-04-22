@@ -218,6 +218,10 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
       
       Dst.Add(Pred); // No-op. Simply propagate the current state unchanged.
       break;
+    
+    case Stmt::ArraySubscriptExprClass:
+      VisitArraySubscriptExpr(cast<ArraySubscriptExpr>(S), Pred, Dst, false);
+      break;
       
     case Stmt::AsmStmtClass:
       VisitAsmStmt(cast<AsmStmt>(S), Pred, Dst);
@@ -296,7 +300,7 @@ void GRExprEngine::Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst) {
     }
       
     case Stmt::ParenExprClass:
-      Visit(cast<ParenExpr>(S)->getSubExpr(), Pred, Dst);
+      Visit(cast<ParenExpr>(S)->getSubExpr()->IgnoreParens(), Pred, Dst);
       break;
       
     case Stmt::SizeOfAlignOfTypeExprClass:
@@ -712,6 +716,32 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst){
   RVal X = RVal::MakeVal(BasicVals, D);
   RVal Y = isa<lval::DeclVal>(X) ? GetRVal(St, cast<lval::DeclVal>(X)) : X;
   MakeNode(Dst, D, Pred, SetBlkExprRVal(St, D, Y));
+}
+
+/// VisitArraySubscriptExpr - Transfer function for array accesses
+void GRExprEngine::VisitArraySubscriptExpr(ArraySubscriptExpr* A, NodeTy* Pred,
+                                           NodeSet& Dst, bool asLVal) {
+  
+  Expr* Base = A->getBase()->IgnoreParens();
+  
+  // Evaluate the base.  
+  NodeSet Tmp1;
+  Visit(Base, Pred, Tmp1);
+  
+  // Dereference the base.
+  NodeSet Tmp2;
+
+  for (NodeSet::iterator I=Tmp1.begin(), E=Tmp1.end(); I!=E; ++I) {
+    ValueState* St = GetState(*I);
+    VisitDeref(Base, GetRVal(St, Base), St, *I, Tmp2, true);
+  }
+  
+  // Get the index.
+  Tmp1.clear();
+  Expr* Index = A->getIdx()->IgnoreParens();
+  
+  for (NodeSet::iterator I=Tmp2.begin(), E=Tmp2.end(); I!=E; ++I)
+    Visit(Index, *I, Dst);
 }
 
 /// VisitMemberExpr - Transfer function for member expressions.
@@ -1431,6 +1461,10 @@ void GRExprEngine::VisitLVal(Expr* Ex, NodeTy* Pred, NodeSet& Dst) {
     default:
       break;
       
+    case Stmt::ArraySubscriptExprClass:
+      VisitArraySubscriptExpr(cast<ArraySubscriptExpr>(Ex), Pred, Dst, true);
+      return;
+
     case Stmt::DeclRefExprClass:
       Dst.Add(Pred);
       return;
