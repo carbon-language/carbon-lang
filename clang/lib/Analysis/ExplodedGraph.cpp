@@ -82,8 +82,8 @@ ExplodedNodeImpl** ExplodedNodeImpl::NodeGroup::end() const {
     return (ExplodedNodeImpl**) (getPtr() ? &P+1 : NULL);
   else {
     // Dereferencing end() is undefined behaviour. The vector is not empty, so
-    // we can dereference the last elem (end()-1) and then add 1 to the result.
-    return const_cast<ExplodedNodeImpl**>(&*(getVector(getPtr()).end()-1)) + 1;
+    // we can dereference the last elem and then add 1 to the result.
+    return const_cast<ExplodedNodeImpl**>(&getVector(getPtr()).back()) + 1;
   }
 }
 
