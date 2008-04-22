@@ -52,6 +52,11 @@ namespace {
   cl::opt<bool>
   DisableCoreFiles("disable-core-files", cl::Hidden,
                    cl::desc("Disable emission of core files if possible"));
+
+  cl::opt<bool>
+  NoLazyCompilation("no-lazy",
+                  cl::desc("Disable JIT lazy compilation"),
+                  cl::init(false));
 }
 
 static ExecutionEngine *EE = 0;
@@ -76,8 +81,8 @@ int main(int argc, char **argv, char * const *envp) {
   
   // Load the bitcode...
   std::string ErrorMsg;
-  ModuleProvider *MP = 0;
-  if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFile,&ErrorMsg)){
+  ModuleProvider *MP = NULL;
+  if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFile,&ErrorMsg)) {
     MP = getBitcodeModuleProvider(Buffer, &ErrorMsg);
     if (!MP) delete Buffer;
   }
@@ -89,17 +94,26 @@ int main(int argc, char **argv, char * const *envp) {
   }
 
   // Get the module as the MP could go away once EE takes over.
-  Module *Mod = MP->getModule();
+  Module *Mod = NoLazyCompilation
+    ? MP->materializeModule(&ErrorMsg) : MP->getModule();
+  if (!Mod) {
+    std::cerr << argv[0] << ": bitcode didn't read correctly.\n";
+    std::cerr << "Reason: " << ErrorMsg << "\n";
+    exit(1);
+  }
 
   // If we are supposed to override the target triple, do so now.
   if (!TargetTriple.empty())
     Mod->setTargetTriple(TargetTriple);
-  
+
   EE = ExecutionEngine::create(MP, ForceInterpreter, &ErrorMsg);
   if (!EE && !ErrorMsg.empty()) {
     std::cerr << argv[0] << ":error creating EE: " << ErrorMsg << "\n";
     exit(1);
   }
+
+  if (NoLazyCompilation)
+    EE->DisableLazyCompilation();
 
   // If the user specifically requested an argv[0] to pass into the program,
   // do it now.
@@ -120,8 +134,8 @@ int main(int argc, char **argv, char * const *envp) {
   // using the contents of Args to determine argc & argv, and the contents of
   // EnvVars to determine envp.
   //
-  Function *Fn = Mod->getFunction("main");
-  if (!Fn) {
+  Function *MainFn = Mod->getFunction("main");
+  if (!MainFn) {
     std::cerr << "'main' function not found in module.\n";
     return -1;
   }
@@ -136,9 +150,17 @@ int main(int argc, char **argv, char * const *envp) {
  
   // Run static constructors.
   EE->runStaticConstructorsDestructors(false);
-  
+
+  if (NoLazyCompilation) {
+    for (Module::iterator I = Mod->begin(), E = Mod->end(); I != E; ++I) {
+      Function *Fn = &*I;
+      if (Fn != MainFn && !Fn->isDeclaration())
+        EE->getPointerToFunction(Fn);
+    }
+  }
+
   // Run main.
-  int Result = EE->runFunctionAsMain(Fn, InputArgv, envp);
+  int Result = EE->runFunctionAsMain(MainFn, InputArgv, envp);
 
   // Run static destructors.
   EE->runStaticConstructorsDestructors(true);
