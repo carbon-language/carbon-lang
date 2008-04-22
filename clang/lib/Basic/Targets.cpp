@@ -804,7 +804,16 @@ public:
     NumAliases = 0;
   }
   virtual bool validateAsmConstraint(char c,
-                                     TargetInfo::ConstraintInfo &Info) const {
+                                     TargetInfo::ConstraintInfo &info) const {
+    switch (c) {
+    default: 
+    case 'l': // r0-r7
+    case 'h': // r8-r15
+    case 'w': // VFP Floating point register single precision
+    case 'P': // VFP Floating point register double precision
+      info = (TargetInfo::ConstraintInfo)(info|TargetInfo::CI_AllowsRegister);
+      return true;
+    }
     return false;
   }
   virtual const char *getClobbers() const {
