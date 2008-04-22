@@ -330,8 +330,8 @@ LTO::optimize(Module *M, std::ostream &Out,
   Passes.add(createGlobalsModRefPass());      // IP alias analysis
   
   Passes.add(createLICMPass());               // Hoist loop invariants
-  Passed.add(createMemCpyOptPass());  // Remove dead memcpy's
   Passes.add(createGVNPass());               // Remove common subexprs
+  Passed.add(createMemCpyOptPass());  // Remove dead memcpy's
   Passes.add(createDeadStoreEliminationPass()); // Nuke dead stores
 
   // Cleanup and simplify the code after the scalar optimizations.
