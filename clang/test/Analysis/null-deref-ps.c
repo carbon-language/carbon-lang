@@ -16,3 +16,14 @@ int f2(struct foo_struct* p) {
     
   return p->x++; // expected-warning{{Dereference of null pointer.}}
 }
+
+int f3(char* x) {
+  
+  int i = 2;
+  
+  if (x)
+    return x[i - 1];
+  
+  return x[i+1]; // expected-warning{{Dereference of null pointer.}}
+}
+
