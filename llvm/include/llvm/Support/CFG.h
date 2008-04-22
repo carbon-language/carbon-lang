@@ -53,13 +53,16 @@ public:
 
   inline pointer operator*() const {
     assert(!It.atEnd() && "pred_iterator out of range!");
-    return cast<TerminatorInst>(*It)->getParent();
+    if (isa<TerminatorInst>(*It))      // not dyn_cast due to const-correctness
+      return cast<TerminatorInst>(*It)->getParent();
+
+    return cast<_Ptr>(*It);
   }
   inline pointer *operator->() const { return &(operator*()); }
 
   inline _Self& operator++() {   // Preincrement
     assert(!It.atEnd() && "pred_iterator out of range!");
-    ++It; advancePastNonTerminators();
+    ++It; advancePastNonPreds();
     return *this;
   }
 
@@ -103,6 +106,8 @@ public:
   inline SuccIterator(Term_ T, bool)                       // end iterator
     : Term(T), idx(Term->getNumSuccessors()) {
     assert(T && "getTerminator returned null!");
+    if (Term->getParent()->getUnwindDest())
+      ++idx;
   }
 
   inline const _Self &operator=(const _Self &I) {
@@ -118,7 +123,12 @@ public:
   inline bool operator==(const _Self& x) const { return idx == x.idx; }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
 
-  inline pointer operator*() const { return Term->getSuccessor(idx); }
+  inline pointer operator*() const {
+    if (idx == Term->getNumSuccessors())
+      return Term->getParent()->getUnwindDest();
+
+    return Term->getSuccessor(idx);
+  }
   inline pointer operator->() const { return operator*(); }
 
   inline _Self& operator++() { ++idx; return *this; } // Preincrement
