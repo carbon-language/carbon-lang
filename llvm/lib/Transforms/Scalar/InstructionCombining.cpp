@@ -4873,7 +4873,7 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
   Value *Result = Constant::getNullValue(IntPtrTy);
 
   // Build a mask for high order bits.
-  unsigned IntPtrWidth = TD.getPointerSize()*8;
+  unsigned IntPtrWidth = TD.getPointerSizeInBits();
   uint64_t PtrSizeMask = ~0ULL >> (64-IntPtrWidth);
 
   for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i, ++GTI) {
@@ -4937,6 +4937,114 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
   return Result;
 }
 
+
+/// EvaluateGEPOffsetExpression - Return an value that can be used to compare of
+/// the *offset* implied by GEP to zero.  For example, if we have &A[i], we want
+/// to return 'i' for "icmp ne i, 0".  Note that, in general, indices can be
+/// complex, and scales are involved.  The above expression would also be legal
+/// to codegen as "icmp ne (i*4), 0" (assuming A is a pointer to i32).  This
+/// later form is less amenable to optimization though, and we are allowed to
+/// generate the first by knowing that pointer arithmetic doesn't overflow.
+///
+/// If we can't emit an optimized form for this expression, this returns null.
+/// 
+static Value *EvaluateGEPOffsetExpression(User *GEP, Instruction &I,
+                                          InstCombiner &IC) {
+//  return 0;
+  TargetData &TD = IC.getTargetData();
+  gep_type_iterator GTI = gep_type_begin(GEP);
+
+  // Check to see if this gep only has a single variable index.  If so, and if
+  // any constant indices are a multiple of its scale, then we can compute this
+  // in terms of the scale of the variable index.  For example, if the GEP
+  // implies an offset of "12 + i*4", then we can codegen this as "3 + i",
+  // because the expression will cross zero at the same point.
+  unsigned i, e = GEP->getNumOperands();
+  int64_t Offset = 0;
+  for (i = 1; i != e; ++i, ++GTI) {
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(GEP->getOperand(i))) {
+      // Compute the aggregate offset of constant indices.
+      if (CI->isZero()) continue;
+
+      // Handle a struct index, which adds its field offset to the pointer.
+      if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
+        Offset += TD.getStructLayout(STy)->getElementOffset(CI->getZExtValue());
+      } else {
+        uint64_t Size = TD.getABITypeSize(GTI.getIndexedType());
+        Offset += Size*CI->getSExtValue();
+      }
+    } else {
+      // Found our variable index.
+      break;
+    }
+  }
+  
+  // If there are no variable indices, we must have a constant offset, just
+  // evaluate it the general way.
+  if (i == e) return 0;
+  
+  Value *VariableIdx = GEP->getOperand(i);
+  // Determine the scale factor of the variable element.  For example, this is
+  // 4 if the variable index is into an array of i32.
+  uint64_t VariableScale = TD.getABITypeSize(GTI.getIndexedType());
+  
+  // Verify that there are no other variable indices.  If so, emit the hard way.
+  for (++i, ++GTI; i != e; ++i, ++GTI) {
+    ConstantInt *CI = dyn_cast<ConstantInt>(GEP->getOperand(i));
+    if (!CI) return 0;
+   
+    // Compute the aggregate offset of constant indices.
+    if (CI->isZero()) continue;
+    
+    // Handle a struct index, which adds its field offset to the pointer.
+    if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
+      Offset += TD.getStructLayout(STy)->getElementOffset(CI->getZExtValue());
+    } else {
+      uint64_t Size = TD.getABITypeSize(GTI.getIndexedType());
+      Offset += Size*CI->getSExtValue();
+    }
+  }
+  
+  // Okay, we know we have a single variable index, which must be a
+  // pointer/array/vector index.  If there is no offset, life is simple, return
+  // the index.
+  unsigned IntPtrWidth = TD.getPointerSizeInBits();
+  if (Offset == 0) {
+    // Cast to intptrty in case a truncation occurs.  If an extension is needed,
+    // we don't need to bother extending: the extension won't affect where the
+    // computation crosses zero.
+    if (VariableIdx->getType()->getPrimitiveSizeInBits() > IntPtrWidth)
+      VariableIdx = new TruncInst(VariableIdx, TD.getIntPtrType(),
+                                  VariableIdx->getNameStart(), &I);
+    return VariableIdx;
+  }
+  
+  // Otherwise, there is an index.  The computation we will do will be modulo
+  // the pointer size, so get it.
+  uint64_t PtrSizeMask = ~0ULL >> (64-IntPtrWidth);
+  
+  Offset &= PtrSizeMask;
+  VariableScale &= PtrSizeMask;
+
+  // To do this transformation, any constant index must be a multiple of the
+  // variable scale factor.  For example, we can evaluate "12 + 4*i" as "3 + i",
+  // but we can't evaluate "10 + 3*i" in terms of i.  Check that the offset is a
+  // multiple of the variable scale.
+  int64_t NewOffs = Offset / (int64_t)VariableScale;
+  if (Offset != NewOffs*(int64_t)VariableScale)
+    return 0;
+
+  // Okay, we can do this evaluation.  Start by converting the index to intptr.
+  const Type *IntPtrTy = TD.getIntPtrType();
+  if (VariableIdx->getType() != IntPtrTy)
+    VariableIdx = CastInst::createIntegerCast(VariableIdx, IntPtrTy,
+                                              true /*SExt*/, 
+                                              VariableIdx->getNameStart(), &I);
+  Constant *OffsetVal = ConstantInt::get(IntPtrTy, NewOffs);
+  return BinaryOperator::createAdd(VariableIdx, OffsetVal, "offset", &I);
+}
+
+
 /// FoldGEPICmp - Fold comparisons between a GEP instruction and something
 /// else.  At this point we know that the GEP is on the LHS of the comparison.
 Instruction *InstCombiner::FoldGEPICmp(User *GEPLHS, Value *RHS,
@@ -4944,15 +5052,20 @@ Instruction *InstCombiner::FoldGEPICmp(User *GEPLHS, Value *RHS,
                                        Instruction &I) {
   assert(dyn_castGetElementPtr(GEPLHS) && "LHS is not a getelementptr!");
 
-  if (CastInst *CI = dyn_cast<CastInst>(RHS))
-    if (isa<PointerType>(CI->getOperand(0)->getType()))
-      RHS = CI->getOperand(0);
+  // Look through bitcasts.
+  if (BitCastInst *BCI = dyn_cast<BitCastInst>(RHS))
+    RHS = BCI->getOperand(0);
 
   Value *PtrBase = GEPLHS->getOperand(0);
   if (PtrBase == RHS) {
     // ((gep Ptr, OFFSET) cmp Ptr)   ---> (OFFSET cmp 0).
-    // This transformation is valid because we know pointers can't overflow.
-    Value *Offset = EmitGEPOffset(GEPLHS, I, *this);
+    // This transformation (ignoring the base and scales) is valid because we
+    // know pointers can't overflow.  See if we can output an optimized form.
+    Value *Offset = EvaluateGEPOffsetExpression(GEPLHS, I, *this);
+    
+    // If not, synthesize the offset the hard way.
+    if (Offset == 0)
+      Offset = EmitGEPOffset(GEPLHS, I, *this);
     return new ICmpInst(ICmpInst::getSignedPredicate(Cond), Offset,
                         Constant::getNullValue(Offset->getType()));
   } else if (User *GEPRHS = dyn_castGetElementPtr(RHS)) {
