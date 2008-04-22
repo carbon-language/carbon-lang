@@ -39,3 +39,10 @@ int f4(int *p) {
   int *q = (int*) x;
   return *q; // expected-warning{{Dereference of null pointer.}}
 }
+
+int f5() {
+  
+  char *s = "hello world";
+  return s[0]; // no-warning
+}
+

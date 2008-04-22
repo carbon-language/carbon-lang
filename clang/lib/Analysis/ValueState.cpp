@@ -264,6 +264,9 @@ RVal ValueStateManager::GetRVal(ValueState* St, Expr* E) {
       case Stmt::IntegerLiteralClass: {
         return NonLVal::MakeVal(BasicVals, cast<IntegerLiteral>(E));
       }
+        
+      case Stmt::StringLiteralClass:
+        return LVal::MakeVal(cast<StringLiteral>(E));
 
         // Casts where the source and target type are the same
         // are no-ops.  We blast through these to get the descendant

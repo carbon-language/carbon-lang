@@ -240,6 +240,10 @@ RVal RVal::GetSymbolValue(SymbolManager& SymMgr, VarDecl* D) {
 
 LVal LVal::MakeVal(AddrLabelExpr* E) { return lval::GotoLabel(E->getLabel()); }
 
+LVal LVal::MakeVal(StringLiteral* S) {
+  return lval::StringLiteralVal(S);
+}
+
 //===----------------------------------------------------------------------===//
 // Utility methods for constructing RVals (both NonLVals and LVals).
 //===----------------------------------------------------------------------===//
@@ -390,6 +394,12 @@ void LVal::print(std::ostream& Out) const {
     case lval::FuncValKind:
       Out << "function " 
           << cast<lval::FuncVal>(this)->getDecl()->getIdentifier()->getName();
+      break;
+      
+    case lval::StringLiteralValKind:
+      Out << "literal \""
+          << cast<lval::StringLiteralVal>(this)->getLiteral()->getStrData()
+          << "\"";
       break;
       
     default:

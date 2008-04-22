@@ -826,6 +826,8 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
       //  should compose behavior, not copy it.
       StateMgr.Unbind(StVals, cast<LVal>(V));
     }
+    else if (isa<nonlval::LValAsInteger>(V))
+      StateMgr.Unbind(StVals, cast<nonlval::LValAsInteger>(V).getLVal());
   }    
   
   St = StateMgr.getPersistentState(StVals);

@@ -2014,6 +2014,7 @@ ValueState* GRExprEngine::AssumeAux(ValueState* St, LVal Cond,
     case lval::DeclValKind:
     case lval::FuncValKind:
     case lval::GotoLabelKind:
+    case lval::StringLiteralValKind:
       isFeasible = Assumption;
       return St;
 

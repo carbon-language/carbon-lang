@@ -128,7 +128,7 @@ public:
   static NonLVal MakeVal(BasicValueFactory& BasicVals, uint64_t X, QualType T);
   
   static NonLVal MakeVal(BasicValueFactory& BasicVals, IntegerLiteral* I);
-  
+    
   static NonLVal MakeIntTruthVal(BasicValueFactory& BasicVals, bool b);
     
   // Implement isa<T> support.
@@ -150,6 +150,8 @@ public:
   void print(std::ostream& Out) const;
     
   static LVal MakeVal(AddrLabelExpr* E);
+  
+  static LVal MakeVal(StringLiteral* S);
   
   // Implement isa<T> support.
   static inline bool classof(const RVal* V) {
@@ -274,7 +276,7 @@ public:
 namespace lval {
   
 enum Kind { SymbolValKind, GotoLabelKind, DeclValKind, FuncValKind,
-            ConcreteIntKind };
+            ConcreteIntKind, StringLiteralValKind };
 
 class SymbolVal : public LVal {
 public:
@@ -390,6 +392,24 @@ public:
     return V->getSubKind() == ConcreteIntKind;
   }
 };
+  
+class StringLiteralVal : public LVal {
+public:
+  StringLiteralVal(StringLiteral* L) : LVal(StringLiteralValKind, L) {}
+  
+  StringLiteral* getLiteral() const { return (StringLiteral*) Data; }
+  
+  // Implement isa<T> support.
+  static inline bool classof(const RVal* V) {
+    return V->getBaseKind() == LValKind &&
+           V->getSubKind() == StringLiteralValKind;
+  }
+  
+  static inline bool classof(const LVal* V) {
+    return V->getSubKind() == StringLiteralValKind;
+  }
+};  
+    
   
 } // end clang::lval namespace
 } // end clang namespace  

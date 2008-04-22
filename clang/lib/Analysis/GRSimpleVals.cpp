@@ -572,6 +572,10 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<ValueState>& Dst,
     
     if (isa<LVal>(V))
       St = StateMgr.SetRVal(St, cast<LVal>(V), UnknownVal());
+    else if (isa<nonlval::LValAsInteger>(V))
+      St = StateMgr.SetRVal(St, cast<nonlval::LValAsInteger>(V).getLVal(),
+                            UnknownVal());
+    
   }
   
   // Make up a symbol for the return value of this function.
