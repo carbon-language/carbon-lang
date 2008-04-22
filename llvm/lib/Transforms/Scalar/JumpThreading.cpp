@@ -57,8 +57,10 @@ namespace {
     bool runOnFunction(Function &F);
     bool ThreadBlock(BasicBlock *BB);
     void ThreadEdge(BasicBlock *BB, BasicBlock *PredBB, BasicBlock *SuccBB);
-    
+    BasicBlock *FactorCommonPHIPreds(PHINode *PN, Constant *CstVal);
+
     bool ProcessJumpOnPHI(PHINode *PN);
+    bool ProcessJumpOnLogicalPHI(PHINode *PN, bool isAnd);
   };
   char JumpThreading::ID = 0;
   RegisterPass<JumpThreading> X("jump-threading", "Jump Threading");
@@ -84,6 +86,29 @@ bool JumpThreading::runOnFunction(Function &F) {
   }
   return EverChanged;
 }
+
+/// FactorCommonPHIPreds - If there are multiple preds with the same incoming
+/// value for the PHI, factor them together so we get one block to thread for
+/// the whole group.
+/// This is important for things like "phi i1 [true, true, false, true, x]"
+/// where we only need to clone the block for the true blocks once.
+///
+BasicBlock *JumpThreading::FactorCommonPHIPreds(PHINode *PN, Constant *CstVal) {
+  SmallVector<BasicBlock*, 16> CommonPreds;
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+    if (PN->getIncomingValue(i) == CstVal)
+      CommonPreds.push_back(PN->getIncomingBlock(i));
+  
+  if (CommonPreds.size() == 1)
+    return CommonPreds[0];
+    
+  DOUT << "  Factoring out " << CommonPreds.size()
+       << " common predecessors.\n";
+  return SplitBlockPredecessors(PN->getParent(),
+                                &CommonPreds[0], CommonPreds.size(),
+                                ".thr_comm", this);
+}
+  
 
 /// getJumpThreadDuplicationCost - Return the cost of duplicating this block to
 /// thread across it.
@@ -163,6 +188,23 @@ bool JumpThreading::ThreadBlock(BasicBlock *BB) {
   if (PN && PN->getParent() == BB)
     return ProcessJumpOnPHI(PN);
   
+  // If this is a conditional branch whose condition is and/or of a phi, try to
+  // simplify it.
+  if (BinaryOperator *CondI = dyn_cast<BinaryOperator>(Condition)) {
+    if ((CondI->getOpcode() == Instruction::And || 
+         CondI->getOpcode() == Instruction::Or) &&
+        isa<BranchInst>(BB->getTerminator())) {
+      if (PHINode *PN = dyn_cast<PHINode>(CondI->getOperand(0)))
+        if (PN->getParent() == BB &&
+            ProcessJumpOnLogicalPHI(PN, CondI->getOpcode() == Instruction::And))
+          return true;
+      if (PHINode *PN = dyn_cast<PHINode>(CondI->getOperand(1)))
+        if (PN->getParent() == BB &&
+            ProcessJumpOnLogicalPHI(PN, CondI->getOpcode() == Instruction::And))
+          return true;
+    }
+  }
+  
   return false;
 }
 
@@ -196,9 +238,11 @@ bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
     return false;
   }
   
-  // If so, we can actually do this threading.  Figure out which predecessor and
-  // which successor we are threading for.
-  BasicBlock *PredBB = PN->getIncomingBlock(PredNo);
+  // If so, we can actually do this threading.  Merge any common predecessors
+  // that will act the same.
+  BasicBlock *PredBB = FactorCommonPHIPreds(PN, PredCst);
+  
+  // Next, figure out which successor we are threading to.
   BasicBlock *SuccBB;
   if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator()))
     SuccBB = BI->getSuccessor(PredCst == ConstantInt::getFalse());
@@ -207,30 +251,72 @@ bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
     SuccBB = SI->getSuccessor(SI->findCaseValue(PredCst));
   }
   
-  // If there are multiple preds with the same incoming value for the PHI,
-  // factor them together so we get one block to thread for the whole group.
-  // This is important for things like "phi i1 [true, true, false, true, x]"
-  // where we only need to clone the block for the true blocks once.
-  SmallVector<BasicBlock*, 16> CommonPreds;
-  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-    if (PN->getIncomingValue(i) == PredCst)
-      CommonPreds.push_back(PN->getIncomingBlock(i));
-  if (CommonPreds.size() != 1) {
-    DOUT << "  Factoring out " << CommonPreds.size()
-         << " common predecessors.\n";
-    PredBB = SplitBlockPredecessors(BB, &CommonPreds[0], CommonPreds.size(),
-                                    ".thr_comm", this);
-  }
-  
+  // And finally, do it!
   DOUT << "  Threading edge from '" << PredBB->getNameStart() << "' to '"
        << SuccBB->getNameStart() << "' with cost: " << JumpThreadCost
        << ", across block:\n    "
-       << *BB;
+       << *BB << "\n";
        
   ThreadEdge(BB, PredBB, SuccBB);
   ++NumThreads;
   return true;
 }
+
+/// ProcessJumpOnLogicalPHI - PN's basic block contains a conditional branch
+/// whose condition is an AND/OR where one side is PN.  If PN has constant
+/// operands that permit us to evaluate the condition for some operand, thread
+/// through the block.  For example with:
+///   br (and X, phi(Y, Z, false))
+/// the predecessor corresponding to the 'false' will always jump to the false
+/// destination of the branch.
+///
+bool JumpThreading::ProcessJumpOnLogicalPHI(PHINode *PN, bool isAnd) {
+  
+  // We can only do the simplification for phi nodes of 'false' with AND or
+  // 'true' with OR.  See if we have any entries in the phi for this.
+  unsigned PredNo = ~0U;
+  ConstantInt *PredCst = ConstantInt::get(Type::Int1Ty, !isAnd);
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+    if (PN->getIncomingValue(i) == PredCst) {
+      PredNo = i;
+      break;
+    }
+  }
+  
+  // If no match, bail out.
+  if (PredNo == ~0U)
+    return false;
+  
+  // See if the cost of duplicating this block is low enough.
+  BasicBlock *BB = PN->getParent();
+  unsigned JumpThreadCost = getJumpThreadDuplicationCost(BB);
+  if (JumpThreadCost > Threshold) {
+    DOUT << "  Not threading BB '" << BB->getNameStart()
+         << "' - Cost is too high: " << JumpThreadCost << "\n";
+    return false;
+  }
+
+  // If so, we can actually do this threading.  Merge any common predecessors
+  // that will act the same.
+  BasicBlock *PredBB = FactorCommonPHIPreds(PN, PredCst);
+  
+  // Next, figure out which successor we are threading to.  If this was an AND,
+  // the constant must be FALSE, and we must be targeting the 'false' block.
+  // If this is an OR, the constant must be TRUE, and we must be targeting the
+  // 'true' block.
+  BasicBlock *SuccBB = BB->getTerminator()->getSuccessor(isAnd);
+  
+  // And finally, do it!
+  DOUT << "  Threading edge through bool from '" << PredBB->getNameStart()
+       << "' to '" << SuccBB->getNameStart() << "' with cost: "
+       << JumpThreadCost << ", across block:\n    "
+       << *BB << "\n";
+  
+  ThreadEdge(BB, PredBB, SuccBB);
+  ++NumThreads;
+  return true;
+}
+
 
 /// ThreadEdge - We have decided that it is safe and profitable to thread an
 /// edge from PredBB to SuccBB across BB.  Transform the IR to reflect this
