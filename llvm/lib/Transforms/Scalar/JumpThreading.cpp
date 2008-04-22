@@ -61,6 +61,7 @@ namespace {
 
     bool ProcessJumpOnPHI(PHINode *PN);
     bool ProcessBranchOnLogical(Value *V, BasicBlock *BB, bool isAnd);
+    bool ProcessBranchOnCompare(CmpInst *Cmp, BasicBlock *BB);
   };
   char JumpThreading::ID = 0;
   RegisterPass<JumpThreading> X("jump-threading", "Jump Threading");
@@ -199,6 +200,14 @@ bool JumpThreading::ThreadBlock(BasicBlock *BB) {
       return true;
   }
   
+  // If we have "br (phi != 42)" and the phi node has any constant values as 
+  // operands, we can thread through this block.
+  if (CmpInst *CondCmp = dyn_cast<CmpInst>(Condition))
+    if (isa<PHINode>(CondCmp->getOperand(0)) &&
+        isa<Constant>(CondCmp->getOperand(1)) &&
+        ProcessBranchOnCompare(CondCmp, BB))
+      return true;
+  
   return false;
 }
 
@@ -209,18 +218,14 @@ bool JumpThreading::ThreadBlock(BasicBlock *BB) {
 bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
   // See if the phi node has any constant values.  If so, we can determine where
   // the corresponding predecessor will branch.
-  unsigned PredNo = ~0U;
   ConstantInt *PredCst = 0;
-  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
-    if ((PredCst = dyn_cast<ConstantInt>(PN->getIncomingValue(i)))) {
-      PredNo = i;
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+    if ((PredCst = dyn_cast<ConstantInt>(PN->getIncomingValue(i))))
       break;
-    }
-  }
   
   // If no incoming value has a constant, we don't know the destination of any
   // predecessors.
-  if (PredNo == ~0U)
+  if (PredCst == 0)
     return false;
   
   // See if the cost of duplicating this block is low enough.
@@ -313,6 +318,77 @@ bool JumpThreading::ProcessBranchOnLogical(Value *V, BasicBlock *BB,
   // If this is an OR, the constant must be TRUE, and we must be targeting the
   // 'true' block.
   BasicBlock *SuccBB = BB->getTerminator()->getSuccessor(isAnd);
+  
+  // And finally, do it!
+  DOUT << "  Threading edge through bool from '" << PredBB->getNameStart()
+       << "' to '" << SuccBB->getNameStart() << "' with cost: "
+       << JumpThreadCost << ", across block:\n    "
+       << *BB << "\n";
+  
+  ThreadEdge(BB, PredBB, SuccBB);
+  ++NumThreads;
+  return true;
+}
+
+/// ProcessBranchOnCompare - We found a branch on a comparison between a phi
+/// node and a constant.  If the PHI node contains any constants as inputs, we
+/// can fold the compare for that edge and thread through it.
+bool JumpThreading::ProcessBranchOnCompare(CmpInst *Cmp, BasicBlock *BB) {
+  PHINode *PN = cast<PHINode>(Cmp->getOperand(0));
+  Constant *RHS = cast<Constant>(Cmp->getOperand(1));
+  
+  // If the phi isn't in the current block, an incoming edge to this block
+  // doesn't control the destination.
+  if (PN->getParent() != BB)
+    return false;
+  
+  // We can do this simplification if any comparisons fold to true or false.
+  // See if any do.
+  Constant *PredCst = 0;
+  bool TrueDirection = false;
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+    PredCst = dyn_cast<Constant>(PN->getIncomingValue(i));
+    if (PredCst == 0) continue;
+    
+    Constant *Res;
+    if (ICmpInst *ICI = dyn_cast<ICmpInst>(Cmp))
+      Res = ConstantExpr::getICmp(ICI->getPredicate(), PredCst, RHS);
+    else
+      Res = ConstantExpr::getFCmp(cast<FCmpInst>(Cmp)->getPredicate(),
+                                  PredCst, RHS);
+    // If this folded to a constant expr, we can't do anything.
+    if (ConstantInt *ResC = dyn_cast<ConstantInt>(Res)) {
+      TrueDirection = ResC->getZExtValue();
+      break;
+    }
+    // If this folded to undef, just go the false way.
+    if (isa<UndefValue>(Res)) {
+      TrueDirection = false;
+      break;
+    }
+    
+    // Otherwise, we can't fold this input.
+    PredCst = 0;
+  }
+  
+  // If no match, bail out.
+  if (PredCst == 0)
+    return false;
+  
+  // See if the cost of duplicating this block is low enough.
+  unsigned JumpThreadCost = getJumpThreadDuplicationCost(BB);
+  if (JumpThreadCost > Threshold) {
+    DOUT << "  Not threading BB '" << BB->getNameStart()
+         << "' - Cost is too high: " << JumpThreadCost << "\n";
+    return false;
+  }
+  
+  // If so, we can actually do this threading.  Merge any common predecessors
+  // that will act the same.
+  BasicBlock *PredBB = FactorCommonPHIPreds(PN, PredCst);
+  
+  // Next, get our successor.
+  BasicBlock *SuccBB = BB->getTerminator()->getSuccessor(!TrueDirection);
   
   // And finally, do it!
   DOUT << "  Threading edge through bool from '" << PredBB->getNameStart()
