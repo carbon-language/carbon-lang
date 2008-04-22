@@ -60,7 +60,7 @@ namespace {
     BasicBlock *FactorCommonPHIPreds(PHINode *PN, Constant *CstVal);
 
     bool ProcessJumpOnPHI(PHINode *PN);
-    bool ProcessJumpOnLogicalPHI(PHINode *PN, bool isAnd);
+    bool ProcessBranchOnLogical(Value *V, BasicBlock *BB, bool isAnd);
   };
   char JumpThreading::ID = 0;
   RegisterPass<JumpThreading> X("jump-threading", "Jump Threading");
@@ -193,16 +193,10 @@ bool JumpThreading::ThreadBlock(BasicBlock *BB) {
   if (BinaryOperator *CondI = dyn_cast<BinaryOperator>(Condition)) {
     if ((CondI->getOpcode() == Instruction::And || 
          CondI->getOpcode() == Instruction::Or) &&
-        isa<BranchInst>(BB->getTerminator())) {
-      if (PHINode *PN = dyn_cast<PHINode>(CondI->getOperand(0)))
-        if (PN->getParent() == BB &&
-            ProcessJumpOnLogicalPHI(PN, CondI->getOpcode() == Instruction::And))
-          return true;
-      if (PHINode *PN = dyn_cast<PHINode>(CondI->getOperand(1)))
-        if (PN->getParent() == BB &&
-            ProcessJumpOnLogicalPHI(PN, CondI->getOpcode() == Instruction::And))
-          return true;
-    }
+        isa<BranchInst>(BB->getTerminator()) &&
+        ProcessBranchOnLogical(CondI, BB,
+                               CondI->getOpcode() == Instruction::And))
+      return true;
   }
   
   return false;
@@ -270,8 +264,23 @@ bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
 /// the predecessor corresponding to the 'false' will always jump to the false
 /// destination of the branch.
 ///
-bool JumpThreading::ProcessJumpOnLogicalPHI(PHINode *PN, bool isAnd) {
-  
+bool JumpThreading::ProcessBranchOnLogical(Value *V, BasicBlock *BB,
+                                           bool isAnd) {
+  // If this is a binary operator tree of the same AND/OR opcode, check the
+  // LHS/RHS.
+  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(V))
+    if (isAnd && BO->getOpcode() == Instruction::And ||
+        !isAnd && BO->getOpcode() == Instruction::Or) {
+      if (ProcessBranchOnLogical(BO->getOperand(0), BB, isAnd))
+        return true;
+      if (ProcessBranchOnLogical(BO->getOperand(1), BB, isAnd))
+        return true;
+    }
+      
+  // If this isn't a PHI node, we can't handle it.
+  PHINode *PN = dyn_cast<PHINode>(V);
+  if (!PN || PN->getParent() != BB) return false;
+                                             
   // We can only do the simplification for phi nodes of 'false' with AND or
   // 'true' with OR.  See if we have any entries in the phi for this.
   unsigned PredNo = ~0U;
@@ -288,7 +297,6 @@ bool JumpThreading::ProcessJumpOnLogicalPHI(PHINode *PN, bool isAnd) {
     return false;
   
   // See if the cost of duplicating this block is low enough.
-  BasicBlock *BB = PN->getParent();
   unsigned JumpThreadCost = getJumpThreadDuplicationCost(BB);
   if (JumpThreadCost > Threshold) {
     DOUT << "  Not threading BB '" << BB->getNameStart()
