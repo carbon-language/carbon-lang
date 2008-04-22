@@ -1185,28 +1185,24 @@ void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
 
   if (BB->getParent() == 0)
     Out << "\t\t; Error: Block without parent!";
-  else {
-    if (BB != &BB->getParent()->getEntryBlock()) {  // Not the entry block?
-      // Output predecessors for the block...
-      Out << "\t\t;";
-      pred_const_iterator PI = pred_begin(BB), PE = pred_end(BB);
-
-      if (PI == PE) {
-        Out << " No predecessors!";
-      } else {
-        Out << " preds =";
+  else if (BB != &BB->getParent()->getEntryBlock()) {  // Not the entry block?
+    // Output predecessors for the block...
+    Out << "\t\t;";
+    pred_const_iterator PI = pred_begin(BB), PE = pred_end(BB);
+    
+    if (PI == PE) {
+      Out << " No predecessors!";
+    } else {
+      Out << " preds =";
+      writeOperand(*PI, false);
+      for (++PI; PI != PE; ++PI) {
+        Out << ',';
         writeOperand(*PI, false);
-        for (++PI; PI != PE; ++PI) {
-          Out << ',';
-          writeOperand(*PI, false);
-        }
       }
     }
   }
 
-  if (BB->hasName() || !BB->use_empty() || BB->getUnwindDest() ||
-      BB != &BB->getParent()->getEntryBlock())
-    Out << "\n";
+  Out << "\n";
 
   if (AnnotationWriter) AnnotationWriter->emitBasicBlockStartAnnot(BB, Out);
 
