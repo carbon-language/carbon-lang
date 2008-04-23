@@ -1083,13 +1083,13 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
   switch (I->getOpcode()) {
     case Instruction::Ret: {
       const ReturnInst* ret =  cast<ReturnInst>(I);
-      Out << "new ReturnInst("
+      Out << "ReturnInst::Create("
           << (ret->getReturnValue() ? opNames[0] + ", " : "") << bbname << ");";
       break;
     }
     case Instruction::Br: {
       const BranchInst* br = cast<BranchInst>(I);
-      Out << "new BranchInst(" ;
+      Out << "BranchInst::Create(" ;
       if (br->getNumOperands() == 3 ) {
         Out << opNames[0] << ", " 
             << opNames[1] << ", "
@@ -1105,7 +1105,7 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
     }
     case Instruction::Switch: {
       const SwitchInst* sw = cast<SwitchInst>(I);
-      Out << "SwitchInst* " << iName << " = new SwitchInst("
+      Out << "SwitchInst* " << iName << " = SwitchInst::Create("
           << opNames[0] << ", "
           << opNames[1] << ", "
           << sw->getNumCases() << ", " << bbname << ");";
@@ -1127,7 +1127,7 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
             << opNames[i] << ");";
         nl(Out);
       }
-      Out << "InvokeInst *" << iName << " = new InvokeInst("
+      Out << "InvokeInst *" << iName << " = InvokeInst::Create("
           << opNames[0] << ", "
           << opNames[1] << ", "
           << opNames[2] << ", "
@@ -1291,7 +1291,7 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
     case Instruction::GetElementPtr: {
       const GetElementPtrInst* gep = cast<GetElementPtrInst>(I);
       if (gep->getNumOperands() <= 2) {
-        Out << "GetElementPtrInst* " << iName << " = new GetElementPtrInst("
+        Out << "GetElementPtrInst* " << iName << " = GetElementPtrInst::Create("
             << opNames[0]; 
         if (gep->getNumOperands() == 2)
           Out << ", " << opNames[1];
@@ -1303,7 +1303,7 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
               << opNames[i] << ");";
           nl(Out);
         }
-        Out << "Instruction* " << iName << " = new GetElementPtrInst(" 
+        Out << "Instruction* " << iName << " = GetElementPtrInst::Create(" 
             << opNames[0] << ", " << iName << "_indices.begin(), " 
             << iName << "_indices.end()";
       }
@@ -1382,14 +1382,14 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
           Out << iName << "_params.push_back(" << opNames[i] << ");";
           nl(Out);
         }
-        Out << "CallInst* " << iName << " = new CallInst("
+        Out << "CallInst* " << iName << " = CallInst::Create("
             << opNames[0] << ", " << iName << "_params.begin(), "
             << iName << "_params.end(), \"";
       } else if (call->getNumOperands() == 2) {
-        Out << "CallInst* " << iName << " = new CallInst("
+        Out << "CallInst* " << iName << " = CallInst::Create("
             << opNames[0] << ", " << opNames[1] << ", \"";
       } else {
-        Out << "CallInst* " << iName << " = new CallInst(" << opNames[0] 
+        Out << "CallInst* " << iName << " = CallInst::Create(" << opNames[0] 
             << ", \"";
       }
       printEscapedString(call->getName());
@@ -1407,7 +1407,7 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
     }
     case Instruction::Select: {
       const SelectInst* sel = cast<SelectInst>(I);
-      Out << "SelectInst* " << getCppName(sel) << " = new SelectInst(";
+      Out << "SelectInst* " << getCppName(sel) << " = SelectInst::Create(";
       Out << opNames[0] << ", " << opNames[1] << ", " << opNames[2] << ", \"";
       printEscapedString(sel->getName());
       Out << "\", " << bbname << ");";
@@ -1439,7 +1439,7 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
     case Instruction::InsertElement: {
       const InsertElementInst* iei = cast<InsertElementInst>(I);
       Out << "InsertElementInst* " << getCppName(iei) 
-          << " = new InsertElementInst(" << opNames[0]
+          << " = InsertElementInst::Create(" << opNames[0]
           << ", " << opNames[1] << ", " << opNames[2] << ", \"";
       printEscapedString(iei->getName());
       Out << "\", " << bbname << ");";
@@ -1550,7 +1550,7 @@ void CppWriter::printFunctionHead(const Function* F) {
     nl(Out) << "if (!" << getCppName(F) << ") {";
     nl(Out) << getCppName(F);
   }
-  Out<< " = new Function(";
+  Out<< " = Function::Create(";
   nl(Out,1) << "/*Type=*/" << getCppName(F->getFunctionType()) << ",";
   nl(Out) << "/*Linkage=*/";
   printLinkageType(F->getLinkage());
@@ -1628,7 +1628,7 @@ void CppWriter::printFunctionBody(const Function *F) {
   for (Function::const_iterator BI = F->begin(), BE = F->end(); 
        BI != BE; ++BI) {
     std::string bbname(getCppName(BI));
-    Out << "BasicBlock* " << bbname << " = new BasicBlock(\"";
+    Out << "BasicBlock* " << bbname << " = BasicBlock::Create(\"";
     if (BI->hasName())
       printEscapedString(BI->getName());
     Out << "\"," << getCppName(BI->getParent()) << ",0);";
