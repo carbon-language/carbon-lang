@@ -280,7 +280,14 @@ public:
   virtual bool addInstSelector(PassManagerBase &PM, bool Fast) {
     return true;
   }
-  
+
+  /// addPreRegAllocPasses - This method may be implemented by targets that want
+  /// to run passes immediately before register allocation. This should return
+  /// true if -print-machineinstrs should print after these passes.
+  virtual bool addPreRegAlloc(PassManagerBase &PM, bool Fast) {
+    return false;
+  }
+
   /// addPostRegAllocPasses - This method may be implemented by targets that
   /// want to run passes after register allocation but before prolog-epilog
   /// insertion.  This should return true if -print-machineinstrs should print
