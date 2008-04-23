@@ -9,7 +9,7 @@ proc llvm2cpp-test { files } {
   global subdir llvmtoolsdir llvmlibsdir objdir srcdir objroot srcroot 
   set timeout 30
   set path [file join $objdir $subdir]
-  set llvm2cpp [file join $llvmtoolsdir llvm2cpp ]
+  set llc [file join $llvmtoolsdir llc ]
   set llvmas [file join $llvmtoolsdir llvm-as ]
   set llvmdis [file join $llvmtoolsdir llvm-dis ]
 
@@ -65,7 +65,7 @@ proc llvm2cpp-test { files } {
     }
 
     set retval [ catch { 
-      exec -keepnewline $llvm2cpp -f -o $generated < $bytecode 2>/dev/null } msg]
+      exec -keepnewline $llc -march=cpp -f -o $generated < $bytecode 2>/dev/null } msg]
 
     if { $retval != 0 } {
       fail "$test: llvm2cpp returned $retval\n$msg"
