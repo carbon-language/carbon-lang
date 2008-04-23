@@ -283,6 +283,7 @@ namespace {
     void visitInsertElementInst(InsertElementInst &I);
     void visitExtractElementInst(ExtractElementInst &I);
     void visitShuffleVectorInst(ShuffleVectorInst &SVI);
+    void visitGetResultInst(GetResultInst &GRI);
 
     void visitInstruction(Instruction &I) {
       cerr << "C Writer does not know about " << I;
@@ -2174,6 +2175,24 @@ void CWriter::visitReturnInst(ReturnInst &I) {
     return;
   }
 
+  if (I.getNumOperands() > 1) {
+    Out << "  {\n";
+    Out << "    ";
+    printType(Out, I.getParent()->getParent()->getReturnType());
+    Out << "   llvm_cbe_mrv_temp = {\n";
+    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
+      Out << "      ";
+      writeOperand(I.getOperand(i));
+      if (i != e - 1)
+        Out << ",";
+      Out << "\n";
+    }
+    Out << "    };\n";
+    Out << "    return llvm_cbe_mrv_temp;\n";
+    Out << "  }\n";
+    return;
+  }
+
   Out << "  return";
   if (I.getNumOperands()) {
     Out << ' ';
@@ -3184,6 +3203,17 @@ void CWriter::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
   Out << "}";
 }
 
+void CWriter::visitGetResultInst(GetResultInst &GRI) {
+  Out << "(";
+  if (isa<UndefValue>(GRI.getOperand(0))) {
+    Out << "(";
+    printType(Out, GRI.getType());
+    Out << ") 0/*UNDEF*/";
+  } else {
+    Out << GetValueName(GRI.getOperand(0)) << ".field" << GRI.getIndex();
+  }
+  Out << ")";
+}
 
 //===----------------------------------------------------------------------===//
 //                       External Interface declaration
