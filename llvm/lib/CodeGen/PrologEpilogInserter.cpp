@@ -313,7 +313,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // Loop over all of the stack objects, assigning sequential addresses...
   MachineFrameInfo *FFI = Fn.getFrameInfo();
 
-  unsigned MaxAlign = 0;
+  unsigned MaxAlign = FFI->getMaxAlignment();
 
   // Start at the beginning of the local area.
   // The Offset is the distance from the stack top in the direction
