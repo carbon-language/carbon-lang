@@ -154,6 +154,10 @@ public:
     const std::vector<const Type*> &Params, ///< The types of the parameters
     bool isVarArg  ///< Whether this is a variable argument length function
   );
+  
+  /// isValidReturnType - Return true if the specified type is valid as a return
+  /// type.
+  static bool isValidReturnType(const Type *RetTy);
 
   inline bool isVarArg() const { return isVarArgs; }
   inline const Type *getReturnType() const { return ContainedTys[0]; }

@@ -437,16 +437,35 @@ const IntegerType *Type::Int64Ty = new BuiltinIntegerType(64);
 //                          Derived Type Constructors
 //===----------------------------------------------------------------------===//
 
+/// isValidReturnType - Return true if the specified type is valid as a return
+/// type.
+bool FunctionType::isValidReturnType(const Type *RetTy) {
+  if (RetTy->isFirstClassType())
+    return true;
+  if (RetTy == Type::VoidTy || isa<OpaqueType>(RetTy))
+    return true;
+  
+  // If this is a multiple return case, verify that each return is a first class
+  // value and that there is at least one value.
+  const StructType *SRetTy = dyn_cast<StructType>(RetTy);
+  if (SRetTy == 0 || SRetTy->getNumElements() == 0)
+    return false;
+  
+  for (unsigned i = 0, e = SRetTy->getNumElements(); i != e; ++i)
+    if (!SRetTy->getElementType(i)->isFirstClassType())
+      return false;
+  return true;
+}
+
 FunctionType::FunctionType(const Type *Result,
                            const std::vector<const Type*> &Params,
                            bool IsVarArgs)
   : DerivedType(FunctionTyID), isVarArgs(IsVarArgs) {
   ContainedTys = reinterpret_cast<PATypeHandle*>(this+1);
   NumContainedTys = Params.size() + 1; // + 1 for result type
-  assert((Result->isFirstClassType() || Result == Type::VoidTy ||
-          Result->getTypeID() == Type::StructTyID ||
-          isa<OpaqueType>(Result)) &&
-         "LLVM functions cannot return aggregates");
+  assert(isValidReturnType(Result) && "invalid return type for function");
+    
+    
   bool isAbstract = Result->isAbstract();
   new (&ContainedTys[0]) PATypeHandle(Result, this);
 
@@ -1091,9 +1110,8 @@ FunctionType *FunctionType::get(const Type *ReturnType,
                                 bool isVarArg) {
   FunctionValType VT(ReturnType, Params, isVarArg);
   FunctionType *FT = FunctionTypes->get(VT);
-  if (FT) { 
+  if (FT)
     return FT;
-  }
 
   FT = (FunctionType*) new char[sizeof(FunctionType) + 
                                 sizeof(PATypeHandle)*(Params.size()+1)];

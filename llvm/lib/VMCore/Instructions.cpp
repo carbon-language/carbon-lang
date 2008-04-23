@@ -2691,7 +2691,7 @@ bool GetResultInst::isValidOperands(const Value *Aggregate, unsigned Index) {
 
   if (const StructType *STy = dyn_cast<StructType>(Aggregate->getType())) {
     unsigned NumElements = STy->getNumElements();
-    if (Index >= NumElements)
+    if (Index >= NumElements || NumElements == 0)
       return false;
 
     // getresult aggregate value's element types are restricted to
