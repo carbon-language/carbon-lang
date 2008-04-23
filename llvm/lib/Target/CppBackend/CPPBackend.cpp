@@ -28,9 +28,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/CFG.h"
-#include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Config/config.h"
 #include <algorithm>
 #include <iostream>
