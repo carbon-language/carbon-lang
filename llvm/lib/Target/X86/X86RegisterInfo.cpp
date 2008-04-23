@@ -284,7 +284,9 @@ X86RegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
   if (!hasFP(MF))
     return Offset + MF.getFrameInfo()->getStackSize();
 
-  Offset += SlotSize;  // Skip the saved EBP
+  // Skip the saved EBP
+  Offset += SlotSize;
+
   // Skip the RETADDR move area
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   int TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
