@@ -626,7 +626,7 @@ protected:
       return TF->EvalBinOp(*this, Op, cast<NonLVal>(L), cast<NonLVal>(R));
   }
   
-  void EvalCall(NodeSet& Dst, CallExpr* CE, LVal L, NodeTy* Pred) {
+  void EvalCall(NodeSet& Dst, CallExpr* CE, RVal L, NodeTy* Pred) {
     assert (Builder && "GRStmtNodeBuilder must be defined.");    
     TF->EvalCall(Dst, *this, *Builder, CE, L, Pred);
   }

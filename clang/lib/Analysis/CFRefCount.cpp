@@ -659,7 +659,7 @@ public:
   virtual void EvalCall(ExplodedNodeSet<ValueState>& Dst,
                         GRExprEngine& Eng,
                         GRStmtNodeBuilder<ValueState>& Builder,
-                        CallExpr* CE, LVal L,
+                        CallExpr* CE, RVal L,
                         ExplodedNode<ValueState>* Pred);  
   
   virtual void EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
@@ -769,7 +769,7 @@ void CFRefCount::ProcessNonLeakError(ExplodedNodeSet<ValueState>& Dst,
 void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
                           GRExprEngine& Eng,
                           GRStmtNodeBuilder<ValueState>& Builder,
-                          CallExpr* CE, LVal L,
+                          CallExpr* CE, RVal L,
                           ExplodedNode<ValueState>* Pred) {
   
   ValueStateManager& StateMgr = Eng.getStateManager();

@@ -78,6 +78,18 @@ struct VISIBILITY_HIDDEN SaveAndRestore {
   T old_value;
 };
 
+// SaveOr - Similar to SaveAndRestore.  Operates only on bools; the old
+//  value of a variable is saved, and during the dstor the old value is
+//  or'ed with the new value.
+struct VISIBILITY_HIDDEN SaveOr {
+  SaveOr(bool& x) : X(x), old_value(x) { x = false; }
+  ~SaveOr() { X |= old_value; }
+  
+  bool& X;
+  bool old_value;
+};
+
+
 void GRExprEngine::EmitWarnings(Diagnostic& Diag, PathDiagnosticClient* PD) {
   for (bug_type_iterator I = bug_types_begin(), E = bug_types_end(); I!=E; ++I){
     BugReporter BR(Diag, PD, getContext(), *this);
@@ -784,11 +796,9 @@ void GRExprEngine::EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred,
   
   unsigned size = Dst.size();  
 
-  SaveAndRestore<bool> OldSink(Builder->BuildSinks),
-                       OldHasGen(Builder->HasGeneratedNode);
+  SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+  SaveOr OldHasGen(Builder->HasGeneratedNode);
 
-  Builder->HasGeneratedNode = false;
-  
   assert (!TargetLV.isUndef());
   
   TF->EvalStore(Dst, *this, *Builder, E, Pred, St, TargetLV, Val);
@@ -828,12 +838,9 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
   // the callee expression.
   
   NodeSet DstTmp;    
-  Expr* Callee = CE->getCallee()->IgnoreParenCasts();
+  Expr* Callee = CE->getCallee()->IgnoreParens();
 
   VisitLVal(Callee, Pred, DstTmp);
-  
-  if (DstTmp.empty())
-    DstTmp.Add(Pred);
   
   // Finally, evaluate the function call.
   for (NodeSet::iterator DI = DstTmp.begin(), DE = DstTmp.end(); DI!=DE; ++DI) {
@@ -903,19 +910,12 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
     }
     
     // Evaluate the call.
-    
-    
-    bool invalidateArgs = false;
-    
-    if (L.isUnknown()) {
-      // Check for an "unknown" callee.      
-      invalidateArgs = true;
-    }
-    else if (isa<lval::FuncVal>(L)) {
+
+    if (isa<lval::FuncVal>(L)) {
       
       IdentifierInfo* Info = cast<lval::FuncVal>(L).getDecl()->getIdentifier();
       
-      if (unsigned id = Info->getBuiltinID()) {
+      if (unsigned id = Info->getBuiltinID())
         switch (id) {
           case Builtin::BI__builtin_expect: {
             // For __builtin_expect, just return the value of the subexpression.
@@ -926,67 +926,45 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
           }
             
           default:
-            invalidateArgs = true;
             break;
         }
-      }
     }
-        
-    if (invalidateArgs) {
-      // Invalidate all arguments passed in by reference (LVals).
-      for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
-                                                       I != E; ++I) {
-        RVal V = GetRVal(St, *I);
 
-        if (isa<LVal>(V))
-          St = SetRVal(St, cast<LVal>(V), UnknownVal());
-      }
+    // Check any arguments passed-by-value against being undefined.
+
+    bool badArg = false;
+    
+    for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
+         I != E; ++I) {
+
+      if (GetRVal(GetState(*DI), *I).isUndef()) {        
+        NodeTy* N = Builder->generateNode(CE, GetState(*DI), *DI);
       
-      MakeNode(Dst, CE, *DI, St);
-    }
-    else {
-
-      // Check any arguments passed-by-value against being undefined.
-
-      bool badArg = false;
-      
-      for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
-           I != E; ++I) {
-
-        if (GetRVal(GetState(*DI), *I).isUndef()) {        
-          NodeTy* N = Builder->generateNode(CE, GetState(*DI), *DI);
-        
-          if (N) {
-            N->markAsSink();
-            UndefArgs[N] = *I;
-          }
-          
-          badArg = true;
-          break;
+        if (N) {
+          N->markAsSink();
+          UndefArgs[N] = *I;
         }
-      }
         
-      if (badArg)
-        continue;        
-      
-      // Dispatch to the plug-in transfer function.      
-      
-      unsigned size = Dst.size();
-      
-      SaveAndRestore<bool> OldSink(Builder->BuildSinks),
-                           OldHasGen(Builder->HasGeneratedNode);
-      
-      Builder->HasGeneratedNode = false;
-
-      EvalCall(Dst, CE, cast<LVal>(L), *DI);
-      
-      // Handle the case where no nodes where generated.  Auto-generate that
-      // contains the updated state if we aren't generating sinks.
-      
-      if (!Builder->BuildSinks && Dst.size() == size &&
-          !Builder->HasGeneratedNode)
-        MakeNode(Dst, CE, *DI, St);
+        badArg = true;
+        break;
+      }
     }
+    
+    if (badArg)
+      continue;        
+
+    // Dispatch to the plug-in transfer function.      
+    
+    unsigned size = Dst.size();
+    SaveOr OldHasGen(Builder->HasGeneratedNode);
+    EvalCall(Dst, CE, L, *DI);
+    
+    // Handle the case where no nodes where generated.  Auto-generate that
+    // contains the updated state if we aren't generating sinks.
+    
+    if (!Builder->BuildSinks && Dst.size() == size &&
+        !Builder->HasGeneratedNode)
+      MakeNode(Dst, CE, *DI, St);
   }
 }
 
@@ -1081,10 +1059,8 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
   
   unsigned size = Dst.size();
 
-  SaveAndRestore<bool> OldSink(Builder->BuildSinks),
-                       OldHasGen(Builder->HasGeneratedNode);
-  
-  Builder->HasGeneratedNode = false;
+  SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+  SaveOr OldHasGen(Builder->HasGeneratedNode);
  
   EvalObjCMessageExpr(Dst, ME, Pred);
   
@@ -1312,9 +1288,9 @@ void GRExprEngine::VisitDeref(UnaryOperator* U, NodeTy* Pred,
     Visit(Ex, Pred, DstTmp);
   
   for (NodeSet::iterator I = DstTmp.begin(), DE = DstTmp.end(); I != DE; ++I) {
-    ValueState* St = GetState(Pred);
+    ValueState* St = GetState(*I);
     RVal V = GetRVal(St, Ex);
-    VisitDeref(U, V, St, Pred, Dst, GetLVal);
+    VisitDeref(U, V, St, *I, Dst, GetLVal);
   }
 }
 
@@ -1641,10 +1617,8 @@ void GRExprEngine::EvalReturn(NodeSet& Dst, ReturnStmt* S, NodeTy* Pred) {
   
   unsigned size = Dst.size();  
 
-  SaveAndRestore<bool> OldSink(Builder->BuildSinks),
-                       OldHasGen(Builder->HasGeneratedNode);
-  
-  Builder->HasGeneratedNode = false;
+  SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+  SaveOr OldHasGen(Builder->HasGeneratedNode);
 
   TF->EvalReturn(Dst, *this, *Builder, S, Pred);
   

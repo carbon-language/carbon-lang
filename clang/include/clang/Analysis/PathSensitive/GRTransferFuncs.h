@@ -63,7 +63,7 @@ public:
   virtual void EvalCall(ExplodedNodeSet<ValueState>& Dst,
                         GRExprEngine& Engine,
                         GRStmtNodeBuilder<ValueState>& Builder,
-                        CallExpr* CE, LVal L,
+                        CallExpr* CE, RVal L,
                         ExplodedNode<ValueState>* Pred) {}
   
   virtual void EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,

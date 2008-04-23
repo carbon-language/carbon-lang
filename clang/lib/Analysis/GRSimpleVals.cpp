@@ -557,7 +557,7 @@ RVal GRSimpleVals::EvalNE(GRExprEngine& Eng, LVal L, LVal R) {
 void GRSimpleVals::EvalCall(ExplodedNodeSet<ValueState>& Dst,
                             GRExprEngine& Eng,
                             GRStmtNodeBuilder<ValueState>& Builder,
-                            CallExpr* CE, LVal L,
+                            CallExpr* CE, RVal L,
                             ExplodedNode<ValueState>* Pred) {
   
   ValueStateManager& StateMgr = Eng.getStateManager();
