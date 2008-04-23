@@ -741,6 +741,7 @@ void RopePieceBTree::erase(unsigned Offset, unsigned NumBytes) {
 /// allocation instead of doing tons of tiny allocations.
 RopePiece RewriteRope::MakeRopeString(const char *Start, const char *End) {
   unsigned Len = End-Start;
+  assert(Len && "Zero length RopePiece is invalid!");
   
   // If we have space for this string in the current alloc buffer, use it.
   if (AllocOffs+Len <= AllocChunkSize) {

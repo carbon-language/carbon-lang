@@ -204,7 +204,8 @@ public:
   
   void assign(const char *Start, const char *End) {
     clear();
-    Chunks.insert(0, MakeRopeString(Start, End));
+    if (Start != End)
+      Chunks.insert(0, MakeRopeString(Start, End));
   }
   
   void insert(unsigned Offset, const char *Start, const char *End) {
