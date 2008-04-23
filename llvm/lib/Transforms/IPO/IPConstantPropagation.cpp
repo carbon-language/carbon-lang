@@ -152,20 +152,20 @@ bool IPCP::PropagateConstantReturn(Function &F) {
 
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
-      unsigned RetValsSize = RetVals.size();
-      assert (RetValsSize == RI->getNumOperands() && "Invalid ReturnInst operands!");
-      for (unsigned i = 0; i < RetValsSize; ++i) {
-        if (isa<UndefValue>(RI->getOperand(i))) {
-          // Ignore
-        } else if (Constant *C = dyn_cast<Constant>(RI->getOperand(i))) { 
-          Value *RV = RetVals[i];
-          if (RV == 0)
-            RetVals[i] = C;
-          else if (RV != C)
-            return false; // Does not return the same constant.
-        } else {
+      assert(RetVals.size() == RI->getNumOperands() &&
+             "Invalid ReturnInst operands!");
+      for (unsigned i = 0, e = RetVals.size(); i != e; ++i) {
+        if (isa<UndefValue>(RI->getOperand(i)))
+          continue; // Ignore
+        Constant *C = dyn_cast<Constant>(RI->getOperand(i));
+        if (C == 0)
           return false; // Does not return a constant.
-        }
+        
+        Value *RV = RetVals[i];
+        if (RV == 0)
+          RetVals[i] = C;
+        else if (RV != C)
+          return false; // Does not return the same constant.
       }
     }
 
@@ -174,43 +174,41 @@ bool IPCP::PropagateConstantReturn(Function &F) {
       if (RetVals[i] == 0) 
         RetVals[i] = UndefValue::get(STy->getElementType(i));
   } else {
-    if (RetVals.size() == 1) 
-      if (RetVals[0] == 0)
-        RetVals[0] = UndefValue::get(F.getReturnType());
+    assert(RetVals.size() == 1);
+    if (RetVals[0] == 0)
+      RetVals[0] = UndefValue::get(F.getReturnType());
   }
 
   // If we got here, the function returns a constant value.  Loop over all
   // users, replacing any uses of the return value with the returned constant.
   bool ReplacedAllUsers = true;
   bool MadeChange = false;
-  for (Value::use_iterator I = F.use_begin(), E = F.use_end(); I != E; ++I)
-    if (!isa<Instruction>(*I))
+  for (Value::use_iterator UI = F.use_begin(), E = F.use_end(); UI != E; ++UI) {
+    // Make sure this is an invoke or call and that the use is for the callee.
+    if (!(isa<InvokeInst>(*UI) || isa<CallInst>(*UI)) ||
+        UI.getOperandNo() != 0) {
       ReplacedAllUsers = false;
-    else {
-      CallSite CS = CallSite::get(cast<Instruction>(*I));
-      if (CS.getInstruction() == 0 ||
-          CS.getCalledFunction() != &F) {
-        ReplacedAllUsers = false;
-      } else {
-        Instruction *Call = CS.getInstruction();
-        if (!Call->use_empty()) {
-          if (RetVals.size() == 1)
-            Call->replaceAllUsesWith(RetVals[0]);
-          else {
-            for(Value::use_iterator CUI = Call->use_begin(), CUE = Call->use_end();
-                CUI != CUE; ++CUI) {
-              GetResultInst *GR = cast<GetResultInst>(CUI);
-              if (RetVals[GR->getIndex()]) {
-                GR->replaceAllUsesWith(RetVals[GR->getIndex()]);
-                GR->eraseFromParent();
-              }
-            }
-          }
-          MadeChange = true;
-        }
-      }
+      continue;
     }
+    
+    Instruction *Call = cast<Instruction>(*UI);
+    if (Call->use_empty())
+      continue;
 
+    MadeChange = true;
+
+    if (STy == 0) {
+      Call->replaceAllUsesWith(RetVals[0]);
+      continue;
+    }
+   
+    while (!Call->use_empty()) {
+      GetResultInst *GR = cast<GetResultInst>(Call->use_back());
+      GR->replaceAllUsesWith(RetVals[GR->getIndex()]);
+      GR->eraseFromParent();
+    }
+  }
+  
   // If we replace all users with the returned constant, and there can be no
   // other callers of the function, replace the constant being returned in the
   // function with an undef value.
