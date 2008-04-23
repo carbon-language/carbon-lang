@@ -1223,17 +1223,21 @@ type "{ i32, [0 x float]}", for example.</p>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="t_function">Function Type</a> </div>
 <div class="doc_text">
+
 <h5>Overview:</h5>
+
 <p>The function type can be thought of as a function signature.  It
 consists of a return type and a list of formal parameter types. The
-return type of a function type is a scalar type or a void type or a struct type. 
+return type of a function type is a scalar type, a void type, or a struct type. 
 If the return type is a struct type then all struct elements must be of first 
-class types. Function types are usually used to build virtual function tables
-(which are structures of pointers to functions), for indirect function
-calls, and when defining a function.</p>
+class types, and the struct must have at least one element.</p>
 
 <h5>Syntax:</h5>
-<pre>  &lt;returntype list&gt; (&lt;parameter list&gt;)<br></pre>
+
+<pre>
+  &lt;returntype list&gt; (&lt;parameter list&gt;)
+</pre>
+
 <p>...where '<tt>&lt;parameter list&gt;</tt>' is a comma-separated list of type
 specifiers.  Optionally, the parameter list may include a type <tt>...</tt>,
 which indicates that the function takes a variable number of arguments.
@@ -1241,6 +1245,7 @@ Variable argument functions can access their arguments with the <a
  href="#int_varargs">variable argument handling intrinsic</a> functions.
 '<tt>&lt;returntype list&gt;</tt>' is a comma-separated list of
 <a href="#t_firstclass">first class</a> type specifiers.</p>
+
 <h5>Examples:</h5>
 <table class="layout">
   <tr class="layout">
@@ -1802,19 +1807,26 @@ Instruction</a> </div>
   ret void                 <i>; Return from void function</i>
   ret &lt;type&gt; &lt;value&gt;, &lt;type&gt; &lt;value&gt;  <i>; Return two values from a non-void function </i>
 </pre>
+
 <h5>Overview:</h5>
+
 <p>The '<tt>ret</tt>' instruction is used to return control flow (and a
 value) from a function back to the caller.</p>
 <p>There are two forms of the '<tt>ret</tt>' instruction: one that
-returns a value and then causes control flow, and one that just causes
+returns value(s) and then causes control flow, and one that just causes
 control flow to occur.</p>
+
 <h5>Arguments:</h5>
-<p>The '<tt>ret</tt>' instruction may return one or multiple values. The
-type of each return value must be a '<a href="#t_firstclass">first class</a>'
- type.  Note that a function is not <a href="#wellformed">well formed</a> 
-if there exists a '<tt>ret</tt>' instruction inside of the function that 
-returns values that do not match the return type of the function.</p>
+
+<p>The '<tt>ret</tt>' instruction may return zero, one or multiple values. 
+The type of each return value must be a '<a href="#t_firstclass">first 
+class</a>' type.  Note that a function is not <a href="#wellformed">well 
+formed</a> if there exists a '<tt>ret</tt>' instruction inside of the 
+function that returns values that do not match the return type of the 
+function.</p>
+
 <h5>Semantics:</h5>
+
 <p>When the '<tt>ret</tt>' instruction is executed, control flow
 returns back to the calling function's context.  If the caller is a "<a
  href="#i_call"><tt>call</tt></a>" instruction, execution continues at
@@ -1825,8 +1837,11 @@ returns a value, that value shall set the call or invoke instruction's
 return value. If the instruction returns multiple values then these 
 values can only be accessed through a '<a href="#i_getresult"><tt>getresult</tt>
 </a>' instruction.</p>
+
 <h5>Example:</h5>
-<pre>  ret i32 5                       <i>; Return an integer value of 5</i>
+
+<pre>
+  ret i32 5                       <i>; Return an integer value of 5</i>
   ret void                        <i>; Return from a void function</i>
   ret i32 4, i8 2                 <i>; Return two values 4 and 2 </i> 
 </pre>
