@@ -1121,10 +1121,17 @@ namespace {
 
     virtual bool runOnMachineFunction(MachineFunction &MF) {
       MachineFrameInfo *FFI = MF.getFrameInfo();
+      MachineRegisterInfo &RI = MF.getRegInfo();
 
-      // Calculate and set max stack object alignment early, so we can decide
-      // whether we will need stack realignment (and thus FP).
+      // Calculate max stack alignment of all already allocated stack objects.
       unsigned MaxAlign = calculateMaxStackAlignment(FFI);
+
+      // Be over-conservative: scan over all vreg defs and find, whether vector
+      // registers are used. If yes - there is probability, that vector register
+      // will be spilled and thus stack needs to be aligned properly.
+      for (unsigned RegNum = TargetRegisterInfo::FirstVirtualRegister;
+           RegNum < RI.getLastVirtReg(); ++RegNum)
+        MaxAlign = std::max(MaxAlign, RI.getRegClass(RegNum)->getAlignment());
 
       FFI->setMaxAlignment(MaxAlign);
 

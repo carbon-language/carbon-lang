@@ -162,6 +162,8 @@ bool X86TargetMachine::addInstSelector(PassManagerBase &PM, bool Fast) {
 }
 
 bool X86TargetMachine::addPreRegAlloc(PassManagerBase &PM, bool Fast) {
+  // Calculate and set max stack object alignment early, so we can decide
+  // whether we will need stack realignment (and thus FP).
   PM.add(createX86MaxStackAlignmentCalculatorPass());
   return false;  // -print-machineinstr shouldn't print after this.
 }
