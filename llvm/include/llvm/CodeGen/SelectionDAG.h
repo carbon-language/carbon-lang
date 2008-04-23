@@ -330,9 +330,9 @@ public:
                       const Value *SrcSV, uint64_t SrcOff);
 
   SDOperand getMemmove(SDOperand Chain, SDOperand Dst, SDOperand Src,
-                      SDOperand Size, unsigned Align,
-                      const Value *DstSV, uint64_t DstOff,
-                      const Value *SrcSV, uint64_t SrcOff);
+                       SDOperand Size, unsigned Align,
+                       const Value *DstSV, uint64_t DstOff,
+                       const Value *SrcSV, uint64_t SrcOff);
 
   SDOperand getMemset(SDOperand Chain, SDOperand Dst, SDOperand Src,
                       SDOperand Size, unsigned Align,
