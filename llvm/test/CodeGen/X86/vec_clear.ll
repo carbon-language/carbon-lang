@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not grep and
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -realign-stack=0 | not grep and
 
 define <4 x float> @test(<4 x float>* %v1) {
         %tmp = load <4 x float>* %v1            ; <<4 x float>> [#uses=1]
