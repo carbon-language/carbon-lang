@@ -456,7 +456,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
     // uses of the returned value.
     if (!TheCall->use_empty()) {
       ReturnInst *R = Returns[0];
-      if (R->getNumOperands() > 1) {
+      if (isa<StructType>(TheCall->getType())) {
         // Multiple return values.
         while (!TheCall->use_empty()) {
           GetResultInst *GR = cast<GetResultInst>(TheCall->use_back());
