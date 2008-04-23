@@ -6065,13 +6065,14 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
     // Otherwise, check to see if the bits shifted out are known to be zero.
     // If so, we can compare against the unshifted value:
     //  (X & 4) >> 1 == 2  --> (X & 4) == 4.
-    if (MaskedValueIsZero(LHSI->getOperand(0), 
+    if (LHSI->hasOneUse() &&
+        MaskedValueIsZero(LHSI->getOperand(0), 
                           APInt::getLowBitsSet(Comp.getBitWidth(), ShAmtVal))) {
       return new ICmpInst(ICI.getPredicate(), LHSI->getOperand(0),
                           ConstantExpr::getShl(RHS, ShAmt));
     }
       
-    if (LHSI->hasOneUse() || RHSV == 0) {
+    if (LHSI->hasOneUse()) {
       // Otherwise strength reduce the shift into an and.
       APInt Val(APInt::getHighBitsSet(TypeBits, TypeBits - ShAmtVal));
       Constant *Mask = ConstantInt::get(Val);
