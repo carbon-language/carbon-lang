@@ -281,16 +281,28 @@ bool X86RegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
 int
 X86RegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
   int Offset = MF.getFrameInfo()->getObjectOffset(FI) + SlotSize;
-  if (!hasFP(MF))
-    return Offset + MF.getFrameInfo()->getStackSize();
 
-  // Skip the saved EBP
-  Offset += SlotSize;
+  if (needsStackRealignment(MF)) {
+    if (FI < 0)
+      // Skip the saved EBP
+      Offset += SlotSize;
+    else
+      return Offset + MF.getFrameInfo()->getStackSize();
 
-  // Skip the RETADDR move area
-  X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
-  int TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
-  if (TailCallReturnAddrDelta < 0) Offset -= TailCallReturnAddrDelta;
+    // FIXME: Support tail calls
+  } else {
+    if (!hasFP(MF))
+      return Offset + MF.getFrameInfo()->getStackSize();
+
+    // Skip the saved EBP
+    Offset += SlotSize;
+
+    // Skip the RETADDR move area
+    X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
+    int TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
+    if (TailCallReturnAddrDelta < 0) Offset -= TailCallReturnAddrDelta;
+  }
+
   return Offset;
 }
 
@@ -360,9 +372,16 @@ void X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 
   int FrameIndex = MI.getOperand(i).getIndex();
+
+  unsigned BasePtr;
+  if (needsStackRealignment(MF))
+    BasePtr = (FrameIndex < 0 ? FramePtr : StackPtr);
+  else
+    BasePtr = (hasFP(MF) ? FramePtr : StackPtr);
+
   // This must be part of a four operand memory reference.  Replace the
   // FrameIndex with base register with EBP.  Add an offset to the offset.
-  MI.getOperand(i).ChangeToRegister(hasFP(MF) ? FramePtr : StackPtr, false);
+  MI.getOperand(i).ChangeToRegister(BasePtr, false);
 
   // Now add the frame object offset to the offset from EBP.
   int64_t Offset = getFrameIndexOffset(MF, FrameIndex) +
