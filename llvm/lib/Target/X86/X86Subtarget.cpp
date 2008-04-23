@@ -315,11 +315,9 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
       ? X86Subtarget::Intel : X86Subtarget::ATT;
   }
 
-  if (TargetType == isDarwin ||
-      TargetType == isCygwin ||
-      TargetType == isMingw  ||
-      TargetType == isWindows ||
-      (TargetType == isELF && Is64Bit))
+  // Stack alignment is 16 bytes on Darwin (both 32 and 64 bit) and for all 64
+  // bit targets.
+  if (TargetType == isDarwin || Is64Bit)
     stackAlignment = 16;
 
   if (StackAlignment)
