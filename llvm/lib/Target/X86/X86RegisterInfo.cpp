@@ -278,6 +278,20 @@ bool X86RegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
   return !MF.getFrameInfo()->hasVarSizedObjects();
 }
 
+int
+X86RegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
+  int Offset = MF.getFrameInfo()->getObjectOffset(FI) + SlotSize;
+  if (!hasFP(MF))
+    return Offset + MF.getFrameInfo()->getStackSize();
+
+  Offset += SlotSize;  // Skip the saved EBP
+  // Skip the RETADDR move area
+  X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
+  int TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
+  if (TailCallReturnAddrDelta < 0) Offset -= TailCallReturnAddrDelta;
+  return Offset;
+}
+
 void X86RegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
@@ -349,18 +363,8 @@ void X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MI.getOperand(i).ChangeToRegister(hasFP(MF) ? FramePtr : StackPtr, false);
 
   // Now add the frame object offset to the offset from EBP.
-  int64_t Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
-                   MI.getOperand(i+3).getImm()+SlotSize;
-
-  if (!hasFP(MF))
-    Offset += MF.getFrameInfo()->getStackSize();
-  else {
-    Offset += SlotSize;  // Skip the saved EBP
-    // Skip the RETADDR move area
-    X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
-    int TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
-    if (TailCallReturnAddrDelta < 0) Offset -= TailCallReturnAddrDelta;
-  }
+  int64_t Offset = getFrameIndexOffset(MF, FrameIndex) +
+                   MI.getOperand(i+3).getImm();
 
   MI.getOperand(i+3).ChangeToImmediate(Offset);
 }
@@ -840,20 +844,6 @@ unsigned X86RegisterInfo::getRARegister() const {
 
 unsigned X86RegisterInfo::getFrameRegister(MachineFunction &MF) const {
   return hasFP(MF) ? FramePtr : StackPtr;
-}
-
-int
-X86RegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
-  int Offset = MF.getFrameInfo()->getObjectOffset(FI) + SlotSize;
-  if (!hasFP(MF))
-    return Offset + MF.getFrameInfo()->getStackSize();
-
-  Offset += SlotSize;  // Skip the saved EBP
-  // Skip the RETADDR move area
-  X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
-  int TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
-  if (TailCallReturnAddrDelta < 0) Offset -= TailCallReturnAddrDelta;
-  return Offset;
 }
 
 void X86RegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves)
