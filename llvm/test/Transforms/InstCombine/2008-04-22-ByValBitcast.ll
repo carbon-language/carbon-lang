@@ -7,14 +7,8 @@ target triple = "i386-apple-darwin9"
 
 define void @foo(i8* %context) nounwind  {
 entry:
-	%context_addr = alloca i8*		; <i8**> [#uses=2]
-	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
-	store i8* %context, i8** %context_addr
-	%tmp = load i8** %context_addr, align 4		; <i8*> [#uses=1]
-	%tmp1 = bitcast i8* %tmp to %struct.NSRect*		; <%struct.NSRect*> [#uses=1]
+	%tmp1 = bitcast i8* %context to %struct.NSRect*		; <%struct.NSRect*> [#uses=1]
 	call void (i32, ...)* @bar( i32 3, %struct.NSRect* byval align 4  %tmp1 ) nounwind 
-	br label %return
-return:		; preds = %entry
 	ret void
 }
 
