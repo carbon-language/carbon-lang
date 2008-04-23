@@ -40,59 +40,59 @@ namespace llvm {
   unsigned StackAlignment;
 }
 namespace {
-  cl::opt<bool, true> PrintCode("print-machineinstrs",
+  static cl::opt<bool, true> PrintCode("print-machineinstrs",
     cl::desc("Print generated machine code"),
     cl::location(PrintMachineCode), cl::init(false));
 
-  cl::opt<bool, true>
+  static cl::opt<bool, true>
     DisableFPElim("disable-fp-elim",
                   cl::desc("Disable frame pointer elimination optimization"),
                   cl::location(NoFramePointerElim),
                   cl::init(false));
-  cl::opt<bool, true>
+  static cl::opt<bool, true>
   DisableExcessPrecision("disable-excess-fp-precision",
                cl::desc("Disable optimizations that may increase FP precision"),
                cl::location(NoExcessFPPrecision),
                cl::init(false));
-  cl::opt<bool, true>
+  static cl::opt<bool, true>
   EnableUnsafeFPMath("enable-unsafe-fp-math",
                cl::desc("Enable optimizations that may decrease FP precision"),
                cl::location(UnsafeFPMath),
                cl::init(false));
-  cl::opt<bool, true>
+  static cl::opt<bool, true>
   EnableFiniteOnlyFPMath("enable-finite-only-fp-math",
                cl::desc("Enable optimizations that assumes non- NaNs / +-Infs"),
                cl::location(FiniteOnlyFPMathOption),
                cl::init(false));
-  cl::opt<bool, true>
+  static cl::opt<bool, true>
   EnableHonorSignDependentRoundingFPMath(cl::Hidden,
                "enable-sign-dependent-rounding-fp-math",
        cl::desc("Force codegen to assume rounding mode can change dynamically"),
                cl::location(HonorSignDependentRoundingFPMathOption),
                cl::init(false));
 
-  cl::opt<bool, true>
+  static cl::opt<bool, true>
   GenerateSoftFloatCalls("soft-float",
                cl::desc("Generate software floating point library calls"),
                cl::location(UseSoftFloat),
                cl::init(false));
-  cl::opt<bool, true>
+  static cl::opt<bool, true>
   DontPlaceZerosInBSS("nozero-initialized-in-bss",
               cl::desc("Don't place zero-initialized symbols into bss section"),
               cl::location(NoZerosInBSS),
               cl::init(false));
-  cl::opt<bool, true>
+  static cl::opt<bool, true>
   EnableExceptionHandling("enable-eh",
                cl::desc("Emit DWARF exception handling (default if target supports)"),
                cl::location(ExceptionHandling),
                cl::init(false));
-  cl::opt<bool, true>
+  static cl::opt<bool, true>
   EnableUnwindTables("unwind-tables",
                cl::desc("Generate unwinding tables for all functions"),
                cl::location(UnwindTablesMandatory),
                cl::init(false));
 
-  cl::opt<llvm::Reloc::Model, true>
+  static cl::opt<llvm::Reloc::Model, true>
   DefRelocationModel(
     "relocation-model",
     cl::desc("Choose relocation model"),
@@ -108,7 +108,7 @@ namespace {
       clEnumValN(Reloc::DynamicNoPIC, "dynamic-no-pic",
                  "  Relocatable external references, non-relocatable code"),
       clEnumValEnd));
-  cl::opt<llvm::CodeModel::Model, true>
+  static cl::opt<llvm::CodeModel::Model, true>
   DefCodeModel(
     "code-model",
     cl::desc("Choose code model"),
@@ -127,12 +127,12 @@ namespace {
                  "  Large code model"),
       clEnumValEnd));
 
-  cl::opt<bool, true>
+  static cl::opt<bool, true>
   EnablePerformTailCallOpt("tailcallopt",
                            cl::desc("Turn on tail call optimization."),
                            cl::location(PerformTailCallOpt),
                            cl::init(false));
-  cl::opt<bool, true>
+  static cl::opt<bool, true>
   EnableOptimizeForSize("optimize-size",
                         cl::desc("Optimize for size."),
                            cl::location(OptimizeForSize),

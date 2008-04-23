@@ -59,7 +59,7 @@ SLUCache::SLUCache(ProgramInfo &pi) : PI(pi) {
 //
 
 namespace {
-  struct SLU : public SourceLanguage {
+  static struct SLU : public SourceLanguage {
     //===------------------------------------------------------------------===//
     // Implement the miscellaneous methods...
     //

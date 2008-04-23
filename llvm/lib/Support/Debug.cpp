@@ -33,19 +33,19 @@ namespace {
 #ifndef NDEBUG
   // -debug - Command line option to enable the DEBUG statements in the passes.
   // This flag may only be enabled in debug builds.
-  cl::opt<bool, true>
+  static cl::opt<bool, true>
   Debug("debug", cl::desc("Enable debug output"), cl::Hidden,
         cl::location(DebugFlag));
 
-  std::string CurrentDebugType;
-  struct DebugOnlyOpt {
+  static std::string CurrentDebugType;
+  static struct DebugOnlyOpt {
     void operator=(const std::string &Val) const {
       DebugFlag |= !Val.empty();
       CurrentDebugType = Val;
     }
   } DebugOnlyOptLoc;
 
-  cl::opt<DebugOnlyOpt, true, cl::parser<std::string> >
+  static cl::opt<DebugOnlyOpt, true, cl::parser<std::string> >
   DebugOnly("debug-only", cl::desc("Enable a specific type of debug output"),
             cl::Hidden, cl::value_desc("debug string"),
             cl::location(DebugOnlyOptLoc), cl::ValueRequired);
