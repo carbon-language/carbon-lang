@@ -417,7 +417,8 @@ X86RegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   // Calculate and set max stack object alignment early, so we can decide
   // whether we will need stack realignment (and thus FP).
-  unsigned MaxAlign = calculateMaxStackAlignment(FFI);
+  unsigned MaxAlign = std::max(FFI->getMaxAlignment(),
+                               calculateMaxStackAlignment(FFI));
 
   FFI->setMaxAlignment(MaxAlign);
 }
