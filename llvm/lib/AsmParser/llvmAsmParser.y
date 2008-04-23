@@ -1349,12 +1349,10 @@ Types
   | Types '(' ArgTypeListI ')' OptFuncAttrs {
     // Allow but ignore attributes on function types; this permits auto-upgrade.
     // FIXME: remove in LLVM 3.0.
-    const Type* RetTy = *$1;
-    if (!(RetTy->isFirstClassType() || RetTy == Type::VoidTy ||
-          isa<StructType>(RetTy) ||
-          isa<OpaqueType>(RetTy)))
-      GEN_ERROR("LLVM Functions cannot return aggregates");
-
+    const Type *RetTy = *$1;
+    if (!FunctionType::isValidReturnType(RetTy))
+      GEN_ERROR("Invalid result type for LLVM function");
+      
     std::vector<const Type*> Params;
     TypeWithAttrsList::iterator I = $3->begin(), E = $3->end();
     for (; I != E; ++I ) {
@@ -2255,6 +2253,9 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
   if (!CurFun.isDeclare && CurModule.TypeIsUnresolved($2))
     GEN_ERROR("Reference to abstract result: "+ $2->get()->getDescription());
 
+  if (!FunctionType::isValidReturnType(*$2))
+    GEN_ERROR("Invalid result type for LLVM function");
+    
   std::vector<const Type*> ParamTypeList;
   SmallVector<ParamAttrsWithIndex, 8> Attrs;
   if ($7 != ParamAttr::None)
@@ -2648,6 +2649,10 @@ BBTerminatorInst :
           GEN_ERROR("Short call syntax cannot be used with varargs");
         ParamTypes.push_back(Ty);
       }
+      
+      if (!FunctionType::isValidReturnType(*$3))
+        GEN_ERROR("Invalid result type for LLVM function");
+
       Ty = FunctionType::get($3->get(), ParamTypes, false);
       PFTy = PointerType::getUnqual(Ty);
     }
@@ -2972,6 +2977,10 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
           GEN_ERROR("Short call syntax cannot be used with varargs");
         ParamTypes.push_back(Ty);
       }
+
+      if (!FunctionType::isValidReturnType(*$3))
+        GEN_ERROR("Invalid result type for LLVM function");
+
       Ty = FunctionType::get($3->get(), ParamTypes, false);
       PFTy = PointerType::getUnqual(Ty);
     }
