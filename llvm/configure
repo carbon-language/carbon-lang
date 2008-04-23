@@ -4743,7 +4743,7 @@ else
 fi
 
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha IA64 ARM Mips CellSPU CBackend MSIL" ;;
+  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha IA64 ARM Mips CellSPU CBackend MSIL CppBackend" ;;
   host-only)
     case "$llvm_cv_target_arch" in
       x86)     TARGETS_TO_BUILD="X86" ;;
@@ -4773,6 +4773,7 @@ echo "$as_me: error: Can not set target to build" >&2;}
         spu)     TARGETS_TO_BUILD="CellSPU $TARGETS_TO_BUILD" ;;
         cbe)     TARGETS_TO_BUILD="CBackend $TARGETS_TO_BUILD" ;;
         msil)    TARGETS_TO_BUILD="MSIL $TARGETS_TO_BUILD" ;;
+	cpp)     TARGETS_TO_BUILD="CppBackend $TARGETS_TO_BUILD" ;;
         *) { { echo "$as_me:$LINENO: error: Unrecognized target $a_target" >&5
 echo "$as_me: error: Unrecognized target $a_target" >&2;}
    { (exit 1); exit 1; }; } ;;

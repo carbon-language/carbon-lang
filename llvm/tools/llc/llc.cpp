@@ -134,10 +134,15 @@ static std::ostream *GetOutputStream(const char *ProgName) {
     
   switch (FileType) {
   case TargetMachine::AssemblyFile:
-    if (MArch->Name[0] != 'c' || MArch->Name[1] != 0)  // not CBE
+    if (MArch->Name[0] == 'c') {
+      if (MArch->Name[1] == 0)
+        OutputFilename += ".cbe.c";
+      else if (MArch->Name[1] == 'p' && MArch->Name[2] == 'p')
+        OutputFilename += ".cpp";
+      else
+        OutputFilename += ".s";
+    } else
       OutputFilename += ".s";
-    else
-      OutputFilename += ".cbe.c";
     break;
   case TargetMachine::ObjectFile:
     OutputFilename += ".o";

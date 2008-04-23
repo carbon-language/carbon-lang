@@ -363,7 +363,7 @@ AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-targets],
     [Build specific host targets: all,host-only,{target-name} (default=all)]),,
     enableval=all)
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha IA64 ARM Mips CellSPU CBackend MSIL" ;;
+  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha IA64 ARM Mips CellSPU CBackend MSIL CppBackend" ;;
   host-only)
     case "$llvm_cv_target_arch" in
       x86)     TARGETS_TO_BUILD="X86" ;;
@@ -391,6 +391,7 @@ case "$enableval" in
         spu)     TARGETS_TO_BUILD="CellSPU $TARGETS_TO_BUILD" ;;
         cbe)     TARGETS_TO_BUILD="CBackend $TARGETS_TO_BUILD" ;;
         msil)    TARGETS_TO_BUILD="MSIL $TARGETS_TO_BUILD" ;;
+        cpp)     TARGETS_TO_BUILD="CppBackend $TARGETS_TO_BUILD" ;;
         *) AC_MSG_ERROR([Unrecognized target $a_target]) ;;
       esac
   done
