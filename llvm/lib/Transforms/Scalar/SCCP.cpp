@@ -130,21 +130,6 @@ public:
   }
 };
 
-/// LatticeValIndex - LatticeVal and associated Index. This is used
-/// to track individual operand Lattice values for multi value ret instructions.
-class VISIBILITY_HIDDEN LatticeValIndexed {
- public:
-  LatticeValIndexed(unsigned I = 0) { Index = I; }
-  LatticeVal &getLatticeVal() { return LV; }
-  unsigned getIndex() const { return Index; }
-
-  void setLatticeVal(LatticeVal &L) { LV = L; }
-  void setIndex(unsigned I) { Index = I; }
-
- private:
-  LatticeVal LV;
-  unsigned Index;
-};
 //===----------------------------------------------------------------------===//
 //
 /// SCCPSolver - This class is a general purpose solver for Sparse Conditional
@@ -167,7 +152,7 @@ class SCCPSolver : public InstVisitor<SCCPSolver> {
 
   /// TrackedMultipleRetVals - Same as TrackedRetVals, but used for functions
   /// that return multiple values.
-  std::multimap<Function*, LatticeValIndexed> TrackedMultipleRetVals;
+  std::map<std::pair<Function*, unsigned>, LatticeVal> TrackedMultipleRetVals;
 
   // The reason for two worklists is that overdefined is the lowest state
   // on the lattice, and moving things to overdefined as fast as possible
@@ -220,11 +205,10 @@ public:
     // Add an entry, F -> undef.
     if (const StructType *STy = dyn_cast<StructType>(F->getReturnType())) {
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
-        TrackedMultipleRetVals.insert(std::pair<Function *, LatticeValIndexed>
-                                      (F, LatticeValIndexed(i)));
-    }
-    else
-      TrackedRetVals[F];
+        TrackedMultipleRetVals.insert(std::make_pair(std::make_pair(F, i),
+                                                     LatticeVal()));
+    } else
+      TrackedRetVals.insert(std::make_pair(F, LatticeVal()));
   }
 
   /// Solve - Solve for constants and executable blocks.
@@ -291,7 +275,6 @@ private:
   // markOverdefined - Make a value be marked as "overdefined". If the
   // value is not already overdefined, add it to the overdefined instruction
   // work list so that the users of the instruction are updated later.
-
   inline void markOverdefined(LatticeVal &IV, Value *V) {
     if (IV.markOverdefined()) {
       DEBUG(DOUT << "markOverdefined: ";
@@ -640,7 +623,7 @@ void SCCPSolver::visitReturnInst(ReturnInst &I) {
   if (!F->hasInternalLinkage())
     return;
 
-  if (!TrackedRetVals.empty()) {
+  if (!TrackedRetVals.empty() && I.getNumOperands() == 1) {
     DenseMap<Function*, LatticeVal>::iterator TFRVI =
       TrackedRetVals.find(F);
     if (TFRVI != TrackedRetVals.end() &&
@@ -651,15 +634,13 @@ void SCCPSolver::visitReturnInst(ReturnInst &I) {
     }
   }
   
-  // Handle function that returns multiple values.
-  std::multimap<Function*, LatticeValIndexed>::iterator It, E;
-  tie(It, E) = TrackedMultipleRetVals.equal_range(F);
-  if (It != E) {
-    for (; It != E; ++It) {
-      LatticeValIndexed &LV = It->second;
-      unsigned Idx = LV.getIndex();
-      Value *V = I.getOperand(Idx);
-      mergeInValue(LV.getLatticeVal(), V, getValueState(V));
+  // Handle functions that return multiple values.
+  if (!TrackedMultipleRetVals.empty() && I.getNumOperands() > 1) {
+    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
+      std::map<std::pair<Function*, unsigned>, LatticeVal>::iterator
+        It = TrackedMultipleRetVals.find(std::make_pair(F, i));
+      if (It == TrackedMultipleRetVals.end()) break;
+      mergeInValue(It->second, F, getValueState(I.getOperand(i)));
     }
   }
 }
@@ -687,28 +668,38 @@ void SCCPSolver::visitCastInst(CastInst &I) {
 }
 
 void SCCPSolver::visitGetResultInst(GetResultInst &GRI) {
-  unsigned Idx = GRI.getIndex();
   Value *Aggr = GRI.getOperand(0);
-  Function *F = NULL;
+
+  // If the operand to the getresult is an undef, the result is undef.
+  if (isa<UndefValue>(Aggr))
+    return;
+  
+  Function *F;
   if (CallInst *CI = dyn_cast<CallInst>(Aggr))
     F = CI->getCalledFunction();
-  else if (InvokeInst *II = dyn_cast<InvokeInst>(Aggr))
-    F = II->getCalledFunction();
+  else
+    F = cast<InvokeInst>(Aggr)->getCalledFunction();
 
-  if (!F)
+  // TODO: If IPSCCP resolves the callee of this function, we could propagate a
+  // result back!
+  if (F == 0 || TrackedMultipleRetVals.empty()) {
+    markOverdefined(&GRI);
     return;
-
-  std::multimap<Function*, LatticeValIndexed>::iterator It, E;
-  tie(It, E) = TrackedMultipleRetVals.equal_range(F);
-  if (It == E) 
-    return;
-
-  for (; It != E; ++It) {
-    LatticeValIndexed &LIV = It->second;
-    if (LIV.getIndex() == Idx) {
-      mergeInValue(&GRI, LIV.getLatticeVal());
-    }
   }
+  
+  // See if we are tracking the result of the callee.
+  std::map<std::pair<Function*, unsigned>, LatticeVal>::iterator
+    It = TrackedMultipleRetVals.find(std::make_pair(F, GRI.getIndex()));
+
+  // If not tracking this function (for example, it is a declaration) just move
+  // to overdefined.
+  if (It == TrackedMultipleRetVals.end()) {
+    markOverdefined(&GRI);
+    return;
+  }
+  
+  // Otherwise, the value will be merged in here as a result of CallSite
+  // handling.
 }
 
 void SCCPSolver::visitSelectInst(SelectInst &I) {
@@ -1127,79 +1118,90 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
 
 void SCCPSolver::visitCallSite(CallSite CS) {
   Function *F = CS.getCalledFunction();
-
-  DenseMap<Function*, LatticeVal>::iterator TFRVI =TrackedRetVals.end();
-  // If we are tracking this function, we must make sure to bind arguments as
-  // appropriate.
-  bool FirstCall = false;
-  if (F && F->hasInternalLinkage()) {
-    TFRVI = TrackedRetVals.find(F);
-    if (TFRVI != TrackedRetVals.end()) 
-      FirstCall = true;
-    else {
-      std::multimap<Function*, LatticeValIndexed>::iterator It, E;
-      tie(It, E) = TrackedMultipleRetVals.equal_range(F);
-      if (It != E) 
-        FirstCall = true;
-    }
-  }
-
-  if (FirstCall) {
-    // If this is the first call to the function hit, mark its entry block
-    // executable.
-    if (!BBExecutable.count(F->begin()))
-      MarkBlockExecutable(F->begin());
-    
-    CallSite::arg_iterator CAI = CS.arg_begin();
-    for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
-         AI != E; ++AI, ++CAI) {
-      LatticeVal &IV = ValueState[AI];
-      if (!IV.isOverdefined())
-        mergeInValue(IV, AI, getValueState(*CAI));
-    }
-  }
   Instruction *I = CS.getInstruction();
-
-  if (!CS.doesNotThrow() && I->getParent()->getUnwindDest())
-    markEdgeExecutable(I->getParent(), I->getParent()->getUnwindDest());
-
-  if (I->getType() == Type::VoidTy) return;
-
-  LatticeVal &IV = ValueState[I];
-  if (IV.isOverdefined()) return;
-
-  // Propagate the single return value of the function to the value of the 
-  // instruction.
-  if (TFRVI != TrackedRetVals.end()) {
-    mergeInValue(IV, I, TFRVI->second);
-    return;
-  }
-
-  if (F == 0 || !F->isDeclaration() || !canConstantFoldCallTo(F)) {
-    markOverdefined(IV, I);
-    return;
-  }
-
-  SmallVector<Constant*, 8> Operands;
-  Operands.reserve(I->getNumOperands()-1);
-
-  for (CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
-       AI != E; ++AI) {
-    LatticeVal &State = getValueState(*AI);
-    if (State.isUndefined())
-      return;  // Operands are not resolved yet...
-    else if (State.isOverdefined()) {
-      markOverdefined(IV, I);
-      return;
+  
+  // The common case is that we aren't tracking the callee, either because we
+  // are not doing interprocedural analysis or the callee is indirect, or is
+  // external.  Handle these cases first.
+  if (F == 0 || !F->hasInternalLinkage()) {
+CallOverdefined:
+    // Void return and not tracking callee, just bail.
+    if (I->getType() == Type::VoidTy) return;
+    
+    // Otherwise, if we have a single return value case, and if the function is
+    // a declaration, maybe we can constant fold it.
+    if (!isa<StructType>(I->getType()) && F && F->isDeclaration() && 
+        canConstantFoldCallTo(F)) {
+      
+      SmallVector<Constant*, 8> Operands;
+      for (CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
+           AI != E; ++AI) {
+        LatticeVal &State = getValueState(*AI);
+        if (State.isUndefined())
+          return;  // Operands are not resolved yet.
+        else if (State.isOverdefined()) {
+          markOverdefined(I);
+          return;
+        }
+        assert(State.isConstant() && "Unknown state!");
+        Operands.push_back(State.getConstant());
+      }
+     
+      // If we can constant fold this, mark the result of the call as a
+      // constant.
+      if (Constant *C = ConstantFoldCall(F, &Operands[0], Operands.size())) {
+        markConstant(I, C);
+        return;
+      }
     }
-    assert(State.isConstant() && "Unknown state!");
-    Operands.push_back(State.getConstant());
+
+    // Otherwise, we don't know anything about this call, mark it overdefined.
+    markOverdefined(I);
+    return;
   }
 
-  if (Constant *C = ConstantFoldCall(F, &Operands[0], Operands.size()))
-    markConstant(IV, I, C);
-  else
-    markOverdefined(IV, I);
+  // If this is a single/zero retval case, see if we're tracking the function.
+  const StructType *RetSTy = dyn_cast<StructType>(I->getType());
+  if (RetSTy == 0) {
+    // Check to see if we're tracking this callee, if not, handle it in the
+    // common path above.
+    DenseMap<Function*, LatticeVal>::iterator TFRVI = TrackedRetVals.find(F);
+    if (TFRVI == TrackedRetVals.end())
+      goto CallOverdefined;
+    
+    // If so, propagate the return value of the callee into this call result.
+    mergeInValue(I, TFRVI->second);
+  } else {
+    // Check to see if we're tracking this callee, if not, handle it in the
+    // common path above.
+    std::map<std::pair<Function*, unsigned>, LatticeVal>::iterator
+      TMRVI = TrackedMultipleRetVals.find(std::make_pair(F, 0));
+    if (TMRVI == TrackedMultipleRetVals.end())
+      goto CallOverdefined;
+    
+    // If we are tracking this callee, propagate the return values of the call
+    // into this call site.  We do this by walking all the getresult uses.
+    for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
+         UI != E; ++UI) {
+      GetResultInst *GRI = cast<GetResultInst>(*UI);
+      mergeInValue(GRI, 
+                   TrackedMultipleRetVals[std::make_pair(F, GRI->getIndex())]);
+    }
+  }
+   
+  // Finally, if this is the first call to the function hit, mark its entry
+  // block executable.
+  if (!BBExecutable.count(F->begin()))
+    MarkBlockExecutable(F->begin());
+  
+  // Propagate information from this call site into the callee.
+  CallSite::arg_iterator CAI = CS.arg_begin();
+  for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end();
+       AI != E; ++AI, ++CAI) {
+    LatticeVal &IV = ValueState[AI];
+    if (!IV.isOverdefined())
+      mergeInValue(IV, AI, getValueState(*CAI));
+  }
 }
 
 
