@@ -1,8 +1,8 @@
 ; RUN: llvm-as < %s | llc -o %t -f
 ; RUN: grep __alloca %t | count 2
-; RUN: grep 8028 %t
+; RUN: grep 4294967288 %t
 ; RUN: grep {pushl	%eax} %t
-; RUN: grep 8024 %t | count 2
+; RUN: grep 8012 %t | count 2
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64"
 target triple = "i386-mingw32"
