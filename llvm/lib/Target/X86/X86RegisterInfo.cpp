@@ -283,7 +283,7 @@ bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
 
   // FIXME: Currently we don't support stack realignment for functions with
   // variable-sized allocas
-  return (MFI->getMaxAlignment() &&
+  return (RealignStack &&
           (MFI->getMaxAlignment() > StackAlign &&
            !MFI->hasVarSizedObjects()));
 }
