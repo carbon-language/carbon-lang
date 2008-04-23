@@ -39,7 +39,7 @@
 using namespace llvm;
 
 static cl::opt<std::string>
-FuncName("funcname", cl::desc("Specify the name of the generated function"),
+FuncName("cppfname", cl::desc("Specify the name of the generated function"),
          cl::value_desc("function name"));
 
 enum WhatToGenerate {
@@ -53,23 +53,23 @@ enum WhatToGenerate {
   GenType
 };
 
-static cl::opt<WhatToGenerate> GenerationType(cl::Optional,
+static cl::opt<WhatToGenerate> GenerationType("cppgen", cl::Optional,
   cl::desc("Choose what kind of output to generate"),
   cl::init(GenProgram),
   cl::values(
-    clEnumValN(GenProgram,  "gen-program",   "Generate a complete program"),
-    clEnumValN(GenModule,   "gen-module",    "Generate a module definition"),
-    clEnumValN(GenContents, "gen-contents",  "Generate contents of a module"),
-    clEnumValN(GenFunction, "gen-function",  "Generate a function definition"),
-    clEnumValN(GenFunctions,"gen-functions", "Generate all function definitions"),
-    clEnumValN(GenInline,   "gen-inline",    "Generate an inline function"),
-    clEnumValN(GenVariable, "gen-variable",  "Generate a variable definition"),
-    clEnumValN(GenType,     "gen-type",      "Generate a type definition"),
+    clEnumValN(GenProgram,  "program",   "Generate a complete program"),
+    clEnumValN(GenModule,   "module",    "Generate a module definition"),
+    clEnumValN(GenContents, "contents",  "Generate contents of a module"),
+    clEnumValN(GenFunction, "function",  "Generate a function definition"),
+    clEnumValN(GenFunctions,"functions", "Generate all function definitions"),
+    clEnumValN(GenInline,   "inline",    "Generate an inline function"),
+    clEnumValN(GenVariable, "variable",  "Generate a variable definition"),
+    clEnumValN(GenType,     "type",      "Generate a type definition"),
     clEnumValEnd
   )
 );
 
-static cl::opt<std::string> NameToGenerate("for", cl::Optional,
+static cl::opt<std::string> NameToGenerate("cppfor", cl::Optional,
   cl::desc("Specify the name of the thing to generate"),
   cl::init("!bad!"));
 
