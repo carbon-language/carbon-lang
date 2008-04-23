@@ -167,6 +167,10 @@ public:
     Profile(ID, getLocation(), getState());
   }
   
+  void addPredecessor(ExplodedNode* V) {
+    ExplodedNodeImpl::addPredecessor(V);
+  }
+  
   // Iterators over successor and predecessor vertices.
   typedef ExplodedNode**       succ_iterator;
   typedef const ExplodedNode** const_succ_iterator;
@@ -270,7 +274,8 @@ public:
   llvm::BumpPtrAllocator& getAllocator() { return Allocator; }
   CFG& getCFG() { return cfg; }
   ASTContext& getContext() { return Ctx; }
-  
+
+  Decl& getCodeDecl() { return CodeDecl; }
   const Decl& getCodeDecl() const { return CodeDecl; }
 
   const FunctionDecl* getFunctionDecl() const {

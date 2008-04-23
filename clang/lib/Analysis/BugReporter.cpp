@@ -139,35 +139,66 @@ PathDiagnosticPiece* BugReport::VisitNode(ExplodedNode<ValueState>* N,
   return NULL;
 }
 
-void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
-                                         BugReport& R) {
-
-  ExplodedNode<ValueState>* N = R.getEndNode();
-
-  if (!N)
-    return;
+static std::pair<ExplodedGraph<ValueState>*, ExplodedNode<ValueState>*>
+MakeReportGraph(ExplodedGraph<ValueState>* G, ExplodedNode<ValueState>* N) {
   
-  llvm::OwningPtr<ExplodedGraph<ValueState> > GTrim(getGraph().Trim(&N, &N+1));
-
-  // Find the sink in the trimmed graph.
-  // FIXME: Should we eventually have a sink iterator?
+  llvm::OwningPtr<ExplodedGraph<ValueState> > GTrim(G->Trim(&N, &N+1));    
+    
+  // Find the sink node in the trimmed graph.  
   
-  ExplodedNode<ValueState>* NewN = 0;
+  N = NULL;
   
   for (ExplodedGraph<ValueState>::node_iterator
        I = GTrim->nodes_begin(), E = GTrim->nodes_end(); I != E; ++I) {
     
     if (I->isSink()) {
-      NewN = &*I;
+      N = &*I;
       break;
     }    
   }
   
-  assert (NewN);
-  assert (NewN->getLocation() == N->getLocation());
-  
-  N = NewN;
+  assert(N);
     
+  // Create a new graph with a single path.
+
+  G = new ExplodedGraph<ValueState>(GTrim->getCFG(), GTrim->getCodeDecl(),
+                                     GTrim->getContext());
+                                     
+                                     
+  ExplodedNode<ValueState>* Last = 0;
+
+  while (N) {
+    ExplodedNode<ValueState>* NewN =
+      G->getNode(N->getLocation(), N->getState());
+    
+    if (Last) Last->addPredecessor(NewN);
+    
+    Last = NewN;
+    N = N->pred_empty() ? 0 : *(N->pred_begin());
+  }
+  
+  return std::make_pair(G, Last);
+}
+
+void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
+                                         BugReport& R) {
+
+  ExplodedNode<ValueState>* N = R.getEndNode();
+
+  if (!N) return;
+  
+  // Construct a new graph that contains only a single path from the error
+  // node to a root.
+  
+  const std::pair<ExplodedGraph<ValueState>*,ExplodedNode<ValueState>*>
+    GPair = MakeReportGraph(&getGraph(), N);
+  
+  llvm::OwningPtr<ExplodedGraph<ValueState> > ReportGraph(GPair.first);
+  assert(GPair.second->getLocation() == N->getLocation());
+  N = GPair.second;
+
+  // Start building the path diagnostic...
+  
   if (PathDiagnosticPiece* Piece = R.getEndPath(*this, N))
     PD.push_back(Piece);
   else
@@ -350,7 +381,8 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
       }
     }
     else
-      if (PathDiagnosticPiece* piece = R.VisitNode(N, NextNode, *GTrim, *this))
+      if (PathDiagnosticPiece* piece = R.VisitNode(N, NextNode,
+                                                   *ReportGraph, *this))
         PD.push_front(piece);
   }
 }
