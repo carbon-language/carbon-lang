@@ -53,6 +53,7 @@ namespace {
     void PrintObjCCategoryDecl(ObjCCategoryDecl *PID);    
     void PrintObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *AID);
     void PrintObjCPropertyDecl(ObjCPropertyDecl *PD);
+    void PrintObjCPropertyImplDecl(ObjCPropertyImplDecl *PID);
   };
 } // end anonymous namespace
 
@@ -228,6 +229,10 @@ void DeclPrinter::PrintObjCImplementationDecl(ObjCImplementationDecl *OID) {
     }
   }
   
+  for (ObjCImplementationDecl::propimpl_iterator I = OID->propimpl_begin(),
+       E = OID->propimpl_end(); I != E; ++I)
+    PrintObjCPropertyImplDecl(*I);
+  
   Out << "@end\n";
 }
 
@@ -287,7 +292,10 @@ void DeclPrinter::PrintObjCCategoryImplDecl(ObjCCategoryImplDecl *PID) {
   Out << "@implementation "
       << PID->getClassInterface()->getName()
       << '(' << PID->getName() << ");\n";  
-  
+  for (ObjCCategoryImplDecl::propimpl_iterator I = PID->propimpl_begin(),
+       E = PID->propimpl_end(); I != E; ++I)
+    PrintObjCPropertyImplDecl(*I);
+  Out << "@end\n";
   // FIXME: implement the rest...
 }
 
@@ -367,7 +375,21 @@ void DeclPrinter::PrintObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
     
   Out << ";\n";
 }
-    
+
+/// PrintObjCPropertyImplDecl - Print an objective-c property implementation
+/// declaration syntax.
+///
+void DeclPrinter::PrintObjCPropertyImplDecl(ObjCPropertyImplDecl *PID) {
+  if (PID->getPropertyImplementation() == 
+      ObjCPropertyImplDecl::OBJC_PR_IMPL_SYNTHSIZE)
+    Out << "\n@synthesize ";
+  else
+    Out << "\n@dynamic ";
+  Out << PID->getPropertyDecl()->getName();
+  if (PID->getPropertyIvarDecl())
+    Out << "=" << PID->getPropertyIvarDecl()->getName();
+  Out << ";\n";
+}
 //===----------------------------------------------------------------------===//
 /// ASTPrinter - Pretty-printer of ASTs
 

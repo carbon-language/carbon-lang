@@ -517,5 +517,14 @@ ObjCInterfaceDecl *ObjCMethodDecl::getClassInterface() {
   return 0;
 }
 
+ObjCPropertyImplDecl *ObjCPropertyImplDecl::Create(ASTContext &C,
+                                                   SourceLocation atLoc,
+                                                   SourceLocation L,
+                                                   ObjCPropertyDecl *property,
+                                                   PropertyImplKind kind,
+                                                   ObjCIvarDecl *ivar) {
+  void *Mem = C.getAllocator().Allocate<ObjCPropertyImplDecl>();
+  return new (Mem) ObjCPropertyImplDecl(atLoc, L, property, kind, ivar);
+}
 
 

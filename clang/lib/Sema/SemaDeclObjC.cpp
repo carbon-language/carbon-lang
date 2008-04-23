@@ -949,8 +949,9 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
   ObjCInterfaceDecl* IDecl = 0;
   // Find the class or category class where this property must have
   // a declaration.
-  if (ObjCImplementationDecl *IC = 
-        dyn_cast<ObjCImplementationDecl>(ClassImpDecl)) {
+  ObjCImplementationDecl *IC = 0;
+  ObjCCategoryImplDecl* CatImplClass = 0;
+  if ((IC = dyn_cast<ObjCImplementationDecl>(ClassImpDecl))) {
     IDecl = getObjCInterfaceDecl(IC->getIdentifier());
     // We always synthesize an interface for an implementation
     // without an interface decl. So, IDecl is always non-zero.
@@ -964,8 +965,7 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
       return 0;
     }
   }
-  else if (ObjCCategoryImplDecl* CatImplClass = 
-            dyn_cast<ObjCCategoryImplDecl>(ClassImpDecl)) {
+  else if ((CatImplClass = dyn_cast<ObjCCategoryImplDecl>(ClassImpDecl))) {
     if (Synthesize) {
       Diag(AtLoc, diag::error_synthesize_category_decl);
       return 0;
@@ -994,14 +994,14 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     Diag(AtLoc, diag::error_bad_property_context);
     return 0;
   }
-  
+  ObjCIvarDecl *Ivar = 0;
   // Check that we have a valid, previously declared ivar for @synthesize
   if (Synthesize) {
     // @synthesize
     if (!PropertyIvar)
       PropertyIvar = PropertyId;
     // Check that this is a previously declared 'ivar' in 'IDecl' interface
-    ObjCIvarDecl *Ivar = IDecl->FindIvarDeclaration(PropertyIvar);
+    Ivar = IDecl->FindIvarDeclaration(PropertyIvar);
     if (!Ivar) {
       Diag(PropertyLoc, diag::error_missing_property_ivar_decl, 
            PropertyId->getName());
@@ -1020,15 +1020,17 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     return 0;
   }
   assert (property && "ActOnPropertyImplDecl - property declaration missing");
-  // TODO: Build the property implementation AST, pushes it into its 
-  // class/cateogory implementation's vector of property implementations
-#if 0
-  ObjCCategoryImplDecl *PIDecl = 
-    ObjCCategoryImplDecl::Create(AtLoc, PropertyLoc, property, 
-      Synthesize ? ObjCPropertyImplDecl::OBJC_PR_IMPL_SYNTHSIZE 
-                 : ObjCPropertyImplDecl::OBJC_PR_IMPL_DYNAMIC,
-                                 PropertyId, PropertyIvar);
-#endif
-  return 0;
+  ObjCPropertyImplDecl *PIDecl = 
+    ObjCPropertyImplDecl::Create(Context, AtLoc, PropertyLoc, property, 
+                                 (Synthesize ? 
+                                  ObjCPropertyImplDecl::OBJC_PR_IMPL_SYNTHSIZE 
+                                  : ObjCPropertyImplDecl::OBJC_PR_IMPL_DYNAMIC),
+                                  Ivar);
+  if (IC)
+    IC->addPropertyImplementation(PIDecl);
+  else
+    CatImplClass->addPropertyImplementation(PIDecl);
+    
+  return PIDecl;
 }
 

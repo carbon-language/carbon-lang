@@ -1106,9 +1106,18 @@ private:
   /// Null for @dynamic. Required for @synthesize.
   ObjCIvarDecl *PropertyIvarDecl;
 public:
-  ObjCPropertyImplDecl(SourceLocation atLoc, SourceLocation L)
-  : Decl(ObjCPropertyImpl, L), AtLoc(atLoc), PropertyDecl(0), 
-  PropertyImplementation(OBJC_PR_IMPL_None), PropertyIvarDecl(0) {}
+  ObjCPropertyImplDecl(SourceLocation atLoc, SourceLocation L,
+                       ObjCPropertyDecl *property, 
+                       PropertyImplKind propertyKind, 
+                       ObjCIvarDecl *ivarDecl)
+  : Decl(ObjCPropertyImpl, L), AtLoc(atLoc), PropertyDecl(property), 
+    PropertyImplementation(propertyKind), PropertyIvarDecl(ivarDecl){}
+  
+  static ObjCPropertyImplDecl *Create(ASTContext &C, SourceLocation atLoc, 
+                                      SourceLocation L, 
+                                      ObjCPropertyDecl *property, 
+                                      PropertyImplKind propertyKind, 
+                                      ObjCIvarDecl *ivarDecl);
 
   void setPropertyDecl(ObjCPropertyDecl *property) { PropertyDecl = property; }
   ObjCPropertyDecl *getPropertyDecl() const { return PropertyDecl; }
