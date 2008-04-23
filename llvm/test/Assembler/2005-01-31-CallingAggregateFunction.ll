@@ -1,8 +1,8 @@
 ; RUN: llvm-as < %s -o /dev/null -f 
 
 define void @test() {
-	call {} @foo()
+	call {i32} @foo()
 	ret void
 }
 
-declare {} @foo()
+declare {i32 } @foo()
