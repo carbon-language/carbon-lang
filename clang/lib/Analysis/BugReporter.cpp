@@ -165,19 +165,20 @@ MakeReportGraph(ExplodedGraph<ValueState>* G, ExplodedNode<ValueState>* N) {
                                      GTrim->getContext());
                                      
                                      
-  ExplodedNode<ValueState>* Last = 0;
+  ExplodedNode<ValueState> *Last = 0, *First = 0;
 
   while (N) {
     ExplodedNode<ValueState>* NewN =
       G->getNode(N->getLocation(), N->getState());
     
+    if (!First) First = NewN;
     if (Last) Last->addPredecessor(NewN);
     
     Last = NewN;
     N = N->pred_empty() ? 0 : *(N->pred_begin());
   }
   
-  return std::make_pair(G, Last);
+  return std::make_pair(G, First);
 }
 
 void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
