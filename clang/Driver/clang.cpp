@@ -1274,7 +1274,7 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
     exit (1);
   }
   
-  llvm::OwningPtr<TranslationUnit> TU(ReadASTBitcodeFile(Filename,FileMgr));
+  llvm::OwningPtr<TranslationUnit> TU(ReadASTBitcodeFile(Filename, FileMgr));
   
   if (!TU) {
     fprintf(stderr, "error: file '%s' could not be deserialized\n", 
@@ -1294,7 +1294,7 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
     exit (1);
   }
   
-  Consumer->Initialize(*TU->getContext());
+  Consumer->Initialize(TU->getContext());
   
   // FIXME: We need to inform Consumer about completed TagDecls as well.
   for (TranslationUnit::iterator I=TU->begin(), E=TU->end(); I!=E; ++I)

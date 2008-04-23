@@ -826,20 +826,24 @@ namespace {
 class ASTSerializer : public ASTConsumer {
 protected:
   Diagnostic &Diags;
-  TranslationUnit TU;
+  const LangOptions& lang;
+  TranslationUnit* TU;
+
 public:
   ASTSerializer(Diagnostic& diags, const LangOptions& LO)
-    : Diags(diags), TU(LO) {}
+    : Diags(diags), lang(LO), TU(0) {}
+    
+  virtual ~ASTSerializer() { delete TU; }
   
   virtual void Initialize(ASTContext &Context) {
-    TU.setContext(&Context);
+    if (!TU) TU = new TranslationUnit(Context, lang);
   }
   
   virtual void HandleTopLevelDecl(Decl *D) {
     if (Diags.hasErrorOccurred())
       return;
     
-    TU.AddTopLevelDecl(D);
+    if (TU) TU->AddTopLevelDecl(D);
   }
 };
     
@@ -851,7 +855,7 @@ public:
   : ASTSerializer(diags,LO), FName(F) {}    
   
   ~SingleFileSerializer() {
-    EmitASTBitcodeFile(TU,FName);
+    EmitASTBitcodeFile(TU, FName);
   }
 };
 
@@ -863,7 +867,11 @@ public:
   : ASTSerializer(diags,LO), EmitDir(dir) {}
   
   ~BuildSerializer() {
-    SourceManager& SourceMgr = TU.getASTContext()->getSourceManager();
+
+    if (!TU)
+      return;
+    
+    SourceManager& SourceMgr = TU->getContext().getSourceManager();
     unsigned ID = SourceMgr.getMainFileID();
     assert (ID && "MainFileID not set!");
     const FileEntry* FE = SourceMgr.getFileEntryForID(ID);
@@ -887,7 +895,7 @@ public:
             
     sprintf(&buf[0], "%s-%llX.ast", FE->getName(), (uint64_t) FE->getInode());
     FName.appendComponent(&buf[0]);    
-    EmitASTBitcodeFile(TU,FName);
+    EmitASTBitcodeFile(TU, FName);
     
     // Now emit the sources.
     

@@ -33,21 +33,22 @@ using namespace clang;
 namespace {
   
 class SerializationTest : public ASTConsumer {
-  TranslationUnit TU;
+  llvm::OwningPtr<TranslationUnit> TU;
   Diagnostic &Diags;
   FileManager &FMgr;  
+  const LangOptions& lopts;
 public:  
   SerializationTest(Diagnostic &d, FileManager& fmgr, const LangOptions& LOpts)
-                    : TU(LOpts), Diags(d), FMgr(fmgr) {}
+                    : Diags(d), FMgr(fmgr), lopts(LOpts) {}
   
   ~SerializationTest();
 
   virtual void Initialize(ASTContext& context) {
-    TU.setContext(&context);
+    if (!TU) TU.reset(new TranslationUnit(context, lopts));
   }  
 
   virtual void HandleTopLevelDecl(Decl *D) {
-    TU.AddTopLevelDecl(D);
+    TU->AddTopLevelDecl(D);
   }
   
 private:
@@ -73,12 +74,12 @@ bool SerializationTest::Serialize(llvm::sys::Path& Filename,
     assert (DeclPP && "Could not open file for printing out decls.");
     llvm::OwningPtr<ASTConsumer> FilePrinter(CreateASTPrinter(&DeclPP));
     
-    for (TranslationUnit::iterator I=TU.begin(), E=TU.end(); I!=E; ++I)
+    for (TranslationUnit::iterator I=TU->begin(), E=TU->end(); I!=E; ++I)
       FilePrinter->HandleTopLevelDecl(*I);
   }
   
   // Serialize the translation unit.
-  return EmitASTBitcodeFile(TU,Filename);
+  return EmitASTBitcodeFile(*TU,Filename);
 }
 
 bool SerializationTest::Deserialize(llvm::sys::Path& Filename,

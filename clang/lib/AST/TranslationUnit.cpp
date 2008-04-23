@@ -33,11 +33,28 @@ enum { BasicMetadataBlock = 1,
 TranslationUnit::~TranslationUnit() {
   for (iterator I=begin(), E=end(); I!=E; ++I) 
     (*I)->Destroy(*Context);
+  
+  if (OwnsMetaData && Context) {
+    // The ASTContext object has the sole references to the IdentifierTable
+    // Selectors, and the Target information.  Go and delete them, since
+    // the TranslationUnit effectively owns them.
+    
+    delete &(Context->Idents);
+    delete &(Context->Selectors);
+    delete &(Context->Target);
+    delete Context;
+  }  
 }
 
+bool clang::EmitASTBitcodeFile(const TranslationUnit* TU,                                
+                               const llvm::sys::Path& Filename) {
+
+  return TU ? EmitASTBitcodeFile(*TU, Filename) : false;
+}
+  
 bool clang::EmitASTBitcodeFile(const TranslationUnit& TU, 
                                const llvm::sys::Path& Filename) {  
-
+  
   // Reserve 256K for bitstream buffer.
   std::vector<unsigned char> Buffer;
   Buffer.reserve(256*1024);
@@ -194,7 +211,7 @@ TranslationUnit* TranslationUnit::Create(llvm::Deserializer& Dezr,
   { // Read the TargetInfo.
     llvm::SerializedPtrID PtrID = Dezr.ReadPtrID();
     char* triple = Dezr.ReadCStr(NULL,0,true);
-    Dezr.RegisterPtr(PtrID,TargetInfo::CreateTargetInfo(std::string(triple)));
+    Dezr.RegisterPtr(PtrID, TargetInfo::CreateTargetInfo(std::string(triple)));
     delete [] triple;
   }
   

@@ -34,19 +34,17 @@ class TranslationUnit {
   LangOptions LangOpts;
   ASTContext* Context;
   std::vector<Decl*> TopLevelDecls;
+  bool OwnsMetaData;
 
   // The default ctor is only invoked during deserialization.
-  explicit TranslationUnit() : Context(NULL) {}
+  explicit TranslationUnit() : Context(NULL), OwnsMetaData(true) {}
   
 public:
-  explicit TranslationUnit(const LangOptions& lopt)
-    : LangOpts(lopt), Context(NULL) {}
+  explicit TranslationUnit(ASTContext& Ctx, const LangOptions& lopt)
+    : LangOpts(lopt), Context(&Ctx), OwnsMetaData(false) {}
 
   ~TranslationUnit();
 
-  void setContext(ASTContext* context) { Context = context; }
-  ASTContext* getContext() const { return Context; }
-  
   const LangOptions& getLangOpts() const { return LangOpts; }
   const std::string& getSourceFile() const;
   
@@ -58,9 +56,12 @@ public:
   
   // Accessors
   const LangOptions& getLangOptions() const { return LangOpts; }
-  ASTContext*        getASTContext() { return Context; }
+
+  ASTContext&        getContext() { return *Context; }
+  const ASTContext&  getContext() const { return *Context; }
   
   /// AddTopLevelDecl - Add a top-level declaration to the translation unit.
+  ///  Ownership of the Decl is transfered to the TranslationUnit object.
   void AddTopLevelDecl(Decl* d) {
     TopLevelDecls.push_back(d);
   }
@@ -76,6 +77,9 @@ public:
   
 /// EmitASTBitcodeFile - Emit a translation unit to a bitcode file.
 bool EmitASTBitcodeFile(const TranslationUnit& TU, 
+                        const llvm::sys::Path& Filename);
+  
+bool EmitASTBitcodeFile(const TranslationUnit* TU, 
                         const llvm::sys::Path& Filename);
                      
 /// ReadASTBitcodeFile - Reconsitute a translation unit from a bitcode file.
