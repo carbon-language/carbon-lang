@@ -51,6 +51,11 @@ FunctionPass *createX86CodeEmitterPass(X86TargetMachine &TM,
 ///
 FunctionPass *createEmitX86CodeToMemory();
 
+/// createX86MaxStackAlignmentCalculatorPass - This function returns a pass which
+/// calculates maximal stack alignment required for function
+///
+FunctionPass *createX86MaxStackAlignmentCalculatorPass();
+
 } // End llvm namespace
 
 // Defines symbolic names for X86 registers.  This defines a mapping from

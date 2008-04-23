@@ -36,6 +36,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/Compiler.h"
 using namespace llvm;
 
 X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
@@ -280,16 +281,10 @@ bool X86RegisterInfo::hasFP(const MachineFunction &MF) const {
 bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();;
 
-  // FIXME: This is really really ugly, but it seems we need to decide, whether
-  // we will need stack realignment or not too early (during RA stage).
-  unsigned MaxAlign = MFI->getMaxAlignment();
-  if (!MaxAlign)
-    MaxAlign = calculateMaxStackAlignment(MFI);
-
   // FIXME: Currently we don't support stack realignment for functions with
   // variable-sized allocas
-  return (RealignStack &&
-          (MaxAlign > StackAlign &&
+  return (MFI->getMaxAlignment() &&
+          (MFI->getMaxAlignment() > StackAlign &&
            !MFI->hasVarSizedObjects()));
 }
 
@@ -1118,3 +1113,31 @@ unsigned getX86SubSuperRegister(unsigned Reg, MVT::ValueType VT, bool High) {
 }
 
 #include "X86GenRegisterInfo.inc"
+
+namespace {
+  struct VISIBILITY_HIDDEN MSAC : public MachineFunctionPass {
+    static char ID;
+    MSAC() : MachineFunctionPass((intptr_t)&ID) {}
+
+    virtual bool runOnMachineFunction(MachineFunction &MF) {
+      MachineFrameInfo *FFI = MF.getFrameInfo();
+
+      // Calculate and set max stack object alignment early, so we can decide
+      // whether we will need stack realignment (and thus FP).
+      unsigned MaxAlign = calculateMaxStackAlignment(FFI);
+
+      FFI->setMaxAlignment(MaxAlign);
+
+      return false;
+    }
+
+    virtual const char *getPassName() const {
+      return "X86 Maximal Stack Alignment Calculator";
+    }
+  };
+
+  char MSAC::ID = 0;
+}
+
+FunctionPass*
+llvm::createX86MaxStackAlignmentCalculatorPass() { return new MSAC(); }

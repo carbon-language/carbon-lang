@@ -161,6 +161,11 @@ bool X86TargetMachine::addInstSelector(PassManagerBase &PM, bool Fast) {
   return false;
 }
 
+bool X86TargetMachine::addPreRegAlloc(PassManagerBase &PM, bool Fast) {
+  PM.add(createX86MaxStackAlignmentCalculatorPass());
+  return false;  // -print-machineinstr shouldn't print after this.
+}
+
 bool X86TargetMachine::addPostRegAlloc(PassManagerBase &PM, bool Fast) {
   PM.add(createX86FloatingPointStackifierPass());
   return true;  // -print-machineinstr should print after this.
