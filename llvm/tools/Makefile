@@ -15,7 +15,7 @@ PARALLEL_DIRS := llvm-config  \
                  opt llvm-as llvm-dis \
                  llc llvm-ranlib llvm-ar llvm-nm \
                  llvm-ld llvm-prof llvm-link \
-		 lli gccas gccld llvm-extract llvm-db llvm2cpp \
+		 lli gccas gccld llvm-extract llvm-db \
 		 bugpoint llvm-bcanalyzer llvm-stub llvmc2
 
 
