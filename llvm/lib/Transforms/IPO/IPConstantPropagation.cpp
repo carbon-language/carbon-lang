@@ -76,61 +76,64 @@ bool IPCP::runOnModule(Module &M) {
 bool IPCP::PropagateConstantsIntoArguments(Function &F) {
   if (F.arg_empty() || F.use_empty()) return false; // No arguments? Early exit.
 
-  std::vector<std::pair<Constant*, bool> > ArgumentConstants;
+  // For each argument, keep track of its constant value and whether it is a
+  // constant or not.  The bool is driven to true when found to be non-constant.
+  SmallVector<std::pair<Constant*, bool>, 16> ArgumentConstants;
   ArgumentConstants.resize(F.arg_size());
 
   unsigned NumNonconstant = 0;
+  for (Value::use_iterator UI = F.use_begin(), E = F.use_end(); UI != E; ++UI) {
+    // Used by a non-instruction, or not the callee of a function, do not
+    // transform.
+    if (UI.getOperandNo() != 0 ||
+        (!isa<CallInst>(*UI) && !isa<InvokeInst>(*UI)))
+      return false;
+    
+    CallSite CS = CallSite::get(cast<Instruction>(*UI));
 
-  for (Value::use_iterator I = F.use_begin(), E = F.use_end(); I != E; ++I)
-    if (!isa<Instruction>(*I))
-      return false;  // Used by a non-instruction, do not transform
-    else {
-      CallSite CS = CallSite::get(cast<Instruction>(*I));
-      if (CS.getInstruction() == 0 ||
-          CS.getCalledFunction() != &F)
-        return false;  // Not a direct call site?
-
-      // Check out all of the potentially constant arguments
-      CallSite::arg_iterator AI = CS.arg_begin();
-      Function::arg_iterator Arg = F.arg_begin();
-      for (unsigned i = 0, e = ArgumentConstants.size(); i != e;
-           ++i, ++AI, ++Arg) {
-        if (*AI == &F) return false;  // Passes the function into itself
-
-        if (!ArgumentConstants[i].second) {
-          if (Constant *C = dyn_cast<Constant>(*AI)) {
-            if (!ArgumentConstants[i].first)
-              ArgumentConstants[i].first = C;
-            else if (ArgumentConstants[i].first != C) {
-              // Became non-constant
-              ArgumentConstants[i].second = true;
-              ++NumNonconstant;
-              if (NumNonconstant == ArgumentConstants.size()) return false;
-            }
-          } else if (*AI != &*Arg) {    // Ignore recursive calls with same arg
-            // This is not a constant argument.  Mark the argument as
-            // non-constant.
-            ArgumentConstants[i].second = true;
-            ++NumNonconstant;
-            if (NumNonconstant == ArgumentConstants.size()) return false;
-          }
-        }
+    // Check out all of the potentially constant arguments.  Note that we don't
+    // inspect varargs here.
+    CallSite::arg_iterator AI = CS.arg_begin();
+    Function::arg_iterator Arg = F.arg_begin();
+    for (unsigned i = 0, e = ArgumentConstants.size(); i != e;
+         ++i, ++AI, ++Arg) {
+      
+      // If this argument is known non-constant, ignore it.
+      if (ArgumentConstants[i].second)
+        continue;
+      
+      Constant *C = dyn_cast<Constant>(*AI);
+      if (C && ArgumentConstants[i].first == 0) {
+        ArgumentConstants[i].first = C;   // First constant seen.
+      } else if (C && ArgumentConstants[i].first == C) {
+        // Still the constant value we think it is.
+      } else if (*AI == &*Arg) {
+        // Ignore recursive calls passing argument down.
+      } else {
+        // Argument became non-constant.  If all arguments are non-constant now,
+        // give up on this function.
+        if (++NumNonconstant == ArgumentConstants.size())
+          return false;
+        ArgumentConstants[i].second = true;
       }
     }
+  }
 
   // If we got to this point, there is a constant argument!
   assert(NumNonconstant != ArgumentConstants.size());
-  Function::arg_iterator AI = F.arg_begin();
   bool MadeChange = false;
-  for (unsigned i = 0, e = ArgumentConstants.size(); i != e; ++i, ++AI)
-    // Do we have a constant argument!?
-    if (!ArgumentConstants[i].second && !AI->use_empty()) {
-      Value *V = ArgumentConstants[i].first;
-      if (V == 0) V = UndefValue::get(AI->getType());
-      AI->replaceAllUsesWith(V);
-      ++NumArgumentsProped;
-      MadeChange = true;
-    }
+  Function::arg_iterator AI = F.arg_begin();
+  for (unsigned i = 0, e = ArgumentConstants.size(); i != e; ++i, ++AI) {
+    // Do we have a constant argument?
+    if (ArgumentConstants[i].second || AI->use_empty())
+      continue;
+  
+    Value *V = ArgumentConstants[i].first;
+    if (V == 0) V = UndefValue::get(AI->getType());
+    AI->replaceAllUsesWith(V);
+    ++NumArgumentsProped;
+    MadeChange = true;
+  }
   return MadeChange;
 }
 
