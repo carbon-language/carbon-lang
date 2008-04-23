@@ -1081,8 +1081,14 @@ void Verifier::visitAllocationInst(AllocationInst &AI) {
 }
 
 void Verifier::visitGetResultInst(GetResultInst &GRI) {
-  Assert1(GRI.isValidOperands(GRI.getAggregateValue(), GRI.getIndex()),
+  Assert1(GetResultInst::isValidOperands(GRI.getAggregateValue(),
+                                         GRI.getIndex()),
           "Invalid GetResultInst operands!", &GRI);
+  Assert1(isa<CallInst>(GRI.getAggregateValue()) ||
+          isa<InvokeInst>(GRI.getAggregateValue()) ||
+          isa<UndefValue>(GRI.getAggregateValue()),
+          "GetResultInst operand must be a call/invoke/undef!", &GRI);
+  
   visitInstruction(GRI);
 }
 
