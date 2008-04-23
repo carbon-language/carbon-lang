@@ -3311,8 +3311,13 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
 
 
 void SelectionDAGLowering::visitGetResult(GetResultInst &I) {
-  SDOperand Call = getValue(I.getOperand(0));
-  setValue(&I, SDOperand(Call.Val, I.getIndex()));
+  if (UndefValue *UV = dyn_cast<UndefValue>(I.getOperand(0))) {
+    SDOperand Undef = DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType()));
+    setValue(&I, Undef);
+  } else {
+    SDOperand Call = getValue(I.getOperand(0));
+    setValue(&I, SDOperand(Call.Val, I.getIndex()));
+  }
 }
 
 
