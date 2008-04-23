@@ -68,7 +68,7 @@ namespace {
 
       // Allow the target machine to make final modifications to the function
       // before the frame layout is finalized.
-      Fn.getTarget().getRegisterInfo()->processFunctionBeforeFrameFinalized(Fn);
+      TRI->processFunctionBeforeFrameFinalized(Fn);
 
       // Calculate actual frame offsets for all of the abstract stack objects...
       calculateFrameObjectOffsets(Fn);
@@ -484,14 +484,16 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 /// prolog and epilog code to the function.
 ///
 void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
+  const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
+
   // Add prologue to the function...
-  Fn.getTarget().getRegisterInfo()->emitPrologue(Fn);
+  TRI->emitPrologue(Fn);
 
   // Add epilogue to restore the callee-save registers in each exiting block
   for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
     // If last instruction is a return instruction, add an epilogue
     if (!I->empty() && I->back().getDesc().isReturn())
-      Fn.getTarget().getRegisterInfo()->emitEpilogue(Fn, *I);
+      TRI->emitEpilogue(Fn, *I);
   }
 }
 
