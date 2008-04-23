@@ -29,6 +29,7 @@
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -37,6 +38,10 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
+
+static cl::opt<bool>
+RealignStack("realign-stack", cl::init(true),
+             cl::desc("Realign stack if needed"));
 
 X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
                                  const TargetInstrInfo &tii)
@@ -269,8 +274,9 @@ bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
 
   // FIXME: Currently we don't support stack realignment for functions with
   // variable-sized allocas
-  return (MFI->getMaxAlignment() > StackAlign &&
-          !MFI->hasVarSizedObjects());
+  return (RealignStack &&
+          (MFI->getMaxAlignment() > StackAlign &&
+           !MFI->hasVarSizedObjects()));
 }
 
 bool X86RegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
