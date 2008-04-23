@@ -562,6 +562,7 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
 
   APSInt V1(bits, false);
   APSInt V2 = V1;
+  bool DefaultFeasible = false;
   
   for (iterator I = builder.begin(), EI = builder.end(); I != EI; ++I) {
 
@@ -617,8 +618,10 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
       isFeasible = false;
       StNew = Assume(DefaultSt, Res, false, isFeasible);
       
-      if (isFeasible)
+      if (isFeasible) {
+        DefaultFeasible = true;
         DefaultSt = StNew;
+      }
 
       // Concretize the next value in the range.
       if (V1 == V2)
@@ -632,7 +635,7 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
   
   // If we reach here, than we know that the default branch is
   // possible.  
-  builder.generateDefaultCaseNode(DefaultSt);
+  if (DefaultFeasible) builder.generateDefaultCaseNode(DefaultSt);
 }
 
 //===----------------------------------------------------------------------===//
