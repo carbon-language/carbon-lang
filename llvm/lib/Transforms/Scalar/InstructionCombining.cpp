@@ -8748,16 +8748,29 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
   const PointerType *PTy = cast<PointerType>(Callee->getType());
   const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
   if (FTy->isVarArg()) {
+    int ix = FTy->getNumParams() + (isa<InvokeInst>(Callee) ? 3 : 1);
     // See if we can optimize any arguments passed through the varargs area of
     // the call.
     for (CallSite::arg_iterator I = CS.arg_begin()+FTy->getNumParams(),
-           E = CS.arg_end(); I != E; ++I)
+           E = CS.arg_end(); I != E; ++I, ++ix)
       if (CastInst *CI = dyn_cast<CastInst>(*I)) {
-        // If this cast does not effect the value passed through the varargs
+        // If this cast does not affect the value passed through the varargs
         // area, we can eliminate the use of the cast.
-        Value *Op = CI->getOperand(0);
+        const PointerType* SrcPTy, *DstPTy;
         if (CI->isLosslessCast()) {
-          *I = Op;
+          // The size of ByVal arguments is derived from the type, so we
+          // can't change to a type with a different size.  If the size were
+          // passed explicitly we could avoid this check.
+          if (CS.paramHasAttr(ix, ParamAttr::ByVal) &&
+              (SrcPTy = cast<PointerType>(CI->getOperand(0)->getType())) &&
+              (DstPTy = cast<PointerType>(CI->getType()))) {
+            const Type* SrcTy = SrcPTy->getElementType();
+            const Type* DstTy = DstPTy->getElementType();
+            if (!SrcTy->isSized() || !DstTy->isSized() ||
+                TD->getABITypeSize(SrcTy) != TD->getABITypeSize(DstTy))
+              continue;
+          }
+          *I = CI->getOperand(0);
           Changed = true;
         }
       }
