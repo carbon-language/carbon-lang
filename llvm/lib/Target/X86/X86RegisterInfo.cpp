@@ -249,6 +249,19 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 // Stack Frame Processing methods
 //===----------------------------------------------------------------------===//
 
+static unsigned calculateMaxStackAlignment(const MachineFrameInfo *FFI) {
+  unsigned MaxAlign = 0;
+  for (int i = FFI->getObjectIndexBegin(),
+         e = FFI->getObjectIndexEnd(); i != e; ++i) {
+    if (FFI->isDeadObjectIndex(i))
+      continue;
+    unsigned Align = FFI->getObjectAlignment(i);
+    MaxAlign = std::max(MaxAlign, Align);
+  }
+
+  return MaxAlign;
+}
+
 // hasFP - Return true if the specified function should have a dedicated frame
 // pointer register.  This is true if the function has variable sized allocas or
 // if frame pointer elimination is disabled.
@@ -267,10 +280,16 @@ bool X86RegisterInfo::hasFP(const MachineFunction &MF) const {
 bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();;
 
+  // FIXME: This is really really ugly, but it seems we need to decide, whether
+  // we will need stack realignment or not too early (during RA stage).
+  unsigned MaxAlign = MFI->getMaxAlignment();
+  if (!MaxAlign)
+    MaxAlign = calculateMaxStackAlignment(MFI);
+
   // FIXME: Currently we don't support stack realignment for functions with
   // variable-sized allocas
   return (RealignStack &&
-          (MFI->getMaxAlignment() > StackAlign &&
+          (MaxAlign > StackAlign &&
            !MFI->hasVarSizedObjects()));
 }
 
@@ -281,18 +300,24 @@ bool X86RegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
 int
 X86RegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
   int Offset = MF.getFrameInfo()->getObjectOffset(FI) + SlotSize;
+  uint64_t StackSize = MF.getFrameInfo()->getStackSize();
 
   if (needsStackRealignment(MF)) {
     if (FI < 0)
       // Skip the saved EBP
       Offset += SlotSize;
-    else
-      return Offset + MF.getFrameInfo()->getStackSize();
+    else {
+      unsigned MaxAlign = MF.getFrameInfo()->getMaxAlignment();
+      uint64_t FrameSize =
+        (StackSize - SlotSize + MaxAlign - 1)/MaxAlign*MaxAlign;
+
+      return Offset + FrameSize - SlotSize;
+    }
 
     // FIXME: Support tail calls
   } else {
     if (!hasFP(MF))
-      return Offset + MF.getFrameInfo()->getStackSize();
+      return Offset + StackSize;
 
     // Skip the saved EBP
     Offset += SlotSize;
@@ -397,14 +422,7 @@ X86RegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   // Calculate and set max stack object alignment early, so we can decide
   // whether we will need stack realignment (and thus FP).
-  unsigned MaxAlign = 0;
-  for (int i = FFI->getObjectIndexBegin(),
-         e = FFI->getObjectIndexEnd(); i != e; ++i) {
-    if (FFI->isDeadObjectIndex(i))
-      continue;
-    unsigned Align = FFI->getObjectAlignment(i);
-    MaxAlign = std::max(MaxAlign, Align);
-  }
+  unsigned MaxAlign = calculateMaxStackAlignment(FFI);
 
   FFI->setMaxAlignment(MaxAlign);
 }
@@ -641,12 +659,14 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   // Get the number of bytes to allocate from the FrameInfo.
   uint64_t StackSize = MFI->getStackSize();
+  // Get desired stack alignment
+  uint64_t MaxAlign  = MFI->getMaxAlignment();
+
   // Add RETADDR move area to callee saved frame size.
   int TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
   if (TailCallReturnAddrDelta < 0)
     X86FI->setCalleeSavedFrameSize(
           X86FI->getCalleeSavedFrameSize() +(-TailCallReturnAddrDelta));
-  uint64_t NumBytes = StackSize - X86FI->getCalleeSavedFrameSize();
 
   // Insert stack pointer adjustment for later moving of return addr.  Only
   // applies to tail call optimized functions where the callee argument stack
@@ -656,16 +676,23 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
             StackPtr).addReg(StackPtr).addImm(-TailCallReturnAddrDelta);
   }
 
+  uint64_t NumBytes = 0;
   if (hasFP(MF)) {
+    // Calculate required stack adjustment
+    uint64_t FrameSize = StackSize - SlotSize;
+    if (needsStackRealignment(MF))
+      FrameSize = (FrameSize + MaxAlign - 1)/MaxAlign*MaxAlign;
+
+    NumBytes = FrameSize - X86FI->getCalleeSavedFrameSize();
+
     // Get the offset of the stack slot for the EBP register... which is
     // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
     // Update the frame offset adjustment.
-    MFI->setOffsetAdjustment(SlotSize-NumBytes);
+    MFI->setOffsetAdjustment(-NumBytes);
 
     // Save EBP into the appropriate stack slot...
     BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::PUSH64r : X86::PUSH32r))
       .addReg(FramePtr);
-    NumBytes -= SlotSize;
 
     if (needsFrameMoves) {
       // Mark effective beginning of when frame pointer becomes valid.
@@ -676,7 +703,14 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     // Update EBP with the new base value...
     BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr), FramePtr)
       .addReg(StackPtr);
-  }
+
+    // Realign stack
+    if (needsStackRealignment(MF))
+      BuildMI(MBB, MBBI,
+              TII.get(Is64Bit ? X86::AND64ri32 : X86::AND32ri),
+              StackPtr).addReg(StackPtr).addImm(-MaxAlign);
+  } else
+    NumBytes = StackSize - X86FI->getCalleeSavedFrameSize();
 
   unsigned ReadyLabelId = 0;
   if (needsFrameMoves) {
@@ -740,25 +774,12 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   if (needsFrameMoves)
     emitFrameMoves(MF, FrameLabelId, ReadyLabelId);
-
-  // If it's main() on Cygwin\Mingw32 we should align stack as well
-  if (Fn->hasExternalLinkage() && Fn->getName() == "main" &&
-      Subtarget->isTargetCygMing()) {
-    BuildMI(MBB, MBBI, TII.get(X86::AND32ri), X86::ESP)
-                .addReg(X86::ESP).addImm(-StackAlign);
-
-    // Probe the stack
-    BuildMI(MBB, MBBI, TII.get(X86::MOV32ri), X86::EAX).addImm(StackAlign);
-    BuildMI(MBB, MBBI, TII.get(X86::CALLpcrel32)).addExternalSymbol("_alloca");
-  }
 }
 
 void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
                                    MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  const Function* Fn = MF.getFunction();
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
-  const X86Subtarget* Subtarget = &MF.getTarget().getSubtarget<X86Subtarget>();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   unsigned RetOpcode = MBBI->getOpcode();
 
@@ -779,16 +800,25 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
 
   // Get the number of bytes to allocate from the FrameInfo
   uint64_t StackSize = MFI->getStackSize();
+  uint64_t MaxAlign  = MFI->getMaxAlignment();
   unsigned CSSize = X86FI->getCalleeSavedFrameSize();
-  uint64_t NumBytes = StackSize - CSSize;
+  uint64_t NumBytes = 0;
 
   if (hasFP(MF)) {
+    // Calculate required stack adjustment
+    uint64_t FrameSize = StackSize - SlotSize;
+    if (needsStackRealignment(MF))
+      FrameSize = (FrameSize + MaxAlign - 1)/MaxAlign*MaxAlign;
+
+    NumBytes = FrameSize - CSSize;
+
     // pop EBP.
     BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::POP64r : X86::POP32r), FramePtr);
-    NumBytes -= SlotSize;
-  }
+  } else
+    NumBytes = StackSize - CSSize;
 
   // Skip the callee-saved pop instructions.
+  MachineBasicBlock::iterator LastCSPop = MBBI;
   while (MBBI != MBB.begin()) {
     MachineBasicBlock::iterator PI = prior(MBBI);
     unsigned Opc = PI->getOpcode();
@@ -804,14 +834,22 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     mergeSPUpdatesUp(MBB, MBBI, StackPtr, &NumBytes);
 
   // If dynamic alloca is used, then reset esp to point to the last callee-saved
-  // slot before popping them off!  Also, if it's main() on Cygwin/Mingw32 we
-  // aligned stack in the prologue, - revert stack changes back. Note: we're
-  // assuming, that frame pointer was forced for main()
-  if (MFI->hasVarSizedObjects() ||
-      (Fn->hasExternalLinkage() && Fn->getName() == "main" &&
-       Subtarget->isTargetCygMing())) {
-    unsigned Opc = Is64Bit ? X86::LEA64r : X86::LEA32r;
+  // slot before popping them off! Same applies for the case, when stack was
+  // realigned
+  if (needsStackRealignment(MF)) {
+    // We cannot use LEA here, because stack pointer was realigned. We need to
+    // deallocate local frame back
     if (CSSize) {
+      emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, TII);
+      MBBI = prior(LastCSPop);
+    }
+
+    BuildMI(MBB, MBBI,
+            TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),
+            StackPtr).addReg(FramePtr);
+  } else if (MFI->hasVarSizedObjects()) {
+    if (CSSize) {
+      unsigned Opc = Is64Bit ? X86::LEA64r : X86::LEA32r;
       MachineInstr *MI = addRegOffset(BuildMI(TII.get(Opc), StackPtr),
                                       FramePtr, -CSSize);
       MBB.insert(MBBI, MI);
@@ -819,12 +857,11 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
       BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),StackPtr).
         addReg(FramePtr);
 
-    NumBytes = 0;
+  } else {
+    // adjust stack pointer back: ESP += numbytes
+    if (NumBytes)
+      emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, TII);
   }
-
-  // adjust stack pointer back: ESP += numbytes
-  if (NumBytes)
-    emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, TII);
 
   // We're returning from function via eh_return.
   if (RetOpcode == X86::EH_RETURN) {
