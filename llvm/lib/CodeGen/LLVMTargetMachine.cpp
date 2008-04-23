@@ -224,6 +224,10 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
   if (EnableSinking)
     PM.add(createMachineSinkingPass());
 
+  // Run pre-ra passes.
+  if (addPreRegAlloc(PM, Fast) && PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(cerr));
+
   // Perform register allocation to convert to a concrete x86 representation
   PM.add(createRegisterAllocator());
   
