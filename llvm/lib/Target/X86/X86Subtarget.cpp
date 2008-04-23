@@ -16,6 +16,7 @@
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
 cl::opt<X86Subtarget::AsmWriterFlavorTy>
@@ -25,10 +26,6 @@ AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::Unset),
     clEnumValN(X86Subtarget::ATT,   "att",   "  Emit AT&T-style assembly"),
     clEnumValN(X86Subtarget::Intel, "intel", "  Emit Intel-style assembly"),
     clEnumValEnd));
-
-cl::opt<unsigned>
-StackAlignment("stack-alignment", cl::init(0),
-               cl::desc("Override default stack alignment"));
 
 
 /// True if accessing the GV requires an extra load. For Windows, dllimported

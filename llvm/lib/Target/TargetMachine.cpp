@@ -36,6 +36,8 @@ namespace llvm {
   CodeModel::Model CMModel;
   bool PerformTailCallOpt;
   bool OptimizeForSize;
+  bool RealignStack;
+  unsigned StackAlignment;
 }
 namespace {
   cl::opt<bool, true> PrintCode("print-machineinstrs",
@@ -135,6 +137,18 @@ namespace {
                         cl::desc("Optimize for size."),
                            cl::location(OptimizeForSize),
                            cl::init(false));
+
+  cl::opt<bool, true>
+  EnableRealignStack("realign-stack",
+                     cl::desc("Realign stack if needed"),
+                     cl::location(RealignStack),
+                     cl::init(true));
+
+  cl::opt<unsigned, true>
+  OverrideStackAlignment("stack-alignment",
+                         cl::desc("Override default stack alignment"),
+                         cl::location(StackAlignment),
+                         cl::init(0));
 }
 
 //---------------------------------------------------------------------------

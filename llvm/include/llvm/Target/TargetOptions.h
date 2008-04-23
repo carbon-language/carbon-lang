@@ -86,6 +86,13 @@ namespace llvm {
   /// OptimizeForSize - When this flag is set, the code generator avoids 
   /// optimizations that increase size.
   extern bool OptimizeForSize;
+
+  /// StackAlignment - Override default stack alignment for target.
+  extern unsigned StackAlignment;
+
+  /// RealignStack - This flag indicates, whether stack should be automatically
+  /// realigned, if needed.
+  extern bool RealignStack;
 } // End llvm namespace
 
 #endif
