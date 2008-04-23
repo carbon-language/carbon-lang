@@ -257,7 +257,7 @@ bool X86RegisterInfo::hasFP(const MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
 
-  return (NoFramePointerElim || 
+  return (NoFramePointerElim ||
           MFI->hasVarSizedObjects() ||
           MF.getInfo<X86MachineFunctionInfo>()->getForceFramePointer() ||
           (MMI && MMI->callsUnwindInit()));
@@ -350,7 +350,7 @@ void X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     int TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
     if (TailCallReturnAddrDelta < 0) Offset -= TailCallReturnAddrDelta;
   }
-  
+
   MI.getOperand(i+3).ChangeToImmediate(Offset);
 }
 
@@ -413,7 +413,7 @@ static
 void mergeSPUpdatesUp(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
                       unsigned StackPtr, uint64_t *NumBytes = NULL) {
   if (MBBI == MBB.begin()) return;
-  
+
   MachineBasicBlock::iterator PI = prior(MBBI);
   unsigned Opc = PI->getOpcode();
   if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
@@ -437,12 +437,12 @@ void mergeSPUpdatesDown(MachineBasicBlock &MBB,
                         MachineBasicBlock::iterator &MBBI,
                         unsigned StackPtr, uint64_t *NumBytes = NULL) {
   return;
-  
+
   if (MBBI == MBB.end()) return;
-  
+
   MachineBasicBlock::iterator NI = next(MBBI);
   if (NI == MBB.end()) return;
-  
+
   unsigned Opc = NI->getOpcode();
   if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
        Opc == X86::ADD32ri || Opc == X86::ADD32ri8) &&
@@ -462,12 +462,12 @@ void mergeSPUpdatesDown(MachineBasicBlock &MBB,
 }
 
 /// mergeSPUpdates - Checks the instruction before/after the passed
-/// instruction. If it is an ADD/SUB instruction it is deleted 
+/// instruction. If it is an ADD/SUB instruction it is deleted
 /// argument and the stack adjustment is returned as a positive value for ADD
-/// and a negative for SUB. 
+/// and a negative for SUB.
 static int mergeSPUpdates(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator &MBBI,
-                           unsigned StackPtr,                     
+                           unsigned StackPtr,
                            bool doMergeWithPrevious) {
 
   if ((doMergeWithPrevious && MBBI == MBB.begin()) ||
@@ -491,7 +491,7 @@ static int mergeSPUpdates(MachineBasicBlock &MBB,
     Offset -= PI->getOperand(2).getImm();
     MBB.erase(PI);
     if (!doMergeWithPrevious) MBBI = NI;
-  }   
+  }
 
   return Offset;
 }
@@ -504,18 +504,17 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   MachineBasicBlock::iterator MBBI = MBB.begin();
-  bool needsFrameMoves = (MMI && MMI->hasDebugInfo()) || 
+  bool needsFrameMoves = (MMI && MMI->hasDebugInfo()) ||
                           !Fn->doesNotThrow() ||
                           UnwindTablesMandatory;
-  
   // Prepare for frame info.
   unsigned FrameLabelId = 0;
-  
+
   // Get the number of bytes to allocate from the FrameInfo.
   uint64_t StackSize = MFI->getStackSize();
   // Add RETADDR move area to callee saved frame size.
   int TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
-  if (TailCallReturnAddrDelta < 0)  
+  if (TailCallReturnAddrDelta < 0)
     X86FI->setCalleeSavedFrameSize(
           X86FI->getCalleeSavedFrameSize() +(-TailCallReturnAddrDelta));
   uint64_t NumBytes = StackSize - X86FI->getCalleeSavedFrameSize();
@@ -524,7 +523,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // applies to tail call optimized functions where the callee argument stack
   // size is bigger than the callers.
   if (TailCallReturnAddrDelta < 0) {
-    BuildMI(MBB, MBBI, TII.get(Is64Bit? X86::SUB64ri32 : X86::SUB32ri), 
+    BuildMI(MBB, MBBI, TII.get(Is64Bit? X86::SUB64ri32 : X86::SUB32ri),
             StackPtr).addReg(StackPtr).addImm(-TailCallReturnAddrDelta);
   }
 
@@ -549,7 +548,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr), FramePtr)
       .addReg(StackPtr);
   }
-  
+
   unsigned ReadyLabelId = 0;
   if (needsFrameMoves) {
     // Mark effective beginning of when frame pointer is ready.
@@ -575,8 +574,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
                       Reg == X86::AH || Reg == X86::AL);
       }
 
-      // Function prologue calls _alloca to probe the stack when allocating  
-      // more than 4k bytes in one go. Touching the stack at 4K increments is  
+      // Function prologue calls _alloca to probe the stack when allocating
+      // more than 4k bytes in one go. Touching the stack at 4K increments is
       // necessary to ensure that the guard pages used by the OS virtual memory
       // manager are allocated in correct sequence.
       if (!isEAXAlive) {
@@ -604,7 +603,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       // If there is an ADD32ri or SUB32ri of ESP immediately after this
       // instruction, merge the two instructions.
       mergeSPUpdatesDown(MBB, MBBI, StackPtr, &NumBytes);
-      
+
       if (NumBytes)
         emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, TII);
     }
@@ -639,13 +638,13 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       MachineLocation SPSrc(StackPtr, stackGrowth);
       Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
     }
-            
+
     // Add callee saved registers to move list.
     const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
 
     // FIXME: This is dirty hack. The code itself is pretty mess right now.
     // It should be rewritten from scratch and generalized sometimes.
-    
+
     // Determine maximum offset (minumum due to stack growth)
     int64_t MaxOffset = 0;
     for (unsigned I = 0, E = CSI.size(); I!=E; ++I)
@@ -662,14 +661,14 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       MachineLocation CSSrc(Reg);
       Moves.push_back(MachineMove(FrameLabelId, CSDst, CSSrc));
     }
-    
+
     if (hasFP(MF)) {
       // Save FP
       MachineLocation FPDst(MachineLocation::VirtualFP, 2*stackGrowth);
       MachineLocation FPSrc(FramePtr);
       Moves.push_back(MachineMove(ReadyLabelId, FPDst, FPSrc));
     }
-    
+
     MachineLocation FPDst(hasFP(MF) ? FramePtr : StackPtr);
     MachineLocation FPSrc(MachineLocation::VirtualFP);
     Moves.push_back(MachineMove(ReadyLabelId, FPDst, FPSrc));
@@ -766,7 +765,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     MachineOperand &DestAddr  = MBBI->getOperand(0);
     assert(DestAddr.isRegister() && "Offset should be in register!");
     BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),StackPtr).
-      addReg(DestAddr.getReg()); 
+      addReg(DestAddr.getReg());
   // Tail call return: adjust the stack pointer and jump to callee
   } else if (RetOpcode == X86::TCRETURNri || RetOpcode == X86::TCRETURNdi ||
              RetOpcode== X86::TCRETURNri64 || RetOpcode == X86::TCRETURNdi64) {
@@ -774,7 +773,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     MachineOperand &JumpTarget = MBBI->getOperand(0);
     MachineOperand &StackAdjust = MBBI->getOperand(1);
     assert( StackAdjust.isImmediate() && "Expecting immediate value.");
-    
+
     // Adjust stack pointer.
     int StackAdj = StackAdjust.getImm();
     int MaxTCDelta = X86FI->getTCReturnAddrDelta();
@@ -787,7 +786,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
       // Check for possible merge with preceeding ADD instruction.
       Offset += mergeSPUpdates(MBB, MBBI, StackPtr, true);
       emitSPUpdate(MBB, MBBI, StackPtr, Offset, Is64Bit, TII);
-    } 
+    }
     // Jump to label or value in register.
     if (RetOpcode == X86::TCRETURNdi|| RetOpcode == X86::TCRETURNdi64)
       BuildMI(MBB, MBBI, TII.get(X86::TAILJMPd)).
@@ -798,7 +797,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
        BuildMI(MBB, MBBI, TII.get(X86::TAILJMPr), JumpTarget.getReg());
     // Delete the pseudo instruction TCRETURN.
     MBB.erase(MBBI);
-  } else if ((RetOpcode == X86::RET || RetOpcode == X86::RETI) && 
+  } else if ((RetOpcode == X86::RET || RetOpcode == X86::RETI) &&
              (X86FI->getTCReturnAddrDelta() < 0)) {
     // Add the return addr area delta back since we are not tail calling.
     int delta = -1*X86FI->getTCReturnAddrDelta();
@@ -1029,4 +1028,3 @@ unsigned getX86SubSuperRegister(unsigned Reg, MVT::ValueType VT, bool High) {
 }
 
 #include "X86GenRegisterInfo.inc"
-
