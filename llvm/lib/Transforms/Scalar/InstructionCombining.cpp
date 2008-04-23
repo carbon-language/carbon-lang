@@ -8694,6 +8694,31 @@ Instruction *InstCombiner::visitInvokeInst(InvokeInst &II) {
   return visitCallSite(&II);
 }
 
+// If this cast does not affect the value passed through the varargs
+// area, we can eliminate the use of the cast.
+static bool isSafeToEliminateVarargsCast(const CallSite CS,
+                                         const CastInst * const CI,
+                                         const TargetData * const TD,
+                                         const int ix) {
+  if (!CI->isLosslessCast())
+    return false;
+
+  // The size of ByVal arguments is derived from the type, so we
+  // can't change to a type with a different size.  If the size were
+  // passed explicitly we could avoid this check.
+  if (!CS.paramHasAttr(ix, ParamAttr::ByVal))
+    return true;
+
+  const Type* SrcTy = 
+            cast<PointerType>(CI->getOperand(0)->getType())->getElementType();
+  const Type* DstTy = cast<PointerType>(CI->getType())->getElementType();
+  if (!SrcTy->isSized() || !DstTy->isSized())
+    return false;
+  if (TD->getABITypeSize(SrcTy) != TD->getABITypeSize(DstTy))
+    return false;
+  return true;
+}
+
 // visitCallSite - Improvements for call and invoke instructions.
 //
 Instruction *InstCombiner::visitCallSite(CallSite CS) {
@@ -8752,28 +8777,13 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
     // See if we can optimize any arguments passed through the varargs area of
     // the call.
     for (CallSite::arg_iterator I = CS.arg_begin()+FTy->getNumParams(),
-           E = CS.arg_end(); I != E; ++I, ++ix)
-      if (CastInst *CI = dyn_cast<CastInst>(*I)) {
-        // If this cast does not affect the value passed through the varargs
-        // area, we can eliminate the use of the cast.
-        const PointerType* SrcPTy, *DstPTy;
-        if (CI->isLosslessCast()) {
-          // The size of ByVal arguments is derived from the type, so we
-          // can't change to a type with a different size.  If the size were
-          // passed explicitly we could avoid this check.
-          if (CS.paramHasAttr(ix, ParamAttr::ByVal) &&
-              (SrcPTy = cast<PointerType>(CI->getOperand(0)->getType())) &&
-              (DstPTy = cast<PointerType>(CI->getType()))) {
-            const Type* SrcTy = SrcPTy->getElementType();
-            const Type* DstTy = DstPTy->getElementType();
-            if (!SrcTy->isSized() || !DstTy->isSized() ||
-                TD->getABITypeSize(SrcTy) != TD->getABITypeSize(DstTy))
-              continue;
-          }
-          *I = CI->getOperand(0);
-          Changed = true;
-        }
+           E = CS.arg_end(); I != E; ++I, ++ix) {
+      CastInst *CI = dyn_cast<CastInst>(*I);
+      if (CI && isSafeToEliminateVarargsCast(CS, CI, TD, ix)) {
+        *I = CI->getOperand(0);
+        Changed = true;
       }
+    }
   }
 
   if (isa<InlineAsm>(Callee) && !CS.doesNotThrow()) {
