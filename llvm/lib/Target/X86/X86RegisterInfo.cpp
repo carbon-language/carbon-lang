@@ -372,6 +372,25 @@ void X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 }
 
 void
+X86RegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                                      RegScavenger *RS) const {
+  MachineFrameInfo *FFI = MF.getFrameInfo();
+
+  // Calculate and set max stack object alignment early, so we can decide
+  // whether we will need stack realignment (and thus FP).
+  unsigned MaxAlign = 0;
+  for (int i = FFI->getObjectIndexBegin(),
+         e = FFI->getObjectIndexEnd(); i != e; ++i) {
+    if (FFI->isDeadObjectIndex(i))
+      continue;
+    unsigned Align = FFI->getObjectAlignment(i);
+    MaxAlign = std::max(MaxAlign, Align);
+  }
+
+  FFI->setMaxAlignment(MaxAlign);
+}
+
+void
 X86RegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF) const{
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   int32_t TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
