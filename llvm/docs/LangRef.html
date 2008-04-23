@@ -3925,9 +3925,10 @@ results.</p>
 <h5>Arguments:</h5>
 
 <p>The '<tt>getresult</tt>' instruction takes a call or invoke value as its 
-first argument.  The value must have <a href="#t_struct">structure type</a>. 
-The second argument is a constant unsigned index value which must be in range for
-the number of values returned by the call.</p>
+first argument, or an undef value.  The value must have <a 
+href="#t_struct">structure type</a>.  The second argument is a constant 
+unsigned index value which must be in range for the number of values returned 
+by the call.</p>
 
 <h5>Semantics:</h5>
 
