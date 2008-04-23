@@ -254,16 +254,16 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
         case Stmt::SwitchStmtClass: {
           
           // Figure out what case arm we took.
-          
-          Stmt* S = Dst->getLabel();
-          
-          if (!S)
-            continue;
-          
+
           std::ostringstream os;
-          
-          switch (S->getStmtClass()) {
+
+          if (Stmt* S = Dst->getLabel())
+            switch (S->getStmtClass()) {
+                
             default:
+              assert(false && "Not a valid switch label.");
+              continue;
+                
             case Stmt::DefaultStmtClass: {              
               
               os << "Control jumps to the 'default' case at line "
@@ -276,38 +276,45 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
               
               os << "Control jumps to 'case ";
               
-              Expr* CondE = cast<SwitchStmt>(T)->getCond();
-              unsigned bits = Ctx.getTypeSize(CondE->getType());
+              CaseStmt* Case = cast<CaseStmt>(S);              
+              Expr* LHS = Case->getLHS()->IgnoreParenCasts();
               
-              llvm::APSInt V1(bits, false);
+              // Determine if it is an enum.
               
-              CaseStmt* Case = cast<CaseStmt>(S);
+              bool GetRawInt = true;
               
-              if (!Case->getLHS()->isIntegerConstantExpr(V1, Ctx, 0, true)) {
-                assert (false &&
-                        "Case condition must evaluate to an integer constant.");
-                continue;
+              if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(LHS)) {
+
+                // FIXME: Maybe this should be an assertion.  Are there cases
+                // were it is not an EnumConstantDecl?
+                
+                EnumConstantDecl* D = dyn_cast<EnumConstantDecl>(DR->getDecl());                
+                
+                if (D) {
+                  GetRawInt = false;
+                  os << D->getName();
+                }
               }
+
+              if (GetRawInt) {
               
-              os << V1.toString();
-              
-              // Get the RHS of the case, if it exists.
-              
-              if (Expr* E = Case->getRHS()) {
+                // Not an enum.
+                Expr* CondE = cast<SwitchStmt>(T)->getCond();
+                unsigned bits = Ctx.getTypeSize(CondE->getType());
+                llvm::APSInt V(bits, false);
                 
-                llvm::APSInt V2(bits, false);
-                
-                if (!E->isIntegerConstantExpr(V2, Ctx, 0, true)) {
-                  assert (false &&
-                  "Case condition (RHS) must evaluate to an integer constant.");
+                if (!LHS->isIntegerConstantExpr(V, Ctx, 0, true)) {
+                  assert (false && "Case condition must be constant.");
                   continue;
                 }
                 
-                os << " .. " << V2.toString();
+                os << V.toString();
               }
               
+              
+              
               os << ":'  at line " 
-                << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
+                 << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
               
               break;
               
@@ -381,10 +388,9 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
         }
       }
     }
-    else
-      if (PathDiagnosticPiece* piece = R.VisitNode(N, NextNode,
-                                                   *ReportGraph, *this))
-        PD.push_front(piece);
+
+    if (PathDiagnosticPiece* p = R.VisitNode(N, NextNode, *ReportGraph, *this))
+      PD.push_front(p);    
   }
 }
 
