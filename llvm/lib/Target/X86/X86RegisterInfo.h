@@ -115,6 +115,8 @@ public:
 
   bool hasFP(const MachineFunction &MF) const;
 
+  bool needsStackRealignment(const MachineFunction &MF) const;
+
   bool hasReservedCallFrame(MachineFunction &MF) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
@@ -128,6 +130,9 @@ public:
 
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
+
+  void emitFrameMoves(MachineFunction &MF,
+                      unsigned FrameLabelId, unsigned ReadyLabelId) const;
 
   // Debug information queries.
   unsigned getRARegister() const;

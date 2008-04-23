@@ -258,9 +258,16 @@ bool X86RegisterInfo::hasFP(const MachineFunction &MF) const {
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
 
   return (NoFramePointerElim ||
+          needsStackRealignment(MF) ||
           MFI->hasVarSizedObjects() ||
           MF.getInfo<X86MachineFunctionInfo>()->getForceFramePointer() ||
           (MMI && MMI->callsUnwindInit()));
+}
+
+bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
+  MachineFrameInfo *MFI = MF.getFrameInfo();;
+
+  return (MFI->getMaxAlignment() > StackAlign);
 }
 
 bool X86RegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
@@ -496,6 +503,80 @@ static int mergeSPUpdates(MachineBasicBlock &MBB,
   return Offset;
 }
 
+void X86RegisterInfo::emitFrameMoves(MachineFunction &MF,
+                                     unsigned FrameLabelId,
+                                     unsigned ReadyLabelId) const {
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
+  if (!MMI)
+    return;
+
+  uint64_t StackSize = MFI->getStackSize();
+  std::vector<MachineMove> &Moves = MMI->getFrameMoves();
+  const TargetData *TD = MF.getTarget().getTargetData();
+
+  // Calculate amount of bytes used for return address storing
+  int stackGrowth =
+    (MF.getTarget().getFrameInfo()->getStackGrowthDirection() ==
+     TargetFrameInfo::StackGrowsUp ?
+     TD->getPointerSize() : -TD->getPointerSize());
+
+  if (StackSize) {
+    // Show update of SP.
+    if (hasFP(MF)) {
+      // Adjust SP
+      MachineLocation SPDst(MachineLocation::VirtualFP);
+      MachineLocation SPSrc(MachineLocation::VirtualFP, 2*stackGrowth);
+      Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
+    } else {
+      MachineLocation SPDst(MachineLocation::VirtualFP);
+      MachineLocation SPSrc(MachineLocation::VirtualFP,
+                            -StackSize+stackGrowth);
+      Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
+    }
+  } else {
+    //FIXME: Verify & implement for FP
+    MachineLocation SPDst(StackPtr);
+    MachineLocation SPSrc(StackPtr, stackGrowth);
+    Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
+  }
+
+  // Add callee saved registers to move list.
+  const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
+
+  // FIXME: This is dirty hack. The code itself is pretty mess right now.
+  // It should be rewritten from scratch and generalized sometimes.
+
+  // Determine maximum offset (minumum due to stack growth)
+  int64_t MaxOffset = 0;
+  for (unsigned I = 0, E = CSI.size(); I!=E; ++I)
+    MaxOffset = std::min(MaxOffset,
+                         MFI->getObjectOffset(CSI[I].getFrameIdx()));
+
+  // Calculate offsets
+  int64_t saveAreaOffset = (hasFP(MF) ? 3 : 2)*stackGrowth;
+  for (unsigned I = 0, E = CSI.size(); I!=E; ++I) {
+    int64_t Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
+    unsigned Reg = CSI[I].getReg();
+    Offset = (MaxOffset-Offset+saveAreaOffset);
+    MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
+    MachineLocation CSSrc(Reg);
+    Moves.push_back(MachineMove(FrameLabelId, CSDst, CSSrc));
+  }
+
+  if (hasFP(MF)) {
+    // Save FP
+    MachineLocation FPDst(MachineLocation::VirtualFP, 2*stackGrowth);
+    MachineLocation FPSrc(FramePtr);
+    Moves.push_back(MachineMove(ReadyLabelId, FPDst, FPSrc));
+  }
+
+  MachineLocation FPDst(hasFP(MF) ? FramePtr : StackPtr);
+  MachineLocation FPSrc(MachineLocation::VirtualFP);
+  Moves.push_back(MachineMove(ReadyLabelId, FPDst, FPSrc));
+}
+
+
 void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -609,70 +690,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     }
   }
 
-  if (needsFrameMoves) {
-    std::vector<MachineMove> &Moves = MMI->getFrameMoves();
-    const TargetData *TD = MF.getTarget().getTargetData();
-
-    // Calculate amount of bytes used for return address storing
-    int stackGrowth =
-      (MF.getTarget().getFrameInfo()->getStackGrowthDirection() ==
-       TargetFrameInfo::StackGrowsUp ?
-       TD->getPointerSize() : -TD->getPointerSize());
-
-    if (StackSize) {
-      // Show update of SP.
-      if (hasFP(MF)) {
-        // Adjust SP
-        MachineLocation SPDst(MachineLocation::VirtualFP);
-        MachineLocation SPSrc(MachineLocation::VirtualFP, 2*stackGrowth);
-        Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
-      } else {
-        MachineLocation SPDst(MachineLocation::VirtualFP);
-        MachineLocation SPSrc(MachineLocation::VirtualFP,
-                              -StackSize+stackGrowth);
-        Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
-      }
-    } else {
-      //FIXME: Verify & implement for FP
-      MachineLocation SPDst(StackPtr);
-      MachineLocation SPSrc(StackPtr, stackGrowth);
-      Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
-    }
-
-    // Add callee saved registers to move list.
-    const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
-
-    // FIXME: This is dirty hack. The code itself is pretty mess right now.
-    // It should be rewritten from scratch and generalized sometimes.
-
-    // Determine maximum offset (minumum due to stack growth)
-    int64_t MaxOffset = 0;
-    for (unsigned I = 0, E = CSI.size(); I!=E; ++I)
-      MaxOffset = std::min(MaxOffset,
-                           MFI->getObjectOffset(CSI[I].getFrameIdx()));
-
-    // Calculate offsets
-    int64_t saveAreaOffset = (hasFP(MF) ? 3 : 2)*stackGrowth;
-    for (unsigned I = 0, E = CSI.size(); I!=E; ++I) {
-      int64_t Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
-      unsigned Reg = CSI[I].getReg();
-      Offset = (MaxOffset-Offset+saveAreaOffset);
-      MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
-      MachineLocation CSSrc(Reg);
-      Moves.push_back(MachineMove(FrameLabelId, CSDst, CSSrc));
-    }
-
-    if (hasFP(MF)) {
-      // Save FP
-      MachineLocation FPDst(MachineLocation::VirtualFP, 2*stackGrowth);
-      MachineLocation FPSrc(FramePtr);
-      Moves.push_back(MachineMove(ReadyLabelId, FPDst, FPSrc));
-    }
-
-    MachineLocation FPDst(hasFP(MF) ? FramePtr : StackPtr);
-    MachineLocation FPSrc(MachineLocation::VirtualFP);
-    Moves.push_back(MachineMove(ReadyLabelId, FPDst, FPSrc));
-  }
+  if (needsFrameMoves)
+    emitFrameMoves(MF, FrameLabelId, ReadyLabelId);
 
   // If it's main() on Cygwin\Mingw32 we should align stack as well
   if (Fn->hasExternalLinkage() && Fn->getName() == "main" &&
