@@ -639,7 +639,8 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
     // first instruction index starts at > 0 value.
     assert(TargetRegisterInfo::isPhysicalRegister(li.reg));
     // Live-in to the function but dead. Remove it from entry live-in set.
-    mf_->begin()->removeLiveIn(li.reg);
+    if (mf_->begin()->isLiveIn(li.reg))
+      mf_->begin()->removeLiveIn(li.reg);
     const LiveRange *LR = li.getLiveRangeContaining(CopyIdx);
     removeRange(li, LR->start, LR->end, li_, tri_);
     return removeIntervalIfEmpty(li, li_, tri_);
@@ -2002,27 +2003,6 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
       I->second.print(DOUT, tri_);
       DOUT << "\n";
     }
-
-    // Delete all coalesced copies.
-    for (SmallPtrSet<MachineInstr*,32>::iterator I = JoinedCopies.begin(),
-           E = JoinedCopies.end(); I != E; ++I) {
-      MachineInstr *CopyMI = *I;
-      unsigned SrcReg, DstReg;
-      if (!tii_->isMoveInstr(*CopyMI, SrcReg, DstReg)) {
-        assert((CopyMI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
-                CopyMI->getOpcode() == TargetInstrInfo::INSERT_SUBREG) &&
-               "Unrecognized copy instruction");
-        DstReg = CopyMI->getOperand(0).getReg();
-      }
-      if (CopyMI->registerDefIsDead(DstReg)) {
-        LiveInterval &li = li_->getInterval(DstReg);
-        if (!ShortenDeadCopySrcLiveRange(li, CopyMI))
-          ShortenDeadCopyLiveRange(li, CopyMI);
-      }
-      li_->RemoveMachineInstrFromMaps(*I);
-      (*I)->eraseFromParent();
-      ++numPeep;
-    }
   }
 
   // Perform a final pass over the instructions and compute spill weights
@@ -2034,15 +2014,35 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
 
     for (MachineBasicBlock::iterator mii = mbb->begin(), mie = mbb->end();
          mii != mie; ) {
-      // if the move will be an identity move delete it
-      unsigned srcReg, dstReg;
-      bool isMove = tii_->isMoveInstr(*mii, srcReg, dstReg);
-      if (isMove && srcReg == dstReg) {
-        if (li_->hasInterval(srcReg)) {
-          LiveInterval &RegInt = li_->getInterval(srcReg);
+      MachineInstr *MI = mii;
+      unsigned SrcReg, DstReg;
+      if (JoinedCopies.count(MI)) {
+        // Delete all coalesced copies.
+        if (!tii_->isMoveInstr(*MI, SrcReg, DstReg)) {
+          assert((MI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
+                  MI->getOpcode() == TargetInstrInfo::INSERT_SUBREG) &&
+                 "Unrecognized copy instruction");
+          DstReg = MI->getOperand(0).getReg();
+        }
+        if (MI->registerDefIsDead(DstReg)) {
+          LiveInterval &li = li_->getInterval(DstReg);
+          if (!ShortenDeadCopySrcLiveRange(li, MI))
+            ShortenDeadCopyLiveRange(li, MI);
+        }
+        li_->RemoveMachineInstrFromMaps(MI);
+        mii = mbbi->erase(mii);
+        ++numPeep;
+        continue;
+      }
+
+      // If the move will be an identity move delete it
+      bool isMove = tii_->isMoveInstr(*mii, SrcReg, DstReg);
+      if (isMove && SrcReg == DstReg) {
+        if (li_->hasInterval(SrcReg)) {
+          LiveInterval &RegInt = li_->getInterval(SrcReg);
           // If def of this move instruction is dead, remove its live range
           // from the dstination register's live interval.
-          if (mii->registerDefIsDead(dstReg)) {
+          if (mii->registerDefIsDead(DstReg)) {
             if (!ShortenDeadCopySrcLiveRange(RegInt, mii))
               ShortenDeadCopyLiveRange(RegInt, mii);
           }
@@ -2050,7 +2050,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
         li_->RemoveMachineInstrFromMaps(mii);
         mii = mbbi->erase(mii);
         ++numPeep;
-      } else if (!isMove || !TurnCopyIntoImpDef(mii, mbb, dstReg, srcReg)) {
+      } else if (!isMove || !TurnCopyIntoImpDef(mii, mbb, DstReg, SrcReg)) {
         SmallSet<unsigned, 4> UniqueUses;
         for (unsigned i = 0, e = mii->getNumOperands(); i != e; ++i) {
           const MachineOperand &mop = mii->getOperand(i);

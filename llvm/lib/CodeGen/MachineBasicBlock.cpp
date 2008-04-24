@@ -205,6 +205,11 @@ void MachineBasicBlock::removeLiveIn(unsigned Reg) {
   LiveIns.erase(I);
 }
 
+bool MachineBasicBlock::isLiveIn(unsigned Reg) const {
+  const_livein_iterator I = std::find(livein_begin(), livein_end(), Reg);
+  return I != livein_end();
+}
+
 void MachineBasicBlock::moveBefore(MachineBasicBlock *NewAfter) {
   MachineFunction::BasicBlockListType &BBList =getParent()->getBasicBlockList();
   getParent()->getBasicBlockList().splice(NewAfter, BBList, this);

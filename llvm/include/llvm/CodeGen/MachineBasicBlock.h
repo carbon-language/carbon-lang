@@ -176,6 +176,10 @@ public:
   ///
   void removeLiveIn(unsigned Reg);
 
+  /// isLiveIn - Return true if the specified register is in the live in set.
+  ///
+  bool isLiveIn(unsigned Reg) const;
+
   // Iteration support for live in sets.  These sets are kept in sorted
   // order by their register number.
   typedef std::vector<unsigned>::iterator       livein_iterator;
