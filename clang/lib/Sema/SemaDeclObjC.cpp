@@ -246,6 +246,74 @@ Sema::FindProtocolDeclaration(SourceLocation TypeLoc,
   }
 }
 
+/// DiagnosePropertyMismatch - Compares two properties for their
+/// attributes and types and warns on a variety of inconsistancies.
+///
+// TODO: Incomplete. 
+//
+static void
+DiagnosePropertyMismatch(ObjCPropertyDecl *Property, 
+                         ObjCPropertyDecl *SuperProperty) {
+  ObjCPropertyDecl::PropertyAttributeKind CAttr = 
+  Property->getPropertyAttributes();
+  ObjCPropertyDecl::PropertyAttributeKind SAttr = 
+  SuperProperty->getPropertyAttributes();
+  if ((CAttr & ObjCPropertyDecl::OBJC_PR_readonly)
+      && (SAttr & ObjCPropertyDecl::OBJC_PR_readwrite))
+    ; // ???
+  
+  if ((CAttr & ObjCPropertyDecl::OBJC_PR_copy)
+      != (SAttr & ObjCPropertyDecl::OBJC_PR_copy))
+    ; //
+  else if ((CAttr & ObjCPropertyDecl::OBJC_PR_retain)
+           != (SAttr & ObjCPropertyDecl::OBJC_PR_retain))
+    ; // ???
+  
+  if ((CAttr & ObjCPropertyDecl::OBJC_PR_nonatomic)
+      != (SAttr & ObjCPropertyDecl::OBJC_PR_nonatomic))
+    ; //
+  
+  if (Property->getSetterName() != SuperProperty->getSetterName())
+    ; //
+  if (Property->getGetterName() != SuperProperty->getGetterName())
+    ; //
+  
+  if (Property->getCanonicalType() != SuperProperty->getCanonicalType()) {
+    if ((CAttr & ObjCPropertyDecl::OBJC_PR_readonly)
+        && (SAttr & ObjCPropertyDecl::OBJC_PR_readonly))
+       // && objc_compare_types(...))
+      ;
+    else
+      ; //
+  }
+  
+}
+
+/// ComparePropertiesInBaseAndSuper - This routine compares property
+/// declarations in base and its super class, if any, and issues
+/// diagnostics in a variety of inconsistant situations.
+///
+void 
+Sema::ComparePropertiesInBaseAndSuper(SourceLocation *PropertyLoc,
+                                      DeclTy *D) {
+  ObjCInterfaceDecl *IDecl = 
+    dyn_cast<ObjCInterfaceDecl>(static_cast<Decl *>(D));
+  ObjCInterfaceDecl *SDecl = IDecl->getSuperClass();
+  if (!SDecl)
+    return;
+  for (ObjCInterfaceDecl::classprop_iterator I = SDecl->classprop_begin(),
+       E = SDecl->classprop_end(); I != E; ++I) {
+    ObjCPropertyDecl *SuperPDecl = (*I);
+    // Does property in super class has declaration in current class?
+    for (ObjCInterfaceDecl::classprop_iterator I = IDecl->classprop_begin(),
+         E = IDecl->classprop_end(); I != E; ++I) {
+      ObjCPropertyDecl *PDecl = (*I);
+      if (SuperPDecl->getIdentifier() == PDecl->getIdentifier())
+          DiagnosePropertyMismatch(PDecl, SuperPDecl);
+    }
+  }
+}
+
 /// ActOnForwardProtocolDeclaration - 
 Action::DeclTy *
 Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,

@@ -718,8 +718,14 @@ public:
                                        llvm::SmallVector<DeclTy *, 8> &
                                        Protocols) {
   }
-                                               
-                                               
+
+  /// ComparePropertiesInBaseAndSuper - This routine compares property
+  /// declarations in base and its super class, if any, and issues
+  /// diagnostics in a variety of inconsistant situations.
+  ///
+  virtual void ComparePropertiesInBaseAndSuper(SourceLocation *PropertyLoc,
+                                               DeclTy *ClassInterface) {
+  }
   //===----------------------- Obj-C Expressions --------------------------===//
 
   virtual ExprResult ParseObjCStringLiteral(SourceLocation *AtLocs, 

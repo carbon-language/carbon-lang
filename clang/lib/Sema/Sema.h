@@ -652,6 +652,9 @@ public:
                                        llvm::SmallVector<DeclTy *, 8> & 
                                        Protocols);
 
+  virtual void ComparePropertiesInBaseAndSuper(SourceLocation *PropertyLoc,
+                                               DeclTy *ClassInterface);
+  
   virtual void ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
                       DeclTy **allMethods = 0, unsigned allNum = 0,
                       DeclTy **allProperties = 0, unsigned pNum = 0);
