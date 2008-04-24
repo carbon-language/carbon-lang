@@ -1516,7 +1516,8 @@ bool SCCP::runOnFunction(Function &F) {
       //
       for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
         Instruction *Inst = BI++;
-        if (Inst->getType() == Type::VoidTy || 
+        if (Inst->getType() == Type::VoidTy ||
+            isa<StructType>(Inst->getType()) ||
             isa<TerminatorInst>(Inst))
           continue;
         
@@ -1692,7 +1693,8 @@ bool IPSCCP::runOnModule(Module &M) {
       } else {
         for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
           Instruction *Inst = BI++;
-          if (Inst->getType() != Type::VoidTy) {
+          if (Inst->getType() != Type::VoidTy &&
+              !isa<StructType>(Inst->getType())) {
             LatticeVal &IV = Values[Inst];
             if (IV.isConstant() ||
                 (IV.isUndefined() && !isa<TerminatorInst>(Inst))) {
