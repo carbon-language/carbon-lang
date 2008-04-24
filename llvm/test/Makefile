@@ -98,7 +98,7 @@ site.exp: Makefile $(LLVM_OBJ_ROOT)/Makefile.config
 	@echo 'set compile_c "$(CC) $(CPP.Flags) $(CompileCommonOpts) -c "' >>site.tmp
 	@echo 'set compile_cxx "$(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) -c"' >> site.tmp
 	@echo 'set link "$(CXX) $(CPP.Flags) $(CXX.Flags) $(CompileCommonOpts) $(LD.Flags)"' >>site.tmp
-	@echo 'set llvmgcc "$(LLVMGCC)"' >> site.tmp
+	@echo 'set llvmgcc "$(LLVMGCC) $(EXTRA_OPTIONS)"' >> site.tmp
 	@echo 'set llvmgxx "$(LLVMGCC)"' >> site.tmp
 	@echo 'set llvmgccmajvers "$(LLVMGCC_MAJVERS)"' >> site.tmp
 	@echo 'set shlibext "$(SHLIBEXT)"' >> site.tmp
