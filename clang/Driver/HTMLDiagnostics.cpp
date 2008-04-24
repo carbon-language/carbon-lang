@@ -162,8 +162,14 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   const FileEntry* Entry = SMgr.getFileEntryForID(FileID);
   std::string DirName(Entry->getDir()->getName());
   
+  // This is a cludge; basically we want to append either the full
+  // working directory if we have no directory information.  This is
+  // a work in progress.
+
   if (DirName == ".")
     DirName = llvm::sys::Path::GetCurrentDirectory().toString();
+  else if (llvm::sys::Path(Entry->getName()).isAbsolute())
+    DirName = "";
     
   // Add the name of the file as an <h1> tag.  
   
@@ -200,7 +206,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   
   {
     std::ostringstream os;
-    os << "\n<!-- BUGFILE " << DirName << "/" << Entry->getName() << " -->\n";
+    os << "\n<!-- BUGFILE " << DirName << Entry->getName() << " -->\n";
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
   }
   
