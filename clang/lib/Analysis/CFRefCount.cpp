@@ -42,14 +42,16 @@ static inline Selector GetUnarySelector(const char* name, ASTContext& Ctx) {
 
 namespace {  
   enum ArgEffect { IncRef, DecRef, DoNothing };
-  typedef std::vector<ArgEffect> ArgEffects;
+  typedef std::vector<std::pair<unsigned,ArgEffect> > ArgEffects;
 }
 
 namespace llvm {
   template <> struct FoldingSetTrait<ArgEffects> {
     static void Profile(const ArgEffects& X, FoldingSetNodeID& ID) {
-      for (ArgEffects::const_iterator I = X.begin(), E = X.end(); I!= E; ++I)
-        ID.AddInteger((unsigned) *I);
+      for (ArgEffects::const_iterator I = X.begin(), E = X.end(); I!= E; ++I) {
+        ID.AddInteger(I->first);
+        ID.AddInteger((unsigned) I->second);
+      }
     }    
   };
 } // end llvm namespace
@@ -98,8 +100,25 @@ public:
   unsigned getNumArgs() const { return Args->size(); }
   
   ArgEffect getArg(unsigned idx) const {
-    assert (idx < getNumArgs());
-    return (*Args)[idx];
+    if (!Args)
+      return DoNothing;
+    
+    // If Args is present, it is likely to contain only 1 element.
+    // Just do a linear search.  Do it from the back because functions with
+    // large numbers of arguments will be tail heavy with respect to which
+    // argument they actually modify with respect to the reference count.
+    
+    for (ArgEffects::reverse_iterator I=Args->rbegin(), E=Args->rend();
+           I!=E; ++I) {
+      
+      if (idx > I->first)
+        return DoNothing;
+      
+      if (idx == I->first)
+        return I->second;
+    }
+    
+    return DoNothing;
   }
   
   RetEffect getRet() const {
@@ -132,8 +151,7 @@ class CFRefSummaryManager {
   SummaryMapTy SummaryMap;  
   AESetTy AESet;  
   llvm::BumpPtrAllocator BPAlloc;  
-  ArgEffects ScratchArgs;
-  
+  ArgEffects ScratchArgs;  
   
   ArgEffects*   getArgEffects();
 
@@ -145,10 +163,7 @@ class CFRefSummaryManager {
   CFRefSummary* getCFSummaryGetRule(FunctionTypeProto* FT);  
   
   CFRefSummary* getPersistentSummary(ArgEffects* AE, RetEffect RE);
-  
-  void FillDoNothing(unsigned Args);
-
-  
+    
 public:
   CFRefSummaryManager(ASTContext& ctx) : Ctx(ctx) {}
   ~CFRefSummaryManager();
@@ -174,14 +189,22 @@ CFRefSummaryManager::~CFRefSummaryManager() {
 
 ArgEffects* CFRefSummaryManager::getArgEffects() {
 
+  if (ScratchArgs.empty())
+    return NULL;
+  
+  // Compute a profile for a non-empty ScratchArgs.
+  
   llvm::FoldingSetNodeID profile;
+    
   profile.Add(ScratchArgs);
   void* InsertPos;
+  
+  // Look up the uniqued copy, or create a new one.
   
   llvm::FoldingSetNodeWrapper<ArgEffects>* E =
     AESet.FindNodeOrInsertPos(profile, InsertPos);
   
-  if (E) {    
+  if (E) {
     ScratchArgs.clear();
     return &E->getValue();
   }
@@ -199,15 +222,18 @@ ArgEffects* CFRefSummaryManager::getArgEffects() {
 CFRefSummary* CFRefSummaryManager::getPersistentSummary(ArgEffects* AE,
                                                         RetEffect RE) {
   
+  // Generate a profile for the summary.
   llvm::FoldingSetNodeID profile;
   CFRefSummary::Profile(profile, AE, RE);
-  void* InsertPos;
   
+  // Look up the uniqued summary, or create one if it doesn't exist.
+  void* InsertPos;  
   CFRefSummary* Summ = SummarySet.FindNodeOrInsertPos(profile, InsertPos);
   
   if (Summ)
     return Summ;
   
+  // Create the summary and return it.
   Summ = (CFRefSummary*) BPAlloc.Allocate<CFRefSummary>();
   new (Summ) CFRefSummary(AE, RE);
   SummarySet.InsertNode(Summ, InsertPos);
@@ -224,33 +250,14 @@ CFRefSummary* CFRefSummaryManager::getSummary(FunctionDecl* FD,
   if (!Loc.isFileID())
     return NULL;
   
-  { // Look into our cache of summaries to see if we have already computed
-    // a summary for this FunctionDecl.
-      
-    SummaryMapTy::iterator I = SummaryMap.find(FD);
-    
-    if (I != SummaryMap.end())
-      return I->second;
-  }
-  
-#if 0
-  SourceManager& SrcMgr = Ctx.getSourceManager();
-  unsigned fid = Loc.getFileID();
-  const FileEntry* FE = SrcMgr.getFileEntryForID(fid);
-  
-  if (!FE)
-    return NULL;
-  
-  const char* DirName = FE->getDir()->getName();  
-  assert (DirName);
-  assert (strlen(DirName) > 0);
-  
-  if (!strstr(DirName, "CoreFoundation")) {
-    SummaryMap[FD] = NULL;
-    return NULL;
-  }
-#endif
-  
+
+  // Look up a summary in our cache of FunctionDecls -> Summaries.
+  SummaryMapTy::iterator I = SummaryMap.find(FD);
+
+  if (I != SummaryMap.end())
+    return I->second;
+
+  // No summary.  Generate one.
   const char* FName = FD->getIdentifier()->getName();
     
   if (FName[0] == 'C' && FName[1] == 'F') {
@@ -258,7 +265,8 @@ CFRefSummary* CFRefSummaryManager::getSummary(FunctionDecl* FD,
     SummaryMap[FD] = S;
     return S;
   }
-  
+
+  // Function has no ref-count effects.  Return the NULL summary.
   return NULL;  
 }
 
@@ -331,7 +339,7 @@ CFRefSummary* CFRefSummaryManager::getCannedCFSummary(FunctionTypeProto* FT,
     
     // The function's interface checks out.  Generate a canned summary.    
     assert (ScratchArgs.empty());
-    ScratchArgs.push_back(IncRef);
+    ScratchArgs.push_back(std::make_pair(0, IncRef));
     return getPersistentSummary(getArgEffects(), RetEffect::MakeAlias(0));
   }
   else {
@@ -341,7 +349,7 @@ CFRefSummary* CFRefSummaryManager::getCannedCFSummary(FunctionTypeProto* FT,
       return NULL;
     
     assert (ScratchArgs.empty());
-    ScratchArgs.push_back(DecRef);
+    ScratchArgs.push_back(std::make_pair(0, DecRef));
     return getPersistentSummary(getArgEffects(), RetEffect::MakeNoRet());
   }
 }
@@ -369,12 +377,6 @@ static bool isCFRefType(QualType T) {
   
   return true;
 }
-  
-void CFRefSummaryManager::FillDoNothing(unsigned Args) {
-  for (unsigned i = 0; i != Args; ++i)
-    ScratchArgs.push_back(DoNothing);
-}
-
 
 CFRefSummary*
 CFRefSummaryManager::getCFSummaryCreateRule(FunctionTypeProto* FT) {
@@ -382,12 +384,10 @@ CFRefSummaryManager::getCFSummaryCreateRule(FunctionTypeProto* FT) {
   if (!isCFRefType(FT->getResultType()))
     return NULL;
 
-  assert (ScratchArgs.empty());
-  
   // FIXME: Add special-cases for functions that retain/release.  For now
   //  just handle the default case.
-  
-  FillDoNothing(FT->getNumArgs());  
+
+  assert (ScratchArgs.empty());
   return getPersistentSummary(getArgEffects(), RetEffect::MakeOwned());
 }
 
@@ -405,12 +405,10 @@ CFRefSummaryManager::getCFSummaryGetRule(FunctionTypeProto* FT) {
   if (!isCFRefType(RetTy) && !RetTy->isPointerType())
     return NULL;
   
-  assert (ScratchArgs.empty());
-  
   // FIXME: Add special-cases for functions that retain/release.  For now
   //  just handle the default case.
   
-  FillDoNothing(FT->getNumArgs());  
+  assert (ScratchArgs.empty());  
   return getPersistentSummary(getArgEffects(), RetEffect::MakeNotOwned());
 }
 
