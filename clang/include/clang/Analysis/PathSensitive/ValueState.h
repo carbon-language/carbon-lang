@@ -30,6 +30,7 @@
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Streams.h"
@@ -222,8 +223,11 @@ public:
   BasicValueFactory& getBasicValueFactory() { return BasicVals; }
   SymbolManager& getSymbolManager() { return SymMgr; }
   
+  typedef llvm::DenseSet<SymbolID> DeadSymbolsTy;
+  
   ValueState* RemoveDeadBindings(ValueState* St, Stmt* Loc, 
-                                 const LiveVariables& Liveness);
+                                 const LiveVariables& Liveness,
+                                 DeadSymbolsTy& DeadSymbols);
   
   ValueState* RemoveSubExprBindings(ValueState* St) {
     ValueState NewSt = *St;

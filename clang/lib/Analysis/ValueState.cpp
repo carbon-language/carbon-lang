@@ -32,7 +32,8 @@ const llvm::APSInt* ValueState::getSymVal(SymbolID sym) const {
 
 ValueState*
 ValueStateManager::RemoveDeadBindings(ValueState* St, Stmt* Loc,
-                                      const LiveVariables& Liveness) {  
+                                      const LiveVariables& Liveness,
+                                      DeadSymbolsTy& DeadSymbols) {  
   
   // This code essentially performs a "mark-and-sweep" of the VariableBindings.
   // The roots are any Block-level exprs and Decls that our liveness algorithm
@@ -133,13 +134,28 @@ ValueStateManager::RemoveDeadBindings(ValueState* St, Stmt* Loc,
       NewSt.VarBindings = Remove(NewSt, I.getKey());
   
   // Remove dead symbols.
-  for (ValueState::ce_iterator I = St->ce_begin(), E=St->ce_end(); I!=E; ++I)
-    if (!MarkedSymbols.count(I.getKey()))
-      NewSt.ConstEq = CEFactory.Remove(NewSt.ConstEq, I.getKey());
   
-  for (ValueState::cne_iterator I = St->cne_begin(), E=St->cne_end(); I!=E; ++I)
-    if (!MarkedSymbols.count(I.getKey()))
-      NewSt.ConstNotEq = CNEFactory.Remove(NewSt.ConstNotEq, I.getKey());
+  DeadSymbols.clear();
+  
+  for (ValueState::ce_iterator I = St->ce_begin(), E=St->ce_end(); I!=E; ++I) {
+
+    SymbolID sym = I.getKey();    
+    
+    if (!MarkedSymbols.count(sym)) {
+      DeadSymbols.insert(sym);
+      NewSt.ConstEq = CEFactory.Remove(NewSt.ConstEq, sym);
+    }
+  }
+  
+  for (ValueState::cne_iterator I = St->cne_begin(), E=St->cne_end(); I!=E;++I){
+    
+    SymbolID sym = I.getKey();
+    
+    if (!MarkedSymbols.count(sym)) {
+      DeadSymbols.insert(sym);
+      NewSt.ConstNotEq = CNEFactory.Remove(NewSt.ConstNotEq, sym);
+    }
+  }
   
   return getPersistentState(NewSt);
 }

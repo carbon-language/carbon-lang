@@ -188,13 +188,34 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   // Create the cleaned state.
   
   CleanedState = StateMgr.RemoveDeadBindings(StmtEntryNode->getState(),
-                                             CurrentStmt, Liveness);
+                                             CurrentStmt, Liveness,
+                                             DeadSymbols);
   
-  Builder->SetCleanedState(CleanedState);
+  // Process any special transfer function for dead symbols.
   
-  // Visit the statement.
+  NodeSet Tmp;
   
-  Visit(S, StmtEntryNode, Dst);
+  if (DeadSymbols.empty())
+    Tmp.Add(StmtEntryNode);
+  else {
+    SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+/*      
+    FIXME: Will hook this up next.
+ 
+    TF->EvalDeadSymbols(Tmp, *this, *Builder, StmtEntryNode->getLocation(), Pred,
+                        CleanedState, DeadSymbols);
+*/
+    if (!Builder->BuildSinks && Tmp.empty() && !Builder->HasGeneratedNode)
+      Tmp.Add(StmtEntryNode);
+  }
+      
+  for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
+    // Set the cleaned state.  
+    Builder->SetCleanedState(*I == StmtEntryNode ? CleanedState : (*I)->getState());
+  
+    // Visit the statement.  
+    Visit(S, StmtEntryNode, Dst);
+  }
   
   // If no nodes were generated, generate a new node that has all the
   // dead mappings removed.
