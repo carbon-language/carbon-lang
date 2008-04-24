@@ -24,15 +24,14 @@ namespace llvm {
 /// should be optimized later if there is a need.
 template<typename ValueT, typename ValueInfoT = DenseMapInfo<ValueT> >
 class DenseSet {
-  DenseMap<ValueT, char, ValueInfoT> TheMap;
+  typedef DenseMap<ValueT, char, ValueInfoT> MapTy;
+  MapTy TheMap;
 public:
   DenseSet(const DenseSet &Other) : TheMap(Other.TheMap) {}
   explicit DenseSet(unsigned NumInitBuckets = 64) : TheMap(NumInitBuckets) {}
   
   bool empty() const { return TheMap.empty(); }
-  unsigned size() const { return TheMap.size(); }
-  
-  // TODO add iterators.
+  unsigned size() const { return TheMap.size(); }  
   
   void clear() {
     TheMap.clear();
@@ -54,6 +53,41 @@ public:
     TheMap = RHS.TheMap;
     return *this;
   }
+  
+  // Iterators.
+  
+  class Iterator {
+    typename MapTy::iterator I;
+  public:
+    Iterator(const typename MapTy::iterator &i) : I(i) {}
+    
+    ValueT& operator*() { return I->first; }
+    ValueT* operator->() { return &I->first; }
+    
+    Iterator& operator++() { ++I; return *this; };
+    bool operator==(const Iterator& X) const { return I == X.I; }
+  };
+  
+  class ConstIterator {
+    typename MapTy::const_iterator I;
+  public:
+    ConstIterator(const typename MapTy::const_iterator &i) : I(i) {}
+    
+    const ValueT& operator*() { return I->first; }
+    const ValueT* operator->() { return &I->first; }
+    
+    ConstIterator& operator++() { ++I; return *this; };
+    bool operator==(const ConstIterator& X) const { return I == X.I; }
+  };
+  
+  typedef Iterator      iterator;
+  typedef ConstIterator const_iterator;
+  
+  iterator begin() { return Iterator(TheMap.begin()); }
+  iterator end() { return Iterator(TheMap.end()); }
+  
+  const_iterator begin() const { return ConstIterator(TheMap.begin()); }
+  const_iterator end() const { return ConstIterator(TheMap.end()); }
 };
 
 } // end namespace llvm
