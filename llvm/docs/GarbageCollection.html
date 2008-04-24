@@ -366,7 +366,7 @@ programs that use different garbage collection algorithms.</p>
 </div>
 
 <div class="doc_code"><tt>
-  void %llvm.gcroot(i8** %ptrloc, i8* %metadata)
+  void @llvm.gcroot(i8** %ptrloc, i8* %metadata)
 </tt></div>
 
 <div class="doc_text">
@@ -399,7 +399,7 @@ Entry:
    ;; Tell LLVM that the stack space is a stack root.
    ;; Java has type-tags on objects, so we pass null as metadata.
    %tmp = bitcast %Object** %X to i8**
-   call void %llvm.gcroot(i8** %X, i8* null)
+   call void @llvm.gcroot(i8** %X, i8* null)
    ...
 
    ;; "CodeBlock" is the block corresponding to the start
