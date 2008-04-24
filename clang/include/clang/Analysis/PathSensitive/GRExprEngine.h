@@ -78,12 +78,12 @@ protected:
   /// SymMgr - Object that manages the symbol information.
   SymbolManager& SymMgr;
   
-  /// StmtEntryNode - The immediate predecessor node.
-  NodeTy* StmtEntryNode;
-  
-  /// CleanedState - The state for StmtEntryNode "cleaned" of all dead
+  /// EntryNode - The immediate predecessor node.
+  NodeTy* EntryNode;
+
+  /// CleanedState - The state for EntryNode "cleaned" of all dead
   ///  variables and symbols (as determined by a liveness analysis).
-  ValueState* CleanedState;
+  ValueState* CleanedState;  
   
   /// CurrentStmt - The current block-level statement.
   Stmt* CurrentStmt;
@@ -392,7 +392,7 @@ public:
 protected:
   
   ValueState* GetState(NodeTy* N) {
-    return N == StmtEntryNode ? CleanedState : N->getState();
+    return N == EntryNode ? CleanedState : N->getState();
   }
   
   ValueState* SetRVal(ValueState* St, Expr* Ex, RVal V);

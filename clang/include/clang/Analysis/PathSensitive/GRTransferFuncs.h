@@ -84,10 +84,18 @@ public:
                          ValueState* St, RVal TargetLV, RVal Val);
                          
   
-  // End-of-path.
+  // End-of-path and dead symbol notification.
   
   virtual void EvalEndPath(GRExprEngine& Engine,
                            GREndPathNodeBuilder<ValueState>& Builder) {}
+  
+  
+  virtual void EvalDeadSymbols(ExplodedNodeSet<ValueState>& Dst,
+                               GRExprEngine& Engine,
+                               GRStmtNodeBuilder<ValueState>& Builder,
+                               ProgramPoint P, ExplodedNode<ValueState>* Pred,
+                               ValueState* St,
+                               const ValueStateManager::DeadSymbolsTy& Dead) {}
   
   // Return statements.
   
