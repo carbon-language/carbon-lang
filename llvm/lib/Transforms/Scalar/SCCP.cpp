@@ -1693,28 +1693,30 @@ bool IPSCCP::runOnModule(Module &M) {
       } else {
         for (BasicBlock::iterator BI = BB->begin(), E = BB->end(); BI != E; ) {
           Instruction *Inst = BI++;
-          if (Inst->getType() != Type::VoidTy &&
-              !isa<StructType>(Inst->getType())) {
-            LatticeVal &IV = Values[Inst];
-            if (IV.isConstant() ||
-                (IV.isUndefined() && !isa<TerminatorInst>(Inst))) {
-              Constant *Const = IV.isConstant()
-                ? IV.getConstant() : UndefValue::get(Inst->getType());
-              DOUT << "  Constant: " << *Const << " = " << *Inst;
+          if (Inst->getType() == Type::VoidTy ||
+              isa<StructType>(Inst->getType()) ||
+              isa<TerminatorInst>(Inst))
+            continue;
+          
+          LatticeVal &IV = Values[Inst];
+          if (!IV.isConstant() && !IV.isUndefined())
+            continue;
+          
+          Constant *Const = IV.isConstant()
+            ? IV.getConstant() : UndefValue::get(Inst->getType());
+          DOUT << "  Constant: " << *Const << " = " << *Inst;
 
-              // Replaces all of the uses of a variable with uses of the
-              // constant.
-              Inst->replaceAllUsesWith(Const);
+          // Replaces all of the uses of a variable with uses of the
+          // constant.
+          Inst->replaceAllUsesWith(Const);
+          
+          // Delete the instruction.
+          if (!isa<CallInst>(Inst))
+            Inst->eraseFromParent();
 
-              // Delete the instruction.
-              if (!isa<TerminatorInst>(Inst) && !isa<CallInst>(Inst))
-                BB->getInstList().erase(Inst);
-
-              // Hey, we just changed something!
-              MadeChanges = true;
-              ++IPNumInstRemoved;
-            }
-          }
+          // Hey, we just changed something!
+          MadeChanges = true;
+          ++IPNumInstRemoved;
         }
       }
 
