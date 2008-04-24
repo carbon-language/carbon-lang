@@ -684,6 +684,13 @@ public:
   virtual void EvalEndPath(GRExprEngine& Engine,
                            GREndPathNodeBuilder<ValueState>& Builder);
   
+  virtual void EvalDeadSymbols(ExplodedNodeSet<ValueState>& Dst,
+                               GRExprEngine& Engine,
+                               GRStmtNodeBuilder<ValueState>& Builder,
+                               ProgramPoint P, ExplodedNode<ValueState>* Pred,
+                               ValueState* St,
+                               const ValueStateManager::DeadSymbolsTy& Dead);
+  
   // Return statements.
   
   virtual void EvalReturn(ExplodedNodeSet<ValueState>& Dst,
@@ -1066,10 +1073,13 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
     
     if (hasLeak) Leaked.push_back((*I).first);
   }
-      
+
+  if (Leaked.empty())
+    return;
+  
   ExplodedNode<ValueState>* N = Builder.MakeNode(St);  
   
-  if (!N || Leaked.empty())
+  if (!N)
     return;
     
   std::vector<SymbolID>*& LeaksAtNode = Leaks[N];
@@ -1079,6 +1089,64 @@ void CFRefCount::EvalEndPath(GRExprEngine& Eng,
   for (llvm::SmallVector<SymbolID, 10>::iterator I=Leaked.begin(),
        E = Leaked.end(); I != E; ++I)
     (*LeaksAtNode).push_back(*I);
+}
+
+// Dead symbols.
+
+void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<ValueState>& Dst,
+                                 GRExprEngine& Eng,
+                                 GRStmtNodeBuilder<ValueState>& Builder,
+                                 ProgramPoint P, ExplodedNode<ValueState>* Pred,
+                                 ValueState* St,
+                                 const ValueStateManager::DeadSymbolsTy& Dead) {
+  
+  // FIXME: Have GRStmtNodeBuilder handle the case where 'P' is not PostStmt;
+  //  This won't result in missed leaks; we'll just flag these ones at the
+  //  end-of-path.
+  
+  Stmt* S = NULL;
+  
+  if (!isa<PostStmt>(P))
+    return;
+  
+  S = cast<PostStmt>(P).getStmt();
+  
+  // FIXME: a lot of copy-and-paste from EvalEndPath.  Refactor.
+  
+  RefBindings B = GetRefBindings(*St);
+  llvm::SmallVector<SymbolID, 10> Leaked;
+  
+  for (ValueStateManager::DeadSymbolsTy::const_iterator
+       I=Dead.begin(), E=Dead.end(); I!=E; ++I) {
+    
+    RefBindings::TreeTy* T = B.SlimFind(*I);
+
+    if (!T)
+      continue;
+    
+    bool hasLeak = false;
+    
+    St = HandleSymbolDeath(Eng.getStateManager(), St,
+                           *I, T->getValue().second, hasLeak);
+    
+    if (hasLeak) Leaked.push_back(*I);    
+  }
+  
+  if (Leaked.empty())
+    return;    
+  
+  ExplodedNode<ValueState>* N = Builder.MakeNode(Dst, S, Pred, St);  
+  
+  if (!N)
+    return;
+  
+  std::vector<SymbolID>*& LeaksAtNode = Leaks[N];
+  assert (!LeaksAtNode);
+  LeaksAtNode = new std::vector<SymbolID>();
+  
+  for (llvm::SmallVector<SymbolID, 10>::iterator I=Leaked.begin(),
+       E = Leaked.end(); I != E; ++I)
+    (*LeaksAtNode).push_back(*I);    
 }
 
  // Return statements.
