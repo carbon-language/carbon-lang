@@ -145,10 +145,10 @@ bool TargetInfo::validateOutputConstraint(const char *Name,
     switch (*Name) {
     default:
       if (!validateAsmConstraint(*Name, info)) {
-        // FIXME: This assert is in place temporarily 
+        // FIXME: We temporarily return false
         // so we can add more constraints as we hit it.
         // Eventually, an unknown constraint should just be treated as 'g'.
-        assert(0 && "Unknown output constraint type!");
+        return false;
       }
     case '&': // early clobber.
       break;
