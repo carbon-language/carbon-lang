@@ -151,7 +151,7 @@ support accurate garbage collection.</p>
 <div class="doc_text">
 
 <p>LLVM's intermediate representation provides <a href="#intrinsics">garbage
-collection intrinsics</a> which offer support for a broad class of
+collection intrinsics</a> that offer support for a broad class of
 collector models. For instance, the intrinsics permit:</p>
 
 <ul>
@@ -280,8 +280,8 @@ compatible runtime.</p>
 
 <div class="doc_text">
 
-<p>The SemiSpace runtime implements with the <a href="runtime">suggested
-runtime interface</a> and is compatible the ShadowStack backend.</p>
+<p>The SemiSpace runtime implements the <a href="runtime">suggested
+runtime interface</a> and is compatible with the ShadowStack backend.</p>
 
 <p>SemiSpace is a very simple copying collector. When it starts up, it
 allocates two blocks of memory for the heap. It uses a simple bump-pointer
@@ -321,7 +321,7 @@ may use <tt>load</tt> and <tt>store</tt> instead of <tt>llvm.gcread</tt> and
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
-  <a name="core">Core support</a>
+  <a name="core">Core support</a><a name="intrinsics"></a>
 </div>
 <!-- *********************************************************************** -->
 
@@ -351,12 +351,12 @@ specified by the runtime.</p>
 <div class="doc_text">
 
 <p>The <tt>gc</tt> function attribute is used to specify the desired collector
-algorithm to the compiler. It is equivalent to specify the collector name
+algorithm to the compiler. It is equivalent to specifying the collector name
 programmatically using the <tt>setCollector</tt> method of
 <tt>Function</tt>.</p>
 
 <p>Specifying the collector on a per-function basis allows LLVM to link together
-programs which use different garbage collection algorithms.</p>
+programs that use different garbage collection algorithms.</p>
 
 </div>
 
@@ -372,7 +372,7 @@ programs which use different garbage collection algorithms.</p>
 <div class="doc_text">
 
 <p>The <tt>llvm.gcroot</tt> intrinsic is used to inform LLVM of a pointer
-variable on the stack. The first argument <b>must</b> be an alloca instruction
+variable on the stack. The first argument <b>must</b> be a value referring to an alloca instruction
 or a bitcast of an alloca. The second contains a pointer to metadata that
 should be associated with the pointer, and <b>must</b> be a constant or global
 value address. If your target collector uses tags, use a null pointer for
@@ -399,7 +399,7 @@ Entry:
    ;; Tell LLVM that the stack space is a stack root.
    ;; Java has type-tags on objects, so we pass null as metadata.
    %tmp = bitcast %Object** %X to i8**
-   call void %llvm.gcroot(%i8** %X, i8* null)
+   call void %llvm.gcroot(i8** %X, i8* null)
    ...
 
    ;; "CodeBlock" is the block corresponding to the start
@@ -439,16 +439,16 @@ object). Accordingly, these intrinsics take both pointers as separate arguments
 for completeness. In this snippet, <tt>%object</tt> is the object pointer, and 
 <tt>%derived</tt> is the derived pointer:</p>
 
-<blockquote><pre
->    ;; An array type.
+<blockquote><pre>
+    ;; An array type.
     %class.Array = type { %class.Object, i32, [0 x %class.Object*] }
-...
+    ...
 
     ;; Load the object pointer from a gcroot.
     %object = load %class.Array** %object_addr
 
     ;; Compute the derived pointer.
-    %derived = getelementptr %obj, i32 0, i32 2, i32 %n</pre></blockquote>
+    %derived = getelementptr %object, i32 0, i32 2, i32 %n</pre></blockquote>
 
 </div>
 
@@ -594,7 +594,7 @@ The <tt>llvm_cg_walk_gcroots</tt> function is a function provided by the code
 generator that iterates through all of the GC roots on the stack, calling the
 specified function pointer with each record. For each GC root, the address of
 the pointer and the meta-data (from the <a
-href="#roots"><tt>llvm.gcroot</tt></a> intrinsic) are provided.
+href="#gcroot"><tt>llvm.gcroot</tt></a> intrinsic) are provided.
 </p>
 </div>
 
@@ -1329,7 +1329,7 @@ href="#gcdescriptors">where pointers are located in heap objects</a>.</p>
 <a href="#explicit"><tt>llvm_gc_collect</tt></a> functions. To do this, it will
 probably have to <a href="#traceroots">trace through the roots
 from the stack</a> and understand the <a href="#gcdescriptors">GC descriptors
-for heap objects</a>. Luckily, there are some <a href="#gcimpls">example
+for heap objects</a>. Luckily, there are some <a href="#usage">example
 implementations</a> available.
 </p>
 </div>
@@ -1366,7 +1366,7 @@ book-keeping is needed at all. This is common for Lisp-like languages.</li>
 <p>The LLVM garbage collectors are capable of supporting all of these styles of
 language, including ones that mix various implementations. To do this, it
 allows the source-language to associate meta-data with the <a
-href="#roots">stack roots</a>, and the heap tracing routines can propagate the
+href="#gcroot">stack roots</a>, and the heap tracing routines can propagate the
 information. In addition, LLVM allows the front-end to extract GC information
 in any form from a specific object pointer (this supports situations #1 and #3).
 </p>

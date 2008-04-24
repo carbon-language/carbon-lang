@@ -3020,8 +3020,8 @@ provided depend on the type of the first pointer argument.  The
 '<tt>getelementptr</tt>' instruction is used to index down through the type
 levels of a structure or to a specific index in an array.  When indexing into a
 structure, only <tt>i32</tt> integer constants are allowed.  When indexing 
-into an array or pointer, only integers of 32 or 64 bits are allowed, and will 
-be sign extended to 64-bit values.</p>
+into an array or pointer, only integers of 32 or 64 bits are allowed; 32-bit 
+values will be sign extended to 64-bits if required.</p>
 
 <p>For example, let's consider a C code fragment and how it gets
 compiled to LLVM:</p>
@@ -3096,7 +3096,7 @@ the LLVM code for the given testcase is equivalent to:</p>
 
 <p>Note that it is undefined to access an array out of bounds: array and 
 pointer indexes must always be within the defined bounds of the array type.
-The one exception for this rules is zero length arrays.  These arrays are
+The one exception for this rule is zero length arrays.  These arrays are
 defined to be accessible as variable length arrays, which requires access
 beyond the zero'th element.</p>
 
@@ -4207,7 +4207,7 @@ value address) contains the meta-data to be associated with the root.</p>
 
 <h5>Semantics:</h5>
 
-<p>At runtime, a call to this intrinsics stores a null pointer into the "ptrloc"
+<p>At runtime, a call to this intrinsic stores a null pointer into the "ptrloc"
 location.  At compile-time, the code generator generates information to allow
 the runtime to find the pointer at GC safe points. The '<tt>llvm.gcroot</tt>'
 intrinsic may only be used in a function which <a href="#gc">specifies a GC
