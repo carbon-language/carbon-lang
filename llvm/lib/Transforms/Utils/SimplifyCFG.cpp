@@ -1165,6 +1165,105 @@ static bool FoldTwoEntryPHINode(PHINode *PN) {
   return true;
 }
 
+/// SimplifyCondBranchToTwoReturns - If we found a conditional branch that goes
+/// to two returning blocks, try to merge them together into one return,
+/// introducing a select if the return values disagree.
+static bool SimplifyCondBranchToTwoReturns(BranchInst *BI) {
+  assert(BI->isConditional() && "Must be a conditional branch");
+  BasicBlock *TrueSucc = BI->getSuccessor(0);
+  BasicBlock *FalseSucc = BI->getSuccessor(1);
+  ReturnInst *TrueRet = cast<ReturnInst>(TrueSucc->getTerminator());
+  ReturnInst *FalseRet = cast<ReturnInst>(FalseSucc->getTerminator());
+  
+  // Check to ensure both blocks are empty (just a return) or optionally empty
+  // with PHI nodes.  If there are other instructions, merging would cause extra
+  // computation on one path or the other.
+  BasicBlock::iterator BBI = TrueRet;
+  if (BBI != TrueSucc->begin() && !isa<PHINode>(--BBI))
+    return false;  // Not empty with optional phi nodes.
+  BBI = FalseRet;
+  if (BBI != FalseSucc->begin() && !isa<PHINode>(--BBI))
+    return false;  // Not empty with optional phi nodes.
+
+  // Okay, we found a branch that is going to two return nodes.  If
+  // there is no return value for this function, just change the
+  // branch into a return.
+  if (FalseRet->getNumOperands() == 0) {
+    TrueSucc->removePredecessor(BI->getParent());
+    FalseSucc->removePredecessor(BI->getParent());
+    ReturnInst::Create(0, BI);
+    BI->eraseFromParent();
+    return true;
+  }
+    
+  // Otherwise, build up the result values for the new return.
+  SmallVector<Value*, 4> TrueResult;
+  SmallVector<Value*, 4> FalseResult;
+  
+  for (unsigned i = 0, e = TrueRet->getNumOperands(); i != e; ++i) {
+    // Otherwise, figure out what the true and false return values are
+    // so we can insert a new select instruction.
+    Value *TrueValue = TrueRet->getOperand(i);
+    Value *FalseValue = FalseRet->getOperand(i);
+    
+    // Unwrap any PHI nodes in the return blocks.
+    if (PHINode *TVPN = dyn_cast<PHINode>(TrueValue))
+      if (TVPN->getParent() == TrueSucc)
+        TrueValue = TVPN->getIncomingValueForBlock(BI->getParent());
+    if (PHINode *FVPN = dyn_cast<PHINode>(FalseValue))
+      if (FVPN->getParent() == FalseSucc)
+        FalseValue = FVPN->getIncomingValueForBlock(BI->getParent());
+    
+    // In order for this transformation to be safe, we must be able to
+    // unconditionally execute both operands to the return.  This is
+    // normally the case, but we could have a potentially-trapping
+    // constant expression that prevents this transformation from being
+    // safe.
+    if (ConstantExpr *TCV = dyn_cast<ConstantExpr>(TrueValue))
+      if (TCV->canTrap())
+        return false;
+    if (ConstantExpr *FCV = dyn_cast<ConstantExpr>(FalseValue))
+      if (FCV->canTrap())
+        return false;
+    
+    TrueResult.push_back(TrueValue);
+    FalseResult.push_back(FalseValue);
+  }
+
+  // Okay, we collected all the mapped values and checked them for sanity, and
+  // defined to really do this transformation.  First, update the CFG.
+  TrueSucc->removePredecessor(BI->getParent());
+  FalseSucc->removePredecessor(BI->getParent());
+  
+  // Insert select instructions where needed.
+  Value *BrCond = BI->getCondition();
+  for (unsigned i = 0, e = TrueRet->getNumOperands(); i != e; ++i) {
+    // Insert a select if the results differ.
+    if (TrueResult[i] == FalseResult[i] || isa<UndefValue>(FalseResult[i]))
+      continue;
+    if (isa<UndefValue>(TrueResult[i])) {
+      TrueResult[i] = FalseResult[i];
+      continue;
+    }
+    
+    TrueResult[i] = SelectInst::Create(BrCond, TrueResult[i],
+                                       FalseResult[i], "retval", BI);
+  }
+
+  Value *RI = ReturnInst::Create(&TrueResult[0], TrueResult.size(), BI);
+      
+  DOUT << "\nCHANGING BRANCH TO TWO RETURNS INTO SELECT:"
+       << "\n  " << *BI << "NewRet = " << *RI
+       << "TRUEBLOCK: " << *TrueSucc << "FALSEBLOCK: "<< *FalseSucc;
+      
+  BI->eraseFromParent();
+  
+  if (Instruction *BrCondI = dyn_cast<Instruction>(BrCond))
+    ErasePossiblyDeadInstructionTree(BrCondI);
+  return true;
+}
+
+
 namespace {
   /// ConstantIntOrdering - This class implements a stable ordering of constant
   /// integers that does not depend on their address.  This is important for
@@ -1292,73 +1391,12 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       while (!CondBranchPreds.empty()) {
         BranchInst *BI = CondBranchPreds.back();
         CondBranchPreds.pop_back();
-        BasicBlock *TrueSucc = BI->getSuccessor(0);
-        BasicBlock *FalseSucc = BI->getSuccessor(1);
-        BasicBlock *OtherSucc = TrueSucc == BB ? FalseSucc : TrueSucc;
 
         // Check to see if the non-BB successor is also a return block.
-        if (isa<ReturnInst>(OtherSucc->getTerminator())) {
-          // Check to see if there are only PHI instructions in this block.
-          BasicBlock::iterator OSI = OtherSucc->getTerminator();
-          if (OSI == OtherSucc->begin() || isa<PHINode>(--OSI)) {
-            // Okay, we found a branch that is going to two return nodes.  If
-            // there is no return value for this function, just change the
-            // branch into a return.
-            if (RI->getNumOperands() == 0) {
-              TrueSucc->removePredecessor(BI->getParent());
-              FalseSucc->removePredecessor(BI->getParent());
-              ReturnInst::Create(0, BI);
-              BI->getParent()->getInstList().erase(BI);
-              return true;
-            }
-
-            // Otherwise, figure out what the true and false return values are
-            // so we can insert a new select instruction.
-            Value *TrueValue = TrueSucc->getTerminator()->getOperand(0);
-            Value *FalseValue = FalseSucc->getTerminator()->getOperand(0);
-
-            // Unwrap any PHI nodes in the return blocks.
-            if (PHINode *TVPN = dyn_cast<PHINode>(TrueValue))
-              if (TVPN->getParent() == TrueSucc)
-                TrueValue = TVPN->getIncomingValueForBlock(BI->getParent());
-            if (PHINode *FVPN = dyn_cast<PHINode>(FalseValue))
-              if (FVPN->getParent() == FalseSucc)
-                FalseValue = FVPN->getIncomingValueForBlock(BI->getParent());
-
-            // In order for this transformation to be safe, we must be able to
-            // unconditionally execute both operands to the return.  This is
-            // normally the case, but we could have a potentially-trapping
-            // constant expression that prevents this transformation from being
-            // safe.
-            if ((!isa<ConstantExpr>(TrueValue) ||
-                 !cast<ConstantExpr>(TrueValue)->canTrap()) &&
-                (!isa<ConstantExpr>(TrueValue) ||
-                 !cast<ConstantExpr>(TrueValue)->canTrap())) {
-              TrueSucc->removePredecessor(BI->getParent());
-              FalseSucc->removePredecessor(BI->getParent());
-
-              // Insert a new select instruction.
-              Value *NewRetVal;
-              Value *BrCond = BI->getCondition();
-              if (TrueValue != FalseValue)
-                NewRetVal = SelectInst::Create(BrCond, TrueValue,
-                                               FalseValue, "retval", BI);
-              else
-                NewRetVal = TrueValue;
-              
-              DOUT << "\nCHANGING BRANCH TO TWO RETURNS INTO SELECT:"
-                   << "\n  " << *BI << "Select = " << *NewRetVal
-                   << "TRUEBLOCK: " << *TrueSucc << "FALSEBLOCK: "<< *FalseSucc;
-
-              ReturnInst::Create(NewRetVal, BI);
-              BI->eraseFromParent();
-              if (Instruction *BrCondI = dyn_cast<Instruction>(BrCond))
-                if (isInstructionTriviallyDead(BrCondI))
-                  BrCondI->eraseFromParent();
-              return true;
-            }
-          }
-        }
+        if (isa<ReturnInst>(BI->getSuccessor(0)->getTerminator()) &&
+            isa<ReturnInst>(BI->getSuccessor(1)->getTerminator()) &&
+            SimplifyCondBranchToTwoReturns(BI))
+          return true;
       }
     }
   } else if (isa<UnwindInst>(BB->begin())) {
