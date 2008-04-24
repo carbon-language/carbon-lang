@@ -173,7 +173,7 @@ int InlineCostAnalyzer::getInlineCost(CallSite CS,
   // make it almost guaranteed to be inlined.
   //
   if (Callee->hasInternalLinkage() && Callee->hasOneUse())
-    InlineCost -= 30000;
+    InlineCost -= 15000;
   
   // If this function uses the coldcc calling convention, prefer not to inline
   // it.
@@ -236,7 +236,7 @@ int InlineCostAnalyzer::getInlineCost(CallSite CS,
   
   // Don't inline into something too big, which would make it bigger.
   //
-  InlineCost += Caller->size()/20;
+  InlineCost += Caller->size()/15;
   
   // Look at the size of the callee. Each instruction counts as 5.
   InlineCost += CalleeFI.NumInsts*5;
