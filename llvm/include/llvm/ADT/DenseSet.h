@@ -66,6 +66,7 @@ public:
     
     Iterator& operator++() { ++I; return *this; };
     bool operator==(const Iterator& X) const { return I == X.I; }
+    bool operator!=(const Iterator& X) const { return I != X.I; }
   };
   
   class ConstIterator {
@@ -78,6 +79,7 @@ public:
     
     ConstIterator& operator++() { ++I; return *this; };
     bool operator==(const ConstIterator& X) const { return I == X.I; }
+    bool operator!=(const ConstIterator& X) const { return I != X.I; }
   };
   
   typedef Iterator      iterator;
