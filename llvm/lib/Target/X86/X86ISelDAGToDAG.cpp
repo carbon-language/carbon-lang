@@ -36,6 +36,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include <queue>
 #include <set>
@@ -222,6 +223,8 @@ namespace {
   };
 }
 
+/// findFlagUse - Return use of MVT::Flag value produced by the specified SDNode.
+///
 static SDNode *findFlagUse(SDNode *N) {
   unsigned FlagResNo = N->getNumValues()-1;
   for (SDNode::use_iterator I = N->use_begin(), E = N->use_end(); I != E; ++I) {
@@ -235,21 +238,24 @@ static SDNode *findFlagUse(SDNode *N) {
   return NULL;
 }
 
+/// findNonImmUse - Return true by reference in "found" if "Use" is an
+/// non-immediate use of "Def". This function recursively traversing
+/// up the operand chain ignoring certain nodes.
 static void findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
                           SDNode *Root, SDNode *Skip, bool &found,
-                          std::set<SDNode *> &Visited) {
+                          SmallPtrSet<SDNode*, 16> &Visited) {
   if (found ||
       Use->getNodeId() > Def->getNodeId() ||
-      !Visited.insert(Use).second)
+      !Visited.insert(Use))
     return;
-
+  
   for (unsigned i = 0, e = Use->getNumOperands(); !found && i != e; ++i) {
     SDNode *N = Use->getOperand(i).Val;
     if (N == Skip)
       continue;
     if (N == Def) {
       if (Use == ImmedUse)
-        continue; // Immediate use is ok.
+        continue; // We are not looking for immediate use.
       if (Use == Root) {
         assert(Use->getOpcode() == ISD::STORE ||
                Use->getOpcode() == X86ISD::CMP ||
@@ -261,6 +267,8 @@ static void findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
       found = true;
       break;
     }
+
+    // Traverse up the operand chain.
     findNonImmUse(N, Def, ImmedUse, Root, Skip, found, Visited);
   }
 }
@@ -276,7 +284,7 @@ static void findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
 /// its chain operand.
 static inline bool isNonImmUse(SDNode *Root, SDNode *Def, SDNode *ImmedUse,
                                SDNode *Skip = NULL) {
-  std::set<SDNode *> Visited;
+  SmallPtrSet<SDNode*, 16> Visited;
   bool found = false;
   findNonImmUse(Root, Def, ImmedUse, Root, Skip, found, Visited);
   return found;
