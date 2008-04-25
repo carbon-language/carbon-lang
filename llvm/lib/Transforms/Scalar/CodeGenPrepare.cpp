@@ -1127,15 +1127,6 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
             // Sink address computing for memory operands into the block.
             MadeChange |= OptimizeInlineAsmInst(I, &(*CI), SunkAddrs);
         }
-    } else if (GetResultInst *GRI = dyn_cast<GetResultInst>(I)) {
-      // Ensure that all getresult instructions live in the same basic block
-      // as their associated struct-value instructions. Codegen requires
-      // this, as lowering only works on one basic block at a time.
-      if (Instruction *Agg = dyn_cast<Instruction>(GRI->getAggregateValue())) {
-        BasicBlock *AggBB = Agg->getParent();
-        if (AggBB != GRI->getParent())
-          GRI->moveBefore(AggBB->getTerminator());
-      }
     }
   }
     
