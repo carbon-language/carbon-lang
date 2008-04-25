@@ -48,8 +48,12 @@ static inline Stmt* GetStmt(const ProgramPoint& P) {
 }
 
 static inline Stmt* GetStmt(const CFGBlock* B) {
-  assert (!B->empty());
-  return (*B)[0];
+  if (B->empty()) {
+    assert (B->getTerminator() && "Empty block should have a terminator.");
+    return const_cast<Stmt*>(B->getTerminator());
+  }
+  else
+    return (*B)[0];
 }
 
 Stmt* BugReport::getStmt() const {
@@ -60,7 +64,18 @@ static inline ExplodedNode<ValueState>*
 GetNextNode(ExplodedNode<ValueState>* N) {
   return N->pred_empty() ? NULL : *(N->pred_begin());
 }
+
+static void ExecutionContinues(std::ostream& os, SourceManager& SMgr,
+                               ExplodedNode<ValueState>* N) {
   
+  Stmt* S = GetStmt(N->getLocation());
+  
+  if (!S)
+    return;
+
+  os << "Execution continue on line "
+     << SMgr.getLogicalLineNumber(S->getLocStart()) << '.';
+}
   
 static Stmt* GetLastStmt(ExplodedNode<ValueState>* N) {
   assert (isa<BlockEntrance>(N->getLocation()));
@@ -311,9 +326,7 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
                 }
                 
                 os << V.toString();
-              }
-              
-              
+              }              
               
               os << ":'  at line " 
                  << SMgr.getLogicalLineNumber(S->getLocStart()) << ".\n";
@@ -323,13 +336,18 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             }
           }
           else {
-            
-            // FIXME: Get line number.
-            
-            os << "'Default' branch taken. "
-                  "Execution continues after switch statement.";
+            os << "'Default' branch taken.";
+            ExecutionContinues(os, SMgr, LastNode);
           }
           
+          PD.push_front(new PathDiagnosticPiece(L, os.str()));
+          break;
+        }
+          
+        case Stmt::BreakStmtClass:
+        case Stmt::ContinueStmtClass: {
+          std::ostringstream os;
+          ExecutionContinues(os, SMgr, LastNode);
           PD.push_front(new PathDiagnosticPiece(L, os.str()));
           break;
         }
