@@ -144,14 +144,16 @@ MakeReportGraph(ExplodedGraph<ValueState>* G, ExplodedNode<ValueState>* N) {
   
   llvm::OwningPtr<ExplodedGraph<ValueState> > GTrim(G->Trim(&N, &N+1));    
     
-  // Find the sink node in the trimmed graph.  
+  // Find the error node in the trimmed graph.  
   
-  N = NULL;
+  ExplodedNode<ValueState>* NOld = N;
+  N = 0;
   
   for (ExplodedGraph<ValueState>::node_iterator
        I = GTrim->nodes_begin(), E = GTrim->nodes_end(); I != E; ++I) {
     
-    if (I->isSink()) {
+    if (I->getState() == NOld->getState() &&
+        I->getLocation() == NOld->getLocation()) {
       N = &*I;
       break;
     }    

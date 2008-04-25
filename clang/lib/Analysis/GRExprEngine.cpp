@@ -199,8 +199,8 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
     SaveAndRestore<bool> OldSink(Builder->BuildSinks);
     SaveOr OldHasGen(Builder->HasGeneratedNode);
 
-    TF->EvalDeadSymbols(Tmp, *this, *Builder, EntryNode->getLocation(),
-                        EntryNode, CleanedState, DeadSymbols);
+    TF->EvalDeadSymbols(Tmp, *this, *Builder, EntryNode, S, 
+                        CleanedState, DeadSymbols);
 
     if (!Builder->BuildSinks && !Builder->HasGeneratedNode)
       Tmp.Add(EntryNode);

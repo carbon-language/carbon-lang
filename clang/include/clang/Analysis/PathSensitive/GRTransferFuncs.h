@@ -93,7 +93,8 @@ public:
   virtual void EvalDeadSymbols(ExplodedNodeSet<ValueState>& Dst,
                                GRExprEngine& Engine,
                                GRStmtNodeBuilder<ValueState>& Builder,
-                               ProgramPoint P, ExplodedNode<ValueState>* Pred,
+                               ExplodedNode<ValueState>* Pred,
+                               Stmt* S,
                                ValueState* St,
                                const ValueStateManager::DeadSymbolsTy& Dead) {}
   

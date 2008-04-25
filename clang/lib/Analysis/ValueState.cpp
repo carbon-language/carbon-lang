@@ -129,14 +129,22 @@ ValueStateManager::RemoveDeadBindings(ValueState* St, Stmt* Loc,
   }
   
   // Remove dead variable bindings.
-  for (ValueState::vb_iterator I = St->vb_begin(), E = St->vb_end(); I!=E ; ++I)
-    if (!Marked.count(I.getKey()))
-      NewSt.VarBindings = Remove(NewSt, I.getKey());
-  
-  // Remove dead symbols.
   
   DeadSymbols.clear();
   
+  for (ValueState::vb_iterator I = St->vb_begin(), E = St->vb_end(); I!=E ; ++I)
+    if (!Marked.count(I.getKey())) {
+      NewSt.VarBindings = Remove(NewSt, I.getKey());
+      
+      RVal X = I.getData();
+      
+      for (RVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end(); 
+           SI != SE; ++SI)
+        if (!MarkedSymbols.count(*SI)) DeadSymbols.insert(*SI);
+    }      
+  
+  // Remove dead symbols.
+
   for (ValueState::ce_iterator I = St->ce_begin(), E=St->ce_end(); I!=E; ++I) {
 
     SymbolID sym = I.getKey();    

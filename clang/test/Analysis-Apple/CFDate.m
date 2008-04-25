@@ -84,3 +84,11 @@ CFDateRef f6(int x) {
   return date; // expected-warning{{leak}}
 }
 
+// Test a leak involving an overwrite.
+
+CFDateRef f7() {
+  CFDateRef date = CFDateCreate(NULL, CFAbsoluteTimeGetCurrent());
+  CFRetain(date);
+  date = CFDateCreate(NULL, CFAbsoluteTimeGetCurrent()); //expected-warning{{leak}}
+  return date;
+}
