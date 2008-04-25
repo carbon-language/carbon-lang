@@ -130,10 +130,6 @@ Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
   for(SmallVector<BasicBlock *, 16>::iterator NBItr = NewBlocks.begin(), 
         NBE = NewBlocks.end();  NBItr != NBE; ++NBItr) {
     BasicBlock *NB = *NBItr;
-
-    if (BasicBlock *UnwindDest = NB->getUnwindDest())
-      NB->setUnwindDest(cast<BasicBlock>(ValueMap[UnwindDest]));
-
     for(BasicBlock::iterator BI = NB->begin(), BE = NB->end(); 
         BI != BE; ++BI) {
       Instruction *Insn = BI;

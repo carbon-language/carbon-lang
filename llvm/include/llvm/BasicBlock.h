@@ -49,14 +49,13 @@ template<> struct ilist_traits<Instruction>
 /// modifying a program. However, the verifier will ensure that basic blocks
 /// are "well formed".
 /// @brief LLVM Basic Block Representation
-class BasicBlock : public User {       // Basic blocks are data objects also
+class BasicBlock : public Value {       // Basic blocks are data objects also
 public:
   typedef iplist<Instruction> InstListType;
 private :
   InstListType InstList;
   BasicBlock *Prev, *Next; // Next and Prev links for our intrusive linked list
   Function *Parent;
-  Use unwindDest;
 
   void setParent(Function *parent);
   void setNext(BasicBlock *N) { Next = N; }
@@ -71,7 +70,7 @@ private :
   /// InsertBefore is null), or before the specified basic block.
   ///
   explicit BasicBlock(const std::string &Name = "", Function *Parent = 0,
-                      BasicBlock *InsertBefore = 0, BasicBlock *UnwindDest = 0);
+                      BasicBlock *InsertBefore = 0);
 public:
   /// Instruction iterators...
   typedef InstListType::iterator                              iterator;
@@ -79,27 +78,21 @@ public:
 
   // allocate space for exactly zero operands
   static BasicBlock *Create(const std::string &Name = "", Function *Parent = 0,
-                            BasicBlock *InsertBefore = 0, BasicBlock *UnwindDest = 0) {
-    return new(!!UnwindDest) BasicBlock(Name, Parent, InsertBefore, UnwindDest);
+                            BasicBlock *InsertBefore = 0) {
+    return new BasicBlock(Name, Parent, InsertBefore);
   }
   ~BasicBlock();
-
-  /// getUnwindDest - Returns the BasicBlock that flow will enter if an unwind
-  /// instruction occurs in this block. May be null, in which case unwinding
-  /// is undefined in this block.
-  const BasicBlock *getUnwindDest() const;
-  BasicBlock *getUnwindDest();
-
-  /// setUnwindDest - Set which BasicBlock flow will enter if an unwind is
-  /// executed within this block. It may be set to null if unwinding is not
-  /// permitted in this block.
-  void setUnwindDest(BasicBlock *unwindDest);
 
   /// getParent - Return the enclosing method, or null if none
   ///
   const Function *getParent() const { return Parent; }
         Function *getParent()       { return Parent; }
 
+  /// use_back - Specialize the methods defined in Value, as we know that an
+  /// BasicBlock can only be used by Instructions (specifically PHI and terms).
+  Instruction       *use_back()       { return cast<Instruction>(*use_begin());}
+  const Instruction *use_back() const { return cast<Instruction>(*use_begin());}
+  
   /// getTerminator() - If this is a well formed basic block, then this returns
   /// a pointer to the terminator instruction.  If it is not, then you get a
   /// null pointer back.
@@ -187,14 +180,7 @@ public:
   /// update the PHI nodes that reside in the block.  Note that this should be
   /// called while the predecessor still refers to this block.
   ///
-  /// DontDeleteUselessPHIs will keep PHIs that have one value or the same 
-  /// value for all entries.
-  ///
-  /// OnlyDeleteOne will only remove one entry from a PHI, in case there were
-  /// duplicate entries for the Pred.
-  ///
-  void removePredecessor(BasicBlock *Pred, bool DontDeleteUselessPHIs = false,
-                         bool OnlyDeleteOne = false);
+  void removePredecessor(BasicBlock *Pred, bool DontDeleteUselessPHIs = false);
 
   /// splitBasicBlock - This splits a basic block into two at the specified
   /// instruction.  Note that all instructions BEFORE the specified iterator

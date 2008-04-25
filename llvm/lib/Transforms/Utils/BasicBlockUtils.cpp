@@ -161,7 +161,6 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
   while (isa<PHINode>(SplitIt))
     ++SplitIt;
   BasicBlock *New = Old->splitBasicBlock(SplitIt, Old->getName()+".split");
-  New->setUnwindDest(Old->getUnwindDest());
 
   // The new block lives in whichever loop the old one did.
   if (Loop *L = LI.getLoopFor(Old))
@@ -210,12 +209,8 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
   BranchInst *BI = BranchInst::Create(BB, NewBB);
   
   // Move the edges from Preds to point to NewBB instead of BB.
-  for (unsigned i = 0; i != NumPreds; ++i) {
+  for (unsigned i = 0; i != NumPreds; ++i)
     Preds[i]->getTerminator()->replaceUsesOfWith(BB, NewBB);
-    
-    if (Preds[i]->getUnwindDest() == BB)
-      Preds[i]->setUnwindDest(NewBB);
-  }
   
   // Update dominator tree and dominator frontier if available.
   DominatorTree *DT = P ? P->getAnalysisToUpdate<DominatorTree>() : 0;

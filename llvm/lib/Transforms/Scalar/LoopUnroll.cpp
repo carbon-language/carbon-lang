@@ -405,14 +405,10 @@ bool LoopUnroll::unrollLoop(Loop *L, unsigned Count, unsigned Threshold) {
     }
     
     // Remap all instructions in the most recent iteration
-    for (unsigned i = 0; i < NewBlocks.size(); ++i) {
-      BasicBlock *NB = NewBlocks[i];
-      if (BasicBlock *UnwindDest = NB->getUnwindDest())
-        NB->setUnwindDest(cast<BasicBlock>(LastValueMap[UnwindDest]));
-
-      for (BasicBlock::iterator I = NB->begin(), E = NB->end(); I != E; ++I)
+    for (unsigned i = 0; i < NewBlocks.size(); ++i)
+      for (BasicBlock::iterator I = NewBlocks[i]->begin(),
+           E = NewBlocks[i]->end(); I != E; ++I)
         RemapInstruction(I, LastValueMap);
-    }
   }
   
   // The latch block exits the loop.  If there are any PHI nodes in the

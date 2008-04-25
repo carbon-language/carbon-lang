@@ -1163,18 +1163,9 @@ void AssemblyWriter::printArgument(const Argument *Arg,
 /// printBasicBlock - This member is called for each basic block in a method.
 ///
 void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
-  if (BB->hasName())              // Print out the label if it exists...
-    Out << '\n' << getLLVMName(BB->getName(), LabelPrefix) << ':';
-
-  if (const BasicBlock* unwindDest = BB->getUnwindDest()) {
-    if (BB->hasName())
-      Out << ' ';
-
-    Out << "unwinds to";
-    writeOperand(unwindDest, false);
-  }
-
-  if (!BB->hasName() && !BB->use_empty()) { // Don't print block # of no uses...
+  if (BB->hasName()) {              // Print out the label if it exists...
+    Out << "\n" << getLLVMName(BB->getName(), LabelPrefix) << ':';
+  } else if (!BB->use_empty()) {      // Don't print block # of no uses...
     Out << "\n; <label>:";
     int Slot = Machine.getLocalSlot(BB);
     if (Slot != -1)

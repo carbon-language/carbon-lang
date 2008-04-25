@@ -34,7 +34,6 @@ BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
                                   ClonedCodeInfo *CodeInfo) {
   BasicBlock *NewBB = BasicBlock::Create("", F);
   if (BB->hasName()) NewBB->setName(BB->getName()+NameSuffix);
-  NewBB->setUnwindDest(const_cast<BasicBlock*>(BB->getUnwindDest()));
 
   bool hasCalls = false, hasDynamicAllocas = false, hasStaticAllocas = false;
   
@@ -108,15 +107,10 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
   // references as we go.  This uses ValueMap to do all the hard work.
   //
   for (Function::iterator BB = cast<BasicBlock>(ValueMap[OldFunc->begin()]),
-         BE = NewFunc->end(); BB != BE; ++BB) {
-    // Fix up the unwind destination.
-    if (BasicBlock *UnwindDest = BB->getUnwindDest())
-      BB->setUnwindDest(cast<BasicBlock>(ValueMap[UnwindDest]));
-
+         BE = NewFunc->end(); BB != BE; ++BB)
     // Loop over all instructions, fixing each one as we find it...
     for (BasicBlock::iterator II = BB->begin(); II != BB->end(); ++II)
       RemapInstruction(II, ValueMap);
-  }
 }
 
 /// CloneFunction - Return a copy of the specified function, but without

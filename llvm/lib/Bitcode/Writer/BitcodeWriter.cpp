@@ -970,20 +970,13 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
   unsigned InstID = CstEnd;
   
   // Finally, emit all the instructions, in order.
-  for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-    if (const BasicBlock *unwindDest = BB->getUnwindDest()) {
-      Vals.push_back(VE.getValueID(unwindDest));
-      Stream.EmitRecord(bitc::FUNC_CODE_INST_BB_UNWINDDEST, Vals);
-      Vals.clear();
-    }   
-
+  for (Function::const_iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end();
          I != E; ++I) {
       WriteInstruction(*I, InstID, VE, Stream, Vals);
       if (I->getType() != Type::VoidTy)
         ++InstID;
     }
-  }
   
   // Emit names for all the instructions etc.
   WriteValueSymbolTable(F.getValueSymbolTable(), VE, Stream);

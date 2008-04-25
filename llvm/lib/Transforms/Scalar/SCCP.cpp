@@ -1727,11 +1727,6 @@ bool IPSCCP::runOnModule(Module &M) {
       // If there are any PHI nodes in this successor, drop entries for BB now.
       BasicBlock *DeadBB = BlocksToErase[i];
       while (!DeadBB->use_empty()) {
-        if (BasicBlock *PredBB = dyn_cast<BasicBlock>(DeadBB->use_back())) {
-          PredBB->setUnwindDest(NULL);
-          continue;
-        }
-
         Instruction *I = cast<Instruction>(DeadBB->use_back());
         bool Folded = ConstantFoldTerminator(I->getParent());
         if (!Folded) {

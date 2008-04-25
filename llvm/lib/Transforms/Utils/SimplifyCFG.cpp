@@ -1342,8 +1342,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       SmallVector<BasicBlock*, 8> UncondBranchPreds;
       SmallVector<BranchInst*, 8> CondBranchPreds;
       for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
-        if ((*PI)->getUnwindDest() == BB) continue;
-
         TerminatorInst *PTI = (*PI)->getTerminator();
         if (BranchInst *BI = dyn_cast<BranchInst>(PTI)) {
           if (BI->isUnconditional())
@@ -1408,14 +1406,8 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
     SmallVector<BasicBlock*, 8> Preds(pred_begin(BB), pred_end(BB));
     while (!Preds.empty()) {
       BasicBlock *Pred = Preds.back();
-
-      if (Pred->getUnwindDest() == BB) {
-        Pred->setUnwindDest(NULL);
-        Changed = true;
-      }
-
       if (BranchInst *BI = dyn_cast<BranchInst>(Pred->getTerminator())) {
-        if (BI->isUnconditional() && BI->getSuccessor(0) == BB) {
+        if (BI->isUnconditional()) {
           Pred->getInstList().pop_back();  // nuke uncond branch
           new UnwindInst(Pred);            // Use unwind.
           Changed = true;
@@ -1840,7 +1832,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
 
   BasicBlock *OnlySucc = 0;
   if (OnlyPred && OnlyPred != BB &&    // Don't break self loops
-      OnlyPred->getUnwindDest() != BB &&
       OnlyPred->getTerminator()->getOpcode() != Instruction::Invoke) {
     // Check to see if there is only one distinct successor...
     succ_iterator SI(succ_begin(OnlyPred)), SE(succ_end(OnlyPred));
@@ -1852,8 +1843,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       }
   }
 
-  if (OnlySucc && (BB->getUnwindDest() == OnlyPred->getUnwindDest() ||
-                   !BB->getUnwindDest() || !OnlyPred->getUnwindDest())) {
+  if (OnlySucc) {
     DOUT << "Merging: " << *BB << "into: " << *OnlyPred;
 
     // Resolve any PHI nodes at the start of the block.  They are all
@@ -1872,10 +1862,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
 
     // Move all definitions in the successor to the predecessor.
     OnlyPred->getInstList().splice(OnlyPred->end(), BB->getInstList());
-
-    // Move the unwind destination block
-    if (!OnlyPred->getUnwindDest() && BB->getUnwindDest())
-      OnlyPred->setUnwindDest(BB->getUnwindDest());
 
     // Make all PHI nodes that referred to BB now refer to Pred as their
     // source.

@@ -118,8 +118,8 @@ public:
   block_iterator block_begin() const { return Blocks.begin(); }
   block_iterator block_end() const { return Blocks.end(); }
 
-  /// isLoopExit - True if this block can branch to another block that is
-  /// outside of the current loop.
+  /// isLoopExit - True if terminator in the block can branch to another block
+  /// that is outside of the current loop.
   ///
   bool isLoopExit(const BlockT *BB) const {
     typedef GraphTraits<BlockT*> BlockTraits;

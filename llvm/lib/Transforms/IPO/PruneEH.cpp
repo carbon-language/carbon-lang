@@ -31,7 +31,6 @@ using namespace llvm;
 
 STATISTIC(NumRemoved, "Number of invokes removed");
 STATISTIC(NumUnreach, "Number of noreturn calls optimized");
-STATISTIC(NumBBUnwind, "Number of unwind dest removed from blocks");
 
 namespace {
   struct VISIBILITY_HIDDEN PruneEH : public CallGraphSCCPass {
@@ -152,8 +151,6 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
 bool PruneEH::SimplifyFunction(Function *F) {
   bool MadeChange = false;
   for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
-    bool couldUnwind = false;
-
     if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator()))
       if (II->doesNotThrow()) {
         SmallVector<Value*, 8> Args(II->op_begin()+3, II->op_end());
@@ -183,12 +180,10 @@ bool PruneEH::SimplifyFunction(Function *F) {
 
         ++NumRemoved;
         MadeChange = true;
-      } else {
-        couldUnwind = true;
       }
 
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; )
-      if (CallInst *CI = dyn_cast<CallInst>(I++)) {
+      if (CallInst *CI = dyn_cast<CallInst>(I++))
         if (CI->doesNotReturn() && !isa<UnreachableInst>(I)) {
           // This call calls a function that cannot return.  Insert an
           // unreachable instruction after it and simplify the code.  Do this
@@ -204,19 +199,9 @@ bool PruneEH::SimplifyFunction(Function *F) {
           MadeChange = true;
           ++NumUnreach;
           break;
-        } else if (!CI->doesNotThrow()) {
-          couldUnwind = true;
         }
-      }
-
-    // Strip 'unwindTo' off of BBs that have no calls/invokes without nounwind.
-    if (!couldUnwind && BB->getUnwindDest()) {
-      MadeChange = true;
-      ++NumBBUnwind;
-      BB->getUnwindDest()->removePredecessor(BB, false, true);
-      BB->setUnwindDest(NULL);
-    }
   }
+
   return MadeChange;
 }
 

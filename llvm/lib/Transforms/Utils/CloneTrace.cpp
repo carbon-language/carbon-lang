@@ -68,11 +68,6 @@ llvm::CloneTrace(const std::vector<BasicBlock*> &origTrace) {
   //Second loop to do the remapping
   for (std::vector<BasicBlock *>::const_iterator BB = clonedTrace.begin(),
     BE = clonedTrace.end(); BB != BE; ++BB) {
-
-    //Remap the unwind destination
-    if (BasicBlock *UnwindDest = (*BB)->getUnwindDest())
-      (*BB)->setUnwindDest(cast<BasicBlock>(ValueMap[UnwindDest]));
-
     for (BasicBlock::iterator I = (*BB)->begin(); I != (*BB)->end(); ++I) {
       //Loop over all the operands of the instruction
       for (unsigned op=0, E = I->getNumOperands(); op != E; ++op) {

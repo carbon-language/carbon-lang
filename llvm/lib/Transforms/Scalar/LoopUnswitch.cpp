@@ -819,14 +819,10 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   }
 
   // Rewrite the code to refer to itself.
-  for (unsigned i = 0, e = NewBlocks.size(); i != e; ++i) {
-    BasicBlock *NB = NewBlocks[i];
-    if (BasicBlock *UnwindDest = NB->getUnwindDest())
-      NB->setUnwindDest(cast<BasicBlock>(ValueMap[UnwindDest]));
-
-    for (BasicBlock::iterator I = NB->begin(), E = NB->end(); I != E; ++I)
+  for (unsigned i = 0, e = NewBlocks.size(); i != e; ++i)
+    for (BasicBlock::iterator I = NewBlocks[i]->begin(),
+           E = NewBlocks[i]->end(); I != E; ++I)
       RemapInstruction(I, ValueMap);
-  }
   
   // Rewrite the original preheader to select between versions of the loop.
   BranchInst *OldBR = cast<BranchInst>(OrigPreheader->getTerminator());

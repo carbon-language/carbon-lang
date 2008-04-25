@@ -172,7 +172,6 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID) {
     switch (CodeID) {
     default: return 0;
     case bitc::FUNC_CODE_DECLAREBLOCKS: return "DECLAREBLOCKS";
-    case bitc::FUNC_CODE_INST_BB_UNWINDDEST: return "UNWINDDEST";
     
     case bitc::FUNC_CODE_INST_BINOP:       return "INST_BINOP";
     case bitc::FUNC_CODE_INST_CAST:        return "INST_CAST";

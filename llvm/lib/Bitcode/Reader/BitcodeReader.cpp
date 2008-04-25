@@ -1224,15 +1224,6 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       CurBB = FunctionBBs[0];
       continue;
       
-    case bitc::FUNC_CODE_INST_BB_UNWINDDEST:   // BB_UNWINDDEST: [bb#]
-      if (CurBB->getUnwindDest())
-        return Error("Only permit one BB_UNWINDDEST per BB");
-      if (Record.size() != 1)
-        return Error("Invalid BB_UNWINDDEST record");
-
-      CurBB->setUnwindDest(getBasicBlock(Record[0]));
-      continue;
-      
     case bitc::FUNC_CODE_INST_BINOP: {    // BINOP: [opval, ty, opval, opcode]
       unsigned OpNum = 0;
       Value *LHS, *RHS;

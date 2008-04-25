@@ -202,9 +202,7 @@ namespace bitc {
     // this is so information only available in the pointer type (e.g. address
     // spaces) is retained.
     FUNC_CODE_INST_STORE2      = 24, // STORE:      [ptrty,ptr,val, align, vol]
-    FUNC_CODE_INST_GETRESULT   = 25, // GETRESULT:  [ty, opval, n]
-
-    FUNC_CODE_INST_BB_UNWINDDEST = 26  // BB_UNWINDDEST: [bb#]
+    FUNC_CODE_INST_GETRESULT   = 25  // GETRESULT:  [ty, opval, n]
   };
 } // End bitc namespace
 } // End llvm namespace

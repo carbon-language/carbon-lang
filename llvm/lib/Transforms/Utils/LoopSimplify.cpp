@@ -125,17 +125,18 @@ bool LoopSimplify::runOnFunction(Function &F) {
     if (LI->getLoopFor(BB)) continue;
     
     bool BlockUnreachable = false;
+    TerminatorInst *TI = BB->getTerminator();
 
     // Check to see if any successors of this block are non-loop-header loops
     // that are not the header.
-    for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I) {
+    for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i) {
       // If this successor is not in a loop, BB is clearly ok.
-      Loop *L = LI->getLoopFor(*I);
+      Loop *L = LI->getLoopFor(TI->getSuccessor(i));
       if (!L) continue;
       
       // If the succ is the loop header, and if L is a top-level loop, then this
       // is an entrance into a loop through the header, which is also ok.
-      if (L->getHeader() == *I && L->getParentLoop() == 0)
+      if (L->getHeader() == TI->getSuccessor(i) && L->getParentLoop() == 0)
         continue;
       
       // Otherwise, this is an entrance into a loop from some place invalid.
@@ -153,11 +154,10 @@ bool LoopSimplify::runOnFunction(Function &F) {
     // loop by replacing the terminator.
     
     // Remove PHI entries from the successors.
-    for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I)
-      (*I)->removePredecessor(BB);
+    for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
+      TI->getSuccessor(i)->removePredecessor(BB);
    
     // Add a new unreachable instruction before the old terminator.
-    TerminatorInst *TI = BB->getTerminator();
     new UnreachableInst(TI);
     
     // Delete the dead terminator.
@@ -576,15 +576,12 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
   }
 
   // Now that all of the PHI nodes have been inserted and adjusted, modify the
-  // backedge blocks to branch to the BEBlock instead of the header.
+  // backedge blocks to just to the BEBlock instead of the header.
   for (unsigned i = 0, e = BackedgeBlocks.size(); i != e; ++i) {
     TerminatorInst *TI = BackedgeBlocks[i]->getTerminator();
     for (unsigned Op = 0, e = TI->getNumSuccessors(); Op != e; ++Op)
       if (TI->getSuccessor(Op) == Header)
         TI->setSuccessor(Op, BEBlock);
-
-    if (BackedgeBlocks[i]->getUnwindDest() == Header)
-      BackedgeBlocks[i]->setUnwindDest(BEBlock);
   }
 
   //===--- Update all analyses which we must preserve now -----------------===//

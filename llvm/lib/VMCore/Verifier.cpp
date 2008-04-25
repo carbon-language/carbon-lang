@@ -530,12 +530,6 @@ void Verifier::visitBasicBlock(BasicBlock &BB) {
   // Ensure that basic blocks have terminators!
   Assert1(BB.getTerminator(), "Basic Block does not have terminator!", &BB);
 
-  // Ensure that the BB doesn't point out of its Function for unwinding.
-  Assert2(!BB.getUnwindDest() ||
-          BB.getUnwindDest()->getParent() == BB.getParent(),
-          "Basic Block unwinds to block in different function!",
-          &BB, BB.getUnwindDest());
-
   // Check constraints that this basic block imposes on all of the PHI nodes in
   // it.
   if (isa<PHINode>(BB.front())) {

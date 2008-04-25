@@ -74,8 +74,8 @@ template class SymbolTableListTraits<Instruction, BasicBlock>;
 
 
 BasicBlock::BasicBlock(const std::string &Name, Function *NewParent,
-                       BasicBlock *InsertBefore, BasicBlock *Dest)
-  : User(Type::LabelTy, Value::BasicBlockVal, &unwindDest, 0/*FIXME*/), Parent(0) {
+                       BasicBlock *InsertBefore)
+  : Value(Type::LabelTy, Value::BasicBlockVal), Parent(0) {
 
   // Make sure that we get added to a function
   LeakDetector::addGarbageObject(this);
@@ -89,8 +89,6 @@ BasicBlock::BasicBlock(const std::string &Name, Function *NewParent,
   }
   
   setName(Name);
-  unwindDest.init(NULL, this);
-  setUnwindDest(Dest);
 }
 
 
@@ -117,19 +115,6 @@ void BasicBlock::removeFromParent() {
 
 void BasicBlock::eraseFromParent() {
   getParent()->getBasicBlockList().erase(this);
-}
-
-const BasicBlock *BasicBlock::getUnwindDest() const {
-  return cast_or_null<const BasicBlock>(unwindDest.get());
-}
-
-BasicBlock *BasicBlock::getUnwindDest() {
-  return cast_or_null<BasicBlock>(unwindDest.get());
-}
-
-void BasicBlock::setUnwindDest(BasicBlock *dest) {
-  NumOperands = unwindDest ? 1 : 0;
-  unwindDest.set(dest);
 }
 
 /// moveBefore - Unlink this basic block from its current function and
@@ -170,7 +155,6 @@ Instruction* BasicBlock::getFirstNonPHI()
 }
 
 void BasicBlock::dropAllReferences() {
-  setUnwindDest(NULL);
   for(iterator I = begin(), E = end(); I != E; ++I)
     I->dropAllReferences();
 }
@@ -192,8 +176,7 @@ BasicBlock *BasicBlock::getSinglePredecessor() {
 /// called while the predecessor still refers to this block.
 ///
 void BasicBlock::removePredecessor(BasicBlock *Pred,
-                                   bool DontDeleteUselessPHIs,
-                                   bool OnlyDeleteOne) {
+                                   bool DontDeleteUselessPHIs) {
   assert((hasNUsesOrMore(16)||// Reduce cost of this assertion for complex CFGs.
           find(pred_begin(this), pred_end(this), Pred) != pred_end(this)) &&
          "removePredecessor: BB is not a predecessor!");
@@ -228,11 +211,7 @@ void BasicBlock::removePredecessor(BasicBlock *Pred,
     // Yup, loop through and nuke the PHI nodes
     while (PHINode *PN = dyn_cast<PHINode>(&front())) {
       // Remove the predecessor first.
-      if (OnlyDeleteOne) {
-        int idx = PN->getBasicBlockIndex(Pred);
-        PN->removeIncomingValue(idx, !DontDeleteUselessPHIs);
-      } else
-        PN->removeIncomingValue(Pred, !DontDeleteUselessPHIs);
+      PN->removeIncomingValue(Pred, !DontDeleteUselessPHIs);
 
       // If the PHI _HAD_ two uses, replace PHI node with its now *single* value
       if (max_idx == 2) {
@@ -253,12 +232,7 @@ void BasicBlock::removePredecessor(BasicBlock *Pred,
     PHINode *PN;
     for (iterator II = begin(); (PN = dyn_cast<PHINode>(II)); ) {
       ++II;
-      if (OnlyDeleteOne) {
-        int idx = PN->getBasicBlockIndex(Pred);
-        PN->removeIncomingValue(idx, false);
-      } else 
-        PN->removeIncomingValue(Pred, false);
-
+      PN->removeIncomingValue(Pred, false);
       // If all incoming values to the Phi are the same, we can replace the Phi
       // with that value.
       Value* PNV = 0;
@@ -287,7 +261,7 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I, const std::string &BBName) {
   assert(I != InstList.end() &&
          "Trying to get me to create degenerate basic block!");
 
-  BasicBlock *New = new(0/*FIXME*/) BasicBlock(BBName, getParent(), getNext());
+  BasicBlock *New = BasicBlock::Create(BBName, getParent(), getNext());
 
   // Move all of the specified instructions from the original basic block into
   // the new basic block.

@@ -203,7 +203,6 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
 
   BasicBlock *OrigBB = TheCall->getParent();
   Function *Caller = OrigBB->getParent();
-  BasicBlock *UnwindBB = OrigBB->getUnwindDest();
 
   // GC poses two hazards to inlining, which only occur when the callee has GC:
   //  1. If the caller has no GC, then the callee's GC must be propagated to the
@@ -415,18 +414,6 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
       TerminatorInst *Term = BB->getTerminator();
       if (isa<UnwindInst>(Term)) {
         new UnreachableInst(Term);
-        BB->getInstList().erase(Term);
-      }
-    }
-
-  // If we are inlining a function that unwinds into a BB with an unwind dest,
-  // turn the inlined unwinds into branches to the unwind dest.
-  if (InlinedFunctionInfo.ContainsUnwinds && UnwindBB && isa<CallInst>(TheCall))
-    for (Function::iterator BB = FirstNewBlock, E = Caller->end();
-         BB != E; ++BB) {
-      TerminatorInst *Term = BB->getTerminator();
-      if (isa<UnwindInst>(Term)) {
-        BranchInst::Create(UnwindBB, Term);
         BB->getInstList().erase(Term);
       }
     }
