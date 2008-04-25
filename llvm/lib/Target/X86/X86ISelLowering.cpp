@@ -1207,13 +1207,25 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
         RC = X86::FR32RegisterClass;
       else if (RegVT == MVT::f64)
         RC = X86::FR64RegisterClass;
-      else {
-        assert(MVT::isVector(RegVT));
-        if (Is64Bit && MVT::getSizeInBits(RegVT) == 64) {
-          RC = X86::GR64RegisterClass;       // MMX values are passed in GPRs.
-          RegVT = MVT::i64;
-        } else
-          RC = X86::VR128RegisterClass;
+      else if (MVT::isVector(RegVT) && MVT::getSizeInBits(RegVT) == 128)
+        RC = X86::VR128RegisterClass;
+      else if (MVT::isVector(RegVT)) {
+        assert(MVT::getSizeInBits(RegVT) == 64);
+        if (!Is64Bit)
+          RC = X86::VR64RegisterClass;     // MMX values are passed in MMXs.
+        else {
+          // Darwin calling convention passes MMX values in either GPRs or
+          // XMMs in x86-64. Other targets pass them in memory.
+          if (RegVT != MVT::v1i64 && Subtarget->hasSSE2()) {
+            RC = X86::VR128RegisterClass;  // MMX values are passed in XMMs.
+            RegVT = MVT::v2i64;
+          } else {
+            RC = X86::GR64RegisterClass;   // v1i64 values are passed in GPRs.
+            RegVT = MVT::i64;
+          }
+        }
+      } else {
+        assert(0 && "Unknown argument type!");
       }
 
       unsigned Reg = AddLiveIn(DAG.getMachineFunction(), VA.getLocReg(), RC);

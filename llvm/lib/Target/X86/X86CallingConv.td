@@ -133,12 +133,20 @@ def CC_X86_64_C : CallingConv<[
   
   // The first 8 FP/Vector arguments are passed in XMM registers.
   CCIfType<[f32, f64, v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
-              CCAssignToReg<[XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>>,
+            CCAssignToReg<[XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>>,
 
-  // The first 8 MMX vector arguments are passed in GPRs.
-  CCIfType<[v8i8, v4i16, v2i32, v1i64],
-              CCAssignToReg<[RDI, RSI, RDX, RCX, R8 , R9 ]>>,
+  // The first 8 MMX (except for v1i64) vector arguments are passed in XMM
+  // registers on Darwin.
+  CCIfType<[v8i8, v4i16, v2i32],
+            CCIfSubtarget<"isTargetDarwin()",
+            CCIfSubtarget<"hasSSE2()",
+            CCAssignToReg<[XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>>>>,
 
+  // The first 8 v1i64 vector arguments are passed in GPRs on Darwin.
+  CCIfType<[v1i64],
+            CCIfSubtarget<"isTargetDarwin()",
+            CCAssignToReg<[RDI, RSI, RDX, RCX, R8]>>>,
+ 
   // Integer/FP values get stored in stack slots that are 8 bytes in size and
   // 8-byte aligned if there are no more registers to hold them.
   CCIfType<[i32, i64, f32, f64], CCAssignToStack<8, 8>>,
@@ -211,12 +219,19 @@ def CC_X86_64_TailCall : CallingConv<[
   
   // The first 8 FP/Vector arguments are passed in XMM registers.
   CCIfType<[f32, f64, v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
-              CCAssignToReg<[XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>>,
+            CCAssignToReg<[XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>>,
 
-  // The first 8 MMX vector arguments are passed in GPRs.
-  CCIfType<[v8i8, v4i16, v2i32, v1i64],
-              CCAssignToReg<[RDI, RSI, RDX, RCX, R8]>>,
-
+  // The first 8 MMX (except for v1i64) vector arguments are passed in XMM
+  // registers on Darwin.
+  CCIfType<[v8i8, v4i16, v2i32],
+            CCIfSubtarget<"isTargetDarwin()",
+            CCAssignToReg<[XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>>>,
+ 
+  // The first 8 v1i64 vector arguments are passed in GPRs on Darwin.
+  CCIfType<[v1i64],
+            CCIfSubtarget<"isTargetDarwin()",
+            CCAssignToReg<[RDI, RSI, RDX, RCX, R8]>>>,
+ 
   // Integer/FP values get stored in stack slots that are 8 bytes in size and
   // 8-byte aligned if there are no more registers to hold them.
   CCIfType<[i32, i64, f32, f64], CCAssignToStack<8, 8>>,
@@ -242,8 +257,14 @@ def CC_X86_32_Common : CallingConv<[
 
   // The first 3 float or double arguments, if marked 'inreg' and if the call
   // is not a vararg call and if SSE2 is available, are passed in SSE registers.
-  CCIfNotVarArg<CCIfInReg<CCIfType<[f32,f64], CCIfSubtarget<"hasSSE2()",
+  CCIfNotVarArg<CCIfInReg<CCIfType<[f32,f64],
+                CCIfSubtarget<"hasSSE2()",
                 CCAssignToReg<[XMM0,XMM1,XMM2]>>>>>,
+
+  // The first 3 __m64 (except for v1i64) vector arguments are passed in mmx
+  // registers if the call is not a vararg call.
+  CCIfNotVarArg<CCIfType<[v8i8, v4i16, v2i32],
+                CCAssignToReg<[MM0, MM1, MM2]>>>,
 
   // Integer/Float values get stored in stack slots that are 4 bytes in
   // size and 4-byte aligned.
@@ -264,8 +285,7 @@ def CC_X86_32_Common : CallingConv<[
 
   // __m64 vectors get 8-byte stack slots that are 4-byte aligned. They are
   // passed in the parameter area.
-  CCIfType<[v8i8, v4i16, v2i32, v1i64], CCAssignToStack<8, 4>>
-]>;
+  CCIfType<[v8i8, v4i16, v2i32, v1i64], CCAssignToStack<8, 4>>]>;
 
 def CC_X86_32_C : CallingConv<[
   // Promote i8/i16 arguments to i32.
