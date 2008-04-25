@@ -189,8 +189,10 @@ def MMX_MOVDQ2Qrr : MMXID<0xD6, MRMDestMem, (outs VR64:$dst), (ins VR128:$src),
 
 def MMX_MOVQ2DQrr : MMXIS<0xD6, MRMDestMem, (outs VR128:$dst), (ins VR64:$src),
                           "movq2dq\t{$src, $dst|$dst, $src}",
-                          [(set VR128:$dst,
-                            (bitconvert (v1i64 VR64:$src)))]>;
+          [(set VR128:$dst,
+                (v2i64 (vector_shuffle immAllZerosV,
+                        (v2i64 (scalar_to_vector (i64 (bitconvert VR64:$src)))),
+                        MOVL_shuffle_mask)))]>;
 
 def MMX_MOVNTQmr  : MMXI<0xE7, MRMDestMem, (outs), (ins i64mem:$dst, VR64:$src),
                          "movntq\t{$src, $dst|$dst, $src}",
