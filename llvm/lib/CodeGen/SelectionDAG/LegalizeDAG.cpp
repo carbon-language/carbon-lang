@@ -155,6 +155,13 @@ private:
   /// no way of lowering.  "Unroll" the vector, splitting out the scalars and
   /// operating on each element individually.
   SDOperand UnrollVectorOp(SDOperand O);
+  
+  /// PerformInsertVectorEltInMemory - Some target cannot handle a variable
+  /// insertion index for the INSERT_VECTOR_ELT instruction.  In this case, it
+  /// is necessary to spill the vector being inserted into to memory, perform
+  /// the insert there, and then read the result back.
+  SDOperand PerformInsertVectorEltInMemory(SDOperand Vec, SDOperand Val,
+                                           SDOperand Idx);
 
   /// PromoteOp - Given an operation that produces a value in an invalid type,
   /// promote it to compute the value into a larger type.  The produced value
@@ -755,6 +762,50 @@ static RTLIB::Libcall GetFPLibCall(MVT::ValueType VT,
     VT == MVT::f80 ? Call_F80 :
     VT == MVT::ppcf128 ? Call_PPCF128 :
     RTLIB::UNKNOWN_LIBCALL;
+}
+
+/// PerformInsertVectorEltInMemory - Some target cannot handle a variable
+/// insertion index for the INSERT_VECTOR_ELT instruction.  In this case, it
+/// is necessary to spill the vector being inserted into to memory, perform
+/// the insert there, and then read the result back.
+SDOperand SelectionDAGLegalize::
+PerformInsertVectorEltInMemory(SDOperand Vec, SDOperand Val, SDOperand Idx) {
+  SDOperand Tmp1 = Vec;
+  SDOperand Tmp2 = Val;
+  SDOperand Tmp3 = Idx;
+  
+  // If the target doesn't support this, we have to spill the input vector
+  // to a temporary stack slot, update the element, then reload it.  This is
+  // badness.  We could also load the value into a vector register (either
+  // with a "move to register" or "extload into register" instruction, then
+  // permute it into place, if the idx is a constant and if the idx is
+  // supported by the target.
+  MVT::ValueType VT    = Tmp1.getValueType();
+  MVT::ValueType EltVT = MVT::getVectorElementType(VT);
+  MVT::ValueType IdxVT = Tmp3.getValueType();
+  MVT::ValueType PtrVT = TLI.getPointerTy();
+  SDOperand StackPtr = DAG.CreateStackTemporary(VT);
+
+  FrameIndexSDNode *StackPtrFI = cast<FrameIndexSDNode>(StackPtr.Val);
+  int SPFI = StackPtrFI->getIndex();
+
+  // Store the vector.
+  SDOperand Ch = DAG.getStore(DAG.getEntryNode(), Tmp1, StackPtr,
+                              PseudoSourceValue::getFixedStack(),
+                              SPFI);
+
+  // Truncate or zero extend offset to target pointer type.
+  unsigned CastOpc = (IdxVT > PtrVT) ? ISD::TRUNCATE : ISD::ZERO_EXTEND;
+  Tmp3 = DAG.getNode(CastOpc, PtrVT, Tmp3);
+  // Add the offset to the index.
+  unsigned EltSize = MVT::getSizeInBits(EltVT)/8;
+  Tmp3 = DAG.getNode(ISD::MUL, IdxVT, Tmp3,DAG.getConstant(EltSize, IdxVT));
+  SDOperand StackPtr2 = DAG.getNode(ISD::ADD, IdxVT, Tmp3, StackPtr);
+  // Store the scalar value.
+  Ch = DAG.getTruncStore(Ch, Tmp2, StackPtr2,
+                         PseudoSourceValue::getFixedStack(), SPFI, EltVT);
+  // Load the updated vector.
+  return DAG.getLoad(VT, Ch, StackPtr, PseudoSourceValue::getFixedStack(),SPFI);
 }
 
 /// LegalizeOp - We know that the specified value has a legal type, and
@@ -1404,40 +1455,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           break;
         }
       }
-      
-      // If the target doesn't support this, we have to spill the input vector
-      // to a temporary stack slot, update the element, then reload it.  This is
-      // badness.  We could also load the value into a vector register (either
-      // with a "move to register" or "extload into register" instruction, then
-      // permute it into place, if the idx is a constant and if the idx is
-      // supported by the target.
-      MVT::ValueType VT    = Tmp1.getValueType();
-      MVT::ValueType EltVT = MVT::getVectorElementType(VT);
-      MVT::ValueType IdxVT = Tmp3.getValueType();
-      MVT::ValueType PtrVT = TLI.getPointerTy();
-      SDOperand StackPtr = DAG.CreateStackTemporary(VT);
-
-      FrameIndexSDNode *StackPtrFI = cast<FrameIndexSDNode>(StackPtr.Val);
-      int SPFI = StackPtrFI->getIndex();
-
-      // Store the vector.
-      SDOperand Ch = DAG.getStore(DAG.getEntryNode(), Tmp1, StackPtr,
-                                  PseudoSourceValue::getFixedStack(),
-                                  SPFI);
-
-      // Truncate or zero extend offset to target pointer type.
-      unsigned CastOpc = (IdxVT > PtrVT) ? ISD::TRUNCATE : ISD::ZERO_EXTEND;
-      Tmp3 = DAG.getNode(CastOpc, PtrVT, Tmp3);
-      // Add the offset to the index.
-      unsigned EltSize = MVT::getSizeInBits(EltVT)/8;
-      Tmp3 = DAG.getNode(ISD::MUL, IdxVT, Tmp3,DAG.getConstant(EltSize, IdxVT));
-      SDOperand StackPtr2 = DAG.getNode(ISD::ADD, IdxVT, Tmp3, StackPtr);
-      // Store the scalar value.
-      Ch = DAG.getTruncStore(Ch, Tmp2, StackPtr2,
-                             PseudoSourceValue::getFixedStack(), SPFI, EltVT);
-      // Load the updated vector.
-      Result = DAG.getLoad(VT, Ch, StackPtr,
-                           PseudoSourceValue::getFixedStack(), SPFI);
+      Result = PerformInsertVectorEltInMemory(Tmp1, Tmp2, Tmp3);
       break;
     }
     }
@@ -6714,15 +6732,22 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     Hi = Node->getOperand(1);
     break;
   case ISD::INSERT_VECTOR_ELT: {
-    SplitVectorOp(Node->getOperand(0), Lo, Hi);
-    unsigned Index = cast<ConstantSDNode>(Node->getOperand(2))->getValue();
-    SDOperand ScalarOp = Node->getOperand(1);
-    if (Index < NewNumElts_Lo)
-      Lo = DAG.getNode(ISD::INSERT_VECTOR_ELT, NewVT_Lo, Lo, ScalarOp,
-                       DAG.getIntPtrConstant(Index));
-    else
-      Hi = DAG.getNode(ISD::INSERT_VECTOR_ELT, NewVT_Hi, Hi, ScalarOp,
-                       DAG.getIntPtrConstant(Index - NewNumElts_Lo));
+    if (ConstantSDNode *Idx = dyn_cast<ConstantSDNode>(Node->getOperand(2))) {
+      SplitVectorOp(Node->getOperand(0), Lo, Hi);
+      unsigned Index = Idx->getValue();
+      SDOperand ScalarOp = Node->getOperand(1);
+      if (Index < NewNumElts_Lo)
+        Lo = DAG.getNode(ISD::INSERT_VECTOR_ELT, NewVT_Lo, Lo, ScalarOp,
+                         DAG.getIntPtrConstant(Index));
+      else
+        Hi = DAG.getNode(ISD::INSERT_VECTOR_ELT, NewVT_Hi, Hi, ScalarOp,
+                         DAG.getIntPtrConstant(Index - NewNumElts_Lo));
+      break;
+    }
+    SDOperand Tmp = PerformInsertVectorEltInMemory(Node->getOperand(0),
+                                                   Node->getOperand(1),
+                                                   Node->getOperand(2));
+    SplitVectorOp(Tmp, Lo, Hi);
     break;
   }
   case ISD::VECTOR_SHUFFLE: {
