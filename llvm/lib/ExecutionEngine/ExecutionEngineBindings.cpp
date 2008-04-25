@@ -104,7 +104,7 @@ int LLVMCreateInterpreter(LLVMExecutionEngineRef *OutInterp,
                           char **OutError) {
   std::string Error;
   if (ExecutionEngine *Interp =
-      ExecutionEngine::create(unwrap(MP), false, &Error)) {
+      ExecutionEngine::create(unwrap(MP), true, &Error)) {
     *OutInterp = wrap(Interp);
     return 0;
   }
