@@ -306,7 +306,7 @@ LLVMValueRef LLVMConstRealOfString(LLVMTypeRef RealTy, const char *Text);
 /* Operations on composite constants */
 LLVMValueRef LLVMConstString(const char *Str, unsigned Length,
                              int DontNullTerminate);
-LLVMValueRef LLVMConstArray(LLVMTypeRef ArrayTy,
+LLVMValueRef LLVMConstArray(LLVMTypeRef ElementTy,
                             LLVMValueRef *ConstantVals, unsigned Length);
 LLVMValueRef LLVMConstStruct(LLVMValueRef *ConstantVals, unsigned Count,
                              int packed);
