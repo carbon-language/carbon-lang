@@ -307,8 +307,8 @@ ConstantFoldMappedInstruction(const Instruction *I) {
     return ConstantFoldCompareInstOperands(CI->getPredicate(),
                                            &Ops[0], Ops.size(), TD);
 
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[0]))
-    if (const LoadInst *LI = dyn_cast<LoadInst>(I))
+  if (const LoadInst *LI = dyn_cast<LoadInst>(I))
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[0]))
       if (!LI->isVolatile() && CE->getOpcode() == Instruction::GetElementPtr)
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
           if (GV->isConstant() && !GV->isDeclaration())
