@@ -252,7 +252,10 @@ static void findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
         continue; // Immediate use is ok.
       if (Use == Root) {
         assert(Use->getOpcode() == ISD::STORE ||
-               Use->getOpcode() == X86ISD::CMP);
+               Use->getOpcode() == X86ISD::CMP ||
+               Use->getOpcode() == ISD::INTRINSIC_WO_CHAIN ||
+               Use->getOpcode() == ISD::INTRINSIC_W_CHAIN ||
+               Use->getOpcode() == ISD::INTRINSIC_VOID);
         continue;
       }
       found = true;
