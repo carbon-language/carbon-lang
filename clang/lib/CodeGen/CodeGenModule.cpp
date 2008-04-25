@@ -355,14 +355,6 @@ void CodeGenModule::EmitStatics() {
       Changed = true;
     }
   } while (Changed);
-  
-  // Warn about all statics that are still unused at end of code generation.
-  for (unsigned i = 0, e = StaticDecls.size(); i != e; ++i) {
-    const NamedDecl *D = StaticDecls[i];
-    std::string Msg = D->getName();
-    getDiags().Report(Context.getFullLoc(D->getLocation()), 
-                      diag::warn_unused_static, &Msg, 1);
-  }
 }
 
 llvm::Constant *CodeGenModule::EmitGlobalInit(const Expr *Expr) {
