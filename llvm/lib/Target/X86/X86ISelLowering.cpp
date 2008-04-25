@@ -4822,7 +4822,7 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
                                       DAG.getConstant(Offset, AddrVT)),
                           Src,
                           DAG.getConstant(BytesLeft, SizeVT),
-                          Align, DstSV, Offset);
+                          Align, DstSV, 0);
   }
 
   // TODO: Use a Tokenfactor, as in memcpy, instead of a single chain.
@@ -4846,8 +4846,6 @@ X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
   uint64_t SizeVal = ConstantSize->getValue();
   if (!AlwaysInline && SizeVal > getSubtarget()->getMaxInlineSizeThreshold())
     return SDOperand();
-
-  SmallVector<SDOperand, 4> Results;
 
   MVT::ValueType AVT;
   unsigned BytesLeft = 0;
@@ -4881,25 +4879,24 @@ X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
   Ops.push_back(Chain);
   Ops.push_back(DAG.getValueType(AVT));
   Ops.push_back(InFlag);
-  Results.push_back(DAG.getNode(X86ISD::REP_MOVS, Tys, &Ops[0], Ops.size()));
+  SDOperand RepMovs = DAG.getNode(X86ISD::REP_MOVS, Tys, &Ops[0], Ops.size());
 
+  SmallVector<SDOperand, 4> Results;
+  Results.push_back(RepMovs);
   if (BytesLeft) {
     // Handle the last 1 - 7 bytes.
     unsigned Offset = SizeVal - BytesLeft;
     MVT::ValueType DstVT = Dst.getValueType();
     MVT::ValueType SrcVT = Src.getValueType();
     MVT::ValueType SizeVT = Size.getValueType();
-
-    Results.push_back(DAG.getMemcpy(Chain, 
+    Results.push_back(DAG.getMemcpy(Chain,
                                     DAG.getNode(ISD::ADD, DstVT, Dst,
-                                                DAG.getConstant(Offset,
-                                                                DstVT)),
+                                                DAG.getConstant(Offset, DstVT)),
                                     DAG.getNode(ISD::ADD, SrcVT, Src,
-                                                DAG.getConstant(Offset,
-                                                                SrcVT)),
+                                                DAG.getConstant(Offset, SrcVT)),
                                     DAG.getConstant(BytesLeft, SizeVT),
                                     Align, AlwaysInline,
-                                    DstSV, Offset, SrcSV, Offset));
+                                    DstSV, 0, SrcSV, 0));
   }
 
   return DAG.getNode(ISD::TokenFactor, MVT::Other, &Results[0], Results.size());
