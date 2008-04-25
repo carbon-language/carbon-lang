@@ -36,7 +36,8 @@ public:
     Format,
     Visibility,
     FastCall,
-    StdCall
+    StdCall,
+    TransparentUnion
   };
     
 private:
@@ -216,6 +217,16 @@ public:
 
   static bool classof(const Attr *A) { return A->getKind() == StdCall; }
   static bool classof(const StdCallAttr *A) { return true; }
+};
+
+class TransparentUnionAttr : public Attr {
+public:
+  TransparentUnionAttr() : Attr(TransparentUnion) {}
+
+  // Implement isa/cast/dyncast/etc.
+
+  static bool classof(const Attr *A) { return A->getKind() == TransparentUnion; }
+  static bool classof(const TransparentUnionAttr *A) { return true; }
 };
 
 }  // end namespace clang

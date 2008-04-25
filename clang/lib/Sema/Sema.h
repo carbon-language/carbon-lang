@@ -323,6 +323,7 @@ private:
   void HandleFormatAttribute(Decl *d, AttributeList *rawAttr);
   void HandleStdCallAttribute(Decl *d, AttributeList *rawAttr);
   void HandleFastCallAttribute(Decl *d, AttributeList *rawAttr);
+  void HandleTransparentUnionAttribute(Decl *d, AttributeList *rawAttr);
   
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl);

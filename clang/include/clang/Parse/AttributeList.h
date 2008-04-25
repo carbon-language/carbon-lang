@@ -64,6 +64,7 @@ public:
     AT_stdcall,
     AT_nothrow,
     AT_noinline,
+    AT_transparent_union,
     AT_warn_unused_result
   };
   

@@ -2003,6 +2003,9 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *Attr) {
   case AttributeList::AT_format:
     HandleFormatAttribute(New, Attr);
     break;
+  case AttributeList::AT_transparent_union:
+    HandleTransparentUnionAttribute(New, Attr);
+    break;
   default:
 #if 0
     // TODO: when we have the full set of attributes, warn about unknown ones.
@@ -2417,6 +2420,29 @@ void Sema::HandleFormatAttribute(Decl *d, AttributeList *rawAttr) {
 
   d->addAttr(new FormatAttr(std::string(Format, FormatLen),
                             Idx.getZExtValue(), FirstArg.getZExtValue()));
+}
+
+void Sema::HandleTransparentUnionAttribute(Decl *d, AttributeList *rawAttr) {
+  // check the attribute arguments.
+  if (rawAttr->getNumArgs() != 0) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("0"));
+    return;
+  }
+
+  TypeDecl *decl = dyn_cast<TypeDecl>(d);
+
+  if (!decl || !Context.getTypeDeclType(decl)->isUnionType()) {
+    Diag(rawAttr->getLoc(), diag::warn_attribute_wrong_decl_type,
+         "transparent_union", "union");
+    return;
+  }
+
+  QualType QTy = Context.getTypeDeclType(decl);
+  const RecordType *Ty = QTy->getAsUnionType();
+
+// FIXME
+// Ty->addAttr(new TransparentUnionAttr());
 }
 
 void Sema::HandleAnnotateAttribute(Decl *d, AttributeList *rawAttr) {
