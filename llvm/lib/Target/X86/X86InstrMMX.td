@@ -184,8 +184,9 @@ def MMX_MOVQ64mr : MMXI<0x7F, MRMDestMem, (outs), (ins i64mem:$dst, VR64:$src),
 def MMX_MOVDQ2Qrr : MMXID<0xD6, MRMDestMem, (outs VR64:$dst), (ins VR128:$src),
                           "movdq2q\t{$src, $dst|$dst, $src}",
                           [(set VR64:$dst,
-                            (v1i64 (vector_extract (v2i64 VR128:$src),
-                                  (iPTR 0))))]>;
+                            (v1i64 (bitconvert
+                            (i64 (vector_extract (v2i64 VR128:$src),
+                                  (iPTR 0))))))]>;
 
 def MMX_MOVQ2DQrr : MMXIS<0xD6, MRMDestMem, (outs VR128:$dst), (ins VR64:$src),
                           "movq2dq\t{$src, $dst|$dst, $src}",
@@ -641,3 +642,15 @@ def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v8i8  immAllOnesV_bc))),
 // Move MMX to lower 64-bit of XMM
 def : Pat<(v2i64 (scalar_to_vector (i64 (bitconvert VR64:$src)))),
           (v2i64 (MMX_MOVQ2DQrr VR64:$src))>;
+
+// Move lower 64-bit of XMM to MMX.
+def : Pat<(v2i32 (bitconvert (i64 (vector_extract (v2i64 VR128:$src),
+                                                  (iPTR 0))))),
+          (v2i32 (MMX_MOVDQ2Qrr VR128:$src))>;
+def : Pat<(v4i16 (bitconvert (i64 (vector_extract (v2i64 VR128:$src),
+                                                  (iPTR 0))))),
+          (v4i16 (MMX_MOVDQ2Qrr VR128:$src))>;
+def : Pat<(v8i8 (bitconvert (i64 (vector_extract (v2i64 VR128:$src),
+                                                  (iPTR 0))))),
+          (v8i8 (MMX_MOVDQ2Qrr VR128:$src))>;
+
