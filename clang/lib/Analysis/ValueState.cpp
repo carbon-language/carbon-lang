@@ -212,6 +212,10 @@ RVal ValueStateManager::GetRVal(ValueState* St, LVal LV, QualType T) {
       return UnknownVal();
     }
       
+    case lval::StringLiteralValKind:
+      // FIXME: Implement better support for fetching characters from strings.
+      return UnknownVal();
+      
     default:
       assert (false && "Invalid LVal.");
       break;
