@@ -250,6 +250,13 @@ bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
     SuccBB = SI->getSuccessor(SI->findCaseValue(PredCst));
   }
   
+  // If threading to the same block as we come from, we would infinite loop.
+  if (SuccBB == BB) {
+    DOUT << "  Not threading BB '" << BB->getNameStart()
+         << "' - would thread to self!\n";
+    return false;
+  }
+  
   // And finally, do it!
   DOUT << "  Threading edge from '" << PredBB->getNameStart() << "' to '"
        << SuccBB->getNameStart() << "' with cost: " << JumpThreadCost
@@ -318,6 +325,13 @@ bool JumpThreading::ProcessBranchOnLogical(Value *V, BasicBlock *BB,
   // If this is an OR, the constant must be TRUE, and we must be targeting the
   // 'true' block.
   BasicBlock *SuccBB = BB->getTerminator()->getSuccessor(isAnd);
+  
+  // If threading to the same block as we come from, we would infinite loop.
+  if (SuccBB == BB) {
+    DOUT << "  Not threading BB '" << BB->getNameStart()
+    << "' - would thread to self!\n";
+    return false;
+  }
   
   // And finally, do it!
   DOUT << "  Threading edge through bool from '" << PredBB->getNameStart()
@@ -389,6 +403,14 @@ bool JumpThreading::ProcessBranchOnCompare(CmpInst *Cmp, BasicBlock *BB) {
   
   // Next, get our successor.
   BasicBlock *SuccBB = BB->getTerminator()->getSuccessor(!TrueDirection);
+  
+  // If threading to the same block as we come from, we would infinite loop.
+  if (SuccBB == BB) {
+    DOUT << "  Not threading BB '" << BB->getNameStart()
+    << "' - would thread to self!\n";
+    return false;
+  }
+  
   
   // And finally, do it!
   DOUT << "  Threading edge through bool from '" << PredBB->getNameStart()
