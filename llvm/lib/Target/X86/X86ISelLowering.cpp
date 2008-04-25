@@ -1248,9 +1248,15 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
         ArgValue = DAG.getNode(ISD::TRUNCATE, VA.getValVT(), ArgValue);
       
       // Handle MMX values passed in GPRs.
-      if (Is64Bit && RegVT != VA.getLocVT() && RC == X86::GR64RegisterClass &&
-          MVT::getSizeInBits(RegVT) == 64)
-        ArgValue = DAG.getNode(ISD::BIT_CONVERT, VA.getLocVT(), ArgValue);
+      if (Is64Bit && RegVT != VA.getLocVT()) {
+        if (MVT::getSizeInBits(RegVT) == 64 && RC == X86::GR64RegisterClass)
+          ArgValue = DAG.getNode(ISD::BIT_CONVERT, VA.getLocVT(), ArgValue);
+        else if (RC == X86::VR128RegisterClass) {
+          ArgValue = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i64, ArgValue,
+                                 DAG.getConstant(0, MVT::i64));
+          ArgValue = DAG.getNode(ISD::BIT_CONVERT, VA.getLocVT(), ArgValue);
+        }
+      }
       
       ArgValues.push_back(ArgValue);
     } else {
