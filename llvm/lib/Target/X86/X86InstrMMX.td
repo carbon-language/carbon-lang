@@ -637,3 +637,7 @@ def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v4i16 immAllOnesV_bc))),
 def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v8i8  immAllOnesV_bc))),
                   (load addr:$src2))),
           (MMX_PANDNrm VR64:$src1, addr:$src2)>;
+
+// Move MMX to lower 64-bit of XMM
+def : Pat<(v2i64 (scalar_to_vector (i64 (bitconvert VR64:$src)))),
+          (v2i64 (MMX_MOVQ2DQrr VR64:$src))>;

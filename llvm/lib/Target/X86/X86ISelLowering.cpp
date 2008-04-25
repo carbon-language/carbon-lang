@@ -41,6 +41,9 @@
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
+// Forward declarations.
+static SDOperand getMOVLMask(unsigned NumElems, SelectionDAG &DAG);
+
 X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   : TargetLowering(TM) {
   Subtarget = &TM.getSubtarget<X86Subtarget>();
@@ -1547,8 +1550,7 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   SDOperand StackPtr;
   bool containsTailCallByValArg = false;
   SmallVector<std::pair<unsigned, unsigned>, 8> TailCallByValClobberedVRegs;
-  SmallVector<MVT::ValueType, 8> TailCallByValClobberedVRegTypes;
-  
+  SmallVector<MVT::ValueType, 8> TailCallByValClobberedVRegTypes;  
 
   // Walk the register/memloc assignments, inserting copies/loads.  For tail
   // calls, remember all arguments for later special lowering.
@@ -1574,6 +1576,30 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     }
     
     if (VA.isRegLoc()) {
+      if (Is64Bit) {
+        MVT::ValueType RegVT = VA.getLocVT();
+        if (MVT::isVector(RegVT) && MVT::getSizeInBits(RegVT) == 64)
+          switch (VA.getLocReg()) {
+          default:
+            break;
+          case X86::RDI: case X86::RSI: case X86::RDX: case X86::RCX:
+          case X86::R8: {
+            // Special case: passing MMX values in GPR registers.
+            Arg = DAG.getNode(ISD::BIT_CONVERT, MVT::i64, Arg);
+            break;
+          }
+          case X86::XMM0: case X86::XMM1: case X86::XMM2: case X86::XMM3:
+          case X86::XMM4: case X86::XMM5: case X86::XMM6: case X86::XMM7: {
+            // Special case: passing MMX values in XMM registers.
+            Arg = DAG.getNode(ISD::BIT_CONVERT, MVT::i64, Arg);
+            Arg = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v2i64, Arg);
+            Arg = DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v2i64,
+                              DAG.getNode(ISD::UNDEF, MVT::v2i64), Arg,
+                              getMOVLMask(2, DAG));
+            break;
+          }
+          }
+      }
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
     } else {
       if (!IsTailCall || (IsTailCall && isByVal)) {
