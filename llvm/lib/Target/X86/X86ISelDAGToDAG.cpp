@@ -255,11 +255,12 @@ static void findNonImmUse(SDNode *Use, SDNode* Def, SDNode *ImmedUse,
       continue;
     if (N == Def) {
       if (Use == ImmedUse)
-        continue; // We are not looking for immediate use.
+        continue;  // We are not looking for immediate use.
       if (Use == Root) {
+        // Must be a chain reading node where it is possible to reach its own
+        // chain operand through a path started from another operand.
         assert(Use->getOpcode() == ISD::STORE ||
                Use->getOpcode() == X86ISD::CMP ||
-               Use->getOpcode() == ISD::INTRINSIC_WO_CHAIN ||
                Use->getOpcode() == ISD::INTRINSIC_W_CHAIN ||
                Use->getOpcode() == ISD::INTRINSIC_VOID);
         continue;
