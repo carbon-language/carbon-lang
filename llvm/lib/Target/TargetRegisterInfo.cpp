@@ -54,7 +54,7 @@ TargetRegisterInfo::getPhysicalRegisterRegClass(unsigned reg,
 
   // Pick the register class of the right type that contains this physreg.
   SmallVector<const TargetRegisterClass*, 4> RCs;
-  for (regclass_iterator I = regclass_begin(), E = regclass_end(); I != E; ++I) {
+  for (regclass_iterator I = regclass_begin(), E = regclass_end(); I != E; ++I){
     if ((VT == MVT::Other || (*I)->hasType(VT)) && (*I)->contains(reg))
       RCs.push_back(*I);
   }
