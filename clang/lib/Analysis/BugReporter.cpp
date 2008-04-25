@@ -322,6 +322,13 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
               
             }
           }
+          else {
+            
+            // FIXME: Get line number.
+            
+            os << "'Default' branch taken. "
+                  "Execution continues after switch statement.";
+          }
           
           PD.push_front(new PathDiagnosticPiece(L, os.str()));
           break;
