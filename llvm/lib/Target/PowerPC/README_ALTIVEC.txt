@@ -186,3 +186,26 @@ lowering would be:
 3. lvsl 0; splat index; vcmpeq to generate a select mask
 4. lvsl slot + x; vperm to rotate result into correct slot
 5. vsel result together.
+
+//===----------------------------------------------------------------------===//
+
+Should codegen branches on vec_any/vec_all to avoid mfcr.  Two examples:
+
+#include <altivec.h>
+ int f(vector float a, vector float b)
+ {
+  int aa = 0;
+  if (vec_all_ge(a, b))
+    aa |= 0x1;
+  if (vec_any_ge(a,b))
+    aa |= 0x2;
+  return aa;
+}
+
+vector float f(vector float a, vector float b) { 
+  if (vec_any_eq(a, b)) 
+    return a; 
+  else 
+    return b; 
+}
+
