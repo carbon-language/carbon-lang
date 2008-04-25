@@ -17,6 +17,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
@@ -308,13 +309,20 @@ ConstantFoldMappedInstruction(const Instruction *I) {
     else
       return 0;  // All operands not constant!
 
-  
   if (const CmpInst *CI = dyn_cast<CmpInst>(I))
     return ConstantFoldCompareInstOperands(CI->getPredicate(),
                                            &Ops[0], Ops.size(), TD);
-  else
-    return ConstantFoldInstOperands(I->getOpcode(), I->getType(),
-                                    &Ops[0], Ops.size(), TD);
+
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[0]))
+    if (const LoadInst *LI = dyn_cast<LoadInst>(I))
+      if (!LI->isVolatile() && CE->getOpcode() == Instruction::GetElementPtr)
+        if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
+          if (GV->isConstant() && !GV->isDeclaration())
+            return ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(),
+                                                          CE);
+
+  return ConstantFoldInstOperands(I->getOpcode(), I->getType(), &Ops[0],
+                                  Ops.size(), TD);
 }
 
 /// CloneAndPruneFunctionInto - This works exactly like CloneFunctionInto,
