@@ -8694,8 +8694,8 @@ Instruction *InstCombiner::visitInvokeInst(InvokeInst &II) {
   return visitCallSite(&II);
 }
 
-// If this cast does not affect the value passed through the varargs
-// area, we can eliminate the use of the cast.
+/// isSafeToEliminateVarargsCast - If this cast does not affect the value 
+/// passed through the varargs area, we can eliminate the use of the cast.
 static bool isSafeToEliminateVarargsCast(const CallSite CS,
                                          const CastInst * const CI,
                                          const TargetData * const TD,
