@@ -19,15 +19,14 @@ using namespace clang;
 BlockEdge::BlockEdge(CFG& cfg, const CFGBlock* B1, const CFGBlock* B2) {    
   if (B1->succ_size() == 1) {
     assert (*(B1->succ_begin()) == B2);
-    Data = reinterpret_cast<uintptr_t>(B1) | BlockEdgeSrcKind;
+    setRawData(B1, BlockEdgeSrcKind);
   }
   else if (B2->pred_size() == 1) {
     assert (*(B2->pred_begin()) == B1);
-    Data = reinterpret_cast<uintptr_t>(B2) | BlockEdgeDstKind;
+    setRawData(B2, BlockEdgeDstKind);
   }
   else 
-    Data = reinterpret_cast<uintptr_t>(cfg.getBlockEdgeImpl(B1,B2)) 
-            | BlockEdgeAuxKind;
+    setRawData(cfg.getBlockEdgeImpl(B1,B2), BlockEdgeAuxKind);
 }
 
 CFGBlock* BlockEdge::getSrc() const {

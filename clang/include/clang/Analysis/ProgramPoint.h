@@ -31,13 +31,17 @@ protected:
   uintptr_t Data;
 
   ProgramPoint(const void* Ptr, Kind k) {
+    setRawData(Ptr, k);
+  }
+  
+  ProgramPoint() : Data(0) {}
+
+  void setRawData(const void* Ptr, Kind k) {
     assert ((reinterpret_cast<uintptr_t>(const_cast<void*>(Ptr)) & 0x7) == 0
             && "Address must have at least an 8-byte alignment.");
     
     Data = reinterpret_cast<uintptr_t>(const_cast<void*>(Ptr)) | k;
   }
-  
-  ProgramPoint() : Data(0) {}
   
 public:    
   unsigned getKind() const { return Data & 0x7; }  
@@ -114,10 +118,8 @@ public:
   /// This ctor forces the BlockEdge to be constructed using an explicitly
   ///  allocated pair object that is stored in the CFG.  This is usually
   ///  used to construct edges representing jumps using computed gotos.
-  BlockEdge(CFG& cfg, const CFGBlock* B1, const CFGBlock* B2, bool) {
-    Data = reinterpret_cast<uintptr_t>(cfg.getBlockEdgeImpl(B1, B2))
-           | BlockEdgeAuxKind;
-  }
+  BlockEdge(CFG& cfg, const CFGBlock* B1, const CFGBlock* B2, bool)
+    : ProgramPoint(cfg.getBlockEdgeImpl(B1, B2), BlockEdgeAuxKind) {}
 
 
   CFGBlock* getSrc() const;
