@@ -2895,16 +2895,6 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
   }
 }
 
-// LowerAsmOperandForConstraint
-void
-SPUTargetLowering::LowerAsmOperandForConstraint(SDOperand Op,
-                                                char ConstraintLetter,
-                                                std::vector<SDOperand> &Ops,
-                                                SelectionDAG &DAG) {
-  // Default, for the time being, to the base class handler
-  TargetLowering::LowerAsmOperandForConstraint(Op, ConstraintLetter, Ops, DAG);
-}
-
 /// isLegalAddressImmediate - Return true if the integer value can be used
 /// as the offset of the target addressing mode.
 bool SPUTargetLowering::isLegalAddressImmediate(int64_t V, const Type *Ty) const {
