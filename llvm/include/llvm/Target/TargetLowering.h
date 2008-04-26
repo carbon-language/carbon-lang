@@ -1100,16 +1100,19 @@ public:
   
       std::string *Current = &Codes[0];
       TargetLowering::ConstraintType CurType = TLI.getConstraintType(*Current);
-      if (Codes.size() == 1) {   // Single-letter constraints ('r') are very common.
+      // Single-letter constraints ('r') are very common.
+      if (Codes.size() == 1) {
         ConstraintCode = *Current;
         ConstraintType = CurType;
       } else {
         unsigned CurGenerality = getConstraintGenerality(CurType);
 
-        // If we have multiple constraints, try to pick the most general one ahead
-        // of time.  This isn't a wonderful solution, but handles common cases.
+        // If we have multiple constraints, try to pick the most general one
+        // ahead of time.  This isn't a wonderful solution, but handles common
+        // cases.
         for (unsigned j = 1, e = Codes.size(); j != e; ++j) {
-          TargetLowering::ConstraintType ThisType = TLI.getConstraintType(Codes[j]);
+          TargetLowering::ConstraintType ThisType = 
+            TLI.getConstraintType(Codes[j]);
           unsigned ThisGenerality = getConstraintGenerality(ThisType);
           if (ThisGenerality > CurGenerality) {
             // This constraint letter is more general than the previous one,
@@ -1124,17 +1127,17 @@ public:
         ConstraintType = CurType;
       }
 
+      // 'X' matches anything.
       if (ConstraintCode == "X" && CallOperandVal) {
+        // Labels and constants are handled elsewhere ('X' is the only thing
+        // that matches labels).
         if (isa<BasicBlock>(CallOperandVal) || isa<ConstantInt>(CallOperandVal))
           return;
-        // This matches anything.  Labels and constants we handle elsewhere 
-        // ('X' is the only thing that matches labels).  Otherwise, try to 
-        // resolve it to something we know about by looking at the actual 
-        // operand type.
-        std::string s = "";
-        TLI.lowerXConstraint(ConstraintVT, s);
-        if (s!="") {
-          ConstraintCode = s;
+        
+        // Otherwise, try to resolve it to something we know about by looking at
+        // the actual operand type.
+        if (const char *Repl = TLI.LowerXConstraint(ConstraintVT)) {
+          ConstraintCode = Repl;
           ConstraintType = TLI.getConstraintType(ConstraintCode);
         }
       }
@@ -1168,15 +1171,15 @@ public:
   
   /// LowerXConstraint - try to replace an X constraint, which matches anything,
   /// with another that has more specific requirements based on the type of the
-  /// corresponding operand.
-  virtual void lowerXConstraint(MVT::ValueType ConstraintVT, 
-                                std::string&) const;
+  /// corresponding operand.  This returns null if there is no replacement to
+  /// make.
+  virtual const char *LowerXConstraint(MVT::ValueType ConstraintVT) const;
   
   /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
   /// vector.  If it is invalid, don't add anything to Ops.
   virtual void LowerAsmOperandForConstraint(SDOperand Op, char ConstraintLetter,
                                             std::vector<SDOperand> &Ops,
-                                            SelectionDAG &DAG);
+                                            SelectionDAG &DAG) const;
   
   //===--------------------------------------------------------------------===//
   // Scheduler hooks

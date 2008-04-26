@@ -3984,7 +3984,7 @@ PPCTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
 /// vector.  If it is invalid, don't add anything to Ops.
 void PPCTargetLowering::LowerAsmOperandForConstraint(SDOperand Op, char Letter,
                                                      std::vector<SDOperand>&Ops,
-                                                     SelectionDAG &DAG) {
+                                                     SelectionDAG &DAG) const {
   SDOperand Result(0,0);
   switch (Letter) {
   default: break;

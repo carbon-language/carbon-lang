@@ -293,7 +293,7 @@ namespace llvm {
     virtual void LowerAsmOperandForConstraint(SDOperand Op,
                                               char ConstraintLetter,
                                               std::vector<SDOperand> &Ops,
-                                              SelectionDAG &DAG);
+                                              SelectionDAG &DAG) const;
     
     /// isLegalAddressingMode - Return true if the addressing mode represented
     /// by AM is legal for this target, for a load/store of the specified type.

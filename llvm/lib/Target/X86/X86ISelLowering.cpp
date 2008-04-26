@@ -6280,17 +6280,18 @@ X86TargetLowering::getConstraintType(const std::string &Constraint) const {
 /// LowerXConstraint - try to replace an X constraint, which matches anything,
 /// with another that has more specific requirements based on the type of the
 /// corresponding operand.
-void X86TargetLowering::lowerXConstraint(MVT::ValueType ConstraintVT, 
-                                         std::string& s) const {
+const char *X86TargetLowering::
+LowerXConstraint(MVT::ValueType ConstraintVT) const {
+  // FP X constraints get lowered to SSE1/2 registers if available, otherwise
+  // 'f' like normal targets.
   if (MVT::isFloatingPoint(ConstraintVT)) {
     if (Subtarget->hasSSE2())
-      s = "Y";
-    else if (Subtarget->hasSSE1())
-      s = "x";
-    else
-      s = "f";
-  } else
-    return TargetLowering::lowerXConstraint(ConstraintVT, s);
+      return "Y";
+    if (Subtarget->hasSSE1())
+      return "x";
+  }
+  
+  return TargetLowering::LowerXConstraint(ConstraintVT);
 }
 
 /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
@@ -6298,7 +6299,7 @@ void X86TargetLowering::lowerXConstraint(MVT::ValueType ConstraintVT,
 void X86TargetLowering::LowerAsmOperandForConstraint(SDOperand Op,
                                                      char Constraint,
                                                      std::vector<SDOperand>&Ops,
-                                                     SelectionDAG &DAG) {
+                                                     SelectionDAG &DAG) const {
   SDOperand Result(0, 0);
   
   switch (Constraint) {

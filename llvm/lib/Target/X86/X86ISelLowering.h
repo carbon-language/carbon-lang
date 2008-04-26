@@ -371,15 +371,14 @@ namespace llvm {
       getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                         MVT::ValueType VT) const;
 
-    virtual void lowerXConstraint(MVT::ValueType ConstraintVT, 
-                                  std::string&) const;
+    virtual const char *LowerXConstraint(MVT::ValueType ConstraintVT) const;
 
     /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
     /// vector.  If it is invalid, don't add anything to Ops.
     virtual void LowerAsmOperandForConstraint(SDOperand Op,
                                               char ConstraintLetter,
                                               std::vector<SDOperand> &Ops,
-                                              SelectionDAG &DAG);
+                                              SelectionDAG &DAG) const;
     
     /// getRegForInlineAsmConstraint - Given a physical register constraint
     /// (e.g. {edx}), return the register number and the register class for the
