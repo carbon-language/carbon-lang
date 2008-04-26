@@ -28,6 +28,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -455,7 +456,7 @@ static bool GlobalUsersSafeToSRA(GlobalValue *GV) {
 /// behavior of the program in a more fine-grained way.  We have determined that
 /// this transformation is safe already.  We return the first global variable we
 /// insert so that the caller can reprocess it.
-static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
+static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD) {
   // Make sure this global only has simple uses that we can SRA.
   if (!GlobalUsersSafeToSRA(GV))
     return 0;
@@ -467,8 +468,14 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
   std::vector<GlobalVariable*> NewGlobals;
   Module::GlobalListType &Globals = GV->getParent()->getGlobalList();
 
+  // Get the alignment of the global, either explicit or target-specific.
+  unsigned StartAlignment = GV->getAlignment();
+  if (StartAlignment == 0)
+    StartAlignment = TD.getABITypeAlignment(GV->getType());
+   
   if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     NewGlobals.reserve(STy->getNumElements());
+    const StructLayout &Layout = *TD.getStructLayout(STy);
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
       Constant *In = getAggregateConstantElement(Init,
                                             ConstantInt::get(Type::Int32Ty, i));
@@ -480,19 +487,28 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
                                                GV->isThreadLocal());
       Globals.insert(GV, NGV);
       NewGlobals.push_back(NGV);
+      
+      // Calculate the known alignment of the field.  If the original aggregate
+      // had 256 byte alignment for example, something might depend on that:
+      // propagate info to each field.
+      uint64_t FieldOffset = Layout.getElementOffset(i);
+      unsigned NewAlign = (unsigned)MinAlign(StartAlignment, FieldOffset);
+      if (NewAlign > TD.getABITypeAlignment(STy->getElementType(i)))
+        NGV->setAlignment(NewAlign);
     }
   } else if (const SequentialType *STy = dyn_cast<SequentialType>(Ty)) {
     unsigned NumElements = 0;
     if (const ArrayType *ATy = dyn_cast<ArrayType>(STy))
       NumElements = ATy->getNumElements();
-    else if (const VectorType *PTy = dyn_cast<VectorType>(STy))
-      NumElements = PTy->getNumElements();
     else
-      assert(0 && "Unknown aggregate sequential type!");
+      NumElements = cast<VectorType>(STy)->getNumElements();
 
     if (NumElements > 16 && GV->hasNUsesOrMore(16))
       return 0; // It's not worth it.
     NewGlobals.reserve(NumElements);
+    
+    uint64_t EltSize = TD.getABITypeSize(STy->getElementType());
+    unsigned EltAlign = TD.getABITypeAlignment(STy->getElementType());
     for (unsigned i = 0, e = NumElements; i != e; ++i) {
       Constant *In = getAggregateConstantElement(Init,
                                             ConstantInt::get(Type::Int32Ty, i));
@@ -505,6 +521,13 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
                                                GV->isThreadLocal());
       Globals.insert(GV, NGV);
       NewGlobals.push_back(NGV);
+      
+      // Calculate the known alignment of the field.  If the original aggregate
+      // had 256 byte alignment for example, something might depend on that:
+      // propagate info to each field.
+      unsigned NewAlign = (unsigned)MinAlign(StartAlignment, EltSize*i);
+      if (NewAlign > EltAlign)
+        NGV->setAlignment(NewAlign);
     }
   }
 
@@ -804,6 +827,9 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
                                              GV->getName()+".body",
                                              (Module *)NULL,
                                              GV->isThreadLocal());
+  // FIXME: This new global should have the alignment returned by malloc.  Code
+  // could depend on malloc returning large alignment (on the mac, 16 bytes) but
+  // this would only guarantee some lower alignment.
   GV->getParent()->getGlobalList().insert(GV, NewGV);
 
   // Anything that used the malloc now uses the global directly.
@@ -1520,7 +1546,8 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       ++NumMarked;
       return true;
     } else if (!GV->getInitializer()->getType()->isFirstClassType()) {
-      if (GlobalVariable *FirstNewGV = SRAGlobal(GV)) {
+      if (GlobalVariable *FirstNewGV = SRAGlobal(GV, 
+                                                 getAnalysis<TargetData>())) {
         GVI = FirstNewGV;  // Don't skip the newly produced globals!
         return true;
       }
