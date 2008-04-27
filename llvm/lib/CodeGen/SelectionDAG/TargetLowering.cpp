@@ -1498,6 +1498,7 @@ PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const {
 //  Inline Assembler Implementation Methods
 //===----------------------------------------------------------------------===//
 
+
 TargetLowering::ConstraintType
 TargetLowering::getConstraintType(const std::string &Constraint) const {
   // FIXME: lots more standard ones to handle.
@@ -1644,6 +1645,102 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
   }
   
   return std::pair<unsigned, const TargetRegisterClass*>(0, 0);
+}
+
+//===----------------------------------------------------------------------===//
+// Constraint Selection.
+
+/// getConstraintGenerality - Return an integer indicating how general CT
+/// is.
+static unsigned getConstraintGenerality(TargetLowering::ConstraintType CT) {
+  switch (CT) {
+  default: assert(0 && "Unknown constraint type!");
+  case TargetLowering::C_Other:
+  case TargetLowering::C_Unknown:
+    return 0;
+  case TargetLowering::C_Register:
+    return 1;
+  case TargetLowering::C_RegisterClass:
+    return 2;
+  case TargetLowering::C_Memory:
+    return 3;
+  }
+}
+
+/// ChooseConstraint - If there are multiple different constraints that we
+/// could pick for this operand (e.g. "imr") try to pick the 'best' one.
+/// This is somewhat tricky: constraints fall into three four classes:
+///    Other         -> immediates and magic values
+///    Register      -> one specific register
+///    RegisterClass -> a group of regs
+///    Memory        -> memory
+/// Ideally, we would pick the most specific constraint possible: if we have
+/// something that fits into a register, we would pick it.  The problem here
+/// is that if we have something that could either be in a register or in
+/// memory that use of the register could cause selection of *other*
+/// operands to fail: they might only succeed if we pick memory.  Because of
+/// this the heuristic we use is:
+///
+///  1) If there is an 'other' constraint, and if the operand is valid for
+///     that constraint, use it.  This makes us take advantage of 'i'
+///     constraints when available.
+///  2) Otherwise, pick the most general constraint present.  This prefers
+///     'm' over 'r', for example.
+///
+static void ChooseConstraint(TargetLowering::AsmOperandInfo &OpInfo,
+                             const TargetLowering &TLI) {
+  assert(OpInfo.Codes.size() > 1 && "Doesn't have multiple constraint options");
+  unsigned BestIdx = 0;
+  TargetLowering::ConstraintType BestType = TargetLowering::C_Unknown;
+  int BestGenerality = -1;
+  
+  // Loop over the options, keeping track of the most general one.
+  for (unsigned i = 0, e = OpInfo.Codes.size(); i != e; ++i) {
+    TargetLowering::ConstraintType CType =
+      TLI.getConstraintType(OpInfo.Codes[i]);
+    
+    // This constraint letter is more general than the previous one, use it.
+    int Generality = getConstraintGenerality(CType);
+    if (Generality > BestGenerality) {
+      BestType = CType;
+      BestIdx = i;
+      BestGenerality = Generality;
+    }
+  }
+  
+  OpInfo.ConstraintCode = OpInfo.Codes[BestIdx];
+  OpInfo.ConstraintType = BestType;
+}
+
+/// ComputeConstraintToUse - Determines the constraint code and constraint
+/// type to use for the specific AsmOperandInfo, setting
+/// OpInfo.ConstraintCode and OpInfo.ConstraintType.
+void TargetLowering::ComputeConstraintToUse(AsmOperandInfo &OpInfo) const {
+  assert(!OpInfo.Codes.empty() && "Must have at least one constraint");
+  
+  // Single-letter constraints ('r') are very common.
+  if (OpInfo.Codes.size() == 1) {
+    OpInfo.ConstraintCode = OpInfo.Codes[0];
+    OpInfo.ConstraintType = getConstraintType(OpInfo.ConstraintCode);
+  } else {
+    ChooseConstraint(OpInfo, *this);
+  }
+  
+  // 'X' matches anything.
+  if (OpInfo.ConstraintCode == "X" && OpInfo.CallOperandVal) {
+    // Labels and constants are handled elsewhere ('X' is the only thing
+    // that matches labels).
+    if (isa<BasicBlock>(OpInfo.CallOperandVal) ||
+        isa<ConstantInt>(OpInfo.CallOperandVal))
+      return;
+    
+    // Otherwise, try to resolve it to something we know about by looking at
+    // the actual operand type.
+    if (const char *Repl = LowerXConstraint(OpInfo.ConstraintVT)) {
+      OpInfo.ConstraintCode = Repl;
+      OpInfo.ConstraintType = getConstraintType(OpInfo.ConstraintCode);
+    }
+  }
 }
 
 //===----------------------------------------------------------------------===//

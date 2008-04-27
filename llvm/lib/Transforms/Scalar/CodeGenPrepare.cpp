@@ -962,7 +962,7 @@ bool CodeGenPrepare::OptimizeInlineAsmInst(Instruction *I, CallSite CS,
     }
 
     // Compute the constraint code and ConstraintType to use.
-    OpInfo.ComputeConstraintToUse(*TLI);
+    TLI->ComputeConstraintToUse(OpInfo);
 
     if (OpInfo.ConstraintType == TargetLowering::C_Memory &&
         OpInfo.isIndirect) {

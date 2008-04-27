@@ -3824,7 +3824,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     OpInfo.ConstraintVT = OpVT;
     
     // Compute the constraint code and ConstraintType to use.
-    OpInfo.ComputeConstraintToUse(TLI);
+    TLI.ComputeConstraintToUse(OpInfo);
 
     // Keep track of whether we see an earlyclobber.
     SawEarlyClobber |= OpInfo.isEarlyClobber;

@@ -1076,74 +1076,13 @@ public:
         ConstraintType(TargetLowering::C_Unknown),
         CallOperandVal(0), ConstraintVT(MVT::Other) {
     }
-  
-    /// getConstraintGenerality - Return an integer indicating how general CT is.
-    unsigned getConstraintGenerality(TargetLowering::ConstraintType CT) {
-      switch (CT) {
-      default: assert(0 && "Unknown constraint type!");
-      case TargetLowering::C_Other:
-      case TargetLowering::C_Unknown:
-        return 0;
-      case TargetLowering::C_Register:
-        return 1;
-      case TargetLowering::C_RegisterClass:
-        return 2;
-      case TargetLowering::C_Memory:
-        return 3;
-      }
-    }
-
-    /// ComputeConstraintToUse - Determines the constraint code and constraint
-    /// type to use.
-    void ComputeConstraintToUse(const TargetLowering &TLI) {
-      assert(!Codes.empty() && "Must have at least one constraint");
-  
-      std::string *Current = &Codes[0];
-      TargetLowering::ConstraintType CurType = TLI.getConstraintType(*Current);
-      // Single-letter constraints ('r') are very common.
-      if (Codes.size() == 1) {
-        ConstraintCode = *Current;
-        ConstraintType = CurType;
-      } else {
-        unsigned CurGenerality = getConstraintGenerality(CurType);
-
-        // If we have multiple constraints, try to pick the most general one
-        // ahead of time.  This isn't a wonderful solution, but handles common
-        // cases.
-        for (unsigned j = 1, e = Codes.size(); j != e; ++j) {
-          TargetLowering::ConstraintType ThisType = 
-            TLI.getConstraintType(Codes[j]);
-          unsigned ThisGenerality = getConstraintGenerality(ThisType);
-          if (ThisGenerality > CurGenerality) {
-            // This constraint letter is more general than the previous one,
-            // use it.
-            CurType = ThisType;
-            Current = &Codes[j];
-            CurGenerality = ThisGenerality;
-          }
-        }
-
-        ConstraintCode = *Current;
-        ConstraintType = CurType;
-      }
-
-      // 'X' matches anything.
-      if (ConstraintCode == "X" && CallOperandVal) {
-        // Labels and constants are handled elsewhere ('X' is the only thing
-        // that matches labels).
-        if (isa<BasicBlock>(CallOperandVal) || isa<ConstantInt>(CallOperandVal))
-          return;
-        
-        // Otherwise, try to resolve it to something we know about by looking at
-        // the actual operand type.
-        if (const char *Repl = TLI.LowerXConstraint(ConstraintVT)) {
-          ConstraintCode = Repl;
-          ConstraintType = TLI.getConstraintType(ConstraintCode);
-        }
-      }
-    }
   };
 
+  /// ComputeConstraintToUse - Determines the constraint code and constraint
+  /// type to use for the specific AsmOperandInfo, setting
+  /// OpInfo.ConstraintCode and OpInfo.ConstraintType.
+  virtual void ComputeConstraintToUse(AsmOperandInfo &OpInfo) const;
+  
   /// getConstraintType - Given a constraint, return the type of constraint it
   /// is for this target.
   virtual ConstraintType getConstraintType(const std::string &Constraint) const;
