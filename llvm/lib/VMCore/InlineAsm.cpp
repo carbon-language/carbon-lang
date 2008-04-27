@@ -202,11 +202,20 @@ bool InlineAsm::Verify(const FunctionType *Ty, const std::string &ConstStr) {
       break;
     }
   }
-    
-  if (NumOutputs > 1) return false;  // Only one result allowed so far.
   
-  if ((Ty->getReturnType() != Type::VoidTy) != NumOutputs)
-    return false;   // NumOutputs = 1 iff has a result type.
+  switch (NumOutputs) {
+  case 0:
+    if (Ty->getReturnType() != Type::VoidTy) return false;
+    break;
+  case 1:
+    if (isa<StructType>(Ty->getReturnType())) return false;
+    break;
+  default:
+    const StructType *STy = dyn_cast<StructType>(Ty->getReturnType());
+    if (STy == 0 || STy->getNumElements() != NumOutputs)
+      return false;
+    break;
+  }      
   
   if (Ty->getNumParams() != NumInputs) return false;
   return true;
