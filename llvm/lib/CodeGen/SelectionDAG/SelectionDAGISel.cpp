@@ -89,33 +89,31 @@ namespace {
 
 namespace { struct SDISelAsmOperandInfo; }
 
-namespace {
-  /// ComputeValueVTs - Given an LLVM IR type, compute a sequence of
-  /// MVT::ValueTypes that represent all the individual underlying
-  /// non-aggregate types that comprise it.
-  static void ComputeValueVTs(const TargetLowering &TLI,
-                              const Type *Ty,
-                              SmallVectorImpl<MVT::ValueType> &ValueVTs) {
-    // Given a struct type, recursively traverse the elements.
-    if (const StructType *STy = dyn_cast<StructType>(Ty)) {
-      for (StructType::element_iterator EI = STy->element_begin(),
-                                        EB = STy->element_end();
-          EI != EB; ++EI)
-        ComputeValueVTs(TLI, *EI, ValueVTs);
-      return;
-    }
-    // Given an array type, recursively traverse the elements.
-    if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
-      const Type *EltTy = ATy->getElementType();
-      for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i)
-        ComputeValueVTs(TLI, EltTy, ValueVTs);
-      return;
-    }
-    // Base case: we can get an MVT::ValueType for this LLVM IR type.
-    MVT::ValueType VT = TLI.getValueType(Ty);
-    ValueVTs.push_back(VT);
+/// ComputeValueVTs - Given an LLVM IR type, compute a sequence of
+/// MVT::ValueTypes that represent all the individual underlying
+/// non-aggregate types that comprise it.
+static void ComputeValueVTs(const TargetLowering &TLI, const Type *Ty,
+                            SmallVectorImpl<MVT::ValueType> &ValueVTs) {
+  // Given a struct type, recursively traverse the elements.
+  if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    for (StructType::element_iterator EI = STy->element_begin(),
+                                      EB = STy->element_end();
+        EI != EB; ++EI)
+      ComputeValueVTs(TLI, *EI, ValueVTs);
+    return;
   }
+  // Given an array type, recursively traverse the elements.
+  if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    const Type *EltTy = ATy->getElementType();
+    for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i)
+      ComputeValueVTs(TLI, EltTy, ValueVTs);
+    return;
+  }
+  // Base case: we can get an MVT::ValueType for this LLVM IR type.
+  ValueVTs.push_back(TLI.getValueType(Ty));
+}
 
+namespace {
   /// RegsForValue - This struct represents the physical registers that a
   /// particular value is assigned and the type information about the value.
   /// This is needed because values can be promoted into larger registers and
