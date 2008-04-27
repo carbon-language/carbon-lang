@@ -74,10 +74,11 @@ Parser::DeclTy *Parser::ParseNamespace(unsigned Context) {
     while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof))
       ParseExternalDeclaration();
     
+    // Leave the namespace scope.
+    ExitScope();
+
     SourceLocation RBrace = MatchRHSPunctuation(tok::r_brace, LBrace);
     Actions.ActOnFinishNamespaceDef(NamespcDecl, RBrace);
-
-    ExitScope();
 
     return NamespcDecl;
     
