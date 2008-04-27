@@ -3789,10 +3789,8 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     // If this is an input or an indirect output, process the call argument.
     // BasicBlocks are labels, currently appearing only in asm's.
     if (OpInfo.CallOperandVal) {
-      if (isa<BasicBlock>(OpInfo.CallOperandVal))
-        OpInfo.CallOperand = 
-          DAG.getBasicBlock(FuncInfo.MBBMap[cast<BasicBlock>(
-                                                 OpInfo.CallOperandVal)]);
+      if (BasicBlock *BB = dyn_cast<BasicBlock>(OpInfo.CallOperandVal))
+        OpInfo.CallOperand = DAG.getBasicBlock(FuncInfo.MBBMap[BB]);
       else {
         OpInfo.CallOperand = getValue(OpInfo.CallOperandVal);
         const Type *OpTy = OpInfo.CallOperandVal->getType();
