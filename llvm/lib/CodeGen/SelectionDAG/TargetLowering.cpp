@@ -1688,7 +1688,8 @@ static unsigned getConstraintGenerality(TargetLowering::ConstraintType CT) {
 ///     'm' over 'r', for example.
 ///
 static void ChooseConstraint(TargetLowering::AsmOperandInfo &OpInfo,
-                             const TargetLowering &TLI) {
+                             const TargetLowering &TLI,
+                             SDOperand Op, SelectionDAG *DAG) {
   assert(OpInfo.Codes.size() > 1 && "Doesn't have multiple constraint options");
   unsigned BestIdx = 0;
   TargetLowering::ConstraintType BestType = TargetLowering::C_Unknown;
@@ -1698,6 +1699,23 @@ static void ChooseConstraint(TargetLowering::AsmOperandInfo &OpInfo,
   for (unsigned i = 0, e = OpInfo.Codes.size(); i != e; ++i) {
     TargetLowering::ConstraintType CType =
       TLI.getConstraintType(OpInfo.Codes[i]);
+    
+    // If this is an 'other' constraint, see if the operand is valid for it.
+    // For example, on X86 we might have an 'rI' constraint.  If the operand
+    // is an integer in the range [0..31] we want to use I (saving a load
+    // of a register), otherwise we must use 'r'.
+    if (CType == TargetLowering::C_Other && Op.Val) {
+      assert(OpInfo.Codes[i].size() == 1 &&
+             "Unhandled multi-letter 'other' constraint");
+      std::vector<SDOperand> ResultOps;
+      TLI.LowerAsmOperandForConstraint(Op, OpInfo.Codes[i][0],
+                                       ResultOps, *DAG);
+      if (!ResultOps.empty()) {
+        BestType = CType;
+        BestIdx = i;
+        break;
+      }
+    }
     
     // This constraint letter is more general than the previous one, use it.
     int Generality = getConstraintGenerality(CType);
@@ -1715,7 +1733,9 @@ static void ChooseConstraint(TargetLowering::AsmOperandInfo &OpInfo,
 /// ComputeConstraintToUse - Determines the constraint code and constraint
 /// type to use for the specific AsmOperandInfo, setting
 /// OpInfo.ConstraintCode and OpInfo.ConstraintType.
-void TargetLowering::ComputeConstraintToUse(AsmOperandInfo &OpInfo) const {
+void TargetLowering::ComputeConstraintToUse(AsmOperandInfo &OpInfo,
+                                            SDOperand Op, 
+                                            SelectionDAG *DAG) const {
   assert(!OpInfo.Codes.empty() && "Must have at least one constraint");
   
   // Single-letter constraints ('r') are very common.
@@ -1723,7 +1743,7 @@ void TargetLowering::ComputeConstraintToUse(AsmOperandInfo &OpInfo) const {
     OpInfo.ConstraintCode = OpInfo.Codes[0];
     OpInfo.ConstraintType = getConstraintType(OpInfo.ConstraintCode);
   } else {
-    ChooseConstraint(OpInfo, *this);
+    ChooseConstraint(OpInfo, *this, Op, DAG);
   }
   
   // 'X' matches anything.

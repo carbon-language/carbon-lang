@@ -109,7 +109,8 @@ public:
   /// srl/add/sra.
   bool isPow2DivCheap() const { return Pow2DivIsCheap; }
 
-  /// getSetCCResultType - Return the ValueType of the result of setcc operations.
+  /// getSetCCResultType - Return the ValueType of the result of setcc
+  /// operations.
   virtual MVT::ValueType getSetCCResultType(const SDOperand &) const;
 
   /// getSetCCResultContents - For targets without boolean registers, this flag
@@ -1080,8 +1081,12 @@ public:
 
   /// ComputeConstraintToUse - Determines the constraint code and constraint
   /// type to use for the specific AsmOperandInfo, setting
-  /// OpInfo.ConstraintCode and OpInfo.ConstraintType.
-  virtual void ComputeConstraintToUse(AsmOperandInfo &OpInfo) const;
+  /// OpInfo.ConstraintCode and OpInfo.ConstraintType.  If the actual operand
+  /// being passed in is available, it can be passed in as Op, otherwise an
+  /// empty SDOperand can be passed.
+  virtual void ComputeConstraintToUse(AsmOperandInfo &OpInfo,
+                                      SDOperand Op,
+                                      SelectionDAG *DAG = 0) const;
   
   /// getConstraintType - Given a constraint, return the type of constraint it
   /// is for this target.
@@ -1130,7 +1135,7 @@ public:
   // insert.  The specified MachineInstr is created but not inserted into any
   // basic blocks, and the scheduler passes ownership of it to this method.
   virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
-                                                         MachineBasicBlock *MBB);
+                                                        MachineBasicBlock *MBB);
 
   //===--------------------------------------------------------------------===//
   // Addressing mode description hooks (used by LSR etc).
