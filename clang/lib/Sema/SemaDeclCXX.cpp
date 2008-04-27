@@ -17,6 +17,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Type.h"
+#include "clang/Parse/Scope.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Compiler.h"
 
@@ -283,4 +284,80 @@ void Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
   //   derived class more than once.
 
   // FIXME: Attach base class to the record.
+}
+
+
+//===----------------------------------------------------------------------===//
+// Namespace Handling
+//===----------------------------------------------------------------------===//
+
+/// ActOnStartNamespaceDef - This is called at the start of a namespace
+/// definition.
+Sema::DeclTy *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
+                                           SourceLocation IdentLoc,
+                                           IdentifierInfo *II,
+                                           SourceLocation LBrace) {
+  NamespaceDecl *Namespc =
+      NamespaceDecl::Create(Context, CurContext, IdentLoc, II);
+  Namespc->setLBracLoc(LBrace);
+
+  Scope *DeclRegionScope = NamespcScope->getParent();
+
+  if (II) {
+    // C++ [namespace.def]p2:
+    // The identifier in an original-namespace-definition shall not have been
+    // previously defined in the declarative region in which the
+    // original-namespace-definition appears. The identifier in an
+    // original-namespace-definition is the name of the namespace. Subsequently
+    // in that declarative region, it is treated as an original-namespace-name.
+
+    Decl *PrevDecl =
+        LookupDecl(II, Decl::IDNS_Tag | Decl::IDNS_Ordinary, DeclRegionScope,
+                   /*enableLazyBuiltinCreation=*/false);
+
+    if (PrevDecl && DeclRegionScope->isDeclScope(PrevDecl)) {
+      if (NamespaceDecl *OrigNS = dyn_cast<NamespaceDecl>(PrevDecl)) {
+        // This is an extended namespace definition.
+        // Attach this namespace decl to the chain of extended namespace
+        // definitions.
+        NamespaceDecl *NextNS = OrigNS;
+        while (NextNS->getNextNamespace())
+          NextNS = NextNS->getNextNamespace();
+
+        NextNS->setNextNamespace(Namespc);
+        Namespc->setOriginalNamespace(OrigNS);
+
+        // We won't add this decl to the current scope. We want the namespace
+        // name to return the original namespace decl during a name lookup.
+      } else {
+        // This is an invalid name redefinition.
+        Diag(Namespc->getLocation(), diag::err_redefinition_different_kind,
+          Namespc->getName());
+        Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+        Namespc->setInvalidDecl();
+        // Continue on to push Namespc as current DeclContext and return it.
+      }
+    } else {
+      // This namespace name is declared for the first time.
+      PushOnScopeChains(Namespc, DeclRegionScope);
+    }
+  }
+  else {
+    // FIXME: Handle anonymous namespaces
+  }
+
+  // Although we could have an invalid decl (i.e. the namespace name is a
+  // redefinition), push it as current DeclContext and try to continue parsing.
+  PushDeclContext(Namespc->getOriginalNamespace());
+  return Namespc;
+}
+
+/// ActOnFinishNamespaceDef - This callback is called after a namespace is
+/// exited. Decl is the DeclTy returned by ActOnStartNamespaceDef.
+void Sema::ActOnFinishNamespaceDef(DeclTy *D, SourceLocation RBrace) {
+  Decl *Dcl = static_cast<Decl *>(D);
+  NamespaceDecl *Namespc = dyn_cast_or_null<NamespaceDecl>(Dcl);
+  assert(Namespc && "Invalid parameter, expected NamespaceDecl");
+  Namespc->setRBracLoc(RBrace);
+  PopDeclContext();
 }

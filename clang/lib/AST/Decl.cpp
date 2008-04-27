@@ -29,6 +29,7 @@ static unsigned nParmVars = 0;
 static unsigned nSUC = 0;
 static unsigned nEnumConst = 0;
 static unsigned nEnumDecls = 0;
+static unsigned nNamespaces = 0;
 static unsigned nTypedef = 0;
 static unsigned nFieldDecls = 0;
 static unsigned nInterfaceDecls = 0;
@@ -57,6 +58,7 @@ static DeclAttrMapTy *DeclAttrs = 0;
 const char *Decl::getDeclKindName() const {
   switch (DeclKind) {
   default: assert(0 && "Unknown decl kind!");
+  case Namespace:           return "Namespace";
   case Typedef:             return "Typedef";
   case Function:            return "Function";
   case Var:                 return "Var";
@@ -85,7 +87,11 @@ void Decl::PrintStats() {
   fprintf(stderr, "  %d decls total.\n", 
           int(nFuncs+nVars+nParmVars+nFieldDecls+nSUC+
               nEnumDecls+nEnumConst+nTypedef+nInterfaceDecls+nClassDecls+
-              nMethodDecls+nProtocolDecls+nCategoryDecls+nIvarDecls));
+              nMethodDecls+nProtocolDecls+nCategoryDecls+nIvarDecls+
+              nNamespaces));
+  fprintf(stderr, "    %d namespace decls, %d each (%d bytes)\n", 
+          nNamespaces, (int)sizeof(NamespaceDecl), 
+          int(nNamespaces*sizeof(NamespaceDecl)));
   fprintf(stderr, "    %d function decls, %d each (%d bytes)\n", 
           nFuncs, (int)sizeof(FunctionDecl), int(nFuncs*sizeof(FunctionDecl)));
   fprintf(stderr, "    %d variable decls, %d each (%d bytes)\n", 
@@ -170,12 +176,14 @@ void Decl::PrintStats() {
               nObjCPropertyDecl*sizeof(ObjCPropertyDecl)+
               nObjCPropertyImplDecl*sizeof(ObjCPropertyImplDecl)+
               nLinkageSpecDecl*sizeof(LinkageSpecDecl)+
-              nFileScopeAsmDecl*sizeof(FileScopeAsmDecl)));
+              nFileScopeAsmDecl*sizeof(FileScopeAsmDecl)+
+              nNamespaces*sizeof(NamespaceDecl)));
     
 }
 
 void Decl::addDeclKind(Kind k) {
   switch (k) {
+  case Namespace:           nNamespaces++; break;
   case Typedef:             nTypedef++; break;
   case Function:            nFuncs++; break;
   case Var:                 nVars++; break;
@@ -205,10 +213,16 @@ void Decl::addDeclKind(Kind k) {
 //===----------------------------------------------------------------------===//
 // Decl Allocation/Deallocation Method Implementations
 //===----------------------------------------------------------------------===//
-
+ 
 TranslationUnitDecl *TranslationUnitDecl::Create(ASTContext &C) {
   void *Mem = C.getAllocator().Allocate<TranslationUnitDecl>();
   return new (Mem) TranslationUnitDecl();
+}
+
+NamespaceDecl *NamespaceDecl::Create(ASTContext &C, DeclContext *DC,
+                                     SourceLocation L, IdentifierInfo *Id) {
+  void *Mem = C.getAllocator().Allocate<NamespaceDecl>();
+  return new (Mem) NamespaceDecl(DC, L, Id);
 }
 
 VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC,
@@ -342,6 +356,7 @@ void Decl::Destroy(ASTContext& C) const {
   CASE(ObjCImplementation);
   CASE(ObjCProtocol);
   CASE(ObjCProperty);
+  CASE(Namespace);
   CASE(Typedef);
   CASE(Enum);
   CASE(EnumConstant);

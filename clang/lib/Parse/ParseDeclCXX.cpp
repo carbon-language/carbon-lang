@@ -62,17 +62,25 @@ Parser::DeclTy *Parser::ParseNamespace(unsigned Context) {
     // FIXME: Verify no attributes were present.
     // FIXME: parse this.
   } else if (Tok.is(tok::l_brace)) {
+
     SourceLocation LBrace = ConsumeBrace();
-    // FIXME: push a scope, push a namespace decl.
-    
-    while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
-      // FIXME capture the decls.
+
+    // Enter a scope for the namespace.
+    EnterScope(Scope::DeclScope);
+
+    DeclTy *NamespcDecl =
+      Actions.ActOnStartNamespaceDef(CurScope, IdentLoc, Ident, LBrace);
+
+    while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof))
       ParseExternalDeclaration();
-    }
     
     SourceLocation RBrace = MatchRHSPunctuation(tok::r_brace, LBrace);
+    Actions.ActOnFinishNamespaceDef(NamespcDecl, RBrace);
+
+    ExitScope();
+
+    return NamespcDecl;
     
-    // FIXME: act on this.
   } else {
     unsigned D = Ident ? diag::err_expected_lbrace : 
                          diag::err_expected_ident_lbrace;

@@ -666,6 +666,8 @@ DIAG(err_first_label, ERROR,
 
 DIAG(err_unexpected_typedef, ERROR,
      "unexpected type name '%0': expected expression")
+DIAG(err_unexpected_namespace, ERROR,
+     "unexpected namespace name '%0': expected expression")
 DIAG(err_unexpected_typedef_ident, ERROR,
      "unexpected type name '%0': expected identifier")
 DIAG(err_undeclared_var_use, ERROR,

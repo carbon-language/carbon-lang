@@ -127,6 +127,66 @@ protected:
   void ReadOutRec(llvm::Deserializer& D, ASTContext& C);
 };
 
+/// NamespaceDecl - Represent a C++ namespace.
+class NamespaceDecl : public ScopedDecl, public DeclContext {
+  SourceLocation LBracLoc, RBracLoc;
+  
+  // For extended namespace definitions:
+  //
+  // namespace A { int x; }
+  // namespace A { int y; }
+  //
+  // there will be one NamespaceDecl for each declaration.
+  // NextDeclarator points to the next extended declaration.
+  // OrigNamespace points to the original namespace declaration.
+  // OrigNamespace of the first namespace decl points to itself.
+
+  NamespaceDecl *OrigNamespace;
+
+  NamespaceDecl(DeclContext *DC, SourceLocation L, IdentifierInfo *Id)
+    : ScopedDecl(Namespace, DC, L, Id, 0), DeclContext(Namespace) {
+      OrigNamespace = this;
+  }
+public:
+  static NamespaceDecl *Create(ASTContext &C, DeclContext *DC,
+                               SourceLocation L, IdentifierInfo *Id);
+
+  NamespaceDecl *getNextNamespace() {
+    return cast_or_null<NamespaceDecl>(getNextDeclarator());
+  }
+  const NamespaceDecl *getNextNamespace() const {
+    return cast_or_null<NamespaceDecl>(getNextDeclarator());
+  }
+  void setNextNamespace(NamespaceDecl *ND) { setNextDeclarator(ND); }
+
+  NamespaceDecl *getOriginalNamespace() const {
+    return OrigNamespace;
+  }
+  void setOriginalNamespace(NamespaceDecl *ND) { OrigNamespace = ND; }
+  
+  SourceRange getSourceRange() const { 
+    return SourceRange(LBracLoc, RBracLoc); 
+  }
+
+  SourceLocation getLBracLoc() const { return LBracLoc; }
+  SourceLocation getRBracLoc() const { return RBracLoc; }
+  void setLBracLoc(SourceLocation LBrace) { LBracLoc = LBrace; }
+  void setRBracLoc(SourceLocation RBrace) { RBracLoc = RBrace; }
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return D->getKind() == Namespace; }
+  static bool classof(const NamespaceDecl *D) { return true; }
+  
+protected:
+  /// EmitImpl - Serialize this NamespaceDecl. Called by Decl::Emit.
+  virtual void EmitImpl(llvm::Serializer& S) const;
+
+  /// CreateImpl - Deserialize a NamespaceDecl.  Called by Decl::Create.
+  static NamespaceDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+
+  friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
+};
+
 /// ValueDecl - Represent the declaration of a variable (in which case it is 
 /// an lvalue) a function (in which case it is a function designator) or
 /// an enum constant. 

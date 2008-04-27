@@ -552,6 +552,12 @@ public:
                                 ExprTy *expr, TypeTy *type,
                                 SourceLocation RPLoc);
   
+  // Act on C++ namespaces
+  virtual DeclTy *ActOnStartNamespaceDef(Scope *S, SourceLocation IdentLoc,
+                                        IdentifierInfo *Ident,
+                                        SourceLocation LBrace);
+  virtual void ActOnFinishNamespaceDef(DeclTy *Dcl, SourceLocation RBrace);
+
   /// ActOnCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
   virtual ExprResult ActOnCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
                                    SourceLocation LAngleBracketLoc, TypeTy *Ty,

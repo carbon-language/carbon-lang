@@ -128,6 +128,8 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
     return Diag(Loc, diag::err_unexpected_typedef, II.getName());
   if (isa<ObjCInterfaceDecl>(D))
     return Diag(Loc, diag::err_unexpected_interface, II.getName());
+  if (isa<NamespaceDecl>(D))
+    return Diag(Loc, diag::err_unexpected_namespace, II.getName());
 
   assert(0 && "Invalid decl");
   abort();
@@ -2312,4 +2314,6 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
        SrcExpr->getSourceRange());
   return isInvalid;
 }
+
+
 

@@ -44,6 +44,9 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
     case TranslationUnit:
       return TranslationUnitDecl::CreateImpl(D, C);
 
+    case Namespace:
+      return NamespaceDecl::CreateImpl(D, C);
+
     case Var:
       return VarDecl::CreateImpl(D, C);
       
@@ -206,10 +209,33 @@ void TranslationUnitDecl::EmitImpl(llvm::Serializer& S) const
 TranslationUnitDecl* TranslationUnitDecl::CreateImpl(Deserializer& D,
                                                      ASTContext& C) {  
   void *Mem = C.getAllocator().Allocate<TranslationUnitDecl>();
-  TranslationUnitDecl* decl =
-    new (Mem) TranslationUnitDecl();
+  TranslationUnitDecl* decl = new (Mem) TranslationUnitDecl();
  
   decl->Decl::ReadInRec(D, C);
+  
+  return decl;
+}
+
+//===----------------------------------------------------------------------===//
+//      NamespaceDecl Serialization.
+//===----------------------------------------------------------------------===//
+
+void NamespaceDecl::EmitImpl(llvm::Serializer& S) const
+{
+  ScopedDecl::EmitInRec(S);
+  S.Emit(getLBracLoc());
+  S.Emit(getRBracLoc());
+  ScopedDecl::EmitOutRec(S);
+}
+
+NamespaceDecl* NamespaceDecl::CreateImpl(Deserializer& D, ASTContext& C) {  
+  void *Mem = C.getAllocator().Allocate<NamespaceDecl>();
+  NamespaceDecl* decl = new (Mem) NamespaceDecl(0, SourceLocation(), 0);
+ 
+  decl->ScopedDecl::ReadInRec(D, C);
+  decl->LBracLoc = SourceLocation::ReadVal(D);
+  decl->RBracLoc = SourceLocation::ReadVal(D);
+  decl->ScopedDecl::ReadOutRec(D, C);
   
   return decl;
 }

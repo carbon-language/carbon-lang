@@ -133,6 +133,20 @@ public:
     return Group;
   }
 
+  /// ActOnStartNamespaceDef - This is called at the start of a namespace
+  /// definition.
+  virtual DeclTy *ActOnStartNamespaceDef(Scope *S, SourceLocation IdentLoc,
+                                        IdentifierInfo *Ident,
+                                        SourceLocation LBrace) {
+    return 0;
+  }
+
+  /// ActOnFinishNamespaceDef - This callback is called after a namespace is
+  /// exited. Decl is the DeclTy returned by ActOnStartNamespaceDef.
+  virtual void ActOnFinishNamespaceDef(DeclTy *Dcl,SourceLocation RBrace) {
+    return;
+  }
+
   /// ActOnStartOfFunctionDef - This is called at the start of a function
   /// definition, instead of calling ActOnDeclarator.  The Declarator includes
   /// information about formal arguments that are part of this function.

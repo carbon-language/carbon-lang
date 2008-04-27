@@ -20,6 +20,7 @@
 
 namespace clang {
 class TranslationUnitDecl;
+class NamespaceDecl;
 class FunctionDecl;
 class ObjCMethodDecl;
 class EnumDecl;
@@ -46,6 +47,7 @@ public:
            ObjCProtocol,
            ObjCProperty,
     //     ScopedDecl
+             Namespace,
     //       TypeDecl
                Typedef,
     //         TagDecl
@@ -72,7 +74,7 @@ public:
     // of the class, to allow efficient classof.
     NamedFirst  = Field,         NamedLast  = ParmVar,
     FieldFirst  = Field,         FieldLast  = ObjCIvar,
-    ScopedFirst = Typedef,       ScopedLast = ParmVar,
+    ScopedFirst = Namespace,     ScopedLast = ParmVar,
     TypeFirst   = Typedef,       TypeLast   = Class,
     TagFirst    = Enum         , TagLast    = Class,
     RecordFirst = Struct       , RecordLast = Class,
@@ -163,6 +165,8 @@ public:
     case Class:
     case Enum:
       return IDNS_Tag;
+    case Namespace:
+      return IdentifierNamespace(IDNS_Tag | IDNS_Ordinary);
     }
   }
   // global temp stats (until we have a per-module visitor)
@@ -198,6 +202,7 @@ protected:
 /// can act as declaration contexts. These decls are:
 ///
 ///   TranslationUnitDecl
+///   NamespaceDecl
 ///   FunctionDecl
 ///   ObjCMethodDecl
 ///   EnumDecl
@@ -221,6 +226,8 @@ class DeclContext {
     switch(DK) {
       case Decl::TranslationUnit:
         return static_cast<TranslationUnitDecl*>(const_cast<From*>(D));
+      case Decl::Namespace:
+        return static_cast<NamespaceDecl*>(const_cast<From*>(D));
       case Decl::Function:
         return static_cast<FunctionDecl*>(const_cast<From*>(D));
       case Decl::ObjCMethod:
@@ -262,6 +269,7 @@ public:
   static bool classof(const Decl *D) {
     switch (D->getKind()) {
       case Decl::TranslationUnit:
+      case Decl::Namespace:
       case Decl::Function:
       case Decl::ObjCMethod:
       case Decl::ObjCInterface:
@@ -273,6 +281,7 @@ public:
   }
   static bool classof(const DeclContext *D) { return true; }
   static bool classof(const TranslationUnitDecl *D) { return true; }
+  static bool classof(const NamespaceDecl *D) { return true; }
   static bool classof(const FunctionDecl *D) { return true; }
   static bool classof(const ObjCMethodDecl *D) { return true; }
   static bool classof(const EnumDecl *D) { return true; }
