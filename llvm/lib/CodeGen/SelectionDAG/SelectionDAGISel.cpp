@@ -3760,6 +3760,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
   bool SawEarlyClobber = false;
   
   unsigned ArgNo = 0;   // ArgNo - The argument of the CallInst.
+  unsigned ResNo = 0;   // ResNo - The result number of the next output.
   for (unsigned i = 0, e = ConstraintInfos.size(); i != e; ++i) {
     ConstraintOperands.push_back(SDISelAsmOperandInfo(ConstraintInfos[i]));
     SDISelAsmOperandInfo &OpInfo = ConstraintOperands.back();
@@ -3769,14 +3770,21 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     // Compute the value type for each operand.
     switch (OpInfo.Type) {
     case InlineAsm::isOutput:
-      if (!OpInfo.isIndirect) {
-        // The return value of the call is this value.  As such, there is no
-        // corresponding argument.
-        assert(CS.getType() != Type::VoidTy && "Bad inline asm!");
-        OpVT = TLI.getValueType(CS.getType());
-      } else {
+      // Indirect outputs just consume an argument.
+      if (OpInfo.isIndirect) {
         OpInfo.CallOperandVal = CS.getArgument(ArgNo++);
+        break;
       }
+      // The return value of the call is this value.  As such, there is no
+      // corresponding argument.
+      assert(CS.getType() != Type::VoidTy && "Bad inline asm!");
+      if (const StructType *STy = dyn_cast<StructType>(CS.getType())) {
+        OpVT = TLI.getValueType(STy->getElementType(ResNo));
+      } else {
+        assert(ResNo == 0 && "Asm only has one result!");
+        OpVT = TLI.getValueType(CS.getType());
+      }
+      ++ResNo;
       break;
     case InlineAsm::isInput:
       OpInfo.CallOperandVal = CS.getArgument(ArgNo++);
