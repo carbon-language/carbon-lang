@@ -9,17 +9,26 @@ elseif exists("b:current_syntax")
   finish
 endif
 
+" May be changed if you have a really slow machine
+syntax sync minlines=100
+
 syn case match
 
-syn keyword tgKeyword   def let in code dag field include
-syn keyword tgType      class int string list bit bits 
-" FIXME: this does not handle hex (0x...) or binary (0b...) constants
+syn keyword tgKeyword   def let in code dag field include defm
+syn keyword tgType      class int string list bit bits multiclass
+
 syn match   tgNumber    /\<\d\+\>/
 syn match   tgNumber    /\<\d\+\.\d*\>/
-syn match   tgComment   /\/\/.*$/
-" FIXME: this does not capture multi-line C-style comments
-syn match   tgComment   /\/\*.*\*\//
-syn region  tgString    start=/"/ skip=/\\"/ end=/"/
+syn match   tgNumber    /\<0b[01]\+\>/
+syn match   tgNumber    /\<0x[0-9a-fA-F]\+\>/
+syn region  tgString    start=/"/ skip=/\\"/ end=/"/    oneline
+
+syn region  tgCode      start=/\[{/ end=/}\]/
+
+syn keyword tgTodo             contained TODO FIXME
+syn match   tgComment   /\/\/.*$/         contains=tgTodo
+" Handle correctly imbricated comment
+syn region  tgComment2 matchgroup=tgComment2  start=+/\*+ end=+\*/+ contains=tgTodo,tgComment2
 
 if version >= 508 || !exists("did_c_syn_inits")
   if version < 508
@@ -33,7 +42,11 @@ if version >= 508 || !exists("did_c_syn_inits")
   HiLink tgType Type
   HiLink tgNumber Number
   HiLink tgComment Comment
+  HiLink tgComment2 Comment
   HiLink tgString String
+  " May find a better Hilight group...
+  HiLink tgCode Special
+  HiLink tgTodo Todo
 
   delcommand HiLink
 endif
