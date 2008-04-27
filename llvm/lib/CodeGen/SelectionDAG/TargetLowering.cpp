@@ -1669,7 +1669,7 @@ static unsigned getConstraintGenerality(TargetLowering::ConstraintType CT) {
 
 /// ChooseConstraint - If there are multiple different constraints that we
 /// could pick for this operand (e.g. "imr") try to pick the 'best' one.
-/// This is somewhat tricky: constraints fall into three four classes:
+/// This is somewhat tricky: constraints fall into four classes:
 ///    Other         -> immediates and magic values
 ///    Register      -> one specific register
 ///    RegisterClass -> a group of regs
