@@ -62,10 +62,8 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   for (unsigned i = 0, e = MDecl->getNumParams(); i != e; ++i) {
     ParmVarDecl *PDecl = MDecl->getParamDecl(i);
     IdentifierInfo *II = PDecl->getIdentifier();
-    if (II) {
-      IdResolver.AddDecl(PDecl, FnBodyScope);
-      FnBodyScope->AddDecl(PDecl);
-    }
+    if (II)
+      PushOnScopeChains(PDecl, FnBodyScope);
   }
 }
 
