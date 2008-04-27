@@ -1180,6 +1180,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
   unsigned CC = MF.getFunction()->getCallingConv();
   bool Is64Bit = Subtarget->is64Bit();
+  bool IsWin64 = Subtarget->isTargetWin64();
 
   assert(!(isVarArg && CC == CallingConv::Fast) &&
          "Var args not supported with calling convention fastcc");
@@ -1292,30 +1293,52 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
       VarArgsFrameIndex = MFI->CreateFixedObject(1, StackSize);
     }
     if (Is64Bit) {
-      static const unsigned GPR64ArgRegs[] = {
-        X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8,  X86::R9
+      unsigned TotalNumIntRegs = 0, TotalNumXMMRegs = 0;
+
+      // FIXME: We should really autogenerate these arrays
+      static const unsigned GPR64ArgRegsWin64[] = {
+        X86::RCX, X86::RDX, X86::R8,  X86::R9
       };
-      static const unsigned XMMArgRegs[] = {
+      static const unsigned XMMArgRegsWin64[] = {
+        X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3
+      };
+      static const unsigned GPR64ArgRegs64Bit[] = {
+        X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8, X86::R9
+      };
+      static const unsigned XMMArgRegs64Bit[] = {
         X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
         X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
       };
-      
-      unsigned NumIntRegs = CCInfo.getFirstUnallocated(GPR64ArgRegs, 6);
-      unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs, 8);
-    
+      const unsigned *GPR64ArgRegs, *XMMArgRegs;
+
+      if (IsWin64) {
+        TotalNumIntRegs = 4; TotalNumXMMRegs = 4;
+        GPR64ArgRegs = GPR64ArgRegsWin64;
+        XMMArgRegs = XMMArgRegsWin64;
+      } else {
+        TotalNumIntRegs = 6; TotalNumXMMRegs = 8;
+        GPR64ArgRegs = GPR64ArgRegs64Bit;
+        XMMArgRegs = XMMArgRegs64Bit;
+      }
+      unsigned NumIntRegs = CCInfo.getFirstUnallocated(GPR64ArgRegs,
+                                                       TotalNumIntRegs);
+      unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs,
+                                                       TotalNumXMMRegs);
+
       // For X86-64, if there are vararg parameters that are passed via
       // registers, then we must store them to their spots on the stack so they
       // may be loaded by deferencing the result of va_next.
       VarArgsGPOffset = NumIntRegs * 8;
-      VarArgsFPOffset = 6 * 8 + NumXMMRegs * 16;
-      RegSaveFrameIndex = MFI->CreateStackObject(6 * 8 + 8 * 16, 16);
-      
+      VarArgsFPOffset = TotalNumIntRegs * 8 + NumXMMRegs * 16;
+      RegSaveFrameIndex = MFI->CreateStackObject(TotalNumIntRegs * 8 +
+                                                 TotalNumXMMRegs * 16, 16);
+
       // Store the integer parameter registers.
       SmallVector<SDOperand, 8> MemOps;
       SDOperand RSFIN = DAG.getFrameIndex(RegSaveFrameIndex, getPointerTy());
       SDOperand FIN = DAG.getNode(ISD::ADD, getPointerTy(), RSFIN,
                                   DAG.getIntPtrConstant(VarArgsGPOffset));
-      for (; NumIntRegs != 6; ++NumIntRegs) {
+      for (; NumIntRegs != TotalNumIntRegs; ++NumIntRegs) {
         unsigned VReg = AddLiveIn(MF, GPR64ArgRegs[NumIntRegs],
                                   X86::GR64RegisterClass);
         SDOperand Val = DAG.getCopyFromReg(Root, VReg, MVT::i64);
@@ -1327,11 +1350,11 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
         FIN = DAG.getNode(ISD::ADD, getPointerTy(), FIN,
                           DAG.getIntPtrConstant(8));
       }
-      
+
       // Now store the XMM (fp + vector) parameter registers.
       FIN = DAG.getNode(ISD::ADD, getPointerTy(), RSFIN,
                         DAG.getIntPtrConstant(VarArgsFPOffset));
-      for (; NumXMMRegs != 8; ++NumXMMRegs) {
+      for (; NumXMMRegs != TotalNumXMMRegs; ++NumXMMRegs) {
         unsigned VReg = AddLiveIn(MF, XMMArgRegs[NumXMMRegs],
                                   X86::VR128RegisterClass);
         SDOperand Val = DAG.getCopyFromReg(Root, VReg, MVT::v4f32);
@@ -1678,7 +1701,8 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     // of SSE registers used. The contents of %al do not need to match exactly
     // the number of registers, but must be an ubound on the number of SSE
     // registers used and is in the range 0 - 8 inclusive.
-    
+
+    // FIXME: Verify this on Win64
     // Count the number of XMM registers allocated.
     static const unsigned XMMArgRegs[] = {
       X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
