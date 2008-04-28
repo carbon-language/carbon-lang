@@ -114,46 +114,56 @@ static void ComputeValueVTs(const TargetLowering &TLI, const Type *Ty,
 }
 
 namespace {
-  /// RegsForValue - This struct represents the physical registers that a
-  /// particular value is assigned and the type information about the value.
-  /// This is needed because values can be promoted into larger registers and
-  /// expanded into multiple smaller registers than the value.
+  /// RegsForValue - This struct represents the registers (physical or virtual)
+  /// that a particular set of values is assigned, and the type information about
+  /// the value. The most common situation is to represent one value at a time,
+  /// but struct or array values are handled element-wise as multiple values.
+  /// The splitting of aggregates is performed recursively, so that we never
+  /// have aggregate-typed registers. The values at this point do not necessarily
+  /// have legal types, so each value may require one or more registers of some
+  /// legal type.
+  /// 
   struct VISIBILITY_HIDDEN RegsForValue {
     /// TLI - The TargetLowering object.
+    ///
     const TargetLowering *TLI;
 
-    /// Regs - This list holds the register (for legal and promoted values)
-    /// or register set (for expanded values) that the value should be assigned
-    /// to.
-    SmallVector<unsigned, 4> Regs;
+    /// ValueVTs - The value types of the values, which may not be legal, and
+    /// may need be promoted or synthesized from one or more registers.
+    ///
+    SmallVector<MVT::ValueType, 4> ValueVTs;
     
-    /// RegVTs - The value types of the registers. This is the same size
-    /// as ValueVTs; every register contributing to a given value must
-    /// have the same type. When Regs contains all virtual registers, the
-    /// contents of RegVTs is redundant with TLI's getRegisterType member
-    /// function, however when Regs contains physical registers, it is
-    /// necessary to have a separate record of the types.
+    /// RegVTs - The value types of the registers. This is the same size as
+    /// ValueVTs and it records, for each value, what the type of the assigned
+    /// register or registers are. (Individual values are never synthesized
+    /// from more than one type of register.)
+    ///
+    /// With virtual registers, the contents of RegVTs is redundant with TLI's
+    /// getRegisterType member function, however when with physical registers
+    /// it is necessary to have a separate record of the types.
     ///
     SmallVector<MVT::ValueType, 4> RegVTs;
     
-    /// ValueVTs - The value types of the values, which may be promoted
-    /// or synthesized from one or more registers.
-    SmallVector<MVT::ValueType, 4> ValueVTs;
+    /// Regs - This list holds the registers assigned to the values.
+    /// Each legal or promoted value requires one register, and each
+    /// expanded value requires multiple registers.
+    ///
+    SmallVector<unsigned, 4> Regs;
     
     RegsForValue() : TLI(0) {}
     
     RegsForValue(const TargetLowering &tli,
                  unsigned Reg, MVT::ValueType regvt, MVT::ValueType valuevt)
-      : TLI(&tli), Regs(1, Reg), RegVTs(1, regvt), ValueVTs(1, valuevt) {}
+      : TLI(&tli), ValueVTs(1, valuevt), RegVTs(1, regvt), Regs(1, Reg) {}
     RegsForValue(const TargetLowering &tli,
                  const SmallVector<unsigned, 4> &regs, 
                  MVT::ValueType regvt, MVT::ValueType valuevt)
-      : TLI(&tli), Regs(regs), RegVTs(1, regvt), ValueVTs(1, valuevt) {}
+      : TLI(&tli),  ValueVTs(1, valuevt), RegVTs(1, regvt), Regs(regs) {}
     RegsForValue(const TargetLowering &tli,
                  const SmallVector<unsigned, 4> &regs, 
                  const SmallVector<MVT::ValueType, 4> &regvts,
                  const SmallVector<MVT::ValueType, 4> &valuevts)
-      : TLI(&tli), Regs(regs), RegVTs(regvts), ValueVTs(valuevts) {}
+      : TLI(&tli), ValueVTs(valuevts), RegVTs(regvts), Regs(regs) {}
     RegsForValue(const TargetLowering &tli,
                  unsigned Reg, const Type *Ty) : TLI(&tli) {
       ComputeValueVTs(tli, Ty, ValueVTs);
