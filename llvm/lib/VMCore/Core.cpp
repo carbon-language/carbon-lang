@@ -20,6 +20,7 @@
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/CallSite.h"
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
@@ -798,6 +799,19 @@ LLVMValueRef LLVMGetPreviousParam(LLVMValueRef Arg) {
   return wrap(--I);
 }
 
+void LLVMAddParamAttr(LLVMValueRef Arg, LLVMParamAttr PA) {
+  unwrap<Argument>(Arg)->addAttr(PA);
+}
+
+void LLVMRemoveParamAttr(LLVMValueRef Arg, LLVMParamAttr PA) {
+  unwrap<Argument>(Arg)->removeAttr(PA);
+}
+
+void LLVMSetParamAlignment(LLVMValueRef Arg, unsigned align) {
+  unwrap<Argument>(Arg)->addAttr(
+          ParamAttr::constructAlignmentFromInt(align));
+}
+
 /*--.. Operations on basic blocks ..........................................--*/
 
 LLVMValueRef LLVMBasicBlockAsValue(LLVMBasicBlockRef BB) {
@@ -934,6 +948,28 @@ void LLVMSetInstructionCallConv(LLVMValueRef Instr, unsigned CC) {
   else if (InvokeInst *II = dyn_cast<InvokeInst>(V))
     return II->setCallingConv(CC);
   assert(0 && "LLVMSetInstructionCallConv applies only to call and invoke!");
+}
+
+void LLVMAddInstrParamAttr(LLVMValueRef Instr, unsigned index, 
+                           LLVMParamAttr PA) {
+  CallSite Call = CallSite(unwrap<Instruction>(Instr));
+  Call.setParamAttrs(
+    Call.getParamAttrs().addAttr(index, PA));
+}
+
+void LLVMRemoveInstrParamAttr(LLVMValueRef Instr, unsigned index, 
+                              LLVMParamAttr PA) {
+  CallSite Call = CallSite(unwrap<Instruction>(Instr));
+  Call.setParamAttrs(
+    Call.getParamAttrs().removeAttr(index, PA));
+}
+
+void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index, 
+                                unsigned align) {
+  CallSite Call = CallSite(unwrap<Instruction>(Instr));
+  Call.setParamAttrs(
+    Call.getParamAttrs().addAttr(index, 
+        ParamAttr::constructAlignmentFromInt(align)));
 }
 
 /*--.. Operations on phi nodes .............................................--*/

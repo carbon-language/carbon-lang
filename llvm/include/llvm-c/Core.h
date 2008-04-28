@@ -83,6 +83,20 @@ typedef struct LLVMOpaqueMemoryBuffer *LLVMMemoryBufferRef;
 typedef struct LLVMOpaquePassManager *LLVMPassManagerRef;
 
 typedef enum {
+    LLVMZExtParamAttr       = 1<<0,
+    LLVMSExtParamAttr       = 1<<1,
+    LLVMNoReturnParamAttr   = 1<<2,
+    LLVMNoUnwindParamAttr   = 1<<3,
+    LLVMInRegParamAttr      = 1<<4,
+    LLVMNoAliasParamAttr    = 1<<5,
+    LLVMStructRetParamAttr  = 1<<6,
+    LLVMByValParamAttr      = 1<<7,
+    LLVMNestParamAttr       = 1<<8,
+    LLVMReadNoneParamAttr   = 1<<9,
+    LLVMReadOnlyParamAttr   = 1<<10
+} LLVMParamAttr;
+
+typedef enum {
   LLVMVoidTypeKind,        /**< type with no size */
   LLVMFloatTypeKind,       /**< 32 bit floating point type */
   LLVMDoubleTypeKind,      /**< 64 bit floating point type */
@@ -413,6 +427,9 @@ LLVMValueRef LLVMGetFirstParam(LLVMValueRef Fn);
 LLVMValueRef LLVMGetLastParam(LLVMValueRef Fn);
 LLVMValueRef LLVMGetNextParam(LLVMValueRef Arg);
 LLVMValueRef LLVMGetPreviousParam(LLVMValueRef Arg);
+void LLVMAddParamAttr(LLVMValueRef Arg, LLVMParamAttr PA);
+void LLVMRemoveParamAttr(LLVMValueRef Arg, LLVMParamAttr PA);
+void LLVMSetParamAlignment(LLVMValueRef Arg, unsigned align);
 
 /* Operations on basic blocks */
 LLVMValueRef LLVMBasicBlockAsValue(LLVMBasicBlockRef BB);
@@ -441,6 +458,11 @@ LLVMValueRef LLVMGetPreviousInstruction(LLVMValueRef Inst);
 /* Operations on call sites */
 void LLVMSetInstructionCallConv(LLVMValueRef Instr, unsigned CC);
 unsigned LLVMGetInstructionCallConv(LLVMValueRef Instr);
+void LLVMAddInstrParamAttr(LLVMValueRef Instr, unsigned index, LLVMParamAttr);
+void LLVMRemoveInstrParamAttr(LLVMValueRef Instr, unsigned index, 
+                              LLVMParamAttr);
+void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index, 
+                                unsigned align);
 
 /* Operations on phi nodes */
 void LLVMAddIncoming(LLVMValueRef PhiNode, LLVMValueRef *IncomingValues,

@@ -110,6 +110,17 @@ bool Argument::hasStructRetAttr() const {
   return getParent()->paramHasAttr(1, ParamAttr::StructRet);
 }
 
+/// addAttr - Add a ParamAttr to an argument
+void Argument::addAttr(ParameterAttributes attr) {
+  getParent()->setParamAttrs(
+    getParent()->getParamAttrs().addAttr(getArgNo() + 1, attr));
+}
+  
+/// removeAttr - Remove a ParamAttr from an argument
+void Argument::removeAttr(ParameterAttributes attr) {
+  getParent()->setParamAttrs(
+    getParent()->getParamAttrs().removeAttr(getArgNo() + 1, attr));
+}
 
 
 

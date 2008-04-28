@@ -15,6 +15,7 @@
 #define LLVM_ARGUMENT_H
 
 #include "llvm/Value.h"
+#include "llvm/ParameterAttributes.h"
 
 namespace llvm {
 
@@ -60,7 +61,13 @@ public:
   /// hasSRetAttr - Return true if this argument has the sret attribute on it in
   /// its containing function.
   bool hasStructRetAttr() const;
+
+  /// addAttr - Add a ParamAttr to an argument
+  void addAttr(ParameterAttributes);
   
+  /// removeAttr - Remove a ParamAttr from an argument
+  void removeAttr(ParameterAttributes);
+
   virtual void print(std::ostream &OS) const;
   void print(std::ostream *OS) const {
     if (OS) print(*OS);
