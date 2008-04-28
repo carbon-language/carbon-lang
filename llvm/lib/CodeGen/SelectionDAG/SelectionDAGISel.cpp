@@ -125,7 +125,7 @@ namespace {
     /// Regs - This list holds the register (for legal and promoted values)
     /// or register set (for expanded values) that the value should be assigned
     /// to.
-    std::vector<unsigned> Regs;
+    SmallVector<unsigned, 4> Regs;
     
     /// RegVTs - The value types of the registers. This is the same size
     /// as ValueVTs; every register contributing to a given value must
@@ -146,11 +146,11 @@ namespace {
                  unsigned Reg, MVT::ValueType regvt, MVT::ValueType valuevt)
       : TLI(&tli), Regs(1, Reg), RegVTs(1, regvt), ValueVTs(1, valuevt) {}
     RegsForValue(const TargetLowering &tli,
-                 const std::vector<unsigned> &regs, 
+                 const SmallVectorImpl<unsigned> &regs, 
                  MVT::ValueType regvt, MVT::ValueType valuevt)
       : TLI(&tli), Regs(regs), RegVTs(1, regvt), ValueVTs(1, valuevt) {}
     RegsForValue(const TargetLowering &tli,
-                 const std::vector<unsigned> &regs, 
+                 const SmallVectorImpl<unsigned> &regs, 
                  const SmallVector<MVT::ValueType, 4> &regvts,
                  const SmallVector<MVT::ValueType, 4> &valuevts)
       : TLI(&tli), Regs(regs), RegVTs(regvts), ValueVTs(valuevts) {}
@@ -3600,7 +3600,7 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo, bool HasEarlyClobber,
   
   
   MachineFunction &MF = DAG.getMachineFunction();
-  std::vector<unsigned> Regs;
+  SmallVector<unsigned, 8> Regs;
   
   // If this is a constraint for a single physreg, or a constraint for a
   // register class, find it.
