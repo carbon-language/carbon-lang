@@ -14,7 +14,7 @@
 #include "BugDriver.h"
 #include "ToolRunner.h"
 #include "ListReducer.h"
-#include "llvm/Constant.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
@@ -300,17 +300,16 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
         for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI)
           (*SI)->removePredecessor(BB);
 
-        if (BB->getTerminator()->getType() != Type::VoidTy)
-          BB->getTerminator()->replaceAllUsesWith(
-                      Constant::getNullValue(BB->getTerminator()->getType()));
+        TerminatorInst *BBTerm = BB->getTerminator();
+        
+        if (isa<StructType>(BBTerm->getType()))
+           BBTerm->replaceAllUsesWith(UndefValue::get(BBTerm->getType()));
+        else if (BB->getTerminator()->getType() != Type::VoidTy)
+          BBTerm->replaceAllUsesWith(Constant::getNullValue(BBTerm->getType()));
 
-        // Delete the old terminator instruction...
+        // Replace the old terminator instruction.
         BB->getInstList().pop_back();
-
-        // Add a new return instruction of the appropriate type...
-        const Type *RetTy = BB->getParent()->getReturnType();
-        ReturnInst::Create(RetTy == Type::VoidTy ? 0 :
-                           Constant::getNullValue(RetTy), BB);
+        new UnreachableInst(BB);
       }
 
   // The CFG Simplifier pass may delete one of the basic blocks we are
