@@ -1040,9 +1040,8 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
   SDOperand &N = NodeMap[V];
   if (N.Val) return N;
   
-  const Type *VTy = V->getType();
   if (Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V))) {
-    MVT::ValueType VT = TLI.getValueType(VTy, true);
+    MVT::ValueType VT = TLI.getValueType(V->getType(), true);
     
     if (ConstantInt *CI = dyn_cast<ConstantInt>(C))
       return N = DAG.getConstant(CI->getValue(), VT);
@@ -1056,22 +1055,8 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
     if (ConstantFP *CFP = dyn_cast<ConstantFP>(C))
       return N = DAG.getConstantFP(CFP->getValueAPF(), VT);
     
-    if (isa<UndefValue>(C)) {
-      if (!isa<VectorType>(VTy))
-        return N = DAG.getNode(ISD::UNDEF, VT);
-
-      // Create a BUILD_VECTOR of undef nodes.
-      const VectorType *PTy = cast<VectorType>(VTy);
-      unsigned NumElements = PTy->getNumElements();
-      MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
-
-      SmallVector<SDOperand, 8> Ops;
-      Ops.assign(NumElements, DAG.getNode(ISD::UNDEF, PVT));
-      
-      // Create a VConstant node with generic Vector type.
-      MVT::ValueType VT = MVT::getVectorType(PVT, NumElements);
-      return N = DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
-    }
+    if (isa<UndefValue>(C) && !isa<VectorType>(V->getType()))
+      return N = DAG.getNode(ISD::UNDEF, VT);
 
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
       visit(CE->getOpcode(), *CE);
@@ -1080,24 +1065,27 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       return N1;
     }
     
-    const VectorType *VecTy = cast<VectorType>(VTy);
+    const VectorType *VecTy = cast<VectorType>(V->getType());
     unsigned NumElements = VecTy->getNumElements();
-    MVT::ValueType PVT = TLI.getValueType(VecTy->getElementType());
     
-    // Now that we know the number and type of the elements, push a
-    // Constant or ConstantFP node onto the ops list for each element of
-    // the vector constant.
-    SmallVector<SDOperand, 8> Ops;
+    // Now that we know the number and type of the elements, get that number of
+    // elements into the Ops array based on what kind of constant it is.
+    SmallVector<SDOperand, 16> Ops;
     if (ConstantVector *CP = dyn_cast<ConstantVector>(C)) {
       for (unsigned i = 0; i != NumElements; ++i)
         Ops.push_back(getValue(CP->getOperand(i)));
     } else {
-      assert(isa<ConstantAggregateZero>(C) && "Unknown vector constant!");
+      assert((isa<ConstantAggregateZero>(C) || isa<UndefValue>(C)) &&
+             "Unknown vector constant!");
+      MVT::ValueType EltVT = TLI.getValueType(VecTy->getElementType());
+
       SDOperand Op;
-      if (MVT::isFloatingPoint(PVT))
-        Op = DAG.getConstantFP(0, PVT);
+      if (isa<UndefValue>(C))
+        Op = DAG.getNode(ISD::UNDEF, EltVT);
+      else if (MVT::isFloatingPoint(EltVT))
+        Op = DAG.getConstantFP(0, EltVT);
       else
-        Op = DAG.getConstant(0, PVT);
+        Op = DAG.getConstant(0, EltVT);
       Ops.assign(NumElements, Op);
     }
     
@@ -1117,7 +1105,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
   unsigned InReg = FuncInfo.ValueMap[V];
   assert(InReg && "Value not in map!");
   
-  RegsForValue RFV(TLI, InReg, VTy);
+  RegsForValue RFV(TLI, InReg, V->getType());
   SDOperand Chain = DAG.getEntryNode();
   return RFV.getCopyFromRegs(DAG, Chain, NULL);
 }
@@ -3368,17 +3356,17 @@ void SelectionDAGLowering::visitGetResult(GetResultInst &I) {
   if (isa<UndefValue>(I.getOperand(0))) {
     SDOperand Undef = DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType()));
     setValue(&I, Undef);
-  } else {
-    SDOperand Call = getValue(I.getOperand(0));
-
-    // To add support for individual return values with aggregate types,
-    // we'd need a way to take a getresult index and determine which
-    // values of the Call SDNode are associated with it.
-    assert(TLI.getValueType(I.getType(), true) != MVT::Other &&
-           "Individual return values must not be aggregates!");
-
-    setValue(&I, SDOperand(Call.Val, I.getIndex()));
+    return;
   }
+  
+  // To add support for individual return values with aggregate types,
+  // we'd need a way to take a getresult index and determine which
+  // values of the Call SDNode are associated with it.
+  assert(TLI.getValueType(I.getType(), true) != MVT::Other &&
+         "Individual return values must not be aggregates!");
+
+  SDOperand Call = getValue(I.getOperand(0));
+  setValue(&I, SDOperand(Call.Val, I.getIndex()));
 }
 
 
@@ -3387,23 +3375,27 @@ void SelectionDAGLowering::visitGetResult(GetResultInst &I) {
 /// Chain/Flag as the input and updates them for the output Chain/Flag.
 /// If the Flag pointer is NULL, no flag is used.
 SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
-                                        SDOperand &Chain, SDOperand *Flag)const{
+                                        SDOperand &Chain,
+                                        SDOperand *Flag) const {
   // Assemble the legal parts into the final values.
   SmallVector<SDOperand, 4> Values(ValueVTs.size());
-  for (unsigned Value = 0, Part = 0; Value != ValueVTs.size(); ++Value) {
+  SmallVector<SDOperand, 8> Parts;
+  for (unsigned Value = 0, Part = 0, e = ValueVTs.size(); Value != e; ++Value) {
     // Copy the legal parts from the registers.
     MVT::ValueType ValueVT = ValueVTs[Value];
     unsigned NumRegs = TLI->getNumRegisters(ValueVT);
     MVT::ValueType RegisterVT = RegVTs[Value];
 
-    SmallVector<SDOperand, 8> Parts(NumRegs);
+    Parts.resize(NumRegs);
     for (unsigned i = 0; i != NumRegs; ++i) {
-      SDOperand P = Flag ?
-                    DAG.getCopyFromReg(Chain, Regs[Part+i], RegisterVT, *Flag) :
-                    DAG.getCopyFromReg(Chain, Regs[Part+i], RegisterVT);
-      Chain = P.getValue(1);
-      if (Flag)
+      SDOperand P;
+      if (Flag == 0)
+        P = DAG.getCopyFromReg(Chain, Regs[Part+i], RegisterVT);
+      else {
+        P = DAG.getCopyFromReg(Chain, Regs[Part+i], RegisterVT, *Flag);
         *Flag = P.getValue(2);
+      }
+      Chain = P.getValue(1);
       Parts[Part+i] = P;
     }
   
@@ -3411,6 +3403,10 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
                                      ValueVT);
     Part += NumRegs;
   }
+  
+  if (ValueVTs.size() == 1)
+    return Values[0];
+    
   return DAG.getNode(ISD::MERGE_VALUES,
                      DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
                      &Values[0], ValueVTs.size());
@@ -3425,7 +3421,7 @@ void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
   // Get the list of the values's legal parts.
   unsigned NumRegs = Regs.size();
   SmallVector<SDOperand, 8> Parts(NumRegs);
-  for (unsigned Value = 0, Part = 0; Value != ValueVTs.size(); ++Value) { 
+  for (unsigned Value = 0, Part = 0, e = ValueVTs.size(); Value != e; ++Value) {
     MVT::ValueType ValueVT = ValueVTs[Value];
     unsigned NumParts = TLI->getNumRegisters(ValueVT);
     MVT::ValueType RegisterVT = RegVTs[Value];
@@ -3438,14 +3434,20 @@ void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
   // Copy the parts into the registers.
   SmallVector<SDOperand, 8> Chains(NumRegs);
   for (unsigned i = 0; i != NumRegs; ++i) {
-    SDOperand Part = Flag ?
-                     DAG.getCopyToReg(Chain, Regs[i], Parts[i], *Flag) :
-                     DAG.getCopyToReg(Chain, Regs[i], Parts[i]);
-    Chains[i] = Part.getValue(0);
-    if (Flag)
+    SDOperand Part;
+    if (Flag == 0)
+      Part = DAG.getCopyToReg(Chain, Regs[i], Parts[i]);
+    else {
+      Part = DAG.getCopyToReg(Chain, Regs[i], Parts[i], *Flag);
       *Flag = Part.getValue(1);
+    }
+    Chains[i] = Part.getValue(0);
   }
-  Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &Chains[0], NumRegs);
+  
+  if (NumRegs == 1)
+    Chain = Chains[0];
+  else
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &Chains[0], NumRegs);
 }
 
 /// AddInlineAsmOperands - Add this value to the specified inlineasm node
@@ -3455,15 +3457,11 @@ void RegsForValue::AddInlineAsmOperands(unsigned Code, SelectionDAG &DAG,
                                         std::vector<SDOperand> &Ops) const {
   MVT::ValueType IntPtrTy = DAG.getTargetLoweringInfo().getPointerTy();
   Ops.push_back(DAG.getTargetConstant(Code | (Regs.size() << 3), IntPtrTy));
-  for (unsigned Value = 0, Reg = 0; Value != ValueVTs.size(); ++Value) { 
-    MVT::ValueType ValueVT = ValueVTs[Value];
-    unsigned NumRegs = TLI->getNumRegisters(ValueVT);
+  for (unsigned Value = 0, Reg = 0, e = ValueVTs.size(); Value != e; ++Value) {
+    unsigned NumRegs = TLI->getNumRegisters(ValueVTs[Value]);
     MVT::ValueType RegisterVT = RegVTs[Value];
-    for (unsigned i = 0; i != NumRegs; ++i) {
-      SDOperand RegOp = DAG.getRegister(Regs[Reg+i], RegisterVT);
-      Ops.push_back(RegOp);
-    }
-    Reg += NumRegs;
+    for (unsigned i = 0; i != NumRegs; ++i)
+      Ops.push_back(DAG.getRegister(Regs[Reg++], RegisterVT));
   }
 }
 
@@ -4524,8 +4522,7 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   return true;
 }
 
-void SelectionDAGLowering::CopyValueToVirtualRegister(Value *V, 
-                                                      unsigned Reg) {
+void SelectionDAGLowering::CopyValueToVirtualRegister(Value *V, unsigned Reg) {
   SDOperand Op = getValue(V);
   assert((Op.getOpcode() != ISD::CopyFromReg ||
           cast<RegisterSDNode>(Op.getOperand(1))->getReg() != Reg) &&
