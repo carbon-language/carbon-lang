@@ -153,9 +153,6 @@ namespace {
     RegsForValue() : TLI(0) {}
     
     RegsForValue(const TargetLowering &tli,
-                 unsigned Reg, MVT::ValueType regvt, MVT::ValueType valuevt)
-      : TLI(&tli), ValueVTs(1, valuevt), RegVTs(1, regvt), Regs(1, Reg) {}
-    RegsForValue(const TargetLowering &tli,
                  const SmallVector<unsigned, 4> &regs, 
                  MVT::ValueType regvt, MVT::ValueType valuevt)
       : TLI(&tli),  ValueVTs(1, valuevt), RegVTs(1, regvt), Regs(regs) {}
