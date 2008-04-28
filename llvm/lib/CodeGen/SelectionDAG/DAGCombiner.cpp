@@ -2888,7 +2888,8 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   }
   
   // fold (sext x) -> (zext x) if the sign bit is known zero.
-  if (DAG.SignBitIsZero(N0))
+  if ((!AfterLegalize || TLI.isOperationLegal(ISD::ZERO_EXTEND, VT)) &&
+      DAG.SignBitIsZero(N0))
     return DAG.getNode(ISD::ZERO_EXTEND, VT, N0);
   
   return SDOperand();
