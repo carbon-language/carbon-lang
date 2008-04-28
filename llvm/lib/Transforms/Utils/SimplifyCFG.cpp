@@ -1365,10 +1365,11 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
 
           // If the return instruction returns a value, and if the value was a
           // PHI node in "BB", propagate the right value into the return.
-          if (NewRet->getNumOperands() == 1)
-            if (PHINode *PN = dyn_cast<PHINode>(NewRet->getOperand(0)))
+          for (unsigned i = 0, e = NewRet->getNumOperands(); i != e; ++i)
+            if (PHINode *PN = dyn_cast<PHINode>(NewRet->getOperand(i)))
               if (PN->getParent() == BB)
-                NewRet->setOperand(0, PN->getIncomingValueForBlock(Pred));
+                NewRet->setOperand(i, PN->getIncomingValueForBlock(Pred));
+          
           // Update any PHI nodes in the returning block to realize that we no
           // longer branch to them.
           BB->removePredecessor(Pred);
