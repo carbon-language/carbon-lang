@@ -17,7 +17,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Path.h"
@@ -87,7 +89,7 @@ static Option *RegisteredOptionList = 0;
 
 void Option::addArgument() {
   assert(NextRegistered == 0 && "argument multiply registered!");
-  
+
   NextRegistered = RegisteredOptionList;
   RegisteredOptionList = this;
   MarkOptionsChanged();
@@ -111,7 +113,7 @@ static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
     O->getExtraOptionNames(OptionNames);
     if (O->ArgStr[0])
       OptionNames.push_back(O->ArgStr);
-    
+
     // Handle named options.
     for (unsigned i = 0, e = OptionNames.size(); i != e; ++i) {
       // Add argument to the argument map!
@@ -121,9 +123,9 @@ static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
              << OptionNames[0] << "' defined more than once!\n";
       }
     }
-    
+
     OptionNames.clear();
-    
+
     // Remember information about positional options.
     if (O->getFormattingFlag() == cl::Positional)
       PositionalOpts.push_back(O);
@@ -135,10 +137,10 @@ static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
       CAOpt = O;
     }
   }
-  
+
   if (CAOpt)
     PositionalOpts.push_back(CAOpt);
-  
+
   // Make sure that they are in order of registration not backwards.
   std::reverse(PositionalOpts.begin(), PositionalOpts.end());
 }
@@ -150,17 +152,17 @@ static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
 static Option *LookupOption(const char *&Arg, const char *&Value,
                             std::map<std::string, Option*> &OptionsMap) {
   while (*Arg == '-') ++Arg;  // Eat leading dashes
-  
+
   const char *ArgEnd = Arg;
   while (*ArgEnd && *ArgEnd != '=')
     ++ArgEnd; // Scan till end of argument name.
-  
+
   if (*ArgEnd == '=')  // If we have an equals sign...
     Value = ArgEnd+1;  // Get the value, not the equals
-  
-  
+
+
   if (*Arg == 0) return 0;
-  
+
   // Look up the option.
   std::map<std::string, Option*>::iterator I =
     OptionsMap.find(std::string(Arg, ArgEnd));
@@ -309,7 +311,7 @@ static void ParseCStringVector(std::vector<char *> &output,
 /// an environment variable (whose name is given in ENVVAR).
 ///
 void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
-                                 const char *Overview) {
+                                 const char *Overview, bool ReadResponseFiles) {
   // Check args.
   assert(progName && "Program name not specified");
   assert(envVar && "Environment variable name missing");
@@ -328,7 +330,7 @@ void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
   // and hand it off to ParseCommandLineOptions().
   ParseCStringVector(newArgv, envValue);
   int newArgc = newArgv.size();
-  ParseCommandLineOptions(newArgc, &newArgv[0], Overview);
+  ParseCommandLineOptions(newArgc, &newArgv[0], Overview, ReadResponseFiles);
 
   // Free all the strdup()ed strings.
   for (std::vector<char*>::iterator i = newArgv.begin(), e = newArgv.end();
@@ -336,32 +338,78 @@ void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
     free (*i);
 }
 
+
+/// ExpandResponseFiles - Copy the contents of argv into newArgv,
+/// substituting the contents of the response files for the arguments
+/// of type @file.
+static void ExpandResponseFiles(int argc, char** argv,
+                                std::vector<char*>& newArgv) {
+  for (int i = 1; i != argc; ++i) {
+    char* arg = argv[i];
+
+    if (arg[0] == '@') {
+
+      sys::PathWithStatus respFile(++arg);
+
+      // Check that the response file is not empty (mmap'ing empty
+      // files can be problematic).
+      const sys::FileStatus *FileStat = respFile.getFileStatus();
+      if (!FileStat)
+        continue;
+      if (FileStat->getSize() == 0)
+        continue;
+
+      // Mmap the response file into memory.
+      OwningPtr<MemoryBuffer>
+        respFilePtr(MemoryBuffer::getFile(respFile.c_str()));
+
+      if (respFilePtr == 0)
+        continue;
+
+      ParseCStringVector(newArgv, respFilePtr->getBufferStart());
+    }
+    else {
+      newArgv.push_back(strdup(arg));
+    }
+  }
+}
+
 void cl::ParseCommandLineOptions(int argc, char **argv,
-                                 const char *Overview) {
+                                 const char *Overview, bool ReadResponseFiles) {
   // Process all registered options.
   std::vector<Option*> PositionalOpts;
   std::vector<Option*> SinkOpts;
   std::map<std::string, Option*> Opts;
   GetOptionInfo(PositionalOpts, SinkOpts, Opts);
-  
+
   assert((!Opts.empty() || !PositionalOpts.empty()) &&
          "No options specified!");
+
+  // Expand response files.
+  std::vector<char*> newArgv;
+  if (ReadResponseFiles) {
+    newArgv.push_back(strdup(argv[0]));
+    ExpandResponseFiles(argc, argv, newArgv);
+    argv = &newArgv[0];
+    argc = newArgv.size();
+  }
+
   sys::Path progname(argv[0]);
 
   // Copy the program name into ProgName, making sure not to overflow it.
   std::string ProgName = sys::Path(argv[0]).getLast();
   if (ProgName.size() > 79) ProgName.resize(79);
   strcpy(ProgramName, ProgName.c_str());
-  
+
   ProgramOverview = Overview;
   bool ErrorParsing = false;
 
   // Check out the positional arguments to collect information about them.
   unsigned NumPositionalRequired = 0;
-  
+
   // Determine whether or not there are an unlimited number of positionals
   bool HasUnlimitedPositionals = false;
-  
+
   Option *ConsumeAfterOpt = 0;
   if (!PositionalOpts.empty()) {
     if (PositionalOpts[0]->getNumOccurrencesFlag() == cl::ConsumeAfter) {
@@ -427,7 +475,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
       GetOptionInfo(PositionalOpts, SinkOpts, Opts);
       OptionListChanged = false;
     }
-    
+
     // Check to see if this is a positional argument.  This argument is
     // considered to be positional if it doesn't start with '-', if it is "-"
     // itself, or if we have seen "--" already.
@@ -567,7 +615,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
          << ": Not enough positional command line arguments specified!\n"
          << "Must specify at least " << NumPositionalRequired
          << " positional arguments: See: " << argv[0] << " --help\n";
-    
+
     ErrorParsing = true;
   } else if (!HasUnlimitedPositionals
              && PositionalVals.size() > PositionalOpts.size()) {
@@ -664,6 +712,14 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
   PositionalOpts.clear();
   MoreHelp->clear();
 
+  // Free the memory allocated by ExpandResponseFiles.
+  if (ReadResponseFiles) {
+    // Free all the strdup()ed strings.
+    for (std::vector<char*>::iterator i = newArgv.begin(), e = newArgv.end();
+         i != e; ++i)
+      free (*i);
+  }
+
   // If we had an error processing our arguments, don't let the program execute
   if (ErrorParsing) exit(1);
 }
@@ -678,7 +734,7 @@ bool Option::error(std::string Message, const char *ArgName) {
     cerr << HelpStr;  // Be nice for positional arguments
   else
     cerr << ProgramName << ": for the -" << ArgName;
-  
+
   cerr << " option: " << Message << "\n";
   return true;
 }
@@ -943,7 +999,7 @@ public:
     std::vector<Option*> SinkOpts;
     std::map<std::string, Option*> OptMap;
     GetOptionInfo(PositionalOpts, SinkOpts, OptMap);
-    
+
     // Copy Options into a vector so we can sort them as we like...
     std::vector<std::pair<std::string, Option*> > Opts;
     copy(OptMap.begin(), OptMap.end(), std::back_inserter(Opts));
@@ -970,7 +1026,7 @@ public:
 
     // Print out the positional options.
     Option *CAOpt = 0;   // The cl::ConsumeAfter option, if it exists...
-    if (!PositionalOpts.empty() && 
+    if (!PositionalOpts.empty() &&
         PositionalOpts[0]->getNumOccurrencesFlag() == ConsumeAfter)
       CAOpt = PositionalOpts[0];
 

@@ -41,14 +41,16 @@ namespace cl {
 // ParseCommandLineOptions - Command line option processing entry point.
 //
 void ParseCommandLineOptions(int argc, char **argv,
-                             const char *Overview = 0);
+                             const char *Overview = 0,
+                             bool ReadResponseFiles = false);
 
 //===----------------------------------------------------------------------===//
 // ParseEnvironmentOptions - Environment variable option processing alternate
 //                           entry point.
 //
 void ParseEnvironmentOptions(const char *progName, const char *envvar,
-                             const char *Overview = 0);
+                             const char *Overview = 0,
+                             bool ReadResponseFiles = false);
 
 ///===---------------------------------------------------------------------===//
 /// SetVersionPrinter - Override the default (LLVM specific) version printer
@@ -146,10 +148,10 @@ class Option {
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
     return ValueOptional;
   }
-  
+
   // Out of line virtual function to provide home for the class.
   virtual void anchor();
-  
+
   int NumOccurrences;     // The number of times specified
   int Flags;              // Flags for the argument
   unsigned Position;      // Position of last occurrence of the option
@@ -213,7 +215,7 @@ public:
   // addArgument - Register this argument with the commandline system.
   //
   void addArgument();
-  
+
   Option *getNextRegisteredOption() const { return NextRegistered; }
 
   // Return the width of the option tag for printing...
@@ -225,7 +227,7 @@ public:
   virtual void printOptionInfo(unsigned GlobalWidth) const = 0;
 
   virtual void getExtraOptionNames(std::vector<const char*> &OptionNames) {}
-  
+
   // addOccurrence - Wrapper around handleOccurrence that enforces Flags
   //
   bool addOccurrence(unsigned pos, const char *ArgName,
@@ -339,7 +341,7 @@ public:
 };
 
 template<class DataType>
-ValuesClass<DataType> END_WITH_NULL values(const char *Arg, DataType Val, 
+ValuesClass<DataType> END_WITH_NULL values(const char *Arg, DataType Val,
                                            const char *Desc, ...) {
     va_list ValueArgs;
     va_start(ValueArgs, Desc);
@@ -389,7 +391,7 @@ struct generic_parser_base {
     //
     hasArgStr = O.hasArgStr();
   }
-  
+
   void getExtraOptionNames(std::vector<const char*> &OptionNames) {
     // If there has been no argstr specified, that means that we need to add an
     // argument for every possible option.  This ensures that our options are
@@ -537,7 +539,7 @@ public:
 
   // getValueName - Do not print =<value> at all.
   virtual const char *getValueName() const { return 0; }
-  
+
   // An out-of-line virtual method to provide a 'home' for this class.
   virtual void anchor();
 };
@@ -551,7 +553,7 @@ template<>
 class parser<boolOrDefault> : public basic_parser<boolOrDefault> {
 public:
   // parse - Return true on error.
-  bool parse(Option &O, const char *ArgName, const std::string &Arg, 
+  bool parse(Option &O, const char *ArgName, const std::string &Arg,
              boolOrDefault &Val);
 
   enum ValueExpected getValueExpectedFlagDefault() const {
@@ -560,7 +562,7 @@ public:
 
   // getValueName - Do not print =<value> at all.
   virtual const char *getValueName() const { return 0; }
-  
+
   // An out-of-line virtual method to provide a 'home' for this class.
   virtual void anchor();
 };
@@ -965,7 +967,7 @@ class list : public Option, public list_storage<DataType, Storage> {
   virtual void getExtraOptionNames(std::vector<const char*> &OptionNames) {
     return Parser.getExtraOptionNames(OptionNames);
   }
-  
+
   virtual bool handleOccurrence(unsigned pos, const char *ArgName,
                                 const std::string &Arg) {
     typename ParserClass::parser_data_type Val =
@@ -1071,7 +1073,7 @@ public:
 template<class DataType, class StorageClass>
 class bits_storage {
   unsigned *Location;   // Where to store the bits...
-  
+
   template<class T>
   static unsigned Bit(const T &V) {
     unsigned BitPos = reinterpret_cast<unsigned>(V);
@@ -1096,9 +1098,9 @@ public:
            "line option with external storage!");
     *Location |= Bit(V);
   }
-  
+
   unsigned getBits() { return *Location; }
-  
+
   template<class T>
   bool isSet(const T &V) {
     return (*Location & Bit(V)) != 0;
@@ -1106,13 +1108,13 @@ public:
 };
 
 
-// Define how to hold bits.  Since we can inherit from a class, we do so. 
+// Define how to hold bits.  Since we can inherit from a class, we do so.
 // This makes us exactly compatible with the bits in all cases that it is used.
 //
 template<class DataType>
 class bits_storage<DataType, bool> {
   unsigned Bits;   // Where to store the bits...
-  
+
   template<class T>
   static unsigned Bit(const T &V) {
     unsigned BitPos = reinterpret_cast<unsigned>(V);
@@ -1120,15 +1122,15 @@ class bits_storage<DataType, bool> {
           "enum exceeds width of bit vector!");
     return 1 << BitPos;
   }
-  
+
 public:
   template<class T>
   void addValue(const T &V) {
     Bits |=  Bit(V);
   }
-  
+
   unsigned getBits() { return Bits; }
-  
+
   template<class T>
   bool isSet(const T &V) {
     return (Bits & Bit(V)) != 0;
@@ -1151,7 +1153,7 @@ class bits : public Option, public bits_storage<DataType, Storage> {
   virtual void getExtraOptionNames(std::vector<const char*> &OptionNames) {
     return Parser.getExtraOptionNames(OptionNames);
   }
-  
+
   virtual bool handleOccurrence(unsigned pos, const char *ArgName,
                                 const std::string &Arg) {
     typename ParserClass::parser_data_type Val =
