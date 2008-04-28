@@ -21,11 +21,10 @@
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/Compiler.h"
-#include <set>
+#include <llvm/Support/Allocator.h>
 #include <iomanip>
 #include <algorithm>
 #include <sstream>
-#include <iostream>
 
 using namespace clang;
 
@@ -115,14 +114,20 @@ public:
   
   // FIXME: Add support for ObjC-specific control-flow structures.
   
-  CFGBlock* VisitObjCForCollectionStmt(ObjCForCollectionStmt* Terminator) {
+  // NYS == Not Yet Supported
+  CFGBlock* NYS() {
     badCFG = true;
     return Block;
   }
   
-  CFGBlock* VisitObjCAtTryStmt(ObjCAtTryStmt* Terminator) {
-    badCFG = true;
-    return Block;
+  CFGBlock* VisitObjCForCollectionStmt(ObjCForCollectionStmt* S){ return NYS();}
+  CFGBlock* VisitObjCAtTryStmt(ObjCAtTryStmt* S) { return NYS(); }
+  CFGBlock* VisitObjCAtCatchStmt(ObjCAtCatchStmt* S) { return NYS(); }
+  CFGBlock* VisitObjCAtFinallyStmt(ObjCAtFinallyStmt* S) { return NYS(); }
+  CFGBlock* VisitObjCAtThrowStmt(ObjCAtThrowStmt* S) { return NYS(); }
+
+  CFGBlock* VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt* S){
+    return NYS();
   }
   
 private:
@@ -1150,21 +1155,77 @@ unsigned CFG::getNumBlkExprs() {
   }
 }
 
-typedef std::set<std::pair<CFGBlock*,CFGBlock*> > BlkEdgeSetTy;
+//===----------------------------------------------------------------------===//
+// Internal Block-Edge Set; used for modeling persistent <CFGBlock*,CFGBlock*>
+// pairs for use with ProgramPoint.
+//===----------------------------------------------------------------------===//
+
+typedef std::pair<CFGBlock*,CFGBlock*> BPairTy;
+
+namespace llvm {
+  template<> struct FoldingSetTrait<BPairTy*> {
+    static void Profile(const BPairTy* X, FoldingSetNodeID& profile) {
+      profile.AddPointer(X->first);
+      profile.AddPointer(X->second);
+    }
+  };
+}
+
+typedef llvm::FoldingSetNodeWrapper<BPairTy*> PersistPairTy;
+typedef llvm::FoldingSet<PersistPairTy> BlkEdgeSetTy;
 
 const std::pair<CFGBlock*,CFGBlock*>*
 CFG::getBlockEdgeImpl(const CFGBlock* B1, const CFGBlock* B2) {
   
-  BlkEdgeSetTy*& p = reinterpret_cast<BlkEdgeSetTy*&>(BlkEdgeSet);
-  if (!p) p = new BlkEdgeSetTy();
+  llvm::BumpPtrAllocator*& Alloc =
+    reinterpret_cast<llvm::BumpPtrAllocator*&>(Allocator);
   
-  return &*(p->insert(std::make_pair(const_cast<CFGBlock*>(B1),
-                                     const_cast<CFGBlock*>(B2))).first);
+  if (!Alloc)
+    Alloc = new llvm::BumpPtrAllocator();
+
+  BlkEdgeSetTy*& p = reinterpret_cast<BlkEdgeSetTy*&>(BlkEdgeSet);
+
+  if (!p)
+    p = new BlkEdgeSetTy();
+  
+  // Profile the edges.
+  llvm::FoldingSetNodeID profile;
+  void* InsertPos;
+  
+  profile.AddPointer(B1);
+  profile.AddPointer(B2);
+  
+  PersistPairTy* V = p->FindNodeOrInsertPos(profile, InsertPos);  
+  
+  if (!V) {
+    assert (llvm::AlignOf<BPairTy>::Alignment_LessEqual_8Bytes);
+    
+    // Allocate the pair, forcing an 8-byte alignment.
+    BPairTy* pair = (BPairTy*) Alloc->Allocate(sizeof(*pair), 8);
+
+    new (pair) BPairTy(const_cast<CFGBlock*>(B1),
+                       const_cast<CFGBlock*>(B2));
+    
+    // Allocate the meta data to store the pair in the FoldingSet.
+    PersistPairTy* ppair = (PersistPairTy*) Alloc->Allocate<PersistPairTy>();
+    new (ppair) PersistPairTy(pair);
+    
+    p->InsertNode(ppair, InsertPos);
+    
+    return pair;
+  }
+  
+  return V->getValue();
 }
+
+//===----------------------------------------------------------------------===//
+// Cleanup: CFG dstor.
+//===----------------------------------------------------------------------===//
 
 CFG::~CFG() {
   delete reinterpret_cast<const BlkExprMapTy*>(BlkExprMap);
   delete reinterpret_cast<BlkEdgeSetTy*>(BlkEdgeSet);
+  delete reinterpret_cast<llvm::BumpPtrAllocator*> (Allocator);
 }
   
 //===----------------------------------------------------------------------===//
@@ -1542,9 +1603,6 @@ void CFG::viewCFG() const {
   GraphHelper = &H;
   llvm::ViewGraph(this,"CFG");
   GraphHelper = NULL;
-#else
-  std::cerr << "CFG::viewCFG is only available in debug builds on "
-            << "systems with Graphviz or gv!\n";
 #endif
 }
 

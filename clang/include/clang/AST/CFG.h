@@ -281,7 +281,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   CFG() : Entry(NULL), Exit(NULL), IndirectGotoBlock(NULL), NumBlockIDs(0), 
-          BlkExprMap(NULL), BlkEdgeSet(NULL) {};
+          BlkExprMap(NULL), BlkEdgeSet(NULL), Allocator(NULL) {};
   
   ~CFG();
     
@@ -298,12 +298,15 @@ private:
   //  block-level expressions and their "statement number" in the CFG.
   void*     BlkExprMap;
   
-  /// BlkEdgeSet - An opaque pointer to prevent inclusion of <set>.
+  /// BlkEdgeSet - An opaque pointer to prevent inclusion of FoldingSet.h.
   ///  The set contains std::pair<CFGBlock*,CFGBlock*> objects that have
   ///  stable references for use by the 'BlockEdge' class.  This set is intended
   ///  to be sparse, as it only contains edges whether both the source
   ///  and destination block have multiple successors/predecessors.
   void*     BlkEdgeSet;
+  
+  /// Alloc - An internal allocator used for BlkEdgeSet.
+  void*     Allocator;
   
   friend class BlockEdge;
   
