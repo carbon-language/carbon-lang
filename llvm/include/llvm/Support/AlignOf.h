@@ -35,10 +35,17 @@ private:
 template <typename T>
 struct AlignOf {
   enum { Alignment = sizeof(AlignmentCalcImpl<T>) - sizeof(T) };
+
   enum { Alignment_GreaterEqual_2Bytes = Alignment >= 2 ? 1 : 0 };
   enum { Alignment_GreaterEqual_4Bytes = Alignment >= 4 ? 1 : 0 };
   enum { Alignment_GreaterEqual_8Bytes = Alignment >= 8 ? 1 : 0 };
   enum { Alignment_GreaterEqual_16Bytes = Alignment >= 16 ? 1 : 0 };
+  
+  enum { Alignment_LessEqual_2Bytes = Alignment <= 2 ? 1 : 0 };
+  enum { Alignment_LessEqual_4Bytes = Alignment <= 4 ? 1 : 0 }; 
+  enum { Alignment_LessEqual_8Bytes = Alignment <= 8 ? 1 : 0 };
+  enum { Alignment_LessEqual_16Bytes = Alignment <= 16 ? 1 : 0 };
+
 };
 
 /// alignof - A templated function that returns the mininum alignment of
