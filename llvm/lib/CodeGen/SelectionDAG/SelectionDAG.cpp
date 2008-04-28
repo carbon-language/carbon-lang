@@ -1229,6 +1229,50 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, const APInt &Mask,
     KnownZero = KnownZeroOut;
     return;
   }
+  case ISD::MUL: {
+    APInt Mask2 = APInt::getAllOnesValue(BitWidth);
+    ComputeMaskedBits(Op.getOperand(1), Mask2, KnownZero, KnownOne, Depth+1);
+    ComputeMaskedBits(Op.getOperand(0), Mask2, KnownZero2, KnownOne2, Depth+1);
+    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
+    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?");
+
+    // If low bits are zero in either operand, output low known-0 bits.
+    // Also compute a conserative estimate for high known-0 bits.
+    // More trickiness is possible, but this is sufficient for the
+    // interesting case of alignment computation.
+    KnownOne.clear();
+    unsigned TrailZ = KnownZero.countTrailingOnes() +
+                      KnownZero2.countTrailingOnes();
+    unsigned LeadZ =  std::max(KnownZero.countLeadingOnes() +
+                               KnownZero2.countLeadingOnes() +
+                               1, BitWidth) - BitWidth;
+
+    TrailZ = std::min(TrailZ, BitWidth);
+    LeadZ = std::min(LeadZ, BitWidth);
+    KnownZero = APInt::getLowBitsSet(BitWidth, TrailZ) |
+                APInt::getHighBitsSet(BitWidth, LeadZ);
+    KnownZero &= Mask;
+    return;
+  }
+  case ISD::UDIV: {
+    // For the purposes of computing leading zeros we can conservatively
+    // treat a udiv as a logical right shift by the power of 2 known to
+    // be greater than the denominator.
+    APInt AllOnes = APInt::getAllOnesValue(BitWidth);
+    ComputeMaskedBits(Op.getOperand(0),
+                      AllOnes, KnownZero2, KnownOne2, Depth+1);
+    unsigned LeadZ = KnownZero2.countLeadingOnes();
+
+    KnownOne2.clear();
+    KnownZero2.clear();
+    ComputeMaskedBits(Op.getOperand(1),
+                      AllOnes, KnownZero2, KnownOne2, Depth+1);
+    LeadZ = std::min(BitWidth,
+                     LeadZ + BitWidth - KnownOne2.countLeadingZeros());
+
+    KnownZero = APInt::getHighBitsSet(BitWidth, LeadZ) & Mask;
+    return;
+  }
   case ISD::SELECT:
     ComputeMaskedBits(Op.getOperand(2), Mask, KnownZero, KnownOne, Depth+1);
     ComputeMaskedBits(Op.getOperand(1), Mask, KnownZero2, KnownOne2, Depth+1);
@@ -1469,47 +1513,94 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, const APInt &Mask,
     KnownZero = APInt::getHighBitsSet(BitWidth, BitWidth - 1);
     return;
   
+  case ISD::SUB: {
+    if (ConstantSDNode *CLHS = dyn_cast<ConstantSDNode>(Op.getOperand(0))) {
+      // We know that the top bits of C-X are clear if X contains less bits
+      // than C (i.e. no wrap-around can happen).  For example, 20-X is
+      // positive if we can prove that X is >= 0 and < 16.
+      if (CLHS->getAPIntValue().isNonNegative()) {
+        unsigned NLZ = (CLHS->getAPIntValue()+1).countLeadingZeros();
+        // NLZ can't be BitWidth with no sign bit
+        APInt MaskV = APInt::getHighBitsSet(BitWidth, NLZ+1);
+        ComputeMaskedBits(Op.getOperand(1), MaskV, KnownZero2, KnownOne2,
+                          Depth+1);
+
+        // If all of the MaskV bits are known to be zero, then we know the
+        // output top bits are zero, because we now know that the output is
+        // from [0-C].
+        if ((KnownZero2 & MaskV) == MaskV) {
+          unsigned NLZ2 = CLHS->getAPIntValue().countLeadingZeros();
+          // Top bits known zero.
+          KnownZero = APInt::getHighBitsSet(BitWidth, NLZ2) & Mask;
+        }
+      }
+    }
+  }
+  // fall through
   case ISD::ADD: {
-    // If either the LHS or the RHS are Zero, the result is zero.
-    ComputeMaskedBits(Op.getOperand(1), Mask, KnownZero, KnownOne, Depth+1);
-    ComputeMaskedBits(Op.getOperand(0), Mask, KnownZero2, KnownOne2, Depth+1);
-    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
-    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
-    
     // Output known-0 bits are known if clear or set in both the low clear bits
     // common to both LHS & RHS.  For example, 8+(X<<3) is known to have the
     // low 3 bits clear.
-    unsigned KnownZeroOut = std::min(KnownZero.countTrailingOnes(), 
-                                     KnownZero2.countTrailingOnes());
-    
-    KnownZero = APInt::getLowBitsSet(BitWidth, KnownZeroOut);
-    KnownOne = APInt(BitWidth, 0);
+    APInt Mask2 = APInt::getLowBitsSet(BitWidth, Mask.countTrailingOnes());
+    ComputeMaskedBits(Op.getOperand(0), Mask2, KnownZero2, KnownOne2, Depth+1);
+    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
+    unsigned KnownZeroOut = KnownZero2.countTrailingOnes();
+
+    ComputeMaskedBits(Op.getOperand(1), Mask2, KnownZero2, KnownOne2, Depth+1);
+    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
+    KnownZeroOut = std::min(KnownZeroOut,
+                            KnownZero2.countTrailingOnes());
+
+    KnownZero |= APInt::getLowBitsSet(BitWidth, KnownZeroOut);
     return;
   }
-  case ISD::SUB: {
-    ConstantSDNode *CLHS = dyn_cast<ConstantSDNode>(Op.getOperand(0));
-    if (!CLHS) return;
+  case ISD::SREM:
+    if (ConstantSDNode *Rem = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      APInt RA = Rem->getAPIntValue();
+      if (RA.isPowerOf2() || (-RA).isPowerOf2()) {
+        APInt LowBits = RA.isStrictlyPositive() ? ((RA - 1) | RA) : ~RA;
+        APInt Mask2 = LowBits | APInt::getSignBit(BitWidth);
+        ComputeMaskedBits(Op.getOperand(0), Mask2,KnownZero2,KnownOne2,Depth+1);
 
-    // We know that the top bits of C-X are clear if X contains less bits
-    // than C (i.e. no wrap-around can happen).  For example, 20-X is
-    // positive if we can prove that X is >= 0 and < 16.
-    if (CLHS->getAPIntValue().isNonNegative()) {
-      unsigned NLZ = (CLHS->getAPIntValue()+1).countLeadingZeros();
-      // NLZ can't be BitWidth with no sign bit
-      APInt MaskV = APInt::getHighBitsSet(BitWidth, NLZ+1);
-      ComputeMaskedBits(Op.getOperand(1), MaskV, KnownZero, KnownOne, Depth+1);
+        // The sign of a remainder is equal to the sign of the first
+        // operand (zero being positive).
+        if (KnownZero2[BitWidth-1] || ((KnownZero2 & LowBits) == LowBits))
+          KnownZero2 |= ~LowBits;
+        else if (KnownOne2[BitWidth-1])
+          KnownOne2 |= ~LowBits;
 
-      // If all of the MaskV bits are known to be zero, then we know the output
-      // top bits are zero, because we now know that the output is from [0-C].
-      if ((KnownZero & MaskV) == MaskV) {
-        unsigned NLZ2 = CLHS->getAPIntValue().countLeadingZeros();
-        // Top bits known zero.
-        KnownZero = APInt::getHighBitsSet(BitWidth, NLZ2) & Mask;
-        KnownOne = APInt(BitWidth, 0);   // No one bits known.
-      } else {
-        KnownZero = KnownOne = APInt(BitWidth, 0);  // Otherwise, nothing known.
+        KnownZero |= KnownZero2 & Mask;
+        KnownOne |= KnownOne2 & Mask;
+
+        assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?");
       }
     }
+    return;
+  case ISD::UREM: {
+    if (ConstantSDNode *Rem = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      APInt RA = Rem->getAPIntValue();
+      if (RA.isStrictlyPositive() && RA.isPowerOf2()) {
+        APInt LowBits = (RA - 1) | RA;
+        APInt Mask2 = LowBits & Mask;
+        KnownZero |= ~LowBits & Mask;
+        ComputeMaskedBits(Op.getOperand(0), Mask2, KnownZero, KnownOne,Depth+1);
+        assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?");
+        break;
+      }
+    }
+
+    // Since the result is less than or equal to either operand, any leading
+    // zero bits in either operand must also exist in the result.
+    APInt AllOnes = APInt::getAllOnesValue(BitWidth);
+    ComputeMaskedBits(Op.getOperand(0), AllOnes, KnownZero, KnownOne,
+                      Depth+1);
+    ComputeMaskedBits(Op.getOperand(1), AllOnes, KnownZero2, KnownOne2,
+                      Depth+1);
+
+    uint32_t Leaders = std::max(KnownZero.countLeadingOnes(),
+                                KnownZero2.countLeadingOnes());
+    KnownOne.clear();
+    KnownZero = APInt::getHighBitsSet(BitWidth, Leaders) & Mask;
     return;
   }
   default:

@@ -700,15 +700,15 @@ void InstCombiner::ComputeMaskedBits(Value *V, const APInt &Mask,
     return;
   }
 
+  KnownZero.clear(); KnownOne.clear();   // Start out not knowing anything.
+
   if (Depth == 6 || Mask == 0)
     return;  // Limit search depth.
 
   User *I = dyn_cast<User>(V);
   if (!I) return;
 
-  KnownZero.clear(); KnownOne.clear();   // Don't know anything.
   APInt KnownZero2(KnownZero), KnownOne2(KnownOne);
-  
   switch (getOpcode(I)) {
   default: break;
   case Instruction::And: {
@@ -759,14 +759,40 @@ void InstCombiner::ComputeMaskedBits(Value *V, const APInt &Mask,
     assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
     
     // If low bits are zero in either operand, output low known-0 bits.
+    // Also compute a conserative estimate for high known-0 bits.
     // More trickiness is possible, but this is sufficient for the
     // interesting case of alignment computation.
     KnownOne.clear();
     unsigned TrailZ = KnownZero.countTrailingOnes() +
                       KnownZero2.countTrailingOnes();
+    unsigned LeadZ =  std::max(KnownZero.countLeadingOnes() +
+                               KnownZero2.countLeadingOnes() +
+                               1, BitWidth) - BitWidth;
+
     TrailZ = std::min(TrailZ, BitWidth);
-    KnownZero = APInt::getLowBitsSet(BitWidth, TrailZ);
+    LeadZ = std::min(LeadZ, BitWidth);
+    KnownZero = APInt::getLowBitsSet(BitWidth, TrailZ) |
+                APInt::getHighBitsSet(BitWidth, LeadZ);
     KnownZero &= Mask;
+    return;
+  }
+  case Instruction::UDiv: {
+    // For the purposes of computing leading zeros we can conservatively
+    // treat a udiv as a logical right shift by the power of 2 known to
+    // be greater than the denominator.
+    APInt AllOnes = APInt::getAllOnesValue(BitWidth);
+    ComputeMaskedBits(I->getOperand(0),
+                      AllOnes, KnownZero2, KnownOne2, Depth+1);
+    unsigned LeadZ = KnownZero2.countLeadingOnes();
+
+    KnownOne2.clear();
+    KnownZero2.clear();
+    ComputeMaskedBits(I->getOperand(1),
+                      AllOnes, KnownZero2, KnownOne2, Depth+1);
+    LeadZ = std::min(BitWidth,
+                     LeadZ + BitWidth - KnownOne2.countLeadingZeros());
+
+    KnownZero = APInt::getHighBitsSet(BitWidth, LeadZ) & Mask;
     return;
   }
   case Instruction::Select:
@@ -900,38 +926,36 @@ void InstCombiner::ComputeMaskedBits(Value *V, const APInt &Mask,
         unsigned NLZ = (CLHS->getValue()+1).countLeadingZeros();
         // NLZ can't be BitWidth with no sign bit
         APInt MaskV = APInt::getHighBitsSet(BitWidth, NLZ+1);
-        ComputeMaskedBits(I->getOperand(1), MaskV, KnownZero, KnownOne, Depth+1);
+        ComputeMaskedBits(I->getOperand(1), MaskV, KnownZero2, KnownOne2,
+                          Depth+1);
     
-        // If all of the MaskV bits are known to be zero, then we know the output
-        // top bits are zero, because we now know that the output is from [0-C].
-        if ((KnownZero & MaskV) == MaskV) {
+        // If all of the MaskV bits are known to be zero, then we know the
+        // output top bits are zero, because we now know that the output is
+        // from [0-C].
+        if ((KnownZero2 & MaskV) == MaskV) {
           unsigned NLZ2 = CLHS->getValue().countLeadingZeros();
           // Top bits known zero.
           KnownZero = APInt::getHighBitsSet(BitWidth, NLZ2) & Mask;
-          KnownOne = APInt(BitWidth, 0);   // No one bits known.
-        } else {
-          KnownZero = KnownOne = APInt(BitWidth, 0);  // Otherwise, nothing known.
         }
-        return;
       }        
     }
   }
   // fall through
   case Instruction::Add: {
-    // If either the LHS or the RHS are Zero, the result is zero.
-    ComputeMaskedBits(I->getOperand(1), Mask, KnownZero, KnownOne, Depth+1);
-    ComputeMaskedBits(I->getOperand(0), Mask, KnownZero2, KnownOne2, Depth+1);
-    assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?"); 
-    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
-      
     // Output known-0 bits are known if clear or set in both the low clear bits
     // common to both LHS & RHS.  For example, 8+(X<<3) is known to have the
     // low 3 bits clear.
-    unsigned KnownZeroOut = std::min(KnownZero.countTrailingOnes(), 
-                                     KnownZero2.countTrailingOnes());
-      
-    KnownZero = APInt::getLowBitsSet(BitWidth, KnownZeroOut);
-    KnownOne = APInt(BitWidth, 0);
+    APInt Mask2 = APInt::getLowBitsSet(BitWidth, Mask.countTrailingOnes());
+    ComputeMaskedBits(I->getOperand(0), Mask2, KnownZero2, KnownOne2, Depth+1);
+    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
+    unsigned KnownZeroOut = KnownZero2.countTrailingOnes();
+
+    ComputeMaskedBits(I->getOperand(1), Mask2, KnownZero2, KnownOne2, Depth+1);
+    assert((KnownZero2 & KnownOne2) == 0 && "Bits known to be one AND zero?"); 
+    KnownZeroOut = std::min(KnownZeroOut, 
+                            KnownZero2.countTrailingOnes());
+
+    KnownZero |= APInt::getLowBitsSet(BitWidth, KnownZeroOut);
     return;
   }
   case Instruction::SRem:
@@ -956,7 +980,7 @@ void InstCombiner::ComputeMaskedBits(Value *V, const APInt &Mask,
       }
     }
     break;
-  case Instruction::URem:
+  case Instruction::URem: {
     if (ConstantInt *Rem = dyn_cast<ConstantInt>(I->getOperand(1))) {
       APInt RA = Rem->getValue();
       if (RA.isStrictlyPositive() && RA.isPowerOf2()) {
@@ -965,19 +989,24 @@ void InstCombiner::ComputeMaskedBits(Value *V, const APInt &Mask,
         KnownZero |= ~LowBits & Mask;
         ComputeMaskedBits(I->getOperand(0), Mask2, KnownZero, KnownOne,Depth+1);
         assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?");
+        break;
       }
-    } else {
-      // Since the result is less than or equal to RHS, any leading zero bits
-      // in RHS must also exist in the result.
-      APInt AllOnes = APInt::getAllOnesValue(BitWidth);
-      ComputeMaskedBits(I->getOperand(1), AllOnes, KnownZero2, KnownOne2,
-                        Depth+1);
-
-      uint32_t Leaders = KnownZero2.countLeadingOnes();
-      KnownZero |= APInt::getHighBitsSet(BitWidth, Leaders) & Mask;
-      assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?");
     }
+
+    // Since the result is less than or equal to either operand, any leading
+    // zero bits in either operand must also exist in the result.
+    APInt AllOnes = APInt::getAllOnesValue(BitWidth);
+    ComputeMaskedBits(I->getOperand(0), AllOnes, KnownZero, KnownOne,
+                      Depth+1);
+    ComputeMaskedBits(I->getOperand(1), AllOnes, KnownZero2, KnownOne2,
+                      Depth+1);
+
+    uint32_t Leaders = std::max(KnownZero.countLeadingOnes(),
+                                KnownZero2.countLeadingOnes());
+    KnownOne.clear();
+    KnownZero = APInt::getHighBitsSet(BitWidth, Leaders) & Mask;
     break;
+  }
 
   case Instruction::Alloca:
   case Instruction::Malloc: {
@@ -1088,6 +1117,20 @@ void InstCombiner::ComputeMaskedBits(Value *V, const APInt &Mask,
     }
     break;
   }
+  case Instruction::Call:
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
+      switch (II->getIntrinsicID()) {
+      default: break;
+      case Intrinsic::ctpop:
+      case Intrinsic::ctlz:
+      case Intrinsic::cttz: {
+        unsigned LowBits = Log2_32(BitWidth)+1;
+        KnownZero = APInt::getHighBitsSet(BitWidth, BitWidth - LowBits);
+        break;
+      }
+      }
+    }
+    break;
   }
 }
 
@@ -1232,7 +1275,9 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
   APInt LHSKnownZero(BitWidth, 0), LHSKnownOne(BitWidth, 0);
   APInt &RHSKnownZero = KnownZero, &RHSKnownOne = KnownOne;
   switch (I->getOpcode()) {
-  default: break;
+  default:
+    ComputeMaskedBits(V, DemandedMask, RHSKnownZero, RHSKnownOne, Depth);
+    break;
   case Instruction::And:
     // If either the LHS or the RHS are Zero, the result is zero.
     if (SimplifyDemandedBits(I->getOperand(1), DemandedMask,
@@ -1578,6 +1623,9 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
                                LHSKnownZero, LHSKnownOne, Depth+1))
         return true;
     }
+    // Otherwise just hand the sub off to ComputeMaskedBits to fill in
+    // the known zeros and ones.
+    ComputeMaskedBits(V, DemandedMask, RHSKnownZero, RHSKnownOne, Depth);
     break;
   case Instruction::Shl:
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
@@ -1695,10 +1743,10 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
       }
     }
     break;
-  case Instruction::URem:
+  case Instruction::URem: {
     if (ConstantInt *Rem = dyn_cast<ConstantInt>(I->getOperand(1))) {
       APInt RA = Rem->getValue();
-      if (RA.isPowerOf2()) {
+      if (RA.isStrictlyPositive() && RA.isPowerOf2()) {
         APInt LowBits = (RA - 1) | RA;
         APInt Mask2 = LowBits & DemandedMask;
         KnownZero |= ~LowBits & DemandedMask;
@@ -1707,18 +1755,25 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
           return true;
 
         assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
+        break;
       }
-    } else {
-      APInt KnownZero2(BitWidth, 0), KnownOne2(BitWidth, 0);
-      APInt AllOnes = APInt::getAllOnesValue(BitWidth);
-      if (SimplifyDemandedBits(I->getOperand(1), AllOnes,
-                               KnownZero2, KnownOne2, Depth+1))
-        return true;
-
-      uint32_t Leaders = KnownZero2.countLeadingOnes();
-      KnownZero |= APInt::getHighBitsSet(BitWidth, Leaders) & DemandedMask;
     }
+
+    APInt KnownZero2(BitWidth, 0), KnownOne2(BitWidth, 0);
+    APInt AllOnes = APInt::getAllOnesValue(BitWidth);
+    ComputeMaskedBits(I->getOperand(0), AllOnes,
+                      KnownZero2, KnownOne2, Depth+1);
+    uint32_t Leaders = KnownZero2.countLeadingOnes();
+    APInt HighZeros = APInt::getHighBitsSet(BitWidth, Leaders);
+    if (SimplifyDemandedBits(I->getOperand(1), ~HighZeros,
+                             KnownZero2, KnownOne2, Depth+1))
+      return true;
+
+    Leaders = std::max(Leaders,
+                       KnownZero2.countLeadingOnes());
+    KnownZero = APInt::getHighBitsSet(BitWidth, Leaders) & DemandedMask;
     break;
+  }
   }
   
   // If the client is only demanding bits that we know, return the known
