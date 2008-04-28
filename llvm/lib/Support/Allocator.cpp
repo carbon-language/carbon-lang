@@ -48,7 +48,7 @@ public:
   void *Allocate(unsigned AllocSize, unsigned Alignment, MemRegion **RegPtr) {
     
     char* Result = (char*) (((uintptr_t) (NextPtr+Alignment-1)) 
-                            & ~(Alignment-1));
+                            & ~((uintptr_t) Alignment-1));
 
     // Speculate the new value of NextPtr.
     char* NextPtrTmp = Result + AllocSize;
