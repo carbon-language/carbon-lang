@@ -263,6 +263,9 @@ public:
   bool isExactlyValue(const APFloat& V) const;
 
   bool isExactlyValue(double V) const {
+    // convert is not supported on this type
+    if (&Val.getSemantics() == &APFloat::PPCDoubleDouble)
+      return false;
     APFloat FV(V);
     FV.convert(Val.getSemantics(), APFloat::rmNearestTiesToEven);
     return isExactlyValue(FV);
