@@ -158,7 +158,7 @@ namespace {
                  unsigned Reg, const Type *Ty) : TLI(&tli) {
       ComputeValueVTs(tli, Ty, ValueVTs);
 
-      for (unsigned Value = 0; Value != ValueVTs.size(); ++Value) {
+      for (unsigned Value = 0, e = ValueVTs.size(); Value != e; ++Value) {
         MVT::ValueType ValueVT = ValueVTs[Value];
         unsigned NumRegs = TLI->getNumRegisters(ValueVT);
         MVT::ValueType RegisterVT = TLI->getRegisterType(ValueVT);
@@ -364,7 +364,7 @@ unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
   ComputeValueVTs(TLI, V->getType(), ValueVTs);
 
   unsigned FirstReg = 0;
-  for (unsigned Value = 0; Value != ValueVTs.size(); ++Value) {
+  for (unsigned Value = 0, e = ValueVTs.size(); Value != e; ++Value) {
     MVT::ValueType ValueVT = ValueVTs[Value];
     MVT::ValueType RegisterVT = TLI.getRegisterType(ValueVT);
 
