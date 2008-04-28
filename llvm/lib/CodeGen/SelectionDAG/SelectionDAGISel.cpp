@@ -369,6 +369,10 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
 /// CreateRegForValue - Allocate the appropriate number of virtual registers of
 /// the correctly promoted or expanded types.  Assign these registers
 /// consecutive vreg numbers and return the first assigned number.
+///
+/// In the case that the given value has struct or array type, this function
+/// will assign registers for each member or element.
+///
 unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
   SmallVector<MVT::ValueType, 4> ValueVTs;
   ComputeValueVTs(TLI, V->getType(), ValueVTs);
