@@ -146,11 +146,11 @@ namespace {
                  unsigned Reg, MVT::ValueType regvt, MVT::ValueType valuevt)
       : TLI(&tli), Regs(1, Reg), RegVTs(1, regvt), ValueVTs(1, valuevt) {}
     RegsForValue(const TargetLowering &tli,
-                 const SmallVectorImpl<unsigned> &regs, 
+                 const SmallVector<unsigned, 4> &regs, 
                  MVT::ValueType regvt, MVT::ValueType valuevt)
       : TLI(&tli), Regs(regs), RegVTs(1, regvt), ValueVTs(1, valuevt) {}
     RegsForValue(const TargetLowering &tli,
-                 const SmallVectorImpl<unsigned> &regs, 
+                 const SmallVector<unsigned, 4> &regs, 
                  const SmallVector<MVT::ValueType, 4> &regvts,
                  const SmallVector<MVT::ValueType, 4> &valuevts)
       : TLI(&tli), Regs(regs), RegVTs(regvts), ValueVTs(valuevts) {}
@@ -360,16 +360,15 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
 /// the correctly promoted or expanded types.  Assign these registers
 /// consecutive vreg numbers and return the first assigned number.
 unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
-  const Type *Ty = V->getType();
   SmallVector<MVT::ValueType, 4> ValueVTs;
-  ComputeValueVTs(TLI, Ty, ValueVTs);
+  ComputeValueVTs(TLI, V->getType(), ValueVTs);
 
   unsigned FirstReg = 0;
   for (unsigned Value = 0; Value != ValueVTs.size(); ++Value) {
     MVT::ValueType ValueVT = ValueVTs[Value];
-    unsigned NumRegs = TLI.getNumRegisters(ValueVT);
     MVT::ValueType RegisterVT = TLI.getRegisterType(ValueVT);
 
+    unsigned NumRegs = TLI.getNumRegisters(ValueVT);
     for (unsigned i = 0; i != NumRegs; ++i) {
       unsigned R = MakeReg(RegisterVT);
       if (!FirstReg) FirstReg = R;
@@ -1042,18 +1041,22 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
   if (N.Val) return N;
   
   const Type *VTy = V->getType();
-  MVT::ValueType VT = TLI.getValueType(VTy, true);
   if (Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V))) {
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-      visit(CE->getOpcode(), *CE);
-      SDOperand N1 = NodeMap[V];
-      assert(N1.Val && "visit didn't populate the ValueMap!");
-      return N1;
-    } else if (GlobalValue *GV = dyn_cast<GlobalValue>(C)) {
+    MVT::ValueType VT = TLI.getValueType(VTy, true);
+    
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(C))
+      return N = DAG.getConstant(CI->getValue(), VT);
+
+    if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
       return N = DAG.getGlobalAddress(GV, VT);
-    } else if (isa<ConstantPointerNull>(C)) {
+    
+    if (isa<ConstantPointerNull>(C))
       return N = DAG.getConstant(0, TLI.getPointerTy());
-    } else if (isa<UndefValue>(C)) {
+    
+    if (ConstantFP *CFP = dyn_cast<ConstantFP>(C))
+      return N = DAG.getConstantFP(CFP->getValueAPF(), VT);
+    
+    if (isa<UndefValue>(C)) {
       if (!isa<VectorType>(VTy))
         return N = DAG.getNode(ISD::UNDEF, VT);
 
@@ -1067,44 +1070,46 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       
       // Create a VConstant node with generic Vector type.
       MVT::ValueType VT = MVT::getVectorType(PVT, NumElements);
-      return N = DAG.getNode(ISD::BUILD_VECTOR, VT,
-                             &Ops[0], Ops.size());
-    } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
-      return N = DAG.getConstantFP(CFP->getValueAPF(), VT);
-    } else if (const VectorType *PTy = dyn_cast<VectorType>(VTy)) {
-      unsigned NumElements = PTy->getNumElements();
-      MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
-      
-      // Now that we know the number and type of the elements, push a
-      // Constant or ConstantFP node onto the ops list for each element of
-      // the vector constant.
-      SmallVector<SDOperand, 8> Ops;
-      if (ConstantVector *CP = dyn_cast<ConstantVector>(C)) {
-        for (unsigned i = 0; i != NumElements; ++i)
-          Ops.push_back(getValue(CP->getOperand(i)));
-      } else {
-        assert(isa<ConstantAggregateZero>(C) && "Unknown vector constant!");
-        SDOperand Op;
-        if (MVT::isFloatingPoint(PVT))
-          Op = DAG.getConstantFP(0, PVT);
-        else
-          Op = DAG.getConstant(0, PVT);
-        Ops.assign(NumElements, Op);
-      }
-      
-      // Create a BUILD_VECTOR node.
-      MVT::ValueType VT = MVT::getVectorType(PVT, NumElements);
-      return NodeMap[V] = DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0],
-                                      Ops.size());
-    } else {
-      // Canonicalize all constant ints to be unsigned.
-      return N = DAG.getConstant(cast<ConstantInt>(C)->getValue(),VT);
+      return N = DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
     }
+
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+      visit(CE->getOpcode(), *CE);
+      SDOperand N1 = NodeMap[V];
+      assert(N1.Val && "visit didn't populate the ValueMap!");
+      return N1;
+    }
+    
+    const VectorType *VecTy = cast<VectorType>(VTy);
+    unsigned NumElements = VecTy->getNumElements();
+    MVT::ValueType PVT = TLI.getValueType(VecTy->getElementType());
+    
+    // Now that we know the number and type of the elements, push a
+    // Constant or ConstantFP node onto the ops list for each element of
+    // the vector constant.
+    SmallVector<SDOperand, 8> Ops;
+    if (ConstantVector *CP = dyn_cast<ConstantVector>(C)) {
+      for (unsigned i = 0; i != NumElements; ++i)
+        Ops.push_back(getValue(CP->getOperand(i)));
+    } else {
+      assert(isa<ConstantAggregateZero>(C) && "Unknown vector constant!");
+      SDOperand Op;
+      if (MVT::isFloatingPoint(PVT))
+        Op = DAG.getConstantFP(0, PVT);
+      else
+        Op = DAG.getConstant(0, PVT);
+      Ops.assign(NumElements, Op);
+    }
+    
+    // Create a BUILD_VECTOR node.
+    return NodeMap[V] = DAG.getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
   }
       
+  // If this is a static alloca, generate it as the frameindex instead of
+  // computation.
   if (const AllocaInst *AI = dyn_cast<AllocaInst>(V)) {
     std::map<const AllocaInst*, int>::iterator SI =
-    FuncInfo.StaticAllocaMap.find(AI);
+      FuncInfo.StaticAllocaMap.find(AI);
     if (SI != FuncInfo.StaticAllocaMap.end())
       return DAG.getFrameIndex(SI->second, TLI.getPointerTy());
   }
@@ -1114,7 +1119,6 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
   
   RegsForValue RFV(TLI, InReg, VTy);
   SDOperand Chain = DAG.getEntryNode();
-
   return RFV.getCopyFromRegs(DAG, Chain, NULL);
 }
 
@@ -1124,6 +1128,7 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
     DAG.setRoot(DAG.getNode(ISD::RET, MVT::Other, getControlRoot()));
     return;
   }
+  
   SmallVector<SDOperand, 8> NewValues;
   NewValues.push_back(getControlRoot());
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {  
@@ -3600,7 +3605,7 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo, bool HasEarlyClobber,
   
   
   MachineFunction &MF = DAG.getMachineFunction();
-  SmallVector<unsigned, 8> Regs;
+  SmallVector<unsigned, 4> Regs;
   
   // If this is a constraint for a single physreg, or a constraint for a
   // register class, find it.

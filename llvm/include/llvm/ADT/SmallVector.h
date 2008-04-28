@@ -491,16 +491,11 @@ public:
       operator=(RHS);
   }
 
-  SmallVector(const SmallVectorImpl<T> &RHS)
-    : SmallVectorImpl<T>(NumTsAvailable) {
-    if (!RHS.empty())
-      operator=(RHS);
-  }
-  
   const SmallVector &operator=(const SmallVector &RHS) {
     SmallVectorImpl<T>::operator=(RHS);
     return *this;
   }
+  
 };
 
 } // End llvm namespace
