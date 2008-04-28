@@ -174,6 +174,110 @@ AbstractInterpreter *AbstractInterpreter::createLLI(const std::string &ProgPath,
   return 0;
 }
 
+//===---------------------------------------------------------------------===//
+// Custom execution command implementation of AbstractIntepreter interface
+//
+// Allows using a custom command for executing the bitcode, thus allows,
+// for example, to invoke a cross compiler for code generation followed by 
+// a simulator that executes the generated binary.
+namespace {
+  class CustomExecutor : public AbstractInterpreter {
+    std::string ExecutionCommand;
+    std::vector<std::string> ExecutorArgs;
+  public:
+    CustomExecutor(
+      const std::string &ExecutionCmd, std::vector<std::string> ExecArgs) :
+      ExecutionCommand(ExecutionCmd), ExecutorArgs(ExecArgs) {}
+
+    virtual int ExecuteProgram(const std::string &Bitcode,
+                               const std::vector<std::string> &Args,
+                               const std::string &InputFile,
+                               const std::string &OutputFile,
+                               const std::vector<std::string> &GCCArgs,
+                               const std::vector<std::string> &SharedLibs =
+                               std::vector<std::string>(),
+                               unsigned Timeout = 0,
+                               unsigned MemoryLimit = 0);
+  };
+}
+
+int CustomExecutor::ExecuteProgram(const std::string &Bitcode,
+                        const std::vector<std::string> &Args,
+                        const std::string &InputFile,
+                        const std::string &OutputFile,
+                        const std::vector<std::string> &GCCArgs,
+                        const std::vector<std::string> &SharedLibs,
+                        unsigned Timeout,
+                        unsigned MemoryLimit) {
+
+  std::vector<const char*> ProgramArgs;
+  ProgramArgs.push_back(ExecutionCommand.c_str());
+
+  for (std::size_t i = 0; i < ExecutorArgs.size(); ++i)
+    ProgramArgs.push_back(ExecutorArgs.at(i).c_str());
+  ProgramArgs.push_back(Bitcode.c_str());
+  ProgramArgs.push_back(0);
+
+  // Add optional parameters to the running program from Argv
+  for (unsigned i=0, e = Args.size(); i != e; ++i)
+    ProgramArgs.push_back(Args[i].c_str());
+
+  return RunProgramWithTimeout(
+    sys::Path(ExecutionCommand),
+    &ProgramArgs[0], sys::Path(InputFile), sys::Path(OutputFile), 
+    sys::Path(OutputFile), Timeout, MemoryLimit);
+}
+
+// Custom execution environment create method, takes the execution command
+// as arguments
+AbstractInterpreter *AbstractInterpreter::createCustom(
+                    const std::string &ProgramPath,
+                    std::string &Message,
+                    const std::string &ExecCommandLine) {
+
+  std::string Command = "";
+  std::vector<std::string> Args;
+  std::string delimiters = " ";
+
+  // Tokenize the ExecCommandLine to the command and the args to allow
+  // defining a full command line as the command instead of just the
+  // executed program. We cannot just pass the whole string after the command
+  // as a single argument because then program sees only a single
+  // command line argument (with spaces in it: "foo bar" instead 
+  // of "foo" and "bar").
+
+  // code borrowed from: 
+  // http://oopweb.com/CPP/Documents/CPPHOWTO/Volume/C++Programming-HOWTO-7.html
+  std::string::size_type lastPos = 
+    ExecCommandLine.find_first_not_of(delimiters, 0);
+  std::string::size_type pos = 
+    ExecCommandLine.find_first_of(delimiters, lastPos);
+
+  while (std::string::npos != pos || std::string::npos != lastPos) {
+    std::string token = ExecCommandLine.substr(lastPos, pos - lastPos);
+    if (Command == "")
+       Command = token;
+    else
+       Args.push_back(token);
+    // Skip delimiters.  Note the "not_of"
+    lastPos = ExecCommandLine.find_first_not_of(delimiters, pos);
+    // Find next "non-delimiter"
+    pos = ExecCommandLine.find_first_of(delimiters, lastPos);
+  }
+
+  std::string CmdPath = FindExecutable(Command, ProgramPath).toString();
+  if (CmdPath.empty()) {
+    Message = 
+      std::string("Cannot find '") + Command + 
+      "' in executable directory or PATH!\n";
+    return 0;
+  }
+
+  Message = "Found command in: " + CmdPath + "\n";
+
+  return new CustomExecutor(CmdPath, Args);
+}
+
 //===----------------------------------------------------------------------===//
 // LLC Implementation of AbstractIntepreter interface
 //

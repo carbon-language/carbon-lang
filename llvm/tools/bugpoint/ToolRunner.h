@@ -98,6 +98,10 @@ public:
                                         std::string &Message,
                                         const std::vector<std::string> *Args=0);
 
+  static AbstractInterpreter* createCustom(const std::string &ProgramPath,
+                                           std::string &Message,
+                                           const std::string &ExecCommandLine);
+
 
   virtual ~AbstractInterpreter() {}
 

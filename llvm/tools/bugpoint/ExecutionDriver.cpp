@@ -28,7 +28,7 @@ namespace {
   // for miscompilation.
   //
   enum OutputType {
-    AutoPick, RunLLI, RunJIT, RunLLC, RunCBE, CBE_bug, LLC_Safe
+    AutoPick, RunLLI, RunJIT, RunLLC, RunCBE, CBE_bug, LLC_Safe, Custom
   };
 
   cl::opt<double>
@@ -48,6 +48,9 @@ namespace {
                             clEnumValN(RunCBE, "run-cbe", "Compile with CBE"),
                             clEnumValN(CBE_bug,"cbe-bug", "Find CBE bugs"),
                             clEnumValN(LLC_Safe, "llc-safe", "Use LLC for all"),
+                            clEnumValN(Custom, "run-custom",
+                            "Use -exec-command to define a command to execute "
+                            "the bitcode. Useful for cross-compilation."),
                             clEnumValEnd),
                  cl::init(AutoPick));
 
@@ -71,8 +74,13 @@ namespace {
                          "into executing programs"));
 
   cl::list<std::string>
-    AdditionalLinkerArgs("Xlinker", 
+  AdditionalLinkerArgs("Xlinker", 
       cl::desc("Additional arguments to pass to the linker"));
+
+  cl::opt<std::string>
+  CustomExecCommand("exec-command", cl::init("simulate"),
+      cl::desc("Command to execute the bitcode (use with -run-custom) "
+               "(default: simulate)"));
 }
 
 namespace llvm {
@@ -147,6 +155,10 @@ bool BugDriver::initializeExecutionEnvironment() {
   case CBE_bug:
     Interpreter = AbstractInterpreter::createCBE(getToolName(), Message,
                                                  &ToolArgv);
+    break;
+  case Custom:
+    Interpreter = AbstractInterpreter::createCustom(getToolName(), Message,
+                                                    CustomExecCommand);
     break;
   default:
     Message = "Sorry, this back-end is not supported by bugpoint right now!\n";
