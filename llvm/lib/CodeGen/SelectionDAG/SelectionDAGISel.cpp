@@ -3455,8 +3455,18 @@ void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
     Chains[i] = Part.getValue(0);
   }
   
-  if (NumRegs == 1)
-    Chain = Chains[0];
+  if (NumRegs == 1 || Flag)
+    // If NumRegs > 1 && Flag is used then the use of the last CopyToReg is 
+    // flagged to it. That is the CopyToReg nodes and the user are considered
+    // a single scheduling unit. If we create a TokenFactor and return it as
+    // chain, then the TokenFactor is both a predecessor (operand) of the
+    // user as well as a successor (the TF operands are flagged to the user).
+    // c1, f1 = CopyToReg
+    // c2, f2 = CopyToReg
+    // c3     = TokenFactor c1, c2
+    // ...
+    //        = op c3, ..., f2
+    Chain = Chains[NumRegs-1];
   else
     Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &Chains[0], NumRegs);
 }
