@@ -2590,8 +2590,8 @@ static SDOperand getMemcpyLoadsAndStores(SelectionDAG &DAG,
                                          SDOperand Src, uint64_t Size,
                                          unsigned Align,
                                          bool AlwaysInline,
-                                         const Value *DstSV, uint64_t DstOff,
-                                         const Value *SrcSV, uint64_t SrcOff) {
+                                         const Value *DstSV, uint64_t DstSVOff,
+                                         const Value *SrcSV, uint64_t SrcSVOff){
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
   // Expand memcpy to a series of store ops if the size operand falls below
@@ -2610,6 +2610,7 @@ static SDOperand getMemcpyLoadsAndStores(SelectionDAG &DAG,
   GlobalAddressSDNode *G = NULL;
   std::string Str;
   bool CopyFromStr = false;
+  uint64_t SrcOff = 0, DstOff = 0;
 
   if (Src.getOpcode() == ISD::GlobalAddress)
     G = cast<GlobalAddressSDNode>(Src);
@@ -2640,15 +2641,15 @@ static SDOperand getMemcpyLoadsAndStores(SelectionDAG &DAG,
       Store =
         DAG.getStore(Chain, Value,
                      getMemBasePlusOffset(Dst, DstOff, DAG),
-                     DstSV, DstOff);
+                     DstSV, DstSVOff + DstOff);
     } else {
       Value = DAG.getLoad(VT, Chain,
                           getMemBasePlusOffset(Src, SrcOff, DAG),
-                          SrcSV, SrcOff, false, Align);
+                          SrcSV, SrcSVOff + SrcOff, false, Align);
       Store =
         DAG.getStore(Chain, Value,
                      getMemBasePlusOffset(Dst, DstOff, DAG),
-                     DstSV, DstOff, false, Align);
+                     DstSV, DstSVOff + DstOff, false, Align);
     }
     OutChains.push_back(Store);
     SrcOff += VTSize;
@@ -2663,7 +2664,7 @@ static SDOperand getMemsetStores(SelectionDAG &DAG,
                                  SDOperand Chain, SDOperand Dst,
                                  SDOperand Src, uint64_t Size,
                                  unsigned Align,
-                                 const Value *DstSV, uint64_t DstOff) {
+                                 const Value *DstSV, uint64_t DstSVOff) {
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
   // Expand memset to a series of load/store ops if the size operand
@@ -2674,6 +2675,7 @@ static SDOperand getMemsetStores(SelectionDAG &DAG,
     return SDOperand();
 
   SmallVector<SDOperand, 8> OutChains;
+  uint64_t DstOff = 0;
 
   unsigned NumMemOps = MemOps.size();
   for (unsigned i = 0; i < NumMemOps; i++) {
@@ -2682,7 +2684,7 @@ static SDOperand getMemsetStores(SelectionDAG &DAG,
     SDOperand Value = getMemsetValue(Src, VT, DAG);
     SDOperand Store = DAG.getStore(Chain, Value,
                                    getMemBasePlusOffset(Dst, DstOff, DAG),
-                                   DstSV, DstOff);
+                                   DstSV, DstSVOff + DstOff);
     OutChains.push_back(Store);
     DstOff += VTSize;
   }
@@ -2694,8 +2696,8 @@ static SDOperand getMemsetStores(SelectionDAG &DAG,
 SDOperand SelectionDAG::getMemcpy(SDOperand Chain, SDOperand Dst,
                                   SDOperand Src, SDOperand Size,
                                   unsigned Align, bool AlwaysInline,
-                                  const Value *DstSV, uint64_t DstOff,
-                                  const Value *SrcSV, uint64_t SrcOff) {
+                                  const Value *DstSV, uint64_t DstSVOff,
+                                  const Value *SrcSV, uint64_t SrcSVOff) {
 
   // Check to see if we should lower the memcpy to loads and stores first.
   // For cases within the target-specified limits, this is the best choice.
@@ -2707,7 +2709,7 @@ SDOperand SelectionDAG::getMemcpy(SDOperand Chain, SDOperand Dst,
 
     SDOperand Result =
       getMemcpyLoadsAndStores(*this, Chain, Dst, Src, ConstantSize->getValue(),
-                              Align, false, DstSV, DstOff, SrcSV, SrcOff);
+                              Align, false, DstSV, DstSVOff, SrcSV, SrcSVOff);
     if (Result.Val)
       return Result;
   }
@@ -2717,7 +2719,7 @@ SDOperand SelectionDAG::getMemcpy(SDOperand Chain, SDOperand Dst,
   SDOperand Result =
     TLI.EmitTargetCodeForMemcpy(*this, Chain, Dst, Src, Size, Align,
                                 AlwaysInline,
-                                DstSV, DstOff, SrcSV, SrcOff);
+                                DstSV, DstSVOff, SrcSV, SrcSVOff);
   if (Result.Val)
     return Result;
 
@@ -2727,7 +2729,7 @@ SDOperand SelectionDAG::getMemcpy(SDOperand Chain, SDOperand Dst,
     assert(ConstantSize && "AlwaysInline requires a constant size!");
     return getMemcpyLoadsAndStores(*this, Chain, Dst, Src,
                                    ConstantSize->getValue(), Align, true,
-                                   DstSV, DstOff, SrcSV, SrcOff);
+                                   DstSV, DstSVOff, SrcSV, SrcSVOff);
   }
 
   // Emit a library call.
@@ -2748,8 +2750,8 @@ SDOperand SelectionDAG::getMemcpy(SDOperand Chain, SDOperand Dst,
 SDOperand SelectionDAG::getMemmove(SDOperand Chain, SDOperand Dst,
                                    SDOperand Src, SDOperand Size,
                                    unsigned Align,
-                                   const Value *DstSV, uint64_t DstOff,
-                                   const Value *SrcSV, uint64_t SrcOff) {
+                                   const Value *DstSV, uint64_t DstSVOff,
+                                   const Value *SrcSV, uint64_t SrcSVOff) {
 
   // TODO: Optimize small memmove cases with simple loads and stores,
   // ensuring that all loads precede all stores. This can cause severe
@@ -2759,7 +2761,7 @@ SDOperand SelectionDAG::getMemmove(SDOperand Chain, SDOperand Dst,
   // code. If the target chooses to do this, this is the next best.
   SDOperand Result =
     TLI.EmitTargetCodeForMemmove(*this, Chain, Dst, Src, Size, Align,
-                                 DstSV, DstOff, SrcSV, SrcOff);
+                                 DstSV, DstSVOff, SrcSV, SrcSVOff);
   if (Result.Val)
     return Result;
 
@@ -2781,7 +2783,7 @@ SDOperand SelectionDAG::getMemmove(SDOperand Chain, SDOperand Dst,
 SDOperand SelectionDAG::getMemset(SDOperand Chain, SDOperand Dst,
                                   SDOperand Src, SDOperand Size,
                                   unsigned Align,
-                                  const Value *DstSV, uint64_t DstOff) {
+                                  const Value *DstSV, uint64_t DstSVOff) {
 
   // Check to see if we should lower the memset to stores first.
   // For cases within the target-specified limits, this is the best choice.
@@ -2793,7 +2795,7 @@ SDOperand SelectionDAG::getMemset(SDOperand Chain, SDOperand Dst,
 
     SDOperand Result =
       getMemsetStores(*this, Chain, Dst, Src, ConstantSize->getValue(), Align,
-                      DstSV, DstOff);
+                      DstSV, DstSVOff);
     if (Result.Val)
       return Result;
   }
@@ -2802,7 +2804,7 @@ SDOperand SelectionDAG::getMemset(SDOperand Chain, SDOperand Dst,
   // code. If the target chooses to do this, this is the next best.
   SDOperand Result =
     TLI.EmitTargetCodeForMemset(*this, Chain, Dst, Src, Size, Align,
-                                DstSV, DstOff);
+                                DstSV, DstSVOff);
   if (Result.Val)
     return Result;
 

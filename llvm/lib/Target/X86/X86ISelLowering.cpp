@@ -4763,7 +4763,7 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
                                            SDOperand Chain,
                                            SDOperand Dst, SDOperand Src,
                                            SDOperand Size, unsigned Align,
-                                           const Value *DstSV, uint64_t DstOff) {
+                                        const Value *DstSV, uint64_t DstSVOff) {
   ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
 
   /// If not DWORD aligned or size is more than the threshold, call the library.
@@ -4890,7 +4890,7 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
                                       DAG.getConstant(Offset, AddrVT)),
                           Src,
                           DAG.getConstant(BytesLeft, SizeVT),
-                          Align, DstSV, 0);
+                          Align, DstSV, DstSVOff + Offset);
   }
 
   // TODO: Use a Tokenfactor, as in memcpy, instead of a single chain.
@@ -4903,8 +4903,8 @@ X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
                                            SDOperand Dst, SDOperand Src,
                                            SDOperand Size, unsigned Align,
                                            bool AlwaysInline,
-                                           const Value *DstSV, uint64_t DstOff,
-                                           const Value *SrcSV, uint64_t SrcOff){
+                                           const Value *DstSV, uint64_t DstSVOff,
+                                           const Value *SrcSV, uint64_t SrcSVOff){
   
   // This requires the copy size to be a constant, preferrably
   // within a subtarget-specific limit.
@@ -4964,7 +4964,8 @@ X86TargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
                                                 DAG.getConstant(Offset, SrcVT)),
                                     DAG.getConstant(BytesLeft, SizeVT),
                                     Align, AlwaysInline,
-                                    DstSV, 0, SrcSV, 0));
+                                    DstSV, DstSVOff + Offset,
+                                    SrcSV, SrcSVOff + Offset));
   }
 
   return DAG.getNode(ISD::TokenFactor, MVT::Other, &Results[0], Results.size());

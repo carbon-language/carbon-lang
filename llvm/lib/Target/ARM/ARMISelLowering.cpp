@@ -1247,8 +1247,8 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
                                            SDOperand Dst, SDOperand Src,
                                            SDOperand Size, unsigned Align,
                                            bool AlwaysInline,
-                                           const Value *DstSV, uint64_t DstOff,
-                                           const Value *SrcSV, uint64_t SrcOff){
+                                         const Value *DstSV, uint64_t DstSVOff,
+                                         const Value *SrcSV, uint64_t SrcSVOff){
   // Do repeated 4-byte loads and stores. To be improved.
   // This requires 4-byte alignment.
   if ((Align & 3) != 0)
@@ -1271,6 +1271,7 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
   const unsigned MAX_LOADS_IN_LDM = 6;
   SDOperand TFOps[MAX_LOADS_IN_LDM];
   SDOperand Loads[MAX_LOADS_IN_LDM];
+  uint64_t SrcOff = 0, DstOff = 0;
 
   // Emit up to MAX_LOADS_IN_LDM loads, then a TokenFactor barrier, then the
   // same number of stores.  The loads and stores will get combined into
@@ -1281,7 +1282,7 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
       Loads[i] = DAG.getLoad(VT, Chain,
                              DAG.getNode(ISD::ADD, MVT::i32, Src,
                                          DAG.getConstant(SrcOff, MVT::i32)),
-                             SrcSV, SrcOff);
+                             SrcSV, SrcSVOff + SrcOff);
       TFOps[i] = Loads[i].getValue(1);
       SrcOff += VTSize;
     }
@@ -1292,7 +1293,7 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
       TFOps[i] = DAG.getStore(Chain, Loads[i],
                            DAG.getNode(ISD::ADD, MVT::i32, Dst, 
                                        DAG.getConstant(DstOff, MVT::i32)),
-                           DstSV, DstOff);
+                           DstSV, DstSVOff + DstOff);
       DstOff += VTSize;
     }
     Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &TFOps[0], i);
@@ -1318,7 +1319,7 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
     Loads[i] = DAG.getLoad(VT, Chain,
                            DAG.getNode(ISD::ADD, MVT::i32, Src,
                                        DAG.getConstant(SrcOff, MVT::i32)),
-                           SrcSV, SrcOff);
+                           SrcSV, SrcSVOff + SrcOff);
     TFOps[i] = Loads[i].getValue(1);
     ++i;
     SrcOff += VTSize;
@@ -1340,7 +1341,7 @@ ARMTargetLowering::EmitTargetCodeForMemcpy(SelectionDAG &DAG,
     TFOps[i] = DAG.getStore(Chain, Loads[i],
                             DAG.getNode(ISD::ADD, MVT::i32, Dst, 
                                         DAG.getConstant(DstOff, MVT::i32)),
-                            DstSV, DstOff);
+                            DstSV, DstSVOff + DstOff);
     ++i;
     DstOff += VTSize;
     BytesLeft -= VTSize;
