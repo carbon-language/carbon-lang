@@ -486,7 +486,8 @@ public:
     append(S, E);
   }
   
-  SmallVector(const SmallVector &RHS) : SmallVectorImpl<T>(NumTsAvailable) {
+  SmallVector(const SmallVectorImpl<T> &RHS)
+    : SmallVectorImpl<T>(NumTsAvailable) {
     if (!RHS.empty())
       operator=(RHS);
   }
