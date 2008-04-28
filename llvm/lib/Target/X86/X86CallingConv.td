@@ -83,6 +83,10 @@ def RetCC_X86_Win64_C : CallingConv<[
   // The X86-Win64 calling convention always returns __m64 values in RAX.
   CCIfType<[v8i8, v4i16, v2i32, v1i64], CCAssignToReg<[RAX]>>,
 
+  // And FP in XMM0 only.
+  CCIfType<[f32], CCAssignToReg<[XMM0]>>,
+  CCIfType<[f64], CCAssignToReg<[XMM0]>>,
+
   // Otherwise, everything is the same as 'normal' X86-64 C CC.
   CCDelegateTo<RetCC_X86_64_C>
 ]>;
