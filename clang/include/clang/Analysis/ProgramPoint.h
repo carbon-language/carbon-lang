@@ -25,8 +25,9 @@ namespace clang {
     
 class ProgramPoint {
 public:
-  enum Kind { BlockEntranceKind=0, PostStmtKind=1, BlockExitKind=2,
-              BlockEdgeSrcKind=3, BlockEdgeDstKind=4, BlockEdgeAuxKind=5 }; 
+  enum Kind { BlockEntranceKind=0, PostStmtKind=1, PostLoadKind=2,
+              BlockExitKind=3, BlockEdgeSrcKind=4, BlockEdgeDstKind=5,
+              BlockEdgeAuxKind=6 }; 
 protected:
   uintptr_t Data;
 
@@ -100,13 +101,25 @@ public:
 
 
 class PostStmt : public ProgramPoint {
+protected:
+  PostStmt(const Stmt* S, Kind k) : ProgramPoint(S, k) {}    
 public:
   PostStmt(const Stmt* S) : ProgramPoint(S, PostStmtKind) {}
-  
+      
   Stmt* getStmt() const { return (Stmt*) getRawPtr(); }
 
   static bool classof(const ProgramPoint* Location) {
-    return Location->getKind() == PostStmtKind;
+    unsigned k = Location->getKind();
+    return k == PostStmtKind || k == PostLoadKind;
+  }
+};
+  
+class PostLoad : public PostStmt {
+public:
+  PostLoad(const Stmt* S) : PostStmt(S, PostLoadKind) {}
+  
+  static bool classof(const ProgramPoint* Location) {
+    return Location->getKind() == PostLoadKind;
   }
 };
   

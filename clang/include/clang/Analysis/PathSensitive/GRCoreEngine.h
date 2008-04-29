@@ -151,12 +151,14 @@ public:
   }  
   
   ExplodedNodeImpl* generateNodeImpl(Stmt* S, void* State,
-                                     ExplodedNodeImpl* Pred);
+                                     ExplodedNodeImpl* Pred,
+                                     bool isLoad = false);
 
-  inline ExplodedNodeImpl* generateNodeImpl(Stmt* S, void* State) {
+  inline ExplodedNodeImpl* generateNodeImpl(Stmt* S, void* State,
+                                            bool isLoad = false) {
     ExplodedNodeImpl* N = getLastNode();
     assert (N && "Predecessor of new node is infeasible.");
-    return generateNodeImpl(S, State, N);
+    return generateNodeImpl(S, State, N, isLoad);
   }
   
   Stmt* getStmt() const { return B[Idx]; }
@@ -201,14 +203,14 @@ public:
     return static_cast<NodeTy*>(NB.getLastNode());
   }
   
-  NodeTy* generateNode(Stmt* S, StateTy* St, NodeTy* Pred) {
+  NodeTy* generateNode(Stmt* S, StateTy* St, NodeTy* Pred, bool isLoad = false){
     HasGeneratedNode = true;
-    return static_cast<NodeTy*>(NB.generateNodeImpl(S, St, Pred));
+    return static_cast<NodeTy*>(NB.generateNodeImpl(S, St, Pred, isLoad));
   }
   
-  NodeTy* generateNode(Stmt* S, StateTy* St) {
+  NodeTy* generateNode(Stmt* S, StateTy* St, bool isLoad = false) {
     HasGeneratedNode = true;
-    return static_cast<NodeTy*>(NB.generateNodeImpl(S, St));    
+    return static_cast<NodeTy*>(NB.generateNodeImpl(S, St, isLoad));    
   }
   
   GRBlockCounter getBlockCounter() const {

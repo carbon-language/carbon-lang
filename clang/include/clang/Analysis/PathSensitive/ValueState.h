@@ -242,7 +242,6 @@ public:
 
   RVal GetRVal(ValueState* St, Expr* E);
   RVal GetRVal(ValueState* St, LVal LV, QualType T = QualType());    
-  RVal GetLVal(ValueState* St, Expr* E);
   
   RVal GetBlkExprRVal(ValueState* St, Expr* Ex);
   

@@ -102,7 +102,8 @@ bool GRCoreEngineImpl::ExecuteWorkList(unsigned Steps) {
       case ProgramPoint::BlockExitKind:
         assert (false && "BlockExit location never occur in forward analysis.");
         break;
-        
+      
+      case ProgramPoint::PostLoadKind:
       case ProgramPoint::PostStmtKind:
         HandlePostStmt(cast<PostStmt>(Node->getLocation()), WU.getBlock(),
                        WU.getIndex(), Node);
@@ -316,11 +317,13 @@ void GRStmtNodeBuilderImpl::GenerateAutoTransition(ExplodedNodeImpl* N) {
     Eng.WList->Enqueue(Succ, B, Idx+1);
 }
 
-ExplodedNodeImpl* GRStmtNodeBuilderImpl::generateNodeImpl(Stmt* S, void* State,
-                                                      ExplodedNodeImpl* Pred) {
+ExplodedNodeImpl*
+GRStmtNodeBuilderImpl::generateNodeImpl(Stmt* S, void* State,
+                                        ExplodedNodeImpl* Pred, bool isLoad) {
   
   bool IsNew;
-  ExplodedNodeImpl* N = Eng.G->getNodeImpl(PostStmt(S), State, &IsNew);
+  ProgramPoint Loc = isLoad ? PostLoad(S) : PostStmt(S);
+  ExplodedNodeImpl* N = Eng.G->getNodeImpl(Loc, State, &IsNew);
   N->addPredecessor(Pred);
   Deferred.erase(Pred);
   

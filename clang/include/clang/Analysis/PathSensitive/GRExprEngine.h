@@ -425,10 +425,6 @@ protected:
     return StateMgr.GetRVal(St, LV, T);
   }
   
-  RVal GetLVal(ValueState* St, Expr* Ex) {
-    return StateMgr.GetLVal(St, Ex);
-  }
-  
   inline NonLVal MakeConstantVal(uint64_t X, Expr* Ex) {
     return NonLVal::MakeVal(BasicVals, X, Ex->getType());
   }
@@ -474,11 +470,7 @@ protected:
     assert (Builder && "GRStmtNodeBuilder not present.");
     return Builder->MakeNode(Dst, S, Pred, St);
   }
-  
-  /// HandleUndefinedStore - Create the necessary sink node to represent
-  ///  a store to an "undefined" LVal.
-  void HandleUndefinedStore(Stmt* S, NodeTy* Pred);
-  
+    
   /// Visit - Transfer function logic for all statements.  Dispatches to
   ///  other functions that handle specific kinds of statements.
   void Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst);
@@ -520,19 +512,14 @@ protected:
   void VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst);  
   
   /// VisitDeclRefExpr - Transfer function logic for DeclRefExprs.
-  void VisitDeclRefExpr(DeclRefExpr* DR, NodeTy* Pred, NodeSet& Dst); 
+  void VisitDeclRefExpr(DeclRefExpr* DR, NodeTy* Pred, NodeSet& Dst,
+                        bool asLval); 
   
   /// VisitDeclStmt - Transfer function logic for DeclStmts.
   void VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst); 
   
   void VisitDeclStmtAux(DeclStmt* DS, ScopedDecl* D,
                         NodeTy* Pred, NodeSet& Dst);
-  
-  void VisitDeref(UnaryOperator* U, NodeTy* Pred, NodeSet& Dst,
-                  bool GetLVal = false);
-  
-  void VisitDeref(Expr* Ex, RVal V, ValueState* St, NodeTy* Pred, NodeSet& Dst,
-                  bool GetLVal);
   
   /// VisitGuardedExpr - Transfer function logic for ?, __builtin_choose
   void VisitGuardedExpr(Expr* Ex, Expr* L, Expr* R, NodeTy* Pred, NodeSet& Dst);
@@ -542,10 +529,6 @@ protected:
   
   /// VisitMemberExpr - Transfer function for member expressions.
   void VisitMemberExpr(MemberExpr* M, NodeTy* Pred, NodeSet& Dst, bool asLVal);
-  
-  void VisitMemberExprField(MemberExpr* M, Expr* Base, NodeTy* Pred,
-                            NodeSet& Dst, bool asLVal);
-    
   
   /// VisitObjCMessageExpr - Transfer function for ObjC message expressions.
   void VisitObjCMessageExpr(ObjCMessageExpr* ME, NodeTy* Pred, NodeSet& Dst);
@@ -564,15 +547,12 @@ protected:
   /// VisitSizeOfAlignOfTypeExpr - Transfer function for sizeof(type).
   void VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex, NodeTy* Pred,
                                   NodeSet& Dst);
-  
-  // VisitSizeOfExpr - Transfer function for sizeof(expr).
-  void VisitSizeOfExpr(UnaryOperator* U, NodeTy* Pred, NodeSet& Dst);
-  
+    
   /// VisitUnaryOperator - Transfer function logic for unary operators.
-  void VisitUnaryOperator(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst);
-  
-  
-  
+  void VisitUnaryOperator(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst,
+                          bool asLVal);
+ 
+  bool CheckDivideZero(Expr* Ex, ValueState* St, NodeTy* Pred, RVal Denom);  
   
   RVal EvalCast(RVal X, QualType CastT) {
     if (X.isUnknownOrUndef())
@@ -583,8 +563,6 @@ protected:
     else
       return TF->EvalCast(*this, cast<NonLVal>(X), CastT);
   }
-  
-
   
   RVal EvalMinus(UnaryOperator* U, RVal X) {
     return X.isValid() ? TF->EvalMinus(*this, U, cast<NonLVal>(X)) : X;
@@ -603,27 +581,27 @@ protected:
   }
   
   RVal EvalBinOp(BinaryOperator::Opcode Op, RVal L, RVal R) {
-    
+
     if (L.isUndef() || R.isUndef())
       return UndefinedVal();
-    
+
     if (L.isUnknown() || R.isUnknown())
       return UnknownVal();
-        
+
     if (isa<LVal>(L)) {
       if (isa<LVal>(R))
         return TF->EvalBinOp(*this, Op, cast<LVal>(L), cast<LVal>(R));
       else
         return TF->EvalBinOp(*this, Op, cast<LVal>(L), cast<NonLVal>(R));
     }
-    
+
     if (isa<LVal>(R)) {
       // Support pointer arithmetic where the increment/decrement operand
       // is on the left and the pointer on the right.
-      
+
       assert (Op == BinaryOperator::Add || Op == BinaryOperator::Sub);
 
-      // Commute the operands.      
+      // Commute the operands.
       return TF->EvalBinOp(*this, Op, cast<LVal>(R), cast<NonLVal>(L));
     }
     else
@@ -631,11 +609,11 @@ protected:
   }
   
   void EvalCall(NodeSet& Dst, CallExpr* CE, RVal L, NodeTy* Pred) {
-    assert (Builder && "GRStmtNodeBuilder must be defined.");    
+    assert (Builder && "GRStmtNodeBuilder must be defined.");
     TF->EvalCall(Dst, *this, *Builder, CE, L, Pred);
   }
   
-  void EvalObjCMessageExpr(NodeSet& Dst, ObjCMessageExpr* ME, NodeTy* Pred) {    
+  void EvalObjCMessageExpr(NodeSet& Dst, ObjCMessageExpr* ME, NodeTy* Pred) {
     assert (Builder && "GRStmtNodeBuilder must be defined.");
     TF->EvalObjCMessageExpr(Dst, *this, *Builder, ME, Pred);
   }
@@ -643,7 +621,16 @@ protected:
   void EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred, ValueState* St,
                  RVal TargetLV, RVal Val);
   
-  void EvalReturn(NodeSet& Dst, ReturnStmt* s, NodeTy* Pred);  
+  // FIXME: The "CheckOnly" option exists only because Array and Field
+  //  loads aren't fully implemented.  Eventually this option will go away.
+  
+  void EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
+                ValueState* St, RVal location, bool CheckOnly = false);
+  
+  ValueState* EvalLocation(Expr* Ex, NodeTy* Pred,
+                           ValueState* St, RVal location, bool isLoad = false);
+  
+  void EvalReturn(NodeSet& Dst, ReturnStmt* s, NodeTy* Pred);
   
   ValueState* MarkBranch(ValueState* St, Stmt* Terminator, bool branchTaken);
 };

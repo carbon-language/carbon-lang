@@ -271,22 +271,6 @@ RVal ValueStateManager::GetRVal(ValueState* St, Expr* E) {
         E = cast<ParenExpr>(E)->getSubExpr();
         continue;
         
-        // DeclRefExprs can either evaluate to an LVal or a Non-LVal
-        // (assuming an implicit "load") depending on the context.  In this
-        // context we assume that we are retrieving the value contained
-        // within the referenced variables.
-        
-      case Stmt::DeclRefExprClass: {
-
-        // Check if this expression is a block-level expression.  If so,
-        // return its value.
-        ValueState::ExprBindingsTy::TreeTy* T=St->BlockExprBindings.SlimFind(E);
-        if (T) return T->getValue().second;
-        
-        RVal X = RVal::MakeVal(BasicVals, cast<DeclRefExpr>(E));
-        return isa<lval::DeclVal>(X) ? GetRVal(St, cast<lval::DeclVal>(X)) : X;
-      }
-        
       case Stmt::CharacterLiteralClass: {
         CharacterLiteral* C = cast<CharacterLiteral>(E);
         return NonLVal::MakeVal(BasicVals, C->getValue(), C->getType());
@@ -326,18 +310,6 @@ RVal ValueStateManager::GetRVal(ValueState* St, Expr* E) {
         break;
       }
         
-      case Stmt::UnaryOperatorClass: {
-        
-        UnaryOperator* U = cast<UnaryOperator>(E);
-        
-        if (U->getOpcode() == UnaryOperator::Plus) {
-          E = U->getSubExpr();
-          continue;
-        }
-        
-        break;
-      }
-          
         // Handle all other Expr* using a lookup.
         
       default:
@@ -375,34 +347,6 @@ RVal ValueStateManager::GetBlkExprRVal(ValueState* St, Expr* E) {
       return T ? T->getValue().second : UnknownVal();
     }
   }
-}
-
-RVal ValueStateManager::GetLVal(ValueState* St, Expr* E) {
-  
-  E = E->IgnoreParens();
-
-  if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E)) {
-    ValueDecl* VD = DR->getDecl();
-    
-    if (FunctionDecl* FD = dyn_cast<FunctionDecl>(VD))
-      return lval::FuncVal(FD);
-    else
-      return lval::DeclVal(cast<VarDecl>(DR->getDecl()));
-  }
-  
-  if (UnaryOperator* U = dyn_cast<UnaryOperator>(E))
-    if (U->getOpcode() == UnaryOperator::Deref) {
-      E = U->getSubExpr()->IgnoreParens();
-        
-      if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(E)) {
-        lval::DeclVal X(cast<VarDecl>(DR->getDecl()));
-        return GetRVal(St, X);
-      }
-      else
-        return GetRVal(St, E);
-    }
-        
-  return GetRVal(St, E);
 }
 
 ValueState*
