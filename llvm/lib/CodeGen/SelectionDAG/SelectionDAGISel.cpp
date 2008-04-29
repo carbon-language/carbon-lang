@@ -4119,15 +4119,24 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
   // and set it as the value of the call.
   if (!RetValRegs.Regs.empty()) {
     SDOperand Val = RetValRegs.getCopyFromRegs(DAG, Chain, &Flag);
-    
-    // If the result of the inline asm is a vector, it may have the wrong
-    // width/num elts.  Make sure to convert it to the right type with
+
+    // If any of the results of the inline asm is a vector, it may have the
+    // wrong width/num elts.  This can happen for register classes that can
+    // contain multiple different value types.  The preg or vreg allocated may
+    // not have the same VT as was expected.  Convert it to the right type with
     // bit_convert.
-    if (MVT::isVector(Val.getValueType())) {
-      MVT::ValueType DesiredVT = TLI.getValueType(CS.getType());
-      Val = DAG.getNode(ISD::BIT_CONVERT, DesiredVT, Val);
+    if (const StructType *ResSTy = dyn_cast<StructType>(CS.getType())) {
+      for (unsigned i = 0, e = ResSTy->getNumElements(); i != e; ++i) {
+        if (MVT::isVector(Val.Val->getValueType(i)))
+          Val = DAG.getNode(ISD::BIT_CONVERT,
+                            TLI.getValueType(ResSTy->getElementType(i)), Val);
+      }
+    } else {
+      if (MVT::isVector(Val.getValueType()))
+        Val = DAG.getNode(ISD::BIT_CONVERT, TLI.getValueType(CS.getType()),
+                          Val);
     }
-    
+
     setValue(CS.getInstruction(), Val);
   }
   
