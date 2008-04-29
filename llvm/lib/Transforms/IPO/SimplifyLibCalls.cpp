@@ -24,6 +24,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Config/config.h"
@@ -398,15 +399,17 @@ ModulePass *llvm::createSimplifyLibCallsPass() {
   return new SimplifyLibCalls();
 }
 
+// Forward declare utility functions.
+static bool GetConstantStringInfo(Value *V, std::string &Str);
+static Value *CastToCStr(Value *V, Instruction *IP);
+static uint64_t GetStringLength(Value *V);
+
+
 // Classes below here, in the anonymous namespace, are all subclasses of the
 // LibCallOptimization class, each implementing all optimizations possible for a
 // single well-known library call. Each has a static singleton instance that
 // auto registers it into the "optlist" global above.
 namespace {
-
-// Forward declare utility functions.
-static bool GetConstantStringInfo(Value *V, std::string &Str);
-static Value *CastToCStr(Value *V, Instruction *IP);
 
 /// This LibCallOptimization will find instances of a call to "exit" that occurs
 /// within the "main" function and change it to a simple "ret" instruction with
@@ -812,12 +815,10 @@ struct VISIBILITY_HIDDEN StrLenOptimization : public LibCallOptimization {
     }
 
     // Get the length of the constant string operand
-    std::string Str;
-    if (!GetConstantStringInfo(Src, Str))
-      return false;
-      
     // strlen("xyz") -> 3 (for example)
-    return ReplaceCallWith(CI, ConstantInt::get(CI->getType(), Str.size()));
+    if (uint64_t Len = GetStringLength(Src))
+      return ReplaceCallWith(CI, ConstantInt::get(CI->getType(), Len-1));
+    return false;
   }
 } StrLenOptimizer;
 
@@ -1876,6 +1877,7 @@ struct VISIBILITY_HIDDEN NearByIntOptimization : public UnaryDoubleFPOptimizer {
     return false; // opt failed
   }
 } NearByIntOptimizer;
+} // end anon namespace
 
 /// GetConstantStringInfo - This function computes the length of a
 /// null-terminated constant array of integers.  This function can't rely on the
@@ -1972,6 +1974,131 @@ static bool GetConstantStringInfo(Value *V, std::string &Str) {
   return false; // The array isn't null terminated.
 }
 
+/// GetStringLengthH - If we can compute the length of the string pointed to by
+/// the specified pointer, return 'len+1'.  If we can't, return 0.
+static uint64_t GetStringLengthH(Value *V, SmallPtrSet<PHINode*, 32> &PHIs) {
+  // Look through noop bitcast instructions.
+  if (BitCastInst *BCI = dyn_cast<BitCastInst>(V))
+    return GetStringLengthH(BCI->getOperand(0), PHIs);
+  
+  // If this is a PHI node, there are two cases: either we have already seen it
+  // or we haven't.
+  if (PHINode *PN = dyn_cast<PHINode>(V)) {
+    if (!PHIs.insert(PN))
+      return ~0ULL;  // already in the set.
+
+    // If it was new, see if all the input strings are the same length.
+    uint64_t LenSoFar = ~0ULL;
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+      uint64_t Len = GetStringLengthH(PN->getIncomingValue(i), PHIs);
+      if (Len == 0) return 0; // Unknown length -> unknown.
+      
+      if (Len == ~0ULL) continue;
+      
+      if (Len != LenSoFar && LenSoFar != ~0ULL)
+        return 0;    // Disagree -> unknown.
+      LenSoFar = Len;
+    }
+    
+    // Success, all agree.
+    return LenSoFar;
+  }
+  
+  // strlen(select(c,x,y)) -> strlen(x) ^ strlen(y)
+  if (SelectInst *SI = dyn_cast<SelectInst>(V)) {
+    uint64_t Len1 = GetStringLengthH(SI->getTrueValue(), PHIs);
+    if (Len1 == 0) return 0;
+    uint64_t Len2 = GetStringLengthH(SI->getFalseValue(), PHIs);
+    if (Len2 == 0) return 0;
+    if (Len1 == ~0ULL) return Len2;
+    if (Len2 == ~0ULL) return Len1;
+    if (Len1 != Len2) return 0;
+    return Len1;
+  }
+  
+  // If the value is not a GEP instruction nor a constant expression with a
+  // GEP instruction, then return unknown.
+  User *GEP = 0;
+  if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(V)) {
+    GEP = GEPI;
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
+    if (CE->getOpcode() != Instruction::GetElementPtr)
+      return 0;
+    GEP = CE;
+  } else {
+    return 0;
+  }
+  
+  // Make sure the GEP has exactly three arguments.
+  if (GEP->getNumOperands() != 3)
+    return 0;
+  
+  // Check to make sure that the first operand of the GEP is an integer and
+  // has value 0 so that we are sure we're indexing into the initializer.
+  if (ConstantInt *Idx = dyn_cast<ConstantInt>(GEP->getOperand(1))) {
+    if (!Idx->isZero())
+      return 0;
+  } else
+    return 0;
+  
+  // If the second index isn't a ConstantInt, then this is a variable index
+  // into the array.  If this occurs, we can't say anything meaningful about
+  // the string.
+  uint64_t StartIdx = 0;
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(GEP->getOperand(2)))
+    StartIdx = CI->getZExtValue();
+  else
+    return 0;
+  
+  // The GEP instruction, constant or instruction, must reference a global
+  // variable that is a constant and is initialized. The referenced constant
+  // initializer is the array that we'll use for optimization.
+  GlobalVariable* GV = dyn_cast<GlobalVariable>(GEP->getOperand(0));
+  if (!GV || !GV->isConstant() || !GV->hasInitializer())
+    return 0;
+  Constant *GlobalInit = GV->getInitializer();
+  
+  // Handle the ConstantAggregateZero case, which is a degenerate case. The
+  // initializer is constant zero so the length of the string must be zero.
+  if (isa<ConstantAggregateZero>(GlobalInit))
+    return 1;  // Len = 0 offset by 1.
+  
+  // Must be a Constant Array
+  ConstantArray *Array = dyn_cast<ConstantArray>(GlobalInit);
+  if (!Array || Array->getType()->getElementType() != Type::Int8Ty)
+    return false;
+  
+  // Get the number of elements in the array
+  uint64_t NumElts = Array->getType()->getNumElements();
+  
+  // Traverse the constant array from StartIdx (derived above) which is
+  // the place the GEP refers to in the array.
+  for (unsigned i = StartIdx; i != NumElts; ++i) {
+    Constant *Elt = Array->getOperand(i);
+    ConstantInt *CI = dyn_cast<ConstantInt>(Elt);
+    if (!CI) // This array isn't suitable, non-int initializer.
+      return 0;
+    if (CI->isZero())
+      return i-StartIdx+1; // We found end of string, success!
+  }
+  
+  return 0; // The array isn't null terminated, conservatively return 'unknown'.
+}
+  
+/// GetStringLength - If we can compute the length of the string pointed to by
+/// the specified pointer, return 'len+1'.  If we can't, return 0.
+static uint64_t GetStringLength(Value *V) {
+  if (!isa<PointerType>(V->getType())) return 0;
+
+  SmallPtrSet<PHINode*, 32> PHIs;
+  uint64_t Len = GetStringLengthH(V, PHIs);
+  // If Len is ~0ULL, we had an infinite phi cycle: this is dead code, so return
+  // an empty string as a length.
+  return Len == ~0ULL ? 1 : Len;
+}
+
+  
+  
 /// CastToCStr - Return V if it is an sbyte*, otherwise cast it to sbyte*,
 /// inserting the cast before IP, and return the cast.
 /// @brief Cast a value to a "C" string.
@@ -2082,4 +2209,3 @@ static Value *CastToCStr(Value *V, Instruction *IP) {
 //   * trunc(cnst) -> cnst'
 //
 //
-}
