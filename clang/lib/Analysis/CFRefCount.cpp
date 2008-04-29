@@ -590,7 +590,8 @@ public:
 private:
   // Instance variables.
   
-  CFRefSummaryManager Summaries;
+  CFRefSummaryManager Summaries;  
+  const bool          GCEnabled;  
   RefBFactoryTy       RefBFactory;
      
   UseAfterReleasesTy UseAfterReleases;
@@ -636,8 +637,9 @@ private:
   
 public:
   
-  CFRefCount(ASTContext& Ctx)
+  CFRefCount(ASTContext& Ctx, bool gcenabled)
     : Summaries(Ctx),
+      GCEnabled(gcenabled),
       RetainSelector(GetUnarySelector("retain", Ctx)),
       ReleaseSelector(GetUnarySelector("release", Ctx)) {}
   
@@ -1575,6 +1577,6 @@ void Leak::GetErrorNodes(std::vector<ExplodedNode<ValueState>*>& Nodes) {
 // Transfer function creation for external clients.
 //===----------------------------------------------------------------------===//
 
-GRTransferFuncs* clang::MakeCFRefCountTF(ASTContext& Ctx) {
-  return new CFRefCount(Ctx);
+GRTransferFuncs* clang::MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled) {
+  return new CFRefCount(Ctx, GCEnabled);
 }  

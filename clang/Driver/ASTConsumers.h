@@ -53,6 +53,7 @@ ASTConsumer *CreateGRSimpleVals(Diagnostic &Diags,
   
 ASTConsumer *CreateCFRefChecker(Diagnostic &Diags,
                                 Preprocessor* PP, PreprocessorFactory* PPF,
+                                const LangOptions& LangOpts,
                                 const std::string& Function,
                                 const std::string& HTMLDir, bool Visualize,
                                 bool TrimGraph, bool AnalyzeAll);

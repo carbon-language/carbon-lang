@@ -690,7 +690,7 @@ public:
   virtual bool printFuncDeclStart() { return false; }
 
   virtual const char* getCheckerName() = 0;
-  virtual GRTransferFuncs* getTransferFunctions() = 0;
+  virtual void getTransferFunctions(std::vector<GRTransferFuncs*>& TFs) = 0;
 };
 } // end anonymous namespace
 
@@ -732,22 +732,30 @@ void CheckerConsumer::VisitCFG(CFG& C, Decl& CD) {
   else
     llvm::cerr << '\n';    
   
-  // Construct the analysis engine.
-  GRExprEngine Eng(C, CD, *Ctx);
+  std::vector<GRTransferFuncs*> TFs;
+  getTransferFunctions(TFs);
   
-  // Set base transfer functions.
-  llvm::OwningPtr<GRTransferFuncs> TF(getTransferFunctions());
-  Eng.setTransferFunctions(TF.get());
-  
-  // Execute the worklist algorithm.
-  Eng.ExecuteWorkList();
-  
-  // Display warnings.
-  Eng.EmitWarnings(Diags, PD.get());
-  
-#ifndef NDEBUG
-  if (Visualize) Eng.ViewGraph(TrimGraph);
-#endif
+  while (!TFs.empty()) {
+
+    // Construct the analysis engine.
+    GRExprEngine Eng(C, CD, *Ctx);
+    
+    // Set base transfer functions.
+    llvm::OwningPtr<GRTransferFuncs> TF(TFs.back());
+    TFs.pop_back();
+      
+    Eng.setTransferFunctions(TF.get());
+    
+    // Execute the worklist algorithm.
+    Eng.ExecuteWorkList();
+    
+    // Display warnings.
+    Eng.EmitWarnings(Diags, PD.get());
+    
+  #ifndef NDEBUG
+    if (Visualize) Eng.ViewGraph(TrimGraph);
+  #endif
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -765,8 +773,8 @@ public:
 
   virtual const char* getCheckerName() { return "GRSimpleVals"; }
   
-  virtual GRTransferFuncs* getTransferFunctions() {
-    return MakeGRSimpleValsTF();
+  virtual void getTransferFunctions(std::vector<GRTransferFuncs*>& TFs) {
+    return TFs.push_back(MakeGRSimpleValsTF());
   }
 };
 } // end anonymous namespace
@@ -789,19 +797,34 @@ ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags,
 
 namespace {
 class CFRefCountCheckerVisitor : public CheckerConsumer {
+  const LangOptions& LangOpts;
 public:
   CFRefCountCheckerVisitor(Diagnostic &diags, Preprocessor* pp,
                            PreprocessorFactory* ppf,
+                           const LangOptions& lopts,
                            const std::string& fname,
                            const std::string& htmldir,
                            bool visualize, bool trim, bool analyzeAll)
   : CheckerConsumer(diags, pp, ppf, fname, htmldir, visualize,
-                    trim, analyzeAll) {}
+                    trim, analyzeAll), LangOpts(lopts) {}
   
   virtual const char* getCheckerName() { return "CFRefCountChecker"; }
   
-  virtual GRTransferFuncs* getTransferFunctions() {
-    return MakeCFRefCountTF(*Ctx);
+  virtual void getTransferFunctions(std::vector<GRTransferFuncs*>& TFs) {
+    switch (LangOpts.getGCMode()) {
+      case LangOptions::NonGC:
+        TFs.push_back(MakeCFRefCountTF(*Ctx, false));
+        break;
+        
+      case LangOptions::GCOnly:
+        TFs.push_back(MakeCFRefCountTF(*Ctx, true));
+        break;
+        
+      case LangOptions::HybridGC:
+        TFs.push_back(MakeCFRefCountTF(*Ctx, false));
+        TFs.push_back(MakeCFRefCountTF(*Ctx, true));
+        break;
+    }
   }
 };
 } // end anonymous namespace
@@ -809,13 +832,15 @@ public:
 ASTConsumer* clang::CreateCFRefChecker(Diagnostic &Diags,
                                        Preprocessor* PP,
                                        PreprocessorFactory* PPF,
+                                       const LangOptions& LangOpts,
                                        const std::string& FunctionName,
                                        const std::string& HTMLDir,
                                        bool Visualize, bool TrimGraph,
                                        bool AnalyzeAll) {
   
-  return new CFRefCountCheckerVisitor(Diags, PP, PPF, FunctionName, HTMLDir,
-                                      Visualize, TrimGraph, AnalyzeAll);
+  return new CFRefCountCheckerVisitor(Diags, PP, PPF, LangOpts, FunctionName,
+                                      HTMLDir, Visualize, TrimGraph,
+                                      AnalyzeAll);
 }
 
 //===----------------------------------------------------------------------===//

@@ -1132,7 +1132,8 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
                                 OutputFile, VisualizeEG, TrimGraph, AnalyzeAll);
       
     case CheckerCFRef:
-      return CreateCFRefChecker(Diag, PP, PPF, AnalyzeSpecificFunction,
+      return CreateCFRefChecker(Diag, PP, PPF, LangOpts,
+                                AnalyzeSpecificFunction,
                                 OutputFile, VisualizeEG, TrimGraph, AnalyzeAll);
       
     case TestSerialization:
