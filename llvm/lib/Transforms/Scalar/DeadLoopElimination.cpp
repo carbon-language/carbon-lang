@@ -162,8 +162,6 @@ bool DeadLoopElimination::runOnLoop(Loop* L, LPPassManager& LPM) {
   L->getUniqueExitBlocks(exitBlocks);
   BasicBlock* exitBlock = exitBlocks[0];
   
-  Function* F = L->getLoopLatch()->getParent();
-  
   for (Loop::block_iterator LI = L->block_begin(), LE = L->block_end();
        LI != LE; ++LI)
     for (BasicBlock::iterator BI = (*LI)->begin(), BE = (*LI)->end();
@@ -210,8 +208,6 @@ bool DeadLoopElimination::runOnLoop(Loop* L, LPPassManager& LPM) {
     
     (*LI)->dropAllReferences();
   }
-  
-  unsigned bar = 0;
   
   for (Loop::block_iterator LI = L->block_begin(), LE = L->block_end();
        LI != LE; ++LI) {
