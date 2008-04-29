@@ -677,7 +677,7 @@ bool MemCpyOpt::processMemCpy(MemCpyInst* M) {
   
   NumMemCpyInstr++;
   
-  return false;
+  return true;
 }
 
 // MemCpyOpt::runOnFunction - This is the main transformation entry point for a
