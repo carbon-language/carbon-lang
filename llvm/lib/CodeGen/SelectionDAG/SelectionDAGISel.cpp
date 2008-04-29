@@ -176,6 +176,15 @@ namespace {
       }
     }
     
+    /// append - Add the specified values to this one.
+    void append(const RegsForValue &RHS) {
+      TLI = RHS.TLI;
+      ValueVTs.append(RHS.ValueVTs.begin(), RHS.ValueVTs.end());
+      RegVTs.append(RHS.RegVTs.begin(), RHS.RegVTs.end());
+      Regs.append(RHS.Regs.begin(), RHS.Regs.end());
+    }
+    
+    
     /// getCopyFromRegs - Emit a series of CopyFromReg nodes that copies from
     /// this value and returns the result as a ValueVTs value.  This uses 
     /// Chain/Flag as the input and updates them for the output Chain/Flag.
@@ -3754,7 +3763,6 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo, bool HasEarlyClobber,
   }
   
   // Otherwise, we couldn't allocate enough registers for this.
-  return;
 }
 
 
@@ -3938,7 +3946,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
   // Loop over all of the inputs, copying the operand values into the
   // appropriate registers and processing the output regs.
   RegsForValue RetValRegs;
-  
+ 
   // IndirectStoresToEmit - The set of stores to emit after the inline asm node.
   std::vector<std::pair<RegsForValue, Value*> > IndirectStoresToEmit;
   
@@ -3970,15 +3978,16 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
         exit(1);
       }
 
-      if (!OpInfo.isIndirect) {
-        // This is the result value of the call.
-        assert(RetValRegs.Regs.empty() &&
-               "Cannot have multiple output constraints yet!");
-        assert(CS.getType() != Type::VoidTy && "Bad inline asm!");
-        RetValRegs = OpInfo.AssignedRegs;
-      } else {
+      // If this is an indirect operand, store through the pointer after the
+      // asm.
+      if (OpInfo.isIndirect) {
         IndirectStoresToEmit.push_back(std::make_pair(OpInfo.AssignedRegs,
                                                       OpInfo.CallOperandVal));
+      } else {
+        // This is the result value of the call.
+        assert(CS.getType() != Type::VoidTy && "Bad inline asm!");
+        // Concatenate this output onto the outputs list.
+        RetValRegs.append(OpInfo.AssignedRegs);
       }
       
       // Add information to the INLINEASM node to know that this register is
@@ -4115,9 +4124,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     // width/num elts.  Make sure to convert it to the right type with
     // bit_convert.
     if (MVT::isVector(Val.getValueType())) {
-      const VectorType *VTy = cast<VectorType>(CS.getType());
-      MVT::ValueType DesiredVT = TLI.getValueType(VTy);
-      
+      MVT::ValueType DesiredVT = TLI.getValueType(CS.getType());
       Val = DAG.getNode(ISD::BIT_CONVERT, DesiredVT, Val);
     }
     
