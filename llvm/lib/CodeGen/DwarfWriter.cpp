@@ -2876,7 +2876,8 @@ private:
     RI->getInitialFrameState(Moves);
     EmitFrameMoves(NULL, 0, Moves, true);
 
-    Asm->EmitAlignment(2, 0, 0, false);
+    Asm->EmitAlignment(TD->getPointerSize() == sizeof(int32_t) ? 2 : 3, 
+                       0, 0, false);
     EmitLabel("eh_frame_common_end", Index);
     
     Asm->EOL();
@@ -2965,7 +2966,8 @@ private:
       // frame.
       EmitFrameMoves("eh_func_begin", EHFrameInfo.Number, EHFrameInfo.Moves, true);
       
-      Asm->EmitAlignment(2, 0, 0, false);
+      Asm->EmitAlignment(TD->getPointerSize() == sizeof(int32_t) ? 2 : 3, 
+                         0, 0, false);
       EmitLabel("eh_frame_end", EHFrameInfo.Number);
     
       // If the function is marked used, this table should be also.  We cannot 
