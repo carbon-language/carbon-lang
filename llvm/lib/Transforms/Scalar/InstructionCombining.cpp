@@ -10311,7 +10311,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   
   // If the RHS is an alloca with a single use, zapify the store, making the
   // alloca dead.
-  if (Ptr->hasOneUse()) {
+  if (Ptr->hasOneUse() && !SI.isVolatile()) {
     if (isa<AllocaInst>(Ptr)) {
       EraseInstFromFunction(SI);
       ++NumCombined;
