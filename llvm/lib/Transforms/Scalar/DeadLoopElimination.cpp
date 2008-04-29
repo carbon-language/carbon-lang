@@ -162,6 +162,12 @@ bool DeadLoopElimination::runOnLoop(Loop* L, LPPassManager& LPM) {
   L->getUniqueExitBlocks(exitBlocks);
   BasicBlock* exitBlock = exitBlocks[0];
   
+  // Because we're deleting a large chunk of code at once, the sequence in which
+  // we remove things is very important to avoid invalidation issues.  Don't
+  // mess with this unless you have good reason and know what you're doing.
+  
+  // Move simple loop-invariant expressions out of the loop, since they
+  // might be needed by the exit phis.
   for (Loop::block_iterator LI = L->block_begin(), LE = L->block_end();
        LI != LE; ++LI)
     for (BasicBlock::iterator BI = (*LI)->begin(), BE = (*LI)->end();
@@ -171,6 +177,7 @@ bool DeadLoopElimination::runOnLoop(Loop* L, LPPassManager& LPM) {
         I->moveBefore(preheader->getTerminator());
     }
   
+  // Connect the preheader directly to the exit block.
   TerminatorInst* TI = preheader->getTerminator();
   if (BranchInst* BI = dyn_cast<BranchInst>(TI)) {
     if (BI->isUnconditional())
@@ -180,9 +187,12 @@ bool DeadLoopElimination::runOnLoop(Loop* L, LPPassManager& LPM) {
     else
       BI->setSuccessor(1, exitBlock);
   } else {
+    // FIXME: Support switches
     return false;
   }
   
+  // Rewrite phis in the exit block to get their inputs from
+  // the preheader instead of the exiting block.
   BasicBlock::iterator BI = exitBlock->begin();
   while (PHINode* P = dyn_cast<PHINode>(BI)) {
     unsigned i = P->getBasicBlockIndex(exitingBlock);
@@ -190,9 +200,12 @@ bool DeadLoopElimination::runOnLoop(Loop* L, LPPassManager& LPM) {
     BI++;
   }
   
+  // Update lots of internal structures...
   DominatorTree& DT = getAnalysis<DominatorTree>();
   for (Loop::block_iterator LI = L->block_begin(), LE = L->block_end();
        LI != LE; ++LI) {
+    // Move all of the block's children to be children of the preheader, which
+    // allows us to remove the domtree entry for the block.
     SmallPtrSet<DomTreeNode*, 8> childNodes;
     childNodes.insert(DT[*LI]->begin(), DT[*LI]->end());
     for (SmallPtrSet<DomTreeNode*, 8>::iterator DI = childNodes.begin(),
@@ -201,6 +214,8 @@ bool DeadLoopElimination::runOnLoop(Loop* L, LPPassManager& LPM) {
     
     DT.eraseNode(*LI);
     
+    // Drop all references between the instructions and the block so
+    // that we don't have reference counting problems later.
     for (BasicBlock::iterator BI = (*LI)->begin(), BE = (*LI)->end();
          BI != BE; ++BI) {
       BI->dropAllReferences();
@@ -209,6 +224,8 @@ bool DeadLoopElimination::runOnLoop(Loop* L, LPPassManager& LPM) {
     (*LI)->dropAllReferences();
   }
   
+  // Erase the instructions and the blocks without having to worry
+  // about ordering because we already dropped the references.
   for (Loop::block_iterator LI = L->block_begin(), LE = L->block_end();
        LI != LE; ++LI) {
     for (BasicBlock::iterator BI = (*LI)->begin(), BE = (*LI)->end();
@@ -220,6 +237,8 @@ bool DeadLoopElimination::runOnLoop(Loop* L, LPPassManager& LPM) {
     (*LI)->eraseFromParent();
   }
   
+  // Finally, the blocks from loopinfo.  This has to happen late because
+  // otherwise our loop iterators won't work.
   LoopInfo& loopInfo = getAnalysis<LoopInfo>();
   SmallPtrSet<BasicBlock*, 8> blocks;
   blocks.insert(L->block_begin(), L->block_end());
@@ -227,6 +246,8 @@ bool DeadLoopElimination::runOnLoop(Loop* L, LPPassManager& LPM) {
        E = blocks.end(); I != E; ++I)
     loopInfo.removeBlock(*I);
   
+  // The last step is to inform the loop pass manager that we've
+  // eliminated this loop.
   LPM.deleteLoopFromQueue(L);
   
   NumDeleted++;
