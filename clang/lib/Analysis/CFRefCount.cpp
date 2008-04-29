@@ -1288,7 +1288,7 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
       assert (false && "Unhandled CFRef transition.");
       
     case DoNothing:
-      if (V.getKind() == RefVal::Released) {
+      if (!GCEnabled && V.getKind() == RefVal::Released) {
         V = RefVal::makeUseAfterRelease();        
         hasErr = V.getKind();
         break;
@@ -1310,8 +1310,13 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
           break;
           
         case RefVal::Released:
-          V = RefVal::makeUseAfterRelease();
-          hasErr = V.getKind();
+          if (GCEnabled)
+            V = RefVal::makeOwned();
+          else {          
+            V = RefVal::makeUseAfterRelease();
+            hasErr = V.getKind();
+          }
+          
           break;
       }
       
