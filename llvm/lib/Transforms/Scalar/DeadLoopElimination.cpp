@@ -126,6 +126,10 @@ bool DeadLoopElimination::IsLoopDead(Loop* L) {
   return true;
 }
 
+/// runOnLoop - Remove dead loops, by which we mean loops that do not impact the
+/// observable behavior of the program other than finite running time.  Note 
+/// we do ensure that this never remove a loop that might be infinite, as doing
+/// so could change the halting/non-halting nature of a program.
 bool DeadLoopElimination::runOnLoop(Loop* L, LPPassManager& LPM) {
   // Don't remove loops for which we can't solve the trip count.
   // They could be infinite, in which case we'd be changing program behavior.
