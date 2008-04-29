@@ -7,7 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the Dead Loop Elimination Pass.
+// This file implements the Dead Loop Elimination Pass.  This pass is
+// responsible for eliminating loops with non-infinite computable trip counts
+// that have no side effects or volatile instructions, and do not contribute
+// to the computation of the function's return value.
 //
 //===----------------------------------------------------------------------===//
 
@@ -31,8 +34,10 @@ namespace {
     // Possibly eliminate loop L if it is dead.
     bool runOnLoop(Loop* L, LPPassManager& LPM);
     
-    bool SingleDominatingExit(Loop* L);
-    bool IsLoopDead(Loop* L);
+    bool SingleDominatingExit(Loop* L,
+                              SmallVector<BasicBlock*, 4>& exitingBlocks);
+    bool IsLoopDead(Loop* L, SmallVector<BasicBlock*, 4>& exitingBlocks,
+                    SmallVector<BasicBlock*, 4>& exitBlocks);
     bool IsLoopInvariantInst(Instruction *I, Loop* L);
     
     virtual void getAnalysisUsage(AnalysisUsage& AU) const {
@@ -56,24 +61,34 @@ LoopPass* llvm::createLoopDeletionPass() {
   return new LoopDeletion();
 }
 
-bool LoopDeletion::SingleDominatingExit(Loop* L) {
-  SmallVector<BasicBlock*, 4> exitingBlocks;
-  L->getExitingBlocks(exitingBlocks);
+/// SingleDominatingExit - Checks that there is only a single blocks that 
+/// branches out of the loop, and that it also dominates the latch block.  Loops
+/// with multiple or non-latch-dominating exiting blocks could be dead, but we'd
+/// have to do more extensive analysis to make sure, for instance, that the 
+/// control flow logic involves was or could be made loop-invariant.
+bool LoopDeletion::SingleDominatingExit(Loop* L,
+                                   SmallVector<BasicBlock*, 4>& exitingBlocks) {
   
   if (exitingBlocks.size() != 1)
-    return 0;
+    return false;
   
   BasicBlock* latch = L->getLoopLatch();
   if (!latch)
-    return 0;
+    return false;
   
   DominatorTree& DT = getAnalysis<DominatorTree>();
   if (DT.dominates(exitingBlocks[0], latch))
-    return exitingBlocks[0];
+    return true;
   else
-    return 0;
+    return false;
 }
 
+/// IsLoopInvariantInst - Checks if an instruction is invariant with respect to
+/// a loop, which is defined as being true if all of its operands are defined
+/// outside of the loop.  These instructions can be hoisted out of the loop
+/// if their results are needed.  This could be made more aggressive by
+/// recursively checking the operands for invariance, but it's not clear that
+/// it's worth it.
 bool LoopDeletion::IsLoopInvariantInst(Instruction *I, Loop* L)  {
   // PHI nodes are not loop invariant if defined in  the loop.
   if (isa<PHINode>(I) && L->contains(I->getParent()))
@@ -88,19 +103,20 @@ bool LoopDeletion::IsLoopInvariantInst(Instruction *I, Loop* L)  {
   return true;
 }
 
-bool LoopDeletion::IsLoopDead(Loop* L) {
-  SmallVector<BasicBlock*, 1> exitingBlocks;
-  L->getExitingBlocks(exitingBlocks);
+/// IsLoopDead - Determined if a loop is dead.  This assumes that we've already
+/// checked for unique exit and exiting blocks, and that the code is in LCSSA
+/// form.
+bool LoopDeletion::IsLoopDead(Loop* L,
+                              SmallVector<BasicBlock*, 4>& exitingBlocks,
+                              SmallVector<BasicBlock*, 4>& exitBlocks) {
   BasicBlock* exitingBlock = exitingBlocks[0];
-    
-  // Get the set of out-of-loop blocks that the exiting block branches to.
-  SmallVector<BasicBlock*, 8> exitBlocks;
-  L->getUniqueExitBlocks(exitBlocks);
-  if (exitBlocks.size() > 1)
-    return false;
   BasicBlock* exitBlock = exitBlocks[0];
   
   // Make sure that all PHI entries coming from the loop are loop invariant.
+  // Because the code is in LCSSA form, any values used outside of the loop
+  // must pass through a PHI in the exit block, meaning that this check is
+  // sufficient to guarantee that no loop-variant values are used outside
+  // of the loop.
   BasicBlock::iterator BI = exitBlock->begin();
   while (PHINode* P = dyn_cast<PHINode>(BI)) {
     Value* incoming = P->getIncomingValueForBlock(exitingBlock);
@@ -112,12 +128,18 @@ bool LoopDeletion::IsLoopDead(Loop* L) {
   }
   
   // Make sure that no instructions in the block have potential side-effects.
+  // This includes instructions that could write to memory, and loads that are
+  // marked volatile.  This could be made more aggressive by using aliasing
+  // information to identify readonly and readnone calls.
   for (Loop::block_iterator LI = L->block_begin(), LE = L->block_end();
        LI != LE; ++LI) {
     for (BasicBlock::iterator BI = (*LI)->begin(), BE = (*LI)->end();
          BI != BE; ++BI) {
       if (BI->mayWriteToMemory())
         return false;
+      else if (LoadInst* L = dyn_cast<LoadInst>(BI))
+        if (L->isVolatile())
+          return false;
     }
   }
   
@@ -128,10 +150,20 @@ bool LoopDeletion::IsLoopDead(Loop* L) {
 /// observable behavior of the program other than finite running time.  Note 
 /// we do ensure that this never remove a loop that might be infinite, as doing
 /// so could change the halting/non-halting nature of a program.
+/// NOTE: This entire process relies pretty heavily on LoopSimplify and LCSSA
+/// in order to make various safety checks work.
 bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
-  // Don't remove loops for which we can't solve the trip count.
-  // They could be infinite, in which case we'd be changing program behavior.
-  if (L->getTripCount())
+  SmallVector<BasicBlock*, 4> exitingBlocks;
+  L->getExitingBlocks(exitingBlocks);
+  
+  SmallVector<BasicBlock*, 4> exitBlocks;
+  L->getUniqueExitBlocks(exitBlocks);
+  
+  // We require that the loop only have a single exit block.  Otherwise, we'd
+  // be in the situation of needing to be able to solve statically which exit
+  // block will be branced to, or trying to preserve the branching logic in
+  // a loop invariant manner.
+  if (exitBlocks.size() != 1)
     return false;
   
   // We can only remove the loop if there is a preheader that we can 
@@ -145,23 +177,22 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   if (L->begin() != L->end())
     return false;
   
+  // Don't remove loops for which we can't solve the trip count.
+  // They could be infinite, in which case we'd be changing program behavior.
+  if (L->getTripCount())
+    return false;
+  
   // Loops with multiple exits or exits that don't dominate the latch
   // are too complicated to handle correctly.
-  if (!SingleDominatingExit(L))
+  if (!SingleDominatingExit(L, exitingBlocks))
     return false;
   
   // Finally, we have to check that the loop really is dead.
-  if (!IsLoopDead(L))
+  if (!IsLoopDead(L, exitingBlocks, exitBlocks))
     return false;
   
-  // Now that we know the removal is safe, change the branch from the preheader
-  // to go to the single exiting block.
-  SmallVector<BasicBlock*, 1> exitingBlocks;
-  L->getExitingBlocks(exitingBlocks);
-  BasicBlock* exitingBlock = exitingBlocks[0];
-  
-  SmallVector<BasicBlock*, 1> exitBlocks;
-  L->getUniqueExitBlocks(exitBlocks);
+  // Now that we know the removal is safe, remove the loop by changing the
+  // branch from the preheader to go to the single exiting block.  
   BasicBlock* exitBlock = exitBlocks[0];
   
   // Because we're deleting a large chunk of code at once, the sequence in which
@@ -181,39 +212,30 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   
   // Connect the preheader directly to the exit block.
   TerminatorInst* TI = preheader->getTerminator();
-  if (BranchInst* BI = dyn_cast<BranchInst>(TI)) {
-    if (BI->isUnconditional())
-      BI->setSuccessor(0, exitBlock);
-    else if (L->contains(BI->getSuccessor(0)))
-      BI->setSuccessor(0, exitBlock);
-    else
-      BI->setSuccessor(1, exitBlock);
-  } else {
-    // FIXME: Support switches
-    return false;
-  }
-  
+  TI->replaceUsesOfWith(L->getHeader(), exitBlock);
+
   // Rewrite phis in the exit block to get their inputs from
   // the preheader instead of the exiting block.
   BasicBlock::iterator BI = exitBlock->begin();
   while (PHINode* P = dyn_cast<PHINode>(BI)) {
-    unsigned i = P->getBasicBlockIndex(exitingBlock);
-    P->setIncomingBlock(i, preheader);
+    P->replaceUsesOfWith(exitBlock, preheader);
     BI++;
   }
   
-  // Update lots of internal structures...
+  // Update the dominator tree and remove the instructions and blocks that will
+  // be deleted from the reference counting scheme.
   DominatorTree& DT = getAnalysis<DominatorTree>();
+  SmallPtrSet<DomTreeNode*, 8> ChildNodes;
   for (Loop::block_iterator LI = L->block_begin(), LE = L->block_end();
        LI != LE; ++LI) {
     // Move all of the block's children to be children of the preheader, which
     // allows us to remove the domtree entry for the block.
-    SmallPtrSet<DomTreeNode*, 8> childNodes;
-    childNodes.insert(DT[*LI]->begin(), DT[*LI]->end());
-    for (SmallPtrSet<DomTreeNode*, 8>::iterator DI = childNodes.begin(),
-         DE = childNodes.end(); DI != DE; ++DI)
+    ChildNodes.insert(DT[*LI]->begin(), DT[*LI]->end());
+    for (SmallPtrSet<DomTreeNode*, 8>::iterator DI = ChildNodes.begin(),
+         DE = ChildNodes.end(); DI != DE; ++DI)
       DT.changeImmediateDominator(*DI, DT[preheader]);
     
+    ChildNodes.clear();
     DT.eraseNode(*LI);
     
     // Drop all references between the instructions and the block so
@@ -228,16 +250,11 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   
   // Erase the instructions and the blocks without having to worry
   // about ordering because we already dropped the references.
+  // NOTE: This iteration is safe because erasing the block does not remove its
+  // entry from the loop's block list.  We do that in the next section.
   for (Loop::block_iterator LI = L->block_begin(), LE = L->block_end();
-       LI != LE; ++LI) {
-    for (BasicBlock::iterator BI = (*LI)->begin(), BE = (*LI)->end();
-         BI != BE; ) {
-      Instruction* I = BI++;
-      I->eraseFromParent();
-    }
-    
+       LI != LE; ++LI)
     (*LI)->eraseFromParent();
-  }
   
   // Finally, the blocks from loopinfo.  This has to happen late because
   // otherwise our loop iterators won't work.
