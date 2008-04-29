@@ -615,10 +615,12 @@ bool MemCpyOpt::processMemCpy(MemCpyInst* M) {
   if (dep == MemoryDependenceAnalysis::None ||
       dep == MemoryDependenceAnalysis::NonLocal)
     return false;
-  else if (CallInst* C = dyn_cast<CallInst>(dep))
-    return performCallSlotOptzn(M, C);
-  else if (!isa<MemCpyInst>(dep))
-    return false;
+  else if (!isa<MemCpyInst>(dep)) {
+    if (CallInst* C = dyn_cast<CallInst>(dep))
+      return performCallSlotOptzn(M, C);
+    else
+      return false;
+  }
   
   MemCpyInst* MDep = cast<MemCpyInst>(dep);
   
