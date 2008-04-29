@@ -30,7 +30,8 @@ void LangOptions::Emit(llvm::Serializer& S) const {
   S.EmitBool((bool) NoExtensions);
   S.EmitBool((bool) CXXOperatorNames);             
   S.EmitBool((bool) ObjC1);
-  S.EmitBool((bool) ObjC2);             
+  S.EmitBool((bool) ObjC2);
+  S.EmitBool((unsigned) GC);
   S.EmitBool((bool) PascalStrings);
   S.EmitBool((bool) Boolean);
   S.EmitBool((bool) WritableStrings);
@@ -51,6 +52,7 @@ void LangOptions::Read(llvm::Deserializer& D) {
   CXXOperatorNames = D.ReadBool() ? 1 : 0;
   ObjC1 = D.ReadBool() ? 1 : 0;
   ObjC2 = D.ReadBool() ? 1 : 0;
+  GC = D.ReadInt();
   PascalStrings = D.ReadBool() ? 1 : 0;
   Boolean = D.ReadBool() ? 1 : 0;
   WritableStrings = D.ReadBool() ? 1 : 0;

@@ -283,7 +283,7 @@ static void InitializeLangOptions(LangOptions &Options, LangKind LK) {
     NoPreprocess = true;
     // FALLTHROUGH
   case langkind_objc:
-    Options.ObjC1 = Options.ObjC2 = 1;
+    Options.ObjC1 = Options.ObjC2 = 1;      
     break;
   case langkind_objcxx_cpp:
     NoPreprocess = true;
@@ -358,6 +358,7 @@ LaxVectorConversions("flax-vector-conversions",
                      llvm::cl::desc("Allow implicit conversions between vectors"
                                     " with a different number of elements or "
                                     "different element types."));
+
 // FIXME: add:
 //   -ansi
 //   -trigraphs
@@ -424,6 +425,23 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK) {
   Options.WritableStrings = WritableStrings;
   Options.LaxVectorConversions = LaxVectorConversions;
 }
+
+static llvm::cl::opt<bool>
+ObjCExclusiveGC("fobjc-gc-only",
+                llvm::cl::desc("Use GC exclusively for Objective-C related "
+                               "memory management."));
+
+static llvm::cl::opt<bool>
+ObjCEnableGC("fobjc-gc",
+             llvm::cl::desc("Enable Objective-C garbage collection."));             
+
+void InitializeGCMode(LangOptions &Options) {
+  if (ObjCExclusiveGC)
+    Options.setGCMode(LangOptions::GCOnly);
+  else if (ObjCEnableGC)
+    Options.setGCMode(LangOptions::HybridGC);
+}
+
 
 //===----------------------------------------------------------------------===//
 // Our DiagnosticClient implementation
@@ -1399,6 +1417,7 @@ int main(int argc, char **argv) {
       LangKind LK = GetLanguage(InFile);
       InitializeLangOptions(LangInfo, LK);
       InitializeLanguageStandard(LangInfo, LK);
+      InitializeGCMode(LangInfo);
       
       // Process the -I options and set them in the HeaderInfo.
       HeaderSearch HeaderInfo(FileMgr);
