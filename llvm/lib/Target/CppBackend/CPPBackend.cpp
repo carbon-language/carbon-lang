@@ -101,27 +101,12 @@ namespace {
 
   public:
     static char ID;
-    explicit CppWriter(std::ostream &o) : ModulePass((intptr_t)&ID), Out(o) {}
+    explicit CppWriter(std::ostream &o) :
+      ModulePass((intptr_t)&ID), Out(o), uniqueNum(0), is_inline(false) {}
 
     virtual const char *getPassName() const { return "C++ backend"; }
 
     bool runOnModule(Module &M);
-
-    bool doInitialization(Module &M) {
-      uniqueNum = 0;
-      is_inline = false;
-
-      TypeNames.clear();
-      ValueNames.clear();
-      UnresolvedTypes.clear();
-      TypeStack.clear();
-      UsedNames.clear();
-      DefinedTypes.clear();
-      DefinedValues.clear();
-      ForwardRefs.clear();
-
-      return false;
-    }
 
     void printProgram(const std::string& fname, const std::string& modName );
     void printModule(const std::string& fname, const std::string& modName );
