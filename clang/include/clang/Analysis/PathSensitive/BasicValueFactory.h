@@ -71,8 +71,8 @@ public:
                                      const llvm::APSInt& V1,
                                      const llvm::APSInt& V2);
   
-  const std::pair<RVal, unsigned>&
-  getPersistentSizedRVal(const RVal& V, unsigned Bits);
+  const std::pair<RVal, uintptr_t>&
+  getPersistentRValWithData(const RVal& V, uintptr_t Data);
 };
 
 } // end clang namespace

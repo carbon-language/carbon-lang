@@ -18,18 +18,18 @@
 
 using namespace clang;
 
-typedef std::pair<RVal, unsigned> SizedRVal;
+typedef std::pair<RVal, uintptr_t> RValData;
 
 namespace llvm {
-template<> struct FoldingSetTrait<SizedRVal> {
-  static inline void Profile(const SizedRVal& X, llvm::FoldingSetNodeID& ID) {
+template<> struct FoldingSetTrait<RValData> {
+  static inline void Profile(const RValData& X, llvm::FoldingSetNodeID& ID) {
     X.first.Profile(ID);
-    ID.AddInteger(X.second);
+    ID.AddPointer( (void*) X.second);
   }
 };
 }
 
-typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<SizedRVal> >
+typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<RValData> >
   PersistentRValsTy;
 
 BasicValueFactory::~BasicValueFactory() {
@@ -184,8 +184,8 @@ BasicValueFactory::EvaluateAPSInt(BinaryOperator::Opcode Op,
 }
 
 
-const std::pair<RVal, unsigned>&
-BasicValueFactory::getPersistentSizedRVal(const RVal& V, unsigned Bits) {
+const std::pair<RVal, uintptr_t>&
+BasicValueFactory::getPersistentRValWithData(const RVal& V, uintptr_t Data) {
   
   // Lazily create the folding set.
   if (!PersistentRVals) PersistentRVals = new PersistentRValsTy();
@@ -193,18 +193,18 @@ BasicValueFactory::getPersistentSizedRVal(const RVal& V, unsigned Bits) {
   llvm::FoldingSetNodeID ID;
   void* InsertPos;
   V.Profile(ID);
-  ID.AddInteger(Bits);
+  ID.AddPointer((void*) Data);
   
   PersistentRValsTy& Map = *((PersistentRValsTy*) PersistentRVals);
   
-  typedef llvm::FoldingSetNodeWrapper<SizedRVal> FoldNodeTy;
+  typedef llvm::FoldingSetNodeWrapper<RValData> FoldNodeTy;
   FoldNodeTy* P = Map.FindNodeOrInsertPos(ID, InsertPos);
   
   if (!P) {  
     P = (FoldNodeTy*) BPAlloc.Allocate<FoldNodeTy>();
-    new (P) FoldNodeTy(std::make_pair(V, Bits));
+    new (P) FoldNodeTy(std::make_pair(V, Data));
     Map.InsertNode(P, InsertPos);
   }
 
-  return *P;
+  return P->getValue();
 }

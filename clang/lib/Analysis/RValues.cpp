@@ -25,6 +25,9 @@ using llvm::APSInt;
 //===----------------------------------------------------------------------===//
 
 RVal::symbol_iterator RVal::symbol_begin() const {
+  
+  // FIXME: This is a rat's nest.  Cleanup.
+
   if (isa<lval::SymbolVal>(this))
     return (symbol_iterator) (&Data);
   else if (isa<nonlval::SymbolVal>(this))
@@ -39,7 +42,10 @@ RVal::symbol_iterator RVal::symbol_begin() const {
     const nonlval::LValAsInteger& V = cast<nonlval::LValAsInteger>(*this);
     return  V.getPersistentLVal().symbol_begin();
   }
-  
+  else if (isa<lval::FieldOffset>(this)) {
+    const lval::FieldOffset& V = cast<lval::FieldOffset>(*this);
+    return V.getPersistentBase().symbol_begin();
+  }
   return NULL;
 }
 
@@ -401,6 +407,13 @@ void LVal::print(std::ostream& Out) const {
           << cast<lval::StringLiteralVal>(this)->getLiteral()->getStrData()
           << "\"";
       break;
+      
+    case lval::FieldOffsetKind: {
+      const lval::FieldOffset& C = *cast<lval::FieldOffset>(this);
+      C.getBase().print(Out);
+      Out << "." << C.getFieldDecl()->getName() << " (field LVal)";
+      break;
+    }
       
     default:
       assert (false && "Pretty-printing not implemented for this LVal.");

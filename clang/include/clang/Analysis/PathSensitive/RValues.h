@@ -234,17 +234,20 @@ public:
 };
   
 class LValAsInteger : public NonLVal {
-  LValAsInteger(const std::pair<RVal, unsigned>& data) :
-    NonLVal(LValAsIntegerKind, &data) {}
+  LValAsInteger(const std::pair<RVal, uintptr_t>& data) :
+    NonLVal(LValAsIntegerKind, &data) {
+      assert (isa<LVal>(data.first));
+    }
   
 public:
     
   LVal getLVal() const {
-    return cast<LVal>(((std::pair<RVal, unsigned>*) Data)->first);
+    return cast<LVal>(((std::pair<RVal, uintptr_t>*) Data)->first);
   }
   
   const LVal& getPersistentLVal() const {
-    return cast<LVal>(((std::pair<RVal, unsigned>*) Data)->first);
+    const RVal& V = ((std::pair<RVal, uintptr_t>*) Data)->first;
+    return cast<LVal>(V);
   }    
   
   unsigned getNumBits() const {
@@ -263,7 +266,7 @@ public:
   
   static inline LValAsInteger Make(BasicValueFactory& Vals, LVal V,
                                    unsigned Bits) {    
-    return LValAsInteger(Vals.getPersistentSizedRVal(V, Bits));
+    return LValAsInteger(Vals.getPersistentRValWithData(V, Bits));
   }
 };
   
@@ -276,7 +279,7 @@ public:
 namespace lval {
   
 enum Kind { SymbolValKind, GotoLabelKind, DeclValKind, FuncValKind,
-            ConcreteIntKind, StringLiteralValKind };
+            ConcreteIntKind, StringLiteralValKind, FieldOffsetKind };
 
 class SymbolVal : public LVal {
 public:
@@ -409,7 +412,48 @@ public:
     return V->getSubKind() == StringLiteralValKind;
   }
 };  
+  
+class FieldOffset : public LVal {
+  FieldOffset(const std::pair<RVal, uintptr_t>& data)
+    : LVal(FieldOffsetKind, &data) {
+      assert (isa<LVal>(data.first));
+    }
+  
+public:
+  
+  LVal getBase() const {
+    return reinterpret_cast<const std::pair<LVal,uintptr_t>*> (Data)->first;
+  }  
+  
+  const LVal& getPersistentBase() const {
+    return reinterpret_cast<const std::pair<LVal,uintptr_t>*> (Data)->first;
+  }    
+  
     
+  FieldDecl* getFieldDecl() const {    
+    return (FieldDecl*)
+      reinterpret_cast<const std::pair<LVal,uintptr_t>*> (Data)->second;
+  }
+
+  // Implement isa<T> support.
+  static inline bool classof(const RVal* V) {
+    return V->getBaseKind() == LValKind &&
+           V->getSubKind() == FieldOffsetKind;
+  }
+  
+  static inline bool classof(const LVal* V) {
+    return V->getSubKind() == FieldOffsetKind;
+  }
+
+  static inline RVal Make(BasicValueFactory& Vals, RVal Base, FieldDecl* D) {
+    
+    if (Base.isUnknownOrUndef())
+      return Base;
+    
+    return FieldOffset(Vals.getPersistentRValWithData(cast<LVal>(Base),
+                                                      (uintptr_t) D));
+  }
+};
   
 } // end clang::lval namespace
 } // end clang namespace  

@@ -856,16 +856,12 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, NodeTy* Pred,
     // This is a redunant copy; we do this as a placeholder for future logic.
     for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
       ValueState* St = GetState(*I);
-      RVal V = GetRVal(St, Base);
+      RVal BaseV = GetRVal(St, Base);      
 
-      // TODO: Compute the LVal for the field.  This will enable field
-      //  sensitivity for the analysis.
+      RVal V = lval::FieldOffset::Make(BasicVals, GetRVal(St, Base),
+                                       M->getMemberDecl());
       
-      if (!(V.isUndef() || V.isUnknown() || isa<lval::ConcreteInt>(V)))
-        V = UnknownVal();      
-      
-      MakeNode(Dst, M, *I, SetRVal(St, M, V)); 
-      
+      MakeNode(Dst, M, *I, SetRVal(St, M, V));      
     }
 
     return;
@@ -879,13 +875,8 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, NodeTy* Pred,
   for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
     ValueState* St = GetState(*I);
     
-    RVal V = GetRVal(St, Base);
-    
-    // TODO: Compute the LVal for the field.  This will enable field
-    //  sensitivity for the analysis.
-    
-    if (!(V.isUndef() || V.isUnknown() || isa<lval::ConcreteInt>(V)))
-      V = UnknownVal();
+    RVal V = lval::FieldOffset::Make(BasicVals, GetRVal(St, Base),
+                                     M->getMemberDecl());
     
     EvalLoad(Dst, M, *I, St, V, true);
   }
@@ -2034,7 +2025,11 @@ ValueState* GRExprEngine::AssumeAux(ValueState* St, LVal Cond,
     case lval::StringLiteralValKind:
       isFeasible = Assumption;
       return St;
-
+      
+    case lval::FieldOffsetKind:
+      return AssumeAux(St, cast<lval::FieldOffset>(Cond).getBase(),
+                       Assumption, isFeasible);
+      
     case lval::ConcreteIntKind: {
       bool b = cast<lval::ConcreteInt>(Cond).getValue() != 0;
       isFeasible = b ? Assumption : !Assumption;      
