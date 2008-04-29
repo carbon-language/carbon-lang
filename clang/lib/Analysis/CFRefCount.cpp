@@ -146,7 +146,9 @@ class CFRefSummaryManager {
   typedef llvm::FoldingSet<CFRefSummary>                SummarySetTy;
   typedef llvm::DenseMap<FunctionDecl*, CFRefSummary*>  SummaryMapTy;
   
-  ASTContext& Ctx;  
+  ASTContext& Ctx;
+  const bool GCEnabled;
+  
   SummarySetTy SummarySet;
   SummaryMapTy SummaryMap;  
   AESetTy AESet;  
@@ -155,8 +157,9 @@ class CFRefSummaryManager {
   
   ArgEffects*   getArgEffects();
 
-  CFRefSummary* getCannedCFSummary(FunctionTypeProto* FT, bool isRetain);
-
+  enum CFUnaryFunc { cfretain, cfrelease, cfmakecollectable };  
+  CFRefSummary* getUnaryCFSummary(FunctionTypeProto* FT, CFUnaryFunc func);
+  
   CFRefSummary* getCFSummary(FunctionDecl* FD, const char* FName);
   
   CFRefSummary* getCFSummaryCreateRule(FunctionTypeProto* FT);
@@ -165,7 +168,9 @@ class CFRefSummaryManager {
   CFRefSummary* getPersistentSummary(ArgEffects* AE, RetEffect RE);
     
 public:
-  CFRefSummaryManager(ASTContext& ctx) : Ctx(ctx) {}
+  CFRefSummaryManager(ASTContext& ctx, bool gcenabled)
+   : Ctx(ctx), GCEnabled(gcenabled) {}
+  
   ~CFRefSummaryManager();
   
   CFRefSummary* getSummary(FunctionDecl* FD, ASTContext& Ctx);
@@ -284,10 +289,13 @@ CFRefSummary* CFRefSummaryManager::getCFSummary(FunctionDecl* FD,
   FName += 2;
 
   if (strcmp(FName, "Retain") == 0)
-    return getCannedCFSummary(FT, true);
+    return getUnaryCFSummary(FT, cfretain);
   
   if (strcmp(FName, "Release") == 0)
-    return getCannedCFSummary(FT, false);
+    return getUnaryCFSummary(FT, cfrelease);
+  
+  if (strcmp(FName, "MakeCollectable") == 0)
+    return getUnaryCFSummary(FT, cfmakecollectable);
   
   assert (ScratchArgs.empty());
   bool usesCreateRule = false;
@@ -307,8 +315,8 @@ CFRefSummary* CFRefSummaryManager::getCFSummary(FunctionDecl* FD,
   return NULL;
 }
 
-CFRefSummary* CFRefSummaryManager::getCannedCFSummary(FunctionTypeProto* FT,
-                                                      bool isRetain) {
+CFRefSummary*
+CFRefSummaryManager::getUnaryCFSummary(FunctionTypeProto* FT, CFUnaryFunc func) {
   
   if (FT->getNumArgs() != 1)
     return NULL;
@@ -332,25 +340,50 @@ CFRefSummary* CFRefSummaryManager::getCannedCFSummary(FunctionTypeProto* FT,
 
   QualType RetTy = FT->getResultType();
   
-  if (isRetain) {
-    // CFRetain: the return type should also be "CFTypeRef".
-    if (RetTy.getTypePtr() != ArgT)
-      return NULL;
-    
-    // The function's interface checks out.  Generate a canned summary.    
-    assert (ScratchArgs.empty());
-    ScratchArgs.push_back(std::make_pair(0, IncRef));
-    return getPersistentSummary(getArgEffects(), RetEffect::MakeAlias(0));
-  }
-  else {
-    // CFRelease: the return type should be void.
-    
-    if (RetTy != Ctx.VoidTy)
-      return NULL;
-    
-    assert (ScratchArgs.empty());
-    ScratchArgs.push_back(std::make_pair(0, DecRef));
-    return getPersistentSummary(getArgEffects(), RetEffect::MakeNoRet());
+  switch (func) {
+    case cfretain: {
+      
+      // CFRetain: the return type should also be "CFTypeRef".
+      if (RetTy.getTypePtr() != ArgT)
+        return NULL;
+      
+      // The function's interface checks out.  Generate a canned summary.    
+      assert (ScratchArgs.empty());
+      ScratchArgs.push_back(std::make_pair(0, IncRef));
+      return getPersistentSummary(getArgEffects(), RetEffect::MakeAlias(0));
+    }
+      
+    case cfrelease: {
+
+      // CFRelease: the return type should be void.
+      
+      if (RetTy != Ctx.VoidTy)
+        return NULL;
+      
+      assert (ScratchArgs.empty());
+      ScratchArgs.push_back(std::make_pair(0, DecRef));
+      return getPersistentSummary(getArgEffects(), RetEffect::MakeNoRet());
+    }
+      
+    case cfmakecollectable: {
+      
+      // CFRetain: the return type should also be "CFTypeRef".
+      if (RetTy.getTypePtr() != ArgT)
+        return NULL;
+      
+      // The function's interface checks out.  Generate a canned summary.    
+      assert (ScratchArgs.empty());
+      
+      if (GCEnabled)
+        ScratchArgs.push_back(std::make_pair(0, DecRef));
+      
+      return getPersistentSummary(getArgEffects(), RetEffect::MakeAlias(0));
+      
+      
+    }
+      
+    default:
+      assert (false && "Not a support unary function.");
   }
 }
 
@@ -638,7 +671,7 @@ private:
 public:
   
   CFRefCount(ASTContext& Ctx, bool gcenabled)
-    : Summaries(Ctx),
+    : Summaries(Ctx, gcenabled),
       GCEnabled(gcenabled),
       RetainSelector(GetUnarySelector("retain", Ctx)),
       ReleaseSelector(GetUnarySelector("release", Ctx)) {}
@@ -930,7 +963,10 @@ bool CFRefCount::EvalObjCMessageExprAux(ExplodedNodeSet<ValueState>& Dst,
                                         GRStmtNodeBuilder<ValueState>& Builder,
                                         ObjCMessageExpr* ME,
                                         ExplodedNode<ValueState>* Pred) {
-    
+  
+  if (GCEnabled)
+    return true;
+  
   // Handle "toll-free bridging" of calls to "Release" and "Retain".
   
   // FIXME: track the underlying object type associated so that we can
