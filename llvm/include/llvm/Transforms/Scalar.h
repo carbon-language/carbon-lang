@@ -319,6 +319,13 @@ FunctionPass *createMemCpyOptPass();
 
 //===----------------------------------------------------------------------===//
 //
+// DeadLoopElimination - This pass performs DCE of non-infinite loops that it
+// can prove are dead.
+//
+LoopPass *createDeadLoopEliminationPass();
+
+//===----------------------------------------------------------------------===//
+//
 // CodeGenPrepare - This pass prepares a function for instruction selection.
 //
 FunctionPass *createCodeGenPreparePass(const TargetLowering *TLI = 0);
