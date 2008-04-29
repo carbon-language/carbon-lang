@@ -415,6 +415,15 @@ void LVal::print(std::ostream& Out) const {
       break;
     }
       
+    case lval::ArrayOffsetKind: {
+      const lval::ArrayOffset& C = *cast<lval::ArrayOffset>(this);
+      C.getBase().print(Out);
+      Out << "[";
+      C.getOffset().print(Out);
+      Out << "] (lval array entry)";
+      break;
+    }
+      
     default:
       assert (false && "Pretty-printing not implemented for this LVal.");
       break;

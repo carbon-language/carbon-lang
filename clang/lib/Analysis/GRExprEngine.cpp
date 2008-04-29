@@ -780,6 +780,7 @@ void GRExprEngine::VisitArraySubscriptExpr(ArraySubscriptExpr* A, NodeTy* Pred,
                                            NodeSet& Dst, bool asLVal) {
   
   Expr* Base = A->getBase()->IgnoreParens();
+  Expr* Idx  = A->getIdx()->IgnoreParens();
   
   // Always visit the base as an LVal expression.  This computes the
   // abstract address of the base object.
@@ -790,47 +791,25 @@ void GRExprEngine::VisitArraySubscriptExpr(ArraySubscriptExpr* A, NodeTy* Pred,
   else  
     VisitLVal(Base, Pred, Tmp);
   
-  // TODO: Compute the LVal for the entry.  This will enable array sensitivity
-  //  for the analysis.
-  
-  // Return the LVal of the array entry.
-  if (asLVal) {
+  for (NodeSet::iterator I1=Tmp.begin(), E1=Tmp.end(); I1!=E1; ++I1) {
     
-    // This is a redunant copy; we do this as a placeholder for future logic.
-    for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
-      
-      ValueState* St = GetState(*I);
-      RVal V = GetRVal(St, Base);
-      
-      // TODO: Compute the LVal for the entry.  This will enable array sensitivity
-      //  for the analysis.
-      
-      if (!(V.isUndef() || V.isUnknown() || isa<lval::ConcreteInt>(V)))
-        V = UnknownVal();      
-      
-      MakeNode(Dst, A, *I, SetRVal(St, A, V)); 
-    }
-          
-    return;
-  }
-  
-  // We are doing a load.  Check for a bad dereference.  In the future we
-  // will check the actual entry lval; for now, check the Base LVal.  For now
-  // the load will just return "UnknownVal" (since we don't have array
-  // sensitivity), but it will perform a null check.
-  
-  for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
+    // Evaluate the index.
 
-    ValueState* St = GetState(*I);    
-    RVal V = GetRVal(St, Base);
-    
-    // TODO: Compute the LVal for the entry.  This will enable array sensitivity
-    //  for the analysis.
-    
-    if (!(V.isUndef() || V.isUnknown() || isa<lval::ConcreteInt>(V)))
-      V = UnknownVal();
-    
-    EvalLoad(Dst, A, *I, St, GetRVal(St, Base),  true);
+    NodeSet Tmp2;
+    Visit(Idx, *I1, Tmp2);
+      
+    for (NodeSet::iterator I2=Tmp2.begin(), E2=Tmp2.end(); I2!=E2; ++I2) {
+
+      ValueState* St = GetState(*I2);
+      RVal BaseV = GetRVal(St, Base);
+      RVal IdxV  = GetRVal(St, Idx);      
+      RVal V = lval::ArrayOffset::Make(BasicVals, BaseV, IdxV);
+
+      if (asLVal)
+        MakeNode(Dst, A, *I2, SetRVal(St, A, V));
+      else
+        EvalLoad(Dst, A, *I2, St, V);
+    }
   }
 }
 
@@ -849,36 +828,17 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, NodeTy* Pred,
   else  
     VisitLVal(Base, Pred, Tmp);
   
-  
-  // Return the LVal of the field access.
-  if (asLVal) {
-    
-    // This is a redunant copy; we do this as a placeholder for future logic.
-    for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
-      ValueState* St = GetState(*I);
-      RVal BaseV = GetRVal(St, Base);      
-
-      RVal V = lval::FieldOffset::Make(BasicVals, GetRVal(St, Base),
-                                       M->getMemberDecl());
-      
-      MakeNode(Dst, M, *I, SetRVal(St, M, V));      
-    }
-
-    return;
-  }
-  
-  // We are doing a load.  Check for a bad dereference.  In the future we
-  // will check the actual field lval; for now, check the Base LVal.  For now
-  // the load will just return "UnknownVal" (since we don't have field
-  // sensitivity), but it will perform a null check.
-  
   for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
     ValueState* St = GetState(*I);
+    RVal BaseV = GetRVal(St, Base);      
     
     RVal V = lval::FieldOffset::Make(BasicVals, GetRVal(St, Base),
                                      M->getMemberDecl());
     
-    EvalLoad(Dst, M, *I, St, V, true);
+    if (asLVal)
+      MakeNode(Dst, M, *I, SetRVal(St, M, V));
+    else
+      EvalLoad(Dst, M, *I, St, V);
   }
 }
 
@@ -2028,6 +1988,10 @@ ValueState* GRExprEngine::AssumeAux(ValueState* St, LVal Cond,
       
     case lval::FieldOffsetKind:
       return AssumeAux(St, cast<lval::FieldOffset>(Cond).getBase(),
+                       Assumption, isFeasible);
+      
+    case lval::ArrayOffsetKind:
+      return AssumeAux(St, cast<lval::ArrayOffset>(Cond).getBase(),
                        Assumption, isFeasible);
       
     case lval::ConcreteIntKind: {

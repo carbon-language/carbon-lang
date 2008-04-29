@@ -43,10 +43,11 @@ class BasicValueFactory {
   APSIntSetTy   APSIntSet;
   SymIntCSetTy  SymIntCSet;
   void*         PersistentRVals;
+  void*         PersistentRValPairs;
 
 public:
   BasicValueFactory(ASTContext& ctx, llvm::BumpPtrAllocator& Alloc) 
-  : Ctx(ctx), BPAlloc(Alloc), PersistentRVals(0) {}
+  : Ctx(ctx), BPAlloc(Alloc), PersistentRVals(0), PersistentRValPairs(0) {}
 
   ~BasicValueFactory();
 
@@ -73,6 +74,9 @@ public:
   
   const std::pair<RVal, uintptr_t>&
   getPersistentRValWithData(const RVal& V, uintptr_t Data);
+  
+  const std::pair<RVal, RVal>&
+  getPersistentRValPair(const RVal& V1, const RVal& V2);  
 };
 
 } // end clang namespace

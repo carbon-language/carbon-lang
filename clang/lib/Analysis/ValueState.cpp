@@ -212,6 +212,7 @@ RVal ValueStateManager::GetRVal(ValueState* St, LVal LV, QualType T) {
       return UnknownVal();
     }
       
+    case lval::ArrayOffsetKind:
     case lval::FieldOffsetKind:
       return UnknownVal();
       

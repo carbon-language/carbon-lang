@@ -279,7 +279,8 @@ public:
 namespace lval {
   
 enum Kind { SymbolValKind, GotoLabelKind, DeclValKind, FuncValKind,
-            ConcreteIntKind, StringLiteralValKind, FieldOffsetKind };
+            ConcreteIntKind, StringLiteralValKind, FieldOffsetKind,
+            ArrayOffsetKind };
 
 class SymbolVal : public LVal {
 public:
@@ -415,9 +416,7 @@ public:
   
 class FieldOffset : public LVal {
   FieldOffset(const std::pair<RVal, uintptr_t>& data)
-    : LVal(FieldOffsetKind, &data) {
-      assert (isa<LVal>(data.first));
-    }
+    : LVal(FieldOffsetKind, &data) {}
   
 public:
   
@@ -452,6 +451,49 @@ public:
     
     return FieldOffset(Vals.getPersistentRValWithData(cast<LVal>(Base),
                                                       (uintptr_t) D));
+  }
+};
+  
+class ArrayOffset : public LVal {
+  ArrayOffset(const std::pair<RVal,RVal>& data) : LVal(ArrayOffsetKind,&data) {}  
+public:
+  
+  LVal getBase() const {
+    return reinterpret_cast<const std::pair<LVal,RVal>*> (Data)->first;
+  }  
+  
+  const LVal& getPersistentBase() const {
+    return reinterpret_cast<const std::pair<LVal,RVal>*> (Data)->first;
+  }   
+  
+  RVal getOffset() const {
+    return reinterpret_cast<const std::pair<LVal,RVal>*> (Data)->second;
+  }  
+  
+  const RVal& getPersistentOffset() const {
+    return reinterpret_cast<const std::pair<LVal,RVal>*> (Data)->second;
+  }   
+  
+
+  // Implement isa<T> support.
+  static inline bool classof(const RVal* V) {
+    return V->getBaseKind() == LValKind &&
+           V->getSubKind() == ArrayOffsetKind;
+  }
+  
+  static inline bool classof(const LVal* V) {
+    return V->getSubKind() == ArrayOffsetKind;
+  }
+  
+  static inline RVal Make(BasicValueFactory& Vals, RVal Base, RVal Offset) {
+    
+    if (Base.isUnknownOrUndef())
+      return Base;
+    
+    if (Offset.isUndef())
+      return Offset;
+    
+    return ArrayOffset(Vals.getPersistentRValPair(cast<LVal>(Base), Offset));
   }
 };
   

@@ -19,6 +19,8 @@
 using namespace clang;
 
 typedef std::pair<RVal, uintptr_t> RValData;
+typedef std::pair<RVal, RVal> RValPair;
+
 
 namespace llvm {
 template<> struct FoldingSetTrait<RValData> {
@@ -27,10 +29,20 @@ template<> struct FoldingSetTrait<RValData> {
     ID.AddPointer( (void*) X.second);
   }
 };
+  
+template<> struct FoldingSetTrait<RValPair> {
+  static inline void Profile(const RValPair& X, llvm::FoldingSetNodeID& ID) {
+    X.first.Profile(ID);
+    X.second.Profile(ID);
+  }
+};
 }
 
 typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<RValData> >
   PersistentRValsTy;
+
+typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<RValPair> >
+  PersistentRValPairsTy;
 
 BasicValueFactory::~BasicValueFactory() {
   // Note that the dstor for the contents of APSIntSet will never be called,
@@ -40,6 +52,7 @@ BasicValueFactory::~BasicValueFactory() {
     I->getValue().~APSInt();
   
   delete (PersistentRValsTy*) PersistentRVals;  
+  delete (PersistentRValPairsTy*) PersistentRValPairs;
 }
 
 const llvm::APSInt& BasicValueFactory::getValue(const llvm::APSInt& X) {
@@ -208,3 +221,29 @@ BasicValueFactory::getPersistentRValWithData(const RVal& V, uintptr_t Data) {
 
   return P->getValue();
 }
+
+const std::pair<RVal, RVal>&
+BasicValueFactory::getPersistentRValPair(const RVal& V1, const RVal& V2) {
+  
+  // Lazily create the folding set.
+  if (!PersistentRValPairs) PersistentRValPairs = new PersistentRValPairsTy();
+  
+  llvm::FoldingSetNodeID ID;
+  void* InsertPos;
+  V1.Profile(ID);
+  V2.Profile(ID);
+  
+  PersistentRValPairsTy& Map = *((PersistentRValPairsTy*) PersistentRValPairs);
+  
+  typedef llvm::FoldingSetNodeWrapper<RValPair> FoldNodeTy;
+  FoldNodeTy* P = Map.FindNodeOrInsertPos(ID, InsertPos);
+  
+  if (!P) {  
+    P = (FoldNodeTy*) BPAlloc.Allocate<FoldNodeTy>();
+    new (P) FoldNodeTy(std::make_pair(V1, V2));
+    Map.InsertNode(P, InsertPos);
+  }
+  
+  return P->getValue();
+}
+
