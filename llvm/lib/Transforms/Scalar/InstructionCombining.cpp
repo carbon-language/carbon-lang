@@ -9396,6 +9396,15 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
           LI->getParent() != PN.getIncomingBlock(i) ||
           !isSafeToSinkLoad(LI))
         return 0;
+      
+      // If the PHI is volatile and its block has multiple successors, sinking
+      // it would remove a load of the volatile value from the path through the
+      // other successor.
+      if (isVolatile &&
+          LI->getParent()->getTerminator()->getNumSuccessors() != 1)
+        return 0;
+
+      
     } else if (I->getOperand(1) != ConstantOp) {
       return 0;
     }
