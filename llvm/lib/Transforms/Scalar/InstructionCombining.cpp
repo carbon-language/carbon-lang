@@ -9432,16 +9432,21 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   // Insert and return the new operation.
   if (CastInst* FirstCI = dyn_cast<CastInst>(FirstInst))
     return CastInst::create(FirstCI->getOpcode(), PhiVal, PN.getType());
-  else if (isa<LoadInst>(FirstInst))
-    return new LoadInst(PhiVal, "", isVolatile);
-  else if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
+  if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
     return BinaryOperator::create(BinOp->getOpcode(), PhiVal, ConstantOp);
-  else if (CmpInst *CIOp = dyn_cast<CmpInst>(FirstInst))
+  if (CmpInst *CIOp = dyn_cast<CmpInst>(FirstInst))
     return CmpInst::create(CIOp->getOpcode(), CIOp->getPredicate(), 
                            PhiVal, ConstantOp);
-  else
-    assert(0 && "Unknown operation");
-  return 0;
+  assert(isa<LoadInst>(FirstInst) && "Unknown operation");
+  
+  // If this was a volatile load that we are merging, make sure to loop through
+  // and mark all the input loads as non-volatile.  If we don't do this, we will
+  // insert a new volatile load and the old ones will not be deletable.
+  if (isVolatile)
+    for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
+      cast<LoadInst>(PN.getIncomingValue(i))->setVolatile(false);
+  
+  return new LoadInst(PhiVal, "", isVolatile);
 }
 
 /// DeadPHICycle - Return true if this PHI node is only used by a PHI node cycle
