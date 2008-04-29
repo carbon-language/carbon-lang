@@ -1,4 +1,4 @@
-//===- DeadLoopElimination.cpp - Dead Loop Elimination Pass ---------------===//
+//===- LoopDeletion.cpp - Dead Loop Deletion Pass ---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,11 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "dead-loop"
+#define DEBUG_TYPE "loop-delete"
 
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Instruction.h"
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SmallVector.h"
@@ -25,10 +23,10 @@ using namespace llvm;
 STATISTIC(NumDeleted, "Number of loops deleted");
 
 namespace {
-  class VISIBILITY_HIDDEN DeadLoopElimination : public LoopPass {
+  class VISIBILITY_HIDDEN LoopDeletion : public LoopPass {
   public:
     static char ID; // Pass ID, replacement for typeid
-    DeadLoopElimination() : LoopPass((intptr_t)&ID) { }
+    LoopDeletion() : LoopPass((intptr_t)&ID) { }
     
     // Possibly eliminate loop L if it is dead.
     bool runOnLoop(Loop* L, LPPassManager& LPM);
@@ -50,15 +48,15 @@ namespace {
     }
   };
   
-  char DeadLoopElimination::ID = 0;
-  RegisterPass<DeadLoopElimination> X ("dead-loop", "Eliminate dead loops");
+  char LoopDeletion::ID = 0;
+  RegisterPass<LoopDeletion> X ("loop-deletion", "Delete dead loops");
 }
 
-LoopPass* llvm::createDeadLoopEliminationPass() {
-  return new DeadLoopElimination();
+LoopPass* llvm::createLoopDeletionPass() {
+  return new LoopDeletion();
 }
 
-bool DeadLoopElimination::SingleDominatingExit(Loop* L) {
+bool LoopDeletion::SingleDominatingExit(Loop* L) {
   SmallVector<BasicBlock*, 4> exitingBlocks;
   L->getExitingBlocks(exitingBlocks);
   
@@ -76,7 +74,7 @@ bool DeadLoopElimination::SingleDominatingExit(Loop* L) {
     return 0;
 }
 
-bool DeadLoopElimination::IsLoopInvariantInst(Instruction *I, Loop* L)  {
+bool LoopDeletion::IsLoopInvariantInst(Instruction *I, Loop* L)  {
   // PHI nodes are not loop invariant if defined in  the loop.
   if (isa<PHINode>(I) && L->contains(I->getParent()))
     return false;
@@ -90,7 +88,7 @@ bool DeadLoopElimination::IsLoopInvariantInst(Instruction *I, Loop* L)  {
   return true;
 }
 
-bool DeadLoopElimination::IsLoopDead(Loop* L) {
+bool LoopDeletion::IsLoopDead(Loop* L) {
   SmallVector<BasicBlock*, 1> exitingBlocks;
   L->getExitingBlocks(exitingBlocks);
   BasicBlock* exitingBlock = exitingBlocks[0];
@@ -130,7 +128,7 @@ bool DeadLoopElimination::IsLoopDead(Loop* L) {
 /// observable behavior of the program other than finite running time.  Note 
 /// we do ensure that this never remove a loop that might be infinite, as doing
 /// so could change the halting/non-halting nature of a program.
-bool DeadLoopElimination::runOnLoop(Loop* L, LPPassManager& LPM) {
+bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   // Don't remove loops for which we can't solve the trip count.
   // They could be infinite, in which case we'd be changing program behavior.
   if (L->getTripCount())

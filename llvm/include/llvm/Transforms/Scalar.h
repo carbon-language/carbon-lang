@@ -319,10 +319,10 @@ FunctionPass *createMemCpyOptPass();
 
 //===----------------------------------------------------------------------===//
 //
-// DeadLoopElimination - This pass performs DCE of non-infinite loops that it
+// LoopDeletion - This pass performs DCE of non-infinite loops that it
 // can prove are dead.
 //
-LoopPass *createDeadLoopEliminationPass();
+LoopPass *createLoopDeletionPass();
 
 //===----------------------------------------------------------------------===//
 //
