@@ -942,9 +942,11 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       unsigned OldSubIdx = isExtSubReg ? CopyMI->getOperand(0).getSubReg()
         : CopyMI->getOperand(2).getSubReg();
       if (OldSubIdx) {
-        if (OldSubIdx == SubIdx)
+        if (OldSubIdx == SubIdx && !differingRegisterClasses(SrcReg, DstReg))
           // r1024<2> = EXTRACT_SUBREG r1025, 2. Then r1024 has already been
           // coalesced to a larger register so the subreg indices cancel out.
+          // Also check if the other larger register is of the same register
+          // class as the would be resulting register.
           SubIdx = 0;
         else {
           DOUT << "\t Sub-register indices mismatch.\n";
