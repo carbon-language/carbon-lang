@@ -29,6 +29,16 @@ int f3(char* x) {
   return x[i+1]; // expected-warning{{Dereference of null pointer.}}
 }
 
+int f3_b(char* x) {
+  
+  int i = 2;
+  
+  if (x)
+    return x[i - 1];
+  
+  return x[i+1]++; // expected-warning{{Dereference of null pointer.}}
+}
+
 int f4(int *p) {
   
   uintptr_t x = p;
