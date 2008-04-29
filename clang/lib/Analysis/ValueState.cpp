@@ -106,26 +106,18 @@ ValueStateManager::RemoveDeadBindings(ValueState* St, Stmt* Loc,
     
     Marked.insert(V);
     
-    if (V->getType()->isPointerType()) {
+    RVal X = GetRVal(St, lval::DeclVal(cast<VarDecl>(V)));      
       
-      RVal X = GetRVal(St, lval::DeclVal(cast<VarDecl>(V)));      
+    for (RVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end();
+                                                       SI != SE; ++SI) {
+      MarkedSymbols.insert(*SI);
+    }
       
-      if (X.isUnknownOrUndef())
-        continue;
+    if (!isa<lval::DeclVal>(X))
+      continue;
       
-      LVal LV = cast<LVal>(X);
-      
-      for (RVal::symbol_iterator SI = LV.symbol_begin(), SE = LV.symbol_end();
-                                                         SI != SE; ++SI) {
-        MarkedSymbols.insert(*SI);
-      }
-      
-      if (!isa<lval::DeclVal>(LV))
-        continue;
-      
-      const lval::DeclVal& LVD = cast<lval::DeclVal>(LV);
-      WList.push_back(LVD.getDecl());
-    }    
+    const lval::DeclVal& LVD = cast<lval::DeclVal>(X);
+    WList.push_back(LVD.getDecl());
   }
   
   // Remove dead variable bindings.
