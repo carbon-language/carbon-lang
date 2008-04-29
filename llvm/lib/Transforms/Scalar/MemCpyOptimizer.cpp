@@ -668,18 +668,24 @@ bool MemCpyOpt::processMemCpy(MemCpyInst* M) {
   
   CallInst* C = CallInst::Create(MemCpyFun, args.begin(), args.end(), "", M);
   
+  
+  // If C and M don't interfere, then this is a valid transformation.  If they
+  // did, this would mean that the two sources overlap, which would be bad.
   if (MD.getDependency(C) == MDep) {
     MD.dropInstruction(M);
     M->eraseFromParent();
+    
+    NumMemCpyInstr++;
+    
     return true;
   }
   
+  // Otherwise, there was no point in doing this, so we remove the call we
+  // inserted and act like nothing happened.
   MD.removeInstruction(C);
   C->eraseFromParent();
   
-  NumMemCpyInstr++;
-  
-  return true;
+  return false;
 }
 
 // MemCpyOpt::runOnFunction - This is the main transformation entry point for a
