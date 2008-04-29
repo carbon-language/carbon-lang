@@ -758,7 +758,7 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl,
 
   SourceLocation LBraceLoc = ConsumeBrace(); // the "{"
   
-  tok::ObjCKeywordKind visibility = tok::objc_private;
+  tok::ObjCKeywordKind visibility = tok::objc_protected;
   // While we still have something to read, read the instance variables.
   while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
     // Each iteration of this loop reads one objc-instance-variable-decl.
