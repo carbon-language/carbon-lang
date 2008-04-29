@@ -184,7 +184,7 @@ def main(args):
             i += 1
             
         # Options with no argument that should pass through to compiler
-        if arg == '-nostdinc':
+        if arg in [ '-nostdinc', 'fobjc-gc-only', 'fobjc-gc' ]:
           compile_opts.append(arg)          
 
         # Options with one argument that should pass through to linker
