@@ -27,6 +27,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 #include <climits>
 #include <queue>
 #include "llvm/Support/CommandLine.h"
@@ -363,14 +364,14 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
 /// CapturePred - This does the opposite of ReleasePred. Since SU is being
 /// unscheduled, incrcease the succ left count of its predecessors. Remove
 /// them from AvailableQueue if necessary.
-void ScheduleDAGRRList::CapturePred(SUnit *PredSU, SUnit *SU, bool isChain) {
-  PredSU->CycleBound = 0;
+void ScheduleDAGRRList::CapturePred(SUnit *PredSU, SUnit *SU, bool isChain) {  
+  unsigned CycleBound = 0;
   for (SUnit::succ_iterator I = PredSU->Succs.begin(), E = PredSU->Succs.end();
        I != E; ++I) {
     if (I->Dep == SU)
       continue;
-    PredSU->CycleBound = std::max(PredSU->CycleBound,
-                                  I->Dep->Cycle + PredSU->Latency);
+    CycleBound = std::max(CycleBound,
+                          I->Dep->Cycle + PredSU->Latency);
   }
 
   if (PredSU->isAvailable) {
@@ -379,6 +380,7 @@ void ScheduleDAGRRList::CapturePred(SUnit *PredSU, SUnit *SU, bool isChain) {
       AvailableQueue->remove(PredSU);
   }
 
+  PredSU->CycleBound = CycleBound;
   ++PredSU->NumSuccsLeft;
 }
 
@@ -1268,11 +1270,12 @@ namespace {
   template<class SF>
   class VISIBILITY_HIDDEN RegReductionPriorityQueue
    : public SchedulingPriorityQueue {
-    std::priority_queue<SUnit*, std::vector<SUnit*>, SF> Queue;
+    std::set<SUnit*, SF> Queue;
+    unsigned currentQueueId;
 
   public:
     RegReductionPriorityQueue() :
-    Queue(SF(this)) {}
+    Queue(SF(this)), currentQueueId(0) {}
     
     virtual void initNodes(DenseMap<SDNode*, std::vector<SUnit*> > &sumap,
                            std::vector<SUnit> &sunits) {}
@@ -1292,39 +1295,31 @@ namespace {
     bool empty() const { return Queue.empty(); }
     
     void push(SUnit *U) {
-      Queue.push(U);
+      assert(!U->NodeQueueId && "Node in the queue already");
+      U->NodeQueueId = ++currentQueueId;
+      Queue.insert(U);
     }
+
     void push_all(const std::vector<SUnit *> &Nodes) {
       for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
-        Queue.push(Nodes[i]);
+        push(Nodes[i]);
     }
     
     SUnit *pop() {
       if (empty()) return NULL;
-      SUnit *V = Queue.top();
-      Queue.pop();
+      typename std::set<SUnit*, SF>::iterator i = prior(Queue.end());
+      SUnit *V = *i;
+      Queue.erase(i);
+      V->NodeQueueId = 0;
       return V;
     }
 
-    /// remove - This is a really inefficient way to remove a node from a
-    /// priority queue.  We should roll our own heap to make this better or
-    /// something.
     void remove(SUnit *SU) {
-      std::vector<SUnit*> Temp;
-      
-      assert(!Queue.empty() && "Not in queue!");
-      while (Queue.top() != SU) {
-        Temp.push_back(Queue.top());
-        Queue.pop();
-        assert(!Queue.empty() && "Not in queue!");
-      }
-
-      // Remove the node from the PQ.
-      Queue.pop();
-      
-      // Add all the other nodes back.
-      for (unsigned i = 0, e = Temp.size(); i != e; ++i)
-        Queue.push(Temp[i]);
+      assert(!Queue.empty() && "Queue is empty!");
+      size_t RemovedNum = Queue.erase(SU);
+      assert(RemovedNum > 0 && "Not in queue!");
+      assert(RemovedNum == 1 && "Multiple times in the queue!");
+      SU->NodeQueueId = 0;
     }
   };
 
@@ -1504,18 +1499,6 @@ static unsigned calcMaxScratches(const SUnit *SU) {
 
 // Bottom up
 bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
-  // There used to be a special tie breaker here that looked for
-  // two-address instructions and preferred the instruction with a
-  // def&use operand.  The special case triggered diagnostics when
-  // _GLIBCXX_DEBUG was enabled because it broke the strict weak
-  // ordering that priority_queue requires. It didn't help much anyway
-  // because AddPseudoTwoAddrDeps already covers many of the cases
-  // where it would have applied.  In addition, it's counter-intuitive
-  // that a tie breaker would be the first thing attempted.  There's a
-  // "real" tie breaker below that is the operation of last resort.
-  // The fact that the "special tie breaker" would trigger when there
-  // wasn't otherwise a tie is what broke the strict weak ordering
-  // constraint.
 
   unsigned LPriority = SPQ->getNodePriority(left);
   unsigned RPriority = SPQ->getNodePriority(right);
@@ -1562,8 +1545,9 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   if (left->CycleBound != right->CycleBound)
     return left->CycleBound > right->CycleBound;
 
-  // FIXME: No strict ordering.
-  return false;
+  assert(left->NodeQueueId && right->NodeQueueId && 
+         "NodeQueueId cannot be zero");
+  return (left->NodeQueueId > right->NodeQueueId);
 }
 
 template<class SF> bool
@@ -1792,8 +1776,9 @@ bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   if (left->CycleBound != right->CycleBound)
     return left->CycleBound > right->CycleBound;
 
-  // FIXME: No strict ordering.
-  return false;
+  assert(left->NodeQueueId && right->NodeQueueId && 
+         "NodeQueueId cannot be zero");
+  return (left->NodeQueueId > right->NodeQueueId);
 }
 
 /// CalcNodeSethiUllmanNumber - Priority is the Sethi Ullman number. 

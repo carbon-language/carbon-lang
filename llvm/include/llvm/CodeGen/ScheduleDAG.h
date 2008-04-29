@@ -112,6 +112,7 @@ namespace llvm {
     typedef SmallVector<SDep, 4>::const_iterator const_succ_iterator;
     
     unsigned NodeNum;                   // Entry # of node in the node vector.
+    unsigned NodeQueueId;               // Queue id of node.
     unsigned short Latency;             // Node latency.
     short NumPreds;                     // # of preds.
     short NumSuccs;                     // # of sucss.
@@ -131,7 +132,7 @@ namespace llvm {
     const TargetRegisterClass *CopySrcRC;
     
     SUnit(SDNode *node, unsigned nodenum)
-      : Node(node), InstanceNo(0), NodeNum(nodenum), Latency(0),
+      : Node(node), InstanceNo(0), NodeNum(nodenum), NodeQueueId(0), Latency(0),
         NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
         isTwoAddress(false), isCommutable(false), hasPhysRegDefs(false),
         isPending(false), isAvailable(false), isScheduled(false),
