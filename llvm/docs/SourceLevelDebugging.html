@@ -130,7 +130,7 @@ href="http://www.eagercon.com/dwarf/dwarf3std.htm">Dwarf 3 standard</a>).</p>
 <p>When a program is being debugged, a debugger interacts with the user and
 turns the stored debug information into source-language specific information. 
 As such, a debugger must be aware of the source-language, and is thus tied to
-a specific language of family of languages.</p>
+a specific language or family of languages.</p>
 
 </div>
 
@@ -142,7 +142,7 @@ a specific language of family of languages.</p>
 <div class="doc_text">
 <p>The role of debug information is to provide meta information normally
 stripped away during the compilation process.  This meta information provides an
-llvm user a relationship between generated code and the original program source
+LLVM user a relationship between generated code and the original program source
 code.</p>
 
 <p>Currently, debug information is consumed by the DwarfWriter to produce dwarf
@@ -175,12 +175,12 @@ source-level state of the program</b>, regardless of which LLVM optimizations
 have been run, and without any modification to the optimizations themselves.
 However, some optimizations may impact the ability to modify the current state
 of the program with a debugger, such as setting program variables, or calling
-function that have been deleted.</li>
+functions that have been deleted.</li>
 
 <li>LLVM optimizations gracefully interact with debugging information.  If they
 are not aware of debug information, they are automatically disabled as necessary
 in the cases that would invalidate the debug info.  This retains the LLVM
-features making it easy to write new transformations.</li>
+features, making it easy to write new transformations.</li>
 
 <li>As desired, LLVM optimizations can be upgraded to be aware of the LLVM
 debugging information, allowing them to update the debugging information as they
