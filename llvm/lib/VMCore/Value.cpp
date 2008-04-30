@@ -140,7 +140,7 @@ unsigned Value::getNameLen() const {
 /// nul terminated string.
 bool Value::isName(const char *N) const {
   unsigned InLen = strlen(N);
-  return InLen = getNameLen() && memcmp(getNameStart(), N, InLen) == 0;
+  return InLen == getNameLen() && memcmp(getNameStart(), N, InLen) == 0;
 }
 
 
