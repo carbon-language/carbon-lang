@@ -16,6 +16,8 @@
 #ifndef LLVM_INTRINSICS_H
 #define LLVM_INTRINSICS_H
 
+#include <string>
+
 namespace llvm {
 
 class Type;
