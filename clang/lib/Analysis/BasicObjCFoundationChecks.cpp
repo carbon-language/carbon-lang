@@ -16,7 +16,6 @@
 #include "BasicObjCFoundationChecks.h"
 
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
-#include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/GRSimpleAPICheck.h"
 #include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
@@ -36,15 +35,16 @@ static ObjCInterfaceType* GetReceiverType(ObjCMessageExpr* ME) {
   if (!Receiver)
     return NULL;
   
-  // FIXME: Cleanup
   QualType X = Receiver->getType();
-  Type* TP = X.getTypePtr();
   
-  assert (IsPointerType(X));
-  
-  const PointerType* T = TP->getAsPointerType();
-  
-  return dyn_cast<ObjCInterfaceType>(T->getPointeeType().getTypePtr());
+  if (X->isPointerType()) {
+    Type* TP = X.getTypePtr();
+    const PointerType* T = TP->getAsPointerType();    
+    return dyn_cast<ObjCInterfaceType>(T->getPointeeType().getTypePtr());
+  }
+
+  // FIXME: Support ObjCQualifiedIdType?
+  return NULL;
 }
 
 static const char* GetReceiverNameType(ObjCMessageExpr* ME) {
