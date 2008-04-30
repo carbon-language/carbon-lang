@@ -1046,6 +1046,10 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
             if (!memcmp(s, "assfail", 7)) Builder->BuildSinks = true;
             break;
             
+          case 8:
+            if (!memcmp(s ,"db_error", 8)) Builder->BuildSinks = true;
+            break;
+            
           case 14:
             if (!memcmp(s, "dtrace_assfail", 14)) Builder->BuildSinks = true;
             break;
@@ -1375,9 +1379,24 @@ void GRExprEngine::VisitDeclStmtAux(DeclStmt* DS, ScopedDecl* D,
 
       QualType T = VD->getType();
 
-      if (T->isPointerType() || T->isIntegerType())
-        St = SetRVal(St, lval::DeclVal(VD),
-                     Ex ? GetRVal(St, Ex) : UndefinedVal());
+      if (T->isPointerType() || T->isIntegerType()) {
+        
+        RVal V = Ex ? GetRVal(St, Ex) : UndefinedVal();
+        
+        if (Ex && V.isUnknown()) {
+          
+          // EXPERIMENTAL: "Conjured" symbols.
+
+          unsigned Count = Builder->getCurrentBlockCount();
+          SymbolID Sym = SymMgr.getConjuredSymbol(Ex, Count);
+          
+          V = Ex->getType()->isPointerType()
+            ? cast<RVal>(lval::SymbolVal(Sym)) 
+            : cast<RVal>(nonlval::SymbolVal(Sym));            
+        }
+        
+        St = SetRVal(St, lval::DeclVal(VD), V);        
+      }
     }
 
     // Create a new node.  We don't really need to create a new NodeSet
