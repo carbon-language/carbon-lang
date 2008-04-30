@@ -2449,8 +2449,8 @@ void Sema::HandleTransparentUnionAttribute(Decl *d, AttributeList *rawAttr) {
     return;
   }
 
-  QualType QTy = Context.getTypeDeclType(decl);
-  const RecordType *Ty = QTy->getAsUnionType();
+  //QualType QTy = Context.getTypeDeclType(decl);
+  //const RecordType *Ty = QTy->getAsUnionType();
 
 // FIXME
 // Ty->addAttr(new TransparentUnionAttr());
