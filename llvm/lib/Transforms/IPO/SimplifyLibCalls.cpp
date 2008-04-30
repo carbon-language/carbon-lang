@@ -496,14 +496,13 @@ public:
     Value *Dst = CI->getOperand(1);
     Value *Src = CI->getOperand(2);
 
-    // Extract the initializer (while making numerous checks) from the
-    // source operand of the call to strcat.
-    std::string SrcStr;
-    if (!GetConstantStringInfo(Src, SrcStr))
-      return false;
-
+    // See if we can get the length of the input string.
+    uint64_t Len = GetStringLength(Src);
+    if (Len == 0) return false;
+    --Len;  // Unbias length.
+    
     // Handle the simple, do-nothing case
-    if (SrcStr.empty())
+    if (Len == 0)
       return ReplaceCallWith(CI, Dst);
 
     // We need to find the end of the destination string.  That's where the
@@ -520,7 +519,7 @@ public:
     // do the concatenation for us.
     Value *Vals[] = {
       Dst, Src,
-      ConstantInt::get(SLC.getIntPtrType(), SrcStr.size()+1), // copy nul byte.
+      ConstantInt::get(SLC.getIntPtrType(), Len+1), // copy nul byte.
       ConstantInt::get(Type::Int32Ty, 1)  // alignment
     };
     CallInst::Create(SLC.get_memcpy(), Vals, Vals + 4, "", CI);
@@ -549,23 +548,29 @@ public:
 
   /// @brief Perform the strchr optimizations
   virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &SLC) {
-    // Check that the first argument to strchr is a constant array of sbyte.
-    std::string Str;
-    if (!GetConstantStringInfo(CI->getOperand(1), Str))
-      return false;
-
-    // If the second operand is not constant, just lower this to memchr since we
-    // know the length of the input string.
+    Value *SrcStr = CI->getOperand(1);
+    // If the second operand is not constant, see if we can compute the length
+    // and turn this into memchr.
     ConstantInt *CSI = dyn_cast<ConstantInt>(CI->getOperand(2));
-    if (!CSI) {
+    if (CSI == 0) {
+      uint64_t Len = GetStringLength(SrcStr);
+      if (Len == 0) return false;
+      
       Value *Args[3] = {
         CI->getOperand(1),
         CI->getOperand(2),
-        ConstantInt::get(SLC.getIntPtrType(), Str.size()+1)
+        ConstantInt::get(SLC.getIntPtrType(), Len) // include nul.
       };
-      return ReplaceCallWith(CI, CallInst::Create(SLC.get_memchr(), Args, Args + 3,
+      return ReplaceCallWith(CI, CallInst::Create(SLC.get_memchr(),
+                                                  Args, Args + 3,
                                                   CI->getName(), CI));
     }
+    
+    // Otherwise, the character is a constant, see if the first argument is
+    // a string literal.  If so, we can constant fold.
+    std::string Str;
+    if (!GetConstantStringInfo(SrcStr, Str))
+      return false;
 
     // strchr can find the nul character.
     Str += '\0';
@@ -747,14 +752,14 @@ public:
       return ReplaceCallWith(CI, Dst);
     }
     
-    // Get the length of the constant string referenced by the Src operand.
-    std::string SrcStr;
-    if (!GetConstantStringInfo(Src, SrcStr))
-      return false;
+    // See if we can get the length of the input string.
+    uint64_t Len = GetStringLength(Src);
+    if (Len == 0) return false;
+    --Len;  // Unbias length.
     
     // If the constant string's length is zero we can optimize this by just
-    // doing a store of 0 at the first byte of the destination
-    if (SrcStr.empty()) {
+    // doing a store of 0 at the first byte of the destination.
+    if (Len == 0) {
       new StoreInst(ConstantInt::get(Type::Int8Ty, 0), Dst, CI);
       return ReplaceCallWith(CI, Dst);
     }
@@ -762,8 +767,8 @@ public:
     // We have enough information to now generate the memcpy call to
     // do the concatenation for us.
     Value *MemcpyOps[] = {
-      Dst, Src, // Pass length including nul byte.
-      ConstantInt::get(SLC.getIntPtrType(), SrcStr.size()+1),
+      Dst, Src,
+      ConstantInt::get(SLC.getIntPtrType(), Len+1),// Length including nul byte.
       ConstantInt::get(Type::Int32Ty, 1) // alignment
     };
     CallInst::Create(SLC.get_memcpy(), MemcpyOps, MemcpyOps + 4, "", CI);
@@ -1525,21 +1530,19 @@ public:
     if (!CI->use_empty())
       return false;
 
-    // All the optimizations depend on the length of the first argument and the
-    // fact that it is a constant string array. Check that now
-    std::string Str;
-    if (!GetConstantStringInfo(CI->getOperand(1), Str))
-      return false;
-
+    // All the optimizations depend on the length of the first argument.
+    uint64_t Len = GetStringLength(CI->getOperand(1));
+    if (!Len) return false;
+    
     const Type *FILETy = CI->getOperand(2)->getType();
-    // fputs(s,F)  -> fwrite(s,1,len,F) (if s is constant and strlen(s) > 1)
-    Value *FWriteParms[4] = {
+    // fputs(s,F)  -> fwrite(s,1,strlen(s),F)
+    Value *Ops[4] = {
       CI->getOperand(1),
-      ConstantInt::get(SLC.getIntPtrType(), Str.size()),
+      ConstantInt::get(SLC.getIntPtrType(), Len-1),
       ConstantInt::get(SLC.getIntPtrType(), 1),
       CI->getOperand(2)
     };
-    CallInst::Create(SLC.get_fwrite(FILETy), FWriteParms, FWriteParms + 4, "", CI);
+    CallInst::Create(SLC.get_fwrite(FILETy), Ops, Ops + 4, "", CI);
     return ReplaceCallWith(CI, 0);  // Known to have no uses (see above).
   }
 } FPutsOptimizer;
