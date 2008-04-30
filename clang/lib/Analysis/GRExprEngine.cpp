@@ -831,22 +831,57 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, NodeTy* Pred,
   // abstract address of the base object.
   NodeSet Tmp;
   
-  if (IsPointerType(Base->getType())) // Base always is an LVal.
-    Visit(Base, Pred, Tmp);
-  else  
-    VisitLVal(Base, Pred, Tmp);
+  if (asLVal) {
+      
+    if (IsPointerType(Base->getType())) // Base always is an LVal.
+      Visit(Base, Pred, Tmp);
+    else  
+      VisitLVal(Base, Pred, Tmp);
+  
+    for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
+      ValueState* St = GetState(*I);
+      RVal BaseV = GetRVal(St, Base);      
+      
+      RVal V = lval::FieldOffset::Make(BasicVals, GetRVal(St, Base),
+                                       M->getMemberDecl());
+      
+      MakeNode(Dst, M, *I, SetRVal(St, M, V));
+    }
+    
+    return;
+  }
+
+  // Evaluate the base.  Can be an LVal or NonLVal (depends on whether
+  //  or not isArrow() is true).
+  Visit(Base, Pred, Tmp);
   
   for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
+
     ValueState* St = GetState(*I);
-    RVal BaseV = GetRVal(St, Base);      
+    RVal BaseV = GetRVal(St, Base);
     
-    RVal V = lval::FieldOffset::Make(BasicVals, GetRVal(St, Base),
-                                     M->getMemberDecl());
+    if (IsPointerType(Base->getType())) {
     
-    if (asLVal)
-      MakeNode(Dst, M, *I, SetRVal(St, M, V));
-    else
+      assert (M->isArrow());
+      
+      RVal V = lval::FieldOffset::Make(BasicVals, GetRVal(St, Base),
+                                       M->getMemberDecl());
+    
       EvalLoad(Dst, M, *I, St, V);
+    }
+    else {
+      
+      assert (!M->isArrow());
+      
+      if (BaseV.isUnknownOrUndef()) {
+        MakeNode(Dst, M, *I, SetRVal(St, M, BaseV));
+        continue;
+      }
+
+      // FIXME: Implement nonlval objects representing struct temporaries.
+      assert (isa<NonLVal>(BaseV));
+      MakeNode(Dst, M, *I, SetRVal(St, M, UnknownVal()));
+    }
   }
 }
 
