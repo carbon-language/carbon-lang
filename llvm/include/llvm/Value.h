@@ -95,6 +95,10 @@ public:
   /// their end.  This always returns a non-null pointer.
   const char *getNameStart() const;
   
+  /// isName - Return true if this value has the name specified by the provided
+  /// nul terminated string.
+  bool isName(const char *N) const;
+  
   /// getNameLen - Return the length of the string, correctly handling nul
   /// characters embedded into them.
   unsigned getNameLen() const;
