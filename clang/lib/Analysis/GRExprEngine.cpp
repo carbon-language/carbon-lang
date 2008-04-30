@@ -1432,6 +1432,12 @@ void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex,
     if (!T.getTypePtr()->isConstantSizeType())
       return;
     
+    // Some code tries to take the sizeof an ObjCInterfaceType, relying that
+    // the compiler has laid out its representation.  Just report Unknown
+    // for these.
+    if (T->isObjCInterfaceType())
+      return;
+    
     amt = 1;  // Handle sizeof(void)
     
     if (T != getContext().VoidTy)
