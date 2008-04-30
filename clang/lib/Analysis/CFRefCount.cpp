@@ -335,7 +335,8 @@ CFRefSummaryManager::getUnaryCFSummary(FunctionTypeProto* FT, CFUnaryFunc func) 
   if (strcmp("CFTypeRef", TDName) != 0)
     return NULL;
   
-  assert (ArgT->isPointerType() || ArgT->isObjCQualifiedIdType());
+  if (!ArgT->isPointerType())
+    return NULL;
 
   QualType RetTy = FT->getResultType();
   

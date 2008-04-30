@@ -20,6 +20,7 @@
 #include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/LocalCheckers.h"
+#include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "llvm/Support/Compiler.h"
 #include <sstream>
 
@@ -306,11 +307,10 @@ RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, NonLVal X, QualType T) {
   BasicValueFactory& BasicVals = Eng.getBasicVals();
   
   llvm::APSInt V = cast<nonlval::ConcreteInt>(X).getValue();
-  V.setIsUnsigned(T->isUnsignedIntegerType() || T->isPointerType() 
-                  || T->isObjCQualifiedIdType());
+  V.setIsUnsigned(T->isUnsignedIntegerType() || IsPointerType(T));
   V.extOrTrunc(Eng.getContext().getTypeSize(T));
   
-  if (T->isPointerType())
+  if (IsPointerType(T))
     return lval::ConcreteInt(BasicVals.getValue(V));
   else
     return nonlval::ConcreteInt(BasicVals.getValue(V));
@@ -320,7 +320,7 @@ RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, NonLVal X, QualType T) {
 
 RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, LVal X, QualType T) {
   
-  if (T->isPointerLikeType() || T->isObjCQualifiedIdType())
+  if (IsPointerType(T))
     return X;
   
   assert (T->isIntegerType());
@@ -331,7 +331,7 @@ RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, LVal X, QualType T) {
   BasicValueFactory& BasicVals = Eng.getBasicVals();
   
   llvm::APSInt V = cast<lval::ConcreteInt>(X).getValue();
-  V.setIsUnsigned(T->isUnsignedIntegerType() || T->isPointerType());
+  V.setIsUnsigned(T->isUnsignedIntegerType() || IsPointerType(T));
   V.extOrTrunc(Eng.getContext().getTypeSize(T));
 
   return nonlval::ConcreteInt(BasicVals.getValue(V));
@@ -594,7 +594,7 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<ValueState>& Dst,
     unsigned Count = Builder.getCurrentBlockCount();
     SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(CE, Count);
         
-    RVal X = CE->getType()->isPointerType() 
+    RVal X = IsPointerType(CE->getType())
              ? cast<RVal>(lval::SymbolVal(Sym)) 
              : cast<RVal>(nonlval::SymbolVal(Sym));
     

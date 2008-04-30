@@ -28,10 +28,6 @@ using llvm::dyn_cast;
 using llvm::cast;
 using llvm::APSInt;
 
-static inline bool IsPointerType(QualType T) {
-  return T->isPointerType() || T->isObjCQualifiedIdType();
-}
-
 //===----------------------------------------------------------------------===//
 // Engine construction and deletion.
 //===----------------------------------------------------------------------===//

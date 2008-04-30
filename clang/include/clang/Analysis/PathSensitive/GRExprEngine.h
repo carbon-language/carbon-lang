@@ -20,6 +20,7 @@
 #include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Analysis/PathSensitive/GRSimpleAPICheck.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
+#include "clang/AST/Type.h"
 
 namespace clang {  
   
@@ -634,6 +635,19 @@ protected:
   
   ValueState* MarkBranch(ValueState* St, Stmt* Terminator, bool branchTaken);
 };
+} // end clang namespace
+
+
+//===----------------------------------------------------------------------===//
+// Utility
+//===----------------------------------------------------------------------===//
+
+namespace clang {
+  
+static inline bool IsPointerType(QualType T) {
+  return T->isPointerType() || T->isObjCQualifiedIdType();
+}
+  
 } // end clang namespace
 
 #endif
