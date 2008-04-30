@@ -24,6 +24,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/Analysis/Verifier.h"
 #include <algorithm>
 using namespace clang;
 using namespace CodeGen;
@@ -48,6 +49,9 @@ CodeGenModule::~CodeGenModule() {
   EmitGlobalCtors();
   EmitAnnotations();
   delete Runtime;
+  
+  // Run the verifier to check that the generated code is consistent.
+  assert(!verifyModule(TheModule));
 }
 
 /// WarnUnsupported - Print out a warning that codegen doesn't support the
