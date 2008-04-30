@@ -320,7 +320,13 @@ RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, NonLVal X, QualType T) {
 
 RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, LVal X, QualType T) {
   
-  if (IsPointerType(T))
+  // Casts from pointers -> pointers, just return the lval.
+  //
+  // Casts from pointers -> references, just return the lval.  These
+  //   can be introduced by the frontend for corner cases, e.g
+  //   casting from va_list* to __builtin_va_list&.
+  //
+  if (IsPointerType(T) || T->isReferenceType())
     return X;
   
   assert (T->isIntegerType());
