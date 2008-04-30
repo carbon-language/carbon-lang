@@ -187,9 +187,16 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
        << (*D.rbegin()).getLocation().getLogicalColumnNumber()
        << "</a></td></tr>\n"
           "<tr><td class=\"rowname\">Description:</td><td>"
-       << D.getDescription()
-       << "</td></tr>\n</table>\n"
-          "<h3>Annotated Source Code</h3>\n";
+       << D.getDescription() << "</td></tr>\n";
+    
+    // Output any other meta data.
+    
+    for (PathDiagnostic::meta_iterator I=D.meta_begin(), E=D.meta_end();
+         I!=E; ++I) {
+      os << "<tr><td></td><td>" << html::EscapeText(*I) << "</td></tr>\n";
+    }
+    
+    os << "</table>\n<h3>Annotated Source Code</h3>\n";    
     
     R.InsertStrBefore(SourceLocation::getFileLoc(FileID, 0), os.str());
   }

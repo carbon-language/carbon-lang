@@ -24,14 +24,16 @@ class ASTContext;
 class PathDiagnosticClient;
 class GRTransferFuncs;
 class BugType;
-
+class LangOptions;
+  
 void CheckDeadStores(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags); 
   
 void CheckUninitializedValues(CFG& cfg, ASTContext& Ctx, Diagnostic& Diags,
                               bool FullUninitTaint=false);
   
 GRTransferFuncs* MakeGRSimpleValsTF();
-GRTransferFuncs* MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled); 
+GRTransferFuncs* MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled, 
+                                  const LangOptions& lopts); 
 BugType* MakeDeadStoresChecker();
   
 } // end namespace clang

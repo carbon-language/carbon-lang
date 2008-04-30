@@ -448,6 +448,13 @@ void BugReporter::EmitWarning(BugReport& R) {
 
   llvm::OwningPtr<PathDiagnostic> D(new PathDiagnostic(R.getName()));
   GeneratePathDiagnostic(*D.get(), R);
+  
+  // Get the meta data.
+  
+  std::pair<const char**, const char**> Meta = R.getExtraDescriptiveText();
+  
+  for (const char** s = Meta.first; s != Meta.second; ++s)
+    D->addMeta(*s);
 
   // Emit a full diagnostic for the path if we have a PathDiagnosticClient.
   

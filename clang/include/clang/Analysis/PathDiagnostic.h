@@ -65,6 +65,7 @@ class PathDiagnostic {
   std::list<PathDiagnosticPiece*> path;
   unsigned Size;
   std::string Desc;
+  std::vector<std::string> OtherDesc;
 public:
   
   PathDiagnostic() : Size(0) {}
@@ -74,6 +75,13 @@ public:
   ~PathDiagnostic();
 
   const std::string& getDescription() const { return Desc; }
+  
+  typedef std::vector<std::string>::const_iterator meta_iterator;
+  meta_iterator meta_begin() const { return OtherDesc.begin(); }
+  meta_iterator meta_end() const { return OtherDesc.end(); }
+  void addMeta(const std::string& s) { OtherDesc.push_back(s); }
+  void addMeta(const char* s) { OtherDesc.push_back(s); }
+  
   
   void push_front(PathDiagnosticPiece* piece) {
     path.push_front(piece);

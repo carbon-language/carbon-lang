@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "GRSimpleVals.h"
+#include "clang/Basic/LangOptions.h"
 #include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Analysis/LocalCheckers.h"
@@ -624,7 +625,8 @@ private:
   // Instance variables.
   
   CFRefSummaryManager Summaries;  
-  const bool          GCEnabled;  
+  const bool          GCEnabled; 
+  const LangOptions&  LOpts;
   RefBFactoryTy       RefBFactory;
      
   UseAfterReleasesTy UseAfterReleases;
@@ -670,9 +672,10 @@ private:
   
 public:
   
-  CFRefCount(ASTContext& Ctx, bool gcenabled)
+  CFRefCount(ASTContext& Ctx, bool gcenabled, const LangOptions& lopts)
     : Summaries(Ctx, gcenabled),
       GCEnabled(gcenabled),
+      LOpts(lopts),
       RetainSelector(GetUnarySelector("retain", Ctx)),
       ReleaseSelector(GetUnarySelector("release", Ctx)) {}
   
@@ -686,6 +689,9 @@ public:
   virtual ValueState::CheckerStatePrinter* getCheckerStatePrinter() {
     return &Printer;
   }
+  
+  bool isGCEnabled() const { return GCEnabled; }
+  const LangOptions& getLangOptions() const { return LOpts; }
   
   // Calls.
   
@@ -1375,6 +1381,8 @@ namespace {
     
   public:
     CFRefBug(CFRefCount& tf) : TF(tf) {}
+    
+    CFRefCount& getTF() { return TF; }   
   };
   
   class VISIBILITY_HIDDEN UseAfterRelease : public CFRefBug {
@@ -1390,7 +1398,6 @@ namespace {
     }
     
     virtual void EmitWarnings(BugReporter& BR);
-    
   };
   
   class VISIBILITY_HIDDEN BadRelease : public CFRefBug {
@@ -1432,11 +1439,12 @@ namespace {
   class VISIBILITY_HIDDEN CFRefReport : public RangedBugReport {
     SymbolID Sym;
   public:
-    CFRefReport(BugType& D, ExplodedNode<ValueState> *n, SymbolID sym)
+    CFRefReport(CFRefBug& D, ExplodedNode<ValueState> *n, SymbolID sym)
       : RangedBugReport(D, n), Sym(sym) {}
         
     virtual ~CFRefReport() {}
     
+    virtual std::pair<const char**,const char**> getExtraDescriptiveText();
     
     virtual PathDiagnosticPiece* VisitNode(ExplodedNode<ValueState>* N,
                                            ExplodedNode<ValueState>* PrevN,
@@ -1452,6 +1460,43 @@ void CFRefCount::RegisterChecks(GRExprEngine& Eng) {
   Eng.Register(new UseAfterRelease(*this));
   Eng.Register(new BadRelease(*this));
   Eng.Register(new Leak(*this));
+}
+
+
+static const char* Msgs[] = {
+  "Code is compiled in garbage collection only mode"  // GC only
+  "  (the bug occurs with garbage collection enabled).",
+  
+  "Code is compiled without garbage collection.", // No GC.
+  
+  "Code is compiled for use with and without garbage collection (GC)."
+  "  The bug occurs with GC enabled.", // Hybrid, with GC.
+  
+  "Code is compiled for use with and without garbage collection (GC)."
+  "  The bug occurs in non-GC mode."  // Hyrbird, without GC/
+};
+
+std::pair<const char**,const char**> CFRefReport::getExtraDescriptiveText() {
+  CFRefCount& TF = static_cast<CFRefBug&>(getBugType()).getTF();
+
+  switch (TF.getLangOptions().getGCMode()) {
+    default:
+      assert(false);
+      
+    case LangOptions::NonGC:
+      assert (!TF.isGCEnabled());
+      return std::make_pair(&Msgs[0], &Msgs[0]+1);
+    
+    case LangOptions::GCOnly:
+      assert (TF.isGCEnabled());
+      return std::make_pair(&Msgs[1], &Msgs[1]+1);
+    
+    case LangOptions::HybridGC:
+      if (TF.isGCEnabled())
+        return std::make_pair(&Msgs[2], &Msgs[2]+1);
+      else
+        return std::make_pair(&Msgs[3], &Msgs[3]+1);
+  }
 }
 
 PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<ValueState>* N,
@@ -1618,6 +1663,7 @@ void Leak::GetErrorNodes(std::vector<ExplodedNode<ValueState>*>& Nodes) {
 // Transfer function creation for external clients.
 //===----------------------------------------------------------------------===//
 
-GRTransferFuncs* clang::MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled) {
-  return new CFRefCount(Ctx, GCEnabled);
+GRTransferFuncs* clang::MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
+                                         const LangOptions& lopts) {
+  return new CFRefCount(Ctx, GCEnabled, lopts);
 }  

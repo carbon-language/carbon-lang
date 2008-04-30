@@ -41,6 +41,10 @@ public:
   
   virtual const char* getName() const = 0;
   virtual const char* getDescription() const { return getName(); }
+  
+  virtual std::pair<const char**,const char**> getExtraDescriptiveText() {
+    return std::pair<const char**, const char**>(0, 0);
+  }
       
   virtual void EmitWarnings(BugReporter& BR) {}
   virtual void GetErrorNodes(std::vector<ExplodedNode<ValueState>*>& Nodes) {}
@@ -76,6 +80,10 @@ public:
 
   virtual const char* getDescription() const {
     return getBugType().getDescription();
+  }
+  
+  virtual std::pair<const char**,const char**> getExtraDescriptiveText() {
+    return getBugType().getExtraDescriptiveText();
   }
   
   virtual PathDiagnosticPiece* getEndPath(BugReporter& BR,
