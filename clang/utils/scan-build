@@ -390,6 +390,23 @@ ENDTEXT
 # RunBuildCommand - Run the build command.
 ##----------------------------------------------------------------------------##
 
+sub AddIfNotPresent {
+  my $Args = shift;
+  my $Arg = shift;  
+  my $found = 0;
+  
+  foreach my $k (@$Args) {
+    if ($k eq $Arg) {
+      $found = 1;
+      last;
+    }
+  }
+  
+  if ($found == 0) {
+    push @$Args, $Arg;
+  }
+}
+
 sub RunBuildCommand {
   
   my $Args = shift;
@@ -402,12 +419,17 @@ sub RunBuildCommand {
   }
   elsif ($IgnoreErrors) {
     if ($Cmd eq "make" or $Cmd eq "gmake") {
-      push @$Args, "-k";
+      AddIfNotPresent($Args,"-k");
     }
     elsif ($Cmd eq "xcodebuild") {
-      push @$Args, "-PBXBuildsContinueAfterErrors=YES";
+      AddIfNotPresent($Args,"-PBXBuildsContinueAfterErrors=YES");
     }
-  }  
+  } 
+  
+  # Disable distributed builds for xcodebuild.
+  if ($Cmd eq "xcodebuild") {
+    AddIfNotPresent($Args,"-nodistribute");
+  }
   
   system(@$Args);
 }
