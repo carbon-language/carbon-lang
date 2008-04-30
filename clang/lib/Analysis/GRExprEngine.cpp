@@ -1481,6 +1481,12 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
       return;
     }
 
+      
+    case UnaryOperator::OffsetOf:
+      // FIXME: Just report "Unknown" known for OffsetOf.
+      Dst.Add(Pred);
+      return;
+      
     case UnaryOperator::Plus: assert (!asLVal);  // FALL-THROUGH.
     case UnaryOperator::Extension: {
       
