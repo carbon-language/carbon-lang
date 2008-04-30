@@ -22,10 +22,10 @@
 //===----------------------------------------------------------------------===//
 
 let hasCtrlDep = 1, Defs = [R1], Uses = [R1] in {
-  def ADJCALLSTACKDOWN : Pseudo<(outs), (ins u16imm:$amt),
+  def ADJCALLSTACKDOWN : Pseudo<(outs), (ins u16imm_i32:$amt),
                                 "${:comment} ADJCALLSTACKDOWN",
                                 [(callseq_start imm:$amt)]>;
-  def ADJCALLSTACKUP   : Pseudo<(outs), (ins u16imm:$amt),
+  def ADJCALLSTACKUP   : Pseudo<(outs), (ins u16imm_i32:$amt),
                                 "${:comment} ADJCALLSTACKUP",
                                 [(callseq_end imm:$amt)]>;
 }
@@ -290,17 +290,33 @@ def CWD : RI7Form<0b01101111100, (outs VECREG:$rT), (ins memri7:$src),
     "cwd\t$rT, $src", ShuffleOp,
     [(set (v4i32 VECREG:$rT), (SPUvecinsmask dform2_addr:$src))]>;
 
+def CWDf32 : RI7Form<0b01101111100, (outs VECREG:$rT), (ins memri7:$src),
+    "cwd\t$rT, $src", ShuffleOp,
+    [(set (v4f32 VECREG:$rT), (SPUvecinsmask dform2_addr:$src))]>;
+
 def CWX : RRForm<0b01101011100, (outs VECREG:$rT), (ins memrr:$src),
     "cwx\t$rT, $src", ShuffleOp,
     [(set (v4i32 VECREG:$rT), (SPUvecinsmask xform_addr:$src))]>;
+
+def CWXf32 : RRForm<0b01101011100, (outs VECREG:$rT), (ins memrr:$src),
+    "cwx\t$rT, $src", ShuffleOp,
+    [(set (v4f32 VECREG:$rT), (SPUvecinsmask xform_addr:$src))]>;
 
 def CDD : RI7Form<0b11101111100, (outs VECREG:$rT), (ins memri7:$src),
     "cdd\t$rT, $src", ShuffleOp,
     [(set (v2i64 VECREG:$rT), (SPUvecinsmask dform2_addr:$src))]>;
 
+def CDDf64 : RI7Form<0b11101111100, (outs VECREG:$rT), (ins memri7:$src),
+    "cdd\t$rT, $src", ShuffleOp,
+    [(set (v2f64 VECREG:$rT), (SPUvecinsmask dform2_addr:$src))]>;
+
 def CDX : RRForm<0b11101011100, (outs VECREG:$rT), (ins memrr:$src),
     "cdx\t$rT, $src", ShuffleOp,
     [(set (v2i64 VECREG:$rT), (SPUvecinsmask xform_addr:$src))]>;
+
+def CDXf64 : RRForm<0b11101011100, (outs VECREG:$rT), (ins memrr:$src),
+    "cdx\t$rT, $src", ShuffleOp,
+    [(set (v2f64 VECREG:$rT), (SPUvecinsmask xform_addr:$src))]>;
 
 //===----------------------------------------------------------------------===//
 // Constant formation:
@@ -367,10 +383,10 @@ class ILHURegInst<RegisterClass rclass, Operand immtype, PatLeaf xform>:
 multiclass ImmLoadHalfwordUpper
 {
   def v2i64: ILHUVecInst<v2i64, u16imm_i64, immILHUvec_i64>;
-  def v4i32: ILHUVecInst<v4i32, u16imm, immILHUvec>;
+  def v4i32: ILHUVecInst<v4i32, u16imm_i32, immILHUvec>;
 
   def r64: ILHURegInst<R64C, u16imm_i64, hi16>;
-  def r32: ILHURegInst<R32C, u16imm, hi16>;
+  def r32: ILHURegInst<R32C, u16imm_i32, hi16>;
 
   // Loads the high portion of an address
   def hi: ILHURegInst<R32C, symbolHi, hi16>;
@@ -436,7 +452,7 @@ class IOHLRegInst<RegisterClass rclass, Operand immtype /* , PatLeaf xform */>:
 multiclass ImmOrHalfwordLower
 {
   def v2i64: IOHLVecInst<v2i64, u16imm_i64>;
-  def v4i32: IOHLVecInst<v4i32, u16imm>;
+  def v4i32: IOHLVecInst<v4i32, u16imm_i32>;
 
   def r32: IOHLRegInst<R32C, i32imm>;
   def f32: IOHLRegInst<R32FP, f32imm>;
@@ -453,7 +469,7 @@ class FSMBIVec<ValueType vectype>:
   RI16Form<0b101001100, (outs VECREG:$rT), (ins u16imm:$val),
           "fsmbi\t$rT, $val",
           SelectOp,
-          [(set (vectype VECREG:$rT), (SPUfsmbi (i32 immU16:$val)))]>;
+          [(set (vectype VECREG:$rT), (SPUfsmbi (i16 immU16:$val)))]>;
 
 multiclass FormSelectMaskBytesImm
 {
@@ -3872,6 +3888,13 @@ def : Pat<(SPUindirect (SPUhi tjumptable:$in, 0),
 def : Pat<(SPUindirect (SPUhi tconstpool:$in, 0),
                        (SPUlo tconstpool:$in, 0)),
           (IOHLlo (ILHUhi tconstpool:$in), tconstpool:$in)>;
+
+def : Pat<(SPUindirect R32C:$sp, i32ImmSExt10:$imm),
+          (AIr32 R32C:$sp, i32ImmSExt10:$imm)>;
+
+def : Pat<(SPUindirect R32C:$sp, imm:$imm),
+          (Ar32 R32C:$sp,
+                (IOHLr32 (ILHUr32 (HI16 imm:$imm)), (LO16 imm:$imm)))>;
 
 def : Pat<(add (SPUhi tglobaladdr:$in, 0), (SPUlo tglobaladdr:$in, 0)),
           (IOHLlo (ILHUhi tglobaladdr:$in), tglobaladdr:$in)>;

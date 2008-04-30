@@ -17,6 +17,7 @@
 #include "SPUISelLowering.h"
 #include "SPUHazardRecognizers.h"
 #include "SPUFrameInfo.h"
+#include "SPURegisterNames.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -411,7 +412,10 @@ SPUDAGToDAGISel::SelectAFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
 bool 
 SPUDAGToDAGISel::SelectDForm2Addr(SDOperand Op, SDOperand N, SDOperand &Disp,
                                   SDOperand &Base) {
-  return DFormAddressPredicate(Op, N, Disp, Base, -(1 << 7), (1 << 7) - 1);
+  const int minDForm2Offset = -(1 << 7);
+  const int maxDForm2Offset = (1 << 7) - 1;
+  return DFormAddressPredicate(Op, N, Disp, Base, minDForm2Offset,
+                               maxDForm2Offset);
 }
 
 /*!
@@ -443,12 +447,13 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDOperand Op, SDOperand N, SDOperand &Bas
 
   if (Opc == ISD::FrameIndex) {
     // Stack frame index must be less than 512 (divided by 16):
-    FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N);
+    FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N);
+    int FI = int(FIN->getIndex());
     DEBUG(cerr << "SelectDFormAddr: ISD::FrameIndex = "
-          << FI->getIndex() << "\n");
-    if (FI->getIndex() < maxOffset) {
+               << FI << "\n");
+    if (SPUFrameInfo::FItoStackOffset(FI) < maxOffset) {
       Base = CurDAG->getTargetConstant(0, PtrTy);
-      Index = CurDAG->getTargetFrameIndex(FI->getIndex(), PtrTy);
+      Index = CurDAG->getTargetFrameIndex(FI, PtrTy);
       return true;
     }
   } else if (Opc == ISD::ADD) {
@@ -467,13 +472,14 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDOperand Op, SDOperand N, SDOperand &Bas
       int32_t offset = int32_t(CN->getSignExtended());
 
       if (Op0.getOpcode() == ISD::FrameIndex) {
-        FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Op0);
+        FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Op0);
+        int FI = int(FIN->getIndex());
         DEBUG(cerr << "SelectDFormAddr: ISD::ADD offset = " << offset
-              << " frame index = " << FI->getIndex() << "\n");
+                   << " frame index = " << FI << "\n");
 
-        if (FI->getIndex() < maxOffset) {
+        if (SPUFrameInfo::FItoStackOffset(FI) < maxOffset) {
           Base = CurDAG->getTargetConstant(offset, PtrTy);
-          Index = CurDAG->getTargetFrameIndex(FI->getIndex(), PtrTy);
+          Index = CurDAG->getTargetFrameIndex(FI, PtrTy);
           return true;
         }
       } else if (offset > minOffset && offset < maxOffset) {
@@ -487,13 +493,14 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDOperand Op, SDOperand N, SDOperand &Bas
       int32_t offset = int32_t(CN->getSignExtended());
 
       if (Op1.getOpcode() == ISD::FrameIndex) {
-        FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Op1);
+        FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Op1);
+        int FI = int(FIN->getIndex());
         DEBUG(cerr << "SelectDFormAddr: ISD::ADD offset = " << offset
-              << " frame index = " << FI->getIndex() << "\n");
+                   << " frame index = " << FI << "\n");
 
-        if (FI->getIndex() < maxOffset) {
+        if (SPUFrameInfo::FItoStackOffset(FI) < maxOffset) {
           Base = CurDAG->getTargetConstant(offset, PtrTy);
-          Index = CurDAG->getTargetFrameIndex(FI->getIndex(), PtrTy);
+          Index = CurDAG->getTargetFrameIndex(FI, PtrTy);
           return true;
         }
       } else if (offset > minOffset && offset < maxOffset) {
@@ -583,17 +590,31 @@ SPUDAGToDAGISel::Select(SDOperand Op) {
   if (Opc >= ISD::BUILTIN_OP_END && Opc < SPUISD::FIRST_NUMBER) {
     return NULL;   // Already selected.
   } else if (Opc == ISD::FrameIndex) {
-    // Selects to AIr32 FI, 0 which in turn will become AIr32 SP, imm.
-    int FI = cast<FrameIndexSDNode>(N)->getIndex();
+    // Selects to (add $sp, FI * stackSlotSize)
+    int FI =
+      SPUFrameInfo::FItoStackOffset(cast<FrameIndexSDNode>(N)->getIndex());
     MVT::ValueType PtrVT = SPUtli.getPointerTy();
-    SDOperand Zero = CurDAG->getTargetConstant(0, PtrVT);
-    SDOperand TFI = CurDAG->getTargetFrameIndex(FI, PtrVT);
 
-    DEBUG(cerr << "SPUDAGToDAGISel: Replacing FrameIndex with AI32 <FI>, 0\n");
-    NewOpc = SPU::AIr32;
-    Ops[0] = TFI;
-    Ops[1] = Zero;
-    n_ops = 2;
+    // Adjust stack slot to actual offset in frame:
+    if (isS10Constant(FI)) {
+      DEBUG(cerr << "SPUDAGToDAGISel: Replacing FrameIndex with AIr32 $sp, "
+                 << FI
+                 << "\n");
+      NewOpc = SPU::AIr32;
+      Ops[0] = CurDAG->getRegister(SPU::R1, PtrVT);
+      Ops[1] = CurDAG->getTargetConstant(FI, PtrVT);
+      n_ops = 2;
+    } else {
+      DEBUG(cerr << "SPUDAGToDAGISel: Replacing FrameIndex with Ar32 $sp, "
+                 << FI
+                 << "\n");
+      NewOpc = SPU::Ar32;
+      Ops[0] = CurDAG->getRegister(SPU::R1, PtrVT);
+      Ops[1] = CurDAG->getConstant(FI, PtrVT);
+      n_ops = 2;
+
+      AddToISelQueue(Ops[1]);
+    }
   } else if (Opc == ISD::ZERO_EXTEND) {
     // (zero_extend:i16 (and:i8 <arg>, <const>))
     const SDOperand &Op1 = N->getOperand(0);

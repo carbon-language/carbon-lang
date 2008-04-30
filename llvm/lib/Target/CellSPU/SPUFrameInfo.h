@@ -57,6 +57,10 @@ namespace llvm {
     static int fullSpillSize() {
       return (SPURegisterInfo::getNumArgRegs() * stackSlotSize());
     }
+    //! Convert frame index to stack offset
+    static int FItoStackOffset(int frame_index) {
+      return frame_index * stackSlotSize();
+    }
     //! Number of instructions required to overcome hint-for-branch latency
     /*!
       HBR (hint-for-branch) instructions can be inserted when, for example,

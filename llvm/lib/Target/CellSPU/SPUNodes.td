@@ -59,7 +59,8 @@ def SPUv4i32_binop: SDTypeProfile<1, 2, [
 // FSMBI type constraints: There are several variations for the various
 // vector types (this avoids having to bit_convert all over the place.)
 def SPUfsmbi_type: SDTypeProfile<1, 1, [
-  /* SDTCisVT<1, i32> */ SDTCisInt<1>]>;
+  SDTCisInt<1>
+]>;
 
 // SELB type constraints:
 def SPUselb_type: SDTypeProfile<1, 3, [

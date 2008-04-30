@@ -509,7 +509,11 @@ def u16imm_i64 : Operand<i64> {
   let PrintMethod = "printU16ImmOperand";
 }
 
-def u16imm : Operand<i32> {
+def u16imm_i32 : Operand<i32> {
+  let PrintMethod = "printU16ImmOperand";
+}
+
+def u16imm : Operand<i16> {
   let PrintMethod = "printU16ImmOperand";
 }
 

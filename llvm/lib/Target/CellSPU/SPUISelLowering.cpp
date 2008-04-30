@@ -14,6 +14,7 @@
 #include "SPURegisterNames.h"
 #include "SPUISelLowering.h"
 #include "SPUTargetMachine.h"
+#include "SPUFrameInfo.h"
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/CodeGen/CallingConvLower.h"
@@ -514,6 +515,12 @@ AlignedLoad(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST,
       alignOffs = 0;
       prefSlotOffs = -vtm->prefslot_byte;
     }
+  } else if (basePtr.getOpcode() == ISD::FrameIndex) {
+    FrameIndexSDNode *FIN = cast<FrameIndexSDNode>(basePtr);
+    alignOffs = int(FIN->getIndex() * SPUFrameInfo::stackSlotSize());
+    prefSlotOffs = (int) (alignOffs & 0xf);
+    prefSlotOffs -= vtm->prefslot_byte;
+    basePtr = DAG.getRegister(SPU::R1, VT);
   } else {
     alignOffs = 0;
     prefSlotOffs = -vtm->prefslot_byte;
@@ -1912,7 +1919,7 @@ static SDOperand LowerVectorMUL(SDOperand Op, SelectionDAG &DAG) {
     SDOperand FSMBOp =
       DAG.getCopyToReg(Chain, FSMBIreg,
                        DAG.getNode(SPUISD::FSMBI, MVT::v8i16,
-                                   DAG.getConstant(0xcccc, MVT::i32)));
+                                   DAG.getConstant(0xcccc, MVT::i16)));
 
     SDOperand HHProd =
       DAG.getCopyToReg(FSMBOp, HiProdReg,
@@ -1956,7 +1963,7 @@ static SDOperand LowerVectorMUL(SDOperand Op, SelectionDAG &DAG) {
                   DAG.getNode(SPUISD::MPY, MVT::v8i16, rALH, rBLH), c8);
 
     SDOperand FSMBmask = DAG.getNode(SPUISD::FSMBI, MVT::v8i16,
-                                     DAG.getConstant(0x2222, MVT::i32));
+                                     DAG.getConstant(0x2222, MVT::i16));
 
     SDOperand LoProdParts =
       DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32,
@@ -2271,6 +2278,7 @@ static SDOperand LowerI64Math(SDOperand Op, SelectionDAG &DAG, unsigned Opc)
 
     assert(Op0VT == MVT::i32
            && "CellSPU: Zero/sign extending something other than i32");
+    DEBUG(cerr << "CellSPU: LowerI64Math custom lowering zero/sign/any extend\n");
 
     unsigned NewOpc = (Opc == ISD::SIGN_EXTEND
                       ? SPUISD::ROTBYTES_RIGHT_S
@@ -2764,7 +2772,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
   }
   }
   // Otherwise, return unchanged.
-#if 0
+#if 1
   if (Result.Val) {
     DEBUG(cerr << "\nReplace.SPU: ");
     DEBUG(N->dump(&DAG));
@@ -2833,7 +2841,9 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
                                                   APInt &KnownOne,
                                                   const SelectionDAG &DAG,
                                                   unsigned Depth ) const {
+#if 0
   const uint64_t uint64_sizebits = sizeof(uint64_t) * 8;
+#endif
 
   switch (Op.getOpcode()) {
   default:
@@ -2849,18 +2859,22 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
 
   case SPUISD::PROMOTE_SCALAR: {
     SDOperand Op0 = Op.getOperand(0);
-    uint64_t InMask = MVT::getIntVTBitMask(Op0.getValueType());
-    KnownZero |= APInt(uint64_sizebits, ~InMask, false);
-    KnownOne |= APInt(uint64_sizebits, InMask, false);
+    MVT::ValueType Op0VT = Op0.getValueType();
+    unsigned Op0VTBits = MVT::getSizeInBits(Op0VT);
+    uint64_t InMask = MVT::getIntVTBitMask(Op0VT);
+    KnownZero |= APInt(Op0VTBits, ~InMask, false);
+    KnownOne |= APInt(Op0VTBits, InMask, false);
     break;
   }
     
   case SPUISD::LDRESULT:
   case SPUISD::EXTRACT_ELT0:
   case SPUISD::EXTRACT_ELT0_CHAINED: {
-    uint64_t InMask = MVT::getIntVTBitMask(Op.getValueType());
-    KnownZero |= APInt(uint64_sizebits, ~InMask, false);
-    KnownOne |= APInt(uint64_sizebits, InMask, false);
+    MVT::ValueType OpVT = Op.getValueType();
+    unsigned OpVTBits = MVT::getSizeInBits(OpVT);
+    uint64_t InMask = MVT::getIntVTBitMask(OpVT);
+    KnownZero |= APInt(OpVTBits, ~InMask, false);
+    KnownOne |= APInt(OpVTBits, InMask, false);
     break;
   }
 
@@ -2873,26 +2887,35 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
   case MPYU:
   case MPYH:
   case MPYHH:
-  case SHLQUAD_L_BITS:
-  case SHLQUAD_L_BYTES:
-  case VEC_SHL:
-  case VEC_SRL:
-  case VEC_SRA:
-  case VEC_ROTL:
-  case VEC_ROTR:
-  case ROTQUAD_RZ_BYTES:
-  case ROTQUAD_RZ_BITS:
-  case ROTBYTES_RIGHT_S:
-  case ROTBYTES_LEFT:
-  case ROTBYTES_LEFT_CHAINED:
+  case SPUISD::SHLQUAD_L_BITS:
+  case SPUISD::SHLQUAD_L_BYTES:
+  case SPUISD::VEC_SHL:
+  case SPUISD::VEC_SRL:
+  case SPUISD::VEC_SRA:
+  case SPUISD::VEC_ROTL:
+  case SPUISD::VEC_ROTR:
+  case SPUISD::ROTQUAD_RZ_BYTES:
+  case SPUISD::ROTQUAD_RZ_BITS:
+  case SPUISD::ROTBYTES_RIGHT_S:
+  case SPUISD::ROTBYTES_LEFT:
+  case SPUISD::ROTBYTES_LEFT_CHAINED:
   case FSMBI:
   case SELB:
-  case SFPConstant:
   case FPInterp:
   case FPRecipEst:
   case SEXT32TO64:
 #endif
   }
+}
+
+// LowerAsmOperandForConstraint
+void
+SPUTargetLowering::LowerAsmOperandForConstraint(SDOperand Op,
+                                                char ConstraintLetter,
+                                                std::vector<SDOperand> &Ops,
+                                                SelectionDAG &DAG) const {
+  // Default, for the time being, to the base class handler
+  TargetLowering::LowerAsmOperandForConstraint(Op, ConstraintLetter, Ops, DAG);
 }
 
 /// isLegalAddressImmediate - Return true if the integer value can be used
