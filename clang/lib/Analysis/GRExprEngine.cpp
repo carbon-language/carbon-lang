@@ -157,7 +157,7 @@ ValueState* GRExprEngine::SetRVal(ValueState* St, Expr* Ex, RVal V) {
       return St;
   }
 
-  return StateMgr.SetRVal(St, Ex, V, isBlkExpr, false);
+  return StateMgr.SetRVal(St, Ex, V, isBlkExpr, true);
 }
 
 //===----------------------------------------------------------------------===//
@@ -890,8 +890,12 @@ void GRExprEngine::EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
   // FIXME: The "CheckOnly" option exists only because Array and Field
   //  loads aren't fully implemented.  Eventually this option will go away.
   
-  if (location.isUnknown() || CheckOnly)
+  if (CheckOnly)
     MakeNode(Dst, Ex, Pred, St);
+  else if (location.isUnknown()) {
+    // This is important.  We must nuke the old binding.
+    MakeNode(Dst, Ex, Pred, SetRVal(St, Ex, UnknownVal()));
+  }
   else    
     MakeNode(Dst, Ex, Pred, SetRVal(St, Ex, GetRVal(St, cast<LVal>(location),
                                                     Ex->getType())));  
@@ -1593,7 +1597,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
       St = SetRVal(St, U, U->isPostfix() ? V2 : Result);
 
       // Perform the store.      
-      EvalStore(Dst, U, *I, St, V1, Result);
+      EvalStore(Dst, U, *I2, St, V1, Result);
     }
   }
 }
