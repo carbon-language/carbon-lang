@@ -803,7 +803,15 @@ void GRExprEngine::VisitArraySubscriptExpr(ArraySubscriptExpr* A, NodeTy* Pred,
       ValueState* St = GetState(*I2);
       RVal BaseV = GetRVal(St, Base);
       RVal IdxV  = GetRVal(St, Idx);      
-      RVal V = lval::ArrayOffset::Make(BasicVals, BaseV, IdxV);
+      
+      // If IdxV is 0, return just BaseV.
+      
+      bool useBase = false;
+      
+      if (nonlval::ConcreteInt* IdxInt = dyn_cast<nonlval::ConcreteInt>(&IdxV))        
+        useBase = IdxInt->getValue() == 0;
+      
+      RVal V = useBase ? BaseV : lval::ArrayOffset::Make(BasicVals, BaseV,IdxV);
 
       if (asLVal)
         MakeNode(Dst, A, *I2, SetRVal(St, A, V));
