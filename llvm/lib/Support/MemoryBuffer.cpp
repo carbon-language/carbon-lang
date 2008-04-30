@@ -26,11 +26,10 @@
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
 #include <unistd.h>
 #include <sys/uio.h>
-#include <sys/fcntl.h>
 #else
 #include <io.h>
-#include <fcntl.h>
 #endif
+#include <fcntl.h>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
