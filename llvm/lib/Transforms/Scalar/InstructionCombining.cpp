@@ -370,6 +370,7 @@ namespace {
     Instruction *MatchBSwap(BinaryOperator &I);
     bool SimplifyStoreAtEndOfBlock(StoreInst &SI);
     Instruction *SimplifyMemTransfer(MemIntrinsic *MI);
+    Instruction *SimplifyMemSet(MemSetInst *MI);
 
 
     Value *EvaluateInDifferentType(Value *V, const Type *Ty, bool isSigned);
@@ -8491,7 +8492,9 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   // A single load+store correctly handles overlapping memory in the memmove
   // case.
   unsigned Size = MemOpLength->getZExtValue();
-  if (Size == 0 || Size > 8 || (Size&(Size-1)))
+  if (Size == 0) return MI;  // Delete this mem transfer.
+  
+  if (Size > 8 || (Size&(Size-1)))
     return 0;  // If not 1/2/4/8 bytes, exit.
   
   // Use an integer load+store unless we can find something better.
@@ -8545,6 +8548,48 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   return MI;
 }
 
+Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
+  unsigned Alignment = GetOrEnforceKnownAlignment(MI->getDest());
+  if (MI->getAlignment()->getZExtValue() < Alignment) {
+    MI->setAlignment(ConstantInt::get(Type::Int32Ty, Alignment));
+    return MI;
+  }
+  
+  // Extract the length and alignment and fill if they are constant.
+  ConstantInt *LenC = dyn_cast<ConstantInt>(MI->getLength());
+  ConstantInt *FillC = dyn_cast<ConstantInt>(MI->getValue());
+  if (!LenC || !FillC || FillC->getType() != Type::Int8Ty)
+    return 0;
+  uint64_t Len = LenC->getZExtValue();
+  Alignment = MI->getAlignment()->getZExtValue();
+  
+  // If the length is zero, this is a no-op
+  if (Len == 0) return MI; // memset(d,c,0,a) -> noop
+  
+  // memset(s,c,n) -> store s, c (for n=1,2,4,8)
+  if (Len <= 8 && isPowerOf2_32((uint32_t)Len)) {
+    const Type *ITy = IntegerType::get(Len*8);  // n=1 -> i8.
+    
+    Value *Dest = MI->getDest();
+    Dest = InsertBitCastBefore(Dest, PointerType::getUnqual(ITy), *MI);
+
+    // Alignment 0 is identity for alignment 1 for memset, but not store.
+    if (Alignment == 0) Alignment = 1;
+    
+    // Extract the fill value and store.
+    uint64_t Fill = FillC->getZExtValue()*0x0101010101010101ULL;
+    InsertNewInstBefore(new StoreInst(ConstantInt::get(ITy, Fill), Dest, false,
+                                      Alignment), *MI);
+    
+    // Set the size of the copy to 0, it will be deleted on the next iteration.
+    MI->setLength(Constant::getNullValue(LenC->getType()));
+    return MI;
+  }
+
+  return 0;
+}
+
+
 /// visitCallInst - CallInst simplification.  This mostly only handles folding 
 /// of intrinsic instructions.  For normal calls, it allows visitCallSite to do
 /// the heavy lifting.
@@ -8592,12 +8637,9 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (isa<MemCpyInst>(MI) || isa<MemMoveInst>(MI)) {
       if (Instruction *I = SimplifyMemTransfer(MI))
         return I;
-    } else if (isa<MemSetInst>(MI)) {
-      unsigned Alignment = GetOrEnforceKnownAlignment(MI->getDest());
-      if (MI->getAlignment()->getZExtValue() < Alignment) {
-        MI->setAlignment(ConstantInt::get(Type::Int32Ty, Alignment));
-        Changed = true;
-      }
+    } else if (MemSetInst *MSI = dyn_cast<MemSetInst>(MI)) {
+      if (Instruction *I = SimplifyMemSet(MSI))
+        return I;
     }
           
     if (Changed) return II;
