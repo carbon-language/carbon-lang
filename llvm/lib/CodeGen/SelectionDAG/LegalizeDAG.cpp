@@ -3874,14 +3874,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case Expand: assert(0 && "Shouldn't need to expand other operators here!");
     case Legal:
       Tmp1 = LegalizeOp(Node->getOperand(0));
+      Result = DAG.UpdateNodeOperands(Result, Tmp1);
       if (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0)) ==
           TargetLowering::Custom) {
-        Tmp2 = TLI.LowerOperation(Result, DAG);
-        if (Tmp2.Val) {
-          Tmp1 = Tmp2;
-        }
+        Tmp1 = TLI.LowerOperation(Result, DAG);
+        if (Tmp1.Val) Result = Tmp1;
       }
-      Result = DAG.UpdateNodeOperands(Result, Tmp1);
       break;
     case Promote:
       switch (Node->getOpcode()) {
