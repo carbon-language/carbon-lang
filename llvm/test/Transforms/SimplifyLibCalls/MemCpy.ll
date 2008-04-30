@@ -1,6 +1,4 @@
-; Test that the StrCatOptimizer works correctly
-; RUN: llvm-as < %s | opt -constprop -simplify-libcalls | \
-; RUN:   llvm-dis | not grep {call.*llvm.memcpy.i32}
+; RUN: llvm-as < %s | opt -constprop -instcombine | llvm-dis | not grep {call.*llvm.memcpy.i32}
 
 @h = constant [2 x i8] c"h\00"		; <[2 x i8]*> [#uses=1]
 @hel = constant [4 x i8] c"hel\00"		; <[4 x i8]*> [#uses=1]
