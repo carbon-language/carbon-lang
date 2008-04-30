@@ -2876,6 +2876,9 @@ private:
     RI->getInitialFrameState(Moves);
     EmitFrameMoves(NULL, 0, Moves, true);
 
+    // On Darwin the linker honors the alignment of eh_frame, which means it
+    // must be 8-byte on 64-bit targets to match what gcc does.  Otherwise
+    // you get holes which confuse readers of eh_frame.
     Asm->EmitAlignment(TD->getPointerSize() == sizeof(int32_t) ? 2 : 3, 
                        0, 0, false);
     EmitLabel("eh_frame_common_end", Index);
@@ -2966,6 +2969,9 @@ private:
       // frame.
       EmitFrameMoves("eh_func_begin", EHFrameInfo.Number, EHFrameInfo.Moves, true);
       
+      // On Darwin the linker honors the alignment of eh_frame, which means it
+      // must be 8-byte on 64-bit targets to match what gcc does.  Otherwise
+      // you get holes which confuse readers of eh_frame.
       Asm->EmitAlignment(TD->getPointerSize() == sizeof(int32_t) ? 2 : 3, 
                          0, 0, false);
       EmitLabel("eh_frame_end", EHFrameInfo.Number);
