@@ -475,15 +475,6 @@ namespace llvm {
     SDOperand EmitTailCallLoadRetAddr(SelectionDAG &DAG, SDOperand &OutRetAddr,
                                 SDOperand Chain, bool IsTailCall, bool Is64Bit,
                                 int FPDiff);
-    
-    bool CopyTailCallByValClobberedRegToVirtReg(bool containsByValArg,
-     SmallVector< std::pair<unsigned, unsigned>,8> &TailCallByValClobberedVRegs,
-     SmallVector<MVT::ValueType, 8> &TailCallByValClobberedVRegTypes,
-     std::pair<unsigned, SDOperand> &RegToPass,
-     SDOperand &OutChain,
-     SDOperand &OutFlag,
-     MachineFunction &MF,
-     SelectionDAG & DAG);
 
     CCAssignFn *CCAssignFnForNode(SDOperand Op) const;
     NameDecorationStyle NameDecorationForFORMAL_ARGUMENTS(SDOperand Op);

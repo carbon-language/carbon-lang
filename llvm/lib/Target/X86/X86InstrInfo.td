@@ -391,6 +391,7 @@ def TCRETURNri : I<0, Pseudo, (outs), (ins GR32:$dst, i32imm:$offset, variable_o
                  []>;
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
+
   def TAILJMPd : IBr<0xE9, (ins i32imm:$dst), "jmp\t${dst:call}  # TAILCALL",
                  []>;
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in

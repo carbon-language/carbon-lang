@@ -42,6 +42,7 @@ def SDT_PPCstbrx : SDTypeProfile<0, 4, [
   SDTCisVT<0, i32>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
 ]>;
 
+
 def SDT_PPClarx : SDTypeProfile<1, 2, [
   SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisVT<2, i32>
 ]>;
@@ -50,6 +51,10 @@ def SDT_PPCstcx : SDTypeProfile<0, 3, [
 ]>;
 def SDT_PPCcmp_unres : SDTypeProfile<0, 3, [
   SDTCisSameAs<0, 1>, SDTCisInt<1>, SDTCisVT<2, i32>
+]>;
+
+def SDT_PPCTC_ret : SDTypeProfile<0, 2, [
+  SDTCisPtrTy<0>, SDTCisVT<1, i32>
 ]>;
 
 //===----------------------------------------------------------------------===//
@@ -120,6 +125,12 @@ def PPCbctrl_ELF  : SDNode<"PPCISD::BCTRL_ELF", SDTNone,
 
 def retflag       : SDNode<"PPCISD::RET_FLAG", SDTNone,
                            [SDNPHasChain, SDNPOptInFlag]>;
+
+def PPCtc_return : SDNode<"PPCISD::TC_RETURN", SDT_PPCTC_ret,
+                        [SDNPHasChain,  SDNPOptInFlag]>;
+
+def PPCtailcall : SDNode<"PPCISD::TAILCALL",     SDT_PPCCall,
+                        [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
 
 def PPCvcmp       : SDNode<"PPCISD::VCMP" , SDT_PPCvcmp, []>;
 def PPCvcmp_o     : SDNode<"PPCISD::VCMPo", SDT_PPCvcmp, [SDNPOutFlag]>;
@@ -452,6 +463,46 @@ let isCall = 1, PPC970_Unit = 7,
                                "bctrl", BrB,
                                [(PPCbctrl_ELF)]>, Requires<[In32BitMode]>;
 }
+
+
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
+def TCRETURNdi :Pseudo< (outs),
+                        (ins calltarget:$dst, i32imm:$offset, variable_ops),
+                 "#TC_RETURNd $dst $offset",
+                 []>;
+
+
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
+def TCRETURNai :Pseudo<(outs), (ins aaddr:$func, i32imm:$offset, variable_ops),
+                 "#TC_RETURNa $func $offset",
+                 [(PPCtc_return (i32 imm:$func), imm:$offset)]>;
+
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
+def TCRETURNri : Pseudo<(outs), (ins CTRRC:$dst, i32imm:$offset, variable_ops),
+                 "#TC_RETURNr $dst $offset",
+                 []>;
+
+
+let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7, isBranch = 1,
+    isIndirectBranch = 1, isCall = 1, isReturn = 1  in
+def TAILBCTR : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>,
+     Requires<[In32BitMode]>;
+
+
+
+let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7,
+    isBarrier = 1, isCall = 1, isReturn = 1 in
+def TAILB   : IForm<18, 0, 0, (outs), (ins calltarget:$dst),
+                  "b $dst", BrB,
+                  []>;
+
+
+let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7,
+    isBarrier = 1, isCall = 1, isReturn = 1 in
+def TAILBA   : IForm<18, 0, 0, (outs), (ins aaddr:$dst),
+                  "ba $dst", BrB,
+                  []>;
+
 
 // DCB* instructions.
 def DCBA   : DCB_Form<758, 0, (outs), (ins memrr:$dst),
@@ -1210,6 +1261,18 @@ def : Pat<(PPCcall_ELF (i32 tglobaladdr:$dst)),
           (BL_ELF tglobaladdr:$dst)>;
 def : Pat<(PPCcall_ELF (i32 texternalsym:$dst)),
           (BL_ELF texternalsym:$dst)>;
+
+
+def : Pat<(PPCtc_return (i32 tglobaladdr:$dst),  imm:$imm),
+          (TCRETURNdi tglobaladdr:$dst, imm:$imm)>;
+
+def : Pat<(PPCtc_return (i32 texternalsym:$dst), imm:$imm),
+          (TCRETURNdi texternalsym:$dst, imm:$imm)>;
+
+def : Pat<(PPCtc_return CTRRC:$dst, imm:$imm),
+          (TCRETURNri CTRRC:$dst, imm:$imm)>;
+
+
 
 // Hi and Lo for Darwin Global Addresses.
 def : Pat<(PPChi tglobaladdr:$in, 0), (LIS tglobaladdr:$in)>;

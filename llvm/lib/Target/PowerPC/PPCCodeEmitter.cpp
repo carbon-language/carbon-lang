@@ -143,7 +143,8 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
              MO.isConstantPoolIndex() || MO.isJumpTableIndex()) {
     unsigned Reloc = 0;
     if (MI.getOpcode() == PPC::BL_Macho || MI.getOpcode() == PPC::BL8_Macho ||
-        MI.getOpcode() == PPC::BL_ELF || MI.getOpcode() == PPC::BL8_ELF)
+        MI.getOpcode() == PPC::BL_ELF || MI.getOpcode() == PPC::BL8_ELF ||
+        MI.getOpcode() == PPC::TAILB || MI.getOpcode() == PPC::TAILB8)
       Reloc = PPC::reloc_pcrel_bx;
     else {
       if (TM.getRelocationModel() == Reloc::PIC_) {

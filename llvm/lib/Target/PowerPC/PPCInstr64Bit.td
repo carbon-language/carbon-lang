@@ -116,7 +116,6 @@ def : Pat<(PPCcall_ELF (i64 tglobaladdr:$dst)),
 def : Pat<(PPCcall_ELF (i64 texternalsym:$dst)),
           (BL8_ELF texternalsym:$dst)>;
 
-
 // Atomic operations.
 def LDARX : Pseudo<(outs G8RC:$rD), (ins memrr:$ptr, i32imm:$label),
                    "\nLa${label}_entry:\n\tldarx $rD, $ptr",
@@ -134,6 +133,53 @@ def CMP_UNRESdi : Pseudo<(outs), (ins G8RC:$rA, s16imm64:$imm, i32imm:$label),
                          "cmpdi $rA, $imm\n\tbne- La${label}_exit",
                          [(PPCcmp_unres G8RC:$rA, immSExt16:$imm, imm:$label)]>;
 }
+
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
+def TCRETURNdi8 :Pseudo< (outs),
+                        (ins calltarget:$dst, i32imm:$offset, variable_ops),
+                 "#TC_RETURNd8 $dst $offset",
+                 []>;
+
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
+def TCRETURNai8 :Pseudo<(outs), (ins aaddr:$func, i32imm:$offset, variable_ops),
+                 "#TC_RETURNa8 $func $offset",
+                 [(PPCtc_return (i64 imm:$func), imm:$offset)]>;
+
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
+def TCRETURNri8 : Pseudo<(outs), (ins CTRRC8:$dst, i32imm:$offset, variable_ops),
+                 "#TC_RETURNr8 $dst $offset",
+                 []>;
+
+
+let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7, isBranch = 1,
+    isIndirectBranch = 1, isCall = 1, isReturn = 1  in
+def TAILBCTR8 : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>,
+    Requires<[In64BitMode]>;
+
+
+
+let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7,
+    isBarrier = 1, isCall = 1, isReturn = 1 in
+def TAILB8   : IForm<18, 0, 0, (outs), (ins calltarget:$dst),
+                  "b $dst", BrB,
+                  []>;
+
+
+let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7,
+    isBarrier = 1, isCall = 1, isReturn = 1 in
+def TAILBA8   : IForm<18, 0, 0, (outs), (ins aaddr:$dst),
+                  "ba $dst", BrB,
+                  []>;
+
+def : Pat<(PPCtc_return (i64 tglobaladdr:$dst),  imm:$imm),
+          (TCRETURNdi8 tglobaladdr:$dst, imm:$imm)>;
+
+def : Pat<(PPCtc_return (i64 texternalsym:$dst), imm:$imm),
+          (TCRETURNdi8 texternalsym:$dst, imm:$imm)>;
+
+def : Pat<(PPCtc_return CTRRC8:$dst, imm:$imm),
+          (TCRETURNri8 CTRRC8:$dst, imm:$imm)>;
+
 
 //===----------------------------------------------------------------------===//
 // 64-bit SPR manipulation instrs.

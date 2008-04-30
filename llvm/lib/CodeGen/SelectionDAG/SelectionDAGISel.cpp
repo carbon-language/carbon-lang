@@ -4612,6 +4612,40 @@ static void copyCatchInfo(BasicBlock *SrcBB, BasicBlock *DestBB,
     }
 }
 
+/// IsFixedFrameObjectWithPosOffset - Check if object is a fixed frame object and
+/// whether object offset >= 0.
+static bool
+IsFixedFrameObjectWithPosOffset(MachineFrameInfo * MFI, SDOperand Op) {
+  if (!isa<FrameIndexSDNode>(Op)) return false;
+
+  FrameIndexSDNode * FrameIdxNode = dyn_cast<FrameIndexSDNode>(Op);
+  int FrameIdx =  FrameIdxNode->getIndex();
+  return MFI->isFixedObjectIndex(FrameIdx) &&
+    MFI->getObjectOffset(FrameIdx) >= 0;
+}
+
+/// IsPossiblyOverwrittenArgumentOfTailCall - Check if the operand could
+/// possibly be overwritten when lowering the outgoing arguments in a tail
+/// call. Currently the implementation of this call is very conservative and
+/// assumes all arguments sourcing from FORMAL_ARGUMENTS or a CopyFromReg with
+/// virtual registers would be overwritten by direct lowering.
+static bool IsPossiblyOverwrittenArgumentOfTailCall(SDOperand Op,
+                                                    MachineFrameInfo * MFI) {
+  RegisterSDNode * OpReg = NULL;
+  if (Op.getOpcode() == ISD::FORMAL_ARGUMENTS ||
+      (Op.getOpcode()== ISD::CopyFromReg &&
+       (OpReg = dyn_cast<RegisterSDNode>(Op.getOperand(1))) &&
+       (OpReg->getReg() >= TargetRegisterInfo::FirstVirtualRegister)) ||
+      (Op.getOpcode() == ISD::LOAD &&
+       IsFixedFrameObjectWithPosOffset(MFI, Op.getOperand(1))) ||
+      (Op.getOpcode() == ISD::MERGE_VALUES &&
+       Op.getOperand(Op.ResNo).getOpcode() == ISD::LOAD &&
+       IsFixedFrameObjectWithPosOffset(MFI, Op.getOperand(Op.ResNo).
+                                       getOperand(1))))
+    return true;
+  return false;
+}
+
 /// CheckDAGForTailCallsAndFixThem - This Function looks for CALL nodes in the
 /// DAG and fixes their tailcall attribute operand.
 static void CheckDAGForTailCallsAndFixThem(SelectionDAG &DAG, 
@@ -4636,18 +4670,50 @@ static void CheckDAGForTailCallsAndFixThem(SelectionDAG &DAG,
       // eligible (no RET or the target rejects) the attribute is fixed to
       // false. The TargetLowering::IsEligibleForTailCallOptimization function
       // must correctly identify tail call optimizable calls.
-      if (isMarkedTailCall && 
-          (Ret==NULL || 
-           !TLI.IsEligibleForTailCallOptimization(OpCall, OpRet, DAG))) {
+      if (!isMarkedTailCall) continue;
+      if (Ret==NULL ||
+          !TLI.IsEligibleForTailCallOptimization(OpCall, OpRet, DAG)) {
+        // Not eligible. Mark CALL node as non tail call.
         SmallVector<SDOperand, 32> Ops;
         unsigned idx=0;
-        for(SDNode::op_iterator I =OpCall.Val->op_begin(), 
-              E=OpCall.Val->op_end(); I!=E; I++, idx++) {
+        for(SDNode::op_iterator I =OpCall.Val->op_begin(),
+              E = OpCall.Val->op_end(); I != E; I++, idx++) {
           if (idx!=3)
             Ops.push_back(*I);
-          else 
+          else
             Ops.push_back(DAG.getConstant(false, TLI.getPointerTy()));
         }
+        DAG.UpdateNodeOperands(OpCall, Ops.begin(), Ops.size());
+      } else {
+        // Look for tail call clobbered arguments. Emit a series of
+        // copyto/copyfrom virtual register nodes to protect them.
+        SmallVector<SDOperand, 32> Ops;
+        SDOperand Chain = OpCall.getOperand(0), InFlag;
+        unsigned idx=0;
+        for(SDNode::op_iterator I = OpCall.Val->op_begin(),
+              E = OpCall.Val->op_end(); I != E; I++, idx++) {
+          SDOperand Arg = *I;
+          if (idx > 4 && (idx % 2)) {
+            bool isByVal = cast<ARG_FLAGSSDNode>(OpCall.getOperand(idx+1))->
+              getArgFlags().isByVal();
+            MachineFunction &MF = DAG.getMachineFunction();
+            MachineFrameInfo *MFI = MF.getFrameInfo();
+            if (!isByVal &&
+                IsPossiblyOverwrittenArgumentOfTailCall(Arg, MFI)) {
+              MVT::ValueType VT = Arg.getValueType();
+              unsigned VReg = MF.getRegInfo().
+                createVirtualRegister(TLI.getRegClassFor(VT));
+              Chain = DAG.getCopyToReg(Chain, VReg, Arg, InFlag);
+              InFlag = Chain.getValue(1);
+              Arg = DAG.getCopyFromReg(Chain, VReg, VT, InFlag);
+              Chain = Arg.getValue(1);
+              InFlag = Arg.getValue(2);
+            }
+          }
+          Ops.push_back(Arg);
+        }
+        // Link in chain of CopyTo/CopyFromReg.
+        Ops[0] = Chain;
         DAG.UpdateNodeOperands(OpCall, Ops.begin(), Ops.size());
       }
     }

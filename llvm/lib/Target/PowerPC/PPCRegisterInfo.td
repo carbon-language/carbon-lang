@@ -346,4 +346,6 @@ def CRBITRC : RegisterClass<"PPC", [i32], 32,
   let CopyCost = -1;
 }
 
-  
+
+def CTRRC : RegisterClass<"PPC", [i32], 32, [CTR]>;
+def CTRRC8 : RegisterClass<"PPC", [i64], 64, [CTR8]>;

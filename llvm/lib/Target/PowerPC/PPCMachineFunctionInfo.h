@@ -43,19 +43,42 @@ private:
   /// requires that the code generator produce a store of LR to the stack on
   /// entry, even though LR may otherwise apparently not be used.
   bool LRStoreRequired;
+
+  /// MinReservedArea - This is the frame size that is at least reserved in a
+  /// potential caller (parameter+linkage area).
+  unsigned MinReservedArea;
+
+  /// TailCallSPDelta - Stack pointer delta used when tail calling. Maximum
+  /// amount the stack pointer is adjusted to make the frame bigger for tail
+  /// calls. Used for creating an area before the register spill area.
+  int TailCallSPDelta;
+
+  /// HasFastCall - Does this function contain a fast call. Used to determine
+  /// how the caller's stack pointer should be calculated (epilog/dynamicalloc).
+  bool HasFastCall;
+
 public:
   PPCFunctionInfo(MachineFunction &MF) 
     : FramePointerSaveIndex(0),
       ReturnAddrSaveIndex(0),
       SpillsCR(false),
-      LRStoreRequired(false) {}
+      LRStoreRequired(false),
+      MinReservedArea(0),
+      TailCallSPDelta(0),
+      HasFastCall(false) {}
 
   int getFramePointerSaveIndex() const { return FramePointerSaveIndex; }
   void setFramePointerSaveIndex(int Idx) { FramePointerSaveIndex = Idx; }
   
   int getReturnAddrSaveIndex() const { return ReturnAddrSaveIndex; }
   void setReturnAddrSaveIndex(int idx) { ReturnAddrSaveIndex = idx; }
-  
+
+  unsigned getMinReservedArea() const { return MinReservedArea; }
+  void setMinReservedArea(unsigned size) { MinReservedArea = size; }
+
+  int getTailCallSPDelta() const { return TailCallSPDelta; }
+  void setTailCallSPDelta(int size) { TailCallSPDelta = size; }
+
   /// UsesLR - This is set when the prolog/epilog inserter does its initial scan
   /// of the function, it is true if the LR/LR8 register is ever explicitly
   /// accessed/clobbered in the machine function (e.g. by calls and movpctolr,
@@ -68,6 +91,9 @@ public:
 
   void setLRStoreRequired() { LRStoreRequired = true; }
   bool isLRStoreRequired() const { return LRStoreRequired; }
+
+  void setHasFastCall() { HasFastCall = true; }
+  bool hasFastCall() const { return HasFastCall;}
 };
 
 } // end of namespace llvm

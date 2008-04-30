@@ -162,7 +162,16 @@ namespace llvm {
 
       /// CMP_UNRESERVE = Test for equality and "unreserve" if not true. This
       /// is used to implement atomic operations.
-      CMP_UNRESERVE
+      CMP_UNRESERVE,
+
+      /// TAILCALL - Indicates a tail call should be taken.
+      TAILCALL,
+      /// TC_RETURN - A tail call return.
+      ///   operand #0 chain
+      ///   operand #1 callee (register or absolute)
+      ///   operand #2 stack adjustment
+      ///   operand #3 optional in flag
+      TC_RETURN
     };
   }
 
@@ -308,10 +317,26 @@ namespace llvm {
     /// the offset of the target addressing mode.
     virtual bool isLegalAddressImmediate(GlobalValue *GV) const;
 
+     /// IsEligibleForTailCallOptimization - Check whether the call is eligible
+    /// for tail call optimization. Target which want to do tail call
+    /// optimization should implement this function.
+    virtual bool IsEligibleForTailCallOptimization(SDOperand Call,
+                                                   SDOperand Ret,
+                                                   SelectionDAG &DAG) const;
+
   private:
     /// PPCAtomicLabelIndex - Keep track the number of PPC atomic labels.
     ///
     unsigned PPCAtomicLabelIndex;
+
+    SDOperand getFramePointerFrameIndex(SelectionDAG & DAG) const;
+    SDOperand getReturnAddrFrameIndex(SelectionDAG & DAG) const;
+
+    SDOperand EmitTailCallLoadFPAndRetAddr(SelectionDAG & DAG,
+                                           int SPDiff,
+                                           SDOperand Chain,
+                                           SDOperand &LROpOut,
+                                           SDOperand &FPOpOut);
 
     SDOperand LowerRETURNADDR(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFRAMEADDR(SDOperand Op, SelectionDAG &DAG);

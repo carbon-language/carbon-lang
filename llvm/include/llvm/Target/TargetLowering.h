@@ -1033,6 +1033,36 @@ public:
     return false;
   }
 
+  /// CheckTailCallReturnConstraints - Check whether CALL node immediatly
+  /// preceeds the RET node and whether the return uses the result of the node
+  /// or is a void return. This function can be used by the target to determine
+  /// eligiblity of tail call optimization.
+  static bool CheckTailCallReturnConstraints(SDOperand Call, SDOperand Ret) {
+    unsigned NumOps = Ret.getNumOperands();
+    if ((NumOps == 1 &&
+       (Ret.getOperand(0) == SDOperand(Call.Val,1) ||
+        Ret.getOperand(0) == SDOperand(Call.Val,0))) ||
+      (NumOps > 1 &&
+       Ret.getOperand(0) == SDOperand(Call.Val,Call.Val->getNumValues()-1) &&
+       Ret.getOperand(1) == SDOperand(Call.Val,0)))
+      return true;
+    return false;
+  }
+
+  /// GetPossiblePreceedingTailCall - Get preceeding TailCallNodeOpCode node if
+  /// it exists skip possible ISD:TokenFactor.
+  static SDOperand GetPossiblePreceedingTailCall(SDOperand Chain,
+                                                 unsigned TailCallNodeOpCode) {
+    if (Chain.getOpcode() == TailCallNodeOpCode) {
+      return Chain;
+    } else if (Chain.getOpcode() == ISD::TokenFactor) {
+      if (Chain.getNumOperands() &&
+          Chain.getOperand(0).getOpcode() == TailCallNodeOpCode)
+        return Chain.getOperand(0);
+    }
+    return Chain;
+  }
+
   /// CustomPromoteOperation - This callback is invoked for operations that are
   /// unsupported by the target, are registered to use 'custom' lowering, and
   /// whose type needs to be promoted.

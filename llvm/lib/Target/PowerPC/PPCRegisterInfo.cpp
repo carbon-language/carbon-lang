@@ -19,6 +19,7 @@
 #include "PPCRegisterInfo.h"
 #include "PPCFrameInfo.h"
 #include "PPCSubtarget.h"
+#include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Type.h"
@@ -332,7 +333,8 @@ PPCRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
 //
 static bool needsFP(const MachineFunction &MF) {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return NoFramePointerElim || MFI->hasVarSizedObjects();
+  return NoFramePointerElim || MFI->hasVarSizedObjects() ||
+    (PerformTailCallOpt && MF.getInfo<PPCFunctionInfo>()->hasFastCall());
 }
 
 static bool spillsCR(const MachineFunction &MF) {
@@ -399,9 +401,42 @@ static bool MustSaveLR(const MachineFunction &MF) {
          MF.getFrameInfo()->hasCalls();
 }
 
+
+
 void PPCRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
+  if (PerformTailCallOpt && I->getOpcode() == PPC::ADJCALLSTACKUP) {
+    // Add (actually substract) back the amount the callee popped on return.
+    if (int CalleeAmt =  I->getOperand(1).getImm()) {
+      MachineInstr * New = NULL;
+      bool is64Bit = Subtarget.isPPC64();
+      CalleeAmt *= -1;
+      unsigned StackReg = is64Bit ? PPC::X1 : PPC::R1;
+      unsigned TmpReg = is64Bit ? PPC::X0 : PPC::R0;
+      unsigned ADDIInstr = is64Bit ? PPC::ADDI8 : PPC::ADDI;
+      unsigned ADDInstr = is64Bit ? PPC::ADD8 : PPC::ADD4;
+      unsigned LISInstr = is64Bit ? PPC::LIS8 : PPC::LIS;
+      unsigned ORIInstr = is64Bit ? PPC::ORI8 : PPC::ORI;
+
+      if (isInt16(CalleeAmt)) {
+        New = BuildMI(TII.get(ADDIInstr), StackReg).addReg(StackReg).
+          addImm(CalleeAmt);
+        MBB.insert(I, New);
+      } else {
+        MachineBasicBlock::iterator MBBI = I;
+        BuildMI(MBB, MBBI, TII.get(LISInstr), TmpReg)
+          .addImm(CalleeAmt >> 16);
+        BuildMI(MBB, MBBI, TII.get(ORIInstr), TmpReg)
+          .addReg(TmpReg, false, false, true)
+          .addImm(CalleeAmt & 0xFFFF);
+        BuildMI(MBB, MBBI, TII.get(ADDInstr))
+          .addReg(StackReg)
+          .addReg(StackReg)
+          .addReg(TmpReg);
+      }
+    }
+  }
   // Simply discard ADJCALLSTACKDOWN, ADJCALLSTACKUP instructions.
   MBB.erase(I);
 }
@@ -924,6 +959,13 @@ PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     FI->setFramePointerSaveIndex(FPSI);                      
   }
 
+  // Reserve stack space to move the linkage area to in case of a tail call.
+  int TCSPDelta = 0;
+  if (PerformTailCallOpt && (TCSPDelta=FI->getTailCallSPDelta()) < 0) {
+    int AddFPOffsetAmount = IsELF32_ABI ? -4 : 0;
+    MF.getFrameInfo()->CreateFixedObject( -1 * TCSPDelta,
+                                          AddFPOffsetAmount + TCSPDelta);
+  }
   // Reserve a slot closest to SP or frame pointer if we have a dynalloc or
   // a large stack, which will require scavenging a register to materialize a
   // large offset.
@@ -1160,7 +1202,15 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
 void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
                                    MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
-  assert(MBBI->getOpcode() == PPC::BLR &&
+  unsigned RetOpcode = MBBI->getOpcode();
+
+  assert( (RetOpcode == PPC::BLR ||
+           RetOpcode == PPC::TCRETURNri ||
+           RetOpcode == PPC::TCRETURNdi ||
+           RetOpcode == PPC::TCRETURNai ||
+           RetOpcode == PPC::TCRETURNri8 ||
+           RetOpcode == PPC::TCRETURNdi8 ||
+           RetOpcode == PPC::TCRETURNai8) &&
          "Can only insert epilog into returning blocks");
 
   // Get alignment info so we know how to restore r1
@@ -1169,7 +1219,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   unsigned MaxAlign = MFI->getMaxAlignment();
 
   // Get the number of bytes allocated from the FrameInfo.
-  unsigned FrameSize = MFI->getStackSize();
+  int FrameSize = MFI->getStackSize();
 
   // Get processor type.
   bool IsPPC64 = Subtarget.isPPC64();
@@ -1183,19 +1233,75 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   int LROffset = PPCFrameInfo::getReturnSaveOffset(IsPPC64, IsMachoABI);
   int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64, IsMachoABI);
   
+  bool UsesTCRet =  RetOpcode == PPC::TCRETURNri ||
+    RetOpcode == PPC::TCRETURNdi ||
+    RetOpcode == PPC::TCRETURNai ||
+    RetOpcode == PPC::TCRETURNri8 ||
+    RetOpcode == PPC::TCRETURNdi8 ||
+    RetOpcode == PPC::TCRETURNai8;
+
+  PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
+
+  if (UsesTCRet) {
+    int MaxTCRetDelta = FI->getTailCallSPDelta();
+    MachineOperand &StackAdjust = MBBI->getOperand(1);
+    assert( StackAdjust.isImmediate() && "Expecting immediate value.");
+    // Adjust stack pointer.
+    int StackAdj = StackAdjust.getImm();
+    int Delta = StackAdj - MaxTCRetDelta;
+    assert((Delta >= 0) && "Delta must be positive");
+    if (MaxTCRetDelta>0)
+      FrameSize += (StackAdj +Delta);
+    else
+      FrameSize += StackAdj;
+  }
+
   if (FrameSize) {
     // The loaded (or persistent) stack pointer value is offset by the 'stwu'
     // on entry to the function.  Add this offset back now.
-    if (!Subtarget.isPPC64()) {
-      if (isInt16(FrameSize) && (!ALIGN_STACK || TargetAlign >= MaxAlign) &&
-            !MFI->hasVarSizedObjects()) {
-          BuildMI(MBB, MBBI, TII.get(PPC::ADDI), PPC::R1)
-              .addReg(PPC::R1).addImm(FrameSize);
+    if (!IsPPC64) {
+      // If this function contained a fastcc call and PerformTailCallOpt is
+      // enabled (=> hasFastCall()==true) the fastcc call might contain a tail
+      // call which invalidates the stack pointer value in SP(0). So we use the
+      // value of R31 in this case.
+      if (FI->hasFastCall() && isInt16(FrameSize)) {
+        assert(hasFP(MF) && "Expecting a valid the frame pointer.");
+        BuildMI(MBB, MBBI, TII.get(PPC::ADDI), PPC::R1)
+          .addReg(PPC::R31).addImm(FrameSize);
+      } else if(FI->hasFastCall()) {
+        BuildMI(MBB, MBBI, TII.get(PPC::LIS), PPC::R0)
+          .addImm(FrameSize >> 16);
+        BuildMI(MBB, MBBI, TII.get(PPC::ORI), PPC::R0)
+          .addReg(PPC::R0, false, false, true)
+          .addImm(FrameSize & 0xFFFF);
+        BuildMI(MBB, MBBI, TII.get(PPC::ADD4))
+          .addReg(PPC::R1)
+          .addReg(PPC::R31)
+          .addReg(PPC::R0);
+      } else if (isInt16(FrameSize) &&
+                 (!ALIGN_STACK || TargetAlign >= MaxAlign) &&
+                 !MFI->hasVarSizedObjects()) {
+        BuildMI(MBB, MBBI, TII.get(PPC::ADDI), PPC::R1)
+          .addReg(PPC::R1).addImm(FrameSize);
       } else {
         BuildMI(MBB, MBBI, TII.get(PPC::LWZ),PPC::R1).addImm(0).addReg(PPC::R1);
       }
     } else {
-      if (isInt16(FrameSize) && TargetAlign >= MaxAlign &&
+      if (FI->hasFastCall() && isInt16(FrameSize)) {
+        assert(hasFP(MF) && "Expecting a valid the frame pointer.");
+        BuildMI(MBB, MBBI, TII.get(PPC::ADDI8), PPC::X1)
+          .addReg(PPC::X31).addImm(FrameSize);
+      } else if(FI->hasFastCall()) {
+        BuildMI(MBB, MBBI, TII.get(PPC::LIS8), PPC::X0)
+          .addImm(FrameSize >> 16);
+        BuildMI(MBB, MBBI, TII.get(PPC::ORI8), PPC::X0)
+          .addReg(PPC::X0, false, false, true)
+          .addImm(FrameSize & 0xFFFF);
+        BuildMI(MBB, MBBI, TII.get(PPC::ADD8))
+          .addReg(PPC::X1)
+          .addReg(PPC::X31)
+          .addReg(PPC::X0);
+      } else if (isInt16(FrameSize) && TargetAlign >= MaxAlign &&
             !MFI->hasVarSizedObjects()) {
         BuildMI(MBB, MBBI, TII.get(PPC::ADDI8), PPC::X1)
            .addReg(PPC::X1).addImm(FrameSize);
@@ -1227,6 +1333,64 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
           
     if (UsesLR)
       BuildMI(MBB, MBBI, TII.get(PPC::MTLR)).addReg(PPC::R0);
+  }
+
+  // Callee pop calling convention. Pop parameter/linkage area. Used for tail
+  // call optimization
+  if (PerformTailCallOpt && RetOpcode == PPC::BLR &&
+      MF.getFunction()->getCallingConv() == CallingConv::Fast) {
+     PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
+     unsigned CallerAllocatedAmt = FI->getMinReservedArea();
+     unsigned StackReg = IsPPC64 ? PPC::X1 : PPC::R1;
+     unsigned FPReg = IsPPC64 ? PPC::X31 : PPC::R31;
+     unsigned TmpReg = IsPPC64 ? PPC::X0 : PPC::R0;
+     unsigned ADDIInstr = IsPPC64 ? PPC::ADDI8 : PPC::ADDI;
+     unsigned ADDInstr = IsPPC64 ? PPC::ADD8 : PPC::ADD4;
+     unsigned LISInstr = IsPPC64 ? PPC::LIS8 : PPC::LIS;
+     unsigned ORIInstr = IsPPC64 ? PPC::ORI8 : PPC::ORI;
+
+     if (CallerAllocatedAmt && isInt16(CallerAllocatedAmt)) {
+       BuildMI(MBB, MBBI, TII.get(ADDIInstr), StackReg)
+         .addReg(StackReg).addImm(CallerAllocatedAmt);
+     } else {
+        BuildMI(MBB, MBBI, TII.get(LISInstr), TmpReg)
+          .addImm(CallerAllocatedAmt >> 16);
+        BuildMI(MBB, MBBI, TII.get(ORIInstr), TmpReg)
+          .addReg(TmpReg, false, false, true)
+          .addImm(CallerAllocatedAmt & 0xFFFF);
+        BuildMI(MBB, MBBI, TII.get(ADDInstr))
+          .addReg(StackReg)
+          .addReg(FPReg)
+          .addReg(TmpReg);
+     }
+  } else if (RetOpcode == PPC::TCRETURNdi) {
+    MBBI = prior(MBB.end());
+    MachineOperand &JumpTarget = MBBI->getOperand(0);
+    BuildMI(MBB, MBBI, TII.get(PPC::TAILB)).
+      addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset());
+  } else if (RetOpcode == PPC::TCRETURNri) {
+    MBBI = prior(MBB.end());
+    MachineOperand &JumpTarget = MBBI->getOperand(0);
+    assert(JumpTarget.isReg() && "Expecting register operand.");
+    BuildMI(MBB, MBBI, TII.get(PPC::TAILBCTR));
+  } else if (RetOpcode == PPC::TCRETURNai) {
+    MBBI = prior(MBB.end());
+    MachineOperand &JumpTarget = MBBI->getOperand(0);
+    BuildMI(MBB, MBBI, TII.get(PPC::TAILBA)).addImm(JumpTarget.getImm());
+  } else if (RetOpcode == PPC::TCRETURNdi8) {
+    MBBI = prior(MBB.end());
+    MachineOperand &JumpTarget = MBBI->getOperand(0);
+    BuildMI(MBB, MBBI, TII.get(PPC::TAILB8)).
+      addGlobalAddress(JumpTarget.getGlobal(), JumpTarget.getOffset());
+  } else if (RetOpcode == PPC::TCRETURNri8) {
+    MBBI = prior(MBB.end());
+    MachineOperand &JumpTarget = MBBI->getOperand(0);
+    assert(JumpTarget.isReg() && "Expecting register operand.");
+    BuildMI(MBB, MBBI, TII.get(PPC::TAILBCTR8));
+  } else if (RetOpcode == PPC::TCRETURNai8) {
+    MBBI = prior(MBB.end());
+    MachineOperand &JumpTarget = MBBI->getOperand(0);
+    BuildMI(MBB, MBBI, TII.get(PPC::TAILBA8)).addImm(JumpTarget.getImm());
   }
 }
 
