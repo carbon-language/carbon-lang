@@ -179,7 +179,7 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   
   // Don't remove loops for which we can't solve the trip count.
   // They could be infinite, in which case we'd be changing program behavior.
-  if (L->getTripCount())
+  if (!L->getTripCount())
     return false;
   
   // Loops with multiple exits or exits that don't dominate the latch
