@@ -986,7 +986,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
       RVal X = StateMgr.GetRVal(St, lv);
       
       if (isa<lval::SymbolVal>(X)) {
-        SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
+        SymbolID Sym = cast<lval::SymbolVal>(X).getSymbol();
         B = Remove(B, Sym);
         
         // Create a new state with the updated bindings.  
