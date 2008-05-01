@@ -21,6 +21,7 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"
+#include <vector>
 
 namespace clang {
   class IdentifierInfo;
@@ -1280,31 +1281,41 @@ public:
 ///         int x = { 1 };  int y[2] = { {1}, {2} };
 ///
 class InitListExpr : public Expr {
-  Expr **InitExprs;
-  unsigned NumInits;
+  std::vector<Expr *> InitExprs;
   SourceLocation LBraceLoc, RBraceLoc;
 public:
   InitListExpr(SourceLocation lbraceloc, Expr **initexprs, unsigned numinits,
                SourceLocation rbraceloc);
-  ~InitListExpr() {
-    delete [] InitExprs;
-  }
   
-  unsigned getNumInits() const { return NumInits; }
+  unsigned getNumInits() const { return InitExprs.size(); }
   
   const Expr* getInit(unsigned Init) const { 
-    assert(Init < NumInits && "Initializer access out of range!");
+    assert(Init < getNumInits() && "Initializer access out of range!");
     return InitExprs[Init];
   }
   
   Expr* getInit(unsigned Init) { 
-    assert(Init < NumInits && "Initializer access out of range!");
+    assert(Init < getNumInits() && "Initializer access out of range!");
     return InitExprs[Init];
   }
   
   void setInit(unsigned Init, Expr *expr) { 
-    assert(Init < NumInits && "Initializer access out of range!");
+    assert(Init < getNumInits() && "Initializer access out of range!");
     InitExprs[Init] = expr;
+  }
+
+  // Dynamic removal/addition (for constructing implicit InitExpr's).
+  void removeInit(unsigned Init) {
+    InitExprs.erase(InitExprs.begin()+Init);
+  }
+  void addInit(unsigned Init, Expr *expr) {
+    InitExprs.insert(InitExprs.begin()+Init, expr);
+  }
+
+  // Explicit InitListExpr's originate from source code (and have valid source
+  // locations). Implicit InitListExpr's are created by the semantic analyzer.
+  bool isExplicit() {
+    return LBraceLoc.isValid() && RBraceLoc.isValid();
   }
   
   virtual SourceRange getSourceRange() const {
@@ -1325,7 +1336,7 @@ public:
 private:
   // Used by serializer.
   InitListExpr() : Expr(InitListExprClass, QualType()), 
-                   InitExprs(NULL), NumInits(0) {}
+                   InitExprs(NULL) {}
 };
 
 /// ObjCStringLiteral, used for Objective-C string literals

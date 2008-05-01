@@ -647,18 +647,20 @@ IndirectGotoStmt* IndirectGotoStmt::CreateImpl(Deserializer& D, ASTContext& C) {
 void InitListExpr::EmitImpl(Serializer& S) const {
   S.Emit(LBraceLoc);
   S.Emit(RBraceLoc);
-  S.EmitInt(NumInits);
-  S.BatchEmitOwnedPtrs(NumInits,InitExprs);
+  S.EmitInt(InitExprs.size());
+  if (!InitExprs.empty()) S.BatchEmitOwnedPtrs(InitExprs.size(), &InitExprs[0]);
 }
 
 InitListExpr* InitListExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   InitListExpr* expr = new InitListExpr();
   expr->LBraceLoc = SourceLocation::ReadVal(D);
   expr->RBraceLoc = SourceLocation::ReadVal(D);
-  expr->NumInits = D.ReadInt();
-  assert(expr->NumInits);
-  expr->InitExprs = new Expr*[expr->NumInits];
-  D.BatchReadOwnedPtrs(expr->NumInits, expr->InitExprs, C);
+  unsigned size = D.ReadInt();
+  assert(size);
+  expr->InitExprs.reserve(size);
+  for (unsigned i = 0 ; i < size; ++i) expr->InitExprs.push_back(0);
+
+  D.BatchReadOwnedPtrs(size, &expr->InitExprs[0], C);
   return expr;
 }
 
