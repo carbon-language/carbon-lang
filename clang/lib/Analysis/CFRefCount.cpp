@@ -294,7 +294,7 @@ CFRefSummary* CFRefSummaryManager::getCFSummary(FunctionDecl* FD,
   
   if (strcmp(FName, "Release") == 0)
     return getUnaryCFSummary(FT, cfrelease);
-  
+
   if (strcmp(FName, "MakeCollectable") == 0)
     return getUnaryCFSummary(FT, cfmakecollectable);
   
@@ -962,8 +962,43 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
                                      ObjCMessageExpr* ME,
                                      ExplodedNode<ValueState>* Pred) {
   
-  if (EvalObjCMessageExprAux(Dst, Eng, Builder, ME, Pred))
-    GRSimpleVals::EvalObjCMessageExpr(Dst, Eng, Builder, ME, Pred);
+  if (!EvalObjCMessageExprAux(Dst, Eng, Builder, ME, Pred))
+    return;
+  
+  // The basic transfer function logic for message expressions does nothing.
+  // We just invalidate all arguments passed in by references.
+  
+  ValueStateManager& StateMgr = Eng.getStateManager();
+  ValueState* St = Builder.GetState(Pred);
+  RefBindings B = GetRefBindings(*St);
+  
+  for (ObjCMessageExpr::arg_iterator I = ME->arg_begin(), E = ME->arg_end();
+       I != E; ++I) {
+    
+    RVal V = StateMgr.GetRVal(St, *I);
+    
+    if (isa<LVal>(V)) {
+
+      LVal lv = cast<LVal>(V);
+      
+      // Did the lval bind to a symbol?
+      RVal X = StateMgr.GetRVal(St, lv);
+      
+      if (isa<lval::SymbolVal>(X)) {
+        SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
+        B = Remove(B, Sym);
+        
+        // Create a new state with the updated bindings.  
+        ValueState StVals = *St;
+        SetRefBindings(StVals, B);
+        St = StateMgr.getPersistentState(StVals);
+      }
+        
+      St = StateMgr.SetRVal(St, cast<LVal>(V), UnknownVal());
+    }
+  }
+  
+  Builder.MakeNode(Dst, ME, Pred, St);
 }
 
 bool CFRefCount::EvalObjCMessageExprAux(ExplodedNodeSet<ValueState>& Dst,

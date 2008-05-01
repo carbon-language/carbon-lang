@@ -203,6 +203,12 @@ RVal ValueStateManager::GetRVal(ValueState* St, LVal LV, QualType T) {
       
       return UnknownVal();
     }
+    
+    case lval::ConcreteIntKind:
+      // Some clients may call GetRVal with such an option simply because
+      // they are doing a quick scan through their LVals (potentially to
+      // invalidate their bindings).  Just return Undefined.
+      return UndefinedVal();
       
     case lval::ArrayOffsetKind:
     case lval::FieldOffsetKind:
