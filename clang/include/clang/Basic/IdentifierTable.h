@@ -222,6 +222,10 @@ class Selector {
 public:
   friend class SelectorTable; // only the SelectorTable can create these.
   
+  /// The default ctor should only be used when creating data structures that
+  ///  will contain selectors.
+  Selector() : InfoPtr(0) {}
+  
   IdentifierInfo *getAsIdentifierInfo() const {
     if (getIdentifierInfoFlag())
       return reinterpret_cast<IdentifierInfo *>(InfoPtr & ~ArgFlags);
