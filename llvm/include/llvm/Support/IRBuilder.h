@@ -475,15 +475,20 @@ public:
   CallInst *CreateCall(Value *Callee, Value *Arg, const char *Name = "") {
     return Insert(CallInst::Create(Callee, Arg, Name));
   }
-
+  CallInst *CreateCall2(Value *Callee, Value *Arg1, Value *Arg2,
+                        const char *Name = "") {
+    Value *Args[] = { Arg1, Arg2 };
+    return Insert(CallInst::Create(Callee, Args, Args+2, Name));
+  }
+  
   template<typename InputIterator>
   CallInst *CreateCall(Value *Callee, InputIterator ArgBegin, 
-                     InputIterator ArgEnd, const char *Name = "") {
+                       InputIterator ArgEnd, const char *Name = "") {
     return Insert(CallInst::Create(Callee, ArgBegin, ArgEnd, Name));
   }
 
   Value *CreateSelect(Value *C, Value *True, Value *False,
-                         const char *Name = "") {
+                      const char *Name = "") {
     if (Constant *CC = dyn_cast<Constant>(C))
       if (Constant *TC = dyn_cast<Constant>(True))
         if (Constant *FC = dyn_cast<Constant>(False))
