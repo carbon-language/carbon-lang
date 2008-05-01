@@ -64,7 +64,7 @@ public:
 class BugReport {
   BugType& Desc;
   ExplodedNode<ValueState> *N;
-  
+  SourceRange R;  
 public:
   BugReport(BugType& D, ExplodedNode<ValueState> *n) : Desc(D), N(n) {}
   virtual ~BugReport();
@@ -74,7 +74,7 @@ public:
   
   ExplodedNode<ValueState>* getEndNode() const { return N; }
   
-  Stmt* getStmt() const;
+  Stmt* getStmt(BugReporter& BR) const;
     
   const char* getName() const { return getBugType().getName(); }
 
@@ -87,12 +87,12 @@ public:
   }
   
   virtual PathDiagnosticPiece* getEndPath(BugReporter& BR,
-                                          ExplodedNode<ValueState>* N) const;
+                                          ExplodedNode<ValueState>* N);
   
   virtual FullSourceLoc getLocation(SourceManager& Mgr);
   
-  virtual void getRanges(const SourceRange*& beg,
-                         const SourceRange*& end) const;
+  virtual void getRanges(BugReporter& BR,const SourceRange*& beg,
+                         const SourceRange*& end);
   
   virtual PathDiagnosticPiece* VisitNode(ExplodedNode<ValueState>* N,
                                          ExplodedNode<ValueState>* PrevN,
@@ -110,8 +110,8 @@ public:
   
   void addRange(SourceRange R) { Ranges.push_back(R); }
   
-  virtual void getRanges(const SourceRange*& beg,           
-                         const SourceRange*& end) const {
+  virtual void getRanges(BugReporter& BR,const SourceRange*& beg,           
+                         const SourceRange*& end) {
     
     if (Ranges.empty()) {
       beg = NULL;

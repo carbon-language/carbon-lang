@@ -89,7 +89,8 @@ public:
     
     virtual const char* getDescription() const { return s; }
     
-    virtual void getRanges(const SourceRange*& B, const SourceRange*& E) const {
+    virtual void getRanges(BugReporter& BR,
+                           const SourceRange*& B, const SourceRange*& E) {
       B = &R;
       E = B+1;
     }

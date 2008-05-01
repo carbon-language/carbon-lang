@@ -1444,7 +1444,9 @@ namespace {
   public:
     CFRefBug(CFRefCount& tf) : TF(tf) {}
     
-    CFRefCount& getTF() { return TF; }   
+    CFRefCount& getTF() { return TF; }
+    
+    virtual bool ReportRanges() const { return true; }
   };
   
   class VISIBILITY_HIDDEN UseAfterRelease : public CFRefBug {
@@ -1491,7 +1493,8 @@ namespace {
     }
     
     virtual void EmitWarnings(BugReporter& BR);
-    virtual void GetErrorNodes(std::vector<ExplodedNode<ValueState>*>& Nodes);    
+    virtual void GetErrorNodes(std::vector<ExplodedNode<ValueState>*>& Nodes);
+    virtual bool ReportRanges() const { return false; }
   };
   
   //===---------===//
@@ -1505,6 +1508,24 @@ namespace {
       : RangedBugReport(D, n), Sym(sym) {}
         
     virtual ~CFRefReport() {}
+    
+    CFRefBug& getBugType() {
+      return (CFRefBug&) RangedBugReport::getBugType();
+    }
+    const CFRefBug& getBugType() const {
+      return (const CFRefBug&) RangedBugReport::getBugType();
+    }
+    
+    virtual void getRanges(BugReporter& BR, const SourceRange*& beg,           
+                           const SourceRange*& end) {
+      
+      if (getBugType().ReportRanges())
+        RangedBugReport::getRanges(BR, beg, end);
+      else {
+        beg = 0;
+        end = 0;
+      }
+    }
     
     virtual std::pair<const char**,const char**> getExtraDescriptiveText();
     

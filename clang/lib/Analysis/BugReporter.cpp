@@ -56,27 +56,11 @@ static inline Stmt* GetStmt(const CFGBlock* B) {
     return (*B)[0];
 }
 
-Stmt* BugReport::getStmt() const {
-  return N ? GetStmt(N->getLocation()) : NULL;
-}
-
 static inline ExplodedNode<ValueState>*
 GetNextNode(ExplodedNode<ValueState>* N) {
   return N->pred_empty() ? NULL : *(N->pred_begin());
 }
 
-static void ExecutionContinues(std::ostream& os, SourceManager& SMgr,
-                               ExplodedNode<ValueState>* N) {
-  
-  Stmt* S = GetStmt(N->getLocation());
-  
-  if (!S)
-    return;
-
-  os << "Execution continue on line "
-     << SMgr.getLogicalLineNumber(S->getLocStart()) << '.';
-}
-  
 static Stmt* GetLastStmt(ExplodedNode<ValueState>* N) {
   assert (isa<BlockEntrance>(N->getLocation()));
   
@@ -91,18 +75,39 @@ static Stmt* GetLastStmt(ExplodedNode<ValueState>* N) {
   return NULL;
 }
 
-PathDiagnosticPiece*
-BugReport::getEndPath(BugReporter& BR,
-                      ExplodedNode<ValueState>* EndPathNode) const {
+
+static void ExecutionContinues(std::ostream& os, SourceManager& SMgr,
+                               ExplodedNode<ValueState>* N) {
   
-  ProgramPoint ProgP = EndPathNode->getLocation();  
+  Stmt* S = GetStmt(N->getLocation());
+  
+  if (!S)
+    return;
+
+  os << "Execution continue on line "
+     << SMgr.getLogicalLineNumber(S->getLocStart()) << '.';
+}
+  
+
+Stmt* BugReport::getStmt(BugReporter& BR) const {
+  
+  ProgramPoint ProgP = N->getLocation();  
   Stmt *S = NULL;
   
   if (BlockEntrance* BE = dyn_cast<BlockEntrance>(&ProgP))
     if (BE->getBlock() == &BR.getCFG().getExit())
-      S = GetLastStmt(EndPathNode);
+      S = GetLastStmt(N);
   if (!S)
-    S = GetStmt(ProgP);      
+    S = GetStmt(ProgP);  
+
+  return S;  
+}
+
+PathDiagnosticPiece*
+BugReport::getEndPath(BugReporter& BR,
+                      ExplodedNode<ValueState>* EndPathNode) {
+  
+  Stmt* S = getStmt(BR);
   
   if (!S)
     return NULL;
@@ -113,25 +118,24 @@ BugReport::getEndPath(BugReporter& BR,
     new PathDiagnosticPiece(L, getDescription());
   
   const SourceRange *Beg, *End;
-  getRanges(Beg, End);
-  
-  if (Beg == End) {
-    if (Expr* E = dyn_cast<Expr>(S))
-      P->addRange(E->getSourceRange());
-  }
-  else {
-    assert (Beg < End);
-    for (; Beg != End; ++Beg)
-      P->addRange(*Beg);
-  }
+  getRanges(BR, Beg, End);  
+
+  for (; Beg != End; ++Beg)
+    P->addRange(*Beg);
   
   return P;
 }
 
-void BugReport::getRanges(const SourceRange*& beg,
-                          const SourceRange*& end) const {  
-  beg = NULL;
-  end = NULL;
+void BugReport::getRanges(BugReporter& BR, const SourceRange*& beg,
+                          const SourceRange*& end) {  
+  
+  if (Expr* E = dyn_cast_or_null<Expr>(getStmt(BR))) {
+    R = E->getSourceRange();
+    beg = &R;
+    end = beg+1;
+  }
+  else
+    beg = end = 0;
 }
 
 FullSourceLoc BugReport::getLocation(SourceManager& Mgr) {
@@ -479,7 +483,7 @@ void BugReporter::EmitWarning(BugReport& R) {
     End = D->back()->ranges_end();
   }
   else  
-    R.getRanges(Beg, End);
+    R.getRanges(*this, Beg, End);
 
   if (PD) {
     PathDiagnosticPiece* piece = new PathDiagnosticPiece(L, R.getDescription());
