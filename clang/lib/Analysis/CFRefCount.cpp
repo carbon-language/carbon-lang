@@ -637,6 +637,7 @@ private:
   
   Selector RetainSelector;
   Selector ReleaseSelector;
+  Selector AutoreleaseSelector;
 
 public:
   
@@ -677,7 +678,8 @@ public:
       GCEnabled(gcenabled),
       LOpts(lopts),
       RetainSelector(GetUnarySelector("retain", Ctx)),
-      ReleaseSelector(GetUnarySelector("release", Ctx)) {}
+      ReleaseSelector(GetUnarySelector("release", Ctx)),
+      AutoreleaseSelector(GetUnarySelector("autorelease", Ctx)) {}
   
   virtual ~CFRefCount() {
     for (LeaksTy::iterator I = Leaks.begin(), E = Leaks.end(); I!=E; ++I)
@@ -989,43 +991,68 @@ bool CFRefCount::EvalObjCMessageExprAux(ExplodedNodeSet<ValueState>& Dst,
   if (!Receiver)
     return true;
 
-  // Check if we are calling "Retain" or "Release".
+  // Check if we are calling "autorelease".
+
+  enum { IsRelease, IsRetain, IsAutorelease, IsNone } mode = IsNone;
   
-  bool isRetain = false;
+  if (S == AutoreleaseSelector)
+    mode = IsAutorelease;
+  else if (S == RetainSelector)
+    mode = IsRetain;
+  else if (S == ReleaseSelector)
+    mode = IsRelease;
   
-  if (S == RetainSelector)
-    isRetain = true;
-  else if (S != ReleaseSelector)
+  if (mode == IsNone)
     return true;
   
-  // We have "Retain" or "Release".  Get the reference binding.
-  
+  // We have "retain", "release", or "autorelease".  
   ValueStateManager& StateMgr = Eng.getStateManager();
   ValueState* St = Builder.GetState(Pred);
   RVal V = StateMgr.GetRVal(St, Receiver);
   
+  // Was the argument something we are not tracking?  
   if (!isa<lval::SymbolVal>(V))
     return true;
 
+  // Get the bindings.
   SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
   RefBindings B = GetRefBindings(*St);
   
+  // Find the tracked value.
   RefBindings::TreeTy* T = B.SlimFind(Sym);
-  
+
   if (!T)
     return true;
-  
-  RefVal::Kind hasErr = (RefVal::Kind) 0;
-  B = Update(B, Sym, T->getValue().second, isRetain ? IncRef : DecRef, hasErr);
 
-  // Create a new state with the updated bindings.
+  RefVal::Kind hasErr = (RefVal::Kind) 0;
   
+  // Update the bindings.
+  switch (mode) {
+    case IsNone:
+      assert(false);
+      
+    case IsRelease:
+      B = Update(B, Sym, T->getValue().second, DecRef, hasErr);
+      break;
+      
+    case IsRetain:
+      B = Update(B, Sym, T->getValue().second, IncRef, hasErr);
+      break;
+      
+    case IsAutorelease:
+      // For now we just stop tracking a value if we see
+      // it sent "autorelease."  In the future we can potentially
+      // track the associated pool.
+      B = Remove(B, Sym);
+      break;
+  }
+
+  // Create a new state with the updated bindings.  
   ValueState StVals = *St;
   SetRefBindings(StVals, B);
   St = StateMgr.getPersistentState(StVals);
   
-  // Create an error node if it exists.
-  
+  // Create an error node if it exists.  
   if (hasErr)
     ProcessNonLeakError(Dst, Builder, ME, Receiver, Pred, St, hasErr, Sym);
   else
