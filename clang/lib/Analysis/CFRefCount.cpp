@@ -1292,10 +1292,6 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<ValueState>& Dst,
     }
       
     default: 
-      // None of the error states should be possible at this point.
-      // A symbol could not have been leaked (yet) if we are returning it
-      // (and thus it is still live), and the other errors are hard errors.
-      assert(false);
       return;
   }
   
