@@ -1083,6 +1083,11 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
           
           case 6:
             if (!memcmp(s, "Assert", 6)) Builder->BuildSinks = true;
+            
+            // FIXME: This is just a wrapper around throwing an exception.
+            //  Eventually inter-procedural analysis should handle this easily.
+            if (!memcmp(s, "ziperr", 6)) Builder->BuildSinks = true;
+
             break;
           
           case 7:
