@@ -1762,11 +1762,12 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
 
     APInt KnownZero2(BitWidth, 0), KnownOne2(BitWidth, 0);
     APInt AllOnes = APInt::getAllOnesValue(BitWidth);
-    ComputeMaskedBits(I->getOperand(0), AllOnes,
-                      KnownZero2, KnownOne2, Depth+1);
+    if (SimplifyDemandedBits(I->getOperand(0), AllOnes,
+                             KnownZero2, KnownOne2, Depth+1))
+      return true;
+
     uint32_t Leaders = KnownZero2.countLeadingOnes();
-    APInt HighZeros = APInt::getHighBitsSet(BitWidth, Leaders);
-    if (SimplifyDemandedBits(I->getOperand(1), ~HighZeros,
+    if (SimplifyDemandedBits(I->getOperand(1), AllOnes,
                              KnownZero2, KnownOne2, Depth+1))
       return true;
 
