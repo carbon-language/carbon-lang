@@ -436,7 +436,7 @@ public:
   }
   
   template <typename T>
-  T* ReadPtr() { T* x; ReadPtr<T>(x,false); return x; }
+  T* ReadPtr() { T* x = 0; ReadPtr<T>(x,false); return x; }
 
   void ReadUIntPtr(uintptr_t& PtrRef, const SerializedPtrID& PtrID, 
                    bool AllowBackpatch = true);
