@@ -28,6 +28,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Config/config.h"
 using namespace llvm;
 
@@ -509,7 +510,7 @@ struct VISIBILITY_HIDDEN StrCatOpt : public LibCallOptimization {
     
     // See if we can get the length of the input string.
     uint64_t Len = GetStringLength(Src);
-    if (Len == 0) return false;
+    if (Len == 0) return 0;
     --Len;  // Unbias length.
     
     // Handle the simple, do-nothing case: strcat(x, "") -> x
@@ -562,7 +563,7 @@ struct VISIBILITY_HIDDEN StrChrOpt : public LibCallOptimization {
     // a string literal.  If so, we can constant fold.
     std::string Str;
     if (!GetConstantStringInfo(SrcStr, Str))
-      return false;
+      return 0;
     
     // strchr can find the nul character.
     Str += '\0';
@@ -682,7 +683,7 @@ struct VISIBILITY_HIDDEN StrCpyOpt : public LibCallOptimization {
     
     // See if we can get the length of the input string.
     uint64_t Len = GetStringLength(Src);
-    if (Len == 0) return false;
+    if (Len == 0) return 0;
     
     // We have enough information to now generate the memcpy call to do the
     // concatenation for us.  Make a memcpy to copy the nul byte with align = 1.
@@ -737,7 +738,7 @@ struct VISIBILITY_HIDDEN MemCmpOpt : public LibCallOptimization {
     
     // Make sure we have a constant length.
     ConstantInt *LenC = dyn_cast<ConstantInt>(CI->getOperand(3));
-    if (!LenC) return false;
+    if (!LenC) return 0;
     uint64_t Len = LenC->getZExtValue();
     
     if (Len == 0) // memcmp(s1,s2,0) -> 0
@@ -969,7 +970,7 @@ struct VISIBILITY_HIDDEN PrintFOpt : public LibCallOptimization {
     // Check for a fixed format string.
     std::string FormatStr;
     if (!GetConstantStringInfo(CI->getOperand(1), FormatStr))
-      return false;
+      return 0;
 
     // Empty format string -> noop.
     if (FormatStr.empty())  // Tolerate printf's declared void.
@@ -1029,7 +1030,7 @@ struct VISIBILITY_HIDDEN SPrintFOpt : public LibCallOptimization {
     // Check for a fixed format string.
     std::string FormatStr;
     if (!GetConstantStringInfo(CI->getOperand(2), FormatStr))
-      return false;
+      return 0;
     
     // If we just have a format string (nothing else crazy) transform it.
     if (CI->getNumOperands() == 3) {
@@ -1052,10 +1053,14 @@ struct VISIBILITY_HIDDEN SPrintFOpt : public LibCallOptimization {
     
     // Decode the second character of the format string.
     if (FormatStr[1] == 'c') {
-      // sprintf(dst, "%c", chr) --> *(i8*)dst = chr
+      // sprintf(dst, "%c", chr) --> *(i8*)dst = chr; *((i8*)dst+1) = 0
       if (!isa<IntegerType>(CI->getOperand(3)->getType())) return 0;
       Value *V = B.CreateTrunc(CI->getOperand(3), Type::Int8Ty, "char");
-      B.CreateStore(V, CastToCStr(CI->getOperand(1), B));
+      Value *Ptr = CastToCStr(CI->getOperand(1), B);
+      B.CreateStore(V, Ptr);
+      Ptr = B.CreateGEP(Ptr, ConstantInt::get(Type::Int32Ty, 1), "nul");
+      B.CreateStore(Constant::getNullValue(Type::Int8Ty), Ptr);
+      
       return ConstantInt::get(CI->getType(), 1);
     }
     
@@ -1124,7 +1129,7 @@ struct VISIBILITY_HIDDEN FPutsOpt : public LibCallOptimization {
     
     // fputs(s,F) --> fwrite(s,1,strlen(s),F)
     uint64_t Len = GetStringLength(CI->getOperand(1));
-    if (!Len) return false;
+    if (!Len) return 0;
     EmitFWrite(CI->getOperand(1), ConstantInt::get(TD->getIntPtrType(), Len-1),
                CI->getOperand(2), B);
     return CI;  // Known to have no uses (see above).
@@ -1146,13 +1151,13 @@ struct VISIBILITY_HIDDEN FPrintFOpt : public LibCallOptimization {
     // All the optimizations depend on the format string.
     std::string FormatStr;
     if (!GetConstantStringInfo(CI->getOperand(2), FormatStr))
-      return false;
+      return 0;
 
     // fprintf(F, "foo") --> fwrite("foo", 3, 1, F)
     if (CI->getNumOperands() == 3) {
       for (unsigned i = 0, e = FormatStr.size(); i != e; ++i)
         if (FormatStr[i] == '%')  // Could handle %% -> % if we cared.
-          return false; // We found a format specifier.
+          return 0; // We found a format specifier.
       
       EmitFWrite(CI->getOperand(2), ConstantInt::get(TD->getIntPtrType(),
                                                      FormatStr.size()),
@@ -1317,6 +1322,9 @@ bool SimplifyLibCalls::runOnFunction(Function &F) {
       Value *Result = OMI->second->OptimizeCall(CI, TD, Builder);
       if (Result == 0) continue;
 
+      DEBUG(DOUT << "SimplifyLibCalls simplified: " << *CI;
+            DOUT << "  into: " << *Result << "\n");
+      
       // Something changed!
       Changed = true;
       ++NumSimplified;
