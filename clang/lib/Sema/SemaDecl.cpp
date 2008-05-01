@@ -1282,15 +1282,17 @@ ScopedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   D.AddTypeInfo(DeclaratorChunk::getFunction(false, false, 0, 0, Loc));
   D.SetIdentifier(&II, Loc);
   
-  // Find translation-unit scope to insert this function into.
-  if (Scope *FnS = S->getFnParent())
-    S = FnS->getParent();   // Skip all scopes in a function at once.
-  while (S->getParent())
-    S = S->getParent();
-  
+  // Insert this function into translation-unit scope.
+
+  DeclContext *PrevDC = CurContext;
+  CurContext = Context.getTranslationUnitDecl();
+ 
   FunctionDecl *FD = 
-    dyn_cast<FunctionDecl>(static_cast<Decl*>(ActOnDeclarator(S, D, 0)));
+    dyn_cast<FunctionDecl>(static_cast<Decl*>(ActOnDeclarator(TUScope, D, 0)));
   FD->setImplicit();
+
+  CurContext = PrevDC;
+
   return FD;
 }
 
