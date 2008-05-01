@@ -31,7 +31,7 @@ define float @test_ceil(float %C) {
 
 define float @test_nearbyint(float %C) {
 	%D = fpext float %C to double		; <double> [#uses=1]
-	; --> floorf
+	; --> nearbyintf
         %E = call double @nearbyint( double %D )		; <double> [#uses=1]
 	%F = fptrunc double %E to float		; <float> [#uses=1]
 	ret float %F
