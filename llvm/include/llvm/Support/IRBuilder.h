@@ -480,6 +480,16 @@ public:
     Value *Args[] = { Arg1, Arg2 };
     return Insert(CallInst::Create(Callee, Args, Args+2, Name));
   }
+  CallInst *CreateCall3(Value *Callee, Value *Arg1, Value *Arg2, Value *Arg3,
+                        const char *Name = "") {
+    Value *Args[] = { Arg1, Arg2, Arg3 };
+    return Insert(CallInst::Create(Callee, Args, Args+3, Name));
+  }
+  CallInst *CreateCall4(Value *Callee, Value *Arg1, Value *Arg2, Value *Arg3,
+                        Value *Arg4, const char *Name = "") {
+    Value *Args[] = { Arg1, Arg2, Arg3, Arg4 };
+    return Insert(CallInst::Create(Callee, Args, Args+4, Name));
+  }
   
   template<typename InputIterator>
   CallInst *CreateCall(Value *Callee, InputIterator ArgBegin, 
