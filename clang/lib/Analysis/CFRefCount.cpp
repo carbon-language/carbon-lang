@@ -1050,7 +1050,7 @@ bool CFRefCount::EvalObjCMessageExprAux(ExplodedNodeSet<ValueState>& Dst,
   // Create a new state with the updated bindings.  
   ValueState StVals = *St;
   SetRefBindings(StVals, B);
-  St = StateMgr.getPersistentState(StVals);
+  St = Eng.SetRVal(StateMgr.getPersistentState(StVals), ME, V);
   
   // Create an error node if it exists.  
   if (hasErr)
@@ -1509,13 +1509,13 @@ std::pair<const char**,const char**> CFRefReport::getExtraDescriptiveText() {
   switch (TF.getLangOptions().getGCMode()) {
     default:
       assert(false);
+          
+    case LangOptions::GCOnly:
+      assert (TF.isGCEnabled());
+      return std::make_pair(&Msgs[0], &Msgs[0]+1);
       
     case LangOptions::NonGC:
       assert (!TF.isGCEnabled());
-      return std::make_pair(&Msgs[0], &Msgs[0]+1);
-    
-    case LangOptions::GCOnly:
-      assert (TF.isGCEnabled());
       return std::make_pair(&Msgs[1], &Msgs[1]+1);
     
     case LangOptions::HybridGC:
