@@ -184,11 +184,11 @@ def main(args):
             i += 1
             
         # Options with no argument that should pass through to compiler
-        if arg in [ '-nostdinc', 'fobjc-gc-only', 'fobjc-gc' ]:
+        if arg in [ '-nostdinc', '-fobjc-gc-only', '-fobjc-gc' ]:
           compile_opts.append(arg)          
 
         # Options with one argument that should pass through to linker
-        if arg == 'framework':
+        if arg == '-framework':
             link_opts.append(arg)
             link_opts.append(args[i+1])
             i += 1
