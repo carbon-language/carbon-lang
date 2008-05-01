@@ -1538,6 +1538,9 @@ public:
     delete [] SubExprs;
   }
   
+  /// getReceiver - Returns the receiver of the message expression.
+  ///  This can be NULL if the message is for instance methods.  For
+  ///  instance methods, use getClassName.
   const Expr *getReceiver() const { return SubExprs[RECEIVER]; }
   Expr *getReceiver() { return SubExprs[RECEIVER]; }
   
@@ -1546,13 +1549,15 @@ public:
   const ObjCMethodDecl *getMethodDecl() const { return MethodProto; }
   ObjCMethodDecl *getMethodDecl() { return MethodProto; }
   
+  /// getClassName - For instance methods, this returns the invoked class,
+  ///  and returns NULL otherwise.  For regular methods, use getReceiver.  
   const IdentifierInfo *getClassName() const { return ClassName; }
   IdentifierInfo *getClassName() { return ClassName; }
   
   /// getNumArgs - Return the number of actual arguments to this call.
   unsigned getNumArgs() const { return NumArgs; }
 
-/// getArg - Return the specified argument.
+  /// getArg - Return the specified argument.
   Expr *getArg(unsigned Arg) {
     assert(Arg < NumArgs && "Arg access out of range!");
     return SubExprs[Arg+ARGS_START];
