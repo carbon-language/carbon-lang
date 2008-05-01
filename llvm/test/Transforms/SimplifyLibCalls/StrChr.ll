@@ -1,6 +1,6 @@
 ; Test that the StrChrOptimizer works correctly
 ; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | \
-; RUN:   not grep {call.*%strchr}
+; RUN:   not grep {call.*@strchr}
 
 @hello = constant [14 x i8] c"hello world\5Cn\00"		; <[14 x i8]*> [#uses=1]
 @null = constant [1 x i8] zeroinitializer		; <[1 x i8]*> [#uses=1]

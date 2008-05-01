@@ -2,7 +2,7 @@
 ; that folding doesn't happen in case a zext is applied where a sext should have
 ; been when a setcc is used with two casts.
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
-; RUN:    not grep {br bool false}
+; RUN:    not grep {br i1 false}
 ; END.
 
 define i32 @bug(i8 %inbuff) {

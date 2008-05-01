@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | \
-; RUN:   not grep {cast uint 1 to uint}
+; RUN:   not grep {bitcast i32 1 to i32}
 ; END.
 ; The setlt wants to use a value that is incremented one more than the dominant
 ; IV.  Don't insert the 1 outside the loop, preventing folding it into the add.

@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -instcombine -simplifycfg | llvm-dis |\
-; RUN:    not grep {call void %abort}
+; RUN:    not grep {call void @abort}
 
 @b_rec.0 = external global i32          ; <i32*> [#uses=2]
 

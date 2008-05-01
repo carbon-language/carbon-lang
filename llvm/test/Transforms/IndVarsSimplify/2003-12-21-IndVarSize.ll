@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep indvar | not grep uint
+; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep indvar | not grep i32
 
 @G = global i64 0               ; <i64*> [#uses=1]
 

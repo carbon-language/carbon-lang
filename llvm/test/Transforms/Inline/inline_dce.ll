@@ -2,7 +2,7 @@
 ; inlined into all of their callers.
 
 ; RUN: llvm-as < %s | opt -inline | llvm-dis | \
-; RUN:   not grep %reallysmall
+; RUN:   not grep @reallysmall
 
 define internal i32 @reallysmall(i32 %A) {
         ret i32 %A

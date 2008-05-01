@@ -1,6 +1,6 @@
 ; Test that the ToAsciiOptimizer works correctly
 ; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | \
-; RUN:   not grep {call.*%ffs}
+; RUN:   not grep {call.*@ffs}
 
 @non_const = external global i32		; <i32*> [#uses=1]
 

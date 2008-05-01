@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -dse -scalarrepl -instcombine | \
-; RUN:   llvm-dis | not grep {ret int undef}
+; RUN:   llvm-dis | not grep {ret i32 undef}
 
 define i32 @test(double %__x) {
         %__u = alloca { [3 x i32] }             ; <{ [3 x i32] }*> [#uses=2]
