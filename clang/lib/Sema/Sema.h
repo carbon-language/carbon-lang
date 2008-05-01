@@ -839,6 +839,7 @@ private:
                                    IdentifierInfo &Comp, SourceLocation CmpLoc);
   
   /// type checking declaration initializers (C99 6.7.8)
+  friend class InitListChecker;
   bool CheckInitializerTypes(Expr *&simpleInit_or_initList, QualType &declType);
   bool CheckSingleInitializer(Expr *&simpleInit, QualType declType);
   bool CheckInitExpr(Expr *expr, InitListExpr *IList, unsigned slot,
@@ -885,6 +886,32 @@ private:
   void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
                             SourceLocation ReturnLoc);
   void CheckFloatComparison(SourceLocation loc, Expr* lex, Expr* rex);
+};
+
+class InitListChecker {
+  Sema *SemaRef;
+  bool hadError;
+  
+  void CheckImplicitInitList(InitListExpr *ParentIList, QualType T, 
+                             unsigned &Index);
+  void CheckExplicitInitList(InitListExpr *IList, QualType T,
+                             unsigned &Index);
+
+  void CheckElementTypes(InitListExpr *IList, QualType &DeclType, 
+                         unsigned &Index);
+  // FIXME: Does DeclType need to be a reference type?
+  void CheckScalarType(InitListExpr *IList, QualType &DeclType, 
+                       unsigned &Index);
+  void CheckVectorType(InitListExpr *IList, QualType DeclType, unsigned &Index);
+  void CheckStructUnionTypes(InitListExpr *IList, QualType DeclType, 
+                             unsigned &Index);
+  void CheckArrayType(InitListExpr *IList, QualType &DeclType, unsigned &Index);
+  
+  int numArrayElements(QualType DeclType);
+  int numStructUnionElements(QualType DeclType);
+public:
+  InitListChecker(Sema *S, InitListExpr *IL, QualType &T);
+  bool HadError() { return hadError; }
 };
 
 

@@ -730,8 +730,13 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType) {
 
     return CheckSingleInitializer(Init, DeclType);
   }
+#if 1
   unsigned newIndex = 0;
   return CheckInitializerListTypes(InitList, DeclType, true, newIndex);
+#else
+  InitListChecker CheckInitList(this, InitList, DeclType);
+  return CheckInitList.HadError();
+#endif
 }
 
 Sema::DeclTy *
