@@ -286,14 +286,10 @@ Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
          Property->getName(), "getter", SuperIDecl->getName(), 
          SourceRange());
   
-  if (Property->getCanonicalType() != SuperProperty->getCanonicalType()) {
-    if ((CAttr & ObjCPropertyDecl::OBJC_PR_readonly)
-        && (SAttr & ObjCPropertyDecl::OBJC_PR_readonly))
-      // && objc_compare_types(...))
-      ;
-    else
-      ; //
-  }
+  if (Property->getCanonicalType() != SuperProperty->getCanonicalType())
+    Diag(Property->getLocation(), diag::warn_property_type,
+         Property->getType().getAsString(),  
+         SuperIDecl->getName());
   
 }
 
