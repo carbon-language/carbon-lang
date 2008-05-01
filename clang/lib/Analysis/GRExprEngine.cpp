@@ -32,6 +32,11 @@ using llvm::APSInt;
 // Engine construction and deletion.
 //===----------------------------------------------------------------------===//
 
+static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
+  IdentifierInfo* II = &Ctx.Idents.get(name);
+  return Ctx.Selectors.getSelector(0, &II);
+}
+
 
 GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx)
   : CoreEngine(cfg, CD, Ctx, *this), 
@@ -42,7 +47,9 @@ GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx)
     BasicVals(StateMgr.getBasicValueFactory()),
     TF(NULL), // FIXME
     SymMgr(StateMgr.getSymbolManager()),
-    CurrentStmt(NULL) {
+    CurrentStmt(NULL),
+  NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
+  RaiseSel(GetNullarySelector("raise", G.getContext())) {
   
   // Compute liveness information.
   Liveness.runOnCFG(G.getCFG());
@@ -60,6 +67,8 @@ GRExprEngine::~GRExprEngine() {
   for (SimpleChecksTy::iterator I=MsgExprChecks.begin(), E=MsgExprChecks.end();
        I != E; ++I)
     delete *I;  
+  
+  delete [] NSExceptionInstanceRaiseSelectors;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1218,6 +1227,8 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
   // FIXME: More logic for the processing the method call. 
   
   ValueState* St = GetState(Pred);
+  bool RaisesException = false;
+  
   
   if (Expr* Receiver = ME->getReceiver()) {
     
@@ -1234,6 +1245,56 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
       }
       
       return;
+    }
+    
+    // Check if the "raise" message was sent.
+    if (ME->getSelector() == RaiseSel)
+      RaisesException = true;
+  }
+  else {
+    
+    IdentifierInfo* ClsName = ME->getClassName();
+    Selector S = ME->getSelector();
+    
+    // Check for special instance methods.
+        
+    if (!NSExceptionII) {      
+      ASTContext& Ctx = getContext();
+      
+      NSExceptionII = &Ctx.Idents.get("NSException");
+    }
+    
+    if (ClsName == NSExceptionII) {
+        
+      enum { NUM_RAISE_SELECTORS = 2 };
+      
+      // Lazily create a cache of the selectors.
+
+      if (!NSExceptionInstanceRaiseSelectors) {
+        
+        ASTContext& Ctx = getContext();
+        
+        NSExceptionInstanceRaiseSelectors = new Selector[NUM_RAISE_SELECTORS];
+      
+        llvm::SmallVector<IdentifierInfo*, NUM_RAISE_SELECTORS> II;
+        unsigned idx = 0;
+        
+        // raise:format:      
+        II.push_back(&Ctx.Idents.get("raise:"));
+        II.push_back(&Ctx.Idents.get("format:"));      
+        NSExceptionInstanceRaiseSelectors[idx++] =
+          Ctx.Selectors.getSelector(II.size(), &II[0]);      
+        
+        // raise:format::arguments:      
+        II.push_back(&Ctx.Idents.get("arguments:"));
+        NSExceptionInstanceRaiseSelectors[idx++] =
+          Ctx.Selectors.getSelector(II.size(), &II[0]);
+      }
+      
+      for (unsigned i = 0; i < NUM_RAISE_SELECTORS; ++i)
+        if (S == NSExceptionInstanceRaiseSelectors[i]) {
+          RaisesException = true; break;
+        }
     }
   }
   
@@ -1255,12 +1316,19 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
       
       return;
     }    
-  }    
+  }
+  
+  // Check if we raise an exception.  For now treat these as sinks.  Eventually
+  // we will want to handle exceptions properly.
+  
+  SaveAndRestore<bool> OldSink(Builder->BuildSinks);
+
+  if (RaisesException)
+    Builder->BuildSinks = true;
+  
   // Dispatch to plug-in transfer function.
   
   unsigned size = Dst.size();
-
-  SaveAndRestore<bool> OldSink(Builder->BuildSinks);
   SaveOr OldHasGen(Builder->HasGeneratedNode);
  
   EvalObjCMessageExpr(Dst, ME, Pred);

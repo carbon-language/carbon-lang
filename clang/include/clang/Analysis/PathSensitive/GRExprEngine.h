@@ -89,6 +89,13 @@ protected:
   /// CurrentStmt - The current block-level statement.
   Stmt* CurrentStmt;
   
+  // Obj-C Class Identifiers.
+  IdentifierInfo* NSExceptionII;
+  
+  // Obj-C Selectors.
+  Selector* NSExceptionInstanceRaiseSelectors;
+  Selector RaiseSel;
+  
   typedef llvm::SmallVector<GRSimpleAPICheck*,2> SimpleChecksTy;
   
   SimpleChecksTy CallChecks;
