@@ -112,10 +112,8 @@ BugReport::getEndPath(BugReporter& BR,
   if (!S)
     return NULL;
   
-  FullSourceLoc L(S->getLocStart(), BR.getContext().getSourceManager());  
-
-  PathDiagnosticPiece* P =
-    new PathDiagnosticPiece(L, getDescription());
+  FullSourceLoc L(S->getLocStart(), BR.getContext().getSourceManager());
+  PathDiagnosticPiece* P = new PathDiagnosticPiece(L, getDescription());
   
   const SourceRange *Beg, *End;
   getRanges(BR, Beg, End);  

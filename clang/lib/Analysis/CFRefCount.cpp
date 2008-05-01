@@ -14,6 +14,7 @@
 
 #include "GRSimpleVals.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Analysis/LocalCheckers.h"
@@ -1446,7 +1447,7 @@ namespace {
     
     CFRefCount& getTF() { return TF; }
     
-    virtual bool ReportRanges() const { return true; }
+    virtual bool isLeak() const { return false; }
   };
   
   class VISIBILITY_HIDDEN UseAfterRelease : public CFRefBug {
@@ -1494,7 +1495,7 @@ namespace {
     
     virtual void EmitWarnings(BugReporter& BR);
     virtual void GetErrorNodes(std::vector<ExplodedNode<ValueState>*>& Nodes);
-    virtual bool ReportRanges() const { return false; }
+    virtual bool isLeak() const { return true; }
   };
   
   //===---------===//
@@ -1519,13 +1520,16 @@ namespace {
     virtual void getRanges(BugReporter& BR, const SourceRange*& beg,           
                            const SourceRange*& end) {
       
-      if (getBugType().ReportRanges())
+      if (getBugType().isLeak())
         RangedBugReport::getRanges(BR, beg, end);
       else {
         beg = 0;
         end = 0;
       }
     }
+    
+    virtual PathDiagnosticPiece* getEndPath(BugReporter& BR,
+                                            ExplodedNode<ValueState>* N);
     
     virtual std::pair<const char**,const char**> getExtraDescriptiveText();
     
@@ -1697,6 +1701,52 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<ValueState>* N,
     }
   
   return P;
+}
+
+PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
+                                             ExplodedNode<ValueState>* N) {
+  
+  if (!getBugType().isLeak())
+    return RangedBugReport::getEndPath(BR, N);
+
+  // We are a leak.  Walk up the graph to get to the first node where the
+  // symbol appeared.
+  
+  ExplodedNode<ValueState>* Last = N;
+  typedef CFRefCount::RefBindings RefBindings;
+    
+  // Find the first node that referred to the tracked symbol.
+  
+  while (N) {
+    ValueState* St = N->getState();
+    RefBindings B = RefBindings((RefBindings::TreeTy*) St->CheckerState);
+
+    if (!B.SlimFind(Sym))
+      break;
+        
+    Last = N;
+    N = N->pred_empty() ? NULL : *(N->pred_begin());    
+  }
+  
+  // Get the location.
+  
+  assert (Last);
+  Stmt* FirstStmt = cast<PostStmt>(Last->getLocation()).getStmt();
+
+  unsigned Line =
+   BR.getSourceManager().getLogicalLineNumber(FirstStmt->getLocStart());
+
+  // FIXME: Also get the name of the variable.
+  
+  std::ostringstream os;
+  os << "Object allocated on line " << Line << " is leaked.";
+  
+  Stmt* S = getStmt(BR);
+  assert (S);  
+  FullSourceLoc L(S->getLocStart(), BR.getContext().getSourceManager());    
+  PathDiagnosticPiece* P = new PathDiagnosticPiece(L, os.str());
+    
+  return P;  
 }
 
 void UseAfterRelease::EmitWarnings(BugReporter& BR) {

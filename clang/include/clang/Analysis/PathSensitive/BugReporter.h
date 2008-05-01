@@ -143,6 +143,8 @@ public:
   
   ASTContext& getContext() { return Ctx; }
   
+  SourceManager& getSourceManager() { return Ctx.getSourceManager(); }
+  
   ExplodedGraph<ValueState>& getGraph();
 
   GRExprEngine& getEngine() { return Eng; }
