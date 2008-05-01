@@ -2317,8 +2317,8 @@ void SelectionDAGLowering::visitFCmp(User &I) {
     case FCmpInst::FCMP_OLT:   FOC = ISD::SETLT; FPC = ISD::SETOLT; break;
     case FCmpInst::FCMP_OLE:   FOC = ISD::SETLE; FPC = ISD::SETOLE; break;
     case FCmpInst::FCMP_ONE:   FOC = ISD::SETNE; FPC = ISD::SETONE; break;
-    case FCmpInst::FCMP_ORD:   FOC = ISD::SETO;   break;
-    case FCmpInst::FCMP_UNO:   FOC = ISD::SETUO;  break;
+    case FCmpInst::FCMP_ORD:   FOC = FPC = ISD::SETO;   break;
+    case FCmpInst::FCMP_UNO:   FOC = FPC = ISD::SETUO;  break;
     case FCmpInst::FCMP_UEQ:   FOC = ISD::SETEQ; FPC = ISD::SETUEQ; break;
     case FCmpInst::FCMP_UGT:   FOC = ISD::SETGT; FPC = ISD::SETUGT; break;
     case FCmpInst::FCMP_UGE:   FOC = ISD::SETGE; FPC = ISD::SETUGE; break;
