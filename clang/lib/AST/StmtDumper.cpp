@@ -428,6 +428,8 @@ void StmtDumper::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
 void StmtDumper::VisitObjCMessageExpr(ObjCMessageExpr* Node) {
   DumpExpr(Node);
   fprintf(F, " selector=%s", Node->getSelector().getName().c_str());
+  IdentifierInfo* clsName = Node->getClassName();
+  if (clsName) fprintf(F, " class=%s", clsName->getName());
 }
 
 void StmtDumper::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {

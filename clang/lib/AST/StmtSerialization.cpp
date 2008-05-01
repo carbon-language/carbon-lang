@@ -181,6 +181,9 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
     case ObjCIvarRefExprClass:
       return ObjCIvarRefExpr::CreateImpl(D, C);
       
+    case ObjCMessageExprClass:
+      return ObjCMessageExpr::CreateImpl(D, C);
+      
     case ObjCSelectorExprClass:
       return ObjCSelectorExpr::CreateImpl(D, C);
       
@@ -190,9 +193,9 @@ Stmt* Stmt::Create(Deserializer& D, ASTContext& C) {
     //==--------------------------------------==//
     //    C++
     //==--------------------------------------==//
-    case CXXDefaultArgExprClass:
-      return CXXDefaultArgExpr::CreateImpl(D, C);
       
+    case CXXDefaultArgExprClass:
+      return CXXDefaultArgExpr::CreateImpl(D, C);      
   }
 }
 
@@ -327,7 +330,7 @@ void CallExpr::EmitImpl(Serializer& S) const {
   S.Emit(getType());
   S.Emit(RParenLoc);
   S.EmitInt(NumArgs);
-  S.BatchEmitOwnedPtrs(NumArgs+1,SubExprs);  
+  S.BatchEmitOwnedPtrs(NumArgs+1, SubExprs);  
 }
 
 CallExpr* CallExpr::CreateImpl(Deserializer& D, ASTContext& C) {
@@ -982,6 +985,58 @@ ObjCIvarRefExpr* ObjCIvarRefExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   ObjCIvarRefExpr* dr = new ObjCIvarRefExpr(NULL,T,Loc);
   D.ReadPtr(dr->D,false);  
   return dr;
+}
+
+void ObjCMessageExpr::EmitImpl(Serializer& S) const {
+  S.EmitBool(getReceiver() ? true : false);
+  S.Emit(getType());
+  S.Emit(SelName);
+  S.Emit(LBracloc);
+  S.Emit(RBracloc);
+  S.EmitInt(NumArgs);  
+  S.EmitPtr(MethodProto);
+  
+  if (getReceiver())
+    S.BatchEmitOwnedPtrs(NumArgs+1, SubExprs);
+  else {    
+    S.EmitPtr(getClassName());
+    S.BatchEmitOwnedPtrs(NumArgs, &SubExprs[ARGS_START]);
+  }
+}
+
+ObjCMessageExpr* ObjCMessageExpr::CreateImpl(Deserializer& D, ASTContext& C) {
+  bool isReceiver = D.ReadBool();
+  QualType t = QualType::ReadVal(D);
+  Selector S = Selector::ReadVal(D);
+  SourceLocation L = SourceLocation::ReadVal(D);
+  SourceLocation R = SourceLocation::ReadVal(D);
+    
+  // Construct an array for the subexpressions.
+  unsigned NumArgs = D.ReadInt();
+  Expr** SubExprs = new Expr*[NumArgs+1];
+  
+  // Construct the ObjCMessageExpr object using the special ctor.
+  ObjCMessageExpr* ME = new ObjCMessageExpr(S, t, L, R, SubExprs, NumArgs);
+  
+  // Read in the MethodProto.  Read the instance variable directly
+  // allows it to be backpatched.
+  D.ReadPtr(ME->MethodProto);
+  
+  // Now read in the arguments.
+  
+  if (isReceiver)
+    D.BatchReadOwnedPtrs(NumArgs+1, SubExprs, C);
+  else {
+    // Read the pointer for ClassName.  The Deserializer will handle the
+    // bit-mangling automatically.
+    SubExprs[RECEIVER] = (Expr*) ((uintptr_t) 0x1);
+    D.ReadUIntPtr((uintptr_t&) SubExprs[RECEIVER]);
+    
+    // Read the arguments.
+    D.BatchReadOwnedPtrs(NumArgs, &SubExprs[ARGS_START], C);
+  }
+  
+  return ME;
 }
 
 void ObjCSelectorExpr::EmitImpl(Serializer& S) const {

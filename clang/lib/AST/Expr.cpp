@@ -1091,7 +1091,7 @@ ObjCMessageExpr::ObjCMessageExpr(Expr *receiver, Selector selInfo,
                 SourceLocation LBrac, SourceLocation RBrac,
                 Expr **ArgExprs, unsigned nargs)
   : Expr(ObjCMessageExprClass, retType), SelName(selInfo), 
-    MethodProto(mproto), ClassName(0) {
+    MethodProto(mproto) {
   NumArgs = nargs;
   SubExprs = new Expr*[NumArgs+1];
   SubExprs[RECEIVER] = receiver;
@@ -1110,10 +1110,10 @@ ObjCMessageExpr::ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
                 SourceLocation LBrac, SourceLocation RBrac,
                 Expr **ArgExprs, unsigned nargs)
   : Expr(ObjCMessageExprClass, retType), SelName(selInfo), 
-    MethodProto(mproto), ClassName(clsName) {
+    MethodProto(mproto) {
   NumArgs = nargs;
   SubExprs = new Expr*[NumArgs+1];
-  SubExprs[RECEIVER] = 0;
+  SubExprs[RECEIVER] = (Expr*) ((uintptr_t) clsName | 0x1);
   if (NumArgs) {
     for (unsigned i = 0; i != NumArgs; ++i)
       SubExprs[i+ARGS_START] = static_cast<Expr *>(ArgExprs[i]);
@@ -1121,7 +1121,6 @@ ObjCMessageExpr::ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
   LBracloc = LBrac;
   RBracloc = RBrac;
 }
-
 
 bool ChooseExpr::isConditionTrue(ASTContext &C) const {
   llvm::APSInt CondVal(32);
@@ -1397,8 +1396,8 @@ Stmt::child_iterator ObjCProtocolExpr::child_end() {
 }
 
 // ObjCMessageExpr
-Stmt::child_iterator ObjCMessageExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&SubExprs[0]);
+Stmt::child_iterator ObjCMessageExpr::child_begin() {  
+  return reinterpret_cast<Stmt**>(&SubExprs[ getReceiver() ? 0 : ARGS_START ]);
 }
 Stmt::child_iterator ObjCMessageExpr::child_end() {
   return reinterpret_cast<Stmt**>(&SubExprs[getNumArgs()+ARGS_START]);

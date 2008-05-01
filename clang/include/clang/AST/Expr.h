@@ -1518,10 +1518,16 @@ class ObjCMessageExpr : public Expr {
   // FIXME: Since method decls contain the selector, and most messages have a
   // prototype, consider devising a scheme for unifying SelName/MethodProto.
   ObjCMethodDecl *MethodProto;
-  
-  IdentifierInfo *ClassName; // optional - 0 for instance messages.
-  
+
   SourceLocation LBracloc, RBracloc;
+  
+  // constructor used during deserialization
+  ObjCMessageExpr(Selector selInfo, QualType retType,
+                  SourceLocation LBrac, SourceLocation RBrac,
+                  Expr **ArgExprs, unsigned nargs)
+  : Expr(ObjCMessageExprClass, retType), NumArgs(nargs), SelName(selInfo),
+    MethodProto(NULL), LBracloc(LBrac), RBracloc(RBrac) {}
+  
 public:
   // constructor for class messages. 
   // FIXME: clsName should be typed to ObjCInterfaceType
@@ -1534,6 +1540,7 @@ public:
                   QualType retType, ObjCMethodDecl *methDecl,
                   SourceLocation LBrac, SourceLocation RBrac,
                   Expr **ArgExprs, unsigned NumArgs);
+  
   ~ObjCMessageExpr() {
     delete [] SubExprs;
   }
@@ -1541,8 +1548,13 @@ public:
   /// getReceiver - Returns the receiver of the message expression.
   ///  This can be NULL if the message is for instance methods.  For
   ///  instance methods, use getClassName.
-  const Expr *getReceiver() const { return SubExprs[RECEIVER]; }
-  Expr *getReceiver() { return SubExprs[RECEIVER]; }
+  Expr *getReceiver() { 
+    uintptr_t x = (uintptr_t) SubExprs[RECEIVER];
+    return x & 0x1 ? NULL : (Expr*) x;
+  }  
+  const Expr *getReceiver() const {
+    return const_cast<ObjCMessageExpr*>(this)->getReceiver();
+  }
   
   Selector getSelector() const { return SelName; }
 
@@ -1551,8 +1563,13 @@ public:
   
   /// getClassName - For instance methods, this returns the invoked class,
   ///  and returns NULL otherwise.  For regular methods, use getReceiver.  
-  const IdentifierInfo *getClassName() const { return ClassName; }
-  IdentifierInfo *getClassName() { return ClassName; }
+  IdentifierInfo *getClassName() {
+    uintptr_t x = (uintptr_t) SubExprs[RECEIVER];
+    return x & 0x1 ? (IdentifierInfo*) (x & ~0x1) : NULL;
+  }  
+  const IdentifierInfo *getClassName() const {
+    return const_cast<ObjCMessageExpr*>(this)->getClassName();
+  }
   
   /// getNumArgs - Return the number of actual arguments to this call.
   unsigned getNumArgs() const { return NumArgs; }
@@ -1591,7 +1608,11 @@ public:
   arg_iterator arg_begin() { return &SubExprs[ARGS_START]; }
   arg_iterator arg_end()   { return arg_begin() + NumArgs; }
   const_arg_iterator arg_begin() const { return &SubExprs[ARGS_START]; }
-  const_arg_iterator arg_end() const { return arg_begin() + NumArgs; }  
+  const_arg_iterator arg_end() const { return arg_begin() + NumArgs; }
+  
+  // Serialization.
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ObjCMessageExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
 }  // end namespace clang
