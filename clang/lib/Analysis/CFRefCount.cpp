@@ -32,7 +32,7 @@ using namespace clang;
 // Utility functions.
 //===----------------------------------------------------------------------===//
 
-static inline Selector GetUnarySelector(const char* name, ASTContext& Ctx) {
+static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
   IdentifierInfo* II = &Ctx.Idents.get(name);
   return Ctx.Selectors.getSelector(0, &II);
 }
@@ -677,9 +677,9 @@ public:
     : Summaries(Ctx, gcenabled),
       GCEnabled(gcenabled),
       LOpts(lopts),
-      RetainSelector(GetUnarySelector("retain", Ctx)),
-      ReleaseSelector(GetUnarySelector("release", Ctx)),
-      AutoreleaseSelector(GetUnarySelector("autorelease", Ctx)) {}
+      RetainSelector(GetNullarySelector("retain", Ctx)),
+      ReleaseSelector(GetNullarySelector("release", Ctx)),
+      AutoreleaseSelector(GetNullarySelector("autorelease", Ctx)) {}
   
   virtual ~CFRefCount() {
     for (LeaksTy::iterator I = Leaks.begin(), E = Leaks.end(); I!=E; ++I)
