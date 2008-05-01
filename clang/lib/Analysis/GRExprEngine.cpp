@@ -1097,6 +1097,10 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
           case 8:
             if (!memcmp(s ,"db_error", 8)) Builder->BuildSinks = true;
             break;
+          
+          case 12:
+            if (!memcmp(s, "__assert_rtn", 12)) Builder->BuildSinks = true;
+            break;
             
           case 14:
             if (!memcmp(s, "dtrace_assfail", 14)) Builder->BuildSinks = true;
