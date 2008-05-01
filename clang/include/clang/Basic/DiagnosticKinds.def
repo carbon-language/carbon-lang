@@ -508,6 +508,12 @@ DIAG(error_synthesize_category_decl, ERROR,
      "@synthesize not allowed in a category's implementation")
 DIAG(error_property_ivar_type, ERROR,
      "type of property '%0'  does not match type of ivar '%1'") 
+DIAG(warn_readonly_property, WARNING,
+     "attribute 'readonly' of property '%0' restricts attribute "
+     "'readwrite' of '%1' property in super class")
+DIAG(warn_property_attribute, WARNING,
+     "property '%0' '%1' attribute does not match super class '%2' "
+     "property")
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis

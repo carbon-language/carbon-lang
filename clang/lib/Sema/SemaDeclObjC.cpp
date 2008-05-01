@@ -249,37 +249,47 @@ Sema::FindProtocolDeclaration(SourceLocation TypeLoc,
 ///
 // TODO: Incomplete. 
 //
-static void
-DiagnosePropertyMismatch(ObjCPropertyDecl *Property, 
-                         ObjCPropertyDecl *SuperProperty) {
+void
+Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property, 
+                               ObjCPropertyDecl *SuperProperty,
+                               ObjCInterfaceDecl *SuperIDecl) {
   ObjCPropertyDecl::PropertyAttributeKind CAttr = 
   Property->getPropertyAttributes();
   ObjCPropertyDecl::PropertyAttributeKind SAttr = 
   SuperProperty->getPropertyAttributes();
   if ((CAttr & ObjCPropertyDecl::OBJC_PR_readonly)
       && (SAttr & ObjCPropertyDecl::OBJC_PR_readwrite))
-    ; // ???
-  
+    Diag(Property->getLocation(), diag::warn_readonly_property, 
+               Property->getName(), SuperIDecl->getName());
   if ((CAttr & ObjCPropertyDecl::OBJC_PR_copy)
       != (SAttr & ObjCPropertyDecl::OBJC_PR_copy))
-    ; //
+    Diag(Property->getLocation(), diag::warn_property_attribute,
+         Property->getName(), "copy", SuperIDecl->getName(), 
+         SourceRange());
   else if ((CAttr & ObjCPropertyDecl::OBJC_PR_retain)
            != (SAttr & ObjCPropertyDecl::OBJC_PR_retain))
-    ; // ???
+    Diag(Property->getLocation(), diag::warn_property_attribute,
+         Property->getName(), "retain", SuperIDecl->getName(), 
+         SourceRange());
   
   if ((CAttr & ObjCPropertyDecl::OBJC_PR_nonatomic)
       != (SAttr & ObjCPropertyDecl::OBJC_PR_nonatomic))
-    ; //
-  
+    Diag(Property->getLocation(), diag::warn_property_attribute,
+         Property->getName(), "atomic", SuperIDecl->getName(), 
+         SourceRange());
   if (Property->getSetterName() != SuperProperty->getSetterName())
-    ; //
+    Diag(Property->getLocation(), diag::warn_property_attribute,
+         Property->getName(), "setter", SuperIDecl->getName(), 
+         SourceRange());
   if (Property->getGetterName() != SuperProperty->getGetterName())
-    ; //
+    Diag(Property->getLocation(), diag::warn_property_attribute,
+         Property->getName(), "getter", SuperIDecl->getName(), 
+         SourceRange());
   
   if (Property->getCanonicalType() != SuperProperty->getCanonicalType()) {
     if ((CAttr & ObjCPropertyDecl::OBJC_PR_readonly)
         && (SAttr & ObjCPropertyDecl::OBJC_PR_readonly))
-       // && objc_compare_types(...))
+      // && objc_compare_types(...))
       ;
     else
       ; //
@@ -292,22 +302,19 @@ DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
 /// diagnostics in a variety of inconsistant situations.
 ///
 void 
-Sema::ComparePropertiesInBaseAndSuper(SourceLocation *PropertyLoc,
-                                      DeclTy *D) {
-  ObjCInterfaceDecl *IDecl = 
-    dyn_cast<ObjCInterfaceDecl>(static_cast<Decl *>(D));
+Sema::ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl) {
   ObjCInterfaceDecl *SDecl = IDecl->getSuperClass();
   if (!SDecl)
     return;
-  for (ObjCInterfaceDecl::classprop_iterator I = SDecl->classprop_begin(),
-       E = SDecl->classprop_end(); I != E; ++I) {
-    ObjCPropertyDecl *SuperPDecl = (*I);
+  for (ObjCInterfaceDecl::classprop_iterator S = SDecl->classprop_begin(),
+       E = SDecl->classprop_end(); S != E; ++S) {
+    ObjCPropertyDecl *SuperPDecl = (*S);
     // Does property in super class has declaration in current class?
     for (ObjCInterfaceDecl::classprop_iterator I = IDecl->classprop_begin(),
          E = IDecl->classprop_end(); I != E; ++I) {
       ObjCPropertyDecl *PDecl = (*I);
       if (SuperPDecl->getIdentifier() == PDecl->getIdentifier())
-          DiagnosePropertyMismatch(PDecl, SuperPDecl);
+          DiagnosePropertyMismatch(PDecl, SuperPDecl, SDecl);
     }
   }
 }
@@ -815,6 +822,9 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
   if (ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl>(ClassDecl)) {
     I->addMethods(&insMethods[0], insMethods.size(),
                   &clsMethods[0], clsMethods.size(), AtEndLoc);
+    // Compares properties declaraed in this class to those of its 
+    // super class.
+    ComparePropertiesInBaseAndSuper (I);
   } else if (ObjCProtocolDecl *P = dyn_cast<ObjCProtocolDecl>(ClassDecl)) {
     P->addMethods(&insMethods[0], insMethods.size(),
                   &clsMethods[0], clsMethods.size(), AtEndLoc);

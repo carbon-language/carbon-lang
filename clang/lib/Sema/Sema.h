@@ -61,6 +61,7 @@ namespace clang {
   class ObjCCategoryDecl;
   class ObjCIvarDecl;
   class ObjCMethodDecl;
+  class ObjCPropertyDecl;
 
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -658,9 +659,11 @@ public:
                                        unsigned NumProtocols,
                                        llvm::SmallVector<DeclTy *, 8> & 
                                        Protocols);
-
-  virtual void ComparePropertiesInBaseAndSuper(SourceLocation *PropertyLoc,
-                                               DeclTy *ClassInterface);
+  
+  void DiagnosePropertyMismatch(ObjCPropertyDecl *Property, 
+                                ObjCPropertyDecl *SuperProperty,
+                                ObjCInterfaceDecl*SuperIDecl);
+  void ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl);
   
   virtual void ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
                       DeclTy **allMethods = 0, unsigned allNum = 0,
