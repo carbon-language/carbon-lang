@@ -323,6 +323,12 @@ FunctionPass *createMemCpyOptPass();
 // can prove are dead.
 //
 LoopPass *createLoopDeletionPass();
+  
+//===----------------------------------------------------------------------===//
+//
+/// createSimplifyLibCallsPass - This pass optimizes specific calls to
+/// specific well-known (library) functions.
+FunctionPass *createSimplifyLibCallsPass();
 
 //===----------------------------------------------------------------------===//
 //

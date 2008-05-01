@@ -159,11 +159,6 @@ FunctionPass *createSingleLoopExtractorPass();
 ///
 ModulePass *createBlockExtractorPass(const std::vector<BasicBlock*> &BTNE);
 
-/// createOptimizeWellKnownCallsPass - This pass optimizes specific calls to
-/// specific well-known (library) functions.
-ModulePass *createSimplifyLibCallsPass();
-
-
 /// createIndMemRemPass - This pass removes potential indirect calls of
 /// malloc and free
 ModulePass *createIndMemRemPass();
