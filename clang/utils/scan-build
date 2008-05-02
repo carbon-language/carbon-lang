@@ -435,8 +435,7 @@ ENDTEXT
       $fname =~ s/$regex//;
       UpdateInFilePath("$Dir/$ReportFile", $InFileRegex, $InFilePrefix)
     }
-    
-    print "Prefix is '$prefix'\n";
+
     print OUT "<td>$fname</td>\n";
 
     # Print the rest of the columns.
