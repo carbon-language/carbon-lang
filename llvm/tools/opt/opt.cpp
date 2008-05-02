@@ -262,10 +262,10 @@ void AddStandardCompilePasses(PassManager &PM) {
 
   if (!DisableInline)
     addPass(PM, createFunctionInliningPass());   // Inline small functions
-  addPass(PM, createSimplifyLibCallsPass());     // Library Call Optimizations
   addPass(PM, createArgumentPromotionPass());    // Scalarize uninlined fn args
 
   addPass(PM, createTailDuplicationPass());      // Simplify cfg by copying code
+  addPass(PM, createSimplifyLibCallsPass());     // Library Call Optimizations
   addPass(PM, createInstructionCombiningPass()); // Cleanup for scalarrepl.
   addPass(PM, createJumpThreadingPass());        // Thread jumps.
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
