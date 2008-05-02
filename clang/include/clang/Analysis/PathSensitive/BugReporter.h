@@ -63,16 +63,16 @@ public:
   
 class BugReport {
   BugType& Desc;
-  ExplodedNode<ValueState> *N;
+  ExplodedNode<ValueState> *EndNode;
   SourceRange R;  
 public:
-  BugReport(BugType& D, ExplodedNode<ValueState> *n) : Desc(D), N(n) {}
+  BugReport(BugType& D, ExplodedNode<ValueState> *n) : Desc(D), EndNode(n) {}
   virtual ~BugReport();
   
   const BugType& getBugType() const { return Desc; }
   BugType& getBugType() { return Desc; }
   
-  ExplodedNode<ValueState>* getEndNode() const { return N; }
+  ExplodedNode<ValueState>* getEndNode() const { return EndNode; }
   
   Stmt* getStmt(BugReporter& BR) const;
     

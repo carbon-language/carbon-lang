@@ -91,12 +91,12 @@ static void ExecutionContinues(std::ostream& os, SourceManager& SMgr,
 
 Stmt* BugReport::getStmt(BugReporter& BR) const {
   
-  ProgramPoint ProgP = N->getLocation();  
+  ProgramPoint ProgP = EndNode->getLocation();  
   Stmt *S = NULL;
   
   if (BlockEntrance* BE = dyn_cast<BlockEntrance>(&ProgP))
     if (BE->getBlock() == &BR.getCFG().getExit())
-      S = GetLastStmt(N);
+      S = GetLastStmt(EndNode);
   if (!S)
     S = GetStmt(ProgP);  
 
@@ -138,10 +138,10 @@ void BugReport::getRanges(BugReporter& BR, const SourceRange*& beg,
 
 FullSourceLoc BugReport::getLocation(SourceManager& Mgr) {
   
-  if (!N)
+  if (!EndNode)
     return FullSourceLoc();
   
-  Stmt* S = GetStmt(N->getLocation());
+  Stmt* S = GetStmt(EndNode->getLocation());
   
   if (!S)
     return FullSourceLoc();
