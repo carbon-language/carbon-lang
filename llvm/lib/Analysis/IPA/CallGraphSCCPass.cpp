@@ -158,6 +158,7 @@ void CallGraphSCCPass::assignPassManager(PMStack &PMS,
          PMS.top()->getPassManagerType() > PMT_CallGraphPassManager)
     PMS.pop();
 
+  assert (!PMS.empty() && "Unable to handle Call Graph Pass");
   CGPassManager *CGP = dynamic_cast<CGPassManager *>(PMS.top());
 
   // Create new Call Graph SCC Pass Manager if it does not exist. 
