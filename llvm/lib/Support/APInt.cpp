@@ -99,7 +99,7 @@ APInt::APInt(uint32_t numbits, const std::string& Val, uint8_t radix)
   assert(BitWidth >= MIN_INT_BITS && "bitwidth too small");
   assert(BitWidth <= MAX_INT_BITS && "bitwidth too large");
   assert(!Val.empty() && "String empty?");
-  fromString(numbits, Val.c_str(), Val.size(), radix);
+  fromString(numbits, Val.c_str(), (uint32_t)Val.size(), radix);
 }
 
 APInt::APInt(const APInt& that)
@@ -905,7 +905,7 @@ APInt llvm::APIntOps::RoundDoubleToAPInt(double Double, uint32_t width) {
 
   // Otherwise, we have to shift the mantissa bits up to the right location
   APInt Tmp(width, mantissa);
-  Tmp = Tmp.shl(exp - 52);
+  Tmp = Tmp.shl((uint32_t)exp - 52);
   return isNeg ? -Tmp : Tmp;
 }
 
@@ -1086,7 +1086,7 @@ APInt &APInt::sextOrTrunc(uint32_t width) {
 /// Arithmetic right-shift this APInt by shiftAmt.
 /// @brief Arithmetic right-shift function.
 APInt APInt::ashr(const APInt &shiftAmt) const {
-  return ashr(shiftAmt.getLimitedValue(BitWidth));
+  return ashr((uint32_t)shiftAmt.getLimitedValue(BitWidth));
 }
 
 /// Arithmetic right-shift this APInt by shiftAmt.
@@ -1175,7 +1175,7 @@ APInt APInt::ashr(uint32_t shiftAmt) const {
 /// Logical right-shift this APInt by shiftAmt.
 /// @brief Logical right-shift function.
 APInt APInt::lshr(const APInt &shiftAmt) const {
-  return lshr(shiftAmt.getLimitedValue(BitWidth));
+  return lshr((uint32_t)shiftAmt.getLimitedValue(BitWidth));
 }
 
 /// Logical right-shift this APInt by shiftAmt.
@@ -1244,7 +1244,7 @@ APInt APInt::lshr(uint32_t shiftAmt) const {
 /// @brief Left-shift function.
 APInt APInt::shl(const APInt &shiftAmt) const {
   // It's undefined behavior in C to shift by BitWidth or greater, but
-  return shl(shiftAmt.getLimitedValue(BitWidth));
+  return shl((uint32_t)shiftAmt.getLimitedValue(BitWidth));
 }
 
 /// Left-shift this APInt by shiftAmt.
@@ -1307,7 +1307,7 @@ APInt APInt::shl(uint32_t shiftAmt) const {
 }
 
 APInt APInt::rotl(const APInt &rotateAmt) const {
-  return rotl(rotateAmt.getLimitedValue(BitWidth));
+  return rotl((uint32_t)rotateAmt.getLimitedValue(BitWidth));
 }
 
 APInt APInt::rotl(uint32_t rotateAmt) const {
@@ -1322,7 +1322,7 @@ APInt APInt::rotl(uint32_t rotateAmt) const {
 }
 
 APInt APInt::rotr(const APInt &rotateAmt) const {
-  return rotr(rotateAmt.getLimitedValue(BitWidth));
+  return rotr((uint32_t)rotateAmt.getLimitedValue(BitWidth));
 }
 
 APInt APInt::rotr(uint32_t rotateAmt) const {
@@ -1517,8 +1517,8 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
 
       uint64_t result = u_tmp - subtrahend;
       uint32_t k = j + i;
-      u[k++] = result & (b-1); // subtract low word
-      u[k++] = result >> 32;   // subtract high word
+      u[k++] = (uint32_t)(result & (b-1)); // subtract low word
+      u[k++] = (uint32_t)(result >> 32);   // subtract high word
       while (borrow && k <= m+n) { // deal with borrow to the left
         borrow = u[k] == 0;
         u[k]--;
@@ -1549,7 +1549,7 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
 
     // D5. [Test remainder.] Set q[j] = qp. If the result of step D4 was 
     // negative, go to step D6; otherwise go on to step D7.
-    q[j] = qp;
+    q[j] = (uint32_t)qp;
     if (isNeg) {
       // D6. [Add back]. The probability that this step is necessary is very 
       // small, on the order of only 2/b. Make sure that test data accounts for
@@ -1645,8 +1645,8 @@ void APInt::divide(const APInt LHS, uint32_t lhsWords,
   memset(U, 0, (m+n+1)*sizeof(uint32_t));
   for (unsigned i = 0; i < lhsWords; ++i) {
     uint64_t tmp = (LHS.getNumWords() == 1 ? LHS.VAL : LHS.pVal[i]);
-    U[i * 2] = tmp & mask;
-    U[i * 2 + 1] = tmp >> (sizeof(uint32_t)*8);
+    U[i * 2] = (uint32_t)(tmp & mask);
+    U[i * 2 + 1] = (uint32_t)(tmp >> (sizeof(uint32_t)*8));
   }
   U[m+n] = 0; // this extra word is for "spill" in the Knuth algorithm.
 
@@ -1654,8 +1654,8 @@ void APInt::divide(const APInt LHS, uint32_t lhsWords,
   memset(V, 0, (n)*sizeof(uint32_t));
   for (unsigned i = 0; i < rhsWords; ++i) {
     uint64_t tmp = (RHS.getNumWords() == 1 ? RHS.VAL : RHS.pVal[i]);
-    V[i * 2] = tmp & mask;
-    V[i * 2 + 1] = tmp >> (sizeof(uint32_t)*8);
+    V[i * 2] = (uint32_t)(tmp & mask);
+    V[i * 2 + 1] = (uint32_t)(tmp >> (sizeof(uint32_t)*8));
   }
 
   // initialize the quotient and remainder
@@ -1691,13 +1691,13 @@ void APInt::divide(const APInt LHS, uint32_t lhsWords,
         remainder = 0;
       } else if (partial_dividend < divisor) {
         Q[i] = 0;
-        remainder = partial_dividend;
+        remainder = (uint32_t)partial_dividend;
       } else if (partial_dividend == divisor) {
         Q[i] = 1;
         remainder = 0;
       } else {
-        Q[i] = partial_dividend / divisor;
-        remainder = partial_dividend - (Q[i] * divisor);
+        Q[i] = (uint32_t)(partial_dividend / divisor);
+        remainder = (uint32_t)(partial_dividend - (Q[i] * divisor));
       }
     }
     if (R)
@@ -1991,7 +1991,7 @@ std::string APInt::toString(uint8_t radix, bool wantSigned) const {
       memset(buf, 0, 65);
       uint64_t v = VAL;
       while (bits_used) {
-        uint32_t bit = v & 1;
+        uint32_t bit = (uint32_t)v & 1;
         bits_used--;
         buf[bits_used] = digits[bit][0];
         v >>=1;
@@ -2026,7 +2026,8 @@ std::string APInt::toString(uint8_t radix, bool wantSigned) const {
       uint64_t mask = radix - 1;
       APInt zero(tmp.getBitWidth(), 0);
       while (tmp.ne(zero)) {
-        unsigned digit = (tmp.isSingleWord() ? tmp.VAL : tmp.pVal[0]) & mask;
+        unsigned digit =
+          (unsigned)((tmp.isSingleWord() ? tmp.VAL : tmp.pVal[0]) & mask);
         result.insert(insert_at, digits[digit]);
         tmp = tmp.lshr(shift);
       }
@@ -2054,7 +2055,7 @@ std::string APInt::toString(uint8_t radix, bool wantSigned) const {
     APInt tmp2(tmp.getBitWidth(), 0);
     divide(tmp, tmp.getNumWords(), divisor, divisor.getNumWords(), &tmp2, 
            &APdigit);
-    uint32_t digit = APdigit.getZExtValue();
+    uint32_t digit = (uint32_t)APdigit.getZExtValue();
     assert(digit < radix && "divide failed");
     result.insert(insert_at,digits[digit]);
     tmp = tmp2;

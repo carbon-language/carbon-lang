@@ -163,9 +163,9 @@ namespace {
   static int
   totalExponent(const char *p, int exponentAdjustment)
   {
-    integerPart unsignedExponent;
+    int unsignedExponent;
     bool negative, overflow;
-    long exponent;
+    int exponent;
 
     /* Move past the exponent letter and sign to the digits.  */
     p++;
@@ -280,9 +280,10 @@ namespace {
       while (*p == '.');
 
       /* Adjust the exponents for any decimal point.  */
-      D->exponent += (dot - p) - (dot > p);
-      D->normalizedExponent = (D->exponent + (p - D->firstSigDigit)
-                               - (dot > D->firstSigDigit && dot < p));
+      D->exponent += static_cast<exponent_t>((dot - p) - (dot > p));
+      D->normalizedExponent = (D->exponent +
+                static_cast<exponent_t>((p - D->firstSigDigit)
+                                        - (dot > D->firstSigDigit && dot < p)));
     }
 
     D->lastSigDigit = p;
@@ -2002,7 +2003,7 @@ APFloat::convertFromHexadecimalString(const char *p,
   firstSignificantDigit = p;
 
   for(;;) {
-    integerPart hex_value;
+    unsigned int hex_value;
 
     if(*p == '.') {
       assert(dot == 0);
@@ -2043,7 +2044,7 @@ APFloat::convertFromHexadecimalString(const char *p,
 
     /* Calculate the exponent adjustment implicit in the number of
        significant digits.  */
-    expAdjustment = dot - firstSignificantDigit;
+    expAdjustment = static_cast<int>(dot - firstSignificantDigit);
     if(expAdjustment < 0)
       expAdjustment++;
     expAdjustment = expAdjustment * 4 - 1;
@@ -2097,7 +2098,8 @@ APFloat::roundSignificandWithExponent(const integerPart *decSigParts,
     decSig.exponent += exp;
 
     lostFraction calcLostFraction;
-    integerPart HUerr, HUdistance, powHUerr;
+    integerPart HUerr, HUdistance;
+    unsigned int powHUerr;
 
     if (exp >= 0) {
       /* multiplySignificand leaves the precision-th bit set to 1.  */
@@ -2113,7 +2115,7 @@ APFloat::roundSignificandWithExponent(const integerPart *decSigParts,
           excessPrecision = calcSemantics.precision;
       }
       /* Extra half-ulp lost in reciprocal of exponent.  */
-      powHUerr = (powStatus == opOK && calcLostFraction == lfExactlyZero) ? 0: 2;
+      powHUerr = (powStatus == opOK && calcLostFraction == lfExactlyZero) ? 0:2;
     }
 
     /* Both multiplySignificand and divideSignificand return the
@@ -2190,7 +2192,7 @@ APFloat::convertFromDecimalString(const char *p, roundingMode rounding_mode)
        N-digit decimal integer is N * 196 / 59.  Allocate enough space
        to hold the full significand, and an extra part required by
        tcMultiplyPart.  */
-    partCount = (D.lastSigDigit - D.firstSigDigit) + 1;
+    partCount = static_cast<unsigned int>(D.lastSigDigit - D.firstSigDigit) + 1;
     partCount = partCountForBits(1 + 196 * partCount / 59);
     decSignificand = new integerPart[partCount + 1];
     partCount = 0;
@@ -2320,7 +2322,7 @@ APFloat::convertToHexString(char *dst, unsigned int hexDigits,
 
   *dst = 0;
 
-  return dst - p;
+  return static_cast<unsigned int>(dst - p);
 }
 
 /* Does the hard work of outputting the correctly rounded hexadecimal
@@ -2443,7 +2445,7 @@ APFloat::getHashValue() const
     uint32_t hash = sign<<11 | semantics->precision | exponent<<12;
     const integerPart* p = significandParts();
     for (int i=partCount(); i>0; i--, p++)
-      hash ^= ((uint32_t)*p) ^ (*p)>>32;
+      hash ^= ((uint32_t)*p) ^ (uint32_t)((*p)>>32);
     return hash;
   }
 }
@@ -2483,8 +2485,8 @@ APFloat::convertF80LongDoubleAPFloatToAPInt() const
   }
 
   uint64_t words[2];
-  words[0] =  (((uint64_t)sign & 1) << 63) |
-              ((myexponent & 0x7fff) <<  48) |
+  words[0] =  ((uint64_t)(sign & 1) << 63) |
+              ((myexponent & 0x7fffLL) <<  48) |
               ((mysignificand >>16) & 0xffffffffffffLL);
   words[1] = mysignificand & 0xffff;
   return APInt(80, 2, words);
@@ -2526,10 +2528,10 @@ APFloat::convertPPCDoubleDoubleAPFloatToAPInt() const
   }
 
   uint64_t words[2];
-  words[0] =  (((uint64_t)sign & 1) << 63) |
+  words[0] =  ((uint64_t)(sign & 1) << 63) |
               ((myexponent & 0x7ff) <<  52) |
               (mysignificand & 0xfffffffffffffLL);
-  words[1] =  (((uint64_t)sign2 & 1) << 63) |
+  words[1] =  ((uint64_t)(sign2 & 1) << 63) |
               ((myexponent2 & 0x7ff) <<  52) |
               (mysignificand2 & 0xfffffffffffffLL);
   return APInt(128, 2, words);
@@ -2560,7 +2562,7 @@ APFloat::convertDoubleAPFloatToAPInt() const
     mysignificand = *significandParts();
   }
 
-  return APInt(64, (((((uint64_t)sign & 1) << 63) |
+  return APInt(64, ((((uint64_t)(sign & 1) << 63) |
                      ((myexponent & 0x7ff) <<  52) |
                      (mysignificand & 0xfffffffffffffLL))));
 }
@@ -2575,7 +2577,7 @@ APFloat::convertFloatAPFloatToAPInt() const
 
   if (category==fcNormal) {
     myexponent = exponent+127; //bias
-    mysignificand = *significandParts();
+    mysignificand = (uint32_t)*significandParts();
     if (myexponent == 1 && !(mysignificand & 0x800000))
       myexponent = 0;   // denormal
   } else if (category==fcZero) {
@@ -2587,7 +2589,7 @@ APFloat::convertFloatAPFloatToAPInt() const
   } else {
     assert(category == fcNaN && "Unknown category!");
     myexponent = 0xff;
-    mysignificand = *significandParts();
+    mysignificand = (uint32_t)*significandParts();
   }
 
   return APInt(32, (((sign&1) << 31) | ((myexponent&0xff) << 23) |
@@ -2649,7 +2651,7 @@ APFloat::initFromF80LongDoubleAPInt(const APInt &api)
   initialize(&APFloat::x87DoubleExtended);
   assert(partCount()==2);
 
-  sign = i1>>63;
+  sign = static_cast<unsigned int>(i1>>63);
   if (myexponent==0 && mysignificand==0) {
     // exponent, significand meaningless
     category = fcZero;
@@ -2685,8 +2687,8 @@ APFloat::initFromPPCDoubleDoubleAPInt(const APInt &api)
   initialize(&APFloat::PPCDoubleDouble);
   assert(partCount()==2);
 
-  sign = i1>>63;
-  sign2 = i2>>63;
+  sign = static_cast<unsigned int>(i1>>63);
+  sign2 = static_cast<unsigned int>(i2>>63);
   if (myexponent==0 && mysignificand==0) {
     // exponent, significand meaningless
     // exponent2 and significand2 are required to be 0; we don't check
@@ -2732,7 +2734,7 @@ APFloat::initFromDoubleAPInt(const APInt &api)
   initialize(&APFloat::IEEEdouble);
   assert(partCount()==1);
 
-  sign = i>>63;
+  sign = static_cast<unsigned int>(i>>63);
   if (myexponent==0 && mysignificand==0) {
     // exponent, significand meaningless
     category = fcZero;

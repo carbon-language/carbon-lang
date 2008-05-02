@@ -31,7 +31,8 @@ namespace llvm {
   typedef uint64_t integerPart;
 
   const unsigned int host_char_bit = 8;
-  const unsigned int integerPartWidth = host_char_bit * sizeof(integerPart);
+  const unsigned int integerPartWidth = host_char_bit *
+    static_cast<unsigned int>(sizeof(integerPart));
 
 //===----------------------------------------------------------------------===//
 //                              APInt Class
@@ -76,8 +77,10 @@ class APInt {
 
   /// This enum is used to hold the constants we needed for APInt.
   enum {
-    APINT_BITS_PER_WORD = sizeof(uint64_t) * 8, ///< Bits in a word
-    APINT_WORD_SIZE = sizeof(uint64_t)          ///< Byte size of a word
+    /// Bits in a word
+    APINT_BITS_PER_WORD = static_cast<unsigned int>(sizeof(uint64_t)) * 8,
+    /// Byte size of a word
+    APINT_WORD_SIZE = static_cast<unsigned int>(sizeof(uint64_t))
   };
 
   /// This constructor is used only internally for speed of construction of
