@@ -780,7 +780,7 @@ void InstCombiner::ComputeMaskedBits(Value *V, const APInt &Mask,
   case Instruction::UDiv: {
     // For the purposes of computing leading zeros we can conservatively
     // treat a udiv as a logical right shift by the power of 2 known to
-    // be greater than the denominator.
+    // be less than the denominator.
     APInt AllOnes = APInt::getAllOnesValue(BitWidth);
     ComputeMaskedBits(I->getOperand(0),
                       AllOnes, KnownZero2, KnownOne2, Depth+1);
@@ -790,8 +790,10 @@ void InstCombiner::ComputeMaskedBits(Value *V, const APInt &Mask,
     KnownZero2.clear();
     ComputeMaskedBits(I->getOperand(1),
                       AllOnes, KnownZero2, KnownOne2, Depth+1);
-    LeadZ = std::min(BitWidth,
-                     LeadZ + BitWidth - KnownOne2.countLeadingZeros());
+    unsigned RHSUnknownLeadingOnes = KnownOne2.countLeadingZeros();
+    if (RHSUnknownLeadingOnes != BitWidth)
+      LeadZ = std::min(BitWidth,
+                       LeadZ + BitWidth - RHSUnknownLeadingOnes - 1);
 
     KnownZero = APInt::getHighBitsSet(BitWidth, LeadZ) & Mask;
     return;
