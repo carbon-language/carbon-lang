@@ -1519,7 +1519,7 @@ namespace {
     virtual void getRanges(BugReporter& BR, const SourceRange*& beg,           
                            const SourceRange*& end) {
       
-      if (getBugType().isLeak())
+      if (!getBugType().isLeak())
         RangedBugReport::getRanges(BR, beg, end);
       else {
         beg = 0;
@@ -1714,14 +1714,36 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
   ExplodedNode<ValueState>* Last = N;
   typedef CFRefCount::RefBindings RefBindings;
     
-  // Find the first node that referred to the tracked symbol.
+  // Find the first node that referred to the tracked symbol.  We also
+  // try and find the first VarDecl the value was stored to.
+  
+  VarDecl* FirstDecl = 0;
   
   while (N) {
     ValueState* St = N->getState();
     RefBindings B = RefBindings((RefBindings::TreeTy*) St->CheckerState);
-
-    if (!B.SlimFind(Sym))
+    RefBindings::TreeTy* T = B.SlimFind(Sym);
+    
+    if (!T)
       break;
+
+    VarDecl* VD = 0;
+    
+    // Determine if there is an LVal binding to the symbol.
+    for (ValueState::vb_iterator I=St->vb_begin(), E=St->vb_end(); I!=E; ++I) {
+      if (!isa<lval::SymbolVal>(I->second)  // Is the value a symbol?
+          || cast<lval::SymbolVal>(I->second).getSymbol() != Sym)
+        continue;
+      
+      if (VD) {  // Multiple decls map to this symbol.
+        VD = 0;
+        break;
+      }
+      
+      VD = I->first;
+    }
+    
+    if (VD) FirstDecl = VD;
         
     Last = N;
     N = N->pred_empty() ? NULL : *(N->pred_begin());    
@@ -1738,7 +1760,13 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
   // FIXME: Also get the name of the variable.
   
   std::ostringstream os;
-  os << "Object allocated on line " << Line << " is leaked.";
+  
+  os << "Object allocated on line " << Line;
+  
+  if (FirstDecl)
+    os << " and stored into '" << FirstDecl->getName() << '\'';
+    
+  os << " is leaked.";
   
   Stmt* S = getStmt(BR);
   assert (S);  
