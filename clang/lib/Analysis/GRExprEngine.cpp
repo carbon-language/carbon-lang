@@ -1280,13 +1280,13 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
         unsigned idx = 0;
         
         // raise:format:      
-        II.push_back(&Ctx.Idents.get("raise:"));
-        II.push_back(&Ctx.Idents.get("format:"));      
+        II.push_back(&Ctx.Idents.get("raise"));
+        II.push_back(&Ctx.Idents.get("format"));      
         NSExceptionInstanceRaiseSelectors[idx++] =
           Ctx.Selectors.getSelector(II.size(), &II[0]);      
         
         // raise:format::arguments:      
-        II.push_back(&Ctx.Idents.get("arguments:"));
+        II.push_back(&Ctx.Idents.get("arguments"));
         NSExceptionInstanceRaiseSelectors[idx++] =
           Ctx.Selectors.getSelector(II.size(), &II[0]);
       }
