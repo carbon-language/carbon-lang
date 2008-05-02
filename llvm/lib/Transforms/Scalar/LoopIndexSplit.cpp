@@ -1124,6 +1124,11 @@ bool LoopIndexSplit::safeSplitCondition(SplitInfo &SD) {
   BasicBlock *Succ0 = SplitTerminator->getSuccessor(0);
   BasicBlock *Succ1 = SplitTerminator->getSuccessor(1);
 
+  // If split block does not dominate the latch then this is not a diamond.
+  // Such loop may not benefit from index split.
+  if (!DT->dominates(SplitCondBlock, Latch))
+    return false;
+
   // Finally this split condition is safe only if merge point for
   // split condition branch is loop latch. This check along with previous
   // check, to ensure that exit condition is in either loop latch or header,
