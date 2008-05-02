@@ -249,8 +249,8 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
     // create new PHINode for this instruction.
     Instruction *NewHeaderReplacement = NULL;
     if (usedOutsideOriginalHeader(In)) {
-      const StructType *STy = dyn_cast<StructType>(In->getType());
-      if (STy) {
+      // FIXME: remove this when we have first-class aggregates.
+      if (isa<StructType>(In->getType())) {
         // Can't create PHI nodes for this type.  If there are any getResults
         // not defined in this block, move them back to this block.  PHI
         // nodes will be created for all getResults later.
@@ -261,14 +261,15 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
             ++InsertPoint;
         } else {
           InsertPoint = I;  // call
-          InsertPoint++;
+          ++InsertPoint;
         }
         for (Value::use_iterator UI = In->use_begin(), UE = In->use_end();
              UI != UE; ++UI) {
           GetResultInst *InGR = cast<GetResultInst>(UI);
           if (InGR->getParent() != OrigHeader) {
-            // move InGR to immediately follow call.  It will be picked
-            // up, cloned and PHI'd on the next iteration.
+            // Move InGR to immediately after the call or in the normal dest of
+            // the invoke.  It will be picked up, cloned and PHI'd on the next
+            // iteration.
             InGR->moveBefore(InsertPoint);
           }
         }
