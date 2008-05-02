@@ -1180,8 +1180,13 @@ Stmt::child_iterator DeclRefExpr::child_begin() { return child_iterator(); }
 Stmt::child_iterator DeclRefExpr::child_end() { return child_iterator(); }
 
 // ObjCIvarRefExpr
-Stmt::child_iterator ObjCIvarRefExpr::child_begin() { return child_iterator(); }
-Stmt::child_iterator ObjCIvarRefExpr::child_end() { return child_iterator(); }
+Stmt::child_iterator ObjCIvarRefExpr::child_begin() {
+  return reinterpret_cast<Stmt**>(&Base);
+}
+
+Stmt::child_iterator ObjCIvarRefExpr::child_end() {
+  return reinterpret_cast<Stmt**>(&Base)+1;
+}
 
 // PreDefinedExpr
 Stmt::child_iterator PreDefinedExpr::child_begin() { return child_iterator(); }
