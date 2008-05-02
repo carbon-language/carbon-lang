@@ -813,16 +813,16 @@ public:
   virtual void getTransferFunctions(std::vector<GRTransferFuncs*>& TFs) {
     switch (LangOpts.getGCMode()) {
       case LangOptions::NonGC:
-        TFs.push_back(MakeCFRefCountTF(*Ctx, false, LangOpts));
+        TFs.push_back(MakeCFRefCountTF(*Ctx, false, true, LangOpts));
         break;
         
       case LangOptions::GCOnly:
-        TFs.push_back(MakeCFRefCountTF(*Ctx, true, LangOpts));
+        TFs.push_back(MakeCFRefCountTF(*Ctx, true, true, LangOpts));
         break;
         
       case LangOptions::HybridGC:
-        TFs.push_back(MakeCFRefCountTF(*Ctx, false, LangOpts));
-        TFs.push_back(MakeCFRefCountTF(*Ctx, true, LangOpts));
+        TFs.push_back(MakeCFRefCountTF(*Ctx, false, true, LangOpts));
+        TFs.push_back(MakeCFRefCountTF(*Ctx, true, false, LangOpts));
         break;
     }
   }

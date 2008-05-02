@@ -32,7 +32,8 @@ void CheckUninitializedValues(CFG& cfg, ASTContext& Ctx, Diagnostic& Diags,
                               bool FullUninitTaint=false);
   
 GRTransferFuncs* MakeGRSimpleValsTF();
-GRTransferFuncs* MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled, 
+GRTransferFuncs* MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
+                                  bool StandardWarnings,
                                   const LangOptions& lopts); 
 BugType* MakeDeadStoresChecker();
   

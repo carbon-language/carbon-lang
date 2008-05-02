@@ -626,7 +626,8 @@ private:
   // Instance variables.
   
   CFRefSummaryManager Summaries;  
-  const bool          GCEnabled; 
+  const bool          GCEnabled;
+  const bool          EmitStandardWarnings;  
   const LangOptions&  LOpts;
   RefBFactoryTy       RefBFactory;
      
@@ -674,9 +675,11 @@ private:
   
 public:
   
-  CFRefCount(ASTContext& Ctx, bool gcenabled, const LangOptions& lopts)
+  CFRefCount(ASTContext& Ctx, bool gcenabled, bool StandardWarnings,
+             const LangOptions& lopts)
     : Summaries(Ctx, gcenabled),
       GCEnabled(gcenabled),
+      EmitStandardWarnings(StandardWarnings),
       LOpts(lopts),
       RetainSelector(GetNullarySelector("retain", Ctx)),
       ReleaseSelector(GetNullarySelector("release", Ctx)),
@@ -1539,7 +1542,7 @@ namespace {
 } // end anonymous namespace
 
 void CFRefCount::RegisterChecks(GRExprEngine& Eng) {
-  GRSimpleVals::RegisterChecks(Eng);
+  if (EmitStandardWarnings) GRSimpleVals::RegisterChecks(Eng);
   Eng.Register(new UseAfterRelease(*this));
   Eng.Register(new BadRelease(*this));
   Eng.Register(new Leak(*this));
@@ -1793,6 +1796,7 @@ void Leak::GetErrorNodes(std::vector<ExplodedNode<ValueState>*>& Nodes) {
 //===----------------------------------------------------------------------===//
 
 GRTransferFuncs* clang::MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
+                                         bool StandardWarnings,
                                          const LangOptions& lopts) {
-  return new CFRefCount(Ctx, GCEnabled, lopts);
+  return new CFRefCount(Ctx, GCEnabled, StandardWarnings, lopts);
 }  
