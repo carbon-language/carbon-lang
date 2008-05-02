@@ -1180,26 +1180,32 @@ def FsMOVAPDrm : PDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
 // Alias bitwise logical operations using SSE logical ops on packed FP values.
 let Constraints = "$src1 = $dst" in {
 let isCommutable = 1 in {
-  def FsANDPDrr : PDI<0x54, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src1, FR64:$src2),
+  def FsANDPDrr : PDI<0x54, MRMSrcReg, (outs FR64:$dst),
+                                       (ins FR64:$src1, FR64:$src2),
                       "andpd\t{$src2, $dst|$dst, $src2}",
                       [(set FR64:$dst, (X86fand FR64:$src1, FR64:$src2))]>;
-  def FsORPDrr  : PDI<0x56, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src1, FR64:$src2),
+  def FsORPDrr  : PDI<0x56, MRMSrcReg, (outs FR64:$dst),
+                                       (ins FR64:$src1, FR64:$src2),
                       "orpd\t{$src2, $dst|$dst, $src2}",
                       [(set FR64:$dst, (X86for FR64:$src1, FR64:$src2))]>;
-  def FsXORPDrr : PDI<0x57, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src1, FR64:$src2),
+  def FsXORPDrr : PDI<0x57, MRMSrcReg, (outs FR64:$dst),
+                                       (ins FR64:$src1, FR64:$src2),
                       "xorpd\t{$src2, $dst|$dst, $src2}",
                       [(set FR64:$dst, (X86fxor FR64:$src1, FR64:$src2))]>;
 }
 
-def FsANDPDrm : PDI<0x54, MRMSrcMem, (outs FR64:$dst), (ins FR64:$src1, f128mem:$src2),
+def FsANDPDrm : PDI<0x54, MRMSrcMem, (outs FR64:$dst),
+                                     (ins FR64:$src1, f128mem:$src2),
                     "andpd\t{$src2, $dst|$dst, $src2}",
                     [(set FR64:$dst, (X86fand FR64:$src1,
                                       (memopfsf64 addr:$src2)))]>;
-def FsORPDrm  : PDI<0x56, MRMSrcMem, (outs FR64:$dst), (ins FR64:$src1, f128mem:$src2),
+def FsORPDrm  : PDI<0x56, MRMSrcMem, (outs FR64:$dst),
+                                     (ins FR64:$src1, f128mem:$src2),
                     "orpd\t{$src2, $dst|$dst, $src2}",
                     [(set FR64:$dst, (X86for FR64:$src1,
                                       (memopfsf64 addr:$src2)))]>;
-def FsXORPDrm : PDI<0x57, MRMSrcMem, (outs FR64:$dst), (ins FR64:$src1, f128mem:$src2),
+def FsXORPDrm : PDI<0x57, MRMSrcMem, (outs FR64:$dst),
+                                     (ins FR64:$src1, f128mem:$src2),
                     "xorpd\t{$src2, $dst|$dst, $src2}",
                     [(set FR64:$dst, (X86fxor FR64:$src1,
                                       (memopfsf64 addr:$src2)))]>;
