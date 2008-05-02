@@ -247,12 +247,10 @@ Sema::FindProtocolDeclaration(SourceLocation TypeLoc,
 /// DiagnosePropertyMismatch - Compares two properties for their
 /// attributes and types and warns on a variety of inconsistancies.
 ///
-// TODO: Incomplete. 
-//
 void
 Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property, 
                                ObjCPropertyDecl *SuperProperty,
-                               ObjCInterfaceDecl *SuperIDecl) {
+                               const char *inheritedName) {
   ObjCPropertyDecl::PropertyAttributeKind CAttr = 
   Property->getPropertyAttributes();
   ObjCPropertyDecl::PropertyAttributeKind SAttr = 
@@ -260,36 +258,36 @@ Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
   if ((CAttr & ObjCPropertyDecl::OBJC_PR_readonly)
       && (SAttr & ObjCPropertyDecl::OBJC_PR_readwrite))
     Diag(Property->getLocation(), diag::warn_readonly_property, 
-               Property->getName(), SuperIDecl->getName());
+               Property->getName(), inheritedName);
   if ((CAttr & ObjCPropertyDecl::OBJC_PR_copy)
       != (SAttr & ObjCPropertyDecl::OBJC_PR_copy))
     Diag(Property->getLocation(), diag::warn_property_attribute,
-         Property->getName(), "copy", SuperIDecl->getName(), 
+         Property->getName(), "copy", inheritedName, 
          SourceRange());
   else if ((CAttr & ObjCPropertyDecl::OBJC_PR_retain)
            != (SAttr & ObjCPropertyDecl::OBJC_PR_retain))
     Diag(Property->getLocation(), diag::warn_property_attribute,
-         Property->getName(), "retain", SuperIDecl->getName(), 
+         Property->getName(), "retain", inheritedName, 
          SourceRange());
   
   if ((CAttr & ObjCPropertyDecl::OBJC_PR_nonatomic)
       != (SAttr & ObjCPropertyDecl::OBJC_PR_nonatomic))
     Diag(Property->getLocation(), diag::warn_property_attribute,
-         Property->getName(), "atomic", SuperIDecl->getName(), 
+         Property->getName(), "atomic", inheritedName, 
          SourceRange());
   if (Property->getSetterName() != SuperProperty->getSetterName())
     Diag(Property->getLocation(), diag::warn_property_attribute,
-         Property->getName(), "setter", SuperIDecl->getName(), 
+         Property->getName(), "setter", inheritedName, 
          SourceRange());
   if (Property->getGetterName() != SuperProperty->getGetterName())
     Diag(Property->getLocation(), diag::warn_property_attribute,
-         Property->getName(), "getter", SuperIDecl->getName(), 
+         Property->getName(), "getter", inheritedName, 
          SourceRange());
   
   if (Property->getCanonicalType() != SuperProperty->getCanonicalType())
     Diag(Property->getLocation(), diag::warn_property_type,
          Property->getType().getAsString(),  
-         SuperIDecl->getName());
+         inheritedName);
   
 }
 
@@ -310,9 +308,67 @@ Sema::ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl) {
          E = IDecl->classprop_end(); I != E; ++I) {
       ObjCPropertyDecl *PDecl = (*I);
       if (SuperPDecl->getIdentifier() == PDecl->getIdentifier())
-          DiagnosePropertyMismatch(PDecl, SuperPDecl, SDecl);
+          DiagnosePropertyMismatch(PDecl, SuperPDecl, SDecl->getName());
     }
   }
+}
+
+/// MergeOneProtocolPropertiesIntoClass - This routine goes thru the list
+/// of properties declared in a protocol and adds them to the list
+/// of properties for current class if it is not there already.
+void
+Sema::MergeOneProtocolPropertiesIntoClass(ObjCInterfaceDecl *IDecl,
+                                          ObjCProtocolDecl *PDecl)
+{
+  llvm::SmallVector<ObjCPropertyDecl*, 16> mergeProperties;
+  for (ObjCProtocolDecl::classprop_iterator P = PDecl->classprop_begin(),
+       E = PDecl->classprop_end(); P != E; ++P) {
+    ObjCPropertyDecl *Pr = (*P);
+    ObjCInterfaceDecl::classprop_iterator CP, CE;
+    // Is this property already in  class's list of properties?
+    for (CP = IDecl->classprop_begin(), CE = IDecl->classprop_end(); 
+         CP != CE; ++CP)
+      if ((*CP)->getIdentifier() == Pr->getIdentifier())
+        break;
+    if (CP == CE)
+      // Add this property to list of properties for thie class.
+      mergeProperties.push_back(Pr);
+    else
+      // Property protocol already exist in class. Diagnose any mismatch.
+      DiagnosePropertyMismatch((*CP), Pr, PDecl->getName());
+    }
+  IDecl->mergeProperties(&mergeProperties[0], mergeProperties.size());
+}
+
+/// MergeProtocolPropertiesIntoClass - This routine merges properties
+/// declared in 'MergeItsProtocols' objects (which can be a class or an
+/// inherited protocol into the list of properties for class 'IDecl'
+///
+
+void
+Sema::MergeProtocolPropertiesIntoClass(ObjCInterfaceDecl *IDecl,
+                                       DeclTy *MergeItsProtocols) {
+  Decl *ClassDecl = static_cast<Decl *>(MergeItsProtocols);
+  if (ObjCInterfaceDecl *MDecl = 
+      dyn_cast<ObjCInterfaceDecl>(ClassDecl)) {
+    for (ObjCInterfaceDecl::protocol_iterator P = MDecl->protocol_begin(),
+         E = MDecl->protocol_end(); P != E; ++P)
+      MergeOneProtocolPropertiesIntoClass(IDecl, (*P));
+      // Merge properties of class (*P) into IDECL's
+      ;
+    // Go thru the list of protocols for this class and recursively merge
+    // their properties into this class as well.
+    for (ObjCInterfaceDecl::protocol_iterator P = IDecl->protocol_begin(),
+         E = IDecl->protocol_end(); P != E; ++P)
+      MergeProtocolPropertiesIntoClass(IDecl, (*P));
+  }
+  else if (ObjCProtocolDecl *MDecl = 
+           dyn_cast<ObjCProtocolDecl>(ClassDecl))
+    for (ObjCProtocolDecl::protocol_iterator P = MDecl->protocol_begin(),
+         E = MDecl->protocol_end(); P != E; ++P)
+      MergeOneProtocolPropertiesIntoClass(IDecl, (*P));
+  else
+    assert(false && "MergeProtocolPropertiesIntoClass - bad object kind");
 }
 
 /// ActOnForwardProtocolDeclaration - 
@@ -820,7 +876,8 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
                   &clsMethods[0], clsMethods.size(), AtEndLoc);
     // Compares properties declaraed in this class to those of its 
     // super class.
-    ComparePropertiesInBaseAndSuper (I);
+    ComparePropertiesInBaseAndSuper(I);
+    MergeProtocolPropertiesIntoClass(I, I);
   } else if (ObjCProtocolDecl *P = dyn_cast<ObjCProtocolDecl>(ClassDecl)) {
     P->addMethods(&insMethods[0], insMethods.size(),
                   &clsMethods[0], clsMethods.size(), AtEndLoc);

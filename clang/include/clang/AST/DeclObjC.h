@@ -285,6 +285,12 @@ public:
   ObjCCategoryDecl *FindCategoryDeclaration(IdentifierInfo *CategoryId) const;
   ObjCIvarDecl *FindIvarDeclaration(IdentifierInfo *IvarId) const;
   
+  typedef ObjCProtocolDecl * const * protocol_iterator;
+  protocol_iterator protocol_begin() const { return ReferencedProtocols; }
+  protocol_iterator protocol_end() const {
+    return ReferencedProtocols+NumReferencedProtocols;
+  }
+  
   typedef ObjCIvarDecl * const *ivar_iterator;
   ivar_iterator ivar_begin() const { return Ivars; }
   ivar_iterator ivar_end() const { return Ivars + ivar_size();}
@@ -313,6 +319,8 @@ public:
                   SourceLocation AtEnd);
   
   void addProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
+  
+  void mergeProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
   
   typedef ObjCPropertyDecl * const * classprop_iterator;
   classprop_iterator classprop_begin() const { return PropertyDecl; }
@@ -517,6 +525,12 @@ public:
     return ReferencedProtocols; 
   }
   unsigned getNumReferencedProtocols() const { return NumReferencedProtocols; }
+  typedef ObjCProtocolDecl * const * protocol_iterator;
+  protocol_iterator protocol_begin() const { return ReferencedProtocols; }
+  protocol_iterator protocol_end() const {
+    return ReferencedProtocols+NumReferencedProtocols;
+  }
+  
   unsigned getNumInstanceMethods() const { return NumInstanceMethods; }
   unsigned getNumClassMethods() const { return NumClassMethods; }
   

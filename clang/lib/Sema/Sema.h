@@ -662,8 +662,14 @@ public:
   
   void DiagnosePropertyMismatch(ObjCPropertyDecl *Property, 
                                 ObjCPropertyDecl *SuperProperty,
-                                ObjCInterfaceDecl*SuperIDecl);
+                                const char *Name);
   void ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl);
+  
+  void MergeProtocolPropertiesIntoClass(ObjCInterfaceDecl *IDecl,
+                                        DeclTy *MergeProtocols);
+  
+  void MergeOneProtocolPropertiesIntoClass(ObjCInterfaceDecl *IDecl,
+                                           ObjCProtocolDecl *PDecl);
   
   virtual void ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
                       DeclTy **allMethods = 0, unsigned allNum = 0,

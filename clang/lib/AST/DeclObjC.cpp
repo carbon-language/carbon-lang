@@ -242,6 +242,33 @@ void ObjCInterfaceDecl::addProperties(ObjCPropertyDecl **Properties,
   memcpy(PropertyDecl, Properties, NumProperties*sizeof(ObjCPropertyDecl*));
 }                                   
 
+/// mergeProperties - Adds properties to the end of list of current properties
+/// for this class.
+
+void ObjCInterfaceDecl::mergeProperties(ObjCPropertyDecl **Properties, 
+                                        unsigned NumNewProperties) {
+  if (NumNewProperties == 0) return;
+  
+  if (PropertyDecl) {
+    ObjCPropertyDecl **newPropertyDecl =  
+      new ObjCPropertyDecl*[NumNewProperties + NumPropertyDecl];
+    ObjCPropertyDecl **buf = newPropertyDecl;
+    // put back original properties in buffer.
+    memcpy(buf, PropertyDecl, NumPropertyDecl*sizeof(ObjCPropertyDecl*));
+    // Add new properties to this buffer.
+    memcpy(buf+NumPropertyDecl, Properties, 
+           NumNewProperties*sizeof(ObjCPropertyDecl*));
+    free(PropertyDecl);
+    PropertyDecl = newPropertyDecl;
+    NumPropertyDecl += NumNewProperties;
+  }
+  else {
+    PropertyDecl = new ObjCPropertyDecl*[NumNewProperties];
+    memcpy(PropertyDecl, Properties, NumNewProperties*sizeof(ObjCPropertyDecl*));
+    NumPropertyDecl = NumNewProperties;
+  }
+}
+
 /// addProperties - Insert property declaration AST nodes into
 /// ObjCProtocolDecl's PropertyDecl field.
 ///
