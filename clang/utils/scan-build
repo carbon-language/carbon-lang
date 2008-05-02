@@ -17,6 +17,7 @@ use warnings;
 use File::Temp qw/ :mktemp /;
 use FindBin qw($RealBin);
 use Digest::MD5;
+use File::Basename;
 
 my $Verbose = 0;       # Verbose output from this script.
 my $Prog = "scan-build";
@@ -140,6 +141,58 @@ sub ComputeDigest {
 }
 
 ##----------------------------------------------------------------------------##
+#  UpdatePrefix - Compute the common prefix of files.
+##----------------------------------------------------------------------------##
+
+my $Prefix;
+
+sub UpdatePrefix {
+  
+  my $x = shift;
+  my $y = basename($x);
+  $x =~ s/\Q$y\E$//;
+  
+  # Ignore /usr, /Library, /System, /Developer
+
+  return if ( $x =~ /^\/usr/ or $x =~ /^\/Library/
+              or $x =~ /^\/System/ or $x =~ /^\/Developer/);
+
+  
+  if (!defined $Prefix) {
+    $Prefix = $x;
+    return;
+  }
+  
+  chop $Prefix while (!($x =~ /^$Prefix/));
+}
+
+sub GetPrefix {
+  return $Prefix;
+}
+
+##----------------------------------------------------------------------------##
+#  UpdateInFilePath - Update the path in the report file.
+##----------------------------------------------------------------------------##
+
+sub UpdateInFilePath {
+  my $fname = shift;
+  my $regex = shift;
+  my $newtext = shift;
+  
+  open (RIN, $fname) or die "cannot open $fname";
+  open (ROUT, ">$fname.tmp") or die "cannot open $fname.tmp";
+  
+  while (<RIN>) {
+    s/$regex/$newtext/;
+    print ROUT $_;
+  }
+  
+  close (ROUT);
+  close (RIN);
+  `mv $fname.tmp $fname`;
+}
+
+##----------------------------------------------------------------------------##
 # ScanFile - Scan a report file for various identifying attributes.
 ##----------------------------------------------------------------------------##
 
@@ -185,6 +238,7 @@ sub ScanFile {
     }
     elsif (/<!-- BUGFILE (.*) -->$/) {
       $BugFile = $1;
+      UpdatePrefix($BugFile);
     }
     elsif (/<!-- BUGPATHLENGTH (.*) -->$/) {
       $BugPathLength = $1;
@@ -351,6 +405,16 @@ print OUT <<ENDTEXT;
 </tr>
 ENDTEXT
 
+  my $prefix = GetPrefix();
+  my $regex;
+  my $InFileRegex;
+  my $InFilePrefix = "File:</td><td>";
+  
+  if (defined($prefix)) { 
+    $regex = qr/^\Q$prefix\E/is;    
+    $InFileRegex = qr/\Q$InFilePrefix$prefix\E/is;
+  }    
+
   for my $row ( sort { $a->[1] cmp $b->[1] } @Index ) {
     
     my $x = lc($row->[1]);
@@ -364,7 +428,20 @@ ENDTEXT
     print OUT lc($row->[1]);
     print OUT "</td>\n";
     
-    for my $j ( 2 .. $#{$row} ) {
+    # Update the file prefix.
+    
+    my $fname = $row->[2];
+    if (defined($regex)) {      
+      $fname =~ s/$regex//;
+      UpdateInFilePath("$Dir/$ReportFile", $InFileRegex, $InFilePrefix)
+    }
+    
+    print "Prefix is '$prefix'\n";
+    print OUT "<td>$fname</td>\n";
+
+    # Print the rest of the columns.
+    
+    for my $j ( 3 .. $#{$row} ) {
       print OUT "<td>$row->[$j]</td>\n"
     }
 
