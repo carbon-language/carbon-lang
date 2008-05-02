@@ -41,31 +41,31 @@ public:
                 Action::ExprTy **args, unsigned numargs, AttributeList *Next);
   ~AttributeList();
   
-  enum Kind {
-    UnknownAttribute,
-    AT_vector_size,
-    AT_ext_vector_type,
+  enum Kind {              // Please keep this list alphabetized.
     AT_address_space,
     AT_aligned,
-    AT_packed,
     AT_annotate,
-    AT_noreturn,
     AT_deprecated,
-    AT_unused,
-    AT_format,
-    AT_nonnull,
-    AT_malloc,
-    AT_pure,
-    AT_weak,
     AT_dllimport,
     AT_dllexport,
-    AT_visibility,
+    AT_ext_vector_type,
     AT_fastcall,
-    AT_stdcall,
-    AT_nothrow,
+    AT_format,
+    AT_malloc,
     AT_noinline,
+    AT_nonnull,
+    AT_noreturn,
+    AT_nothrow,
+    AT_packed,
+    AT_pure,
+    AT_stdcall,
     AT_transparent_union,
-    AT_warn_unused_result
+    AT_unused,
+    AT_vector_size,
+    AT_visibility,
+    AT_warn_unused_result,
+    AT_weak,
+    UnknownAttribute
   };
   
   IdentifierInfo *getName() const { return AttrName; }
