@@ -5,7 +5,7 @@
 #include <Foundation/NSException.h>
 #include <Foundation/NSString.h>
 
-int* f1(int *x, NSString* s) {
+int f1(int *x, NSString* s) {
   
   if (x) ++x;
   
@@ -14,7 +14,7 @@ int* f1(int *x, NSString* s) {
   return *x; // no-warning
 }
 
-int* f2(int *x, ...) {
+int f2(int *x, ...) {
   
   if (x) ++x;
   va_list alist;
@@ -25,7 +25,7 @@ int* f2(int *x, ...) {
   return *x; // no-warning
 }
 
-int *f3(int* x) {
+int f3(int* x) {
   
   if (x) ++x;
   
