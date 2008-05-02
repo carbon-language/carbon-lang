@@ -822,15 +822,21 @@ void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
   Expr *receiver = Mess->getReceiver();
   if (receiver) PrintExpr(receiver);
   else OS << Mess->getClassName()->getName();
+  OS << ' ';
   Selector selector = Mess->getSelector();
   if (selector.isUnarySelector()) {
-    OS << " " << selector.getIdentifierInfoForSlot(0)->getName();
+    OS << selector.getIdentifierInfoForSlot(0)->getName();
   } else {
     for (unsigned i = 0, e = Mess->getNumArgs(); i != e; ++i) {
-      if (selector.getIdentifierInfoForSlot(i))
-        OS << selector.getIdentifierInfoForSlot(i)->getName() << ":";
-      else
-         OS << ":";
+      if (i < selector.getNumArgs()) {
+        if (i > 0) OS << ' ';
+        if (selector.getIdentifierInfoForSlot(i))
+          OS << selector.getIdentifierInfoForSlot(i)->getName() << ":";
+        else
+           OS << ":";
+      }
+      else OS << ", "; // Handle variadic methods.
+      
       PrintExpr(Mess->getArg(i));
     }
   }
