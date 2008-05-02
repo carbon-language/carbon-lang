@@ -4023,8 +4023,8 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
           // Add NumOps>>3 registers to MatchedRegs.
           RegsForValue MatchedRegs;
           MatchedRegs.TLI = &TLI;
-          MatchedRegs.ValueVTs.resize(1, InOperandVal.getValueType());
-          MatchedRegs.RegVTs.resize(1, AsmNodeOperands[CurOp+1].getValueType());
+          MatchedRegs.ValueVTs.push_back(InOperandVal.getValueType());
+          MatchedRegs.RegVTs.push_back(AsmNodeOperands[CurOp+1].getValueType());
           for (unsigned i = 0, e = NumOps>>3; i != e; ++i) {
             unsigned Reg =
               cast<RegisterSDNode>(AsmNodeOperands[++CurOp])->getReg();
