@@ -838,6 +838,53 @@ struct VISIBILITY_HIDDEN PowOpt : public LibCallOptimization {
 };
 
 //===---------------------------------------===//
+// 'exp2' Optimizations
+
+struct VISIBILITY_HIDDEN Exp2Opt : public LibCallOptimization {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+    const FunctionType *FT = Callee->getFunctionType();
+    // Just make sure this has 1 argument of FP type, which matches the
+    // result type.
+    if (FT->getNumParams() != 1 || FT->getReturnType() != FT->getParamType(0) ||
+        !FT->getParamType(0)->isFloatingPoint())
+      return 0;
+    
+    Value *Op = CI->getOperand(1);
+    // Turn exp2(sitofp(x)) -> ldexp(1.0, sext(x))  if sizeof(x) <= 32
+    // Turn exp2(uitofp(x)) -> ldexp(1.0, zext(x))  if sizeof(x) < 32
+    Value *LdExpArg = 0;
+    if (SIToFPInst *OpC = dyn_cast<SIToFPInst>(Op)) {
+      if (OpC->getOperand(0)->getType()->getPrimitiveSizeInBits() <= 32)
+        LdExpArg = B.CreateSExt(OpC->getOperand(0), Type::Int32Ty, "tmp");
+    } else if (UIToFPInst *OpC = dyn_cast<UIToFPInst>(Op)) {
+      if (OpC->getOperand(0)->getType()->getPrimitiveSizeInBits() < 32)
+        LdExpArg = B.CreateZExt(OpC->getOperand(0), Type::Int32Ty, "tmp");
+    }
+    
+    if (LdExpArg) {
+      const char *Name;
+      if (Op->getType() == Type::FloatTy)
+        Name = "ldexpf";
+      else if (Op->getType() == Type::DoubleTy)
+        Name = "ldexp";
+      else
+        Name = "ldexpl";
+
+      Constant *One = ConstantFP::get(APFloat(1.0f));
+      if (Op->getType() != Type::FloatTy)
+        One = ConstantExpr::getFPExtend(One, Op->getType());
+
+      Module *M = Caller->getParent();
+      Value *Callee = M->getOrInsertFunction(Name, Op->getType(),
+                                             Op->getType(), Type::Int32Ty,NULL);
+      return B.CreateCall2(Callee, One, LdExpArg);
+    }
+    return 0;
+  }
+};
+    
+
+//===---------------------------------------===//
 // Double -> Float Shrinking Optimizations for Unary Functions like 'floor'
 
 struct VISIBILITY_HIDDEN UnaryDoubleFPOpt : public LibCallOptimization {
@@ -1205,7 +1252,7 @@ namespace {
     StrCatOpt StrCat; StrChrOpt StrChr; StrCmpOpt StrCmp; StrNCmpOpt StrNCmp;
     StrCpyOpt StrCpy; StrLenOpt StrLen; MemCmpOpt MemCmp; MemCpyOpt  MemCpy;
     // Math Library Optimizations
-    PowOpt Pow; UnaryDoubleFPOpt UnaryDoubleFP;
+    PowOpt Pow; Exp2Opt Exp2; UnaryDoubleFPOpt UnaryDoubleFP;
     // Integer Optimizations
     FFSOpt FFS; IsDigitOpt IsDigit; IsAsciiOpt IsAscii; ToAsciiOpt ToAscii;
     // Formatting and IO Optimizations
@@ -1253,6 +1300,10 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["powf"] = &Pow;
   Optimizations["pow"] = &Pow;
   Optimizations["powl"] = &Pow;
+  Optimizations["exp2l"] = &Exp2;
+  Optimizations["exp2"] = &Exp2;
+  Optimizations["exp2f"] = &Exp2;
+  
 #ifdef HAVE_FLOORF
   Optimizations["floor"] = &UnaryDoubleFP;
 #endif
