@@ -118,7 +118,8 @@ let isTwoAddress = 1 in {
   }
 
   multiclass MMXI_binop_rmi_int<bits<8> opc, bits<8> opc2, Format ImmForm,
-                                string OpcodeStr, Intrinsic IntId> {
+                                string OpcodeStr, Intrinsic IntId,
+                                Intrinsic IntId2> {
     def rr : MMXI<opc, MRMSrcReg, (outs VR64:$dst),
                                   (ins VR64:$src1, VR64:$src2),
                   !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
@@ -131,11 +132,7 @@ let isTwoAddress = 1 in {
     def ri : MMXIi8<opc2, ImmForm, (outs VR64:$dst),
                                    (ins VR64:$src1, i32i8imm:$src2),
                     !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-           [(set VR64:$dst, (IntId VR64:$src1,
-                             (v1i64 (bitconvert
-                                     (v2i32 (vector_shuffle immAllZerosV,
-                                     (v2i32 (scalar_to_vector (i32 imm:$src2))),
-                                             MMX_MOVL_shuffle_mask))))))]>;
+           [(set VR64:$dst, (IntId2 VR64:$src1, (i32 imm:$src2)))]>;
   }
 }
 
@@ -283,23 +280,23 @@ let isTwoAddress = 1 in {
 
 // Shift Instructions
 defm MMX_PSRLW : MMXI_binop_rmi_int<0xD1, 0x71, MRM2r, "psrlw",
-                                    int_x86_mmx_psrl_w>;
+                                    int_x86_mmx_psrl_w, int_x86_mmx_psrli_w>;
 defm MMX_PSRLD : MMXI_binop_rmi_int<0xD2, 0x72, MRM2r, "psrld",
-                                    int_x86_mmx_psrl_d>;
+                                    int_x86_mmx_psrl_d, int_x86_mmx_psrli_d>;
 defm MMX_PSRLQ : MMXI_binop_rmi_int<0xD3, 0x73, MRM2r, "psrlq",
-                                    int_x86_mmx_psrl_q>;
+                                    int_x86_mmx_psrl_q, int_x86_mmx_psrli_q>;
 
 defm MMX_PSLLW : MMXI_binop_rmi_int<0xF1, 0x71, MRM6r, "psllw",
-                                    int_x86_mmx_psll_w>;
+                                    int_x86_mmx_psll_w, int_x86_mmx_pslli_w>;
 defm MMX_PSLLD : MMXI_binop_rmi_int<0xF2, 0x72, MRM6r, "pslld",
-                                    int_x86_mmx_psll_d>;
+                                    int_x86_mmx_psll_d, int_x86_mmx_pslli_d>;
 defm MMX_PSLLQ : MMXI_binop_rmi_int<0xF3, 0x73, MRM6r, "psllq",
-                                    int_x86_mmx_psll_q>;
+                                    int_x86_mmx_psll_q, int_x86_mmx_pslli_q>;
 
 defm MMX_PSRAW : MMXI_binop_rmi_int<0xE1, 0x71, MRM4r, "psraw",
-                                    int_x86_mmx_psra_w>;
+                                    int_x86_mmx_psra_w, int_x86_mmx_psrai_w>;
 defm MMX_PSRAD : MMXI_binop_rmi_int<0xE2, 0x72, MRM4r, "psrad",
-                                    int_x86_mmx_psra_d>;
+                                    int_x86_mmx_psra_d, int_x86_mmx_psrai_d>;
 
 // Comparison Instructions
 defm MMX_PCMPEQB : MMXI_binop_rm_int<0x74, "pcmpeqb", int_x86_mmx_pcmpeq_b>;
