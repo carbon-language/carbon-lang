@@ -217,7 +217,29 @@ void LCSSA::getLoopValuesUsedOutsideLoop(Loop *L,
         }
         
         if (*BB != UserBB && !inLoop(UserBB)) {
-          AffectedValues.insert(I);
+          const StructType *STy = dyn_cast<StructType>(I->getType());
+          if (STy) {
+            // I is a call or an invoke that returns multiple values.
+            // These values are accessible through getresult only.
+            // If the getresult value is not in the BB then move it
+            // immediately here. It will be processed in next iteration.
+            BasicBlock::iterator InsertPoint;
+            if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
+              InsertPoint = II->getNormalDest()->begin();
+              while (isa<PHINode>(InsertPoint))
+                ++InsertPoint;
+            } else {
+              InsertPoint = I;
+              InsertPoint++;
+            }
+            for (Value::use_iterator TmpI = I->use_begin(), 
+                   TmpE = I->use_end(); TmpI != TmpE; ++TmpI) {
+              GetResultInst *GR = cast<GetResultInst>(TmpI);
+              if (GR->getParent() != *BB)
+                GR->moveBefore(InsertPoint);
+            }
+          } else
+            AffectedValues.insert(I);
           break;
         }
       }
