@@ -176,16 +176,19 @@ public:
     friend class ImmutableMap;
 
   public:
-    inline value_type_ref operator*() const { return itr->getValue(); }
-    inline key_type_ref getKey() const { return itr->getValue().first; }
-    inline data_type_ref getData() const { return itr->getValue().second; }
+    value_type_ref operator*() const { return itr->getValue(); }
+    value_type*    operator->() const { return &itr->getValue(); }
     
-    inline iterator& operator++() { ++itr; return *this; }
-    inline iterator  operator++(int) { iterator tmp(*this); ++itr; return tmp; }
-    inline iterator& operator--() { --itr; return *this; }
-    inline iterator  operator--(int) { iterator tmp(*this); --itr; return tmp; }
-    inline bool operator==(const iterator& RHS) const { return RHS.itr == itr; }
-    inline bool operator!=(const iterator& RHS) const { return RHS.itr != itr; }        
+    key_type_ref getKey() const { return itr->getValue().first; }
+    data_type_ref getData() const { return itr->getValue().second; }
+    
+    
+    iterator& operator++() { ++itr; return *this; }
+    iterator  operator++(int) { iterator tmp(*this); ++itr; return tmp; }
+    iterator& operator--() { --itr; return *this; }
+    iterator  operator--(int) { iterator tmp(*this); --itr; return tmp; }
+    bool operator==(const iterator& RHS) const { return RHS.itr == itr; }
+    bool operator!=(const iterator& RHS) const { return RHS.itr != itr; }        
   };
   
   iterator begin() const { return iterator(Root); }
