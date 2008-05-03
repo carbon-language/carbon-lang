@@ -37,6 +37,11 @@ bool PostDominatorTree::runOnFunction(Function &F) {
   return false;
 }
 
+PostDominatorTree::~PostDominatorTree()
+{
+  delete DT;
+}
+
 //===----------------------------------------------------------------------===//
 //  PostDominanceFrontier Implementation
 //===----------------------------------------------------------------------===//
