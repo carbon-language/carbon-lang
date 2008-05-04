@@ -500,6 +500,15 @@ static void InitializeDiagnostics(Diagnostic &Diags) {
     
   if (MSExtensions) // MS allows unnamed struct/union fields.
     Diags.setDiagnosticMapping(diag::w_no_declarators, diag::MAP_IGNORE);
+
+  // If -pedantic-errors is set, turn extensions that warn by default into
+  // errors. 
+  if (ErrorOnExtensions) {
+    Diags.setDiagnosticMapping(diag::warn_hex_escape_too_large,
+                               diag::MAP_ERROR);
+    Diags.setDiagnosticMapping(diag::warn_octal_escape_too_large,
+                               diag::MAP_ERROR);
+  }
 }
 
 //===----------------------------------------------------------------------===//
