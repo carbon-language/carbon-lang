@@ -718,8 +718,7 @@ bool MemCpyOpt::iterateOnFunction(Function &F) {
       
       if (StoreInst *SI = dyn_cast<StoreInst>(I))
         changed_function |= processStore(SI, BI);
-
-      if (MemCpyInst* M = dyn_cast<MemCpyInst>(I)) {
+      else if (MemCpyInst* M = dyn_cast<MemCpyInst>(I)) {
         changed_function |= processMemCpy(M);
       }
     }
