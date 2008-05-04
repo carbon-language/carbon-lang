@@ -413,7 +413,7 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
     // for shifts.
     llvm::APSInt Res(LHS.getBitWidth());
     if (Operator != tok::question && Operator != tok::lessless &&
-        Operator != tok::greatergreater) {
+        Operator != tok::greatergreater && Operator != tok::comma) {
       Res.setIsUnsigned(LHS.isUnsigned()|RHS.isUnsigned());
       // If this just promoted something from signed to unsigned, and if the
       // value was negative, warn about it.
