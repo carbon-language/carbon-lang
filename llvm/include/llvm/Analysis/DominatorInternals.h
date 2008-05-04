@@ -233,14 +233,7 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
   typedef GraphTraits<NodeT> GraphT;
 
   unsigned N = 0;
-
-  // Add a node for the root.  This node might be the actual root, if there is
-  // one exit block, or it may be the virtual exit (denoted by (BasicBlock *)0)
-  // which postdominates all real exits if there are multiple exit blocks.
-  typename GraphT::NodeType* Root = DT.Roots.size() == 1 ? DT.Roots[0]
-                   : 0;
   bool MultipleRoots = (DT.Roots.size() > 1);
-
   if (MultipleRoots) {
     typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &BBInfo =
         DT.Info[NULL];
@@ -257,6 +250,10 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
   // in later stages of the algorithm.
   for (unsigned i = 0, e = DT.Roots.size(); i != e; ++i)
     N = DFSPass<GraphT>(DT, DT.Roots[i], N);
+
+  // it might be that some blocks did not get a DFS number (e.g., blocks of 
+  // infinite loops). In these cases an artificial exit node is required.
+  MultipleRoots |= (DT.isPostDominator() && N != F.size());
 
   for (unsigned i = N; i >= 2; --i) {
     typename GraphT::NodeType* W = DT.Vertex[i];
@@ -311,15 +308,18 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
     if (WIDom != DT.Vertex[DT.Info[W].Semi])
       WIDom = DT.IDoms[WIDom];
   }
-  
+
   if (DT.Roots.empty()) return;
-  
+
   // Add a node for the root.  This node might be the actual root, if there is
   // one exit block, or it may be the virtual exit (denoted by (BasicBlock *)0)
-  // which postdominates all real exits if there are multiple exit blocks.
+  // which postdominates all real exits if there are multiple exit blocks, or
+  // an infinite loop.
+  typename GraphT::NodeType* Root = !MultipleRoots ? DT.Roots[0] : 0;
+
   DT.DomTreeNodes[Root] = DT.RootNode =
                         new DomTreeNodeBase<typename GraphT::NodeType>(Root, 0);
-  
+
   // Loop over all of the reachable blocks in the function...
   for (unsigned i = 2; i <= N; ++i) {
     typename GraphT::NodeType* W = DT.Vertex[i];
@@ -329,19 +329,11 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
 
     typename GraphT::NodeType* ImmDom = DT.getIDom(W);
 
-    // skip all non root nodes that have no dominator - this occures with 
-    // infinite loops.
-    if (!ImmDom && std::count(DT.Roots.begin(), DT.Roots.end(), W) == 0)
-      continue;
+    assert(ImmDom || DT.DomTreeNodes[NULL]);
 
     // Get or calculate the node for the immediate dominator
     DomTreeNodeBase<typename GraphT::NodeType> *IDomNode =
                                                      DT.getNodeForBlock(ImmDom);
-
-    // skip all children that are dominated by a non root node that, by itself,
-    // has no dominator.
-    if (!IDomNode)
-      continue;
 
     // Add a new tree node for this BasicBlock, and link it as a child of
     // IDomNode

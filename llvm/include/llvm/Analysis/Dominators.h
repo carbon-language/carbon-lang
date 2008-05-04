@@ -605,16 +605,8 @@ protected:
     // immediate dominator.
     NodeT *IDom = getIDom(BB);
 
-    // skip all non root nodes that have no dominator
-    if (!IDom && std::count(this->Roots.begin(), this->Roots.end(), BB) == 0)
-      return NULL;
-
+    assert(IDom || this->DomTreeNodes[NULL]);
     DomTreeNodeBase<NodeT> *IDomNode = getNodeForBlock(IDom);
-
-    // skip all nodes that are dominated by a non root node that, by itself,
-    // has no dominator.
-    if (!IDomNode)
-      return NULL;
 
     // Add a new tree node for this BasicBlock, and link it as a child of
     // IDomNode
