@@ -17,3 +17,16 @@ int test() {
 int a[10];
 int b[10] = a; // expected-error {{initialization with "{...}" expected}}
 }
+
+
+// PR2050
+struct cdiff_cmd {
+          const char *name;
+          unsigned short argc;
+          int (*handler)();
+};
+int cdiff_cmd_open();
+struct cdiff_cmd commands[] = {
+        {"OPEN", 1, &cdiff_cmd_open }
+};
+
