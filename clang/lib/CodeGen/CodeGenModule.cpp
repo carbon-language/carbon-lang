@@ -303,28 +303,30 @@ void CodeGenModule::EmitObjCMethod(const ObjCMethodDecl *OMD) {
 
 void CodeGenModule::EmitFunction(const FunctionDecl *FD) {
   // If this is not a prototype, emit the body.
-  if (FD->getBody()) {
-    // If the function is a static, defer code generation until later so we can
-    // easily omit unused statics.
-    if (FD->getStorageClass() == FunctionDecl::Static) {
-      // We need to check the Module here to see if GetAddrOfFunctionDecl() has
-      // already added this function to the Module because the address of the
-      // function's prototype was taken.  If this is the case, call 
-      // GetAddrOfFunctionDecl to insert the static FunctionDecl into the used
-      // GlobalDeclsMap, so that EmitStatics will generate code for it later.
-      //
-      // Example:
-      // static int foo();
-      // int bar() { return foo(); }
-      // static int foo() { return 5; }
-      if (getModule().getFunction(FD->getName()))
-        GetAddrOfFunctionDecl(FD, true);
-
-      StaticDecls.push_back(FD);
-      return;
-    }
+  if (!FD->isThisDeclarationADefinition())
+    return;
+  
+  // If the function is a static, defer code generation until later so we can
+  // easily omit unused statics.
+  if (FD->getStorageClass() != FunctionDecl::Static) {
     CodeGenFunction(*this).GenerateCode(FD);
+    return;
   }
+      
+  // We need to check the Module here to see if GetAddrOfFunctionDecl() has
+  // already added this function to the Module because the address of the
+  // function's prototype was taken.  If this is the case, call 
+  // GetAddrOfFunctionDecl to insert the static FunctionDecl into the used
+  // GlobalDeclsMap, so that EmitStatics will generate code for it later.
+  //
+  // Example:
+  // static int foo();
+  // int bar() { return foo(); }
+  // static int foo() { return 5; }
+  if (getModule().getFunction(FD->getName()))
+    GetAddrOfFunctionDecl(FD, true);
+
+  StaticDecls.push_back(FD);
 }
 
 void CodeGenModule::EmitStatics() {

@@ -135,6 +135,7 @@ public:
   
   void addAttr(Attr *attr);
   const Attr *getAttrs() const;
+  void swapAttrs(Decl *D);
 
   template<typename T> const T *getAttr() const {
     for (const Attr *attr = getAttrs(); attr; attr = attr->getNext())

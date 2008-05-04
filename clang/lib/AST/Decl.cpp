@@ -341,6 +341,31 @@ const Attr *Decl::getAttrs() const {
   return (*DeclAttrs)[this];
 }
 
+void Decl::swapAttrs(Decl *RHS) {
+  bool HasLHSAttr = this->HasAttrs;
+  bool HasRHSAttr = RHS->HasAttrs;
+  
+  // Usually, neither decl has attrs, nothing to do.
+  if (!HasLHSAttr && !HasRHSAttr) return;
+  
+  // If 'this' has no attrs, swap the other way.
+  if (!HasLHSAttr)
+    return RHS->swapAttrs(this);
+  
+  // Handle the case when both decls have attrs.
+  if (HasRHSAttr) {
+    std::swap((*DeclAttrs)[this], (*DeclAttrs)[RHS]);
+    return;
+  }
+  
+  // Otherwise, LHS has an attr and RHS doesn't.
+  (*DeclAttrs)[RHS] = (*DeclAttrs)[this];
+  (*DeclAttrs).erase(this);
+  this->HasAttrs = false;
+  RHS->HasAttrs = true;
+}
+
+
 #define CASE(KIND) \
   case KIND: \
     static_cast<KIND##Decl *>(const_cast<Decl *>(this))->~KIND##Decl(); \
@@ -487,16 +512,12 @@ void FunctionDecl::AddRedeclaration(FunctionDecl *FD) {
   // Swap parameters, so that the most recent parameter names and
   // exact types (e.g., enum vs int) show up in the original
   // declaration.
-  ParmVarDecl **thisParamInfo = this->ParamInfo;
-  this->ParamInfo = FD->ParamInfo;
-  FD->ParamInfo = thisParamInfo;
+  std::swap(this->ParamInfo, FD->ParamInfo);
   
   // Swap the function body: all declarations share the same function
   // body, but we keep track of who actually defined that function
   // body by keeping the pointer to the body stored in that node.
-  Stmt *thisBody = this->Body;
-  this->Body = FD->Body;
-  FD->Body = thisBody;
+  std::swap(this->Body, FD->Body);
 
   // Swap type information: this is important because in C, later
   // declarations can provide slightly different types (enum vs. int,
@@ -515,11 +536,7 @@ void FunctionDecl::AddRedeclaration(FunctionDecl *FD) {
   
   // Swap attributes. FD will have the union of the attributes from
   // all previous declarations.
-  if (DeclAttrs) {
-    Attr *thisAttr = (*DeclAttrs)[this];
-    (*DeclAttrs)[this] = (*DeclAttrs)[FD];
-    (*DeclAttrs)[FD] = thisAttr;
-  }
+  this->swapAttrs(FD);
 
   // If any declaration is inline, the function is inline.
   this->IsInline |= FD->IsInline;

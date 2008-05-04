@@ -153,6 +153,7 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   CurFuncDecl = FD;
   FnRetTy = FD->getType()->getAsFunctionType()->getResultType();
 
+  FD->getType().dump();
 
   CurFn = cast<llvm::Function>(CGM.GetAddrOfFunctionDecl(FD, true));
   assert(CurFn->isDeclaration() && "Function already has body?");
