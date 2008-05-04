@@ -6,3 +6,8 @@
 foo
 #endif
 
+// Shifts don't want the usual conversions: PR2279
+#if (2 << 1U) - 30 >= 0
+#error
+#endif
+

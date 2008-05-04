@@ -409,9 +409,11 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
     assert(PeekPrec <= ThisPrec && "Recursion didn't work!");
     
     // Usual arithmetic conversions (C99 6.3.1.8p1): result is unsigned if
-    // either operand is unsigned.  Don't do this for x and y in "x ? y : z".
+    // either operand is unsigned.  Don't do this for x and y in "x ? y : z" or
+    // for shifts.
     llvm::APSInt Res(LHS.getBitWidth());
-    if (Operator != tok::question) {
+    if (Operator != tok::question && Operator != tok::lessless &&
+        Operator != tok::greatergreater) {
       Res.setIsUnsigned(LHS.isUnsigned()|RHS.isUnsigned());
       // If this just promoted something from signed to unsigned, and if the
       // value was negative, warn about it.
