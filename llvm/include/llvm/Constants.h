@@ -233,9 +233,6 @@ protected:
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static ConstantFP *get(const APFloat &V);
-  static ConstantFP *get(const Type *Ty, const APFloat &V) {
-    return get(V);
-  }
 
   /// get() - This returns a constant fp for the specified value in the
   /// specified type.  This should only be used for simple constant values like
