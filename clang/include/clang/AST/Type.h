@@ -618,6 +618,9 @@ public:
   static bool classof(const ArrayType *) { return true; }
 };
 
+/// ConstantArrayType - This class represents C arrays with a specified constant
+/// size.  For example 'int A[100]' has ConstantArrayType where the element type
+/// is 'int' and the size is 100.
 class ConstantArrayType : public ArrayType {
   llvm::APInt Size; // Allows us to unique the type.
   
@@ -660,6 +663,9 @@ protected:
   friend class Type;
 };
 
+/// IncompleteArrayType - This class represents C arrays with an unspecified
+/// size.  For example 'int A[]' has an IncompleteArrayType where the element
+/// type is 'int' and the size is unspecified.
 class IncompleteArrayType : public ArrayType {
   IncompleteArrayType(QualType et, QualType can,
                     ArraySizeModifier sm, unsigned tq)
@@ -690,7 +696,21 @@ protected:
   friend class Type;
 };
 
-// FIXME: VariableArrayType's aren't uniqued (since expressions aren't).
+/// VariableArrayType - This class represents C arrays with a specified size
+/// which is not an integer-constant-expression.  For example, 'int s[x+foo()]'.
+/// Since the size expression is an arbitrary expression, we store it as such.
+///
+/// Note: VariableArrayType's aren't uniqued (since the expressions aren't) and
+/// should not be: two lexically equivalent variable array types could mean
+/// different things, for example, these variables do not have the same type
+/// dynamically:
+///
+/// void foo(int x) {
+///   int Y[x];
+///   ++x;
+///   int Z[x];
+/// }
+///
 class VariableArrayType : public ArrayType {
   /// SizeExpr - An assignment expression. VLA's are only permitted within 
   /// a function block. 
