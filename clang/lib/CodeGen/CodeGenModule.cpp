@@ -459,17 +459,19 @@ void CodeGenModule::EmitGlobalVarInit(const VarDecl *D) {
   // FIXME: else handle -fvisibility
   
   // Set the llvm linkage type as appropriate.
-  if (D->getAttr<DLLImportAttr>())
+  if (D->getStorageClass() == VarDecl::Static)
+    GV->setLinkage(llvm::Function::InternalLinkage);
+  else if (D->getAttr<DLLImportAttr>())
     GV->setLinkage(llvm::Function::DLLImportLinkage);
   else if (D->getAttr<DLLExportAttr>())
     GV->setLinkage(llvm::Function::DLLExportLinkage);
-  else if (D->getAttr<WeakAttr>()) {
+  else if (D->getAttr<WeakAttr>())
     GV->setLinkage(llvm::GlobalVariable::WeakLinkage);
-
-  } else {
+  else {
     // FIXME: This isn't right.  This should handle common linkage and other
     // stuff.
     switch (D->getStorageClass()) {
+    case VarDecl::Static: assert(0 && "This case handled above");
     case VarDecl::Auto:
     case VarDecl::Register:
       assert(0 && "Can't have auto or register globals");
@@ -480,9 +482,6 @@ void CodeGenModule::EmitGlobalVarInit(const VarDecl *D) {
     case VarDecl::Extern:
     case VarDecl::PrivateExtern:
       // todo: common
-      break;
-    case VarDecl::Static:
-      GV->setLinkage(llvm::GlobalVariable::InternalLinkage);
       break;
     }
   }

@@ -159,14 +159,14 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   
   // TODO: Set up linkage and many other things.  Note, this is a simple 
   // approximation of what we really want.
-  if (FD->getAttr<DLLImportAttr>())
+  if (FD->getStorageClass() == FunctionDecl::Static)
+    CurFn->setLinkage(llvm::Function::InternalLinkage);
+  else if (FD->getAttr<DLLImportAttr>())
     CurFn->setLinkage(llvm::Function::DLLImportLinkage);
   else if (FD->getAttr<DLLExportAttr>())
     CurFn->setLinkage(llvm::Function::DLLExportLinkage);
   else if (FD->getAttr<WeakAttr>() || FD->isInline())
     CurFn->setLinkage(llvm::Function::WeakLinkage);
-  else if (FD->getStorageClass() == FunctionDecl::Static)
-    CurFn->setLinkage(llvm::Function::InternalLinkage);
 
   if (FD->getAttr<FastCallAttr>())
     CurFn->setCallingConv(llvm::CallingConv::Fast);
