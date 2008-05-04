@@ -63,14 +63,14 @@ extern "C" {
  * Returns a printable string.
  */
 extern const char*
-lto_get_version();
+lto_get_version(void);
 
 
 /**
  * Returns the last error string or NULL if last operation was sucessful.
  */
 extern const char*
-lto_get_error_message();
+lto_get_error_message(void);
 
 
 /**
@@ -160,7 +160,7 @@ lto_module_get_symbol_attribute(lto_module_t mod, unsigned int index);
  * Returns NULL on error (check lto_get_error_message() for details).
  */
 extern lto_code_gen_t
-lto_codegen_create();
+lto_codegen_create(void);
 
 
 /**

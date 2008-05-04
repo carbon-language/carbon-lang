@@ -228,20 +228,20 @@ LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty);
 void LLVMRefineAbstractType(LLVMTypeRef AbstractType, LLVMTypeRef ConcreteType);
 
 /* Operations on integer types */
-LLVMTypeRef LLVMInt1Type();
-LLVMTypeRef LLVMInt8Type();
-LLVMTypeRef LLVMInt16Type();
-LLVMTypeRef LLVMInt32Type();
-LLVMTypeRef LLVMInt64Type();
+LLVMTypeRef LLVMInt1Type(void);
+LLVMTypeRef LLVMInt8Type(void);
+LLVMTypeRef LLVMInt16Type(void);
+LLVMTypeRef LLVMInt32Type(void);
+LLVMTypeRef LLVMInt64Type(void);
 LLVMTypeRef LLVMIntType(unsigned NumBits);
 unsigned LLVMGetIntTypeWidth(LLVMTypeRef IntegerTy);
 
 /* Operations on real types */
-LLVMTypeRef LLVMFloatType();
-LLVMTypeRef LLVMDoubleType();
-LLVMTypeRef LLVMX86FP80Type();
-LLVMTypeRef LLVMFP128Type();
-LLVMTypeRef LLVMPPCFP128Type();
+LLVMTypeRef LLVMFloatType(void);
+LLVMTypeRef LLVMDoubleType(void);
+LLVMTypeRef LLVMX86FP80Type(void);
+LLVMTypeRef LLVMFP128Type(void);
+LLVMTypeRef LLVMPPCFP128Type(void);
 
 /* Operations on function types */
 LLVMTypeRef LLVMFunctionType(LLVMTypeRef ReturnType,
@@ -270,9 +270,9 @@ unsigned LLVMGetPointerAddressSpace(LLVMTypeRef PointerTy);
 unsigned LLVMGetVectorSize(LLVMTypeRef VectorTy);
 
 /* Operations on other types */
-LLVMTypeRef LLVMVoidType();
-LLVMTypeRef LLVMLabelType();
-LLVMTypeRef LLVMOpaqueType();
+LLVMTypeRef LLVMVoidType(void);
+LLVMTypeRef LLVMLabelType(void);
+LLVMTypeRef LLVMOpaqueType(void);
 
 /* Operations on type handles */
 LLVMTypeHandleRef LLVMCreateTypeHandle(LLVMTypeRef PotentiallyAbstractTy);
@@ -477,7 +477,7 @@ LLVMBasicBlockRef LLVMGetIncomingBlock(LLVMValueRef PhiNode, unsigned Index);
  * exclusive means of building instructions using the C interface.
  */
 
-LLVMBuilderRef LLVMCreateBuilder();
+LLVMBuilderRef LLVMCreateBuilder(void);
 void LLVMPositionBuilder(LLVMBuilderRef Builder, LLVMBasicBlockRef Block,
                          LLVMValueRef Instr);
 void LLVMPositionBuilderBefore(LLVMBuilderRef Builder, LLVMValueRef Instr);
@@ -637,7 +637,7 @@ void LLVMDisposeMemoryBuffer(LLVMMemoryBufferRef MemBuf);
 /** Constructs a new whole-module pass pipeline. This type of pipeline is
     suitable for link-time optimization and whole-module transformations.
     See llvm::PassManager::PassManager. */
-LLVMPassManagerRef LLVMCreatePassManager();
+LLVMPassManagerRef LLVMCreatePassManager(void);
 
 /** Constructs a new function-by-function pass pipeline over the module
     provider. It does not take ownership of the module provider. This type of

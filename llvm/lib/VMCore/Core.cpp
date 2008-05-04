@@ -97,11 +97,11 @@ void LLVMRefineAbstractType(LLVMTypeRef AbstractType, LLVMTypeRef ConcreteType){
 
 /*--.. Operations on integer types .........................................--*/
 
-LLVMTypeRef LLVMInt1Type()  { return (LLVMTypeRef) Type::Int1Ty;  }
-LLVMTypeRef LLVMInt8Type()  { return (LLVMTypeRef) Type::Int8Ty;  }
-LLVMTypeRef LLVMInt16Type() { return (LLVMTypeRef) Type::Int16Ty; }
-LLVMTypeRef LLVMInt32Type() { return (LLVMTypeRef) Type::Int32Ty; }
-LLVMTypeRef LLVMInt64Type() { return (LLVMTypeRef) Type::Int64Ty; }
+LLVMTypeRef LLVMInt1Type(void)  { return (LLVMTypeRef) Type::Int1Ty;  }
+LLVMTypeRef LLVMInt8Type(void)  { return (LLVMTypeRef) Type::Int8Ty;  }
+LLVMTypeRef LLVMInt16Type(void) { return (LLVMTypeRef) Type::Int16Ty; }
+LLVMTypeRef LLVMInt32Type(void) { return (LLVMTypeRef) Type::Int32Ty; }
+LLVMTypeRef LLVMInt64Type(void) { return (LLVMTypeRef) Type::Int64Ty; }
 
 LLVMTypeRef LLVMIntType(unsigned NumBits) {
   return wrap(IntegerType::get(NumBits));
@@ -113,11 +113,11 @@ unsigned LLVMGetIntTypeWidth(LLVMTypeRef IntegerTy) {
 
 /*--.. Operations on real types ............................................--*/
 
-LLVMTypeRef LLVMFloatType()    { return (LLVMTypeRef) Type::FloatTy;     }
-LLVMTypeRef LLVMDoubleType()   { return (LLVMTypeRef) Type::DoubleTy;    }
-LLVMTypeRef LLVMX86FP80Type()  { return (LLVMTypeRef) Type::X86_FP80Ty;  }
-LLVMTypeRef LLVMFP128Type()    { return (LLVMTypeRef) Type::FP128Ty;     }
-LLVMTypeRef LLVMPPCFP128Type() { return (LLVMTypeRef) Type::PPC_FP128Ty; }
+LLVMTypeRef LLVMFloatType(void)    { return (LLVMTypeRef) Type::FloatTy;     }
+LLVMTypeRef LLVMDoubleType(void)   { return (LLVMTypeRef) Type::DoubleTy;    }
+LLVMTypeRef LLVMX86FP80Type(void)  { return (LLVMTypeRef) Type::X86_FP80Ty;  }
+LLVMTypeRef LLVMFP128Type(void)    { return (LLVMTypeRef) Type::FP128Ty;     }
+LLVMTypeRef LLVMPPCFP128Type(void) { return (LLVMTypeRef) Type::PPC_FP128Ty; }
 
 /*--.. Operations on function types ........................................--*/
 
@@ -209,10 +209,10 @@ unsigned LLVMGetVectorSize(LLVMTypeRef VectorTy) {
 
 /*--.. Operations on other types ...........................................--*/
 
-LLVMTypeRef LLVMVoidType()  { return (LLVMTypeRef) Type::VoidTy;  }
-LLVMTypeRef LLVMLabelType() { return (LLVMTypeRef) Type::LabelTy; }
+LLVMTypeRef LLVMVoidType(void)  { return (LLVMTypeRef) Type::VoidTy;  }
+LLVMTypeRef LLVMLabelType(void) { return (LLVMTypeRef) Type::LabelTy; }
 
-LLVMTypeRef LLVMOpaqueType() {
+LLVMTypeRef LLVMOpaqueType(void) {
   return wrap(llvm::OpaqueType::get());
 }
 
@@ -996,7 +996,7 @@ LLVMBasicBlockRef LLVMGetIncomingBlock(LLVMValueRef PhiNode, unsigned Index) {
 
 /*===-- Instruction builders ----------------------------------------------===*/
 
-LLVMBuilderRef LLVMCreateBuilder() {
+LLVMBuilderRef LLVMCreateBuilder(void) {
   return wrap(new IRBuilder());
 }
 
