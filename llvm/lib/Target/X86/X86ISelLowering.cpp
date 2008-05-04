@@ -4909,7 +4909,7 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG) {
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getValue();
   switch (IntNo) {
   default: return SDOperand();    // Don't custom lower most intrinsics.
-    // Comparison intrinsics.
+  // Comparison intrinsics.
   case Intrinsic::x86_sse_comieq_ss:
   case Intrinsic::x86_sse_comilt_ss:
   case Intrinsic::x86_sse_comile_ss:
@@ -5009,6 +5009,95 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG) {
     SDOperand SetCC = DAG.getNode(X86ISD::SETCC, MVT::i8,
                                   DAG.getConstant(X86CC, MVT::i8), Cond);
     return DAG.getNode(ISD::ANY_EXTEND, MVT::i32, SetCC);
+  }
+
+  // Fix vector shift instructions where the last operand is a non-immediate
+  // i32 value.
+  case Intrinsic::x86_sse2_pslli_w:
+  case Intrinsic::x86_sse2_pslli_d:
+  case Intrinsic::x86_sse2_pslli_q:
+  case Intrinsic::x86_sse2_psrli_w:
+  case Intrinsic::x86_sse2_psrli_d:
+  case Intrinsic::x86_sse2_psrli_q:
+  case Intrinsic::x86_sse2_psrai_w:
+  case Intrinsic::x86_sse2_psrai_d:
+  case Intrinsic::x86_mmx_pslli_w:
+  case Intrinsic::x86_mmx_pslli_d:
+  case Intrinsic::x86_mmx_pslli_q:
+  case Intrinsic::x86_mmx_psrli_w:
+  case Intrinsic::x86_mmx_psrli_d:
+  case Intrinsic::x86_mmx_psrli_q:
+  case Intrinsic::x86_mmx_psrai_w:
+  case Intrinsic::x86_mmx_psrai_d: {
+    SDOperand ShAmt = Op.getOperand(2);
+    if (isa<ConstantSDNode>(ShAmt))
+      return SDOperand();
+
+    unsigned NewIntNo = 0;
+    MVT::ValueType ShAmtVT = MVT::v4i32;
+    switch (IntNo) {
+    case Intrinsic::x86_sse2_pslli_w:
+      NewIntNo = Intrinsic::x86_sse2_psll_w;
+      break;
+    case Intrinsic::x86_sse2_pslli_d:
+      NewIntNo = Intrinsic::x86_sse2_psll_d;
+      break;
+    case Intrinsic::x86_sse2_pslli_q:
+      NewIntNo = Intrinsic::x86_sse2_psll_q;
+      break;
+    case Intrinsic::x86_sse2_psrli_w:
+      NewIntNo = Intrinsic::x86_sse2_psrl_w;
+      break;
+    case Intrinsic::x86_sse2_psrli_d:
+      NewIntNo = Intrinsic::x86_sse2_psrl_d;
+      break;
+    case Intrinsic::x86_sse2_psrli_q:
+      NewIntNo = Intrinsic::x86_sse2_psrl_q;
+      break;
+    case Intrinsic::x86_sse2_psrai_w:
+      NewIntNo = Intrinsic::x86_sse2_psra_w;
+      break;
+    case Intrinsic::x86_sse2_psrai_d:
+      NewIntNo = Intrinsic::x86_sse2_psra_d;
+      break;
+    default: {
+      ShAmtVT = MVT::v2i32;
+      switch (IntNo) {
+      case Intrinsic::x86_mmx_pslli_w:
+        NewIntNo = Intrinsic::x86_mmx_psll_w;
+        break;
+      case Intrinsic::x86_mmx_pslli_d:
+        NewIntNo = Intrinsic::x86_mmx_psll_d;
+        break;
+      case Intrinsic::x86_mmx_pslli_q:
+        NewIntNo = Intrinsic::x86_mmx_psll_q;
+        break;
+      case Intrinsic::x86_mmx_psrli_w:
+        NewIntNo = Intrinsic::x86_mmx_psrl_w;
+        break;
+      case Intrinsic::x86_mmx_psrli_d:
+        NewIntNo = Intrinsic::x86_mmx_psrl_d;
+        break;
+      case Intrinsic::x86_mmx_psrli_q:
+        NewIntNo = Intrinsic::x86_mmx_psrl_q;
+        break;
+      case Intrinsic::x86_mmx_psrai_w:
+        NewIntNo = Intrinsic::x86_mmx_psra_w;
+        break;
+      case Intrinsic::x86_mmx_psrai_d:
+        NewIntNo = Intrinsic::x86_mmx_psra_d;
+        break;
+      default: abort();  // Can't reach here.
+      }
+      break;
+    }
+    }
+    MVT::ValueType VT = Op.getValueType();
+    ShAmt = DAG.getNode(ISD::BIT_CONVERT, VT,
+                        DAG.getNode(ISD::SCALAR_TO_VECTOR, ShAmtVT, ShAmt));
+    return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, VT,
+                       DAG.getConstant(NewIntNo, MVT::i32),
+                       Op.getOperand(1), ShAmt);
   }
   }
 }
