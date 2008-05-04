@@ -193,14 +193,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   }
   case Builtin::BI__builtin_inff: {
     APFloat f(APFloat::IEEEsingle, APFloat::fcInfinity, false);
-    return RValue::get(ConstantFP::get(llvm::Type::FloatTy, f));
+    return RValue::get(ConstantFP::get(f));
   }
   case Builtin::BI__builtin_huge_val:
   case Builtin::BI__builtin_inf:
   // FIXME: mapping long double onto double.      
   case Builtin::BI__builtin_infl: {
     APFloat f(APFloat::IEEEdouble, APFloat::fcInfinity, false);
-    return RValue::get(ConstantFP::get(llvm::Type::DoubleTy, f));
+    return RValue::get(ConstantFP::get(f));
   }
   case Builtin::BI__builtin_isgreater:
   case Builtin::BI__builtin_isgreaterequal:

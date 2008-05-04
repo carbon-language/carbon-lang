@@ -301,14 +301,12 @@ ComplexPairTy ComplexExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
   else if (InVal.first->getType() == llvm::Type::FloatTy)
     // FIXME: Handle long double.
     NextVal = 
-      llvm::ConstantFP::get(InVal.first->getType(), 
-                            llvm::APFloat(static_cast<float>(AmountVal)));
+      llvm::ConstantFP::get(llvm::APFloat(static_cast<float>(AmountVal)));
   else {
     // FIXME: Handle long double.
     assert(InVal.first->getType() == llvm::Type::DoubleTy);
     NextVal = 
-      llvm::ConstantFP::get(InVal.first->getType(), 
-                            llvm::APFloat(static_cast<double>(AmountVal)));
+      llvm::ConstantFP::get(llvm::APFloat(static_cast<double>(AmountVal)));
   }
   
   // Add the inc/dec to the real part.
