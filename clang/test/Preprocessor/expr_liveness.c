@@ -20,6 +20,13 @@ bar
 #if 0 ? 124/0 : 42
 #endif
 
+// PR2279
+#if 0 ? 1/0: 2
+#else
+#error
+#endif
+
+
 #else
 
 

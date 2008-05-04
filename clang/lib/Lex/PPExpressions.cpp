@@ -433,20 +433,28 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
     default: assert(0 && "Unknown operator token!");
     case tok::percent:
       if (RHS == 0) {
-        if (ValueLive) PP.Diag(OpToken, diag::err_pp_remainder_by_zero);
-        return true;
+        if (ValueLive) {
+          PP.Diag(OpToken, diag::err_pp_remainder_by_zero);
+          return true;
+        }
+      } else {
+        Res = LHS % RHS;
       }
-      Res = LHS % RHS;
       break;
     case tok::slash:
       if (RHS == 0) {
-        if (ValueLive) PP.Diag(OpToken, diag::err_pp_division_by_zero);
-        return true;
+        if (ValueLive) {
+          PP.Diag(OpToken, diag::err_pp_division_by_zero);
+          return true;
+        }
+        break;
       }
+
       Res = LHS / RHS;
       if (LHS.isSigned())
         Overflow = LHS.isMinSignedValue() && RHS.isAllOnesValue(); // MININT/-1
       break;
+        
     case tok::star:
       Res = LHS * RHS;
       if (LHS != 0 && RHS != 0)
