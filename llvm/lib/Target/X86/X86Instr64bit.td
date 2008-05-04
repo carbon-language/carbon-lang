@@ -1102,6 +1102,13 @@ def MOV64ri64i32 : Ii32<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64i32imm:$src),
                         "mov{l}\t{$src, ${dst:subreg32}|${dst:subreg32}, $src}",
                         [(set GR64:$dst, i64immZExt32:$src)]>;
 
+//===----------------------------------------------------------------------===//
+// Thread Local Storage Instructions
+//===----------------------------------------------------------------------===//
+
+def TLS_addr64 : I<0, Pseudo, (outs GR64:$dst), (ins i64imm:$sym),
+                  ".byte\t0x66; leaq\t${sym:mem}(%rip), $dst; .word\t0x6666; rex64",
+                  [(set GR64:$dst, (X86tlsaddr tglobaltlsaddr:$sym))]>;
 
 //===----------------------------------------------------------------------===//
 // Atomic Instructions

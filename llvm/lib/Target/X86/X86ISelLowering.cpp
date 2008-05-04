@@ -267,6 +267,8 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::JumpTable       , MVT::i32  , Custom);
   setOperationAction(ISD::GlobalAddress   , MVT::i32  , Custom);
   setOperationAction(ISD::GlobalTLSAddress, MVT::i32  , Custom);
+  if (Subtarget->is64Bit())
+    setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
   setOperationAction(ISD::ExternalSymbol  , MVT::i32  , Custom);
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::ConstantPool  , MVT::i64  , Custom);
@@ -4001,10 +4003,10 @@ X86TargetLowering::LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) {
   return Result;
 }
 
-// Lower ISD::GlobalTLSAddress using the "general dynamic" model
+// Lower ISD::GlobalTLSAddress using the "general dynamic" model, 32 bit
 static SDOperand
-LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
-                              const MVT::ValueType PtrVT) {
+LowerToTLSGeneralDynamicModel32(GlobalAddressSDNode *GA, SelectionDAG &DAG,
+                                const MVT::ValueType PtrVT) {
   SDOperand InFlag;
   SDOperand Chain = DAG.getCopyToReg(DAG.getEntryNode(), X86::EBX,
                                      DAG.getNode(X86ISD::GlobalBaseReg,
@@ -4039,6 +4041,39 @@ LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA, SelectionDAG &DAG,
   return DAG.getCopyFromReg(Chain, X86::EAX, PtrVT, InFlag);
 }
 
+// Lower ISD::GlobalTLSAddress using the "general dynamic" model, 64 bit
+static SDOperand
+LowerToTLSGeneralDynamicModel64(GlobalAddressSDNode *GA, SelectionDAG &DAG,
+                                const MVT::ValueType PtrVT) {
+  SDOperand InFlag, Chain;
+
+  // emit leaq symbol@TLSGD(%rip), %rdi
+  SDVTList NodeTys = DAG.getVTList(PtrVT, MVT::Other, MVT::Flag);
+  SDOperand TGA = DAG.getTargetGlobalAddress(GA->getGlobal(),
+                                             GA->getValueType(0),
+                                             GA->getOffset());
+  SDOperand Ops[]  = { DAG.getEntryNode(), TGA};
+  SDOperand Result = DAG.getNode(X86ISD::TLSADDR, NodeTys, Ops, 2);
+  Chain  = Result.getValue(1);
+  InFlag = Result.getValue(2);
+
+  // call ___tls_get_addr. This function receives its argument in
+  // the register RDI.
+  Chain = DAG.getCopyToReg(Chain, X86::RDI, Result, InFlag);
+  InFlag = Chain.getValue(1);
+
+  NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SDOperand Ops1[] = { Chain,
+                      DAG.getTargetExternalSymbol("___tls_get_addr",
+                                                  PtrVT),
+                      DAG.getRegister(X86::RDI, PtrVT),
+                      InFlag };
+  Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops1, 4);
+  InFlag = Chain.getValue(1);
+
+  return DAG.getCopyFromReg(Chain, X86::RAX, PtrVT, InFlag);
+}
+
 // Lower ISD::GlobalTLSAddress using the "initial exec" (for no-pic) or
 // "local exec" model.
 static SDOperand
@@ -4066,15 +4101,19 @@ SDOperand
 X86TargetLowering::LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG) {
   // TODO: implement the "local dynamic" model
   // TODO: implement the "initial exec"model for pic executables
-  assert(!Subtarget->is64Bit() && Subtarget->isTargetELF() &&
-         "TLS not implemented for non-ELF and 64-bit targets");
+  assert(Subtarget->isTargetELF() &&
+         "TLS not implemented for non-ELF targets");
   GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(Op);
   // If the relocation model is PIC, use the "General Dynamic" TLS Model,
   // otherwise use the "Local Exec"TLS Model
-  if (getTargetMachine().getRelocationModel() == Reloc::PIC_)
-    return LowerToTLSGeneralDynamicModel(GA, DAG, getPointerTy());
-  else
-    return LowerToTLSExecModel(GA, DAG, getPointerTy());
+  if (Subtarget->is64Bit()) {
+    return LowerToTLSGeneralDynamicModel64(GA, DAG, getPointerTy());
+  } else {
+    if (getTargetMachine().getRelocationModel() == Reloc::PIC_)
+      return LowerToTLSGeneralDynamicModel32(GA, DAG, getPointerTy());
+    else
+      return LowerToTLSExecModel(GA, DAG, getPointerTy());
+  }
 }
 
 SDOperand

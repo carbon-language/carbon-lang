@@ -109,7 +109,7 @@ def X86Wrapper    : SDNode<"X86ISD::Wrapper",     SDTX86Wrapper>;
 def X86WrapperRIP : SDNode<"X86ISD::WrapperRIP",  SDTX86Wrapper>;
 
 def X86tlsaddr : SDNode<"X86ISD::TLSADDR", SDT_X86TLSADDR,
-                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
+                        [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 def X86TLStp : SDNode<"X86ISD::THREAD_POINTER", SDT_X86TLSTP, []>;
 
 def X86ehret : SDNode<"X86ISD::EH_RETURN", SDT_X86EHRET,
@@ -2500,12 +2500,12 @@ def MOV32_mr : I<0x89, MRMDestMem, (outs), (ins i32mem:$dst, GR32_:$src),
 //
 
 let Uses = [EBX] in
-def TLS_addr : I<0, Pseudo, (outs GR32:$dst), (ins i32imm:$sym),
-               "leal\t${sym:mem}(,%ebx,1), $dst",
-               [(set GR32:$dst, (X86tlsaddr tglobaltlsaddr:$sym))]>;
+def TLS_addr32 : I<0, Pseudo, (outs GR32:$dst), (ins i32imm:$sym),
+                  "leal\t${sym:mem}(,%ebx,1), $dst",
+                  [(set GR32:$dst, (X86tlsaddr tglobaltlsaddr:$sym))]>;
 
 let AddedComplexity = 10 in
-def TLS_gs_rr : I<0, Pseudo, (outs GR32:$dst), (ins GR32:$src),
+def TLS_gs_rr  : I<0, Pseudo, (outs GR32:$dst), (ins GR32:$src),
                   "movl\t%gs:($src), $dst",
                   [(set GR32:$dst, (load (add X86TLStp, GR32:$src)))]>;
 

@@ -347,7 +347,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
 
     if (GV->hasExternalWeakLinkage())
       ExtWeakSymbols.insert(GV);
-    
+
     int Offset = MO.getOffset();
     if (Offset > 0)
       O << "+" << Offset;
@@ -355,7 +355,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       O << Offset;
 
     if (isThreadLocal) {
-      if (TM.getRelocationModel() == Reloc::PIC_)
+      if (TM.getRelocationModel() == Reloc::PIC_ || Subtarget->is64Bit())
         O << "@TLSGD"; // general dynamic TLS model
       else
         if (GV->isDeclaration())
