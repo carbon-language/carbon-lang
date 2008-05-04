@@ -328,9 +328,9 @@ static unsigned getPrecedence(tok::TokenKind Kind) {
   case tok::pipe:                 return 7;
   case tok::ampamp:               return 6;
   case tok::pipepipe:             return 5;
-  case tok::question:             return 4;
-  case tok::colon:                return 3;
-  case tok::comma:                return 2;
+  case tok::comma:                return 4;
+  case tok::question:             return 3;
+  case tok::colon:                return 2;
   case tok::r_paren:              return 0;   // Lowest priority, end of expr.
   case tok::eom:                  return 0;   // Lowest priority, end of macro.
   }
@@ -543,7 +543,10 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
       Res.setIsUnsigned(false);  // C99 6.5.14p3, result is always int (signed)
       break;
     case tok::comma:
-      PP.Diag(OpToken, diag::ext_pp_comma_expr);
+      // Comma is invalid in pp expressions in c89/c++ mode, but is valid in C99
+      // if not being evaluated.
+      if (!PP.getLangOptions().C99 || ValueLive)
+        PP.Diag(OpToken, diag::ext_pp_comma_expr);
       Res = RHS; // LHS = LHS,RHS -> RHS.
       break; 
     case tok::question: {
