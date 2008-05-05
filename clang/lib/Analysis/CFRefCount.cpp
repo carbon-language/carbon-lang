@@ -214,7 +214,12 @@ class RetainSummaryManager {
   RetainSummary* getCFSummaryGetRule(FunctionDecl* FD);  
   
   RetainSummary* getPersistentSummary(ArgEffects* AE, RetEffect RE);
-    
+  
+  RetainSummary* getInstanceMethodSummary(Selector S);
+  
+  RetainSummary* getMethodSummary(Selector S);    
+  RetainSummary* getInitMethodSummary(Selector S);
+
 public:
   
   RetainSummaryManager(ASTContext& ctx, bool gcenabled)
@@ -239,7 +244,8 @@ RetainSummaryManager::~RetainSummaryManager() {
   //   mitigating the need to do explicit cleanup of the
   //   Argument-Effect summaries.
   
-  for (ArgEffectsSetTy::iterator I = ArgEffectsSet.begin(), E = ArgEffectsSet.end(); I!=E; ++I)
+  for (ArgEffectsSetTy::iterator I = ArgEffectsSet.begin(), 
+                                 E = ArgEffectsSet.end(); I!=E; ++I)
     I->getValue().~ArgEffects();
 }
 
@@ -302,7 +308,7 @@ RetainSummary* RetainSummaryManager::getPersistentSummary(ArgEffects* AE,
 //===----------------------------------------------------------------------===//
 
 RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD,
-                                              ASTContext& Ctx) {
+                                                ASTContext& Ctx) {
 
   SourceLocation Loc = FD->getLocation();
   
@@ -330,7 +336,7 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD,
 }
 
 RetainSummary* RetainSummaryManager::getNSSummary(FunctionDecl* FD,
-                                                const char* FName) {
+                                                  const char* FName) {
   FName += 2;
   
   if (strcmp(FName, "MakeCollectable") == 0)
@@ -340,7 +346,7 @@ RetainSummary* RetainSummaryManager::getNSSummary(FunctionDecl* FD,
 }
   
 RetainSummary* RetainSummaryManager::getCFSummary(FunctionDecl* FD,
-                                                const char* FName) {
+                                                  const char* FName) {
 
   FName += 2;
 
@@ -475,8 +481,44 @@ RetainSummary* RetainSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
 // Summary creation for Selectors.
 //===----------------------------------------------------------------------===//
 
+RetainSummary* RetainSummaryManager::getInitMethodSummary(Selector S) {
+  assert(ScratchArgs.empty());
+    
+  RetainSummary* Summ =
+    getPersistentSummary(getArgEffects(), RetEffect::MakeReceiverAlias());
+  
+  ObjCMethodSummaries[S] = Summ;
+  return Summ;
+}
 
+RetainSummary* RetainSummaryManager::getMethodSummary(Selector S) {
+  
+  // Look up a summary in our cache of Selectors -> Summaries.
+  ObjCMethodSummariesTy::iterator I = ObjCMethodSummaries.find(S);
+  
+  if (I != ObjCMethodSummaries.end())
+    return I->second;
 
+  // "initXXX": pass-through for receiver.
+
+  const char* s = S.getIdentifierInfoForSlot(0)->getName();
+    
+  if (s[0] == 'i' && s[10] == 'n' && s[2] == 'i' && s[3] == 't')
+    return getInitMethodSummary(S);
+
+  return 0;
+}
+
+RetainSummary* RetainSummaryManager::getInstanceMethodSummary(Selector S) {
+    
+  // Look up a summary in our cache of Selectors -> Summaries.
+  ObjCMethodSummariesTy::iterator I = ObjCInstanceMethodSummaries.find(S);
+  
+  if (I != ObjCInstanceMethodSummaries.end())
+    return I->second;
+    
+  return 0;
+}
 
 //===----------------------------------------------------------------------===//
 // Reference-counting logic (typestate + counts).
