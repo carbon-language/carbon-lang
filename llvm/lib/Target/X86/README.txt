@@ -1691,3 +1691,21 @@ LBB1_1:	## bb.i
   ...
 
 //===---------------------------------------------------------------------===//
+
+We compile:
+
+int test(int x, int y) {
+  return x-y-1;
+}
+
+into (-m64):
+
+_test:
+	decl	%edi
+	movl	%edi, %eax
+	subl	%esi, %eax
+	ret
+
+it would be better to codegen as: x+~y  (notl+addl)
+
+//===---------------------------------------------------------------------===//
