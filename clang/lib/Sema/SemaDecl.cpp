@@ -143,8 +143,7 @@ Decl *Sema::LookupDecl(const IdentifierInfo *II, unsigned NSI,
   return 0;
 }
 
-void Sema::InitBuiltinVaListType()
-{
+void Sema::InitBuiltinVaListType() {
   if (!Context.getBuiltinVaListType().isNull())
     return;
   
@@ -161,8 +160,8 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
   Builtin::ID BID = (Builtin::ID)bid;
 
   if (BID == Builtin::BI__builtin_va_start ||
-       BID == Builtin::BI__builtin_va_copy ||
-       BID == Builtin::BI__builtin_va_end)
+      BID == Builtin::BI__builtin_va_copy ||
+      BID == Builtin::BI__builtin_va_end)
     InitBuiltinVaListType();
     
   QualType R = Context.BuiltinInfo.GetBuiltinType(BID, Context);  
@@ -170,6 +169,19 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
                                            Context.getTranslationUnitDecl(),
                                            SourceLocation(), II, R,
                                            FunctionDecl::Extern, false, 0);
+  
+  // Create Decl objects for each parameter, adding them to the
+  // FunctionDecl.
+  if (FunctionTypeProto *FT = dyn_cast<FunctionTypeProto>(R)) {
+    llvm::SmallVector<ParmVarDecl*, 16> Params;
+    for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i)
+      Params.push_back(ParmVarDecl::Create(Context, New, SourceLocation(), 0,
+                                           FT->getArgType(i), VarDecl::None, 0,
+                                           0));
+    New->setParams(&Params[0], Params.size());
+  }
+  
+  
   
   // TUScope is the translation-unit scope to insert this function into.
   TUScope->AddDecl(New);

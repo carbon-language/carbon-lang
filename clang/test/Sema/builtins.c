@@ -30,3 +30,12 @@ void cfstring() {
   CFSTR("foo", "bar"); // expected-error {{ error: too many arguments to function }}
 }
 
+
+typedef __attribute__(( ext_vector_type(16) )) unsigned char uchar16;  // expected-warning {{extension}}
+
+// rdar://5905347
+unsigned char foo( short v ) {
+  uchar16 c;
+  return __builtin_ia32_vec_ext_v4si( c );  // expected-error {{too few arguments to function}}
+}
+
