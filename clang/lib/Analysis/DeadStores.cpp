@@ -35,6 +35,19 @@ public:
   
   virtual ~DeadStoreObs() {}
   
+  void CheckDeclRef(DeclRefExpr* DR, Expr* Val,
+                    const LiveVariables::AnalysisDataTy& AD,
+                    const LiveVariables::ValTy& Live) {
+    
+    if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))
+      if (VD->hasLocalStorage() && !Live(VD, AD)) {
+        SourceRange R = Val->getSourceRange();
+        Diags.Report(&Client,
+                     Ctx.getFullLoc(DR->getSourceRange().getBegin()),
+                     diag::warn_dead_store, 0, 0, &R, 1);
+      }
+  }
+  
   virtual void ObserveStmt(Stmt* S,
                            const LiveVariables::AnalysisDataTy& AD,
                            const LiveVariables::ValTy& Live) {
@@ -47,15 +60,18 @@ public:
       if (!B->isAssignmentOp()) return; // Skip non-assignments.
       
       if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(B->getLHS()))
-        if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))
-          if (VD->hasLocalStorage() && !Live(VD,AD)) {
-            SourceRange R = B->getRHS()->getSourceRange();
-            Diags.Report(&Client,
-                         Ctx.getFullLoc(DR->getSourceRange().getBegin()),
-                         diag::warn_dead_store, 0, 0, &R, 1);                                                                        
-        }
+        CheckDeclRef(DR, B->getRHS(), AD, Live);
     }
-    else if(DeclStmt* DS = dyn_cast<DeclStmt>(S))
+    else if (UnaryOperator* U = dyn_cast<UnaryOperator>(S)) {
+      if (!U->isIncrementOp())
+        return;
+      
+      Expr *Ex = U->getSubExpr()->IgnoreParenCasts();
+      
+      if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(Ex))
+        CheckDeclRef(DR, U, AD, Live);
+    }    
+    else if (DeclStmt* DS = dyn_cast<DeclStmt>(S))
       // Iterate through the decls.  Warn if any initializers are complex
       // expressions that are not live (never used).
       for (ScopedDecl* SD = DS->getDecl(); SD; SD = SD->getNextDeclarator()) {        

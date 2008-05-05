@@ -36,3 +36,10 @@ void f5() {
   int *p = &x; // expected-warning{{value stored to variable is never used}}
 
 }
+
+int f6() {
+  
+  int x = 4;
+  ++x; // expected-warning{{value stored to variable is never used}}
+  return 1;
+}
