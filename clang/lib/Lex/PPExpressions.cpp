@@ -294,19 +294,8 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
 /// getPrecedence - Return the precedence of the specified binary operator
 /// token.  This returns:
 ///   ~0 - Invalid token.
-///   14 - *,/,%
-///   13 - -,+
-///   12 - <<,>>
-///   11 - >=, <=, >, <
-///   10 - ==, !=
-///    9 - &
-///    8 - ^
-///    7 - |
-///    6 - &&
-///    5 - ||
-///    4 - ?
-///    3 - :
-///    0 - eom, )
+///   14 -> 3 - various operators.
+///    0 - 'eom' or ')'
 static unsigned getPrecedence(tok::TokenKind Kind) {
   switch (Kind) {
   default: return ~0U;
@@ -402,7 +391,8 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
     // more tightly with RHS than we do, evaluate it completely first.
     if (ThisPrec < PeekPrec ||
         (ThisPrec == PeekPrec && isRightAssoc)) {
-      if (EvaluateDirectiveSubExpr(RHS, ThisPrec+1, PeekTok, RHSIsLive, PP))
+      if (EvaluateDirectiveSubExpr(RHS, ThisPrec+!isRightAssoc, 
+                                   PeekTok, RHSIsLive, PP))
         return true;
       PeekPrec = getPrecedence(PeekTok.getKind());
     }
