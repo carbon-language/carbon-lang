@@ -237,7 +237,7 @@ protected:
       bool NewBBDominatesNewBBSucc = true;
       {
         typename GraphT::NodeType* OnePred = PredBlocks[0];
-        unsigned i = 1, e = PredBlocks.size();
+        size_t i = 1, e = PredBlocks.size();
         for (i = 1; !DT.isReachableFromEntry(OnePred); ++i) {
           assert(i != e && "Didn't find reachable pred?");
           OnePred = PredBlocks[i];
@@ -567,7 +567,7 @@ protected:
     SmallVector<std::pair<DomTreeNodeBase<NodeT>*,
                 typename DomTreeNodeBase<NodeT>::iterator>, 32> WorkStack;
 
-    for (unsigned i = 0, e = this->Roots.size(); i != e; ++i) {
+    for (unsigned i = 0, e = (unsigned)this->Roots.size(); i != e; ++i) {
       DomTreeNodeBase<NodeT> *ThisRoot = getNode(this->Roots[i]);
       WorkStack.push_back(std::make_pair(ThisRoot, ThisRoot->begin()));
       ThisRoot->DFSNumIn = DFSNum++;

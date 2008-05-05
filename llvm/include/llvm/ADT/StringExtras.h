@@ -126,7 +126,7 @@ static inline std::string UppercaseString(const std::string &S) {
 static inline bool StringsEqualNoCase(const std::string &LHS, 
                                       const std::string &RHS) {
   if (LHS.size() != RHS.size()) return false;
-  for (unsigned i = 0, e = LHS.size(); i != e; ++i)
+  for (unsigned i = 0, e = static_cast<unsigned>(LHS.size()); i != e; ++i)
     if (tolower(LHS[i]) != tolower(RHS[i])) return false;
   return true;
 }
@@ -135,7 +135,7 @@ static inline bool StringsEqualNoCase(const std::string &LHS,
 /// case.
 static inline bool StringsEqualNoCase(const std::string &LHS, 
                                       const char *RHS) {
-  for (unsigned i = 0, e = LHS.size(); i != e; ++i) {
+  for (unsigned i = 0, e = static_cast<unsigned>(LHS.size()); i != e; ++i) {
     if (RHS[i] == 0) return false;  // RHS too short.
     if (tolower(LHS[i]) != tolower(RHS[i])) return false;
   }

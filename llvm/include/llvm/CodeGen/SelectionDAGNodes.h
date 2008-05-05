@@ -972,12 +972,12 @@ public:
 
   SDOperandPtr(SDUse * use_ptr) { 
     ptr = &use_ptr->getSDOperand(); 
-    object_size = sizeof(SDUse); 
+    object_size = (int)sizeof(SDUse); 
   }
 
   SDOperandPtr(const SDOperand * op_ptr) { 
     ptr = op_ptr; 
-    object_size = sizeof(SDOperand); 
+    object_size = (int)sizeof(SDOperand); 
   }
 
   const SDOperand operator *() { return *ptr; }
@@ -1107,7 +1107,7 @@ public:
     /// getOperandNum - Retrive a number of a current operand.
     unsigned getOperandNum() const {
       assert(Op && "Cannot dereference end iterator!");
-      return (Op - Op->getUser()->OperandList);
+      return (unsigned)(Op - Op->getUser()->OperandList);
     }
 
     /// Retrieve a reference to the current operand.

@@ -70,7 +70,8 @@ public:
     while (!BlockInfoRecords.empty()) {
       BlockInfo &Info = BlockInfoRecords.back();
       // Free blockinfo abbrev info.
-      for (unsigned i = 0, e = Info.Abbrevs.size(); i != e; ++i)
+      for (unsigned i = 0, e = static_cast<unsigned>(Info.Abbrevs.size());
+           i != e; ++i)
         Info.Abbrevs[i]->dropRef();
       BlockInfoRecords.pop_back();
     }
@@ -167,7 +168,8 @@ public:
     if (!BlockInfoRecords.empty() && BlockInfoRecords.back().BlockID == BlockID)
       return &BlockInfoRecords.back();
     
-    for (unsigned i = 0, e = BlockInfoRecords.size(); i != e; ++i)
+    for (unsigned i = 0, e = static_cast<unsigned>(BlockInfoRecords.size());
+         i != e; ++i)
       if (BlockInfoRecords[i].BlockID == BlockID)
         return &BlockInfoRecords[i];
     return 0;
@@ -181,7 +183,7 @@ public:
     EmitVBR(CodeLen, bitc::CodeLenWidth);
     FlushToWord();
     
-    unsigned BlockSizeWordLoc = Out.size();
+    unsigned BlockSizeWordLoc = static_cast<unsigned>(Out.size());
     unsigned OldCodeSize = CurCodeSize;
     
     // Emit a placeholder, which will be replaced when the block is popped.
@@ -197,7 +199,8 @@ public:
     // If there is a blockinfo for this BlockID, add all the predefined abbrevs
     // to the abbrev list.
     if (BlockInfo *Info = getBlockInfo(BlockID)) {
-      for (unsigned i = 0, e = Info->Abbrevs.size(); i != e; ++i) {
+      for (unsigned i = 0, e = static_cast<unsigned>(Info->Abbrevs.size());
+           i != e; ++i) {
         CurAbbrevs.push_back(Info->Abbrevs[i]);
         Info->Abbrevs[i]->addRef();
       }
@@ -208,7 +211,8 @@ public:
     assert(!BlockScope.empty() && "Block scope imbalance!");
     
     // Delete all abbrevs.
-    for (unsigned i = 0, e = CurAbbrevs.size(); i != e; ++i)
+    for (unsigned i = 0, e = static_cast<unsigned>(CurAbbrevs.size());
+         i != e; ++i)
       CurAbbrevs[i]->dropRef();
     
     const Block &B = BlockScope.back();
@@ -219,7 +223,7 @@ public:
     FlushToWord();
 
     // Compute the size of the block, in words, not counting the size field.
-    unsigned SizeInWords = Out.size()/4-B.StartSizeWord - 1;
+    unsigned SizeInWords= static_cast<unsigned>(Out.size())/4-B.StartSizeWord-1;
     unsigned ByteNo = B.StartSizeWord*4;
     
     // Update the block size field in the header of this sub-block.
@@ -283,7 +287,8 @@ public:
       Vals.insert(Vals.begin(), Code);
       
       unsigned RecordIdx = 0;
-      for (unsigned i = 0, e = Abbv->getNumOperandInfos(); i != e; ++i) {
+      for (unsigned i = 0, e = static_cast<unsigned>(Abbv->getNumOperandInfos());
+           i != e; ++i) {
         const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
         if (Op.isLiteral() || Op.getEncoding() != BitCodeAbbrevOp::Array) {
           assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
@@ -295,7 +300,7 @@ public:
           const BitCodeAbbrevOp &EltEnc = Abbv->getOperandInfo(++i);
           
           // Emit a vbr6 to indicate the number of elements present.
-          EmitVBR(Vals.size()-RecordIdx, 6);
+          EmitVBR(static_cast<uint32_t>(Vals.size()-RecordIdx), 6);
           
           // Emit each field.
           for (; RecordIdx != Vals.size(); ++RecordIdx)
@@ -308,8 +313,8 @@ public:
       // form.
       EmitCode(bitc::UNABBREV_RECORD);
       EmitVBR(Code, 6);
-      EmitVBR(Vals.size(), 6);
-      for (unsigned i = 0, e = Vals.size(); i != e; ++i)
+      EmitVBR(static_cast<uint32_t>(Vals.size()), 6);
+      for (unsigned i = 0, e = static_cast<unsigned>(Vals.size()); i != e; ++i)
         EmitVBR64(Vals[i], 6);
     }
   }
@@ -323,7 +328,8 @@ private:
   void EncodeAbbrev(BitCodeAbbrev *Abbv) {
     EmitCode(bitc::DEFINE_ABBREV);
     EmitVBR(Abbv->getNumOperandInfos(), 5);
-    for (unsigned i = 0, e = Abbv->getNumOperandInfos(); i != e; ++i) {
+    for (unsigned i = 0, e = static_cast<unsigned>(Abbv->getNumOperandInfos());
+         i != e; ++i) {
       const BitCodeAbbrevOp &Op = Abbv->getOperandInfo(i);
       Emit(Op.isLiteral(), 1);
       if (Op.isLiteral()) {
@@ -343,7 +349,8 @@ public:
     // Emit the abbreviation as a record.
     EncodeAbbrev(Abbv);
     CurAbbrevs.push_back(Abbv);
-    return CurAbbrevs.size()-1+bitc::FIRST_APPLICATION_ABBREV;
+    return static_cast<unsigned>(CurAbbrevs.size())-1 +
+      bitc::FIRST_APPLICATION_ABBREV;
   }
   
   //===--------------------------------------------------------------------===//

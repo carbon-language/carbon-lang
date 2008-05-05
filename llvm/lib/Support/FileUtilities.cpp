@@ -98,7 +98,8 @@ static bool CompareNumbers(const char *&F1P, const char *&F2P,
     if (*F1NumEnd == 'D' || *F1NumEnd == 'd') {
       // Copy string into tmp buffer to replace the 'D' with an 'e'.
       SmallString<200> StrTmp(F1P, EndOfNumber(F1NumEnd)+1);
-      StrTmp[F1NumEnd-F1P] = 'e';  // Strange exponential notation!
+      // Strange exponential notation!
+      StrTmp[static_cast<unsigned>(F1NumEnd-F1P)] = 'e';
       
       V1 = strtod(&StrTmp[0], const_cast<char**>(&F1NumEnd));
       F1NumEnd = F1P + (F1NumEnd-&StrTmp[0]);
@@ -107,7 +108,8 @@ static bool CompareNumbers(const char *&F1P, const char *&F2P,
     if (*F2NumEnd == 'D' || *F2NumEnd == 'd') {
       // Copy string into tmp buffer to replace the 'D' with an 'e'.
       SmallString<200> StrTmp(F2P, EndOfNumber(F2NumEnd)+1);
-      StrTmp[F2NumEnd-F2P] = 'e';  // Strange exponential notation!
+      // Strange exponential notation!
+      StrTmp[static_cast<unsigned>(F2NumEnd-F2P)] = 'e';
       
       V2 = strtod(&StrTmp[0], const_cast<char**>(&F2NumEnd));
       F2NumEnd = F2P + (F2NumEnd-&StrTmp[0]);

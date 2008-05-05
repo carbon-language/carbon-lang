@@ -566,7 +566,7 @@ Path::createDirectoryOnDisk( bool create_parents, std::string* ErrMsg ) {
   path.copy(pathname,MAXPATHLEN);
 
   // Null-terminate the last component
-  int lastchar = path.length() - 1 ;
+  size_t lastchar = path.length() - 1 ;
   
   if (pathname[lastchar] != '/')
     ++lastchar;
@@ -639,7 +639,7 @@ Path::eraseFromDisk(bool remove_contents, std::string *ErrStr) const {
   // Otherwise, try to just remove the one directory.
   char pathname[MAXPATHLEN];
   path.copy(pathname, MAXPATHLEN);
-  int lastchar = path.length() - 1 ; 
+  size_t lastchar = path.length() - 1;
   if (pathname[lastchar] == '/') 
     pathname[lastchar] = 0;
   else

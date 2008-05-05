@@ -82,7 +82,7 @@ public:
 
   /// Access to explicit operands of the instruction.
   ///
-  unsigned getNumOperands() const { return Operands.size(); }
+  unsigned getNumOperands() const { return (unsigned)Operands.size(); }
 
   const MachineOperand& getOperand(unsigned i) const {
     assert(i < getNumOperands() && "getOperand() out of range!");
@@ -98,7 +98,7 @@ public:
   unsigned getNumExplicitOperands() const;
   
   /// Access to memory operands of the instruction
-  unsigned getNumMemOperands() const { return MemOperands.size(); }
+  unsigned getNumMemOperands() const { return (unsigned)MemOperands.size(); }
 
   const MachineMemOperand& getMemOperand(unsigned i) const {
     assert(i < getNumMemOperands() && "getMemOperand() out of range!");

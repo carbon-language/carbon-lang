@@ -193,7 +193,7 @@ public:
 
   /// getObjectIndexEnd - Return one past the maximum frame object index...
   ///
-  int getObjectIndexEnd() const { return Objects.size()-NumFixedObjects; }
+  int getObjectIndexEnd() const { return (int)Objects.size()-NumFixedObjects; }
 
   /// getObjectSize - Return the size of the specified object
   ///
@@ -311,7 +311,7 @@ public:
   int CreateStackObject(uint64_t Size, unsigned Alignment) {
     assert(Size != 0 && "Cannot allocate zero size stack objects!");
     Objects.push_back(StackObject(Size, Alignment, -1));
-    return Objects.size()-NumFixedObjects-1;
+    return (int)Objects.size()-NumFixedObjects-1;
   }
 
   /// RemoveStackObject - Remove or mark dead a statically sized stack object.
@@ -333,7 +333,7 @@ public:
   int CreateVariableSizedObject() {
     HasVarSizedObjects = true;
     Objects.push_back(StackObject(0, 1, -1));
-    return Objects.size()-NumFixedObjects-1;
+    return (int)Objects.size()-NumFixedObjects-1;
   }
   
   /// getCalleeSavedInfo - Returns a reference to call saved info vector for the

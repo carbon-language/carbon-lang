@@ -107,8 +107,10 @@ namespace llvm {
         outxword(X);
     }
     void outstring(const std::string &S, unsigned Length) {
-      unsigned len_to_copy = S.length() < Length ? S.length() : Length;
-      unsigned len_to_fill = S.length() < Length ? Length - S.length() : 0;
+      unsigned len_to_copy = static_cast<unsigned>(S.length()) < Length
+        ? static_cast<unsigned>(S.length()) : Length;
+      unsigned len_to_fill = static_cast<unsigned>(S.length()) < Length
+        ? Length - static_cast<unsigned>(S.length()) : 0;
       
       for (unsigned i = 0; i < len_to_copy; ++i)
         outbyte(S[i]);

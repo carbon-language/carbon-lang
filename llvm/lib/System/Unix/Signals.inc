@@ -65,7 +65,8 @@ static void* StackTrace[256];
 static void PrintStackTrace() {
 #ifdef HAVE_BACKTRACE
   // Use backtrace() to output a backtrace on Linux systems with glibc.
-  int depth = backtrace(StackTrace, array_lengthof(StackTrace));
+  int depth = backtrace(StackTrace,
+                        static_cast<int>(array_lengthof(StackTrace)));
   backtrace_symbols_fd(StackTrace, depth, STDERR_FILENO);
 #endif
 }

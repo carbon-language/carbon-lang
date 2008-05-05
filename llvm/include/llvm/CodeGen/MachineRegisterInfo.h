@@ -152,7 +152,7 @@ public:
   /// getLastVirtReg - Return the highest currently assigned virtual register.
   ///
   unsigned getLastVirtReg() const {
-    return VRegInfo.size()+TargetRegisterInfo::FirstVirtualRegister-1;
+    return (unsigned)VRegInfo.size()+TargetRegisterInfo::FirstVirtualRegister-1;
   }
   
   

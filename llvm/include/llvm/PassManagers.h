@@ -146,7 +146,7 @@ class PMTopLevelManager {
 public:
 
   virtual unsigned getNumContainedManagers() {
-    return PassManagers.size();
+    return (unsigned)PassManagers.size();
   }
 
   /// Schedule pass P for execution. Make sure that passes required by
@@ -306,7 +306,7 @@ public:
                            const std::vector<AnalysisID> &Set) const;
 
   virtual unsigned getNumContainedPasses() { 
-    return PassVector.size();
+    return (unsigned)PassVector.size();
   }
 
   virtual PassManagerType getPassManagerType() const { 

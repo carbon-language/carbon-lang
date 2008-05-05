@@ -99,7 +99,7 @@ public:
 
   /// getNumRegs - Return the number of registers in this class.
   ///
-  unsigned getNumRegs() const { return RegsEnd-RegsBegin; }
+  unsigned getNumRegs() const { return (unsigned)(RegsEnd-RegsBegin); }
 
   /// getRegister - Return the specified register in the class.
   ///
@@ -465,7 +465,7 @@ public:
   regclass_iterator regclass_end() const { return RegClassEnd; }
 
   unsigned getNumRegClasses() const {
-    return regclass_end()-regclass_begin();
+    return (unsigned)(regclass_end()-regclass_begin());
   }
   
   /// getRegClass - Returns the register class associated with the enumeration

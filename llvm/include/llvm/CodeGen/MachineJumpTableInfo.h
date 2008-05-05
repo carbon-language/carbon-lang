@@ -70,9 +70,9 @@ public:
   bool ReplaceMBBInJumpTables(MachineBasicBlock *Old, MachineBasicBlock *New) {
     assert(Old != New && "Not making a change?");
     bool MadeChange = false;
-    for (unsigned i = 0, e = JumpTables.size(); i != e; ++i) {
+    for (size_t i = 0, e = JumpTables.size(); i != e; ++i) {
       MachineJumpTableEntry &JTE = JumpTables[i];
-      for (unsigned j = 0, e = JTE.MBBs.size(); j != e; ++j)
+      for (size_t j = 0, e = JTE.MBBs.size(); j != e; ++j)
         if (JTE.MBBs[j] == Old) {
           JTE.MBBs[j] = New;
           MadeChange = true;

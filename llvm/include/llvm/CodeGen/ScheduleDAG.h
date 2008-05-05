@@ -143,7 +143,7 @@ namespace llvm {
     /// not already.  This returns true if this is a new pred.
     bool addPred(SUnit *N, bool isCtrl, bool isSpecial,
                  unsigned PhyReg = 0, int Cost = 1) {
-      for (unsigned i = 0, e = Preds.size(); i != e; ++i)
+      for (unsigned i = 0, e = (unsigned)Preds.size(); i != e; ++i)
         if (Preds[i].Dep == N &&
             Preds[i].isCtrl == isCtrl && Preds[i].isSpecial == isSpecial)
           return false;
@@ -189,14 +189,14 @@ namespace llvm {
     }
 
     bool isPred(SUnit *N) {
-      for (unsigned i = 0, e = Preds.size(); i != e; ++i)
+      for (unsigned i = 0, e = (unsigned)Preds.size(); i != e; ++i)
         if (Preds[i].Dep == N)
           return true;
       return false;
     }
     
     bool isSucc(SUnit *N) {
-      for (unsigned i = 0, e = Succs.size(); i != e; ++i)
+      for (unsigned i = 0, e = (unsigned)Succs.size(); i != e; ++i)
         if (Succs[i].Dep == N)
           return true;
       return false;
@@ -293,7 +293,7 @@ namespace llvm {
     /// NewSUnit - Creates a new SUnit and return a ptr to it.
     ///
     SUnit *NewSUnit(SDNode *N) {
-      SUnits.push_back(SUnit(N, SUnits.size()));
+      SUnits.push_back(SUnit(N, (unsigned)SUnits.size()));
       return &SUnits.back();
     }
 
@@ -452,7 +452,7 @@ namespace llvm {
 
     static SUnitIterator begin(SUnit *N) { return SUnitIterator(N, 0); }
     static SUnitIterator end  (SUnit *N) {
-      return SUnitIterator(N, N->Preds.size());
+      return SUnitIterator(N, (unsigned)N->Preds.size());
     }
 
     unsigned getOperand() const { return Operand; }

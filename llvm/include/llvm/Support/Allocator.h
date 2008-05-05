@@ -25,7 +25,7 @@ public:
   ~MallocAllocator() {}
   
   void Reset() {}
-  void *Allocate(unsigned Size, unsigned Alignment) { return malloc(Size); }
+  void *Allocate(size_t Size, size_t Alignment) { return malloc(Size); }
   
   template <typename T>
   void *Allocate() { return reinterpret_cast<T*>(malloc(sizeof(T))); }
@@ -45,7 +45,7 @@ public:
   ~BumpPtrAllocator();
   
   void Reset();
-  void *Allocate(unsigned Size, unsigned Alignment);
+  void *Allocate(size_t Size, size_t Alignment);
 
   template <typename T>
   void *Allocate() { 

@@ -191,7 +191,7 @@ public:
   inline const_iterator begin() const { return CalledFunctions.begin(); }
   inline const_iterator end()   const { return CalledFunctions.end();   }
   inline bool empty() const { return CalledFunctions.empty(); }
-  inline unsigned size() const { return CalledFunctions.size(); }
+  inline unsigned size() const { return (unsigned)CalledFunctions.size(); }
 
   // Subscripting operator - Return the i'th called function...
   //

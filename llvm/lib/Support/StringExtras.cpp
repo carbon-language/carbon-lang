@@ -22,7 +22,7 @@ using namespace llvm;
 /// The Source source string is updated in place to remove the returned string
 /// and any delimiter prefix from it.
 std::string llvm::getToken(std::string &Source, const char *Delimiters) {
-  unsigned NumDelimiters = std::strlen(Delimiters);
+  size_t NumDelimiters = std::strlen(Delimiters);
 
   // Figure out where the token starts.
   std::string::size_type Start =

@@ -80,7 +80,7 @@ public:
   /// Loop ctor - This creates an empty loop.
   LoopBase() : ParentLoop(0) {}
   ~LoopBase() {
-    for (unsigned i = 0, e = SubLoops.size(); i != e; ++i)
+    for (size_t i = 0, e = SubLoops.size(); i != e; ++i)
       delete SubLoops[i];
   }
 
@@ -847,7 +847,8 @@ public:
            "This loop should not be inserted here!");
 
     // Check to see if it belongs in a child loop...
-    for (unsigned i = 0, e = Parent->SubLoops.size(); i != e; ++i)
+    for (unsigned i = 0, e = static_cast<unsigned>(Parent->SubLoops.size());
+         i != e; ++i)
       if (Parent->SubLoops[i]->contains(LHeader)) {
         InsertLoopInto(L, Parent->SubLoops[i]);
         return;

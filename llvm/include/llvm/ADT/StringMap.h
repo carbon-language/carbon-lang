@@ -153,13 +153,14 @@ public:
   static StringMapEntry *Create(const char *KeyStart, const char *KeyEnd,
                                 AllocatorTy &Allocator,
                                 InitType InitVal) {
-    unsigned KeyLength = KeyEnd-KeyStart;
+    unsigned KeyLength = static_cast<unsigned>(KeyEnd-KeyStart);
 
     // Okay, the item doesn't already exist, and 'Bucket' is the bucket to fill
     // in.  Allocate a new item with space for the string at the end and a null
     // terminator.
 
-    unsigned AllocSize = sizeof(StringMapEntry)+KeyLength+1;
+    unsigned AllocSize = static_cast<unsigned>(sizeof(StringMapEntry))+
+      KeyLength+1;
     unsigned Alignment = alignof<StringMapEntry>();
 
     StringMapEntry *NewItem =
@@ -236,9 +237,9 @@ class StringMap : public StringMapImpl {
   AllocatorTy Allocator;
   typedef StringMapEntry<ValueTy> MapEntryTy;
 public:
-  StringMap() : StringMapImpl(sizeof(MapEntryTy)) {}
+  StringMap() : StringMapImpl(static_cast<unsigned>(sizeof(MapEntryTy))) {}
   explicit StringMap(unsigned InitialSize)
-    : StringMapImpl(InitialSize, sizeof(MapEntryTy)) {}
+    : StringMapImpl(InitialSize, static_cast<unsigned>(sizeof(MapEntryTy))) {}
 
   AllocatorTy &getAllocator() { return Allocator; }
   const AllocatorTy &getAllocator() const { return Allocator; }

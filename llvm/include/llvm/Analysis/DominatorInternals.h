@@ -248,7 +248,8 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
 
   // Step #1: Number blocks in depth-first order and initialize variables used
   // in later stages of the algorithm.
-  for (unsigned i = 0, e = DT.Roots.size(); i != e; ++i)
+  for (unsigned i = 0, e = static_cast<unsigned>(DT.Roots.size());
+       i != e; ++i)
     N = DFSPass<GraphT>(DT, DT.Roots[i], N);
 
   // it might be that some blocks did not get a DFS number (e.g., blocks of 

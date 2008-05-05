@@ -163,7 +163,7 @@ public:
     return getVTList(VT1, VT2, VT3).VTs;
   }
   const MVT::ValueType *getNodeValueTypes(std::vector<MVT::ValueType> &VTList) {
-    return getVTList(&VTList[0], VTList.size()).VTs;
+    return getVTList(&VTList[0], (unsigned)VTList.size()).VTs;
   }
   
   
@@ -287,7 +287,7 @@ public:
     Ops.push_back(Op2);
     Ops.push_back(InFlag);
     return getNode(ISD::CALLSEQ_END, NodeTys, &Ops[0],
-                   Ops.size() - (InFlag.Val == 0 ? 1 : 0));
+                   (unsigned)Ops.size() - (InFlag.Val == 0 ? 1 : 0));
   }
 
   /// getNode - Gets or creates the specified node.

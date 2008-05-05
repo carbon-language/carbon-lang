@@ -58,7 +58,7 @@ void FoldingSetNodeID::AddDouble(double D) {
  AddInteger(DoubleToBits(D));
 }
 void FoldingSetNodeID::AddString(const std::string &String) {
-  unsigned Size = String.size();
+  unsigned Size = static_cast<unsigned>(String.size());
   Bits.push_back(Size);
   if (!Size) return;
 
@@ -98,7 +98,7 @@ void FoldingSetNodeID::AddString(const std::string &String) {
 /// lookup the node in the FoldingSetImpl.
 unsigned FoldingSetNodeID::ComputeHash() const {
   // This is adapted from SuperFastHash by Paul Hsieh.
-  unsigned Hash = Bits.size();
+  unsigned Hash = static_cast<unsigned>(Bits.size());
   for (const unsigned *BP = &Bits[0], *E = BP+Bits.size(); BP != E; ++BP) {
     unsigned Data = *BP;
     Hash         += Data & 0xFFFF;

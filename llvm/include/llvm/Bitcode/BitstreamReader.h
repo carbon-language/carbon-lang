@@ -85,12 +85,15 @@ public:
   ~BitstreamReader() {
     // Abbrevs could still exist if the stream was broken.  If so, don't leak
     // them.
-    for (unsigned i = 0, e = CurAbbrevs.size(); i != e; ++i)
+    for (unsigned i = 0, e = static_cast<unsigned>(CurAbbrevs.size());
+         i != e; ++i)
       CurAbbrevs[i]->dropRef();
 
-    for (unsigned S = 0, e = BlockScope.size(); S != e; ++S) {
+    for (unsigned S = 0, e = static_cast<unsigned>(BlockScope.size());
+         S != e; ++S) {
       std::vector<BitCodeAbbrev*> &Abbrevs = BlockScope[S].PrevAbbrevs;
-      for (unsigned i = 0, e = Abbrevs.size(); i != e; ++i)
+      for (unsigned i = 0, e = static_cast<unsigned>(Abbrevs.size());
+           i != e; ++i)
         Abbrevs[i]->dropRef();
     }
     
@@ -98,7 +101,8 @@ public:
     while (!BlockInfoRecords.empty()) {
       BlockInfo &Info = BlockInfoRecords.back();
       // Free blockinfo abbrev info.
-      for (unsigned i = 0, e = Info.Abbrevs.size(); i != e; ++i)
+      for (unsigned i = 0, e = static_cast<unsigned>(Info.Abbrevs.size());
+           i != e; ++i)
         Info.Abbrevs[i]->dropRef();
       BlockInfoRecords.pop_back();
     }
@@ -127,7 +131,7 @@ public:
     // Skip over any bits that are already consumed.
     if (WordBitNo) {
       NextChar -= 4;
-      Read(WordBitNo);
+      Read(static_cast<unsigned>(WordBitNo));
     }
   }
   
@@ -237,7 +241,8 @@ private:
     if (!BlockInfoRecords.empty() && BlockInfoRecords.back().BlockID == BlockID)
       return &BlockInfoRecords.back();
     
-    for (unsigned i = 0, e = BlockInfoRecords.size(); i != e; ++i)
+    for (unsigned i = 0, e = static_cast<unsigned>(BlockInfoRecords.size());
+         i != e; ++i)
       if (BlockInfoRecords[i].BlockID == BlockID)
         return &BlockInfoRecords[i];
     return 0;
@@ -282,7 +287,8 @@ public:
     
     // Add the abbrevs specific to this block to the CurAbbrevs list.
     if (BlockInfo *Info = getBlockInfo(BlockID)) {
-      for (unsigned i = 0, e = Info->Abbrevs.size(); i != e; ++i) {
+      for (unsigned i = 0, e = static_cast<unsigned>(Info->Abbrevs.size());
+           i != e; ++i) {
         CurAbbrevs.push_back(Info->Abbrevs[i]);
         CurAbbrevs.back()->addRef();
       }
@@ -317,7 +323,8 @@ private:
     CurCodeSize = BlockScope.back().PrevCodeSize;
     
     // Delete abbrevs from popped scope.
-    for (unsigned i = 0, e = CurAbbrevs.size(); i != e; ++i)
+    for (unsigned i = 0, e = static_cast<unsigned>(CurAbbrevs.size());
+         i != e; ++i)
       CurAbbrevs[i]->dropRef();
     
     BlockScope.back().PrevAbbrevs.swap(CurAbbrevs);

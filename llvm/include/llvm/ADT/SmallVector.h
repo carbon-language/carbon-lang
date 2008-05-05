@@ -190,7 +190,7 @@ public:
   ///
   template<typename in_iter>
   void append(in_iter in_start, in_iter in_end) {
-    unsigned NumInputs = std::distance(in_start, in_end);
+    size_type NumInputs = std::distance(in_start, in_end);
     // Grow allocated space if needed.
     if (End+NumInputs > Capacity)
       grow(size()+NumInputs);
@@ -242,7 +242,7 @@ public:
       *I = Elt;
       return I;
     }
-    unsigned EltNo = I-Begin;
+    size_t EltNo = I-Begin;
     grow();
     I = Begin+EltNo;
     goto Retry;
@@ -255,12 +255,12 @@ public:
       return end()-1;
     }
     
-    unsigned NumToInsert = std::distance(From, To);
+    size_t NumToInsert = std::distance(From, To);
     // Convert iterator to elt# to avoid invalidating iterator when we reserve()
-    unsigned InsertElt = I-begin();
+    size_t InsertElt = I-begin();
     
     // Ensure there is enough space.
-    reserve(size() + NumToInsert);
+    reserve(static_cast<unsigned>(size() + NumToInsert));
     
     // Uninvalidate the iterator.
     I = begin()+InsertElt;
@@ -285,7 +285,7 @@ public:
     // Copy over the elements that we're about to overwrite.
     T *OldEnd = End;
     End += NumToInsert;
-    unsigned NumOverwritten = OldEnd-I;
+    size_t NumOverwritten = OldEnd-I;
     std::uninitialized_copy(I, OldEnd, End-NumOverwritten);
     
     // Replace the overwritten part.
@@ -318,7 +318,7 @@ private:
 
   /// grow - double the size of the allocated memory, guaranteeing space for at
   /// least one more element or MinSize if specified.
-  void grow(unsigned MinSize = 0);
+  void grow(size_type MinSize = 0);
 
   void construct_range(T *S, T *E, const T &Elt) {
     for (; S != E; ++S)
@@ -335,10 +335,10 @@ private:
 
 // Define this out-of-line to dissuade the C++ compiler from inlining it.
 template <typename T>
-void SmallVectorImpl<T>::grow(unsigned MinSize) {
-  unsigned CurCapacity = unsigned(Capacity-Begin);
-  unsigned CurSize = unsigned(size());
-  unsigned NewCapacity = 2*CurCapacity;
+void SmallVectorImpl<T>::grow(size_t MinSize) {
+  size_t CurCapacity = Capacity-Begin;
+  size_t CurSize = size();
+  size_t NewCapacity = 2*CurCapacity;
   if (NewCapacity < MinSize)
     NewCapacity = MinSize;
   T *NewElts = reinterpret_cast<T*>(new char[NewCapacity*sizeof(T)]);
@@ -375,20 +375,20 @@ void SmallVectorImpl<T>::swap(SmallVectorImpl<T> &RHS) {
     RHS.grow(size());
   
   // Swap the shared elements.
-  unsigned NumShared = size();
+  size_t NumShared = size();
   if (NumShared > RHS.size()) NumShared = RHS.size();
-  for (unsigned i = 0; i != NumShared; ++i)
+  for (unsigned i = 0; i != static_cast<unsigned>(NumShared); ++i)
     std::swap(Begin[i], RHS[i]);
   
   // Copy over the extra elts.
   if (size() > RHS.size()) {
-    unsigned EltDiff = size() - RHS.size();
+    size_t EltDiff = size() - RHS.size();
     std::uninitialized_copy(Begin+NumShared, End, RHS.End);
     RHS.End += EltDiff;
     destroy_range(Begin+NumShared, End);
     End = Begin+NumShared;
   } else if (RHS.size() > size()) {
-    unsigned EltDiff = RHS.size() - size();
+    size_t EltDiff = RHS.size() - size();
     std::uninitialized_copy(RHS.Begin+NumShared, RHS.End, End);
     End += EltDiff;
     destroy_range(RHS.Begin+NumShared, RHS.End);
@@ -458,7 +458,9 @@ class SmallVector : public SmallVectorImpl<T> {
   typedef typename SmallVectorImpl<T>::U U;
   enum {
     // MinUs - The number of U's require to cover N T's.
-    MinUs = (sizeof(T)*N+sizeof(U)-1)/sizeof(U),
+    MinUs = (static_cast<unsigned int>(sizeof(T))*N +
+             static_cast<unsigned int>(sizeof(U)) - 1) / 
+            static_cast<unsigned int>(sizeof(U)),
     
     // NumInlineEltsElts - The number of elements actually in this array.  There
     // is already one in the parent class, and we have to round up to avoid
@@ -467,7 +469,8 @@ class SmallVector : public SmallVectorImpl<T> {
     
     // NumTsAvailable - The number of T's we actually have space for, which may
     // be more than N due to rounding.
-    NumTsAvailable = (NumInlineEltsElts+1)*sizeof(U) / sizeof(T)
+    NumTsAvailable = (NumInlineEltsElts+1)*static_cast<unsigned int>(sizeof(U))/
+                     static_cast<unsigned int>(sizeof(T))
   };
   U InlineElts[NumInlineEltsElts];
 public:  

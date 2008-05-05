@@ -45,7 +45,7 @@ public:
   
   /// Allocate - Allocate and return at least the specified number of bytes.
   ///
-  void *Allocate(unsigned AllocSize, unsigned Alignment, MemRegion **RegPtr) {
+  void *Allocate(size_t AllocSize, size_t Alignment, MemRegion **RegPtr) {
     
     char* Result = (char*) (((uintptr_t) (NextPtr+Alignment-1)) 
                             & ~((uintptr_t) Alignment-1));
@@ -113,7 +113,7 @@ void BumpPtrAllocator::Reset() {
   TheMemory = MRP;
 }
 
-void *BumpPtrAllocator::Allocate(unsigned Size, unsigned Align) {
+void *BumpPtrAllocator::Allocate(size_t Size, size_t Align) {
   MemRegion *MRP = (MemRegion*)TheMemory;
   void *Ptr = MRP->Allocate(Size, Align, &MRP);
   TheMemory = MRP;

@@ -108,7 +108,7 @@ public:
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
   typedef std::reverse_iterator<iterator>             reverse_iterator;
 
-  unsigned size() const { return Insts.size(); }
+  unsigned size() const { return (unsigned)Insts.size(); }
   bool empty() const { return Insts.empty(); }
 
   MachineInstr& front() { return Insts.front(); }
@@ -149,7 +149,9 @@ public:
                                           { return Predecessors.rend();  }
   const_pred_reverse_iterator  pred_rend()   const
                                           { return Predecessors.rend();  }
-  unsigned             pred_size()  const { return Predecessors.size();  }
+  unsigned             pred_size()  const {
+    return (unsigned)Predecessors.size();
+  }
   bool                 pred_empty() const { return Predecessors.empty(); }
   succ_iterator        succ_begin()       { return Successors.begin();   }
   const_succ_iterator  succ_begin() const { return Successors.begin();   }
@@ -163,7 +165,9 @@ public:
                                           { return Successors.rend();    }
   const_succ_reverse_iterator  succ_rend()   const
                                           { return Successors.rend();    }
-  unsigned             succ_size()  const { return Successors.size();    }
+  unsigned             succ_size()  const {
+    return (unsigned)Successors.size();
+  }
   bool                 succ_empty() const { return Successors.empty();   }
 
   // LiveIn management methods.

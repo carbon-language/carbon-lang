@@ -106,7 +106,7 @@ MemoryBuffer *MemoryBuffer::getMemBufferCopy(const char *StartPtr,
 /// that is completely initialized to zeros.  Note that the caller should
 /// initialize the memory allocated by this method.  The memory is owned by
 /// the MemoryBuffer object.
-MemoryBuffer *MemoryBuffer::getNewUninitMemBuffer(unsigned Size,
+MemoryBuffer *MemoryBuffer::getNewUninitMemBuffer(size_t Size,
                                                   const char *BufferName) {
   char *Buf = new char[Size+1];
   Buf[Size] = 0;
@@ -120,7 +120,7 @@ MemoryBuffer *MemoryBuffer::getNewUninitMemBuffer(unsigned Size,
 /// is completely initialized to zeros.  Note that the caller should
 /// initialize the memory allocated by this method.  The memory is owned by
 /// the MemoryBuffer object.
-MemoryBuffer *MemoryBuffer::getNewMemBuffer(unsigned Size,
+MemoryBuffer *MemoryBuffer::getNewMemBuffer(size_t Size,
                                             const char *BufferName) {
   MemoryBuffer *SB = getNewUninitMemBuffer(Size, BufferName);
   memset(const_cast<char*>(SB->getBufferStart()), 0, Size+1);
@@ -214,7 +214,7 @@ MemoryBuffer *MemoryBuffer::getFile(const char *Filename, std::string *ErrStr,
   SB.reset(MemoryBuffer::getNewUninitMemBuffer(FileSize, Filename));
   char *BufPtr = const_cast<char*>(SB->getBufferStart());
   
-  unsigned BytesLeft = FileSize;
+  size_t BytesLeft = FileSize;
   while (BytesLeft) {
     ssize_t NumRead = ::read(FD, BufPtr, BytesLeft);
     if (NumRead != -1) {

@@ -124,7 +124,8 @@ Path::isDynamicLibrary() const {
   if (canRead()) {
     std::string Magic;
     if (getMagicNumber(Magic, 64))
-      switch (IdentifyFileType(Magic.c_str(), Magic.length())) {
+      switch (IdentifyFileType(Magic.c_str(),
+                               static_cast<unsigned>(Magic.length()))) {
         default: return false;
         case Mach_O_FixedVirtualMemorySharedLib_FileType:
         case Mach_O_DynamicallyLinkedSharedLib_FileType:
@@ -167,7 +168,7 @@ Path::isBitcodeFile() const {
 
 bool Path::hasMagicNumber(const std::string &Magic) const {
   std::string actualMagic;
-  if (getMagicNumber(actualMagic, Magic.size()))
+  if (getMagicNumber(actualMagic, static_cast<unsigned>(Magic.size())))
     return Magic == actualMagic;
   return false;
 }
@@ -204,7 +205,7 @@ static std::string getDirnameCharSep(const std::string& path, char Sep) {
   // If the path is all slashes, return a single slash.
   // Otherwise, remove all trailing slashes.
   
-  signed pos = path.size() - 1;
+  signed pos = static_cast<signed>(path.size()) - 1;
   
   while (pos >= 0 && path[pos] == Sep)
     --pos;

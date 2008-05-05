@@ -165,7 +165,7 @@ public:
 
   /// getNumBlockIDs - Return the number of MBB ID's allocated.
   ///
-  unsigned getNumBlockIDs() const { return MBBNumbering.size(); }
+  unsigned getNumBlockIDs() const { return (unsigned)MBBNumbering.size(); }
   
   /// RenumberBlocks - This discards all of the MachineBasicBlock numbers and
   /// recomputes them.  This guarantees that the MBB numbers are sequential,
@@ -238,7 +238,7 @@ public:
   reverse_iterator        rend  ()       { return BasicBlocks.rend();   }
   const_reverse_iterator  rend  () const { return BasicBlocks.rend();   }
 
-  unsigned                  size() const { return BasicBlocks.size(); }
+  unsigned                  size() const { return (unsigned)BasicBlocks.size();}
   bool                     empty() const { return BasicBlocks.empty(); }
   const MachineBasicBlock &front() const { return BasicBlocks.front(); }
         MachineBasicBlock &front()       { return BasicBlocks.front(); }
@@ -254,7 +254,7 @@ public:
   ///
   unsigned addToMBBNumbering(MachineBasicBlock *MBB) {
     MBBNumbering.push_back(MBB);
-    return MBBNumbering.size()-1;
+    return (unsigned)MBBNumbering.size()-1;
   }
 
   /// removeFromMBBNumbering - Remove the specific machine basic block from our

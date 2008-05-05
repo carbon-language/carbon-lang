@@ -41,7 +41,7 @@ public:
     if (Val) return Val;
 
     // Compute ID for entry.
-    Val = Vector.size() + 1;
+    Val = static_cast<unsigned>(Vector.size()) + 1;
     
     // Insert in vector.
     Vector.push_back(Entry);

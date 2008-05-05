@@ -58,7 +58,7 @@ Program::FindProgramByName(const std::string& progName) {
     return Path();
 
   // Now we have a colon separated list of directories to search; try them.
-  unsigned PathLen = strlen(PathStr);
+  size_t PathLen = strlen(PathStr);
   while (PathLen) {
     // Find the first colon...
     const char *Colon = std::find(PathStr, PathStr+PathLen, ':');

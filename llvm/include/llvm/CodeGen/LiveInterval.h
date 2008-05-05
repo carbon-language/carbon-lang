@@ -143,7 +143,7 @@ namespace llvm {
 
     bool containsOneValue() const { return valnos.size() == 1; }
 
-    unsigned getNumValNums() const { return valnos.size(); }
+    unsigned getNumValNums() const { return (unsigned)valnos.size(); }
     
     /// getValNumInfo - Returns pointer to the specified val#.
     ///
@@ -168,14 +168,15 @@ namespace llvm {
     VNInfo *getNextValue(unsigned MIIdx, MachineInstr *CopyMI,
                          BumpPtrAllocator &VNInfoAllocator) {
 #ifdef __GNUC__
-      unsigned Alignment = __alignof__(VNInfo);
+      unsigned Alignment = (unsigned)__alignof__(VNInfo);
 #else
       // FIXME: ugly.
       unsigned Alignment = 8;
 #endif
-      VNInfo *VNI= static_cast<VNInfo*>(VNInfoAllocator.Allocate(sizeof(VNInfo),
-                                                                 Alignment));
-      new (VNI) VNInfo(valnos.size(), MIIdx, CopyMI);
+      VNInfo *VNI =
+        static_cast<VNInfo*>(VNInfoAllocator.Allocate((unsigned)sizeof(VNInfo),
+                                                      Alignment));
+      new (VNI) VNInfo((unsigned)valnos.size(), MIIdx, CopyMI);
       valnos.push_back(VNI);
       return VNI;
     }
@@ -196,7 +197,8 @@ namespace llvm {
     /// addKills - Add a number of kills into the VNInfo kill vector. If this
     /// interval is live at a kill point, then the kill is not added.
     void addKills(VNInfo *VNI, const SmallVector<unsigned, 4> &kills) {
-      for (unsigned i = 0, e = kills.size(); i != e; ++i) {
+      for (unsigned i = 0, e = static_cast<unsigned>(kills.size());
+           i != e; ++i) {
         unsigned KillIdx = kills[i];
         if (!liveBeforeAndAt(KillIdx)) {
           SmallVector<unsigned, 4>::iterator

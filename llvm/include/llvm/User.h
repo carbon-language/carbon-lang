@@ -39,7 +39,7 @@ protected:
   ///
   unsigned NumOperands;
 
-  void *operator new(size_t s, unsigned) {
+  void *operator new(size_t s, size_t) {
     return ::operator new(s);
   }
   User(const Type *Ty, unsigned vty, Use *OpList, unsigned NumOps)

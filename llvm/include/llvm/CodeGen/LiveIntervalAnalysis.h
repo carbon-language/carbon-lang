@@ -131,7 +131,7 @@ namespace llvm {
     const_iterator end() const { return r2iMap_.end(); }
     iterator begin() { return r2iMap_.begin(); }
     iterator end() { return r2iMap_.end(); }
-    unsigned getNumIntervals() const { return r2iMap_.size(); }
+    unsigned getNumIntervals() const { return (unsigned)r2iMap_.size(); }
 
     LiveInterval &getInterval(unsigned reg) {
       Reg2IntervalMap::iterator I = r2iMap_.find(reg);

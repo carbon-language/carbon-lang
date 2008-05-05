@@ -74,7 +74,7 @@ namespace llvm {
     ///
     unsigned getNumLines() const {
       if (LineOffset.empty()) calculateLineOffsets();
-      return LineOffset.size();
+      return static_cast<unsigned>(LineOffset.size());
     }
 
   private:

@@ -34,7 +34,8 @@ private:
 ///  compile-time constant (e.g., for template instantiation).
 template <typename T>
 struct AlignOf {
-  enum { Alignment = sizeof(AlignmentCalcImpl<T>) - sizeof(T) };
+  enum { Alignment =
+         static_cast<unsigned int>(sizeof(AlignmentCalcImpl<T>) - sizeof(T)) };
 
   enum { Alignment_GreaterEqual_2Bytes = Alignment >= 2 ? 1 : 0 };
   enum { Alignment_GreaterEqual_4Bytes = Alignment >= 4 ? 1 : 0 };

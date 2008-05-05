@@ -175,8 +175,8 @@ public:
         child_iterator TargetIt = DOTTraits::getEdgeTarget(Node, EI);
 
         // Figure out which edge this targets...
-        unsigned Offset = std::distance(GTraits::child_begin(TargetNode),
-                                        TargetIt);
+        unsigned Offset =
+          (unsigned)std::distance(GTraits::child_begin(TargetNode), TargetIt);
         DestPort = static_cast<int>(Offset);
       }
 

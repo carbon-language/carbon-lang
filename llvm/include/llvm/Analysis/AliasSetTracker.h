@@ -232,7 +232,7 @@ private:
                   bool KnownMustAlias = false);
   void addCallSite(CallSite CS, AliasAnalysis &AA);
   void removeCallSite(CallSite CS) {
-    for (unsigned i = 0, e = CallSites.size(); i != e; ++i)
+    for (size_t i = 0, e = CallSites.size(); i != e; ++i)
       if (CallSites[i].getInstruction() == CS.getInstruction()) {
         CallSites[i] = CallSites.back();
         CallSites.pop_back();

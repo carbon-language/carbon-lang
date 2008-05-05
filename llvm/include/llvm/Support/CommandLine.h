@@ -219,12 +219,12 @@ public:
   Option *getNextRegisteredOption() const { return NextRegistered; }
 
   // Return the width of the option tag for printing...
-  virtual unsigned getOptionWidth() const = 0;
+  virtual size_t getOptionWidth() const = 0;
 
   // printOptionInfo - Print out information about this option.  The
   // to-be-maintained width is specified.
   //
-  virtual void printOptionInfo(unsigned GlobalWidth) const = 0;
+  virtual void printOptionInfo(size_t GlobalWidth) const = 0;
 
   virtual void getExtraOptionNames(std::vector<const char*> &OptionNames) {}
 
@@ -334,7 +334,8 @@ public:
 
   template<class Opt>
   void apply(Opt &O) const {
-    for (unsigned i = 0, e = Values.size(); i != e; ++i)
+    for (unsigned i = 0, e = static_cast<unsigned>(Values.size());
+         i != e; ++i)
       O.getParser().addLiteralOption(Values[i].first, Values[i].second.first,
                                      Values[i].second.second);
   }
@@ -378,12 +379,12 @@ struct generic_parser_base {
   virtual const char *getDescription(unsigned N) const = 0;
 
   // Return the width of the option tag for printing...
-  virtual unsigned getOptionWidth(const Option &O) const;
+  virtual size_t getOptionWidth(const Option &O) const;
 
   // printOptionInfo - Print out information about this option.  The
   // to-be-maintained width is specified.
   //
-  virtual void printOptionInfo(const Option &O, unsigned GlobalWidth) const;
+  virtual void printOptionInfo(const Option &O, size_t GlobalWidth) const;
 
   void initialize(Option &O) {
     // All of the modifiers for the option have been processed by now, so the
@@ -459,7 +460,8 @@ public:
     else
       ArgVal = ArgName;
 
-    for (unsigned i = 0, e = Values.size(); i != e; ++i)
+    for (unsigned i = 0, e = static_cast<unsigned>(Values.size());
+         i != e; ++i)
       if (ArgVal == Values[i].first) {
         V = Values[i].second.first;
         return false;
@@ -502,12 +504,12 @@ struct basic_parser_impl {  // non-template implementation of basic_parser<t>
   void initialize(Option &O) {}
 
   // Return the width of the option tag for printing...
-  unsigned getOptionWidth(const Option &O) const;
+  size_t getOptionWidth(const Option &O) const;
 
   // printOptionInfo - Print out information about this option.  The
   // to-be-maintained width is specified.
   //
-  void printOptionInfo(const Option &O, unsigned GlobalWidth) const;
+  void printOptionInfo(const Option &O, size_t GlobalWidth) const;
 
   // getValueName - Overload in subclass to provide a better default value.
   virtual const char *getValueName() const { return "value"; }
@@ -815,8 +817,8 @@ class opt : public Option,
   }
 
   // Forward printing stuff to the parser...
-  virtual unsigned getOptionWidth() const {return Parser.getOptionWidth(*this);}
-  virtual void printOptionInfo(unsigned GlobalWidth) const {
+  virtual size_t getOptionWidth() const {return Parser.getOptionWidth(*this);}
+  virtual void printOptionInfo(size_t GlobalWidth) const {
     Parser.printOptionInfo(*this, GlobalWidth);
   }
 
@@ -981,8 +983,8 @@ class list : public Option, public list_storage<DataType, Storage> {
   }
 
   // Forward printing stuff to the parser...
-  virtual unsigned getOptionWidth() const {return Parser.getOptionWidth(*this);}
-  virtual void printOptionInfo(unsigned GlobalWidth) const {
+  virtual size_t getOptionWidth() const {return Parser.getOptionWidth(*this);}
+  virtual void printOptionInfo(size_t GlobalWidth) const {
     Parser.printOptionInfo(*this, GlobalWidth);
   }
 
@@ -1167,8 +1169,8 @@ class bits : public Option, public bits_storage<DataType, Storage> {
   }
 
   // Forward printing stuff to the parser...
-  virtual unsigned getOptionWidth() const {return Parser.getOptionWidth(*this);}
-  virtual void printOptionInfo(unsigned GlobalWidth) const {
+  virtual size_t getOptionWidth() const {return Parser.getOptionWidth(*this);}
+  virtual void printOptionInfo(size_t GlobalWidth) const {
     Parser.printOptionInfo(*this, GlobalWidth);
   }
 
@@ -1260,8 +1262,8 @@ class alias : public Option {
     return AliasFor->handleOccurrence(pos, AliasFor->ArgStr, Arg);
   }
   // Handle printing stuff...
-  virtual unsigned getOptionWidth() const;
-  virtual void printOptionInfo(unsigned GlobalWidth) const;
+  virtual size_t getOptionWidth() const;
+  virtual void printOptionInfo(size_t GlobalWidth) const;
 
   void done() {
     if (!hasArgStr())

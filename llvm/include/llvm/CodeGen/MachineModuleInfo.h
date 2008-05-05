@@ -1100,7 +1100,7 @@ public:
   /// NextLabelID - Return the next unique label id.
   ///
   unsigned NextLabelID() {
-    unsigned ID = LabelIDList.size() + 1;
+    unsigned ID = (unsigned)LabelIDList.size() + 1;
     LabelIDList.push_back(ID);
     return ID;
   }

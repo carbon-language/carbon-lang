@@ -28,7 +28,7 @@ llvm::sys::Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock,
                                std::string *ErrMsg) {
   if (NumBytes == 0) return MemoryBlock();
 
-  long pageSize = Process::GetPageSize();
+  unsigned pageSize = Process::GetPageSize();
   unsigned NumPages = (NumBytes+pageSize-1)/pageSize;
 
   int fd = -1;

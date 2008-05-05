@@ -40,7 +40,7 @@ public:
   
   const char *getBufferStart() const { return BufferStart; }
   const char *getBufferEnd() const   { return BufferEnd; }
-  unsigned getBufferSize() const { return BufferEnd-BufferStart; }
+  size_t getBufferSize() const { return BufferEnd-BufferStart; }
   
   /// getBufferIdentifier - Return an identifier for this buffer, typically the
   /// filename it was read from.
@@ -71,14 +71,14 @@ public:
   /// is completely initialized to zeros.  Note that the caller should
   /// initialize the memory allocated by this method.  The memory is owned by
   /// the MemoryBuffer object.
-  static MemoryBuffer *getNewMemBuffer(unsigned Size,
+  static MemoryBuffer *getNewMemBuffer(size_t Size,
                                        const char *BufferName = "");
   
   /// getNewUninitMemBuffer - Allocate a new MemoryBuffer of the specified size
   /// that is not initialized.  Note that the caller should initialize the
   /// memory allocated by this method.  The memory is owned by the MemoryBuffer
   /// object.
-  static MemoryBuffer *getNewUninitMemBuffer(unsigned Size,
+  static MemoryBuffer *getNewUninitMemBuffer(size_t Size,
                                              const char *BufferName = "");
   
   /// getSTDIN - Read all of stdin into a file buffer, and return it.  This

@@ -165,7 +165,9 @@ public:
   void addRef() { ++RefCount; }
   void dropRef() { if (--RefCount == 0) delete this; }
 
-  unsigned getNumOperandInfos() const { return OperandList.size(); }
+  unsigned getNumOperandInfos() const {
+    return static_cast<unsigned>(OperandList.size());
+  }
   const BitCodeAbbrevOp &getOperandInfo(unsigned N) const {
     return OperandList[N];
   }

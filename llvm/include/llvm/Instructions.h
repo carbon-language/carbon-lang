@@ -397,8 +397,7 @@ class GetElementPtrInst : public Instruction {
             // This argument ensures that we have an iterator we can
             // do arithmetic on in constant time
             std::random_access_iterator_tag) {
-    typename std::iterator_traits<InputIterator>::difference_type NumIdx = 
-      std::distance(IdxBegin, IdxEnd);
+    unsigned NumIdx = static_cast<unsigned>(std::distance(IdxBegin, IdxEnd));
     
     if (NumIdx > 0) {
       // This requires that the itoerator points to contiguous memory.
@@ -430,8 +429,7 @@ class GetElementPtrInst : public Instruction {
                                     // have an iterator we can do
                                     // arithmetic on in constant time
                                     std::random_access_iterator_tag) {
-    typename std::iterator_traits<InputIterator>::difference_type NumIdx = 
-      std::distance(IdxBegin, IdxEnd);
+    unsigned NumIdx = static_cast<unsigned>(std::distance(IdxBegin, IdxEnd));
 
     if (NumIdx > 0) {
       // This requires that the iterator points to contiguous memory.
@@ -961,7 +959,8 @@ public:
                           Instruction *InsertBefore = 0) {
     return new(1) CallInst(F, Name, InsertBefore);
   }
-  static CallInst *Create(Value *F, const std::string &Name, BasicBlock *InsertAtEnd) {
+  static CallInst *Create(Value *F, const std::string &Name,
+                          BasicBlock *InsertAtEnd) {
     return new(1) CallInst(F, Name, InsertAtEnd);
   }
 
