@@ -1335,8 +1335,7 @@ public:
 
 private:
   // Used by serializer.
-  InitListExpr() : Expr(InitListExprClass, QualType()), 
-                   InitExprs(NULL) {}
+  InitListExpr() : Expr(InitListExprClass, QualType()) {}
 };
 
 /// ObjCStringLiteral, used for Objective-C string literals
