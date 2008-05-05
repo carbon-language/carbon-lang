@@ -320,7 +320,11 @@ void DeclPrinter::PrintObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *AID) {
 /// PrintObjCPropertyDecl - print a property declaration.
 ///
 void DeclPrinter::PrintObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
-    
+  if (PDecl->getPropertyImplementation() == ObjCPropertyDecl::Required)
+    Out << "@required\n";
+  else if (PDecl->getPropertyImplementation() == ObjCPropertyDecl::Optional)
+    Out << "@optional\n";
+  
   Out << "@property";
   if (PDecl->getPropertyAttributes() != ObjCPropertyDecl::OBJC_PR_noattr) {
     bool first = true;

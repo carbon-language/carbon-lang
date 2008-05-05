@@ -1066,9 +1066,14 @@ public:
     OBJC_PR_nonatomic = 0x40,
     OBJC_PR_setter    = 0x80
   };
+  
+  enum PropertyControl { None, Required, Optional };
 private:
   QualType DeclType;
   unsigned PropertyAttributes : 8;
+  
+  // @required/@optional
+  unsigned PropertyImplementation : 2;
   
   IdentifierInfo *GetterName;    // getter name of NULL if no getter
   IdentifierInfo *SetterName;    // setter name of NULL if no setter
@@ -1078,7 +1083,8 @@ private:
       PropertyAttributes(OBJC_PR_noattr), GetterName(0), SetterName(0) {}
 public:
   static ObjCPropertyDecl *Create(ASTContext &C, SourceLocation L, 
-                                  IdentifierInfo *Id, QualType T);
+                                  IdentifierInfo *Id, QualType T,
+                                  PropertyControl propControl = None);
   QualType getType() const { return DeclType; }
   QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
   
@@ -1094,6 +1100,14 @@ public:
   
   IdentifierInfo *getSetterName() const { return SetterName; }
   void setSetterName(IdentifierInfo *Id) { SetterName = Id; }
+  
+  // Related to @optional/@required declared in @protocol
+  void setPropertyImplementation(PropertyControl pc) {
+    PropertyImplementation = pc;
+  }
+  PropertyControl getPropertyImplementation() const {
+    return PropertyControl(PropertyImplementation);
+  }  
   
   static bool classof(const Decl *D) {
     return D->getKind() == ObjCProperty;

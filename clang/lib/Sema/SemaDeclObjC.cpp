@@ -1022,7 +1022,8 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
 
 Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc, 
                                   FieldDeclarator &FD,
-                                  ObjCDeclSpec &ODS) {
+                                  ObjCDeclSpec &ODS,
+                                  tok::ObjCKeywordKind MethodImplKind) {
   QualType T = GetTypeForDeclarator(FD.D, S);
   ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, AtLoc, 
                                                      FD.D.getIdentifier(), T);
@@ -1054,6 +1055,11 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   
   if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_nonatomic)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_nonatomic);
+  
+  if (MethodImplKind == tok::objc_required)
+    PDecl->setPropertyImplementation(ObjCPropertyDecl::Required);
+  else if (MethodImplKind == tok::objc_optional)
+    PDecl->setPropertyImplementation(ObjCPropertyDecl::Optional);
   
   return PDecl;
 }

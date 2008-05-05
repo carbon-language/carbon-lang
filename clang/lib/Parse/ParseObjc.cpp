@@ -271,7 +271,8 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
           FieldDeclarator &FD = FieldDeclarators[i];
           // Install the property declarator into interfaceDecl.
           DeclTy *Property = Actions.ActOnProperty(CurScope,
-                               DS.getSourceRange().getBegin(), FD, OCDS);
+                               DS.getSourceRange().getBegin(), FD, OCDS,
+                               MethodImplKind);
           allProperties.push_back(Property);
         }
         continue;

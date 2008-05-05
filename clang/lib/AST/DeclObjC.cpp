@@ -112,7 +112,8 @@ ObjCCompatibleAliasDecl::Create(ASTContext &C,
 ObjCPropertyDecl *ObjCPropertyDecl::Create(ASTContext &C,
                                            SourceLocation L,
                                            IdentifierInfo *Id,
-                                           QualType T) {
+                                           QualType T,
+                                           PropertyControl propControl) {
   void *Mem = C.getAllocator().Allocate<ObjCPropertyDecl>();
   return new (Mem) ObjCPropertyDecl(L, Id, T);
 }
