@@ -1268,9 +1268,10 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtTy *Body) {
 /// call, forming a call to an implicitly defined function (per C99 6.5.1p2).
 ScopedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc, 
                                            IdentifierInfo &II, Scope *S) {
-  if (getLangOptions().C99)  // Extension in C99.
+  // Extension in C99.  Legal in C90, but warn about it.
+  if (getLangOptions().C99)
     Diag(Loc, diag::ext_implicit_function_decl, II.getName());
-  else  // Legal in C90, but warn about it.
+  else
     Diag(Loc, diag::warn_implicit_function_decl, II.getName());
   
   // FIXME: handle stuff like:

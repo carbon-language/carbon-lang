@@ -475,6 +475,9 @@ static llvm::cl::opt<bool>
 WarnUndefMacros("Wundef",
    llvm::cl::desc("Warn on use of undefined macros in #if's"));
 
+static llvm::cl::opt<bool>
+WarnImplicitFunctionDeclaration("Wimplicit-function-declaration"
+                             "Warn about use of implicitly defined functions");
 
 /// InitializeDiagnostics - Initialize the diagnostic object, based on the
 /// current command line option settings.
@@ -498,6 +501,10 @@ static void InitializeDiagnostics(Diagnostic &Diags) {
   if (!WarnUndefMacros)
     Diags.setDiagnosticMapping(diag::warn_pp_undef_identifier,diag::MAP_IGNORE);
     
+  if (!WarnImplicitFunctionDeclaration)
+    Diags.setDiagnosticMapping(diag::warn_implicit_function_decl,
+                               diag::MAP_IGNORE);
+  
   if (MSExtensions) // MS allows unnamed struct/union fields.
     Diags.setDiagnosticMapping(diag::w_no_declarators, diag::MAP_IGNORE);
 
