@@ -82,7 +82,7 @@ public:
 
   // printOptionInfo - Print out information about this option.  Override the
   // default implementation to sort the table before we print...
-  virtual void printOptionInfo(const cl::Option &O, unsigned GlobalWidth) const{
+  virtual void printOptionInfo(const cl::Option &O, size_t GlobalWidth) const {
     PassNameParser *PNP = const_cast<PassNameParser*>(this);
     std::sort(PNP->Values.begin(), PNP->Values.end(), ValLessThan);
     cl::parser<const PassInfo*>::printOptionInfo(O, GlobalWidth);
