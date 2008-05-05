@@ -30,6 +30,10 @@ bar
 #if 1 ? 2 ? 3 : 4 : 5
 #endif
 
+// PR2284
+#if 1 ? 0: 1 ? 1/0: 1/0
+#endif
+
 #else
 
 

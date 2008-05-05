@@ -362,8 +362,8 @@ static unsigned getPrecedence(tok::TokenKind Kind) {
   case tok::pipe:                 return 7;
   case tok::ampamp:               return 6;
   case tok::pipepipe:             return 5;
-  case tok::comma:                return 4;
-  case tok::question:             return 3;
+  case tok::question:             return 4;
+  case tok::comma:                return 3;
   case tok::colon:                return 2;
   case tok::r_paren:              return 0;   // Lowest priority, end of expr.
   case tok::eom:                  return 0;   // Lowest priority, end of macro.
@@ -432,14 +432,25 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
       return true;
     }
     
-    bool isRightAssoc = Operator == tok::question;
+    // Decide whether to include the next binop in this subexpression.  For
+    // example, when parsing x+y*z and looking at '*', we want to recursively
+    // handling y*z as a single subexpression.  We do this because the
+    // precedence of * is higher than that of +.  The only strange case we have
+    // to handle here is for the ?: operator, where the precedence is actually
+    // lower than the LHS of the '?'.  The grammar rule is:
+    //
+    // conditional-expression ::=
+    //    logical-OR-expression ? expression : conditional-expression
+    // where 'expression' is actually comma-expression.
+    unsigned RHSPrec;
+    if (Operator == tok::question)
+      // The RHS of "?" should be maximally consumed as an expression.
+      RHSPrec = getPrecedence(tok::comma);
+    else  // All others should munch while higher precedence.
+      RHSPrec = ThisPrec+1;
     
-    // Get the precedence of the operator to the right of the RHS.  If it binds
-    // more tightly with RHS than we do, evaluate it completely first.
-    if (ThisPrec < PeekPrec ||
-        (ThisPrec == PeekPrec && isRightAssoc)) {
-      if (EvaluateDirectiveSubExpr(RHS, ThisPrec+!isRightAssoc, 
-                                   PeekTok, RHSIsLive, PP))
+    if (PeekPrec >= RHSPrec) {
+      if (EvaluateDirectiveSubExpr(RHS, RHSPrec, PeekTok, RHSIsLive, PP))
         return true;
       PeekPrec = getPrecedence(PeekTok.getKind());
     }
@@ -609,8 +620,8 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
       if (EvaluateValue(AfterColonVal, PeekTok, DT, AfterColonLive, PP))
         return true;
 
-      // Parse anything after the : RHS that has a higher precedence than ?.
-      if (EvaluateDirectiveSubExpr(AfterColonVal, ThisPrec+1,
+      // Parse anything after the : with the same precedence as ?.
+      if (EvaluateDirectiveSubExpr(AfterColonVal, ThisPrec,
                                    PeekTok, AfterColonLive, PP))
         return true;
       
@@ -681,7 +692,8 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   
   // Otherwise, we must have a binary operator (e.g. "#if 1 < 2"), so parse the
   // operator and the stuff after it.
-  if (EvaluateDirectiveSubExpr(ResVal, 1, Tok, true, *this)) {
+  if (EvaluateDirectiveSubExpr(ResVal, getPrecedence(tok::question),
+                               Tok, true, *this)) {
     // Parse error, skip the rest of the macro line.
     if (Tok.isNot(tok::eom))
       DiscardUntilEndOfDirective();
