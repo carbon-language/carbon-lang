@@ -1707,10 +1707,10 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<ValueState>* N,
 }
 
 PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
-                                             ExplodedNode<ValueState>* N) {
+                                             ExplodedNode<ValueState>* EndN) {
   
   if (!getBugType().isLeak())
-    return RangedBugReport::getEndPath(BR, N);
+    return RangedBugReport::getEndPath(BR, EndN);
 
   typedef CFRefCount::RefBindings RefBindings;
 
@@ -1718,7 +1718,7 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
   unsigned long RetCount = 0;
   
   {
-    ValueState* St = N->getState();
+    ValueState* St = EndN->getState();
     RefBindings B = RefBindings((RefBindings::TreeTy*) St->CheckerState);
     RefBindings::TreeTy* T = B.SlimFind(Sym);
     assert (T);
@@ -1728,13 +1728,14 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
   // We are a leak.  Walk up the graph to get to the first node where the
   // symbol appeared.
   
+  ExplodedNode<ValueState>* N = EndN;
   ExplodedNode<ValueState>* Last = N;
-    
+  
   // Find the first node that referred to the tracked symbol.  We also
   // try and find the first VarDecl the value was stored to.
   
   VarDecl* FirstDecl = 0;
-  
+
   while (N) {
     ValueState* St = N->getState();
     RefBindings B = RefBindings((RefBindings::TreeTy*) St->CheckerState);
@@ -1765,17 +1766,85 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
     N = N->pred_empty() ? NULL : *(N->pred_begin());    
   }
   
-  // Get the location.
+  // Get the allocate site.
   
   assert (Last);
   Stmt* FirstStmt = cast<PostStmt>(Last->getLocation()).getStmt();
 
-  unsigned Line =
-   BR.getSourceManager().getLogicalLineNumber(FirstStmt->getLocStart());
+  SourceManager& SMgr = BR.getContext().getSourceManager();
+  unsigned AllocLine = SMgr.getLogicalLineNumber(FirstStmt->getLocStart());
 
+  // Get the leak site.  We may have multiple ExplodedNodes (one with the
+  // leak) that occur on the same line number; if the node with the leak
+  // has any immediate predecessor nodes with the same line number, find
+  // any transitive-successors that have a different statement and use that
+  // line number instead.  This avoids emiting a diagnostic like:
+  //
+  //    // 'y' is leaked.
+  //  int x = foo(y);
+  //
+  //  instead we want:
+  //
+  //  int x = foo(y);
+  //   // 'y' is leaked.
+  
+  Stmt* S = getStmt(BR);  // This is the statement where the leak occured.
+  assert (S);
+  unsigned EndLine = SMgr.getLogicalLineNumber(S->getLocStart());
+
+  // Look in the *trimmed* graph at the immediate predecessor of EndN.  Does
+  // it occur on the same line?
+  
+  assert (!EndN->pred_empty()); // Not possible to have 0 predecessors.
+  N = *(EndN->pred_begin());
+  
+  do {
+    ProgramPoint P = N->getLocation();
+
+    if (!isa<PostStmt>(P))
+      break;
+    
+    // Predecessor at same line?
+    
+    Stmt* SPred = cast<PostStmt>(P).getStmt();
+    
+    if (SMgr.getLogicalLineNumber(SPred->getLocStart()) != EndLine)
+      break;
+    
+    // The predecessor (where the object was not yet leaked) is a statement
+    // on the same line.  Get the first successor statement that appears
+    // on a different line.  For this operation, we can traverse the
+    // non-trimmed graph.
+    
+    N = getEndNode(); // This is the node where the leak occured in the
+                      // original graph.
+        
+    while (!N->succ_empty()) {
+      
+      N = *(N->succ_begin());
+      ProgramPoint P = N->getLocation();
+      
+      if (!isa<PostStmt>(P))
+        continue;
+      
+      Stmt* SSucc = cast<PostStmt>(P).getStmt();
+      
+      if (SMgr.getLogicalLineNumber(SSucc->getLocStart()) != EndLine) {
+        S = SSucc;
+        break;
+      }
+    }    
+  }
+  while (false);
+  
+  // Construct the location.
+    
+  FullSourceLoc L(S->getLocStart(), SMgr);
+  
+  // Generate the diagnostic.
   std::ostringstream os;
   
-  os << "Object allocated on line " << Line;
+  os << "Object allocated on line " << AllocLine;
   
   if (FirstDecl)
     os << " and stored into '" << FirstDecl->getName() << '\'';
@@ -1783,12 +1852,7 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
   os << " is no longer referenced after this point and has a retain count of +"
      << RetCount << " (object leaked).";
   
-  Stmt* S = getStmt(BR);
-  assert (S);  
-  FullSourceLoc L(S->getLocStart(), BR.getContext().getSourceManager());    
-  PathDiagnosticPiece* P = new PathDiagnosticPiece(L, os.str());
-    
-  return P;  
+  return new PathDiagnosticPiece(L, os.str());
 }
 
 void UseAfterRelease::EmitWarnings(BugReporter& BR) {
