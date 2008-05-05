@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep {not} | count 3
-; RUN: llvm-as < %s | llc -march=x86-64 | grep {not}  | count 4
+; RUN: llvm-as < %s | llc -march=x86 | grep {not\[lwb\]} | count 3
+; RUN: llvm-as < %s | llc -march=x86-64 | grep {not\[lwb\]}  | count 4
 define i32 @test(i32 %a, i32 %b) nounwind  {
 entry:
         %tmp1not = xor i32 %b, -2

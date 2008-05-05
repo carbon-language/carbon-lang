@@ -61,10 +61,16 @@ namespace llvm {
     /// Null if this target doesn't support a BSS section.
     ///
     const char *TLSBSSSection;// Default to ".section .tbss,"awT",@nobits".
+
     /// ZeroFillDirective - Directive for emitting a global to the ZeroFill
     /// section on this target.  Null if this target doesn't support zerofill.
     const char *ZeroFillDirective;        // Default is null.
     
+    /// NonexecutableStackDirective - Directive for declaring to the
+    /// linker and beyond that the emitted code does not require stack
+    /// memory to be executable.
+    const char *NonexecutableStackDirective; // Default is null.
+
     /// NeedsSet - True if target asm treats expressions in data directives
     /// as linktime-relocatable.  For assembly-time computation, we need to
     /// use a .set.  Thus:
@@ -439,6 +445,9 @@ namespace llvm {
     }
     const char *getZeroFillDirective() const {
       return ZeroFillDirective;
+    }
+    const char *getNonexecutableStackDirective() const {
+      return NonexecutableStackDirective;
     }
     bool needsSet() const {
       return NeedsSet;

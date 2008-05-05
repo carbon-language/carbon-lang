@@ -192,6 +192,13 @@ bool AsmPrinter::doFinalization(Module &M) {
                                          E = CMM->begin(); I != E; )
     (*--I)->finishAssembly(O, *this, *TAI);
 
+  // If we don't have any trampolines, then we don't require stack memory
+  // to be executable. Some targets have a directive to declare this.
+  Function* InitTrampolineIntrinsic = M.getFunction("llvm.init.trampoline");
+  if (!InitTrampolineIntrinsic || InitTrampolineIntrinsic->use_empty())
+    if (TAI->getNonexecutableStackDirective())
+      O << TAI->getNonexecutableStackDirective() << "\n";
+
   delete Mang; Mang = 0;
   return false;
 }

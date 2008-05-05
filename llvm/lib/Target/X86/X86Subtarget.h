@@ -84,7 +84,7 @@ private:
 
 public:
   enum {
-    isELF, isCygwin, isDarwin, isWindows, isMingw
+    isELF, isELFLinux, isCygwin, isDarwin, isWindows, isMingw
   } TargetType;
 
   /// This constructor initializes the data members to match that
@@ -132,7 +132,12 @@ public:
   bool isFlavorIntel() const { return AsmFlavor == Intel; }
 
   bool isTargetDarwin() const { return TargetType == isDarwin; }
-  bool isTargetELF() const { return TargetType == isELF; }
+  bool isTargetELF() const {
+    return TargetType == isELF || TargetType == isELFLinux;
+  }
+  bool isTargetLinux() const {
+    return TargetType == isELFLinux;
+  }
   bool isTargetWindows() const { return TargetType == isWindows; }
   bool isTargetMingw() const { return TargetType == isMingw; }
   bool isTargetCygMing() const { return (TargetType == isMingw ||

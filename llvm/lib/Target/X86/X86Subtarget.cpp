@@ -278,6 +278,8 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
         DarwinVers = atoi(&TT[Pos+7]);
       else
         DarwinVers = 8;  // Minimum supported darwin is Tiger.
+    } else if (TT.find("linux") != std::string::npos) {
+      TargetType = isELFLinux;
     } else if (TT.find("cygwin") != std::string::npos) {
       TargetType = isCygwin;
     } else if (TT.find("mingw") != std::string::npos) {
@@ -302,6 +304,9 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
     
 #elif defined(_WIN32) || defined(_WIN64)
     TargetType = isWindows;
+#elif defined(__linux__)
+    // Linux doesn't imply ELF, but we don't currently support anything else.
+    TargetType = isELFLinux;
 #endif
   }
 

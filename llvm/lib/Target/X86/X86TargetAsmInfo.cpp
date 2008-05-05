@@ -128,6 +128,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     break;
 
   case X86Subtarget::isELF:
+  case X86Subtarget::isELFLinux:
     ReadOnlySection = "\t.section\t.rodata";
     FourByteConstantSection = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
     EightByteConstantSection = "\t.section\t.rodata.cst8,\"aM\",@progbits,8";
@@ -228,6 +229,10 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     DataSectionStartSuffix = "\tsegment 'DATA'";
     SectionEndDirectiveSuffix = "\tends\n";
   }
+
+  // On Linux we must declare when we can use a non-executable stack.
+  if (Subtarget->isTargetLinux())
+    NonexecutableStackDirective = "\t.section\t.note.GNU-stack,\"\",@progbits";
 
   AssemblerDialect = Subtarget->getAsmFlavor();
 }
