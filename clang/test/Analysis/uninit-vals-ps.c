@@ -16,3 +16,20 @@ int f1_b() {
   int x;
   return bar(x)+1;  // expected-warning{{Pass-by-value argument in function is undefined.}}
 }
+
+int f2() {
+  
+  int x;
+  
+  if (x+1)  // expected-warning{{Branch}}
+    return 1;
+    
+  return 2;  
+}
+
+int f2_b() {
+  int x;
+  
+  return ((x+1)+2+((x))) + 1 ? 1 : 2; // expected-warning{{Branch}}
+}
+

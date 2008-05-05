@@ -99,11 +99,7 @@ public:
     return "Branch condition evaluates to an uninitialized value.";
   }
   
-  virtual void EmitWarnings(BugReporter& BR) {
-    GRExprEngine& Eng = BR.getEngine();
-    GenericEmitWarnings(BR, *this, Eng.undef_branches_begin(),
-                        Eng.undef_branches_end());
-  }
+  virtual void EmitWarnings(BugReporter& BR);
 };
   
 class VISIBILITY_HIDDEN DivZero : public BugTypeCacheLocation {
@@ -263,6 +259,82 @@ public:
 };
   
 } // end anonymous namespace
+
+
+namespace {
+
+struct VISIBILITY_HIDDEN FindUndefExpr {
+  ValueStateManager& VM;
+  ValueState* St;
+  
+  FindUndefExpr(ValueStateManager& V, ValueState* S) : VM(V), St(S) {}
+  
+  Expr* FindExpr(Expr* Ex) {
+    
+    if (!MatchesCriteria(Ex))
+      return 0;    
+        
+    for (Stmt::child_iterator I=Ex->child_begin(), E=Ex->child_end(); I!=E; ++I)
+      if (Expr* ExI = dyn_cast_or_null<Expr>(*I)) {
+        Expr* E2 = FindExpr(ExI);
+        if (E2) return E2;
+      }
+    
+    return Ex;
+  }
+  
+  bool MatchesCriteria(Expr* Ex) { return VM.GetRVal(St, Ex).isUndef(); }  
+};
+  
+} // end anonymous namespace
+  
+  
+void UndefBranch::EmitWarnings(BugReporter& BR) {
+
+  GRExprEngine& Eng = BR.getEngine();
+  
+  for (GRExprEngine::undef_branch_iterator I=Eng.undef_branches_begin(),
+       E=Eng.undef_branches_end(); I!=E; ++I) {
+
+    // What's going on here: we want to highlight the subexpression of the
+    // condition that is the most likely source of the "uninitialized
+    // branch condition."  We do a recursive walk of the condition's
+    // subexpressions and roughly look for the most nested subexpression
+    // that binds to Undefined.  We then highlight that expression's range.
+    
+    BlockEdge B = cast<BlockEdge>((*I)->getLocation());
+    Expr* Ex = cast<Expr>(B.getSrc()->getTerminatorCondition());
+    assert (Ex && "Block must have a terminator.");
+    
+    // Get the predecessor node and check if is a PostStmt with the Stmt
+    // being the terminator condition.  We want to inspect the state
+    // of that node instead because it will contain main information about
+    // the subexpressions.
+    
+    assert (!(*I)->pred_empty());
+    
+    // Note: any predecessor will do.  They should have identical state,
+    // since all the BlockEdge did was act as an error sink since the value
+    // had to already be undefined.
+    ExplodedNode<ValueState> *N = *(*I)->pred_begin();
+    ProgramPoint P = N->getLocation();
+
+    ValueState* St = (*I)->getState();
+    
+    if (PostStmt* PS = dyn_cast<PostStmt>(&P))
+      if (PS->getStmt() == Ex)
+        St = N->getState();
+        
+    FindUndefExpr FindIt(Eng.getStateManager(), St);
+    Ex = FindIt.FindExpr(Ex);
+    
+    RangedBugReport R(*this, *I);
+    R.addRange(Ex->getSourceRange());
+    
+    BR.EmitWarning(R);
+  }
+}
+
 
 void GRSimpleVals::RegisterChecks(GRExprEngine& Eng) {
   
