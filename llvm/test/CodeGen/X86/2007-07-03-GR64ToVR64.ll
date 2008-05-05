@@ -4,7 +4,7 @@
 
 @R = external global <1 x i64>		; <<1 x i64>*> [#uses=1]
 
-define void @foo(<1 x i64> %A, <1 x i64> %B) {
+define void @foo(<1 x i64> %A, <1 x i64> %B) nounwind {
 entry:
 	%tmp4 = bitcast <1 x i64> %B to <4 x i16>		; <<4 x i16>> [#uses=1]
 	%tmp6 = bitcast <1 x i64> %A to <4 x i16>		; <<4 x i16>> [#uses=1]
