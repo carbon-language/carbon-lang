@@ -935,14 +935,19 @@ class CallInst : public Instruction {
   CallInst(Value *F, const std::string &Name, BasicBlock *InsertAtEnd);
 public:
   template<typename InputIterator>
-  static CallInst *Create(Value *Func, InputIterator ArgBegin, InputIterator ArgEnd,
-                          const std::string &Name = "", Instruction *InsertBefore = 0) {
-    return new(ArgEnd - ArgBegin + 1) CallInst(Func, ArgBegin, ArgEnd, Name, InsertBefore);
+  static CallInst *Create(Value *Func, InputIterator ArgBegin,
+                          InputIterator ArgEnd,
+                          const std::string &Name = "",
+                          Instruction *InsertBefore = 0) {
+    return new(ArgEnd - ArgBegin + 1)
+      CallInst(Func, ArgBegin, ArgEnd, Name, InsertBefore);
   }
   template<typename InputIterator>
-  static CallInst *Create(Value *Func, InputIterator ArgBegin, InputIterator ArgEnd,
-                          const std::string &Name, BasicBlock *InsertAtEnd) {
-    return new(ArgEnd - ArgBegin + 1) CallInst(Func, ArgBegin, ArgEnd, Name, InsertAtEnd);
+  static CallInst *Create(Value *Func, InputIterator ArgBegin,
+                          InputIterator ArgEnd, const std::string &Name,
+                          BasicBlock *InsertAtEnd) {
+    return new(ArgEnd - ArgBegin + 1)
+      CallInst(Func, ArgBegin, ArgEnd, Name, InsertAtEnd);
   }
   static CallInst *Create(Value *F, Value *Actual, const std::string& Name = "",
                           Instruction *InsertBefore = 0) {
@@ -1078,12 +1083,13 @@ class SelectInst : public Instruction {
     setName(Name);
   }
 public:
-  static SelectInst *Create(Value *C, Value *S1, Value *S2, const std::string &Name = "",
-             Instruction *InsertBefore = 0) {
+  static SelectInst *Create(Value *C, Value *S1, Value *S2,
+                            const std::string &Name = "",
+                            Instruction *InsertBefore = 0) {
     return new(3) SelectInst(C, S1, S2, Name, InsertBefore);
   }
-  static SelectInst *Create(Value *C, Value *S1, Value *S2, const std::string &Name,
-             BasicBlock *InsertAtEnd) {
+  static SelectInst *Create(Value *C, Value *S1, Value *S2,
+                            const std::string &Name, BasicBlock *InsertAtEnd) {
     return new(3) SelectInst(C, S1, S2, Name, InsertAtEnd);
   }
 
@@ -1235,16 +1241,21 @@ public:
     return new(3) InsertElementInst(Vec, NewElt, Idx, Name, InsertBefore);
   }
   static InsertElementInst *Create(Value *Vec, Value *NewElt, unsigned Idx,
-                                   const std::string &Name = "",Instruction *InsertBefore = 0) {
-    return new(3/*FIXME*/) InsertElementInst(Vec, NewElt, Idx, Name, InsertBefore);
+                                   const std::string &Name = "",
+                                   Instruction *InsertBefore = 0) {
+    return new(3/*FIXME*/)
+      InsertElementInst(Vec, NewElt, Idx, Name, InsertBefore);
   }
   static InsertElementInst *Create(Value *Vec, Value *NewElt, Value *Idx,
-                                   const std::string &Name, BasicBlock *InsertAtEnd) {
+                                   const std::string &Name,
+                                   BasicBlock *InsertAtEnd) {
     return new(3) InsertElementInst(Vec, NewElt, Idx, Name, InsertAtEnd);
   }
   static InsertElementInst *Create(Value *Vec, Value *NewElt, unsigned Idx,
-                                   const std::string &Name, BasicBlock *InsertAtEnd) {
-    return new(3/*FIXME*/) InsertElementInst(Vec, NewElt, Idx, Name, InsertAtEnd);
+                                   const std::string &Name,
+                                   BasicBlock *InsertAtEnd) {
+    return new(3/*FIXME*/)
+      InsertElementInst(Vec, NewElt, Idx, Name, InsertAtEnd);
   }
 
   /// isValidOperands - Return true if an insertelement instruction can be
@@ -1380,7 +1391,8 @@ public:
                          Instruction *InsertBefore = 0) {
     return new PHINode(Ty, Name, InsertBefore);
   }
-  static PHINode *Create(const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd) {
+  static PHINode *Create(const Type *Ty, const std::string &Name,
+                         BasicBlock *InsertAtEnd) {
     return new PHINode(Ty, Name, InsertAtEnd);
   }
   ~PHINode();
@@ -1532,10 +1544,12 @@ public:
   static ReturnInst* Create(Value * const* retVals, unsigned N) {
     return new(N) ReturnInst(retVals, N);
   }
-  static ReturnInst* Create(Value * const* retVals, unsigned N, Instruction *InsertBefore) {
+  static ReturnInst* Create(Value * const* retVals, unsigned N,
+                            Instruction *InsertBefore) {
     return new(N) ReturnInst(retVals, N, InsertBefore);
   }
-  static ReturnInst* Create(Value * const* retVals, unsigned N, BasicBlock *InsertAtEnd) {
+  static ReturnInst* Create(Value * const* retVals, unsigned N,
+                            BasicBlock *InsertAtEnd) {
     return new(N) ReturnInst(retVals, N, InsertAtEnd);
   }
   static ReturnInst* Create(BasicBlock *InsertAtEnd) {
@@ -1710,11 +1724,13 @@ class SwitchInst : public TerminatorInst {
 public:
   static SwitchInst *Create(Value *Value, BasicBlock *Default, unsigned NumCases,
                             Instruction *InsertBefore = 0) {
-    return new(NumCases/*FIXME*/) SwitchInst(Value, Default, NumCases, InsertBefore);
+    return new(NumCases/*FIXME*/)
+      SwitchInst(Value, Default, NumCases, InsertBefore);
   }
   static SwitchInst *Create(Value *Value, BasicBlock *Default, unsigned NumCases,
                             BasicBlock *InsertAtEnd) {
-    return new(NumCases/*FIXME*/) SwitchInst(Value, Default, NumCases, InsertAtEnd);
+    return new(NumCases/*FIXME*/)
+      SwitchInst(Value, Default, NumCases, InsertAtEnd);
   }
   ~SwitchInst();
 
@@ -1880,16 +1896,21 @@ class InvokeInst : public TerminatorInst {
   }
 public:
   template<typename InputIterator>
-  static InvokeInst *Create(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
+  static InvokeInst *Create(Value *Func, BasicBlock *IfNormal,
+                            BasicBlock *IfException,
                             InputIterator ArgBegin, InputIterator ArgEnd,
-                            const std::string &Name = "", Instruction *InsertBefore = 0) {
-    return new(ArgEnd - ArgBegin + 3) InvokeInst(Func, IfNormal, IfException, ArgBegin, ArgEnd, Name, InsertBefore);
+                            const std::string &Name = "",
+                            Instruction *InsertBefore = 0) {
+    return new(ArgEnd - ArgBegin + 3)
+      InvokeInst(Func, IfNormal, IfException, ArgBegin, ArgEnd, Name, InsertBefore);
   }
   template<typename InputIterator>
-  static InvokeInst *Create(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
+  static InvokeInst *Create(Value *Func, BasicBlock *IfNormal,
+                            BasicBlock *IfException,
                             InputIterator ArgBegin, InputIterator ArgEnd,
                             const std::string &Name, BasicBlock *InsertAtEnd) {
-    return new(ArgEnd - ArgBegin + 3) InvokeInst(Func, IfNormal, IfException, ArgBegin, ArgEnd, Name, InsertAtEnd);
+    return new(ArgEnd - ArgBegin + 3)
+      InvokeInst(Func, IfNormal, IfException, ArgBegin, ArgEnd, Name, InsertAtEnd);
   }
 
   ~InvokeInst();
