@@ -159,13 +159,14 @@ class CFRefSummaryManager {
   
   ArgEffects*   getArgEffects();
 
-  enum CFUnaryFunc { cfretain, cfrelease, cfmakecollectable };  
-  CFRefSummary* getUnaryCFSummary(FunctionTypeProto* FT, CFUnaryFunc func);
+  enum UnaryFuncKind { cfretain, cfrelease, cfmakecollectable };  
+  CFRefSummary* getUnarySummary(FunctionDecl* FD, UnaryFuncKind func);
   
+  CFRefSummary* getNSSummary(FunctionDecl* FD, const char* FName);
   CFRefSummary* getCFSummary(FunctionDecl* FD, const char* FName);
   
-  CFRefSummary* getCFSummaryCreateRule(FunctionTypeProto* FT);
-  CFRefSummary* getCFSummaryGetRule(FunctionTypeProto* FT);  
+  CFRefSummary* getCFSummaryCreateRule(FunctionDecl* FD);
+  CFRefSummary* getCFSummaryGetRule(FunctionDecl* FD);  
   
   CFRefSummary* getPersistentSummary(ArgEffects* AE, RetEffect RE);
     
@@ -257,7 +258,6 @@ CFRefSummary* CFRefSummaryManager::getSummary(FunctionDecl* FD,
   if (!Loc.isFileID())
     return NULL;
   
-
   // Look up a summary in our cache of FunctionDecls -> Summaries.
   SummaryMapTy::iterator I = SummaryMap.find(FD);
 
@@ -267,125 +267,92 @@ CFRefSummary* CFRefSummaryManager::getSummary(FunctionDecl* FD,
   // No summary.  Generate one.
   const char* FName = FD->getIdentifier()->getName();
     
-  if (FName[0] == 'C' && FName[1] == 'F') {
-    CFRefSummary* S = getCFSummary(FD, FName);
-    SummaryMap[FD] = S;
-    return S;
-  }
+  CFRefSummary *S = 0;
+  
+  if (FName[0] == 'C' && FName[1] == 'F')
+    S = getCFSummary(FD, FName);
+  else if (FName[0] == 'N' && FName[1] == 'S')
+    S = getNSSummary(FD, FName);
 
-  // Function has no ref-count effects.  Return the NULL summary.
-  return NULL;  
+  SummaryMap[FD] = S;
+  return S;  
 }
 
+CFRefSummary* CFRefSummaryManager::getNSSummary(FunctionDecl* FD,
+                                                const char* FName) {
+  FName += 2;
+  
+  if (strcmp(FName, "MakeCollectable") == 0)
+    return getUnarySummary(FD, cfmakecollectable);
+
+  return 0;  
+}
+  
 CFRefSummary* CFRefSummaryManager::getCFSummary(FunctionDecl* FD,
                                                 const char* FName) {
+
+  FName += 2;
+
+  if (strcmp(FName, "Retain") == 0)
+    return getUnarySummary(FD, cfretain);
   
-  // For now, only generate summaries for functions that have a prototype.
+  if (strcmp(FName, "Release") == 0)
+    return getUnarySummary(FD, cfrelease);
+
+  if (strcmp(FName, "MakeCollectable") == 0)
+    return getUnarySummary(FD, cfmakecollectable);
+    
+  if (strstr(FName, "Create") || strstr(FName, "Copy"))
+    return getCFSummaryCreateRule(FD);
+
+  if (strstr(FName, "Get"))
+    return getCFSummaryGetRule(FD);
+  
+  return 0;
+}
+
+CFRefSummary*
+CFRefSummaryManager::getUnarySummary(FunctionDecl* FD, UnaryFuncKind func) {
   
   FunctionTypeProto* FT =
     dyn_cast<FunctionTypeProto>(FD->getType().getTypePtr());
   
-  if (!FT)
-    return NULL;
+  if (FT) {
+    
+    if (FT->getNumArgs() != 1)
+      return 0;
   
-  FName += 2;
+    TypedefType* ArgT = dyn_cast<TypedefType>(FT->getArgType(0).getTypePtr());
+  
+    if (!ArgT)
+      return 0;
 
-  if (strcmp(FName, "Retain") == 0)
-    return getUnaryCFSummary(FT, cfretain);
-  
-  if (strcmp(FName, "Release") == 0)
-    return getUnaryCFSummary(FT, cfrelease);
+    if (!ArgT->isPointerType())
+      return NULL;
+  }
 
-  if (strcmp(FName, "MakeCollectable") == 0)
-    return getUnaryCFSummary(FT, cfmakecollectable);
-  
   assert (ScratchArgs.empty());
-  bool usesCreateRule = false;
-  
-  if (strstr(FName, "Create"))
-    usesCreateRule = true;
-  
-  if (!usesCreateRule && strstr(FName, "Copy"))
-    usesCreateRule = true;
-  
-  if (usesCreateRule)
-    return getCFSummaryCreateRule(FT);
-
-  if (strstr(FName, "Get"))
-    return getCFSummaryGetRule(FT);
-  
-  return NULL;
-}
-
-CFRefSummary*
-CFRefSummaryManager::getUnaryCFSummary(FunctionTypeProto* FT, CFUnaryFunc func) {
-  
-  if (FT->getNumArgs() != 1)
-    return NULL;
-  
-  TypedefType* ArgT = dyn_cast<TypedefType>(FT->getArgType(0).getTypePtr());
-  
-  if (!ArgT)
-    return NULL;
-  
-  // For CFRetain/CFRelease, the first (and only) argument is of type 
-  // "CFTypeRef".
-  
-  const char* TDName = ArgT->getDecl()->getIdentifier()->getName();
-  assert (TDName);
-  
-  if (strcmp("CFTypeRef", TDName) != 0)
-    return NULL;
-  
-  if (!ArgT->isPointerType())
-    return NULL;
-
-  QualType RetTy = FT->getResultType();
   
   switch (func) {
     case cfretain: {
-      
-      // CFRetain: the return type should also be "CFTypeRef".
-      if (RetTy.getTypePtr() != ArgT)
-        return NULL;
-      
-      // The function's interface checks out.  Generate a canned summary.    
-      assert (ScratchArgs.empty());
       ScratchArgs.push_back(std::make_pair(0, IncRef));
       return getPersistentSummary(getArgEffects(), RetEffect::MakeAlias(0));
     }
       
     case cfrelease: {
-
-      // CFRelease: the return type should be void.
-      
-      if (RetTy != Ctx.VoidTy)
-        return NULL;
-      
-      assert (ScratchArgs.empty());
       ScratchArgs.push_back(std::make_pair(0, DecRef));
       return getPersistentSummary(getArgEffects(), RetEffect::MakeNoRet());
     }
       
     case cfmakecollectable: {
-      
-      // CFRetain: the return type should also be "CFTypeRef".
-      if (RetTy.getTypePtr() != ArgT)
-        return NULL;
-      
-      // The function's interface checks out.  Generate a canned summary.    
-      assert (ScratchArgs.empty());
-      
       if (GCEnabled)
         ScratchArgs.push_back(std::make_pair(0, DecRef));
       
-      return getPersistentSummary(getArgEffects(), RetEffect::MakeAlias(0));
-      
-      
+      return getPersistentSummary(getArgEffects(), RetEffect::MakeAlias(0));    
     }
       
     default:
-      assert (false && "Not a support unary function.");
+      assert (false && "Not a supported unary function.");
   }
 }
 
@@ -414,10 +381,13 @@ static bool isCFRefType(QualType T) {
 }
 
 CFRefSummary*
-CFRefSummaryManager::getCFSummaryCreateRule(FunctionTypeProto* FT) {
+CFRefSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
  
-  if (!isCFRefType(FT->getResultType()))
-    return NULL;
+  FunctionTypeProto* FT =
+    dyn_cast<FunctionTypeProto>(FD->getType().getTypePtr());
+  
+  if (FT && !isCFRefType(FT->getResultType()))
+    return 0;
 
   // FIXME: Add special-cases for functions that retain/release.  For now
   //  just handle the default case.
@@ -427,18 +397,23 @@ CFRefSummaryManager::getCFSummaryCreateRule(FunctionTypeProto* FT) {
 }
 
 CFRefSummary*
-CFRefSummaryManager::getCFSummaryGetRule(FunctionTypeProto* FT) {
+CFRefSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
   
-  QualType RetTy = FT->getResultType();
+  FunctionTypeProto* FT =
+    dyn_cast<FunctionTypeProto>(FD->getType().getTypePtr());
   
-  // FIXME: For now we assume that all pointer types returned are referenced
-  // counted.  Since this is the "Get" rule, we assume non-ownership, which
-  // works fine for things that are not reference counted.  We do this because
-  // some generic data structures return "void*".  We need something better
-  // in the future.
+  if (FT) {
+    QualType RetTy = FT->getResultType();
   
-  if (!isCFRefType(RetTy) && !RetTy->isPointerType())
-    return NULL;
+    // FIXME: For now we assume that all pointer types returned are referenced
+    // counted.  Since this is the "Get" rule, we assume non-ownership, which
+    // works fine for things that are not reference counted.  We do this because
+    // some generic data structures return "void*".  We need something better
+    // in the future.
+  
+    if (!isCFRefType(RetTy) && !RetTy->isPointerType())
+      return 0;
+  }
   
   // FIXME: Add special-cases for functions that retain/release.  For now
   //  just handle the default case.
