@@ -63,22 +63,24 @@ namespace {
 class RetEffect {
 public:
   enum Kind { NoRet = 0x0, Alias = 0x1, OwnedSymbol = 0x2,
-              NotOwnedSymbol = 0x3 };
+              NotOwnedSymbol = 0x3, ReceiverAlias=0x4 };
 
 private:
   unsigned Data;
-  RetEffect(Kind k, unsigned D) { Data = (D << 2) | (unsigned) k; }
+  RetEffect(Kind k, unsigned D) { Data = (D << 3) | (unsigned) k; }
   
 public:
 
-  Kind getKind() const { return (Kind) (Data & 0x3); }
+  Kind getKind() const { return (Kind) (Data & 0x7); }
 
   unsigned getValue() const { 
     assert(getKind() == Alias);
-    return Data >> 2;
+    return Data >> 3;
   }
     
   static RetEffect MakeAlias(unsigned Idx) { return RetEffect(Alias, Idx); }
+  
+  static RetEffect MakeReceiverAlias() { return RetEffect(ReceiverAlias, 0); }
   
   static RetEffect MakeOwned() { return RetEffect(OwnedSymbol, 0); }
   
@@ -92,12 +94,12 @@ public:
 };
 
   
-class CFRefSummary : public llvm::FoldingSetNode {
+class RetainSummary : public llvm::FoldingSetNode {
   ArgEffects* Args;
   RetEffect   Ret;
 public:
   
-  CFRefSummary(ArgEffects* A, RetEffect R) : Args(A), Ret(R) {}
+  RetainSummary(ArgEffects* A, RetEffect R) : Args(A), Ret(R) {}
   
   unsigned getNumArgs() const { return Args->size(); }
   
@@ -143,40 +145,86 @@ public:
 };
 
   
-class CFRefSummaryManager {
-  typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<ArgEffects> > AESetTy;
-  typedef llvm::FoldingSet<CFRefSummary>                SummarySetTy;
-  typedef llvm::DenseMap<FunctionDecl*, CFRefSummary*>  SummaryMapTy;
+class RetainSummaryManager {
+
+  //==-----------------------------------------------------------------==//
+  //  Typedefs.
+  //==-----------------------------------------------------------------==//
   
+  typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<ArgEffects> >
+          ArgEffectsSetTy;
+  
+  typedef llvm::FoldingSet<RetainSummary>
+          SummarySetTy;
+  
+  typedef llvm::DenseMap<FunctionDecl*, RetainSummary*>
+          FuncSummariesTy;
+  
+  typedef llvm::DenseMap<Selector, RetainSummary*>
+          ObjCMethodSummariesTy;
+    
+  //==-----------------------------------------------------------------==//
+  //  Data.
+  //==-----------------------------------------------------------------==//
+  
+  // Ctx - The ASTContext object for the analyzed ASTs.
   ASTContext& Ctx;
+  
+  // GCEnabled - Records whether or not the analyzed code runs in GC mode.
   const bool GCEnabled;
   
+  // SummarySet - A FoldingSet of uniqued summaries.
   SummarySetTy SummarySet;
-  SummaryMapTy SummaryMap;  
-  AESetTy AESet;  
-  llvm::BumpPtrAllocator BPAlloc;  
-  ArgEffects ScratchArgs;  
   
+  // FuncSummaries - A map from FunctionDecls to summaries.
+  FuncSummariesTy FuncSummaries; 
+  
+  // ObjCInstanceMethodSummaries - A map from selectors (for instance methods)
+  //  to summaries.
+  ObjCMethodSummariesTy ObjCInstanceMethodSummaries;
+
+  // ObjCMethodSummaries - A map from selectors to summaries.
+  ObjCMethodSummariesTy ObjCMethodSummaries;
+
+  // ArgEffectsSet - A FoldingSet of uniqued ArgEffects.
+  ArgEffectsSetTy ArgEffectsSet;
+  
+  // BPAlloc - A BumpPtrAllocator used for allocating summaries, ArgEffects,
+  //  and all other data used by the checker.
+  llvm::BumpPtrAllocator BPAlloc;
+  
+  // ScratchArgs - A holding buffer for construct ArgEffects.
+  ArgEffects ScratchArgs;
+  
+  //==-----------------------------------------------------------------==//
+  //  Methods.
+  //==-----------------------------------------------------------------==//
+  
+  // getArgEffects - Returns a persistent ArgEffects object based on the
+  //  data in ScratchArgs.
   ArgEffects*   getArgEffects();
 
   enum UnaryFuncKind { cfretain, cfrelease, cfmakecollectable };  
-  CFRefSummary* getUnarySummary(FunctionDecl* FD, UnaryFuncKind func);
+  RetainSummary* getUnarySummary(FunctionDecl* FD, UnaryFuncKind func);
   
-  CFRefSummary* getNSSummary(FunctionDecl* FD, const char* FName);
-  CFRefSummary* getCFSummary(FunctionDecl* FD, const char* FName);
+  RetainSummary* getNSSummary(FunctionDecl* FD, const char* FName);
+  RetainSummary* getCFSummary(FunctionDecl* FD, const char* FName);
   
-  CFRefSummary* getCFSummaryCreateRule(FunctionDecl* FD);
-  CFRefSummary* getCFSummaryGetRule(FunctionDecl* FD);  
+  RetainSummary* getCFSummaryCreateRule(FunctionDecl* FD);
+  RetainSummary* getCFSummaryGetRule(FunctionDecl* FD);  
   
-  CFRefSummary* getPersistentSummary(ArgEffects* AE, RetEffect RE);
+  RetainSummary* getPersistentSummary(ArgEffects* AE, RetEffect RE);
     
 public:
-  CFRefSummaryManager(ASTContext& ctx, bool gcenabled)
+  
+  RetainSummaryManager(ASTContext& ctx, bool gcenabled)
    : Ctx(ctx), GCEnabled(gcenabled) {}
   
-  ~CFRefSummaryManager();
+  ~RetainSummaryManager();
   
-  CFRefSummary* getSummary(FunctionDecl* FD, ASTContext& Ctx);
+  RetainSummary* getSummary(FunctionDecl* FD, ASTContext& Ctx);
+  
+  bool isGCEnabled() const { return GCEnabled; }
 };
   
 } // end anonymous namespace
@@ -185,17 +233,17 @@ public:
 // Implementation of checker data structures.
 //===----------------------------------------------------------------------===//
 
-CFRefSummaryManager::~CFRefSummaryManager() {
+RetainSummaryManager::~RetainSummaryManager() {
   
   // FIXME: The ArgEffects could eventually be allocated from BPAlloc, 
   //   mitigating the need to do explicit cleanup of the
   //   Argument-Effect summaries.
   
-  for (AESetTy::iterator I = AESet.begin(), E = AESet.end(); I!=E; ++I)
+  for (ArgEffectsSetTy::iterator I = ArgEffectsSet.begin(), E = ArgEffectsSet.end(); I!=E; ++I)
     I->getValue().~ArgEffects();
 }
 
-ArgEffects* CFRefSummaryManager::getArgEffects() {
+ArgEffects* RetainSummaryManager::getArgEffects() {
 
   if (ScratchArgs.empty())
     return NULL;
@@ -210,7 +258,7 @@ ArgEffects* CFRefSummaryManager::getArgEffects() {
   // Look up the uniqued copy, or create a new one.
   
   llvm::FoldingSetNodeWrapper<ArgEffects>* E =
-    AESet.FindNodeOrInsertPos(profile, InsertPos);
+    ArgEffectsSet.FindNodeOrInsertPos(profile, InsertPos);
   
   if (E) {
     ScratchArgs.clear();
@@ -221,36 +269,39 @@ ArgEffects* CFRefSummaryManager::getArgEffects() {
       BPAlloc.Allocate<llvm::FoldingSetNodeWrapper<ArgEffects> >();
                        
   new (E) llvm::FoldingSetNodeWrapper<ArgEffects>(ScratchArgs);
-  AESet.InsertNode(E, InsertPos);
+  ArgEffectsSet.InsertNode(E, InsertPos);
 
   ScratchArgs.clear();
   return &E->getValue();
 }
 
-CFRefSummary* CFRefSummaryManager::getPersistentSummary(ArgEffects* AE,
+RetainSummary* RetainSummaryManager::getPersistentSummary(ArgEffects* AE,
                                                         RetEffect RE) {
   
   // Generate a profile for the summary.
   llvm::FoldingSetNodeID profile;
-  CFRefSummary::Profile(profile, AE, RE);
+  RetainSummary::Profile(profile, AE, RE);
   
   // Look up the uniqued summary, or create one if it doesn't exist.
   void* InsertPos;  
-  CFRefSummary* Summ = SummarySet.FindNodeOrInsertPos(profile, InsertPos);
+  RetainSummary* Summ = SummarySet.FindNodeOrInsertPos(profile, InsertPos);
   
   if (Summ)
     return Summ;
   
   // Create the summary and return it.
-  Summ = (CFRefSummary*) BPAlloc.Allocate<CFRefSummary>();
-  new (Summ) CFRefSummary(AE, RE);
+  Summ = (RetainSummary*) BPAlloc.Allocate<RetainSummary>();
+  new (Summ) RetainSummary(AE, RE);
   SummarySet.InsertNode(Summ, InsertPos);
   
   return Summ;
 }
 
+//===----------------------------------------------------------------------===//
+// Summary creation for functions (largely uses of Core Foundation).
+//===----------------------------------------------------------------------===//
 
-CFRefSummary* CFRefSummaryManager::getSummary(FunctionDecl* FD,
+RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD,
                                               ASTContext& Ctx) {
 
   SourceLocation Loc = FD->getLocation();
@@ -259,26 +310,26 @@ CFRefSummary* CFRefSummaryManager::getSummary(FunctionDecl* FD,
     return NULL;
   
   // Look up a summary in our cache of FunctionDecls -> Summaries.
-  SummaryMapTy::iterator I = SummaryMap.find(FD);
+  FuncSummariesTy::iterator I = FuncSummaries.find(FD);
 
-  if (I != SummaryMap.end())
+  if (I != FuncSummaries.end())
     return I->second;
 
   // No summary.  Generate one.
   const char* FName = FD->getIdentifier()->getName();
     
-  CFRefSummary *S = 0;
+  RetainSummary *S = 0;
   
   if (FName[0] == 'C' && FName[1] == 'F')
     S = getCFSummary(FD, FName);
   else if (FName[0] == 'N' && FName[1] == 'S')
     S = getNSSummary(FD, FName);
 
-  SummaryMap[FD] = S;
+  FuncSummaries[FD] = S;
   return S;  
 }
 
-CFRefSummary* CFRefSummaryManager::getNSSummary(FunctionDecl* FD,
+RetainSummary* RetainSummaryManager::getNSSummary(FunctionDecl* FD,
                                                 const char* FName) {
   FName += 2;
   
@@ -288,7 +339,7 @@ CFRefSummary* CFRefSummaryManager::getNSSummary(FunctionDecl* FD,
   return 0;  
 }
   
-CFRefSummary* CFRefSummaryManager::getCFSummary(FunctionDecl* FD,
+RetainSummary* RetainSummaryManager::getCFSummary(FunctionDecl* FD,
                                                 const char* FName) {
 
   FName += 2;
@@ -311,8 +362,8 @@ CFRefSummary* CFRefSummaryManager::getCFSummary(FunctionDecl* FD,
   return 0;
 }
 
-CFRefSummary*
-CFRefSummaryManager::getUnarySummary(FunctionDecl* FD, UnaryFuncKind func) {
+RetainSummary*
+RetainSummaryManager::getUnarySummary(FunctionDecl* FD, UnaryFuncKind func) {
   
   FunctionTypeProto* FT =
     dyn_cast<FunctionTypeProto>(FD->getType().getTypePtr());
@@ -330,7 +381,7 @@ CFRefSummaryManager::getUnarySummary(FunctionDecl* FD, UnaryFuncKind func) {
     if (!ArgT->isPointerType())
       return NULL;
   }
-
+  
   assert (ScratchArgs.empty());
   
   switch (func) {
@@ -380,8 +431,7 @@ static bool isCFRefType(QualType T) {
   return true;
 }
 
-CFRefSummary*
-CFRefSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
+RetainSummary* RetainSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
  
   FunctionTypeProto* FT =
     dyn_cast<FunctionTypeProto>(FD->getType().getTypePtr());
@@ -396,8 +446,7 @@ CFRefSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
   return getPersistentSummary(getArgEffects(), RetEffect::MakeOwned());
 }
 
-CFRefSummary*
-CFRefSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
+RetainSummary* RetainSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
   
   FunctionTypeProto* FT =
     dyn_cast<FunctionTypeProto>(FD->getType().getTypePtr());
@@ -421,6 +470,13 @@ CFRefSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
   assert (ScratchArgs.empty());  
   return getPersistentSummary(getArgEffects(), RetEffect::MakeNotOwned());
 }
+
+//===----------------------------------------------------------------------===//
+// Summary creation for Selectors.
+//===----------------------------------------------------------------------===//
+
+
+
 
 //===----------------------------------------------------------------------===//
 // Reference-counting logic (typestate + counts).
@@ -610,11 +666,10 @@ public:
 private:
   // Instance variables.
   
-  CFRefSummaryManager Summaries;  
-  const bool          GCEnabled;
-  const bool          EmitStandardWarnings;  
-  const LangOptions&  LOpts;
-  RefBFactoryTy       RefBFactory;
+  RetainSummaryManager Summaries;  
+  const bool           EmitStandardWarnings;  
+  const LangOptions&   LOpts;
+  RefBFactoryTy        RefBFactory;
      
   UseAfterReleasesTy UseAfterReleases;
   ReleasesNotOwnedTy ReleasesNotOwned;
@@ -663,7 +718,6 @@ public:
   CFRefCount(ASTContext& Ctx, bool gcenabled, bool StandardWarnings,
              const LangOptions& lopts)
     : Summaries(Ctx, gcenabled),
-      GCEnabled(gcenabled),
       EmitStandardWarnings(StandardWarnings),
       LOpts(lopts),
       RetainSelector(GetNullarySelector("retain", Ctx)),
@@ -681,16 +735,26 @@ public:
     return &Printer;
   }
   
-  bool isGCEnabled() const { return GCEnabled; }
+  bool isGCEnabled() const { return Summaries.isGCEnabled(); }
   const LangOptions& getLangOptions() const { return LOpts; }
   
   // Calls.
-  
+
+  void EvalSummary(ExplodedNodeSet<ValueState>& Dst,
+                   GRExprEngine& Eng,
+                   GRStmtNodeBuilder<ValueState>& Builder,
+                   Expr* Ex,
+                   Expr* Receiver,
+                   RetainSummary* Summ,
+                   Expr** arg_beg, Expr** arg_end,                             
+                   ExplodedNode<ValueState>* Pred);
+    
   virtual void EvalCall(ExplodedNodeSet<ValueState>& Dst,
                         GRExprEngine& Eng,
                         GRStmtNodeBuilder<ValueState>& Builder,
                         CallExpr* CE, RVal L,
                         ExplodedNode<ValueState>* Pred);  
+  
   
   virtual void EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
                                    GRExprEngine& Engine,
@@ -772,11 +836,11 @@ void CFRefCount::BindingsPrinter::PrintCheckerState(std::ostream& Out,
   }
 }
 
-static inline ArgEffect GetArgE(CFRefSummary* Summ, unsigned idx) {
+static inline ArgEffect GetArgE(RetainSummary* Summ, unsigned idx) {
   return Summ ? Summ->getArg(idx) : DoNothing;
 }
 
-static inline RetEffect GetRetE(CFRefSummary* Summ) {
+static inline RetEffect GetRetE(RetainSummary* Summ) {
   return Summ ? Summ->getRet() : RetEffect::MakeNoRet();
 }
 
@@ -803,33 +867,25 @@ void CFRefCount::ProcessNonLeakError(ExplodedNodeSet<ValueState>& Dst,
   }
 }
 
-void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
-                          GRExprEngine& Eng,
-                          GRStmtNodeBuilder<ValueState>& Builder,
-                          CallExpr* CE, RVal L,
-                          ExplodedNode<ValueState>* Pred) {
+void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
+                             GRExprEngine& Eng,
+                             GRStmtNodeBuilder<ValueState>& Builder,
+                             Expr* Ex,
+                             Expr* Receiver,
+                             RetainSummary* Summ,
+                             Expr** arg_beg, Expr** arg_end,                             
+                             ExplodedNode<ValueState>* Pred) {
   
-  ValueStateManager& StateMgr = Eng.getStateManager();
   
-  CFRefSummary* Summ = NULL;
-  
-  // Get the summary.
-
-  if (isa<lval::FuncVal>(L)) {  
-    lval::FuncVal FV = cast<lval::FuncVal>(L);
-    FunctionDecl* FD = FV.getDecl();
-    Summ = Summaries.getSummary(FD, Eng.getContext());
-  }
-
   // Get the state.
-  
+  ValueStateManager& StateMgr = Eng.getStateManager();  
   ValueState* St = Builder.GetState(Pred);
   
   // Evaluate the effects of the call.
   
   ValueState StVals = *St;
   RefVal::Kind hasErr = (RefVal::Kind) 0;
- 
+  
   // This function has a summary.  Evaluate the effect of the arguments.
   
   unsigned idx = 0;
@@ -837,8 +893,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
   Expr* ErrorExpr = NULL;
   SymbolID ErrorSym = 0;                                        
   
-  for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
-        I != E; ++I, ++idx) {
+  for (Expr **I = arg_beg, **E = arg_end; I != E; ++I, ++idx) {
     
     RVal V = StateMgr.GetRVal(St, *I);
     
@@ -857,24 +912,22 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
         }
       }
     }  
-    else if (isa<LVal>(V)) { // Nuke all arguments passed by reference.
-      
-      // FIXME: This is basically copy-and-paste from GRSimpleVals.  We 
-      //  should compose behavior, not copy it.
+    else if (isa<LVal>(V)) {
+      // Nuke all arguments passed by reference.
       StateMgr.Unbind(StVals, cast<LVal>(V));
     }
     else if (isa<nonlval::LValAsInteger>(V))
       StateMgr.Unbind(StVals, cast<nonlval::LValAsInteger>(V).getLVal());
-  }    
+  } 
   
   St = StateMgr.getPersistentState(StVals);
-    
+  
   if (hasErr) {
-    ProcessNonLeakError(Dst, Builder, CE, ErrorExpr, Pred, St,
+    ProcessNonLeakError(Dst, Builder, Ex, ErrorExpr, Pred, St,
                         hasErr, ErrorSym);
     return;
   }
-    
+  
   // Finally, consult the summary for the return value.
   
   RetEffect RE = GetRetE(Summ);
@@ -882,66 +935,89 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
   switch (RE.getKind()) {
     default:
       assert (false && "Unhandled RetEffect."); break;
-    
+      
     case RetEffect::NoRet:
-    
+      
       // Make up a symbol for the return value (not reference counted).
       // FIXME: This is basically copy-and-paste from GRSimpleVals.  We 
       //  should compose behavior, not copy it.
       
-      if (CE->getType() != Eng.getContext().VoidTy) {    
+      if (Ex->getType() != Eng.getContext().VoidTy) {    
         unsigned Count = Builder.getCurrentBlockCount();
-        SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(CE, Count);
+        SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
         
-        RVal X = CE->getType()->isPointerType() 
-          ? cast<RVal>(lval::SymbolVal(Sym)) 
-          : cast<RVal>(nonlval::SymbolVal(Sym));
+        RVal X = Ex->getType()->isPointerType() 
+        ? cast<RVal>(lval::SymbolVal(Sym)) 
+        : cast<RVal>(nonlval::SymbolVal(Sym));
         
-        St = StateMgr.SetRVal(St, CE, X, Eng.getCFG().isBlkExpr(CE), false);
+        St = StateMgr.SetRVal(St, Ex, X, Eng.getCFG().isBlkExpr(Ex), false);
       }      
       
       break;
       
     case RetEffect::Alias: {
       unsigned idx = RE.getValue();
-      assert (idx < CE->getNumArgs());
-      RVal V = StateMgr.GetRVal(St, CE->getArg(idx));
-      St = StateMgr.SetRVal(St, CE, V, Eng.getCFG().isBlkExpr(CE), false);
+      assert ((arg_end - arg_beg) >= 0);
+      assert (idx < (unsigned) (arg_end - arg_beg));
+      RVal V = StateMgr.GetRVal(St, arg_beg[idx]);
+      St = StateMgr.SetRVal(St, Ex, V, Eng.getCFG().isBlkExpr(Ex), false);
       break;
     }
       
     case RetEffect::OwnedSymbol: {
       unsigned Count = Builder.getCurrentBlockCount();
-      SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(CE, Count);
-
+      SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
+      
       ValueState StImpl = *St;
       RefBindings B = GetRefBindings(StImpl);
       SetRefBindings(StImpl, RefBFactory.Add(B, Sym, RefVal::makeOwned()));
       
       St = StateMgr.SetRVal(StateMgr.getPersistentState(StImpl),
-                            CE, lval::SymbolVal(Sym),
-                            Eng.getCFG().isBlkExpr(CE), false);
+                            Ex, lval::SymbolVal(Sym),
+                            Eng.getCFG().isBlkExpr(Ex), false);
       
       break;
     }
       
     case RetEffect::NotOwnedSymbol: {
       unsigned Count = Builder.getCurrentBlockCount();
-      SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(CE, Count);
+      SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
       
       ValueState StImpl = *St;
       RefBindings B = GetRefBindings(StImpl);
       SetRefBindings(StImpl, RefBFactory.Add(B, Sym, RefVal::makeNotOwned()));
       
       St = StateMgr.SetRVal(StateMgr.getPersistentState(StImpl),
-                            CE, lval::SymbolVal(Sym),
-                            Eng.getCFG().isBlkExpr(CE), false);
+                            Ex, lval::SymbolVal(Sym),
+                            Eng.getCFG().isBlkExpr(Ex), false);
       
       break;
     }
   }
-      
-  Builder.MakeNode(Dst, CE, Pred, St);
+  
+  Builder.MakeNode(Dst, Ex, Pred, St);
+}
+
+
+void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
+                          GRExprEngine& Eng,
+                          GRStmtNodeBuilder<ValueState>& Builder,
+                          CallExpr* CE, RVal L,
+                          ExplodedNode<ValueState>* Pred) {
+  
+  
+  RetainSummary* Summ = NULL;
+  
+  // Get the summary.
+
+  if (isa<lval::FuncVal>(L)) {  
+    lval::FuncVal FV = cast<lval::FuncVal>(L);
+    FunctionDecl* FD = FV.getDecl();
+    Summ = Summaries.getSummary(FD, Eng.getContext());
+  }
+  
+  EvalSummary(Dst, Eng, Builder, CE, 0, Summ,
+              CE->arg_begin(), CE->arg_end(), Pred);
 }
 
 
@@ -996,7 +1072,7 @@ bool CFRefCount::EvalObjCMessageExprAux(ExplodedNodeSet<ValueState>& Dst,
                                         ObjCMessageExpr* ME,
                                         ExplodedNode<ValueState>* Pred) {
   
-  if (GCEnabled)
+  if (isGCEnabled())
     return true;
   
   // Handle "toll-free bridging" of calls to "Release" and "Retain".
@@ -1344,7 +1420,7 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
       assert (false && "Unhandled CFRef transition.");
       
     case DoNothing:
-      if (!GCEnabled && V.getKind() == RefVal::Released) {
+      if (!isGCEnabled() && V.getKind() == RefVal::Released) {
         V = RefVal::makeUseAfterRelease();        
         hasErr = V.getKind();
         break;
@@ -1366,7 +1442,7 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
           break;
           
         case RefVal::Released:
-          if (GCEnabled)
+          if (isGCEnabled())
             V = RefVal::makeOwned();
           else {          
             V = RefVal::makeUseAfterRelease();
