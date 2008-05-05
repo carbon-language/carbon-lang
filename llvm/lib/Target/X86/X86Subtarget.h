@@ -67,7 +67,10 @@ protected:
   
   /// DarwinVers - Nonzero if this is a darwin platform: the numeric
   /// version of the platform, e.g. 8 = 10.4 (Tiger), 9 = 10.5 (Leopard), etc.
-  unsigned char DarwinVers; // Is any darwin-ppc platform.
+  unsigned char DarwinVers; // Is any darwin-x86 platform.
+
+  /// isLinux - true if this is a "linux" platform.
+  bool IsLinux;
 
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
@@ -84,7 +87,7 @@ private:
 
 public:
   enum {
-    isELF, isELFLinux, isCygwin, isDarwin, isWindows, isMingw
+    isELF, isCygwin, isDarwin, isWindows, isMingw
   } TargetType;
 
   /// This constructor initializes the data members to match that
@@ -133,10 +136,7 @@ public:
 
   bool isTargetDarwin() const { return TargetType == isDarwin; }
   bool isTargetELF() const {
-    return TargetType == isELF || TargetType == isELFLinux;
-  }
-  bool isTargetLinux() const {
-    return TargetType == isELFLinux;
+    return TargetType == isELF;
   }
   bool isTargetWindows() const { return TargetType == isWindows; }
   bool isTargetMingw() const { return TargetType == isMingw; }
@@ -169,6 +169,9 @@ public:
   /// getDarwinVers - Return the darwin version number, 8 = tiger, 9 = leopard.
   unsigned getDarwinVers() const { return DarwinVers; }
   
+  /// isLinux - Return true if the target is "Linux".
+  bool isLinux() const { return IsLinux; }
+
   /// True if accessing the GV requires an extra load. For Windows, dllimported
   /// symbols are indirect, loading the value at address GV rather then the
   /// value of GV itself. This means that the GlobalAddress must be in the base
