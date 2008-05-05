@@ -1509,7 +1509,8 @@ namespace {
     CFRefBug(CFRefCount& tf) : TF(tf) {}
     
     CFRefCount& getTF() { return TF; }
-    
+    const CFRefCount& getTF() const { return TF; }
+
     virtual bool isLeak() const { return false; }
   };
   
@@ -1518,7 +1519,7 @@ namespace {
     UseAfterRelease(CFRefCount& tf) : CFRefBug(tf) {}
     
     virtual const char* getName() const {
-      return "Core Foundation: Use-After-Release";
+      return "Use-After-Release";
     }
     virtual const char* getDescription() const {
       return "Reference-counted object is used"
@@ -1533,7 +1534,7 @@ namespace {
     BadRelease(CFRefCount& tf) : CFRefBug(tf) {}
     
     virtual const char* getName() const {
-      return "Core Foundation: Release of non-owned object";
+      return "Bad Release";
     }
     virtual const char* getDescription() const {
       return "Incorrect decrement of the reference count of a "
@@ -1549,7 +1550,7 @@ namespace {
     Leak(CFRefCount& tf) : CFRefBug(tf) {}
     
     virtual const char* getName() const {
-      return "Core Foundation: Memory Leak";
+      return getTF().isGCEnabled() ? "Memory Leak (GC)" : "Memory Leak";
     }
     
     virtual const char* getDescription() const {
