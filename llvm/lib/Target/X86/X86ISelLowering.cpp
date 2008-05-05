@@ -6214,35 +6214,36 @@ static SDOperand PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   MVT::ValueType VT = N->getValueType(0);
   MVT::ValueType EVT = MVT::getVectorElementType(VT);
   SDOperand PermMask = N->getOperand(2);
-  int NumElems = (int)PermMask.getNumOperands();
+  unsigned NumElems = PermMask.getNumOperands();
   SDNode *Base = NULL;
-  for (int i = 0; i < NumElems; ++i) {
-    SDOperand Idx = PermMask.getOperand(i);
-    if (Idx.getOpcode() == ISD::UNDEF) {
-      if (!Base) return SDOperand();
-    } else {
-      SDOperand Arg =
-        getShuffleScalarElt(N, cast<ConstantSDNode>(Idx)->getValue(), DAG);
-      if (!Arg.Val || !ISD::isNON_EXTLoad(Arg.Val))
-        return SDOperand();
+  for (unsigned i = 0; i < NumElems; ++i) {
+    SDOperand Elt = PermMask.getOperand(i);
+    if (Elt.getOpcode() == ISD::UNDEF) {
       if (!Base)
-        Base = Arg.Val;
-      else if (!isConsecutiveLoad(Arg.Val, Base,
-                                  i, MVT::getSizeInBits(EVT)/8,MFI))
         return SDOperand();
+      continue;
     }
+
+    unsigned Idx = cast<ConstantSDNode>(Elt)->getValue();
+    SDOperand Arg = getShuffleScalarElt(N, Idx, DAG);
+    if (!Arg.Val || !ISD::isNON_EXTLoad(Arg.Val))
+      return SDOperand();
+    if (!Base) {
+      Base = Arg.Val;
+      continue;
+    }
+
+    if (!isConsecutiveLoad(Arg.Val, Base, i, MVT::getSizeInBits(EVT)/8,MFI))
+      return SDOperand();
   }
 
-  bool isAlign16 = isBaseAlignment16(Base->getOperand(1).Val, MFI, Subtarget);
   LoadSDNode *LD = cast<LoadSDNode>(Base);
-  if (isAlign16) {
+  if (isBaseAlignment16(Base->getOperand(1).Val, MFI, Subtarget))
     return DAG.getLoad(VT, LD->getChain(), LD->getBasePtr(), LD->getSrcValue(),
                        LD->getSrcValueOffset(), LD->isVolatile());
-  } else {
-    return DAG.getLoad(VT, LD->getChain(), LD->getBasePtr(), LD->getSrcValue(),
-                       LD->getSrcValueOffset(), LD->isVolatile(),
-                       LD->getAlignment());
-  }
+  return DAG.getLoad(VT, LD->getChain(), LD->getBasePtr(), LD->getSrcValue(),
+                     LD->getSrcValueOffset(), LD->isVolatile(),
+                     LD->getAlignment());
 }
 
 /// PerformSELECTCombine - Do target-specific dag combines on SELECT nodes.
