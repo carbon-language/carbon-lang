@@ -5753,9 +5753,9 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
   // For the atomic bitwise operator, we generate
   //   thisMBB:
   //   newMBB:
-  //     ld  EAX = [bitinstr.addr]
-  //     mov t1 = EAX
-  //     op  t2 = t1, [bitinstr.val] 
+  //     ld  t1 = [bitinstr.addr]
+  //     op  t2 = t1, [bitinstr.val]
+  //     mov EAX = t1
   //     lcs dest = [bitinstr.addr], t2  [EAX is implicit]
   //     bz  newMBB
   //     fallthrough -->nextMBB
@@ -5794,13 +5794,10 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
   int lastAddrIndx = 3; // [0,3]
   int valArgIndx = 4;
   
-  MachineInstrBuilder MIB = BuildMI(newMBB, TII->get(X86::MOV32rm), X86::EAX);
+  unsigned t1 = F->getRegInfo().createVirtualRegister(X86::GR32RegisterClass);
+  MachineInstrBuilder MIB = BuildMI(newMBB, TII->get(X86::MOV32rm), t1);
   for (int i=0; i <= lastAddrIndx; ++i)
     (*MIB).addOperand(*argOpers[i]);
-  
-  unsigned t1 = F->getRegInfo().createVirtualRegister(X86::GR32RegisterClass);
-  MIB = BuildMI(newMBB, TII->get(X86::MOV32rr), t1);
-  MIB.addReg(X86::EAX);
   
   unsigned t2 = F->getRegInfo().createVirtualRegister(X86::GR32RegisterClass);
   assert(   (argOpers[valArgIndx]->isReg() || argOpers[valArgIndx]->isImm())
@@ -5811,6 +5808,9 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
     MIB = BuildMI(newMBB, TII->get(immOpc), t2);
   MIB.addReg(t1);
   (*MIB).addOperand(*argOpers[valArgIndx]);
+  
+  MIB = BuildMI(newMBB, TII->get(X86::MOV32rr), X86::EAX);
+  MIB.addReg(t1);
   
   MIB = BuildMI(newMBB, TII->get(X86::LCMPXCHG32));
   for (int i=0; i <= lastAddrIndx; ++i)
@@ -5835,11 +5835,11 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
   // For the atomic min/max operator, we generate
   //   thisMBB:
   //   newMBB:
-  //     ld EAX = [min/max.addr]
-  //     mov t1 = EAX
+  //     ld t1 = [min/max.addr]
   //     mov t2 = [min/max.val] 
   //     cmp  t1, t2
   //     cmov[cond] t2 = t1
+  //     mov EAX = t1
   //     lcs dest = [bitinstr.addr], t2  [EAX is implicit]
   //     bz   newMBB
   //     fallthrough -->nextMBB
@@ -5879,14 +5879,11 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
   int lastAddrIndx = 3; // [0,3]
   int valArgIndx = 4;
   
-  MachineInstrBuilder MIB = BuildMI(newMBB, TII->get(X86::MOV32rm), X86::EAX);
+  unsigned t1 = F->getRegInfo().createVirtualRegister(X86::GR32RegisterClass);
+  MachineInstrBuilder MIB = BuildMI(newMBB, TII->get(X86::MOV32rm), t1);
   for (int i=0; i <= lastAddrIndx; ++i)
     (*MIB).addOperand(*argOpers[i]);
-  
-  unsigned t1 = F->getRegInfo().createVirtualRegister(X86::GR32RegisterClass);
-  MIB = BuildMI(newMBB, TII->get(X86::MOV32rr), t1);
-  MIB.addReg(X86::EAX);
-  
+
   // We only support register and immediate values
   assert(   (argOpers[valArgIndx]->isReg() || argOpers[valArgIndx]->isImm())
          && "invalid operand");
@@ -5897,6 +5894,9 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
   else 
     MIB = BuildMI(newMBB, TII->get(X86::MOV32rr), t2);
   (*MIB).addOperand(*argOpers[valArgIndx]);
+
+  MIB = BuildMI(newMBB, TII->get(X86::MOV32rr), X86::EAX);
+  MIB.addReg(t1);
 
   MIB = BuildMI(newMBB, TII->get(X86::CMP32rr));
   MIB.addReg(t1);
