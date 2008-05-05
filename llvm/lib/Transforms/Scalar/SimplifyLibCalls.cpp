@@ -454,6 +454,7 @@ static bool IsOnlyUsedInZeroEqualityComparison(Value *V) {
 // Miscellaneous LibCall Optimizations
 //===----------------------------------------------------------------------===//
 
+namespace {
 //===---------------------------------------===//
 // 'exit' Optimizations
 
@@ -1236,6 +1237,7 @@ struct VISIBILITY_HIDDEN FPrintFOpt : public LibCallOptimization {
   }
 };
 
+} // end anonymous namespace.
 
 //===----------------------------------------------------------------------===//
 // SimplifyLibCalls Pass Implementation
