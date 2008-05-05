@@ -241,6 +241,7 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
   , X863DNowLevel(NoThreeDNow)
   , HasX86_64(false)
   , DarwinVers(0)
+  , IsLinux(false)
   , stackAlignment(8)
   // FIXME: this is a known good value for Yonah. How about others?
   , MaxInlineSizeThreshold(128)
