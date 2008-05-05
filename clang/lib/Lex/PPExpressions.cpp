@@ -434,10 +434,10 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
     
     // Decide whether to include the next binop in this subexpression.  For
     // example, when parsing x+y*z and looking at '*', we want to recursively
-    // handling y*z as a single subexpression.  We do this because the
-    // precedence of * is higher than that of +.  The only strange case we have
-    // to handle here is for the ?: operator, where the precedence is actually
-    // lower than the LHS of the '?'.  The grammar rule is:
+    // handle y*z as a single subexpression.  We do this because the precedence
+    // of * is higher than that of +.  The only strange case we have to handle
+    // here is for the ?: operator, where the precedence is actually lower than
+    // the LHS of the '?'.  The grammar rule is:
     //
     // conditional-expression ::=
     //    logical-OR-expression ? expression : conditional-expression
@@ -620,7 +620,8 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
       if (EvaluateValue(AfterColonVal, PeekTok, DT, AfterColonLive, PP))
         return true;
 
-      // Parse anything after the : with the same precedence as ?.
+      // Parse anything after the : with the same precedence as ?.  We allow
+      // things of equal precedence because ?: is right associative.
       if (EvaluateDirectiveSubExpr(AfterColonVal, ThisPrec,
                                    PeekTok, AfterColonLive, PP))
         return true;
