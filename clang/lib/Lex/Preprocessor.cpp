@@ -124,6 +124,26 @@ void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID,
   Diags.Report(getFullLoc(Loc), DiagID, &Msg, 1);
 }
 
+void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID,
+                        const std::string &Msg,
+                        const SourceRange &R1, const SourceRange &R2) {
+  SourceRange R[] = {R1, R2};
+  Diags.Report(getFullLoc(Loc), DiagID, &Msg, 1, R, 2);
+}
+
+
+void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID,
+                        const SourceRange &R) {
+  Diags.Report(getFullLoc(Loc), DiagID, 0, 0, &R, 1);
+}
+
+void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID,
+                        const SourceRange &R1, const SourceRange &R2) {
+  SourceRange R[] = {R1, R2};
+  Diags.Report(getFullLoc(Loc), DiagID, 0, 0, R, 2);
+}
+
+
 void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {
   llvm::cerr << tok::getTokenName(Tok.getKind()) << " '"
              << getSpelling(Tok) << "'";

@@ -300,6 +300,11 @@ public:
   /// position in the current buffer into a SourcePosition object for rendering.
   void Diag(SourceLocation Loc, unsigned DiagID);  
   void Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg);
+  void Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
+            const SourceRange &R1, const SourceRange &R2);
+  void Diag(SourceLocation Loc, unsigned DiagID, const SourceRange &R);
+  void Diag(SourceLocation Loc, unsigned DiagID, const SourceRange &R1,
+            const SourceRange &R2);
   void Diag(const Token &Tok, unsigned DiagID) {
     Diag(Tok.getLocation(), DiagID);
   }

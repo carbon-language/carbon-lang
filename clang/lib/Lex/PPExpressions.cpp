@@ -26,7 +26,30 @@
 #include "llvm/ADT/SmallString.h"
 using namespace clang;
 
-static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
+/// PPValue - Represents the value of a subexpression of a preprocessor
+/// conditional and the source range covered by it.
+class PPValue {
+  SourceRange Range;
+public:
+  llvm::APSInt Val;
+  
+  // Default ctor - Construct an 'invalid' PPValue.
+  PPValue(unsigned BitWidth) : Val(BitWidth) {}
+  
+  unsigned getBitWidth() const { return Val.getBitWidth(); }
+  bool isUnsigned() const { return Val.isUnsigned(); }
+  
+  const SourceRange &getRange() const { return Range; }
+  
+  void setRange(SourceLocation L) { Range.setBegin(L); Range.setEnd(L); }
+  void setRange(SourceLocation B, SourceLocation E) {
+    Range.setBegin(B); Range.setEnd(E); 
+  }
+  void setBegin(SourceLocation L) { Range.setBegin(L); }
+  void setEnd(SourceLocation L) { Range.setEnd(L); }
+};
+
+static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
                                      Token &PeekTok, bool ValueLive,
                                      Preprocessor &PP);
 
@@ -50,8 +73,6 @@ struct DefinedTracker {
   IdentifierInfo *TheMacro;
 };
 
-
-
 /// EvaluateValue - Evaluate the token PeekTok (and any others needed) and
 /// return the computed value in Result.  Return true if there was an error
 /// parsing.  This function also returns information about the form of the
@@ -60,10 +81,8 @@ struct DefinedTracker {
 /// If ValueLive is false, then this value is being evaluated in a context where
 /// the result is not used.  As such, avoid diagnostics that relate to
 /// evaluation.
-static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
-                          DefinedTracker &DT, bool ValueLive,
-                          Preprocessor &PP) {
-  Result = 0;
+static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
+                          bool ValueLive, Preprocessor &PP) {
   DT.State = DefinedTracker::Unknown;
   
   // If this token's spelling is a pp-identifier, check to see if it is
@@ -75,22 +94,24 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
     // turns into "1".
     if (II->getPPKeywordID() != tok::pp_defined) {
       PP.Diag(PeekTok, diag::warn_pp_undef_identifier, II->getName());
-      Result = II->getTokenID() == tok::kw_true;
-      Result.setIsUnsigned(false);  // "0" is signed intmax_t 0.
+      Result.Val = II->getTokenID() == tok::kw_true;
+      Result.Val.setIsUnsigned(false);  // "0" is signed intmax_t 0.
+      Result.setRange(PeekTok.getLocation());
       PP.LexNonComment(PeekTok);
       return false;
     }
 
     // Handle "defined X" and "defined(X)".
+    Result.setBegin(PeekTok.getLocation());
 
     // Get the next token, don't expand it.
     PP.LexUnexpandedToken(PeekTok);
 
     // Two options, it can either be a pp-identifier or a (.
-    bool InParens = false;
+    SourceLocation LParenLoc;
     if (PeekTok.is(tok::l_paren)) {
       // Found a paren, remember we saw it and skip it.
-      InParens = true;
+      LParenLoc = PeekTok.getLocation();
       PP.LexUnexpandedToken(PeekTok);
     }
     
@@ -101,25 +122,28 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
     }
     
     // Otherwise, we got an identifier, is it defined to something?
-    Result = II->hasMacroDefinition();
-    Result.setIsUnsigned(false);  // Result is signed intmax_t.
+    Result.Val = II->hasMacroDefinition();
+    Result.Val.setIsUnsigned(false);  // Result is signed intmax_t.
 
     // If there is a macro, mark it used.
-    if (Result != 0 && ValueLive) {
+    if (Result.Val != 0 && ValueLive) {
       MacroInfo *Macro = PP.getMacroInfo(II);
       Macro->setIsUsed(true);
     }
 
     // Consume identifier.
+    Result.setEnd(PeekTok.getLocation());
     PP.LexNonComment(PeekTok);
 
     // If we are in parens, ensure we have a trailing ).
-    if (InParens) {
+    if (LParenLoc.isValid()) {
       if (PeekTok.isNot(tok::r_paren)) {
-        PP.Diag(PeekTok, diag::err_pp_missing_rparen);
+        PP.Diag(PeekTok.getLocation(), diag::err_pp_missing_rparen);
+        PP.Diag(LParenLoc, diag::err_matching, "(");
         return true;
       }
       // Consume the ).
+      Result.setEnd(PeekTok.getLocation());
       PP.LexNonComment(PeekTok);
     }
     
@@ -160,26 +184,28 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
       PP.Diag(PeekTok, diag::ext_longlong);
 
     // Parse the integer literal into Result.
-    if (Literal.GetIntegerValue(Result)) {
+    if (Literal.GetIntegerValue(Result.Val)) {
       // Overflow parsing integer literal.
       if (ValueLive) PP.Diag(PeekTok, diag::warn_integer_too_large);
-      Result.setIsUnsigned(true);
+      Result.Val.setIsUnsigned(true);
     } else {
       // Set the signedness of the result to match whether there was a U suffix
       // or not.
-      Result.setIsUnsigned(Literal.isUnsigned);
+      Result.Val.setIsUnsigned(Literal.isUnsigned);
     
       // Detect overflow based on whether the value is signed.  If signed
       // and if the value is too large, emit a warning "integer constant is so
       // large that it is unsigned" e.g. on 12345678901234567890 where intmax_t
       // is 64-bits.
-      if (!Literal.isUnsigned && Result.isNegative()) {
-        if (ValueLive)PP.Diag(PeekTok, diag::warn_integer_too_large_for_signed);
-        Result.setIsUnsigned(true);
+      if (!Literal.isUnsigned && Result.Val.isNegative()) {
+        if (ValueLive)
+          PP.Diag(PeekTok, diag::warn_integer_too_large_for_signed);
+        Result.Val.setIsUnsigned(true);
       }
     }
     
     // Consume the token.
+    Result.setRange(PeekTok.getLocation());
     PP.LexNonComment(PeekTok);
     return false;
   }
@@ -204,19 +230,21 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
     // Set the signedness.
     Val.setIsUnsigned(!TI.isCharSigned());
     
-    if (Result.getBitWidth() > Val.getBitWidth()) {
-      Result = Val.extend(Result.getBitWidth());
+    if (Result.Val.getBitWidth() > Val.getBitWidth()) {
+      Result.Val = Val.extend(Result.Val.getBitWidth());
     } else {
-      assert(Result.getBitWidth() == Val.getBitWidth() &&
+      assert(Result.Val.getBitWidth() == Val.getBitWidth() &&
              "intmax_t smaller than char/wchar_t?");
-      Result = Val;
+      Result.Val = Val;
     }
 
     // Consume the token.
+    Result.setRange(PeekTok.getLocation());
     PP.LexNonComment(PeekTok);
     return false;
   }
-  case tok::l_paren:
+  case tok::l_paren: {
+    SourceLocation Start = PeekTok.getLocation();
     PP.LexNonComment(PeekTok);  // Eat the (.
     // Parse the value and if there are any binary operators involved, parse
     // them.
@@ -227,63 +255,80 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
     if (PeekTok.is(tok::r_paren)) {
       // Just use DT unmodified as our result.
     } else {
+      // Otherwise, we have something like (x+y), and we consumed '(x'.
       if (EvaluateDirectiveSubExpr(Result, 1, PeekTok, ValueLive, PP))
         return true;
       
       if (PeekTok.isNot(tok::r_paren)) {
-        PP.Diag(PeekTok, diag::err_pp_expected_rparen);
+        PP.Diag(PeekTok.getLocation(), diag::err_pp_expected_rparen,
+                Result.getRange());
+        PP.Diag(Start, diag::err_matching, "(");
         return true;
       }
       DT.State = DefinedTracker::Unknown;
     }
+    Result.setRange(Start, PeekTok.getLocation());
     PP.LexNonComment(PeekTok);  // Eat the ).
     return false;
- 
-  case tok::plus:
+  }
+  case tok::plus: {
+    SourceLocation Start = PeekTok.getLocation();
     // Unary plus doesn't modify the value.
     PP.LexNonComment(PeekTok);
-    return EvaluateValue(Result, PeekTok, DT, ValueLive, PP);
+    if (EvaluateValue(Result, PeekTok, DT, ValueLive, PP)) return true;
+    Result.setBegin(Start);
+    return false;
+  }
   case tok::minus: {
     SourceLocation Loc = PeekTok.getLocation();
     PP.LexNonComment(PeekTok);
     if (EvaluateValue(Result, PeekTok, DT, ValueLive, PP)) return true;
+    Result.setBegin(Loc);
+    
     // C99 6.5.3.3p3: The sign of the result matches the sign of the operand.
-    Result = -Result;
+    Result.Val = -Result.Val;
     
     bool Overflow = false;
     if (Result.isUnsigned())
-      Overflow = Result.isNegative();
-    else if (Result.isMinSignedValue())
+      Overflow = Result.Val.isNegative();
+    else if (Result.Val.isMinSignedValue())
       Overflow = true;   // -MININT is the only thing that overflows.
       
     // If this operator is live and overflowed, report the issue.
     if (Overflow && ValueLive)
-      PP.Diag(Loc, diag::warn_pp_expr_overflow);
+      PP.Diag(Loc, diag::warn_pp_expr_overflow, Result.getRange());
     
     DT.State = DefinedTracker::Unknown;
     return false;
   }
     
-  case tok::tilde:
+  case tok::tilde: {
+    SourceLocation Start = PeekTok.getLocation();
     PP.LexNonComment(PeekTok);
     if (EvaluateValue(Result, PeekTok, DT, ValueLive, PP)) return true;
+    Result.setBegin(Start);
+
     // C99 6.5.3.3p4: The sign of the result matches the sign of the operand.
-    Result = ~Result;
+    Result.Val = ~Result.Val;
     DT.State = DefinedTracker::Unknown;
     return false;
+  }
     
-  case tok::exclaim:
+  case tok::exclaim: {
+    SourceLocation Start = PeekTok.getLocation();
     PP.LexNonComment(PeekTok);
     if (EvaluateValue(Result, PeekTok, DT, ValueLive, PP)) return true;
-    Result = !Result;
+    Result.setBegin(Start);
+    Result.Val = !Result.Val;
     // C99 6.5.3.3p5: The sign of the result is 'int', aka it is signed.
-    Result.setIsUnsigned(false);
+    Result.Val.setIsUnsigned(false);
     
     if (DT.State == DefinedTracker::DefinedMacro)
       DT.State = DefinedTracker::NotDefinedMacro;
     else if (DT.State == DefinedTracker::NotDefinedMacro)
       DT.State = DefinedTracker::DefinedMacro;
     return false;
+  }
     
   // FIXME: Handle #assert
   }
@@ -327,18 +372,19 @@ static unsigned getPrecedence(tok::TokenKind Kind) {
 
 
 /// EvaluateDirectiveSubExpr - Evaluate the subexpression whose first token is
-/// PeekTok, and whose precedence is PeekPrec.
+/// PeekTok, and whose precedence is PeekPrec.  This returns the result in LHS.
 ///
 /// If ValueLive is false, then this value is being evaluated in a context where
 /// the result is not used.  As such, avoid diagnostics that relate to
-/// evaluation.
-static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
+/// evaluation, such as division by zero warnings.
+static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
                                      Token &PeekTok, bool ValueLive,
                                      Preprocessor &PP) {
   unsigned PeekPrec = getPrecedence(PeekTok.getKind());
   // If this token isn't valid, report the error.
   if (PeekPrec == ~0U) {
-    PP.Diag(PeekTok, diag::err_pp_expr_bad_token_binop);
+    PP.Diag(PeekTok.getLocation(), diag::err_pp_expr_bad_token_binop,
+            LHS.getRange());
     return true;
   }
   
@@ -356,20 +402,20 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
     // this example, the RHS of the && being dead does not make the rest of the
     // expr dead.
     bool RHSIsLive;
-    if (Operator == tok::ampamp && LHS == 0)
+    if (Operator == tok::ampamp && LHS.Val == 0)
       RHSIsLive = false;   // RHS of "0 && x" is dead.
-    else if (Operator == tok::pipepipe && LHS != 0)
+    else if (Operator == tok::pipepipe && LHS.Val != 0)
       RHSIsLive = false;   // RHS of "1 || x" is dead.
-    else if (Operator == tok::question && LHS == 0)
+    else if (Operator == tok::question && LHS.Val == 0)
       RHSIsLive = false;   // RHS (x) of "0 ? x : y" is dead.
     else
       RHSIsLive = ValueLive;
 
-    // Consume the operator, saving the operator token for error reporting.
-    Token OpToken = PeekTok;
+    // Consume the operator, remembering the operator's location for reporting.
+    SourceLocation OpLoc = PeekTok.getLocation();
     PP.LexNonComment(PeekTok);
 
-    llvm::APSInt RHS(LHS.getBitWidth());
+    PPValue RHS(LHS.getBitWidth());
     // Parse the RHS of the operator.
     DefinedTracker DT;
     if (EvaluateValue(RHS, PeekTok, DT, RHSIsLive, PP)) return true;
@@ -381,7 +427,8 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
 
     // If this token isn't valid, report the error.
     if (PeekPrec == ~0U) {
-      PP.Diag(PeekTok, diag::err_pp_expr_bad_token_binop);
+      PP.Diag(PeekTok.getLocation(), diag::err_pp_expr_bad_token_binop,
+              RHS.getRange());
       return true;
     }
     
@@ -414,15 +461,17 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
       // If this just promoted something from signed to unsigned, and if the
       // value was negative, warn about it.
       if (ValueLive && Res.isUnsigned()) {
-        if (!LHS.isUnsigned() && LHS.isNegative())
-          PP.Diag(OpToken, diag::warn_pp_convert_lhs_to_positive,
-                  LHS.toStringSigned() + " to " + LHS.toStringUnsigned());
-        if (!RHS.isUnsigned() && RHS.isNegative())
-          PP.Diag(OpToken, diag::warn_pp_convert_rhs_to_positive,
-                  RHS.toStringSigned() + " to " + RHS.toStringUnsigned());
+        if (!LHS.isUnsigned() && LHS.Val.isNegative())
+          PP.Diag(OpLoc, diag::warn_pp_convert_lhs_to_positive,
+                  LHS.Val.toStringSigned() + " to "+LHS.Val.toStringUnsigned(),
+                  LHS.getRange(), RHS.getRange());
+        if (!RHS.isUnsigned() && RHS.Val.isNegative())
+          PP.Diag(OpLoc, diag::warn_pp_convert_rhs_to_positive,
+                  RHS.Val.toStringSigned() + " to "+RHS.Val.toStringUnsigned(),
+                  LHS.getRange(), RHS.getRange());
       }
-      LHS.setIsUnsigned(Res.isUnsigned());
-      RHS.setIsUnsigned(Res.isUnsigned());
+      LHS.Val.setIsUnsigned(Res.isUnsigned());
+      RHS.Val.setIsUnsigned(Res.isUnsigned());
     }
     
     // FIXME: All of these should detect and report overflow??
@@ -430,133 +479,132 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
     switch (Operator) {
     default: assert(0 && "Unknown operator token!");
     case tok::percent:
-      if (RHS == 0) {
-        if (ValueLive) {
-          PP.Diag(OpToken, diag::err_pp_remainder_by_zero);
-          return true;
-        }
-      } else {
-        Res = LHS % RHS;
+      if (RHS.Val != 0)
+        Res = LHS.Val % RHS.Val;
+      else if (ValueLive) {
+        PP.Diag(OpLoc, diag::err_pp_remainder_by_zero, LHS.getRange(),
+                RHS.getRange());
+        return true;
       }
       break;
     case tok::slash:
-      if (RHS == 0) {
-        if (ValueLive) {
-          PP.Diag(OpToken, diag::err_pp_division_by_zero);
-          return true;
-        }
-        break;
+      if (RHS.Val != 0) {
+        Res = LHS.Val / RHS.Val;
+        if (LHS.Val.isSigned())   // MININT/-1  -->  overflow.
+          Overflow = LHS.Val.isMinSignedValue() && RHS.Val.isAllOnesValue();
+      } else if (ValueLive) {
+        PP.Diag(OpLoc, diag::err_pp_division_by_zero, LHS.getRange(),
+                RHS.getRange());
+        return true;
       }
-
-      Res = LHS / RHS;
-      if (LHS.isSigned())
-        Overflow = LHS.isMinSignedValue() && RHS.isAllOnesValue(); // MININT/-1
       break;
         
     case tok::star:
-      Res = LHS * RHS;
-      if (LHS != 0 && RHS != 0)
-        Overflow = Res/RHS != LHS || Res/LHS != RHS;
+      Res = LHS.Val * RHS.Val;
+      if (LHS.Val != 0 && RHS.Val != 0)
+        Overflow = Res/RHS.Val != LHS.Val || Res/LHS.Val != RHS.Val;
       break;
     case tok::lessless: {
       // Determine whether overflow is about to happen.
-      unsigned ShAmt = static_cast<unsigned>(RHS.getLimitedValue());
-      if (ShAmt >= LHS.getBitWidth())
-        Overflow = true, ShAmt = LHS.getBitWidth()-1;
+      unsigned ShAmt = static_cast<unsigned>(RHS.Val.getLimitedValue());
+      if (ShAmt >= LHS.Val.getBitWidth())
+        Overflow = true, ShAmt = LHS.Val.getBitWidth()-1;
       else if (LHS.isUnsigned())
-        Overflow = ShAmt > LHS.countLeadingZeros();
-      else if (LHS.isNonNegative())
-        Overflow = ShAmt >= LHS.countLeadingZeros(); // Don't allow sign change.
+        Overflow = ShAmt > LHS.Val.countLeadingZeros();
+      else if (LHS.Val.isNonNegative()) // Don't allow sign change.
+        Overflow = ShAmt >= LHS.Val.countLeadingZeros();
       else
-        Overflow = ShAmt >= LHS.countLeadingOnes();
+        Overflow = ShAmt >= LHS.Val.countLeadingOnes();
       
-      Res = LHS << ShAmt;
+      Res = LHS.Val << ShAmt;
       break;
     }
     case tok::greatergreater: {
       // Determine whether overflow is about to happen.
-      unsigned ShAmt = static_cast<unsigned>(RHS.getLimitedValue());
+      unsigned ShAmt = static_cast<unsigned>(RHS.Val.getLimitedValue());
       if (ShAmt >= LHS.getBitWidth())
         Overflow = true, ShAmt = LHS.getBitWidth()-1;
-      Res = LHS >> ShAmt;
+      Res = LHS.Val >> ShAmt;
       break;
     }
     case tok::plus:
-      Res = LHS + RHS;
+      Res = LHS.Val + RHS.Val;
       if (LHS.isUnsigned())
-        Overflow = Res.ult(LHS);
-      else if (LHS.isNonNegative() == RHS.isNonNegative() &&
-               Res.isNonNegative() != LHS.isNonNegative())
+        Overflow = Res.ult(LHS.Val);
+      else if (LHS.Val.isNonNegative() == RHS.Val.isNonNegative() &&
+               Res.isNonNegative() != LHS.Val.isNonNegative())
         Overflow = true;  // Overflow for signed addition.
       break;
     case tok::minus:
-      Res = LHS - RHS;
+      Res = LHS.Val - RHS.Val;
       if (LHS.isUnsigned())
-        Overflow = Res.ugt(LHS);
-      else if (LHS.isNonNegative() != RHS.isNonNegative() &&
-               Res.isNonNegative() != LHS.isNonNegative())
+        Overflow = Res.ugt(LHS.Val);
+      else if (LHS.Val.isNonNegative() != RHS.Val.isNonNegative() &&
+               Res.isNonNegative() != LHS.Val.isNonNegative())
         Overflow = true;  // Overflow for signed subtraction.
       break;
     case tok::lessequal:
-      Res = LHS <= RHS;
+      Res = LHS.Val <= RHS.Val;
       Res.setIsUnsigned(false);  // C99 6.5.8p6, result is always int (signed)
       break;
     case tok::less:
-      Res = LHS < RHS;
+      Res = LHS.Val < RHS.Val;
       Res.setIsUnsigned(false);  // C99 6.5.8p6, result is always int (signed)
       break;
     case tok::greaterequal:
-      Res = LHS >= RHS;
+      Res = LHS.Val >= RHS.Val;
       Res.setIsUnsigned(false);  // C99 6.5.8p6, result is always int (signed)
       break;
     case tok::greater:
-      Res = LHS > RHS;
+      Res = LHS.Val > RHS.Val;
       Res.setIsUnsigned(false);  // C99 6.5.8p6, result is always int (signed)
       break;
     case tok::exclaimequal:
-      Res = LHS != RHS;
+      Res = LHS.Val != RHS.Val;
       Res.setIsUnsigned(false);  // C99 6.5.9p3, result is always int (signed)
       break;
     case tok::equalequal:
-      Res = LHS == RHS;
+      Res = LHS.Val == RHS.Val;
       Res.setIsUnsigned(false);  // C99 6.5.9p3, result is always int (signed)
       break;
     case tok::amp:
-      Res = LHS & RHS;
+      Res = LHS.Val & RHS.Val;
       break;
     case tok::caret:
-      Res = LHS ^ RHS;
+      Res = LHS.Val ^ RHS.Val;
       break;
     case tok::pipe:
-      Res = LHS | RHS;
+      Res = LHS.Val | RHS.Val;
       break;
     case tok::ampamp:
-      Res = (LHS != 0 && RHS != 0);
+      Res = (LHS.Val != 0 && RHS.Val != 0);
       Res.setIsUnsigned(false);  // C99 6.5.13p3, result is always int (signed)
       break;
     case tok::pipepipe:
-      Res = (LHS != 0 || RHS != 0);
+      Res = (LHS.Val != 0 || RHS.Val != 0);
       Res.setIsUnsigned(false);  // C99 6.5.14p3, result is always int (signed)
       break;
     case tok::comma:
       // Comma is invalid in pp expressions in c89/c++ mode, but is valid in C99
       // if not being evaluated.
       if (!PP.getLangOptions().C99 || ValueLive)
-        PP.Diag(OpToken, diag::ext_pp_comma_expr);
-      Res = RHS; // LHS = LHS,RHS -> RHS.
+        PP.Diag(OpLoc, diag::ext_pp_comma_expr, LHS.getRange(), RHS.getRange());
+      Res = RHS.Val; // LHS = LHS,RHS -> RHS.
       break; 
     case tok::question: {
       // Parse the : part of the expression.
       if (PeekTok.isNot(tok::colon)) {
-        PP.Diag(OpToken, diag::err_pp_question_without_colon);
+        PP.Diag(PeekTok.getLocation(), diag::err_expected_colon,
+                LHS.getRange(), RHS.getRange());
+        PP.Diag(OpLoc, diag::err_matching, "?");
         return true;
       }
       // Consume the :.
       PP.LexNonComment(PeekTok);
 
       // Evaluate the value after the :.
-      bool AfterColonLive = ValueLive && LHS == 0;
-      llvm::APSInt AfterColonVal(LHS.getBitWidth());
+      bool AfterColonLive = ValueLive && LHS.Val == 0;
+      PPValue AfterColonVal(LHS.getBitWidth());
       DefinedTracker DT;
       if (EvaluateValue(AfterColonVal, PeekTok, DT, AfterColonLive, PP))
         return true;
@@ -567,7 +615,8 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
         return true;
       
       // Now that we have the condition, the LHS and the RHS of the :, evaluate.
-      Res = LHS != 0 ? RHS : AfterColonVal;
+      Res = LHS.Val != 0 ? RHS.Val : AfterColonVal.Val;
+      RHS.setEnd(AfterColonVal.getRange().getEnd());
 
       // Usual arithmetic conversions (C99 6.3.1.8p1): result is unsigned if
       // either operand is unsigned.
@@ -579,16 +628,19 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
     }
     case tok::colon:
       // Don't allow :'s to float around without being part of ?: exprs.
-      PP.Diag(OpToken, diag::err_pp_colon_without_question);
+      PP.Diag(OpLoc, diag::err_pp_colon_without_question, LHS.getRange(),
+        RHS.getRange());
       return true;
     }
 
     // If this operator is live and overflowed, report the issue.
     if (Overflow && ValueLive)
-      PP.Diag(OpToken, diag::warn_pp_expr_overflow);
+      PP.Diag(OpLoc, diag::warn_pp_expr_overflow,
+              LHS.getRange(), RHS.getRange());
     
     // Put the result back into 'LHS' for our next iteration.
-    LHS = Res;
+    LHS.Val = Res;
+    LHS.setEnd(RHS.getRange().getEnd());
   }
   
   return false;
@@ -606,7 +658,7 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   // C99 6.10.1p3 - All expressions are evaluated as intmax_t or uintmax_t.
   unsigned BitWidth = getTargetInfo().getIntMaxTWidth();
     
-  llvm::APSInt ResVal(BitWidth);
+  PPValue ResVal(BitWidth);
   DefinedTracker DT;
   if (EvaluateValue(ResVal, Tok, DT, true, *this)) {
     // Parse error, skip the rest of the macro line.
@@ -624,7 +676,7 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
     if (DT.State == DefinedTracker::NotDefinedMacro)
       IfNDefMacro = DT.TheMacro;
     
-    return ResVal != 0;
+    return ResVal.Val != 0;
   }
   
   // Otherwise, we must have a binary operator (e.g. "#if 1 < 2"), so parse the
@@ -643,6 +695,6 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
     DiscardUntilEndOfDirective();
   }
   
-  return ResVal != 0;
+  return ResVal.Val != 0;
 }
 

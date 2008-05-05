@@ -201,8 +201,6 @@ DIAG(err_pp_missing_rparen, ERROR,
      "missing ')' after \"defined\"")
 DIAG(err_pp_colon_without_question, ERROR,
      "':' without preceding '?'")
-DIAG(err_pp_question_without_colon, ERROR,
-     "'?' without following ':'")
 DIAG(err_pp_division_by_zero, ERROR,
      "division by zero in preprocessor expression")
 DIAG(err_pp_remainder_by_zero, ERROR,
