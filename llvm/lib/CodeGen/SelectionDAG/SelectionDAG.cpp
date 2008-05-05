@@ -2855,7 +2855,11 @@ SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain,
 SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain, 
                                   SDOperand Ptr, SDOperand Val, 
                                   MVT::ValueType VT) {
-  assert((Opcode == ISD::ATOMIC_LAS || Opcode == ISD::ATOMIC_SWAP)
+  assert((   Opcode == ISD::ATOMIC_LAS || Opcode == ISD::ATOMIC_LSS
+          || Opcode == ISD::ATOMIC_SWAP || Opcode == ISD::ATOMIC_LOAD_AND
+          || Opcode == ISD::ATOMIC_LOAD_OR || Opcode == ISD::ATOMIC_LOAD_XOR
+          || Opcode == ISD::ATOMIC_LOAD_MIN || Opcode == ISD::ATOMIC_LOAD_MAX
+          || Opcode == ISD::ATOMIC_LOAD_UMIN || Opcode == ISD::ATOMIC_LOAD_UMAX) 
          && "Invalid Atomic Op");
   SDVTList VTs = getVTList(Val.getValueType(), MVT::Other);
   FoldingSetNodeID ID;
@@ -4269,7 +4273,15 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::MEMBARRIER:    return "MemBarrier";
   case ISD::ATOMIC_LCS:    return "AtomicLCS";
   case ISD::ATOMIC_LAS:    return "AtomicLAS";
-  case ISD::ATOMIC_SWAP:    return "AtomicSWAP";
+  case ISD::ATOMIC_LSS:    return "AtomicLSS";
+  case ISD::ATOMIC_LOAD_AND:  return "AtomicLoadAnd";
+  case ISD::ATOMIC_LOAD_OR:   return "AtomicLoadOr";
+  case ISD::ATOMIC_LOAD_XOR:  return "AtomicLoadXor";
+  case ISD::ATOMIC_LOAD_MIN:  return "AtomicLoadMin";
+  case ISD::ATOMIC_LOAD_MAX:  return "AtomicLoadMax";
+  case ISD::ATOMIC_LOAD_UMIN: return "AtomicLoadUMin";
+  case ISD::ATOMIC_LOAD_UMAX: return "AtomicLoadUMax";
+  case ISD::ATOMIC_SWAP:   return "AtomicSWAP";
   case ISD::PCMARKER:      return "PCMarker";
   case ISD::READCYCLECOUNTER: return "ReadCycleCounter";
   case ISD::SRCVALUE:      return "SrcValue";

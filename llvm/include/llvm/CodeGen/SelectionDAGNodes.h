@@ -594,6 +594,24 @@ namespace ISD {
     // the return is always the original value in *ptr
     ATOMIC_SWAP,
 
+    // Val, OUTCHAIN = ATOMIC_LSS(INCHAIN, ptr, amt)
+    // this corresponds to the atomic.lss intrinsic.
+    // *ptr - amt is stored to *ptr atomically.
+    // the return is always the original value in *ptr
+    ATOMIC_LSS,
+    
+    // Val, OUTCHAIN = ATOMIC_L[OpName]S(INCHAIN, ptr, amt)
+    // this corresponds to the atomic.[OpName] intrinsic.
+    // op(*ptr, amt) is stored to *ptr atomically.
+    // the return is always the original value in *ptr
+    ATOMIC_LOAD_AND,
+    ATOMIC_LOAD_OR,
+    ATOMIC_LOAD_XOR,
+    ATOMIC_LOAD_MIN,
+    ATOMIC_LOAD_MAX,
+    ATOMIC_LOAD_UMIN,
+    ATOMIC_LOAD_UMAX,
+    
     // BUILTIN_OP_END - This must be the last enum value in this list.
     BUILTIN_OP_END
   };

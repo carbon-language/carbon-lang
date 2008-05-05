@@ -732,6 +732,10 @@ public:
     assert(0 && "UserOp2 should not exist at instruction selection time!");
     abort();
   }
+  
+private:
+  inline const char *implVisitBinaryAtomic(CallInst& I, ISD::NodeType Op);
+
 };
 } // end namespace llvm
 
@@ -2769,6 +2773,22 @@ static void addCatchInfo(CallInst &I, MachineModuleInfo *MMI,
   }
 }
 
+
+/// Inlined utility function to implement binary input atomic intrinsics for 
+// visitIntrinsicCall: I is a call instruction
+//                     Op is the associated NodeType for I
+const char *
+SelectionDAGLowering::implVisitBinaryAtomic(CallInst& I, ISD::NodeType Op) {
+  SDOperand Root = getRoot();   
+  SDOperand O2 = getValue(I.getOperand(2));
+  SDOperand L = DAG.getAtomic(Op, Root, 
+                              getValue(I.getOperand(1)), 
+                              O2, O2.getValueType());
+  setValue(&I, L);
+  DAG.setRoot(L.getValue(1));
+  return 0;
+}
+
 /// visitIntrinsicCall - Lower the call to the specified intrinsic function.  If
 /// we want to emit this as a call to a named external function, return the name
 /// otherwise lower it and return null.
@@ -3205,27 +3225,26 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(L.getValue(1));
     return 0;
   }
-  case Intrinsic::atomic_las: {
-    SDOperand Root = getRoot();   
-    SDOperand O2 = getValue(I.getOperand(2));
-    SDOperand L = DAG.getAtomic(ISD::ATOMIC_LAS, Root, 
-                                getValue(I.getOperand(1)), 
-                                O2, O2.getValueType());
-    setValue(&I, L);
-    DAG.setRoot(L.getValue(1));
-    return 0;
-  }
-  case Intrinsic::atomic_swap: {
-    SDOperand Root = getRoot();   
-    SDOperand O2 = getValue(I.getOperand(2));
-    SDOperand L = DAG.getAtomic(ISD::ATOMIC_SWAP, Root, 
-                                getValue(I.getOperand(1)), 
-                                O2, O2.getValueType());
-    setValue(&I, L);
-    DAG.setRoot(L.getValue(1));
-    return 0;
-  }
-
+  case Intrinsic::atomic_las:
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LAS);
+  case Intrinsic::atomic_lss:
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LSS);
+  case Intrinsic::atomic_load_and:
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_AND);
+  case Intrinsic::atomic_load_or:
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_OR);
+  case Intrinsic::atomic_load_xor:
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_XOR);
+  case Intrinsic::atomic_load_min:
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_MIN);
+  case Intrinsic::atomic_load_max:
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_MAX);
+  case Intrinsic::atomic_load_umin:
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_UMIN);
+  case Intrinsic::atomic_load_umax:
+      return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_UMAX);                                              
+  case Intrinsic::atomic_swap:
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_SWAP);
   }
 }
 
@@ -4518,8 +4537,6 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<CollectorModuleMetadata>();
   AU.setPreservesAll();
 }
-
-
 
 bool SelectionDAGISel::runOnFunction(Function &Fn) {
   // Get alias analysis for load/store combining.

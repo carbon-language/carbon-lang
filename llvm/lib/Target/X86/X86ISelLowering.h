@@ -346,6 +346,7 @@ namespace llvm {
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
                                                         MachineBasicBlock *MBB);
 
+ 
     /// getTargetNodeName - This method returns the name of a target specific
     /// DAG node.
     virtual const char *getTargetNodeName(unsigned Opcode) const;
@@ -524,7 +525,8 @@ namespace llvm {
     SDNode *ExpandFP_TO_SINT(SDNode *N, SelectionDAG &DAG);
     SDNode *ExpandREADCYCLECOUNTER(SDNode *N, SelectionDAG &DAG);
     SDNode *ExpandATOMIC_LCS(SDNode *N, SelectionDAG &DAG);
-
+    SDNode *ExpandATOMIC_LSS(SDNode *N, SelectionDAG &DAG);
+    
     SDOperand EmitTargetCodeForMemset(SelectionDAG &DAG,
                                       SDOperand Chain,
                                       SDOperand Dst, SDOperand Src,
@@ -537,6 +539,23 @@ namespace llvm {
                                       bool AlwaysInline,
                                       const Value *DstSV, uint64_t DstSVOff,
                                       const Value *SrcSV, uint64_t SrcSVOff);
+    
+    /// Utility function to emit atomic bitwise operations (and, or, xor).
+    // It takes the bitwise instruction to expand, the associated machine basic
+    // block, and the associated X86 opcodes for reg/reg and reg/imm.
+    MachineBasicBlock *EmitAtomicBitwiseWithCustomInserter(
+                                                    MachineInstr *BInstr,
+                                                    MachineBasicBlock *BB,
+                                                    unsigned regOpc,
+                                                    unsigned immOpc);
+    
+    /// Utility function to emit atomic min and max.  It takes the min/max
+    // instruction to expand, the associated basic block, and the associated
+    // cmov opcode for moving the min or max value.
+    MachineBasicBlock *EmitAtomicMinMaxWithCustomInserter(MachineInstr *BInstr,
+                                                          MachineBasicBlock *BB,
+                                                          unsigned cmovOpc);
+    
   };
 }
 

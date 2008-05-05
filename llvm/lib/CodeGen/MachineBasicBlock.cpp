@@ -252,6 +252,19 @@ void MachineBasicBlock::removePredecessor(MachineBasicBlock *pred) {
   Predecessors.erase(I);
 }
 
+void MachineBasicBlock::transferSuccessors(MachineBasicBlock *fromMBB)
+{
+  if (this == fromMBB)
+    return;
+  
+  for(MachineBasicBlock::succ_iterator iter = fromMBB->succ_begin(), 
+      end = fromMBB->succ_end(); iter != end; ++iter) {
+      addSuccessor(*iter);
+  }
+  while(!fromMBB->succ_empty())
+    fromMBB->removeSuccessor(fromMBB->succ_begin());
+}
+
 bool MachineBasicBlock::isSuccessor(MachineBasicBlock *MBB) const {
   std::vector<MachineBasicBlock *>::const_iterator I =
     std::find(Successors.begin(), Successors.end(), MBB);

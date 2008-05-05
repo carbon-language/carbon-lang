@@ -1235,23 +1235,50 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   }
 
-  case ISD::ATOMIC_LCS:
-  case ISD::ATOMIC_LAS:
-  case ISD::ATOMIC_SWAP: {
-    assert(((Node->getNumOperands() == 4 && Node->getOpcode() == ISD::ATOMIC_LCS) ||
-            (Node->getNumOperands() == 3 && Node->getOpcode() == ISD::ATOMIC_LAS) ||
-            (Node->getNumOperands() == 3 && Node->getOpcode() == ISD::ATOMIC_SWAP)) &&
-           "Invalid Atomic node!");
-    int num = Node->getOpcode() == ISD::ATOMIC_LCS ? 4 : 3;
+  case ISD::ATOMIC_LCS: {
+    unsigned int num_operands = 4;
+    assert(Node->getNumOperands() == num_operands && "Invalid Atomic node!");
     SDOperand Ops[4];
-    for (int x = 0; x < num; ++x)
+    for (unsigned int x = 0; x < num_operands; ++x)
       Ops[x] = LegalizeOp(Node->getOperand(x));
-    Result = DAG.UpdateNodeOperands(Result, &Ops[0], num);
+    Result = DAG.UpdateNodeOperands(Result, &Ops[0], num_operands);
+    
+    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+      default: assert(0 && "This action is not supported yet!");
+      case TargetLowering::Custom:
+        Result = TLI.LowerOperation(Result, DAG);
+        break;
+      case TargetLowering::Legal:
+        break;
+    }
+    AddLegalizedOperand(SDOperand(Node, 0), Result.getValue(0));
+    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+    return Result.getValue(Op.ResNo);
+  }      
+  case ISD::ATOMIC_LAS:
+  case ISD::ATOMIC_LSS:
+  case ISD::ATOMIC_LOAD_AND:
+  case ISD::ATOMIC_LOAD_OR:
+  case ISD::ATOMIC_LOAD_XOR:
+  case ISD::ATOMIC_LOAD_MIN:
+  case ISD::ATOMIC_LOAD_MAX:
+  case ISD::ATOMIC_LOAD_UMIN:
+  case ISD::ATOMIC_LOAD_UMAX:
+  case ISD::ATOMIC_SWAP: {
+    unsigned int num_operands = 3;
+    assert(Node->getNumOperands() == num_operands && "Invalid Atomic node!");
+    SDOperand Ops[3];
+    for (unsigned int x = 0; x < num_operands; ++x)
+      Ops[x] = LegalizeOp(Node->getOperand(x));
+    Result = DAG.UpdateNodeOperands(Result, &Ops[0], num_operands);
     
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Custom:
       Result = TLI.LowerOperation(Result, DAG);
+      break;
+    case TargetLowering::Expand:
+      Result = SDOperand(TLI.ExpandOperationResult(Op.Val, DAG),0);
       break;
     case TargetLowering::Legal:
       break;
@@ -1259,8 +1286,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     AddLegalizedOperand(SDOperand(Node, 0), Result.getValue(0));
     AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
     return Result.getValue(Op.ResNo);
-  }
-
+  }      
   case ISD::Constant: {
     ConstantSDNode *CN = cast<ConstantSDNode>(Node);
     unsigned opAction =
@@ -4242,6 +4268,14 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     break;
   }
   case ISD::ATOMIC_LAS:
+  case ISD::ATOMIC_LSS:
+  case ISD::ATOMIC_LOAD_AND:
+  case ISD::ATOMIC_LOAD_OR:
+  case ISD::ATOMIC_LOAD_XOR:
+  case ISD::ATOMIC_LOAD_MIN:
+  case ISD::ATOMIC_LOAD_MAX:
+  case ISD::ATOMIC_LOAD_UMIN:
+  case ISD::ATOMIC_LOAD_UMAX:
   case ISD::ATOMIC_SWAP: {
     Tmp2 = PromoteOp(Node->getOperand(2));
     Result = DAG.getAtomic(Node->getOpcode(), Node->getOperand(0), 

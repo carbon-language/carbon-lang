@@ -292,10 +292,12 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   if (!Subtarget->hasSSE2())
     setOperationAction(ISD::MEMBARRIER    , MVT::Other, Expand);
 
+  // Expand certain atomics
   setOperationAction(ISD::ATOMIC_LCS     , MVT::i8, Custom);
   setOperationAction(ISD::ATOMIC_LCS     , MVT::i16, Custom);
   setOperationAction(ISD::ATOMIC_LCS     , MVT::i32, Custom);
   setOperationAction(ISD::ATOMIC_LCS     , MVT::i64, Custom);
+  setOperationAction(ISD::ATOMIC_LSS     , MVT::i32, Expand);
 
   // Use the default ISD::LOCATION, ISD::DECLARE expansion.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
@@ -5511,6 +5513,15 @@ SDNode* X86TargetLowering::ExpandATOMIC_LCS(SDNode* Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::MERGE_VALUES, Tys, ResultVal, cpOutH.getValue(1)).Val;
 }
 
+SDNode* X86TargetLowering::ExpandATOMIC_LSS(SDNode* Op, SelectionDAG &DAG) {
+  MVT::ValueType T = cast<AtomicSDNode>(Op)->getVT();
+  assert (T == MVT::i32 && "Only know how to expand i32 LSS");
+  SDOperand negOp = DAG.getNode(ISD::SUB, T,
+                                DAG.getConstant(0, T), Op->getOperand(2));
+  return DAG.getAtomic(ISD::ATOMIC_LAS, Op->getOperand(0),
+                       Op->getOperand(1), negOp, T).Val;
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
@@ -5568,6 +5579,7 @@ SDNode *X86TargetLowering::ExpandOperationResult(SDNode *N, SelectionDAG &DAG) {
   case ISD::FP_TO_SINT:         return ExpandFP_TO_SINT(N, DAG);
   case ISD::READCYCLECOUNTER:   return ExpandREADCYCLECOUNTER(N, DAG);
   case ISD::ATOMIC_LCS:         return ExpandATOMIC_LCS(N, DAG);
+  case ISD::ATOMIC_LSS:         return ExpandATOMIC_LSS(N,DAG);
   }
 }
 
@@ -5732,6 +5744,187 @@ X86TargetLowering::isVectorClearMaskLegal(const std::vector<SDOperand> &BVOps,
 //                           X86 Scheduler Hooks
 //===----------------------------------------------------------------------===//
 
+// private utility function
+MachineBasicBlock *
+X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
+                                                       MachineBasicBlock *MBB,
+                                                       unsigned regOpc,
+                                                       unsigned immOpc) {
+  // For the atomic bitwise operator, we generate
+  //   thisMBB:
+  //   newMBB:
+  //     ld  EAX = [bitinstr.addr]
+  //     mov t1 = EAX
+  //     op  t2 = t1, [bitinstr.val] 
+  //     lcs dest = [bitinstr.addr], t2  [EAX is implicit]
+  //     bz  newMBB
+  //     fallthrough -->nextMBB
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  const BasicBlock *LLVM_BB = MBB->getBasicBlock();
+  ilist<MachineBasicBlock>::iterator MBBIter = MBB;
+  ++MBBIter;
+  
+  /// First build the CFG
+  MachineFunction *F = MBB->getParent();
+  MachineBasicBlock *thisMBB = MBB;
+  MachineBasicBlock *newMBB = new MachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *nextMBB = new MachineBasicBlock(LLVM_BB);
+  F->getBasicBlockList().insert(MBBIter, newMBB);
+  F->getBasicBlockList().insert(MBBIter, nextMBB);
+  
+  // Move all successors to thisMBB to nextMBB
+  nextMBB->transferSuccessors(thisMBB);
+    
+  // Update thisMBB to fall through to newMBB
+  thisMBB->addSuccessor(newMBB);
+  
+  // newMBB jumps to itself and fall through to nextMBB
+  newMBB->addSuccessor(nextMBB);
+  newMBB->addSuccessor(newMBB);
+  
+  // Insert instructions into newMBB based on incoming instruction
+  assert(bInstr->getNumOperands() < 8 && "unexpected number of operands");
+  MachineOperand& destOper = bInstr->getOperand(0);
+  MachineOperand* argOpers[6];
+  int numArgs = bInstr->getNumOperands() - 1;
+  for (int i=0; i < numArgs; ++i)
+    argOpers[i] = &bInstr->getOperand(i+1);
+
+  // x86 address has 4 operands: base, index, scale, and displacement
+  int lastAddrIndx = 3; // [0,3]
+  int valArgIndx = 4;
+  
+  MachineInstrBuilder MIB = BuildMI(newMBB, TII->get(X86::MOV32rm), X86::EAX);
+  for (int i=0; i <= lastAddrIndx; ++i)
+    (*MIB).addOperand(*argOpers[i]);
+  
+  unsigned t1 = F->getRegInfo().createVirtualRegister(X86::GR32RegisterClass);
+  MIB = BuildMI(newMBB, TII->get(X86::MOV32rr), t1);
+  MIB.addReg(X86::EAX);
+  
+  unsigned t2 = F->getRegInfo().createVirtualRegister(X86::GR32RegisterClass);
+  assert(   (argOpers[valArgIndx]->isReg() || argOpers[valArgIndx]->isImm())
+         && "invalid operand");
+  if (argOpers[valArgIndx]->isReg())
+    MIB = BuildMI(newMBB, TII->get(regOpc), t2);
+  else
+    MIB = BuildMI(newMBB, TII->get(immOpc), t2);
+  MIB.addReg(t1);
+  (*MIB).addOperand(*argOpers[valArgIndx]);
+  
+  MIB = BuildMI(newMBB, TII->get(X86::LCMPXCHG32));
+  for (int i=0; i <= lastAddrIndx; ++i)
+    (*MIB).addOperand(*argOpers[i]);
+  MIB.addReg(t2);
+  
+  MIB = BuildMI(newMBB, TII->get(X86::MOV32rr), destOper.getReg());
+  MIB.addReg(X86::EAX);
+  
+  // insert branch
+  BuildMI(newMBB, TII->get(X86::JNE)).addMBB(newMBB);
+
+  delete bInstr;   // The pseudo instruction is gone now.
+  return nextMBB;
+}
+
+// private utility function
+MachineBasicBlock *
+X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
+                                                      MachineBasicBlock *MBB,
+                                                      unsigned cmovOpc) {
+  // For the atomic min/max operator, we generate
+  //   thisMBB:
+  //   newMBB:
+  //     ld EAX = [min/max.addr]
+  //     mov t1 = EAX
+  //     mov t2 = [min/max.val] 
+  //     cmp  t1, t2
+  //     cmov[cond] t2 = t1
+  //     lcs dest = [bitinstr.addr], t2  [EAX is implicit]
+  //     bz   newMBB
+  //     fallthrough -->nextMBB
+  //
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  const BasicBlock *LLVM_BB = MBB->getBasicBlock();
+  ilist<MachineBasicBlock>::iterator MBBIter = MBB;
+  ++MBBIter;
+  
+  /// First build the CFG
+  MachineFunction *F = MBB->getParent();
+  MachineBasicBlock *thisMBB = MBB;
+  MachineBasicBlock *newMBB = new MachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *nextMBB = new MachineBasicBlock(LLVM_BB);
+  F->getBasicBlockList().insert(MBBIter, newMBB);
+  F->getBasicBlockList().insert(MBBIter, nextMBB);
+  
+  // Move all successors to thisMBB to nextMBB
+  nextMBB->transferSuccessors(thisMBB);
+  
+  // Update thisMBB to fall through to newMBB
+  thisMBB->addSuccessor(newMBB);
+  
+  // newMBB jumps to newMBB and fall through to nextMBB
+  newMBB->addSuccessor(nextMBB);
+  newMBB->addSuccessor(newMBB);
+  
+  // Insert instructions into newMBB based on incoming instruction
+  assert(mInstr->getNumOperands() < 8 && "unexpected number of operands");
+  MachineOperand& destOper = mInstr->getOperand(0);
+  MachineOperand* argOpers[6];
+  int numArgs = mInstr->getNumOperands() - 1;
+  for (int i=0; i < numArgs; ++i)
+    argOpers[i] = &mInstr->getOperand(i+1);
+  
+  // x86 address has 4 operands: base, index, scale, and displacement
+  int lastAddrIndx = 3; // [0,3]
+  int valArgIndx = 4;
+  
+  MachineInstrBuilder MIB = BuildMI(newMBB, TII->get(X86::MOV32rm), X86::EAX);
+  for (int i=0; i <= lastAddrIndx; ++i)
+    (*MIB).addOperand(*argOpers[i]);
+  
+  unsigned t1 = F->getRegInfo().createVirtualRegister(X86::GR32RegisterClass);
+  MIB = BuildMI(newMBB, TII->get(X86::MOV32rr), t1);
+  MIB.addReg(X86::EAX);
+  
+  // We only support register and immediate values
+  assert(   (argOpers[valArgIndx]->isReg() || argOpers[valArgIndx]->isImm())
+         && "invalid operand");
+  
+  unsigned t2 = F->getRegInfo().createVirtualRegister(X86::GR32RegisterClass);  
+  if (argOpers[valArgIndx]->isReg())
+    MIB = BuildMI(newMBB, TII->get(X86::MOV32rr), t2);
+  else 
+    MIB = BuildMI(newMBB, TII->get(X86::MOV32rr), t2);
+  (*MIB).addOperand(*argOpers[valArgIndx]);
+
+  MIB = BuildMI(newMBB, TII->get(X86::CMP32rr));
+  MIB.addReg(t1);
+  MIB.addReg(t2);
+
+  // Generate movc
+  unsigned t3 = F->getRegInfo().createVirtualRegister(X86::GR32RegisterClass);
+  MIB = BuildMI(newMBB, TII->get(cmovOpc),t3);
+  MIB.addReg(t2);
+  MIB.addReg(t1);
+
+  // Cmp and exchange if none has modified the memory location
+  MIB = BuildMI(newMBB, TII->get(X86::LCMPXCHG32));
+  for (int i=0; i <= lastAddrIndx; ++i)
+    (*MIB).addOperand(*argOpers[i]);
+  MIB.addReg(t3);
+  
+  MIB = BuildMI(newMBB, TII->get(X86::MOV32rr), destOper.getReg());
+  MIB.addReg(X86::EAX);
+  
+  // insert branch
+  BuildMI(newMBB, TII->get(X86::JNE)).addMBB(newMBB);
+
+  delete mInstr;   // The pseudo instruction is gone now.
+  return nextMBB;
+}
+
+
 MachineBasicBlock *
 X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB) {
@@ -5766,15 +5959,11 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     MachineFunction *F = BB->getParent();
     F->getBasicBlockList().insert(It, copy0MBB);
     F->getBasicBlockList().insert(It, sinkMBB);
-    // Update machine-CFG edges by first adding all successors of the current
+    // Update machine-CFG edges by transferring all successors of the current
     // block to the new block which will contain the Phi node for the select.
-    for(MachineBasicBlock::succ_iterator i = BB->succ_begin(),
-        e = BB->succ_end(); i != e; ++i)
-      sinkMBB->addSuccessor(*i);
-    // Next, remove all successors of the current block, and add the true
-    // and fallthrough blocks as its successors.
-    while(!BB->succ_empty())
-      BB->removeSuccessor(BB->succ_begin());
+    sinkMBB->transferSuccessors(BB);
+
+    // Add the true and fallthrough blocks as its successors.
     BB->addSuccessor(copy0MBB);
     BB->addSuccessor(sinkMBB);
 
@@ -5874,6 +6063,23 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     delete MI;   // The pseudo instruction is gone now.
     return BB;
   }
+  case X86::ATOMAND32:
+    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::AND32rr,
+                                                       X86::AND32ri);
+  case X86::ATOMOR32:
+    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::OR32rr, 
+                                                       X86::OR32ri);
+  case X86::ATOMXOR32:
+    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::XOR32rr,
+                                                       X86::XOR32ri);
+  case X86::ATOMMIN32:
+    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVL32rr);
+  case X86::ATOMMAX32:
+    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVG32rr);
+  case X86::ATOMUMIN32:
+    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVB32rr);
+  case X86::ATOMUMAX32:
+    return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVA32rr);
   }
 }
 

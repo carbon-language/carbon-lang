@@ -165,7 +165,7 @@ static void InitCmpLibcallCCs(ISD::CondCode *CCs) {
 
 TargetLowering::TargetLowering(TargetMachine &tm)
   : TM(tm), TD(TM.getTargetData()) {
-  assert(ISD::BUILTIN_OP_END <= 156 &&
+  assert(ISD::BUILTIN_OP_END <= OpActionsCapacity &&
          "Fixed size array in TargetLowering is not large enough!");
   // All operations default to being supported.
   memset(OpActions, 0, sizeof(OpActions));

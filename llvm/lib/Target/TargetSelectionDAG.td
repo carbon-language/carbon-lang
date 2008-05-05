@@ -358,6 +358,22 @@ def atomic_las  : SDNode<"ISD::ATOMIC_LAS" , STDAtomic2,
                          [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
 def atomic_swap : SDNode<"ISD::ATOMIC_SWAP", STDAtomic2,
                          [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def atomic_lss  : SDNode<"ISD::ATOMIC_LSS" , STDAtomic2,
+                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def atomic_load_and : SDNode<"ISD::ATOMIC_LOAD_AND" , STDAtomic2,
+                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def atomic_load_or  : SDNode<"ISD::ATOMIC_LOAD_OR" , STDAtomic2,
+                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def atomic_load_xor : SDNode<"ISD::ATOMIC_LOAD_XOR" , STDAtomic2,
+                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def atomic_load_min : SDNode<"ISD::ATOMIC_LOAD_MIN", STDAtomic2,
+                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def atomic_load_max : SDNode<"ISD::ATOMIC_LOAD_MAX", STDAtomic2,
+                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def atomic_load_umin : SDNode<"ISD::ATOMIC_LOAD_UMIN", STDAtomic2,
+                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def atomic_load_umax : SDNode<"ISD::ATOMIC_LOAD_UMAX", STDAtomic2,
+                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
 
 // Do not use ld, st directly. Use load, extload, sextload, zextload, store,
 // and truncst (see below).

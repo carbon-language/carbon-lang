@@ -236,6 +236,11 @@ public:
   ///
   succ_iterator removeSuccessor(succ_iterator I);
   
+  /// transferSuccessors - Transfers all the successors from MBB to this
+  /// machine basic block (i.e., copies all the successors fromMBB and
+  /// remove all the successors fromBB).
+  void transferSuccessors(MachineBasicBlock *fromMBB);
+  
   /// isSuccessor - Return true if the specified MBB is a successor of this
   /// block.
   bool isSuccessor(MachineBasicBlock *MBB) const;
