@@ -920,9 +920,6 @@ public:
     return LI->isLoopHeader(BB);
   }
 
-  /// isAnalysis - Return true if this pass is  implementing an analysis pass.
-  bool isAnalysis() const { return true; }
-
   /// runOnFunction - Calculate the natural loop information.
   ///
   virtual bool runOnFunction(Function &F);
