@@ -229,7 +229,7 @@ bool ELFWriter::doInitialization(Module &M) {
 
   // This should change for shared objects.
   FHOut.outhalf(1);                 // e_type = ET_REL
-  FHOut.outword(TM.getELFWriterInfo()->getEMachine()); // target-defined
+  FHOut.outhalf(TM.getELFWriterInfo()->getEMachine()); // target-defined
   FHOut.outword(1);                 // e_version = 1
   FHOut.outaddr(0);                 // e_entry = 0 -> no entry point in .o file
   FHOut.outaddr(0);                 // e_phoff = 0 -> no program header for .o
