@@ -504,7 +504,7 @@ public:
   
   // State creation: errors.
   
-  static RefVal makeLeak() { return RefVal(ErrorLeak); }  
+  static RefVal makeLeak(unsigned Count) { return RefVal(ErrorLeak, Count); }  
   static RefVal makeReleased() { return RefVal(Released); }
   static RefVal makeUseAfterRelease() { return RefVal(ErrorUseAfterRelease); }
   static RefVal makeReleaseNotOwned() { return RefVal(ErrorReleaseNotOwned); }
@@ -569,6 +569,16 @@ void RefVal::print(std::ostream& Out) const {
     case ErrorReleaseNotOwned:
       Out << "Release of Not-Owned [ERROR]";
       break;
+  }
+}
+  
+static inline unsigned GetCount(RefVal V) {
+  switch (V.getKind()) {
+    default:
+      return V.getCount();
+
+    case RefVal::Owned:
+      return V.getCount()+1;
   }
 }
   
@@ -1138,7 +1148,10 @@ ValueState* CFRefCount::HandleSymbolDeath(ValueStateManager& VMgr,
   
   RefBindings B = GetRefBindings(*St);
   ValueState StImpl = *St;  
-  StImpl.CheckerState = RefBFactory.Add(B, sid, RefVal::makeLeak()).getRoot();
+
+  StImpl.CheckerState =
+    RefBFactory.Add(B, sid, RefVal::makeLeak(GetCount(V))).getRoot();
+  
   return VMgr.getPersistentState(StImpl);
 }
 
@@ -1581,19 +1594,35 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<ValueState>* N,
   
   const char* Msg = NULL;  
   RefVal CurrV = CurrB.SlimFind(Sym)->getValue().second;
-  
+
   if (!PrevT) {
     
-    // Check for the point where we start tracking the value.
-    
-    if (CurrV.isOwned())
-      Msg = "Function call returns 'Owned' Core Foundation object.";
+    Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
+
+    if (CurrV.isOwned()) {
+
+      if (isa<CallExpr>(S))
+        Msg = "Function call returns an object with a +1 retain count"
+              " (owning reference).";
+      else {
+        assert (isa<ObjCMessageExpr>(S));
+        Msg = "Method returns an object with a +1 retain count"
+              " (owning reference).";
+      }
+    }
     else {
       assert (CurrV.isNotOwned());
-      Msg = "Function call returns 'Non-Owned' Core Foundation object.";
+      
+      if (isa<CallExpr>(S))
+        Msg = "Function call returns an object with a +0 retain count"
+              " (non-owning reference).";
+      else {
+        assert (isa<ObjCMessageExpr>(S));
+        Msg = "Method returns an object with a +0 retain count"
+              " (non-owning reference).";
+      }      
     }
-
-    Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();    
+    
     FullSourceLoc Pos(S->getLocStart(), BR.getContext().getSourceManager());
     PathDiagnosticPiece* P = new PathDiagnosticPiece(Pos, Msg);
     
@@ -1624,13 +1653,14 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<ValueState>* N,
       else
         os << "Reference count incremented.";
       
-      if (CurrV.getCount()) {
-        os << " Object has +" << CurrV.getCount();
+      if (unsigned Count = GetCount(CurrV)) {
+
+        os << " Object has +" << Count;
         
-        if (CurrV.getCount() > 1)
-          os << " reference counts.";
+        if (Count > 1)
+          os << " retain counts.";
         else
-          os << " reference count.";
+          os << " retain count.";
       }
       
       Msg = os.str().c_str();
@@ -1642,13 +1672,12 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<ValueState>* N,
       break;
       
     case RefVal::ReturnedOwned:
-      Msg = "Object returned to caller.  "
-            "Caller gets ownership of object.";
+      Msg = "Object returned to caller as owning reference (single retain count"
+            " transferred to caller).";
       break;
       
     case RefVal::ReturnedNotOwned:
-      Msg = "Object returned to caller.  "
-            "Caller does not get ownership of object.";
+      Msg = "Object returned to caller with a +0 (non-owning) retain count.";
       break;
 
     default:
@@ -1683,11 +1712,23 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
   if (!getBugType().isLeak())
     return RangedBugReport::getEndPath(BR, N);
 
+  typedef CFRefCount::RefBindings RefBindings;
+
+  // Get the retain count.
+  unsigned long RetCount = 0;
+  
+  {
+    ValueState* St = N->getState();
+    RefBindings B = RefBindings((RefBindings::TreeTy*) St->CheckerState);
+    RefBindings::TreeTy* T = B.SlimFind(Sym);
+    assert (T);
+    RetCount = GetCount(T->getValue().second);
+  }
+
   // We are a leak.  Walk up the graph to get to the first node where the
   // symbol appeared.
   
   ExplodedNode<ValueState>* Last = N;
-  typedef CFRefCount::RefBindings RefBindings;
     
   // Find the first node that referred to the tracked symbol.  We also
   // try and find the first VarDecl the value was stored to.
@@ -1732,8 +1773,6 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
   unsigned Line =
    BR.getSourceManager().getLogicalLineNumber(FirstStmt->getLocStart());
 
-  // FIXME: Also get the name of the variable.
-  
   std::ostringstream os;
   
   os << "Object allocated on line " << Line;
@@ -1741,7 +1780,8 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
   if (FirstDecl)
     os << " and stored into '" << FirstDecl->getName() << '\'';
     
-  os << " is leaked.";
+  os << " is no longer referenced after this point and has a retain count of +"
+     << RetCount << " (object leaked).";
   
   Stmt* S = getStmt(BR);
   assert (S);  
