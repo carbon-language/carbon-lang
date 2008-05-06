@@ -946,7 +946,7 @@ void EmitEdgePropertyTest2Args(const std::string& PropName,
     throw PropName + ": unknown edge property!";
 }
 
-// Helper function used by EmitEdgeClasses.
+// Helper function used by EmitEdgeClass.
 void EmitEdgePropertyTest(const std::string& PropName,
                           const DagInit& Prop,
                           const GlobalOptionDescriptions& OptDescs,
@@ -957,7 +957,62 @@ void EmitEdgePropertyTest(const std::string& PropName,
     EmitEdgePropertyTest2Args(PropName, Prop, OptDescs, O);
 }
 
-// Emit Edge* classes that represent edges in the graph.
+// Emit a single Edge* class.
+void EmitEdgeClass(unsigned N, const std::string& Target,
+                   ListInit* Props, const GlobalOptionDescriptions& OptDescs,
+                   std::ostream& O) {
+  bool IsDefault = false;
+
+  // Class constructor.
+  O << "class Edge" << N << ": public Edge {\n"
+    << "public:\n"
+    << Indent1 << "Edge" << N << "() : Edge(\"" << Target
+    << "\") {}\n\n"
+
+    // Function isEnabled().
+    << Indent1 << "bool isEnabled() const {\n"
+    << Indent2 << "bool ret = false;\n";
+
+  for (size_t i = 0, PropsSize = Props->size(); i < PropsSize; ++i) {
+    const DagInit& Prop = dynamic_cast<DagInit&>(*Props->getElement(i));
+    const std::string& PropName = Prop.getOperator()->getAsString();
+
+    if (PropName == "default")
+      IsDefault = true;
+
+    O << Indent2 << "if (ret || (";
+    if (PropName == "and") {
+      O << '(';
+      for (unsigned j = 0, NumArgs = Prop.getNumArgs(); j < NumArgs; ++j) {
+        const DagInit& InnerProp = dynamic_cast<DagInit&>(*Prop.getArg(j));
+        const std::string& InnerPropName =
+          InnerProp.getOperator()->getAsString();
+        EmitEdgePropertyTest(InnerPropName, InnerProp, OptDescs, O);
+        if (j != NumArgs - 1)
+          O << ")\n" << Indent3 << " && (";
+        else
+          O << ')';
+      }
+    }
+    else {
+      EmitEdgePropertyTest(PropName, Prop, OptDescs, O);
+    }
+    O << "))\n" << Indent3 << "ret = true;\n";
+  }
+
+  O << Indent2 << "return ret;\n"
+    << Indent1 << "};\n\n"
+
+  // Function isDefault().
+    << Indent1 << "bool isDefault() const { return ";
+  if (IsDefault)
+    O << "true";
+  else
+    O << "false";
+  O <<"; }\n};\n\n";
+}
+
+// Emit Edge* classes that represent graph edges.
 void EmitEdgeClasses (Record* CompilationGraph,
                       const GlobalOptionDescriptions& OptDescs,
                       std::ostream& O) {
@@ -971,42 +1026,7 @@ void EmitEdgeClasses (Record* CompilationGraph,
     if (Props->empty())
       continue;
 
-    O << "class Edge" << i << ": public Edge {\n"
-      << "public:\n"
-      << Indent1 << "Edge" << i << "() : Edge(\"" << B->getName()
-      << "\") {}\n\n"
-      << Indent1 << "bool isEnabled() const {\n"
-      << Indent2 << "bool ret = false;\n";
-
-    for (unsigned i = 0; i < Props->size(); ++i) {
-      const DagInit& Prop = dynamic_cast<DagInit&>(*Props->getElement(i));
-      const std::string& PropName = Prop.getOperator()->getAsString();
-
-      O << Indent2 << "if (ret || (";
-      if (PropName == "and") {
-        const unsigned NumArgs = Prop.getNumArgs();
-        O << '(';
-        for (unsigned j = 0; j < NumArgs; ++j) {
-          const DagInit& InnerProp = dynamic_cast<DagInit&>(*Prop.getArg(j));
-          const std::string& InnerPropName =
-            InnerProp.getOperator()->getAsString();
-          EmitEdgePropertyTest(InnerPropName, InnerProp, OptDescs, O);
-          if (j != NumArgs - 1)
-            O << ")\n" << Indent3 << " && (";
-          else
-            O << ')';
-        }
-      }
-      else {
-        EmitEdgePropertyTest(PropName, Prop, OptDescs, O);
-      }
-      O << "))\n" << Indent3 << "ret = true;\n";
-    }
-
-    O << Indent2 << "return ret;\n"
-      << Indent1 << "};\n\n"
-      << Indent1 << "bool isDefault() const { return false; }\n"
-      << "};\n\n";
+    EmitEdgeClass(i, B->getName(), Props, OptDescs, O);
   }
 }
 
