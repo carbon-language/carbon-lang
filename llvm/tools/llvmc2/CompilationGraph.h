@@ -153,7 +153,7 @@ namespace llvmcc {
     const tools_vector_type& getToolsVector(const std::string& LangName) const;
 
     // Pass the input file through the toolchain.
-    const JoinTool* PassThroughGraph (llvm::sys::Path& In, llvm::sys::Path Out,
+    const JoinTool* PassThroughGraph (llvm::sys::Path& In,
                                       const llvm::sys::Path& TempDir) const;
 
   };

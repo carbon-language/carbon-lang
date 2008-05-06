@@ -112,7 +112,7 @@ void CompilationGraph::insertEdge(const std::string& A, Edge* E) {
 // Pass input file through the chain until we bump into a Join node or
 // a node that says that it is the last.
 const JoinTool*
-CompilationGraph::PassThroughGraph (sys::Path& In, sys::Path Out,
+CompilationGraph::PassThroughGraph (sys::Path& In,
                                     const sys::Path& TempDir) const {
   bool Last = false;
   JoinTool* ret = 0;
@@ -124,6 +124,7 @@ CompilationGraph::PassThroughGraph (sys::Path& In, sys::Path Out,
   const Node* N = &getNode(*TV.begin());
 
   while(!Last) {
+    sys::Path Out;
     Tool* CurTool = N->ToolPtr.getPtr();
 
     if (CurTool->IsJoin()) {
@@ -162,14 +163,13 @@ CompilationGraph::PassThroughGraph (sys::Path& In, sys::Path Out,
 
 int CompilationGraph::Build (const sys::Path& TempDir) const {
   const JoinTool* JT = 0;
-  sys::Path In, Out;
 
   // For each input file
   for (cl::list<std::string>::const_iterator B = InputFilenames.begin(),
         E = InputFilenames.end(); B != E; ++B) {
-    In = sys::Path(*B);
+    sys::Path In = sys::Path(*B);
 
-    const JoinTool* NewJoin = PassThroughGraph(In, Out, TempDir);
+    const JoinTool* NewJoin = PassThroughGraph(In, TempDir);
     if (JT && NewJoin && JT != NewJoin)
       throw std::runtime_error("Graphs with multiple Join nodes"
                                "are not yet supported!");
@@ -178,6 +178,7 @@ int CompilationGraph::Build (const sys::Path& TempDir) const {
   }
 
   if (JT) {
+    sys::Path Out;
     // If the final output name is empty, set it to "a.out"
     if (!OutputFilename.empty()) {
       Out = sys::Path(OutputFilename);
@@ -193,6 +194,8 @@ int CompilationGraph::Build (const sys::Path& TempDir) const {
 
   return 0;
 }
+
+// Code related to graph visualization.
 
 namespace llvm {
   template <>
