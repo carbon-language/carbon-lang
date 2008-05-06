@@ -531,7 +531,7 @@ RetainSummary* RetainSummaryManager::getMethodSummary(Selector S) {
 
   const char* s = S.getIdentifierInfoForSlot(0)->getName();
   
-  if (!strncmp(s, "init", 4))
+  if (strncmp(s, "init", 4) == 0)
     return getInitMethodSummary(S);
 
   return 0;
@@ -624,7 +624,7 @@ RetainSummaryManager::getInstanceMethodSummary(IdentifierInfo* ClsName,
   unsigned len = strlen(cls);
 
   // Prefix matches?
-  if (strncmp(cls, s, len))
+  if (strncmp(cls, s, len) != 0)
     return 0;
   
   s += len;  
@@ -636,7 +636,7 @@ RetainSummaryManager::getInstanceMethodSummary(IdentifierInfo* ClsName,
     if (s[0] == '\0')
       break;
   
-    if (!strncmp(s, "With", 4))
+    if (strncmp(s, "With", 4) == 0)
       break;
     
     return 0;
