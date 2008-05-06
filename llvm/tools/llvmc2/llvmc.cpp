@@ -32,7 +32,7 @@ using namespace llvmcc;
 // External linkage here is intentional.
 
 cl::list<std::string> InputFilenames(cl::Positional, cl::desc("<input file>"),
-                                     cl::OneOrMore);
+                                     cl::ZeroOrMore);
 cl::opt<std::string> OutputFilename("o", cl::desc("Output file name"),
                                     cl::value_desc("file"));
 cl::opt<bool> VerboseMode("v",
@@ -70,10 +70,20 @@ int main(int argc, char** argv) {
                                 "LLVM Compiler Driver(Work In Progress)");
     PopulateCompilationGraph(graph);
 
-    if(WriteGraph)
+    if (WriteGraph) {
       graph.writeGraph();
-    if(ViewGraph)
+      return 0;
+    }
+
+    if (ViewGraph) {
       graph.viewGraph();
+      return 0;
+    }
+
+    if (InputFilenames.empty()) {
+      std::cerr << "No input files.\n";
+      return 1;
+    }
 
     return BuildTargets(graph);
   }
