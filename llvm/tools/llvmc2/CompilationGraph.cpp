@@ -60,7 +60,7 @@ CompilationGraph::getToolsVector(const std::string& LangName) const
   return I->second;
 }
 
-void CompilationGraph::insertVertex(const IntrusiveRefCntPtr<Tool> V) {
+void CompilationGraph::insertNode(Tool* V) {
   if (!NodesMap.count(V->Name())) {
     Node N;
     N.OwningGraph = this;
@@ -82,13 +82,13 @@ void CompilationGraph::insertEdge(const std::string& A,
     ToolsMap[InputLanguage].push_back(B);
 
     // Needed to support iteration via GraphTraits.
-    NodesMap["root"].Children.push_back(B);
+    NodesMap["root"].AddEdge(new DefaultEdge(B));
   }
   else {
-    Node& NA = getNode(A);
+    Node& N = getNode(A);
     // Check that there is a node at B.
     getNode(B);
-    NA.Children.push_back(B);
+    N.AddEdge(new DefaultEdge(B));
   }
 }
 
@@ -123,7 +123,7 @@ int CompilationGraph::Build (const sys::Path& tempDir) const {
       }
 
       // Is this the last tool?
-      if (N->Children.empty() || CurTool->IsLast()) {
+      if (!N->HasChildren() || CurTool->IsLast()) {
         Out.appendComponent(In.getBasename());
         Out.appendSuffix(CurTool->OutputSuffix());
         Last = true;
@@ -139,7 +139,7 @@ int CompilationGraph::Build (const sys::Path& tempDir) const {
       if (CurTool->GenerateAction(In, Out).Execute() != 0)
         throw std::runtime_error("Tool returned error code!");
 
-      N = &getNode(*N->Children.begin());
+      N = &getNode((*N->EdgesBegin())->ToolName());
       In = Out; Out.clear();
     }
   }

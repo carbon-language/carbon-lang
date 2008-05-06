@@ -18,6 +18,7 @@
 #include "Tool.h"
 
 #include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/iterator"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
@@ -27,24 +28,119 @@
 
 namespace llvmcc {
 
-  class CompilationGraph;
+  class Edge : public llvm::RefCountedBaseVPTR<Edge> {
+  public:
+    Edge(const std::string& T) : ToolName_(T) {}
+    virtual ~Edge() {};
+
+    const std::string& ToolName() const { return ToolName_; }
+    virtual bool isEnabled() const = 0;
+    virtual bool isDefault() const = 0;
+  private:
+    std::string ToolName_;
+  };
+
+  class DefaultEdge : public Edge {
+  public:
+    DefaultEdge(const std::string& T) : Edge(T) {}
+    bool isEnabled() const { return true;}
+    bool isDefault() const { return true;}
+  };
 
   struct Node {
-    typedef llvm::SmallVector<std::string, 3> sequence_type;
+    typedef llvm::SmallVector<llvm::IntrusiveRefCntPtr<Edge>, 3> container_type;
+    typedef container_type::iterator iterator;
+    typedef container_type::const_iterator const_iterator;
 
     Node() {}
     Node(CompilationGraph* G) : OwningGraph(G) {}
     Node(CompilationGraph* G, Tool* T) : OwningGraph(G), ToolPtr(T) {}
+
+    bool HasChildren() const { return OutEdges.empty(); }
+
+    iterator EdgesBegin() { return OutEdges.begin(); }
+    const_iterator EdgesBegin() const { return OutEdges.begin(); }
+    iterator EdgesEnd() { return OutEdges.end(); }
+    const_iterator EdgesEnd() const { return OutEdges.end(); }
+
+    // E is a new-allocated pointer.
+    void AddEdge(Edge* E)
+    { OutEdges.push_back(llvm::IntrusiveRefCntPtr<Edge>(E)); }
 
     // Needed to implement NodeChildIterator/GraphTraits
     CompilationGraph* OwningGraph;
     // The corresponding Tool.
     llvm::IntrusiveRefCntPtr<Tool> ToolPtr;
     // Links to children.
-    sequence_type Children;
+    container_type OutEdges;
   };
 
-  // This can be generalised to something like value_iterator for maps
+  class NodesIterator;
+
+  class CompilationGraph {
+    typedef llvm::SmallVector<std::string, 3> tools_vector_type;
+    typedef llvm::StringMap<tools_vector_type> tools_map_type;
+    typedef llvm::StringMap<Node> nodes_map_type;
+
+    // Map from file extensions to language names.
+    LanguageMap ExtsToLangs;
+    // Map from language names to lists of tool names.
+    tools_map_type ToolsMap;
+    // Map from tool names to Tool objects.
+    nodes_map_type NodesMap;
+
+  public:
+
+    CompilationGraph();
+
+    // insertVertex - insert a new node into the graph.
+    void insertNode(Tool* T);
+
+    // insertEdge - Insert a new edge into the graph. This function
+    // assumes that both A and B have been already inserted.
+    void insertEdge(const std::string& A, const std::string& B);
+
+    // Build - Build the target(s) from the set of the input
+    // files. Command-line options are passed implicitly as global
+    // variables.
+    int Build(llvm::sys::Path const& tempDir) const;
+
+    // Return a reference to the node correponding to the given tool
+    // name. Throws std::runtime_error.
+    Node& getNode(const std::string& ToolName);
+    const Node& getNode(const std::string& ToolName) const;
+
+    // viewGraph - This function is meant for use from the debugger.
+    // You can just say 'call G->viewGraph()' and a ghostview window
+    // should pop up from the program, displaying the compilation
+    // graph. This depends on there being a 'dot' and 'gv' program
+    // in your path.
+    void viewGraph();
+
+    // Write a CompilationGraph.dot file.
+    void writeGraph();
+
+    // GraphTraits support
+    friend NodesIterator GraphBegin(CompilationGraph*);
+    friend NodesIterator GraphEnd(CompilationGraph*);
+    friend void PopulateCompilationGraph(CompilationGraph&);
+
+  private:
+    // Helper functions.
+
+    // Find out which language corresponds to the suffix of this file.
+    const std::string& getLanguage(const llvm::sys::Path& File) const;
+
+    // Return a reference to the list of tool names corresponding to
+    // the given language name. Throws std::runtime_error.
+    const tools_vector_type& getToolsVector(const std::string& LangName) const;
+  };
+
+  /// GraphTraits support code.
+
+  // Auxiliary class needed to implement GraphTraits support.  Can be
+  // generalised to something like value_iterator for map-like
+  // containers.
   class NodesIterator : public llvm::StringMap<Node>::iterator {
     typedef llvm::StringMap<Node>::iterator super;
     typedef NodesIterator ThisType;
@@ -62,115 +158,55 @@ namespace llvmcc {
     }
   };
 
-  class CompilationGraph {
-    typedef llvm::StringMap<Node> nodes_map_type;
-    typedef llvm::SmallVector<std::string, 3> tools_vector_type;
-    typedef llvm::StringMap<tools_vector_type> tools_map_type;
+  inline NodesIterator GraphBegin(CompilationGraph* G) {
+    return NodesIterator(G->NodesMap.begin());
+  }
 
-    // Map from file extensions to language names.
-    LanguageMap ExtsToLangs;
-    // Map from language names to lists of tool names.
-    tools_map_type ToolsMap;
-    // Map from tool names to Tool objects.
-    nodes_map_type NodesMap;
+  inline NodesIterator GraphEnd(CompilationGraph* G) {
+    return NodesIterator(G->NodesMap.end());
+  }
 
-  public:
 
-    CompilationGraph();
-
-    // insertVertex - insert a new node into the graph.
-    void insertVertex(const llvm::IntrusiveRefCntPtr<Tool> T);
-
-    // insertEdge - Insert a new edge into the graph. This function
-    // assumes that both A and B have been already inserted.
-    void insertEdge(const std::string& A, const std::string& B);
-
-    // Build - Build the target(s) from the set of the input
-    // files. Command-line options are passed implicitly as global
-    // variables.
-    int Build(llvm::sys::Path const& tempDir) const;
-
-    /// viewGraph - This function is meant for use from the debugger.
-    /// You can just say 'call G->viewGraph()' and a ghostview window
-    /// should pop up from the program, displaying the compilation
-    /// graph. This depends on there being a 'dot' and 'gv' program
-    /// in your path.
-    void viewGraph();
-
-    /// Write a CompilationGraph.dot file.
-    void writeGraph();
-
-    // GraphTraits support
-
-    typedef NodesIterator nodes_iterator;
-
-    nodes_iterator nodes_begin() {
-      return NodesIterator(NodesMap.begin());
-    }
-
-    nodes_iterator nodes_end() {
-      return NodesIterator(NodesMap.end());
-    }
-
-    // Return a reference to the node correponding to the given tool
-    // name. Throws std::runtime_error in case of error.
-    Node& getNode(const std::string& ToolName);
-    const Node& getNode(const std::string& ToolName) const;
-
-    // Auto-generated function.
-    friend void PopulateCompilationGraph(CompilationGraph&);
-
-  private:
-    // Helper function - find out which language corresponds to the
-    // suffix of this file
-    const std::string& getLanguage(const llvm::sys::Path& File) const;
-
-    // Return a reference to the tool names list correponding to the
-    // given language name. Throws std::runtime_error in case of
-    // error.
-    const tools_vector_type& getToolsVector(const std::string& LangName) const;
-  };
-
-  // Auxiliary class needed to implement GraphTraits support.
+  // Another auxiliary class needed by GraphTraits.
   class NodeChildIterator : public bidirectional_iterator<Node, ptrdiff_t> {
     typedef NodeChildIterator ThisType;
-    typedef Node::sequence_type::iterator iterator;
+    typedef Node::container_type::iterator iterator;
 
     CompilationGraph* OwningGraph;
-    iterator KeyIter;
+    iterator EdgeIter;
   public:
     typedef Node* pointer;
     typedef Node& reference;
 
     NodeChildIterator(Node* N, iterator I) :
-      OwningGraph(N->OwningGraph), KeyIter(I) {}
+      OwningGraph(N->OwningGraph), EdgeIter(I) {}
 
     const ThisType& operator=(const ThisType& I) {
       assert(OwningGraph == I.OwningGraph);
-      KeyIter = I.KeyIter;
+      EdgeIter = I.EdgeIter;
       return *this;
     }
 
     inline bool operator==(const ThisType& I) const
-    { return KeyIter == I.KeyIter; }
+    { return EdgeIter == I.EdgeIter; }
     inline bool operator!=(const ThisType& I) const
-    { return KeyIter != I.KeyIter; }
+    { return EdgeIter != I.EdgeIter; }
 
     inline pointer operator*() const {
-      return &OwningGraph->getNode(*KeyIter);
+      return &OwningGraph->getNode((*EdgeIter)->ToolName());
     }
     inline pointer operator->() const {
-      return &OwningGraph->getNode(*KeyIter);
+      return &OwningGraph->getNode((*EdgeIter)->ToolName());
     }
 
-    ThisType& operator++() { ++KeyIter; return *this; } // Preincrement
+    ThisType& operator++() { ++EdgeIter; return *this; } // Preincrement
     ThisType operator++(int) { // Postincrement
       ThisType tmp = *this;
       ++*this;
       return tmp;
     }
 
-    inline ThisType& operator--() { --KeyIter; return *this; }  // Predecrement
+    inline ThisType& operator--() { --EdgeIter; return *this; }  // Predecrement
     inline ThisType operator--(int) { // Postdecrement
       ThisType tmp = *this;
       --*this;
@@ -192,18 +228,18 @@ namespace llvm {
     }
 
     static ChildIteratorType child_begin(NodeType* N) {
-      return ChildIteratorType(N, N->Children.begin());
+      return ChildIteratorType(N, N->OutEdges.begin());
     }
     static ChildIteratorType child_end(NodeType* N) {
-      return ChildIteratorType(N, N->Children.end());
+      return ChildIteratorType(N, N->OutEdges.end());
     }
 
-    typedef GraphType::nodes_iterator nodes_iterator;
+    typedef llvmcc::NodesIterator nodes_iterator;
     static nodes_iterator nodes_begin(GraphType *G) {
-      return G->nodes_begin();
+      return GraphBegin(G);
     }
     static nodes_iterator nodes_end(GraphType *G) {
-      return G->nodes_end();
+      return GraphEnd(G);
     }
   };
 

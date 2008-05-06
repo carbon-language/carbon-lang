@@ -21,7 +21,7 @@
 
 def llvm_gcc_c : Tool<
 [(in_language "c"),
- (out_language "llvm-assembler"),
+ (out_language "llvm-bitcode"),
  (output_suffix "bc"),
  (cmd_line "llvm-gcc -c $INFILE -o $OUTFILE -emit-llvm"),
  (sink)
@@ -29,7 +29,7 @@ def llvm_gcc_c : Tool<
 
 def llvm_gcc_cpp : Tool<
 [(in_language "c++"),
- (out_language "llvm-assembler"),
+ (out_language "llvm-bitcode"),
  (output_suffix "bc"),
  (cmd_line "llvm-g++ -c $INFILE -o $OUTFILE -emit-llvm"),
  (sink)

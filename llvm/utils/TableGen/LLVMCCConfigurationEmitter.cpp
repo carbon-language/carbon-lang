@@ -27,7 +27,7 @@
 
 using namespace llvm;
 
-namespace {
+//namespace {
 
 //===----------------------------------------------------------------------===//
 /// Typedefs
@@ -144,6 +144,7 @@ struct GlobalOptionDescription : public OptionDescription {
   std::string Help;
   unsigned Flags;
 
+  // We need t provide a default constructor since
   // StringMap can only store DefaultConstructible objects
   GlobalOptionDescription() : OptionDescription(), Flags(0)
   {}
@@ -539,8 +540,6 @@ void CollectToolProperties (RecordVector::const_iterator B,
   for (;B!=E;++B) {
     RecordVector::value_type T = *B;
     ListInit* PropList = T->getValueAsListInit("properties");
-    if (!PropList)
-      throw std::string("Tool has no property list!");
 
     IntrusiveRefCntPtr<ToolProperties>
       ToolProps(new ToolProperties(T->getName()));
@@ -853,17 +852,66 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, std::ostream& O)
   O << "}\n\n";
 }
 
-void EmitPopulateCompilationGraph (const RecordKeeper& Records,
-                                   StringMap<std::string>& ToolToLang,
+// Fills in two tables that map tool names to (input, output) languages.
+// Used by the typechecker.
+void FillInToolToLang (const ToolPropertiesList& TPList,
+                       StringMap<std::string>& ToolToInLang,
+                       StringMap<std::string>& ToolToOutLang) {
+  for (ToolPropertiesList::const_iterator B = TPList.begin(), E = TPList.end();
+       B != E; ++B) {
+    const ToolProperties& P = *(*B);
+    ToolToInLang[P.Name] = P.InLanguage;
+    ToolToOutLang[P.Name] = P.OutLanguage;
+  }
+}
+
+// Check that all output and input language names match.
+void TypecheckGraph (Record* CompilationGraph,
+                     const ToolPropertiesList& TPList) {
+  StringMap<std::string> ToolToInLang;
+  StringMap<std::string> ToolToOutLang;
+
+  FillInToolToLang(TPList, ToolToInLang, ToolToOutLang);
+  ListInit* edges = CompilationGraph->getValueAsListInit("edges");
+  StringMap<std::string>::iterator IAE = ToolToInLang.end();
+  StringMap<std::string>::iterator IBE = ToolToOutLang.end();
+
+  for (unsigned i = 0; i < edges->size(); ++i) {
+    Record* Edge = edges->getElementAsRecord(i);
+    Record* A = Edge->getValueAsDef("a");
+    Record* B = Edge->getValueAsDef("b");
+    StringMap<std::string>::iterator IA = ToolToOutLang.find(A->getName());
+    StringMap<std::string>::iterator IB = ToolToInLang.find(B->getName());
+    if(IA == IAE)
+      throw A->getName() + ": no such tool!";
+    if(IB == IBE)
+      throw B->getName() + ": no such tool!";
+    if(A->getName() != "root" && IA->second != IB->second)
+      throw "Edge " + A->getName() + "->" + B->getName()
+        + ": output->input language mismatch";
+  }
+}
+
+// Emit Edge* classes used for.
+void EmitEdgeClasses (Record* CompilationGraph,
+                      const GlobalOptionDescriptions& OptDescs,
+                      std::ostream& O) {
+  ListInit* edges = CompilationGraph->getValueAsListInit("edges");
+
+  for (unsigned i = 0; i < edges->size(); ++i) {
+    //Record* Edge = edges->getElementAsRecord(i);
+    //Record* A = Edge->getValueAsDef("a");
+    //Record* B = Edge->getValueAsDef("b");
+    //ListInit* Props = Edge->getValueAsListInit("props");
+
+    O << "class Edge" << i << " {};\n\n";
+  }
+}
+
+void EmitPopulateCompilationGraph (Record* CompilationGraph,
                                    std::ostream& O)
 {
-  // Get the relevant field out of RecordKeeper
-  Record* CompilationGraph = Records.getDef("CompilationGraph");
-  if (!CompilationGraph)
-    throw std::string("No CompilationGraph specification found!");
   ListInit* edges = CompilationGraph->getValueAsListInit("edges");
-  if (!edges)
-    throw std::string("Error in compilation graph definition!");
 
   // Generate code
   O << "void llvmcc::PopulateCompilationGraph(CompilationGraph& G) {\n"
@@ -878,14 +926,13 @@ void EmitPopulateCompilationGraph (const RecordKeeper& Records,
   for (RecordVector::iterator B = Tools.begin(), E = Tools.end(); B != E; ++B) {
     const std::string& Name = (*B)->getName();
     if(Name != "root")
-      O << Indent1 << "G.insertVertex(IntrusiveRefCntPtr<Tool>(new "
-        << Name << "()));\n";
+      O << Indent1 << "G.insertNode(new "
+        << Name << "());\n";
   }
 
   O << '\n';
 
   // Insert edges
-
   for (unsigned i = 0; i < edges->size(); ++i) {
     Record* Edge = edges->getElementAsRecord(i);
     Record* A = Edge->getValueAsDef("a");
@@ -897,17 +944,9 @@ void EmitPopulateCompilationGraph (const RecordKeeper& Records,
   O << "}\n\n";
 }
 
-void FillInToolToLang (const ToolPropertiesList& T,
-                       StringMap<std::string>& M) {
-  for (ToolPropertiesList::const_iterator B = T.begin(), E = T.end();
-       B != E; ++B) {
-    const ToolProperties& P = *(*B);
-    M[P.Name] = P.InLanguage;
-  }
-}
 
 // End of anonymous namespace
-}
+//}
 
 // Back-end entry point
 void LLVMCCConfigurationEmitter::run (std::ostream &O) {
@@ -936,12 +975,18 @@ void LLVMCCConfigurationEmitter::run (std::ostream &O) {
          E = tool_props.end(); B!=E; ++B)
     EmitToolClassDefinition(*(*B), O);
 
-  // Fill in table that maps tool names to languages
-  StringMap<std::string> ToolToLang;
-  FillInToolToLang(tool_props, ToolToLang);
+  Record* CompilationGraphRecord = Records.getDef("CompilationGraph");
+  if (!CompilationGraphRecord)
+    throw std::string("Compilation graph description not found!");
+
+  // Typecheck the compilation graph.
+  TypecheckGraph(CompilationGraphRecord, tool_props);
+
+  // Emit Edge* classes.
+  EmitEdgeClasses(CompilationGraphRecord, opt_descs, O);
 
   // Emit PopulateCompilationGraph function
-  EmitPopulateCompilationGraph(Records, ToolToLang, O);
+  EmitPopulateCompilationGraph(CompilationGraphRecord, O);
 
   // EOF
 }
