@@ -108,8 +108,7 @@ llvm::Value *CGObjCGNU::getSelector(llvm::IRBuilder &Builder,
           PtrToInt8Ty,
           PtrToInt8Ty,
           NULL);
-    llvm::Value *Args[] = { SelName, SelTypes };
-    cmd = Builder.CreateCall(SelFunction, Args, Args+2);
+    cmd = Builder.CreateCall2(SelFunction, SelName, SelTypes);
   }
   return cmd;
 }
@@ -142,13 +141,12 @@ llvm::Value *CGObjCGNU::generateMessageSend(llvm::IRBuilder &Builder,
      TheModule.getOrInsertFunction("objc_msg_lookup",
                                    llvm::PointerType::getUnqual(impType),
                                    Receiver->getType(), SelectorTy, NULL);
+  llvm::Value *imp = Builder.CreateCall2(lookupFunction, Receiver, cmd);
+
+  // Call the method.
   llvm::SmallVector<llvm::Value*, 16> lookupArgs;
   lookupArgs.push_back(Receiver);
   lookupArgs.push_back(cmd);
-  llvm::Value *imp = Builder.CreateCall(lookupFunction,
-                                        lookupArgs.begin(), lookupArgs.end());
-
-  // Call the method.
   lookupArgs.insert(lookupArgs.end(), ArgV, ArgV+ArgC);
   return Builder.CreateCall(imp, lookupArgs.begin(), lookupArgs.end());
 }

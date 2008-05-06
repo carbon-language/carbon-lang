@@ -131,10 +131,7 @@ llvm::Value *CGObjCEtoile::getSelector(llvm::IRBuilder &Builder,
         PtrToInt8Ty,
         PtrToInt8Ty,
         NULL);
-  llvm::SmallVector<llvm::Value*, 2> Args;
-  Args.push_back(SelName);
-  Args.push_back(SelTypes);
-  return Builder.CreateCall(SelFunction, Args.begin(), Args.end());
+  return Builder.CreateCall2(SelFunction, SelName, SelTypes);
 }
 
 static void SetField(llvm::IRBuilder &Builder, llvm::Value *Structure, 
@@ -180,9 +177,8 @@ llvm::Value *CGObjCEtoile::generateMessageSend(llvm::IRBuilder &Builder,
   LookupArgs.push_back(Receiver);
   LookupArgs.push_back(cmd);
   LookupArgs.push_back(Sender);
-  llvm::Value *Slot = Builder.CreateCall(Lookup,
-      LookupArgs.begin(),
-      LookupArgs.end());
+  llvm::Value *Slot = Builder.CreateCall(Lookup, LookupArgs.begin(),
+                                         LookupArgs.end());
   
   // Create the call structure
   llvm::Value *Call = Builder.CreateAlloca(CallTy);

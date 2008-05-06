@@ -330,14 +330,10 @@ void AggExprEmitter::EmitNullInitializationToLValue(LValue LV, QualType T) {
     
     const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
     llvm::Value* DestPtr = Builder.CreateBitCast(LV.getAddress(), BP, "tmp");
-    
-    llvm::Value *MemSetOps[4] = {
-      DestPtr, llvm::ConstantInt::get(llvm::Type::Int8Ty, 0),
-      llvm::ConstantInt::get(llvm::Type::Int64Ty, Size/8),
-      llvm::ConstantInt::get(llvm::Type::Int32Ty, 0)
-    };
-    
-    Builder.CreateCall(MemSet, MemSetOps, MemSetOps+4);
+    Builder.CreateCall4(MemSet, DestPtr, 
+                        llvm::ConstantInt::get(llvm::Type::Int8Ty, 0),
+                        llvm::ConstantInt::get(llvm::Type::Int64Ty, Size/8),
+                        llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
   }
 }
 

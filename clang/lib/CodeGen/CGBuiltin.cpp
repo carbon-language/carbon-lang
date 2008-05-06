@@ -140,9 +140,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
 
     DstPtr = Builder.CreateBitCast(DstPtr, Type);
     SrcPtr = Builder.CreateBitCast(SrcPtr, Type);
-    Value *Args[] = { DstPtr, SrcPtr };
-    return RValue::get(Builder.CreateCall(CGM.getIntrinsic(Intrinsic::vacopy), 
-                                          &Args[0], &Args[2]));
+    return RValue::get(Builder.CreateCall2(CGM.getIntrinsic(Intrinsic::vacopy), 
+                                           DstPtr, SrcPtr));
   }
   case Builtin::BI__builtin_classify_type: {
     APSInt Result(32);
@@ -559,18 +558,16 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     llvm::Type *PtrTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
     Value *One = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
     Value *Tmp = Builder.CreateAlloca(llvm::Type::Int32Ty, One, "tmp");
-    One = Builder.CreateBitCast(Tmp, PtrTy);
     Builder.CreateStore(Ops[0], Tmp);
     return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::x86_sse_ldmxcsr),
-                             &One, &One+1);
+                              Builder.CreateBitCast(Tmp, PtrTy));
   }
   case X86::BI__builtin_ia32_stmxcsr: {
     llvm::Type *PtrTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
     Value *One = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
     Value *Tmp = Builder.CreateAlloca(llvm::Type::Int32Ty, One, "tmp");
-    One = Builder.CreateBitCast(Tmp, PtrTy);
     One = Builder.CreateCall(CGM.getIntrinsic(Intrinsic::x86_sse_stmxcsr),
-                             &One, &One+1);
+                             Builder.CreateBitCast(Tmp, PtrTy));
     return Builder.CreateLoad(Tmp, "stmxcsr");
   }
   case X86::BI__builtin_ia32_cmpordps:
