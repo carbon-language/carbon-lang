@@ -50,7 +50,7 @@ def required;
 def switch_on;
 def parameter_equals;
 def element_in_list;
-def or;
+def and;
 
 // Map from suffixes to language names
 

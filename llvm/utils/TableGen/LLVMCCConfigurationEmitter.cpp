@@ -905,6 +905,58 @@ void TypecheckGraph (Record* CompilationGraph,
   }
 }
 
+// Helper function used by EmitEdgePropertyTest.
+void EmitEdgePropertyTest1Arg(const DagInit& Prop,
+                              const GlobalOptionDescriptions& OptDescs,
+                              std::ostream& O) {
+  checkNumberOfArguments(&Prop, 1);
+  const std::string& OptName = InitPtrToString(Prop.getArg(0));
+  const GlobalOptionDescription& OptDesc = OptDescs.FindOption(OptName);
+  if (OptDesc.Type != OptionType::Switch)
+    throw OptName + ": incorrect option type!";
+  O << OptDesc.GenVariableName();
+}
+
+// Helper function used by EmitEdgePropertyTest.
+void EmitEdgePropertyTest2Args(const std::string& PropName,
+                               const DagInit& Prop,
+                               const GlobalOptionDescriptions& OptDescs,
+                               std::ostream& O) {
+  checkNumberOfArguments(&Prop, 2);
+  const std::string& OptName = InitPtrToString(Prop.getArg(0));
+  const std::string& OptArg = InitPtrToString(Prop.getArg(1));
+  const GlobalOptionDescription& OptDesc = OptDescs.FindOption(OptName);
+
+  if (PropName == "parameter_equals") {
+    if (OptDesc.Type != OptionType::Parameter
+        && OptDesc.Type != OptionType::Prefix)
+      throw OptName + ": incorrect option type!";
+    O << OptDesc.GenVariableName() << " == \"" << OptArg << "\"";
+  }
+  else if (PropName == "element_in_list") {
+    if (OptDesc.Type != OptionType::ParameterList
+        && OptDesc.Type != OptionType::PrefixList)
+      throw OptName + ": incorrect option type!";
+    const std::string& VarName = OptDesc.GenVariableName();
+    O << "std::find(" << VarName << ".begin(),\n"
+      << Indent3 << VarName << ".end(), \""
+      << OptArg << "\") != " << VarName << ".end()";
+  }
+  else
+    throw PropName + ": unknown edge property!";
+}
+
+// Helper function used by EmitEdgeClasses.
+void EmitEdgePropertyTest(const std::string& PropName,
+                          const DagInit& Prop,
+                          const GlobalOptionDescriptions& OptDescs,
+                          std::ostream& O) {
+  if (PropName == "switch_on")
+    EmitEdgePropertyTest1Arg(Prop, OptDescs, O);
+  else
+    EmitEdgePropertyTest2Args(PropName, Prop, OptDescs, O);
+}
+
 // Emit Edge* classes that represent edges in the graph.
 void EmitEdgeClasses (Record* CompilationGraph,
                       const GlobalOptionDescriptions& OptDescs,
@@ -923,38 +975,35 @@ void EmitEdgeClasses (Record* CompilationGraph,
       << "public:\n"
       << Indent1 << "Edge" << i << "() : Edge(\"" << B->getName()
       << "\") {}\n\n"
-      << Indent1 << "bool isEnabled() const {\n";
+      << Indent1 << "bool isEnabled() const {\n"
+      << Indent2 << "bool ret = false;\n";
 
     for (unsigned i = 0; i < Props->size(); ++i) {
       const DagInit& Prop = dynamic_cast<DagInit&>(*Props->getElement(i));
       const std::string& PropName = Prop.getOperator()->getAsString();
 
-      if (PropName == "switch_on") {
-        checkNumberOfArguments(&Prop, 1);
-        const std::string& OptName = InitPtrToString(Prop.getArg(0));
-        const GlobalOptionDescription& OptDesc = OptDescs.FindOption(OptName);
-        if (OptDesc.Type != OptionType::Switch)
-          throw OptName + ": incorrect option type!";
-        O << Indent2 << "if (" << OptDesc.GenVariableName() << ")\n"
-          << Indent3 << "return true;\n";
-      }
-      else if (PropName == "parameter_equals") {
-        checkNumberOfArguments(&Prop, 2);
-        throw PropName + ": not implemented!";
-      }
-      else if (PropName == "element_in_list") {
-        checkNumberOfArguments(&Prop, 2);
-        throw PropName + ": not implemented!";
-      }
-      else if (PropName == "or") {
-        throw PropName + ": not implemented!";
+      O << Indent2 << "if (ret || (";
+      if (PropName == "and") {
+        const unsigned NumArgs = Prop.getNumArgs();
+        O << '(';
+        for (unsigned j = 0; j < NumArgs; ++j) {
+          const DagInit& InnerProp = dynamic_cast<DagInit&>(*Prop.getArg(j));
+          const std::string& InnerPropName =
+            InnerProp.getOperator()->getAsString();
+          EmitEdgePropertyTest(InnerPropName, InnerProp, OptDescs, O);
+          if (j != NumArgs - 1)
+            O << ")\n" << Indent3 << " && (";
+          else
+            O << ')';
+        }
       }
       else {
-        throw "No such edge property: " + PropName;
+        EmitEdgePropertyTest(PropName, Prop, OptDescs, O);
       }
+      O << "))\n" << Indent3 << "ret = true;\n";
     }
 
-    O << Indent2 << "return false;\n"
+    O << Indent2 << "return ret;\n"
       << Indent1 << "};\n\n"
       << Indent1 << "bool isDefault() const { return false; }\n"
       << "};\n\n";

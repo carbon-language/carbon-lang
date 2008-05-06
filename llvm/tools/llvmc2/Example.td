@@ -26,10 +26,11 @@ def CompilationGraph : CompilationGraph<[
     Edge<llvm_gcc_cpp, llc>,
     Edge<llvm_as, llc>,
 
-    OptionalEdge<llvm_gcc_c, opt, [(switch_on "opt")]>,
-    OptionalEdge<llvm_gcc_cpp, opt, [(switch_on "opt")]>,
-    OptionalEdge<llvm_as, opt, [(switch_on "opt")]>,
-    OptionalEdge<opt, llc, [(switch_on "opt")]>,
+    OptionalEdge<llvm_gcc_c, opt, [(switch_on "S")]>,
+    OptionalEdge<llvm_gcc_cpp, opt, [(switch_on "S")]>,
+    OptionalEdge<llvm_as, opt, [(switch_on "S")]>,
+    OptionalEdge<opt, llc, [(and (switch_on "S"), (parameter_equals "O", "V")),
+                            (element_in_list  "P", "E")]>,
 
     Edge<llc, llvm_gcc_assembler>,
     Edge<llvm_gcc_assembler, llvm_gcc_linker>
