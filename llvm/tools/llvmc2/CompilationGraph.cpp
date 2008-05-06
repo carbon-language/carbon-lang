@@ -50,8 +50,7 @@ namespace {
         MaxEdge = E;
         MaxWeight = EW;
         SingleMax = true;
-      }
-      else if (EW == MaxWeight) {
+      } else if (EW == MaxWeight) {
         SingleMax = false;
       }
     }

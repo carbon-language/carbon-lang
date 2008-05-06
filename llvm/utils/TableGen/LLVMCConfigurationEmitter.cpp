@@ -948,8 +948,7 @@ bool EmitEdgePropertyTest1Arg(const std::string& PropName,
       throw OptName + ": incorrect option type!";
     O << OptDesc.GenVariableName();
     return true;
-  }
-  else if (PropName == "if_input_languages_contain") {
+  } else if (PropName == "if_input_languages_contain") {
     O << "InLangs.count(\"" << OptName << "\") != 0";
     return true;
   }

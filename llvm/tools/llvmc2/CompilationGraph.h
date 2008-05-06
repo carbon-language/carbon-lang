@@ -20,16 +20,30 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/iterator"
-#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/System/Path.h"
 
+#include <cassert>
 #include <string>
 
 namespace llvmc {
 
-  typedef llvm::SmallSet<std::string, 5> InputLanguagesSet;
+  // A wrapper for StringMap that provides set-like functionality.
+  // Only insert() and count() methods are used by my code.
+  template <class AllocatorTy = llvm::MallocAllocator>
+  class StringSet : public llvm::StringMap<char, AllocatorTy> {
+    typedef llvm::StringMap<char, AllocatorTy> base;
+  public:
+    void insert (const std::string& InLang) {
+      assert(!InLang.empty());
+      const char* KeyStart = &InLang[0];
+      const char* KeyEnd = KeyStart + InLang.size();
+      base::insert(llvm::StringMapEntry<char>::
+                   Create(KeyStart, KeyEnd, base::getAllocator(), '+'));
+    }
+  };
+  typedef StringSet<> InputLanguagesSet;
 
   // An edge of the compilation graph.
   class Edge : public llvm::RefCountedBaseVPTR<Edge> {
