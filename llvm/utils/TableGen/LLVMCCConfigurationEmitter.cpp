@@ -787,7 +787,7 @@ void EmitToolClassDefinition (const ToolProperties& P, std::ostream& O) {
     O << "JoinTool";
   else
     O << "Tool";
-  O << "{\npublic:\n";
+  O << " {\npublic:\n";
 
   EmitNameMethod(P, O);
   EmitInOutLanguageMethods(P, O);
