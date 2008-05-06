@@ -27,7 +27,7 @@
 
 using namespace llvm;
 
-//namespace {
+namespace {
 
 //===----------------------------------------------------------------------===//
 /// Typedefs
@@ -1080,10 +1080,10 @@ void EmitPopulateCompilationGraph (Record* CompilationGraph,
 
 
 // End of anonymous namespace
-//}
+}
 
 // Back-end entry point
-void LLVMCCConfigurationEmitter::run (std::ostream &O) {
+void LLVMCConfigurationEmitter::run (std::ostream &O) {
   // Emit file header
   EmitSourceFileHeader("LLVMC Configuration Library", O);
 

@@ -11,20 +11,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVMCCCONF_EMITTER_H
-#define LLVMCCCONF_EMITTER_H
+#ifndef LLVM_UTILS_TABLEGEN_LLVMCCONF_EMITTER_H
+#define LLVM_UTILS_TABLEGEN_LLVMCCONF_EMITTER_H
 
 #include "TableGenBackend.h"
 
 namespace llvm {
-  class LLVMCCConfigurationEmitter : public TableGenBackend {
+  class LLVMCConfigurationEmitter : public TableGenBackend {
     RecordKeeper &Records;
   public:
-    explicit LLVMCCConfigurationEmitter(RecordKeeper &R) : Records(R) {}
+    explicit LLVMCConfigurationEmitter(RecordKeeper &R) : Records(R) {}
 
     // run - Output the asmwriter, returning true on failure.
     void run(std::ostream &o);
   };
 }
 
-#endif //LLVMCCCONF_EMITTER_H
+#endif //LLVM_UTILS_TABLEGEN_LLVMCCONF_EMITTER_H
