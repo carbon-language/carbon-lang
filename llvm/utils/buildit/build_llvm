@@ -235,6 +235,11 @@ chgrp -h -R wheel $DEST_DIR
 chgrp -R wheel $DEST_DIR
 
 ################################################################################
+# Remove tar ball from docs directory
+
+find $DEST_DIR -name html.tar.gz -exec rm {} \;
+
+################################################################################
 # w00t! Done!
 
 exit 0
