@@ -521,7 +521,28 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
   unsigned StructAlign = RL.getAlignment();
   if (llvmSize % StructAlign) {
     unsigned StructPadding = StructAlign - (llvmSize % StructAlign);
-    addPaddingFields(llvmSize + StructPadding);
+    bool needStructPadding = true;
+    if (!LLVMFields.empty()) {
+      const llvm::Type *LastFieldType = LLVMFields.back();
+      const llvm::Type *LastFieldDeclType = 
+        CGT.ConvertTypeRecursive(FieldDecls.back()->getType());
+      if (LastFieldType != LastFieldDeclType) {
+        unsigned LastFieldTypeSize = 
+          CGT.getTargetData().getABITypeSizeInBits(LastFieldType);
+        unsigned LastFieldDeclTypeSize = 
+          CGT.getTargetData().getABITypeSizeInBits(LastFieldDeclType);
+        if (LastFieldDeclTypeSize > LastFieldTypeSize
+            && StructPadding == (LastFieldDeclTypeSize - LastFieldTypeSize)) {
+          // Replace last LLVMField with a LastFieldDeclType field will 
+          // to avoid extra padding fields.
+          LLVMFields.pop_back();
+          LLVMFields.push_back(LastFieldDeclType);
+          needStructPadding = false;
+        }
+      }
+    }
+    if (needStructPadding)
+      addPaddingFields(llvmSize + StructPadding);
   }
 
   STy = llvm::StructType::get(LLVMFields);
@@ -533,8 +554,13 @@ void RecordOrganizer::addPaddingFields(unsigned WaterMark) {
   assert(WaterMark >= llvmSize && "Invalid padding Field");
   unsigned RequiredBits = WaterMark - llvmSize;
   unsigned RequiredBytes = (RequiredBits + 7) / 8;
-  for (unsigned i = 0; i != RequiredBytes; ++i)
-    addLLVMField(llvm::Type::Int8Ty, true);
+  if (RequiredBytes == 1)
+    // This is a bitfield that is using few bits from this byte.
+    // It is not a padding field.
+    addLLVMField(llvm::Type::Int8Ty, false);
+  else
+    for (unsigned i = 0; i != RequiredBytes; ++i)
+      addLLVMField(llvm::Type::Int8Ty, true);
 }
 
 /// addLLVMField - Add llvm struct field that corresponds to llvm type Ty.
