@@ -24,7 +24,7 @@
 #include <stdexcept>
 
 using namespace llvm;
-using namespace llvmcc;
+using namespace llvmc;
 
 extern cl::list<std::string> InputFilenames;
 extern cl::opt<std::string> OutputFilename;
@@ -215,6 +215,9 @@ const Node* CompilationGraph::FindToolChain(const sys::Path& In) const {
   return &getNode(ChooseEdge(TV)->ToolName());
 }
 
+// TOFIX: merge some parts with PassThroughGraph.
+// Build the targets. Command-line options are passed through
+// temporary variables.
 int CompilationGraph::Build (const sys::Path& TempDir) {
 
   // For each input file:
@@ -234,12 +237,13 @@ int CompilationGraph::Build (const sys::Path& TempDir) {
   // For all join nodes in topological order:
   for (std::vector<const Node*>::iterator B = JTV.begin(), E = JTV.end();
        B != E; ++B) {
-    // TOFIX: more testing, merge some parts with PassThroughGraph.
+
     sys::Path Out;
     const Node* CurNode = *B;
     JoinTool* JT = &dynamic_cast<JoinTool&>(*CurNode->ToolPtr.getPtr());
     bool IsLast = false;
 
+    // Has files pending?
     if (JT->JoinListEmpty())
       continue;
 
@@ -277,7 +281,7 @@ int CompilationGraph::Build (const sys::Path& TempDir) {
 
 namespace llvm {
   template <>
-  struct DOTGraphTraits<llvmcc::CompilationGraph*>
+  struct DOTGraphTraits<llvmc::CompilationGraph*>
     : public DefaultDOTGraphTraits
   {
 

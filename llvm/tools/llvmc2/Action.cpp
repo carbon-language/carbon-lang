@@ -20,12 +20,13 @@
 #include <stdexcept>
 
 using namespace llvm;
+using namespace llvmc;
 
 extern cl::opt<bool> VerboseMode;
 
 namespace {
   int ExecuteProgram(const std::string& name,
-                     const std::vector<std::string>& args) {
+                     const StringVector& args) {
     sys::Path prog = sys::Program::FindProgramByName(name);
 
     if (prog.isEmpty())
@@ -33,14 +34,27 @@ namespace {
     if (!prog.canExecute())
       throw std::runtime_error("Program '" + name + "' is not executable.");
 
-    // Invoke the program
-    std::vector<const char*> argv((args.size()+2));
-    argv[0] = name.c_str();
-    for (unsigned i = 1; i <= args.size(); ++i)
-      argv[i] = args[i-1].c_str();
-    argv[args.size()+1] = 0;  // null terminate list.
+    const sys::Path* redirects[3] = {0,0,0};
+    sys::Path stdout_redirect;
 
-    return sys::Program::ExecuteAndWait(prog, &argv[0]);
+    std::vector<const char*> argv;
+    argv.reserve((args.size()+2));
+    argv.push_back(name.c_str());
+
+    for (StringVector::const_iterator B = args.begin(), E = args.end();
+         B!=E; ++B) {
+      if (*B == ">") {
+        ++B;
+        stdout_redirect.set(*B);
+        redirects[1] = &stdout_redirect;
+      }
+      else {
+        argv.push_back((*B).c_str());
+      }
+    }
+    argv.push_back(0);  // null terminate list.
+
+    return sys::Program::ExecuteAndWait(prog, &argv[0], 0, &redirects[0]);
   }
 
   void print_string (const std::string& str) {
@@ -48,7 +62,7 @@ namespace {
   }
 }
 
-int llvmcc::Action::Execute() const {
+int llvmc::Action::Execute() const {
   if (VerboseMode) {
     std::cerr << Command_ << " ";
     std::for_each(Args_.begin(), Args_.end(), print_string);

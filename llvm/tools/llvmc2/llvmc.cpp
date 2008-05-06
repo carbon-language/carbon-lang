@@ -1,4 +1,4 @@
-//===--- llvmcc.cpp - The LLVM Compiler Driver ------------------*- C++ -*-===//
+//===--- llvmc.cpp - The LLVM Compiler Driver ------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -26,7 +26,7 @@
 
 namespace cl = llvm::cl;
 namespace sys = llvm::sys;
-using namespace llvmcc;
+using namespace llvmc;
 
 // Built-in command-line options.
 // External linkage here is intentional.

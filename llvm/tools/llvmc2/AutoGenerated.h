@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace llvmcc {
+namespace llvmc {
 
   typedef llvm::StringMap<std::string> LanguageMap;
   class CompilationGraph;

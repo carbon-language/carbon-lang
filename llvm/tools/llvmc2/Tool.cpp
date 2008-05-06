@@ -15,7 +15,7 @@
 
 #include "llvm/ADT/StringExtras.h"
 
-void llvmcc::Tool::UnpackValues (const std::string& from,
+void llvmc::Tool::UnpackValues (const std::string& from,
                                  std::vector<std::string>& to) {
   llvm::SplitString(from, to, ",");
 }

@@ -1,4 +1,4 @@
-//===- LLVMCConfigurationEmitter.cpp - Generate LLVMCC config -------------===//
+//===- LLVMCConfigurationEmitter.cpp - Generate LLVMC config --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This tablegen backend is responsible for emitting LLVMCC configuration code.
+// This tablegen backend is responsible for emitting LLVMC configuration code.
 //
 //===----------------------------------------------------------------------===//
 
@@ -848,7 +848,7 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, std::ostream& O)
     throw std::string("Error in the language map definition!");
 
   // Generate code
-  O << "void llvmcc::PopulateLanguageMap(LanguageMap& language_map) {\n";
+  O << "void llvmc::PopulateLanguageMap(LanguageMap& language_map) {\n";
 
   for (unsigned i = 0; i < LangsToSuffixesList->size(); ++i) {
     Record* LangToSuffixes = LangsToSuffixesList->getElementAsRecord(i);
@@ -1040,7 +1040,7 @@ void EmitPopulateCompilationGraph (Record* CompilationGraph,
   ListInit* edges = CompilationGraph->getValueAsListInit("edges");
 
   // Generate code
-  O << "void llvmcc::PopulateCompilationGraph(CompilationGraph& G) {\n"
+  O << "void llvmc::PopulateCompilationGraph(CompilationGraph& G) {\n"
     << Indent1 << "PopulateLanguageMap(G.ExtsToLangs);\n\n";
 
   // Insert vertices
@@ -1085,7 +1085,7 @@ void EmitPopulateCompilationGraph (Record* CompilationGraph,
 // Back-end entry point
 void LLVMCCConfigurationEmitter::run (std::ostream &O) {
   // Emit file header
-  EmitSourceFileHeader("LLVMCC Configuration Library", O);
+  EmitSourceFileHeader("LLVMC Configuration Library", O);
 
   // Get a list of all defined Tools
   RecordVector Tools = Records.getAllDerivedDefinitions("Tool");

@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-namespace llvmcc {
+namespace llvmc {
 
   typedef std::vector<llvm::sys::Path> PathVector;
 

@@ -26,7 +26,7 @@
 
 #include <string>
 
-namespace llvmcc {
+namespace llvmc {
 
   // An edge in the graph.
   class Edge : public llvm::RefCountedBaseVPTR<Edge> {
@@ -255,10 +255,10 @@ namespace llvmcc {
 
 namespace llvm {
   template <>
-  struct GraphTraits<llvmcc::CompilationGraph*> {
-    typedef llvmcc::CompilationGraph GraphType;
-    typedef llvmcc::Node NodeType;
-    typedef llvmcc::NodeChildIterator ChildIteratorType;
+  struct GraphTraits<llvmc::CompilationGraph*> {
+    typedef llvmc::CompilationGraph GraphType;
+    typedef llvmc::Node NodeType;
+    typedef llvmc::NodeChildIterator ChildIteratorType;
 
     static NodeType* getEntryNode(GraphType* G) {
       return &G->getNode("root");
@@ -271,7 +271,7 @@ namespace llvm {
       return ChildIteratorType(N, N->OutEdges.end());
     }
 
-    typedef llvmcc::NodesIterator nodes_iterator;
+    typedef llvmc::NodesIterator nodes_iterator;
     static nodes_iterator nodes_begin(GraphType *G) {
       return GraphBegin(G);
     }

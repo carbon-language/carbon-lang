@@ -17,14 +17,16 @@
 #include <string>
 #include <vector>
 
-namespace llvmcc {
+namespace llvmc {
+
+  typedef std::vector<std::string> StringVector;
 
   class Action {
     std::string Command_;
     std::vector<std::string> Args_;
   public:
-    Action (std::string const& C,
-            std::vector<std::string> const& A)
+    Action (const std::string& C,
+            const StringVector& A)
       : Command_(C), Args_(A)
     {}
 
