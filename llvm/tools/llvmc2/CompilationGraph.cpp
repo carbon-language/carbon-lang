@@ -20,7 +20,6 @@
 
 #include <algorithm>
 #include <iterator>
-#include <iostream>
 #include <limits>
 #include <queue>
 #include <stdexcept>
@@ -88,6 +87,7 @@ const Node& CompilationGraph::getNode(const std::string& ToolName) const {
   return I->second;
 }
 
+// Find the language name corresponding to the given file.
 const std::string& CompilationGraph::getLanguage(const sys::Path& File) const {
   LanguageMap::const_iterator Lang = ExtsToLangs.find(File.getSuffix());
   if (Lang == ExtsToLangs.end())
@@ -95,6 +95,7 @@ const std::string& CompilationGraph::getLanguage(const sys::Path& File) const {
   return Lang->second;
 }
 
+// Find the tools list corresponding to the given language name.
 const CompilationGraph::tools_vector_type&
 CompilationGraph::getToolsVector(const std::string& LangName) const
 {
@@ -189,42 +190,7 @@ void CompilationGraph::PassThroughGraph (const sys::Path& InFile,
   }
 }
 
-// Sort the nodes in topological order.
-void CompilationGraph::TopologicalSort(std::vector<const Node*>& Out) {
-  std::queue<const Node*> Q;
-  Q.push(&getNode("root"));
-
-  while (!Q.empty()) {
-    const Node* A = Q.front();
-    Q.pop();
-    Out.push_back(A);
-    for (Node::const_iterator EB = A->EdgesBegin(), EE = A->EdgesEnd();
-         EB != EE; ++EB) {
-      Node* B = &getNode((*EB)->ToolName());
-      B->DecrInEdges();
-      if (B->HasNoInEdges())
-        Q.push(B);
-    }
-  }
-}
-
-namespace {
-  bool NotJoinNode(const Node* N) {
-    return N->ToolPtr ? !N->ToolPtr->IsJoin() : true;
-  }
-}
-
-// Call TopologicalSort and filter the resulting list to include
-// only Join nodes.
-void CompilationGraph::
-TopologicalSortFilterJoinNodes(std::vector<const Node*>& Out) {
-  std::vector<const Node*> TopSorted;
-  TopologicalSort(TopSorted);
-  std::remove_copy_if(TopSorted.begin(), TopSorted.end(),
-                      std::back_inserter(Out), NotJoinNode);
-}
-
-// Find head of the toolchain corresponding to the given file.
+// Find the head of the toolchain corresponding to the given file.
 // Also, insert an input language into InLangs.
 const Node* CompilationGraph::
 FindToolChain(const sys::Path& In, const std::string* forceLanguage,
@@ -304,8 +270,43 @@ void CompilationGraph::BuildInitial (InputLanguagesSet& InLangs,
   }
 }
 
-// Build the targets. Command-line options are passed through
-// temporary variables.
+// Sort the nodes in topological order.
+void CompilationGraph::TopologicalSort(std::vector<const Node*>& Out) {
+  std::queue<const Node*> Q;
+  Q.push(&getNode("root"));
+
+  while (!Q.empty()) {
+    const Node* A = Q.front();
+    Q.pop();
+    Out.push_back(A);
+    for (Node::const_iterator EB = A->EdgesBegin(), EE = A->EdgesEnd();
+         EB != EE; ++EB) {
+      Node* B = &getNode((*EB)->ToolName());
+      B->DecrInEdges();
+      if (B->HasNoInEdges())
+        Q.push(B);
+    }
+  }
+}
+
+namespace {
+  bool NotJoinNode(const Node* N) {
+    return N->ToolPtr ? !N->ToolPtr->IsJoin() : true;
+  }
+}
+
+// Call TopologicalSort and filter the resulting list to include
+// only Join nodes.
+void CompilationGraph::
+TopologicalSortFilterJoinNodes(std::vector<const Node*>& Out) {
+  std::vector<const Node*> TopSorted;
+  TopologicalSort(TopSorted);
+  std::remove_copy_if(TopSorted.begin(), TopSorted.end(),
+                      std::back_inserter(Out), NotJoinNode);
+}
+
+// Build the targets. Command-line options are accessed through global
+// variables.
 int CompilationGraph::Build (const sys::Path& TempDir) {
 
   InputLanguagesSet InLangs;
@@ -325,12 +326,12 @@ int CompilationGraph::Build (const sys::Path& TempDir) {
     JoinTool* JT = &dynamic_cast<JoinTool&>(*CurNode->ToolPtr.getPtr());
     bool IsLast = false;
 
-    // Are there any files to be joined?
+    // Are there any files in the join list?
     if (JT->JoinListEmpty())
       continue;
 
-    // Is this the last tool in the chain?
-    // NOTE: we can process several chains in parallel.
+    // Is this the last tool in the toolchain?
+    // NOTE: we can process several toolchains in parallel.
     if (!CurNode->HasChildren() || JT->IsLast()) {
       if (OutputFilename.empty()) {
         Out.set("a");
