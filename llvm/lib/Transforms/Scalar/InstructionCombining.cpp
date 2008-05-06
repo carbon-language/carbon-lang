@@ -965,7 +965,7 @@ void InstCombiner::ComputeMaskedBits(Value *V, const APInt &Mask,
     if (ConstantInt *Rem = dyn_cast<ConstantInt>(I->getOperand(1))) {
       APInt RA = Rem->getValue();
       if (RA.isPowerOf2() || (-RA).isPowerOf2()) {
-        APInt LowBits = RA.isStrictlyPositive() ? ((RA - 1) | RA) : ~RA;
+        APInt LowBits = RA.isStrictlyPositive() ? (RA - 1) : ~RA;
         APInt Mask2 = LowBits | APInt::getSignBit(BitWidth);
         ComputeMaskedBits(I->getOperand(0), Mask2,KnownZero2,KnownOne2,Depth+1);
 
@@ -986,8 +986,8 @@ void InstCombiner::ComputeMaskedBits(Value *V, const APInt &Mask,
   case Instruction::URem: {
     if (ConstantInt *Rem = dyn_cast<ConstantInt>(I->getOperand(1))) {
       APInt RA = Rem->getValue();
-      if (RA.isStrictlyPositive() && RA.isPowerOf2()) {
-        APInt LowBits = (RA - 1) | RA;
+      if (RA.isPowerOf2()) {
+        APInt LowBits = (RA - 1);
         APInt Mask2 = LowBits & Mask;
         KnownZero |= ~LowBits & Mask;
         ComputeMaskedBits(I->getOperand(0), Mask2, KnownZero, KnownOne,Depth+1);
@@ -1728,7 +1728,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     if (ConstantInt *Rem = dyn_cast<ConstantInt>(I->getOperand(1))) {
       APInt RA = Rem->getValue();
       if (RA.isPowerOf2() || (-RA).isPowerOf2()) {
-        APInt LowBits = RA.isStrictlyPositive() ? (RA - 1) | RA : ~RA;
+        APInt LowBits = RA.isStrictlyPositive() ? (RA - 1) : ~RA;
         APInt Mask2 = LowBits | APInt::getSignBit(BitWidth);
         if (SimplifyDemandedBits(I->getOperand(0), Mask2,
                                  LHSKnownZero, LHSKnownOne, Depth+1))
@@ -1749,8 +1749,8 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
   case Instruction::URem: {
     if (ConstantInt *Rem = dyn_cast<ConstantInt>(I->getOperand(1))) {
       APInt RA = Rem->getValue();
-      if (RA.isStrictlyPositive() && RA.isPowerOf2()) {
-        APInt LowBits = (RA - 1) | RA;
+      if (RA.isPowerOf2()) {
+        APInt LowBits = (RA - 1);
         APInt Mask2 = LowBits & DemandedMask;
         KnownZero |= ~LowBits & DemandedMask;
         if (SimplifyDemandedBits(I->getOperand(0), Mask2,

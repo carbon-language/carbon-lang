@@ -1560,7 +1560,7 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, const APInt &Mask,
     if (ConstantSDNode *Rem = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       APInt RA = Rem->getAPIntValue();
       if (RA.isPowerOf2() || (-RA).isPowerOf2()) {
-        APInt LowBits = RA.isStrictlyPositive() ? ((RA - 1) | RA) : ~RA;
+        APInt LowBits = RA.isStrictlyPositive() ? (RA - 1) : ~RA;
         APInt Mask2 = LowBits | APInt::getSignBit(BitWidth);
         ComputeMaskedBits(Op.getOperand(0), Mask2,KnownZero2,KnownOne2,Depth+1);
 
@@ -1581,8 +1581,8 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, const APInt &Mask,
   case ISD::UREM: {
     if (ConstantSDNode *Rem = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       APInt RA = Rem->getAPIntValue();
-      if (RA.isStrictlyPositive() && RA.isPowerOf2()) {
-        APInt LowBits = (RA - 1) | RA;
+      if (RA.isPowerOf2()) {
+        APInt LowBits = (RA - 1);
         APInt Mask2 = LowBits & Mask;
         KnownZero |= ~LowBits & Mask;
         ComputeMaskedBits(Op.getOperand(0), Mask2, KnownZero, KnownOne,Depth+1);
