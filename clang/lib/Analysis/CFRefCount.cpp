@@ -492,6 +492,7 @@ static bool isCFRefType(QualType T) {
   return true;
 }
 
+#if 0
 static bool isNSType(QualType T) {
   
   if (!T->isPointerType())
@@ -512,6 +513,7 @@ static bool isNSType(QualType T) {
   
   return true;
 }
+#endif
 
 
 RetainSummary* RetainSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
@@ -579,15 +581,17 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME) {
   
   if (I != ObjCMethSummaries.end())
     return I->second;
-
+  
+#if 0
   // Only generate real summaries for methods involving
   // NSxxxx objects.
-  
+
   if (!isNSType(ME->getReceiver()->getType())) {
     RetainSummary* Summ = getPersistentStopSummary();
     ObjCMethSummaries[S] = Summ;
     return Summ;
   }
+#endif 
   
   // "initXXX": pass-through for receiver.
 
@@ -620,6 +624,57 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME) {
   return 0;
 }
 
+RetainSummary*
+RetainSummaryManager::getInstanceMethodSummary(IdentifierInfo* ClsName,
+                                               Selector S) {
+  
+  // Look up a summary in our cache of Selectors -> Summaries.
+  ObjCMethSummariesTy::iterator I = ObjCInstMethSummaries.find(S);
+  
+  if (I != ObjCInstMethSummaries.end())
+    return I->second;
+  
+  // Don't track anything if using GC.
+  if (isGCEnabled())
+    return 0;
+  
+  // Inspect the class name and selecrtor to determine if this method
+  //  creates new objects.
+  const char* cls = ClsName->getName();
+  
+  if (cls[0] == 'N' && cls[1] == 'S')  // Ignore preceding "NS" (if present).
+    cls += 2;
+  
+  // Heuristic: XXXwithYYY, where XXX is the class name with the "NS"
+  //  stripped off is usually an allocation.
+  
+  const char* s = S.getIdentifierInfoForSlot(0)->getName();  
+  
+  if (cls[0] == '\0' || s[0] == '\0' || tolower(cls[0]) != s[0])
+    return 0;
+  
+  // Now look at the rest of the characters.
+  ++cls; ++s;
+  unsigned len = strlen(cls);
+  
+  // If the prefix doesn't match, don't generate a special summary.
+  if (strncmp(cls, s, len) != 0)
+    return 0;
+  
+  // Look at the text after the prefix.
+  s += len;  
+  
+  if (!(s[0] == '\0' || strncmp(s, "With", 4) == 0))
+    return 0;
+  
+  // Generate and return the summary.
+  assert (ScratchArgs.empty());
+  
+  RetainSummary* Summ = getPersistentSummary(RetEffect::MakeOwned());
+  ObjCInstMethSummaries[S] = Summ;
+  return Summ;
+}
+
 void RetainSummaryManager::InitializeInstMethSummaries() {
   
   assert (ScratchArgs.empty());
@@ -642,7 +697,14 @@ void RetainSummaryManager::InitializeInstMethSummaries() {
   // Create the "mutableCopyWithZone:" selector.
   ObjCInstMethSummaries[ GetUnarySelector("mutableCopyWithZone", Ctx) ] = Summ;
   
-  // Special cases: create the NSProcessInfo::processInfo selector.
+  // ** Special cases! **
+  //
+  //  FIXME: It would be great if this one day was in a file, rather than
+  //   hardcoded into the source code.
+  //
+  
+  // NSProcessInfo::processInfo - This instance method does not return
+  //  an owning reference.
   ObjCInstMethSummaries[ GetNullarySelector("processInfo", Ctx) ] = 
     getPersistentSummary(RetEffect::MakeNoRet());  
 }
@@ -651,13 +713,16 @@ void RetainSummaryManager::InitializeMethSummaries() {
   
   assert (ScratchArgs.empty());  
   
-  // Create the "init" selector.
+  // Create the "init" selector.  It just acts as a pass-through for the
+  // receiver.
   RetainSummary* Summ = getPersistentSummary(RetEffect::MakeReceiverAlias());
   ObjCMethSummaries[ GetNullarySelector("init", Ctx) ] = Summ;
-    
-  // Create the "copy" selector.
+  
+  // The next methods are allocators.
   RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet() : RetEffect::MakeOwned();  
-  Summ = getPersistentSummary(E);
+  Summ = getPersistentSummary(E);  
+  
+  // Create the "copy" selector.  
   ObjCMethSummaries[ GetNullarySelector("copy", Ctx) ] = Summ;
   
   // Create the "mutableCopy" selector.
@@ -675,72 +740,6 @@ void RetainSummaryManager::InitializeMethSummaries() {
   // Create the "autorelease" selector.
   Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : StopTracking);
   ObjCMethSummaries[ GetNullarySelector("autorelease", Ctx) ] = Summ;
-}
-
-
-RetainSummary*
-RetainSummaryManager::getInstanceMethodSummary(IdentifierInfo* ClsName,
-                                               Selector S) {
-    
-  // Look up a summary in our cache of Selectors -> Summaries.
-  ObjCMethSummariesTy::iterator I = ObjCInstMethSummaries.find(S);
-  
-  if (I != ObjCInstMethSummaries.end())
-    return I->second;
-  
-  // Don't track anything if using GC.
-  if (isGCEnabled())
-    return 0;
-  
-  // Only generate real summaries for NSXXX classes.
-  
-  const char* cls = ClsName->getName();
-  
-  if (cls[0] != 'N' || cls[1] != 'S')
-    return getPersistentStopSummary();  
-      
-  // Heuristic: XXXXwithYYYY, where XXX is the class name with the "NS"
-  //  stripped off is usually an allocation.
-  
-  const char* s = S.getIdentifierInfoForSlot(0)->getName();  
-  
-  cls += 2;
-  
-  if (cls[0] == '\0' || s[0] == '\0' || tolower(cls[0]) != s[0])
-    return 0;  
-  
-  ++cls;
-  ++s;
-    
-  // Now look at the rest of the characters.
-  unsigned len = strlen(cls);
-
-  // Prefix matches?
-  if (strncmp(cls, s, len) != 0)
-    return 0;
-  
-  s += len;  
-  
-  // If 's' is the same as clsName, or 's' has "With" after the class name,
-  // treat it as an allocator.
-  do {
-  
-    if (s[0] == '\0')
-      break;
-  
-    if (strncmp(s, "With", 4) == 0)
-      break;
-    
-    return 0;
-    
-  } while(0);
-  
-  // Generate the summary.
-  
-  assert (ScratchArgs.empty());
-  RetainSummary* Summ = getPersistentSummary(RetEffect::MakeOwned());
-  ObjCInstMethSummaries[S] = Summ;
-  return Summ;
 }
 
 //===----------------------------------------------------------------------===//
