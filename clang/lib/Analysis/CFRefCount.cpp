@@ -229,14 +229,16 @@ class RetainSummaryManager {
   RetainSummary* getMethodSummary(Selector S);    
   RetainSummary* getInitMethodSummary(Selector S);
 
-  void InitializeInstanceSummaries();
+  void InitializeInstMethSummaries();
+  void InitializeMethSummaries();
     
 public:
   
   RetainSummaryManager(ASTContext& ctx, bool gcenabled)
    : Ctx(ctx), GCEnabled(gcenabled) {
     
-     InitializeInstanceSummaries();
+     InitializeInstMethSummaries();
+     InitializeMethSummaries();
    }
   
   ~RetainSummaryManager();
@@ -523,7 +525,7 @@ RetainSummary* RetainSummaryManager::getMethodSummary(Selector S) {
   return 0;
 }
 
-void RetainSummaryManager::InitializeInstanceSummaries() {
+void RetainSummaryManager::InitializeInstMethSummaries() {
   
   assert (ScratchArgs.empty());
   
@@ -544,6 +546,23 @@ void RetainSummaryManager::InitializeInstanceSummaries() {
     
   // Create the "mutableCopyWithZone:" selector.
   ObjCInstMethSummaries[ GetUnarySelector("mutableCopyWithZone", Ctx) ] = Summ;
+}
+
+void RetainSummaryManager::InitializeMethSummaries() {
+  
+  assert (ScratchArgs.empty());  
+  
+  // Create the "init" selector.
+  RetainSummary* Summ = getPersistentSummary(RetEffect::MakeReceiverAlias());
+  ObjCMethSummaries[ GetNullarySelector("init", Ctx) ] = Summ;
+    
+  // Create the "copy" selector.
+  RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet() : RetEffect::MakeOwned();  
+  Summ = getPersistentSummary(E);
+  ObjCMethSummaries[ GetNullarySelector("copy", Ctx) ] = Summ;
+  
+  // Create the "mutableCopy" selector.
+  ObjCMethSummaries[ GetNullarySelector("mutableCopy", Ctx) ] = Summ;
 }
 
 
