@@ -38,6 +38,7 @@ def llvm_gcc_cpp : Tool<
 def opt : Tool<
 [(in_language "llvm-bitcode"),
  (out_language "llvm-bitcode"),
+ (switch_option "opt", (help "Enable opt")),
  (output_suffix "bc"),
  (cmd_line "opt $INFILE -o $OUTFILE")
 ]>;

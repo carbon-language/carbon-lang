@@ -58,6 +58,15 @@ std::string InitPtrToString(Init* ptr) {
   return val.getValue();
 }
 
+// Ensure that the number of args in d is <= min_arguments,
+// throw exception otherwise
+void checkNumberOfArguments (const DagInit* d, unsigned min_arguments) {
+  if (d->getNumArgs() < min_arguments)
+    throw "Property " + d->getOperator()->getAsString()
+      + " has too few arguments!";
+}
+
+
 //===----------------------------------------------------------------------===//
 /// Back-end specific code
 
@@ -186,6 +195,14 @@ struct GlobalOptionDescriptions {
   container_type Descriptions;
   // Should the emitter generate a "cl::sink" option?
   bool HasSink;
+
+  const GlobalOptionDescription& FindOption(const std::string& OptName) const {
+    const_iterator I = Descriptions.find(OptName);
+    if (I != Descriptions.end())
+      return I->second;
+    else
+      throw OptName + ": no such option!";
+  }
 
   // Support for STL-style iteration
   const_iterator begin() const { return Descriptions.begin(); }
@@ -358,7 +375,7 @@ public:
   // Just forwards to the corresponding property handler.
   void operator() (Init* i) {
     DagInit& d = dynamic_cast<DagInit&>(*i);
-    std::string property_name = d.getOperator()->getAsString();
+    const std::string& property_name = d.getOperator()->getAsString();
     PropertyHandlerMap::iterator method
       = propertyHandlers_.find(property_name);
 
@@ -468,14 +485,6 @@ private:
     toolProps_.OptDescs[name].Name = name;
     processOptionProperties(d, o);
     insertDescription(o);
-  }
-
-  // Ensure that the number of args in d is <= min_arguments,
-  // throw exception otherwise
-  void checkNumberOfArguments (DagInit* d, unsigned min_arguments) {
-    if (d->getNumArgs() < min_arguments)
-      throw "Property " + d->getOperator()->getAsString()
-        + " has too few arguments!";
   }
 
   // Insert new GlobalOptionDescription into GlobalOptionDescriptions list
@@ -897,7 +906,6 @@ void TypecheckGraph (Record* CompilationGraph,
 }
 
 // Emit Edge* classes that represent edges in the graph.
-// TOFIX: add edge properties.
 void EmitEdgeClasses (Record* CompilationGraph,
                       const GlobalOptionDescriptions& OptDescs,
                       std::ostream& O) {
@@ -914,13 +922,42 @@ void EmitEdgeClasses (Record* CompilationGraph,
     O << "class Edge" << i << ": public Edge {\n"
       << "public:\n"
       << Indent1 << "Edge" << i << "() : Edge(\"" << B->getName()
-      << "\") {}\n";
+      << "\") {}\n\n"
+      << Indent1 << "bool isEnabled() const {\n";
 
-    O << Indent1 << "bool isEnabled() const { return true; }\n";
+    for (unsigned i = 0; i < Props->size(); ++i) {
+      const DagInit& Prop = dynamic_cast<DagInit&>(*Props->getElement(i));
+      const std::string& PropName = Prop.getOperator()->getAsString();
 
-    O << Indent1 << "bool isDefault() const { return false; }\n";
+      if (PropName == "switch_on") {
+        checkNumberOfArguments(&Prop, 1);
+        const std::string& OptName = InitPtrToString(Prop.getArg(0));
+        const GlobalOptionDescription& OptDesc = OptDescs.FindOption(OptName);
+        if (OptDesc.Type != OptionType::Switch)
+          throw OptName + ": incorrect option type!";
+        O << Indent2 << "if (" << OptDesc.GenVariableName() << ")\n"
+          << Indent3 << "return true;\n";
+      }
+      else if (PropName == "parameter_equals") {
+        checkNumberOfArguments(&Prop, 2);
+        throw PropName + ": not implemented!";
+      }
+      else if (PropName == "element_in_list") {
+        checkNumberOfArguments(&Prop, 2);
+        throw PropName + ": not implemented!";
+      }
+      else if (PropName == "or") {
+        throw PropName + ": not implemented!";
+      }
+      else {
+        throw "No such edge property: " + PropName;
+      }
+    }
 
-    O << "};\n\n";
+    O << Indent2 << "return false;\n"
+      << Indent1 << "};\n\n"
+      << Indent1 << "bool isDefault() const { return false; }\n"
+      << "};\n\n";
   }
 }
 
