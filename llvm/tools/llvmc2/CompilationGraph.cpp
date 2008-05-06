@@ -245,12 +245,11 @@ FindToolChain(const sys::Path& In, const std::string* forceLanguage,
   return &getNode(ChooseEdge(TV, InLangs)->ToolName());
 }
 
-// Build the targets. Command-line options are passed through
-// temporary variables.
-int CompilationGraph::Build (const sys::Path& TempDir) {
-
-  InputLanguagesSet InLangs;
-
+// Helper function used by Build().
+// Traverses initial portions of the toolchains (up to the first Join node).
+// This function is also responsible for handling the -x option.
+void CompilationGraph::BuildInitial (InputLanguagesSet& InLangs,
+                                     const sys::Path& TempDir) {
   // This is related to -x option handling.
   cl::list<std::string>::const_iterator xIter = Languages.begin(),
     xBegin = xIter, xEnd = Languages.end();
@@ -303,6 +302,16 @@ int CompilationGraph::Build (const sys::Path& TempDir) {
     // Pass file through the chain starting at head.
     PassThroughGraph(In, N, InLangs, TempDir);
   }
+}
+
+// Build the targets. Command-line options are passed through
+// temporary variables.
+int CompilationGraph::Build (const sys::Path& TempDir) {
+
+  InputLanguagesSet InLangs;
+
+  // Traverse initial parts of the toolchains and fill in InLangs.
+  BuildInitial(InLangs, TempDir);
 
   std::vector<const Node*> JTV;
   TopologicalSortFilterJoinNodes(JTV);

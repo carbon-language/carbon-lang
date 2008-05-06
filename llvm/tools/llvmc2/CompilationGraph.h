@@ -20,17 +20,16 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/iterator"
-//#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/System/Path.h"
 
-#include <set>
 #include <string>
 
 namespace llvmc {
 
-  typedef std::set<std::string> InputLanguagesSet;
+  typedef llvm::SmallSet<std::string, 5> InputLanguagesSet;
 
   // An edge of the compilation graph.
   class Edge : public llvm::RefCountedBaseVPTR<Edge> {
@@ -162,7 +161,7 @@ namespace llvmc {
     // the given language name. Throws std::runtime_error.
     const tools_vector_type& getToolsVector(const std::string& LangName) const;
 
-    // Pass the input file through the toolchain.
+    // Pass the input file through the toolchain starting at StartNode.
     void PassThroughGraph (const llvm::sys::Path& In, const Node* StartNode,
                            const InputLanguagesSet& InLangs,
                            const llvm::sys::Path& TempDir) const;
@@ -171,6 +170,10 @@ namespace llvmc {
     const Node* FindToolChain(const llvm::sys::Path& In,
                               const std::string* forceLanguage,
                               InputLanguagesSet& InLangs) const;
+
+    // Traverse the initial parts of the toolchains.
+    void BuildInitial(InputLanguagesSet& InLangs,
+                      const llvm::sys::Path& TempDir);
 
     // Sort the nodes in topological order.
     void TopologicalSort(std::vector<const Node*>& Out);
