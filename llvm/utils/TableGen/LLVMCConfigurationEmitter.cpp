@@ -632,11 +632,11 @@ void EmitOptionPropertyHandlingCode (const ToolProperties& P,
         << "::iterator B = " << D.GenVariableName() << ".begin(),\n"
         << Indent3 << "E = " << D.GenVariableName()
         << ".end(); B != E; ++B)\n"
-        << Indent4 << "Tool::UnpackValues(*B, vec);\n";
+        << Indent4 << "llvm::SplitString(*B, vec, \",\");\n";
     }
     else if (D.Type == OptionType::Prefix || D.Type == OptionType::Parameter){
-      O << Indent3 << "Tool::UnpackValues("
-        << D.GenVariableName() << ", vec);\n";
+      O << Indent3 << "llvm::SplitString("
+        << D.GenVariableName() << ", vec, \",\");\n";
     }
     else {
       // TOFIX: move this to the type-checking phase

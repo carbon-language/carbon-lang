@@ -15,6 +15,7 @@
 #include "CompilationGraph.h"
 #include "Tool.h"
 
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 
 #include <stdexcept>

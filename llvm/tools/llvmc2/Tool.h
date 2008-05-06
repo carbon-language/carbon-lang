@@ -44,12 +44,6 @@ namespace llvmc {
 
     virtual bool IsLast() const = 0;
     virtual bool IsJoin() const = 0;
-
-    // Helper function that is called by the auto-generated code
-    // Splits strings of the form ",-foo,-bar,-baz"
-    // TOFIX: find a better name
-    static void UnpackValues (std::string const& from,
-                              std::vector<std::string>& to);
   };
 
   // Join tools have an input file list associated with them.
