@@ -677,6 +677,7 @@ public:
   
   virtual DeclTy *ActOnProperty(Scope *S, SourceLocation AtLoc,
                                 FieldDeclarator &FD, ObjCDeclSpec &ODS,
+                                Selector GetterSel, Selector SetterSel,
                                 tok::ObjCKeywordKind MethodImplKind);
   
   virtual DeclTy *ActOnPropertyImplDecl(SourceLocation AtLoc, 

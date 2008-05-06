@@ -329,7 +329,8 @@ public:
   };
   
   
-  ObjCDeclSpec() : objcDeclQualifier(DQ_None), PropertyAttributes(DQ_PR_noattr) 
+  ObjCDeclSpec() : objcDeclQualifier(DQ_None), PropertyAttributes(DQ_PR_noattr),
+  GetterName(0), SetterName(0)
   {}
   ObjCDeclQualifier getObjCDeclQualifier() const { return objcDeclQualifier; }
   void setObjCDeclQualifier(ObjCDeclQualifier DQVal) 

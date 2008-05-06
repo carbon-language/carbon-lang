@@ -1075,12 +1075,13 @@ private:
   // @required/@optional
   unsigned PropertyImplementation : 2;
   
-  IdentifierInfo *GetterName;    // getter name of NULL if no getter
-  IdentifierInfo *SetterName;    // setter name of NULL if no setter
+  Selector GetterName;    // getter name of NULL if no getter
+  Selector SetterName;    // setter name of NULL if no setter
   
   ObjCPropertyDecl(SourceLocation L, IdentifierInfo *Id, QualType T)
     : NamedDecl(ObjCProperty, L, Id), DeclType(T),
-      PropertyAttributes(OBJC_PR_noattr), GetterName(0), SetterName(0) {}
+      PropertyAttributes(OBJC_PR_noattr), GetterName(Selector()), 
+      SetterName(Selector()) {}
 public:
   static ObjCPropertyDecl *Create(ASTContext &C, SourceLocation L, 
                                   IdentifierInfo *Id, QualType T,
@@ -1095,11 +1096,11 @@ public:
     PropertyAttributes |= PRVal;
   }
   
-  IdentifierInfo *getGetterName() const { return GetterName; }
-  void setGetterName(IdentifierInfo *Id) { GetterName = Id; }
+  Selector getGetterName() const { return GetterName; }
+  void setGetterName(Selector Sel) { GetterName = Sel; }
   
-  IdentifierInfo *getSetterName() const { return SetterName; }
-  void setSetterName(IdentifierInfo *Id) { SetterName = Id; }
+  Selector getSetterName() const { return SetterName; }
+  void setSetterName(Selector Sel) { SetterName = Sel; }
   
   // Related to @optional/@required declared in @protocol
   void setPropertyImplementation(PropertyControl pc) {

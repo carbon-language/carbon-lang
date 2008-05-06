@@ -686,6 +686,7 @@ public:
   // ActOnProperty - called to build one property AST
   virtual DeclTy *ActOnProperty (Scope *S, SourceLocation AtLoc,
                                  FieldDeclarator &FD, ObjCDeclSpec &ODS,
+                                 Selector GetterSel, Selector SetterSel,
                                  tok::ObjCKeywordKind MethodImplKind) {
     return 0;
   }

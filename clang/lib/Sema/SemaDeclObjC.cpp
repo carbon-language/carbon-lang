@@ -1023,6 +1023,8 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
 Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc, 
                                   FieldDeclarator &FD,
                                   ObjCDeclSpec &ODS,
+                                  Selector GetterSel,
+                                  Selector SetterSel,
                                   tok::ObjCKeywordKind MethodImplKind) {
   QualType T = GetTypeForDeclarator(FD.D, S);
   ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, AtLoc, 
@@ -1033,12 +1035,12 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   
   if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_getter) {
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_getter);
-    PDecl->setGetterName(ODS.getGetterName());
+    PDecl->setGetterName(GetterSel);
   }
   
   if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_setter) {
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_setter);
-    PDecl->setSetterName(ODS.getSetterName());
+    PDecl->setSetterName(SetterSel);
   }
   
   if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_assign)

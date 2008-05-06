@@ -270,8 +270,13 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
         for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
           FieldDeclarator &FD = FieldDeclarators[i];
           // Install the property declarator into interfaceDecl.
+          Selector GetterSel = 
+            PP.getSelectorTable().getNullarySelector(OCDS.getGetterName());
+          Selector SetterSel = 
+          PP.getSelectorTable().getNullarySelector(OCDS.getSetterName());
           DeclTy *Property = Actions.ActOnProperty(CurScope,
                                DS.getSourceRange().getBegin(), FD, OCDS,
+                               GetterSel, SetterSel,
                                MethodImplKind);
           allProperties.push_back(Property);
         }
