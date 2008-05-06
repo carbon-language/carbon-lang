@@ -672,7 +672,7 @@ Path::renamePathOnDisk(const Path& newName, std::string* ErrMsg) {
   if (!MoveFileEx(path.c_str(), newName.c_str(), MOVEFILE_REPLACE_EXISTING))
     return MakeErrMsg(ErrMsg, "Can't move '" + path + "' to '" + newName.path 
         + "': ");
-  return true;
+  return false;
 }
 
 bool
