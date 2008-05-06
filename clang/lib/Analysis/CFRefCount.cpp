@@ -530,8 +530,8 @@ RetainSummary* RetainSummaryManager::getMethodSummary(Selector S) {
   // "initXXX": pass-through for receiver.
 
   const char* s = S.getIdentifierInfoForSlot(0)->getName();
-    
-  if (s[0] == 'i' && s[10] == 'n' && s[2] == 'i' && s[3] == 't')
+  
+  if (!strncmp(s, "init", 4))
     return getInitMethodSummary(S);
 
   return 0;
