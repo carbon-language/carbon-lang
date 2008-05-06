@@ -48,7 +48,7 @@ static inline Selector GetUnarySelector(const char* name, ASTContext& Ctx) {
 //===----------------------------------------------------------------------===//
 
 namespace {  
-  enum ArgEffect { IncRef, DecRef, DoNothing };
+  enum ArgEffect { IncRef, DecRef, DoNothing, AutoRef };
   typedef std::vector<std::pair<unsigned,ArgEffect> > ArgEffects;
 }
 
@@ -101,10 +101,12 @@ public:
   
 class RetainSummary : public llvm::FoldingSetNode {
   ArgEffects* Args;
+  ArgEffect   Receiver;
   RetEffect   Ret;
 public:
   
-  RetainSummary(ArgEffects* A, RetEffect R) : Args(A), Ret(R) {}
+  RetainSummary(ArgEffects* A, RetEffect R, ArgEffect ReceiverEff = DoNothing) 
+    : Args(A), Receiver(ReceiverEff), Ret(R) {}
   
   unsigned getNumArgs() const { return Args->size(); }
   
@@ -130,8 +132,12 @@ public:
     return DoNothing;
   }
   
-  RetEffect getRet() const {
+  RetEffect getRetEffect() const {
     return Ret;
+  }
+  
+  ArgEffect getReceiverEffect() const {
+    return Receiver;
   }
   
   typedef ArgEffects::const_iterator arg_iterator;
@@ -139,13 +145,15 @@ public:
   arg_iterator begin_args() const { return Args->begin(); }
   arg_iterator end_args()   const { return Args->end(); }
   
-  static void Profile(llvm::FoldingSetNodeID& ID, ArgEffects* A, RetEffect R) {
+  static void Profile(llvm::FoldingSetNodeID& ID, ArgEffects* A,
+                      RetEffect RetEff, ArgEffect ReceiverEff) {
     ID.AddPointer(A);
-    ID.Add(R);
+    ID.Add(RetEff);
+    ID.AddInteger((unsigned) ReceiverEff);
   }
       
   void Profile(llvm::FoldingSetNodeID& ID) const {
-    Profile(ID, Args, Ret);
+    Profile(ID, Args, Ret, Receiver);
   }
 };
 
@@ -218,10 +226,12 @@ class RetainSummaryManager {
   RetainSummary* getCFSummaryCreateRule(FunctionDecl* FD);
   RetainSummary* getCFSummaryGetRule(FunctionDecl* FD);  
   
-  RetainSummary* getPersistentSummary(ArgEffects* AE, RetEffect RE);
+  RetainSummary* getPersistentSummary(ArgEffects* AE, RetEffect RetEff,
+                                      ArgEffect ReceiverEff = DoNothing);
 
-  RetainSummary* getPersistentSummary(RetEffect RE) {
-    return getPersistentSummary(getArgEffects(), RE);
+  RetainSummary* getPersistentSummary(RetEffect RE,
+                                      ArgEffect ReceiverEff = DoNothing) {
+    return getPersistentSummary(getArgEffects(), RE, ReceiverEff);
   }
   
   RetainSummary* getInstanceMethodSummary(Selector S);
@@ -297,12 +307,13 @@ ArgEffects* RetainSummaryManager::getArgEffects() {
   return &E->getValue();
 }
 
-RetainSummary* RetainSummaryManager::getPersistentSummary(ArgEffects* AE,
-                                                        RetEffect RE) {
+RetainSummary*
+RetainSummaryManager::getPersistentSummary(ArgEffects* AE, RetEffect RetEff,
+                                           ArgEffect ReceiverEff) {
   
   // Generate a profile for the summary.
   llvm::FoldingSetNodeID profile;
-  RetainSummary::Profile(profile, AE, RE);
+  RetainSummary::Profile(profile, AE, RetEff, ReceiverEff);
   
   // Look up the uniqued summary, or create one if it doesn't exist.
   void* InsertPos;  
@@ -313,7 +324,7 @@ RetainSummary* RetainSummaryManager::getPersistentSummary(ArgEffects* AE,
   
   // Create the summary and return it.
   Summ = (RetainSummary*) BPAlloc.Allocate<RetainSummary>();
-  new (Summ) RetainSummary(AE, RE);
+  new (Summ) RetainSummary(AE, RetEff, ReceiverEff);
   SummarySet.InsertNode(Summ, InsertPos);
   
   return Summ;
@@ -563,6 +574,19 @@ void RetainSummaryManager::InitializeMethSummaries() {
   
   // Create the "mutableCopy" selector.
   ObjCMethSummaries[ GetNullarySelector("mutableCopy", Ctx) ] = Summ;
+
+  // Create the "retain" selector.
+  E = RetEffect::MakeReceiverAlias();
+  Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : IncRef);
+  ObjCMethSummaries[ GetNullarySelector("retain", Ctx) ] = Summ;
+  
+  // Create the "release" selector.
+  Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : DecRef);
+  ObjCMethSummaries[ GetNullarySelector("release", Ctx) ] = Summ;
+
+  // Create the "autorelease" selector.
+  Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : AutoRef);
+  ObjCMethSummaries[ GetNullarySelector("autorelease", Ctx) ] = Summ;
 }
 
 
@@ -939,8 +963,8 @@ static inline ArgEffect GetArgE(RetainSummary* Summ, unsigned idx) {
   return Summ ? Summ->getArg(idx) : DoNothing;
 }
 
-static inline RetEffect GetRetE(RetainSummary* Summ) {
-  return Summ ? Summ->getRet() : RetEffect::MakeNoRet();
+static inline RetEffect GetRetEffect(RetainSummary* Summ) {
+  return Summ ? Summ->getRetEffect() : RetEffect::MakeNoRet();
 }
 
 void CFRefCount::ProcessNonLeakError(ExplodedNodeSet<ValueState>& Dst,
@@ -1029,7 +1053,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
   
   // Finally, consult the summary for the return value.
   
-  RetEffect RE = GetRetE(Summ);
+  RetEffect RE = GetRetEffect(Summ);
   
   switch (RE.getKind()) {
     default:
