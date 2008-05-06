@@ -11389,7 +11389,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
     }
 
     // See if we can trivially sink this instruction to a successor basic block.
-    // FIXME: Remove GetREsultInst test when first class support for aggregates is
+    // FIXME: Remove GetResultInst test when first class support for aggregates is
     // implemented.
     if (I->hasOneUse() && !isa<GetResultInst>(I)) {
       BasicBlock *BB = I->getParent();
