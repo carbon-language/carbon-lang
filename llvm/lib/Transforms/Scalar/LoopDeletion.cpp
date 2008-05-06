@@ -192,8 +192,9 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
     return false;
   
   // Now that we know the removal is safe, remove the loop by changing the
-  // branch from the preheader to go to the single exiting block.  
+  // branch from the preheader to go to the single exit block.  
   BasicBlock* exitBlock = exitBlocks[0];
+  BasicBlock* exitingBlock = exitingBlocks[0];
   
   // Because we're deleting a large chunk of code at once, the sequence in which
   // we remove things is very important to avoid invalidation issues.  Don't
@@ -218,7 +219,7 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   // the preheader instead of the exiting block.
   BasicBlock::iterator BI = exitBlock->begin();
   while (PHINode* P = dyn_cast<PHINode>(BI)) {
-    P->replaceUsesOfWith(exitBlock, preheader);
+    P->replaceUsesOfWith(exitingBlock, preheader);
     BI++;
   }
   
@@ -253,8 +254,12 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   // NOTE: This iteration is safe because erasing the block does not remove its
   // entry from the loop's block list.  We do that in the next section.
   for (Loop::block_iterator LI = L->block_begin(), LE = L->block_end();
-       LI != LE; ++LI)
+       LI != LE; ++LI) {
+    for (Value::use_iterator UI = (*LI)->use_begin(), UE = (*LI)->use_end();
+         UI != UE; ++UI)
+      (*UI)->dump();
     (*LI)->eraseFromParent();
+  }
   
   // Finally, the blocks from loopinfo.  This has to happen late because
   // otherwise our loop iterators won't work.
