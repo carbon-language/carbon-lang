@@ -445,7 +445,7 @@ void JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB,
     }
     
     // Alternatively, I must be a call or invoke that returns multiple retvals.
-    // We can't use 'DemoteRegToStack' because the at will create loads and
+    // We can't use 'DemoteRegToStack' because that will create loads and
     // stores of aggregates which is not valid yet.  If I is a call, we can just
     // pull all the getresult instructions up to this block.  If I is an invoke,
     // we are out of luck.
