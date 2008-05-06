@@ -55,7 +55,7 @@ STATISTIC(NumTrivial , "Number of unswitches that are trivial");
 STATISTIC(NumSimplify, "Number of simplifications of unswitched code");
 
 namespace {
-  cl::opt<unsigned>
+  static cl::opt<unsigned>
   Threshold("loop-unswitch-threshold", cl::desc("Max loop size to unswitch"),
             cl::init(10), cl::Hidden);
   

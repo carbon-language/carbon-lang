@@ -149,7 +149,7 @@ FunctionPass *llvm::createSingleLoopExtractorPass() {
 namespace {
   // BlockFile - A file which contains a list of blocks that should not be
   // extracted.
-  cl::opt<std::string>
+  static cl::opt<std::string>
   BlockFile("extract-blocks-file", cl::value_desc("filename"),
             cl::desc("A file containing list of basic blocks to not extract"),
             cl::Hidden);

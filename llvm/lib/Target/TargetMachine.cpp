@@ -138,13 +138,13 @@ namespace {
                            cl::location(OptimizeForSize),
                            cl::init(false));
 
-  cl::opt<bool, true>
+  static cl::opt<bool, true>
   EnableRealignStack("realign-stack",
                      cl::desc("Realign stack if needed"),
                      cl::location(RealignStack),
                      cl::init(true));
 
-  cl::opt<unsigned, true>
+  static cl::opt<unsigned, true>
   OverrideStackAlignment("stack-alignment",
                          cl::desc("Override default stack alignment"),
                          cl::location(StackAlignment),

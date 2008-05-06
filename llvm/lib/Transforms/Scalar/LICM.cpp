@@ -59,7 +59,7 @@ STATISTIC(NumMovedCalls, "Number of call insts hoisted or sunk");
 STATISTIC(NumPromoted  , "Number of memory locations promoted to registers");
 
 namespace {
-  cl::opt<bool>
+  static cl::opt<bool>
   DisablePromotion("disable-licm-promotion", cl::Hidden,
                    cl::desc("Disable memory promotion in LICM pass"));
 

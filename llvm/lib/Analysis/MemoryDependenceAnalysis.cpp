@@ -31,7 +31,7 @@ using namespace llvm;
 namespace {
   // Control the calculation of non-local dependencies by only examining the
   // predecessors if the basic block has less than X amount (50 by default).
-  cl::opt<int> 
+  static cl::opt<int> 
   PredLimit("nonlocaldep-threshold", cl::Hidden, cl::init(50),
             cl::desc("Control the calculation of non-local"
                      "dependencies (default = 50)"));           

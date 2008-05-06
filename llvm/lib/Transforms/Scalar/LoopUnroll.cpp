@@ -45,12 +45,12 @@ STATISTIC(NumCompletelyUnrolled, "Number of loops completely unrolled");
 STATISTIC(NumUnrolled,    "Number of loops unrolled (completely or otherwise)");
 
 namespace {
-  cl::opt<unsigned>
+  static cl::opt<unsigned>
   UnrollThreshold
     ("unroll-threshold", cl::init(100), cl::Hidden,
      cl::desc("The cut-off point for automatic loop unrolling"));
 
-  cl::opt<unsigned>
+  static cl::opt<unsigned>
   UnrollCount
     ("unroll-count", cl::init(0), cl::Hidden,
      cl::desc("Use this unroll count for all loops, for testing purposes"));

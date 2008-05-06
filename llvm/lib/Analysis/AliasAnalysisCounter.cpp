@@ -22,9 +22,9 @@
 using namespace llvm;
 
 namespace {
-  cl::opt<bool>
+  static cl::opt<bool>
   PrintAll("count-aa-print-all-queries", cl::ReallyHidden);
-  cl::opt<bool>
+  static cl::opt<bool>
   PrintAllFailures("count-aa-print-all-failed-queries", cl::ReallyHidden);
 
   class VISIBILITY_HIDDEN AliasAnalysisCounter 

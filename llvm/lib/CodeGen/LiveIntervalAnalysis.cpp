@@ -38,13 +38,13 @@ using namespace llvm;
 
 namespace {
   // Hidden options for help debugging.
-  cl::opt<bool> DisableReMat("disable-rematerialization", 
-                              cl::init(false), cl::Hidden);
+  static cl::opt<bool> DisableReMat("disable-rematerialization", 
+                                    cl::init(false), cl::Hidden);
 
-  cl::opt<bool> SplitAtBB("split-intervals-at-bb", 
-                          cl::init(true), cl::Hidden);
-  cl::opt<int> SplitLimit("split-limit",
-                          cl::init(-1), cl::Hidden);
+  static cl::opt<bool> SplitAtBB("split-intervals-at-bb", 
+                                 cl::init(true), cl::Hidden);
+  static cl::opt<int> SplitLimit("split-limit",
+                                 cl::init(-1), cl::Hidden);
 }
 
 STATISTIC(numIntervals, "Number of original intervals");

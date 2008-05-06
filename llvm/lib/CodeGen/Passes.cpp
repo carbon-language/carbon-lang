@@ -31,6 +31,7 @@ MachinePassRegistry RegisterRegAlloc::Registry;
 ///
 //===---------------------------------------------------------------------===//
 namespace {
+  static
   cl::opt<RegisterRegAlloc::FunctionPassCtor, false,
           RegisterPassParser<RegisterRegAlloc> >
   RegAlloc("regalloc",

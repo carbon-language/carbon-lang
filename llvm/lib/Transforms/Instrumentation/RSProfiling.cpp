@@ -56,7 +56,7 @@ namespace {
     GBV, GBVO, HOSTCC
   };
 
-  cl::opt<RandomMeth> RandomMethod("profile-randomness",
+  static cl::opt<RandomMeth> RandomMethod("profile-randomness",
       cl::desc("How to randomly choose to profile:"),
       cl::values(
                  clEnumValN(GBV, "global", "global counter"),

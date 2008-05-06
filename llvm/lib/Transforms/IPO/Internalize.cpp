@@ -32,12 +32,12 @@ namespace {
 
   // APIFile - A file which contains a list of symbols that should not be marked
   // external.
-  cl::opt<std::string>
+  static cl::opt<std::string>
   APIFile("internalize-public-api-file", cl::value_desc("filename"),
           cl::desc("A file containing list of symbol names to preserve"));
 
   // APIList - A list of symbols that should not be marked internal.
-  cl::list<std::string>
+  static cl::list<std::string>
   APIList("internalize-public-api-list", cl::value_desc("list"),
           cl::desc("A list of symbol names to preserve"),
           cl::CommaSeparated);
