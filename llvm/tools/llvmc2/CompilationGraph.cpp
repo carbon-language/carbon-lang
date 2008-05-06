@@ -17,6 +17,10 @@
 #include "llvm/Support/DOTGraphTraits.h"
 #include "llvm/Support/GraphWriter.h"
 
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <queue>
 #include <stdexcept>
 
 using namespace llvm;
@@ -166,46 +170,70 @@ CompilationGraph::PassThroughGraph (sys::Path& In,
   return ret;
 }
 
-int CompilationGraph::Build (const sys::Path& TempDir) const {
-  const JoinTool* JT = 0;
+// Sort the nodes in topological order.
+void CompilationGraph::TopologicalSort(std::vector<const Node*>& Out) {
+  std::queue<const Node*> Q;
+  Q.push(&getNode("root"));
+
+  while (!Q.empty()) {
+    const Node* A = Q.front();
+    Q.pop();
+    Out.push_back(A);
+    for (Node::const_iterator EB = A->EdgesBegin(), EE = A->EdgesEnd();
+         EB != EE; ++EB) {
+      Node* B = &getNode((*EB)->ToolName());
+      B->DecrInEdges();
+      if (B->HasNoInEdges())
+        Q.push(B);
+    }
+  }
+}
+
+namespace {
+  bool NotJoinNode(const Node* N) {
+    return N->ToolPtr ? !N->ToolPtr->IsJoin() : true;
+  }
+}
+
+// Call TopologicalSort and filter the resulting list to include
+// only Join nodes.
+void CompilationGraph::
+TopologicalSortFilterJoinNodes(std::vector<const Node*>& Out) {
+  std::vector<const Node*> TopSorted;
+  TopologicalSort(TopSorted);
+  std::remove_copy_if(TopSorted.begin(), TopSorted.end(),
+                      std::back_inserter(Out), NotJoinNode);
+}
+
+// Find head of the toolchain corresponding to the given file.
+const Node* CompilationGraph::FindToolChain(const sys::Path& In) const {
+  const std::string& InLanguage = getLanguage(In);
+  const tools_vector_type& TV = getToolsVector(InLanguage);
+  if (TV.empty())
+    throw std::runtime_error("No toolchain corresponding to language"
+                             + InLanguage + " found!");
+  return &getNode(ChooseEdge(TV)->ToolName());
+}
+
+int CompilationGraph::Build (const sys::Path& TempDir) {
 
   // For each input file:
   for (cl::list<std::string>::const_iterator B = InputFilenames.begin(),
         E = InputFilenames.end(); B != E; ++B) {
     sys::Path In = sys::Path(*B);
 
-    // Get to the head of the toolchain.
-    const std::string& InLanguage = getLanguage(In);
-    const tools_vector_type& TV = getToolsVector(InLanguage);
-    if (TV.empty())
-      throw std::runtime_error("No toolchain corresponding to language"
-                               + InLanguage + " found!");
-    const Node* N = &getNode(ChooseEdge(TV)->ToolName());
-
-    // Pass it through the chain starting at head.
-    const JoinTool* NewJoin = PassThroughGraph(In, N, TempDir);
-    if (JT && NewJoin && JT != NewJoin)
-      throw std::runtime_error("Graphs with multiple Join nodes"
-                               "are not yet supported!");
-    else if (NewJoin)
-      JT = NewJoin;
+    // Find the toolchain corresponding to this file.
+    const Node* N = FindToolChain(In);
+    // Pass file through the chain starting at head.
+    PassThroughGraph(In, N, TempDir);
   }
 
-  // For all join nodes in topological order:
-  // TOFIX: implement.
-  if (JT) {
-    sys::Path Out;
-    // If the final output name is empty, set it to "a.out"
-    if (!OutputFilename.empty()) {
-      Out = sys::Path(OutputFilename);
-    }
-    else {
-      Out = sys::Path("a");
-      Out.appendSuffix(JT->OutputSuffix());
-    }
+  std::vector<const Node*> JTV;
+  TopologicalSortFilterJoinNodes(JTV);
 
-    if (JT->GenerateAction(Out).Execute() != 0)
-      throw std::runtime_error("Tool returned error code!");
+  // For all join nodes in topological order:
+  for (std::vector<const Node*>::iterator B = JTV.begin(), E = JTV.end();
+       B != E; ++B) {
   }
 
   return 0;

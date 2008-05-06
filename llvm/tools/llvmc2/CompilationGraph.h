@@ -61,7 +61,8 @@ namespace llvmcc {
       OwningGraph(G), ToolPtr(T), InEdges(0) {}
 
     bool HasChildren() const { return !OutEdges.empty(); }
-    const std::string Name() const { return ToolPtr->Name(); }
+    const std::string Name() const
+    { return ToolPtr ? ToolPtr->Name() : "root"; }
 
     // Iteration.
     iterator EdgesBegin() { return OutEdges.begin(); }
@@ -75,6 +76,8 @@ namespace llvmcc {
 
     // Inward edge counter. Used by Build() to implement topological
     // sort.
+    // TOTHINK: Move the counter back into Tool classes? Makes us more
+    // const-correct.
     void IncrInEdges() { ++InEdges; }
     void DecrInEdges() { --InEdges; }
     bool HasNoInEdges() const { return InEdges == 0; }
@@ -82,15 +85,17 @@ namespace llvmcc {
     // Needed to implement NodeChildIterator/GraphTraits
     CompilationGraph* OwningGraph;
     // The corresponding Tool.
+    // WARNING: For the root node, ToolPtr is NULL.
     llvm::IntrusiveRefCntPtr<Tool> ToolPtr;
     // Links to children.
     container_type OutEdges;
-    // Number of parents.
+    // Number of parents. Used for topological sorting.
     unsigned InEdges;
   };
 
   class NodesIterator;
 
+  // The compilation graph itself.
   class CompilationGraph {
     // Main data structure.
     typedef llvm::StringMap<Node> nodes_map_type;
@@ -121,7 +126,7 @@ namespace llvmcc {
 
     // Build - Build target(s) from the input file set. Command-line
     // options are passed implicitly as global variables.
-    int Build(llvm::sys::Path const& tempDir) const;
+    int Build(llvm::sys::Path const& tempDir);
 
     // Return a reference to the node correponding to the given tool
     // name. Throws std::runtime_error.
@@ -158,6 +163,14 @@ namespace llvmcc {
                                       const Node* StartNode,
                                       const llvm::sys::Path& TempDir) const;
 
+    // Find head of the toolchain corresponding to the given file.
+    const Node* FindToolChain(const llvm::sys::Path& In) const;
+
+    // Sort the nodes in topological order.
+    void TopologicalSort(std::vector<const Node*>& Out);
+    // Call TopologicalSort and filter the resulting list to include
+    // only Join nodes.
+    void TopologicalSortFilterJoinNodes(std::vector<const Node*>& Out);
   };
 
   /// GraphTraits support code.

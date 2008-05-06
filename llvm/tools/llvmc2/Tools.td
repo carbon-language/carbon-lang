@@ -39,8 +39,6 @@ def opt : Tool<
 [(in_language "llvm-bitcode"),
  (out_language "llvm-bitcode"),
  (switch_option "opt", (help "Enable opt")),
- //(parameter_option "O", (help "Test Parameter")),
- //(prefix_list_option "P", (help "Test Parameter List")),
  (output_suffix "bc"),
  (cmd_line "opt $INFILE -o $OUTFILE")
 ]>;

@@ -45,7 +45,7 @@ cl::opt<bool> ViewGraph("view-graph",
                          cl::Hidden);
 
 namespace {
-  int BuildTargets(const CompilationGraph& graph) {
+  int BuildTargets(CompilationGraph& graph) {
     int ret;
     sys::Path tempDir(sys::Path::GetTemporaryDirectory());
 
@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
     CompilationGraph graph;
 
     cl::ParseCommandLineOptions(argc, argv,
-                                "LLVM Compiler Driver(Work In Progress)");
+                                "LLVM Compiler Driver (Work In Progress)");
     PopulateCompilationGraph(graph);
 
     if (WriteGraph) {
@@ -79,6 +79,7 @@ int main(int argc, char** argv) {
       graph.viewGraph();
       return 0;
     }
+
 
     if (InputFilenames.empty()) {
       std::cerr << "No input files.\n";
