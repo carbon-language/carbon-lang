@@ -100,19 +100,27 @@ public:
 
   
 class RetainSummary : public llvm::FoldingSetNode {
+  /// Args - an ordered vector of (index, ArgEffect) pairs, where index
+  ///  specifies the argument (starting from 0).  This can be sparsely
+  ///  populated; arguments with no entry in Args use 'DefaultArgEffect'.
   ArgEffects* Args;
+  
+  /// DefaultArgEffect - The default ArgEffect to apply to arguments that
+  ///  do not have an entry in Args.
+  ArgEffect   DefaultArgEffect;
+  
   ArgEffect   Receiver;
   RetEffect   Ret;
 public:
   
-  RetainSummary(ArgEffects* A, RetEffect R, ArgEffect ReceiverEff = DoNothing) 
-    : Args(A), Receiver(ReceiverEff), Ret(R) {}
-  
-  unsigned getNumArgs() const { return Args->size(); }
+  RetainSummary(ArgEffects* A, RetEffect R, ArgEffect defaultEff,
+                ArgEffect ReceiverEff)
+    : Args(A), DefaultArgEffect(defaultEff), Receiver(ReceiverEff), Ret(R) {}  
   
   ArgEffect getArg(unsigned idx) const {
+
     if (!Args)
-      return DoNothing;
+      return DefaultArgEffect;
     
     // If Args is present, it is likely to contain only 1 element.
     // Just do a linear search.  Do it from the back because functions with
@@ -123,13 +131,13 @@ public:
            I!=E; ++I) {
       
       if (idx > I->first)
-        return DoNothing;
+        return DefaultArgEffect;
       
       if (idx == I->first)
         return I->second;
     }
     
-    return DoNothing;
+    return DefaultArgEffect;
   }
   
   RetEffect getRetEffect() const {
@@ -146,14 +154,16 @@ public:
   arg_iterator end_args()   const { return Args->end(); }
   
   static void Profile(llvm::FoldingSetNodeID& ID, ArgEffects* A,
-                      RetEffect RetEff, ArgEffect ReceiverEff) {
+                      RetEffect RetEff, ArgEffect DefaultEff,
+                      ArgEffect ReceiverEff) {
     ID.AddPointer(A);
     ID.Add(RetEff);
+    ID.AddInteger((unsigned) DefaultEff);
     ID.AddInteger((unsigned) ReceiverEff);
   }
       
   void Profile(llvm::FoldingSetNodeID& ID) const {
-    Profile(ID, Args, Ret, Receiver);
+    Profile(ID, Args, Ret, DefaultArgEffect, Receiver);
   }
 };
 
@@ -227,13 +237,19 @@ class RetainSummaryManager {
   RetainSummary* getCFSummaryGetRule(FunctionDecl* FD);  
   
   RetainSummary* getPersistentSummary(ArgEffects* AE, RetEffect RetEff,
-                                      ArgEffect ReceiverEff = DoNothing);
+                                      ArgEffect ReceiverEff = DoNothing,
+                                      ArgEffect DefaultEff = DoNothing);
+                 
 
   RetainSummary* getPersistentSummary(RetEffect RE,
-                                      ArgEffect ReceiverEff = DoNothing) {
-    return getPersistentSummary(getArgEffects(), RE, ReceiverEff);
+                                      ArgEffect ReceiverEff = DoNothing,
+                                      ArgEffect DefaultEff = DoNothing) {
+    return getPersistentSummary(getArgEffects(), RE, ReceiverEff, DefaultEff);
   }
   
+  RetainSummary* getPersistentStopSummary() {
+    return getPersistentSummary(RetEffect::MakeNoRet(),DoNothing, StopTracking);
+  }  
 
   RetainSummary* getInitMethodSummary(Selector S);
 
@@ -253,7 +269,7 @@ public:
   
   RetainSummary* getSummary(FunctionDecl* FD, ASTContext& Ctx);
   
-  RetainSummary* getMethodSummary(Selector S);    
+  RetainSummary* getMethodSummary(ObjCMessageExpr* ME);    
   RetainSummary* getInstanceMethodSummary(IdentifierInfo* ClsName, Selector S);
   
   bool isGCEnabled() const { return GCEnabled; }
@@ -310,11 +326,12 @@ ArgEffects* RetainSummaryManager::getArgEffects() {
 
 RetainSummary*
 RetainSummaryManager::getPersistentSummary(ArgEffects* AE, RetEffect RetEff,
-                                           ArgEffect ReceiverEff) {
+                                           ArgEffect ReceiverEff,
+                                           ArgEffect DefaultEff) {
   
   // Generate a profile for the summary.
   llvm::FoldingSetNodeID profile;
-  RetainSummary::Profile(profile, AE, RetEff, ReceiverEff);
+  RetainSummary::Profile(profile, AE, RetEff, DefaultEff, ReceiverEff);
   
   // Look up the uniqued summary, or create one if it doesn't exist.
   void* InsertPos;  
@@ -325,7 +342,7 @@ RetainSummaryManager::getPersistentSummary(ArgEffects* AE, RetEffect RetEff,
   
   // Create the summary and return it.
   Summ = (RetainSummary*) BPAlloc.Allocate<RetainSummary>();
-  new (Summ) RetainSummary(AE, RetEff, ReceiverEff);
+  new (Summ) RetainSummary(AE, RetEff, DefaultEff, ReceiverEff);
   SummarySet.InsertNode(Summ, InsertPos);
   
   return Summ;
@@ -465,6 +482,28 @@ static bool isCFRefType(QualType T) {
   return true;
 }
 
+static bool isNSType(QualType T) {
+  
+  if (!T->isPointerType())
+    return false;
+  
+  // Check the typedef for the name "CF" and the substring "Ref".
+  
+  TypedefType* TD = dyn_cast<TypedefType>(T.getTypePtr());
+  
+  if (!TD)
+    return false;
+  
+  const char* TDName = TD->getDecl()->getIdentifier()->getName();
+  assert (TDName);
+  
+  if (TDName[0] != 'N' || TDName[1] != 'S')
+    return false;
+  
+  return true;
+}
+
+
 RetainSummary* RetainSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
  
   FunctionTypeProto* FT =
@@ -509,7 +548,8 @@ RetainSummary* RetainSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
 // Summary creation for Selectors.
 //===----------------------------------------------------------------------===//
 
-RetainSummary* RetainSummaryManager::getInitMethodSummary(Selector S) {
+RetainSummary*
+RetainSummaryManager::getInitMethodSummary(Selector S) {
   assert(ScratchArgs.empty());
     
   RetainSummary* Summ =
@@ -519,13 +559,25 @@ RetainSummary* RetainSummaryManager::getInitMethodSummary(Selector S) {
   return Summ;
 }
 
-RetainSummary* RetainSummaryManager::getMethodSummary(Selector S) {
+RetainSummary*
+RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME) {
+
+  Selector S = ME->getSelector();
   
   // Look up a summary in our cache of Selectors -> Summaries.
   ObjCMethSummariesTy::iterator I = ObjCMethSummaries.find(S);
   
   if (I != ObjCMethSummaries.end())
     return I->second;
+  
+  // Only generate real summaries for methods involving
+  // NSxxxx objects.
+
+  if (!isNSType(ME->getReceiver()->getType())) {
+    RetainSummary* Summ = getPersistentStopSummary();
+    ObjCMethSummaries[S] = Summ;
+    return Summ;
+  }
 
   // "initXXX": pass-through for receiver.
 
@@ -533,7 +585,28 @@ RetainSummary* RetainSummaryManager::getMethodSummary(Selector S) {
   
   if (strncmp(s, "init", 4) == 0)
     return getInitMethodSummary(S);
+  
+#if 0
+  // Generate a summary.  For all "setYYY:" and "addXXX:" slots => StopTracking.
 
+  assert (ScratchArgs.empty());
+  
+  if (S.isUnarySelector()) {
+    RetainSummary* Summ = getPersistentSummary(RetEffect::MakeNoRet());
+    return Summ;
+  }
+
+  for (unsigned i = 0, e = ME->getNumArgs(); i!=e; ++i) {
+    IdentifierInfo *II = S.getIdentifierInfoForSlot(i);
+    const char* s = II->getName();
+    
+    if (strncmp(s, "set", 3) == 0 || strncmp(s, "add", 3) == 0)
+      ScratchArgs.push_back(std::make_pair(i, StopTracking));
+    
+
+  }
+#endif 
+  
   return 0;
 }
 
@@ -1236,7 +1309,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
   RetainSummary* Summ;
   
   if (ME->getReceiver())
-    Summ = Summaries.getMethodSummary(ME->getSelector());
+    Summ = Summaries.getMethodSummary(ME);
   else
     Summ = Summaries.getInstanceMethodSummary(ME->getClassName(),
                                               ME->getSelector());
