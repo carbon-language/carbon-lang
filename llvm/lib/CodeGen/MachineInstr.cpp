@@ -553,8 +553,9 @@ int MachineInstr::findRegisterUseOperandIdx(unsigned Reg, bool isKill,
 }
   
 /// findRegisterDefOperandIdx() - Returns the operand index that is a def of
-/// the specific register or -1 if it is not found. It further tightening
-  /// the search criteria to a def that is dead the register if isDead is true.
+/// the specified register or -1 if it is not found. If isDead is true, defs
+/// that are not dead are skipped. If TargetRegisterInfo is non-null, then it
+/// also checks if there is a def of a super-register.
 int MachineInstr::findRegisterDefOperandIdx(unsigned Reg, bool isDead,
                                           const TargetRegisterInfo *TRI) const {
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
