@@ -92,3 +92,13 @@ CFDateRef f7() {
   date = CFDateCreate(NULL, CFAbsoluteTimeGetCurrent()); //expected-warning{{leak}}
   return date;
 }
+
+NSDate* f8(int x) {
+ 
+  NSDate* date = [NSDate date];
+  
+  if (x) [date retain];
+  
+  return date; // expected-warning{{leak}}
+}
+

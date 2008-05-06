@@ -234,9 +234,7 @@ class RetainSummaryManager {
     return getPersistentSummary(getArgEffects(), RE, ReceiverEff);
   }
   
-  RetainSummary* getInstanceMethodSummary(Selector S);
-  
-  RetainSummary* getMethodSummary(Selector S);    
+
   RetainSummary* getInitMethodSummary(Selector S);
 
   void InitializeInstMethSummaries();
@@ -254,6 +252,9 @@ public:
   ~RetainSummaryManager();
   
   RetainSummary* getSummary(FunctionDecl* FD, ASTContext& Ctx);
+  
+  RetainSummary* getMethodSummary(Selector S);    
+  RetainSummary* getInstanceMethodSummary(IdentifierInfo* ClsName, Selector S);
   
   bool isGCEnabled() const { return GCEnabled; }
 };
@@ -590,15 +591,65 @@ void RetainSummaryManager::InitializeMethSummaries() {
 }
 
 
-RetainSummary* RetainSummaryManager::getInstanceMethodSummary(Selector S) {
+RetainSummary*
+RetainSummaryManager::getInstanceMethodSummary(IdentifierInfo* ClsName,
+                                               Selector S) {
     
   // Look up a summary in our cache of Selectors -> Summaries.
   ObjCMethSummariesTy::iterator I = ObjCInstMethSummaries.find(S);
   
   if (I != ObjCInstMethSummaries.end())
     return I->second;
+  
+  // Don't track anything if using GC.
+  if (isGCEnabled())
+    return 0;
+  
+  // Heuristic: XXXXwithYYYY, where XXX is the class name with the "NS"
+  //  stripped off is usually an allocation.
+  
+  const char* cls = ClsName->getName();
+  const char* s = S.getIdentifierInfoForSlot(0)->getName();
+  
+  if (cls[0] == 'N' && cls[1] == 'S')
+    cls += 2;
+  
+  if (cls[0] == '\0' || s[0] == '\0' || tolower(cls[0]) != s[0])
+    return 0;  
+  
+  ++cls;
+  ++s;
     
-  return 0;
+  // Now look at the rest of the characters.
+  unsigned len = strlen(cls);
+  assert (len);
+
+  // Prefix matches?
+  if (strncmp(cls, s, len))
+    return 0;
+  
+  s += len;  
+  
+  // If 's' is the same as clsName, or 's' has "With" after the class name,
+  // treat it as an allocator.
+  do {
+  
+    if (s[0] == '\0')
+      break;
+  
+    if (s[0]=='\0' || s[0]!='W' || s[1]!='i' || s[2]!='t' || s[3]!='h')
+      break;
+    
+    return 0;
+    
+  } while(0);
+  
+  // Generate the summary.
+  
+  assert (ScratchArgs.empty());
+  RetainSummary* Summ = getPersistentSummary(RetEffect::MakeOwned());
+  ObjCInstMethSummaries[S] = Summ;
+  return Summ;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1183,140 +1234,18 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
                                      ObjCMessageExpr* ME,
                                      ExplodedNode<ValueState>* Pred) {
   
-  if (!EvalObjCMessageExprAux(Dst, Eng, Builder, ME, Pred))
-    return;
+  RetainSummary* Summ;
   
-  // The basic transfer function logic for message expressions does nothing.
-  // We just invalidate all arguments passed in by references.
-  
-  ValueStateManager& StateMgr = Eng.getStateManager();
-  ValueState* St = Builder.GetState(Pred);
-  RefBindings B = GetRefBindings(*St);
-  
-  for (ObjCMessageExpr::arg_iterator I = ME->arg_begin(), E = ME->arg_end();
-       I != E; ++I) {
-    
-    RVal V = StateMgr.GetRVal(St, *I);
-    
-    if (isa<LVal>(V)) {
-
-      LVal lv = cast<LVal>(V);
-      
-      // Did the lval bind to a symbol?
-      RVal X = StateMgr.GetRVal(St, lv);
-      
-      if (isa<lval::SymbolVal>(X)) {
-        SymbolID Sym = cast<lval::SymbolVal>(X).getSymbol();
-        B = Remove(B, Sym);
-        
-        // Create a new state with the updated bindings.  
-        ValueState StVals = *St;
-        SetRefBindings(StVals, B);
-        St = StateMgr.getPersistentState(StVals);
-      }
-        
-      St = StateMgr.SetRVal(St, cast<LVal>(V), UnknownVal());
-    }
-  }
-  
-  Builder.MakeNode(Dst, ME, Pred, St);
-}
-
-bool CFRefCount::EvalObjCMessageExprAux(ExplodedNodeSet<ValueState>& Dst,
-                                        GRExprEngine& Eng,
-                                        GRStmtNodeBuilder<ValueState>& Builder,
-                                        ObjCMessageExpr* ME,
-                                        ExplodedNode<ValueState>* Pred) {
-  
-  if (isGCEnabled())
-    return true;
-  
-  // Handle "toll-free bridging" of calls to "Release" and "Retain".
-  
-  // FIXME: track the underlying object type associated so that we can
-  //  flag illegal uses of toll-free bridging (or at least handle it
-  //  at casts).
-  
-  Selector S = ME->getSelector();
-  
-  if (!S.isUnarySelector())
-    return true;
-
-  Expr* Receiver = ME->getReceiver();
-  
-  if (!Receiver)
-    return true;
-
-  // Check if we are calling "autorelease".
-
-  enum { IsRelease, IsRetain, IsAutorelease, IsNone } mode = IsNone;
-  
-  if (S == AutoreleaseSelector)
-    mode = IsAutorelease;
-  else if (S == RetainSelector)
-    mode = IsRetain;
-  else if (S == ReleaseSelector)
-    mode = IsRelease;
-  
-  if (mode == IsNone)
-    return true;
-  
-  // We have "retain", "release", or "autorelease".  
-  ValueStateManager& StateMgr = Eng.getStateManager();
-  ValueState* St = Builder.GetState(Pred);
-  RVal V = StateMgr.GetRVal(St, Receiver);
-  
-  // Was the argument something we are not tracking?  
-  if (!isa<lval::SymbolVal>(V))
-    return true;
-
-  // Get the bindings.
-  SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
-  RefBindings B = GetRefBindings(*St);
-  
-  // Find the tracked value.
-  RefBindings::TreeTy* T = B.SlimFind(Sym);
-
-  if (!T)
-    return true;
-
-  RefVal::Kind hasErr = (RefVal::Kind) 0;
-  
-  // Update the bindings.
-  switch (mode) {
-    case IsNone:
-      assert(false);
-      
-    case IsRelease:
-      B = Update(B, Sym, T->getValue().second, DecRef, hasErr);
-      break;
-      
-    case IsRetain:
-      B = Update(B, Sym, T->getValue().second, IncRef, hasErr);
-      break;
-      
-    case IsAutorelease:
-      // For now we just stop tracking a value if we see
-      // it sent "autorelease."  In the future we can potentially
-      // track the associated pool.
-      B = Remove(B, Sym);
-      break;
-  }
-
-  // Create a new state with the updated bindings.  
-  ValueState StVals = *St;
-  SetRefBindings(StVals, B);
-  St = Eng.SetRVal(StateMgr.getPersistentState(StVals), ME, V);
-  
-  // Create an error node if it exists.  
-  if (hasErr)
-    ProcessNonLeakError(Dst, Builder, ME, Receiver, Pred, St, hasErr, Sym);
+  if (ME->getReceiver())
+    Summ = Summaries.getMethodSummary(ME->getSelector());
   else
-    Builder.MakeNode(Dst, ME, Pred, St);
+    Summ = Summaries.getInstanceMethodSummary(ME->getClassName(),
+                                              ME->getSelector());
 
-  return false;
+  EvalSummary(Dst, Eng, Builder, ME, ME->getReceiver(), Summ,
+              ME->arg_begin(), ME->arg_end(), Pred);
 }
-
+  
 // Stores.
 
 void CFRefCount::EvalStore(ExplodedNodeSet<ValueState>& Dst,
