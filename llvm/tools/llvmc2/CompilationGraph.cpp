@@ -13,13 +13,14 @@
 
 #include "CompilationGraph.h"
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DOTGraphTraits.h"
 #include "llvm/Support/GraphWriter.h"
 
 #include <algorithm>
-#include <iostream>
 #include <iterator>
+#include <limits>
 #include <queue>
 #include <stdexcept>
 
@@ -28,10 +29,13 @@ using namespace llvmc;
 
 extern cl::list<std::string> InputFilenames;
 extern cl::opt<std::string> OutputFilename;
+extern cl::list<std::string> Languages;
 
 namespace {
 
-  // Choose edge that returns
+  // Go through the list C and find the edge that isEnabled(); if
+  // there is no such edge, return the default edge; if there is no
+  // default edge, throw an exception.
   template <class C>
   const Edge* ChooseEdge(const C& EdgesContainer,
                          const std::string& NodeName = "root") {
@@ -47,7 +51,7 @@ namespace {
         else
           throw std::runtime_error("Node " + NodeName
                                    + ": multiple default outward edges found!"
-                                   "Most probably a specification error.");
+                                   " Most probably a specification error.");
       if (E->isEnabled())
         return E;
     }
@@ -57,7 +61,7 @@ namespace {
     else
       throw std::runtime_error("Node " + NodeName
                                + ": no default outward edge found!"
-                               "Most probably a specification error.");
+                               " Most probably a specification error.");
   }
 
 }
@@ -92,8 +96,8 @@ CompilationGraph::getToolsVector(const std::string& LangName) const
 {
   tools_map_type::const_iterator I = ToolsMap.find(LangName);
   if (I == ToolsMap.end())
-    throw std::runtime_error("No tools corresponding to " + LangName
-                             + " found!");
+    throw std::runtime_error("No tool corresponding to the language "
+                             + LangName + "found!");
   return I->second;
 }
 
@@ -121,15 +125,15 @@ void CompilationGraph::insertEdge(const std::string& A, Edge* E) {
   B.IncrInEdges();
 }
 
-// Make a temporary file named like BaseName-RandomDigits.Suffix
-sys::Path MakeTempFile(const sys::Path& TempDir, const std::string& BaseName,
-                       const std::string& Suffix) {
-  sys::Path Out = TempDir;
-  Out.appendComponent(BaseName);
-  Out.appendSuffix(Suffix);
-  Out.makeUnique(true, NULL);
-  Out.eraseFromDisk();
-  return Out;
+namespace {
+  sys::Path MakeTempFile(const sys::Path& TempDir, const std::string& BaseName,
+                         const std::string& Suffix) {
+    sys::Path Out = TempDir;
+    Out.appendComponent(BaseName);
+    Out.appendSuffix(Suffix);
+    Out.makeUnique(true, NULL);
+    return Out;
+  }
 }
 
 // Pass input file through the chain until we bump into a Join node or
@@ -169,6 +173,9 @@ void CompilationGraph::PassThroughGraph (const sys::Path& InFile,
 
     if (CurTool->GenerateAction(In, Out).Execute() != 0)
       throw std::runtime_error("Tool returned error code!");
+
+    if (Last)
+      return;
 
     CurNode = &getNode(ChooseEdge(CurNode->OutEdges,
                                   CurNode->Name())->ToolName());
@@ -212,8 +219,10 @@ TopologicalSortFilterJoinNodes(std::vector<const Node*>& Out) {
 }
 
 // Find head of the toolchain corresponding to the given file.
-const Node* CompilationGraph::FindToolChain(const sys::Path& In) const {
-  const std::string& InLanguage = getLanguage(In);
+const Node* CompilationGraph::
+FindToolChain(const sys::Path& In, const std::string* forceLanguage) const {
+  const std::string& InLanguage =
+    forceLanguage ? *forceLanguage : getLanguage(In);
   const tools_vector_type& TV = getToolsVector(InLanguage);
   if (TV.empty())
     throw std::runtime_error("No toolchain corresponding to language"
@@ -225,13 +234,55 @@ const Node* CompilationGraph::FindToolChain(const sys::Path& In) const {
 // temporary variables.
 int CompilationGraph::Build (const sys::Path& TempDir) {
 
+  // This is related to -x option handling.
+  cl::list<std::string>::const_iterator xIter = Languages.begin(),
+    xBegin = xIter, xEnd = Languages.end();
+  bool xEmpty = true;
+  const std::string* xLanguage = 0;
+  unsigned xPos = 0, xPosNext = 0, filePos = 0;
+
+  if (xIter != xEnd) {
+    xEmpty = false;
+    xPos = Languages.getPosition(xIter - xBegin);
+    cl::list<std::string>::const_iterator xNext = llvm::next(xIter);
+    xPosNext = (xNext == xEnd) ? std::numeric_limits<unsigned>::max()
+      : Languages.getPosition(xNext - xBegin);
+    xLanguage = (*xIter == "none") ? 0 : &(*xIter);
+  }
+
   // For each input file:
   for (cl::list<std::string>::const_iterator B = InputFilenames.begin(),
-        E = InputFilenames.end(); B != E; ++B) {
+         CB = B, E = InputFilenames.end(); B != E; ++B) {
     sys::Path In = sys::Path(*B);
 
+    // Code for handling the -x option.
+    // Output: std::string* xLanguage (can be NULL).
+    if (!xEmpty) {
+      filePos = InputFilenames.getPosition(B - CB);
+
+      if (xPos < filePos) {
+        if (filePos < xPosNext) {
+          xLanguage = (*xIter == "none") ? 0 : &(*xIter);
+        }
+        else { // filePos >= xPosNext
+          // Skip xIters while filePos > xPosNext
+          while (filePos > xPosNext) {
+            ++xIter;
+            xPos = xPosNext;
+
+            cl::list<std::string>::const_iterator xNext = llvm::next(xIter);
+            if (xNext == xEnd)
+              xPosNext = std::numeric_limits<unsigned>::max();
+            else
+              xPosNext = Languages.getPosition(xNext - xBegin);
+            xLanguage = (*xIter == "none") ? 0 : &(*xIter);
+          }
+        }
+      }
+    }
+
     // Find the toolchain corresponding to this file.
-    const Node* N = FindToolChain(In);
+    const Node* N = FindToolChain(In, xLanguage);
     // Pass file through the chain starting at head.
     PassThroughGraph(In, N, TempDir);
   }

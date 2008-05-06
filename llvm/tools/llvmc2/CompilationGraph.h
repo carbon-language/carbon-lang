@@ -165,7 +165,8 @@ namespace llvmc {
                            const llvm::sys::Path& TempDir) const;
 
     // Find head of the toolchain corresponding to the given file.
-    const Node* FindToolChain(const llvm::sys::Path& In) const;
+    const Node* FindToolChain(const llvm::sys::Path& In,
+                              const std::string* forceLanguage) const;
 
     // Sort the nodes in topological order.
     void TopologicalSort(std::vector<const Node*>& Out);

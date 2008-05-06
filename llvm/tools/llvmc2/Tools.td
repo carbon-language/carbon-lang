@@ -56,7 +56,7 @@ def llc : Tool<
 [(in_language "llvm-bitcode"),
  (out_language "assembler"),
  (output_suffix "s"),
- (cmd_line "llc $INFILE -o $OUTFILE")
+ (cmd_line "llc -f $INFILE -o $OUTFILE")
 ]>;
 
 def llvm_gcc_assembler : Tool<
@@ -68,6 +68,7 @@ def llvm_gcc_assembler : Tool<
  (prefix_list_option "Wa", (unpack_values), (help "pass options to assembler"))
 ]>;
 
+// Default linker
 def llvm_gcc_linker : Tool<
 [(in_language "object-code"),
  (out_language "executable"),
@@ -78,6 +79,21 @@ def llvm_gcc_linker : Tool<
  (prefix_list_option "l", (forward), (help "search a library when linking")),
  (prefix_list_option "Wl", (unpack_values), (help "pass options to linker"))
 ]>;
+
+// Alternative linker for C++
+// TOTHINK: how to implement this best?
+// Something like input_file_language can only choose between two languages.
+// def llvm_gcc_cpp_linker : Tool<
+// [(in_language "object-code"),
+//  (out_language "executable"),
+//  (output_suffix "out"),
+//  (cmd_line "llvm-g++ $INFILE -o $OUTFILE"),
+//  (join),
+//  //(input_file_language "c++"),
+//  (prefix_list_option "L", (forward)),
+//  (prefix_list_option "l", (forward)),
+//  (prefix_list_option "Wl", (unpack_values))
+// ]>;
 
 // Language map
 

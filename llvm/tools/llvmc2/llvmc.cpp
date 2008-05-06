@@ -35,6 +35,9 @@ cl::list<std::string> InputFilenames(cl::Positional, cl::desc("<input file>"),
                                      cl::ZeroOrMore);
 cl::opt<std::string> OutputFilename("o", cl::desc("Output file name"),
                                     cl::value_desc("file"));
+cl::list<std::string> Languages("x",
+          cl::desc("Specify the language of the following input files"),
+          cl::ZeroOrMore);
 cl::opt<bool> VerboseMode("v",
                           cl::desc("Enable verbose mode"));
 cl::opt<bool> WriteGraph("write-graph",
