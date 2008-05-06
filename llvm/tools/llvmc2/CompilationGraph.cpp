@@ -109,9 +109,61 @@ void CompilationGraph::insertEdge(const std::string& A, Edge* E) {
   }
 }
 
+// Pass input file through the chain until we bump into a Join node or
+// a node that says that it is the last.
+const Tool* CompilationGraph::PassThroughGraph (sys::Path& In,
+                                                sys::Path Out,
+                                                const sys::Path& TempDir,
+                                                PathVector& JoinList) const {
+  bool Last = false;
+  const Tool* ret = 0;
+
+  // Get to the head of the toolchain.
+  const tools_vector_type& TV = getToolsVector(getLanguage(In));
+  if (TV.empty())
+    throw std::runtime_error("Tool names vector is empty!");
+  const Node* N = &getNode(*TV.begin());
+
+  while(!Last) {
+    const Tool* CurTool = N->ToolPtr.getPtr();
+
+    if (CurTool->IsJoin()) {
+      JoinList.push_back(In);
+      ret = CurTool;
+      break;
+    }
+
+    // Is this the last tool?
+    if (!N->HasChildren() || CurTool->IsLast()) {
+      // Check if the first tool is also the last
+      if (Out.empty())
+        Out.set(In.getBasename());
+      else
+        Out.appendComponent(In.getBasename());
+      Out.appendSuffix(CurTool->OutputSuffix());
+      Last = true;
+    }
+    else {
+      Out = TempDir;
+      Out.appendComponent(In.getBasename());
+      Out.appendSuffix(CurTool->OutputSuffix());
+      Out.makeUnique(true, NULL);
+      Out.eraseFromDisk();
+    }
+
+    if (CurTool->GenerateAction(In, Out).Execute() != 0)
+      throw std::runtime_error("Tool returned error code!");
+
+    N = &getNode(N->ChooseEdge()->ToolName());
+    In = Out; Out.clear();
+  }
+
+  return ret;
+}
+
 // TOFIX: support more interesting graph topologies. We will need to
 // do topological sorting to process multiple Join nodes correctly.
-int CompilationGraph::Build (const sys::Path& tempDir) const {
+int CompilationGraph::Build (const sys::Path& TempDir) const {
   PathVector JoinList;
   const Tool* JoinTool = 0;
   sys::Path In, Out;
@@ -121,48 +173,12 @@ int CompilationGraph::Build (const sys::Path& tempDir) const {
         E = InputFilenames.end(); B != E; ++B) {
     In = sys::Path(*B);
 
-    // Get to the head of the toolchain.
-    const tools_vector_type& TV = getToolsVector(getLanguage(In));
-    if (TV.empty())
-      throw std::runtime_error("Tool names vector is empty!");
-    const Node* N = &getNode(*TV.begin());
-
-    // Pass file through the chain until we bump into a Join node or a
-    // node that says that it is the last.
-    bool Last = false;
-    while(!Last) {
-      const Tool* CurTool = N->ToolPtr.getPtr();
-
-      if (CurTool->IsJoin()) {
-        JoinList.push_back(In);
-        JoinTool = CurTool;
-        break;
-      }
-
-      // Is this the last tool?
-      if (!N->HasChildren() || CurTool->IsLast()) {
-        // Check if the first tool is also the last
-        if (Out.empty())
-          Out.set(In.getBasename());
-        else
-          Out.appendComponent(In.getBasename());
-        Out.appendSuffix(CurTool->OutputSuffix());
-        Last = true;
-      }
-      else {
-        Out = tempDir;
-        Out.appendComponent(In.getBasename());
-        Out.appendSuffix(CurTool->OutputSuffix());
-        Out.makeUnique(true, NULL);
-        Out.eraseFromDisk();
-      }
-
-      if (CurTool->GenerateAction(In, Out).Execute() != 0)
-        throw std::runtime_error("Tool returned error code!");
-
-      N = &getNode(N->ChooseEdge()->ToolName());
-      In = Out; Out.clear();
-    }
+    const Tool* NewJoin = PassThroughGraph(In, Out, TempDir, JoinList);
+    if (JoinTool && NewJoin && JoinTool != NewJoin)
+      throw std::runtime_error("Graphs with multiple Join nodes"
+                               "are not yet supported!");
+    else if (NewJoin)
+      JoinTool = NewJoin;
   }
 
   if (JoinTool) {

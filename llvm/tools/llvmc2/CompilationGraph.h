@@ -141,6 +141,12 @@ namespace llvmcc {
     // Return a reference to the list of tool names corresponding to
     // the given language name. Throws std::runtime_error.
     const tools_vector_type& getToolsVector(const std::string& LangName) const;
+
+    // Pass the input file through the toolchain.
+    const Tool* PassThroughGraph (llvm::sys::Path& In, llvm::sys::Path Out,
+                                  const llvm::sys::Path& TempDir,
+                                  PathVector& JoinList) const;
+
   };
 
   /// GraphTraits support code.
