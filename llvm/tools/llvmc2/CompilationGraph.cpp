@@ -98,7 +98,7 @@ int CompilationGraph::Build (const sys::Path& tempDir) const {
 
     // Get to the head of the toolchain.
     const tools_vector_type& TV = getToolsVector(getLanguage(In));
-    if(TV.empty())
+    if (TV.empty())
       throw std::runtime_error("Tool names vector is empty!");
     const Node* N = &getNode(*TV.begin());
 
@@ -108,7 +108,7 @@ int CompilationGraph::Build (const sys::Path& tempDir) const {
     while(!Last) {
       const Tool* CurTool = N->ToolPtr.getPtr();
 
-      if(CurTool->IsJoin()) {
+      if (CurTool->IsJoin()) {
         JoinList.push_back(In);
         JoinTool = CurTool;
         break;
@@ -117,7 +117,7 @@ int CompilationGraph::Build (const sys::Path& tempDir) const {
       // Is this the last tool?
       if (!N->HasChildren() || CurTool->IsLast()) {
         // Check if the first tool is also the last
-        if(Out.empty())
+        if (Out.empty())
           Out.set(In.getBasename());
         else
           Out.appendComponent(In.getBasename());
@@ -140,7 +140,7 @@ int CompilationGraph::Build (const sys::Path& tempDir) const {
     }
   }
 
-  if(JoinTool) {
+  if (JoinTool) {
     // If the final output name is empty, set it to "a.out"
     if (!OutputFilename.empty()) {
       Out = sys::Path(OutputFilename);
@@ -177,7 +177,7 @@ namespace llvm {
 void CompilationGraph::writeGraph() {
   std::ofstream O("CompilationGraph.dot");
 
-  if(O.good()) {
+  if (O.good()) {
     llvm::WriteGraph(this, "CompilationGraph");
     O.close();
   }
