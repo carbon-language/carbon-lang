@@ -50,6 +50,7 @@ namespace {
     llvm::SmallVector<ObjCImplementationDecl *, 8> ClassImplementation;
     llvm::SmallVector<ObjCCategoryImplDecl *, 8> CategoryImplementation;
     llvm::SmallPtrSet<ObjCInterfaceDecl*, 8> ObjCSynthesizedStructs;
+    llvm::SmallPtrSet<ObjCProtocolDecl*, 8> ObjCSynthesizedProtocols;
     llvm::SmallPtrSet<ObjCInterfaceDecl*, 8> ObjCForwardDecls;
     llvm::DenseMap<ObjCMethodDecl*, std::string> MethodInternalNames;
     llvm::SmallVector<Stmt *, 32> Stmts;
@@ -2299,7 +2300,7 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
   }
   // Mark this struct as having been generated.
   if (!ObjCSynthesizedStructs.insert(CDecl))
-  assert(false && "struct already synthesize- SynthesizeObjCInternalStruct");
+    assert(false && "struct already synthesize- SynthesizeObjCInternalStruct");
 }
 
 // RewriteObjCMethodsMetaData - Rewrite methods metadata for instance or
@@ -2399,6 +2400,10 @@ void RewriteObjC::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
         
         objc_protocol_methods = true;
       }
+      // Do not synthesize the protocol more than once.
+      if (ObjCSynthesizedProtocols.count(PDecl))
+        continue;
+             
       if (PDecl->instmeth_begin() != PDecl->instmeth_end()) {
         unsigned NumMethods = PDecl->getNumInstanceMethods();
         /* struct _objc_protocol_method_list {
@@ -2467,6 +2472,7 @@ void RewriteObjC::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
         }
         Result += "\t }\n};\n";
       }
+
       // Output:
       /* struct _objc_protocol {
        // Objective-C 1.0 extensions
@@ -2511,6 +2517,10 @@ void RewriteObjC::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
       else
         Result += "0\n";
       Result += "};\n";
+      
+      // Mark this protocol as having been generated.
+      if (!ObjCSynthesizedProtocols.insert(PDecl))
+        assert(false && "protocol already synthesized");
     }
     // Output the top lovel protocol meta-data for the class.
     /* struct _objc_protocol_list {
