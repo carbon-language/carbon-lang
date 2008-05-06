@@ -979,17 +979,7 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op,
     }
 #endif
     break;
-  case ISD::ADD:
-  case ISD::SUB:
-  case ISD::INTRINSIC_WO_CHAIN:
-  case ISD::INTRINSIC_W_CHAIN:
-  case ISD::INTRINSIC_VOID:
-  case ISD::CTTZ:
-  case ISD::CTLZ:
-  case ISD::CTPOP:
-  case ISD::LOAD:
-  case ISD::SETCC:
-  case ISD::FGETSIGN:
+  default:
     // Just use ComputeMaskedBits to compute output bits.
     TLO.DAG.ComputeMaskedBits(Op, NewMask, KnownZero, KnownOne, Depth);
     break;
