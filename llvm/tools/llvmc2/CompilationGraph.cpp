@@ -25,29 +25,37 @@ using namespace llvmcc;
 extern cl::list<std::string> InputFilenames;
 extern cl::opt<std::string> OutputFilename;
 
-// Choose one of the edges based on command-line options.
-const Edge* Node::ChooseEdge() const {
-  const Edge* DefaultEdge = 0;
-  for (const_iterator B = EdgesBegin(), E = EdgesEnd();
-       B != E; ++B) {
-    const Edge* E = (*B).getPtr();
-    if (E->isDefault())
-      if (!DefaultEdge)
-        DefaultEdge = E;
-      else
-        throw std::runtime_error("Node " + Name() +
-                                 ": multiple default edges found!"
-                                 "Most probably a specification error.");
-    if (E->isEnabled())
-      return E;
+namespace {
+
+  // Choose edge that returns
+  template <class C>
+  const Edge* ChooseEdge(const C& EdgesContainer,
+                         const std::string& NodeName = "root") {
+    const Edge* DefaultEdge = 0;
+
+    for (typename C::const_iterator B = EdgesContainer.begin(),
+           E = EdgesContainer.end(); B != E; ++B) {
+      const Edge* E = B->getPtr();
+
+      if (E->isDefault())
+        if (!DefaultEdge)
+          DefaultEdge = E;
+        else
+          throw std::runtime_error("Node " + NodeName
+                                   + ": multiple default outward edges found!"
+                                   "Most probably a specification error.");
+      if (E->isEnabled())
+        return E;
+    }
+
+    if (DefaultEdge)
+      return DefaultEdge;
+    else
+      throw std::runtime_error("Node " + NodeName
+                               + ": no default outward edge found!"
+                               "Most probably a specification error.");
   }
 
-  if (DefaultEdge)
-    return DefaultEdge;
-  else
-    throw std::runtime_error("Node " + Name() +
-                             ": no suitable edge found! "
-                             "Most probably a specification error.");
 }
 
 CompilationGraph::CompilationGraph() {
@@ -98,7 +106,7 @@ void CompilationGraph::insertEdge(const std::string& A, Edge* E) {
   Node& B = getNode(E->ToolName());
   if (A == "root") {
     const std::string& InputLanguage = B.ToolPtr->InputLanguage();
-    ToolsMap[InputLanguage].push_back(E->ToolName());
+    ToolsMap[InputLanguage].push_back(IntrusiveRefCntPtr<Edge>(E));
     NodesMap["root"].AddEdge(E);
   }
   else {
@@ -113,19 +121,15 @@ void CompilationGraph::insertEdge(const std::string& A, Edge* E) {
 // a node that says that it is the last.
 const JoinTool*
 CompilationGraph::PassThroughGraph (sys::Path& In,
+                                    const Node* StartNode,
                                     const sys::Path& TempDir) const {
   bool Last = false;
+  const Node* CurNode = StartNode;
   JoinTool* ret = 0;
-
-  // Get to the head of the toolchain.
-  const tools_vector_type& TV = getToolsVector(getLanguage(In));
-  if (TV.empty())
-    throw std::runtime_error("Tool names vector is empty!");
-  const Node* N = &getNode(*TV.begin());
 
   while(!Last) {
     sys::Path Out;
-    Tool* CurTool = N->ToolPtr.getPtr();
+    Tool* CurTool = CurNode->ToolPtr.getPtr();
 
     if (CurTool->IsJoin()) {
       ret = &dynamic_cast<JoinTool&>(*CurTool);
@@ -134,7 +138,7 @@ CompilationGraph::PassThroughGraph (sys::Path& In,
     }
 
     // Is this the last tool?
-    if (!N->HasChildren() || CurTool->IsLast()) {
+    if (!CurNode->HasChildren() || CurTool->IsLast()) {
       // Check if the first tool is also the last
       if (Out.empty())
         Out.set(In.getBasename());
@@ -154,7 +158,8 @@ CompilationGraph::PassThroughGraph (sys::Path& In,
     if (CurTool->GenerateAction(In, Out).Execute() != 0)
       throw std::runtime_error("Tool returned error code!");
 
-    N = &getNode(N->ChooseEdge()->ToolName());
+    CurNode = &getNode(ChooseEdge(CurNode->OutEdges,
+                                  CurNode->Name())->ToolName());
     In = Out; Out.clear();
   }
 
@@ -164,12 +169,21 @@ CompilationGraph::PassThroughGraph (sys::Path& In,
 int CompilationGraph::Build (const sys::Path& TempDir) const {
   const JoinTool* JT = 0;
 
-  // For each input file
+  // For each input file:
   for (cl::list<std::string>::const_iterator B = InputFilenames.begin(),
         E = InputFilenames.end(); B != E; ++B) {
     sys::Path In = sys::Path(*B);
 
-    const JoinTool* NewJoin = PassThroughGraph(In, TempDir);
+    // Get to the head of the toolchain.
+    const std::string& InLanguage = getLanguage(In);
+    const tools_vector_type& TV = getToolsVector(InLanguage);
+    if (TV.empty())
+      throw std::runtime_error("No toolchain corresponding to language"
+                               + InLanguage + " found!");
+    const Node* N = &getNode(ChooseEdge(TV)->ToolName());
+
+    // Pass it through the chain starting at head.
+    const JoinTool* NewJoin = PassThroughGraph(In, N, TempDir);
     if (JT && NewJoin && JT != NewJoin)
       throw std::runtime_error("Graphs with multiple Join nodes"
                                "are not yet supported!");
@@ -177,6 +191,8 @@ int CompilationGraph::Build (const sys::Path& TempDir) const {
       JT = NewJoin;
   }
 
+  // For all join nodes in topological order:
+  // TOFIX: implement.
   if (JT) {
     sys::Path Out;
     // If the final output name is empty, set it to "a.out"

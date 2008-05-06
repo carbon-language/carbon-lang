@@ -69,9 +69,6 @@ namespace llvmcc {
     iterator EdgesEnd() { return OutEdges.end(); }
     const_iterator EdgesEnd() const { return OutEdges.end(); }
 
-    // Choose one of the outward edges based on command-line options.
-    const Edge* ChooseEdge() const;
-
     // Add an outward edge. Takes ownership of the Edge object.
     void AddEdge(Edge* E)
     { OutEdges.push_back(llvm::IntrusiveRefCntPtr<Edge>(E)); }
@@ -95,9 +92,13 @@ namespace llvmcc {
   class NodesIterator;
 
   class CompilationGraph {
-    typedef llvm::SmallVector<std::string, 3> tools_vector_type;
-    typedef llvm::StringMap<tools_vector_type> tools_map_type;
+    // Main data structure.
     typedef llvm::StringMap<Node> nodes_map_type;
+    // These are used to map from language names-> tools. (We can have
+    // several tools associated with each language name.)
+    typedef
+    llvm::SmallVector<llvm::IntrusiveRefCntPtr<Edge>, 3> tools_vector_type;
+    typedef llvm::StringMap<tools_vector_type> tools_map_type;
 
     // Map from file extensions to language names.
     LanguageMap ExtsToLangs;
@@ -154,6 +155,7 @@ namespace llvmcc {
 
     // Pass the input file through the toolchain.
     const JoinTool* PassThroughGraph (llvm::sys::Path& In,
+                                      const Node* StartNode,
                                       const llvm::sys::Path& TempDir) const;
 
   };
