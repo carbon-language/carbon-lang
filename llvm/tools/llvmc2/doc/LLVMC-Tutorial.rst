@@ -120,11 +120,20 @@ specify one default edge *per language*).
     language belongs to the current input language set.
 
   - ``and`` - Edge property combinator. Returns true if all of its
-    arguments return true. Used like this: (and
-    (prop1), (prop2), ... (propN)). Nesting not allowed.
+    arguments return true. Used like this: ``(and (prop1), (prop2),
+    ... (propN))``. Nesting is allowed, but not encouraged.
 
   - ``or`` - Edge property combinator that returns true if any one of its
-    arguments returns true. Example: (or (prop1), (prop2), ... (propN))
+    arguments returns true. Example: ``(or (prop1), (prop2), ... (propN))``.
+
+  - ``weight`` - Makes it possible to explicitly specify the quantity
+    added to the edge weight if this edge property matches. Used like
+    this: ``(weight N, (prop))``. The inner property can include
+    ``and`` and ``or`` combinators. When N is equal to 2, equivalent
+    to ``(prop)``.
+
+    Example: ``(weight 8, (and (switch_on "a"), (switch_on "b")))``.
+
 
 To get a visual representation of the compilation graph (useful for
 debugging), run ``llvmc2 --view-graph``. You will need ``dot`` and

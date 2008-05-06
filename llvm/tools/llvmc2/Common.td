@@ -53,6 +53,7 @@ def element_in_list;
 def if_input_languages_contain;
 
 // Edge property combinators.
+def weight;
 def and;
 def or;
 
@@ -77,8 +78,8 @@ class EdgeBase<Tool t1, Tool t2, list<dag> lst> {
 
 class Edge<Tool t1, Tool t2> : EdgeBase<t1, t2, []>;
 
-// Edge and DefaultEdge are synonyms.
-class DefaultEdge<Tool t1, Tool t2> : EdgeBase<t1, t2, []>;
+// Edge and SimpleEdge are synonyms.
+class SimpleEdge<Tool t1, Tool t2> : EdgeBase<t1, t2, []>;
 
 // Optionally enabled edge.
 class OptionalEdge<Tool t1, Tool t2, list<dag> lst> : EdgeBase<t1, t2, lst>;

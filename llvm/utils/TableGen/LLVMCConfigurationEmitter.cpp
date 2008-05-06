@@ -58,6 +58,17 @@ std::string InitPtrToString(Init* ptr) {
   return val.getValue();
 }
 
+int InitPtrToInt(Init* ptr) {
+  IntInit& val = dynamic_cast<IntInit&>(*ptr);
+  return val.getValue();
+}
+
+const DagInit& InitPtrToDagInitRef(Init* ptr) {
+  DagInit& val = dynamic_cast<DagInit&>(*ptr);
+  return val;
+}
+
+
 // Ensure that the number of args in d is <= min_arguments,
 // throw exception otherwise
 void checkNumberOfArguments (const DagInit* d, unsigned min_arguments) {
@@ -310,15 +321,15 @@ private:
 
   // "Property handler" - a function that extracts information
   // about a given tool property from its DAG representation
-  typedef void (CollectProperties::*PropertyHandler)(DagInit*);
+  typedef void (CollectProperties::*PropertyHandler)(const DagInit*);
 
   // Map from property names -> property handlers
   typedef StringMap<PropertyHandler> PropertyHandlerMap;
 
   // "Option property handler" - a function that extracts information
   // about a given option property from its DAG representation
-  typedef void (CollectProperties::*
-                OptionPropertyHandler)(DagInit*, GlobalOptionDescription &);
+  typedef void (CollectProperties::* OptionPropertyHandler)
+  (const DagInit*, GlobalOptionDescription &);
 
   // Map from option property names -> option property handlers
   typedef StringMap<OptionPropertyHandler> OptionPropertyHandlerMap;
@@ -375,7 +386,7 @@ public:
   // Gets called for every tool property;
   // Just forwards to the corresponding property handler.
   void operator() (Init* i) {
-    DagInit& d = dynamic_cast<DagInit&>(*i);
+    const DagInit& d = InitPtrToDagInitRef(i);
     const std::string& property_name = d.getOperator()->getAsString();
     PropertyHandlerMap::iterator method
       = propertyHandlers_.find(property_name);
@@ -395,81 +406,95 @@ private:
   /// Functions that extract information about tool properties from
   /// DAG representation.
 
-  void onCmdLine (DagInit* d) {
+  void onCmdLine (const DagInit* d) {
     checkNumberOfArguments(d, 1);
     SplitString(InitPtrToString(d->getArg(0)), toolProps_.CmdLine);
     if (toolProps_.CmdLine.empty())
       throw "Tool " + toolProps_.Name + " has empty command line!";
   }
 
-  void onInLanguage (DagInit* d) {
+  void onInLanguage (const DagInit* d) {
     checkNumberOfArguments(d, 1);
     toolProps_.InLanguage = InitPtrToString(d->getArg(0));
   }
 
-  void onJoin (DagInit* d) {
+  void onJoin (const DagInit* d) {
     checkNumberOfArguments(d, 0);
     toolProps_.setJoin();
   }
 
-  void onOutLanguage (DagInit* d) {
+  void onOutLanguage (const DagInit* d) {
     checkNumberOfArguments(d, 1);
     toolProps_.OutLanguage = InitPtrToString(d->getArg(0));
   }
 
-  void onOutputSuffix (DagInit* d) {
+  void onOutputSuffix (const DagInit* d) {
     checkNumberOfArguments(d, 1);
     toolProps_.OutputSuffix = InitPtrToString(d->getArg(0));
   }
 
-  void onSink (DagInit* d) {
+  void onSink (const DagInit* d) {
     checkNumberOfArguments(d, 0);
     optDescs_.HasSink = true;
     toolProps_.setSink();
   }
 
-  void onSwitch (DagInit* d)        { addOption(d, OptionType::Switch); }
-  void onParameter (DagInit* d)     { addOption(d, OptionType::Parameter); }
-  void onParameterList (DagInit* d) { addOption(d, OptionType::ParameterList); }
-  void onPrefix (DagInit* d)        { addOption(d, OptionType::Prefix); }
-  void onPrefixList (DagInit* d)    { addOption(d, OptionType::PrefixList); }
+  void onSwitch (const DagInit* d) {
+    addOption(d, OptionType::Switch);
+  }
+
+  void onParameter (const DagInit* d) {
+    addOption(d, OptionType::Parameter);
+  }
+
+  void onParameterList (const DagInit* d) {
+    addOption(d, OptionType::ParameterList);
+  }
+
+  void onPrefix (const DagInit* d) {
+    addOption(d, OptionType::Prefix);
+  }
+
+  void onPrefixList (const DagInit* d) {
+    addOption(d, OptionType::PrefixList);
+  }
 
   /// Option property handlers --
   /// Methods that handle properties that are common for all types of
   /// options (like append_cmd, stop_compilation)
 
-  void onAppendCmd (DagInit* d, GlobalOptionDescription& o) {
+  void onAppendCmd (const DagInit* d, GlobalOptionDescription& o) {
     checkNumberOfArguments(d, 1);
     std::string const& cmd = InitPtrToString(d->getArg(0));
 
     toolProps_.OptDescs[o.Name].AddProperty(OptionPropertyType::AppendCmd, cmd);
   }
 
-  void onForward (DagInit* d, GlobalOptionDescription& o) {
+  void onForward (const DagInit* d, GlobalOptionDescription& o) {
     checkNumberOfArguments(d, 0);
     toolProps_.OptDescs[o.Name].setForward();
   }
 
-  void onHelp (DagInit* d, GlobalOptionDescription& o) {
+  void onHelp (const DagInit* d, GlobalOptionDescription& o) {
     checkNumberOfArguments(d, 1);
     const std::string& help_message = InitPtrToString(d->getArg(0));
 
     o.Help = help_message;
   }
 
-  void onRequired (DagInit* d, GlobalOptionDescription& o) {
+  void onRequired (const DagInit* d, GlobalOptionDescription& o) {
     checkNumberOfArguments(d, 0);
     o.setRequired();
   }
 
-  void onStopCompilation (DagInit* d, GlobalOptionDescription& o) {
+  void onStopCompilation (const DagInit* d, GlobalOptionDescription& o) {
     checkNumberOfArguments(d, 0);
     if (o.Type != OptionType::Switch)
       throw std::string("Only options of type Switch can stop compilation!");
     toolProps_.OptDescs[o.Name].setStopCompilation();
   }
 
-  void onUnpackValues (DagInit* d, GlobalOptionDescription& o) {
+  void onUnpackValues (const DagInit* d, GlobalOptionDescription& o) {
     checkNumberOfArguments(d, 0);
     toolProps_.OptDescs[o.Name].setUnpackValues();
   }
@@ -477,7 +502,7 @@ private:
   /// Helper functions
 
   // Add an option of type t
-  void addOption (DagInit* d, OptionType::OptionType t) {
+  void addOption (const DagInit* d, OptionType::OptionType t) {
     checkNumberOfArguments(d, 2);
     const std::string& name = InitPtrToString(d->getArg(0));
 
@@ -506,13 +531,13 @@ private:
   // Parameters:
   // name - option name
   // d - option property list
-  void processOptionProperties (DagInit* d, GlobalOptionDescription& o) {
+  void processOptionProperties (const DagInit* d, GlobalOptionDescription& o) {
     // First argument is option name
     checkNumberOfArguments(d, 2);
 
     for (unsigned B = 1, E = d->getNumArgs(); B!=E; ++B) {
-      DagInit& option_property
-        = dynamic_cast<DagInit&>(*d->getArg(B));
+      const DagInit& option_property
+        = InitPtrToDagInitRef(d->getArg(B));
       const std::string& option_property_name
         = option_property.getOperator()->getAsString();
       OptionPropertyHandlerMap::iterator method
@@ -963,18 +988,10 @@ bool EmitEdgePropertyTest2Args(const std::string& PropName,
   return false;
 }
 
-// Helper function used by EmitEdgeClass.
-void EmitEdgePropertyTest(const std::string& PropName,
-                          const DagInit& Prop,
+// Forward declaration.
+void EmitEdgePropertyTest(const DagInit& Prop,
                           const GlobalOptionDescriptions& OptDescs,
-                          std::ostream& O) {
-  if (EmitEdgePropertyTest1Arg(PropName, Prop, OptDescs, O))
-    return;
-  else if (EmitEdgePropertyTest2Args(PropName, Prop, OptDescs, O))
-    return;
-  else
-    throw PropName + ": unknown edge property!";
-}
+                          std::ostream& O);
 
 // Helper function used by EmitEdgeClass.
 void EmitLogicalOperationTest(const DagInit& Prop, const char* LogicOp,
@@ -982,10 +999,8 @@ void EmitLogicalOperationTest(const DagInit& Prop, const char* LogicOp,
                               std::ostream& O) {
   O << '(';
   for (unsigned j = 0, NumArgs = Prop.getNumArgs(); j < NumArgs; ++j) {
-    const DagInit& InnerProp = dynamic_cast<DagInit&>(*Prop.getArg(j));
-    const std::string& InnerPropName =
-      InnerProp.getOperator()->getAsString();
-    EmitEdgePropertyTest(InnerPropName, InnerProp, OptDescs, O);
+    const DagInit& InnerProp = InitPtrToDagInitRef(Prop.getArg(j));
+    EmitEdgePropertyTest(InnerProp, OptDescs, O);
     if (j != NumArgs - 1)
       O << ")\n" << Indent3 << ' ' << LogicOp << " (";
     else
@@ -993,11 +1008,28 @@ void EmitLogicalOperationTest(const DagInit& Prop, const char* LogicOp,
   }
 }
 
+// Helper function used by EmitEdgeClass.
+void EmitEdgePropertyTest(const DagInit& Prop,
+                          const GlobalOptionDescriptions& OptDescs,
+                          std::ostream& O) {
+  const std::string& PropName = Prop.getOperator()->getAsString();
+
+  if (PropName == "and")
+    EmitLogicalOperationTest(Prop, "&&", OptDescs, O);
+  else if (PropName == "or")
+    EmitLogicalOperationTest(Prop, "||", OptDescs, O);
+  else if (EmitEdgePropertyTest1Arg(PropName, Prop, OptDescs, O))
+    return;
+  else if (EmitEdgePropertyTest2Args(PropName, Prop, OptDescs, O))
+    return;
+  else
+    throw PropName + ": unknown edge property!";
+}
+
 // Emit a single Edge* class.
 void EmitEdgeClass(unsigned N, const std::string& Target,
                    ListInit* Props, const GlobalOptionDescriptions& OptDescs,
                    std::ostream& O) {
-  bool IsDefault = false;
 
   // Class constructor.
   O << "class Edge" << N << ": public Edge {\n"
@@ -1009,28 +1041,26 @@ void EmitEdgeClass(unsigned N, const std::string& Target,
     << Indent1 << "unsigned Weight(const InputLanguagesSet& InLangs) const {\n"
     << Indent2 << "unsigned ret = 0;\n";
 
+  // Emit tests for every edge property.
   for (size_t i = 0, PropsSize = Props->size(); i < PropsSize; ++i) {
-    const DagInit& Prop = dynamic_cast<DagInit&>(*Props->getElement(i));
+    const DagInit& Prop = InitPtrToDagInitRef(Props->getElement(i));
     const std::string& PropName = Prop.getOperator()->getAsString();
-
-    if (PropName == "default")
-      IsDefault = true;
+    unsigned N = 2;
 
     O << Indent2 << "if (";
-    if (PropName == "and") {
-      EmitLogicalOperationTest(Prop, "&&", OptDescs, O);
-    }
-    else if (PropName == "or") {
-      EmitLogicalOperationTest(Prop, "||", OptDescs, O);
+
+    if (PropName == "weight") {
+      checkNumberOfArguments(&Prop, 2);
+      N = InitPtrToInt(Prop.getArg(0));
+      const DagInit& InnerProp = InitPtrToDagInitRef(Prop.getArg(1));
+      EmitEdgePropertyTest(InnerProp, OptDescs, O);
     }
     else {
-      EmitEdgePropertyTest(PropName, Prop, OptDescs, O);
+      EmitEdgePropertyTest(Prop, OptDescs, O);
     }
-    O << ")\n" << Indent3 << "ret += 2;\n";
-  }
 
-  if (IsDefault)
-    O << Indent2 << "ret += 1;\n";
+    O << ")\n" << Indent3 << "ret += " << N << ";\n";
+  }
 
   O << Indent2 << "return ret;\n"
     << Indent1 << "};\n\n};\n\n";
