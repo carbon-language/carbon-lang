@@ -15,7 +15,6 @@
 #define LLVM_SYSTEM_PROGRAM_H
 
 #include "llvm/System/Path.h"
-#include "llvm/System/IncludeFile.h"
 #include <vector>
 
 namespace llvm {
@@ -89,7 +88,5 @@ namespace sys {
   };
 }
 }
-
-FORCE_DEFINING_FILE_TO_BE_LINKED(SystemProgram)
 
 #endif

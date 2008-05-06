@@ -15,7 +15,6 @@
 #define LLVM_SYSTEM_MEMORY_H
 
 #include <string>
-#include "llvm/System/IncludeFile.h"
 
 namespace llvm {
 namespace sys {
@@ -70,7 +69,5 @@ namespace sys {
   };
 }
 }
-
-FORCE_DEFINING_FILE_TO_BE_LINKED(SystemMemory)
 
 #endif

@@ -96,6 +96,3 @@ void FindUsedTypes::print(std::ostream &o, const Module *M) const {
        E = UsedTypes.end(); I != E; ++I)
     WriteTypeSymbolic(o << "  ", *I, M) << "\n";
 }
-
-// Ensure that this file gets linked in when FindUsedTypes.h is used.
-DEFINING_FILE_FOR(FindUsedTypes)

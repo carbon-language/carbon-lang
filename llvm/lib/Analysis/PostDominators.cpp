@@ -84,6 +84,3 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
 
   return S;
 }
-
-// Ensure that this .cpp file gets linked when PostDominators.h is used.
-DEFINING_FILE_FOR(PostDominanceFrontier)

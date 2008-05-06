@@ -14,7 +14,6 @@
 #ifndef LLVM_SUPPORT_MANGLER_H
 #define LLVM_SUPPORT_MANGLER_H
 
-#include "llvm/System/IncludeFile.h"
 #include <map>
 #include <set>
 #include <string>
@@ -111,8 +110,5 @@ private:
 };
 
 } // End llvm namespace
-
-// Force the Mangler.cpp file to be linked when this header is #included
-FORCE_DEFINING_FILE_TO_BE_LINKED(Mangler)
 
 #endif // LLVM_SUPPORT_MANGLER_H

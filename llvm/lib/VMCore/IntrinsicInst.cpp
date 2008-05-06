@@ -74,7 +74,3 @@ std::string DbgStopPointInst::getDirectory() const {
   ConstantStruct *CS = cast<ConstantStruct>(GV->getInitializer());
   return CS->getOperand(4)->getStringValue();
 }
-
-//===----------------------------------------------------------------------===//
-/// Ensure that users of IntrinsicInst.h will link with this module.
-DEFINING_FILE_FOR(IntrinsicInst)

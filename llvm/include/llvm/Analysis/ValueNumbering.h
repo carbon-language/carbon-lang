@@ -22,6 +22,7 @@
 
 #include <vector>
 #include "llvm/Pass.h"
+#include "llvm/System/IncludeFile.h"
 
 namespace llvm {
 

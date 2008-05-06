@@ -13,7 +13,6 @@
 
 #include "llvm/Config/config.h"
 #include "llvm/System/Mutex.h"
-#include "llvm/System/IncludeFile.h"
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only TRULY operating system

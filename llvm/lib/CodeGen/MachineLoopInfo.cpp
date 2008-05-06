@@ -40,6 +40,3 @@ void MachineLoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequired<MachineDominatorTree>();
 }
-
-// Ensure this file gets linked when MachineLoopInfo.h is used.
-DEFINING_FILE_FOR(MachineLoopInfo)

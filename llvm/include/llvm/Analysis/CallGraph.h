@@ -55,6 +55,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/System/IncludeFile.h"
 #include <map>
 
 namespace llvm {
@@ -158,10 +159,7 @@ public:
   void print(std::ostream *o, const Module *M) const { if (o) print(*o, M); }
   void dump() const;
   
-  // stub - dummy function, just ignore it
-  static int stub;
 protected:
-
   // destroy - Release memory for the call graph
   virtual void destroy();
 };

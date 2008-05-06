@@ -21,7 +21,6 @@
 #ifndef LLVM_PASS_SUPPORT_H
 #define LLVM_PASS_SUPPORT_H
 
-#include "llvm/System/IncludeFile.h"
 // No need to include Pass.h, we are being included by it!
 
 namespace llvm {

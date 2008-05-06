@@ -187,7 +187,4 @@ template <> struct GraphTraits<MachineLoop*> {
 
 } // End llvm namespace
 
-// Make sure that any clients of this file link in LoopInfo.cpp
-FORCE_DEFINING_FILE_TO_BE_LINKED(MachineLoopInfo)
-
 #endif

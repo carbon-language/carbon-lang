@@ -51,6 +51,3 @@ void LoopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequired<DominatorTree>();
 }
-
-// Ensure this file gets linked when LoopInfo.h is used.
-DEFINING_FILE_FOR(LoopInfo)

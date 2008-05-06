@@ -32,5 +32,3 @@ using namespace sys;
 #ifdef LLVM_ON_WIN32
 #include "Win32/Signals.inc"
 #endif
-
-DEFINING_FILE_FOR(SystemSignals)

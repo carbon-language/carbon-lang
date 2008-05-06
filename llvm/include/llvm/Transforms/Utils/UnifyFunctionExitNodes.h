@@ -40,15 +40,9 @@ public:
   BasicBlock *getUnreachableBlock() const { return UnreachableBlock; }
 
   virtual bool runOnFunction(Function &F);
-  
-  // Force linking the impl of this class into anything that uses this header.
-  static int stub;
 };
 
 Pass *createUnifyFunctionExitNodesPass();
-
-static IncludeFile
-UNIFY_FUNCTION_EXIT_NODES_INCLUDE_FILE(&UnifyFunctionExitNodes::stub);
 
 } // End llvm namespace
 
