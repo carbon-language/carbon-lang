@@ -28,13 +28,21 @@ namespace cl = llvm::cl;
 namespace sys = llvm::sys;
 using namespace llvmcc;
 
+// Built-in command-line options.
 // External linkage here is intentional.
-cl::list<std::string> InputFilenames(cl::Positional,
-                                     cl::desc("<input file>"), cl::OneOrMore);
+
+cl::list<std::string> InputFilenames(cl::Positional, cl::desc("<input file>"),
+                                     cl::OneOrMore);
 cl::opt<std::string> OutputFilename("o", cl::desc("Output file name"),
                                     cl::value_desc("file"));
-cl::opt<bool> VerboseMode("v", cl::desc("Enable verbose mode"));
-
+cl::opt<bool> VerboseMode("v",
+                          cl::desc("Enable verbose mode"));
+cl::opt<bool> WriteGraph("write-graph",
+                         cl::desc("Write CompilationGraph.dot file"),
+                         cl::Hidden);
+cl::opt<bool> ViewGraph("view-graph",
+                         cl::desc("Show compilation graph in GhostView"),
+                         cl::Hidden);
 
 namespace {
   int BuildTargets(const CompilationGraph& graph) {
@@ -61,6 +69,12 @@ int main(int argc, char** argv) {
     cl::ParseCommandLineOptions(argc, argv,
                                 "LLVM Compiler Driver(Work In Progress)");
     PopulateCompilationGraph(graph);
+
+    if(WriteGraph)
+      graph.writeGraph();
+    if(ViewGraph)
+      graph.viewGraph();
+
     return BuildTargets(graph);
   }
   catch(const std::exception& ex) {

@@ -380,7 +380,7 @@ private:
     checkNumberOfArguments(d, 1);
     SplitString(InitPtrToString(d->getArg(0)), toolProps_.CmdLine);
     if (toolProps_.CmdLine.empty())
-      throw std::string("Tool " + toolProps_.Name + " has empty command line!");
+      throw "Tool " + toolProps_.Name + " has empty command line!";
   }
 
   void onInLanguage (DagInit* d) {
@@ -653,6 +653,9 @@ void EmitGenerateActionMethod (const ToolProperties& P, int V, std::ostream& O)
     << Indent2 << "std::vector<std::string> vec;\n";
 
   // Parse CmdLine tool property
+  if(P.CmdLine.empty())
+    throw "Tool " + P.Name + " has empty command line!";
+
   StrVector::const_iterator I = P.CmdLine.begin();
   ++I;
   for (StrVector::const_iterator E = P.CmdLine.end(); I != E; ++I) {
@@ -766,6 +769,10 @@ void EmitIsJoinMethod (const ToolProperties& P, std::ostream& O) {
 
 // Emit a Tool class definition
 void EmitToolClassDefinition (const ToolProperties& P, std::ostream& O) {
+
+  if(P.Name == "root")
+    return;
+
   // Header
   O << "class " << P.Name << " : public Tool {\n"
     << "public:\n";
@@ -851,35 +858,40 @@ void EmitPopulateCompilationGraph (const RecordKeeper& Records,
                                    std::ostream& O)
 {
   // Get the relevant field out of RecordKeeper
-  Record* ToolChains = Records.getDef("ToolChains");
-  if (!ToolChains)
-    throw std::string("No ToolChains specification found!");
-  ListInit* chains = ToolChains->getValueAsListInit("chains");
-  if (!chains)
-    throw std::string("Error in toolchain list definition!");
+  Record* CompilationGraph = Records.getDef("CompilationGraph");
+  if (!CompilationGraph)
+    throw std::string("No CompilationGraph specification found!");
+  ListInit* edges = CompilationGraph->getValueAsListInit("edges");
+  if (!edges)
+    throw std::string("Error in compilation graph definition!");
 
   // Generate code
   O << "void llvmcc::PopulateCompilationGraph(CompilationGraph& G) {\n"
-    << Indent1 << "PopulateLanguageMap(G.ExtsToLangs);\n"
-    << Indent1 << "std::vector<IntrusiveRefCntPtr<Tool> > vec;\n\n";
+    << Indent1 << "PopulateLanguageMap(G.ExtsToLangs);\n\n";
 
-  for (unsigned i = 0; i < chains->size(); ++i) {
-    Record* ToolChain = chains->getElementAsRecord(i);
-    ListInit* Tools = ToolChain->getValueAsListInit("tools");
+  // Insert vertices
 
-    // Get name of the first tool in the list
-    const std::string& firstTool =
-      dynamic_cast<DefInit&>(**Tools->begin()).getDef()->getName();
+  RecordVector Tools = Records.getAllDerivedDefinitions("Tool");
+  if (Tools.empty())
+    throw std::string("No tool definitions found!");
 
-    for (ListInit::iterator B = Tools->begin(),
-          E = Tools->end(); B != E; ++B) {
-      Record* val = dynamic_cast<DefInit&>(**B).getDef();
-      O << Indent1 << "vec.push_back(IntrusiveRefCntPtr<Tool>(new "
-        << val->getName() << "()));\n";
-    }
-    O << Indent1 << "G.ToolChains[\"" << ToolToLang[firstTool]
-      << "\"] = vec;\n";
-    O << Indent1 << "vec.clear();\n\n";
+  for (RecordVector::iterator B = Tools.begin(), E = Tools.end(); B != E; ++B) {
+    const std::string& Name = (*B)->getName();
+    if(Name != "root")
+      O << Indent1 << "G.insertVertex(IntrusiveRefCntPtr<Tool>(new "
+        << Name << "()));\n";
+  }
+
+  O << '\n';
+
+  // Insert edges
+
+  for (unsigned i = 0; i < edges->size(); ++i) {
+    Record* Edge = edges->getElementAsRecord(i);
+    Record* A = Edge->getValueAsDef("a");
+    Record* B = Edge->getValueAsDef("b");
+    O << Indent1 << "G.insertEdge(\"" << A->getName() << "\", \""
+      << B->getName() << "\");\n";
   }
 
   O << "}\n\n";

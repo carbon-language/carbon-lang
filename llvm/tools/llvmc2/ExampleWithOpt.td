@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains toolchain descriptions used by llvmcc.
+// This file contains compilation graph description used by llvmcc.
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,9 +16,15 @@ include "Tools.td"
 
 // Toolchains
 
-def ToolChains : ToolChains<[
-    ToolChain<[llvm_gcc_c, opt, llc, llvm_gcc_assembler, llvm_gcc_linker]>,
-    ToolChain<[llvm_gcc_cpp, opt, llc, llvm_gcc_assembler, llvm_gcc_linker]>,
-    ToolChain<[llvm_as, opt, llc, llvm_gcc_assembler, llvm_gcc_linker]>,
-    ToolChain<[llvm_gcc_assembler, llvm_gcc_linker]>
+def CompilationGraph : CompilationGraph<[
+    Edge<root, llvm_gcc_c>,
+    Edge<root, llvm_gcc_assembler>,
+    Edge<root, llvm_gcc_cpp>,
+    Edge<root, llvm_as>,
+    Edge<llvm_gcc_c, opt>,
+    Edge<llvm_gcc_cpp, opt>,
+    Edge<llvm_as, opt>,
+    Edge<opt, llc>,
+    Edge<llc, llvm_gcc_assembler>,
+    Edge<llvm_gcc_assembler, llvm_gcc_linker>
     ]>;

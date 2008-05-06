@@ -15,6 +15,10 @@ class Tool<list<dag> l> {
       list<dag> properties = l;
 }
 
+// Special Tool instance - root of all toolchains
+
+def root : Tool<[]>;
+
 // Possible Tool properties
 
 def in_language;
@@ -52,12 +56,13 @@ class LanguageMap<list<LangToSuffixes> lst> {
       list<LangToSuffixes> map = lst;
 }
 
-// Toolchain classes
+// Compilation graph
 
-class ToolChain <list<Tool> lst> {
-      list <Tool> tools = lst;
+class Edge<Tool t1, Tool t2> {
+      Tool a = t1;
+      Tool b = t2;
 }
 
-class ToolChains <list<ToolChain> lst> {
-      list<ToolChain> chains = lst;
+class CompilationGraph<list<Edge> lst> {
+      list<Edge> edges = lst;
 }
