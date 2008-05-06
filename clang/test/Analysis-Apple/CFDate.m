@@ -2,6 +2,8 @@
 
 #include <CoreFoundation/CFDate.h>
 #include <Foundation/NSDate.h>
+#include <Foundation/NSCalendarDate.h>
+#include <Foundation/NSString.h>
 
 CFAbsoluteTime f1() {
   CFAbsoluteTime t = CFAbsoluteTimeGetCurrent();
@@ -96,6 +98,15 @@ CFDateRef f7() {
 NSDate* f8(int x) {
  
   NSDate* date = [NSDate date];
+  
+  if (x) [date retain];
+  
+  return date; // expected-warning{{leak}}
+}
+
+NSDate* f9(int x) {
+  
+  NSDate* date = [NSDate dateWithString:@"2001-03-24 10:45:32 +0600"];
   
   if (x) [date retain];
   
