@@ -622,7 +622,6 @@ RetainSummaryManager::getInstanceMethodSummary(IdentifierInfo* ClsName,
     
   // Now look at the rest of the characters.
   unsigned len = strlen(cls);
-  assert (len);
 
   // Prefix matches?
   if (strncmp(cls, s, len))
