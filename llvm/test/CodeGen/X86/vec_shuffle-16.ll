@@ -1,8 +1,8 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse,-sse2 | grep shufps | count 4
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse,-sse2 -realign-stack=0 | grep mov | count 2
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse,-sse2 -mtriple=i386-apple-darwin | grep mov | count 2
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pshufd | count 4
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not grep shufps
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -realign-stack=0 | not grep mov
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -mtriple=i386-apple-darwin | not grep mov
 
 define <4 x float> @t1(<4 x float> %a, <4 x float> %b) nounwind  {
         %tmp1 = shufflevector <4 x float> %b, <4 x float> undef, <4 x i32> zeroinitializer

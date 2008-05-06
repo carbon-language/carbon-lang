@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -realign-stack=0 | not grep mov
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -mtriple=i386-apple-darwin | not grep mov
 
 define <4 x i32> @test() {
         %tmp131 = call <2 x i64> @llvm.x86.sse2.psrl.dq( <2 x i64> < i64 -1, i64 -1 >, i32 96 )         ; <<2 x i64>> [#uses=1]
