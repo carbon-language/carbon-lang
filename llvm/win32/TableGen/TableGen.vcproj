@@ -408,7 +408,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\utils\TableGen\LLVMCCConfigurationEmitter.cpp"
+				RelativePath="..\..\utils\TableGen\LLVMCConfigurationEmitter.cpp"
 				>
 			</File>
 			<File

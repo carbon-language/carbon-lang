@@ -464,7 +464,15 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\Transforms\Scalar\JumpThreading.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\Transforms\Scalar\LICM.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Scalar\LoopDeletion.cpp"
 					>
 				</File>
 				<File
@@ -518,6 +526,28 @@
 				<File
 					RelativePath="..\..\lib\Transforms\Scalar\SimplifyCFG.cpp"
 					>
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Scalar\SimplifyLibCalls.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Scalar\TailDuplication.cpp"
