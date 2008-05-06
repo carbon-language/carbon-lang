@@ -1,5 +1,5 @@
 // Test that we can compile C++ code.
-// RUN: llvmc2 %s -o %t
+// RUN: llvmc2 --linker=c++ %s -o %t
 // RUN: ./%t | grep hello
 #include <iostream>
 

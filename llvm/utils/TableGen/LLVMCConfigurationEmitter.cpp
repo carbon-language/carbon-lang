@@ -175,11 +175,12 @@ struct GlobalOptionDescription : public OptionDescription {
     if (other.Type != Type)
       throw "Conflicting definitions for the option " + Name + "!";
 
-    if (Help.empty() && !other.Help.empty())
+    if (Help == DefaultHelpString)
       Help = other.Help;
-    else if (!Help.empty() && !other.Help.empty())
-      cerr << "Warning: more than one help string defined for option "
+    else if (other.Help != DefaultHelpString) {
+      llvm::cerr << "Warning: more than one help string defined for option "
         + Name + "\n";
+    }
 
     Flags |= other.Flags;
   }
@@ -290,8 +291,8 @@ struct ToolProperties : public RefCountedBase<ToolProperties> {
 
   // Default ctor here is needed because StringMap can only store
   // DefaultConstructible objects
-  ToolProperties() {}
-  ToolProperties (const std::string& n) : Name(n) {}
+  ToolProperties() : Flags(0) {}
+  ToolProperties (const std::string& n) : Name(n), Flags(0) {}
 };
 
 

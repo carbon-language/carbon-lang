@@ -81,19 +81,18 @@ def llvm_gcc_linker : Tool<
 ]>;
 
 // Alternative linker for C++
-// TOTHINK: how to implement this best?
-// Something like input_file_language can only choose between two languages.
-// def llvm_gcc_cpp_linker : Tool<
-// [(in_language "object-code"),
-//  (out_language "executable"),
-//  (output_suffix "out"),
-//  (cmd_line "llvm-g++ $INFILE -o $OUTFILE"),
-//  (join),
-//  //(input_file_language "c++"),
-//  (prefix_list_option "L", (forward)),
-//  (prefix_list_option "l", (forward)),
-//  (prefix_list_option "Wl", (unpack_values))
-// ]>;
+def llvm_gcc_cpp_linker : Tool<
+[(in_language "object-code"),
+ (out_language "executable"),
+ (output_suffix "out"),
+ (cmd_line "llvm-g++ $INFILE -o $OUTFILE"),
+ (join),
+ (parameter_option "linker",
+                   (help "Choose linker (possible values: gcc, g++)")),
+ (prefix_list_option "L", (forward)),
+ (prefix_list_option "l", (forward)),
+ (prefix_list_option "Wl", (unpack_values))
+]>;
 
 // Language map
 
