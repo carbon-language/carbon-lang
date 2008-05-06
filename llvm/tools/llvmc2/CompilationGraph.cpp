@@ -234,6 +234,40 @@ int CompilationGraph::Build (const sys::Path& TempDir) {
   // For all join nodes in topological order:
   for (std::vector<const Node*>::iterator B = JTV.begin(), E = JTV.end();
        B != E; ++B) {
+    // TOFIX: more testing, merge some parts with PassThroughGraph.
+    sys::Path Out;
+    const Node* CurNode = *B;
+    JoinTool* JT = &dynamic_cast<JoinTool&>(*CurNode->ToolPtr.getPtr());
+    bool IsLast = false;
+
+    if (JT->JoinListEmpty())
+      continue;
+
+    if (!CurNode->HasChildren() || JT->IsLast()) {
+      if (OutputFilename.empty()) {
+        Out.set("a");
+        Out.appendSuffix(JT->OutputSuffix());
+      }
+      else
+        Out.set(OutputFilename);
+      IsLast = true;
+    }
+    else {
+      Out = TempDir;
+      Out.appendComponent("tmp");
+      Out.appendSuffix(JT->OutputSuffix());
+      Out.makeUnique(true, NULL);
+      Out.eraseFromDisk();
+    }
+
+    if (JT->GenerateAction(Out).Execute() != 0)
+      throw std::runtime_error("Tool returned error code!");
+
+    if (!IsLast) {
+      const Node* NextNode = &getNode(ChooseEdge(CurNode->OutEdges,
+                                                 CurNode->Name())->ToolName());
+      PassThroughGraph(Out, NextNode, TempDir);
+    }
   }
 
   return 0;
@@ -276,7 +310,7 @@ void CompilationGraph::writeGraph() {
   std::ofstream O("CompilationGraph.dot");
 
   if (O.good()) {
-    llvm::WriteGraph(this, "CompilationGraph");
+    llvm::WriteGraph(this, "compilation-graph");
     O.close();
   }
   else {

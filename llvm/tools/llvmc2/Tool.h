@@ -55,16 +55,17 @@ namespace llvmcc {
   // Join tools have an input file list associated with them.
   class JoinTool : public Tool {
   public:
-    void AddToJoinList(const llvm::sys::Path& P) { JoinList.push_back(P); }
-    void ClearJoinList() { JoinList.clear(); }
+    void AddToJoinList(const llvm::sys::Path& P) { JoinList_.push_back(P); }
+    void ClearJoinList() { JoinList_.clear(); }
+    bool JoinListEmpty() const { return JoinList_.empty(); }
 
     Action GenerateAction(const llvm::sys::Path& outFile) const
-    { return GenerateAction(JoinList, outFile); }
-    // We shouldn't shadow GenerateAction from the base class.
+    { return GenerateAction(JoinList_, outFile); }
+    // We shouldn't shadow base class's version of GenerateAction.
     using Tool::GenerateAction;
 
   private:
-    PathVector JoinList;
+    PathVector JoinList_;
   };
 
 }

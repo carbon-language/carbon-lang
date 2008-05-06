@@ -38,7 +38,7 @@ cl::opt<std::string> OutputFilename("o", cl::desc("Output file name"),
 cl::opt<bool> VerboseMode("v",
                           cl::desc("Enable verbose mode"));
 cl::opt<bool> WriteGraph("write-graph",
-                         cl::desc("Write CompilationGraph.dot file"),
+                         cl::desc("Write compilation-graph.dot file"),
                          cl::Hidden);
 cl::opt<bool> ViewGraph("view-graph",
                          cl::desc("Show compilation graph in GhostView"),
@@ -72,14 +72,14 @@ int main(int argc, char** argv) {
 
     if (WriteGraph) {
       graph.writeGraph();
-      return 0;
+      if (!ViewGraph)
+        return 0;
     }
 
     if (ViewGraph) {
       graph.viewGraph();
       return 0;
     }
-
 
     if (InputFilenames.empty()) {
       std::cerr << "No input files.\n";
