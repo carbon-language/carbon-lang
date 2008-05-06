@@ -974,9 +974,9 @@ void EmitEdgeClass(unsigned N, const std::string& Target,
     << Indent1 << "Edge" << N << "() : Edge(\"" << Target
     << "\") {}\n\n"
 
-    // Function isEnabled().
-    << Indent1 << "bool isEnabled() const {\n"
-    << Indent2 << "bool ret = false;\n";
+  // Function Weight().
+    << Indent1 << "unsigned Weight() const {\n"
+    << Indent2 << "unsigned ret = 0;\n";
 
   for (size_t i = 0, PropsSize = Props->size(); i < PropsSize; ++i) {
     const DagInit& Prop = dynamic_cast<DagInit&>(*Props->getElement(i));
@@ -985,7 +985,7 @@ void EmitEdgeClass(unsigned N, const std::string& Target,
     if (PropName == "default")
       IsDefault = true;
 
-    O << Indent2 << "if (ret || (";
+    O << Indent2 << "if ((";
     if (PropName == "and") {
       O << '(';
       for (unsigned j = 0, NumArgs = Prop.getNumArgs(); j < NumArgs; ++j) {
@@ -1002,19 +1002,14 @@ void EmitEdgeClass(unsigned N, const std::string& Target,
     else {
       EmitEdgePropertyTest(PropName, Prop, OptDescs, O);
     }
-    O << "))\n" << Indent3 << "ret = true;\n";
+    O << "))\n" << Indent3 << "ret += 2;\n";
   }
 
-  O << Indent2 << "return ret;\n"
-    << Indent1 << "};\n\n"
-
-  // Function isDefault().
-    << Indent1 << "bool isDefault() const { return ";
   if (IsDefault)
-    O << "true";
-  else
-    O << "false";
-  O <<"; }\n};\n\n";
+    O << Indent2 << "ret += 1;\n";
+
+  O << Indent2 << "return ret;\n"
+    << Indent1 << "};\n\n};\n\n";
 }
 
 // Emit Edge* classes that represent graph edges.

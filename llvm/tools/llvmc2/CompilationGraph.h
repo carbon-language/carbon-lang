@@ -35,8 +35,7 @@ namespace llvmc {
     virtual ~Edge() {};
 
     const std::string& ToolName() const { return ToolName_; }
-    virtual bool isEnabled() const = 0;
-    virtual bool isDefault() const = 0;
+    virtual unsigned Weight() const = 0;
   private:
     std::string ToolName_;
   };
@@ -45,8 +44,7 @@ namespace llvmc {
   class SimpleEdge : public Edge {
   public:
     SimpleEdge(const std::string& T) : Edge(T) {}
-    bool isEnabled() const { return false;}
-    bool isDefault() const { return true;}
+    unsigned Weight() const { return 1; }
   };
 
   // A node of the compilation graph.

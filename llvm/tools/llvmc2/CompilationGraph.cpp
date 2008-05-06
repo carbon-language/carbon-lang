@@ -33,35 +33,37 @@ extern cl::list<std::string> Languages;
 
 namespace {
 
-  // Go through the list C and find the edge that isEnabled(); if
-  // there is no such edge, return the default edge; if there is no
-  // default edge, throw an exception.
+  // Return the edge with the maximum weight.
   template <class C>
   const Edge* ChooseEdge(const C& EdgesContainer,
                          const std::string& NodeName = "root") {
-    const Edge* DefaultEdge = 0;
+    const Edge* MaxEdge = 0;
+    unsigned MaxWeight = 0;
+    bool SingleMax = true;
 
     for (typename C::const_iterator B = EdgesContainer.begin(),
            E = EdgesContainer.end(); B != E; ++B) {
       const Edge* E = B->getPtr();
-
-      if (E->isDefault())
-        if (!DefaultEdge)
-          DefaultEdge = E;
-        else
-          throw std::runtime_error("Node " + NodeName
-                                   + ": multiple default outward edges found!"
-                                   " Most probably a specification error.");
-      if (E->isEnabled())
-        return E;
+      unsigned EW = E->Weight();
+      if (EW > MaxWeight) {
+        MaxEdge = E;
+        MaxWeight = EW;
+        SingleMax = true;
+      }
+      else if (EW == MaxWeight) {
+        SingleMax = false;
+      }
     }
 
-    if (DefaultEdge)
-      return DefaultEdge;
-    else
-      throw std::runtime_error("Node " + NodeName
-                               + ": no default outward edge found!"
+    if (!SingleMax)
+      throw std::runtime_error("Node " + NodeName +
+                               ": multiple maximal outward edges found!"
                                " Most probably a specification error.");
+    if (!MaxEdge)
+      throw std::runtime_error("Node " + NodeName +
+                               ": no maximal outward edge found!"
+                               " Most probably a specification error.");
+    return MaxEdge;
   }
 
 }
