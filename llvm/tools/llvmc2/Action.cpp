@@ -48,7 +48,7 @@ namespace {
   }
 }
 
-int llvmcc::Action::Execute() {
+int llvmcc::Action::Execute() const {
   if (VerboseMode) {
     std::cerr << Command_ << " ";
     std::for_each(Args_.begin(), Args_.end(), print_string);

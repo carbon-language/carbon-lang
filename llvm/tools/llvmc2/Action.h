@@ -28,7 +28,7 @@ namespace llvmcc {
       : Command_(C), Args_(A)
     {}
 
-    int Execute();
+    int Execute() const;
   };
 
 }
