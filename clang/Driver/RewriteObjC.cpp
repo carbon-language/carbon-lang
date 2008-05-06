@@ -850,9 +850,35 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
       }
     }
   } else { // we are outside a method.
-    if (IV->isFreeIvar())
-      assert(1 && "Cannot have a free standing ivar outside a method");
-    // Explicit ivar refs do not need to be rewritten. Do nothing.
+    assert(!IV->isFreeIvar() && "Cannot have a free standing ivar outside a method");
+      
+    // Explicit ivar refs need to have a cast inserted.
+    // FIXME: consider sharing some of this code with the code above.
+    if (const PointerType *pType = IV->getBase()->getType()->getAsPointerType()) {
+      ObjCInterfaceType *intT = dyn_cast<ObjCInterfaceType>(pType->getPointeeType());
+      // lookup which class implements the instance variable.
+      ObjCInterfaceDecl *clsDeclared = 0;
+      intT->getDecl()->lookupInstanceVariable(D->getIdentifier(), clsDeclared);
+      assert(clsDeclared && "RewriteObjCIvarRefExpr(): Can't find class");
+      
+      // Synthesize an explicit cast to gain access to the ivar.
+      std::string RecName = clsDeclared->getIdentifier()->getName();
+      RecName += "_IMPL";
+      IdentifierInfo *II = &Context->Idents.get(RecName.c_str());
+      RecordDecl *RD = RecordDecl::Create(*Context, Decl::Struct, TUDecl,
+                                          SourceLocation(), II, 0);
+      assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
+      QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
+      CastExpr *castExpr = new CastExpr(castT, IV->getBase(), SourceLocation());
+      // Don't forget the parens to enforce the proper binding.
+      ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), castExpr);
+      ReplaceStmt(IV->getBase(), PE);
+      // Cannot delete IV->getBase(), since PE points to it.
+      // Replace the old base with the cast. This is important when doing
+      // embedded rewrites. For example, [newInv->_container addObject:0].
+      IV->setBase(PE); 
+      return IV;
+    }
   }
   return IV;
 }
