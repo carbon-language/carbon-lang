@@ -32,14 +32,14 @@ class GREndPathNodeBuilderImpl;
 class GRWorkList;
 
 //===----------------------------------------------------------------------===//
-/// GRCoreEngineImpl - Implements the core logic of the graph-reachability analysis.
-///   It traverses the CFG and generates the ExplodedGraph. Program "states"
-///   are treated as opaque void pointers.  The template class GRCoreEngine
-///   (which subclasses GRCoreEngineImpl) provides the matching component
-///   to the engine that knows the actual types for states.  Note that this
-///   engine only dispatches to transfer functions as the statement and
-///   block-level.  The analyses themselves must implement any transfer
-///   function logic and the sub-expression level (if any).
+/// GRCoreEngineImpl - Implements the core logic of the graph-reachability 
+///   analysis. It traverses the CFG and generates the ExplodedGraph.
+///   Program "states" are treated as opaque void pointers.
+///   The template class GRCoreEngine (which subclasses GRCoreEngineImpl)
+///   provides the matching component to the engine that knows the actual types
+///   for states.  Note that this engine only dispatches to transfer functions
+///   at the statement and block-level.  The analyses themselves must implement
+///   any transfer function logic and the sub-expression level (if any).
 class GRCoreEngineImpl {
 protected:
   friend class GRStmtNodeBuilderImpl;
@@ -263,11 +263,11 @@ public:
       if (BuildSinks)
         N->markAsSink();
       else {
-        Dst.Add(N);
-        
         for ( ; AB != AE; ++AB)
           if ((*AB)->Audit(N))
-            N->markAsSink();            
+            N->markAsSink();
+        
+        Dst.Add(N);
       }
     }
     
