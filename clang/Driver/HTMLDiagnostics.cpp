@@ -285,11 +285,15 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R,
   SourceManager& SM = R.getSourceMgr();
   FullSourceLoc LPos = Pos.getLogicalLoc();
   unsigned FileID = SM.getCanonicalFileID(LPos.getLocation());
-  
+
   assert (&LPos.getManager() == &SM && "SourceManagers are different!");
   
   if (!SM.isFromMainFile(LPos.getLocation()))
     return;
+  
+  const llvm::MemoryBuffer *Buf = SM.getBuffer(FileID);
+  const char* FileStart = Buf->getBufferStart();  
+
   
   // Compute the column number.  Rewind from the current position to the start
   // of the line.
@@ -297,13 +301,23 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R,
   unsigned ColNo = LPos.getColumnNumber();
   const char *TokLogicalPtr = LPos.getCharacterData();
   const char *LineStart = TokLogicalPtr-ColNo;
+
+  // Only compute LineEnd if we display below a line.
+  const char *LineEnd = TokLogicalPtr;
+  
+  if (P.getDisplayHint() == PathDiagnosticPiece::Below) {
+    const char* FileEnd = Buf->getBufferEnd();
+
+    while (*LineEnd != '\n' && LineEnd != FileEnd)
+      ++LineEnd;
+  }
   
   // Compute the margin offset by counting tabs and non-tabs.
   
   unsigned PosNo = 0;
   
   for (const char* c = LineStart; c != TokLogicalPtr; ++c)
-    PosNo += *c == '\t' ? 4 : 1;
+    PosNo += *c == '\t' ? 8 : 1;
   
   // Create the html for the message.
   
@@ -327,11 +341,20 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R,
   
   // Insert the new html.
   
-  const llvm::MemoryBuffer *Buf = SM.getBuffer(FileID);
-  const char* FileStart = Buf->getBufferStart();
+  unsigned DisplayPos = 0;
   
-  R.InsertStrBefore(SourceLocation::getFileLoc(FileID, LineStart - FileStart),
-                    os.str());
+  switch (P.getDisplayHint()) {
+    case PathDiagnosticPiece::Above:
+      DisplayPos = LineStart - FileStart;
+      break;
+    case PathDiagnosticPiece::Below:
+      DisplayPos = LineEnd - FileStart;
+      break;
+    default:
+      assert (false && "Unhandled hint.");
+  }
+    
+  R.InsertStrBefore(SourceLocation::getFileLoc(FileID, DisplayPos), os.str());
   
   // Now highlight the ranges.
   
