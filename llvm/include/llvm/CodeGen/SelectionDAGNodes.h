@@ -1413,7 +1413,9 @@ class HandleSDNode : public SDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
   SDUse Op;
 public:
-  explicit HandleSDNode(SDOperand X)
+  // FIXME: Remove the "noinline" attribute once <rdar://problem/5852746> is
+  // fixed.
+  explicit __attribute__((__noinline__)) HandleSDNode(SDOperand X)
     : SDNode(ISD::HANDLENODE, getSDVTList(MVT::Other)) {
     Op = X;
     InitOperands(&Op, 1);
