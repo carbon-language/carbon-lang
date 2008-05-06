@@ -28,6 +28,7 @@
 
 namespace llvmcc {
 
+  // An edge in the graph.
   class Edge : public llvm::RefCountedBaseVPTR<Edge> {
   public:
     Edge(const std::string& T) : ToolName_(T) {}
@@ -40,13 +41,15 @@ namespace llvmcc {
     std::string ToolName_;
   };
 
-  class DefaultEdge : public Edge {
+  // Edges with no properties are instances of this class.
+  class SimpleEdge : public Edge {
   public:
-    DefaultEdge(const std::string& T) : Edge(T) {}
+    SimpleEdge(const std::string& T) : Edge(T) {}
     bool isEnabled() const { return true;}
     bool isDefault() const { return true;}
   };
 
+  // A node in the graph.
   struct Node {
     typedef llvm::SmallVector<llvm::IntrusiveRefCntPtr<Edge>, 3> container_type;
     typedef container_type::iterator iterator;
@@ -56,14 +59,14 @@ namespace llvmcc {
     Node(CompilationGraph* G) : OwningGraph(G) {}
     Node(CompilationGraph* G, Tool* T) : OwningGraph(G), ToolPtr(T) {}
 
-    bool HasChildren() const { return OutEdges.empty(); }
+    bool HasChildren() const { return !OutEdges.empty(); }
 
     iterator EdgesBegin() { return OutEdges.begin(); }
     const_iterator EdgesBegin() const { return OutEdges.begin(); }
     iterator EdgesEnd() { return OutEdges.end(); }
     const_iterator EdgesEnd() const { return OutEdges.end(); }
 
-    // E is a new-allocated pointer.
+    // Takes ownership of the object.
     void AddEdge(Edge* E)
     { OutEdges.push_back(llvm::IntrusiveRefCntPtr<Edge>(E)); }
 
@@ -93,16 +96,16 @@ namespace llvmcc {
 
     CompilationGraph();
 
-    // insertVertex - insert a new node into the graph.
+    // insertVertex - insert a new node into the graph. Takes
+    // ownership of the object.
     void insertNode(Tool* T);
 
-    // insertEdge - Insert a new edge into the graph. This function
-    // assumes that both A and B have been already inserted.
-    void insertEdge(const std::string& A, const std::string& B);
+    // insertEdge - Insert a new edge into the graph. Takes ownership
+    // of the object.
+    void insertEdge(const std::string& A, Edge* E);
 
-    // Build - Build the target(s) from the set of the input
-    // files. Command-line options are passed implicitly as global
-    // variables.
+    // Build - Build target(s) from the input file set. Command-line
+    // options are passed implicitly as global variables.
     int Build(llvm::sys::Path const& tempDir) const;
 
     // Return a reference to the node correponding to the given tool

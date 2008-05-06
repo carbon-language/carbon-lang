@@ -32,14 +32,14 @@ CompilationGraph::CompilationGraph() {
 Node& CompilationGraph::getNode(const std::string& ToolName) {
   nodes_map_type::iterator I = NodesMap.find(ToolName);
   if (I == NodesMap.end())
-    throw std::runtime_error("Node " + ToolName + " is not in graph");
+    throw std::runtime_error("Node " + ToolName + " is not in the graph");
   return I->second;
 }
 
 const Node& CompilationGraph::getNode(const std::string& ToolName) const {
   nodes_map_type::const_iterator I = NodesMap.find(ToolName);
   if (I == NodesMap.end())
-    throw std::runtime_error("Node " + ToolName + " is not in graph!");
+    throw std::runtime_error("Node " + ToolName + " is not in the graph!");
   return I->second;
 }
 
@@ -69,31 +69,23 @@ void CompilationGraph::insertNode(Tool* V) {
   }
 }
 
-void CompilationGraph::insertEdge(const std::string& A,
-                                  const std::string& B) {
-  // TOTHINK: check this at compile-time?
-  if (B == "root")
-    throw std::runtime_error("Edges back to the root are not allowed!"
-                             "Compilation graph should be acyclic!");
-
+void CompilationGraph::insertEdge(const std::string& A, Edge* E) {
   if (A == "root") {
-    const Node& N = getNode(B);
+    const Node& N = getNode(E->ToolName());
     const std::string& InputLanguage = N.ToolPtr->InputLanguage();
-    ToolsMap[InputLanguage].push_back(B);
+    ToolsMap[InputLanguage].push_back(E->ToolName());
 
     // Needed to support iteration via GraphTraits.
-    NodesMap["root"].AddEdge(new DefaultEdge(B));
+    NodesMap["root"].AddEdge(E);
   }
   else {
     Node& N = getNode(A);
-    // Check that there is a node at B.
-    getNode(B);
-    N.AddEdge(new DefaultEdge(B));
+    N.AddEdge(E);
   }
 }
 
-// TOFIX: extend, add an ability to choose between different
-// toolchains, support more interesting graph topologies.
+// TOFIX: support edge properties.
+// TOFIX: support more interesting graph topologies.
 int CompilationGraph::Build (const sys::Path& tempDir) const {
   PathVector JoinList;
   const Tool* JoinTool = 0;
@@ -124,7 +116,11 @@ int CompilationGraph::Build (const sys::Path& tempDir) const {
 
       // Is this the last tool?
       if (!N->HasChildren() || CurTool->IsLast()) {
-        Out.appendComponent(In.getBasename());
+        // Check if the first tool is also the last
+        if(Out.empty())
+          Out.set(In.getBasename());
+        else
+          Out.appendComponent(In.getBasename());
         Out.appendSuffix(CurTool->OutputSuffix());
         Last = true;
       }
@@ -191,5 +187,5 @@ void CompilationGraph::writeGraph() {
 }
 
 void CompilationGraph::viewGraph() {
-  llvm::ViewGraph(this, "CompilationGraph");
+  llvm::ViewGraph(this, "compilation-graph");
 }

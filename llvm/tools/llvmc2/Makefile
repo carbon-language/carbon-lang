@@ -14,12 +14,7 @@ REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
 
-TOOLS_TARGET=default
-ifeq ($(TOOLS_TARGET), default)
-	TOOLS_SOURCE=Example.td
-else
-	TOOLS_SOURCE=ExampleWithOpt.td
-endif
+TOOLS_SOURCE=Example.td
 
 # TOFIX: integrate this part into Makefile.rules?
 # The degree of horrorshowness in that file is too much for me atm.

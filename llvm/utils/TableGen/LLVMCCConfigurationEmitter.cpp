@@ -866,6 +866,8 @@ void FillInToolToLang (const ToolPropertiesList& TPList,
 }
 
 // Check that all output and input language names match.
+// TOFIX: check for cycles.
+// TOFIX: check for multiple default edges.
 void TypecheckGraph (Record* CompilationGraph,
                      const ToolPropertiesList& TPList) {
   StringMap<std::string> ToolToInLang;
@@ -889,22 +891,36 @@ void TypecheckGraph (Record* CompilationGraph,
     if(A->getName() != "root" && IA->second != IB->second)
       throw "Edge " + A->getName() + "->" + B->getName()
         + ": output->input language mismatch";
+    if(B->getName() == "root")
+      throw std::string("Edges back to the root are not allowed!");
   }
 }
 
-// Emit Edge* classes used for.
+// Emit Edge* classes that represent edges in the graph.
+// TOFIX: add edge properties.
 void EmitEdgeClasses (Record* CompilationGraph,
                       const GlobalOptionDescriptions& OptDescs,
                       std::ostream& O) {
   ListInit* edges = CompilationGraph->getValueAsListInit("edges");
 
   for (unsigned i = 0; i < edges->size(); ++i) {
-    //Record* Edge = edges->getElementAsRecord(i);
-    //Record* A = Edge->getValueAsDef("a");
-    //Record* B = Edge->getValueAsDef("b");
-    //ListInit* Props = Edge->getValueAsListInit("props");
+    Record* Edge = edges->getElementAsRecord(i);
+    Record* B = Edge->getValueAsDef("b");
+    ListInit* Props = Edge->getValueAsListInit("props");
 
-    O << "class Edge" << i << " {};\n\n";
+    if (Props->empty())
+      continue;
+
+    O << "class Edge" << i << ": public Edge {\n"
+      << "public:\n"
+      << Indent1 << "Edge" << i << "() : Edge(\"" << B->getName()
+      << "\") {}\n";
+
+    O << Indent1 << "bool isEnabled() const { return true; }\n";
+
+    O << Indent1 << "bool isDefault() const { return false; }\n";
+
+    O << "};\n\n";
   }
 }
 
@@ -937,8 +953,16 @@ void EmitPopulateCompilationGraph (Record* CompilationGraph,
     Record* Edge = edges->getElementAsRecord(i);
     Record* A = Edge->getValueAsDef("a");
     Record* B = Edge->getValueAsDef("b");
-    O << Indent1 << "G.insertEdge(\"" << A->getName() << "\", \""
-      << B->getName() << "\");\n";
+    ListInit* Props = Edge->getValueAsListInit("props");
+
+    O << Indent1 << "G.insertEdge(\"" << A->getName() << "\", ";
+
+    if (Props->empty())
+      O << "new SimpleEdge(\"" << B->getName() << "\")";
+    else
+      O << "new Edge" << i << "()";
+
+    O << ");\n";
   }
 
   O << "}\n\n";
