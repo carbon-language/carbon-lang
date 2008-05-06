@@ -48,7 +48,7 @@ static inline Selector GetUnarySelector(const char* name, ASTContext& Ctx) {
 //===----------------------------------------------------------------------===//
 
 namespace {  
-  enum ArgEffect { IncRef, DecRef, DoNothing, AutoRef };
+  enum ArgEffect { IncRef, DecRef, DoNothing, StopTracking };
   typedef std::vector<std::pair<unsigned,ArgEffect> > ArgEffects;
 }
 
@@ -585,7 +585,7 @@ void RetainSummaryManager::InitializeMethSummaries() {
   ObjCMethSummaries[ GetNullarySelector("release", Ctx) ] = Summ;
 
   // Create the "autorelease" selector.
-  Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : AutoRef);
+  Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : StopTracking);
   ObjCMethSummaries[ GetNullarySelector("autorelease", Ctx) ] = Summ;
 }
 
@@ -967,6 +967,10 @@ static inline RetEffect GetRetEffect(RetainSummary* Summ) {
   return Summ ? Summ->getRetEffect() : RetEffect::MakeNoRet();
 }
 
+static inline ArgEffect GetReceiverE(RetainSummary* Summ) {
+  return Summ ? Summ->getReceiverEffect() : DoNothing;
+}
+
 void CFRefCount::ProcessNonLeakError(ExplodedNodeSet<ValueState>& Dst,
                                      GRStmtNodeBuilder<ValueState>& Builder,
                                      Expr* NodeExpr, Expr* ErrorExpr,                        
@@ -1004,15 +1008,12 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
   ValueStateManager& StateMgr = Eng.getStateManager();  
   ValueState* St = Builder.GetState(Pred);
   
-  // Evaluate the effects of the call.
+
+  // Evaluate the effect of the arguments.
   
   ValueState StVals = *St;
   RefVal::Kind hasErr = (RefVal::Kind) 0;
-  
-  // This function has a summary.  Evaluate the effect of the arguments.
-  
   unsigned idx = 0;
-  
   Expr* ErrorExpr = NULL;
   SymbolID ErrorSym = 0;                                        
   
@@ -1043,7 +1044,32 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
       StateMgr.Unbind(StVals, cast<nonlval::LValAsInteger>(V).getLVal());
   } 
   
+  // Evaluate the effect on the message receiver.
+  
+  if (!ErrorExpr && Receiver) {
+    RVal V = StateMgr.GetRVal(St, Receiver);
+
+    if (isa<lval::SymbolVal>(V)) {
+      SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
+      RefBindings B = GetRefBindings(StVals);      
+      
+      if (RefBindings::TreeTy* T = B.SlimFind(Sym)) {
+        B = Update(B, Sym, T->getValue().second, GetReceiverE(Summ), hasErr);
+        SetRefBindings(StVals, B);
+        
+        if (hasErr) {
+          ErrorExpr = Receiver;
+          ErrorSym = T->getValue().first;
+        }
+      }
+    }
+  }
+
+  // Get the persistent state.
+  
   St = StateMgr.getPersistentState(StVals);
+  
+  // Process any errors.
   
   if (hasErr) {
     ProcessNonLeakError(Dst, Builder, Ex, ErrorExpr, Pred, St,
@@ -1083,6 +1109,13 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
       assert ((arg_end - arg_beg) >= 0);
       assert (idx < (unsigned) (arg_end - arg_beg));
       RVal V = StateMgr.GetRVal(St, arg_beg[idx]);
+      St = StateMgr.SetRVal(St, Ex, V, Eng.getCFG().isBlkExpr(Ex), false);
+      break;
+    }
+      
+    case RetEffect::ReceiverAlias: {
+      assert (Receiver);
+      RVal V = StateMgr.GetRVal(St, Receiver);
       St = StateMgr.SetRVal(St, Ex, V, Eng.getCFG().isBlkExpr(Ex), false);
       break;
     }
@@ -1550,6 +1583,9 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
       }
       
       return B;
+      
+    case StopTracking:
+      return RefBFactory.Remove(B, sym);
       
     case IncRef:      
       switch (V.getKind()) {
