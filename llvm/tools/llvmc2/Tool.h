@@ -28,11 +28,14 @@ namespace llvmcc {
 
   class Tool : public llvm::RefCountedBaseVPTR<Tool> {
   public:
-    virtual Action GenerateAction (PathVector const& inFiles,
-                                  llvm::sys::Path const& outFile) const = 0;
 
-    virtual Action GenerateAction (llvm::sys::Path const& inFile,
-                                  llvm::sys::Path const& outFile) const = 0;
+    virtual ~Tool() {}
+
+    virtual Action GenerateAction (const PathVector& inFiles,
+                                   const llvm::sys::Path& outFile) const = 0;
+
+    virtual Action GenerateAction (const llvm::sys::Path& inFile,
+                                   const llvm::sys::Path& outFile) const = 0;
 
     virtual const char* Name() const = 0;
     virtual const char* InputLanguage() const = 0;
@@ -47,9 +50,21 @@ namespace llvmcc {
     // TOFIX: find a better name
     static void UnpackValues (std::string const& from,
                               std::vector<std::string>& to);
+  };
 
-    virtual ~Tool()
-    {}
+  // Join tools have an input file list associated with them.
+  class JoinTool : public Tool {
+  public:
+    void AddToJoinList(const llvm::sys::Path& P) { JoinList.push_back(P); }
+    void ClearJoinList() { JoinList.clear(); }
+
+    Action GenerateAction(const llvm::sys::Path& outFile) const
+    { return GenerateAction(JoinList, outFile); }
+    // We shouldn't shadow GenerateAction from the base class.
+    using Tool::GenerateAction;
+
+  private:
+    PathVector JoinList;
   };
 
 }

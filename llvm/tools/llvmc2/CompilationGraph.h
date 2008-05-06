@@ -55,24 +55,32 @@ namespace llvmcc {
     typedef container_type::iterator iterator;
     typedef container_type::const_iterator const_iterator;
 
-    Node() {}
-    Node(CompilationGraph* G) : OwningGraph(G) {}
-    Node(CompilationGraph* G, Tool* T) : OwningGraph(G), ToolPtr(T) {}
+    Node() : OwningGraph(0), InEdges(0) {}
+    Node(CompilationGraph* G) : OwningGraph(G), InEdges(0) {}
+    Node(CompilationGraph* G, Tool* T) :
+      OwningGraph(G), ToolPtr(T), InEdges(0) {}
 
     bool HasChildren() const { return !OutEdges.empty(); }
     const std::string Name() const { return ToolPtr->Name(); }
 
+    // Iteration.
     iterator EdgesBegin() { return OutEdges.begin(); }
     const_iterator EdgesBegin() const { return OutEdges.begin(); }
     iterator EdgesEnd() { return OutEdges.end(); }
     const_iterator EdgesEnd() const { return OutEdges.end(); }
 
-    // Choose one of the edges based on command-line options.
+    // Choose one of the outward edges based on command-line options.
     const Edge* ChooseEdge() const;
 
-    // Takes ownership of the object.
+    // Add an outward edge. Takes ownership of the Edge object.
     void AddEdge(Edge* E)
     { OutEdges.push_back(llvm::IntrusiveRefCntPtr<Edge>(E)); }
+
+    // Inward edge counter. Used by Build() to implement topological
+    // sort.
+    void IncrInEdges() { ++InEdges; }
+    void DecrInEdges() { --InEdges; }
+    bool HasNoInEdges() const { return InEdges == 0; }
 
     // Needed to implement NodeChildIterator/GraphTraits
     CompilationGraph* OwningGraph;
@@ -80,6 +88,8 @@ namespace llvmcc {
     llvm::IntrusiveRefCntPtr<Tool> ToolPtr;
     // Links to children.
     container_type OutEdges;
+    // Number of parents.
+    unsigned InEdges;
   };
 
   class NodesIterator;
@@ -105,7 +115,7 @@ namespace llvmcc {
     void insertNode(Tool* T);
 
     // insertEdge - Insert a new edge into the graph. Takes ownership
-    // of the object.
+    // of the Edge object.
     void insertEdge(const std::string& A, Edge* E);
 
     // Build - Build target(s) from the input file set. Command-line
@@ -143,9 +153,8 @@ namespace llvmcc {
     const tools_vector_type& getToolsVector(const std::string& LangName) const;
 
     // Pass the input file through the toolchain.
-    const Tool* PassThroughGraph (llvm::sys::Path& In, llvm::sys::Path Out,
-                                  const llvm::sys::Path& TempDir,
-                                  PathVector& JoinList) const;
+    const JoinTool* PassThroughGraph (llvm::sys::Path& In, llvm::sys::Path Out,
+                                      const llvm::sys::Path& TempDir) const;
 
   };
 

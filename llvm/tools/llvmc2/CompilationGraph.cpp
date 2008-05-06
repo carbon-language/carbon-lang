@@ -86,7 +86,7 @@ CompilationGraph::getToolsVector(const std::string& LangName) const
 }
 
 void CompilationGraph::insertNode(Tool* V) {
-  if (!NodesMap.count(V->Name())) {
+  if (NodesMap.count(V->Name()) == 0) {
     Node N;
     N.OwningGraph = this;
     N.ToolPtr = V;
@@ -95,28 +95,27 @@ void CompilationGraph::insertNode(Tool* V) {
 }
 
 void CompilationGraph::insertEdge(const std::string& A, Edge* E) {
+  Node& B = getNode(E->ToolName());
   if (A == "root") {
-    const Node& N = getNode(E->ToolName());
-    const std::string& InputLanguage = N.ToolPtr->InputLanguage();
+    const std::string& InputLanguage = B.ToolPtr->InputLanguage();
     ToolsMap[InputLanguage].push_back(E->ToolName());
-
-    // Needed to support iteration via GraphTraits.
     NodesMap["root"].AddEdge(E);
   }
   else {
     Node& N = getNode(A);
     N.AddEdge(E);
   }
+  // Increase the inward edge counter.
+  B.IncrInEdges();
 }
 
 // Pass input file through the chain until we bump into a Join node or
 // a node that says that it is the last.
-const Tool* CompilationGraph::PassThroughGraph (sys::Path& In,
-                                                sys::Path Out,
-                                                const sys::Path& TempDir,
-                                                PathVector& JoinList) const {
+const JoinTool*
+CompilationGraph::PassThroughGraph (sys::Path& In, sys::Path Out,
+                                    const sys::Path& TempDir) const {
   bool Last = false;
-  const Tool* ret = 0;
+  JoinTool* ret = 0;
 
   // Get to the head of the toolchain.
   const tools_vector_type& TV = getToolsVector(getLanguage(In));
@@ -125,11 +124,11 @@ const Tool* CompilationGraph::PassThroughGraph (sys::Path& In,
   const Node* N = &getNode(*TV.begin());
 
   while(!Last) {
-    const Tool* CurTool = N->ToolPtr.getPtr();
+    Tool* CurTool = N->ToolPtr.getPtr();
 
     if (CurTool->IsJoin()) {
-      JoinList.push_back(In);
-      ret = CurTool;
+      ret = &dynamic_cast<JoinTool&>(*CurTool);
+      ret->AddToJoinList(In);
       break;
     }
 
@@ -161,11 +160,8 @@ const Tool* CompilationGraph::PassThroughGraph (sys::Path& In,
   return ret;
 }
 
-// TOFIX: support more interesting graph topologies. We will need to
-// do topological sorting to process multiple Join nodes correctly.
 int CompilationGraph::Build (const sys::Path& TempDir) const {
-  PathVector JoinList;
-  const Tool* JoinTool = 0;
+  const JoinTool* JT = 0;
   sys::Path In, Out;
 
   // For each input file
@@ -173,25 +169,25 @@ int CompilationGraph::Build (const sys::Path& TempDir) const {
         E = InputFilenames.end(); B != E; ++B) {
     In = sys::Path(*B);
 
-    const Tool* NewJoin = PassThroughGraph(In, Out, TempDir, JoinList);
-    if (JoinTool && NewJoin && JoinTool != NewJoin)
+    const JoinTool* NewJoin = PassThroughGraph(In, Out, TempDir);
+    if (JT && NewJoin && JT != NewJoin)
       throw std::runtime_error("Graphs with multiple Join nodes"
                                "are not yet supported!");
     else if (NewJoin)
-      JoinTool = NewJoin;
+      JT = NewJoin;
   }
 
-  if (JoinTool) {
+  if (JT) {
     // If the final output name is empty, set it to "a.out"
     if (!OutputFilename.empty()) {
       Out = sys::Path(OutputFilename);
     }
     else {
       Out = sys::Path("a");
-      Out.appendSuffix(JoinTool->OutputSuffix());
+      Out.appendSuffix(JT->OutputSuffix());
     }
 
-    if (JoinTool->GenerateAction(JoinList, Out).Execute() != 0)
+    if (JT->GenerateAction(Out).Execute() != 0)
       throw std::runtime_error("Tool returned error code!");
   }
 

@@ -782,8 +782,12 @@ void EmitToolClassDefinition (const ToolProperties& P, std::ostream& O) {
     return;
 
   // Header
-  O << "class " << P.Name << " : public Tool {\n"
-    << "public:\n";
+  O << "class " << P.Name << " : public ";
+  if (P.isJoin())
+    O << "JoinTool";
+  else
+    O << "Tool";
+  O << "{\npublic:\n";
 
   EmitNameMethod(P, O);
   EmitInOutLanguageMethods(P, O);
