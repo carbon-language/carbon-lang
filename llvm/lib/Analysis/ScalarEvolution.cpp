@@ -1981,7 +1981,7 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
   }
   case ICmpInst::ICMP_UGT: {
     SCEVHandle TC = HowManyLessThans(SE.getNotSCEV(LHS),
-                  SE.getNotSCEV(RHS), L, false);
+                                     SE.getNotSCEV(RHS), L, false);
     if (!isa<SCEVCouldNotCompute>(TC)) return TC;
     break;
   }
@@ -2045,7 +2045,7 @@ GetAddressedElementFromGlobal(GlobalVariable *GV,
 }
 
 /// ComputeLoadConstantCompareIterationCount - Given an exit condition of
-/// 'icmp op load X, cst', try to se if we can compute the trip count.
+/// 'icmp op load X, cst', try to see if we can compute the trip count.
 SCEVHandle ScalarEvolutionsImpl::
 ComputeLoadConstantCompareIterationCount(LoadInst *LI, Constant *RHS,
                                          const Loop *L, 
