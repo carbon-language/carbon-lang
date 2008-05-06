@@ -28,7 +28,7 @@
 
 namespace llvmc {
 
-  // An edge in the graph.
+  // An edge of the compilation graph.
   class Edge : public llvm::RefCountedBaseVPTR<Edge> {
   public:
     Edge(const std::string& T) : ToolName_(T) {}
@@ -41,7 +41,7 @@ namespace llvmc {
     std::string ToolName_;
   };
 
-  // Edges with no properties are instances of this class.
+  // Edges that have no properties are instances of this class.
   class SimpleEdge : public Edge {
   public:
     SimpleEdge(const std::string& T) : Edge(T) {}
@@ -49,8 +49,9 @@ namespace llvmc {
     bool isDefault() const { return true;}
   };
 
-  // A node in the graph.
+  // A node of the compilation graph.
   struct Node {
+    // A Node holds a list of the outward edges.
     typedef llvm::SmallVector<llvm::IntrusiveRefCntPtr<Edge>, 3> container_type;
     typedef container_type::iterator iterator;
     typedef container_type::const_iterator const_iterator;
@@ -74,10 +75,9 @@ namespace llvmc {
     void AddEdge(Edge* E)
     { OutEdges.push_back(llvm::IntrusiveRefCntPtr<Edge>(E)); }
 
-    // Inward edge counter. Used by Build() to implement topological
-    // sort.
-    // TOTHINK: Move the counter back into Tool classes? Makes us more
-    // const-correct.
+    // Inward edge counter. Used to implement topological sort.
+    // TOTHINK: Move the mutable counter back into Tool classes? Makes
+    // us more const-correct.
     void IncrInEdges() { ++InEdges; }
     void DecrInEdges() { --InEdges; }
     bool HasNoInEdges() const { return InEdges == 0; }
@@ -85,11 +85,12 @@ namespace llvmc {
     // Needed to implement NodeChildIterator/GraphTraits
     CompilationGraph* OwningGraph;
     // The corresponding Tool.
-    // WARNING: For the root node, ToolPtr is NULL.
+    // WARNING: ToolPtr can be NULL (for the root node).
     llvm::IntrusiveRefCntPtr<Tool> ToolPtr;
     // Links to children.
     container_type OutEdges;
-    // Number of parents. Used for topological sorting.
+    // Inward edge counter. Updated in
+    // CompilationGraph::insertEdge(). Used for topological sorting.
     unsigned InEdges;
   };
 
@@ -99,8 +100,9 @@ namespace llvmc {
   class CompilationGraph {
     // Main data structure.
     typedef llvm::StringMap<Node> nodes_map_type;
-    // These are used to map from language names-> tools. (We can have
-    // several tools associated with each language name.)
+    // These are used to map from language names to tools. (We can
+    // have several tools associated with each language name, hence
+    // the need for a vector of Edges.)
     typedef
     llvm::SmallVector<llvm::IntrusiveRefCntPtr<Edge>, 3> tools_vector_type;
     typedef llvm::StringMap<tools_vector_type> tools_map_type;
@@ -159,9 +161,8 @@ namespace llvmc {
     const tools_vector_type& getToolsVector(const std::string& LangName) const;
 
     // Pass the input file through the toolchain.
-    const JoinTool* PassThroughGraph (llvm::sys::Path& In,
-                                      const Node* StartNode,
-                                      const llvm::sys::Path& TempDir) const;
+    void PassThroughGraph (const llvm::sys::Path& In, const Node* StartNode,
+                           const llvm::sys::Path& TempDir) const;
 
     // Find head of the toolchain corresponding to the given file.
     const Node* FindToolChain(const llvm::sys::Path& In) const;

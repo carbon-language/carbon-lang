@@ -34,6 +34,7 @@ namespace {
     if (!prog.canExecute())
       throw std::runtime_error("Program '" + name + "' is not executable.");
 
+    // Build the command line vector and redirects.
     const sys::Path* redirects[3] = {0,0,0};
     sys::Path stdout_redirect;
 
@@ -54,6 +55,7 @@ namespace {
     }
     argv.push_back(0);  // null terminate list.
 
+    // Invoke the program.
     return sys::Program::ExecuteAndWait(prog, &argv[0], 0, &redirects[0]);
   }
 

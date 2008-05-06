@@ -11,19 +11,21 @@
 //
 //===----------------------------------------------------------------------===//
 
-// Open issue: should we use DAG lists in Tool specifications
+// TOTHINK: Open issue: should we use DAG lists in Tool specifications
 // or change to something like
+
 // def LLVMGccC : < Tool<
 // [ InLanguage<"c">,
 //   PrefixListOption<"Wl", [UnpackValues, PropertyName<Arg>, ...]>
 //  ...] ?
+
 // DAG lists look more aesthetically pleasing to me.
 
 def llvm_gcc_c : Tool<
 [(in_language "c"),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
- (cmd_line "llvm-gcc -c $INFILE -o $OUTFILE -emit-llvm"),
+ (cmd_line "llvm-gcc -c -x c $INFILE -o $OUTFILE -emit-llvm"),
  (sink)
 ]>;
 
@@ -31,7 +33,7 @@ def llvm_gcc_cpp : Tool<
 [(in_language "c++"),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
- (cmd_line "llvm-g++ -c $INFILE -o $OUTFILE -emit-llvm"),
+ (cmd_line "llvm-g++ -c -x c++ $INFILE -o $OUTFILE -emit-llvm"),
  (sink)
 ]>;
 
@@ -61,7 +63,8 @@ def llvm_gcc_assembler : Tool<
 [(in_language "assembler"),
  (out_language "object-code"),
  (output_suffix "o"),
- (cmd_line "llvm-gcc -c $INFILE -o $OUTFILE"),
+ (cmd_line "llvm-gcc -c -x assembler $INFILE -o $OUTFILE"),
+ (switch_option "c", (stop_compilation)),
  (prefix_list_option "Wa", (unpack_values), (help "pass options to assembler"))
 ]>;
 
@@ -85,4 +88,5 @@ def LanguageMap : LanguageMap<
      LangToSuffixes<"llvm-assembler", ["ll"]>,
      LangToSuffixes<"llvm-bitcode", ["bc"]>,
      LangToSuffixes<"object-code", ["o"]>,
-     LangToSuffixes<"executable", ["out"]>]>;
+     LangToSuffixes<"executable", ["out"]>
+     ]>;

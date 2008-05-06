@@ -121,42 +121,50 @@ void CompilationGraph::insertEdge(const std::string& A, Edge* E) {
   B.IncrInEdges();
 }
 
+// Make a temporary file named like BaseName-RandomDigits.Suffix
+sys::Path MakeTempFile(const sys::Path& TempDir, const std::string& BaseName,
+                       const std::string& Suffix) {
+  sys::Path Out = TempDir;
+  Out.appendComponent(BaseName);
+  Out.appendSuffix(Suffix);
+  Out.makeUnique(true, NULL);
+  Out.eraseFromDisk();
+  return Out;
+}
+
 // Pass input file through the chain until we bump into a Join node or
 // a node that says that it is the last.
-const JoinTool*
-CompilationGraph::PassThroughGraph (sys::Path& In,
-                                    const Node* StartNode,
-                                    const sys::Path& TempDir) const {
+void CompilationGraph::PassThroughGraph (const sys::Path& InFile,
+                                         const Node* StartNode,
+                                         const sys::Path& TempDir) const {
   bool Last = false;
+  sys::Path In = InFile;
   const Node* CurNode = StartNode;
-  JoinTool* ret = 0;
 
   while(!Last) {
     sys::Path Out;
     Tool* CurTool = CurNode->ToolPtr.getPtr();
 
     if (CurTool->IsJoin()) {
-      ret = &dynamic_cast<JoinTool&>(*CurTool);
-      ret->AddToJoinList(In);
+      JoinTool& JT = dynamic_cast<JoinTool&>(*CurTool);
+      JT.AddToJoinList(In);
       break;
     }
 
-    // Is this the last tool?
+    // Since toolchains do not have to end with a Join node, we should
+    // check if this Node is the last.
     if (!CurNode->HasChildren() || CurTool->IsLast()) {
-      // Check if the first tool is also the last
-      if (Out.empty())
+      if (!OutputFilename.empty()) {
+        Out.set(OutputFilename);
+      }
+      else {
         Out.set(In.getBasename());
-      else
-        Out.appendComponent(In.getBasename());
-      Out.appendSuffix(CurTool->OutputSuffix());
+        Out.appendSuffix(CurTool->OutputSuffix());
+      }
       Last = true;
     }
     else {
-      Out = TempDir;
-      Out.appendComponent(In.getBasename());
-      Out.appendSuffix(CurTool->OutputSuffix());
-      Out.makeUnique(true, NULL);
-      Out.eraseFromDisk();
+      Out = MakeTempFile(TempDir, In.getBasename(), CurTool->OutputSuffix());
     }
 
     if (CurTool->GenerateAction(In, Out).Execute() != 0)
@@ -166,8 +174,6 @@ CompilationGraph::PassThroughGraph (sys::Path& In,
                                   CurNode->Name())->ToolName());
     In = Out; Out.clear();
   }
-
-  return ret;
 }
 
 // Sort the nodes in topological order.
@@ -215,7 +221,6 @@ const Node* CompilationGraph::FindToolChain(const sys::Path& In) const {
   return &getNode(ChooseEdge(TV)->ToolName());
 }
 
-// TOFIX: merge some parts with PassThroughGraph.
 // Build the targets. Command-line options are passed through
 // temporary variables.
 int CompilationGraph::Build (const sys::Path& TempDir) {
@@ -243,10 +248,12 @@ int CompilationGraph::Build (const sys::Path& TempDir) {
     JoinTool* JT = &dynamic_cast<JoinTool&>(*CurNode->ToolPtr.getPtr());
     bool IsLast = false;
 
-    // Has files pending?
+    // Are there any files to be joined?
     if (JT->JoinListEmpty())
       continue;
 
+    // Is this the last tool in the chain?
+    // NOTE: we can process several chains in parallel.
     if (!CurNode->HasChildren() || JT->IsLast()) {
       if (OutputFilename.empty()) {
         Out.set("a");
@@ -257,11 +264,7 @@ int CompilationGraph::Build (const sys::Path& TempDir) {
       IsLast = true;
     }
     else {
-      Out = TempDir;
-      Out.appendComponent("tmp");
-      Out.appendSuffix(JT->OutputSuffix());
-      Out.makeUnique(true, NULL);
-      Out.eraseFromDisk();
+      Out = MakeTempFile(TempDir, "tmp", JT->OutputSuffix());
     }
 
     if (JT->GenerateAction(Out).Execute() != 0)

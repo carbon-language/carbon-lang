@@ -32,5 +32,7 @@ def CompilationGraph : CompilationGraph<[
     Edge<opt, llc>,
 
     Edge<llc, llvm_gcc_assembler>,
-    Edge<llvm_gcc_assembler, llvm_gcc_linker>
+    Edge<llvm_gcc_assembler, llvm_gcc_linker>,
+
+    Edge<root, llvm_gcc_linker>
     ]>;
