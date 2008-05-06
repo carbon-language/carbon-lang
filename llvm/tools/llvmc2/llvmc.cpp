@@ -14,9 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Core.h"
-#include "Utility.h"
-#include "Tools.h"
+#include "CompilationGraph.h"
+#include "Tool.h"
 
 #include "llvm/System/Path.h"
 #include "llvm/Support/CommandLine.h"
@@ -25,11 +24,11 @@
 #include <stdexcept>
 #include <string>
 
-using namespace llvm;
+namespace cl = llvm::cl;
+namespace sys = llvm::sys;
 using namespace llvmcc;
 
-// These variables are also used in Core.cpp,
-// so they should have external linkage.
+// External linkage here is intentional.
 cl::list<std::string> InputFilenames(cl::Positional,
                                      cl::desc("<input file>"), cl::OneOrMore);
 cl::opt<std::string> OutputFilename("o", cl::desc("Output file name"),

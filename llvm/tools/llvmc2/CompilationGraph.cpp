@@ -1,4 +1,4 @@
-//===--- Core.cpp - The LLVM Compiler Driver --------------------*- C++ -*-===//
+//===--- CompilationGraph.cpp - The LLVM Compiler Driver --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,42 +7,21 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  Core driver abstractions.
+//  Compilation graph - implementation.
 //
 //===----------------------------------------------------------------------===//
 
-#include "Core.h"
-#include "Utility.h"
+#include "CompilationGraph.h"
 
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/STLExtras.h"
 
-#include <algorithm>
-#include <iostream>
 #include <stdexcept>
 
 using namespace llvm;
-using namespace llvmcc;
 
 extern cl::list<std::string> InputFilenames;
 extern cl::opt<std::string> OutputFilename;
-extern cl::opt<bool> VerboseMode;
-
-namespace {
-  void print_string (const std::string& str) {
-    std::cerr << str << ' ';
-  }
-}
-
-int llvmcc::Action::Execute() {
-  if (VerboseMode) {
-    std::cerr << Command_ << " ";
-    std::for_each(Args_.begin(), Args_.end(), print_string);
-    std::cerr << '\n';
-  }
-  return ExecuteProgram(Command_, Args_);
-}
 
 int llvmcc::CompilationGraph::Build (const sys::Path& tempDir) const {
   sys::Path In(InputFilenames.at(0)), Out;
@@ -107,9 +86,3 @@ int llvmcc::CompilationGraph::Build (const sys::Path& tempDir) const {
 
   return 0;
 }
-
-void llvmcc::Tool::UnpackValues (const std::string& from,
-                                 std::vector<std::string>& to) const {
-  SplitString(from, to, ",");
-}
-

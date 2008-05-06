@@ -623,10 +623,10 @@ void EmitOptionPropertyHandlingCode (const ToolProperties& P,
         << "::iterator B = " << D.GenVariableName() << ".begin(),\n"
         << Indent3 << "E = " << D.GenVariableName()
         << ".end(); B != E; ++B)\n"
-        << Indent4 << "UnpackValues(*B, vec);\n";
+        << Indent4 << "Tool::UnpackValues(*B, vec);\n";
     }
     else if (D.Type == OptionType::Prefix || D.Type == OptionType::Parameter){
-      O << Indent3 << "UnpackValues("
+      O << Indent3 << "Tool::UnpackValues("
         << D.GenVariableName() << ", vec);\n";
     }
     else {

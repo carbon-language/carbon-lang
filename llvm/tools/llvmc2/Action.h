@@ -7,20 +7,30 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  Auto-generated tool descriptions.
+//  Action - encapsulates a single shell command.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVMCC_TOOLS_H
-#define LLVM_TOOLS_LLVMCC_TOOLS_H
+#ifndef LLVM_TOOLS_LLVMC2_ACTION_H
+#define LLVM_TOOLS_LLVMC2_ACTION_H
 
-#include "Core.h"
+#include <string>
+#include <vector>
 
 namespace llvmcc {
 
-  void PopulateLanguageMap(LanguageMap& language_map);
-  void PopulateCompilationGraph(CompilationGraph& tools);
+  class Action {
+    std::string Command_;
+    std::vector<std::string> Args_;
+  public:
+    Action (std::string const& C,
+            std::vector<std::string> const& A)
+      : Command_(C), Args_(A)
+    {}
+
+    int Execute();
+  };
 
 }
 
-#endif //LLVM_TOOLS_LLVMCC_TOOLS_H
+#endif // LLVM_TOOLS_LLVMC2_ACTION_H
