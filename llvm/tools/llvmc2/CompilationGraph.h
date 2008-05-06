@@ -45,7 +45,7 @@ namespace llvmcc {
   class SimpleEdge : public Edge {
   public:
     SimpleEdge(const std::string& T) : Edge(T) {}
-    bool isEnabled() const { return true;}
+    bool isEnabled() const { return false;}
     bool isDefault() const { return true;}
   };
 
@@ -60,11 +60,15 @@ namespace llvmcc {
     Node(CompilationGraph* G, Tool* T) : OwningGraph(G), ToolPtr(T) {}
 
     bool HasChildren() const { return !OutEdges.empty(); }
+    const std::string Name() const { return ToolPtr->Name(); }
 
     iterator EdgesBegin() { return OutEdges.begin(); }
     const_iterator EdgesBegin() const { return OutEdges.begin(); }
     iterator EdgesEnd() { return OutEdges.end(); }
     const_iterator EdgesEnd() const { return OutEdges.end(); }
+
+    // Choose one of the edges based on command-line options.
+    const Edge* ChooseEdge() const;
 
     // Takes ownership of the object.
     void AddEdge(Edge* E)

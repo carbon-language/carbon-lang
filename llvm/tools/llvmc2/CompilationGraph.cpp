@@ -25,6 +25,31 @@ using namespace llvmcc;
 extern cl::list<std::string> InputFilenames;
 extern cl::opt<std::string> OutputFilename;
 
+// Choose one of the edges based on command-line options.
+const Edge* Node::ChooseEdge() const {
+  const Edge* DefaultEdge = 0;
+  for (const_iterator B = EdgesBegin(), E = EdgesEnd();
+       B != E; ++B) {
+    const Edge* E = (*B).getPtr();
+    if (E->isDefault())
+      if (!DefaultEdge)
+        DefaultEdge = E;
+      else
+        throw std::runtime_error("Node " + Name() +
+                                 ": multiple default edges found!"
+                                 "Most probably a specification error.");
+    if (E->isEnabled())
+      return E;
+  }
+
+  if (DefaultEdge)
+    return DefaultEdge;
+  else
+    throw std::runtime_error("Node " + Name() +
+                             ": no suitable edge found! "
+                             "Most probably a specification error.");
+}
+
 CompilationGraph::CompilationGraph() {
   NodesMap["root"] = Node(this);
 }
@@ -84,8 +109,8 @@ void CompilationGraph::insertEdge(const std::string& A, Edge* E) {
   }
 }
 
-// TOFIX: support edge properties.
-// TOFIX: support more interesting graph topologies.
+// TOFIX: support more interesting graph topologies. We will need to
+// do topological sorting to process multiple Join nodes correctly.
 int CompilationGraph::Build (const sys::Path& tempDir) const {
   PathVector JoinList;
   const Tool* JoinTool = 0;
@@ -102,7 +127,7 @@ int CompilationGraph::Build (const sys::Path& tempDir) const {
       throw std::runtime_error("Tool names vector is empty!");
     const Node* N = &getNode(*TV.begin());
 
-    // Pass it through the chain until we bump into a Join node or a
+    // Pass file through the chain until we bump into a Join node or a
     // node that says that it is the last.
     bool Last = false;
     while(!Last) {
@@ -135,7 +160,7 @@ int CompilationGraph::Build (const sys::Path& tempDir) const {
       if (CurTool->GenerateAction(In, Out).Execute() != 0)
         throw std::runtime_error("Tool returned error code!");
 
-      N = &getNode((*N->EdgesBegin())->ToolName());
+      N = &getNode(N->ChooseEdge()->ToolName());
       In = Out; Out.clear();
     }
   }
@@ -166,7 +191,7 @@ namespace llvm {
   template<typename GraphType>
   static std::string getNodeLabel(const Node* N, const GraphType&) {
     if (N->ToolPtr)
-      return N->ToolPtr->Name();
+      return N->Name();
     else
       return "root";
   }
