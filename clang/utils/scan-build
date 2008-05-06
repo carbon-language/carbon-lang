@@ -364,7 +364,8 @@ ENDTEXT
   
   for my $row ( @Index ) {
     
-    my $bug_type = lc($row->[1]);
+    #my $bug_type = lc($row->[1]);
+    my $bug_type = ($row->[1]);
     
     if (!defined($Totals{$bug_type})) {
       $Totals{$bug_type} = 1;
@@ -425,7 +426,8 @@ ENDTEXT
     my $ReportFile = $row->[0];
 
     print OUT " <td class=\"DESC\">";
-    print OUT lc($row->[1]);
+    #print OUT lc($row->[1]);
+    print OUT $row->[1];
     print OUT "</td>\n";
     
     # Update the file prefix.

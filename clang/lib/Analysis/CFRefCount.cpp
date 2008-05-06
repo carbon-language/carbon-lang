@@ -219,6 +219,8 @@ class RetainSummaryManager {
   // ScratchArgs - A holding buffer for construct ArgEffects.
   ArgEffects ScratchArgs;
   
+  RetainSummary* StopSummary;
+  
   //==-----------------------------------------------------------------==//
   //  Methods.
   //==-----------------------------------------------------------------==//
@@ -247,8 +249,16 @@ class RetainSummaryManager {
     return getPersistentSummary(getArgEffects(), RE, ReceiverEff, DefaultEff);
   }
   
+
+  
   RetainSummary* getPersistentStopSummary() {
-    return getPersistentSummary(RetEffect::MakeNoRet(),DoNothing, StopTracking);
+    if (StopSummary)
+      return StopSummary;
+    
+    StopSummary = getPersistentSummary(RetEffect::MakeNoRet(),
+                                       StopTracking, StopTracking);
+    
+    return StopSummary;
   }  
 
   RetainSummary* getInitMethodSummary(Selector S);
@@ -259,7 +269,7 @@ class RetainSummaryManager {
 public:
   
   RetainSummaryManager(ASTContext& ctx, bool gcenabled)
-   : Ctx(ctx), GCEnabled(gcenabled) {
+   : Ctx(ctx), GCEnabled(gcenabled), StopSummary(0) {
     
      InitializeInstMethSummaries();
      InitializeMethSummaries();
@@ -569,22 +579,22 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME) {
   
   if (I != ObjCMethSummaries.end())
     return I->second;
-  
+
   // Only generate real summaries for methods involving
   // NSxxxx objects.
-
+  
   if (!isNSType(ME->getReceiver()->getType())) {
     RetainSummary* Summ = getPersistentStopSummary();
     ObjCMethSummaries[S] = Summ;
     return Summ;
   }
-
+  
   // "initXXX": pass-through for receiver.
 
   const char* s = S.getIdentifierInfoForSlot(0)->getName();
   
   if (strncmp(s, "init", 4) == 0)
-    return getInitMethodSummary(S);
+    return getInitMethodSummary(S);  
   
 #if 0
   // Generate a summary.  For all "setYYY:" and "addXXX:" slots => StopTracking.
@@ -631,6 +641,10 @@ void RetainSummaryManager::InitializeInstMethSummaries() {
     
   // Create the "mutableCopyWithZone:" selector.
   ObjCInstMethSummaries[ GetUnarySelector("mutableCopyWithZone", Ctx) ] = Summ;
+  
+  // Special cases: create the NSProcessInfo::processInfo selector.
+  ObjCInstMethSummaries[ GetNullarySelector("processInfo", Ctx) ] = 
+    getPersistentSummary(RetEffect::MakeNoRet());  
 }
 
 void RetainSummaryManager::InitializeMethSummaries() {
@@ -678,14 +692,19 @@ RetainSummaryManager::getInstanceMethodSummary(IdentifierInfo* ClsName,
   if (isGCEnabled())
     return 0;
   
+  // Only generate real summaries for NSXXX classes.
+  
+  const char* cls = ClsName->getName();
+  
+  if (cls[0] != 'N' || cls[1] != 'S')
+    return getPersistentStopSummary();  
+      
   // Heuristic: XXXXwithYYYY, where XXX is the class name with the "NS"
   //  stripped off is usually an allocation.
   
-  const char* cls = ClsName->getName();
-  const char* s = S.getIdentifierInfoForSlot(0)->getName();
+  const char* s = S.getIdentifierInfoForSlot(0)->getName();  
   
-  if (cls[0] == 'N' && cls[1] == 'S')
-    cls += 2;
+  cls += 2;
   
   if (cls[0] == '\0' || s[0] == '\0' || tolower(cls[0]) != s[0])
     return 0;  
@@ -1710,7 +1729,15 @@ namespace {
     Leak(CFRefCount& tf) : CFRefBug(tf) {}
     
     virtual const char* getName() const {
-      return getTF().isGCEnabled() ? "Memory Leak (GC)" : "Memory Leak";
+      
+      if (getTF().isGCEnabled())
+        return "Memory Leak (GC)";
+      
+      if (getTF().getLangOptions().getGCMode() == LangOptions::HybridGC)
+        return "Memory Leak (Hybrid MM, non-GC)";
+      
+      assert (getTF().getLangOptions().getGCMode() == LangOptions::NonGC);
+      return "Memory Leak";
     }
     
     virtual const char* getDescription() const {
