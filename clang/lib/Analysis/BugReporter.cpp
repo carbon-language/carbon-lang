@@ -48,10 +48,8 @@ static inline Stmt* GetStmt(const ProgramPoint& P) {
 }
 
 static inline Stmt* GetStmt(const CFGBlock* B) {
-  if (B->empty()) {
-    assert (B->getTerminator() && "Empty block should have a terminator.");
+  if (B->empty())
     return const_cast<Stmt*>(B->getTerminator());
-  }
   else
     return (*B)[0];
 }
@@ -75,19 +73,35 @@ static Stmt* GetLastStmt(ExplodedNode<ValueState>* N) {
   return NULL;
 }
 
-
-static void ExecutionContinues(std::ostream& os, SourceManager& SMgr,
-                               ExplodedNode<ValueState>* N) {
-  
-  Stmt* S = GetStmt(N->getLocation());
+static void ExecutionContinues(std::ostringstream& os, SourceManager& SMgr,
+                               Stmt* S) {
   
   if (!S)
     return;
-
-  os << "Execution continue on line "
+  
+  // Slow, but probably doesn't matter.
+  if (os.str().empty())
+    os << ' ';
+  
+  os << "Execution continues on line "
      << SMgr.getLogicalLineNumber(S->getLocStart()) << '.';
 }
+
+
+static inline void ExecutionContinues(std::ostringstream& os,
+                                      SourceManager& SMgr,
+                                      ExplodedNode<ValueState>* N) {
+
+  ExecutionContinues(os, SMgr, GetStmt(N->getLocation()));
+}
+
+static inline void ExecutionContinues(std::ostringstream& os,
+                                      SourceManager& SMgr,
+                                      const CFGBlock* B) {  
   
+  ExecutionContinues(os, SMgr, GetStmt(B));
+}
+
 
 Stmt* BugReport::getStmt(BugReporter& BR) const {
   
@@ -375,8 +389,8 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             
             std::ostringstream os;          
             
-            os << "Loop condition is true. Execution continues on line "
-               << SMgr.getLogicalLineNumber(GetStmt(Dst)->getLocStart()) << '.';
+            os << "Loop condition is true.";
+            ExecutionContinues(os, SMgr, Dst);
             
             PD.push_front(new PathDiagnosticPiece(L, os.str()));
           }
@@ -394,8 +408,8 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
             
             std::ostringstream os;          
 
-            os << "Loop condition is false. Execution continues on line "
-               << SMgr.getLogicalLineNumber(GetStmt(Dst)->getLocStart()) << '.';
+            os << "Loop condition is false.";
+            ExecutionContinues(os, SMgr, Dst);
           
             PD.push_front(new PathDiagnosticPiece(L, os.str()));
           }
