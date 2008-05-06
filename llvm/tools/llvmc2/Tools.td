@@ -64,7 +64,8 @@ def llvm_gcc_assembler : Tool<
  (out_language "object-code"),
  (output_suffix "o"),
  (cmd_line "llvm-gcc -c -x assembler $INFILE -o $OUTFILE"),
- (switch_option "c", (stop_compilation)),
+ (switch_option "c", (stop_compilation),
+                (help "Compile and assemble, but do not link")),
  (prefix_list_option "Wa", (unpack_values), (help "pass options to assembler"))
 ]>;
 
