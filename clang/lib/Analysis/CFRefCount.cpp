@@ -636,7 +636,7 @@ RetainSummaryManager::getInstanceMethodSummary(IdentifierInfo* ClsName,
     if (s[0] == '\0')
       break;
   
-    if (s[0]=='\0' || s[0]!='W' || s[1]!='i' || s[2]!='t' || s[3]!='h')
+    if (s[0]!='W' || s[1]!='i' || s[2]!='t' || s[3]!='h')
       break;
     
     return 0;
