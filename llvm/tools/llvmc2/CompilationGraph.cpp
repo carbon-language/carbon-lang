@@ -204,15 +204,29 @@ namespace llvm {
     : public DefaultDOTGraphTraits
   {
 
-  template<typename GraphType>
-  static std::string getNodeLabel(const Node* N, const GraphType&) {
-    if (N->ToolPtr)
-      return N->Name();
-    else
-      return "root";
-  }
+    template<typename GraphType>
+    static std::string getNodeLabel(const Node* N, const GraphType&)
+    {
+      if (N->ToolPtr)
+        if (N->ToolPtr->IsJoin())
+          return N->Name() + "\n (join" +
+            (N->HasChildren() ? ")"
+             : std::string(": ") + N->ToolPtr->OutputLanguage() + ')');
+        else
+          return N->Name();
+      else
+        return "root";
+    }
 
+    template<typename EdgeIter>
+    static std::string getEdgeSourceLabel(const Node* N, EdgeIter I) {
+      if (N->ToolPtr)
+        return N->ToolPtr->OutputLanguage();
+      else
+        return I->ToolPtr->InputLanguage();
+    }
   };
+
 }
 
 void CompilationGraph::writeGraph() {
