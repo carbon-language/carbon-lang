@@ -306,30 +306,32 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "#define _REWRITER_typedef_Protocol\n";
   Preamble += "#endif\n";
   if (LangOpts.Microsoft) 
-    Preamble += "extern \"C\" {\n";
-  Preamble += "struct objc_object *objc_msgSend";
+    Preamble += "#define __OBJC_RW_EXTERN extern \"C\" __declspec(dllimport)\n";
+  else
+    Preamble += "#define __OBJC_RW_EXTERN extern\n";
+  Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_msgSend";
   Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
-  Preamble += "extern struct objc_object *objc_msgSendSuper";
+  Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_msgSendSuper";
   Preamble += "(struct objc_super *, struct objc_selector *, ...);\n";
-  Preamble += "extern struct objc_object *objc_msgSend_stret";
+  Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_msgSend_stret";
   Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
-  Preamble += "extern struct objc_object *objc_msgSendSuper_stret";
+  Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_msgSendSuper_stret";
   Preamble += "(struct objc_super *, struct objc_selector *, ...);\n";
-  Preamble += "extern struct objc_object *objc_msgSend_fpret";
+  Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_msgSend_fpret";
   Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
-  Preamble += "struct objc_object *objc_getClass";
+  Preamble += "__OBJC_RW_EXTERN objc_object *objc_getClass";
   Preamble += "(const char *);\n";
-  Preamble += "extern struct objc_object *objc_getMetaClass";
+  Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_getMetaClass";
   Preamble += "(const char *);\n";
-  Preamble += "extern void objc_exception_throw(struct objc_object *);\n";
-  Preamble += "extern void objc_exception_try_enter(void *);\n";
-  Preamble += "extern void objc_exception_try_exit(void *);\n";
-  Preamble += "extern struct objc_object *objc_exception_extract(void *);\n";
-  Preamble += "extern int objc_exception_match";
+  Preamble += "__OBJC_RW_EXTERN void objc_exception_throw(struct objc_object *);\n";
+  Preamble += "__OBJC_RW_EXTERN void objc_exception_try_enter(void *);\n";
+  Preamble += "__OBJC_RW_EXTERN void objc_exception_try_exit(void *);\n";
+  Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_exception_extract(void *);\n";
+  Preamble += "__OBJC_RW_EXTERN int objc_exception_match";
   Preamble += "(struct objc_class *, struct objc_object *, ...);\n";
-  Preamble += "extern Protocol *objc_getProtocol(const char *);\n";
+  Preamble += "__OBJC_RW_EXTERN Protocol *objc_getProtocol(const char *);\n";
   if (LangOpts.Microsoft) 
-    Preamble += "} // end extern \"C\"\n";
+    Preamble += "#undef __OBJC_RW_EXTERN\n";
   Preamble += "#ifndef __FASTENUMERATIONSTATE\n";
   Preamble += "struct __objcFastEnumerationState {\n\t";
   Preamble += "unsigned long state;\n\t";
