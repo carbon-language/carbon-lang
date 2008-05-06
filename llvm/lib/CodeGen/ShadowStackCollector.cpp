@@ -325,8 +325,7 @@ void ShadowStackCollector::CollectRoots(Function &F) {
         if (Function *F = CI->getCalledFunction())
           if (F->getIntrinsicID() == Intrinsic::gcroot) {
             std::pair<CallInst*,AllocaInst*> Pair = std::make_pair(
-              CI, cast<AllocaInst>(
-                    IntrinsicInst::StripPointerCasts(CI->getOperand(1))));
+              CI, cast<AllocaInst>(StripPointerCasts(CI->getOperand(1))));
             if (IsNullValue(CI->getOperand(2)))
               Roots.push_back(Pair);
             else

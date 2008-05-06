@@ -38,12 +38,6 @@ namespace llvm {
     IntrinsicInst(const IntrinsicInst&);  // DO NOT IMPLEMENT
     void operator=(const IntrinsicInst&); // DO NOT IMPLEMENT
   public:
-
-    /// StripPointerCasts - This static method strips off any unneeded pointer
-    /// casts from the specified value, returning the original uncasted value.
-    /// Note that the returned value is guaranteed to have pointer type.
-    static Value *StripPointerCasts(Value *Ptr);
-    
     /// getIntrinsicID - Return the intrinsic ID of this intrinsic.
     ///
     Intrinsic::ID getIntrinsicID() const {

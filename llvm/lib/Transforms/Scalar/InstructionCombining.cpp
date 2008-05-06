@@ -9131,8 +9131,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
   IntrinsicInst *Tramp =
     cast<IntrinsicInst>(cast<BitCastInst>(Callee)->getOperand(0));
 
-  Function *NestF =
-    cast<Function>(IntrinsicInst::StripPointerCasts(Tramp->getOperand(2)));
+  Function *NestF = cast<Function>(StripPointerCasts(Tramp->getOperand(2)));
   const PointerType *NestFPTy = cast<PointerType>(NestF->getType());
   const FunctionType *NestFTy = cast<FunctionType>(NestFPTy->getElementType());
 

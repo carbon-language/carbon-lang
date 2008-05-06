@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Constant.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
@@ -331,3 +332,30 @@ void User::replaceUsesOfWith(Value *From, Value *To) {
     }
 }
 
+//===----------------------------------------------------------------------===//
+//                            Utility functions
+//===----------------------------------------------------------------------===//
+
+Value *llvm::StripPointerCasts(Value *Ptr) {
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr)) {
+    if (CE->getOpcode() == Instruction::BitCast) {
+      if (isa<PointerType>(CE->getOperand(0)->getType()))
+        return StripPointerCasts(CE->getOperand(0));
+    } else if (CE->getOpcode() == Instruction::GetElementPtr) {
+      for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
+        if (!CE->getOperand(i)->isNullValue())
+          return Ptr;
+      return StripPointerCasts(CE->getOperand(0));
+    }
+    return Ptr;
+  }
+
+  if (BitCastInst *CI = dyn_cast<BitCastInst>(Ptr)) {
+    if (isa<PointerType>(CI->getOperand(0)->getType()))
+      return StripPointerCasts(CI->getOperand(0));
+  } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr)) {
+    if (GEP->hasAllZeroIndices())
+      return StripPointerCasts(GEP->getOperand(0));
+  }
+  return Ptr;
+}

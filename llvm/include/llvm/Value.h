@@ -272,6 +272,11 @@ template <> inline bool isa_impl<GlobalValue, Value>(const Value &Val) {
   return isa<GlobalVariable>(Val) || isa<Function>(Val) || isa<GlobalAlias>(Val);
 }
 
+/// StripPointerCasts - This function strips off any unneeded pointer
+/// casts from the specified value, returning the original uncasted value.
+/// Note that the returned value is guaranteed to have pointer type.
+Value *StripPointerCasts(Value *Ptr);
+
 } // End llvm namespace
 
 #endif
