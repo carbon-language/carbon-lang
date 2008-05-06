@@ -83,4 +83,5 @@ int main(int argc, char** argv) {
   catch(...) {
     std::cerr << "Unknown error!\n";
   }
+  return 1;
 }
