@@ -742,25 +742,25 @@ void EmitIsLastMethod (const ToolProperties& P, std::ostream& O) {
 
 // Emit static [Input,Output]Language() methods for Tool classes
 void EmitInOutLanguageMethods (const ToolProperties& P, std::ostream& O) {
-  O << Indent1 << "std::string InputLanguage() const {\n"
+  O << Indent1 << "const char* InputLanguage() const {\n"
     << Indent2 << "return \"" << P.InLanguage << "\";\n"
     << Indent1 << "}\n\n";
 
-  O << Indent1 << "std::string OutputLanguage() const {\n"
+  O << Indent1 << "const char* OutputLanguage() const {\n"
     << Indent2 << "return \"" << P.OutLanguage << "\";\n"
     << Indent1 << "}\n\n";
 }
 
 // Emit static [Input,Output]Language() methods for Tool classes
 void EmitOutputSuffixMethod (const ToolProperties& P, std::ostream& O) {
-  O << Indent1 << "std::string OutputSuffix() const {\n"
+  O << Indent1 << "const char* OutputSuffix() const {\n"
     << Indent2 << "return \"" << P.OutputSuffix << "\";\n"
     << Indent1 << "}\n\n";
 }
 
 // Emit static Name() method for Tool classes
 void EmitNameMethod (const ToolProperties& P, std::ostream& O) {
-  O << Indent1 << "std::string Name() const {\n"
+  O << Indent1 << "const char* Name() const {\n"
     << Indent2 << "return \"" << P.Name << "\";\n"
     << Indent1 << "}\n\n";
 }

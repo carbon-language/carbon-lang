@@ -34,10 +34,10 @@ namespace llvmcc {
     virtual Action GenerateAction (llvm::sys::Path const& inFile,
                                   llvm::sys::Path const& outFile) const = 0;
 
-    virtual std::string Name() const = 0;
-    virtual std::string InputLanguage() const = 0;
-    virtual std::string OutputLanguage() const = 0;
-    virtual std::string OutputSuffix() const = 0;
+    virtual const char* Name() const = 0;
+    virtual const char* InputLanguage() const = 0;
+    virtual const char* OutputLanguage() const = 0;
+    virtual const char* OutputSuffix() const = 0;
 
     virtual bool IsLast() const = 0;
     virtual bool IsJoin() const = 0;
