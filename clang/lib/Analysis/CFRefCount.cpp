@@ -38,6 +38,11 @@ static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
   return Ctx.Selectors.getSelector(0, &II);
 }
 
+static inline Selector GetUnarySelector(const char* name, ASTContext& Ctx) {
+  IdentifierInfo* II = &Ctx.Idents.get(name);
+  return Ctx.Selectors.getSelector(1, &II);
+}
+
 //===----------------------------------------------------------------------===//
 // Symbolic Evaluation of Reference Counting Logic
 //===----------------------------------------------------------------------===//
@@ -161,7 +166,7 @@ class RetainSummaryManager {
           FuncSummariesTy;
   
   typedef llvm::DenseMap<Selector, RetainSummary*>
-          ObjCMethodSummariesTy;
+          ObjCMethSummariesTy;
     
   //==-----------------------------------------------------------------==//
   //  Data.
@@ -179,12 +184,12 @@ class RetainSummaryManager {
   // FuncSummaries - A map from FunctionDecls to summaries.
   FuncSummariesTy FuncSummaries; 
   
-  // ObjCInstanceMethodSummaries - A map from selectors (for instance methods)
+  // ObjCInstMethSummaries - A map from selectors (for instance methods)
   //  to summaries.
-  ObjCMethodSummariesTy ObjCInstanceMethodSummaries;
+  ObjCMethSummariesTy ObjCInstMethSummaries;
 
-  // ObjCMethodSummaries - A map from selectors to summaries.
-  ObjCMethodSummariesTy ObjCMethodSummaries;
+  // ObjCMethSummaries - A map from selectors to summaries.
+  ObjCMethSummariesTy ObjCMethSummaries;
 
   // ArgEffectsSet - A FoldingSet of uniqued ArgEffects.
   ArgEffectsSetTy ArgEffectsSet;
@@ -214,16 +219,25 @@ class RetainSummaryManager {
   RetainSummary* getCFSummaryGetRule(FunctionDecl* FD);  
   
   RetainSummary* getPersistentSummary(ArgEffects* AE, RetEffect RE);
+
+  RetainSummary* getPersistentSummary(RetEffect RE) {
+    return getPersistentSummary(getArgEffects(), RE);
+  }
   
   RetainSummary* getInstanceMethodSummary(Selector S);
   
   RetainSummary* getMethodSummary(Selector S);    
   RetainSummary* getInitMethodSummary(Selector S);
 
+  void InitializeInstanceSummaries();
+    
 public:
   
   RetainSummaryManager(ASTContext& ctx, bool gcenabled)
-   : Ctx(ctx), GCEnabled(gcenabled) {}
+   : Ctx(ctx), GCEnabled(gcenabled) {
+    
+     InitializeInstanceSummaries();
+   }
   
   ~RetainSummaryManager();
   
@@ -393,19 +407,19 @@ RetainSummaryManager::getUnarySummary(FunctionDecl* FD, UnaryFuncKind func) {
   switch (func) {
     case cfretain: {
       ScratchArgs.push_back(std::make_pair(0, IncRef));
-      return getPersistentSummary(getArgEffects(), RetEffect::MakeAlias(0));
+      return getPersistentSummary(RetEffect::MakeAlias(0));
     }
       
     case cfrelease: {
       ScratchArgs.push_back(std::make_pair(0, DecRef));
-      return getPersistentSummary(getArgEffects(), RetEffect::MakeNoRet());
+      return getPersistentSummary(RetEffect::MakeNoRet());
     }
       
     case cfmakecollectable: {
       if (GCEnabled)
         ScratchArgs.push_back(std::make_pair(0, DecRef));
       
-      return getPersistentSummary(getArgEffects(), RetEffect::MakeAlias(0));    
+      return getPersistentSummary(RetEffect::MakeAlias(0));    
     }
       
     default:
@@ -449,7 +463,7 @@ RetainSummary* RetainSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
   //  just handle the default case.
 
   assert (ScratchArgs.empty());
-  return getPersistentSummary(getArgEffects(), RetEffect::MakeOwned());
+  return getPersistentSummary(RetEffect::MakeOwned());
 }
 
 RetainSummary* RetainSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
@@ -474,7 +488,7 @@ RetainSummary* RetainSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
   //  just handle the default case.
   
   assert (ScratchArgs.empty());  
-  return getPersistentSummary(getArgEffects(), RetEffect::MakeNotOwned());
+  return getPersistentSummary(RetEffect::MakeNotOwned());
 }
 
 //===----------------------------------------------------------------------===//
@@ -485,18 +499,18 @@ RetainSummary* RetainSummaryManager::getInitMethodSummary(Selector S) {
   assert(ScratchArgs.empty());
     
   RetainSummary* Summ =
-    getPersistentSummary(getArgEffects(), RetEffect::MakeReceiverAlias());
+    getPersistentSummary(RetEffect::MakeReceiverAlias());
   
-  ObjCMethodSummaries[S] = Summ;
+  ObjCMethSummaries[S] = Summ;
   return Summ;
 }
 
 RetainSummary* RetainSummaryManager::getMethodSummary(Selector S) {
   
   // Look up a summary in our cache of Selectors -> Summaries.
-  ObjCMethodSummariesTy::iterator I = ObjCMethodSummaries.find(S);
+  ObjCMethSummariesTy::iterator I = ObjCMethSummaries.find(S);
   
-  if (I != ObjCMethodSummaries.end())
+  if (I != ObjCMethSummaries.end())
     return I->second;
 
   // "initXXX": pass-through for receiver.
@@ -509,12 +523,36 @@ RetainSummary* RetainSummaryManager::getMethodSummary(Selector S) {
   return 0;
 }
 
+void RetainSummaryManager::InitializeInstanceSummaries() {
+  
+  assert (ScratchArgs.empty());
+  
+  RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet() : RetEffect::MakeOwned();  
+  RetainSummary* Summ = getPersistentSummary(E);
+  
+  // Create the "alloc" selector.
+  ObjCInstMethSummaries[ GetNullarySelector("alloc", Ctx) ] = Summ;
+  
+  // Create the "new" selector.
+  ObjCInstMethSummaries[ GetNullarySelector("new", Ctx) ] = Summ;
+  
+  // Create the "allocWithZone:" selector.
+  ObjCInstMethSummaries[ GetUnarySelector("allocWithZone", Ctx) ] = Summ;
+  
+  // Create the "copyWithZone:" selector.
+  ObjCInstMethSummaries[ GetUnarySelector("copyWithZone", Ctx) ] = Summ;
+    
+  // Create the "mutableCopyWithZone:" selector.
+  ObjCInstMethSummaries[ GetUnarySelector("mutableCopyWithZone", Ctx) ] = Summ;
+}
+
+
 RetainSummary* RetainSummaryManager::getInstanceMethodSummary(Selector S) {
     
   // Look up a summary in our cache of Selectors -> Summaries.
-  ObjCMethodSummariesTy::iterator I = ObjCInstanceMethodSummaries.find(S);
+  ObjCMethSummariesTy::iterator I = ObjCInstMethSummaries.find(S);
   
-  if (I != ObjCInstanceMethodSummaries.end())
+  if (I != ObjCInstMethSummaries.end())
     return I->second;
     
   return 0;
