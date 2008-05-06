@@ -50,7 +50,11 @@ def required;
 def switch_on;
 def parameter_equals;
 def element_in_list;
+def if_input_languages_contain;
+
+// Edge property combinators.
 def and;
+def or;
 
 // Map from suffixes to language names
 

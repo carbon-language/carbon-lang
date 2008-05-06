@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <iostream>
 #include <limits>
 #include <queue>
 #include <stdexcept>
@@ -36,6 +37,7 @@ namespace {
   // Return the edge with the maximum weight.
   template <class C>
   const Edge* ChooseEdge(const C& EdgesContainer,
+                         const InputLanguagesSet& InLangs,
                          const std::string& NodeName = "root") {
     const Edge* MaxEdge = 0;
     unsigned MaxWeight = 0;
@@ -44,7 +46,7 @@ namespace {
     for (typename C::const_iterator B = EdgesContainer.begin(),
            E = EdgesContainer.end(); B != E; ++B) {
       const Edge* E = B->getPtr();
-      unsigned EW = E->Weight();
+      unsigned EW = E->Weight(InLangs);
       if (EW > MaxWeight) {
         MaxEdge = E;
         MaxWeight = EW;
@@ -142,6 +144,7 @@ namespace {
 // a node that says that it is the last.
 void CompilationGraph::PassThroughGraph (const sys::Path& InFile,
                                          const Node* StartNode,
+                                         const InputLanguagesSet& InLangs,
                                          const sys::Path& TempDir) const {
   bool Last = false;
   sys::Path In = InFile;
@@ -180,6 +183,7 @@ void CompilationGraph::PassThroughGraph (const sys::Path& InFile,
       return;
 
     CurNode = &getNode(ChooseEdge(CurNode->OutEdges,
+                                  InLangs,
                                   CurNode->Name())->ToolName());
     In = Out; Out.clear();
   }
@@ -221,20 +225,31 @@ TopologicalSortFilterJoinNodes(std::vector<const Node*>& Out) {
 }
 
 // Find head of the toolchain corresponding to the given file.
+// Also, insert an input language into InLangs.
 const Node* CompilationGraph::
-FindToolChain(const sys::Path& In, const std::string* forceLanguage) const {
+FindToolChain(const sys::Path& In, const std::string* forceLanguage,
+              InputLanguagesSet& InLangs) const {
+
+  // Determine the input language.
   const std::string& InLanguage =
     forceLanguage ? *forceLanguage : getLanguage(In);
+
+  // Add the current input language to the input language set.
+  InLangs.insert(InLanguage);
+
+  // Find the toolchain for the input language.
   const tools_vector_type& TV = getToolsVector(InLanguage);
   if (TV.empty())
     throw std::runtime_error("No toolchain corresponding to language"
                              + InLanguage + " found!");
-  return &getNode(ChooseEdge(TV)->ToolName());
+  return &getNode(ChooseEdge(TV, InLangs)->ToolName());
 }
 
 // Build the targets. Command-line options are passed through
 // temporary variables.
 int CompilationGraph::Build (const sys::Path& TempDir) {
+
+  InputLanguagesSet InLangs;
 
   // This is related to -x option handling.
   cl::list<std::string>::const_iterator xIter = Languages.begin(),
@@ -284,9 +299,9 @@ int CompilationGraph::Build (const sys::Path& TempDir) {
     }
 
     // Find the toolchain corresponding to this file.
-    const Node* N = FindToolChain(In, xLanguage);
+    const Node* N = FindToolChain(In, xLanguage, InLangs);
     // Pass file through the chain starting at head.
-    PassThroughGraph(In, N, TempDir);
+    PassThroughGraph(In, N, InLangs, TempDir);
   }
 
   std::vector<const Node*> JTV;
@@ -324,9 +339,10 @@ int CompilationGraph::Build (const sys::Path& TempDir) {
       throw std::runtime_error("Tool returned error code!");
 
     if (!IsLast) {
-      const Node* NextNode = &getNode(ChooseEdge(CurNode->OutEdges,
-                                                 CurNode->Name())->ToolName());
-      PassThroughGraph(Out, NextNode, TempDir);
+      const Node* NextNode =
+        &getNode(ChooseEdge(CurNode->OutEdges, InLangs,
+                            CurNode->Name())->ToolName());
+      PassThroughGraph(Out, NextNode, InLangs, TempDir);
     }
   }
 

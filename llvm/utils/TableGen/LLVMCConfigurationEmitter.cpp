@@ -911,19 +911,29 @@ void TypecheckGraph (Record* CompilationGraph,
 }
 
 // Helper function used by EmitEdgePropertyTest.
-void EmitEdgePropertyTest1Arg(const DagInit& Prop,
+bool EmitEdgePropertyTest1Arg(const std::string& PropName,
+                              const DagInit& Prop,
                               const GlobalOptionDescriptions& OptDescs,
                               std::ostream& O) {
   checkNumberOfArguments(&Prop, 1);
   const std::string& OptName = InitPtrToString(Prop.getArg(0));
-  const GlobalOptionDescription& OptDesc = OptDescs.FindOption(OptName);
-  if (OptDesc.Type != OptionType::Switch)
-    throw OptName + ": incorrect option type!";
-  O << OptDesc.GenVariableName();
+  if (PropName == "switch_on") {
+    const GlobalOptionDescription& OptDesc = OptDescs.FindOption(OptName);
+    if (OptDesc.Type != OptionType::Switch)
+      throw OptName + ": incorrect option type!";
+    O << OptDesc.GenVariableName();
+    return true;
+  }
+  else if (PropName == "if_input_languages_contain") {
+    O << "InLangs.count(\"" << OptName << "\") != 0";
+    return true;
+  }
+
+  return false;
 }
 
 // Helper function used by EmitEdgePropertyTest.
-void EmitEdgePropertyTest2Args(const std::string& PropName,
+bool EmitEdgePropertyTest2Args(const std::string& PropName,
                                const DagInit& Prop,
                                const GlobalOptionDescriptions& OptDescs,
                                std::ostream& O) {
@@ -937,6 +947,7 @@ void EmitEdgePropertyTest2Args(const std::string& PropName,
         && OptDesc.Type != OptionType::Prefix)
       throw OptName + ": incorrect option type!";
     O << OptDesc.GenVariableName() << " == \"" << OptArg << "\"";
+    return true;
   }
   else if (PropName == "element_in_list") {
     if (OptDesc.Type != OptionType::ParameterList
@@ -946,9 +957,10 @@ void EmitEdgePropertyTest2Args(const std::string& PropName,
     O << "std::find(" << VarName << ".begin(),\n"
       << Indent3 << VarName << ".end(), \""
       << OptArg << "\") != " << VarName << ".end()";
+    return true;
   }
-  else
-    throw PropName + ": unknown edge property!";
+
+  return false;
 }
 
 // Helper function used by EmitEdgeClass.
@@ -956,10 +968,29 @@ void EmitEdgePropertyTest(const std::string& PropName,
                           const DagInit& Prop,
                           const GlobalOptionDescriptions& OptDescs,
                           std::ostream& O) {
-  if (PropName == "switch_on")
-    EmitEdgePropertyTest1Arg(Prop, OptDescs, O);
+  if (EmitEdgePropertyTest1Arg(PropName, Prop, OptDescs, O))
+    return;
+  else if (EmitEdgePropertyTest2Args(PropName, Prop, OptDescs, O))
+    return;
   else
-    EmitEdgePropertyTest2Args(PropName, Prop, OptDescs, O);
+    throw PropName + ": unknown edge property!";
+}
+
+// Helper function used by EmitEdgeClass.
+void EmitLogicalOperationTest(const DagInit& Prop, const char* LogicOp,
+                              const GlobalOptionDescriptions& OptDescs,
+                              std::ostream& O) {
+  O << '(';
+  for (unsigned j = 0, NumArgs = Prop.getNumArgs(); j < NumArgs; ++j) {
+    const DagInit& InnerProp = dynamic_cast<DagInit&>(*Prop.getArg(j));
+    const std::string& InnerPropName =
+      InnerProp.getOperator()->getAsString();
+    EmitEdgePropertyTest(InnerPropName, InnerProp, OptDescs, O);
+    if (j != NumArgs - 1)
+      O << ")\n" << Indent3 << ' ' << LogicOp << " (";
+    else
+      O << ')';
+  }
 }
 
 // Emit a single Edge* class.
@@ -975,7 +1006,7 @@ void EmitEdgeClass(unsigned N, const std::string& Target,
     << "\") {}\n\n"
 
   // Function Weight().
-    << Indent1 << "unsigned Weight() const {\n"
+    << Indent1 << "unsigned Weight(const InputLanguagesSet& InLangs) const {\n"
     << Indent2 << "unsigned ret = 0;\n";
 
   for (size_t i = 0, PropsSize = Props->size(); i < PropsSize; ++i) {
@@ -985,24 +1016,17 @@ void EmitEdgeClass(unsigned N, const std::string& Target,
     if (PropName == "default")
       IsDefault = true;
 
-    O << Indent2 << "if ((";
+    O << Indent2 << "if (";
     if (PropName == "and") {
-      O << '(';
-      for (unsigned j = 0, NumArgs = Prop.getNumArgs(); j < NumArgs; ++j) {
-        const DagInit& InnerProp = dynamic_cast<DagInit&>(*Prop.getArg(j));
-        const std::string& InnerPropName =
-          InnerProp.getOperator()->getAsString();
-        EmitEdgePropertyTest(InnerPropName, InnerProp, OptDescs, O);
-        if (j != NumArgs - 1)
-          O << ")\n" << Indent3 << " && (";
-        else
-          O << ')';
-      }
+      EmitLogicalOperationTest(Prop, "&&", OptDescs, O);
+    }
+    else if (PropName == "or") {
+      EmitLogicalOperationTest(Prop, "||", OptDescs, O);
     }
     else {
       EmitEdgePropertyTest(PropName, Prop, OptDescs, O);
     }
-    O << "))\n" << Indent3 << "ret += 2;\n";
+    O << ")\n" << Indent3 << "ret += 2;\n";
   }
 
   if (IsDefault)

@@ -20,13 +20,17 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/iterator"
+//#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/System/Path.h"
 
+#include <set>
 #include <string>
 
 namespace llvmc {
+
+  typedef std::set<std::string> InputLanguagesSet;
 
   // An edge of the compilation graph.
   class Edge : public llvm::RefCountedBaseVPTR<Edge> {
@@ -35,7 +39,7 @@ namespace llvmc {
     virtual ~Edge() {};
 
     const std::string& ToolName() const { return ToolName_; }
-    virtual unsigned Weight() const = 0;
+    virtual unsigned Weight(const InputLanguagesSet& InLangs) const = 0;
   private:
     std::string ToolName_;
   };
@@ -44,7 +48,7 @@ namespace llvmc {
   class SimpleEdge : public Edge {
   public:
     SimpleEdge(const std::string& T) : Edge(T) {}
-    unsigned Weight() const { return 1; }
+    unsigned Weight(const InputLanguagesSet&) const { return 1; }
   };
 
   // A node of the compilation graph.
@@ -160,11 +164,13 @@ namespace llvmc {
 
     // Pass the input file through the toolchain.
     void PassThroughGraph (const llvm::sys::Path& In, const Node* StartNode,
+                           const InputLanguagesSet& InLangs,
                            const llvm::sys::Path& TempDir) const;
 
     // Find head of the toolchain corresponding to the given file.
     const Node* FindToolChain(const llvm::sys::Path& In,
-                              const std::string* forceLanguage) const;
+                              const std::string* forceLanguage,
+                              InputLanguagesSet& InLangs) const;
 
     // Sort the nodes in topological order.
     void TopologicalSort(std::vector<const Node*>& Out);

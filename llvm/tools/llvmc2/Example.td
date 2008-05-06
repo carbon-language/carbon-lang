@@ -34,12 +34,14 @@ def CompilationGraph : CompilationGraph<[
     Edge<llc, llvm_gcc_assembler>,
     Edge<llvm_gcc_assembler, llvm_gcc_linker>,
     OptionalEdge<llvm_gcc_assembler, llvm_gcc_cpp_linker,
-                 [(parameter_equals "linker", "g++"),
-                  (parameter_equals "linker", "c++")]>,
+                 [(if_input_languages_contain "c++"),
+                  (or (parameter_equals "linker", "g++"),
+                      (parameter_equals "linker", "c++"))]>,
 
 
     Edge<root, llvm_gcc_linker>,
     OptionalEdge<root, llvm_gcc_cpp_linker,
-                 [(parameter_equals "linker", "g++"),
-                  (parameter_equals "linker", "c++")]>
+                 [(if_input_languages_contain "c++"),
+                  (or (parameter_equals "linker", "g++"),
+                      (parameter_equals "linker", "c++"))]>
     ]>;
