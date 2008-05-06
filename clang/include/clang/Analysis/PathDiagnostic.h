@@ -25,19 +25,29 @@
 namespace clang {
 
 class PathDiagnosticPiece {
+public:
+  enum DisplayHint { Above, Below };
+
+private:
   FullSourceLoc Pos;
   std::string str;
+  DisplayHint Hint;
   std::vector<SourceRange> ranges;
+  
 public:
   
-  PathDiagnosticPiece(FullSourceLoc pos, const std::string& s)
-    : Pos(pos), str(s) {}
+  PathDiagnosticPiece(FullSourceLoc pos, const std::string& s,
+                      DisplayHint hint = Above)
+    : Pos(pos), str(s), Hint(hint) {}
   
-  PathDiagnosticPiece(FullSourceLoc pos, const char* s)
-    : Pos(pos), str(s) {}
+  PathDiagnosticPiece(FullSourceLoc pos, const char* s,
+                      DisplayHint hint = Above)
+    : Pos(pos), str(s), Hint(hint) {}
   
   const std::string& getString() const { return str; }
-    
+   
+  DisplayHint getDisplayHint() const { return Hint; }
+  
   void addRange(SourceRange R) {
     ranges.push_back(R);
   }
@@ -66,10 +76,12 @@ class PathDiagnostic {
   unsigned Size;
   std::string Desc;
   std::vector<std::string> OtherDesc;
-public:
-  
+
+public:  
   PathDiagnostic() : Size(0) {}
+
   PathDiagnostic(const char* desc) : Size(0), Desc(desc) {}
+  
   PathDiagnostic(const std::string& desc) : Size(0), Desc(desc) {}
   
   ~PathDiagnostic();
@@ -81,7 +93,6 @@ public:
   meta_iterator meta_end() const { return OtherDesc.end(); }
   void addMeta(const std::string& s) { OtherDesc.push_back(s); }
   void addMeta(const char* s) { OtherDesc.push_back(s); }
-  
   
   void push_front(PathDiagnosticPiece* piece) {
     path.push_front(piece);
