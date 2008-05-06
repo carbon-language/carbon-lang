@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "LLVMCCConfigurationEmitter.h"
+#include "LLVMCConfigurationEmitter.h"
 #include "Record.h"
 
 #include "llvm/ADT/IntrusiveRefCntPtr.h"

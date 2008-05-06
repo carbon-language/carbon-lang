@@ -31,7 +31,7 @@
 #include "DAGISelEmitter.h"
 #include "SubtargetEmitter.h"
 #include "IntrinsicEmitter.h"
-#include "LLVMCCConfigurationEmitter.h"
+#include "LLVMCConfigurationEmitter.h"
 #include <algorithm>
 #include <cstdio>
 #include <fstream>
@@ -104,7 +104,7 @@ RecordKeeper llvm::Records;
 
 /// ParseFile - this function begins the parsing of the specified tablegen
 /// file.
-static bool ParseFile(const std::string &Filename, 
+static bool ParseFile(const std::string &Filename,
                       const std::vector<std::string> &IncludeDirs) {
   std::string ErrorStr;
   MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), &ErrorStr);
@@ -112,13 +112,13 @@ static bool ParseFile(const std::string &Filename,
     cerr << "Could not open input file '" + Filename + "': " << ErrorStr <<"\n";
     return true;
   }
-  
+
   TGParser Parser(F);
-  
+
   // Record the location of the include directory so that the lexer can find
   // it later.
   Parser.setIncludeDirs(IncludeDirs);
-  
+
   return Parser.ParseFile();
 }
 
