@@ -902,7 +902,7 @@ class InitListChecker {
   
   void CheckImplicitInitList(InitListExpr *ParentIList, QualType T, 
                              unsigned &Index);
-  void CheckExplicitInitList(InitListExpr *IList, QualType T,
+  void CheckExplicitInitList(InitListExpr *IList, QualType &T,
                              unsigned &Index);
 
   void CheckElementTypes(InitListExpr *IList, QualType &DeclType, 
@@ -912,7 +912,7 @@ class InitListChecker {
                        unsigned &Index);
   void CheckVectorType(InitListExpr *IList, QualType DeclType, unsigned &Index);
   void CheckStructUnionTypes(InitListExpr *IList, QualType DeclType, 
-                             unsigned &Index);
+                             unsigned &Index, bool topLevel = false);
   void CheckArrayType(InitListExpr *IList, QualType &DeclType, unsigned &Index);
   
   int numArrayElements(QualType DeclType);
