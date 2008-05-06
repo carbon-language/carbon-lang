@@ -634,10 +634,15 @@ RetainSummaryManager::getInstanceMethodSummary(IdentifierInfo* ClsName,
   if (I != ObjCInstMethSummaries.end())
     return I->second;
   
+  return 0;
+
+#if 0
+  return 0;
+  
   // Don't track anything if using GC.
   if (isGCEnabled())
-    return 0;
-  
+    return 0;  
+
   // Inspect the class name and selecrtor to determine if this method
   //  creates new objects.
   const char* cls = ClsName->getName();
@@ -673,6 +678,7 @@ RetainSummaryManager::getInstanceMethodSummary(IdentifierInfo* ClsName,
   RetainSummary* Summ = getPersistentSummary(RetEffect::MakeOwned());
   ObjCInstMethSummaries[S] = Summ;
   return Summ;
+#endif
 }
 
 void RetainSummaryManager::InitializeInstMethSummaries() {
@@ -1969,6 +1975,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<ValueState>* N,
   return P;
 }
 
+
 PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
                                              ExplodedNode<ValueState>* EndN) {
   
@@ -2057,54 +2064,26 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
 
   // Look in the *trimmed* graph at the immediate predecessor of EndN.  Does
   // it occur on the same line?
+
+  PathDiagnosticPiece::DisplayHint Hint = PathDiagnosticPiece::Above;
   
   assert (!EndN->pred_empty()); // Not possible to have 0 predecessors.
-  N = *(EndN->pred_begin());
+  ExplodedNode<ValueState> *Pred = *(EndN->pred_begin());
+  ProgramPoint PredPos = Pred->getLocation();
   
-  do {
-    ProgramPoint P = N->getLocation();
+  if (PostStmt* PredPS = dyn_cast<PostStmt>(&PredPos)) {
 
-    if (!isa<PostStmt>(P))
-      break;
+    Stmt* SPred = PredPS->getStmt();
     
     // Predecessor at same line?
-    
-    Stmt* SPred = cast<PostStmt>(P).getStmt();
-    
-    if (SMgr.getLogicalLineNumber(SPred->getLocStart()) != EndLine)
-      break;
-    
-    // The predecessor (where the object was not yet leaked) is a statement
-    // on the same line.  Get the first successor statement that appears
-    // on a different line.  For this operation, we can traverse the
-    // non-trimmed graph.
-    
-    N = getEndNode(); // This is the node where the leak occured in the
-                      // original graph.
-        
-    while (!N->succ_empty()) {
-      
-      N = *(N->succ_begin());
-      ProgramPoint P = N->getLocation();
-      
-      if (!isa<PostStmt>(P))
-        continue;
-      
-      Stmt* SSucc = cast<PostStmt>(P).getStmt();
-      
-      if (SMgr.getLogicalLineNumber(SSucc->getLocStart()) != EndLine) {
-        S = SSucc;
-        break;
-      }
-    }    
+    if (SMgr.getLogicalLineNumber(SPred->getLocStart()) != EndLine) {
+      Hint = PathDiagnosticPiece::Below;
+      S = SPred;
+    }
   }
-  while (false);
-  
-  // Construct the location.
-    
-  FullSourceLoc L(S->getLocStart(), SMgr);
   
   // Generate the diagnostic.
+  FullSourceLoc L( S->getLocStart(), SMgr);
   std::ostringstream os;
   
   os << "Object allocated on line " << AllocLine;
@@ -2115,7 +2094,7 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
   os << " is no longer referenced after this point and has a retain count of +"
      << RetCount << " (object leaked).";
   
-  return new PathDiagnosticPiece(L, os.str());
+  return new PathDiagnosticPiece(L, os.str(), Hint);
 }
 
 void UseAfterRelease::EmitWarnings(BugReporter& BR) {

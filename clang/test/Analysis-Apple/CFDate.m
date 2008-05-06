@@ -90,26 +90,7 @@ CFDateRef f6(int x) {
 
 CFDateRef f7() {
   CFDateRef date = CFDateCreate(NULL, CFAbsoluteTimeGetCurrent());
-  CFRetain(date);
-  date = CFDateCreate(NULL, CFAbsoluteTimeGetCurrent()); //expected-warning{{leak}}
+  CFRetain(date); //expected-warning{{leak}}
+  date = CFDateCreate(NULL, CFAbsoluteTimeGetCurrent()); 
   return date;
 }
-
-NSDate* f8(int x) {
- 
-  NSDate* date = [NSDate date];
-  
-  if (x) [date retain];
-  
-  return date; // expected-warning{{leak}}
-}
-
-NSDate* f9(int x) {
-  
-  NSDate* date = [NSDate dateWithString:@"2001-03-24 10:45:32 +0600"];
-  
-  if (x) [date retain];
-  
-  return date; // expected-warning{{leak}}
-}
-
