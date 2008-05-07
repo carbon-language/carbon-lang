@@ -141,6 +141,30 @@ static inline bool StringsEqualNoCase(const std::string &LHS,
   }
   return RHS[LHS.size()] == 0;  // Not too long?
 }
+  
+/// CStrInCStrNoCase - Portable version of strcasestr.  Locates the first
+///  occurance of c-string 's1' in string 's2', ignoring case.  Returns
+///  NULL if 's1' cannot be found.
+static inline const char* CStrInCStrNoCase(const char *s1, const char *s2) {
+
+  // Are either strings NULL?
+  if (!s1 || !s2)
+    return 0;
+  
+  const char *I1=s1, *I2=s2;
+  
+  while (*I1 != '\0' || *I2 != '\0' )
+    if (tolower(*I1) != tolower(*I2)) { // No match.  Start over.
+      ++s1; I1 = s1; I2 = s2;
+    }
+    else { // Character match.  Advance to the next character.
+      ++I1; ++I2;
+    }
+
+  // If we exhausted all of the characters in 's2', then 's1' does not occur
+  // in it.
+  return *I2 == '\0' ? 0 : I1;
+}
 
 /// getToken - This function extracts one token from source, ignoring any
 /// leading characters that appear in the Delimiters string, and ending the
