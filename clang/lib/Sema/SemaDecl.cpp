@@ -785,6 +785,10 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   assert(!R.isNull() && "GetTypeForDeclarator() returned null type");
 
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
+    // Check that there are no default arguments (C++ only).
+    if (getLangOptions().CPlusPlus)
+      CheckExtraCXXDefaultArguments(D);
+
     TypedefDecl *NewTD = ParseTypedefDecl(S, D, R, LastDeclarator);
     if (!NewTD) return 0;
 
@@ -889,6 +893,10 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     if (getLangOptions().CPlusPlus)
       CheckCXXDefaultArguments(NewFD);
   } else {
+    // Check that there are no default arguments (C++ only).
+    if (getLangOptions().CPlusPlus)
+      CheckExtraCXXDefaultArguments(D);
+
     if (R.getTypePtr()->isObjCInterfaceType()) {
       Diag(D.getIdentifierLoc(), diag::err_statically_allocated_object,
            D.getIdentifier()->getName());
@@ -1108,7 +1116,11 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
     DS.ClearStorageClassSpecs();
   }
   
-  
+  // Check that there are no default arguments inside the type of this
+  // parameter (C++ only).
+  if (getLangOptions().CPlusPlus)
+    CheckExtraCXXDefaultArguments(D);
+ 
   // In this context, we *do not* check D.getInvalidType(). If the declarator
   // type was invalid, GetTypeForDeclarator() still returns a "valid" type,
   // though it will not reflect the user specified type.

@@ -279,6 +279,7 @@ private:
   ParmVarDecl *CreateImplicitParameter(Scope *S, IdentifierInfo *Id, 
                                        SourceLocation IdLoc, QualType Type);
   void CheckCXXDefaultArguments(FunctionDecl *FD);
+  void CheckExtraCXXDefaultArguments(Declarator &D);
 
   /// More parsing and symbol table subroutines...
   Decl *LookupDecl(const IdentifierInfo *II, unsigned NSI, Scope *S,

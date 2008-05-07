@@ -134,14 +134,6 @@ Sema::ActOnParamDefaultArgument(DeclTy *param, SourceLocation EqualLoc,
     return;
   }
 
-  // FIXME: C++ [dcl.fct.default]p3
-  //   A default argument expression shall be specified only in the
-  //   parameter-declaration-clause of a function declaration or in a
-  //   template-parameter (14.1). It shall not be specified for a
-  //   parameter pack. If it is specified in a
-  //   parameter-declaration-clause, it shall not occur within a
-  //   declarator or abstract-declarator of a parameter-declaration.
-
   // Check that the default argument is well-formed
   CheckDefaultArgumentVisitor DefaultArgChecker(DefaultArg.get(), this);
   if (DefaultArgChecker.Visit(DefaultArg.get()))
@@ -149,6 +141,34 @@ Sema::ActOnParamDefaultArgument(DeclTy *param, SourceLocation EqualLoc,
 
   // Okay: add the default argument to the parameter
   Param->setDefaultArg(DefaultArg.take());
+}
+
+/// CheckExtraCXXDefaultArguments - Check for any extra default
+/// arguments in the declarator, which is not a function declaration
+/// or definition and therefore is not permitted to have default
+/// arguments. This routine should be invoked for every declarator
+/// that is not a function declaration or definition.
+void Sema::CheckExtraCXXDefaultArguments(Declarator &D) {
+  // C++ [dcl.fct.default]p3
+  //   A default argument expression shall be specified only in the
+  //   parameter-declaration-clause of a function declaration or in a
+  //   template-parameter (14.1). It shall not be specified for a
+  //   parameter pack. If it is specified in a
+  //   parameter-declaration-clause, it shall not occur within a
+  //   declarator or abstract-declarator of a parameter-declaration.
+  for (unsigned i = 0; i < D.getNumTypeObjects(); ++i) {
+    DeclaratorChunk &chunk = D.getTypeObject(i);
+    if (chunk.Kind == DeclaratorChunk::Function) {
+      for (unsigned argIdx = 0; argIdx < chunk.Fun.NumArgs; ++argIdx) {
+        ParmVarDecl *Param = (ParmVarDecl *)chunk.Fun.ArgInfo[argIdx].Param;
+        if (Param->getDefaultArg()) {
+          Diag(Param->getLocation(), diag::err_param_default_argument_nonfunc,
+               Param->getDefaultArg()->getSourceRange());
+          Param->setDefaultArg(0);
+        }
+      }
+    }
+  }
 }
 
 // MergeCXXFunctionDecl - Merge two declarations of the same C++

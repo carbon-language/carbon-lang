@@ -501,6 +501,10 @@ Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
 
   assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
   
+  // Check that there are no default arguments (C++ only).
+  if (getLangOptions().CPlusPlus)
+    CheckExtraCXXDefaultArguments(D);
+
   // In this context, we *do not* check D.getInvalidType(). If the declarator
   // type was invalid, GetTypeForDeclarator() still returns a "valid" type,
   // though it will not reflect the user specified type.
