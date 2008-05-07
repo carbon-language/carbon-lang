@@ -1415,7 +1415,11 @@ class HandleSDNode : public SDNode {
 public:
   // FIXME: Remove the "noinline" attribute once <rdar://problem/5852746> is
   // fixed.
+#ifdef __GNUC__
   explicit __attribute__((__noinline__)) HandleSDNode(SDOperand X)
+#else
+  explicit HandleSDNode(SDOperand X)
+#endif
     : SDNode(ISD::HANDLENODE, getSDVTList(MVT::Other)) {
     Op = X;
     InitOperands(&Op, 1);
