@@ -593,33 +593,29 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME) {
   }
 #endif 
   
+  if (!ME->getType()->isPointerType())
+    return 0;
+  
   // "initXXX": pass-through for receiver.
 
   const char* s = S.getIdentifierInfoForSlot(0)->getName();
+  assert (ScratchArgs.empty());
   
   if (strncmp(s, "init", 4) == 0)
     return getInitMethodSummary(S);  
   
-#if 0
-  // Generate a summary.  For all "setYYY:" and "addXXX:" slots => StopTracking.
+  // "copyXXX", "createXXX", "newXXX": allocators.  
 
-  assert (ScratchArgs.empty());
-  
-  if (S.isUnarySelector()) {
-    RetainSummary* Summ = getPersistentSummary(RetEffect::MakeNoRet());
+  if (strcasestr(s, "create") == 0 || strcasestr(s, "copy") == 0 || 
+      strcasestr(s, "new") == 0) {
+    
+    RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
+                                : RetEffect::MakeOwned();  
+
+    RetainSummary* Summ = getPersistentSummary(E);
+    ObjCMethSummaries[S] = Summ;
     return Summ;
   }
-
-  for (unsigned i = 0, e = ME->getNumArgs(); i!=e; ++i) {
-    IdentifierInfo *II = S.getIdentifierInfoForSlot(i);
-    const char* s = II->getName();
-    
-    if (strncmp(s, "set", 3) == 0 || strncmp(s, "add", 3) == 0)
-      ScratchArgs.push_back(std::make_pair(i, StopTracking));
-    
-
-  }
-#endif 
   
   return 0;
 }
