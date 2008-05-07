@@ -48,6 +48,7 @@ namespace {
       (void) llvm::createArgumentPromotionPass();
       (void) llvm::createStructRetPromotionPass();
       (void) llvm::createBasicAliasAnalysisPass();
+      (void) llvm::createLibCallAliasAnalysisPass(0);
       (void) llvm::createBasicVNPass();
       (void) llvm::createBlockPlacementPass();
       (void) llvm::createBlockProfilerPass();

@@ -20,6 +20,7 @@ namespace llvm {
   class ImmutablePass;
   class ModulePass;
   class Pass;
+  class LibCallInfo;
 
   //===--------------------------------------------------------------------===//
   //
@@ -60,6 +61,14 @@ namespace llvm {
   // analysis.
   //
   ImmutablePass *createBasicAliasAnalysisPass();
+
+  //===--------------------------------------------------------------------===//
+  //
+  /// createLibCallAliasAnalysisPass - Create an alias analysis pass that knows
+  /// about the semantics of a set of libcalls specified by LCI.  The newly
+  /// constructed pass takes ownership of the pointer that is provided.
+  ///
+  FunctionPass *createLibCallAliasAnalysisPass(LibCallInfo *LCI);
 
   //===--------------------------------------------------------------------===//
   //
