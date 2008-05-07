@@ -726,6 +726,10 @@ void RetainSummaryManager::InitializeMethSummaries() {
   // Create the "release" selector.
   Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : DecRef);
   ObjCMethSummaries[ GetNullarySelector("release", Ctx) ] = Summ;
+  
+  // Create the "drain" selector.
+  Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : DecRef);
+  ObjCMethSummaries[ GetNullarySelector("drain", Ctx) ] = Summ;
 
   // Create the "autorelease" selector.
   Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : StopTracking);
