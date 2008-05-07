@@ -1366,10 +1366,12 @@ Stmt::child_iterator VAArgExpr::child_end() {
 
 // InitListExpr
 Stmt::child_iterator InitListExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&InitExprs[0]);
+  return reinterpret_cast<Stmt**>(InitExprs.size() ? 
+                                  &InitExprs[0] : 0);
 }
 Stmt::child_iterator InitListExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&InitExprs[getNumInits()-1]);
+  return reinterpret_cast<Stmt**>(InitExprs.size() ? 
+                                  &InitExprs[0] + InitExprs.size() : 0);
 }
 
 // ObjCStringLiteral
