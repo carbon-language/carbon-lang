@@ -29,8 +29,9 @@
 
 namespace llvmc {
 
-  // A wrapper for StringMap that provides set-like functionality.
-  // Only insert() and count() methods are used by my code.
+  /// StringSet - A wrapper for StringMap that provides set-like
+  /// functionality.  Only insert() and count() methods are used by my
+  /// code.
   template <class AllocatorTy = llvm::MallocAllocator>
   class StringSet : public llvm::StringMap<char, AllocatorTy> {
     typedef llvm::StringMap<char, AllocatorTy> base;
@@ -45,7 +46,7 @@ namespace llvmc {
   };
   typedef StringSet<> InputLanguagesSet;
 
-  // An edge of the compilation graph.
+  /// Edge - Represents an edge of the compilation graph.
   class Edge : public llvm::RefCountedBaseVPTR<Edge> {
   public:
     Edge(const std::string& T) : ToolName_(T) {}
@@ -57,14 +58,14 @@ namespace llvmc {
     std::string ToolName_;
   };
 
-  // Edges that have no properties are instances of this class.
+  /// SimpleEdge - An edge that has no properties.
   class SimpleEdge : public Edge {
   public:
     SimpleEdge(const std::string& T) : Edge(T) {}
     unsigned Weight(const InputLanguagesSet&) const { return 1; }
   };
 
-  // A node of the compilation graph.
+  /// Node - A node (vertex) of the compilation graph.
   struct Node {
     // A Node holds a list of the outward edges.
     typedef llvm::SmallVector<llvm::IntrusiveRefCntPtr<Edge>, 3> container_type;
@@ -86,7 +87,8 @@ namespace llvmc {
     iterator EdgesEnd() { return OutEdges.end(); }
     const_iterator EdgesEnd() const { return OutEdges.end(); }
 
-    // Add an outward edge. Takes ownership of the Edge object.
+    /// AddEdge - Add an outward edge. Takes ownership of the provided
+    /// Edge object.
     void AddEdge(Edge* E)
     { OutEdges.push_back(llvm::IntrusiveRefCntPtr<Edge>(E)); }
 
@@ -111,56 +113,57 @@ namespace llvmc {
 
   class NodesIterator;
 
-  // The compilation graph itself.
+  /// CompilationGraph - The compilation graph itself.
   class CompilationGraph {
-    // Main data structure.
+    /// nodes_map_type - The main data structure.
     typedef llvm::StringMap<Node> nodes_map_type;
-    // These are used to map from language names to tools. (We can
-    // have several tools associated with each language name, hence
-    // the need for a vector of Edges.)
+    /// tools_vector_type, tools_map_type - Data structures used to
+    /// map from language names to tools. (We can have several tools
+    /// associated with each language name, hence the need for a
+    /// vector.)
     typedef
     llvm::SmallVector<llvm::IntrusiveRefCntPtr<Edge>, 3> tools_vector_type;
     typedef llvm::StringMap<tools_vector_type> tools_map_type;
 
-    // Map from file extensions to language names.
+    /// ExtsToLangs - Map from file extensions to language names.
     LanguageMap ExtsToLangs;
-    // Map from language names to lists of tool names.
+    /// ToolsMap - Map from language names to lists of tool names.
     tools_map_type ToolsMap;
-    // Map from tool names to Tool objects.
+    /// NodesMap - Map from tool names to Tool objects.
     nodes_map_type NodesMap;
 
   public:
 
     CompilationGraph();
 
-    // insertVertex - insert a new node into the graph. Takes
-    // ownership of the object.
+    /// insertNode - Insert a new node into the graph. Takes
+    /// ownership of the object.
     void insertNode(Tool* T);
 
-    // insertEdge - Insert a new edge into the graph. Takes ownership
-    // of the Edge object.
+    /// insertEdge - Insert a new edge into the graph. Takes ownership
+    /// of the Edge object.
     void insertEdge(const std::string& A, Edge* E);
 
-    // Build - Build target(s) from the input file set. Command-line
-    // options are passed implicitly as global variables.
+    /// Build - Build target(s) from the input file set. Command-line
+    /// options are passed implicitly as global variables.
     int Build(llvm::sys::Path const& tempDir);
 
-    // Return a reference to the node correponding to the given tool
-    // name. Throws std::runtime_error.
+    /// getNode -Return a reference to the node correponding to the
+    /// given tool name. Throws std::runtime_error.
     Node& getNode(const std::string& ToolName);
     const Node& getNode(const std::string& ToolName) const;
 
-    // viewGraph - This function is meant for use from the debugger.
-    // You can just say 'call G->viewGraph()' and a ghostview window
-    // should pop up from the program, displaying the compilation
-    // graph. This depends on there being a 'dot' and 'gv' program
-    // in your path.
+    /// viewGraph - This function is meant for use from the debugger.
+    /// You can just say 'call G->viewGraph()' and a ghostview window
+    /// should pop up from the program, displaying the compilation
+    /// graph. This depends on there being a 'dot' and 'gv' program
+    /// in your path.
     void viewGraph();
 
-    // Write a CompilationGraph.dot file.
+    /// writeGraph - Write a compilation-graph.dot file.
     void writeGraph();
 
-    // GraphTraits support
+    // GraphTraits support.
     friend NodesIterator GraphBegin(CompilationGraph*);
     friend NodesIterator GraphEnd(CompilationGraph*);
     friend void PopulateCompilationGraph(CompilationGraph&);
@@ -168,39 +171,42 @@ namespace llvmc {
   private:
     // Helper functions.
 
-    // Find out which language corresponds to the suffix of this file.
+    /// getLanguage - Find out which language corresponds to the
+    /// suffix of this file.
     const std::string& getLanguage(const llvm::sys::Path& File) const;
 
-    // Return a reference to the list of tool names corresponding to
-    // the given language name. Throws std::runtime_error.
+    /// getToolsVector - Return a reference to the list of tool names
+    /// corresponding to the given language name. Throws
+    /// std::runtime_error.
     const tools_vector_type& getToolsVector(const std::string& LangName) const;
 
-    // Pass the input file through the toolchain starting at StartNode.
+    /// PassThroughGraph - Pass the input file through the toolchain
+    /// starting at StartNode.
     void PassThroughGraph (const llvm::sys::Path& In, const Node* StartNode,
                            const InputLanguagesSet& InLangs,
                            const llvm::sys::Path& TempDir) const;
 
-    // Find head of the toolchain corresponding to the given file.
+    /// FindToolChain - Find head of the toolchain corresponding to the given file.
     const Node* FindToolChain(const llvm::sys::Path& In,
                               const std::string* forceLanguage,
                               InputLanguagesSet& InLangs) const;
 
-    // Traverse the initial parts of the toolchains.
+    /// BuildInitial - Traverse the initial parts of the toolchains.
     void BuildInitial(InputLanguagesSet& InLangs,
                       const llvm::sys::Path& TempDir);
 
-    // Sort the nodes in topological order.
+    /// TopologicalSort - Sort the nodes in topological order.
     void TopologicalSort(std::vector<const Node*>& Out);
-    // Call TopologicalSort and filter the resulting list to include
-    // only Join nodes.
+    /// TopologicalSortFilterJoinNodes - Call TopologicalSort and
+    /// filter the resulting list to include only Join nodes.
     void TopologicalSortFilterJoinNodes(std::vector<const Node*>& Out);
   };
 
-  /// GraphTraits support code.
+  // GraphTraits support code.
 
-  // Auxiliary class needed to implement GraphTraits support.  Can be
-  // generalised to something like value_iterator for map-like
-  // containers.
+  /// NodesIterator - Auxiliary class needed to implement GraphTraits
+  /// support. Can be generalised to something like value_iterator
+  /// for map-like containers.
   class NodesIterator : public llvm::StringMap<Node>::iterator {
     typedef llvm::StringMap<Node>::iterator super;
     typedef NodesIterator ThisType;
@@ -227,7 +233,7 @@ namespace llvmc {
   }
 
 
-  // Another auxiliary class needed by GraphTraits.
+  /// NodeChildIterator - Another auxiliary class needed by GraphTraits.
   class NodeChildIterator : public bidirectional_iterator<Node, ptrdiff_t> {
     typedef NodeChildIterator ThisType;
     typedef Node::container_type::iterator iterator;

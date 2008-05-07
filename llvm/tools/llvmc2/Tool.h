@@ -26,6 +26,7 @@ namespace llvmc {
 
   typedef std::vector<llvm::sys::Path> PathVector;
 
+  /// Tool - A class
   class Tool : public llvm::RefCountedBaseVPTR<Tool> {
   public:
 
@@ -46,7 +47,7 @@ namespace llvmc {
     virtual bool IsJoin() const = 0;
   };
 
-  // Join tools have an input file list associated with them.
+  /// JoinTool - A Tool that has an associated input file list.
   class JoinTool : public Tool {
   public:
     void AddToJoinList(const llvm::sys::Path& P) { JoinList_.push_back(P); }

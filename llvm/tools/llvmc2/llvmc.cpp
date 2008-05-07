@@ -48,6 +48,7 @@ cl::opt<bool> ViewGraph("view-graph",
                          cl::Hidden);
 
 namespace {
+  /// BuildTargets - A small wrapper for CompilationGraph::Build.
   int BuildTargets(CompilationGraph& graph) {
     int ret;
     sys::Path tempDir(sys::Path::GetTemporaryDirectory());

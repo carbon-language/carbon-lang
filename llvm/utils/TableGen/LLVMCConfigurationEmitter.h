@@ -17,6 +17,9 @@
 #include "TableGenBackend.h"
 
 namespace llvm {
+
+  /// LLVMCConfigurationEmitter - TableGen backend that generates
+  /// configuration code for LLVMC.
   class LLVMCConfigurationEmitter : public TableGenBackend {
     RecordKeeper &Records;
   public:

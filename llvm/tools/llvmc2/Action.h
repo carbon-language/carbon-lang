@@ -21,8 +21,11 @@ namespace llvmc {
 
   typedef std::vector<std::string> StringVector;
 
+  /// Action - A class that encapsulates a single shell command.
   class Action {
+    /// Command_ - The actual command (for example, 'ls').
     std::string Command_;
+    /// Args_ - Command arguments. Stdout redirection is allowed.
     std::vector<std::string> Args_;
   public:
     Action (const std::string& C,
@@ -30,6 +33,7 @@ namespace llvmc {
       : Command_(C), Args_(A)
     {}
 
+    /// Execute - Executes the represented action.
     int Execute() const;
   };
 

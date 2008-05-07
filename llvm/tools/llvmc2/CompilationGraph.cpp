@@ -33,7 +33,7 @@ extern cl::list<std::string> Languages;
 
 namespace {
 
-  // Return the edge with the maximum weight.
+  /// ChooseEdge - Return the edge with the maximum weight.
   template <class C>
   const Edge* ChooseEdge(const C& EdgesContainer,
                          const InputLanguagesSet& InLangs,
@@ -304,8 +304,6 @@ TopologicalSortFilterJoinNodes(std::vector<const Node*>& Out) {
                       std::back_inserter(Out), NotJoinNode);
 }
 
-// Build the targets. Command-line options are accessed through global
-// variables.
 int CompilationGraph::Build (const sys::Path& TempDir) {
 
   InputLanguagesSet InLangs;
