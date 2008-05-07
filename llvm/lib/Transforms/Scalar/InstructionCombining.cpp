@@ -767,8 +767,8 @@ void InstCombiner::ComputeMaskedBits(Value *V, const APInt &Mask,
     unsigned TrailZ = KnownZero.countTrailingOnes() +
                       KnownZero2.countTrailingOnes();
     unsigned LeadZ =  std::max(KnownZero.countLeadingOnes() +
-                               KnownZero2.countLeadingOnes() +
-                               1, BitWidth) - BitWidth;
+                               KnownZero2.countLeadingOnes(),
+                               BitWidth) - BitWidth;
 
     TrailZ = std::min(TrailZ, BitWidth);
     LeadZ = std::min(LeadZ, BitWidth);
