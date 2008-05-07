@@ -270,6 +270,36 @@ void ObjCInterfaceDecl::mergeProperties(ObjCPropertyDecl **Properties,
   }
 }
 
+/// addPropertyMethods - Goes through list of properties declared in this class
+/// and builds setter/getter method declartions depending on the setter/getter
+/// attributes of the property.
+///
+void ObjCInterfaceDecl::addPropertyMethods(
+       ASTContext &Context,
+       ObjCPropertyDecl *property,
+       llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods) {
+  // Find the default getter and if one not found, add one.
+  ObjCMethodDecl *GetterDecl = getInstanceMethod(property->getGetterName());
+  if (GetterDecl) {
+    // An instance method with same name as property getter name found.
+    property->setGetterMethodDecl(GetterDecl);
+  }
+  else {
+    // No instance method of same name as property getter name was found.
+    // Declare a getter method and add it to the list of methods 
+    // for this class.
+    QualType resultDeclType = property->getType();
+    ObjCMethodDecl* ObjCMethod =
+    ObjCMethodDecl::Create(Context, property->getLocation(), 
+                           property->getLocation(), 
+                           property->getGetterName(), resultDeclType,
+                           this, 0,
+                           true, false, ObjCMethodDecl::Required);
+    property->setGetterMethodDecl(ObjCMethod);
+    insMethods.push_back(ObjCMethod);
+  }
+}
+
 /// addProperties - Insert property declaration AST nodes into
 /// ObjCProtocolDecl's PropertyDecl field.
 ///

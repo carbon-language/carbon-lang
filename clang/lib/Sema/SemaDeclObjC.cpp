@@ -872,12 +872,17 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
   }
   
   if (ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl>(ClassDecl)) {
-    I->addMethods(&insMethods[0], insMethods.size(),
-                  &clsMethods[0], clsMethods.size(), AtEndLoc);
     // Compares properties declaraed in this class to those of its 
     // super class.
     ComparePropertiesInBaseAndSuper(I);
     MergeProtocolPropertiesIntoClass(I, I);
+    for (ObjCInterfaceDecl::classprop_iterator P = I->classprop_begin(),
+         E = I->classprop_end(); P != E; ++P) {
+      I->addPropertyMethods(Context, *P, insMethods);
+    }
+    I->addMethods(&insMethods[0], insMethods.size(),
+                  &clsMethods[0], clsMethods.size(), AtEndLoc);
+    
   } else if (ObjCProtocolDecl *P = dyn_cast<ObjCProtocolDecl>(ClassDecl)) {
     P->addMethods(&insMethods[0], insMethods.size(),
                   &clsMethods[0], clsMethods.size(), AtEndLoc);
@@ -1029,19 +1034,19 @@ Sema::DeclTy *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   QualType T = GetTypeForDeclarator(FD.D, S);
   ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, AtLoc, 
                                                      FD.D.getIdentifier(), T);
+  // Regardless of setter/getter attribute, we save the default getter/setter
+  // selector names in anticipation of declaration of setter/getter methods.
+  PDecl->setGetterName(GetterSel);
+  PDecl->setSetterName(SetterSel);
   
   if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_readonly)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readonly);
   
-  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_getter) {
+  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_getter)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_getter);
-    PDecl->setGetterName(GetterSel);
-  }
   
-  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_setter) {
+  if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_setter)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_setter);
-    PDecl->setSetterName(SetterSel);
-  }
   
   if (ODS.getPropertyAttributes() & ObjCDeclSpec::DQ_PR_assign)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_assign);

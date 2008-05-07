@@ -322,6 +322,10 @@ public:
   
   void mergeProperties(ObjCPropertyDecl **Properties, unsigned NumProperties);
   
+  void addPropertyMethods(ASTContext &Context,
+                          ObjCPropertyDecl* Property,
+                          llvm::SmallVector<ObjCMethodDecl*, 32> &insMethods);
+  
   typedef ObjCPropertyDecl * const * classprop_iterator;
   classprop_iterator classprop_begin() const { return PropertyDecl; }
   classprop_iterator classprop_end() const {
@@ -1078,10 +1082,15 @@ private:
   Selector GetterName;    // getter name of NULL if no getter
   Selector SetterName;    // setter name of NULL if no setter
   
+  ObjCMethodDecl *GetterMethodDecl; // Declaration of getter instance method
+  ObjCMethodDecl *SetterMethodDecl; // Declaration of setter instance method
+
   ObjCPropertyDecl(SourceLocation L, IdentifierInfo *Id, QualType T)
     : NamedDecl(ObjCProperty, L, Id), DeclType(T),
-      PropertyAttributes(OBJC_PR_noattr), GetterName(Selector()), 
-      SetterName(Selector()) {}
+      PropertyAttributes(OBJC_PR_noattr), PropertyImplementation(None),
+      GetterName(Selector()), 
+      SetterName(Selector()),
+      GetterMethodDecl(0), SetterMethodDecl(0) {}
 public:
   static ObjCPropertyDecl *Create(ASTContext &C, SourceLocation L, 
                                   IdentifierInfo *Id, QualType T,
@@ -1101,6 +1110,12 @@ public:
   
   Selector getSetterName() const { return SetterName; }
   void setSetterName(Selector Sel) { SetterName = Sel; }
+  
+  ObjCMethodDecl *getGetterMethodDecl() const { return GetterMethodDecl; }
+  void setGetterMethodDecl(ObjCMethodDecl *gDecl) { GetterMethodDecl = gDecl; }
+
+  ObjCMethodDecl *getSetterMethodDecl() const { return SetterMethodDecl; }
+  void setSetterMethodDecl(ObjCMethodDecl *gDecl) { SetterMethodDecl = gDecl; }
   
   // Related to @optional/@required declared in @protocol
   void setPropertyImplementation(PropertyControl pc) {

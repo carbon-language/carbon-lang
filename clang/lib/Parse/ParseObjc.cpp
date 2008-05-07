@@ -271,9 +271,14 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
           FieldDeclarator &FD = FieldDeclarators[i];
           // Install the property declarator into interfaceDecl.
           Selector GetterSel = 
-            PP.getSelectorTable().getNullarySelector(OCDS.getGetterName());
+          PP.getSelectorTable().getNullarySelector(OCDS.getGetterName() 
+                                                   ? OCDS.getGetterName() 
+                                                   : FD.D.getIdentifier());
           Selector SetterSel = 
-          PP.getSelectorTable().getNullarySelector(OCDS.getSetterName());
+          PP.getSelectorTable().getNullarySelector(OCDS.getSetterName()
+                                                   ? OCDS.getSetterName()
+                                                   // FIXME. This is not right!
+                                                   : FD.D.getIdentifier());
           DeclTy *Property = Actions.ActOnProperty(CurScope,
                                DS.getSourceRange().getBegin(), FD, OCDS,
                                GetterSel, SetterSel,

@@ -273,16 +273,16 @@ void DeclPrinter::PrintObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
   for (ObjCInterfaceDecl::classprop_iterator I = OID->classprop_begin(),
        E = OID->classprop_end(); I != E; ++I)
     PrintObjCPropertyDecl(*I);
-  
+  bool eol_needed = false;
   for (ObjCInterfaceDecl::classmeth_iterator I = OID->classmeth_begin(),
        E = OID->classmeth_end(); I != E; ++I)
-    PrintObjCMethodDecl(*I);
+    eol_needed = true, PrintObjCMethodDecl(*I);
   
   for (ObjCInterfaceDecl::instmeth_iterator I = OID->instmeth_begin(),
        E = OID->instmeth_end(); I != E; ++I)
-    PrintObjCMethodDecl(*I);
+    eol_needed = true, PrintObjCMethodDecl(*I);
   
-  Out << "@end\n";
+  Out << (eol_needed ? "\n@end\n" : "@end\n");
   // FIXME: implement the rest...
 }
 
