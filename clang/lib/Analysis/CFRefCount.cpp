@@ -691,24 +691,7 @@ void RetainSummaryManager::InitializeInstMethSummaries() {
   ObjCInstMethSummaries[ GetNullarySelector("new", Ctx) ] = Summ;
   
   // Create the "allocWithZone:" selector.
-  ObjCInstMethSummaries[ GetUnarySelector("allocWithZone", Ctx) ] = Summ;
-  
-  // Create the "copyWithZone:" selector.
-  ObjCInstMethSummaries[ GetUnarySelector("copyWithZone", Ctx) ] = Summ;
-    
-  // Create the "mutableCopyWithZone:" selector.
-  ObjCInstMethSummaries[ GetUnarySelector("mutableCopyWithZone", Ctx) ] = Summ;
-  
-  // ** Special cases! **
-  //
-  //  FIXME: It would be great if this one day was in a file, rather than
-  //   hardcoded into the source code.
-  //
-  
-  // NSProcessInfo::processInfo - This instance method does not return
-  //  an owning reference.
-  ObjCInstMethSummaries[ GetNullarySelector("processInfo", Ctx) ] = 
-    getPersistentSummary(RetEffect::MakeNoRet());  
+  ObjCInstMethSummaries[ GetUnarySelector("allocWithZone", Ctx) ] = Summ;    
 }
 
 void RetainSummaryManager::InitializeMethSummaries() {
