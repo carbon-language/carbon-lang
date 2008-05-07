@@ -497,17 +497,15 @@ static bool isNSType(QualType T) {
   if (!T->isPointerType())
     return false;
   
-  // Check the typedef for the name "CF" and the substring "Ref".
+  ObjCInterfaceType* OT = dyn_cast<ObjCInterfaceType>(T.getTypePtr());
   
-  TypedefType* TD = dyn_cast<TypedefType>(T.getTypePtr());
-  
-  if (!TD)
+  if (!OT)
     return false;
   
-  const char* TDName = TD->getDecl()->getIdentifier()->getName();
-  assert (TDName);
+  const char* ClsName = OT->getDecl()->getIdentifier()->getName();
+  assert (ClsName);
   
-  if (TDName[0] != 'N' || TDName[1] != 'S')
+  if (ClsName[0] != 'N' || ClsName[1] != 'S')
     return false;
   
   return true;
