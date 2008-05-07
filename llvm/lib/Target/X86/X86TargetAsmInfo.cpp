@@ -120,8 +120,6 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     GlobalEHDirective = "\t.globl\t";
     SupportsWeakOmittedEHFrame = false;
     AbsoluteEHSectionOffsets = false;
-    if (Subtarget->is64Bit())
-      ShortenEHDataOn64Bit = true;
     DwarfEHFrameSection =
     ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
     DwarfExceptionSection = ".section __DATA,__gcc_except_tab";

@@ -339,10 +339,6 @@ namespace llvm {
     /// handle a weak_definition of constant 0 for an omitted EH frame.
     bool SupportsWeakOmittedEHFrame;  // Defaults to true.
 
-    /// ShortenEHDataON64Bit - True if target exception table format requires
-    /// 32-bit data in certain places even when targeting 64-bits.
-    bool ShortenEHDataOn64Bit;    // Defaults to false.
-
     /// DwarfSectionOffsetDirective - Special section offset directive.
     const char* DwarfSectionOffsetDirective; // Defaults to NULL
     
@@ -634,9 +630,6 @@ namespace llvm {
     }
     bool getSupportsWeakOmittedEHFrame() const {
       return SupportsWeakOmittedEHFrame;
-    }
-    bool getShortenEHDataOn64Bit() const {
-      return ShortenEHDataOn64Bit;
     }
     const char *getDwarfSectionOffsetDirective() const {
       return DwarfSectionOffsetDirective;

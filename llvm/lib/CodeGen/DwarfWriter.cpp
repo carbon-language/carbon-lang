@@ -2796,7 +2796,7 @@ private:
   /// shouldEmitFrameModule - Per-module flag to indicate if frame moves 
   /// should be emitted.
   bool shouldEmitMovesModule;
-  
+
   /// EmitCommonEHFrame - Emit the common eh unwind frame.
   ///
   void EmitCommonEHFrame(const Function *Personality, unsigned Index) {
@@ -2813,7 +2813,7 @@ private:
 
     // Define base labels.
     EmitLabel("eh_frame_common", Index);
-    
+
     // Define the eh frame length.
     EmitDifference("eh_frame_common_end", Index,
                    "eh_frame_common_begin", Index, true);
@@ -2825,50 +2825,49 @@ private:
     Asm->EOL("CIE Identifier Tag");
     Asm->EmitInt8(DW_CIE_VERSION);
     Asm->EOL("CIE Version");
-    
+
     // The personality presence indicates that language specific information
     // will show up in the eh frame.
     Asm->EmitString(Personality ? "zPLR" : "zR");
     Asm->EOL("CIE Augmentation");
-    
+
     // Round out reader.
     Asm->EmitULEB128Bytes(1);
     Asm->EOL("CIE Code Alignment Factor");
     Asm->EmitSLEB128Bytes(stackGrowth);
-    Asm->EOL("CIE Data Alignment Factor");   
+    Asm->EOL("CIE Data Alignment Factor");
     Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister(), true));
-    Asm->EOL("CIE RA Column");
-    
+    Asm->EOL("CIE Return Address Column");
+
     // If there is a personality, we need to indicate the functions location.
     if (Personality) {
       Asm->EmitULEB128Bytes(7);
       Asm->EOL("Augmentation Size");
 
-      if (TAI->getNeedsIndirectEncoding())
+      if (TAI->getNeedsIndirectEncoding()) {
         Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4 | DW_EH_PE_indirect);
-      else
+        Asm->EOL("Personality (pcrel sdata4 indirect)");
+      } else {
         Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
+        Asm->EOL("Personality (pcrel sdata4)");
+      }
 
-      Asm->EOL("Personality (pcrel sdata4 indirect)");
-      
-      PrintRelDirective(TAI->getShortenEHDataOn64Bit());
+      PrintRelDirective(true);
       O << TAI->getPersonalityPrefix();
       Asm->EmitExternalGlobal((const GlobalVariable *)(Personality));
       O << TAI->getPersonalitySuffix();
-      if (!TAI->getShortenEHDataOn64Bit()) {
-        O << "-" << TAI->getPCSymbol();
-      }
+      O << "-" << TAI->getPCSymbol();
       Asm->EOL("Personality");
 
-      Asm->EmitULEB128Bytes(DW_EH_PE_pcrel);
-      Asm->EOL("LSDA Encoding (pcrel)");
-      Asm->EmitULEB128Bytes(DW_EH_PE_pcrel);
-      Asm->EOL("FDE Encoding (pcrel)");
+      Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
+      Asm->EOL("LSDA Encoding (pcrel sdata4)");
+      Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
+      Asm->EOL("FDE Encoding (pcrel sdata4)");
    } else {
       Asm->EmitULEB128Bytes(1);
       Asm->EOL("Augmentation Size");
-      Asm->EmitULEB128Bytes(DW_EH_PE_pcrel);
-      Asm->EOL("FDE Encoding (pcrel)");
+      Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
+      Asm->EOL("FDE Encoding (pcrel sdata4)");
     }
 
     // Indicate locations of general callee saved registers in frame.
@@ -2882,10 +2881,10 @@ private:
     Asm->EmitAlignment(TD->getPointerSize() == sizeof(int32_t) ? 2 : 3, 
                        0, 0, false);
     EmitLabel("eh_frame_common_end", Index);
-    
+
     Asm->EOL();
   }
-  
+
   /// EmitEHFrame - Emit function exception frame information.
   ///
   void EmitEHFrame(const FunctionEHFrameInfo &EHFrameInfo) {
@@ -2940,31 +2939,28 @@ private:
                         true, true, false);
       Asm->EOL("FDE CIE offset");
 
-      EmitReference("eh_func_begin", EHFrameInfo.Number, true);
+      EmitReference("eh_func_begin", EHFrameInfo.Number, true, true);
       Asm->EOL("FDE initial location");
       EmitDifference("eh_func_end", EHFrameInfo.Number,
-                     "eh_func_begin", EHFrameInfo.Number);
+                     "eh_func_begin", EHFrameInfo.Number, true);
       Asm->EOL("FDE address range");
-      
+
       // If there is a personality and landing pads then point to the language
       // specific data area in the exception table.
       if (EHFrameInfo.PersonalityIndex) {
-        Asm->EmitULEB128Bytes(TAI->getShortenEHDataOn64Bit() ? 8 : 4);
+        Asm->EmitULEB128Bytes(4);
         Asm->EOL("Augmentation size");
-        
-        if (EHFrameInfo.hasLandingPads) {
-          EmitReference("exception", EHFrameInfo.Number, true);
-        } else if (TD->getPointerSize() == 8) {
-          Asm->EmitInt64((int)0);
-        } else {
+
+        if (EHFrameInfo.hasLandingPads)
+          EmitReference("exception", EHFrameInfo.Number, true, true);
+        else
           Asm->EmitInt32((int)0);
-        }
         Asm->EOL("Language Specific Data Area");
       } else {
         Asm->EmitULEB128Bytes(0);
         Asm->EOL("Augmentation size");
       }
-      
+
       // Indicate locations of function specific  callee saved registers in
       // frame.
       EmitFrameMoves("eh_func_begin", EHFrameInfo.Number, EHFrameInfo.Moves, true);
@@ -3267,13 +3263,20 @@ private:
     }
 
     // Final tallies.
-    unsigned SizeSites = CallSites.size() * (sizeof(int32_t) + // Site start.
-                                             sizeof(int32_t) + // Site length.
-                                             sizeof(int32_t)); // Landing pad.
+
+    // Call sites.
+    const unsigned SiteStartSize  = sizeof(int32_t); // DW_EH_PE_udata4
+    const unsigned SiteLengthSize = sizeof(int32_t); // DW_EH_PE_udata4
+    const unsigned LandingPadSize = sizeof(int32_t); // DW_EH_PE_udata4
+    unsigned SizeSites = CallSites.size() * (SiteStartSize +
+                                             SiteLengthSize +
+                                             LandingPadSize);
     for (unsigned i = 0, e = CallSites.size(); i < e; ++i)
       SizeSites += Asm->SizeULEB128(CallSites[i].Action);
 
-    unsigned SizeTypes = TypeInfos.size() * TD->getPointerSize();
+    // Type infos.
+    const unsigned TypeInfoSize = TD->getPointerSize(); // DW_EH_PE_absptr
+    unsigned SizeTypes = TypeInfos.size() * TypeInfoSize;
 
     unsigned TypeOffset = sizeof(int8_t) + // Call site format
                           Asm->SizeULEB128(SizeSites) + // Call-site table length
@@ -3323,27 +3326,22 @@ private:
       }
 
       EmitSectionOffset(BeginTag, "eh_func_begin", BeginNumber, SubprogramCount,
-                        TAI->getShortenEHDataOn64Bit(), true);
+                        true, true);
       Asm->EOL("Region start");
 
       if (!S.EndLabel) {
         EmitDifference("eh_func_end", SubprogramCount, BeginTag, BeginNumber,
-                       TAI->getShortenEHDataOn64Bit());
+                       true);
       } else {
-        EmitDifference("label", S.EndLabel, BeginTag, BeginNumber, 
-                       TAI->getShortenEHDataOn64Bit());
+        EmitDifference("label", S.EndLabel, BeginTag, BeginNumber, true);
       }
       Asm->EOL("Region length");
 
-      if (!S.PadLabel) {
-        if (TD->getPointerSize() == sizeof(int32_t) || TAI->getShortenEHDataOn64Bit())
-          Asm->EmitInt32(0);
-        else
-          Asm->EmitInt64(0);
-      } else {
+      if (!S.PadLabel)
+        Asm->EmitInt32(0);
+      else
         EmitSectionOffset("label", "eh_func_begin", S.PadLabel, SubprogramCount,
-                          TAI->getShortenEHDataOn64Bit(), true);
-      }
+                          true, true);
       Asm->EOL("Landing pad");
 
       Asm->EmitULEB128Bytes(S.Action);
