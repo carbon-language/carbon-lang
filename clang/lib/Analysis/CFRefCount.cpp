@@ -606,8 +606,8 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME) {
   if (!isNSType(ME->getReceiver()->getType()))
     return 0;
   
-  if (CStrInCStrNoCase(s, "create") || CStrInCStrNoCase(s, "copy")  || 
-      CStrInCStrNoCase(s, "new")) {
+  if (CStrInCStrNoCase("create", s) || CStrInCStrNoCase("copy", s)  || 
+      CStrInCStrNoCase("new", s)) {
     
     RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
                                 : RetEffect::MakeOwned();  
