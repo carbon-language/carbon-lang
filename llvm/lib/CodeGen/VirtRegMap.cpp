@@ -1465,20 +1465,25 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           // the value and there isn't an earlier def that has already clobbered
           // the physreg.
           if (PhysReg &&
-              !TII->isStoreToStackSlot(&MI, SS) && // Not profitable!
-              DeadStore->killsRegister(PhysReg) &&
-              TII->unfoldMemoryOperand(MF, &MI, PhysReg, false, true, NewMIs)) {
-            MBB.insert(MII, NewMIs[0]);
-            NewStore = NewMIs[1];
-            MBB.insert(MII, NewStore);
-            VRM.addSpillSlotUse(SS, NewStore);
-            VRM.RemoveMachineInstrFromMaps(&MI);
-            MBB.erase(&MI);
-            Erased = true;
-            --NextMII;
-            --NextMII;  // backtrack to the unfolded instruction.
-            BackTracked = true;
-            isDead = true;
+              !TII->isStoreToStackSlot(&MI, SS)) { // Not profitable!
+            MachineOperand *KillOpnd =
+              DeadStore->findRegisterUseOperand(PhysReg, true);
+            // Note, if the store is storing a sub-register, it's possible the
+            // super-register is needed below.
+            if (KillOpnd && !KillOpnd->getSubReg() &&
+                TII->unfoldMemoryOperand(MF, &MI, PhysReg, false, true,NewMIs)){
+              MBB.insert(MII, NewMIs[0]);
+              NewStore = NewMIs[1];
+              MBB.insert(MII, NewStore);
+              VRM.addSpillSlotUse(SS, NewStore);
+              VRM.RemoveMachineInstrFromMaps(&MI);
+              MBB.erase(&MI);
+              Erased = true;
+              --NextMII;
+              --NextMII;  // backtrack to the unfolded instruction.
+              BackTracked = true;
+              isDead = true;
+            }
           }
         }
 
