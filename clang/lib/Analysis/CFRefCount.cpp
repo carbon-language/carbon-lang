@@ -23,11 +23,13 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Compiler.h"
 #include <ostream>
 #include <sstream>
 
 using namespace clang;
+using llvm::CStrInCStrNoCase;
 
 //===----------------------------------------------------------------------===//
 // Utility functions.
@@ -604,8 +606,8 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME) {
   if (!isNSType(ME->getReceiver()->getType()))
     return 0;
   
-  if (strcasestr(s, "create") == 0 || strcasestr(s, "copy") == 0 || 
-      strcasestr(s, "new") == 0) {
+  if (CStrInCStrNoCase(s, "create") || CStrInCStrNoCase(s, "copy")  || 
+      CStrInCStrNoCase(s, "new")) {
     
     RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
                                 : RetEffect::MakeOwned();  
