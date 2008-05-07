@@ -147,8 +147,8 @@ static inline bool StringsEqualNoCase(const std::string &LHS,
 ///  NULL if 's1' cannot be found.
 static inline const char* CStrInCStrNoCase(const char *s1, const char *s2) {
 
-  // Are either strings NULL?
-  if (!s1 || !s2)
+  // Are either strings NULL or empty?
+  if (!s1 || !s2 || s1[0] == '\0' || s2[0] == '\0')
     return 0;
   
   const char *I1=s1, *I2=s2;
