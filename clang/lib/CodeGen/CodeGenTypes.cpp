@@ -593,12 +593,14 @@ void RecordOrganizer::layoutUnionFields() {
   unsigned PrimaryEltNo = 0;
   std::pair<uint64_t, unsigned> PrimaryElt =
     CGT.getContext().getTypeInfo(FieldDecls[0]->getType());
-  CGT.addFieldInfo(FieldDecls[0], 0);
+    if (FieldDecls[0]->isBitField()) 
+      placeBitField(FieldDecls[0]);
+    else
+      CGT.addFieldInfo(FieldDecls[0], 0);
 
   unsigned Size = FieldDecls.size();
   for(unsigned i = 1; i != Size; ++i) {
     const FieldDecl *FD = FieldDecls[i];
-    assert (!FD->isBitField() && "Bit fields are not yet supported");
     std::pair<uint64_t, unsigned> EltInfo = 
       CGT.getContext().getTypeInfo(FD->getType());
 
@@ -611,7 +613,10 @@ void RecordOrganizer::layoutUnionFields() {
     }
 
     // In union, each field gets first slot.
-    CGT.addFieldInfo(FD, 0);
+    if (FD->isBitField()) 
+      placeBitField(FD);
+    else
+      CGT.addFieldInfo(FD, 0);
   }
 
   std::vector<const llvm::Type*> Fields;

@@ -26,3 +26,8 @@ typedef union { int i; int *j; } value;
 int f3(value v) {
   return *v.j;
 }
+
+enum E9 { one, two };
+union S65 { enum E9 a:62; } ; union S65 s65;
+void fS65() { enum E9 e = s65.a; } 
+
