@@ -18,7 +18,7 @@
 //
 // The ilist class itself, should be a plug in replacement for list, assuming
 // that the nodes contain next/prev pointers.  This list replacement does not
-// provides a constant time size() method, so be careful to use empty() when you
+// provide a constant time size() method, so be careful to use empty() when you
 // really want to know if it's empty.
 //
 // The ilist class is implemented by allocating a 'tail' node when the list is
