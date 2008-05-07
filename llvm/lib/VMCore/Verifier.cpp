@@ -1271,7 +1271,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
                 "Intrinsic parameter #1 is not i8**.", &CI);
         Assert1(CI.getOperand(2)->getType() == PtrTy,
                 "Intrinsic parameter #2 is not i8*.", &CI);
-        Assert1(isa<AllocaInst>(StripPointerCasts(CI.getOperand(1))),
+        Assert1(isa<AllocaInst>(CI.getOperand(1)->stripPointerCasts()),
                 "llvm.gcroot parameter #1 must be an alloca.", &CI);
         Assert1(isa<Constant>(CI.getOperand(2)),
                 "llvm.gcroot parameter #2 must be a constant.", &CI);
@@ -1297,7 +1297,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
               &CI);
     } break;
   case Intrinsic::init_trampoline:
-    Assert1(isa<Function>(StripPointerCasts(CI.getOperand(2))),
+    Assert1(isa<Function>(CI.getOperand(2)->stripPointerCasts()),
             "llvm.init_trampoline parameter #2 must resolve to a function.",
             &CI);
     break;

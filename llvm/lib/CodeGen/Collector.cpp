@@ -179,7 +179,7 @@ bool LowerIntrinsics::InsertRootInitializers(Function &F, AllocaInst **Roots,
   for (; !CouldBecomeSafePoint(IP); ++IP)
     if (StoreInst *SI = dyn_cast<StoreInst>(IP))
       if (AllocaInst *AI =
-          dyn_cast<AllocaInst>(StripPointerCasts(SI->getOperand(1))))
+          dyn_cast<AllocaInst>(SI->getOperand(1)->stripPointerCasts()))
         InitedRoots.insert(AI);
   
   // Add root initializers.
@@ -294,7 +294,7 @@ bool LowerIntrinsics::PerformDefaultLowering(Function &F, Collector &Coll) {
             // Initialize the GC root, but do not delete the intrinsic. The
             // backend needs the intrinsic to flag the stack slot.
             Roots.push_back(cast<AllocaInst>(
-                              StripPointerCasts(CI->getOperand(1))));
+                              CI->getOperand(1)->stripPointerCasts()));
           }
           break;
         default:

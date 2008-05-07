@@ -183,7 +183,7 @@ namespace llvm {
     /// getDest - This is just like getRawDest, but it strips off any cast
     /// instructions that feed it, giving the original input.  The returned
     /// value is guaranteed to be a pointer.
-    Value *getDest() const { return StripPointerCasts(getRawDest()); }
+    Value *getDest() const { return getRawDest()->stripPointerCasts(); }
 
     /// set* - Set the specified arguments of the instruction.
     ///
@@ -234,7 +234,7 @@ namespace llvm {
     /// getSource - This is just like getRawSource, but it strips off any cast
     /// instructions that feed it, giving the original input.  The returned
     /// value is guaranteed to be a pointer.
-    Value *getSource() const { return StripPointerCasts(getRawSource()); }
+    Value *getSource() const { return getRawSource()->stripPointerCasts(); }
 
 
     void setSource(Value *Ptr) {
@@ -264,7 +264,7 @@ namespace llvm {
     /// getSource - This is just like getRawSource, but it strips off any cast
     /// instructions that feed it, giving the original input.  The returned
     /// value is guaranteed to be a pointer.
-    Value *getSource() const { return StripPointerCasts(getRawSource()); }
+    Value *getSource() const { return getRawSource()->stripPointerCasts(); }
 
     void setSource(Value *Ptr) {
       assert(getRawSource()->getType() == Ptr->getType() &&

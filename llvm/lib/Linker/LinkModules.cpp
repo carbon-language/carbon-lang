@@ -758,7 +758,8 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
       Constant *SInit =
         cast<Constant>(RemapOperand(SGV->getInitializer(), ValueMap));
 
-      GlobalVariable *DGV = cast<GlobalVariable>(StripPointerCasts(ValueMap[SGV]));
+      GlobalVariable *DGV =
+        cast<GlobalVariable>(ValueMap[SGV]->stripPointerCasts());
       if (DGV->hasInitializer()) {
         if (SGV->hasExternalLinkage()) {
           if (DGV->getInitializer() != SInit)

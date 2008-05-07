@@ -310,6 +310,30 @@ void Value::replaceAllUsesWith(Value *New) {
   uncheckedReplaceAllUsesWith(New);
 }
 
+Value *Value::stripPointerCasts() {
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(this)) {
+    if (CE->getOpcode() == Instruction::BitCast) {
+      if (isa<PointerType>(CE->getOperand(0)->getType()))
+        return CE->getOperand(0)->stripPointerCasts();
+    } else if (CE->getOpcode() == Instruction::GetElementPtr) {
+      for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
+        if (!CE->getOperand(i)->isNullValue())
+          return this;
+      return CE->getOperand(0)->stripPointerCasts();
+    }
+    return this;
+  }
+
+  if (BitCastInst *CI = dyn_cast<BitCastInst>(this)) {
+    if (isa<PointerType>(CI->getOperand(0)->getType()))
+      return CI->getOperand(0)->stripPointerCasts();
+  } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(this)) {
+    if (GEP->hasAllZeroIndices())
+      return GEP->getOperand(0)->stripPointerCasts();
+  }
+  return this;
+}
+
 //===----------------------------------------------------------------------===//
 //                                 User Class
 //===----------------------------------------------------------------------===//
@@ -330,32 +354,4 @@ void User::replaceUsesOfWith(Value *From, Value *To) {
       // most importantly, removing "this" from the use list of "From".
       setOperand(i, To); // Fix it now...
     }
-}
-
-//===----------------------------------------------------------------------===//
-//                            Utility functions
-//===----------------------------------------------------------------------===//
-
-Value *llvm::StripPointerCasts(Value *Ptr) {
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr)) {
-    if (CE->getOpcode() == Instruction::BitCast) {
-      if (isa<PointerType>(CE->getOperand(0)->getType()))
-        return StripPointerCasts(CE->getOperand(0));
-    } else if (CE->getOpcode() == Instruction::GetElementPtr) {
-      for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
-        if (!CE->getOperand(i)->isNullValue())
-          return Ptr;
-      return StripPointerCasts(CE->getOperand(0));
-    }
-    return Ptr;
-  }
-
-  if (BitCastInst *CI = dyn_cast<BitCastInst>(Ptr)) {
-    if (isa<PointerType>(CI->getOperand(0)->getType()))
-      return StripPointerCasts(CI->getOperand(0));
-  } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr)) {
-    if (GEP->hasAllZeroIndices())
-      return StripPointerCasts(GEP->getOperand(0));
-  }
-  return Ptr;
 }

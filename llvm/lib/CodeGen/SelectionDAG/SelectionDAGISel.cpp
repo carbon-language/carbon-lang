@@ -2712,7 +2712,7 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
 
 /// ExtractTypeInfo - Returns the type info, possibly bitcast, encoded in V.
 static GlobalVariable *ExtractTypeInfo (Value *V) {
-  V = StripPointerCasts(V);
+  V = V->stripPointerCasts();
   GlobalVariable *GV = dyn_cast<GlobalVariable>(V);
   assert ((GV || isa<ConstantPointerNull>(V)) &&
           "TypeInfo must be a global variable or NULL");
@@ -3150,7 +3150,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
 
   case Intrinsic::init_trampoline: {
-    const Function *F = cast<Function>(StripPointerCasts(I.getOperand(2)));
+    const Function *F = cast<Function>(I.getOperand(2)->stripPointerCasts());
 
     SDOperand Ops[6];
     Ops[0] = getRoot();

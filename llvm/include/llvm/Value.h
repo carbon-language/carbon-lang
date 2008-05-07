@@ -220,6 +220,11 @@ public:
   /// getRawType - This should only be used to implement the vmcore library.
   ///
   const Type *getRawType() const { return Ty.getRawType(); }
+
+  /// stripPointerCasts - This method strips off any unneeded pointer
+  /// casts from the specified value, returning the original uncasted value.
+  /// Note that the returned value is guaranteed to have pointer type.
+  Value *stripPointerCasts();
 };
 
 inline std::ostream &operator<<(std::ostream &OS, const Value &V) {
@@ -271,11 +276,6 @@ template <> inline bool isa_impl<GlobalAlias, Value>(const Value &Val) {
 template <> inline bool isa_impl<GlobalValue, Value>(const Value &Val) {
   return isa<GlobalVariable>(Val) || isa<Function>(Val) || isa<GlobalAlias>(Val);
 }
-
-/// StripPointerCasts - This function strips off any unneeded pointer
-/// casts from the specified value, returning the original uncasted value.
-/// Note that the returned value is guaranteed to have pointer type.
-Value *StripPointerCasts(Value *Ptr);
 
 } // End llvm namespace
 
