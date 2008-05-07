@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pinsrw | count 2
 
-define <2 x i64> @test(i16 %a) {
+define <2 x i64> @test(i16 %a) nounwind {
 entry:
 	%tmp10 = insertelement <8 x i16> zeroinitializer, i16 %a, i32 3		; <<8 x i16>> [#uses=1]
 	%tmp12 = insertelement <8 x i16> %tmp10, i16 0, i32 4		; <<8 x i16>> [#uses=1]
@@ -11,7 +11,7 @@ entry:
 	ret <2 x i64> %tmp19
 }
 
-define <2 x i64> @test2(i8 %a) {
+define <2 x i64> @test2(i8 %a) nounwind {
 entry:
 	%tmp24 = insertelement <16 x i8> zeroinitializer, i8 %a, i32 10		; <<16 x i8>> [#uses=1]
 	%tmp26 = insertelement <16 x i8> %tmp24, i8 0, i32 11		; <<16 x i8>> [#uses=1]

@@ -7,7 +7,7 @@ target triple = "i686-apple-darwin8"
 
 @G = external global { float,float,float,float}, align 16
 
-define %f4 @test1(float %W, float %X, float %Y, float %Z) {
+define %f4 @test1(float %W, float %X, float %Y, float %Z) nounwind {
         %tmp = insertelement %f4 undef, float %W, i32 0
         %tmp2 = insertelement %f4 %tmp, float %X, i32 1
         %tmp4 = insertelement %f4 %tmp2, float %Y, i32 2
@@ -15,7 +15,7 @@ define %f4 @test1(float %W, float %X, float %Y, float %Z) {
 	ret %f4 %tmp6
 }
 
-define %f4 @test2() {
+define %f4 @test2() nounwind {
 	%Wp = getelementptr { float,float,float,float}* @G, i32 0, i32 0
 	%Xp = getelementptr { float,float,float,float}* @G, i32 0, i32 1
 	%Yp = getelementptr { float,float,float,float}* @G, i32 0, i32 2

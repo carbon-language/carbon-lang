@@ -5,7 +5,7 @@
 target datalayout = "e-p:32:32"
 target triple = "i686-apple-darwin8.7.2"
 
-define i16 @test1(float %f) {
+define i16 @test1(float %f) nounwind {
 	%tmp = insertelement <4 x float> undef, float %f, i32 0		; <<4 x float>> [#uses=1]
 	%tmp10 = insertelement <4 x float> %tmp, float 0.000000e+00, i32 1		; <<4 x float>> [#uses=1]
 	%tmp11 = insertelement <4 x float> %tmp10, float 0.000000e+00, i32 2		; <<4 x float>> [#uses=1]
@@ -19,7 +19,7 @@ define i16 @test1(float %f) {
 	ret i16 %tmp69
 }
 
-define i16 @test2(float %f) {
+define i16 @test2(float %f) nounwind {
 	%tmp28 = sub float %f, 1.000000e+00		; <float> [#uses=1]
 	%tmp37 = mul float %tmp28, 5.000000e-01		; <float> [#uses=1]
 	%tmp375 = insertelement <4 x float> undef, float %tmp37, i32 0		; <<4 x float>> [#uses=1]

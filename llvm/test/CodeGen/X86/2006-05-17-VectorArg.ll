@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2
 
-define <4 x float> @opRSQ(<4 x float> %a) {
+define <4 x float> @opRSQ(<4 x float> %a) nounwind {
 entry:
 	%tmp2 = extractelement <4 x float> %a, i32 3		; <float> [#uses=2]
 	%abscond = fcmp oge float %tmp2, -0.000000e+00		; <i1> [#uses=1]

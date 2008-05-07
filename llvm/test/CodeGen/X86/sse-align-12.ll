@@ -4,8 +4,7 @@
 ; RUN: llvm-as < %s | llc -march=x86-64 | grep pd | count 4
 ; RUN: llvm-as < %s | llc -march=x86-64 | grep movup | count 4
 
-define <4 x float> @a(<4 x float>* %y)
-{
+define <4 x float> @a(<4 x float>* %y) nounwind {
   %x = load <4 x float>* %y, align 4
   %a = extractelement <4 x float> %x, i32 0
   %b = extractelement <4 x float> %x, i32 1
@@ -17,8 +16,7 @@ define <4 x float> @a(<4 x float>* %y)
   %s = insertelement <4 x float> %r, float %a, i32 3
   ret <4 x float> %s
 }
-define <4 x float> @b(<4 x float>* %y, <4 x float> %z)
-{
+define <4 x float> @b(<4 x float>* %y, <4 x float> %z) nounwind {
   %x = load <4 x float>* %y, align 4
   %a = extractelement <4 x float> %x, i32 2
   %b = extractelement <4 x float> %x, i32 3

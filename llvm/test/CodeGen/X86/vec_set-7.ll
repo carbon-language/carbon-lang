@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movsd | count 1
 
-define <2 x i64> @test(<2 x i64>* %p) {
+define <2 x i64> @test(<2 x i64>* %p) nounwind {
 	%tmp = bitcast <2 x i64>* %p to double*		
 	%tmp.upgrd.1 = load double* %tmp	
 	%tmp.upgrd.2 = insertelement <2 x double> undef, double %tmp.upgrd.1, i32 0
