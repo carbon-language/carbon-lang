@@ -492,7 +492,6 @@ static bool isCFRefType(QualType T) {
   return true;
 }
 
-#if 0
 static bool isNSType(QualType T) {
   
   if (!T->isPointerType())
@@ -513,8 +512,6 @@ static bool isNSType(QualType T) {
   
   return true;
 }
-#endif
-
 
 RetainSummary* RetainSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
  
@@ -606,6 +603,9 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME) {
   
   // "copyXXX", "createXXX", "newXXX": allocators.  
 
+  if (!isNSType(ME->getReceiver()->getType()))
+    return 0;
+  
   if (strcasestr(s, "create") == 0 || strcasestr(s, "copy") == 0 || 
       strcasestr(s, "new") == 0) {
     
