@@ -45,6 +45,49 @@ static inline Selector GetUnarySelector(const char* name, ASTContext& Ctx) {
   return Ctx.Selectors.getSelector(1, &II);
 }
 
+static bool isCFRefType(QualType T) {
+  
+  if (!T->isPointerType())
+    return false;
+  
+  // Check the typedef for the name "CF" and the substring "Ref".
+  
+  TypedefType* TD = dyn_cast<TypedefType>(T.getTypePtr());
+  
+  if (!TD)
+    return false;
+  
+  const char* TDName = TD->getDecl()->getIdentifier()->getName();
+  assert (TDName);
+  
+  if (TDName[0] != 'C' || TDName[1] != 'F')
+    return false;
+  
+  if (strstr(TDName, "Ref") == 0)
+    return false;
+  
+  return true;
+}
+
+static bool isNSType(QualType T) {
+  
+  if (!T->isPointerType())
+    return false;
+  
+  ObjCInterfaceType* OT = dyn_cast<ObjCInterfaceType>(T.getTypePtr());
+  
+  if (!OT)
+    return false;
+  
+  const char* ClsName = OT->getDecl()->getIdentifier()->getName();
+  assert (ClsName);
+  
+  if (ClsName[0] != 'N' || ClsName[1] != 'S')
+    return false;
+  
+  return true;
+}
+
 //===----------------------------------------------------------------------===//
 // Symbolic Evaluation of Reference Counting Logic
 //===----------------------------------------------------------------------===//
@@ -383,8 +426,12 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD,
     
   RetainSummary *S = 0;
   
-  if (FName[0] == 'C' && FName[1] == 'F')
-    S = getCFSummary(FD, FName);
+  FunctionType* FT = dyn_cast<FunctionType>(FD->getType());
+  
+  if (FT && isCFRefType(FT->getResultType()))
+    S = getCFSummary(FD, FName);          
+  else if (FName[0] == 'C' && FName[1] == 'F')
+    S = getCFSummary(FD, FName);  
   else if (FName[0] == 'N' && FName[1] == 'S')
     S = getNSSummary(FD, FName);
 
@@ -405,7 +452,8 @@ RetainSummary* RetainSummaryManager::getNSSummary(FunctionDecl* FD,
 RetainSummary* RetainSummaryManager::getCFSummary(FunctionDecl* FD,
                                                   const char* FName) {
 
-  FName += 2;
+  if (FName[0] == 'C' && FName[1] == 'F')
+    FName += 2;
 
   if (strcmp(FName, "Retain") == 0)
     return getUnarySummary(FD, cfretain);
@@ -470,53 +518,10 @@ RetainSummaryManager::getUnarySummary(FunctionDecl* FD, UnaryFuncKind func) {
   }
 }
 
-static bool isCFRefType(QualType T) {
-  
-  if (!T->isPointerType())
-    return false;
-  
-  // Check the typedef for the name "CF" and the substring "Ref".
-  
-  TypedefType* TD = dyn_cast<TypedefType>(T.getTypePtr());
-  
-  if (!TD)
-    return false;
-  
-  const char* TDName = TD->getDecl()->getIdentifier()->getName();
-  assert (TDName);
-  
-  if (TDName[0] != 'C' || TDName[1] != 'F')
-    return false;
-  
-  if (strstr(TDName, "Ref") == 0)
-    return false;
-  
-  return true;
-}
-
-static bool isNSType(QualType T) {
-  
-  if (!T->isPointerType())
-    return false;
-  
-  ObjCInterfaceType* OT = dyn_cast<ObjCInterfaceType>(T.getTypePtr());
-  
-  if (!OT)
-    return false;
-  
-  const char* ClsName = OT->getDecl()->getIdentifier()->getName();
-  assert (ClsName);
-  
-  if (ClsName[0] != 'N' || ClsName[1] != 'S')
-    return false;
-  
-  return true;
-}
-
 RetainSummary* RetainSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
  
-  FunctionTypeProto* FT =
-    dyn_cast<FunctionTypeProto>(FD->getType().getTypePtr());
+  FunctionType* FT =
+    dyn_cast<FunctionType>(FD->getType().getTypePtr());
   
   if (FT && !isCFRefType(FT->getResultType()))
     return 0;
@@ -530,8 +535,8 @@ RetainSummary* RetainSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
 
 RetainSummary* RetainSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
   
-  FunctionTypeProto* FT =
-    dyn_cast<FunctionTypeProto>(FD->getType().getTypePtr());
+  FunctionType* FT =
+    dyn_cast<FunctionType>(FD->getType().getTypePtr());
   
   if (FT) {
     QualType RetTy = FT->getResultType();
@@ -606,8 +611,8 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME) {
   if (!isNSType(ME->getReceiver()->getType()))
     return 0;
   
-  if (CStrInCStrNoCase("create", s) || CStrInCStrNoCase("copy", s)  || 
-      CStrInCStrNoCase("new", s)) {
+  if (CStrInCStrNoCase(s, "create") || CStrInCStrNoCase(s, "copy")  || 
+      CStrInCStrNoCase(s, "new")) {
     
     RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
                                 : RetEffect::MakeOwned();  

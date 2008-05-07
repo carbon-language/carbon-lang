@@ -94,3 +94,16 @@ CFDateRef f7() {
   date = CFDateCreate(NULL, CFAbsoluteTimeGetCurrent()); 
   return date;
 }
+
+// Generalization of Create rule.  MyDateCreate returns a CFXXXTypeRef, and
+// has the word create.
+
+CFDateRef MyDateCreate();
+
+CFDateRef f8() {
+  CFDateRef date = MyDateCreate();
+  CFRetain(date);  
+  return date; // expected-warning{{leak}}
+}
+
+
