@@ -1369,7 +1369,7 @@ Stmt::child_iterator InitListExpr::child_begin() {
   return reinterpret_cast<Stmt**>(&InitExprs[0]);
 }
 Stmt::child_iterator InitListExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&InitExprs[getNumInits()]);
+  return reinterpret_cast<Stmt**>(&InitExprs[getNumInits()-1]);
 }
 
 // ObjCStringLiteral
