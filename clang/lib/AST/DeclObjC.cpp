@@ -26,12 +26,13 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
                                        Decl *contextDecl,
                                        AttributeList *M, bool isInstance,
                                        bool isVariadic,
+                                       bool isSynthesized,
                                        ImplementationControl impControl) {
   void *Mem = C.getAllocator().Allocate<ObjCMethodDecl>();
   return new (Mem) ObjCMethodDecl(beginLoc, endLoc,
                                   SelInfo, T, contextDecl,
                                   M, isInstance, 
-                                  isVariadic, impControl);
+                                  isVariadic, isSynthesized, impControl);
 }
 
 ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
@@ -294,7 +295,7 @@ void ObjCInterfaceDecl::addPropertyMethods(
                            property->getLocation(), 
                            property->getGetterName(), resultDeclType,
                            this, 0,
-                           true, false, ObjCMethodDecl::Required);
+                           true, false, true, ObjCMethodDecl::Required);
     property->setGetterMethodDecl(ObjCMethod);
     insMethods.push_back(ObjCMethod);
   }

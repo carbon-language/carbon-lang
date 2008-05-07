@@ -636,7 +636,7 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplementationDecl* IMPDecl,
   bool IncompleteImpl = false;
   for (ObjCInterfaceDecl::instmeth_iterator I = IDecl->instmeth_begin(),
        E = IDecl->instmeth_end(); I != E; ++I)
-    if (!InsMap.count((*I)->getSelector()))
+    if (!(*I)->isSynthesized() && !InsMap.count((*I)->getSelector()))
       WarnUndefinedMethod(IMPDecl->getLocation(), *I, IncompleteImpl);
       
   llvm::DenseSet<Selector> ClsMap;
@@ -964,6 +964,7 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
     ObjCMethodDecl::Create(Context, MethodLoc, EndLoc, Sel, resultDeclType,
                            ClassDecl, AttrList, 
                            MethodType == tok::minus, isVariadic,
+                           false,
                            MethodDeclKind == tok::objc_optional ? 
                            ObjCMethodDecl::Optional : 
                            ObjCMethodDecl::Required);

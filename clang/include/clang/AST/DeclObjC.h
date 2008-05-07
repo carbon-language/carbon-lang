@@ -59,6 +59,9 @@ private:
   bool IsInstance : 1;
   bool IsVariadic : 1;
   
+  // Synthesized declaration method for a property setter/getter
+  bool IsSynthesized : 1;
+  
   // NOTE: VC++ treats enums as signed, avoid using ImplementationControl enum
   /// @required/@optional
   unsigned DeclImplementation : 2;
@@ -95,10 +98,12 @@ private:
                  Decl *contextDecl,
                  AttributeList *M = 0, bool isInstance = true,
                  bool isVariadic = false,
+                 bool isSynthesized = false,
                  ImplementationControl impControl = None)
   : Decl(ObjCMethod, beginLoc),
     DeclContext(ObjCMethod),
     IsInstance(isInstance), IsVariadic(isVariadic),
+    IsSynthesized(isSynthesized),
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
     MethodContext(static_cast<NamedDecl*>(contextDecl)),
     SelName(SelInfo), MethodDeclType(T), 
@@ -113,6 +118,7 @@ public:
                                 QualType T, Decl *contextDecl,
                                 AttributeList *M = 0, bool isInstance = true,
                                 bool isVariadic = false,
+                                bool isSynthesized = false,
                                 ImplementationControl impControl = None);
   
   ObjCDeclQualifier getObjCDeclQualifier() const {
@@ -157,6 +163,8 @@ public:
   AttributeList *getMethodAttrs() const {return MethodAttrs;}
   bool isInstance() const { return IsInstance; }
   bool isVariadic() const { return IsVariadic; }
+  
+  bool isSynthesized() const { return IsSynthesized; }
   
   // Related to protocols declared in  @protocol
   void setDeclImplementation(ImplementationControl ic) { 
