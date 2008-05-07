@@ -3022,7 +3022,7 @@ void RewriteObjC::RewriteImplementations(std::string &Result) {
 
   if (LangOpts.Microsoft) {
     Result += "#pragma section(\".objc_module_info$B\",long,read,write)\n";
-    Result += "#pragma data_seq(push, \".objc_module_info$B\")\n";
+    Result += "#pragma data_seg(push, \".objc_module_info$B\")\n";
     Result += "static struct _objc_module *_POINTER_OBJC_MODULES = ";
     Result += "&_OBJC_MODULES;\n";
     Result += "#pragma data_seg(pop)\n\n";
