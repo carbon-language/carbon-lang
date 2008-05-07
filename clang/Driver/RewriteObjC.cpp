@@ -2685,7 +2685,7 @@ void RewriteObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
 void RewriteObjC::SynthesizeIvarOffsetComputation(ObjCImplementationDecl *IDecl, 
                                                   ObjCIvarDecl *ivar, 
                                                   std::string &Result) {
-  Result += "offsetof(struct ";
+  Result += "__OFFSETOFIVAR__(struct ";
   Result += IDecl->getName();
   if (LangOpts.Microsoft)
     Result += "_IMPL";
@@ -2947,8 +2947,8 @@ void RewriteObjC::RewriteImplementations(std::string &Result) {
   for (int i = 0; i < CatDefCount; i++)
     RewriteImplementationDecl(CategoryImplementation[i]);
   
-  // This is needed for use of offsetof
-  Result += "#define offsetof(TYPE, MEMBER) ((int) &((TYPE *)0)->MEMBER)\n";   
+  // This is needed for determining instance variable offsets.
+  Result += "#define __OFFSETOFIVAR__(TYPE, MEMBER) ((int) &((TYPE *)0)->MEMBER)\n";   
   // For each implemented class, write out all its meta data.
   for (int i = 0; i < ClsDefCount; i++)
     RewriteObjCClassMetaData(ClassImplementation[i], Result);
