@@ -15,6 +15,7 @@
 #include "CodeGenModule.h"
 #include "clang/AST/AST.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Type.h"
 using namespace clang;
@@ -67,16 +68,16 @@ void CodeGenFunction::EmitBlockVarDecl(const VarDecl &D) {
   }
 }
 
-void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
+llvm::GlobalValue *
+CodeGenFunction::GenerateStaticBlockVarDecl(const VarDecl &D,
+                                            bool NoInit,
+                                            const char *Separator) {
   QualType Ty = D.getType();
   assert(Ty->isConstantSizeType() && "VLAs can't be static");
   
-  llvm::Value *&DMEntry = LocalDeclMap[&D];
-  assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
-  
   const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
   llvm::Constant *Init = 0;
-  if (D.getInit() == 0) {
+  if ((D.getInit() == 0) || NoInit) {
     Init = llvm::Constant::getNullValue(LTy);
   } else {
     Init = CGM.EmitConstantExpr(D.getInit(), this);
@@ -92,8 +93,18 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
 
   llvm::GlobalValue *GV = 
     new llvm::GlobalVariable(LTy, false, llvm::GlobalValue::InternalLinkage,
-                             Init, ContextName + "." + D.getName(),
+                             Init, ContextName + Separator + D.getName(),
                              &CGM.getModule(), 0, Ty.getAddressSpace());
+
+  return GV;
+}
+
+void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) { 
+
+  llvm::Value *&DMEntry = LocalDeclMap[&D];
+  assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
+  
+  llvm::GlobalValue *GV = GenerateStaticBlockVarDecl(D, false, ".");
 
   if (const AnnotateAttr *AA = D.getAttr<AnnotateAttr>()) {
     SourceManager &SM = CGM.getContext().getSourceManager();
@@ -107,16 +118,23 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   
 /// EmitLocalBlockVarDecl - Emit code and set up an entry in LocalDeclMap for a
 /// variable declaration with auto, register, or no storage class specifier.
-/// These turn into simple stack objects.
+/// These turn into simple stack objects, or GlobalValues depending on target.
 void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   QualType Ty = D.getType();
 
   llvm::Value *DeclPtr;
   if (Ty->isConstantSizeType()) {
-    // A normal fixed sized variable becomes an alloca in the entry block.
-    const llvm::Type *LTy = ConvertType(Ty);
-    // TODO: Alignment
-    DeclPtr = CreateTempAlloca(LTy, D.getName());
+    if (!Target.useGlobalsForAutomaticVariables()) {
+      // A normal fixed sized variable becomes an alloca in the entry block.
+      const llvm::Type *LTy = ConvertType(Ty);
+      // TODO: Alignment
+      DeclPtr = CreateTempAlloca(LTy, D.getName());
+    } else {
+      // Targets that don't support recursion emit locals as globals.
+      const char *Class =
+        D.getStorageClass() == VarDecl::Register ? ".reg." : ".auto.";
+      DeclPtr = GenerateStaticBlockVarDecl(D, true, Class);
+    }
   } else {
     // TODO: Create a dynamic alloca.
     assert(0 && "FIXME: Local VLAs not implemented yet");
@@ -139,7 +157,8 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   }
 }
 
-/// Emit an alloca for the specified parameter and set up LocalDeclMap.
+/// Emit an alloca (or GlobalValue depending on target) 
+/// for the specified parameter and set up LocalDeclMap.
 void CodeGenFunction::EmitParmDecl(const ParmVarDecl &D, llvm::Value *Arg) {
   QualType Ty = D.getType();
   
@@ -147,6 +166,8 @@ void CodeGenFunction::EmitParmDecl(const ParmVarDecl &D, llvm::Value *Arg) {
   if (!Ty->isConstantSizeType()) {
     // Variable sized values always are passed by-reference.
     DeclPtr = Arg;
+  } else if (Target.useGlobalsForAutomaticVariables()) {
+    DeclPtr = GenerateStaticBlockVarDecl(D, true, ".arg.");
   } else {
     // A fixed sized first class variable becomes an alloca in the entry block.
     const llvm::Type *LTy = ConvertType(Ty);

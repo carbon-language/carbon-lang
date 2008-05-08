@@ -863,6 +863,36 @@ public:
 } // end anonymous namespace.
 
 
+namespace {
+  class PIC16TargetInfo : public TargetInfo{
+  public:
+    PIC16TargetInfo(const std::string& triple) : TargetInfo(triple) {
+      IntWidth = IntAlign = 16;
+    }
+    virtual uint64_t getPointerWidth(unsigned AddrSpace) const { return 16; }
+    virtual uint64_t getPointerAlign(unsigned AddrSpace) const { return 8; }
+    virtual unsigned getIntWidth() const { return 16; }
+    virtual unsigned getIntAlign() const { return 8; }
+    virtual void getTargetDefines(std::vector<char> &Defines) const {
+      Define(Defines, "__pic16");
+    }
+    virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                   unsigned &NumRecords) const {}
+    virtual const char *getVAListDeclaration() const { return "";}
+    virtual const char *getClobbers() const {return "";}
+    virtual const char *getTargetPrefix() const {return "";}
+    virtual void getGCCRegNames(const char * const *&Names, 
+                                unsigned &NumNames) const {} 
+    virtual bool validateAsmConstraint(char c, 
+                                       TargetInfo::ConstraintInfo &info) const {
+      return true;
+    }
+    virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
+                                  unsigned &NumAliases) const {}
+    virtual bool useGlobalsForAutomaticVariables() const {return true;}
+  };
+}
+
 //===----------------------------------------------------------------------===//
 // Driver code
 //===----------------------------------------------------------------------===//
@@ -890,6 +920,9 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
   if (T.find("x86_64-") == 0)
     return new DarwinX86_64TargetInfo(T);
   
+  if (T.find("pic16-") == 0)
+    return new PIC16TargetInfo(T);
+
   if (IsX86(T))
     return new DarwinI386TargetInfo(T);
   

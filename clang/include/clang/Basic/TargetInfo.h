@@ -36,6 +36,7 @@ protected:
   // values are specified by the TargetInfo constructor.
   bool CharIsSigned;
   unsigned WCharWidth, WCharAlign;
+  unsigned IntWidth, IntAlign;
   unsigned DoubleWidth, DoubleAlign;
   
   const llvm::fltSemantics *FloatFormat, *DoubleFormat, *LongDoubleFormat;
@@ -59,8 +60,8 @@ public:
   
   /// getPointerWidth - Return the width of pointers on this target, for the
   /// specified address space. FIXME: implement correctly.
-  uint64_t getPointerWidth(unsigned AddrSpace) const { return 32; }
-  uint64_t getPointerAlign(unsigned AddrSpace) const { return 32; }
+  virtual uint64_t getPointerWidth(unsigned AddrSpace) const { return 32; }
+  virtual uint64_t getPointerAlign(unsigned AddrSpace) const { return 32; }
   
   /// getBoolWidth/Align - Return the size of '_Bool' and C++ 'bool' for this
   /// target, in bits.
@@ -81,8 +82,8 @@ public:
   
   /// getIntWidth/Align - Return the size of 'signed int' and 'unsigned int' for
   /// this target, in bits.
-  unsigned getIntWidth() const { return 32; } // FIXME
-  unsigned getIntAlign() const { return 32; } // FIXME
+  unsigned getIntWidth() const { return IntWidth; }
+  unsigned getIntAlign() const { return IntAlign; }
   
   /// getLongWidth/Align - Return the size of 'signed long' and 'unsigned long'
   /// for this target, in bits.
@@ -191,6 +192,8 @@ public:
     const char * const Aliases[5];
     const char * const Register;
   };
+
+  virtual bool useGlobalsForAutomaticVariables() const {return false;}
   
 protected:
   virtual void getGCCRegNames(const char * const *&Names, 

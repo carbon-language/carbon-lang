@@ -488,6 +488,12 @@ public:
                                bool DestIsVolatile);
   /// LoadComplexFromAddr - Load a complex number from the specified address.
   ComplexPairTy LoadComplexFromAddr(llvm::Value *SrcAddr, bool SrcIsVolatile);
+
+  /// GenerateStaticBlockVarDecl - return the the static
+  /// declaration of local variable. 
+  llvm::GlobalValue *GenerateStaticBlockVarDecl(const VarDecl &D,
+                                                bool NoInit,
+                                                const char *Separator);
 };
 }  // end namespace CodeGen
 }  // end namespace clang
