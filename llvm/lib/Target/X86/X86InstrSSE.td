@@ -2916,7 +2916,8 @@ let AddedComplexity = 15 in
 def : Pat<(v2f64 (vector_shuffle immAllZerosV_bc, VR128:$src,
            MOVL_shuffle_mask)),
           (MOVZPQILo2PQIrr VR128:$src)>, Requires<[HasSSE2]>;
-
+def : Pat<(v2f64 (X86zvmovl (v2f64 VR128:$src))),
+          (MOVZPQILo2PQIrr VR128:$src)>, Requires<[HasSSE2]>;
 
 // FIXME: Temporary workaround since 2-wide shuffle is broken.
 def : Pat<(int_x86_sse2_movs_d  VR128:$src1, VR128:$src2),
