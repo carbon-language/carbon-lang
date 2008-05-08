@@ -50,6 +50,10 @@ public:
   ///
   bool mayWriteToMemory() const;
 
+  /// mayReadFromMemory - Return true if this instruction may read memory.
+  ///
+  bool mayReadFromMemory() const;
+  
   /// clone() - Create a copy of 'this' instruction that is identical in all
   /// ways except the following:
   ///   * The instruction has no parent

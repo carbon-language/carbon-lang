@@ -219,7 +219,23 @@ bool Instruction::isUsedOutsideOfBlock(const BasicBlock *BB) const {
   return false;    
 }
 
-
+/// mayReadFromMemory - Return true if this instruction may read memory.
+///
+bool Instruction::mayReadFromMemory() const {
+  switch (getOpcode()) {
+  default: return false;
+  case Instruction::Free:
+  case Instruction::Store:
+  case Instruction::VAArg:
+    return true;
+  case Instruction::Call:
+    return !cast<CallInst>(this)->doesNotAccessMemory();
+  case Instruction::Invoke:
+    return !cast<InvokeInst>(this)->doesNotAccessMemory();
+  case Instruction::Load:
+    return true;
+  }
+}
 
 /// mayWriteToMemory - Return true if this instruction may modify memory.
 ///
@@ -227,12 +243,13 @@ bool Instruction::mayWriteToMemory() const {
   switch (getOpcode()) {
   default: return false;
   case Instruction::Free:
-  case Instruction::Invoke:
   case Instruction::Store:
   case Instruction::VAArg:
     return true;
   case Instruction::Call:
     return !cast<CallInst>(this)->onlyReadsMemory();
+  case Instruction::Invoke:
+    return !cast<InvokeInst>(this)->onlyReadsMemory();
   case Instruction::Load:
     return cast<LoadInst>(this)->isVolatile();
   }
