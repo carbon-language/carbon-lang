@@ -113,23 +113,23 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
              clEnumValN(ASTDump, "ast-dump",
                         "Build ASTs and then debug dump them"),
              clEnumValN(ASTView, "ast-view",
-                        "Build ASTs and view them with GraphViz."),
+                        "Build ASTs and view them with GraphViz"),
              clEnumValN(ParseCFGDump, "dump-cfg",
-                        "Run parser, then build and print CFGs."),
+                        "Run parser, then build and print CFGs"),
              clEnumValN(ParseCFGView, "view-cfg",
-                        "Run parser, then build and view CFGs with Graphviz."),
+                        "Run parser, then build and view CFGs with Graphviz"),
              clEnumValN(AnalysisLiveVariables, "dump-live-variables",
-                        "Print results of live variable analysis."),
+                        "Print results of live variable analysis"),
              clEnumValN(WarnDeadStores, "warn-dead-stores",
-                        "Flag warnings of stores to dead variables."),
+                        "Flag warnings of stores to dead variables"),
              clEnumValN(WarnUninitVals, "warn-uninit-values",
-                        "Flag warnings of uses of unitialized variables."),
+                        "Flag warnings of uses of unitialized variables"),
              clEnumValN(AnalysisGRSimpleVals, "checker-simple",
-                        "Perform path-sensitive constant propagation."),
+                        "Perform path-sensitive constant propagation"),
              clEnumValN(CheckerCFRef, "checker-cfref",
-                        "Run the Core Foundation reference count checker."),
+                        "Run the Core Foundation reference count checker"),
              clEnumValN(TestSerialization, "test-pickling",
-                        "Run prototype serialization code."),
+                        "Run prototype serialization code"),
              clEnumValN(EmitLLVM, "emit-llvm",
                         "Build ASTs then convert to LLVM, emit .ll file"),
              clEnumValN(EmitBC, "emit-llvm-bc",
@@ -154,7 +154,7 @@ OutputFile("o",
 
 static llvm::cl::opt<bool>
 VerifyDiagnostics("verify",
-                  llvm::cl::desc("Verify emitted diagnostics and warnings."));
+                  llvm::cl::desc("Verify emitted diagnostics and warnings"));
 
 static llvm::cl::opt<std::string>
 HTMLDiag("html-diags",
@@ -167,12 +167,12 @@ HTMLDiag("html-diags",
 
 static llvm::cl::opt<bool>
 VisualizeEG("visualize-egraph",
-            llvm::cl::desc("Display static analysis Exploded Graph."));
+            llvm::cl::desc("Display static analysis Exploded Graph"));
 
 static llvm::cl::opt<bool>
 AnalyzeAll("checker-opt-analyze-headers",
     llvm::cl::desc("Force the static analyzer to analyze "
-                   "functions defined in header files."));
+                   "functions defined in header files"));
 
 //===----------------------------------------------------------------------===//
 // Language Options
@@ -350,17 +350,17 @@ PascalStrings("fpascal-strings",
 static llvm::cl::opt<bool>
 MSExtensions("fms-extensions",
              llvm::cl::desc("Accept some non-standard constructs used in "
-                            "Microsoft header files. "));
+                            "Microsoft header files "));
 
 static llvm::cl::opt<bool>
 WritableStrings("fwritable-strings",
-              llvm::cl::desc("Store string literals as writable data."));
+              llvm::cl::desc("Store string literals as writable data"));
 
 static llvm::cl::opt<bool>
 LaxVectorConversions("flax-vector-conversions",
                      llvm::cl::desc("Allow implicit conversions between vectors"
                                     " with a different number of elements or "
-                                    "different element types."));
+                                    "different element types"));
 
 // FIXME: add:
 //   -ansi
@@ -432,11 +432,11 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK) {
 static llvm::cl::opt<bool>
 ObjCExclusiveGC("fobjc-gc-only",
                 llvm::cl::desc("Use GC exclusively for Objective-C related "
-                               "memory management."));
+                               "memory management"));
 
 static llvm::cl::opt<bool>
 ObjCEnableGC("fobjc-gc",
-             llvm::cl::desc("Enable Objective-C garbage collection."));             
+             llvm::cl::desc("Enable Objective-C garbage collection"));             
 
 void InitializeGCMode(LangOptions &Options) {
   if (ObjCExclusiveGC)
@@ -468,11 +468,11 @@ WarnUnusedMacros("Wunused_macros",
 
 static llvm::cl::opt<bool>
 WarnFloatEqual("Wfloat-equal",
-   llvm::cl::desc("Warn about equality comparisons of floating point values."));
+   llvm::cl::desc("Warn about equality comparisons of floating point values"));
 
 static llvm::cl::opt<bool>
 WarnNoFormatNonLiteral("Wno-format-nonliteral",
-   llvm::cl::desc("Do not warn about non-literal format strings."));
+   llvm::cl::desc("Do not warn about non-literal format strings"));
 
 static llvm::cl::opt<bool>
 WarnUndefMacros("Wundef",
@@ -527,11 +527,11 @@ static void InitializeDiagnostics(Diagnostic &Diags) {
 
 static llvm::cl::opt<std::string>
 AnalyzeSpecificFunction("analyze-function",
-                llvm::cl::desc("Run analysis on specific function."));
+                llvm::cl::desc("Run analysis on specific function"));
 
 static llvm::cl::opt<bool>
 TrimGraph("trim-egraph",
-      llvm::cl::desc("Only show error-related paths in the analysis graph."));
+      llvm::cl::desc("Only show error-related paths in the analysis graph"));
 
 //===----------------------------------------------------------------------===//
 // Target Triple Processing.
@@ -539,10 +539,10 @@ TrimGraph("trim-egraph",
 
 static llvm::cl::opt<std::string>
 TargetTriple("triple",
-  llvm::cl::desc("Specify target triple (e.g. i686-apple-darwin9)."));
+  llvm::cl::desc("Specify target triple (e.g. i686-apple-darwin9)"));
 
 static llvm::cl::opt<std::string>
-Arch("arch", llvm::cl::desc("Specify target architecture (e.g. i686)."));
+Arch("arch", llvm::cl::desc("Specify target architecture (e.g. i686)"));
 
 static std::string CreateTargetTriple() {
   // Initialize base triple.  If a -triple option has been specified, use
