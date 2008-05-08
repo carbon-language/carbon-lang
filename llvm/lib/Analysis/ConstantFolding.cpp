@@ -122,25 +122,32 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
                                          const Type *ResultTy,
                                          const TargetData *TD) {
   Constant *Ptr = Ops[0];
-  if (!cast<PointerType>(Ptr->getType())->getElementType()->isSized())
+  if (!TD || !cast<PointerType>(Ptr->getType())->getElementType()->isSized())
     return 0;
   
-  if (TD && Ptr->isNullValue()) {
-    // If this is a constant expr gep that is effectively computing an
-    // "offsetof", fold it into 'cast int Size to T*' instead of 'gep 0, 0, 12'
-    bool isFoldableGEP = true;
-    for (unsigned i = 1; i != NumOps; ++i)
-      if (!isa<ConstantInt>(Ops[i])) {
-        isFoldableGEP = false;
-        break;
-      }
-    if (isFoldableGEP) {
-      uint64_t Offset = TD->getIndexedOffset(Ptr->getType(),
-                                             (Value**)Ops+1, NumOps-1);
-      Constant *C = ConstantInt::get(TD->getIntPtrType(), Offset);
-      return ConstantExpr::getIntToPtr(C, ResultTy);
-    }
+  uint64_t BasePtr = 0;
+  if (!Ptr->isNullValue()) {
+    // If this is a inttoptr from a constant int, we can fold this as the base,
+    // otherwise we can't.
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
+      if (CE->getOpcode() == Instruction::IntToPtr)
+        if (ConstantInt *Base = dyn_cast<ConstantInt>(CE->getOperand(0)))
+          BasePtr = Base->getZExtValue();
+    
+    if (BasePtr == 0)
+      return 0;
   }
+
+  // If this is a constant expr gep that is effectively computing an
+  // "offsetof", fold it into 'cast int Size to T*' instead of 'gep 0, 0, 12'
+  for (unsigned i = 1; i != NumOps; ++i)
+    if (!isa<ConstantInt>(Ops[i]))
+      return false;
+  
+  uint64_t Offset = TD->getIndexedOffset(Ptr->getType(),
+                                         (Value**)Ops+1, NumOps-1);
+  Constant *C = ConstantInt::get(TD->getIntPtrType(), Offset+BasePtr);
+  return ConstantExpr::getIntToPtr(C, ResultTy);
   
   return 0;
 }
