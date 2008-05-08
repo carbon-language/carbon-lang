@@ -225,7 +225,6 @@ bool Instruction::mayReadFromMemory() const {
   switch (getOpcode()) {
   default: return false;
   case Instruction::Free:
-  case Instruction::Store:
   case Instruction::VAArg:
     return true;
   case Instruction::Call:
