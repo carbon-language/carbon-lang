@@ -370,9 +370,12 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
       // A("blah")
       Diag(Tok, diag::ext_missing_varargs_arg);
 
-      // Remember this occurred if this is a C99 macro invocation with at least
-      // one actual argument.
-      isVarargsElided = MI->isC99Varargs() && MI->getNumArgs() > 1;
+      // Remember this occurred if this is a macro invocation with at least
+      // one actual argument.  This allows us to elide the comma when used for
+      // cases like:
+      //   #define A(x, foo...) blah(a, ## foo) 
+      //   #define A(x, ...) blah(a, ## __VA_ARGS__) 
+      isVarargsElided = MI->getNumArgs() > 1;
     } else if (MI->getNumArgs() == 1) {
       // #define A(x)
       //   A()
