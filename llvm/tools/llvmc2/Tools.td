@@ -26,6 +26,8 @@ def llvm_gcc_c : Tool<
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
  (cmd_line "llvm-gcc -c -x c $INFILE -o $OUTFILE -emit-llvm"),
+ (switch_option "E", (stop_compilation),
+   (help "Stop after the preprocessing stage, do not run the compiler")),
  (sink)
 ]>;
 
@@ -34,6 +36,7 @@ def llvm_gcc_cpp : Tool<
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
  (cmd_line "llvm-g++ -c -x c++ $INFILE -o $OUTFILE -emit-llvm"),
+ (switch_option "E", (stop_compilation)),
  (sink)
 ]>;
 
@@ -56,6 +59,8 @@ def llc : Tool<
 [(in_language "llvm-bitcode"),
  (out_language "assembler"),
  (output_suffix "s"),
+ (switch_option "S", (stop_compilation),
+                (help "Stop after compilation, do not assemble")),
  (cmd_line "llc -f $INFILE -o $OUTFILE")
 ]>;
 
