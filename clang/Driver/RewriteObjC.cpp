@@ -319,7 +319,7 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "(struct objc_super *, struct objc_selector *, ...);\n";
   Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_msgSend_fpret";
   Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
-  Preamble += "__OBJC_RW_EXTERN objc_object *objc_getClass";
+  Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_getClass";
   Preamble += "(const char *);\n";
   Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_getMetaClass";
   Preamble += "(const char *);\n";
@@ -816,37 +816,36 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
   ObjCIvarDecl *D = IV->getDecl();
   if (CurMethodDecl) {
     if (const PointerType *pType = IV->getBase()->getType()->getAsPointerType()) {
-      ObjCInterfaceType *intT = dyn_cast<ObjCInterfaceType>(pType->getPointeeType());
-      if (CurMethodDecl->getClassInterface() == intT->getDecl()) {
-        // lookup which class implements the instance variable.
-        ObjCInterfaceDecl *clsDeclared = 0;
-        intT->getDecl()->lookupInstanceVariable(D->getIdentifier(), clsDeclared);
-        assert(clsDeclared && "RewriteObjCIvarRefExpr(): Can't find class");
-        
-        // Synthesize an explicit cast to gain access to the ivar.
-        std::string RecName = clsDeclared->getIdentifier()->getName();
-        RecName += "_IMPL";
-        IdentifierInfo *II = &Context->Idents.get(RecName.c_str());
-        RecordDecl *RD = RecordDecl::Create(*Context, Decl::Struct, TUDecl,
-                                            SourceLocation(), II, 0);
-        assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
-        QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
-        CastExpr *castExpr = new CastExpr(castT, IV->getBase(), SourceLocation());
-        // Don't forget the parens to enforce the proper binding.
-        ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), castExpr);
-        if (IV->isFreeIvar()) {
-          MemberExpr *ME = new MemberExpr(PE, true, D, IV->getLocation(), D->getType());
-          ReplaceStmt(IV, ME);
-          delete IV;
-          return ME;
-        } else {
-          ReplaceStmt(IV->getBase(), PE);
-          // Cannot delete IV->getBase(), since PE points to it.
-          // Replace the old base with the cast. This is important when doing
-          // embedded rewrites. For example, [newInv->_container addObject:0].
-          IV->setBase(PE); 
-          return IV;
-        }
+      ObjCInterfaceType *iFaceDecl = dyn_cast<ObjCInterfaceType>(pType->getPointeeType());
+      // lookup which class implements the instance variable.
+      ObjCInterfaceDecl *clsDeclared = 0;
+      iFaceDecl->getDecl()->lookupInstanceVariable(D->getIdentifier(), clsDeclared);
+      assert(clsDeclared && "RewriteObjCIvarRefExpr(): Can't find class");
+      
+      // Synthesize an explicit cast to gain access to the ivar.
+      std::string RecName = clsDeclared->getIdentifier()->getName();
+      RecName += "_IMPL";
+      IdentifierInfo *II = &Context->Idents.get(RecName.c_str());
+      RecordDecl *RD = RecordDecl::Create(*Context, Decl::Struct, TUDecl,
+                                          SourceLocation(), II, 0);
+      assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
+      QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
+      CastExpr *castExpr = new CastExpr(castT, IV->getBase(), SourceLocation());
+      // Don't forget the parens to enforce the proper binding.
+      ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), castExpr);
+      if (IV->isFreeIvar() && 
+          CurMethodDecl->getClassInterface() == iFaceDecl->getDecl()) {
+        MemberExpr *ME = new MemberExpr(PE, true, D, IV->getLocation(), D->getType());
+        ReplaceStmt(IV, ME);
+        delete IV;
+        return ME;
+      } else {
+        ReplaceStmt(IV->getBase(), PE);
+        // Cannot delete IV->getBase(), since PE points to it.
+        // Replace the old base with the cast. This is important when doing
+        // embedded rewrites. For example, [newInv->_container addObject:0].
+        IV->setBase(PE); 
+        return IV;
       }
     }
   } else { // we are outside a method.
@@ -855,10 +854,10 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
     // Explicit ivar refs need to have a cast inserted.
     // FIXME: consider sharing some of this code with the code above.
     if (const PointerType *pType = IV->getBase()->getType()->getAsPointerType()) {
-      ObjCInterfaceType *intT = dyn_cast<ObjCInterfaceType>(pType->getPointeeType());
+      ObjCInterfaceType *iFaceDecl = dyn_cast<ObjCInterfaceType>(pType->getPointeeType());
       // lookup which class implements the instance variable.
       ObjCInterfaceDecl *clsDeclared = 0;
-      intT->getDecl()->lookupInstanceVariable(D->getIdentifier(), clsDeclared);
+      iFaceDecl->getDecl()->lookupInstanceVariable(D->getIdentifier(), clsDeclared);
       assert(clsDeclared && "RewriteObjCIvarRefExpr(): Can't find class");
       
       // Synthesize an explicit cast to gain access to the ivar.
