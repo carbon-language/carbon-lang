@@ -11229,8 +11229,8 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
 
   // We can only sink load instructions if there is nothing between the load and
   // the end of block that could change the value.
-  if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-    for (BasicBlock::iterator Scan = LI, E = LI->getParent()->end();
+  if (I->mayReadFromMemory()) {
+    for (BasicBlock::iterator Scan = I, E = I->getParent()->end();
          Scan != E; ++Scan)
       if (Scan->mayWriteToMemory())
         return false;
@@ -11388,8 +11388,8 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
     }
 
     // See if we can trivially sink this instruction to a successor basic block.
-    // FIXME: Remove GetResultInst test when first class support for aggregates is
-    // implemented.
+    // FIXME: Remove GetResultInst test when first class support for aggregates
+    // is implemented.
     if (I->hasOneUse() && !isa<GetResultInst>(I)) {
       BasicBlock *BB = I->getParent();
       BasicBlock *UserParent = cast<Instruction>(I->use_back())->getParent();
