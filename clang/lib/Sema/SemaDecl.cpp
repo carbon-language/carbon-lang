@@ -2350,6 +2350,22 @@ static const FunctionTypeProto *getFunctionProto(Decl *d) {
   return 0;
 }
 
+static inline bool isNSStringType(QualType T, ASTContext &Ctx) {
+  if (!T->isPointerType())
+    return false;
+  
+  T = T->getAsPointerType()->getPointeeType().getCanonicalType();
+  ObjCInterfaceType* ClsT = dyn_cast<ObjCInterfaceType>(T.getTypePtr());
+  
+  if (!ClsT)
+    return false;
+  
+  IdentifierInfo* ClsName = ClsT->getDecl()->getIdentifier();
+  
+  // FIXME: Should we walk the chain of classes?
+  return ClsName == &Ctx.Idents.get("NSString") ||
+         ClsName == &Ctx.Idents.get("NSMutableString");
+}
 
 /// Handle __attribute__((format(type,idx,firstarg))) attributes
 /// based on http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
@@ -2393,10 +2409,28 @@ void Sema::HandleFormatAttribute(Decl *d, AttributeList *rawAttr) {
     FormatLen -= 4;
   }
 
-  if (!((FormatLen == 5 && !memcmp(Format, "scanf", 5))
-     || (FormatLen == 6 && !memcmp(Format, "printf", 6))
-     || (FormatLen == 7 && !memcmp(Format, "strfmon", 7))
-     || (FormatLen == 8 && !memcmp(Format, "strftime", 8)))) {
+  bool Supported = false;
+  bool is_NSString = false;
+  bool is_strftime = false;
+  
+  switch (FormatLen) {
+    default: break;
+    case 5:
+      Supported = !memcmp(Format, "scanf", 5);
+      break;
+    case 6:
+      Supported = !memcmp(Format, "printf", 6);
+      break;
+    case 7:
+      Supported = !memcmp(Format, "strfmon", 7);
+      break;
+    case 8:
+      Supported = (is_strftime = !memcmp(Format, "strftime", 8)) || 
+                  (is_NSString = !memcmp(Format, "NSString", 8));
+      break;
+  }
+      
+  if (!Supported) {
     Diag(rawAttr->getLoc(), diag::warn_attribute_type_not_supported,
            "format", rawAttr->getParameterName()->getName());
     return;
@@ -2417,15 +2451,31 @@ void Sema::HandleFormatAttribute(Decl *d, AttributeList *rawAttr) {
     return;
   }
 
+  // FIXME: Do we need to bounds check?
+  unsigned ArgIdx = Idx.getZExtValue() - 1;
+  
   // make sure the format string is really a string
-  QualType Ty = proto->getArgType(Idx.getZExtValue()-1);
-  if (!Ty->isPointerType() ||
+  QualType Ty = proto->getArgType(ArgIdx);
+
+  if (is_NSString) {
+    // FIXME: do we need to check if the type is NSString*?  What are
+    //  the semantics?
+    if (!isNSStringType(Ty, Context)) {
+      // FIXME: Should highlight the actual expression that has the
+      // wrong type.
+      Diag(rawAttr->getLoc(), diag::err_format_attribute_not_NSString,
+           IdxExpr->getSourceRange());
+      return;
+    }    
+  }
+  else if (!Ty->isPointerType() ||
       !Ty->getAsPointerType()->getPointeeType()->isCharType()) {
+    // FIXME: Should highlight the actual expression that has the
+    // wrong type.
     Diag(rawAttr->getLoc(), diag::err_format_attribute_not_string,
          IdxExpr->getSourceRange());
     return;
   }
-
 
   // check the 3rd argument
   Expr *FirstArgExpr = static_cast<Expr *>(rawAttr->getArg(1));
@@ -2448,7 +2498,7 @@ void Sema::HandleFormatAttribute(Decl *d, AttributeList *rawAttr) {
 
   // strftime requires FirstArg to be 0 because it doesn't read from any variable
   // the input is just the current time + the format string
-  if (FormatLen == 8 && !memcmp(Format, "strftime", 8)) {
+  if (is_strftime) {
     if (FirstArg != 0) {
       Diag(rawAttr->getLoc(), diag::err_format_strftime_third_parameter,
              FirstArgExpr->getSourceRange());
