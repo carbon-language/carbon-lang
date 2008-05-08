@@ -317,7 +317,7 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
   Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_msgSendSuper_stret";
   Preamble += "(struct objc_super *, struct objc_selector *, ...);\n";
-  Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_msgSend_fpret";
+  Preamble += "__OBJC_RW_EXTERN double objc_msgSend_fpret";
   Preamble += "(struct objc_object *, struct objc_selector *, ...);\n";
   Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_getClass";
   Preamble += "(const char *);\n";
@@ -1741,7 +1741,7 @@ void RewriteObjC::SynthMsgSendSuperStretFunctionDecl() {
                                               FunctionDecl::Extern, false, 0);
 }
 
-// SynthMsgSendFpretFunctionDecl - id objc_msgSend_fpret(id self, SEL op, ...);
+// SynthMsgSendFpretFunctionDecl - double objc_msgSend_fpret(id self, SEL op, ...);
 void RewriteObjC::SynthMsgSendFpretFunctionDecl() {
   IdentifierInfo *msgSendIdent = &Context->Idents.get("objc_msgSend_fpret");
   llvm::SmallVector<QualType, 16> ArgTys;
@@ -1751,7 +1751,7 @@ void RewriteObjC::SynthMsgSendFpretFunctionDecl() {
   argT = Context->getObjCSelType();
   assert(!argT.isNull() && "Can't find 'SEL' type");
   ArgTys.push_back(argT);
-  QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
+  QualType msgSendType = Context->getFunctionType(Context->DoubleTy,
                                                   &ArgTys[0], ArgTys.size(),
                                                   true /*isVariadic*/);
   MsgSendFpretFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
