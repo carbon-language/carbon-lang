@@ -181,10 +181,10 @@ namespace llvm {
       /// in order to obtain suitable precision.
       FRSQRT, FRCP,
 
-      // Thread Local Storage
+      // TLSADDR, THREAThread - Thread Local Storage.
       TLSADDR, THREAD_POINTER,
 
-      // Exception Handling helpers
+      // EH_RETURN - Exception Handling helpers.
       EH_RETURN,
       
       /// TC_RETURN - Tail call return.
@@ -194,12 +194,15 @@ namespace llvm {
       ///   operand #3 optional in flag
       TC_RETURN,
 
-      // compare and swap
+      // LCMPXCHG_DAG, LCMPXCHG8_DAG - Compare and swap.
       LCMPXCHG_DAG,
       LCMPXCHG8_DAG,
 
-      // Store FP control world into i16 memory
-      FNSTCW16m
+      // FNSTCW16m - Store FP control world into i16 memory.
+      FNSTCW16m,
+
+      // ZEXT_VMOVL - Vector move low and zero extend.
+      ZEXT_VMOVL
     };
   }
 

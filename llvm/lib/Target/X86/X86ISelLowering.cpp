@@ -2605,11 +2605,16 @@ static bool ShouldXformToMOVHLPS(SDNode *Mask) {
 }
 
 /// isScalarLoadToVector - Returns true if the node is a scalar load that
-/// is promoted to a vector.
-static inline bool isScalarLoadToVector(SDNode *N) {
+/// is promoted to a vector. It also returns the LoadSDNode by reference if
+/// required.
+static bool isScalarLoadToVector(SDNode *N, LoadSDNode **LD = NULL) {
   if (N->getOpcode() == ISD::SCALAR_TO_VECTOR) {
     N = N->getOperand(0).Val;
-    return ISD::isNON_EXTLoad(N);
+    if (ISD::isNON_EXTLoad(N)) {
+      if (LD)
+        *LD = cast<LoadSDNode>(N);
+      return true;
+    }
   }
   return false;
 }
@@ -3082,8 +3087,16 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     return SDOperand();
 
   // Let legalizer expand 2-wide build_vectors.
-  if (EVTBits == 64)
+  if (EVTBits == 64) {
+    if (NumNonZero == 1) {
+      // One half is zero or undef.
+      unsigned Idx = CountTrailingZeros_32(NonZeros);
+      SDOperand V2 = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT,
+                                 Op.getOperand(Idx));
+      return getShuffleVectorZeroOrUndef(V2, Idx, true, DAG);
+    }
     return SDOperand();
+  }
 
   // If element VT is < 32 bits, convert it to inserts into a zero vector.
   if (EVTBits == 8 && NumElems == 16) {
@@ -3131,13 +3144,6 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
       }
     }
 
-    // Take advantage of the fact GR32 to VR128 scalar_to_vector (i.e. movd)
-    // clears the upper bits.
-    // FIXME: we can do the same for v4f32 case when we know both parts of
-    // the lower half come from scalar_to_vector (loadf32). We should do
-    // that in post legalizer dag combiner with target specific hooks.
-    if (MVT::isInteger(EVT) && (NonZeros & (0x3 << 2)) == 0)
-      return V[0];
     MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NumElems);
     MVT::ValueType EVT = MVT::getVectorElementType(MaskVT);
     SmallVector<SDOperand, 8> MaskVec;
@@ -3475,6 +3481,38 @@ SDOperand RewriteAsNarrowerShuffle(SDOperand V1, SDOperand V2,
                                  &MaskVec[0], MaskVec.size()));
 }
 
+/// getZextVMoveL - Return a zero-extending vector move low node.
+///
+static SDOperand getZextVMoveL(MVT::ValueType VT, MVT::ValueType OpVT,
+                               SDOperand SrcOp, SelectionDAG &DAG,
+                               const X86Subtarget *Subtarget) {
+  if (VT == MVT::v2f64 || VT == MVT::v4f32) {
+    LoadSDNode *LD = NULL;
+    if (!isScalarLoadToVector(SrcOp.Val, &LD))
+      LD = dyn_cast<LoadSDNode>(SrcOp);
+    if (!LD) {
+      // movssrr and movsdrr do not clear top bits. Try to use movd, movq
+      // instead.
+      MVT::ValueType EVT = (OpVT == MVT::v2f64) ? MVT::i64 : MVT::i32;
+      if ((EVT != MVT::i64 || Subtarget->is64Bit()) &&
+          SrcOp.getOpcode() == ISD::SCALAR_TO_VECTOR &&
+          SrcOp.getOperand(0).getOpcode() == ISD::BIT_CONVERT &&
+          SrcOp.getOperand(0).getOperand(0).getValueType() == EVT) {
+        // PR2108
+        OpVT = (OpVT == MVT::v2f64) ? MVT::v2i64 : MVT::v4i32;
+        return DAG.getNode(ISD::BIT_CONVERT, VT,
+                           DAG.getNode(X86ISD::ZEXT_VMOVL, OpVT,
+                                       DAG.getNode(ISD::SCALAR_TO_VECTOR, OpVT,
+                                                   SrcOp.getOperand(0).getOperand(0))));
+      }
+    }
+  }
+
+  return DAG.getNode(ISD::BIT_CONVERT, VT,
+                     DAG.getNode(X86ISD::ZEXT_VMOVL, OpVT,
+                                 DAG.getNode(ISD::BIT_CONVERT, OpVT, SrcOp)));
+}
+
 SDOperand
 X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   SDOperand V1 = Op.getOperand(0);
@@ -3515,27 +3553,33 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
     // FIXME: Figure out a cleaner way to do this.
     // Try to make use of movq to zero out the top part.
     if (ISD::isBuildVectorAllZeros(V2.Val)) {
-      SDOperand NewOp = RewriteAsNarrowerShuffle(V1, V2, VT, PermMask, DAG, *this);
+      SDOperand NewOp = RewriteAsNarrowerShuffle(V1, V2, VT, PermMask,
+                                                 DAG, *this);
       if (NewOp.Val) {
         SDOperand NewV1 = NewOp.getOperand(0);
         SDOperand NewV2 = NewOp.getOperand(1);
         SDOperand NewMask = NewOp.getOperand(2);
         if (isCommutedMOVL(NewMask.Val, true, false)) {
           NewOp = CommuteVectorShuffle(NewOp, NewV1, NewV2, NewMask, DAG);
-          NewOp = DAG.getNode(ISD::VECTOR_SHUFFLE, NewOp.getValueType(),
-                              NewV1, NewV2, getMOVLMask(2, DAG));
-          return DAG.getNode(ISD::BIT_CONVERT, VT, LowerVECTOR_SHUFFLE(NewOp, DAG));
+          return getZextVMoveL(VT, NewOp.getValueType(), NewV2, DAG, Subtarget);
         }
       }
     } else if (ISD::isBuildVectorAllZeros(V1.Val)) {
-      SDOperand NewOp= RewriteAsNarrowerShuffle(V1, V2, VT, PermMask, DAG, *this);
+      SDOperand NewOp= RewriteAsNarrowerShuffle(V1, V2, VT, PermMask,
+                                                DAG, *this);
       if (NewOp.Val && X86::isMOVLMask(NewOp.getOperand(2).Val))
-        return DAG.getNode(ISD::BIT_CONVERT, VT, LowerVECTOR_SHUFFLE(NewOp, DAG));
+        return getZextVMoveL(VT, NewOp.getValueType(), NewOp.getOperand(1),
+                             DAG, Subtarget);
     }
   }
 
-  if (X86::isMOVLMask(PermMask.Val))
-    return (V1IsUndef) ? V2 : Op;
+  if (X86::isMOVLMask(PermMask.Val)) {
+    if (V1IsUndef)
+      return V2;
+    if (ISD::isBuildVectorAllZeros(V1.Val))
+      return getZextVMoveL(VT, VT, V2, DAG, Subtarget);
+    return Op;
+  }
 
   if (X86::isMOVSHDUPMask(PermMask.Val) ||
       X86::isMOVSLDUPMask(PermMask.Val) ||
@@ -5629,8 +5673,9 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::EH_RETURN:          return "X86ISD::EH_RETURN";
   case X86ISD::TC_RETURN:          return "X86ISD::TC_RETURN";
   case X86ISD::FNSTCW16m:          return "X86ISD::FNSTCW16m";
-  case X86ISD::LCMPXCHG_DAG:       return "x86ISD::LCMPXCHG_DAG";
-  case X86ISD::LCMPXCHG8_DAG:      return "x86ISD::LCMPXCHG8_DAG";
+  case X86ISD::LCMPXCHG_DAG:       return "X86ISD::LCMPXCHG_DAG";
+  case X86ISD::LCMPXCHG8_DAG:      return "X86ISD::LCMPXCHG8_DAG";
+  case X86ISD::ZEXT_VMOVL:         return "X86ISD::ZEXT_VMOVL";
   }
 }
 
@@ -6192,16 +6237,46 @@ static bool isConsecutiveLoad(SDNode *N, SDNode *Base, int Dist, int Size,
   return false;
 }
 
-static bool isBaseAlignment16(SDNode *Base, MachineFrameInfo *MFI,
-                              const X86Subtarget *Subtarget) {
+static bool isBaseAlignmentOfN(unsigned N, SDNode *Base, MachineFrameInfo *MFI,
+                               const X86Subtarget *Subtarget) {
   GlobalValue *GV;
   int64_t Offset = 0;
   if (isGAPlusOffset(Base, GV, Offset))
-    return (GV->getAlignment() >= 16 && (Offset % 16) == 0);
+    return (GV->getAlignment() >= N && (Offset % N) == 0);
   // DAG combine handles the stack object case.
   return false;
 }
 
+static bool EltsFromConsecutiveLoads(SDNode *N, SDOperand PermMask,
+                                     unsigned NumElems, MVT::ValueType EVT,
+                                     MachineFrameInfo *MFI,
+                                     SelectionDAG &DAG, SDNode *&Base) {
+  Base = NULL;
+  for (unsigned i = 0; i < NumElems; ++i) {
+    SDOperand Idx = PermMask.getOperand(i);
+    if (Idx.getOpcode() == ISD::UNDEF) {
+      if (!Base)
+        return false;
+      continue;
+    }
+
+    unsigned Index = cast<ConstantSDNode>(Idx)->getValue();
+    SDOperand Elt = getShuffleScalarElt(N, Index, DAG);
+    if (!Elt.Val ||
+        (Elt.getOpcode() != ISD::UNDEF && !ISD::isNON_EXTLoad(Elt.Val)))
+      return false;
+    if (!Base) {
+      Base = Elt.Val;
+      continue;
+    }
+    if (Elt.getOpcode() == ISD::UNDEF)
+      continue;
+
+    if (!isConsecutiveLoad(Elt.Val, Base, i, MVT::getSizeInBits(EVT)/8,MFI))
+      return false;
+  }
+  return true;
+}
 
 /// PerformShuffleCombine - Combine a vector_shuffle that is equal to
 /// build_vector load1, load2, load3, load4, <0, 1, 2, 3> into a 128-bit load
@@ -6209,36 +6284,17 @@ static bool isBaseAlignment16(SDNode *Base, MachineFrameInfo *MFI,
 /// order.
 static SDOperand PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
                                        const X86Subtarget *Subtarget) {
-  MachineFunction &MF = DAG.getMachineFunction();
-  MachineFrameInfo *MFI = MF.getFrameInfo();
+  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
   MVT::ValueType VT = N->getValueType(0);
   MVT::ValueType EVT = MVT::getVectorElementType(VT);
   SDOperand PermMask = N->getOperand(2);
   unsigned NumElems = PermMask.getNumOperands();
   SDNode *Base = NULL;
-  for (unsigned i = 0; i < NumElems; ++i) {
-    SDOperand Elt = PermMask.getOperand(i);
-    if (Elt.getOpcode() == ISD::UNDEF) {
-      if (!Base)
-        return SDOperand();
-      continue;
-    }
-
-    unsigned Idx = cast<ConstantSDNode>(Elt)->getValue();
-    SDOperand Arg = getShuffleScalarElt(N, Idx, DAG);
-    if (!Arg.Val || !ISD::isNON_EXTLoad(Arg.Val))
-      return SDOperand();
-    if (!Base) {
-      Base = Arg.Val;
-      continue;
-    }
-
-    if (!isConsecutiveLoad(Arg.Val, Base, i, MVT::getSizeInBits(EVT)/8,MFI))
-      return SDOperand();
-  }
+  if (!EltsFromConsecutiveLoads(N, PermMask, NumElems, EVT, MFI, DAG, Base))
+    return SDOperand();
 
   LoadSDNode *LD = cast<LoadSDNode>(Base);
-  if (isBaseAlignment16(Base->getOperand(1).Val, MFI, Subtarget))
+  if (isBaseAlignmentOfN(16, Base->getOperand(1).Val, MFI, Subtarget))
     return DAG.getLoad(VT, LD->getChain(), LD->getBasePtr(), LD->getSrcValue(),
                        LD->getSrcValueOffset(), LD->isVolatile());
   return DAG.getLoad(VT, LD->getChain(), LD->getBasePtr(), LD->getSrcValue(),
@@ -6319,12 +6375,13 @@ static SDOperand PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
 }
 
 /// PerformSTORECombine - Do target-specific dag combines on STORE nodes.
-static SDOperand PerformSTORECombine(StoreSDNode *St, SelectionDAG &DAG,
+static SDOperand PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
                                      const X86Subtarget *Subtarget) {
   // Turn load->store of MMX types into GPR load/stores.  This avoids clobbering
   // the FP state in cases where an emms may be missing.
   // A preferable solution to the general problem is to figure out the right
   // places to insert EMMS.  This qualifies as a quick hack.
+  StoreSDNode *St = cast<StoreSDNode>(N);
   if (MVT::isVector(St->getValue().getValueType()) && 
       MVT::getSizeInBits(St->getValue().getValueType()) == 64 &&
       isa<LoadSDNode>(St->getValue()) &&
@@ -6442,8 +6499,7 @@ SDOperand X86TargetLowering::PerformDAGCombine(SDNode *N,
   default: break;
   case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, Subtarget);
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
-  case ISD::STORE:          
-      return PerformSTORECombine(cast<StoreSDNode>(N), DAG, Subtarget);
+  case ISD::STORE:          return PerformSTORECombine(N, DAG, Subtarget);
   case X86ISD::FXOR:
   case X86ISD::FOR:         return PerformFORCombine(N, DAG);
   case X86ISD::FAND:        return PerformFANDCombine(N, DAG);

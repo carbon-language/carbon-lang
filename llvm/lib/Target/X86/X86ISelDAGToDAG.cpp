@@ -975,38 +975,19 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDOperand Op, SDOperand Pred,
 
   // Also handle the case where we explicitly require zeros in the top
   // elements.  This is a vector shuffle from the zero vector.
-  if (N.getOpcode() == ISD::VECTOR_SHUFFLE && N.Val->hasOneUse() &&
+  if (N.getOpcode() == X86ISD::ZEXT_VMOVL && N.Val->hasOneUse() &&
       // Check to see if the top elements are all zeros (or bitcast of zeros).
-      ISD::isBuildVectorAllZeros(N.getOperand(0).Val) &&
-      N.getOperand(1).getOpcode() == ISD::SCALAR_TO_VECTOR && 
-      N.getOperand(1).Val->hasOneUse() &&
-      ISD::isNON_EXTLoad(N.getOperand(1).getOperand(0).Val) &&
-      N.getOperand(1).getOperand(0).hasOneUse()) {
-    // Check to see if the shuffle mask is 4/L/L/L or 2/L, where L is something
-    // from the LHS.
-    unsigned VecWidth=MVT::getVectorNumElements(N.getOperand(0).getValueType());
-    SDOperand ShufMask = N.getOperand(2);
-    assert(ShufMask.getOpcode() == ISD::BUILD_VECTOR && "Invalid shuf mask!");
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(ShufMask.getOperand(0))) {
-      if (C->getValue() == VecWidth) {
-        for (unsigned i = 1; i != VecWidth; ++i) {
-          if (ShufMask.getOperand(i).getOpcode() == ISD::UNDEF) {
-            // ok.
-          } else {
-            ConstantSDNode *C = cast<ConstantSDNode>(ShufMask.getOperand(i));
-            if (C->getValue() >= VecWidth) return false;
-          }
-        }
-      }
-      
-      // Okay, this is a zero extending load.  Fold it.
-      LoadSDNode *LD = cast<LoadSDNode>(N.getOperand(1).getOperand(0));
-      if (!SelectAddr(Op, LD->getBasePtr(), Base, Scale, Index, Disp))
-        return false;
-      OutChain = LD->getChain();
-      InChain = SDOperand(LD, 1);
-      return true;
-    }
+      N.getOperand(0).getOpcode() == ISD::SCALAR_TO_VECTOR && 
+      N.getOperand(0).Val->hasOneUse() &&
+      ISD::isNON_EXTLoad(N.getOperand(0).getOperand(0).Val) &&
+      N.getOperand(0).getOperand(0).hasOneUse()) {
+    // Okay, this is a zero extending load.  Fold it.
+    LoadSDNode *LD = cast<LoadSDNode>(N.getOperand(0).getOperand(0));
+    if (!SelectAddr(Op, LD->getBasePtr(), Base, Scale, Index, Disp))
+      return false;
+    OutChain = LD->getChain();
+    InChain = SDOperand(LD, 1);
+    return true;
   }
   return false;
 }
