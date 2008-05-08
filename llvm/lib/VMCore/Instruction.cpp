@@ -226,13 +226,14 @@ bool Instruction::mayReadFromMemory() const {
   default: return false;
   case Instruction::Free:
   case Instruction::VAArg:
+  case Instruction::Load:
     return true;
   case Instruction::Call:
     return !cast<CallInst>(this)->doesNotAccessMemory();
   case Instruction::Invoke:
     return !cast<InvokeInst>(this)->doesNotAccessMemory();
-  case Instruction::Load:
-    return true;
+  case Instruction::Store:
+    return cast<StoreInst>(this)->isVolatile();
   }
 }
 
