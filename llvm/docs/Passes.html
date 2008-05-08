@@ -116,7 +116,7 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#argpromotion">-argpromotion</a></td><td>Promote 'by reference' arguments to scalars</td></tr>
 <tr><td><a href="#block-placement">-block-placement</a></td><td>Profile Guided Basic Block Placement</td></tr>
 <tr><td><a href="#break-crit-edges">-break-crit-edges</a></td><td>Break critical edges in CFG</td></tr>
-<tr><td><a href="#cee">-cee</a></td><td>Correlated Expression Elimination</td></tr>
+<tr><td><a href="#codegenprepare">-codegenprepare</a></td><td>Prepare a function for code generation </td></tr>
 <tr><td><a href="#condprop">-condprop</a></td><td>Conditional Propagation</td></tr>
 <tr><td><a href="#constmerge">-constmerge</a></td><td>Merge Duplicate Global Constants</td></tr>
 <tr><td><a href="#constprop">-constprop</a></td><td>Simple constant propagation</td></tr>
@@ -142,8 +142,10 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#internalize">-internalize</a></td><td>Internalize Global Symbols</td></tr>
 <tr><td><a href="#ipconstprop">-ipconstprop</a></td><td>Interprocedural constant propagation</td></tr>
 <tr><td><a href="#ipsccp">-ipsccp</a></td><td>Interprocedural Sparse Conditional Constant Propagation</td></tr>
+<tr><td><a href="#jump-threading">-jump-threading</a></td><td>Thread control through conditional blocks </td></tr>
 <tr><td><a href="#lcssa">-lcssa</a></td><td>Loop-Closed SSA Form Pass</td></tr>
 <tr><td><a href="#licm">-licm</a></td><td>Loop Invariant Code Motion</td></tr>
+<tr><td><a href="#loop-deletion">-loop-deletion</a></td><td>Dead Loop Deletion Pass </td></tr>
 <tr><td><a href="#loop-extract">-loop-extract</a></td><td>Extract loops into new functions</td></tr>
 <tr><td><a href="#loop-extract-single">-loop-extract-single</a></td><td>Extract at most one loop into a new function</td></tr>
 <tr><td><a href="#loop-index-split">-loop-index-split</a></td><td>Index Split Loops</td></tr>
@@ -152,14 +154,12 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#loop-unroll">-loop-unroll</a></td><td>Unroll loops</td></tr>
 <tr><td><a href="#loop-unswitch">-loop-unswitch</a></td><td>Unswitch loops</td></tr>
 <tr><td><a href="#loopsimplify">-loopsimplify</a></td><td>Canonicalize natural loops</td></tr>
-<tr><td><a href="#lower-packed">-lower-packed</a></td><td>lowers packed operations to operations on smaller packed datatypes</td></tr>
 <tr><td><a href="#lowerallocs">-lowerallocs</a></td><td>Lower allocations from instructions to calls</td></tr>
-<tr><td><a href="#lowergc">-lowergc</a></td><td>Lower GC intrinsics, for GCless code generators</td></tr>
 <tr><td><a href="#lowerinvoke">-lowerinvoke</a></td><td>Lower invoke and unwind, for unwindless code generators</td></tr>
-<tr><td><a href="#lowerselect">-lowerselect</a></td><td>Lower select instructions to branches</td></tr>
 <tr><td><a href="#lowersetjmp">-lowersetjmp</a></td><td>Lower Set Jump</td></tr>
 <tr><td><a href="#lowerswitch">-lowerswitch</a></td><td>Lower SwitchInst's to branches</td></tr>
 <tr><td><a href="#mem2reg">-mem2reg</a></td><td>Promote Memory to Register</td></tr>
+<tr><td><a href="#memcpyopt">-memcpyopt</a></td><td>Optimize use of memcpy and friends</td></tr>
 <tr><td><a href="#mergereturn">-mergereturn</a></td><td>Unify function exit nodes</td></tr>
 <tr><td><a href="#predsimplify">-predsimplify</a></td><td>Predicate Simplifier</td></tr>
 <tr><td><a href="#prune-eh">-prune-eh</a></td><td>Remove unused exception handling info</td></tr>
@@ -171,6 +171,8 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#simplify-libcalls">-simplify-libcalls</a></td><td>Simplify well-known library calls</td></tr>
 <tr><td><a href="#simplifycfg">-simplifycfg</a></td><td>Simplify the CFG</td></tr>
 <tr><td><a href="#strip">-strip</a></td><td>Strip all symbols from a module</td></tr>
+<tr><td><a href="#strip-dead-prototypes">-strip-dead-prototypes</a></td><td>Remove unused function declarations</td></tr>
+<tr><td><a href="#sretpromotion">-sretpromotion</a></td><td>Promote sret arguments</td></tr>
 <tr><td><a href="#tailcallelim">-tailcallelim</a></td><td>Tail Call Elimination</td></tr>
 <tr><td><a href="#tailduplicate">-tailduplicate</a></td><td>Tail Duplication</td></tr>
 
@@ -739,27 +741,12 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="cee">Correlated Expression Elimination</a>
+  <a name="codegenprepare">Prepare a function for code generation</a>
 </div>
 <div class="doc_text">
-  <p>Correlated Expression Elimination propagates information from conditional
-  branches to blocks dominated by destinations of the branch.  It propagates
-  information from the condition check itself into the body of the branch,
-  allowing transformations like these for example:</p>
-  
-<blockquote><pre>
-if (i == 7)
-  ... 4*i;  // constant propagation
-
-M = i+1; N = j+1;
-if (i == j)
-  X = M-N;  // = M-M == 0;
-</pre></blockquote>
-
-   <p>This is called Correlated Expression Elimination because we eliminate or
-   simplify expressions that are correlated with the direction of a branch. In
-   this way we use static information to give us some information about the
-   dynamic value of a variable.</p>
+  This pass munges the code in the input function to better prepare it for
+  SelectionDAG-based code generation. This works around limitations in it's
+  basic-block-at-a-time approach. It should eventually be removed.
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1183,6 +1170,35 @@ if (i == j)
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
+  <a name="jump-threading">Thread control through conditional blocks</a>
+</div>
+<div class="doc_text">
+  <p>
+  Jump threading tries to find distinct threads of control flow running through
+  a basic block. This pass looks at blocks that have multiple predecessors and
+  multiple successors.  If one or more of the predecessors of the block can be
+  proven to always cause a jump to one of the successors, we forward the edge
+  from the predecessor to the successor by duplicating the contents of this
+  block.
+  </p>
+  <p>
+  An example of when this can occur is code like this:
+  </p>
+
+  <pre
+>if () { ...
+  X = 4;
+}
+if (X &lt; 3) {</pre>
+
+  <p>
+  In this case, the unconditional branch at the end of the first if can be
+  revectored to the false side of the second if.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
   <a name="lcssa">Loop-Closed SSA Form Pass</a>
 </div>
 <div class="doc_text">
@@ -1245,6 +1261,18 @@ if (i == j)
         the mem2reg functionality to construct the appropriate SSA form for the
         variable.</li>
   </ul>
+</div>
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="loop-deletion">Dead Loop Deletion Pass</a>
+</div>
+<div class="doc_text">
+  <p>
+  This file implements the Dead Loop Deletion Pass.  This pass is responsible
+  for eliminating loops with non-infinite computable trip counts that have no
+  side effects or volatile instructions, and do not contribute to the
+  computation of the function's return value.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1390,17 +1418,6 @@ if (i == j)
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="lower-packed">lowers packed operations to operations on smaller packed datatypes</a>
-</div>
-<div class="doc_text">
-  <p>
-  Lowers operations on vector datatypes into operations on more primitive vector
-  datatypes, and finally to scalar operations.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
   <a name="lowerallocs">Lower allocations from instructions to calls</a>
 </div>
 <div class="doc_text">
@@ -1413,29 +1430,6 @@ if (i == j)
   This is a target-dependent tranformation because it depends on the size of
   data types and alignment constraints.
   </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="lowergc">Lower GC intrinsics, for GCless code generators</a>
-</div>
-<div class="doc_text">
-  <p>
-  This file implements lowering for the <tt>llvm.gc*</tt> intrinsics for targets 
-  that do not natively support them (which includes the C backend).  Note that
-  the code generated is not as efficient as it would be for targets that
-  natively support the GC intrinsics, but it is useful for getting new targets
-  up-and-running quickly.
-  </p>
-  
-  <p>
-  This pass implements the code transformation described in this paper:
-  </p>
-  
-  <blockquote><p>
-    "Accurate Garbage Collection in an Uncooperative Environment"
-    Fergus Henderson, ISMM, 2002
-  </p></blockquote>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1476,25 +1470,6 @@ if (i == j)
   be done after the lowerinvoke pass has run (like generation of native code).
   This should not be used as a general purpose "my LLVM-to-LLVM pass doesn't
   support the invoke instruction yet" lowering pass.
-  </p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="lowerselect">Lower select instructions to branches</a>
-</div>
-<div class="doc_text">
-  <p>
-  Lowers select instructions into conditional branches for targets that do not 
-  have conditional moves or that have not implemented the select instruction
-  yet.
-  </p>
-  
-  <p>
-  Note that this pass could be improved.  In particular it turns every select
-  instruction into a new conditional branch, even though some common cases have
-  select instructions on the same predicate next to each other.  It would be
-  better to use the same branch for the whole group of selects.
   </p>
 </div>
 
@@ -1552,6 +1527,17 @@ if (i == j)
   depth-first order to rewrite <tt>load</tt>s and <tt>store</tt>s as
   appropriate. This is just the standard SSA construction algorithm to construct
   "pruned" SSA form.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="memcpyopt">Optimize use of memcpy and friend</a>
+</div>
+<div class="doc_text">
+  <p>
+  This pass performs various transformations related to eliminating memcpy
+  calls, or transforming sets of stores into memset's.
   </p>
 </div>
 
@@ -1749,6 +1735,42 @@ if (i == j)
   only be used in situations where the <tt>strip</tt> utility would be used,
   such as reducing code size or making it harder to reverse engineer code.
   </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="strip-dead-prototypes">Remove unused function declarations</a>
+</div>
+<div class="doc_text">
+  <p>
+  This pass loops over all of the functions in the input module, looking for
+  dead declarations and removes them. Dead declarations are declarations of
+  functions for which no implementation is available (i.e., declarations for
+  unused library functions).
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="sretpromotion">Promote sret arguments</a>
+</div>
+<div class="doc_text">
+  <p>
+  This pass finds functions that return a struct (using a pointer to the struct
+  as the first argument of the function, marked with the '<tt>sret</tt>' attribute) and
+  replaces them with a new function that simply returns each of the elements of
+  that struct (using multiple return values).
+  </p>
+
+  <p>
+  This pass works under a number of conditions:
+  </p>
+
+  <ul>
+  <li>The returned struct must not contain other structs</li>
+  <li>The returned struct must only be used to load values from</li>
+  <li>The placeholder struct passed in is the result of an <tt>alloca</tt></li>
+  </ul>
 </div>
 
 <!-------------------------------------------------------------------------- -->

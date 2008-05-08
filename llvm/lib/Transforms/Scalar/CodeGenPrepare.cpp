@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 //
 // This pass munges the code in the input function to better prepare it for
-// SelectionDAG-based code generation.  This works around limitations in it's
-// basic-block-at-a-time approach.  It should eventually be removed.
+// SelectionDAG-based code generation. This works around limitations in it's
+// basic-block-at-a-time approach. It should eventually be removed.
 //
 //===----------------------------------------------------------------------===//
 

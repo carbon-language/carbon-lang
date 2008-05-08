@@ -1,4 +1,4 @@
-//===-- StripDeadPrototypes.cpp - Removed unused function declarations ----===//
+//===-- StripDeadPrototypes.cpp - Remove unused function declarations ----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,7 +8,9 @@
 //===----------------------------------------------------------------------===//
 //
 // This pass loops over all of the functions in the input module, looking for 
-// dead declarations and removes them.
+// dead declarations and removes them. Dead declarations are declarations of
+// functions for which no implementation is available (i.e., declarations for
+// unused library functions).
 //
 //===----------------------------------------------------------------------===//
 

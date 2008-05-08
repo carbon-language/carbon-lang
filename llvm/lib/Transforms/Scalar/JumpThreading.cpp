@@ -9,6 +9,23 @@
 //
 // This file implements the Jump Threading pass.
 //
+// Jump threading tries to find distinct threads of control flow running through
+// a basic block. This pass looks at blocks that have multiple predecessors and
+// multiple successors.  If one or more of the predecessors of the block can be
+// proven to always cause a jump to one of the successors, we forward the edge
+// from the predecessor to the successor by duplicating the contents of this
+// block.
+//
+// An example of when this can occur is code like this:
+//
+//   if () { ...
+//     X = 4;
+//   }
+//   if (X < 3) {
+//
+// In this case, the unconditional branch at the end of the first if can be
+// revectored to the false side of the second if.
+//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "jump-threading"
@@ -33,22 +50,6 @@ Threshold("jump-threading-threshold",
           cl::init(6), cl::Hidden);
 
 namespace {
-  /// This pass performs 'jump threading', which looks at blocks that have
-  /// multiple predecessors and multiple successors.  If one or more of the
-  /// predecessors of the block can be proven to always jump to one of the
-  /// successors, we forward the edge from the predecessor to the successor by
-  /// duplicating the contents of this block.
-  ///
-  /// An example of when this can occur is code like this:
-  ///
-  ///   if () { ...
-  ///     X = 4;
-  ///   }
-  ///   if (X < 3) {
-  ///
-  /// In this case, the unconditional branch at the end of the first if can be
-  /// revectored to the false side of the second if.
-  ///
   class VISIBILITY_HIDDEN JumpThreading : public FunctionPass {
   public:
     static char ID; // Pass identification

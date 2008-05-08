@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the Dead Loop Elimination Pass.  This pass is
-// responsible for eliminating loops with non-infinite computable trip counts
-// that have no side effects or volatile instructions, and do not contribute
-// to the computation of the function's return value.
+// This file implements the Dead Loop Deletion Pass. This pass is responsible
+// for eliminating loops with non-infinite computable trip counts that have no
+// side effects or volatile instructions, and do not contribute to the
+// computation of the function's return value.
 //
 //===----------------------------------------------------------------------===//
 

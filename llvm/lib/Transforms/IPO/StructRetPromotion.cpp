@@ -1,4 +1,4 @@
-//===-- StructRetPromotion.cpp - Promote sret arguments -000000------------===//
+//===-- StructRetPromotion.cpp - Promote sret arguments ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// TODO : Describe this pass.
+// This pass finds functions that return a struct (using a pointer to the struct
+// as the first argument of the function, marked with the 'sret' attribute) and
+// replaces them with a new function that simply returns each of the elements of
+// that struct (using multiple return values).
+//
+// This pass works under a number of conditions:
+//  1. The returned struct must not contain other structs
+//  2. The returned struct must only be used to load values from
+//  3. The placeholder struct passed in is the result of an alloca
+//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "sretpromotion"
