@@ -163,8 +163,8 @@ struct GlobalOptionDescription : public OptionDescription {
   std::string Help;
   unsigned Flags;
 
-  // We need to provide a default constructor because
-  // StringMap can only store DefaultConstructible objects.
+  // We need t provide a default constructor since
+  // StringMap can only store DefaultConstructible objects
   GlobalOptionDescription() : OptionDescription(), Flags(0)
   {}
 
@@ -222,9 +222,9 @@ struct GlobalOptionDescriptions {
 };
 
 
-// Tool-local option description.
+// Tool-local option description
 
-// Properties without arguments are implemented as flags.
+// Properties without arguments are implemented as flags
 namespace ToolOptionDescriptionFlags {
   enum ToolOptionDescriptionFlags { StopCompilation = 0x1,
                                     Forward = 0x2, UnpackValues = 0x4};
@@ -314,7 +314,7 @@ typedef std::vector<IntrusiveRefCntPtr<ToolProperties> > ToolPropertiesList;
 
 
 /// CollectProperties - Function object for iterating over a list of
-/// tool property records.
+/// tool property records
 class CollectProperties {
 private:
 
@@ -569,8 +569,7 @@ bool CollectProperties::staticMembersInitialized_ = false;
 
 
 /// CollectToolProperties - Gather information from the parsed
-/// TableGen data (basically a wrapper for the CollectProperties
-/// function object).
+/// TableGen data (basically a wrapper for CollectProperties).
 void CollectToolProperties (RecordVector::const_iterator B,
                             RecordVector::const_iterator E,
                             ToolPropertiesList& TPList,
@@ -590,50 +589,12 @@ void CollectToolProperties (RecordVector::const_iterator B,
   }
 }
 
-/// EmitForwardOptionPropertyHandlingCode - Helper function used to
-/// implement EmitOptionPropertyHandlingCode(). Emits code for
-/// handling the (forward) option property.
-void EmitForwardOptionPropertyHandlingCode (const ToolOptionDescription& D,
-                                            std::ostream& O) {
-  switch (D.Type) {
-  case OptionType::Switch:
-    O << Indent3 << "vec.push_back(\"-" << D.Name << "\");\n";
-    break;
-  case OptionType::Parameter:
-    O << Indent3 << "vec.push_back(\"-" << D.Name << "\");\n";
-    O << Indent3 << "vec.push_back(" << D.GenVariableName() << ");\n";
-    break;
-  case OptionType::Prefix:
-    O << Indent3 << "vec.push_back(\"-" << D.Name << "\" + "
-      << D.GenVariableName() << ");\n";
-    break;
-  case OptionType::PrefixList:
-    O << Indent3 << "for (" << D.GenTypeDeclaration()
-      << "::iterator B = " << D.GenVariableName() << ".begin(),\n"
-      << Indent3 << "E = " << D.GenVariableName() << ".end(); B != E; ++B)\n"
-      << Indent4 << "vec.push_back(\"-" << D.Name << "\" + "
-      << "*B);\n";
-    break;
-  case OptionType::ParameterList:
-    O << Indent3 << "for (" << D.GenTypeDeclaration()
-      << "::iterator B = " << D.GenVariableName() << ".begin(),\n"
-      << Indent3 << "E = " << D.GenVariableName()
-      << ".end() ; B != E; ++B) {\n"
-      << Indent4 << "vec.push_back(\"-" << D.Name << "\");\n"
-      << Indent4 << "vec.push_back(*B);\n"
-      << Indent3 << "}\n";
-    break;
-  }
-}
-
-/// EmitOptionPropertyHandlingCode - Helper function used by
-/// EmitGenerateActionMethod(). Emits code that handles option
-/// properties.
+/// EmitOptionPropertyHandlingCode - Used by EmitGenerateActionMethod.
 void EmitOptionPropertyHandlingCode (const ToolProperties& P,
                                      const ToolOptionDescription& D,
                                      std::ostream& O)
 {
-  // Start of the if-clause.
+  // if clause
   O << Indent2 << "if (";
   if (D.Type == OptionType::Switch)
     O << D.GenVariableName();
@@ -642,7 +603,7 @@ void EmitOptionPropertyHandlingCode (const ToolProperties& P,
 
   O <<") {\n";
 
-  // Handle option properties that take an argument.
+  // Handle option properties that take an argument
   for (OptionPropertyList::const_iterator B = D.Props.begin(),
         E = D.Props.end(); B!=E; ++B) {
     const OptionProperty& val = *B;
@@ -661,8 +622,37 @@ void EmitOptionPropertyHandlingCode (const ToolProperties& P,
   // Handle flags
 
   // (forward) property
-  if (D.isForward())
-    HandleForwardPropertyy(O);
+  if (D.isForward()) {
+    switch (D.Type) {
+    case OptionType::Switch:
+      O << Indent3 << "vec.push_back(\"-" << D.Name << "\");\n";
+      break;
+    case OptionType::Parameter:
+      O << Indent3 << "vec.push_back(\"-" << D.Name << "\");\n";
+      O << Indent3 << "vec.push_back(" << D.GenVariableName() << ");\n";
+      break;
+    case OptionType::Prefix:
+      O << Indent3 << "vec.push_back(\"-" << D.Name << "\" + "
+        << D.GenVariableName() << ");\n";
+      break;
+    case OptionType::PrefixList:
+      O << Indent3 << "for (" << D.GenTypeDeclaration()
+        << "::iterator B = " << D.GenVariableName() << ".begin(),\n"
+        << Indent3 << "E = " << D.GenVariableName() << ".end(); B != E; ++B)\n"
+        << Indent4 << "vec.push_back(\"-" << D.Name << "\" + "
+        << "*B);\n";
+      break;
+    case OptionType::ParameterList:
+      O << Indent3 << "for (" << D.GenTypeDeclaration()
+        << "::iterator B = " << D.GenVariableName() << ".begin(),\n"
+        << Indent3 << "E = " << D.GenVariableName()
+        << ".end() ; B != E; ++B) {\n"
+        << Indent4 << "vec.push_back(\"-" << D.Name << "\");\n"
+        << Indent4 << "vec.push_back(*B);\n"
+        << Indent3 << "}\n";
+      break;
+    }
+  }
 
   // (unpack_values) property
   if (D.isUnpackValues()) {
@@ -683,15 +673,16 @@ void EmitOptionPropertyHandlingCode (const ToolProperties& P,
     }
   }
 
-  // End of the if-clause.
+  // close if clause
   O << Indent2 << "}\n";
 }
 
-// EmitGenerateActionMethod - Emit one of two versions of the
-// Tool::GenerateAction() method.
-void EmitGenerateActionMethod (const ToolProperties& P, bool V, std::ostream& O)
+// EmitGenerateActionMethod - Emit one of two versions of
+// GenerateAction method.
+void EmitGenerateActionMethod (const ToolProperties& P, int V, std::ostream& O)
 {
-  if (V)
+  assert(V==1 || V==2);
+  if (V==1)
     O << Indent1 << "Action GenerateAction(const PathVector& inFiles,\n";
   else
     O << Indent1 << "Action GenerateAction(const sys::Path& inFile,\n";
@@ -710,7 +701,7 @@ void EmitGenerateActionMethod (const ToolProperties& P, bool V, std::ostream& O)
     const std::string& cmd = *I;
     O << Indent2;
     if (cmd == "$INFILE") {
-      if (V)
+      if (V==1)
         O << "for (PathVector::const_iterator B = inFiles.begin()"
           << ", E = inFiles.end();\n"
           << Indent2 << "B != E; ++B)\n"
@@ -726,14 +717,14 @@ void EmitGenerateActionMethod (const ToolProperties& P, bool V, std::ostream& O)
     }
   }
 
-  // For every understood option, emit handling code.
+  // For every understood option, emit handling code
   for (ToolOptionDescriptions::const_iterator B = P.OptDescs.begin(),
         E = P.OptDescs.end(); B != E; ++B) {
     const ToolOptionDescription& val = B->second;
     EmitOptionPropertyHandlingCode(P, val, O);
   }
 
-  // Handle the Sink property.
+  // Handle Sink property
   if (P.isSink()) {
     O << Indent2 << "if (!" << SinkOptionName << ".empty()) {\n"
       << Indent3 << "vec.insert(vec.end(), "
@@ -745,8 +736,8 @@ void EmitGenerateActionMethod (const ToolProperties& P, bool V, std::ostream& O)
     << Indent1 << "}\n\n";
 }
 
-/// EmitGenerateActionMethods - Emit two GenerateAction() methods for
-/// a given Tool class.
+/// EmitGenerateActionMethods - Emit two GenerateAction methods for a given
+/// Tool class.
 void EmitGenerateActionMethods (const ToolProperties& P, std::ostream& O) {
 
   if (!P.isJoin())
@@ -762,8 +753,7 @@ void EmitGenerateActionMethods (const ToolProperties& P, std::ostream& O) {
   EmitGenerateActionMethod(P, 2, O);
 }
 
-/// EmitIsLastMethod - Emit the IsLast() method for a given Tool
-/// class.
+/// EmitIsLastMethod - Emit IsLast() method for a given Tool class
 void EmitIsLastMethod (const ToolProperties& P, std::ostream& O) {
   O << Indent1 << "bool IsLast() const {\n"
     << Indent2 << "bool last = false;\n";
