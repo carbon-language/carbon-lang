@@ -2856,7 +2856,8 @@ private:
       O << TAI->getPersonalityPrefix();
       Asm->EmitExternalGlobal((const GlobalVariable *)(Personality));
       O << TAI->getPersonalitySuffix();
-      O << "-" << TAI->getPCSymbol();
+      if (strcmp(TAI->getPersonalitySuffix(), "+4@GOTPCREL"))
+        O << "-" << TAI->getPCSymbol();
       Asm->EOL("Personality");
 
       Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_sdata4);
