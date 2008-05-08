@@ -367,9 +367,11 @@ void Verifier::visitGlobalAlias(GlobalAlias &GA) {
   Assert1(GA.hasExternalLinkage() || GA.hasInternalLinkage() ||
           GA.hasWeakLinkage(),
           "Alias should have external or external weak linkage!", &GA);
+  Assert1(GA.getAliasee(),
+          "Aliasee cannot be NULL!", &GA);
   Assert1(GA.getType() == GA.getAliasee()->getType(),
           "Alias and aliasee types should match!", &GA);
-  
+
   if (!isa<GlobalValue>(GA.getAliasee())) {
     const ConstantExpr *CE = dyn_cast<ConstantExpr>(GA.getAliasee());
     Assert1(CE && CE->getOpcode() == Instruction::BitCast &&
