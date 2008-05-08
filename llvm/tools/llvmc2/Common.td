@@ -15,7 +15,7 @@ class Tool<list<dag> l> {
       list<dag> properties = l;
 }
 
-// Special Tool instance - graph root.
+// Special Tool instance - the root node of the compilation graph.
 
 def root : Tool<[]>;
 
@@ -47,6 +47,7 @@ def required;
 
 // Possible edge properties
 
+// 'Atomic' properties.
 def switch_on;
 def parameter_equals;
 def element_in_list;
