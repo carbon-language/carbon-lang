@@ -148,8 +148,6 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
                                          (Value**)Ops+1, NumOps-1);
   Constant *C = ConstantInt::get(TD->getIntPtrType(), Offset+BasePtr);
   return ConstantExpr::getIntToPtr(C, ResultTy);
-  
-  return 0;
 }
 
 /// FoldBitCast - Constant fold bitcast, symbolically evaluating it with 
