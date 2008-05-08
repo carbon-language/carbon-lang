@@ -567,10 +567,12 @@ void RopePieceBTreeInterior::erase(unsigned Offset, unsigned NumBytes) {
       unsigned BytesFromChild = CurChild->size()-Offset;
       CurChild->erase(Offset, BytesFromChild);
       NumBytes -= BytesFromChild;
+      // Start at the beginning of the next child.
+      Offset = 0;
       ++i;
       continue;
     }
-    
+
     // If the deletion request completely covers the child, delete it and move
     // the rest down.
     NumBytes -= CurChild->size();
