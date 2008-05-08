@@ -43,7 +43,8 @@ namespace clang {
 namespace CodeGen {
 
   class CodeGenFunction;
-
+  class CGDebugInfo;
+  
 /// CodeGenModule - This class organizes the cross-module state that is used
 /// while generating LLVM code.
 class CodeGenModule {
@@ -54,6 +55,7 @@ class CodeGenModule {
   Diagnostic &Diags;
   CodeGenTypes Types;
   CGObjCRuntime *Runtime;
+  CGDebugInfo *DebugInfo;
 
   llvm::Function *MemCpyFn;
   llvm::Function *MemSetFn;
@@ -70,10 +72,12 @@ class CodeGenModule {
   std::vector<llvm::Function *> BuiltinFunctions;
 public:
   CodeGenModule(ASTContext &C, const LangOptions &Features, llvm::Module &M, 
-                const llvm::TargetData &TD, Diagnostic &Diags);
+                const llvm::TargetData &TD, Diagnostic &Diags,
+                bool GenerateDebugInfo);
   ~CodeGenModule();
   
   CGObjCRuntime *getObjCRuntime() { return Runtime; }
+  CGDebugInfo *getDebugInfo() { return DebugInfo; }
   ASTContext &getContext() const { return Context; }
   const LangOptions &getLangOptions() const { return Features; }
   llvm::Module &getModule() const { return TheModule; }

@@ -24,7 +24,8 @@ namespace clang {
   class ASTConsumer;
   
   ASTConsumer *CreateLLVMCodeGen(Diagnostic &Diags, const LangOptions &Features,
-                                 llvm::Module *&DestModule);
+                                 llvm::Module *&DestModule,
+                                 bool GenerateDebugInfo);
 }
 
 #endif

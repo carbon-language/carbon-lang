@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "CGDebugInfo.h"
+#include "CodeGenModule.h"
 #include "CodeGenFunction.h"
 #include "clang/AST/AST.h"
 #include "clang/Basic/TargetInfo.h"
@@ -29,6 +31,18 @@ using namespace CodeGen;
 void CodeGenFunction::EmitStmt(const Stmt *S) {
   assert(S && "Null statement?");
   
+  // Generate stoppoints if we are emitting debug info.
+  // Beginning of a Compound Statement (e.g. an opening '{') does not produce 
+  // executable code. So do not generate a stoppoint for that.
+  CGDebugInfo *DI = CGM.getDebugInfo();
+  if (DI && S->getStmtClass() != Stmt::CompoundStmtClass) {
+    if (S->getLocStart().isValid()) {
+        DI->setLocation(S->getLocStart());
+    }
+
+    DI->EmitStopPoint(CurFn, Builder);
+  }
+
   switch (S->getStmtClass()) {
   default:
     // Must be an expression in a stmt context.  Emit the value (to get
@@ -74,11 +88,25 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
   // FIXME: handle vla's etc.
   if (S.body_empty() || !isa<Expr>(S.body_back())) GetLast = false;
   
+  CGDebugInfo *DI = CGM.getDebugInfo();
+  if (DI) {
+    if (S.getLBracLoc().isValid()) {
+      DI->setLocation(S.getLBracLoc());
+    }
+    DI->EmitRegionStart(CurFn, Builder);
+  }
+
   for (CompoundStmt::const_body_iterator I = S.body_begin(),
        E = S.body_end()-GetLast; I != E; ++I)
     EmitStmt(*I);
-  
-  
+
+  if (DI) {
+    if (S.getRBracLoc().isValid()) {
+      DI->setLocation(S.getRBracLoc());
+    }
+    DI->EmitRegionEnd(CurFn, Builder);
+  }
+
   if (!GetLast)
     return RValue::get(0);
   

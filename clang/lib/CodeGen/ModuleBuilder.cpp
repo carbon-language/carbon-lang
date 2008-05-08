@@ -34,13 +34,15 @@ namespace {
     const llvm::TargetData *TD;
     ASTContext *Ctx;
     const LangOptions &Features;
+    bool GenerateDebugInfo;
   protected:
     llvm::Module *&M;
     CodeGen::CodeGenModule *Builder;
   public:
     CodeGenerator(Diagnostic &diags, const LangOptions &LO,
-                  llvm::Module *&DestModule)
-    : Diags(diags), Features(LO), M(DestModule) {}
+                  llvm::Module *&DestModule, bool DebugInfoFlag)
+    : Diags(diags), Features(LO), GenerateDebugInfo(DebugInfoFlag),
+    M(DestModule) {}
     
     ~CodeGenerator() {
       delete Builder;
@@ -52,7 +54,8 @@ namespace {
       M->setTargetTriple(Ctx->Target.getTargetTriple());
       M->setDataLayout(Ctx->Target.getTargetDescription());
       TD = new llvm::TargetData(Ctx->Target.getTargetDescription());
-      Builder = new CodeGen::CodeGenModule(Context, Features, *M, *TD, Diags);
+      Builder = new CodeGen::CodeGenModule(Context, Features, *M, *TD, Diags,
+                                           GenerateDebugInfo);
     }
     
     virtual void HandleTopLevelDecl(Decl *D) {
@@ -103,7 +106,8 @@ namespace {
 
 ASTConsumer *clang::CreateLLVMCodeGen(Diagnostic &Diags, 
                                       const LangOptions &Features,
-                                      llvm::Module *&DestModule) {
-  return new CodeGenerator(Diags, Features, DestModule);
+                                      llvm::Module *&DestModule,
+                                      bool GenerateDebugInfo) {
+  return new CodeGenerator(Diags, Features, DestModule, GenerateDebugInfo);
 }
 

@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "CGDebugInfo.h"
 #include "CodeGenModule.h"
 #include "CodeGenFunction.h"
 #include "clang/AST/ASTContext.h"
@@ -32,13 +33,19 @@ using namespace CodeGen;
 
 CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
                              llvm::Module &M, const llvm::TargetData &TD,
-                             Diagnostic &diags)
+                             Diagnostic &diags, bool GenerateDebugInfo)
   : Context(C), Features(LO), TheModule(M), TheTargetData(TD), Diags(diags),
     Types(C, M, TD), MemCpyFn(0), MemSetFn(0), CFConstantStringClassRef(0) {
   //TODO: Make this selectable at runtime
   Runtime = CreateObjCRuntime(M,
       getTypes().ConvertType(getContext().IntTy),
       getTypes().ConvertType(getContext().LongTy));
+
+  // If debug info generation is enabled, create the CGDebugInfo object.
+  if (GenerateDebugInfo)
+    DebugInfo = new CGDebugInfo(this);
+  else
+    DebugInfo = NULL;
 }
 
 CodeGenModule::~CodeGenModule() {
@@ -49,7 +56,7 @@ CodeGenModule::~CodeGenModule() {
   EmitGlobalCtors();
   EmitAnnotations();
   delete Runtime;
-  
+  delete DebugInfo;
   // Run the verifier to check that the generated code is consistent.
   assert(!verifyModule(TheModule));
 }

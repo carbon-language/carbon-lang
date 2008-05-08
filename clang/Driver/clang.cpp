@@ -149,6 +149,13 @@ OutputFile("o",
  llvm::cl::desc("Specify output file (for --serialize, this is a directory)"));
 
 //===----------------------------------------------------------------------===//
+// Code Generator Options
+//===----------------------------------------------------------------------===//
+static llvm::cl::opt<bool>
+GenerateDebugInfo("g",
+                  llvm::cl::desc("Generate source level debug information"));
+
+//===----------------------------------------------------------------------===//
 // Diagnostic Options
 //===----------------------------------------------------------------------===//
 
@@ -1161,7 +1168,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
     case EmitLLVM:
     case EmitBC:
       DestModule = new llvm::Module(InFile);
-      return CreateLLVMCodeGen(Diag, LangOpts, DestModule);
+      return CreateLLVMCodeGen(Diag, LangOpts, DestModule, GenerateDebugInfo);
 
     case SerializeAST:
       // FIXME: Allow user to tailor where the file is written.
