@@ -63,6 +63,7 @@ Stats("print-stats",
 
 enum ProgActions {
   RewriteObjC,                  // ObjC->C Rewriter.
+  RewriteMacros,                // Expand macros but not #includes.
   HTMLTest,                     // HTML displayer testing stuff.
   EmitLLVM,                     // Emit a .ll file.
   EmitBC,                       // Emit a .bc file.
@@ -136,7 +137,9 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
              clEnumValN(SerializeAST, "serialize",
                         "Build ASTs and emit .ast file"),
              clEnumValN(RewriteObjC, "rewrite-objc",
-                        "Playground for the code rewriter"),                            
+                        "Rewrite ObjC into C (code rewriter example)"),
+             clEnumValN(RewriteMacros, "rewrite-macros",
+                        "Expand macros without full preprocessing"),
              clEnumValEnd));
 
 
@@ -1218,7 +1221,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     DoPrintPreprocessedInput(PP, OutputFile);
     ClearSourceMgr = true;
     break;
-    
+      
   case ParseNoop:                    // -parse-noop
     ParseFile(PP, new MinimalAction(PP.getIdentifierTable()));
     ClearSourceMgr = true;
@@ -1231,6 +1234,11 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
       
   case ParseSyntaxOnly:              // -fsyntax-only
     Consumer = new ASTConsumer();
+    break;
+      
+  case RewriteMacros:
+    RewriteMacrosInInput(PP, OutputFile);
+    ClearSourceMgr = true;
     break;
   }
   
