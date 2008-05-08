@@ -10426,7 +10426,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
     }
     
     // Don't skip over loads or things that can modify memory.
-    if (BBI->mayWriteToMemory())
+    if (BBI->mayWriteToMemory() || BBI->mayReadFromMemory())
       break;
   }
   
