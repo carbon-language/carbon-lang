@@ -81,6 +81,7 @@ private:
     
     static LTOModule*       makeLTOModule(llvm::MemoryBuffer* buffer, 
                                                         std::string& errMsg);
+	static llvm::MemoryBuffer* makeBuffer(const void* mem, size_t length);
                                                         
     typedef llvm::StringMap<uint8_t> StringSet;
     

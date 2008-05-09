@@ -23,6 +23,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/System/Path.h"
+#include "llvm/System/Process.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -46,8 +47,7 @@ bool LTOModule::isBitcodeFile(const char* path)
 bool LTOModule::isBitcodeFileForTarget(const void* mem, size_t length,
                                        const char* triplePrefix) 
 {
-    MemoryBuffer* buffer = MemoryBuffer::getMemBuffer((char*)mem, 
-                                                      (char*)mem+length);
+    MemoryBuffer* buffer = makeBuffer(mem, length);
     if ( buffer == NULL )
         return false;
     return isTargetMatch(buffer, triplePrefix);
@@ -91,11 +91,26 @@ LTOModule* LTOModule::makeLTOModule(const char* path, std::string& errMsg)
     return makeLTOModule(buffer.get(), errMsg);
 }
 
+
+MemoryBuffer* LTOModule::makeBuffer(const void* mem, size_t length)
+{
+ 	// MemoryBuffer requires the byte past end of the buffer to be a zero.
+	// We might get lucky and already be that way, otherwise make a copy.
+	// Also if next byte is on a different page, don't assume it is readable.
+	const char* startPtr = (char*)mem;
+	const char* endPtr = startPtr+length;
+	if ( (((uintptr_t)endPtr & (sys::Process::GetPageSize()-1)) == 0) 
+	    || (*endPtr != 0) ) 
+		return MemoryBuffer::getMemBufferCopy(startPtr, endPtr);
+	else
+		return MemoryBuffer::getMemBuffer(startPtr, endPtr);
+}
+
+
 LTOModule* LTOModule::makeLTOModule(const void* mem, size_t length, 
                                                         std::string& errMsg)
 {
-    OwningPtr<MemoryBuffer> buffer(MemoryBuffer::getMemBuffer((char*)mem, 
-                                                            (char*)mem+length));
+    OwningPtr<MemoryBuffer> buffer(makeBuffer(mem, length));
     if ( !buffer )
         return NULL;
     return makeLTOModule(buffer.get(), errMsg);
