@@ -385,6 +385,35 @@ template<typename LHS>
 inline not_match<LHS> m_Not(const LHS &L) { return L; }
 
 
+template<typename LHS_t>
+struct neg_match {
+  LHS_t L;
+  
+  neg_match(const LHS_t &LHS) : L(LHS) {}
+  
+  template<typename OpTy>
+  bool match(OpTy *V) {
+    if (Instruction *I = dyn_cast<Instruction>(V))
+      if (I->getOpcode() == Instruction::Sub)
+        return matchIfNeg(I->getOperand(0), I->getOperand(1));
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+      if (CE->getOpcode() == Instruction::Sub)
+        return matchIfNeg(CE->getOperand(0), CE->getOperand(1));
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
+      return L.match(ConstantExpr::getNeg(CI));
+    return false;
+  }
+private:
+  bool matchIfNeg(Value *LHS, Value *RHS) {
+    return LHS == ConstantExpr::getZeroValueForNegationExpr(LHS->getType()) &&
+           L.match(RHS);
+  }
+};
+
+template<typename LHS>
+inline neg_match<LHS> m_Neg(const LHS &L) { return L; }
+
+
 //===----------------------------------------------------------------------===//
 // Matchers for control flow
 //
