@@ -18,7 +18,7 @@
 #include "llvm/Target/TargetData.h"
 using namespace llvm;
 
-namespace llvm {
+namespace {
   /// LibCallAliasAnalysis - Alias analysis driven from LibCallInfo.
   struct LibCallAliasAnalysis : public FunctionPass, AliasAnalysis {
     static char ID; // Class identification
