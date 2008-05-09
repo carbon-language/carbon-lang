@@ -22,3 +22,5 @@ struct _mystruct {
   int (*printf)(const char *format, ...) __attribute__((__format__(printf, 1, 2))); // no-error
   int (*printf2)(double format, ...) __attribute__((__format__(printf, 1, 2))); // expected-error {{format argument not a string type}}
 };
+
+typedef int (*f3_ptr)(char*,...) __attribute__((format(printf,1,0))); // no-error

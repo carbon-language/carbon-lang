@@ -2338,6 +2338,8 @@ static const FunctionTypeProto *getFunctionProto(Decl *d) {
     Ty = decl->getType();
   else if (FieldDecl *decl = dyn_cast<FieldDecl>(d))
     Ty = decl->getType();
+  else if (TypedefDecl* decl = dyn_cast<TypedefDecl>(d))
+    Ty = decl->getUnderlyingType();
   else
     return 0;
 
