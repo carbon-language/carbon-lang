@@ -5658,8 +5658,21 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         return R;
   }
   
+  // ~x < ~y --> y < x
+  { Value *A, *B;
+    if (match(Op0, m_Not(m_Value(A))) &&
+        match(Op1, m_Not(m_Value(B))))
+      return new ICmpInst(I.getPredicate(), B, A);
+  }
+  
   if (I.isEquality()) {
     Value *A, *B, *C, *D;
+    
+    // -x == -y --> x == y
+    if (match(Op0, m_Neg(m_Value(A))) &&
+        match(Op1, m_Neg(m_Value(B))))
+      return new ICmpInst(I.getPredicate(), A, B);
+    
     if (match(Op0, m_Xor(m_Value(A), m_Value(B)))) {
       if (A == Op1 || B == Op1) {    // (A^B) == A  ->  B == 0
         Value *OtherVal = A == Op1 ? B : A;

@@ -134,3 +134,13 @@ define i1 @test21(i32 %g, i32 %h) {
 	%tmp.4 = icmp ne i32 %tmp.2, %g		; <i1> [#uses=1]
 	ret i1 %tmp.4
 }
+
+; PR2298
+define i8 @test22(i32 %a, i32 %b) zeroext nounwind  {
+	%tmp2 = sub i32 0, %a		; <i32> [#uses=1]
+	%tmp4 = sub i32 0, %b		; <i32> [#uses=1]
+	%tmp5 = icmp eq i32 %tmp2, %tmp4		; <i1> [#uses=1]
+	%retval89 = zext i1 %tmp5 to i8		; <i8> [#uses=1]
+	ret i8 %retval89
+}
+
