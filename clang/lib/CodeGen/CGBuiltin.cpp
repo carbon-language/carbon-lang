@@ -25,6 +25,17 @@ using namespace clang;
 using namespace CodeGen;
 using namespace llvm;
 
+/// Utility to insert an atomic instruction based Instrinsic::ID and
+// the expression node
+static RValue EmitBinaryAtomic(CodeGenFunction& CFG, 
+                               Intrinsic::ID Id, const CallExpr *E) {
+  const llvm::Type *ResType = CFG.ConvertType(E->getType());
+  Value *AtomF = CFG.CGM.getIntrinsic(Id, &ResType, 1);
+  return RValue::get(CFG.Builder.CreateCall2(AtomF,
+                                             CFG.EmitScalarExpr(E->getArg(0)),
+                                             CFG.EmitScalarExpr(E->getArg(1))));
+}
+
 RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   switch (BuiltinID) {
   default: {
@@ -241,7 +252,35 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     return RValue::get(Builder.CreateAlloca(llvm::Type::Int8Ty,
                                             EmitScalarExpr(E->getArg(0)),
                                             "tmp"));
+  case Builtin::BI__sync_fetch_and_add:
+    return EmitBinaryAtomic(*this, Intrinsic::atomic_las, E);
+  case Builtin::BI__sync_fetch_and_sub:
+    return EmitBinaryAtomic(*this, Intrinsic::atomic_lss, E);
+  case Builtin::BI__sync_fetch_and_min:
+    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_min, E);
+  case Builtin::BI__sync_fetch_and_max:
+    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_max, E);
+  case Builtin::BI__sync_fetch_and_umin:
+    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_umin, E);
+  case Builtin::BI__sync_fetch_and_umax:
+    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_umax, E);
+  case Builtin::BI__sync_fetch_and_and:
+    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_and, E);
+  case Builtin::BI__sync_fetch_and_or:
+    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_or, E);
+  case Builtin::BI__sync_fetch_and_xor:
+    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_xor, E);
+  case Builtin::BI__sync_val_compare_and_swap: {
+    Value *Args[3];
+    Args[0]= EmitScalarExpr(E->getArg(0));
+    Args[1] = EmitScalarExpr(E->getArg(1));
+    Args[2] = EmitScalarExpr(E->getArg(2));
+    const llvm::Type *ResType = ConvertType(E->getType());
+    Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_lcs, &ResType, 1);
+    return RValue::get(Builder.CreateCall(AtomF, &Args[0], &Args[1]+2));
   }
+  case Builtin::BI__sync_lock_test_and_set:
+    return EmitBinaryAtomic(*this, Intrinsic::atomic_swap, E);  }
   return RValue::get(0);
 }
 
