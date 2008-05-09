@@ -1341,7 +1341,7 @@ private:
   MVT::ValueType TransformToType[MVT::LAST_VALUETYPE];
 
   // Defines the capacity of the TargetLowering::OpActions table
-  static const int OpActionsCapacity = 173;
+  static const int OpActionsCapacity = 176;
 
   /// OpActions - For each operation and each value type, keep a LegalizeAction
   /// that indicates how instruction selection should deal with the operation.
@@ -1381,7 +1381,8 @@ private:
   /// TargetDAGCombineArray - Targets can specify ISD nodes that they would
   /// like PerformDAGCombine callbacks for by calling setTargetDAGCombine(),
   /// which sets a bit in this array.
-  unsigned char TargetDAGCombineArray[168/(sizeof(unsigned char)*8)];
+  unsigned char
+  TargetDAGCombineArray[OpActionsCapacity/(sizeof(unsigned char)*8)];
   
   /// PromoteToType - For operations that must be promoted to a specific type,
   /// this holds the destination type.  This map should be sparse, so don't hold
