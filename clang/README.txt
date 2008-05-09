@@ -51,7 +51,7 @@ I. Introduction:
                  on libast and libparse.
 
    librewrite  - Fast, scalable rewriting of source code.  This operates on
-                 on the raw syntactic text of source code, allowing a client
+                 the raw syntactic text of source code, allowing a client
                  to insert and delete text in very large source files using
                  the same source location information embedded in ASTs.  This
                  is intended to be a low-level API that is useful for
