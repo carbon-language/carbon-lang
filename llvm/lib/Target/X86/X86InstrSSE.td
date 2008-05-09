@@ -47,7 +47,10 @@ def X86pinsrw  : SDNode<"X86ISD::PINSRW",
 def X86insrtps : SDNode<"X86ISD::INSERTPS", 
                  SDTypeProfile<1, 3, [SDTCisVT<0, v4f32>, SDTCisSameAs<0,1>,
                                       SDTCisVT<2, f32>, SDTCisPtrTy<3>]>>;
-def X86zvmovl  : SDNode<"X86ISD::ZEXT_VMOVL", SDTUnaryOp>;
+def X86vzmovl  : SDNode<"X86ISD::VZEXT_MOVL",
+                 SDTypeProfile<1, 1, [SDTCisSameAs<0,1>]>>;
+def X86vzload  : SDNode<"X86ISD::VZEXT_LOAD", SDTLoad,
+                        [SDNPHasChain, SDNPMayLoad]>;
 
 //===----------------------------------------------------------------------===//
 // SSE Complex Patterns
@@ -1008,10 +1011,10 @@ let neverHasSideEffects = 1 in
 let AddedComplexity = 20 in
 def MOVZSS2PSrm : SSI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f32mem:$src),
                       "movss\t{$src, $dst|$dst, $src}",
-                   [(set VR128:$dst, (v4f32 (X86zvmovl (v4f32 (scalar_to_vector
+                   [(set VR128:$dst, (v4f32 (X86vzmovl (v4f32 (scalar_to_vector
                                                       (loadf32 addr:$src))))))]>;
 
-def : Pat<(v4f32 (X86zvmovl (memopv4f32 addr:$src))),
+def : Pat<(v4f32 (X86vzmovl (memopv4f32 addr:$src))),
           (MOVZSS2PSrm addr:$src)>;
 
 //===----------------------------------------------------------------------===//
@@ -2266,22 +2269,23 @@ let AddedComplexity = 20 in
   def MOVZSD2PDrm : SDI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
                         "movsd\t{$src, $dst|$dst, $src}",
                         [(set VR128:$dst,
-                          (v2f64 (X86zvmovl (v2f64 (scalar_to_vector
+                          (v2f64 (X86vzmovl (v2f64 (scalar_to_vector
                                                    (loadf64 addr:$src))))))]>;
 
-def : Pat<(v2f64 (X86zvmovl (memopv2f64 addr:$src))),
+def : Pat<(v2f64 (X86vzmovl (memopv2f64 addr:$src))),
           (MOVZSD2PDrm addr:$src)>;
+def : Pat<(v2f64 (X86vzload addr:$src)), (MOVZSD2PDrm addr:$src)>;
 
 // movd / movq to XMM register zero-extends
 let AddedComplexity = 15 in {
 def MOVZDI2PDIrr : PDI<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR32:$src),
                        "movd\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (v4i32 (X86zvmovl
+                       [(set VR128:$dst, (v4i32 (X86vzmovl
                                       (v4i32 (scalar_to_vector GR32:$src)))))]>;
 // This is X86-64 only.
 def MOVZQI2PQIrr : RPDI<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR64:$src),
                        "mov{d|q}\t{$src, $dst|$dst, $src}",
-                       [(set VR128:$dst, (v2i64 (X86zvmovl
+                       [(set VR128:$dst, (v2i64 (X86vzmovl
                                       (v2i64 (scalar_to_vector GR64:$src)))))]>;
 }
 
@@ -2289,28 +2293,30 @@ let AddedComplexity = 20 in {
 def MOVZDI2PDIrm : PDI<0x6E, MRMSrcMem, (outs VR128:$dst), (ins i32mem:$src),
                        "movd\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst,
-                         (v4i32 (X86zvmovl (v4i32 (scalar_to_vector
+                         (v4i32 (X86vzmovl (v4i32 (scalar_to_vector
                                                    (loadi32 addr:$src))))))]>;
 def MOVZQI2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                      "movq\t{$src, $dst|$dst, $src}",
                      [(set VR128:$dst,
-                       (v2i64 (X86zvmovl (v2i64 (scalar_to_vector
+                       (v2i64 (X86vzmovl (v2i64 (scalar_to_vector
                                                  (loadi64 addr:$src))))))]>, XS,
                    Requires<[HasSSE2]>;
 }
+
+def : Pat<(v2i64 (X86vzload addr:$src)), (MOVZQI2PQIrm addr:$src)>;
 
 // Moving from XMM to XMM and clear upper 64 bits. Note, there is a bug in
 // IA32 document. movq xmm1, xmm2 does clear the high bits.
 let AddedComplexity = 15 in
 def MOVZPQILo2PQIrr : I<0x7E, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                         "movq\t{$src, $dst|$dst, $src}",
-                    [(set VR128:$dst, (v2i64 (X86zvmovl (v2i64 VR128:$src))))]>,
+                    [(set VR128:$dst, (v2i64 (X86vzmovl (v2i64 VR128:$src))))]>,
                       XS, Requires<[HasSSE2]>;
 
 let AddedComplexity = 20 in
 def MOVZPQILo2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                         "movq\t{$src, $dst|$dst, $src}",
-                    [(set VR128:$dst, (v2i64 (X86zvmovl
+                    [(set VR128:$dst, (v2i64 (X86vzmovl
                                              (memopv2i64 addr:$src))))]>,
                       XS, Requires<[HasSSE2]>;
 
@@ -2758,9 +2764,9 @@ let Predicates = [HasSSE2] in {
 // movd to XMM register zero-extends
 let AddedComplexity = 15 in {
 // Zeroing a VR128 then do a MOVS{S|D} to the lower bits.
-def : Pat<(v2f64 (X86zvmovl (v2f64 (scalar_to_vector FR64:$src)))),
+def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector FR64:$src)))),
           (MOVLSD2PDrr (V_SET0), FR64:$src)>, Requires<[HasSSE2]>;
-def : Pat<(v4f32 (X86zvmovl (v4f32 (scalar_to_vector FR32:$src)))),
+def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector FR32:$src)))),
           (MOVLSS2PSrr (V_SET0), FR32:$src)>, Requires<[HasSSE2]>;
 }
 
@@ -2916,7 +2922,7 @@ let AddedComplexity = 15 in
 def : Pat<(v2f64 (vector_shuffle immAllZerosV_bc, VR128:$src,
            MOVL_shuffle_mask)),
           (MOVZPQILo2PQIrr VR128:$src)>, Requires<[HasSSE2]>;
-def : Pat<(v2f64 (X86zvmovl (v2f64 VR128:$src))),
+def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
           (MOVZPQILo2PQIrr VR128:$src)>, Requires<[HasSSE2]>;
 
 // FIXME: Temporary workaround since 2-wide shuffle is broken.

@@ -201,12 +201,12 @@ let AddedComplexity = 15 in
 def MMX_MOVZDI2PDIrr : MMXI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR32:$src),
                              "movd\t{$src, $dst|$dst, $src}",
               [(set VR64:$dst,
-                    (v2i32 (X86zvmovl (v2i32 (scalar_to_vector GR32:$src)))))]>;
+                    (v2i32 (X86vzmovl (v2i32 (scalar_to_vector GR32:$src)))))]>;
 let AddedComplexity = 20 in
 def MMX_MOVZDI2PDIrm : MMXI<0x6E, MRMSrcMem, (outs VR64:$dst), (ins i32mem:$src),
                              "movd\t{$src, $dst|$dst, $src}",
           [(set VR64:$dst,
-                (v2i32 (X86zvmovl (v2i32
+                (v2i32 (X86vzmovl (v2i32
                                    (scalar_to_vector (loadi32 addr:$src))))))]>;
 
 // Arithmetic Instructions
@@ -560,9 +560,9 @@ def : Pat<(i64  (bitconvert (v8i8 VR64:$src))),
 // Move scalar to XMM zero-extended
 // movd to XMM register zero-extends
 let AddedComplexity = 15 in {
-  def : Pat<(v8i8 (X86zvmovl (bc_v8i8 (v2i32 (scalar_to_vector GR32:$src))))),
+  def : Pat<(v8i8 (X86vzmovl (bc_v8i8 (v2i32 (scalar_to_vector GR32:$src))))),
            (MMX_MOVZDI2PDIrr GR32:$src)>; 
-  def : Pat<(v4i16 (X86zvmovl (bc_v8i8 (v2i32 (scalar_to_vector GR32:$src))))),
+  def : Pat<(v4i16 (X86vzmovl (bc_v4i16 (v2i32 (scalar_to_vector GR32:$src))))),
            (MMX_MOVZDI2PDIrr GR32:$src)>; 
 }
 

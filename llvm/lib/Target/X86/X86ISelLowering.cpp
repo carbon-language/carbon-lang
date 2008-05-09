@@ -715,6 +715,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 
   // We have target-specific dag combine patterns for the following nodes:
   setTargetDAGCombine(ISD::VECTOR_SHUFFLE);
+  setTargetDAGCombine(ISD::BUILD_VECTOR);
   setTargetDAGCombine(ISD::SELECT);
   setTargetDAGCombine(ISD::STORE);
 
@@ -3481,9 +3482,9 @@ SDOperand RewriteAsNarrowerShuffle(SDOperand V1, SDOperand V2,
                                  &MaskVec[0], MaskVec.size()));
 }
 
-/// getZextVMoveL - Return a zero-extending vector move low node.
+/// getVZextMovL - Return a zero-extending vector move low node.
 ///
-static SDOperand getZextVMoveL(MVT::ValueType VT, MVT::ValueType OpVT,
+static SDOperand getVZextMovL(MVT::ValueType VT, MVT::ValueType OpVT,
                                SDOperand SrcOp, SelectionDAG &DAG,
                                const X86Subtarget *Subtarget) {
   if (VT == MVT::v2f64 || VT == MVT::v4f32) {
@@ -3501,7 +3502,7 @@ static SDOperand getZextVMoveL(MVT::ValueType VT, MVT::ValueType OpVT,
         // PR2108
         OpVT = (OpVT == MVT::v2f64) ? MVT::v2i64 : MVT::v4i32;
         return DAG.getNode(ISD::BIT_CONVERT, VT,
-                           DAG.getNode(X86ISD::ZEXT_VMOVL, OpVT,
+                           DAG.getNode(X86ISD::VZEXT_MOVL, OpVT,
                                        DAG.getNode(ISD::SCALAR_TO_VECTOR, OpVT,
                                                    SrcOp.getOperand(0).getOperand(0))));
       }
@@ -3509,7 +3510,7 @@ static SDOperand getZextVMoveL(MVT::ValueType VT, MVT::ValueType OpVT,
   }
 
   return DAG.getNode(ISD::BIT_CONVERT, VT,
-                     DAG.getNode(X86ISD::ZEXT_VMOVL, OpVT,
+                     DAG.getNode(X86ISD::VZEXT_MOVL, OpVT,
                                  DAG.getNode(ISD::BIT_CONVERT, OpVT, SrcOp)));
 }
 
@@ -3561,14 +3562,14 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
         SDOperand NewMask = NewOp.getOperand(2);
         if (isCommutedMOVL(NewMask.Val, true, false)) {
           NewOp = CommuteVectorShuffle(NewOp, NewV1, NewV2, NewMask, DAG);
-          return getZextVMoveL(VT, NewOp.getValueType(), NewV2, DAG, Subtarget);
+          return getVZextMovL(VT, NewOp.getValueType(), NewV2, DAG, Subtarget);
         }
       }
     } else if (ISD::isBuildVectorAllZeros(V1.Val)) {
       SDOperand NewOp= RewriteAsNarrowerShuffle(V1, V2, VT, PermMask,
                                                 DAG, *this);
       if (NewOp.Val && X86::isMOVLMask(NewOp.getOperand(2).Val))
-        return getZextVMoveL(VT, NewOp.getValueType(), NewOp.getOperand(1),
+        return getVZextMovL(VT, NewOp.getValueType(), NewOp.getOperand(1),
                              DAG, Subtarget);
     }
   }
@@ -3577,7 +3578,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
     if (V1IsUndef)
       return V2;
     if (ISD::isBuildVectorAllZeros(V1.Val))
-      return getZextVMoveL(VT, VT, V2, DAG, Subtarget);
+      return getVZextMovL(VT, VT, V2, DAG, Subtarget);
     return Op;
   }
 
@@ -5675,7 +5676,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FNSTCW16m:          return "X86ISD::FNSTCW16m";
   case X86ISD::LCMPXCHG_DAG:       return "X86ISD::LCMPXCHG_DAG";
   case X86ISD::LCMPXCHG8_DAG:      return "X86ISD::LCMPXCHG8_DAG";
-  case X86ISD::ZEXT_VMOVL:         return "X86ISD::ZEXT_VMOVL";
+  case X86ISD::VZEXT_MOVL:         return "X86ISD::VZEXT_MOVL";
+  case X86ISD::VZEXT_LOAD:         return "X86ISD::VZEXT_LOAD";
   }
 }
 
@@ -6302,6 +6304,55 @@ static SDOperand PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
                      LD->getAlignment());
 }
 
+static SDNode *getBuildPairElt(SDNode *N, unsigned i) {
+  SDOperand Elt = N->getOperand(i);
+  if (Elt.getOpcode() != ISD::MERGE_VALUES)
+    return Elt.Val;
+  return Elt.getOperand(Elt.ResNo).Val;
+}
+
+static SDOperand PerformBuildVectorCombine(SDNode *N, SelectionDAG &DAG,
+                                       const X86Subtarget *Subtarget) {
+  // Ignore single operand BUILD_VECTOR.
+  if (N->getNumOperands() == 1)
+    return SDOperand();
+
+  MVT::ValueType VT = N->getValueType(0);
+  MVT::ValueType EVT = MVT::getVectorElementType(VT);
+  if ((EVT != MVT::i64 && EVT != MVT::f64) || Subtarget->is64Bit())
+    // We are looking for load i64 and zero extend. We want to transform
+    // it before legalizer has a chance to expand it. Also look for i64
+    // BUILD_PAIR bit casted to f64.
+    return SDOperand();
+  // This must be an insertion into a zero vector.
+  SDOperand HighElt = N->getOperand(1);
+  if (HighElt.getOpcode() != ISD::UNDEF &&
+      !isZeroNode(HighElt))
+    return SDOperand();
+
+  // Value must be a load.
+  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+  SDNode *Base = N->getOperand(0).Val;
+  if (!isa<LoadSDNode>(Base)) {
+    if (Base->getOpcode() == ISD::BIT_CONVERT)
+      Base = Base->getOperand(0).Val;
+    if (Base->getOpcode() != ISD::BUILD_PAIR)
+      return SDOperand();
+    SDNode *Pair = Base;
+    Base = getBuildPairElt(Pair, 0);
+    if (!ISD::isNON_EXTLoad(Base))
+      return SDOperand();
+    SDNode *NextLD = getBuildPairElt(Pair, 1);
+    if (!ISD::isNON_EXTLoad(NextLD) ||
+        !isConsecutiveLoad(NextLD, Base, 1, 4/*32 bits*/, MFI))
+      return SDOperand();
+  }
+  LoadSDNode *LD = cast<LoadSDNode>(Base);
+
+  // Transform it into VZEXT_LOAD addr.
+  return DAG.getNode(X86ISD::VZEXT_LOAD, VT, LD->getChain(), LD->getBasePtr());
+}                                           
+
 /// PerformSELECTCombine - Do target-specific dag combines on SELECT nodes.
 static SDOperand PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
                                       const X86Subtarget *Subtarget) {
@@ -6498,6 +6549,7 @@ SDOperand X86TargetLowering::PerformDAGCombine(SDNode *N,
   switch (N->getOpcode()) {
   default: break;
   case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, Subtarget);
+  case ISD::BUILD_VECTOR:   return PerformBuildVectorCombine(N, DAG, Subtarget);
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
   case ISD::STORE:          return PerformSTORECombine(N, DAG, Subtarget);
   case X86ISD::FXOR:

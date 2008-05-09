@@ -975,7 +975,7 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDOperand Op, SDOperand Pred,
 
   // Also handle the case where we explicitly require zeros in the top
   // elements.  This is a vector shuffle from the zero vector.
-  if (N.getOpcode() == X86ISD::ZEXT_VMOVL && N.Val->hasOneUse() &&
+  if (N.getOpcode() == X86ISD::VZEXT_MOVL && N.Val->hasOneUse() &&
       // Check to see if the top elements are all zeros (or bitcast of zeros).
       N.getOperand(0).getOpcode() == ISD::SCALAR_TO_VECTOR && 
       N.getOperand(0).Val->hasOneUse() &&

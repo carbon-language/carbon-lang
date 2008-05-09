@@ -201,8 +201,11 @@ namespace llvm {
       // FNSTCW16m - Store FP control world into i16 memory.
       FNSTCW16m,
 
-      // ZEXT_VMOVL - Vector move low and zero extend.
-      ZEXT_VMOVL
+      // VZEXT_MOVL - Vector move low and zero extend.
+      VZEXT_MOVL,
+
+      // VZEXT_LOAD - Load, scalar_to_vector, and zero extend.
+      VZEXT_LOAD
     };
   }
 
