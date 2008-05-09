@@ -24,6 +24,7 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
   // Set defaults.  These should be overridden by concrete targets as needed.
   CharIsSigned = true;
   WCharWidth = WCharAlign = 32;
+  LongWidth = LongAlign = 32;
   IntWidth = IntAlign = 32;
   DoubleWidth = 64;
   DoubleAlign = 32;
