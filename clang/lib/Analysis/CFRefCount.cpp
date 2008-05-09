@@ -1230,9 +1230,9 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
         unsigned Count = Builder.getCurrentBlockCount();
         SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
         
-        RVal X = Ex->getType()->isPointerType() 
-        ? cast<RVal>(lval::SymbolVal(Sym)) 
-        : cast<RVal>(nonlval::SymbolVal(Sym));
+        RVal X = LVal::IsLValType(Ex->getType())
+               ? cast<RVal>(lval::SymbolVal(Sym)) 
+               : cast<RVal>(nonlval::SymbolVal(Sym));
         
         St = StateMgr.SetRVal(St, Ex, X, Eng.getCFG().isBlkExpr(Ex), false);
       }      

@@ -379,10 +379,10 @@ RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, NonLVal X, QualType T) {
   BasicValueFactory& BasicVals = Eng.getBasicVals();
   
   llvm::APSInt V = cast<nonlval::ConcreteInt>(X).getValue();
-  V.setIsUnsigned(T->isUnsignedIntegerType() || IsPointerType(T));
+  V.setIsUnsigned(T->isUnsignedIntegerType() || LVal::IsLValType(T));
   V.extOrTrunc(Eng.getContext().getTypeSize(T));
   
-  if (IsPointerType(T))
+  if (LVal::IsLValType(T))
     return lval::ConcreteInt(BasicVals.getValue(V));
   else
     return nonlval::ConcreteInt(BasicVals.getValue(V));
@@ -398,7 +398,7 @@ RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, LVal X, QualType T) {
   //   can be introduced by the frontend for corner cases, e.g
   //   casting from va_list* to __builtin_va_list&.
   //
-  if (IsPointerType(T) || T->isReferenceType())
+  if (LVal::IsLValType(T) || T->isReferenceType())
     return X;
   
   assert (T->isIntegerType());
@@ -409,7 +409,7 @@ RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, LVal X, QualType T) {
   BasicValueFactory& BasicVals = Eng.getBasicVals();
   
   llvm::APSInt V = cast<lval::ConcreteInt>(X).getValue();
-  V.setIsUnsigned(T->isUnsignedIntegerType() || IsPointerType(T));
+  V.setIsUnsigned(T->isUnsignedIntegerType() || LVal::IsLValType(T));
   V.extOrTrunc(Eng.getContext().getTypeSize(T));
 
   return nonlval::ConcreteInt(BasicVals.getValue(V));
@@ -672,7 +672,7 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<ValueState>& Dst,
     unsigned Count = Builder.getCurrentBlockCount();
     SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(CE, Count);
         
-    RVal X = IsPointerType(CE->getType())
+    RVal X = LVal::IsLValType(CE->getType())
              ? cast<RVal>(lval::SymbolVal(Sym)) 
              : cast<RVal>(nonlval::SymbolVal(Sym));
     

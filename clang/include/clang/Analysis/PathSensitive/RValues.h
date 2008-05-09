@@ -157,6 +157,10 @@ public:
   static inline bool classof(const RVal* V) {
     return V->getBaseKind() == LValKind;
   }
+  
+  static inline bool IsLValType(QualType T) {
+    return T->isPointerType() || T->isObjCQualifiedIdType();
+  }
 };
   
 //==------------------------------------------------------------------------==//

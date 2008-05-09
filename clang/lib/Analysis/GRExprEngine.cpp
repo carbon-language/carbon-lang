@@ -795,7 +795,7 @@ void GRExprEngine::VisitArraySubscriptExpr(ArraySubscriptExpr* A, NodeTy* Pred,
   // abstract address of the base object.
   NodeSet Tmp;
   
-  if (IsPointerType(Base->getType())) // Base always is an LVal.
+  if (LVal::IsLValType(Base->getType())) // Base always is an LVal.
     Visit(Base, Pred, Tmp);
   else  
     VisitLVal(Base, Pred, Tmp);
@@ -842,7 +842,7 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, NodeTy* Pred,
   
   if (asLVal) {
       
-    if (IsPointerType(Base->getType())) // Base always is an LVal.
+    if (LVal::IsLValType(Base->getType())) // Base always is an LVal.
       Visit(Base, Pred, Tmp);
     else  
       VisitLVal(Base, Pred, Tmp);
@@ -869,7 +869,7 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, NodeTy* Pred,
     ValueState* St = GetState(*I);
     RVal BaseV = GetRVal(St, Base);
     
-    if (IsPointerType(Base->getType())) {
+    if (LVal::IsLValType(Base->getType())) {
     
       assert (M->isArrow());
       
@@ -1389,7 +1389,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
     }
   
     // Check for casts from pointers to integers.
-    if (T->isIntegerType() && IsPointerType(ExTy)) {
+    if (T->isIntegerType() && LVal::IsLValType(ExTy)) {
       unsigned bits = getContext().getTypeSize(ExTy);
     
       // FIXME: Determine if the number of bits of the target type is 
@@ -1402,7 +1402,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
     }
     
     // Check for casts from integers to pointers.
-    if (IsPointerType(T) && ExTy->isIntegerType())
+    if (LVal::IsLValType(T) && ExTy->isIntegerType())
       if (nonlval::LValAsInteger *LV = dyn_cast<nonlval::LValAsInteger>(&V)) {
         // Just unpackage the lval and return it.
         V = LV->getLVal();
@@ -1481,7 +1481,7 @@ void GRExprEngine::VisitDeclStmtAux(DeclStmt* DS, ScopedDecl* D,
 
         QualType T = VD->getType();
         
-        if (IsPointerType(T))
+        if (LVal::IsLValType(T))
           St = SetRVal(St, lval::DeclVal(VD),
                        lval::ConcreteInt(BasicVals.getValue(0, T)));
         else if (T->isIntegerType())
@@ -1499,7 +1499,7 @@ void GRExprEngine::VisitDeclStmtAux(DeclStmt* DS, ScopedDecl* D,
 
       QualType T = VD->getType();
 
-      if (IsPointerType(T) || T->isIntegerType()) {
+      if (LVal::IsLValType(T) || T->isIntegerType()) {
         
         RVal V = Ex ? GetRVal(St, Ex) : UndefinedVal();
         
@@ -1510,7 +1510,7 @@ void GRExprEngine::VisitDeclStmtAux(DeclStmt* DS, ScopedDecl* D,
           unsigned Count = Builder->getCurrentBlockCount();
           SymbolID Sym = SymMgr.getConjuredSymbol(Ex, Count);
           
-          V = IsPointerType(Ex->getType())
+          V = LVal::IsLValType(Ex->getType())
             ? cast<RVal>(lval::SymbolVal(Sym)) 
             : cast<RVal>(nonlval::SymbolVal(Sym));            
         }
@@ -1965,7 +1965,7 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
             unsigned Count = Builder->getCurrentBlockCount();
             SymbolID Sym = SymMgr.getConjuredSymbol(B->getRHS(), Count);
             
-            RightV = IsPointerType(B->getRHS()->getType()) 
+            RightV = LVal::IsLValType(B->getRHS()->getType()) 
                    ? cast<RVal>(lval::SymbolVal(Sym)) 
                    : cast<RVal>(nonlval::SymbolVal(Sym));            
           }
