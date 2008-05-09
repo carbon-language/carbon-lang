@@ -23,20 +23,18 @@
 using namespace clang;
 
 /// RewriteMacrosInInput - Implement -rewrite-macros mode.
-void clang::RewriteMacrosInInput(Preprocessor &PP,
+void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
                                  const std::string &OutFileName) {
   SourceManager &SM = PP.getSourceManager();
   
   Rewriter Rewrite;
   Rewrite.setSourceMgr(SM);
 
-#if 0
-  
   // Get the ID and start/end of the main file.
   unsigned MainFileID = SM.getMainFileID();
-  const llvm::MemoryBuffer *MainBuf = SM.getBuffer(MainFileID);
-  const char *MainFileStart = MainBuf->getBufferStart();
-  const char *MainFileEnd = MainBuf->getBufferEnd();
+  //const llvm::MemoryBuffer *MainBuf = SM.getBuffer(MainFileID);
+  //const char *MainFileStart = MainBuf->getBufferStart();
+  //const char *MainFileEnd = MainBuf->getBufferEnd();
  
   
   // Create the output file.
@@ -66,11 +64,4 @@ void clang::RewriteMacrosInInput(Preprocessor &PP,
   } else {
     fprintf(stderr, "No changes\n");
   }
-  // Emit metadata.
-  *OutFile << ResultStr;
-#endif
-  
 }
-
-
-

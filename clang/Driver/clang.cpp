@@ -1244,7 +1244,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     break;
       
   case RewriteMacros:
-    RewriteMacrosInInput(PP, OutputFile);
+    RewriteMacrosInInput(PP, InFile, OutputFile);
     ClearSourceMgr = true;
     break;
   }

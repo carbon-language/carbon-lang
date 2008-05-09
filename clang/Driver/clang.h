@@ -30,7 +30,8 @@ class SourceManager;
 void DoPrintPreprocessedInput(Preprocessor &PP, const std::string& OutFile);
 
 /// RewriteMacrosInInput - Implement -rewrite-macros mode.
-void RewriteMacrosInInput(Preprocessor &PP, const std::string& OutFile);
+void RewriteMacrosInInput(Preprocessor &PP, const std::string &InFileName,
+                          const std::string& OutFile);
   
 /// CreatePrintParserActionsAction - Return the actions implementation that
 /// implements the -parse-print-callbacks option.
