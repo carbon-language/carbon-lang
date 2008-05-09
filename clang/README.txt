@@ -23,30 +23,50 @@ I. Introduction:
  carefully designed as the following components:
  
    libsupport  - Basic support library, reused from LLVM.
+
    libsystem   - System abstraction library, reused from LLVM.
    
    libbasic    - Diagnostics, SourceLocations, SourceBuffer abstraction,
                  file system caching for input source files.  This depends on
                  libsupport and libsystem.
+
    libast      - Provides classes to represent the C AST, the C type system,
                  builtin functions, and various helpers for analyzing and
                  manipulating the AST (visitors, pretty printers, etc).  This
                  library depends on libbasic.
-                 
+
+
    liblex      - C/C++/ObjC lexing and preprocessing, identifier hash table,
                  pragma handling, tokens, and macros.  This depends on libbasic.
+
    libparse    - C (for now) parsing and local semantic analysis. This library
                  invokes coarse-grained 'Actions' provided by the client to do
                  stuff (e.g. libsema builds ASTs).  This depends on liblex.
+
    libsema     - Provides a set of parser actions to build a standardized AST
                  for programs.  AST's are 'streamed' out a top-level declaration
                  at a time, allowing clients to use decl-at-a-time processing,
                  build up entire translation units, or even build 'whole
                  program' ASTs depending on how they use the APIs.  This depends
                  on libast and libparse.
-                 
+
+   librewrite  - Fast, scalable rewriting of source code.  This operates on
+                 on the raw syntactic text of source code, allowing a client
+                 to insert and delete text in very large source files using
+                 the same source location information embedded in ASTs.  This
+                 is intended to be a low-level API that is useful for
+                 higher-level clients and libraries such as code refactoring.
+
+   libanalysis - Source-level dataflow analysis useful for performing analyses
+                 such as computing live variables.  It also includes a
+                 path-sensitive "graph-reachability" engine for writing
+                 analyses that reason about different possible paths of
+                 execution through source code.  This is currently being
+                 employ to write a set of checks for finding bugs in software.
+
    libcodegen  - Lower the AST to LLVM IR for optimization & codegen.  Depends
                  on libast.
+                 
    clang       - An example driver, client of the libraries at various levels.
                  This depends on all these libraries, and on LLVM VMCore.
 
