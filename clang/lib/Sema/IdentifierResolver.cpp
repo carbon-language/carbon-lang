@@ -13,67 +13,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "IdentifierResolver.h"
-#include "clang/Basic/IdentifierTable.h"
-#include "clang/AST/Decl.h"
-#include "clang/Parse/Scope.h"
 #include <list>
 #include <vector>
 
 using namespace clang;
 
-namespace {
-
-class IdDeclInfo;
-
-/// Identifier's FETokenInfo contains a Decl pointer if lower bit == 0.
-static inline bool isDeclPtr(void *Ptr) {
-  return (reinterpret_cast<uintptr_t>(Ptr) & 0x1) == 0;
-}
-
-/// Identifier's FETokenInfo contains a IdDeclInfo pointer if lower bit == 1.
-static inline IdDeclInfo *toIdDeclInfo(void *Ptr) {
-  return reinterpret_cast<IdDeclInfo*>(
-                  reinterpret_cast<uintptr_t>(Ptr) & ~0x1
-                                                          );
-}
-
-
-/// IdDeclInfo - Keeps track of information about decls associated to a
-/// particular identifier. IdDeclInfos are lazily constructed and assigned
-/// to an identifier the first time a decl with that identifier is shadowed
-/// in some scope.
-class IdDeclInfo {
-  typedef llvm::SmallVector<NamedDecl *, 2> ShadowedTy;
-  ShadowedTy ShadowedDecls;
-
-public:
-  typedef ShadowedTy::iterator ShadowedIter;
-
-  inline ShadowedIter shadowed_begin() { return ShadowedDecls.begin(); }
-  inline ShadowedIter shadowed_end() { return ShadowedDecls.end(); }
-
-  /// Add a decl in the scope chain.
-  void PushShadowed(NamedDecl *D) {
-    assert(D && "Decl null");
-    ShadowedDecls.push_back(D);
-  }
-
-  /// Add the decl at the top of scope chain.
-  void PushGlobalShadowed(NamedDecl *D) {
-    assert(D && "Decl null");
-    ShadowedDecls.insert(ShadowedDecls.begin(), D);
-  }
-
-  /// RemoveShadowed - Remove the decl from the scope chain.
-  /// The decl must already be part of the decl chain.
-  void RemoveShadowed(NamedDecl *D);
-};
-
 
 /// IdDeclInfoMap - Associates IdDeclInfos with Identifiers.
 /// Allocates 'pools' (vectors of IdDeclInfos) to avoid allocating each
 /// individual IdDeclInfo to heap.
-class IdDeclInfoMap {
+class IdentifierResolver::IdDeclInfoMap {
   static const unsigned int VECTOR_SIZE = 512;
   // Holds vectors of IdDeclInfos that serve as 'pools'.
   // New vectors are added when the current one is full.
@@ -88,17 +37,14 @@ public:
   IdDeclInfo &operator[](IdentifierInfo *II);
 };
 
-} // end anonymous namespace
-
 
 IdentifierResolver::IdentifierResolver() : IdDeclInfos(new IdDeclInfoMap) {}
 IdentifierResolver::~IdentifierResolver() {
-  delete static_cast<IdDeclInfoMap*>(IdDeclInfos);
+  delete IdDeclInfos;
 }
 
 /// AddDecl - Link the decl to its shadowed decl chain.
-void IdentifierResolver::AddDecl(NamedDecl *D, Scope *S) {
-  assert(D && S && "null param passed");
+void IdentifierResolver::AddDecl(NamedDecl *D) {
   IdentifierInfo *II = D->getIdentifier();
   void *Ptr = II->getFETokenInfo<void>();
 
@@ -111,56 +57,40 @@ void IdentifierResolver::AddDecl(NamedDecl *D, Scope *S) {
 
   if (isDeclPtr(Ptr)) {
     II->setFETokenInfo(NULL);
-    IdDeclInfoMap &Map = *static_cast<IdDeclInfoMap*>(IdDeclInfos);
-    IDI = &Map[II];
-    IDI->PushShadowed(static_cast<NamedDecl*>(Ptr));
+    IDI = &(*IdDeclInfos)[II];
+    NamedDecl *PrevD = static_cast<NamedDecl*>(Ptr);
+    IDI->AddDecl(PrevD);
   } else
     IDI = toIdDeclInfo(Ptr);
 
-  // C++ [basic.scope]p4:
-  //   -- exactly one declaration shall declare a class name or
-  //   enumeration name that is not a typedef name and the other
-  //   declarations shall all refer to the same object or
-  //   enumerator, or all refer to functions and function templates;
-  //   in this case the class name or enumeration name is hidden.
-  if (isa<TagDecl>(D) && IDI->shadowed_end() != IDI->shadowed_begin()) {
-    // We are pushing the name of a tag (enum or class).
-    IdDeclInfo::ShadowedIter TopIter = IDI->shadowed_end() - 1;
-    if (S->isDeclScope(*TopIter)) {
-      // There is already a declaration with the same name in the same
-      // scope. It must be found before we find the new declaration,
-      // so swap the order on the shadowed declaration stack.
-      NamedDecl *Temp = *TopIter;
-      *TopIter = D;
-      D = Temp;
-    }
-  }
-
-  IDI->PushShadowed(D);
+  IDI->AddDecl(D);
 }
 
-/// AddGlobalDecl - Link the decl at the top of the shadowed decl chain.
-void IdentifierResolver::AddGlobalDecl(NamedDecl *D) {
-  assert(D && "null param passed");
+/// AddShadowedDecl - Link the decl to its shadowed decl chain putting it
+/// after the decl that the iterator points to, thus the 'CIT' decl will be
+/// encountered before the 'D' decl.
+void IdentifierResolver::AddShadowedDecl(NamedDecl *D, NamedDecl *Shadow) {
+  assert(D->getIdentifier() == Shadow->getIdentifier() && "Different ids!");
+  assert(LookupContext(D) == LookupContext(Shadow) && "Different context!");
+
   IdentifierInfo *II = D->getIdentifier();
   void *Ptr = II->getFETokenInfo<void>();
-
-  if (!Ptr) {
-    II->setFETokenInfo(D);
-    return;
-  }
+  assert(Ptr && "No decl from Ptr ?");
 
   IdDeclInfo *IDI;
 
   if (isDeclPtr(Ptr)) {
     II->setFETokenInfo(NULL);
-    IdDeclInfoMap &Map = *static_cast<IdDeclInfoMap*>(IdDeclInfos);
-    IDI = &Map[II];
-    IDI->PushShadowed(static_cast<NamedDecl*>(Ptr));
-  } else
-    IDI = toIdDeclInfo(Ptr);
+    IDI = &(*IdDeclInfos)[II];
+    NamedDecl *PrevD = static_cast<NamedDecl*>(Ptr);
+    assert(PrevD == Shadow && "Invalid shadow decl ?");
+    IDI->AddDecl(D);
+    IDI->AddDecl(PrevD);
+    return;
+  }
 
-  IDI->PushGlobalShadowed(D);
+  IDI = toIdDeclInfo(Ptr);
+  IDI->AddShadowed(D, Shadow);
 }
 
 /// RemoveDecl - Unlink the decl from its shadowed decl chain.
@@ -178,71 +108,72 @@ void IdentifierResolver::RemoveDecl(NamedDecl *D) {
     return;
   }
   
-  return toIdDeclInfo(Ptr)->RemoveShadowed(D);
+  return toIdDeclInfo(Ptr)->RemoveDecl(D);
 }
 
-/// Lookup - Find the non-shadowed decl that belongs to a particular
-/// Decl::IdentifierNamespace.
-NamedDecl *IdentifierResolver::Lookup(const IdentifierInfo *II, unsigned NS) {
-  assert(II && "null param passed");
-  void *Ptr = II->getFETokenInfo<void>();
+/// begin - Returns an iterator for all decls, starting at the given
+/// declaration context.
+IdentifierResolver::iterator
+IdentifierResolver::begin(const IdentifierInfo *II, DeclContext *Ctx) {
+  assert(Ctx && "null param passed");
 
-  if (!Ptr) return NULL;
+  void *Ptr = II->getFETokenInfo<void>();
+  if (!Ptr) return end(II);
+
+  LookupContext LC(Ctx);
 
   if (isDeclPtr(Ptr)) {
     NamedDecl *D = static_cast<NamedDecl*>(Ptr);
-    return (D->getIdentifierNamespace() & NS) ? D : NULL;
-  }
 
+    if (LC.isEqOrContainedBy(LookupContext(D)))
+      return iterator(D);
+    else
+      return end(II);
+
+  }
+  
   IdDeclInfo *IDI = toIdDeclInfo(Ptr);
-
-  // ShadowedDecls are ordered from most shadowed to less shadowed.
-  // So we do a reverse iteration from end to begin.
-  for (IdDeclInfo::ShadowedIter SI = IDI->shadowed_end();
-       SI != IDI->shadowed_begin(); --SI) {
-    NamedDecl *D = *(SI-1);
-    if (D->getIdentifierNamespace() & NS)
-      return D;
-  }
-
-  // we didn't find the decl.
-  return NULL;
+  return iterator(IDI->FindContext(LC));
 }
 
-/// RemoveShadowed - Remove the decl from the scope chain.
-/// The decl must already be part of the decl chain.
-void IdDeclInfo::RemoveShadowed(NamedDecl *D) {
-  assert(D && "null decl passed");
-  assert(!ShadowedDecls.empty() &&
-         "Didn't find this decl on its identifier's chain!");
+/// ctx_begin - Returns an iterator for only decls that belong to the given
+/// declaration context.
+IdentifierResolver::ctx_iterator
+IdentifierResolver::ctx_begin(const IdentifierInfo *II, DeclContext *Ctx) {
+  assert(Ctx && "null param passed");
 
-  // common case
-  if (D == ShadowedDecls.back()) {
-    ShadowedDecls.pop_back();
-    return;
+  void *Ptr = II->getFETokenInfo<void>();
+  if (!Ptr) return ctx_end(II);
+
+  LookupContext LC(Ctx);
+
+  if (isDeclPtr(Ptr)) {
+    NamedDecl *D = static_cast<NamedDecl*>(Ptr);
+
+    if (LC == LookupContext(D))
+      return ctx_iterator(D);
+    else
+      return ctx_end(II);
+
   }
+  
+  IdDeclInfo *IDI = toIdDeclInfo(Ptr);
+  IdDeclInfo::DeclsTy::iterator I = IDI->FindContext(LookupContext(Ctx));
+  if (I != IDI->decls_begin() && LC != LookupContext(*(I-1)))
+    I = IDI->decls_begin();
 
-  for (ShadowedIter SI = ShadowedDecls.end()-1;
-       SI != ShadowedDecls.begin(); --SI) {
-    if (*(SI-1) == D) {
-      ShadowedDecls.erase(SI-1);
-      return;
-    }
-  }
-
-  assert(false && "Didn't find this decl on its identifier's chain!");
+  return ctx_iterator(I);
 }
+
 
 /// Returns the IdDeclInfo associated to the IdentifierInfo.
 /// It creates a new IdDeclInfo if one was not created before for this id.
-IdDeclInfo &IdDeclInfoMap::operator[](IdentifierInfo *II) {
+IdentifierResolver::IdDeclInfo &
+IdentifierResolver::IdDeclInfoMap::operator[](IdentifierInfo *II) {
   assert (II && "null IdentifierInfo passed");
   void *Ptr = II->getFETokenInfo<void>();
 
-  if (Ptr) {
-    assert(!isDeclPtr(Ptr) && "didn't clear decl for FEToken");
-    return *toIdDeclInfo(Ptr);
-  }
+  if (Ptr) return *toIdDeclInfo(Ptr);
 
   if (CurIndex == VECTOR_SIZE) {
     // Add a IdDeclInfo vector 'pool'

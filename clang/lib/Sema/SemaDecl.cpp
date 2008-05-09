@@ -59,13 +59,40 @@ void Sema::PopDeclContext() {
 
 /// Add this decl to the scope shadowed decl chains.
 void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
-  IdResolver.AddDecl(D, S);
   S->AddDecl(D);
+
+  // C++ [basic.scope]p4:
+  //   -- exactly one declaration shall declare a class name or
+  //   enumeration name that is not a typedef name and the other
+  //   declarations shall all refer to the same object or
+  //   enumerator, or all refer to functions and function templates;
+  //   in this case the class name or enumeration name is hidden.
+  if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
+    // We are pushing the name of a tag (enum or class).
+    IdentifierResolver::ctx_iterator
+      CIT = IdResolver.ctx_begin(TD->getIdentifier(), TD->getDeclContext());
+    if (CIT != IdResolver.ctx_end(TD->getIdentifier()) &&
+        IdResolver.isDeclInScope(*CIT, TD->getDeclContext(), S)) {
+      // There is already a declaration with the same name in the same
+      // scope. It must be found before we find the new declaration,
+      // so swap the order on the shadowed declaration chain.
+
+      IdResolver.AddShadowedDecl(TD, *CIT);
+      return;
+    }
+  }
+
+  IdResolver.AddDecl(D);
 }
 
 void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
   if (S->decl_empty()) return;
   assert((S->getFlags() & Scope::DeclScope) &&"Scope shouldn't contain decls!");
+
+  // We only want to remove the decls from the identifier decl chains for local
+  // scopes, when inside a function/method.
+  if (S->getFnParent() == 0)
+    return;
          
   for (Scope::decl_iterator I = S->decl_begin(), E = S->decl_end();
        I != E; ++I) {
@@ -115,8 +142,10 @@ Decl *Sema::LookupDecl(const IdentifierInfo *II, unsigned NSI,
   // Scan up the scope chain looking for a decl that matches this identifier
   // that is in the appropriate namespace.  This search should not take long, as
   // shadowing of names is uncommon, and deep shadowing is extremely uncommon.
-  NamedDecl *ND = IdResolver.Lookup(II, NS);
-  if (ND) return ND;
+  for (IdentifierResolver::iterator
+       I = IdResolver.begin(II, CurContext), E = IdResolver.end(II); I != E; ++I)
+    if ((*I)->getIdentifierNamespace() & NS)
+      return *I;
 
   // If we didn't find a use of this identifier, and if the identifier
   // corresponds to a compiler builtin, create the decl object for the builtin
@@ -184,11 +213,7 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
   
   
   // TUScope is the translation-unit scope to insert this function into.
-  TUScope->AddDecl(New);
-  
-  // Add this decl to the end of the identifier info.
-  IdResolver.AddGlobalDecl(New);
-
+  PushOnScopeChains(New, TUScope);
   return New;
 }
 
@@ -797,12 +822,12 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
                          D.getAttributes());
     // Merge the decl with the existing one if appropriate. If the decl is
     // in an outer scope, it isn't the same thing.
-    if (PrevDecl && S->isDeclScope(PrevDecl)) {
+    if (PrevDecl && IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
       NewTD = MergeTypeDefDecl(NewTD, PrevDecl);
       if (NewTD == 0) return 0;
     }
     New = NewTD;
-    if (S->getParent() == 0) {
+    if (S->getFnParent() == 0) {
       // C99 6.7.7p2: If a typedef name specifies a variably modified type
       // then it shall have block scope.
       if (NewTD->getUnderlyingType()->isVariablyModifiedType()) {
@@ -873,7 +898,9 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
 
     // Merge the decl with the existing one if appropriate. Since C functions
     // are in a flat namespace, make sure we consider decls in outer scopes.
-    if (PrevDecl) {
+    if (PrevDecl &&
+        (!getLangOptions().CPlusPlus ||
+         IdResolver.isDeclInScope(PrevDecl, CurContext, S)) ) {
       bool Redeclaration = false;
       NewFD = MergeFunctionDecl(NewFD, PrevDecl, Redeclaration);
       if (NewFD == 0) return 0;
@@ -914,7 +941,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     case DeclSpec::SCS_register:       SC = VarDecl::Register; break;
     case DeclSpec::SCS_private_extern: SC = VarDecl::PrivateExtern; break;
     }    
-    if (S->getParent() == 0) {
+    if (S->getFnParent() == 0) {
       // C99 6.9p2: The storage-class specifiers auto and register shall not
       // appear in the declaration specifiers in an external declaration.
       if (SC == VarDecl::Auto || SC == VarDecl::Register) {
@@ -942,7 +969,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     }
     // Merge the decl with the existing one if appropriate. If the decl is
     // in an outer scope, it isn't the same thing.
-    if (PrevDecl && S->isDeclScope(PrevDecl)) {
+    if (PrevDecl && IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
       NewVD = MergeVarDecl(NewVD, PrevDecl);
       if (NewVD == 0) return 0;
     }
@@ -1221,12 +1248,14 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   // See if this is a redefinition.
   Decl *PrevDcl = LookupDecl(D.getIdentifier(), Decl::IDNS_Ordinary,
                              GlobalScope);
-  if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(PrevDcl)) {
-    const FunctionDecl *Definition;
-    if (FD->getBody(Definition)) {
-      Diag(D.getIdentifierLoc(), diag::err_redefinition, 
-           D.getIdentifier()->getName());
-      Diag(Definition->getLocation(), diag::err_previous_definition);
+  if (PrevDcl && IdResolver.isDeclInScope(PrevDcl, CurContext)) {
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(PrevDcl)) {
+      const FunctionDecl *Definition;
+      if (FD->getBody(Definition)) {
+        Diag(D.getIdentifierLoc(), diag::err_redefinition, 
+             D.getIdentifier()->getName());
+        Diag(Definition->getLocation(), diag::err_previous_definition);
+      }
     }
   }
   Decl *decl = static_cast<Decl*>(ActOnDeclarator(GlobalScope, D, 0));
@@ -1375,7 +1404,8 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
       // If this is a use of a previous tag, or if the tag is already declared in
       // the same scope (so that the definition/declaration completes or
       // rementions the tag), reuse the decl.
-      if (TK == TK_Reference || S->isDeclScope(PrevDecl)) {
+      if (TK == TK_Reference ||
+          IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
         // Make sure that this wasn't declared as an enum and now used as a struct
         // or something similar.
         if (PrevDecl->getKind() != Kind) {
@@ -1733,7 +1763,7 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
   // Verify that there isn't already something declared with this name in this
   // scope.
   if (Decl *PrevDecl = LookupDecl(Id, Decl::IDNS_Ordinary, S)) {
-    if (S->isDeclScope(PrevDecl)) {
+    if (IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
       if (isa<EnumConstantDecl>(PrevDecl))
         Diag(IdLoc, diag::err_redefinition_of_enumerator, Id->getName());
       else
