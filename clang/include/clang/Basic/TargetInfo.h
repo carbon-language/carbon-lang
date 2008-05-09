@@ -35,11 +35,12 @@ protected:
   // Target values set by the ctor of the actual target implementation.  Default
   // values are specified by the TargetInfo constructor.
   bool CharIsSigned;
-  unsigned WCharWidth, WCharAlign;
-  unsigned IntWidth, IntAlign;
-  unsigned DoubleWidth, DoubleAlign;
-  unsigned LongWidth, LongAlign;
-  unsigned LongLongWidth, LongLongAlign;
+  unsigned char PointerWidth, PointerAlign;
+  unsigned char WCharWidth, WCharAlign;
+  unsigned char IntWidth, IntAlign;
+  unsigned char DoubleWidth, DoubleAlign;
+  unsigned char LongWidth, LongAlign;
+  unsigned char LongLongWidth, LongLongAlign;
   
   const llvm::fltSemantics *FloatFormat, *DoubleFormat, *LongDoubleFormat;
 
@@ -61,9 +62,19 @@ public:
   bool isCharSigned() const { return CharIsSigned; }
   
   /// getPointerWidth - Return the width of pointers on this target, for the
-  /// specified address space. FIXME: implement correctly.
-  virtual uint64_t getPointerWidth(unsigned AddrSpace) const { return 32; }
-  virtual uint64_t getPointerAlign(unsigned AddrSpace) const { return 32; }
+  /// specified address space.
+  uint64_t getPointerWidth(unsigned AddrSpace) const {
+    return AddrSpace == 0 ? PointerWidth : getPointerWidthV(AddrSpace);
+  }
+  uint64_t getPointerAlign(unsigned AddrSpace) const {
+    return AddrSpace == 0 ? PointerAlign : getPointerAlignV(AddrSpace);
+  }
+  virtual uint64_t getPointerWidthV(unsigned AddrSpace) const {
+    return PointerWidth;
+  }
+  virtual uint64_t getPointerAlignV(unsigned AddrSpace) const {
+    return PointerAlign;
+  }
   
   /// getBoolWidth/Align - Return the size of '_Bool' and C++ 'bool' for this
   /// target, in bits.

@@ -23,6 +23,7 @@ using namespace clang;
 TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
   // Set defaults.  These should be overridden by concrete targets as needed.
   CharIsSigned = true;
+  PointerWidth = PointerAlign = 32;
   WCharWidth = WCharAlign = 32;
   IntWidth = IntAlign = 32;
   LongWidth = LongAlign = 32;

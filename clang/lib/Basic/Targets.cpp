@@ -869,10 +869,8 @@ namespace {
     PIC16TargetInfo(const std::string& triple) : TargetInfo(triple) {
       IntWidth = IntAlign = 16;
     }
-    virtual uint64_t getPointerWidth(unsigned AddrSpace) const { return 16; }
-    virtual uint64_t getPointerAlign(unsigned AddrSpace) const { return 8; }
-    virtual unsigned getIntWidth() const { return 16; }
-    virtual unsigned getIntAlign() const { return 8; }
+    virtual uint64_t getPointerWidthV(unsigned AddrSpace) const { return 16; }
+    virtual uint64_t getPointerAlignV(unsigned AddrSpace) const { return 8; }
     virtual void getTargetDefines(std::vector<char> &Defines) const {
       Define(Defines, "__pic16");
     }
