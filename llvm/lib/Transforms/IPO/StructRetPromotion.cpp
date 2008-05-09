@@ -92,7 +92,7 @@ bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
   assert (F->getReturnType() == Type::VoidTy && "Invalid function return type");
   Function::arg_iterator AI = F->arg_begin();
   const llvm::PointerType *FArgType = dyn_cast<PointerType>(AI->getType());
-  assert (FArgType && "Invalid sret paramater type");
+  assert (FArgType && "Invalid sret parameter type");
   const llvm::StructType *STy = 
     dyn_cast<StructType>(FArgType->getElementType());
   assert (STy && "Invalid sret parameter element type");
@@ -149,7 +149,7 @@ bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
   return true;
 }
 
-  // Check if it is ok to perform this promotion.
+// Check if it is ok to perform this promotion.
 bool SRETPromotion::isSafeToUpdateAllCallers(Function *F) {
 
   if (F->use_empty())
