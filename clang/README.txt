@@ -62,7 +62,7 @@ I. Introduction:
                  path-sensitive "graph-reachability" engine for writing
                  analyses that reason about different possible paths of
                  execution through source code.  This is currently being
-                 employ to write a set of checks for finding bugs in software.
+                 employed to write a set of checks for finding bugs in software.
 
    libcodegen  - Lower the AST to LLVM IR for optimization & codegen.  Depends
                  on libast.
