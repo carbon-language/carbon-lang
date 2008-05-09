@@ -586,7 +586,9 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   }
   case tok::l_square:
     // These can be followed by postfix-expr pieces.
-    return ParsePostfixExpressionSuffix(ParseObjCMessageExpression());
+    if (getLang().ObjC1)
+      return ParsePostfixExpressionSuffix(ParseObjCMessageExpression());
+    // FALL THROUGH.
   default:
     Diag(Tok, diag::err_expected_expression);
     return ExprResult(true);
