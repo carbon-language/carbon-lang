@@ -431,7 +431,8 @@ ActOnArraySubscriptExpr(ExprTy *Base, SourceLocation LLoc,
     IndexExpr = RHSExp;
     
     // Component access limited to variables (reject vec4.rg[1]).
-    if (!isa<DeclRefExpr>(BaseExpr) && !isa<ArraySubscriptExpr>(BaseExpr)) 
+    if (!isa<DeclRefExpr>(BaseExpr) && !isa<ArraySubscriptExpr>(BaseExpr) &&
+        !isa<ExtVectorElementExpr>(BaseExpr))
       return Diag(LLoc, diag::err_ext_vector_component_access, 
                   SourceRange(LLoc, RLoc));
     // FIXME: need to deal with const...
@@ -461,6 +462,10 @@ QualType Sema::
 CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
                         IdentifierInfo &CompName, SourceLocation CompLoc) {
   const ExtVectorType *vecType = baseType->getAsExtVectorType();
+
+  // This flag determines whether or not the component is to be treated as a 
+  // special name, or a regular GLSL-style component access.
+  bool SpecialComponent = false;
   
   // The vector accessor can't exceed the number of elements.
   const char *compStr = CompName.getName();
@@ -469,8 +474,13 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
                 baseType.getAsString(), SourceRange(CompLoc));
     return QualType();
   }
-  // The component names must come from the same set.
-  if (vecType->getPointAccessorIdx(*compStr) != -1) {
+
+  // Check that we've found one of the special components, or that the component
+  // names must come from the same set.
+  if (!strcmp(compStr, "hi") || !strcmp(compStr, "lo") || 
+      !strcmp(compStr, "e") || !strcmp(compStr, "o")) {
+    SpecialComponent = true;
+  } else if (vecType->getPointAccessorIdx(*compStr) != -1) {
     do
       compStr++;
     while (*compStr && vecType->getPointAccessorIdx(*compStr) != -1);
@@ -484,7 +494,7 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
     while (*compStr && vecType->getTextureAccessorIdx(*compStr) != -1);
   }
     
-  if (*compStr) { 
+  if (!SpecialComponent && *compStr) { 
     // We didn't get to the end of the string. This means the component names
     // didn't come from the same set *or* we encountered an illegal name.
     Diag(OpLoc, diag::err_ext_vector_component_name_illegal, 
@@ -499,17 +509,27 @@ CheckExtVectorComponent(QualType baseType, SourceLocation OpLoc,
     else
       break;
   }
-  if (*compStr) { 
+  if (!SpecialComponent && *compStr) { 
     // We didn't get to the end of the string. This means a component accessor
     // exceeds the number of elements in the vector.
     Diag(OpLoc, diag::err_ext_vector_component_exceeds_length, 
                 baseType.getAsString(), SourceRange(CompLoc));
     return QualType();
   }
+
+  // If we have a special component name, verify that the current vector length
+  // is an even number, since all special component names return exactly half
+  // the elements.
+  if (SpecialComponent && (vecType->getNumElements() & 1U)) {
+    return QualType();
+  }
+  
   // The component accessor looks fine - now we need to compute the actual type.
   // The vector type is implied by the component accessor. For example, 
   // vec4.b is a float, vec4.xy is a vec2, vec4.rgb is a vec3, etc.
-  unsigned CompSize = strlen(CompName.getName());
+  // vec4.hi, vec4.lo, vec4.e, and vec4.o all return vec2.
+  unsigned CompSize = SpecialComponent ? vecType->getNumElements() / 2
+                                       : strlen(CompName.getName());
   if (CompSize == 1)
     return vecType->getElementType();
     
@@ -566,7 +586,8 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                           MemberLoc, MemberType);
   } else if (BaseType->isExtVectorType() && OpKind == tok::period) {
     // Component access limited to variables (reject vec4.rg.g).
-    if (!isa<DeclRefExpr>(BaseExpr) && !isa<ArraySubscriptExpr>(BaseExpr))
+    if (!isa<DeclRefExpr>(BaseExpr) && !isa<ArraySubscriptExpr>(BaseExpr) &&
+        !isa<ExtVectorElementExpr>(BaseExpr))
       return Diag(OpLoc, diag::err_ext_vector_component_access, 
                   SourceRange(MemberLoc));
     QualType ret = CheckExtVectorComponent(BaseType, OpLoc, Member, MemberLoc);

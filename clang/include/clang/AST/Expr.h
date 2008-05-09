@@ -23,6 +23,8 @@
 #include "llvm/ADT/APFloat.h"
 #include <vector>
 
+class llvm::Constant;
+
 namespace clang {
   class IdentifierInfo;
   class Selector;
@@ -701,11 +703,6 @@ class ExtVectorElementExpr : public Expr {
   IdentifierInfo &Accessor;
   SourceLocation AccessorLoc;
 public:
-  enum ElementType {
-    Point,   // xywz
-    Color,   // rgba
-    Texture  // stpq
-  };
   ExtVectorElementExpr(QualType ty, Expr *base, IdentifierInfo &accessor,
                        SourceLocation loc)
     : Expr(ExtVectorElementExprClass, ty), 
@@ -719,25 +716,18 @@ public:
   /// getNumElements - Get the number of components being selected.
   unsigned getNumElements() const;
   
-  /// getElementType - Determine whether the components of this access are
-  /// "point" "color" or "texture" elements.
-  ElementType getElementType() const;
-
   /// containsDuplicateElements - Return true if any element access is
   /// repeated.
   bool containsDuplicateElements() const;
   
-  /// getEncodedElementAccess - Encode the elements accessed into a bit vector.
-  /// The encoding currently uses 2-bit bitfields, but clients should use the
-  /// accessors below to access them.
-  ///
-  unsigned getEncodedElementAccess() const;
+  /// getEncodedElementAccess - Encode the elements accessed into an llvm
+  /// aggregate Constant of ConstantInt(s).
+  llvm::Constant *getEncodedElementAccess() const;
   
   /// getAccessedFieldNo - Given an encoded value and a result number, return
   /// the input field number being accessed.
-  static unsigned getAccessedFieldNo(unsigned Idx, unsigned EncodedVal) {
-    return (EncodedVal >> (Idx*2)) & 3;
-  }
+  static unsigned getAccessedFieldNo(unsigned Idx,
+                                     const llvm::Constant *Elts);
   
   virtual SourceRange getSourceRange() const {
     return SourceRange(getBase()->getLocStart(), AccessorLoc);

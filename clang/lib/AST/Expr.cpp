@@ -16,6 +16,8 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -1035,27 +1037,12 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const {
 }
 
 unsigned ExtVectorElementExpr::getNumElements() const {
-  return strlen(Accessor.getName());
+  if (const VectorType *VT = getType()->getAsVectorType())
+    return VT->getNumElements();
+  return 1;
 }
 
-
-/// getComponentType - Determine whether the components of this access are
-/// "point" "color" or "texture" elements.
-ExtVectorElementExpr::ElementType 
-ExtVectorElementExpr::getElementType() const {
-  // derive the component type, no need to waste space.
-  const char *compStr = Accessor.getName();
-  
-  if (ExtVectorType::getPointAccessorIdx(*compStr) != -1) return Point;
-  if (ExtVectorType::getColorAccessorIdx(*compStr) != -1) return Color;
-  
-  assert(ExtVectorType::getTextureAccessorIdx(*compStr) != -1 &&
-         "getComponentType(): Illegal accessor");
-  return Texture;
-}
-
-/// containsDuplicateElements - Return true if any element access is
-/// repeated.
+/// containsDuplicateElements - Return true if any element access is repeated.
 bool ExtVectorElementExpr::containsDuplicateElements() const {
   const char *compStr = Accessor.getName();
   unsigned length = strlen(compStr);
@@ -1069,20 +1056,42 @@ bool ExtVectorElementExpr::containsDuplicateElements() const {
   return false;
 }
 
-/// getEncodedElementAccess - We encode fields with two bits per component.
-unsigned ExtVectorElementExpr::getEncodedElementAccess() const {
+/// getEncodedElementAccess - We encode the fields as a llvm ConstantArray.
+llvm::Constant *ExtVectorElementExpr::getEncodedElementAccess() const {
   const char *compStr = Accessor.getName();
-  unsigned length = getNumElements();
+  llvm::SmallVector<llvm::Constant *, 8> Indices;
+ 
+  bool isHi =   !strcmp(compStr, "hi");
+  bool isLo =   !strcmp(compStr, "lo");
+  bool isEven = !strcmp(compStr, "e");
+  bool isOdd  = !strcmp(compStr, "o");
+    
+  for (unsigned i = 0, e = getNumElements(); i != e; ++i) {
+    uint64_t Index;
+    
+    if (isHi)
+      Index = e + i;
+    else if (isLo)
+      Index = i;
+    else if (isEven)
+      Index = 2 * i;
+    else if (isOdd)
+      Index = 2 * i + 1;
+    else
+      Index = ExtVectorType::getAccessorIdx(compStr[i]);
 
-  unsigned Result = 0;
-  
-  while (length--) {
-    Result <<= 2;
-    int Idx = ExtVectorType::getAccessorIdx(compStr[length]);
-    assert(Idx != -1 && "Invalid accessor letter");
-    Result |= Idx;
+    Indices.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, Index));
   }
-  return Result;
+  return llvm::ConstantVector::get(&Indices[0], Indices.size());
+}
+
+unsigned 
+ExtVectorElementExpr::getAccessedFieldNo(unsigned Idx, 
+                                         const llvm::Constant *Elts) {
+  if (isa<llvm::ConstantAggregateZero>(Elts))
+    return 0;
+  
+  return cast<llvm::ConstantInt>(Elts->getOperand(Idx))->getZExtValue();
 }
 
 // constructor for instance messages.

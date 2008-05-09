@@ -182,13 +182,13 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
                                                          QualType ExprType) {
   llvm::Value *Vec = Builder.CreateLoad(LV.getExtVectorAddr(), "tmp");
   
-  unsigned EncFields = LV.getExtVectorElts();
+  const llvm::Constant *Elts = LV.getExtVectorElts();
   
   // If the result of the expression is a non-vector type, we must be
   // extracting a single element.  Just codegen as an extractelement.
   const VectorType *ExprVT = ExprType->getAsVectorType();
   if (!ExprVT) {
-    unsigned InIdx = ExtVectorElementExpr::getAccessedFieldNo(0, EncFields);
+    unsigned InIdx = ExtVectorElementExpr::getAccessedFieldNo(0, Elts);
     llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
     return RValue::get(Builder.CreateExtractElement(Vec, Elt, "tmp"));
   }
@@ -202,7 +202,7 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
   if (NumResultElts == NumSourceElts) {
     llvm::SmallVector<llvm::Constant*, 4> Mask;
     for (unsigned i = 0; i != NumResultElts; ++i) {
-      unsigned InIdx = ExtVectorElementExpr::getAccessedFieldNo(i, EncFields);
+      unsigned InIdx = ExtVectorElementExpr::getAccessedFieldNo(i, Elts);
       Mask.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx));
     }
     
@@ -218,7 +218,7 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
   
   // Extract/Insert each element of the result.
   for (unsigned i = 0; i != NumResultElts; ++i) {
-    unsigned InIdx = ExtVectorElementExpr::getAccessedFieldNo(i, EncFields);
+    unsigned InIdx = ExtVectorElementExpr::getAccessedFieldNo(i, Elts);
     llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
     Elt = Builder.CreateExtractElement(Vec, Elt, "tmp");
     
@@ -312,7 +312,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
   // value now.
   llvm::Value *Vec = Builder.CreateLoad(Dst.getExtVectorAddr(), "tmp");
   // FIXME: Volatility.
-  unsigned EncFields = Dst.getExtVectorElts();
+  const llvm::Constant *Elts = Dst.getExtVectorElts();
   
   llvm::Value *SrcVal = Src.getScalarVal();
   
@@ -324,13 +324,13 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
       llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
       Elt = Builder.CreateExtractElement(SrcVal, Elt, "tmp");
       
-      unsigned Idx = ExtVectorElementExpr::getAccessedFieldNo(i, EncFields);
+      unsigned Idx = ExtVectorElementExpr::getAccessedFieldNo(i, Elts);
       llvm::Value *OutIdx = llvm::ConstantInt::get(llvm::Type::Int32Ty, Idx);
       Vec = Builder.CreateInsertElement(Vec, Elt, OutIdx, "tmp");
     }
   } else {
     // If the Src is a scalar (not a vector) it must be updating one element.
-    unsigned InIdx = ExtVectorElementExpr::getAccessedFieldNo(0, EncFields);
+    unsigned InIdx = ExtVectorElementExpr::getAccessedFieldNo(0, Elts);
     llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
     Vec = Builder.CreateInsertElement(Vec, SrcVal, Elt, "tmp");
   }
@@ -460,9 +460,28 @@ LValue CodeGenFunction::
 EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
   // Emit the base vector as an l-value.
   LValue Base = EmitLValue(E->getBase());
+  
+  if (Base.isExtVectorElt()) {
+    llvm::Constant *BaseElts = Base.getExtVectorElts();
+    llvm::Constant *ExprElts = E->getEncodedElementAccess();
+    
+    llvm::SmallVector<llvm::Constant *, 8> Indices;
+    
+    for (unsigned i = 0, e = E->getNumElements(); i != e; ++i) {
+      unsigned Idx = ExtVectorElementExpr::getAccessedFieldNo(i, ExprElts);
+      
+      if (isa<llvm::ConstantAggregateZero>(BaseElts))
+        Indices.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
+      else
+        Indices.push_back(cast<llvm::ConstantInt>(BaseElts->getOperand(Idx)));
+    }
+    llvm::Constant *NewElts = llvm::ConstantVector::get(&Indices[0], Indices.size());
+    return LValue::MakeExtVectorElt(Base.getExtVectorAddr(), NewElts);
+  }
+  
   assert(Base.isSimple() && "Can only subscript lvalue vectors here!");
 
-  return LValue::MakeExtVectorElt(Base.getAddress(), 
+  return LValue::MakeExtVectorElt(Base.getAddress(),
                                   E->getEncodedElementAccess());
 }
 

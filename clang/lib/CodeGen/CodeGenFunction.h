@@ -161,8 +161,12 @@ class LValue {
   llvm::Value *V;
   
   union {
-    llvm::Value *VectorIdx;   // Index into a vector subscript: V[i]
-    unsigned VectorElts;      // Encoded ExtVector element subset: V.xyx
+    // Index into a vector subscript: V[i]
+    llvm::Value *VectorIdx;
+
+    // ExtVector element subset: V.xyx
+    llvm::Constant *VectorElts;
+    
     struct {
       unsigned short StartBit;
       unsigned short Size;
@@ -182,7 +186,7 @@ public:
   llvm::Value *getVectorIdx() const { assert(isVectorElt()); return VectorIdx; }
   // extended vector elements.
   llvm::Value *getExtVectorAddr() const { assert(isExtVectorElt()); return V; }
-  unsigned getExtVectorElts() const {
+  llvm::Constant *getExtVectorElts() const {
     assert(isExtVectorElt());
     return VectorElts;
   }
@@ -216,11 +220,11 @@ public:
     return R;
   }
   
-  static LValue MakeExtVectorElt(llvm::Value *Vec, unsigned Elements) {
+  static LValue MakeExtVectorElt(llvm::Value *Vec, llvm::Constant *Elts) {
     LValue R;
     R.LVType = ExtVectorElt;
     R.V = Vec;
-    R.VectorElts = Elements;
+    R.VectorElts = Elts;
     return R;
   }
 
