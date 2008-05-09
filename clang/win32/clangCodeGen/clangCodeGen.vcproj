@@ -157,6 +157,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\CGDebugInfo.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\CGDecl.cpp"
 				>
 			</File>
