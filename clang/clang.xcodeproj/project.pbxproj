@@ -866,7 +866,6 @@
 		DED7D7500A5242C7003AD0FB /* Basic */ = {
 			isa = PBXGroup;
 			children = (
-				03F50AC50D416EAA00B9CF60 /* Targets.cpp */,
 				DED7D75D0A5242C7003AD0FB /* Diagnostic.cpp */,
 				DED7D75E0A5242C7003AD0FB /* FileManager.cpp */,
 				DE3986F30CB8D50C00223765 /* IdentifierTable.cpp */,
@@ -874,6 +873,7 @@
 				35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */,
 				DED7D76D0A5242C7003AD0FB /* SourceManager.cpp */,
 				DED626C80AE0C065001E80A4 /* TargetInfo.cpp */,
+				03F50AC50D416EAA00B9CF60 /* Targets.cpp */,
 				DED7D76E0A5242C7003AD0FB /* TokenKinds.cpp */,
 			);
 			name = Basic;

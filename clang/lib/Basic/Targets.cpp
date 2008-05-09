@@ -658,7 +658,9 @@ public:
 namespace {
 class DarwinPPC64TargetInfo : public DarwinTargetInfo {
 public:
-  DarwinPPC64TargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {}
+  DarwinPPC64TargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {
+    LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
+  }
   
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     DarwinTargetInfo::getTargetDefines(Defines);
@@ -737,7 +739,9 @@ public:
 namespace {
 class DarwinX86_64TargetInfo : public DarwinTargetInfo {
 public:
-  DarwinX86_64TargetInfo(const std::string& triple) :DarwinTargetInfo(triple) {}
+  DarwinX86_64TargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {
+    LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
+  }
   
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     DarwinTargetInfo::getTargetDefines(Defines);
