@@ -39,6 +39,7 @@ protected:
   unsigned IntWidth, IntAlign;
   unsigned DoubleWidth, DoubleAlign;
   unsigned LongWidth, LongAlign;
+  unsigned LongLongWidth, LongLongAlign;
   
   const llvm::fltSemantics *FloatFormat, *DoubleFormat, *LongDoubleFormat;
 
@@ -93,8 +94,8 @@ public:
   
   /// getLongLongWidth/Align - Return the size of 'signed long long' and
   /// 'unsigned long long' for this target, in bits.
-  unsigned getLongLongWidth() const { return 64; } // FIXME
-  unsigned getLongLongAlign() const { return 64; } // FIXME
+  unsigned getLongLongWidth() const { return LongLongWidth; }
+  unsigned getLongLongAlign() const { return LongLongAlign; }
   
   /// getWcharWidth/Align - Return the size of 'wchar_t' for this target, in
   /// bits.
