@@ -328,7 +328,7 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "__OBJC_RW_EXTERN void objc_exception_try_exit(void *);\n";
   Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_exception_extract(void *);\n";
   Preamble += "__OBJC_RW_EXTERN int objc_exception_match";
-  Preamble += "(struct objc_class *, struct objc_object *, ...);\n";
+  Preamble += "(struct objc_class *, struct objc_object *);\n";
   Preamble += "__OBJC_RW_EXTERN Protocol *objc_getProtocol(const char *);\n";
   if (LangOpts.Microsoft) 
     Preamble += "#undef __OBJC_RW_EXTERN\n";
