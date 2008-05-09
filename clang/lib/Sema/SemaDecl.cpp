@@ -2183,7 +2183,8 @@ void Sema::HandlePackedAttribute(Decl *d, AttributeList *rawAttr) {
   else if (FieldDecl *FD = dyn_cast<FieldDecl>(d)) {
     // If the alignment is less than or equal to 8 bits, the packed attribute
     // has no effect.
-    if (Context.getTypeAlign(FD->getType()) <= 8)
+    if (!FD->getType()->isIncompleteType() &&
+        Context.getTypeAlign(FD->getType()) <= 8)
       Diag(rawAttr->getLoc(), 
            diag::warn_attribute_ignored_for_field_of_type,
            rawAttr->getName()->getName(), FD->getType().getAsString());
