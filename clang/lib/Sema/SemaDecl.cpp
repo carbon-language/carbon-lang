@@ -1177,7 +1177,8 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   if (II)
     PushOnScopeChains(New, S);
 
-  HandleDeclAttributes(New, D.getAttributes(), 0);
+  HandleDeclAttributes(New, D.getDeclSpec().getAttributes(),
+                       D.getAttributes());
   return New;
 
 }
