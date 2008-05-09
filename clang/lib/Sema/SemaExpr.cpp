@@ -253,10 +253,11 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
       bool AllowUnsigned = Literal.isUnsigned || Literal.getRadix() != 10;
 
       // Check from smallest to largest, picking the smallest type we can.
+      unsigned Width = 0;
       if (!Literal.isLong && !Literal.isLongLong) {
         // Are int/unsigned possibilities?
-        unsigned IntSize = 
-          static_cast<unsigned>(Context.getTypeSize(Context.IntTy));
+        unsigned IntSize = Context.Target.getIntWidth();
+        
         // Does it fit in a unsigned int?
         if (ResultVal.isIntN(IntSize)) {
           // Does it fit in a signed int?
@@ -264,16 +265,13 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
             Ty = Context.IntTy;
           else if (AllowUnsigned)
             Ty = Context.UnsignedIntTy;
+          Width = IntSize;
         }
-        
-        if (!Ty.isNull())
-          ResultVal.trunc(IntSize);
       }
       
       // Are long/unsigned long possibilities?
       if (Ty.isNull() && !Literal.isLongLong) {
-        unsigned LongSize =
-          static_cast<unsigned>(Context.getTypeSize(Context.LongTy));
+        unsigned LongSize = Context.Target.getLongWidth();
      
         // Does it fit in a unsigned long?
         if (ResultVal.isIntN(LongSize)) {
@@ -282,15 +280,13 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
             Ty = Context.LongTy;
           else if (AllowUnsigned)
             Ty = Context.UnsignedLongTy;
+          Width = LongSize;
         }
-        if (!Ty.isNull())
-          ResultVal.trunc(LongSize);
       }      
       
       // Finally, check long long if needed.
       if (Ty.isNull()) {
-        unsigned LongLongSize =
-          static_cast<unsigned>(Context.getTypeSize(Context.LongLongTy));
+        unsigned LongLongSize = Context.Target.getLongLongWidth();
         
         // Does it fit in a unsigned long long?
         if (ResultVal.isIntN(LongLongSize)) {
@@ -299,6 +295,7 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
             Ty = Context.LongLongTy;
           else if (AllowUnsigned)
             Ty = Context.UnsignedLongLongTy;
+          Width = LongLongSize;
         }
       }
       
@@ -307,7 +304,11 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
       if (Ty.isNull()) {
         Diag(Tok.getLocation(), diag::warn_integer_too_large_for_signed);
         Ty = Context.UnsignedLongLongTy;
+        Width = Context.Target.getLongLongWidth();
       }
+      
+      if (ResultVal.getBitWidth() != Width)
+        ResultVal.trunc(Width);
     }
 
     Res = new IntegerLiteral(ResultVal, Ty, Tok.getLocation());
