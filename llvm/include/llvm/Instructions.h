@@ -1087,7 +1087,7 @@ CallInst::CallInst(Value *Func, InputIterator ArgBegin, InputIterator ArgEnd,
                                    ->getElementType())->getReturnType(),
                 Instruction::Call,
                 OperandTraits<CallInst>::op_end(this) - (ArgEnd - ArgBegin + 1),
-                ArgEnd - ArgBegin + 1, InsertAtEnd) {
+                (unsigned)(ArgEnd - ArgBegin + 1), InsertAtEnd) {
   init(Func, ArgBegin, ArgEnd, Name,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
@@ -1099,7 +1099,7 @@ CallInst::CallInst(Value *Func, InputIterator ArgBegin, InputIterator ArgEnd,
                                    ->getElementType())->getReturnType(),
                 Instruction::Call,
                 OperandTraits<CallInst>::op_end(this) - (ArgEnd - ArgBegin + 1),
-                ArgEnd - ArgBegin + 1, InsertBefore) {
+                (unsigned)(ArgEnd - ArgBegin + 1), InsertBefore) {
   init(Func, ArgBegin, ArgEnd, Name, 
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
