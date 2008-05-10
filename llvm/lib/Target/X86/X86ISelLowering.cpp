@@ -6326,8 +6326,7 @@ static SDOperand PerformBuildVectorCombine(SDNode *N, SelectionDAG &DAG,
     return SDOperand();
   // This must be an insertion into a zero vector.
   SDOperand HighElt = N->getOperand(1);
-  if (HighElt.getOpcode() != ISD::UNDEF &&
-      !isZeroNode(HighElt))
+  if (!isZeroNode(HighElt))
     return SDOperand();
 
   // Value must be a load.
