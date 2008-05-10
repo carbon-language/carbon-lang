@@ -127,11 +127,15 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
   return true;
 }
 
-static bool isSourceDefinedByImplicitDef(MachineInstr *MPhi, unsigned SrcIdx,
+static bool isSourceDefinedByImplicitDef(MachineInstr *MPhi,
                                          MachineRegisterInfo  *MRI) {
-  unsigned SrcReg = MPhi->getOperand(SrcIdx*2+1).getReg();
-  MachineInstr *DefMI = MRI->getVRegDef(SrcReg);
-  return DefMI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF;
+  for (unsigned i = 1; i != MPhi->getNumOperands(); i += 2) {
+    unsigned SrcReg = MPhi->getOperand(i).getReg();
+    MachineInstr *DefMI = MRI->getVRegDef(SrcReg);
+    if (!DefMI || DefMI->getOpcode() != TargetInstrInfo::IMPLICIT_DEF)
+      return false;
+  }
+  return true;
 }
 
 /// LowerAtomicPHINode - Lower the PHI node at the top of the specified block,
@@ -156,9 +160,9 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
   // into the phi node destination.
   //
   const TargetInstrInfo *TII = MF.getTarget().getInstrInfo();
-  if (NumSrcs == 1 && isSourceDefinedByImplicitDef(MPhi, 0, MRI))
-    // If the only source of a PHI node is an implicit_def, just emit an
-    // implicit_def instead of a copy.
+  if (isSourceDefinedByImplicitDef(MPhi, MRI))
+    // If all sources of a PHI node are implicit_def, just emit an implicit_def
+    // instead of a copy.
     BuildMI(MBB, AfterPHIsIt, TII->get(TargetInstrInfo::IMPLICIT_DEF), DestReg);
   else
     TII->copyRegToReg(MBB, AfterPHIsIt, DestReg, IncomingReg, RC, RC);
