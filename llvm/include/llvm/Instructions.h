@@ -960,14 +960,14 @@ public:
                           InputIterator ArgBegin, InputIterator ArgEnd,
                           const std::string &Name = "",
                           Instruction *InsertBefore = 0) {
-    return new(ArgEnd - ArgBegin + 1)
+    return new((unsigned)(ArgEnd - ArgBegin + 1))
       CallInst(Func, ArgBegin, ArgEnd, Name, InsertBefore);
   }
   template<typename InputIterator>
   static CallInst *Create(Value *Func,
                           InputIterator ArgBegin, InputIterator ArgEnd,
                           const std::string &Name, BasicBlock *InsertAtEnd) {
-    return new(ArgEnd - ArgBegin + 1)
+    return new((unsigned)(ArgEnd - ArgBegin + 1))
       CallInst(Func, ArgBegin, ArgEnd, Name, InsertAtEnd);
   }
   static CallInst *Create(Value *F, Value *Actual, const std::string& Name = "",
@@ -1685,7 +1685,7 @@ public:
 
   ~BranchInst() {
     if (NumOperands == 1)
-      NumOperands = (unsigned)(uintptr_t)((Use*)this - OperandList);
+      NumOperands = (unsigned)((Use*)this - OperandList);
   }
 
   /// Transparently provide more efficient getOperand methods.
