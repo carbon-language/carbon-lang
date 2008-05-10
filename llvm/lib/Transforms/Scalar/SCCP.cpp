@@ -448,20 +448,8 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
         (SCValue.isConstant() && !isa<ConstantInt>(SCValue.getConstant()))) {
       // All destinations are executable!
       Succs.assign(TI.getNumSuccessors(), true);
-    } else if (SCValue.isConstant()) {
-      Constant *CPV = SCValue.getConstant();
-      // Make sure to skip the "default value" which isn't a value
-      for (unsigned i = 1, E = SI->getNumSuccessors(); i != E; ++i) {
-        if (SI->getSuccessorValue(i) == CPV) {// Found the right branch...
-          Succs[i] = true;
-          return;
-        }
-      }
-
-      // Constant value not equal to any of the branches... must execute
-      // default branch then...
-      Succs[0] = true;
-    }
+    } else if (SCValue.isConstant())
+      Succs[SI->findCaseValue(cast<ConstantInt>(SCValue.getConstant()))] = true;
   } else {
     assert(0 && "SCCP: Don't know how to handle this terminator!");
   }
