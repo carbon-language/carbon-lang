@@ -327,12 +327,14 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
-  setOperationAction(ISD::VAARG             , MVT::Other, Expand);
   setOperationAction(ISD::VAEND             , MVT::Other, Expand);
-  if (Subtarget->is64Bit())
+  if (Subtarget->is64Bit()) {
+    setOperationAction(ISD::VAARG           , MVT::Other, Custom);
     setOperationAction(ISD::VACOPY          , MVT::Other, Custom);
-  else
+  } else {
+    setOperationAction(ISD::VAARG           , MVT::Other, Expand);
     setOperationAction(ISD::VACOPY          , MVT::Other, Expand);
+  }
 
   setOperationAction(ISD::STACKSAVE,          MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE,       MVT::Other, Expand);
@@ -4976,6 +4978,17 @@ SDOperand X86TargetLowering::LowerVASTART(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::TokenFactor, MVT::Other, &MemOps[0], MemOps.size());
 }
 
+SDOperand X86TargetLowering::LowerVAARG(SDOperand Op, SelectionDAG &DAG) {
+  // X86-64 va_list is a struct { i32, i32, i8*, i8* }.
+  assert(Subtarget->is64Bit() && "This code only handles 64-bit va_arg!");
+  SDOperand Chain = Op.getOperand(0);
+  SDOperand SrcPtr = Op.getOperand(1);
+  SDOperand SrcSV = Op.getOperand(2);
+
+  assert(0 && "VAArgInst is not yet implemented for x86-64!");
+  abort();
+}
+
 SDOperand X86TargetLowering::LowerVACOPY(SDOperand Op, SelectionDAG &DAG) {
   // X86-64 va_list is a struct { i32, i32, i8*, i8* }.
   assert(Subtarget->is64Bit() && "This code only handles 64-bit va_copy!");
@@ -5598,6 +5611,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::RET:                return LowerRET(Op, DAG);
   case ISD::FORMAL_ARGUMENTS:   return LowerFORMAL_ARGUMENTS(Op, DAG);
   case ISD::VASTART:            return LowerVASTART(Op, DAG);
+  case ISD::VAARG:              return LowerVAARG(Op, DAG);
   case ISD::VACOPY:             return LowerVACOPY(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG);

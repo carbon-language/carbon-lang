@@ -517,6 +517,7 @@ namespace llvm {
     SDOperand LowerDYNAMIC_STACKALLOC(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerVAARG(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerVACOPY(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerRETURNADDR(SDOperand Op, SelectionDAG &DAG);
