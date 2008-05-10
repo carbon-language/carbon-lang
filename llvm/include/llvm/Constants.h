@@ -736,15 +736,6 @@ public:
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 
-/*  /// Override methods to provide more type information...
-  inline Constant *getOperand(unsigned i) {
-    return cast<Constant>(User::getOperand(i));
-  }
-  inline Constant *getOperand(unsigned i) const {
-    return const_cast<Constant*>(cast<Constant>(User::getOperand(i)));
-  }*/
-
-
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantExpr *) { return true; }
   static inline bool classof(const Value *V) {
