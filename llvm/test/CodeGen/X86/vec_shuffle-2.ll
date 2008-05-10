@@ -3,7 +3,7 @@
 ; RUN: grep pshuflw %t | count 1
 ; RUN: grep movhps  %t | count 1
 
-define void @test1(<2 x i64>* %res, <2 x i64>* %A) {
+define void @test1(<2 x i64>* %res, <2 x i64>* %A) nounwind {
 	%tmp = load <2 x i64>* %A		; <<2 x i64>> [#uses=1]
 	%tmp.upgrd.1 = bitcast <2 x i64> %tmp to <8 x i16>		; <<8 x i16>> [#uses=8]
 	%tmp0 = extractelement <8 x i16> %tmp.upgrd.1, i32 0		; <i16> [#uses=1]
@@ -27,7 +27,7 @@ define void @test1(<2 x i64>* %res, <2 x i64>* %A) {
 	ret void
 }
 
-define void @test2(<4 x float>* %r, <2 x i32>* %A) {
+define void @test2(<4 x float>* %r, <2 x i32>* %A) nounwind {
 	%tmp = load <4 x float>* %r		; <<4 x float>> [#uses=2]
 	%tmp.upgrd.3 = bitcast <2 x i32>* %A to double*		; <double*> [#uses=1]
 	%tmp.upgrd.4 = load double* %tmp.upgrd.3		; <double> [#uses=1]
