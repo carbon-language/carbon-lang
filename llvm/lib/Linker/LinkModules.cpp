@@ -627,20 +627,52 @@ static bool LinkAlias(Module *Dest, const Module *Src,
     GlobalAlias *NewGA = NULL;
 
     // Globals were already linked, thus we can just query ValueMap for variant
-    // of SAliasee in Dest
+    // of SAliasee in Dest.
     std::map<const Value*,Value*>::const_iterator VMI = ValueMap.find(SAliasee);
     assert(VMI != ValueMap.end() && "Aliasee not linked");
     GlobalValue* DAliasee = cast<GlobalValue>(VMI->second);
+    GlobalValue* DGV = NULL;
 
     // Try to find something 'similar' to SGA in destination module.
-    if (GlobalAlias *DGA = Dest->getNamedAlias(SGA->getName())) {
-      // If types don't agree due to opaque types, try to resolve them.
-      if (RecursiveResolveTypes(SGA->getType(), DGA->getType(),
-                                &Dest->getTypeSymbolTable(), ""))
-        return Error(Err, "Alias Collision on '" + SGA->getName()+
-                     "': aliases have different types");
+    if (!DGV && !SGA->hasInternalLinkage()) {
+      DGV = Dest->getNamedAlias(SGA->getName());
 
-      // Now types are known to be the same, check whether aliasees equal. As
+      // If types don't agree due to opaque types, try to resolve them.
+      if (DGV && DGV->getType() != SGA->getType())
+        if (RecursiveResolveTypes(SGA->getType(), DGV->getType(),
+                                  &Dest->getTypeSymbolTable(), ""))
+          return Error(Err, "Alias Collision on '" + SGA->getName()+
+                       "': aliases have different types");
+    }
+
+    if (!DGV && !SGA->hasInternalLinkage()) {
+      DGV = Dest->getGlobalVariable(SGA->getName());
+
+      // If types don't agree due to opaque types, try to resolve them.
+      if (DGV && DGV->getType() != SGA->getType())
+        if (RecursiveResolveTypes(SGA->getType(), DGV->getType(),
+                                  &Dest->getTypeSymbolTable(), ""))
+          return Error(Err, "Alias Collision on '" + SGA->getName()+
+                       "': aliases have different types");
+    }
+
+    if (!DGV && !SGA->hasInternalLinkage()) {
+      DGV = Dest->getFunction(SGA->getName());
+
+      // If types don't agree due to opaque types, try to resolve them.
+      if (DGV && DGV->getType() != SGA->getType())
+        if (RecursiveResolveTypes(SGA->getType(), DGV->getType(),
+                                  &Dest->getTypeSymbolTable(), ""))
+          return Error(Err, "Alias Collision on '" + SGA->getName()+
+                       "': aliases have different types");
+    }
+
+    // No linking to be performed on internal stuff.
+    if (DGV && DGV->hasInternalLinkage())
+      DGV = NULL;
+
+    if (GlobalAlias *DGA = dyn_cast_or_null<GlobalAlias>(DGV)) {
+      // Types are known to be the same, check whether aliasees equal. As
       // globals are already linked we just need query ValueMap to find the
       // mapping.
       if (DAliasee == DGA->getAliasedGlobal()) {
@@ -653,47 +685,41 @@ static bool LinkAlias(Module *Dest, const Module *Src,
       } else
         return Error(Err, "Alias Collision on '"  + SGA->getName()+
                      "': aliases have different aliasees");
-    } else if (GlobalVariable *DGV = Dest->getGlobalVariable(SGA->getName())) {
-      RecursiveResolveTypes(SGA->getType(), DGV->getType(),
-                            &Dest->getTypeSymbolTable(), "");
-
+    } else if (GlobalVariable *DGVar = dyn_cast_or_null<GlobalVariable>(DGV)) {
       // The only allowed way is to link alias with external declaration.
-      if (DGV->isDeclaration()) {
+      if (DGVar->isDeclaration()) {
         // But only if aliasee is global too...
         if (!isa<GlobalVariable>(DAliasee))
-            return Error(Err, "Global-Alias Collision on '" + SGA->getName() +
-                         "': aliasee is not global variable");
+          return Error(Err, "Global-Alias Collision on '" + SGA->getName() +
+                       "': aliasee is not global variable");
 
         NewGA = new GlobalAlias(SGA->getType(), SGA->getLinkage(),
                                 SGA->getName(), DAliasee, Dest);
         CopyGVAttributes(NewGA, SGA);
 
         // Any uses of DGV need to change to NewGA, with cast, if needed.
-        if (SGA->getType() != DGV->getType())
-          DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewGA,
-                                                           DGV->getType()));
+        if (SGA->getType() != DGVar->getType())
+          DGVar->replaceAllUsesWith(ConstantExpr::getBitCast(NewGA,
+                                                             DGVar->getType()));
         else
-          DGV->replaceAllUsesWith(NewGA);
+          DGVar->replaceAllUsesWith(NewGA);
 
-        // DGV will conflict with NewGA because they both had the same
+        // DGVar will conflict with NewGA because they both had the same
         // name. We must erase this now so ForceRenaming doesn't assert
         // because DGV might not have internal linkage.
-        DGV->eraseFromParent();
+        DGVar->eraseFromParent();
 
         // Proceed to 'common' steps
       } else
         return Error(Err, "Global-Alias Collision on '" + SGA->getName() +
                      "': symbol multiple defined");
-    } else if (Function *DF = Dest->getFunction(SGA->getName())) {
-      RecursiveResolveTypes(SGA->getType(), DF->getType(),
-                            &Dest->getTypeSymbolTable(), "");
-
+    } else if (Function *DF = dyn_cast_or_null<Function>(DGV)) {
       // The only allowed way is to link alias with external declaration.
       if (DF->isDeclaration()) {
         // But only if aliasee is function too...
         if (!isa<Function>(DAliasee))
-            return Error(Err, "Function-Alias Collision on '" + SGA->getName() +
-                         "': aliasee is not function");
+          return Error(Err, "Function-Alias Collision on '" + SGA->getName() +
+                       "': aliasee is not function");
 
         NewGA = new GlobalAlias(SGA->getType(), SGA->getLinkage(),
                                 SGA->getName(), DAliasee, Dest);
@@ -716,7 +742,8 @@ static bool LinkAlias(Module *Dest, const Module *Src,
         return Error(Err, "Function-Alias Collision on '" + SGA->getName() +
                      "': symbol multiple defined");
     } else {
-      // Nothing similar found, just copy alias into destination module.
+      // No linking to be performed, simply create an identical version of the
+      // alias over in the dest module...
 
       NewGA = new GlobalAlias(SGA->getType(), SGA->getLinkage(),
                               SGA->getName(), DAliasee, Dest);
@@ -728,7 +755,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
     assert(NewGA && "No alias was created in destination module!");
 
     // If the symbol table renamed the alias, but it is an externally visible
-    // symbol, DGV must be an global value with internal linkage. Rename it.
+    // symbol, DGA must be an global value with internal linkage. Rename it.
     if (NewGA->getName() != SGA->getName() &&
         !NewGA->hasInternalLinkage())
       ForceRenaming(NewGA, SGA->getName());
