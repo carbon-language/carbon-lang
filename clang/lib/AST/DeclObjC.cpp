@@ -260,14 +260,12 @@ void ObjCInterfaceDecl::mergeProperties(ObjCPropertyDecl **Properties,
     // Add new properties to this buffer.
     memcpy(buf+NumPropertyDecl, Properties, 
            NumNewProperties*sizeof(ObjCPropertyDecl*));
-    free(PropertyDecl);
+    delete[] PropertyDecl;
     PropertyDecl = newPropertyDecl;
     NumPropertyDecl += NumNewProperties;
   }
   else {
-    PropertyDecl = new ObjCPropertyDecl*[NumNewProperties];
-    memcpy(PropertyDecl, Properties, NumNewProperties*sizeof(ObjCPropertyDecl*));
-    NumPropertyDecl = NumNewProperties;
+    addProperties(Properties, NumNewProperties);
   }
 }
 
