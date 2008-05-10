@@ -49,26 +49,31 @@ STATISTIC(NumConvertedTo3Addr, "Number of instructions promoted to 3-address");
 STATISTIC(Num3AddrSunk,        "Number of 3-address instructions sunk");
 
 namespace {
-  struct VISIBILITY_HIDDEN TwoAddressInstructionPass
-   : public MachineFunctionPass {
+  class VISIBILITY_HIDDEN TwoAddressInstructionPass
+    : public MachineFunctionPass {
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
     MachineRegisterInfo *MRI;
     LiveVariables *LV;
 
+    bool Sink3AddrInstruction(MachineBasicBlock *MBB, MachineInstr *MI,
+                              unsigned Reg,
+                              MachineBasicBlock::iterator OldPos);
   public:
     static char ID; // Pass identification, replacement for typeid
     TwoAddressInstructionPass() : MachineFunctionPass((intptr_t)&ID) {}
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<LiveVariables>();
+      AU.addPreserved<LiveVariables>();
+      AU.addPreservedID(MachineLoopInfoID);
+      AU.addPreservedID(MachineDominatorsID);
+      AU.addPreservedID(PHIEliminationID);
+      MachineFunctionPass::getAnalysisUsage(AU);
+    }
 
-    /// runOnMachineFunction - pass entry point
+    /// runOnMachineFunction - Pass entry point.
     bool runOnMachineFunction(MachineFunction&);
-
-  private:
-    bool Sink3AddrInstruction(MachineBasicBlock *MBB, MachineInstr *MI,
-                              unsigned Reg,
-                              MachineBasicBlock::iterator OldPos);
   };
 
   char TwoAddressInstructionPass::ID = 0;
@@ -78,19 +83,11 @@ namespace {
 
 const PassInfo *llvm::TwoAddressInstructionPassID = X.getPassInfo();
 
-void TwoAddressInstructionPass::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<LiveVariables>();
-  AU.addPreserved<LiveVariables>();
-  AU.addPreservedID(MachineLoopInfoID);
-  AU.addPreservedID(MachineDominatorsID);
-  AU.addPreservedID(PHIEliminationID);
-  MachineFunctionPass::getAnalysisUsage(AU);
-}
-
 /// Sink3AddrInstruction - A two-address instruction has been converted to a
 /// three-address instruction to avoid clobbering a register. Try to sink it
-/// past the instruction that would kill the above mentioned register to
-/// reduce register pressure.
+/// past the instruction that would kill the above mentioned register to reduce
+/// register pressure.
+/// 
 bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
                                            MachineInstr *MI, unsigned SavedReg,
                                            MachineBasicBlock::iterator OldPos) {
@@ -101,6 +98,7 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
 
   unsigned DefReg = 0;
   SmallSet<unsigned, 4> UseRegs;
+
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isRegister())
@@ -123,6 +121,7 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
 
   // Find the instruction that kills SavedReg.
   MachineInstr *KillMI = NULL;
+
   for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(SavedReg),
          UE = MRI->use_end(); UI != UE; ++UI) {
     MachineOperand &UseMO = UI.getOperand();
@@ -131,19 +130,23 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
     KillMI = UseMO.getParent();
     break;
   }
+
   if (!KillMI || KillMI->getParent() != MBB)
     return false;
 
-  // If any of the definitions are used  by another instruction between
-  // the position and the kill use, then it's not safe to sink it.
-  // FIXME: This can be sped up if there is an easy way to query whether
-  // an instruction if before or after another instruction. Then we can
-  // use MachineRegisterInfo def / use instead.
+  // If any of the definitions are used by another instruction between the
+  // position and the kill use, then it's not safe to sink it.
+  // 
+  // FIXME: This can be sped up if there is an easy way to query whether an
+  // instruction if before or after another instruction. Then we can use
+  // MachineRegisterInfo def / use instead.
   MachineOperand *KillMO = NULL;
   MachineBasicBlock::iterator KillPos = KillMI;
   ++KillPos;
+
   for (MachineBasicBlock::iterator I = next(OldPos); I != KillPos; ++I) {
     MachineInstr *OtherMI = I;
+
     for (unsigned i = 0, e = OtherMI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = OtherMI->getOperand(i);
       if (!MO.isRegister())
@@ -153,6 +156,7 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
         continue;
       if (DefReg == MOReg)
         return false;
+
       if (MO.isKill()) {
         if (OtherMI == KillMI && MOReg == SavedReg)
           // Save the operand that kills the register. We want unset the kill
@@ -181,8 +185,7 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
   return true;
 }
 
-/// runOnMachineFunction - Reduce two-address instructions to two
-/// operands.
+/// runOnMachineFunction - Reduce two-address instructions to two operands.
 ///
 bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   DOUT << "Machine Function\n";
@@ -203,8 +206,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
          mi != me; ) {
       MachineBasicBlock::iterator nmi = next(mi);
       const TargetInstrDesc &TID = mi->getDesc();
-
       bool FirstTied = true;
+
       for (unsigned si = 1, e = TID.getNumOperands(); si < e; ++si) {
         int ti = TID.getOperandConstraint(si, TOI::TIED_TO);
         if (ti == -1)
@@ -214,15 +217,16 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           ++NumTwoAddressInstrs;
           DOUT << '\t'; DEBUG(mi->print(*cerr.stream(), &TM));
         }
+
         FirstTied = false;
 
         assert(mi->getOperand(si).isRegister() && mi->getOperand(si).getReg() &&
                mi->getOperand(si).isUse() && "two address instruction invalid");
 
-        // if the two operands are the same we just remove the use
+        // If the two operands are the same we just remove the use
         // and mark the def as def&use, otherwise we have to insert a copy.
         if (mi->getOperand(ti).getReg() != mi->getOperand(si).getReg()) {
-          // rewrite:
+          // Rewrite:
           //     a = b op c
           // to:
           //     a = b
@@ -257,9 +261,11 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
               assert(mi->getOperand(3-si).isRegister() &&
                      "Not a proper commutative instruction!");
               unsigned regC = mi->getOperand(3-si).getReg();
+
               if (mi->killsRegister(regC)) {
                 DOUT << "2addr: COMMUTING  : " << *mi;
                 MachineInstr *NewMI = TII->commuteInstruction(mi);
+
                 if (NewMI == 0) {
                   DOUT << "2addr: COMMUTING FAILED!\n";
                 } else {
@@ -285,7 +291,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
               // FIXME: This assumes there are no more operands which are tied
               // to another register.
 #ifndef NDEBUG
-              for (unsigned i = si+1, e = TID.getNumOperands(); i < e; ++i)
+              for (unsigned i = si + 1, e = TID.getNumOperands(); i < e; ++i)
                 assert(TID.getOperandConstraint(i, TOI::TIED_TO) == -1);
 #endif
 
@@ -293,19 +299,22 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                 DOUT << "2addr: CONVERTING 2-ADDR: " << *mi;
                 DOUT << "2addr:         TO 3-ADDR: " << *New;
                 bool Sunk = false;
+
                 if (New->findRegisterUseOperand(regB, false, TRI))
                   // FIXME: Temporary workaround. If the new instruction doesn't
                   // uses regB, convertToThreeAddress must have created more
                   // then one instruction.
                   Sunk = Sink3AddrInstruction(mbbi, New, regB, mi);
-                mbbi->erase(mi);                 // Nuke the old inst.
+
+                mbbi->erase(mi); // Nuke the old inst.
+
                 if (!Sunk) {
                   mi = New;
                   nmi = next(mi);
                 }
+
                 ++NumConvertedTo3Addr;
-                // Done with this instruction.
-                break;
+                break; // Done with this instruction.
               }
             }
           }
@@ -317,17 +326,19 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           MachineBasicBlock::iterator prevMi = prior(mi);
           DOUT << "\t\tprepend:\t"; DEBUG(prevMi->print(*cerr.stream(), &TM));
 
-          // update live variables for regB
+          // Update live variables for regB.
           LiveVariables::VarInfo& varInfoB = LV->getVarInfo(regB);
+
           // regB is used in this BB.
           varInfoB.UsedBlocks[mbbi->getNumber()] = true;
+
           if (LV->removeVirtualRegisterKilled(regB, mbbi, mi))
             LV->addVirtualRegisterKilled(regB, prevMi);
 
           if (LV->removeVirtualRegisterDead(regB, mbbi, mi))
             LV->addVirtualRegisterDead(regB, prevMi);
 
-          // replace all occurences of regB with regA
+          // Replace all occurences of regB with regA.
           for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
             if (mi->getOperand(i).isRegister() &&
                 mi->getOperand(i).getReg() == regB)
@@ -341,6 +352,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
         DOUT << "\t\trewrite to:\t"; DEBUG(mi->print(*cerr.stream(), &TM));
       }
+
       mi = nmi;
     }
   }
