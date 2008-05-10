@@ -675,19 +675,20 @@ let Constraints = "$src1 = $dst" in {
     def MOVLPSrm : PSI<0x12, MRMSrcMem,
                        (outs VR128:$dst), (ins VR128:$src1, f64mem:$src2),
                        "movlps\t{$src2, $dst|$dst, $src2}",
-                       [(set VR128:$dst, 
-                         (v4f32 (vector_shuffle VR128:$src1,
-                         (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2)))),
-                                 MOVLP_shuffle_mask)))]>;
+       [(set VR128:$dst, 
+             (v4f32 (vector_shuffle VR128:$src1,
+                     (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2)))),
+                     MOVLP_shuffle_mask)))]>;
     def MOVHPSrm : PSI<0x16, MRMSrcMem,
                        (outs VR128:$dst), (ins VR128:$src1, f64mem:$src2),
                        "movhps\t{$src2, $dst|$dst, $src2}",
-                       [(set VR128:$dst, 
-                         (v4f32 (vector_shuffle VR128:$src1,
-                         (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2)))),
-                                 MOVHP_shuffle_mask)))]>;
+       [(set VR128:$dst, 
+             (v4f32 (vector_shuffle VR128:$src1,
+                     (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2)))),
+                     MOVHP_shuffle_mask)))]>;
   } // AddedComplexity
 } // Constraints = "$src1 = $dst"
+
 
 def MOVLPSmr : PSI<0x13, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
                    "movlps\t{$src, $dst|$dst, $src}",
@@ -2265,16 +2266,17 @@ def MOVLQ128mr : PDI<0xD6, MRMDestMem, (outs), (ins i64mem:$dst, VR128:$src),
 
 // Move to lower bits of a VR128 and zeroing upper bits.
 // Loading from memory automatically zeroing upper bits.
-let AddedComplexity = 20 in
-  def MOVZSD2PDrm : SDI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
-                        "movsd\t{$src, $dst|$dst, $src}",
-                        [(set VR128:$dst,
-                          (v2f64 (X86vzmovl (v2f64 (scalar_to_vector
-                                                   (loadf64 addr:$src))))))]>;
+let AddedComplexity = 20 in {
+def MOVZSD2PDrm : SDI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
+                      "movsd\t{$src, $dst|$dst, $src}",
+                      [(set VR128:$dst,
+                        (v2f64 (X86vzmovl (v2f64 (scalar_to_vector
+                                                 (loadf64 addr:$src))))))]>;
 
 def : Pat<(v2f64 (X86vzmovl (memopv2f64 addr:$src))),
-          (MOVZSD2PDrm addr:$src)>;
+            (MOVZSD2PDrm addr:$src)>;
 def : Pat<(v2f64 (X86vzload addr:$src)), (MOVZSD2PDrm addr:$src)>;
+}
 
 // movd / movq to XMM register zero-extends
 let AddedComplexity = 15 in {
@@ -2301,9 +2303,9 @@ def MOVZQI2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                        (v2i64 (X86vzmovl (v2i64 (scalar_to_vector
                                                  (loadi64 addr:$src))))))]>, XS,
                    Requires<[HasSSE2]>;
-}
 
 def : Pat<(v2i64 (X86vzload addr:$src)), (MOVZQI2PQIrm addr:$src)>;
+}
 
 // Moving from XMM to XMM and clear upper 64 bits. Note, there is a bug in
 // IA32 document. movq xmm1, xmm2 does clear the high bits.
