@@ -232,10 +232,9 @@ inline std::ostream &operator<<(std::ostream &OS, const Value &V) {
   return OS;
 }
 
-void Use::init(Value *v, User *user) {
-  Val = v;
-  U = user;
-  if (Val) Val->addUse(*this);
+void Use::init(Value *V, User *user) {
+  Val = V;
+  if (V) V->addUse(*this);
 }
 
 void Use::set(Value *V) {

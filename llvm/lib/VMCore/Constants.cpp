@@ -354,7 +354,9 @@ ConstantFP *ConstantFP::get(const Type *Ty, double V) {
 
 ConstantArray::ConstantArray(const ArrayType *T,
                              const std::vector<Constant*> &V)
-  : Constant(T, ConstantArrayVal, new Use[V.size()], V.size()) {
+  : Constant(T, ConstantArrayVal,
+             OperandTraits<ConstantArray>::op_end(this) - V.size(),
+             V.size()) {
   assert(V.size() == T->getNumElements() &&
          "Invalid initializer vector for constant array");
   Use *OL = OperandList;
@@ -369,13 +371,12 @@ ConstantArray::ConstantArray(const ArrayType *T,
   }
 }
 
-ConstantArray::~ConstantArray() {
-  delete [] OperandList;
-}
 
 ConstantStruct::ConstantStruct(const StructType *T,
                                const std::vector<Constant*> &V)
-  : Constant(T, ConstantStructVal, new Use[V.size()], V.size()) {
+  : Constant(T, ConstantStructVal,
+             OperandTraits<ConstantStruct>::op_end(this) - V.size(),
+             V.size()) {
   assert(V.size() == T->getNumElements() &&
          "Invalid initializer vector for constant structure");
   Use *OL = OperandList;
@@ -392,14 +393,12 @@ ConstantStruct::ConstantStruct(const StructType *T,
   }
 }
 
-ConstantStruct::~ConstantStruct() {
-  delete [] OperandList;
-}
-
 
 ConstantVector::ConstantVector(const VectorType *T,
                                const std::vector<Constant*> &V)
-  : Constant(T, ConstantVectorVal, new Use[V.size()], V.size()) {
+  : Constant(T, ConstantVectorVal,
+             OperandTraits<ConstantVector>::op_end(this) - V.size(),
+             V.size()) {
   Use *OL = OperandList;
     for (std::vector<Constant*>::const_iterator I = V.begin(), E = V.end();
          I != E; ++I, ++OL) {
@@ -412,10 +411,8 @@ ConstantVector::ConstantVector(const VectorType *T,
   }
 }
 
-ConstantVector::~ConstantVector() {
-  delete [] OperandList;
-}
 
+namespace llvm {
 // We declare several classes private to this file, so use an anonymous
 // namespace
 namespace {
@@ -424,49 +421,54 @@ namespace {
 /// behind the scenes to implement unary constant exprs.
 class VISIBILITY_HIDDEN UnaryConstantExpr : public ConstantExpr {
   void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
-  Use Op;
 public:
   // allocate space for exactly one operand
   void *operator new(size_t s) {
     return User::operator new(s, 1);
   }
   UnaryConstantExpr(unsigned Opcode, Constant *C, const Type *Ty)
-    : ConstantExpr(Ty, Opcode, &Op, 1), Op(C, this) {}
+    : ConstantExpr(Ty, Opcode, &Op<0>(), 1) {
+    Op<0>() = C;
+  }
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 };
 
 /// BinaryConstantExpr - This class is private to Constants.cpp, and is used
 /// behind the scenes to implement binary constant exprs.
 class VISIBILITY_HIDDEN BinaryConstantExpr : public ConstantExpr {
   void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
-  Use Ops[2];
 public:
   // allocate space for exactly two operands
   void *operator new(size_t s) {
     return User::operator new(s, 2);
   }
   BinaryConstantExpr(unsigned Opcode, Constant *C1, Constant *C2)
-    : ConstantExpr(C1->getType(), Opcode, Ops, 2) {
-    Ops[0].init(C1, this);
-    Ops[1].init(C2, this);
+    : ConstantExpr(C1->getType(), Opcode, &Op<0>(), 2) {
+    Op<0>().init(C1, this);
+    Op<1>().init(C2, this);
   }
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 };
 
 /// SelectConstantExpr - This class is private to Constants.cpp, and is used
 /// behind the scenes to implement select constant exprs.
 class VISIBILITY_HIDDEN SelectConstantExpr : public ConstantExpr {
   void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
-  Use Ops[3];
 public:
   // allocate space for exactly three operands
   void *operator new(size_t s) {
     return User::operator new(s, 3);
   }
   SelectConstantExpr(Constant *C1, Constant *C2, Constant *C3)
-    : ConstantExpr(C2->getType(), Instruction::Select, Ops, 3) {
-    Ops[0].init(C1, this);
-    Ops[1].init(C2, this);
-    Ops[2].init(C3, this);
+    : ConstantExpr(C2->getType(), Instruction::Select, &Op<0>(), 3) {
+    Op<0>().init(C1, this);
+    Op<1>().init(C2, this);
+    Op<2>().init(C3, this);
   }
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 };
 
 /// ExtractElementConstantExpr - This class is private to
@@ -474,7 +476,6 @@ public:
 /// extractelement constant exprs.
 class VISIBILITY_HIDDEN ExtractElementConstantExpr : public ConstantExpr {
   void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
-  Use Ops[2];
 public:
   // allocate space for exactly two operands
   void *operator new(size_t s) {
@@ -482,10 +483,12 @@ public:
   }
   ExtractElementConstantExpr(Constant *C1, Constant *C2)
     : ConstantExpr(cast<VectorType>(C1->getType())->getElementType(), 
-                   Instruction::ExtractElement, Ops, 2) {
-    Ops[0].init(C1, this);
-    Ops[1].init(C2, this);
+                   Instruction::ExtractElement, &Op<0>(), 2) {
+    Op<0>().init(C1, this);
+    Op<1>().init(C2, this);
   }
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 };
 
 /// InsertElementConstantExpr - This class is private to
@@ -493,7 +496,6 @@ public:
 /// insertelement constant exprs.
 class VISIBILITY_HIDDEN InsertElementConstantExpr : public ConstantExpr {
   void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
-  Use Ops[3];
 public:
   // allocate space for exactly three operands
   void *operator new(size_t s) {
@@ -501,11 +503,13 @@ public:
   }
   InsertElementConstantExpr(Constant *C1, Constant *C2, Constant *C3)
     : ConstantExpr(C1->getType(), Instruction::InsertElement, 
-                   Ops, 3) {
-    Ops[0].init(C1, this);
-    Ops[1].init(C2, this);
-    Ops[2].init(C3, this);
+                   &Op<0>(), 3) {
+    Op<0>().init(C1, this);
+    Op<1>().init(C2, this);
+    Op<2>().init(C3, this);
   }
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 };
 
 /// ShuffleVectorConstantExpr - This class is private to
@@ -513,7 +517,6 @@ public:
 /// shufflevector constant exprs.
 class VISIBILITY_HIDDEN ShuffleVectorConstantExpr : public ConstantExpr {
   void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
-  Use Ops[3];
 public:
   // allocate space for exactly three operands
   void *operator new(size_t s) {
@@ -521,32 +524,27 @@ public:
   }
   ShuffleVectorConstantExpr(Constant *C1, Constant *C2, Constant *C3)
   : ConstantExpr(C1->getType(), Instruction::ShuffleVector, 
-                 Ops, 3) {
-    Ops[0].init(C1, this);
-    Ops[1].init(C2, this);
-    Ops[2].init(C3, this);
+                 &Op<0>(), 3) {
+    Op<0>().init(C1, this);
+    Op<1>().init(C2, this);
+    Op<2>().init(C3, this);
   }
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 };
 
 /// GetElementPtrConstantExpr - This class is private to Constants.cpp, and is
 /// used behind the scenes to implement getelementpr constant exprs.
 class VISIBILITY_HIDDEN GetElementPtrConstantExpr : public ConstantExpr {
   GetElementPtrConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
-                            const Type *DestTy)
-    : ConstantExpr(DestTy, Instruction::GetElementPtr,
-                   new Use[IdxList.size()+1], IdxList.size()+1) {
-    OperandList[0].init(C, this);
-    for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
-      OperandList[i+1].init(IdxList[i], this);
-  }
+                            const Type *DestTy);
 public:
   static GetElementPtrConstantExpr *Create(Constant *C, const std::vector<Constant*> &IdxList,
-                                    const Type *DestTy) {
-    return new(IdxList.size() + 1/*FIXME*/) GetElementPtrConstantExpr(C, IdxList, DestTy);
+                                           const Type *DestTy) {
+    return new(IdxList.size() + 1) GetElementPtrConstantExpr(C, IdxList, DestTy);
   }
-  ~GetElementPtrConstantExpr() {
-    delete [] OperandList;
-  }
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 };
 
 // CompareConstantExpr - This class is private to Constants.cpp, and is used
@@ -559,16 +557,76 @@ struct VISIBILITY_HIDDEN CompareConstantExpr : public ConstantExpr {
     return User::operator new(s, 2);
   }
   unsigned short predicate;
-  Use Ops[2];
   CompareConstantExpr(Instruction::OtherOps opc, unsigned short pred, 
                       Constant* LHS, Constant* RHS)
-    : ConstantExpr(Type::Int1Ty, opc, Ops, 2), predicate(pred) {
-    OperandList[0].init(LHS, this);
-    OperandList[1].init(RHS, this);
+    : ConstantExpr(Type::Int1Ty, opc, &Op<0>(), 2), predicate(pred) {
+    Op<0>().init(LHS, this);
+    Op<1>().init(RHS, this);
   }
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 };
 
 } // end anonymous namespace
+
+template <>
+struct OperandTraits<UnaryConstantExpr> : FixedNumOperandTraits<1> {
+};
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(UnaryConstantExpr, Value)
+
+template <>
+struct OperandTraits<BinaryConstantExpr> : FixedNumOperandTraits<2> {
+};
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(BinaryConstantExpr, Value)
+
+template <>
+struct OperandTraits<SelectConstantExpr> : FixedNumOperandTraits<3> {
+};
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(SelectConstantExpr, Value)
+
+template <>
+struct OperandTraits<ExtractElementConstantExpr> : FixedNumOperandTraits<2> {
+};
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ExtractElementConstantExpr, Value)
+
+template <>
+struct OperandTraits<InsertElementConstantExpr> : FixedNumOperandTraits<3> {
+};
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(InsertElementConstantExpr, Value)
+
+template <>
+struct OperandTraits<ShuffleVectorConstantExpr> : FixedNumOperandTraits<3> {
+};
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ShuffleVectorConstantExpr, Value)
+
+
+template <>
+struct OperandTraits<GetElementPtrConstantExpr> : VariadicOperandTraits<1> {
+};
+
+GetElementPtrConstantExpr::GetElementPtrConstantExpr
+  (Constant *C,
+   const std::vector<Constant*> &IdxList,
+   const Type *DestTy)
+    : ConstantExpr(DestTy, Instruction::GetElementPtr,
+                   OperandTraits<GetElementPtrConstantExpr>::op_end(this)
+                   - (IdxList.size()+1),
+                   IdxList.size()+1) {
+  OperandList[0].init(C, this);
+  for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
+    OperandList[i+1].init(IdxList[i], this);
+}
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(GetElementPtrConstantExpr, Value)
+
+
+template <>
+struct OperandTraits<CompareConstantExpr> : FixedNumOperandTraits<2> {
+};
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CompareConstantExpr, Value)
+
+
+} // End llvm namespace
 
 
 // Utility function for determining if a ConstantExpr is a CastOp or not. This
@@ -815,17 +873,29 @@ bool ConstantFP::isValueValidForType(const Type *Ty, const APFloat& Val) {
 //===----------------------------------------------------------------------===//
 //                      Factory Function Implementation
 
+
+// The number of operands for each ConstantCreator::create method is
+// determined by the ConstantTraits template.
 // ConstantCreator - A class that is used to create constants by
 // ValueMap*.  This class should be partially specialized if there is
 // something strange that needs to be done to interface to the ctor for the
 // constant.
 //
 namespace llvm {
+  template<class ValType>
+  struct ConstantTraits;
+
+  template<typename T, typename Alloc>
+  struct VISIBILITY_HIDDEN ConstantTraits< std::vector<T, Alloc> > {
+    static unsigned uses(const std::vector<T, Alloc>& v) {
+      return v.size();
+    }
+  };
+
   template<class ConstantClass, class TypeClass, class ValType>
   struct VISIBILITY_HIDDEN ConstantCreator {
     static ConstantClass *create(const TypeClass *Ty, const ValType &V) {
-      unsigned FIXME = 0; // = traits<ValType>::uses(V)
-      return new(FIXME) ConstantClass(Ty, V);
+      return new(ConstantTraits<ValType>::uses(V)) ConstantClass(Ty, V);
     }
   };
 

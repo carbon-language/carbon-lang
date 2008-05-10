@@ -332,10 +332,10 @@ Constant *llvm::ConstantFoldExtractElementInstruction(const Constant *Val,
   
   if (const ConstantVector *CVal = dyn_cast<ConstantVector>(Val)) {
     if (const ConstantInt *CIdx = dyn_cast<ConstantInt>(Idx)) {
-      return const_cast<Constant*>(CVal->getOperand(CIdx->getZExtValue()));
+      return CVal->getOperand(CIdx->getZExtValue());
     } else if (isa<UndefValue>(Idx)) {
       // ee({w,x,y,z}, undef) -> w (an arbitrary value).
-      return const_cast<Constant*>(CVal->getOperand(0));
+      return CVal->getOperand(0);
     }
   }
   return 0;
@@ -401,7 +401,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
 /// return the specified element value.  Otherwise return null.
 static Constant *GetVectorElement(const Constant *C, unsigned EltNo) {
   if (const ConstantVector *CV = dyn_cast<ConstantVector>(C))
-    return const_cast<Constant*>(CV->getOperand(EltNo));
+    return CV->getOperand(EltNo);
   
   const Type *EltTy = cast<VectorType>(C->getType())->getElementType();
   if (isa<ConstantAggregateZero>(C))
@@ -1222,9 +1222,9 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     if (const ConstantVector *CP2 = dyn_cast<ConstantVector>(C2)) {
       if (pred == FCmpInst::FCMP_OEQ || pred == FCmpInst::FCMP_UEQ) {
         for (unsigned i = 0, e = CP1->getNumOperands(); i != e; ++i) {
-          Constant *C= ConstantExpr::getFCmp(FCmpInst::FCMP_OEQ,
-              const_cast<Constant*>(CP1->getOperand(i)),
-              const_cast<Constant*>(CP2->getOperand(i)));
+          Constant *C = ConstantExpr::getFCmp(FCmpInst::FCMP_OEQ,
+                                              CP1->getOperand(i),
+                                              CP2->getOperand(i));
           if (ConstantInt *CB = dyn_cast<ConstantInt>(C))
             return CB;
         }
@@ -1233,8 +1233,8 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
       } else if (pred == ICmpInst::ICMP_EQ) {
         for (unsigned i = 0, e = CP1->getNumOperands(); i != e; ++i) {
           Constant *C = ConstantExpr::getICmp(ICmpInst::ICMP_EQ,
-              const_cast<Constant*>(CP1->getOperand(i)),
-              const_cast<Constant*>(CP2->getOperand(i)));
+                                              CP1->getOperand(i),
+                                              CP2->getOperand(i));
           if (ConstantInt *CB = dyn_cast<ConstantInt>(C))
             return CB;
         }

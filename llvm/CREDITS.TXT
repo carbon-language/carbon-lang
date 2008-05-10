@@ -110,6 +110,10 @@ E: greened@obbligato.org
 D: Miscellaneous bug fixes
 D: Register allocation refactoring
 
+N: Gabor Greif
+E: ggreif@gmail.com
+D: Improvements for space efficiency
+
 N: Gordon Henriksen
 E: gordonhenriksen@mac.com
 D: Pluggable GC support

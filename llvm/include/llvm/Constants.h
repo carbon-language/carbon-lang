@@ -22,6 +22,7 @@
 
 #include "llvm/Constant.h"
 #include "llvm/Type.h"
+#include "llvm/OperandTraits.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/APFloat.h"
 
@@ -318,7 +319,6 @@ class ConstantArray : public Constant {
   ConstantArray(const ConstantArray &);      // DO NOT IMPLEMENT
 protected:
   ConstantArray(const ArrayType *T, const std::vector<Constant*> &Val);
-  ~ConstantArray();
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static Constant *get(const ArrayType *T, const std::vector<Constant*> &);
@@ -335,6 +335,9 @@ public:
   /// this is not desired so if AddNull==false then the string is copied without
   /// null termination. 
   static Constant *get(const std::string &Initializer, bool AddNull = true);
+
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 
   /// getType - Specialize the getType() method to always return an ArrayType,
   /// which reduces the amount of casting needed in parts of the compiler.
@@ -374,6 +377,11 @@ public:
   }
 };
 
+template <>
+struct OperandTraits<ConstantArray> : VariadicOperandTraits<> {
+};
+
+DEFINE_TRANSPARENT_CASTED_OPERAND_ACCESSORS(ConstantArray, Constant)
 
 //===----------------------------------------------------------------------===//
 // ConstantStruct - Constant Struct Declarations
@@ -384,7 +392,6 @@ class ConstantStruct : public Constant {
   ConstantStruct(const ConstantStruct &);      // DO NOT IMPLEMENT
 protected:
   ConstantStruct(const StructType *T, const std::vector<Constant*> &Val);
-  ~ConstantStruct();
 public:
   /// get() - Static factory methods - Return objects of the specified value
   ///
@@ -396,6 +403,9 @@ public:
     return get(std::vector<Constant*>(Vals, Vals+NumVals), Packed);
   }
   
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
+
   /// getType() specialization - Reduce amount of casting...
   ///
   inline const StructType *getType() const {
@@ -419,6 +429,12 @@ public:
   }
 };
 
+template <>
+struct OperandTraits<ConstantStruct> : VariadicOperandTraits<> {
+};
+
+DEFINE_TRANSPARENT_CASTED_OPERAND_ACCESSORS(ConstantStruct, Constant)
+
 //===----------------------------------------------------------------------===//
 /// ConstantVector - Constant Vector Declarations
 ///
@@ -428,7 +444,6 @@ class ConstantVector : public Constant {
   ConstantVector(const ConstantVector &);      // DO NOT IMPLEMENT
 protected:
   ConstantVector(const VectorType *T, const std::vector<Constant*> &Val);
-  ~ConstantVector();
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static Constant *get(const VectorType *T, const std::vector<Constant*> &);
@@ -438,6 +453,9 @@ public:
     return get(std::vector<Constant*>(Vals, Vals+NumVals));
   }
   
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
+
   /// getType - Specialize the getType() method to always return a VectorType,
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
@@ -474,6 +492,12 @@ public:
     return V->getValueID() == ConstantVectorVal;
   }
 };
+
+template <>
+struct OperandTraits<ConstantVector> : VariadicOperandTraits<> {
+};
+
+DEFINE_TRANSPARENT_CASTED_OPERAND_ACCESSORS(ConstantVector, Constant)
 
 //===----------------------------------------------------------------------===//
 /// ConstantPointerNull - a constant pointer value that points to null
@@ -572,6 +596,9 @@ public:
   static Constant *getPtrToInt(Constant *C, const Type *Ty);
   static Constant *getIntToPtr(Constant *C, const Type *Ty);
   static Constant *getBitCast (Constant *C, const Type *Ty);
+
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 
   // @brief Convenience function for getting one of the casting operations
   // using a CastOps opcode.
@@ -709,13 +736,13 @@ public:
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 
-  /// Override methods to provide more type information...
+/*  /// Override methods to provide more type information...
   inline Constant *getOperand(unsigned i) {
     return cast<Constant>(User::getOperand(i));
   }
   inline Constant *getOperand(unsigned i) const {
     return const_cast<Constant*>(cast<Constant>(User::getOperand(i)));
-  }
+  }*/
 
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -725,6 +752,11 @@ public:
   }
 };
 
+template <>
+struct OperandTraits<ConstantExpr> : VariadicOperandTraits<1> {
+};
+
+DEFINE_TRANSPARENT_CASTED_OPERAND_ACCESSORS(ConstantExpr, Constant)
 
 //===----------------------------------------------------------------------===//
 /// UndefValue - 'undef' values are things that do not have specified contents.

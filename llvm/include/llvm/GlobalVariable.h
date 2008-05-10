@@ -21,6 +21,7 @@
 #define LLVM_GLOBAL_VARIABLE_H
 
 #include "llvm/GlobalValue.h"
+#include "llvm/OperandTraits.h"
 
 namespace llvm {
 
@@ -44,26 +45,32 @@ class GlobalVariable : public GlobalValue {
 
   bool isConstantGlobal : 1;           // Is this a global constant?
   bool isThreadLocalSymbol : 1;        // Is this symbol "Thread Local"?
-  Use Initializer;
 
 public:
-  // allocate space for exactly zero operands
+  // allocate space for exactly one operand
   void *operator new(size_t s) {
-    return User::operator new(s, 0);
+    return User::operator new(s, 1);
   }
   /// GlobalVariable ctor - If a parent module is specified, the global is
   /// automatically inserted into the end of the specified modules global list.
   GlobalVariable(const Type *Ty, bool isConstant, LinkageTypes Linkage,
                  Constant *Initializer = 0, const std::string &Name = "",
-                 Module *Parent = 0, bool ThreadLocal = false, 
+                 Module *Parent = 0, bool ThreadLocal = false,
                  unsigned AddressSpace = 0);
   /// GlobalVariable ctor - This creates a global and inserts it before the
   /// specified other global.
   GlobalVariable(const Type *Ty, bool isConstant, LinkageTypes Linkage,
                  Constant *Initializer, const std::string &Name,
-                 GlobalVariable *InsertBefore, bool ThreadLocal = false, 
+                 GlobalVariable *InsertBefore, bool ThreadLocal = false,
                  unsigned AddressSpace = 0);
-  
+
+  ~GlobalVariable() {
+    NumOperands = 1; // FIXME: needed by operator delete
+  }
+
+  /// Provide fast operand accessors
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
   /// isDeclaration - Is this global variable lacking an initializer?  If so, 
   /// the global variable is defined in some other translation unit, and is thus
   /// only a declaration here.
@@ -79,24 +86,24 @@ public:
   /// illegal to call this method if the global is external, because we cannot
   /// tell what the value is initialized to!
   ///
-  inline Constant *getInitializer() const {
+  inline /*const FIXME*/ Constant *getInitializer() const {
     assert(hasInitializer() && "GV doesn't have initializer!");
-    return reinterpret_cast<Constant*>(Initializer.get());
+    return static_cast<Constant*>(Op<0>().get());
   }
   inline Constant *getInitializer() {
     assert(hasInitializer() && "GV doesn't have initializer!");
-    return reinterpret_cast<Constant*>(Initializer.get());
+    return static_cast<Constant*>(Op<0>().get());
   }
   inline void setInitializer(Constant *CPV) {
     if (CPV == 0) {
       if (hasInitializer()) {
-        Initializer.set(0);
+        Op<0>().set(0);
         NumOperands = 0;
       }
     } else {
       if (!hasInitializer())
         NumOperands = 1;
-      Initializer.set(CPV);
+      Op<0>().set(CPV);
     }
   }
 
@@ -140,6 +147,12 @@ private:
         GlobalVariable *getPrev()       { return Prev; }
   const GlobalVariable *getPrev() const { return Prev; }
 };
+
+template <>
+struct OperandTraits<GlobalVariable> : OptionalOperandTraits<> {
+};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(GlobalVariable, Value)
 
 } // End llvm namespace
 

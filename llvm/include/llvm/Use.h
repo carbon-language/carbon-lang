@@ -26,6 +26,40 @@ class User;
 
 
 //===----------------------------------------------------------------------===//
+//                          Generic Tagging Functions
+//===----------------------------------------------------------------------===//
+
+/// Tag - generic tag type for (at least 32 bit) pointers
+enum Tag { noTag, tagOne, tagTwo, tagThree };
+
+/// addTag - insert tag bits into an (untagged) pointer
+template <typename T, typename TAG>
+inline T *addTag(const T *P, TAG Tag) {
+    return reinterpret_cast<T*>(ptrdiff_t(P) | Tag);
+}
+
+/// stripTag - remove tag bits from a pointer,
+/// making it dereferencable
+template <ptrdiff_t MASK, typename T>
+inline T *stripTag(const T *P) {
+  return reinterpret_cast<T*>(ptrdiff_t(P) & ~MASK);
+}
+
+/// extractTag - extract tag bits from a pointer
+template <typename TAG, TAG MASK, typename T>
+inline TAG extractTag(const T *P) {
+  return TAG(ptrdiff_t(P) & MASK);
+}
+
+/// transferTag - transfer tag bits from a pointer,
+/// to an untagged pointer
+template <ptrdiff_t MASK, typename T>
+inline T *transferTag(const T *From, const T *To) {
+  return reinterpret_cast<T*>((ptrdiff_t(From) & MASK) | ptrdiff_t(To));
+}
+
+
+//===----------------------------------------------------------------------===//
 //                                  Use Class
 //===----------------------------------------------------------------------===//
 
@@ -35,20 +69,36 @@ class Use {
 public:
   inline void init(Value *V, User *U);
 
-  Use(Value *V, User *U) { init(V, U); }
-  Use(const Use &U) { init(U.Val, U.U); }
+private:
+  /// Allow std::swap some intimacy
+  template <typename U> friend void std::swap(U&, U&);
+
+  /// Copy ctor - Only for std::swap
+  Use(const Use &U) { init(U.get(), 0); }
+
+  /// Destructor - Only for zap() and std::swap
   inline ~Use() {
-    if (Val) removeFromList();
+    if (get()) removeFromList();
   }
 
-  /// Default ctor - This leaves the Use completely unitialized.  The only thing
+  /// Default ctor - This leaves the Use completely uninitialized.  The only thing
   /// that is valid to do with this use is to call the "init" method.
-  inline Use() : Val(0) {}
+
+  inline Use() {}
+  enum PrevPtrTag { zeroDigitTag = noTag
+                  , oneDigitTag = tagOne
+                  , stopTag = tagTwo
+                  , fullStopTag = tagThree };
+
+public:
 
 
   operator Value*() const { return Val; }
   Value *get() const { return Val; }
-  User *getUser() const { return U; }
+  User *getUser() const;
+  const Use* getImpliedUser() const;
+  static Use *initTags(Use *Start, Use *Stop, ptrdiff_t Done = 0);
+  static void zap(Use *Start, const Use *Stop, bool del = false);
 
   inline void set(Value *Val);
 
@@ -57,7 +107,7 @@ public:
     return RHS;
   }
   const Use &operator=(const Use &RHS) {
-    set(RHS.Val);
+    set(RHS.get());
     return *this;
   }
 
@@ -66,19 +116,22 @@ public:
 
   Use *getNext() const { return Next; }
 private:
-  Use *Next, **Prev;
   Value *Val;
-  User *U;
+  Use *Next, **Prev;
 
+  void setPrev(Use **NewPrev) {
+    Prev = transferTag<fullStopTag>(Prev, NewPrev);
+  }
   void addToList(Use **List) {
     Next = *List;
-    if (Next) Next->Prev = &Next;
-    Prev = List;
+    if (Next) Next->setPrev(&Next);
+    setPrev(List);
     *List = this;
   }
   void removeFromList() {
-    *Prev = Next;
-    if (Next) Next->Prev = Prev;
+    Use **StrippedPrev = stripTag<fullStopTag>(Prev);
+    *StrippedPrev = Next;
+    if (Next) Next->setPrev(StrippedPrev);
   }
 
   friend class Value;
@@ -138,7 +191,7 @@ public:
 
   // Retrieve a reference to the current User
   UserTy *operator*() const {
-    assert(U && "Cannot increment end iterator!");
+    assert(U && "Cannot dereference end iterator!");
     return U->getUser();
   }
 

@@ -17,7 +17,7 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/ParameterAttributes.h"
 #include "llvm/Type.h"
-#include "llvm/User.h"
+#include "llvm/OperandTraits.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Bitcode/LLVMBitCodes.h"
 #include "llvm/ADT/DenseMap.h"
@@ -26,32 +26,43 @@
 namespace llvm {
   class MemoryBuffer;
   
+//===----------------------------------------------------------------------===//
+//                          BitcodeReaderValueList Class
+//===----------------------------------------------------------------------===//
+
 class BitcodeReaderValueList : public User {
-  std::vector<Use> Uses;
+  unsigned Capacity;
 public:
-  BitcodeReaderValueList() : User(Type::VoidTy, Value::ArgumentVal, 0, 0) {}
-  
+  BitcodeReaderValueList() : User(Type::VoidTy, Value::ArgumentVal, 0, 0)
+                           , Capacity(0) {}
+
+  /// Provide fast operand accessors
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
   // vector compatibility methods
   unsigned size() const { return getNumOperands(); }
+  void resize(unsigned);
   void push_back(Value *V) {
-    Uses.push_back(Use(V, this));
-    OperandList = &Uses[0];
-    ++NumOperands;
+    unsigned OldOps(NumOperands), NewOps(NumOperands + 1);
+    resize(NewOps);
+    NumOperands = NewOps;
+    OperandList[OldOps] = V;
   }
   
   void clear() {
-    std::vector<Use>().swap(Uses);
+    if (OperandList) dropHungoffUses(OperandList);
+    Capacity = 0;
   }
   
   Value *operator[](unsigned i) const { return getOperand(i); }
   
-  Value *back() const { return Uses.back(); }
-  void pop_back() { Uses.pop_back(); --NumOperands; }
+  Value *back() const { return getOperand(size() - 1); }
+  void pop_back() { setOperand(size() - 1, 0); --NumOperands; }
   bool empty() const { return NumOperands == 0; }
   void shrinkTo(unsigned N) {
     assert(N <= NumOperands && "Invalid shrinkTo request!");
-    Uses.resize(N);
-    NumOperands = N;
+    while (NumOperands > N)
+      pop_back();
   }
   virtual void print(std::ostream&) const {}
   
@@ -73,11 +84,20 @@ public:
   
 private:
   void initVal(unsigned Idx, Value *V) {
-    assert(Uses[Idx] == 0 && "Cannot init an already init'd Use!");
-    Uses[Idx].init(V, this);
+    if (Idx >= size()) {
+      // Insert a bunch of null values.
+      resize(Idx * 2 + 1);
+    }
+    assert(getOperand(Idx) == 0 && "Cannot init an already init'd Use!");
+    OperandList[Idx].init(V, this);
   }
 };
-  
+
+template <>
+struct OperandTraits<BitcodeReaderValueList> : HungoffOperandTraits</*16 FIXME*/> {
+};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(BitcodeReaderValueList, Value)  
 
 class BitcodeReader : public ModuleProvider {
   MemoryBuffer *Buffer;

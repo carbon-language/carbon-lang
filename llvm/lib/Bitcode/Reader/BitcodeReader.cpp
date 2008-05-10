@@ -23,6 +23,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/OperandTraits.h"
 using namespace llvm;
 
 void BitcodeReader::FreeState() {
@@ -115,55 +116,81 @@ static int GetDecodedBinaryOpcode(unsigned Val, const Type *Ty) {
   }
 }
 
-
+namespace llvm {
 namespace {
   /// @brief A class for maintaining the slot number definition
   /// as a placeholder for the actual definition for forward constants defs.
   class ConstantPlaceHolder : public ConstantExpr {
     ConstantPlaceHolder();                       // DO NOT IMPLEMENT
     void operator=(const ConstantPlaceHolder &); // DO NOT IMPLEMENT
-    Use Op;
   public:
     // allocate space for exactly one operand
     void *operator new(size_t s) {
       return User::operator new(s, 1);
     }
     explicit ConstantPlaceHolder(const Type *Ty)
-      : ConstantExpr(Ty, Instruction::UserOp1, &Op, 1),
-        Op(UndefValue::get(Type::Int32Ty), this) {
+      : ConstantExpr(Ty, Instruction::UserOp1, &Op<0>(), 1) {
+      Op<0>() = UndefValue::get(Type::Int32Ty);
     }
+    /// Provide fast operand accessors
+    DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
   };
+}
+
+
+  // FIXME: can we inherit this from ConstantExpr?
+template <>
+struct OperandTraits<ConstantPlaceHolder> : FixedNumOperandTraits<1> {
+};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantPlaceHolder, Value)
+}
+
+void BitcodeReaderValueList::resize(unsigned Desired) {
+  if (Desired > Capacity) {
+    // Since we expect many values to come from the bitcode file we better
+    // allocate the double amount, so that the array size grows exponentially
+    // at each reallocation.  Also, add a small amount of 100 extra elements
+    // each time, to reallocate less frequently when the array is still small.
+    //
+    Capacity = Desired * 2 + 100;
+    Use *New = allocHungoffUses(Capacity);
+    Use *Old = OperandList;
+    unsigned Ops = getNumOperands();
+    for (int i(Ops - 1); i >= 0; --i)
+      New[i] = Old[i].get();
+    OperandList = New;
+    if (Old) Use::zap(Old, Old + Ops, true);
+  }
 }
 
 Constant *BitcodeReaderValueList::getConstantFwdRef(unsigned Idx,
                                                     const Type *Ty) {
   if (Idx >= size()) {
     // Insert a bunch of null values.
-    Uses.resize(Idx+1);
-    OperandList = &Uses[0];
+    resize(Idx + 1);
     NumOperands = Idx+1;
   }
 
-  if (Value *V = Uses[Idx]) {
+  if (Value *V = OperandList[Idx]) {
     assert(Ty == V->getType() && "Type mismatch in constant table!");
     return cast<Constant>(V);
   }
 
   // Create and return a placeholder, which will later be RAUW'd.
   Constant *C = new ConstantPlaceHolder(Ty);
-  Uses[Idx].init(C, this);
+  OperandList[Idx].init(C, this);
   return C;
 }
 
 Value *BitcodeReaderValueList::getValueFwdRef(unsigned Idx, const Type *Ty) {
   if (Idx >= size()) {
     // Insert a bunch of null values.
-    Uses.resize(Idx+1);
-    OperandList = &Uses[0];
+    resize(Idx + 1);
     NumOperands = Idx+1;
   }
   
-  if (Value *V = Uses[Idx]) {
+  if (Value *V = OperandList[Idx]) {
     assert((Ty == 0 || Ty == V->getType()) && "Type mismatch in value table!");
     return V;
   }
@@ -173,7 +200,7 @@ Value *BitcodeReaderValueList::getValueFwdRef(unsigned Idx, const Type *Ty) {
   
   // Create and return a placeholder, which will later be RAUW'd.
   Value *V = new Argument(Ty);
-  Uses[Idx].init(V, this);
+  OperandList[Idx].init(V, this);
   return V;
 }
 
