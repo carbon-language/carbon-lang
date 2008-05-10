@@ -1683,12 +1683,9 @@ public:
     return new(3) BranchInst(IfTrue, IfFalse, Cond, InsertAtEnd);
   }
 
-  ~BranchInst()
-  {
+  ~BranchInst() {
     if (NumOperands == 1)
-      {
-        NumOperands = (Use*)this - OperandList;
-      }
+      NumOperands = (unsigned)(uintptr_t)((Use*)this - OperandList);
   }
 
   /// Transparently provide more efficient getOperand methods.
