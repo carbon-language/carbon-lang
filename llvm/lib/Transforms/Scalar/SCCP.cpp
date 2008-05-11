@@ -179,7 +179,7 @@ public:
   /// MarkBlockExecutable - This method can be used by clients to mark all of
   /// the blocks that are known to be intrinsically live in the processed unit.
   void MarkBlockExecutable(BasicBlock *BB) {
-    DOUT << "Marking Block Executable: " << BB->getName() << "\n";
+    DOUT << "Marking Block Executable: " << BB->getNameStart() << "\n";
     BBExecutable.insert(BB);   // Basic block is executable!
     BBWorkList.push_back(BB);  // Add the block to the work list!
   }
@@ -334,8 +334,8 @@ private:
       return;  // This edge is already known to be executable!
 
     if (BBExecutable.count(Dest)) {
-      DOUT << "Marking Edge Executable: " << Source->getName()
-           << " -> " << Dest->getName() << "\n";
+      DOUT << "Marking Edge Executable: " << Source->getNameStart()
+           << " -> " << Dest->getNameStart() << "\n";
 
       // The destination is already executable, but we just made an edge
       // feasible that wasn't before.  Revisit the PHI nodes in the block
@@ -1451,7 +1451,7 @@ FunctionPass *llvm::createSCCPPass() {
 // and return true if the function was modified.
 //
 bool SCCP::runOnFunction(Function &F) {
-  DOUT << "SCCP on function '" << F.getName() << "'\n";
+  DOUT << "SCCP on function '" << F.getNameStart() << "'\n";
   SCCPSolver Solver;
 
   // Mark the first block of the function as being executable.
@@ -1774,7 +1774,7 @@ bool IPSCCP::runOnModule(Module &M) {
     GlobalVariable *GV = I->first;
     assert(!I->second.isOverdefined() &&
            "Overdefined values should have been taken out of the map!");
-    DOUT << "Found that GV '" << GV->getName()<< "' is constant!\n";
+    DOUT << "Found that GV '" << GV->getNameStart() << "' is constant!\n";
     while (!GV->use_empty()) {
       StoreInst *SI = cast<StoreInst>(GV->use_back());
       SI->eraseFromParent();
