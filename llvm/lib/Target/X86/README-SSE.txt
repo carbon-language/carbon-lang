@@ -835,3 +835,41 @@ LLVM should be able to generate the same thing as gcc.  This looks like it is
 just a matter of matching (scalar_to_vector (load x)) to movd.
 
 //===---------------------------------------------------------------------===//
+
+LLVM currently generates stack realignment code, when it is not necessary
+needed. The problem is that we need to know about stack alignment too early,
+before RA runs.
+
+At that point we don't know, whether there will be vector spill, or not.
+Stack realignment logic is overly conservative here, but otherwise we can
+produce unaligned loads/stores.
+
+Fixing this will require some huge RA changes.
+
+Testcase:
+#include <emmintrin.h>
+
+typedef short vSInt16 __attribute__ ((__vector_size__ (16)));
+
+static const vSInt16 a = {- 22725, - 12873, - 22725, - 12873, - 22725, - 12873,
+- 22725, - 12873};;
+
+vSInt16 madd(vSInt16 b)
+{
+    return _mm_madd_epi16(a, b);
+}
+
+Generated code (x86-32, linux):
+madd:
+        pushl   %ebp
+        movl    %esp, %ebp
+        andl    $-16, %esp
+        movaps  .LCPI1_0, %xmm1
+        pmaddwd %xmm1, %xmm0
+        movl    %ebp, %esp
+        popl    %ebp
+        ret
+
+//===---------------------------------------------------------------------===//
+
+
