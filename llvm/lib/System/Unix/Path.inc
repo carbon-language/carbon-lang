@@ -75,6 +75,12 @@ using namespace sys;
 
 extern const char sys::PathSeparator = ':';
 
+Path::Path(const std::string& p)
+  : path(p) {}
+
+Path::Path(const char *StrStart, unsigned StrLen)
+  : path(StrStart, StrLen) {}
+
 bool 
 Path::isValid() const {
   // Check some obvious things

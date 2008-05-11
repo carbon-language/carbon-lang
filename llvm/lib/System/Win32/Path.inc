@@ -46,6 +46,16 @@ namespace llvm {
 namespace sys {
 const char PathSeparator = ';';
 
+Path::Path(const std::string& p)
+  : path(p) {
+  FlipBackSlashes(path);
+}
+
+Path::Path(const char *StrStart, unsigned StrLen)
+  : path(StrStart, StrLen) {
+  FlipBackSlashes(path);
+}
+
 bool
 Path::isValid() const {
   if (path.empty())
@@ -230,7 +240,7 @@ Path::isRootDirectory() const {
 }
 
 std::string Path::getDirname() const {
-  return getDirnameCharSep(path, '\\');
+  return getDirnameCharSep(path, '/');
 }
 
 std::string
