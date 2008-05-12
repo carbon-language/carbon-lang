@@ -1359,7 +1359,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
           OpNum+1 != Record.size())
         return Error("Invalid CMP record");
       
-      if (LHS->getType()->isInteger())
+      if (LHS->getType()->isInteger() || isa<PointerType>(LHS->getType()))
         I = new ICmpInst((ICmpInst::Predicate)Record[OpNum], LHS, RHS);
       else if (LHS->getType()->isFloatingPoint())
         I = new FCmpInst((FCmpInst::Predicate)Record[OpNum], LHS, RHS);
