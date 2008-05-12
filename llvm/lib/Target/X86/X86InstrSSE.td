@@ -161,6 +161,22 @@ def PSxLDQ_imm  : SDNodeXForm<imm, [{
   return getI32Imm(N->getValue() >> 3);
 }]>;
 
+def SSE_CC_imm  : SDNodeXForm<cond, [{
+  unsigned Val;
+  switch (N->get()) {
+  default: Val = 0; assert(0 && "Unexpected CondCode"); break;
+  case ISD::SETOEQ: Val = 0; break;
+  case ISD::SETOLT: Val = 1; break;
+  case ISD::SETOLE: Val = 2; break;
+  case ISD::SETUO:  Val = 3; break;
+  case ISD::SETONE: Val = 4; break;
+  case ISD::SETOGE: Val = 5; break;
+  case ISD::SETOGT: Val = 6; break;
+  case ISD::SETO:   Val = 7; break;
+  }
+  return getI8Imm(Val);
+}]>;
+
 // SHUFFLE_get_shuf_imm xform function: convert vector_shuffle mask to PSHUF*,
 // SHUFP* etc. imm.
 def SHUFFLE_get_shuf_imm : SDNodeXForm<build_vector, [{
@@ -254,6 +270,7 @@ def SHUFP_shuffle_mask : PatLeaf<(build_vector), [{
 def PSHUFD_binary_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isSHUFPMask(N);
 }], SHUFFLE_get_shuf_imm>;
+
 
 //===----------------------------------------------------------------------===//
 // SSE scalar FP Instructions
@@ -855,16 +872,20 @@ let Constraints = "$src1 = $dst" in {
 
 let Constraints = "$src1 = $dst" in {
   def CMPPSrri : PSIi8<0xC2, MRMSrcReg, 
-                      (outs VR128:$dst), (ins VR128:$src1, VR128:$src, SSECC:$cc),
-                      "cmp${cc}ps\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (int_x86_sse_cmp_ps VR128:$src1,
-                                         VR128:$src, imm:$cc))]>;
+                    (outs VR128:$dst), (ins VR128:$src1, VR128:$src, SSECC:$cc),
+                    "cmp${cc}ps\t{$src, $dst|$dst, $src}",
+                    [(set VR128:$dst, (int_x86_sse_cmp_ps VR128:$src1,
+                                                        VR128:$src, imm:$cc))]>;
   def CMPPSrmi : PSIi8<0xC2, MRMSrcMem, 
-                      (outs VR128:$dst), (ins VR128:$src1, f128mem:$src, SSECC:$cc),
-                      "cmp${cc}ps\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (int_x86_sse_cmp_ps VR128:$src1,
-                                         (load addr:$src), imm:$cc))]>;
+                  (outs VR128:$dst), (ins VR128:$src1, f128mem:$src, SSECC:$cc),
+                  "cmp${cc}ps\t{$src, $dst|$dst, $src}",
+                  [(set VR128:$dst, (int_x86_sse_cmp_ps VR128:$src1,
+                                                  (load addr:$src), imm:$cc))]>;
 }
+def : Pat<(v4i32 (vsetcc (v4f32 VR128:$src1), VR128:$src2, cond:$cc)),
+          (CMPPSrri VR128:$src1, VR128:$src2, (SSE_CC_imm cond:$cc))>;
+def : Pat<(v4i32 (vsetcc (v4f32 VR128:$src1), (memop addr:$src2), cond:$cc)),
+          (CMPPSrmi VR128:$src1, addr:$src2, (SSE_CC_imm cond:$cc))>;
 
 // Shuffle and unpack instructions
 let Constraints = "$src1 = $dst" in {
@@ -1675,13 +1696,17 @@ let Constraints = "$src1 = $dst" in {
                     (outs VR128:$dst), (ins VR128:$src1, VR128:$src, SSECC:$cc),
                     "cmp${cc}pd\t{$src, $dst|$dst, $src}",
                     [(set VR128:$dst, (int_x86_sse2_cmp_pd VR128:$src1,
-                                       VR128:$src, imm:$cc))]>;
+                                                        VR128:$src, imm:$cc))]>;
   def CMPPDrmi : PDIi8<0xC2, MRMSrcMem, 
                   (outs VR128:$dst), (ins VR128:$src1, f128mem:$src, SSECC:$cc),
                   "cmp${cc}pd\t{$src, $dst|$dst, $src}",
                   [(set VR128:$dst, (int_x86_sse2_cmp_pd VR128:$src1,
-                                     (load addr:$src), imm:$cc))]>;
+                                                  (load addr:$src), imm:$cc))]>;
 }
+def : Pat<(v2i64 (vsetcc (v2f64 VR128:$src1), VR128:$src2, cond:$cc)),
+          (CMPPDrri VR128:$src1, VR128:$src2, (SSE_CC_imm cond:$cc))>;
+def : Pat<(v2i64 (vsetcc (v2f64 VR128:$src1), (memop addr:$src2), cond:$cc)),
+          (CMPPDrmi VR128:$src1, addr:$src2, (SSE_CC_imm cond:$cc))>;
 
 // Shuffle and unpack instructions
 let Constraints = "$src1 = $dst" in {

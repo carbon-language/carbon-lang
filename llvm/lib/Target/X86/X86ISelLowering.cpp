@@ -530,6 +530,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::ROTL, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::ROTR, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::BSWAP, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::VSETCC, (MVT::ValueType)VT, Expand);
   }
 
   if (Subtarget->hasMMX()) {
@@ -614,6 +615,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v4f32, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Custom);
     setOperationAction(ISD::SELECT,             MVT::v4f32, Custom);
+    setOperationAction(ISD::VSETCC,             MVT::v4f32, Legal);
   }
 
   if (Subtarget->hasSSE2()) {
@@ -638,6 +640,12 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FDIV,               MVT::v2f64, Legal);
     setOperationAction(ISD::FSQRT,              MVT::v2f64, Legal);
     setOperationAction(ISD::FNEG,               MVT::v2f64, Custom);
+
+    setOperationAction(ISD::VSETCC,             MVT::v2f64, Legal);
+    setOperationAction(ISD::VSETCC,             MVT::v16i8, Legal);
+    setOperationAction(ISD::VSETCC,             MVT::v8i16, Legal);
+    setOperationAction(ISD::VSETCC,             MVT::v4i32, Legal);
+    setOperationAction(ISD::VSETCC,             MVT::v2i64, Legal);
 
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v16i8, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v8i16, Custom);
@@ -686,6 +694,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::LOAD,               MVT::v2i64, Legal);
     setOperationAction(ISD::SELECT,             MVT::v2f64, Custom);
     setOperationAction(ISD::SELECT,             MVT::v2i64, Custom);
+    
   }
   
   if (Subtarget->hasSSE41()) {

@@ -565,7 +565,6 @@ namespace llvm {
     MachineBasicBlock *EmitAtomicMinMaxWithCustomInserter(MachineInstr *BInstr,
                                                           MachineBasicBlock *BB,
                                                           unsigned cmovOpc);
-    
   };
 }
 
