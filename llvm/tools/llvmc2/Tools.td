@@ -71,7 +71,7 @@ def llvm_gcc_assembler : Tool<
  (cmd_line "llvm-gcc -c -x assembler $INFILE -o $OUTFILE"),
  (switch_option "c", (stop_compilation),
                 (help "Compile and assemble, but do not link")),
- (prefix_list_option "Wa", (unpack_values), (help "pass options to assembler"))
+ (prefix_list_option "Wa,", (unpack_values), (help "pass options to assembler"))
 ]>;
 
 // Default linker
@@ -83,7 +83,7 @@ def llvm_gcc_linker : Tool<
  (join),
  (prefix_list_option "L", (forward), (help "add a directory to link path")),
  (prefix_list_option "l", (forward), (help "search a library when linking")),
- (prefix_list_option "Wl", (unpack_values), (help "pass options to linker"))
+ (prefix_list_option "Wl,", (unpack_values), (help "pass options to linker"))
 ]>;
 
 // Alternative linker for C++
@@ -97,7 +97,7 @@ def llvm_gcc_cpp_linker : Tool<
                    (help "Choose linker (possible values: gcc, g++)")),
  (prefix_list_option "L", (forward)),
  (prefix_list_option "l", (forward)),
- (prefix_list_option "Wl", (unpack_values))
+ (prefix_list_option "Wl,", (unpack_values))
 ]>;
 
 // Language map
