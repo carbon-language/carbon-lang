@@ -67,7 +67,7 @@ public:
   /// isTriviallyReMaterializable - Return true if the instruction is trivially
   /// rematerializable, meaning it has no side effects and requires no operands
   /// that aren't always available.
-  bool isTriviallyReMaterializable(MachineInstr *MI) const {
+  bool isTriviallyReMaterializable(const MachineInstr *MI) const {
     return MI->getDesc().isRematerializable() &&
            isReallyTriviallyReMaterializable(MI);
   }
@@ -81,7 +81,7 @@ protected:
   /// return false if the instruction has any side effects other than
   /// producing a value, or if it requres any address registers that are not
   /// always available.
-  virtual bool isReallyTriviallyReMaterializable(MachineInstr *MI) const {
+  virtual bool isReallyTriviallyReMaterializable(const MachineInstr *MI) const {
     return true;
   }
 

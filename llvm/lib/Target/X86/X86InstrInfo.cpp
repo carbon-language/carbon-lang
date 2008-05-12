@@ -760,7 +760,8 @@ static inline bool isGVStub(GlobalValue *GV, X86TargetMachine &TM) {
   return TM.getSubtarget<X86Subtarget>().GVRequiresExtraLoad(GV, TM, false);
 }
  
-bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
+bool
+X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI) const {
   switch (MI->getOpcode()) {
   default: break;
     case X86::MOV8rm:
