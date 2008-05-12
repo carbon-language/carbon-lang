@@ -495,7 +495,18 @@ unsigned BranchFolder::ComputeSameTails(unsigned CurHash,
                                         CurMPIter->second,
                                         I->second,
                                         TrialBBI1, TrialBBI2);
-      if (CommonTailLen >= minCommonTailLength) {
+      // If we will have to split a block, there should be at least
+      // minCommonTailLength instructions in common; if not, at worst
+      // we will be replacing a fallthrough into the common tail with a
+      // branch, which at worst breaks even with falling through into
+      // the duplicated common tail, so 1 instruction in common is enough.
+      // We will always pick a block we do not have to split as the common
+      // tail if there is one.
+      // (Empty blocks will get forwarded and need not be considered.)
+      if (CommonTailLen >= minCommonTailLength ||
+          (CommonTailLen > 0 &&
+           (TrialBBI1==CurMPIter->second->begin() ||
+            TrialBBI2==I->second->begin()))) {
         if (CommonTailLen > maxCommonTailLength) {
           SameTails.clear();
           maxCommonTailLength = CommonTailLen;
