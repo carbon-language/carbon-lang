@@ -74,3 +74,14 @@ void foo5(){
     }
 }
 
+void foo6(){
+    switch(0){
+    }
+}
+
+void foo7(){
+    switch(0){
+      foo7();
+    }
+}
+

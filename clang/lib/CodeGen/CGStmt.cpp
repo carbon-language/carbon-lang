@@ -499,6 +499,9 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   llvm::BasicBlock *NextBlock = llvm::BasicBlock::Create("after.sw");
   SwitchInsn = Builder.CreateSwitch(CondV, NextBlock);
 
+  // Create basic block for body of switch
+  StartBlock("body.sw");
+
   // All break statements jump to NextBlock. If BreakContinueStack is non empty
   // then reuse last ContinueBlock.
   llvm::BasicBlock *ContinueBlock = NULL;
