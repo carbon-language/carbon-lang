@@ -29,8 +29,8 @@ def quote(arg):
 def run(args):
     # We MUST print to stderr.  Some clients use the stdout output of
     # gcc for various purposes.
-    print >> sys.stderr, ' '.join(map(quote, args))
-    print >> sys.stderr
+    #print >> sys.stderr, ' '.join(map(quote, args))
+    #print >> sys.stderr
     code = subprocess.call(args)
     if code > 255:
         code = 1
@@ -40,7 +40,7 @@ def run(args):
 def compile(args):
   # We MUST print to stderr.  Some clients use the stdout output of
   # gcc for various purposes.
-  print >> sys.stderr, '\n'
+  #print >> sys.stderr, '\n'
   command = 'gcc'.split()
   run(command + args)
 
@@ -94,7 +94,7 @@ def analyze(clang, args,language,output,files,verbose,htmldir):
       print >> sys.stderr, '\n'
 
 
-    subprocess.call(args)
+#    subprocess.call(args)
 
 def link(args):
     command = 'gcc'.split()
@@ -138,9 +138,11 @@ def main(args):
     language = ''
     
     verbose = 0
-    clang = "clang"
+    clang = "clang"    
     
-    
+    # Forward to GCC.
+    compile(args)    
+        
     if os.environ.get('CCC_ANALYZER_VERBOSE') is not None:
       verbose = 1
       
@@ -247,8 +249,8 @@ def main(args):
     if not files:
         error('no input files')
 
-    if action == 'preprocess' or save_temps:
-      compile(args)
+    # if action == 'preprocess' or save_temps:
+    #   compile(args)
 
     if action == 'compile' or save_temps:
         for i, file in enumerate(files):
@@ -267,12 +269,12 @@ def main(args):
               analyze_args = analyze_args + [ '-x', language ]
             analyze_args = analyze_args + compile_opts
             analyze(clang, analyze_args, language, output, files, verbose, htmldir)
-        compile(args)
+#        compile(args)
 
 
-    if action == 'link':
-        link(args)
-#        analyze(link_opts)
+#     if action == 'link':
+#         link(args)
+# #        analyze(link_opts)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
