@@ -2046,7 +2046,7 @@ ConstantExpr::getVICmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   assert(pred >= ICmpInst::FIRST_ICMP_PREDICATE && 
          pred <= ICmpInst::LAST_ICMP_PREDICATE && "Invalid VICmp Predicate");
 
-  const Type *VTy = cast<VectorType>(LHS->getType());
+  const VectorType *VTy = cast<VectorType>(LHS->getType());
   const Type *EltTy = VTy->getElementType();
   unsigned NumElts = VTy->getNumElements();
 
