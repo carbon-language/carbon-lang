@@ -662,6 +662,10 @@ if ($Verbose >= 2) {
   $ENV{'CCC_ANALYZER_VERBOSE'} = 1;
 }
 
+if ($Verbose >= 3) {
+  $ENV{'CCC_ANALYZER_LOG'} = 1;
+}
+
 # Run the build.
 
 RunBuildCommand(\@ARGV, $IgnoreErrors);

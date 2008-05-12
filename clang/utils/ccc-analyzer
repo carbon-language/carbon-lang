@@ -64,7 +64,10 @@ def analyze(clang, args,language,output,files,verbose,htmldir):
       while i < len(args):
         print_args.append(''.join([ '\'', args[i], '\'' ]))
         i += 1
-    
+
+
+    RunAnalyzer = 0;
+
     if language.find("header") > 0:
       target = remove_pch_extension(output)
       command = 'cp'.split()
@@ -72,19 +75,25 @@ def analyze(clang, args,language,output,files,verbose,htmldir):
     else:
       command = clang.split() + '-checker-cfref'.split()
       args = command + args;
-      
-      if htmldir is not None:
-        args.append('-o')
-        print_args.append('-o')
-        args.append(htmldir)
-        print_args.append(htmldir)
+      RunAnalyzer = 1
+
+    if verbose == 2:
+      print >> sys.stderr, '#SHELL (cd ' + os.getcwd() + ' && ' + ' '.join(command + print_args) + ')\n'
+
+
+    if RunAnalyzer and htmldir is not None:
+      args.append('-o')
+      print_args.append('-o')
+      args.append(htmldir)
+      print_args.append(htmldir)
     
     if verbose: 
       # We MUST print to stderr.  Some clients use the stdout output of
       # gcc for various purposes. 
       print >> sys.stderr, ' '.join(command+print_args)
       print >> sys.stderr, '\n'
-      
+
+
     subprocess.call(args)
 
 def link(args):
@@ -133,7 +142,10 @@ def main(args):
     
     
     if os.environ.get('CCC_ANALYZER_VERBOSE') is not None:
-      verbose =1
+      verbose = 1
+      
+    if os.environ.get('CCC_ANALYZER_LOG') is not None:
+      verbose = 2
       
     clang_env = os.environ.get('CLANG') 
     
