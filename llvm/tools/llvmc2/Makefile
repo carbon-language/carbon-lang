@@ -14,7 +14,8 @@ REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
 
-TOOLS_SOURCE=Graph.td Tools.td Common.td
+GRAPH = Graph.td
+TOOLS_SOURCE=$(GRAPH) Tools.td Common.td
 
 # TOFIX: integrate this part into Makefile.rules?
 # The degree of horrorshowness in that file is too much for me atm.
