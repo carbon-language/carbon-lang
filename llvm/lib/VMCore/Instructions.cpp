@@ -2335,7 +2335,7 @@ BitCastInst::BitCastInst(
 CmpInst::CmpInst(const Type *ty, OtherOps op, unsigned short predicate,
                  Value *LHS, Value *RHS, const std::string &Name,
                  Instruction *InsertBefore)
-  : Instruction(ty, op,
+  : Instruction(Type::Int1Ty, op,
                 OperandTraits<CmpInst>::op_begin(this),
                 OperandTraits<CmpInst>::operands(this),
                 InsertBefore) {
@@ -2348,7 +2348,7 @@ CmpInst::CmpInst(const Type *ty, OtherOps op, unsigned short predicate,
 CmpInst::CmpInst(const Type *ty, OtherOps op, unsigned short predicate,
                  Value *LHS, Value *RHS, const std::string &Name,
                  BasicBlock *InsertAtEnd)
-  : Instruction(ty, op,
+  : Instruction(Type::Int1Ty, op,
                 OperandTraits<CmpInst>::op_begin(this),
                 OperandTraits<CmpInst>::operands(this),
                 InsertAtEnd) {
