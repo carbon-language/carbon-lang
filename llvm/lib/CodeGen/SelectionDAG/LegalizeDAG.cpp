@@ -7117,6 +7117,16 @@ SDOperand SelectionDAGLegalize::ScalarizeVectorOp(SDOperand Op) {
                          ScalarizeVectorOp(Op.getOperand(1)),
                          ScalarizeVectorOp(Op.getOperand(2)));
     break;
+  case ISD::VSETCC: {
+    SDOperand Op0 = ScalarizeVectorOp(Op.getOperand(0));
+    SDOperand Op1 = ScalarizeVectorOp(Op.getOperand(1));
+    Result = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(Op0), Op0, Op1,
+                         Op.getOperand(2));
+    Result = DAG.getNode(ISD::SELECT, NewVT, Result,
+                         DAG.getConstant(-1ULL, NewVT),
+                         DAG.getConstant(0ULL, NewVT));
+    break;
+  }
   }
 
   if (TLI.isTypeLegal(NewVT))

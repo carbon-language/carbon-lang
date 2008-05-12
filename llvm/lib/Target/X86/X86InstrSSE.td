@@ -1966,6 +1966,33 @@ defm PCMPGTB  : PDI_binop_rm_int<0x64, "pcmpgtb", int_x86_sse2_pcmpgt_b>;
 defm PCMPGTW  : PDI_binop_rm_int<0x65, "pcmpgtw", int_x86_sse2_pcmpgt_w>;
 defm PCMPGTD  : PDI_binop_rm_int<0x66, "pcmpgtd", int_x86_sse2_pcmpgt_d>;
 
+def : Pat<(v16i8 (vsetcc (v16i8 VR128:$src1), VR128:$src2, SETEQ)),
+          (PCMPEQBrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v16i8 (vsetcc (v16i8 VR128:$src1), (memop addr:$src2), SETEQ)),
+          (PCMPEQBrm VR128:$src1, addr:$src2)>;
+def : Pat<(v8i16 (vsetcc (v8i16 VR128:$src1), VR128:$src2, SETEQ)),
+          (PCMPEQWrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v8i16 (vsetcc (v8i16 VR128:$src1), (memop addr:$src2), SETEQ)),
+          (PCMPEQWrm VR128:$src1, addr:$src2)>;
+def : Pat<(v4i32 (vsetcc (v4i32 VR128:$src1), VR128:$src2, SETEQ)),
+          (PCMPEQDrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v4i32 (vsetcc (v4i32 VR128:$src1), (memop addr:$src2), SETEQ)),
+          (PCMPEQDrm VR128:$src1, addr:$src2)>;
+
+def : Pat<(v16i8 (vsetcc (v16i8 VR128:$src1), VR128:$src2, SETGT)),
+          (PCMPGTBrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v16i8 (vsetcc (v16i8 VR128:$src1), (memop addr:$src2), SETGT)),
+          (PCMPGTBrm VR128:$src1, addr:$src2)>;
+def : Pat<(v8i16 (vsetcc (v8i16 VR128:$src1), VR128:$src2, SETGT)),
+          (PCMPGTWrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v8i16 (vsetcc (v8i16 VR128:$src1), (memop addr:$src2), SETGT)),
+          (PCMPGTWrm VR128:$src1, addr:$src2)>;
+def : Pat<(v4i32 (vsetcc (v4i32 VR128:$src1), VR128:$src2, SETGT)),
+          (PCMPGTDrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v4i32 (vsetcc (v4i32 VR128:$src1), (memop addr:$src2), SETGT)),
+          (PCMPGTDrm VR128:$src1, addr:$src2)>;
+
+
 // Pack instructions
 defm PACKSSWB : PDI_binop_rm_int<0x63, "packsswb", int_x86_sse2_packsswb_128>;
 defm PACKSSDW : PDI_binop_rm_int<0x6B, "packssdw", int_x86_sse2_packssdw_128>;
