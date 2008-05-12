@@ -49,6 +49,7 @@ namespace clang {
   class RecordType;
   class ComplexType;
   class TagType;
+  class TypedefType;
   class FunctionType;
   class ExtVectorType;
   class BuiltinType;
@@ -338,7 +339,8 @@ public:
   const VariableArrayType *getAsVariableArrayType() const;
   const IncompleteArrayType *getAsIncompleteArrayType() const;
   const RecordType *getAsRecordType() const;
-  const RecordType *getAsStructureType() const;   
+  const RecordType *getAsStructureType() const;
+  const TypedefType *getAsTypedefType() const;
   const RecordType *getAsUnionType() const;
   const VectorType *getAsVectorType() const; // GCC vector type.
   const ComplexType *getAsComplexType() const;
@@ -350,7 +352,7 @@ public:
 
   
   /// getDesugaredType - Return the specified type with any "sugar" removed from
-  /// type type.  This takes off typedefs, typeof's etc.  If the outer level of
+  /// the type.  This takes off typedefs, typeof's etc.  If the outer level of
   /// the type is already concrete, it returns it unmodified.  This is similar
   /// to getting the canonical type, but it doesn't remove *all* typedefs.  For
   /// example, it returns "T*" as "T*", (not as "int*"), because the pointer is
@@ -1215,6 +1217,10 @@ inline unsigned QualType::getAddressSpace() const {
   return 0;
 }
 
+inline const TypedefType* Type::getAsTypedefType() const {
+  return dyn_cast<TypedefType>(this);
+}
+  
 inline bool Type::isFunctionType() const {
   return isa<FunctionType>(CanonicalType.getUnqualifiedType());
 }
