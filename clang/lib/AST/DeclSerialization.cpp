@@ -117,9 +117,9 @@ void ScopedDecl::ReadInRec(Deserializer& D, ASTContext& C) {
   NamedDecl::ReadInRec(D, C);
   D.ReadPtr(Next);                                  // From ScopedDecl.
   
-  DeclCtx = 0;            // Allow back-patching.  Observe that we register
+  assert(DeclCtx == 0)    // Allow back-patching.  Observe that we register
   D.ReadPtr(DeclCtx);     // the variable of the *object* for back-patching.
-                          // It's actual value will get filled in later.
+                          // Its actual value will get filled in later.
 }
     
   //===------------------------------------------------------------===//
@@ -251,7 +251,6 @@ VarDecl* VarDecl::CreateImpl(Deserializer& D, ASTContext& C) {
     new (Mem) VarDecl(Var, 0, SourceLocation(), NULL, QualType(), None, NULL);
  
   decl->VarDecl::ReadImpl(D, C);
-  
   return decl;
 }
 
