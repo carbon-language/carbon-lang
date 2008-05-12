@@ -17,10 +17,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/Module.h"
-#include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Streams.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
