@@ -297,10 +297,6 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
 void MachineLICM::Hoist(MachineInstr &MI) {
   if (!IsLoopInvariantInst(MI)) return;
 
-  // Hoisting things that are trivially rematerializable may result in worse
-  // code than before.
-  if (TII->isTriviallyReMaterializable(&MI)) return;
-
   std::vector<MachineBasicBlock*> Preds;
 
   // Non-back-edge predecessors.
