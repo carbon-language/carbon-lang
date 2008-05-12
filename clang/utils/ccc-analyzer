@@ -266,7 +266,7 @@ def main(args):
                 coutput = output
             analyze_args = [ file ]
             if language != 'unknown':
-              analyze_args = analyze_args + [ '-x', language ]
+              analyze_args = [ '-x', language ] + analyze_args
             analyze_args = analyze_args + compile_opts
             analyze(clang, analyze_args, language, output, files, verbose, htmldir)
 #        compile(args)
