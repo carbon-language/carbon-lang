@@ -37,3 +37,9 @@ void f() {
   v5 = v3; // expected-error {{incompatible type assigning 'v1s', expected 'v4ss'}}
   v5 = v4; // expected-error {{incompatible type assigning 'v2f', expected 'v4ss'}}
 }
+
+// PR2263
+float f2(__attribute__((vector_size(16))) float a, int b) {
+   return a[b];
+}
+
