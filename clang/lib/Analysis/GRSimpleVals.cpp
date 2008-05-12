@@ -569,6 +569,7 @@ RVal GRSimpleVals::EvalEQ(GRExprEngine& Eng, LVal L, LVal R) {
     case lval::DeclValKind:
     case lval::FuncValKind:
     case lval::GotoLabelKind:
+    case lval::StringLiteralValKind:
       return NonLVal::MakeIntTruthVal(BasicVals, L == R);
   }
   
@@ -632,6 +633,7 @@ RVal GRSimpleVals::EvalNE(GRExprEngine& Eng, LVal L, LVal R) {
     case lval::DeclValKind:
     case lval::FuncValKind:
     case lval::GotoLabelKind:
+    case lval::StringLiteralValKind:
       return NonLVal::MakeIntTruthVal(BasicVals, L != R);
   }
   
