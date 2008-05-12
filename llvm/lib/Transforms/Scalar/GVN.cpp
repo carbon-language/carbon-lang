@@ -42,6 +42,10 @@ STATISTIC(NumGVNLoad, "Number of loads deleted");
 //                         ValueTable Class
 //===----------------------------------------------------------------------===//
 
+static DominatorTree* DT;
+static AliasAnalysis* AA;
+static MemoryDependenceAnalysis* MD;
+
 /// This class holds the mapping between values and value numbers.  It is used
 /// as an efficient mechanism to determine the expression-wise equivalence of
 /// two values.
@@ -129,8 +133,6 @@ namespace {
     private:
       DenseMap<Value*, uint32_t> valueNumbering;
       DenseMap<Expression, uint32_t> expressionNumbering;
-      AliasAnalysis* AA;
-      MemoryDependenceAnalysis* MD;
   
       uint32_t nextValueNumber;
     
@@ -154,8 +156,6 @@ namespace {
       void clear();
       void erase(Value* v);
       unsigned size();
-      void setAliasAnalysis(AliasAnalysis* A) { AA = A; }
-      void setMemDep(MemoryDependenceAnalysis* M) { MD = M; }
   };
 }
 
@@ -734,7 +734,6 @@ void GVN::dump(DenseMap<BasicBlock*, Value*>& d) {
 }
 
 Value* GVN::CollapsePhi(PHINode* p) {
-  DominatorTree &DT = getAnalysis<DominatorTree>();
   Value* constVal = p->hasConstantValue();
   
   if (!constVal) return 0;
@@ -743,7 +742,7 @@ Value* GVN::CollapsePhi(PHINode* p) {
   if (!inst)
     return constVal;
     
-  if (DT.dominates(inst, p))
+  if (DT->dominates(inst, p))
     if (isSafeReplacement(p, inst))
       return inst;
   return 0;
@@ -794,8 +793,7 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
     PN->addIncoming(val, *PI);
   }
   
-  AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
-  AA.copyValue(orig, PN);
+  AA->copyValue(orig, PN);
   
   // Attempt to collapse PHI nodes that are trivially redundant
   Value* v = CollapsePhi(PN);
@@ -804,10 +802,8 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
     phiMap[orig->getPointerOperand()].insert(PN);
     return PN;
   }
-    
-  MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
 
-  MD.removeInstruction(PN);
+  MD->removeInstruction(PN);
   PN->replaceAllUsesWith(v);
 
   for (DenseMap<BasicBlock*, Value*>::iterator I = Phis.begin(),
@@ -825,11 +821,9 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
 /// non-local by performing PHI construction.
 bool GVN::processNonLocalLoad(LoadInst* L,
                               SmallVectorImpl<Instruction*> &toErase) {
-  MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
-  
   // Find the non-local dependencies of the load
   DenseMap<BasicBlock*, Value*> deps;
-  MD.getNonLocalDependency(L, deps);
+  MD->getNonLocalDependency(L, deps);
   
   DenseMap<BasicBlock*, Value*> repl;
   
@@ -860,7 +854,7 @@ bool GVN::processNonLocalLoad(LoadInst* L,
   for (SmallPtrSet<Instruction*, 4>::iterator I = p.begin(), E = p.end();
        I != E; ++I) {
     if ((*I)->getParent() == L->getParent()) {
-      MD.removeInstruction(L);
+      MD->removeInstruction(L);
       L->replaceAllUsesWith(*I);
       toErase.push_back(L);
       NumGVNLoad++;
@@ -874,7 +868,7 @@ bool GVN::processNonLocalLoad(LoadInst* L,
   SmallPtrSet<BasicBlock*, 4> visited;
   Value* v = GetValueForBlock(L->getParent(), L, repl, true);
   
-  MD.removeInstruction(L);
+  MD->removeInstruction(L);
   L->replaceAllUsesWith(v);
   toErase.push_back(L);
   NumGVNLoad++;
@@ -895,9 +889,8 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
   LoadInst*& last = lastLoad[pointer];
   
   // ... to a pointer that has been loaded from before...
-  MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
   bool removedNonLocal = false;
-  Instruction* dep = MD.getDependency(L);
+  Instruction* dep = MD->getDependency(L);
   if (dep == MemoryDependenceAnalysis::NonLocal &&
       L->getParent() != &L->getParent()->getParent()->getEntryBlock()) {
     removedNonLocal = processNonLocalLoad(L, toErase);
@@ -920,7 +913,7 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
     if (StoreInst* S = dyn_cast<StoreInst>(dep)) {
       if (S->getPointerOperand() == pointer) {
         // Remove it!
-        MD.removeInstruction(L);
+        MD->removeInstruction(L);
         
         L->replaceAllUsesWith(S->getOperand(0));
         toErase.push_back(L);
@@ -937,7 +930,7 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
       break;
     } else if (dep == last) {
       // Remove it!
-      MD.removeInstruction(L);
+      MD->removeInstruction(L);
       
       L->replaceAllUsesWith(last);
       toErase.push_back(L);
@@ -946,7 +939,7 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
         
       break;
     } else {
-      dep = MD.getDependency(L, dep);
+      dep = MD->getDependency(L, dep);
     }
   }
 
@@ -968,7 +961,7 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
       // If this load depends directly on an allocation, there isn't
       // anything stored there; therefore, we can optimize this load
       // to undef.
-      MD.removeInstruction(L);
+      MD->removeInstruction(L);
 
       L->replaceAllUsesWith(UndefValue::get(L->getType()));
       toErase.push_back(L);
@@ -1016,8 +1009,7 @@ bool GVN::processInstruction(Instruction *I, ValueNumberedSet &currAvail,
     Value* repl = find_leader(currAvail, num);
     
     // Remove it!
-    MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
-    MD.removeInstruction(I);
+    MD->removeInstruction(I);
     
     VN.erase(I);
     I->replaceAllUsesWith(repl);
@@ -1035,8 +1027,9 @@ bool GVN::processInstruction(Instruction *I, ValueNumberedSet &currAvail,
 // function.
 //
 bool GVN::runOnFunction(Function& F) {
-  VN.setAliasAnalysis(&getAnalysis<AliasAnalysis>());
-  VN.setMemDep(&getAnalysis<MemoryDependenceAnalysis>());
+  DT = &getAnalysis<DominatorTree>();
+  AA = &getAnalysis<AliasAnalysis>();
+  MD = &getAnalysis<MemoryDependenceAnalysis>();
   
   bool changed = false;
   bool shouldContinue = true;
@@ -1059,15 +1052,13 @@ bool GVN::iterateOnFunction(Function &F) {
  
   bool changed_function = false;
   
-  DominatorTree &DT = getAnalysis<DominatorTree>();   
-  
   SmallVector<Instruction*, 8> toErase;
   DenseMap<Value*, LoadInst*> lastSeenLoad;
   DenseMap<DomTreeNode*, size_t> numChildrenVisited;
 
   // Top-down walk of the dominator tree
-  for (df_iterator<DomTreeNode*> DI = df_begin(DT.getRootNode()),
-         E = df_end(DT.getRootNode()); DI != E; ++DI) {
+  for (df_iterator<DomTreeNode*> DI = df_begin(DT->getRootNode()),
+         E = df_end(DT->getRootNode()); DI != E; ++DI) {
     
     // Get the set to update for this block
     ValueNumberedSet& currAvail = availableOut[DI->getBlock()];     
