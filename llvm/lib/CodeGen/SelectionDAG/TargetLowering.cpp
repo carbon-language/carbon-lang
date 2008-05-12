@@ -1514,7 +1514,7 @@ bool TargetLowering::isGAPlusOffset(SDNode *N, GlobalValue* &GA,
 /// location that the 'Base' load is loading from.
 bool TargetLowering::isConsecutiveLoad(SDNode *LD, SDNode *Base,
                                        unsigned Bytes, int Dist,
-                                       MachineFrameInfo *MFI) const {
+                                       const MachineFrameInfo *MFI) const {
   if (LD->getOperand(0).Val != Base->getOperand(0).Val)
     return false;
   MVT::ValueType VT = LD->getValueType(0);

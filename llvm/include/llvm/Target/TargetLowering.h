@@ -691,7 +691,7 @@ public:
   /// loading 'Bytes' bytes from a location that is 'Dist' units away from the
   /// location that the 'Base' load is loading from.
   bool isConsecutiveLoad(SDNode *LD, SDNode *Base, unsigned Bytes, int Dist,
-                         MachineFrameInfo *MFI) const;
+                         const MachineFrameInfo *MFI) const;
 
   /// PerformDAGCombine - This method will be invoked for all target nodes and
   /// for any target-independent nodes that the target has registered with

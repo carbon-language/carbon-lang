@@ -6285,13 +6285,7 @@ static SDOperand PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
                      LD->getAlignment());
 }
 
-static SDNode *getBuildPairElt(SDNode *N, unsigned i) {
-  SDOperand Elt = N->getOperand(i);
-  if (Elt.getOpcode() != ISD::MERGE_VALUES)
-    return Elt.Val;
-  return Elt.getOperand(Elt.ResNo).Val;
-}
-
+/// PerformBuildVectorCombine - build_vector 0,(load i64 / f64) -> movq / movsd.
 static SDOperand PerformBuildVectorCombine(SDNode *N, SelectionDAG &DAG,
                                            const X86Subtarget *Subtarget,
                                            const TargetLowering &TLI) {
@@ -6312,25 +6306,17 @@ static SDOperand PerformBuildVectorCombine(SDNode *N, SelectionDAG &DAG,
     return SDOperand();
 
   // Value must be a load.
-  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
   SDNode *Base = N->getOperand(0).Val;
   if (!isa<LoadSDNode>(Base)) {
-    if (Base->getOpcode() == ISD::BIT_CONVERT)
-      Base = Base->getOperand(0).Val;
-    if (Base->getOpcode() != ISD::BUILD_PAIR)
+    if (Base->getOpcode() != ISD::BIT_CONVERT)
       return SDOperand();
-    SDNode *Pair = Base;
-    Base = getBuildPairElt(Pair, 0);
-    if (!ISD::isNON_EXTLoad(Base))
-      return SDOperand();
-    SDNode *NextLD = getBuildPairElt(Pair, 1);
-    if (!ISD::isNON_EXTLoad(NextLD) ||
-        !TLI.isConsecutiveLoad(NextLD, Base, 4/*32 bits*/, 1, MFI))
+    Base = Base->getOperand(0).Val;
+    if (!isa<LoadSDNode>(Base))
       return SDOperand();
   }
-  LoadSDNode *LD = cast<LoadSDNode>(Base);
 
   // Transform it into VZEXT_LOAD addr.
+  LoadSDNode *LD = cast<LoadSDNode>(Base);
   return DAG.getNode(X86ISD::VZEXT_LOAD, VT, LD->getChain(), LD->getBasePtr());
 }                                           
 

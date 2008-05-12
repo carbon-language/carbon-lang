@@ -177,6 +177,7 @@ namespace {
     SDOperand visitSIGN_EXTEND_INREG(SDNode *N);
     SDOperand visitTRUNCATE(SDNode *N);
     SDOperand visitBIT_CONVERT(SDNode *N);
+    SDOperand visitBUILD_PAIR(SDNode *N);
     SDOperand visitFADD(SDNode *N);
     SDOperand visitFSUB(SDNode *N);
     SDOperand visitFMUL(SDNode *N);
@@ -217,6 +218,7 @@ namespace {
                             ISD::CondCode Cond, bool foldBooleans = true);
     SDOperand SimplifyNodeWithTwoResults(SDNode *N, unsigned LoOp, 
                                          unsigned HiOp);
+    SDOperand CombineConsecutiveLoads(SDNode *N, MVT::ValueType VT);
     SDOperand ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *, MVT::ValueType);
     SDOperand BuildSDIV(SDNode *N);
     SDOperand BuildUDIV(SDNode *N);
@@ -710,6 +712,7 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::SIGN_EXTEND_INREG:  return visitSIGN_EXTEND_INREG(N);
   case ISD::TRUNCATE:           return visitTRUNCATE(N);
   case ISD::BIT_CONVERT:        return visitBIT_CONVERT(N);
+  case ISD::BUILD_PAIR:         return visitBUILD_PAIR(N);
   case ISD::FADD:               return visitFADD(N);
   case ISD::FSUB:               return visitFSUB(N);
   case ISD::FMUL:               return visitFMUL(N);
@@ -3356,6 +3359,40 @@ SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
   return ReduceLoadWidth(N);
 }
 
+static SDNode *getBuildPairElt(SDNode *N, unsigned i) {
+  SDOperand Elt = N->getOperand(i);
+  if (Elt.getOpcode() != ISD::MERGE_VALUES)
+    return Elt.Val;
+  return Elt.getOperand(Elt.ResNo).Val;
+}
+
+/// CombineConsecutiveLoads - build_pair (load, load) -> load
+/// if load locations are consecutive. 
+SDOperand DAGCombiner::CombineConsecutiveLoads(SDNode *N, MVT::ValueType VT) {
+  assert(N->getOpcode() == ISD::BUILD_PAIR);
+
+  SDNode *LD1 = getBuildPairElt(N, 0);
+  if (!ISD::isNON_EXTLoad(LD1) || !LD1->hasOneUse())
+    return SDOperand();
+  MVT::ValueType LD1VT = LD1->getValueType(0);
+  SDNode *LD2 = getBuildPairElt(N, 1);
+  const MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+  if (ISD::isNON_EXTLoad(LD2) &&
+      LD2->hasOneUse() &&
+      TLI.isConsecutiveLoad(LD2, LD1, MVT::getSizeInBits(LD1VT)/8, 1, MFI)) {
+    LoadSDNode *LD = cast<LoadSDNode>(LD1);
+    unsigned Align = LD->getAlignment();
+    unsigned NewAlign = TLI.getTargetMachine().getTargetData()->
+      getABITypeAlignment(MVT::getTypeForValueType(VT));
+    if ((!AfterLegalize || TLI.isTypeLegal(VT)) &&
+        TLI.isOperationLegal(ISD::LOAD, VT) && NewAlign <= Align)
+      return DAG.getLoad(VT, LD->getChain(), LD->getBasePtr(),
+                         LD->getSrcValue(), LD->getSrcValueOffset(),
+                         LD->isVolatile(), Align);
+  }
+  return SDOperand();
+}
+
 SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   MVT::ValueType VT = N->getValueType(0);
@@ -3463,8 +3500,20 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
 
     return DAG.getNode(ISD::OR, VT, X, Cst);
   }
+
+  // bitconvert(build_pair(ld, ld)) -> ld iff load locations are consecutive. 
+  if (N0.getOpcode() == ISD::BUILD_PAIR) {
+    SDOperand CombineLD = CombineConsecutiveLoads(N0.Val, VT);
+    if (CombineLD.Val)
+      return CombineLD;
+  }
   
   return SDOperand();
+}
+
+SDOperand DAGCombiner::visitBUILD_PAIR(SDNode *N) {
+  MVT::ValueType VT = N->getValueType(0);
+  return CombineConsecutiveLoads(N, VT);
 }
 
 /// ConstantFoldBIT_CONVERTofBUILD_VECTOR - We know that BV is a build_vector
