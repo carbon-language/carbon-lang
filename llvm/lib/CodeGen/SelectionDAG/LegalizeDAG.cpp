@@ -2886,6 +2886,24 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     break;
+  case ISD::VSETCC: {
+    Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
+    Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
+    SDOperand CC = Node->getOperand(2);
+    
+    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, CC);
+
+    // Everything is legal, see if we should expand this op or something.
+    switch (TLI.getOperationAction(ISD::VSETCC, Tmp1.getValueType())) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal: break;
+    case TargetLowering::Custom:
+      Tmp1 = TLI.LowerOperation(Result, DAG);
+      if (Tmp1.Val) Result = Tmp1;
+      break;
+    }
+    break;
+  }
 
   case ISD::SHL_PARTS:
   case ISD::SRA_PARTS:
@@ -6873,6 +6891,14 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
       Lo = DAG.getNode(Node->getOpcode(), NewVT_Lo, Cond, LL, RL);
       Hi = DAG.getNode(Node->getOpcode(), NewVT_Hi, Cond, LH, RH);
     }
+    break;
+  }
+  case ISD::VSETCC: {
+    SDOperand LL, LH, RL, RH;
+    SplitVectorOp(Node->getOperand(0), LL, LH);
+    SplitVectorOp(Node->getOperand(1), RL, RH);
+    Lo = DAG.getNode(ISD::VSETCC, NewVT_Lo, LL, RL, Node->getOperand(2));
+    Hi = DAG.getNode(ISD::VSETCC, NewVT_Hi, LH, RH, Node->getOperand(2));
     break;
   }
   case ISD::ADD:

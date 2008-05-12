@@ -4383,6 +4383,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FGETSIGN:  return "fgetsign";
 
   case ISD::SETCC:       return "setcc";
+  case ISD::VSETCC:      return "vsetcc";
   case ISD::SELECT:      return "select";
   case ISD::SELECT_CC:   return "select_cc";
   case ISD::INSERT_VECTOR_ELT:   return "insert_vector_elt";

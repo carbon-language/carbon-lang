@@ -346,6 +346,14 @@ public:
     return getNode(ISD::SETCC, VT, LHS, RHS, getCondCode(Cond));
   }
 
+  /// getVSetCC - Helper function to make it easier to build VSetCC's nodes
+  /// if you just have an ISD::CondCode instead of an SDOperand.
+  ///
+  SDOperand getVSetCC(MVT::ValueType VT, SDOperand LHS, SDOperand RHS,
+                      ISD::CondCode Cond) {
+    return getNode(ISD::VSETCC, VT, LHS, RHS, getCondCode(Cond));
+  }
+
   /// getSelectCC - Helper function to make it easier to build SelectCC's if you
   /// just have an ISD::CondCode instead of an SDOperand.
   ///

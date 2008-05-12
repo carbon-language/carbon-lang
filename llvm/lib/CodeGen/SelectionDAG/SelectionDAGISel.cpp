@@ -685,6 +685,8 @@ public:
   void visitAShr(User &I) { visitShift(I, ISD::SRA); }
   void visitICmp(User &I);
   void visitFCmp(User &I);
+  void visitVICmp(User &I);
+  void visitVFCmp(User &I);
   // Visit the conversion instructions
   void visitTrunc(User &I);
   void visitZExt(User &I);
@@ -2340,6 +2342,75 @@ void SelectionDAGLowering::visitFCmp(User &I) {
   else 
     Condition = FPC;
   setValue(&I, DAG.getSetCC(MVT::i1, Op1, Op2, Condition));
+}
+
+void SelectionDAGLowering::visitVICmp(User &I) {
+  ICmpInst::Predicate predicate = ICmpInst::BAD_ICMP_PREDICATE;
+  if (VICmpInst *IC = dyn_cast<VICmpInst>(&I))
+    predicate = IC->getPredicate();
+  else if (ConstantExpr *IC = dyn_cast<ConstantExpr>(&I))
+    predicate = ICmpInst::Predicate(IC->getPredicate());
+  SDOperand Op1 = getValue(I.getOperand(0));
+  SDOperand Op2 = getValue(I.getOperand(1));
+  ISD::CondCode Opcode;
+  switch (predicate) {
+    case ICmpInst::ICMP_EQ  : Opcode = ISD::SETEQ; break;
+    case ICmpInst::ICMP_NE  : Opcode = ISD::SETNE; break;
+    case ICmpInst::ICMP_UGT : Opcode = ISD::SETUGT; break;
+    case ICmpInst::ICMP_UGE : Opcode = ISD::SETUGE; break;
+    case ICmpInst::ICMP_ULT : Opcode = ISD::SETULT; break;
+    case ICmpInst::ICMP_ULE : Opcode = ISD::SETULE; break;
+    case ICmpInst::ICMP_SGT : Opcode = ISD::SETGT; break;
+    case ICmpInst::ICMP_SGE : Opcode = ISD::SETGE; break;
+    case ICmpInst::ICMP_SLT : Opcode = ISD::SETLT; break;
+    case ICmpInst::ICMP_SLE : Opcode = ISD::SETLE; break;
+    default:
+      assert(!"Invalid ICmp predicate value");
+      Opcode = ISD::SETEQ;
+      break;
+  }
+  setValue(&I, DAG.getVSetCC(Op1.getValueType(), Op1, Op2, Opcode));
+}
+
+void SelectionDAGLowering::visitVFCmp(User &I) {
+  FCmpInst::Predicate predicate = FCmpInst::BAD_FCMP_PREDICATE;
+  if (VFCmpInst *FC = dyn_cast<VFCmpInst>(&I))
+    predicate = FC->getPredicate();
+  else if (ConstantExpr *FC = dyn_cast<ConstantExpr>(&I))
+    predicate = FCmpInst::Predicate(FC->getPredicate());
+  SDOperand Op1 = getValue(I.getOperand(0));
+  SDOperand Op2 = getValue(I.getOperand(1));
+  ISD::CondCode Condition, FOC, FPC;
+  switch (predicate) {
+    case FCmpInst::FCMP_FALSE: FOC = FPC = ISD::SETFALSE; break;
+    case FCmpInst::FCMP_OEQ:   FOC = ISD::SETEQ; FPC = ISD::SETOEQ; break;
+    case FCmpInst::FCMP_OGT:   FOC = ISD::SETGT; FPC = ISD::SETOGT; break;
+    case FCmpInst::FCMP_OGE:   FOC = ISD::SETGE; FPC = ISD::SETOGE; break;
+    case FCmpInst::FCMP_OLT:   FOC = ISD::SETLT; FPC = ISD::SETOLT; break;
+    case FCmpInst::FCMP_OLE:   FOC = ISD::SETLE; FPC = ISD::SETOLE; break;
+    case FCmpInst::FCMP_ONE:   FOC = ISD::SETNE; FPC = ISD::SETONE; break;
+    case FCmpInst::FCMP_ORD:   FOC = FPC = ISD::SETO;   break;
+    case FCmpInst::FCMP_UNO:   FOC = FPC = ISD::SETUO;  break;
+    case FCmpInst::FCMP_UEQ:   FOC = ISD::SETEQ; FPC = ISD::SETUEQ; break;
+    case FCmpInst::FCMP_UGT:   FOC = ISD::SETGT; FPC = ISD::SETUGT; break;
+    case FCmpInst::FCMP_UGE:   FOC = ISD::SETGE; FPC = ISD::SETUGE; break;
+    case FCmpInst::FCMP_ULT:   FOC = ISD::SETLT; FPC = ISD::SETULT; break;
+    case FCmpInst::FCMP_ULE:   FOC = ISD::SETLE; FPC = ISD::SETULE; break;
+    case FCmpInst::FCMP_UNE:   FOC = ISD::SETNE; FPC = ISD::SETUNE; break;
+    case FCmpInst::FCMP_TRUE:  FOC = FPC = ISD::SETTRUE; break;
+    default:
+      assert(!"Invalid VFCmp predicate value");
+      FOC = FPC = ISD::SETFALSE;
+      break;
+  }
+  if (FiniteOnlyFPMath())
+    Condition = FOC;
+  else 
+    Condition = FPC;
+    
+  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+    
+  setValue(&I, DAG.getVSetCC(DestVT, Op1, Op2, Condition));
 }
 
 void SelectionDAGLowering::visitSelect(User &I) {
