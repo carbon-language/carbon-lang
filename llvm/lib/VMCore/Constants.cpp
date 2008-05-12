@@ -557,9 +557,9 @@ struct VISIBILITY_HIDDEN CompareConstantExpr : public ConstantExpr {
     return User::operator new(s, 2);
   }
   unsigned short predicate;
-  CompareConstantExpr(Instruction::OtherOps opc, unsigned short pred, 
-                      Constant* LHS, Constant* RHS)
-    : ConstantExpr(Type::Int1Ty, opc, &Op<0>(), 2), predicate(pred) {
+  CompareConstantExpr(const Type *ty, Instruction::OtherOps opc,
+                      unsigned short pred,  Constant* LHS, Constant* RHS)
+    : ConstantExpr(ty, opc, &Op<0>(), 2), predicate(pred) {
     Op<0>().init(LHS, this);
     Op<1>().init(RHS, this);
   }
@@ -690,7 +690,10 @@ Constant *ConstantExpr::getXor(Constant *C1, Constant *C2) {
   return get(Instruction::Xor, C1, C2);
 }
 unsigned ConstantExpr::getPredicate() const {
-  assert(getOpcode() == Instruction::FCmp || getOpcode() == Instruction::ICmp);
+  assert(getOpcode() == Instruction::FCmp || 
+         getOpcode() == Instruction::ICmp ||
+         getOpcode() == Instruction::VFCmp ||
+         getOpcode() == Instruction::VICmp);
   return ((const CompareConstantExpr*)this)->predicate;
 }
 Constant *ConstantExpr::getShl(Constant *C1, Constant *C2) {
@@ -1564,10 +1567,16 @@ namespace llvm {
       // value and it is combined with the instruction opcode by multiplying
       // the opcode by one hundred. We must decode this to get the predicate.
       if (V.opcode == Instruction::ICmp)
-        return new CompareConstantExpr(Instruction::ICmp, V.predicate, 
+        return new CompareConstantExpr(Ty, Instruction::ICmp, V.predicate, 
                                        V.operands[0], V.operands[1]);
       if (V.opcode == Instruction::FCmp) 
-        return new CompareConstantExpr(Instruction::FCmp, V.predicate, 
+        return new CompareConstantExpr(Ty, Instruction::FCmp, V.predicate, 
+                                       V.operands[0], V.operands[1]);
+      if (V.opcode == Instruction::VICmp)
+        return new CompareConstantExpr(Ty, Instruction::VICmp, V.predicate, 
+                                       V.operands[0], V.operands[1]);
+      if (V.opcode == Instruction::VFCmp) 
+        return new CompareConstantExpr(Ty, Instruction::VFCmp, V.predicate, 
                                        V.operands[0], V.operands[1]);
       assert(0 && "Invalid ConstantExpr!");
       return 0;
@@ -2027,6 +2036,79 @@ ConstantExpr::getFCmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   // Get the key type with both the opcode and predicate
   const ExprMapKeyType Key(Instruction::FCmp, ArgVec, pred);
   return ExprConstants->getOrCreate(Type::Int1Ty, Key);
+}
+
+Constant *
+ConstantExpr::getVICmp(unsigned short pred, Constant* LHS, Constant* RHS) {
+  assert(isa<VectorType>(LHS->getType()) &&
+         "Tried to create vicmp operation on non-vector type!");
+  assert(LHS->getType() == RHS->getType());
+  assert(pred >= ICmpInst::FIRST_ICMP_PREDICATE && 
+         pred <= ICmpInst::LAST_ICMP_PREDICATE && "Invalid VICmp Predicate");
+
+  const Type *VTy = cast<VectorType>(LHS->getType());
+  const Type *EltTy = VTy->getElementType();
+  unsigned NumElts = VTy->getNumElements();
+
+  SmallVector<Constant *, 8> Elts;
+  for (unsigned i = 0; i != NumElts; ++i) {
+    Constant *FC = ConstantFoldCompareInstruction(pred, LHS->getOperand(i),
+                                                        RHS->getOperand(i));
+    if (FC) {
+      uint64_t Val = cast<ConstantInt>(FC)->getZExtValue();
+      if (Val != 0ULL)
+        Elts.push_back(ConstantInt::getAllOnesValue(EltTy));
+      else
+        Elts.push_back(ConstantInt::get(EltTy, 0ULL));
+    }
+  }
+  if (Elts.size() == NumElts)
+    return ConstantVector::get(&Elts[0], Elts.size());
+
+  // Look up the constant in the table first to ensure uniqueness
+  std::vector<Constant*> ArgVec;
+  ArgVec.push_back(LHS);
+  ArgVec.push_back(RHS);
+  // Get the key type with both the opcode and predicate
+  const ExprMapKeyType Key(Instruction::VICmp, ArgVec, pred);
+  return ExprConstants->getOrCreate(LHS->getType(), Key);
+}
+
+Constant *
+ConstantExpr::getVFCmp(unsigned short pred, Constant* LHS, Constant* RHS) {
+  assert(isa<VectorType>(LHS->getType()) &&
+         "Tried to create vfcmp operation on non-vector type!");
+  assert(LHS->getType() == RHS->getType());
+  assert(pred <= FCmpInst::LAST_FCMP_PREDICATE && "Invalid VFCmp Predicate");
+
+  const VectorType *VTy = cast<VectorType>(LHS->getType());
+  unsigned NumElts = VTy->getNumElements();
+  const Type *EltTy = VTy->getElementType();
+  const Type *REltTy = IntegerType::get(EltTy->getPrimitiveSizeInBits());
+  const Type *ResultTy = VectorType::get(REltTy, NumElts);
+
+  SmallVector<Constant *, 8> Elts;
+  for (unsigned i = 0; i != NumElts; ++i) {
+    Constant *FC = ConstantFoldCompareInstruction(pred, LHS->getOperand(i),
+                                                        RHS->getOperand(i));
+    if (FC) {
+      uint64_t Val = cast<ConstantInt>(FC)->getZExtValue();
+      if (Val != 0ULL)
+        Elts.push_back(ConstantInt::getAllOnesValue(REltTy));
+      else
+        Elts.push_back(ConstantInt::get(REltTy, 0ULL));
+    }
+  }
+  if (Elts.size() == NumElts)
+    return ConstantVector::get(&Elts[0], Elts.size());
+
+  // Look up the constant in the table first to ensure uniqueness
+  std::vector<Constant*> ArgVec;
+  ArgVec.push_back(LHS);
+  ArgVec.push_back(RHS);
+  // Get the key type with both the opcode and predicate
+  const ExprMapKeyType Key(Instruction::VFCmp, ArgVec, pred);
+  return ExprConstants->getOrCreate(ResultTy, Key);
 }
 
 Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,

@@ -610,31 +610,11 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(GetElementPtrInst, Value)
 //===----------------------------------------------------------------------===//
 
 /// This instruction compares its operands according to the predicate given
-/// to the constructor. It only operates on integers, pointers, or packed 
-/// vectors of integrals. The two operands must be the same type.
+/// to the constructor. It only operates on integers or pointers. The operands
+/// must be identical types.
 /// @brief Represent an integer comparison operator.
 class ICmpInst: public CmpInst {
 public:
-  /// This enumeration lists the possible predicates for the ICmpInst. The
-  /// values in the range 0-31 are reserved for FCmpInst while values in the
-  /// range 32-64 are reserved for ICmpInst. This is necessary to ensure the
-  /// predicate values are not overlapping between the classes.
-  enum Predicate {
-    ICMP_EQ  = 32,    ///< equal
-    ICMP_NE  = 33,    ///< not equal
-    ICMP_UGT = 34,    ///< unsigned greater than
-    ICMP_UGE = 35,    ///< unsigned greater or equal
-    ICMP_ULT = 36,    ///< unsigned less than
-    ICMP_ULE = 37,    ///< unsigned less or equal
-    ICMP_SGT = 38,    ///< signed greater than
-    ICMP_SGE = 39,    ///< signed greater or equal
-    ICMP_SLT = 40,    ///< signed less than
-    ICMP_SLE = 41,    ///< signed less or equal
-    FIRST_ICMP_PREDICATE = ICMP_EQ,
-    LAST_ICMP_PREDICATE = ICMP_SLE,
-    BAD_ICMP_PREDICATE = ICMP_SLE + 1
-  };
-
   /// @brief Constructor with insert-before-instruction semantics.
   ICmpInst(
     Predicate pred,  ///< The predicate to use for the comparison
@@ -642,7 +622,18 @@ public:
     Value *RHS,      ///< The right-hand-side of the expression
     const std::string &Name = "",  ///< Name of the instruction
     Instruction *InsertBefore = 0  ///< Where to insert
-  ) : CmpInst(Instruction::ICmp, pred, LHS, RHS, Name, InsertBefore) {
+  ) : CmpInst(Type::Int1Ty, Instruction::ICmp, pred, LHS, RHS, Name,
+              InsertBefore) {
+    assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
+           pred <= CmpInst::LAST_ICMP_PREDICATE &&
+           "Invalid ICmp predicate value");
+    const Type* Op0Ty = getOperand(0)->getType();
+    const Type* Op1Ty = getOperand(1)->getType();
+    assert(Op0Ty == Op1Ty &&
+          "Both operands to ICmp instruction are not of the same type!");
+    // Check that the operands are the right type
+    assert((Op0Ty->isInteger() || isa<PointerType>(Op0Ty)) &&
+           "Invalid operand types for ICmp instruction");
   }
 
   /// @brief Constructor with insert-at-block-end semantics.
@@ -652,7 +643,18 @@ public:
     Value *RHS,     ///< The right-hand-side of the expression
     const std::string &Name,  ///< Name of the instruction
     BasicBlock *InsertAtEnd   ///< Block to insert into.
-  ) : CmpInst(Instruction::ICmp, pred, LHS, RHS, Name, InsertAtEnd) {
+  ) : CmpInst(Type::Int1Ty, Instruction::ICmp, pred, LHS, RHS, Name,
+              InsertAtEnd) {
+    assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
+           pred <= CmpInst::LAST_ICMP_PREDICATE &&
+           "Invalid ICmp predicate value");
+    const Type* Op0Ty = getOperand(0)->getType();
+    const Type* Op1Ty = getOperand(1)->getType();
+    assert(Op0Ty == Op1Ty &&
+          "Both operands to ICmp instruction are not of the same type!");
+    // Check that the operands are the right type
+    assert((Op0Ty->isInteger() || isa<PointerType>(Op0Ty)) &&
+           "Invalid operand types for ICmp instruction");
   }
 
   /// @brief Return the predicate for this instruction.
@@ -783,31 +785,6 @@ public:
 /// @brief Represents a floating point comparison operator.
 class FCmpInst: public CmpInst {
 public:
-  /// This enumeration lists the possible predicates for the FCmpInst. Values
-  /// in the range 0-31 are reserved for FCmpInst.
-  enum Predicate {
-    // Opcode        U L G E    Intuitive operation
-    FCMP_FALSE = 0, ///<  0 0 0 0    Always false (always folded)
-    FCMP_OEQ   = 1, ///<  0 0 0 1    True if ordered and equal
-    FCMP_OGT   = 2, ///<  0 0 1 0    True if ordered and greater than
-    FCMP_OGE   = 3, ///<  0 0 1 1    True if ordered and greater than or equal
-    FCMP_OLT   = 4, ///<  0 1 0 0    True if ordered and less than
-    FCMP_OLE   = 5, ///<  0 1 0 1    True if ordered and less than or equal
-    FCMP_ONE   = 6, ///<  0 1 1 0    True if ordered and operands are unequal
-    FCMP_ORD   = 7, ///<  0 1 1 1    True if ordered (no nans)
-    FCMP_UNO   = 8, ///<  1 0 0 0    True if unordered: isnan(X) | isnan(Y)
-    FCMP_UEQ   = 9, ///<  1 0 0 1    True if unordered or equal
-    FCMP_UGT   =10, ///<  1 0 1 0    True if unordered or greater than
-    FCMP_UGE   =11, ///<  1 0 1 1    True if unordered, greater than, or equal
-    FCMP_ULT   =12, ///<  1 1 0 0    True if unordered or less than
-    FCMP_ULE   =13, ///<  1 1 0 1    True if unordered, less than, or equal
-    FCMP_UNE   =14, ///<  1 1 1 0    True if unordered or not equal
-    FCMP_TRUE  =15, ///<  1 1 1 1    Always true (always folded)
-    FIRST_FCMP_PREDICATE = FCMP_FALSE,
-    LAST_FCMP_PREDICATE = FCMP_TRUE,
-    BAD_FCMP_PREDICATE = FCMP_TRUE + 1
-  };
-
   /// @brief Constructor with insert-before-instruction semantics.
   FCmpInst(
     Predicate pred,  ///< The predicate to use for the comparison
@@ -815,7 +792,17 @@ public:
     Value *RHS,      ///< The right-hand-side of the expression
     const std::string &Name = "",  ///< Name of the instruction
     Instruction *InsertBefore = 0  ///< Where to insert
-  ) : CmpInst(Instruction::FCmp, pred, LHS, RHS, Name, InsertBefore) {
+  ) : CmpInst(Type::Int1Ty, Instruction::FCmp, pred, LHS, RHS, Name,
+              InsertBefore) {
+    assert(pred <= FCmpInst::LAST_FCMP_PREDICATE &&
+           "Invalid FCmp predicate value");
+    const Type* Op0Ty = getOperand(0)->getType();
+    const Type* Op1Ty = getOperand(1)->getType();
+    assert(Op0Ty == Op1Ty &&
+           "Both operands to FCmp instruction are not of the same type!");
+    // Check that the operands are the right type
+    assert(Op0Ty->isFloatingPoint() &&
+           "Invalid operand types for FCmp instruction");
   }
 
   /// @brief Constructor with insert-at-block-end semantics.
@@ -825,7 +812,17 @@ public:
     Value *RHS,     ///< The right-hand-side of the expression
     const std::string &Name,  ///< Name of the instruction
     BasicBlock *InsertAtEnd   ///< Block to insert into.
-  ) : CmpInst(Instruction::FCmp, pred, LHS, RHS, Name, InsertAtEnd) {
+  ) : CmpInst(Type::Int1Ty, Instruction::FCmp, pred, LHS, RHS, Name,
+              InsertAtEnd) {
+    assert(pred <= FCmpInst::LAST_FCMP_PREDICATE &&
+           "Invalid FCmp predicate value");
+    const Type* Op0Ty = getOperand(0)->getType();
+    const Type* Op1Ty = getOperand(1)->getType();
+    assert(Op0Ty == Op1Ty &&
+           "Both operands to FCmp instruction are not of the same type!");
+    // Check that the operands are the right type
+    assert(Op0Ty->isFloatingPoint() &&
+           "Invalid operand types for FCmp instruction");
   }
 
   /// @brief Return the predicate for this instruction.
@@ -891,6 +888,100 @@ public:
   static inline bool classof(const FCmpInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::FCmp;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+//===----------------------------------------------------------------------===//
+//                               VICmpInst Class
+//===----------------------------------------------------------------------===//
+
+/// This instruction compares its operands according to the predicate given
+/// to the constructor. It only operates on vectors of integers.
+/// The operands must be identical types.
+/// @brief Represents a vector integer comparison operator.
+class VICmpInst: public CmpInst {
+public:
+  /// @brief Constructor with insert-before-instruction semantics.
+  VICmpInst(
+    Predicate pred,  ///< The predicate to use for the comparison
+    Value *LHS,      ///< The left-hand-side of the expression
+    Value *RHS,      ///< The right-hand-side of the expression
+    const std::string &Name = "",  ///< Name of the instruction
+    Instruction *InsertBefore = 0  ///< Where to insert
+  ) : CmpInst(LHS->getType(), Instruction::VICmp, pred, LHS, RHS, Name,
+              InsertBefore) {
+  }
+
+  /// @brief Constructor with insert-at-block-end semantics.
+  VICmpInst(
+    Predicate pred, ///< The predicate to use for the comparison
+    Value *LHS,     ///< The left-hand-side of the expression
+    Value *RHS,     ///< The right-hand-side of the expression
+    const std::string &Name,  ///< Name of the instruction
+    BasicBlock *InsertAtEnd   ///< Block to insert into.
+  ) : CmpInst(LHS->getType(), Instruction::VICmp, pred, LHS, RHS, Name,
+              InsertAtEnd) {
+  }
+  
+  /// @brief Return the predicate for this instruction.
+  Predicate getPredicate() const { return Predicate(SubclassData); }
+
+  virtual VICmpInst *clone() const;
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const VICmpInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::VICmp;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+//===----------------------------------------------------------------------===//
+//                               VFCmpInst Class
+//===----------------------------------------------------------------------===//
+
+/// This instruction compares its operands according to the predicate given
+/// to the constructor. It only operates on vectors of floating point values.
+/// The operands must be identical types.
+/// @brief Represents a vector floating point comparison operator.
+class VFCmpInst: public CmpInst {
+public:
+  /// @brief Constructor with insert-before-instruction semantics.
+  VFCmpInst(
+    Predicate pred,  ///< The predicate to use for the comparison
+    Value *LHS,      ///< The left-hand-side of the expression
+    Value *RHS,      ///< The right-hand-side of the expression
+    const std::string &Name = "",  ///< Name of the instruction
+    Instruction *InsertBefore = 0  ///< Where to insert
+  ) : CmpInst(VectorType::getInteger(cast<VectorType>(LHS->getType())),
+              Instruction::VFCmp, pred, LHS, RHS, Name, InsertBefore) {
+  }
+
+  /// @brief Constructor with insert-at-block-end semantics.
+  VFCmpInst(
+    Predicate pred, ///< The predicate to use for the comparison
+    Value *LHS,     ///< The left-hand-side of the expression
+    Value *RHS,     ///< The right-hand-side of the expression
+    const std::string &Name,  ///< Name of the instruction
+    BasicBlock *InsertAtEnd   ///< Block to insert into.
+  ) : CmpInst(VectorType::getInteger(cast<VectorType>(LHS->getType())),
+              Instruction::VFCmp, pred, LHS, RHS, Name, InsertAtEnd) {
+  }
+
+  /// @brief Return the predicate for this instruction.
+  Predicate getPredicate() const { return Predicate(SubclassData); }
+
+  virtual VFCmpInst *clone() const;
+
+  /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const VFCmpInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::VFCmp;
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
@@ -1907,8 +1998,6 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(SwitchInst, Value)
 //===----------------------------------------------------------------------===//
 //                               InvokeInst Class
 //===----------------------------------------------------------------------===//
-
-//===---------------------------------------------------------------------------
 
 /// InvokeInst - Invoke instruction.  The SubclassData field is used to hold the
 /// calling convention of the call.

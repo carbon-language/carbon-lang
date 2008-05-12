@@ -566,6 +566,8 @@ int LLLexer::LexIdentifier() {
   INSTKEYWORD("xor",     BinaryOpVal, Xor, XOR);
   INSTKEYWORD("icmp",    OtherOpVal,  ICmp,  ICMP);
   INSTKEYWORD("fcmp",    OtherOpVal,  FCmp,  FCMP);
+  INSTKEYWORD("vicmp",   OtherOpVal,  VICmp, VICMP);
+  INSTKEYWORD("vfcmp",   OtherOpVal,  VFCmp, VFCMP);
 
   INSTKEYWORD("phi",         OtherOpVal, PHI, PHI_TOK);
   INSTKEYWORD("call",        OtherOpVal, Call, CALL);

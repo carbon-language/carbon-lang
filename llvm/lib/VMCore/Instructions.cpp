@@ -2332,9 +2332,10 @@ BitCastInst::BitCastInst(
 //                               CmpInst Classes
 //===----------------------------------------------------------------------===//
 
-CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
-                 const std::string &Name, Instruction *InsertBefore)
-  : Instruction(Type::Int1Ty, op,
+CmpInst::CmpInst(const Type *ty, OtherOps op, unsigned short predicate,
+                 Value *LHS, Value *RHS, const std::string &Name,
+                 Instruction *InsertBefore)
+  : Instruction(ty, op,
                 OperandTraits<CmpInst>::op_begin(this),
                 OperandTraits<CmpInst>::operands(this),
                 InsertBefore) {
@@ -2342,34 +2343,12 @@ CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
     Op<1>().init(RHS, this);
   SubclassData = predicate;
   setName(Name);
-  if (op == Instruction::ICmp) {
-    assert(predicate >= ICmpInst::FIRST_ICMP_PREDICATE &&
-           predicate <= ICmpInst::LAST_ICMP_PREDICATE &&
-           "Invalid ICmp predicate value");
-    const Type* Op0Ty = getOperand(0)->getType();
-    const Type* Op1Ty = getOperand(1)->getType();
-    assert(Op0Ty == Op1Ty &&
-           "Both operands to ICmp instruction are not of the same type!");
-    // Check that the operands are the right type
-    assert((Op0Ty->isInteger() || isa<PointerType>(Op0Ty)) &&
-           "Invalid operand types for ICmp instruction");
-    return;
-  }
-  assert(op == Instruction::FCmp && "Invalid CmpInst opcode");
-  assert(predicate <= FCmpInst::LAST_FCMP_PREDICATE &&
-         "Invalid FCmp predicate value");
-  const Type* Op0Ty = getOperand(0)->getType();
-  const Type* Op1Ty = getOperand(1)->getType();
-  assert(Op0Ty == Op1Ty &&
-         "Both operands to FCmp instruction are not of the same type!");
-  // Check that the operands are the right type
-  assert(Op0Ty->isFloatingPoint() &&
-         "Invalid operand types for FCmp instruction");
 }
 
-CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
-                 const std::string &Name, BasicBlock *InsertAtEnd)
-  : Instruction(Type::Int1Ty, op,
+CmpInst::CmpInst(const Type *ty, OtherOps op, unsigned short predicate,
+                 Value *LHS, Value *RHS, const std::string &Name,
+                 BasicBlock *InsertAtEnd)
+  : Instruction(ty, op,
                 OperandTraits<CmpInst>::op_begin(this),
                 OperandTraits<CmpInst>::operands(this),
                 InsertAtEnd) {
@@ -2377,52 +2356,44 @@ CmpInst::CmpInst(OtherOps op, unsigned short predicate, Value *LHS, Value *RHS,
   Op<1>().init(RHS, this);
   SubclassData = predicate;
   setName(Name);
-  if (op == Instruction::ICmp) {
-    assert(predicate >= ICmpInst::FIRST_ICMP_PREDICATE &&
-           predicate <= ICmpInst::LAST_ICMP_PREDICATE &&
-           "Invalid ICmp predicate value");
-
-    const Type* Op0Ty = getOperand(0)->getType();
-    const Type* Op1Ty = getOperand(1)->getType();
-    assert(Op0Ty == Op1Ty &&
-          "Both operands to ICmp instruction are not of the same type!");
-    // Check that the operands are the right type
-    assert((Op0Ty->isInteger() || isa<PointerType>(Op0Ty)) &&
-           "Invalid operand types for ICmp instruction");
-    return;
-  }
-  assert(op == Instruction::FCmp && "Invalid CmpInst opcode");
-  assert(predicate <= FCmpInst::LAST_FCMP_PREDICATE &&
-         "Invalid FCmp predicate value");
-  const Type* Op0Ty = getOperand(0)->getType();
-  const Type* Op1Ty = getOperand(1)->getType();
-  assert(Op0Ty == Op1Ty &&
-          "Both operands to FCmp instruction are not of the same type!");
-  // Check that the operands are the right type
-  assert(Op0Ty->isFloatingPoint() &&
-        "Invalid operand types for FCmp instruction");
 }
 
 CmpInst *
 CmpInst::create(OtherOps Op, unsigned short predicate, Value *S1, Value *S2, 
                 const std::string &Name, Instruction *InsertBefore) {
   if (Op == Instruction::ICmp) {
-    return new ICmpInst(ICmpInst::Predicate(predicate), S1, S2, Name, 
+    return new ICmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
                         InsertBefore);
   }
-  return new FCmpInst(FCmpInst::Predicate(predicate), S1, S2, Name, 
-                      InsertBefore);
+  if (Op == Instruction::FCmp) {
+    return new FCmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
+                        InsertBefore);
+  }
+  if (Op == Instruction::VICmp) {
+    return new VICmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
+                         InsertBefore);
+  }
+  return new VFCmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
+                       InsertBefore);
 }
 
 CmpInst *
 CmpInst::create(OtherOps Op, unsigned short predicate, Value *S1, Value *S2, 
                 const std::string &Name, BasicBlock *InsertAtEnd) {
   if (Op == Instruction::ICmp) {
-    return new ICmpInst(ICmpInst::Predicate(predicate), S1, S2, Name, 
+    return new ICmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
                         InsertAtEnd);
   }
-  return new FCmpInst(FCmpInst::Predicate(predicate), S1, S2, Name, 
-                      InsertAtEnd);
+  if (Op == Instruction::FCmp) {
+    return new FCmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
+                        InsertAtEnd);
+  }
+  if (Op == Instruction::VICmp) {
+    return new VICmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
+                         InsertAtEnd);
+  }
+  return new VFCmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
+                       InsertAtEnd);
 }
 
 void CmpInst::swapOperands() {
@@ -2811,6 +2782,13 @@ FCmpInst* FCmpInst::clone() const {
 }
 ICmpInst* ICmpInst::clone() const {
   return new ICmpInst(getPredicate(), Op<0>(), Op<1>());
+}
+
+VFCmpInst* VFCmpInst::clone() const {
+  return new VFCmpInst(getPredicate(), Op<0>(), Op<1>());
+}
+VICmpInst* VICmpInst::clone() const {
+  return new VICmpInst(getPredicate(), Op<0>(), Op<1>());
 }
 
 MallocInst *MallocInst::clone()   const { return new MallocInst(*this); }

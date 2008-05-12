@@ -689,6 +689,8 @@ public:
   static Constant *getXor(Constant *C1, Constant *C2);
   static Constant *getICmp(unsigned short pred, Constant *LHS, Constant *RHS);
   static Constant *getFCmp(unsigned short pred, Constant *LHS, Constant *RHS);
+  static Constant *getVICmp(unsigned short pred, Constant *LHS, Constant *RHS);
+  static Constant *getVFCmp(unsigned short pred, Constant *LHS, Constant *RHS);
   static Constant *getShl(Constant *C1, Constant *C2);
   static Constant *getLShr(Constant *C1, Constant *C2);
   static Constant *getAShr(Constant *C1, Constant *C2);

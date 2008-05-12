@@ -635,6 +635,8 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         break;
       case Instruction::ICmp:
       case Instruction::FCmp:
+      case Instruction::VICmp:
+      case Instruction::VFCmp:
         Code = bitc::CST_CODE_CE_CMP;
         Record.push_back(VE.getTypeID(C->getOperand(0)->getType()));
         Record.push_back(VE.getValueID(C->getOperand(0)));
@@ -740,6 +742,8 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     break;
   case Instruction::ICmp:
   case Instruction::FCmp:
+  case Instruction::VICmp:
+  case Instruction::VFCmp:
     Code = bitc::FUNC_CODE_INST_CMP;
     PushValueAndType(I.getOperand(0), InstID, Vals, VE);
     Vals.push_back(VE.getValueID(I.getOperand(1)));

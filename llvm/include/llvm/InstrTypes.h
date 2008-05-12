@@ -498,13 +498,55 @@ class CmpInst: public Instruction {
   void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
   CmpInst(); // do not implement
 protected:
-  CmpInst(Instruction::OtherOps op, unsigned short pred, Value *LHS, Value *RHS,
-          const std::string &Name = "", Instruction *InsertBefore = 0);
+  CmpInst(const Type *ty, Instruction::OtherOps op, unsigned short pred,
+          Value *LHS, Value *RHS, const std::string &Name = "",
+          Instruction *InsertBefore = 0);
   
-  CmpInst(Instruction::OtherOps op, unsigned short pred, Value *LHS, Value *RHS,
-          const std::string &Name, BasicBlock *InsertAtEnd);
+  CmpInst(const Type *ty, Instruction::OtherOps op, unsigned short pred,
+          Value *LHS, Value *RHS, const std::string &Name,
+          BasicBlock *InsertAtEnd);
 
 public:
+  /// This enumeration lists the possible predicates for CmpInst subclasses.
+  /// Values in the range 0-31 are reserved for FCmpInst, while values in the
+  /// range 32-64 are reserved for ICmpInst. This is necessary to ensure the
+  /// predicate values are not overlapping between the classes.
+  enum Predicate {
+    // Opcode             U L G E    Intuitive operation
+    FCMP_FALSE =  0,  /// 0 0 0 0    Always false (always folded)
+    FCMP_OEQ   =  1,  /// 0 0 0 1    True if ordered and equal
+    FCMP_OGT   =  2,  /// 0 0 1 0    True if ordered and greater than
+    FCMP_OGE   =  3,  /// 0 0 1 1    True if ordered and greater than or equal
+    FCMP_OLT   =  4,  /// 0 1 0 0    True if ordered and less than
+    FCMP_OLE   =  5,  /// 0 1 0 1    True if ordered and less than or equal
+    FCMP_ONE   =  6,  /// 0 1 1 0    True if ordered and operands are unequal
+    FCMP_ORD   =  7,  /// 0 1 1 1    True if ordered (no nans)
+    FCMP_UNO   =  8,  /// 1 0 0 0    True if unordered: isnan(X) | isnan(Y)
+    FCMP_UEQ   =  9,  /// 1 0 0 1    True if unordered or equal
+    FCMP_UGT   = 10,  /// 1 0 1 0    True if unordered or greater than
+    FCMP_UGE   = 11,  /// 1 0 1 1    True if unordered, greater than, or equal
+    FCMP_ULT   = 12,  /// 1 1 0 0    True if unordered or less than
+    FCMP_ULE   = 13,  /// 1 1 0 1    True if unordered, less than, or equal
+    FCMP_UNE   = 14,  /// 1 1 1 0    True if unordered or not equal
+    FCMP_TRUE  = 15,  /// 1 1 1 1    Always true (always folded)
+    FIRST_FCMP_PREDICATE = FCMP_FALSE,
+    LAST_FCMP_PREDICATE = FCMP_TRUE,
+    BAD_FCMP_PREDICATE = FCMP_TRUE + 1,
+    ICMP_EQ    = 32,  /// equal
+    ICMP_NE    = 33,  /// not equal
+    ICMP_UGT   = 34,  /// unsigned greater than
+    ICMP_UGE   = 35,  /// unsigned greater or equal
+    ICMP_ULT   = 36,  /// unsigned less than
+    ICMP_ULE   = 37,  /// unsigned less or equal
+    ICMP_SGT   = 38,  /// signed greater than
+    ICMP_SGE   = 39,  /// signed greater or equal
+    ICMP_SLT   = 40,  /// signed less than
+    ICMP_SLE   = 41,  /// signed less or equal
+    FIRST_ICMP_PREDICATE = ICMP_EQ,
+    LAST_ICMP_PREDICATE = ICMP_SLE,
+    BAD_ICMP_PREDICATE = ICMP_SLE + 1
+  };
+
   // allocate space for exactly two operands
   void *operator new(size_t s) {
     return User::operator new(s, 2);
@@ -576,7 +618,9 @@ public:
   static inline bool classof(const CmpInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::ICmp || 
-           I->getOpcode() == Instruction::FCmp;
+           I->getOpcode() == Instruction::FCmp ||
+           I->getOpcode() == Instruction::VICmp ||
+           I->getOpcode() == Instruction::VFCmp;
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));

@@ -1251,11 +1251,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   Out << I.getOpcodeName();
 
   // Print out the compare instruction predicates
-  if (const FCmpInst *FCI = dyn_cast<FCmpInst>(&I)) {
-    Out << " " << getPredicateText(FCI->getPredicate());
-  } else if (const ICmpInst *ICI = dyn_cast<ICmpInst>(&I)) {
-    Out << " " << getPredicateText(ICI->getPredicate());
-  }
+  if (const CmpInst *CI = dyn_cast<CmpInst>(&I))
+    Out << " " << getPredicateText(CI->getPredicate());
 
   // Print out the type of the operands...
   const Value *Operand = I.getNumOperands() ? I.getOperand(0) : 0;

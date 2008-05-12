@@ -1075,7 +1075,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 %token <BinaryOpVal> ADD SUB MUL UDIV SDIV FDIV UREM SREM FREM AND OR XOR
 %token <BinaryOpVal> SHL LSHR ASHR
 
-%token <OtherOpVal> ICMP FCMP
+%token <OtherOpVal> ICMP FCMP VICMP VFCMP
 %type  <IPredicate> IPredicates
 %type  <FPredicate> FPredicates
 %token  EQ NE SLT SGT SLE SGE ULT UGT ULE UGE 
@@ -1938,6 +1938,16 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     if ($4->getType() != $6->getType())
       GEN_ERROR("fcmp operand types must match");
     $$ = ConstantExpr::getFCmp($2, $4, $6);
+  }
+  | VICMP IPredicates '(' ConstVal ',' ConstVal ')' {
+    if ($4->getType() != $6->getType())
+      GEN_ERROR("vicmp operand types must match");
+    $$ = ConstantExpr::getVICmp($2, $4, $6);
+  }
+  | VFCMP FPredicates '(' ConstVal ',' ConstVal ')' {
+    if ($4->getType() != $6->getType())
+      GEN_ERROR("vfcmp operand types must match");
+    $$ = ConstantExpr::getVFCmp($2, $4, $6);
   }
   | EXTRACTELEMENT '(' ConstVal ',' ConstVal ')' {
     if (!ExtractElementInst::isValidOperands($3, $5))
@@ -2882,6 +2892,34 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
     if (isa<VectorType>((*$3).get()))
       GEN_ERROR("Vector types not supported by fcmp instruction");
+    Value* tmpVal1 = getVal(*$3, $4);
+    CHECK_FOR_ERROR
+    Value* tmpVal2 = getVal(*$3, $6);
+    CHECK_FOR_ERROR
+    $$ = CmpInst::create($1, $2, tmpVal1, tmpVal2);
+    if ($$ == 0)
+      GEN_ERROR("fcmp operator returned null");
+    delete $3;
+  }
+  | VICMP IPredicates Types ValueRef ',' ValueRef  {
+    if (!UpRefs.empty())
+      GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
+    if (!isa<VectorType>((*$3).get()))
+      GEN_ERROR("Scalar types not supported by vicmp instruction");
+    Value* tmpVal1 = getVal(*$3, $4);
+    CHECK_FOR_ERROR
+    Value* tmpVal2 = getVal(*$3, $6);
+    CHECK_FOR_ERROR
+    $$ = CmpInst::create($1, $2, tmpVal1, tmpVal2);
+    if ($$ == 0)
+      GEN_ERROR("icmp operator returned null");
+    delete $3;
+  }
+  | VFCMP FPredicates Types ValueRef ',' ValueRef  {
+    if (!UpRefs.empty())
+      GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
+    if (!isa<VectorType>((*$3).get()))
+      GEN_ERROR("Scalar types not supported by vfcmp instruction");
     Value* tmpVal1 = getVal(*$3, $4);
     CHECK_FOR_ERROR
     Value* tmpVal2 = getVal(*$3, $6);

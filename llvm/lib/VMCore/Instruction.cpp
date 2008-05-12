@@ -128,6 +128,8 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   // Other instructions...
   case ICmp:           return "icmp";
   case FCmp:           return "fcmp";
+  case VICmp:          return "vicmp";
+  case VFCmp:          return "vfcmp";
   case PHI:            return "phi";
   case Select:         return "select";
   case Call:           return "call";

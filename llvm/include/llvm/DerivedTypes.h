@@ -349,6 +349,16 @@ public:
   ///
   static VectorType *get(const Type *ElementType, unsigned NumElements);
 
+  /// VectorType::getInteger - This static method gets a VectorType with the
+  /// same number of elements as the input type, and the element type is an
+  /// integer type of the same width as the input element type.
+  ///
+  static VectorType *getInteger(const VectorType *VTy) {
+    unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
+    const Type *EltTy = IntegerType::get(EltBits);
+    return VectorType::get(EltTy, VTy->getNumElements());
+  }
+
   /// @brief Return the number of elements in the Vector type.
   inline unsigned getNumElements() const { return NumElements; }
 

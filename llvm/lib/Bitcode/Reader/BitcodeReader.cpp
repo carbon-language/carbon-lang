@@ -818,8 +818,12 @@ bool BitcodeReader::ParseConstants() {
 
       if (OpTy->isFloatingPoint())
         V = ConstantExpr::getFCmp(Record[3], Op0, Op1);
-      else
+      else if (OpTy->isInteger())
         V = ConstantExpr::getICmp(Record[3], Op0, Op1);
+      else if (OpTy->isFPOrFPVector())
+        V = ConstantExpr::getVFCmp(Record[3], Op0, Op1);
+      else
+        V = ConstantExpr::getVICmp(Record[3], Op0, Op1);
       break;
     }
     case bitc::CST_CODE_INLINEASM: {
@@ -1355,10 +1359,14 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
           OpNum+1 != Record.size())
         return Error("Invalid CMP record");
       
-      if (LHS->getType()->isFPOrFPVector())
-        I = new FCmpInst((FCmpInst::Predicate)Record[OpNum], LHS, RHS);
-      else
+      if (LHS->getType()->isInteger())
         I = new ICmpInst((ICmpInst::Predicate)Record[OpNum], LHS, RHS);
+      else if (LHS->getType()->isFloatingPoint())
+        I = new FCmpInst((FCmpInst::Predicate)Record[OpNum], LHS, RHS);
+      else if (LHS->getType()->isFPOrFPVector())
+        I = new VFCmpInst((FCmpInst::Predicate)Record[OpNum], LHS, RHS);
+      else
+        I = new VICmpInst((ICmpInst::Predicate)Record[OpNum], LHS, RHS);
       break;
     }
     case bitc::FUNC_CODE_INST_GETRESULT: { // GETRESULT: [ty, val, n]

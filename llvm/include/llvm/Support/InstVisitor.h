@@ -169,6 +169,8 @@ public:
   RetTy visitUnreachableInst(UnreachableInst &I)    { DELEGATE(TerminatorInst);}
   RetTy visitICmpInst(ICmpInst &I)                  { DELEGATE(CmpInst);}
   RetTy visitFCmpInst(FCmpInst &I)                  { DELEGATE(CmpInst);}
+  RetTy visitVICmpInst(VICmpInst &I)                { DELEGATE(CmpInst);}
+  RetTy visitVFCmpInst(VFCmpInst &I)                { DELEGATE(CmpInst);}
   RetTy visitMallocInst(MallocInst &I)              { DELEGATE(AllocationInst);}
   RetTy visitAllocaInst(AllocaInst &I)              { DELEGATE(AllocationInst);}
   RetTy visitFreeInst(FreeInst     &I)              { DELEGATE(Instruction); }
