@@ -117,7 +117,7 @@ void ScopedDecl::ReadInRec(Deserializer& D, ASTContext& C) {
   NamedDecl::ReadInRec(D, C);
   D.ReadPtr(Next);                                  // From ScopedDecl.
   
-  assert(DeclCtx == 0)    // Allow back-patching.  Observe that we register
+  assert(DeclCtx == 0);   // Allow back-patching.  Observe that we register
   D.ReadPtr(DeclCtx);     // the variable of the *object* for back-patching.
                           // Its actual value will get filled in later.
 }
