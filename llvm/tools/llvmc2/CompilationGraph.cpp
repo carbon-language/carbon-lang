@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Error.h"
 #include "CompilationGraph.h"
 
 #include "llvm/ADT/STLExtras.h"
@@ -90,7 +91,7 @@ const Node& CompilationGraph::getNode(const std::string& ToolName) const {
 const std::string& CompilationGraph::getLanguage(const sys::Path& File) const {
   LanguageMap::const_iterator Lang = ExtsToLangs.find(File.getSuffix());
   if (Lang == ExtsToLangs.end())
-    throw std::runtime_error("Unknown suffix: " + File.getSuffix() + '!');
+    throw std::runtime_error("Unknown suffix: " + File.getSuffix());
   return Lang->second;
 }
 
@@ -101,7 +102,7 @@ CompilationGraph::getToolsVector(const std::string& LangName) const
   tools_map_type::const_iterator I = ToolsMap.find(LangName);
   if (I == ToolsMap.end())
     throw std::runtime_error("No tool corresponding to the language "
-                             + LangName + "found!");
+                             + LangName + "found");
   return I->second;
 }
 
@@ -176,8 +177,8 @@ void CompilationGraph::PassThroughGraph (const sys::Path& InFile,
       Out = MakeTempFile(TempDir, In.getBasename(), CurTool->OutputSuffix());
     }
 
-    if (CurTool->GenerateAction(In, Out).Execute() != 0)
-      throw std::runtime_error("Tool returned error code!");
+    if (int ret = CurTool->GenerateAction(In, Out).Execute())
+      throw error_code(ret);
 
     if (Last)
       return;
@@ -205,8 +206,8 @@ FindToolChain(const sys::Path& In, const std::string* forceLanguage,
   // Find the toolchain for the input language.
   const tools_vector_type& TV = getToolsVector(InLanguage);
   if (TV.empty())
-    throw std::runtime_error("No toolchain corresponding to language"
-                             + InLanguage + " found!");
+    throw std::runtime_error("No toolchain corresponding to language "
+                             + InLanguage + " found");
   return &getNode(ChooseEdge(TV, InLangs)->ToolName());
 }
 
@@ -342,8 +343,8 @@ int CompilationGraph::Build (const sys::Path& TempDir) {
       Out = MakeTempFile(TempDir, "tmp", JT->OutputSuffix());
     }
 
-    if (JT->GenerateAction(Out).Execute() != 0)
-      throw std::runtime_error("Tool returned error code!");
+    if (int ret = JT->GenerateAction(Out).Execute())
+      throw error_code(ret);
 
     if (!IsLast) {
       const Node* NextNode =
@@ -397,7 +398,7 @@ void CompilationGraph::writeGraph() {
     O.close();
   }
   else {
-    throw std::runtime_error("");
+    throw std::runtime_error("Error opening file for writing");
   }
 }
 

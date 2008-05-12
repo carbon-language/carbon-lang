@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CompilationGraph.h"
+#include "Error.h"
 #include "Tool.h"
 
 #include "llvm/System/Path.h"
@@ -91,6 +92,9 @@ int main(int argc, char** argv) {
     }
 
     return BuildTargets(graph);
+  }
+  catch(llvmc::error_code& ec) {
+    return ec.code();
   }
   catch(const std::exception& ex) {
     std::cerr << ex.what() << '\n';
