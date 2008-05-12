@@ -111,6 +111,12 @@
           <li><a href="#i_shufflevector">'<tt>shufflevector</tt>' Instruction</a></li>
         </ol>
       </li>
+      <li><a href="#aggregateops">Aggregate Operations</a>
+        <ol>
+          <li><a href="#i_extractvalue">'<tt>extractvalue</tt>' Instruction</a></li>
+          <li><a href="#i_insertvalue">'<tt>insertvalue</tt>' Instruction</a></li>
+        </ol>
+      </li>
       <li><a href="#memoryops">Memory Access and Addressing Operations</a>
         <ol>
           <li><a href="#i_malloc">'<tt>malloc</tt>'   Instruction</a></li>
@@ -1030,6 +1036,8 @@ classifications:</p>
           <a href="#t_floating">floating point</a>,
           <a href="#t_pointer">pointer</a>,
           <a href="#t_vector">vector</a>
+          <a href="#t_struct">structure</a>,
+          <a href="#t_array">array</a>,
       </td>
     </tr>
     <tr>
@@ -2769,6 +2777,114 @@ operand may be undef if performing a shuffle from only one vector.
                           &lt;4 x i32&gt; &lt;i32 0, i32 4, i32 1, i32 5&gt;  <i>; yields &lt;4 x i32&gt;</i>
   %result = shufflevector &lt;4 x i32&gt; %v1, &lt;4 x i32&gt; undef, 
                           &lt;4 x i32&gt; &lt;i32 0, i32 1, i32 2, i32 3&gt;  <i>; yields &lt;4 x i32&gt;</i> - Identity shuffle.
+</pre>
+</div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"> 
+  <a name="aggregateops">Aggregate Operations</a>
+</div>
+
+<div class="doc_text">
+
+<p>LLVM supports several instructions for working with aggregate values.
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+   <a name="i_extractvalue">'<tt>extractvalue</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+
+<pre>
+  &lt;result&gt; = extractvalue &lt;aggregate type&gt; &lt;val&gt;, &lt;idx&gt;{, &lt;idx&gt;}*
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>extractvalue</tt>' instruction extracts a value
+from an aggregate value.
+</p>
+
+
+<h5>Arguments:</h5>
+
+<p>
+The first operand of an '<tt>extractvalue</tt>' instruction is a
+value of <a href="#t_struct">struct</a> or <a href="#t_array">array</a>
+type.  The operands are constant indicies to specify which value to extract
+in the same manner as indicies in a
+'<tt><a href="#i_getelementptr">getelementptr</a></tt>' instruction.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+The result is the value at the position in the aggregate specified by
+the index operands.
+</p>
+
+<h5>Example:</h5>
+
+<pre>
+  %result = extractvalue {i32, float} %agg, i32 0    <i>; yields i32</i>
+</pre>
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+   <a name="i_insertvalue">'<tt>insertvalue</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+
+<pre>
+  &lt;result&gt; = insertvalue &lt;aggregate type&gt; &lt;val&gt;, &lt;ty&gt; &lt;val&gt;, i32 &lt;idx&gt;    <i>; yields &lt;n x &lt;ty&gt;&gt;</i>
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>insertvalue</tt>' instruction inserts a value
+into a aggregate.
+</p>
+
+
+<h5>Arguments:</h5>
+
+<p>
+The first operand of an '<tt>insertvalue</tt>' instruction is a
+value of <a href="#t_struct">struct</a> or <a href="#t_array">array</a> type.
+The second operand is a first-class value to insert.
+type of the first operand.  The following operands are constant indicies
+indicating the position at which to insert the value in the same manner as
+indicies in a
+'<tt><a href="#i_getelementptr">getelementptr</a></tt>' instruction.
+The value to insert must have the same type as the value identified
+by the indicies.
+
+<h5>Semantics:</h5>
+
+<p>
+The result is an aggregate of the same type as <tt>val</tt>.  Its
+value is that of <tt>val</tt> except that the value at the position
+specified by the indicies is that of <tt>elt</tt>.
+</p>
+
+<h5>Example:</h5>
+
+<pre>
+  %result = insertvalue {i32, float} %agg, i32 1, i32 0    <i>; yields {i32, float}</i>
 </pre>
 </div>
 
