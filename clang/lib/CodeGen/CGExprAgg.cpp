@@ -304,12 +304,11 @@ void AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {
   // FIXME: Are initializers affected by volatile?
   if (E->getType()->isComplexType()) {
     CGF.EmitComplexExprIntoAddr(E, LV.getAddress(), false);
-    return;
+  } else if (CGF.hasAggregateLLVMType(E->getType())) {
+    CGF.EmitAnyExpr(E, LV.getAddress(), false);
+  } else {
+    CGF.EmitStoreThroughLValue(CGF.EmitAnyExpr(E), LV, E->getType());
   }
-  RValue RV = CGF.EmitAnyExpr(E, LV.getAddress(), false);
-  if (CGF.hasAggregateLLVMType(E->getType()))
-    return;
-  CGF.EmitStoreThroughLValue(RV, LV, E->getType());
 }
 
 void AggExprEmitter::EmitNullInitializationToLValue(LValue LV, QualType T) {
