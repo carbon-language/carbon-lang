@@ -441,8 +441,11 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
     if (NewIsTentative || OldIsTentative)
       return New;
   }
+  // Handle __private_extern__ just like extern.
   if (Old->getStorageClass() != VarDecl::Extern &&
-      New->getStorageClass() != VarDecl::Extern) {
+      Old->getStorageClass() != VarDecl::PrivateExtern &&
+      New->getStorageClass() != VarDecl::Extern &&
+      New->getStorageClass() != VarDecl::PrivateExtern) {
     Diag(New->getLocation(), diag::err_redefinition, New->getName());
     Diag(Old->getLocation(), diag::err_previous_definition);
   }

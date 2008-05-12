@@ -18,6 +18,9 @@ extern int i1; // expected-error{{previous definition is here}}
 static int i1; // expected-error{{static declaration of 'i1' follows non-static declaration}} expected-error{{previous definition is here}}
 int i1 = 3; // expected-error{{non-static declaration of 'i1' follows static declaration}}
 
+__private_extern__ int pExtern;
+int pExtern = 0;
+
 void func() {
   extern int i1; // expected-error{{previous definition is here}}
   static int i1; // expected-error{{static declaration of 'i1' follows non-static declaration}}
