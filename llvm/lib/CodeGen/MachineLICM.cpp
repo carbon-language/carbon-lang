@@ -34,16 +34,16 @@ namespace {
   class VISIBILITY_HIDDEN MachineLICM : public MachineFunctionPass {
     const TargetMachine   *TM;
     const TargetInstrInfo *TII;
-    MachineFunction       *CurMF; // Current MachineFunction
+    MachineFunction       *CurMF;  // Current MachineFunction
 
     // Various analyses that we use...
-    MachineLoopInfo      *LI;   // Current MachineLoopInfo
-    MachineDominatorTree *DT;   // Machine dominator tree for the current Loop
+    MachineLoopInfo      *LI;      // Current MachineLoopInfo
+    MachineDominatorTree *DT;      // Machine dominator tree for the cur loop
     MachineRegisterInfo  *RegInfo; // Machine register information
 
     // State that is updated as we process loops
-    bool         Changed;       // True if a loop is changed.
-    MachineLoop *CurLoop;       // The current loop we are working on.
+    bool         Changed;          // True if a loop is changed.
+    MachineLoop *CurLoop;          // The current loop we are working on.
   public:
     static char ID; // Pass identification, replacement for typeid
     MachineLICM() : MachineFunctionPass((intptr_t)&ID) {}
@@ -233,15 +233,14 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
     return false;
   
   if (TID.mayLoad()) {
-    // Okay, this instruction does a load.  As a refinement, allow the target
-    // to decide whether the loaded value is actually a constant.  If so, we
-    // can actually use it as a load.
-    if (!TII->isInvariantLoad(&I)) {
+    // Okay, this instruction does a load. As a refinement, we allow the target
+    // to decide whether the loaded value is actually a constant. If so, we can
+    // actually use it as a load.
+    if (!TII->isInvariantLoad(&I))
       // FIXME: we should be able to sink loads with no other side effects if
       // there is nothing that can change memory from here until the end of
-      // block.  This is a trivial form of alias analysis.
+      // block. This is a trivial form of alias analysis.
       return false;
-    }
   }
 
   DEBUG({
@@ -263,12 +262,9 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
              *ImpDefs; ++ImpDefs)
           DOUT << "      -> " << TRI->getName(*ImpDefs) << "\n";
       }
-
-        //if (TII->hasUnmodelledSideEffects(&I))
-        //DOUT << "  * Instruction has side effects.\n";
     });
 
-  // The instruction is loop invariant if all of its operands are loop-invariant
+  // The instruction is loop invariant if all of its operands are.
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = I.getOperand(i);
 
@@ -282,7 +278,8 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
     if (TargetRegisterInfo::isPhysicalRegister(Reg))
       return false;
 
-    assert(RegInfo->getVRegDef(Reg)&&"Machine instr not mapped for this vreg?");
+    assert(RegInfo->getVRegDef(Reg) &&
+           "Machine instr not mapped for this vreg?!");
 
     // If the loop contains the definition of an operand, then the instruction
     // isn't loop invariant.
@@ -294,11 +291,15 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
   return true;
 }
 
-/// Hoist - When an instruction is found to only use loop invariant operands
-/// that is safe to hoist, this instruction is called to do the dirty work.
+/// Hoist - When an instruction is found to use only loop invariant operands
+/// that are safe to hoist, this instruction is called to do the dirty work.
 ///
 void MachineLICM::Hoist(MachineInstr &MI) {
   if (!IsLoopInvariantInst(MI)) return;
+
+  // Hoisting things that are trivially rematerializable may result in worse
+  // code than before.
+  if (TII->isTriviallyReMaterializable(&MI)) return;
 
   std::vector<MachineBasicBlock*> Preds;
 
