@@ -32,18 +32,19 @@
 #include <vector>
 
 namespace llvm {
-  class Value;
   class Function;
-  class TargetMachine;
-  class TargetData;
-  class TargetRegisterClass;
+  class MachineBasicBlock;
+  class MachineFrameInfo;
+  class MachineInstr;
   class SDNode;
   class SDOperand;
   class SelectionDAG;
-  class MachineBasicBlock;
-  class MachineInstr;
-  class VectorType;
+  class TargetData;
+  class TargetMachine;
+  class TargetRegisterClass;
   class TargetSubtarget;
+  class Value;
+  class VectorType;
 
 //===----------------------------------------------------------------------===//
 /// TargetLowering - This class defines information used to lower LLVM code to
@@ -680,6 +681,17 @@ public:
   SDOperand SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
                           ISD::CondCode Cond, bool foldBooleans,
                           DAGCombinerInfo &DCI) const;
+
+  /// isGAPlusOffset - Returns true (and the GlobalValue and the offset) if the
+  /// node is a GlobalAddress + offset.
+  virtual bool
+  isGAPlusOffset(SDNode *N, GlobalValue* &GA, int64_t &Offset) const;
+
+  /// isConsecutiveLoad - Return true if LD (which must be a LoadSDNode) is
+  /// loading 'Bytes' bytes from a location that is 'Dist' units away from the
+  /// location that the 'Base' load is loading from.
+  bool isConsecutiveLoad(SDNode *LD, SDNode *Base, unsigned Bytes, int Dist,
+                         MachineFrameInfo *MFI) const;
 
   /// PerformDAGCombine - This method will be invoked for all target nodes and
   /// for any target-independent nodes that the target has registered with
