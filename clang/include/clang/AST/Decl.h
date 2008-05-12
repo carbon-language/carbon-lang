@@ -226,8 +226,8 @@ private:
   
   friend class StmtIteratorBase;
 protected:
-  VarDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id, QualType T,
-          StorageClass SC, ScopedDecl *PrevDecl)
+  VarDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
+          QualType T, StorageClass SC, ScopedDecl *PrevDecl)
     : ValueDecl(DK, DC, L, Id, T, PrevDecl), Init(0) { SClass = SC; }
 public:
   static VarDecl *Create(ASTContext &C, DeclContext *DC,
