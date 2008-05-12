@@ -19,6 +19,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
@@ -1477,6 +1478,73 @@ TargetLowering::SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
   // Could not fold it.
   return SDOperand();
 }
+
+/// isGAPlusOffset - Returns true (and the GlobalValue and the offset) if the
+/// node is a GlobalAddress + offset.
+bool TargetLowering::isGAPlusOffset(SDNode *N, GlobalValue* &GA,
+                                    int64_t &Offset) const {
+  if (isa<GlobalAddressSDNode>(N)) {
+    GA = cast<GlobalAddressSDNode>(N)->getGlobal();
+    return true;
+  }
+
+  if (N->getOpcode() == ISD::ADD) {
+    SDOperand N1 = N->getOperand(0);
+    SDOperand N2 = N->getOperand(1);
+    if (isGAPlusOffset(N1.Val, GA, Offset)) {
+      ConstantSDNode *V = dyn_cast<ConstantSDNode>(N2);
+      if (V) {
+        Offset += V->getSignExtended();
+        return true;
+      }
+    } else if (isGAPlusOffset(N2.Val, GA, Offset)) {
+      ConstantSDNode *V = dyn_cast<ConstantSDNode>(N1);
+      if (V) {
+        Offset += V->getSignExtended();
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+
+/// isConsecutiveLoad - Return true if LD (which must be a LoadSDNode) is
+/// loading 'Bytes' bytes from a location that is 'Dist' units away from the
+/// location that the 'Base' load is loading from.
+bool TargetLowering::isConsecutiveLoad(SDNode *LD, SDNode *Base,
+                                       unsigned Bytes, int Dist,
+                                       MachineFrameInfo *MFI) const {
+  if (LD->getOperand(0).Val != Base->getOperand(0).Val)
+    return false;
+  MVT::ValueType VT = LD->getValueType(0);
+  if (MVT::getSizeInBits(VT) / 8 != Bytes)
+    return false;
+
+  SDOperand Loc = LD->getOperand(1);
+  SDOperand BaseLoc = Base->getOperand(1);
+  if (Loc.getOpcode() == ISD::FrameIndex) {
+    if (BaseLoc.getOpcode() != ISD::FrameIndex)
+      return false;
+    int FI  = cast<FrameIndexSDNode>(Loc)->getIndex();
+    int BFI = cast<FrameIndexSDNode>(BaseLoc)->getIndex();
+    int FS  = MFI->getObjectSize(FI);
+    int BFS = MFI->getObjectSize(BFI);
+    if (FS != BFS || FS != (int)Bytes) return false;
+    return MFI->getObjectOffset(FI) == (MFI->getObjectOffset(BFI) + Dist*Bytes);
+  }
+
+  GlobalValue *GV1 = NULL;
+  GlobalValue *GV2 = NULL;
+  int64_t Offset1 = 0;
+  int64_t Offset2 = 0;
+  bool isGA1 = isGAPlusOffset(Loc.Val, GV1, Offset1);
+  bool isGA2 = isGAPlusOffset(BaseLoc.Val, GV2, Offset2);
+  if (isGA1 && isGA2 && GV1 == GV2)
+    return Offset1 == (Offset2 + Dist*Bytes);
+  return false;
+}
+
 
 SDOperand TargetLowering::
 PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const {

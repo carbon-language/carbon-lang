@@ -369,6 +369,9 @@ namespace llvm {
                                                 APInt &KnownOne,
                                                 const SelectionDAG &DAG,
                                                 unsigned Depth = 0) const;
+
+    virtual bool
+    isGAPlusOffset(SDNode *N, GlobalValue* &GA, int64_t &Offset) const;
     
     SDOperand getReturnAddressFrameIndex(SelectionDAG &DAG);
 

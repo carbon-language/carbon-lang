@@ -6194,71 +6194,23 @@ static SDOperand getShuffleScalarElt(SDNode *N, unsigned i, SelectionDAG &DAG) {
 }
 
 /// isGAPlusOffset - Returns true (and the GlobalValue and the offset) if the
-/// node is a GlobalAddress + an offset.
-static bool isGAPlusOffset(SDNode *N, GlobalValue* &GA, int64_t &Offset) {
-  unsigned Opc = N->getOpcode();
-  if (Opc == X86ISD::Wrapper) {
-    if (dyn_cast<GlobalAddressSDNode>(N->getOperand(0))) {
+/// node is a GlobalAddress + offset.
+bool X86TargetLowering::isGAPlusOffset(SDNode *N,
+                                       GlobalValue* &GA, int64_t &Offset) const{
+  if (N->getOpcode() == X86ISD::Wrapper) {
+    if (isa<GlobalAddressSDNode>(N->getOperand(0))) {
       GA = cast<GlobalAddressSDNode>(N->getOperand(0))->getGlobal();
       return true;
     }
-  } else if (Opc == ISD::ADD) {
-    SDOperand N1 = N->getOperand(0);
-    SDOperand N2 = N->getOperand(1);
-    if (isGAPlusOffset(N1.Val, GA, Offset)) {
-      ConstantSDNode *V = dyn_cast<ConstantSDNode>(N2);
-      if (V) {
-        Offset += V->getSignExtended();
-        return true;
-      }
-    } else if (isGAPlusOffset(N2.Val, GA, Offset)) {
-      ConstantSDNode *V = dyn_cast<ConstantSDNode>(N1);
-      if (V) {
-        Offset += V->getSignExtended();
-        return true;
-      }
-    }
   }
-  return false;
+  return TargetLowering::isGAPlusOffset(N, GA, Offset);
 }
 
-/// isConsecutiveLoad - Returns true if N is loading from an address of Base
-/// + Dist * Size.
-static bool isConsecutiveLoad(SDNode *N, SDNode *Base, int Dist, int Size,
-                              MachineFrameInfo *MFI) {
-  if (N->getOperand(0).Val != Base->getOperand(0).Val)
-    return false;
-
-  SDOperand Loc = N->getOperand(1);
-  SDOperand BaseLoc = Base->getOperand(1);
-  if (Loc.getOpcode() == ISD::FrameIndex) {
-    if (BaseLoc.getOpcode() != ISD::FrameIndex)
-      return false;
-    int FI  = cast<FrameIndexSDNode>(Loc)->getIndex();
-    int BFI = cast<FrameIndexSDNode>(BaseLoc)->getIndex();
-    int FS  = MFI->getObjectSize(FI);
-    int BFS = MFI->getObjectSize(BFI);
-    if (FS != BFS || FS != Size) return false;
-    return MFI->getObjectOffset(FI) == (MFI->getObjectOffset(BFI) + Dist*Size);
-  } else {
-    GlobalValue *GV1 = NULL;
-    GlobalValue *GV2 = NULL;
-    int64_t Offset1 = 0;
-    int64_t Offset2 = 0;
-    bool isGA1 = isGAPlusOffset(Loc.Val, GV1, Offset1);
-    bool isGA2 = isGAPlusOffset(BaseLoc.Val, GV2, Offset2);
-    if (isGA1 && isGA2 && GV1 == GV2)
-      return Offset1 == (Offset2 + Dist*Size);
-  }
-
-  return false;
-}
-
-static bool isBaseAlignmentOfN(unsigned N, SDNode *Base, MachineFrameInfo *MFI,
-                               const X86Subtarget *Subtarget) {
+static bool isBaseAlignmentOfN(unsigned N, SDNode *Base,
+                               const TargetLowering &TLI) {
   GlobalValue *GV;
   int64_t Offset = 0;
-  if (isGAPlusOffset(Base, GV, Offset))
+  if (TLI.isGAPlusOffset(Base, GV, Offset))
     return (GV->getAlignment() >= N && (Offset % N) == 0);
   // DAG combine handles the stack object case.
   return false;
@@ -6266,8 +6218,9 @@ static bool isBaseAlignmentOfN(unsigned N, SDNode *Base, MachineFrameInfo *MFI,
 
 static bool EltsFromConsecutiveLoads(SDNode *N, SDOperand PermMask,
                                      unsigned NumElems, MVT::ValueType EVT,
-                                     MachineFrameInfo *MFI,
-                                     SelectionDAG &DAG, SDNode *&Base) {
+                                     SDNode *&Base,
+                                     SelectionDAG &DAG, MachineFrameInfo *MFI,
+                                     const TargetLowering &TLI) {
   Base = NULL;
   for (unsigned i = 0; i < NumElems; ++i) {
     SDOperand Idx = PermMask.getOperand(i);
@@ -6291,7 +6244,8 @@ static bool EltsFromConsecutiveLoads(SDNode *N, SDOperand PermMask,
     if (Elt.getOpcode() == ISD::UNDEF)
       continue;
 
-    if (!isConsecutiveLoad(Elt.Val, Base, i, MVT::getSizeInBits(EVT)/8,MFI))
+    if (!TLI.isConsecutiveLoad(Elt.Val, Base,
+                               MVT::getSizeInBits(EVT)/8, i, MFI))
       return false;
   }
   return true;
@@ -6302,18 +6256,19 @@ static bool EltsFromConsecutiveLoads(SDNode *N, SDOperand PermMask,
 /// if the load addresses are consecutive, non-overlapping, and in the right
 /// order.
 static SDOperand PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
-                                       const X86Subtarget *Subtarget) {
+                                       const TargetLowering &TLI) {
   MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
   MVT::ValueType VT = N->getValueType(0);
   MVT::ValueType EVT = MVT::getVectorElementType(VT);
   SDOperand PermMask = N->getOperand(2);
   unsigned NumElems = PermMask.getNumOperands();
   SDNode *Base = NULL;
-  if (!EltsFromConsecutiveLoads(N, PermMask, NumElems, EVT, MFI, DAG, Base))
+  if (!EltsFromConsecutiveLoads(N, PermMask, NumElems, EVT, Base,
+                                DAG, MFI, TLI))
     return SDOperand();
 
   LoadSDNode *LD = cast<LoadSDNode>(Base);
-  if (isBaseAlignmentOfN(16, Base->getOperand(1).Val, MFI, Subtarget))
+  if (isBaseAlignmentOfN(16, Base->getOperand(1).Val, TLI))
     return DAG.getLoad(VT, LD->getChain(), LD->getBasePtr(), LD->getSrcValue(),
                        LD->getSrcValueOffset(), LD->isVolatile());
   return DAG.getLoad(VT, LD->getChain(), LD->getBasePtr(), LD->getSrcValue(),
@@ -6329,7 +6284,8 @@ static SDNode *getBuildPairElt(SDNode *N, unsigned i) {
 }
 
 static SDOperand PerformBuildVectorCombine(SDNode *N, SelectionDAG &DAG,
-                                       const X86Subtarget *Subtarget) {
+                                           const X86Subtarget *Subtarget,
+                                           const TargetLowering &TLI) {
   // Ignore single operand BUILD_VECTOR.
   if (N->getNumOperands() == 1)
     return SDOperand();
@@ -6360,7 +6316,7 @@ static SDOperand PerformBuildVectorCombine(SDNode *N, SelectionDAG &DAG,
       return SDOperand();
     SDNode *NextLD = getBuildPairElt(Pair, 1);
     if (!ISD::isNON_EXTLoad(NextLD) ||
-        !isConsecutiveLoad(NextLD, Base, 1, 4/*32 bits*/, MFI))
+        !TLI.isConsecutiveLoad(NextLD, Base, 4/*32 bits*/, 1, MFI))
       return SDOperand();
   }
   LoadSDNode *LD = cast<LoadSDNode>(Base);
@@ -6564,8 +6520,9 @@ SDOperand X86TargetLowering::PerformDAGCombine(SDNode *N,
   SelectionDAG &DAG = DCI.DAG;
   switch (N->getOpcode()) {
   default: break;
-  case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, Subtarget);
-  case ISD::BUILD_VECTOR:   return PerformBuildVectorCombine(N, DAG, Subtarget);
+  case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, *this);
+  case ISD::BUILD_VECTOR:
+    return PerformBuildVectorCombine(N, DAG, Subtarget, *this);
   case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
   case ISD::STORE:          return PerformSTORECombine(N, DAG, Subtarget);
   case X86ISD::FXOR:
