@@ -116,9 +116,10 @@ void ScopedDecl::EmitInRec(Serializer& S) const {
 void ScopedDecl::ReadInRec(Deserializer& D, ASTContext& C) {
   NamedDecl::ReadInRec(D, C);
   D.ReadPtr(Next);                                  // From ScopedDecl.
-  Decl *TmpD;
-  D.ReadPtr(TmpD);                                  // From ScopedDecl.
-  DeclCtx = cast_or_null<DeclContext>(TmpD);
+  
+  DeclCtx = 0;            // Allow back-patching.  Observe that we register
+  D.ReadPtr(DeclCtx);     // the variable of the *object* for back-patching.
+                          // It's actual value will get filled in later.
 }
     
   //===------------------------------------------------------------===//
