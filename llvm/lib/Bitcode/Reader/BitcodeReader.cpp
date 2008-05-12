@@ -818,7 +818,7 @@ bool BitcodeReader::ParseConstants() {
 
       if (OpTy->isFloatingPoint())
         V = ConstantExpr::getFCmp(Record[3], Op0, Op1);
-      else if (OpTy->isInteger())
+      else if (OpTy->isInteger() || isa<PointerType>(OpTy))
         V = ConstantExpr::getICmp(Record[3], Op0, Op1);
       else if (OpTy->isFPOrFPVector())
         V = ConstantExpr::getVFCmp(Record[3], Op0, Op1);
