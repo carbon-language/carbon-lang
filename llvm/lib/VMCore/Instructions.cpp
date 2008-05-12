@@ -1605,10 +1605,9 @@ bool CastInst::isLosslessCast() const {
 /// changed in order to effect the cast. Essentially, it identifies cases where
 /// no code gen is necessary for the cast, hence the name no-op cast.  For 
 /// example, the following are all no-op casts:
-/// # bitcast uint %X, int
-/// # bitcast uint* %x, sbyte*
-/// # bitcast vector< 2 x int > %x, vector< 4 x short> 
-/// # ptrtoint uint* %x, uint     ; on 32-bit plaforms only
+/// # bitcast i32* %x to i8*
+/// # bitcast <2 x i32> %x to <4 x i16> 
+/// # ptrtoint i32* %x to i32     ; on 32-bit plaforms only
 /// @brief Determine if a cast is a no-op.
 bool CastInst::isNoopCast(const Type *IntPtrTy) const {
   switch (getOpcode()) {

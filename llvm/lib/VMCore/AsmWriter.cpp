@@ -539,7 +539,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
     Out << "zeroinitializer";
   } else if (const ConstantArray *CA = dyn_cast<ConstantArray>(CV)) {
     // As a special case, print the array as a string if it is an array of
-    // ubytes or an array of sbytes with positive values.
+    // i8 with ConstantInt values.
     //
     const Type *ETy = CA->getType()->getElementType();
     if (CA->isString()) {
