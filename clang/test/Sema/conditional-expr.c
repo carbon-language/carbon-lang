@@ -36,3 +36,7 @@ void foo() {
   *(0 ? (asdf) 0 : &x) = 10;
 }
 
+int Postgresql() {
+  char x;
+  return ((((&x) != ((void *) 0)) ? (*(&x) = ((char) 1)) : (void) ((void *) 0)), (unsigned long) ((void *) 0)); // expected-warning {{C99 forbids conditional expressions with only one void side}}
+}
