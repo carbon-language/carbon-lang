@@ -177,6 +177,8 @@ public:
   
   ComplexPairTy VisitConditionalOperator(const ConditionalOperator *CO);
   ComplexPairTy VisitChooseExpr(ChooseExpr *CE);
+
+  ComplexPairTy VisitInitListExpr(InitListExpr *E);
 };
 }  // end anonymous namespace.
 
@@ -498,6 +500,17 @@ VisitConditionalOperator(const ConditionalOperator *E) {
 ComplexPairTy ComplexExprEmitter::VisitChooseExpr(ChooseExpr *E) {
   // Emit the LHS or RHS as appropriate.
   return Visit(E->isConditionTrue(CGF.getContext()) ? E->getLHS() :E->getRHS());
+}
+
+ComplexPairTy ComplexExprEmitter::VisitInitListExpr(InitListExpr *E) {
+  if (E->getNumInits())
+    return Visit(E->getInit(0));
+
+  // Empty init list intializes to null
+  QualType Ty = E->getType()->getAsComplexType()->getElementType();
+  const llvm::Type* LTy = CGF.ConvertType(Ty);
+  llvm::Value* zeroConstant = llvm::Constant::getNullValue(LTy);
+  return ComplexPairTy(zeroConstant, zeroConstant);
 }
 
 //===----------------------------------------------------------------------===//
