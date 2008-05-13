@@ -443,7 +443,7 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
       
       DenseMap<BasicBlock*, Value*> deps;
       MD->getNonLocalDependency(C, deps);
-      Value* dep = 0;
+      CallInst* cdep = 0;
       
       for (DenseMap<BasicBlock*, Value*>::iterator I = deps.begin(),
            E = deps.end(); I != E; ++I) {
@@ -453,21 +453,23 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
           return nextValueNumber++;
         } else if (I->second != MemoryDependenceAnalysis::NonLocal) {
           if (DT->dominates(I->first, C->getParent())) {
-            dep = I->second;
+            if (CallInst* CD = dyn_cast<CallInst>(I->second))
+              cdep = CD;
+            else {
+              valueNumbering.insert(std::make_pair(V, nextValueNumber));
+              return nextValueNumber++;
+            }
           } else {
             valueNumbering.insert(std::make_pair(V, nextValueNumber));
-
             return nextValueNumber++;
           }
         }
       }
       
-      if (!dep || !isa<CallInst>(dep)) {
+      if (!cdep) {
         valueNumbering.insert(std::make_pair(V, nextValueNumber));
         return nextValueNumber++;
       }
-      
-      CallInst* cdep = cast<CallInst>(dep);
       
       if (cdep->getCalledFunction() != C->getCalledFunction() ||
           cdep->getNumOperands() != C->getNumOperands()) {
