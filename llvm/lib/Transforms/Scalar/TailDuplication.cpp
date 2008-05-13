@@ -32,6 +32,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include <map>
 using namespace llvm;
 
@@ -51,6 +52,7 @@ namespace {
   private:
     inline bool shouldEliminateUnconditionalBranch(TerminatorInst *TI);
     inline void eliminateUnconditionalBranch(BranchInst *BI);
+    SmallPtrSet<BasicBlock*, 4> CycleDetector;
   };
 }
 
@@ -61,17 +63,21 @@ static RegisterPass<TailDup> X("tailduplicate", "Tail Duplication");
 FunctionPass *llvm::createTailDuplicationPass() { return new TailDup(); }
 
 /// runOnFunction - Top level algorithm - Loop over each unconditional branch in
-/// the function, eliminating it if it looks attractive enough.
-///
+/// the function, eliminating it if it looks attractive enough.  CycleDetector
+/// prevents infinite loops by checking that we aren't redirecting a branch to
+/// a place it already pointed to earlier; see PR 2323.
 bool TailDup::runOnFunction(Function &F) {
   bool Changed = false;
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; )
+  CycleDetector.clear();
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ) {
     if (shouldEliminateUnconditionalBranch(I->getTerminator())) {
       eliminateUnconditionalBranch(cast<BranchInst>(I->getTerminator()));
       Changed = true;
     } else {
       ++I;
+      CycleDetector.clear();
     }
+  }
   return Changed;
 }
 
@@ -140,7 +146,7 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
       if (TooMany-- == 0) return false;
   }
   
-  // Finally, if this unconditional branch is a fall-through, be careful about
+  // If this unconditional branch is a fall-through, be careful about
   // tail duplicating it.  In particular, we don't want to taildup it if the
   // original block will still be there after taildup is completed: doing so
   // would eliminate the fall-through, requiring unconditional branches.
@@ -169,6 +175,11 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
           return false;
     }
   }
+
+  // Finally, check that we haven't redirected to this target block earlier;
+  // there are cases where we loop forever if we don't check this (PR 2323).
+  if (!CycleDetector.insert(Dest))
+    return false;
 
   return true;
 }
