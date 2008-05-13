@@ -56,8 +56,8 @@ namespace {
                             FCMPULT, FCMPULE, FCMPUNE, EXTRACT, INSERT,
                             SHUFFLE, SELECT, TRUNC, ZEXT, SEXT, FPTOUI,
                             FPTOSI, UITOFP, SITOFP, FPTRUNC, FPEXT, 
-                            PTRTOINT, INTTOPTR, BITCAST, GEP, CALL, EMPTY,
-                            TOMBSTONE };
+                            PTRTOINT, INTTOPTR, BITCAST, GEP, CALL, CONSTANT,
+                            EMPTY, TOMBSTONE };
 
     ExpressionOpcode opcode;
     const Type* type;
@@ -147,6 +147,7 @@ namespace {
       Expression create_expression(CastInst* C);
       Expression create_expression(GetElementPtrInst* G);
       Expression create_expression(CallInst* C);
+      Expression create_expression(Constant* C);
     public:
       ValueTable() : nextValueNumber(1) { }
       uint32_t lookup_or_add(Value* V);
@@ -391,7 +392,7 @@ Expression ValueTable::create_expression(SelectInst* I) {
 
 Expression ValueTable::create_expression(GetElementPtrInst* G) {
   Expression e;
-    
+  
   e.firstVN = lookup_or_add(G->getPointerOperand());
   e.secondVN = 0;
   e.thirdVN = 0;
@@ -434,26 +435,58 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
     } else if (AA->onlyReadsMemory(C)) {
       Expression e = create_expression(C);
       
-      Instruction* dep = MD->getDependency(C);
-      
-      if (dep == MemoryDependenceAnalysis::NonLocal ||
-          !isa<CallInst>(dep)) {
+      if (expressionNumbering.find(e) == expressionNumbering.end()) {
         expressionNumbering.insert(std::make_pair(e, nextValueNumber));
         valueNumbering.insert(std::make_pair(V, nextValueNumber));
+        return nextValueNumber++;
+      }
       
+      DenseMap<BasicBlock*, Value*> deps;
+      MD->getNonLocalDependency(C, deps);
+      Value* dep = 0;
+      
+      for (DenseMap<BasicBlock*, Value*>::iterator I = deps.begin(),
+           E = deps.end(); I != E; ++I) {
+        if (I->second == MemoryDependenceAnalysis::None) {
+          valueNumbering.insert(std::make_pair(V, nextValueNumber));
+
+          return nextValueNumber++;
+        } else if (I->second != MemoryDependenceAnalysis::NonLocal) {
+          if (DT->dominates(I->first, C->getParent())) {
+            dep = I->second;
+          } else {
+            valueNumbering.insert(std::make_pair(V, nextValueNumber));
+
+            return nextValueNumber++;
+          }
+        }
+      }
+      
+      if (!dep || !isa<CallInst>(dep)) {
+        valueNumbering.insert(std::make_pair(V, nextValueNumber));
         return nextValueNumber++;
       }
       
       CallInst* cdep = cast<CallInst>(dep);
-      Expression d_exp = create_expression(cdep);
       
-      if (e != d_exp) {
-        expressionNumbering.insert(std::make_pair(e, nextValueNumber));
+      if (cdep->getCalledFunction() != C->getCalledFunction() ||
+          cdep->getNumOperands() != C->getNumOperands()) {
         valueNumbering.insert(std::make_pair(V, nextValueNumber));
-      
+        return nextValueNumber++;
+      } else if (!C->getCalledFunction()) { 
+        valueNumbering.insert(std::make_pair(V, nextValueNumber));
         return nextValueNumber++;
       } else {
-        uint32_t v = expressionNumbering[d_exp];
+        for (unsigned i = 1; i < C->getNumOperands(); ++i) {
+          uint32_t c_vn = lookup_or_add(C->getOperand(i));
+          uint32_t cd_vn = lookup_or_add(cdep->getOperand(i));
+          if (c_vn != cd_vn) {
+            valueNumbering.insert(std::make_pair(V, nextValueNumber));
+            return nextValueNumber++;
+          }
+        }
+        
+        uint32_t v = valueNumbering[cdep];
         valueNumbering.insert(std::make_pair(V, v));
         return v;
       }
