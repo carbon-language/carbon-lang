@@ -764,4 +764,28 @@ madd:
 
 //===---------------------------------------------------------------------===//
 
+Consider:
+#include <emmintrin.h> 
+__m128 foo2 (float x) {
+ return _mm_set_ps (0, 0, x, 0);
+}
+
+In x86-32 mode, we generate this spiffy code:
+
+_foo2:
+	movss	4(%esp), %xmm0
+	pshufd	$81, %xmm0, %xmm0
+	ret
+
+in x86-64 mode, we generate this code, which could be better:
+
+_foo2:
+	xorps	%xmm1, %xmm1
+	movss	%xmm0, %xmm1
+	pshufd	$81, %xmm1, %xmm0
+	ret
+
+In sse4 mode, we could use insertps to make both better.
+
+//===---------------------------------------------------------------------===//
 
