@@ -757,31 +757,6 @@ or iseling it.
 
 //===---------------------------------------------------------------------===//
 
-Take the following code:
-
-#include <xmmintrin.h>
-__m128i doload64(short x) {return _mm_set_epi16(x,x,x,x,x,x,x,x);}
-
-LLVM currently generates the following on x86:
-doload64:
-        movzwl  4(%esp), %eax
-        movd    %eax, %xmm0
-        punpcklwd       %xmm0, %xmm0
-        pshufd  $0, %xmm0, %xmm0
-        ret
-
-gcc's generated code:
-doload64:
-        movd    4(%esp), %xmm0
-        punpcklwd       %xmm0, %xmm0
-        pshufd  $0, %xmm0, %xmm0
-        ret
-
-LLVM should be able to generate the same thing as gcc.  This looks like it is
-just a matter of matching (scalar_to_vector (load x)) to movd.
-
-//===---------------------------------------------------------------------===//
-
 LLVM currently generates stack realignment code, when it is not necessary
 needed. The problem is that we need to know about stack alignment too early,
 before RA runs.
