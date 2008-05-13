@@ -93,8 +93,7 @@ def analyze(clang, args,language,output,files,verbose,htmldir):
       print >> sys.stderr, ' '.join(command+print_args)
       print >> sys.stderr, '\n'
 
-
-#    subprocess.call(args)
+    subprocess.call(args)
 
 def link(args):
     command = 'gcc'.split()
