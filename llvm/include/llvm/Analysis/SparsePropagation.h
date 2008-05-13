@@ -146,6 +146,10 @@ public:
   ///
   LatticeVal getOrInitValueState(Value *V);
   
+  /// isEdgeFeasible - Return true if the control flow edge from the 'From'
+  /// basic block to the 'To' basic block is currently feasible...
+  bool isEdgeFeasible(BasicBlock *From, BasicBlock *To);
+  
 private:
   /// UpdateState - When the state for some instruction is potentially updated,
   /// this function notices and adds I to the worklist if needed.
@@ -162,10 +166,6 @@ private:
   /// getFeasibleSuccessors - Return a vector of booleans to indicate which
   /// successors are reachable from a given terminator instruction.
   void getFeasibleSuccessors(TerminatorInst &TI, SmallVectorImpl<bool> &Succs);
-  
-  /// isEdgeFeasible - Return true if the control flow edge from the 'From'
-  /// basic block to the 'To' basic block is currently feasible...
-  bool isEdgeFeasible(BasicBlock *From, BasicBlock *To);
   
   void visitInst(Instruction &I);
   void visitPHINode(PHINode &I);
