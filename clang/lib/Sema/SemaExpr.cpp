@@ -1603,7 +1603,7 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   UsualUnaryConversions(lex);
   UsualUnaryConversions(rex);
   
-  if (lex->getType()->isScalarType() || rex->getType()->isScalarType())
+  if (lex->getType()->isScalarType() && rex->getType()->isScalarType())
     return Context.IntTy;
   return InvalidOperands(loc, lex, rex);
 }

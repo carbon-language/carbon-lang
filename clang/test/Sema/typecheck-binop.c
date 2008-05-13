@@ -18,3 +18,6 @@ int sub4(void *P, void *Q) {
   return P-Q;      /* expected-warning{{GNU void* extension}} */
 }
 
+int logicaland1(int a) {
+  return a && (void)a; /* expected-error{{invalid operands}} */
+}
