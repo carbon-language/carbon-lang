@@ -545,35 +545,6 @@ swizzle:
 
 //===---------------------------------------------------------------------===//
 
-These functions should produce the same code:
-
-#include <emmintrin.h>
-
-typedef long long __m128i __attribute__ ((__vector_size__ (16)));
-
-int foo(__m128i* val) {
-  return __builtin_ia32_vec_ext_v4si(*val, 1);
-}
-int bar(__m128i* val) {
-  union vs {
-    __m128i *_v;
-    int* _s;
-  } v = {val};
-  return v._s[1];
-}
-
-We currently produce (with -m64):
-
-_foo:
-        pshufd $1, (%rdi), %xmm0
-        movd %xmm0, %eax
-        ret
-_bar:
-        movl 4(%rdi), %eax
-        ret
-
-//===---------------------------------------------------------------------===//
-
 We should materialize vector constants like "all ones" and "signbit" with 
 code like:
 

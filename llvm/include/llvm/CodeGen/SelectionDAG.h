@@ -607,6 +607,10 @@ public:
   /// isVerifiedDebugInfoDesc - Returns true if the specified SDOperand has
   /// been verified as a debug information descriptor.
   bool isVerifiedDebugInfoDesc(SDOperand Op) const;
+
+  /// getShuffleScalarElt - Returns the scalar element that will make up the ith
+  /// element of the result of the vector shuffle.
+  SDOperand getShuffleScalarElt(const SDNode *N, unsigned Idx);
   
 private:
   void RemoveNodeFromCSEMaps(SDNode *N);

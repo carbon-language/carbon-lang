@@ -4682,49 +4682,82 @@ SDOperand DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
 }
 
 SDOperand DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
+  // (vextract (v4f32 load $addr), c) -> (f32 load $addr+c*size)
+  // (vextract (v4f32 s2v (f32 load $addr)), c) -> (f32 load $addr+c*size)
+  // (vextract (v4f32 shuffle (load $addr), <1,u,u,u>), 0) -> (f32 load $addr)
+
+  // Perform only after legalization to ensure build_vector / vector_shuffle
+  // optimizations have already been done.
+  if (!AfterLegalize) return SDOperand();
+
   SDOperand InVec = N->getOperand(0);
   SDOperand EltNo = N->getOperand(1);
 
-  // (vextract (v4f32 s2v (f32 load $addr)), 0) -> (f32 load $addr)
-  // (vextract (v4i32 bc (v4f32 s2v (f32 load $addr))), 0) -> (i32 load $addr)
   if (isa<ConstantSDNode>(EltNo)) {
     unsigned Elt = cast<ConstantSDNode>(EltNo)->getValue();
     bool NewLoad = false;
-    if (Elt == 0) {
-      MVT::ValueType VT = InVec.getValueType();
-      MVT::ValueType EVT = MVT::getVectorElementType(VT);
-      MVT::ValueType LVT = EVT;
-      unsigned NumElts = MVT::getVectorNumElements(VT);
-      if (InVec.getOpcode() == ISD::BIT_CONVERT) {
-        MVT::ValueType BCVT = InVec.getOperand(0).getValueType();
-        if (!MVT::isVector(BCVT) ||
-            NumElts != MVT::getVectorNumElements(BCVT))
-          return SDOperand();
-        InVec = InVec.getOperand(0);
-        EVT = MVT::getVectorElementType(BCVT);
-        NewLoad = true;
-      }
-      if (InVec.getOpcode() == ISD::SCALAR_TO_VECTOR &&
-          InVec.getOperand(0).getValueType() == EVT &&
-          ISD::isNormalLoad(InVec.getOperand(0).Val) &&
-          InVec.getOperand(0).hasOneUse()) {
-        LoadSDNode *LN0 = cast<LoadSDNode>(InVec.getOperand(0));
-        unsigned Align = LN0->getAlignment();
-        if (NewLoad) {
-          // Check the resultant load doesn't need a higher alignment than the
-          // original load.
-          unsigned NewAlign = TLI.getTargetMachine().getTargetData()->
-            getABITypeAlignment(MVT::getTypeForValueType(LVT));
-          if (!TLI.isOperationLegal(ISD::LOAD, LVT) || NewAlign > Align)
-            return SDOperand();
-          Align = NewAlign;
-        }
+    MVT::ValueType VT = InVec.getValueType();
+    MVT::ValueType EVT = MVT::getVectorElementType(VT);
+    MVT::ValueType LVT = EVT;
+    if (InVec.getOpcode() == ISD::BIT_CONVERT) {
+      MVT::ValueType BCVT = InVec.getOperand(0).getValueType();
+      if (!MVT::isVector(BCVT)
+          || (MVT::getSizeInBits(EVT) >
+              MVT::getSizeInBits(MVT::getVectorElementType(BCVT))))
+        return SDOperand();
+      InVec = InVec.getOperand(0);
+      EVT = MVT::getVectorElementType(BCVT);
+      NewLoad = true;
+    }
 
-        return DAG.getLoad(LVT, LN0->getChain(), LN0->getBasePtr(),
-                           LN0->getSrcValue(), LN0->getSrcValueOffset(),
-                           LN0->isVolatile(), Align);
+    LoadSDNode *LN0 = NULL;
+    if (ISD::isNormalLoad(InVec.Val))
+      LN0 = cast<LoadSDNode>(InVec);
+    else if (InVec.getOpcode() == ISD::SCALAR_TO_VECTOR &&
+             InVec.getOperand(0).getValueType() == EVT &&
+             ISD::isNormalLoad(InVec.getOperand(0).Val)) {
+      LN0 = cast<LoadSDNode>(InVec.getOperand(0));
+    } else if (InVec.getOpcode() == ISD::VECTOR_SHUFFLE) {
+      // (vextract (vector_shuffle (load $addr), v2, <1, u, u, u>), 1)
+      // =>
+      // (load $addr+1*size)
+      unsigned Idx = cast<ConstantSDNode>(InVec.getOperand(2).
+                                          getOperand(Elt))->getValue();
+      unsigned NumElems = InVec.getOperand(2).getNumOperands();
+      InVec = (Idx < NumElems) ? InVec.getOperand(0) : InVec.getOperand(1);
+      if (InVec.getOpcode() == ISD::BIT_CONVERT)
+        InVec = InVec.getOperand(0);
+      if (ISD::isNormalLoad(InVec.Val)) {
+        LN0 = cast<LoadSDNode>(InVec);
+        Elt = (Idx < NumElems) ? Idx : Idx - NumElems;
       }
     }
+    if (!LN0 || !LN0->hasOneUse())
+      return SDOperand();
+
+    unsigned Align = LN0->getAlignment();
+    if (NewLoad) {
+      // Check the resultant load doesn't need a higher alignment than the
+      // original load.
+      unsigned NewAlign = TLI.getTargetMachine().getTargetData()->
+        getABITypeAlignment(MVT::getTypeForValueType(LVT));
+      if (!TLI.isOperationLegal(ISD::LOAD, LVT) || NewAlign > Align)
+        return SDOperand();
+      Align = NewAlign;
+    }
+
+    SDOperand NewPtr = LN0->getBasePtr();
+    if (Elt) {
+      unsigned PtrOff = MVT::getSizeInBits(LVT) * Elt / 8;
+      MVT::ValueType PtrType = NewPtr.getValueType();
+      if (TLI.isBigEndian())
+        PtrOff = MVT::getSizeInBits(VT) / 8 - PtrOff;
+      NewPtr = DAG.getNode(ISD::ADD, PtrType, NewPtr,
+                           DAG.getConstant(PtrOff, PtrType));
+    }
+    return DAG.getLoad(LVT, LN0->getChain(), NewPtr,
+                       LN0->getSrcValue(), LN0->getSrcValueOffset(),
+                       LN0->isVolatile(), Align);
   }
   return SDOperand();
 }

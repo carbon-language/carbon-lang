@@ -6182,26 +6182,6 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
   }
 }
 
-/// getShuffleScalarElt - Returns the scalar element that will make up the ith
-/// element of the result of the vector shuffle.
-static SDOperand getShuffleScalarElt(SDNode *N, unsigned i, SelectionDAG &DAG) {
-  MVT::ValueType VT = N->getValueType(0);
-  SDOperand PermMask = N->getOperand(2);
-  unsigned NumElems = PermMask.getNumOperands();
-  SDOperand V = (i < NumElems) ? N->getOperand(0) : N->getOperand(1);
-  i %= NumElems;
-  if (V.getOpcode() == ISD::SCALAR_TO_VECTOR) {
-    return (i == 0)
-     ? V.getOperand(0) : DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(VT));
-  } else if (V.getOpcode() == ISD::VECTOR_SHUFFLE) {
-    SDOperand Idx = PermMask.getOperand(i);
-    if (Idx.getOpcode() == ISD::UNDEF)
-      return DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(VT));
-    return getShuffleScalarElt(V.Val,cast<ConstantSDNode>(Idx)->getValue(),DAG);
-  }
-  return SDOperand();
-}
-
 /// isGAPlusOffset - Returns true (and the GlobalValue and the offset) if the
 /// node is a GlobalAddress + offset.
 bool X86TargetLowering::isGAPlusOffset(SDNode *N,
@@ -6240,7 +6220,7 @@ static bool EltsFromConsecutiveLoads(SDNode *N, SDOperand PermMask,
     }
 
     unsigned Index = cast<ConstantSDNode>(Idx)->getValue();
-    SDOperand Elt = getShuffleScalarElt(N, Index, DAG);
+    SDOperand Elt = DAG.getShuffleScalarElt(N, Index);
     if (!Elt.Val ||
         (Elt.getOpcode() != ISD::UNDEF && !ISD::isNON_EXTLoad(Elt.Val)))
       return false;

@@ -28,8 +28,7 @@ define <4 x float> @b(<4 x float>* %y, <4 x float> %z) nounwind {
   %s = insertelement <4 x float> %r, float %b, i32 3
   ret <4 x float> %s
 }
-define <2 x double> @c(<2 x double>* %y)
-{
+define <2 x double> @c(<2 x double>* %y) nounwind {
   %x = load <2 x double>* %y, align 8
   %a = extractelement <2 x double> %x, i32 0
   %c = extractelement <2 x double> %x, i32 1
@@ -37,8 +36,7 @@ define <2 x double> @c(<2 x double>* %y)
   %r = insertelement <2 x double> %p, double %a, i32 1
   ret <2 x double> %r
 }
-define <2 x double> @d(<2 x double>* %y, <2 x double> %z)
-{
+define <2 x double> @d(<2 x double>* %y, <2 x double> %z) nounwind {
   %x = load <2 x double>* %y, align 8
   %a = extractelement <2 x double> %x, i32 1
   %c = extractelement <2 x double> %z, i32 1
