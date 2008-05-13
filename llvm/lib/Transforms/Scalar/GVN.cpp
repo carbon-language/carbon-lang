@@ -441,6 +441,43 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
         return nextValueNumber++;
       }
       
+      Instruction* local_dep = MD->getDependency(C);
+      
+      if (local_dep == MemoryDependenceAnalysis::None) {
+        valueNumbering.insert(std::make_pair(V, nextValueNumber));
+        return nextValueNumber++;
+      } else if (local_dep != MemoryDependenceAnalysis::NonLocal) {
+        if (!isa<CallInst>(local_dep)) {
+          valueNumbering.insert(std::make_pair(V, nextValueNumber));
+          return nextValueNumber++;
+        }
+        
+        CallInst* local_cdep = cast<CallInst>(local_dep);
+        
+        if (local_cdep->getCalledFunction() != C->getCalledFunction() ||
+            local_cdep->getNumOperands() != C->getNumOperands()) {
+          valueNumbering.insert(std::make_pair(V, nextValueNumber));
+          return nextValueNumber++;
+        } else if (!C->getCalledFunction()) { 
+          valueNumbering.insert(std::make_pair(V, nextValueNumber));
+          return nextValueNumber++;
+        } else {
+          for (unsigned i = 1; i < C->getNumOperands(); ++i) {
+            uint32_t c_vn = lookup_or_add(C->getOperand(i));
+            uint32_t cd_vn = lookup_or_add(local_cdep->getOperand(i));
+            if (c_vn != cd_vn) {
+              valueNumbering.insert(std::make_pair(V, nextValueNumber));
+              return nextValueNumber++;
+            }
+          }
+        
+          uint32_t v = lookup_or_add(local_cdep);
+          valueNumbering.insert(std::make_pair(V, v));
+          return v;
+        }
+      }
+      
+      
       DenseMap<BasicBlock*, Value*> deps;
       MD->getNonLocalDependency(C, deps);
       CallInst* cdep = 0;
@@ -488,7 +525,7 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
           }
         }
         
-        uint32_t v = valueNumbering[cdep];
+        uint32_t v = lookup_or_add(cdep);
         valueNumbering.insert(std::make_pair(V, v));
         return v;
       }
