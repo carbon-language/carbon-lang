@@ -67,7 +67,7 @@ bool DominatorTree::runOnFunction(Function &F) {
 
 char DominanceFrontier::ID = 0;
 static RegisterPass<DominanceFrontier>
-G("domfrontier", "Dominance Frontier Construction", false, true);
+G("domfrontier", "Dominance Frontier Construction", true, true);
 
 // NewBB is split and now it has one successor. Update dominace frontier to
 // reflect this change.
