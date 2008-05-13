@@ -21,9 +21,8 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/SmallVector.h"
 #include <vector>
-
-class llvm::Constant;
 
 namespace clang {
   class IdentifierInfo;
@@ -722,12 +721,11 @@ public:
   
   /// getEncodedElementAccess - Encode the elements accessed into an llvm
   /// aggregate Constant of ConstantInt(s).
-  llvm::Constant *getEncodedElementAccess() const;
+  void getEncodedElementAccess(llvm::SmallVectorImpl<unsigned> &Elts) const;
   
   /// getAccessedFieldNo - Given an encoded value and a result number, return
   /// the input field number being accessed.
-  static unsigned getAccessedFieldNo(unsigned Idx,
-                                     const llvm::Constant *Elts);
+  static unsigned getAccessedFieldNo(unsigned Idx, const llvm::Constant *Elts);
   
   virtual SourceRange getSourceRange() const {
     return SourceRange(getBase()->getLocStart(), AccessorLoc);

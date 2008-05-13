@@ -456,33 +456,42 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   return LValue::MakeAddr(Builder.CreateGEP(Base, Idx, "arrayidx"));
 }
 
+static 
+llvm::Constant *GenerateConstantVector(llvm::SmallVector<unsigned, 4> &Elts) {
+  llvm::SmallVector<llvm::Constant *, 4> CElts;
+  
+  for (unsigned i = 0, e = Elts.size(); i != e; ++i)
+    CElts.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, Elts[i]));
+
+  return llvm::ConstantVector::get(&CElts[0], CElts.size());
+}
+
 LValue CodeGenFunction::
 EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
   // Emit the base vector as an l-value.
   LValue Base = EmitLValue(E->getBase());
-  
-  if (Base.isExtVectorElt()) {
-    llvm::Constant *BaseElts = Base.getExtVectorElts();
-    llvm::Constant *ExprElts = E->getEncodedElementAccess();
-    
-    llvm::SmallVector<llvm::Constant *, 8> Indices;
-    
-    for (unsigned i = 0, e = E->getNumElements(); i != e; ++i) {
-      unsigned Idx = ExtVectorElementExpr::getAccessedFieldNo(i, ExprElts);
-      
-      if (isa<llvm::ConstantAggregateZero>(BaseElts))
-        Indices.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
-      else
-        Indices.push_back(cast<llvm::ConstantInt>(BaseElts->getOperand(Idx)));
-    }
-    llvm::Constant *NewElts = llvm::ConstantVector::get(&Indices[0], Indices.size());
-    return LValue::MakeExtVectorElt(Base.getExtVectorAddr(), NewElts);
-  }
-  
-  assert(Base.isSimple() && "Can only subscript lvalue vectors here!");
 
-  return LValue::MakeExtVectorElt(Base.getAddress(),
-                                  E->getEncodedElementAccess());
+  // Encode the element access list into a vector of unsigned indices.
+  llvm::SmallVector<unsigned, 4> Indices;
+  E->getEncodedElementAccess(Indices);
+
+  if (Base.isSimple()) {
+    llvm::Constant *CV = GenerateConstantVector(Indices);
+    return LValue::MakeExtVectorElt(Base.getAddress(), CV);
+  }
+  assert(Base.isExtVectorElt() && "Can only subscript lvalue vec elts here!");
+
+  llvm::Constant *BaseElts = Base.getExtVectorElts();
+  llvm::SmallVector<llvm::Constant *, 4> CElts;
+
+  for (unsigned i = 0, e = Indices.size(); i != e; ++i) {
+    if (isa<llvm::ConstantAggregateZero>(BaseElts))
+      CElts.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
+    else
+      CElts.push_back(BaseElts->getOperand(Indices[i]));
+  }
+  llvm::Constant *CV = llvm::ConstantVector::get(&CElts[0], CElts.size());
+  return LValue::MakeExtVectorElt(Base.getExtVectorAddr(), CV);
 }
 
 LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
