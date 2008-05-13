@@ -84,7 +84,7 @@ static RegisterPass<LowerSwitch>
 X("lowerswitch", "Lower SwitchInst's to branches");
 
 // Publically exposed interface to pass...
-const PassInfo *llvm::LowerSwitchID = X.getPassInfo();
+const PassInfo *const llvm::LowerSwitchID = &X;
 // createLowerSwitchPass - Interface to this file...
 FunctionPass *llvm::createLowerSwitchPass() {
   return new LowerSwitch();

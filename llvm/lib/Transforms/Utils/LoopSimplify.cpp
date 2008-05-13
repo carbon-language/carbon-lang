@@ -102,7 +102,7 @@ static RegisterPass<LoopSimplify>
 X("loopsimplify", "Canonicalize natural loops", true);
 
 // Publically exposed interface to pass...
-const PassInfo *llvm::LoopSimplifyID = X.getPassInfo();
+const PassInfo *const llvm::LoopSimplifyID = &X;
 FunctionPass *llvm::createLoopSimplifyPass() { return new LoopSimplify(); }
 
 /// runOnFunction - Run down all loops in the CFG (recursively, but we could do

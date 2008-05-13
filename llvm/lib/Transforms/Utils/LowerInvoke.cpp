@@ -104,7 +104,7 @@ char LowerInvoke::ID = 0;
 static RegisterPass<LowerInvoke>
 X("lowerinvoke", "Lower invoke and unwind, for unwindless code generators");
 
-const PassInfo *llvm::LowerInvokePassID = X.getPassInfo();
+const PassInfo *const llvm::LowerInvokePassID = &X;
 
 // Public Interface To the LowerInvoke pass.
 FunctionPass *llvm::createLowerInvokePass(const TargetLowering *TLI) { 

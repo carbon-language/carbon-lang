@@ -81,7 +81,7 @@ char TwoAddressInstructionPass::ID = 0;
 static RegisterPass<TwoAddressInstructionPass>
 X("twoaddressinstruction", "Two-Address instruction pass");
 
-const PassInfo *llvm::TwoAddressInstructionPassID = X.getPassInfo();
+const PassInfo *const llvm::TwoAddressInstructionPassID = &X;
 
 /// Sink3AddrInstruction - A two-address instruction has been converted to a
 /// three-address instruction to avoid clobbering a register. Try to sink it

@@ -162,7 +162,7 @@ LoopPass *createLoopIndexSplitPass();
 //   ret int %Y
 //
 FunctionPass *createPromoteMemoryToRegisterPass();
-extern const PassInfo *PromoteMemoryToRegisterID;
+extern const PassInfo *const PromoteMemoryToRegisterID;
 
 //===----------------------------------------------------------------------===//
 //
@@ -171,7 +171,7 @@ extern const PassInfo *PromoteMemoryToRegisterID;
 // hacking easier.
 //
 FunctionPass *createDemoteRegisterToMemoryPass();
-extern const PassInfo *DemoteRegisterToMemoryID;
+extern const PassInfo *const DemoteRegisterToMemoryID;
 
 //===----------------------------------------------------------------------===//
 //
@@ -223,7 +223,7 @@ FunctionPass *createCFGSimplificationPass();
 // (set, immediate dominators, tree, and frontier) information.
 //
 FunctionPass *createBreakCriticalEdgesPass();
-extern const PassInfo *BreakCriticalEdgesID;
+extern const PassInfo *const BreakCriticalEdgesID;
 
 //===----------------------------------------------------------------------===//
 //
@@ -234,7 +234,7 @@ extern const PassInfo *BreakCriticalEdgesID;
 //   AU.addRequiredID(LoopSimplifyID);
 //
 FunctionPass *createLoopSimplifyPass();
-extern const PassInfo *LoopSimplifyID;
+extern const PassInfo *const LoopSimplifyID;
 
 //===----------------------------------------------------------------------===//
 //
@@ -244,7 +244,7 @@ extern const PassInfo *LoopSimplifyID;
 //   AU.addRequiredID(LowerAllocationsID);
 //
 Pass *createLowerAllocationsPass(bool LowerMallocArgToInteger = false);
-extern const PassInfo *LowerAllocationsID;
+extern const PassInfo *const LowerAllocationsID;
 
 //===----------------------------------------------------------------------===//
 //
@@ -259,7 +259,7 @@ FunctionPass *createTailCallEliminationPass();
 // chained binary branch instructions.
 //
 FunctionPass *createLowerSwitchPass();
-extern const PassInfo *LowerSwitchID;
+extern const PassInfo *const LowerSwitchID;
 
 //===----------------------------------------------------------------------===//
 //
@@ -272,7 +272,7 @@ extern const PassInfo *LowerSwitchID;
 // lowering pass.
 //
 FunctionPass *createLowerInvokePass(const TargetLowering *TLI = NULL);
-extern const PassInfo *LowerInvokePassID;
+extern const PassInfo *const LowerInvokePassID;
 
 //===----------------------------------------------------------------------===//
 //
@@ -287,7 +287,7 @@ FunctionPass *createBlockPlacementPass();
 // optimizations.
 //
 LoopPass *createLCSSAPass();
-extern const PassInfo *LCSSAID;
+extern const PassInfo *const LCSSAID;
 
 //===----------------------------------------------------------------------===//
 //

@@ -97,7 +97,7 @@ namespace {  // Anonymous namespace for class
 char PreVerifier::ID = 0;
 static RegisterPass<PreVerifier>
 PreVer("preverify", "Preliminary module verification");
-static const PassInfo *PreVerifyID = PreVer.getPassInfo();
+static const PassInfo *PreVerifyID = &PreVer;
 
 namespace {
   struct VISIBILITY_HIDDEN

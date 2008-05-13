@@ -73,7 +73,7 @@ static RegisterPass<LowerAllocations>
 X("lowerallocs", "Lower allocations from instructions to calls");
 
 // Publically exposed interface to pass...
-const PassInfo *llvm::LowerAllocationsID = X.getPassInfo();
+const PassInfo *const llvm::LowerAllocationsID = &X;
 // createLowerAllocationsPass - Interface to this file...
 Pass *llvm::createLowerAllocationsPass(bool LowerMallocArgToInteger) {
   return new LowerAllocations(LowerMallocArgToInteger);

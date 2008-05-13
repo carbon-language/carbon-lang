@@ -25,4 +25,4 @@ char MachineDominatorTree::ID = 0;
 static RegisterPass<MachineDominatorTree>
 E("machinedomtree", "MachineDominator Tree Construction", true);
 
-const PassInfo *llvm::MachineDominatorsID = E.getPassInfo();
+const PassInfo *const llvm::MachineDominatorsID = &E;

@@ -119,7 +119,7 @@ X("reg2mem", "Demote all values to stack slots");
 
 // createDemoteRegisterToMemory - Provide an entry point to create this pass.
 //
-const PassInfo *llvm::DemoteRegisterToMemoryID = X.getPassInfo();
+const PassInfo *const llvm::DemoteRegisterToMemoryID = &X;
 FunctionPass *llvm::createDemoteRegisterToMemoryPass() {
   return new RegToMem();
 }

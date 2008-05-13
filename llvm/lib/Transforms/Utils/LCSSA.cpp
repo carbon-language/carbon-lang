@@ -100,7 +100,7 @@ char LCSSA::ID = 0;
 static RegisterPass<LCSSA> X("lcssa", "Loop-Closed SSA Form Pass");
 
 LoopPass *llvm::createLCSSAPass() { return new LCSSA(); }
-const PassInfo *llvm::LCSSAID = X.getPassInfo();
+const PassInfo *const llvm::LCSSAID = &X;
 
 /// runOnFunction - Process all loops in the function, inner-most out.
 bool LCSSA::runOnLoop(Loop *L, LPPassManager &LPM) {

@@ -55,7 +55,7 @@ static RegisterPass<BreakCriticalEdges>
 X("break-crit-edges", "Break critical edges in CFG");
 
 // Publically exposed interface to pass...
-const PassInfo *llvm::BreakCriticalEdgesID = X.getPassInfo();
+const PassInfo *const llvm::BreakCriticalEdgesID = &X;
 FunctionPass *llvm::createBreakCriticalEdgesPass() {
   return new BreakCriticalEdges();
 }

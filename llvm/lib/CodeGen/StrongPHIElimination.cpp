@@ -147,7 +147,7 @@ static RegisterPass<StrongPHIElimination>
 X("strong-phi-node-elimination",
   "Eliminate PHI nodes for register allocation, intelligently");
 
-const PassInfo *llvm::StrongPHIEliminationID = X.getPassInfo();
+const PassInfo *const llvm::StrongPHIEliminationID = &X;
 
 /// computeDFS - Computes the DFS-in and DFS-out numbers of the dominator tree
 /// of the given MachineFunction.  These numbers are then used in other parts

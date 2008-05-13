@@ -79,7 +79,7 @@ char PNE::ID = 0;
 static RegisterPass<PNE>
 X("phi-node-elimination", "Eliminate PHI nodes for register allocation");
 
-const PassInfo *llvm::PHIEliminationID = X.getPassInfo();
+const PassInfo *const llvm::PHIEliminationID = &X;
 
 bool PNE::runOnMachineFunction(MachineFunction &Fn) {
   MRI = &Fn.getRegInfo();
