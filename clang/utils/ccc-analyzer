@@ -50,7 +50,7 @@ def remove_pch_extension(path):
           return path
       return path[:i]
 
-def analyze(clang, args,language,output,files,verbose,htmldir):
+def analyze(clang, args,language,output,files,verbose,htmldir,file):
     if language.find("c++") > 0:
       return
   
@@ -79,6 +79,7 @@ def analyze(clang, args,language,output,files,verbose,htmldir):
 
     if verbose == 2:
       print >> sys.stderr, '#SHELL (cd ' + os.getcwd() + ' && ' + ' '.join(command + print_args) + ')\n'
+      print >> sys.stderr, '#LINE (cd ' + os.getcwd() + ' && wc -l ' + file + ')\n'
 
 
     if RunAnalyzer and htmldir is not None:
@@ -267,7 +268,7 @@ def main(args):
             if language != 'unknown':
               analyze_args = [ '-x', language ] + analyze_args
             analyze_args = analyze_args + compile_opts
-            analyze(clang, analyze_args, language, output, files, verbose, htmldir)
+            analyze(clang, analyze_args, language, output, files, verbose, htmldir, file)
 #        compile(args)
 
 
