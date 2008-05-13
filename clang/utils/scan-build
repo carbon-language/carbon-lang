@@ -497,6 +497,7 @@ sub RunBuildCommand {
   elsif ($IgnoreErrors) {
     if ($Cmd eq "make" or $Cmd eq "gmake") {
       AddIfNotPresent($Args,"-k");
+      AddIfNotPresent($Args,"-i");
     }
     elsif ($Cmd eq "xcodebuild") {
       AddIfNotPresent($Args,"-PBXBuildsContinueAfterErrors=YES");
