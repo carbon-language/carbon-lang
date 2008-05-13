@@ -106,6 +106,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::ExtVectorElementExprClass:
     return EmitExtVectorElementExpr(cast<ExtVectorElementExpr>(E));
   case Expr::MemberExprClass: return EmitMemberExpr(cast<MemberExpr>(E));
+  case Expr::CompoundLiteralExprClass:
+    return EmitCompoundLiteralLValue(cast<CompoundLiteralExpr>(E));
   }
 }
 
@@ -561,6 +563,24 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
     CGM.getTypes().getBitFieldInfo(Field);
   return LValue::MakeBitfield(V, bitFieldInfo.Begin, bitFieldInfo.Size,
                               Field->getType()->isSignedIntegerType());
+}
+
+LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E) {
+  const llvm::Type *LTy = ConvertType(E->getType());
+  llvm::Value *DeclPtr = CreateTempAlloca(LTy, ".compoundliteral");
+
+  const Expr* InitExpr = E->getInitializer();
+  LValue Result = LValue::MakeAddr(DeclPtr);
+
+  if (E->getType()->isComplexType()) {
+    EmitComplexExprIntoAddr(InitExpr, DeclPtr, false);
+  } else if (hasAggregateLLVMType(E->getType())) {
+    EmitAnyExpr(InitExpr, DeclPtr, false);
+  } else {
+    EmitStoreThroughLValue(EmitAnyExpr(InitExpr), Result, E->getType());
+  }
+
+  return Result;
 }
 
 //===--------------------------------------------------------------------===//

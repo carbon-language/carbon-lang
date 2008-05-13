@@ -129,6 +129,7 @@ public:
   Value *VisitArraySubscriptExpr(ArraySubscriptExpr *E);
   Value *VisitMemberExpr(Expr *E)           { return EmitLoadOfLValue(E); }
   Value *VisitExtVectorElementExpr(Expr *E) { return EmitLoadOfLValue(E); }
+  Value *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) { return EmitLoadOfLValue(E); }
   Value *VisitStringLiteral(Expr *E)  { return EmitLValue(E).getAddress(); }
   Value *VisitPreDefinedExpr(Expr *E) { return EmitLValue(E).getAddress(); }
 
@@ -164,10 +165,6 @@ public:
     }
     
     return V;
-  }
-
-  Value *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
-    return Visit(E->getInitializer());
   }
   
   Value *VisitImplicitCastExpr(const ImplicitCastExpr *E);

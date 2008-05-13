@@ -69,6 +69,7 @@ namespace clang {
   class ObjCStringLiteral;
   class ObjCIvarRefExpr;
   class MemberExpr;
+  class CompoundLiteralExpr;
 
   class VarDecl;
   class EnumConstantDecl;
@@ -431,6 +432,7 @@ public:
   LValue EmitArraySubscriptExpr(const ArraySubscriptExpr *E);
   LValue EmitExtVectorElementExpr(const ExtVectorElementExpr *E);
   LValue EmitMemberExpr(const MemberExpr *E);
+  LValue EmitCompoundLiteralLValue(const CompoundLiteralExpr *E);
 
   LValue EmitLValueForField(llvm::Value* Base, FieldDecl* Field,
                             bool isUnion);
