@@ -787,5 +787,23 @@ _foo2:
 
 In sse4 mode, we could use insertps to make both better.
 
+Here's another testcase that could use insertps [mem]:
+
+#include <xmmintrin.h>
+extern float x2, x3;
+__m128 foo1 (float x1, float x4) {
+ return _mm_set_ps (x2, x1, x3, x4);
+}
+
+gcc mainline compiles it to:
+
+foo1:
+       insertps        $0x10, x2(%rip), %xmm0
+       insertps        $0x10, x3(%rip), %xmm1
+       movaps  %xmm1, %xmm2
+       movlhps %xmm0, %xmm2
+       movaps  %xmm2, %xmm0
+       ret
+
 //===---------------------------------------------------------------------===//
 
