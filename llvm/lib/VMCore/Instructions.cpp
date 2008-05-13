@@ -2734,14 +2734,12 @@ void SwitchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 GetResultInst::GetResultInst(Value *Aggregate, unsigned Index,
                              const std::string &Name,
                              Instruction *InsertBef)
-  : Instruction(cast<StructType>(Aggregate->getType())->getElementType(Index),
-                GetResult,
-                OperandTraits<GetResultInst>::op_begin(this),
-                OperandTraits<GetResultInst>::operands(this),
-                InsertBef) {
-  assert(isValidOperands(Aggregate, Index) && "Invalid GetResultInst operands!");
-  Op<0>().init(Aggregate, this);
-  Idx = Index;
+  : UnaryInstruction(cast<StructType>(Aggregate->getType())
+                       ->getElementType(Index),
+                     GetResult, Aggregate, InsertBef),
+    Idx(Index) {
+  assert(isValidOperands(Aggregate, Index)
+         && "Invalid GetResultInst operands!");
   setName(Name);
 }
 

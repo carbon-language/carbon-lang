@@ -85,8 +85,9 @@ public:
 //===----------------------------------------------------------------------===//
 
 class UnaryInstruction : public Instruction {
-  void *operator new(size_t, unsigned); // Do not implement
-  
+  void *operator new(size_t, unsigned);      // Do not implement
+  UnaryInstruction(const UnaryInstruction&); // Do not implement
+
 protected:
   UnaryInstruction(const Type *Ty, unsigned iType, Value *V, Instruction *IB = 0)
     : Instruction(Ty, iType, &Op<0>(), 1, IB) {
@@ -116,6 +117,7 @@ public:
            I->getOpcode() == Instruction::Free ||
            I->getOpcode() == Instruction::Load ||
            I->getOpcode() == Instruction::VAArg ||
+           I->getOpcode() == Instruction::GetResult ||
            (I->getOpcode() >= CastOpsBegin && I->getOpcode() < CastOpsEnd);
   }
   static inline bool classof(const Value *V) {

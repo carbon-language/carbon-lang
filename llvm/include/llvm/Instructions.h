@@ -2761,20 +2761,14 @@ public:
 /// GetResultInst - This instruction extracts individual result value from
 /// aggregate value, where aggregate value is returned by CallInst.
 ///
-class GetResultInst : public /*FIXME: Unary*/Instruction {
-  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
+class GetResultInst : public UnaryInstruction {
   unsigned Idx;
   GetResultInst(const GetResultInst &GRI) :
-    Instruction(GRI.getType(), Instruction::GetResult, &Op<0>(), 1) {
-    Op<0>().init(GRI.Op<0>(), this);
-    Idx = GRI.Idx;
+    UnaryInstruction(GRI.getType(), Instruction::GetResult, GRI.getOperand(0)),
+    Idx(GRI.Idx) {
   }
 
 public:
-  // allocate space for exactly one operand
-  void *operator new(size_t s) {
-    return User::operator new(s, 1);
-  }
   GetResultInst(Value *Aggr, unsigned index,
                 const std::string &Name = "",
                 Instruction *InsertBefore = 0);
@@ -2797,9 +2791,6 @@ public:
     return Idx;
   }
 
-  /// Provide fast operand accessors
-  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
-
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GetResultInst *) { return true; }
   static inline bool classof(const Instruction *I) {
@@ -2809,14 +2800,6 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 };
-
-// FIXME: these are redundant if GetResultInst < UnaryInstruction
-template <>
-struct OperandTraits<GetResultInst> : FixedNumOperandTraits<1> {
-};
-
-DEFINE_TRANSPARENT_OPERAND_ACCESSORS(GetResultInst, Value)
-
 
 } // End llvm namespace
 
