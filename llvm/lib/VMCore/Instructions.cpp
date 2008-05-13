@@ -1563,7 +1563,7 @@ const Value *BinaryOperator::getNotArgument(const Value *BinOp) {
 bool BinaryOperator::swapOperands() {
   if (!isCommutative())
     return true; // Can't commute operands
-  std::swap(Op<0>(), Op<1>());
+  Op<0>().swap(Op<1>());
   return false;
 }
 

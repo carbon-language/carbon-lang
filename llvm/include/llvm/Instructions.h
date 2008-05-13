@@ -760,7 +760,7 @@ public:
   /// @brief Swap operands and adjust predicate.
   void swapOperands() {
     SubclassData = getSwappedPredicate();
-    std::swap(Op<0>(), Op<1>());
+    Op<0>().swap(Op<1>());
   }
 
   virtual ICmpInst *clone() const;
@@ -879,7 +879,7 @@ public:
   /// @brief Swap operands and adjust predicate.
   void swapOperands() {
     SubclassData = getSwappedPredicate();
-    std::swap(Op<0>(), Op<1>());
+    Op<0>().swap(Op<1>());
   }
 
   virtual FCmpInst *clone() const;

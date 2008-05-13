@@ -67,18 +67,20 @@ inline T *transferTag(const T *From, const T *To) {
 //
 class Use {
 public:
+  /// init - specify Value and User
+  /// @deprecated in 2.4, will be removed soon
   inline void init(Value *V, User *U);
+  /// swap - provide a fast substitute to std::swap<Use>
+  /// that also works with less standard-compliant compilers
+  void swap(Use &RHS);
 
 private:
-  /// Allow std::swap some intimacy
-  template <typename U> friend void std::swap(U&, U&);
+  /// Copy ctor - do not implement
+  Use(const Use &U);
 
-  /// Copy ctor - Only for std::swap
-  Use(const Use &U) { init(U.get(), 0); }
-
-  /// Destructor - Only for zap() and std::swap
+  /// Destructor - Only for zap()
   inline ~Use() {
-    if (get()) removeFromList();
+    if (Val) removeFromList();
   }
 
   /// Default ctor - This leaves the Use completely uninitialized.  The only thing
@@ -107,7 +109,7 @@ public:
     return RHS;
   }
   const Use &operator=(const Use &RHS) {
-    set(RHS.get());
+    set(RHS.Val);
     return *this;
   }
 
