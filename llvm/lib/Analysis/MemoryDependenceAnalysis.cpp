@@ -129,7 +129,7 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
       
       // FreeInsts erase the entire structure
       pointerSize = ~0UL;
-    } else if (isa<CallInst>(QI)) {
+    } else if (CallSite::get(QI).getInstruction() != 0) {
       AliasAnalysis::ModRefBehavior result =
                    AA.getModRefBehavior(CallSite::get(QI));
       if (result != AliasAnalysis::DoesNotAccessMemory) {
