@@ -2809,8 +2809,8 @@ operand may be undef if performing a shuffle from only one vector.
 <h5>Overview:</h5>
 
 <p>
-The '<tt>extractvalue</tt>' instruction extracts a value
-from an aggregate value.
+The '<tt>extractvalue</tt>' instruction extracts the value of a struct field
+or array element from an aggregate value.
 </p>
 
 
@@ -2819,8 +2819,8 @@ from an aggregate value.
 <p>
 The first operand of an '<tt>extractvalue</tt>' instruction is a
 value of <a href="#t_struct">struct</a> or <a href="#t_array">array</a>
-type.  The operands are constant indicies to specify which value to extract
-in the same manner as indicies in a
+type.  The operands are constant indices to specify which value to extract
+in the same manner as indices in a
 '<tt><a href="#i_getelementptr">getelementptr</a></tt>' instruction.
 </p>
 
@@ -2856,7 +2856,7 @@ the index operands.
 
 <p>
 The '<tt>insertvalue</tt>' instruction inserts a value
-into a aggregate.
+into a struct field or array element in an aggregate.
 </p>
 
 
@@ -2866,19 +2866,19 @@ into a aggregate.
 The first operand of an '<tt>insertvalue</tt>' instruction is a
 value of <a href="#t_struct">struct</a> or <a href="#t_array">array</a> type.
 The second operand is a first-class value to insert.
-type of the first operand.  The following operands are constant indicies
+type of the first operand.  The following operands are constant indices
 indicating the position at which to insert the value in the same manner as
-indicies in a
+indices in a
 '<tt><a href="#i_getelementptr">getelementptr</a></tt>' instruction.
 The value to insert must have the same type as the value identified
-by the indicies.
+by the indices.
 
 <h5>Semantics:</h5>
 
 <p>
 The result is an aggregate of the same type as <tt>val</tt>.  Its
 value is that of <tt>val</tt> except that the value at the position
-specified by the indicies is that of <tt>elt</tt>.
+specified by the indices is that of <tt>elt</tt>.
 </p>
 
 <h5>Example:</h5>
