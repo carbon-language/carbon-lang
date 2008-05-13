@@ -66,7 +66,8 @@ namespace {
 
     virtual bool runOnSCC(const std::vector<CallGraphNode *> &SCC);
     static char ID; // Pass identification, replacement for typeid
-    ArgPromotion(unsigned maxElements = 3) : CallGraphSCCPass((intptr_t)&ID), maxElements(maxElements) {}
+    ArgPromotion(unsigned maxElements = 3) : CallGraphSCCPass((intptr_t)&ID),
+                                             maxElements(maxElements) {}
 
   private:
     bool PromoteArguments(CallGraphNode *CGN);
@@ -74,8 +75,8 @@ namespace {
     Function *DoPromotion(Function *F, 
                           SmallPtrSet<Argument*, 8> &ArgsToPromote,
                           SmallPtrSet<Argument*, 8> &ByValArgsToTransform);
-	/// The maximum number of elements to expand, or 0 for unlimited.
-	unsigned maxElements;
+  /// The maximum number of elements to expand, or 0 for unlimited.
+  unsigned maxElements;
   };
 }
 
@@ -290,7 +291,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
                << Arg->getName() << "' because it would require adding more "
                << "than " << maxElements << " arguments to the function.\n";
           // We limit aggregate promotion to only promoting up to a fixed number
-		  // of elements of the aggregate.
+          // of elements of the aggregate.
           return false;
         }
         GEPIndices.push_back(Operands);

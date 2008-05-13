@@ -327,8 +327,8 @@ bool DSE::handleEndBlock(BasicBlock& BB,
     
     // If we encounter a use of the pointer, it is no longer considered dead
     if (LoadInst* L = dyn_cast<LoadInst>(BBI)) {
-      // However, if this load is unused and not volatile, we can go ahead and remove it,
-      // and not have to worry about it making our pointer undead!
+      // However, if this load is unused and not volatile, we can go ahead and
+      // remove it, and not have to worry about it making our pointer undead!
       if (L->use_empty() && !L->isVolatile()) {
         MD.removeInstruction(L);
         
