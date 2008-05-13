@@ -54,7 +54,7 @@ CGDebugInfo::~CGDebugInfo()
 /// descriptor cast to an empty struct pointer.
 llvm::Value *CGDebugInfo::getCastValueFor(llvm::DebugInfoDesc *DD) {
   return llvm::ConstantExpr::getBitCast(SR->Serialize(DD), 
-					SR->getEmptyStructPtrType());
+                                        SR->getEmptyStructPtrType());
 }
 
 /// getOrCreateCompileUnit - Get the compile unit from the cache or create a new
@@ -121,16 +121,16 @@ CGDebugInfo::EmitStopPoint(llvm::Function *Fn, llvm::IRBuilder &Builder) {
   // Lazily construct llvm.dbg.stoppoint function.
   if (!StopPointFn)
     StopPointFn = llvm::Intrinsic::getDeclaration(&M->getModule(), 
-					llvm::Intrinsic::dbg_stoppoint);
+                                        llvm::Intrinsic::dbg_stoppoint);
 
   uint64_t CurLineNo = SM.getLogicalLineNumber(CurLoc);
   uint64_t ColumnNo = SM.getLogicalColumnNumber(CurLoc);
 
   // Invoke llvm.dbg.stoppoint
   Builder.CreateCall3(StopPointFn, 
-		       llvm::ConstantInt::get(llvm::Type::Int32Ty, CurLineNo),
-		       llvm::ConstantInt::get(llvm::Type::Int32Ty, ColumnNo),
-		       getCastValueFor(Unit), "");
+                      llvm::ConstantInt::get(llvm::Type::Int32Ty, CurLineNo),
+                      llvm::ConstantInt::get(llvm::Type::Int32Ty, ColumnNo),
+                      getCastValueFor(Unit), "");
 }
 
 /// EmitRegionStart- Constructs the debug code for entering a declarative
@@ -145,7 +145,7 @@ void CGDebugInfo::EmitRegionStart(llvm::Function *Fn, llvm::IRBuilder &Builder)
   // Lazily construct llvm.dbg.region.start function.
   if (!RegionStartFn)
     RegionStartFn = llvm::Intrinsic::getDeclaration(&M->getModule(), 
-				llvm::Intrinsic::dbg_region_start);
+                                llvm::Intrinsic::dbg_region_start);
 
   // Call llvm.dbg.func.start.
   Builder.CreateCall(RegionStartFn, getCastValueFor(Block), "");
@@ -158,7 +158,7 @@ void CGDebugInfo::EmitRegionEnd(llvm::Function *Fn, llvm::IRBuilder &Builder)
   // Lazily construct llvm.dbg.region.end function.
   if (!RegionEndFn)
     RegionEndFn =llvm::Intrinsic::getDeclaration(&M->getModule(), 
-				llvm::Intrinsic::dbg_region_end);
+                                llvm::Intrinsic::dbg_region_end);
 
   // Provide an region stop point.
   EmitStopPoint(Fn, Builder);
