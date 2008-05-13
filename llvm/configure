@@ -2375,6 +2375,7 @@ else
   ia64-*)                 llvm_cv_target_arch="IA64" ;;
   arm-*)                  llvm_cv_target_arch="ARM" ;;
   mips-*)                 llvm_cv_target_arch="Mips" ;;
+  pic16-*)                llvm_cv_target_arch="PIC16" ;;
   *)                      llvm_cv_target_arch="Unknown" ;;
 esac
 fi
@@ -4662,6 +4663,8 @@ else
  ;;
     Mips)    TARGET_HAS_JIT=0
  ;;
+    PIC16)   TARGET_HAS_JIT=0
+ ;;
     *)       TARGET_HAS_JIT=0
  ;;
   esac
@@ -4743,7 +4746,7 @@ else
 fi
 
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha IA64 ARM Mips CellSPU CBackend MSIL CppBackend" ;;
+  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha IA64 ARM Mips CellSPU CBackend MSIL CppBackend PIC16" ;;
   host-only)
     case "$llvm_cv_target_arch" in
       x86)     TARGETS_TO_BUILD="X86" ;;
@@ -4754,6 +4757,7 @@ case "$enableval" in
       IA64)    TARGETS_TO_BUILD="IA64" ;;
       ARM)     TARGETS_TO_BUILD="ARM" ;;
       Mips)    TARGETS_TO_BUILD="Mips" ;;
+      PIC16)   TARGETS_TO_BUILD="PIC16" ;;
       CellSPU|SPU) TARGETS_TO_BUILD="CellSPU" ;;
       *)       { { echo "$as_me:$LINENO: error: Can not set target to build" >&5
 echo "$as_me: error: Can not set target to build" >&2;}
@@ -4770,6 +4774,7 @@ echo "$as_me: error: Can not set target to build" >&2;}
         ia64)    TARGETS_TO_BUILD="IA64 $TARGETS_TO_BUILD" ;;
         arm)     TARGETS_TO_BUILD="ARM $TARGETS_TO_BUILD" ;;
         mips)    TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
+        pic16)   TARGETS_TO_BUILD="PIC16 $TARGETS_TO_BUILD" ;;
         spu)     TARGETS_TO_BUILD="CellSPU $TARGETS_TO_BUILD" ;;
         cbe)     TARGETS_TO_BUILD="CBackend $TARGETS_TO_BUILD" ;;
         msil)    TARGETS_TO_BUILD="MSIL $TARGETS_TO_BUILD" ;;
