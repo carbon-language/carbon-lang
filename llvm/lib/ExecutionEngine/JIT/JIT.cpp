@@ -52,9 +52,13 @@ using namespace llvm;
 extern void *__dso_handle __attribute__ ((__visibility__ ("hidden")));
 #endif
 
+namespace {
+
 static struct RegisterJIT {
   RegisterJIT() { JIT::Register(); }
 } JITRegistrator;
+
+}
 
 namespace llvm {
   void LinkInJIT() {

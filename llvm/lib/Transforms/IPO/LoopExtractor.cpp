@@ -52,21 +52,23 @@ namespace {
       AU.addRequired<LoopInfo>();
     }
   };
+}
 
-  char LoopExtractor::ID = 0;
-  RegisterPass<LoopExtractor>
-  X("loop-extract", "Extract loops into new functions");
+char LoopExtractor::ID = 0;
+static RegisterPass<LoopExtractor>
+X("loop-extract", "Extract loops into new functions");
 
+namespace {
   /// SingleLoopExtractor - For bugpoint.
   struct SingleLoopExtractor : public LoopExtractor {
     static char ID; // Pass identification, replacement for typeid
     SingleLoopExtractor() : LoopExtractor(1) {}
   };
-
-  char SingleLoopExtractor::ID = 0;
-  RegisterPass<SingleLoopExtractor>
-  Y("loop-extract-single", "Extract at most one loop into a new function");
 } // End anonymous namespace
+
+char SingleLoopExtractor::ID = 0;
+static RegisterPass<SingleLoopExtractor>
+Y("loop-extract-single", "Extract at most one loop into a new function");
 
 // createLoopExtractorPass - This pass extracts all natural loops from the
 // program into a function if it can.
@@ -146,14 +148,14 @@ FunctionPass *llvm::createSingleLoopExtractorPass() {
 }
 
 
-namespace {
-  // BlockFile - A file which contains a list of blocks that should not be
-  // extracted.
-  static cl::opt<std::string>
-  BlockFile("extract-blocks-file", cl::value_desc("filename"),
-            cl::desc("A file containing list of basic blocks to not extract"),
-            cl::Hidden);
+// BlockFile - A file which contains a list of blocks that should not be
+// extracted.
+static cl::opt<std::string>
+BlockFile("extract-blocks-file", cl::value_desc("filename"),
+          cl::desc("A file containing list of basic blocks to not extract"),
+          cl::Hidden);
 
+namespace {
   /// BlockExtractorPass - This pass is used by bugpoint to extract all blocks
   /// from the module into their own functions except for those specified by the
   /// BlocksToNotExtract list.
@@ -173,11 +175,11 @@ namespace {
 
     bool runOnModule(Module &M);
   };
-
-  char BlockExtractorPass::ID = 0;
-  RegisterPass<BlockExtractorPass>
-  XX("extract-blocks", "Extract Basic Blocks From Module (for bugpoint use)");
 }
+
+char BlockExtractorPass::ID = 0;
+static RegisterPass<BlockExtractorPass>
+XX("extract-blocks", "Extract Basic Blocks From Module (for bugpoint use)");
 
 // createBlockExtractorPass - This pass extracts all blocks (except those
 // specified in the argument list) from the functions in the module.

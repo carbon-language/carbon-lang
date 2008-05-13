@@ -94,10 +94,10 @@ namespace {
       return std::binary_search(LoopBlocks.begin(), LoopBlocks.end(), B);
     }
   };
-  
-  char LCSSA::ID = 0;
-  RegisterPass<LCSSA> X("lcssa", "Loop-Closed SSA Form Pass");
 }
+  
+char LCSSA::ID = 0;
+static RegisterPass<LCSSA> X("lcssa", "Loop-Closed SSA Form Pass");
 
 LoopPass *llvm::createLCSSAPass() { return new LCSSA(); }
 const PassInfo *llvm::LCSSAID = X.getPassInfo();

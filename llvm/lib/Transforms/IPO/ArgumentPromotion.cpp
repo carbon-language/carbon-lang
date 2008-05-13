@@ -77,11 +77,11 @@ namespace {
 	/// The maximum number of elements to expand, or 0 for unlimited.
 	unsigned maxElements;
   };
-
-  char ArgPromotion::ID = 0;
-  RegisterPass<ArgPromotion> X("argpromotion",
-                               "Promote 'by reference' arguments to scalars");
 }
+
+char ArgPromotion::ID = 0;
+static RegisterPass<ArgPromotion>
+X("argpromotion", "Promote 'by reference' arguments to scalars");
 
 Pass *llvm::createArgumentPromotionPass(unsigned maxElements) {
   return new ArgPromotion(maxElements);

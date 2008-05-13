@@ -22,9 +22,7 @@
 using namespace llvm;
 
 // Register the RegisterCoalescer interface, providing a nice name to refer to.
-namespace {
-  RegisterAnalysisGroup<RegisterCoalescer> Z("Register Coalescer");
-}
+static RegisterAnalysisGroup<RegisterCoalescer> Z("Register Coalescer");
 char RegisterCoalescer::ID = 0;
 
 // RegisterCoalescer destructor: DO NOT move this to the header file

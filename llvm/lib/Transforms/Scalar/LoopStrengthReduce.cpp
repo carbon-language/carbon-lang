@@ -194,9 +194,11 @@ private:
                                       Loop *L, bool isOnlyStride);
     void DeleteTriviallyDeadInstructions(SmallPtrSet<Instruction*,16> &Insts);
   };
-  char LoopStrengthReduce::ID = 0;
-  RegisterPass<LoopStrengthReduce> X("loop-reduce", "Loop Strength Reduction");
 }
+
+char LoopStrengthReduce::ID = 0;
+static RegisterPass<LoopStrengthReduce>
+X("loop-reduce", "Loop Strength Reduction");
 
 LoopPass *llvm::createLoopStrengthReducePass(const TargetLowering *TLI) {
   return new LoopStrengthReduce(TLI);

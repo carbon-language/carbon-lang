@@ -82,14 +82,15 @@ namespace {
     void getCallEqualNumberNodes(CallInst *CI,
                                  std::vector<Value*> &RetVals) const;
   };
-
-  char LoadVN::ID = 0;
-  // Register this pass...
-  RegisterPass<LoadVN> X("load-vn", "Load Value Numbering", false, true);
-
-  // Declare that we implement the ValueNumbering interface
-  RegisterAnalysisGroup<ValueNumbering> Y(X);
 }
+
+char LoadVN::ID = 0;
+// Register this pass...
+static RegisterPass<LoadVN>
+X("load-vn", "Load Value Numbering", false, true);
+
+// Declare that we implement the ValueNumbering interface
+static RegisterAnalysisGroup<ValueNumbering> Y(X);
 
 FunctionPass *llvm::createLoadValueNumberingPass() { return new LoadVN(); }
 

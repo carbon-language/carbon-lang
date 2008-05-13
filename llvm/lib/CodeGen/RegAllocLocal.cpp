@@ -37,12 +37,11 @@ using namespace llvm;
 STATISTIC(NumStores, "Number of stores added");
 STATISTIC(NumLoads , "Number of loads added");
 
+static RegisterRegAlloc
+  localRegAlloc("local", "  local register allocator",
+                createLocalRegisterAllocator);
+
 namespace {
-  static RegisterRegAlloc
-    localRegAlloc("local", "  local register allocator",
-                  createLocalRegisterAllocator);
-
-
   class VISIBILITY_HIDDEN RALocal : public MachineFunctionPass {
   public:
     static char ID;

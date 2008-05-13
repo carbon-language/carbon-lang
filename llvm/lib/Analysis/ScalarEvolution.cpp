@@ -95,16 +95,14 @@ STATISTIC(NumTripCountsNotComputed,
 STATISTIC(NumBruteForceTripCountsComputed,
           "Number of loops with trip counts computed by force");
 
-cl::opt<unsigned>
+static cl::opt<unsigned>
 MaxBruteForceIterations("scalar-evolution-max-iterations", cl::ReallyHidden,
                         cl::desc("Maximum number of iterations SCEV will "
                                  "symbolically execute a constant derived loop"),
                         cl::init(100));
 
-namespace {
-  RegisterPass<ScalarEvolution>
-  R("scalar-evolution", "Scalar Evolution Analysis", false, true);
-}
+static RegisterPass<ScalarEvolution>
+R("scalar-evolution", "Scalar Evolution Analysis", false, true);
 char ScalarEvolution::ID = 0;
 
 //===----------------------------------------------------------------------===//

@@ -1514,6 +1514,8 @@ void UndefValue::destroyConstant() {
 //---- ConstantExpr::get() implementations...
 //
 
+namespace {
+
 struct ExprMapKeyType {
   explicit ExprMapKeyType(unsigned opc, std::vector<Constant*> ops,
       unsigned short pred = 0) : opcode(opc), predicate(pred), operands(ops) { }
@@ -1536,6 +1538,8 @@ struct ExprMapKeyType {
     return !(*this == that);
   }
 };
+
+}
 
 namespace llvm {
   template<>

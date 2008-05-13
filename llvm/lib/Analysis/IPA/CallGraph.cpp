@@ -190,11 +190,12 @@ private:
   }
 };
 
-RegisterAnalysisGroup<CallGraph> X("Call Graph");
-RegisterPass<BasicCallGraph> Y("basiccg", "Basic CallGraph Construction", false, true);
-RegisterAnalysisGroup<CallGraph, true> Z(Y);
-
 } //End anonymous namespace
+
+static RegisterAnalysisGroup<CallGraph> X("Call Graph");
+static RegisterPass<BasicCallGraph>
+Y("basiccg", "Basic CallGraph Construction", false, true);
+static RegisterAnalysisGroup<CallGraph, true> Z(Y);
 
 char CallGraph::ID = 0;
 char BasicCallGraph::ID = 0;

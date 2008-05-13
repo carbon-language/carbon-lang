@@ -94,10 +94,11 @@ namespace {
 
     void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
   };
-
-  char IndVarSimplify::ID = 0;
-  RegisterPass<IndVarSimplify> X("indvars", "Canonicalize Induction Variables");
 }
+
+char IndVarSimplify::ID = 0;
+static RegisterPass<IndVarSimplify>
+X("indvars", "Canonicalize Induction Variables");
 
 LoopPass *llvm::createIndVarSimplifyPass() {
   return new IndVarSimplify();

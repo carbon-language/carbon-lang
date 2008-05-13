@@ -97,9 +97,13 @@ namespace {
 
     void RemoveDeadArgumentsFromFunction(Function *F);
   };
-  char DAE::ID = 0;
-  RegisterPass<DAE> X("deadargelim", "Dead Argument Elimination");
+}
 
+char DAE::ID = 0;
+static RegisterPass<DAE>
+X("deadargelim", "Dead Argument Elimination");
+
+namespace {
   /// DAH - DeadArgumentHacking pass - Same as dead argument elimination, but
   /// deletes arguments to functions which are external.  This is only for use
   /// by bugpoint.
@@ -107,10 +111,11 @@ namespace {
     static char ID;
     virtual bool ShouldHackArguments() const { return true; }
   };
-  char DAH::ID = 0;
-  RegisterPass<DAH> Y("deadarghaX0r",
-                      "Dead Argument Hacking (BUGPOINT USE ONLY; DO NOT USE)");
 }
+
+char DAH::ID = 0;
+static RegisterPass<DAH>
+Y("deadarghaX0r", "Dead Argument Hacking (BUGPOINT USE ONLY; DO NOT USE)");
 
 /// createDeadArgEliminationPass - This pass removes arguments from functions
 /// which are not used by the body of the function.

@@ -70,6 +70,8 @@ void Statistic::RegisterStatistic() {
   Initialized = true;
 }
 
+namespace {
+
 struct NameCompare {
   bool operator()(const Statistic *LHS, const Statistic *RHS) const {
     int Cmp = std::strcmp(LHS->getName(), RHS->getName());
@@ -79,6 +81,8 @@ struct NameCompare {
     return std::strcmp(LHS->getDesc(), RHS->getDesc()) < 0;
   }
 };
+
+}
 
 // Print information when destroyed, iff command line option is specified.
 StatisticInfo::~StatisticInfo() {

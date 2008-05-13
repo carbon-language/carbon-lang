@@ -73,11 +73,11 @@ namespace {
     // Defs of PHI sources which are implicit_def.
     SmallPtrSet<MachineInstr*, 4> ImpDefs;
   };
-
-  char PNE::ID = 0;
-  RegisterPass<PNE> X("phi-node-elimination",
-                      "Eliminate PHI nodes for register allocation");
 }
+
+char PNE::ID = 0;
+static RegisterPass<PNE>
+X("phi-node-elimination", "Eliminate PHI nodes for register allocation");
 
 const PassInfo *llvm::PHIEliminationID = X.getPassInfo();
 

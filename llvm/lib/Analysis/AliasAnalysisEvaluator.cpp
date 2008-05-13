@@ -34,19 +34,18 @@
 #include <sstream>
 using namespace llvm;
 
+static cl::opt<bool> PrintAll("print-all-alias-modref-info", cl::ReallyHidden);
+
+static cl::opt<bool> PrintNoAlias("print-no-aliases", cl::ReallyHidden);
+static cl::opt<bool> PrintMayAlias("print-may-aliases", cl::ReallyHidden);
+static cl::opt<bool> PrintMustAlias("print-must-aliases", cl::ReallyHidden);
+
+static cl::opt<bool> PrintNoModRef("print-no-modref", cl::ReallyHidden);
+static cl::opt<bool> PrintMod("print-mod", cl::ReallyHidden);
+static cl::opt<bool> PrintRef("print-ref", cl::ReallyHidden);
+static cl::opt<bool> PrintModRef("print-modref", cl::ReallyHidden);
+
 namespace {
-  static cl::opt<bool>
-  PrintAll("print-all-alias-modref-info", cl::ReallyHidden);
-
-  static cl::opt<bool> PrintNoAlias("print-no-aliases", cl::ReallyHidden);
-  static cl::opt<bool> PrintMayAlias("print-may-aliases", cl::ReallyHidden);
-  static cl::opt<bool> PrintMustAlias("print-must-aliases", cl::ReallyHidden);
-
-  static cl::opt<bool> PrintNoModRef("print-no-modref", cl::ReallyHidden);
-  static cl::opt<bool> PrintMod("print-mod", cl::ReallyHidden);
-  static cl::opt<bool> PrintRef("print-ref", cl::ReallyHidden);
-  static cl::opt<bool> PrintModRef("print-modref", cl::ReallyHidden);
-
   class VISIBILITY_HIDDEN AAEval : public FunctionPass {
     unsigned NoAlias, MayAlias, MustAlias;
     unsigned NoModRef, Mod, Ref, ModRef;
@@ -74,11 +73,11 @@ namespace {
     bool runOnFunction(Function &F);
     bool doFinalization(Module &M);
   };
-
-  char AAEval::ID = 0;
-  static RegisterPass<AAEval>
-  X("aa-eval", "Exhaustive Alias Analysis Precision Evaluator", false, true);
 }
+
+char AAEval::ID = 0;
+static RegisterPass<AAEval>
+X("aa-eval", "Exhaustive Alias Analysis Precision Evaluator", false, true);
 
 FunctionPass *llvm::createAAEvalPass() { return new AAEval(); }
 

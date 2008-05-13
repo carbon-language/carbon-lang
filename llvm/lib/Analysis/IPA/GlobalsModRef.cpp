@@ -146,13 +146,12 @@ namespace {
                               GlobalValue *OkayStoreDest = 0);
     bool AnalyzeIndirectGlobalMemory(GlobalValue *GV);
   };
-
-  char GlobalsModRef::ID = 0;
-  RegisterPass<GlobalsModRef> X("globalsmodref-aa",
-                                "Simple mod/ref analysis for globals", false,
-                                true);
-  RegisterAnalysisGroup<AliasAnalysis> Y(X);
 }
+
+char GlobalsModRef::ID = 0;
+static RegisterPass<GlobalsModRef>
+X("globalsmodref-aa", "Simple mod/ref analysis for globals", false, true);
+static RegisterAnalysisGroup<AliasAnalysis> Y(X);
 
 Pass *llvm::createGlobalsModRefPass() { return new GlobalsModRef(); }
 

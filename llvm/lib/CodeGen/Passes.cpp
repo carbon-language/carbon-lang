@@ -30,14 +30,11 @@ MachinePassRegistry RegisterRegAlloc::Registry;
 /// RegAlloc command line options.
 ///
 //===---------------------------------------------------------------------===//
-namespace {
-  static
-  cl::opt<RegisterRegAlloc::FunctionPassCtor, false,
-          RegisterPassParser<RegisterRegAlloc> >
-  RegAlloc("regalloc",
-           cl::init(&createLinearScanRegisterAllocator),
-           cl::desc("Register allocator to use: (default = linearscan)")); 
-}
+static cl::opt<RegisterRegAlloc::FunctionPassCtor, false,
+               RegisterPassParser<RegisterRegAlloc> >
+RegAlloc("regalloc",
+         cl::init(&createLinearScanRegisterAllocator),
+         cl::desc("Register allocator to use: (default = linearscan)")); 
 
 
 //===---------------------------------------------------------------------===//

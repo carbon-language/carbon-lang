@@ -58,11 +58,11 @@ namespace {
     void updateCallSites(Function *F, Function *NF);
     bool nestedStructType(const StructType *STy);
   };
-
-  char SRETPromotion::ID = 0;
-  RegisterPass<SRETPromotion> X("sretpromotion",
-                               "Promote sret arguments to multiple ret values");
 }
+
+char SRETPromotion::ID = 0;
+static RegisterPass<SRETPromotion>
+X("sretpromotion", "Promote sret arguments to multiple ret values");
 
 Pass *llvm::createStructRetPromotionPass() {
   return new SRETPromotion();

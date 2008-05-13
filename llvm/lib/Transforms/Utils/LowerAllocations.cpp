@@ -66,11 +66,11 @@ namespace {
     ///
     bool runOnBasicBlock(BasicBlock &BB);
   };
-
-  char LowerAllocations::ID = 0;
-  RegisterPass<LowerAllocations>
-  X("lowerallocs", "Lower allocations from instructions to calls");
 }
+
+char LowerAllocations::ID = 0;
+static RegisterPass<LowerAllocations>
+X("lowerallocs", "Lower allocations from instructions to calls");
 
 // Publically exposed interface to pass...
 const PassInfo *llvm::LowerAllocationsID = X.getPassInfo();

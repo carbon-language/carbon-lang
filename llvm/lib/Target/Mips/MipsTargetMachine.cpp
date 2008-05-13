@@ -19,10 +19,8 @@
 #include "llvm/Target/TargetMachineRegistry.h"
 using namespace llvm;
 
-namespace {
-  // Register the target.
-  RegisterTarget<MipsTargetMachine> X("mips", "  Mips");
-}
+// Register the target.
+static RegisterTarget<MipsTargetMachine> X("mips", "  Mips");
 
 const TargetAsmInfo *MipsTargetMachine::
 createTargetAsmInfo() const 

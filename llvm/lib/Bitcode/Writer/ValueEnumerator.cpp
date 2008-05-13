@@ -114,19 +114,21 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
 }
 
 // Optimize constant ordering.
-struct CstSortPredicate {
-  ValueEnumerator &VE;
-  CstSortPredicate(ValueEnumerator &ve) : VE(ve) {}
-  bool operator()(const std::pair<const Value*, unsigned> &LHS,
-                  const std::pair<const Value*, unsigned> &RHS) {
-    // Sort by plane.
-    if (LHS.first->getType() != RHS.first->getType())
-      return VE.getTypeID(LHS.first->getType()) < 
-             VE.getTypeID(RHS.first->getType());
-    // Then by frequency.
-    return LHS.second > RHS.second;
-  }
-};
+namespace {
+  struct CstSortPredicate {
+    ValueEnumerator &VE;
+    explicit CstSortPredicate(ValueEnumerator &ve) : VE(ve) {}
+    bool operator()(const std::pair<const Value*, unsigned> &LHS,
+                    const std::pair<const Value*, unsigned> &RHS) {
+      // Sort by plane.
+      if (LHS.first->getType() != RHS.first->getType())
+        return VE.getTypeID(LHS.first->getType()) < 
+               VE.getTypeID(RHS.first->getType());
+      // Then by frequency.
+      return LHS.second > RHS.second;
+    }
+  };
+}
 
 /// OptimizeConstants - Reorder constant pool for denser encoding.
 void ValueEnumerator::OptimizeConstants(unsigned CstStart, unsigned CstEnd) {

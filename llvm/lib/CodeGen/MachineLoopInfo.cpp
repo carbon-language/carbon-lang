@@ -23,10 +23,8 @@ TEMPLATE_INSTANTIATION(class LoopBase<MachineBasicBlock>);
 TEMPLATE_INSTANTIATION(class LoopInfoBase<MachineBasicBlock>);
 
 char MachineLoopInfo::ID = 0;
-namespace {
-  RegisterPass<MachineLoopInfo>
-  X("machine-loops", "Machine Natural Loop Construction", true);
-}
+static RegisterPass<MachineLoopInfo>
+X("machine-loops", "Machine Natural Loop Construction", true);
 
 const PassInfo *llvm::MachineLoopInfoID = X.getPassInfo();
 

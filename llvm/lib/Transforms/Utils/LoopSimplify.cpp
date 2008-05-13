@@ -95,11 +95,11 @@ namespace {
                                   SmallVectorImpl<BasicBlock*> &SplitPreds,
                                   Loop *L);
   };
-
-  char LoopSimplify::ID = 0;
-  RegisterPass<LoopSimplify>
-  X("loopsimplify", "Canonicalize natural loops", true);
 }
+
+char LoopSimplify::ID = 0;
+static RegisterPass<LoopSimplify>
+X("loopsimplify", "Canonicalize natural loops", true);
 
 // Publically exposed interface to pass...
 const PassInfo *llvm::LoopSimplifyID = X.getPassInfo();

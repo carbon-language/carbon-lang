@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 //
 // InstructionCombining - Combine instructions to form fewer, simple
-// instructions.  This pass does not modify the CFG This pass is where algebraic
-// simplification happens.
+// instructions.  This pass does not modify the CFG.  This pass is where
+// algebraic simplification happens.
 //
 // This pass combines things like:
 //    %Y = add i32 %X, 1
@@ -384,10 +384,11 @@ namespace {
     unsigned GetOrEnforceKnownAlignment(Value *V,
                                         unsigned PrefAlign = 0);
   };
-
-  char InstCombiner::ID = 0;
-  RegisterPass<InstCombiner> X("instcombine", "Combine redundant instructions");
 }
+
+char InstCombiner::ID = 0;
+static RegisterPass<InstCombiner>
+X("instcombine", "Combine redundant instructions");
 
 // getComplexity:  Assign a complexity or rank value to LLVM Values...
 //   0 -> undef, 1 -> Const, 2 -> Other, 3 -> Arg, 3 -> Unary, 4 -> OtherInst
@@ -2151,6 +2152,7 @@ Instruction *AssociativeOpt(BinaryOperator &Root, const Functor &F) {
   return 0;
 }
 
+namespace {
 
 // AddRHS - Implements: X + X --> X << 1
 struct AddRHS {
@@ -2177,6 +2179,8 @@ struct AddMaskingAnd {
     return BinaryOperator::createOr(Add.getOperand(0), Add.getOperand(1));
   }
 };
+
+}
 
 static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
                                              InstCombiner *IC) {
@@ -4635,6 +4639,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   return Changed ? &I : 0;
 }
 
+namespace {
+
 // XorSelf - Implements: X ^ X --> 0
 struct XorSelf {
   Value *RHS;
@@ -4645,6 +4651,7 @@ struct XorSelf {
   }
 };
 
+}
 
 Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);

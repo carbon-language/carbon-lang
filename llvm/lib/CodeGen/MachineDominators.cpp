@@ -22,9 +22,7 @@ TEMPLATE_INSTANTIATION(class DominatorTreeBase<MachineBasicBlock>);
 
 char MachineDominatorTree::ID = 0;
 
-namespace {
-  RegisterPass<MachineDominatorTree>
-  E("machinedomtree", "MachineDominator Tree Construction", true);
-}
+static RegisterPass<MachineDominatorTree>
+E("machinedomtree", "MachineDominator Tree Construction", true);
 
 const PassInfo *llvm::MachineDominatorsID = E.getPassInfo();

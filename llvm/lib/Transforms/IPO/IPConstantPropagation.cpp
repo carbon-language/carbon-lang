@@ -42,9 +42,11 @@ namespace {
     bool PropagateConstantsIntoArguments(Function &F);
     bool PropagateConstantReturn(Function &F);
   };
-  char IPCP::ID = 0;
-  RegisterPass<IPCP> X("ipconstprop", "Interprocedural constant propagation");
 }
+
+char IPCP::ID = 0;
+static RegisterPass<IPCP>
+X("ipconstprop", "Interprocedural constant propagation");
 
 ModulePass *llvm::createIPConstantPropagationPass() { return new IPCP(); }
 

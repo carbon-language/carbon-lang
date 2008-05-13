@@ -483,6 +483,7 @@ static void EraseDeadInstructions(Value *V) {
   }
 }
 
+namespace {
 
 /// ExtAddrMode - This is an extended version of TargetLowering::AddrMode which
 /// holds actual Value*'s for register values.
@@ -515,6 +516,8 @@ static std::ostream &operator<<(std::ostream &OS, const ExtAddrMode &AM) {
 
 void ExtAddrMode::dump() const {
   cerr << *this << "\n";
+}
+
 }
 
 static bool TryMatchingScaledValue(Value *ScaleReg, int64_t Scale,

@@ -43,9 +43,10 @@ namespace {
       AU.addRequired<FindUsedTypes>();
     }
   };
-  char DTE::ID = 0;
-  RegisterPass<DTE> X("deadtypeelim", "Dead Type Elimination");
 }
+
+char DTE::ID = 0;
+static RegisterPass<DTE> X("deadtypeelim", "Dead Type Elimination");
 
 ModulePass *llvm::createDeadTypeEliminationPass() {
   return new DTE();

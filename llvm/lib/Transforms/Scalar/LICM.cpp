@@ -58,11 +58,11 @@ STATISTIC(NumMovedLoads, "Number of load insts hoisted or sunk");
 STATISTIC(NumMovedCalls, "Number of call insts hoisted or sunk");
 STATISTIC(NumPromoted  , "Number of memory locations promoted to registers");
 
-namespace {
-  static cl::opt<bool>
-  DisablePromotion("disable-licm-promotion", cl::Hidden,
-                   cl::desc("Disable memory promotion in LICM pass"));
+static cl::opt<bool>
+DisablePromotion("disable-licm-promotion", cl::Hidden,
+                 cl::desc("Disable memory promotion in LICM pass"));
 
+namespace {
   struct VISIBILITY_HIDDEN LICM : public LoopPass {
     static char ID; // Pass identification, replacement for typeid
     LICM() : LoopPass((intptr_t)&ID) {}
@@ -216,10 +216,10 @@ namespace {
                    std::vector<std::pair<AllocaInst*, Value*> > &PromotedValues,
                                     std::map<Value*, AllocaInst*> &Val2AlMap);
   };
-
-  char LICM::ID = 0;
-  RegisterPass<LICM> X("licm", "Loop Invariant Code Motion");
 }
+
+char LICM::ID = 0;
+static RegisterPass<LICM> X("licm", "Loop Invariant Code Motion");
 
 LoopPass *llvm::createLICMPass() { return new LICM(); }
 

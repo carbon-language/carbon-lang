@@ -105,11 +105,13 @@ namespace {
       AU.setPreservesAll();
     }
   };
+}
 
-  char CFGViewer::ID = 0;
-  RegisterPass<CFGViewer> V0("view-cfg",
-                             "View CFG of function", false, true);
+char CFGViewer::ID = 0;
+static RegisterPass<CFGViewer>
+V0("view-cfg", "View CFG of function", false, true);
 
+namespace {
   struct VISIBILITY_HIDDEN CFGOnlyViewer : public FunctionPass {
     static char ID; // Pass identifcation, replacement for typeid
     CFGOnlyViewer() : FunctionPass((intptr_t)&ID) {}
@@ -127,11 +129,14 @@ namespace {
       AU.setPreservesAll();
     }
   };
+}
 
-  char CFGOnlyViewer::ID = 0;
-  RegisterPass<CFGOnlyViewer> V1("view-cfg-only",
-                                 "View CFG of function (with no function bodies)", false, true);
+char CFGOnlyViewer::ID = 0;
+static RegisterPass<CFGOnlyViewer>
+V1("view-cfg-only",
+   "View CFG of function (with no function bodies)", false, true);
 
+namespace {
   struct VISIBILITY_HIDDEN CFGPrinter : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
     CFGPrinter() : FunctionPass((intptr_t)&ID) {}
@@ -156,11 +161,13 @@ namespace {
       AU.setPreservesAll();
     }
   };
+}
 
-  char CFGPrinter::ID = 0;
-  RegisterPass<CFGPrinter> P1("print-cfg",
-                              "Print CFG of function to 'dot' file", false, true);
+char CFGPrinter::ID = 0;
+static RegisterPass<CFGPrinter>
+P1("print-cfg", "Print CFG of function to 'dot' file", false, true);
 
+namespace {
   struct VISIBILITY_HIDDEN CFGOnlyPrinter : public CFGPrinter {
     static char ID; // Pass identification, replacement for typeid
     CFGOnlyPrinter() : CFGPrinter((intptr_t)&ID) {}
@@ -177,12 +184,12 @@ namespace {
       AU.setPreservesAll();
     }
   };
-
-  char CFGOnlyPrinter::ID = 0;
-  RegisterPass<CFGOnlyPrinter>
-  P2("print-cfg-only",
-     "Print CFG of function to 'dot' file (with no function bodies)", false, true);
 }
+
+char CFGOnlyPrinter::ID = 0;
+static RegisterPass<CFGOnlyPrinter>
+P2("print-cfg-only",
+   "Print CFG of function to 'dot' file (with no function bodies)", false, true);
 
 /// viewCFG - This function is meant for use from the debugger.  You can just
 /// say 'call F->viewCFG()' and a ghostview window should pop up from the

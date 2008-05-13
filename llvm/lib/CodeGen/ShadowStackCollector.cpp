@@ -66,11 +66,14 @@ namespace {
     static GetElementPtrInst *CreateGEP(IRBuilder &B, Value *BasePtr,
                                         int Idx1, int Idx2, const char *Name);
   };
+
+}
   
-  CollectorRegistry::Add<ShadowStackCollector>
-  Y("shadow-stack",
-    "Very portable collector for uncooperative code generators");
+static CollectorRegistry::Add<ShadowStackCollector>
+Y("shadow-stack",
+  "Very portable collector for uncooperative code generators");
   
+namespace {
   /// EscapeEnumerator - This is a little algorithm to find all escape points
   /// from a function so that "finally"-style code can be inserted. In addition
   /// to finding the existing return and unwind instructions, it also (if

@@ -52,10 +52,11 @@ namespace {
       AU.addRequired<ValueNumbering>();
     }
   };
-
-  char GCSE::ID = 0;
-  RegisterPass<GCSE> X("gcse", "Global Common Subexpression Elimination");
 }
+
+char GCSE::ID = 0;
+static RegisterPass<GCSE>
+X("gcse", "Global Common Subexpression Elimination");
 
 // createGCSEPass - The public interface to this file...
 FunctionPass *llvm::createGCSEPass() { return new GCSE(); }

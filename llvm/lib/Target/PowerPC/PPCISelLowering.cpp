@@ -1920,6 +1920,8 @@ static SDNode *isBLACompatibleAddress(SDOperand Op, SelectionDAG &DAG) {
                          DAG.getTargetLoweringInfo().getPointerTy()).Val;
 }
 
+namespace {
+
 struct TailCallArgumentInfo {
   SDOperand Arg;
   SDOperand FrameIdxOp;
@@ -1927,6 +1929,8 @@ struct TailCallArgumentInfo {
 
   TailCallArgumentInfo() : FrameIdx(0) {}
 };
+
+}
 
 /// StoreTailCallArgumentsToStackSlot - Stores arguments to their stack slot.
 static void

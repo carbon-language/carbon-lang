@@ -45,9 +45,10 @@ namespace {
 
     virtual bool runOnFunction(Function &F);
   };
-  char CFGSimplifyPass::ID = 0;
-  RegisterPass<CFGSimplifyPass> X("simplifycfg", "Simplify the CFG");
 }
+
+char CFGSimplifyPass::ID = 0;
+static RegisterPass<CFGSimplifyPass> X("simplifycfg", "Simplify the CFG");
 
 // Public interface to the CFGSimplification pass
 FunctionPass *llvm::createCFGSimplificationPass() {

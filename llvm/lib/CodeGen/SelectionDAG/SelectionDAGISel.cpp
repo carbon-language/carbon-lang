@@ -74,18 +74,16 @@ MachinePassRegistry RegisterScheduler::Registry;
 /// ISHeuristic command line option for instruction schedulers.
 ///
 //===---------------------------------------------------------------------===//
-namespace {
-  static cl::opt<RegisterScheduler::FunctionPassCtor, false,
-                 RegisterPassParser<RegisterScheduler> >
-  ISHeuristic("pre-RA-sched",
-              cl::init(&createDefaultScheduler),
-              cl::desc("Instruction schedulers available (before register"
-                       " allocation):"));
+static cl::opt<RegisterScheduler::FunctionPassCtor, false,
+               RegisterPassParser<RegisterScheduler> >
+ISHeuristic("pre-RA-sched",
+            cl::init(&createDefaultScheduler),
+            cl::desc("Instruction schedulers available (before register"
+                     " allocation):"));
 
-  static RegisterScheduler
-  defaultListDAGScheduler("default", "  Best scheduler for the target",
-                          createDefaultScheduler);
-} // namespace
+static RegisterScheduler
+defaultListDAGScheduler("default", "  Best scheduler for the target",
+                        createDefaultScheduler);
 
 namespace { struct SDISelAsmOperandInfo; }
 

@@ -46,7 +46,7 @@ namespace {
 }
 
 
-RegisterTarget<MSILTarget> X("msil", "  MSIL backend");
+static RegisterTarget<MSILTarget> X("msil", "  MSIL backend");
 
 bool MSILModule::runOnModule(Module &M) {
   ModulePtr = &M;

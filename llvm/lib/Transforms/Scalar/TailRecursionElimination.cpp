@@ -80,9 +80,10 @@ namespace {
     bool CanMoveAboveCall(Instruction *I, CallInst *CI);
     Value *CanTransformAccumulatorRecursion(Instruction *I, CallInst *CI);
   };
-  char TailCallElim::ID = 0;
-  RegisterPass<TailCallElim> X("tailcallelim", "Tail Call Elimination");
 }
+
+char TailCallElim::ID = 0;
+static RegisterPass<TailCallElim> X("tailcallelim", "Tail Call Elimination");
 
 // Public interface to the TailCallElimination pass
 FunctionPass *llvm::createTailCallEliminationPass() {

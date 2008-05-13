@@ -140,11 +140,12 @@ namespace {
                       SmallPtrSet<MachineBasicBlock*, 16>& v);
     void mergeLiveIntervals(unsigned primary, unsigned secondary, unsigned VN);
   };
-
-  char StrongPHIElimination::ID = 0;
-  RegisterPass<StrongPHIElimination> X("strong-phi-node-elimination",
-                  "Eliminate PHI nodes for register allocation, intelligently");
 }
+
+char StrongPHIElimination::ID = 0;
+static RegisterPass<StrongPHIElimination>
+X("strong-phi-node-elimination",
+  "Eliminate PHI nodes for register allocation, intelligently");
 
 const PassInfo *llvm::StrongPHIEliminationID = X.getPassInfo();
 
@@ -192,6 +193,8 @@ void StrongPHIElimination::computeDFS(MachineFunction& MF) {
   }
 }
 
+namespace {
+
 /// PreorderSorter - a helper class that is used to sort registers
 /// according to the preorder number of their defining blocks
 class PreorderSorter {
@@ -218,6 +221,8 @@ public:
     return false;
   }
 };
+
+}
 
 /// computeDomForest - compute the subforest of the DomTree corresponding
 /// to the defining blocks of the registers in question

@@ -48,16 +48,16 @@ STATISTIC(NumDSS   , "Number of dead spill slots removed");
 
 namespace {
   enum SpillerName { simple, local };
-
-  static cl::opt<SpillerName>
-  SpillerOpt("spiller",
-             cl::desc("Spiller to use: (default: local)"),
-             cl::Prefix,
-             cl::values(clEnumVal(simple, "  simple spiller"),
-                        clEnumVal(local,  "  local spiller"),
-                        clEnumValEnd),
-             cl::init(local));
 }
+
+static cl::opt<SpillerName>
+SpillerOpt("spiller",
+           cl::desc("Spiller to use: (default: local)"),
+           cl::Prefix,
+           cl::values(clEnumVal(simple, "  simple spiller"),
+                      clEnumVal(local,  "  local spiller"),
+                      clEnumValEnd),
+           cl::init(local));
 
 //===----------------------------------------------------------------------===//
 //  VirtRegMap implementation

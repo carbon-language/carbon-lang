@@ -34,11 +34,11 @@ public:
   virtual bool runOnModule(Module &M);
 };
 
-char StripDeadPrototypesPass::ID = 0;
-RegisterPass<StripDeadPrototypesPass> X("strip-dead-prototypes", 
-                                        "Strip Unused Function Prototypes");
-
 } // end anonymous namespace
+
+char StripDeadPrototypesPass::ID = 0;
+static RegisterPass<StripDeadPrototypesPass>
+X("strip-dead-prototypes", "Strip Unused Function Prototypes");
 
 bool StripDeadPrototypesPass::runOnModule(Module &M) {
   bool MadeChange = false;

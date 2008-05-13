@@ -70,10 +70,10 @@ static cl::opt<std::string> NameToGenerate("cppfor", cl::Optional,
   cl::desc("Specify the name of the thing to generate"),
   cl::init("!bad!"));
 
-namespace {
-  // Register the target.
-  RegisterTarget<CPPTargetMachine> X("cpp", "  C++ backend");
+// Register the target.
+static RegisterTarget<CPPTargetMachine> X("cpp", "  C++ backend");
 
+namespace {
   typedef std::vector<const Type*> TypeList;
   typedef std::map<const Type*,std::string> TypeMap;
   typedef std::map<const Value*,std::string> ValueMap;

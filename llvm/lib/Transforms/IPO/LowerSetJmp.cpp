@@ -122,10 +122,10 @@ namespace {
     bool runOnModule(Module& M);
     bool doInitialization(Module& M);
   };
-
-  char LowerSetJmp::ID = 0;
-  RegisterPass<LowerSetJmp> X("lowersetjmp", "Lower Set Jump");
 } // end anonymous namespace
+
+char LowerSetJmp::ID = 0;
+static RegisterPass<LowerSetJmp> X("lowersetjmp", "Lower Set Jump");
 
 // run - Run the transformation on the program. We grab the function
 // prototypes for longjmp and setjmp. If they are used in the program,

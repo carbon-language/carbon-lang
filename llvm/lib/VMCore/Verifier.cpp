@@ -92,11 +92,14 @@ namespace {  // Anonymous namespace for class
       return false;
     }
   };
+}
 
-  char PreVerifier::ID = 0;
-  RegisterPass<PreVerifier> PreVer("preverify", "Preliminary module verification");
-  const PassInfo *PreVerifyID = PreVer.getPassInfo();
+char PreVerifier::ID = 0;
+static RegisterPass<PreVerifier>
+PreVer("preverify", "Preliminary module verification");
+static const PassInfo *PreVerifyID = PreVer.getPassInfo();
 
+namespace {
   struct VISIBILITY_HIDDEN
      Verifier : public FunctionPass, InstVisitor<Verifier> {
     static char ID; // Pass ID, replacement for typeid
@@ -305,11 +308,10 @@ namespace {  // Anonymous namespace for class
       Broken = true;
     }
   };
-
-  char Verifier::ID = 0;
-  RegisterPass<Verifier> X("verify", "Module Verifier");
 } // End anonymous namespace
 
+char Verifier::ID = 0;
+static RegisterPass<Verifier> X("verify", "Module Verifier");
 
 // Assert - We know that cond should be true, if not print an error message.
 #define Assert(C, M) \

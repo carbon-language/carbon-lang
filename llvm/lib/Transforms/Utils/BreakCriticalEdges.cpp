@@ -48,11 +48,11 @@ namespace {
       AU.addPreservedID(LoopSimplifyID);
     }
   };
-
-  char BreakCriticalEdges::ID = 0;
-  RegisterPass<BreakCriticalEdges> X("break-crit-edges",
-                                    "Break critical edges in CFG");
 }
+
+char BreakCriticalEdges::ID = 0;
+static RegisterPass<BreakCriticalEdges>
+X("break-crit-edges", "Break critical edges in CFG");
 
 // Publically exposed interface to pass...
 const PassInfo *llvm::BreakCriticalEdgesID = X.getPassInfo();

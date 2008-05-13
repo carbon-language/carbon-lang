@@ -195,10 +195,11 @@ namespace {
     // Induction variable's final loop exit value operand number in exit condition..
     unsigned ExitValueNum;
   };
-
-  char LoopIndexSplit::ID = 0;
-  RegisterPass<LoopIndexSplit> X ("loop-index-split", "Index Split Loops");
 }
+
+char LoopIndexSplit::ID = 0;
+static RegisterPass<LoopIndexSplit>
+X("loop-index-split", "Index Split Loops");
 
 LoopPass *llvm::createLoopIndexSplitPass() {
   return new LoopIndexSplit();

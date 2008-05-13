@@ -42,23 +42,21 @@ STATISTIC(numPeep     , "Number of identity moves eliminated after coalescing");
 STATISTIC(numAborts   , "Number of times interval joining aborted");
 
 char SimpleRegisterCoalescing::ID = 0;
-namespace {
-  static cl::opt<bool>
-  EnableJoining("join-liveintervals",
-                cl::desc("Coalesce copies (default=true)"),
-                cl::init(true));
+static cl::opt<bool>
+EnableJoining("join-liveintervals",
+              cl::desc("Coalesce copies (default=true)"),
+              cl::init(true));
 
-  static cl::opt<bool>
-  NewHeuristic("new-coalescer-heuristic",
-                cl::desc("Use new coalescer heuristic"),
-                cl::init(false));
+static cl::opt<bool>
+NewHeuristic("new-coalescer-heuristic",
+              cl::desc("Use new coalescer heuristic"),
+              cl::init(false));
 
-  RegisterPass<SimpleRegisterCoalescing> 
-  X("simple-register-coalescing", "Simple Register Coalescing");
+static RegisterPass<SimpleRegisterCoalescing> 
+X("simple-register-coalescing", "Simple Register Coalescing");
 
-  // Declare that we implement the RegisterCoalescer interface
-  RegisterAnalysisGroup<RegisterCoalescer, true/*The Default*/> V(X);
-}
+// Declare that we implement the RegisterCoalescer interface
+static RegisterAnalysisGroup<RegisterCoalescer, true/*The Default*/> V(X);
 
 const PassInfo *llvm::SimpleRegisterCoalescingID = X.getPassInfo();
 

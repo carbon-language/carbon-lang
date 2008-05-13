@@ -111,10 +111,11 @@ namespace {
       return false;
     }
   };
-  
-  char RegToMem::ID = 0;
-  RegisterPass<RegToMem> X("reg2mem", "Demote all values to stack slots");
 }
+  
+char RegToMem::ID = 0;
+static RegisterPass<RegToMem>
+X("reg2mem", "Demote all values to stack slots");
 
 // createDemoteRegisterToMemory - Provide an entry point to create this pass.
 //

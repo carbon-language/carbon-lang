@@ -19,13 +19,11 @@
 #include "llvm/Target/TargetMachineRegistry.h"
 using namespace llvm;
 
-namespace {
-  // Register the targets
-  RegisterTarget<PPC32TargetMachine>
-  X("ppc32", "  PowerPC 32");
-  RegisterTarget<PPC64TargetMachine>
-  Y("ppc64", "  PowerPC 64");
-}
+// Register the targets
+static RegisterTarget<PPC32TargetMachine>
+X("ppc32", "  PowerPC 32");
+static RegisterTarget<PPC64TargetMachine>
+Y("ppc64", "  PowerPC 64");
 
 const TargetAsmInfo *PPCTargetMachine::createTargetAsmInfo() const {
   if (Subtarget.isDarwin())

@@ -46,10 +46,11 @@ namespace {
       AU.setPreservesAll();
     }
   };
-
-  char StripSymbols::ID = 0;
-  RegisterPass<StripSymbols> X("strip", "Strip all symbols from a module");
 }
+
+char StripSymbols::ID = 0;
+static RegisterPass<StripSymbols>
+X("strip", "Strip all symbols from a module");
 
 ModulePass *llvm::createStripSymbolsPass(bool OnlyDebugInfo) {
   return new StripSymbols(OnlyDebugInfo);

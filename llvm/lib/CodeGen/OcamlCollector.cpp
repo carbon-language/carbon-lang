@@ -35,10 +35,10 @@ namespace {
                         const TargetAsmInfo &TAI);
   };
   
-  CollectorRegistry::Add<OcamlCollector>
-  X("ocaml", "ocaml 3.10-compatible collector");
-  
 }
+
+static CollectorRegistry::Add<OcamlCollector>
+X("ocaml", "ocaml 3.10-compatible collector");
 
 // -----------------------------------------------------------------------------
 

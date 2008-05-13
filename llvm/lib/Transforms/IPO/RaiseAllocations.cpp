@@ -48,12 +48,11 @@ namespace {
     //
     bool runOnModule(Module &M);
   };
-
-  char RaiseAllocations::ID = 0;
-  RegisterPass<RaiseAllocations>
-  X("raiseallocs", "Raise allocations from calls to instructions");
 }  // end anonymous namespace
 
+char RaiseAllocations::ID = 0;
+static RegisterPass<RaiseAllocations>
+X("raiseallocs", "Raise allocations from calls to instructions");
 
 // createRaiseAllocationsPass - The interface to this file...
 ModulePass *llvm::createRaiseAllocationsPass() {

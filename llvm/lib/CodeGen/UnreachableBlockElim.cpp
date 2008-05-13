@@ -38,10 +38,10 @@ namespace {
     static char ID; // Pass identification, replacement for typeid
     UnreachableBlockElim() : FunctionPass((intptr_t)&ID) {}
   };
-  char UnreachableBlockElim::ID = 0;
-  RegisterPass<UnreachableBlockElim>
-  X("unreachableblockelim", "Remove unreachable blocks from the CFG");
 }
+char UnreachableBlockElim::ID = 0;
+static RegisterPass<UnreachableBlockElim>
+X("unreachableblockelim", "Remove unreachable blocks from the CFG");
 
 FunctionPass *llvm::createUnreachableBlockEliminationPass() {
   return new UnreachableBlockElim();

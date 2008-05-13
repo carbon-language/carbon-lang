@@ -28,14 +28,12 @@
 
 using namespace llvm;
 
-namespace {
-  // Control the calculation of non-local dependencies by only examining the
-  // predecessors if the basic block has less than X amount (50 by default).
-  static cl::opt<int> 
-  PredLimit("nonlocaldep-threshold", cl::Hidden, cl::init(50),
-            cl::desc("Control the calculation of non-local"
-                     "dependencies (default = 50)"));           
-}
+// Control the calculation of non-local dependencies by only examining the
+// predecessors if the basic block has less than X amount (50 by default).
+static cl::opt<int> 
+PredLimit("nonlocaldep-threshold", cl::Hidden, cl::init(50),
+          cl::desc("Control the calculation of non-local"
+                   "dependencies (default = 50)"));           
 
 STATISTIC(NumCacheNonlocal, "Number of cached non-local responses");
 STATISTIC(NumUncacheNonlocal, "Number of uncached non-local responses");

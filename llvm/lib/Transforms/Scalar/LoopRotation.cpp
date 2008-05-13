@@ -102,10 +102,10 @@ namespace {
     LPPassManager *LPM_Ptr;
     SmallVector<RenameData, MAX_HEADER_SIZE> LoopHeaderInfo;
   };
-  
-  char LoopRotate::ID = 0;
-  RegisterPass<LoopRotate> X ("loop-rotate", "Rotate Loops");
 }
+  
+char LoopRotate::ID = 0;
+static RegisterPass<LoopRotate> X("loop-rotate", "Rotate Loops");
 
 LoopPass *llvm::createLoopRotatePass() { return new LoopRotate(); }
 

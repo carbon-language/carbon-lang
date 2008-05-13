@@ -585,6 +585,8 @@ namespace {
       return false;
     }
   };
-  char AliasSetPrinter::ID = 0;
-  RegisterPass<AliasSetPrinter> X("print-alias-sets", "Alias Set Printer", false, true);
 }
+
+char AliasSetPrinter::ID = 0;
+static RegisterPass<AliasSetPrinter>
+X("print-alias-sets", "Alias Set Printer", false, true);

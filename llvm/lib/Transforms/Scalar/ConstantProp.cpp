@@ -43,11 +43,11 @@ namespace {
       AU.setPreservesCFG();
     }
   };
-
-  char ConstantPropagation::ID = 0;
-  RegisterPass<ConstantPropagation> X("constprop",
-                                      "Simple constant propagation");
 }
+
+char ConstantPropagation::ID = 0;
+static RegisterPass<ConstantPropagation>
+X("constprop", "Simple constant propagation");
 
 FunctionPass *llvm::createConstantPropagationPass() {
   return new ConstantPropagation();

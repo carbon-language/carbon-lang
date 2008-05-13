@@ -19,7 +19,7 @@
 using namespace llvm;
 
 /// Read a variable-bit-rate encoded unsigned integer
-inline unsigned readInteger(const char*&At, const char*End){
+static inline unsigned readInteger(const char*&At, const char*End) {
   unsigned Shift = 0;
   unsigned Result = 0;
 

@@ -48,10 +48,10 @@ namespace {
       AU.addPreservedID(LowerAllocationsID);
     }
   };
-
-  char PromotePass::ID = 0;
-  RegisterPass<PromotePass> X("mem2reg", "Promote Memory to Register");
 }  // end of anonymous namespace
+
+char PromotePass::ID = 0;
+static RegisterPass<PromotePass> X("mem2reg", "Promote Memory to Register");
 
 bool PromotePass::runOnFunction(Function &F) {
   std::vector<AllocaInst*> Allocas;

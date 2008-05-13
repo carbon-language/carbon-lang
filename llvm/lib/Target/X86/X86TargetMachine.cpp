@@ -30,13 +30,11 @@ using namespace llvm;
 extern "C" int X86TargetMachineModule;
 int X86TargetMachineModule = 0;
 
-namespace {
-  // Register the target.
-  RegisterTarget<X86_32TargetMachine>
-  X("x86",    "  32-bit X86: Pentium-Pro and above");
-  RegisterTarget<X86_64TargetMachine>
-  Y("x86-64", "  64-bit X86: EM64T and AMD64");
-}
+// Register the target.
+static RegisterTarget<X86_32TargetMachine>
+X("x86",    "  32-bit X86: Pentium-Pro and above");
+static RegisterTarget<X86_64TargetMachine>
+Y("x86-64", "  64-bit X86: EM64T and AMD64");
 
 const TargetAsmInfo *X86TargetMachine::createTargetAsmInfo() const {
   return new X86TargetAsmInfo(*this);

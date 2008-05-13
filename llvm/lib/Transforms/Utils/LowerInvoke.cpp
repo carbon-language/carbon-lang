@@ -98,11 +98,11 @@ namespace {
                                 AllocaInst *InvokeNum, SwitchInst *CatchSwitch);
     bool insertExpensiveEHSupport(Function &F);
   };
-
-  char LowerInvoke::ID = 0;
-  RegisterPass<LowerInvoke>
-  X("lowerinvoke", "Lower invoke and unwind, for unwindless code generators");
 }
+
+char LowerInvoke::ID = 0;
+static RegisterPass<LowerInvoke>
+X("lowerinvoke", "Lower invoke and unwind, for unwindless code generators");
 
 const PassInfo *llvm::LowerInvokePassID = X.getPassInfo();
 

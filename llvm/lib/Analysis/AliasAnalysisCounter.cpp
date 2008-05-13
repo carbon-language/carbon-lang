@@ -21,12 +21,12 @@
 #include "llvm/Support/Streams.h"
 using namespace llvm;
 
-namespace {
-  static cl::opt<bool>
-  PrintAll("count-aa-print-all-queries", cl::ReallyHidden);
-  static cl::opt<bool>
-  PrintAllFailures("count-aa-print-all-failed-queries", cl::ReallyHidden);
+static cl::opt<bool>
+PrintAll("count-aa-print-all-queries", cl::ReallyHidden);
+static cl::opt<bool>
+PrintAllFailures("count-aa-print-all-failed-queries", cl::ReallyHidden);
 
+namespace {
   class VISIBILITY_HIDDEN AliasAnalysisCounter 
       : public ModulePass, public AliasAnalysis {
     unsigned No, May, Must;
@@ -113,12 +113,12 @@ namespace {
       return AliasAnalysis::getModRefInfo(CS1,CS2);
     }
   };
-
-  char AliasAnalysisCounter::ID = 0;
-  RegisterPass<AliasAnalysisCounter>
-  X("count-aa", "Count Alias Analysis Query Responses", false, true);
-  RegisterAnalysisGroup<AliasAnalysis> Y(X);
 }
+
+char AliasAnalysisCounter::ID = 0;
+static RegisterPass<AliasAnalysisCounter>
+X("count-aa", "Count Alias Analysis Query Responses", false, true);
+static RegisterAnalysisGroup<AliasAnalysis> Y(X);
 
 ModulePass *llvm::createAliasAnalysisCounterPass() {
   return new AliasAnalysisCounter();

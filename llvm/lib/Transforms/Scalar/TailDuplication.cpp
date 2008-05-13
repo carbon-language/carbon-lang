@@ -37,10 +37,11 @@ using namespace llvm;
 
 STATISTIC(NumEliminated, "Number of unconditional branches eliminated");
 
+static cl::opt<unsigned>
+Threshold("taildup-threshold", cl::desc("Max block size to tail duplicate"),
+          cl::init(6), cl::Hidden);
+
 namespace {
-  cl::opt<unsigned>
-  Threshold("taildup-threshold", cl::desc("Max block size to tail duplicate"),
-            cl::init(6), cl::Hidden);
   class VISIBILITY_HIDDEN TailDup : public FunctionPass {
     bool runOnFunction(Function &F);
   public:
@@ -51,9 +52,10 @@ namespace {
     inline bool shouldEliminateUnconditionalBranch(TerminatorInst *TI);
     inline void eliminateUnconditionalBranch(BranchInst *BI);
   };
-  char TailDup::ID = 0;
-  RegisterPass<TailDup> X("tailduplicate", "Tail Duplication");
 }
+
+char TailDup::ID = 0;
+static RegisterPass<TailDup> X("tailduplicate", "Tail Duplication");
 
 // Public interface to the Tail Duplication pass
 FunctionPass *llvm::createTailDuplicationPass() { return new TailDup(); }

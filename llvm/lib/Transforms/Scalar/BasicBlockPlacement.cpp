@@ -72,11 +72,11 @@ namespace {
     /// successors.
     void PlaceBlocks(BasicBlock *BB);
   };
-
-  char BlockPlacement::ID = 0;
-  RegisterPass<BlockPlacement> X("block-placement",
-                                 "Profile Guided Basic Block Placement");
 }
+
+char BlockPlacement::ID = 0;
+static RegisterPass<BlockPlacement>
+X("block-placement", "Profile Guided Basic Block Placement");
 
 FunctionPass *llvm::createBlockPlacementPass() { return new BlockPlacement(); }
 

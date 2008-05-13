@@ -44,17 +44,15 @@ using namespace llvm;
 STATISTIC(NumCompletelyUnrolled, "Number of loops completely unrolled");
 STATISTIC(NumUnrolled,    "Number of loops unrolled (completely or otherwise)");
 
+static cl::opt<unsigned>
+UnrollThreshold("unroll-threshold", cl::init(100), cl::Hidden,
+  cl::desc("The cut-off point for automatic loop unrolling"));
+
+static cl::opt<unsigned>
+UnrollCount("unroll-count", cl::init(0), cl::Hidden,
+  cl::desc("Use this unroll count for all loops, for testing purposes"));
+
 namespace {
-  static cl::opt<unsigned>
-  UnrollThreshold
-    ("unroll-threshold", cl::init(100), cl::Hidden,
-     cl::desc("The cut-off point for automatic loop unrolling"));
-
-  static cl::opt<unsigned>
-  UnrollCount
-    ("unroll-count", cl::init(0), cl::Hidden,
-     cl::desc("Use this unroll count for all loops, for testing purposes"));
-
   class VISIBILITY_HIDDEN LoopUnroll : public LoopPass {
     LoopInfo *LI;  // The current loop information
   public:
@@ -81,9 +79,10 @@ namespace {
       AU.addPreserved<LoopInfo>();
     }
   };
-  char LoopUnroll::ID = 0;
-  RegisterPass<LoopUnroll> X("loop-unroll", "Unroll loops");
 }
+
+char LoopUnroll::ID = 0;
+static RegisterPass<LoopUnroll> X("loop-unroll", "Unroll loops");
 
 LoopPass *llvm::createLoopUnrollPass() { return new LoopUnroll(); }
 

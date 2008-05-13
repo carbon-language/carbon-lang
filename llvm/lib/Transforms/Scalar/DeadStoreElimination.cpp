@@ -92,9 +92,10 @@ namespace {
       AU.addPreserved<MemoryDependenceAnalysis>();
     }
   };
-  char DSE::ID = 0;
-  RegisterPass<DSE> X("dse", "Dead Store Elimination");
 }
+
+char DSE::ID = 0;
+static RegisterPass<DSE> X("dse", "Dead Store Elimination");
 
 FunctionPass *llvm::createDeadStoreEliminationPass() { return new DSE(); }
 

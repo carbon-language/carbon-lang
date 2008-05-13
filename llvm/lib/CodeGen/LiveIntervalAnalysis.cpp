@@ -36,16 +36,14 @@
 #include <cmath>
 using namespace llvm;
 
-namespace {
-  // Hidden options for help debugging.
-  static cl::opt<bool> DisableReMat("disable-rematerialization", 
-                                    cl::init(false), cl::Hidden);
+// Hidden options for help debugging.
+static cl::opt<bool> DisableReMat("disable-rematerialization", 
+                                  cl::init(false), cl::Hidden);
 
-  static cl::opt<bool> SplitAtBB("split-intervals-at-bb", 
-                                 cl::init(true), cl::Hidden);
-  static cl::opt<int> SplitLimit("split-limit",
-                                 cl::init(-1), cl::Hidden);
-}
+static cl::opt<bool> SplitAtBB("split-intervals-at-bb", 
+                               cl::init(true), cl::Hidden);
+static cl::opt<int> SplitLimit("split-limit",
+                               cl::init(-1), cl::Hidden);
 
 STATISTIC(numIntervals, "Number of original intervals");
 STATISTIC(numIntervalsAfter, "Number of intervals after coalescing");
@@ -53,9 +51,7 @@ STATISTIC(numFolds    , "Number of loads/stores folded into instructions");
 STATISTIC(numSplits   , "Number of intervals split");
 
 char LiveIntervals::ID = 0;
-namespace {
-  RegisterPass<LiveIntervals> X("liveintervals", "Live Interval Analysis");
-}
+static RegisterPass<LiveIntervals> X("liveintervals", "Live Interval Analysis");
 
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<LiveVariables>();
@@ -1078,20 +1074,22 @@ static const VNInfo *findDefinedVNInfo(const LiveInterval &li, unsigned DefIdx) 
 
 /// RewriteInfo - Keep track of machine instrs that will be rewritten
 /// during spilling.
-struct RewriteInfo {
-  unsigned Index;
-  MachineInstr *MI;
-  bool HasUse;
-  bool HasDef;
-  RewriteInfo(unsigned i, MachineInstr *mi, bool u, bool d)
-    : Index(i), MI(mi), HasUse(u), HasDef(d) {}
-};
+namespace {
+  struct RewriteInfo {
+    unsigned Index;
+    MachineInstr *MI;
+    bool HasUse;
+    bool HasDef;
+    RewriteInfo(unsigned i, MachineInstr *mi, bool u, bool d)
+      : Index(i), MI(mi), HasUse(u), HasDef(d) {}
+  };
 
-struct RewriteInfoCompare {
-  bool operator()(const RewriteInfo &LHS, const RewriteInfo &RHS) const {
-    return LHS.Index < RHS.Index;
-  }
-};
+  struct RewriteInfoCompare {
+    bool operator()(const RewriteInfo &LHS, const RewriteInfo &RHS) const {
+      return LHS.Index < RHS.Index;
+    }
+  };
+}
 
 void LiveIntervals::
 rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,

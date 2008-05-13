@@ -50,10 +50,11 @@ namespace {
     bool SinkInstruction(MachineInstr *MI, bool &SawStore);
     bool AllUsesDominatedByBlock(unsigned Reg, MachineBasicBlock *MBB) const;
   };
-  
-  char MachineSinking::ID = 0;
-  RegisterPass<MachineSinking> X("machine-sink", "Machine code sinking");
 } // end anonymous namespace
+  
+char MachineSinking::ID = 0;
+static RegisterPass<MachineSinking>
+X("machine-sink", "Machine code sinking");
 
 FunctionPass *llvm::createMachineSinkingPass() { return new MachineSinking(); }
 

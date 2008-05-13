@@ -52,10 +52,10 @@ namespace {
       AU.addPreservedID(LCSSAID);
     }
   };
-  
-  char LoopDeletion::ID = 0;
-  RegisterPass<LoopDeletion> X ("loop-deletion", "Delete dead loops");
 }
+  
+char LoopDeletion::ID = 0;
+static RegisterPass<LoopDeletion> X("loop-deletion", "Delete dead loops");
 
 LoopPass* llvm::createLoopDeletionPass() {
   return new LoopDeletion();

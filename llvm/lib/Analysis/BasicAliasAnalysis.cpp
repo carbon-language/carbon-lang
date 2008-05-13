@@ -79,15 +79,15 @@ namespace {
     virtual void deleteValue(Value *V) {}
     virtual void copyValue(Value *From, Value *To) {}
   };
-
-  // Register this pass...
-  char NoAA::ID = 0;
-  RegisterPass<NoAA>
-  U("no-aa", "No Alias Analysis (always returns 'may' alias)", true, true);
-
-  // Declare that we implement the AliasAnalysis interface
-  RegisterAnalysisGroup<AliasAnalysis> V(U);
 }  // End of anonymous namespace
+
+// Register this pass...
+char NoAA::ID = 0;
+static RegisterPass<NoAA>
+U("no-aa", "No Alias Analysis (always returns 'may' alias)", true, true);
+
+// Declare that we implement the AliasAnalysis interface
+static RegisterAnalysisGroup<AliasAnalysis> V(U);
 
 ImmutablePass *llvm::createNoAAPass() { return new NoAA(); }
 
@@ -124,15 +124,15 @@ namespace {
                          const Type *BasePtr2Ty,
                          Value **GEP2Ops, unsigned NumGEP2Ops, unsigned G2Size);
   };
-
-  // Register this pass...
-  char BasicAliasAnalysis::ID = 0;
-  RegisterPass<BasicAliasAnalysis>
-  X("basicaa", "Basic Alias Analysis (default AA impl)", false, true);
-
-  // Declare that we implement the AliasAnalysis interface
-  RegisterAnalysisGroup<AliasAnalysis, true> Y(X);
 }  // End of anonymous namespace
+
+// Register this pass...
+char BasicAliasAnalysis::ID = 0;
+static RegisterPass<BasicAliasAnalysis>
+X("basicaa", "Basic Alias Analysis (default AA impl)", false, true);
+
+// Declare that we implement the AliasAnalysis interface
+static RegisterAnalysisGroup<AliasAnalysis, true> Y(X);
 
 ImmutablePass *llvm::createBasicAliasAnalysisPass() {
   return new BasicAliasAnalysis();

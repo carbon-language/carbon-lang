@@ -106,10 +106,10 @@ private:
     markInstructionLive(const_cast<TerminatorInst*>(BB->getTerminator()));
   }
 };
-
-  char ADCE::ID = 0;
-  RegisterPass<ADCE> X("adce", "Aggressive Dead Code Elimination");
 } // End of anonymous namespace
+
+char ADCE::ID = 0;
+static RegisterPass<ADCE> X("adce", "Aggressive Dead Code Elimination");
 
 FunctionPass *llvm::createAggressiveDCEPass() { return new ADCE(); }
 

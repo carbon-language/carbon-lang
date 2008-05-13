@@ -172,6 +172,8 @@ static bool PadLT(const LandingPadInfo *L, const LandingPadInfo *R) {
   return LSize < RSize;
 }
 
+namespace {
+
 struct KeyInfo {
   static inline unsigned getEmptyKey() { return -1U; }
   static inline unsigned getTombstoneKey() { return -2U; }
@@ -204,6 +206,8 @@ struct CallSiteEntry {
   unsigned PadLabel;   // zero indicates that there is no landing pad.
   unsigned Action;
 };
+
+}
 
 unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
                                          unsigned char* StartFunction,

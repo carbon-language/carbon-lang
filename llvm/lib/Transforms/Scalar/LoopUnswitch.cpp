@@ -54,11 +54,11 @@ STATISTIC(NumSelects , "Number of selects unswitched");
 STATISTIC(NumTrivial , "Number of unswitches that are trivial");
 STATISTIC(NumSimplify, "Number of simplifications of unswitched code");
 
-namespace {
-  static cl::opt<unsigned>
-  Threshold("loop-unswitch-threshold", cl::desc("Max loop size to unswitch"),
-            cl::init(10), cl::Hidden);
+static cl::opt<unsigned>
+Threshold("loop-unswitch-threshold", cl::desc("Max loop size to unswitch"),
+          cl::init(10), cl::Hidden);
   
+namespace {
   class VISIBILITY_HIDDEN LoopUnswitch : public LoopPass {
     LoopInfo *LI;  // Loop information
     LPPassManager *LPM;
@@ -144,9 +144,9 @@ namespace {
                            std::vector<Instruction*> &Worklist, Loop *l);
     void RemoveLoopFromHierarchy(Loop *L);
   };
-  char LoopUnswitch::ID = 0;
-  RegisterPass<LoopUnswitch> X("loop-unswitch", "Unswitch loops");
 }
+char LoopUnswitch::ID = 0;
+static RegisterPass<LoopUnswitch> X("loop-unswitch", "Unswitch loops");
 
 LoopPass *llvm::createLoopUnswitchPass(bool Os) { 
   return new LoopUnswitch(Os); 
@@ -459,11 +459,11 @@ static inline void RemapInstruction(Instruction *I,
 // OrigPreheader is loop pre-header before this pass started
 // updating CFG. NewPrehader is loops new pre-header. However, after CFG
 // manipulation, loop L may not exist. So rely on input parameter NewPreheader.
-void CloneDomInfo(BasicBlock *NewBB, BasicBlock *Orig, 
-                  BasicBlock *NewPreheader, BasicBlock *OrigPreheader, 
-                  BasicBlock *OrigHeader,
-                  DominatorTree *DT, DominanceFrontier *DF,
-                  DenseMap<const Value*, Value*> &VM) {
+static void CloneDomInfo(BasicBlock *NewBB, BasicBlock *Orig,
+                         BasicBlock *NewPreheader, BasicBlock *OrigPreheader,
+                         BasicBlock *OrigHeader,
+                         DominatorTree *DT, DominanceFrontier *DF,
+                         DenseMap<const Value*, Value*> &VM) {
 
   // If NewBB alreay has found its place in domiantor tree then no need to do
   // anything.

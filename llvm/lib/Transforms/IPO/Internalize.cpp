@@ -28,20 +28,19 @@ using namespace llvm;
 STATISTIC(NumFunctions, "Number of functions internalized");
 STATISTIC(NumGlobals  , "Number of global vars internalized");
 
+// APIFile - A file which contains a list of symbols that should not be marked
+// external.
+static cl::opt<std::string>
+APIFile("internalize-public-api-file", cl::value_desc("filename"),
+        cl::desc("A file containing list of symbol names to preserve"));
+
+// APIList - A list of symbols that should not be marked internal.
+static cl::list<std::string>
+APIList("internalize-public-api-list", cl::value_desc("list"),
+        cl::desc("A list of symbol names to preserve"),
+        cl::CommaSeparated);
+
 namespace {
-
-  // APIFile - A file which contains a list of symbols that should not be marked
-  // external.
-  static cl::opt<std::string>
-  APIFile("internalize-public-api-file", cl::value_desc("filename"),
-          cl::desc("A file containing list of symbol names to preserve"));
-
-  // APIList - A list of symbols that should not be marked internal.
-  static cl::list<std::string>
-  APIList("internalize-public-api-list", cl::value_desc("list"),
-          cl::desc("A list of symbol names to preserve"),
-          cl::CommaSeparated);
-
   class VISIBILITY_HIDDEN InternalizePass : public ModulePass {
     std::set<std::string> ExternalNames;
     bool DontInternalize;
@@ -52,9 +51,11 @@ namespace {
     void LoadFile(const char *Filename);
     virtual bool runOnModule(Module &M);
   };
-  char InternalizePass::ID = 0;
-  RegisterPass<InternalizePass> X("internalize", "Internalize Global Symbols");
 } // end anonymous namespace
+
+char InternalizePass::ID = 0;
+static RegisterPass<InternalizePass>
+X("internalize", "Internalize Global Symbols");
 
 InternalizePass::InternalizePass(bool InternalizeEverything) 
   : ModulePass((intptr_t)&ID), DontInternalize(false){

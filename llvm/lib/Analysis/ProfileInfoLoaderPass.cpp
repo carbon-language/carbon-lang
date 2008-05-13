@@ -23,12 +23,12 @@
 #include "llvm/Support/Streams.h"
 using namespace llvm;
 
-namespace {
-  static cl::opt<std::string>
-  ProfileInfoFilename("profile-info-file", cl::init("llvmprof.out"),
-                      cl::value_desc("filename"),
-                      cl::desc("Profile file loaded by -profile-loader"));
+static cl::opt<std::string>
+ProfileInfoFilename("profile-info-file", cl::init("llvmprof.out"),
+                    cl::value_desc("filename"),
+                    cl::desc("Profile file loaded by -profile-loader"));
 
+namespace {
   class VISIBILITY_HIDDEN LoaderPass : public ModulePass, public ProfileInfo {
     std::string Filename;
   public:
@@ -49,13 +49,13 @@ namespace {
     /// run - Load the profile information from the specified file.
     virtual bool runOnModule(Module &M);
   };
-
-  char LoaderPass::ID = 0;
-  RegisterPass<LoaderPass>
-  X("profile-loader", "Load profile information from llvmprof.out", false, true);
-
-  RegisterAnalysisGroup<ProfileInfo> Y(X);
 }  // End of anonymous namespace
+
+char LoaderPass::ID = 0;
+static RegisterPass<LoaderPass>
+X("profile-loader", "Load profile information from llvmprof.out", false, true);
+
+static RegisterAnalysisGroup<ProfileInfo> Y(X);
 
 ModulePass *llvm::createProfileLoaderPass() { return new LoaderPass(); }
 

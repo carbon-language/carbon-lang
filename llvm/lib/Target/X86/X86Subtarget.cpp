@@ -19,7 +19,7 @@
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
-cl::opt<X86Subtarget::AsmWriterFlavorTy>
+static cl::opt<X86Subtarget::AsmWriterFlavorTy>
 AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::Unset),
   cl::desc("Choose style of code to emit from X86 backend:"),
   cl::values(

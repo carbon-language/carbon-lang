@@ -36,10 +36,12 @@ namespace {
       return false;
     }
   };
+}
 
-  char Hello::ID = 0;
-  RegisterPass<Hello> X("hello", "Hello World Pass");
+char Hello::ID = 0;
+static RegisterPass<Hello> X("hello", "Hello World Pass");
 
+namespace {
   // Hello2 - The second implementation with getAnalysisUsage implemented.
   struct Hello2 : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
@@ -58,7 +60,8 @@ namespace {
       AU.setPreservesAll();
     };
   };
-  char Hello2::ID = 0;
-  RegisterPass<Hello2> Y("hello2",
-                        "Hello World Pass (with getAnalysisUsage implemented)");
 }
+
+char Hello2::ID = 0;
+static RegisterPass<Hello2>
+Y("hello2", "Hello World Pass (with getAnalysisUsage implemented)");

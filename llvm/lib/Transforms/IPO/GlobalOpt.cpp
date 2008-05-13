@@ -68,12 +68,14 @@ namespace {
     bool OptimizeGlobalCtorsList(GlobalVariable *&GCL);
     bool ProcessInternalGlobal(GlobalVariable *GV,Module::global_iterator &GVI);
   };
-
-  char GlobalOpt::ID = 0;
-  RegisterPass<GlobalOpt> X("globalopt", "Global Variable Optimizer");
 }
 
+char GlobalOpt::ID = 0;
+static RegisterPass<GlobalOpt> X("globalopt", "Global Variable Optimizer");
+
 ModulePass *llvm::createGlobalOptimizerPass() { return new GlobalOpt(); }
+
+namespace {
 
 /// GlobalStatus - As we analyze each global, keep track of some information
 /// about it.  If we find out that the address of the global is taken, none of
@@ -129,7 +131,7 @@ struct VISIBILITY_HIDDEN GlobalStatus {
                    HasNonInstructionUser(false), HasPHIUser(false) {}
 };
 
-
+}
 
 /// ConstantIsDead - Return true if the specified constant is (transitively)
 /// dead.  The constant may be used by other constants (e.g. constant arrays and

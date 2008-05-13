@@ -62,11 +62,11 @@ namespace {
     virtual void print(std::ostream &O, const Module *M) const {}
 
   };
-
-  char InstCount::ID = 0;
-  RegisterPass<InstCount> X("instcount",
-                            "Counts the various types of Instructions", false, true);
 }
+
+char InstCount::ID = 0;
+static RegisterPass<InstCount>
+X("instcount", "Counts the various types of Instructions", false, true);
 
 FunctionPass *llvm::createInstCountPass() { return new InstCount(); }
 

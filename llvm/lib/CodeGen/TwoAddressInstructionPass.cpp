@@ -75,11 +75,11 @@ namespace {
     /// runOnMachineFunction - Pass entry point.
     bool runOnMachineFunction(MachineFunction&);
   };
-
-  char TwoAddressInstructionPass::ID = 0;
-  RegisterPass<TwoAddressInstructionPass>
-  X("twoaddressinstruction", "Two-Address instruction pass");
 }
+
+char TwoAddressInstructionPass::ID = 0;
+static RegisterPass<TwoAddressInstructionPass>
+X("twoaddressinstruction", "Two-Address instruction pass");
 
 const PassInfo *llvm::TwoAddressInstructionPassID = X.getPassInfo();
 

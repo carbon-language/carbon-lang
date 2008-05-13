@@ -2646,11 +2646,11 @@ namespace {
       }
     }
   }
-
-  char PredicateSimplifier::ID = 0;
-  RegisterPass<PredicateSimplifier> X("predsimplify",
-                                      "Predicate Simplifier");
 }
+
+char PredicateSimplifier::ID = 0;
+static RegisterPass<PredicateSimplifier>
+X("predsimplify", "Predicate Simplifier");
 
 FunctionPass *llvm::createPredicateSimplifierPass() {
   return new PredicateSimplifier();

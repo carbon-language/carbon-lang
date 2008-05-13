@@ -51,10 +51,10 @@ namespace {
     bool doFinalization(Module &M);
   };
   
-  RegisterPass<CollectorModuleMetadata>
-  X("collector-metadata", "Create Garbage Collector Module Metadata");
-  
 }
+
+static RegisterPass<CollectorModuleMetadata>
+X("collector-metadata", "Create Garbage Collector Module Metadata");
 
 // -----------------------------------------------------------------------------
 

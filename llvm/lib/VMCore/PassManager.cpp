@@ -360,9 +360,9 @@ public:
   }
 };
 
-static TimingInfo *TheTimeInfo;
-
 } // End of anon namespace
+
+static TimingInfo *TheTimeInfo;
 
 //===----------------------------------------------------------------------===//
 // PMTopLevelManager implementation

@@ -49,9 +49,10 @@ namespace {
     bool SafeToDestroyConstant(Constant* C);
     bool RemoveUnusedGlobalValue(GlobalValue &GV);
   };
-  char GlobalDCE::ID = 0;
-  RegisterPass<GlobalDCE> X("globaldce", "Dead Global Elimination");
 }
+
+char GlobalDCE::ID = 0;
+static RegisterPass<GlobalDCE> X("globaldce", "Dead Global Elimination");
 
 ModulePass *llvm::createGlobalDCEPass() { return new GlobalDCE(); }
 

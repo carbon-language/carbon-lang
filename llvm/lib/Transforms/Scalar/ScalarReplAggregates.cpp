@@ -124,10 +124,10 @@ namespace {
                                       unsigned Offset);
     static Instruction *isOnlyCopiedFromConstantGlobal(AllocationInst *AI);
   };
-
-  char SROA::ID = 0;
-  RegisterPass<SROA> X("scalarrepl", "Scalar Replacement of Aggregates");
 }
+
+char SROA::ID = 0;
+static RegisterPass<SROA> X("scalarrepl", "Scalar Replacement of Aggregates");
 
 // Public interface to the ScalarReplAggregates pass
 FunctionPass *llvm::createScalarReplAggregatesPass(signed int Threshold) { 

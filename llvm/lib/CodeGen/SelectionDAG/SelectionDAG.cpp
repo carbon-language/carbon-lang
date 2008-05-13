@@ -318,7 +318,7 @@ static void AddNodeIDOpcode(FoldingSetNodeID &ID, unsigned OpC)  {
 
 /// AddNodeIDValueTypes - Value type lists are intern'd so we can represent them
 /// solely with their pointer.
-void AddNodeIDValueTypes(FoldingSetNodeID &ID, SDVTList VTList) {
+static void AddNodeIDValueTypes(FoldingSetNodeID &ID, SDVTList VTList) {
   ID.AddPointer(VTList.VTs);  
 }
 

@@ -52,10 +52,11 @@ namespace {
       AU.setPreservesCFG();
     }
   };
-
-  char DeadInstElimination::ID = 0;
-  RegisterPass<DeadInstElimination> X("die", "Dead Instruction Elimination");
 }
+
+char DeadInstElimination::ID = 0;
+static RegisterPass<DeadInstElimination>
+X("die", "Dead Instruction Elimination");
 
 Pass *llvm::createDeadInstEliminationPass() {
   return new DeadInstElimination();
@@ -76,10 +77,10 @@ namespace {
       AU.setPreservesCFG();
     }
  };
-
-  char DCE::ID = 0;
-  RegisterPass<DCE> Y("dce", "Dead Code Elimination");
 }
+
+char DCE::ID = 0;
+static RegisterPass<DCE> Y("dce", "Dead Code Elimination");
 
 bool DCE::runOnFunction(Function &F) {
   // Start out with all of the instructions in the worklist...

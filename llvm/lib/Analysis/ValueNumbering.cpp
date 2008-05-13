@@ -24,7 +24,7 @@ using namespace llvm;
 
 char ValueNumbering::ID = 0;
 // Register the ValueNumbering interface, providing a nice name to refer to.
-static RegisterAnalysisGroup<ValueNumbering> X("Value Numbering");
+static RegisterAnalysisGroup<ValueNumbering> V("Value Numbering");
 
 /// ValueNumbering destructor: DO NOT move this to the header file for
 /// ValueNumbering or else clients of the ValueNumbering class may not depend on
@@ -64,15 +64,17 @@ namespace {
     virtual void getEqualNumberNodes(Value *V1,
                                      std::vector<Value*> &RetVals) const;
   };
+}
 
-  char BasicVN::ID = 0;
-  // Register this pass...
-  RegisterPass<BasicVN>
-  X("basicvn", "Basic Value Numbering (default GVN impl)", false, true);
+char BasicVN::ID = 0;
+// Register this pass...
+static RegisterPass<BasicVN>
+X("basicvn", "Basic Value Numbering (default GVN impl)", false, true);
 
-  // Declare that we implement the ValueNumbering interface
-  RegisterAnalysisGroup<ValueNumbering, true> Y(X);
+// Declare that we implement the ValueNumbering interface
+static RegisterAnalysisGroup<ValueNumbering, true> Y(X);
 
+namespace {
   /// BVNImpl - Implement BasicVN in terms of a visitor class that
   /// handles the different types of instructions as appropriate.
   ///

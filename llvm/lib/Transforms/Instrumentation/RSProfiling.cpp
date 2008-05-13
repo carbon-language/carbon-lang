@@ -55,16 +55,18 @@ namespace {
   enum RandomMeth {
     GBV, GBVO, HOSTCC
   };
+}
 
-  static cl::opt<RandomMeth> RandomMethod("profile-randomness",
-      cl::desc("How to randomly choose to profile:"),
-      cl::values(
-                 clEnumValN(GBV, "global", "global counter"),
-                 clEnumValN(GBVO, "ra_global", 
-                            "register allocated global counter"),
-                 clEnumValN(HOSTCC, "rdcc", "cycle counter"),
-                 clEnumValEnd));
+static cl::opt<RandomMeth> RandomMethod("profile-randomness",
+    cl::desc("How to randomly choose to profile:"),
+    cl::values(
+               clEnumValN(GBV, "global", "global counter"),
+               clEnumValN(GBVO, "ra_global", 
+                          "register allocated global counter"),
+               clEnumValN(HOSTCC, "rdcc", "cycle counter"),
+               clEnumValEnd));
   
+namespace {
   /// NullProfilerRS - The basic profiler that does nothing.  It is the default
   /// profiler and thus terminates RSProfiler chains.  It is useful for 
   /// measuring framework overhead
@@ -81,12 +83,14 @@ namespace {
       AU.setPreservesAll();
     }
   };
+}
 
-  static RegisterAnalysisGroup<RSProfilers> A("Profiling passes");
-  static RegisterPass<NullProfilerRS> NP("insert-null-profiling-rs",
-                                         "Measure profiling framework overhead");
-  static RegisterAnalysisGroup<RSProfilers, true> NPT(NP);
+static RegisterAnalysisGroup<RSProfilers> A("Profiling passes");
+static RegisterPass<NullProfilerRS> NP("insert-null-profiling-rs",
+                                       "Measure profiling framework overhead");
+static RegisterAnalysisGroup<RSProfilers, true> NPT(NP);
 
+namespace {
   /// Chooser - Something that chooses when to make a sample of the profiled code
   class VISIBILITY_HIDDEN Chooser {
   public:
@@ -158,10 +162,11 @@ namespace {
     bool doInitialization(Module &M);
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
   };
-
-  RegisterPass<ProfilerRS> X("insert-rs-profiling-framework",
-                             "Insert random sampling instrumentation framework");
 }
+
+static RegisterPass<ProfilerRS>
+X("insert-rs-profiling-framework",
+  "Insert random sampling instrumentation framework");
 
 char RSProfilers::ID = 0;
 char NullProfilerRS::ID = 0;

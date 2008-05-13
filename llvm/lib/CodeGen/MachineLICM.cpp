@@ -150,11 +150,11 @@ namespace {
     ///
     void Hoist(MachineInstr &MI);
   };
-
-  char MachineLICM::ID = 0;
-  RegisterPass<MachineLICM> X("machine-licm",
-                              "Machine Loop Invariant Code Motion");
 } // end anonymous namespace
+
+char MachineLICM::ID = 0;
+static RegisterPass<MachineLICM>
+X("machine-licm", "Machine Loop Invariant Code Motion");
 
 FunctionPass *llvm::createMachineLICMPass() { return new MachineLICM(); }
 

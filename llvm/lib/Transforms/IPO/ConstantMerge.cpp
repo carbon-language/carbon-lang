@@ -38,10 +38,11 @@ namespace {
     //
     bool runOnModule(Module &M);
   };
-
-  char ConstantMerge::ID = 0;
-  RegisterPass<ConstantMerge>X("constmerge","Merge Duplicate Global Constants");
 }
+
+char ConstantMerge::ID = 0;
+static RegisterPass<ConstantMerge>
+X("constmerge", "Merge Duplicate Global Constants");
 
 ModulePass *llvm::createConstantMergePass() { return new ConstantMerge(); }
 

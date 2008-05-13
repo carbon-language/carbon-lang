@@ -77,11 +77,11 @@ namespace {
       return CI1->getValue().slt(CI2->getValue());
     }
   };
-
-  char LowerSwitch::ID = 0;
-  RegisterPass<LowerSwitch>
-  X("lowerswitch", "Lower SwitchInst's to branches");
 }
+
+char LowerSwitch::ID = 0;
+static RegisterPass<LowerSwitch>
+X("lowerswitch", "Lower SwitchInst's to branches");
 
 // Publically exposed interface to pass...
 const PassInfo *llvm::LowerSwitchID = X.getPassInfo();

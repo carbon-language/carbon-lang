@@ -1435,11 +1435,11 @@ namespace {
       AU.setPreservesCFG();
     }
   };
-
-  char SCCP::ID = 0;
-  RegisterPass<SCCP> X("sccp", "Sparse Conditional Constant Propagation");
 } // end anonymous namespace
 
+char SCCP::ID = 0;
+static RegisterPass<SCCP>
+X("sccp", "Sparse Conditional Constant Propagation");
 
 // createSCCPPass - This is the public interface to this file...
 FunctionPass *llvm::createSCCPPass() {
@@ -1543,11 +1543,11 @@ namespace {
     IPSCCP() : ModulePass((intptr_t)&ID) {}
     bool runOnModule(Module &M);
   };
-
-  char IPSCCP::ID = 0;
-  RegisterPass<IPSCCP>
-  Y("ipsccp", "Interprocedural Sparse Conditional Constant Propagation");
 } // end anonymous namespace
+
+char IPSCCP::ID = 0;
+static RegisterPass<IPSCCP>
+Y("ipsccp", "Interprocedural Sparse Conditional Constant Propagation");
 
 // createIPSCCPPass - This is the public interface to this file...
 ModulePass *llvm::createIPSCCPPass() {

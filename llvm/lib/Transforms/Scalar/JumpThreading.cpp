@@ -63,9 +63,11 @@ namespace {
     bool ProcessBranchOnLogical(Value *V, BasicBlock *BB, bool isAnd);
     bool ProcessBranchOnCompare(CmpInst *Cmp, BasicBlock *BB);
   };
-  char JumpThreading::ID = 0;
-  RegisterPass<JumpThreading> X("jump-threading", "Jump Threading");
 }
+
+char JumpThreading::ID = 0;
+static RegisterPass<JumpThreading>
+X("jump-threading", "Jump Threading");
 
 // Public interface to the Jump Threading pass
 FunctionPass *llvm::createJumpThreadingPass() { return new JumpThreading(); }

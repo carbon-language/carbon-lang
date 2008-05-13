@@ -550,6 +550,7 @@ void DerivedType::dropAllTypeUses() {
 }
 
 
+namespace {
 
 /// TypePromotionGraph and graph traits - this is designed to allow us to do
 /// efficient SCC processing of type graphs.  This is the exact same as
@@ -559,6 +560,8 @@ struct TypePromotionGraph {
   Type *Ty;
   TypePromotionGraph(Type *T) : Ty(T) {}
 };
+
+}
 
 namespace llvm {
   template <> struct GraphTraits<TypePromotionGraph> {

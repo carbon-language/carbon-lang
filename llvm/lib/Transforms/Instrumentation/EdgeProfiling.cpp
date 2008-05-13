@@ -36,11 +36,11 @@ namespace {
     static char ID; // Pass identification, replacement for typeid
     EdgeProfiler() : ModulePass((intptr_t)&ID) {}
   };
-
-  char EdgeProfiler::ID = 0;
-  RegisterPass<EdgeProfiler> X("insert-edge-profiling",
-                               "Insert instrumentation for edge profiling");
 }
+
+char EdgeProfiler::ID = 0;
+static RegisterPass<EdgeProfiler>
+X("insert-edge-profiling", "Insert instrumentation for edge profiling");
 
 ModulePass *llvm::createEdgeProfilerPass() { return new EdgeProfiler(); }
 

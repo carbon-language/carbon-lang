@@ -36,14 +36,14 @@ namespace {
     static char ID;
     bool runOnModule(Module &M);
   };
-
-  char FunctionProfiler::ID = 0;
-
-  RegisterPass<FunctionProfiler> X("insert-function-profiling",
-                               "Insert instrumentation for function profiling");
-  RegisterAnalysisGroup<RSProfilers> XG(X);
-
 }
+
+char FunctionProfiler::ID = 0;
+
+static RegisterPass<FunctionProfiler>
+X("insert-function-profiling",
+  "Insert instrumentation for function profiling");
+static RegisterAnalysisGroup<RSProfilers> XG(X);
 
 ModulePass *llvm::createFunctionProfilerPass() {
   return new FunctionProfiler();
@@ -86,12 +86,12 @@ namespace {
   public:
     static char ID;
   };
-
-  char BlockProfiler::ID = 0;
-  RegisterPass<BlockProfiler> Y("insert-block-profiling",
-                                "Insert instrumentation for block profiling");
-  RegisterAnalysisGroup<RSProfilers> YG(Y);
 }
+
+char BlockProfiler::ID = 0;
+static RegisterPass<BlockProfiler>
+Y("insert-block-profiling", "Insert instrumentation for block profiling");
+static RegisterAnalysisGroup<RSProfilers> YG(Y);
 
 ModulePass *llvm::createBlockProfilerPass() { return new BlockProfiler(); }
 

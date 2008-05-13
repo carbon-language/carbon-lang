@@ -45,6 +45,8 @@ using namespace llvm;
 //                         ValueTable Class
 //===----------------------------------------------------------------------===//
 
+namespace {
+
 /// This class holds the mapping between values and value numbers.  It is used
 /// as an efficient mechanism to determine the expression-wise equivalence of
 /// two values.
@@ -123,6 +125,7 @@ struct Expression {
   }
 };
 
+}
 
 namespace {
   class VISIBILITY_HIDDEN ValueTable {
@@ -596,6 +599,8 @@ unsigned ValueTable::size() {
   return nextValueNumber;
 }
 
+namespace {
+
 //===----------------------------------------------------------------------===//
 //                       ValueNumberedSet Class
 //===----------------------------------------------------------------------===//
@@ -651,6 +656,8 @@ class ValueNumberedSet {
       numbers.clear();
     }
 };
+
+}
 
 //===----------------------------------------------------------------------===//
 //                         GVNPRE Pass

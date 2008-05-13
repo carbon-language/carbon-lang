@@ -47,10 +47,10 @@
 #include <sstream>
 using namespace llvm;
 
-namespace {
-  // Register the target.
-  RegisterTarget<CTargetMachine> X("c", "  C backend");
+// Register the target.
+static RegisterTarget<CTargetMachine> X("c", "  C backend");
 
+namespace {
   /// CBackendNameAllUsedStructsAndMergeFunctions - This pass inserts names for
   /// any unnamed structure types that are used by the program, and merges
   /// external functions with the same name.

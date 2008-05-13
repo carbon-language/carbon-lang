@@ -64,7 +64,7 @@ static void PrintOps(Instruction *I, const std::vector<ValueEntry> &Ops) {
       << "," << Ops[i].Rank;
 }
   
-namespace {  
+namespace {
   class VISIBILITY_HIDDEN Reassociate : public FunctionPass {
     std::map<BasicBlock*, unsigned> RankMap;
     std::map<Value*, unsigned> ValueRankMap;
@@ -92,10 +92,10 @@ namespace {
     
     void RemoveDeadBinaryOp(Value *V);
   };
-
-  char Reassociate::ID = 0;
-  RegisterPass<Reassociate> X("reassociate", "Reassociate expressions");
 }
+
+char Reassociate::ID = 0;
+static RegisterPass<Reassociate> X("reassociate", "Reassociate expressions");
 
 // Public interface to the Reassociate pass
 FunctionPass *llvm::createReassociatePass() { return new Reassociate(); }
