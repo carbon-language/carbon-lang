@@ -30,7 +30,7 @@ using namespace clang;
 
 /// CheckFunctionCall - Check a direct function call for various correctness
 /// and safety properties not strictly enforced by the C type system.
-bool
+Action::ExprResult
 Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
                         
   // Get the IdentifierInfo* for the called function.
@@ -40,23 +40,36 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   case Builtin::BI__builtin___CFStringMakeConstantString:
     assert(TheCall->getNumArgs() == 1 &&
            "Wrong # arguments to builtin CFStringMakeConstantString");
-    return CheckBuiltinCFStringArgument(TheCall->getArg(0));
+    if (!CheckBuiltinCFStringArgument(TheCall->getArg(0))) {
+      delete TheCall;
+      return true;
+    }
+    return TheCall;
   case Builtin::BI__builtin_va_start:
-    return SemaBuiltinVAStart(TheCall);
-    
+    if (!SemaBuiltinVAStart(TheCall)) {
+      delete TheCall;
+      return true;
+    }
+    return TheCall;
   case Builtin::BI__builtin_isgreater:
   case Builtin::BI__builtin_isgreaterequal:
   case Builtin::BI__builtin_isless:
   case Builtin::BI__builtin_islessequal:
   case Builtin::BI__builtin_islessgreater:
   case Builtin::BI__builtin_isunordered:
-    return SemaBuiltinUnorderedCompare(TheCall);
+    if (!SemaBuiltinUnorderedCompare(TheCall)) {
+      delete TheCall;
+      return true;
+    }
+    return TheCall;
+  case Builtin::BI__builtin_shufflevector:
+    return SemaBuiltinShuffleVector(TheCall);
   }
   
   // Search the KnownFunctionIDs for the identifier.
   unsigned i = 0, e = id_num_known_functions;
   for (; i != e; ++i) { if (KnownFunctionIDs[i] == FnInfo) break; }
-  if (i == e) return false;
+  if (i == e) return TheCall;
   
   // Printf checking.
   if (i <= id_vprintf) {
@@ -82,7 +95,7 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
     CheckPrintfArguments(TheCall, HasVAListArg, format_idx);       
   }
   
-  return false;
+  return TheCall;
 }
 
 /// CheckBuiltinCFStringArgument - Checks that the argument to the builtin
@@ -200,6 +213,79 @@ bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
   return false;
 }
 
+/// SemaBuiltinShuffleVector - Handle __builtin_shufflevector.
+// This is declared to take (...), so we have to check everything.
+Action::ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
+  if (TheCall->getNumArgs() < 3)
+    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args,
+                TheCall->getSourceRange());
+
+  QualType FAType = TheCall->getArg(0)->getType();
+  QualType SAType = TheCall->getArg(1)->getType();
+
+  if (!FAType->isVectorType() || !SAType->isVectorType()) {
+    Diag(TheCall->getLocStart(), diag::err_shufflevector_non_vector,
+         SourceRange(TheCall->getArg(0)->getLocStart(), 
+                     TheCall->getArg(1)->getLocEnd()));
+    delete TheCall;
+    return true;
+  }
+
+  if (TheCall->getArg(0)->getType().getCanonicalType().getUnqualifiedType() !=
+      TheCall->getArg(1)->getType().getCanonicalType().getUnqualifiedType()) {
+    Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector,
+         SourceRange(TheCall->getArg(0)->getLocStart(), 
+                     TheCall->getArg(1)->getLocEnd()));
+    delete TheCall;
+    return true;
+  }
+
+  unsigned numElements = FAType->getAsVectorType()->getNumElements();
+  if (TheCall->getNumArgs() != numElements+2) {
+    if (TheCall->getNumArgs() < numElements+2)
+      Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args,
+           TheCall->getSourceRange());
+    else
+      Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_many_args,
+           TheCall->getSourceRange());
+    delete TheCall;
+    return true;
+  }
+
+  for (unsigned i = 2; i < TheCall->getNumArgs(); i++) {
+    llvm::APSInt Result(32);
+    if (!TheCall->getArg(i)->isIntegerConstantExpr(Result, Context)) {
+      Diag(TheCall->getLocStart(),
+           diag::err_shufflevector_nonconstant_argument,
+           TheCall->getArg(i)->getSourceRange());
+      delete TheCall;
+      return true;
+    }
+    if (Result.getActiveBits() > 64 || Result.getZExtValue() >= numElements*2) {
+      Diag(TheCall->getLocStart(),
+           diag::err_shufflevector_argument_too_large,
+           TheCall->getArg(i)->getSourceRange());
+      delete TheCall;
+      return true;
+    }
+  }
+
+  llvm::SmallVector<Expr*, 32> exprs;
+
+  for (unsigned i = 0; i < TheCall->getNumArgs(); i++) {
+    exprs.push_back(TheCall->getArg(i));
+    TheCall->setArg(i, 0);
+  }
+
+  ShuffleVectorExpr* E = new ShuffleVectorExpr(
+      exprs.begin(), numElements+2, FAType,
+      TheCall->getCallee()->getLocStart(),
+      TheCall->getRParenLoc());
+
+  delete TheCall;
+  
+  return E;
+}
 
 /// CheckPrintfArguments - Check calls to printf (and similar functions) for
 /// correct use of format strings.  

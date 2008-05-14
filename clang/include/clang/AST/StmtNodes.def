@@ -103,8 +103,9 @@ STMT(75, ObjCIvarRefExpr      , Expr)
 
 // Clang Extensions.
 STMT(76, OverloadExpr         , Expr)
+STMT(77, ShuffleVectorExpr    , Expr)
 
-LAST_EXPR(76)
+LAST_EXPR(77)
 
 #undef STMT
 #undef FIRST_STMT

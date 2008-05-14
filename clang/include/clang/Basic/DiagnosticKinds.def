@@ -1056,4 +1056,13 @@ DIAG(ext_return_missing_expr, EXTENSION,
 DIAG(ext_return_has_expr, EXTENSION,
      "void function '%0' should not return a value")
 
+DIAG(err_shufflevector_non_vector, ERROR,
+     "first two arguments to __builtin_shufflevector must be vectors")
+DIAG(err_shufflevector_incompatible_vector, ERROR,
+     "first two arguments to __builtin_shufflevector must have the same type")
+DIAG(err_shufflevector_nonconstant_argument, ERROR,
+     "indexes for __builtin_shufflevector must be constant integers")
+DIAG(err_shufflevector_argument_too_large, ERROR,
+     "indexes for __builtin_shufflevector must be less than the total number of vector elements")
+
 #undef DIAG

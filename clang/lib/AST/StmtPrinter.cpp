@@ -755,6 +755,15 @@ void StmtPrinter::VisitOverloadExpr(OverloadExpr *Node) {
   OS << ")";
 }
 
+void StmtPrinter::VisitShuffleVectorExpr(ShuffleVectorExpr *Node) {
+  OS << "__builtin_shufflevector(";
+  for (unsigned i = 0, e = Node->getNumSubExprs(); i != e; ++i) {
+    if (i) OS << ", ";
+    PrintExpr(Node->getExpr(i));
+  }
+  OS << ")";
+}
+
 void StmtPrinter::VisitInitListExpr(InitListExpr* Node) {
   OS << "{ ";
   for (unsigned i = 0, e = Node->getNumInits(); i != e; ++i) {

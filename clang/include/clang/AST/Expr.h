@@ -1095,6 +1095,75 @@ public:
   virtual child_iterator child_end();
 };
 
+/// ShuffleVectorExpr - clang-specific builtin-in function
+/// __builtin_shufflevector.
+/// This AST node represents a operator that does a constant
+/// shuffle, similar to LLVM's shufflevector instruction. It takes
+/// two vectors and a variable number of constant indices,
+/// and returns the appropriately shuffled vector.
+class ShuffleVectorExpr : public Expr {
+  SourceLocation BuiltinLoc, RParenLoc;
+
+  // SubExprs - the list of values passed to the __builtin_shufflevector
+  // function. The first two are vectors, and the rest are constant
+  // indices.  The number of values in this list is always
+  // 2+the number of indices in the vector type.
+  Expr **SubExprs;
+  unsigned NumExprs;
+
+public:
+  ShuffleVectorExpr(Expr **args, unsigned nexpr,
+                    QualType Type, SourceLocation BLoc, 
+                    SourceLocation RP) : 
+    Expr(ShuffleVectorExprClass, Type), BuiltinLoc(BLoc),
+    RParenLoc(RP), NumExprs(nexpr)
+  {
+    SubExprs = new Expr*[nexpr];
+    for (unsigned i = 0; i < nexpr; i++)
+      SubExprs[i] = args[i];
+  }
+    
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(BuiltinLoc, RParenLoc);
+  }
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ShuffleVectorExprClass; 
+  }
+  static bool classof(const ShuffleVectorExpr *) { return true; }
+  
+  ~ShuffleVectorExpr() {
+    for (unsigned i = 0; i < NumExprs; i++)
+      delete SubExprs[i];
+    delete [] SubExprs;
+  }
+  
+  /// getNumSubExprs - Return the size of the SubExprs array.  This includes the
+  /// constant expression, the actual arguments passed in, and the function
+  /// pointers.
+  unsigned getNumSubExprs() const { return NumExprs; }
+  
+  /// getExpr - Return the Expr at the specified index.
+  Expr *getExpr(unsigned Index) {
+    assert((Index < NumExprs) && "Arg access out of range!");
+    return SubExprs[Index];
+  }
+  const Expr *getExpr(unsigned Index) const {
+    assert((Index < NumExprs) && "Arg access out of range!");
+    return SubExprs[Index];
+  }
+
+  int getShuffleMaskIdx(ASTContext &Ctx, unsigned N) {
+    llvm::APSInt Result(32);
+    bool result = getExpr(N+2)->isIntegerConstantExpr(Result, Ctx);
+    assert(result && "Must be integer constant");
+    return Result.getZExtValue();
+  }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
 /// ChooseExpr - GNU builtin-in function __builtin_choose_expr.
 /// This AST node is similar to the conditional operator (?:) in C, with 
 /// the following exceptions:

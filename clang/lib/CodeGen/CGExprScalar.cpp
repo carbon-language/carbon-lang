@@ -127,6 +127,7 @@ public:
   Value *VisitObjCMessageExpr(ObjCMessageExpr *E);
   Value *VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) { return EmitLoadOfLValue(E);}
   Value *VisitArraySubscriptExpr(ArraySubscriptExpr *E);
+  Value *VisitShuffleVectorExpr(ShuffleVectorExpr *E);
   Value *VisitMemberExpr(Expr *E)           { return EmitLoadOfLValue(E); }
   Value *VisitExtVectorElementExpr(Expr *E) { return EmitLoadOfLValue(E); }
   Value *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) { return EmitLoadOfLValue(E); }
@@ -447,6 +448,17 @@ Value *ScalarExprEmitter::VisitExpr(Expr *E) {
   if (E->getType()->isVoidType())
     return 0;
   return llvm::UndefValue::get(CGF.ConvertType(E->getType()));
+}
+
+Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
+  llvm::SmallVector<llvm::Constant*, 32> indices;
+  for (unsigned i = 2; i < E->getNumSubExprs(); i++) {
+    indices.push_back(cast<llvm::Constant>(CGF.EmitScalarExpr(E->getExpr(i))));
+  }
+  Value* V1 = CGF.EmitScalarExpr(E->getExpr(0));
+  Value* V2 = CGF.EmitScalarExpr(E->getExpr(1));
+  Value* SV = llvm::ConstantVector::get(indices.begin(), indices.size());
+  return Builder.CreateShuffleVector(V1, V2, SV, "shuffle");
 }
 
 Value *ScalarExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {

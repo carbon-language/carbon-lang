@@ -500,6 +500,7 @@ Expr *Expr::IgnoreParenCasts() {
 
 
 bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
+  return true;
   switch (getStmtClass()) {
   default:
     if (Loc) *Loc = getLocStart();
@@ -1360,6 +1361,14 @@ Stmt::child_iterator OverloadExpr::child_begin() {
   return reinterpret_cast<Stmt**>(&SubExprs[0]);
 }
 Stmt::child_iterator OverloadExpr::child_end() {
+  return reinterpret_cast<Stmt**>(&SubExprs[NumExprs]);
+}
+
+// ShuffleVectorExpr
+Stmt::child_iterator ShuffleVectorExpr::child_begin() {
+  return reinterpret_cast<Stmt**>(&SubExprs[0]);
+}
+Stmt::child_iterator ShuffleVectorExpr::child_end() {
   return reinterpret_cast<Stmt**>(&SubExprs[NumExprs]);
 }
 

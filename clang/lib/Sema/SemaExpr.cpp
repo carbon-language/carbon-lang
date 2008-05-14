@@ -723,8 +723,8 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
   }
 
   // Do special checking on direct calls to functions.
-  if (FDecl && CheckFunctionCall(FDecl, TheCall.get()))
-    return true;
+  if (FDecl)
+    return CheckFunctionCall(FDecl, TheCall.take());
 
   return TheCall.take();
 }

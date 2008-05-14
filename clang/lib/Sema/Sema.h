@@ -887,10 +887,11 @@ private:
   //===--------------------------------------------------------------------===//
   // Extra semantic analysis beyond the C type system
 private:
-  bool CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall);
+  Action::ExprResult CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall);
   bool CheckBuiltinCFStringArgument(Expr* Arg);
   bool SemaBuiltinVAStart(CallExpr *TheCall);
   bool SemaBuiltinUnorderedCompare(CallExpr *TheCall);
+  Action::ExprResult SemaBuiltinShuffleVector(CallExpr *TheCall);
   void CheckPrintfArguments(CallExpr *TheCall,
                             bool HasVAListArg, unsigned format_idx);
   void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
