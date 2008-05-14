@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="clangSema"
 	ProjectGUID="{4727E8B7-AA99-41C9-AB09-A8A862595DB7}"
 	RootNamespace="clangSema"
 	Keyword="Win32Proj"
+	TargetFrameworkVersion="0"
 	>
 	<Platforms>
 		<Platform
@@ -207,11 +208,15 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\..\include\clang\Sema\ASTStreamer.h"
+				RelativePath="..\..\lib\Sema\IdentifierResolver.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\lib\Sema\Sema.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Sema\SemaUtil.h"
 				>
 			</File>
 		</Filter>
