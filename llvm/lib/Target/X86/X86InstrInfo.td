@@ -239,7 +239,7 @@ def loadi16 : PatFrag<(ops node:$ptr), (i16 (ld node:$ptr)), [{
     if (ExtType == ISD::NON_EXTLOAD)
       return true;
     if (ExtType == ISD::EXTLOAD)
-      return LD->getAlignment() >= 16 && !LD->isVolatile();
+      return LD->getAlignment() >= 2 && !LD->isVolatile();
   }
   return false;
 }]>;
@@ -252,7 +252,7 @@ def loadi32 : PatFrag<(ops node:$ptr), (i32 (ld node:$ptr)), [{
     if (ExtType == ISD::NON_EXTLOAD)
       return true;
     if (ExtType == ISD::EXTLOAD)
-      return LD->getAlignment() >= 32 && !LD->isVolatile();
+      return LD->getAlignment() >= 4 && !LD->isVolatile();
   }
   return false;
 }]>;
