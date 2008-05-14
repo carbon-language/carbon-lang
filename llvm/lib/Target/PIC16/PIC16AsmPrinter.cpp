@@ -95,11 +95,11 @@ namespace {
 
     public:
     void SwitchToTextSection(const char *NewSection, 
-			     const GlobalValue *GV = NULL);    
+                             const GlobalValue *GV = NULL);    
     void SwitchToDataSection(const char *NewSection, 
-			     const GlobalValue *GV = NULL);
+                             const GlobalValue *GV = NULL);
     void SwitchToDataOvrSection(const char *NewSection, 
-				const GlobalValue *GV = NULL);
+                                const GlobalValue *GV = NULL);
   };
 } // end of anonymous namespace
 
@@ -117,7 +117,7 @@ FunctionPass *llvm::createPIC16CodePrinterPass(std::ostream &o,
 
 void PIC16AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const 
 {
-  // Currently unimplemented.
+  // FIXME: Currently unimplemented.
 }
 
 
@@ -137,66 +137,62 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV)
   } else if (ACPV->isStub()) {
     FnStubs.insert(Name);
     O << TAI->getPrivateGlobalPrefix() << Name << "$stub";
-  } else
+  } else {
     O << Name;
-    if (ACPV->hasModifier()) O << "(" << ACPV->getModifier() << ")";
+  }
 
-    if (ACPV->getPCAdjustment() != 0) {
-      O << "-(" << TAI->getPrivateGlobalPrefix() << "PC"
-        << utostr(ACPV->getLabelId())
-        << "+" << (unsigned)ACPV->getPCAdjustment();
+  if (ACPV->hasModifier()) O << "(" << ACPV->getModifier() << ")";
 
-      if (ACPV->mustAddCurrentAddress())
-        O << "-.";
+  if (ACPV->getPCAdjustment() != 0) {
+    O << "-(" << TAI->getPrivateGlobalPrefix() << "PC"
+      << utostr(ACPV->getLabelId())
+      << "+" << (unsigned)ACPV->getPCAdjustment();
 
-      O << ")";
-    }
-    O << "\n";
+    if (ACPV->mustAddCurrentAddress())
+      O << "-.";
 
-    // If the constant pool value is a extern weak symbol, remember to emit
-    // the weak reference.
-    if (GV && GV->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(GV);
+    O << ")";
+  }
+  O << "\n";
+
+  // If the constant pool value is a extern weak symbol, remember to emit
+  // the weak reference.
+  if (GV && GV->hasExternalWeakLinkage())
+    ExtWeakSymbols.insert(GV);
 }
 
-/// Emit the directives used by ASM on the start of functions
-void PIC16AsmPrinter:: emitFunctionStart(MachineFunction &MF)
+/// emitFunctionStart - Emit the directives used by ASM on the start of 
+/// functions.
+void PIC16AsmPrinter::emitFunctionStart(MachineFunction &MF)
 {
-   // Print out the label for the function.
-   const Function *F = MF.getFunction();
-   MachineFrameInfo *FrameInfo = MF.getFrameInfo();
-   if (FrameInfo->hasStackObjects()) {	   
-     int indexBegin = FrameInfo->getObjectIndexBegin();
-     int indexEnd = FrameInfo->getObjectIndexEnd();
-     while (indexBegin<indexEnd) {
-       if (indexBegin ==0)                     
-         SwitchToDataOvrSection(F->getParent()->getModuleIdentifier().c_str(),
-			 	F);
-		 
-         O << "\t\t" << CurrentFnName << "_" << indexBegin << " " << "RES" 
-	   << " " << FrameInfo->getObjectSize(indexBegin) << "\n" ;
-         indexBegin++;
-     }
-   }
-   SwitchToTextSection(CurrentFnName.c_str(), F);  
-   O << "_" << CurrentFnName << ":" ; 
-   O << "\n";
+  // Print out the label for the function.
+  const Function *F = MF.getFunction();
+  MachineFrameInfo *FrameInfo = MF.getFrameInfo();
+  if (FrameInfo->hasStackObjects()) {           
+    int indexBegin = FrameInfo->getObjectIndexBegin();
+    int indexEnd = FrameInfo->getObjectIndexEnd();
+    while (indexBegin < indexEnd) {
+      if (indexBegin == 0)                     
+        SwitchToDataOvrSection(F->getParent()->getModuleIdentifier().c_str(),
+                                F);
+                 
+        O << "\t\t" << CurrentFnName << "_" << indexBegin << " " << "RES" 
+          << " " << FrameInfo->getObjectSize(indexBegin) << "\n" ;
+        indexBegin++;
+    }
+  }
+  SwitchToTextSection(CurrentFnName.c_str(), F);  
+  O << "_" << CurrentFnName << ":" ; 
+  O << "\n";
 }
 
 
 /// runOnMachineFunction - This uses the printInstruction()
 /// method to print assembly for each instruction.
 ///
-bool PIC16AsmPrinter::
-runOnMachineFunction(MachineFunction &MF) 
+bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) 
 {
-
-  // DW.SetModuleInfo(&getAnalysis<MachineModuleInfo>());
   SetupMachineFunction(MF);
-  O << "\n";
-
-  // NOTE: we don't print out constant pools here, they are handled as
-  // instructions.
   O << "\n";
 
   // What's my mangled name?
@@ -204,9 +200,6 @@ runOnMachineFunction(MachineFunction &MF)
 
   // Emit the function start directives
   emitFunctionStart(MF);
-
-  // Emit pre-function debug information.
-  // DW.BeginFunction(&MF);
 
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
@@ -225,9 +218,6 @@ runOnMachineFunction(MachineFunction &MF)
     }
   }
 
-  // Emit post-function debug information.
-  // DW.EndFunction();
-
   // We didn't modify anything.
   return false;
 }
@@ -238,61 +228,50 @@ printOperand(const MachineInstr *MI, int opNum, const char *Modifier)
   const MachineOperand &MO = MI->getOperand(opNum);
   const TargetRegisterInfo  &RI = *TM.getRegisterInfo();
 
-  switch (MO.getType()) 
-  {
+  switch (MO.getType()) {
     case MachineOperand::MO_Register:
-    {
       if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
         O << RI.get(MO.getReg()).Name;
       else
         assert(0 && "not implemented");
       break;
-    }
+
     case MachineOperand::MO_Immediate: 
-    {
       if (!Modifier || strcmp(Modifier, "no_hash") != 0)
         O << "#";
       O << (int)MO.getImm();
       break;
-    }
+
     case MachineOperand::MO_MachineBasicBlock:
-    {
       printBasicBlockLabel(MO.getMBB());
       return;
-    }
+
     case MachineOperand::MO_GlobalAddress: 
-    {
       O << Mang->getValueName(MO.getGlobal())<<'+'<<MO.getOffset();
       break;
-    }
+
     case MachineOperand::MO_ExternalSymbol: 
-    {
       O << MO.getSymbolName();
       break;
-    }
+
     case MachineOperand::MO_ConstantPoolIndex:
-    {
       O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
         << '_' << MO.getIndex();
       break;
-    }
+
     case MachineOperand::MO_FrameIndex:
-    {
       O << "_" << CurrentFnName 
         << '+' << MO.getIndex();
       break;
-    }
+
     case MachineOperand::MO_JumpTableIndex:
-    {
       O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
         << '_' << MO.getIndex();
       break;
-    }
+
     default:
-    {
       O << "<unknown operand type>"; abort (); 
       break;
-    }
   } // end switch.
 }
 
@@ -300,15 +279,13 @@ static void
 printSOImm(std::ostream &O, int64_t V, const TargetAsmInfo *TAI) 
 {
   assert(V < (1 << 12) && "Not a valid so_imm value!");
-  unsigned Imm = V;
   
-  O << Imm;
+  O << (unsigned) V;
 }
 
-/// printSOImmOperand - SOImm is 4-bit rotate amount in bits 8-11 with 8-bit
+/// printSOImmOperand - SOImm is 4-bit rotated amount in bits 8-11 with 8-bit
 /// immediate in bits 0-7.
-void PIC16AsmPrinter::
-printSOImmOperand(const MachineInstr *MI, int OpNum) 
+void PIC16AsmPrinter::printSOImmOperand(const MachineInstr *MI, int OpNum) 
 {
   const MachineOperand &MO = MI->getOperand(OpNum);
   assert(MO.isImmediate() && "Not a valid so_imm value!");
@@ -316,7 +293,7 @@ printSOImmOperand(const MachineInstr *MI, int OpNum)
 }
 
 
-void PIC16AsmPrinter:: printAddrModeOperand(const MachineInstr *MI, int Op) 
+void PIC16AsmPrinter::printAddrModeOperand(const MachineInstr *MI, int Op) 
 {
   const MachineOperand &MO1 = MI->getOperand(Op);
   const MachineOperand &MO2 = MI->getOperand(Op+1);
@@ -326,15 +303,15 @@ void PIC16AsmPrinter:: printAddrModeOperand(const MachineInstr *MI, int Op)
     return;
   }
 
-  if (!MO1.isRegister()) {   // FIXME: This is for CP entries, but isn't right.
+  if (!MO1.isRegister()) {   
+    // FIXME: This is for CP entries, but isn't right.
     printOperand(MI, Op);
     return;
   }
 
   // If this is Stack Slot
   if (MO1.isRegister()) {  
-    if(strcmp(TM.getRegisterInfo()->get(MO1.getReg()).Name, "SP")==0) 
-    {
+    if (strcmp(TM.getRegisterInfo()->get(MO1.getReg()).Name, "SP") == 0) {
       O << CurrentFnName <<"_"<< MO2.getImm();
       return;
     }
@@ -350,7 +327,7 @@ void PIC16AsmPrinter:: printAddrModeOperand(const MachineInstr *MI, int Op)
 }
 
 
-void PIC16AsmPrinter:: printRegisterList(const MachineInstr *MI, int opNum) 
+void PIC16AsmPrinter::printRegisterList(const MachineInstr *MI, int opNum) 
 {
   O << "{";
   for (unsigned i = opNum, e = MI->getNumOperands(); i != e; ++i) {
@@ -391,16 +368,13 @@ printCPInstOperand(const MachineInstr *MI, int OpNo, const char *Modifier)
 }
 
 
-bool PIC16AsmPrinter:: doInitialization(Module &M) 
+bool PIC16AsmPrinter::doInitialization(Module &M) 
 {
-  // Emit initial debug information.
-  // DW.BeginModule(&M);
-
   bool Result = AsmPrinter::doInitialization(M);
   return Result;
 }
 
-bool PIC16AsmPrinter:: doFinalization(Module &M) 
+bool PIC16AsmPrinter::doFinalization(Module &M) 
 {
   const TargetData *TD = TM.getTargetData();
 
@@ -415,8 +389,8 @@ bool PIC16AsmPrinter:: doFinalization(Module &M)
 
     std::string name = Mang->getValueName(I);
     Constant *C = I->getInitializer();
-    const Type *Type = C->getType();
-    unsigned Size = TD->getABITypeSize(Type);
+    const Type *Ty = C->getType();
+    unsigned Size = TD->getABITypeSize(Ty);
     unsigned Align = TD->getPreferredAlignmentLog(I);
 
     const char *VisibilityDirective = NULL;
@@ -443,7 +417,7 @@ bool PIC16AsmPrinter:: doFinalization(Module &M)
            I->hasLinkOnceLinkage())) {
         if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
         if (!NoZerosInBSS && TAI->getBSSSection())
-           SwitchToDataSection(M.getModuleIdentifier().c_str(), I);
+          SwitchToDataSection(M.getModuleIdentifier().c_str(), I);
         else
           SwitchToDataSection(TAI->getDataSection(), I);
         if (TAI->getLCOMMDirective() != NULL) {
@@ -453,33 +427,29 @@ bool PIC16AsmPrinter:: doFinalization(Module &M)
             O << TAI->getCOMMDirective()  << name << "," << Size;
         } else {
           if (I->hasInternalLinkage())
-             O << "\t.local\t" << name << "\n";
+            O << "\t.local\t" << name << "\n";
 
           O << TAI->getCOMMDirective() <<"\t" << name << " " <<"RES"<< " " 
-	    << Size;
+            << Size;
           O << "\n\t\tGLOBAL" <<" "<< name;
           if (TAI->getCOMMDirectiveTakesAlignment())
-             O << "," << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
+            O << "," << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
         }
         continue;
       }
     }
 
-    switch (I->getLinkage()) 
-    {
+    switch (I->getLinkage()) {
     case GlobalValue::AppendingLinkage:
-    {
       // FIXME: appending linkage variables should go into a section of
       // their name or something.  For now, just emit them as external.
-      // Fall through
-    }
+      // FALL THROUGH
+
     case GlobalValue::ExternalLinkage:
-    {
       O << "\t.globl " << name << "\n";
       // FALL THROUGH
-    }
+
     case GlobalValue::InternalLinkage: 
-    {
       if (I->isConstant()) {
         const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
         if (TAI->getCStringSection() && CVA && CVA->isCString()) {
@@ -488,12 +458,10 @@ bool PIC16AsmPrinter:: doFinalization(Module &M)
         }
       }
       break;
-    }
+
     default:
-    {
       assert(0 && "Unknown linkage type!");
       break;
-    }
     } // end switch.
 
     EmitAlignment(Align, I);
@@ -517,53 +485,53 @@ bool PIC16AsmPrinter:: doFinalization(Module &M)
 void PIC16AsmPrinter::
 SwitchToTextSection(const char *NewSection, const GlobalValue *GV)
 {
-   O << "\n";
-   if (NewSection && *NewSection) {
-     std::string codeSection = "code_";
-     codeSection += NewSection;
-     codeSection += " ";
-     codeSection += "CODE";
-     AsmPrinter::SwitchToTextSection(codeSection.c_str(),GV);
-   } 
-   else 
-     AsmPrinter::SwitchToTextSection(NewSection,GV);
+  O << "\n";
+  if (NewSection && *NewSection) {
+    std::string codeSection = "code_";
+    codeSection += NewSection;
+    codeSection += " ";
+    codeSection += "CODE";
+    AsmPrinter::SwitchToTextSection(codeSection.c_str(), GV);
+  } 
+  else 
+    AsmPrinter::SwitchToTextSection(NewSection, GV);
 }
 
 void PIC16AsmPrinter::
 SwitchToDataSection(const char *NewSection, const GlobalValue *GV)
 {
-   //Need to append index for page
-   O << "\n";
-   if (NewSection && *NewSection) {
-     std::string dataSection ="udata_";
-     dataSection+=NewSection;
-     if (dataSection.substr(dataSection.length()-2).compare(".o") == 0) {
-        dataSection = dataSection.substr(0,dataSection.length()-2);
-     }
-     dataSection += " ";
-     dataSection += "UDATA";
-     AsmPrinter::SwitchToDataSection(dataSection.c_str(),GV);
-   } 
-   else
-     AsmPrinter::SwitchToDataSection(NewSection,GV);
+  // Need to append index for page.
+  O << "\n";
+  if (NewSection && *NewSection) {
+    std::string dataSection = "udata_";
+    dataSection += NewSection;
+    if (dataSection.substr(dataSection.length() - 2).compare(".o") == 0) {
+      dataSection = dataSection.substr(0, dataSection.length() - 2);
+    }
+    dataSection += " ";
+    dataSection += "UDATA";
+    AsmPrinter::SwitchToDataSection(dataSection.c_str(), GV);
+  } 
+  else
+    AsmPrinter::SwitchToDataSection(NewSection, GV);
 }
 
 void PIC16AsmPrinter::
 SwitchToDataOvrSection(const char *NewSection, const GlobalValue *GV)
 {
-   O << "\n";
-   if (NewSection && *NewSection) {
-      std::string dataSection = "frame_";
-      dataSection += NewSection;
-      if (dataSection.substr(dataSection.length()-2).compare(".o") == 0) {
-         dataSection = dataSection.substr(0,dataSection.length()-2);
-      }	  
-      dataSection += "_";
-      dataSection += CurrentFnName;
-      dataSection += " ";
-      dataSection += "UDATA_OVR";
-      AsmPrinter::SwitchToDataSection(dataSection.c_str(),GV);
-   } 
-   else
-      AsmPrinter::SwitchToDataSection(NewSection,GV);
+  O << "\n";
+  if (NewSection && *NewSection) {
+    std::string dataSection = "frame_";
+    dataSection += NewSection;
+    if (dataSection.substr(dataSection.length() - 2).compare(".o") == 0) {
+      dataSection = dataSection.substr(0, dataSection.length() - 2);
+    }          
+    dataSection += "_";
+    dataSection += CurrentFnName;
+    dataSection += " ";
+    dataSection += "UDATA_OVR";
+    AsmPrinter::SwitchToDataSection(dataSection.c_str(), GV);
+  } 
+  else
+    AsmPrinter::SwitchToDataSection(NewSection, GV);
 }

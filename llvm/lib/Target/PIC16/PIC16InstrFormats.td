@@ -22,17 +22,17 @@
 
 // Generic PIC16 Format
 class PIC16Inst<dag outs, dag ins, string asmstr, list<dag> pattern>
-	: Instruction 
+        : Instruction 
 {
   field bits<14> Inst;
 
   let Namespace = "PIC16";
 
   dag OutOperandList = outs;
-  dag InOperandList  = ins;
+  dag InOperandList = ins;
 
-  let AsmString   = asmstr;
-  let Pattern     = pattern;
+  let AsmString = asmstr;
+  let Pattern = pattern;
 }
 
 
@@ -41,8 +41,8 @@ class PIC16Inst<dag outs, dag ins, string asmstr, list<dag> pattern>
 //===----------------------------------------------------------------------===//
 
 class ByteFormat<bits<6> op, dag outs, dag ins, string asmstr,
-         	 list<dag> pattern>
-	:PIC16Inst<outs, ins, asmstr, pattern> 
+                  list<dag> pattern>
+        :PIC16Inst<outs, ins, asmstr, pattern> 
 {
   bits<1>  d;
   bits<7>  f;
@@ -74,8 +74,8 @@ class BitFormat<bits<4> op, dag outs, dag ins, string asmstr, list<dag> pattern>
 //===----------------------------------------------------------------------===//
 
 class LiteralFormat<bits<6> op, dag outs, dag ins, string asmstr, 
-		    list<dag> pattern>
-	: PIC16Inst<outs, ins, asmstr, pattern> 
+                    list<dag> pattern>
+        : PIC16Inst<outs, ins, asmstr, pattern> 
 {
   bits<8> k;
 
@@ -90,8 +90,8 @@ class LiteralFormat<bits<6> op, dag outs, dag ins, string asmstr,
 //===----------------------------------------------------------------------===//
 
 class ControlFormat<bits<3> op, dag outs, dag ins, string asmstr, 
-		    list<dag> pattern>
-	:PIC16Inst<outs, ins, asmstr, pattern> 
+                    list<dag> pattern>
+        :PIC16Inst<outs, ins, asmstr, pattern> 
 {
   bits<11> k;
 

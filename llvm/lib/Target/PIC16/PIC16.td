@@ -32,7 +32,7 @@ def PIC16InstrInfo : InstrInfo {
 
 // Not currently supported, but work as SubtargetFeature placeholder.
 def FeaturePIC16Old : SubtargetFeature<"pic16old", "IsPIC16Old", "true",
-                                      "PIC16 Old ISA Support">;
+                                       "PIC16 Old ISA Support">;
 
 //===----------------------------------------------------------------------===//
 // PIC16 processors supported.

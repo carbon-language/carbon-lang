@@ -12,12 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "PIC16.h"
-#include "PIC16TargetMachine.h"
 #include "PIC16TargetAsmInfo.h"
+#include "PIC16TargetMachine.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetMachineRegistry.h"
 
 using namespace llvm;
 
@@ -33,8 +33,7 @@ PIC16TargetMachine(const Module &M, const std::string &FS) :
   FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0) { }
 
 
-const TargetAsmInfo *PIC16TargetMachine::
-createTargetAsmInfo() const 
+const TargetAsmInfo *PIC16TargetMachine::createTargetAsmInfo() const 
 {
   return new PIC16TargetAsmInfo(*this);
 }
@@ -43,8 +42,7 @@ createTargetAsmInfo() const
 // Pass Pipeline Configuration
 //===----------------------------------------------------------------------===//
 
-bool PIC16TargetMachine::
-addInstSelector(PassManagerBase &PM, bool Fast) 
+bool PIC16TargetMachine::addInstSelector(PassManagerBase &PM, bool Fast) 
 {
   // Install an instruction selector.
   PM.add(createPIC16ISelDag(*this));
@@ -57,7 +55,7 @@ addPrologEpilogInserter(PassManagerBase &PM, bool Fast)
   return false;
 }
 
-bool PIC16TargetMachine:: addPreEmitPass(PassManagerBase &PM, bool Fast) 
+bool PIC16TargetMachine::addPreEmitPass(PassManagerBase &PM, bool Fast) 
 {
   return true;
 }

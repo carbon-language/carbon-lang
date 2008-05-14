@@ -35,8 +35,7 @@ using namespace llvm;
 
 const char *PIC16TargetLowering:: getTargetNodeName(unsigned Opcode) const 
 {
-  switch (Opcode) 
-  {
+  switch (Opcode) {
     case PIC16ISD::Hi        : return "PIC16ISD::Hi";
     case PIC16ISD::Lo        : return "PIC16ISD::Lo";
     case PIC16ISD::Package   : return "PIC16ISD::Package";
@@ -44,7 +43,7 @@ const char *PIC16TargetLowering:: getTargetNodeName(unsigned Opcode) const
     case PIC16ISD::SetBank   : return "PIC16ISD::SetBank";
     case PIC16ISD::SetPage   : return "PIC16ISD::SetPage";
     case PIC16ISD::Branch    : return "PIC16ISD::Branch";
-    case PIC16ISD::Cmp 	     : return "PIC16ISD::Cmp";
+    case PIC16ISD::Cmp       : return "PIC16ISD::Cmp";
     case PIC16ISD::BTFSS     : return "PIC16ISD::BTFSS";
     case PIC16ISD::BTFSC     : return "PIC16ISD::BTFSC";
     case PIC16ISD::XORCC     : return "PIC16ISD::XORCC";
@@ -56,97 +55,77 @@ const char *PIC16TargetLowering:: getTargetNodeName(unsigned Opcode) const
 PIC16TargetLowering::
 PIC16TargetLowering(PIC16TargetMachine &TM): TargetLowering(TM) 
 {
-  // PIC16 does not have i1 type, so use i8 for
-  // setcc operations results (slt, sgt, ...). 
-  // setSetCCResultType(MVT::i8);
-  // setSetCCResultContents(ZeroOrOneSetCCResult);
-
-  // Set up the register classes
-  addRegisterClass(MVT::i8,  PIC16::CPURegsRegisterClass);
+  // Set up the register classes.
+  addRegisterClass(MVT::i8, PIC16::CPURegsRegisterClass);
   addRegisterClass(MVT::i16, PIC16::PTRRegsRegisterClass);
-  // Custom
 
-  // Load extented operations for i1 types must be promoted 
-  setLoadXAction(ISD::EXTLOAD,  MVT::i1,  Promote);
+  // Load extented operations for i1 types must be promoted .
+  setLoadXAction(ISD::EXTLOAD, MVT::i1,  Promote);
   setLoadXAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
   setLoadXAction(ISD::SEXTLOAD, MVT::i1,  Promote);
 
-  // Store operations for i1 types must be promoted
-  // setStoreXAction(MVT::i1, Promote);
-  // setStoreXAction(MVT::i8, Legal);
-  // setStoreXAction(MVT::i16, Custom);
-  // setStoreXAction(MVT::i32, Expand);
+  setOperationAction(ISD::ADD, MVT::i1, Promote);
+  setOperationAction(ISD::ADD, MVT::i8, Legal);
+  setOperationAction(ISD::ADD, MVT::i16, Custom);
+  setOperationAction(ISD::ADD, MVT::i32, Expand);
+  setOperationAction(ISD::ADD, MVT::i64, Expand);
 
-  // setOperationAction(ISD::BUILD_PAIR,     MVT::i32,  Expand);
-  // setOperationAction(ISD::BUILD_PAIR,     MVT::i16,  Expand);
+  setOperationAction(ISD::SUB, MVT::i1, Promote);
+  setOperationAction(ISD::SUB, MVT::i8, Legal);
+  setOperationAction(ISD::SUB, MVT::i16, Custom);
+  setOperationAction(ISD::SUB, MVT::i32, Expand);
+  setOperationAction(ISD::SUB, MVT::i64, Expand);
 
-  setOperationAction(ISD::ADD,     MVT::i1,  Promote);
-  setOperationAction(ISD::ADD,     MVT::i8,  Legal);
-  setOperationAction(ISD::ADD,     MVT::i16, Custom);
-  setOperationAction(ISD::ADD,     MVT::i32, Expand);
-  setOperationAction(ISD::ADD,     MVT::i64, Expand);
+  setOperationAction(ISD::ADDC, MVT::i1, Promote);
+  setOperationAction(ISD::ADDC, MVT::i8, Legal);
+  setOperationAction(ISD::ADDC, MVT::i16, Custom);
+  setOperationAction(ISD::ADDC, MVT::i32, Expand);
+  setOperationAction(ISD::ADDC, MVT::i64, Expand);
 
-  setOperationAction(ISD::SUB,     MVT::i1,  Promote);
-  setOperationAction(ISD::SUB,     MVT::i8,  Legal);
-  setOperationAction(ISD::SUB,     MVT::i16, Custom);
-  setOperationAction(ISD::SUB,     MVT::i32, Expand);
-  setOperationAction(ISD::SUB,     MVT::i64, Expand);
+  setOperationAction(ISD::ADDE, MVT::i1, Promote);
+  setOperationAction(ISD::ADDE, MVT::i8, Legal);
+  setOperationAction(ISD::ADDE, MVT::i16, Custom);
+  setOperationAction(ISD::ADDE, MVT::i32, Expand);
+  setOperationAction(ISD::ADDE, MVT::i64, Expand);
 
-  setOperationAction(ISD::ADDC,     MVT::i1,  Promote);
-  setOperationAction(ISD::ADDC,     MVT::i8,  Legal);
-  setOperationAction(ISD::ADDC,     MVT::i16, Custom);
-  setOperationAction(ISD::ADDC,     MVT::i32, Expand);
-  setOperationAction(ISD::ADDC,     MVT::i64, Expand);
+  setOperationAction(ISD::SUBC, MVT::i1, Promote);
+  setOperationAction(ISD::SUBC, MVT::i8, Legal);
+  setOperationAction(ISD::SUBC, MVT::i16, Custom);
+  setOperationAction(ISD::SUBC, MVT::i32, Expand);
+  setOperationAction(ISD::SUBC, MVT::i64, Expand);
 
-  setOperationAction(ISD::ADDE,     MVT::i1,  Promote);
-  setOperationAction(ISD::ADDE,     MVT::i8,  Legal);
-  setOperationAction(ISD::ADDE,     MVT::i16, Custom);
-  setOperationAction(ISD::ADDE,     MVT::i32, Expand);
-  setOperationAction(ISD::ADDE,     MVT::i64, Expand);
-
-  setOperationAction(ISD::SUBC,     MVT::i1,  Promote);
-  setOperationAction(ISD::SUBC,     MVT::i8,  Legal);
-  setOperationAction(ISD::SUBC,     MVT::i16, Custom);
-  setOperationAction(ISD::SUBC,     MVT::i32, Expand);
-  setOperationAction(ISD::SUBC,     MVT::i64, Expand);
-
-  setOperationAction(ISD::SUBE,     MVT::i1,  Promote);
-  setOperationAction(ISD::SUBE,     MVT::i8,  Legal);
-  setOperationAction(ISD::SUBE,     MVT::i16, Custom);
-  setOperationAction(ISD::SUBE,     MVT::i32, Expand);
-  setOperationAction(ISD::SUBE,     MVT::i64, Expand);
+  setOperationAction(ISD::SUBE, MVT::i1, Promote);
+  setOperationAction(ISD::SUBE, MVT::i8, Legal);
+  setOperationAction(ISD::SUBE, MVT::i16, Custom);
+  setOperationAction(ISD::SUBE, MVT::i32, Expand);
+  setOperationAction(ISD::SUBE, MVT::i64, Expand);
 
   // PIC16 does not have these NodeTypes below.
-  setOperationAction(ISD::SETCC,     MVT::i1,   Expand);
-  setOperationAction(ISD::SETCC,     MVT::i8,   Expand);
-  setOperationAction(ISD::SETCC,     MVT::Other,   Expand);
+  setOperationAction(ISD::SETCC, MVT::i1, Expand);
+  setOperationAction(ISD::SETCC, MVT::i8, Expand);
+  setOperationAction(ISD::SETCC, MVT::Other, Expand);
   setOperationAction(ISD::SELECT_CC, MVT::i1, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i8, Custom);
 
-  setOperationAction(ISD::BRCOND,     MVT::i1,   Expand);
-  setOperationAction(ISD::BRCOND,     MVT::i8,   Expand);
-  setOperationAction(ISD::BRCOND,     MVT::Other,   Expand);
-  setOperationAction(ISD::BR_CC,     MVT::i1, Custom);
-  setOperationAction(ISD::BR_CC,     MVT::i8, Custom);
+  setOperationAction(ISD::BRCOND, MVT::i1, Expand);
+  setOperationAction(ISD::BRCOND, MVT::i8, Expand);
+  setOperationAction(ISD::BRCOND, MVT::Other, Expand);
+
+  setOperationAction(ISD::BR_CC, MVT::i1, Custom);
+  setOperationAction(ISD::BR_CC, MVT::i8, Custom);
 
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
   
-  // Do we really need to Custom lower the GA ??
-  // setOperationAction(ISD::GlobalAddress, MVT::i16, Custom);
+  // FIXME: Do we really need to Custom lower the GA ??
   setOperationAction(ISD::GlobalAddress, MVT::i8, Custom);
   setOperationAction(ISD::RET, MVT::Other, Custom);
 
-  // PIC16 not supported intrinsics.
-  // setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
-  // setOperationAction(ISD::MEMSET, MVT::Other, Expand);
-  // setOperationAction(ISD::MEMCPY, MVT::Other, Expand);
-
   setOperationAction(ISD::CTPOP, MVT::i32, Expand);
-  setOperationAction(ISD::CTTZ , MVT::i32, Expand);
-  setOperationAction(ISD::CTLZ , MVT::i32, Expand);
-  setOperationAction(ISD::ROTL , MVT::i32, Expand);
-  setOperationAction(ISD::ROTR , MVT::i32, Expand);
+  setOperationAction(ISD::CTTZ, MVT::i32, Expand);
+  setOperationAction(ISD::CTLZ, MVT::i32, Expand);
+  setOperationAction(ISD::ROTL, MVT::i32, Expand);
+  setOperationAction(ISD::ROTR, MVT::i32, Expand);
   setOperationAction(ISD::BSWAP, MVT::i32, Expand);
 
   setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
@@ -158,14 +137,12 @@ PIC16TargetLowering(PIC16TargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
   setOperationAction(ISD::LABEL, MVT::Other, Expand);
 
-  // Use the default for now
+  // Use the default for now.
   setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
 
   setOperationAction(ISD::LOAD, MVT::i1, Promote);
   setOperationAction(ISD::LOAD, MVT::i8, Legal);
-  // setOperationAction(ISD::LOAD, MVT::i16, Expand);
-  // setOperationAction(ISD::LOAD, MVT::i32, Expand);
 
   setTargetDAGCombine(ISD::LOAD);
   setTargetDAGCombine(ISD::STORE);
@@ -176,11 +153,6 @@ PIC16TargetLowering(PIC16TargetMachine &TM): TargetLowering(TM)
   setTargetDAGCombine(ISD::SUBC);
   setTargetDAGCombine(ISD::SUB);
 
-  // We must find a way to get rid of Package nodes in the map
-  // setTargetDAGCombine(PIC16ISD::Package);
-
-  // getValueTypeActions().setTypeAction((MVT::ValueType)MVT::i16, Expand);
-
   setStackPointerRegisterToSaveRestore(PIC16::STKPTR);
   computeRegisterProperties();
 }
@@ -189,33 +161,39 @@ PIC16TargetLowering(PIC16TargetMachine &TM): TargetLowering(TM)
 SDOperand PIC16TargetLowering:: LowerOperation(SDOperand Op, SelectionDAG &DAG) 
 {
   SDVTList VTList16 = DAG.getVTList(MVT::i16, MVT::i16, MVT::Other);
-  switch (Op.getOpcode()) 
-  {
+  switch (Op.getOpcode()) {
     case ISD::STORE: 
-      cout << "reduce store\n"; 
-	break;
-    case ISD::FORMAL_ARGUMENTS:   
-      cout<<"==== lowering formal args\n";
-      return LowerFORMAL_ARGUMENTS(Op, DAG);
-    case ISD::GlobalAddress:      
-      cout<<"==== lowering GA\n";
-      return LowerGlobalAddress(Op, DAG);
-    case ISD::RET:      	  
-      cout<<"==== lowering ret\n";
-      return LowerRET(Op, DAG);
-    case ISD::FrameIndex:      	  
-      cout<<"==== lowering frame index\n";
-      return LowerFrameIndex(Op, DAG);
-    case ISD::ADDE: 
-      cout <<"==== lowering adde\n"; 
+      DOUT << "reduce store\n"; 
       break;
+
+    case ISD::FORMAL_ARGUMENTS:   
+      DOUT << "==== lowering formal args\n";
+      return LowerFORMAL_ARGUMENTS(Op, DAG);
+
+    case ISD::GlobalAddress:      
+      DOUT << "==== lowering GA\n";
+      return LowerGlobalAddress(Op, DAG);
+
+    case ISD::RET:                
+      DOUT << "==== lowering ret\n";
+      return LowerRET(Op, DAG);
+
+    case ISD::FrameIndex:                
+      DOUT << "==== lowering frame index\n";
+      return LowerFrameIndex(Op, DAG);
+
+    case ISD::ADDE: 
+      DOUT << "==== lowering adde\n"; 
+      break;
+
     case ISD::LOAD:
     case ISD::ADD: 
       break;
-    case ISD::BR_CC:		
-      cout << "==== lowering BR_CC\n"; 
+
+    case ISD::BR_CC:                
+      DOUT << "==== lowering BR_CC\n"; 
       return LowerBR_CC(Op, DAG); 
-  } //end swithch
+  } // end switch.
   return SDOperand();
 }
 
@@ -224,9 +202,7 @@ SDOperand PIC16TargetLowering:: LowerOperation(SDOperand Op, SelectionDAG &DAG)
 //  Lower helper functions
 //===----------------------------------------------------------------------===//
 
-
-SDOperand 
-PIC16TargetLowering::LowerBR_CC(SDOperand Op, SelectionDAG &DAG) 
+SDOperand PIC16TargetLowering::LowerBR_CC(SDOperand Op, SelectionDAG &DAG) 
 {
   MVT::ValueType VT = Op.getValueType();
   SDOperand Chain = Op.getOperand(0);
@@ -239,74 +215,66 @@ PIC16TargetLowering::LowerBR_CC(SDOperand Op, SelectionDAG &DAG)
   unsigned  branchOpcode;
   SDOperand branchOperand;
 
-  SDOperand StatusReg = DAG.getRegister(PIC16::STATUSREG,MVT::i8);
-  SDOperand CPUReg = DAG.getRegister(PIC16::WREG,MVT::i8);
-  switch(CC) 
-  {
+  SDOperand StatusReg = DAG.getRegister(PIC16::STATUSREG, MVT::i8);
+  SDOperand CPUReg = DAG.getRegister(PIC16::WREG, MVT::i8);
+  switch(CC) {
     default:
       assert(0 && "This condition code is not handled yet!!");
       abort();
+
     case ISD::SETNE:
-    {
-      cout << "setne\n";
+      DOUT << "setne\n";
       cmpOpcode = PIC16ISD::XORCC;
       branchOpcode = PIC16ISD::BTFSS;
-      branchOperand = DAG.getConstant(2,MVT::i8);
+      branchOperand = DAG.getConstant(2, MVT::i8);
       break;
-    }
+
     case ISD::SETEQ:
-    {
-      cout << "seteq\n";
+      DOUT << "seteq\n";
       cmpOpcode = PIC16ISD::XORCC;
       branchOpcode = PIC16ISD::BTFSC;
-      branchOperand = DAG.getConstant(2,MVT::i8);
+      branchOperand = DAG.getConstant(2, MVT::i8);
       break;
-    }
+
     case ISD::SETGT:
-    {
       assert(0 && "Greater Than condition code is not handled yet!!");
       abort();
-    }
+      break;
+
     case ISD::SETGE:
-    {
-      cout << "setge\n";
+      DOUT << "setge\n";
       cmpOpcode = PIC16ISD::SUBCC;
       branchOpcode = PIC16ISD::BTFSS;
       branchOperand = DAG.getConstant(1, MVT::i8);
       break;
-    }
+
     case ISD::SETLT:
-    {
-      cout << "setlt\n";
+      DOUT << "setlt\n";
       cmpOpcode = PIC16ISD::SUBCC;
       branchOpcode = PIC16ISD::BTFSC;
       branchOperand = DAG.getConstant(1,MVT::i8);
       break;
-    }
+
     case ISD::SETLE:
-    {
       assert(0 && "Less Than Equal condition code is not handled yet!!");
       abort();
-    }
+      break;
   }  // End of Switch
 
    SDVTList VTList = DAG.getVTList(MVT::i8, MVT::Flag);
    SDOperand CmpValue = DAG.getNode(cmpOpcode, VTList, LHS, RHS).getValue(1);
-   // SDOperand CCOper = DAG.getConstant(CC,MVT::i8);
-   // Result = DAG.getNode(branchOpcode,VT, Chain, JumpVal, CCOper, StatusReg, 
-   //			   CmpValue);
    Result = DAG.getNode(branchOpcode, VT, Chain, JumpVal, branchOperand, 
-		        StatusReg, CmpValue);
+                        StatusReg, CmpValue);
    return Result;
-	
-  // return SDOperand();
 }
 
 
 //===----------------------------------------------------------------------===//
 //  Misc Lower Operation implementation
 //===----------------------------------------------------------------------===//
-// Create a constant pool entry for global value and wrap it in a wrapper node.
+
+// LowerGlobalAddress - Create a constant pool entry for global value 
+// and wrap it in a wrapper node.
 SDOperand
 PIC16TargetLowering::LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) 
 {
@@ -314,7 +282,7 @@ PIC16TargetLowering::LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG)
   GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
   GlobalValue *GV = GSDN->getGlobal();
 
-  //for now only do the ram.
+  // FIXME: for now only do the ram.
   SDOperand CPAddr = DAG.getTargetConstantPool(GV, PtrVT, 2);
   SDOperand CPBank = DAG.getNode(PIC16ISD::SetBank, MVT::i8, CPAddr);
   CPAddr = DAG.getNode(PIC16ISD::Wrapper, MVT::i8, CPAddr,CPBank);
@@ -325,11 +293,11 @@ PIC16TargetLowering::LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG)
 SDOperand
 PIC16TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) 
 {
-  switch(Op.getNumOperands()) 
-  {
+  switch(Op.getNumOperands()) {
     default:
       assert(0 && "Do not know how to return this many arguments!");
       abort();
+
     case 1:
       return SDOperand(); // ret void is legal
   }
@@ -360,8 +328,8 @@ PIC16TargetLowering::LowerLOAD(SDNode *N,
 
   // If this load is directly stored, replace the load value with the stored
   // value.
-  // TODO: Handle store large -> read small portion.
-  // TODO: Handle TRUNCSTORE/LOADEXT
+  // FIXME: Handle store large -> read small portion.
+  // FIXME: Handle TRUNCSTORE/LOADEXT
   LoadSDNode *LD  = cast<LoadSDNode>(N);
   SDOperand Ptr   = LD->getBasePtr();
   if (LD->getExtensionType() == ISD::NON_EXTLOAD) {
@@ -381,7 +349,7 @@ PIC16TargetLowering::LowerLOAD(SDNode *N,
   toWorklist = DAG.getNode(ISD::ADD, MVT::i16, Src,
                            DAG.getConstant(1, MVT::i16));
   Outs[1] = DAG.getLoad(MVT::i8, Chain, toWorklist, NULL, 0);
-  // Add to worklist may not be needed. 
+  // FIXME: Add to worklist may not be needed. 
   // It is meant to merge sequences of add with constant into one. 
   DCI.AddToWorklist(toWorklist.Val);   
   
@@ -405,7 +373,7 @@ PIC16TargetLowering::LowerADDSUB(SDNode *N, SelectionDAG &DAG,
   bool changed = false;
   int i;
   SDOperand LoOps[3], HiOps[3];
-  SDOperand OutOps[3]; //[0]:left, [1]:right, [2]:carry
+  SDOperand OutOps[3]; // [0]:left, [1]:right, [2]:carry
   SDOperand InOp[2];
   SDOperand retVal;
   SDOperand as1,as2;
@@ -415,8 +383,7 @@ PIC16TargetLowering::LowerADDSUB(SDNode *N, SelectionDAG &DAG,
   InOp[0] = N->getOperand(0);
   InOp[1] = N->getOperand(1);  
 
-  switch (N->getOpcode())
-  {
+  switch (N->getOpcode()) {
     case ISD::ADD:
       if (InOp[0].getOpcode() == ISD::Constant &&
           InOp[1].getOpcode() == ISD::Constant) {
@@ -424,12 +391,15 @@ PIC16TargetLowering::LowerADDSUB(SDNode *N, SelectionDAG &DAG,
         ConstantSDNode *CST1 = dyn_cast<ConstantSDNode>(InOp[1]);
         return DAG.getConstant(CST0->getValue() + CST1->getValue(), MVT::i16);
       }
+      break;
+
     case ISD::ADDE:
     case ISD::ADDC:
       AS  = ISD::ADD;
       ASE = ISD::ADDE;
       ASC = ISD::ADDC;
       break;
+
     case ISD::SUB:
       if (InOp[0].getOpcode() == ISD::Constant &&
           InOp[1].getOpcode() == ISD::Constant) {
@@ -437,23 +407,25 @@ PIC16TargetLowering::LowerADDSUB(SDNode *N, SelectionDAG &DAG,
         ConstantSDNode *CST1 = dyn_cast<ConstantSDNode>(InOp[1]);
         return DAG.getConstant(CST0->getValue() - CST1->getValue(), MVT::i16);
       }
+      break;
+
     case ISD::SUBE:
     case ISD::SUBC:
       AS  = ISD::SUB;
       ASE = ISD::SUBE;
       ASC = ISD::SUBC;
       break;
-    }
+  } // end switch.
 
   assert ((N->getValueType(0) == MVT::i16) 
-	   && "expecting an MVT::i16 node for lowering");
+           && "expecting an MVT::i16 node for lowering");
   assert ((N->getOperand(0).getValueType() == MVT::i16) 
-	   && (N->getOperand(1).getValueType() == MVT::i16) 
- 	   && "both inputs to addx/subx:i16 must be i16");
+           && (N->getOperand(1).getValueType() == MVT::i16) 
+            && "both inputs to addx/subx:i16 must be i16");
 
   for (i = 0; i < 2; i++) {
     if (InOp[i].getOpcode() == ISD::GlobalAddress) {
-      //we don't want to lower subs/adds with global address (at least not yet)
+      // We don't want to lower subs/adds with global address yet.
       return SDOperand();
     }
     else if (InOp[i].getOpcode() == ISD::Constant) {
@@ -469,11 +441,11 @@ PIC16TargetLowering::LowerADDSUB(SDNode *N, SelectionDAG &DAG,
     else if (InOp[i].getOpcode() == ISD::LOAD) {
       changed = true;
       // LowerLOAD returns a Package node or it may combine and return 
-      // anything else
+      // anything else.
       SDOperand lowered = LowerLOAD(InOp[i].Val, DAG, DCI);
 
       // So If LowerLOAD returns something other than Package, 
-      // then just call ADD again
+      // then just call ADD again.
       if (lowered.getOpcode() != PIC16ISD::Package)
         return LowerADDSUB(N, DAG, DCI);
           
@@ -487,15 +459,15 @@ PIC16TargetLowering::LowerADDSUB(SDNode *N, SelectionDAG &DAG,
              (InOp[i].getOpcode() == ISD::SUBE) ||
              (InOp[i].getOpcode() == ISD::SUBC)) {
       changed = true;
-      //must call LowerADDSUB recursively here....
-      //LowerADDSUB returns a Package node
+      // Must call LowerADDSUB recursively here,
+      // LowerADDSUB returns a Package node.
       SDOperand lowered = LowerADDSUB(InOp[i].Val, DAG, DCI);
 
       LoOps[i] = lowered.getOperand(0);
       HiOps[i] = lowered.getOperand(1);
     }
     else if (InOp[i].getOpcode() == ISD::SIGN_EXTEND) {
-      //FIXME: I am just zero extending. for now.
+      // FIXME: I am just zero extending. for now.
       changed = true;
       LoOps[i] = InOp[i].getOperand(0);
       HiOps[i] = DAG.getConstant(0, MVT::i8);
@@ -505,14 +477,14 @@ PIC16TargetLowering::LowerADDSUB(SDNode *N, SelectionDAG &DAG,
       DAG.viewGraph();
       assert (0 && "not implemented yet");
     }
-  } //end for
+  } // end for.
 
   assert (changed && "nothing changed while lowering SUBx/ADDx");
 
   VTList = DAG.getVTList(MVT::i8, MVT::Flag);
   if (N->getOpcode() == ASE) { 
-    //we must take in the existing carry
-    //if this node is part of an existing subx/addx sequence
+    // We must take in the existing carry
+    // if this node is part of an existing subx/addx sequence.
     LoOps[2] = N->getOperand(2).getValue(1);
     as1 = DAG.getNode (ASE, VTList, LoOps, 3);
   }
@@ -521,11 +493,11 @@ PIC16TargetLowering::LowerADDSUB(SDNode *N, SelectionDAG &DAG,
   }
   HiOps[2] = as1.getValue(1);
   as2 = DAG.getNode (ASE, VTList, HiOps, 3);
-  //we must build a pair that also provides the carry from sube/adde
+  // We must build a pair that also provides the carry from sube/adde.
   OutOps[0] = as1;
   OutOps[1] = as2;
   OutOps[2] = as2.getValue(1);
-  //breaking an original i16 so lets make the Package also an i16
+  // Breaking an original i16, so lets make the Package also an i16.
   if (N->getOpcode() == ASE) {
     VTList = DAG.getVTList(MVT::i16, MVT::Flag);
     retVal = DAG.getNode (PIC16ISD::Package, VTList, OutOps, 3);
@@ -548,13 +520,6 @@ PIC16TargetLowering::LowerADDSUB(SDNode *N, SelectionDAG &DAG,
 
 //===----------------------------------------------------------------------===//
 //                      Calling Convention Implementation
-//
-//  The lower operations present on calling convention works on this order:
-//      LowerCALL (virt regs --> phys regs, virt regs --> stack) 
-//      LowerFORMAL_ARGUMENTS (phys --> virt regs, stack --> virt regs)
-//      LowerRET (virt regs --> phys regs)
-//      LowerCALL (phys regs --> virt regs)
-//
 //===----------------------------------------------------------------------===//
 
 #include "PIC16GenCallingConv.inc"
@@ -574,7 +539,7 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG)
   SDOperand Root = Op.getOperand(0);
 
   // Return the new list of results.
-  // Just copy right now.
+  // FIXME: Just copy right now.
   ArgValues.push_back(Root);
 
   return DAG.getNode(ISD::MERGE_VALUES, Op.Val->getVTList(), &ArgValues[0], 
@@ -601,184 +566,182 @@ SDOperand PIC16TargetLowering::PerformDAGCombine(SDNode *N,
   ConstantSDNode *CST;
   SelectionDAG &DAG = DCI.DAG;
 
-  switch (N->getOpcode()) 
-  {
-  default: break;
-  case PIC16ISD::Package  :
-    cout <<"==== combining PIC16ISD::Package\n";
-    return SDOperand();
-  case ISD::ADD  :
-  case ISD::SUB  :
-    if ((N->getOperand(0).getOpcode() == ISD::GlobalAddress) ||
-        (N->getOperand(0).getOpcode() == ISD::FrameIndex)) {
-      //do not touch pointer adds
-      return SDOperand ();
-    }
-  case ISD::ADDE :
-  case ISD::ADDC :
-  case ISD::SUBE :
-  case ISD::SUBC :
-    if (N->getValueType(0) == MVT::i16) {
-      SDOperand retVal = LowerADDSUB(N, DAG,DCI); 
-      // LowerADDSUB has already combined the result, 
-      // so we just return nothing to avoid assertion failure from llvm 
-      // if N has been deleted already
+  switch (N->getOpcode()) {
+    default: 
+      break;
+
+    case PIC16ISD::Package:
+      DOUT << "==== combining PIC16ISD::Package\n";
       return SDOperand();
-    }
-    else if (N->getValueType(0) == MVT::i8) { 
-      //sanity check ....
-      for (int i=0; i<2; i++) {
-        if (N->getOperand (i).getOpcode() == PIC16ISD::Package) {
-          assert (0 && 
-		  "don't want to have PIC16ISD::Package as intput to add:i8");
+
+    case ISD::ADD:
+    case ISD::SUB:
+      if ((N->getOperand(0).getOpcode() == ISD::GlobalAddress) ||
+          (N->getOperand(0).getOpcode() == ISD::FrameIndex)) {
+        // Do not touch pointer adds.
+        return SDOperand ();
+      }
+      break;
+
+    case ISD::ADDE :
+    case ISD::ADDC :
+    case ISD::SUBE :
+    case ISD::SUBC :
+      if (N->getValueType(0) == MVT::i16) {
+        SDOperand retVal = LowerADDSUB(N, DAG,DCI); 
+        // LowerADDSUB has already combined the result, 
+        // so we just return nothing to avoid assertion failure from llvm 
+        // if N has been deleted already.
+        return SDOperand();
+      }
+      else if (N->getValueType(0) == MVT::i8) { 
+        // Sanity check ....
+        for (int i=0; i<2; i++) {
+          if (N->getOperand (i).getOpcode() == PIC16ISD::Package) {
+            assert (0 && 
+                    "don't want to have PIC16ISD::Package as intput to add:i8");
+          }
         }
       }
-    }
-    break;
-  case ISD::STORE :
-  {
-    SDOperand Chain = N->getOperand(0);  
-    SDOperand Src = N->getOperand(1);
-    SDOperand Dest = N->getOperand(2);
-    unsigned int DstOff = 0;
-    int NUM_STORES;
-    SDOperand Stores[6];
+      break;
 
-
-    // if source operand is expected to be extended to 
-    // some higher type then - remove this extension 
-    // SDNode and do the extension manually
-    if ((Src.getOpcode() == ISD::ANY_EXTEND) ||
-	(Src.getOpcode() == ISD::SIGN_EXTEND) || 
-	(Src.getOpcode() == ISD::ZERO_EXTEND)) {
-      Src = Src.Val->getOperand(0);
-      Stores[0] = DAG.getStore(Chain, Src, Dest, NULL,0);
-      return Stores[0];
-    }
-
-    switch(Src.getValueType()) 
+    // FIXME: split this large chunk of code.
+    case ISD::STORE :
     {
-      case MVT::i8:  
-        break;
-      case MVT::i16: 
-        NUM_STORES = 2;
-        break;
-      case MVT::i32: 
-        NUM_STORES = 4;
-        break;
-      case MVT::i64: 
-        NUM_STORES = 8; 
-        break;
-    }
+      SDOperand Chain = N->getOperand(0);  
+      SDOperand Src = N->getOperand(1);
+      SDOperand Dest = N->getOperand(2);
+      unsigned int DstOff = 0;
+      int NUM_STORES;
+      SDOperand Stores[6];
 
-    if (isa<GlobalAddressSDNode>(Dest) && isa<LoadSDNode>(Src) && 
-        (Src.getValueType() != MVT::i8)) {
-      //create direct addressing a = b
-      Chain = Src.getOperand(0);
-      for (i=0; i<NUM_STORES; i++) {
-	SDOperand ADN = DAG.getNode(ISD::ADD, MVT::i16, Src.getOperand(1),
-                                    DAG.getConstant(DstOff, MVT::i16));
-	SDOperand LDN = DAG.getLoad(MVT::i8, Chain, ADN, NULL, 0);
-	SDOperand DSTADDR = DAG.getNode(ISD::ADD, MVT::i16, Dest,
-                                        DAG.getConstant(DstOff, MVT::i16));
-        Stores[i] = DAG.getStore(Chain, LDN, DSTADDR, NULL, 0);
-        Chain = Stores[i];
-        DstOff += 1;
-      } 
+      // if source operand is expected to be extended to 
+      // some higher type then - remove this extension 
+      // SDNode and do the extension manually
+      if ((Src.getOpcode() == ISD::ANY_EXTEND) ||
+          (Src.getOpcode() == ISD::SIGN_EXTEND) || 
+          (Src.getOpcode() == ISD::ZERO_EXTEND)) {
+        Src = Src.Val->getOperand(0);
+        Stores[0] = DAG.getStore(Chain, Src, Dest, NULL,0);
+        return Stores[0];
+      }
+
+      switch(Src.getValueType()) {
+        case MVT::i8:  
+          break;
+
+        case MVT::i16: 
+          NUM_STORES = 2;
+          break;
+
+        case MVT::i32: 
+          NUM_STORES = 4;
+          break;
+
+        case MVT::i64: 
+          NUM_STORES = 8; 
+          break;
+      }
+
+      if (isa<GlobalAddressSDNode>(Dest) && isa<LoadSDNode>(Src) && 
+          (Src.getValueType() != MVT::i8)) {
+        //create direct addressing a = b
+        Chain = Src.getOperand(0);
+        for (i=0; i<NUM_STORES; i++) {
+          SDOperand ADN = DAG.getNode(ISD::ADD, MVT::i16, Src.getOperand(1),
+                                      DAG.getConstant(DstOff, MVT::i16));
+          SDOperand LDN = DAG.getLoad(MVT::i8, Chain, ADN, NULL, 0);
+          SDOperand DSTADDR = DAG.getNode(ISD::ADD, MVT::i16, Dest,
+                                          DAG.getConstant(DstOff, MVT::i16));
+          Stores[i] = DAG.getStore(Chain, LDN, DSTADDR, NULL, 0);
+          Chain = Stores[i];
+          DstOff += 1;
+        } 
         
-      Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &Stores[0], i);
-      return Chain;
-    }
-    else if (isa<GlobalAddressSDNode>(Dest) && isa<ConstantSDNode>(Src) 
-             && (Src.getValueType() != MVT::i8))
-    {
-      //create direct addressing a = CONST
-      CST = dyn_cast<ConstantSDNode>(Src);
-      for (i = 0; i < NUM_STORES; i++) {
-	SDOperand CNST = DAG.getConstant(CST->getValue() >> i*8, MVT::i8);
-	SDOperand ADN = DAG.getNode(ISD::ADD, MVT::i16, Dest,
-                                    DAG.getConstant(DstOff, MVT::i16));
-        Stores[i] = DAG.getStore(Chain, CNST, ADN, NULL, 0);
-        Chain = Stores[i];
-        DstOff += 1;
-      } 
+        Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &Stores[0], i);
+        return Chain;
+      }
+      else if (isa<GlobalAddressSDNode>(Dest) && isa<ConstantSDNode>(Src) 
+               && (Src.getValueType() != MVT::i8)) {
+        //create direct addressing a = CONST
+        CST = dyn_cast<ConstantSDNode>(Src);
+        for (i = 0; i < NUM_STORES; i++) {
+          SDOperand CNST = DAG.getConstant(CST->getValue() >> i*8, MVT::i8);
+          SDOperand ADN = DAG.getNode(ISD::ADD, MVT::i16, Dest,
+                                      DAG.getConstant(DstOff, MVT::i16));
+          Stores[i] = DAG.getStore(Chain, CNST, ADN, NULL, 0);
+          Chain = Stores[i];
+          DstOff += 1;
+        } 
           
-      Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &Stores[0], i);
-      return Chain;
-    }
-    else if (isa<LoadSDNode>(Dest) && isa<ConstantSDNode>(Src) 
-	    && (Src.getValueType() != MVT::i8)) {
-      //create indirect addressing
-      CST = dyn_cast<ConstantSDNode>(Src);
-      Chain = Dest.getOperand(0);  
-      SDOperand Load;
-      Load = DAG.getLoad(MVT::i16, Chain,Dest.getOperand(1), NULL, 0);
-      Chain = Load.getValue(1);
-      for (i=0; i<NUM_STORES; i++) {
-	SDOperand CNST = DAG.getConstant(CST->getValue() >> i*8, MVT::i8);
-        Stores[i] = DAG.getStore(Chain, CNST, Load, NULL, 0);
-        Chain = Stores[i];
-        DstOff += 1;
-      } 
+        Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &Stores[0], i);
+        return Chain;
+      }
+      else if (isa<LoadSDNode>(Dest) && isa<ConstantSDNode>(Src) 
+              && (Src.getValueType() != MVT::i8)) {
+        // Create indirect addressing.
+        CST = dyn_cast<ConstantSDNode>(Src);
+        Chain = Dest.getOperand(0);  
+        SDOperand Load;
+        Load = DAG.getLoad(MVT::i16, Chain,Dest.getOperand(1), NULL, 0);
+        Chain = Load.getValue(1);
+        for (i=0; i<NUM_STORES; i++) {
+          SDOperand CNST = DAG.getConstant(CST->getValue() >> i*8, MVT::i8);
+          Stores[i] = DAG.getStore(Chain, CNST, Load, NULL, 0);
+          Chain = Stores[i];
+          DstOff += 1;
+        } 
           
-      Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &Stores[0], i);
-      return Chain;
-    }
-    else if (isa<LoadSDNode>(Dest) && isa<GlobalAddressSDNode>(Src)) {
-      // GlobalAddressSDNode *GAD = dyn_cast<GlobalAddressSDNode>(Src);
-      return SDOperand();
-    }
-    else if (Src.getOpcode() == PIC16ISD::Package) {
-      StoreSDNode *st = dyn_cast<StoreSDNode>(N);
-      SDOperand toWorkList, retVal;
-      Chain = N->getOperand(0);
+        Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &Stores[0], i);
+        return Chain;
+      }
+      else if (isa<LoadSDNode>(Dest) && isa<GlobalAddressSDNode>(Src)) {
+        // GlobalAddressSDNode *GAD = dyn_cast<GlobalAddressSDNode>(Src);
+        return SDOperand();
+      }
+      else if (Src.getOpcode() == PIC16ISD::Package) {
+        StoreSDNode *st = dyn_cast<StoreSDNode>(N);
+        SDOperand toWorkList, retVal;
+        Chain = N->getOperand(0);
 
-      if (st->isTruncatingStore()) {
-        retVal = DAG.getStore(Chain, Src.getOperand(0), Dest, NULL, 0);
+        if (st->isTruncatingStore()) {
+          retVal = DAG.getStore(Chain, Src.getOperand(0), Dest, NULL, 0);
+        }
+        else {
+          toWorkList = DAG.getNode(ISD::ADD, MVT::i16, Dest,
+                                   DAG.getConstant(1, MVT::i16));
+          Stores[1] = DAG.getStore(Chain, Src.getOperand(0), Dest, NULL, 0);
+          Stores[0] = DAG.getStore(Chain, Src.getOperand(1), toWorkList, NULL, 
+                                   0);
+
+          // We want to merge sequence of add with constant to one add and a 
+          // constant, so add the ADD node to worklist to have llvm do that 
+          // automatically.
+          DCI.AddToWorklist(toWorkList.Val); 
+
+          // We don't need the Package so add to worklist so llvm deletes it
+          DCI.AddToWorklist(Src.Val);
+          retVal = DAG.getNode(ISD::TokenFactor, MVT::Other, &Stores[0], 2);
+        }
+
+        return retVal;
+      }
+      else if (Src.getOpcode() == ISD::TRUNCATE) {
       }
       else {
-	toWorkList = DAG.getNode(ISD::ADD, MVT::i16, Dest,
-                                 DAG.getConstant(1, MVT::i16));
-        Stores[1] = DAG.getStore(Chain, Src.getOperand(0), Dest, NULL, 0);
-        Stores[0] = DAG.getStore(Chain, Src.getOperand(1), toWorkList, NULL, 0);
-
-       // We want to merge sequence of add with constant to one add and a 
-       // constant, so add the ADD node to worklist to have llvm do that 
-       // automatically.
-       DCI.AddToWorklist(toWorkList.Val); 
-
-       // We don't need the Package so add to worklist so llvm deletes it
-       DCI.AddToWorklist(Src.Val);
-       retVal = DAG.getNode(ISD::TokenFactor, MVT::Other, &Stores[0], 2);
       }
+    } // end ISD::STORE.
+    break;
 
-      return retVal;
+    case ISD::LOAD :
+    {
+      SDOperand Ptr = N->getOperand(1);
+      if (Ptr.getOpcode() == PIC16ISD::Package) {
+        assert (0 && "not implemented yet");
+       }
     }
-    else if (Src.getOpcode() == ISD::TRUNCATE) {
-    }
-    else {
-      // DAG.setGraphColor(N, "blue");
-      // DAG.viewGraph();
-      // assert (0 && "input to store not implemented yet");
-    }
-  } //end ISD::STORE
-
-  break;
-  case ISD::LOAD :
-  {
-    SDOperand Ptr = N->getOperand(1);
-    if (Ptr.getOpcode() == PIC16ISD::Package) {
-      // DAG.setGraphColor(N, "blue");
-      // DAG.viewGraph();
-      // Here we must make so that:
-      // Ptr.getOperand(0) --> fsrl
-      // Ptr.getOperand(1) --> fsrh
-      assert (0 && "not implemented yet");
-     }
-     //return SDOperand();
-     //break;
-  }
-  }//end switch
+    break;
+  } // end switch.
 
   return SDOperand();
 }
@@ -793,8 +756,8 @@ findLoadi8(const SDOperand &Src, SelectionDAG &DAG) const
   if ((Src.getOpcode() == ISD::LOAD) && (Src.getValueType() == MVT::i8))
     return &Src;
   for (i=0; i<Src.getNumOperands(); i++) {
-     const SDOperand *retVal = findLoadi8(Src.getOperand(i),DAG);
-     if (retVal) return retVal;
+    const SDOperand *retVal = findLoadi8(Src.getOperand(i),DAG);
+    if (retVal) return retVal;
   }
 
   return NULL;

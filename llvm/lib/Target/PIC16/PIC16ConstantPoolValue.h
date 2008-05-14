@@ -41,15 +41,15 @@ class PIC16ConstantPoolValue : public MachineConstantPoolValue {
 
 public:
   PIC16ConstantPoolValue(GlobalValue *gv, unsigned id,
-                       PIC16CP::PIC16CPKind Kind = PIC16CP::CPValue,
-                       unsigned char PCAdj = 0, const char *Modifier = NULL,
-                       bool AddCurrentAddress = false);
+                         PIC16CP::PIC16CPKind Kind = PIC16CP::CPValue,
+                         unsigned char PCAdj = 0, const char *Modifier = NULL,
+                         bool AddCurrentAddress = false);
   PIC16ConstantPoolValue(const char *s, unsigned id,
-                       PIC16CP::PIC16CPKind Kind = PIC16CP::CPValue,
-                       unsigned char PCAdj = 0, const char *Modifier = NULL,
-                       bool AddCurrentAddress = false);
+                         PIC16CP::PIC16CPKind Kind = PIC16CP::CPValue,
+                         unsigned char PCAdj = 0, const char *Modifier = NULL,
+                         bool AddCurrentAddress = false);
   PIC16ConstantPoolValue(GlobalValue *GV, PIC16CP::PIC16CPKind Kind,
-                       const char *Modifier);
+                         const char *Modifier);
 
 
   GlobalValue *getGV() const { return GV; }

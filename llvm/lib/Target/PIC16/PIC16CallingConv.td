@@ -1,4 +1,4 @@
-//===- PIC16CallingConv.td - Calling Conventions Sparc -----*- tablegen -*-===//
+//===- PIC16CallingConv.td - Calling Conventions PIC16 -----*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,4 +14,3 @@
 //===----------------------------------------------------------------------===//
 // Return Value Calling Conventions
 //===----------------------------------------------------------------------===//
-

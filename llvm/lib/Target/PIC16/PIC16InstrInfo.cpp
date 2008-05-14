@@ -21,7 +21,7 @@
 
 using namespace llvm;
 
-// TODO: Add the subtarget support on this constructor.
+// FIXME: Add the subtarget support on this constructor.
 PIC16InstrInfo::PIC16InstrInfo(PIC16TargetMachine &tm)
   : TargetInstrInfoImpl(PIC16Insts, array_lengthof(PIC16Insts)),
     TM(tm), RI(*this) {}
@@ -87,7 +87,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB,
         .addReg(SrcReg,false,false,true,true)
         .addExternalSymbol(tmpName)   // the current printer expects 3 operands,
         .addExternalSymbol(tmpName);  // all we need is actually one, 
-				      // so we repeat.
+                                      // so we repeat.
   }
   else
     assert(0 && "Can't store this register to stack slot");
@@ -120,7 +120,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 /// instructions inserted.
 unsigned PIC16InstrInfo::
 InsertBranch(MachineBasicBlock &MBB, 
-	     MachineBasicBlock *TBB, MachineBasicBlock *FBB,
+             MachineBasicBlock *TBB, MachineBasicBlock *FBB,
              const std::vector<MachineOperand> &Cond) const
 {
   // Shouldn't be a fall through.
@@ -134,7 +134,7 @@ InsertBranch(MachineBasicBlock &MBB,
     return 1;
   }
 
-  // TODO: If the there are some conditions specified then conditional branch 
+  // FIXME: If the there are some conditions specified then conditional branch 
   // should be generated.
   // For the time being no instruction is being generated therefore 
   // returning NULL.

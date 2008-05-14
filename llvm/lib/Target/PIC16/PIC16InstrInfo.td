@@ -46,7 +46,7 @@ def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_PIC16CallSeq,
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PIC16CallSeq,
                            [SDNPHasChain, SDNPOutFlag]>;
 
-def PIC16Wrapper       : SDNode<"PIC16ISD::Wrapper", SDTIntUnaryOp>;
+def PIC16Wrapper  : SDNode<"PIC16ISD::Wrapper", SDTIntUnaryOp>;
 
 // so_imm_XFORM - Return a so_imm value packed into the format described for
 // so_imm def below.
@@ -74,7 +74,7 @@ class ArithI<bits<6> op, string instr_asm, SDNode OpNode,
       !strconcat(instr_asm, " $c"),
       [(set CPURegs:$dst, (OpNode CPURegs:$b, Od:$c))]>;
 
-// Memory Load/Store 
+// Memory Load/Store. 
 class LoadDirect<bits<6> op, string instr_asm, PatFrag OpNode>:
   ByteFormat< op,
       (outs CPURegs:$dst),
@@ -103,7 +103,7 @@ class StoreInDirect<bits<6> op, string instr_asm, PatFrag OpNode>:
       !strconcat(instr_asm, " $fsr"),
       [(OpNode CPURegs:$src, PTRRegs:$fsr)]>;
 
-// Move 
+// Move.
 class MovLit<bits<6> op, string instr_asm>:
   LiteralFormat< op,
       (outs CPURegs:$dst),
@@ -162,52 +162,52 @@ def MOVLW : MovLit<0x24, "movlw">;
 }
 
 // Load/Store
-def LFSR1      : LoadInDirect	<0x4, "lfsr",  load>;
+def LFSR1      : LoadInDirect        <0x4, "lfsr",  load>;
 
 let isReMaterializable = 1 in {
-def MOVF      : LoadDirect <0x23, "movf",  load>;
+def MOVF       : LoadDirect <0x23, "movf",  load>;
 }
 
-def MOVWF     : StoreDirect <0x2b, "movwf", store>;
+def MOVWF      : StoreDirect <0x2b, "movwf", store>;
 
-def MOVFSRINC : StoreInDirect <0x5, "movfsrinc", store>;
+def MOVFSRINC  : StoreInDirect <0x5, "movfsrinc", store>;
 
-def RETURN    : ControlFormat<0x03, (outs), (ins), "return", []>;
+def RETURN     : ControlFormat<0x03, (outs), (ins), "return", []>;
 
-def ADDWF     : Arith1M<0x01, "addwf", add>; 
-def ADDFW     : Arith1R<0x02, "addfw", add>; 
+def ADDWF      : Arith1M<0x01, "addwf", add>; 
+def ADDFW      : Arith1R<0x02, "addfw", add>; 
 
-def ADDWFE    : Arith1M<0x03, "addwfe", adde>; 
-def ADDFWE    : Arith1R<0x04, "addfwe", adde>; 
+def ADDWFE     : Arith1M<0x03, "addwfe", adde>; 
+def ADDFWE     : Arith1R<0x04, "addfwe", adde>; 
 
-def ADDWFC    : Arith1M<0x05, "addwfc", addc>; 
-def ADDFWC    : Arith1R<0x06, "addfwc", addc>; 
+def ADDWFC     : Arith1M<0x05, "addwfc", addc>; 
+def ADDFWC     : Arith1R<0x06, "addfwc", addc>; 
 
-def SUBWF     : Arith1M<0x07, "subwf", sub>; 
-def SUBFW     : Arith1R<0x08, "subfw", sub>; 
+def SUBWF      : Arith1M<0x07, "subwf", sub>; 
+def SUBFW      : Arith1R<0x08, "subfw", sub>; 
 
-def SUBWFE    : Arith1M<0x09, "subwfe", sube>; 
-def SUBFWE    : Arith1R<0x0a, "subfwe", sube>; 
+def SUBWFE     : Arith1M<0x09, "subwfe", sube>; 
+def SUBFWE     : Arith1R<0x0a, "subfwe", sube>; 
 
-def SUBWFC    : Arith1M<0x0b, "subwfc", subc>; 
-def SUBFWC    : Arith1R<0x0d, "subfwc", subc>; 
+def SUBWFC     : Arith1M<0x0b, "subwfc", subc>; 
+def SUBFWC     : Arith1R<0x0d, "subfwc", subc>; 
 
-def SUBRFW    : Arith2R<0x08, "subfw", sub>; 
+def SUBRFW     : Arith2R<0x08, "subfw", sub>; 
 
-def SUBRFWE   : Arith2R<0x0a, "subfwe", sube>; 
+def SUBRFWE    : Arith2R<0x0a, "subfwe", sube>; 
 
-def SUBRFWC   : Arith2R<0x0d, "subfwc", subc>; 
+def SUBRFWC    : Arith2R<0x0d, "subfwc", subc>; 
 
-def brtarget  : Operand<OtherVT>;
+def brtarget   : Operand<OtherVT>;
 
 class UncondJump< bits<4> op, string instr_asm>:
   BitFormat< op,
-	     (outs),
-	     (ins brtarget:$target),
-	     !strconcat(instr_asm, " $target"),
-	     [(br bb:$target)]>;
+             (outs),
+             (ins brtarget:$target),
+             !strconcat(instr_asm, " $target"),
+             [(br bb:$target)]>;
 
-def GOTO : UncondJump<0x1, "goto">;
+def GOTO       : UncondJump<0x1, "goto">;
 
 class LogicM<bits<6> op, string instr_asm, SDNode OpNode> :
   ByteFormat< op,
@@ -246,7 +246,7 @@ def IORLW : LogicI<0x1,"iorlw",or, so_imm>;
 /* For comparison before branch */
 def SDT_PIC16Cmp  : SDTypeProfile<1, 3, [SDTCisSameAs<0,1>]>;
 def SDTIntBinOpPIC16 : SDTypeProfile<1, 2, [SDTCisSameAs<0,1>, 
-				     SDTCisSameAs<1,2>, SDTCisInt<1>]>;
+                                     SDTCisSameAs<1,2>, SDTCisInt<1>]>;
 
 def PIC16Cmp : SDNode<"PIC16ISD::Cmp",SDTIntBinOpPIC16, [SDNPOutFlag]>; 
 def PIC16XORCC : SDNode<"PIC16ISD::XORCC",SDTIntBinOpPIC16, [SDNPOutFlag]>; 
@@ -260,23 +260,23 @@ def SUBLWCC : ArithI<0x1,"sublw",PIC16SUBCC, so_imm>;
 
 /* For branch conditions */
 def SDT_PIC16Branch  : SDTypeProfile<0, 3, [SDTCisVT<0, OtherVT>, 
-				     SDTCisVT<1,i8>, SDTCisVT<2,i8>]>;
+                                     SDTCisVT<1,i8>, SDTCisVT<2,i8>]>;
 
 def PIC16Branch : SDNode<"PIC16ISD::Branch",SDT_PIC16Branch, 
-			 [SDNPHasChain, SDNPInFlag]>; 
+                         [SDNPHasChain, SDNPInFlag]>; 
 
 def PIC16BTFSS  : SDNode<"PIC16ISD::BTFSS",SDT_PIC16Branch, 
-			 [SDNPHasChain, SDNPInFlag]>; 
+                         [SDNPHasChain, SDNPInFlag]>; 
 
 def PIC16BTFSC  : SDNode<"PIC16ISD::BTFSC",SDT_PIC16Branch, 
-			 [SDNPHasChain, SDNPInFlag]>; 
+                         [SDNPHasChain, SDNPInFlag]>; 
 
 class InstrBitTestCC<bits<4> op, string instr_asm,SDNode OpNode>:
   BitFormat< op,
-	     (outs),
-	     (ins brtarget:$target ,so_imm:$i, STATUSRegs:$s ),
-      	     !strconcat(instr_asm, " $s, $i, $target"),
-      	     [(OpNode bb:$target, so_imm:$i, STATUSRegs:$s )]>;
+             (outs),
+             (ins brtarget:$target ,so_imm:$i, STATUSRegs:$s ),
+                   !strconcat(instr_asm, " $s, $i, $target"),
+                   [(OpNode bb:$target, so_imm:$i, STATUSRegs:$s )]>;
 
 def BTFSS : InstrBitTestCC<0x1,"btfss",PIC16BTFSS>;
 def BTFSC : InstrBitTestCC<0x1,"btfsc",PIC16BTFSC>;

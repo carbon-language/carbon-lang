@@ -44,8 +44,8 @@ struct PIC16RegisterInfo : public PIC16GenRegisterInfo {
   }
 
   void copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
-          	    unsigned DestReg, unsigned SrcReg,
-          	    const TargetRegisterClass *RC) const;
+                    unsigned DestReg, unsigned SrcReg,
+                    const TargetRegisterClass *RC) const;
   
 
   const unsigned *getCalleeSavedRegs(const MachineFunction* MF = 0) const;

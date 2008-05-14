@@ -15,10 +15,10 @@
 #ifndef PIC16ISELLOWERING_H
 #define PIC16ISELLOWERING_H
 
-#include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/Target/TargetLowering.h"
 #include "PIC16.h"
 #include "PIC16Subtarget.h"
+#include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
   namespace PIC16ISD {
@@ -35,15 +35,15 @@ namespace llvm {
       // Get the Lower 16 bits from a 32-bit immediate
       Lo,
 
-      Cmp,	// PIC16 Generic Comparison instruction.
-      Branch,	// PIC16 Generic Branch Instruction.	
-      BTFSS,	// PIC16 BitTest Instruction (Skip if set).
-      BTFSC,	// PIC16 BitTest Instruction (Skip if clear).
+      Cmp,        // PIC16 Generic Comparison instruction.
+      Branch,        // PIC16 Generic Branch Instruction.        
+      BTFSS,        // PIC16 BitTest Instruction (Skip if set).
+      BTFSC,        // PIC16 BitTest Instruction (Skip if clear).
 
       // PIC16 comparison to be converted to either XOR or SUB
       // Following instructions cater to those convertions.
-      XORCC,	
-      SUBCC,	
+      XORCC,        
+      SUBCC,        
 
       // Get the Global Address wrapped into a wrapper that also captures 
       // the bank or page.
@@ -73,9 +73,9 @@ namespace llvm {
     SDOperand LowerBR_CC(SDOperand Op, SelectionDAG &DAG);
 
     SDOperand RemoveHiLo(SDNode *, SelectionDAG &DAG, 
-			 DAGCombinerInfo &DCI) const;
+                         DAGCombinerInfo &DCI) const;
     SDOperand LowerADDSUB(SDNode *, SelectionDAG &DAG, 
-			  DAGCombinerInfo &DCI) const;
+                          DAGCombinerInfo &DCI) const;
     SDOperand LowerLOAD(SDNode *, SelectionDAG &DAG, 
                         DAGCombinerInfo &DCI) const;
 

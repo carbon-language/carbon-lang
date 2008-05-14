@@ -34,7 +34,7 @@
 
 using namespace llvm;
 
-// TODO: add subtarget support
+// FIXME: add subtarget support.
 PIC16RegisterInfo::PIC16RegisterInfo(const TargetInstrInfo &tii)
   : PIC16GenRegisterInfo(PIC16::ADJCALLSTACKDOWN, PIC16::ADJCALLSTACKUP),
   TII(tii) {}
@@ -44,8 +44,8 @@ PIC16RegisterInfo::PIC16RegisterInfo(const TargetInstrInfo &tii)
 unsigned PIC16RegisterInfo::
 getRegisterNumbering(unsigned RegEnum) 
 {
-   assert (RegEnum <= 31 && "Unknown register number!");
-   return RegEnum;
+  assert (RegEnum <= 31 && "Unknown register number!");
+  return RegEnum;
 }
 
 void PIC16RegisterInfo::
@@ -61,16 +61,15 @@ void PIC16RegisterInfo::reMaterialize(MachineBasicBlock &MBB,
                                       unsigned DestReg, 
                                       const MachineInstr *Orig) const 
 {
-    MachineInstr *MI = Orig->clone();
-    MI->getOperand(0).setReg(DestReg);
-    MBB.insert(I, MI);
+  MachineInstr *MI = Orig->clone();
+  MI->getOperand(0).setReg(DestReg);
+  MBB.insert(I, MI);
 }
 
 MachineInstr *PIC16RegisterInfo::
 foldMemoryOperand(MachineInstr* MI, unsigned OpNum, int FI) const 
 {
   MachineInstr *NewMI = NULL;
-
   return NewMI;
 }
 
@@ -152,27 +151,24 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   int stackSize  = MF.getFrameInfo()->getStackSize();
   int spOffset   = MF.getFrameInfo()->getObjectOffset(FrameIndex);
 
-  #ifndef NDEBUG
   DOUT << "\nFunction : " << MF.getFunction()->getName() << "\n";
   DOUT << "<--------->\n";
+#ifndef NDEBUG
   MI.print(DOUT);
+#endif
   DOUT << "FrameIndex : " << FrameIndex << "\n";
   DOUT << "spOffset   : " << spOffset << "\n";
   DOUT << "stackSize  : " << stackSize << "\n";
-  #endif
 
-  // as explained on LowerFORMAL_ARGUMENTS, detect negative offsets 
+  // As explained on LowerFORMAL_ARGUMENTS, detect negative offsets 
   // and adjust SPOffsets considering the final stack size.
   int Offset = ((spOffset < 0) ? (stackSize + (-(spOffset+4))) : (spOffset));
-  //Offset    += MI.getOperand(i+1).getImm();
 
-  #ifndef NDEBUG
   DOUT << "Offset     : " << Offset << "\n";
   DOUT << "<--------->\n";
-  #endif
 
   // MI.getOperand(i+1).ChangeToImmediate(Offset);
-   MI.getOperand(i).ChangeToRegister(getFrameRegister(MF),false);
+  MI.getOperand(i).ChangeToRegister(getFrameRegister(MF), false);
 }
 
 void PIC16RegisterInfo::
@@ -186,7 +182,8 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
 }
 
 void PIC16RegisterInfo::
-processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
+processFunctionBeforeFrameFinalized(MachineFunction &MF) const 
+{
 }
 
 unsigned PIC16RegisterInfo::
