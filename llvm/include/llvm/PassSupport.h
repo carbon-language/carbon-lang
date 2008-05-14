@@ -137,6 +137,10 @@ public:
 protected:
   void registerPass();
   void unregisterPass();
+
+private:
+  void operator=(const PassInfo &); // do not implement
+  PassInfo(const PassInfo &);       // do not implement
 };
 
 
