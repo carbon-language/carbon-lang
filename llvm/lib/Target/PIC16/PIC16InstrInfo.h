@@ -32,7 +32,7 @@ public:
   /// such, whenever a client has an instance of instruction info, it should
   /// always be able to get register info as well (through this method).
   ///
-  virtual const TargetRegisterInfo &getRegisterInfo() const { return RI; }
+  virtual const PIC16RegisterInfo &getRegisterInfo() const { return RI; }
 
   
   /// isLoadFromStackSlot - If the specified machine instruction is a direct

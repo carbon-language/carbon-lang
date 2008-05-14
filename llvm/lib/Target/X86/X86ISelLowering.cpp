@@ -44,7 +44,7 @@ using namespace llvm;
 // Forward declarations.
 static SDOperand getMOVLMask(unsigned NumElems, SelectionDAG &DAG);
 
-X86TargetLowering::X86TargetLowering(TargetMachine &TM)
+X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   : TargetLowering(TM) {
   Subtarget = &TM.getSubtarget<X86Subtarget>();
   X86ScalarSSEf64 = Subtarget->hasSSE2();
@@ -5284,10 +5284,8 @@ SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
     const unsigned char JMP64r  = TII->getBaseOpcodeFor(X86::JMP64r);
     const unsigned char MOV64ri = TII->getBaseOpcodeFor(X86::MOV64ri);
 
-    const unsigned char N86R10 =
-      ((const X86RegisterInfo*)RegInfo)->getX86RegNum(X86::R10);
-    const unsigned char N86R11 =
-      ((const X86RegisterInfo*)RegInfo)->getX86RegNum(X86::R11);
+    const unsigned char N86R10 = RegInfo->getX86RegNum(X86::R10);
+    const unsigned char N86R11 = RegInfo->getX86RegNum(X86::R11);
 
     const unsigned char REX_WB = 0x40 | 0x08 | 0x01; // REX prefix
 
@@ -5374,8 +5372,7 @@ SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
     Disp = DAG.getNode(ISD::SUB, MVT::i32, FPtr, Addr);
 
     const unsigned char MOV32ri = TII->getBaseOpcodeFor(X86::MOV32ri);
-    const unsigned char N86Reg =
-      ((const X86RegisterInfo*)RegInfo)->getX86RegNum(NestReg);
+    const unsigned char N86Reg = RegInfo->getX86RegNum(NestReg);
     OutChains[0] = DAG.getStore(Root, DAG.getConstant(MOV32ri|N86Reg, MVT::i8),
                                 Trmp, TrmpAddr, 0);
 

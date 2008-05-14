@@ -47,7 +47,7 @@ public:
   { return &DataLayout; }
   virtual PIC16TargetLowering *getTargetLowering() const 
   { return const_cast<PIC16TargetLowering*>(&TLInfo); }
-  virtual const TargetRegisterInfo *getRegisterInfo() const 
+  virtual const PIC16RegisterInfo *getRegisterInfo() const 
   { return &InstrInfo.getRegisterInfo(); }
   
   virtual bool addInstSelector(PassManagerBase &PM, bool Fast);

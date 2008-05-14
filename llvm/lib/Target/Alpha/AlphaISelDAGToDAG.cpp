@@ -146,9 +146,9 @@ namespace {
     }
 
   public:
-    AlphaDAGToDAGISel(TargetMachine &TM)
+    explicit AlphaDAGToDAGISel(AlphaTargetMachine &TM)
       : SelectionDAGISel(AlphaLowering), 
-        AlphaLowering(*(AlphaTargetLowering*)(TM.getTargetLowering())) 
+        AlphaLowering(*TM.getTargetLowering())
     {}
 
     /// getI64Imm - Return a target constant with the specified value, of type
@@ -559,6 +559,6 @@ void AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
 /// createAlphaISelDag - This pass converts a legalized DAG into a 
 /// Alpha-specific DAG, ready for instruction scheduling.
 ///
-FunctionPass *llvm::createAlphaISelDag(TargetMachine &TM) {
+FunctionPass *llvm::createAlphaISelDag(AlphaTargetMachine &TM) {
   return new AlphaDAGToDAGISel(TM);
 }

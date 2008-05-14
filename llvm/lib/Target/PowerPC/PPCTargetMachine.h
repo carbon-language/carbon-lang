@@ -46,12 +46,12 @@ public:
   PPCTargetMachine(const Module &M, const std::string &FS, bool is64Bit);
 
   virtual const PPCInstrInfo     *getInstrInfo() const { return &InstrInfo; }
-  virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
-  virtual       TargetJITInfo    *getJITInfo()         { return &JITInfo; }
+  virtual const PPCFrameInfo     *getFrameInfo() const { return &FrameInfo; }
+  virtual       PPCJITInfo       *getJITInfo()         { return &JITInfo; }
   virtual       PPCTargetLowering *getTargetLowering() const { 
    return const_cast<PPCTargetLowering*>(&TLInfo); 
   }
-  virtual const TargetRegisterInfo    *getRegisterInfo() const {
+  virtual const PPCRegisterInfo  *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
   

@@ -38,8 +38,8 @@ public:
 
   virtual const SparcInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
-  virtual const TargetSubtarget  *getSubtargetImpl() const{ return &Subtarget; }
-  virtual const TargetRegisterInfo *getRegisterInfo() const {
+  virtual const SparcSubtarget   *getSubtargetImpl() const{ return &Subtarget; }
+  virtual const SparcRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }

@@ -311,7 +311,7 @@ namespace llvm {
     int BytesCallerReserves;          // Number of arg bytes caller makes.
 
   public:
-    explicit X86TargetLowering(TargetMachine &TM);
+    explicit X86TargetLowering(X86TargetMachine &TM);
 
     /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
     /// jumptable.
@@ -454,7 +454,7 @@ namespace llvm {
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
     /// make the right decision when generating code for different targets.
     const X86Subtarget *Subtarget;
-    const TargetRegisterInfo *RegInfo;
+    const X86RegisterInfo *RegInfo;
 
     /// X86StackPtr - X86 physical register used as stack ptr.
     unsigned X86StackPtr;

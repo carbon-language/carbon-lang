@@ -2820,7 +2820,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
 unsigned X86InstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   const TargetInstrDesc &Desc = MI->getDesc();
   bool IsPIC = (TM.getRelocationModel() == Reloc::PIC_);
-  bool Is64BitMode = ((X86Subtarget*)TM.getSubtargetImpl())->is64Bit();
+  bool Is64BitMode = TM.getSubtargetImpl()->is64Bit();
   unsigned Size = GetInstSizeWithDesc(*MI, &Desc, IsPIC, Is64BitMode);
   if (Desc.getOpcode() == X86::MOVPC32r) {
     Size += GetInstSizeWithDesc(*MI, &get(X86::POP32r), IsPIC, Is64BitMode);

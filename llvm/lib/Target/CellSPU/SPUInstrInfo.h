@@ -30,7 +30,7 @@ namespace llvm {
     /// such, whenever a client has an instance of instruction info, it should
     /// always be able to get register info as well (through this method).
     ///
-    virtual const TargetRegisterInfo &getRegisterInfo() const { return RI; }
+    virtual const SPURegisterInfo &getRegisterInfo() const { return RI; }
 
     /// getPointerRegClass - Return the register class to use to hold pointers.
     /// This is used for addressing modes.

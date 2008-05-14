@@ -38,10 +38,10 @@ class ARMTargetMachine : public LLVMTargetMachine {
 public:
   ARMTargetMachine(const Module &M, const std::string &FS, bool isThumb = false);
 
-  virtual const ARMInstrInfo *getInstrInfo() const { return &InstrInfo; }
-  virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
-  virtual       TargetJITInfo    *getJITInfo()         { return &JITInfo; }
-  virtual const TargetRegisterInfo *getRegisterInfo() const {
+  virtual const ARMInstrInfo     *getInstrInfo() const { return &InstrInfo; }
+  virtual const ARMFrameInfo     *getFrameInfo() const { return &FrameInfo; }
+  virtual       ARMJITInfo       *getJITInfo()         { return &JITInfo; }
+  virtual const ARMRegisterInfo  *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }

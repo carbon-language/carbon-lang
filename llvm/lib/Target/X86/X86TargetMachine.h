@@ -44,12 +44,12 @@ public:
 
   virtual const X86InstrInfo     *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
-  virtual       TargetJITInfo    *getJITInfo()         { return &JITInfo; }
-  virtual const TargetSubtarget  *getSubtargetImpl() const{ return &Subtarget; }
+  virtual       X86JITInfo       *getJITInfo()         { return &JITInfo; }
+  virtual const X86Subtarget     *getSubtargetImpl() const{ return &Subtarget; }
   virtual       X86TargetLowering *getTargetLowering() const { 
     return const_cast<X86TargetLowering*>(&TLInfo); 
   }
-  virtual const TargetRegisterInfo    *getRegisterInfo() const {
+  virtual const X86RegisterInfo  *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }

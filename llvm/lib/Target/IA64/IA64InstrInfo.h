@@ -28,7 +28,7 @@ public:
   /// such, whenever a client has an instance of instruction info, it should
   /// always be able to get register info as well (through this method).
   ///
-  virtual const TargetRegisterInfo &getRegisterInfo() const { return RI; }
+  virtual const IA64RegisterInfo &getRegisterInfo() const { return RI; }
 
   //
   // Return true if the instruction is a register to register move and

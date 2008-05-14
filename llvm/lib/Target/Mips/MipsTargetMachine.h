@@ -39,12 +39,12 @@ namespace llvm {
     { return &InstrInfo; }
     virtual const TargetFrameInfo *getFrameInfo()     const 
     { return &FrameInfo; }
-    virtual const TargetSubtarget *getSubtargetImpl() const 
+    virtual const MipsSubtarget   *getSubtargetImpl() const 
     { return &Subtarget; }
     virtual const TargetData      *getTargetData()    const 
     { return &DataLayout;}
 
-    virtual const TargetRegisterInfo   *getRegisterInfo()  const {
+    virtual const MipsRegisterInfo *getRegisterInfo()  const {
       return &InstrInfo.getRegisterInfo();
     }
 
