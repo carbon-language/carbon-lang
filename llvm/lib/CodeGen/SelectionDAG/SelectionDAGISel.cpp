@@ -807,8 +807,8 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
       unsigned NumRegs =
         TLI.getVectorTypeBreakdown(ValueVT, IntermediateVT, NumIntermediates,
                                    RegisterVT);
-      NumRegs; // Silence a compiler warning.
       assert(NumRegs == NumParts && "Part count doesn't match vector breakdown!");
+      NumParts = NumRegs; // Silence a compiler warning.
       assert(RegisterVT == PartVT && "Part type doesn't match vector breakdown!");
       assert(RegisterVT == Parts[0].getValueType() &&
              "Part type doesn't match part!");
@@ -1024,10 +1024,10 @@ static void getCopyToParts(SelectionDAG &DAG,
     DAG.getTargetLoweringInfo()
       .getVectorTypeBreakdown(ValueVT, IntermediateVT, NumIntermediates,
                               RegisterVT);
-  NumRegs; // Silence a compiler warning.
   unsigned NumElements = MVT::getVectorNumElements(ValueVT);
 
   assert(NumRegs == NumParts && "Part count doesn't match vector breakdown!");
+  NumParts = NumRegs; // Silence a compiler warning.
   assert(RegisterVT == PartVT && "Part type doesn't match vector breakdown!");
 
   // Split the vector into intermediate operands.
