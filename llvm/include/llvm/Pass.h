@@ -82,8 +82,7 @@ class Pass {
   Pass(const Pass &);           // DO NOT IMPLEMENT
 public:
   explicit Pass(intptr_t pid) : Resolver(0), PassID(pid) {}
-  explicit Pass(const void *pid) : Resolver(0), 
-                                                    PassID((intptr_t)pid) {}
+  explicit Pass(const void *pid) : Resolver(0), PassID((intptr_t)pid) {}
   virtual ~Pass();
 
   /// getPassName - Return a nice clean name for a pass.  This usually

@@ -4004,7 +4004,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     AddLegalizedOperand(SDOperand(Node, 1), Tmp1);
     return Op.ResNo ? Tmp1 : Result;
   }
-   case ISD::FLT_ROUNDS_: {
+  case ISD::FLT_ROUNDS_: {
     MVT::ValueType VT = Node->getValueType(0);
     switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
     default: assert(0 && "This action not supported for this op yet!");
