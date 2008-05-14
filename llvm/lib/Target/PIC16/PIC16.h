@@ -2,8 +2,8 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Bruno Cardoso Lopes and is distributed under the 
-// University of Illinois Open Source License. See LICENSE.TXT for details.
+// This file is distributed under the University of Illinois Open Source 
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
