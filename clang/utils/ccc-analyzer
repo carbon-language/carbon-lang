@@ -165,8 +165,12 @@ def main(args):
       clang = clang_env
     
     # Get the HTML output directory.
-    htmldir = os.environ.get('CCC_ANALYZER_HTML')
-      
+    htmldir = None
+    
+    if analysis_type == "-checker-cfref":
+      htmldir = os.environ.get('CCC_ANALYZER_HTML')
+
+    # Process the arguments.
     i = 0
     while i < len(args):
         arg = args[i]
