@@ -418,6 +418,59 @@ public:
     return 0;
   }
   
+  /// getSmallConstantTripCount - Returns the trip count of this loop as a
+  /// normal unsigned value, if possible. Returns 0 if the trip count is unknown
+  /// of not constant. Will also return 0 if the trip count is very large 
+  /// (>= 2^32)
+  inline unsigned getSmallConstantTripCount() const {
+    Value* TripCount = this->getTripCount();
+    if (TripCount) {
+      if (ConstantInt *TripCountC = dyn_cast<ConstantInt>(TripCount)) {
+        // Guard against huge trip counts.
+        if (TripCountC->getValue().getActiveBits() <= 32) {
+          return (unsigned)TripCountC->getZExtValue();
+        }
+      }
+    }
+    return 0;
+  }
+
+  /// getSmallConstantTripMultiple - Returns the largest constant divisor of the
+  /// trip count of this loop as a normal unsigned value, if possible. This
+  /// means that the actual trip count is always a multiple of the returned
+  /// value (don't forget the trip count could very well be zero as well!).
+  ///
+  /// Returns 1 if the trip count is unknown or not guaranteed to be the
+  /// multiple of a constant (which is also the case if the trip count is simply
+  /// constant, use getSmallConstantTripCount for that case), Will also return 1
+  /// if the trip count is very large (>= 2^32).
+  inline unsigned getSmallConstantTripMultiple() const {
+    Value* TripCount = this->getTripCount();
+    // This will hold the ConstantInt result, if any
+    ConstantInt *Result = NULL;
+    if (TripCount) {
+      // See if the trip count is constant itself
+      Result = dyn_cast<ConstantInt>(TripCount);
+      // if not, see if it is a multiplication
+      if (!Result)
+        if (BinaryOperator *BO = dyn_cast<BinaryOperator>(TripCount)) {
+          switch (BO->getOpcode()) {
+          case BinaryOperator::Mul:
+            Result = dyn_cast<ConstantInt>(BO->getOperand(1));
+            break;
+          default: 
+            break;
+          }
+        }
+    }
+    // Guard against huge trip counts.
+    if (Result && Result->getValue().getActiveBits() <= 32) {
+      return (unsigned)Result->getZExtValue();
+    } else {
+      return 1;
+    }
+  }
+  
   /// isLCSSAForm - Return true if the Loop is in LCSSA form
   inline bool isLCSSAForm() const {
     // Sort the blocks vector so that we can use binary search to do quick
