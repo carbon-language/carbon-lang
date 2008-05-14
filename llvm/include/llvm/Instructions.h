@@ -627,12 +627,11 @@ public:
     assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
            pred <= CmpInst::LAST_ICMP_PREDICATE &&
            "Invalid ICmp predicate value");
-    const Type* Op0Ty = getOperand(0)->getType();
-    const Type* Op1Ty = getOperand(1)->getType();
-    assert(Op0Ty == Op1Ty &&
+    assert(getOperand(0)->getType() == getOperand(1)->getType() &&
           "Both operands to ICmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert((Op0Ty->isInteger() || isa<PointerType>(Op0Ty)) &&
+    assert((getOperand(0)->getType()->isInteger() || 
+            isa<PointerType>(getOperand(0)->getType())) &&
            "Invalid operand types for ICmp instruction");
   }
 
@@ -648,12 +647,11 @@ public:
     assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
            pred <= CmpInst::LAST_ICMP_PREDICATE &&
            "Invalid ICmp predicate value");
-    const Type* Op0Ty = getOperand(0)->getType();
-    const Type* Op1Ty = getOperand(1)->getType();
-    assert(Op0Ty == Op1Ty &&
+    assert(getOperand(0)->getType() == getOperand(1)->getType() &&
           "Both operands to ICmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert((Op0Ty->isInteger() || isa<PointerType>(Op0Ty)) &&
+    assert((getOperand(0)->getType()->isInteger() || 
+            isa<PointerType>(getOperand(0)->getType())) &&
            "Invalid operand types for ICmp instruction");
   }
 
@@ -796,12 +794,10 @@ public:
               InsertBefore) {
     assert(pred <= FCmpInst::LAST_FCMP_PREDICATE &&
            "Invalid FCmp predicate value");
-    const Type* Op0Ty = getOperand(0)->getType();
-    const Type* Op1Ty = getOperand(1)->getType();
-    assert(Op0Ty == Op1Ty &&
+    assert(getOperand(0)->getType() == getOperand(1)->getType() &&
            "Both operands to FCmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert(Op0Ty->isFloatingPoint() &&
+    assert(getOperand(0)->getType()->isFloatingPoint() &&
            "Invalid operand types for FCmp instruction");
   }
 
@@ -816,12 +812,10 @@ public:
               InsertAtEnd) {
     assert(pred <= FCmpInst::LAST_FCMP_PREDICATE &&
            "Invalid FCmp predicate value");
-    const Type* Op0Ty = getOperand(0)->getType();
-    const Type* Op1Ty = getOperand(1)->getType();
-    assert(Op0Ty == Op1Ty &&
+    assert(getOperand(0)->getType() == getOperand(1)->getType() &&
            "Both operands to FCmp instruction are not of the same type!");
     // Check that the operands are the right type
-    assert(Op0Ty->isFloatingPoint() &&
+    assert(getOperand(0)->getType()->isFloatingPoint() &&
            "Invalid operand types for FCmp instruction");
   }
 
@@ -913,6 +907,11 @@ public:
     Instruction *InsertBefore = 0  ///< Where to insert
   ) : CmpInst(LHS->getType(), Instruction::VICmp, pred, LHS, RHS, Name,
               InsertBefore) {
+    assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
+           pred <= CmpInst::LAST_ICMP_PREDICATE &&
+           "Invalid VICmp predicate value");
+    assert(getOperand(0)->getType() == getOperand(1)->getType() &&
+          "Both operands to VICmp instruction are not of the same type!");
   }
 
   /// @brief Constructor with insert-at-block-end semantics.
@@ -924,6 +923,11 @@ public:
     BasicBlock *InsertAtEnd   ///< Block to insert into.
   ) : CmpInst(LHS->getType(), Instruction::VICmp, pred, LHS, RHS, Name,
               InsertAtEnd) {
+    assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
+           pred <= CmpInst::LAST_ICMP_PREDICATE &&
+           "Invalid VICmp predicate value");
+    assert(getOperand(0)->getType() == getOperand(1)->getType() &&
+          "Both operands to VICmp instruction are not of the same type!");
   }
   
   /// @brief Return the predicate for this instruction.
@@ -960,6 +964,10 @@ public:
     Instruction *InsertBefore = 0  ///< Where to insert
   ) : CmpInst(VectorType::getInteger(cast<VectorType>(LHS->getType())),
               Instruction::VFCmp, pred, LHS, RHS, Name, InsertBefore) {
+    assert(pred <= CmpInst::LAST_FCMP_PREDICATE &&
+           "Invalid VFCmp predicate value");
+    assert(getOperand(0)->getType() == getOperand(1)->getType() &&
+           "Both operands to VFCmp instruction are not of the same type!");
   }
 
   /// @brief Constructor with insert-at-block-end semantics.
@@ -971,6 +979,10 @@ public:
     BasicBlock *InsertAtEnd   ///< Block to insert into.
   ) : CmpInst(VectorType::getInteger(cast<VectorType>(LHS->getType())),
               Instruction::VFCmp, pred, LHS, RHS, Name, InsertAtEnd) {
+    assert(pred <= CmpInst::LAST_FCMP_PREDICATE &&
+           "Invalid VFCmp predicate value");
+    assert(getOperand(0)->getType() == getOperand(1)->getType() &&
+           "Both operands to VFCmp instruction are not of the same type!");
   }
 
   /// @brief Return the predicate for this instruction.
