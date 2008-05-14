@@ -185,7 +185,7 @@ namespace {
         if (MO.getType() == MachineOperand::MO_GlobalAddress) {
           GlobalValue *GV = MO.getGlobal();
           if (((GV->isDeclaration() || GV->hasWeakLinkage() ||
-                GV->hasLinkOnceLinkage()))) {
+                GV->hasLinkOnceLinkage() || GV->hasCommonLinkage()))) {
             // Dynamically-resolved functions need a stub for the function.
             std::string Name = Mang->getValueName(GV);
             FnStubs.insert(Name);
@@ -390,7 +390,7 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     // External or weakly linked global variables need non-lazily-resolved stubs
     if (TM.getRelocationModel() != Reloc::Static) {
       if (((GV->isDeclaration() || GV->hasWeakLinkage() ||
-            GV->hasLinkOnceLinkage()))) {
+            GV->hasLinkOnceLinkage() || GV->hasCommonLinkage()))) {
         GVStubs.insert(Name);
         O << "L" << Name << "$non_lazy_ptr";
         return;
@@ -671,8 +671,8 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
     unsigned Align = TD->getPreferredAlignmentLog(I);
 
     if (C->isNullValue() && /* FIXME: Verify correct */
-        !I->hasSection() &&
-        (I->hasInternalLinkage() || I->hasWeakLinkage() ||
+        !I->hasSection() && (I->hasCommonLinkage() ||
+         I->hasInternalLinkage() || I->hasWeakLinkage() ||
          I->hasLinkOnceLinkage() || I->hasExternalLinkage())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
       if (I->hasExternalLinkage()) {
@@ -696,6 +696,7 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
       switch (I->getLinkage()) {
       case GlobalValue::LinkOnceLinkage:
       case GlobalValue::WeakLinkage:
+      case GlobalValue::CommonLinkage:
         O << "\t.global " << name << '\n'
           << "\t.type " << name << ", @object\n"
           << "\t.weak " << name << '\n';
@@ -936,8 +937,8 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
     unsigned Align = TD->getPreferredAlignmentLog(I);
 
     if (C->isNullValue() && /* FIXME: Verify correct */
-        !I->hasSection() &&
-        (I->hasInternalLinkage() || I->hasWeakLinkage() ||
+        !I->hasSection() && (I->hasCommonLinkage() ||
+         I->hasInternalLinkage() || I->hasWeakLinkage() ||
          I->hasLinkOnceLinkage() || I->hasExternalLinkage())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
       if (I->hasExternalLinkage()) {
@@ -961,6 +962,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       switch (I->getLinkage()) {
       case GlobalValue::LinkOnceLinkage:
       case GlobalValue::WeakLinkage:
+      case GlobalValue::CommonLinkage:
         O << "\t.globl " << name << '\n'
           << "\t.weak_definition " << name << '\n';
         SwitchToDataSection("\t.section __DATA,__datacoal_nt,coalesced", I);

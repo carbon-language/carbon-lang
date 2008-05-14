@@ -231,8 +231,8 @@ bool SparcAsmPrinter::doFinalization(Module &M) {
       unsigned Size = TD->getABITypeSize(C->getType());
       unsigned Align = TD->getPreferredAlignment(I);
 
-      if (C->isNullValue() &&
-          (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
+      if (C->isNullValue() && (I->hasCommonLinkage() ||
+           I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
         SwitchToDataSection(".data", I);
         if (I->hasInternalLinkage())
@@ -243,6 +243,7 @@ bool SparcAsmPrinter::doFinalization(Module &M) {
         O << "\n";
       } else {
         switch (I->getLinkage()) {
+        case GlobalValue::CommonLinkage:
         case GlobalValue::LinkOnceLinkage:
         case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
           // Nonnull linkonce -> weak

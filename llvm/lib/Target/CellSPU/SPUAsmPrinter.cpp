@@ -340,7 +340,7 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO) {
     // stubs
     if (TM.getRelocationModel() != Reloc::Static) {
       if (((GV->isDeclaration() || GV->hasWeakLinkage() ||
-            GV->hasLinkOnceLinkage()))) {
+            GV->hasLinkOnceLinkage() || GV->hasCommonLinkage()))) {
         GVStubs.insert(Name);
         O << "L" << Name << "$non_lazy_ptr";
         return;
@@ -510,7 +510,7 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
 
     if (C->isNullValue() && /* FIXME: Verify correct */
         (I->hasInternalLinkage() || I->hasWeakLinkage() ||
-         I->hasLinkOnceLinkage() ||
+         I->hasLinkOnceLinkage() || I->hasCommonLinkage() ||
          (I->hasExternalLinkage() && !I->hasSection()))) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
       if (I->hasExternalLinkage()) {
@@ -537,6 +537,7 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
       switch (I->getLinkage()) {
       case GlobalValue::LinkOnceLinkage:
       case GlobalValue::WeakLinkage:
+      case GlobalValue::CommonLinkage:
         O << "\t.global " << name << '\n'
           << "\t.weak_definition " << name << '\n';
         SwitchToDataSection(".section __DATA,__datacoal_nt,coalesced", I);

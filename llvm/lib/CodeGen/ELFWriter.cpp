@@ -282,7 +282,8 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV) {
     // If this global is part of the common block, add it now.  Variables are
     // part of the common block if they are zero initialized and allowed to be
     // merged with other symbols.
-    if (GV->hasLinkOnceLinkage() || GV->hasWeakLinkage()) {
+    if (GV->hasLinkOnceLinkage() || GV->hasWeakLinkage() ||
+        GV->hasCommonLinkage()) {
       ELFSym CommonSym(GV);
       // Value for common symbols is the alignment required.
       CommonSym.Value = Align;
@@ -313,7 +314,7 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV) {
     BSSSym.SetType(ELFSym::STT_OBJECT);
 
     switch (GV->getLinkage()) {
-    default:  // weak/linkonce handled above
+    default:  // weak/linkonce/common handled above
       assert(0 && "Unexpected linkage type!");
     case GlobalValue::AppendingLinkage:  // FIXME: This should be improved!
     case GlobalValue::ExternalLinkage:

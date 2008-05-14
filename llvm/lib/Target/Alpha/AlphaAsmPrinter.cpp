@@ -225,6 +225,7 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
     switch (I->getLinkage()) {
     case GlobalValue::LinkOnceLinkage:
     case GlobalValue::WeakLinkage:
+    case GlobalValue::CommonLinkage:
       O << TAI->getWeakRefDirective() << name << '\n';
       break;
     case GlobalValue::AppendingLinkage:

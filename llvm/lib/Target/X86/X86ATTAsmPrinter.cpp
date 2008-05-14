@@ -309,7 +309,8 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       // non-lazily-resolved stubs
       if (GV->isDeclaration() ||
           GV->hasWeakLinkage() ||
-          GV->hasLinkOnceLinkage()) {
+          GV->hasLinkOnceLinkage() ||
+          GV->hasCommonLinkage()) {
         // Dynamically-resolved functions need a stub for the function.
         if (isCallOp && isa<Function>(GV)) {
           FnStubs.insert(Name);

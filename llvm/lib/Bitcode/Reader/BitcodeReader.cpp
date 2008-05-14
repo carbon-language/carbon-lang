@@ -66,6 +66,7 @@ static GlobalValue::LinkageTypes GetDecodedLinkage(unsigned Val) {
   case 5: return GlobalValue::DLLImportLinkage;
   case 6: return GlobalValue::DLLExportLinkage;
   case 7: return GlobalValue::ExternalWeakLinkage;
+  case 8: return GlobalValue::CommonLinkage;
   }
 }
 

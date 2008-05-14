@@ -41,6 +41,7 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
     if (isTargetDarwin()) {
       return (!isDirectCall &&
               (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
+               GV->hasCommonLinkage() ||
                (GV->isDeclaration() && !GV->hasNotBeenReadFromBitcode())));
     } else if (isTargetELF()) {
       // Extra load is needed for all non-statics.

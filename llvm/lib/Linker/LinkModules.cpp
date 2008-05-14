@@ -410,10 +410,12 @@ static bool GetLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
             "': can only link appending global with another appending global!");
     LinkFromSrc = true; // Special cased.
     LT = Src->getLinkage();
-  } else if (Src->hasWeakLinkage() || Src->hasLinkOnceLinkage()) {
-    // At this point we know that Dest has LinkOnce, External*, Weak, or
-    // DLL* linkage.
-    if ((Dest->hasLinkOnceLinkage() && Src->hasWeakLinkage()) ||
+  } else if (Src->hasWeakLinkage() || Src->hasLinkOnceLinkage() ||
+             Src->hasCommonLinkage()) {
+    // At this point we know that Dest has LinkOnce, External*, Weak, Common,
+    // or DLL* linkage.
+    if ((Dest->hasLinkOnceLinkage() && 
+          (Src->hasWeakLinkage() || Src->hasCommonLinkage())) ||
         Dest->hasExternalWeakLinkage()) {
       LinkFromSrc = true;
       LT = Src->getLinkage();
@@ -421,7 +423,8 @@ static bool GetLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
       LinkFromSrc = false;
       LT = Dest->getLinkage();
     }
-  } else if (Dest->hasWeakLinkage() || Dest->hasLinkOnceLinkage()) {
+  } else if (Dest->hasWeakLinkage() || Dest->hasLinkOnceLinkage() ||
+             Dest->hasCommonLinkage()) {
     // At this point we know that Src has External* or DLL* linkage.
     if (Src->hasExternalWeakLinkage()) {
       LinkFromSrc = false;
@@ -792,10 +795,12 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
           if (DGV->getInitializer() != SInit)
             return Error(Err, "Global Variable Collision on '" + SGV->getName() +
                          "': global variables have different initializers");
-        } else if (DGV->hasLinkOnceLinkage() || DGV->hasWeakLinkage()) {
+        } else if (DGV->hasLinkOnceLinkage() || DGV->hasWeakLinkage() ||
+                   DGV->hasCommonLinkage()) {
           // Nothing is required, mapped values will take the new global
           // automatically.
-        } else if (SGV->hasLinkOnceLinkage() || SGV->hasWeakLinkage()) {
+        } else if (SGV->hasLinkOnceLinkage() || SGV->hasWeakLinkage() ||
+                   SGV->hasCommonLinkage()) {
           // Nothing is required, mapped values will take the new global
           // automatically.
         } else if (DGV->hasAppendingLinkage()) {
@@ -916,16 +921,19 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       DF->setLinkage(SF->getLinkage());
       // Visibility of prototype is overridden by vis of definition.
       DF->setVisibility(SF->getVisibility());
-    } else if (SF->hasWeakLinkage() || SF->hasLinkOnceLinkage()) {
+    } else if (SF->hasWeakLinkage() || SF->hasLinkOnceLinkage() ||
+               SF->hasCommonLinkage()) {
       // At this point we know that DF has LinkOnce, Weak, or External* linkage.
       ValueMap[SF] = DF;
 
       // Linkonce+Weak = Weak
       // *+External Weak = *
-      if ((DF->hasLinkOnceLinkage() && SF->hasWeakLinkage()) ||
+      if ((DF->hasLinkOnceLinkage() && 
+              (SF->hasWeakLinkage() || SF->hasCommonLinkage())) ||
           DF->hasExternalWeakLinkage())
         DF->setLinkage(SF->getLinkage());
-    } else if (DF->hasWeakLinkage() || DF->hasLinkOnceLinkage()) {
+    } else if (DF->hasWeakLinkage() || DF->hasLinkOnceLinkage() ||
+               DF->hasCommonLinkage()) {
       // At this point we know that SF has LinkOnce or External* linkage.
       ValueMap[SF] = DF;
       if (!SF->hasLinkOnceLinkage() && !SF->hasExternalWeakLinkage())

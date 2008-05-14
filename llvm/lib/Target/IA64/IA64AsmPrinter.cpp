@@ -275,6 +275,7 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
 
       if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
+           I->hasCommonLinkage() ||
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
         SwitchToDataSection(".data", I);
         if (I->hasInternalLinkage()) {
@@ -289,6 +290,7 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
       } else {
         switch (I->getLinkage()) {
           case GlobalValue::LinkOnceLinkage:
+          case GlobalValue::CommonLinkage:
           case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
                                            // Nonnull linkonce -> weak
             O << "\t.weak " << name << "\n";

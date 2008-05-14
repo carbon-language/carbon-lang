@@ -414,7 +414,7 @@ bool PIC16AsmPrinter::doFinalization(Module &M)
 
       if (!I->hasSection() &&
           (I->hasInternalLinkage() || I->hasWeakLinkage() ||
-           I->hasLinkOnceLinkage())) {
+           I->hasLinkOnceLinkage() || I->hasCommonLinkage())) {
         if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
         if (!NoZerosInBSS && TAI->getBSSSection())
           SwitchToDataSection(M.getModuleIdentifier().c_str(), I);

@@ -373,6 +373,7 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
     bool bCustomSegment = false;
 
     switch (I->getLinkage()) {
+    case GlobalValue::CommonLinkage:
     case GlobalValue::LinkOnceLinkage:
     case GlobalValue::WeakLinkage:
       SwitchToDataSection("");

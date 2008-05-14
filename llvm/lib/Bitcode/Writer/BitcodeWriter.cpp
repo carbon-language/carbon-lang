@@ -270,6 +270,7 @@ static unsigned getEncodedLinkage(const GlobalValue *GV) {
   case GlobalValue::DLLImportLinkage:    return 5;
   case GlobalValue::DLLExportLinkage:    return 6;
   case GlobalValue::ExternalWeakLinkage: return 7;
+  case GlobalValue::CommonLinkage:       return 8;
   }
 }
 

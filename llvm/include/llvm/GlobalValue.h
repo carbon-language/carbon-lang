@@ -38,7 +38,8 @@ public:
     DLLImportLinkage,   ///< Function to be imported from DLL
     DLLExportLinkage,   ///< Function to be accessible from DLL
     ExternalWeakLinkage,///< ExternalWeak linkage description
-    GhostLinkage        ///< Stand-in functions for streaming fns from BC files    
+    GhostLinkage,       ///< Stand-in functions for streaming fns from BC files
+    CommonLinkage       ///< Tentative definitions
   };
 
   /// @brief An enumeration for the kinds of visibility of global values.
@@ -100,6 +101,7 @@ public:
   bool hasExternalLinkage()   const { return Linkage == ExternalLinkage; }
   bool hasLinkOnceLinkage()   const { return Linkage == LinkOnceLinkage; }
   bool hasWeakLinkage()       const { return Linkage == WeakLinkage; }
+  bool hasCommonLinkage()     const { return Linkage == CommonLinkage; }
   bool hasAppendingLinkage()  const { return Linkage == AppendingLinkage; }
   bool hasInternalLinkage()   const { return Linkage == InternalLinkage; }
   bool hasDLLImportLinkage()  const { return Linkage == DLLImportLinkage; }

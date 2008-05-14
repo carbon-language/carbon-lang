@@ -884,7 +884,7 @@ void ExecutionEngine::emitGlobals() {
           continue;
         
         // Otherwise, we know it's linkonce/weak, replace it if this is a strong
-        // symbol.
+        // symbol.  FIXME is this right for common?
         if (GV->hasExternalLinkage() || GVEntry->hasExternalWeakLinkage())
           GVEntry = GV;
       }

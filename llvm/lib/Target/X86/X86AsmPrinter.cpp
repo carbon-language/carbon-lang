@@ -200,7 +200,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       
       if (!I->isThreadLocal() &&
           (I->hasInternalLinkage() || I->hasWeakLinkage() ||
-           I->hasLinkOnceLinkage())) {
+           I->hasLinkOnceLinkage() || I->hasCommonLinkage())) {
         if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
         if (!NoZerosInBSS && TAI->getBSSSection())
           SwitchToDataSection(TAI->getBSSSection(), I);
@@ -235,6 +235,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     }
 
     switch (I->getLinkage()) {
+    case GlobalValue::CommonLinkage:
     case GlobalValue::LinkOnceLinkage:
     case GlobalValue::WeakLinkage:
       if (Subtarget->isTargetDarwin()) {

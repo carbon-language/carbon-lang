@@ -461,7 +461,8 @@ doFinalization(Module &M)
 
       // Is this correct ?
       if (C->isNullValue() && (I->hasLinkOnceLinkage() || 
-          I->hasInternalLinkage() || I->hasWeakLinkage())) 
+          I->hasInternalLinkage() || I->hasWeakLinkage() ||
+          I->hasCommonLinkage()))
       {
         if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
@@ -487,7 +488,8 @@ doFinalization(Module &M)
         switch (I->getLinkage()) 
         {
           case GlobalValue::LinkOnceLinkage:
-          case GlobalValue::WeakLinkage:   
+          case GlobalValue::CommonLinkage:
+          case GlobalValue::WeakLinkage:
             // FIXME: Verify correct for weak.
             // Nonnull linkonce -> weak
             O << "\t.weak " << name << "\n";

@@ -1604,7 +1604,8 @@ bool CWriter::doInitialization(Module &M) {
     for (Module::global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I) {
 
-      if (I->hasExternalLinkage() || I->hasExternalWeakLinkage())
+      if (I->hasExternalLinkage() || I->hasExternalWeakLinkage() || 
+          I->hasCommonLinkage())
         Out << "extern ";
       else if (I->hasDLLImportLinkage())
         Out << "__declspec(dllimport) ";
@@ -1678,6 +1679,8 @@ bool CWriter::doInitialization(Module &M) {
 
         if (I->hasLinkOnceLinkage())
           Out << " __attribute__((common))";
+        else if (I->hasCommonLinkage())     // FIXME is this right?
+          Out << " __ATTRIBUTE_WEAK__";
         else if (I->hasWeakLinkage())
           Out << " __ATTRIBUTE_WEAK__";
         else if (I->hasExternalWeakLinkage())
@@ -1715,6 +1718,8 @@ bool CWriter::doInitialization(Module &M) {
           Out << " __attribute__((common))";
         else if (I->hasWeakLinkage())
           Out << " __ATTRIBUTE_WEAK__";
+        else if (I->hasCommonLinkage())
+          Out << " __ATTRIBUTE_WEAK__";
 
         if (I->hasHiddenVisibility())
           Out << " __HIDDEN__";
@@ -1724,6 +1729,7 @@ bool CWriter::doInitialization(Module &M) {
         // this, however, occurs when the variable has weak linkage.  In this
         // case, the assembler will complain about the variable being both weak
         // and common, so we disable this optimization.
+        // FIXME common linkage should avoid this problem.
         if (!I->getInitializer()->isNullValue()) {
           Out << " = " ;
           writeOperand(I->getInitializer());
