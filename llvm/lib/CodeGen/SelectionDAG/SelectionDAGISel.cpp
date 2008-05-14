@@ -807,7 +807,7 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
       unsigned NumRegs =
         TLI.getVectorTypeBreakdown(ValueVT, IntermediateVT, NumIntermediates,
                                    RegisterVT);
-
+      NumRegs; // Silence a compiler warning.
       assert(NumRegs == NumParts && "Part count doesn't match vector breakdown!");
       assert(RegisterVT == PartVT && "Part type doesn't match vector breakdown!");
       assert(RegisterVT == Parts[0].getValueType() &&
@@ -1024,6 +1024,7 @@ static void getCopyToParts(SelectionDAG &DAG,
     DAG.getTargetLoweringInfo()
       .getVectorTypeBreakdown(ValueVT, IntermediateVT, NumIntermediates,
                               RegisterVT);
+  NumRegs; // Silence a compiler warning.
   unsigned NumElements = MVT::getVectorNumElements(ValueVT);
 
   assert(NumRegs == NumParts && "Part count doesn't match vector breakdown!");
@@ -3752,14 +3753,13 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo, bool HasEarlyClobber,
     // If this is an expanded reference, add the rest of the regs to Regs.
     if (NumRegs != 1) {
       TargetRegisterClass::iterator I = PhysReg.second->begin();
-      TargetRegisterClass::iterator E = PhysReg.second->end();
       for (; *I != PhysReg.first; ++I)
-        assert(I != E && "Didn't find reg!"); 
+        assert(I != PhysReg.second->end() && "Didn't find reg!"); 
       
       // Already added the first reg.
       --NumRegs; ++I;
       for (; NumRegs; --NumRegs, ++I) {
-        assert(I != E && "Ran out of registers to allocate!");
+        assert(I != PhysReg.second->end() && "Ran out of registers to allocate!");
         Regs.push_back(*I);
       }
     }
