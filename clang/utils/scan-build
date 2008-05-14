@@ -523,14 +523,17 @@ USAGE: $Prog [options] <build command> [build options]
 
 OPTIONS:
 
+  -a            - The analysis to run.  The default is 'checker-cfref'.
+                  Valid options are: 'checker-cfref', 'fsyntax-only'
+
   -o            - Target directory for HTML report files.  Subdirectories
                   will be created as needed to represent separate "runs" of
                   the analyzer.  If this option is not specified, a directory
                   is created in /tmp to store the reports.
-                
+
   -h            - Display this message.
   --help
-  
+
   -k            - Add a "keep on going" option to the specified build command.
   --keep-going    This option currently supports make and xcodebuild.
                   This is a convenience option; one can specify this
@@ -565,6 +568,7 @@ ENDTEXT
 my $HtmlDir;           # Parent directory to store HTML files.
 my $IgnoreErrors = 0;  # Ignore build errors.
 my $ViewResults  = 0;  # View results when the build terminates.
+my $Analysis = "checker-cfref";
 
 if (!@ARGV) {
   DisplayHelp();
@@ -580,6 +584,22 @@ while (@ARGV) {
   if ($arg eq "-h" or $arg eq "--help") {
     DisplayHelp();
     exit 0;
+  }
+  
+  if ($arg eq "-a") {
+    shift @ARGV;
+
+    if (!@ARGV) {
+      die "$Prog: '-a' option requires an analysis type.\n";
+    }
+    
+    $Analysis = shift @ARGV;
+    
+    if (!($Analysis eq "checker-cfref" or $Analysis eq "fsyntax-only")) {
+      die "$Prog: Invalid argument '$Analysis' to -a.\n";
+    }
+    
+    next;
   }
   
   if ($arg eq "-o") {
@@ -666,6 +686,8 @@ if ($Verbose >= 2) {
 if ($Verbose >= 3) {
   $ENV{'CCC_ANALYZER_LOG'} = 1;
 }
+
+$ENV{'CCC_ANALYZER_ANALYSIS'} = $Analysis;
 
 # Run the build.
 
