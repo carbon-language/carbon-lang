@@ -406,8 +406,11 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
     // Just use the input register directly!
     if (InstanceNo > 0)
       VRBaseMap.erase(SDOperand(Node, ResNo));
+#ifndef NDEBUG
     bool isNew = VRBaseMap.insert(std::make_pair(SDOperand(Node,ResNo),SrcReg));
-    isNew; // Silence compiler warning.
+#else
+    VRBaseMap.insert(std::make_pair(SDOperand(Node,ResNo),SrcReg));
+#endif
     assert(isNew && "Node emitted out of order - early");
     return;
   }
@@ -465,8 +468,11 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
 
   if (InstanceNo > 0)
     VRBaseMap.erase(SDOperand(Node, ResNo));
+#ifndef NDEBUG
   bool isNew = VRBaseMap.insert(std::make_pair(SDOperand(Node,ResNo), VRBase));
-  isNew; // Silence compiler warning.
+#else
+  VRBaseMap.insert(std::make_pair(SDOperand(Node,ResNo), VRBase));
+#endif
   assert(isNew && "Node emitted out of order - early");
 }
 
@@ -523,8 +529,11 @@ void ScheduleDAG::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
       MI->addOperand(MachineOperand::CreateReg(VRBase, true));
     }
 
+#ifndef NDEBUG
     bool isNew = VRBaseMap.insert(std::make_pair(SDOperand(Node,i), VRBase));
-    isNew; // Silence compiler warning.
+#else
+    VRBaseMap.insert(std::make_pair(SDOperand(Node,i), VRBase));
+#endif
     assert(isNew && "Node emitted out of order - early");
   }
 }
@@ -776,8 +785,11 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
   } else
     assert(0 && "Node is not insert_subreg, extract_subreg, or subreg_to_reg");
      
+#ifndef NDEBUG
   bool isNew = VRBaseMap.insert(std::make_pair(SDOperand(Node,0), VRBase));
-  isNew; // Silence compiler warning.
+#else
+  VRBaseMap.insert(std::make_pair(SDOperand(Node,0), VRBase));
+#endif
   assert(isNew && "Node emitted out of order - early");
 }
 
@@ -1004,8 +1016,11 @@ void ScheduleDAG::EmitCrossRCCopy(SUnit *SU,
       // Copy from physical register.
       assert(I->Reg && "Unknown physical register!");
       unsigned VRBase = MRI.createVirtualRegister(SU->CopyDstRC);
+#ifndef NDEBUG
       bool isNew = VRBaseMap.insert(std::make_pair(SU, VRBase));
-      isNew; // Silence compiler warning.
+#else
+      VRBaseMap.insert(std::make_pair(SU, VRBase));
+#endif
       assert(isNew && "Node emitted out of order - early");
       TII->copyRegToReg(*BB, BB->end(), VRBase, I->Reg,
                         SU->CopyDstRC, SU->CopySrcRC);
