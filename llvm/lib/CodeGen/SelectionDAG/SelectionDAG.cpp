@@ -293,6 +293,7 @@ ISD::CondCode ISD::getSetCCAndOperation(ISD::CondCode Op1, ISD::CondCode Op2,
     switch (Result) {
     default: break;
     case ISD::SETUO : Result = ISD::SETFALSE; break;  // SETUGT & SETULT
+    case ISD::SETOEQ:                                 // SETEQ  & SETU[LG]E
     case ISD::SETUEQ: Result = ISD::SETEQ   ; break;  // SETUGE & SETULE
     case ISD::SETOLT: Result = ISD::SETULT  ; break;  // SETULT & SETNE
     case ISD::SETOGT: Result = ISD::SETUGT  ; break;  // SETUGT & SETNE
