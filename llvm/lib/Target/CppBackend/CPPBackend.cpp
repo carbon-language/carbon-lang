@@ -431,7 +431,7 @@ namespace {
 
   void CppWriter::printParamAttrs(const PAListPtr &PAL,
                                   const std::string &name) {
-    Out << "PAListPtr " << name << "_PAL = 0;";
+    Out << "PAListPtr " << name << "_PAL;";
     nl(Out);
     if (!PAL.isEmpty()) {
       Out << '{'; in(); nl(Out);
@@ -440,7 +440,7 @@ namespace {
       for (unsigned i = 0; i < PAL.getNumSlots(); ++i) {
         uint16_t index = PAL.getSlot(i).Index;
         ParameterAttributes attrs = PAL.getSlot(i).Attrs;
-        Out << "PAWI.index = " << index << "; PAWI.attrs = 0 ";
+        Out << "PAWI.Index = " << index << "; PAWI.Attrs = 0 ";
         if (attrs & ParamAttr::SExt)
           Out << " | ParamAttr::SExt";
         if (attrs & ParamAttr::ZExt)
@@ -1745,6 +1745,7 @@ namespace {
     Out << "#include <llvm/Support/MathExtras.h>\n";
     Out << "#include <llvm/Pass.h>\n";
     Out << "#include <llvm/PassManager.h>\n";
+    Out << "#include <llvm/ADT/SmallVector.h>\n";
     Out << "#include <llvm/Analysis/Verifier.h>\n";
     Out << "#include <llvm/Assembly/PrintModulePass.h>\n";
     Out << "#include <algorithm>\n";
