@@ -43,7 +43,9 @@ APIList("internalize-public-api-list", cl::value_desc("list"),
 namespace {
   class VISIBILITY_HIDDEN InternalizePass : public ModulePass {
     std::set<std::string> ExternalNames;
-    bool DontInternalize;
+    /// If no api symbols were specified and a main function is defined,
+    /// assume the main function is the only API
+    bool AllButMain;
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit InternalizePass(bool InternalizeEverything = true);
@@ -57,19 +59,16 @@ char InternalizePass::ID = 0;
 static RegisterPass<InternalizePass>
 X("internalize", "Internalize Global Symbols");
 
-InternalizePass::InternalizePass(bool InternalizeEverything) 
-  : ModulePass((intptr_t)&ID), DontInternalize(false){
-  if (!APIFile.empty())           // If a filename is specified, use it
+InternalizePass::InternalizePass(bool AllButMain)
+  : ModulePass((intptr_t)&ID), AllButMain(AllButMain){
+  if (!APIFile.empty())           // If a filename is specified, use it.
     LoadFile(APIFile.c_str());
-  else if (!APIList.empty())      // Else, if a list is specified, use it.
+  if (!APIList.empty())           // If a list is specified, use it as well.
     ExternalNames.insert(APIList.begin(), APIList.end());
-  else if (!InternalizeEverything)
-    // Finally, if we're allowed to, internalize all but main.
-    DontInternalize = true;
 }
 
 InternalizePass::InternalizePass(const std::vector<const char *>&exportList) 
-  : ModulePass((intptr_t)&ID), DontInternalize(false){
+  : ModulePass((intptr_t)&ID), AllButMain(false){
   for(std::vector<const char *>::const_iterator itr = exportList.begin();
         itr != exportList.end(); itr++) {
     ExternalNames.insert(*itr);
@@ -80,8 +79,9 @@ void InternalizePass::LoadFile(const char *Filename) {
   // Load the APIFile...
   std::ifstream In(Filename);
   if (!In.good()) {
-    cerr << "WARNING: Internalize couldn't load file '" << Filename << "'!\n";
-    return;   // Do not internalize anything...
+    cerr << "WARNING: Internalize couldn't load file '" << Filename 
+         << "'! Continuing as if it's empty.\n";
+    return; // Just continue as if the file were empty
   }
   while (In) {
     std::string Symbol;
@@ -92,13 +92,14 @@ void InternalizePass::LoadFile(const char *Filename) {
 }
 
 bool InternalizePass::runOnModule(Module &M) {
-  if (DontInternalize) return false;
-  
-  // If no list or file of symbols was specified, check to see if there is a
-  // "main" symbol defined in the module.  If so, use it, otherwise do not
-  // internalize the module, it must be a library or something.
-  //
   if (ExternalNames.empty()) {
+    // Return if we're not in 'all but main' mode and have no external api
+    if (!AllButMain)
+      return false; 
+    // If no list or file of symbols was specified, check to see if there is a
+    // "main" symbol defined in the module.  If so, use it, otherwise do not
+    // internalize the module, it must be a library or something.
+    //
     Function *MainFunc = M.getFunction("main");
     if (MainFunc == 0 || MainFunc->isDeclaration())
       return false;  // No main found, must be a library...
@@ -109,7 +110,7 @@ bool InternalizePass::runOnModule(Module &M) {
   
   bool Changed = false;
   
-  // Found a main function, mark all functions not named main as internal.
+  // Mark all functions not in the api as internal.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isDeclaration() &&         // Function must be defined here
         !I->hasInternalLinkage() &&  // Can't already have internal linkage
@@ -134,7 +135,8 @@ bool InternalizePass::runOnModule(Module &M) {
   ExternalNames.insert("llvm.noinline");
   ExternalNames.insert("llvm.global.annotations");
       
-  // Mark all global variables with initializers as internal as well.
+  // Mark all global variables with initializers that are not in the api as
+  // internal as well.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
     if (!I->isDeclaration() && !I->hasInternalLinkage() &&

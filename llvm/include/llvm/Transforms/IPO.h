@@ -102,12 +102,17 @@ Pass *createPruneEHPass();
 
 //===----------------------------------------------------------------------===//
 /// createInternalizePass - This pass loops over all of the functions in the
-/// input module, looking for a main function.  If a list of symbols is
-/// specified with the -internalize-public-api-* command line options, those
-/// symbols are internalized.  Otherwise if InternalizeEverything is set and
-/// the main function is found, all other globals are marked as internal.
+/// input module, internalizing all globals (functions and variables) not part
+/// of the api.  If a list of symbols is specified with the
+/// -internalize-public-api-* command line options, those symbols are not
+/// internalized and all others are.  Otherwise if AllButMain is set and the
+/// main function is found, all other globals are marked as internal.
 ///
 ModulePass *createInternalizePass(bool InternalizeEverything);
+
+/// createInternalizePass - This pass loops over all of the functions in the
+/// input module, internalizing all globals (functions and variables) not in the
+/// given exportList.
 ModulePass *createInternalizePass(const std::vector<const char *> &exportList);
 
 //===----------------------------------------------------------------------===//
