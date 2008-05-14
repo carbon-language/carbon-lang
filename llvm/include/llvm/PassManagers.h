@@ -145,7 +145,7 @@ private:
 class PMTopLevelManager {
 public:
 
-  virtual unsigned getNumContainedManagers() {
+  virtual unsigned getNumContainedManagers() const {
     return (unsigned)PassManagers.size();
   }
 
@@ -305,7 +305,7 @@ public:
   void dumpAnalysisSetInfo(const char *Msg, Pass *P,
                            const std::vector<AnalysisID> &Set) const;
 
-  virtual unsigned getNumContainedPasses() { 
+  virtual unsigned getNumContainedPasses() const {
     return (unsigned)PassVector.size();
   }
 
