@@ -2003,7 +2003,7 @@ APFloat::convertFromHexadecimalString(const char *p,
   firstSignificantDigit = p;
 
   for(;;) {
-    unsigned int hex_value;
+    uint64_t hex_value;
 
     if(*p == '.') {
       assert(dot == 0);
