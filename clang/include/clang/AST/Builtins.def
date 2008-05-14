@@ -94,6 +94,10 @@ BUILTIN(__builtin_va_start, "va&.", "n")
 BUILTIN(__builtin_va_end, "va&", "n")
 BUILTIN(__builtin_va_copy, "va&a", "n")
 BUILTIN(__builtin_memcpy, "v*v*vC*z", "n")
+// GCC Object size checking builtins
+BUILTIN(__builtin___memcpy_chk, "v*v*vC*zz", "n")
+BUILTIN(__builtin___memmove_chk, "v*v*vC*zz", "n")
+BUILTIN(__builtin___mempcpy_chk, "v*v*vC*zz", "n")
 BUILTIN(__builtin_expect, "iii"   , "nc")
 
 BUILTIN(__builtin_shufflevector, "v."   , "nc")
