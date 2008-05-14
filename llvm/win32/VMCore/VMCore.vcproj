@@ -443,6 +443,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\VMCore\Use.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\VMCore\Value.cpp"
 				>
 			</File>

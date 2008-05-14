@@ -683,6 +683,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\Transforms\Utils\UnrollLoop.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\Transforms\Utils\ValueMapper.cpp"
 					>
 				</File>
