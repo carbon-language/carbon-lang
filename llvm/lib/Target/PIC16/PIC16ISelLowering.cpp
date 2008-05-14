@@ -378,7 +378,7 @@ PIC16TargetLowering::LowerADDSUB(SDNode *N, SelectionDAG &DAG,
   SDOperand retVal;
   SDOperand as1,as2;
   SDVTList VTList;
-  unsigned AS,ASE,ASC;
+  unsigned AS = 0, ASE = 0, ASC=0;
 
   InOp[0] = N->getOperand(0);
   InOp[1] = N->getOperand(1);  
@@ -612,7 +612,7 @@ SDOperand PIC16TargetLowering::PerformDAGCombine(SDNode *N,
       SDOperand Src = N->getOperand(1);
       SDOperand Dest = N->getOperand(2);
       unsigned int DstOff = 0;
-      int NUM_STORES;
+      int NUM_STORES = 0;
       SDOperand Stores[6];
 
       // if source operand is expected to be extended to 
