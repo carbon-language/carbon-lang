@@ -41,7 +41,8 @@ static std::vector<sys::Path> *DirectoriesToRemove = 0;
 static const int IntSigs[] = {
   SIGHUP, SIGINT, SIGQUIT, SIGPIPE, SIGTERM, SIGUSR1, SIGUSR2
 };
-static const int *IntSigsEnd = IntSigs + sizeof(IntSigs) / sizeof(IntSigs[0]);
+static const int *const IntSigsEnd =
+  IntSigs + sizeof(IntSigs) / sizeof(IntSigs[0]);
 
 // KillSigs - Signals that are synchronous with the program that will cause it
 // to die.
@@ -51,7 +52,8 @@ static const int KillSigs[] = {
   , SIGEMT
 #endif
 };
-static const int *KillSigsEnd = KillSigs + sizeof(KillSigs) / sizeof(KillSigs[0]);
+static const int *const KillSigsEnd =
+  KillSigs + sizeof(KillSigs) / sizeof(KillSigs[0]);
 
 #ifdef HAVE_BACKTRACE
 static void* StackTrace[256];
