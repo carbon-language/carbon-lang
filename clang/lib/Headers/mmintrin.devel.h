@@ -48,7 +48,8 @@ inline __m64 __attribute__((__always_inline__)) _mm_cvtsi32_si64(int i)
 
 inline int __attribute__((__always_inline__)) _mm_cvtsi64_si32(__m64 m)
 {
-    return ((__v2si)m)[0];
+    __v2si __mmx_var2 = (__v2si)m;
+    return __mmx_var2[0];
 }
 
 inline __m64 __attribute__((__always_inline__)) _mm_cvtsi64_m64(long long i)
@@ -78,32 +79,32 @@ inline __m64 __attribute__((__always_inline__)) _mm_packs_pu16(__m64 m1, __m64 m
 
 inline __m64 __attribute__((__always_inline__)) _mm_unpackhi_pi8(__m64 m1, __m64 m2)
 {
-    // FIXME: use __builtin_shuffle_vector
+    return (__m64)__builtin_shufflevector((__v8qi)m1, (__v8qi)m2, 4, 8+4, 5, 8+5, 6, 8+6, 7, 8+7);
 }
 
 inline __m64 __attribute__((__always_inline__)) _mm_unpackhi_pi16(__m64 m1, __m64 m2)
 {
-    // FIXME: use __builtin_shuffle_vector
+    return (__m64)__builtin_shufflevector((__v4hi)m1, (__v4hi)m2, 2, 4+2, 3, 4+3);
 }
 
 inline __m64 __attribute__((__always_inline__)) _mm_unpackhi_pi32(__m64 m1, __m64 m2)
 {
-    // FIXME: use __builtin_shuffle_vector
+    return (__m64)__builtin_shufflevector((__v2si)m1, (__v2si)m2, 1, 2+1);
 }
 
 inline __m64 __attribute__((__always_inline__)) _mm_unpacklo_pi8(__m64 m1, __m64 m2)
 {
-    // FIXME: use __builtin_shuffle_vector
+    return (__m64)__builtin_shufflevector((__v8qi)m1, (__v8qi)m2, 0, 8+0, 1, 8+1, 2, 8+2, 3, 8+3);
 }
 
 inline __m64 __attribute__((__always_inline__)) _mm_unpacklo_pi16(__m64 m1, __m64 m2)
 {
-    // FIXME: use __builtin_shuffle_vector
+    return (__m64)__builtin_shufflevector((__v4hi)m1, (__v4hi)m2, 0, 4+0, 1, 4+1);
 }
 
 inline __m64 __attribute__((__always_inline__)) _mm_unpacklo_pi32(__m64 m1, __m64 m2)
 {
-    // FIXME: use __builtin_shuffle_vector
+    return (__m64)__builtin_shufflevector((__v2si)m1, (__v2si)m2, 0, 2+0);
 }
 
 inline __m64 __attribute__((__always_inline__)) _mm_add_pi8(__m64 m1, __m64 m2)
