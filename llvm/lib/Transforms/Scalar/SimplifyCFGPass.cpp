@@ -1,4 +1,4 @@
-//===- SimplifyCFG.cpp - CFG Simplification Pass --------------------------===//
+//===- SimplifyCFGPass.cpp - CFG Simplification Pass ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
