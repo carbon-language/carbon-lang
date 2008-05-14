@@ -40,7 +40,7 @@ sub GetHTMLRunDir {
   my $day   = $CurrentTime[3];
   my $month = $CurrentTime[4] + 1;
   
-  my $DateString = "$year-$month-$day";
+  my $DateString = sprintf("%d-%02d-%02d", $year, $month, $day);
   
   # Determine the run number.
   
