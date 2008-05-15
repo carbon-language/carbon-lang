@@ -308,7 +308,7 @@ void *JITResolver::JITCompilerFn(void *Stub) {
 // have useful answers.  However, we don't go crazy with atomic operations, we
 // just do a "reasonable effort".
 #ifdef __APPLE__ 
-#define ENABLE_JIT_SYMBOL_TABLE 1
+#define ENABLE_JIT_SYMBOL_TABLE 0
 #endif
 
 /// JitSymbolEntry - Each function that is JIT compiled results in one of these
