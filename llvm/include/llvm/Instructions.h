@@ -404,7 +404,7 @@ class GetElementPtrInst : public Instruction {
   /// getIndexedType - Returns the type of the element that would be loaded with
   /// a load instruction with the specified parameters.
   ///
-  /// A null type is returned if the indices are invalid for the specified
+  /// Null is returned if the indices are invalid for the specified
   /// pointer type.
   ///
   static const Type *getIndexedType(const Type *Ptr,
@@ -497,7 +497,7 @@ public:
   /// getIndexedType - Returns the type of the element that would be loaded with
   /// a load instruction with the specified parameters.
   ///
-  /// A null type is returned if the indices are invalid for the specified
+  /// Null is returned if the indices are invalid for the specified
   /// pointer type.
   ///
   template<typename InputIterator>
@@ -1495,8 +1495,8 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ShuffleVectorInst, Value)
 //                                ExtractValueInst Class
 //===----------------------------------------------------------------------===//
 
-/// ExtractValueInst - This instruction extracts a value
-/// from an aggregate value
+/// ExtractValueInst - This instruction extracts a struct member or array
+/// element value from an aggregate value.
 ///
 class ExtractValueInst : public Instruction {
   ExtractValueInst(const ExtractValueInst &EVI);
@@ -1526,7 +1526,7 @@ class ExtractValueInst : public Instruction {
   /// getIndexedType - Returns the type of the element that would be extracted
   /// with an extractvalue instruction with the specified parameters.
   ///
-  /// A null type is returned if the indices are invalid for the specified
+  /// Null is returned if the indices are invalid for the specified
   /// pointer type.
   ///
   static const Type *getIndexedType(const Type *Agg,
@@ -1549,10 +1549,10 @@ class ExtractValueInst : public Instruction {
       return getIndexedType(Ptr, (Value *const*)0, NumIdx);
   }
 
-  /// Constructors - Create a extractvalue instruction with a base pointer an
-  /// list of indices.  The first ctor can optionally insert before an existing
-  /// instruction, the second appends the new instruction to the specified
-  /// BasicBlock.
+  /// Constructors - Create a extractvalue instruction with a base aggregate
+  /// value and a list of indices.  The first ctor can optionally insert before
+  /// an existing instruction, the second appends the new instruction to the
+  /// specified BasicBlock.
   template<typename InputIterator>
   inline ExtractValueInst(Value *Agg, InputIterator IdxBegin, 
                           InputIterator IdxEnd,
@@ -1620,7 +1620,7 @@ public:
   /// getIndexedType - Returns the type of the element that would be extracted
   /// with an extractvalue instruction with the specified parameters.
   ///
-  /// A null type is returned if the indices are invalid for the specified
+  /// Null is returned if the indices are invalid for the specified
   /// pointer type.
   ///
   template<typename InputIterator>
@@ -1676,8 +1676,8 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ExtractValueInst, Value)
 //                                InsertValueInst Class
 //===----------------------------------------------------------------------===//
 
-/// InsertValueInst - This instruction extracts a value
-/// from an aggregate value
+/// InsertValueInst - This instruction inserts a struct field of array element
+/// value into an aggregate value.
 ///
 class InsertValueInst : public Instruction {
   InsertValueInst(const InsertValueInst &IVI);
@@ -1705,21 +1705,21 @@ class InsertValueInst : public Instruction {
     setName(Name);
   }
 
-  /// Constructors - Create a insertvalue instruction with a base pointer an
-  /// list of indices.  The first ctor can optionally insert before an existing
-  /// instruction, the second appends the new instruction to the specified
-  /// BasicBlock.
+  /// Constructors - Create a insertvalue instruction with a base aggregate
+  /// value, a value to insert, and a list of indices.  The first ctor can
+  /// optionally insert before an existing instruction, the second appends
+  /// the new instruction to the specified BasicBlock.
   template<typename InputIterator>
   inline InsertValueInst(Value *Agg, Value *Val, InputIterator IdxBegin, 
-                          InputIterator IdxEnd,
-                          unsigned Values,
-                          const std::string &Name,
-                          Instruction *InsertBefore);
+                         InputIterator IdxEnd,
+                         unsigned Values,
+                         const std::string &Name,
+                         Instruction *InsertBefore);
   template<typename InputIterator>
   inline InsertValueInst(Value *Agg, Value *Val,
-                          InputIterator IdxBegin, InputIterator IdxEnd,
-                          unsigned Values,
-                          const std::string &Name, BasicBlock *InsertAtEnd);
+                         InputIterator IdxBegin, InputIterator IdxEnd,
+                         unsigned Values,
+                         const std::string &Name, BasicBlock *InsertAtEnd);
 
   /// Constructors - These two constructors are convenience methods because one
   /// and two index insertvalue instructions are so common.
