@@ -533,6 +533,43 @@ public:
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 };
 
+/// ExtractValueConstantExpr - This class is private to
+/// Constants.cpp, and is used behind the scenes to implement
+/// extractvalue constant exprs.
+class VISIBILITY_HIDDEN ExtractValueConstantExpr : public ConstantExpr {
+  ExtractValueConstantExpr(Constant *Agg, const std::vector<Constant*> &IdxList,
+                           const Type *DestTy);
+public:
+  static ExtractValueConstantExpr *Create(Constant *Agg,
+                                          const std::vector<Constant*> &IdxList,
+                                          const Type *DestTy) {
+    return
+      new(IdxList.size() + 1) ExtractValueConstantExpr(Agg, IdxList, DestTy);
+  }
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+};
+
+/// InsertValueConstantExpr - This class is private to
+/// Constants.cpp, and is used behind the scenes to implement
+/// insertvalue constant exprs.
+class VISIBILITY_HIDDEN InsertValueConstantExpr : public ConstantExpr {
+  InsertValueConstantExpr(Constant *Agg, Constant *Val,
+                          const std::vector<Constant*> &IdxList,
+                          const Type *DestTy);
+public:
+  static InsertValueConstantExpr *Create(Constant *Agg, Constant *Val,
+                                         const std::vector<Constant*> &IdxList,
+                                         const Type *DestTy) {
+    return
+      new(IdxList.size() + 2) InsertValueConstantExpr(Agg, Val,
+                                                      IdxList, DestTy);
+  }
+  /// Transparently provide more efficient getOperand methods.
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+};
+
+
 /// GetElementPtrConstantExpr - This class is private to Constants.cpp, and is
 /// used behind the scenes to implement getelementpr constant exprs.
 class VISIBILITY_HIDDEN GetElementPtrConstantExpr : public ConstantExpr {
@@ -600,6 +637,45 @@ template <>
 struct OperandTraits<ShuffleVectorConstantExpr> : FixedNumOperandTraits<3> {
 };
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ShuffleVectorConstantExpr, Value)
+
+template <>
+struct OperandTraits<ExtractValueConstantExpr> : VariadicOperandTraits<1> {
+};
+
+ExtractValueConstantExpr::ExtractValueConstantExpr
+  (Constant *Agg,
+   const std::vector<Constant*> &IdxList,
+   const Type *DestTy)
+    : ConstantExpr(DestTy, Instruction::ExtractValue,
+                   OperandTraits<ExtractValueConstantExpr>::op_end(this)
+                   - (IdxList.size()+1),
+                   IdxList.size()+1) {
+  OperandList[0].init(Agg, this);
+  for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
+    OperandList[i+1].init(IdxList[i], this);
+}
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ExtractValueConstantExpr, Value)
+
+template <>
+struct OperandTraits<InsertValueConstantExpr> : VariadicOperandTraits<2> {
+};
+
+InsertValueConstantExpr::InsertValueConstantExpr
+  (Constant *Agg, Constant *Val,
+   const std::vector<Constant*> &IdxList,
+   const Type *DestTy)
+    : ConstantExpr(DestTy, Instruction::InsertValue,
+                   OperandTraits<InsertValueConstantExpr>::op_end(this)
+                   - (IdxList.size()+2),
+                   IdxList.size()+2) {
+  OperandList[0].init(Agg, this);
+  OperandList[1].init(Val, this);
+  for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
+    OperandList[i+2].init(IdxList[i], this);
+}
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(InsertValueConstantExpr, Value)
 
 
 template <>
@@ -752,11 +828,36 @@ ConstantExpr::getWithOperandReplaced(unsigned OpNo, Constant *Op) const {
     Op1 = (OpNo == 1) ? Op : getOperand(1);
     Op2 = (OpNo == 2) ? Op : getOperand(2);
     return ConstantExpr::getShuffleVector(Op0, Op1, Op2);
+  case Instruction::InsertValue: {
+    SmallVector<Constant*, 8> Ops;
+    Ops.resize(getNumOperands()-2);
+    for (unsigned i = 2, e = getNumOperands(); i != e; ++i)
+      Ops[i-2] = getOperand(i);
+    if (OpNo == 0)
+      return ConstantExpr::getInsertValue(Op, getOperand(1),
+                                          &Ops[0], Ops.size());
+    if (OpNo == 1)
+      return ConstantExpr::getInsertValue(getOperand(0), Op,
+                                          &Ops[0], Ops.size());
+    Ops[OpNo-2] = Op;
+    return ConstantExpr::getInsertValue(getOperand(0), getOperand(1),
+                                        &Ops[0], Ops.size());
+  }
+  case Instruction::ExtractValue: {
+    SmallVector<Constant*, 8> Ops;
+    Ops.resize(getNumOperands()-1);
+    for (unsigned i = 1, e = getNumOperands(); i != e; ++i)
+      Ops[i-1] = getOperand(i);
+    if (OpNo == 0)
+      return ConstantExpr::getExtractValue(Op, &Ops[0], Ops.size());
+    Ops[OpNo-1] = Op;
+    return ConstantExpr::getExtractValue(getOperand(0), &Ops[0], Ops.size());
+  }
   case Instruction::GetElementPtr: {
     SmallVector<Constant*, 8> Ops;
-    Ops.resize(getNumOperands());
+    Ops.resize(getNumOperands()-1);
     for (unsigned i = 1, e = getNumOperands(); i != e; ++i)
-      Ops[i] = getOperand(i);
+      Ops[i-1] = getOperand(i);
     if (OpNo == 0)
       return ConstantExpr::getGetElementPtr(Op, &Ops[0], Ops.size());
     Ops[OpNo-1] = Op;
@@ -807,6 +908,10 @@ getWithOperands(const std::vector<Constant*> &Ops) const {
     return ConstantExpr::getExtractElement(Ops[0], Ops[1]);
   case Instruction::ShuffleVector:
     return ConstantExpr::getShuffleVector(Ops[0], Ops[1], Ops[2]);
+  case Instruction::InsertValue:
+    return ConstantExpr::getInsertValue(Ops[0], Ops[1], &Ops[2], Ops.size()-2);
+  case Instruction::ExtractValue:
+    return ConstantExpr::getExtractValue(Ops[0], &Ops[1], Ops.size()-1);
   case Instruction::GetElementPtr:
     return ConstantExpr::getGetElementPtr(Ops[0], &Ops[1], Ops.size()-1);
   case Instruction::ICmp:
@@ -1564,6 +1669,15 @@ namespace llvm {
       if (V.opcode == Instruction::ShuffleVector)
         return new ShuffleVectorConstantExpr(V.operands[0], V.operands[1],
                                              V.operands[2]);
+      if (V.opcode == Instruction::InsertValue) {
+        std::vector<Constant*> IdxList(V.operands.begin()+2, V.operands.end());
+        return InsertValueConstantExpr::Create(V.operands[0], V.operands[1],
+                                               IdxList, Ty);
+      }
+      if (V.opcode == Instruction::ExtractValue) {
+        std::vector<Constant*> IdxList(V.operands.begin()+1, V.operands.end());
+        return ExtractValueConstantExpr::Create(V.operands[0], IdxList, Ty);
+      }
       if (V.opcode == Instruction::GetElementPtr) {
         std::vector<Constant*> IdxList(V.operands.begin()+1, V.operands.end());
         return GetElementPtrConstantExpr::Create(V.operands[0], IdxList, Ty);
@@ -1975,9 +2089,10 @@ Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
 Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
                                            Value* const *Idxs,
                                            unsigned NumIdx) {
-  assert(GetElementPtrInst::getIndexedType(C->getType(),
-                                           Idxs, Idxs+NumIdx, true)
-         && "GEP indices invalid!");
+  assert(GetElementPtrInst::getIndexedType(C->getType(), Idxs,
+                                           Idxs+NumIdx) ==
+         cast<PointerType>(ReqTy)->getElementType() &&
+         "GEP indices invalid!");
 
   if (Constant *FC = ConstantFoldGetElementPtr(C, (Constant**)Idxs, NumIdx))
     return FC;          // Fold a few common cases...
@@ -1998,7 +2113,7 @@ Constant *ConstantExpr::getGetElementPtr(Constant *C, Value* const *Idxs,
                                          unsigned NumIdx) {
   // Get the result type of the getelementptr!
   const Type *Ty = 
-    GetElementPtrInst::getIndexedType(C->getType(), Idxs, Idxs+NumIdx, true);
+    GetElementPtrInst::getIndexedType(C->getType(), Idxs, Idxs+NumIdx);
   assert(Ty && "GEP indices invalid!");
   unsigned As = cast<PointerType>(C->getType())->getAddressSpace();
   return getGetElementPtrTy(PointerType::get(Ty, As), C, Idxs, NumIdx);
@@ -2179,6 +2294,76 @@ Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2,
   assert(ShuffleVectorInst::isValidOperands(V1, V2, Mask) &&
          "Invalid shuffle vector constant expr operands!");
   return getShuffleVectorTy(V1->getType(), V1, V2, Mask);
+}
+
+Constant *ConstantExpr::getInsertValueTy(const Type *ReqTy, Constant *Agg,
+                                         Constant *Val,
+                                       Constant *const *Idxs, unsigned NumIdx) {
+  assert(ExtractValueInst::getIndexedType(Agg->getType(), Idxs,
+                                          Idxs+NumIdx) == Val->getType() &&
+         "insertvalue indices invalid!");
+  assert(Agg->getType() == ReqTy &&
+         "insertvalue type invalid!");
+
+  if (Constant *FC = ConstantFoldInsertValue(Agg, Val, Idxs, NumIdx))
+    return FC;          // Fold a few common cases...
+
+  assert(isa<PointerType>(Agg->getType()) &&
+         "Non-pointer type for constant InsertValue expression");
+  // Look up the constant in the table first to ensure uniqueness
+  std::vector<Constant*> ArgVec;
+  ArgVec.reserve(NumIdx+2);
+  ArgVec.push_back(Agg);
+  ArgVec.push_back(Val);
+  for (unsigned i = 0; i != NumIdx; ++i)
+    ArgVec.push_back(cast<Constant>(Idxs[i]));
+  const ExprMapKeyType Key(Instruction::InsertValue, ArgVec);
+  return ExprConstants->getOrCreate(ReqTy, Key);
+}
+
+Constant *ConstantExpr::getInsertValue(Constant *Agg, Constant *Val,
+                                    Constant* const *IdxList, unsigned NumIdx) {
+  assert((isa<StructType>(Agg->getType()) || isa<ArrayType>(Agg->getType()) ||
+          isa<VectorType>(Agg->getType())) &&
+         "Tried to create insertelement operation on non-aggregate type!");
+
+  const Type *ReqTy =
+    ExtractValueInst::getIndexedType(Agg->getType(), IdxList, IdxList+NumIdx);
+  assert(ReqTy && "insertvalue indices invalid!");
+  return getInsertValueTy(ReqTy, Agg, Val, IdxList, NumIdx);
+}
+
+Constant *ConstantExpr::getExtractValueTy(const Type *ReqTy, Constant *Agg,
+                                       Constant *const *Idxs, unsigned NumIdx) {
+  assert(ExtractValueInst::getIndexedType(Agg->getType(), Idxs,
+                                          Idxs+NumIdx) == ReqTy &&
+         "extractvalue indices invalid!");
+
+  if (Constant *FC = ConstantFoldExtractValue(Agg, Idxs, NumIdx))
+    return FC;          // Fold a few common cases...
+
+  assert(isa<PointerType>(Agg->getType()) &&
+         "Non-pointer type for constant ExtractValue expression");
+  // Look up the constant in the table first to ensure uniqueness
+  std::vector<Constant*> ArgVec;
+  ArgVec.reserve(NumIdx+1);
+  ArgVec.push_back(Agg);
+  for (unsigned i = 0; i != NumIdx; ++i)
+    ArgVec.push_back(cast<Constant>(Idxs[i]));
+  const ExprMapKeyType Key(Instruction::ExtractValue, ArgVec);
+  return ExprConstants->getOrCreate(ReqTy, Key);
+}
+
+Constant *ConstantExpr::getExtractValue(Constant *Agg,
+                                    Constant* const *IdxList, unsigned NumIdx) {
+  assert((isa<StructType>(Agg->getType()) || isa<ArrayType>(Agg->getType()) ||
+          isa<VectorType>(Agg->getType())) &&
+         "Tried to create extractelement operation on non-aggregate type!");
+
+  const Type *ReqTy =
+    ExtractValueInst::getIndexedType(Agg->getType(), IdxList, IdxList+NumIdx);
+  assert(ReqTy && "extractvalue indices invalid!");
+  return getExtractValueTy(ReqTy, Agg, IdxList, NumIdx);
 }
 
 Constant *ConstantExpr::getZeroValueForNegationExpr(const Type *Ty) {
@@ -2406,6 +2591,34 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
     }
     Replacement = ConstantExpr::getGetElementPtr(Pointer,
                                                  &Indices[0], Indices.size());
+  } else if (getOpcode() == Instruction::ExtractValue) {
+    SmallVector<Constant*, 8> Indices;
+    Constant *Agg = getOperand(0);
+    Indices.reserve(getNumOperands()-1);
+    if (Agg == From) Agg = To;
+    
+    for (unsigned i = 1, e = getNumOperands(); i != e; ++i) {
+      Constant *Val = getOperand(i);
+      if (Val == From) Val = To;
+      Indices.push_back(Val);
+    }
+    Replacement = ConstantExpr::getExtractValue(Agg,
+                                                &Indices[0], Indices.size());
+  } else if (getOpcode() == Instruction::InsertValue) {
+    SmallVector<Constant*, 8> Indices;
+    Constant *Agg = getOperand(0);
+    Constant *Val = getOperand(1);
+    Indices.reserve(getNumOperands()-2);
+    if (Agg == From) Agg = To;
+    if (Val == From) Val = To;
+    
+    for (unsigned i = 2, e = getNumOperands(); i != e; ++i) {
+      Constant *Val = getOperand(i);
+      if (Val == From) Val = To;
+      Indices.push_back(Val);
+    }
+    Replacement = ConstantExpr::getInsertValue(Agg, Val,
+                                               &Indices[0], Indices.size());
   } else if (isCast()) {
     assert(getOperand(0) == From && "Cast only has one use!");
     Replacement = ConstantExpr::getCast(getOpcode(), To, getType());

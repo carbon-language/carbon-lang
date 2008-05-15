@@ -575,6 +575,11 @@ protected:
                                       Constant *Elt, Constant *Idx);
   static Constant *getShuffleVectorTy(const Type *Ty, Constant *V1,
                                       Constant *V2, Constant *Mask);
+  static Constant *getExtractValueTy(const Type *Ty, Constant *Agg,
+                                     Constant * const *Idxs, unsigned NumIdxs);
+  static Constant *getInsertValueTy(const Type *Ty, Constant *Agg,
+                                    Constant *Val,
+                                    Constant * const *Idxs, unsigned NumIdxs);
 
 public:
   // Static methods to construct a ConstantExpr of different kinds.  Note that
@@ -706,6 +711,10 @@ public:
   static Constant *getExtractElement(Constant *Vec, Constant *Idx);
   static Constant *getInsertElement(Constant *Vec, Constant *Elt,Constant *Idx);
   static Constant *getShuffleVector(Constant *V1, Constant *V2, Constant *Mask);
+  static Constant *getExtractValue(Constant *Agg,
+                                   Constant* const *IdxList, unsigned NumIdx);
+  static Constant *getInsertValue(Constant *Agg, Constant *Val,
+                                  Constant* const *IdxList, unsigned NumIdx);
 
   /// Floating point negation must be implemented with f(x) = -0.0 - x. This
   /// method returns the negative zero constant for floating point or vector

@@ -161,15 +161,17 @@ HANDLE_OTHER_INST(44, Select , SelectInst )  // select instruction
 HANDLE_OTHER_INST(45, UserOp1, Instruction)  // May be used internally in a pass
 HANDLE_OTHER_INST(46, UserOp2, Instruction)  // Internal to passes only
 HANDLE_OTHER_INST(47, VAArg  , VAArgInst  )  // vaarg instruction
-HANDLE_OTHER_INST(48, ExtractElement, ExtractElementInst)// extract from vector.
+HANDLE_OTHER_INST(48, ExtractElement, ExtractElementInst)// extract from vector
 HANDLE_OTHER_INST(49, InsertElement, InsertElementInst)  // insert into vector
 HANDLE_OTHER_INST(50, ShuffleVector, ShuffleVectorInst)  // shuffle two vectors.
 HANDLE_OTHER_INST(51, GetResult, GetResultInst) // Extract individual value 
                                                 //from aggregate result
-HANDLE_OTHER_INST(52, VICmp  , VICmpInst  )  // Vec Int comparison instruction.
-HANDLE_OTHER_INST(53, VFCmp  , VFCmpInst  )  // Vec FP point comparison instr.
+HANDLE_OTHER_INST(52, ExtractValue, ExtractValueInst)// extract from aggregate
+HANDLE_OTHER_INST(53, InsertValue, InsertValueInst)  // insert into aggregate
+HANDLE_OTHER_INST(54, VICmp  , VICmpInst  )  // Vec Int comparison instruction.
+HANDLE_OTHER_INST(55, VFCmp  , VFCmpInst  )  // Vec FP point comparison instr.
 
-  LAST_OTHER_INST(53)
+  LAST_OTHER_INST(55)
 
 #undef  FIRST_TERM_INST
 #undef HANDLE_TERM_INST

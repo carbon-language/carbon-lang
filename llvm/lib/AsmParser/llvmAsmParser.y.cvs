@@ -1888,8 +1888,7 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
       GEN_ERROR("GetElementPtr requires a pointer operand");
 
     const Type *IdxTy =
-      GetElementPtrInst::getIndexedType($3->getType(), $4->begin(), $4->end(),
-                                        true);
+      GetElementPtrInst::getIndexedType($3->getType(), $4->begin(), $4->end());
     if (!IdxTy)
       GEN_ERROR("Index list invalid for constant getelementptr");
 
@@ -2712,7 +2711,8 @@ BBTerminatorInst :
       PAL = PAListPtr::get(Attrs.begin(), Attrs.end());
 
     // Create the InvokeInst
-    InvokeInst *II = InvokeInst::Create(V, Normal, Except, Args.begin(),Args.end());
+    InvokeInst *II = InvokeInst::Create(V, Normal, Except,
+                                        Args.begin(), Args.end());
     II->setCallingConv($2);
     II->setParamAttrs(PAL);
     $$ = II;
@@ -3179,7 +3179,7 @@ MemoryInst : MALLOC Types OptCAlign {
     if (!isa<PointerType>($2->get()))
       GEN_ERROR("getelementptr insn requires pointer operand");
 
-    if (!GetElementPtrInst::getIndexedType(*$2, $4->begin(), $4->end(), true))
+    if (!GetElementPtrInst::getIndexedType(*$2, $4->begin(), $4->end()))
       GEN_ERROR("Invalid getelementptr indices for type '" +
                      (*$2)->getDescription()+ "'");
     Value* tmpVal = getVal(*$2, $3);

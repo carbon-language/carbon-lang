@@ -703,6 +703,9 @@ public:
   void visitInsertElement(User &I);
   void visitShuffleVector(User &I);
 
+  void visitExtractValue(User &I);
+  void visitInsertValue(User &I);
+
   void visitGetElementPtr(User &I);
   void visitSelect(User &I);
 
@@ -2553,6 +2556,16 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
   setValue(&I, DAG.getNode(ISD::VECTOR_SHUFFLE,
                            TLI.getValueType(I.getType()),
                            V1, V2, Mask));
+}
+
+void SelectionDAGLowering::visitInsertValue(User &I) {
+  assert(0 && "insertvalue instruction not implemented");
+  abort();
+}
+
+void SelectionDAGLowering::visitExtractValue(User &I) {
+  assert(0 && "extractvalue instruction not implemented");
+  abort();
 }
 
 

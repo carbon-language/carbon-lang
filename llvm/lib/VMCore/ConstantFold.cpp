@@ -447,6 +447,21 @@ Constant *llvm::ConstantFoldShuffleVectorInstruction(const Constant *V1,
   return ConstantVector::get(&Result[0], Result.size());
 }
 
+Constant *llvm::ConstantFoldExtractValue(const Constant *Agg,
+                                         Constant* const *Idxs,
+                                         unsigned NumIdx) {
+  // FIXME: implement some constant folds
+  return 0;
+}
+
+Constant *llvm::ConstantFoldInsertValue(const Constant *Agg,
+                                        const Constant *Val,
+                                        Constant* const *Idxs,
+                                        unsigned NumIdx) {
+  // FIXME: implement some constant folds
+  return 0;
+}
+
 /// EvalVectorOp - Given two vector constants and a function pointer, apply the
 /// function pointer to each element pair, producing a new ConstantVector
 /// constant. Either or both of V1 and V2 may be NULL, meaning a
@@ -1408,8 +1423,7 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
     const PointerType *Ptr = cast<PointerType>(C->getType());
     const Type *Ty = GetElementPtrInst::getIndexedType(Ptr,
                                                        (Value **)Idxs,
-                                                       (Value **)Idxs+NumIdx,
-                                                       true);
+                                                       (Value **)Idxs+NumIdx);
     assert(Ty != 0 && "Invalid indices for GEP!");
     return UndefValue::get(PointerType::get(Ty, Ptr->getAddressSpace()));
   }
@@ -1426,8 +1440,7 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
       const PointerType *Ptr = cast<PointerType>(C->getType());
       const Type *Ty = GetElementPtrInst::getIndexedType(Ptr,
                                                          (Value**)Idxs,
-                                                         (Value**)Idxs+NumIdx,
-                                                         true);
+                                                         (Value**)Idxs+NumIdx);
       assert(Ty != 0 && "Invalid indices for GEP!");
       return 
         ConstantPointerNull::get(PointerType::get(Ty,Ptr->getAddressSpace()));

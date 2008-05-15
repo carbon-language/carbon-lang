@@ -1038,41 +1038,16 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
 //
 const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
                                               Value* const *Idxs,
-                                              unsigned NumIdx,
-                                              bool AllowCompositeLeaf) {
-  if (!isa<PointerType>(Ptr)) return 0;   // Type isn't a pointer type!
+                                              unsigned NumIdx) {
+  const PointerType *PTy = dyn_cast<PointerType>(Ptr);
+  if (!PTy) return 0;   // Type isn't a pointer type!
+  const Type *Agg = PTy->getElementType();
 
   // Handle the special case of the empty set index set...
-  if (NumIdx == 0) {
-    if (AllowCompositeLeaf ||
-        cast<PointerType>(Ptr)->getElementType()->isFirstClassType())
-      return cast<PointerType>(Ptr)->getElementType();
-    else
-      return 0;
-  }
+  if (NumIdx == 0)
+    return Agg;
 
-  unsigned CurIdx = 0;
-  while (const CompositeType *CT = dyn_cast<CompositeType>(Ptr)) {
-    if (NumIdx == CurIdx) {
-      if (AllowCompositeLeaf || CT->isFirstClassType()) return Ptr;
-      return 0;   // Can't load a whole structure or array!?!?
-    }
-
-    Value *Index = Idxs[CurIdx++];
-    if (isa<PointerType>(CT) && CurIdx != 1)
-      return 0;  // Can only index into pointer types at the first index!
-    if (!CT->indexValid(Index)) return 0;
-    Ptr = CT->getTypeAtIndex(Index);
-
-    // If the new type forwards to another type, then it is in the middle
-    // of being refined to another type (and hence, may have dropped all
-    // references to what it was using before).  So, use the new forwarded
-    // type.
-    if (const Type * Ty = Ptr->getForwardedType()) {
-      Ptr = Ty;
-    }
-  }
-  return CurIdx == NumIdx ? Ptr : 0;
+  return ExtractValueInst::getIndexedType(Agg, Idxs+1, Idxs+NumIdx);
 }
 
 const Type* GetElementPtrInst::getIndexedType(const Type *Ptr, Value *Idx) {
@@ -1345,6 +1320,36 @@ int ShuffleVectorInst::getMaskValue(unsigned i) const {
   return cast<ConstantInt>(MaskCV->getOperand(i))->getZExtValue();
 }
 
+//===----------------------------------------------------------------------===//
+//                             ExtractValueInst Class
+//===----------------------------------------------------------------------===//
+
+// getIndexedType - Returns the type of the element that would be extracted
+// with an extractvalue instruction with the specified parameters.
+//
+// A null type is returned if the indices are invalid for the specified
+// pointer type.
+//
+const Type* ExtractValueInst::getIndexedType(const Type *Agg,
+                                             Value* const *Idxs,
+                                             unsigned NumIdx) {
+  unsigned CurIdx = 0;
+  for (; CurIdx != NumIdx; ++CurIdx) {
+    const CompositeType *CT = dyn_cast<CompositeType>(Agg);
+    if (!CT) return 0;
+    Value *Index = Idxs[CurIdx];
+    if (!CT->indexValid(Index)) return 0;
+    Agg = CT->getTypeAtIndex(Index);
+
+    // If the new type forwards to another type, then it is in the middle
+    // of being refined to another type (and hence, may have dropped all
+    // references to what it was using before).  So, use the new forwarded
+    // type.
+    if (const Type *Ty = Agg->getForwardedType())
+      Agg = Ty;
+  }
+  return CurIdx == NumIdx ? Agg : 0;
+}
 
 //===----------------------------------------------------------------------===//
 //                             BinaryOperator Class
