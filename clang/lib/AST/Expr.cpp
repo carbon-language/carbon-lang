@@ -500,7 +500,6 @@ Expr *Expr::IgnoreParenCasts() {
 
 
 bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
-  return true;
   switch (getStmtClass()) {
   default:
     if (Loc) *Loc = getLocStart();
