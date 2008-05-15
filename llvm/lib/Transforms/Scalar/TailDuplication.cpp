@@ -109,13 +109,9 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
   if (!DTI->use_empty())
     return false;
 
-  // Do not bother working on dead blocks...
-  pred_iterator PI = pred_begin(Dest), PE = pred_end(Dest);
-  if (PI == PE && Dest != Dest->getParent()->begin())
-    return false;   // It's just a dead block, ignore it...
-
-  // Also, do not bother with blocks with only a single predecessor: simplify
+  // Do not bother with blocks with only a single predecessor: simplify
   // CFG will fold these two blocks together!
+  pred_iterator PI = pred_begin(Dest), PE = pred_end(Dest);
   ++PI;
   if (PI == PE) return false;  // Exactly one predecessor!
 
