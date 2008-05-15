@@ -543,6 +543,7 @@ namespace {
     // operands of Inst to use the new expression 'NewBase', with 'Imm' added
     // to it.
     void RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
+                                        Instruction *InsertPt,
                                        SCEVExpander &Rewriter, Loop *L, Pass *P,
                                        SmallPtrSet<Instruction*,16> &DeadInsts);
     
@@ -603,8 +604,12 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase,
 
 // Once we rewrite the code to insert the new IVs we want, update the
 // operands of Inst to use the new expression 'NewBase', with 'Imm' added
-// to it.
+// to it. NewBasePt is the last instruction which contributes to the
+// value of NewBase in the case that it's a diffferent instruction from
+// the PHI that NewBase is computed from, or null otherwise.
+//
 void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
+                                               Instruction *NewBasePt,
                                       SCEVExpander &Rewriter, Loop *L, Pass *P,
                                       SmallPtrSet<Instruction*,16> &DeadInsts) {
   if (!isa<PHINode>(Inst)) {
@@ -620,7 +625,10 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
     // value will be pinned to live somewhere after the original computation.
     // In this case, we have to back off.
     if (!isUseOfPostIncrementedValue) {
-      if (Instruction *OpInst = dyn_cast<Instruction>(OperandValToReplace)) { 
+      if (NewBasePt) {
+        InsertPt = NewBasePt;
+        ++InsertPt;
+      } else if (Instruction *OpInst = dyn_cast<Instruction>(OperandValToReplace)) { 
         InsertPt = OpInst;
         while (isa<PHINode>(InsertPt)) ++InsertPt;
       }
@@ -1400,6 +1408,15 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 
       SCEVHandle RewriteExpr = SE->getUnknown(RewriteOp);
 
+      // If we had to insert new instrutions for RewriteOp, we have to
+      // consider that they may not have been able to end up immediately
+      // next to RewriteOp, because non-PHI instructions may never precede
+      // PHI instructions in a block. In this case, remember where the last
+      // instruction was inserted so that we can use that point to expand
+      // the final RewriteExpr.
+      Instruction *NewBasePt = dyn_cast<Instruction>(RewriteOp);
+      if (RewriteOp == NewPHI) NewBasePt = 0;
+
       // Clear the SCEVExpander's expression map so that we are guaranteed
       // to have the code emitted where we expect it.
       Rewriter.clear();
@@ -1426,7 +1443,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
         // Add BaseV to the PHI value if needed.
         RewriteExpr = SE->getAddExpr(RewriteExpr, SE->getUnknown(BaseV));
 
-      User.RewriteInstructionToUseNewBase(RewriteExpr, Rewriter, L, this,
+      User.RewriteInstructionToUseNewBase(RewriteExpr, NewBasePt,
+                                          Rewriter, L, this,
                                           DeadInsts);
 
       // Mark old value we replaced as possibly dead, so that it is elminated
