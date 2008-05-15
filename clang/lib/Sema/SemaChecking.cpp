@@ -40,13 +40,13 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   case Builtin::BI__builtin___CFStringMakeConstantString:
     assert(TheCall->getNumArgs() == 1 &&
            "Wrong # arguments to builtin CFStringMakeConstantString");
-    if (!CheckBuiltinCFStringArgument(TheCall->getArg(0))) {
+    if (CheckBuiltinCFStringArgument(TheCall->getArg(0))) {
       delete TheCall;
       return true;
     }
     return TheCall;
   case Builtin::BI__builtin_va_start:
-    if (!SemaBuiltinVAStart(TheCall)) {
+    if (SemaBuiltinVAStart(TheCall)) {
       delete TheCall;
       return true;
     }
@@ -57,7 +57,7 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   case Builtin::BI__builtin_islessequal:
   case Builtin::BI__builtin_islessgreater:
   case Builtin::BI__builtin_isunordered:
-    if (!SemaBuiltinUnorderedCompare(TheCall)) {
+    if (SemaBuiltinUnorderedCompare(TheCall)) {
       delete TheCall;
       return true;
     }
