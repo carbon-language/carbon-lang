@@ -1,6 +1,6 @@
 // RUN: %llvmgcc %s -S -emit-llvm -o - | grep llvm.atomic
-// XFAIL: powerpc|sparc-sun-solaris2|arm|ia64
-// Feature currently implemented only for x86 and alpha.
+// XFAIL: sparc-sun-solaris2|arm|ia64
+// Feature currently implemented only for x86, alpha, powerpc.
 
 int* foo(int** a, int* b, int* c) {
 return __sync_val_compare_and_swap (a, b, c);
