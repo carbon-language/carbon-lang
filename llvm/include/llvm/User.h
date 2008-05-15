@@ -227,16 +227,7 @@ protected:
   ///
   unsigned NumOperands;
 
-  void *operator new(size_t s, unsigned Us) {
-    void *Storage = ::operator new(s + sizeof(Use) * Us);
-    Use *Start = static_cast<Use*>(Storage);
-    Use *End = Start + Us;
-    User *Obj = reinterpret_cast<User*>(End);
-    Obj->OperandList = Start;
-    Obj->NumOperands = Us;
-    Use::initTags(Start, End);
-    return Obj;
-  }
+  void *operator new(size_t s, unsigned Us);
   User(const Type *Ty, unsigned vty, Use *OpList, unsigned NumOps)
     : Value(Ty, vty), OperandList(OpList), NumOperands(NumOps) {}
   Use *allocHungoffUses(unsigned) const;
@@ -251,13 +242,7 @@ public:
   ~User() {
     Use::zap(OperandList, OperandList + NumOperands);
   }
-  void operator delete(void *Usr) {
-    User *Start = static_cast<User*>(Usr);
-    Use *Storage = static_cast<Use*>(Usr) - Start->NumOperands;
-    ::operator delete(Storage == Start->OperandList
-                      ? Storage
-                      : Usr);
-  }
+  void operator delete(void *Usr);
   template <unsigned Idx> Use &Op() {
     return OperandTraits<User>::op_begin(this)[Idx];
   }

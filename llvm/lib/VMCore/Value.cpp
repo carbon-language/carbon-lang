@@ -355,3 +355,22 @@ void User::replaceUsesOfWith(Value *From, Value *To) {
       setOperand(i, To); // Fix it now...
     }
 }
+
+void *User::operator new(size_t s, unsigned Us) {
+  void *Storage = ::operator new(s + sizeof(Use) * Us);
+  Use *Start = static_cast<Use*>(Storage);
+  Use *End = Start + Us;
+  User *Obj = reinterpret_cast<User*>(End);
+  Obj->OperandList = Start;
+  Obj->NumOperands = Us;
+  Use::initTags(Start, End);
+  return Obj;
+}
+
+void User::operator delete(void *Usr) {
+  User *Start = static_cast<User*>(Usr);
+  Use *Storage = static_cast<Use*>(Usr) - Start->NumOperands;
+  ::operator delete(Storage == Start->OperandList
+                    ? Storage
+                    : Usr);
+}
