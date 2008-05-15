@@ -25,7 +25,7 @@ namespace {
     
     LibCallInfo *LCI;
     
-    LibCallAliasAnalysis(LibCallInfo *LC = 0)
+    explicit LibCallAliasAnalysis(LibCallInfo *LC = 0)
       : FunctionPass((intptr_t)&ID), LCI(LC) {
     }
     ~LibCallAliasAnalysis() {
@@ -56,15 +56,15 @@ namespace {
     ModRefResult AnalyzeLibCallDetails(const LibCallFunctionInfo *FI,
                                        CallSite CS, Value *P, unsigned Size);
   };
-  
-  // Register this pass...
-  char LibCallAliasAnalysis::ID = 0;
-  RegisterPass<LibCallAliasAnalysis>
-  X("libcall-aa", "LibCall Alias Analysis", false, true);
-  
-  // Declare that we implement the AliasAnalysis interface
-  RegisterAnalysisGroup<AliasAnalysis> Y(X);
 }  // End of llvm namespace
+  
+// Register this pass...
+char LibCallAliasAnalysis::ID = 0;
+static RegisterPass<LibCallAliasAnalysis>
+X("libcall-aa", "LibCall Alias Analysis", false, true);
+  
+// Declare that we implement the AliasAnalysis interface
+static RegisterAnalysisGroup<AliasAnalysis> Y(X);
 
 FunctionPass *llvm::createLibCallAliasAnalysisPass(LibCallInfo *LCI) {
   return new LibCallAliasAnalysis(LCI);
