@@ -2505,41 +2505,42 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 /// operand.
 static SDOperand getMemsetValue(SDOperand Value, MVT::ValueType VT,
                                 SelectionDAG &DAG) {
-  MVT::ValueType CurVT = VT;
+  unsigned NumBits = MVT::isVector(VT) ?
+    MVT::getSizeInBits(MVT::getVectorElementType(VT)) : MVT::getSizeInBits(VT);
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Value)) {
-    uint64_t Val   = C->getValue() & 255;
+    APInt Val = APInt(NumBits, C->getValue() & 255);
     unsigned Shift = 8;
-    while (CurVT != MVT::i8) {
+    for (unsigned i = NumBits; i > 8; i >>= 1) {
       Val = (Val << Shift) | Val;
       Shift <<= 1;
-      CurVT = (MVT::ValueType)((unsigned)CurVT - 1);
     }
-    return DAG.getConstant(Val, VT);
-  } else {
-    Value = DAG.getNode(ISD::ZERO_EXTEND, VT, Value);
-    unsigned Shift = 8;
-    while (CurVT != MVT::i8) {
-      Value =
-        DAG.getNode(ISD::OR, VT,
-                    DAG.getNode(ISD::SHL, VT, Value,
-                                DAG.getConstant(Shift, MVT::i8)), Value);
-      Shift <<= 1;
-      CurVT = (MVT::ValueType)((unsigned)CurVT - 1);
-    }
-
-    return Value;
+    if (MVT::isInteger(VT))
+      return DAG.getConstant(Val, VT);
+    return DAG.getConstantFP(APFloat(Val), VT);
   }
+
+  Value = DAG.getNode(ISD::ZERO_EXTEND, VT, Value);
+  unsigned Shift = 8;
+  for (unsigned i = NumBits; i > 8; i >>= 1) {
+    Value = DAG.getNode(ISD::OR, VT,
+                        DAG.getNode(ISD::SHL, VT, Value,
+                                    DAG.getConstant(Shift, MVT::i8)), Value);
+    Shift <<= 1;
+  }
+
+  return Value;
 }
 
 /// getMemsetStringVal - Similar to getMemsetValue. Except this is only
 /// used when a memcpy is turned into a memset when the source is a constant
 /// string ptr.
-static SDOperand getMemsetStringVal(MVT::ValueType VT,
-                                    SelectionDAG &DAG,
+static SDOperand getMemsetStringVal(MVT::ValueType VT, SelectionDAG &DAG,
                                     const TargetLowering &TLI,
                                     std::string &Str, unsigned Offset) {
+  assert(!MVT::isVector(VT) && "Can't handle vector type here!");
+  unsigned NumBits = MVT::getSizeInBits(VT);
+  unsigned MSB = NumBits / 8;
   uint64_t Val = 0;
-  unsigned MSB = MVT::getSizeInBits(VT) / 8;
   if (TLI.isLittleEndian())
     Offset = Offset + MSB - 1;
   for (unsigned i = 0; i != MSB; ++i) {
@@ -2550,56 +2551,119 @@ static SDOperand getMemsetStringVal(MVT::ValueType VT,
 }
 
 /// getMemBasePlusOffset - Returns base and offset node for the 
+///
 static SDOperand getMemBasePlusOffset(SDOperand Base, unsigned Offset,
                                       SelectionDAG &DAG) {
   MVT::ValueType VT = Base.getValueType();
   return DAG.getNode(ISD::ADD, VT, Base, DAG.getConstant(Offset, VT));
 }
 
-/// MeetsMaxMemopRequirement - Determines if the number of memory ops required
-/// to replace the memset / memcpy is below the threshold. It also returns the
-/// types of the sequence of memory ops to perform memset / memcpy.
-static bool MeetsMaxMemopRequirement(std::vector<MVT::ValueType> &MemOps,
-                                     unsigned Limit, uint64_t Size,
-                                     unsigned Align,
-                                     const TargetLowering &TLI) {
-  MVT::ValueType VT;
+/// isMemSrcFromString - Returns true if memcpy source is a string constant.
+///
+static bool isMemSrcFromString(SDOperand Src, std::string &Str,
+                               uint64_t &SrcOff) {
+  unsigned SrcDelta = 0;
+  GlobalAddressSDNode *G = NULL;
+  if (Src.getOpcode() == ISD::GlobalAddress)
+    G = cast<GlobalAddressSDNode>(Src);
+  else if (Src.getOpcode() == ISD::ADD &&
+           Src.getOperand(0).getOpcode() == ISD::GlobalAddress &&
+           Src.getOperand(1).getOpcode() == ISD::Constant) {
+    G = cast<GlobalAddressSDNode>(Src.getOperand(0));
+    SrcDelta = cast<ConstantSDNode>(Src.getOperand(1))->getValue();
+  }
+  if (!G)
+    return false;
 
-  if (TLI.allowsUnalignedMemoryAccesses()) {
-    VT = MVT::i64;
-  } else {
-    switch (Align & 7) {
-    case 0:
-      VT = MVT::i64;
-      break;
-    case 4:
-      VT = MVT::i32;
-      break;
-    case 2:
-      VT = MVT::i16;
-      break;
-    default:
-      VT = MVT::i8;
-      break;
+  GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
+  if (GV && GV->isConstant()) {
+    Str = GV->getStringValue(false);
+    if (!Str.empty()) {
+      SrcOff += SrcDelta;
+      return true;
     }
   }
 
-  MVT::ValueType LVT = MVT::i64;
-  while (!TLI.isTypeLegal(LVT))
-    LVT = (MVT::ValueType)((unsigned)LVT - 1);
-  assert(MVT::isInteger(LVT));
+  return false;
+}
 
-  if (VT > LVT)
-    VT = LVT;
+/// MeetsMaxMemopRequirement - Determines if the number of memory ops required
+/// to replace the memset / memcpy is below the threshold. It also returns the
+/// types of the sequence of memory ops to perform memset / memcpy.
+static
+bool MeetsMaxMemopRequirement(std::vector<MVT::ValueType> &MemOps,
+                              SDOperand Dst, SDOperand Src,
+                              unsigned Limit, uint64_t Size, unsigned &Align,
+                              SelectionDAG &DAG,
+                              const TargetLowering &TLI) {
+  bool AllowUnalign = TLI.allowsUnalignedMemoryAccesses();
+
+  std::string Str;
+  uint64_t SrcOff = 0;
+  bool isSrcStr = isMemSrcFromString(Src, Str, SrcOff);
+  bool isSrcConst = isa<ConstantSDNode>(Src);
+  MVT::ValueType VT= TLI.getOptimalMemOpType(Size, Align, isSrcConst, isSrcStr);
+  if (VT != MVT::iAny) {
+    unsigned NewAlign = (unsigned)
+      TLI.getTargetData()->getABITypeAlignment(MVT::getTypeForValueType(VT));
+    // If source is a string constant, this will require an unaligned load.
+    if (NewAlign > Align && (isSrcConst || AllowUnalign)) {
+      if (Dst.getOpcode() != ISD::FrameIndex) {
+        // Can't change destination alignment. It requires a unaligned store.
+        if (AllowUnalign)
+          VT = MVT::iAny;
+      } else {
+        int FI = cast<FrameIndexSDNode>(Dst)->getIndex();
+        MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+        if (MFI->isFixedObjectIndex(FI)) {
+          // Can't change destination alignment. It requires a unaligned store.
+          if (AllowUnalign)
+            VT = MVT::iAny;
+        } else {
+          // Give the stack frame object a larger alignment.
+          MFI->setObjectAlignment(FI, NewAlign);
+          Align = NewAlign;
+        }
+      }
+    }
+  }
+
+  if (VT == MVT::iAny) {
+    if (AllowUnalign) {
+      VT = MVT::i64;
+    } else {
+      switch (Align & 7) {
+      case 0:  VT = MVT::i64; break;
+      case 4:  VT = MVT::i32; break;
+      case 2:  VT = MVT::i16; break;
+      default: VT = MVT::i8;  break;
+      }
+    }
+
+    MVT::ValueType LVT = MVT::i64;
+    while (!TLI.isTypeLegal(LVT))
+      LVT = (MVT::ValueType)((unsigned)LVT - 1);
+    assert(MVT::isInteger(LVT));
+
+    if (VT > LVT)
+      VT = LVT;
+  }
 
   unsigned NumMemOps = 0;
   while (Size != 0) {
     unsigned VTSize = MVT::getSizeInBits(VT) / 8;
     while (VTSize > Size) {
-      VT = (MVT::ValueType)((unsigned)VT - 1);
-      VTSize >>= 1;
+      // For now, only use non-vector load / store's for the left-over pieces.
+      if (MVT::isVector(VT)) {
+        VT = MVT::i64;
+        while (!TLI.isTypeLegal(VT))
+          VT = (MVT::ValueType)((unsigned)VT - 1);         
+        VTSize = MVT::getSizeInBits(VT) / 8;
+      } else {
+        VT = (MVT::ValueType)((unsigned)VT - 1);
+        VTSize >>= 1;
+      }
     }
-    assert(MVT::isInteger(VT));
 
     if (++NumMemOps > Limit)
       return false;
@@ -2613,8 +2677,7 @@ static bool MeetsMaxMemopRequirement(std::vector<MVT::ValueType> &MemOps,
 static SDOperand getMemcpyLoadsAndStores(SelectionDAG &DAG,
                                          SDOperand Chain, SDOperand Dst,
                                          SDOperand Src, uint64_t Size,
-                                         unsigned Align,
-                                         bool AlwaysInline,
+                                         unsigned Align, bool AlwaysInline,
                                          const Value *DstSV, uint64_t DstSVOff,
                                          const Value *SrcSV, uint64_t SrcSVOff){
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
@@ -2625,56 +2688,38 @@ static SDOperand getMemcpyLoadsAndStores(SelectionDAG &DAG,
   uint64_t Limit = -1;
   if (!AlwaysInline)
     Limit = TLI.getMaxStoresPerMemcpy();
-  if (!MeetsMaxMemopRequirement(MemOps, Limit, Size, Align, TLI))
+  unsigned DstAlign = Align;  // Destination alignment can change.
+  if (!MeetsMaxMemopRequirement(MemOps, Dst, Src, Limit, Size, DstAlign,
+                                DAG, TLI))
     return SDOperand();
 
-  SmallVector<SDOperand, 8> OutChains;
-
-  unsigned NumMemOps = MemOps.size();
-  unsigned SrcDelta = 0;
-  GlobalAddressSDNode *G = NULL;
   std::string Str;
-  bool CopyFromStr = false;
   uint64_t SrcOff = 0, DstOff = 0;
+  bool CopyFromStr = isMemSrcFromString(Src, Str, SrcOff);
 
-  if (Src.getOpcode() == ISD::GlobalAddress)
-    G = cast<GlobalAddressSDNode>(Src);
-  else if (Src.getOpcode() == ISD::ADD &&
-           Src.getOperand(0).getOpcode() == ISD::GlobalAddress &&
-           Src.getOperand(1).getOpcode() == ISD::Constant) {
-    G = cast<GlobalAddressSDNode>(Src.getOperand(0));
-    SrcDelta = cast<ConstantSDNode>(Src.getOperand(1))->getValue();
-  }
-  if (G) {
-    GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
-    if (GV && GV->isConstant()) {
-      Str = GV->getStringValue(false);
-      if (!Str.empty()) {
-        CopyFromStr = true;
-        SrcOff += SrcDelta;
-      }
-    }
-  }
-
+  SmallVector<SDOperand, 8> OutChains;
+  unsigned NumMemOps = MemOps.size();
   for (unsigned i = 0; i < NumMemOps; i++) {
     MVT::ValueType VT = MemOps[i];
     unsigned VTSize = MVT::getSizeInBits(VT) / 8;
     SDOperand Value, Store;
 
-    if (CopyFromStr) {
+    if (CopyFromStr && !MVT::isVector(VT)) {
+      // It's unlikely a store of a vector immediate can be done in a single
+      // instruction. It would require a load from a constantpool first.
+      // FIXME: Handle cases where store of vector immediate is done in a
+      // single instruction.
       Value = getMemsetStringVal(VT, DAG, TLI, Str, SrcOff);
-      Store =
-        DAG.getStore(Chain, Value,
-                     getMemBasePlusOffset(Dst, DstOff, DAG),
-                     DstSV, DstSVOff + DstOff);
+      Store = DAG.getStore(Chain, Value,
+                           getMemBasePlusOffset(Dst, DstOff, DAG),
+                           DstSV, DstSVOff + DstOff);
     } else {
       Value = DAG.getLoad(VT, Chain,
                           getMemBasePlusOffset(Src, SrcOff, DAG),
                           SrcSV, SrcSVOff + SrcOff, false, Align);
-      Store =
-        DAG.getStore(Chain, Value,
-                     getMemBasePlusOffset(Dst, DstOff, DAG),
-                     DstSV, DstSVOff + DstOff, false, Align);
+      Store = DAG.getStore(Chain, Value,
+                           getMemBasePlusOffset(Dst, DstOff, DAG),
+                           DstSV, DstSVOff + DstOff, false, DstAlign);
     }
     OutChains.push_back(Store);
     SrcOff += VTSize;
@@ -2695,8 +2740,8 @@ static SDOperand getMemsetStores(SelectionDAG &DAG,
   // Expand memset to a series of load/store ops if the size operand
   // falls below a certain threshold.
   std::vector<MVT::ValueType> MemOps;
-  if (!MeetsMaxMemopRequirement(MemOps, TLI.getMaxStoresPerMemset(),
-                                Size, Align, TLI))
+  if (!MeetsMaxMemopRequirement(MemOps, Dst, Src, TLI.getMaxStoresPerMemset(),
+                                Size, Align, DAG, TLI))
     return SDOperand();
 
   SmallVector<SDOperand, 8> OutChains;

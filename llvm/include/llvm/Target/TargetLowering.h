@@ -510,6 +510,15 @@ public:
   bool allowsUnalignedMemoryAccesses() const {
     return allowUnalignedMemoryAccesses;
   }
+
+  /// getOptimalMemOpType - Returns the target specific optimal type for load
+  /// store operations as result of memset, memcpy, and memmove lowering.
+  /// It returns MVT::iAny if SelectionDAG should be responsible for
+  /// determining it.
+  virtual MVT::ValueType getOptimalMemOpType(uint64_t Size, unsigned Align,
+                                         bool isSrcConst, bool isSrcStr) const {
+    return MVT::iAny;
+  }
   
   /// usesUnderscoreSetJmp - Determine if we should use _setjmp or setjmp
   /// to implement llvm.setjmp.

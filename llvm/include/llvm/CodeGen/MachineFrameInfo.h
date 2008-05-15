@@ -210,6 +210,13 @@ public:
     return Objects[ObjectIdx+NumFixedObjects].Alignment;
   }
 
+  /// setObjectAlignment - Change the alignment of the spcified stack object...
+  void setObjectAlignment(int ObjectIdx, unsigned Align) {
+    assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
+           "Invalid Object Idx!");
+    Objects[ObjectIdx+NumFixedObjects].Alignment = Align;
+  }
+
   /// getObjectOffset - Return the assigned stack offset of the specified object
   /// from the incoming stack pointer.
   ///
