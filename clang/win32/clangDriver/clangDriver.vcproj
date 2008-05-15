@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="8.00"
 	Name="clangDriver"
 	ProjectGUID="{7E7DA455-C276-4B93-8D02-8F7E2F629BAF}"
 	RootNamespace="clangDriver"

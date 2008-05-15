@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="8.00"
 	Name="clangRewrite"
 	ProjectGUID="{F9FBDDA2-9EE1-473C-A456-BE20B7B2439D}"
 	RootNamespace="clangRewrite"
