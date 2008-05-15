@@ -274,7 +274,8 @@ public:
   bool isFileVarDecl() const {
     if (getKind() != Decl::Var)
       return false;
-    if (isa<TranslationUnitDecl>(getDeclContext()))
+    if (isa<TranslationUnitDecl>(getDeclContext()) ||
+        isa<NamespaceDecl>(getDeclContext()) )
       return true;
     return false;
   }
