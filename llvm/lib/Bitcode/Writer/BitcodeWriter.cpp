@@ -353,7 +353,7 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
                               Log2_32_Ceil(MaxGlobalType+1)));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1));      // Constant.
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));        // Initializer.
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 3));      // Linkage.
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 4));      // Linkage.
     if (MaxAlignment == 0)                                      // Alignment.
       Abbv->Add(BitCodeAbbrevOp(0));
     else {
