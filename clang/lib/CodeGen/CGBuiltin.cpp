@@ -280,7 +280,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     return RValue::get(Builder.CreateCall(AtomF, &Args[0], &Args[1]+2));
   }
   case Builtin::BI__sync_lock_test_and_set:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_swap, E);  }
+    return EmitBinaryAtomic(*this, Intrinsic::atomic_swap, E);
+  }
   return RValue::get(0);
 }
 
@@ -503,6 +504,20 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     }
     llvm::Function *F = CGM.getIntrinsic(ID);
     return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), name);  
+  }
+  case X86::BI__builtin_ia32_pshuflw: {
+    unsigned i = cast<ConstantInt>(Ops[1])->getZExtValue();
+    return EmitShuffleVector(Ops[0], Ops[0], 
+                             i & 0x3, (i & 0xc) >> 2,
+                             (i & 0x30) >> 4, (i & 0xc0) >> 6, 4, 5, 6, 7,
+                             "pshuflw");
+  }
+  case X86::BI__builtin_ia32_pshufhw: {
+    unsigned i = cast<ConstantInt>(Ops[1])->getZExtValue();
+    return EmitShuffleVector(Ops[0], Ops[0], 0, 1, 2, 3,
+                             4 + (i & 0x3), 4 + ((i & 0xc) >> 2),
+                             4 + ((i & 0x30) >> 4), 4 + ((i & 0xc0) >> 6),
+                             "pshufhw");
   }
   case X86::BI__builtin_ia32_pshufd: {
     unsigned i = cast<ConstantInt>(Ops[1])->getZExtValue();
