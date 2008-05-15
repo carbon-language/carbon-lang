@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="8.00"
 	Name="ExecutionEngine"
 	ProjectGUID="{76295AE8-A083-460E-9F80-6F2B8923264A}"
 	Keyword="Win32Proj"
-	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -340,11 +339,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\lib\ExecutionEngine\Jit\JIT.h"
+				RelativePath="..\..\include\llvm\ExecutionEngine\JIT.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\ExecutionEngine\JIT.h"
+				RelativePath="..\..\lib\ExecutionEngine\Jit\JIT.h"
 				>
 			</File>
 			<File

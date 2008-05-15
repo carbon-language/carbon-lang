@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="8.00"
 	Name="Analysis"
 	ProjectGUID="{0622E827-8464-489D-8B1C-B0B496F35C08}"
 	Keyword="Win32Proj"
-	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -351,14 +350,6 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Analysis\IntervalPartition.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\lib\Analysis\LibCallAliasAnalysis.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\lib\Analysis\LibCallSemantics.cpp"
 				>
 			</File>
 			<File

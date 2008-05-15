@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="8.00"
 	Name="Configure"
 	ProjectGUID="{19514E48-456C-4B9D-8637-F2285476461E}"
 	RootNamespace="Configure"
 	Keyword="Win32Proj"
-	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -70,8 +69,6 @@
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/Configure.pdb"
 				SubSystem="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -79,8 +76,6 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
-				OutputManifestFile="$(IntDir)\$(TargetFileName).intermediate.manifest"
-				ManifestResourceFile="$(IntDir)\$(TargetFileName).embed.intermediate.res"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -93,6 +88,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
