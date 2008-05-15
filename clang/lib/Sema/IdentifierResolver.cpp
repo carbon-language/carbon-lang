@@ -67,7 +67,7 @@ void IdentifierResolver::AddDecl(NamedDecl *D) {
 }
 
 /// AddShadowedDecl - Link the decl to its shadowed decl chain putting it
-/// after the decl that the iterator points to, thus the 'CIT' decl will be
+/// after the decl that the iterator points to, thus the 'Shadow' decl will be
 /// encountered before the 'D' decl.
 void IdentifierResolver::AddShadowedDecl(NamedDecl *D, NamedDecl *Shadow) {
   assert(D->getIdentifier() == Shadow->getIdentifier() && "Different ids!");
