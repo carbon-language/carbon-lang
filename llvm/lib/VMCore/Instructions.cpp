@@ -421,7 +421,8 @@ void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
 
 InvokeInst::InvokeInst(const InvokeInst &II)
   : TerminatorInst(II.getType(), Instruction::Invoke,
-                   OperandTraits<InvokeInst>::op_end(this) - II.getNumOperands(),
+                   OperandTraits<InvokeInst>::op_end(this)
+                   - II.getNumOperands(),
                    II.getNumOperands()) {
   setParamAttrs(II.getParamAttrs());
   SubclassData = II.SubclassData;
@@ -464,7 +465,8 @@ void InvokeInst::setDoesNotThrow(bool doesNotThrow) {
 
 ReturnInst::ReturnInst(const ReturnInst &RI)
   : TerminatorInst(Type::VoidTy, Instruction::Ret,
-                   OperandTraits<ReturnInst>::op_end(this) - RI.getNumOperands(),
+                   OperandTraits<ReturnInst>::op_end(this)
+                   - RI.getNumOperands(),
                    RI.getNumOperands()) {
   unsigned N = RI.getNumOperands();
   if (N == 1)
@@ -997,7 +999,8 @@ void GetElementPtrInst::init(Value *Ptr, Value *Idx) {
 
 GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
   : Instruction(reinterpret_cast<const Type*>(GEPI.getType()), GetElementPtr,
-                OperandTraits<GetElementPtrInst>::op_end(this) - GEPI.getNumOperands(),
+                OperandTraits<GetElementPtrInst>::op_end(this)
+                - GEPI.getNumOperands(),
                 GEPI.getNumOperands()) {
   Use *OL = OperandList;
   Use *GEPIOL = GEPI.OperandList;
@@ -1976,45 +1979,45 @@ bool CastInst::isCastable(const Type *SrcTy, const Type *DestTy) {
   unsigned DestBits = DestTy->getPrimitiveSizeInBits(); // 0 for ptr/vector
 
   // Run through the possibilities ...
-  if (DestTy->isInteger()) {                      // Casting to integral
-    if (SrcTy->isInteger()) {                     // Casting from integral
+  if (DestTy->isInteger()) {                   // Casting to integral
+    if (SrcTy->isInteger()) {                  // Casting from integral
         return true;
-    } else if (SrcTy->isFloatingPoint()) {        // Casting from floating pt
+    } else if (SrcTy->isFloatingPoint()) {     // Casting from floating pt
       return true;
     } else if (const VectorType *PTy = dyn_cast<VectorType>(SrcTy)) {
-                                                  // Casting from vector
+                                               // Casting from vector
       return DestBits == PTy->getBitWidth();
-    } else {                                      // Casting from something else
+    } else {                                   // Casting from something else
       return isa<PointerType>(SrcTy);
     }
-  } else if (DestTy->isFloatingPoint()) {         // Casting to floating pt
-    if (SrcTy->isInteger()) {                     // Casting from integral
+  } else if (DestTy->isFloatingPoint()) {      // Casting to floating pt
+    if (SrcTy->isInteger()) {                  // Casting from integral
       return true;
-    } else if (SrcTy->isFloatingPoint()) {        // Casting from floating pt
+    } else if (SrcTy->isFloatingPoint()) {     // Casting from floating pt
       return true;
     } else if (const VectorType *PTy = dyn_cast<VectorType>(SrcTy)) {
-                                                  // Casting from vector
+                                               // Casting from vector
       return DestBits == PTy->getBitWidth();
-    } else {                                      // Casting from something else
+    } else {                                   // Casting from something else
       return false;
     }
   } else if (const VectorType *DestPTy = dyn_cast<VectorType>(DestTy)) {
-                                                   // Casting to vector
+                                                // Casting to vector
     if (const VectorType *SrcPTy = dyn_cast<VectorType>(SrcTy)) {
-                                                   // Casting from vector
+                                                // Casting from vector
       return DestPTy->getBitWidth() == SrcPTy->getBitWidth();
-    } else {                                       // Casting from something else
+    } else {                                    // Casting from something else
       return DestPTy->getBitWidth() == SrcBits;
     }
-  } else if (isa<PointerType>(DestTy)) {           // Casting to pointer
-    if (isa<PointerType>(SrcTy)) {                 // Casting from pointer
+  } else if (isa<PointerType>(DestTy)) {        // Casting to pointer
+    if (isa<PointerType>(SrcTy)) {              // Casting from pointer
       return true;
-    } else if (SrcTy->isInteger()) {               // Casting from integral
+    } else if (SrcTy->isInteger()) {            // Casting from integral
       return true;
-    } else {                                       // Casting from something else
+    } else {                                    // Casting from something else
       return false;
     }
-  } else {                                         // Casting to something else
+  } else {                                      // Casting to something else
     return false;
   }
 }
@@ -2806,8 +2809,12 @@ CastInst   *FPToSIInst::clone()   const { return new FPToSIInst(*this); }
 CastInst   *PtrToIntInst::clone() const { return new PtrToIntInst(*this); }
 CastInst   *IntToPtrInst::clone() const { return new IntToPtrInst(*this); }
 CastInst   *BitCastInst::clone()  const { return new BitCastInst(*this); }
-CallInst   *CallInst::clone()     const { return new(getNumOperands()) CallInst(*this); }
-SelectInst *SelectInst::clone()   const { return new(getNumOperands()) SelectInst(*this); }
+CallInst   *CallInst::clone()     const {
+  return new(getNumOperands()) CallInst(*this);
+}
+SelectInst *SelectInst::clone()   const {
+  return new(getNumOperands()) SelectInst(*this);
+}
 VAArgInst  *VAArgInst::clone()    const { return new VAArgInst(*this); }
 
 ExtractElementInst *ExtractElementInst::clone() const {
@@ -2820,10 +2827,16 @@ ShuffleVectorInst *ShuffleVectorInst::clone() const {
   return new ShuffleVectorInst(*this);
 }
 PHINode    *PHINode::clone()    const { return new PHINode(*this); }
-ReturnInst *ReturnInst::clone() const { return new(getNumOperands()) ReturnInst(*this); }
-BranchInst *BranchInst::clone() const { return new(getNumOperands()) BranchInst(*this); }
+ReturnInst *ReturnInst::clone() const {
+  return new(getNumOperands()) ReturnInst(*this);
+}
+BranchInst *BranchInst::clone() const {
+  return new(getNumOperands()) BranchInst(*this);
+}
 SwitchInst *SwitchInst::clone() const { return new SwitchInst(*this); }
-InvokeInst *InvokeInst::clone() const { return new(getNumOperands()) InvokeInst(*this); }
+InvokeInst *InvokeInst::clone() const {
+  return new(getNumOperands()) InvokeInst(*this);
+}
 UnwindInst *UnwindInst::clone() const { return new UnwindInst(); }
 UnreachableInst *UnreachableInst::clone() const { return new UnreachableInst();}
 GetResultInst *GetResultInst::clone() const { return new GetResultInst(*this); }

@@ -265,12 +265,13 @@ GenericValue JIT::runFunction(Function *F,
     Args.push_back(C);
   }
 
-  CallInst *TheCall = CallInst::Create(F, Args.begin(), Args.end(), "", StubBB);
+  CallInst *TheCall = CallInst::Create(F, Args.begin(), Args.end(),
+                                       "", StubBB);
   TheCall->setTailCall();
   if (TheCall->getType() != Type::VoidTy)
-    ReturnInst::Create(TheCall, StubBB);             // Return result of the call.
+    ReturnInst::Create(TheCall, StubBB);    // Return result of the call.
   else
-    ReturnInst::Create(StubBB);                      // Just return void.
+    ReturnInst::Create(StubBB);             // Just return void.
 
   // Finally, return the value returned by our nullary stub function.
   return runFunction(Stub, std::vector<GenericValue>());

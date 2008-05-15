@@ -1485,7 +1485,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         }
       }
       
-      I = InvokeInst::Create(Callee, NormalBB, UnwindBB, Ops.begin(), Ops.end());
+      I = InvokeInst::Create(Callee, NormalBB, UnwindBB,
+                             Ops.begin(), Ops.end());
       cast<InvokeInst>(I)->setCallingConv(CCInfo);
       cast<InvokeInst>(I)->setParamAttrs(PAL);
       break;

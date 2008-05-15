@@ -532,7 +532,8 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
           GR->eraseFromParent();
         }
       } else {
-        PHINode *PHI = PHINode::Create(RTy, TheCall->getName(), AfterCallBB->begin());
+        PHINode *PHI = PHINode::Create(RTy, TheCall->getName(),
+                                       AfterCallBB->begin());
         PHIs.push_back(PHI);
         // Anything that used the result of the function call should now use the
         // PHI node as their operand.

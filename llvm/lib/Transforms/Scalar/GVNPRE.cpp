@@ -909,12 +909,13 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
       Instruction* newVal = 0;
       if (ShuffleVectorInst* S = dyn_cast<ShuffleVectorInst>(U))
         newVal = new ShuffleVectorInst(newOp1, newOp2, newOp3,
-                                       S->getName()+".expr");
+                                       S->getName() + ".expr");
       else if (InsertElementInst* I = dyn_cast<InsertElementInst>(U))
         newVal = InsertElementInst::Create(newOp1, newOp2, newOp3,
-                                           I->getName()+".expr");
+                                           I->getName() + ".expr");
       else if (SelectInst* I = dyn_cast<SelectInst>(U))
-        newVal = SelectInst::Create(newOp1, newOp2, newOp3, I->getName()+".expr");
+        newVal = SelectInst::Create(newOp1, newOp2, newOp3,
+                                    I->getName() + ".expr");
       
       uint32_t v = VN.lookup_or_add(newVal);
       

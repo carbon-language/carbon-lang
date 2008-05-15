@@ -734,18 +734,22 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
           // Resolve the call to function F via the JIT API:
           //
           // call resolver(GetElementPtr...)
-          CallInst *Resolver = CallInst::Create(resolverFunc, ResolverArgs.begin(),
-                                                ResolverArgs.end(),
-                                                "resolver", LookupBB);
-          // cast the result from the resolver to correctly-typed function
-          CastInst *CastedResolver = new BitCastInst(Resolver, 
-            PointerType::getUnqual(F->getFunctionType()), "resolverCast", LookupBB);
+          CallInst *Resolver =
+            CallInst::Create(resolverFunc, ResolverArgs.begin(),
+                             ResolverArgs.end(), "resolver", LookupBB);
+
+          // Cast the result from the resolver to correctly-typed function.
+          CastInst *CastedResolver =
+            new BitCastInst(Resolver,
+                            PointerType::getUnqual(F->getFunctionType()),
+                            "resolverCast", LookupBB);
 
           // Save the value in our cache.
           new StoreInst(CastedResolver, Cache, LookupBB);
           BranchInst::Create(DoCallBB, LookupBB);
 
-          PHINode *FuncPtr = PHINode::Create(NullPtr->getType(), "fp", DoCallBB);
+          PHINode *FuncPtr = PHINode::Create(NullPtr->getType(),
+                                             "fp", DoCallBB);
           FuncPtr->addIncoming(CastedResolver, LookupBB);
           FuncPtr->addIncoming(CachedVal, EntryBB);
 

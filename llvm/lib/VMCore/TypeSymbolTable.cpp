@@ -64,7 +64,9 @@ Type* TypeSymbolTable::remove(iterator Entry) {
   // list...
   if (Result->isAbstract()) {
 #if DEBUG_ABSTYPE
-    cerr << "Removing abstract type from symtab" << Result->getDescription()<<"\n";
+    cerr << "Removing abstract type from symtab"
+         << Result->getDescription()
+         << "\n";
 #endif
     cast<DerivedType>(Result)->removeAbstractTypeUser(this);
   }

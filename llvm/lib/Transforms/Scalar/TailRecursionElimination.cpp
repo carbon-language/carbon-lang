@@ -401,7 +401,8 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
     Instruction *InsertPos = OldEntry->begin();
     for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
          I != E; ++I) {
-      PHINode *PN = PHINode::Create(I->getType(), I->getName()+".tr", InsertPos);
+      PHINode *PN = PHINode::Create(I->getType(),
+                                    I->getName() + ".tr", InsertPos);
       I->replaceAllUsesWith(PN); // Everyone use the PHI node now!
       PN->addIncoming(I, NewEntry);
       ArgumentPHIs.push_back(PN);

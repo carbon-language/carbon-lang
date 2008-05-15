@@ -106,7 +106,8 @@ bool Argument::hasNoAliasAttr() const {
 /// it in its containing function.
 bool Argument::hasStructRetAttr() const {
   if (!isa<PointerType>(getType())) return false;
-  if (this != getParent()->arg_begin()) return false; // StructRet param must be first param
+  if (this != getParent()->arg_begin())
+    return false; // StructRet param must be first param
   return getParent()->paramHasAttr(1, ParamAttr::StructRet);
 }
 

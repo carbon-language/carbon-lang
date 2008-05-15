@@ -539,9 +539,11 @@ class VISIBILITY_HIDDEN GetElementPtrConstantExpr : public ConstantExpr {
   GetElementPtrConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
                             const Type *DestTy);
 public:
-  static GetElementPtrConstantExpr *Create(Constant *C, const std::vector<Constant*> &IdxList,
+  static GetElementPtrConstantExpr *Create(Constant *C,
+                                           const std::vector<Constant*>&IdxList,
                                            const Type *DestTy) {
-    return new(IdxList.size() + 1) GetElementPtrConstantExpr(C, IdxList, DestTy);
+    return new(IdxList.size() + 1)
+      GetElementPtrConstantExpr(C, IdxList, DestTy);
   }
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -1973,8 +1975,9 @@ Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
 Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
                                            Value* const *Idxs,
                                            unsigned NumIdx) {
-  assert(GetElementPtrInst::getIndexedType(C->getType(), Idxs, Idxs+NumIdx, true) &&
-         "GEP indices invalid!");
+  assert(GetElementPtrInst::getIndexedType(C->getType(),
+                                           Idxs, Idxs+NumIdx, true)
+         && "GEP indices invalid!");
 
   if (Constant *FC = ConstantFoldGetElementPtr(C, (Constant**)Idxs, NumIdx))
     return FC;          // Fold a few common cases...

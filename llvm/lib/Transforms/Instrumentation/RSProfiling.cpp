@@ -381,8 +381,8 @@ Value* ProfilerRS::Translate(Value* v) {
     if (bb == &bb->getParent()->getEntryBlock())
       TransCache[bb] = bb; //don't translate entry block
     else
-      TransCache[bb] = BasicBlock::Create("dup_" + bb->getName(), bb->getParent(), 
-                                          NULL);
+      TransCache[bb] = BasicBlock::Create("dup_" + bb->getName(),
+                                          bb->getParent(), NULL);
     return TransCache[bb];
   } else if (Instruction* i = dyn_cast<Instruction>(v)) {
     //we have already translated this

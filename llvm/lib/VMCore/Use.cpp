@@ -1,4 +1,4 @@
-//===-- Use.cpp - Implement the Use class -------------------------------===//
+//===-- Use.cpp - Implement the Use class ---------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -151,7 +151,9 @@ User *Use::getUser() const {
 //===----------------------------------------------------------------------===//
 
 Use *User::allocHungoffUses(unsigned N) const {
-  Use *Begin = static_cast<Use*>(::operator new(sizeof(Use) * N + sizeof(AugmentedUse) - sizeof(Use)));
+  Use *Begin = static_cast<Use*>(::operator new(sizeof(Use) * N
+                                                + sizeof(AugmentedUse)
+                                                - sizeof(Use)));
   Use *End = Begin + N;
   static_cast<AugmentedUse&>(End[-1]).ref = addTag(this, tagOne);
   return Use::initTags(Begin, End);

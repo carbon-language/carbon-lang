@@ -641,7 +641,8 @@ ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
   Function *oldFunction = header->getParent();
 
   // This takes place of the original loop
-  BasicBlock *codeReplacer = BasicBlock::Create("codeRepl", oldFunction, header);
+  BasicBlock *codeReplacer = BasicBlock::Create("codeRepl", oldFunction,
+                                                header);
 
   // The new function needs a root node because other nodes can branch to the
   // head of the region, but the entry node of a function cannot have preds.

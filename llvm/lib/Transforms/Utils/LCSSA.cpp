@@ -281,8 +281,8 @@ Value *LCSSA::GetValueForBlock(DomTreeNode *BB, Instruction *OrigInst,
   
   // Otherwise, the idom is the loop, so we need to insert a PHI node.  Do so
   // now, then get values to fill in the incoming values for the PHI.
-  PHINode *PN = PHINode::Create(OrigInst->getType(), OrigInst->getName()+".lcssa",
-                                BBN->begin());
+  PHINode *PN = PHINode::Create(OrigInst->getType(),
+                                OrigInst->getName() + ".lcssa", BBN->begin());
   PN->reserveOperandSpace(std::distance(pred_begin(BBN), pred_end(BBN)));
   V = PN;
                                  
