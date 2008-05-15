@@ -210,7 +210,7 @@ public:
     return Objects[ObjectIdx+NumFixedObjects].Alignment;
   }
 
-  /// setObjectAlignment - Change the alignment of the spcified stack object...
+  /// setObjectAlignment - Change the alignment of the specified stack object...
   void setObjectAlignment(int ObjectIdx, unsigned Align) {
     assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
            "Invalid Object Idx!");
