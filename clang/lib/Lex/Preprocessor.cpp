@@ -402,6 +402,8 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   DefineBuiltinMacro(Buf, "__STDC_HOSTED__=1");
   if (PP.getLangOptions().ObjC1)
     DefineBuiltinMacro(Buf, "__OBJC__=1");
+  if (PP.getLangOptions().ObjC2)
+    DefineBuiltinMacro(Buf, "OBJC_NEW_PROPERTIES");
 
   // Add __builtin_va_list typedef.
   {

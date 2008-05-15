@@ -330,8 +330,6 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "__OBJC_RW_EXTERN int objc_exception_match";
   Preamble += "(struct objc_class *, struct objc_object *);\n";
   Preamble += "__OBJC_RW_EXTERN Protocol *objc_getProtocol(const char *);\n";
-  if (LangOpts.Microsoft) 
-    Preamble += "#undef __OBJC_RW_EXTERN\n";
   Preamble += "#ifndef __FASTENUMERATIONSTATE\n";
   Preamble += "struct __objcFastEnumerationState {\n\t";
   Preamble += "unsigned long state;\n\t";
@@ -347,11 +345,13 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "  char *str;\n";
   Preamble += "  long length;\n";
   Preamble += "};\n";
-  Preamble += "extern int __CFConstantStringClassReference[];\n";
+  Preamble += "__OBJC_RW_EXTERN int __CFConstantStringClassReference[];\n";
   Preamble += "#define __NSCONSTANTSTRINGIMPL\n";
   Preamble += "#endif\n";
-  if (LangOpts.Microsoft) 
+  if (LangOpts.Microsoft) {
+    Preamble += "#undef __OBJC_RW_EXTERN\n";
     Preamble += "#define __attribute__(X)\n";
+  }
 }
 
 
