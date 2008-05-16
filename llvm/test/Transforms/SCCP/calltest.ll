@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -sccp -adce -simplifycfg | llvm-dis | \
+; RUN: llvm-as < %s | opt -sccp -loop-deletion -simplifycfg | llvm-dis | \
 ; RUN:   not grep br
 
 ; No matter how hard you try, sqrt(1.0) is always 1.0.  This allows the
