@@ -872,7 +872,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
           case ICmpInst::ICMP_ULE:
           case ICmpInst::ICMP_SLE:
           case ICmpInst::ICMP_EQ:
-            LV = BinaryOperator::createNot(LV, "notinit", CI);
+            LV = BinaryOperator::CreateNot(LV, "notinit", CI);
             break;
           case ICmpInst::ICMP_NE:
           case ICmpInst::ICMP_UGE:
@@ -1193,7 +1193,7 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI){
     if (!RunningOr)
       RunningOr = Cond;   // First seteq
     else
-      RunningOr = BinaryOperator::createOr(RunningOr, Cond, "tmp", MI);
+      RunningOr = BinaryOperator::CreateOr(RunningOr, Cond, "tmp", MI);
   }
 
   // Split the basic block at the old malloc.

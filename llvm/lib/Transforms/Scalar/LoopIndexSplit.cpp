@@ -581,7 +581,7 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
                                  ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                                  SD.SplitValue, ExitValue, "lisplit", 
                                  Terminator);
-  Instruction *NSplitCond = BinaryOperator::createAnd(C1, C2, "lisplit", 
+  Instruction *NSplitCond = BinaryOperator::CreateAnd(C1, C2, "lisplit", 
                                                       Terminator);
   SD.SplitCondition->replaceAllUsesWith(NSplitCond);
   SD.SplitCondition->eraseFromParent();
@@ -769,7 +769,7 @@ void LoopIndexSplit::updateLoopBounds(ICmpInst *CI) {
     //
     if (ExitCondition->getPredicate() == ICmpInst::ICMP_SLT
         || ExitCondition->getPredicate() == ICmpInst::ICMP_ULT) {
-      Value *A = BinaryOperator::createAdd(NV, ConstantInt::get(Ty, 1, Sign),
+      Value *A = BinaryOperator::CreateAdd(NV, ConstantInt::get(Ty, 1, Sign),
                                            "lsplit.add", PHTerminator);
       Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                               A, UB,"lsplit,c", PHTerminator);
@@ -821,7 +821,7 @@ void LoopIndexSplit::updateLoopBounds(ICmpInst *CI) {
     //
     else if (ExitCondition->getPredicate() == ICmpInst::ICMP_SLE
              || ExitCondition->getPredicate() == ICmpInst::ICMP_ULE) {
-      Value *S = BinaryOperator::createSub(NV, ConstantInt::get(Ty, 1, Sign),
+      Value *S = BinaryOperator::CreateSub(NV, ConstantInt::get(Ty, 1, Sign),
                                            "lsplit.add", PHTerminator);
       Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                               S, UB, "lsplit.c", PHTerminator);
@@ -857,7 +857,7 @@ void LoopIndexSplit::updateLoopBounds(ICmpInst *CI) {
     //   LOOP_BODY
     //
     {
-      Value *A = BinaryOperator::createAdd(NV, ConstantInt::get(Ty, 1, Sign),
+      Value *A = BinaryOperator::CreateAdd(NV, ConstantInt::get(Ty, 1, Sign),
                                            "lsplit.add", PHTerminator);
       Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                               A, StartValue, "lsplit.c", PHTerminator);
@@ -1213,7 +1213,7 @@ void LoopIndexSplit::calculateLoopBounds(SplitInfo &SD) {
           //       A;
           // for (i = max(LB, BSV); i < UB; ++i) 
           //       B;
-          BSV = BinaryOperator::createAdd(SD.SplitValue,
+          BSV = BinaryOperator::CreateAdd(SD.SplitValue,
                                           ConstantInt::get(Ty, 1, Sign),
                                           "lsplit.add", PHTerminator);
           AEV = BSV;
@@ -1244,7 +1244,7 @@ void LoopIndexSplit::calculateLoopBounds(SplitInfo &SD) {
           //       B;
           // for (i = max(LB, BSV); i < UB; ++i) 
           //       A;
-          BSV = BinaryOperator::createAdd(SD.SplitValue,
+          BSV = BinaryOperator::CreateAdd(SD.SplitValue,
                                           ConstantInt::get(Ty, 1, Sign),
                                           "lsplit.add", PHTerminator);
           AEV = BSV;
@@ -1272,7 +1272,7 @@ void LoopIndexSplit::calculateLoopBounds(SplitInfo &SD) {
         //       A;
         // for (i = max(LB, BSV); i <= UB; ++i) 
         //       B;
-        AEV = BinaryOperator::createSub(SD.SplitValue,
+        AEV = BinaryOperator::CreateSub(SD.SplitValue,
                                         ConstantInt::get(Ty, 1, Sign),
                                         "lsplit.sub", PHTerminator);
         break;
@@ -1288,7 +1288,7 @@ void LoopIndexSplit::calculateLoopBounds(SplitInfo &SD) {
         //       A;
         // for (i = max(LB, BSV); i <= UB; ++i) 
         //       B;
-        BSV = BinaryOperator::createAdd(SD.SplitValue,
+        BSV = BinaryOperator::CreateAdd(SD.SplitValue,
                                         ConstantInt::get(Ty, 1, Sign),
                                         "lsplit.add", PHTerminator);
         break;
@@ -1304,7 +1304,7 @@ void LoopIndexSplit::calculateLoopBounds(SplitInfo &SD) {
         //      B;
         // for (i = max(LB, BSV); i <= UB; ++i)
         //      A;
-        BSV = BinaryOperator::createAdd(SD.SplitValue,
+        BSV = BinaryOperator::CreateAdd(SD.SplitValue,
                                         ConstantInt::get(Ty, 1, Sign),
                                         "lsplit.add", PHTerminator);
         break;
@@ -1321,7 +1321,7 @@ void LoopIndexSplit::calculateLoopBounds(SplitInfo &SD) {
         //      B;
         // for (i = max(LB, BSV); i <= UB; ++i)
         //      A;
-        AEV = BinaryOperator::createSub(SD.SplitValue,
+        AEV = BinaryOperator::CreateSub(SD.SplitValue,
                                         ConstantInt::get(Ty, 1, Sign),
                                         "lsplit.sub", PHTerminator);
         break;

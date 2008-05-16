@@ -1266,7 +1266,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       
       int Opc = GetDecodedBinaryOpcode(Record[OpNum], LHS->getType());
       if (Opc == -1) return Error("Invalid BINOP record");
-      I = BinaryOperator::create((Instruction::BinaryOps)Opc, LHS, RHS);
+      I = BinaryOperator::Create((Instruction::BinaryOps)Opc, LHS, RHS);
       break;
     }
     case bitc::FUNC_CODE_INST_CAST: {    // CAST: [opval, opty, destty, castopc]
@@ -1280,7 +1280,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       int Opc = GetDecodedCastOpcode(Record[OpNum+1]);
       if (Opc == -1 || ResTy == 0)
         return Error("Invalid CAST record");
-      I = CastInst::create((Instruction::CastOps)Opc, Op, ResTy);
+      I = CastInst::Create((Instruction::CastOps)Opc, Op, ResTy);
       break;
     }
     case bitc::FUNC_CODE_INST_GEP: { // GEP: [n x operands]

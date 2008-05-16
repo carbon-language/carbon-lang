@@ -389,7 +389,7 @@ static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
       while (isa<PHINode>(InsertPt)) ++InsertPt;
       
       InsertedCast = 
-        CastInst::create(CI->getOpcode(), CI->getOperand(0), CI->getType(), "", 
+        CastInst::Create(CI->getOpcode(), CI->getOperand(0), CI->getType(), "", 
                          InsertPt);
       MadeChange = true;
     }
@@ -447,7 +447,7 @@ static bool OptimizeCmpExpression(CmpInst *CI){
       while (isa<PHINode>(InsertPt)) ++InsertPt;
       
       InsertedCmp = 
-        CmpInst::create(CI->getOpcode(), CI->getPredicate(), CI->getOperand(0), 
+        CmpInst::Create(CI->getOpcode(), CI->getPredicate(), CI->getOperand(0), 
                         CI->getOperand(1), "", InsertPt);
       MadeChange = true;
     }
@@ -880,7 +880,7 @@ bool CodeGenPrepare::OptimizeLoadStoreInst(Instruction *LdStInst, Value *Addr,
         V = new SExtInst(V, IntPtrTy, "sunkaddr", InsertPt);
       }
       if (AddrMode.Scale != 1)
-        V = BinaryOperator::createMul(V, ConstantInt::get(IntPtrTy,
+        V = BinaryOperator::CreateMul(V, ConstantInt::get(IntPtrTy,
                                                           AddrMode.Scale),
                                       "sunkaddr", InsertPt);
       Result = V;
@@ -892,7 +892,7 @@ bool CodeGenPrepare::OptimizeLoadStoreInst(Instruction *LdStInst, Value *Addr,
       if (V->getType() != IntPtrTy)
         V = new PtrToIntInst(V, IntPtrTy, "sunkaddr", InsertPt);
       if (Result)
-        Result = BinaryOperator::createAdd(Result, V, "sunkaddr", InsertPt);
+        Result = BinaryOperator::CreateAdd(Result, V, "sunkaddr", InsertPt);
       else
         Result = V;
     }
@@ -902,7 +902,7 @@ bool CodeGenPrepare::OptimizeLoadStoreInst(Instruction *LdStInst, Value *Addr,
       Value *V = new PtrToIntInst(AddrMode.BaseGV, IntPtrTy, "sunkaddr",
                                   InsertPt);
       if (Result)
-        Result = BinaryOperator::createAdd(Result, V, "sunkaddr", InsertPt);
+        Result = BinaryOperator::CreateAdd(Result, V, "sunkaddr", InsertPt);
       else
         Result = V;
     }
@@ -911,7 +911,7 @@ bool CodeGenPrepare::OptimizeLoadStoreInst(Instruction *LdStInst, Value *Addr,
     if (AddrMode.BaseOffs) {
       Value *V = ConstantInt::get(IntPtrTy, AddrMode.BaseOffs);
       if (Result)
-        Result = BinaryOperator::createAdd(Result, V, "sunkaddr", InsertPt);
+        Result = BinaryOperator::CreateAdd(Result, V, "sunkaddr", InsertPt);
       else
         Result = V;
     }

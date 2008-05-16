@@ -272,7 +272,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       bool DestSExt = F->getParamAttrs().paramHasAttr(0, ParamAttr::SExt);
       
       //  Construct an appropriate cast from the new return type to the old.
-      CastInst *RetCast = CastInst::create(
+      CastInst *RetCast = CastInst::Create(
                             CastInst::getCastOpcode(NewCI, SrcSExt,
                                                     F->getReturnType(),
                                                     DestSExt),

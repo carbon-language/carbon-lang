@@ -149,103 +149,103 @@ public:
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getAdd(LC, RC);      
-    return Insert(BinaryOperator::createAdd(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateAdd(LHS, RHS, Name));
   }
   Value *CreateSub(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getSub(LC, RC);
-    return Insert(BinaryOperator::createSub(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateSub(LHS, RHS, Name));
   }
   Value *CreateMul(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getMul(LC, RC);
-    return Insert(BinaryOperator::createMul(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateMul(LHS, RHS, Name));
   }
   Value *CreateUDiv(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getUDiv(LC, RC);
-    return Insert(BinaryOperator::createUDiv(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateUDiv(LHS, RHS, Name));
   }
   Value *CreateSDiv(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getSDiv(LC, RC);      
-    return Insert(BinaryOperator::createSDiv(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateSDiv(LHS, RHS, Name));
   }
   Value *CreateFDiv(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getFDiv(LC, RC);      
-    return Insert(BinaryOperator::createFDiv(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateFDiv(LHS, RHS, Name));
   }
   Value *CreateURem(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getURem(LC, RC);
-    return Insert(BinaryOperator::createURem(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateURem(LHS, RHS, Name));
   }
   Value *CreateSRem(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getSRem(LC, RC);
-    return Insert(BinaryOperator::createSRem(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateSRem(LHS, RHS, Name));
   }
   Value *CreateFRem(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getFRem(LC, RC);
-    return Insert(BinaryOperator::createFRem(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateFRem(LHS, RHS, Name));
   }
   Value *CreateShl(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getShl(LC, RC);
-    return Insert(BinaryOperator::createShl(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateShl(LHS, RHS, Name));
   }
   Value *CreateLShr(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getLShr(LC, RC);
-    return Insert(BinaryOperator::createLShr(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateLShr(LHS, RHS, Name));
   }
   Value *CreateAShr(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getAShr(LC, RC);
-    return Insert(BinaryOperator::createAShr(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateAShr(LHS, RHS, Name));
   }
   Value *CreateAnd(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getAnd(LC, RC);
-    return Insert(BinaryOperator::createAnd(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateAnd(LHS, RHS, Name));
   }
   Value *CreateOr(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getOr(LC, RC);
-    return Insert(BinaryOperator::createOr(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateOr(LHS, RHS, Name));
   }
   Value *CreateXor(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getXor(LC, RC);
-    return Insert(BinaryOperator::createXor(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateXor(LHS, RHS, Name));
   }
 
   BinaryOperator *CreateBinOp(Instruction::BinaryOps Opc,
                               Value *LHS, Value *RHS, const char *Name = "") {
-    return Insert(BinaryOperator::create(Opc, LHS, RHS, Name));
+    return Insert(BinaryOperator::Create(Opc, LHS, RHS, Name));
   }
   
   BinaryOperator *CreateNeg(Value *V, const char *Name = "") {
-    return Insert(BinaryOperator::createNeg(V, Name));
+    return Insert(BinaryOperator::CreateNeg(V, Name));
   }
   BinaryOperator *CreateNot(Value *V, const char *Name = "") {
-    return Insert(BinaryOperator::createNot(V, Name));
+    return Insert(BinaryOperator::CreateNot(V, Name));
   }
   
   //===--------------------------------------------------------------------===//
@@ -357,7 +357,7 @@ public:
       return V;
     if (Constant *VC = dyn_cast<Constant>(V))
       return ConstantExpr::getCast(Op, VC, DestTy);      
-    return Insert(CastInst::create(Op, V, DestTy, Name));
+    return Insert(CastInst::Create(Op, V, DestTy, Name));
   }
   Value *CreateIntCast(Value *V, const Type *DestTy, bool isSigned,
                         const char *Name = "") {
@@ -365,7 +365,7 @@ public:
       return V;
     if (Constant *VC = dyn_cast<Constant>(V))
       return ConstantExpr::getIntegerCast(VC, DestTy, isSigned);
-    return Insert(CastInst::createIntegerCast(V, DestTy, isSigned, Name));
+    return Insert(CastInst::CreateIntegerCast(V, DestTy, isSigned, Name));
   }
 
   //===--------------------------------------------------------------------===//

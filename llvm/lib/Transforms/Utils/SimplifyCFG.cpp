@@ -1513,7 +1513,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                   // Invert the predecessors condition test (xor it with true),
                   // which allows us to write this code once.
                   Value *NewCond =
-                    BinaryOperator::createNot(PBI->getCondition(),
+                    BinaryOperator::CreateNot(PBI->getCondition(),
                                     PBI->getCondition()->getName()+".not", PBI);
                   PBI->setCondition(NewCond);
                   BasicBlock *OldTrue = PBI->getSuccessor(0);
@@ -1534,7 +1534,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                     PBI->getSuccessor(0) == TrueDest ?
                     Instruction::Or : Instruction::And;
                   Value *NewCond =
-                    BinaryOperator::create(Opcode, PBI->getCondition(),
+                    BinaryOperator::Create(Opcode, PBI->getCondition(),
                                            New, "bothcond", PBI);
                   PBI->setCondition(NewCond);
                   if (PBI->getSuccessor(0) == BB) {
@@ -1656,17 +1656,17 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                 // Make sure we get to CommonDest on True&True directions.
                 Value *PBICond = PBI->getCondition();
                 if (PBIOp)
-                  PBICond = BinaryOperator::createNot(PBICond,
+                  PBICond = BinaryOperator::CreateNot(PBICond,
                                                       PBICond->getName()+".not",
                                                       PBI);
                 Value *BICond = BI->getCondition();
                 if (BIOp)
-                  BICond = BinaryOperator::createNot(BICond,
+                  BICond = BinaryOperator::CreateNot(BICond,
                                                      BICond->getName()+".not",
                                                      PBI);
                 // Merge the conditions.
                 Value *Cond =
-                  BinaryOperator::createOr(PBICond, BICond, "brmerge", PBI);
+                  BinaryOperator::CreateOr(PBICond, BICond, "brmerge", PBI);
                 
                 // Modify PBI to branch on the new condition to the new dests.
                 PBI->setCondition(Cond);

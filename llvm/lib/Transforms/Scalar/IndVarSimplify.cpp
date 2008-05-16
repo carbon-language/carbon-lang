@@ -151,7 +151,7 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
       NewPhi->addIncoming(Constant::getNullValue(NewPhi->getType()), Preheader);
 
       // Create the new add instruction.
-      Value *NewAdd = BinaryOperator::createAdd(NewPhi, AddedVal,
+      Value *NewAdd = BinaryOperator::CreateAdd(NewPhi, AddedVal,
                                                 GEPI->getName()+".rec", GEPI);
       NewPhi->addIncoming(NewAdd, PN->getIncomingBlock(BackedgeIdx));
 

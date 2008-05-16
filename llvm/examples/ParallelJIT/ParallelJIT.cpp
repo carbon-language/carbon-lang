@@ -50,7 +50,7 @@ static Function* createAdd1(Module *M) {
   ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
 
   // Create the add instruction, inserting it into the end of BB.
-  Instruction *Add = BinaryOperator::createAdd(One, ArgX, "addresult", BB);
+  Instruction *Add = BinaryOperator::CreateAdd(One, ArgX, "addresult", BB);
 
   // Create the return instruction and add it to the basic block
   ReturnInst::Create(Add, BB);
@@ -90,16 +90,16 @@ static Function *CreateFibFunction(Module *M) {
   ReturnInst::Create(One, RetBB);
 
   // create fib(x-1)
-  Value *Sub = BinaryOperator::createSub(ArgX, One, "arg", RecurseBB);
+  Value *Sub = BinaryOperator::CreateSub(ArgX, One, "arg", RecurseBB);
   Value *CallFibX1 = CallInst::Create(FibF, Sub, "fibx1", RecurseBB);
 
   // create fib(x-2)
-  Sub = BinaryOperator::createSub(ArgX, Two, "arg", RecurseBB);
+  Sub = BinaryOperator::CreateSub(ArgX, Two, "arg", RecurseBB);
   Value *CallFibX2 = CallInst::Create(FibF, Sub, "fibx2", RecurseBB);
 
   // fib(x-1)+fib(x-2)
   Value *Sum =
-    BinaryOperator::createAdd(CallFibX1, CallFibX2, "addresult", RecurseBB);
+    BinaryOperator::CreateAdd(CallFibX1, CallFibX2, "addresult", RecurseBB);
 
   // Create the return instruction and add it to the basic block
   ReturnInst::Create(Sum, RecurseBB);

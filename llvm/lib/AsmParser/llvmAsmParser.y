@@ -2852,7 +2852,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     CHECK_FOR_ERROR
     Value* val2 = getVal(*$2, $5);
     CHECK_FOR_ERROR
-    $$ = BinaryOperator::create($1, val1, val2);
+    $$ = BinaryOperator::Create($1, val1, val2);
     if ($$ == 0)
       GEN_ERROR("binary operator returned null");
     delete $2;
@@ -2869,7 +2869,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     CHECK_FOR_ERROR
     Value* tmpVal2 = getVal(*$2, $5);
     CHECK_FOR_ERROR
-    $$ = BinaryOperator::create($1, tmpVal1, tmpVal2);
+    $$ = BinaryOperator::Create($1, tmpVal1, tmpVal2);
     if ($$ == 0)
       GEN_ERROR("binary operator returned null");
     delete $2;
@@ -2883,7 +2883,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     CHECK_FOR_ERROR
     Value* tmpVal2 = getVal(*$3, $6);
     CHECK_FOR_ERROR
-    $$ = CmpInst::create($1, $2, tmpVal1, tmpVal2);
+    $$ = CmpInst::Create($1, $2, tmpVal1, tmpVal2);
     if ($$ == 0)
       GEN_ERROR("icmp operator returned null");
     delete $3;
@@ -2897,7 +2897,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     CHECK_FOR_ERROR
     Value* tmpVal2 = getVal(*$3, $6);
     CHECK_FOR_ERROR
-    $$ = CmpInst::create($1, $2, tmpVal1, tmpVal2);
+    $$ = CmpInst::Create($1, $2, tmpVal1, tmpVal2);
     if ($$ == 0)
       GEN_ERROR("fcmp operator returned null");
     delete $3;
@@ -2911,7 +2911,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     CHECK_FOR_ERROR
     Value* tmpVal2 = getVal(*$3, $6);
     CHECK_FOR_ERROR
-    $$ = CmpInst::create($1, $2, tmpVal1, tmpVal2);
+    $$ = CmpInst::Create($1, $2, tmpVal1, tmpVal2);
     if ($$ == 0)
       GEN_ERROR("icmp operator returned null");
     delete $3;
@@ -2925,7 +2925,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     CHECK_FOR_ERROR
     Value* tmpVal2 = getVal(*$3, $6);
     CHECK_FOR_ERROR
-    $$ = CmpInst::create($1, $2, tmpVal1, tmpVal2);
+    $$ = CmpInst::Create($1, $2, tmpVal1, tmpVal2);
     if ($$ == 0)
       GEN_ERROR("fcmp operator returned null");
     delete $3;
@@ -2939,7 +2939,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       GEN_ERROR("invalid cast opcode for cast from '" +
                 Val->getType()->getDescription() + "' to '" +
                 DestTy->getDescription() + "'"); 
-    $$ = CastInst::create($1, Val, DestTy);
+    $$ = CastInst::Create($1, Val, DestTy);
     delete $4;
   }
   | SELECT ResolvedVal ',' ResolvedVal ',' ResolvedVal {

@@ -164,7 +164,7 @@ bool RaiseAllocations::runOnModule(Module &M) {
           // source size.
           if (Source->getType() != Type::Int32Ty)
             Source = 
-              CastInst::createIntegerCast(Source, Type::Int32Ty, false/*ZExt*/,
+              CastInst::CreateIntegerCast(Source, Type::Int32Ty, false/*ZExt*/,
                                           "MallocAmtCast", I);
 
           MallocInst *MI = new MallocInst(Type::Int8Ty, Source, "", I);

@@ -1204,11 +1204,11 @@ Value *SROA::ConvertUsesOfLoadToScalar(LoadInst *LI, AllocaInst *NewAI,
   // We do this to support (f.e.) loads off the end of a structure where
   // only some bits are used.
   if (ShAmt > 0 && (unsigned)ShAmt < NTy->getBitWidth())
-    NV = BinaryOperator::createLShr(NV, 
+    NV = BinaryOperator::CreateLShr(NV, 
                                     ConstantInt::get(NV->getType(),ShAmt),
                                     LI->getName(), LI);
   else if (ShAmt < 0 && (unsigned)-ShAmt < NTy->getBitWidth())
-    NV = BinaryOperator::createShl(NV, 
+    NV = BinaryOperator::CreateShl(NV, 
                                    ConstantInt::get(NV->getType(),-ShAmt),
                                    LI->getName(), LI);
   
@@ -1308,12 +1308,12 @@ Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI,
     // only some bits in the structure are set.
     APInt Mask(APInt::getLowBitsSet(DestWidth, SrcWidth));
     if (ShAmt > 0 && (unsigned)ShAmt < DestWidth) {
-      SV = BinaryOperator::createShl(SV, 
+      SV = BinaryOperator::CreateShl(SV, 
                                      ConstantInt::get(SV->getType(), ShAmt),
                                      SV->getName(), SI);
       Mask <<= ShAmt;
     } else if (ShAmt < 0 && (unsigned)-ShAmt < DestWidth) {
-      SV = BinaryOperator::createLShr(SV,
+      SV = BinaryOperator::CreateLShr(SV,
                                       ConstantInt::get(SV->getType(),-ShAmt),
                                       SV->getName(), SI);
       Mask = Mask.lshr(ShAmt);
@@ -1323,9 +1323,9 @@ Value *SROA::ConvertUsesOfStoreToScalar(StoreInst *SI, AllocaInst *NewAI,
     // in the new bits.
     if (SrcWidth != DestWidth) {
       assert(DestWidth > SrcWidth);
-      Old = BinaryOperator::createAnd(Old, ConstantInt::get(~Mask),
+      Old = BinaryOperator::CreateAnd(Old, ConstantInt::get(~Mask),
                                       Old->getName()+".mask", SI);
-      SV = BinaryOperator::createOr(Old, SV, SV->getName()+".ins", SI);
+      SV = BinaryOperator::CreateOr(Old, SV, SV->getName()+".ins", SI);
     }
   }
   return SV;

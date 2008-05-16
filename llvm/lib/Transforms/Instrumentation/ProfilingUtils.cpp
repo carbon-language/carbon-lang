@@ -68,7 +68,7 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
       Instruction::CastOps opcode = CastInst::getCastOpcode(AI, false, ArgVTy, 
                                                             false);
       InitCall->setOperand(2, 
-          CastInst::create(opcode, AI, ArgVTy, "argv.cast", InitCall));
+          CastInst::Create(opcode, AI, ArgVTy, "argv.cast", InitCall));
     } else {
       InitCall->setOperand(2, AI);
     }
@@ -83,11 +83,11 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
       if (!AI->use_empty()) {
         opcode = CastInst::getCastOpcode(InitCall, true, AI->getType(), true);
         AI->replaceAllUsesWith(
-          CastInst::create(opcode, InitCall, AI->getType(), "", InsertPos));
+          CastInst::Create(opcode, InitCall, AI->getType(), "", InsertPos));
       }
       opcode = CastInst::getCastOpcode(AI, true, Type::Int32Ty, true);
       InitCall->setOperand(1, 
-          CastInst::create(opcode, AI, Type::Int32Ty, "argc.cast", InitCall));
+          CastInst::Create(opcode, AI, Type::Int32Ty, "argc.cast", InitCall));
     } else {
       AI->replaceAllUsesWith(InitCall);
       InitCall->setOperand(1, AI);
@@ -113,7 +113,7 @@ void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
 
   // Load, increment and store the value back.
   Value *OldVal = new LoadInst(ElementPtr, "OldFuncCounter", InsertPos);
-  Value *NewVal = BinaryOperator::create(Instruction::Add, OldVal,
+  Value *NewVal = BinaryOperator::Create(Instruction::Add, OldVal,
                                          ConstantInt::get(Type::Int32Ty, 1),
                                          "NewFuncCounter", InsertPos);
   new StoreInst(NewVal, ElementPtr, InsertPos);

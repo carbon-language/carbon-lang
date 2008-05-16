@@ -194,7 +194,7 @@ static BinaryOperator *isReassociableOp(Value *V, unsigned Opcode) {
 static Instruction *LowerNegateToMultiply(Instruction *Neg) {
   Constant *Cst = ConstantInt::getAllOnesValue(Neg->getType());
 
-  Instruction *Res = BinaryOperator::createMul(Neg->getOperand(1), Cst, "",Neg);
+  Instruction *Res = BinaryOperator::CreateMul(Neg->getOperand(1), Cst, "",Neg);
   Res->takeName(Neg);
   Neg->replaceAllUsesWith(Res);
   Neg->eraseFromParent();
@@ -389,7 +389,7 @@ static Value *NegateValue(Value *V, Instruction *BI) {
   // Insert a 'neg' instruction that subtracts the value from zero to get the
   // negation.
   //
-  return BinaryOperator::createNeg(V, V->getName() + ".neg", BI);
+  return BinaryOperator::CreateNeg(V, V->getName() + ".neg", BI);
 }
 
 /// ShouldBreakUpSubtract - Return true if we should break up this subtract of
@@ -427,7 +427,7 @@ static Instruction *BreakUpSubtract(Instruction *Sub) {
   //
   Value *NegVal = NegateValue(Sub->getOperand(1), Sub);
   Instruction *New =
-    BinaryOperator::createAdd(Sub->getOperand(0), NegVal, "", Sub);
+    BinaryOperator::CreateAdd(Sub->getOperand(0), NegVal, "", Sub);
   New->takeName(Sub);
 
   // Everyone now refers to the add instruction.
@@ -451,7 +451,7 @@ static Instruction *ConvertShiftToMul(Instruction *Shl) {
     Constant *MulCst = ConstantInt::get(Shl->getType(), 1);
     MulCst = ConstantExpr::getShl(MulCst, cast<Constant>(Shl->getOperand(1)));
     
-    Instruction *Mul = BinaryOperator::createMul(Shl->getOperand(0), MulCst,
+    Instruction *Mul = BinaryOperator::CreateMul(Shl->getOperand(0), MulCst,
                                                  "", Shl);
     Mul->takeName(Shl);
     Shl->replaceAllUsesWith(Mul);
@@ -485,7 +485,7 @@ static Value *EmitAddTreeOfValues(Instruction *I, std::vector<Value*> &Ops) {
   Value *V1 = Ops.back();
   Ops.pop_back();
   Value *V2 = EmitAddTreeOfValues(I, Ops);
-  return BinaryOperator::createAdd(V2, V1, "tmp", I);
+  return BinaryOperator::CreateAdd(V2, V1, "tmp", I);
 }
 
 /// RemoveFactorFromExpression - If V is an expression tree that is a 
@@ -714,7 +714,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
       // this, we could otherwise run into situations where removing a factor
       // from an expression will drop a use of maxocc, and this can cause 
       // RemoveFactorFromExpression on successive values to behave differently.
-      Instruction *DummyInst = BinaryOperator::createAdd(MaxOccVal, MaxOccVal);
+      Instruction *DummyInst = BinaryOperator::CreateAdd(MaxOccVal, MaxOccVal);
       std::vector<Value*> NewMulOps;
       for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
         if (Value *V = RemoveFactorFromExpression(Ops[i].Op, MaxOccVal)) {
@@ -729,7 +729,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
 
       unsigned NumAddedValues = NewMulOps.size();
       Value *V = EmitAddTreeOfValues(I, NewMulOps);
-      Value *V2 = BinaryOperator::createMul(V, MaxOccVal, "tmp", I);
+      Value *V2 = BinaryOperator::CreateMul(V, MaxOccVal, "tmp", I);
 
       // Now that we have inserted V and its sole use, optimize it. This allows
       // us to handle cases that require multiple factoring steps, such as this:

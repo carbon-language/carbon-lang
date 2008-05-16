@@ -152,42 +152,42 @@ public:
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
-  /// create() - Construct a binary instruction, given the opcode and the two
+  /// Create() - Construct a binary instruction, given the opcode and the two
   /// operands.  Optionally (if InstBefore is specified) insert the instruction
   /// into a BasicBlock right before the specified instruction.  The specified
   /// Instruction is allowed to be a dereferenced end iterator.
   ///
-  static BinaryOperator *create(BinaryOps Op, Value *S1, Value *S2,
+  static BinaryOperator *Create(BinaryOps Op, Value *S1, Value *S2,
                                 const std::string &Name = "",
                                 Instruction *InsertBefore = 0);
 
-  /// create() - Construct a binary instruction, given the opcode and the two
+  /// Create() - Construct a binary instruction, given the opcode and the two
   /// operands.  Also automatically insert this instruction to the end of the
   /// BasicBlock specified.
   ///
-  static BinaryOperator *create(BinaryOps Op, Value *S1, Value *S2,
+  static BinaryOperator *Create(BinaryOps Op, Value *S1, Value *S2,
                                 const std::string &Name,
                                 BasicBlock *InsertAtEnd);
 
-  /// create* - These methods just forward to create, and are useful when you
+  /// Create* - These methods just forward to create, and are useful when you
   /// statically know what type of instruction you're going to create.  These
   /// helpers just save some typing.
 #define HANDLE_BINARY_INST(N, OPC, CLASS) \
-  static BinaryOperator *create##OPC(Value *V1, Value *V2, \
+  static BinaryOperator *Create##OPC(Value *V1, Value *V2, \
                                      const std::string &Name = "") {\
-    return create(Instruction::OPC, V1, V2, Name);\
+    return Create(Instruction::OPC, V1, V2, Name);\
   }
 #include "llvm/Instruction.def"
 #define HANDLE_BINARY_INST(N, OPC, CLASS) \
-  static BinaryOperator *create##OPC(Value *V1, Value *V2, \
+  static BinaryOperator *Create##OPC(Value *V1, Value *V2, \
                                      const std::string &Name, BasicBlock *BB) {\
-    return create(Instruction::OPC, V1, V2, Name, BB);\
+    return Create(Instruction::OPC, V1, V2, Name, BB);\
   }
 #include "llvm/Instruction.def"
 #define HANDLE_BINARY_INST(N, OPC, CLASS) \
-  static BinaryOperator *create##OPC(Value *V1, Value *V2, \
+  static BinaryOperator *Create##OPC(Value *V1, Value *V2, \
                                      const std::string &Name, Instruction *I) {\
-    return create(Instruction::OPC, V1, V2, Name, I);\
+    return Create(Instruction::OPC, V1, V2, Name, I);\
   }
 #include "llvm/Instruction.def"
 
@@ -195,16 +195,16 @@ public:
   /// Helper functions to construct and inspect unary operations (NEG and NOT)
   /// via binary operators SUB and XOR:
   ///
-  /// createNeg, createNot - Create the NEG and NOT
+  /// CreateNeg, CreateNot - Create the NEG and NOT
   ///     instructions out of SUB and XOR instructions.
   ///
-  static BinaryOperator *createNeg(Value *Op, const std::string &Name = "",
+  static BinaryOperator *CreateNeg(Value *Op, const std::string &Name = "",
                                    Instruction *InsertBefore = 0);
-  static BinaryOperator *createNeg(Value *Op, const std::string &Name,
+  static BinaryOperator *CreateNeg(Value *Op, const std::string &Name,
                                    BasicBlock *InsertAtEnd);
-  static BinaryOperator *createNot(Value *Op, const std::string &Name = "",
+  static BinaryOperator *CreateNot(Value *Op, const std::string &Name = "",
                                    Instruction *InsertBefore = 0);
-  static BinaryOperator *createNot(Value *Op, const std::string &Name,
+  static BinaryOperator *CreateNot(Value *Op, const std::string &Name,
                                    BasicBlock *InsertAtEnd);
 
   /// isNeg, isNot - Check if the given Value is a NEG or NOT instruction.
@@ -240,6 +240,53 @@ public:
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+
+  /// Backward-compatible interfaces
+  /// @deprecated in 2.4, do not use, will disappear soon
+  static BinaryOperator *create(BinaryOps Op, Value *S1, Value *S2,
+                                const std::string &Name = "",
+                                Instruction *InsertBefore = 0) {
+    return Create(Op, S1, S2, Name, InsertBefore);
+  }
+  static BinaryOperator *create(BinaryOps Op, Value *S1, Value *S2,
+                                const std::string &Name,
+                                BasicBlock *InsertAtEnd) {
+    return Create(Op, S1, S2, Name, InsertAtEnd);
+  }
+#define HANDLE_BINARY_INST(N, OPC, CLASS) \
+  static BinaryOperator *create##OPC(Value *V1, Value *V2, \
+                                     const std::string &Name = "") {\
+    return Create(Instruction::OPC, V1, V2, Name);\
+  }
+#include "llvm/Instruction.def"
+#define HANDLE_BINARY_INST(N, OPC, CLASS) \
+  static BinaryOperator *create##OPC(Value *V1, Value *V2, \
+                                     const std::string &Name, BasicBlock *BB) {\
+    return Create(Instruction::OPC, V1, V2, Name, BB);\
+  }
+#include "llvm/Instruction.def"
+#define HANDLE_BINARY_INST(N, OPC, CLASS) \
+  static BinaryOperator *create##OPC(Value *V1, Value *V2, \
+                                     const std::string &Name, Instruction *I) {\
+    return Create(Instruction::OPC, V1, V2, Name, I);\
+  }
+#include "llvm/Instruction.def"
+  static BinaryOperator *createNeg(Value *Op, const std::string &Name = "",
+                                   Instruction *InsertBefore = 0) {
+    return CreateNeg(Op, Name, InsertBefore);
+  }
+  static BinaryOperator *createNeg(Value *Op, const std::string &Name,
+                                   BasicBlock *InsertAtEnd) {
+    return CreateNeg(Op, Name, InsertAtEnd);
+  }
+  static BinaryOperator *createNot(Value *Op, const std::string &Name = "",
+                                   Instruction *InsertBefore = 0) {
+    return CreateNot(Op, Name, InsertBefore);
+  }
+  static BinaryOperator *createNot(Value *Op, const std::string &Name,
+                                   BasicBlock *InsertAtEnd) {
+    return CreateNot(Op, Name, InsertAtEnd);
   }
 };
 
@@ -286,7 +333,7 @@ public:
   /// constructor has insert-before-instruction semantics to automatically
   /// insert the new CastInst before InsertBefore (if it is non-null).
   /// @brief Construct any of the CastInst subclasses
-  static CastInst *create(
+  static CastInst *Create(
     Instruction::CastOps,    ///< The opcode of the cast instruction
     Value *S,                ///< The value to be casted (operand 0)
     const Type *Ty,          ///< The type to which cast should be made
@@ -299,7 +346,7 @@ public:
   /// to automatically insert the new CastInst at the end of InsertAtEnd (if
   /// its non-null).
   /// @brief Construct any of the CastInst subclasses
-  static CastInst *create(
+  static CastInst *Create(
     Instruction::CastOps,    ///< The opcode for the cast instruction
     Value *S,                ///< The value to be casted (operand 0)
     const Type *Ty,          ///< The type to which operand is casted
@@ -308,7 +355,7 @@ public:
   );
 
   /// @brief Create a ZExt or BitCast cast instruction
-  static CastInst *createZExtOrBitCast(
+  static CastInst *CreateZExtOrBitCast(
     Value *S,                ///< The value to be casted (operand 0)
     const Type *Ty,          ///< The type to which cast should be made
     const std::string &Name = "", ///< Name for the instruction
@@ -316,7 +363,7 @@ public:
   );
 
   /// @brief Create a ZExt or BitCast cast instruction
-  static CastInst *createZExtOrBitCast(
+  static CastInst *CreateZExtOrBitCast(
     Value *S,                ///< The value to be casted (operand 0)
     const Type *Ty,          ///< The type to which operand is casted
     const std::string &Name, ///< The name for the instruction
@@ -324,15 +371,23 @@ public:
   );
 
   /// @brief Create a SExt or BitCast cast instruction
-  static CastInst *createSExtOrBitCast(
+  static CastInst *CreateSExtOrBitCast(
     Value *S,                ///< The value to be casted (operand 0)
     const Type *Ty,          ///< The type to which cast should be made
     const std::string &Name = "", ///< Name for the instruction
     Instruction *InsertBefore = 0 ///< Place to insert the instruction
   );
 
+  /// @brief Create a SExt or BitCast cast instruction
+  static CastInst *CreateSExtOrBitCast(
+    Value *S,                ///< The value to be casted (operand 0)
+    const Type *Ty,          ///< The type to which operand is casted
+    const std::string &Name, ///< The name for the instruction
+    BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
+  );
+
   /// @brief Create a BitCast or a PtrToInt cast instruction
-  static CastInst *createPointerCast(
+  static CastInst *CreatePointerCast(
     Value *S,                ///< The pointer value to be casted (operand 0)
     const Type *Ty,          ///< The type to which operand is casted
     const std::string &Name, ///< The name for the instruction
@@ -340,7 +395,7 @@ public:
   );
 
   /// @brief Create a BitCast or a PtrToInt cast instruction
-  static CastInst *createPointerCast(
+  static CastInst *CreatePointerCast(
     Value *S,                ///< The pointer value to be casted (operand 0)
     const Type *Ty,          ///< The type to which cast should be made
     const std::string &Name = "", ///< Name for the instruction
@@ -348,7 +403,7 @@ public:
   );
 
   /// @brief Create a ZExt, BitCast, or Trunc for int -> int casts.
-  static CastInst *createIntegerCast(
+  static CastInst *CreateIntegerCast(
     Value *S,                ///< The pointer value to be casted (operand 0)
     const Type *Ty,          ///< The type to which cast should be made
     bool isSigned,           ///< Whether to regard S as signed or not
@@ -357,7 +412,7 @@ public:
   );
 
   /// @brief Create a ZExt, BitCast, or Trunc for int -> int casts.
-  static CastInst *createIntegerCast(
+  static CastInst *CreateIntegerCast(
     Value *S,                ///< The integer value to be casted (operand 0)
     const Type *Ty,          ///< The integer type to which operand is casted
     bool isSigned,           ///< Whether to regard S as signed or not
@@ -366,7 +421,7 @@ public:
   );
 
   /// @brief Create an FPExt, BitCast, or FPTrunc for fp -> fp casts
-  static CastInst *createFPCast(
+  static CastInst *CreateFPCast(
     Value *S,                ///< The floating point value to be casted 
     const Type *Ty,          ///< The floating point type to cast to
     const std::string &Name = "", ///< Name for the instruction
@@ -374,23 +429,15 @@ public:
   );
 
   /// @brief Create an FPExt, BitCast, or FPTrunc for fp -> fp casts
-  static CastInst *createFPCast(
+  static CastInst *CreateFPCast(
     Value *S,                ///< The floating point value to be casted 
     const Type *Ty,          ///< The floating point type to cast to
     const std::string &Name, ///< The name for the instruction
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
-  /// @brief Create a SExt or BitCast cast instruction
-  static CastInst *createSExtOrBitCast(
-    Value *S,                ///< The value to be casted (operand 0)
-    const Type *Ty,          ///< The type to which operand is casted
-    const std::string &Name, ///< The name for the instruction
-    BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
-  );
-
   /// @brief Create a Trunc or BitCast cast instruction
-  static CastInst *createTruncOrBitCast(
+  static CastInst *CreateTruncOrBitCast(
     Value *S,                ///< The value to be casted (operand 0)
     const Type *Ty,          ///< The type to which cast should be made
     const std::string &Name = "", ///< Name for the instruction
@@ -398,7 +445,7 @@ public:
   );
 
   /// @brief Create a Trunc or BitCast cast instruction
-  static CastInst *createTruncOrBitCast(
+  static CastInst *CreateTruncOrBitCast(
     Value *S,                ///< The value to be casted (operand 0)
     const Type *Ty,          ///< The type to which operand is casted
     const std::string &Name, ///< The name for the instruction
@@ -487,6 +534,40 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+  /// Backward-compatible interfaces
+  /// @deprecated in 2.4, do not use, will disappear soon
+  static CastInst *create(Instruction::CastOps Op,Value *S,const Type *Ty,
+    const std::string &Name = "",Instruction *InsertBefore = 0) {
+    return Create(Op,S,Ty,Name,InsertBefore);
+  }
+  static CastInst *create(Instruction::CastOps Op,Value *S,const Type *Ty,
+    const std::string &Name,BasicBlock *InsertAtEnd) {
+    return Create(Op,S,Ty,Name,InsertAtEnd);
+  }
+
+#define DEFINE_CASTINST_DEPRECATED(OP)                                  \
+  static CastInst *create ## OP ## Cast(Value *S, const Type *Ty,       \
+    const std::string &Name = "", Instruction *InsertBefore = 0) {      \
+    return Create ## OP ## Cast(S, Ty, Name, InsertBefore);             \
+  }                                                                     \
+  static CastInst *create ## OP ## Cast(Value *S, const Type *Ty,       \
+    const std::string &Name, BasicBlock *InsertAtEnd) {                 \
+    return Create ## OP ## Cast(S, Ty, Name, InsertAtEnd);              \
+  }
+  DEFINE_CASTINST_DEPRECATED(ZExtOrBit)
+  DEFINE_CASTINST_DEPRECATED(SExtOrBit)
+  DEFINE_CASTINST_DEPRECATED(Pointer)
+  DEFINE_CASTINST_DEPRECATED(FP)
+  DEFINE_CASTINST_DEPRECATED(TruncOrBit)
+#undef DEFINE_CASTINST_DEPRECATED
+  static CastInst *createIntegerCast(Value *S, const Type *Ty, bool isSigned,
+    const std::string &Name = "", Instruction *InsertBefore = 0) {
+    return CreateIntegerCast(S, Ty, isSigned, Name, InsertBefore);
+  }
+  static CastInst *createIntegerCast(Value *S, const Type *Ty, bool isSigned,
+    const std::string &Name, BasicBlock *InsertAtEnd) {
+    return CreateIntegerCast(S, Ty, isSigned, Name, InsertAtEnd);
+  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -558,7 +639,7 @@ public:
   /// instruction into a BasicBlock right before the specified instruction.  
   /// The specified Instruction is allowed to be a dereferenced end iterator.
   /// @brief Create a CmpInst
-  static CmpInst *create(OtherOps Op, unsigned short predicate, Value *S1, 
+  static CmpInst *Create(OtherOps Op, unsigned short predicate, Value *S1, 
                          Value *S2, const std::string &Name = "",
                          Instruction *InsertBefore = 0);
 
@@ -566,7 +647,7 @@ public:
   /// two operands.  Also automatically insert this instruction to the end of 
   /// the BasicBlock specified.
   /// @brief Create a CmpInst
-  static CmpInst *create(OtherOps Op, unsigned short predicate, Value *S1, 
+  static CmpInst *Create(OtherOps Op, unsigned short predicate, Value *S1, 
                          Value *S2, const std::string &Name, 
                          BasicBlock *InsertAtEnd);
 
@@ -626,6 +707,18 @@ public:
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+  /// Backward-compatible interfaces
+  /// @deprecated in 2.4, do not use, will disappear soon
+  static CmpInst *create(OtherOps Op, unsigned short predicate, Value *S1, 
+                         Value *S2, const std::string &Name = "",
+                         Instruction *InsertBefore = 0) {
+    return Create(Op, predicate, S1, S2, Name, InsertBefore);
+  }
+  static CmpInst *create(OtherOps Op, unsigned short predicate, Value *S1, 
+                         Value *S2, const std::string &Name, 
+                         BasicBlock *InsertAtEnd) {
+    return Create(Op, predicate, S1, S2, Name, InsertAtEnd);
   }
 };
 

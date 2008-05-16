@@ -72,7 +72,7 @@ bool IndMemRemPass::runOnModule(Module &M) {
                                       GlobalValue::LinkOnceLinkage, 
                                       "malloc_llvm_bounce", &M);
       BasicBlock* bb = BasicBlock::Create("entry",FN);
-      Instruction* c = CastInst::createIntegerCast(
+      Instruction* c = CastInst::CreateIntegerCast(
           FN->arg_begin(), Type::Int32Ty, false, "c", bb);
       Instruction* a = new MallocInst(Type::Int8Ty, c, "m", bb);
       ReturnInst::Create(a, bb);

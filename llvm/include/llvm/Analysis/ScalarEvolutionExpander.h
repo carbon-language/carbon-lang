@@ -101,17 +101,17 @@ namespace llvm {
 
     Value *visitTruncateExpr(SCEVTruncateExpr *S) {
       Value *V = expand(S->getOperand());
-      return CastInst::createTruncOrBitCast(V, S->getType(), "tmp.", InsertPt);
+      return CastInst::CreateTruncOrBitCast(V, S->getType(), "tmp.", InsertPt);
     }
 
     Value *visitZeroExtendExpr(SCEVZeroExtendExpr *S) {
       Value *V = expand(S->getOperand());
-      return CastInst::createZExtOrBitCast(V, S->getType(), "tmp.", InsertPt);
+      return CastInst::CreateZExtOrBitCast(V, S->getType(), "tmp.", InsertPt);
     }
 
     Value *visitSignExtendExpr(SCEVSignExtendExpr *S) {
       Value *V = expand(S->getOperand());
-      return CastInst::createSExtOrBitCast(V, S->getType(), "tmp.", InsertPt);
+      return CastInst::CreateSExtOrBitCast(V, S->getType(), "tmp.", InsertPt);
     }
 
     Value *visitAddExpr(SCEVAddExpr *S) {

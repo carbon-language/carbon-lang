@@ -66,18 +66,18 @@ static Function *CreateFibFunction(Module *M) {
   ReturnInst::Create(One, RetBB);
 
   // create fib(x-1)
-  Value *Sub = BinaryOperator::createSub(ArgX, One, "arg", RecurseBB);
+  Value *Sub = BinaryOperator::CreateSub(ArgX, One, "arg", RecurseBB);
   CallInst *CallFibX1 = CallInst::Create(FibF, Sub, "fibx1", RecurseBB);
   CallFibX1->setTailCall();
 
   // create fib(x-2)
-  Sub = BinaryOperator::createSub(ArgX, Two, "arg", RecurseBB);
+  Sub = BinaryOperator::CreateSub(ArgX, Two, "arg", RecurseBB);
   CallInst *CallFibX2 = CallInst::Create(FibF, Sub, "fibx2", RecurseBB);
   CallFibX2->setTailCall();
 
 
   // fib(x-1)+fib(x-2)
-  Value *Sum = BinaryOperator::createAdd(CallFibX1, CallFibX2,
+  Value *Sum = BinaryOperator::CreateAdd(CallFibX1, CallFibX2,
                                          "addresult", RecurseBB);
 
   // Create the return instruction and add it to the basic block

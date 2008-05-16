@@ -173,76 +173,76 @@ static Value *LowerBSWAP(Value *V, Instruction *IP) {
   switch(BitSize) {
   default: assert(0 && "Unhandled type size of value to byteswap!");
   case 16: {
-    Value *Tmp1 = BinaryOperator::createShl(V,
+    Value *Tmp1 = BinaryOperator::CreateShl(V,
                                 ConstantInt::get(V->getType(),8),"bswap.2",IP);
-    Value *Tmp2 = BinaryOperator::createLShr(V,
+    Value *Tmp2 = BinaryOperator::CreateLShr(V,
                                 ConstantInt::get(V->getType(),8),"bswap.1",IP);
-    V = BinaryOperator::createOr(Tmp1, Tmp2, "bswap.i16", IP);
+    V = BinaryOperator::CreateOr(Tmp1, Tmp2, "bswap.i16", IP);
     break;
   }
   case 32: {
-    Value *Tmp4 = BinaryOperator::createShl(V,
+    Value *Tmp4 = BinaryOperator::CreateShl(V,
                               ConstantInt::get(V->getType(),24),"bswap.4", IP);
-    Value *Tmp3 = BinaryOperator::createShl(V,
+    Value *Tmp3 = BinaryOperator::CreateShl(V,
                               ConstantInt::get(V->getType(),8),"bswap.3",IP);
-    Value *Tmp2 = BinaryOperator::createLShr(V,
+    Value *Tmp2 = BinaryOperator::CreateLShr(V,
                               ConstantInt::get(V->getType(),8),"bswap.2",IP);
-    Value *Tmp1 = BinaryOperator::createLShr(V,
+    Value *Tmp1 = BinaryOperator::CreateLShr(V,
                               ConstantInt::get(V->getType(),24),"bswap.1", IP);
-    Tmp3 = BinaryOperator::createAnd(Tmp3, 
+    Tmp3 = BinaryOperator::CreateAnd(Tmp3, 
                                      ConstantInt::get(Type::Int32Ty, 0xFF0000),
                                      "bswap.and3", IP);
-    Tmp2 = BinaryOperator::createAnd(Tmp2, 
+    Tmp2 = BinaryOperator::CreateAnd(Tmp2, 
                                      ConstantInt::get(Type::Int32Ty, 0xFF00),
                                      "bswap.and2", IP);
-    Tmp4 = BinaryOperator::createOr(Tmp4, Tmp3, "bswap.or1", IP);
-    Tmp2 = BinaryOperator::createOr(Tmp2, Tmp1, "bswap.or2", IP);
-    V = BinaryOperator::createOr(Tmp4, Tmp2, "bswap.i32", IP);
+    Tmp4 = BinaryOperator::CreateOr(Tmp4, Tmp3, "bswap.or1", IP);
+    Tmp2 = BinaryOperator::CreateOr(Tmp2, Tmp1, "bswap.or2", IP);
+    V = BinaryOperator::CreateOr(Tmp4, Tmp2, "bswap.i32", IP);
     break;
   }
   case 64: {
-    Value *Tmp8 = BinaryOperator::createShl(V,
+    Value *Tmp8 = BinaryOperator::CreateShl(V,
                               ConstantInt::get(V->getType(),56),"bswap.8", IP);
-    Value *Tmp7 = BinaryOperator::createShl(V,
+    Value *Tmp7 = BinaryOperator::CreateShl(V,
                               ConstantInt::get(V->getType(),40),"bswap.7", IP);
-    Value *Tmp6 = BinaryOperator::createShl(V,
+    Value *Tmp6 = BinaryOperator::CreateShl(V,
                               ConstantInt::get(V->getType(),24),"bswap.6", IP);
-    Value *Tmp5 = BinaryOperator::createShl(V,
+    Value *Tmp5 = BinaryOperator::CreateShl(V,
                               ConstantInt::get(V->getType(),8),"bswap.5", IP);
-    Value* Tmp4 = BinaryOperator::createLShr(V,
+    Value* Tmp4 = BinaryOperator::CreateLShr(V,
                               ConstantInt::get(V->getType(),8),"bswap.4", IP);
-    Value* Tmp3 = BinaryOperator::createLShr(V,
+    Value* Tmp3 = BinaryOperator::CreateLShr(V,
                               ConstantInt::get(V->getType(),24),"bswap.3", IP);
-    Value* Tmp2 = BinaryOperator::createLShr(V,
+    Value* Tmp2 = BinaryOperator::CreateLShr(V,
                               ConstantInt::get(V->getType(),40),"bswap.2", IP);
-    Value* Tmp1 = BinaryOperator::createLShr(V,
+    Value* Tmp1 = BinaryOperator::CreateLShr(V,
                               ConstantInt::get(V->getType(),56),"bswap.1", IP);
-    Tmp7 = BinaryOperator::createAnd(Tmp7,
+    Tmp7 = BinaryOperator::CreateAnd(Tmp7,
                              ConstantInt::get(Type::Int64Ty, 
                                0xFF000000000000ULL),
                              "bswap.and7", IP);
-    Tmp6 = BinaryOperator::createAnd(Tmp6,
+    Tmp6 = BinaryOperator::CreateAnd(Tmp6,
                              ConstantInt::get(Type::Int64Ty, 0xFF0000000000ULL),
                              "bswap.and6", IP);
-    Tmp5 = BinaryOperator::createAnd(Tmp5,
+    Tmp5 = BinaryOperator::CreateAnd(Tmp5,
                              ConstantInt::get(Type::Int64Ty, 0xFF00000000ULL),
                              "bswap.and5", IP);
-    Tmp4 = BinaryOperator::createAnd(Tmp4,
+    Tmp4 = BinaryOperator::CreateAnd(Tmp4,
                              ConstantInt::get(Type::Int64Ty, 0xFF000000ULL),
                              "bswap.and4", IP);
-    Tmp3 = BinaryOperator::createAnd(Tmp3,
+    Tmp3 = BinaryOperator::CreateAnd(Tmp3,
                              ConstantInt::get(Type::Int64Ty, 0xFF0000ULL),
                              "bswap.and3", IP);
-    Tmp2 = BinaryOperator::createAnd(Tmp2,
+    Tmp2 = BinaryOperator::CreateAnd(Tmp2,
                              ConstantInt::get(Type::Int64Ty, 0xFF00ULL),
                              "bswap.and2", IP);
-    Tmp8 = BinaryOperator::createOr(Tmp8, Tmp7, "bswap.or1", IP);
-    Tmp6 = BinaryOperator::createOr(Tmp6, Tmp5, "bswap.or2", IP);
-    Tmp4 = BinaryOperator::createOr(Tmp4, Tmp3, "bswap.or3", IP);
-    Tmp2 = BinaryOperator::createOr(Tmp2, Tmp1, "bswap.or4", IP);
-    Tmp8 = BinaryOperator::createOr(Tmp8, Tmp6, "bswap.or5", IP);
-    Tmp4 = BinaryOperator::createOr(Tmp4, Tmp2, "bswap.or6", IP);
-    V = BinaryOperator::createOr(Tmp8, Tmp4, "bswap.i64", IP);
+    Tmp8 = BinaryOperator::CreateOr(Tmp8, Tmp7, "bswap.or1", IP);
+    Tmp6 = BinaryOperator::CreateOr(Tmp6, Tmp5, "bswap.or2", IP);
+    Tmp4 = BinaryOperator::CreateOr(Tmp4, Tmp3, "bswap.or3", IP);
+    Tmp2 = BinaryOperator::CreateOr(Tmp2, Tmp1, "bswap.or4", IP);
+    Tmp8 = BinaryOperator::CreateOr(Tmp8, Tmp6, "bswap.or5", IP);
+    Tmp4 = BinaryOperator::CreateOr(Tmp4, Tmp2, "bswap.or6", IP);
+    V = BinaryOperator::CreateOr(Tmp8, Tmp4, "bswap.i64", IP);
     break;
   }
   }
@@ -269,16 +269,16 @@ static Value *LowerCTPOP(Value *V, Instruction *IP) {
     for (unsigned i = 1, ct = 0; i < (BitSize>64 ? 64 : BitSize); 
          i <<= 1, ++ct) {
       Value *MaskCst = ConstantInt::get(V->getType(), MaskValues[ct]);
-      Value *LHS = BinaryOperator::createAnd(
+      Value *LHS = BinaryOperator::CreateAnd(
                      PartValue, MaskCst, "cppop.and1", IP);
-      Value *VShift = BinaryOperator::createLShr(PartValue,
+      Value *VShift = BinaryOperator::CreateLShr(PartValue,
                         ConstantInt::get(V->getType(), i), "ctpop.sh", IP);
-      Value *RHS = BinaryOperator::createAnd(VShift, MaskCst, "cppop.and2", IP);
-      PartValue = BinaryOperator::createAdd(LHS, RHS, "ctpop.step", IP);
+      Value *RHS = BinaryOperator::CreateAnd(VShift, MaskCst, "cppop.and2", IP);
+      PartValue = BinaryOperator::CreateAdd(LHS, RHS, "ctpop.step", IP);
     }
-    Count = BinaryOperator::createAdd(PartValue, Count, "ctpop.part", IP);
+    Count = BinaryOperator::CreateAdd(PartValue, Count, "ctpop.part", IP);
     if (BitSize > 64) {
-      V = BinaryOperator::createLShr(V, ConstantInt::get(V->getType(), 64), 
+      V = BinaryOperator::CreateLShr(V, ConstantInt::get(V->getType(), 64), 
                                      "ctpop.part.sh", IP);
       BitSize -= 64;
     }
@@ -294,11 +294,11 @@ static Value *LowerCTLZ(Value *V, Instruction *IP) {
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
   for (unsigned i = 1; i < BitSize; i <<= 1) {
     Value *ShVal = ConstantInt::get(V->getType(), i);
-    ShVal = BinaryOperator::createLShr(V, ShVal, "ctlz.sh", IP);
-    V = BinaryOperator::createOr(V, ShVal, "ctlz.step", IP);
+    ShVal = BinaryOperator::CreateLShr(V, ShVal, "ctlz.sh", IP);
+    V = BinaryOperator::CreateOr(V, ShVal, "ctlz.step", IP);
   }
 
-  V = BinaryOperator::createNot(V, "", IP);
+  V = BinaryOperator::CreateNot(V, "", IP);
   return LowerCTPOP(V, IP);
 }
 
@@ -355,10 +355,10 @@ static Instruction *LowerPartSelect(CallInst *CI) {
 
     // Cast Hi and Lo to the size of Val so the widths are all the same
     if (Hi->getType() != Val->getType())
-      Hi = CastInst::createIntegerCast(Hi, Val->getType(), false, 
+      Hi = CastInst::CreateIntegerCast(Hi, Val->getType(), false, 
                                          "tmp", CurBB);
     if (Lo->getType() != Val->getType())
-      Lo = CastInst::createIntegerCast(Lo, Val->getType(), false, 
+      Lo = CastInst::CreateIntegerCast(Lo, Val->getType(), false, 
                                           "tmp", CurBB);
 
     // Compute a few things that both cases will need, up front.
@@ -373,12 +373,12 @@ static Instruction *LowerPartSelect(CallInst *CI) {
 
     // First, copmute the number of bits in the forward case.
     Instruction* FBitSize = 
-      BinaryOperator::createSub(Hi, Lo,"fbits", FwdSize);
+      BinaryOperator::CreateSub(Hi, Lo,"fbits", FwdSize);
     BranchInst::Create(Compute, FwdSize);
 
     // Second, compute the number of bits in the reverse case.
     Instruction* RBitSize = 
-      BinaryOperator::createSub(Lo, Hi, "rbits", RevSize);
+      BinaryOperator::CreateSub(Lo, Hi, "rbits", RevSize);
     BranchInst::Create(Compute, RevSize);
 
     // Now, compute the bit range. Start by getting the bitsize and the shift
@@ -402,17 +402,17 @@ static Instruction *LowerPartSelect(CallInst *CI) {
 
     // Increment the bit size
     Instruction *BitSizePlusOne = 
-      BinaryOperator::createAdd(BitSize, One, "bits", Compute);
+      BinaryOperator::CreateAdd(BitSize, One, "bits", Compute);
 
     // Create a Mask to zero out the high order bits.
     Instruction* Mask = 
-      BinaryOperator::createShl(AllOnes, BitSizePlusOne, "mask", Compute);
-    Mask = BinaryOperator::createNot(Mask, "mask", Compute);
+      BinaryOperator::CreateShl(AllOnes, BitSizePlusOne, "mask", Compute);
+    Mask = BinaryOperator::CreateNot(Mask, "mask", Compute);
 
     // Shift the bits down and apply the mask
     Instruction* FRes = 
-      BinaryOperator::createLShr(Val, ShiftAmt, "fres", Compute);
-    FRes = BinaryOperator::createAnd(FRes, Mask, "fres", Compute);
+      BinaryOperator::CreateLShr(Val, ShiftAmt, "fres", Compute);
+    FRes = BinaryOperator::CreateAnd(FRes, Mask, "fres", Compute);
     BranchInst::Create(Reverse, RsltBlk, Cmp, Compute);
 
     // In the Reverse block we have the mask already in FRes but we must reverse
@@ -435,22 +435,22 @@ static Instruction *LowerPartSelect(CallInst *CI) {
     RRes->addIncoming(Zero, Compute);
 
     // Decrement the counter
-    Instruction *Decr = BinaryOperator::createSub(Count, One, "decr", Reverse);
+    Instruction *Decr = BinaryOperator::CreateSub(Count, One, "decr", Reverse);
     Count->addIncoming(Decr, Reverse);
 
     // Compute the Bit that we want to move
     Instruction *Bit = 
-      BinaryOperator::createAnd(BitsToShift, One, "bit", Reverse);
+      BinaryOperator::CreateAnd(BitsToShift, One, "bit", Reverse);
 
     // Compute the new value for next iteration.
     Instruction *NewVal = 
-      BinaryOperator::createLShr(BitsToShift, One, "rshift", Reverse);
+      BinaryOperator::CreateLShr(BitsToShift, One, "rshift", Reverse);
     BitsToShift->addIncoming(NewVal, Reverse);
 
     // Shift the bit into the low bits of the result.
     Instruction *NewRes = 
-      BinaryOperator::createShl(RRes, One, "lshift", Reverse);
-    NewRes = BinaryOperator::createOr(NewRes, Bit, "addbit", Reverse);
+      BinaryOperator::CreateShl(RRes, One, "lshift", Reverse);
+    NewRes = BinaryOperator::CreateOr(NewRes, Bit, "addbit", Reverse);
     RRes->addIncoming(NewRes, Reverse);
     
     // Terminate loop if we've moved all the bits.
@@ -543,8 +543,8 @@ static Instruction *LowerPartSet(CallInst *CI) {
       new ICmpInst(ICmpInst::ICMP_ULT, Lo, Hi, "", entry);
     SelectInst* Hi_pn = SelectInst::Create(is_forward, Hi, Lo, "", entry);
     SelectInst* Lo_pn = SelectInst::Create(is_forward, Lo, Hi, "", entry);
-    BinaryOperator* NumBits = BinaryOperator::createSub(Hi_pn, Lo_pn, "",entry);
-    NumBits = BinaryOperator::createAdd(NumBits, One, "", entry);
+    BinaryOperator* NumBits = BinaryOperator::CreateSub(Hi_pn, Lo_pn, "",entry);
+    NumBits = BinaryOperator::CreateAdd(NumBits, One, "", entry);
     // Now, convert Lo and Hi to ValTy bit width
     if (ValBits > 32) {
       Lo = new ZExtInst(Lo_pn, ValTy, "", entry);
@@ -559,12 +559,12 @@ static Instruction *LowerPartSet(CallInst *CI) {
 
     // BASIC BLOCK: large
     Instruction* MaskBits = 
-      BinaryOperator::createSub(RepBitWidth, NumBits, "", large);
-    MaskBits = CastInst::createIntegerCast(MaskBits, RepMask->getType(), 
+      BinaryOperator::CreateSub(RepBitWidth, NumBits, "", large);
+    MaskBits = CastInst::CreateIntegerCast(MaskBits, RepMask->getType(), 
                                            false, "", large);
     BinaryOperator* Mask1 = 
-      BinaryOperator::createLShr(RepMask, MaskBits, "", large);
-    BinaryOperator* Rep2 = BinaryOperator::createAnd(Mask1, Rep, "", large);
+      BinaryOperator::CreateLShr(RepMask, MaskBits, "", large);
+    BinaryOperator* Rep2 = BinaryOperator::CreateAnd(Mask1, Rep, "", large);
     BranchInst::Create(small, large);
 
     // BASIC BLOCK: small
@@ -598,19 +598,19 @@ static Instruction *LowerPartSet(CallInst *CI) {
     RRes->addIncoming(ValZero, small);
 
     // Decrement the loop counter by one
-    Instruction *Decr = BinaryOperator::createSub(Count, One, "", reverse);
+    Instruction *Decr = BinaryOperator::CreateSub(Count, One, "", reverse);
     Count->addIncoming(Decr, reverse);
 
     // Get the bit that we want to move into the result
-    Value *Bit = BinaryOperator::createAnd(BitsToShift, ValOne, "", reverse);
+    Value *Bit = BinaryOperator::CreateAnd(BitsToShift, ValOne, "", reverse);
 
     // Compute the new value of the bits to shift for the next iteration.
-    Value *NewVal = BinaryOperator::createLShr(BitsToShift, ValOne,"", reverse);
+    Value *NewVal = BinaryOperator::CreateLShr(BitsToShift, ValOne,"", reverse);
     BitsToShift->addIncoming(NewVal, reverse);
 
     // Shift the bit we extracted into the low bit of the result.
-    Instruction *NewRes = BinaryOperator::createShl(RRes, ValOne, "", reverse);
-    NewRes = BinaryOperator::createOr(NewRes, Bit, "", reverse);
+    Instruction *NewRes = BinaryOperator::CreateShl(RRes, ValOne, "", reverse);
+    NewRes = BinaryOperator::CreateOr(NewRes, Bit, "", reverse);
     RRes->addIncoming(NewRes, reverse);
     
     // Terminate loop if we've moved all the bits.
@@ -622,14 +622,14 @@ static Instruction *LowerPartSet(CallInst *CI) {
     Rplcmnt->reserveOperandSpace(2);
     Rplcmnt->addIncoming(NewRes, reverse);
     Rplcmnt->addIncoming(Rep4, small);
-    Value* t0   = CastInst::createIntegerCast(NumBits,ValTy,false,"",result);
-    Value* t1   = BinaryOperator::createShl(ValMask, Lo, "", result);
-    Value* t2   = BinaryOperator::createNot(t1, "", result);
-    Value* t3   = BinaryOperator::createShl(t1, t0, "", result);
-    Value* t4   = BinaryOperator::createOr(t2, t3, "", result);
-    Value* t5   = BinaryOperator::createAnd(t4, Val, "", result);
-    Value* t6   = BinaryOperator::createShl(Rplcmnt, Lo, "", result);
-    Value* Rslt = BinaryOperator::createOr(t5, t6, "part_set", result);
+    Value* t0   = CastInst::CreateIntegerCast(NumBits,ValTy,false,"",result);
+    Value* t1   = BinaryOperator::CreateShl(ValMask, Lo, "", result);
+    Value* t2   = BinaryOperator::CreateNot(t1, "", result);
+    Value* t3   = BinaryOperator::CreateShl(t1, t0, "", result);
+    Value* t4   = BinaryOperator::CreateOr(t2, t3, "", result);
+    Value* t5   = BinaryOperator::CreateAnd(t4, Val, "", result);
+    Value* t6   = BinaryOperator::CreateShl(Rplcmnt, Lo, "", result);
+    Value* Rslt = BinaryOperator::CreateOr(t5, t6, "part_set", result);
     ReturnInst::Create(Rslt, result);
   }
 
@@ -704,10 +704,10 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::cttz: {
     // cttz(x) -> ctpop(~X & (X-1))
     Value *Src = CI->getOperand(1);
-    Value *NotSrc = BinaryOperator::createNot(Src, Src->getName()+".not", CI);
+    Value *NotSrc = BinaryOperator::CreateNot(Src, Src->getName()+".not", CI);
     Value *SrcM1 = ConstantInt::get(Src->getType(), 1);
-    SrcM1 = BinaryOperator::createSub(Src, SrcM1, "", CI);
-    Src = LowerCTPOP(BinaryOperator::createAnd(NotSrc, SrcM1, "", CI), CI);
+    SrcM1 = BinaryOperator::CreateSub(Src, SrcM1, "", CI);
+    Src = LowerCTPOP(BinaryOperator::CreateAnd(NotSrc, SrcM1, "", CI), CI);
     CI->replaceAllUsesWith(Src);
     break;
   }

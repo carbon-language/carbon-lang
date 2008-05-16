@@ -69,7 +69,7 @@ int main() {
   ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
 
   // Create the add instruction, inserting it into the end of BB.
-  Instruction *Add = BinaryOperator::createAdd(One, ArgX, "addresult", BB);
+  Instruction *Add = BinaryOperator::CreateAdd(One, ArgX, "addresult", BB);
 
   // Create the return instruction and add it to the basic block
   ReturnInst::Create(Add, BB);

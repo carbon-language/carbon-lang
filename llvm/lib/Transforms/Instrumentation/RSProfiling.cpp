@@ -215,7 +215,7 @@ void GlobalRandomCounter::ProcessChoicePoint(BasicBlock* bb) {
   ICmpInst* s = new ICmpInst(ICmpInst::ICMP_EQ, l, ConstantInt::get(T, 0), 
                              "countercc", t);
 
-  Value* nv = BinaryOperator::createSub(l, ConstantInt::get(T, 1),
+  Value* nv = BinaryOperator::CreateSub(l, ConstantInt::get(T, 1),
                                         "counternew", t);
   new StoreInst(nv, Counter, t);
   t->setCondition(s);
@@ -290,7 +290,7 @@ void GlobalRandomCounterOpt::ProcessChoicePoint(BasicBlock* bb) {
   ICmpInst* s = new ICmpInst(ICmpInst::ICMP_EQ, l, ConstantInt::get(T, 0), 
                              "countercc", t);
 
-  Value* nv = BinaryOperator::createSub(l, ConstantInt::get(T, 1),
+  Value* nv = BinaryOperator::CreateSub(l, ConstantInt::get(T, 1),
                                         "counternew", t);
   new StoreInst(nv, AI, t);
   t->setCondition(s);
@@ -319,7 +319,7 @@ void CycleCounter::ProcessChoicePoint(BasicBlock* bb) {
   
   CallInst* c = CallInst::Create(F, "rdcc", t);
   BinaryOperator* b = 
-    BinaryOperator::createAnd(c, ConstantInt::get(Type::Int64Ty, rm),
+    BinaryOperator::CreateAnd(c, ConstantInt::get(Type::Int64Ty, rm),
                               "mrdcc", t);
   
   ICmpInst *s = new ICmpInst(ICmpInst::ICMP_EQ, b,
@@ -357,7 +357,7 @@ void RSProfilers_std::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNu
   // Load, increment and store the value back.
   Value *OldVal = new LoadInst(ElementPtr, "OldCounter", InsertPos);
   profcode.insert(OldVal);
-  Value *NewVal = BinaryOperator::createAdd(OldVal,
+  Value *NewVal = BinaryOperator::CreateAdd(OldVal,
                                             ConstantInt::get(Type::Int32Ty, 1),
                                             "NewCounter", InsertPos);
   profcode.insert(NewVal);

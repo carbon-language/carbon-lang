@@ -67,7 +67,7 @@ namespace {
         while (isa<AllocaInst>(I)) ++I;
 
         CastInst *AllocaInsertionPoint =
-          CastInst::create(Instruction::BitCast,
+          CastInst::Create(Instruction::BitCast,
                            Constant::getNullValue(Type::Int32Ty), Type::Int32Ty,
                            "reg2mem alloca point", I);
 

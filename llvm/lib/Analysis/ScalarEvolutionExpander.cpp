@@ -40,7 +40,7 @@ Value *SCEVExpander::InsertCastOfTo(Instruction::CastOps opcode, Value *V,
             return CI;
           }
     }
-    return CastInst::create(opcode, V, Ty, V->getName(), 
+    return CastInst::Create(opcode, V, Ty, V->getName(), 
                             A->getParent()->getEntryBlock().begin());
   }
 
@@ -67,7 +67,7 @@ Value *SCEVExpander::InsertCastOfTo(Instruction::CastOps opcode, Value *V,
   if (InvokeInst *II = dyn_cast<InvokeInst>(I))
     IP = II->getNormalDest()->begin();
   while (isa<PHINode>(IP)) ++IP;
-  return CastInst::create(opcode, V, Ty, V->getName(), IP);
+  return CastInst::Create(opcode, V, Ty, V->getName(), IP);
 }
 
 /// InsertBinop - Insert the specified binary operator, doing a small amount
@@ -96,7 +96,7 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
   }
 
   // If we don't have 
-  return BinaryOperator::create(Opcode, LHS, RHS, "tmp", InsertPt);
+  return BinaryOperator::Create(Opcode, LHS, RHS, "tmp", InsertPt);
 }
 
 Value *SCEVExpander::visitMulExpr(SCEVMulExpr *S) {
@@ -155,7 +155,7 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
     // Insert a unit add instruction right before the terminator corresponding
     // to the back-edge.
     Constant *One = ConstantInt::get(Ty, 1);
-    Instruction *Add = BinaryOperator::createAdd(PN, One, "indvar.next",
+    Instruction *Add = BinaryOperator::CreateAdd(PN, One, "indvar.next",
                                                  (*HPI)->getTerminator());
 
     pred_iterator PI = pred_begin(Header);

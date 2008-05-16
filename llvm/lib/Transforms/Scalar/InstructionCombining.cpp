@@ -263,7 +263,7 @@ namespace {
       if (Constant *CV = dyn_cast<Constant>(V))
         return ConstantExpr::getCast(opc, CV, Ty);
       
-      Instruction *C = CastInst::create(opc, V, Ty, V->getName(), &Pos);
+      Instruction *C = CastInst::Create(opc, V, Ty, V->getName(), &Pos);
       AddToWorkList(C);
       return C;
     }
@@ -513,7 +513,7 @@ bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
 
           // Fold (op (op V1, C1), (op V2, C2)) ==> (op (op V1, V2), (op C1,C2))
           Constant *Folded = ConstantExpr::get(I.getOpcode(), C1, C2);
-          Instruction *New = BinaryOperator::create(Opcode, Op->getOperand(0),
+          Instruction *New = BinaryOperator::Create(Opcode, Op->getOperand(0),
                                                     Op1->getOperand(0),
                                                     Op1->getName(), &I);
           AddToWorkList(New);
@@ -1393,7 +1393,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     //    e.g. (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
     if ((DemandedMask & ~RHSKnownZero & ~LHSKnownZero) == 0) {
       Instruction *Or =
-        BinaryOperator::createOr(I->getOperand(0), I->getOperand(1),
+        BinaryOperator::CreateOr(I->getOperand(0), I->getOperand(1),
                                  I->getName());
       InsertNewInstBefore(Or, *I);
       return UpdateValueUsesWith(I, Or);
@@ -1408,7 +1408,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
       if ((RHSKnownOne & LHSKnownOne) == RHSKnownOne) {
         Constant *AndC = ConstantInt::get(~RHSKnownOne & DemandedMask);
         Instruction *And = 
-          BinaryOperator::createAnd(I->getOperand(0), AndC, "tmp");
+          BinaryOperator::CreateAnd(I->getOperand(0), AndC, "tmp");
         InsertNewInstBefore(And, *I);
         return UpdateValueUsesWith(I, And);
       }
@@ -1567,7 +1567,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
       // Turn it into OR if input bits are zero.
       if ((LHSKnownZero & RHS->getValue()) == RHS->getValue()) {
         Instruction *Or =
-          BinaryOperator::createOr(I->getOperand(0), I->getOperand(1),
+          BinaryOperator::CreateOr(I->getOperand(0), I->getOperand(1),
                                    I->getName());
         InsertNewInstBefore(Or, *I);
         return UpdateValueUsesWith(I, Or);
@@ -1675,7 +1675,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     // the shift amount is >= the size of the datatype, which is undefined.
     if (DemandedMask == 1) {
       // Perform the logical shift right.
-      Value *NewVal = BinaryOperator::createLShr(
+      Value *NewVal = BinaryOperator::CreateLShr(
                         I->getOperand(0), I->getOperand(1), I->getName());
       InsertNewInstBefore(cast<Instruction>(NewVal), *I);
       return UpdateValueUsesWith(I, NewVal);
@@ -1716,7 +1716,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
       if (RHSKnownZero[BitWidth-ShiftAmt-1] || 
           (HighBits & ~DemandedMask) == HighBits) {
         // Perform the logical shift right.
-        Value *NewVal = BinaryOperator::createLShr(
+        Value *NewVal = BinaryOperator::CreateLShr(
                           I->getOperand(0), SA, I->getName());
         InsertNewInstBefore(cast<Instruction>(NewVal), *I);
         return UpdateValueUsesWith(I, NewVal);
@@ -2026,12 +2026,12 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
           default: assert(0 && "Case stmts out of sync!");
           case Intrinsic::x86_sse_sub_ss:
           case Intrinsic::x86_sse2_sub_sd:
-            TmpV = InsertNewInstBefore(BinaryOperator::createSub(LHS, RHS,
+            TmpV = InsertNewInstBefore(BinaryOperator::CreateSub(LHS, RHS,
                                                         II->getName()), *II);
             break;
           case Intrinsic::x86_sse_mul_ss:
           case Intrinsic::x86_sse2_mul_sd:
-            TmpV = InsertNewInstBefore(BinaryOperator::createMul(LHS, RHS,
+            TmpV = InsertNewInstBefore(BinaryOperator::CreateMul(LHS, RHS,
                                                          II->getName()), *II);
             break;
           }
@@ -2160,7 +2160,7 @@ struct AddRHS {
   AddRHS(Value *rhs) : RHS(rhs) {}
   bool shouldApply(Value *LHS) const { return LHS == RHS; }
   Instruction *apply(BinaryOperator &Add) const {
-    return BinaryOperator::createShl(Add.getOperand(0),
+    return BinaryOperator::CreateShl(Add.getOperand(0),
                                   ConstantInt::get(Add.getType(), 1));
   }
 };
@@ -2176,7 +2176,7 @@ struct AddMaskingAnd {
            ConstantExpr::getAnd(C1, C2)->isNullValue();
   }
   Instruction *apply(BinaryOperator &Add) const {
-    return BinaryOperator::createOr(Add.getOperand(0), Add.getOperand(1));
+    return BinaryOperator::CreateOr(Add.getOperand(0), Add.getOperand(1));
   }
 };
 
@@ -2188,7 +2188,7 @@ static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
     if (Constant *SOC = dyn_cast<Constant>(SO))
       return ConstantExpr::getCast(CI->getOpcode(), SOC, I.getType());
 
-    return IC->InsertNewInstBefore(CastInst::create(
+    return IC->InsertNewInstBefore(CastInst::Create(
           CI->getOpcode(), SO, I.getType(), SO->getName() + ".cast"), I);
   }
 
@@ -2207,9 +2207,9 @@ static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
     std::swap(Op0, Op1);
   Instruction *New;
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(&I))
-    New = BinaryOperator::create(BO->getOpcode(), Op0, Op1,SO->getName()+".op");
+    New = BinaryOperator::Create(BO->getOpcode(), Op0, Op1,SO->getName()+".op");
   else if (CmpInst *CI = dyn_cast<CmpInst>(&I))
-    New = CmpInst::create(CI->getOpcode(), CI->getPredicate(), Op0, Op1, 
+    New = CmpInst::Create(CI->getOpcode(), CI->getPredicate(), Op0, Op1, 
                           SO->getName()+".cmp");
   else {
     assert(0 && "Unknown binary instruction type!");
@@ -2295,11 +2295,11 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
       } else {
         assert(PN->getIncomingBlock(i) == NonConstBB);
         if (BinaryOperator *BO = dyn_cast<BinaryOperator>(&I)) 
-          InV = BinaryOperator::create(BO->getOpcode(),
+          InV = BinaryOperator::Create(BO->getOpcode(),
                                        PN->getIncomingValue(i), C, "phitmp",
                                        NonConstBB->getTerminator());
         else if (CmpInst *CI = dyn_cast<CmpInst>(&I))
-          InV = CmpInst::create(CI->getOpcode(), 
+          InV = CmpInst::Create(CI->getOpcode(), 
                                 CI->getPredicate(),
                                 PN->getIncomingValue(i), C, "phitmp",
                                 NonConstBB->getTerminator());
@@ -2319,7 +2319,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
         InV = ConstantExpr::getCast(CI->getOpcode(), InC, RetTy);
       } else {
         assert(PN->getIncomingBlock(i) == NonConstBB);
-        InV = CastInst::create(CI->getOpcode(), PN->getIncomingValue(i), 
+        InV = CastInst::Create(CI->getOpcode(), PN->getIncomingValue(i), 
                                I.getType(), "phitmp", 
                                NonConstBB->getTerminator());
         AddToWorkList(cast<Instruction>(InV));
@@ -2396,7 +2396,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       const APInt& Val = CI->getValue();
       uint32_t BitWidth = Val.getBitWidth();
       if (Val == APInt::getSignBit(BitWidth))
-        return BinaryOperator::createXor(LHS, RHS);
+        return BinaryOperator::CreateXor(LHS, RHS);
       
       // See if SimplifyDemandedBits can simplify this.  This handles stuff like
       // (X & 254)+1 -> (X&254)|1
@@ -2480,35 +2480,35 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   if (Value *LHSV = dyn_castNegVal(LHS)) {
     if (LHS->getType()->isIntOrIntVector()) {
       if (Value *RHSV = dyn_castNegVal(RHS)) {
-        Instruction *NewAdd = BinaryOperator::createAdd(LHSV, RHSV, "sum");
+        Instruction *NewAdd = BinaryOperator::CreateAdd(LHSV, RHSV, "sum");
         InsertNewInstBefore(NewAdd, I);
-        return BinaryOperator::createNeg(NewAdd);
+        return BinaryOperator::CreateNeg(NewAdd);
       }
     }
     
-    return BinaryOperator::createSub(RHS, LHSV);
+    return BinaryOperator::CreateSub(RHS, LHSV);
   }
 
   // A + -B  -->  A - B
   if (!isa<Constant>(RHS))
     if (Value *V = dyn_castNegVal(RHS))
-      return BinaryOperator::createSub(LHS, V);
+      return BinaryOperator::CreateSub(LHS, V);
 
 
   ConstantInt *C2;
   if (Value *X = dyn_castFoldableMul(LHS, C2)) {
     if (X == RHS)   // X*C + X --> X * (C+1)
-      return BinaryOperator::createMul(RHS, AddOne(C2));
+      return BinaryOperator::CreateMul(RHS, AddOne(C2));
 
     // X*C1 + X*C2 --> X * (C1+C2)
     ConstantInt *C1;
     if (X == dyn_castFoldableMul(RHS, C1))
-      return BinaryOperator::createMul(X, Add(C1, C2));
+      return BinaryOperator::CreateMul(X, Add(C1, C2));
   }
 
   // X + X*C --> X * (C+1)
   if (dyn_castFoldableMul(RHS, C2) == LHS)
-    return BinaryOperator::createMul(LHS, AddOne(C2));
+    return BinaryOperator::CreateMul(LHS, AddOne(C2));
 
   // X + ~X --> -1   since   ~X = -X-1
   if (dyn_castNotVal(LHS) == RHS || dyn_castNotVal(RHS) == LHS)
@@ -2537,9 +2537,9 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       }
 
       if (W == Y) {
-        Value *NewAdd = InsertNewInstBefore(BinaryOperator::createAdd(X, Z,
+        Value *NewAdd = InsertNewInstBefore(BinaryOperator::CreateAdd(X, Z,
                                                             LHS->getName()), I);
-        return BinaryOperator::createMul(W, NewAdd);
+        return BinaryOperator::CreateMul(W, NewAdd);
       }
     }
   }
@@ -2547,7 +2547,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   if (ConstantInt *CRHS = dyn_cast<ConstantInt>(RHS)) {
     Value *X = 0;
     if (match(LHS, m_Not(m_Value(X))))    // ~X + C --> (C-1) - X
-      return BinaryOperator::createSub(SubOne(CRHS), X);
+      return BinaryOperator::CreateSub(SubOne(CRHS), X);
 
     // (X & FF00) + xx00  -> (X+xx00) & FF00
     if (LHS->hasOneUse() && match(LHS, m_And(m_Value(X), m_ConstantInt(C2)))) {
@@ -2565,9 +2565,9 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 
         if (AddRHSHighBits == AddRHSHighBitsAnd) {
           // Okay, the xform is safe.  Insert the new add pronto.
-          Value *NewAdd = InsertNewInstBefore(BinaryOperator::createAdd(X, CRHS,
+          Value *NewAdd = InsertNewInstBefore(BinaryOperator::CreateAdd(X, CRHS,
                                                             LHS->getName()), I);
-          return BinaryOperator::createAnd(NewAdd, C2);
+          return BinaryOperator::CreateAnd(NewAdd, C2);
         }
       }
     }
@@ -2647,7 +2647,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 
   // If this is a 'B = x-(-A)', change to B = x+A...
   if (Value *V = dyn_castNegVal(Op1))
-    return BinaryOperator::createAdd(Op0, V);
+    return BinaryOperator::CreateAdd(Op0, V);
 
   if (isa<UndefValue>(Op0))
     return ReplaceInstUsesWith(I, Op0);    // undef - X -> undef
@@ -2657,12 +2657,12 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   if (ConstantInt *C = dyn_cast<ConstantInt>(Op0)) {
     // Replace (-1 - A) with (~A)...
     if (C->isAllOnesValue())
-      return BinaryOperator::createNot(Op1);
+      return BinaryOperator::CreateNot(Op1);
 
     // C - ~X == X + (1+C)
     Value *X = 0;
     if (match(Op1, m_Not(m_Value(X))))
-      return BinaryOperator::createAdd(X, AddOne(C));
+      return BinaryOperator::CreateAdd(X, AddOne(C));
 
     // -(X >>u 31) -> (X >>s 31)
     // -(X >>s 31) -> (X >>u 31)
@@ -2674,7 +2674,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
             if (CU->getLimitedValue(SI->getType()->getPrimitiveSizeInBits()) ==
                 SI->getType()->getPrimitiveSizeInBits()-1) {
               // Ok, the transformation is safe.  Insert AShr.
-              return BinaryOperator::create(Instruction::AShr, 
+              return BinaryOperator::Create(Instruction::AShr, 
                                           SI->getOperand(0), CU, SI->getName());
             }
           }
@@ -2685,7 +2685,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
             if (CU->getLimitedValue(SI->getType()->getPrimitiveSizeInBits()) ==
                 SI->getType()->getPrimitiveSizeInBits()-1) {
               // Ok, the transformation is safe.  Insert LShr. 
-              return BinaryOperator::createLShr(
+              return BinaryOperator::CreateLShr(
                                           SI->getOperand(0), CU, SI->getName());
             }
           }
@@ -2707,13 +2707,13 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     if (Op1I->getOpcode() == Instruction::Add &&
         !Op0->getType()->isFPOrFPVector()) {
       if (Op1I->getOperand(0) == Op0)              // X-(X+Y) == -Y
-        return BinaryOperator::createNeg(Op1I->getOperand(1), I.getName());
+        return BinaryOperator::CreateNeg(Op1I->getOperand(1), I.getName());
       else if (Op1I->getOperand(1) == Op0)         // X-(Y+X) == -Y
-        return BinaryOperator::createNeg(Op1I->getOperand(0), I.getName());
+        return BinaryOperator::CreateNeg(Op1I->getOperand(0), I.getName());
       else if (ConstantInt *CI1 = dyn_cast<ConstantInt>(I.getOperand(0))) {
         if (ConstantInt *CI2 = dyn_cast<ConstantInt>(Op1I->getOperand(1)))
           // C1-(X+C2) --> (C1-C2)-X
-          return BinaryOperator::createSub(Subtract(CI1, CI2), 
+          return BinaryOperator::CreateSub(Subtract(CI1, CI2), 
                                            Op1I->getOperand(0));
       }
     }
@@ -2730,7 +2730,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         Op1I->setOperand(1, IIOp0);
 
         // Create the new top level add instruction...
-        return BinaryOperator::createAdd(Op0, Op1);
+        return BinaryOperator::CreateAdd(Op0, Op1);
       }
 
       // Replace (A - (A & B)) with (A & ~B) if this is the only use of (A&B)...
@@ -2740,8 +2740,8 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         Value *OtherOp = Op1I->getOperand(Op1I->getOperand(0) == Op0);
 
         Value *NewNot =
-          InsertNewInstBefore(BinaryOperator::createNot(OtherOp, "B.not"), I);
-        return BinaryOperator::createAnd(Op0, NewNot);
+          InsertNewInstBefore(BinaryOperator::CreateNot(OtherOp, "B.not"), I);
+        return BinaryOperator::CreateAnd(Op0, NewNot);
       }
 
       // 0 - (X sdiv C)  -> (X sdiv -C)
@@ -2749,14 +2749,14 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         if (ConstantInt *CSI = dyn_cast<ConstantInt>(Op0))
           if (CSI->isZero())
             if (Constant *DivRHS = dyn_cast<Constant>(Op1I->getOperand(1)))
-              return BinaryOperator::createSDiv(Op1I->getOperand(0),
+              return BinaryOperator::CreateSDiv(Op1I->getOperand(0),
                                                ConstantExpr::getNeg(DivRHS));
 
       // X - X*C --> X * (1-C)
       ConstantInt *C2 = 0;
       if (dyn_castFoldableMul(Op1I, C2) == Op0) {
         Constant *CP1 = Subtract(ConstantInt::get(I.getType(), 1), C2);
-        return BinaryOperator::createMul(Op0, CP1);
+        return BinaryOperator::CreateMul(Op0, CP1);
       }
 
       // X - ((X / Y) * Y) --> X % Y
@@ -2765,9 +2765,9 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
           if (Op0 == I->getOperand(0) &&
               Op1I->getOperand(1) == I->getOperand(1)) {
             if (I->getOpcode() == Instruction::SDiv)
-              return BinaryOperator::createSRem(Op0, Op1I->getOperand(1));
+              return BinaryOperator::CreateSRem(Op0, Op1I->getOperand(1));
             if (I->getOpcode() == Instruction::UDiv)
-              return BinaryOperator::createURem(Op0, Op1I->getOperand(1));
+              return BinaryOperator::CreateURem(Op0, Op1I->getOperand(1));
           }
     }
   }
@@ -2781,18 +2781,18 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
           return ReplaceInstUsesWith(I, Op0I->getOperand(0));
       } else if (Op0I->getOpcode() == Instruction::Sub) {
         if (Op0I->getOperand(0) == Op1)             // (X-Y)-X == -Y
-          return BinaryOperator::createNeg(Op0I->getOperand(1), I.getName());
+          return BinaryOperator::CreateNeg(Op0I->getOperand(1), I.getName());
       }
     }
 
   ConstantInt *C1;
   if (Value *X = dyn_castFoldableMul(Op0, C1)) {
     if (X == Op1)  // X*C - X --> X * (C-1)
-      return BinaryOperator::createMul(Op1, SubOne(C1));
+      return BinaryOperator::CreateMul(Op1, SubOne(C1));
 
     ConstantInt *C2;   // X*C1 - X*C2 -> X * (C1-C2)
     if (X == dyn_castFoldableMul(Op1, C2))
-      return BinaryOperator::createMul(X, Subtract(C1, C2));
+      return BinaryOperator::CreateMul(X, Subtract(C1, C2));
   }
   return 0;
 }
@@ -2843,7 +2843,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
       if (BinaryOperator *SI = dyn_cast<BinaryOperator>(Op0))
         if (SI->getOpcode() == Instruction::Shl)
           if (Constant *ShOp = dyn_cast<Constant>(SI->getOperand(1)))
-            return BinaryOperator::createMul(SI->getOperand(0),
+            return BinaryOperator::CreateMul(SI->getOperand(0),
                                              ConstantExpr::getShl(CI, ShOp));
 
       if (CI->isZero())
@@ -2851,11 +2851,11 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
       if (CI->equalsInt(1))                  // X * 1  == X
         return ReplaceInstUsesWith(I, Op0);
       if (CI->isAllOnesValue())              // X * -1 == 0 - X
-        return BinaryOperator::createNeg(Op0, I.getName());
+        return BinaryOperator::CreateNeg(Op0, I.getName());
 
       const APInt& Val = cast<ConstantInt>(CI)->getValue();
       if (Val.isPowerOf2()) {          // Replace X*(2^C) with X << C
-        return BinaryOperator::createShl(Op0,
+        return BinaryOperator::CreateShl(Op0,
                  ConstantInt::get(Op0->getType(), Val.logBase2()));
       }
     } else if (ConstantFP *Op1F = dyn_cast<ConstantFP>(Op1)) {
@@ -2874,12 +2874,12 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
       if (Op0I->getOpcode() == Instruction::Add && Op0I->hasOneUse() &&
           isa<ConstantInt>(Op0I->getOperand(1))) {
         // Canonicalize (X+C1)*C2 -> X*C2+C1*C2.
-        Instruction *Add = BinaryOperator::createMul(Op0I->getOperand(0),
+        Instruction *Add = BinaryOperator::CreateMul(Op0I->getOperand(0),
                                                      Op1, "tmp");
         InsertNewInstBefore(Add, I);
         Value *C1C2 = ConstantExpr::getMul(Op1, 
                                            cast<Constant>(Op0I->getOperand(1)));
-        return BinaryOperator::createAdd(Add, C1C2);
+        return BinaryOperator::CreateAdd(Add, C1C2);
         
       }
 
@@ -2895,7 +2895,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 
   if (Value *Op0v = dyn_castNegVal(Op0))     // -X * -Y = X*Y
     if (Value *Op1v = dyn_castNegVal(I.getOperand(1)))
-      return BinaryOperator::createMul(Op0v, Op1v);
+      return BinaryOperator::CreateMul(Op0v, Op1v);
 
   // If one of the operands of the multiply is a cast from a boolean value, then
   // we know the bool is either zero or one, so this is a 'masking' multiply.
@@ -2925,7 +2925,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
                                           SCOpTy->getPrimitiveSizeInBits()-1);
         Value *V =
           InsertNewInstBefore(
-            BinaryOperator::create(Instruction::AShr, SCIOp0, Amt,
+            BinaryOperator::Create(Instruction::AShr, SCIOp0, Amt,
                                             BoolCast->getOperand(0)->getName()+
                                             ".mask"), I);
 
@@ -2941,7 +2941,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
         }
 
         Value *OtherOp = Op0 == BoolCast ? I.getOperand(1) : Op0;
-        return BinaryOperator::createAnd(V, OtherOp);
+        return BinaryOperator::CreateAnd(V, OtherOp);
       }
     }
   }
@@ -3031,7 +3031,7 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
           if (MultiplyOverflows(RHS, LHSRHS, I.getOpcode()==Instruction::SDiv))
             return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
           else 
-            return BinaryOperator::create(I.getOpcode(), LHS->getOperand(0),
+            return BinaryOperator::Create(I.getOpcode(), LHS->getOperand(0),
                                           Multiply(RHS, LHSRHS));
         }
 
@@ -3065,7 +3065,7 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   // if so, convert to a right shift.
   if (ConstantInt *C = dyn_cast<ConstantInt>(Op1)) {
     if (C->getValue().isPowerOf2())  // 0 not included in isPowerOf2
-      return BinaryOperator::createLShr(Op0, 
+      return BinaryOperator::CreateLShr(Op0, 
                ConstantInt::get(Op0->getType(), C->getValue().logBase2()));
   }
 
@@ -3079,9 +3079,9 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
         const Type *NTy = N->getType();
         if (uint32_t C2 = C1.logBase2()) {
           Constant *C2V = ConstantInt::get(NTy, C2);
-          N = InsertNewInstBefore(BinaryOperator::createAdd(N, C2V, "tmp"), I);
+          N = InsertNewInstBefore(BinaryOperator::CreateAdd(N, C2V, "tmp"), I);
         }
-        return BinaryOperator::createLShr(Op0, N);
+        return BinaryOperator::CreateLShr(Op0, N);
       }
     }
   }
@@ -3097,13 +3097,13 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
           uint32_t TSA = TVA.logBase2(), FSA = FVA.logBase2();
           // Construct the "on true" case of the select
           Constant *TC = ConstantInt::get(Op0->getType(), TSA);
-          Instruction *TSI = BinaryOperator::createLShr(
+          Instruction *TSI = BinaryOperator::CreateLShr(
                                                  Op0, TC, SI->getName()+".t");
           TSI = InsertNewInstBefore(TSI, I);
   
           // Construct the "on false" case of the select
           Constant *FC = ConstantInt::get(Op0->getType(), FSA); 
-          Instruction *FSI = BinaryOperator::createLShr(
+          Instruction *FSI = BinaryOperator::CreateLShr(
                                                  Op0, FC, SI->getName()+".f");
           FSI = InsertNewInstBefore(FSI, I);
 
@@ -3124,11 +3124,11 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
     // sdiv X, -1 == -X
     if (RHS->isAllOnesValue())
-      return BinaryOperator::createNeg(Op0);
+      return BinaryOperator::CreateNeg(Op0);
 
     // -X/C -> X/-C
     if (Value *LHSNeg = dyn_castNegVal(Op0))
-      return BinaryOperator::createSDiv(LHSNeg, ConstantExpr::getNeg(RHS));
+      return BinaryOperator::CreateSDiv(LHSNeg, ConstantExpr::getNeg(RHS));
   }
 
   // If the sign bits of both operands are zero (i.e. we can prove they are
@@ -3137,7 +3137,7 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
     APInt Mask(APInt::getSignBit(I.getType()->getPrimitiveSizeInBits()));
     if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
       // X sdiv Y -> X udiv Y, iff X and Y don't have sign bit set
-      return BinaryOperator::createUDiv(Op0, Op1, I.getName());
+      return BinaryOperator::CreateUDiv(Op0, Op1, I.getName());
     }
   }      
   
@@ -3254,7 +3254,7 @@ Instruction *InstCombiner::visitURem(BinaryOperator &I) {
     // if so, convert to a bitwise and.
     if (ConstantInt *C = dyn_cast<ConstantInt>(RHS))
       if (C->getValue().isPowerOf2())
-        return BinaryOperator::createAnd(Op0, SubOne(C));
+        return BinaryOperator::CreateAnd(Op0, SubOne(C));
   }
 
   if (Instruction *RHSI = dyn_cast<Instruction>(I.getOperand(1))) {
@@ -3263,9 +3263,9 @@ Instruction *InstCombiner::visitURem(BinaryOperator &I) {
         isa<ConstantInt>(RHSI->getOperand(0))) {
       if (cast<ConstantInt>(RHSI->getOperand(0))->getValue().isPowerOf2()) {
         Constant *N1 = ConstantInt::getAllOnesValue(I.getType());
-        Value *Add = InsertNewInstBefore(BinaryOperator::createAdd(RHSI, N1,
+        Value *Add = InsertNewInstBefore(BinaryOperator::CreateAdd(RHSI, N1,
                                                                    "tmp"), I);
-        return BinaryOperator::createAnd(Op0, Add);
+        return BinaryOperator::CreateAnd(Op0, Add);
       }
     }
   }
@@ -3279,9 +3279,9 @@ Instruction *InstCombiner::visitURem(BinaryOperator &I) {
         if ((STO->getValue().isPowerOf2()) && 
             (SFO->getValue().isPowerOf2())) {
           Value *TrueAnd = InsertNewInstBefore(
-            BinaryOperator::createAnd(Op0, SubOne(STO), SI->getName()+".t"), I);
+            BinaryOperator::CreateAnd(Op0, SubOne(STO), SI->getName()+".t"), I);
           Value *FalseAnd = InsertNewInstBefore(
-            BinaryOperator::createAnd(Op0, SubOne(SFO), SI->getName()+".f"), I);
+            BinaryOperator::CreateAnd(Op0, SubOne(SFO), SI->getName()+".f"), I);
           return SelectInst::Create(SI->getOperand(0), TrueAnd, FalseAnd);
         }
       }
@@ -3312,7 +3312,7 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
     APInt Mask(APInt::getSignBit(I.getType()->getPrimitiveSizeInBits()));
     if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
       // X srem Y -> X urem Y, iff X and Y don't have sign bit set
-      return BinaryOperator::createURem(Op0, Op1, I.getName());
+      return BinaryOperator::CreateURem(Op0, Op1, I.getName());
     }
   }
 
@@ -3500,10 +3500,10 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
   case Instruction::Xor:
     if (Op->hasOneUse()) {
       // (X ^ C1) & C2 --> (X & C2) ^ (C1&C2)
-      Instruction *And = BinaryOperator::createAnd(X, AndRHS);
+      Instruction *And = BinaryOperator::CreateAnd(X, AndRHS);
       InsertNewInstBefore(And, TheAnd);
       And->takeName(Op);
-      return BinaryOperator::createXor(And, Together);
+      return BinaryOperator::CreateXor(And, Together);
     }
     break;
   case Instruction::Or:
@@ -3512,10 +3512,10 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
 
     if (Op->hasOneUse() && Together != OpRHS) {
       // (X | C1) & C2 --> (X | (C1&C2)) & C2
-      Instruction *Or = BinaryOperator::createOr(X, Together);
+      Instruction *Or = BinaryOperator::CreateOr(X, Together);
       InsertNewInstBefore(Or, TheAnd);
       Or->takeName(Op);
-      return BinaryOperator::createAnd(Or, AndRHS);
+      return BinaryOperator::CreateAnd(Or, AndRHS);
     }
     break;
   case Instruction::Add:
@@ -3543,10 +3543,10 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
             return &TheAnd;
           } else {
             // Pull the XOR out of the AND.
-            Instruction *NewAnd = BinaryOperator::createAnd(X, AndRHS);
+            Instruction *NewAnd = BinaryOperator::CreateAnd(X, AndRHS);
             InsertNewInstBefore(NewAnd, TheAnd);
             NewAnd->takeName(Op);
-            return BinaryOperator::createXor(NewAnd, AndRHS);
+            return BinaryOperator::CreateXor(NewAnd, AndRHS);
           }
         }
       }
@@ -3605,9 +3605,9 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
         // Make the argument unsigned.
         Value *ShVal = Op->getOperand(0);
         ShVal = InsertNewInstBefore(
-            BinaryOperator::createLShr(ShVal, OpRHS, 
+            BinaryOperator::CreateLShr(ShVal, OpRHS, 
                                    Op->getName()), TheAnd);
-        return BinaryOperator::createAnd(ShVal, AndRHS, TheAnd.getName());
+        return BinaryOperator::CreateAnd(ShVal, AndRHS, TheAnd.getName());
       }
     }
     break;
@@ -3641,7 +3641,7 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
 
     // Emit V-Lo <u Hi-Lo
     Constant *NegLo = ConstantExpr::getNeg(Lo);
-    Instruction *Add = BinaryOperator::createAdd(V, NegLo, V->getName()+".off");
+    Instruction *Add = BinaryOperator::CreateAdd(V, NegLo, V->getName()+".off");
     InsertNewInstBefore(Add, IB);
     Constant *UpperBound = ConstantExpr::getAdd(NegLo, Hi);
     return new ICmpInst(ICmpInst::ICMP_ULT, Add, UpperBound);
@@ -3661,7 +3661,7 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
   // Emit V-Lo >u Hi-1-Lo
   // Note that Hi has already had one subtracted from it, above.
   ConstantInt *NegLo = cast<ConstantInt>(ConstantExpr::getNeg(Lo));
-  Instruction *Add = BinaryOperator::createAdd(V, NegLo, V->getName()+".off");
+  Instruction *Add = BinaryOperator::CreateAdd(V, NegLo, V->getName()+".off");
   InsertNewInstBefore(Add, IB);
   Constant *LowerBound = ConstantExpr::getAdd(NegLo, Hi);
   return new ICmpInst(ICmpInst::ICMP_UGT, Add, LowerBound);
@@ -3736,9 +3736,9 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
   
   Instruction *New;
   if (isSub)
-    New = BinaryOperator::createSub(LHSI->getOperand(0), RHS, "fold");
+    New = BinaryOperator::CreateSub(LHSI->getOperand(0), RHS, "fold");
   else
-    New = BinaryOperator::createAdd(LHSI->getOperand(0), RHS, "fold");
+    New = BinaryOperator::CreateAdd(LHSI->getOperand(0), RHS, "fold");
   return InsertNewInstBefore(New, I);
 }
 
@@ -3786,19 +3786,19 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         if (Op0I->hasOneUse()) {
           if (MaskedValueIsZero(Op0LHS, NotAndRHS)) {
             // Not masking anything out for the LHS, move to RHS.
-            Instruction *NewRHS = BinaryOperator::createAnd(Op0RHS, AndRHS,
+            Instruction *NewRHS = BinaryOperator::CreateAnd(Op0RHS, AndRHS,
                                                    Op0RHS->getName()+".masked");
             InsertNewInstBefore(NewRHS, I);
-            return BinaryOperator::create(
+            return BinaryOperator::Create(
                        cast<BinaryOperator>(Op0I)->getOpcode(), Op0LHS, NewRHS);
           }
           if (!isa<Constant>(Op0RHS) &&
               MaskedValueIsZero(Op0RHS, NotAndRHS)) {
             // Not masking anything out for the RHS, move to LHS.
-            Instruction *NewLHS = BinaryOperator::createAnd(Op0LHS, AndRHS,
+            Instruction *NewLHS = BinaryOperator::CreateAnd(Op0LHS, AndRHS,
                                                    Op0LHS->getName()+".masked");
             InsertNewInstBefore(NewLHS, I);
-            return BinaryOperator::create(
+            return BinaryOperator::Create(
                        cast<BinaryOperator>(Op0I)->getOpcode(), NewLHS, Op0RHS);
           }
         }
@@ -3809,9 +3809,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         // ((A | N) + B) & AndRHS -> (A + B) & AndRHS iff N&AndRHS == 0
         // ((A ^ N) + B) & AndRHS -> (A + B) & AndRHS iff N&AndRHS == 0
         if (Value *V = FoldLogicalPlusAnd(Op0LHS, Op0RHS, AndRHS, false, I))
-          return BinaryOperator::createAnd(V, AndRHS);
+          return BinaryOperator::CreateAnd(V, AndRHS);
         if (Value *V = FoldLogicalPlusAnd(Op0RHS, Op0LHS, AndRHS, false, I))
-          return BinaryOperator::createAnd(V, AndRHS);  // Add commutes
+          return BinaryOperator::CreateAnd(V, AndRHS);  // Add commutes
         break;
 
       case Instruction::Sub:
@@ -3819,7 +3819,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         // ((A | N) - B) & AndRHS -> (A - B) & AndRHS iff N&AndRHS == 0
         // ((A ^ N) - B) & AndRHS -> (A - B) & AndRHS iff N&AndRHS == 0
         if (Value *V = FoldLogicalPlusAnd(Op0LHS, Op0RHS, AndRHS, true, I))
-          return BinaryOperator::createAnd(V, AndRHS);
+          return BinaryOperator::CreateAnd(V, AndRHS);
         break;
       }
 
@@ -3839,14 +3839,14 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
               // into  : and (cast X to T), trunc_or_bitcast(C1)&C2
               // This will fold the two constants together, which may allow 
               // other simplifications.
-              Instruction *NewCast = CastInst::createTruncOrBitCast(
+              Instruction *NewCast = CastInst::CreateTruncOrBitCast(
                 CastOp->getOperand(0), I.getType(), 
                 CastOp->getName()+".shrunk");
               NewCast = InsertNewInstBefore(NewCast, I);
               // trunc_or_bitcast(C1)&C2
               Constant *C3 = ConstantExpr::getTruncOrBitCast(AndCI,I.getType());
               C3 = ConstantExpr::getAnd(C3, AndRHS);
-              return BinaryOperator::createAnd(NewCast, C3);
+              return BinaryOperator::CreateAnd(NewCast, C3);
             } else if (CastOp->getOpcode() == Instruction::Or) {
               // Change: and (cast (or X, C1) to T), C2
               // into  : trunc(C1)&C2 iff trunc(C1)&C2 == C2
@@ -3875,10 +3875,10 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
 
   // (~A & ~B) == (~(A | B)) - De Morgan's Law
   if (Op0NotVal && Op1NotVal && isOnlyUse(Op0) && isOnlyUse(Op1)) {
-    Instruction *Or = BinaryOperator::createOr(Op0NotVal, Op1NotVal,
+    Instruction *Or = BinaryOperator::CreateOr(Op0NotVal, Op1NotVal,
                                                I.getName()+".demorgan");
     InsertNewInstBefore(Or, I);
-    return BinaryOperator::createNot(Or);
+    return BinaryOperator::CreateNot(Or);
   }
   
   {
@@ -3890,7 +3890,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       // (A|B) & ~(A&B) -> A^B
       if (match(Op1, m_Not(m_And(m_Value(C), m_Value(D))))) {
         if ((A == C && B == D) || (A == D && B == C))
-          return BinaryOperator::createXor(A, B);
+          return BinaryOperator::CreateXor(A, B);
       }
     }
     
@@ -3901,7 +3901,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       // ~(A&B) & (A|B) -> A^B
       if (match(Op0, m_Not(m_And(m_Value(C), m_Value(D))))) {
         if ((A == C && B == D) || (A == D && B == C))
-          return BinaryOperator::createXor(A, B);
+          return BinaryOperator::CreateXor(A, B);
       }
     }
     
@@ -3923,9 +3923,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         std::swap(A, B);
       }
       if (A == Op0) {                                // A&(A^B) -> A & ~B
-        Instruction *NotB = BinaryOperator::createNot(B, "tmp");
+        Instruction *NotB = BinaryOperator::CreateNot(B, "tmp");
         InsertNewInstBefore(NotB, I);
-        return BinaryOperator::createAnd(A, NotB);
+        return BinaryOperator::CreateAnd(A, NotB);
       }
     }
   }
@@ -4008,7 +4008,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
             case ICmpInst::ICMP_NE:
               if (LHSCst == SubOne(RHSCst)){// (X != 13 & X != 14) -> X-13 >u 1
                 Constant *AddCST = ConstantExpr::getNeg(LHSCst);
-                Instruction *Add = BinaryOperator::createAdd(LHSVal, AddCST,
+                Instruction *Add = BinaryOperator::CreateAdd(LHSVal, AddCST,
                                                       LHSVal->getName()+".off");
                 InsertNewInstBefore(Add, I);
                 return new ICmpInst(ICmpInst::ICMP_UGT, Add,
@@ -4101,11 +4101,11 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
                               I.getType(), TD) &&
             ValueRequiresCast(Op1C->getOpcode(), Op1C->getOperand(0), 
                               I.getType(), TD)) {
-          Instruction *NewOp = BinaryOperator::createAnd(Op0C->getOperand(0),
+          Instruction *NewOp = BinaryOperator::CreateAnd(Op0C->getOperand(0),
                                                          Op1C->getOperand(0),
                                                          I.getName());
           InsertNewInstBefore(NewOp, I);
-          return CastInst::create(Op0C->getOpcode(), NewOp, I.getType());
+          return CastInst::Create(Op0C->getOpcode(), NewOp, I.getType());
         }
       }
     
@@ -4116,10 +4116,10 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
           SI0->getOperand(1) == SI1->getOperand(1) &&
           (SI0->hasOneUse() || SI1->hasOneUse())) {
         Instruction *NewOp =
-          InsertNewInstBefore(BinaryOperator::createAnd(SI0->getOperand(0),
+          InsertNewInstBefore(BinaryOperator::CreateAnd(SI0->getOperand(0),
                                                         SI1->getOperand(0),
                                                         SI0->getName()), I);
-        return BinaryOperator::create(SI1->getOpcode(), NewOp, 
+        return BinaryOperator::Create(SI1->getOpcode(), NewOp, 
                                       SI1->getOperand(1));
       }
   }
@@ -4291,19 +4291,19 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     ConstantInt *C1 = 0; Value *X = 0;
     // (X & C1) | C2 --> (X | C2) & (C1|C2)
     if (match(Op0, m_And(m_Value(X), m_ConstantInt(C1))) && isOnlyUse(Op0)) {
-      Instruction *Or = BinaryOperator::createOr(X, RHS);
+      Instruction *Or = BinaryOperator::CreateOr(X, RHS);
       InsertNewInstBefore(Or, I);
       Or->takeName(Op0);
-      return BinaryOperator::createAnd(Or, 
+      return BinaryOperator::CreateAnd(Or, 
                ConstantInt::get(RHS->getValue() | C1->getValue()));
     }
 
     // (X ^ C1) | C2 --> (X | C2) ^ (C1&~C2)
     if (match(Op0, m_Xor(m_Value(X), m_ConstantInt(C1))) && isOnlyUse(Op0)) {
-      Instruction *Or = BinaryOperator::createOr(X, RHS);
+      Instruction *Or = BinaryOperator::CreateOr(X, RHS);
       InsertNewInstBefore(Or, I);
       Or->takeName(Op0);
-      return BinaryOperator::createXor(Or,
+      return BinaryOperator::CreateXor(Or,
                  ConstantInt::get(C1->getValue() & ~RHS->getValue()));
     }
 
@@ -4339,19 +4339,19 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   // (X^C)|Y -> (X|Y)^C iff Y&C == 0
   if (Op0->hasOneUse() && match(Op0, m_Xor(m_Value(A), m_ConstantInt(C1))) &&
       MaskedValueIsZero(Op1, C1->getValue())) {
-    Instruction *NOr = BinaryOperator::createOr(A, Op1);
+    Instruction *NOr = BinaryOperator::CreateOr(A, Op1);
     InsertNewInstBefore(NOr, I);
     NOr->takeName(Op0);
-    return BinaryOperator::createXor(NOr, C1);
+    return BinaryOperator::CreateXor(NOr, C1);
   }
 
   // Y|(X^C) -> (X|Y)^C iff Y&C == 0
   if (Op1->hasOneUse() && match(Op1, m_Xor(m_Value(A), m_ConstantInt(C1))) &&
       MaskedValueIsZero(Op0, C1->getValue())) {
-    Instruction *NOr = BinaryOperator::createOr(A, Op0);
+    Instruction *NOr = BinaryOperator::CreateOr(A, Op0);
     InsertNewInstBefore(NOr, I);
     NOr->takeName(Op0);
-    return BinaryOperator::createXor(NOr, C1);
+    return BinaryOperator::CreateXor(NOr, C1);
   }
 
   // (A & C)|(B & D)
@@ -4401,8 +4401,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       
       if (V1) {
         Value *Or =
-          InsertNewInstBefore(BinaryOperator::createOr(V2, V3, "tmp"), I);
-        return BinaryOperator::createAnd(V1, Or);
+          InsertNewInstBefore(BinaryOperator::CreateOr(V2, V3, "tmp"), I);
+        return BinaryOperator::CreateAnd(V1, Or);
       }
     }
   }
@@ -4414,10 +4414,10 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
           SI0->getOperand(1) == SI1->getOperand(1) &&
           (SI0->hasOneUse() || SI1->hasOneUse())) {
         Instruction *NewOp =
-        InsertNewInstBefore(BinaryOperator::createOr(SI0->getOperand(0),
+        InsertNewInstBefore(BinaryOperator::CreateOr(SI0->getOperand(0),
                                                      SI1->getOperand(0),
                                                      SI0->getName()), I);
-        return BinaryOperator::create(SI1->getOpcode(), NewOp, 
+        return BinaryOperator::Create(SI1->getOpcode(), NewOp, 
                                       SI1->getOperand(1));
       }
   }
@@ -4435,9 +4435,9 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
     // (~A | ~B) == (~(A & B)) - De Morgan's Law
     if (A && isOnlyUse(Op0) && isOnlyUse(Op1)) {
-      Value *And = InsertNewInstBefore(BinaryOperator::createAnd(A, B,
+      Value *And = InsertNewInstBefore(BinaryOperator::CreateAnd(A, B,
                                               I.getName()+".demorgan"), I);
-      return BinaryOperator::createNot(And);
+      return BinaryOperator::CreateNot(And);
     }
   }
 
@@ -4489,7 +4489,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
             case ICmpInst::ICMP_EQ:
               if (LHSCst == SubOne(RHSCst)) {// (X == 13 | X == 14) -> X-13 <u 2
                 Constant *AddCST = ConstantExpr::getNeg(LHSCst);
-                Instruction *Add = BinaryOperator::createAdd(LHSVal, AddCST,
+                Instruction *Add = BinaryOperator::CreateAdd(LHSVal, AddCST,
                                                       LHSVal->getName()+".off");
                 InsertNewInstBefore(Add, I);
                 AddCST = Subtract(AddOne(RHSCst), LHSCst);
@@ -4608,11 +4608,11 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
                                 I.getType(), TD) &&
               ValueRequiresCast(Op1C->getOpcode(), Op1C->getOperand(0), 
                                 I.getType(), TD)) {
-            Instruction *NewOp = BinaryOperator::createOr(Op0C->getOperand(0),
+            Instruction *NewOp = BinaryOperator::CreateOr(Op0C->getOperand(0),
                                                           Op1C->getOperand(0),
                                                           I.getName());
             InsertNewInstBefore(NewOp, I);
-            return CastInst::create(Op0C->getOpcode(), NewOp, I.getType());
+            return CastInst::Create(Op0C->getOpcode(), NewOp, I.getType());
           }
         }
       }
@@ -4697,13 +4697,13 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         if (dyn_castNotVal(Op0I->getOperand(1))) Op0I->swapOperands();
         if (Value *Op0NotVal = dyn_castNotVal(Op0I->getOperand(0))) {
           Instruction *NotY =
-            BinaryOperator::createNot(Op0I->getOperand(1),
+            BinaryOperator::CreateNot(Op0I->getOperand(1),
                                       Op0I->getOperand(1)->getName()+".not");
           InsertNewInstBefore(NotY, I);
           if (Op0I->getOpcode() == Instruction::And)
-            return BinaryOperator::createOr(Op0NotVal, NotY);
+            return BinaryOperator::CreateOr(Op0NotVal, NotY);
           else
-            return BinaryOperator::createAnd(Op0NotVal, NotY);
+            return BinaryOperator::CreateAnd(Op0NotVal, NotY);
         }
       }
     }
@@ -4729,7 +4729,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
           Constant *NegOp0I0C = ConstantExpr::getNeg(Op0I0C);
           Constant *ConstantRHS = ConstantExpr::getSub(NegOp0I0C,
                                               ConstantInt::get(I.getType(), 1));
-          return BinaryOperator::createAdd(Op0I->getOperand(1), ConstantRHS);
+          return BinaryOperator::CreateAdd(Op0I->getOperand(1), ConstantRHS);
         }
           
       if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
@@ -4737,14 +4737,14 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
           // ~(X-c) --> (-c-1)-X
           if (RHS->isAllOnesValue()) {
             Constant *NegOp0CI = ConstantExpr::getNeg(Op0CI);
-            return BinaryOperator::createSub(
+            return BinaryOperator::CreateSub(
                            ConstantExpr::getSub(NegOp0CI,
                                              ConstantInt::get(I.getType(), 1)),
                                           Op0I->getOperand(0));
           } else if (RHS->getValue().isSignBit()) {
             // (X + C) ^ signbit -> (X + C + signbit)
             Constant *C = ConstantInt::get(RHS->getValue() + Op0CI->getValue());
-            return BinaryOperator::createAdd(Op0I->getOperand(0), C);
+            return BinaryOperator::CreateAdd(Op0I->getOperand(0), C);
 
           }
         } else if (Op0I->getOpcode() == Instruction::Or) {
@@ -4820,8 +4820,8 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         std::swap(A, B);
       if (B == Op1) {                                // (A|B)^B == A & ~B
         Instruction *NotB =
-          InsertNewInstBefore(BinaryOperator::createNot(Op1, "tmp"), I);
-        return BinaryOperator::createAnd(A, NotB);
+          InsertNewInstBefore(BinaryOperator::CreateNot(Op1, "tmp"), I);
+        return BinaryOperator::CreateAnd(A, NotB);
       }
     } else if (match(Op0I, m_Xor(m_Value(A), m_Value(B)))) {
       if (Op1 == A)                                          // (A^B)^A == B
@@ -4834,8 +4834,8 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       if (B == Op1 &&                                      // (B&A)^A == ~B & A
           !isa<ConstantInt>(Op1)) {  // Canonical form is (B&C)^C
         Instruction *N =
-          InsertNewInstBefore(BinaryOperator::createNot(A, "tmp"), I);
-        return BinaryOperator::createAnd(N, Op1);
+          InsertNewInstBefore(BinaryOperator::CreateNot(A, "tmp"), I);
+        return BinaryOperator::CreateAnd(N, Op1);
       }
     }
   }
@@ -4846,10 +4846,10 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       Op0I->getOperand(1) == Op1I->getOperand(1) &&
       (Op1I->hasOneUse() || Op1I->hasOneUse())) {
     Instruction *NewOp =
-      InsertNewInstBefore(BinaryOperator::createXor(Op0I->getOperand(0),
+      InsertNewInstBefore(BinaryOperator::CreateXor(Op0I->getOperand(0),
                                                     Op1I->getOperand(0),
                                                     Op0I->getName()), I);
-    return BinaryOperator::create(Op1I->getOpcode(), NewOp, 
+    return BinaryOperator::Create(Op1I->getOpcode(), NewOp, 
                                   Op1I->getOperand(1));
   }
     
@@ -4859,13 +4859,13 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     if (match(Op0I, m_And(m_Value(A), m_Value(B))) &&
         match(Op1I, m_Or(m_Value(C), m_Value(D)))) {
       if ((A == C && B == D) || (A == D && B == C)) 
-        return BinaryOperator::createXor(A, B);
+        return BinaryOperator::CreateXor(A, B);
     }
     // (A | B)^(A & B) -> A ^ B
     if (match(Op0I, m_Or(m_Value(A), m_Value(B))) &&
         match(Op1I, m_And(m_Value(C), m_Value(D)))) {
       if ((A == C && B == D) || (A == D && B == C)) 
-        return BinaryOperator::createXor(A, B);
+        return BinaryOperator::CreateXor(A, B);
     }
     
     // (A & B)^(C & D)
@@ -4885,8 +4885,8 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       
       if (X) {
         Instruction *NewOp =
-        InsertNewInstBefore(BinaryOperator::createXor(Y, Z, Op0->getName()), I);
-        return BinaryOperator::createAnd(NewOp, X);
+        InsertNewInstBefore(BinaryOperator::CreateXor(Y, Z, Op0->getName()), I);
+        return BinaryOperator::CreateAnd(NewOp, X);
       }
     }
   }
@@ -4907,11 +4907,11 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
                               I.getType(), TD) &&
             ValueRequiresCast(Op1C->getOpcode(), Op1C->getOperand(0), 
                               I.getType(), TD)) {
-          Instruction *NewOp = BinaryOperator::createXor(Op0C->getOperand(0),
+          Instruction *NewOp = BinaryOperator::CreateXor(Op0C->getOperand(0),
                                                          Op1C->getOperand(0),
                                                          I.getName());
           InsertNewInstBefore(NewOp, I);
-          return CastInst::create(Op0C->getOpcode(), NewOp, I.getType());
+          return CastInst::Create(Op0C->getOpcode(), NewOp, I.getType());
         }
       }
   }
@@ -4960,7 +4960,7 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
           Result = ConstantInt::get(RC->getValue() + APInt(IntPtrWidth, Size));
         else
           Result = IC.InsertNewInstBefore(
-                   BinaryOperator::createAdd(Result,
+                   BinaryOperator::CreateAdd(Result,
                                              ConstantInt::get(IntPtrTy, Size),
                                              GEP->getName()+".offs"), I);
         continue;
@@ -4974,7 +4974,7 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
       else {
         // Emit an add instruction.
         Result = IC.InsertNewInstBefore(
-           BinaryOperator::createAdd(Result, Scale,
+           BinaryOperator::CreateAdd(Result, Scale,
                                      GEP->getName()+".offs"), I);
       }
       continue;
@@ -4992,7 +4992,7 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
       if (Constant *OpC = dyn_cast<Constant>(Op))
         Op = ConstantExpr::getMul(OpC, Scale);
       else    // We'll let instcombine(mul) convert this to a shl if possible.
-        Op = IC.InsertNewInstBefore(BinaryOperator::createMul(Op, Scale,
+        Op = IC.InsertNewInstBefore(BinaryOperator::CreateMul(Op, Scale,
                                                   GEP->getName()+".idx"), I);
     }
 
@@ -5001,7 +5001,7 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
       Result = ConstantExpr::getAdd(cast<Constant>(Op),
                                     cast<Constant>(Result));
     else
-      Result = IC.InsertNewInstBefore(BinaryOperator::createAdd(Op, Result,
+      Result = IC.InsertNewInstBefore(BinaryOperator::CreateAdd(Op, Result,
                                                   GEP->getName()+".offs"), I);
   }
   return Result;
@@ -5106,11 +5106,11 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, Instruction &I,
   // Okay, we can do this evaluation.  Start by converting the index to intptr.
   const Type *IntPtrTy = TD.getIntPtrType();
   if (VariableIdx->getType() != IntPtrTy)
-    VariableIdx = CastInst::createIntegerCast(VariableIdx, IntPtrTy,
+    VariableIdx = CastInst::CreateIntegerCast(VariableIdx, IntPtrTy,
                                               true /*SExt*/, 
                                               VariableIdx->getNameStart(), &I);
   Constant *OffsetVal = ConstantInt::get(IntPtrTy, NewOffs);
-  return BinaryOperator::createAdd(VariableIdx, OffsetVal, "offset", &I);
+  return BinaryOperator::CreateAdd(VariableIdx, OffsetVal, "offset", &I);
 }
 
 
@@ -5340,12 +5340,12 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     switch (I.getPredicate()) {
     default: assert(0 && "Invalid icmp instruction!");
     case ICmpInst::ICMP_EQ: {               // icmp eq bool %A, %B -> ~(A^B)
-      Instruction *Xor = BinaryOperator::createXor(Op0, Op1, I.getName()+"tmp");
+      Instruction *Xor = BinaryOperator::CreateXor(Op0, Op1, I.getName()+"tmp");
       InsertNewInstBefore(Xor, I);
-      return BinaryOperator::createNot(Xor);
+      return BinaryOperator::CreateNot(Xor);
     }
     case ICmpInst::ICMP_NE:                  // icmp eq bool %A, %B -> A^B
-      return BinaryOperator::createXor(Op0, Op1);
+      return BinaryOperator::CreateXor(Op0, Op1);
 
     case ICmpInst::ICMP_UGT:
     case ICmpInst::ICMP_SGT:
@@ -5353,9 +5353,9 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       // FALL THROUGH
     case ICmpInst::ICMP_ULT:
     case ICmpInst::ICMP_SLT: {               // icmp lt bool A, B -> ~X & Y
-      Instruction *Not = BinaryOperator::createNot(Op0, I.getName()+"tmp");
+      Instruction *Not = BinaryOperator::CreateNot(Op0, I.getName()+"tmp");
       InsertNewInstBefore(Not, I);
-      return BinaryOperator::createAnd(Not, Op1);
+      return BinaryOperator::CreateAnd(Not, Op1);
     }
     case ICmpInst::ICMP_UGE:
     case ICmpInst::ICMP_SGE:
@@ -5363,9 +5363,9 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       // FALL THROUGH
     case ICmpInst::ICMP_ULE:
     case ICmpInst::ICMP_SLE: {               //  icmp le bool %A, %B -> ~A | B
-      Instruction *Not = BinaryOperator::createNot(Op0, I.getName()+"tmp");
+      Instruction *Not = BinaryOperator::CreateNot(Op0, I.getName()+"tmp");
       InsertNewInstBefore(Not, I);
-      return BinaryOperator::createOr(Not, Op1);
+      return BinaryOperator::CreateOr(Not, Op1);
     }
     }
   }
@@ -5697,7 +5697,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           if (ConstantInt *C2 = dyn_cast<ConstantInt>(D))
             if (Op1->hasOneUse()) {
               Constant *NC = ConstantInt::get(C1->getValue() ^ C2->getValue());
-              Instruction *Xor = BinaryOperator::createXor(C, NC, "tmp");
+              Instruction *Xor = BinaryOperator::CreateXor(C, NC, "tmp");
               return new ICmpInst(I.getPredicate(), A,
                                   InsertNewInstBefore(Xor, I));
             }
@@ -5745,8 +5745,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       }
       
       if (X) {   // Build (X^Y) & Z
-        Op1 = InsertNewInstBefore(BinaryOperator::createXor(X, Y, "tmp"), I);
-        Op1 = InsertNewInstBefore(BinaryOperator::createAnd(Op1, Z, "tmp"), I);
+        Op1 = InsertNewInstBefore(BinaryOperator::CreateXor(X, Y, "tmp"), I);
+        Op1 = InsertNewInstBefore(BinaryOperator::CreateAnd(Op1, Z, "tmp"), I);
         I.setOperand(0, Op1);
         I.setOperand(1, Constant::getNullValue(Op1->getType()));
         return &I;
@@ -5960,7 +5960,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           APInt NewCI = RHSV;
           NewCI.zext(BitWidth);
           Instruction *NewAnd = 
-            BinaryOperator::createAnd(Cast->getOperand(0),
+            BinaryOperator::CreateAnd(Cast->getOperand(0),
                                       ConstantInt::get(NewCST),LHSI->getName());
           InsertNewInstBefore(NewAnd, ICI);
           return new ICmpInst(ICI.getPredicate(), NewAnd,
@@ -6040,18 +6040,18 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         // Compute C << Y.
         Value *NS;
         if (Shift->getOpcode() == Instruction::LShr) {
-          NS = BinaryOperator::createShl(AndCST, 
+          NS = BinaryOperator::CreateShl(AndCST, 
                                          Shift->getOperand(1), "tmp");
         } else {
           // Insert a logical shift.
-          NS = BinaryOperator::createLShr(AndCST,
+          NS = BinaryOperator::CreateLShr(AndCST,
                                           Shift->getOperand(1), "tmp");
         }
         InsertNewInstBefore(cast<Instruction>(NS), ICI);
         
         // Compute X & (C << Y).
         Instruction *NewAnd = 
-          BinaryOperator::createAnd(Shift->getOperand(0), NS, LHSI->getName());
+          BinaryOperator::CreateAnd(Shift->getOperand(0), NS, LHSI->getName());
         InsertNewInstBefore(NewAnd, ICI);
         
         ICI.setOperand(0, NewAnd);
@@ -6090,7 +6090,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           ConstantInt::get(APInt::getLowBitsSet(TypeBits, TypeBits-ShAmtVal));
         
         Instruction *AndI =
-          BinaryOperator::createAnd(LHSI->getOperand(0),
+          BinaryOperator::CreateAnd(LHSI->getOperand(0),
                                     Mask, LHSI->getName()+".mask");
         Value *And = InsertNewInstBefore(AndI, ICI);
         return new ICmpInst(ICI.getPredicate(), And,
@@ -6106,7 +6106,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       Constant *Mask = ConstantInt::get(APInt(TypeBits, 1) <<
                                            (TypeBits-ShAmt->getZExtValue()-1));
       Instruction *AndI =
-        BinaryOperator::createAnd(LHSI->getOperand(0),
+        BinaryOperator::CreateAnd(LHSI->getOperand(0),
                                   Mask, LHSI->getName()+".mask");
       Value *And = InsertNewInstBefore(AndI, ICI);
       
@@ -6161,7 +6161,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       Constant *Mask = ConstantInt::get(Val);
       
       Instruction *AndI =
-        BinaryOperator::createAnd(LHSI->getOperand(0),
+        BinaryOperator::CreateAnd(LHSI->getOperand(0),
                                   Mask, LHSI->getName()+".mask");
       Value *And = InsertNewInstBefore(AndI, ICI);
       return new ICmpInst(ICI.getPredicate(), And,
@@ -6230,7 +6230,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           const APInt &V = cast<ConstantInt>(BO->getOperand(1))->getValue();
           if (V.sgt(APInt(V.getBitWidth(), 1)) && V.isPowerOf2()) {
             Instruction *NewRem =
-              BinaryOperator::createURem(BO->getOperand(0), BO->getOperand(1),
+              BinaryOperator::CreateURem(BO->getOperand(0), BO->getOperand(1),
                                          BO->getName());
             InsertNewInstBefore(NewRem, ICI);
             return new ICmpInst(ICI.getPredicate(), NewRem, 
@@ -6254,7 +6254,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           else if (Value *NegVal = dyn_castNegVal(BOp0))
             return new ICmpInst(ICI.getPredicate(), NegVal, BOp1);
           else if (BO->hasOneUse()) {
-            Instruction *Neg = BinaryOperator::createNeg(BOp1);
+            Instruction *Neg = BinaryOperator::CreateNeg(BOp1);
             InsertNewInstBefore(Neg, ICI);
             Neg->takeName(BO);
             return new ICmpInst(ICI.getPredicate(), BOp0, Neg);
@@ -6491,7 +6491,7 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
     if (Constant *CI = dyn_cast<Constant>(Result))
       return ReplaceInstUsesWith(ICI, ConstantExpr::getNot(CI));
     else
-      return BinaryOperator::createNot(Result);
+      return BinaryOperator::CreateNot(Result);
   }
 }
 
@@ -6517,7 +6517,7 @@ Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
   // See if we can turn a signed shr into an unsigned shr.
   if (MaskedValueIsZero(Op0, 
                       APInt::getSignBit(I.getType()->getPrimitiveSizeInBits())))
-    return BinaryOperator::createLShr(Op0, I.getOperand(1));
+    return BinaryOperator::CreateLShr(Op0, I.getOperand(1));
   
   return 0;
 }
@@ -6585,7 +6585,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Op0))
     if (BO->getOpcode() == Instruction::Mul && isLeftShift)
       if (Constant *BOOp = dyn_cast<Constant>(BO->getOperand(1)))
-        return BinaryOperator::createMul(BO->getOperand(0),
+        return BinaryOperator::CreateMul(BO->getOperand(0),
                                          ConstantExpr::getShl(BOOp, Op1));
   
   // Try to fold constant and into select arguments.
@@ -6608,7 +6608,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         isa<ConstantInt>(TrOp->getOperand(1))) {
       // Okay, we'll do this xform.  Make the shift of shift.
       Constant *ShAmt = ConstantExpr::getZExt(Op1, TrOp->getType());
-      Instruction *NSh = BinaryOperator::create(I.getOpcode(), TrOp, ShAmt,
+      Instruction *NSh = BinaryOperator::Create(I.getOpcode(), TrOp, ShAmt,
                                                 I.getName());
       InsertNewInstBefore(NSh, I); // (shift2 (shift1 & 0x00FF), c2)
 
@@ -6631,7 +6631,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         MaskV = MaskV.lshr(Op1->getZExtValue());
       }
 
-      Instruction *And = BinaryOperator::createAnd(NSh, ConstantInt::get(MaskV),
+      Instruction *And = BinaryOperator::CreateAnd(NSh, ConstantInt::get(MaskV),
                                                    TI->getName());
       InsertNewInstBefore(And, I); // shift1 & 0x00FF
 
@@ -6656,16 +6656,16 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           if (isLeftShift && Op0BO->getOperand(1)->hasOneUse() &&
               match(Op0BO->getOperand(1),
                     m_Shr(m_Value(V1), m_ConstantInt(CC))) && CC == Op1) {
-            Instruction *YS = BinaryOperator::createShl(
+            Instruction *YS = BinaryOperator::CreateShl(
                                             Op0BO->getOperand(0), Op1,
                                             Op0BO->getName());
             InsertNewInstBefore(YS, I); // (Y << C)
             Instruction *X = 
-              BinaryOperator::create(Op0BO->getOpcode(), YS, V1,
+              BinaryOperator::Create(Op0BO->getOpcode(), YS, V1,
                                      Op0BO->getOperand(1)->getName());
             InsertNewInstBefore(X, I);  // (X + (Y << C))
             uint32_t Op1Val = Op1->getLimitedValue(TypeBits);
-            return BinaryOperator::createAnd(X, ConstantInt::get(
+            return BinaryOperator::CreateAnd(X, ConstantInt::get(
                        APInt::getHighBitsSet(TypeBits, TypeBits-Op1Val)));
           }
           
@@ -6676,16 +6676,16 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                     m_And(m_Shr(m_Value(V1), m_Value(V2)),m_ConstantInt(CC))) &&
               cast<BinaryOperator>(Op0BOOp1)->getOperand(0)->hasOneUse() &&
               V2 == Op1) {
-            Instruction *YS = BinaryOperator::createShl(
+            Instruction *YS = BinaryOperator::CreateShl(
                                                      Op0BO->getOperand(0), Op1,
                                                      Op0BO->getName());
             InsertNewInstBefore(YS, I); // (Y << C)
             Instruction *XM =
-              BinaryOperator::createAnd(V1, ConstantExpr::getShl(CC, Op1),
+              BinaryOperator::CreateAnd(V1, ConstantExpr::getShl(CC, Op1),
                                         V1->getName()+".mask");
             InsertNewInstBefore(XM, I); // X & (CC << C)
             
-            return BinaryOperator::create(Op0BO->getOpcode(), YS, XM);
+            return BinaryOperator::Create(Op0BO->getOpcode(), YS, XM);
           }
         }
           
@@ -6695,16 +6695,16 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           if (isLeftShift && Op0BO->getOperand(0)->hasOneUse() &&
               match(Op0BO->getOperand(0),
                     m_Shr(m_Value(V1), m_ConstantInt(CC))) && CC == Op1) {
-            Instruction *YS = BinaryOperator::createShl(
+            Instruction *YS = BinaryOperator::CreateShl(
                                                      Op0BO->getOperand(1), Op1,
                                                      Op0BO->getName());
             InsertNewInstBefore(YS, I); // (Y << C)
             Instruction *X =
-              BinaryOperator::create(Op0BO->getOpcode(), V1, YS,
+              BinaryOperator::Create(Op0BO->getOpcode(), V1, YS,
                                      Op0BO->getOperand(0)->getName());
             InsertNewInstBefore(X, I);  // (X + (Y << C))
             uint32_t Op1Val = Op1->getLimitedValue(TypeBits);
-            return BinaryOperator::createAnd(X, ConstantInt::get(
+            return BinaryOperator::CreateAnd(X, ConstantInt::get(
                        APInt::getHighBitsSet(TypeBits, TypeBits-Op1Val)));
           }
           
@@ -6715,16 +6715,16 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                           m_ConstantInt(CC))) && V2 == Op1 &&
               cast<BinaryOperator>(Op0BO->getOperand(0))
                   ->getOperand(0)->hasOneUse()) {
-            Instruction *YS = BinaryOperator::createShl(
+            Instruction *YS = BinaryOperator::CreateShl(
                                                      Op0BO->getOperand(1), Op1,
                                                      Op0BO->getName());
             InsertNewInstBefore(YS, I); // (Y << C)
             Instruction *XM =
-              BinaryOperator::createAnd(V1, ConstantExpr::getShl(CC, Op1),
+              BinaryOperator::CreateAnd(V1, ConstantExpr::getShl(CC, Op1),
                                         V1->getName()+".mask");
             InsertNewInstBefore(XM, I); // X & (CC << C)
             
-            return BinaryOperator::create(Op0BO->getOpcode(), XM, YS);
+            return BinaryOperator::Create(Op0BO->getOpcode(), XM, YS);
           }
           
           break;
@@ -6765,11 +6765,11 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           Constant *NewRHS = ConstantExpr::get(I.getOpcode(), Op0C, Op1);
           
           Instruction *NewShift =
-            BinaryOperator::create(I.getOpcode(), Op0BO->getOperand(0), Op1);
+            BinaryOperator::Create(I.getOpcode(), Op0BO->getOperand(0), Op1);
           InsertNewInstBefore(NewShift, I);
           NewShift->takeName(Op0BO);
           
-          return BinaryOperator::create(Op0BO->getOpcode(), NewShift,
+          return BinaryOperator::Create(Op0BO->getOpcode(), NewShift,
                                         NewRHS);
         }
       }
@@ -6797,21 +6797,21 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
     
     // Check for (X << c1) << c2  and  (X >> c1) >> c2
     if (I.getOpcode() == ShiftOp->getOpcode()) {
-      return BinaryOperator::create(I.getOpcode(), X,
+      return BinaryOperator::Create(I.getOpcode(), X,
                                     ConstantInt::get(Ty, AmtSum));
     } else if (ShiftOp->getOpcode() == Instruction::LShr &&
                I.getOpcode() == Instruction::AShr) {
       // ((X >>u C1) >>s C2) -> (X >>u (C1+C2))  since C1 != 0.
-      return BinaryOperator::createLShr(X, ConstantInt::get(Ty, AmtSum));
+      return BinaryOperator::CreateLShr(X, ConstantInt::get(Ty, AmtSum));
     } else if (ShiftOp->getOpcode() == Instruction::AShr &&
                I.getOpcode() == Instruction::LShr) {
       // ((X >>s C1) >>u C2) -> ((X >>s (C1+C2)) & mask) since C1 != 0.
       Instruction *Shift =
-        BinaryOperator::createAShr(X, ConstantInt::get(Ty, AmtSum));
+        BinaryOperator::CreateAShr(X, ConstantInt::get(Ty, AmtSum));
       InsertNewInstBefore(Shift, I);
 
       APInt Mask(APInt::getLowBitsSet(TypeBits, TypeBits - ShiftAmt2));
-      return BinaryOperator::createAnd(Shift, ConstantInt::get(Mask));
+      return BinaryOperator::CreateAnd(Shift, ConstantInt::get(Mask));
     }
     
     // Okay, if we get here, one shift must be left, and the other shift must be
@@ -6820,12 +6820,12 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       // If we have ((X >>? C) << C), turn this into X & (-1 << C).
       if (I.getOpcode() == Instruction::Shl) {
         APInt Mask(APInt::getHighBitsSet(TypeBits, TypeBits - ShiftAmt1));
-        return BinaryOperator::createAnd(X, ConstantInt::get(Mask));
+        return BinaryOperator::CreateAnd(X, ConstantInt::get(Mask));
       }
       // If we have ((X << C) >>u C), turn this into X & (-1 >>u C).
       if (I.getOpcode() == Instruction::LShr) {
         APInt Mask(APInt::getLowBitsSet(TypeBits, TypeBits - ShiftAmt1));
-        return BinaryOperator::createAnd(X, ConstantInt::get(Mask));
+        return BinaryOperator::CreateAnd(X, ConstantInt::get(Mask));
       }
       // We can simplify ((X << C) >>s C) into a trunc + sext.
       // NOTE: we could do this for any C, but that would make 'unusual' integer
@@ -6857,22 +6857,22 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         assert(ShiftOp->getOpcode() == Instruction::LShr ||
                ShiftOp->getOpcode() == Instruction::AShr);
         Instruction *Shift =
-          BinaryOperator::createShl(X, ConstantInt::get(Ty, ShiftDiff));
+          BinaryOperator::CreateShl(X, ConstantInt::get(Ty, ShiftDiff));
         InsertNewInstBefore(Shift, I);
         
         APInt Mask(APInt::getHighBitsSet(TypeBits, TypeBits - ShiftAmt2));
-        return BinaryOperator::createAnd(Shift, ConstantInt::get(Mask));
+        return BinaryOperator::CreateAnd(Shift, ConstantInt::get(Mask));
       }
       
       // (X << C1) >>u C2  --> X >>u (C2-C1) & (-1 >> C2)
       if (I.getOpcode() == Instruction::LShr) {
         assert(ShiftOp->getOpcode() == Instruction::Shl);
         Instruction *Shift =
-          BinaryOperator::createLShr(X, ConstantInt::get(Ty, ShiftDiff));
+          BinaryOperator::CreateLShr(X, ConstantInt::get(Ty, ShiftDiff));
         InsertNewInstBefore(Shift, I);
         
         APInt Mask(APInt::getLowBitsSet(TypeBits, TypeBits - ShiftAmt2));
-        return BinaryOperator::createAnd(Shift, ConstantInt::get(Mask));
+        return BinaryOperator::CreateAnd(Shift, ConstantInt::get(Mask));
       }
       
       // We can't handle (X << C1) >>s C2, it shifts arbitrary bits in.
@@ -6885,23 +6885,23 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         assert(ShiftOp->getOpcode() == Instruction::LShr ||
                ShiftOp->getOpcode() == Instruction::AShr);
         Instruction *Shift =
-          BinaryOperator::create(ShiftOp->getOpcode(), X,
+          BinaryOperator::Create(ShiftOp->getOpcode(), X,
                                  ConstantInt::get(Ty, ShiftDiff));
         InsertNewInstBefore(Shift, I);
         
         APInt Mask(APInt::getHighBitsSet(TypeBits, TypeBits - ShiftAmt2));
-        return BinaryOperator::createAnd(Shift, ConstantInt::get(Mask));
+        return BinaryOperator::CreateAnd(Shift, ConstantInt::get(Mask));
       }
       
       // (X << C1) >>u C2  --> X << (C1-C2) & (-1 >> C2)
       if (I.getOpcode() == Instruction::LShr) {
         assert(ShiftOp->getOpcode() == Instruction::Shl);
         Instruction *Shift =
-          BinaryOperator::createShl(X, ConstantInt::get(Ty, ShiftDiff));
+          BinaryOperator::CreateShl(X, ConstantInt::get(Ty, ShiftDiff));
         InsertNewInstBefore(Shift, I);
         
         APInt Mask(APInt::getLowBitsSet(TypeBits, TypeBits - ShiftAmt2));
-        return BinaryOperator::createAnd(Shift, ConstantInt::get(Mask));
+        return BinaryOperator::CreateAnd(Shift, ConstantInt::get(Mask));
       }
       
       // We can't handle (X << C1) >>a C2, it shifts arbitrary bits in.
@@ -7016,14 +7016,14 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
       Amt = Multiply(cast<ConstantInt>(NumElements), cast<ConstantInt>(Amt));
     // otherwise multiply the amount and the number of elements
     else if (Scale != 1) {
-      Instruction *Tmp = BinaryOperator::createMul(Amt, NumElements, "tmp");
+      Instruction *Tmp = BinaryOperator::CreateMul(Amt, NumElements, "tmp");
       Amt = InsertNewInstBefore(Tmp, AI);
     }
   }
   
   if (int Offset = (AllocElTySize*ArrayOffset)/CastElTySize) {
     Value *Off = ConstantInt::get(Type::Int32Ty, Offset, true);
-    Instruction *Tmp = BinaryOperator::createAdd(Amt, Off, "tmp");
+    Instruction *Tmp = BinaryOperator::CreateAdd(Amt, Off, "tmp");
     Amt = InsertNewInstBefore(Tmp, AI);
   }
   
@@ -7175,7 +7175,7 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty,
   case Instruction::Shl: {
     Value *LHS = EvaluateInDifferentType(I->getOperand(0), Ty, isSigned);
     Value *RHS = EvaluateInDifferentType(I->getOperand(1), Ty, isSigned);
-    Res = BinaryOperator::create((Instruction::BinaryOps)I->getOpcode(),
+    Res = BinaryOperator::Create((Instruction::BinaryOps)I->getOpcode(),
                                  LHS, RHS, I->getName());
     break;
   }    
@@ -7189,7 +7189,7 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty,
       return I->getOperand(0);
     
     // Otherwise, must be the same type of case, so just reinsert a new one.
-    Res = CastInst::create(cast<CastInst>(I)->getOpcode(), I->getOperand(0),
+    Res = CastInst::Create(cast<CastInst>(I)->getOpcode(), I->getOperand(0),
                            Ty, I->getName());
     break;
   default: 
@@ -7212,7 +7212,7 @@ Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
         isEliminableCastPair(CSrc, CI.getOpcode(), CI.getType(), TD)) {
       // The first cast (CSrc) is eliminable so we need to fix up or replace
       // the second cast (CI). CSrc will then have a good chance of being dead.
-      return CastInst::create(opc, CSrc->getOperand(0), CI.getType());
+      return CastInst::Create(opc, CSrc->getOperand(0), CI.getType());
     }
   }
 
@@ -7407,11 +7407,11 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
         assert(SrcBitSize < DestBitSize && "Not a zext?");
         Constant *C = ConstantInt::get(APInt::getLowBitsSet(DestBitSize,
                                                             SrcBitSize));
-        return BinaryOperator::createAnd(Res, C);
+        return BinaryOperator::CreateAnd(Res, C);
       }
       case Instruction::SExt:
         // We need to emit a cast to truncate, then a cast to sext.
-        return CastInst::create(Instruction::SExt,
+        return CastInst::Create(Instruction::SExt,
             InsertCastBefore(Instruction::Trunc, Res, Src->getType(), 
                              CI), DestTy);
       }
@@ -7438,7 +7438,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
         Instruction::CastOps opcode = CI.getOpcode();
         Value *Op0c = InsertOperandCastBefore(opcode, Op0, DestTy, SrcI);
         Value *Op1c = InsertOperandCastBefore(opcode, Op1, DestTy, SrcI);
-        return BinaryOperator::create(
+        return BinaryOperator::Create(
             cast<BinaryOperator>(SrcI)->getOpcode(), Op0c, Op1c);
       }
     }
@@ -7449,7 +7449,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
         Op1 == ConstantInt::getTrue() &&
         (!Op0->hasOneUse() || !isa<CmpInst>(Op0))) {
       Value *New = InsertOperandCastBefore(Instruction::ZExt, Op0, DestTy, &CI);
-      return BinaryOperator::createXor(New, ConstantInt::get(CI.getType(), 1));
+      return BinaryOperator::CreateXor(New, ConstantInt::get(CI.getType(), 1));
     }
     break;
   case Instruction::SDiv:
@@ -7467,7 +7467,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
                                               Op0, DestTy, SrcI);
         Value *Op1c = InsertOperandCastBefore(Instruction::BitCast, 
                                               Op1, DestTy, SrcI);
-        return BinaryOperator::create(
+        return BinaryOperator::Create(
           cast<BinaryOperator>(SrcI)->getOpcode(), Op0c, Op1c);
       }
     }
@@ -7485,7 +7485,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
           Instruction::BitCast : Instruction::Trunc);
       Value *Op0c = InsertOperandCastBefore(opcode, Op0, DestTy, SrcI);
       Value *Op1c = InsertOperandCastBefore(opcode, Op1, DestTy, SrcI);
-      return BinaryOperator::createShl(Op0c, Op1c);
+      return BinaryOperator::CreateShl(Op0c, Op1c);
     }
     break;
   case Instruction::AShr:
@@ -7497,7 +7497,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       uint32_t ShiftAmt = cast<ConstantInt>(Op1)->getLimitedValue(SrcBitSize);
       if (SrcBitSize > ShiftAmt && SrcBitSize-ShiftAmt >= DestBitSize) {
         // Insert the new logical shift right.
-        return BinaryOperator::createLShr(Op0, Op1);
+        return BinaryOperator::CreateLShr(Op0, Op1);
       }
     }
     break;
@@ -7535,7 +7535,7 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
           Value *V1 = InsertCastBefore(Instruction::Trunc, SrcIOp0, Ty, CI);
           Value *V2 = InsertCastBefore(Instruction::Trunc, SrcI->getOperand(1),
                                        Ty, CI);
-          return BinaryOperator::createLShr(V1, V2);
+          return BinaryOperator::CreateLShr(V1, V2);
         }
       } else {     // This is a variable shr.
         
@@ -7546,9 +7546,9 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
           Value *One = ConstantInt::get(SrcI->getType(), 1);
 
           Value *V = InsertNewInstBefore(
-              BinaryOperator::createShl(One, SrcI->getOperand(1),
+              BinaryOperator::CreateShl(One, SrcI->getOperand(1),
                                      "tmp"), CI);
-          V = InsertNewInstBefore(BinaryOperator::createAnd(V,
+          V = InsertNewInstBefore(BinaryOperator::CreateAnd(V,
                                                             SrcI->getOperand(0),
                                                             "tmp"), CI);
           Value *Zero = Constant::getNullValue(V->getType());
@@ -7581,16 +7581,16 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
       Value *In = ICI->getOperand(0);
       Value *Sh = ConstantInt::get(In->getType(),
                                    In->getType()->getPrimitiveSizeInBits()-1);
-      In = InsertNewInstBefore(BinaryOperator::createLShr(In, Sh,
+      In = InsertNewInstBefore(BinaryOperator::CreateLShr(In, Sh,
                                                         In->getName()+".lobit"),
                                CI);
       if (In->getType() != CI.getType())
-        In = CastInst::createIntegerCast(In, CI.getType(),
+        In = CastInst::CreateIntegerCast(In, CI.getType(),
                                          false/*ZExt*/, "tmp", &CI);
 
       if (ICI->getPredicate() == ICmpInst::ICMP_SGT) {
         Constant *One = ConstantInt::get(In->getType(), 1);
-        In = InsertNewInstBefore(BinaryOperator::createXor(In, One,
+        In = InsertNewInstBefore(BinaryOperator::CreateXor(In, One,
                                                          In->getName()+".not"),
                                  CI);
       }
@@ -7635,21 +7635,21 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
         if (ShiftAmt) {
           // Perform a logical shr by shiftamt.
           // Insert the shift to put the result in the low bit.
-          In = InsertNewInstBefore(BinaryOperator::createLShr(In,
+          In = InsertNewInstBefore(BinaryOperator::CreateLShr(In,
                                   ConstantInt::get(In->getType(), ShiftAmt),
                                                    In->getName()+".lobit"), CI);
         }
           
         if ((Op1CV != 0) == isNE) { // Toggle the low bit.
           Constant *One = ConstantInt::get(In->getType(), 1);
-          In = BinaryOperator::createXor(In, One, "tmp");
+          In = BinaryOperator::CreateXor(In, One, "tmp");
           InsertNewInstBefore(cast<Instruction>(In), CI);
         }
           
         if (CI.getType() == In->getType())
           return ReplaceInstUsesWith(CI, In);
         else
-          return CastInst::createIntegerCast(In, CI.getType(), false/*ZExt*/);
+          return CastInst::CreateIntegerCast(In, CI.getType(), false/*ZExt*/);
       }
     }
   }
@@ -7681,12 +7681,12 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
         APInt AndValue(APInt::getLowBitsSet(SrcSize, MidSize));
         Constant *AndConst = ConstantInt::get(AndValue);
         Instruction *And = 
-          BinaryOperator::createAnd(CSrc->getOperand(0), AndConst);
+          BinaryOperator::CreateAnd(CSrc->getOperand(0), AndConst);
         // Unfortunately, if the type changed, we need to cast it back.
         if (And->getType() != CI.getType()) {
           And->setName(CSrc->getName()+".mask");
           InsertNewInstBefore(And, CI);
-          And = CastInst::createIntegerCast(And, CI.getType(), false/*ZExt*/);
+          And = CastInst::CreateIntegerCast(And, CI.getType(), false/*ZExt*/);
         }
         return And;
       }
@@ -7707,7 +7707,7 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
          transformZExtICmp(RHS, CI, false))) {
       Value *LCast = InsertCastBefore(Instruction::ZExt, LHS, CI.getType(), CI);
       Value *RCast = InsertCastBefore(Instruction::ZExt, RHS, CI.getType(), CI);
-      return BinaryOperator::create(Instruction::Or, LCast, RCast);
+      return BinaryOperator::Create(Instruction::Or, LCast, RCast);
     }
   }
 
@@ -7736,15 +7736,15 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
         Value *In = ICI->getOperand(0);
         Value *Sh = ConstantInt::get(In->getType(),
                                      In->getType()->getPrimitiveSizeInBits()-1);
-        In = InsertNewInstBefore(BinaryOperator::createAShr(In, Sh,
+        In = InsertNewInstBefore(BinaryOperator::CreateAShr(In, Sh,
                                                         In->getName()+".lobit"),
                                  CI);
         if (In->getType() != CI.getType())
-          In = CastInst::createIntegerCast(In, CI.getType(),
+          In = CastInst::CreateIntegerCast(In, CI.getType(),
                                            true/*SExt*/, "tmp", &CI);
         
         if (ICI->getPredicate() == ICmpInst::ICMP_SGT)
-          In = InsertNewInstBefore(BinaryOperator::createNot(In,
+          In = InsertNewInstBefore(BinaryOperator::CreateNot(In,
                                      In->getName()+".not"), CI);
         
         return ReplaceInstUsesWith(CI, In);
@@ -7821,7 +7821,7 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
                                       CI.getType(), CI);
           RHSTrunc = InsertCastBefore(Instruction::FPExt, RHSTrunc,
                                       CI.getType(), CI);
-          return BinaryOperator::create(OpI->getOpcode(), LHSTrunc, RHSTrunc);
+          return BinaryOperator::Create(OpI->getOpcode(), LHSTrunc, RHSTrunc);
         }
       }
       break;  
@@ -8064,7 +8064,7 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
     SelectInst *NewSI = SelectInst::Create(SI.getCondition(), TI->getOperand(0),
                                            FI->getOperand(0), SI.getName()+".v");
     InsertNewInstBefore(NewSI, SI);
-    return CastInst::create(Instruction::CastOps(TI->getOpcode()), NewSI, 
+    return CastInst::Create(Instruction::CastOps(TI->getOpcode()), NewSI, 
                             TI->getType());
   }
 
@@ -8108,9 +8108,9 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
 
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(TI)) {
     if (MatchIsOpZero)
-      return BinaryOperator::create(BO->getOpcode(), MatchOp, NewSI);
+      return BinaryOperator::Create(BO->getOpcode(), MatchOp, NewSI);
     else
-      return BinaryOperator::create(BO->getOpcode(), NewSI, MatchOp);
+      return BinaryOperator::Create(BO->getOpcode(), NewSI, MatchOp);
   }
   assert(0 && "Shouldn't get here");
   return 0;
@@ -8145,33 +8145,33 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
     if (ConstantInt *C = dyn_cast<ConstantInt>(TrueVal)) {
       if (C->getZExtValue()) {
         // Change: A = select B, true, C --> A = or B, C
-        return BinaryOperator::createOr(CondVal, FalseVal);
+        return BinaryOperator::CreateOr(CondVal, FalseVal);
       } else {
         // Change: A = select B, false, C --> A = and !B, C
         Value *NotCond =
-          InsertNewInstBefore(BinaryOperator::createNot(CondVal,
+          InsertNewInstBefore(BinaryOperator::CreateNot(CondVal,
                                              "not."+CondVal->getName()), SI);
-        return BinaryOperator::createAnd(NotCond, FalseVal);
+        return BinaryOperator::CreateAnd(NotCond, FalseVal);
       }
     } else if (ConstantInt *C = dyn_cast<ConstantInt>(FalseVal)) {
       if (C->getZExtValue() == false) {
         // Change: A = select B, C, false --> A = and B, C
-        return BinaryOperator::createAnd(CondVal, TrueVal);
+        return BinaryOperator::CreateAnd(CondVal, TrueVal);
       } else {
         // Change: A = select B, C, true --> A = or !B, C
         Value *NotCond =
-          InsertNewInstBefore(BinaryOperator::createNot(CondVal,
+          InsertNewInstBefore(BinaryOperator::CreateNot(CondVal,
                                              "not."+CondVal->getName()), SI);
-        return BinaryOperator::createOr(NotCond, TrueVal);
+        return BinaryOperator::CreateOr(NotCond, TrueVal);
       }
     }
     
     // select a, b, a  -> a&b
     // select a, a, b  -> a|b
     if (CondVal == TrueVal)
-      return BinaryOperator::createOr(CondVal, FalseVal);
+      return BinaryOperator::CreateOr(CondVal, FalseVal);
     else if (CondVal == FalseVal)
-      return BinaryOperator::createAnd(CondVal, TrueVal);
+      return BinaryOperator::CreateAnd(CondVal, TrueVal);
   }
 
   // Selecting between two integer constants?
@@ -8179,13 +8179,13 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
     if (ConstantInt *FalseValC = dyn_cast<ConstantInt>(FalseVal)) {
       // select C, 1, 0 -> zext C to int
       if (FalseValC->isZero() && TrueValC->getValue() == 1) {
-        return CastInst::create(Instruction::ZExt, CondVal, SI.getType());
+        return CastInst::Create(Instruction::ZExt, CondVal, SI.getType());
       } else if (TrueValC->isZero() && FalseValC->getValue() == 1) {
         // select C, 0, 1 -> zext !C to int
         Value *NotCond =
-          InsertNewInstBefore(BinaryOperator::createNot(CondVal,
+          InsertNewInstBefore(BinaryOperator::CreateNot(CondVal,
                                                "not."+CondVal->getName()), SI);
-        return CastInst::create(Instruction::ZExt, NotCond, SI.getType());
+        return CastInst::Create(Instruction::ZExt, NotCond, SI.getType());
       }
       
       // FIXME: Turn select 0/-1 and -1/0 into sext from condition!
@@ -8201,7 +8201,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
               Value *X = IC->getOperand(0);
               uint32_t Bits = X->getType()->getPrimitiveSizeInBits();
               Constant *ShAmt = ConstantInt::get(X->getType(), Bits-1);
-              Instruction *SRA = BinaryOperator::create(Instruction::AShr, X,
+              Instruction *SRA = BinaryOperator::Create(Instruction::AShr, X,
                                                         ShAmt, "ones");
               InsertNewInstBefore(SRA, SI);
               
@@ -8214,7 +8214,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
                 opc = Instruction::SExt;
               else if (SRASize > SISize)
                 opc = Instruction::Trunc;
-              return CastInst::create(opc, SRA, SI.getType());
+              return CastInst::Create(opc, SRA, SI.getType());
             }
           }
 
@@ -8239,7 +8239,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
                 ShouldNotVal ^= IC->getPredicate() == ICmpInst::ICMP_NE;
                 Value *V = ICA;
                 if (ShouldNotVal)
-                  V = InsertNewInstBefore(BinaryOperator::create(
+                  V = InsertNewInstBefore(BinaryOperator::Create(
                                   Instruction::Xor, V, ICA->getOperand(1)), SI);
                 return ReplaceInstUsesWith(SI, V);
               }
@@ -8344,7 +8344,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
               NegVal = ConstantExpr::getNeg(C);
             } else {
               NegVal = InsertNewInstBefore(
-                    BinaryOperator::createNeg(SubOp->getOperand(1), "tmp"), SI);
+                    BinaryOperator::CreateNeg(SubOp->getOperand(1), "tmp"), SI);
             }
 
             Value *NewTrueOp = OtherAddOp;
@@ -8356,7 +8356,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
                                  NewFalseOp, SI.getName() + ".p");
 
             NewSel = InsertNewInstBefore(NewSel, SI);
-            return BinaryOperator::createAdd(SubOp->getOperand(0), NewSel);
+            return BinaryOperator::CreateAdd(SubOp->getOperand(0), NewSel);
           }
         }
       }
@@ -8384,7 +8384,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
             InsertNewInstBefore(NewSel, SI);
             NewSel->takeName(TVI);
             if (BinaryOperator *BO = dyn_cast<BinaryOperator>(TVI))
-              return BinaryOperator::create(BO->getOpcode(), FalseVal, NewSel);
+              return BinaryOperator::Create(BO->getOpcode(), FalseVal, NewSel);
             else {
               assert(0 && "Unknown instruction!!");
             }
@@ -8410,7 +8410,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
             InsertNewInstBefore(NewSel, SI);
             NewSel->takeName(FVI);
             if (BinaryOperator *BO = dyn_cast<BinaryOperator>(FVI))
-              return BinaryOperator::create(BO->getOpcode(), TrueVal, NewSel);
+              return BinaryOperator::Create(BO->getOpcode(), TrueVal, NewSel);
             else
               assert(0 && "Unknown instruction!!");
           }
@@ -8768,7 +8768,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
                                                i, "tmp");
             InsertNewInstBefore(cast<Instruction>(Result), CI);
           }
-          return CastInst::create(Instruction::BitCast, Result, CI.getType());
+          return CastInst::Create(Instruction::BitCast, Result, CI.getType());
         }
       }
       break;
@@ -9049,7 +9049,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     } else {
       Instruction::CastOps opcode = CastInst::getCastOpcode(*AI,
           false, ParamTy, false);
-      CastInst *NewCast = CastInst::create(opcode, *AI, ParamTy, "tmp");
+      CastInst *NewCast = CastInst::Create(opcode, *AI, ParamTy, "tmp");
       Args.push_back(InsertNewInstBefore(NewCast, *Caller));
     }
 
@@ -9076,7 +9076,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
           // Must promote to pass through va_arg area!
           Instruction::CastOps opcode = CastInst::getCastOpcode(*AI, false, 
                                                                 PTy, false);
-          Instruction *Cast = CastInst::create(opcode, *AI, PTy, "tmp");
+          Instruction *Cast = CastInst::Create(opcode, *AI, PTy, "tmp");
           InsertNewInstBefore(Cast, *Caller);
           Args.push_back(Cast);
         } else {
@@ -9118,7 +9118,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if (NV->getType() != Type::VoidTy) {
       Instruction::CastOps opcode = CastInst::getCastOpcode(NC, false, 
                                                             OldRetTy, false);
-      NV = NC = CastInst::create(opcode, NC, OldRetTy, "tmp");
+      NV = NC = CastInst::Create(opcode, NC, OldRetTy, "tmp");
 
       // If this is an invoke instruction, we should insert it after the first
       // non-phi, instruction in the normal successor block.
@@ -9370,9 +9370,9 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   }
     
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
-    return BinaryOperator::create(BinOp->getOpcode(), LHSVal, RHSVal);
+    return BinaryOperator::Create(BinOp->getOpcode(), LHSVal, RHSVal);
   else if (CmpInst *CIOp = dyn_cast<CmpInst>(FirstInst))
-    return CmpInst::create(CIOp->getOpcode(), CIOp->getPredicate(), LHSVal, 
+    return CmpInst::Create(CIOp->getOpcode(), CIOp->getPredicate(), LHSVal, 
                            RHSVal);
   else {
     assert(isa<GetElementPtrInst>(FirstInst));
@@ -9515,11 +9515,11 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
 
   // Insert and return the new operation.
   if (CastInst* FirstCI = dyn_cast<CastInst>(FirstInst))
-    return CastInst::create(FirstCI->getOpcode(), PhiVal, PN.getType());
+    return CastInst::Create(FirstCI->getOpcode(), PhiVal, PN.getType());
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst))
-    return BinaryOperator::create(BinOp->getOpcode(), PhiVal, ConstantOp);
+    return BinaryOperator::Create(BinOp->getOpcode(), PhiVal, ConstantOp);
   if (CmpInst *CIOp = dyn_cast<CmpInst>(FirstInst))
-    return CmpInst::create(CIOp->getOpcode(), CIOp->getPredicate(), 
+    return CmpInst::Create(CIOp->getOpcode(), CIOp->getPredicate(), 
                            PhiVal, ConstantOp);
   assert(isa<LoadInst>(FirstInst) && "Unknown operation");
   
@@ -9814,7 +9814,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         if (isa<Constant>(SO1) && isa<Constant>(GO1))
           Sum = ConstantExpr::getAdd(cast<Constant>(SO1), cast<Constant>(GO1));
         else {
-          Sum = BinaryOperator::createAdd(SO1, GO1, PtrOp->getName()+".sum");
+          Sum = BinaryOperator::CreateAdd(SO1, GO1, PtrOp->getName()+".sum");
           InsertNewInstBefore(cast<Instruction>(Sum), GEP);
         }
       }
@@ -9945,7 +9945,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           if (Scale->getZExtValue() != 1) {
             Constant *C = ConstantExpr::getIntegerCast(Scale, NewIdx->getType(),
                                                        false /*ZExt*/);
-            Instruction *Sc = BinaryOperator::createMul(NewIdx, C, "idxscale");
+            Instruction *Sc = BinaryOperator::CreateMul(NewIdx, C, "idxscale");
             NewIdx = InsertNewInstBefore(Sc, GEP);
           }
 
@@ -10379,7 +10379,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
           NewCast = ConstantExpr::getCast(opcode, C, CastDstTy);
         else
           NewCast = IC.InsertNewInstBefore(
-            CastInst::create(opcode, SIOp0, CastDstTy, SIOp0->getName()+".c"), 
+            CastInst::Create(opcode, SIOp0, CastDstTy, SIOp0->getName()+".c"), 
             SI);
         return new StoreInst(NewCast, CastOp);
       }
@@ -10868,7 +10868,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
                                    EI.getName()+".rhs");
           InsertNewInstBefore(newEI0, EI);
           InsertNewInstBefore(newEI1, EI);
-          return BinaryOperator::create(BO->getOpcode(), newEI0, newEI1);
+          return BinaryOperator::Create(BO->getOpcode(), newEI0, newEI1);
         }
       } else if (isa<LoadInst>(I)) {
         unsigned AS = 

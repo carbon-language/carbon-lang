@@ -131,11 +131,11 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
         } else {
           Value *Scale = MI->getOperand(0);
           if (Scale->getType() != IntPtrTy)
-            Scale = CastInst::createIntegerCast(Scale, IntPtrTy, false /*ZExt*/,
+            Scale = CastInst::CreateIntegerCast(Scale, IntPtrTy, false /*ZExt*/,
                                                 "", I);
 
           // Multiply it by the array size if necessary...
-          MallocArg = BinaryOperator::create(Instruction::Mul, Scale,
+          MallocArg = BinaryOperator::Create(Instruction::Mul, Scale,
                                              MallocArg, "", I);
         }
       }

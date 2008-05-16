@@ -202,7 +202,7 @@ BasicBlock* LowerSwitch::newLeafBlock(CaseRange& Leaf, Value* Val,
     } else {
       // Emit V-Lo <=u Hi-Lo
       Constant* NegLo = ConstantExpr::getNeg(Leaf.Low);
-      Instruction* Add = BinaryOperator::createAdd(Val, NegLo,
+      Instruction* Add = BinaryOperator::CreateAdd(Val, NegLo,
                                                    Val->getName()+".off",
                                                    NewLeaf);
       Constant *UpperBound = ConstantExpr::getAdd(NegLo, Leaf.High);

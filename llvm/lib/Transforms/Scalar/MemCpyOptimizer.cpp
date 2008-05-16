@@ -583,7 +583,7 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
   for (unsigned i = 0; i < CS.arg_size(); ++i)
     if (CS.getArgument(i) == cpySrc) {
       if (cpySrc->getType() != cpyDest->getType())
-        cpyDest = CastInst::createPointerCast(cpyDest, cpySrc->getType(),
+        cpyDest = CastInst::CreatePointerCast(cpyDest, cpySrc->getType(),
                                               cpyDest->getName(), C);
       CS.setArgument(i, cpyDest);
     }

@@ -43,7 +43,7 @@ int main() {
   Value *Three = ConstantInt::get(Type::Int32Ty, 3);
 
   // Create the add instruction... does not insert...
-  Instruction *Add = BinaryOperator::create(Instruction::Add, Two, Three,
+  Instruction *Add = BinaryOperator::Create(Instruction::Add, Two, Three,
                                             "addresult");
 
   // explicitly insert it into the basic block...
