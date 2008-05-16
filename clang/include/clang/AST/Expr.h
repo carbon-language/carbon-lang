@@ -1152,7 +1152,8 @@ public:
     return SubExprs[Index];
   }
 
-  int getShuffleMaskIdx(ASTContext &Ctx, unsigned N) {
+  unsigned getShuffleMaskIdx(ASTContext &Ctx, unsigned N) {
+    assert((N < NumExprs - 2) && "Shuffle idx out of range!");
     llvm::APSInt Result(32);
     bool result = getExpr(N+2)->isIntegerConstantExpr(Result, Ctx);
     assert(result && "Must be integer constant");
