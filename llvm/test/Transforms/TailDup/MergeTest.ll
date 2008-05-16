@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -tailduplicate  | llvm-dis | grep add | not grep uses=1
+; RUN: llvm-as < %s | opt -tailduplicate -taildup-threshold=2 | llvm-dis | grep add | not grep uses=1
 
 define i32 @test1(i1 %C, i32 %A, i32* %P) {
 entry:
