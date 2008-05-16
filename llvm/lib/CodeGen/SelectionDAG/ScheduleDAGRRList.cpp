@@ -1317,7 +1317,7 @@ namespace {
     void remove(SUnit *SU) {
       assert(!Queue.empty() && "Queue is empty!");
       size_t RemovedNum = Queue.erase(SU);
-      RemovedNum; // Silence compiler warning.
+      RemovedNum = RemovedNum; // Silence compiler warning.
       assert(RemovedNum > 0 && "Not in queue!");
       assert(RemovedNum == 1 && "Multiple times in the queue!");
       SU->NodeQueueId = 0;
