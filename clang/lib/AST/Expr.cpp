@@ -141,9 +141,8 @@ bool CallExpr::isBuiltinConstantExpr() const {
     return false;
 
   // We have a builtin that is a constant expression
-  if (builtinID == Builtin::BI__builtin___CFStringMakeConstantString)
-    return true;
-  return false;
+  return builtinID == Builtin::BI__builtin___CFStringMakeConstantString ||
+         builtinID == Builtin::BI__builtin_classify_type;
 }
 
 bool CallExpr::isBuiltinClassifyType(llvm::APSInt &Result) const {
@@ -517,10 +516,6 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
     return true;
   case CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(this);
-    llvm::APSInt Result(32);
-    Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(getType())));
-    if (CE->isBuiltinClassifyType(Result))
-      return true;
     if (CE->isBuiltinConstantExpr())
       return true;
     if (Loc) *Loc = getLocStart();
