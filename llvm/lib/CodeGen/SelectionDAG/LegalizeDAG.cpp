@@ -7109,10 +7109,13 @@ SDOperand SelectionDAGLegalize::ScalarizeVectorOp(SDOperand Op) {
     Result = Node->getOperand(0);
     assert(Result.getValueType() == NewVT);
     break;
-  case ISD::BIT_CONVERT:
-    Result = DAG.getNode(ISD::BIT_CONVERT, NewVT,
-                         ScalarizeVectorOp(Op.getOperand(0)));
+  case ISD::BIT_CONVERT: {
+    SDOperand Op0 = Op.getOperand(0);
+    if (MVT::getVectorNumElements(Op0.getValueType()) == 1)
+      Op0 = ScalarizeVectorOp(Op0);
+    Result = DAG.getNode(ISD::BIT_CONVERT, NewVT, Op0);
     break;
+  }
   case ISD::SELECT:
     Result = DAG.getNode(ISD::SELECT, NewVT, Op.getOperand(0),
                          ScalarizeVectorOp(Op.getOperand(1)),
