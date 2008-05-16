@@ -1,9 +1,8 @@
 ; Test that LICM uses basicaa to do alias analysis, which is capable of 
 ; disambiguating some obvious cases.  If LICM is able to disambiguate the
-; two pointers, then the load should be hoisted, and the store sunk.  Thus
-; the loop becomes empty and can be deleted by ADCE. 
+; two pointers, then the load should be hoisted, and the store sunk.
 
-; RUN: llvm-as < %s | opt -basicaa -licm --adce | llvm-dis | not grep Loop
+; RUN: llvm-as < %s | opt -basicaa -licm | llvm-dis | %prcontext @A 1 | not grep Loop
 
 @A = global i32 7               ; <i32*> [#uses=3]
 @B = global i32 8               ; <i32*> [#uses=2]
