@@ -73,10 +73,10 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
   for (unsigned i = 0, e = SCC.size();
        (!SCCMightUnwind || !SCCMightReturn) && i != e; ++i) {
     Function *F = SCC[i]->getFunction();
-    if (F == 0 || (F->hasWeakLinkage() && !F->doesNotThrow())) {
+    if (F == 0) {
       SCCMightUnwind = true;
       SCCMightReturn = true;
-    } else if (F->isDeclaration()) {
+    } else if (F->isDeclaration() || F->hasWeakLinkage()) {
       SCCMightUnwind |= !F->doesNotThrow();
       SCCMightReturn |= !F->doesNotReturn();
     } else {
