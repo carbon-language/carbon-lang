@@ -12,7 +12,6 @@
 // counts of loops easily.
 //===----------------------------------------------------------------------===//
 
-#include <climits>
 #define DEBUG_TYPE "loop-unroll"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Transforms/Scalar.h"
@@ -22,6 +21,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/UnrollLoop.h"
+#include <climits>
 
 using namespace llvm;
 
