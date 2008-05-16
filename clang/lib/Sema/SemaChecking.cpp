@@ -226,8 +226,8 @@ Action::ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
     return true;
   }
 
-  if (TheCall->getArg(0)->getType().getCanonicalType().getUnqualifiedType() !=
-      TheCall->getArg(1)->getType().getCanonicalType().getUnqualifiedType()) {
+  if (FAType.getCanonicalType().getUnqualifiedType() !=
+      SAType.getCanonicalType().getUnqualifiedType()) {
     Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector,
          SourceRange(TheCall->getArg(0)->getLocStart(), 
                      TheCall->getArg(1)->getLocEnd()));
