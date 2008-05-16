@@ -211,6 +211,16 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
             O << TAI->getLCOMMDirective() << name << "," << Size;
             if (Subtarget->isTargetDarwin())
               O << "," << Align;
+          } else if (Subtarget->isTargetDarwin() && !I->hasCommonLinkage()) {
+            O << "\t.globl " << name << "\n"
+              << TAI->getWeakDefDirective() << name << "\n";
+            SwitchToDataSection("\t.section __DATA,__datacoal_nt,coalesced", I);
+            EmitAlignment(Align, I);
+            O << name << ":\t\t\t\t" << TAI->getCommentString() << " ";
+            PrintUnmangledNameSafely(I, O);
+            O << "\n";
+            EmitGlobalConstant(C);
+            continue;
           } else {
             O << TAI->getCOMMDirective()  << name << "," << Size;
             
