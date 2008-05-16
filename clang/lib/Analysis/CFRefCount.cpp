@@ -25,6 +25,7 @@
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/STLExtras.h"
 #include <ostream>
 #include <sstream>
 
@@ -1740,6 +1741,7 @@ namespace {
     virtual void EmitWarnings(BugReporter& BR);
     virtual void GetErrorNodes(std::vector<ExplodedNode<ValueState>*>& Nodes);
     virtual bool isLeak() const { return true; }
+    virtual bool isCached(BugReport& R);
   };
   
   //===---------===//
@@ -1771,6 +1773,8 @@ namespace {
         end = 0;
       }
     }
+    
+    SymbolID getSymbol() const { return Sym; }
     
     virtual PathDiagnosticPiece* getEndPath(BugReporter& BR,
                                             ExplodedNode<ValueState>* N);
@@ -1963,6 +1967,49 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<ValueState>* N,
   return P;
 }
 
+static std::pair<ExplodedNode<ValueState>*,VarDecl*>
+GetAllocationSite(ExplodedNode<ValueState>* N, SymbolID Sym) {
+
+  typedef CFRefCount::RefBindings RefBindings;
+  ExplodedNode<ValueState>* Last = N;
+  
+  // Find the first node that referred to the tracked symbol.  We also
+  // try and find the first VarDecl the value was stored to.
+  
+  VarDecl* FirstDecl = 0;
+  
+  while (N) {
+    ValueState* St = N->getState();
+    RefBindings B = RefBindings((RefBindings::TreeTy*) St->CheckerState);
+    RefBindings::TreeTy* T = B.SlimFind(Sym);
+    
+    if (!T)
+      break;
+    
+    VarDecl* VD = 0;
+    
+    // Determine if there is an LVal binding to the symbol.
+    for (ValueState::vb_iterator I=St->vb_begin(), E=St->vb_end(); I!=E; ++I) {
+      if (!isa<lval::SymbolVal>(I->second)  // Is the value a symbol?
+          || cast<lval::SymbolVal>(I->second).getSymbol() != Sym)
+        continue;
+      
+      if (VD) {  // Multiple decls map to this symbol.
+        VD = 0;
+        break;
+      }
+      
+      VD = I->first;
+    }
+    
+    if (VD) FirstDecl = VD;
+    
+    Last = N;
+    N = N->pred_empty() ? NULL : *(N->pred_begin());    
+  }
+  
+  return std::make_pair(Last, FirstDecl);
+}
 
 PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
                                              ExplodedNode<ValueState>* EndN) {
@@ -1984,50 +2031,16 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
   }
 
   // We are a leak.  Walk up the graph to get to the first node where the
-  // symbol appeared.
-  
-  ExplodedNode<ValueState>* N = EndN;
-  ExplodedNode<ValueState>* Last = N;
-  
-  // Find the first node that referred to the tracked symbol.  We also
-  // try and find the first VarDecl the value was stored to.
-  
+  // symbol appeared, and also get the first VarDecl that tracked object
+  // is stored to.
+
+  ExplodedNode<ValueState>* AllocNode = 0;
   VarDecl* FirstDecl = 0;
-
-  while (N) {
-    ValueState* St = N->getState();
-    RefBindings B = RefBindings((RefBindings::TreeTy*) St->CheckerState);
-    RefBindings::TreeTy* T = B.SlimFind(Sym);
-    
-    if (!T)
-      break;
-
-    VarDecl* VD = 0;
-    
-    // Determine if there is an LVal binding to the symbol.
-    for (ValueState::vb_iterator I=St->vb_begin(), E=St->vb_end(); I!=E; ++I) {
-      if (!isa<lval::SymbolVal>(I->second)  // Is the value a symbol?
-          || cast<lval::SymbolVal>(I->second).getSymbol() != Sym)
-        continue;
-      
-      if (VD) {  // Multiple decls map to this symbol.
-        VD = 0;
-        break;
-      }
-      
-      VD = I->first;
-    }
-    
-    if (VD) FirstDecl = VD;
-        
-    Last = N;
-    N = N->pred_empty() ? NULL : *(N->pred_begin());    
-  }
+  llvm::tie(AllocNode, FirstDecl) = GetAllocationSite(EndN, Sym);
   
-  // Get the allocate site.
-  
-  assert (Last);
-  Stmt* FirstStmt = cast<PostStmt>(Last->getLocation()).getStmt();
+  // Get the allocate site.  
+  assert (AllocNode);
+  Stmt* FirstStmt = cast<PostStmt>(AllocNode->getLocation()).getStmt();
 
   SourceManager& SMgr = BR.getContext().getSourceManager();
   unsigned AllocLine = SMgr.getLogicalLineNumber(FirstStmt->getLocStart());
@@ -2126,6 +2139,23 @@ void Leak::GetErrorNodes(std::vector<ExplodedNode<ValueState>*>& Nodes) {
   for (CFRefCount::leaks_iterator I=TF.leaks_begin(), E=TF.leaks_end();
        I!=E; ++I)
     Nodes.push_back(I->first);
+}
+
+bool Leak::isCached(BugReport& R) {
+  
+  // Most bug reports are cached at the location where they occured.
+  // With leaks, we want to unique them by the location where they were
+  // allocated, and only report only a single path.
+  
+  SymbolID Sym = static_cast<CFRefReport&>(R).getSymbol();
+
+  ExplodedNode<ValueState>* AllocNode =
+    GetAllocationSite(R.getEndNode(), Sym).first;
+  
+  if (!AllocNode)
+    return false;
+  
+  return BugTypeCacheLocation::isCached(AllocNode->getLocation());
 }
 
 //===----------------------------------------------------------------------===//
