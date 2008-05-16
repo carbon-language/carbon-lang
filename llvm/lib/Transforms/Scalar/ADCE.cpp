@@ -191,10 +191,18 @@ bool ADCE::doADCE() {
   // be eliminated later, along with the instructions inside.
   //
   std::set<BasicBlock*> ReachableBBs;
-  for (df_ext_iterator<BasicBlock*>
-         BBI = df_ext_begin(&Func->front(), ReachableBBs),
-         BBE = df_ext_end(&Func->front(), ReachableBBs); BBI != BBE; ++BBI) {
-    BasicBlock *BB = *BBI;
+  std::vector<BasicBlock*> Stack;
+  Stack.push_back(&Func->getEntryBlock());
+  
+  while (!Stack.empty()) {
+    BasicBlock* BB = Stack.back();
+    if (ReachableBBs.count(BB)) {
+      Stack.pop_back();
+      continue;
+    } else {
+      ReachableBBs.insert(BB);
+    }
+    
     for (BasicBlock::iterator II = BB->begin(), EI = BB->end(); II != EI; ) {
       Instruction *I = II++;
       if (CallInst *CI = dyn_cast<CallInst>(I)) {
@@ -216,6 +224,15 @@ bool ADCE::doADCE() {
         BB->getInstList().erase(I);
         ++NumInstRemoved;
       }
+    }
+  
+    for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI) {
+      // Back edges (as opposed to cross edges) indicate loops, so implicitly
+      // mark them live.
+      if (std::find(Stack.begin(), Stack.end(), *SI) != Stack.end())
+        markInstructionLive(BB->getTerminator());
+      if (!ReachableBBs.count(*SI))
+        Stack.push_back(*SI);
     }
   }
 
