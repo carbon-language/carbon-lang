@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -indvars -adce -simplifycfg | opt \
+; RUN: llvm-as < %s | opt -indvars -loop-deletion -simplifycfg | opt \
 ; RUN:     -analyze -loops | not grep "^Loop Containing" 
 ; PR1179
 

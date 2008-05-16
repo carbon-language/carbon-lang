@@ -2,7 +2,7 @@
 ; these loops all have predictable exit values we can replace the use outside
 ; of the loop with a closed-form computation, making the loop dead.
 ;
-; RUN: llvm-as < %s | opt -indvars -adce -simplifycfg | \
+; RUN: llvm-as < %s | opt -indvars -loop-deletion -simplifycfg | \
 ; RUN:   llvm-dis | not grep br
 
 define i32 @polynomial_constant() {
