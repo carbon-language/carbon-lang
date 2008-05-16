@@ -1336,7 +1336,7 @@ const Type* ExtractValueInst::getIndexedType(const Type *Agg,
   unsigned CurIdx = 0;
   for (; CurIdx != NumIdx; ++CurIdx) {
     const CompositeType *CT = dyn_cast<CompositeType>(Agg);
-    if (!CT) return 0;
+    if (!CT || isa<PointerType>(CT)) return 0;
     Value *Index = Idxs[CurIdx];
     if (!CT->indexValid(Index)) return 0;
     Agg = CT->getTypeAtIndex(Index);
