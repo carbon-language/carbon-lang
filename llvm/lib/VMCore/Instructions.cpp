@@ -373,6 +373,12 @@ CallInst::CallInst(const CallInst &CI)
     OL[i].init(InOL[i], this);
 }
 
+void CallInst::addParamAttr(unsigned i, ParameterAttributes attr) {
+  PAListPtr PAL = getParamAttrs();
+  PAL = PAL.addAttr(i, attr);
+  setParamAttrs(PAL);
+}
+
 bool CallInst::paramHasAttr(unsigned i, ParameterAttributes attr) const {
   if (ParamAttrs.paramHasAttr(i, attr))
     return true;
@@ -447,6 +453,12 @@ bool InvokeInst::paramHasAttr(unsigned i, ParameterAttributes attr) const {
   if (const Function *F = getCalledFunction())
     return F->paramHasAttr(i, attr);
   return false;
+}
+
+void InvokeInst::addParamAttr(unsigned i, ParameterAttributes attr) {
+  PAListPtr PAL = getParamAttrs();
+  PAL = PAL.addAttr(i, attr);
+  setParamAttrs(PAL);
 }
 
 void InvokeInst::setDoesNotThrow(bool doesNotThrow) {

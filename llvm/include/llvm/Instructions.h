@@ -1109,6 +1109,9 @@ public:
 
   /// setParamAttrs - Sets the parameter attributes for this call.
   void setParamAttrs(const PAListPtr &Attrs) { ParamAttrs = Attrs; }
+  
+  /// addParamAttr - adds the attribute to the list of attributes.
+  void addParamAttr(unsigned i, ParameterAttributes attr);
 
   /// @brief Determine whether the call or the callee has the given attribute.
   bool paramHasAttr(unsigned i, unsigned attr) const;
@@ -2428,6 +2431,9 @@ public:
 
   /// @brief Determine whether the call or the callee has the given attribute.
   bool paramHasAttr(unsigned i, ParameterAttributes attr) const;
+  
+  /// addParamAttr - adds the attribute to the list of attributes.
+  void addParamAttr(unsigned i, ParameterAttributes attr);
 
   /// @brief Extract the alignment for a call or parameter (0=unknown).
   unsigned getParamAlignment(unsigned i) const {

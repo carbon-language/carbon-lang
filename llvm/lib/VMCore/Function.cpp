@@ -240,6 +240,12 @@ void Function::setDoesNotThrow(bool doesNotThrow) {
   setParamAttrs(PAL);
 }
 
+void Function::addParamAttr(unsigned i, ParameterAttributes attr) {
+  PAListPtr PAL = getParamAttrs();
+  PAL = PAL.addAttr(i, attr);
+  setParamAttrs(PAL);
+}
+
 // Maintain the collector name for each function in an on-the-side table. This
 // saves allocating an additional word in Function for programs which do not use
 // GC (i.e., most programs) at the cost of increased overhead for clients which
