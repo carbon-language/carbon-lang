@@ -920,9 +920,12 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
       // differently qualified versions of compatible types, the result type is
       // a pointer to an appropriately qualified version of the *composite*
       // type.
-      // FIXME: Need to return the composite type.
+      // FIXME: Need to calculate the composite type.
       // FIXME: Need to add qualifiers
-      return lexT;
+      QualType compositeType = lexT;
+      ImpCastExprToType(lex, compositeType);
+      ImpCastExprToType(rex, compositeType);
+      return compositeType;
     }
   }
   
