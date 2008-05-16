@@ -1,8 +1,6 @@
 ; This test makes sure that div instructions are properly eliminated.
-;
 
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep div
-; END.
 
 define i32 @test1(i32 %A) {
         %B = sdiv i32 %A, 1             ; <i32> [#uses=1]
@@ -72,3 +70,15 @@ define i32 @test11(i32 %X, i1 %C) {
         %B = udiv i32 %X, %A            ; <i32> [#uses=1]
         ret i32 %B
 }
+
+; PR2328
+define i32 @test12(i32 %x) nounwind  {
+	%tmp3 = udiv i32 %x, %x		; 1
+	ret i32 %tmp3
+}
+
+define i32 @test13(i32 %x) nounwind  {
+	%tmp3 = sdiv i32 %x, %x		; 1
+	ret i32 %tmp3
+}
+

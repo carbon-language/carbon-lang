@@ -3012,6 +3012,10 @@ Instruction *InstCombiner::commonDivTransforms(BinaryOperator &I) {
 Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
+  // (sdiv X, X) --> 1     (udiv X, X) --> 1
+  if (Op0 == Op1)
+    return ReplaceInstUsesWith(I, ConstantInt::get(I.getType(), 1));
+  
   if (Instruction *Common = commonDivTransforms(I))
     return Common;
 
