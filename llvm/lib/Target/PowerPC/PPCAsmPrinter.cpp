@@ -393,6 +393,8 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
             GV->hasLinkOnceLinkage() || GV->hasCommonLinkage()))) {
         GVStubs.insert(Name);
         O << "L" << Name << "$non_lazy_ptr";
+        if (GV->hasExternalWeakLinkage())
+          ExtWeakSymbols.insert(GV);
         return;
       }
     }
@@ -948,6 +950,16 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       } else if (I->hasInternalLinkage()) {
         SwitchToDataSection("\t.data", I);
         O << TAI->getLCOMMDirective() << name << "," << Size << "," << Align;
+      } else if (!I->hasCommonLinkage()) {
+        O << "\t.globl " << name << "\n"
+          << TAI->getWeakDefDirective() << name << "\n";
+        SwitchToDataSection("\t.section __DATA,__datacoal_nt,coalesced", I);
+        EmitAlignment(Align, I);
+        O << name << ":\t\t\t\t" << TAI->getCommentString() << " ";
+        PrintUnmangledNameSafely(I, O);
+        O << "\n";
+        EmitGlobalConstant(C);
+        continue;
       } else {
         SwitchToDataSection("\t.data", I);
         O << ".comm " << name << "," << Size;
