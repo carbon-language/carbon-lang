@@ -5,4 +5,4 @@
 
 ; Darwin 9+ should get alignment on common symbols.  Darwin8 does 
 ; not support this.
-@array = weak global [4128 x i32] zeroinitializer, align 128
+@array = common global [4128 x i32] zeroinitializer, align 128
