@@ -39,8 +39,9 @@ using namespace llvm;
 STATISTIC(NumEliminated, "Number of unconditional branches eliminated");
 
 static cl::opt<unsigned>
-Threshold("taildup-threshold", cl::desc("Max block size to tail duplicate"),
-          cl::init(6), cl::Hidden);
+TailDupThreshold("taildup-threshold",
+                 cl::desc("Max block size to tail duplicate"),
+                 cl::init(1), cl::Hidden);
 
 namespace {
   class VISIBILITY_HIDDEN TailDup : public FunctionPass {
@@ -50,7 +51,7 @@ namespace {
     TailDup() : FunctionPass((intptr_t)&ID) {}
 
   private:
-    inline bool shouldEliminateUnconditionalBranch(TerminatorInst *TI);
+    inline bool shouldEliminateUnconditionalBranch(TerminatorInst *, unsigned);
     inline void eliminateUnconditionalBranch(BranchInst *BI);
     SmallPtrSet<BasicBlock*, 4> CycleDetector;
   };
@@ -70,7 +71,8 @@ bool TailDup::runOnFunction(Function &F) {
   bool Changed = false;
   CycleDetector.clear();
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ) {
-    if (shouldEliminateUnconditionalBranch(I->getTerminator())) {
+    if (shouldEliminateUnconditionalBranch(I->getTerminator(),
+                                           TailDupThreshold)) {
       eliminateUnconditionalBranch(cast<BranchInst>(I->getTerminator()));
       Changed = true;
     } else {
@@ -90,7 +92,8 @@ bool TailDup::runOnFunction(Function &F) {
 /// We don't count PHI nodes in the count since they will be removed when the
 /// contents of the block are copied over.
 ///
-bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
+bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI,
+                                                 unsigned Threshold) {
   BranchInst *BI = dyn_cast<BranchInst>(TI);
   if (!BI || !BI->isUnconditional()) return false;  // Not an uncond branch!
 
@@ -124,6 +127,13 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
     // Don't tail duplicate call instructions.  They are very large compared to
     // other instructions.
     if (isa<CallInst>(I) || isa<InvokeInst>(I)) return false;
+
+    // Allso alloca and malloc.
+    if (isa<AllocationInst>(I)) return false;
+
+    // Some vector instructions can expand into a number of instructions.
+    if (isa<ShuffleVectorInst>(I) || isa<ExtractElementInst>(I) ||
+        isa<InsertElementInst>(I)) return false;
     
     // Only count instructions that are not debugger intrinsics.
     if (!isa<DbgInfoIntrinsic>(I)) ++Size;
