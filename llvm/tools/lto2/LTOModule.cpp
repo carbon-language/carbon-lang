@@ -203,6 +203,9 @@ void LTOModule::addDefinedSymbol(GlobalValue* def, Mangler &mangler,
             attr |= LTO_SYMBOL_DEFINITION_TENTATIVE;
         }
     }
+    else if ( def->hasCommonLinkage()) {
+        attr |= LTO_SYMBOL_DEFINITION_TENTATIVE;
+    }
     else { 
         attr |= LTO_SYMBOL_DEFINITION_REGULAR;
     }
