@@ -23,6 +23,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "SemaUtil.h"
@@ -31,8 +32,8 @@ using namespace clang;
 /// CheckFunctionCall - Check a direct function call for various correctness
 /// and safety properties not strictly enforced by the C type system.
 Action::ExprResult
-Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
-                        
+Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCallRaw) {
+  llvm::OwningPtr<CallExpr> TheCall(TheCallRaw);
   // Get the IdentifierInfo* for the called function.
   IdentifierInfo *FnInfo = FDecl->getIdentifier();
   
@@ -40,36 +41,31 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
   case Builtin::BI__builtin___CFStringMakeConstantString:
     assert(TheCall->getNumArgs() == 1 &&
            "Wrong # arguments to builtin CFStringMakeConstantString");
-    if (CheckBuiltinCFStringArgument(TheCall->getArg(0))) {
-      delete TheCall;
+    if (CheckBuiltinCFStringArgument(TheCall->getArg(0)))
       return true;
-    }
-    return TheCall;
+    return TheCall.take();
   case Builtin::BI__builtin_va_start:
-    if (SemaBuiltinVAStart(TheCall)) {
-      delete TheCall;
+    if (SemaBuiltinVAStart(TheCall.get())) {
       return true;
     }
-    return TheCall;
+    return TheCall.take();
   case Builtin::BI__builtin_isgreater:
   case Builtin::BI__builtin_isgreaterequal:
   case Builtin::BI__builtin_isless:
   case Builtin::BI__builtin_islessequal:
   case Builtin::BI__builtin_islessgreater:
   case Builtin::BI__builtin_isunordered:
-    if (SemaBuiltinUnorderedCompare(TheCall)) {
-      delete TheCall;
+    if (SemaBuiltinUnorderedCompare(TheCall.get()))
       return true;
-    }
-    return TheCall;
+    return TheCall.take();
   case Builtin::BI__builtin_shufflevector:
-    return SemaBuiltinShuffleVector(TheCall);
+    return SemaBuiltinShuffleVector(TheCall.get());
   }
   
   // Search the KnownFunctionIDs for the identifier.
   unsigned i = 0, e = id_num_known_functions;
   for (; i != e; ++i) { if (KnownFunctionIDs[i] == FnInfo) break; }
-  if (i == e) return TheCall;
+  if (i == e) return TheCall.take();
   
   // Printf checking.
   if (i <= id_vprintf) {
@@ -92,10 +88,10 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
     case id_vprintf:   format_idx = 0; HasVAListArg = true; break;
     }
     
-    CheckPrintfArguments(TheCall, HasVAListArg, format_idx);       
+    CheckPrintfArguments(TheCall.get(), HasVAListArg, format_idx);       
   }
   
-  return TheCall;
+  return TheCall.take();
 }
 
 /// CheckBuiltinCFStringArgument - Checks that the argument to the builtin
@@ -227,7 +223,6 @@ Action::ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
     Diag(TheCall->getLocStart(), diag::err_shufflevector_non_vector,
          SourceRange(TheCall->getArg(0)->getLocStart(), 
                      TheCall->getArg(1)->getLocEnd()));
-    delete TheCall;
     return true;
   }
 
@@ -236,7 +231,6 @@ Action::ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
     Diag(TheCall->getLocStart(), diag::err_shufflevector_incompatible_vector,
          SourceRange(TheCall->getArg(0)->getLocStart(), 
                      TheCall->getArg(1)->getLocEnd()));
-    delete TheCall;
     return true;
   }
 
@@ -248,7 +242,6 @@ Action::ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
     else
       Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_many_args,
            TheCall->getSourceRange());
-    delete TheCall;
     return true;
   }
 
@@ -258,14 +251,12 @@ Action::ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
       Diag(TheCall->getLocStart(),
            diag::err_shufflevector_nonconstant_argument,
            TheCall->getArg(i)->getSourceRange());
-      delete TheCall;
       return true;
     }
     if (Result.getActiveBits() > 64 || Result.getZExtValue() >= numElements*2) {
       Diag(TheCall->getLocStart(),
            diag::err_shufflevector_argument_too_large,
            TheCall->getArg(i)->getSourceRange());
-      delete TheCall;
       return true;
     }
   }
@@ -281,8 +272,6 @@ Action::ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
       exprs.begin(), numElements+2, FAType,
       TheCall->getCallee()->getLocStart(),
       TheCall->getRParenLoc());
-
-  delete TheCall;
   
   return E;
 }
