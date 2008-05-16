@@ -448,7 +448,12 @@ bool BugTypeCacheLocation::isCached(BugReport& R) {
   // warning for the same error type that occurs at the same program
   // location but along a different path.
   
-  void* p = N->getLocation().getRawData();
+  return isCached(N->getLocation());
+}
+
+bool BugTypeCacheLocation::isCached(ProgramPoint P) {
+  
+  void* p = P.getRawData();
   
   if (CachedErrors.count(p))
     return true;

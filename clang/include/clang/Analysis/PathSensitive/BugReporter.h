@@ -58,6 +58,7 @@ public:
   BugTypeCacheLocation() {}
   virtual ~BugTypeCacheLocation() {}  
   virtual bool isCached(BugReport& R);
+  bool isCached(ProgramPoint P);
 };
   
   
