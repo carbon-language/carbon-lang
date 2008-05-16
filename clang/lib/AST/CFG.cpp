@@ -1587,6 +1587,30 @@ Expr* CFGBlock::getTerminatorCondition() {
   return E ? E->IgnoreParens() : NULL;
 }
 
+bool CFGBlock::hasBinaryBranchTerminator() const {
+  
+  if (!Terminator)
+    return false;
+  
+  Expr* E = NULL;
+  
+  switch (Terminator->getStmtClass()) {
+    default:
+      return false;
+      
+    case Stmt::ForStmtClass:      
+    case Stmt::WhileStmtClass:
+    case Stmt::DoStmtClass:
+    case Stmt::IfStmtClass:
+    case Stmt::ChooseExprClass:
+    case Stmt::ConditionalOperatorClass:
+    case Stmt::BinaryOperatorClass:
+      return true;      
+  }
+  
+  return E ? E->IgnoreParens() : NULL;
+}
+
 
 //===----------------------------------------------------------------------===//
 // CFG Graphviz Visualization

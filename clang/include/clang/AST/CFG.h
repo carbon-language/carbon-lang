@@ -158,6 +158,8 @@ public:
     return const_cast<CFGBlock*>(this)->getTerminatorCondition();
   }
   
+  bool hasBinaryBranchTerminator() const;
+  
   Stmt* getLabel() { return Label; }
   const Stmt* getLabel() const { return Label; }
   
