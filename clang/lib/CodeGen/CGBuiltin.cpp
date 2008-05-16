@@ -792,6 +792,9 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return Builder.CreateBitCast(Ops[0], 
                                  llvm::VectorType::get(llvm::Type::Int32Ty, 4));
   }
+  case X86::BI__builtin_ia32_vec_set_v4hi:
+  case X86::BI__builtin_ia32_vec_set_v8hi:
+    return Builder.CreateInsertElement(Ops[0], Ops[1], Ops[2], "pinsrw");
   case X86::BI__builtin_ia32_andps:
   case X86::BI__builtin_ia32_andpd:
   case X86::BI__builtin_ia32_andnps:

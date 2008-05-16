@@ -406,11 +406,11 @@ BUILTIN(__builtin_ia32_vec_ext_v2df, "dV2di", "")
 BUILTIN(__builtin_ia32_vec_ext_v2di, "LLiV2LLii", "")
 BUILTIN(__builtin_ia32_vec_ext_v4sf, "fV4fi", "")
 BUILTIN(__builtin_ia32_vec_ext_v4si, "iV4ii", "")
-BUILTIN(__builtin_ia32_vec_ext_v8hi, "v", "")
-BUILTIN(__builtin_ia32_vec_ext_v4hi, "v", "")
+BUILTIN(__builtin_ia32_vec_ext_v8hi, "UsV8si", "")
+BUILTIN(__builtin_ia32_vec_ext_v4hi, "sV4si", "")
 BUILTIN(__builtin_ia32_vec_ext_v2si, "iV2ii", "")
-BUILTIN(__builtin_ia32_vec_set_v8hi, "v", "")
-BUILTIN(__builtin_ia32_vec_set_v4hi, "v", "")
+BUILTIN(__builtin_ia32_vec_set_v8hi, "V8sV8ssi", "")
+BUILTIN(__builtin_ia32_vec_set_v4hi, "V4sv4ssi", "")
 
 // Apple local SSE builtins?  These are probably not needed eventually, but are
 // in the apple-gcc xmmintrin.h file (rdar://4099020).
