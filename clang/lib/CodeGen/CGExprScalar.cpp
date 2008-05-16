@@ -1050,8 +1050,7 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   // Handle the GNU extension for missing LHS.
   Value *LHS;
   if (E->getLHS())
-    LHS = EmitScalarConversion(Visit(E->getLHS()), E->getLHS()->getType(),
-                               E->getType());
+    LHS = Visit(E->getLHS());
   else    // Perform promotions, to handle cases like "short ?: int"
     LHS = EmitScalarConversion(CondVal, E->getCond()->getType(), E->getType());
   
@@ -1060,8 +1059,7 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   
   CGF.EmitBlock(RHSBlock);
   
-  Value *RHS = EmitScalarConversion(Visit(E->getRHS()), E->getRHS()->getType(),
-                                    E->getType());
+  Value *RHS = Visit(E->getRHS());
   Builder.CreateBr(ContBlock);
   RHSBlock = Builder.GetInsertBlock();
   
