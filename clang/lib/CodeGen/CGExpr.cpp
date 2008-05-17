@@ -14,11 +14,13 @@
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "clang/AST/AST.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Target/TargetData.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -175,6 +177,11 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
   V = LV.isBitfieldSigned() ?
     Builder.CreateAShr(V, ShAmt, "tmp") :
     Builder.CreateLShr(V, ShAmt, "tmp");
+
+  // The bitfield type and the normal type differ when the storage sizes
+  // differ (currently just _Bool).
+  V = Builder.CreateIntCast(V, ConvertType(ExprType), false, "tmp");
+
   return RValue::get(V);
 }
 
@@ -280,13 +287,18 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
   unsigned short StartBit = Dst.getBitfieldStartBit();
   unsigned short BitfieldSize = Dst.getBitfieldSize();
   llvm::Value *Ptr = Dst.getBitfieldAddr();
-  const llvm::Type *EltTy =
-    cast<llvm::PointerType>(Ptr->getType())->getElementType();
-  unsigned EltTySize = EltTy->getPrimitiveSizeInBits();
 
   llvm::Value *NewVal = Src.getScalarVal();
   llvm::Value *OldVal = Builder.CreateLoad(Ptr, "tmp");
 
+  // The bitfield type and the normal type differ when the storage sizes
+  // differ (currently just _Bool).
+  const llvm::Type *EltTy = OldVal->getType();
+  unsigned EltTySize = CGM.getTargetData().getABITypeSizeInBits(EltTy);
+
+  NewVal = Builder.CreateIntCast(NewVal, EltTy, false, "tmp");
+
+  // Move the bits into the appropriate location
   llvm::Value *ShAmt = llvm::ConstantInt::get(EltTy, StartBit);
   NewVal = Builder.CreateShl(NewVal, ShAmt, "tmp");
 
@@ -531,7 +543,11 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
   if (!Field->isBitField()) {
     V = Builder.CreateStructGEP(BaseValue, idx, "tmp");
   } else {
-    const llvm::Type *FieldTy = ConvertType(Field->getType());
+    // FIXME: CodeGenTypes should expose a method to get the appropriate
+    // type for FieldTy (the appropriate type is ABI-dependent).
+    unsigned EltTySize =
+      CGM.getTargetData().getABITypeSizeInBits(ConvertType(Field->getType()));
+    const llvm::Type *FieldTy = llvm::IntegerType::get(EltTySize);
     const llvm::PointerType *BaseTy =
       cast<llvm::PointerType>(BaseValue->getType());
     unsigned AS = BaseTy->getAddressSpace();
