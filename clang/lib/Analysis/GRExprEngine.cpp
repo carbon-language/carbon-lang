@@ -1091,7 +1091,10 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
             break;
           
           case 6:
-            if (!memcmp(s, "Assert", 6)) Builder->BuildSinks = true;
+            if (!memcmp(s, "Assert", 6)) {
+              Builder->BuildSinks = true;
+              break;
+            }
             
             // FIXME: This is just a wrapper around throwing an exception.
             //  Eventually inter-procedural analysis should handle this easily.
