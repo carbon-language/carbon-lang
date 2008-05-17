@@ -1029,29 +1029,6 @@ static ICmpInst::Predicate evaluateICmpRelation(const Constant *V1,
         }
       break;
 
-    case Instruction::PtrToInt:
-    case Instruction::IntToPtr:
-      // inttoptr(x1) != inttoptr(x2) iff x1 != x2
-      if (const ConstantExpr *CE2 = dyn_cast<ConstantExpr>(V2))
-        if (CE1->getOpcode() == CE2->getOpcode()) {
-          Constant *Op1 = const_cast<Constant*>(CE1Op0);
-          Constant *Op2 = CE2->getOperand(0);
-          if (Op1->getType() == Op2->getType()) {
-            ConstantInt *R = 0;
-
-            ICmpInst::Predicate pred = ICmpInst::ICMP_EQ;
-            R = dyn_cast<ConstantInt>(ConstantExpr::getICmp(pred, Op1, Op2));
-            if (R && !R->isZero()) 
-              return pred;
-
-            pred = ICmpInst::ICMP_NE;
-            R = dyn_cast<ConstantInt>(ConstantExpr::getICmp(pred, Op1, Op2));
-            if (R && !R->isZero()) 
-              return pred;
-          }
-        }
-      break;
-
     case Instruction::GetElementPtr:
       // Ok, since this is a getelementptr, we know that the constant has a
       // pointer type.  Check the various cases.
