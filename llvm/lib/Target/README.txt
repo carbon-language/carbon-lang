@@ -806,3 +806,12 @@ To fix this, we need to make CanEvaluateInDifferentType smarter.
 
 //===---------------------------------------------------------------------===//
 
+We should be able to evaluate this loop:
+
+int test(int x_offs) {
+  while (x_offs > 4)
+     x_offs -= 4;
+  return x_offs;
+}
+
+//===---------------------------------------------------------------------===//
