@@ -1036,7 +1036,7 @@ static ICmpInst::Predicate evaluateICmpRelation(const Constant *V1,
         if (CE1->getOpcode() == CE2->getOpcode()) {
           Constant *Op1 = const_cast<Constant*>(CE1Op0);
           Constant *Op2 = CE2->getOperand(0);
-          if (CE1Op->getType() == CE2Op->getType()) {
+          if (Op1->getType() == Op2->getType()) {
             ConstantInt *R = 0;
 
             ICmpInst::Predicate pred = ICmpInst::ICMP_EQ;
