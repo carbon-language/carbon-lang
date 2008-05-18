@@ -1405,15 +1405,33 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
     return CheckVectorOperands(loc, lex, rex);
 
   QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
-  
+
   // handle the common case first (both operands are arithmetic).
   if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
     return compType;
 
-  if (lex->getType()->isPointerType() && rex->getType()->isIntegerType())
-    return lex->getType();
-  if (lex->getType()->isIntegerType() && rex->getType()->isPointerType())
-    return rex->getType();
+  // Put any potential pointer into PExp
+  Expr* PExp = lex, *IExp = rex;
+  if (IExp->getType()->isPointerType())
+    std::swap(PExp, IExp);
+
+  if (const PointerType* PTy = PExp->getType()->getAsPointerType()) {
+    if (IExp->getType()->isIntegerType()) {
+      // Check for arithmetic on pointers to incomplete types
+      if (!PTy->getPointeeType()->isObjectType()) {
+        if (PTy->getPointeeType()->isVoidType()) {
+          Diag(loc, diag::ext_gnu_void_ptr, 
+               lex->getSourceRange(), rex->getSourceRange());
+        } else {
+          Diag(loc, diag::err_typecheck_arithmetic_incomplete_type,
+               lex->getType().getAsString(), lex->getSourceRange());
+          return QualType();
+        }
+      }
+      return PExp->getType();
+    }
+  }
+
   return InvalidOperands(loc, lex, rex);
 }
 
@@ -1681,7 +1699,10 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
 
   // C99 6.5.2.4p1: We allow complex as a GCC extension.
   if (const PointerType *pt = resType->getAsPointerType()) {
-    if (!pt->getPointeeType()->isObjectType()) { // C99 6.5.2.4p2, 6.5.6p2
+    if (pt->getPointeeType()->isVoidType()) {
+      Diag(OpLoc, diag::ext_gnu_void_ptr, op->getSourceRange());
+    } else if (!pt->getPointeeType()->isObjectType()) {
+      // C99 6.5.2.4p2, 6.5.6p2
       Diag(OpLoc, diag::err_typecheck_arithmetic_incomplete_type,
            resType.getAsString(), op->getSourceRange());
       return QualType();
