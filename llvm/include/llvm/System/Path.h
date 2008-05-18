@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <iosfwd>
+#include <cstring>
 
 namespace llvm {
 namespace sys {
