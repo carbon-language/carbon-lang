@@ -2856,7 +2856,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     
     if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0))
       if (Op0I->getOpcode() == Instruction::Add && Op0I->hasOneUse() &&
-          isa<ConstantInt>(Op0I->getOperand(1))) {
+          isa<ConstantInt>(Op0I->getOperand(1)) && isa<ConstantInt>(Op1)) {
         // Canonicalize (X+C1)*C2 -> X*C2+C1*C2.
         Instruction *Add = BinaryOperator::CreateMul(Op0I->getOperand(0),
                                                      Op1, "tmp");
