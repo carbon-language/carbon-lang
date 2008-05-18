@@ -421,7 +421,7 @@ static void RemoveFunctionFromSymbolTable(void *FnStart) {
   --SymTabPtr->NumSymbols;
 
   // Finally, if we deleted the final symbol, deallocate the table itself.
-  if (SymTabPtr->NumSymbols == 0) 
+  if (SymTabPtr->NumSymbols != 0) 
     return;
   
   *SymTabPtrPtr = 0;
