@@ -226,7 +226,7 @@ Expression::ExpressionOpcode ValueTable::getOpcode(BinaryOperator* BO) {
 }
 
 Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
-  if (isa<ICmpInst>(C)) {
+  if (isa<ICmpInst>(C) || isa<VICmpInst>(C)) {
     switch (C->getPredicate()) {
     default:  // THIS SHOULD NEVER HAPPEN
       assert(0 && "Comparison with unknown predicate?");
@@ -242,7 +242,7 @@ Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
     case ICmpInst::ICMP_SLE: return Expression::ICMPSLE;
     }
   }
-  assert(isa<FCmpInst>(C) && "Unknown compare");
+  assert((isa<FCmpInst>(C) || isa<VFCmpInst>(C)) && "Unknown compare");
   switch (C->getPredicate()) {
   default: // THIS SHOULD NEVER HAPPEN
     assert(0 && "Comparison with unknown predicate?");
