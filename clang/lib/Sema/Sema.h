@@ -908,14 +908,16 @@ class InitListChecker {
   void CheckExplicitInitList(InitListExpr *IList, QualType &T,
                              unsigned &Index);
 
-  void CheckElementTypes(InitListExpr *IList, QualType &DeclType, 
-                         unsigned &Index);
+  void CheckListElementTypes(InitListExpr *IList, QualType &DeclType, 
+                             unsigned &Index);
+  void CheckSubElementType(InitListExpr *IList, QualType ElemType, 
+                           unsigned &Index);
   // FIXME: Does DeclType need to be a reference type?
   void CheckScalarType(InitListExpr *IList, QualType &DeclType, 
                        unsigned &Index);
   void CheckVectorType(InitListExpr *IList, QualType DeclType, unsigned &Index);
   void CheckStructUnionTypes(InitListExpr *IList, QualType DeclType, 
-                             unsigned &Index, bool topLevel = false);
+                             unsigned &Index);
   void CheckArrayType(InitListExpr *IList, QualType &DeclType, unsigned &Index);
   
   int numArrayElements(QualType DeclType);

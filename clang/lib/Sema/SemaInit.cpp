@@ -22,31 +22,16 @@ InitListChecker::InitListChecker(Sema *S, InitListExpr *IL, QualType &T) {
   hadError = false;
   SemaRef = S;
   
-  if (IL) {
-    unsigned newIndex = 0;
+  unsigned newIndex = 0;
     
-    // Special case the following, which should produce an error.
-    //
-    // struct foo { int z; } w;
-    // int bar (void) {
-    //   struct foo bad = { w };
-    //   return bad.z;
-    // }
-    if (T->isStructureType() || T->isUnionType())
-      CheckStructUnionTypes(IL, T, newIndex, true);
-    else
-      CheckExplicitInitList(IL, T, newIndex);
+  CheckExplicitInitList(IL, T, newIndex);
       
-    if (!hadError && (newIndex < IL->getNumInits())) {
-      // We have leftover initializers; warn
-      SemaRef->Diag(IL->getInit(newIndex)->getLocStart(), 
-                    diag::warn_excess_initializers, 
-                    IL->getInit(newIndex)->getSourceRange());
-    }
-  } else {
-    // FIXME: Create an implicit InitListExpr with expressions from the
-    // parent checker.
-  }  
+  if (!hadError && (newIndex < IL->getNumInits())) {
+    // We have leftover initializers; warn
+    SemaRef->Diag(IL->getInit(newIndex)->getLocStart(), 
+                  diag::warn_excess_initializers, 
+                  IL->getInit(newIndex)->getSourceRange());
+  }
 }
 
 int InitListChecker::numArrayElements(QualType DeclType) {
@@ -73,6 +58,8 @@ int InitListChecker::numArrayElements(QualType DeclType) {
 
 int InitListChecker::numStructUnionElements(QualType DeclType) {
   RecordDecl *structDecl = DeclType->getAsRecordType()->getDecl();
+  if (structDecl->getKind() == Decl::Union)
+    return std::min(structDecl->getNumMembers(), 1);
   return structDecl->getNumMembers() - structDecl->hasFlexibleArrayMember();
 }
 
@@ -85,9 +72,16 @@ void InitListChecker::CheckImplicitInitList(InitListExpr *ParentIList,
     maxElements = numArrayElements(T);
   else if (T->isStructureType() || T->isUnionType())
     maxElements = numStructUnionElements(T);
+  else if (T->isVectorType())
+    maxElements = T->getAsVectorType()->getNumElements();
   else
     assert(0 && "CheckImplicitInitList(): Illegal type");
-  
+
+  // Check the element types *before* we create the implicit init list;
+  // otherwise, we might end up taking the wrong number of elements
+  unsigned NewIndex = Index;
+  CheckListElementTypes(ParentIList, T, NewIndex);
+
   for (int i = 0; i < maxElements; ++i) {
     // Don't attempt to go past the end of the init list
     if (Index >= ParentIList->getNumInits())
@@ -106,8 +100,6 @@ void InitListChecker::CheckImplicitInitList(InitListExpr *ParentIList,
   
   // Modify the parent InitListExpr to point to the implicit InitListExpr.
   ParentIList->addInit(Index, ILE);
-  // Now we can check the types.
-  // CheckElementTypes(ParentIList, T, Index);
 }
 
 void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
@@ -116,12 +108,13 @@ void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
   if (IList->isExplicit() && T->isScalarType())
       SemaRef->Diag(IList->getLocStart(), diag::warn_braces_around_scalar_init, 
                     IList->getSourceRange());
-  CheckElementTypes(IList, T, Index);
+  CheckListElementTypes(IList, T, Index);
   IList->setType(T);
 }
 
-void InitListChecker::CheckElementTypes(InitListExpr *IList, QualType &DeclType, 
-                                        unsigned &Index) {
+void InitListChecker::CheckListElementTypes(InitListExpr *IList,
+                                            QualType &DeclType, 
+                                            unsigned &Index) {
   if (DeclType->isScalarType())
     CheckScalarType(IList, DeclType, Index);
   else if (DeclType->isVectorType())
@@ -140,13 +133,38 @@ void InitListChecker::CheckElementTypes(InitListExpr *IList, QualType &DeclType,
   }
 }
 
+void InitListChecker::CheckSubElementType(InitListExpr *IList,
+                                          QualType ElemType, 
+                                          unsigned &Index) {
+  Expr* expr = IList->getInit(Index);
+  if (ElemType->isScalarType()) {
+    CheckScalarType(IList, ElemType, Index);
+  } else if (StringLiteral *lit =
+             SemaRef->IsStringLiteralInit(expr, ElemType)) {
+    SemaRef->CheckStringLiteralInit(lit, ElemType);
+    Index++;
+  } else if (InitListExpr *SubInitList = dyn_cast<InitListExpr>(expr)) {
+    unsigned newIndex = 0;
+    CheckExplicitInitList(SubInitList, ElemType, newIndex);
+    Index++;
+  } else if (expr->getType()->getAsRecordType() &&
+             SemaRef->Context.typesAreCompatible(
+                  IList->getInit(Index)->getType(), ElemType)) {
+    Index++;
+    // FIXME: Add checking
+  } else {
+    CheckImplicitInitList(IList, ElemType, Index);
+    Index++;
+  }
+}
+
 void InitListChecker::CheckScalarType(InitListExpr *IList, QualType &DeclType, 
                                       unsigned &Index) {
   if (Index < IList->getNumInits()) {
     Expr* expr = IList->getInit(Index);
     if (InitListExpr *SubInitList = dyn_cast<InitListExpr>(expr)) {
-        unsigned newIndex = 0;
-        CheckExplicitInitList(SubInitList, DeclType, newIndex);
+      unsigned newIndex = 0;
+      CheckExplicitInitList(SubInitList, DeclType, newIndex);
     } else {
       Expr *savExpr = expr; // Might be promoted by CheckSingleInitializer.
       if (SemaRef->CheckSingleInitializer(expr, DeclType))
@@ -171,13 +189,7 @@ void InitListChecker::CheckVectorType(InitListExpr *IList, QualType DeclType,
       // Don't attempt to go past the end of the init list
       if (Index >= IList->getNumInits())
         break;
-      Expr* expr = IList->getInit(Index);
-      if (InitListExpr *SubInitList = dyn_cast<InitListExpr>(expr)) {
-        unsigned newIndex = 0;
-        CheckExplicitInitList(SubInitList, elementType, newIndex);
-        newIndex++;
-      } else
-        CheckImplicitInitList(IList, elementType, Index);
+      CheckSubElementType(IList, elementType, Index);
     }
   }
 }
@@ -190,12 +202,14 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
         SemaRef->IsStringLiteralInit(IList->getInit(Index), DeclType)) {
       SemaRef->CheckStringLiteralInit(lit, DeclType);
       ++Index;
+#if 0
       if (IList->isExplicit() && Index < IList->getNumInits()) {
         // We have leftover initializers; warn
         SemaRef->Diag(IList->getInit(Index)->getLocStart(), 
                       diag::err_excess_initializers_in_char_array_initializer, 
                       IList->getInit(Index)->getSourceRange());
       }
+#endif
       return;
     }
   }
@@ -206,24 +220,7 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
     // Don't attempt to go past the end of the init list
     if (Index >= IList->getNumInits())
       break;
-    Expr* expr = IList->getInit(Index);
-    // Now, check the expression against the element type.
-    if (elementType->isScalarType())
-      CheckScalarType(IList, elementType, Index);
-    else if (elementType->isStructureType() || elementType->isUnionType())
-      CheckStructUnionTypes(IList, elementType, Index);
-    else if (StringLiteral *lit =
-             SemaRef->IsStringLiteralInit(expr, elementType)) {
-      SemaRef->CheckStringLiteralInit(lit, elementType);
-      Index++;
-    } else if (InitListExpr *SubInitList = dyn_cast<InitListExpr>(expr)) {
-      unsigned newIndex = 0;
-      CheckExplicitInitList(SubInitList, elementType, newIndex);
-      Index++;
-    } else {
-      CheckImplicitInitList(IList, elementType, Index);
-      Index++;
-    }
+    CheckSubElementType(IList, elementType, Index);
   }
   if (DeclType->isIncompleteArrayType()) {
     // If this is an incomplete array type, the actual type needs to
@@ -245,65 +242,35 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
 
 void InitListChecker::CheckStructUnionTypes(InitListExpr *IList, 
                                             QualType DeclType, 
-                                            unsigned &Index,
-                                            bool topLevel) {
-  if (Index < IList->getNumInits() && !topLevel &&
-      SemaRef->Context.typesAreCompatible(
-        IList->getInit(Index)->getType(), DeclType)) {
-    // We found a compatible struct; per the standard, this initializes the
-    // struct.  (The C standard technically says that this only applies for
-    // initializers for declarations with automatic scope; however, this
-    // construct is unambiguous anyway because a struct cannot contain
-    // a type compatible with itself. We'll output an error when we check
-    // if the initializer is constant.)
-    // FIXME: Is a call to CheckSingleInitializer required here?
-    ++Index;
-  } else {
-    RecordDecl* structDecl = DeclType->getAsRecordType()->getDecl();
+                                            unsigned &Index) {
+  RecordDecl* structDecl = DeclType->getAsRecordType()->getDecl();
     
-    // If the record is invalid, some of it's members are invalid. To avoid
-    // confusion, we forgo checking the intializer for the entire record.
-    if (structDecl->isInvalidDecl()) {
-      hadError = true;
-      return;
-    }    
-    // If structDecl is a forward declaration, this loop won't do anything;
-    // That's okay, because an error should get printed out elsewhere. It
-    // might be worthwhile to skip over the rest of the initializer, though.
-    int numMembers = numStructUnionElements(DeclType);
-    for (int i = 0; i < numMembers; i++) {
-      // Don't attempt to go past the end of the init list
-      if (Index >= IList->getNumInits())
-        break;
-      FieldDecl * curField = structDecl->getMember(i);
-      if (!curField->getIdentifier()) {
-        // Don't initialize unnamed fields, e.g. "int : 20;"
-        continue;
-      }
-      QualType elementType = curField->getType();
-      Expr* expr = IList->getInit(Index);
-      if (elementType->isScalarType())
-        CheckScalarType(IList, elementType, Index);
-      else if (elementType->isStructureType() || elementType->isUnionType())
-        CheckStructUnionTypes(IList, elementType, Index);
-      else if (StringLiteral *lit =SemaRef->IsStringLiteralInit(expr, elementType)) {
-        SemaRef->CheckStringLiteralInit(lit, elementType);
-        Index++;
-      } else if (InitListExpr *SubInitList = dyn_cast<InitListExpr>(expr)) {
-        unsigned newIndex = 0;
-        CheckExplicitInitList(SubInitList, elementType, newIndex);
-        Index++;
-      } else {
-        CheckImplicitInitList(IList, elementType, Index);
-        Index++;
-      }
-      if (DeclType->isUnionType())
-        break;
+  // If the record is invalid, some of it's members are invalid. To avoid
+  // confusion, we forgo checking the intializer for the entire record.
+  if (structDecl->isInvalidDecl()) {
+    hadError = true;
+    return;
+  }    
+  // If structDecl is a forward declaration, this loop won't do anything;
+  // That's okay, because an error should get printed out elsewhere. It
+  // might be worthwhile to skip over the rest of the initializer, though.
+  int numMembers = numStructUnionElements(DeclType);
+  for (int i = 0; i < numMembers; i++) {
+    // Don't attempt to go past the end of the init list
+    if (Index >= IList->getNumInits())
+      break;
+    FieldDecl * curField = structDecl->getMember(i);
+    if (!curField->getIdentifier()) {
+      // Don't initialize unnamed fields, e.g. "int : 20;"
+      continue;
     }
-    // FIXME: Implement flexible array initialization GCC extension (it's a 
-    // really messy extension to implement, unfortunately...the necessary
-    // information isn't actually even here!)
+    CheckSubElementType(IList, curField->getType(), Index);
+    if (DeclType->isUnionType())
+      break;
   }
+  // FIXME: Implement flexible array initialization GCC extension (it's a 
+  // really messy extension to implement, unfortunately...the necessary
+  // information isn't actually even here!)
 }
 } // end namespace clang
 
