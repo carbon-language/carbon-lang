@@ -1435,3 +1435,10 @@ void AsmPrinter::printDataDirective(const Type *type) {
   }
 }
 
+void AsmPrinter::printSuffixedName(std::string &Name, const char* Suffix) {
+  if (Name[0]=='\"')
+    O << "\"" << TAI->getPrivateGlobalPrefix() << 
+         Name.substr(1, Name.length()-2) << Suffix << "\"";
+  else
+    O << TAI->getPrivateGlobalPrefix() << Name << Suffix;
+}

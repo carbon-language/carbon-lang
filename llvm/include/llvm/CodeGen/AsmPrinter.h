@@ -348,6 +348,11 @@ namespace llvm {
     /// specified type.
     void printDataDirective(const Type *type);
 
+    /// printSuffixedName - This prints a name with preceding 
+    /// getPrivateGlobalPrefix and the specified suffix, handling quoted names
+    /// correctly.
+    void printSuffixedName(std::string &Name, const char* Suffix);
+
   private:
     void EmitLLVMUsedList(Constant *List);
     void EmitXXStructorList(Constant *List);

@@ -314,10 +314,10 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         // Dynamically-resolved functions need a stub for the function.
         if (isCallOp && isa<Function>(GV)) {
           FnStubs.insert(Name);
-          O << TAI->getPrivateGlobalPrefix() << Name << "$stub";
+          printSuffixedName(Name, "$stub");
         } else {
           GVStubs.insert(Name);
-          O << TAI->getPrivateGlobalPrefix() << Name << "$non_lazy_ptr";
+          printSuffixedName(Name, "$non_lazy_ptr");
         }
       } else {
         if (GV->hasDLLImportLinkage())
@@ -398,7 +398,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     Name += MO.getSymbolName();
     if (isCallOp && printStub(TM, Subtarget)) {
       FnStubs.insert(Name);
-      O << TAI->getPrivateGlobalPrefix() << Name << "$stub";
+      printSuffixedName(Name, "$stub");
       return;
     }
     if (!isCallOp)

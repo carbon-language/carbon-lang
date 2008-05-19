@@ -385,8 +385,10 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
          i != e; ++i, ++j) {
       SwitchToDataSection("\t.section __IMPORT,__jump_table,symbol_stubs,"
                           "self_modifying_code+pure_instructions,5", 0);
-      O << "L" << *i << "$stub:\n";
-      O << "\t.indirect_symbol " << *i << "\n";
+      std::string p = *i;
+      printSuffixedName(p, "$stub");
+      O << ":\n";
+      O << "\t.indirect_symbol " << p << "\n";
       O << "\thlt ; hlt ; hlt ; hlt ; hlt\n";
     }
 
@@ -408,8 +410,10 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
                     "\t.section __IMPORT,__pointers,non_lazy_symbol_pointers");
     for (std::set<std::string>::iterator i = GVStubs.begin(), e = GVStubs.end();
          i != e; ++i) {
-      O << "L" << *i << "$non_lazy_ptr:\n";
-      O << "\t.indirect_symbol " << *i << "\n";
+      std::string p = *i;
+      printSuffixedName(p, "$non_lazy_ptr");
+      O << ":\n";
+      O << "\t.indirect_symbol " << p << "\n";
       O << "\t.long\t0\n";
     }
 

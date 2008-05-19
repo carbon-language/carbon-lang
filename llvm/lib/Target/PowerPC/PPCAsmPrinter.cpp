@@ -189,7 +189,7 @@ namespace {
             // Dynamically-resolved functions need a stub for the function.
             std::string Name = Mang->getValueName(GV);
             FnStubs.insert(Name);
-            O << "L" << Name << "$stub";
+            printSuffixedName(Name, "$stub");
             if (GV->hasExternalWeakLinkage())
               ExtWeakSymbols.insert(GV);
             return;
@@ -198,7 +198,7 @@ namespace {
         if (MO.getType() == MachineOperand::MO_ExternalSymbol) {
           std::string Name(TAI->getGlobalPrefix()); Name += MO.getSymbolName();
           FnStubs.insert(Name);
-          O << "L" << Name << "$stub";
+          printSuffixedName(Name, "$stub");
           return;
         }
       }
@@ -377,7 +377,7 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     if (TM.getRelocationModel() != Reloc::Static) {
       std::string Name(TAI->getGlobalPrefix()); Name += MO.getSymbolName();
       GVStubs.insert(Name);
-      O << "L" << Name << "$non_lazy_ptr";
+      printSuffixedName(Name, "$non_lazy_ptr");
       return;
     }
     O << TAI->getGlobalPrefix() << MO.getSymbolName();
@@ -392,7 +392,7 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
       if (((GV->isDeclaration() || GV->hasWeakLinkage() ||
             GV->hasLinkOnceLinkage() || GV->hasCommonLinkage()))) {
         GVStubs.insert(Name);
-        O << "L" << Name << "$non_lazy_ptr";
+        printSuffixedName(Name, "$non_lazy_ptr");
         if (GV->hasExternalWeakLinkage())
           ExtWeakSymbols.insert(GV);
         return;
@@ -422,7 +422,7 @@ void PPCAsmPrinter::EmitExternalGlobal(const GlobalVariable *GV) {
   std::string Name = getGlobalLinkName(GV);
   if (TM.getRelocationModel() != Reloc::Static) {
     GVStubs.insert(Name);
-    O << "L" << Name << "$non_lazy_ptr";
+    printSuffixedName(Name, "$non_lazy_ptr");
     return;
   }
   O << Name;
@@ -1051,22 +1051,30 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       SwitchToTextSection("\t.section __TEXT,__picsymbolstub1,symbol_stubs,"
                           "pure_instructions,32");
       EmitAlignment(4);
-      O << "L" << *i << "$stub:\n";
+      std::string p = *i;
+      std::string L0p = (p[0]=='\"') ? "\"L0$" + p.substr(1) : "L0$" + p ;
+      printSuffixedName(p, "$stub");
+      O << ":\n";
       O << "\t.indirect_symbol " << *i << "\n";
       O << "\tmflr r0\n";
-      O << "\tbcl 20,31,L0$" << *i << "\n";
-      O << "L0$" << *i << ":\n";
+      O << "\tbcl 20,31," << L0p << "\n";
+      O << L0p << ":\n";
       O << "\tmflr r11\n";
-      O << "\taddis r11,r11,ha16(L" << *i << "$lazy_ptr-L0$" << *i << ")\n";
+      O << "\taddis r11,r11,ha16(";
+      printSuffixedName(p, "$lazy_ptr");
+      O << "-" << L0p << ")\n";
       O << "\tmtlr r0\n";
       if (isPPC64)
-        O << "\tldu r12,lo16(L" << *i << "$lazy_ptr-L0$" << *i << ")(r11)\n";
+        O << "\tldu r12,lo16(";
       else
-        O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr-L0$" << *i << ")(r11)\n";
+        O << "\tlwzu r12,lo16(";
+      printSuffixedName(p, "$lazy_ptr");
+      O << "-" << L0p << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
       SwitchToDataSection(".lazy_symbol_pointer");
-      O << "L" << *i << "$lazy_ptr:\n";
+      printSuffixedName(p, "$lazy_ptr");
+      O << ":\n";
       O << "\t.indirect_symbol " << *i << "\n";
       if (isPPC64)
         O << "\t.quad dyld_stub_binding_helper\n";
@@ -1079,17 +1087,24 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       SwitchToTextSection("\t.section __TEXT,__symbol_stub1,symbol_stubs,"
                           "pure_instructions,16");
       EmitAlignment(4);
-      O << "L" << *i << "$stub:\n";
+      std::string p = *i;
+      printSuffixedName(p, "$stub");
+      O << ":\n";
       O << "\t.indirect_symbol " << *i << "\n";
-      O << "\tlis r11,ha16(L" << *i << "$lazy_ptr)\n";
+      O << "\tlis r11,ha16(";
+      printSuffixedName(p, "$lazy_ptr");
+      O << ")\n";
       if (isPPC64)
-        O << "\tldu r12,lo16(L" << *i << "$lazy_ptr)(r11)\n";
+        O << "\tldu r12,lo16(";
       else
-        O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr)(r11)\n";
+        O << "\tlwzu r12,lo16(";
+      printSuffixedName(p, "$lazy_ptr");
+      O << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
       SwitchToDataSection(".lazy_symbol_pointer");
-      O << "L" << *i << "$lazy_ptr:\n";
+      printSuffixedName(p, "$lazy_ptr");
+      O << ":\n";
       O << "\t.indirect_symbol " << *i << "\n";
       if (isPPC64)
         O << "\t.quad dyld_stub_binding_helper\n";
@@ -1115,7 +1130,9 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
     SwitchToDataSection(".non_lazy_symbol_pointer");
     for (std::set<std::string>::iterator I = GVStubs.begin(),
          E = GVStubs.end(); I != E; ++I) {
-      O << "L" << *I << "$non_lazy_ptr:\n";
+      std::string p = *I;
+      printSuffixedName(p, "$non_lazy_ptr");
+      O << ":\n";
       O << "\t.indirect_symbol " << *I << "\n";
       if (isPPC64)
         O << "\t.quad\t0\n";
