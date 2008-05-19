@@ -70,7 +70,8 @@ int main(int argc, char**argv) {
   PassManager PM;
   PM.add(new PrintModulePass(&amp;llvm::cout));
   PM.run(*Mod);
-  
+
+  delete Mod;  
   return 0;
 }
 
