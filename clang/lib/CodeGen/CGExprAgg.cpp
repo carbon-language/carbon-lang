@@ -53,7 +53,7 @@ public:
   void EmitAggregateClear(llvm::Value *DestPtr, QualType Ty);
 
   void EmitNonConstInit(InitListExpr *E);
-  
+
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
   //===--------------------------------------------------------------------===//
@@ -336,7 +336,6 @@ void AggExprEmitter::EmitNullInitializationToLValue(LValue LV, QualType T) {
   }
 }
 
-
 void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   if (E->isConstantExpr(CGF.getContext(), 0)) {
     // FIXME: call into const expr emitter so that we can emit
@@ -355,6 +354,14 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       cast<llvm::ArrayType>(APType->getElementType());
     
     uint64_t NumInitElements = E->getNumInits();
+
+    if (E->getNumInits() > 0 &&
+        E->getType().getCanonicalType().getUnqualifiedType() == 
+          E->getInit(0)->getType().getCanonicalType().getUnqualifiedType()) {
+      EmitAggLoadOfLValue(E->getInit(0));
+      return;
+    }
+
     uint64_t NumArrayElements = AType->getNumElements();
     QualType ElementType = E->getType()->getAsArrayType()->getElementType();
     

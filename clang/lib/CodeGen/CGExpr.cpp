@@ -395,9 +395,16 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
 
 LValue CodeGenFunction::EmitStringLiteralLValue(const StringLiteral *E) {
   assert(!E->isWide() && "FIXME: Wide strings not supported yet!");
+  // Get the string data
   const char *StrData = E->getStrData();
   unsigned Len = E->getByteLength();
   std::string StringLiteral(StrData, StrData+Len);
+
+  // Resize the string to the right size
+  const ConstantArrayType *CAT = E->getType()->getAsConstantArrayType();
+  uint64_t RealLen = CAT->getSize().getZExtValue();
+  StringLiteral.resize(RealLen, '\0');
+
   return LValue::MakeAddr(CGM.GetAddrOfConstantString(StringLiteral));
 }
 
