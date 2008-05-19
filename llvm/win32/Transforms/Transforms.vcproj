@@ -396,10 +396,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Ipo\SimplifyLibCalls.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\..\lib\Transforms\IPO\StripDeadPrototypes.cpp"
 					>
 				</File>
@@ -524,7 +520,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\SimplifyCFG.cpp"
+					RelativePath="..\..\lib\Transforms\Scalar\SimplifyCFGPass.cpp"
 					>
 				</File>
 				<File

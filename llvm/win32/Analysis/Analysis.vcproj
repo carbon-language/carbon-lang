@@ -353,6 +353,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\LibCallAliasAnalysis.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Analysis\LibCallSemantics.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\LoadValueNumbering.cpp"
 				>
 			</File>
