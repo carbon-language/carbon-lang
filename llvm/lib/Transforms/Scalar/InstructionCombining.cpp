@@ -378,8 +378,9 @@ namespace {
     Value *EvaluateInDifferentType(Value *V, const Type *Ty, bool isSigned);
 
     void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero, 
-                           APInt& KnownOne, unsigned Depth = 0);
+                           APInt& KnownOne, unsigned Depth = 0) const;
     bool MaskedValueIsZero(Value *V, const APInt& Mask, unsigned Depth = 0);
+    unsigned ComputeNumSignBits(Value *Op, unsigned Depth = 0) const;
     bool CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
                                     unsigned CastOpc,
                                     int &NumCastsRemoved);
@@ -596,10 +597,10 @@ static User *dyn_castGetElementPtr(Value *V) {
 
 /// getOpcode - If this is an Instruction or a ConstantExpr, return the
 /// opcode value. Otherwise return UserOp1.
-static unsigned getOpcode(User *U) {
-  if (Instruction *I = dyn_cast<Instruction>(U))
+static unsigned getOpcode(Value *V) {
+  if (Instruction *I = dyn_cast<Instruction>(V))
     return I->getOpcode();
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U))
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
     return CE->getOpcode();
   // Use UserOp1 to mean there's no opcode.
   return Instruction::UserOp1;
@@ -666,7 +667,7 @@ static bool MultiplyOverflows(ConstantInt *C1, ConstantInt *C2, bool sign) {
 /// this won't lose us code quality.
 void InstCombiner::ComputeMaskedBits(Value *V, const APInt &Mask,
                                      APInt& KnownZero, APInt& KnownOne,
-                                     unsigned Depth) {
+                                     unsigned Depth) const {
   assert(V && "No Value?");
   assert(Depth <= 6 && "Limit Search Depth");
   uint32_t BitWidth = Mask.getBitWidth();
@@ -678,6 +679,7 @@ void InstCombiner::ComputeMaskedBits(Value *V, const APInt &Mask,
          KnownZero.getBitWidth() == BitWidth && 
          KnownOne.getBitWidth() == BitWidth &&
          "V, Mask, KnownOne and KnownZero should have same BitWidth");
+
   if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
     // We know all of the bits for a constant!
     KnownOne = CI->getValue() & Mask;
@@ -2058,6 +2060,148 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, uint64_t DemandedElts,
   }
   return MadeChange ? I : 0;
 }
+
+/// ComputeNumSignBits - Return the number of times the sign bit of the
+/// register is replicated into the other bits.  We know that at least 1 bit
+/// is always equal to the sign bit (itself), but other cases can give us
+/// information.  For example, immediately after an "ashr X, 2", we know that
+/// the top 3 bits are all equal to each other, so we return 3.
+///
+unsigned InstCombiner::ComputeNumSignBits(Value *V, unsigned Depth) const{
+  const IntegerType *Ty = cast<IntegerType>(V->getType());
+  unsigned TyBits = Ty->getBitWidth();
+  unsigned Tmp, Tmp2;
+
+  if (Depth == 6)
+    return 1;  // Limit search depth.
+
+  User *U = dyn_cast<User>(V);
+  switch (getOpcode(V)) {
+  default: break;
+  case Instruction::SExt:
+    Tmp = TyBits-cast<IntegerType>(U->getOperand(0)->getType())->getBitWidth();
+    return ComputeNumSignBits(U->getOperand(0), Depth+1) + Tmp;
+    
+  case Instruction::AShr:
+    Tmp = ComputeNumSignBits(U->getOperand(0), Depth+1);
+    // SRA X, C   -> adds C sign bits.
+    if (ConstantInt *C = dyn_cast<ConstantInt>(U->getOperand(1))) {
+      Tmp += C->getZExtValue();
+      if (Tmp > TyBits) Tmp = TyBits;
+    }
+    return Tmp;
+  case Instruction::Shl:
+    if (ConstantInt *C = dyn_cast<ConstantInt>(U->getOperand(1))) {
+      // shl destroys sign bits.
+      Tmp = ComputeNumSignBits(U->getOperand(0), Depth+1);
+      if (C->getZExtValue() >= TyBits ||      // Bad shift.
+          C->getZExtValue() >= Tmp) break;    // Shifted all sign bits out.
+      return Tmp - C->getZExtValue();
+    }
+    break;
+  case Instruction::And:
+  case Instruction::Or:
+  case Instruction::Xor:    // NOT is handled here.
+    // Logical binary ops preserve the number of sign bits.
+    Tmp = ComputeNumSignBits(U->getOperand(0), Depth+1);
+    if (Tmp == 1) return 1;  // Early out.
+    Tmp2 = ComputeNumSignBits(U->getOperand(1), Depth+1);
+    return std::min(Tmp, Tmp2);
+
+  case Instruction::Select:
+    Tmp = ComputeNumSignBits(U->getOperand(0), Depth+1);
+    if (Tmp == 1) return 1;  // Early out.
+    Tmp2 = ComputeNumSignBits(U->getOperand(1), Depth+1);
+    return std::min(Tmp, Tmp2);
+    
+  case Instruction::Add:
+    // Add can have at most one carry bit.  Thus we know that the output
+    // is, at worst, one more bit than the inputs.
+    Tmp = ComputeNumSignBits(U->getOperand(0), Depth+1);
+    if (Tmp == 1) return 1;  // Early out.
+      
+    // Special case decrementing a value (ADD X, -1):
+    if (ConstantInt *CRHS = dyn_cast<ConstantInt>(U->getOperand(0)))
+      if (CRHS->isAllOnesValue()) {
+        APInt KnownZero(TyBits, 0), KnownOne(TyBits, 0);
+        APInt Mask = APInt::getAllOnesValue(TyBits);
+        ComputeMaskedBits(U->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+        
+        // If the input is known to be 0 or 1, the output is 0/-1, which is all
+        // sign bits set.
+        if ((KnownZero | APInt(TyBits, 1)) == Mask)
+          return TyBits;
+        
+        // If we are subtracting one from a positive number, there is no carry
+        // out of the result.
+        if (KnownZero.isNegative())
+          return Tmp;
+      }
+      
+    Tmp2 = ComputeNumSignBits(U->getOperand(1), Depth+1);
+    if (Tmp2 == 1) return 1;
+      return std::min(Tmp, Tmp2)-1;
+    break;
+    
+  case Instruction::Sub:
+    Tmp2 = ComputeNumSignBits(U->getOperand(1), Depth+1);
+    if (Tmp2 == 1) return 1;
+      
+    // Handle NEG.
+    if (ConstantInt *CLHS = dyn_cast<ConstantInt>(U->getOperand(0)))
+      if (CLHS->isNullValue()) {
+        APInt KnownZero(TyBits, 0), KnownOne(TyBits, 0);
+        APInt Mask = APInt::getAllOnesValue(TyBits);
+        ComputeMaskedBits(U->getOperand(1), Mask, KnownZero, KnownOne, Depth+1);
+        // If the input is known to be 0 or 1, the output is 0/-1, which is all
+        // sign bits set.
+        if ((KnownZero | APInt(TyBits, 1)) == Mask)
+          return TyBits;
+        
+        // If the input is known to be positive (the sign bit is known clear),
+        // the output of the NEG has the same number of sign bits as the input.
+        if (KnownZero.isNegative())
+          return Tmp2;
+        
+        // Otherwise, we treat this like a SUB.
+      }
+    
+    // Sub can have at most one carry bit.  Thus we know that the output
+    // is, at worst, one more bit than the inputs.
+    Tmp = ComputeNumSignBits(U->getOperand(0), Depth+1);
+    if (Tmp == 1) return 1;  // Early out.
+      return std::min(Tmp, Tmp2)-1;
+    break;
+  case Instruction::Trunc:
+    // FIXME: it's tricky to do anything useful for this, but it is an important
+    // case for targets like X86.
+    break;
+  }
+  
+  // Finally, if we can prove that the top bits of the result are 0's or 1's,
+  // use this information.
+  APInt KnownZero(TyBits, 0), KnownOne(TyBits, 0);
+  APInt Mask = APInt::getAllOnesValue(TyBits);
+  ComputeMaskedBits(V, Mask, KnownZero, KnownOne, Depth);
+  
+  if (KnownZero.isNegative()) {        // sign bit is 0
+    Mask = KnownZero;
+  } else if (KnownOne.isNegative()) {  // sign bit is 1;
+    Mask = KnownOne;
+  } else {
+    // Nothing known.
+    return 1;
+  }
+  
+  // Okay, we know that the sign bit in Mask is set.  Use CLZ to determine
+  // the number of identical bits in the top of the input value.
+  Mask = ~Mask;
+  Mask <<= Mask.getBitWidth()-TyBits;
+  // Return # leading zeros.  We use 'min' here in case Val was zero before
+  // shifting.  We don't want to return '64' as for an i32 "0".
+  return std::min(TyBits, Mask.countLeadingZeros());
+}
+
 
 /// AssociativeOpt - Perform an optimization on an associative operator.  This
 /// function is designed to check a chain of associative operators for a
