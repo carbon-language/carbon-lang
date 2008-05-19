@@ -2503,6 +2503,25 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   if (match(RHS, m_And(m_Value(), m_ConstantInt(C2))))
     if (Instruction *R = AssociativeOpt(I, AddMaskingAnd(C2)))
       return R;
+  
+  // A+B --> A|B iff A and B have no bits set in common.
+  if (const IntegerType *IT = dyn_cast<IntegerType>(I.getType())) {
+    APInt Mask = APInt::getAllOnesValue(IT->getBitWidth());
+    APInt LHSKnownOne(IT->getBitWidth(), 0);
+    APInt LHSKnownZero(IT->getBitWidth(), 0);
+    ComputeMaskedBits(LHS, Mask, LHSKnownZero, LHSKnownOne);
+    if (LHSKnownZero != 0) {
+      APInt RHSKnownOne(IT->getBitWidth(), 0);
+      APInt RHSKnownZero(IT->getBitWidth(), 0);
+      ComputeMaskedBits(RHS, Mask, RHSKnownZero, RHSKnownOne);
+      
+      // No bits in common -> bitwise or.
+      if ((LHSKnownZero|RHSKnownZero).isAllOnesValue()) {
+        cerr << "HACK\n" << *LHS << *RHS << "\n";
+        return BinaryOperator::CreateOr(LHS, RHS);
+      }
+    }
+  }
 
   // W*X + Y*Z --> W * (X+Z)  iff W == Y
   if (I.getType()->isIntOrIntVector()) {

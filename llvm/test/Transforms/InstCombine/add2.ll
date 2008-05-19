@@ -29,3 +29,18 @@ EntryBlock:
 
 declare i32 @callee(i32)
 
+
+define i32 @test3(i32 %A) {
+  %B = and i32 %A, 7
+  %C = and i32 %A, 32
+  %F = add i32 %B, %C
+  ret i32 %F
+}
+
+define i32 @test4(i32 %A) {
+  %B = and i32 %A, 128
+  %C = lshr i32 %A, 30
+  %F = add i32 %B, %C
+  ret i32 %F
+}
+
