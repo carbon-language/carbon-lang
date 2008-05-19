@@ -420,18 +420,6 @@ static const Type *getPromotedType(const Type *Ty) {
   return Ty;
 }
 
-/// GetFPMantissaWidth - Return the width of the mantissa (aka significand) of
-/// the specified floating point type in bits.  This returns -1 if unknown.
-static int GetFPMantissaWidth(const Type *FPType) {
-  if (FPType == Type::FloatTy)
-    return 24;
-  if (FPType == Type::DoubleTy)
-    return 53;
-  if (FPType == Type::X86_FP80Ty)
-    return 64;
-  return -1; // Unknown/crazy type.
-}
-
 /// getBitCastOperand - If the specified operand is a CastInst or a constant 
 /// expression bitcast,  return the operand value, otherwise return null.
 static Value *getBitCastOperand(Value *V) {
@@ -5257,7 +5245,7 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
   
   // Get the width of the mantissa.  We don't want to hack on conversions that
   // might lose information from the integer, e.g. "i64 -> float"
-  int MantissaWidth = GetFPMantissaWidth(LHSI->getType());
+  int MantissaWidth = LHSI->getType()->getFPMantissaWidth();
   if (MantissaWidth == -1) return 0;  // Unknown.
   
   // Check to see that the input is converted from an integer type that is small
@@ -8007,7 +7995,7 @@ Instruction *InstCombiner::visitFPToUI(FPToUIInst &FI) {
   if (UIToFPInst *SrcI = dyn_cast<UIToFPInst>(FI.getOperand(0)))
     if (SrcI->getOperand(0)->getType() == FI.getType() &&
         (int)FI.getType()->getPrimitiveSizeInBits() < /*extra bit for sign */
-                    GetFPMantissaWidth(SrcI->getType()))
+                    SrcI->getType()->getFPMantissaWidth())
       return ReplaceInstUsesWith(FI, SrcI->getOperand(0));
 
   return commonCastTransforms(FI);
@@ -8020,7 +8008,7 @@ Instruction *InstCombiner::visitFPToSI(FPToSIInst &FI) {
   if (SIToFPInst *SrcI = dyn_cast<SIToFPInst>(FI.getOperand(0)))
     if (SrcI->getOperand(0)->getType() == FI.getType() &&
         (int)FI.getType()->getPrimitiveSizeInBits() <= 
-                    GetFPMantissaWidth(SrcI->getType()))
+                    SrcI->getType()->getFPMantissaWidth())
       return ReplaceInstUsesWith(FI, SrcI->getOperand(0));
   
   return commonCastTransforms(FI);
