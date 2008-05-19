@@ -252,6 +252,16 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     return RValue::get(Builder.CreateAlloca(llvm::Type::Int8Ty,
                                             EmitScalarExpr(E->getArg(0)),
                                             "tmp"));
+  case Builtin::BI__builtin_memcpy: {
+    Value* MemCpyOps[4] = {
+      EmitScalarExpr(E->getArg(0)),
+      EmitScalarExpr(E->getArg(1)),
+      EmitScalarExpr(E->getArg(2)),
+      llvm::ConstantInt::get(llvm::Type::Int32Ty, 0)
+    };
+    Builder.CreateCall(CGM.getMemCpyFn(), MemCpyOps, MemCpyOps+4);
+    return RValue::get(MemCpyOps[0]);
+  }
   case Builtin::BI__sync_fetch_and_add:
     return EmitBinaryAtomic(*this, Intrinsic::atomic_las, E);
   case Builtin::BI__sync_fetch_and_sub:
