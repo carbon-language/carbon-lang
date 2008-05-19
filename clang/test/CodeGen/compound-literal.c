@@ -9,5 +9,4 @@ int xxx() {
 int* a = &(int){1};
 struct s {int a, b, c;} * b = &(struct s) {1, 2, 3};
 _Complex double * x = &(_Complex double){1.0f};
-_Complex double * y = &(_Complex double){};
 }
