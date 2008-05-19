@@ -81,6 +81,7 @@ int main(int argc, char**argv) {
   PM.add(new PrintModulePass(&amp;llvm::cout));
   PM.run(*Mod);
 
+  delete Mod;
   return 0;
 }
 </pre>
@@ -161,7 +162,7 @@ function will interoperate properly with C code, which is a good thing.</p>
 <div class="doc_code">
 <pre>
   Value* tmp = builder.CreateBinOp(Instruction::Mul,
-                                    x, y, "tmp");
+                                   x, y, "tmp");
   Value* tmp2 = builder.CreateBinOp(Instruction::Add,
                                     tmp, z, "tmp2");
 
