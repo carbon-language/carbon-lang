@@ -2516,10 +2516,8 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       ComputeMaskedBits(RHS, Mask, RHSKnownZero, RHSKnownOne);
       
       // No bits in common -> bitwise or.
-      if ((LHSKnownZero|RHSKnownZero).isAllOnesValue()) {
-        cerr << "HACK\n" << *LHS << *RHS << "\n";
+      if ((LHSKnownZero|RHSKnownZero).isAllOnesValue())
         return BinaryOperator::CreateOr(LHS, RHS);
-      }
     }
   }
 
