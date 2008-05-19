@@ -596,11 +596,27 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
     if (isa<PHINode>(I) || I == LTerminator)
       continue;
 
-    if (I == IndVarIncrement) 
-      I->replaceAllUsesWith(ExitValue);
-    else
+    if (I == IndVarIncrement) {
+      // Replace induction variable increment if it is not used outside 
+      // the loop.
+      bool UsedOutsideLoop = false;
+      for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); 
+           UI != E; ++UI) {
+        if (Instruction *Use = dyn_cast<Instruction>(UI)) 
+          if (!L->contains(Use->getParent())) {
+            UsedOutsideLoop = true;
+            break;
+          }
+      }
+      if (!UsedOutsideLoop) {
+        I->replaceAllUsesWith(ExitValue);
+        I->eraseFromParent();
+      }
+    }
+    else {
       I->replaceAllUsesWith(UndefValue::get(I->getType()));
-    I->eraseFromParent();
+      I->eraseFromParent();
+    }
   }
 
   LPM->deleteLoopFromQueue(L);
