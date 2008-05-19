@@ -126,7 +126,15 @@ Module* makeLLVMModule() {
 </pre>
 </div>
 
-<p><code>cond_false</code> is a more interesting block: we now know that <code>x != y</code>, so we must branch again to determine which of <code>x</code> and <code>y</code> is larger.  This is achieved using the <code>ICmpULT</code> instruction, which stands for <em>integer comparison for unsigned less-than</em>.  In LLVM, integer types do not carry sign; a 32-bit integer pseudo-register can interpreted as signed or unsigned without casting.  Whether a signed or unsigned interpretation is desired is specified in the instruction.  This is why several instructions in the LLVM IR, such as integer less-than, include a specifier for signed or unsigned.</p>
+<p><code>cond_false</code> is a more interesting block: we now know that <code>x
+!= y</code>, so we must branch again to determine which of <code>x</code>
+and <code>y</code> is larger.  This is achieved using the <code>ICmpULT</code>
+instruction, which stands for <em>integer comparison for unsigned
+less-than</em>.  In LLVM, integer types do not carry sign; a 32-bit integer
+pseudo-register can be interpreted as signed or unsigned without casting.
+Whether a signed or unsigned interpretation is desired is specified in the
+instruction.  This is why several instructions in the LLVM IR, such as integer
+less-than, include a specifier for signed or unsigned.</p>
 
 <p>Also note that we're again making use of LLVM's automatic name uniquing, this time at a register level.  We've deliberately chosen to name every instruction "tmp" to illustrate that LLVM will give them all unique names without getting confused.</p>
 
