@@ -109,7 +109,7 @@ void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
     // We have leftover initializers
     if (IList->getNumInits() > 0 &&
         SemaRef->IsStringLiteralInit(IList->getInit(Index), T)) {
-      // Special-case; this could be confusing
+      // Special-case
       SemaRef->Diag(IList->getInit(Index)->getLocStart(),
                     diag::err_excess_initializers_in_char_array_initializer,
                     IList->getInit(Index)->getSourceRange());
@@ -173,17 +173,27 @@ void InitListChecker::CheckScalarType(InitListExpr *IList, QualType &DeclType,
   if (Index < IList->getNumInits()) {
     Expr* expr = IList->getInit(Index);
     if (isa<InitListExpr>(expr)) {
-      // FIXME: Print error about too many braces
+      SemaRef->Diag(IList->getLocStart(),
+                    diag::err_many_braces_around_scalar_init, 
+                    IList->getSourceRange());
+      hadError = true;
+      ++Index;
+      return;
     }
     Expr *savExpr = expr; // Might be promoted by CheckSingleInitializer.
     if (SemaRef->CheckSingleInitializer(expr, DeclType))
-      hadError |= true; // types weren't compatible.
+      hadError = true; // types weren't compatible.
     else if (savExpr != expr)
       // The type was promoted, update initializer list.
       IList->setInit(Index, expr);
     ++Index;
+  } else {
+    SemaRef->Diag(IList->getLocStart(),
+                  diag::err_empty_scalar_initializer, 
+                  IList->getSourceRange());
+    hadError = true;
+    return;
   }
-  // FIXME: Should an error be reported for empty initializer list + scalar?
 }
 
 void InitListChecker::CheckVectorType(InitListExpr *IList, QualType DeclType, 
@@ -210,12 +220,6 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
         SemaRef->IsStringLiteralInit(IList->getInit(Index), DeclType)) {
       SemaRef->CheckStringLiteralInit(lit, DeclType);
       ++Index;
-#if 0
-      if (IList->isExplicit() && Index < IList->getNumInits()) {
-        // We have leftover initializers; warn
-
-      }
-#endif
       return;
     }
   }

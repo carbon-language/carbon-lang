@@ -745,6 +745,10 @@ DIAG(warn_initializer_string_for_char_array_too_long, WARNING,
     "initializer-string for char array is too long")
 DIAG(warn_braces_around_scalar_init, WARNING,
      "braces around scalar initializer")
+DIAG(err_many_braces_around_scalar_init, ERROR,
+     "too many braces around scalar initializer")
+DIAG(err_empty_scalar_initializer, ERROR,
+     "scalar initializer cannot be empty")
 DIAG(err_illegal_initializer, ERROR,
      "illegal initializer (only variables can be initialized)")
 
