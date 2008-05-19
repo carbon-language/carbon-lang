@@ -48,7 +48,7 @@ entry:
 </pre>
 </div>
 
-<p>If you're unsure what the above code says, skim through the <a href="../LangRef.html">LLVM Language Reference Manual</a> and convince yourself that the above LLVM IR is actually equivalent to the original function.  Once you’re satisfied with that, let’s move on to actually generating it programmatically!</p>
+<p>If you're unsure what the above code says, skim through the <a href="../LangRef.html">LLVM Language Reference Manual</a> and convince yourself that the above LLVM IR is actually equivalent to the original function.  Once you’re satisfied with that, let's move on to actually generating it programmatically!</p>
 
 <p>Of course, before we can start, we need to <code>#include</code> the appropriate LLVM header files:</p>
 
@@ -64,7 +64,7 @@ entry:
 </pre>
 </div>
 
-<p>Now, let’s get started on our real program.  Here’s what our basic <code>main()</code> will look like:</p>
+<p>Now, let's get started on our real program.  Here's what our basic <code>main()</code> will look like:</p>
 
 <div class="doc_code">
 <pre>
@@ -89,7 +89,7 @@ int main(int argc, char**argv) {
 
 <p>The first segment is pretty simple: it creates an LLVM “module.”  In LLVM, a module represents a single unit of code that is to be processed together.  A module contains things like global variables, function declarations, and implementations.  Here we’ve declared a <code>makeLLVMModule()</code> function to do the real work of creating the module.  Don’t worry, we’ll be looking at that one next!</p>
 
-<p>The second segment runs the LLVM module verifier on our newly created module.  While this probably isn’t really necessary for a simple module like this one, it’s always a good idea, especially if you’re generating LLVM IR based on some input.  The verifier will print an error message if your LLVM module is malformed in any way.</p>
+<p>The second segment runs the LLVM module verifier on our newly created module.  While this probably isn’t really necessary for a simple module like this one, it's always a good idea, especially if you’re generating LLVM IR based on some input.  The verifier will print an error message if your LLVM module is malformed in any way.</p>
 
 <p>Finally, we instantiate an LLVM <code>PassManager</code> and run
 the <code>PrintModulePass</code> on our module.  LLVM uses an explicit pass
@@ -99,7 +99,7 @@ it is responsible for scheduling them, invoking them, and ensuring the proper
 disposal after we’re done with them.  For this example, we’re just using a
 trivial pass that prints out our module in textual form.</p>
 
-<p>Now onto the interesting part: creating and populating a module.  Here’s the
+<p>Now onto the interesting part: creating and populating a module.  Here's the
 first chunk of our <code>makeLLVMModule()</code>:</p>
 
 <div class="doc_code">
@@ -146,7 +146,7 @@ function will interoperate properly with C code, which is a good thing.</p>
 </pre>
 </div>
 
-<p>While we’re setting up our function, let’s also give names to the parameters.  This also isn’t strictly necessary (LLVM will generate names for them if you don’t specify them), but it’ll make looking at our output somewhat more pleasant.  To name the parameters, we iterate over the arguments of our function and call <code>setName()</code> on them.  We’ll also keep the pointer to <code>x</code>, <code>y</code>, and <code>z</code> around, since we’ll need them when we get around to creating instructions.</p>
+<p>While we’re setting up our function, let's also give names to the parameters.  This also isn’t strictly necessary (LLVM will generate names for them if you don’t specify them), but it’ll make looking at our output somewhat more pleasant.  To name the parameters, we iterate over the arguments of our function and call <code>setName()</code> on them.  We’ll also keep the pointer to <code>x</code>, <code>y</code>, and <code>z</code> around, since we’ll need them when we get around to creating instructions.</p>
 
 <p>Great!  We have a function now.  But what good is a function if it has no body?  Before we start working on a body for our new function, we need to recall some details of the LLVM IR.  The IR, being an abstract assembly language, represents control flow using jumps (we call them branches), both conditional and unconditional.  The straight-line sequences of code between branches are called basic blocks, or just blocks.  To create a body for our function, we fill it with blocks:</p>
 
@@ -173,9 +173,9 @@ function will interoperate properly with C code, which is a good thing.</p>
 </pre>
 </div>
 
-<p>The final step in creating our function is to create the instructions that make it up.  Our <code>mul_add</code> function is composed of just three instructions: a multiply, an add, and a return.  <code>IRBuilder</code> gives us a simple interface for constructing these instructions and appending them to the “entry” block.  Each of the calls to <code>IRBuilder</code> returns a <code>Value*</code> that represents the value yielded by the instruction.  You’ll also notice that, above, <code>x</code>, <code>y</code>, and <code>z</code> are also <code>Value*</code>’s, so it’s clear that instructions operate on <code>Value*</code>’s.</p>
+<p>The final step in creating our function is to create the instructions that make it up.  Our <code>mul_add</code> function is composed of just three instructions: a multiply, an add, and a return.  <code>IRBuilder</code> gives us a simple interface for constructing these instructions and appending them to the “entry” block.  Each of the calls to <code>IRBuilder</code> returns a <code>Value*</code> that represents the value yielded by the instruction.  You’ll also notice that, above, <code>x</code>, <code>y</code>, and <code>z</code> are also <code>Value*</code>'s, so it's clear that instructions operate on <code>Value*</code>'s.</p>
 
-<p>And that’s it!  Now you can compile and run your code, and get a wonderful textual print out of the LLVM IR we saw at the beginning.  To compile, use the following command line as a guide:</p>
+<p>And that's it!  Now you can compile and run your code, and get a wonderful textual print out of the LLVM IR we saw at the beginning.  To compile, use the following command line as a guide:</p>
 
 <div class="doc_code">
 <pre>
