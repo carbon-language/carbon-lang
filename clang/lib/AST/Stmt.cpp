@@ -42,6 +42,11 @@ const char *Stmt::getStmtClassName() const {
   return getStmtInfoTableEntry(sClass).Name;
 }
 
+void Stmt::DestroyChildren() {
+  for (child_iterator I = child_begin(), E = child_end(); I !=E; ++I)
+    delete *I; // Handles the case when *I == NULL.
+}
+
 void Stmt::PrintStats() {
   // Ensure the table is primed.
   getStmtInfoTableEntry(Stmt::NullStmtClass);

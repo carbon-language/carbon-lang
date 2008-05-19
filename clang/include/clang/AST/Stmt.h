@@ -50,6 +50,12 @@ public:
 };
 private:
   const StmtClass sClass;
+  
+protected:
+  /// DestroyChildren - Invoked by destructors of subclasses of Stmt to
+  ///  recursively release child AST nodes.
+  void DestroyChildren();
+  
 public:
   Stmt(StmtClass SC) : sClass(SC) { 
     if (Stmt::CollectingStats()) Stmt::addStmtClass(SC);
