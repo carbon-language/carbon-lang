@@ -35,3 +35,8 @@ int stmt_expr(int x, int y) {
   return ({int _a = x, _b = y; _a > _b ? _a : _b; });
 }
 
+void nowarn(unsigned char* a, unsigned char* b)
+{
+  unsigned char c = 1;
+  *a |= c, *b += c;
+}

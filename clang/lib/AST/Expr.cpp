@@ -336,6 +336,10 @@ bool Expr::hasLocalSideEffect() const {
       return cast<CastExpr>(this)->getSubExpr()->hasLocalSideEffect();
     return false;
 
+  case ImplicitCastExprClass:
+    // Check the operand, since implicit casts are inserted by Sema
+    return cast<ImplicitCastExpr>(this)->getSubExpr()->hasLocalSideEffect();
+
   case CXXDefaultArgExprClass:
     return cast<CXXDefaultArgExpr>(this)->getExpr()->hasLocalSideEffect();
   }     
