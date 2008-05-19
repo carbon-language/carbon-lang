@@ -90,9 +90,16 @@ int main(int argc, char**argv) {
 
 <p>The second segment runs the LLVM module verifier on our newly created module.  While this probably isn’t really necessary for a simple module like this one, it’s always a good idea, especially if you’re generating LLVM IR based on some input.  The verifier will print an error message if your LLVM module is malformed in any way.</p>
 
-<p>Finally, we instantiate an LLVM <code>PassManager</code> and run the <code>PrintModulePass</code> on our module.  LLVM uses an explicit pass infrastructure to manage optimizations and various other things.  A <code>PassManager</code>, as should be obvious from its name, manages passes: it is responsible for scheduling them, invoking them, and insuring the proper disposal after we’re done with them.  For this example, we’re just using a trivial pass that prints out our module in textual form.</p>
+<p>Finally, we instantiate an LLVM <code>PassManager</code> and run
+the <code>PrintModulePass</code> on our module.  LLVM uses an explicit pass
+infrastructure to manage optimizations and various other things.
+A <code>PassManager</code>, as should be obvious from its name, manages passes:
+it is responsible for scheduling them, invoking them, and ensuring the proper
+disposal after we’re done with them.  For this example, we’re just using a
+trivial pass that prints out our module in textual form.</p>
 
-<p>Now onto the interesting part: creating and populating a module.  Here’s the first chunk of our <code>makeLLVMModule()</code>:</p>
+<p>Now onto the interesting part: creating and populating a module.  Here’s the
+first chunk of our <code>makeLLVMModule()</code>:</p>
 
 <div class="doc_code">
 <pre>
@@ -122,7 +129,9 @@ Module* makeLLVMModule() {
 
 <p>You'll notice that <code>getOrInsertFunction()</code> doesn't actually return a <code>Function*</code>.  This is because <code>getOrInsertFunction()</code> will return a cast of the existing function if the function already existed with a different prototype.  Since we know that there's not already a <code>mul_add</code> function, we can safely just cast <code>c</code> to a <code>Function*</code>.
   
-<p>In addition, we set the calling convention for our new function to be the C calling convention.  This isn’t strictly necessary, but it insures that our new function will interoperate properly with C code, which is a good thing.</p>
+<p>In addition, we set the calling convention for our new function to be the C
+calling convention.  This isn’t strictly necessary, but it ensures that our new
+function will interoperate properly with C code, which is a good thing.</p>
 
 <div class="doc_code">
 <pre>
