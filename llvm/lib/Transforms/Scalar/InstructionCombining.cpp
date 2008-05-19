@@ -834,10 +834,11 @@ void InstCombiner::ComputeMaskedBits(Value *V, const APInt &Mask,
   case Instruction::IntToPtr:
     // We can't handle these if we don't know the pointer size.
     if (!TD) return;
-    // Fall through and handle them the same as zext/trunc.
+    // FALL THROUGH and handle them the same as zext/trunc.
   case Instruction::ZExt:
   case Instruction::Trunc: {
-    // All these have integer operands
+    // Note that we handle pointer operands here because of inttoptr/ptrtoint
+    // which fall through here.
     const Type *SrcTy = I->getOperand(0)->getType();
     uint32_t SrcBitWidth = TD ?
       TD->getTypeSizeInBits(SrcTy) :
@@ -2339,11 +2340,15 @@ static bool CannotBeNegativeZero(const Value *V) {
   if (const ConstantFP *CFP = dyn_cast<ConstantFP>(V))
     return !CFP->getValueAPF().isNegZero();
 
-  // (add x, 0.0) is guaranteed to return +0.0, not -0.0.
   if (const Instruction *I = dyn_cast<Instruction>(V)) {
+    // (add x, 0.0) is guaranteed to return +0.0, not -0.0.
     if (I->getOpcode() == Instruction::Add &&
         isa<ConstantFP>(I->getOperand(1)) && 
         cast<ConstantFP>(I->getOperand(1))->isNullValue())
+      return true;
+    
+    // sitofp and uitofp turn into +0.0 for zero.
+    if (isa<SIToFPInst>(I) || isa<UIToFPInst>(I))
       return true;
     
     if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
