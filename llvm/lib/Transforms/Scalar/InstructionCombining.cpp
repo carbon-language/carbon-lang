@@ -185,6 +185,8 @@ namespace {
     Instruction *visitAShr(BinaryOperator &I);
     Instruction *visitLShr(BinaryOperator &I);
     Instruction *commonShiftTransforms(BinaryOperator &I);
+    Instruction *FoldFCmp_IntToFP_Cst(FCmpInst &I, Instruction *LHSI,
+                                      Constant *RHSC);
     Instruction *visitFCmpInst(FCmpInst &I);
     Instruction *visitICmpInst(ICmpInst &I);
     Instruction *visitICmpInstWithCastAndCast(ICmpInst &ICI);
@@ -416,6 +418,18 @@ static const Type *getPromotedType(const Type *Ty) {
       return Type::Int32Ty;
   }
   return Ty;
+}
+
+/// GetFPMantissaWidth - Return the width of the mantissa (aka significand) of
+/// the specified floating point type in bits.  This returns -1 if unknown.
+static int GetFPMantissaWidth(const Type *FPType) {
+  if (FPType == Type::FloatTy)
+    return 24;
+  if (FPType == Type::DoubleTy)
+    return 53;
+  if (FPType == Type::X86_FP80Ty)
+    return 64;
+  return -1; // Unknown/crazy type.
 }
 
 /// getBitCastOperand - If the specified operand is a CastInst or a constant 
@@ -5228,6 +5242,135 @@ Instruction *InstCombiner::FoldGEPICmp(User *GEPLHS, Value *RHS,
   return 0;
 }
 
+/// FoldFCmp_IntToFP_Cst - Fold fcmp ([us]itofp x, cst) if possible.
+///
+Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
+                                                Instruction *LHSI,
+                                                Constant *RHSC) {
+  if (!isa<ConstantFP>(RHSC)) return 0;
+  const APFloat &RHS = cast<ConstantFP>(RHSC)->getValueAPF();
+  
+  // Get the width of the mantissa.  We don't want to hack on conversions that
+  // might lose information from the integer, e.g. "i64 -> float"
+  int MantissaWidth = GetFPMantissaWidth(LHSI->getType());
+  if (MantissaWidth == -1) return 0;  // Unknown.
+  
+  // Check to see that the input is converted from an integer type that is small
+  // enough that preserves all bits.  TODO: check here for "known" sign bits.
+  // This would allow us to handle (fptosi (x >>s 62) to float) if x is i64 f.e.
+  unsigned InputSize = LHSI->getOperand(0)->getType()->getPrimitiveSizeInBits();
+  
+  // If this is a uitofp instruction, we need an extra bit to hold the sign.
+  if (isa<UIToFPInst>(LHSI))
+    ++InputSize;
+  
+  // If the conversion would lose info, don't hack on this.
+  if ((int)InputSize > MantissaWidth)
+    return 0;
+  
+  // Otherwise, we can potentially simplify the comparison.  We know that it
+  // will always come through as an integer value and we know the constant is
+  // not a NAN (it would have been previously simplified).
+  assert(!RHS.isNaN() && "NaN comparison not already folded!");
+  
+  ICmpInst::Predicate Pred;
+  switch (I.getPredicate()) {
+  default: assert(0 && "Unexpected predicate!");
+  case FCmpInst::FCMP_UEQ:
+  case FCmpInst::FCMP_OEQ: Pred = ICmpInst::ICMP_EQ; break;
+  case FCmpInst::FCMP_UGT:
+  case FCmpInst::FCMP_OGT: Pred = ICmpInst::ICMP_SGT; break;
+  case FCmpInst::FCMP_UGE:
+  case FCmpInst::FCMP_OGE: Pred = ICmpInst::ICMP_SGE; break;
+  case FCmpInst::FCMP_ULT:
+  case FCmpInst::FCMP_OLT: Pred = ICmpInst::ICMP_SLT; break;
+  case FCmpInst::FCMP_ULE:
+  case FCmpInst::FCMP_OLE: Pred = ICmpInst::ICMP_SLE; break;
+  case FCmpInst::FCMP_UNE:
+  case FCmpInst::FCMP_ONE: Pred = ICmpInst::ICMP_NE; break;
+  case FCmpInst::FCMP_ORD:
+    return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+  case FCmpInst::FCMP_UNO:
+    return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+  }
+  
+  const IntegerType *IntTy = cast<IntegerType>(LHSI->getOperand(0)->getType());
+  
+  // Now we know that the APFloat is a normal number, zero or inf.
+  
+  // See if the FP constant is top large for the integer.  For example,
+  // comparing an i8 to 300.0.
+  unsigned IntWidth = IntTy->getPrimitiveSizeInBits();
+  
+  // If the RHS value is > SignedMax, fold the comparison.  This handles +INF
+  // and large values. 
+  APFloat SMax(RHS.getSemantics(), APFloat::fcZero, false);
+  SMax.convertFromAPInt(APInt::getSignedMaxValue(IntWidth), true,
+                        APFloat::rmNearestTiesToEven);
+  if (SMax.compare(RHS) == APFloat::cmpLessThan) {  // smax < 13123.0
+    if (ICmpInst::ICMP_NE || ICmpInst::ICMP_SLT || Pred == ICmpInst::ICMP_SLE)
+      return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+    return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+  }
+  
+  // See if the RHS value is < SignedMin.
+  APFloat SMin(RHS.getSemantics(), APFloat::fcZero, false);
+  SMin.convertFromAPInt(APInt::getSignedMinValue(IntWidth), true,
+                        APFloat::rmNearestTiesToEven);
+  if (SMin.compare(RHS) == APFloat::cmpGreaterThan) { // smin > 12312.0
+    if (ICmpInst::ICMP_NE || ICmpInst::ICMP_SGT || Pred == ICmpInst::ICMP_SGE)
+      return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+    return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+  }
+
+  // Okay, now we know that the FP constant fits in the range [SMIN, SMAX] but
+  // it may still be fractional.  See if it is fractional by casting the FP
+  // value to the integer value and back, checking for equality.  Don't do this
+  // for zero, because -0.0 is not fractional.
+  Constant *RHSInt = ConstantExpr::getFPToSI(RHSC, IntTy);
+  if (!RHS.isZero() &&
+      ConstantExpr::getSIToFP(RHSInt, RHSC->getType()) != RHSC) {
+    // If we had a comparison against a fractional value, we have to adjust
+    // the compare predicate and sometimes the value.  RHSC is rounded towards
+    // zero at this point.
+    switch (Pred) {
+    default: assert(0 && "Unexpected integer comparison!");
+    case ICmpInst::ICMP_NE:  // (float)int != 4.4   --> true
+      return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+    case ICmpInst::ICMP_EQ:  // (float)int == 4.4   --> false
+      return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+    case ICmpInst::ICMP_SLE:
+      // (float)int <= 4.4   --> int <= 4
+      // (float)int <= -4.4  --> int < -4
+      if (RHS.isNegative())
+        Pred = ICmpInst::ICMP_SLT;
+      break;
+    case ICmpInst::ICMP_SLT:
+      // (float)int < -4.4   --> int < -4
+      // (float)int < 4.4    --> int <= 4
+      if (!RHS.isNegative())
+        Pred = ICmpInst::ICMP_SLE;
+      break;
+    case ICmpInst::ICMP_SGT:
+      // (float)int > 4.4    --> int > 4
+      // (float)int > -4.4   --> int >= -4
+      if (RHS.isNegative())
+        Pred = ICmpInst::ICMP_SGE;
+      break;
+    case ICmpInst::ICMP_SGE:
+      // (float)int >= -4.4   --> int >= -4
+      // (float)int >= 4.4    --> int > 4
+      if (!RHS.isNegative())
+        Pred = ICmpInst::ICMP_SGT;
+      break;
+    }
+  }
+
+  // Lower this FP comparison into an appropriate integer version of the
+  // comparison.
+  return new ICmpInst(Pred, LHSI->getOperand(0), RHSInt);
+}
+
 Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
   bool Changed = SimplifyCompare(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
@@ -5276,10 +5419,27 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
 
   // Handle fcmp with constant RHS
   if (Constant *RHSC = dyn_cast<Constant>(Op1)) {
+    // If the constant is a nan, see if we can fold the comparison based on it.
+    if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHSC)) {
+      if (CFP->getValueAPF().isNaN()) {
+        if (FCmpInst::isOrdered(I.getPredicate()))   // True if ordered and...
+          return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
+        if (FCmpInst::isUnordered(I.getPredicate())) // True if unordered or...
+          return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
+        if (FCmpInst::isUnordered(I.getPredicate())) // Undef on unordered.
+          return ReplaceInstUsesWith(I, UndefValue::get(Type::Int1Ty));
+      }
+    }
+    
     if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
       switch (LHSI->getOpcode()) {
       case Instruction::PHI:
         if (Instruction *NV = FoldOpIntoPhi(I))
+          return NV;
+        break;
+      case Instruction::SIToFP:
+      case Instruction::UIToFP:
+        if (Instruction *NV = FoldFCmp_IntToFP_Cst(I, LHSI, RHSC))
           return NV;
         break;
       case Instruction::Select:
