@@ -208,8 +208,8 @@ namespace {
     Instruction *visitSExt(SExtInst &CI);
     Instruction *visitFPTrunc(FPTruncInst &CI);
     Instruction *visitFPExt(CastInst &CI);
-    Instruction *visitFPToUI(CastInst &CI);
-    Instruction *visitFPToSI(CastInst &CI);
+    Instruction *visitFPToUI(FPToUIInst &FI);
+    Instruction *visitFPToSI(FPToSIInst &FI);
     Instruction *visitUIToFP(CastInst &CI);
     Instruction *visitSIToFP(CastInst &CI);
     Instruction *visitPtrToInt(CastInst &CI);
@@ -2439,9 +2439,9 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       } while (Size >= 1);
       
       // FIXME: This shouldn't be necessary. When the backends can handle types
-      // with funny bit widths then this whole cascade of if statements should
-      // be removed. It is just here to get the size of the "middle" type back
-      // up to something that the back ends can handle.
+      // with funny bit widths then this switch statement should be removed. It
+      // is just here to get the size of the "middle" type back up to something
+      // that the back ends can handle.
       const Type *MiddleType = 0;
       switch (Size) {
         default: break;
@@ -7995,12 +7995,30 @@ Instruction *InstCombiner::visitFPExt(CastInst &CI) {
   return commonCastTransforms(CI);
 }
 
-Instruction *InstCombiner::visitFPToUI(CastInst &CI) {
-  return commonCastTransforms(CI);
+Instruction *InstCombiner::visitFPToUI(FPToUIInst &FI) {
+  // fptoui(uitofp(X)) --> X  if the intermediate type has enough bits in its
+  // mantissa to accurately represent all values of X.  For example, do not
+  // do this with i64->float->i64.
+  if (UIToFPInst *SrcI = dyn_cast<UIToFPInst>(FI.getOperand(0)))
+    if (SrcI->getOperand(0)->getType() == FI.getType() &&
+        (int)FI.getType()->getPrimitiveSizeInBits() < /*extra bit for sign */
+                    GetFPMantissaWidth(SrcI->getType()))
+      return ReplaceInstUsesWith(FI, SrcI->getOperand(0));
+
+  return commonCastTransforms(FI);
 }
 
-Instruction *InstCombiner::visitFPToSI(CastInst &CI) {
-  return commonCastTransforms(CI);
+Instruction *InstCombiner::visitFPToSI(FPToSIInst &FI) {
+  // fptosi(sitofp(X)) --> X  if the intermediate type has enough bits in its
+  // mantissa to accurately represent all values of X.  For example, do not
+  // do this with i64->float->i64.
+  if (SIToFPInst *SrcI = dyn_cast<SIToFPInst>(FI.getOperand(0)))
+    if (SrcI->getOperand(0)->getType() == FI.getType() &&
+        (int)FI.getType()->getPrimitiveSizeInBits() <= 
+                    GetFPMantissaWidth(SrcI->getType()))
+      return ReplaceInstUsesWith(FI, SrcI->getOperand(0));
+  
+  return commonCastTransforms(FI);
 }
 
 Instruction *InstCombiner::visitUIToFP(CastInst &CI) {

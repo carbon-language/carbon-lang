@@ -23,3 +23,11 @@ define i1 @test4(i8 %A) {
   ret i1 %C  ;  A != 127
 }
 
+define i32 @test5(i32 %A) {
+  %B = sitofp i32 %A to double
+  %C = fptosi double %B to i32
+  %D = uitofp i32 %C to double
+  %E = fptoui double %D to i32
+  ret i32 %E
+}
+
