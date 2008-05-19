@@ -21,17 +21,10 @@ namespace clang {
 InitListChecker::InitListChecker(Sema *S, InitListExpr *IL, QualType &T) {
   hadError = false;
   SemaRef = S;
-  
+
   unsigned newIndex = 0;
-    
+
   CheckExplicitInitList(IL, T, newIndex);
-      
-  if (!hadError && (newIndex < IL->getNumInits())) {
-    // We have leftover initializers; warn
-    SemaRef->Diag(IL->getInit(newIndex)->getLocStart(), 
-                  diag::warn_excess_initializers, 
-                  IL->getInit(newIndex)->getSourceRange());
-  }
 }
 
 int InitListChecker::numArrayElements(QualType DeclType) {
@@ -97,29 +90,46 @@ void InitListChecker::CheckImplicitInitList(InitListExpr *ParentIList,
                                        &InitExprs[0], InitExprs.size(), 
                                        SourceLocation());
   ILE->setType(T);
-  
+
   // Modify the parent InitListExpr to point to the implicit InitListExpr.
   ParentIList->addInit(Index, ILE);
 }
 
 void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
                                             unsigned &Index) {
-  //assert(IList->isExplicit() && "Illegal Implicit InitListExpr");
-  if (IList->isExplicit() && T->isScalarType())
-      SemaRef->Diag(IList->getLocStart(), diag::warn_braces_around_scalar_init, 
-                    IList->getSourceRange());
+  assert(IList->isExplicit() && "Illegal Implicit InitListExpr");
+  if (T->isScalarType())
+    SemaRef->Diag(IList->getLocStart(), diag::warn_braces_around_scalar_init, 
+                  IList->getSourceRange());
+
   CheckListElementTypes(IList, T, Index);
   IList->setType(T);
+
+  if (!hadError && (Index < IList->getNumInits())) {
+    // We have leftover initializers
+    if (IList->getNumInits() > 0 &&
+        SemaRef->IsStringLiteralInit(IList->getInit(Index), T)) {
+      // Special-case; this could be confusing
+      SemaRef->Diag(IList->getInit(Index)->getLocStart(),
+                    diag::err_excess_initializers_in_char_array_initializer,
+                    IList->getInit(Index)->getSourceRange());
+      hadError = true; 
+    } else {
+      SemaRef->Diag(IList->getInit(Index)->getLocStart(), 
+                    diag::warn_excess_initializers, 
+                    IList->getInit(Index)->getSourceRange());
+    }
+  }
 }
 
 void InitListChecker::CheckListElementTypes(InitListExpr *IList,
                                             QualType &DeclType, 
                                             unsigned &Index) {
-  if (DeclType->isScalarType())
+  if (DeclType->isScalarType()) {
     CheckScalarType(IList, DeclType, Index);
-  else if (DeclType->isVectorType())
+  } else if (DeclType->isVectorType()) {
     CheckVectorType(IList, DeclType, Index);
-  else if (DeclType->isAggregateType() || DeclType->isUnionType()) {
+  } else if (DeclType->isAggregateType() || DeclType->isUnionType()) {
     if (DeclType->isStructureType() || DeclType->isUnionType())
       CheckStructUnionTypes(IList, DeclType, Index);
     else if (DeclType->isArrayType()) 
@@ -137,16 +147,16 @@ void InitListChecker::CheckSubElementType(InitListExpr *IList,
                                           QualType ElemType, 
                                           unsigned &Index) {
   Expr* expr = IList->getInit(Index);
-  if (ElemType->isScalarType()) {
-    CheckScalarType(IList, ElemType, Index);
+  if (InitListExpr *SubInitList = dyn_cast<InitListExpr>(expr)) {
+    unsigned newIndex = 0;
+    CheckExplicitInitList(SubInitList, ElemType, newIndex);
+    Index++;
   } else if (StringLiteral *lit =
              SemaRef->IsStringLiteralInit(expr, ElemType)) {
     SemaRef->CheckStringLiteralInit(lit, ElemType);
     Index++;
-  } else if (InitListExpr *SubInitList = dyn_cast<InitListExpr>(expr)) {
-    unsigned newIndex = 0;
-    CheckExplicitInitList(SubInitList, ElemType, newIndex);
-    Index++;
+  } else if (ElemType->isScalarType()) {
+    CheckScalarType(IList, ElemType, Index);
   } else if (expr->getType()->getAsRecordType() &&
              SemaRef->Context.typesAreCompatible(
                   IList->getInit(Index)->getType(), ElemType)) {
@@ -162,17 +172,15 @@ void InitListChecker::CheckScalarType(InitListExpr *IList, QualType &DeclType,
                                       unsigned &Index) {
   if (Index < IList->getNumInits()) {
     Expr* expr = IList->getInit(Index);
-    if (InitListExpr *SubInitList = dyn_cast<InitListExpr>(expr)) {
-      unsigned newIndex = 0;
-      CheckExplicitInitList(SubInitList, DeclType, newIndex);
-    } else {
-      Expr *savExpr = expr; // Might be promoted by CheckSingleInitializer.
-      if (SemaRef->CheckSingleInitializer(expr, DeclType))
-        hadError |= true; // types weren't compatible.
-      else if (savExpr != expr)
-        // The type was promoted, update initializer list.
-        IList->setInit(Index, expr);
+    if (isa<InitListExpr>(expr)) {
+      // FIXME: Print error about too many braces
     }
+    Expr *savExpr = expr; // Might be promoted by CheckSingleInitializer.
+    if (SemaRef->CheckSingleInitializer(expr, DeclType))
+      hadError |= true; // types weren't compatible.
+    else if (savExpr != expr)
+      // The type was promoted, update initializer list.
+      IList->setInit(Index, expr);
     ++Index;
   }
   // FIXME: Should an error be reported for empty initializer list + scalar?
@@ -205,9 +213,7 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
 #if 0
       if (IList->isExplicit() && Index < IList->getNumInits()) {
         // We have leftover initializers; warn
-        SemaRef->Diag(IList->getInit(Index)->getLocStart(), 
-                      diag::err_excess_initializers_in_char_array_initializer, 
-                      IList->getInit(Index)->getSourceRange());
+
       }
 #endif
       return;
