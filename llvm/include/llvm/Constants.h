@@ -283,8 +283,8 @@ class ConstantAggregateZero : public Constant {
   void *operator new(size_t, unsigned);                      // DO NOT IMPLEMENT
   ConstantAggregateZero(const ConstantAggregateZero &);      // DO NOT IMPLEMENT
 protected:
-  explicit ConstantAggregateZero(const Type *Ty)
-    : Constant(Ty, ConstantAggregateZeroVal, 0, 0) {}
+  explicit ConstantAggregateZero(const Type *ty)
+    : Constant(ty, ConstantAggregateZeroVal, 0, 0) {}
 protected:
   // allocate space for exactly zero operands
   void *operator new(size_t s) {
@@ -553,8 +553,8 @@ class ConstantExpr : public Constant {
   friend struct ConvertConstantType<ConstantExpr, Type>;
 
 protected:
-  ConstantExpr(const Type *Ty, unsigned Opcode, Use *Ops, unsigned NumOps)
-    : Constant(Ty, ConstantExprVal, Ops, NumOps) {
+  ConstantExpr(const Type *ty, unsigned Opcode, Use *Ops, unsigned NumOps)
+    : Constant(ty, ConstantExprVal, Ops, NumOps) {
     // Operation type (an Instruction opcode) is stored as the SubclassData.
     SubclassData = Opcode;
   }

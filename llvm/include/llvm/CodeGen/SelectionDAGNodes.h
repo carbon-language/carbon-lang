@@ -1964,15 +1964,15 @@ protected:
    */
   SDUse Ops[4];
 public:
-  LSBaseSDNode(ISD::NodeType NodeTy, SDOperand *Operands, unsigned NumOperands,
+  LSBaseSDNode(ISD::NodeType NodeTy, SDOperand *Operands, unsigned numOperands,
                SDVTList VTs, ISD::MemIndexedMode AM, MVT::ValueType VT, 
                const Value *SV, int SVO, unsigned Align, bool Vol)
     : SDNode(NodeTy, VTs),
       AddrMode(AM), MemoryVT(VT),
       SrcValue(SV), SVOffset(SVO), Alignment(Align), IsVolatile(Vol) {
-    for (unsigned i = 0; i != NumOperands; ++i)
+    for (unsigned i = 0; i != numOperands; ++i)
       Ops[i] = Operands[i];
-    InitOperands(Ops, NumOperands);
+    InitOperands(Ops, numOperands);
     assert(Align != 0 && "Loads and stores should have non-zero aligment");
     assert((getOffset().getOpcode() == ISD::UNDEF || isIndexed()) &&
            "Only indexed loads and stores have a non-undef offset operand");
@@ -2004,7 +2004,7 @@ public:
   /// reference performed by this load or store.
   MachineMemOperand getMemOperand() const;
 
-  static bool classof(const LSBaseSDNode *N) { return true; }
+  static bool classof(const LSBaseSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::LOAD ||
            N->getOpcode() == ISD::STORE;
@@ -2134,11 +2134,11 @@ struct ilist_traits<SDNode> {
   //static SDNode *createNode(const SDNode &V) { return new SDNode(V); }
   
   
-  void addNodeToList(SDNode *NTy) {}
-  void removeNodeFromList(SDNode *NTy) {}
-  void transferNodesFromList(iplist<SDNode, ilist_traits> &L2,
-                             const ilist_iterator<SDNode> &X,
-                             const ilist_iterator<SDNode> &Y) {}
+  void addNodeToList(SDNode *) {}
+  void removeNodeFromList(SDNode *) {}
+  void transferNodesFromList(iplist<SDNode, ilist_traits> &,
+                             const ilist_iterator<SDNode> &,
+                             const ilist_iterator<SDNode> &) {}
 };
 
 namespace ISD {

@@ -228,8 +228,8 @@ protected:
   unsigned NumOperands;
 
   void *operator new(size_t s, unsigned Us);
-  User(const Type *Ty, unsigned vty, Use *OpList, unsigned NumOps)
-    : Value(Ty, vty), OperandList(OpList), NumOperands(NumOps) {}
+  User(const Type *ty, unsigned vty, Use *OpList, unsigned NumOps)
+    : Value(ty, vty), OperandList(OpList), NumOperands(NumOps) {}
   Use *allocHungoffUses(unsigned) const;
   void dropHungoffUses(Use *U) {
     if (OperandList == U) {

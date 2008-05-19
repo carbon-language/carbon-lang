@@ -226,7 +226,7 @@ public:
   //
   virtual void printOptionInfo(size_t GlobalWidth) const = 0;
 
-  virtual void getExtraOptionNames(std::vector<const char*> &OptionNames) {}
+  virtual void getExtraOptionNames(std::vector<const char*> &) {}
 
   // addOccurrence - Wrapper around handleOccurrence that enforces Flags
   //
@@ -324,10 +324,10 @@ public:
     Values.push_back(std::make_pair(EnumName, std::make_pair(Val, Desc)));
 
     // Process the varargs portion of the values...
-    while (const char *EnumName = va_arg(ValueArgs, const char *)) {
+    while (const char *enumName = va_arg(ValueArgs, const char *)) {
       DataType EnumVal = static_cast<DataType>(va_arg(ValueArgs, int));
       const char *EnumDesc = va_arg(ValueArgs, const char *);
-      Values.push_back(std::make_pair(EnumName,      // Add value to value map
+      Values.push_back(std::make_pair(enumName,      // Add value to value map
                                       std::make_pair(EnumVal, EnumDesc)));
     }
   }
@@ -499,9 +499,9 @@ struct basic_parser_impl {  // non-template implementation of basic_parser<t>
     return ValueRequired;
   }
 
-  void getExtraOptionNames(std::vector<const char*> &OptionNames) {}
+  void getExtraOptionNames(std::vector<const char*> &) {}
 
-  void initialize(Option &O) {}
+  void initialize(Option &) {}
 
   // Return the width of the option tag for printing...
   size_t getOptionWidth(const Option &O) const;
@@ -651,7 +651,7 @@ template<>
 class parser<std::string> : public basic_parser<std::string> {
 public:
   // parse - Return true on error.
-  bool parse(Option &O, const char *AN, const std::string &Arg,
+  bool parse(Option &, const char *, const std::string &Arg,
              std::string &Value) {
     Value = Arg;
     return false;
@@ -1257,7 +1257,7 @@ public:
 
 class alias : public Option {
   Option *AliasFor;
-  virtual bool handleOccurrence(unsigned pos, const char *ArgName,
+  virtual bool handleOccurrence(unsigned pos, const char */*ArgName*/,
                                 const std::string &Arg) {
     return AliasFor->handleOccurrence(pos, AliasFor->ArgStr, Arg);
   }

@@ -232,7 +232,7 @@ inline std::ostream &operator<<(std::ostream &OS, const Value &V) {
   return OS;
 }
 
-void Use::init(Value *V, User *user) {
+void Use::init(Value *V, User *) {
   Val = V;
   if (V) V->addUse(*this);
 }

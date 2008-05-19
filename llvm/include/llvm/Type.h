@@ -293,7 +293,7 @@ public:
   static const IntegerType *Int1Ty, *Int8Ty, *Int16Ty, *Int32Ty, *Int64Ty;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const Type *T) { return true; }
+  static inline bool classof(const Type *) { return true; }
 
   void addRef() const {
     assert(isAbstract() && "Cannot add a reference to a non-abstract type!");

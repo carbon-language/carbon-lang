@@ -53,10 +53,10 @@ public:
   /// through RegisterPass.
   PassInfo(const char *name, const char *arg, intptr_t pi,
            NormalCtor_t normal = 0,
-           bool isCFGOnly = false, bool isAnalysis = false)
+           bool isCFGOnly = false, bool is_analysis = false)
     : PassName(name), PassArgument(arg), PassID(pi), 
       IsCFGOnlyPass(isCFGOnly), 
-      IsAnalysis(isAnalysis), IsAnalysisGroup(false), NormalCtor(normal) {
+      IsAnalysis(is_analysis), IsAnalysisGroup(false), NormalCtor(normal) {
     registerPass();
   }
   /// PassInfo ctor - Do not call this directly, this should only be invoked
@@ -169,10 +169,10 @@ struct RegisterPass : public PassInfo {
 
   // Register Pass using default constructor...
   RegisterPass(const char *PassArg, const char *Name, bool CFGOnly = false,
-               bool IsAnalysis = false)
+               bool is_analysis = false)
     : PassInfo(Name, PassArg, intptr_t(&passName::ID),
                PassInfo::NormalCtor_t(callDefaultCtor<passName>),
-               CFGOnly, IsAnalysis) {
+               CFGOnly, is_analysis) {
   }
 };
 
@@ -244,7 +244,7 @@ struct PassRegistrationListener {
   /// Callback functions - These functions are invoked whenever a pass is loaded
   /// or removed from the current executable.
   ///
-  virtual void passRegistered(const PassInfo *P) {}
+  virtual void passRegistered(const PassInfo *) {}
 
   /// enumeratePasses - Iterate over the registered passes, calling the
   /// passEnumerate callback on each PassInfo object.
@@ -254,7 +254,7 @@ struct PassRegistrationListener {
   /// passEnumerate - Callback function invoked when someone calls
   /// enumeratePasses on this PassRegistrationListener object.
   ///
-  virtual void passEnumerate(const PassInfo *P) {}
+  virtual void passEnumerate(const PassInfo *) {}
 };
 
 

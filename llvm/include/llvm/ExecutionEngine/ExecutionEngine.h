@@ -50,12 +50,12 @@ private:
 
 public:
   std::map<const GlobalValue*, void *> &
-  getGlobalAddressMap(const MutexGuard &locked) {
+  getGlobalAddressMap(const MutexGuard &) {
     return GlobalAddressMap;
   }
 
   std::map<void*, const GlobalValue*> & 
-  getGlobalAddressReverseMap(const MutexGuard& locked) {
+  getGlobalAddressReverseMap(const MutexGuard &) {
     return GlobalAddressReverseMap;
   }
 };

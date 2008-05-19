@@ -48,7 +48,7 @@ public:
   /// it up to be materialized lazily.  If the provider doesn't support this
   /// capability, this method is a noop.
   ///
-  virtual void dematerializeFunction(Function *F) {}
+  virtual void dematerializeFunction(Function *) {}
   
   /// materializeModule - make sure the entire Module has been completely read.
   /// On error, return null and fill in the error string if specified.
@@ -77,10 +77,10 @@ struct ExistingModuleProvider : public ModuleProvider {
   explicit ExistingModuleProvider(Module *M) {
     TheModule = M;
   }
-  bool materializeFunction(Function *F, std::string *ErrInfo = 0) {
+  bool materializeFunction(Function *, std::string * = 0) {
     return false;
   }
-  Module* materializeModule(std::string *ErrInfo = 0) { return TheModule; }
+  Module* materializeModule(std::string * = 0) { return TheModule; }
 };
 
 } // End llvm namespace

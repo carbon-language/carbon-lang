@@ -99,7 +99,7 @@ public:
   /// used by the LLC tool to determine which target to use when an explicit
   /// -march option is not specified.  If a target returns zero, it will never
   /// be chosen without an explicit -march option.
-  static unsigned getModuleMatchQuality(const Module &M) { return 0; }
+  static unsigned getModuleMatchQuality(const Module &) { return 0; }
 
   /// getJITMatchQuality - This static method should be implemented by targets
   /// that provide JIT capabilities to indicate how suitable they are for
@@ -195,10 +195,10 @@ public:
   /// This method should return FileModel::Error if emission of this file type
   /// is not supported.
   ///
-  virtual FileModel::Model addPassesToEmitFile(PassManagerBase &PM,
-                                               std::ostream &Out,
-                                               CodeGenFileType FileType,
-                                               bool Fast) {
+  virtual FileModel::Model addPassesToEmitFile(PassManagerBase &,
+                                               std::ostream &,
+                                               CodeGenFileType,
+                                               bool /*Fast*/) {
     return FileModel::None;
   }
 
@@ -206,8 +206,8 @@ public:
   /// to be split up (e.g., to add an object writer pass), this method can be
   /// used to finish up adding passes to emit the file, if necessary.
   ///
-  virtual bool addPassesToEmitFileFinish(PassManagerBase &PM,
-                                         MachineCodeEmitter *MCE, bool Fast) {
+  virtual bool addPassesToEmitFileFinish(PassManagerBase &,
+                                         MachineCodeEmitter *, bool /*Fast*/) {
     return true;
   }
  
@@ -217,8 +217,9 @@ public:
   /// of functions.  This method returns true if machine code emission is
   /// not supported.
   ///
-  virtual bool addPassesToEmitMachineCode(PassManagerBase &PM,
-                                          MachineCodeEmitter &MCE, bool Fast) {
+  virtual bool addPassesToEmitMachineCode(PassManagerBase &,
+                                          MachineCodeEmitter &,
+                                          bool /*Fast*/) {
     return true;
   }
 
@@ -226,8 +227,8 @@ public:
   /// require having the entire module at once.  This is not recommended, do not
   /// use this.
   virtual bool WantsWholeFile() const { return false; }
-  virtual bool addPassesToEmitWholeFile(PassManager &PM, std::ostream &Out,
-                                        CodeGenFileType FileType, bool Fast) {
+  virtual bool addPassesToEmitWholeFile(PassManager &, std::ostream &,
+                                        CodeGenFileType, bool /*Fast*/) {
     return true;
   }
 };
@@ -277,14 +278,14 @@ public:
   /// addInstSelector - This method should add any "last minute" LLVM->LLVM
   /// passes, then install an instruction selector pass, which converts from
   /// LLVM code to machine instructions.
-  virtual bool addInstSelector(PassManagerBase &PM, bool Fast) {
+  virtual bool addInstSelector(PassManagerBase &, bool /*Fast*/) {
     return true;
   }
 
   /// addPreRegAllocPasses - This method may be implemented by targets that want
   /// to run passes immediately before register allocation. This should return
   /// true if -print-machineinstrs should print after these passes.
-  virtual bool addPreRegAlloc(PassManagerBase &PM, bool Fast) {
+  virtual bool addPreRegAlloc(PassManagerBase &, bool /*Fast*/) {
     return false;
   }
 
@@ -292,14 +293,14 @@ public:
   /// want to run passes after register allocation but before prolog-epilog
   /// insertion.  This should return true if -print-machineinstrs should print
   /// after these passes.
-  virtual bool addPostRegAlloc(PassManagerBase &PM, bool Fast) {
+  virtual bool addPostRegAlloc(PassManagerBase &, bool /*Fast*/) {
     return false;
   }
   
   /// addPreEmitPass - This pass may be implemented by targets that want to run
   /// passes immediately before machine code is emitted.  This should return
   /// true if -print-machineinstrs should print out the code after the passes.
-  virtual bool addPreEmitPass(PassManagerBase &PM, bool Fast) {
+  virtual bool addPreEmitPass(PassManagerBase &, bool /*Fast*/) {
     return false;
   }
   
@@ -307,16 +308,16 @@ public:
   /// addAssemblyEmitter - This pass should be overridden by the target to add
   /// the asmprinter, if asm emission is supported.  If this is not supported,
   /// 'true' should be returned.
-  virtual bool addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
-                                  std::ostream &Out) {
+  virtual bool addAssemblyEmitter(PassManagerBase &, bool /*Fast*/, 
+                                  std::ostream &) {
     return true;
   }
   
   /// addCodeEmitter - This pass should be overridden by the target to add a
   /// code emitter, if supported.  If this is not supported, 'true' should be
   /// returned. If DumpAsm is true, the generated assembly is printed to cerr.
-  virtual bool addCodeEmitter(PassManagerBase &PM, bool Fast, bool DumpAsm,
-                              MachineCodeEmitter &MCE) {
+  virtual bool addCodeEmitter(PassManagerBase &, bool /*Fast*/,
+                              bool /*DumpAsm*/, MachineCodeEmitter &) {
     return true;
   }
 
@@ -324,8 +325,8 @@ public:
   /// a code emitter (without setting flags), if supported.  If this is not
   /// supported, 'true' should be returned.  If DumpAsm is true, the generated
   /// assembly is printed to cerr.
-  virtual bool addSimpleCodeEmitter(PassManagerBase &PM, bool Fast, 
-                                    bool DumpAsm, MachineCodeEmitter &MCE) {
+  virtual bool addSimpleCodeEmitter(PassManagerBase &, bool /*Fast*/,
+                                    bool /*DumpAsm*/, MachineCodeEmitter &) {
     return true;
   }
 

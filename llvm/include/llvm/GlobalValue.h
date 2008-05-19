@@ -50,9 +50,9 @@ public:
   };
 
 protected:
-  GlobalValue(const Type *Ty, ValueTy vty, Use *Ops, unsigned NumOps,
+  GlobalValue(const Type *ty, ValueTy vty, Use *Ops, unsigned NumOps,
               LinkageTypes linkage, const std::string &name = "")
-    : Constant(Ty, vty, Ops, NumOps), Parent(0),
+    : Constant(ty, vty, Ops, NumOps), Parent(0),
       Linkage(linkage), Visibility(DefaultVisibility), Alignment(0) {
     if (!name.empty()) setName(name);
   }

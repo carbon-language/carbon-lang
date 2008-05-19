@@ -300,8 +300,8 @@ public:
   
   bool operator==(const SmallVectorImpl &RHS) const {
     if (size() != RHS.size()) return false;
-    for (T *This = Begin, *That = RHS.Begin, *End = Begin+size(); 
-         This != End; ++This, ++That)
+    for (T *This = Begin, *That = RHS.Begin, *E = Begin+size(); 
+         This != E; ++This, ++That)
       if (*This != *That)
         return false;
     return true;

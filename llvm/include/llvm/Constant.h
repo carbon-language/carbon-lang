@@ -39,8 +39,8 @@ class Constant : public User {
   void operator=(const Constant &);     // Do not implement
   Constant(const Constant &);           // Do not implement
 protected:
-  Constant(const Type *Ty, ValueTy vty, Use *Ops, unsigned NumOps)
-    : User(Ty, vty, Ops, NumOps) {}
+  Constant(const Type *ty, ValueTy vty, Use *Ops, unsigned NumOps)
+    : User(ty, vty, Ops, NumOps) {}
 
   void destroyConstantImpl();
 public:

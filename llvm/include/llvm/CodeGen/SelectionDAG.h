@@ -162,8 +162,8 @@ public:
                                           MVT::ValueType VT3) {
     return getVTList(VT1, VT2, VT3).VTs;
   }
-  const MVT::ValueType *getNodeValueTypes(std::vector<MVT::ValueType> &VTList) {
-    return getVTList(&VTList[0], (unsigned)VTList.size()).VTs;
+  const MVT::ValueType *getNodeValueTypes(std::vector<MVT::ValueType> &vtList) {
+    return getVTList(&vtList[0], (unsigned)vtList.size()).VTs;
   }
   
   

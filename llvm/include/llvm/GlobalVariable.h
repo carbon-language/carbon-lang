@@ -112,11 +112,11 @@ public:
   /// leads to undefined behavior.
   ///
   bool isConstant() const { return isConstantGlobal; }
-  void setConstant(bool Value) { isConstantGlobal = Value; }
+  void setConstant(bool Val) { isConstantGlobal = Val; }
 
   /// If the value is "Thread Local", its value isn't shared by the threads.
   bool isThreadLocal() const { return isThreadLocalSymbol; }
-  void setThreadLocal(bool Value) { isThreadLocalSymbol = Value; }
+  void setThreadLocal(bool Val) { isThreadLocalSymbol = Val; }
 
   /// removeFromParent - This method unlinks 'this' from the containing module,
   /// but does not delete it.

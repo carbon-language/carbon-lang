@@ -59,26 +59,23 @@ namespace llvm {
     ///     other instruction is available, issue it first.
     ///  * NoopHazard: issuing this instruction would break the program.  If
     ///     some other instruction can be issued, do so, otherwise issue a noop.
-    virtual HazardType getHazardType(SDNode *Node) {
+    virtual HazardType getHazardType(SDNode *) {
       return NoHazard;
     }
     
     /// EmitInstruction - This callback is invoked when an instruction is
     /// emitted, to advance the hazard state.
-    virtual void EmitInstruction(SDNode *Node) {
-    }
+    virtual void EmitInstruction(SDNode *) {}
     
     /// AdvanceCycle - This callback is invoked when no instructions can be
     /// issued on this cycle without a hazard.  This should increment the
     /// internal state of the hazard recognizer so that previously "Hazard"
     /// instructions will now not be hazards.
-    virtual void AdvanceCycle() {
-    }
+    virtual void AdvanceCycle() {}
     
     /// EmitNoop - This callback is invoked when a noop was added to the
     /// instruction stream.
-    virtual void EmitNoop() {
-    }
+    virtual void EmitNoop() {}
   };
 
   /// SDep - Scheduling dependency. It keeps track of dependent nodes,
@@ -236,9 +233,9 @@ namespace llvm {
     /// ScheduledNode - As each node is scheduled, this method is invoked.  This
     /// allows the priority function to adjust the priority of node that have
     /// already been emitted.
-    virtual void ScheduledNode(SUnit *Node) {}
+    virtual void ScheduledNode(SUnit *) {}
 
-    virtual void UnscheduledNode(SUnit *Node) {}
+    virtual void UnscheduledNode(SUnit *) {}
   };
 
   class ScheduleDAG {
