@@ -770,7 +770,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType) {
 
     return CheckSingleInitializer(Init, DeclType);
   }
-#if 1
+#if 0
   unsigned newIndex = 0;
   return CheckInitializerListTypes(InitList, DeclType, true, newIndex);
 #else
