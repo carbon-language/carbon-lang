@@ -90,11 +90,6 @@ LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty) {
   return static_cast<LLVMTypeKind>(unwrap(Ty)->getTypeID());
 }
 
-void LLVMRefineAbstractType(LLVMTypeRef AbstractType, LLVMTypeRef ConcreteType){
-  DerivedType *Ty = unwrap<DerivedType>(AbstractType);
-  Ty->refineAbstractTypeTo(unwrap(ConcreteType));
-}
-
 /*--.. Operations on integer types .........................................--*/
 
 LLVMTypeRef LLVMInt1Type(void)  { return (LLVMTypeRef) Type::Int1Ty;  }

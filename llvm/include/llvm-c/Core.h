@@ -224,9 +224,6 @@ void LLVMDumpModule(LLVMModuleRef M);
 /** See llvm::LLVMTypeKind::getTypeID. */
 LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty);
 
-/** See llvm::DerivedType::refineAbstractTypeTo. */
-void LLVMRefineAbstractType(LLVMTypeRef AbstractType, LLVMTypeRef ConcreteType);
-
 /* Operations on integer types */
 LLVMTypeRef LLVMInt1Type(void);
 LLVMTypeRef LLVMInt8Type(void);

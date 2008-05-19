@@ -329,7 +329,7 @@ CAMLprim LLVMTypeRef llvm_type_of_handle(value TH) {
 }
 
 CAMLprim value llvm_refine_type(LLVMTypeRef AbstractTy, LLVMTypeRef ConcreteTy){
-  LLVMRefineAbstractType(AbstractTy, ConcreteTy);
+  LLVMRefineType(AbstractTy, ConcreteTy);
   return Val_unit;
 }
 
