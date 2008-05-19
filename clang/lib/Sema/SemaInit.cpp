@@ -98,9 +98,6 @@ void InitListChecker::CheckImplicitInitList(InitListExpr *ParentIList,
 void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
                                             unsigned &Index) {
   assert(IList->isExplicit() && "Illegal Implicit InitListExpr");
-  if (T->isScalarType())
-    SemaRef->Diag(IList->getLocStart(), diag::warn_braces_around_scalar_init, 
-                  IList->getSourceRange());
 
   CheckListElementTypes(IList, T, Index);
   IList->setType(T);
@@ -120,6 +117,10 @@ void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
                     IList->getInit(Index)->getSourceRange());
     }
   }
+
+  if (!hadError && T->isScalarType())
+    SemaRef->Diag(IList->getLocStart(), diag::warn_braces_around_scalar_init, 
+                  IList->getSourceRange());
 }
 
 void InitListChecker::CheckListElementTypes(InitListExpr *IList,
