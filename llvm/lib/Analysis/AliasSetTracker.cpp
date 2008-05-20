@@ -294,7 +294,10 @@ bool AliasSetTracker::add(FreeInst *FI) {
 
 bool AliasSetTracker::add(VAArgInst *VAAI) {
   bool NewPtr;
-  addPointer(VAAI->getOperand(0), ~0, AliasSet::ModRef, NewPtr);
+  AliasSet &AS = addPointer(VAAI->getOperand(0), ~0, AliasSet::ModRef, NewPtr);
+  
+  // Treat vaarg instructions as volatile (not to be moved).
+  AS.setVolatile();
   return NewPtr;
 }
 
