@@ -446,10 +446,25 @@ public:
   unsigned param_size() const { return getNumParams(); }
   typedef ParmVarDecl **param_iterator;
   typedef ParmVarDecl * const *param_const_iterator;
+  
   param_iterator param_begin() { return ParamInfo; }
-  param_iterator param_end() { return ParamInfo+param_size(); }
+  param_iterator param_end() {
+
+    // Special-case for handling typedefs:
+    //
+    //  typedef void func_t(int x);
+    //  func_t a;
+    //
+    // In the case of the FunctionDecl for "a", there are no ParmVarDecls.
+
+    return ParamInfo ? ParamInfo+param_size() : 0x0;
+  }
+  
   param_const_iterator param_begin() const { return ParamInfo; }
-  param_const_iterator param_end() const { return ParamInfo+param_size(); }
+  
+  param_const_iterator param_end() const {
+    return ParamInfo ? ParamInfo+param_size() : 0x0;
+  }
   
   unsigned getNumParams() const;
   const ParmVarDecl *getParamDecl(unsigned i) const {
