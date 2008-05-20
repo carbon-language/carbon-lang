@@ -58,6 +58,11 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCallRaw) {
     if (SemaBuiltinUnorderedCompare(TheCall.get()))
       return true;
     return TheCall.take();
+  case Builtin::BI__builtin_return_address:
+  case Builtin::BI__builtin_frame_address:
+    if (SemaBuiltinStackAddress(TheCall.get()))
+      return true;
+    return TheCall.take();
   case Builtin::BI__builtin_shufflevector:
     return SemaBuiltinShuffleVector(TheCall.get());
   }
@@ -177,7 +182,7 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
     Diag(TheCall->getArg(1)->getLocStart(), 
          diag::warn_second_parameter_of_va_start_not_last_named_argument);
   return false;
-}  
+}
 
 /// SemaBuiltinUnorderedCompare - Handle functions like __builtin_isgreater and
 /// friends.  This is declared to take (...), so we have to check everything.
@@ -206,6 +211,16 @@ bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
                 OrigArg1->getType().getAsString(),
                 SourceRange(OrigArg0->getLocStart(), OrigArg1->getLocEnd()));
   
+  return false;
+}
+
+bool Sema::SemaBuiltinStackAddress(CallExpr *TheCall) {
+  // The signature for these builtins is exact; the only thing we need
+  // to check is that the argument is a constant.
+  SourceLocation Loc;
+  if (!TheCall->getArg(0)->isIntegerConstantExpr(Context, &Loc)) {
+    return Diag(Loc, diag::err_stack_const_level, TheCall->getSourceRange());
+  }
   return false;
 }
 

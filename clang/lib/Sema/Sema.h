@@ -891,6 +891,7 @@ private:
   bool CheckBuiltinCFStringArgument(Expr* Arg);
   bool SemaBuiltinVAStart(CallExpr *TheCall);
   bool SemaBuiltinUnorderedCompare(CallExpr *TheCall);
+  bool SemaBuiltinStackAddress(CallExpr *TheCall);
   Action::ExprResult SemaBuiltinShuffleVector(CallExpr *TheCall);
   void CheckPrintfArguments(CallExpr *TheCall,
                             bool HasVAListArg, unsigned format_idx);
