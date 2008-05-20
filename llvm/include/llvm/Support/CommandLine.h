@@ -1257,7 +1257,7 @@ public:
 
 class alias : public Option {
   Option *AliasFor;
-  virtual bool handleOccurrence(unsigned pos, const char */*ArgName*/,
+  virtual bool handleOccurrence(unsigned pos, const char * /*ArgName*/,
                                 const std::string &Arg) {
     return AliasFor->handleOccurrence(pos, AliasFor->ArgStr, Arg);
   }
