@@ -625,7 +625,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
     // value will be pinned to live somewhere after the original computation.
     // In this case, we have to back off.
     if (!isUseOfPostIncrementedValue) {
-      if (NewBasePt) {
+      if (NewBasePt && isa<PHINode>(OperandValToReplace)) {
         InsertPt = NewBasePt;
         ++InsertPt;
       } else if (Instruction *OpInst = dyn_cast<Instruction>(OperandValToReplace)) { 
@@ -1412,8 +1412,9 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       // consider that they may not have been able to end up immediately
       // next to RewriteOp, because non-PHI instructions may never precede
       // PHI instructions in a block. In this case, remember where the last
-      // instruction was inserted so that we can use that point to expand
-      // the final RewriteExpr.
+      // instruction was inserted so that if we're replacing a different
+      // PHI node, we can use the later point to expand the final
+      // RewriteExpr.
       Instruction *NewBasePt = dyn_cast<Instruction>(RewriteOp);
       if (RewriteOp == NewPHI) NewBasePt = 0;
 
