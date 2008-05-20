@@ -24,6 +24,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/AST/ExprCXX.h"
 // FIXME: layering (ideally, Sema shouldn't be dependent on Lex API's)
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/HeaderSearch.h" 
@@ -989,15 +990,351 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   return New;
 }
 
-bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
-  SourceLocation loc;
-  // FIXME: Remove the isReference check and handle assignment to a reference.
-  if (!DclT->isReferenceType() && !Init->isConstantExpr(Context, &loc)) { 
-    assert(loc.isValid() && "isConstantExpr didn't return a loc!");
-    Diag(loc, diag::err_init_element_not_constant, Init->getSourceRange());
+bool Sema::CheckAddressConstantExpressionLValue(const Expr* Init) {
+  switch (Init->getStmtClass()) {
+  default:
+    Diag(Init->getExprLoc(),
+         diag::err_init_element_not_constant, Init->getSourceRange());
+    return true;
+  case Expr::ParenExprClass: {
+    const ParenExpr* PE = cast<ParenExpr>(Init);
+    return CheckAddressConstantExpressionLValue(PE->getSubExpr());
+  }
+  case Expr::CompoundLiteralExprClass:
+    return cast<CompoundLiteralExpr>(Init)->isFileScope();
+  case Expr::DeclRefExprClass: {
+    const Decl *D = cast<DeclRefExpr>(Init)->getDecl();
+    if (const VarDecl *VD = dyn_cast<VarDecl>(D))
+      return VD->hasGlobalStorage();
+    if (isa<FunctionDecl>(D))
+      return false;
+    Diag(Init->getExprLoc(),
+         diag::err_init_element_not_constant, Init->getSourceRange());
     return true;
   }
-  return false;
+  case Expr::MemberExprClass: {
+    const MemberExpr *M = cast<MemberExpr>(Init);
+    if (M->isArrow())
+      return CheckAddressConstantExpression(M->getBase());
+    return CheckAddressConstantExpressionLValue(M->getBase());
+  }
+  case Expr::ArraySubscriptExprClass: {
+    // FIXME: Should we pedwarn for "x[0+0]" (where x is a pointer)?
+    const ArraySubscriptExpr *ASE = cast<ArraySubscriptExpr>(Init);
+    return CheckAddressConstantExpression(ASE->getBase()) ||
+           CheckArithmeticConstantExpression(ASE->getIdx());
+  }
+  case Expr::StringLiteralClass:
+  case Expr::PreDefinedExprClass:
+    return false;
+  case Expr::UnaryOperatorClass: {
+    const UnaryOperator *Exp = cast<UnaryOperator>(Init);
+
+    // C99 6.6p9
+    if (Exp->getOpcode() == UnaryOperator::Deref)
+      return CheckAddressConstantExpressionLValue(Exp->getSubExpr());
+
+    Diag(Init->getExprLoc(),
+         diag::err_init_element_not_constant, Init->getSourceRange());
+    return true;
+  }
+  }
+}
+
+bool Sema::CheckAddressConstantExpression(const Expr* Init) {
+  switch (Init->getStmtClass()) {
+  default:
+    Diag(Init->getExprLoc(),
+         diag::err_init_element_not_constant, Init->getSourceRange());
+    return true;
+  case Expr::ParenExprClass: {
+    const ParenExpr* PE = cast<ParenExpr>(Init);
+    return CheckAddressConstantExpression(PE->getSubExpr());
+  }
+  case Expr::StringLiteralClass:
+  case Expr::ObjCStringLiteralClass:
+    return false;
+  case Expr::CallExprClass: {
+    const CallExpr *CE = cast<CallExpr>(Init);
+    if (CE->isBuiltinConstantExpr())
+      return false;
+    Diag(Init->getExprLoc(),
+         diag::err_init_element_not_constant, Init->getSourceRange());
+    return true;
+  }
+  case Expr::UnaryOperatorClass: {
+    const UnaryOperator *Exp = cast<UnaryOperator>(Init);
+
+    // C99 6.6p9
+    if (Exp->getOpcode() == UnaryOperator::AddrOf)
+      return CheckAddressConstantExpressionLValue(Exp->getSubExpr());
+
+    if (Exp->getOpcode() == UnaryOperator::Extension)
+      return CheckAddressConstantExpression(Exp->getSubExpr());
+  
+    Diag(Init->getExprLoc(),
+         diag::err_init_element_not_constant, Init->getSourceRange());
+    return true;
+  }
+  case Expr::BinaryOperatorClass: {
+    // FIXME: Should we pedwarn for expressions like "a + 1 + 2"?
+    const BinaryOperator *Exp = cast<BinaryOperator>(Init);
+
+    Expr *PExp = Exp->getLHS();
+    Expr *IExp = Exp->getRHS();
+    if (IExp->getType()->isPointerType())
+      std::swap(PExp, IExp);
+
+    // FIXME: Should we pedwarn if IExp isn't an integer constant expression?
+    return CheckAddressConstantExpression(PExp) ||
+           CheckArithmeticConstantExpression(IExp);
+  }
+  case Expr::ImplicitCastExprClass: {
+    const Expr* SubExpr = cast<ImplicitCastExpr>(Init)->getSubExpr();
+
+    // Check for implicit promotion
+    if (SubExpr->getType()->isFunctionType() ||
+        SubExpr->getType()->isArrayType())
+      return CheckAddressConstantExpressionLValue(SubExpr);
+
+    // Check for pointer->pointer cast
+    if (SubExpr->getType()->isPointerType())
+      return CheckAddressConstantExpression(SubExpr);
+
+    if (SubExpr->getType()->isArithmeticType())
+      return CheckArithmeticConstantExpression(SubExpr);
+
+    Diag(Init->getExprLoc(),
+         diag::err_init_element_not_constant, Init->getSourceRange());
+    return true;
+  }
+  case Expr::CastExprClass: {
+    const Expr* SubExpr = cast<CastExpr>(Init)->getSubExpr();
+
+    // Check for pointer->pointer cast
+    if (SubExpr->getType()->isPointerType())
+      return CheckAddressConstantExpression(SubExpr);
+
+    // FIXME: Should we pedwarn for (int*)(0+0)?
+    if (SubExpr->getType()->isArithmeticType())
+      return CheckArithmeticConstantExpression(SubExpr);
+
+    Diag(Init->getExprLoc(),
+         diag::err_init_element_not_constant, Init->getSourceRange());
+    return true;
+  }
+  case Expr::ConditionalOperatorClass: {
+    // FIXME: Should we pedwarn here?
+    const ConditionalOperator *Exp = cast<ConditionalOperator>(Init);
+    if (!Exp->getCond()->getType()->isArithmeticType()) {
+      Diag(Init->getExprLoc(),
+           diag::err_init_element_not_constant, Init->getSourceRange());
+      return true;
+    }
+    if (CheckArithmeticConstantExpression(Exp->getCond()))
+      return true;
+    if (Exp->getLHS() &&
+        CheckAddressConstantExpression(Exp->getLHS()))
+      return true;
+    return CheckAddressConstantExpression(Exp->getRHS());
+  }
+  case Expr::AddrLabelExprClass:
+    return false;
+  }
+}
+
+bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
+  switch (Init->getStmtClass()) {
+  default:
+    Diag(Init->getExprLoc(),
+         diag::err_init_element_not_constant, Init->getSourceRange());
+    return true;
+  case Expr::ParenExprClass: {
+    const ParenExpr* PE = cast<ParenExpr>(Init);
+    return CheckArithmeticConstantExpression(PE->getSubExpr());
+  }
+  case Expr::FloatingLiteralClass:
+  case Expr::IntegerLiteralClass:
+  case Expr::CharacterLiteralClass:
+  case Expr::ImaginaryLiteralClass:
+  case Expr::TypesCompatibleExprClass:
+  case Expr::CXXBoolLiteralExprClass:
+    return false;
+  case Expr::CallExprClass: {
+    const CallExpr *CE = cast<CallExpr>(Init);
+    if (CE->isBuiltinConstantExpr())
+      return false;
+    Diag(Init->getExprLoc(),
+         diag::err_init_element_not_constant, Init->getSourceRange());
+    return true;
+  }
+  case Expr::DeclRefExprClass: {
+    const Decl *D = cast<DeclRefExpr>(Init)->getDecl();
+    if (isa<EnumConstantDecl>(D))
+      return false;
+    Diag(Init->getExprLoc(),
+         diag::err_init_element_not_constant, Init->getSourceRange());
+    return true;
+  }
+  case Expr::CompoundLiteralExprClass:
+    // Allow "(vector type){2,4}"; normal C constraints don't allow this,
+    // but vectors are allowed to be magic.
+    if (Init->getType()->isVectorType())
+      return false;
+    Diag(Init->getExprLoc(),
+         diag::err_init_element_not_constant, Init->getSourceRange());
+    return true;
+  case Expr::UnaryOperatorClass: {
+    const UnaryOperator *Exp = cast<UnaryOperator>(Init);
+  
+    switch (Exp->getOpcode()) {
+    // Address, indirect, pre/post inc/dec, etc are not valid constant exprs.
+    // See C99 6.6p3.
+    default:
+      Diag(Init->getExprLoc(),
+           diag::err_init_element_not_constant, Init->getSourceRange());
+      return true;
+    case UnaryOperator::SizeOf:
+    case UnaryOperator::AlignOf:
+    case UnaryOperator::OffsetOf:
+      // sizeof(E) is a constantexpr if and only if E is not evaluted.
+      // See C99 6.5.3.4p2 and 6.6p3.
+      if (Exp->getSubExpr()->getType()->isConstantSizeType())
+        return false;
+      Diag(Init->getExprLoc(),
+           diag::err_init_element_not_constant, Init->getSourceRange());
+      return true;
+    case UnaryOperator::Extension:
+    case UnaryOperator::LNot:
+    case UnaryOperator::Plus:
+    case UnaryOperator::Minus:
+    case UnaryOperator::Not:
+      return CheckArithmeticConstantExpression(Exp->getSubExpr());
+    }
+  }
+  case Expr::SizeOfAlignOfTypeExprClass: {
+    const SizeOfAlignOfTypeExpr *Exp = cast<SizeOfAlignOfTypeExpr>(Init);
+    // Special check for void types, which are allowed as an extension
+    if (Exp->getArgumentType()->isVoidType())
+      return false;
+    // alignof always evaluates to a constant.
+    // FIXME: is sizeof(int[3.0]) a constant expression?
+    if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType()) {
+      Diag(Init->getExprLoc(),
+           diag::err_init_element_not_constant, Init->getSourceRange());
+      return true;
+    }
+    return false;
+  }
+  case Expr::BinaryOperatorClass: {
+    const BinaryOperator *Exp = cast<BinaryOperator>(Init);
+
+    if (Exp->getLHS()->getType()->isArithmeticType() &&
+        Exp->getRHS()->getType()->isArithmeticType()) {
+      return CheckArithmeticConstantExpression(Exp->getLHS()) ||
+             CheckArithmeticConstantExpression(Exp->getRHS());
+    }
+
+    Diag(Init->getExprLoc(),
+         diag::err_init_element_not_constant, Init->getSourceRange());
+    return true;
+  }
+  case Expr::ImplicitCastExprClass:
+  case Expr::CastExprClass: {
+    const Expr *SubExpr;
+    if (const CastExpr *C = dyn_cast<CastExpr>(Init)) {
+      SubExpr = C->getSubExpr();
+    } else {
+      SubExpr = cast<ImplicitCastExpr>(Init)->getSubExpr();
+    }
+
+    if (SubExpr->getType()->isArithmeticType())
+      return CheckArithmeticConstantExpression(SubExpr);
+
+    Diag(Init->getExprLoc(),
+         diag::err_init_element_not_constant, Init->getSourceRange());
+    return true;
+  }
+  case Expr::ConditionalOperatorClass: {
+    const ConditionalOperator *Exp = cast<ConditionalOperator>(Init);
+    if (CheckArithmeticConstantExpression(Exp->getCond()))
+      return true;
+    if (Exp->getLHS() &&
+        CheckArithmeticConstantExpression(Exp->getLHS()))
+      return true;
+    return CheckArithmeticConstantExpression(Exp->getRHS());
+  }
+  }
+}
+
+bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
+  // Look through CXXDefaultArgExprs; they have no meaning in this context.
+  if (CXXDefaultArgExpr* DAE = dyn_cast<CXXDefaultArgExpr>(Init))
+    return CheckForConstantInitializer(DAE->getExpr(), DclT);
+
+  if (Init->getType()->isReferenceType()) {
+    // FIXME: Work out how the heck reference types work
+    return false;
+#if 0
+    // A reference is constant if the address of the expression
+    // is constant
+    // We look through initlists here to simplify
+    // CheckAddressConstantExpressionLValue.
+    if (InitListExpr *Exp = dyn_cast<InitListExpr>(Init)) {
+      assert(Exp->getNumInits() > 0 &&
+             "Refernce initializer cannot be empty");
+      Init = Exp->getInit(0);
+    }
+    return CheckAddressConstantExpressionLValue(Init);
+#endif
+  }
+
+  if (InitListExpr *Exp = dyn_cast<InitListExpr>(Init)) {
+    unsigned numInits = Exp->getNumInits();
+    for (unsigned i = 0; i < numInits; i++) {
+      // FIXME: Need to get the type of the declaration for C++,
+      // because it could be a reference?
+      if (CheckForConstantInitializer(Exp->getInit(i),
+                                      Exp->getInit(i)->getType()))
+        return true;
+    }
+    return false;
+  }
+
+  if (Init->isNullPointerConstant(Context))
+    return false;
+  if (Init->getType()->isArithmeticType()) {
+    // Special check for pointer cast to int; we allow
+    // an address constant cast to an integer if the integer
+    // is of an appropriate width (this sort of code is apparently used
+    // in some places).
+    // FIXME: Add pedwarn?
+    Expr* SubE;
+    if (ImplicitCastExpr* ICE = dyn_cast<ImplicitCastExpr>(Init))
+      SubE = ICE->getSubExpr();
+    else if (CastExpr* CE = dyn_cast<CastExpr>(Init))
+      SubE = CE->getSubExpr();
+    if (SubE && (SubE->getType()->isPointerType() ||
+                 SubE->getType()->isArrayType() ||
+                 SubE->getType()->isFunctionType())) {
+      unsigned IntWidth = Context.getTypeSize(Init->getType());
+      unsigned PointerWidth = Context.getTypeSize(Context.VoidPtrTy);
+      if (IntWidth >= PointerWidth)
+        return CheckAddressConstantExpression(Init);
+    }
+
+    return CheckArithmeticConstantExpression(Init);
+  }
+
+  if (Init->getType()->isPointerType())
+    return CheckAddressConstantExpression(Init);
+
+  if (Init->getType()->isArrayType())
+    return false;
+
+  Diag(Init->getExprLoc(), diag::err_init_element_not_constant,
+       Init->getSourceRange());
+  return true;
 }
 
 void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {

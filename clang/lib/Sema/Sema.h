@@ -857,6 +857,9 @@ private:
   bool CheckInitializerListTypes(InitListExpr*& IList, QualType &DeclType,
                                  bool topLevel, unsigned& startIndex);
   bool CheckForConstantInitializer(Expr *e, QualType t);
+  bool CheckArithmeticConstantExpression(const Expr* e);
+  bool CheckAddressConstantExpression(const Expr* e);
+  bool CheckAddressConstantExpressionLValue(const Expr* e);
   
   StringLiteral *IsStringLiteralInit(Expr *Init, QualType DeclType);
   bool CheckStringLiteralInit(StringLiteral *strLiteral, QualType &DeclT);
