@@ -20,9 +20,9 @@
 #include "llvm/Bitcode/Deserialize.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
-#include "llvm/ADT/OwningPtr.h"
 
-#include <stdio.h>
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/DenseSet.h"
 
 using namespace clang;
 
@@ -31,8 +31,15 @@ enum { BasicMetadataBlock = 1,
        DeclsBlock = 3 };
 
 TranslationUnit::~TranslationUnit() {
-  for (iterator I=begin(), E=end(); I!=E; ++I) 
+  
+  llvm::DenseSet<Decl*> Killed;
+  
+  for (iterator I=begin(), E=end(); I!=E; ++I) {
+    if (Killed.count(*I)) continue;
+
+    Killed.insert(*I);
     (*I)->Destroy(*Context);
+  }
   
   if (OwnsMetaData && Context) {
     // The ASTContext object has the sole references to the IdentifierTable

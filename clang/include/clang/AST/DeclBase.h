@@ -185,7 +185,7 @@ public:
   static Decl* Create(llvm::Deserializer& D, ASTContext& C);
 
   /// Destroy - Call destructors and release memory.
-  void Destroy(ASTContext& C) const;
+  virtual void Destroy(ASTContext& C);
 
 protected:
   /// EmitImpl - Provides the subclass-specific serialization logic for

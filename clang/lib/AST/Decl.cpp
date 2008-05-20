@@ -16,6 +16,8 @@
 #include "clang/AST/Attr.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/DenseMap.h"
+
+#include <stdio.h>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -314,8 +316,10 @@ Decl::~Decl() {
   DeclAttrMapTy::iterator it = DeclAttrs->find(this);
   assert(it != DeclAttrs->end() && "No attrs found but HasAttrs is true!");
 
-  delete it->second;
+  // FIXME: Properly release attributes.
+  // delete it->second;
   DeclAttrs->erase(it);
+  
   if (DeclAttrs->empty()) {
     delete DeclAttrs;
     DeclAttrs = 0;
@@ -366,46 +370,10 @@ void Decl::swapAttrs(Decl *RHS) {
 }
 
 
-#define CASE(KIND) \
-  case KIND: \
-    static_cast<KIND##Decl *>(const_cast<Decl *>(this))->~KIND##Decl(); \
-    break
-
-void Decl::Destroy(ASTContext& C) const {
-  switch (getKind()) {
-  CASE(TranslationUnit);
-  CASE(Field);
-  CASE(ObjCIvar);
-  CASE(ObjCCategory);
-  CASE(ObjCCategoryImpl);
-  CASE(ObjCImplementation);
-  CASE(ObjCProtocol);
-  CASE(ObjCProperty);
-  CASE(Namespace);
-  CASE(Typedef);
-  CASE(Enum);
-  CASE(EnumConstant);
-  CASE(Function);
-  CASE(Var);
-  CASE(ParmVar);
-  CASE(ObjCInterface);
-  CASE(ObjCCompatibleAlias);
-  CASE(ObjCMethod);
-  CASE(ObjCClass);
-  CASE(ObjCForwardProtocol);
-  CASE(LinkageSpec);
-
-  case Struct: case Union: case Class:
-    static_cast<RecordDecl *>(const_cast<Decl *>(this))->~RecordDecl();
-    break;
-
-  default: assert(0 && "Unknown decl kind!");
-  }
-
+void Decl::Destroy(ASTContext& C) {
+  this->~Decl();
   C.getAllocator().Deallocate((void *)this);
 }
-
-#undef CASE
 
 //===----------------------------------------------------------------------===//
 // DeclContext Implementation
@@ -442,9 +410,13 @@ const char *NamedDecl::getName() const {
 
 FunctionDecl::~FunctionDecl() {
   delete[] ParamInfo;
-  delete Body;
-  delete PreviousDeclaration;
 }
+
+void FunctionDecl::Destroy(ASTContext& C) {
+  if (Body) Body->Destroy(C);
+  Decl::Destroy(C);
+}
+
 
 Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
   for (const FunctionDecl *FD = this; FD != 0; FD = FD->PreviousDeclaration) {

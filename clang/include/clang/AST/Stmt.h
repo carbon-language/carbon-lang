@@ -54,13 +54,15 @@ private:
 protected:
   /// DestroyChildren - Invoked by destructors of subclasses of Stmt to
   ///  recursively release child AST nodes.
-  void DestroyChildren();
+  void DestroyChildren(ASTContext& Ctx);
   
 public:
   Stmt(StmtClass SC) : sClass(SC) { 
     if (Stmt::CollectingStats()) Stmt::addStmtClass(SC);
   }
   virtual ~Stmt() {}
+  
+  virtual void Destroy(ASTContext& Ctx);
 
   StmtClass getStmtClass() const { return sClass; }
   const char *getStmtClassName() const;

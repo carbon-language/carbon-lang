@@ -42,9 +42,14 @@ const char *Stmt::getStmtClassName() const {
   return getStmtInfoTableEntry(sClass).Name;
 }
 
-void Stmt::DestroyChildren() {
+void Stmt::DestroyChildren(ASTContext& C) {
   for (child_iterator I = child_begin(), E = child_end(); I !=E; ++I)
-    delete *I; // Handles the case when *I == NULL.
+    if (Stmt* Child = *I) Child->Destroy(C);
+}
+
+void Stmt::Destroy(ASTContext& C) {
+  DestroyChildren(C);
+  this->~Stmt();
 }
 
 void Stmt::PrintStats() {

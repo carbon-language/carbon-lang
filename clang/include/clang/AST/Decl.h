@@ -403,11 +403,13 @@ private:
       IsInline(isInline), IsImplicit(0), PreviousDeclaration(0) {}
 
   virtual ~FunctionDecl();
+  virtual void Destroy(ASTContext& C);
+
 public:
   static FunctionDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                               IdentifierInfo *Id, QualType T, 
                               StorageClass S = None, bool isInline = false, 
-                              ScopedDecl *PrevDecl = 0);
+                              ScopedDecl *PrevDecl = 0);  
   
   /// getBody - Retrieve the body (definition) of the function. The
   /// function body might be in any of the (re-)declarations of this
@@ -488,7 +490,6 @@ protected:
   static FunctionDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
   
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
-  friend void Decl::Destroy(ASTContext& C) const;
 };
 
 
@@ -540,7 +541,8 @@ protected:
                    IdentifierInfo *Id, QualType T, Expr *E,
                    const llvm::APSInt &V, ScopedDecl *PrevDecl)
     : ValueDecl(EnumConstant, DC, L, Id, T, PrevDecl), Init(E), Val(V) {}
-  ~EnumConstantDecl() {}
+
+  virtual ~EnumConstantDecl() {}
 public:
 
   static EnumConstantDecl *Create(ASTContext &C, EnumDecl *DC,
@@ -569,7 +571,6 @@ protected:
   static EnumConstantDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
   
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
-  friend void Decl::Destroy(ASTContext& C) const;
 };
 
 
@@ -600,7 +601,8 @@ class TypedefDecl : public TypeDecl {
   TypedefDecl(DeclContext *DC, SourceLocation L,
               IdentifierInfo *Id, QualType T, ScopedDecl *PD) 
     : TypeDecl(Typedef, DC, L, Id, PD), UnderlyingType(T) {}
-  ~TypedefDecl() {}
+
+  virtual ~TypedefDecl() {}
 public:
   
   static TypedefDecl *Create(ASTContext &C, DeclContext *DC,
@@ -622,7 +624,7 @@ protected:
   static TypedefDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
   
   friend Decl* Decl::Create(llvm::Deserializer& D, ASTContext& C);
-  friend void Decl::Destroy(ASTContext& C) const;
+  
 };
 
 

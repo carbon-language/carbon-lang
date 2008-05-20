@@ -14,6 +14,7 @@
 #include "clang/Sema/ParseAST.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/AST/TranslationUnit.h"
 #include "Sema.h"
 #include "clang/Parse/Action.h"
 #include "clang/Parse/Parser.h"
@@ -36,6 +37,8 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer, bool PrintStats) {
   ASTContext Context(PP.getSourceManager(), PP.getTargetInfo(),
                      PP.getIdentifierTable(), PP.getSelectorTable());
   
+  TranslationUnit TU(Context, PP.getLangOptions());
+  
   Parser P(PP, *new Sema(PP, Context, *Consumer));
   PP.EnterMainSourceFile();
     
@@ -45,12 +48,16 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer, bool PrintStats) {
   Consumer->Initialize(Context);
   
   Parser::DeclTy *ADecl;
+  
   while (!P.ParseTopLevelDecl(ADecl)) {  // Not end of file.
     // If we got a null return and something *was* parsed, ignore it.  This
     // is due to a top-level semicolon, an action override, or a parse error
     // skipping something.
-    if (ADecl)
-      Consumer->HandleTopLevelDecl(static_cast<Decl*>(ADecl));
+    if (ADecl) {
+      Decl* D = static_cast<Decl*>(ADecl);      
+      TU.AddTopLevelDecl(D); // TranslationUnit now owns the Decl.
+      Consumer->HandleTopLevelDecl(D);
+    }
   };
 
   if (PrintStats) {

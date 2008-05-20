@@ -184,8 +184,6 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ObjCMethod; }
   static bool classof(const ObjCMethodDecl *D) { return true; }
-
-  friend void Decl::Destroy(ASTContext& C) const;
 };
   
 /// ObjCInterfaceDecl - Represents an ObjC class declaration. For example:
