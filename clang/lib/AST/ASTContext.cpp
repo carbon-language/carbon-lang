@@ -354,11 +354,7 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
         else if (FieldIsPacked)
           FieldAlign = 8;
         else {
-          // FIXME: This is X86 specific, use 32-bit alignment for long long.
-          if (FD->getType()->isIntegerType() && TypeInfo.second > 32)
-            FieldAlign = 32;
-          else
-            FieldAlign = TypeInfo.second;
+          FieldAlign = TypeInfo.second;
         }
 
         // Check if we need to add padding to give the field the correct
@@ -418,17 +414,13 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
       std::pair<uint64_t, unsigned> FieldInfo = getTypeInfo(FD->getType());
       uint64_t FieldSize = FieldInfo.first;
       unsigned FieldAlign = FieldInfo.second;
-      
-      // FIXME: This is X86 specific, use 32-bit alignment for long long.
-      if (FD->getType()->isIntegerType() && FieldAlign > 32)
-        FieldAlign = 32;
 
       // Round up the current record size to the field's alignment boundary.
       RecordSize = std::max(RecordSize, FieldSize);
-      
+
       // Place this field at the start of the record.
       FieldOffsets[i] = 0;
-      
+
       // Remember max struct/class alignment.
       RecordAlign = std::max(RecordAlign, FieldAlign);
     }
