@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 #include <iosfwd>
-#include <cstring>
 
 namespace llvm {
 namespace sys {
@@ -207,14 +206,14 @@ namespace sys {
       /// @returns true if \p this and \p that refer to the same thing.
       /// @brief Equality Operator
       bool operator==(const Path &that) const {
-        return strcmp(path.c_str(), that.path.c_str()) == 0;
+        return path == that.path;
       }
 
       /// Compares \p this Path with \p that Path for inequality.
       /// @returns true if \p this and \p that refer to different things.
       /// @brief Inequality Operator
       bool operator!=(const Path &that) const {
-        return strcmp(path.c_str(), that.path.c_str()) != 0;
+        return path != that.path;
       }
 
       /// Determines if \p this Path is less than \p that Path. This is required
@@ -224,7 +223,7 @@ namespace sys {
       /// @returns true if \p this path is lexicographically less than \p that.
       /// @brief Less Than Operator
       bool operator<(const Path& that) const {
-        return strcmp(path.c_str(), that.path.c_str()) < 0;
+        return path < that.path;
       }
 
     /// @}
