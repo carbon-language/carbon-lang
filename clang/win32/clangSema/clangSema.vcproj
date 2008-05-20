@@ -6,7 +6,6 @@
 	ProjectGUID="{4727E8B7-AA99-41C9-AB09-A8A862595DB7}"
 	RootNamespace="clangSema"
 	Keyword="Win32Proj"
-	TargetFrameworkVersion="0"
 	>
 	<Platforms>
 		<Platform
@@ -191,6 +190,10 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Sema\SemaExprObjC.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Sema\SemaInit.cpp"
 				>
 			</File>
 			<File
