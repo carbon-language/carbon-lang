@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s -o - | opt -inline | llvm-dis | grep nounwind
-; RUN: llvm-as < %s -o - | opt -inline | llvm-dis | grep unreachable
+; RUN: llvm-as %s -o - | opt -inline | llvm-dis | grep nounwind
+; RUN: llvm-as %s -o - | opt -inline | llvm-dis | grep unreachable
 
 declare i1 @extern()
 

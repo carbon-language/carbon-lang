@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s -f -o %t1.bc
+; RUN: llvm-as %s -f -o %t1.bc
 ; RUN: llvm-as < %p/2004-05-07-TypeResolution2.ll -o %t2.bc -f
 ; RUN: llvm-link -f -o %t3.bc %t1.bc %t2.bc
 

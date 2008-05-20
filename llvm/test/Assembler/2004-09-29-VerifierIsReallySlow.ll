@@ -1,6 +1,6 @@
 ; Check to see that the verifier does not take an outrageous amount of time on 
 ; this testcase.
-; RUN: llvm-as < %s -o /dev/null -f
+; RUN: llvm-as %s -o /dev/null -f
 
 %"complex long double" = type { double, double }
 %"struct.std::dcomplex" = type { %"complex long double" }

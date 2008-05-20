@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s -o /dev/null -f 
+; RUN: llvm-as %s -o /dev/null -f 
 
 define void @test() {
 	call {i32} @foo()

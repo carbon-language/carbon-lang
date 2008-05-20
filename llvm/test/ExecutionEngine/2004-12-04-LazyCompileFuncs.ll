@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s -f -o %t.bc
+; RUN: llvm-as %s -f -o %t.bc
 ; RUN: lli -debug-only=jit %t.bc |& not grep {Finished CodeGen of .*Function: F}
 @.str_1 = internal constant [7 x i8] c"IN F!\0A\00"             ; <[7 x i8]*> [#uses=1]
 @.str_2 = internal constant [7 x i8] c"IN G!\0A\00"             ; <[7 x i8]*> [#uses=1]

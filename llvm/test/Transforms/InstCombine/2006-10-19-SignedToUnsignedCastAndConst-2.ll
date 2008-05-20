@@ -1,5 +1,5 @@
 ; The optimizer should be able to remove cast operation here.
-; RUN: llvm-as < %s -o - | opt -instcombine | llvm-dis | \
+; RUN: llvm-as %s -o - | opt -instcombine | llvm-dis | \
 ; RUN:    not grep sext.*i32
 
 define i1 @eq_signed_to_small_unsigned(i8 %SB) {

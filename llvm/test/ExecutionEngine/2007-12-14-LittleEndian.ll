@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s -o - | lli -force-interpreter
+; RUN: llvm-as %s -o - | lli -force-interpreter
 
 target datalayout = "e"
 

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s -o - | llc 
+; RUN: llvm-as %s -o - | llc 
 
 ; This caused the backend to assert out with:
 ; SparcInstrInfo.cpp:103: failed assertion `0 && "Unexpected unsigned type"'

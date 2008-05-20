@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s -o /dev/null -f
+; RUN: llvm-as %s -o /dev/null -f
 
 
 define i32 @test(i1 %C, i32 %V1, i32 %V2) {

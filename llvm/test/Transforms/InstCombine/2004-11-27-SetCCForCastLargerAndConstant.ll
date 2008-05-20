@@ -9,7 +9,7 @@
 ; be eliminated. In many cases the setCC is also eliminated based on the
 ; constant value and the range of the casted value.
 ;
-; RUN: llvm-as < %s -o - | opt -instcombine | llvm-dis | \
+; RUN: llvm-as %s -o - | opt -instcombine | llvm-dis | \
 ; RUN:    notcast .*int
 ; END.
 define i1 @lt_signed_to_large_unsigned(i8 %SB) {

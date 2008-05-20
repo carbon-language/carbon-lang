@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s -f -o %t1.bc
+; RUN: llvm-as %s -f -o %t1.bc
 ; RUN: llvm-link -f -o %t2.bc %t1.bc
 
 target datalayout = "E-p:32:32"
