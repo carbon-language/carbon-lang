@@ -82,6 +82,7 @@ public:
   void VisitBinaryOperator(const BinaryOperator *BO);
   void VisitBinAssign(const BinaryOperator *E);
   void VisitOverloadExpr(const OverloadExpr *E);
+  void VisitBinComma(const BinaryOperator *E);
 
   
   void VisitConditionalOperator(const ConditionalOperator *CO);
@@ -211,6 +212,12 @@ void AggExprEmitter::VisitOverloadExpr(const OverloadExpr *E)
     return;
   
   EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
+}
+
+void AggExprEmitter::VisitBinComma(const BinaryOperator *E)
+{
+  CGF.EmitAnyExpr(E->getLHS());
+  CGF.EmitAggExpr(E->getRHS(), DestPtr, false);
 }
 
 void AggExprEmitter::VisitStmtExpr(const StmtExpr *E) {
