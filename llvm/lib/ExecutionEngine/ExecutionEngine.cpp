@@ -812,35 +812,26 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   } else if (isa<ConstantAggregateZero>(Init)) {
     memset(Addr, 0, (size_t)getTargetData()->getABITypeSize(Init->getType()));
     return;
+  } else if (const ConstantArray *CPA = dyn_cast<ConstantArray>(Init)) {
+    unsigned ElementSize =
+      getTargetData()->getABITypeSize(CPA->getType()->getElementType());
+    for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i)
+      InitializeMemory(CPA->getOperand(i), (char*)Addr+i*ElementSize);
+    return;
+  } else if (const ConstantStruct *CPS = dyn_cast<ConstantStruct>(Init)) {
+    const StructLayout *SL =
+      getTargetData()->getStructLayout(cast<StructType>(CPS->getType()));
+    for (unsigned i = 0, e = CPS->getNumOperands(); i != e; ++i)
+      InitializeMemory(CPS->getOperand(i), (char*)Addr+SL->getElementOffset(i));
+    return;
   } else if (Init->getType()->isFirstClassType()) {
     GenericValue Val = getConstantValue(Init);
     StoreValueToMemory(Val, (GenericValue*)Addr, Init->getType());
     return;
   }
 
-  switch (Init->getType()->getTypeID()) {
-  case Type::ArrayTyID: {
-    const ConstantArray *CPA = cast<ConstantArray>(Init);
-    unsigned ElementSize =
-      getTargetData()->getABITypeSize(CPA->getType()->getElementType());
-    for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i)
-      InitializeMemory(CPA->getOperand(i), (char*)Addr+i*ElementSize);
-    return;
-  }
-
-  case Type::StructTyID: {
-    const ConstantStruct *CPS = cast<ConstantStruct>(Init);
-    const StructLayout *SL =
-      getTargetData()->getStructLayout(cast<StructType>(CPS->getType()));
-    for (unsigned i = 0, e = CPS->getNumOperands(); i != e; ++i)
-      InitializeMemory(CPS->getOperand(i), (char*)Addr+SL->getElementOffset(i));
-    return;
-  }
-
-  default:
-    cerr << "Bad Type: " << *Init->getType() << "\n";
-    assert(0 && "Unknown constant type to initialize memory with!");
-  }
+  cerr << "Bad Type: " << *Init->getType() << "\n";
+  assert(0 && "Unknown constant type to initialize memory with!");
 }
 
 /// EmitGlobals - Emit all of the global variables to memory, storing their
