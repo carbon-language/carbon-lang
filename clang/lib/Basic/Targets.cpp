@@ -17,6 +17,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/APFloat.h"
 
 using namespace clang;
 
