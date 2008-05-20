@@ -17,7 +17,6 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/DenseMap.h"
 
-#include <stdio.h>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
