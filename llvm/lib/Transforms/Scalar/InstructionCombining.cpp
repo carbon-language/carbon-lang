@@ -2212,7 +2212,7 @@ unsigned InstCombiner::ComputeNumSignBits(Value *V, unsigned Depth) const{
 /// 'shouldApply' and 'apply' methods.
 ///
 template<typename Functor>
-Instruction *AssociativeOpt(BinaryOperator &Root, const Functor &F) {
+static Instruction *AssociativeOpt(BinaryOperator &Root, const Functor &F) {
   unsigned Opcode = Root.getOpcode();
   Value *LHS = Root.getOperand(0);
 
