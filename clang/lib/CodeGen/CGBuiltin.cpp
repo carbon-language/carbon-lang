@@ -262,6 +262,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     Builder.CreateCall(CGM.getMemCpyFn(), MemCpyOps, MemCpyOps+4);
     return RValue::get(MemCpyOps[0]);
   }
+  case Builtin::BI__builtin_return_address: {
+    Value *F = CGM.getIntrinsic(Intrinsic::returnaddress, 0, 0);
+    return RValue::get(Builder.CreateCall(F, EmitScalarExpr(E->getArg(0))));
+  }
+  case Builtin::BI__builtin_frame_address: {
+    Value *F = CGM.getIntrinsic(Intrinsic::frameaddress, 0, 0);
+    return RValue::get(Builder.CreateCall(F, EmitScalarExpr(E->getArg(0))));
+  }
   case Builtin::BI__sync_fetch_and_add:
     return EmitBinaryAtomic(*this, Intrinsic::atomic_las, E);
   case Builtin::BI__sync_fetch_and_sub:
