@@ -147,8 +147,12 @@ public:
   LatticeVal getOrInitValueState(Value *V);
   
   /// isEdgeFeasible - Return true if the control flow edge from the 'From'
-  /// basic block to the 'To' basic block is currently feasible...
-  bool isEdgeFeasible(BasicBlock *From, BasicBlock *To);
+  /// basic block to the 'To' basic block is currently feasible.  If
+  /// AggressiveUndef is true, then this treats values with unknown lattice
+  /// values as undefined.  This is generally only useful when solving the
+  /// lattice, not when querying it.
+  bool isEdgeFeasible(BasicBlock *From, BasicBlock *To,
+                      bool AggressiveUndef = false);
   
 private:
   /// UpdateState - When the state for some instruction is potentially updated,
@@ -165,7 +169,8 @@ private:
   
   /// getFeasibleSuccessors - Return a vector of booleans to indicate which
   /// successors are reachable from a given terminator instruction.
-  void getFeasibleSuccessors(TerminatorInst &TI, SmallVectorImpl<bool> &Succs);
+  void getFeasibleSuccessors(TerminatorInst &TI, SmallVectorImpl<bool> &Succs,
+                             bool AggressiveUndef);
   
   void visitInst(Instruction &I);
   void visitPHINode(PHINode &I);

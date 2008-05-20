@@ -115,7 +115,8 @@ void SparseSolver::markEdgeExecutable(BasicBlock *Source, BasicBlock *Dest) {
 /// getFeasibleSuccessors - Return a vector of booleans to indicate which
 /// successors are reachable from a given terminator instruction.
 void SparseSolver::getFeasibleSuccessors(TerminatorInst &TI,
-                                         SmallVectorImpl<bool> &Succs) {
+                                         SmallVectorImpl<bool> &Succs,
+                                         bool AggressiveUndef) {
   Succs.resize(TI.getNumSuccessors());
   if (TI.getNumSuccessors() == 0) return;
   
@@ -125,7 +126,12 @@ void SparseSolver::getFeasibleSuccessors(TerminatorInst &TI,
       return;
     }
     
-    LatticeVal BCValue = getOrInitValueState(BI->getCondition());
+    LatticeVal BCValue;
+    if (AggressiveUndef)
+      BCValue = getOrInitValueState(BI->getCondition());
+    else
+      BCValue = getLatticeState(BI->getCondition());
+    
     if (BCValue == LatticeFunc->getOverdefinedVal() ||
         BCValue == LatticeFunc->getUntrackedVal()) {
       // Overdefined condition variables can branch either way.
@@ -157,7 +163,12 @@ void SparseSolver::getFeasibleSuccessors(TerminatorInst &TI,
   }
   
   SwitchInst &SI = cast<SwitchInst>(TI);
-  LatticeVal SCValue = getOrInitValueState(SI.getCondition());
+  LatticeVal SCValue;
+  if (AggressiveUndef)
+    SCValue = getOrInitValueState(SI.getCondition());
+  else
+    SCValue = getLatticeState(SI.getCondition());
+  
   if (SCValue == LatticeFunc->getOverdefinedVal() ||
       SCValue == LatticeFunc->getUntrackedVal()) {
     // All destinations are executable!
@@ -182,10 +193,11 @@ void SparseSolver::getFeasibleSuccessors(TerminatorInst &TI,
 
 /// isEdgeFeasible - Return true if the control flow edge from the 'From'
 /// basic block to the 'To' basic block is currently feasible...
-bool SparseSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
+bool SparseSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To,
+                                  bool AggressiveUndef) {
   SmallVector<bool, 16> SuccFeasible;
   TerminatorInst *TI = From->getTerminator();
-  getFeasibleSuccessors(*TI, SuccFeasible);
+  getFeasibleSuccessors(*TI, SuccFeasible, AggressiveUndef);
   
   for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
     if (TI->getSuccessor(i) == To && SuccFeasible[i])
@@ -196,7 +208,7 @@ bool SparseSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
 
 void SparseSolver::visitTerminatorInst(TerminatorInst &TI) {
   SmallVector<bool, 16> SuccFeasible;
-  getFeasibleSuccessors(TI, SuccFeasible);
+  getFeasibleSuccessors(TI, SuccFeasible, true);
   
   BasicBlock *BB = TI.getParent();
   
@@ -226,7 +238,7 @@ void SparseSolver::visitPHINode(PHINode &PN) {
   // transfer function to give us the merge of the incoming values.
   for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
     // If the edge is not yet known to be feasible, it doesn't impact the PHI.
-    if (!isEdgeFeasible(PN.getIncomingBlock(i), PN.getParent()))
+    if (!isEdgeFeasible(PN.getIncomingBlock(i), PN.getParent(), true))
       continue;
     
     // Merge in this value.
