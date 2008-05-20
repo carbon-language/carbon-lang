@@ -49,7 +49,10 @@ void Stmt::DestroyChildren(ASTContext& C) {
 
 void Stmt::Destroy(ASTContext& C) {
   DestroyChildren(C);
-  this->~Stmt();
+  // FIXME: Eventually all Stmts should be allocated with the allocator
+  //  in ASTContext, just like with Decls.
+  // this->~Stmt();
+  delete this;
 }
 
 void Stmt::PrintStats() {

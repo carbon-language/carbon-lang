@@ -1116,8 +1116,8 @@ public:
                     QualType Type, SourceLocation BLoc, 
                     SourceLocation RP) : 
     Expr(ShuffleVectorExprClass, Type), BuiltinLoc(BLoc),
-    RParenLoc(RP), NumExprs(nexpr)
-  {
+    RParenLoc(RP), NumExprs(nexpr) {
+      
     SubExprs = new Expr*[nexpr];
     for (unsigned i = 0; i < nexpr; i++)
       SubExprs[i] = args[i];
@@ -1132,8 +1132,6 @@ public:
   static bool classof(const ShuffleVectorExpr *) { return true; }
   
   ~ShuffleVectorExpr() {
-    for (unsigned i = 0; i < NumExprs; i++)
-      delete SubExprs[i];
     delete [] SubExprs;
   }
   
