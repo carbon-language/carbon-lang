@@ -1309,7 +1309,7 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
     // is of an appropriate width (this sort of code is apparently used
     // in some places).
     // FIXME: Add pedwarn?
-    Expr* SubE;
+    Expr* SubE = 0;
     if (ImplicitCastExpr* ICE = dyn_cast<ImplicitCastExpr>(Init))
       SubE = ICE->getSubExpr();
     else if (CastExpr* CE = dyn_cast<CastExpr>(Init))
