@@ -91,7 +91,6 @@ public:
     // Copy initializer elements.
     unsigned i = 0;
     for (; i < NumInitableElts; ++i) {
-        
       llvm::Constant *C = Visit(ILE->getInit(i));
       assert (C && "Failed to create initializer expression");
       Elts.push_back(C);
@@ -107,42 +106,35 @@ public:
   llvm::Constant *EmitStructInitialization(InitListExpr *ILE,
                                            const llvm::StructType *SType) {
 
-    TagDecl *TD = ILE->getType()->getAsRecordType()->getDecl();
+    RecordDecl *RD = ILE->getType()->getAsRecordType()->getDecl();
     std::vector<llvm::Constant*> Elts;
-    const CGRecordLayout *CGR = CGM.getTypes().getCGRecordLayout(TD);
-    unsigned NumInitElements = ILE->getNumInits();
-    unsigned NumElements = SType->getNumElements();
-    
-    // Initialising an structure requires us to automatically 
-    // initialise any elements that have not been initialised explicitly
-    unsigned NumInitableElts = std::min(NumInitElements, NumElements);
 
-    // Copy initializer elements. Skip padding fields.
-    unsigned EltNo = 0;  // Element no in ILE
-    unsigned FieldNo = 0; // Field no in  SType
-    while (EltNo < NumInitableElts) {
-      
-      // Zero initialize padding field.
-      if (CGR->isPaddingField(FieldNo)) {
-        const llvm::Type *FieldTy = SType->getElementType(FieldNo);
-        Elts.push_back(llvm::Constant::getNullValue(FieldTy));
-        FieldNo++;
-        continue;
-      }
-        
-      llvm::Constant *C = Visit(ILE->getInit(EltNo));
-      assert (C && "Failed to create initializer expression");
-      Elts.push_back(C);
-      EltNo++;
-      FieldNo++;
-    }
-    
-    // Initialize remaining structure elements.
-    for (unsigned i = Elts.size(); i < NumElements; ++i) {
+    // Initialize the whole structure to zero.
+    for (unsigned i = 0; i < SType->getNumElements(); ++i) {
       const llvm::Type *FieldTy = SType->getElementType(i);
       Elts.push_back(llvm::Constant::getNullValue(FieldTy));
     }
-     
+
+    // Copy initializer elements. Skip padding fields.
+    unsigned EltNo = 0;  // Element no in ILE
+    int FieldNo = 0; // Field no in RecordDecl
+    while (EltNo < ILE->getNumInits() && FieldNo < RD->getNumMembers()) {
+      FieldDecl* curField = RD->getMember(FieldNo);
+      FieldNo++;
+      if (!curField->getIdentifier())
+        continue;
+
+      llvm::Constant *C = Visit(ILE->getInit(EltNo));
+      assert (C && "Failed to create initializer expression");
+
+      if (curField->isBitField()) {
+        CGM.WarnUnsupported(ILE->getInit(EltNo), "bitfield initialization");
+      } else {
+        Elts[CGM.getTypes().getLLVMFieldNo(curField)] = C;
+      }
+      EltNo++;
+    }
+
     return llvm::ConstantStruct::get(SType, Elts);
   }
 
@@ -158,7 +150,6 @@ public:
     // Copy initializer elements.
     unsigned i = 0;
     for (; i < NumElements; ++i) {
-        
       llvm::Constant *C = Visit(ILE->getInit(i));
       assert (C && "Failed to create initializer expression");
       Elts.push_back(C);
