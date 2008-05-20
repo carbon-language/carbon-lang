@@ -2095,82 +2095,121 @@ The result value has the same type as its operands.</p>
 <p>There are several different binary operators:</p>
 </div>
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_add">'<tt>add</tt>'
-Instruction</a> </div>
+<div class="doc_subsubsection">
+  <a name="i_add">'<tt>add</tt>' Instruction</a>
+</div>
+
 <div class="doc_text">
+
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = add &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+
+<pre>
+  &lt;result&gt; = add &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
+
 <h5>Overview:</h5>
+
 <p>The '<tt>add</tt>' instruction returns the sum of its two operands.</p>
+
 <h5>Arguments:</h5>
-<p>The two arguments to the '<tt>add</tt>' instruction must be either <a
- href="#t_integer">integer</a> or <a href="#t_floating">floating point</a> values.
- This instruction can also take <a href="#t_vector">vector</a> versions of the values.
-Both arguments must have identical types.</p>
+
+<p>The two arguments to the '<tt>add</tt>' instruction must be <a
+ href="#t_integer">integer</a>, <a href="#t_floating">floating point</a>, or
+ <a href="#t_vector">vector</a> values. Both arguments must have identical
+ types.</p>
+
 <h5>Semantics:</h5>
+
 <p>The value produced is the integer or floating point sum of the two
 operands.</p>
+
 <p>If an integer sum has unsigned overflow, the result returned is the
 mathematical result modulo 2<sup>n</sup>, where n is the bit width of
 the result.</p>
+
 <p>Because LLVM integers use a two's complement representation, this
 instruction is appropriate for both signed and unsigned integers.</p>
+
 <h5>Example:</h5>
-<pre>  &lt;result&gt; = add i32 4, %var          <i>; yields {i32}:result = 4 + %var</i>
+
+<pre>
+  &lt;result&gt; = add i32 4, %var          <i>; yields {i32}:result = 4 + %var</i>
 </pre>
 </div>
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_sub">'<tt>sub</tt>'
-Instruction</a> </div>
+<div class="doc_subsubsection">
+   <a name="i_sub">'<tt>sub</tt>' Instruction</a>
+</div>
+
 <div class="doc_text">
+
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = sub &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+
+<pre>
+  &lt;result&gt; = sub &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
+
 <h5>Overview:</h5>
+
 <p>The '<tt>sub</tt>' instruction returns the difference of its two
 operands.</p>
-<p>Note that the '<tt>sub</tt>' instruction is used to represent the '<tt>neg</tt>'
-instruction present in most other intermediate representations.</p>
+
+<p>Note that the '<tt>sub</tt>' instruction is used to represent the
+'<tt>neg</tt>' instruction present in most other intermediate 
+representations.</p>
+
 <h5>Arguments:</h5>
-<p>The two arguments to the '<tt>sub</tt>' instruction must be either <a
- href="#t_integer">integer</a> or <a href="#t_floating">floating point</a>
-values. 
-This instruction can also take <a href="#t_vector">vector</a> versions of the values.
-Both arguments must have identical types.</p>
+
+<p>The two arguments to the '<tt>sub</tt>' instruction must be <a
+ href="#t_integer">integer</a>, <a href="#t_floating">floating point</a>,
+ or <a href="#t_vector">vector</a> values.  Both arguments must have identical
+ types.</p>
+
 <h5>Semantics:</h5>
+
 <p>The value produced is the integer or floating point difference of
 the two operands.</p>
+
 <p>If an integer difference has unsigned overflow, the result returned is the
 mathematical result modulo 2<sup>n</sup>, where n is the bit width of
 the result.</p>
+
 <p>Because LLVM integers use a two's complement representation, this
 instruction is appropriate for both signed and unsigned integers.</p>
+
 <h5>Example:</h5>
 <pre>
   &lt;result&gt; = sub i32 4, %var          <i>; yields {i32}:result = 4 - %var</i>
   &lt;result&gt; = sub i32 0, %val          <i>; yields {i32}:result = -%var</i>
 </pre>
 </div>
+
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_mul">'<tt>mul</tt>'
-Instruction</a> </div>
+<div class="doc_subsubsection">
+  <a name="i_mul">'<tt>mul</tt>' Instruction</a>
+</div>
+
 <div class="doc_text">
+
 <h5>Syntax:</h5>
 <pre>  &lt;result&gt; = mul &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
 <h5>Overview:</h5>
 <p>The  '<tt>mul</tt>' instruction returns the product of its two
 operands.</p>
+
 <h5>Arguments:</h5>
-<p>The two arguments to the '<tt>mul</tt>' instruction must be either <a
- href="#t_integer">integer</a> or <a href="#t_floating">floating point</a>
-values. 
-This instruction can also take <a href="#t_vector">vector</a> versions of the values.
-Both arguments must have identical types.</p>
+
+<p>The two arguments to the '<tt>mul</tt>' instruction must be <a
+href="#t_integer">integer</a>, <a href="#t_floating">floating point</a>,
+or <a href="#t_vector">vector</a> values.  Both arguments must have identical
+types.</p>
+ 
 <h5>Semantics:</h5>
+
 <p>The value produced is the integer or floating point product of the
 two operands.</p>
+
 <p>If the result of an integer multiplication has unsigned overflow,
 the result returned is the mathematical result modulo 
 2<sup>n</sup>, where n is the bit width of the result.</p>
@@ -2184,6 +2223,7 @@ width of the full product.</p>
 <pre>  &lt;result&gt; = mul i32 4, %var          <i>; yields {i32}:result = 4 * %var</i>
 </pre>
 </div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="i_udiv">'<tt>udiv</tt>' Instruction
 </a></div>
@@ -2194,12 +2234,15 @@ width of the full product.</p>
 <h5>Overview:</h5>
 <p>The '<tt>udiv</tt>' instruction returns the quotient of its two
 operands.</p>
+
 <h5>Arguments:</h5>
+
 <p>The two arguments to the '<tt>udiv</tt>' instruction must be 
-<a href="#t_integer">integer</a> values. Both arguments must have identical 
-types. This instruction can also take <a href="#t_vector">vector</a> versions 
-of the values in which case the elements must be integers.</p>
+<a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer
+values.  Both arguments must have identical types.</p>
+
 <h5>Semantics:</h5>
+
 <p>The value produced is the unsigned integer quotient of the two operands.</p>
 <p>Note that unsigned integer division and signed integer division are distinct
 operations; for signed integer division, use '<tt>sdiv</tt>'.</p>
@@ -2213,16 +2256,21 @@ operations; for signed integer division, use '<tt>sdiv</tt>'.</p>
 </a> </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = sdiv &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+<pre>
+  &lt;result&gt; = sdiv &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
+
 <h5>Overview:</h5>
+
 <p>The '<tt>sdiv</tt>' instruction returns the quotient of its two
 operands.</p>
+
 <h5>Arguments:</h5>
-<p>The two arguments to the '<tt>sdiv</tt>' instruction must be
-<a href="#t_integer">integer</a> values.  Both arguments must have identical 
-types. This instruction can also take <a href="#t_vector">vector</a> versions 
-of the values in which case the elements must be integers.</p>
+
+<p>The two arguments to the '<tt>sdiv</tt>' instruction must be 
+<a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer
+values.  Both arguments must have identical types.</p>
+
 <h5>Semantics:</h5>
 <p>The value produced is the signed integer quotient of the two operands rounded towards zero.</p>
 <p>Note that signed integer division and unsigned integer division are distinct
@@ -2239,22 +2287,31 @@ by doing a 32-bit division of -2147483648 by -1.</p>
 Instruction</a> </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = fdiv &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+<pre>
+  &lt;result&gt; = fdiv &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
 <h5>Overview:</h5>
+
 <p>The '<tt>fdiv</tt>' instruction returns the quotient of its two
 operands.</p>
+
 <h5>Arguments:</h5>
+
 <p>The two arguments to the '<tt>fdiv</tt>' instruction must be
-<a href="#t_floating">floating point</a> values.  Both arguments must have
-identical types.  This instruction can also take <a href="#t_vector">vector</a>
-versions of floating point values.</p>
+<a href="#t_floating">floating point</a> or <a href="#t_vector">vector</a>
+of floating point values.  Both arguments must have identical types.</p>
+
 <h5>Semantics:</h5>
+
 <p>The value produced is the floating point quotient of the two operands.</p>
+
 <h5>Example:</h5>
-<pre>  &lt;result&gt; = fdiv float 4.0, %var          <i>; yields {float}:result = 4.0 / %var</i>
+
+<pre>
+  &lt;result&gt; = fdiv float 4.0, %var          <i>; yields {float}:result = 4.0 / %var</i>
 </pre>
 </div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="i_urem">'<tt>urem</tt>' Instruction</a>
 </div>
@@ -2266,10 +2323,9 @@ versions of floating point values.</p>
 <p>The '<tt>urem</tt>' instruction returns the remainder from the
 unsigned division of its two arguments.</p>
 <h5>Arguments:</h5>
-<p>The two arguments to the '<tt>urem</tt>' instruction must be
-<a href="#t_integer">integer</a> values. Both arguments must have identical
-types. This instruction can also take <a href="#t_vector">vector</a> versions 
-of the values in which case the elements must be integers.</p>
+<p>The two arguments to the '<tt>urem</tt>' instruction must be 
+<a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer
+values.  Both arguments must have identical types.</p>
 <h5>Semantics:</h5>
 <p>This instruction returns the unsigned integer <i>remainder</i> of a division.
 This instruction always performs an unsigned division to get the remainder.</p>
@@ -2282,23 +2338,33 @@ distinct operations; for signed integer remainder, use '<tt>srem</tt>'.</p>
 
 </div>
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_srem">'<tt>srem</tt>'
-Instruction</a> </div>
+<div class="doc_subsubsection">
+  <a name="i_srem">'<tt>srem</tt>' Instruction</a>
+</div>
+
 <div class="doc_text">
+
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = srem &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+
+<pre>
+  &lt;result&gt; = srem &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
+
 <h5>Overview:</h5>
+
 <p>The '<tt>srem</tt>' instruction returns the remainder from the
 signed division of its two operands. This instruction can also take
 <a href="#t_vector">vector</a> versions of the values in which case
 the elements must be integers.</p>
 
 <h5>Arguments:</h5>
+
 <p>The two arguments to the '<tt>srem</tt>' instruction must be 
-<a href="#t_integer">integer</a> values.  Both arguments must have identical 
-types.</p>
+<a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer
+values.  Both arguments must have identical types.</p>
+
 <h5>Semantics:</h5>
+
 <p>This instruction returns the <i>remainder</i> of a division (where the result
 has the same sign as the dividend, <tt>var1</tt>), not the <i>modulo</i> 
 operator (where the result has the same sign as the divisor, <tt>var2</tt>) of 
@@ -2321,9 +2387,11 @@ and the remainder.)</p>
 
 </div>
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_frem">'<tt>frem</tt>'
-Instruction</a> </div>
+<div class="doc_subsubsection">
+  <a name="i_frem">'<tt>frem</tt>' Instruction</a> </div>
+
 <div class="doc_text">
+
 <h5>Syntax:</h5>
 <pre>  &lt;result&gt; = frem &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
@@ -2332,14 +2400,18 @@ Instruction</a> </div>
 division of its two operands.</p>
 <h5>Arguments:</h5>
 <p>The two arguments to the '<tt>frem</tt>' instruction must be
-<a href="#t_floating">floating point</a> values.  Both arguments must have 
-identical types.  This instruction can also take <a href="#t_vector">vector</a>
-versions of floating point values.</p>
+<a href="#t_floating">floating point</a> or <a href="#t_vector">vector</a>
+of floating point values.  Both arguments must have identical types.</p>
+
 <h5>Semantics:</h5>
+
 <p>This instruction returns the <i>remainder</i> of a division.
 The remainder has the same sign as the dividend.</p>
+
 <h5>Example:</h5>
-<pre>  &lt;result&gt; = frem float 4.0, %var          <i>; yields {float}:result = 4.0 % %var</i>
+
+<pre>
+  &lt;result&gt; = frem float 4.0, %var          <i>; yields {float}:result = 4.0 % %var</i>
 </pre>
 </div>
 
@@ -2371,7 +2443,8 @@ the left a specified number of bits.</p>
 
 <p>Both arguments to the '<tt>shl</tt>' instruction must be the same <a
  href="#t_integer">integer</a> type.  '<tt>var2</tt>' is treated as an
-unsigned value.</p>
+unsigned value.  This instruction does not support
+<a href="#t_vector">vector</a> operands.</p>
  
 <h5>Semantics:</h5>
 
@@ -2401,7 +2474,8 @@ operand shifted to the right a specified number of bits with zero fill.</p>
 <h5>Arguments:</h5>
 <p>Both arguments to the '<tt>lshr</tt>' instruction must be the same 
 <a href="#t_integer">integer</a> type.  '<tt>var2</tt>' is treated as an
-unsigned value.</p>
+unsigned value.  This instruction does not support
+<a href="#t_vector">vector</a> operands.</p>
 
 <h5>Semantics:</h5>
 
@@ -2436,7 +2510,8 @@ operand shifted to the right a specified number of bits with sign extension.</p>
 <h5>Arguments:</h5>
 <p>Both arguments to the '<tt>ashr</tt>' instruction must be the same 
 <a href="#t_integer">integer</a> type.  '<tt>var2</tt>' is treated as an
-unsigned value.</p>
+unsigned value.  This instruction does not support
+<a href="#t_vector">vector</a> operands.</p>
 
 <h5>Semantics:</h5>
 <p>This instruction always performs an arithmetic shift right operation, 
@@ -2458,17 +2533,26 @@ larger than the number of bits in <tt>var1</tt>, the result is undefined.
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="i_and">'<tt>and</tt>'
 Instruction</a> </div>
+
 <div class="doc_text">
+
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = and &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
+
+<pre>
+  &lt;result&gt; = and &lt;ty&gt; &lt;var1&gt;, &lt;var2&gt;   <i>; yields {ty}:result</i>
 </pre>
+
 <h5>Overview:</h5>
+
 <p>The '<tt>and</tt>' instruction returns the bitwise logical and of
 its two operands.</p>
+
 <h5>Arguments:</h5>
-<p>The two arguments to the '<tt>and</tt>' instruction must be <a
- href="#t_integer">integer</a> values.  Both arguments must have
-identical types.</p>
+
+<p>The two arguments to the '<tt>and</tt>' instruction must be 
+<a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer
+values.  Both arguments must have identical types.</p>
+
 <h5>Semantics:</h5>
 <p>The truth table used for the '<tt>and</tt>' instruction is:</p>
 <p> </p>
@@ -2504,7 +2588,8 @@ identical types.</p>
 </table>
 </div>
 <h5>Example:</h5>
-<pre>  &lt;result&gt; = and i32 4, %var         <i>; yields {i32}:result = 4 &amp; %var</i>
+<pre>
+  &lt;result&gt; = and i32 4, %var         <i>; yields {i32}:result = 4 &amp; %var</i>
   &lt;result&gt; = and i32 15, 40          <i>; yields {i32}:result = 8</i>
   &lt;result&gt; = and i32 4, 8            <i>; yields {i32}:result = 0</i>
 </pre>
@@ -2519,9 +2604,10 @@ identical types.</p>
 <p>The '<tt>or</tt>' instruction returns the bitwise logical inclusive
 or of its two operands.</p>
 <h5>Arguments:</h5>
-<p>The two arguments to the '<tt>or</tt>' instruction must be <a
- href="#t_integer">integer</a> values.  Both arguments must have
-identical types.</p>
+
+<p>The two arguments to the '<tt>or</tt>' instruction must be 
+<a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer
+values.  Both arguments must have identical types.</p>
 <h5>Semantics:</h5>
 <p>The truth table used for the '<tt>or</tt>' instruction is:</p>
 <p> </p>
@@ -2574,10 +2660,12 @@ Instruction</a> </div>
 or of its two operands.  The <tt>xor</tt> is used to implement the
 "one's complement" operation, which is the "~" operator in C.</p>
 <h5>Arguments:</h5>
-<p>The two arguments to the '<tt>xor</tt>' instruction must be <a
- href="#t_integer">integer</a> values.  Both arguments must have
-identical types.</p>
+<p>The two arguments to the '<tt>xor</tt>' instruction must be 
+<a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of integer
+values.  Both arguments must have identical types.</p>
+
 <h5>Semantics:</h5>
+
 <p>The truth table used for the '<tt>xor</tt>' instruction is:</p>
 <p> </p>
 <div style="align: center">
@@ -3658,15 +3746,19 @@ nothing is done (<i>no-op cast</i>).</p>
 </pre>
 
 <h5>Overview:</h5>
+
 <p>The '<tt>bitcast</tt>' instruction converts <tt>value</tt> to type
 <tt>ty2</tt> without changing any bits.</p>
 
 <h5>Arguments:</h5>
+
 <p>The '<tt>bitcast</tt>' instruction takes a value to cast, which must be 
 a first class value, and a type to cast it to, which must also be a <a
   href="#t_firstclass">first class</a> type. The bit sizes of <tt>value</tt>
 and the destination type, <tt>ty2</tt>, must be identical. If the source
-type is a pointer, the destination type must also be a pointer.</p>
+type is a pointer, the destination type must also be a pointer.  This
+instruction supports bitwise conversion of vectors to integers and to vectors
+of other types (as long as they have the same size).</p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>bitcast</tt>' instruction converts <tt>value</tt> to type
@@ -3881,8 +3973,8 @@ instruction</a>.
 
 <h5>Example:</h5>
 <pre>
-  &lt;result&gt; = vicmp eq <2 x i32> < i32 4, i32 0 >, < i32 5, i32 0 >   <i>; yields: result=<2 x i32> < i32 0, i32 -1 ></i>
-  &lt;result&gt; = vicmp ult <2 x i8> < i8 1, i8 2 >, < i8 2, i8 2>        <i>; yields: result=<2 x i8> < i8 -1, i8 0 ></i>
+  &lt;result&gt; = vicmp eq &lt;2 x i32&gt; &lt; i32 4, i32 0&gt;, &lt; i32 5, i32 0&gt;   <i>; yields: result=&lt;2 x i32&gt; &lt; i32 0, i32 -1 &gt;</i>
+  &lt;result&gt; = vicmp ult &lt;2 x i8 &gt; &lt; i8 1, i8 2&gt;, &lt; i8 2, i8 2 &gt;        <i>; yields: result=&lt;2 x i8&gt; &lt; i8 -1, i8 0 &gt;</i>
 </pre>
 </div>
 
@@ -3935,36 +4027,50 @@ condition codes are evaluated identically to the
 
 <h5>Example:</h5>
 <pre>
-  &lt;result&gt; = vfcmp oeq <2 x float> < float 4, float 0 >, < float 5, float 0 >       <i>; yields: result=<2 x i32> < i32 0, i32 -1 ></i>
-  &lt;result&gt; = vfcmp ult <2 x double> < double 1, double 2 >, < double 2, double 2>   <i>; yields: result=<2 x i64> < i64 -1, i64 0 ></i>
+  &lt;result&gt; = vfcmp oeq &lt;2 x float&gt; &lt; float 4, float 0 &gt;, &lt; float 5, float 0 &gt;       <i>; yields: result=&lt;2 x i32&gt; &lt; i32 0, i32 -1 &gt;</i>
+  &lt;result&gt; = vfcmp ult &lt;2 x double&gt; &lt; double 1, double 2 &gt;, &lt; double 2, double 2&gt;   <i>; yields: result=&lt;2 x i64&gt; &lt; i64 -1, i64 0 &gt;</i>
 </pre>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_phi">'<tt>phi</tt>'
-Instruction</a> </div>
+<div class="doc_subsubsection">
+  <a name="i_phi">'<tt>phi</tt>' Instruction</a>
+</div>
+
 <div class="doc_text">
+
 <h5>Syntax:</h5>
+
 <pre>  &lt;result&gt; = phi &lt;ty&gt; [ &lt;val0&gt;, &lt;label0&gt;], ...<br></pre>
 <h5>Overview:</h5>
 <p>The '<tt>phi</tt>' instruction is used to implement the &#966; node in
 the SSA graph representing the function.</p>
 <h5>Arguments:</h5>
+
 <p>The type of the incoming values is specified with the first type
 field. After this, the '<tt>phi</tt>' instruction takes a list of pairs
 as arguments, with one pair for each predecessor basic block of the
 current block.  Only values of <a href="#t_firstclass">first class</a>
 type may be used as the value arguments to the PHI node.  Only labels
 may be used as the label arguments.</p>
+
 <p>There must be no non-phi instructions between the start of a basic
 block and the PHI instructions: i.e. PHI instructions must be first in
 a basic block.</p>
+
 <h5>Semantics:</h5>
+
 <p>At runtime, the '<tt>phi</tt>' instruction logically takes on the value
 specified by the pair corresponding to the predecessor basic block that executed
 just prior to the current block.</p>
+
 <h5>Example:</h5>
-<pre>Loop:       ; Infinite loop that counts from 0 on up...<br>  %indvar = phi i32 [ 0, %LoopHeader ], [ %nextindvar, %Loop ]<br>  %nextindvar = add i32 %indvar, 1<br>  br label %Loop<br></pre>
+<pre>
+Loop:       ; Infinite loop that counts from 0 on up...
+  %indvar = phi i32 [ 0, %LoopHeader ], [ %nextindvar, %Loop ]
+  %nextindvar = add i32 %indvar, 1
+  br label %Loop
+</pre>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -3991,13 +4097,16 @@ condition, without branching.
 <h5>Arguments:</h5>
 
 <p>
-The '<tt>select</tt>' instruction requires a boolean value indicating the condition, and two values of the same <a href="#t_firstclass">first class</a> type.
+The '<tt>select</tt>' instruction requires an 'i1' value indicating the
+condition, and two values of the same <a href="#t_firstclass">first class</a>
+type.  If the val1/val2 are vectors, the entire vectors are selected, not
+individual elements.
 </p>
 
 <h5>Semantics:</h5>
 
 <p>
-If the boolean condition evaluates to true, the instruction returns the first
+If the i1 condition evaluates is 1, the instruction returns the first
 value argument; otherwise, it returns the second value argument.
 </p>
 
