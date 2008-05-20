@@ -111,7 +111,8 @@ void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
                     diag::err_excess_initializers_in_char_array_initializer,
                     IList->getInit(Index)->getSourceRange());
       hadError = true; 
-    } else {
+    } else if (!T->isIncompleteType()) {
+      // Don't warn for incomplete types, since we'll get an error elsewhere
       SemaRef->Diag(IList->getInit(Index)->getLocStart(), 
                     diag::warn_excess_initializers, 
                     IList->getInit(Index)->getSourceRange());
@@ -137,6 +138,11 @@ void InitListChecker::CheckListElementTypes(InitListExpr *IList,
       CheckArrayType(IList, DeclType, Index);
     else
       assert(0 && "Aggregate that isn't a function or array?!");
+  } else if (DeclType->isVoidType()) {
+    // This is clearly invalid, so not much we can do here. Don't bother
+    // with a diagnostic; we'll give an error elsewhere.
+    Index++;
+    hadError = true;
   } else {
     // In C, all types are either scalars or aggregates, but
     // additional handling is needed here for C++ (and possibly others?). 
