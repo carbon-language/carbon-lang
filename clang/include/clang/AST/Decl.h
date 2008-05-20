@@ -125,6 +125,8 @@ protected:
   
   void EmitOutRec(llvm::Serializer& S) const;
   void ReadOutRec(llvm::Deserializer& D, ASTContext& C);
+  
+  friend void Decl::Destroy(ASTContext& C);
 };
 
 /// NamespaceDecl - Represent a C++ namespace.
@@ -150,6 +152,8 @@ class NamespaceDecl : public ScopedDecl, public DeclContext {
 public:
   static NamespaceDecl *Create(ASTContext &C, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id);
+  
+  virtual void Destroy(ASTContext& C);
 
   NamespaceDecl *getNextNamespace() {
     return cast_or_null<NamespaceDecl>(getNextDeclarator());
@@ -565,6 +569,8 @@ public:
                                   QualType T, Expr *E,
                                   const llvm::APSInt &V, ScopedDecl *PrevDecl);
   
+  virtual void Destroy(ASTContext& C);
+
   const Expr *getInitExpr() const { return Init; }
   Expr *getInitExpr() { return Init; }
   const llvm::APSInt &getInitVal() const { return Val; }
@@ -703,6 +709,8 @@ public:
                           SourceLocation L, IdentifierInfo *Id,
                           ScopedDecl *PrevDecl);
   
+  virtual void Destroy(ASTContext& C);
+
   /// defineElements - When created, EnumDecl correspond to a forward declared
   /// enum.  This method is used to mark the decl as being defined, with the
   /// specified list of enums.

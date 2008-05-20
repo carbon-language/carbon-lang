@@ -226,6 +226,15 @@ NamespaceDecl *NamespaceDecl::Create(ASTContext &C, DeclContext *DC,
   return new (Mem) NamespaceDecl(DC, L, Id);
 }
 
+void NamespaceDecl::Destroy(ASTContext& C) {
+  // NamespaceDecl uses "NextDeclarator" to chain namespace declarations
+  // together. They are all top-level Decls.
+  
+  this->~Decl();
+  C.getAllocator().Deallocate((void *)this);
+}
+
+
 VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC,
                          SourceLocation L,
                          IdentifierInfo *Id, QualType T,
@@ -267,6 +276,11 @@ EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,
   return new (Mem) EnumConstantDecl(CD, L, Id, T, E, V, PrevDecl);
 }
 
+void EnumConstantDecl::Destroy(ASTContext& C) {
+  if (Init) Init->Destroy(C);
+  Decl::Destroy(C);
+}
+
 TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation L,
                                  IdentifierInfo *Id, QualType T,
@@ -288,6 +302,12 @@ RecordDecl *RecordDecl::Create(ASTContext &C, Kind DK, DeclContext *DC,
   void *Mem = C.getAllocator().Allocate<RecordDecl>();
   return new (Mem) RecordDecl(DK, DC, L, Id, PrevDecl);
 }
+
+void EnumDecl::Destroy(ASTContext& C) {
+  if (ElementList) ElementList->Destroy(C);
+  Decl::Destroy(C);
+}
+
 
 FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C,
                                            SourceLocation L,
@@ -370,6 +390,23 @@ void Decl::swapAttrs(Decl *RHS) {
 
 
 void Decl::Destroy(ASTContext& C) {
+
+  if (ScopedDecl* SD = dyn_cast<ScopedDecl>(this)) {    
+
+    // Observe the unrolled recursion.  By setting N->NextDeclarator = 0x0
+    // within the loop, only the Destroy method for the first ScopedDecl
+    // will deallocate all of the ScopedDecls in a chain.
+    
+    ScopedDecl* N = SD->getNextDeclarator();
+    
+    while (N) {
+      ScopedDecl* Tmp = N->getNextDeclarator();
+      N->NextDeclarator = 0x0;
+      N->Destroy(C);
+      N = Tmp;
+    }
+  }  
+  
   this->~Decl();
   C.getAllocator().Deallocate((void *)this);
 }
