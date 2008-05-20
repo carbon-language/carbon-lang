@@ -241,6 +241,7 @@ namespace {
     Instruction *transformCallThroughTrampoline(CallSite CS);
     Instruction *transformZExtICmp(ICmpInst *ICI, Instruction &CI,
                                    bool DoXform = true);
+    bool WillNotOverflowSignedAdd(Value *LHS, Value *RHS);
 
   public:
     // InsertNewInstBefore - insert an instruction New before instruction Old
@@ -377,7 +378,7 @@ namespace {
 
     Value *EvaluateInDifferentType(Value *V, const Type *Ty, bool isSigned);
 
-    void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero, 
+    void ComputeMaskedBits(Value *V, const APInt &Mask, APInt& KnownZero,
                            APInt& KnownOne, unsigned Depth = 0) const;
     bool MaskedValueIsZero(Value *V, const APInt& Mask, unsigned Depth = 0);
     unsigned ComputeNumSignBits(Value *Op, unsigned Depth = 0) const;
@@ -2100,7 +2101,48 @@ unsigned InstCombiner::ComputeNumSignBits(Value *V, unsigned Depth) const{
     }
     break;
   case Instruction::And:
+    // Logical binary ops preserve the number of sign bits at the worst.
+    Tmp = ComputeNumSignBits(U->getOperand(0), Depth+1);
+    if (Tmp != 1) {
+      Tmp2 = ComputeNumSignBits(U->getOperand(1), Depth+1);
+      Tmp = std::min(Tmp, Tmp2);
+    }
+      
+    // X & C has sign bits equal to C if C's top bits are zeros.
+    if (ConstantInt *C = dyn_cast<ConstantInt>(U->getOperand(1))) {
+      // See what bits are known to be zero on the output.
+      APInt KnownZero(TyBits, 0), KnownOne(TyBits, 0);
+      APInt Mask = APInt::getAllOnesValue(TyBits);
+      ComputeMaskedBits(U->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+      
+      KnownZero |= ~C->getValue();
+      // If we know that we have leading zeros, we know we have at least that
+      // many sign bits.
+      Tmp = std::max(Tmp, KnownZero.countLeadingOnes());
+    }
+    return Tmp;
+      
   case Instruction::Or:
+    // Logical binary ops preserve the number of sign bits at the worst.
+    Tmp = ComputeNumSignBits(U->getOperand(0), Depth+1);
+    if (Tmp != 1) {
+      Tmp2 = ComputeNumSignBits(U->getOperand(1), Depth+1);
+      Tmp = std::min(Tmp, Tmp2);
+    }
+    // X & C has sign bits equal to C if C's top bits are zeros.
+    if (ConstantInt *C = dyn_cast<ConstantInt>(U->getOperand(1))) {
+      // See what bits are known to be one on the output.
+      APInt KnownZero(TyBits, 0), KnownOne(TyBits, 0);
+      APInt Mask = APInt::getAllOnesValue(TyBits);
+      ComputeMaskedBits(U->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
+      
+      KnownOne |= C->getValue();
+      // If we know that we have leading ones, we know we have at least that
+      // many sign bits.
+      Tmp = std::max(Tmp, KnownOne.countLeadingOnes());
+    }
+    return Tmp;
+      
   case Instruction::Xor:    // NOT is handled here.
     // Logical binary ops preserve the number of sign bits.
     Tmp = ComputeNumSignBits(U->getOperand(0), Depth+1);
@@ -2109,9 +2151,9 @@ unsigned InstCombiner::ComputeNumSignBits(Value *V, unsigned Depth) const{
     return std::min(Tmp, Tmp2);
 
   case Instruction::Select:
-    Tmp = ComputeNumSignBits(U->getOperand(0), Depth+1);
+    Tmp = ComputeNumSignBits(U->getOperand(1), Depth+1);
     if (Tmp == 1) return 1;  // Early out.
-    Tmp2 = ComputeNumSignBits(U->getOperand(1), Depth+1);
+    Tmp2 = ComputeNumSignBits(U->getOperand(2), Depth+1);
     return std::min(Tmp, Tmp2);
     
   case Instruction::Add:
@@ -2506,6 +2548,32 @@ static bool CannotBeNegativeZero(const Value *V) {
   return false;
 }
 
+/// WillNotOverflowSignedAdd - Return true if we can prove that:
+///    (sext (add LHS, RHS))  === (add (sext LHS), (sext RHS))
+/// This basically requires proving that the add in the original type would not
+/// overflow to change the sign bit or have a carry out.
+bool InstCombiner::WillNotOverflowSignedAdd(Value *LHS, Value *RHS) {
+  // There are different heuristics we can use for this.  Here are some simple
+  // ones.
+  
+  // Add has the property that adding any two 2's complement numbers can only 
+  // have one carry bit which can change a sign.  As such, if LHS and RHS each
+  // have at least two sign bits, we know that the addition of the two values will
+  // sign extend fine.
+  if (ComputeNumSignBits(LHS) > 1 && ComputeNumSignBits(RHS) > 1)
+    return true;
+  
+  
+  // If one of the operands only has one non-zero bit, and if the other operand
+  // has a known-zero bit in a more significant place than it (not including the
+  // sign bit) the ripple may go up to and fill the zero, but won't change the
+  // sign.  For example, (X & ~4) + 1.
+  
+  // TODO: Implement.
+  
+  return false;
+}
+
 
 Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
@@ -2781,6 +2849,84 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     if (CFP->getValueAPF().isPosZero() && CannotBeNegativeZero(LHS))
       return ReplaceInstUsesWith(I, LHS);
 
+  // Check for (add (sext x), y), see if we can merge this into an
+  // integer add followed by a sext.
+  if (SExtInst *LHSConv = dyn_cast<SExtInst>(LHS)) {
+    // (add (sext x), cst) --> (sext (add x, cst'))
+    if (ConstantInt *RHSC = dyn_cast<ConstantInt>(RHS)) {
+      Constant *CI = 
+        ConstantExpr::getTrunc(RHSC, LHSConv->getOperand(0)->getType());
+      if (LHSConv->hasOneUse() &&
+          ConstantExpr::getSExt(CI, I.getType()) == RHSC &&
+          WillNotOverflowSignedAdd(LHSConv->getOperand(0), CI)) {
+        // Insert the new, smaller add.
+        Instruction *NewAdd = BinaryOperator::CreateAdd(LHSConv->getOperand(0), 
+                                                        CI, "addconv");
+        InsertNewInstBefore(NewAdd, I);
+        return new SExtInst(NewAdd, I.getType());
+      }
+    }
+    
+    // (add (sext x), (sext y)) --> (sext (add int x, y))
+    if (SExtInst *RHSConv = dyn_cast<SExtInst>(RHS)) {
+      // Only do this if x/y have the same type, if at last one of them has a
+      // single use (so we don't increase the number of sexts), and if the
+      // integer add will not overflow.
+      if (LHSConv->getOperand(0)->getType()==RHSConv->getOperand(0)->getType()&&
+          (LHSConv->hasOneUse() || RHSConv->hasOneUse()) &&
+          WillNotOverflowSignedAdd(LHSConv->getOperand(0),
+                                   RHSConv->getOperand(0))) {
+        // Insert the new integer add.
+        Instruction *NewAdd = BinaryOperator::CreateAdd(LHSConv->getOperand(0), 
+                                                        RHSConv->getOperand(0),
+                                                        "addconv");
+        InsertNewInstBefore(NewAdd, I);
+        return new SExtInst(NewAdd, I.getType());
+      }
+    }
+  }
+  
+  // Check for (add double (sitofp x), y), see if we can merge this into an
+  // integer add followed by a promotion.
+  if (SIToFPInst *LHSConv = dyn_cast<SIToFPInst>(LHS)) {
+    // (add double (sitofp x), fpcst) --> (sitofp (add int x, intcst))
+    // ... if the constant fits in the integer value.  This is useful for things
+    // like (double)(x & 1234) + 4.0 -> (double)((X & 1234)+4) which no longer
+    // requires a constant pool load, and generally allows the add to be better
+    // instcombined.
+    if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHS)) {
+      Constant *CI = 
+      ConstantExpr::getFPToSI(CFP, LHSConv->getOperand(0)->getType());
+      if (LHSConv->hasOneUse() &&
+          ConstantExpr::getSIToFP(CI, I.getType()) == CFP &&
+          WillNotOverflowSignedAdd(LHSConv->getOperand(0), CI)) {
+        // Insert the new integer add.
+        Instruction *NewAdd = BinaryOperator::CreateAdd(LHSConv->getOperand(0), 
+                                                        CI, "addconv");
+        InsertNewInstBefore(NewAdd, I);
+        return new SIToFPInst(NewAdd, I.getType());
+      }
+    }
+    
+    // (add double (sitofp x), (sitofp y)) --> (sitofp (add int x, y))
+    if (SIToFPInst *RHSConv = dyn_cast<SIToFPInst>(RHS)) {
+      // Only do this if x/y have the same type, if at last one of them has a
+      // single use (so we don't increase the number of int->fp conversions),
+      // and if the integer add will not overflow.
+      if (LHSConv->getOperand(0)->getType()==RHSConv->getOperand(0)->getType()&&
+          (LHSConv->hasOneUse() || RHSConv->hasOneUse()) &&
+          WillNotOverflowSignedAdd(LHSConv->getOperand(0),
+                                   RHSConv->getOperand(0))) {
+        // Insert the new integer add.
+        Instruction *NewAdd = BinaryOperator::CreateAdd(LHSConv->getOperand(0), 
+                                                        RHSConv->getOperand(0),
+                                                        "addconv");
+        InsertNewInstBefore(NewAdd, I);
+        return new SIToFPInst(NewAdd, I.getType());
+      }
+    }
+  }
+  
   return Changed ? &I : 0;
 }
 
