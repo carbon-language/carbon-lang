@@ -93,12 +93,6 @@ public:
     for (; i < NumInitableElts; ++i) {
         
       llvm::Constant *C = Visit(ILE->getInit(i));
-      // FIXME: Remove this when sema of initializers is finished (and the code
-      // above).
-      if (C == 0 && ILE->getInit(i)->getType()->isVoidType()) {
-        if (ILE->getType()->isVoidType()) return 0;
-        return llvm::UndefValue::get(AType);
-      }
       assert (C && "Failed to create initializer expression");
       Elts.push_back(C);
     }
@@ -137,12 +131,6 @@ public:
       }
         
       llvm::Constant *C = Visit(ILE->getInit(EltNo));
-      // FIXME: Remove this when sema of initializers is finished (and the code
-      // above).
-      if (C == 0 && ILE->getInit(EltNo)->getType()->isVoidType()) {
-        if (ILE->getType()->isVoidType()) return 0;
-        return llvm::UndefValue::get(SType);
-      }
       assert (C && "Failed to create initializer expression");
       Elts.push_back(C);
       EltNo++;
@@ -172,12 +160,6 @@ public:
     for (; i < NumElements; ++i) {
         
       llvm::Constant *C = Visit(ILE->getInit(i));
-      // FIXME: Remove this when sema of initializers is finished (and the code
-      // above).
-      if (C == 0 && ILE->getInit(i)->getType()->isVoidType()) {
-        if (ILE->getType()->isVoidType()) return 0;
-        return llvm::UndefValue::get(VType);
-      }
       assert (C && "Failed to create initializer expression");
       Elts.push_back(C);
     }
