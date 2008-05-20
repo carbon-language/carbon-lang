@@ -158,7 +158,7 @@ static unsigned getJumpThreadDuplicationCost(const BasicBlock *BB) {
 /// ThreadBlock - If there are any predecessors whose control can be threaded
 /// through to a successor, transform them now.
 bool JumpThreading::ThreadBlock(BasicBlock *BB) {
-  // See if this block ends with a branch of switch.  If so, see if the
+  // See if this block ends with a branch or switch.  If so, see if the
   // condition is a phi node.  If so, and if an entry of the phi node is a
   // constant, we can thread the block.
   Value *Condition;
