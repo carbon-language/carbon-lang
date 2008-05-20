@@ -160,7 +160,7 @@ bool BasicObjCFoundationChecks::Audit(ExplodedNode<ValueState>* N) {
   ObjCInterfaceType* ReceiverType = GetReceiverType(ME);
   
   if (!ReceiverType)
-    return NULL;
+    return false;
   
   const char* name = ReceiverType->getDecl()->getIdentifier()->getName();
   
@@ -177,7 +177,7 @@ bool BasicObjCFoundationChecks::Audit(ExplodedNode<ValueState>* N) {
   if (isNSString(ReceiverType, name))
     return AuditNSString(N, ME);
 
-  return false;  
+  return false;
 }
 
 static inline bool isNil(RVal X) {
