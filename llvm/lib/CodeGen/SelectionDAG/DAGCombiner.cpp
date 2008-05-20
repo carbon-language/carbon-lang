@@ -2776,20 +2776,18 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   if (N0.getOpcode() == ISD::SIGN_EXTEND || N0.getOpcode() == ISD::ANY_EXTEND)
     return DAG.getNode(ISD::SIGN_EXTEND, VT, N0.getOperand(0));
   
-  // fold (sext (truncate (load x))) -> (sext (smaller load x))
-  // fold (sext (truncate (srl (load x), c))) -> (sext (smaller load (x+c/n)))
   if (N0.getOpcode() == ISD::TRUNCATE) {
+    // fold (sext (truncate (load x))) -> (sext (smaller load x))
+    // fold (sext (truncate (srl (load x), c))) -> (sext (smaller load (x+c/n)))
     SDOperand NarrowLoad = ReduceLoadWidth(N0.Val);
     if (NarrowLoad.Val) {
       if (NarrowLoad.Val != N0.Val)
         CombineTo(N0.Val, NarrowLoad);
       return DAG.getNode(ISD::SIGN_EXTEND, VT, NarrowLoad);
     }
-  }
 
-  // See if the value being truncated is already sign extended.  If so, just
-  // eliminate the trunc/sext pair.
-  if (N0.getOpcode() == ISD::TRUNCATE) {
+    // See if the value being truncated is already sign extended.  If so, just
+    // eliminate the trunc/sext pair.
     SDOperand Op = N0.getOperand(0);
     unsigned OpBits   = MVT::getSizeInBits(Op.getValueType());
     unsigned MidBits  = MVT::getSizeInBits(N0.getValueType());
