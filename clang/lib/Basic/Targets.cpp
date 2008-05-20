@@ -697,8 +697,13 @@ public:
 namespace {
 class DarwinI386TargetInfo : public DarwinTargetInfo {
 public:
-  DarwinI386TargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {}
-  
+  DarwinI386TargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {
+    DoubleAlign = LongLongAlign = 32;
+    LongDoubleWidth = 96;
+    LongDoubleAlign = 32;
+    LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
+  }
+
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     DarwinTargetInfo::getTargetDefines(Defines);
     getX86Defines(Defines, false);
@@ -741,6 +746,9 @@ class DarwinX86_64TargetInfo : public DarwinTargetInfo {
 public:
   DarwinX86_64TargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
+    LongDoubleWidth = 128;
+    LongDoubleAlign = 128;
+    LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
   
   virtual void getTargetDefines(std::vector<char> &Defines) const {
@@ -782,7 +790,9 @@ public:
 namespace {
 class DarwinARMTargetInfo : public DarwinTargetInfo {
 public:
-  DarwinARMTargetInfo(const std::string& triple) :DarwinTargetInfo(triple) {}
+  DarwinARMTargetInfo(const std::string& triple) :DarwinTargetInfo(triple) {
+    // FIXME: Are the defaults corrent for ARM?
+  }
   
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     DarwinTargetInfo::getTargetDefines(Defines);
@@ -871,7 +881,10 @@ namespace {
   class PIC16TargetInfo : public TargetInfo{
   public:
     PIC16TargetInfo(const std::string& triple) : TargetInfo(triple) {
-      IntWidth = IntAlign = 16;
+      // FIXME: Is IntAlign really supposed to be 16?  There seems
+      // little point on a platform with 8-bit loads.
+      IntWidth = IntAlign = LongAlign = LongLongAlign = PointerWidth = 16;
+      PointerAlign = 8;
     }
     virtual uint64_t getPointerWidthV(unsigned AddrSpace) const { return 16; }
     virtual uint64_t getPointerAlignV(unsigned AddrSpace) const { return 8; }
@@ -909,25 +922,25 @@ static inline bool IsX86(const std::string& TT) {
 TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
   if (T.find("ppc-") == 0 || T.find("powerpc-") == 0)
     return new DarwinPPCTargetInfo(T);
-  
+
   if (T.find("ppc64-") == 0 || T.find("powerpc64-") == 0)
     return new DarwinPPC64TargetInfo(T);
-  
+
   if (T.find("armv6-") == 0 || T.find("arm-") == 0)
     return new DarwinARMTargetInfo(T);
 
   if (T.find("sparc-") == 0)
     return new SolarisSparcV8TargetInfo(T); // ugly hack
-  
+
   if (T.find("x86_64-") == 0)
     return new DarwinX86_64TargetInfo(T);
-  
+
   if (T.find("pic16-") == 0)
     return new PIC16TargetInfo(T);
 
   if (IsX86(T))
     return new DarwinI386TargetInfo(T);
-  
+
   return NULL;
 }
 

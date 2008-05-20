@@ -38,7 +38,9 @@ protected:
   unsigned char PointerWidth, PointerAlign;
   unsigned char WCharWidth, WCharAlign;
   unsigned char IntWidth, IntAlign;
+  unsigned char FloatWidth, FloatAlign;
   unsigned char DoubleWidth, DoubleAlign;
+  unsigned char LongDoubleWidth, LongDoubleAlign;
   unsigned char LongWidth, LongAlign;
   unsigned char LongLongWidth, LongLongAlign;
   
@@ -114,8 +116,8 @@ public:
   unsigned getWCharAlign() const { return WCharAlign; }
 
   /// getFloatWidth/Align/Format - Return the size/align/format of 'float'.
-  unsigned getFloatWidth() const { return 32; } // FIXME
-  unsigned getFloatAlign() const { return 32; } // FIXME
+  unsigned getFloatWidth() const { return FloatWidth; }
+  unsigned getFloatAlign() const { return FloatAlign; }
   const llvm::fltSemantics *getFloatFormat() const { return FloatFormat; }
 
   /// getDoubleWidth/Align/Format - Return the size/align/format of 'double'.
@@ -125,8 +127,8 @@ public:
 
   /// getLongDoubleWidth/Align/Format - Return the size/align/format of 'long
   /// double'.
-  unsigned getLongDoubleWidth() const { return 64; } // FIXME
-  unsigned getLongDoubleAlign() const { return 64; } // FIXME
+  unsigned getLongDoubleWidth() const { return LongDoubleWidth; }
+  unsigned getLongDoubleAlign() const { return LongDoubleAlign; }
   const llvm::fltSemantics *getLongDoubleFormat() const {
     return LongDoubleFormat;
   }
