@@ -1,4 +1,4 @@
 load_lib llvm.exp
 
-RunLLVMTests [lsort [glob -nocomplain $srcdir/$subdir/*.{ll,llx,c,cpp,tr}]]
+RunLLVMTests [lsort [glob -nocomplain $srcdir/$subdir/*.{ll,c,cpp,tr}]]
 

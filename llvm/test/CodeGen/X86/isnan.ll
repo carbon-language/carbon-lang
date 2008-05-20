@@ -1,11 +1,9 @@
-; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah | not grep pxor
+; RUN: llvm-as < %s | llc -march=x86 | not grep call
 
-; This should not need to materialize 0.0 to evaluate the condition.
+declare i1 @llvm.isunordered.f64(double)
 
-define i32 @test(double %X) nounwind  {
-entry:
-	%tmp6 = fcmp uno double %X, 0.000000e+00		; <i1> [#uses=1]
-	%tmp67 = zext i1 %tmp6 to i32		; <i32> [#uses=1]
-	ret i32 %tmp67
+define i1 @test_isnan(double %X) {
+        %R = fcmp uno double %X, %X             ; <i1> [#uses=1]
+        ret i1 %R
 }
 
