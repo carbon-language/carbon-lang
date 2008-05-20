@@ -621,7 +621,9 @@ namespace ARM {
 namespace {
 class DarwinPPCTargetInfo : public DarwinTargetInfo {
 public:
-  DarwinPPCTargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {}
+  DarwinPPCTargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {
+    CharIsSigned = false;
+  }
   
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     DarwinTargetInfo::getTargetDefines(Defines);
@@ -659,6 +661,7 @@ namespace {
 class DarwinPPC64TargetInfo : public DarwinTargetInfo {
 public:
   DarwinPPC64TargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {
+    CharIsSigned = false;
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
   }
   
