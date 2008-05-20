@@ -302,6 +302,7 @@ namespace {
     MachineRegisterInfo *RegInfo;
     const TargetRegisterInfo *TRI;
     const TargetInstrInfo *TII;
+    DenseMap<MachineInstr*, unsigned> DistanceMap;
   public:
     bool runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
       RegInfo = &MF.getRegInfo(); 
@@ -333,6 +334,9 @@ namespace {
       return true;
     }
   private:
+    void TransferDeadness(MachineBasicBlock *MBB, unsigned CurDist,
+                          unsigned Reg, BitVector &RegKills,
+                          std::vector<MachineOperand*> &KillOps);
     bool PrepForUnfoldOpti(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator &MII,
                            std::vector<MachineInstr*> &MaybeDeadStores,
@@ -943,6 +947,7 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
           VRM.assignVirt2Phys(UnfoldVR, UnfoldPR);
         VRM.virtFolded(VirtReg, FoldedMI, VirtRegMap::isRef);
         MII = MBB.insert(MII, FoldedMI);
+        InvalidateKills(MI, RegKills, KillOps);
         VRM.RemoveMachineInstrFromMaps(&MI);
         MBB.erase(&MI);
         return true;
@@ -1026,6 +1031,49 @@ void LocalSpiller::SpillRegToStackSlot(MachineBasicBlock &MBB,
   ++NumStores;
 }
 
+/// TransferDeadness - A identity copy definition is dead and it's being
+/// removed. Find the last def or use and mark it as dead / kill.
+void LocalSpiller::TransferDeadness(MachineBasicBlock *MBB, unsigned CurDist,
+                                    unsigned Reg, BitVector &RegKills,
+                                    std::vector<MachineOperand*> &KillOps) {
+  int LastUDDist = -1;
+  MachineInstr *LastUDMI = NULL;
+  for (MachineRegisterInfo::reg_iterator RI = RegInfo->reg_begin(Reg),
+         RE = RegInfo->reg_end(); RI != RE; ++RI) {
+    MachineInstr *UDMI = &*RI;
+    if (UDMI->getParent() != MBB)
+      continue;
+    DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(UDMI);
+    if (DI == DistanceMap.end() || DI->second > CurDist)
+      continue;
+    if ((int)DI->second < LastUDDist)
+      continue;
+    LastUDDist = DI->second;
+    LastUDMI = UDMI;
+  }
+
+  if (LastUDMI) {
+    const TargetInstrDesc &TID = LastUDMI->getDesc();
+    MachineOperand *LastUD = NULL;
+    for (unsigned i = 0, e = LastUDMI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = LastUDMI->getOperand(i);
+      if (!MO.isRegister() || MO.getReg() != Reg)
+        continue;
+      if (!LastUD || (LastUD->isUse() && MO.isDef()))
+        LastUD = &MO;
+      if (TID.getOperandConstraint(i, TOI::TIED_TO) != -1)
+        return;
+    }
+    if (LastUD->isDef())
+      LastUD->setIsDead();
+    else {
+      LastUD->setIsKill();
+      RegKills.set(Reg);
+      KillOps[Reg] = LastUD;
+    }
+  }
+}
+
 /// rewriteMBB - Keep track of which spills are available even after the
 /// register allocator is done with them.  If possible, avid reloading vregs.
 void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
@@ -1054,6 +1102,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
   std::vector<MachineOperand*>  KillOps;
   KillOps.resize(TRI->getNumRegs(), NULL);
 
+  unsigned Dist = 0;
+  DistanceMap.clear();
   for (MachineBasicBlock::iterator MII = MBB.begin(), E = MBB.end();
        MII != E; ) {
     MachineBasicBlock::iterator NextMII = MII; ++NextMII;
@@ -1431,6 +1481,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
               InvalidateKill(InReg, RegKills, KillOps);
             }
 
+            InvalidateKills(MI, RegKills, KillOps);
             VRM.RemoveMachineInstrFromMaps(&MI);
             MBB.erase(&MI);
             Erased = true;
@@ -1442,6 +1493,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           if (PhysReg &&
               TII->unfoldMemoryOperand(MF, &MI, PhysReg, false, false, NewMIs)) {
             MBB.insert(MII, NewMIs[0]);
+            InvalidateKills(MI, RegKills, KillOps);
             VRM.RemoveMachineInstrFromMaps(&MI);
             MBB.erase(&MI);
             Erased = true;
@@ -1476,6 +1528,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
               NewStore = NewMIs[1];
               MBB.insert(MII, NewStore);
               VRM.addSpillSlotUse(SS, NewStore);
+              InvalidateKills(MI, RegKills, KillOps);
               VRM.RemoveMachineInstrFromMaps(&MI);
               MBB.erase(&MI);
               Erased = true;
@@ -1549,6 +1602,13 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
           ++NumDCE;
           DOUT << "Removing now-noop copy: " << MI;
+          SmallVector<unsigned, 2> KillRegs;
+          InvalidateKills(MI, RegKills, KillOps, &KillRegs);
+          if (MO.isDead() && !KillRegs.empty()) {
+            assert(KillRegs[0] == Dst);
+            // Last def is now dead.
+            TransferDeadness(&MBB, Dist, Src, RegKills, KillOps);
+          }
           VRM.RemoveMachineInstrFromMaps(&MI);
           MBB.erase(&MI);
           Erased = true;
@@ -1626,6 +1686,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
             ++NumDCE;
             DOUT << "Removing now-noop copy: " << MI;
+            InvalidateKills(MI, RegKills, KillOps);
             VRM.RemoveMachineInstrFromMaps(&MI);
             MBB.erase(&MI);
             Erased = true;
@@ -1636,6 +1697,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       }    
     }
   ProcessNextInst:
+    DistanceMap.insert(std::make_pair(&MI, Dist++));
     if (!Erased && !BackTracked) {
       for (MachineBasicBlock::iterator II = MI; II != NextMII; ++II)
         UpdateKills(*II, RegKills, KillOps);
