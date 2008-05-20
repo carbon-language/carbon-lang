@@ -1562,7 +1562,9 @@ addIntervalsForSpills(const LiveInterval &li,
         if (!Folded) {
           LiveRange *LR = &nI.ranges[nI.ranges.size()-1];
           bool isKill = LR->end == getStoreIndex(index);
-          vrm.addSpillPoint(VReg, isKill, MI);
+          if (!MI->registerDefIsDead(nI.reg))
+            // No need to spill a dead def.
+            vrm.addSpillPoint(VReg, isKill, MI);
           if (isKill)
             AddedKill.insert(&nI);
         }
