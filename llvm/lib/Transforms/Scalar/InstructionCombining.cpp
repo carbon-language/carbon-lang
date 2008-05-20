@@ -5435,7 +5435,7 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
   
   // Now we know that the APFloat is a normal number, zero or inf.
   
-  // See if the FP constant is top large for the integer.  For example,
+  // See if the FP constant is too large for the integer.  For example,
   // comparing an i8 to 300.0.
   unsigned IntWidth = IntTy->getPrimitiveSizeInBits();
   
@@ -5561,10 +5561,10 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
       if (CFP->getValueAPF().isNaN()) {
         if (FCmpInst::isOrdered(I.getPredicate()))   // True if ordered and...
           return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
-        if (FCmpInst::isUnordered(I.getPredicate())) // True if unordered or...
-          return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
-        if (FCmpInst::isUnordered(I.getPredicate())) // Undef on unordered.
-          return ReplaceInstUsesWith(I, UndefValue::get(Type::Int1Ty));
+        assert(FCmpInst::isUnordered(I.getPredicate()) &&
+               "Comparison must be either ordered or unordered!");
+        // True if unordered.
+        return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
       }
     }
     
