@@ -362,6 +362,7 @@ void FunctionDecl::EmitImpl(Serializer& S) const {
   S.EmitBool(IsInline);        // From FunctionDecl.
   ValueDecl::EmitInRec(S);
   S.EmitPtr(DeclChain);
+  S.EmitPtr(PreviousDeclaration);
   
   // NOTE: We do not need to serialize out the number of parameters, because
   //  that is encoded in the type (accessed via getNumParams()).
@@ -387,6 +388,7 @@ FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   
   decl->ValueDecl::ReadInRec(D, C);
   D.ReadPtr(decl->DeclChain);
+  D.ReadPtr(decl->PreviousDeclaration);
 
   Decl* next_declarator;
   
