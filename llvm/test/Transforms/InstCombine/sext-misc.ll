@@ -43,3 +43,10 @@ define i64 @voo(i32 %x) {
   %s = sext i32 %u to i64
   ret i64 %s
 }
+define i32 @woo(i8 %a, i32 %f, i1 %p, i32* %z) {
+  %d = ashr i32 %f, 24
+  %e = select i1 %p, i32 %d, i32 0
+  %s = trunc i32 %e to i16
+  %n = sext i16 %s to i32
+  ret i32 %n
+}

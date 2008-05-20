@@ -2085,7 +2085,7 @@ unsigned InstCombiner::ComputeNumSignBits(Value *V, unsigned Depth) const{
     
   case Instruction::AShr:
     Tmp = ComputeNumSignBits(U->getOperand(0), Depth+1);
-    // SRA X, C   -> adds C sign bits.
+    // ashr X, C   -> adds C sign bits.
     if (ConstantInt *C = dyn_cast<ConstantInt>(U->getOperand(1))) {
       Tmp += C->getZExtValue();
       if (Tmp > TyBits) Tmp = TyBits;
@@ -8193,6 +8193,33 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
         
         return ReplaceInstUsesWith(CI, In);
       }
+    }
+  }
+
+  // See if the value being truncated is already sign extended.  If so, just
+  // eliminate the trunc/sext pair.
+  if (getOpcode(Src) == Instruction::Trunc) {
+    Value *Op = cast<User>(Src)->getOperand(0);
+    unsigned OpBits   = cast<IntegerType>(Op->getType())->getBitWidth();
+    unsigned MidBits  = cast<IntegerType>(Src->getType())->getBitWidth();
+    unsigned DestBits = cast<IntegerType>(CI.getType())->getBitWidth();
+    unsigned NumSignBits = ComputeNumSignBits(Op);
+
+    if (OpBits == DestBits) {
+      // Op is i32, Mid is i8, and Dest is i32.  If Op has more than 24 sign
+      // bits, it is already ready.
+      if (NumSignBits > DestBits-MidBits)
+        return ReplaceInstUsesWith(CI, Op);
+    } else if (OpBits < DestBits) {
+      // Op is i32, Mid is i8, and Dest is i64.  If Op has more than 24 sign
+      // bits, just sext from i32.
+      if (NumSignBits > OpBits-MidBits)
+        return new SExtInst(Op, CI.getType(), "tmp");
+    } else {
+      // Op is i64, Mid is i8, and Dest is i32.  If Op has more than 56 sign
+      // bits, just truncate to i32.
+      if (NumSignBits > OpBits-MidBits)
+        return new TruncInst(Op, CI.getType(), "tmp");
     }
   }
       
