@@ -511,7 +511,7 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
 
   // Enter function-declaration scope, limiting any declarators to the
   // function prototype scope, including parameter declarators.
-  EnterScope(Scope::DeclScope);
+  EnterScope(Scope::FnScope|Scope::DeclScope);
 
   // Read all the argument declarations.
   while (isDeclarationSpecifier()) {
