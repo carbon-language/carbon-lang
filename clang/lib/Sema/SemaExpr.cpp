@@ -738,7 +738,20 @@ ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
   //assert((InitExpr != 0) && "ActOnCompoundLiteral(): missing expression");
   Expr *literalExpr = static_cast<Expr*>(InitExpr);
 
-  // FIXME: add more semantic analysis (C99 6.5.2.5).
+  if (literalType->isArrayType()) {
+    if (literalType->getAsVariableArrayType())
+      return Diag(LParenLoc,
+                  diag::err_variable_object_no_init,
+                  SourceRange(LParenLoc,
+                              literalExpr->getSourceRange().getEnd()));
+  } else if (literalType->isIncompleteType()) {
+    return Diag(LParenLoc,
+                diag::err_typecheck_decl_incomplete_type,
+                literalType.getAsString(),
+                SourceRange(LParenLoc,
+                            literalExpr->getSourceRange().getEnd()));
+  }
+
   if (CheckInitializerTypes(literalExpr, literalType))
     return true;
 
