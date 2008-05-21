@@ -31,3 +31,8 @@ enum E9 { one, two };
 union S65 { enum E9 a:62; } ; union S65 s65;
 void fS65() { enum E9 e = s65.a; } 
 
+typedef union{
+  unsigned char x[65536];
+} q;
+int qfunc() {q buf; unsigned char* x = buf.x;}
+
