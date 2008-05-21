@@ -36,16 +36,16 @@ void StmtIteratorBase::NextVA() {
   p = FindVA(p->getElementType().getTypePtr());
   setVAPtr(p);
 
-  if (!p && decl) {
+  if (!p && inDecl()) {
     if (VarDecl* VD = dyn_cast<VarDecl>(decl)) 
       if (VD->Init)
         return;
       
     NextDecl();
-  }
-  else {
+  } else if (inSizeOfTypeVA()) {
+    assert(!decl);
     RawVAPtr = 0;
-  }    
+  }
 }
 
 void StmtIteratorBase::NextDecl(bool ImmediateAdvance) {
@@ -100,7 +100,6 @@ StmtIteratorBase::StmtIteratorBase(VariableArrayType* t)
 : decl(NULL), RawVAPtr(SizeOfTypeVAMode) {
   RawVAPtr |= reinterpret_cast<uintptr_t>(t);
 }
-
 
 Stmt*& StmtIteratorBase::GetDeclExpr() const {
   if (VariableArrayType* VAPtr = getVAPtr()) {

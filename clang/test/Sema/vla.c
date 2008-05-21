@@ -5,3 +5,11 @@ int test1() {
   static int y = sizeof(x);  // expected-error {{not constant}}
 }
 
+// PR2347
+void f (unsigned int m)
+{
+  extern int e[2][m];
+
+  e[0][0] = 0;
+}
+
