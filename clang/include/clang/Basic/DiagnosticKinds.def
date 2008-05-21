@@ -1007,9 +1007,6 @@ DIAG(warn_floatingpoint_eq, WARNING,
 DIAG(warn_selfcomparison,WARNING,
      "self-comparison always results in a constant value.")
 
-// CHECK: stores to variables that are no longer live (dead stores)
-DIAG(warn_dead_store, WARNING, "value stored to variable is never used")
-
 // CHECK: use of uninitialized values
 DIAG(warn_uninit_val, WARNING, "use of uninitialized variable")
 

@@ -3,12 +3,12 @@
 void f1() {
   int k, y;
   int abc=1;
-  long idx=abc+3*5; // expected-warning {{value stored to variable is never used}}
+  long idx=abc+3*5; // expected-warning {{never used}}
 }
 
 void f2(void *b) {
  char *c = (char*)b; // no-warning
- char *d = b+1; // expected-warning {{value stored to variable is never used}}
+ char *d = b+1; // expected-warning {{never used}}
  printf("%s", c);
 }
 
@@ -27,19 +27,19 @@ void f4(int k) {
   if (k)
     f1();
     
-  k = 2;  // expected-warning {{value stored to variable is never used}}
+  k = 2;  // expected-warning {{never used}}
 }
 
 void f5() {
 
   int x = 4; // no-warning
-  int *p = &x; // expected-warning{{value stored to variable is never used}}
+  int *p = &x; // expected-warning{{never used}}
 
 }
 
 int f6() {
   
   int x = 4;
-  ++x; // expected-warning{{value stored to variable is never used}}
+  ++x; // expected-warning{{never used}}
   return 1;
 }

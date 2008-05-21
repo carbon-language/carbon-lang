@@ -20,6 +20,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/ASTContext.h"
 #include "llvm/Support/Compiler.h"
+#include <sstream>
 
 using namespace clang;
 
@@ -35,16 +36,22 @@ public:
   
   virtual ~DeadStoreObs() {}
   
+  unsigned GetDiag(VarDecl* VD) {
+    std::ostringstream os;
+    os << "value stored to '" << VD->getName() << "' is never used";        
+    return Diags.getCustomDiagID(Diagnostic::Warning, os.str().c_str());     
+  }
+  
   void CheckDeclRef(DeclRefExpr* DR, Expr* Val,
                     const LiveVariables::AnalysisDataTy& AD,
                     const LiveVariables::ValTy& Live) {
     
     if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))
       if (VD->hasLocalStorage() && !Live(VD, AD)) {
-        SourceRange R = Val->getSourceRange();
+        SourceRange R = Val->getSourceRange();        
         Diags.Report(&Client,
                      Ctx.getFullLoc(DR->getSourceRange().getBegin()),
-                     diag::warn_dead_store, 0, 0, &R, 1);
+                     GetDiag(VD), 0, 0, &R, 1);
       }
   }
   
@@ -94,7 +101,7 @@ public:
                 SourceRange R = E->getSourceRange();
                 Diags.Report(&Client,
                              Ctx.getFullLoc(V->getLocation()),
-                             diag::warn_dead_store, 0, 0, &R, 1);
+                             GetDiag(V), 0, 0, &R, 1);
               }
             }
           }
