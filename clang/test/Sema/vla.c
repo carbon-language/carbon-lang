@@ -8,7 +8,7 @@ int test1() {
 // PR2347
 void f (unsigned int m)
 {
-  extern int e[2][m];
+  int e[2][m];
 
   e[0][0] = 0;
 }
