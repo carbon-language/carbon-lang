@@ -44,7 +44,10 @@ public:
   ~SerializationTest();
 
   virtual void Initialize(ASTContext& context) {
-    if (!TU) TU.reset(new TranslationUnit(context, lopts));
+    if (!TU) {
+      TU.reset(new TranslationUnit(context, lopts));
+      TU->SetOwnsDecls(false);
+    }
   }  
 
   virtual void HandleTopLevelDecl(Decl *D) {

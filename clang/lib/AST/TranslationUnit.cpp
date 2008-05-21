@@ -31,7 +31,7 @@ enum { BasicMetadataBlock = 1,
        DeclsBlock = 3 };
 
 TranslationUnit::~TranslationUnit() {
-  if (OwnsMetaData && Context) {
+  if (OwnsDecls) {
     llvm::DenseSet<Decl*> Killed;
     for (iterator I=begin(), E=end(); I!=E; ++I) {
       if (Killed.count(*I)) continue;
@@ -39,10 +39,13 @@ TranslationUnit::~TranslationUnit() {
       Killed.insert(*I);
       (*I)->Destroy(*Context);
     }
+  }
 
+  if (OwnsMetaData && Context) {
     // The ASTContext object has the sole references to the IdentifierTable
     // Selectors, and the Target information.  Go and delete them, since
     // the TranslationUnit effectively owns them.
+    
     delete &(Context->Idents);
     delete &(Context->Selectors);
     delete &(Context->Target);

@@ -35,13 +35,18 @@ class TranslationUnit {
   ASTContext* Context;
   std::vector<Decl*> TopLevelDecls;
   bool OwnsMetaData;
+  bool OwnsDecls;
 
   // The default ctor is only invoked during deserialization.
-  explicit TranslationUnit() : Context(NULL), OwnsMetaData(true) {}
+  explicit TranslationUnit() : Context(NULL), OwnsMetaData(true),
+                               OwnsDecls(true) {}
   
 public:
   explicit TranslationUnit(ASTContext& Ctx, const LangOptions& lopt)
-    : LangOpts(lopt), Context(&Ctx), OwnsMetaData(false) {}
+    : LangOpts(lopt), Context(&Ctx), OwnsMetaData(false),
+      OwnsDecls(true) {}
+
+  void SetOwnsDecls(bool val) { OwnsDecls = val; }
 
   ~TranslationUnit();
 
