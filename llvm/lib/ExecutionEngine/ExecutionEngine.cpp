@@ -59,6 +59,7 @@ Module* ExecutionEngine::removeModuleProvider(ModuleProvider *P,
     ModuleProvider *MP = *I;
     if (MP == P) {
       Modules.erase(I);
+      clearGlobalMappingsFromModule(MP->getModule());
       return MP->releaseModule(ErrInfo);
     }
   }
@@ -104,6 +105,22 @@ void ExecutionEngine::clearAllGlobalMappings() {
   
   state.getGlobalAddressMap(locked).clear();
   state.getGlobalAddressReverseMap(locked).clear();
+}
+
+/// clearGlobalMappingsFromModule - Clear all global mappings that came from a
+/// particular module, because it has been removed from the JIT.
+void ExecutionEngine::clearGlobalMappingsFromModule(Module *M) {
+  MutexGuard locked(lock);
+  
+  for (Module::iterator FI = M->begin(), FE = M->end(); FI != FE; ++FI) {
+    state.getGlobalAddressMap(locked).erase(FI);
+    state.getGlobalAddressReverseMap(locked).erase(FI);
+  }
+  for (Module::global_iterator GI = M->global_begin(), GE = M->global_end(); 
+       GI != GE; ++GI) {
+    state.getGlobalAddressMap(locked).erase(GI);
+    state.getGlobalAddressReverseMap(locked).erase(GI);
+  }
 }
 
 /// updateGlobalMapping - Replace an existing mapping for GV with a new

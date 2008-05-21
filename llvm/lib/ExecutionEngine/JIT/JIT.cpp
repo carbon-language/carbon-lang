@@ -91,15 +91,17 @@ ExecutionEngine *ExecutionEngine::createJIT(ModuleProvider *MP,
 
 JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,
          JITMemoryManager *JMM)
-  : ExecutionEngine(MP), TM(tm), TJI(tji), jitstate(MP) {
+  : ExecutionEngine(MP), TM(tm), TJI(tji) {
   setTargetData(TM.getTargetData());
+
+  jitstate = new JITState(MP);
 
   // Initialize MCE
   MCE = createEmitter(*this, JMM);
 
   // Add target data
   MutexGuard locked(lock);
-  FunctionPassManager &PM = jitstate.getPM(locked);
+  FunctionPassManager &PM = jitstate->getPM(locked);
   PM.add(new TargetData(*TM.getTargetData()));
 
   // Turn the machine code intermediate representation into bytes in memory that
@@ -114,8 +116,52 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,
 }
 
 JIT::~JIT() {
+  delete jitstate;
   delete MCE;
   delete &TM;
+}
+
+/// addModuleProvider - Add a new ModuleProvider to the JIT.  If we previously
+/// removed the last ModuleProvider, we need re-initialize jitstate with a valid
+/// ModuleProvider.
+void JIT::addModuleProvider(ModuleProvider *MP) {
+  MutexGuard locked(lock);
+
+  if (Modules.empty()) {
+    assert(!jitstate && "jitstate should be NULL if Modules vector is empty!");
+
+    jitstate = new JITState(MP);
+
+    FunctionPassManager &PM = jitstate->getPM(locked);
+    PM.add(new TargetData(*TM.getTargetData()));
+
+    // Turn the machine code intermediate representation into bytes in memory
+    // that may be executed.
+    if (TM.addPassesToEmitMachineCode(PM, *MCE, false /*fast*/)) {
+      cerr << "Target does not support machine code emission!\n";
+      abort();
+    }
+    
+    // Initialize passes.
+    PM.doInitialization();
+  }
+  
+  ExecutionEngine::addModuleProvider(MP);
+}
+
+/// removeModuleProvider - If we are removing the last ModuleProvider, 
+/// invalidate the jitstate since the PassManager it contains references a
+/// released ModuleProvider.
+Module *JIT::removeModuleProvider(ModuleProvider *MP, std::string *E) {
+  Module *result = ExecutionEngine::removeModuleProvider(MP, E);
+  
+  MutexGuard locked(lock);
+  if (Modules.empty()) {
+    delete jitstate;
+    jitstate = 0;
+  }
+  
+  return result;
 }
 
 /// run - Start execution with the specified function and arguments.
@@ -289,15 +335,15 @@ void JIT::runJITOnFunction(Function *F) {
 
   // JIT the function
   isAlreadyCodeGenerating = true;
-  jitstate.getPM(locked).run(*F);
+  jitstate->getPM(locked).run(*F);
   isAlreadyCodeGenerating = false;
 
   // If the function referred to a global variable that had not yet been
   // emitted, it allocates memory for the global, but doesn't emit it yet.  Emit
   // all of these globals now.
-  while (!jitstate.getPendingGlobals(locked).empty()) {
-    const GlobalVariable *GV = jitstate.getPendingGlobals(locked).back();
-    jitstate.getPendingGlobals(locked).pop_back();
+  while (!jitstate->getPendingGlobals(locked).empty()) {
+    const GlobalVariable *GV = jitstate->getPendingGlobals(locked).back();
+    jitstate->getPendingGlobals(locked).pop_back();
     EmitGlobalVariable(GV);
   }
 }
@@ -387,7 +433,7 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
       unsigned MisAligned = ((intptr_t)Ptr & (A-1));
       Ptr = (char*)Ptr + (MisAligned ? (A-MisAligned) : 0);
     }
-    jitstate.getPendingGlobals(locked).push_back(GV);
+    jitstate->getPendingGlobals(locked).push_back(GV);
   }
   addGlobalMapping(GV, Ptr);
   return Ptr;
