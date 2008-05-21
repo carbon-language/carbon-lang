@@ -205,16 +205,12 @@ namespace sys {
       /// Compares \p this Path with \p that Path for equality.
       /// @returns true if \p this and \p that refer to the same thing.
       /// @brief Equality Operator
-      bool operator==(const Path &that) const {
-        return path == that.path;
-      }
+      bool operator==(const Path &that) const;
 
       /// Compares \p this Path with \p that Path for inequality.
       /// @returns true if \p this and \p that refer to different things.
       /// @brief Inequality Operator
-      bool operator!=(const Path &that) const {
-        return path != that.path;
-      }
+      bool operator!=(const Path &that) const;
 
       /// Determines if \p this Path is less than \p that Path. This is required
       /// so that Path objects can be placed into ordered collections (e.g.
@@ -222,9 +218,7 @@ namespace sys {
       /// the std::string::compare method.
       /// @returns true if \p this path is lexicographically less than \p that.
       /// @brief Less Than Operator
-      bool operator<(const Path& that) const {
-        return path < that.path;
-      }
+      bool operator<(const Path& that) const;
 
     /// @}
     /// @name Path Accessors

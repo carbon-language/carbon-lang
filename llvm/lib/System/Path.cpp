@@ -24,6 +24,18 @@ using namespace sys;
 //===          independent code.
 //===----------------------------------------------------------------------===//
 
+bool Path::operator==(const Path &that) const {
+  return path == that.path;
+}
+
+bool Path::operator!=(const Path &that) const {
+  return path != that.path;
+}
+
+bool Path::operator<(const Path& that) const {
+  return path < that.path;
+}
+
 std::ostream& llvm::operator<<(std::ostream &strm, const sys::Path &aPath) {
   strm << aPath.toString();
   return strm;
