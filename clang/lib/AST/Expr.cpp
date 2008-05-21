@@ -17,7 +17,6 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
