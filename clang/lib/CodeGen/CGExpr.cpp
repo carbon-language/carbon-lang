@@ -571,12 +571,10 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
     const llvm::Type * FieldTy = ConvertType(Field->getType());
     const llvm::PointerType * BaseTy = 
       cast<llvm::PointerType>(BaseValue->getType());
-    if (FieldTy != BaseTy->getElementType()) {
-      unsigned AS = BaseTy->getAddressSpace();
-      V = Builder.CreateBitCast(V, 
-                                llvm::PointerType::get(FieldTy, AS), 
-                                "tmp");
-    }
+    unsigned AS = BaseTy->getAddressSpace();
+    V = Builder.CreateBitCast(V, 
+                              llvm::PointerType::get(FieldTy, AS), 
+                              "tmp");
   }
 
   if (!Field->isBitField())
