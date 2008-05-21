@@ -237,8 +237,8 @@ DeleteTriviallyDeadInstructions(SmallPtrSet<Instruction*,16> &Insts) {
       if (Value *PNV = PN->hasConstantValue()) {
         if (Instruction *U = dyn_cast<Instruction>(PNV))
           Insts.insert(U);
-        PN->replaceAllUsesWith(PNV);
         SE->deleteValueFromRecords(PN);
+        PN->replaceAllUsesWith(PNV);
         PN->eraseFromParent();
         Changed = true;
         continue;
@@ -1663,8 +1663,8 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
 
     // Remove the old compare instruction. The old indvar is probably dead too.
     DeadInsts.insert(cast<Instruction>(CondUse->OperandValToReplace));
-    OldCond->replaceAllUsesWith(Cond);
     SE->deleteValueFromRecords(OldCond);
+    OldCond->replaceAllUsesWith(Cond);
     OldCond->eraseFromParent();
 
     IVUsesByStride[*CondStride].Users.pop_back();
@@ -1782,7 +1782,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
 #endif
 
   // IVsByStride keeps IVs for one particular loop.
-  IVsByStride.clear();
+  assert(IVsByStride.empty() && "Stale entries in IVsByStride?");
 
   // Sort the StrideOrder so we process larger strides first.
   std::stable_sort(StrideOrder.begin(), StrideOrder.end(), StrideCompare());
@@ -1798,6 +1798,12 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
     assert(SI != IVUsesByStride.end() && "Stride doesn't exist!");
     StrengthReduceStridedIVUsers(SI->first, SI->second, L, HasOneStride);
   }
+
+  // We're done analyzing this loop; release all the state we built up for it.
+  CastedPointers.clear();
+  IVUsesByStride.clear();
+  IVsByStride.clear();
+  StrideOrder.clear();
 
   // Clean up after ourselves
   if (!DeadInsts.empty()) {
@@ -1826,8 +1832,8 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
           if (BO->hasOneUse() && PN == *(BO->use_begin())) {
             DeadInsts.insert(BO);
             // Break the cycle, then delete the PHI.
-            PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
             SE->deleteValueFromRecords(PN);
+            PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
             PN->eraseFromParent();
           }
         }
@@ -1836,8 +1842,5 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
     DeleteTriviallyDeadInstructions(DeadInsts);
   }
 
-  CastedPointers.clear();
-  IVUsesByStride.clear();
-  StrideOrder.clear();
   return false;
 }
