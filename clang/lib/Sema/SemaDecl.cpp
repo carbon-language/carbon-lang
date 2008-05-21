@@ -1004,8 +1004,13 @@ bool Sema::CheckAddressConstantExpressionLValue(const Expr* Init) {
     return cast<CompoundLiteralExpr>(Init)->isFileScope();
   case Expr::DeclRefExprClass: {
     const Decl *D = cast<DeclRefExpr>(Init)->getDecl();
-    if (const VarDecl *VD = dyn_cast<VarDecl>(D))
-      return VD->hasGlobalStorage();
+    if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+      if (VD->hasGlobalStorage())
+        return false;
+      Diag(Init->getExprLoc(),
+           diag::err_init_element_not_constant, Init->getSourceRange());
+      return true;
+    }
     if (isa<FunctionDecl>(D))
       return false;
     Diag(Init->getExprLoc(),
@@ -1032,7 +1037,7 @@ bool Sema::CheckAddressConstantExpressionLValue(const Expr* Init) {
 
     // C99 6.6p9
     if (Exp->getOpcode() == UnaryOperator::Deref)
-      return CheckAddressConstantExpressionLValue(Exp->getSubExpr());
+      return CheckAddressConstantExpression(Exp->getSubExpr());
 
     Diag(Init->getExprLoc(),
          diag::err_init_element_not_constant, Init->getSourceRange());

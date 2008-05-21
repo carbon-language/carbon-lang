@@ -30,3 +30,15 @@ struct cdiff_cmd commands[] = {
         {"OPEN", 1, &cdiff_cmd_open }
 };
 
+// PR2348
+static struct { int z; } s[2];
+int *t = &(*s).z;
+
+// PR2349
+short *a2(void)
+{
+  short int b;
+  static short *bp = &b; // expected-error {{initializer element is not constant}}
+
+  return bp;
+}
