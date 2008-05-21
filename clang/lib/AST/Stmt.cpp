@@ -55,6 +55,11 @@ void Stmt::Destroy(ASTContext& C) {
   delete this;
 }
 
+void DeclStmt::Destroy(ASTContext& C) {
+  TheDecl->Destroy(C);
+  Stmt::Destroy(C);
+}
+
 void Stmt::PrintStats() {
   // Ensure the table is primed.
   getStmtInfoTableEntry(Stmt::NullStmtClass);

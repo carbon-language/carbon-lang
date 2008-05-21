@@ -146,6 +146,8 @@ public:
   DeclStmt(ScopedDecl *D, SourceLocation startLoc, SourceLocation endLoc)
     : Stmt(DeclStmtClass), TheDecl(D), StartLoc(startLoc), EndLoc(endLoc) {}
   
+  virtual void Destroy(ASTContext& Ctx);
+
   const ScopedDecl *getDecl() const { return TheDecl; }
   ScopedDecl *getDecl() { return TheDecl; }
 
