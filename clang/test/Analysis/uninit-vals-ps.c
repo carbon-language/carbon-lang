@@ -33,3 +33,11 @@ int f2_b() {
   return ((x+1)+2+((x))) + 1 ? 1 : 2; // expected-warning{{Branch}}
 }
 
+int f3(void) {
+  int i;
+  int *p = &i;
+  if (*p > 0) // expected-warning{{Branch condition evaluates to an uninitialized value}}
+    return 0;
+  else
+    return 1;
+}

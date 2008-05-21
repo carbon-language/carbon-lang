@@ -1596,7 +1596,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
         if (asLVal)
           MakeNode(Dst, U, *I, SetRVal(St, U, location));
         else
-          EvalLoad(Dst, Ex, *I, St, location);
+          EvalLoad(Dst, U, *I, St, location);
       } 
 
       return;
