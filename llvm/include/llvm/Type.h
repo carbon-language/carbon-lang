@@ -212,9 +212,19 @@ public:
   inline bool isPrimitiveType() const { return ID <= LastPrimitiveTyID; }
   inline bool isDerivedType()   const { return ID >= FirstDerivedTyID; }
 
-  /// isFirstClassType - Return true if the value is holdable in a register.
+  /// isFirstClassType - Return true if the type is "first class", meaning it
+  /// is a valid type for a Value.
   ///
   inline bool isFirstClassType() const {
+    // Coming soon: first-class struct and array types...
+    return isSingleValueType();
+  }
+
+  /// isSingleValueType - Return true if the type is a valid type for a
+  /// virtual register in codegen.  This includes all first-class types
+  /// except struct and array types.
+  ///
+  inline bool isSingleValueType() const {
     return (ID != VoidTyID && ID <= LastPrimitiveTyID) ||
             ID == IntegerTyID || ID == PointerTyID || ID == VectorTyID;
   }
