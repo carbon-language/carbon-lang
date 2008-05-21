@@ -57,7 +57,7 @@ void Stmt::Destroy(ASTContext& C) {
 
 void DeclStmt::Destroy(ASTContext& C) {
   TheDecl->Destroy(C);
-  Stmt::Destroy(C);
+  delete this;
 }
 
 void Stmt::PrintStats() {
