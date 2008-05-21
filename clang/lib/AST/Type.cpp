@@ -22,7 +22,18 @@
 #include <sstream>
 using namespace clang;
 
-Type::~Type() {}
+void Type::Destroy(ASTContext& C) { delete this; }
+
+void FunctionTypeProto::Destroy(ASTContext& C) {
+  // Destroy the object, but don't call delete.  These are malloc'd.
+  this->~FunctionTypeProto();
+  free(this);  
+}
+
+void VariableArrayType::Destroy(ASTContext& C) {
+  SizeExpr->Destroy(C);
+  delete this;  
+}
 
 /// isVoidType - Helper method to determine if this is the 'void' type.
 bool Type::isVoidType() const {

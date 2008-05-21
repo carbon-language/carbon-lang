@@ -29,13 +29,7 @@ enum FloatingRank {
 ASTContext::~ASTContext() {
   // Deallocate all the types.
   while (!Types.empty()) {
-    if (FunctionTypeProto *FT = dyn_cast<FunctionTypeProto>(Types.back())) {
-      // Destroy the object, but don't call delete.  These are malloc'd.
-      FT->~FunctionTypeProto();
-      free(FT);
-    } else {
-      delete Types.back();
-    }
+    Types.back()->Destroy(*this);
     Types.pop_back();
   }
 }

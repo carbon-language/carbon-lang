@@ -244,7 +244,8 @@ protected:
   Type(TypeClass tc, QualType Canonical)
     : CanonicalType(Canonical.isNull() ? QualType(this_(), 0) : Canonical),
       TC(tc) {}
-  virtual ~Type();
+  virtual ~Type() {};
+  virtual void Destroy(ASTContext& C);
   friend class ASTContext;
   
   void EmitTypeInternal(llvm::Serializer& S) const;
@@ -722,6 +723,8 @@ class VariableArrayType : public ArrayType {
                     ArraySizeModifier sm, unsigned tq)
     : ArrayType(VariableArray, et, can, sm, tq), SizeExpr(e) {}
   friend class ASTContext;  // ASTContext creates these.
+  virtual void Destroy(ASTContext& C);
+
 public:
   const Expr *getSizeExpr() const { return SizeExpr; }
   Expr *getSizeExpr() { return SizeExpr; }
@@ -916,7 +919,10 @@ class FunctionTypeProto : public FunctionType, public llvm::FoldingSetNode {
   
   /// ArgInfo - There is an variable size array after the class in memory that
   /// holds the argument types.
+  
   friend class ASTContext;  // ASTContext creates these.
+  virtual void Destroy(ASTContext& C);
+
 public:
   unsigned getNumArgs() const { return NumArgs; }
   QualType getArgType(unsigned i) const {
