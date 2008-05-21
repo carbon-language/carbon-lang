@@ -1322,7 +1322,20 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
         // Copy from the RHS?
         if (!RangeIsDefinedByCopyFromReg(LHS, LHSIt, RHS.reg))
           return false;    // Nope, bail out.
-        
+
+        if (LHSIt->contains(RHSIt->valno->def))
+          // Here is an interesting situation:
+          // BB1:
+          //   vr1025 = copy vr1024
+          //   ..
+          // BB2:
+          //   vr1024 = op 
+          //          = vr1025
+          // Even though vr1025 is copied from vr1024, it's not safe to
+          // coalesced them since live range of vr1025 intersects the
+          // def of vr1024. This happens because vr1025 is assigned the
+          // value of the previous iteration of vr1024.
+          return false;
         EliminatedLHSVals.push_back(LHSIt->valno);
       }
       
@@ -1348,6 +1361,19 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
           // Otherwise, if this is a copy from the RHS, mark it as being merged
           // in.
           if (RangeIsDefinedByCopyFromReg(LHS, LHSIt, RHS.reg)) {
+            if (LHSIt->contains(RHSIt->valno->def))
+              // Here is an interesting situation:
+              // BB1:
+              //   vr1025 = copy vr1024
+              //   ..
+              // BB2:
+              //   vr1024 = op 
+              //          = vr1025
+              // Even though vr1025 is copied from vr1024, it's not safe to
+              // coalesced them since live range of vr1025 intersects the
+              // def of vr1024. This happens because vr1025 is assigned the
+              // value of the previous iteration of vr1024.
+              return false;
             EliminatedLHSVals.push_back(LHSIt->valno);
 
             // We know this entire LHS live range is okay, so skip it now.
