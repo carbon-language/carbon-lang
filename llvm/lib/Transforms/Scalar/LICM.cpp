@@ -787,72 +787,69 @@ void LICM::FindPromotableValuesInLoop(
     // We can promote this alias set if it has a store, if it is a "Must" alias
     // set, if the pointer is loop invariant, and if we are not eliminating any
     // volatile loads or stores.
-    if (!AS.isForwardingAliasSet() && AS.isMod() && AS.isMustAlias() &&
-        !AS.isVolatile() && CurLoop->isLoopInvariant(AS.begin()->first)) {
-      assert(!AS.empty() &&
-             "Must alias set should have at least one pointer element in it!");
-      Value *V = AS.begin()->first;
+    if (AS.isForwardingAliasSet() || !AS.isMod() || !AS.isMustAlias() ||
+        AS.isVolatile() || !CurLoop->isLoopInvariant(AS.begin()->first))
+      continue;
+    
+    assert(!AS.empty() &&
+           "Must alias set should have at least one pointer element in it!");
+    Value *V = AS.begin()->first;
 
-      // Check that all of the pointers in the alias set have the same type.  We
-      // cannot (yet) promote a memory location that is loaded and stored in
-      // different sizes.
+    // Check that all of the pointers in the alias set have the same type.  We
+    // cannot (yet) promote a memory location that is loaded and stored in
+    // different sizes.
+    {
       bool PointerOk = true;
       for (AliasSet::iterator I = AS.begin(), E = AS.end(); I != E; ++I)
         if (V->getType() != I->first->getType()) {
           PointerOk = false;
           break;
         }
-
-      // If one use of value V inside the loop is safe then it is OK to promote 
-      // this value. On the otherside if there is not any unsafe use inside the
-      // loop then also it is OK to promote this value. Otherwise it is
-      // unsafe to promote this value.
-      if (PointerOk) {
-        bool oneSafeUse = false;
-        bool oneUnsafeUse = false;
-        for(Value::use_iterator UI = V->use_begin(), UE = V->use_end();
-            UI != UE; ++UI) {
-          Instruction *Use = dyn_cast<Instruction>(*UI);
-          if (!Use || !CurLoop->contains(Use->getParent()))
-            continue;
-          for (SmallVector<Instruction *, 4>::iterator 
-                 ExitI = LoopExits.begin(), ExitE = LoopExits.end();
-               ExitI != ExitE; ++ExitI) {
-            Instruction *Ex = *ExitI;
-            if (!isa<PHINode>(Use) && DT->dominates(Use, Ex)) {
-              oneSafeUse = true;
-              break;
-            }
-            else 
-              oneUnsafeUse = true;
-          }
-
-          if (oneSafeUse)
-            break;
-        }
-
-        if (oneSafeUse)
-          PointerOk = true;
-        else if (!oneUnsafeUse)
-          PointerOk = true;
-        else
-          PointerOk = false;
-      }
-      
-      if (PointerOk) {
-        const Type *Ty = cast<PointerType>(V->getType())->getElementType();
-        AllocaInst *AI = new AllocaInst(Ty, 0, V->getName()+".tmp", FnStart);
-        PromotedValues.push_back(std::make_pair(AI, V));
-
-        // Update the AST and alias analysis.
-        CurAST->copyValue(V, AI);
-
-        for (AliasSet::iterator I = AS.begin(), E = AS.end(); I != E; ++I)
-          ValueToAllocaMap.insert(std::make_pair(I->first, AI));
-
-        DOUT << "LICM: Promoting value: " << *V << "\n";
-      }
+      if (!PointerOk)
+        continue;
     }
+
+    // If one use of value V inside the loop is safe then it is OK to promote 
+    // this value. On the otherside if there is not any unsafe use inside the
+    // loop then also it is OK to promote this value. Otherwise it is
+    // unsafe to promote this value.
+    bool oneSafeUse = false;
+    bool oneUnsafeUse = false;
+    for(Value::use_iterator UI = V->use_begin(), UE = V->use_end();
+        UI != UE; ++UI) {
+      Instruction *Use = dyn_cast<Instruction>(*UI);
+      if (!Use || !CurLoop->contains(Use->getParent()))
+        continue;
+      
+      for (SmallVector<Instruction *, 4>::iterator 
+             ExitI = LoopExits.begin(), ExitE = LoopExits.end();
+           ExitI != ExitE; ++ExitI) {
+        Instruction *Ex = *ExitI;
+        if (!isa<PHINode>(Use) && DT->dominates(Use, Ex)) {
+          oneSafeUse = true;
+          break;
+        } else 
+          oneUnsafeUse = true;
+      }
+
+      if (oneSafeUse)
+        break;
+    }
+
+    if (!oneSafeUse && oneUnsafeUse)
+      continue;
+    
+    const Type *Ty = cast<PointerType>(V->getType())->getElementType();
+    AllocaInst *AI = new AllocaInst(Ty, 0, V->getName()+".tmp", FnStart);
+    PromotedValues.push_back(std::make_pair(AI, V));
+
+    // Update the AST and alias analysis.
+    CurAST->copyValue(V, AI);
+
+    for (AliasSet::iterator I = AS.begin(), E = AS.end(); I != E; ++I)
+      ValueToAllocaMap.insert(std::make_pair(I->first, AI));
+
+    DOUT << "LICM: Promoting value: " << *V << "\n";
   }
 }
 
