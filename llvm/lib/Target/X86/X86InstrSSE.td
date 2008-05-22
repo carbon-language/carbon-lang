@@ -2351,6 +2351,12 @@ def MOVZDI2PDIrm : PDI<0x6E, MRMSrcMem, (outs VR128:$dst), (ins i32mem:$src),
                        [(set VR128:$dst,
                          (v4i32 (X86vzmovl (v4i32 (scalar_to_vector
                                                    (loadi32 addr:$src))))))]>;
+
+def : Pat<(v4i32 (X86vzmovl (loadv4i32 addr:$src))),
+            (MOVZDI2PDIrm addr:$src)>;
+def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv4f32 addr:$src)))),
+            (MOVZDI2PDIrm addr:$src)>;
+
 def MOVZQI2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                      "movq\t{$src, $dst|$dst, $src}",
                      [(set VR128:$dst,
@@ -2358,6 +2364,10 @@ def MOVZQI2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                                                  (loadi64 addr:$src))))))]>, XS,
                    Requires<[HasSSE2]>;
 
+def : Pat<(v2i64 (X86vzmovl (loadv2i64 addr:$src))),
+            (MOVZQI2PQIrm addr:$src)>;
+def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4f32 addr:$src)))),
+            (MOVZQI2PQIrm addr:$src)>;
 def : Pat<(v2i64 (X86vzload addr:$src)), (MOVZQI2PQIrm addr:$src)>;
 }
 
