@@ -158,10 +158,10 @@ void LoadVN::getCallEqualNumberNodes(CallInst *CI,
   // global.  In particular, we would prefer to have an argument or instruction
   // operand to chase the def-use chains of.
   Value *Op = CF;
-  for (unsigned i = 1, e = CI->getNumOperands(); i != e; ++i)
-    if (isa<Argument>(CI->getOperand(i)) ||
-        isa<Instruction>(CI->getOperand(i))) {
-      Op = CI->getOperand(i);
+  for (User::op_iterator i = CI->op_begin() + 1, e = CI->op_end(); i != e; ++i)
+    if (isa<Argument>(*i) ||
+        isa<Instruction>(*i)) {
+      Op = *i;
       break;
     }
 
@@ -176,8 +176,9 @@ void LoadVN::getCallEqualNumberNodes(CallInst *CI,
           C->getOperand(0) == CI->getOperand(0) &&
           C->getParent()->getParent() == CIFunc && C != CI) {
         bool AllOperandsEqual = true;
-        for (unsigned i = 1, e = CI->getNumOperands(); i != e; ++i)
-          if (C->getOperand(i) != CI->getOperand(i)) {
+        for (User::op_iterator i = CI->op_begin() + 1, j = C->op_begin() + 1,
+             e = CI->op_end(); i != e; ++i, ++j)
+          if (*j != *i) {
             AllOperandsEqual = false;
             break;
           }

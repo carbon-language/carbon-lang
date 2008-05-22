@@ -66,7 +66,7 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
     // Otherwise, add any offset that our operands provide.
     gep_type_iterator GTI = gep_type_begin(CE);
     for (User::const_op_iterator i = CE->op_begin() + 1, e = CE->op_end();
-	 i != e; ++i, ++GTI) {
+         i != e; ++i, ++GTI) {
       ConstantInt *CI = dyn_cast<ConstantInt>(*i);
       if (!CI) return false;  // Index isn't a simple constant?
       if (CI->getZExtValue() == 0) continue;  // Not adding anything.
