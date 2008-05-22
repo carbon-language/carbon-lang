@@ -252,7 +252,7 @@ public:
   llvm::IRBuilder Builder;
   
   // Holds the Decl for the current function or method
-  const Decl *CurFuncDecl;
+  const FunctionDecl *CurFuncDecl;
   QualType FnRetTy;
   llvm::Function *CurFn;
 
