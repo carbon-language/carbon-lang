@@ -94,7 +94,7 @@ static bool isNSType(QualType T) {
 //===----------------------------------------------------------------------===//
 
 namespace {  
-  enum ArgEffect { IncRef, DecRef, DoNothing, StopTracking };
+  enum ArgEffect { IncRef, DecRef, DoNothing, StopTracking, MayEscape };
   typedef std::vector<std::pair<unsigned,ArgEffect> > ArgEffects;
 }
 
@@ -286,12 +286,12 @@ class RetainSummaryManager {
   
   RetainSummary* getPersistentSummary(ArgEffects* AE, RetEffect RetEff,
                                       ArgEffect ReceiverEff = DoNothing,
-                                      ArgEffect DefaultEff = DoNothing);
+                                      ArgEffect DefaultEff = MayEscape);
                  
 
   RetainSummary* getPersistentSummary(RetEffect RE,
                                       ArgEffect ReceiverEff = DoNothing,
-                                      ArgEffect DefaultEff = DoNothing) {
+                                      ArgEffect DefaultEff = MayEscape) {
     return getPersistentSummary(getArgEffects(), RE, ReceiverEff, DefaultEff);
   }
   
@@ -499,19 +499,22 @@ RetainSummaryManager::getUnarySummary(FunctionDecl* FD, UnaryFuncKind func) {
   switch (func) {
     case cfretain: {
       ScratchArgs.push_back(std::make_pair(0, IncRef));
-      return getPersistentSummary(RetEffect::MakeAlias(0));
+      return getPersistentSummary(RetEffect::MakeAlias(0),
+                                  DoNothing, DoNothing);
     }
       
     case cfrelease: {
       ScratchArgs.push_back(std::make_pair(0, DecRef));
-      return getPersistentSummary(RetEffect::MakeNoRet());
+      return getPersistentSummary(RetEffect::MakeNoRet(),
+                                  DoNothing, DoNothing);
     }
       
     case cfmakecollectable: {
       if (GCEnabled)
         ScratchArgs.push_back(std::make_pair(0, DecRef));
       
-      return getPersistentSummary(RetEffect::MakeAlias(0));    
+      return getPersistentSummary(RetEffect::MakeAlias(0),
+                                  DoNothing, DoNothing);    
     }
       
     default:
@@ -525,7 +528,7 @@ RetainSummary* RetainSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
     dyn_cast<FunctionType>(FD->getType().getTypePtr());
   
   if (FT && !isCFRefType(FT->getResultType()))
-    return 0;
+    return getPersistentSummary(RetEffect::MakeNoRet());
 
   // FIXME: Add special-cases for functions that retain/release.  For now
   //  just handle the default case.
@@ -549,14 +552,14 @@ RetainSummary* RetainSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
     // in the future.
   
     if (!isCFRefType(RetTy) && !RetTy->isPointerType())
-      return 0;
+      return getPersistentSummary(RetEffect::MakeNoRet(), DoNothing, DoNothing);
   }
   
   // FIXME: Add special-cases for functions that retain/release.  For now
   //  just handle the default case.
   
   assert (ScratchArgs.empty());  
-  return getPersistentSummary(RetEffect::MakeNotOwned());
+  return getPersistentSummary(RetEffect::MakeNotOwned(), DoNothing, DoNothing);
 }
 
 //===----------------------------------------------------------------------===//
@@ -801,7 +804,7 @@ public:
   
   // State creation: normal state.
   
-  static RefVal makeOwned(unsigned Count = 0) {
+  static RefVal makeOwned(unsigned Count = 1) {
     return RefVal(Owned, Count);
   }
   
@@ -884,16 +887,6 @@ void RefVal::print(std::ostream& Out) const {
     case ErrorReleaseNotOwned:
       Out << "Release of Not-Owned [ERROR]";
       break;
-  }
-}
-  
-static inline unsigned GetCount(RefVal V) {
-  switch (V.getKind()) {
-    default:
-      return V.getCount();
-
-    case RefVal::Owned:
-      return V.getCount()+1;
   }
 }
   
@@ -1096,7 +1089,7 @@ void CFRefCount::BindingsPrinter::PrintCheckerState(std::ostream& Out,
 }
 
 static inline ArgEffect GetArgE(RetainSummary* Summ, unsigned idx) {
-  return Summ ? Summ->getArg(idx) : DoNothing;
+  return Summ ? Summ->getArg(idx) : MayEscape;
 }
 
 static inline RetEffect GetRetEffect(RetainSummary* Summ) {
@@ -1396,7 +1389,7 @@ ValueState* CFRefCount::HandleSymbolDeath(ValueStateManager& VMgr,
   ValueState StImpl = *St;  
 
   StImpl.CheckerState =
-    RefBFactory.Add(B, sid, RefVal::makeLeak(GetCount(V))).getRoot();
+    RefBFactory.Add(B, sid, RefVal::makeLeak(V.getCount())).getRoot();
   
   return VMgr.getPersistentState(StImpl);
 }
@@ -1517,7 +1510,8 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<ValueState>& Dst,
       
     case RefVal::Owned: { 
       unsigned cnt = X.getCount();
-      X = RefVal::makeReturnedOwned(cnt);
+      assert (cnt > 0);
+      X = RefVal::makeReturnedOwned(cnt - 1);
       break;
     }
       
@@ -1588,6 +1582,14 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
   switch (E) {
     default:
       assert (false && "Unhandled CFRef transition.");
+
+    case MayEscape:
+      if (V.getKind() == RefVal::Owned) {
+        V = RefVal::makeNotOwned(V.getCount());
+        break;
+      }
+
+      // Fall-through.
       
     case DoNothing:
       if (!isGCEnabled() && V.getKind() == RefVal::Released) {
@@ -1634,7 +1636,7 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
           
         case RefVal::Owned: {
           unsigned Count = V.getCount();
-          V = Count > 0 ? RefVal::makeOwned(Count - 1) : RefVal::makeReleased();
+          V = Count > 1 ? RefVal::makeOwned(Count - 1) : RefVal::makeReleased();
           break;
         }
           
@@ -1907,14 +1909,16 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<ValueState>* N,
   switch (CurrV.getKind()) {
     case RefVal::Owned:
     case RefVal::NotOwned:
-      assert (PrevV.getKind() == CurrV.getKind());
+
+      if (PrevV.getCount() == CurrV.getCount())
+        return 0;
       
       if (PrevV.getCount() > CurrV.getCount())
         os << "Reference count decremented.";
       else
         os << "Reference count incremented.";
       
-      if (unsigned Count = GetCount(CurrV)) {
+      if (unsigned Count = CurrV.getCount()) {
 
         os << " Object has +" << Count;
         
@@ -2027,7 +2031,7 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
     RefBindings B = RefBindings((RefBindings::TreeTy*) St->CheckerState);
     RefBindings::TreeTy* T = B.SlimFind(Sym);
     assert (T);
-    RetCount = GetCount(T->getValue().second);
+    RetCount = T->getValue().second.getCount();
   }
 
   // We are a leak.  Walk up the graph to get to the first node where the
