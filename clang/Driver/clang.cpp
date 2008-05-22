@@ -951,6 +951,12 @@ static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
   // FIXME: get these from the target?
   if (!nostdinc) {
     if (Lang.CPlusPlus) {
+      AddPath("/usr/include/c++/4.2.1", System, true, false, false, Headers);
+      AddPath("/usr/include/c++/4.2.1/i686-apple-darwin10", System, true, false,
+              false, Headers);
+      AddPath("/usr/include/c++/4.2.1/backward", System, true, false, false,
+              Headers);
+
       AddPath("/usr/include/c++/4.0.0", System, true, false, false, Headers);
       AddPath("/usr/include/c++/4.0.0/i686-apple-darwin8", System, true, false,
               false, Headers);
@@ -973,6 +979,12 @@ static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
     }
     
     AddPath("/usr/local/include", System, false, false, false, Headers);
+
+    AddPath("/usr/lib/gcc/i686-apple-darwin10/4.2.1/include", System, 
+            false, false, false, Headers);
+    AddPath("/usr/lib/gcc/powerpc-apple-darwin10/4.2.1/include", 
+            System, false, false, false, Headers);
+
     // leopard
     AddPath("/usr/lib/gcc/i686-apple-darwin9/4.0.1/include", System, 
             false, false, false, Headers);
