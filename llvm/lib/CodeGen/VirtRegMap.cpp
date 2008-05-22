@@ -147,8 +147,14 @@ int VirtRegMap::getEmergencySpillSlot(const TargetRegisterClass *RC) {
 
 void VirtRegMap::addSpillSlotUse(int FI, MachineInstr *MI) {
   if (!MF.getFrameInfo()->isFixedObjectIndex(FI)) {
-    assert(FI >= 0 && "Spill slot index should not be negative!");
-    SpillSlotToUsesMap[FI-LowSpillSlot].insert(MI);
+    // If FI < LowSpillSlot, this stack reference was produced by
+    // instruction selection and is not a spill
+    if (FI >= LowSpillSlot) {
+      assert(FI >= 0 && "Spill slot index should not be negative!");
+      assert(FI-LowSpillSlot < SpillSlotToUsesMap.size()
+             && "Invalid spill slot");
+      SpillSlotToUsesMap[FI-LowSpillSlot].insert(MI);
+    }
   }
 }
 
@@ -179,6 +185,12 @@ void VirtRegMap::RemoveMachineInstrFromMaps(MachineInstr *MI) {
     int FI = MO.getIndex();
     if (MF.getFrameInfo()->isFixedObjectIndex(FI))
       continue;
+    // This stack reference was produced by instruction selection and
+    // is not a spill
+    if (FI < LowSpillSlot)
+      continue;
+    assert(FI-LowSpillSlot < SpillSlotToUsesMap.size()
+           && "Invalid spill slot");
     SpillSlotToUsesMap[FI-LowSpillSlot].erase(MI);
   }
   MI2VirtMap.erase(MI);
