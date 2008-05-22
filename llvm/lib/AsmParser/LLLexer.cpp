@@ -452,6 +452,7 @@ int LLLexer::LexIdentifier() {
   KEYWORD("dllimport", DLLIMPORT);
   KEYWORD("dllexport", DLLEXPORT);
   KEYWORD("common", COMMON);
+  KEYWORD("default", DEFAULT);
   KEYWORD("hidden", HIDDEN);
   KEYWORD("protected", PROTECTED);
   KEYWORD("extern_weak", EXTERN_WEAK);
