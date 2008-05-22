@@ -2017,6 +2017,10 @@ GetAllocationSite(ExplodedNode<ValueState>* N, SymbolID Sym) {
 
 PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
                                              ExplodedNode<ValueState>* EndN) {
+
+  // Tell the BugReporter to report cases when the tracked symbol is
+  // assigned to different variables, etc.
+  BR.addNotableSymbol(Sym);
   
   if (!getBugType().isLeak())
     return RangedBugReport::getEndPath(BR, EndN);

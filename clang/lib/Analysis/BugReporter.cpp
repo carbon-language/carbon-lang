@@ -30,7 +30,13 @@ BugType::~BugType() {}
 BugReport::~BugReport() {}
 RangedBugReport::~RangedBugReport() {}
 
-ExplodedGraph<ValueState>& BugReporter::getGraph() { return Eng.getGraph(); }
+ExplodedGraph<ValueState>& BugReporter::getGraph() {
+  return Eng.getGraph();
+}
+
+ValueStateManager& BugReporter::getStateManager() { 
+  return Eng.getStateManager();
+}
 
 static inline Stmt* GetStmt(const ProgramPoint& P) {
   if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {
@@ -212,6 +218,126 @@ MakeReportGraph(ExplodedGraph<ValueState>* G, ExplodedNode<ValueState>* N) {
   }
   
   return std::make_pair(G, First);
+}
+
+static VarDecl* GetMostRecentVarDeclBinding(ExplodedNode<ValueState>* N,
+                                            ValueStateManager& VMgr,
+                                            RVal X) {
+  
+  for ( ; N ; N = N->pred_empty() ? 0 : *N->pred_begin()) {
+    
+    ProgramPoint P = N->getLocation();
+
+    if (!isa<PostStmt>(P))
+      continue;
+    
+    DeclRefExpr* DR = dyn_cast<DeclRefExpr>(cast<PostStmt>(P).getStmt());
+
+    if (!DR)
+      continue;
+    
+    RVal Y = VMgr.GetRVal(N->getState(), DR);
+    
+    if (X != Y)
+      continue;
+    
+    VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl());
+    
+    if (!VD)
+      continue;
+    
+    return VD;
+  }
+  
+  return 0;
+}
+
+
+static void HandleNotableSymbol(ExplodedNode<ValueState>* N, Stmt* S,
+                                SymbolID Sym, BugReporter& BR,
+                                PathDiagnostic& PD) {
+  
+  ExplodedNode<ValueState>* Pred = N->pred_empty() ? 0 : *N->pred_begin();
+  ValueState* PrevSt = Pred ? Pred->getState() : 0;
+  
+  if (!PrevSt)
+    return;
+  
+  // Look at the variable bindings of the current state that map to the
+  // specified symbol.  Are any of them not in the previous state.
+  
+  ValueState* St = N->getState();
+  ValueStateManager& VMgr = BR.getStateManager();
+  
+  // FIXME: Later generalize for a broader memory model.
+
+  // FIXME: This is quadratic, since its nested in another loop.  Probably
+  //   doesn't matter, but keep an eye out for performance issues.  It's
+  //   also a bunch of copy-paste.  Bad.  Cleanup later.
+  
+  for (ValueState::vb_iterator I=St->vb_begin(), E=St->vb_end(); I!=E; ++I){
+    
+    RVal V = I.getData();
+    SymbolID ScanSym;
+    
+    if (lval::SymbolVal* SV = dyn_cast<lval::SymbolVal>(&V))
+      ScanSym = SV->getSymbol();
+    else if (nonlval::SymbolVal* SV = dyn_cast<nonlval::SymbolVal>(&V))
+      ScanSym = SV->getSymbol();
+    else
+      continue;
+    
+    if (ScanSym != Sym)
+      continue;
+    
+    // Check if the previous state has this binding.
+    
+    RVal X = VMgr.GetRVal(PrevSt, lval::DeclVal(I.getKey()));
+    
+    if (X == V) // Same binding?
+      continue;
+
+    // Different binding.  Only handle assignments for now.  We don't pull
+    // this check out of the loop because we will eventually handle other 
+    // cases.
+    
+    VarDecl *VD = 0;
+    
+    if (BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {
+      if (!B->isAssignmentOp())
+        continue;
+      
+      // What variable did we assign to?
+      DeclRefExpr* DR = dyn_cast<DeclRefExpr>(B->getLHS()->IgnoreParenCasts());
+      
+      if (!DR)
+        continue;
+      
+      VD = dyn_cast<VarDecl>(DR->getDecl());
+    }
+    else if (DeclStmt* DS = dyn_cast<DeclStmt>(S))
+      VD = dyn_cast<VarDecl>(DS->getDecl());
+      
+    if (!VD)
+      continue;
+      
+    // What is the most recently referenced variable with this binding?
+    VarDecl* MostRecent = GetMostRecentVarDeclBinding(Pred, VMgr, V);
+        
+    if (!MostRecent)
+      continue;
+
+    // Create the diagnostic.
+    
+    FullSourceLoc L(S->getLocStart(), BR.getSourceManager());
+      
+    if (VD->getType()->isPointerLikeType()) {
+      std::string msg = "'" + std::string(VD->getName()) +
+                        "' now aliases '" + MostRecent->getName() + "'";
+      
+      PD.push_front(new PathDiagnosticPiece(L, msg));
+    }
+  }
 }
 
 void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
@@ -433,9 +559,48 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
     }
 
     if (PathDiagnosticPiece* p = R.VisitNode(N, NextNode, *ReportGraph, *this))
-      PD.push_front(p);    
+      PD.push_front(p);
+    
+    if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {
+      
+      ValueState* St = N->getState();
+      
+      // Scan the lval bindings, and see if a "notable" symbol has a new
+      // lval binding.
+      
+      // FIXME: In the future, when we generalize the memory model, we'll
+      //  need a way to iterate over binded locations.
+      
+      llvm::SmallSet<SymbolID, 10> AlreadyProcessed;
+      
+      for (ValueState::vb_iterator I=St->vb_begin(), E=St->vb_end(); I!=E; ++I){
+        
+        RVal V = I.getData();
+        SymbolID ScanSym;
+        
+        if (lval::SymbolVal* SV = dyn_cast<lval::SymbolVal>(&V))
+          ScanSym = SV->getSymbol();
+        else if (nonlval::SymbolVal* SV = dyn_cast<nonlval::SymbolVal>(&V))
+          ScanSym = SV->getSymbol();
+        else
+          continue;
+        
+        assert (ScanSym.isInitialized());
+        
+        if (!isNotable(ScanSym))
+          continue;
+        
+        if (AlreadyProcessed.count(ScanSym))
+          continue;
+        
+        AlreadyProcessed.insert(ScanSym);
+        
+        HandleNotableSymbol(N, PS->getStmt(), ScanSym, *this, PD);        
+      }
+    }
   }
 }
+
 
 bool BugTypeCacheLocation::isCached(BugReport& R) {
   
