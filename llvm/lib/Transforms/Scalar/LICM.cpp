@@ -726,30 +726,32 @@ void LICM::PromoteValuesInLoop() {
   // want to insert one copy of the code in each exit block, though the loop may
   // exit to the same block more than once.
   //
-  std::set<BasicBlock*> ProcessedBlocks;
+  SmallPtrSet<BasicBlock*, 16> ProcessedBlocks;
 
   SmallVector<BasicBlock*, 8> ExitBlocks;
   CurLoop->getExitBlocks(ExitBlocks);
-  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
-    if (ProcessedBlocks.insert(ExitBlocks[i]).second) {
-      // Copy all of the allocas into their memory locations.
-      BasicBlock::iterator BI = ExitBlocks[i]->begin();
-      while (isa<PHINode>(*BI))
-        ++BI;             // Skip over all of the phi nodes in the block.
-      Instruction *InsertPos = BI;
-      unsigned PVN = 0;
-      for (unsigned i = 0, e = PromotedValues.size(); i != e; ++i) {
-        // Load from the alloca.
-        LoadInst *LI = new LoadInst(PromotedValues[i].first, "", InsertPos);
+  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
+    if (!ProcessedBlocks.insert(ExitBlocks[i]))
+      continue;
+  
+    // Copy all of the allocas into their memory locations.
+    BasicBlock::iterator BI = ExitBlocks[i]->begin();
+    while (isa<PHINode>(*BI))
+      ++BI;             // Skip over all of the phi nodes in the block.
+    Instruction *InsertPos = BI;
+    unsigned PVN = 0;
+    for (unsigned i = 0, e = PromotedValues.size(); i != e; ++i) {
+      // Load from the alloca.
+      LoadInst *LI = new LoadInst(PromotedValues[i].first, "", InsertPos);
 
-        // If this is a pointer type, update alias info appropriately.
-        if (isa<PointerType>(LI->getType()))
-          CurAST->copyValue(PointerValueNumbers[PVN++], LI);
+      // If this is a pointer type, update alias info appropriately.
+      if (isa<PointerType>(LI->getType()))
+        CurAST->copyValue(PointerValueNumbers[PVN++], LI);
 
-        // Store into the memory we promoted.
-        new StoreInst(LI, PromotedValues[i].second, InsertPos);
-      }
+      // Store into the memory we promoted.
+      new StoreInst(LI, PromotedValues[i].second, InsertPos);
     }
+  }
 
   // Now that we have done the deed, use the mem2reg functionality to promote
   // all of the new allocas we just created into real SSA registers.
@@ -771,14 +773,8 @@ void LICM::FindPromotableValuesInLoop(
                              std::map<Value*, AllocaInst*> &ValueToAllocaMap) {
   Instruction *FnStart = CurLoop->getHeader()->getParent()->begin()->begin();
 
-  SmallVector<Instruction *, 4> LoopExits;
-  SmallVector<BasicBlock *, 4> Blocks;
-  CurLoop->getExitingBlocks(Blocks);
-  for (SmallVector<BasicBlock *, 4>::iterator BI = Blocks.begin(),
-         BE = Blocks.end(); BI != BE; ++BI) {
-    BasicBlock *BB = *BI;
-    LoopExits.push_back(BB->getTerminator());
-  }
+  SmallVector<BasicBlock*, 4> ExitingBlocks;
+  CurLoop->getExitingBlocks(ExitingBlocks);
 
   // Loop over all of the alias sets in the tracker object.
   for (AliasSetTracker::iterator I = CurAST->begin(), E = CurAST->end();
@@ -809,34 +805,41 @@ void LICM::FindPromotableValuesInLoop(
         continue;
     }
 
-    // If one use of value V inside the loop is safe then it is OK to promote 
-    // this value. On the otherside if there is not any unsafe use inside the
-    // loop then also it is OK to promote this value. Otherwise it is
-    // unsafe to promote this value.
-    bool oneSafeUse = false;
-    bool oneUnsafeUse = false;
-    for(Value::use_iterator UI = V->use_begin(), UE = V->use_end();
-        UI != UE; ++UI) {
+    // It isn't safe to promote a load/store from the loop if the load/store is
+    // conditional.  For example, turning:
+    //
+    //    for () { if (c) *P += 1; }
+    //
+    // into:
+    //
+    //    tmp = *P;  for () { if (c) tmp +=1; } *P = tmp;
+    //
+    // is not safe, because *P may only be valid to access if 'c' is true.
+    // 
+    // It is safe to promote P if all uses are direct load/stores and if at
+    // least one is guaranteed to be executed.
+    bool GuaranteedToExecute = false;
+    bool InvalidInst = false;
+    for (Value::use_iterator UI = V->use_begin(), UE = V->use_end();
+         UI != UE; ++UI) {
+      // Ignore instructions not in this loop.
       Instruction *Use = dyn_cast<Instruction>(*UI);
       if (!Use || !CurLoop->contains(Use->getParent()))
         continue;
-      
-      for (SmallVector<Instruction *, 4>::iterator 
-             ExitI = LoopExits.begin(), ExitE = LoopExits.end();
-           ExitI != ExitE; ++ExitI) {
-        Instruction *Ex = *ExitI;
-        if (!isa<PHINode>(Use) && DT->dominates(Use, Ex)) {
-          oneSafeUse = true;
-          break;
-        } else 
-          oneUnsafeUse = true;
-      }
 
-      if (oneSafeUse)
+      if (!isa<LoadInst>(Use) && !isa<StoreInst>(Use)) {
+        InvalidInst = true;
         break;
+      }
+      
+      if (!GuaranteedToExecute)
+        GuaranteedToExecute = isSafeToExecuteUnconditionally(*Use);
     }
 
-    if (!oneSafeUse && oneUnsafeUse)
+    // If there is an non-load/store instruction in the loop, we can't promote
+    // it.  If there isn't a guaranteed-to-execute instruction, we can't
+    // promote.
+    if (InvalidInst || !GuaranteedToExecute)
       continue;
     
     const Type *Ty = cast<PointerType>(V->getType())->getElementType();
