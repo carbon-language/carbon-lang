@@ -45,12 +45,23 @@ private:
 
   /// CompileUnitCache - Cache of previously constructed CompileUnits.
   std::map<unsigned, llvm::CompileUnitDesc *> CompileUnitCache;
+  std::vector<llvm::DebugInfoDesc*> DebugAllocationList;
   
   llvm::Function *StopPointFn;
   llvm::AnchorDesc *CompileUnitAnchor;
+  llvm::AnchorDesc *SubProgramAnchor;
   llvm::Function *RegionStartFn;
   llvm::Function *RegionEndFn;
-  std::vector<llvm::DebugInfoDesc *> RegionStack;  
+  llvm::Function *FuncStartFn;
+  llvm::Value *CurFuncDesc;  
+
+  /// getOrCreateCompileUnit - Get the compile unit from the cache or create a
+  /// new one if necessary.
+  llvm::CompileUnitDesc *getOrCreateCompileUnit(SourceLocation loc);
+
+  /// getCastValueFor - Return a llvm representation for a given debug
+  /// information descriptor cast to an empty struct pointer.
+  llvm::Value *getCastValueFor(llvm::DebugInfoDesc *DD);
 
 public:
   CGDebugInfo(CodeGenModule *m);
@@ -62,21 +73,13 @@ public:
   /// source line.
   void EmitStopPoint(llvm::Function *Fn, llvm::IRBuilder &Builder);
   
-  /// EmitRegionStart - Emit a call to llvm.dbg.region.start to indicate start
+  /// EmitFunctionStart - Emit a call to llvm.dbg.func.start to indicate start
   /// of a new block.  
-  void EmitRegionStart(llvm::Function *Fn, llvm::IRBuilder &Builder);
+  void EmitFunctionStart(llvm::Function *Fn, llvm::IRBuilder &Builder);
   
-  /// EmitRegionEnd - Emit call to llvm.dbg.region.end to indicate end of a 
+  /// EmitFunctionEnd - Emit call to llvm.dbg.region.end to indicate end of a 
   /// block.
-  void EmitRegionEnd(llvm::Function *Fn, llvm::IRBuilder &Builder);
- 
-  /// getOrCreateCompileUnit - Get the compile unit from the cache or create a
-  /// new one if necessary.
-  llvm::CompileUnitDesc *getOrCreateCompileUnit(SourceLocation loc);
-
-  /// getCastValueFor - Return a llvm representation for a given debug
-  /// information descriptor cast to an empty struct pointer.
-  llvm::Value *getCastValueFor(llvm::DebugInfoDesc *DD);
+  void EmitFunctionEnd(llvm::Function *Fn, llvm::IRBuilder &Builder);
 };
 } // namespace CodeGen
 } // namespace clang

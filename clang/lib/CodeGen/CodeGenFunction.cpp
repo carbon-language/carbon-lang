@@ -13,6 +13,7 @@
 
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
+#include "CGDebugInfo.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/AST.h"
 #include "llvm/CallingConv.h"
@@ -197,7 +198,16 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
                                          EntryBB);
   
   Builder.SetInsertPoint(EntryBB);
-  
+
+  CGDebugInfo *DI = CGM.getDebugInfo();
+  if (DI) {
+    CompoundStmt* body = cast<CompoundStmt>(CurFuncDecl->getBody());
+    if (body->getLBracLoc().isValid()) {
+      DI->setLocation(body->getLBracLoc());
+    }
+    DI->EmitFunctionStart(CurFn, Builder);
+  }
+
   // Emit allocs for param decls.  Give the LLVM Argument nodes names.
   llvm::Function::arg_iterator AI = CurFn->arg_begin();
   
@@ -221,6 +231,15 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   if (isDummyBlock(BB))
     BB->eraseFromParent();
   else {
+    CGDebugInfo *DI = CGM.getDebugInfo();
+    if (DI) {
+      CompoundStmt* body = cast<CompoundStmt>(CurFuncDecl->getBody());
+      if (body->getRBracLoc().isValid()) {
+        DI->setLocation(body->getRBracLoc());
+      }
+      DI->EmitFunctionEnd(CurFn, Builder);
+    }
+
     // FIXME: if this is C++ main, this should return 0.
     if (CurFn->getReturnType() == llvm::Type::VoidTy)
       Builder.CreateRetVoid();

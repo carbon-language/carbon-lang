@@ -36,9 +36,12 @@ CGDebugInfo::CGDebugInfo(CodeGenModule *m)
 , PrevLoc()
 , CompileUnitCache()
 , StopPointFn(NULL)
+, CompileUnitAnchor(NULL)
+, SubProgramAnchor(NULL)
 , RegionStartFn(NULL)
 , RegionEndFn(NULL)
-, RegionStack()
+, FuncStartFn(NULL)
+, CurFuncDesc(NULL)
 {
   SR = new llvm::DISerializer();
   SR->setModule (&M->getModule());
@@ -47,6 +50,19 @@ CGDebugInfo::CGDebugInfo(CodeGenModule *m)
 CGDebugInfo::~CGDebugInfo()
 {
   delete SR;
+  // Clean up allocated debug info; we can't do this until after the
+  // serializer is destroyed because it caches pointers to
+  // the debug info
+  delete CompileUnitAnchor;
+  delete SubProgramAnchor;
+  // Clean up compile unit descriptions
+  std::map<unsigned, llvm::CompileUnitDesc *>::iterator MI;
+  for (MI = CompileUnitCache.begin(); MI != CompileUnitCache.end(); ++MI)
+    delete MI->second;
+  // Clean up misc allocations
+  std::vector<llvm::DebugInfoDesc*>::iterator VI;
+  for (VI = DebugAllocationList.begin(); VI != DebugAllocationList.end(); ++VI)
+    delete *VI;
 }
 
 
@@ -79,8 +95,14 @@ llvm::CompileUnitDesc
   // Get source file information.
   SourceManager &SM = M->getContext().getSourceManager();
   const FileEntry *FE = SM.getFileEntryForLoc(Loc);
-  const char *FileName = FE->getName();
-  const char *DirName = FE->getDir()->getName();
+  const char *FileName, *DirName;
+  if (FE) {
+    FileName = FE->getName();
+    DirName = FE->getDir()->getName();
+  } else {
+    FileName = SM.getSourceName(Loc);
+    DirName = "";
+  }
 
   Unit->setAnchor(CompileUnitAnchor);
   Unit->setFileName(FileName);
@@ -103,6 +125,7 @@ llvm::CompileUnitDesc
 
 void 
 CGDebugInfo::EmitStopPoint(llvm::Function *Fn, llvm::IRBuilder &Builder) {
+  if (CurLoc.isInvalid() || CurLoc.isMacroID()) return;
 
   // Don't bother if things are the same as last time.
   SourceManager &SM = M->getContext().getSourceManager();
@@ -110,7 +133,6 @@ CGDebugInfo::EmitStopPoint(llvm::Function *Fn, llvm::IRBuilder &Builder) {
        || (SM.getLineNumber(CurLoc) == SM.getLineNumber(PrevLoc)
            && SM.isFromSameFile(CurLoc, PrevLoc)))
     return;
-  if (CurLoc.isInvalid()) return;
 
   // Update last state.
   PrevLoc = CurLoc;
@@ -135,25 +157,35 @@ CGDebugInfo::EmitStopPoint(llvm::Function *Fn, llvm::IRBuilder &Builder) {
 
 /// EmitRegionStart- Constructs the debug code for entering a declarative
 /// region - "llvm.dbg.region.start.".
-void CGDebugInfo::EmitRegionStart(llvm::Function *Fn, llvm::IRBuilder &Builder) 
+void CGDebugInfo::EmitFunctionStart(llvm::Function *Fn, llvm::IRBuilder &Builder) 
 {
-  llvm::BlockDesc *Block = new llvm::BlockDesc();
-  if (RegionStack.size() > 0)
-    Block->setContext(RegionStack.back());
-  RegionStack.push_back(Block);
+  // Get the appropriate compile unit.
+  llvm::CompileUnitDesc *Unit = getOrCreateCompileUnit(CurLoc);
 
-  // Lazily construct llvm.dbg.region.start function.
-  if (!RegionStartFn)
-    RegionStartFn = llvm::Intrinsic::getDeclaration(&M->getModule(), 
-                                llvm::Intrinsic::dbg_region_start);
-
-  // Call llvm.dbg.func.start.
-  Builder.CreateCall(RegionStartFn, getCastValueFor(Block), "");
+  llvm::SubprogramDesc* Block = new llvm::SubprogramDesc;
+  DebugAllocationList.push_back(Block);
+  Block->setFile(Unit);
+  Block->setContext(Unit);
+  if (!SubProgramAnchor) {
+    SubProgramAnchor = new llvm::AnchorDesc(Block);
+    SR->Serialize(SubProgramAnchor);
+  }
+  Block->setAnchor(SubProgramAnchor);
+  Block->setName(Fn->getName());
+  Block->setFullName(Fn->getName());
+  Block->setIsDefinition(true);
+  SourceManager &SM = M->getContext().getSourceManager();
+  Block->setLine(SM.getLogicalLineNumber(CurLoc));
+  CurFuncDesc = getCastValueFor(Block);
+  if (!FuncStartFn)
+    FuncStartFn = llvm::Intrinsic::getDeclaration(&M->getModule(),
+                                llvm::Intrinsic::dbg_func_start);
+  Builder.CreateCall(FuncStartFn, CurFuncDesc);
 }
 
 /// EmitRegionEnd - Constructs the debug code for exiting a declarative
 /// region - "llvm.dbg.region.end."
-void CGDebugInfo::EmitRegionEnd(llvm::Function *Fn, llvm::IRBuilder &Builder) 
+void CGDebugInfo::EmitFunctionEnd(llvm::Function *Fn, llvm::IRBuilder &Builder) 
 {
   // Lazily construct llvm.dbg.region.end function.
   if (!RegionEndFn)
@@ -164,8 +196,6 @@ void CGDebugInfo::EmitRegionEnd(llvm::Function *Fn, llvm::IRBuilder &Builder)
   EmitStopPoint(Fn, Builder);
   
   // Call llvm.dbg.func.end.
-  Builder.CreateCall(RegionEndFn, getCastValueFor(RegionStack.back()), "");
-  RegionStack.pop_back();
-  // FIXME: Free here the memory created for BlockDesc in RegionStart?
+  Builder.CreateCall(RegionEndFn, CurFuncDesc, "");
 }
 
