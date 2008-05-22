@@ -20,7 +20,6 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/ASTContext.h"
 #include "llvm/Support/Compiler.h"
-#include <sstream>
 
 using namespace clang;
 
@@ -36,10 +35,12 @@ public:
   
   virtual ~DeadStoreObs() {}
   
-  unsigned GetDiag(VarDecl* VD) {
-    std::ostringstream os;
-    os << "value stored to '" << VD->getName() << "' is never used";        
-    return Diags.getCustomDiagID(Diagnostic::Warning, os.str().c_str());     
+  unsigned GetDiag(VarDecl* VD) {      
+    std::string msg = "value stored to '" + std::string(VD->getName()) +
+                      "' is never used";
+    
+    return Diags.getCustomDiagID(Diagnostic::Warning, msg.c_str());
+                               
   }
   
   void CheckDeclRef(DeclRefExpr* DR, Expr* Val,
