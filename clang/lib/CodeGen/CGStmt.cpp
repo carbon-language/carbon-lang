@@ -360,24 +360,33 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   // Emit the result value, even if unused, to evalute the side effects.
   const Expr *RV = S.getRetValue();
 
+  llvm::Value* RetValue = 0;
   if (FnRetTy->isVoidType()) {
-    // If the function returns void, emit ret void.
-    Builder.CreateRetVoid();
+    // Make sure not to return anything
+    if (RV) {
+      // Evaluate the expression for side effects
+      EmitAnyExpr(RV);
+    }
   } else if (RV == 0) {
-    // Handle "return;" in a function that returns a value.
     const llvm::Type *RetTy = CurFn->getFunctionType()->getReturnType();
-    if (RetTy == llvm::Type::VoidTy)
-      Builder.CreateRetVoid();   // struct return etc.
-    else
-      Builder.CreateRet(llvm::UndefValue::get(RetTy));
+    if (RetTy != llvm::Type::VoidTy) {
+      // Handle "return;" in a function that returns a value.
+      RetValue = llvm::UndefValue::get(RetTy);
+    }
   } else if (!hasAggregateLLVMType(RV->getType())) {
-    Builder.CreateRet(EmitScalarExpr(RV));
+    RetValue = EmitScalarExpr(RV);
   } else if (RV->getType()->isAnyComplexType()) {
     llvm::Value *SRetPtr = CurFn->arg_begin();
     EmitComplexExprIntoAddr(RV, SRetPtr, false);
   } else {
     llvm::Value *SRetPtr = CurFn->arg_begin();
     EmitAggExpr(RV, SRetPtr, false);
+  }
+
+  if (RetValue) {
+    Builder.CreateRet(RetValue);
+  } else {
+    Builder.CreateRetVoid();
   }
   
   // Emit a block after the branch so that dead code after a return has some
