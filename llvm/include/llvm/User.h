@@ -242,7 +242,12 @@ public:
   ~User() {
     Use::zap(OperandList, OperandList + NumOperands);
   }
+  /// operator delete - free memory allocated for User and Use objects
   void operator delete(void *Usr);
+  /// placement delete - required by std, but never called.
+  void operator delete(void*, unsigned) {
+    assert(0 && "Constructor throws?");
+  }
   template <unsigned Idx> Use &Op() {
     return OperandTraits<User>::op_begin(this)[Idx];
   }
