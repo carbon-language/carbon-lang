@@ -863,7 +863,7 @@ unsigned Andersens::getNodeForConstantPointerTarget(Constant *C) {
 /// object N, which contains values indicated by C.
 void Andersens::AddGlobalInitializerConstraints(unsigned NodeIndex,
                                                 Constant *C) {
-  if (C->getType()->isFirstClassType()) {
+  if (C->getType()->isSingleValueType()) {
     if (isa<PointerType>(C->getType()))
       Constraints.push_back(Constraint(Constraint::Copy, NodeIndex,
                                        getNodeForConstantPointer(C)));
