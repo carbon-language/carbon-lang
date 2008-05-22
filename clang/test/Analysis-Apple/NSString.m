@@ -43,3 +43,20 @@ NSString* f7(NSString* s1, NSString* s2, NSString* s3) {
   CFRetain(s4);
   return s4; // expected-warning{{leak}}
 }
+
+NSMutableArray* f8() {
+  
+  NSString* s = [[NSString alloc] init];
+  NSMutableArray* a = [[NSMutableArray alloc] initWithCapacity:2];
+  [a addObject:s];
+  [s release]; // no-warning
+  return a;
+}
+
+void f9() {
+  
+  NSString* s = [[NSString alloc] init];
+  NSString* q = s;
+  [s release];
+  [q release]; // expected-warning {{used after it is released}}
+}
