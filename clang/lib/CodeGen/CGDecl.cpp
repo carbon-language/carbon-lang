@@ -169,9 +169,9 @@ void CodeGenFunction::EmitParmDecl(const ParmVarDecl &D, llvm::Value *Arg) {
   } else if (Target.useGlobalsForAutomaticVariables()) {
     DeclPtr = GenerateStaticBlockVarDecl(D, true, ".arg.");
   } else {
-    // A fixed sized first class variable becomes an alloca in the entry block.
+    // A fixed sized single-value variable becomes an alloca in the entry block.
     const llvm::Type *LTy = ConvertType(Ty);
-    if (LTy->isFirstClassType()) {
+    if (LTy->isSingleValueType()) {
       // TODO: Alignment
       DeclPtr = new llvm::AllocaInst(LTy, 0, std::string(D.getName())+".addr",
                                      AllocaInsertPt);

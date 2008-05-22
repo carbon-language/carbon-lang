@@ -279,7 +279,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     std::vector<const llvm::Type*> ArgTys;
     
     // Struct return passes the struct byref.
-    if (!ResultType->isFirstClassType() && ResultType != llvm::Type::VoidTy) {
+    if (!ResultType->isSingleValueType() && ResultType != llvm::Type::VoidTy) {
       ArgTys.push_back(llvm::PointerType::get(ResultType, 
                                         FP.getResultType().getAddressSpace()));
       ResultType = llvm::Type::VoidTy;
@@ -352,7 +352,7 @@ void CodeGenTypes::DecodeArgumentTypes(const FunctionTypeProto &FTP,
                                        std::vector<const llvm::Type*> &ArgTys) {
   for (unsigned i = 0, e = FTP.getNumArgs(); i != e; ++i) {
     const llvm::Type *Ty = ConvertTypeRecursive(FTP.getArgType(i));
-    if (Ty->isFirstClassType())
+    if (Ty->isSingleValueType())
       ArgTys.push_back(Ty);
     else
       // byval arguments are always on the stack, which is addr space #0.

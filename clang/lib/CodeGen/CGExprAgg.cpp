@@ -298,7 +298,7 @@ void AggExprEmitter::EmitNonConstInit(InitListExpr *E) {
     const llvm::Type *EType = AType->getElementType();
     for (/*Do not initialize i*/; i < NumArrayElements; ++i) {
       llvm::Value *NextVal = Builder.CreateStructGEP(DestPtr, i, ".array");
-      if (EType->isFirstClassType())
+      if (EType->isSingleValueType())
         Builder.CreateStore(llvm::Constant::getNullValue(EType), NextVal);
       else
         EmitAggregateClear(NextVal, QType);

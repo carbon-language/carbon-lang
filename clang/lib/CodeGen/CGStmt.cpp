@@ -688,7 +688,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     // If the first output operand is not a memory dest, we'll
     // make it the return value.
     if (i == 0 && !(Info & TargetInfo::CI_AllowsMemory) &&
-        DestValueType->isFirstClassType()) {
+        DestValueType->isSingleValueType()) {
       ResultAddr = Dest.getAddress();
       ResultType = DestValueType;
       Constraints += "=" + OutputConstraint;
@@ -709,10 +709,10 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
       llvm::Value *Arg;
       if ((Info & TargetInfo::CI_AllowsRegister) ||
           !(Info & TargetInfo::CI_AllowsMemory)) {      
-        if (ConvertType(InputExpr->getType())->isFirstClassType()) {
+        if (ConvertType(InputExpr->getType())->isSingleValueType()) {
           Arg = EmitScalarExpr(InputExpr);
         } else {
-          assert(0 && "FIXME: Implement passing non first class types as inputs");
+          assert(0 && "FIXME: Implement passing multiple-value types as inputs");
         }
       } else {
         LValue Dest = EmitLValue(InputExpr);
@@ -750,10 +750,10 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     
     if ((Info & TargetInfo::CI_AllowsRegister) ||
         !(Info & TargetInfo::CI_AllowsMemory)) {      
-      if (ConvertType(InputExpr->getType())->isFirstClassType()) {
+      if (ConvertType(InputExpr->getType())->isSingleValueType()) {
         Arg = EmitScalarExpr(InputExpr);
       } else {
-        assert(0 && "FIXME: Implement passing non first class types as inputs");
+        assert(0 && "FIXME: Implement passing multiple-value types as inputs");
       }
     } else {
       LValue Dest = EmitLValue(InputExpr);

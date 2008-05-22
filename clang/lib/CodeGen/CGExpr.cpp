@@ -133,7 +133,7 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, QualType ExprType) {
       cast<llvm::PointerType>(Ptr->getType())->getElementType();
     
     // Simple scalar l-value.
-    if (EltTy->isFirstClassType()) {
+    if (EltTy->isSingleValueType()) {
       llvm::Value *V = Builder.CreateLoad(Ptr, "tmp");
       
       // Bool can have different representation in memory than in registers.
