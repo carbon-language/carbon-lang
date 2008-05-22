@@ -1150,7 +1150,9 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     }
     MachineBasicBlock *MBB = MI->getParent();
 
-    if (ImpUse && MI != ReMatDefMI) {
+    // ReMatDefMI is a clone and not in the IR at all, so check
+    // RefMatOrigDefMI too.
+    if (ImpUse && MI != ReMatDefMI && MI != ReMatOrigDefMI) {
       // Re-matting an instruction with virtual register use. Update the
       // register interval's spill weight to HUGE_VALF to prevent it from
       // being spilled.
