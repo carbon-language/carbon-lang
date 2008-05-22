@@ -284,20 +284,13 @@ bool AliasSetTracker::add(StoreInst *SI) {
 
 bool AliasSetTracker::add(FreeInst *FI) {
   bool NewPtr;
-  AliasSet &AS = addPointer(FI->getOperand(0), ~0,
-                            AliasSet::Mods, NewPtr);
-
-  // Free operations are volatile ops (cannot be moved).
-  AS.setVolatile();
+  addPointer(FI->getOperand(0), ~0, AliasSet::Mods, NewPtr);
   return NewPtr;
 }
 
 bool AliasSetTracker::add(VAArgInst *VAAI) {
   bool NewPtr;
-  AliasSet &AS = addPointer(VAAI->getOperand(0), ~0, AliasSet::ModRef, NewPtr);
-  
-  // Treat vaarg instructions as volatile (not to be moved).
-  AS.setVolatile();
+  addPointer(VAAI->getOperand(0), ~0, AliasSet::ModRef, NewPtr);
   return NewPtr;
 }
 
