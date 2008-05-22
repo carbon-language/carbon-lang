@@ -60,6 +60,16 @@ RValue CodeGenFunction::EmitAnyExpr(const Expr *E, llvm::Value *AggLoc,
   return RValue::getAggregate(AggLoc);
 }
 
+/// getAccessedFieldNo - Given an encoded value and a result number, return
+/// the input field number being accessed.
+unsigned CodeGenFunction::getAccessedFieldNo(unsigned Idx, 
+                                             const llvm::Constant *Elts) {
+  if (isa<llvm::ConstantAggregateZero>(Elts))
+    return 0;
+  
+  return cast<llvm::ConstantInt>(Elts->getOperand(Idx))->getZExtValue();
+}
+
 
 //===----------------------------------------------------------------------===//
 //                         LValue Expression Emission
@@ -197,7 +207,7 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
   // extracting a single element.  Just codegen as an extractelement.
   const VectorType *ExprVT = ExprType->getAsVectorType();
   if (!ExprVT) {
-    unsigned InIdx = ExtVectorElementExpr::getAccessedFieldNo(0, Elts);
+    unsigned InIdx = getAccessedFieldNo(0, Elts);
     llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
     return RValue::get(Builder.CreateExtractElement(Vec, Elt, "tmp"));
   }
@@ -211,7 +221,7 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
   if (NumResultElts == NumSourceElts) {
     llvm::SmallVector<llvm::Constant*, 4> Mask;
     for (unsigned i = 0; i != NumResultElts; ++i) {
-      unsigned InIdx = ExtVectorElementExpr::getAccessedFieldNo(i, Elts);
+      unsigned InIdx = getAccessedFieldNo(i, Elts);
       Mask.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx));
     }
     
@@ -227,7 +237,7 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
   
   // Extract/Insert each element of the result.
   for (unsigned i = 0; i != NumResultElts; ++i) {
-    unsigned InIdx = ExtVectorElementExpr::getAccessedFieldNo(i, Elts);
+    unsigned InIdx = getAccessedFieldNo(i, Elts);
     llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
     Elt = Builder.CreateExtractElement(Vec, Elt, "tmp");
     
@@ -338,13 +348,13 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
       llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
       Elt = Builder.CreateExtractElement(SrcVal, Elt, "tmp");
       
-      unsigned Idx = ExtVectorElementExpr::getAccessedFieldNo(i, Elts);
+      unsigned Idx = getAccessedFieldNo(i, Elts);
       llvm::Value *OutIdx = llvm::ConstantInt::get(llvm::Type::Int32Ty, Idx);
       Vec = Builder.CreateInsertElement(Vec, Elt, OutIdx, "tmp");
     }
   } else {
     // If the Src is a scalar (not a vector) it must be updating one element.
-    unsigned InIdx = ExtVectorElementExpr::getAccessedFieldNo(0, Elts);
+    unsigned InIdx = getAccessedFieldNo(0, Elts);
     llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
     Vec = Builder.CreateInsertElement(Vec, SrcVal, Elt, "tmp");
   }

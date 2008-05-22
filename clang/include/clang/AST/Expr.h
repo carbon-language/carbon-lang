@@ -723,10 +723,6 @@ public:
   /// aggregate Constant of ConstantInt(s).
   void getEncodedElementAccess(llvm::SmallVectorImpl<unsigned> &Elts) const;
   
-  /// getAccessedFieldNo - Given an encoded value and a result number, return
-  /// the input field number being accessed.
-  static unsigned getAccessedFieldNo(unsigned Idx, const llvm::Constant *Elts);
-  
   virtual SourceRange getSourceRange() const {
     return SourceRange(getBase()->getLocStart(), AccessorLoc);
   }

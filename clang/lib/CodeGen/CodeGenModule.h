@@ -16,6 +16,7 @@
 
 #include "CodeGenTypes.h"
 #include "CGObjCRuntime.h"
+#include "clang/AST/Attr.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 
@@ -130,6 +131,11 @@ public:
   /// specified decl yet.
   void WarnUnsupported(const Decl *D, const char *Type);
   
+  /// setVisibility - Set the visibility for the given LLVM GlobalValue
+  /// according to the given clang AST visibility value.
+  static void setVisibility(llvm::GlobalValue *GV,
+                            VisibilityAttr::VisibilityTypes);
+
 private:
   /// ReplaceMapValuesWith - This is a really slow and bad function that
   /// searches for any entries in GlobalDeclMap that point to OldVal, changing

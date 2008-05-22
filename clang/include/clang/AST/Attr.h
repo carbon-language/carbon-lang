@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_AST_ATTR_H
 #define LLVM_CLANG_AST_ATTR_H
 
-#include "llvm/GlobalValue.h"
 #include <cassert>
 #include <string>
 
@@ -166,12 +165,20 @@ public:
 };
 
 class VisibilityAttr : public Attr {
-  llvm::GlobalValue::VisibilityTypes VisibilityType;
 public:
-  VisibilityAttr(llvm::GlobalValue::VisibilityTypes v) : Attr(Visibility),
+  /// @brief An enumeration for the kinds of visibility of symbols.
+  enum VisibilityTypes {
+    DefaultVisibility = 0,
+    HiddenVisibility,
+    ProtectedVisibility
+  };
+private:
+  VisibilityTypes VisibilityType;
+public:
+  VisibilityAttr(VisibilityTypes v) : Attr(Visibility),
                  VisibilityType(v) {}
 
-  llvm::GlobalValue::VisibilityTypes getVisibility() const { return VisibilityType; }
+  VisibilityTypes getVisibility() const { return VisibilityType; }
 
   // Implement isa/cast/dyncast/etc.
 

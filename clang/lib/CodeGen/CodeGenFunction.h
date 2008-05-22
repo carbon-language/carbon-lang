@@ -350,6 +350,11 @@ public:
 
   /// GetAddrOfStaticLocalVar - Return the address of a static local variable.
   llvm::Constant *GetAddrOfStaticLocalVar(const VarDecl *BVD);
+
+  /// getAccessedFieldNo - Given an encoded value and a result number, return
+  /// the input field number being accessed.
+  static unsigned getAccessedFieldNo(unsigned Idx, const llvm::Constant *Elts);
+
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//

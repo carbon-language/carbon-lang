@@ -171,7 +171,7 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
     CurFn->setCallingConv(llvm::CallingConv::Fast);
 
   if (const VisibilityAttr *attr = FD->getAttr<VisibilityAttr>())
-    CurFn->setVisibility(attr->getVisibility());
+    CodeGenModule::setVisibility(CurFn, attr->getVisibility());
   // FIXME: else handle -fvisibility
 
 

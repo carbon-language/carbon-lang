@@ -2621,16 +2621,16 @@ void Sema::HandleVisibilityAttribute(Decl *d, AttributeList *rawAttr) {
 
   const char *TypeStr = Str->getStrData();
   unsigned TypeLen = Str->getByteLength();
-  llvm::GlobalValue::VisibilityTypes type;
+  VisibilityAttr::VisibilityTypes type;
 
   if (TypeLen == 7 && !memcmp(TypeStr, "default", 7))
-    type = llvm::GlobalValue::DefaultVisibility;
+    type = VisibilityAttr::DefaultVisibility;
   else if (TypeLen == 6 && !memcmp(TypeStr, "hidden", 6))
-    type = llvm::GlobalValue::HiddenVisibility;
+    type = VisibilityAttr::HiddenVisibility;
   else if (TypeLen == 8 && !memcmp(TypeStr, "internal", 8))
-    type = llvm::GlobalValue::HiddenVisibility; // FIXME
+    type = VisibilityAttr::HiddenVisibility; // FIXME
   else if (TypeLen == 9 && !memcmp(TypeStr, "protected", 9))
-    type = llvm::GlobalValue::ProtectedVisibility;
+    type = VisibilityAttr::ProtectedVisibility;
   else {
     Diag(rawAttr->getLoc(), diag::warn_attribute_type_not_supported,
            "visibility", TypeStr);

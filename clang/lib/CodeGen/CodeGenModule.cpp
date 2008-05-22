@@ -82,6 +82,24 @@ void CodeGenModule::WarnUnsupported(const Decl *D, const char *Type) {
                     &Msg, 1);
 }
 
+/// setVisibility - Set the visibility for the given LLVM GlobalValue
+/// according to the given clang AST visibility value.
+void CodeGenModule::setVisibility(llvm::GlobalValue *GV,
+                                  VisibilityAttr::VisibilityTypes Vis) {
+  switch (Vis) {
+  default: assert(0 && "Unknown visibility!");
+  case VisibilityAttr::DefaultVisibility:
+    GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
+    break;
+  case VisibilityAttr::HiddenVisibility:
+    GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
+    break;
+  case VisibilityAttr::ProtectedVisibility:
+    GV->setVisibility(llvm::GlobalValue::ProtectedVisibility);
+    break;
+  }
+}
+
 /// AddGlobalCtor - Add a function to the list that will be called before
 /// main() runs.
 void CodeGenModule::AddGlobalCtor(llvm::Function * Ctor) {
@@ -467,7 +485,7 @@ void CodeGenModule::EmitGlobalVarInit(const VarDecl *D) {
   GV->setInitializer(Init);
 
   if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>())
-    GV->setVisibility(attr->getVisibility());
+    setVisibility(GV, attr->getVisibility());
   // FIXME: else handle -fvisibility
   
   // Set the llvm linkage type as appropriate.

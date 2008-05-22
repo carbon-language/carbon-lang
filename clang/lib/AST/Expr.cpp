@@ -16,7 +16,6 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/TargetInfo.h"
-#include "llvm/Constants.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -1080,15 +1079,6 @@ void ExtVectorElementExpr::getEncodedElementAccess(
 
     Elts.push_back(Index);
   }
-}
-
-unsigned 
-ExtVectorElementExpr::getAccessedFieldNo(unsigned Idx, 
-                                         const llvm::Constant *Elts) {
-  if (isa<llvm::ConstantAggregateZero>(Elts))
-    return 0;
-  
-  return cast<llvm::ConstantInt>(Elts->getOperand(Idx))->getZExtValue();
 }
 
 // constructor for instance messages.
