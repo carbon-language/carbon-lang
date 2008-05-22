@@ -65,8 +65,9 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
     
     // Otherwise, add any offset that our operands provide.
     gep_type_iterator GTI = gep_type_begin(CE);
-    for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i, ++GTI) {
-      ConstantInt *CI = dyn_cast<ConstantInt>(CE->getOperand(i));
+    for (User::const_op_iterator i = CE->op_begin() + 1, e = CE->op_end();
+	 i != e; ++i, ++GTI) {
+      ConstantInt *CI = dyn_cast<ConstantInt>(*i);
       if (!CI) return false;  // Index isn't a simple constant?
       if (CI->getZExtValue() == 0) continue;  // Not adding anything.
       
@@ -297,8 +298,8 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, const TargetData *TD) {
   // Scan the operand list, checking to see if they are all constants, if so,
   // hand off to ConstantFoldInstOperands.
   SmallVector<Constant*, 8> Ops;
-  for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-    if (Constant *Op = dyn_cast<Constant>(I->getOperand(i)))
+  for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i)
+    if (Constant *Op = dyn_cast<Constant>(*i))
       Ops.push_back(Op);
     else
       return 0;  // All operands not constant!
