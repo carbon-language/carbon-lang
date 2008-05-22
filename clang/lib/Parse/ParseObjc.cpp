@@ -280,7 +280,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
                                                    // FIXME. This is not right!
                                                    : FD.D.getIdentifier());
           DeclTy *Property = Actions.ActOnProperty(CurScope,
-                               DS.getSourceRange().getBegin(), FD, OCDS,
+                               AtLoc, FD, OCDS,
                                GetterSel, SetterSel,
                                MethodImplKind);
           allProperties.push_back(Property);

@@ -878,6 +878,10 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
     MergeProtocolPropertiesIntoClass(I, I);
     for (ObjCInterfaceDecl::classprop_iterator P = I->classprop_begin(),
          E = I->classprop_end(); P != E; ++P) {
+      // FIXME: It would be really nice if we could avoid this. Injecting 
+      // methods into the interface makes it hard to distinguish "real" methods
+      // from synthesized "property" methods (that aren't in the source). 
+      // This complicicates the rewriter's life.
       I->addPropertyMethods(Context, *P, insMethods);
     }
     I->addMethods(&insMethods[0], insMethods.size(),
