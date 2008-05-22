@@ -878,9 +878,10 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       // Check for C99 6.7.5.3p10 - foo(void) is a non-varargs
       // function that takes no arguments, not a function that takes a
       // single void argument.
+      // We let through "const void" here because Sema::GetTypeForDeclarator
+      // already checks for that case.
       if (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
           FTI.ArgInfo[0].Param &&
-          !((ParmVarDecl*)FTI.ArgInfo[0].Param)->getType().getCVRQualifiers() &&
           ((ParmVarDecl*)FTI.ArgInfo[0].Param)->getType()->isVoidType()) {
         // empty arg list, don't push any params.
         ParmVarDecl *Param = (ParmVarDecl*)FTI.ArgInfo[0].Param;
@@ -888,7 +889,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
         // In C++, the empty parameter-type-list must be spelled "void"; a
         // typedef of void is not permitted.
         if (getLangOptions().CPlusPlus &&
-            Param->getType() != Context.VoidTy) {
+            Param->getType().getUnqualifiedType() != Context.VoidTy) {
           Diag(Param->getLocation(), diag::ext_param_typedef_of_void);
         }
 
