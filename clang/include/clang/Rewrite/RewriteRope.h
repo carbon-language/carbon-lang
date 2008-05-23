@@ -209,11 +209,13 @@ public:
   }
   
   void insert(unsigned Offset, const char *Start, const char *End) {
+    assert(Offset <= size() && "Invalid position to insert!");
     if (Start == End) return;
     Chunks.insert(Offset, MakeRopeString(Start, End));
   }
 
   void erase(unsigned Offset, unsigned NumBytes) {
+    assert(Offset+NumBytes <= size() && "Invalid region to erase!");
     if (NumBytes == 0) return;
     Chunks.erase(Offset, NumBytes);
   }
