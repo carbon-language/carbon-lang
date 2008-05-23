@@ -529,18 +529,20 @@ unsigned BranchFolder::ComputeSameTails(unsigned CurHash,
 void BranchFolder::RemoveBlocksWithHash(unsigned CurHash, 
                                         MachineBasicBlock* SuccBB,
                                         MachineBasicBlock* PredBB) {
-  for (MPIterator CurMPIter = prior(MergePotentials.end()),
-                  B = MergePotentials.begin(); 
+  MPIterator CurMPIter, B;
+  for (CurMPIter = prior(MergePotentials.end()), B = MergePotentials.begin(); 
        CurMPIter->first==CurHash;
        --CurMPIter) {
     // Put the unconditional branch back, if we need one.
     MachineBasicBlock *CurMBB = CurMPIter->second;
     if (SuccBB && CurMBB != PredBB)
       FixTail(CurMBB, SuccBB, TII);
-    MergePotentials.erase(CurMPIter);
-    if (CurMPIter==B) 
+    if (CurMPIter==B)
       break;
   }
+  if (CurMPIter->first!=CurHash)
+    CurMPIter++;
+  MergePotentials.erase(CurMPIter, MergePotentials.end());
 }
 
 /// CreateCommonTailOnlyBlock - None of the blocks to be tail-merged consist
