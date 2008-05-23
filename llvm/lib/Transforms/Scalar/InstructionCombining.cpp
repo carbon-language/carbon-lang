@@ -3276,8 +3276,16 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   // (sdiv X, X) --> 1     (udiv X, X) --> 1
-  if (Op0 == Op1)
-    return ReplaceInstUsesWith(I, ConstantInt::get(I.getType(), 1));
+  if (Op0 == Op1) {
+    if (const VectorType *Ty = dyn_cast<VectorType>(I.getType())) {
+      ConstantInt *CI = ConstantInt::get(Ty->getElementType(), 1);
+      std::vector<Constant*> Elts(Ty->getNumElements(), CI);
+      return ReplaceInstUsesWith(I, ConstantVector::get(Elts));
+    }
+
+    ConstantInt *CI = ConstantInt::get(I.getType(), 1);
+    return ReplaceInstUsesWith(I, CI);
+  }
   
   if (Instruction *Common = commonDivTransforms(I))
     return Common;
