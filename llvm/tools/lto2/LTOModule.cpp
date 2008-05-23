@@ -191,17 +191,7 @@ void LTOModule::addDefinedSymbol(GlobalValue* def, Mangler &mangler,
     
     // set definition part 
     if ( def->hasWeakLinkage() || def->hasLinkOnceLinkage() ) {
-        // lvm bitcode does not differenciate between weak def data 
-        // and tentative definitions!
-        // HACK HACK HACK
-        // C++ does not use tentative definitions, but does use weak symbols
-        // so guess that anything that looks like a C++ symbol is weak and others
-        // are tentative definitions
-        if ( (strncmp(symbolName, "__Z", 3) == 0) )
-            attr |= LTO_SYMBOL_DEFINITION_WEAK;
-        else {
-            attr |= LTO_SYMBOL_DEFINITION_TENTATIVE;
-        }
+        attr |= LTO_SYMBOL_DEFINITION_WEAK;
     }
     else if ( def->hasCommonLinkage()) {
         attr |= LTO_SYMBOL_DEFINITION_TENTATIVE;
