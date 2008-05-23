@@ -3242,19 +3242,18 @@ defm PMAXUD       : SS41I_binop_rm_int<0x3F, "pmaxud",
                                        int_x86_sse41_pmaxud, 1>;
 defm PMAXUW       : SS41I_binop_rm_int<0x3E, "pmaxuw",
                                        int_x86_sse41_pmaxuw, 1>;
-defm PMULDQ       : SS41I_binop_rm_int<0x28, "pmuldq",
-                                       int_x86_sse41_pmuldq, 1>;
 
 
 /// SS41I_binop_rm_int - Simple SSE 4.1 binary operator
 let Constraints = "$src1 = $dst" in {
-  multiclass SS41I_binop_patint<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                                Intrinsic IntId128, bit Commutable = 0> {
+  multiclass SS41I_binop_patint<bits<8> opc, string OpcodeStr, ValueType OpVT,
+                                SDNode OpNode, Intrinsic IntId128,
+                                bit Commutable = 0> {
     def rr : SS48I<opc, MRMSrcReg, (outs VR128:$dst),
                    (ins VR128:$src1, VR128:$src2),
                    !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-                   [(set VR128:$dst, (OpNode (v4i32 VR128:$src1),
-                                                    VR128:$src2))]>, OpSize {
+                   [(set VR128:$dst, (OpNode (OpVT VR128:$src1),
+                                                   VR128:$src2))]>, OpSize {
       let isCommutable = Commutable;
     }
     def rr_int : SS48I<opc, MRMSrcReg, (outs VR128:$dst),
@@ -3277,8 +3276,10 @@ let Constraints = "$src1 = $dst" in {
                        OpSize;
   }
 }
-defm PMULLD       : SS41I_binop_patint<0x40, "pmulld", mul,
+defm PMULLD       : SS41I_binop_patint<0x40, "pmulld", v4i32, mul,
                                        int_x86_sse41_pmulld, 1>;
+defm PMULDQ       : SS41I_binop_patint<0x28, "pmuldq", v2i64, mul,
+                                       int_x86_sse41_pmuldq, 1>;
 
 
 /// SS41I_binop_rmi_int - SSE 4.1 binary operator with 8-bit immediate
