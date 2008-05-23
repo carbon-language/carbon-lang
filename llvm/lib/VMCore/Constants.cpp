@@ -2308,8 +2308,8 @@ Constant *ConstantExpr::getInsertValueTy(const Type *ReqTy, Constant *Agg,
   if (Constant *FC = ConstantFoldInsertValue(Agg, Val, Idxs, NumIdx))
     return FC;          // Fold a few common cases...
 
-  assert(isa<PointerType>(Agg->getType()) &&
-         "Non-pointer type for constant InsertValue expression");
+  assert(Agg->getType()->isFirstClassType() &&
+         "Non-first-class type for constant InsertValue expression");
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> ArgVec;
   ArgVec.reserve(NumIdx+2);
@@ -2323,13 +2323,13 @@ Constant *ConstantExpr::getInsertValueTy(const Type *ReqTy, Constant *Agg,
 
 Constant *ConstantExpr::getInsertValue(Constant *Agg, Constant *Val,
                                     Constant* const *IdxList, unsigned NumIdx) {
-  assert((isa<StructType>(Agg->getType()) || isa<ArrayType>(Agg->getType()) ||
-          isa<VectorType>(Agg->getType())) &&
-         "Tried to create insertelement operation on non-aggregate type!");
+  assert(Agg->getType()->isFirstClassType() &&
+         "Tried to create insertelement operation on non-first-class type!");
 
-  const Type *ReqTy =
+  const Type *ReqTy = Agg->getType();
+  const Type *ValTy =
     ExtractValueInst::getIndexedType(Agg->getType(), IdxList, IdxList+NumIdx);
-  assert(ReqTy && "insertvalue indices invalid!");
+  assert(ValTy == Val->getType() && "insertvalue indices invalid!");
   return getInsertValueTy(ReqTy, Agg, Val, IdxList, NumIdx);
 }
 
@@ -2342,8 +2342,8 @@ Constant *ConstantExpr::getExtractValueTy(const Type *ReqTy, Constant *Agg,
   if (Constant *FC = ConstantFoldExtractValue(Agg, Idxs, NumIdx))
     return FC;          // Fold a few common cases...
 
-  assert(isa<PointerType>(Agg->getType()) &&
-         "Non-pointer type for constant ExtractValue expression");
+  assert(Agg->getType()->isFirstClassType() &&
+         "Non-first-class type for constant extractvalue expression");
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> ArgVec;
   ArgVec.reserve(NumIdx+1);
@@ -2356,9 +2356,8 @@ Constant *ConstantExpr::getExtractValueTy(const Type *ReqTy, Constant *Agg,
 
 Constant *ConstantExpr::getExtractValue(Constant *Agg,
                                     Constant* const *IdxList, unsigned NumIdx) {
-  assert((isa<StructType>(Agg->getType()) || isa<ArrayType>(Agg->getType()) ||
-          isa<VectorType>(Agg->getType())) &&
-         "Tried to create extractelement operation on non-aggregate type!");
+  assert(Agg->getType()->isFirstClassType() &&
+         "Tried to create extractelement operation on non-first-class type!");
 
   const Type *ReqTy =
     ExtractValueInst::getIndexedType(Agg->getType(), IdxList, IdxList+NumIdx);

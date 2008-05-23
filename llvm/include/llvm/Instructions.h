@@ -1689,7 +1689,41 @@ template <>
 struct OperandTraits<ExtractValueInst> : VariadicOperandTraits<1> {
 };
 
+template<typename InputIterator>
+ExtractValueInst::ExtractValueInst(Value *Agg,
+                                   InputIterator IdxBegin, 
+                                   InputIterator IdxEnd,
+                                   unsigned Values,
+                                   const std::string &Name,
+                                   Instruction *InsertBefore)
+  : Instruction(checkType(getIndexedType(Agg->getType(), IdxBegin, IdxEnd)),
+                ExtractValue,
+                OperandTraits<ExtractValueInst>::op_end(this) - Values,
+                Values, InsertBefore) {
+  init(Agg, IdxBegin, IdxEnd, Name,
+       typename std::iterator_traits<InputIterator>::iterator_category());
+}
+template<typename InputIterator>
+ExtractValueInst::ExtractValueInst(Value *Agg,
+                                   InputIterator IdxBegin,
+                                   InputIterator IdxEnd,
+                                   unsigned Values,
+                                   const std::string &Name,
+                                   BasicBlock *InsertAtEnd)
+  : Instruction(PointerType::get(checkType(
+                                   getIndexedType(Agg->getType(),
+                                                  IdxBegin, IdxEnd)),
+                                 cast<PointerType>(Agg->getType())
+                                   ->getAddressSpace()),
+                ExtractValue,
+                OperandTraits<ExtractValueInst>::op_end(this) - Values,
+                Values, InsertAtEnd) {
+  init(Agg, IdxBegin, IdxEnd, Name,
+       typename std::iterator_traits<InputIterator>::iterator_category());
+}
+
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ExtractValueInst, Value)
+
 
 //===----------------------------------------------------------------------===//
 //                                InsertValueInst Class
@@ -1839,6 +1873,44 @@ public:
 template <>
 struct OperandTraits<InsertValueInst> : VariadicOperandTraits<2> {
 };
+
+template<typename InputIterator>
+InsertValueInst::InsertValueInst(Value *Agg,
+                                 Value *Val,
+                                 InputIterator IdxBegin, 
+                                 InputIterator IdxEnd,
+                                 unsigned Values,
+                                 const std::string &Name,
+                                 Instruction *InsertBefore)
+  : Instruction(checkType(ExtractValueInst::getIndexedType(
+                                     Agg->getType(),
+                                     IdxBegin, IdxEnd)),
+                InsertValue,
+                OperandTraits<InsertValueInst>::op_end(this) - Values,
+                Values, InsertBefore) {
+  init(Agg, Val, IdxBegin, IdxEnd, Name,
+       typename std::iterator_traits<InputIterator>::iterator_category());
+}
+template<typename InputIterator>
+InsertValueInst::InsertValueInst(Value *Agg,
+                                 Value *Val,
+                                 InputIterator IdxBegin,
+                                 InputIterator IdxEnd,
+                                 unsigned Values,
+                                 const std::string &Name,
+                                 BasicBlock *InsertAtEnd)
+  : Instruction(PointerType::get(checkType(
+                                   ExtractValueInst::getIndexedType(
+                                     Val->getType(),
+                                     IdxBegin, IdxEnd)),
+                                 cast<PointerType>(Val->getType())
+                                   ->getAddressSpace()),
+                InsertValue,
+                OperandTraits<InsertValueInst>::op_end(this) - Values,
+                Values, InsertAtEnd) {
+  init(Agg, Val, IdxBegin, IdxEnd, Name,
+       typename std::iterator_traits<InputIterator>::iterator_category());
+}
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(InsertValueInst, Value)
 

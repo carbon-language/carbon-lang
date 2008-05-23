@@ -1333,8 +1333,68 @@ int ShuffleVectorInst::getMaskValue(unsigned i) const {
 }
 
 //===----------------------------------------------------------------------===//
+//                             InsertValueInst Class
+//===----------------------------------------------------------------------===//
+
+void InsertValueInst::init(Value *Agg, Value *Val, Value* const *Idx, unsigned NumIdx) {
+  assert(NumOperands == 1+NumIdx && "NumOperands not initialized?");
+  Use *OL = OperandList;
+  OL[0].init(Agg, this);
+  OL[1].init(Val, this);
+
+  for (unsigned i = 0; i != NumIdx; ++i)
+    OL[i+2].init(Idx[i], this);
+}
+
+void InsertValueInst::init(Value *Agg, Value *Val, Value *Idx) {
+  assert(NumOperands == 3 && "NumOperands not initialized?");
+  Use *OL = OperandList;
+  OL[0].init(Agg, this);
+  OL[1].init(Val, this);
+  OL[2].init(Idx, this);
+}
+
+InsertValueInst::InsertValueInst(const InsertValueInst &IVI)
+  : Instruction(reinterpret_cast<const Type*>(IVI.getType()), InsertValue,
+                OperandTraits<InsertValueInst>::op_end(this)
+                - IVI.getNumOperands(),
+                IVI.getNumOperands()) {
+  Use *OL = OperandList;
+  Use *IVIOL = IVI.OperandList;
+  for (unsigned i = 0, E = NumOperands; i != E; ++i)
+    OL[i].init(IVIOL[i], this);
+}
+
+//===----------------------------------------------------------------------===//
 //                             ExtractValueInst Class
 //===----------------------------------------------------------------------===//
+
+void ExtractValueInst::init(Value *Agg, Value* const *Idx, unsigned NumIdx) {
+  assert(NumOperands == 1+NumIdx && "NumOperands not initialized?");
+  Use *OL = OperandList;
+  OL[0].init(Agg, this);
+
+  for (unsigned i = 0; i != NumIdx; ++i)
+    OL[i+1].init(Idx[i], this);
+}
+
+void ExtractValueInst::init(Value *Agg, Value *Idx) {
+  assert(NumOperands == 2 && "NumOperands not initialized?");
+  Use *OL = OperandList;
+  OL[0].init(Agg, this);
+  OL[1].init(Idx, this);
+}
+
+ExtractValueInst::ExtractValueInst(const ExtractValueInst &EVI)
+  : Instruction(reinterpret_cast<const Type*>(EVI.getType()), ExtractValue,
+                OperandTraits<ExtractValueInst>::op_end(this)
+                - EVI.getNumOperands(),
+                EVI.getNumOperands()) {
+  Use *OL = OperandList;
+  Use *EVIOL = EVI.OperandList;
+  for (unsigned i = 0, E = NumOperands; i != E; ++i)
+    OL[i].init(EVIOL[i], this);
+}
 
 // getIndexedType - Returns the type of the element that would be extracted
 // with an extractvalue instruction with the specified parameters.
@@ -2808,6 +2868,14 @@ VFCmpInst* VFCmpInst::clone() const {
 VICmpInst* VICmpInst::clone() const {
   return new VICmpInst(getPredicate(), Op<0>(), Op<1>());
 }
+
+ExtractValueInst *ExtractValueInst::clone() const {
+  return new(getNumOperands()) ExtractValueInst(*this);
+}
+InsertValueInst *InsertValueInst::clone() const {
+  return new(getNumOperands()) InsertValueInst(*this);
+}
+
 
 MallocInst *MallocInst::clone()   const { return new MallocInst(*this); }
 AllocaInst *AllocaInst::clone()   const { return new AllocaInst(*this); }
