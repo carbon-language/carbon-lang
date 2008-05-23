@@ -1379,6 +1379,8 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
       if (!getValueState(BI->getCondition()).isUndefined())
         continue;
     } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+      if (SI->getNumSuccessors()<2)   // no cases
+        continue;
       if (!getValueState(SI->getCondition()).isUndefined())
         continue;
     } else {
