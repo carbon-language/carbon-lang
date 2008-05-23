@@ -154,10 +154,10 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
                << PtrArg->getName() << "' because it would require adding more "
                << "than " << maxElements << " arguments to the function.\n";
         } else {
-          // If all the elements are first class types, we can promote it.
+          // If all the elements are single-value types, we can promote it.
           bool AllSimple = true;
           for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
-            if (!STy->getElementType(i)->isFirstClassType()) {
+            if (!STy->getElementType(i)->isSingleValueType()) {
               AllSimple = false;
               break;
             }

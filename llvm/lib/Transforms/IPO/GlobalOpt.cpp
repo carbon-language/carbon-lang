@@ -1493,11 +1493,11 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
     // this global a local variable) we replace the global with a local alloca
     // in this function.
     //
-    // NOTE: It doesn't make sense to promote non first class types since we
+    // NOTE: It doesn't make sense to promote non single-value types since we
     // are just replacing static memory to stack memory.
     if (!GS.HasMultipleAccessingFunctions &&
         GS.AccessingFunction && !GS.HasNonInstructionUser &&
-        GV->getType()->getElementType()->isFirstClassType() &&
+        GV->getType()->getElementType()->isSingleValueType() &&
         GS.AccessingFunction->getName() == "main" &&
         GS.AccessingFunction->hasExternalLinkage()) {
       DOUT << "LOCALIZING GLOBAL: " << *GV;
@@ -1548,7 +1548,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
 
       ++NumMarked;
       return true;
-    } else if (!GV->getInitializer()->getType()->isFirstClassType()) {
+    } else if (!GV->getInitializer()->getType()->isSingleValueType()) {
       if (GlobalVariable *FirstNewGV = SRAGlobal(GV, 
                                                  getAnalysis<TargetData>())) {
         GVI = FirstNewGV;  // Don't skip the newly produced globals!

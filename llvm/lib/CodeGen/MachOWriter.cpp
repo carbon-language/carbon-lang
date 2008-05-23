@@ -840,7 +840,7 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
         abort();
         break;
       }
-    } else if (PC->getType()->isFirstClassType()) {
+    } else if (PC->getType()->isSingleValueType()) {
       unsigned char *ptr = (unsigned char *)PA;
       switch (PC->getType()->getTypeID()) {
       case Type::IntegerTyID: {
