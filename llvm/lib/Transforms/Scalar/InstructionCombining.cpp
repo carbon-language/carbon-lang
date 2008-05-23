@@ -1096,7 +1096,9 @@ void InstCombiner::ComputeMaskedBits(Value *V, const APInt &Mask,
         Value *L = P->getIncomingValue(i);
         Value *R = P->getIncomingValue(!i);
         User *LU = dyn_cast<User>(L);
-        unsigned Opcode = LU ? getOpcode(LU) : (unsigned)Instruction::UserOp1;
+        if (!LU)
+          continue;
+        unsigned Opcode = getOpcode(LU);
         // Check for operations that have the property that if
         // both their operands have low zero bits, the result
         // will have low zero bits.
