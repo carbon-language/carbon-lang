@@ -3937,9 +3937,9 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
         if (OpInfo.isIndirect)
           OpTy = cast<PointerType>(OpTy)->getElementType();
 
-        // If OpTy is not a first-class value, it may be a struct/union that we
+        // If OpTy is not a single value, it may be a struct/union that we
         // can tile with integers.
-        if (!OpTy->isFirstClassType() && OpTy->isSized()) {
+        if (!OpTy->isSingleValueType() && OpTy->isSized()) {
           unsigned BitSize = TD->getTypeSizeInBits(OpTy);
           switch (BitSize) {
           default: break;
