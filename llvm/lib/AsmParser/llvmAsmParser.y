@@ -731,6 +731,10 @@ ParseGlobalVariable(std::string *NameStr,
     GenerateError("Cannot declare global vars of function type");
     return 0;
   }
+  if (Ty == Type::LabelTy) {
+    GenerateError("Cannot declare global vars of label type");
+    return 0;
+  }
 
   const PointerType *PTy = PointerType::get(Ty, AddressSpace);
 
@@ -1850,12 +1854,14 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     CHECK_FOR_ERROR
   }
   | INTTYPE TRUETOK {                      // Boolean constants
-    assert(cast<IntegerType>($1)->getBitWidth() == 1 && "Not Bool?");
+    if (cast<IntegerType>($1)->getBitWidth() != 1)
+      GEN_ERROR("Constant true must have type i1");
     $$ = ConstantInt::getTrue();
     CHECK_FOR_ERROR
   }
   | INTTYPE FALSETOK {                     // Boolean constants
-    assert(cast<IntegerType>($1)->getBitWidth() == 1 && "Not Bool?");
+    if (cast<IntegerType>($1)->getBitWidth() != 1)
+      GEN_ERROR("Constant false must have type i1");
     $$ = ConstantInt::getFalse();
     CHECK_FOR_ERROR
   }
@@ -2250,8 +2256,8 @@ LibList : LibList ',' STRINGCONSTANT {
 ArgListH : ArgListH ',' Types OptParamAttrs OptLocalName {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
-    if (*$3 == Type::VoidTy)
-      GEN_ERROR("void typed arguments are invalid");
+    if (!(*$3)->isFirstClassType())
+      GEN_ERROR("Argument types must be first-class");
     ArgListEntry E; E.Attrs = $4; E.Ty = $3; E.Name = $5;
     $$ = $1;
     $1->push_back(E);
@@ -2260,8 +2266,8 @@ ArgListH : ArgListH ',' Types OptParamAttrs OptLocalName {
   | Types OptParamAttrs OptLocalName {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$1)->getDescription());
-    if (*$1 == Type::VoidTy)
-      GEN_ERROR("void typed arguments are invalid");
+    if (!(*$1)->isFirstClassType())
+      GEN_ERROR("Argument types must be first-class");
     ArgListEntry E; E.Attrs = $2; E.Ty = $1; E.Name = $3;
     $$ = new ArgListType;
     $$->push_back(E);
@@ -2498,6 +2504,9 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
   | '<' ConstVector '>' { // Nonempty unsized packed vector
     const Type *ETy = (*$2)[0]->getType();
     int NumElements = $2->size(); 
+
+    if (!ETy->isInteger() && !ETy->isFloatingPoint())
+      GEN_ERROR("Invalid vector element type: " + ETy->getDescription());
     
     VectorType* pt = VectorType::get(ETy, NumElements);
     PATypeHolder* PTy = new PATypeHolder(
@@ -2639,7 +2648,8 @@ BBTerminatorInst :
     $$ = BranchInst::Create(tmpBB);
   }                                               // Conditional Branch...
   | BR INTTYPE ValueRef ',' LABEL ValueRef ',' LABEL ValueRef {  
-    assert(cast<IntegerType>($2)->getBitWidth() == 1 && "Not Bool?");
+    if (cast<IntegerType>($2)->getBitWidth() != 1)
+      GEN_ERROR("Branch condition must have type i1");
     BasicBlock* tmpBBA = getBBVal($6);
     CHECK_FOR_ERROR
     BasicBlock* tmpBBB = getBBVal($9);
@@ -3149,6 +3159,8 @@ MemoryInst : MALLOC Types OptCAlign {
   | MALLOC Types ',' INTTYPE ValueRef OptCAlign {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$2)->getDescription());
+    if ($4 != Type::Int32Ty)
+      GEN_ERROR("Malloc array size is not a 32-bit integer!");
     Value* tmpVal = getVal($4, $5);
     CHECK_FOR_ERROR
     $$ = new MallocInst(*$2, tmpVal, $6);
@@ -3164,6 +3176,8 @@ MemoryInst : MALLOC Types OptCAlign {
   | ALLOCA Types ',' INTTYPE ValueRef OptCAlign {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$2)->getDescription());
+    if ($4 != Type::Int32Ty)
+      GEN_ERROR("Alloca array size is not a 32-bit integer!");
     Value* tmpVal = getVal($4, $5);
     CHECK_FOR_ERROR
     $$ = new AllocaInst(*$2, tmpVal, $6);
