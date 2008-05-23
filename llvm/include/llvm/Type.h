@@ -216,8 +216,9 @@ public:
   /// is a valid type for a Value.
   ///
   inline bool isFirstClassType() const {
-    return isSingleValueType() ||
-           ID == StructTyID || ID == ArrayTyID;
+    // There are more first-class kinds than non-first-class kinds, so a
+    // negative test is simpler than a positive one.
+    return ID != FunctionTyID && ID != VoidTyID && ID != OpaqueTyID;
   }
 
   /// isSingleValueType - Return true if the type is a valid type for a
