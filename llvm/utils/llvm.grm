@@ -356,7 +356,7 @@ InstVal ::=
  | vfcmp FPredicates Types ValueRef ^ "," ValueRef
  | CastOps ResolvedVal to Types
  | select ResolvedVal ^ "," ResolvedVal ^ "," ResolvedVal
- | vaarg ResolvedVal ^ "," Types
+ | "va_arg" ResolvedVal ^ "," Types
  | extractelement ResolvedVal ^ "," ResolvedVal
  | insertelement ResolvedVal ^ "," ResolvedVal ^ "," ResolvedVal
  | shufflevector ResolvedVal ^ "," ResolvedVal ^ "," ResolvedVal
