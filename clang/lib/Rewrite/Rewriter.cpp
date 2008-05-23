@@ -52,7 +52,7 @@ void RewriteBuffer::InsertText(unsigned OrigOffset,
 /// operation.
 void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
                                 const char *NewStr, unsigned NewLength) {
-  unsigned RealOffset = getMappedOffset(OrigOffset, true);
+  unsigned RealOffset = getMappedOffset(OrigOffset, false);
   Buffer.erase(RealOffset, OrigLength);
   Buffer.insert(RealOffset, NewStr, NewStr+NewLength);
   if (OrigLength != NewLength)
