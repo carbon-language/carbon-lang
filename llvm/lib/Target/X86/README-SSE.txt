@@ -845,3 +845,47 @@ _f:
 	movaps	%xmm1, %xmm0
 	punpckldq	%xmm2, %xmm0
 	ret
+
+//===---------------------------------------------------------------------===//
+
+We compile this:
+
+__m128i
+foo2 (char x)
+{
+  return _mm_set_epi8 (1, 0, 0, 0, 0, 0, 0, 0, 0, x, 0, 1, 0, 0, 0, 0);
+}
+
+into:
+	movl	$1, %eax
+	xorps	%xmm0, %xmm0
+	pinsrw	$2, %eax, %xmm0
+	movzbl	4(%esp), %eax
+	pinsrw	$3, %eax, %xmm0
+	movl	$256, %eax
+	pinsrw	$7, %eax, %xmm0
+	ret
+
+
+gcc-4.2:
+	subl	$12, %esp
+	movzbl	16(%esp), %eax
+	movdqa	LC0, %xmm0
+	pinsrw	$3, %eax, %xmm0
+	addl	$12, %esp
+	ret
+	.const
+	.align 4
+LC0:
+	.word	0
+	.word	0
+	.word	1
+	.word	0
+	.word	0
+	.word	0
+	.word	0
+	.word	256
+
+With SSE4, it should be
+      movdqa  .LC0(%rip), %xmm0
+      pinsrb  $6, %edi, %xmm0
