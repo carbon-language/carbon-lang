@@ -2292,22 +2292,14 @@ static Instruction *AssociativeOpt(BinaryOperator &Root, const Functor &F) {
 
 namespace {
 
-// AddRHS - Implements: X + X --> X << 1 and X + X --> X * 2 for vectors
+// AddRHS - Implements: X + X --> X << 1
 struct AddRHS {
   Value *RHS;
   AddRHS(Value *rhs) : RHS(rhs) {}
   bool shouldApply(Value *LHS) const { return LHS == RHS; }
   Instruction *apply(BinaryOperator &Add) const {
-    if (Add.getType()->getTypeID() == Type::VectorTyID) {
-      const VectorType *VTy = cast<VectorType>(Add.getType());
-      ConstantInt *CI = ConstantInt::get(VTy->getElementType(), 2);
-      std::vector<Constant*> Elts(VTy->getNumElements(), CI);
-      return BinaryOperator::CreateMul(Add.getOperand(0),
-                                       ConstantVector::get(Elts));
-    } else {
-      return BinaryOperator::CreateShl(Add.getOperand(0),
-                                       ConstantInt::get(Add.getType(), 1));
-    }
+    return BinaryOperator::CreateShl(Add.getOperand(0),
+                                     ConstantInt::get(Add.getType(), 1));
   }
 };
 
@@ -2635,8 +2627,8 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     }
   }
 
-  // X + X --> X << 1 and X + X --> X * 2 for vectors
-  if (I.getType()->isIntOrIntVector() && I.getType() != Type::Int1Ty) {
+  // X + X --> X
+  if (I.getType()->isInteger() && I.getType() != Type::Int1Ty) {
     if (Instruction *Result = AssociativeOpt(I, AddRHS(RHS))) return Result;
 
     if (Instruction *RHSI = dyn_cast<Instruction>(RHS)) {
