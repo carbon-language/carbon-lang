@@ -251,7 +251,15 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       if (Subtarget->isTargetDarwin()) {
         O << "\t.globl " << name << "\n"
           << TAI->getWeakDefDirective() << name << "\n";
-        SwitchToDataSection("\t.section __DATA,__datacoal_nt,coalesced", I);
+        if (!I->isConstant())
+          SwitchToDataSection("\t.section __DATA,__datacoal_nt,coalesced", I);
+        else {
+          const ArrayType *AT = dyn_cast<ArrayType>(Type);
+          if (AT && AT->getElementType()==Type::Int8Ty)
+            SwitchToDataSection("\t.section __TEXT,__const_coal,coalesced", I);
+          else
+            SwitchToDataSection("\t.section __DATA,__const_coal,coalesced", I);
+        }
       } else if (Subtarget->isTargetCygMing()) {
         std::string SectionName(".section\t.data$linkonce." +
                                 name +
