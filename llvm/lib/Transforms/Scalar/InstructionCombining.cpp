@@ -2627,7 +2627,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     }
   }
 
-  // X + X --> X
+  // X + X --> X << 1
   if (I.getType()->isInteger() && I.getType() != Type::Int1Ty) {
     if (Instruction *Result = AssociativeOpt(I, AddRHS(RHS))) return Result;
 
