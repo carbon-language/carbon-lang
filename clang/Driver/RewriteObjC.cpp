@@ -165,7 +165,7 @@ namespace {
     // Expression Rewriting.
     Stmt *RewriteFunctionBodyOrGlobalInitializer(Stmt *S);
     Stmt *RewriteAtEncode(ObjCEncodeExpr *Exp);
-    Stmt *RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV);
+    Stmt *RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV, SourceLocation OrigStart);
     Stmt *RewriteAtSelector(ObjCSelectorExpr *Exp);
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
     Stmt *RewriteObjCStringLiteral(ObjCStringLiteral *Exp);
@@ -813,7 +813,8 @@ void RewriteObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
   ReplaceText(ClassDecl->getAtEndLoc(), 0, "// ", 3);
 }
 
-Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
+Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV, 
+                                          SourceLocation OrigStart) {
   ObjCIvarDecl *D = IV->getDecl();
   if (CurMethodDecl) {
     if (const PointerType *pType = IV->getBase()->getType()->getAsPointerType()) {
@@ -833,21 +834,24 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
       QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
       CastExpr *castExpr = new CastExpr(castT, IV->getBase(), SourceLocation());
       // Don't forget the parens to enforce the proper binding.
-      ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), castExpr);
+      ParenExpr *PE = new ParenExpr(IV->getBase()->getLocStart(),
+                                    IV->getBase()->getLocEnd(),
+                                    castExpr);
       if (IV->isFreeIvar() && 
           CurMethodDecl->getClassInterface() == iFaceDecl->getDecl()) {
-        MemberExpr *ME = new MemberExpr(PE, true, D, IV->getLocation(), D->getType());
+        MemberExpr *ME = new MemberExpr(PE, true, D, IV->getLocation(),
+                                        D->getType());
         ReplaceStmt(IV, ME);
         delete IV;
         return ME;
-      } else {
-        ReplaceStmt(IV->getBase(), PE);
-        // Cannot delete IV->getBase(), since PE points to it.
-        // Replace the old base with the cast. This is important when doing
-        // embedded rewrites. For example, [newInv->_container addObject:0].
-        IV->setBase(PE); 
-        return IV;
       }
+       
+      ReplaceStmt(IV->getBase(), PE);
+      // Cannot delete IV->getBase(), since PE points to it.
+      // Replace the old base with the cast. This is important when doing
+      // embedded rewrites. For example, [newInv->_container addObject:0].
+      IV->setBase(PE); 
+      return IV;
     }
   } else { // we are outside a method.
     assert(!IV->isFreeIvar() && "Cannot have a free standing ivar outside a method");
@@ -896,7 +900,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     ObjCBcLabelNo.push_back(++BcLabelCount);
   }
   
-  SourceLocation OrigStmtEnd = S->getLocEnd();
+  SourceRange OrigStmtRange = S->getSourceRange();
   
   // Start by rewriting all children.
   for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
@@ -912,7 +916,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     return RewriteAtEncode(AtEncode);
   
   if (ObjCIvarRefExpr *IvarRefExpr = dyn_cast<ObjCIvarRefExpr>(S))
-    return RewriteObjCIvarRefExpr(IvarRefExpr);
+    return RewriteObjCIvarRefExpr(IvarRefExpr, OrigStmtRange.getBegin());
 
   if (ObjCSelectorExpr *AtSelector = dyn_cast<ObjCSelectorExpr>(S))
     return RewriteAtSelector(AtSelector);
@@ -955,7 +959,8 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   
   if (ObjCForCollectionStmt *StmtForCollection = 
         dyn_cast<ObjCForCollectionStmt>(S))
-    return RewriteObjCForCollectionStmt(StmtForCollection, OrigStmtEnd);
+    return RewriteObjCForCollectionStmt(StmtForCollection, 
+                                        OrigStmtRange.getEnd());
   if (BreakStmt *StmtBreakStmt =
       dyn_cast<BreakStmt>(S))
     return RewriteBreakStmt(StmtBreakStmt);
