@@ -301,6 +301,8 @@ void StmtDumper::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
 
   fprintf(F, " %sDecl='%s' %p", Node->getDecl()->getDeclKindName(), 
                             Node->getDecl()->getName(), (void*)Node->getDecl());
+  if (Node->isFreeIvar())
+    fprintf(F, " isFreeIvar");
 }
 
 void StmtDumper::VisitPreDefinedExpr(PreDefinedExpr *Node) {
