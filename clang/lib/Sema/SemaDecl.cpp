@@ -258,10 +258,8 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // TODO: This is totally simplistic.  It should handle merging functions
   // together etc, merging extern int X; int X; ...
-  // FIXME: temporarily removing this diagnostic (5/23/08). Will put back
-  // next week (which the .i file FIXME above is nailed).
-  //Diag(New->getLocation(), diag::err_redefinition, New->getName());
-  //Diag(Old->getLocation(), diag::err_previous_definition);
+  Diag(New->getLocation(), diag::err_redefinition, New->getName());
+  Diag(Old->getLocation(), diag::err_previous_definition);
   return New;
 }
 
