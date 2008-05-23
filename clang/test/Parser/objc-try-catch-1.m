@@ -34,7 +34,7 @@ void * foo()
     }
   }
 
-  @try {  // expected-error {{@try statment without a @catch and @finally clause}}
+  @try {  // expected-error {{@try statement without a @catch and @finally clause}}
     return proc();
   }
 }
@@ -42,13 +42,13 @@ void * foo()
 
 void bar()
 {
-  @try {}// expected-error {{@try statment without a @catch and @finally clause}}
+  @try {}// expected-error {{@try statement without a @catch and @finally clause}}
   @"s"; //  expected-warning {{result unused}}
 }
 
 void baz()
 {
-  @try {}// expected-error {{@try statment without a @catch and @finally clause}}
+  @try {}// expected-error {{@try statement without a @catch and @finally clause}}
   @try {}
   @finally {}
 }

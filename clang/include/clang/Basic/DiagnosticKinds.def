@@ -412,7 +412,7 @@ DIAG(err_objc_protocol_required, ERROR,
 DIAG(err_objc_protocol_optional, ERROR,
      "@optional may be specified in protocols only")
 DIAG(err_missing_catch_finally, ERROR,
-     "@try statment without a @catch and @finally clause")
+     "@try statement without a @catch and @finally clause")
 DIAG(err_objc_concat_string, ERROR,
      "unexpected token after Objective-C string")
 DIAG(err_undef_superclass, ERROR,
