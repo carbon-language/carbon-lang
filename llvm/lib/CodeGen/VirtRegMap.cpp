@@ -151,7 +151,7 @@ void VirtRegMap::addSpillSlotUse(int FI, MachineInstr *MI) {
     // instruction selection and is not a spill
     if (FI >= LowSpillSlot) {
       assert(FI >= 0 && "Spill slot index should not be negative!");
-      assert(FI-LowSpillSlot < SpillSlotToUsesMap.size()
+      assert((unsigned)FI-LowSpillSlot < SpillSlotToUsesMap.size()
              && "Invalid spill slot");
       SpillSlotToUsesMap[FI-LowSpillSlot].insert(MI);
     }
@@ -189,7 +189,7 @@ void VirtRegMap::RemoveMachineInstrFromMaps(MachineInstr *MI) {
     // is not a spill
     if (FI < LowSpillSlot)
       continue;
-    assert(FI-LowSpillSlot < SpillSlotToUsesMap.size()
+    assert((unsigned)FI-LowSpillSlot < SpillSlotToUsesMap.size()
            && "Invalid spill slot");
     SpillSlotToUsesMap[FI-LowSpillSlot].erase(MI);
   }
