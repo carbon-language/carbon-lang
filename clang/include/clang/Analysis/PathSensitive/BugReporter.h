@@ -19,6 +19,7 @@
 #include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include <vector>
 
 namespace clang {
@@ -130,6 +131,7 @@ class BugReporter {
   PathDiagnosticClient* PD;
   ASTContext& Ctx;
   GRExprEngine& Eng;
+  llvm::SmallSet<SymbolID, 10> NotableSymbols;
   
 public:
   BugReporter(Diagnostic& diag, PathDiagnosticClient* pd,
@@ -150,11 +152,16 @@ public:
 
   GRExprEngine& getEngine() { return Eng; }
   
+  ValueStateManager& getStateManager();
+  
   CFG& getCFG() { return getGraph().getCFG(); }
   
   void EmitWarning(BugReport& R);
   
   void GeneratePathDiagnostic(PathDiagnostic& PD, BugReport& R);
+  
+  void addNotableSymbol(SymbolID Sym) { NotableSymbols.insert(Sym); }
+  bool isNotable(SymbolID Sym) const { return (bool) NotableSymbols.count(Sym);}
 };
   
 } // end clang namespace
