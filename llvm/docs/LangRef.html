@@ -466,7 +466,7 @@ All Global Variables and Functions have one of the following types of linkage:
 
 <dl>
 
-  <dt><tt><b><a name="linkage_internal">internal</a></b></tt> </dt>
+  <dt><tt><b><a name="linkage_internal">internal</a></b></tt>: </dt>
 
   <dd>Global values with internal linkage are only directly accessible by
   objects in the current module.  In particular, linking code into a module with
@@ -485,14 +485,22 @@ All Global Variables and Functions have one of the following types of linkage:
   allowed to be discarded.
   </dd>
 
+  <dt><tt><b><a name="linkage_common">common</a></b></tt>: </dt>
+
+  <dd>"<tt>common</tt>" linkage is exactly the same as <tt>linkonce</tt> 
+  linkage, except that unreferenced <tt>common</tt> globals may not be
+  discarded.  This is used for globals that may be emitted in multiple 
+  translation units, but that are not guaranteed to be emitted into every 
+  translation unit that uses them.  One example of this is tentative
+  definitions in C, such as "<tt>int X;</tt>" at global scope.
+  </dd>
+
   <dt><tt><b><a name="linkage_weak">weak</a></b></tt>: </dt>
 
-  <dd>"<tt>weak</tt>" linkage is exactly the same as <tt>linkonce</tt> linkage,
-  except that unreferenced <tt>weak</tt> globals may not be discarded.  This is
-  used for globals that may be emitted in multiple translation units, but that
-  are not guaranteed to be emitted into every translation unit that uses them.
-  One example of this are common globals in C, such as "<tt>int X;</tt>" at 
-  global scope.
+  <dd>"<tt>weak</tt>" linkage is the same as <tt>common</tt> linkage, except
+  that some targets may choose to emit different assembly sequences for them 
+  for target-dependent reasons.  This is used for globals that are declared 
+  "weak" in C source code.
   </dd>
 
   <dt><tt><b><a name="linkage_appending">appending</a></b></tt>: </dt>
