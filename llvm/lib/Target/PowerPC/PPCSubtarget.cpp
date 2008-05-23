@@ -143,5 +143,6 @@ bool PPCSubtarget::hasLazyResolverStub(const GlobalValue *GV) const {
     return false;
   
   return GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
+         GV->hasCommonLinkage() ||
          (GV->isDeclaration() && !GV->hasNotBeenReadFromBitcode());
 }
