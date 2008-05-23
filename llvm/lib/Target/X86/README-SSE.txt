@@ -814,7 +814,7 @@ define <4 x i32> @f(<4 x i32> %i) nounwind  {
 	ret <4 x i32> %A
 }
 
-Compiles into:
+On targets without SSE4.1, this compiles into:
 
 LCPI1_0:					##  <4 x i32>
 	.long	10
@@ -845,6 +845,11 @@ _f:
 	movaps	%xmm1, %xmm0
 	punpckldq	%xmm2, %xmm0
 	ret
+
+It would be better to synthesize integer vector multiplication by constants
+using shifts and adds, pslld and paddd here. And even on targets with SSE4.1,
+simple cases such as multiplication by powers of two would be better as
+vector shifts than as multiplications.
 
 //===---------------------------------------------------------------------===//
 
