@@ -2,7 +2,7 @@
 
 ; Because the 'internal' function is passed to an external function, we don't
 ; know what the incoming values will alias.  As such, we cannot do the 
-; optimization checked by the 'arg-must-alias.llx' test.
+; optimization checked by the 'arg-must-alias.ll' test.
 
 declare void @external(i32(i32*)*)
 @G = internal constant i32* null

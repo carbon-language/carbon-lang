@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -indvars -disable-output
-; ModuleID = '2004-04-05-InvokeCastCrash.llx'
+; ModuleID = '2004-04-05-InvokeCastCrash.ll'
 	%struct.__false_type = type { i8 }
 	%"struct.__gnu_cxx::_Hashtable_node<const llvm::Constant*>" = type { %"struct.__gnu_cxx::_Hashtable_node<const llvm::Constant*>"*, %"struct.llvm::Constant"* }
 	%"struct.__gnu_cxx::_Hashtable_node<std::pair<const llvm::Value* const, int> >" = type { %"struct.__gnu_cxx::_Hashtable_node<std::pair<const llvm::Value* const, int> >"*, %"struct.std::pair<const llvm::Value* const,int>" }
