@@ -610,6 +610,20 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
           Record.push_back(VE.getValueID(C->getOperand(i)));
         }
         break;
+      case Instruction::ExtractValue:
+        Code = bitc::CST_CODE_CE_EXTRACTVAL;
+        for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i) {
+          Record.push_back(VE.getTypeID(C->getOperand(i)->getType()));
+          Record.push_back(VE.getValueID(C->getOperand(i)));
+        }
+        break;
+      case Instruction::InsertValue:
+        Code = bitc::CST_CODE_CE_INSERTVAL;
+        for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i) {
+          Record.push_back(VE.getTypeID(C->getOperand(i)->getType()));
+          Record.push_back(VE.getValueID(C->getOperand(i)));
+        }
+        break;
       case Instruction::Select:
         Code = bitc::CST_CODE_CE_SELECT;
         Record.push_back(VE.getValueID(C->getOperand(0)));
@@ -715,6 +729,16 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
 
   case Instruction::GetElementPtr:
     Code = bitc::FUNC_CODE_INST_GEP;
+    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
+      PushValueAndType(I.getOperand(i), InstID, Vals, VE);
+    break;
+  case Instruction::ExtractValue:
+    Code = bitc::FUNC_CODE_INST_EXTRACTVAL;
+    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
+      PushValueAndType(I.getOperand(i), InstID, Vals, VE);
+    break;
+  case Instruction::InsertValue:
+    Code = bitc::FUNC_CODE_INST_INSERTVAL;
     for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
       PushValueAndType(I.getOperand(i), InstID, Vals, VE);
     break;

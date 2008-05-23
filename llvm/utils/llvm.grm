@@ -222,7 +222,9 @@ ConstExpr::= CastOps "(" ^ ConstVal to Types ^ ")"
  | vfcmp FPredicates "(" ^ ConstVal ^ "," ConstVal ^ ")"
  | extractelement "(" ^ ConstVal ^ "," ConstVal ^ ")"
  | insertelement "(" ^ ConstVal ^ "," ConstVal ^ "," ConstVal ^ ")"
- | shufflevector "(" ^ ConstVal ^ "," ConstVal ^ "," ConstVal ^ ")" ;
+ | shufflevector "(" ^ ConstVal ^ "," ConstVal ^ "," ConstVal ^ ")"
+ | extractvalue "(" ^ ConstVal IndexList ^ ")"
+ | insertvalue "(" ^ ConstVal ^ "," ConstVal IndexList ^ ")" ;
 
 ConstVector ::= ConstVector ^ "," ConstVal | ConstVal ;
 
@@ -373,4 +375,6 @@ MemoryInst ::= malloc Types OptCAlign
  | OptVolatile load Types ValueRef OptCAlign
  | OptVolatile store ResolvedVal ^ "," Types ValueRef OptCAlign
  | getresult Types ValueRef ^ "," EUINT64VAL
- | getelementptr Types ValueRef IndexList ;
+ | getelementptr Types ValueRef IndexList
+ | extractvalue Types ValueRef IndexList 
+ | insertvalue Types ValueRef ^ "," Types ValueRef IndexList ;

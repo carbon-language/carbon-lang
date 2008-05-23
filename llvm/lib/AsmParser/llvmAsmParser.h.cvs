@@ -175,21 +175,23 @@
      INSERTELEMENT = 391,
      SHUFFLEVECTOR = 392,
      GETRESULT = 393,
-     SIGNEXT = 394,
-     ZEROEXT = 395,
-     NORETURN = 396,
-     INREG = 397,
-     SRET = 398,
-     NOUNWIND = 399,
-     NOALIAS = 400,
-     BYVAL = 401,
-     NEST = 402,
-     READNONE = 403,
-     READONLY = 404,
-     GC = 405,
-     DEFAULT = 406,
-     HIDDEN = 407,
-     PROTECTED = 408
+     EXTRACTVALUE = 394,
+     INSERTVALUE = 395,
+     SIGNEXT = 396,
+     ZEROEXT = 397,
+     NORETURN = 398,
+     INREG = 399,
+     SRET = 400,
+     NOUNWIND = 401,
+     NOALIAS = 402,
+     BYVAL = 403,
+     NEST = 404,
+     READNONE = 405,
+     READONLY = 406,
+     GC = 407,
+     DEFAULT = 408,
+     HIDDEN = 409,
+     PROTECTED = 410
    };
 #endif
 /* Tokens.  */
@@ -329,28 +331,30 @@
 #define INSERTELEMENT 391
 #define SHUFFLEVECTOR 392
 #define GETRESULT 393
-#define SIGNEXT 394
-#define ZEROEXT 395
-#define NORETURN 396
-#define INREG 397
-#define SRET 398
-#define NOUNWIND 399
-#define NOALIAS 400
-#define BYVAL 401
-#define NEST 402
-#define READNONE 403
-#define READONLY 404
-#define GC 405
-#define DEFAULT 406
-#define HIDDEN 407
-#define PROTECTED 408
+#define EXTRACTVALUE 394
+#define INSERTVALUE 395
+#define SIGNEXT 396
+#define ZEROEXT 397
+#define NORETURN 398
+#define INREG 399
+#define SRET 400
+#define NOUNWIND 401
+#define NOALIAS 402
+#define BYVAL 403
+#define NEST 404
+#define READNONE 405
+#define READONLY 406
+#define GC 407
+#define DEFAULT 408
+#define HIDDEN 409
+#define PROTECTED 410
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 949 "/Volumes/LLVM/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 949 "/Users/gohman/LLVM/llvm/lib/AsmParser/llvmAsmParser.y"
 {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -398,7 +402,7 @@ typedef union YYSTYPE
   llvm::FCmpInst::Predicate         FPredicate;
 }
 /* Line 1529 of yacc.c.  */
-#line 402 "llvmAsmParser.tab.h"
+#line 406 "llvmAsmParser.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

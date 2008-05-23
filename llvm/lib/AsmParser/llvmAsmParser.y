@@ -475,7 +475,7 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
   if (TriggerError) return 0;
 
   if (!Ty->isFirstClassType() && !isa<OpaqueType>(Ty)) {
-    GenerateError("Invalid use of a composite type");
+    GenerateError("Invalid use of a non-first-class type");
     return 0;
   }
 
@@ -1093,6 +1093,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 %token <OtherOpVal> PHI_TOK SELECT VAARG
 %token <OtherOpVal> EXTRACTELEMENT INSERTELEMENT SHUFFLEVECTOR
 %token <OtherOpVal> GETRESULT
+%token <OtherOpVal> EXTRACTVALUE INSERTVALUE
 
 // Function Attributes
 %token SIGNEXT ZEROEXT NORETURN INREG SRET NOUNWIND NOALIAS BYVAL NEST
@@ -1965,6 +1966,48 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     if (!ShuffleVectorInst::isValidOperands($3, $5, $7))
       GEN_ERROR("Invalid shufflevector operands");
     $$ = ConstantExpr::getShuffleVector($3, $5, $7);
+    CHECK_FOR_ERROR
+  }
+  | EXTRACTVALUE '(' ConstVal IndexList ')' {
+    if (!isa<StructType>($3->getType()) && !isa<ArrayType>($3->getType()))
+      GEN_ERROR("ExtractValue requires an aggregate operand");
+
+    const Type *IdxTy =
+      ExtractValueInst::getIndexedType($3->getType(), $4->begin(), $4->end());
+    if (!IdxTy)
+      GEN_ERROR("Index list invalid for constant extractvalue");
+
+    SmallVector<Constant*, 8> IdxVec;
+    for (unsigned i = 0, e = $4->size(); i != e; ++i)
+      if (Constant *C = dyn_cast<Constant>((*$4)[i]))
+        IdxVec.push_back(C);
+      else
+        GEN_ERROR("Indices to constant extractvalue must be constants");
+
+    delete $4;
+
+    $$ = ConstantExpr::getExtractValue($3, &IdxVec[0], IdxVec.size());
+    CHECK_FOR_ERROR
+  }
+  | INSERTVALUE '(' ConstVal ',' ConstVal IndexList ')' {
+    if (!isa<StructType>($3->getType()) && !isa<ArrayType>($3->getType()))
+      GEN_ERROR("InsertValue requires an aggregate operand");
+
+    const Type *IdxTy =
+      ExtractValueInst::getIndexedType($3->getType(), $6->begin(), $6->end());
+    if (IdxTy != $5->getType())
+      GEN_ERROR("Index list invalid for constant insertvalue");
+
+    SmallVector<Constant*, 8> IdxVec;
+    for (unsigned i = 0, e = $6->size(); i != e; ++i)
+      if (Constant *C = dyn_cast<Constant>((*$6)[i]))
+        IdxVec.push_back(C);
+      else
+        GEN_ERROR("Indices to constant insertvalue must be constants");
+
+    delete $6;
+
+    $$ = ConstantExpr::getInsertValue($3, $5, &IdxVec[0], IdxVec.size());
     CHECK_FOR_ERROR
   };
 
@@ -3165,7 +3208,7 @@ MemoryInst : MALLOC Types OptCAlign {
     $$ = new StoreInst($3, tmpVal, $1, $7);
     delete $5;
   }
-| GETRESULT Types ValueRef ',' EUINT64VAL  {
+  | GETRESULT Types ValueRef ',' EUINT64VAL  {
   Value *TmpVal = getVal($2->get(), $3);
   if (!GetResultInst::isValidOperands(TmpVal, $5))
       GEN_ERROR("Invalid getresult operands");
@@ -3187,6 +3230,38 @@ MemoryInst : MALLOC Types OptCAlign {
     $$ = GetElementPtrInst::Create(tmpVal, $4->begin(), $4->end());
     delete $2; 
     delete $4;
+  }
+  | EXTRACTVALUE Types ValueRef IndexList {
+    if (!UpRefs.empty())
+      GEN_ERROR("Invalid upreference in type: " + (*$2)->getDescription());
+    if (!isa<StructType>($2->get()) && !isa<ArrayType>($2->get()))
+      GEN_ERROR("extractvalue insn requires an aggregate operand");
+
+    if (!ExtractValueInst::getIndexedType(*$2, $4->begin(), $4->end()))
+      GEN_ERROR("Invalid extractvalue indices for type '" +
+                     (*$2)->getDescription()+ "'");
+    Value* tmpVal = getVal(*$2, $3);
+    CHECK_FOR_ERROR
+    $$ = ExtractValueInst::Create(tmpVal, $4->begin(), $4->end());
+    delete $2; 
+    delete $4;
+  }
+  | INSERTVALUE Types ValueRef ',' Types ValueRef IndexList {
+    if (!UpRefs.empty())
+      GEN_ERROR("Invalid upreference in type: " + (*$2)->getDescription());
+    if (!isa<StructType>($2->get()) && !isa<ArrayType>($2->get()))
+      GEN_ERROR("extractvalue insn requires an aggregate operand");
+
+    if (ExtractValueInst::getIndexedType(*$2, $7->begin(), $7->end()) != $5->get())
+      GEN_ERROR("Invalid insertvalue indices for type '" +
+                     (*$2)->getDescription()+ "'");
+    Value* aggVal = getVal(*$2, $3);
+    Value* tmpVal = getVal(*$5, $6);
+    CHECK_FOR_ERROR
+    $$ = InsertValueInst::Create(aggVal, tmpVal, $7->begin(), $7->end());
+    delete $2; 
+    delete $5;
+    delete $7;
   };
 
 

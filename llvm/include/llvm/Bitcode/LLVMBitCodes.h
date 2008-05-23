@@ -125,7 +125,9 @@ namespace bitc {
     CST_CODE_CE_INSERTELT  = 15,  // CE_INSERTELT:  [opval, opval, opval]
     CST_CODE_CE_SHUFFLEVEC = 16,  // CE_SHUFFLEVEC: [opval, opval, opval]
     CST_CODE_CE_CMP        = 17,  // CE_CMP:        [opty, opval, opval, pred]
-    CST_CODE_INLINEASM     = 18   // INLINEASM:     [sideeffect,asmstr,conststr]
+    CST_CODE_INLINEASM     = 18,  // INLINEASM:     [sideeffect,asmstr,conststr]
+    CST_CODE_CE_EXTRACTVAL = 19,  // CE_EXTRACTVAL: [n x operands]
+    CST_CODE_CE_INSERTVAL  = 20   // CE_INSERTVAL:  [n x operands]
   };
   
   /// CastOpcodes - These are values used in the bitcode files to encode which
@@ -202,7 +204,9 @@ namespace bitc {
     // this is so information only available in the pointer type (e.g. address
     // spaces) is retained.
     FUNC_CODE_INST_STORE2      = 24, // STORE:      [ptrty,ptr,val, align, vol]
-    FUNC_CODE_INST_GETRESULT   = 25  // GETRESULT:  [ty, opval, n]
+    FUNC_CODE_INST_GETRESULT   = 25, // GETRESULT:  [ty, opval, n]
+    FUNC_CODE_INST_EXTRACTVAL  = 26, // EXTRACTVAL: [n x operands]
+    FUNC_CODE_INST_INSERTVAL   = 27  // INSERTVAL:  [n x operands]
   };
 } // End bitc namespace
 } // End llvm namespace

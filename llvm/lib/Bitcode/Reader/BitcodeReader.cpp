@@ -770,6 +770,29 @@ bool BitcodeReader::ParseConstants() {
       V = ConstantExpr::getGetElementPtr(Elts[0], &Elts[1], Elts.size()-1);
       break;
     }
+    case bitc::CST_CODE_CE_EXTRACTVAL: { // CE_EXTRACTVAL: [n x operands]
+      if (Record.size() & 1) return Error("Invalid CE_EXTRACTVAL record");
+      SmallVector<Constant*, 16> Elts;
+      for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
+        const Type *ElTy = getTypeByID(Record[i]);
+        if (!ElTy) return Error("Invalid CE_EXTRACTVAL record");
+        Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], ElTy));
+      }
+      V = ConstantExpr::getExtractValue(Elts[0], &Elts[1], Elts.size()-1);
+      break;
+    }
+    case bitc::CST_CODE_CE_INSERTVAL: { // CE_INSERTVAL: [n x operands]
+      if (Record.size() & 1) return Error("Invalid CE_INSERTVAL record");
+      SmallVector<Constant*, 16> Elts;
+      for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
+        const Type *ElTy = getTypeByID(Record[i]);
+        if (!ElTy) return Error("Invalid CE_INSERTVAL record");
+        Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], ElTy));
+      }
+      V = ConstantExpr::getInsertValue(Elts[0], Elts[1],
+                                       &Elts[2], Elts.size()-1);
+      break;
+    }
     case bitc::CST_CODE_CE_SELECT:  // CE_SELECT: [opval#, opval#, opval#]
       if (Record.size() < 3) return Error("Invalid CE_SELECT record");
       V = ConstantExpr::getSelect(ValueList.getConstantFwdRef(Record[0],
@@ -1298,6 +1321,47 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       }
 
       I = GetElementPtrInst::Create(BasePtr, GEPIdx.begin(), GEPIdx.end());
+      break;
+    }
+      
+    case bitc::FUNC_CODE_INST_EXTRACTVAL: { // EXTRACTVAL: [n x operands]
+      unsigned OpNum = 0;
+      Value *Agg;
+      if (getValueTypePair(Record, OpNum, NextValueNo, Agg))
+        return Error("Invalid EXTRACTVAL record");
+
+      SmallVector<Value*, 16> EXTRACTVALIdx;
+      while (OpNum != Record.size()) {
+        Value *Op;
+        if (getValueTypePair(Record, OpNum, NextValueNo, Op))
+          return Error("Invalid EXTRACTVAL record");
+        EXTRACTVALIdx.push_back(Op);
+      }
+
+      I = ExtractValueInst::Create(Agg,
+                                   EXTRACTVALIdx.begin(), EXTRACTVALIdx.end());
+      break;
+    }
+      
+    case bitc::FUNC_CODE_INST_INSERTVAL: { // INSERTVAL: [n x operands]
+      unsigned OpNum = 0;
+      Value *Agg;
+      if (getValueTypePair(Record, OpNum, NextValueNo, Agg))
+        return Error("Invalid INSERTVAL record");
+      Value *Val;
+      if (getValueTypePair(Record, OpNum, NextValueNo, Val))
+        return Error("Invalid INSERTVAL record");
+
+      SmallVector<Value*, 16> INSERTVALIdx;
+      while (OpNum != Record.size()) {
+        Value *Op;
+        if (getValueTypePair(Record, OpNum, NextValueNo, Op))
+          return Error("Invalid INSERTVAL record");
+        INSERTVALIdx.push_back(Op);
+      }
+
+      I = InsertValueInst::Create(Agg, Val,
+                                  INSERTVALIdx.begin(), INSERTVALIdx.end());
       break;
     }
       

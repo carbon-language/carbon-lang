@@ -216,8 +216,8 @@ public:
   /// is a valid type for a Value.
   ///
   inline bool isFirstClassType() const {
-    // Coming soon: first-class struct and array types...
-    return isSingleValueType();
+    return isSingleValueType() ||
+           ID == StructTyID || ID == ArrayTyID;
   }
 
   /// isSingleValueType - Return true if the type is a valid type for a
