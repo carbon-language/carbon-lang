@@ -60,3 +60,41 @@ void f9() {
   [s release];
   [q release]; // expected-warning {{used after it is released}}
 }
+
+NSString* f10() {
+  
+  static NSString* s = nil;
+  
+  if (!s) s = [[NSString alloc] init];
+    
+  return s; // no-warning
+}
+
+@interface C1 : NSObject {}
+
+- (NSString*) getShared;
++ (C1*) sharedInstance;
+
+@end
+
+@implementation C1 : NSObject {}
+
+- (NSString*) getShared {
+  
+  static NSString* s = nil;
+  
+  if (!s) s = [[NSString alloc] init];
+    
+  return s; // no-warning  
+}
+
++ (C1 *)sharedInstance {
+  static C1 *sharedInstance = nil;
+  if (!sharedInstance) {
+    sharedInstance = [[C1 alloc] init];
+  }
+  return sharedInstance; // no-warning
+}
+
+@end
+
