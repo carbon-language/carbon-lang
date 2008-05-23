@@ -511,9 +511,13 @@ sub RunBuildCommand {
     }
   } 
   
-  # Disable distributed builds for xcodebuild.
+
   if ($Cmd eq "xcodebuild") {
+    # Disable distributed builds for xcodebuild.
     AddIfNotPresent($Args,"-nodistribute");
+
+    # Disable PCH files until clang supports them.
+    AddIfNotPresent($Args,"GCC_PRECOMPILE_PREFIX_HEADER=NO");
   }
   
   system(@$Args);
