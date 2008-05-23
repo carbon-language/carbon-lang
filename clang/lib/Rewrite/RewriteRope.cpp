@@ -578,7 +578,7 @@ void RopePieceBTreeInterior::erase(unsigned Offset, unsigned NumBytes) {
     NumBytes -= CurChild->size();
     CurChild->Destroy();
     --NumChildren;
-    if (i+1 != getNumChildren())
+    if (i != getNumChildren())
       memmove(&Children[i], &Children[i+1],
               (getNumChildren()-i)*sizeof(Children[0]));
   }
