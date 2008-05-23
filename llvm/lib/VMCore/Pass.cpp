@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"

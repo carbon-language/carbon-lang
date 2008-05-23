@@ -86,6 +86,9 @@
 #ifndef PASSMANAGERS_H
 #define PASSMANAGERS_H
 
+#include "llvm/Pass.h"
+#include <deque>
+
 namespace llvm {
 
 /// FunctionPassManager and PassManager, two top level managers, serve 
