@@ -1533,7 +1533,10 @@ public:
   
   ObjCIvarDecl *getDecl() { return D; }
   const ObjCIvarDecl *getDecl() const { return D; }
-  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
+  virtual SourceRange getSourceRange() const { 
+    return isFreeIvar() ? SourceRange(Loc)
+                        : SourceRange(getBase()->getLocStart(), Loc); 
+  }
   const Expr *getBase() const { return Base; }
   Expr *getBase() { return Base; }
   void setBase(Expr * base) { Base = base; }
