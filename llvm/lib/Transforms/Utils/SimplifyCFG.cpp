@@ -1493,8 +1493,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
     }
   } else if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
     if (BI->isUnconditional()) {
-      BasicBlock::iterator BBI = BB->begin();  // Skip over phi nodes...
-      while (isa<PHINode>(*BBI)) ++BBI;
+      BasicBlock::iterator BBI = BB->getFirstNonPHI();
 
       BasicBlock *Succ = BI->getSuccessor(0);
       if (BBI->isTerminator() &&  // Terminator is the only non-phi instruction!

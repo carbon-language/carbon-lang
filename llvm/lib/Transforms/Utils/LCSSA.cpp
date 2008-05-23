@@ -225,9 +225,7 @@ void LCSSA::getLoopValuesUsedOutsideLoop(Loop *L,
             // immediately here. It will be processed in next iteration.
             BasicBlock::iterator InsertPoint;
             if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
-              InsertPoint = II->getNormalDest()->begin();
-              while (isa<PHINode>(InsertPoint))
-                ++InsertPoint;
+              InsertPoint = II->getNormalDest()->getFirstNonPHI();
             } else {
               InsertPoint = I;
               InsertPoint++;

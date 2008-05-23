@@ -126,8 +126,7 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
   // containing PHI nodes merging values from outside of the region, and a
   // second that contains all of the code for the block and merges back any
   // incoming values from inside of the region.
-  BasicBlock::iterator AfterPHIs = Header->begin();
-  while (isa<PHINode>(AfterPHIs)) ++AfterPHIs;
+  BasicBlock::iterator AfterPHIs = Header->getFirstNonPHI();
   BasicBlock *NewBB = Header->splitBasicBlock(AfterPHIs,
                                               Header->getName()+".ce");
 

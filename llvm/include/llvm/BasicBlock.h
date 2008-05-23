@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//
 // This file contains the declaration of the BasicBlock class.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_BASICBLOCK_H
@@ -106,6 +106,9 @@ public:
   /// the first instruction, which might be PHI.
   /// Returns 0 is there's no non-PHI instruction.
   Instruction* getFirstNonPHI();
+  const Instruction* getFirstNonPHI() const {
+    return const_cast<BasicBlock*>(this)->getFirstNonPHI();
+  }
   
   /// removeFromParent - This method unlinks 'this' from the containing
   /// function, but does not delete it.

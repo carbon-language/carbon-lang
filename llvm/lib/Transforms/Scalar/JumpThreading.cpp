@@ -116,9 +116,8 @@ BasicBlock *JumpThreading::FactorCommonPHIPreds(PHINode *PN, Constant *CstVal) {
 /// getJumpThreadDuplicationCost - Return the cost of duplicating this block to
 /// thread across it.
 static unsigned getJumpThreadDuplicationCost(const BasicBlock *BB) {
-  BasicBlock::const_iterator I = BB->begin();
   /// Ignore PHI nodes, these will be flattened when duplication happens.
-  while (isa<PHINode>(*I)) ++I;
+  BasicBlock::const_iterator I = BB->getFirstNonPHI();
 
   // Sum up the cost of each instruction until we get to the terminator.  Don't
   // include the terminator because the copy won't include it.

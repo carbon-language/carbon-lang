@@ -9592,8 +9592,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       // If this is an invoke instruction, we should insert it after the first
       // non-phi, instruction in the normal successor block.
       if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
-        BasicBlock::iterator I = II->getNormalDest()->begin();
-        while (isa<PHINode>(I)) ++I;
+        BasicBlock::iterator I = II->getNormalDest()->getFirstNonPHI();
         InsertNewInstBefore(NC, *I);
       } else {
         // Otherwise, it's a call, just insert cast right after the call instr
@@ -11068,8 +11067,7 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
   
   // Advance to a place where it is safe to insert the new store and
   // insert it.
-  BBI = DestBB->begin();
-  while (isa<PHINode>(BBI)) ++BBI;
+  BBI = DestBB->getFirstNonPHI();
   InsertNewInstBefore(new StoreInst(MergedVal, SI.getOperand(1),
                                     OtherStore->isVolatile()), *BBI);
   
@@ -11737,8 +11735,7 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
         return false;
   }
 
-  BasicBlock::iterator InsertPos = DestBlock->begin();
-  while (isa<PHINode>(InsertPos)) ++InsertPos;
+  BasicBlock::iterator InsertPos = DestBlock->getFirstNonPHI();
 
   I->moveBefore(InsertPos);
   ++NumSunkInst;

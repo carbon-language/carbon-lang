@@ -472,8 +472,7 @@ void LICM::sink(Instruction &I) {
       // nodes in it.
       I.removeFromParent();
 
-      BasicBlock::iterator InsertPt = ExitBlocks[0]->begin();
-      while (isa<PHINode>(InsertPt)) ++InsertPt;
+      BasicBlock::iterator InsertPt = ExitBlocks[0]->getFirstNonPHI();
       ExitBlocks[0]->getInstList().insert(InsertPt, &I);
     }
   } else if (ExitBlocks.empty()) {
@@ -542,8 +541,7 @@ void LICM::sink(Instruction &I) {
         // If we haven't already processed this exit block, do so now.
         if (InsertedBlocks.insert(ExitBlock).second) {
           // Insert the code after the last PHI node...
-          BasicBlock::iterator InsertPt = ExitBlock->begin();
-          while (isa<PHINode>(InsertPt)) ++InsertPt;
+          BasicBlock::iterator InsertPt = ExitBlock->getFirstNonPHI();
 
           // If this is the first exit block processed, just move the original
           // instruction, otherwise clone the original instruction and insert
@@ -735,9 +733,7 @@ void LICM::PromoteValuesInLoop() {
       continue;
   
     // Copy all of the allocas into their memory locations.
-    BasicBlock::iterator BI = ExitBlocks[i]->begin();
-    while (isa<PHINode>(*BI))
-      ++BI;             // Skip over all of the phi nodes in the block.
+    BasicBlock::iterator BI = ExitBlocks[i]->getFirstNonPHI();
     Instruction *InsertPos = BI;
     unsigned PVN = 0;
     for (unsigned i = 0, e = PromotedValues.size(); i != e; ++i) {

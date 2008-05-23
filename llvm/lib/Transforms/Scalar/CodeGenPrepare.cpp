@@ -385,8 +385,7 @@ static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
     CastInst *&InsertedCast = InsertedCasts[UserBB];
 
     if (!InsertedCast) {
-      BasicBlock::iterator InsertPt = UserBB->begin();
-      while (isa<PHINode>(InsertPt)) ++InsertPt;
+      BasicBlock::iterator InsertPt = UserBB->getFirstNonPHI();
       
       InsertedCast = 
         CastInst::Create(CI->getOpcode(), CI->getOperand(0), CI->getType(), "", 
@@ -443,8 +442,7 @@ static bool OptimizeCmpExpression(CmpInst *CI){
     CmpInst *&InsertedCmp = InsertedCmps[UserBB];
 
     if (!InsertedCmp) {
-      BasicBlock::iterator InsertPt = UserBB->begin();
-      while (isa<PHINode>(InsertPt)) ++InsertPt;
+      BasicBlock::iterator InsertPt = UserBB->getFirstNonPHI();
       
       InsertedCmp = 
         CmpInst::Create(CI->getOpcode(), CI->getPredicate(), CI->getOperand(0), 
@@ -1039,8 +1037,7 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
     Instruction *&InsertedTrunc = InsertedTruncs[UserBB];
 
     if (!InsertedTrunc) {
-      BasicBlock::iterator InsertPt = UserBB->begin();
-      while (isa<PHINode>(InsertPt)) ++InsertPt;
+      BasicBlock::iterator InsertPt = UserBB->getFirstNonPHI();
       
       InsertedTrunc = new TruncInst(I, Src->getType(), "", InsertPt);
     }

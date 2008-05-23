@@ -265,14 +265,11 @@ void GlobalRandomCounterOpt::PrepFunction(Function* F) {
         new StoreInst(l, Counter, bib);
         
         BasicBlock* bb = cast<InvokeInst>(bib)->getNormalDest();
-        BasicBlock::iterator i = bb->begin();
-        while (isa<PHINode>(i))
-          ++i;
+        BasicBlock::iterator i = bb->getFirstNonPHI();
         l = new LoadInst(Counter, "counter", i);
         
         bb = cast<InvokeInst>(bib)->getUnwindDest();
-        i = bb->begin();
-        while (isa<PHINode>(i)) ++i;
+        i = bb->getFirstNonPHI();
         l = new LoadInst(Counter, "counter", i);
         new StoreInst(l, AI, i);
       } else if (isa<UnwindInst>(&*bib) || isa<ReturnInst>(&*bib)) {
@@ -343,8 +340,8 @@ bool RSProfilers_std::isProfiling(Value* v) {
 void RSProfilers_std::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
                                           GlobalValue *CounterArray) {
   // Insert the increment after any alloca or PHI instructions...
-  BasicBlock::iterator InsertPos = BB->begin();
-  while (isa<AllocaInst>(InsertPos) || isa<PHINode>(InsertPos))
+  BasicBlock::iterator InsertPos = BB->getFirstNonPHI();
+  while (isa<AllocaInst>(InsertPos))
     ++InsertPos;
   
   // Create the getelementptr constant expression

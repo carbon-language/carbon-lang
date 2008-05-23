@@ -256,9 +256,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
         // nodes will be created for all getResults later.
         BasicBlock::iterator InsertPoint;
         if (InvokeInst *II = dyn_cast<InvokeInst>(In)) {
-          InsertPoint = II->getNormalDest()->begin();
-          while (isa<PHINode>(InsertPoint)) 
-            ++InsertPoint;
+          InsertPoint = II->getNormalDest()->getFirstNonPHI();
         } else {
           InsertPoint = I;  // call
           ++InsertPoint;

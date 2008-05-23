@@ -118,8 +118,7 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI,
   ++PI;
   if (PI == PE) return false;  // Exactly one predecessor!
 
-  BasicBlock::iterator I = Dest->begin();
-  while (isa<PHINode>(*I)) ++I;
+  BasicBlock::iterator I = Dest->getFirstNonPHI();
 
   for (unsigned Size = 0; I != Dest->end(); ++I) {
     if (Size == Threshold) return false;  // The block is too large.
@@ -254,8 +253,7 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
     // If there are non-phi instructions in DestBlock that have no operands
     // defined in DestBlock, and if the instruction has no side effects, we can
     // move the instruction to DomBlock instead of duplicating it.
-    BasicBlock::iterator BBI = DestBlock->begin();
-    while (isa<PHINode>(BBI)) ++BBI;
+    BasicBlock::iterator BBI = DestBlock->getFirstNonPHI();
     while (!isa<TerminatorInst>(BBI)) {
       Instruction *I = BBI++;
 

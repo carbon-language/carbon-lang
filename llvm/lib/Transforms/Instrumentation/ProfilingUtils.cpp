@@ -100,8 +100,8 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
 void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
                                    GlobalValue *CounterArray) {
   // Insert the increment after any alloca or PHI instructions...
-  BasicBlock::iterator InsertPos = BB->begin();
-  while (isa<AllocaInst>(InsertPos) || isa<PHINode>(InsertPos))
+  BasicBlock::iterator InsertPos = BB->getFirstNonPHI();
+  while (isa<AllocaInst>(InsertPos))
     ++InsertPos;
 
   // Create the getelementptr constant expression

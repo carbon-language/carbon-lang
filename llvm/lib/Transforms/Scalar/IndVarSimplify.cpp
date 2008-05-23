@@ -319,8 +319,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
     BlockToInsertInto = ExitBlocks[0];
   else
     BlockToInsertInto = Preheader;
-  BasicBlock::iterator InsertPt = BlockToInsertInto->begin();
-  while (isa<PHINode>(InsertPt)) ++InsertPt;
+  BasicBlock::iterator InsertPt = BlockToInsertInto->getFirstNonPHI();
 
   bool HasConstantItCount = isa<SCEVConstant>(SE->getIterationCount(L));
 
@@ -535,8 +534,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Now that we have a canonical induction variable, we can rewrite any
   // recurrences in terms of the induction variable.  Start with the auxillary
   // induction variables, and recursively rewrite any of their uses.
-  BasicBlock::iterator InsertPt = Header->begin();
-  while (isa<PHINode>(InsertPt)) ++InsertPt;
+  BasicBlock::iterator InsertPt = Header->getFirstNonPHI();
 
   // If there were induction variables of other sizes, cast the primary
   // induction variable to the right size for them, avoiding the need for the

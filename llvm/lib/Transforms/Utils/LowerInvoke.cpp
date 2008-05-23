@@ -282,8 +282,7 @@ void LowerInvoke::rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
   // location afterward.
   new StoreInst(InvokeNoC, InvokeNum, true, II);  // volatile
   
-  BasicBlock::iterator NI = II->getNormalDest()->begin();
-  while (isa<PHINode>(NI)) ++NI;
+  BasicBlock::iterator NI = II->getNormalDest()->getFirstNonPHI();
   // nonvolatile.
   new StoreInst(Constant::getNullValue(Type::Int32Ty), InvokeNum, false, NI);
   

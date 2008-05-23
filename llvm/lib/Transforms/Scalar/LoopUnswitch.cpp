@@ -682,8 +682,7 @@ void LoopUnswitch::SplitExitEdges(Loop *L,
         InsertedPHIs.insert(NewLCSSA);
       }
 
-      BasicBlock::iterator InsertPt = EndBlock->begin();
-      while (dyn_cast<PHINode>(InsertPt)) ++InsertPt;
+      BasicBlock::iterator InsertPt = EndBlock->getFirstNonPHI();
       for (BasicBlock::iterator I = MiddleBlock->begin();
          (OldLCSSA = dyn_cast<PHINode>(I)) && InsertedPHIs.count(OldLCSSA) == 0;
          ++I) {
