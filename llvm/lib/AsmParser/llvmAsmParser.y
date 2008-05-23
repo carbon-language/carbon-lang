@@ -1406,7 +1406,7 @@ Types
   }
 
   | '[' EUINT64VAL 'x' Types ']' {          // Sized array type?
-    $$ = new PATypeHolder(HandleUpRefs(ArrayType::get(*$4, (unsigned)$2)));
+    $$ = new PATypeHolder(HandleUpRefs(ArrayType::get(*$4, $2)));
     delete $4;
     CHECK_FOR_ERROR
   }
