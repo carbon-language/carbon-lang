@@ -807,3 +807,41 @@ foo1:
 
 //===---------------------------------------------------------------------===//
 
+We compile vector multiply-by-constant into poor code:
+
+define <4 x i32> @f(<4 x i32> %i) nounwind  {
+	%A = mul <4 x i32> %i, < i32 10, i32 10, i32 10, i32 10 >
+	ret <4 x i32> %A
+}
+
+Compiles into:
+
+LCPI1_0:					##  <4 x i32>
+	.long	10
+	.long	10
+	.long	10
+	.long	10
+	.text
+	.align	4,0x90
+	.globl	_f
+_f:
+	pshufd	$3, %xmm0, %xmm1
+	movd	%xmm1, %eax
+	imull	LCPI1_0+12, %eax
+	movd	%eax, %xmm1
+	pshufd	$1, %xmm0, %xmm2
+	movd	%xmm2, %eax
+	imull	LCPI1_0+4, %eax
+	movd	%eax, %xmm2
+	punpckldq	%xmm1, %xmm2
+	movd	%xmm0, %eax
+	imull	LCPI1_0, %eax
+	movd	%eax, %xmm1
+	movhlps	%xmm0, %xmm0
+	movd	%xmm0, %eax
+	imull	LCPI1_0+8, %eax
+	movd	%eax, %xmm0
+	punpckldq	%xmm0, %xmm1
+	movaps	%xmm1, %xmm0
+	punpckldq	%xmm2, %xmm0
+	ret
