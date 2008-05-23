@@ -462,6 +462,11 @@ namespace {
       } else if (ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(D)) {
         Out << "Read objc method decl: '" << MD->getSelector().getName()
             << "'\n";
+        if (MD->getBody()) {
+          // FIXME: convert dumper to use std::ostream?
+          MD->getBody()->dumpAll(*SM);
+          Out << '\n';
+        }
       } else if (isa<ObjCImplementationDecl>(D)) {
         Out << "Read objc implementation decl\n";
       }
