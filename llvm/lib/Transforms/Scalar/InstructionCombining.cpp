@@ -9030,7 +9030,7 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
     if (SrcETy->isSized() && TD->getTypeStoreSize(SrcETy) == Size) {
       // The SrcETy might be something like {{{double}}} or [1 x double].  Rip
       // down through these levels if so.
-      while (!SrcETy->isFirstClassType()) {
+      while (!SrcETy->isSingleValueType()) {
         if (const StructType *STy = dyn_cast<StructType>(SrcETy)) {
           if (STy->getNumElements() == 1)
             SrcETy = STy->getElementType(0);
@@ -9045,7 +9045,7 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
           break;
       }
       
-      if (SrcETy->isFirstClassType())
+      if (SrcETy->isSingleValueType())
         NewPtrTy = PointerType::getUnqual(SrcETy);
     }
   }
