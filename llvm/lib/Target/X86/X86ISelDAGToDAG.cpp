@@ -363,6 +363,32 @@ static void MoveBelowTokenFactor(SelectionDAG &DAG, SDOperand Load,
                          Store.getOperand(2), Store.getOperand(3));
 }
 
+/// isRMWLoad - Return true if N is a load that's part of RMW sub-DAG.
+/// 
+static bool isRMWLoad(SDOperand N, SDOperand Chain, SDOperand Address,
+                      SDOperand &Load) {
+  if (N.getOpcode() == ISD::BIT_CONVERT)
+    N = N.getOperand(0);
+
+  LoadSDNode *LD = dyn_cast<LoadSDNode>(N);
+  if (!LD || LD->isVolatile())
+    return false;
+  if (LD->getAddressingMode() != ISD::UNINDEXED)
+    return false;
+
+  ISD::LoadExtType ExtType = LD->getExtensionType();
+  if (ExtType != ISD::NON_EXTLOAD && ExtType != ISD::EXTLOAD)
+    return false;
+
+  if (N.hasOneUse() &&
+      N.getOperand(1) == Address &&
+      N.Val->isOperandOf(Chain.Val)) {
+    Load = N;
+    return true;
+  }
+  return false;
+}
+
 /// PreprocessForRMW - Preprocess the DAG to make instruction selection better.
 /// This is only run if not in -fast mode (aka -O0).
 /// This allows the instruction selector to pick more read-modify-write
@@ -414,8 +440,8 @@ void X86DAGToDAGISel::PreprocessForRMW(SelectionDAG &DAG) {
 
     SDOperand N1 = I->getOperand(1);
     SDOperand N2 = I->getOperand(2);
-    if (MVT::isFloatingPoint(N1.getValueType()) ||
-        MVT::isVector(N1.getValueType()) ||
+    if ((MVT::isFloatingPoint(N1.getValueType()) &&
+         !MVT::isVector(N1.getValueType())) ||
         !N1.hasOneUse())
       continue;
 
@@ -429,20 +455,13 @@ void X86DAGToDAGISel::PreprocessForRMW(SelectionDAG &DAG) {
       case ISD::OR:
       case ISD::XOR:
       case ISD::ADDC:
-      case ISD::ADDE: {
+      case ISD::ADDE:
+      case ISD::VECTOR_SHUFFLE: {
         SDOperand N10 = N1.getOperand(0);
         SDOperand N11 = N1.getOperand(1);
-        if (ISD::isNON_EXTLoad(N10.Val))
-          RModW = true;
-        else if (ISD::isNON_EXTLoad(N11.Val)) {
-          RModW = true;
-          std::swap(N10, N11);
-        }
-        RModW = RModW && N10.Val->isOperandOf(Chain.Val) && N10.hasOneUse() &&
-          (N10.getOperand(1) == N2) &&
-          (N10.Val->getValueType(0) == N1.getValueType());
-        if (RModW)
-          Load = N10;
+        RModW = isRMWLoad(N10, Chain, N2, Load);
+        if (!RModW)
+          RModW = isRMWLoad(N11, Chain, N2, Load);
         break;
       }
       case ISD::SUB:
@@ -456,12 +475,7 @@ void X86DAGToDAGISel::PreprocessForRMW(SelectionDAG &DAG) {
       case X86ISD::SHLD:
       case X86ISD::SHRD: {
         SDOperand N10 = N1.getOperand(0);
-        if (ISD::isNON_EXTLoad(N10.Val))
-          RModW = N10.Val->isOperandOf(Chain.Val) && N10.hasOneUse() &&
-            (N10.getOperand(1) == N2) &&
-            (N10.Val->getValueType(0) == N1.getValueType());
-        if (RModW)
-          Load = N10;
+        RModW = isRMWLoad(N10, Chain, N2, Load);
         break;
       }
     }

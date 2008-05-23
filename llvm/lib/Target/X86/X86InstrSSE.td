@@ -2977,19 +2977,52 @@ def : Pat<(v2f64 (vector_shuffle VR128:$src1, (memop addr:$src2),
                   MOVHP_shuffle_mask)),
           (MOVHPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 
-def : Pat<(v4i32 (vector_shuffle VR128:$src1, (bc_v4i32 (memopv2i64 addr:$src2)),
+def : Pat<(v4i32 (vector_shuffle VR128:$src1,
+                                 (bc_v4i32 (memopv2i64 addr:$src2)),
                   MOVLP_shuffle_mask)),
           (MOVLPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (vector_shuffle VR128:$src1, (memop addr:$src2),
                   MOVLP_shuffle_mask)),
           (MOVLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
-def : Pat<(v4i32 (vector_shuffle VR128:$src1, (bc_v4i32 (memopv2i64 addr:$src2)),
+def : Pat<(v4i32 (vector_shuffle VR128:$src1,
+                                 (bc_v4i32 (memopv2i64 addr:$src2)),
                   MOVHP_shuffle_mask)),
           (MOVHPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE1]>;
 def : Pat<(v2i64 (vector_shuffle VR128:$src1, (memop addr:$src2),
                   MOVHP_shuffle_mask)),
           (MOVHPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 }
+
+// (store (vector_shuffle (load addr), v2, <4, 5, 2, 3>), addr) using MOVLPS
+// (store (vector_shuffle (load addr), v2, <0, 1, 4, 5>), addr) using MOVHPS
+def : Pat<(store (v4f32 (vector_shuffle (memop addr:$src1), VR128:$src2,
+                         MOVLP_shuffle_mask)), addr:$src1),
+          (MOVLPSmr addr:$src1, VR128:$src2)>, Requires<[HasSSE1]>;
+def : Pat<(store (v2f64 (vector_shuffle (memop addr:$src1), VR128:$src2,
+                         MOVLP_shuffle_mask)), addr:$src1),
+          (MOVLPDmr addr:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(store (v4f32 (vector_shuffle (memop addr:$src1), VR128:$src2,
+                         MOVHP_shuffle_mask)), addr:$src1),
+          (MOVHPSmr addr:$src1, VR128:$src2)>, Requires<[HasSSE1]>;
+def : Pat<(store (v2f64 (vector_shuffle (memop addr:$src1), VR128:$src2,
+                         MOVHP_shuffle_mask)), addr:$src1),
+          (MOVHPDmr addr:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+
+def : Pat<(store (v4i32 (vector_shuffle
+                         (bc_v4i32 (memopv2i64 addr:$src1)), VR128:$src2,
+                         MOVLP_shuffle_mask)), addr:$src1),
+          (MOVLPSmr addr:$src1, VR128:$src2)>, Requires<[HasSSE1]>;
+def : Pat<(store (v2i64 (vector_shuffle (memop addr:$src1), VR128:$src2,
+                         MOVLP_shuffle_mask)), addr:$src1),
+          (MOVLPDmr addr:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+def : Pat<(store (v4i32 (vector_shuffle
+                         (bc_v4i32 (memopv2i64 addr:$src1)), VR128:$src2,
+                         MOVHP_shuffle_mask)), addr:$src1),
+          (MOVHPSmr addr:$src1, VR128:$src2)>, Requires<[HasSSE1]>;
+def : Pat<(store (v2i64 (vector_shuffle (memop addr:$src1), VR128:$src2,
+                         MOVHP_shuffle_mask)), addr:$src1),
+          (MOVHPDmr addr:$src1, VR128:$src2)>, Requires<[HasSSE2]>;
+
 
 let AddedComplexity = 15 in {
 // Setting the lowest element in the vector.

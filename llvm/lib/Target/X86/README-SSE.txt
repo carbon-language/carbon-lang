@@ -505,46 +505,6 @@ nodes which are selected to max / min instructions that are marked commutable.
 
 //===---------------------------------------------------------------------===//
 
-We should compile this:
-#include <xmmintrin.h>
-typedef union {
-  int i[4];
-  float f[4];
-  __m128 v;
-} vector4_t;
-void swizzle (const void *a, vector4_t * b, vector4_t * c) {
-  b->v = _mm_loadl_pi (b->v, (__m64 *) a);
-  c->v = _mm_loadl_pi (c->v, ((__m64 *) a) + 1);
-}
-
-to:
-
-_swizzle:
-        movl    4(%esp), %eax
-        movl    8(%esp), %edx
-        movl    12(%esp), %ecx
-        movlps  (%eax), %xmm0
-        movlps  %xmm0, (%edx)
-        movlps  8(%eax), %xmm0
-        movlps  %xmm0, (%ecx)
-        ret
-
-not:
-
-swizzle:
-        movl 8(%esp), %eax
-        movaps (%eax), %xmm0
-        movl 4(%esp), %ecx
-        movlps (%ecx), %xmm0
-        movaps %xmm0, (%eax)
-        movl 12(%esp), %eax
-        movaps (%eax), %xmm0
-        movlps 8(%ecx), %xmm0
-        movaps %xmm0, (%eax)
-        ret
-
-//===---------------------------------------------------------------------===//
-
 We should materialize vector constants like "all ones" and "signbit" with 
 code like:
 
