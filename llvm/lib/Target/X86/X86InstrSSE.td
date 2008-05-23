@@ -2987,8 +2987,8 @@ def : Pat<(v4i32 (vector_shuffle VR128:$src1, (bc_v4i32 (memopv2i64 addr:$src2))
                   MOVHP_shuffle_mask)),
           (MOVHPSrm VR128:$src1, addr:$src2)>, Requires<[HasSSE1]>;
 def : Pat<(v2i64 (vector_shuffle VR128:$src1, (memop addr:$src2),
-                  MOVLP_shuffle_mask)),
-          (MOVLPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
+                  MOVHP_shuffle_mask)),
+          (MOVHPDrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 }
 
 let AddedComplexity = 15 in {
