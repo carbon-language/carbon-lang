@@ -75,8 +75,8 @@ namespace {
     Function *DoPromotion(Function *F, 
                           SmallPtrSet<Argument*, 8> &ArgsToPromote,
                           SmallPtrSet<Argument*, 8> &ByValArgsToTransform);
-  /// The maximum number of elements to expand, or 0 for unlimited.
-  unsigned maxElements;
+    /// The maximum number of elements to expand, or 0 for unlimited.
+    unsigned maxElements;
   };
 }
 
