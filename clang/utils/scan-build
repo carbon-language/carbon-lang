@@ -21,6 +21,8 @@ use File::Basename;
 
 my $Verbose = 0;       # Verbose output from this script.
 my $Prog = "scan-build";
+my $BuildName;
+my $BuildDate;
 
 ##----------------------------------------------------------------------------##
 # GetHTMLRunDir - Construct an HTML directory name for the current run.
@@ -373,9 +375,14 @@ ENDTEXT
       $Totals{$bug_type}++;
     }
   }
-
+  
+  print OUT "<h3>Summary</h3>";
+    
+  if (defined($BuildName)) {
+    print OUT "\n<p>Results in this analysis run are based on analyzer build <b>$BuildName</b>.</p>\n"
+  }
+  
 print OUT <<ENDTEXT;
-<h3>Summary</h3>
 <table class="sortable">
 <tr>
   <td>Bug Type</td>
@@ -521,6 +528,13 @@ sub DisplayHelp {
 print <<ENDTEXT;
 USAGE: $Prog [options] <build command> [build options]
 
+ENDTEXT
+
+  if (defined($BuildName)) {
+    print "ANALYZER BUILD: $BuildName ($BuildDate)\n\n";
+  }
+
+print <<ENDTEXT;
 OPTIONS:
 
   -a            - The analysis to run.  The default is 'checker-cfref'.
