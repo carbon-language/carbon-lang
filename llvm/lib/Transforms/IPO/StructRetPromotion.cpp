@@ -339,7 +339,7 @@ bool SRETPromotion::nestedStructType(const StructType *STy) {
   unsigned Num = STy->getNumElements();
   for (unsigned i = 0; i < Num; i++) {
     const Type *Ty = STy->getElementType(i);
-    if (!Ty->isFirstClassType() && Ty != Type::VoidTy)
+    if (!Ty->isSingleValueType() && Ty != Type::VoidTy)
       return true;
   }
   return false;

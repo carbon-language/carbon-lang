@@ -643,7 +643,7 @@ void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
       const Type *EltTy =cast<PointerType>(EltPtr->getType())->getElementType();
       
       // If we got down to a scalar, insert a load or store as appropriate.
-      if (EltTy->isFirstClassType()) {
+      if (EltTy->isSingleValueType()) {
         if (isa<MemCpyInst>(MI) || isa<MemMoveInst>(MI)) {
           Value *Elt = new LoadInst(SROADest ? OtherElt : EltPtr, "tmp",
                                     MI);
