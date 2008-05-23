@@ -2072,6 +2072,7 @@ unsigned InstCombiner::ComputeNumSignBits(Value *V, unsigned Depth) const{
   const IntegerType *Ty = cast<IntegerType>(V->getType());
   unsigned TyBits = Ty->getBitWidth();
   unsigned Tmp, Tmp2;
+  unsigned FirstAnswer = 1;
 
   if (Depth == 6)
     return 1;  // Limit search depth.
@@ -2101,54 +2102,18 @@ unsigned InstCombiner::ComputeNumSignBits(Value *V, unsigned Depth) const{
     }
     break;
   case Instruction::And:
-    // Logical binary ops preserve the number of sign bits at the worst.
-    Tmp = ComputeNumSignBits(U->getOperand(0), Depth+1);
-    if (Tmp != 1) {
-      Tmp2 = ComputeNumSignBits(U->getOperand(1), Depth+1);
-      Tmp = std::min(Tmp, Tmp2);
-    }
-      
-    // X & C has sign bits equal to C if C's top bits are zeros.
-    if (ConstantInt *C = dyn_cast<ConstantInt>(U->getOperand(1))) {
-      // See what bits are known to be zero on the output.
-      APInt KnownZero(TyBits, 0), KnownOne(TyBits, 0);
-      APInt Mask = APInt::getAllOnesValue(TyBits);
-      ComputeMaskedBits(U->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
-      
-      KnownZero |= ~C->getValue();
-      // If we know that we have leading zeros, we know we have at least that
-      // many sign bits.
-      Tmp = std::max(Tmp, KnownZero.countLeadingOnes());
-    }
-    return Tmp;
-      
   case Instruction::Or:
+  case Instruction::Xor:    // NOT is handled here.
     // Logical binary ops preserve the number of sign bits at the worst.
     Tmp = ComputeNumSignBits(U->getOperand(0), Depth+1);
     if (Tmp != 1) {
       Tmp2 = ComputeNumSignBits(U->getOperand(1), Depth+1);
-      Tmp = std::min(Tmp, Tmp2);
+      FirstAnswer = std::min(Tmp, Tmp2);
+      // We computed what we know about the sign bits as our first
+      // answer. Now proceed to the generic code that uses
+      // ComputeMaskedBits, and pick whichever answer is better.
     }
-    // X & C has sign bits equal to C if C's top bits are zeros.
-    if (ConstantInt *C = dyn_cast<ConstantInt>(U->getOperand(1))) {
-      // See what bits are known to be one on the output.
-      APInt KnownZero(TyBits, 0), KnownOne(TyBits, 0);
-      APInt Mask = APInt::getAllOnesValue(TyBits);
-      ComputeMaskedBits(U->getOperand(0), Mask, KnownZero, KnownOne, Depth+1);
-      
-      KnownOne |= C->getValue();
-      // If we know that we have leading ones, we know we have at least that
-      // many sign bits.
-      Tmp = std::max(Tmp, KnownOne.countLeadingOnes());
-    }
-    return Tmp;
-      
-  case Instruction::Xor:    // NOT is handled here.
-    // Logical binary ops preserve the number of sign bits.
-    Tmp = ComputeNumSignBits(U->getOperand(0), Depth+1);
-    if (Tmp == 1) return 1;  // Early out.
-    Tmp2 = ComputeNumSignBits(U->getOperand(1), Depth+1);
-    return std::min(Tmp, Tmp2);
+    break;
 
   case Instruction::Select:
     Tmp = ComputeNumSignBits(U->getOperand(1), Depth+1);
@@ -2232,7 +2197,7 @@ unsigned InstCombiner::ComputeNumSignBits(Value *V, unsigned Depth) const{
     Mask = KnownOne;
   } else {
     // Nothing known.
-    return 1;
+    return FirstAnswer;
   }
   
   // Okay, we know that the sign bit in Mask is set.  Use CLZ to determine
@@ -2241,7 +2206,7 @@ unsigned InstCombiner::ComputeNumSignBits(Value *V, unsigned Depth) const{
   Mask <<= Mask.getBitWidth()-TyBits;
   // Return # leading zeros.  We use 'min' here in case Val was zero before
   // shifting.  We don't want to return '64' as for an i32 "0".
-  return std::min(TyBits, Mask.countLeadingZeros());
+  return std::max(FirstAnswer, std::min(TyBits, Mask.countLeadingZeros()));
 }
 
 

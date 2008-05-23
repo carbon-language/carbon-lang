@@ -1628,6 +1628,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
   assert(MVT::isInteger(VT) && "Invalid VT!");
   unsigned VTBits = MVT::getSizeInBits(VT);
   unsigned Tmp, Tmp2;
+  unsigned FirstAnswer = 1;
   
   if (Depth == 6)
     return 1;  // Limit search depth.
@@ -1683,11 +1684,16 @@ unsigned SelectionDAG::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:    // NOT is handled here.
-    // Logical binary ops preserve the number of sign bits.
+    // Logical binary ops preserve the number of sign bits at the worst.
     Tmp = ComputeNumSignBits(Op.getOperand(0), Depth+1);
-    if (Tmp == 1) return 1;  // Early out.
-    Tmp2 = ComputeNumSignBits(Op.getOperand(1), Depth+1);
-    return std::min(Tmp, Tmp2);
+    if (Tmp != 1) {
+      Tmp2 = ComputeNumSignBits(Op.getOperand(1), Depth+1);
+      FirstAnswer = std::min(Tmp, Tmp2);
+      // We computed what we know about the sign bits as our first
+      // answer. Now proceed to the generic code that uses
+      // ComputeMaskedBits, and pick whichever answer is better.
+    }
+    break;
 
   case ISD::SELECT:
     Tmp = ComputeNumSignBits(Op.getOperand(1), Depth+1);
@@ -1801,7 +1807,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
       Op.getOpcode() == ISD::INTRINSIC_W_CHAIN ||
       Op.getOpcode() == ISD::INTRINSIC_VOID) {
     unsigned NumBits = TLI.ComputeNumSignBitsForTargetNode(Op, Depth);
-    if (NumBits > 1) return NumBits;
+    if (NumBits > 1) FirstAnswer = std::max(FirstAnswer, NumBits);
   }
   
   // Finally, if we can prove that the top bits of the result are 0's or 1's,
@@ -1816,7 +1822,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
     Mask = KnownOne;
   } else {
     // Nothing known.
-    return 1;
+    return FirstAnswer;
   }
   
   // Okay, we know that the sign bit in Mask is set.  Use CLZ to determine
@@ -1825,7 +1831,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDOperand Op, unsigned Depth) const{
   Mask <<= Mask.getBitWidth()-VTBits;
   // Return # leading zeros.  We use 'min' here in case Val was zero before
   // shifting.  We don't want to return '64' as for an i32 "0".
-  return std::min(VTBits, Mask.countLeadingZeros());
+  return std::max(FirstAnswer, std::min(VTBits, Mask.countLeadingZeros()));
 }
 
 
