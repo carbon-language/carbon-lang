@@ -297,10 +297,10 @@ void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
 }
 
 void StmtDumper::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
-  DumpExpr(Node->getBase());
+  DumpExpr(Node);
 
-  fprintf(F, " ObjCIvarRefExpr");
-  fprintf(F, "='%s' %p", Node->getDecl()->getName(), (void*)Node->getDecl());
+  fprintf(F, " %sDecl='%s' %p", Node->getDecl()->getDeclKindName(), 
+                            Node->getDecl()->getName(), (void*)Node->getDecl());
 }
 
 void StmtDumper::VisitPreDefinedExpr(PreDefinedExpr *Node) {

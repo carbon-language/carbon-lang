@@ -65,6 +65,7 @@ const char *Decl::getDeclKindName() const {
   case Var:                 return "Var";
   case ParmVar:             return "ParmVar";
   case EnumConstant:        return "EnumConstant";
+  case ObjCIvar:            return "ObjCIvar";
   case ObjCInterface:       return "ObjCInterface";
   case ObjCClass:           return "ObjCClass";
   case ObjCMethod:          return "ObjCMethod";
