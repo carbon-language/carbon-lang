@@ -382,52 +382,6 @@ elements are fixed zeros.
 
 //===---------------------------------------------------------------------===//
 
-For this:
-
-#include <emmintrin.h>
-void test(__m128d *r, __m128d *A, double B) {
-  *r = _mm_loadl_pd(*A, &B);
-}
-
-We generates:
-
-	subl $12, %esp
-	movsd 24(%esp), %xmm0
-	movsd %xmm0, (%esp)
-	movl 20(%esp), %eax
-	movapd (%eax), %xmm0
-	movlpd (%esp), %xmm0
-	movl 16(%esp), %eax
-	movapd %xmm0, (%eax)
-	addl $12, %esp
-	ret
-
-icc generates:
-
-        movl      4(%esp), %edx                                 #3.6
-        movl      8(%esp), %eax                                 #3.6
-        movapd    (%eax), %xmm0                                 #4.22
-        movlpd    12(%esp), %xmm0                               #4.8
-        movapd    %xmm0, (%edx)                                 #4.3
-        ret                                                     #5.1
-
-So icc is smart enough to know that B is in memory so it doesn't load it and
-store it back to stack.
-
-This should be fixed by eliminating the llvm.x86.sse2.loadl.pd intrinsic, 
-lowering it to a load+insertelement instead.  Already match the load+shuffle 
-as movlpd, so this should be easy.  We already get optimal code for:
-
-define void @test2(<2 x double>* %r, <2 x double>* %A, double %B) {
-entry:
-	%tmp2 = load <2 x double>* %A, align 16
-	%tmp8 = insertelement <2 x double> %tmp2, double %B, i32 0
-	store <2 x double> %tmp8, <2 x double>* %r, align 16
-	ret void
-}
-
-//===---------------------------------------------------------------------===//
-
 __m128d test1( __m128d A, __m128d B) {
   return _mm_shuffle_pd(A, B, 0x3);
 }
