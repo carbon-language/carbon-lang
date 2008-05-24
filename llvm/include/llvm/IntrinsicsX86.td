@@ -507,12 +507,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse2_movs_d : GCCBuiltin<"__builtin_ia32_movsd">,
               Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
                          llvm_v2f64_ty], [IntrNoMem]>;
-  def int_x86_sse2_loadh_pd : GCCBuiltin<"__builtin_ia32_loadhpd">,
-              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
-                         llvm_ptr_ty], [IntrReadMem]>;
-  def int_x86_sse2_loadl_pd : GCCBuiltin<"__builtin_ia32_loadlpd">,
-              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
-                         llvm_ptr_ty], [IntrReadMem]>;
   def int_x86_sse2_shuf_pd : GCCBuiltin<"__builtin_ia32_shufpd">,
               Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
                          llvm_v2f64_ty, llvm_i32_ty], [IntrNoMem]>;

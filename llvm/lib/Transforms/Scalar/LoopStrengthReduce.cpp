@@ -1119,11 +1119,6 @@ static bool isAddressUse(Instruction *Inst, Value *OperandVal) {
         if (II->getOperand(1) == OperandVal)
           isAddress = true;
         break;
-      case Intrinsic::x86_sse2_loadh_pd:
-      case Intrinsic::x86_sse2_loadl_pd:
-        if (II->getOperand(2) == OperandVal)
-          isAddress = true;
-        break;
     }
   }
   return isAddress;
