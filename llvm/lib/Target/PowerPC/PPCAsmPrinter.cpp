@@ -977,7 +977,15 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       case GlobalValue::CommonLinkage:
         O << "\t.globl " << name << '\n'
           << "\t.weak_definition " << name << '\n';
-        SwitchToDataSection("\t.section __DATA,__datacoal_nt,coalesced", I);
+        if (!I->isConstant())
+          SwitchToDataSection("\t.section __DATA,__datacoal_nt,coalesced", I);
+        else {
+          const ArrayType *AT = dyn_cast<ArrayType>(Type);
+          if (AT && AT->getElementType()==Type::Int8Ty)
+            SwitchToDataSection("\t.section __TEXT,__const_coal,coalesced", I);
+          else
+            SwitchToDataSection("\t.section __DATA,__const_coal,coalesced", I);
+        }
         break;
       case GlobalValue::AppendingLinkage:
         // FIXME: appending linkage variables should go into a section of
