@@ -254,9 +254,10 @@ def main(args):
 
   if action == 'compile' or save_temps or action == 'link':
     for i, file in enumerate(files):
+      file_language = language
       if not language:
-        language = inferlanguage(extension(file))
-        if language == "skip":
+        file_language = inferlanguage(extension(file))
+        if file__language == "skip":
           continue
 
       if save_temps and action != "compile":
