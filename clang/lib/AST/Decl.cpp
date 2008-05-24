@@ -231,7 +231,7 @@ void NamespaceDecl::Destroy(ASTContext& C) {
   // NamespaceDecl uses "NextDeclarator" to chain namespace declarations
   // together. They are all top-level Decls.
   
-  this->~Decl();
+  this->~NamespaceDecl();
   C.getAllocator().Deallocate((void *)this);
 }
 
