@@ -257,7 +257,7 @@ def main(args):
       file_language = language
       if not language:
         file_language = inferlanguage(extension(file))
-        if file__language == "skip":
+        if file_language == "skip":
           continue
 
       if save_temps and action != "compile":
