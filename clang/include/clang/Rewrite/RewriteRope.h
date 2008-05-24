@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/iterator"
 #include <cstring>
+#include <cassert>
 
 namespace clang {
   //===--------------------------------------------------------------------===//
