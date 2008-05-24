@@ -467,5 +467,12 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress,
   if (TmpArchive.renamePathOnDisk(archPath, ErrMsg))
     return true;
 
+  // Set correct read and write permissions after temporary file is moved
+  // to final destination path.
+  if (archPath.makeReadableOnDisk(ErrMsg))
+    return true;
+  if (archPath.makeWriteableOnDisk(ErrMsg))
+    return true;
+
   return false;
 }
