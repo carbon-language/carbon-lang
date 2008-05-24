@@ -110,7 +110,7 @@ def inferlanguage(extension):
       return "objective-c"
   elif extension == "mi":
       return "objective-c-cpp-output"
-  elif extension == "s":
+  elif extension == "s" or extension == "o":
       return "skip"
   else:
       return "unknown"
