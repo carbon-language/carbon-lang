@@ -5571,7 +5571,8 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
   SMax.convertFromAPInt(APInt::getSignedMaxValue(IntWidth), true,
                         APFloat::rmNearestTiesToEven);
   if (SMax.compare(RHS) == APFloat::cmpLessThan) {  // smax < 13123.0
-    if (ICmpInst::ICMP_NE || ICmpInst::ICMP_SLT || Pred == ICmpInst::ICMP_SLE)
+    if (Pred == ICmpInst::ICMP_NE || Pred == ICmpInst::ICMP_SLT ||
+        Pred == ICmpInst::ICMP_SLE)
       return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
     return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
   }
@@ -5581,7 +5582,8 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
   SMin.convertFromAPInt(APInt::getSignedMinValue(IntWidth), true,
                         APFloat::rmNearestTiesToEven);
   if (SMin.compare(RHS) == APFloat::cmpGreaterThan) { // smin > 12312.0
-    if (ICmpInst::ICMP_NE || ICmpInst::ICMP_SGT || Pred == ICmpInst::ICMP_SGE)
+    if (Pred == ICmpInst::ICMP_NE || Pred == ICmpInst::ICMP_SGT ||
+        Pred == ICmpInst::ICMP_SGE)
       return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 1));
     return ReplaceInstUsesWith(I, ConstantInt::get(Type::Int1Ty, 0));
   }
