@@ -504,18 +504,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 // Shuffles.
 // FIXME: Temporary workarounds since 2-wide shuffle is broken.
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_sse2_movs_d : GCCBuiltin<"__builtin_ia32_movsd">,
-              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
-                         llvm_v2f64_ty], [IntrNoMem]>;
-  def int_x86_sse2_shuf_pd : GCCBuiltin<"__builtin_ia32_shufpd">,
-              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
-                         llvm_v2f64_ty, llvm_i32_ty], [IntrNoMem]>;
-  def int_x86_sse2_unpckh_pd : GCCBuiltin<"__builtin_ia32_unpckhpd">,
-              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
-                         llvm_v2f64_ty], [IntrNoMem]>;
-  def int_x86_sse2_unpckl_pd : GCCBuiltin<"__builtin_ia32_unpcklpd">,
-              Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
-                         llvm_v2f64_ty], [IntrNoMem]>;
   def int_x86_sse2_punpckh_qdq : GCCBuiltin<"__builtin_ia32_punpckhqdq128">,
               Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty,
                          llvm_v2i64_ty], [IntrNoMem]>;

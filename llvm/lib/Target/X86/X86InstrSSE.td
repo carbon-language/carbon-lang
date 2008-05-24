@@ -3051,22 +3051,6 @@ def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
           (MOVZPQILo2PQIrr VR128:$src)>, Requires<[HasSSE2]>;
 
 // FIXME: Temporary workaround since 2-wide shuffle is broken.
-def : Pat<(int_x86_sse2_movs_d  VR128:$src1, VR128:$src2),
-          (v2f64 (MOVLPDrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
-def : Pat<(int_x86_sse2_shuf_pd VR128:$src1, VR128:$src2, imm:$src3),
-          (v2f64 (SHUFPDrri VR128:$src1, VR128:$src2, imm:$src3))>,
-      Requires<[HasSSE2]>;
-def : Pat<(int_x86_sse2_shuf_pd VR128:$src1, (memop addr:$src2),imm:$src3),
-          (v2f64 (SHUFPDrmi VR128:$src1, addr:$src2, imm:$src3))>,
-      Requires<[HasSSE2]>;
-def : Pat<(int_x86_sse2_unpckh_pd VR128:$src1, VR128:$src2),
-          (v2f64 (UNPCKHPDrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
-def : Pat<(int_x86_sse2_unpckh_pd VR128:$src1, (memop addr:$src2)),
-          (v2f64 (UNPCKHPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
-def : Pat<(int_x86_sse2_unpckl_pd VR128:$src1, VR128:$src2),
-          (v2f64 (UNPCKLPDrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
-def : Pat<(int_x86_sse2_unpckl_pd VR128:$src1, (memop addr:$src2)),
-          (v2f64 (UNPCKLPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(int_x86_sse2_punpckh_qdq VR128:$src1, VR128:$src2),
           (v2i64 (PUNPCKHQDQrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(int_x86_sse2_punpckh_qdq VR128:$src1, (memop addr:$src2)),

@@ -150,7 +150,11 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
       return true;
     } else if (Name.compare(5,17,"x86.sse2.loadh.pd",17) == 0 ||
                Name.compare(5,17,"x86.sse2.loadl.pd",17) == 0 ||
-               Name.compare(5,16,"x86.sse2.movl.dq",16) == 0) {
+               Name.compare(5,16,"x86.sse2.movl.dq",16) == 0 ||
+               Name.compare(5,15,"x86.sse2.movs.d",15) == 0 ||
+               Name.compare(5,16,"x86.sse2.shuf.pd",16) == 0 ||
+               Name.compare(5,18,"x86.sse2.unpckh.pd",18) == 0 ||
+               Name.compare(5,18,"x86.sse2.unpckl.pd",18) == 0 ) {
       // Calls to these intrinsics are transformed into ShuffleVector's.
       NewFn = 0;
       return true;
@@ -187,17 +191,28 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
 
   if (!NewFn) {
     bool isLoadH = false, isLoadL = false, isMovL = false;
+    bool isMovSD = false, isShufPD = false;
+    bool isUnpckhPD = false, isUnpcklPD = false;
     if (strcmp(F->getNameStart(), "llvm.x86.sse2.loadh.pd") == 0)
       isLoadH = true;
     else if (strcmp(F->getNameStart(), "llvm.x86.sse2.loadl.pd") == 0)
       isLoadL = true;
     else if (strcmp(F->getNameStart(), "llvm.x86.sse2.movl.dq") == 0)
       isMovL = true;
+    else if (strcmp(F->getNameStart(), "llvm.x86.sse2.movs.d") == 0)
+      isMovSD = true;
+    else if (strcmp(F->getNameStart(), "llvm.x86.sse2.shuf.pd") == 0)
+      isShufPD = true;
+    else if (strcmp(F->getNameStart(), "llvm.x86.sse2.unpckh.pd") == 0)
+      isUnpckhPD = true;
+    else if (strcmp(F->getNameStart(), "llvm.x86.sse2.unpckl.pd") == 0)
+      isUnpcklPD = true;
 
-    if (isLoadH || isLoadL || isMovL) {
+    if (isLoadH || isLoadL || isMovL || isMovSD || isShufPD ||
+        isUnpckhPD || isUnpcklPD) {
       std::vector<Constant*> Idxs;
       Value *Op0 = CI->getOperand(1);
-      ShuffleVectorInst *SI;
+      ShuffleVectorInst *SI = NULL;
       if (isLoadH || isLoadL) {
         Value *Op1 = UndefValue::get(Op0->getType());
         Value *Addr = new BitCastInst(CI->getOperand(2), 
@@ -216,7 +231,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         }
         Value *Mask = ConstantVector::get(Idxs);
         SI = new ShuffleVectorInst(Op0, Op1, Mask, "upgraded.", CI);
-      } else {
+      } else if (isMovL) {
         Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
         Idxs.push_back(Zero);
         Idxs.push_back(Zero);
@@ -231,7 +246,30 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         Idxs.push_back(ConstantInt::get(Type::Int32Ty, 3));
         Value *Mask = ConstantVector::get(Idxs);
         SI = new ShuffleVectorInst(ZeroV, Op0, Mask, "upgraded.", CI);
+      } else if (isMovSD || isUnpckhPD || isUnpcklPD) {
+        Value *Op1 = CI->getOperand(2);
+        if (isMovSD) {
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2));
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 1));
+        } else if (isUnpckhPD) {
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 1));
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 3));
+        } else {
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 0));
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2));
+        }
+        Value *Mask = ConstantVector::get(Idxs);
+        SI = new ShuffleVectorInst(Op0, Op1, Mask, "upgraded.", CI);
+      } else if (isShufPD) {
+        Value *Op1 = CI->getOperand(2);
+        unsigned MaskVal = cast<ConstantInt>(CI->getOperand(3))->getZExtValue();
+        Idxs.push_back(ConstantInt::get(Type::Int32Ty, MaskVal & 1));
+        Idxs.push_back(ConstantInt::get(Type::Int32Ty, ((MaskVal >> 1) & 1)+2));
+        Value *Mask = ConstantVector::get(Idxs);
+        SI = new ShuffleVectorInst(Op0, Op1, Mask, "upgraded.", CI);
       }
+
+      assert(SI && "Unexpected!");
 
       // Handle any uses of the old CallInst.
       if (!CI->use_empty())
