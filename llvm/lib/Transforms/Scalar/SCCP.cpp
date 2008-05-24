@@ -1370,6 +1370,12 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
         else
           markOverdefined(LV, I);
         return true;
+      case Instruction::Call:
+        // If a call has an undef result, it is because it is constant foldable
+        // but one of the inputs was undef.  Just force the result to
+        // overdefined.
+        markOverdefined(LV, I);
+        return true;
       }
     }
   
