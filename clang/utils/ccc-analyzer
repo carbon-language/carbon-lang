@@ -18,85 +18,73 @@ import subprocess
 import os
 
 def error(message):
-    print >> sys.stderr, 'ccc: ' + message
-    sys.exit(1)
+  print >> sys.stderr, 'ccc: ' + message
+  sys.exit(1)
 
 def quote(arg):
-    if '"' in arg:
-        return repr(arg)
-    return arg
+  if '"' in arg:
+    return repr(arg)
+  return arg
 
 def run(args):
-    # We MUST print to stderr.  Some clients use the stdout output of
-    # gcc for various purposes.
-    #print >> sys.stderr, ' '.join(map(quote, args))
-    #print >> sys.stderr
-    code = subprocess.call(args)
-    if code > 255:
-        code = 1
-    if code:
-        sys.exit(code)
+  code = subprocess.call(args)
+  if code > 255:
+    code = 1
+  if code:
+    sys.exit(code)
 
 def compile(args):
-  # We MUST print to stderr.  Some clients use the stdout output of
-  # gcc for various purposes.
-  #print >> sys.stderr, '\n'
   command = 'gcc'.split()
   run(command + args)
 
 def remove_pch_extension(path):
-      i = path.rfind('.gch')
-      if i < 0:
-          return path
-      return path[:i]
+  i = path.rfind('.gch')
+  if i < 0:
+    return path
+  return path[:i]
 
 def analyze(clang, args,language,output,files,verbose,htmldir,file,analysis_type):
-    if language.find("c++") > 0:
-      return
+  if language.find("c++") > 0:
+    return
+
+  print_args = []
   
-    print_args = []
-    
-    if verbose:
-      # We MUST print to stderr.  Some clients use the stdout output of
-      # gcc for various purposes.
-      print >> sys.stderr, ' '.join(['\n[LOCATION]:', os.getcwd(), '\n' ])
-      i = 0
-      while i < len(args):
-        print_args.append(''.join([ '\'', args[i], '\'' ]))
-        i += 1
+  if verbose:
+    # We MUST print to stderr.  Some clients use the stdout output of
+    # gcc for various purposes.
+    print >> sys.stderr, ' '.join(['\n[LOCATION]:', os.getcwd(), '\n' ])
+    i = 0
+    while i < len(args):
+      print_args.append(''.join([ '\'', args[i], '\'' ]))
+      i += 1
 
+  RunAnalyzer = 0;
 
-    RunAnalyzer = 0;
+  if language.find("header") > 0:
+    target = remove_pch_extension(output)
+    command = 'cp'.split()
+    args = command + files + target.split()      
+  else:
+    command = clang.split() + analysis_type.split()
+    args = command + args;
+    RunAnalyzer = 1
 
-    if language.find("header") > 0:
-      target = remove_pch_extension(output)
-      command = 'cp'.split()
-      args = command + files + target.split()      
-    else:
-      command = clang.split() + analysis_type.split()
-      args = command + args;
-      RunAnalyzer = 1
+  if verbose == 2:
+    print >> sys.stderr, '#SHELL (cd ' + os.getcwd() + ' && ' + ' '.join(command + print_args) + ')\n'
 
-    if verbose == 2:
-      print >> sys.stderr, '#SHELL (cd ' + os.getcwd() + ' && ' + ' '.join(command + print_args) + ')\n'
+  if RunAnalyzer and htmldir is not None:
+    args.append('-o')
+    print_args.append('-o')
+    args.append(htmldir)
+    print_args.append(htmldir)
+  
+  if verbose == 1: 
+    # We MUST print to stderr.  Some clients use the stdout output of
+    # gcc for various purposes. 
+    print >> sys.stderr, ' '.join(command+print_args)
+    print >> sys.stderr, '\n'
 
-    if RunAnalyzer and htmldir is not None:
-      args.append('-o')
-      print_args.append('-o')
-      args.append(htmldir)
-      print_args.append(htmldir)
-    
-    if verbose: 
-      # We MUST print to stderr.  Some clients use the stdout output of
-      # gcc for various purposes. 
-      print >> sys.stderr, ' '.join(command+print_args)
-      print >> sys.stderr, '\n'
-
-    subprocess.call(args)
-
-def link(args):
-    command = 'gcc'.split()
-    run(command + args)
+  subprocess.call(args)
 
 def extension(path):
     return path.split(".")[-1]
@@ -128,171 +116,162 @@ def inferlanguage(extension):
       return "unknown"
 
 def main(args):
-    old_args = args
-    action = 'link'
-    output = ''
-    compile_opts = [ ]
-    link_opts = [ ]
-    files = []
-    save_temps = 0
-    language = ''
+  old_args = args
+  action = 'link'
+  output = ''
+  compile_opts = [ ]
+  link_opts = [ ]
+  files = []
+  save_temps = 0
+  language = ''
+  
+  verbose = 0
+  clang = "clang"    
+  
+  # Forward to GCC.
+  compile(args)    
+  
+  # Set the analyzer flag.
+  analysis_type = os.environ.get('CCC_ANALYZER_ANALYSIS')
+  
+  if analysis_type is not None:
+    analysis_type = "-" + analysis_type
+  else:
+    analysis_type = "-checker-cfref"
+
+  # Determine the level of verbosity.
+  if os.environ.get('CCC_ANALYZER_VERBOSE') is not None:
+    verbose = 1
     
-    verbose = 0
-    clang = "clang"    
+  if os.environ.get('CCC_ANALYZER_LOG') is not None:
+    verbose = 2
     
-    # Forward to GCC.
-    compile(args)    
+  # Determine what clang executable to use.
+  clang_env = os.environ.get('CLANG') 
+  
+  if clang_env is not None:
+    clang = clang_env
+  
+  # Get the HTML output directory.
+  htmldir = None
+  
+  if analysis_type == "-checker-cfref":
+    htmldir = os.environ.get('CCC_ANALYZER_HTML')
+
+  # Process the arguments.
+  i = 0
+  while i < len(args):
+    arg = args[i]
+
+    # Modes ccc supports
+    if arg == '-E':
+        action = 'preprocess'
+    if arg == '-c':
+        action = 'compile'
+    if arg.startswith('-print-prog-name'):
+        action = 'print-prog-name'
+    if arg == '-save-temps':
+        save_temps = 1
+
+    # Options with no arguments that should pass through
+    if arg in ['-v']:
+        compile_opts.append(arg)
+        link_opts.append(arg)
     
-    # Set the analyzer flag.
-    analysis_type = os.environ.get('CCC_ANALYZER_ANALYSIS')
-    
-    if analysis_type is not None:
-      analysis_type = "-" + analysis_type
-    else:
-      analysis_type = "-checker-cfref"
-
-    # Determine the level of verbosity.
-    if os.environ.get('CCC_ANALYZER_VERBOSE') is not None:
-      verbose = 1
-      
-    if os.environ.get('CCC_ANALYZER_LOG') is not None:
-      verbose = 2
-      
-    # Determine what clang executable to use.
-    clang_env = os.environ.get('CLANG') 
-    
-    if clang_env is not None:
-      clang = clang_env
-    
-    # Get the HTML output directory.
-    htmldir = None
-    
-    if analysis_type == "-checker-cfref":
-      htmldir = os.environ.get('CCC_ANALYZER_HTML')
-
-    # Process the arguments.
-    i = 0
-    while i < len(args):
-        arg = args[i]
-
-        # Modes ccc supports
-        if arg == '-E':
-            action = 'preprocess'
-        if arg == '-c':
-            action = 'compile'
-        if arg.startswith('-print-prog-name'):
-            action = 'print-prog-name'
-        if arg == '-save-temps':
-            save_temps = 1
-
-        # Options with no arguments that should pass through
-        if arg in ['-v']:
-            compile_opts.append(arg)
-            link_opts.append(arg)
-        
-        # Options with one argument that should be ignored
-        if arg in ['--param', '-u']:
-            i += 1
-
-        # Prefix matches for the compile mode
-        if arg[:2] in ['-D', '-I', '-U', '-F' ]:
-            if not arg[2:]:
-                arg += args[i+1]
-                i += 1
-            compile_opts.append(arg)
-
-        if arg[:5] in ['-std=']:
-            compile_opts.append(arg)
-
-        # Options with one argument that should pass through to compiler
-        if arg in [ '-include', '-idirafter', '-iprefix',
-                    '-iquote', '-isystem', '-iwithprefix',
-                    '-iwithprefixbefore']:
-            compile_opts.append(arg)
-            compile_opts.append(args[i+1])
-            i += 1
-            
-        # Options with no argument that should pass through to compiler
-        if arg in [ '-nostdinc', '-fobjc-gc-only', '-fobjc-gc' ]:
-          compile_opts.append(arg)          
-
-        # Options with one argument that should pass through to linker
-        if arg == '-framework':
-            link_opts.append(arg)
-            link_opts.append(args[i+1])
-            i += 1
-
-        # Options with one argument that should pass through to both
-        if arg in ['-isysroot', '-arch']:
-            compile_opts.append(arg)
-            compile_opts.append(args[i+1])
-            link_opts.append(arg)
-            link_opts.append(args[i+1])
-            i += 1
-
-        # Prefix matches for the link mode
-        if arg[:2] in ['-l', '-L', '-O', '-F']:
-            if arg == '-O': arg = '-O1'
-            if arg == '-Os': arg = '-O2'
-            link_opts.append(arg)
-
-        # Input files
-        if arg == '-filelist':
-            f = open(args[i+1])
-            for line in f:
-                files.append(line.strip())
-            f.close()
-            i += 1
-        if arg == '-x':
-            language = args[i+1]
-            i += 1
-        if arg[0] != '-':
-            files.append(arg)
-
-        # Output file
-        if arg == '-o':
-            output = args[i+1]
-            i += 1
-
+    # Options with one argument that should be ignored
+    if arg in ['--param', '-u']:
         i += 1
 
-    if action == 'print-prog-name':
-        # assume we can handle everything
-        print sys.argv[0]
-        return
+    # Prefix matches for the compile mode
+    if arg[:2] in ['-D', '-I', '-U', '-F' ]:
+        if not arg[2:]:
+            arg += args[i+1]
+            i += 1
+        compile_opts.append(arg)
 
-    if not files:
-        error('no input files')
+    if arg[:5] in ['-std=']:
+        compile_opts.append(arg)
 
-    # if action == 'preprocess' or save_temps:
-    #   compile(args)
+    # Options with one argument that should pass through to compiler
+    if arg in [ '-include', '-idirafter', '-iprefix',
+                '-iquote', '-isystem', '-iwithprefix',
+                '-iwithprefixbefore']:
+        compile_opts.append(arg)
+        compile_opts.append(args[i+1])
+        i += 1
+        
+    # Options with no argument that should pass through to compiler
+    if arg in [ '-nostdinc', '-fobjc-gc-only', '-fobjc-gc' ]:
+      compile_opts.append(arg)          
 
-    if action == 'compile' or save_temps:
-        for i, file in enumerate(files):
-            if not language:
-                language = inferlanguage(extension(file))
-                if language == "skip":
-                  continue
+    # Options with one argument that should pass through to linker
+    if arg == '-framework':
+        link_opts.append(arg)
+        link_opts.append(args[i+1])
+        i += 1
 
-            if save_temps and action != "compile":
-                # Need a temporary output file
-                coutput = changeextension(file, "o");
-                files[i] = coutput
-            elif not output:
-                coutput = changeextension(file, "o")
-            else:
-                coutput = output
-            analyze_args = [ file ]
-            if language != 'unknown':
-              analyze_args = [ '-x', language ] + analyze_args
-            analyze_args = analyze_args + compile_opts
-            analyze(clang, analyze_args, language, output, files, verbose, htmldir, file, analysis_type)
-#        compile(args)
+    # Options with one argument that should pass through to both
+    if arg in ['-isysroot', '-arch']:
+        compile_opts.append(arg)
+        compile_opts.append(args[i+1])
+        link_opts.append(arg)
+        link_opts.append(args[i+1])
+        i += 1
 
+    # Prefix matches for the link mode
+    if arg[:2] in ['-l', '-L', '-O', '-F']:
+        if arg == '-O': arg = '-O1'
+        if arg == '-Os': arg = '-O2'
+        link_opts.append(arg)
 
-#     if action == 'link':
-#         link(args)
-# #        analyze(link_opts)
+    # Input files
+    if arg == '-filelist':
+        f = open(args[i+1])
+        for line in f:
+            files.append(line.strip())
+        f.close()
+        i += 1
+    if arg == '-x':
+        language = args[i+1]
+        i += 1
+    if arg[0] != '-':
+        files.append(arg)
+
+    # Output file
+    if arg == '-o':
+        output = args[i+1]
+        i += 1
+
+    i += 1
+
+  if action == 'print-prog-name':
+      # assume we can handle everything
+      print sys.argv[0]
+      return
+
+  if not files:
+      error('no input files')
+
+  if action == 'compile' or save_temps or action == 'link':
+    for i, file in enumerate(files):
+      if not language:
+        language = inferlanguage(extension(file))
+        if language == "skip":
+          continue
+
+      if save_temps and action != "compile":
+        # Need a temporary output file
+        coutput = changeextension(file, "o");
+        files[i] = coutput
+      elif not output:
+        coutput = changeextension(file, "o")
+      else:
+        coutput = output
+      analyze_args = [ file ]
+      if language != 'unknown':
+        analyze_args = [ '-x', language ] + analyze_args
+      analyze_args = analyze_args + compile_opts
+      analyze(clang, analyze_args, language, output, files, verbose, htmldir, file, analysis_type)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
