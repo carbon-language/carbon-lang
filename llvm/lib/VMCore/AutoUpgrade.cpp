@@ -148,8 +148,10 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
                                                     VT,
                                                     (Type *)0));
       return true;
-    } else if (Name.compare(5,16,"x86.sse2.movl.dq",16) == 0) {
-      // Calls to this intrinsic are transformed into ShuffleVector's.
+    } else if (Name.compare(5,17,"x86.sse2.loadh.pd",17) == 0 ||
+               Name.compare(5,17,"x86.sse2.loadl.pd",17) == 0 ||
+               Name.compare(5,16,"x86.sse2.movl.dq",16) == 0) {
+      // Calls to these intrinsics are transformed into ShuffleVector's.
       NewFn = 0;
       return true;
     }
@@ -184,23 +186,52 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   assert(F && "CallInst has no function associated with it.");
 
   if (!NewFn) {
-    if (strcmp(F->getNameStart(), "llvm.x86.sse2.movl.dq") == 0) {
-      std::vector<Constant*> Idxs;
-      Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
-      Idxs.push_back(Zero);
-      Idxs.push_back(Zero);
-      Idxs.push_back(Zero);
-      Idxs.push_back(Zero);
-      Value *ZeroV = ConstantVector::get(Idxs);
+    bool isLoadH = false, isLoadL = false, isMovL = false;
+    if (strcmp(F->getNameStart(), "llvm.x86.sse2.loadh.pd") == 0)
+      isLoadH = true;
+    else if (strcmp(F->getNameStart(), "llvm.x86.sse2.loadl.pd") == 0)
+      isLoadL = true;
+    else if (strcmp(F->getNameStart(), "llvm.x86.sse2.movl.dq") == 0)
+      isMovL = true;
 
-      Idxs.clear(); 
-      Idxs.push_back(ConstantInt::get(Type::Int32Ty, 4));
-      Idxs.push_back(ConstantInt::get(Type::Int32Ty, 5));
-      Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2));
-      Idxs.push_back(ConstantInt::get(Type::Int32Ty, 3));
-      Value *Mask = ConstantVector::get(Idxs);
-      ShuffleVectorInst *SI = new ShuffleVectorInst(ZeroV, CI->getOperand(1),
-                                                    Mask, "upgraded", CI);
+    if (isLoadH || isLoadL || isMovL) {
+      std::vector<Constant*> Idxs;
+      Value *Op0 = CI->getOperand(1);
+      ShuffleVectorInst *SI;
+      if (isLoadH || isLoadL) {
+        Value *Op1 = UndefValue::get(Op0->getType());
+        Value *Addr = new BitCastInst(CI->getOperand(2), 
+                                      PointerType::getUnqual(Type::DoubleTy),
+                                      "upgraded.", CI);
+        Value *Load = new LoadInst(Addr, "upgraded.", false, 8, CI);
+        Value *Idx = ConstantInt::get(Type::Int32Ty, 0);
+        Op1 = InsertElementInst::Create(Op1, Load, Idx, "upgraded.", CI);
+
+        if (isLoadH) {
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 0));
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2));
+        } else {
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2));
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 1));
+        }
+        Value *Mask = ConstantVector::get(Idxs);
+        SI = new ShuffleVectorInst(Op0, Op1, Mask, "upgraded.", CI);
+      } else {
+        Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
+        Idxs.push_back(Zero);
+        Idxs.push_back(Zero);
+        Idxs.push_back(Zero);
+        Idxs.push_back(Zero);
+        Value *ZeroV = ConstantVector::get(Idxs);
+
+        Idxs.clear(); 
+        Idxs.push_back(ConstantInt::get(Type::Int32Ty, 4));
+        Idxs.push_back(ConstantInt::get(Type::Int32Ty, 5));
+        Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2));
+        Idxs.push_back(ConstantInt::get(Type::Int32Ty, 3));
+        Value *Mask = ConstantVector::get(Idxs);
+        SI = new ShuffleVectorInst(ZeroV, Op0, Mask, "upgraded.", CI);
+      }
 
       // Handle any uses of the old CallInst.
       if (!CI->use_empty())
@@ -233,7 +264,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     // Cast the second parameter to the correct type.
     BitCastInst *BC = new BitCastInst(CI->getOperand(2), 
                                       NewFn->getFunctionType()->getParamType(1),
-                                      "upgraded", CI);
+                                      "upgraded.", CI);
     Operands[1] = BC;
     
     //  Construct a new CallInst
