@@ -501,17 +501,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
               Intrinsic<[llvm_void_ty], [IntrWriteMem]>;
 }
 
-// Shuffles.
-// FIXME: Temporary workarounds since 2-wide shuffle is broken.
-let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_sse2_punpckh_qdq : GCCBuiltin<"__builtin_ia32_punpckhqdq128">,
-              Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty,
-                         llvm_v2i64_ty], [IntrNoMem]>;
-  def int_x86_sse2_punpckl_qdq : GCCBuiltin<"__builtin_ia32_punpcklqdq128">,
-              Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty,
-                         llvm_v2i64_ty], [IntrNoMem]>;
-}
-
 //===----------------------------------------------------------------------===//
 // SSE3
 

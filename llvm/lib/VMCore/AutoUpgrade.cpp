@@ -154,7 +154,9 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
                Name.compare(5,15,"x86.sse2.movs.d",15) == 0 ||
                Name.compare(5,16,"x86.sse2.shuf.pd",16) == 0 ||
                Name.compare(5,18,"x86.sse2.unpckh.pd",18) == 0 ||
-               Name.compare(5,18,"x86.sse2.unpckl.pd",18) == 0 ) {
+               Name.compare(5,18,"x86.sse2.unpckl.pd",18) == 0 ||
+               Name.compare(5,20,"x86.sse2.punpckh.qdq",20) == 0 ||
+               Name.compare(5,20,"x86.sse2.punpckl.qdq",20) == 0) {
       // Calls to these intrinsics are transformed into ShuffleVector's.
       NewFn = 0;
       return true;
@@ -193,6 +195,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     bool isLoadH = false, isLoadL = false, isMovL = false;
     bool isMovSD = false, isShufPD = false;
     bool isUnpckhPD = false, isUnpcklPD = false;
+    bool isPunpckhQPD = false, isPunpcklQPD = false;
     if (strcmp(F->getNameStart(), "llvm.x86.sse2.loadh.pd") == 0)
       isLoadH = true;
     else if (strcmp(F->getNameStart(), "llvm.x86.sse2.loadl.pd") == 0)
@@ -207,9 +210,13 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       isUnpckhPD = true;
     else if (strcmp(F->getNameStart(), "llvm.x86.sse2.unpckl.pd") == 0)
       isUnpcklPD = true;
+    else if (strcmp(F->getNameStart(), "llvm.x86.sse2.punpckh.qdq") == 0)
+      isPunpckhQPD = true;
+    else if (strcmp(F->getNameStart(), "llvm.x86.sse2.punpckl.qdq") == 0)
+      isPunpcklQPD = true;
 
     if (isLoadH || isLoadL || isMovL || isMovSD || isShufPD ||
-        isUnpckhPD || isUnpcklPD) {
+        isUnpckhPD || isUnpcklPD || isPunpckhQPD || isPunpcklQPD) {
       std::vector<Constant*> Idxs;
       Value *Op0 = CI->getOperand(1);
       ShuffleVectorInst *SI = NULL;
@@ -246,12 +253,13 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         Idxs.push_back(ConstantInt::get(Type::Int32Ty, 3));
         Value *Mask = ConstantVector::get(Idxs);
         SI = new ShuffleVectorInst(ZeroV, Op0, Mask, "upgraded.", CI);
-      } else if (isMovSD || isUnpckhPD || isUnpcklPD) {
+      } else if (isMovSD ||
+                 isUnpckhPD || isUnpcklPD || isPunpckhQPD || isPunpcklQPD) {
         Value *Op1 = CI->getOperand(2);
         if (isMovSD) {
           Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2));
           Idxs.push_back(ConstantInt::get(Type::Int32Ty, 1));
-        } else if (isUnpckhPD) {
+        } else if (isUnpckhPD || isPunpckhQPD) {
           Idxs.push_back(ConstantInt::get(Type::Int32Ty, 1));
           Idxs.push_back(ConstantInt::get(Type::Int32Ty, 3));
         } else {

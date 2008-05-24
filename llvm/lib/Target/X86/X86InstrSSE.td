@@ -3050,16 +3050,6 @@ def : Pat<(v2f64 (vector_shuffle immAllZerosV_bc, VR128:$src,
 def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
           (MOVZPQILo2PQIrr VR128:$src)>, Requires<[HasSSE2]>;
 
-// FIXME: Temporary workaround since 2-wide shuffle is broken.
-def : Pat<(int_x86_sse2_punpckh_qdq VR128:$src1, VR128:$src2),
-          (v2i64 (PUNPCKHQDQrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
-def : Pat<(int_x86_sse2_punpckh_qdq VR128:$src1, (memop addr:$src2)),
-          (v2i64 (PUNPCKHQDQrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
-def : Pat<(int_x86_sse2_punpckl_qdq VR128:$src1, VR128:$src2),
-          (v2i64 (PUNPCKLQDQrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
-def : Pat<(int_x86_sse2_punpckl_qdq VR128:$src1, (memop addr:$src2)),
-          (PUNPCKLQDQrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
-
 // Some special case pandn patterns.
 def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v4i32 immAllOnesV))),
                   VR128:$src2)),
