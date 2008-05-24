@@ -22,6 +22,8 @@ exit
 
 :nobison
 echo Bison not found.  Using pre-generated files.
+copy %~pn4.cpp.cvs .\%3.cpp
 copy %~pn4.cpp.cvs %5\%3.cpp
+copy %~pn4.h.cvs .\%3.h
 copy %~pn4.h.cvs %5\%3.h
 exit
