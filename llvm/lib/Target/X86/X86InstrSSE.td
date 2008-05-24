@@ -3053,10 +3053,6 @@ def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
 // FIXME: Temporary workaround since 2-wide shuffle is broken.
 def : Pat<(int_x86_sse2_movs_d  VR128:$src1, VR128:$src2),
           (v2f64 (MOVLPDrr VR128:$src1, VR128:$src2))>, Requires<[HasSSE2]>;
-def : Pat<(int_x86_sse2_loadh_pd VR128:$src1, addr:$src2),
-          (v2f64 (MOVHPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
-def : Pat<(int_x86_sse2_loadl_pd VR128:$src1, addr:$src2),
-          (v2f64 (MOVLPDrm VR128:$src1, addr:$src2))>, Requires<[HasSSE2]>;
 def : Pat<(int_x86_sse2_shuf_pd VR128:$src1, VR128:$src2, imm:$src3),
           (v2f64 (SHUFPDrri VR128:$src1, VR128:$src2, imm:$src3))>,
       Requires<[HasSSE2]>;
