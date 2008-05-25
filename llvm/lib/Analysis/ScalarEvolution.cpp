@@ -2548,9 +2548,9 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToZero(SCEV *V, const Loop *L) {
       if (SCEVConstant *StartC = dyn_cast<SCEVConstant>(Start)) {
         ConstantInt *StartCC = StartC->getValue();
         Constant *StartNegC = ConstantExpr::getNeg(StartCC);
-        Constant *Rem = ConstantExpr::getSRem(StartNegC, StepC->getValue());
+        Constant *Rem = ConstantExpr::getURem(StartNegC, StepC->getValue());
         if (Rem->isNullValue()) {
-          Constant *Result =ConstantExpr::getSDiv(StartNegC,StepC->getValue());
+          Constant *Result = ConstantExpr::getUDiv(StartNegC,StepC->getValue());
           return SE.getUnknown(Result);
         }
       }
