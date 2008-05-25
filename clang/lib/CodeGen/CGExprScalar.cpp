@@ -768,6 +768,11 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
   // Store the result value into the LHS lvalue.
   CGF.EmitStoreThroughLValue(RValue::get(Result), LHSLV, E->getType());
 
+  // For bitfields, we need the value in the bitfield
+  // FIXME: This adds an extra bitfield load
+  if (LHSLV.isBitfield())
+    Result = EmitLoadOfLValue(LHSLV, LHSTy);
+
   return Result;
 }
 
@@ -963,7 +968,11 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   // Store the value into the LHS.
   // FIXME: Volatility!
   CGF.EmitStoreThroughLValue(RValue::get(RHS), LHS, E->getType());
-  
+
+  // For bitfields, we need the value in the bitfield
+  // FIXME: This adds an extra bitfield load
+  if (LHS.isBitfield())
+    return EmitLoadOfLValue(LHS, E->getLHS()->getType());
   // Return the RHS.
   return RHS;
 }
