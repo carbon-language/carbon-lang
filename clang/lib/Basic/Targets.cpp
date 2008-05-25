@@ -849,6 +849,7 @@ public:
     SolarisTargetInfo::getTargetDefines(Defines);
 //    getSparcDefines(Defines, false);
     Define(Defines, "__sparc");
+    Define(Defines, "__sparc__");
     Define(Defines, "__sparcv8");
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
