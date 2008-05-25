@@ -1,4 +1,5 @@
-// RUN: clang %s -fsyntax-only -verify -pedantic
+// RUN: clang %s -fsyntax-only -verify -pedantic -triple=i686-apple-darwin9
+// This test needs to set the target because it uses __builtin_ia32_vec_ext_v4si
 
 int test1(float a, int b) {
   return __builtin_isless(a, b);
