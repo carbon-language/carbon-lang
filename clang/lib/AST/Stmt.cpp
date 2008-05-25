@@ -170,9 +170,8 @@ ObjCAtCatchStmt::ObjCAtCatchStmt(SourceLocation atCatchLoc,
 : Stmt(ObjCAtCatchStmtClass) {
   SubExprs[SELECTOR] = catchVarStmtDecl;
   SubExprs[BODY] = atCatchStmt;
-  if (!atCatchList)
-    SubExprs[NEXT_CATCH] = NULL;
-  else {
+  SubExprs[NEXT_CATCH] = NULL;
+  if (atCatchList) {
     ObjCAtCatchStmt *AtCatchList = static_cast<ObjCAtCatchStmt*>(atCatchList);
 
     while (ObjCAtCatchStmt* NextCatch = AtCatchList->getNextCatchStmt())      
