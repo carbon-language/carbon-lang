@@ -28,22 +28,9 @@ InitListChecker::InitListChecker(Sema *S, InitListExpr *IL, QualType &T) {
 }
 
 int InitListChecker::numArrayElements(QualType DeclType) {
-  int maxElements;
-  if (DeclType->isIncompleteArrayType()) {
-    // FIXME: use a proper constant
-    maxElements = 0x7FFFFFFF;
-  } else if (const VariableArrayType *VAT =
-             DeclType->getAsVariableArrayType()) {
-    // Check for VLAs; in standard C it would be possible to check this
-    // earlier, but I don't know where clang accepts VLAs (gcc accepts
-    // them in all sorts of strange places).
-    SemaRef->Diag(VAT->getSizeExpr()->getLocStart(),
-                  diag::err_variable_object_no_init,
-                  VAT->getSizeExpr()->getSourceRange());
-    hadError = true;
-    maxElements = 0x7FFFFFFF;
-  } else {
-    const ConstantArrayType *CAT = DeclType->getAsConstantArrayType();
+  // FIXME: use a proper constant
+  int maxElements = 0x7FFFFFFF;
+  if (const ConstantArrayType *CAT = DeclType->getAsConstantArrayType()) {
     maxElements = static_cast<int>(CAT->getSize().getZExtValue());
   }
   return maxElements;
@@ -101,8 +88,10 @@ void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
 
   CheckListElementTypes(IList, T, Index);
   IList->setType(T);
+  if (hadError)
+    return;
 
-  if (!hadError && (Index < IList->getNumInits())) {
+  if (Index < IList->getNumInits()) {
     // We have leftover initializers
     if (IList->getNumInits() > 0 &&
         SemaRef->IsStringLiteralInit(IList->getInit(Index), T)) {
@@ -119,7 +108,7 @@ void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
     }
   }
 
-  if (!hadError && T->isScalarType())
+  if (T->isScalarType())
     SemaRef->Diag(IList->getLocStart(), diag::warn_braces_around_scalar_init, 
                   IList->getSourceRange());
 }
@@ -165,8 +154,7 @@ void InitListChecker::CheckSubElementType(InitListExpr *IList,
   } else if (ElemType->isScalarType()) {
     CheckScalarType(IList, ElemType, Index);
   } else if (expr->getType()->getAsRecordType() &&
-             SemaRef->Context.typesAreCompatible(
-                  IList->getInit(Index)->getType(), ElemType)) {
+             SemaRef->Context.typesAreCompatible(expr->getType(), ElemType)) {
     Index++;
     // FIXME: Add checking
   } else {
@@ -230,6 +218,17 @@ void InitListChecker::CheckArrayType(InitListExpr *IList, QualType &DeclType,
       return;
     }
   }
+  if (const VariableArrayType *VAT = DeclType->getAsVariableArrayType()) {
+    // Check for VLAs; in standard C it would be possible to check this
+    // earlier, but I don't know where clang accepts VLAs (gcc accepts
+    // them in all sorts of strange places).
+    SemaRef->Diag(VAT->getSizeExpr()->getLocStart(),
+                  diag::err_variable_object_no_init,
+                  VAT->getSizeExpr()->getSourceRange());
+    hadError = true;
+    return;
+  }
+
   int maxElements = numArrayElements(DeclType);
   QualType elementType = DeclType->getAsArrayType()->getElementType();
   int numElements = 0;

@@ -208,3 +208,7 @@ struct bittest bittestvar = {1, 2, 3, 4}; //expected-warning{{excess elements in
 int u1 = {}; //expected-warning{{use of GNU empty initializer extension}} expected-error{{scalar initializer cannot be empty}}
 int u2 = {{3}}; //expected-error{{too many braces around scalar initializer}}
 
+// PR2362
+void varArray() {
+  int c[][x] = { 0 }; //expected-error{{variable-sized object may not be initialized}}
+}
