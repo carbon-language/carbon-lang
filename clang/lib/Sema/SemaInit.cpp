@@ -38,9 +38,13 @@ int InitListChecker::numArrayElements(QualType DeclType) {
 
 int InitListChecker::numStructUnionElements(QualType DeclType) {
   RecordDecl *structDecl = DeclType->getAsRecordType()->getDecl();
+  int InitializableMembers = 0;
+  for (int i = 0; i < structDecl->getNumMembers(); i++)
+    if (structDecl->getMember(i)->getIdentifier())
+      ++InitializableMembers;
   if (structDecl->getKind() == Decl::Union)
-    return std::min(structDecl->getNumMembers(), 1);
-  return structDecl->getNumMembers() - structDecl->hasFlexibleArrayMember();
+    return std::min(InitializableMembers, 1);
+  return InitializableMembers - structDecl->hasFlexibleArrayMember();
 }
 
 void InitListChecker::CheckImplicitInitList(InitListExpr *ParentIList, 

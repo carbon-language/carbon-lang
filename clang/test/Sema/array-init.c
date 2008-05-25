@@ -216,3 +216,9 @@ void varArray() {
 // PR2151
 int emptyInit() {struct {} x[] = {6};} //expected-warning{{empty struct extension}} expected-error{{initializer for aggregate with no elements}}
 
+int noNamedInit() {
+struct {int:5;} x[] = {6}; //expected-error{{initializer for aggregate with no elements}}
+}
+struct {int a; int:5;} noNamedImplicit[] = {1,2,3};
+int noNamedImplicitCheck[sizeof(noNamedImplicit) == 3 * sizeof(*noNamedImplicit) ? 1 : -1];
+
