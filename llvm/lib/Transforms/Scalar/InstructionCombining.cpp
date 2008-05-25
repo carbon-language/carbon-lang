@@ -11887,6 +11887,16 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
       continue;
     }
 
+    if (TD && I->getType()->getTypeID() == Type::VoidTyID) {
+      // See if we can constant fold its operands.
+      for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i) {
+        if (ConstantExpr *CE = dyn_cast<ConstantExpr>(i)) {
+          if (Constant *NewC = ConstantFoldConstantExpression(CE, TD))
+            i->set(NewC);
+        }
+      }
+    }
+
     // See if we can trivially sink this instruction to a successor basic block.
     // FIXME: Remove GetResultInst test when first class support for aggregates
     // is implemented.

@@ -30,6 +30,12 @@ namespace llvm {
 ///
 Constant *ConstantFoldInstruction(Instruction *I, const TargetData *TD = 0);
 
+/// ConstantFoldConstantExpression - Attempt to fold the constant expression
+/// using the specified TargetData.  If successful, the constant result is
+/// result is returned, if not, null is returned.
+Constant *ConstantFoldConstantExpression(ConstantExpr *CE,
+                                         const TargetData *TD);
+
 /// ConstantFoldInstOperands - Attempt to constant fold an instruction with the
 /// specified operands.  If successful, the constant result is returned, if not,
 /// null is returned.  Note that this function can fail when attempting to 
