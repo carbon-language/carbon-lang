@@ -88,9 +88,24 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
   // FIXME: handle vla's etc.
   if (S.body_empty() || !isa<Expr>(S.body_back())) GetLast = false;
 
+  CGDebugInfo *DI = CGM.getDebugInfo();
+  if (DI) {
+    if (S.getLBracLoc().isValid()) {
+      DI->setLocation(S.getLBracLoc());
+    }
+    DI->EmitRegionStart(CurFn, Builder);
+  }
+
   for (CompoundStmt::const_body_iterator I = S.body_begin(),
        E = S.body_end()-GetLast; I != E; ++I)
     EmitStmt(*I);
+
+  if (DI) {
+    if (S.getRBracLoc().isValid()) {
+      DI->setLocation(S.getRBracLoc());
+    }
+    DI->EmitRegionEnd(CurFn, Builder);
+  }
 
   if (!GetLast)
     return RValue::get(0);
@@ -366,15 +381,6 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   } else {
     llvm::Value *SRetPtr = CurFn->arg_begin();
     EmitAggExpr(RV, SRetPtr, false);
-  }
-
-  CGDebugInfo *DI = CGM.getDebugInfo();
-  if (DI) {
-    CompoundStmt* body = cast<CompoundStmt>(CurFuncDecl->getBody());
-    if (body->getRBracLoc().isValid()) {
-      DI->setLocation(body->getRBracLoc());
-    }
-    DI->EmitFunctionEnd(CurFn, Builder);
   }
 
   if (RetValue) {

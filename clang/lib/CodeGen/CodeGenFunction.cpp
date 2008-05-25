@@ -205,7 +205,7 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
     if (body->getLBracLoc().isValid()) {
       DI->setLocation(body->getLBracLoc());
     }
-    DI->EmitFunctionStart(CurFn, Builder);
+    DI->EmitFunctionStart(FD, CurFn, Builder);
   }
 
   // Emit allocs for param decls.  Give the LLVM Argument nodes names.
@@ -225,21 +225,20 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   // Emit the function body.
   EmitStmt(FD->getBody());
   
+  if (DI) {
+    CompoundStmt* body = cast<CompoundStmt>(CurFuncDecl->getBody());
+    if (body->getRBracLoc().isValid()) {
+      DI->setLocation(body->getRBracLoc());
+    }
+    DI->EmitRegionEnd(CurFn, Builder);
+  }
+
   // Emit a return for code that falls off the end. If insert point
   // is a dummy block with no predecessors then remove the block itself.
   llvm::BasicBlock *BB = Builder.GetInsertBlock();
   if (isDummyBlock(BB))
     BB->eraseFromParent();
   else {
-    CGDebugInfo *DI = CGM.getDebugInfo();
-    if (DI) {
-      CompoundStmt* body = cast<CompoundStmt>(CurFuncDecl->getBody());
-      if (body->getRBracLoc().isValid()) {
-        DI->setLocation(body->getRBracLoc());
-      }
-      DI->EmitFunctionEnd(CurFn, Builder);
-    }
-
     // FIXME: if this is C++ main, this should return 0.
     if (CurFn->getReturnType() == llvm::Type::VoidTy)
       Builder.CreateRetVoid();

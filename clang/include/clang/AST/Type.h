@@ -133,6 +133,10 @@ public:
   void addVolatile() { ThePtr |= Volatile; }
   void addRestrict() { ThePtr |= Restrict; }
 
+  void removeConst()    { ThePtr &= ~Const; }
+  void removeVolatile() { ThePtr &= ~Volatile; }
+  void removeRestrict() { ThePtr &= ~Restrict; }
+
   QualType getQualifiedType(unsigned TQs) const {
     return QualType(getTypePtr(), TQs);
   }
