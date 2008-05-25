@@ -57,6 +57,13 @@ void InitListChecker::CheckImplicitInitList(InitListExpr *ParentIList,
   else
     assert(0 && "CheckImplicitInitList(): Illegal type");
 
+  if (maxElements == 0) {
+    SemaRef->Diag(ParentIList->getInit(Index)->getLocStart(),
+                  diag::err_implicit_empty_initializer);
+    hadError = true;
+    return;
+  }
+
   // Check the element types *before* we create the implicit init list;
   // otherwise, we might end up taking the wrong number of elements
   unsigned NewIndex = Index;

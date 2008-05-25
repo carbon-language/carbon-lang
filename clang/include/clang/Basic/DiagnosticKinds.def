@@ -751,6 +751,8 @@ DIAG(err_empty_scalar_initializer, ERROR,
      "scalar initializer cannot be empty")
 DIAG(err_illegal_initializer, ERROR,
      "illegal initializer (only variables can be initialized)")
+DIAG(err_implicit_empty_initializer, ERROR,
+     "initializer for aggregate with no elements requires explicit braces")
 
 DIAG(err_redefinition_of_label, ERROR,
      "redefinition of label '%0'")

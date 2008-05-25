@@ -212,3 +212,7 @@ int u2 = {{3}}; //expected-error{{too many braces around scalar initializer}}
 void varArray() {
   int c[][x] = { 0 }; //expected-error{{variable-sized object may not be initialized}}
 }
+
+// PR2151
+int emptyInit() {struct {} x[] = {6};} //expected-warning{{empty struct extension}} expected-error{{initializer for aggregate with no elements}}
+
