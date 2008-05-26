@@ -1509,7 +1509,7 @@ namespace {
       }
 
       // We'd like to allow makeEqual on two values to perform a simple
-      // substitution without every creating nodes in the IG whenever possible.
+      // substitution without creating nodes in the IG whenever possible.
       //
       // The first iteration through this loop operates on V2 before going
       // through the Remove list and operating on those too. If all of the
