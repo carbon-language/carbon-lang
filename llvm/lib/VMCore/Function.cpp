@@ -284,6 +284,18 @@ void Function::clearCollector() {
   }
 }
 
+/// copyAttributesFrom - copy all additional attributes (those not needed to
+/// create a Function) from the Function Src to this one.
+void Function::copyAttributesFrom(const GlobalValue *Src) {
+  assert(isa<Function>(Src) && "Expected a Function!");
+  GlobalValue::copyAttributesFrom(Src);
+  const Function *SrcF = cast<Function>(Src);
+  setCallingConv(SrcF->getCallingConv());
+  setParamAttrs(SrcF->getParamAttrs());
+  if (SrcF->hasCollector())
+    setCollector(SrcF->getCollector());
+}
+
 /// getIntrinsicID - This method returns the ID number of the specified
 /// function, or Intrinsic::not_intrinsic if the function is not an
 /// intrinsic, or if the pointer is null.  This value is always defined to be

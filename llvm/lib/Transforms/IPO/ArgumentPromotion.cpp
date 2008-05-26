@@ -478,15 +478,13 @@ Function *ArgPromotion::DoPromotion(Function *F,
 
   // Create the new function body and insert it into the module...
   Function *NF = Function::Create(NFTy, F->getLinkage(), F->getName());
-  NF->setCallingConv(F->getCallingConv());
+  NF->copyAttributesFrom(F);
 
   // Recompute the parameter attributes list based on the new arguments for
   // the function.
   NF->setParamAttrs(PAListPtr::get(ParamAttrsVec.begin(), ParamAttrsVec.end()));
   ParamAttrsVec.clear();
-  
-  if (F->hasCollector())
-    NF->setCollector(F->getCollector());
+
   F->getParent()->getFunctionList().insert(F, NF);
   NF->takeName(F);
 

@@ -80,11 +80,8 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
     assert(ValueMap.count(I) && "No mapping from source argument specified!");
 #endif
 
-  // Clone the parameter attributes
-  NewFunc->setParamAttrs(OldFunc->getParamAttrs());
-
-  // Clone the calling convention
-  NewFunc->setCallingConv(OldFunc->getCallingConv());
+  // Clone any attributes.
+  NewFunc->copyAttributesFrom(OldFunc);
 
   // Loop over all of the basic blocks in the function, cloning them as
   // appropriate.  Note that we save BE this way in order to handle cloning of
@@ -339,8 +336,8 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
        E = OldFunc->arg_end(); II != E; ++II)
     assert(ValueMap.count(II) && "No mapping from source argument specified!");
 #endif
-  
-  PruningFunctionCloner PFC(NewFunc, OldFunc, ValueMap, Returns, 
+
+  PruningFunctionCloner PFC(NewFunc, OldFunc, ValueMap, Returns,
                             NameSuffix, CodeInfo, TD);
 
   // Clone the entry block, and anything recursively reachable from it.

@@ -79,7 +79,16 @@ void GlobalValue::destroyConstant() {
   assert(0 && "You can't GV->destroyConstant()!");
   abort();
 }
-  
+
+/// copyAttributesFrom - copy all additional attributes (those not needed to
+/// create a GlobalValue) from the GlobalValue Src to this one.
+void GlobalValue::copyAttributesFrom(const GlobalValue *Src) {
+  setAlignment(Src->getAlignment());
+  setSection(Src->getSection());
+  setVisibility(Src->getVisibility());
+}
+
+
 //===----------------------------------------------------------------------===//
 // GlobalVariable Implementation
 //===----------------------------------------------------------------------===//
@@ -159,6 +168,16 @@ void GlobalVariable::replaceUsesOfWithOnConstant(Value *From, Value *To,
   // Okay, preconditions out of the way, replace the constant initializer.
   this->setOperand(0, cast<Constant>(To));
 }
+
+/// copyAttributesFrom - copy all additional attributes (those not needed to
+/// create a GlobalVariable) from the GlobalVariable Src to this one.
+void GlobalVariable::copyAttributesFrom(const GlobalValue *Src) {
+  assert(isa<GlobalVariable>(Src) && "Expected a GlobalVariable!");
+  GlobalValue::copyAttributesFrom(Src);
+  const GlobalVariable *SrcVar = cast<GlobalVariable>(Src);
+  setThreadLocal(SrcVar->isThreadLocal());
+}
+
 
 //===----------------------------------------------------------------------===//
 // GlobalAlias Implementation

@@ -110,6 +110,10 @@ public:
   void setLinkage(LinkageTypes LT) { Linkage = LT; }
   LinkageTypes getLinkage() const { return Linkage; }
 
+  /// copyAttributesFrom - copy all additional attributes (those not needed to
+  /// create a GlobalValue) from the GlobalValue Src to this one.
+  virtual void copyAttributesFrom(const GlobalValue *Src);
+
   /// hasNotBeenReadFromBitcode - If a module provider is being used to lazily
   /// stream in functions from disk, this method can be used to check to see if
   /// the function has been read in yet or not.  Unless you are working on the

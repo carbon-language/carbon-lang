@@ -351,20 +351,10 @@ static void ForceRenaming(GlobalValue *GV, const std::string &Name) {
 /// CopyGVAttributes - copy additional attributes (those not needed to construct
 /// a GlobalValue) from the SrcGV to the DestGV. 
 static void CopyGVAttributes(GlobalValue *DestGV, const GlobalValue *SrcGV) {
-  // Propagate alignment, visibility and section info.
-  DestGV->setAlignment(std::max(DestGV->getAlignment(), SrcGV->getAlignment()));
-  DestGV->setSection(SrcGV->getSection());
-  DestGV->setVisibility(SrcGV->getVisibility());
-  if (const Function *SrcF = dyn_cast<Function>(SrcGV)) {
-    Function *DestF = cast<Function>(DestGV);
-    DestF->setCallingConv(SrcF->getCallingConv());
-    DestF->setParamAttrs(SrcF->getParamAttrs());
-    if (SrcF->hasCollector())
-      DestF->setCollector(SrcF->getCollector());
-  } else if (const GlobalVariable *SrcVar = dyn_cast<GlobalVariable>(SrcGV)) {
-    GlobalVariable *DestVar = cast<GlobalVariable>(DestGV);
-    DestVar->setThreadLocal(SrcVar->isThreadLocal());
-  }
+  // Use the maximum alignment, rather than just copying the alignment of SrcGV.
+  unsigned Alignment = std::max(DestGV->getAlignment(), SrcGV->getAlignment());
+  DestGV->copyAttributesFrom(SrcGV);
+  DestGV->setAlignment(Alignment);
 }
 
 /// GetLinkageResult - This analyzes the two global values and determines what

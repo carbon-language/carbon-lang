@@ -163,10 +163,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
 
   // Create the new function body and insert it into the module...
   Function *NF = Function::Create(NFTy, Fn.getLinkage());
-  NF->setCallingConv(Fn.getCallingConv());
-  NF->setParamAttrs(Fn.getParamAttrs());
-  if (Fn.hasCollector())
-    NF->setCollector(Fn.getCollector());
+  NF->copyAttributesFrom(&Fn);
   Fn.getParent()->getFunctionList().insert(&Fn, NF);
   NF->takeName(&Fn);
 
@@ -556,10 +553,8 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
 
   // Create the new function body and insert it into the module...
   Function *NF = Function::Create(NFTy, F->getLinkage());
-  NF->setCallingConv(F->getCallingConv());
+  NF->copyAttributesFrom(F);
   NF->setParamAttrs(NewPAL);
-  if (F->hasCollector())
-    NF->setCollector(F->getCollector());
   F->getParent()->getFunctionList().insert(F, NF);
   NF->takeName(F);
 

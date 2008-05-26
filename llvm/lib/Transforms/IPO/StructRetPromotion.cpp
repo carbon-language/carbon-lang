@@ -232,7 +232,7 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
 
   FunctionType *NFTy = FunctionType::get(STy, Params, FTy->isVarArg());
   Function *NF = Function::Create(NFTy, F->getLinkage(), F->getName());
-  NF->setCallingConv(F->getCallingConv());
+  NF->copyAttributesFrom(F);
   NF->setParamAttrs(PAListPtr::get(ParamAttrsVec.begin(), ParamAttrsVec.end()));
   F->getParent()->getFunctionList().insert(F, NF);
   NF->getBasicBlockList().splice(NF->begin(), F->getBasicBlockList());

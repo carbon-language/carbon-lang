@@ -204,6 +204,10 @@ public:
     return paramHasAttr(1, ParamAttr::StructRet);
   }
 
+  /// copyAttributesFrom - copy all additional attributes (those not needed to
+  /// create a Function) from the Function Src to this one.
+  void copyAttributesFrom(const GlobalValue *Src);
+
   /// deleteBody - This method deletes the body of the function, and converts
   /// the linkage to external.
   ///

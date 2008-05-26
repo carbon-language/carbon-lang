@@ -118,6 +118,10 @@ public:
   bool isThreadLocal() const { return isThreadLocalSymbol; }
   void setThreadLocal(bool Val) { isThreadLocalSymbol = Val; }
 
+  /// copyAttributesFrom - copy all additional attributes (those not needed to
+  /// create a GlobalVariable) from the GlobalVariable Src to this one.
+  void copyAttributesFrom(const GlobalValue *Src);
+
   /// removeFromParent - This method unlinks 'this' from the containing module,
   /// but does not delete it.
   ///
