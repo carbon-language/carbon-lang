@@ -37,6 +37,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -48,6 +49,10 @@ STATISTIC(NumTwoAddressInstrs, "Number of two-address instructions");
 STATISTIC(NumCommuted        , "Number of instructions commuted to coalesce");
 STATISTIC(NumConvertedTo3Addr, "Number of instructions promoted to 3-address");
 STATISTIC(Num3AddrSunk,        "Number of 3-address instructions sunk");
+
+static cl::opt<bool>
+EnableReMat("2-addr-remat", cl::init(false), cl::Hidden,
+            cl::desc("Two-addr conversion should remat when possible."));
 
 namespace {
   class VISIBILITY_HIDDEN TwoAddressInstructionPass
@@ -326,7 +331,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           const TargetRegisterClass* rc = MF.getRegInfo().getRegClass(regA);
           MachineInstr *Orig = MRI->getVRegDef(regB);
 
-          if (Orig && TII->isTriviallyReMaterializable(Orig)) {
+          if (EnableReMat && Orig && TII->isTriviallyReMaterializable(Orig)) {
             TII->reMaterialize(*mbbi, mi, regA, Orig);
             ReMattedInstrs.insert(Orig);
           } else {
@@ -367,33 +372,35 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  SmallPtrSet<MachineInstr*, 8>::iterator I = ReMattedInstrs.begin();
-  SmallPtrSet<MachineInstr*, 8>::iterator E = ReMattedInstrs.end();
+  if (EnableReMat) {
+    SmallPtrSet<MachineInstr*, 8>::iterator I = ReMattedInstrs.begin();
+    SmallPtrSet<MachineInstr*, 8>::iterator E = ReMattedInstrs.end();
 
-  for (; I != E; ++I) {
-    MachineInstr *MI = *I;
-    bool InstrDead = true;
-
-    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      const MachineOperand &MO = MI->getOperand(i);
-      if (!MO.isRegister())
-        continue;
-      unsigned MOReg = MO.getReg();
-      if (!MOReg)
-        continue;
-      if (MO.isDef()) {
-        if (MO.isImplicit())
+    for (; I != E; ++I) {
+      MachineInstr *MI = *I;
+      bool InstrDead = true;
+      
+      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+        const MachineOperand &MO = MI->getOperand(i);
+        if (!MO.isRegister())
           continue;
+        unsigned MOReg = MO.getReg();
+        if (!MOReg)
+          continue;
+        if (MO.isDef()) {
+          if (MO.isImplicit())
+            continue;
 
-        if (MRI->use_begin(MOReg) != MRI->use_end()) {
-          InstrDead = false;
-          break;
+          if (MRI->use_begin(MOReg) != MRI->use_end()) {
+            InstrDead = false;
+            break;
+          }
         }
       }
-    }
 
-    if (InstrDead && MI->getNumOperands() > 0)
-      MI->eraseFromParent();
+      if (InstrDead && MI->getNumOperands() > 0)
+        MI->eraseFromParent();
+    }
   }
 
   return MadeChange;
