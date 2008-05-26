@@ -39,6 +39,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
@@ -200,6 +201,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   DOUT << "********** REWRITING TWO-ADDR INSTRS **********\n";
   DOUT << "********** Function: " << MF.getFunction()->getName() << '\n';
 
+  SmallPtrSet<MachineInstr*, 8> ReMattedInstrs;
+
   for (MachineFunction::iterator mbbi = MF.begin(), mbbe = MF.end();
        mbbi != mbbe; ++mbbi) {
     for (MachineBasicBlock::iterator mi = mbbi->begin(), me = mbbi->end();
@@ -321,7 +324,14 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
         InstructionRearranged:
           const TargetRegisterClass* rc = MF.getRegInfo().getRegClass(regA);
-          TII->copyRegToReg(*mbbi, mi, regA, regB, rc, rc);
+          MachineInstr *Orig = MRI->getVRegDef(regB);
+
+          if (Orig && TII->isTriviallyReMaterializable(Orig)) {
+            TII->reMaterialize(*mbbi, mi, regA, Orig);
+            ReMattedInstrs.insert(Orig);
+          } else {
+            TII->copyRegToReg(*mbbi, mi, regA, regB, rc, rc);
+          }
 
           MachineBasicBlock::iterator prevMi = prior(mi);
           DOUT << "\t\tprepend:\t"; DEBUG(prevMi->print(*cerr.stream(), &TM));
@@ -355,6 +365,35 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
       mi = nmi;
     }
+  }
+
+  SmallPtrSet<MachineInstr*, 8>::iterator I = ReMattedInstrs.begin();
+  SmallPtrSet<MachineInstr*, 8>::iterator E = ReMattedInstrs.end();
+
+  for (; I != E; ++I) {
+    MachineInstr *MI = *I;
+    bool InstrDead = true;
+
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = MI->getOperand(i);
+      if (!MO.isRegister())
+        continue;
+      unsigned MOReg = MO.getReg();
+      if (!MOReg)
+        continue;
+      if (MO.isDef()) {
+        if (MO.isImplicit())
+          continue;
+
+        if (MRI->use_begin(MOReg) != MRI->use_end()) {
+          InstrDead = false;
+          break;
+        }
+      }
+    }
+
+    if (InstrDead && MI->getNumOperands() > 0)
+      MI->eraseFromParent();
   }
 
   return MadeChange;
