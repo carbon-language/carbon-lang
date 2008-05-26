@@ -104,7 +104,7 @@ GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
   if (InitVal) {
     assert(InitVal->getType() == Ty &&
            "Initializer should be the same type as the GlobalVariable!");
-    Op<0>().init(InitVal, this);
+    Op<0>() = InitVal;
   }
 
   LeakDetector::addGarbageObject(this);
@@ -124,7 +124,7 @@ GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
   if (InitVal) {
     assert(InitVal->getType() == Ty &&
            "Initializer should be the same type as the GlobalVariable!");
-    Op<0>().init(InitVal, this);
+    Op<0>() = InitVal;
   }
   
   LeakDetector::addGarbageObject(this);
@@ -191,7 +191,7 @@ GlobalAlias::GlobalAlias(const Type *Ty, LinkageTypes Link,
 
   if (aliasee)
     assert(aliasee->getType() == Ty && "Alias and aliasee types should match!");
-  Op<0>().init(aliasee, this);
+  Op<0>() = aliasee;
 
   if (ParentModule)
     ParentModule->getAliasList().push_back(this);

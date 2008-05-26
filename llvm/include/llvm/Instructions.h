@@ -291,8 +291,8 @@ class StoreInst : public Instruction {
   
   StoreInst(const StoreInst &SI) : Instruction(SI.getType(), Store,
                                                &Op<0>(), 2) {
-    Op<0>().init(SI.Op<0>(), this);
-    Op<1>().init(SI.Op<1>(), this);
+    Op<0>() = SI.Op<0>();
+    Op<1>() = SI.Op<1>();
     setVolatile(SI.isVolatile());
     setAlignment(SI.getAlignment());
     
@@ -1337,8 +1337,8 @@ public:
 class ExtractElementInst : public Instruction {
   ExtractElementInst(const ExtractElementInst &EE) :
     Instruction(EE.getType(), ExtractElement, &Op<0>(), 2) {
-    Op<0>().init(EE.Op<0>(), this);
-    Op<1>().init(EE.Op<1>(), this);
+    Op<0>() = EE.Op<0>();
+    Op<1>() = EE.Op<1>();
   }
 
 public:
@@ -2010,8 +2010,8 @@ public:
       resizeOperands(0);  // Get more space!
     // Initialize some new operands.
     NumOperands = OpNo+2;
-    OperandList[OpNo].init(V, this);
-    OperandList[OpNo+1].init(BB, this);
+    OperandList[OpNo] = V;
+    OperandList[OpNo+1] = BB;
   }
 
   /// removeIncomingValue - Remove an incoming value.  This is useful if a

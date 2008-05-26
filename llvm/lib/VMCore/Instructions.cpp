@@ -118,8 +118,8 @@ PHINode::PHINode(const PHINode &PN)
     ReservedSpace(PN.getNumOperands()) {
   Use *OL = OperandList;
   for (unsigned i = 0, e = PN.getNumOperands(); i != e; i+=2) {
-    OL[i].init(PN.getOperand(i), this);
-    OL[i+1].init(PN.getOperand(i+1), this);
+    OL[i] = PN.getOperand(i);
+    OL[i+1] = PN.getOperand(i+1);
   }
 }
 
@@ -184,7 +184,7 @@ void PHINode::resizeOperands(unsigned NumOps) {
   Use *OldOps = OperandList;
   Use *NewOps = allocHungoffUses(NumOps);
   for (unsigned i = 0; i != e; ++i) {
-      NewOps[i].init(OldOps[i], this);
+      NewOps[i] = OldOps[i];
   }
   OperandList = NewOps;
   if (OldOps) Use::zap(OldOps, OldOps + e, true);
@@ -249,7 +249,7 @@ CallInst::~CallInst() {
 void CallInst::init(Value *Func, Value* const *Params, unsigned NumParams) {
   assert(NumOperands == NumParams+1 && "NumOperands not set up?");
   Use *OL = OperandList;
-  OL[0].init(Func, this);
+  OL[0] = Func;
 
   const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
@@ -262,16 +262,16 @@ void CallInst::init(Value *Func, Value* const *Params, unsigned NumParams) {
     assert((i >= FTy->getNumParams() || 
             FTy->getParamType(i) == Params[i]->getType()) &&
            "Calling a function with a bad signature!");
-    OL[i+1].init(Params[i], this);
+    OL[i+1] = Params[i];
   }
 }
 
 void CallInst::init(Value *Func, Value *Actual1, Value *Actual2) {
   assert(NumOperands == 3 && "NumOperands not set up?");
   Use *OL = OperandList;
-  OL[0].init(Func, this);
-  OL[1].init(Actual1, this);
-  OL[2].init(Actual2, this);
+  OL[0] = Func;
+  OL[1] = Actual1;
+  OL[2] = Actual2;
 
   const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
@@ -291,8 +291,8 @@ void CallInst::init(Value *Func, Value *Actual1, Value *Actual2) {
 void CallInst::init(Value *Func, Value *Actual) {
   assert(NumOperands == 2 && "NumOperands not set up?");
   Use *OL = OperandList;
-  OL[0].init(Func, this);
-  OL[1].init(Actual, this);
+  OL[0] = Func;
+  OL[1] = Actual;
 
   const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
@@ -309,7 +309,7 @@ void CallInst::init(Value *Func, Value *Actual) {
 void CallInst::init(Value *Func) {
   assert(NumOperands == 1 && "NumOperands not set up?");
   Use *OL = OperandList;
-  OL[0].init(Func, this);
+  OL[0] = Func;
 
   const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
@@ -370,7 +370,7 @@ CallInst::CallInst(const CallInst &CI)
   Use *OL = OperandList;
   Use *InOL = CI.OperandList;
   for (unsigned i = 0, e = CI.getNumOperands(); i != e; ++i)
-    OL[i].init(InOL[i], this);
+    OL[i] = InOL[i];
 }
 
 void CallInst::addParamAttr(unsigned i, ParameterAttributes attr) {
@@ -405,9 +405,9 @@ void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
                       Value* const *Args, unsigned NumArgs) {
   assert(NumOperands == 3+NumArgs && "NumOperands not set up?");
   Use *OL = OperandList;
-  OL[0].init(Fn, this);
-  OL[1].init(IfNormal, this);
-  OL[2].init(IfException, this);
+  OL[0] = Fn;
+  OL[1] = IfNormal;
+  OL[2] = IfException;
   const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Fn->getType())->getElementType());
   FTy = FTy;  // silence warning.
@@ -421,7 +421,7 @@ void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
             FTy->getParamType(i) == Args[i]->getType()) &&
            "Invoking a function with a bad signature!");
     
-    OL[i+3].init(Args[i], this);
+    OL[i+3] = Args[i];
   }
 }
 
@@ -434,7 +434,7 @@ InvokeInst::InvokeInst(const InvokeInst &II)
   SubclassData = II.SubclassData;
   Use *OL = OperandList, *InOL = II.OperandList;
   for (unsigned i = 0, e = II.getNumOperands(); i != e; ++i)
-    OL[i].init(InOL[i], this);
+    OL[i] = InOL[i];
 }
 
 BasicBlock *InvokeInst::getSuccessorV(unsigned idx) const {
@@ -482,11 +482,11 @@ ReturnInst::ReturnInst(const ReturnInst &RI)
                    RI.getNumOperands()) {
   unsigned N = RI.getNumOperands();
   if (N == 1)
-    Op<0>().init(RI.Op<0>(), this);
+    Op<0>() = RI.Op<0>();
   else if (N) {
     Use *OL = OperandList;
     for (unsigned i = 0; i < N; ++i)
-      OL[i].init(RI.getOperand(i), this);
+      OL[i] = RI.getOperand(i);
   }
 }
 
@@ -535,7 +535,7 @@ void ReturnInst::init(Value * const* retVals, unsigned N) {
     Value *V = *retVals;
     if (V->getType() == Type::VoidTy)
       return;
-    Op<0>().init(V, this);
+    Op<0>() = V;
     return;
   }
 
@@ -544,7 +544,7 @@ void ReturnInst::init(Value * const* retVals, unsigned N) {
     Value *V = *retVals++;
     assert(!isa<BasicBlock>(V) &&
            "Cannot return basic block.  Probably using the incorrect ctor");
-    OL[i].init(V, this);
+    OL[i] = V;
   }
 }
 
@@ -633,16 +633,16 @@ BranchInst::BranchInst(BasicBlock *IfTrue, Instruction *InsertBefore)
                    OperandTraits<BranchInst>::op_end(this) - 1,
                    1, InsertBefore) {
   assert(IfTrue != 0 && "Branch destination may not be null!");
-  Op<0>().init(reinterpret_cast<Value*>(IfTrue), this);
+  Op<0>() = reinterpret_cast<Value*>(IfTrue);
 }
 BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
                        Instruction *InsertBefore)
   : TerminatorInst(Type::VoidTy, Instruction::Br,
                    OperandTraits<BranchInst>::op_end(this) - 3,
                    3, InsertBefore) {
-  Op<0>().init(reinterpret_cast<Value*>(IfTrue), this);
-  Op<1>().init(reinterpret_cast<Value*>(IfFalse), this);
-  Op<2>().init(Cond, this);
+  Op<0>() = reinterpret_cast<Value*>(IfTrue);
+  Op<1>() = reinterpret_cast<Value*>(IfFalse);
+  Op<2>() = Cond;
 #ifndef NDEBUG
   AssertOK();
 #endif
@@ -653,7 +653,7 @@ BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *InsertAtEnd)
                    OperandTraits<BranchInst>::op_end(this) - 1,
                    1, InsertAtEnd) {
   assert(IfTrue != 0 && "Branch destination may not be null!");
-  Op<0>().init(reinterpret_cast<Value*>(IfTrue), this);
+  Op<0>() = reinterpret_cast<Value*>(IfTrue);
 }
 
 BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
@@ -661,9 +661,9 @@ BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
   : TerminatorInst(Type::VoidTy, Instruction::Br,
                    OperandTraits<BranchInst>::op_end(this) - 3,
                    3, InsertAtEnd) {
-  Op<0>().init(reinterpret_cast<Value*>(IfTrue), this);
-  Op<1>().init(reinterpret_cast<Value*>(IfFalse), this);
-  Op<2>().init(Cond, this);
+  Op<0>() = reinterpret_cast<Value*>(IfTrue);
+  Op<1>() = reinterpret_cast<Value*>(IfFalse);
+  Op<2>() = Cond;
 #ifndef NDEBUG
   AssertOK();
 #endif
@@ -674,11 +674,11 @@ BranchInst::BranchInst(const BranchInst &BI) :
   TerminatorInst(Type::VoidTy, Instruction::Br,
                  OperandTraits<BranchInst>::op_end(this) - BI.getNumOperands(),
                  BI.getNumOperands()) {
-  OperandList[0].init(BI.getOperand(0), this);
+  OperandList[0] = BI.getOperand(0);
   if (BI.getNumOperands() != 1) {
     assert(BI.getNumOperands() == 3 && "BR can have 1 or 3 operands!");
-    OperandList[1].init(BI.getOperand(1), this);
-    OperandList[2].init(BI.getOperand(2), this);
+    OperandList[1] = BI.getOperand(1);
+    OperandList[2] = BI.getOperand(2);
   }
 }
 
@@ -909,8 +909,8 @@ StoreInst::StoreInst(Value *val, Value *addr, Instruction *InsertBefore)
                 OperandTraits<StoreInst>::op_begin(this),
                 OperandTraits<StoreInst>::operands(this),
                 InsertBefore) {
-  Op<0>().init(val, this);
-  Op<1>().init(addr, this);
+  Op<0>() = val;
+  Op<1>() = addr;
   setVolatile(false);
   setAlignment(0);
   AssertOK();
@@ -921,8 +921,8 @@ StoreInst::StoreInst(Value *val, Value *addr, BasicBlock *InsertAtEnd)
                 OperandTraits<StoreInst>::op_begin(this),
                 OperandTraits<StoreInst>::operands(this),
                 InsertAtEnd) {
-  Op<0>().init(val, this);
-  Op<1>().init(addr, this);
+  Op<0>() = val;
+  Op<1>() = addr;
   setVolatile(false);
   setAlignment(0);
   AssertOK();
@@ -934,8 +934,8 @@ StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
                 OperandTraits<StoreInst>::op_begin(this),
                 OperandTraits<StoreInst>::operands(this),
                 InsertBefore) {
-  Op<0>().init(val, this);
-  Op<1>().init(addr, this);
+  Op<0>() = val;
+  Op<1>() = addr;
   setVolatile(isVolatile);
   setAlignment(0);
   AssertOK();
@@ -947,8 +947,8 @@ StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
                 OperandTraits<StoreInst>::op_begin(this),
                 OperandTraits<StoreInst>::operands(this),
                 InsertBefore) {
-  Op<0>().init(val, this);
-  Op<1>().init(addr, this);
+  Op<0>() = val;
+  Op<1>() = addr;
   setVolatile(isVolatile);
   setAlignment(Align);
   AssertOK();
@@ -960,8 +960,8 @@ StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
                 OperandTraits<StoreInst>::op_begin(this),
                 OperandTraits<StoreInst>::operands(this),
                 InsertAtEnd) {
-  Op<0>().init(val, this);
-  Op<1>().init(addr, this);
+  Op<0>() = val;
+  Op<1>() = addr;
   setVolatile(isVolatile);
   setAlignment(Align);
   AssertOK();
@@ -973,8 +973,8 @@ StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
                 OperandTraits<StoreInst>::op_begin(this),
                 OperandTraits<StoreInst>::operands(this),
                 InsertAtEnd) {
-  Op<0>().init(val, this);
-  Op<1>().init(addr, this);
+  Op<0>() = val;
+  Op<1>() = addr;
   setVolatile(isVolatile);
   setAlignment(0);
   AssertOK();
@@ -996,17 +996,17 @@ static unsigned retrieveAddrSpace(const Value *Val) {
 void GetElementPtrInst::init(Value *Ptr, Value* const *Idx, unsigned NumIdx) {
   assert(NumOperands == 1+NumIdx && "NumOperands not initialized?");
   Use *OL = OperandList;
-  OL[0].init(Ptr, this);
+  OL[0] = Ptr;
 
   for (unsigned i = 0; i != NumIdx; ++i)
-    OL[i+1].init(Idx[i], this);
+    OL[i+1] = Idx[i];
 }
 
 void GetElementPtrInst::init(Value *Ptr, Value *Idx) {
   assert(NumOperands == 2 && "NumOperands not initialized?");
   Use *OL = OperandList;
-  OL[0].init(Ptr, this);
-  OL[1].init(Idx, this);
+  OL[0] = Ptr;
+  OL[1] = Idx;
 }
 
 GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
@@ -1017,7 +1017,7 @@ GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
   Use *OL = OperandList;
   Use *GEPIOL = GEPI.OperandList;
   for (unsigned i = 0, E = NumOperands; i != E; ++i)
-    OL[i].init(GEPIOL[i], this);
+    OL[i] = GEPIOL[i];
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
@@ -1112,8 +1112,8 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
                 2, InsertBef) {
   assert(isValidOperands(Val, Index) &&
          "Invalid extractelement instruction operands!");
-  Op<0>().init(Val, this);
-  Op<1>().init(Index, this);
+  Op<0>() = Val;
+  Op<1>() = Index;
   setName(Name);
 }
 
@@ -1127,8 +1127,8 @@ ExtractElementInst::ExtractElementInst(Value *Val, unsigned IndexV,
   Constant *Index = ConstantInt::get(Type::Int32Ty, IndexV);
   assert(isValidOperands(Val, Index) &&
          "Invalid extractelement instruction operands!");
-  Op<0>().init(Val, this);
-  Op<1>().init(Index, this);
+  Op<0>() = Val;
+  Op<1>() = Index;
   setName(Name);
 }
 
@@ -1143,8 +1143,8 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
   assert(isValidOperands(Val, Index) &&
          "Invalid extractelement instruction operands!");
 
-  Op<0>().init(Val, this);
-  Op<1>().init(Index, this);
+  Op<0>() = Val;
+  Op<1>() = Index;
   setName(Name);
 }
 
@@ -1159,8 +1159,8 @@ ExtractElementInst::ExtractElementInst(Value *Val, unsigned IndexV,
   assert(isValidOperands(Val, Index) &&
          "Invalid extractelement instruction operands!");
   
-  Op<0>().init(Val, this);
-  Op<1>().init(Index, this);
+  Op<0>() = Val;
+  Op<1>() = Index;
   setName(Name);
 }
 
@@ -1179,9 +1179,9 @@ bool ExtractElementInst::isValidOperands(const Value *Val, const Value *Index) {
 InsertElementInst::InsertElementInst(const InsertElementInst &IE)
     : Instruction(IE.getType(), InsertElement,
                   OperandTraits<InsertElementInst>::op_begin(this), 3) {
-  Op<0>().init(IE.Op<0>(), this);
-  Op<1>().init(IE.Op<1>(), this);
-  Op<2>().init(IE.Op<2>(), this);
+  Op<0>() = IE.Op<0>();
+  Op<1>() = IE.Op<1>();
+  Op<2>() = IE.Op<2>();
 }
 InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, Value *Index,
                                      const std::string &Name,
@@ -1191,9 +1191,9 @@ InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, Value *Index,
                 3, InsertBef) {
   assert(isValidOperands(Vec, Elt, Index) &&
          "Invalid insertelement instruction operands!");
-  Op<0>().init(Vec, this);
-  Op<1>().init(Elt, this);
-  Op<2>().init(Index, this);
+  Op<0>() = Vec;
+  Op<1>() = Elt;
+  Op<2>() = Index;
   setName(Name);
 }
 
@@ -1206,9 +1206,9 @@ InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, unsigned IndexV,
   Constant *Index = ConstantInt::get(Type::Int32Ty, IndexV);
   assert(isValidOperands(Vec, Elt, Index) &&
          "Invalid insertelement instruction operands!");
-  Op<0>().init(Vec, this);
-  Op<1>().init(Elt, this);
-  Op<2>().init(Index, this);
+  Op<0>() = Vec;
+  Op<1>() = Elt;
+  Op<2>() = Index;
   setName(Name);
 }
 
@@ -1222,9 +1222,9 @@ InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, Value *Index,
   assert(isValidOperands(Vec, Elt, Index) &&
          "Invalid insertelement instruction operands!");
 
-  Op<0>().init(Vec, this);
-  Op<1>().init(Elt, this);
-  Op<2>().init(Index, this);
+  Op<0>() = Vec;
+  Op<1>() = Elt;
+  Op<2>() = Index;
   setName(Name);
 }
 
@@ -1238,9 +1238,9 @@ InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, unsigned IndexV,
   assert(isValidOperands(Vec, Elt, Index) &&
          "Invalid insertelement instruction operands!");
   
-  Op<0>().init(Vec, this);
-  Op<1>().init(Elt, this);
-  Op<2>().init(Index, this);
+  Op<0>() = Vec;
+  Op<1>() = Elt;
+  Op<2>() = Index;
   setName(Name);
 }
 
@@ -1266,9 +1266,9 @@ ShuffleVectorInst::ShuffleVectorInst(const ShuffleVectorInst &SV)
   : Instruction(SV.getType(), ShuffleVector,
                 OperandTraits<ShuffleVectorInst>::op_begin(this),
                 OperandTraits<ShuffleVectorInst>::operands(this)) {
-  Op<0>().init(SV.Op<0>(), this);
-  Op<1>().init(SV.Op<1>(), this);
-  Op<2>().init(SV.Op<2>(), this);
+  Op<0>() = SV.Op<0>();
+  Op<1>() = SV.Op<1>();
+  Op<2>() = SV.Op<2>();
 }
 
 ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
@@ -1280,9 +1280,9 @@ ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
                 InsertBefore) {
   assert(isValidOperands(V1, V2, Mask) &&
          "Invalid shuffle vector instruction operands!");
-  Op<0>().init(V1, this);
-  Op<1>().init(V2, this);
-  Op<2>().init(Mask, this);
+  Op<0>() = V1;
+  Op<1>() = V2;
+  Op<2>() = Mask;
   setName(Name);
 }
 
@@ -1296,9 +1296,9 @@ ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
   assert(isValidOperands(V1, V2, Mask) &&
          "Invalid shuffle vector instruction operands!");
 
-  Op<0>().init(V1, this);
-  Op<1>().init(V2, this);
-  Op<2>().init(Mask, this);
+  Op<0>() = V1;
+  Op<1>() = V2;
+  Op<2>() = Mask;
   setName(Name);
 }
 
@@ -1339,19 +1339,19 @@ int ShuffleVectorInst::getMaskValue(unsigned i) const {
 void InsertValueInst::init(Value *Agg, Value *Val, Value* const *Idx, unsigned NumIdx) {
   assert(NumOperands == 1+NumIdx && "NumOperands not initialized?");
   Use *OL = OperandList;
-  OL[0].init(Agg, this);
-  OL[1].init(Val, this);
+  OL[0] = Agg;
+  OL[1] = Val;
 
   for (unsigned i = 0; i != NumIdx; ++i)
-    OL[i+2].init(Idx[i], this);
+    OL[i+2] = Idx[i];
 }
 
 void InsertValueInst::init(Value *Agg, Value *Val, Value *Idx) {
   assert(NumOperands == 3 && "NumOperands not initialized?");
   Use *OL = OperandList;
-  OL[0].init(Agg, this);
-  OL[1].init(Val, this);
-  OL[2].init(Idx, this);
+  OL[0] = Agg;
+  OL[1] = Val;
+  OL[2] = Idx;
 }
 
 InsertValueInst::InsertValueInst(const InsertValueInst &IVI)
@@ -1362,7 +1362,7 @@ InsertValueInst::InsertValueInst(const InsertValueInst &IVI)
   Use *OL = OperandList;
   Use *IVIOL = IVI.OperandList;
   for (unsigned i = 0, E = NumOperands; i != E; ++i)
-    OL[i].init(IVIOL[i], this);
+    OL[i] = IVIOL[i];
 }
 
 //===----------------------------------------------------------------------===//
@@ -1372,17 +1372,17 @@ InsertValueInst::InsertValueInst(const InsertValueInst &IVI)
 void ExtractValueInst::init(Value *Agg, Value* const *Idx, unsigned NumIdx) {
   assert(NumOperands == 1+NumIdx && "NumOperands not initialized?");
   Use *OL = OperandList;
-  OL[0].init(Agg, this);
+  OL[0] = Agg;
 
   for (unsigned i = 0; i != NumIdx; ++i)
-    OL[i+1].init(Idx[i], this);
+    OL[i+1] = Idx[i];
 }
 
 void ExtractValueInst::init(Value *Agg, Value *Idx) {
   assert(NumOperands == 2 && "NumOperands not initialized?");
   Use *OL = OperandList;
-  OL[0].init(Agg, this);
-  OL[1].init(Idx, this);
+  OL[0] = Agg;
+  OL[1] = Idx;
 }
 
 ExtractValueInst::ExtractValueInst(const ExtractValueInst &EVI)
@@ -1393,7 +1393,7 @@ ExtractValueInst::ExtractValueInst(const ExtractValueInst &EVI)
   Use *OL = OperandList;
   Use *EVIOL = EVI.OperandList;
   for (unsigned i = 0, E = NumOperands; i != E; ++i)
-    OL[i].init(EVIOL[i], this);
+    OL[i] = EVIOL[i];
 }
 
 // getIndexedType - Returns the type of the element that would be extracted
@@ -1434,8 +1434,8 @@ BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2,
                 OperandTraits<BinaryOperator>::op_begin(this),
                 OperandTraits<BinaryOperator>::operands(this),
                 InsertBefore) {
-  Op<0>().init(S1, this);
-  Op<1>().init(S2, this);
+  Op<0>() = S1;
+  Op<1>() = S2;
   init(iType);
   setName(Name);
 }
@@ -1447,8 +1447,8 @@ BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2,
                 OperandTraits<BinaryOperator>::op_begin(this),
                 OperandTraits<BinaryOperator>::operands(this),
                 InsertAtEnd) {
-  Op<0>().init(S1, this);
-  Op<1>().init(S2, this);
+  Op<0>() = S1;
+  Op<1>() = S2;
   init(iType);
   setName(Name);
 }
@@ -2419,8 +2419,8 @@ CmpInst::CmpInst(const Type *ty, OtherOps op, unsigned short predicate,
                 OperandTraits<CmpInst>::op_begin(this),
                 OperandTraits<CmpInst>::operands(this),
                 InsertBefore) {
-    Op<0>().init(LHS, this);
-    Op<1>().init(RHS, this);
+    Op<0>() = LHS;
+    Op<1>() = RHS;
   SubclassData = predicate;
   setName(Name);
 }
@@ -2432,8 +2432,8 @@ CmpInst::CmpInst(const Type *ty, OtherOps op, unsigned short predicate,
                 OperandTraits<CmpInst>::op_begin(this),
                 OperandTraits<CmpInst>::operands(this),
                 InsertAtEnd) {
-  Op<0>().init(LHS, this);
-  Op<1>().init(RHS, this);
+  Op<0>() = LHS;
+  Op<1>() = RHS;
   SubclassData = predicate;
   setName(Name);
 }
@@ -2687,8 +2687,8 @@ void SwitchInst::init(Value *Value, BasicBlock *Default, unsigned NumCases) {
   NumOperands = 2;
   OperandList = allocHungoffUses(ReservedSpace);
 
-  OperandList[0].init(Value, this);
-  OperandList[1].init(Default, this);
+  OperandList[0] = Value;
+  OperandList[1] = Default;
 }
 
 /// SwitchInst ctor - Create a new switch instruction, specifying a value to
@@ -2716,8 +2716,8 @@ SwitchInst::SwitchInst(const SwitchInst &SI)
                    allocHungoffUses(SI.getNumOperands()), SI.getNumOperands()) {
   Use *OL = OperandList, *InOL = SI.OperandList;
   for (unsigned i = 0, E = SI.getNumOperands(); i != E; i+=2) {
-    OL[i].init(InOL[i], this);
-    OL[i+1].init(InOL[i+1], this);
+    OL[i] = InOL[i];
+    OL[i+1] = InOL[i+1];
   }
 }
 
@@ -2735,8 +2735,8 @@ void SwitchInst::addCase(ConstantInt *OnVal, BasicBlock *Dest) {
   // Initialize some new operands.
   assert(OpNo+1 < ReservedSpace && "Growing didn't work!");
   NumOperands = OpNo+2;
-  OperandList[OpNo].init(OnVal, this);
-  OperandList[OpNo+1].init(Dest, this);
+  OperandList[OpNo] = OnVal;
+  OperandList[OpNo+1] = Dest;
 }
 
 /// removeCase - This method removes the specified successor from the switch
@@ -2790,7 +2790,7 @@ void SwitchInst::resizeOperands(unsigned NumOps) {
   Use *NewOps = allocHungoffUses(NumOps);
   Use *OldOps = OperandList;
   for (unsigned i = 0; i != e; ++i) {
-      NewOps[i].init(OldOps[i], this);
+      NewOps[i] = OldOps[i];
   }
   OperandList = NewOps;
   if (OldOps) Use::zap(OldOps, OldOps + e, true);

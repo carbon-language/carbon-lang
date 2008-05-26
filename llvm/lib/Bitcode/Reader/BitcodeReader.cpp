@@ -180,7 +180,7 @@ Constant *BitcodeReaderValueList::getConstantFwdRef(unsigned Idx,
 
   // Create and return a placeholder, which will later be RAUW'd.
   Constant *C = new ConstantPlaceHolder(Ty);
-  OperandList[Idx].init(C, this);
+  OperandList[Idx] = C;
   return C;
 }
 
@@ -201,7 +201,7 @@ Value *BitcodeReaderValueList::getValueFwdRef(unsigned Idx, const Type *Ty) {
   
   // Create and return a placeholder, which will later be RAUW'd.
   Value *V = new Argument(Ty);
-  OperandList[Idx].init(V, this);
+  OperandList[Idx] = V;
   return V;
 }
 

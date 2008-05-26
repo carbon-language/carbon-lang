@@ -367,7 +367,7 @@ ConstantArray::ConstantArray(const ArrayType *T,
             (T->isAbstract() &&
              C->getType()->getTypeID() == T->getElementType()->getTypeID())) &&
            "Initializer for array element doesn't match array element type!");
-    OL->init(C, this);
+    *OL = C;
   }
 }
 
@@ -389,7 +389,7 @@ ConstantStruct::ConstantStruct(const StructType *T,
              T->getElementType(I-V.begin())->getTypeID() == 
                    C->getType()->getTypeID())) &&
            "Initializer for struct element doesn't match struct element type!");
-    OL->init(C, this);
+    *OL = C;
   }
 }
 
@@ -407,7 +407,7 @@ ConstantVector::ConstantVector(const VectorType *T,
             (T->isAbstract() &&
              C->getType()->getTypeID() == T->getElementType()->getTypeID())) &&
            "Initializer for vector element doesn't match vector element type!");
-    OL->init(C, this);
+    *OL = C;
   }
 }
 
@@ -445,8 +445,8 @@ public:
   }
   BinaryConstantExpr(unsigned Opcode, Constant *C1, Constant *C2)
     : ConstantExpr(C1->getType(), Opcode, &Op<0>(), 2) {
-    Op<0>().init(C1, this);
-    Op<1>().init(C2, this);
+    Op<0>() = C1;
+    Op<1>() = C2;
   }
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -463,9 +463,9 @@ public:
   }
   SelectConstantExpr(Constant *C1, Constant *C2, Constant *C3)
     : ConstantExpr(C2->getType(), Instruction::Select, &Op<0>(), 3) {
-    Op<0>().init(C1, this);
-    Op<1>().init(C2, this);
-    Op<2>().init(C3, this);
+    Op<0>() = C1;
+    Op<1>() = C2;
+    Op<2>() = C3;
   }
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -484,8 +484,8 @@ public:
   ExtractElementConstantExpr(Constant *C1, Constant *C2)
     : ConstantExpr(cast<VectorType>(C1->getType())->getElementType(), 
                    Instruction::ExtractElement, &Op<0>(), 2) {
-    Op<0>().init(C1, this);
-    Op<1>().init(C2, this);
+    Op<0>() = C1;
+    Op<1>() = C2;
   }
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -504,9 +504,9 @@ public:
   InsertElementConstantExpr(Constant *C1, Constant *C2, Constant *C3)
     : ConstantExpr(C1->getType(), Instruction::InsertElement, 
                    &Op<0>(), 3) {
-    Op<0>().init(C1, this);
-    Op<1>().init(C2, this);
-    Op<2>().init(C3, this);
+    Op<0>() = C1;
+    Op<1>() = C2;
+    Op<2>() = C3;
   }
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -525,9 +525,9 @@ public:
   ShuffleVectorConstantExpr(Constant *C1, Constant *C2, Constant *C3)
   : ConstantExpr(C1->getType(), Instruction::ShuffleVector, 
                  &Op<0>(), 3) {
-    Op<0>().init(C1, this);
-    Op<1>().init(C2, this);
-    Op<2>().init(C3, this);
+    Op<0>() = C1;
+    Op<1>() = C2;
+    Op<2>() = C3;
   }
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -599,8 +599,8 @@ struct VISIBILITY_HIDDEN CompareConstantExpr : public ConstantExpr {
   CompareConstantExpr(const Type *ty, Instruction::OtherOps opc,
                       unsigned short pred,  Constant* LHS, Constant* RHS)
     : ConstantExpr(ty, opc, &Op<0>(), 2), predicate(pred) {
-    Op<0>().init(LHS, this);
-    Op<1>().init(RHS, this);
+    Op<0>() = LHS;
+    Op<1>() = RHS;
   }
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -650,9 +650,9 @@ ExtractValueConstantExpr::ExtractValueConstantExpr
                    OperandTraits<ExtractValueConstantExpr>::op_end(this)
                    - (IdxList.size()+1),
                    IdxList.size()+1) {
-  OperandList[0].init(Agg, this);
+  OperandList[0] = Agg;
   for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
-    OperandList[i+1].init(IdxList[i], this);
+    OperandList[i+1] = IdxList[i];
 }
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ExtractValueConstantExpr, Value)
@@ -669,10 +669,10 @@ InsertValueConstantExpr::InsertValueConstantExpr
                    OperandTraits<InsertValueConstantExpr>::op_end(this)
                    - (IdxList.size()+2),
                    IdxList.size()+2) {
-  OperandList[0].init(Agg, this);
-  OperandList[1].init(Val, this);
+  OperandList[0] = Agg;
+  OperandList[1] = Val;
   for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
-    OperandList[i+2].init(IdxList[i], this);
+    OperandList[i+2] = IdxList[i];
 }
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(InsertValueConstantExpr, Value)
@@ -690,9 +690,9 @@ GetElementPtrConstantExpr::GetElementPtrConstantExpr
                    OperandTraits<GetElementPtrConstantExpr>::op_end(this)
                    - (IdxList.size()+1),
                    IdxList.size()+1) {
-  OperandList[0].init(C, this);
+  OperandList[0] = C;
   for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
-    OperandList[i+1].init(IdxList[i], this);
+    OperandList[i+1] = IdxList[i];
 }
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(GetElementPtrConstantExpr, Value)
