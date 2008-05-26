@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=sse41 > %t
+; RUN: llvm-as < %s | llc -march=x86 -mattr=sse41 -mtriple=i686-apple-darwin8.8.0 > %t
 ; RUN: grep pmul %t | count 6
 ; RUN: grep mov %t | count 8
 
