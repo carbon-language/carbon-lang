@@ -131,7 +131,7 @@ void AggExprEmitter::EmitAggregateCopy(llvm::Value *DestPtr,
                                        llvm::Value *SrcPtr, QualType Ty) {
   assert(!Ty->isAnyComplexType() && "Shouldn't happen for complex");
   
-  // Aggregate assignment turns into llvm.memcpy.
+  // Aggregate assignment turns into llvm.memmove.
   const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   if (DestPtr->getType() != BP)
     DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
@@ -144,14 +144,14 @@ void AggExprEmitter::EmitAggregateCopy(llvm::Value *DestPtr,
   // FIXME: Handle variable sized types.
   const llvm::Type *IntPtr = llvm::IntegerType::get(CGF.LLVMPointerWidth);
   
-  llvm::Value *MemCpyOps[4] = {
+  llvm::Value *MemMoveOps[4] = {
     DestPtr, SrcPtr,
     // TypeInfo.first describes size in bits.
     llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
     llvm::ConstantInt::get(llvm::Type::Int32Ty, TypeInfo.second/8)
   };
   
-  Builder.CreateCall(CGF.CGM.getMemCpyFn(), MemCpyOps, MemCpyOps+4);
+  Builder.CreateCall(CGF.CGM.getMemMoveFn(), MemMoveOps, MemMoveOps+4);
 }
 
 

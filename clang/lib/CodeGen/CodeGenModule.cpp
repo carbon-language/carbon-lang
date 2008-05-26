@@ -35,7 +35,8 @@ CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
                              llvm::Module &M, const llvm::TargetData &TD,
                              Diagnostic &diags, bool GenerateDebugInfo)
   : Context(C), Features(LO), TheModule(M), TheTargetData(TD), Diags(diags),
-    Types(C, M, TD), MemCpyFn(0), MemSetFn(0), CFConstantStringClassRef(0) {
+    Types(C, M, TD), MemCpyFn(0), MemMoveFn(0), MemSetFn(0),
+    CFConstantStringClassRef(0) {
   //TODO: Make this selectable at runtime
   Runtime = CreateObjCRuntime(M,
       getTypes().ConvertType(getContext().IntTy),
@@ -587,6 +588,17 @@ llvm::Function *CodeGenModule::getMemCpyFn() {
   case 64: IID = llvm::Intrinsic::memcpy_i64; break;
   }
   return MemCpyFn = getIntrinsic(IID);
+}
+
+llvm::Function *CodeGenModule::getMemMoveFn() {
+  if (MemMoveFn) return MemMoveFn;
+  llvm::Intrinsic::ID IID;
+  switch (Context.Target.getPointerWidth(0)) {
+  default: assert(0 && "Unknown ptr width");
+  case 32: IID = llvm::Intrinsic::memmove_i32; break;
+  case 64: IID = llvm::Intrinsic::memmove_i64; break;
+  }
+  return MemMoveFn = getIntrinsic(IID);
 }
 
 llvm::Function *CodeGenModule::getMemSetFn() {

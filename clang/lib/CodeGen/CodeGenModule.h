@@ -59,6 +59,7 @@ class CodeGenModule {
   CGDebugInfo *DebugInfo;
 
   llvm::Function *MemCpyFn;
+  llvm::Function *MemMoveFn;
   llvm::Function *MemSetFn;
   llvm::DenseMap<const Decl*, llvm::Constant*> GlobalDeclMap;
   std::vector<const NamedDecl*> StaticDecls;
@@ -101,6 +102,7 @@ public:
   /// array containing the literal.  The result is pointer to array type.
   llvm::Constant *GetAddrOfConstantString(const std::string& str);
   llvm::Function *getMemCpyFn();
+  llvm::Function *getMemMoveFn();
   llvm::Function *getMemSetFn();
   llvm::Function *getIntrinsic(unsigned IID, const llvm::Type **Tys = 0, 
                                unsigned NumTys = 0);
