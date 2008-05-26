@@ -87,7 +87,7 @@ namespace {
                                       SetVector<Instruction*> &AffectedValues);
 
     Value *GetValueForBlock(DomTreeNode *BB, Instruction *OrigInst,
-                            std::map<DomTreeNode*, Value*> &Phis);
+                            DenseMap<DomTreeNode*, Value*> &Phis);
 
     /// inLoop - returns true if the given block is within the current loop
     bool inLoop(BasicBlock* B) {
@@ -143,7 +143,7 @@ void LCSSA::ProcessInstruction(Instruction *Instr,
   ++NumLCSSA; // We are applying the transformation
 
   // Keep track of the blocks that have the value available already.
-  std::map<DomTreeNode*, Value*> Phis;
+  DenseMap<DomTreeNode*, Value*> Phis;
 
   DomTreeNode *InstrNode = DT->getNode(Instr->getParent());
 
@@ -247,7 +247,7 @@ void LCSSA::getLoopValuesUsedOutsideLoop(Loop *L,
 /// GetValueForBlock - Get the value to use within the specified basic block.
 /// available values are in Phis.
 Value *LCSSA::GetValueForBlock(DomTreeNode *BB, Instruction *OrigInst,
-                               std::map<DomTreeNode*, Value*> &Phis) {
+                               DenseMap<DomTreeNode*, Value*> &Phis) {
   // If there is no dominator info for this BB, it is unreachable.
   if (BB == 0)
     return UndefValue::get(OrigInst->getType());
