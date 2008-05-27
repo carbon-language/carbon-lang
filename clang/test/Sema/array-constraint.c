@@ -41,7 +41,7 @@ void check_size() {
 }
 
 static int I;
-typedef int TA[I]; // expected-error {{variable length array declared outside of any function}}
+typedef int TA[I]; // expected-error {{arrays with static storage duration must have constant integer length}}
 
 void strFunc(char *);
 const char staticAry[] = "test";

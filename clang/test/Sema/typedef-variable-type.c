@@ -1,3 +1,3 @@
 // RUN: clang %s -verify -fsyntax-only -pedantic
 
-typedef int (*a)[!.0]; // expected-error{{variable length array declared outside of any function}}
+typedef int (*a)[!.0]; // expected-error{{arrays with static storage duration must have constant integer length}}

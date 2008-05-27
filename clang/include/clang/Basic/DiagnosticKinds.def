@@ -712,7 +712,7 @@ DIAG(warn_enum_too_large, WARNING,
 DIAG(err_case_label_not_integer_constant_expr, ERROR,
      "case label does not reduce to an integer constant")
 DIAG(err_typecheck_illegal_vla, ERROR,
-     "variable length array declared outside of any function")
+     "arrays with static storage duration must have constant integer length")
 DIAG(err_typecheck_negative_array_size, ERROR,
      "array size is negative")
 DIAG(warn_typecheck_function_qualifiers, WARNING,

@@ -9,8 +9,8 @@ int main() {
   struct foo s;
 
   static int ary[__builtin_classify_type(a)];
-  static int ary2[(__builtin_classify_type)(a)]; // expected-error{{variable length array declared outside of any function}}
-  static int ary3[(*__builtin_classify_type)(a)]; // expected-error{{variable length array declared outside of any function}}
+  static int ary2[(__builtin_classify_type)(a)]; // expected-error{{arrays with static storage duration must have constant integer length}}
+  static int ary3[(*__builtin_classify_type)(a)]; // expected-error{{arrays with static storage duration must have constant integer length}}
 
   int result;
 
