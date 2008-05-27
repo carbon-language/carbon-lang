@@ -161,6 +161,21 @@ void CodeGenTypes::CollectObjCIvarTypes(ObjCInterfaceDecl *ObjCClass,
   }
 }
 
+static const llvm::Type* getTypeForFormat(const llvm::fltSemantics * format) {
+  if (format == &llvm::APFloat::IEEEsingle)
+    return llvm::Type::FloatTy;
+  if (format == &llvm::APFloat::IEEEdouble)
+    return llvm::Type::DoubleTy;
+  if (format == &llvm::APFloat::IEEEquad)
+    return llvm::Type::FP128Ty;
+  if (format == &llvm::APFloat::PPCDoubleDouble)
+    return llvm::Type::PPC_FP128Ty;
+  if (format == &llvm::APFloat::x87DoubleExtended)
+    return llvm::Type::X86_FP80Ty;
+  assert(9 && "Unknown float format!");
+  return 0;
+}
+
 const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   const clang::Type &Ty = *T.getCanonicalType();
   
@@ -195,13 +210,12 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       return llvm::IntegerType::get(
         static_cast<unsigned>(Context.getTypeSize(T)));
       
-    case BuiltinType::Float:      return llvm::Type::FloatTy;
+    case BuiltinType::Float:
+      return getTypeForFormat(Context.Target.getFloatFormat());
     case BuiltinType::Double:
-      return (Context.Target.getDoubleFormat() == &llvm::APFloat::IEEEdouble) ? 
-        llvm::Type::DoubleTy : llvm::Type::FloatTy;
+      return getTypeForFormat(Context.Target.getDoubleFormat());
     case BuiltinType::LongDouble:
-      // FIXME: mapping long double onto double.
-      return llvm::Type::DoubleTy;
+      return getTypeForFormat(Context.Target.getLongDoubleFormat());
     }
     break;
   }
