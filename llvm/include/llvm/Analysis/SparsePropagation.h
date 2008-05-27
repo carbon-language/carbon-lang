@@ -32,7 +32,7 @@ namespace llvm {
   class SparseSolver;
   
 /// AbstractLatticeFunction - This class is implemented by the dataflow instance
-/// to specify what the lattice values are and what how they handle merges etc.
+/// to specify what the lattice values are and how they handle merges etc.
 /// This gives the client the power to compute lattice values from instructions,
 /// constants, etc.  The requirement is that lattice values must all fit into
 /// a void*.  If a void* is not sufficient, the implementation should use this
@@ -119,7 +119,8 @@ class SparseSolver {
   SparseSolver(const SparseSolver&);    // DO NOT IMPLEMENT
   void operator=(const SparseSolver&);  // DO NOT IMPLEMENT
 public:
-  SparseSolver(AbstractLatticeFunction *Lattice) : LatticeFunc(Lattice) {}
+  explicit SparseSolver(AbstractLatticeFunction *Lattice)
+    : LatticeFunc(Lattice) {}
   ~SparseSolver() {
     delete LatticeFunc;
   }
