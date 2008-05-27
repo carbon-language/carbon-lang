@@ -328,6 +328,7 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
 
     if (!Result.isInvalid)
       return Actions.ActOnFileScopeAsmDecl(Tok.getLocation(), Result.Val);
+    return 0;
   }
   case tok::at:
     // @ is not a legal token unless objc is enabled, no need to check.
@@ -653,7 +654,7 @@ Parser::ExprResult Parser::ParseSimpleAsm() {
   
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after, "asm");
-    return 0;
+    return true;
   }
   
   ConsumeParen();
