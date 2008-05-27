@@ -511,13 +511,19 @@ sub RunBuildCommand {
     }
   } 
   
-
   if ($Cmd eq "xcodebuild") {
     # Disable distributed builds for xcodebuild.
     AddIfNotPresent($Args,"-nodistribute");
 
     # Disable PCH files until clang supports them.
     AddIfNotPresent($Args,"GCC_PRECOMPILE_PREFIX_HEADER=NO");
+    
+    # When 'CC' is set, xcodebuild uses it to do all linking, even if we are
+    # linking C++ object files.  Set 'LDPLUSPLUS' so that xcodebuild uses 'g++'
+    # when linking such files.
+    my $LDPLUSPLUS = `which g++`;
+    $LDPLUSPLUS =~ s/\015?\012//;  # strip newlines
+    $ENV{'LDPLUSPLUS'} = $LDPLUSPLUS;    
   }
   
   system(@$Args);
