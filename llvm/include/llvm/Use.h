@@ -66,10 +66,11 @@ inline T *transferTag(const T *From, const T *To) {
 // Use is here to make keeping the "use" list of a Value up-to-date really easy.
 //
 class Use {
-public:
+private:
   /// init - specify Value and User
   /// @deprecated in 2.4, will be removed soon
   inline void init(Value *V, User *U);
+public:
   /// swap - provide a fast substitute to std::swap<Use>
   /// that also works with less standard-compliant compilers
   void swap(Use &RHS);
@@ -93,8 +94,6 @@ private:
                   , fullStopTag = tagThree };
 
 public:
-
-
   operator Value*() const { return Val; }
   Value *get() const { return Val; }
   User *getUser() const;
