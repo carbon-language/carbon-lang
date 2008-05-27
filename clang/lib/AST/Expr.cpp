@@ -319,14 +319,17 @@ bool Expr::hasLocalSideEffect() const {
     // If the base pointer or element is to a volatile pointer/field, accessing
     // if is a side effect.
     return getType().isVolatileQualified();
-    
+
   case CallExprClass:
     // TODO: check attributes for pure/const.   "void foo() { strlen("bar"); }"
     // should warn.
     return true;
   case ObjCMessageExprClass:
     return true;
-    
+  case StmtExprClass:
+    // TODO: check the inside of the statement expression
+    return true;
+
   case CastExprClass:
     // If this is a cast to void, check the operand.  Otherwise, the result of
     // the cast is unused.
