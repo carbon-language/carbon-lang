@@ -341,19 +341,6 @@ void CodeGenModule::EmitFunction(const FunctionDecl *FD) {
     CodeGenFunction(*this).GenerateCode(FD);
     return;
   }
-      
-  // We need to check the Module here to see if GetAddrOfFunctionDecl() has
-  // already added this function to the Module because the address of the
-  // function's prototype was taken.  If this is the case, call 
-  // GetAddrOfFunctionDecl to insert the static FunctionDecl into the used
-  // GlobalDeclsMap, so that EmitStatics will generate code for it later.
-  //
-  // Example:
-  // static int foo();
-  // int bar() { return foo(); }
-  // static int foo() { return 5; }
-  if (getModule().getFunction(FD->getName()))
-    GetAddrOfFunctionDecl(FD, true);
 
   StaticDecls.push_back(FD);
 }
@@ -366,11 +353,19 @@ void CodeGenModule::EmitStatics() {
   do {
     Changed = false;
     for (unsigned i = 0, e = StaticDecls.size(); i != e; ++i) {
-      // Check the map of used decls for our static. If not found, continue.
       const Decl *D = StaticDecls[i];
-      if (!GlobalDeclMap.count(D))
-        continue;
-      
+
+      // Check if we have used a decl with the same name
+      // FIXME: The AST should have some sort of aggregate decls or
+      // global symbol map.
+      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+        if (!getModule().getFunction(FD->getName()))
+          continue;
+      } else {
+        if (!getModule().getNamedGlobal(cast<VarDecl>(D)->getName()))
+          continue;
+      }
+
       // If this is a function decl, generate code for the static function if it
       // has a body.  Otherwise, we must have a var decl for a static global
       // variable.
