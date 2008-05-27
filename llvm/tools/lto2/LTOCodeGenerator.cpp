@@ -340,6 +340,11 @@ bool LTOCodeGenerator::generateAssemblyCode(std::ostream& out, std::string& errM
     // Add an appropriate TargetData instance for this module...
     passes.add(new TargetData(*_target->getTargetData()));
     
+    // Propagate constants at call sites into the functions they call.  This
+    // opens opportunities for globalopt (and inlining) by substituting function
+    // pointers passed as arguments to direct uses of functions.  
+    passes.add(createIPSCCPPass());
+
     // Now that we internalized some globals, see if we can hack on them!
     passes.add(createGlobalOptimizerPass());
 
@@ -352,9 +357,6 @@ bool LTOCodeGenerator::generateAssemblyCode(std::ostream& out, std::string& errM
     // supporting.
     passes.add(createStripSymbolsPass());
     
-    // Propagate constants at call sites into the functions they call.
-    passes.add(createIPConstantPropagationPass());
-
     // Remove unused arguments from functions...
     passes.add(createDeadArgEliminationPass());
 
