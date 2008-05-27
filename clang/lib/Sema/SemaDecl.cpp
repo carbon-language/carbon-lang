@@ -910,13 +910,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
       NewFD = MergeFunctionDecl(NewFD, PrevDecl, Redeclaration);
       if (NewFD == 0) return 0;
       if (Redeclaration) {
-        // Note that the new declaration is a redeclaration of the
-        // older declaration. Then return the older declaration: the
-        // new one is only kept within the set of previous
-        // declarations for this function.
-        FunctionDecl *OldFD = (FunctionDecl *)PrevDecl;
-        OldFD->AddRedeclaration(NewFD);
-        return OldFD;
+        NewFD->setPreviousDeclaration(cast<FunctionDecl>(PrevDecl));
       }
     }
     New = NewFD;

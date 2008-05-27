@@ -446,6 +446,10 @@ public:
     return PreviousDeclaration;
   }
 
+  void setPreviousDeclaration(FunctionDecl * PrevDecl) {
+    PreviousDeclaration = PrevDecl;
+  }
+
   // Iterator access to formal parameters.
   unsigned param_size() const { return getNumParams(); }
   typedef ParmVarDecl **param_iterator;
@@ -492,10 +496,6 @@ public:
   }
   StorageClass getStorageClass() const { return StorageClass(SClass); }
   bool isInline() const { return IsInline; }
-   
-  /// AddRedeclaration - Adds the function declaration FD as a
-  /// redeclaration of this function.
-  void AddRedeclaration(FunctionDecl *FD);
  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Function; }
