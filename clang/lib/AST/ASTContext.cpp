@@ -32,6 +32,8 @@ ASTContext::~ASTContext() {
     Types.back()->Destroy(*this);
     Types.pop_back();
   }
+
+  TUDecl->Destroy(*this);
 }
 
 void ASTContext::PrintStats() const {
