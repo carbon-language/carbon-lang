@@ -44,7 +44,7 @@ def remove_pch_extension(path):
   return path[:i]
 
 def analyze(clang, args,language,output,files,verbose,htmldir,file,analysis_type):
-  if language.find("c++") > 0:
+  if language.rfind("c++") >= 0:
     return
 
   print_args = []
