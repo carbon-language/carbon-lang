@@ -187,10 +187,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunctionDecl(const FunctionDecl *D,
                                                      bool isDefinition) {
   // See if it is already in the map.  If so, just return it.
   llvm::Constant *&Entry = GlobalDeclMap[D];
-#if 0
-  // FIXME: The cache is currently broken!
   if (Entry) return Entry;
-#endif
 
   const llvm::Type *Ty = getTypes().ConvertType(D->getType());
   
