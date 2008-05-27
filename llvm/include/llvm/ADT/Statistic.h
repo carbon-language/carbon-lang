@@ -68,7 +68,7 @@ protected:
 // STATISTIC - A macro to make definition of statistics really simple.  This
 // automatically passes the DEBUG_TYPE of the file into the statistic.
 #define STATISTIC(VARNAME, DESC) \
-  static Statistic VARNAME = { DEBUG_TYPE, DESC, 0, 0 }
+  static llvm::Statistic VARNAME = { DEBUG_TYPE, DESC, 0, 0 }
 
 } // End llvm namespace
 
