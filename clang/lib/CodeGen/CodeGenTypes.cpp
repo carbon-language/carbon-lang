@@ -516,6 +516,8 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
       unsigned Align = CGT.getTargetData().getABITypeAlignment(Ty) * 8;
       if (llvmSize % Align)
         packedStruct = true;
+      else if (offset == 0 && RL.getAlignment() % Align)
+        packedStruct = true;
 
       llvmSize += size;
       CGT.addFieldInfo(FD, LLVMFields.size());

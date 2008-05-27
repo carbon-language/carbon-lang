@@ -160,3 +160,6 @@ int f14(int i, ...) {
   a13 b = __builtin_va_arg(l, a13);
   return b.b;
 }
+
+/* Attribute packed */
+struct __attribute__((packed)) S2839 { double a[19];  signed char b; } s2839[5];
