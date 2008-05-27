@@ -93,6 +93,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
 
   // FIXME: Move this initialization up to Sema::ActOnTranslationUnitScope()
   // and make sure the decls get inserted into TUScope!
+  // FIXME: And make sure they don't leak!
   if (PP.getLangOptions().ObjC1) {
     TranslationUnitDecl *TUDecl = Context.getTranslationUnitDecl();
 
