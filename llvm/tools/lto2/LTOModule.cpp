@@ -161,7 +161,7 @@ void LTOModule::addDefinedDataSymbol(GlobalValue* v, Mangler &mangler)
     addDefinedSymbol(v, mangler, false); 
 
     // add external symbols referenced by this data.
-    for (unsigned count = 0, total = v->getNumOperands();\
+    for (unsigned count = 0, total = v->getNumOperands();
                                                 count != total; ++count) {
         findExternalRefs(v->getOperand(count), mangler);
     }
@@ -234,8 +234,13 @@ void LTOModule::findExternalRefs(Value* value, Mangler &mangler) {
     if (GlobalValue* gv = dyn_cast<GlobalValue>(value)) {
         if ( !gv->hasExternalLinkage() )
             addPotentialUndefinedSymbol(gv, mangler);
+		// If this is a variable definition, do not recursively process
+		// initializer.  It might contain a reference to this variable
+		// and cause an infinite loop.  The initializer will be
+		// processed in addDefinedDataSymbol(). 
+	    return;
     }
-
+	
     // GlobalValue, even with InternalLinkage type, may have operands with 
     // ExternalLinkage type. Do not ignore these operands.
     if (Constant* c = dyn_cast<Constant>(value)) {
