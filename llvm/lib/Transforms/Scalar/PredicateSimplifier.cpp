@@ -1594,6 +1594,7 @@ namespace {
       if (mergeIGNode) {
         // Create N1.
         if (!n1) n1 = VN.getOrInsertVN(V1, Top);
+        IG.node(n1); // Ensure that IG.Nodes won't get resized
 
         // Migrate relationships from removed nodes to N1.
         for (SetVector<unsigned>::iterator I = Remove.begin(), E = Remove.end();
