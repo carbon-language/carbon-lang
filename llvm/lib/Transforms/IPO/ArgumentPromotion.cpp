@@ -148,7 +148,7 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
     Argument *PtrArg = PointerArgs[i].first;
     if (isByVal) {
       const Type *AgTy = cast<PointerType>(PtrArg->getType())->getElementType();
-      if (const StructType *STy = dyn_cast<StructType>(AgTy))
+      if (const StructType *STy = dyn_cast<StructType>(AgTy)) {
         if (maxElements > 0 && STy->getNumElements() > maxElements) {
           DOUT << "argpromotion disable promoting argument '"
                << PtrArg->getName() << "' because it would require adding more "
@@ -170,6 +170,7 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
             continue;
           }
         }
+      }
     }
     
     // Otherwise, see if we can promote the pointer to its value.

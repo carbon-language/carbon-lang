@@ -3205,11 +3205,12 @@ void CWriter::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
         Out << "((";
         printType(Out, PointerType::getUnqual(EltTy));
         Out << ")(&" << GetValueName(Op)
-            << "))[" << (SrcVal & NumElts-1) << "]";
+            << "))[" << (SrcVal & (NumElts-1)) << "]";
       } else if (isa<ConstantAggregateZero>(Op) || isa<UndefValue>(Op)) {
         Out << "0";
       } else {
-        printConstant(cast<ConstantVector>(Op)->getOperand(SrcVal & NumElts-1));
+        printConstant(cast<ConstantVector>(Op)->getOperand(SrcVal &
+                                                           (NumElts-1)));
       }
     }
   }

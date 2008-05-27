@@ -2986,7 +2986,7 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
   }
 
   bool Indexed = AM != ISD::UNINDEXED;
-  assert(Indexed || Offset.getOpcode() == ISD::UNDEF &&
+  assert((Indexed || Offset.getOpcode() == ISD::UNDEF) &&
          "Unindexed load with an offset!");
 
   SDVTList VTs = Indexed ?

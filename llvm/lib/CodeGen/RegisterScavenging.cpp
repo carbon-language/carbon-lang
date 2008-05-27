@@ -37,11 +37,12 @@ static bool RedefinesSuperRegPart(const MachineInstr *MI, unsigned SubReg,
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isRegister())
       continue;
-    if (TRI->isSuperRegister(SubReg, MO.getReg()))
+    if (TRI->isSuperRegister(SubReg, MO.getReg())) {
       if (MO.isUse())
         SeenSuperUse = true;
       else if (MO.isImplicit())
         SeenSuperDef = true;
+    }
   }
 
   return SeenSuperDef && SeenSuperUse;

@@ -2724,13 +2724,14 @@ unsigned Andersens::UniteNodes(unsigned First, unsigned Second,
   DOUT << "\n";
 
   if (SDTActive)
-    if (SDT[Second] >= 0)
+    if (SDT[Second] >= 0) {
       if (SDT[First] < 0)
         SDT[First] = SDT[Second];
       else {
         UniteNodes( FindNode(SDT[First]), FindNode(SDT[Second]) );
         First = FindNode(First);
       }
+    }
 
   return First;
 }

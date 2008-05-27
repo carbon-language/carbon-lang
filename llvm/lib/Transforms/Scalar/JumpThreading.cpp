@@ -282,8 +282,8 @@ bool JumpThreading::ProcessBranchOnLogical(Value *V, BasicBlock *BB,
   // If this is a binary operator tree of the same AND/OR opcode, check the
   // LHS/RHS.
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(V))
-    if (isAnd && BO->getOpcode() == Instruction::And ||
-        !isAnd && BO->getOpcode() == Instruction::Or) {
+    if ((isAnd && BO->getOpcode() == Instruction::And) ||
+        (!isAnd && BO->getOpcode() == Instruction::Or)) {
       if (ProcessBranchOnLogical(BO->getOperand(0), BB, isAnd))
         return true;
       if (ProcessBranchOnLogical(BO->getOperand(1), BB, isAnd))
