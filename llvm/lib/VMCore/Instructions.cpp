@@ -633,15 +633,15 @@ BranchInst::BranchInst(BasicBlock *IfTrue, Instruction *InsertBefore)
                    OperandTraits<BranchInst>::op_end(this) - 1,
                    1, InsertBefore) {
   assert(IfTrue != 0 && "Branch destination may not be null!");
-  Op<0>() = reinterpret_cast<Value*>(IfTrue);
+  Op<0>() = IfTrue;
 }
 BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
                        Instruction *InsertBefore)
   : TerminatorInst(Type::VoidTy, Instruction::Br,
                    OperandTraits<BranchInst>::op_end(this) - 3,
                    3, InsertBefore) {
-  Op<0>() = reinterpret_cast<Value*>(IfTrue);
-  Op<1>() = reinterpret_cast<Value*>(IfFalse);
+  Op<0>() = IfTrue;
+  Op<1>() = IfFalse;
   Op<2>() = Cond;
 #ifndef NDEBUG
   AssertOK();
@@ -653,7 +653,7 @@ BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *InsertAtEnd)
                    OperandTraits<BranchInst>::op_end(this) - 1,
                    1, InsertAtEnd) {
   assert(IfTrue != 0 && "Branch destination may not be null!");
-  Op<0>() = reinterpret_cast<Value*>(IfTrue);
+  Op<0>() = IfTrue;
 }
 
 BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
@@ -661,8 +661,8 @@ BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
   : TerminatorInst(Type::VoidTy, Instruction::Br,
                    OperandTraits<BranchInst>::op_end(this) - 3,
                    3, InsertAtEnd) {
-  Op<0>() = reinterpret_cast<Value*>(IfTrue);
-  Op<1>() = reinterpret_cast<Value*>(IfFalse);
+  Op<0>() = IfTrue;
+  Op<1>() = IfFalse;
   Op<2>() = Cond;
 #ifndef NDEBUG
   AssertOK();
