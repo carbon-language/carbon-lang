@@ -192,6 +192,20 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
       Result = Builder.CreateIntCast(Result, ResultType, "cast");
     return RValue::get(Result);
   }
+  case Builtin::BI__builtin_clz:
+  case Builtin::BI__builtin_clzl:
+  case Builtin::BI__builtin_clzll: {
+    Value *ArgValue = EmitScalarExpr(E->getArg(0));
+    
+    const llvm::Type *ArgType = ArgValue->getType();
+    Value *F = CGM.getIntrinsic(Intrinsic::ctlz, &ArgType, 1);
+
+    const llvm::Type *ResultType = ConvertType(E->getType());    
+    Value *Result = Builder.CreateCall(F, ArgValue, "tmp");
+    if (Result->getType() != ResultType)
+      Result = Builder.CreateIntCast(Result, ResultType, "cast");
+    return RValue::get(Result);
+  }
   case Builtin::BI__builtin_expect:
     return RValue::get(EmitScalarExpr(E->getArg(0)));
   case Builtin::BI__builtin_bswap32:
