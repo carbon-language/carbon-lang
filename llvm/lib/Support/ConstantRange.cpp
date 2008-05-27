@@ -464,7 +464,7 @@ ConstantRange ConstantRange::truncate(uint32_t DstTySize) const {
 ///
 void ConstantRange::print(std::ostream &OS) const {
   OS << "[" << Lower.toStringSigned(10) << "," 
-            << Upper.toStringSigned(10) << " )";
+            << Upper.toStringSigned(10) << ")";
 }
 
 /// dump - Allow printing from a debugger easily...
