@@ -145,3 +145,17 @@ struct a14 { short a; int b; } x = {1, 1};
 /* flexible array members */
 struct a15 {char a; int b[];} c15;
 int a16(void) {c15.a = 1;}
+
+/* compound literals */
+void f13()
+{
+  a13 x; x = (a13){1,2};
+}
+
+/* va_arg */
+int f14(int i, ...) {
+  __builtin_va_list l;
+  __builtin_va_start(l,i);
+  a13 b = __builtin_va_arg(l, a13);
+  return b.b;
+}

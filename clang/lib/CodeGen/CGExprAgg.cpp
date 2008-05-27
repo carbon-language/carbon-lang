@@ -68,6 +68,8 @@ public:
   void VisitMemberExpr(MemberExpr *ME) { EmitAggLoadOfLValue(ME); }
   void VisitUnaryDeref(UnaryOperator *E) { EmitAggLoadOfLValue(E); }
   void VisitStringLiteral(StringLiteral *E) { EmitAggLoadOfLValue(E); }
+  void VisitCompoundLiteralExpr(CompoundLiteralExpr *E)
+      { EmitAggLoadOfLValue(E); }
 
   void VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
     EmitAggLoadOfLValue(E);
@@ -90,6 +92,7 @@ public:
   void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
     Visit(DAE->getExpr());
   }
+  void VisitVAArgExpr(VAArgExpr *E);
 
   void EmitInitializationToLValue(Expr *E, LValue Address);
   void EmitNullInitializationToLValue(LValue Address, QualType T);
@@ -271,6 +274,13 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
   RHSBlock = Builder.GetInsertBlock();
   
   CGF.EmitBlock(ContBlock);
+}
+
+void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
+  llvm::Value *ArgValue = CGF.EmitLValue(VE->getSubExpr()).getAddress();
+  llvm::Value *V = Builder.CreateVAArg(ArgValue, CGF.ConvertType(VE->getType()));
+  if (DestPtr)
+    Builder.CreateStore(V, DestPtr);
 }
 
 void AggExprEmitter::EmitNonConstInit(InitListExpr *E) {
