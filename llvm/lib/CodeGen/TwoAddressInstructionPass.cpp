@@ -373,6 +373,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   }
 
   if (EnableReMat) {
+    // Check to see if the instructions that we rematerialized are now dead. If
+    // they are, expunge them here.
     SmallPtrSet<MachineInstr*, 8>::iterator I = ReMattedInstrs.begin();
     SmallPtrSet<MachineInstr*, 8>::iterator E = ReMattedInstrs.end();
 
@@ -385,20 +387,17 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         if (!MO.isRegister())
           continue;
         unsigned MOReg = MO.getReg();
-        if (!MOReg)
-          continue;
-        if (MO.isDef()) {
-          if (MO.isImplicit())
-            continue;
 
-          if (MRI->use_begin(MOReg) != MRI->use_end()) {
-            InstrDead = false;
-            break;
-          }
+        if (!MOReg || !MO.isDef() || (MO.isImplicit() && MO.isDead()))
+          continue;
+
+        if (MRI->use_begin(MOReg) != MRI->use_end()) {
+          InstrDead = false;
+          break;
         }
       }
 
-      if (InstrDead && MI->getNumOperands() > 0)
+      if (InstrDead)
         MI->eraseFromParent();
     }
   }
