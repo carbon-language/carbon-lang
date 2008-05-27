@@ -299,7 +299,13 @@ private:
   /// The raw attribute contains 1 argument, the id of the address space 
   /// for the type.
   QualType HandleAddressSpaceTypeAttribute(QualType curType, 
-                                           AttributeList *rawAttr);                                
+                                           AttributeList *rawAttr);
+
+  /// HandleModeTypeAttribute - this attribute modifies the width of a
+  /// primitive type.  Note that this is a variable attribute, and not
+  /// a type attribute.
+  QualType HandleModeTypeAttribute(QualType curType, 
+                                   AttributeList *rawAttr);                                
 
   // HandleVectorTypeAttribute - this attribute is only applicable to 
   // integral and float scalars, although arrays, pointers, and function
@@ -723,6 +729,10 @@ private:
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1).
   Expr *UsualUnaryConversions(Expr *&expr); 
+
+  // UsualUnaryConversionType - Same as UsualUnaryConversions, but works
+  // on types instead of expressions
+  QualType UsualUnaryConversionType(QualType Ty); 
   
   // DefaultFunctionArrayConversion - converts functions and arrays
   // to their respective pointers (C99 6.3.2.1). 

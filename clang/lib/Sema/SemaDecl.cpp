@@ -2384,6 +2384,17 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *Attr) {
       vDecl->setType(newType);
     }
     break;
+  case AttributeList::AT_mode:
+    if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New)) {
+      QualType newType = HandleModeTypeAttribute(tDecl->getUnderlyingType(),
+                                                 Attr);
+      tDecl->setUnderlyingType(newType);
+    } else if (ValueDecl *vDecl = dyn_cast<ValueDecl>(New)) {
+      QualType newType = HandleModeTypeAttribute(vDecl->getType(), Attr);
+      vDecl->setType(newType);
+    }
+    // FIXME: Diagnostic?
+    break;
   case AttributeList::AT_deprecated:
     HandleDeprecatedAttribute(New, Attr);
     break;

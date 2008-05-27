@@ -52,6 +52,7 @@ public:
     AT_fastcall,
     AT_format,
     AT_malloc,
+    AT_mode,
     AT_noinline,
     AT_nonnull,
     AT_noreturn,

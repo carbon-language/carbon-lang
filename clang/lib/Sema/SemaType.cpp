@@ -579,3 +579,123 @@ QualType Sema::HandleAddressSpaceTypeAttribute(QualType Type,
   return Context.getASQualType(Type, ASIdx);
 }
 
+/// HandleModeTypeAttribute - Process a mode attribute on the
+/// specified type.
+QualType Sema::HandleModeTypeAttribute(QualType Type, 
+                                       AttributeList *Attr) {
+  // This attribute isn't documented, but glibc uses it.  It changes
+  // the width of an int or unsigned int to the specified size.
+
+  // Check that there aren't any arguments
+  if (Attr->getNumArgs() != 0) {
+    Diag(Attr->getLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("0"));
+    return Type;
+  }
+
+  IdentifierInfo * Name = Attr->getParameterName();
+  if (!Name) {
+    Diag(Attr->getLoc(), diag::err_attribute_missing_parameter_name);
+    return Type;
+  }
+  const char *Str = Name->getName();
+  unsigned Len = Name->getLength();
+
+  // Normalize the attribute name, __foo__ becomes foo.
+  if (Len > 4 && Str[0] == '_' && Str[1] == '_' &&
+      Str[Len - 2] == '_' && Str[Len - 1] == '_') {
+    Str += 2;
+    Len -= 4;
+  }
+
+  unsigned DestWidth = 0;
+  bool IntegerMode = true;
+
+  switch (Len) {
+  case 2:
+    if (!memcmp(Str, "QI", 2)) { DestWidth =  8; break; }
+    if (!memcmp(Str, "HI", 2)) { DestWidth = 16; break; }
+    if (!memcmp(Str, "SI", 2)) { DestWidth = 32; break; }
+    if (!memcmp(Str, "DI", 2)) { DestWidth = 64; break; }
+    if (!memcmp(Str, "TI", 2)) { DestWidth = 128; break; }
+    if (!memcmp(Str, "SF", 2)) { DestWidth = 32; IntegerMode = false; break; }
+    if (!memcmp(Str, "DF", 2)) { DestWidth = 64; IntegerMode = false; break; }
+    if (!memcmp(Str, "XF", 2)) { DestWidth = 96; IntegerMode = false; break; }
+    if (!memcmp(Str, "TF", 2)) { DestWidth = 128; IntegerMode = false; break; }
+    break;
+  case 4:
+    if (!memcmp(Str, "word", 4)) {
+      // FIXME: glibc uses this to define register_t; this is
+      // narrover than a pointer on PIC16 and other embedded
+      // platforms
+      DestWidth = Context.getTypeSize(Context.VoidPtrTy);
+      break;
+    }
+    if (!memcmp(Str, "byte", 4)) {
+      DestWidth = Context.getTypeSize(Context.CharTy);
+      break;
+    }
+    break;
+  case 7:
+    if (!memcmp(Str, "pointer", 7)) {
+      DestWidth = Context.getTypeSize(Context.VoidPtrTy);
+      IntegerMode = true;
+      break;
+    }
+    break;
+  }
+
+  // FIXME: Need proper fixed-width types
+  QualType RetTy;
+  switch (DestWidth) {
+  case 0:
+    Diag(Attr->getLoc(), diag::err_unknown_machine_mode, 
+         std::string(Str, Len));
+    return Type;
+  case 8:
+    assert(IntegerMode);
+    if (Type->isSignedIntegerType())
+      RetTy = Context.SignedCharTy;
+    else
+      RetTy = Context.UnsignedCharTy;
+    break;
+  case 16:
+    assert(IntegerMode);
+    if (Type->isSignedIntegerType())
+      RetTy = Context.ShortTy;
+    else
+      RetTy = Context.UnsignedShortTy;
+    break;
+  case 32:
+    if (!IntegerMode)
+      RetTy = Context.FloatTy;
+    else if (Type->isSignedIntegerType())
+      RetTy = Context.IntTy;
+    else
+      RetTy = Context.UnsignedIntTy;
+    break;
+  case 64:
+    if (!IntegerMode)
+      RetTy = Context.DoubleTy;
+    else if (Type->isSignedIntegerType())
+      RetTy = Context.LongLongTy;
+    else
+      RetTy = Context.UnsignedLongLongTy;
+    break;
+  default:
+    Diag(Attr->getLoc(), diag::err_unsupported_machine_mode,
+         std::string(Str, Len));
+    return Type;
+  }
+
+  if (!Type->getAsBuiltinType())
+    Diag(Attr->getLoc(), diag::err_mode_not_primitive);
+  else if (!(IntegerMode && Type->isIntegerType()) &&
+           !(!IntegerMode && Type->isFloatingType())) {
+    Diag(Attr->getLoc(), diag::err_mode_wrong_type);
+  }
+
+  return RetTy;
+}
+
+

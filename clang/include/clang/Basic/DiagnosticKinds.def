@@ -584,6 +584,8 @@ DIAG(err_bad_language, ERROR,
 // Attributes
 DIAG(err_attribute_wrong_number_arguments, ERROR,
      "attribute requires %0 argument(s)")
+DIAG(err_attribute_missing_parameter_name, ERROR,
+     "attribute requires unquoted parameter")
 DIAG(err_attribute_invalid_vector_type, ERROR,
      "invalid vector type '%0'")
 DIAG(err_attribute_argument_not_int, ERROR,
@@ -632,6 +634,14 @@ DIAG(warn_attribute_ignored_for_field_of_type, WARNING,
   "'%0' attribute ignored for field of type '%1'")
 DIAG(warn_attribute_type_not_supported, WARNING,
   "'%0' attribute argument not supported: '%1'")
+DIAG(err_unknown_machine_mode, ERROR,
+     "unknown machine mode '%0'")
+DIAG(err_unsupported_machine_mode, ERROR,
+     "unsupported machine mode '%0'")
+DIAG(err_mode_not_primitive, ERROR,
+     "mode attribute only supported for integer and floating-point types")
+DIAG(err_mode_wrong_type, ERROR,
+     "type of machine mode does not match type of base type")
 
 // Function Parameter Semantic Analysis.
 DIAG(err_param_with_void_type, ERROR,
