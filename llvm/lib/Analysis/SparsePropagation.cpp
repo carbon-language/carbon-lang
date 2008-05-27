@@ -272,7 +272,7 @@ void SparseSolver::visitInst(Instruction &I) {
 }
 
 void SparseSolver::Solve(Function &F) {
-  MarkBlockExecutable(F.begin());
+  MarkBlockExecutable(&F.getEntryBlock());
   
   // Process the work lists until they are empty!
   while (!BBWorkList.empty() || !InstWorkList.empty()) {
