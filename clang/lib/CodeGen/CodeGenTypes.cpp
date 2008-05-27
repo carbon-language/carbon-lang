@@ -27,20 +27,8 @@ namespace {
   /// FIXME : Handle field aligments. Handle packed structs.
   class RecordOrganizer {
   public:
-    explicit RecordOrganizer(CodeGenTypes &Types) : 
-      CGT(Types), STy(NULL), llvmFieldNo(0), Cursor(0),
-      llvmSize(0) {}
-    
-    /// addField - Add new field.
-    void addField(const FieldDecl *FD);
-
-    /// addLLVMField - Add llvm struct field that corresponds to llvm type Ty. 
-    /// Increment field count.
-    void addLLVMField(const llvm::Type *Ty, bool isPaddingField = false);
-
-    /// addPaddingFields - Current cursor is not suitable place to add next 
-    /// field. Add required padding fields.
-    void addPaddingFields(unsigned WaterMark);
+    explicit RecordOrganizer(CodeGenTypes &Types, const RecordDecl& Record) : 
+      CGT(Types), RD(Record), STy(NULL) {}
 
     /// layoutStructFields - Do the actual work and lay out all fields. Create
     /// corresponding llvm struct type.  This should be invoked only after
@@ -50,7 +38,7 @@ namespace {
     /// layoutUnionFields - Do the actual work and lay out all fields. Create
     /// corresponding llvm struct type.  This should be invoked only after
     /// all fields are added.
-    void layoutUnionFields();
+    void layoutUnionFields(const ASTRecordLayout &RL);
 
     /// getLLVMType - Return associated llvm struct type. This may be NULL
     /// if fields are not laid out.
@@ -58,21 +46,14 @@ namespace {
       return STy;
     }
 
-    /// placeBitField - Find a place for FD, which is a bit-field. 
-    void placeBitField(const FieldDecl *FD);
-
     llvm::SmallSet<unsigned, 8> &getPaddingFields() {
       return PaddingFields;
     }
 
   private:
     CodeGenTypes &CGT;
+    const RecordDecl& RD;
     llvm::Type *STy;
-    unsigned llvmFieldNo;
-    uint64_t Cursor; 
-    uint64_t llvmSize;
-    llvm::SmallVector<const FieldDecl *, 8> FieldDecls;
-    std::vector<const llvm::Type*> LLVMFields;
     llvm::SmallSet<unsigned, 8> PaddingFields;
   };
 }
@@ -398,9 +379,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   const RecordDecl *RD = cast<const RecordDecl>(TD);
   if (TD->getKind() == Decl::Struct || TD->getKind() == Decl::Class) {
     // Layout fields.
-    RecordOrganizer RO(*this);
-    for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
-      RO.addField(RD->getMember(i));
+    RecordOrganizer RO(*this, *RD);
     
     RO.layoutStructFields(Context.getASTRecordLayout(RD));
     
@@ -413,11 +392,9 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
     // Just use the largest element of the union, breaking ties with the
     // highest aligned member.
     if (RD->getNumMembers() != 0) {
-      RecordOrganizer RO(*this);
-      for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
-        RO.addField(RD->getMember(i));
+      RecordOrganizer RO(*this, *RD);
       
-      RO.layoutUnionFields();
+      RO.layoutUnionFields(Context.getASTRecordLayout(RD));
       
       // Get llvm::StructType.
       CGRecordLayouts[TD] = new CGRecordLayout(RO.getLLVMType(),
@@ -482,184 +459,95 @@ CodeGenTypes::getCGRecordLayout(const TagDecl *TD) const {
   return I->second;
 }
 
-/// addField - Add new field.
-void RecordOrganizer::addField(const FieldDecl *FD) {
-  assert (!STy && "Record fields are already laid out");
-  FieldDecls.push_back(FD);
-}
-
 /// layoutStructFields - Do the actual work and lay out all fields. Create
-/// corresponding llvm struct type.  This should be invoked only after
-/// all fields are added.
-/// FIXME : At the moment assume 
-///    - one to one mapping between AST FieldDecls and 
-///      llvm::StructType elements.
-///    - Ignore bit fields
-///    - Ignore field aligments
-///    - Ignore packed structs
+/// corresponding llvm struct type.
+/// Note that this doesn't actually try to do struct layout; it depends on
+/// the layout built by the AST.  (We have to do struct layout to do Sema,
+/// and there's no point to duplicating the work.)
 void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
   // FIXME : Use SmallVector
-  llvmSize = 0;
-  llvmFieldNo = 0;
-  Cursor = 0;
-  LLVMFields.clear();
+  uint64_t llvmSize = 0;
+  std::vector<const llvm::Type*> LLVMFields;
+  bool packedStruct = false;
+  int NumMembers = RD.getNumMembers();
 
-  for (llvm::SmallVector<const FieldDecl *, 8>::iterator I = FieldDecls.begin(),
-         E = FieldDecls.end(); I != E; ++I) {
-    const FieldDecl *FD = *I;
+  for (int curField = 0; curField < NumMembers; curField++) {
+    const FieldDecl *FD = RD.getMember(curField);
+    uint64_t offset = RL.getFieldOffset(curField);
+    const llvm::Type *Ty = CGT.ConvertTypeRecursive(FD->getType());
+    uint64_t size = CGT.getTargetData().getABITypeSize(Ty) * 8;
 
-    if (FD->isBitField()) 
-      placeBitField(FD);
-    else {
-      const llvm::Type *Ty = CGT.ConvertTypeRecursive(FD->getType());
-      addLLVMField(Ty);
-      CGT.addFieldInfo(FD, llvmFieldNo - 1);
-      Cursor = llvmSize;
-    }
-  }
+    if (FD->isBitField()) {
+      Expr *BitWidth = FD->getBitWidth();
+      llvm::APSInt FieldSize(32);
+      bool isBitField =
+        BitWidth->isIntegerConstantExpr(FieldSize, CGT.getContext());
+      assert (isBitField  && "Invalid BitField size expression");
+      uint64_t BitFieldSize =  FieldSize.getZExtValue();
 
-  unsigned StructAlign = RL.getAlignment();
-  if (llvmSize % StructAlign) {
-    unsigned StructPadding = StructAlign - (llvmSize % StructAlign);
-    bool needStructPadding = true;
-    if (!LLVMFields.empty()) {
-      const llvm::Type *LastFieldType = LLVMFields.back();
-      const llvm::Type *LastFieldDeclType = 
-        CGT.ConvertTypeRecursive(FieldDecls.back()->getType());
-      if (LastFieldType != LastFieldDeclType) {
-        unsigned LastFieldTypeSize = 
-          CGT.getTargetData().getABITypeSizeInBits(LastFieldType);
-        unsigned LastFieldDeclTypeSize = 
-          CGT.getTargetData().getABITypeSizeInBits(LastFieldDeclType);
-        if (LastFieldDeclTypeSize > LastFieldTypeSize
-            && StructPadding == (LastFieldDeclTypeSize - LastFieldTypeSize)) {
-          // Replace last LLVMField with a LastFieldDeclType field will 
-          // to avoid extra padding fields.
-          LLVMFields.pop_back();
-          LLVMFields.push_back(LastFieldDeclType);
-          needStructPadding = false;
-        }
+      // Bitfield field info is different from other field info;
+      // it actually ignores the underlying LLVM struct because
+      // there isn't any convenient mapping.
+      CGT.addFieldInfo(FD, offset / size);
+      CGT.addBitFieldInfo(FD, offset % size, BitFieldSize);
+    } else {
+      // Put the element into the struct. This would be simpler
+      // if we didn't bother, but it seems a bit too strange to
+      // allocate all structs as i8 arrays.
+      while (llvmSize < offset) {
+        LLVMFields.push_back(llvm::Type::Int8Ty);
+        llvmSize += 8;
       }
+
+      unsigned Align = CGT.getTargetData().getABITypeAlignment(Ty) * 8;
+      if (llvmSize % Align)
+        packedStruct = true;
+
+      llvmSize += size;
+      CGT.addFieldInfo(FD, LLVMFields.size());
+      LLVMFields.push_back(Ty);
     }
-    if (needStructPadding)
-      addPaddingFields(llvmSize + StructPadding);
   }
 
-  STy = llvm::StructType::get(LLVMFields);
-}
-
-/// addPaddingFields - Current cursor is not suitable place to add next field.
-/// Add required padding fields.
-void RecordOrganizer::addPaddingFields(unsigned WaterMark) {
-  assert(WaterMark >= llvmSize && "Invalid padding Field");
-  unsigned RequiredBits = WaterMark - llvmSize;
-  unsigned RequiredBytes = (RequiredBits + 7) / 8;
-  if (RequiredBytes == 1)
-    // This is a bitfield that is using few bits from this byte.
-    // It is not a padding field.
-    addLLVMField(llvm::Type::Int8Ty, false);
-  else
-    for (unsigned i = 0; i != RequiredBytes; ++i)
-      addLLVMField(llvm::Type::Int8Ty, true);
-}
-
-/// addLLVMField - Add llvm struct field that corresponds to llvm type Ty.
-/// Increment field count.
-void RecordOrganizer::addLLVMField(const llvm::Type *Ty, bool isPaddingField) {
-
-  unsigned AlignmentInBits = CGT.getTargetData().getABITypeAlignment(Ty) * 8;
-  if (llvmSize % AlignmentInBits) {
-    // At the moment, insert padding fields even if target specific llvm 
-    // type alignment enforces implict padding fields for FD. Later on, 
-    // optimize llvm fields by removing implicit padding fields and 
-    // combining consequetive padding fields.
-    unsigned Padding = AlignmentInBits - (llvmSize % AlignmentInBits);
-    addPaddingFields(llvmSize + Padding);
+  while (llvmSize < RL.getSize()) {
+    LLVMFields.push_back(llvm::Type::Int8Ty);
+    llvmSize += 8;
   }
 
-  unsigned TySize = CGT.getTargetData().getABITypeSizeInBits(Ty);
-  llvmSize += TySize;
-  if (isPaddingField)
-    PaddingFields.insert(llvmFieldNo);
-  LLVMFields.push_back(Ty);
-  ++llvmFieldNo;
+  STy = llvm::StructType::get(LLVMFields, packedStruct);
+  assert(CGT.getTargetData().getABITypeSizeInBits(STy) == RL.getSize());
 }
 
 /// layoutUnionFields - Do the actual work and lay out all fields. Create
 /// corresponding llvm struct type.  This should be invoked only after
 /// all fields are added.
-void RecordOrganizer::layoutUnionFields() {
- 
-  unsigned PrimaryEltNo = 0;
-  std::pair<uint64_t, unsigned> PrimaryElt =
-    CGT.getContext().getTypeInfo(FieldDecls[0]->getType());
-    if (FieldDecls[0]->isBitField()) 
-      placeBitField(FieldDecls[0]);
-    else
-      CGT.addFieldInfo(FieldDecls[0], 0);
+void RecordOrganizer::layoutUnionFields(const ASTRecordLayout &RL) {
+  for (int curField = 0; curField < RD.getNumMembers(); curField++) {
+    const FieldDecl *FD = RD.getMember(curField);
+    // The offset should usually be zero, but bitfields could be strange
+    uint64_t offset = RL.getFieldOffset(curField);
 
-  unsigned Size = FieldDecls.size();
-  for(unsigned i = 1; i != Size; ++i) {
-    const FieldDecl *FD = FieldDecls[i];
-    std::pair<uint64_t, unsigned> EltInfo = 
-      CGT.getContext().getTypeInfo(FD->getType());
+    if (FD->isBitField()) {
+      Expr *BitWidth = FD->getBitWidth();
+      llvm::APSInt FieldSize(32);
+      bool isBitField =
+        BitWidth->isIntegerConstantExpr(FieldSize, CGT.getContext());
+      assert (isBitField  && "Invalid BitField size expression");
+      uint64_t BitFieldSize =  FieldSize.getZExtValue();
 
-    // Use largest element, breaking ties with the hightest aligned member.
-    if (EltInfo.first > PrimaryElt.first ||
-        (EltInfo.first == PrimaryElt.first &&
-         EltInfo.second > PrimaryElt.second)) {
-      PrimaryElt = EltInfo;
-      PrimaryEltNo = i;
-    }
-
-    // In union, each field gets first slot.
-    if (FD->isBitField()) 
-      placeBitField(FD);
-    else
       CGT.addFieldInfo(FD, 0);
+      CGT.addBitFieldInfo(FD, offset, BitFieldSize);
+    } else {
+      CGT.addFieldInfo(FD, 0);
+    }
   }
 
-  std::vector<const llvm::Type*> Fields;
-  const llvm::Type *Ty =
-    CGT.ConvertTypeRecursive(FieldDecls[PrimaryEltNo]->getType());
-  Fields.push_back(Ty);
-  STy = llvm::StructType::get(Fields);
-}
-
-/// placeBitField - Find a place for FD, which is a bit-field.
-/// This function searches for the last aligned field. If the  bit-field fits in
-/// it, it is reused. Otherwise, the bit-field is placed in a new field.
-void RecordOrganizer::placeBitField(const FieldDecl *FD) {
-
-  assert (FD->isBitField() && "FD is not a bit-field");
-  Expr *BitWidth = FD->getBitWidth();
-  llvm::APSInt FieldSize(32);
-  bool isBitField = 
-    BitWidth->isIntegerConstantExpr(FieldSize, CGT.getContext());
-  assert (isBitField  && "Invalid BitField size expression");
-  uint64_t BitFieldSize =  FieldSize.getZExtValue();
-
-  const llvm::Type *Ty = CGT.ConvertTypeRecursive(FD->getType());
-  uint64_t TySize = CGT.getTargetData().getABITypeSizeInBits(Ty);
-
-  unsigned Idx = Cursor / TySize;
-  unsigned BitsLeft = TySize - (Cursor % TySize);
-
-  if (BitsLeft >= BitFieldSize) {
-    // The bitfield fits in the last aligned field.
-    // This is : struct { char a; int CurrentField:10;};
-    // where 'CurrentField' shares first field with 'a'.
-    CGT.addFieldInfo(FD, Idx);
-    CGT.addBitFieldInfo(FD, TySize - BitsLeft, BitFieldSize);
-    Cursor += BitFieldSize;
-  } else {
-    // Place the bitfield in a new LLVM field.
-    // This is : struct { char a; short CurrentField:10;};
-    // where 'CurrentField' needs a new llvm field.
-    CGT.addFieldInfo(FD, Idx + 1);
-    CGT.addBitFieldInfo(FD, 0, BitFieldSize);
-    Cursor = (Idx + 1) * TySize + BitFieldSize;
-  }
-  if (Cursor > llvmSize)
-    addPaddingFields(Cursor);
+  // This looks stupid, but it is correct in the sense that
+  // it works no matter how complicated the sizes and alignments
+  // of the union elements are. The natural alignment
+  // of the result doesn't matter because anyone allocating
+  // structures should be aligning them appropriately anyway.
+  // FIXME: We can be a bit more intuitive in a lot of cases.
+  STy = llvm::ArrayType::get(llvm::Type::Int8Ty, RL.getSize() / 8);
+  assert(CGT.getTargetData().getABITypeSizeInBits(STy) == RL.getSize());
 }
