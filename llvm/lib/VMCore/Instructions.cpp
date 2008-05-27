@@ -1010,7 +1010,7 @@ void GetElementPtrInst::init(Value *Ptr, Value *Idx) {
 }
 
 GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
-  : Instruction(reinterpret_cast<const Type*>(GEPI.getType()), GetElementPtr,
+  : Instruction(GEPI.getType(), GetElementPtr,
                 OperandTraits<GetElementPtrInst>::op_end(this)
                 - GEPI.getNumOperands(),
                 GEPI.getNumOperands()) {
@@ -1355,7 +1355,7 @@ void InsertValueInst::init(Value *Agg, Value *Val, Value *Idx) {
 }
 
 InsertValueInst::InsertValueInst(const InsertValueInst &IVI)
-  : Instruction(reinterpret_cast<const Type*>(IVI.getType()), InsertValue,
+  : Instruction(IVI.getType(), InsertValue,
                 OperandTraits<InsertValueInst>::op_end(this)
                 - IVI.getNumOperands(),
                 IVI.getNumOperands()) {
