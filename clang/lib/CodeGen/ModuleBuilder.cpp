@@ -46,6 +46,7 @@ namespace {
     
     ~CodeGenerator() {
       delete Builder;
+      delete TD;
     }
     
     virtual void Initialize(ASTContext &Context) {
