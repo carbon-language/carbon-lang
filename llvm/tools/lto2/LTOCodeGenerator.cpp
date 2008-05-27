@@ -360,6 +360,12 @@ bool LTOCodeGenerator::generateAssemblyCode(std::ostream& out, std::string& errM
     // Remove unused arguments from functions...
     passes.add(createDeadArgEliminationPass());
 
+    // Reduce the code after globalopt and ipsccp.  Both can open up significant
+    // simplification opportunities, and both can propagate functions through
+    // function pointers.  When this happens, we often have to resolve varargs
+    // calls, etc, so let instcombine do this.
+    passes.add(createInstructionCombiningPass());
+
     passes.add(createFunctionInliningPass()); // Inline small functions
 
     passes.add(createPruneEHPass());            // Remove dead EH info
