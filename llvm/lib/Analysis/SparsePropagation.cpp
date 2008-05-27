@@ -96,10 +96,10 @@ void SparseSolver::markEdgeExecutable(BasicBlock *Source, BasicBlock *Dest) {
   if (!KnownFeasibleEdges.insert(Edge(Source, Dest)).second)
     return;  // This edge is already known to be executable!
   
+  DOUT << "Marking Edge Executable: " << Source->getNameStart()
+       << " -> " << Dest->getNameStart() << "\n";
+
   if (BBExecutable.count(Dest)) {
-    DOUT << "Marking Edge Executable: " << Source->getNameStart()
-    << " -> " << Dest->getNameStart() << "\n";
-    
     // The destination is already executable, but we just made an edge
     // feasible that wasn't before.  Revisit the PHI nodes in the block
     // because they have potentially new operands.
