@@ -181,7 +181,7 @@ class RewriteRope {
   RopeRefCountString *AllocBuffer;
   unsigned AllocOffs;
   enum { AllocChunkSize = 4080 };
-  
+
 public:
   RewriteRope() :  AllocBuffer(0), AllocOffs(AllocChunkSize) {}
   RewriteRope(const RewriteRope &RHS) 

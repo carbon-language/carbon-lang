@@ -147,9 +147,14 @@ namespace {
     
     /// NextLeaf - This is a pointer to the next leaf in the tree, allowing
     /// efficient in-order forward iteration of the tree without traversal.
-    const RopePieceBTreeLeaf *NextLeaf;
+    RopePieceBTreeLeaf **PrevLeaf, *NextLeaf;
   public:
-    RopePieceBTreeLeaf() : RopePieceBTreeNode(true), NumPieces(0), NextLeaf(0){}
+    RopePieceBTreeLeaf() : RopePieceBTreeNode(true), NumPieces(0),
+                           PrevLeaf(0), NextLeaf(0) {}
+    ~RopePieceBTreeLeaf() {
+      if (PrevLeaf || NextLeaf)
+        removeFromLeafInOrder();
+    }
     
     bool isFull() const { return NumPieces == 2*WidthFactor; }
     
@@ -168,7 +173,25 @@ namespace {
     }
     
     const RopePieceBTreeLeaf *getNextLeafInOrder() const { return NextLeaf; }
-    void setNextLeafInOrder(const RopePieceBTreeLeaf *NL) { NextLeaf = NL; }
+    void insertAfterLeafInOrder(RopePieceBTreeLeaf *Node) {
+      assert(PrevLeaf == 0 && NextLeaf == 0 && "Already in ordering");
+      
+      NextLeaf = Node->NextLeaf;
+      if (NextLeaf)
+        NextLeaf->PrevLeaf = &NextLeaf;
+      PrevLeaf = &Node->NextLeaf;
+      Node->NextLeaf = this;
+    }
+    
+    void removeFromLeafInOrder() {
+      if (PrevLeaf) {
+        *PrevLeaf = NextLeaf;
+        if (NextLeaf)
+          NextLeaf->PrevLeaf = PrevLeaf;
+      } else if (NextLeaf) {
+        NextLeaf->PrevLeaf = 0;
+      }
+    }
     
     /// FullRecomputeSizeLocally - This method recomputes the 'Size' field by
     /// summing the size of all RopePieces.
@@ -302,8 +325,7 @@ RopePieceBTreeNode *RopePieceBTreeLeaf::insert(unsigned Offset,
   FullRecomputeSizeLocally();
   
   // Update the list of leaves.
-  NewNode->setNextLeafInOrder(this->getNextLeafInOrder());
-  this->setNextLeafInOrder(NewNode);
+  NewNode->insertAfterLeafInOrder(this);
   
   // These insertions can't fail.
   if (this->size() >= Offset)
