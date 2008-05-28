@@ -639,9 +639,9 @@ void MachineInstr::copyPredicates(const MachineInstr *MI) {
   }
 }
 
-/// isSafeToMove - Return true if it is safe to this instruction. If SawStore
-/// true, it means there is a store (or call) between the instruction the
-/// localtion and its intended destination.
+/// isSafeToMove - Return true if it is safe to this instruction. If SawStore is
+/// set to true, it means that there is a store (or call) between the
+/// instruction's location and its intended destination.
 bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII, bool &SawStore) {
   // Ignore stuff that we obviously can't move.
   if (TID->mayStore() || TID->isCall()) {

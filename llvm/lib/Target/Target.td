@@ -203,22 +203,25 @@ class Instruction {
   bit usesCustomDAGSchedInserter = 0; // Pseudo instr needing special help.
   bit hasCtrlDep   = 0;     // Does this instruction r/w ctrl-flow chains?
   bit isNotDuplicable = 0;  // Is it unsafe to duplicate this instruction?
+  bit isAsCheapAsAMove = 0; // As cheap (or cheaper) than a move instruction.
 
   // Side effect flags - When set, the flags have these meanings:
   //
   //  hasSideEffects - The instruction has side effects that are not
   //    captured by any operands of the instruction or other flags.
+  //
   //  mayHaveSideEffects  - Some instances of the instruction can have side
   //    effects. The virtual method "isReallySideEffectFree" is called to
   //    determine this. Load instructions are an example of where this is
   //    useful. In general, loads always have side effects. However, loads from
   //    constant pools don't. Individual back ends make this determination.
+  //
   //  neverHasSideEffects - Set on an instruction with no pattern if it has no
   //    side effects.
   bit hasSideEffects = 0;
   bit mayHaveSideEffects = 0;
   bit neverHasSideEffects = 0;
-  
+
   InstrItinClass Itinerary = NoItinerary;// Execution steps used for scheduling.
 
   string Constraints = "";  // OperandConstraint, e.g. $src = $dst.

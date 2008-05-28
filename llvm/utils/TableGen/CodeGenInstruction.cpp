@@ -99,6 +99,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   hasSideEffects = R->getValueAsBit("hasSideEffects");
   mayHaveSideEffects = R->getValueAsBit("mayHaveSideEffects");
   neverHasSideEffects = R->getValueAsBit("neverHasSideEffects");
+  isAsCheapAsAMove = R->getValueAsBit("isAsCheapAsAMove");
   hasOptionalDef = false;
   isVariadic = false;
 

@@ -208,26 +208,27 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
      << ",\t\"" << Inst.TheDef->getName() << "\", 0";
 
   // Emit all of the target indepedent flags...
-  if (Inst.isReturn)     OS << "|(1<<TID::Return)";
-  if (Inst.isBranch)     OS << "|(1<<TID::Branch)";
-  if (Inst.isIndirectBranch) OS << "|(1<<TID::IndirectBranch)";
-  if (Inst.isBarrier)    OS << "|(1<<TID::Barrier)";
-  if (Inst.hasDelaySlot) OS << "|(1<<TID::DelaySlot)";
-  if (Inst.isCall)       OS << "|(1<<TID::Call)";
-  if (Inst.isSimpleLoad) OS << "|(1<<TID::SimpleLoad)";
-  if (Inst.mayLoad)      OS << "|(1<<TID::MayLoad)";
-  if (Inst.mayStore)     OS << "|(1<<TID::MayStore)";
-  if (Inst.isPredicable) OS << "|(1<<TID::Predicable)";
+  if (Inst.isReturn)           OS << "|(1<<TID::Return)";
+  if (Inst.isBranch)           OS << "|(1<<TID::Branch)";
+  if (Inst.isIndirectBranch)   OS << "|(1<<TID::IndirectBranch)";
+  if (Inst.isBarrier)          OS << "|(1<<TID::Barrier)";
+  if (Inst.hasDelaySlot)       OS << "|(1<<TID::DelaySlot)";
+  if (Inst.isCall)             OS << "|(1<<TID::Call)";
+  if (Inst.isSimpleLoad)       OS << "|(1<<TID::SimpleLoad)";
+  if (Inst.mayLoad)            OS << "|(1<<TID::MayLoad)";
+  if (Inst.mayStore)           OS << "|(1<<TID::MayStore)";
+  if (Inst.isPredicable)       OS << "|(1<<TID::Predicable)";
   if (Inst.isConvertibleToThreeAddress) OS << "|(1<<TID::ConvertibleTo3Addr)";
-  if (Inst.isCommutable) OS << "|(1<<TID::Commutable)";
-  if (Inst.isTerminator) OS << "|(1<<TID::Terminator)";
+  if (Inst.isCommutable)       OS << "|(1<<TID::Commutable)";
+  if (Inst.isTerminator)       OS << "|(1<<TID::Terminator)";
   if (Inst.isReMaterializable) OS << "|(1<<TID::Rematerializable)";
   if (Inst.isNotDuplicable)    OS << "|(1<<TID::NotDuplicable)";
   if (Inst.hasOptionalDef)     OS << "|(1<<TID::HasOptionalDef)";
   if (Inst.usesCustomDAGSchedInserter)
     OS << "|(1<<TID::UsesCustomDAGSchedInserter)";
   if (Inst.isVariadic)         OS << "|(1<<TID::Variadic)";
-  if (Inst.hasSideEffects)          OS << "|(1<<TID::UnmodeledSideEffects)";
+  if (Inst.hasSideEffects)     OS << "|(1<<TID::UnmodeledSideEffects)";
+  if (Inst.isAsCheapAsAMove)   OS << "|(1<<TID::CheapAsAMove)";
   OS << ", 0";
 
   // Emit all of the target-specific flags...
