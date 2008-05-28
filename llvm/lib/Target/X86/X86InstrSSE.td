@@ -2778,7 +2778,7 @@ let Constraints = "$src1 = $dst" in {
                              (int_x86_ssse3_palign_r
                               VR64:$src1, VR64:$src2,
                               imm:$src3))]>;
-  def PALIGNR64rm  : SS3AI<0x0F, MRMSrcReg, (outs VR64:$dst),
+  def PALIGNR64rm  : SS3AI<0x0F, MRMSrcMem, (outs VR64:$dst),
                            (ins VR64:$src1, i64mem:$src2, i16imm:$src3),
                            "palignr\t{$src3, $src2, $dst|$dst, $src2, $src3}",
                            [(set VR64:$dst,
@@ -2794,7 +2794,7 @@ let Constraints = "$src1 = $dst" in {
                              (int_x86_ssse3_palign_r_128
                               VR128:$src1, VR128:$src2,
                               imm:$src3))]>, OpSize;
-  def PALIGNR128rm : SS3AI<0x0F, MRMSrcReg, (outs VR128:$dst),
+  def PALIGNR128rm : SS3AI<0x0F, MRMSrcMem, (outs VR128:$dst),
                            (ins VR128:$src1, i128mem:$src2, i32imm:$src3),
                            "palignr\t{$src3, $src2, $dst|$dst, $src2, $src3}",
                            [(set VR128:$dst,
