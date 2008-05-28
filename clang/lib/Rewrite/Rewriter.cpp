@@ -100,6 +100,7 @@ int Rewriter::getRangeSize(SourceRange Range) const {
 
 unsigned Rewriter::getLocationOffsetAndFileID(SourceLocation Loc,
                                               unsigned &FileID) const {
+  assert(Loc.isValid() && "Invalid location");
   std::pair<unsigned,unsigned> V = SourceMgr->getDecomposedFileLoc(Loc);
   FileID = V.first;
   return V.second;
