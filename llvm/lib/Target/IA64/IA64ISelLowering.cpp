@@ -91,12 +91,17 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
   setOperationAction(ISD::LABEL, MVT::Other, Expand);
 
-  //IA64 has these, but they are not implemented
-  setOperationAction(ISD::CTTZ , MVT::i64  , Expand);
+  // IA64 has ctlz in the form of the 'fnorm' instruction.  The Legalizer 
+  // expansion for ctlz/cttz in terms of ctpop is much larger, but lower
+  // latency.
+  // FIXME: Custom lower CTLZ when compiling for size?
   setOperationAction(ISD::CTLZ , MVT::i64  , Expand);
+  setOperationAction(ISD::CTTZ , MVT::i64  , Expand);
   setOperationAction(ISD::ROTL , MVT::i64  , Expand);
   setOperationAction(ISD::ROTR , MVT::i64  , Expand);
-  setOperationAction(ISD::BSWAP, MVT::i64  , Expand);  // mux @rev
+
+  // FIXME: IA64 has this, but is not implemented. should be mux @rev
+  setOperationAction(ISD::BSWAP, MVT::i64  , Expand);
 
   // VASTART needs to be custom lowered to use the VarArgsFrameIndex
   setOperationAction(ISD::VAARG             , MVT::Other, Custom);
