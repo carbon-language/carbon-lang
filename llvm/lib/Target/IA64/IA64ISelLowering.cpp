@@ -80,6 +80,8 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FSQRT, MVT::f32, Expand);
   setOperationAction(ISD::FPOW , MVT::f32, Expand);
 
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1   , Expand);
+    
   // FIXME: IA64 supports fcopysign natively!
   setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
   setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
