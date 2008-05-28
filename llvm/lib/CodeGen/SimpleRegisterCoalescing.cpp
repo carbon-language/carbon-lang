@@ -751,7 +751,7 @@ bool SimpleRegisterCoalescing::CanCoalesceWithImpDef(MachineInstr *CopyMI,
 /// identity copies so they will be removed.
 void SimpleRegisterCoalescing::RemoveCopiesFromValNo(LiveInterval &li,
                                                      VNInfo *VNI) {
-  MachineInstr *ImpDef = NULL;
+  SmallVector<MachineInstr*, 4> ImpDefs;
   MachineOperand *LastUse = NULL;
   unsigned LastUseIdx = li_->getUseIndex(VNI->def);
   for (MachineRegisterInfo::reg_iterator RI = mri_->reg_begin(li.reg),
@@ -761,8 +761,7 @@ void SimpleRegisterCoalescing::RemoveCopiesFromValNo(LiveInterval &li,
     ++RI;
     if (MO->isDef()) {
       if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
-        assert(!ImpDef && "Multiple implicit_def defining same register?");
-        ImpDef = MI;
+        ImpDefs.push_back(MI);
       }
       continue;
     }
@@ -790,9 +789,13 @@ void SimpleRegisterCoalescing::RemoveCopiesFromValNo(LiveInterval &li,
   if (LastUse)
     LastUse->setIsKill();
   else {
-    // Remove dead implicit_def.
-    li_->RemoveMachineInstrFromMaps(ImpDef);
-    ImpDef->eraseFromParent();
+    // Remove dead implicit_def's.
+    while (!ImpDefs.empty()) {
+      MachineInstr *ImpDef = ImpDefs.back();
+      ImpDefs.pop_back();
+      li_->RemoveMachineInstrFromMaps(ImpDef);
+      ImpDef->eraseFromParent();
+    }
   }
 }
 
