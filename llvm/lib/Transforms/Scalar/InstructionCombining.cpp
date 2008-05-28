@@ -9131,6 +9131,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           CI.setOperand(0, Intrinsic::getDeclaration(M, MemCpyID));
           Changed = true;
         }
+
+      // memmove(x,x,size) -> noop.
+      if (MMI->getSource() == MMI->getDest())
+        return EraseInstFromFunction(CI);
     }
 
     // If we can determine a pointer alignment that is bigger than currently

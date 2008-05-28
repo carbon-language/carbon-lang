@@ -34,3 +34,9 @@ define i32 @test3() {
 	ret i32 0
 }
 
+; PR2370
+define void @test4(i8* %a) {
+        tail call void @llvm.memmove.i32( i8* %a, i8* %a, i32 100, i32 1 )
+        ret void
+}
+
