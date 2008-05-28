@@ -26,101 +26,101 @@ using namespace llvm;
 IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
   : TargetLowering(TM) {
  
-      // register class for general registers
-      addRegisterClass(MVT::i64, IA64::GRRegisterClass);
+  // register class for general registers
+  addRegisterClass(MVT::i64, IA64::GRRegisterClass);
 
-      // register class for FP registers
-      addRegisterClass(MVT::f64, IA64::FPRegisterClass);
+  // register class for FP registers
+  addRegisterClass(MVT::f64, IA64::FPRegisterClass);
 
-      // register class for predicate registers
-      addRegisterClass(MVT::i1, IA64::PRRegisterClass);
+  // register class for predicate registers
+  addRegisterClass(MVT::i1, IA64::PRRegisterClass);
 
-      setLoadXAction(ISD::EXTLOAD          , MVT::i1   , Promote);
+  setLoadXAction(ISD::EXTLOAD          , MVT::i1   , Promote);
 
-      setLoadXAction(ISD::ZEXTLOAD         , MVT::i1   , Promote);
+  setLoadXAction(ISD::ZEXTLOAD         , MVT::i1   , Promote);
 
-      setLoadXAction(ISD::SEXTLOAD         , MVT::i1   , Promote);
-      setLoadXAction(ISD::SEXTLOAD         , MVT::i8   , Expand);
-      setLoadXAction(ISD::SEXTLOAD         , MVT::i16  , Expand);
-      setLoadXAction(ISD::SEXTLOAD         , MVT::i32  , Expand);
+  setLoadXAction(ISD::SEXTLOAD         , MVT::i1   , Promote);
+  setLoadXAction(ISD::SEXTLOAD         , MVT::i8   , Expand);
+  setLoadXAction(ISD::SEXTLOAD         , MVT::i16  , Expand);
+  setLoadXAction(ISD::SEXTLOAD         , MVT::i32  , Expand);
 
-      setOperationAction(ISD::BRIND            , MVT::Other, Expand);
-      setOperationAction(ISD::BR_JT            , MVT::Other, Expand);
-      setOperationAction(ISD::BR_CC            , MVT::Other, Expand);
-      setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
+  setOperationAction(ISD::BRIND            , MVT::Other, Expand);
+  setOperationAction(ISD::BR_JT            , MVT::Other, Expand);
+  setOperationAction(ISD::BR_CC            , MVT::Other, Expand);
+  setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
 
-      // ia64 uses SELECT not SELECT_CC
-      setOperationAction(ISD::SELECT_CC        , MVT::Other,  Expand);
-      
-      // We need to handle ISD::RET for void functions ourselves,
-      // so we get a chance to restore ar.pfs before adding a
-      // br.ret insn
-      setOperationAction(ISD::RET, MVT::Other, Custom);
+  // ia64 uses SELECT not SELECT_CC
+  setOperationAction(ISD::SELECT_CC        , MVT::Other,  Expand);
+  
+  // We need to handle ISD::RET for void functions ourselves,
+  // so we get a chance to restore ar.pfs before adding a
+  // br.ret insn
+  setOperationAction(ISD::RET, MVT::Other, Custom);
 
-      setShiftAmountType(MVT::i64);
+  setShiftAmountType(MVT::i64);
 
-      setOperationAction(ISD::FREM             , MVT::f32  , Expand);
-      setOperationAction(ISD::FREM             , MVT::f64  , Expand);
+  setOperationAction(ISD::FREM             , MVT::f32  , Expand);
+  setOperationAction(ISD::FREM             , MVT::f64  , Expand);
 
-      setOperationAction(ISD::UREM             , MVT::f32  , Expand);
-      setOperationAction(ISD::UREM             , MVT::f64  , Expand);
+  setOperationAction(ISD::UREM             , MVT::f32  , Expand);
+  setOperationAction(ISD::UREM             , MVT::f64  , Expand);
 
-      setOperationAction(ISD::MEMBARRIER       , MVT::Other, Expand);
+  setOperationAction(ISD::MEMBARRIER       , MVT::Other, Expand);
 
-      setOperationAction(ISD::SINT_TO_FP       , MVT::i1   , Promote);
-      setOperationAction(ISD::UINT_TO_FP       , MVT::i1   , Promote);
+  setOperationAction(ISD::SINT_TO_FP       , MVT::i1   , Promote);
+  setOperationAction(ISD::UINT_TO_FP       , MVT::i1   , Promote);
 
-      // We don't support sin/cos/sqrt/pow
-      setOperationAction(ISD::FSIN , MVT::f64, Expand);
-      setOperationAction(ISD::FCOS , MVT::f64, Expand);
-      setOperationAction(ISD::FSQRT, MVT::f64, Expand);
-      setOperationAction(ISD::FPOW , MVT::f64, Expand);
-      setOperationAction(ISD::FSIN , MVT::f32, Expand);
-      setOperationAction(ISD::FCOS , MVT::f32, Expand);
-      setOperationAction(ISD::FSQRT, MVT::f32, Expand);
-      setOperationAction(ISD::FPOW , MVT::f32, Expand);
+  // We don't support sin/cos/sqrt/pow
+  setOperationAction(ISD::FSIN , MVT::f64, Expand);
+  setOperationAction(ISD::FCOS , MVT::f64, Expand);
+  setOperationAction(ISD::FSQRT, MVT::f64, Expand);
+  setOperationAction(ISD::FPOW , MVT::f64, Expand);
+  setOperationAction(ISD::FSIN , MVT::f32, Expand);
+  setOperationAction(ISD::FCOS , MVT::f32, Expand);
+  setOperationAction(ISD::FSQRT, MVT::f32, Expand);
+  setOperationAction(ISD::FPOW , MVT::f32, Expand);
 
-      // FIXME: IA64 supports fcopysign natively!
-      setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
-      setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
-      
-      // We don't have line number support yet.
-      setOperationAction(ISD::LOCATION, MVT::Other, Expand);
-      setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
-      setOperationAction(ISD::LABEL, MVT::Other, Expand);
+  // FIXME: IA64 supports fcopysign natively!
+  setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
+  setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
+  
+  // We don't have line number support yet.
+  setOperationAction(ISD::LOCATION, MVT::Other, Expand);
+  setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
+  setOperationAction(ISD::LABEL, MVT::Other, Expand);
 
-      //IA64 has these, but they are not implemented
-      setOperationAction(ISD::CTTZ , MVT::i64  , Expand);
-      setOperationAction(ISD::CTLZ , MVT::i64  , Expand);
-      setOperationAction(ISD::ROTL , MVT::i64  , Expand);
-      setOperationAction(ISD::ROTR , MVT::i64  , Expand);
-      setOperationAction(ISD::BSWAP, MVT::i64  , Expand);  // mux @rev
+  //IA64 has these, but they are not implemented
+  setOperationAction(ISD::CTTZ , MVT::i64  , Expand);
+  setOperationAction(ISD::CTLZ , MVT::i64  , Expand);
+  setOperationAction(ISD::ROTL , MVT::i64  , Expand);
+  setOperationAction(ISD::ROTR , MVT::i64  , Expand);
+  setOperationAction(ISD::BSWAP, MVT::i64  , Expand);  // mux @rev
 
-      // VASTART needs to be custom lowered to use the VarArgsFrameIndex
-      setOperationAction(ISD::VAARG             , MVT::Other, Custom);
-      setOperationAction(ISD::VASTART           , MVT::Other, Custom);
-      
-      // Use the default implementation.
-      setOperationAction(ISD::VACOPY            , MVT::Other, Expand);
-      setOperationAction(ISD::VAEND             , MVT::Other, Expand);
-      setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
-      setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
-      setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
+  // VASTART needs to be custom lowered to use the VarArgsFrameIndex
+  setOperationAction(ISD::VAARG             , MVT::Other, Custom);
+  setOperationAction(ISD::VASTART           , MVT::Other, Custom);
+  
+  // Use the default implementation.
+  setOperationAction(ISD::VACOPY            , MVT::Other, Expand);
+  setOperationAction(ISD::VAEND             , MVT::Other, Expand);
+  setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
+  setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
 
-      // Thread Local Storage
-      setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
+  // Thread Local Storage
+  setOperationAction(ISD::GlobalTLSAddress, MVT::i64, Custom);
 
-      setStackPointerRegisterToSaveRestore(IA64::r12);
+  setStackPointerRegisterToSaveRestore(IA64::r12);
 
-      setJumpBufSize(704); // on ia64-linux, jmp_bufs are 704 bytes..
-      setJumpBufAlignment(16); // ...and must be 16-byte aligned
-      
-      computeRegisterProperties();
+  setJumpBufSize(704); // on ia64-linux, jmp_bufs are 704 bytes..
+  setJumpBufAlignment(16); // ...and must be 16-byte aligned
+  
+  computeRegisterProperties();
 
-      addLegalFPImmediate(APFloat(+0.0));
-      addLegalFPImmediate(APFloat(-0.0));
-      addLegalFPImmediate(APFloat(+1.0));
-      addLegalFPImmediate(APFloat(-1.0));
+  addLegalFPImmediate(APFloat(+0.0));
+  addLegalFPImmediate(APFloat(-0.0));
+  addLegalFPImmediate(APFloat(+1.0));
+  addLegalFPImmediate(APFloat(-1.0));
 }
 
 const char *IA64TargetLowering::getTargetNodeName(unsigned Opcode) const {
