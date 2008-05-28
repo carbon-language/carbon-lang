@@ -306,6 +306,9 @@ namespace llvm {
     /// computeIntervals - Compute live intervals.
     void computeIntervals();
     
+    /// computeNumbering - Compute the index numbering.
+    void computeNumbering();
+    
     /// handleRegisterDef - update intervals for a register def
     /// (calls handlePhysicalRegisterDef and
     /// handleVirtualRegisterDef)

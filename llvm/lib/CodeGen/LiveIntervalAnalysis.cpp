@@ -75,17 +75,14 @@ void LiveIntervals::releaseMemory() {
     delete ClonedMIs[i];
 }
 
-/// runOnMachineFunction - Register allocate the whole function
-///
-bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
-  mf_ = &fn;
-  mri_ = &mf_->getRegInfo();
-  tm_ = &fn.getTarget();
-  tri_ = tm_->getRegisterInfo();
-  tii_ = tm_->getInstrInfo();
-  lv_ = &getAnalysis<LiveVariables>();
-  allocatableRegs_ = tri_->getAllocatableSet(fn);
-
+void LiveIntervals::computeNumbering() {
+  Index2MiMap OldI2MI = i2miMap_;
+  
+  Idx2MBBMap.clear();
+  MBB2IdxMap.clear();
+  mi2iMap_.clear();
+  i2miMap_.clear();
+  
   // Number MachineInstrs and MachineBasicBlocks.
   // Initialize MBB indexes to a sentinal.
   MBB2IdxMap.resize(mf_->getNumBlockIDs(), std::make_pair(~0U,~0U));
@@ -110,7 +107,28 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     Idx2MBBMap.push_back(std::make_pair(StartIdx, MBB));
   }
   std::sort(Idx2MBBMap.begin(), Idx2MBBMap.end(), Idx2MBBCompare());
+  
+  if (!OldI2MI.empty())
+    for (iterator I = begin(), E = end(); I != E; ++I)
+      for (LiveInterval::iterator LI = I->second.begin(), LE = I->second.end();
+           LI != LE; ++LI) {
+        LI->start = mi2iMap_[OldI2MI[LI->start]];
+        LI->end = mi2iMap_[OldI2MI[LI->end]];
+      }
+}
 
+/// runOnMachineFunction - Register allocate the whole function
+///
+bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
+  mf_ = &fn;
+  mri_ = &mf_->getRegInfo();
+  tm_ = &fn.getTarget();
+  tri_ = tm_->getRegisterInfo();
+  tii_ = tm_->getInstrInfo();
+  lv_ = &getAnalysis<LiveVariables>();
+  allocatableRegs_ = tri_->getAllocatableSet(fn);
+
+  computeNumbering();
   computeIntervals();
 
   numIntervals += getNumIntervals();
