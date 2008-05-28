@@ -875,7 +875,8 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
       QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
       CastExpr *castExpr = new CastExpr(castT, IV->getBase(), SourceLocation());
       // Don't forget the parens to enforce the proper binding.
-      ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), castExpr);
+      ParenExpr *PE = new ParenExpr(IV->getBase()->getLocStart(),
+                                    IV->getBase()->getLocEnd(), castExpr);
       ReplaceStmt(IV->getBase(), PE);
       // Cannot delete IV->getBase(), since PE points to it.
       // Replace the old base with the cast. This is important when doing
