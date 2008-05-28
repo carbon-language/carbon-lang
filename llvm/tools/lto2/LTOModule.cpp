@@ -97,13 +97,13 @@ LTOModule* LTOModule::makeLTOModule(const char* path, std::string& errMsg)
 /// Also if next byte is on a different page, don't assume it is readable.
 MemoryBuffer* LTOModule::makeBuffer(const void* mem, size_t length)
 {
-	const char* startPtr = (char*)mem;
-	const char* endPtr = startPtr+length;
-	if ( (((uintptr_t)endPtr & (sys::Process::GetPageSize()-1)) == 0) 
-	    || (*endPtr != 0) ) 
-		return MemoryBuffer::getMemBufferCopy(startPtr, endPtr);
-	else
-		return MemoryBuffer::getMemBuffer(startPtr, endPtr);
+    const char* startPtr = (char*)mem;
+    const char* endPtr = startPtr+length;
+    if ( (((uintptr_t)endPtr & (sys::Process::GetPageSize()-1)) == 0) 
+        || (*endPtr != 0) ) 
+        return MemoryBuffer::getMemBufferCopy(startPtr, endPtr);
+    else
+        return MemoryBuffer::getMemBuffer(startPtr, endPtr);
 }
 
 
@@ -234,13 +234,13 @@ void LTOModule::findExternalRefs(Value* value, Mangler &mangler) {
     if (GlobalValue* gv = dyn_cast<GlobalValue>(value)) {
         if ( !gv->hasExternalLinkage() )
             addPotentialUndefinedSymbol(gv, mangler);
-		// If this is a variable definition, do not recursively process
-		// initializer.  It might contain a reference to this variable
-		// and cause an infinite loop.  The initializer will be
-		// processed in addDefinedDataSymbol(). 
-	    return;
+        // If this is a variable definition, do not recursively process
+        // initializer.  It might contain a reference to this variable
+        // and cause an infinite loop.  The initializer will be
+        // processed in addDefinedDataSymbol(). 
+        return;
     }
-	
+    
     // GlobalValue, even with InternalLinkage type, may have operands with 
     // ExternalLinkage type. Do not ignore these operands.
     if (Constant* c = dyn_cast<Constant>(value)) {
