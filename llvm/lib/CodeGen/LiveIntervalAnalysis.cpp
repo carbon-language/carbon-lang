@@ -114,6 +114,12 @@ void LiveIntervals::computeNumbering() {
            LI != LE; ++LI) {
         LI->start = mi2iMap_[OldI2MI[LI->start]];
         LI->end = mi2iMap_[OldI2MI[LI->end]];
+        
+        VNInfo* vni = LI->valno;
+        vni->def = mi2iMap_[OldI2MI[vni->def]];
+        
+        for (size_t i = 0; i < vni->kills.size(); ++i)
+          vni->kills[i] = mi2iMap_[OldI2MI[vni->kills[i]]];
       }
 }
 
