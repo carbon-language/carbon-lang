@@ -530,7 +530,8 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     case MVT::f32:
       RetVal = DAG.getCopyFromReg(Chain, IA64::F8, MVT::f64, InFlag);
       Chain = RetVal.getValue(1);
-      RetVal = DAG.getNode(ISD::TRUNCATE, MVT::f32, RetVal);
+      RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal,
+                           DAG.getIntPtrConstant(0));
       break;
     case MVT::f64:
       RetVal = DAG.getCopyFromReg(Chain, IA64::F8, MVT::f64, InFlag);
