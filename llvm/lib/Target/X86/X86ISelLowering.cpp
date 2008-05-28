@@ -6324,6 +6324,11 @@ static SDOperand PerformBuildVectorCombine(SDNode *N, SelectionDAG &DAG,
 
   // Transform it into VZEXT_LOAD addr.
   LoadSDNode *LD = cast<LoadSDNode>(Base);
+  
+  // Load must not be an extload.
+  if (LD->getExtensionType() != ISD::NON_EXTLOAD)
+    return SDOperand();
+  
   return DAG.getNode(X86ISD::VZEXT_LOAD, VT, LD->getChain(), LD->getBasePtr());
 }                                           
 
