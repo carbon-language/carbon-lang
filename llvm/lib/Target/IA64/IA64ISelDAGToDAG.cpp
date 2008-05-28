@@ -348,7 +348,8 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
     // load the branch target's entry point [mem] and 
     // GP value [mem+8]
     SDOperand targetEntryPoint=
-      SDOperand(CurDAG->getTargetNode(IA64::LD8, MVT::i64, FnDescriptor), 0);
+      SDOperand(CurDAG->getTargetNode(IA64::LD8, MVT::i64, MVT::Other,
+                                      FnDescriptor), 0);
     Chain = targetEntryPoint.getValue(1);
     SDOperand targetGPAddr=
       SDOperand(CurDAG->getTargetNode(IA64::ADDS, MVT::i64, 
@@ -356,7 +357,8 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
                                       CurDAG->getConstant(8, MVT::i64)), 0);
     Chain = targetGPAddr.getValue(1);
     SDOperand targetGP =
-      SDOperand(CurDAG->getTargetNode(IA64::LD8, MVT::i64, targetGPAddr), 0);
+      SDOperand(CurDAG->getTargetNode(IA64::LD8, MVT::i64,MVT::Other,
+                                      targetGPAddr), 0);
     Chain = targetGP.getValue(1);
 
     Chain = CurDAG->getCopyToReg(Chain, IA64::r1, targetGP, InFlag);
