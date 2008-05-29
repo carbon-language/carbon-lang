@@ -58,8 +58,6 @@ void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LiveVariables>();
   AU.addPreservedID(MachineLoopInfoID);
   AU.addPreservedID(MachineDominatorsID);
-  AU.addPreservedID(PHIEliminationID);
-  AU.addRequiredID(PHIEliminationID);
   AU.addRequiredID(TwoAddressInstructionPassID);
   MachineFunctionPass::getAnalysisUsage(AU);
 }
@@ -74,6 +72,8 @@ void LiveIntervals::releaseMemory() {
   for (unsigned i = 0, e = ClonedMIs.size(); i != e; ++i)
     delete ClonedMIs[i];
 }
+
+#include <iostream>
 
 void LiveIntervals::computeNumbering() {
   Index2MiMap OldI2MI = i2miMap_;
@@ -112,14 +112,27 @@ void LiveIntervals::computeNumbering() {
     for (iterator I = begin(), E = end(); I != E; ++I)
       for (LiveInterval::iterator LI = I->second.begin(), LE = I->second.end();
            LI != LE; ++LI) {
-        LI->start = mi2iMap_[OldI2MI[LI->start]];
-        LI->end = mi2iMap_[OldI2MI[LI->end]];
+        unsigned offset = LI->start % InstrSlots::NUM;
+        LI->start = mi2iMap_[OldI2MI[LI->start / InstrSlots::NUM]] + offset;
+        
+        if (LI->end / InstrSlots::NUM < OldI2MI.size()) {
+          // FIXME: Not correct when the instruction at LI->end has 
+          // been removed
+          offset = LI->end % InstrSlots::NUM;
+          LI->end = mi2iMap_[OldI2MI[LI->end / InstrSlots::NUM]] + offset;
+        } else {
+          LI->end = i2miMap_.size() * InstrSlots::NUM;
+        }
         
         VNInfo* vni = LI->valno;
-        vni->def = mi2iMap_[OldI2MI[vni->def]];
+        offset = vni->def % InstrSlots::NUM;
+        vni->def = mi2iMap_[OldI2MI[vni->def / InstrSlots::NUM]] + offset;
         
-        for (size_t i = 0; i < vni->kills.size(); ++i)
-          vni->kills[i] = mi2iMap_[OldI2MI[vni->kills[i]]];
+        for (size_t i = 0; i < vni->kills.size(); ++i) {
+          offset = vni->kills[i] % InstrSlots::NUM;
+          vni->kills[i] = mi2iMap_[OldI2MI[vni->kills[i] / InstrSlots::NUM]] +
+                          offset;
+        }
       }
 }
 
