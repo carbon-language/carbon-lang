@@ -35,8 +35,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ADT_ILIST
-#define LLVM_ADT_ILIST
+#ifndef LLVM_ADT_ILIST_H
+#define LLVM_ADT_ILIST_H
 
 #include "llvm/ADT/iterator.h"
 #include <cassert>
@@ -631,4 +631,4 @@ namespace std {
   }
 }  // End 'std' extensions...
 
-#endif
+#endif // LLVM_ADT_ILIST_H

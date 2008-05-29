@@ -15,8 +15,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ADT_HASH_SET
-#define LLVM_ADT_HASH_SET
+#ifndef LLVM_ADT_HASH_SET_H
+#define LLVM_ADT_HASH_SET_H
 
 // Compiler Support Matrix
 //
@@ -108,4 +108,4 @@ using HASH_NAMESPACE::hash_set;
 
 #include "llvm/ADT/HashExtras.h"
 
-#endif
+#endif // LLVM_ADT_HASH_SET_H
