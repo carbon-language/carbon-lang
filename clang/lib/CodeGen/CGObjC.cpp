@@ -14,7 +14,7 @@
 #include "CGObjCRuntime.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
-#include "clang/AST/Expr.h"
+#include "clang/AST/ExprObjC.h"
 #include "llvm/Constant.h"
 using namespace clang;
 using namespace CodeGen;

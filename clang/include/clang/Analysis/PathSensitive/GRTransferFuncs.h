@@ -22,6 +22,7 @@
 namespace clang {
   
   class GRExprEngine;
+  class ObjCMessageExpr;
   
 class GRTransferFuncs {
 public:

@@ -16,6 +16,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/ExprObjC.h"
 #include "clang/Parse/DeclSpec.h" 
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/LiteralSupport.h"

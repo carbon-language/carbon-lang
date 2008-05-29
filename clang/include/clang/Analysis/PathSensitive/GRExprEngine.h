@@ -21,13 +21,14 @@
 #include "clang/Analysis/PathSensitive/GRSimpleAPICheck.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/ExprObjC.h"
 
 namespace clang {  
   
   class BugType;
   class PathDiagnosticClient;
   class Diagnostic;
-  
+
 class GRExprEngine {
   
 public:

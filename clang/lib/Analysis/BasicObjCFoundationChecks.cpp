@@ -21,6 +21,7 @@
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprObjC.h"
 #include "clang/AST/ASTContext.h"
 #include "llvm/Support/Compiler.h"
 
