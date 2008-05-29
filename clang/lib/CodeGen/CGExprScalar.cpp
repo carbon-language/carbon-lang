@@ -917,12 +917,12 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
     if (LHS->getType()->isFloatingPoint()) {
       Result = Builder.CreateFCmp((llvm::FCmpInst::Predicate)FCmpOpc,
                                   LHS, RHS, "cmp");
-    } else if (LHSTy->isUnsignedIntegerType()) {
-      Result = Builder.CreateICmp((llvm::ICmpInst::Predicate)UICmpOpc,
+    } else if (LHSTy->isSignedIntegerType()) {
+      Result = Builder.CreateICmp((llvm::ICmpInst::Predicate)SICmpOpc,
                                   LHS, RHS, "cmp");
     } else {
-      // Signed integers and pointers.
-      Result = Builder.CreateICmp((llvm::ICmpInst::Predicate)SICmpOpc,
+      // Unsigned integers and pointers.
+      Result = Builder.CreateICmp((llvm::ICmpInst::Predicate)UICmpOpc,
                                   LHS, RHS, "cmp");
     }
   } else {
