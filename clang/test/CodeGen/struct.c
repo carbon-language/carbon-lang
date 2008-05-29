@@ -163,3 +163,6 @@ int f14(int i, ...) {
 
 /* Attribute packed */
 struct __attribute__((packed)) S2839 { double a[19];  signed char b; } s2839[5];
+
+struct __attribute__((packed)) SS { long double a; char b; } SS;
+

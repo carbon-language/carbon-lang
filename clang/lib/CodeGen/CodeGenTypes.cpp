@@ -482,14 +482,13 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
   // FIXME : Use SmallVector
   uint64_t llvmSize = 0;
   std::vector<const llvm::Type*> LLVMFields;
-  bool packedStruct = false;
   int NumMembers = RD.getNumMembers();
 
   for (int curField = 0; curField < NumMembers; curField++) {
     const FieldDecl *FD = RD.getMember(curField);
     uint64_t offset = RL.getFieldOffset(curField);
     const llvm::Type *Ty = CGT.ConvertTypeRecursive(FD->getType());
-    uint64_t size = CGT.getTargetData().getABITypeSize(Ty) * 8;
+    uint64_t size = CGT.getTargetData().getTypeStoreSizeInBits(Ty);
 
     if (FD->isBitField()) {
       Expr *BitWidth = FD->getBitWidth();
@@ -513,12 +512,6 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
         llvmSize += 8;
       }
 
-      unsigned Align = CGT.getTargetData().getABITypeAlignment(Ty) * 8;
-      if (llvmSize % Align)
-        packedStruct = true;
-      else if (offset == 0 && RL.getAlignment() % Align)
-        packedStruct = true;
-
       llvmSize += size;
       CGT.addFieldInfo(FD, LLVMFields.size());
       LLVMFields.push_back(Ty);
@@ -530,7 +523,7 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
     llvmSize += 8;
   }
 
-  STy = llvm::StructType::get(LLVMFields, packedStruct);
+  STy = llvm::StructType::get(LLVMFields, true);
   assert(CGT.getTargetData().getABITypeSizeInBits(STy) == RL.getSize());
 }
 
