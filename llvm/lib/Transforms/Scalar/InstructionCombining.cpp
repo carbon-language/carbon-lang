@@ -603,10 +603,10 @@ static User *dyn_castGetElementPtr(Value *V) {
 
 /// getOpcode - If this is an Instruction or a ConstantExpr, return the
 /// opcode value. Otherwise return UserOp1.
-static unsigned getOpcode(Value *V) {
-  if (Instruction *I = dyn_cast<Instruction>(V))
+static unsigned getOpcode(const Value *V) {
+  if (const Instruction *I = dyn_cast<Instruction>(V))
     return I->getOpcode();
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
     return CE->getOpcode();
   // Use UserOp1 to mean there's no opcode.
   return Instruction::UserOp1;
