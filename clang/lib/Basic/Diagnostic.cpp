@@ -108,6 +108,7 @@ namespace clang {
 //===----------------------------------------------------------------------===//
 
 Diagnostic::Diagnostic(DiagnosticClient &client) : Client(client) {
+  IgnoreAllWarnings = false;
   WarningsAsErrors = false;
   WarnOnExtensions = false;
   ErrorOnExtensions = false;
@@ -167,7 +168,7 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
   if (DiagClass < ERROR) {
     switch (getDiagnosticMapping((diag::kind)DiagID)) {
     case diag::MAP_DEFAULT: break;
-    case diag::MAP_IGNORE:  return Ignored;
+    case diag::MAP_IGNORE:  return Diagnostic::Ignored;
     case diag::MAP_WARNING: DiagClass = WARNING; break;
     case diag::MAP_ERROR:   DiagClass = ERROR; break;
     }
@@ -183,9 +184,13 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
       return Ignored;
   }
   
-  // If warnings are to be treated as errors, indicate this as such.
-  if (DiagClass == WARNING && WarningsAsErrors)
-    DiagClass = ERROR;
+  // If warnings are globally mapped to ignore or error, do it.
+  if (DiagClass == WARNING) {
+    if (IgnoreAllWarnings)
+      return Diagnostic::Ignored;
+    if (WarningsAsErrors)
+      DiagClass = ERROR;
+  }
   
   switch (DiagClass) {
   default: assert(0 && "Unknown diagnostic class!");

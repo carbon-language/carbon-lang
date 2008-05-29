@@ -57,6 +57,7 @@ public:
   };
   
 private:  
+  bool IgnoreAllWarnings;     // Ignore all warnings: -w
   bool WarningsAsErrors;      // Treat warnings like errors: 
   bool WarnOnExtensions;      // Enables warnings for gcc extensions: -pedantic.
   bool ErrorOnExtensions;     // Error on extensions: -pedantic-errors.
@@ -87,6 +88,11 @@ public:
   
   const DiagnosticClient &getClient() const { return Client; };
 
+  /// setIgnoreAllWarnings - When set to true, any unmapped warnings are
+  /// ignored.  If this and WarningsAsErrors are both set, then this one wins.
+  void setIgnoreAllWarnings(bool Val) { IgnoreAllWarnings = Val; }
+  bool getIgnoreAllWarnings() const { return IgnoreAllWarnings; }
+  
   /// setWarningsAsErrors - When set to true, any warnings reported are issued
   /// as errors.
   void setWarningsAsErrors(bool Val) { WarningsAsErrors = Val; }

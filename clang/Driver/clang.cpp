@@ -462,6 +462,9 @@ static llvm::cl::opt<bool>
 WarningsAsErrors("Werror", llvm::cl::desc("Treat all warnings as errors"));
 
 static llvm::cl::opt<bool>
+SilenceWarnings("w", llvm::cl::desc("Do not emit any warnings"));
+
+static llvm::cl::opt<bool>
 WarnOnExtensions("pedantic", llvm::cl::init(false),
                  llvm::cl::desc("Issue a warning on uses of GCC extensions"));
 
@@ -492,6 +495,7 @@ WarnImplicitFunctionDeclaration("Wimplicit-function-declaration"
 /// InitializeDiagnostics - Initialize the diagnostic object, based on the
 /// current command line option settings.
 static void InitializeDiagnostics(Diagnostic &Diags) {
+  Diags.setIgnoreAllWarnings(SilenceWarnings);
   Diags.setWarningsAsErrors(WarningsAsErrors);
   Diags.setWarnOnExtensions(WarnOnExtensions);
   Diags.setErrorOnExtensions(ErrorOnExtensions);
