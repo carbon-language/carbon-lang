@@ -42,6 +42,10 @@ PostDominatorTree::~PostDominatorTree()
   delete DT;
 }
 
+FunctionPass* llvm::createPostDomTree() {
+  return new PostDominatorTree();
+}
+
 //===----------------------------------------------------------------------===//
 //  PostDominanceFrontier Implementation
 //===----------------------------------------------------------------------===//
@@ -83,4 +87,8 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
   }
 
   return S;
+}
+
+FunctionPass* llvm::createPostDomFrontier() {
+  return new PostDominanceFrontier();
 }

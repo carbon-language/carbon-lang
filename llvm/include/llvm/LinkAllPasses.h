@@ -116,6 +116,8 @@ namespace {
       (void) llvm::createGVNPass();
       (void) llvm::createMemCpyOptPass();
       (void) llvm::createLoopDeletionPass();
+      (void) llvm::createPostDomTree();
+      (void) llvm::createPostDomFrontier();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::FindUsedTypes();
