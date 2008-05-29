@@ -17,8 +17,8 @@
 //===----------------------------------------------------------------------===//
 
 #include <llvm/Config/config.h>
+#include <llvm/Support/Streams.h>
 #include "Unix.h"
-#include <iostream>
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -210,8 +210,8 @@ Program::ExecuteAndWait(const Path& path,
   }
 
   // Make sure stderr and stdout have been flushed
-  std::cerr << std::flush;
-  std::cout << std::flush;
+  cerr.flush();
+  cout.flush();
   fsync(1);
   fsync(2);
 

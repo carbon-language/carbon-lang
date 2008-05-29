@@ -19,6 +19,9 @@
 
 namespace llvm {
 
+  /// FlushStream - Function called by BaseStream to flush an ostream.
+  void FlushStream(std::ostream &S);
+
   /// BaseStream - Acts like the STL streams. It's a wrapper for the std::cerr,
   /// std::cout, std::cin, etc. streams. However, it doesn't require #including
   /// @verbatim <iostream> @endverbatm in every file (doing so increases static 
@@ -37,6 +40,11 @@ namespace llvm {
     inline BaseStream &operator << (StreamTy &(*Func)(StreamTy&)) {
       if (Stream) *Stream << Func;
       return *this;
+    }
+
+    void flush() {
+      if (Stream)
+        FlushStream(*Stream);
     }
 
     template <typename Ty>

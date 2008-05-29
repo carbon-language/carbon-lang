@@ -17,7 +17,7 @@
 #include "SPUTargetMachine.h"
 #include "SPUGenInstrInfo.inc"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include <iostream>
+#include "llvm/Support/Streams.h"
 
 using namespace llvm;
 
@@ -218,7 +218,7 @@ void SPUInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, get(SPU::ORv4i32), DestReg).addReg(SrcReg)
       .addReg(SrcReg);
   } else {
-    std::cerr << "Attempt to copy unknown/unsupported register class!\n";
+    cerr << "Attempt to copy unknown/unsupported register class!\n";
     abort();
   }
 }
