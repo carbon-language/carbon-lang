@@ -14,7 +14,7 @@
 #ifndef LLVM_CLANG_REWRITEROPE_H
 #define LLVM_CLANG_REWRITEROPE_H
 
-#include "llvm/ADT/iterator"
+#include "llvm/ADT/iterator.h"
 #include <cstring>
 #include <cassert>
 
