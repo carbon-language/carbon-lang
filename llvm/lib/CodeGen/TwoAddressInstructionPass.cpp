@@ -330,10 +330,13 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         InstructionRearranged:
           const TargetRegisterClass* rc = MF.getRegInfo().getRegClass(regA);
           MachineInstr *Orig = MRI->getVRegDef(regB);
+          const TargetInstrDesc &OrigTID = Orig->getDesc();
           bool SawStore = false;
 
           if (EnableReMat && Orig && Orig->isSafeToMove(TII, SawStore) &&
-              TII->isTriviallyReMaterializable(Orig)) {
+              OrigTID.isAsCheapAsAMove() && !OrigTID.mayLoad() &&
+              !OrigTID.isSimpleLoad()) {
+            DEBUG(cerr << "2addr: REMATTING : " << *Orig << "\n");
             TII->reMaterialize(*mbbi, mi, regA, Orig);
             ReMattedInstrs.insert(Orig);
           } else {
