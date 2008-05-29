@@ -25,12 +25,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ADT_ITERATOR
-#define LLVM_ADT_ITERATOR
-
 #warning This files includes old 'llvm/ADT/iterator' file, which was replaced  \
 by 'llvm/ADT/iterator.h'. Please consider upgrading the source.
 
 #include "llvm/ADT/iterator.h"
 
-#endif // LLVM_ADT_ITERATOR
