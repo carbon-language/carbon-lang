@@ -17,7 +17,6 @@
 #ifndef LLVM_TARGET_TARGETJITINFO_H
 #define LLVM_TARGET_TARGETJITINFO_H
 
-#include <vector>
 #include <cassert>
 #include "llvm/Support/DataTypes.h"
 

@@ -14,13 +14,10 @@
 #ifndef LLVM_ANALYSIS_SCALAREVOLUTION_EXPANDER_H
 #define LLVM_ANALYSIS_SCALAREVOLUTION_EXPANDER_H
 
-#include "llvm/BasicBlock.h"
-#include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
-#include "llvm/Support/CFG.h"
 
 namespace llvm {
   /// SCEVExpander - This class uses information about analyze scalars to

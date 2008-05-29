@@ -14,12 +14,12 @@
 #ifndef LLVM_TRANSFORMS_UTILS_FUNCTION_H
 #define LLVM_TRANSFORMS_UTILS_FUNCTION_H
 
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include <vector>
 
 namespace llvm {
   class BasicBlock;
+  class DominatorTree;
   class Function;
 
   /// ExtractCodeRegion - rip out a sequence of basic blocks into a new function

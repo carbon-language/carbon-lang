@@ -18,7 +18,7 @@
 #include "llvm/AbstractTypeUser.h"
 #include "llvm/Use.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/Streams.h"
+#include <iosfwd>
 #include <string>
 
 namespace llvm {

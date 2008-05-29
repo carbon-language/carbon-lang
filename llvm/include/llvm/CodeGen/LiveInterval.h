@@ -23,9 +23,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/Streams.h"
 #include <iosfwd>
-#include <vector>
 #include <cassert>
 
 namespace llvm {

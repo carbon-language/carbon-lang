@@ -15,8 +15,6 @@
 #ifndef LLVM_TRANSFORMS_SCALAR_H
 #define LLVM_TRANSFORMS_SCALAR_H
 
-#include <cstdlib>
-
 namespace llvm {
 
 class FunctionPass;
@@ -271,7 +269,7 @@ extern const PassInfo *const LowerSwitchID;
 // purpose "my LLVM-to-LLVM pass doesn't support the invoke instruction yet"
 // lowering pass.
 //
-FunctionPass *createLowerInvokePass(const TargetLowering *TLI = NULL);
+FunctionPass *createLowerInvokePass(const TargetLowering *TLI = 0);
 extern const PassInfo *const LowerInvokePassID;
 
 //===----------------------------------------------------------------------===//

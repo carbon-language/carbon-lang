@@ -16,7 +16,7 @@
 
 #include "llvm/Target/TargetInstrItineraries.h"
 #include <cassert>
-#include <string>
+#include <iosfwd>
 
 namespace llvm {
 
