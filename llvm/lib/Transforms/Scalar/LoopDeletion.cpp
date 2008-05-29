@@ -258,12 +258,8 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   // NOTE: This iteration is safe because erasing the block does not remove its
   // entry from the loop's block list.  We do that in the next section.
   for (Loop::block_iterator LI = L->block_begin(), LE = L->block_end();
-       LI != LE; ++LI) {
-    for (Value::use_iterator UI = (*LI)->use_begin(), UE = (*LI)->use_end();
-         UI != UE; ++UI)
-      (*UI)->dump();
+       LI != LE; ++LI)
     (*LI)->eraseFromParent();
-  }
   
   // Finally, the blocks from loopinfo.  This has to happen late because
   // otherwise our loop iterators won't work.
