@@ -477,6 +477,12 @@ void CodeGenModule::EmitGlobalVarInit(const VarDecl *D) {
          "Initializer codegen type mismatch!");
   GV->setInitializer(Init);
 
+  unsigned Align = Context.getTypeAlign(D->getType());
+  if (const AlignedAttr* AA = D->getAttr<AlignedAttr>()) {
+    Align = std::max(Align, AA->getAlignment());
+  }
+  GV->setAlignment(Align / 8);
+
   if (const VisibilityAttr *attr = D->getAttr<VisibilityAttr>())
     setVisibility(GV, attr->getVisibility());
   // FIXME: else handle -fvisibility
