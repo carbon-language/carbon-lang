@@ -2695,8 +2695,8 @@ static SDOperand getMemcpyLoadsAndStores(SelectionDAG &DAG,
                                          const Value *SrcSV, uint64_t SrcSVOff){
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
-  // Expand memcpy to a series of store ops if the size operand falls below
-  // a certain threshold.
+  // Expand memcpy to a series of load and store ops if the size operand falls
+  // below a certain threshold.
   std::vector<MVT::ValueType> MemOps;
   uint64_t Limit = -1;
   if (!AlwaysInline)
@@ -2736,6 +2736,63 @@ static SDOperand getMemcpyLoadsAndStores(SelectionDAG &DAG,
     }
     OutChains.push_back(Store);
     SrcOff += VTSize;
+    DstOff += VTSize;
+  }
+
+  return DAG.getNode(ISD::TokenFactor, MVT::Other,
+                     &OutChains[0], OutChains.size());
+}
+
+static SDOperand getMemmoveLoadsAndStores(SelectionDAG &DAG,
+                                          SDOperand Chain, SDOperand Dst,
+                                          SDOperand Src, uint64_t Size,
+                                          unsigned Align, bool AlwaysInline,
+                                          const Value *DstSV, uint64_t DstSVOff,
+                                          const Value *SrcSV, uint64_t SrcSVOff){
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+
+  // Expand memmove to a series of load and store ops if the size operand falls
+  // below a certain threshold.
+  std::vector<MVT::ValueType> MemOps;
+  uint64_t Limit = -1;
+  if (!AlwaysInline)
+    Limit = TLI.getMaxStoresPerMemmove();
+  unsigned DstAlign = Align;  // Destination alignment can change.
+  if (!MeetsMaxMemopRequirement(MemOps, Dst, Src, Limit, Size, DstAlign,
+                                DAG, TLI))
+    return SDOperand();
+
+  std::string Str;
+  uint64_t SrcOff = 0, DstOff = 0;
+
+  SmallVector<SDOperand, 8> LoadValues;
+  SmallVector<SDOperand, 8> LoadChains;
+  SmallVector<SDOperand, 8> OutChains;
+  unsigned NumMemOps = MemOps.size();
+  for (unsigned i = 0; i < NumMemOps; i++) {
+    MVT::ValueType VT = MemOps[i];
+    unsigned VTSize = MVT::getSizeInBits(VT) / 8;
+    SDOperand Value, Store;
+
+    Value = DAG.getLoad(VT, Chain,
+                        getMemBasePlusOffset(Src, SrcOff, DAG),
+                        SrcSV, SrcSVOff + SrcOff, false, Align);
+    LoadValues.push_back(Value);
+    LoadChains.push_back(Value.getValue(1));
+    SrcOff += VTSize;
+  }
+  Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                      &LoadChains[0], LoadChains.size());
+  OutChains.clear();
+  for (unsigned i = 0; i < NumMemOps; i++) {
+    MVT::ValueType VT = MemOps[i];
+    unsigned VTSize = MVT::getSizeInBits(VT) / 8;
+    SDOperand Value, Store;
+
+    Store = DAG.getStore(Chain, LoadValues[i],
+                         getMemBasePlusOffset(Dst, DstOff, DAG),
+                         DstSV, DstSVOff + DstOff, false, DstAlign);
+    OutChains.push_back(Store);
     DstOff += VTSize;
   }
 
@@ -2836,9 +2893,20 @@ SDOperand SelectionDAG::getMemmove(SDOperand Chain, SDOperand Dst,
                                    const Value *DstSV, uint64_t DstSVOff,
                                    const Value *SrcSV, uint64_t SrcSVOff) {
 
-  // TODO: Optimize small memmove cases with simple loads and stores,
-  // ensuring that all loads precede all stores. This can cause severe
-  // register pressure, so targets should be careful with the size limit.
+  // Check to see if we should lower the memmove to loads and stores first.
+  // For cases within the target-specified limits, this is the best choice.
+  ConstantSDNode *ConstantSize = dyn_cast<ConstantSDNode>(Size);
+  if (ConstantSize) {
+    // Memmove with size zero? Just return the original chain.
+    if (ConstantSize->isNullValue())
+      return Chain;
+
+    SDOperand Result =
+      getMemmoveLoadsAndStores(*this, Chain, Dst, Src, ConstantSize->getValue(),
+                               Align, false, DstSV, DstSVOff, SrcSV, SrcSVOff);
+    if (Result.Val)
+      return Result;
+  }
 
   // Then check to see if we should lower the memmove with target-specific
   // code. If the target chooses to do this, this is the next best.

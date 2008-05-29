@@ -737,7 +737,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   // be smaller when we are in optimizing for size mode.
   maxStoresPerMemset = 16; // For %llvm.memset -> sequence of stores
   maxStoresPerMemcpy = 16; // For %llvm.memcpy -> sequence of stores
-  maxStoresPerMemmove = 16; // For %llvm.memmove -> sequence of stores
+  maxStoresPerMemmove = 3; // For %llvm.memmove -> sequence of stores
   allowUnalignedMemoryAccesses = true; // x86 supports it!
   setPrefLoopAlignment(16);
 }
