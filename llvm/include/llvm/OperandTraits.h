@@ -23,6 +23,10 @@ namespace llvm {
 //                          FixedNumOperands Trait Class
 //===----------------------------------------------------------------------===//
 
+/// FixedNumOperandTraits - determine the allocation regime of the Use array
+/// when it is a prefix to the User object, and the number of Use objects is
+/// known at compile time.
+
 template <unsigned ARITY>
 struct FixedNumOperandTraits {
   static Use *op_begin(User* U) {
@@ -62,6 +66,10 @@ struct OptionalOperandTraits : FixedNumOperandTraits<ARITY> {
 //                          VariadicOperand Trait Class
 //===----------------------------------------------------------------------===//
 
+/// VariadicOperandTraits - determine the allocation regime of the Use array
+/// when it is a prefix to the User object, and the number of Use objects is
+/// only known at allocation time.
+
 template <unsigned MINARITY = 0>
 struct VariadicOperandTraits {
   static Use *op_begin(User* U) {
@@ -79,6 +87,16 @@ struct VariadicOperandTraits {
 //===----------------------------------------------------------------------===//
 //                          HungoffOperand Trait Class
 //===----------------------------------------------------------------------===//
+
+/// HungoffOperandTraits - determine the allocation regime of the Use array
+/// when it is not a prefix to the User object, but allocated at an unrelated
+/// heap address.
+/// Assumes that the User subclass that is determined by this traits class
+/// has an OperandList member of type User::op_iterator. [Note: this is now
+/// trivially satisfied, because User has that member for historic reasons.]
+///
+/// This is the traits class that is needed when the Use array must be
+/// resizable.
 
 template <unsigned MINARITY = 1>
 struct HungoffOperandTraits {
