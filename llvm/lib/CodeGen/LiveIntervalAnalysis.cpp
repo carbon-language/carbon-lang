@@ -75,8 +75,6 @@ void LiveIntervals::releaseMemory() {
     delete ClonedMIs[i];
 }
 
-#include <iostream>
-
 void LiveIntervals::computeNumbering() {
   Index2MiMap OldI2MI = i2miMap_;
   
