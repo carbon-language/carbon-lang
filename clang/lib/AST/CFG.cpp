@@ -1177,17 +1177,17 @@ typedef llvm::FoldingSet<PersistPairTy> BlkEdgeSetTy;
 const std::pair<CFGBlock*,CFGBlock*>*
 CFG::getBlockEdgeImpl(const CFGBlock* B1, const CFGBlock* B2) {
   
-  llvm::BumpPtrAllocator*& Alloc =
-    reinterpret_cast<llvm::BumpPtrAllocator*&>(Allocator);
+  if (!Allocator)
+    Allocator = new llvm::BumpPtrAllocator();
   
-  if (!Alloc)
-    Alloc = new llvm::BumpPtrAllocator();
+  llvm::BumpPtrAllocator* Alloc =
+    static_cast<llvm::BumpPtrAllocator*>(Allocator);
 
-  BlkEdgeSetTy*& p = reinterpret_cast<BlkEdgeSetTy*&>(BlkEdgeSet);
+  if (!BlkEdgeSet)
+    BlkEdgeSet = new BlkEdgeSetTy();
+    
+  BlkEdgeSetTy* p = static_cast<BlkEdgeSetTy*>(BlkEdgeSet);
 
-  if (!p)
-    p = new BlkEdgeSetTy();
-  
   // Profile the edges.
   llvm::FoldingSetNodeID profile;
   void* InsertPos;
