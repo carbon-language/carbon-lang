@@ -2923,6 +2923,70 @@ static SDOperand getShuffleVectorZeroOrUndef(SDOperand V2, unsigned Idx,
   return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, Mask);
 }
 
+/// getNumOfConsecutiveZeros - Return the number of elements in a result of
+/// a shuffle that is zero.
+static
+unsigned getNumOfConsecutiveZeros(SDOperand Op, SDOperand Mask,
+                                  unsigned NumElems, bool Low,
+                                  SelectionDAG &DAG) {
+  unsigned NumZeros = 0;
+  for (unsigned i = 0; i < NumElems; ++i) {
+    SDOperand Idx = Mask.getOperand(Low ? i : NumElems-i-1);
+    if (Idx.getOpcode() == ISD::UNDEF) {
+      ++NumZeros;
+      continue;
+    }
+    unsigned Index = cast<ConstantSDNode>(Idx)->getValue();
+    SDOperand Elt = DAG.getShuffleScalarElt(Op.Val, Index);
+    if (Elt.Val && isZeroNode(Elt))
+      ++NumZeros;
+    else
+      break;
+  }
+  return NumZeros;
+}
+
+/// isVectorShift - Returns true if the shuffle can be implemented as a
+/// logical left or right shift of a vector.
+static bool isVectorShift(SDOperand Op, SDOperand Mask, SelectionDAG &DAG,
+                          bool &isLeft, SDOperand &ShVal, unsigned &ShAmt) {
+  unsigned NumElems = Mask.getNumOperands();
+
+  isLeft = true;
+  unsigned NumZeros= getNumOfConsecutiveZeros(Op, Mask, NumElems, true, DAG);
+  if (!NumZeros) {
+    isLeft = false;
+    NumZeros = getNumOfConsecutiveZeros(Op, Mask, NumElems, false, DAG);
+    if (!NumZeros)
+      return false;
+  }
+
+  bool SeenV1 = false;
+  bool SeenV2 = false;
+  for (unsigned i = NumZeros; i < NumElems; ++i) {
+    unsigned Val = isLeft ? (i - NumZeros) : i;
+    SDOperand Idx = Mask.getOperand(isLeft ? i : (i - NumZeros));
+    if (Idx.getOpcode() == ISD::UNDEF)
+      continue;
+    unsigned Index = cast<ConstantSDNode>(Idx)->getValue();
+    if (Index < NumElems)
+      SeenV1 = true;
+    else {
+      Index -= NumElems;
+      SeenV2 = true;
+    }
+    if (Index != Val)
+      return false;
+  }
+  if (SeenV1 && SeenV2)
+    return false;
+
+  ShVal = SeenV1 ? Op.getOperand(0) : Op.getOperand(1);
+  ShAmt = NumZeros;
+  return true;
+}
+
+
 /// LowerBuildVectorv16i8 - Custom lower build_vector of v16i8.
 ///
 static SDOperand LowerBuildVectorv16i8(SDOperand Op, unsigned NonZeros,
@@ -2993,6 +3057,20 @@ static SDOperand LowerBuildVectorv8i16(SDOperand Op, unsigned NonZeros,
   }
 
   return V;
+}
+
+/// getVShift - Return a vector logical shift node.
+///
+static SDOperand getVShift(bool isLeft, MVT::ValueType VT, SDOperand SrcOp,
+                           unsigned NumBits, SelectionDAG &DAG,
+                           const TargetLowering &TLI) {
+  bool isMMX = MVT::getSizeInBits(VT) == 64;
+  MVT::ValueType ShVT = isMMX ? MVT::v1i64 : MVT::v2i64;
+  unsigned Opc = isLeft ? X86ISD::VSHL : X86ISD::VSRL;
+  SrcOp = DAG.getNode(ISD::BIT_CONVERT, ShVT, SrcOp);
+  return DAG.getNode(ISD::BIT_CONVERT, VT,
+                     DAG.getNode(Opc, ShVT, SrcOp,
+                              DAG.getConstant(NumBits, TLI.getShiftAmountTy())));
 }
 
 SDOperand
@@ -3090,6 +3168,15 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
       // Turn it into a MOVL (i.e. movss, movsd, or movd) to a zero vector.
       return getShuffleVectorZeroOrUndef(Item, 0, NumZero > 0,
                                          Subtarget->hasSSE2(), DAG);
+    }
+
+    // Is it a vector logical left shift?
+    if (NumElems == 2 && Idx == 1 &&
+        isZeroNode(Op.getOperand(0)) && !isZeroNode(Op.getOperand(1))) {
+      unsigned NumBits = MVT::getSizeInBits(VT);
+      return getVShift(true, VT,
+                       DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Op.getOperand(1)),
+                       NumBits/2, DAG, *this);
     }
     
     if (IsAllConstants) // Otherwise, it's better to do a constpool load.
@@ -3615,6 +3702,19 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
     }
   }
 
+  // Check if this can be converted into a logical shift.
+  bool isLeft = false;
+  unsigned ShAmt = 0;
+  SDOperand ShVal;
+  bool isShift = isVectorShift(Op, PermMask, DAG, isLeft, ShVal, ShAmt);
+  if (isShift && ShVal.hasOneUse()) {
+    // If the shifted value has multiple uses, it may be cheaper to use 
+    // v_set0 + movlhps or movhlps, etc.
+    MVT::ValueType EVT = MVT::getVectorElementType(VT);
+    ShAmt *= MVT::getSizeInBits(EVT);
+    return getVShift(isLeft, VT, ShVal, ShAmt, DAG, *this);
+  }
+
   if (X86::isMOVLMask(PermMask.Val)) {
     if (V1IsUndef)
       return V2;
@@ -3633,6 +3733,13 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   if (ShouldXformToMOVHLPS(PermMask.Val) ||
       ShouldXformToMOVLP(V1.Val, V2.Val, PermMask.Val))
     return CommuteVectorShuffle(Op, V1, V2, PermMask, DAG);
+
+  if (isShift) {
+    // No better options. Use a vshl / vsrl.
+    MVT::ValueType EVT = MVT::getVectorElementType(VT);
+    ShAmt *= MVT::getSizeInBits(EVT);
+    return getVShift(isLeft, VT, ShVal, ShAmt, DAG, *this);
+  }
 
   bool Commuted = false;
   // FIXME: This should also accept a bitcast of a splat?  Be careful, not
@@ -5729,6 +5836,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::LCMPXCHG8_DAG:      return "X86ISD::LCMPXCHG8_DAG";
   case X86ISD::VZEXT_MOVL:         return "X86ISD::VZEXT_MOVL";
   case X86ISD::VZEXT_LOAD:         return "X86ISD::VZEXT_LOAD";
+  case X86ISD::VSHL:               return "X86ISD::VSHL";
+  case X86ISD::VSRL:               return "X86ISD::VSRL";
   }
 }
 
@@ -6296,8 +6405,10 @@ static SDOperand PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
 static SDOperand PerformBuildVectorCombine(SDNode *N, SelectionDAG &DAG,
                                            const X86Subtarget *Subtarget,
                                            const TargetLowering &TLI) {
+  unsigned NumOps = N->getNumOperands();
+
   // Ignore single operand BUILD_VECTOR.
-  if (N->getNumOperands() == 1)
+  if (NumOps == 1)
     return SDOperand();
 
   MVT::ValueType VT = N->getValueType(0);

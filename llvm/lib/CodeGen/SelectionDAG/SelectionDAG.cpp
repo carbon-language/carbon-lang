@@ -1853,10 +1853,17 @@ SDOperand SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned Idx) {
   unsigned NumElems = PermMask.getNumOperands();
   SDOperand V = (Idx < NumElems) ? N->getOperand(0) : N->getOperand(1);
   Idx %= NumElems;
-  if (V.getOpcode() == ISD::SCALAR_TO_VECTOR) {
-    return (Idx == 0)
-     ? V.getOperand(0) : getNode(ISD::UNDEF, MVT::getVectorElementType(VT));
+
+  if (V.getOpcode() == ISD::BIT_CONVERT) {
+    V = V.getOperand(0);
+    if (MVT::getVectorNumElements(V.getValueType()) != NumElems)
+      return SDOperand();
   }
+  if (V.getOpcode() == ISD::SCALAR_TO_VECTOR)
+    return (Idx == 0) ? V.getOperand(0)
+                      : getNode(ISD::UNDEF, MVT::getVectorElementType(VT));
+  if (V.getOpcode() == ISD::BUILD_VECTOR)
+    return V.getOperand(Idx);
   if (V.getOpcode() == ISD::VECTOR_SHUFFLE) {
     SDOperand Elt = PermMask.getOperand(Idx);
     if (Elt.getOpcode() == ISD::UNDEF)

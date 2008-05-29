@@ -51,6 +51,8 @@ def X86vzmovl  : SDNode<"X86ISD::VZEXT_MOVL",
                  SDTypeProfile<1, 1, [SDTCisSameAs<0,1>]>>;
 def X86vzload  : SDNode<"X86ISD::VZEXT_LOAD", SDTLoad,
                         [SDNPHasChain, SDNPMayLoad]>;
+def X86vshl    : SDNode<"X86ISD::VSHL",      SDTIntShiftOp>;
+def X86vshr    : SDNode<"X86ISD::VSRL",      SDTIntShiftOp>;
 
 //===----------------------------------------------------------------------===//
 // SSE Complex Patterns
@@ -1957,6 +1959,12 @@ let Predicates = [HasSSE2] in {
             (v2i64 (PSRLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>;
   def : Pat<(v2f64 (X86fsrl VR128:$src1, i32immSExt8:$src2)),
             (v2f64 (PSRLDQri VR128:$src1, (PSxLDQ_imm imm:$src2)))>;
+
+  // Shift up / down and insert zero's.
+  def : Pat<(v2i64 (X86vshl  VR128:$src, (i8 imm:$amt))),
+            (v2i64 (PSLLDQri VR128:$src, (PSxLDQ_imm imm:$amt)))>;
+  def : Pat<(v2i64 (X86vshr  VR128:$src, (i8 imm:$amt))),
+            (v2i64 (PSRLDQri VR128:$src, (PSxLDQ_imm imm:$amt)))>;
 }
 
 // Logical

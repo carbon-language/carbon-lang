@@ -294,6 +294,12 @@ defm MMX_PSRAW : MMXI_binop_rmi_int<0xE1, 0x71, MRM4r, "psraw",
 defm MMX_PSRAD : MMXI_binop_rmi_int<0xE2, 0x72, MRM4r, "psrad",
                                     int_x86_mmx_psra_d, int_x86_mmx_psrai_d>;
 
+// Shift up / down and insert zero's.
+def : Pat<(v1i64 (X86vshl     VR64:$src, (i8 imm:$amt))),
+          (v1i64 (MMX_PSLLQri VR64:$src, imm:$amt))>;
+def : Pat<(v1i64 (X86vshr     VR64:$src, (i8 imm:$amt))),
+          (v1i64 (MMX_PSRLQri VR64:$src, imm:$amt))>;
+
 // Comparison Instructions
 defm MMX_PCMPEQB : MMXI_binop_rm_int<0x74, "pcmpeqb", int_x86_mmx_pcmpeq_b>;
 defm MMX_PCMPEQW : MMXI_binop_rm_int<0x75, "pcmpeqw", int_x86_mmx_pcmpeq_w>;

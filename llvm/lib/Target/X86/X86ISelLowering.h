@@ -205,7 +205,10 @@ namespace llvm {
       VZEXT_MOVL,
 
       // VZEXT_LOAD - Load, scalar_to_vector, and zero extend.
-      VZEXT_LOAD
+      VZEXT_LOAD,
+
+      // VSHL, VSRL - Vector logical left / right shift.
+      VSHL, VSRL
     };
   }
 
