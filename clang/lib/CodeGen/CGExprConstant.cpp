@@ -385,18 +385,58 @@ public:
     return llvm::ConstantExpr::getAnd(LHS, RHS);
   }
 
-  llvm::Constant *VisitBinNE(const BinaryOperator *E) {
+  llvm::Constant *EmitCmp(const BinaryOperator *E,
+                          llvm::CmpInst::Predicate SignedPred,
+                          llvm::CmpInst::Predicate UnsignedPred,
+                          llvm::CmpInst::Predicate FloatPred) {
     llvm::Constant *LHS = Visit(E->getLHS());
     llvm::Constant *RHS = Visit(E->getRHS());
+    llvm::Constant *Result;
+    if (LHS->getType()->isInteger() ||
+        isa<llvm::PointerType>(LHS->getType())) {
+      if (E->getLHS()->getType()->isSignedIntegerType())
+        Result = llvm::ConstantExpr::getICmp(SignedPred, LHS, RHS);
+      else
+        Result = llvm::ConstantExpr::getICmp(UnsignedPred, LHS, RHS);
+    } else if (LHS->getType()->isFloatingPoint()) {
+      Result = llvm::ConstantExpr::getFCmp(FloatPred, LHS, RHS);
+    } else {
+      CGM.WarnUnsupported(E, "constant expression");
+      Result = llvm::ConstantInt::getFalse();
+    }
 
     const llvm::Type* ResultType = ConvertType(E->getType());
-    if (!ResultType->isInteger()) {
-      CGM.WarnUnsupported(E, "constant expression");
-      return llvm::Constant::getNullValue(ConvertType(E->getType()));
-    }
-    llvm::Constant *Result =
-        llvm::ConstantExpr::getICmp(llvm::ICmpInst::ICMP_NE, LHS, RHS);
     return llvm::ConstantExpr::getZExtOrBitCast(Result, ResultType);
+  }
+
+  llvm::Constant *VisitBinNE(const BinaryOperator *E) {
+    return EmitCmp(E, llvm::CmpInst::ICMP_NE, llvm::CmpInst::ICMP_NE,
+                   llvm::CmpInst::FCMP_ONE);
+  }
+
+  llvm::Constant *VisitBinEQ(const BinaryOperator *E) {
+    return EmitCmp(E, llvm::CmpInst::ICMP_EQ, llvm::CmpInst::ICMP_EQ,
+                   llvm::CmpInst::FCMP_OEQ);
+  }
+
+  llvm::Constant *VisitBinLT(const BinaryOperator *E) {
+    return EmitCmp(E, llvm::CmpInst::ICMP_SLT, llvm::CmpInst::ICMP_ULT,
+                   llvm::CmpInst::FCMP_OLT);
+  }
+
+  llvm::Constant *VisitBinLE(const BinaryOperator *E) {
+    return EmitCmp(E, llvm::CmpInst::ICMP_SLE, llvm::CmpInst::ICMP_ULE,
+                   llvm::CmpInst::FCMP_OLE);
+  }
+
+  llvm::Constant *VisitBinGT(const BinaryOperator *E) {
+    return EmitCmp(E, llvm::CmpInst::ICMP_SGT, llvm::CmpInst::ICMP_UGT,
+                   llvm::CmpInst::FCMP_OGT);
+  }
+
+  llvm::Constant *VisitBinGE(const BinaryOperator *E) {
+    return EmitCmp(E, llvm::CmpInst::ICMP_SGE, llvm::CmpInst::ICMP_SGE,
+                   llvm::CmpInst::FCMP_OGE);
   }
 
   llvm::Constant *VisitConditionalOperator(const ConditionalOperator *E) {
