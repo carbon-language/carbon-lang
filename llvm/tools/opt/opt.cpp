@@ -296,7 +296,7 @@ void AddStandardCompilePasses(PassManager &PM) {
   addPass(PM, createCondPropagationPass());      // Propagate conditionals
 
   addPass(PM, createDeadStoreEliminationPass()); // Delete dead stores
-  addPass(PM, createDeadCodeEliminationPass());                  // Delete dead instructions
+  addPass(PM, createAggressiveDCEPass());        // Delete dead instructions
   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
   addPass(PM, createStripDeadPrototypesPass());  // Get rid of dead prototypes
   addPass(PM, createDeadTypeEliminationPass());  // Eliminate dead types
