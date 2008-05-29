@@ -262,8 +262,9 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
       }
       // Ensure that all of the indices are constants.
       SmallVector<ConstantInt*, 8> Operands;
-      for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
-        if (ConstantInt *C = dyn_cast<ConstantInt>(GEP->getOperand(i)))
+      for (User::op_iterator i = GEP->op_begin() + 1, e = GEP->op_end();
+	   i != e; ++i)
+        if (ConstantInt *C = dyn_cast<ConstantInt>(*i))
           Operands.push_back(C);
         else
           return false;  // Not a constant operand GEP!
