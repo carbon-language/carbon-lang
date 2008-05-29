@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm %s
+// RUN: clang -emit-llvm %s 2>&1 | not grep warning
 
 #include <stdint.h>
 
@@ -11,3 +11,5 @@ intptr_t b = a;
 int c();
 void *d = c;
 intptr_t e = c;
+
+int f, *g = __extension__ &f, *h = (1 != 1) ? &f : &f;

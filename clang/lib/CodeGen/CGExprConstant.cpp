@@ -296,6 +296,10 @@ public:
       static_cast<uint32_t>(CGM.getContext().getTypeSize(E->getType()));
     return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val));    
   }
+
+  llvm::Constant *VisitUnaryExtension(const UnaryOperator *E) {
+    return Visit(E->getSubExpr());
+  }
   
   // Binary operators
   llvm::Constant *VisitBinOr(const BinaryOperator *E) {
@@ -379,6 +383,37 @@ public:
     llvm::Constant *RHS = Visit(E->getRHS());
 
     return llvm::ConstantExpr::getAnd(LHS, RHS);
+  }
+
+  llvm::Constant *VisitBinNE(const BinaryOperator *E) {
+    llvm::Constant *LHS = Visit(E->getLHS());
+    llvm::Constant *RHS = Visit(E->getRHS());
+
+    const llvm::Type* ResultType = ConvertType(E->getType());
+    if (!ResultType->isInteger()) {
+      CGM.WarnUnsupported(E, "constant expression");
+      return llvm::Constant::getNullValue(ConvertType(E->getType()));
+    }
+    llvm::Constant *Result =
+        llvm::ConstantExpr::getICmp(llvm::ICmpInst::ICMP_NE, LHS, RHS);
+    return llvm::ConstantExpr::getZExtOrBitCast(Result, ResultType);
+  }
+
+  llvm::Constant *VisitConditionalOperator(const ConditionalOperator *E) {
+    llvm::Constant *Cond = Visit(E->getCond());
+    llvm::Constant *CondVal = EmitConversionToBool(Cond, E->getType());
+    llvm::ConstantInt *CondValInt = dyn_cast<llvm::ConstantInt>(CondVal);
+    if (!CondValInt) {
+      CGM.WarnUnsupported(E, "constant expression");
+      return llvm::Constant::getNullValue(ConvertType(E->getType()));
+    }
+    if (CondValInt->isOne()) {
+      if (E->getLHS())
+        return Visit(E->getLHS());
+      return Cond;
+    }
+
+    return Visit(E->getRHS());
   }
     
   // Utility methods
