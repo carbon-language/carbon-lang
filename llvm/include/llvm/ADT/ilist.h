@@ -1,4 +1,4 @@
-//===-- llvm/ADT/ilist - Intrusive Linked List Template ---------*- C++ -*-===//
+//==-- llvm/ADT/ilist.h - Intrusive Linked List Template ---------*- C++ -*-==//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -38,7 +38,7 @@
 #ifndef LLVM_ADT_ILIST
 #define LLVM_ADT_ILIST
 
-#include "llvm/ADT/iterator"
+#include "llvm/ADT/iterator.h"
 #include <cassert>
 #include <cstdlib>
 

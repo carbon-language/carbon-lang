@@ -1,4 +1,4 @@
-//===-- llvm/ADT/hash_map - "Portable" wrapper around hash_map --*- C++ -*-===//
+//==-- llvm/ADT/hash_map.h - "Portable" wrapper around hash_map --*- C++ -*-==//
 // 
 //                     The LLVM Compiler Infrastructure
 //

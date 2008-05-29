@@ -16,7 +16,7 @@
 #define LLVM_CODEGEN_SELECTIONDAG_H
 
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/ilist"
+#include "llvm/ADT/ilist.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 
 #include <list>

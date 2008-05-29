@@ -15,7 +15,7 @@
 #ifndef LLVM_ADT_EQUIVALENCECLASSES_H
 #define LLVM_ADT_EQUIVALENCECLASSES_H
 
-#include "llvm/ADT/iterator"
+#include "llvm/ADT/iterator.h"
 #include "llvm/Support/DataTypes.h"
 #include <set>
 

@@ -18,7 +18,7 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/Function.h"
 #include "llvm/InstrTypes.h"
-#include "llvm/ADT/iterator"
+#include "llvm/ADT/iterator.h"
 
 namespace llvm {
 

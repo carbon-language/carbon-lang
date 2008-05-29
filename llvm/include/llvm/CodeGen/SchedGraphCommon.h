@@ -16,7 +16,7 @@
 #define LLVM_CODEGEN_SCHEDGRAPHCOMMON_H
 
 #include "llvm/Value.h"
-#include "llvm/ADT/iterator"
+#include "llvm/ADT/iterator.h"
 #include "llvm/Support/Streams.h"
 #include <vector>
 

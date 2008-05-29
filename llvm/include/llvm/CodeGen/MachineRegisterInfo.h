@@ -16,7 +16,7 @@
 
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/iterator"
+#include "llvm/ADT/iterator.h"
 #include <vector>
 
 namespace llvm {

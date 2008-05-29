@@ -17,7 +17,7 @@
 #define LLVM_ADT_POSTORDERITERATOR_H
 
 #include "llvm/ADT/GraphTraits.h"
-#include "llvm/ADT/iterator"
+#include "llvm/ADT/iterator.h"
 #include <stack>
 #include <set>
 #include <vector>

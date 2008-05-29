@@ -981,9 +981,9 @@ dnl contains the same list of files as AC_CONFIG_HEADERS below. This ensures the
 dnl files can be updated automatically when their *.in sources change.
 AC_CONFIG_HEADERS([include/llvm/Config/config.h])
 AC_CONFIG_HEADERS([include/llvm/Support/DataTypes.h])
-AC_CONFIG_HEADERS([include/llvm/ADT/hash_map])
-AC_CONFIG_HEADERS([include/llvm/ADT/hash_set])
-AC_CONFIG_HEADERS([include/llvm/ADT/iterator])
+AC_CONFIG_HEADERS([include/llvm/ADT/hash_map.h])
+AC_CONFIG_HEADERS([include/llvm/ADT/hash_set.h])
+AC_CONFIG_HEADERS([include/llvm/ADT/iterator.h])
 
 dnl Configure the makefile's configuration data
 AC_CONFIG_FILES([Makefile.config])

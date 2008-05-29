@@ -19,9 +19,9 @@
 
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Streams.h"
-#include "llvm/ADT/iterator"
-#include "llvm/ADT/hash_map"
-#include "llvm/ADT/ilist"
+#include "llvm/ADT/iterator.h"
+#include "llvm/ADT/hash_map.h"
+#include "llvm/ADT/ilist.h"
 
 namespace llvm {
 

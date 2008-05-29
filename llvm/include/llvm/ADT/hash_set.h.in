@@ -1,4 +1,4 @@
-//===-- llvm/ADT/hash_set - "Portable" wrapper around hash_set --*- C++ -*-===//
+//==-- llvm/ADT/hash_set.h - "Portable" wrapper around hash_set --*- C++ -*-==//
 // 
 //                     The LLVM Compiler Infrastructure
 //

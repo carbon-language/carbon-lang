@@ -17,7 +17,7 @@
 #define LLVM_USE_H
 
 #include "llvm/Support/Casting.h"
-#include "llvm/ADT/iterator"
+#include "llvm/ADT/iterator.h"
 
 namespace llvm {
 

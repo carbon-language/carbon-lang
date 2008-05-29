@@ -17,7 +17,7 @@
 #ifndef LLVM_BITCODE_ARCHIVE_H
 #define LLVM_BITCODE_ARCHIVE_H
 
-#include "llvm/ADT/ilist"
+#include "llvm/ADT/ilist.h"
 #include "llvm/System/Path.h"
 #include <map>
 #include <set>

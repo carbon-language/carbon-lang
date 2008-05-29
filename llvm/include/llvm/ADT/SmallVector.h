@@ -14,7 +14,7 @@
 #ifndef LLVM_ADT_SMALLVECTOR_H
 #define LLVM_ADT_SMALLVECTOR_H
 
-#include "llvm/ADT/iterator"
+#include "llvm/ADT/iterator.h"
 #include <algorithm>
 #include <memory>
 

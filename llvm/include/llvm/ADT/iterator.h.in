@@ -1,4 +1,4 @@
-//===-- llvm/ADT/iterator - Portable wrapper around <iterator> --*- C++ -*-===//
+//==-- llvm/ADT/iterator.h - Portable wrapper around <iterator> --*- C++ -*-==//
 // 
 //                     The LLVM Compiler Infrastructure
 //
