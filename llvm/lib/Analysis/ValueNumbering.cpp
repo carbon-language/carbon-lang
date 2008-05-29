@@ -244,9 +244,9 @@ void BVNImpl::visitGetElementPtrInst(GetElementPtrInst &I) {
 
   // Try to pick a local operand if possible instead of a constant or a global
   // that might have a lot of uses.
-  for (unsigned i = 1, e = I.getNumOperands(); i != e; ++i)
-    if (isa<Instruction>(I.getOperand(i)) || isa<Argument>(I.getOperand(i))) {
-      Op = I.getOperand(i);
+  for (User::op_iterator i = I.op_begin() + 1, e = I.op_end(); i != e; ++i)
+    if (isa<Instruction>(*i) || isa<Argument>(*i)) {
+      Op = *i;
       break;
     }
 
