@@ -557,9 +557,7 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
   llvm::Value *V;
   unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
 
-  if (!Field->isBitField()) {
-    V = Builder.CreateStructGEP(BaseValue, idx, "tmp");
-  } else {
+  if (Field->isBitField()) {
     // FIXME: CodeGenTypes should expose a method to get the appropriate
     // type for FieldTy (the appropriate type is ABI-dependent).
     unsigned EltTySize =
@@ -574,8 +572,15 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
     V = Builder.CreateGEP(BaseValue,
                           llvm::ConstantInt::get(llvm::Type::Int32Ty, idx),
                           "tmp");
+
+    CodeGenTypes::BitFieldInfo bitFieldInfo =
+      CGM.getTypes().getBitFieldInfo(Field);
+    return LValue::MakeBitfield(V, bitFieldInfo.Begin, bitFieldInfo.Size,
+                                Field->getType()->isSignedIntegerType());
   }
   
+  V = Builder.CreateStructGEP(BaseValue, idx, "tmp");
+
   // Match union field type.
   if (isUnion) {
     const llvm::Type * FieldTy = ConvertType(Field->getType());
@@ -587,13 +592,7 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
                               "tmp");
   }
 
-  if (!Field->isBitField())
-    return LValue::MakeAddr(V);
-    
-  CodeGenTypes::BitFieldInfo bitFieldInfo =
-    CGM.getTypes().getBitFieldInfo(Field);
-  return LValue::MakeBitfield(V, bitFieldInfo.Begin, bitFieldInfo.Size,
-                              Field->getType()->isSignedIntegerType());
+  return LValue::MakeAddr(V);
 }
 
 LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E) {

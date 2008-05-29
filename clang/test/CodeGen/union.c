@@ -36,3 +36,6 @@ typedef union{
 } q;
 int qfunc() {q buf; unsigned char* x = buf.x;}
 
+union RR {_Bool a : 1;} RRU;
+int RRF(void) {return RRU.a;}
+
