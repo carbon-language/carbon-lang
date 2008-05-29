@@ -1342,29 +1342,27 @@ def XOR32rm  : I<0x33, MRMSrcMem ,
                  "xor{l}\t{$src2, $dst|$dst, $src2}",
                  [(set GR32:$dst, (xor GR32:$src1, (load addr:$src2)))]>;
 
-let isAsCheapAsAMove = 1 in {
-  def XOR8ri   : Ii8<0x80, MRM6r, 
-                     (outs GR8:$dst), (ins GR8:$src1, i8imm:$src2), 
-                     "xor{b}\t{$src2, $dst|$dst, $src2}",
-                     [(set GR8:$dst, (xor GR8:$src1, imm:$src2))]>;
-  def XOR16ri  : Ii16<0x81, MRM6r, 
-                      (outs GR16:$dst), (ins GR16:$src1, i16imm:$src2), 
-                      "xor{w}\t{$src2, $dst|$dst, $src2}",
-                      [(set GR16:$dst, (xor GR16:$src1, imm:$src2))]>, OpSize;
-  def XOR32ri  : Ii32<0x81, MRM6r, 
-                      (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2), 
-                      "xor{l}\t{$src2, $dst|$dst, $src2}",
-                      [(set GR32:$dst, (xor GR32:$src1, imm:$src2))]>;
-  def XOR16ri8 : Ii8<0x83, MRM6r, 
-                     (outs GR16:$dst), (ins GR16:$src1, i16i8imm:$src2),
-                     "xor{w}\t{$src2, $dst|$dst, $src2}",
-                     [(set GR16:$dst, (xor GR16:$src1, i16immSExt8:$src2))]>,
-                     OpSize;
-  def XOR32ri8 : Ii8<0x83, MRM6r, 
-                     (outs GR32:$dst), (ins GR32:$src1, i32i8imm:$src2),
-                     "xor{l}\t{$src2, $dst|$dst, $src2}",
-                     [(set GR32:$dst, (xor GR32:$src1, i32immSExt8:$src2))]>;
-} // isAsCheapAsAMove = 1
+def XOR8ri   : Ii8<0x80, MRM6r, 
+                   (outs GR8:$dst), (ins GR8:$src1, i8imm:$src2), 
+                   "xor{b}\t{$src2, $dst|$dst, $src2}",
+                   [(set GR8:$dst, (xor GR8:$src1, imm:$src2))]>;
+def XOR16ri  : Ii16<0x81, MRM6r, 
+                    (outs GR16:$dst), (ins GR16:$src1, i16imm:$src2), 
+                    "xor{w}\t{$src2, $dst|$dst, $src2}",
+                    [(set GR16:$dst, (xor GR16:$src1, imm:$src2))]>, OpSize;
+def XOR32ri  : Ii32<0x81, MRM6r, 
+                    (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2), 
+                    "xor{l}\t{$src2, $dst|$dst, $src2}",
+                    [(set GR32:$dst, (xor GR32:$src1, imm:$src2))]>;
+def XOR16ri8 : Ii8<0x83, MRM6r, 
+                   (outs GR16:$dst), (ins GR16:$src1, i16i8imm:$src2),
+                   "xor{w}\t{$src2, $dst|$dst, $src2}",
+                   [(set GR16:$dst, (xor GR16:$src1, i16immSExt8:$src2))]>,
+                   OpSize;
+def XOR32ri8 : Ii8<0x83, MRM6r, 
+                   (outs GR32:$dst), (ins GR32:$src1, i32i8imm:$src2),
+                   "xor{l}\t{$src2, $dst|$dst, $src2}",
+                   [(set GR32:$dst, (xor GR32:$src1, i32immSExt8:$src2))]>;
 
 let isTwoAddress = 0 in {
   def XOR8mr   : I<0x30, MRMDestMem,
