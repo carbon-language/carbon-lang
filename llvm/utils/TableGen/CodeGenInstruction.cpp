@@ -163,7 +163,8 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
       isVariadic = true;
       continue;
     } else if (!Rec->isSubClassOf("RegisterClass") && 
-               Rec->getName() != "ptr_rc" && Rec->getName() != "unknown")
+               Rec->getName() != "ptr_rc" && Rec->getName() != "unknown" &&
+               Rec->getName() != "discard")
       throw "Unknown operand class '" + Rec->getName() +
             "' in instruction '" + R->getName() + "' instruction!";
 

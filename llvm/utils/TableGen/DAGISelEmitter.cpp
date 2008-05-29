@@ -947,22 +947,20 @@ public:
       // instruction operands to do this.
       std::vector<std::string> AllOps;
       unsigned NumEAInputs = 0; // # of synthesized 'execute always' inputs.
+      unsigned NumDiscardedInputs = 0; // # of 'discard' inputs to skip.
       for (unsigned ChildNo = 0, InstOpNo = NumResults;
            InstOpNo != II.OperandList.size(); ++InstOpNo) {
         std::vector<std::string> Ops;
         
-        // If this is a normal operand or a predicate operand without
-        // 'execute always', emit it.
+        // Determine what to emit for this operand.
         Record *OperandNode = II.OperandList[InstOpNo].Rec;
-        if ((!OperandNode->isSubClassOf("PredicateOperand") &&
-             !OperandNode->isSubClassOf("OptionalDefOperand")) ||
-            CGP.getDefaultOperand(OperandNode).DefaultOps.empty()) {
-          Ops = EmitResultCode(N->getChild(ChildNo), DstRegs,
-                               InFlagDecled, ResNodeDecled);
-          AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
-          ++ChildNo;
-        } else {
-          // Otherwise, this is a predicate or optional def operand, emit the
+        if (OperandNode->getName() == "discard") {
+          // This is a "discard" operand; emit nothing. Just note it.
+          ++NumDiscardedInputs;
+        } else if ((OperandNode->isSubClassOf("PredicateOperand") ||
+                    OperandNode->isSubClassOf("OptionalDefOperand")) &&
+                   !CGP.getDefaultOperand(OperandNode).DefaultOps.empty()) {
+          // This is a predicate or optional def operand; emit the
           // 'default ops' operands.
           const DAGDefaultOperand &DefaultOp =
             CGP.getDefaultOperand(II.OperandList[InstOpNo].Rec);
@@ -972,6 +970,13 @@ public:
             AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
             NumEAInputs += Ops.size();
           }
+        } else {
+          // Otherwise this is a normal operand or a predicate operand without
+          // 'execute always'; emit it.
+          Ops = EmitResultCode(N->getChild(ChildNo), DstRegs,
+                               InFlagDecled, ResNodeDecled);
+          AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
+          ++ChildNo;
         }
       }
 
@@ -1049,19 +1054,23 @@ public:
         if (NodeHasOutFlag)
           Code += ", MVT::Flag";
 
-        // Figure out how many fixed inputs the node has.  This is important to
-        // know which inputs are the variable ones if present.
-        unsigned NumInputs = AllOps.size();
-        NumInputs += NodeHasChain;
-        
         // Inputs.
         if (HasVarOps) {
+          // Figure out how many fixed inputs the node has.  This is important
+          // to know which inputs are the variable ones if present. Include
+          // the 'discard' and chain inputs in the count, and adjust for the
+          // number of operands that are 'execute always'. This is the index
+          // where we should start copying operands into the 'variable_ops'
+          // portion of the output.
+          unsigned InputIndex = AllOps.size() +
+                                NumDiscardedInputs +
+                                NodeHasChain -
+                                NumEAInputs;
+        
           for (unsigned i = 0, e = AllOps.size(); i != e; ++i)
             emitCode("Ops" + utostr(OpsNo) + ".push_back(" + AllOps[i] + ");");
           AllOps.clear();
-        }
 
-        if (HasVarOps) {
           // Figure out whether any operands at the end of the op list are not
           // part of the variable section.
           std::string EndAdjust;
@@ -1070,7 +1079,7 @@ public:
           else if (NodeHasOptInFlag)
             EndAdjust = "-(HasInFlag?1:0)"; // May have a flag.
 
-          emitCode("for (unsigned i = " + utostr(NumInputs - NumEAInputs) +
+          emitCode("for (unsigned i = " + utostr(InputIndex) +
                    ", e = N.getNumOperands()" + EndAdjust + "; i != e; ++i) {");
 
           emitCode("  AddToISelQueue(N.getOperand(i));");

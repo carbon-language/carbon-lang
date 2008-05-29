@@ -45,7 +45,7 @@ def SDT_X86CallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i32> ]>;
 def SDT_X86CallSeqEnd   : SDCallSeqEnd<[ SDTCisVT<0, i32>,
                                          SDTCisVT<1, i32> ]>;
 
-def SDT_X86Call   : SDTypeProfile<0, 1, [SDTCisVT<0, iPTR>]>;
+def SDT_X86Call   : SDTypeProfile<0, -1, [SDTCisVT<0, iPTR>]>;
 
 def SDTX86RepStr  : SDTypeProfile<0, 1, [SDTCisVT<0, OtherVT>]>;
 
@@ -322,9 +322,9 @@ let neverHasSideEffects = 1, isNotDuplicable = 1 in
 // Return instructions.
 let isTerminator = 1, isReturn = 1, isBarrier = 1,
     hasCtrlDep = 1, FPForm = SpecialFP, FPFormBits = SpecialFP.Value in {
-  def RET    : I   <0xC3, RawFrm, (outs), (ins variable_ops),
+  def RET    : I   <0xC3, RawFrm, (outs), (ins discard:$amt, variable_ops),
                     "ret",
-                    [/*(X86retflag 0)*/ /*FIXME: Disabled: rdar://5791600*/]>;
+                    [(X86retflag immAllZeros:$amt)]>;
   def RETI   : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt, variable_ops),
                     "ret\t$amt",
                     [(X86retflag imm:$amt)]>;

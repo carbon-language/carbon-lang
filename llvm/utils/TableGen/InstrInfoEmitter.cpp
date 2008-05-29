@@ -85,6 +85,10 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
       Record *OpR = OperandList[j].Rec;
       std::string Res;
       
+      // Discard "discard" operands.
+      if (OpR->getName() == "discard")
+        continue;
+
       if (OpR->isSubClassOf("RegisterClass"))
         Res += getQualifiedName(OpR) + "RegClassID, ";
       else
@@ -201,6 +205,14 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
     // Each logical operand can be multiple MI operands.
     MinOperands = Inst.OperandList.back().MIOperandNo +
                   Inst.OperandList.back().MINumOperands;
+
+  // Subtract the number of "discard" operands, which we'll be skipping
+  // when emitting OperandInfo records.
+  for (unsigned j = 0, e = Inst.OperandList.size(); j != e; ++j) {
+    Record *OpR = Inst.OperandList[j].Rec;
+    if (OpR->getName() == "discard")
+      --MinOperands;
+  }
   
   OS << "  { ";
   OS << Num << ",\t" << MinOperands << ",\t"

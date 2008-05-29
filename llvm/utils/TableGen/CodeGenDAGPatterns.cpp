@@ -916,6 +916,8 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
         MadeChange |= Child->UpdateNodeType(MVT::iPTR, TP);
       } else if (OperandNode->getName() == "unknown") {
         MadeChange |= Child->UpdateNodeType(MVT::isUnknown, TP);
+      } else if (OperandNode->getName() == "discard") {
+        MadeChange |= Child->UpdateNodeType(MVT::isUnknown, TP);
       } else {
         assert(0 && "Unknown operand type!");
         abort();
