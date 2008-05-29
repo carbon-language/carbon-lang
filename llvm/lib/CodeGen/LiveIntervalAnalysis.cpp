@@ -112,26 +112,92 @@ void LiveIntervals::computeNumbering() {
     for (iterator I = begin(), E = end(); I != E; ++I)
       for (LiveInterval::iterator LI = I->second.begin(), LE = I->second.end();
            LI != LE; ++LI) {
-        unsigned offset = LI->start % InstrSlots::NUM;
-        LI->start = mi2iMap_[OldI2MI[LI->start / InstrSlots::NUM]] + offset;
         
+        // Remap the start index of the live range to the corresponding new
+        // number, or our best guess at what it _should_ correspond to if the
+        // original instruction has been erased.  This is either the following
+        // instruction or its predecessor.
+        unsigned offset = LI->start % InstrSlots::NUM;
+        if (OldI2MI[LI->start / InstrSlots::NUM])
+          LI->start = mi2iMap_[OldI2MI[LI->start / InstrSlots::NUM]] + offset;
+        else {
+          unsigned i = 0;
+          MachineInstr* newInstr = 0;
+          do {
+            newInstr = OldI2MI[LI->start / InstrSlots::NUM + i];
+            i++;
+          } while (!newInstr);
+          
+          MachineInstr* preceding = i2miMap_[(mi2iMap_[newInstr] - 
+                                    InstrSlots::NUM) / InstrSlots::NUM];
+          if (preceding->getParent() == newInstr->getParent() &&
+              preceding->modifiesRegister(I->second.reg))
+            LI->start = mi2iMap_[newInstr] - InstrSlots::NUM + offset;
+          else
+            LI->start = mi2iMap_[newInstr];
+        }
+        
+        // Remap the ending index in the same way that we remapped the start,
+        // except for the final step where we always map to the immediately
+        // following instruction.
         if (LI->end / InstrSlots::NUM < OldI2MI.size()) {
-          // FIXME: Not correct when the instruction at LI->end has 
-          // been removed
           offset = LI->end % InstrSlots::NUM;
-          LI->end = mi2iMap_[OldI2MI[LI->end / InstrSlots::NUM]] + offset;
+          if (OldI2MI[LI->end / InstrSlots::NUM])
+            LI->end = mi2iMap_[OldI2MI[LI->end / InstrSlots::NUM]] + offset;
+          else {
+            unsigned i = 0;
+            MachineInstr* newInstr = 0;
+            do {
+              newInstr = OldI2MI[LI->end / InstrSlots::NUM + i];
+              i++;
+            } while (!newInstr);
+            
+            LI->end = mi2iMap_[newInstr];
+          }
         } else {
           LI->end = i2miMap_.size() * InstrSlots::NUM;
         }
         
+        // Remap the VNInfo def index, which works the same as the
+        // start indices above.
         VNInfo* vni = LI->valno;
         offset = vni->def % InstrSlots::NUM;
-        vni->def = mi2iMap_[OldI2MI[vni->def / InstrSlots::NUM]] + offset;
+        if (OldI2MI[vni->def / InstrSlots::NUM])
+          vni->def = mi2iMap_[OldI2MI[vni->def / InstrSlots::NUM]] + offset;
+        else {
+          unsigned i = 0;
+          MachineInstr* newInstr = 0;
+          do {
+            newInstr = OldI2MI[vni->def / InstrSlots::NUM + i];
+            i++;
+          } while (!newInstr);
+          
+          MachineInstr* preceding = i2miMap_[(mi2iMap_[newInstr] - 
+                                    InstrSlots::NUM) / InstrSlots::NUM];
+          if (preceding->getParent() == newInstr->getParent() &&
+              preceding->modifiesRegister(I->second.reg))
+            vni->def = mi2iMap_[newInstr] - InstrSlots::NUM + offset;
+          else
+            vni->def = mi2iMap_[newInstr];
+        }
         
+        // Remap the VNInfo kill indices, which works the same as
+        // the end indices above.
         for (size_t i = 0; i < vni->kills.size(); ++i) {
           offset = vni->kills[i] % InstrSlots::NUM;
-          vni->kills[i] = mi2iMap_[OldI2MI[vni->kills[i] / InstrSlots::NUM]] +
-                          offset;
+          if (OldI2MI[vni->kills[i] / InstrSlots::NUM])
+            vni->kills[i] = mi2iMap_[OldI2MI[vni->kills[i] / InstrSlots::NUM]] +
+                            offset;
+          else {
+            unsigned e = 0;
+            MachineInstr* newInstr = 0;
+            do {
+              newInstr = OldI2MI[vni->kills[i] / InstrSlots::NUM + e];
+              e++;
+            } while (!newInstr);
+            
+            vni->kills[i] = mi2iMap_[newInstr];
+          }
         }
       }
 }
