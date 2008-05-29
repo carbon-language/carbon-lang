@@ -77,6 +77,11 @@ CGDebugInfo::~CGDebugInfo()
   delete SubprogramAnchor;
 }
 
+void CGDebugInfo::setLocation(SourceLocation loc)
+{
+  SourceManager &SM = M->getContext().getSourceManager();
+  CurLoc = SM.getLogicalLoc(loc);
+}
 
 /// getCastValueFor - Return a llvm representation for a given debug information
 /// descriptor cast to an empty struct pointer.
@@ -339,6 +344,8 @@ CGDebugInfo::getOrCreateFunctionType(QualType type, llvm::CompileUnitDesc *Unit)
 llvm::TypeDesc *
 CGDebugInfo::getOrCreateType(QualType type, llvm::CompileUnitDesc *Unit)
 {
+  // TODO: Re-enable once we can generate all types
+  return 0;
   if (type.isNull())
     return NULL;
 

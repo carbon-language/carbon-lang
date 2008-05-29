@@ -80,7 +80,7 @@ public:
   CGDebugInfo(CodeGenModule *m);
   ~CGDebugInfo();
 
-  void setLocation(SourceLocation loc) { CurLoc = loc; }
+  void setLocation(SourceLocation loc);
 
   /// EmitStopPoint - Emit a call to llvm.dbg.stoppoint to indicate a change of
   /// source line.
