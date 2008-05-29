@@ -947,7 +947,7 @@ public:
       // instruction operands to do this.
       std::vector<std::string> AllOps;
       unsigned NumEAInputs = 0; // # of synthesized 'execute always' inputs.
-      unsigned NumDiscardedInputs = 0; // # of 'discard' inputs to skip.
+      unsigned InputIndex = 0;
       for (unsigned ChildNo = 0, InstOpNo = NumResults;
            InstOpNo != II.OperandList.size(); ++InstOpNo) {
         std::vector<std::string> Ops;
@@ -956,7 +956,7 @@ public:
         Record *OperandNode = II.OperandList[InstOpNo].Rec;
         if (OperandNode->getName() == "discard") {
           // This is a "discard" operand; emit nothing. Just note it.
-          ++NumDiscardedInputs;
+          ++InputIndex;
         } else if ((OperandNode->isSubClassOf("PredicateOperand") ||
                     OperandNode->isSubClassOf("OptionalDefOperand")) &&
                    !CGP.getDefaultOperand(OperandNode).DefaultOps.empty()) {
@@ -970,6 +970,7 @@ public:
             AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
             NumEAInputs += Ops.size();
           }
+          ++InputIndex;
         } else {
           // Otherwise this is a normal operand or a predicate operand without
           // 'execute always'; emit it.
@@ -977,6 +978,7 @@ public:
                                InFlagDecled, ResNodeDecled);
           AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
           ++ChildNo;
+          ++InputIndex;
         }
       }
 
@@ -1062,10 +1064,7 @@ public:
           // number of operands that are 'execute always'. This is the index
           // where we should start copying operands into the 'variable_ops'
           // portion of the output.
-          unsigned InputIndex = AllOps.size() +
-                                NumDiscardedInputs +
-                                NodeHasChain -
-                                NumEAInputs;
+          InputIndex += NodeHasChain - NumEAInputs;
         
           for (unsigned i = 0, e = AllOps.size(); i != e; ++i)
             emitCode("Ops" + utostr(OpsNo) + ".push_back(" + AllOps[i] + ");");

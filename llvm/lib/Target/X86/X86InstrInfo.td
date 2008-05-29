@@ -397,7 +397,7 @@ let isCall = 1 in
     def CALL32r     : I<0xFF, MRM2r, (outs), (ins GR32:$dst, variable_ops),
                         "call\t{*}$dst", [(X86call GR32:$dst)]>;
     def CALL32m     : I<0xFF, MRM2m, (outs), (ins i32mem:$dst, variable_ops),
-                        "call\t{*}$dst", []>;
+                        "call\t{*}$dst", [(X86call (loadi32 addr:$dst))]>;
   }
 
 // Tail call stuff.

@@ -101,7 +101,7 @@ let isCall = 1 in
     def CALL64r       : I<0xFF, MRM2r, (outs), (ins GR64:$dst, variable_ops),
                           "call\t{*}$dst", [(X86call GR64:$dst)]>;
     def CALL64m       : I<0xFF, MRM2m, (outs), (ins i64mem:$dst, variable_ops),
-                          "call\t{*}$dst", []>;
+                          "call\t{*}$dst", [(X86call (loadi64 addr:$dst))]>;
   }
 
 
