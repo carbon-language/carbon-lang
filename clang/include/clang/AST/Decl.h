@@ -224,7 +224,7 @@ public:
     None, Auto, Register, Extern, Static, PrivateExtern
   };
 private:
-  Expr *Init;
+  Stmt *Init;
   // FIXME: This can be packed into the bitfields in Decl.
   unsigned SClass : 3;
   
@@ -240,9 +240,9 @@ public:
   
   StorageClass getStorageClass() const { return (StorageClass)SClass; }
 
-  const Expr *getInit() const { return Init; }
-  Expr *getInit() { return Init; }
-  void setInit(Expr *I) { Init = I; }
+  const Expr *getInit() const { return (const Expr*) Init; }
+  Expr *getInit() { return (Expr*) Init; }
+  void setInit(Expr *I) { Init = (Stmt*) I; }
       
   /// hasLocalStorage - Returns true if a variable with function scope
   ///  is a non-static local variable.
@@ -553,13 +553,13 @@ protected:
 /// EnumConstantDecl's, X is an instance of EnumDecl, and the type of a/b is a
 /// TagType for the X EnumDecl.
 class EnumConstantDecl : public ValueDecl {
-  Expr *Init; // an integer constant expression
+  Stmt *Init; // an integer constant expression
   llvm::APSInt Val; // The value.
 protected:
   EnumConstantDecl(DeclContext *DC, SourceLocation L,
                    IdentifierInfo *Id, QualType T, Expr *E,
                    const llvm::APSInt &V, ScopedDecl *PrevDecl)
-    : ValueDecl(EnumConstant, DC, L, Id, T, PrevDecl), Init(E), Val(V) {}
+    : ValueDecl(EnumConstant, DC, L, Id, T, PrevDecl), Init((Stmt*)E), Val(V) {}
 
   virtual ~EnumConstantDecl() {}
 public:
@@ -571,11 +571,11 @@ public:
   
   virtual void Destroy(ASTContext& C);
 
-  const Expr *getInitExpr() const { return Init; }
-  Expr *getInitExpr() { return Init; }
+  const Expr *getInitExpr() const { return (const Expr*) Init; }
+  Expr *getInitExpr() { return (Expr*) Init; }
   const llvm::APSInt &getInitVal() const { return Val; }
 
-  void setInitExpr(Expr *E) { Init = E; }
+  void setInitExpr(Expr *E) { Init = (Stmt*) E; }
   void setInitVal(const llvm::APSInt &V) { Val = V; }
   
   // Implement isa/cast/dyncast/etc.

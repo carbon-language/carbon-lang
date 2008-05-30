@@ -37,6 +37,7 @@ namespace clang {
   class ObjCProtocolDecl;
   class ObjCMethodDecl;
   class Expr;
+  class Stmt;
   class SourceLocation;
   class PointerLikeType;
   class PointerType;
@@ -721,17 +722,20 @@ protected:
 class VariableArrayType : public ArrayType {
   /// SizeExpr - An assignment expression. VLA's are only permitted within 
   /// a function block. 
-  Expr *SizeExpr;
+  Stmt *SizeExpr;
   
   VariableArrayType(QualType et, QualType can, Expr *e,
                     ArraySizeModifier sm, unsigned tq)
-    : ArrayType(VariableArray, et, can, sm, tq), SizeExpr(e) {}
+    : ArrayType(VariableArray, et, can, sm, tq), SizeExpr((Stmt*) e) {}
   friend class ASTContext;  // ASTContext creates these.
   virtual void Destroy(ASTContext& C);
 
 public:
-  const Expr *getSizeExpr() const { return SizeExpr; }
-  Expr *getSizeExpr() { return SizeExpr; }
+  const Expr *getSizeExpr() const { 
+    // We use C-style casts instead of cast<> here because we do not wish
+    // to have a dependency of Type.h on Stmt.h/Expr.h.
+    return (Expr*) SizeExpr;
+  }
   
   virtual void getAsStringInternal(std::string &InnerString) const;
   

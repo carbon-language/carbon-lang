@@ -104,14 +104,14 @@ StmtIteratorBase::StmtIteratorBase(VariableArrayType* t)
 Stmt*& StmtIteratorBase::GetDeclExpr() const {
   if (VariableArrayType* VAPtr = getVAPtr()) {
     assert (VAPtr->SizeExpr);
-    return reinterpret_cast<Stmt*&>(VAPtr->SizeExpr);
+    return VAPtr->SizeExpr;
   }
 
   if (VarDecl* VD = dyn_cast<VarDecl>(decl)) {
     assert (VD->Init);
-    return reinterpret_cast<Stmt*&>(VD->Init);
+    return VD->Init;
   }
 
   EnumConstantDecl* ECD = cast<EnumConstantDecl>(decl);
-  return reinterpret_cast<Stmt*&>(ECD->Init);
+  return ECD->Init;
 }
