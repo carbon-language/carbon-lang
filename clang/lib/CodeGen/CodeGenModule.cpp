@@ -187,7 +187,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunctionDecl(const FunctionDecl *D,
                                                      bool isDefinition) {
   // See if it is already in the map.  If so, just return it.
   llvm::Constant *&Entry = GlobalDeclMap[D];
-  if (Entry) return Entry;
+  if (!isDefinition && Entry) return Entry;
 
   const llvm::Type *Ty = getTypes().ConvertType(D->getType());
   
