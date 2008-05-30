@@ -1,3 +1,4 @@
+======================
 Tutorial - Using LLVMC
 ======================
 
@@ -6,8 +7,12 @@ as the ``gcc`` program does for GCC - the difference being that LLVMC
 is designed to be more adaptable and easier to customize. This
 tutorial describes the basic usage and configuration of LLVMC.
 
+
+.. contents::
+
+
 Compiling with LLVMC
---------------------
+====================
 
 In general, LLVMC tries to be command-line compatible with ``gcc`` as
 much as possible, so most of the familiar options work::
@@ -20,7 +25,7 @@ For further help on command-line LLVMC usage, refer to the ``llvmc
 --help`` output.
 
 Using LLVMC to generate toolchain drivers
------------------------------------------
+=========================================
 
 At the time of writing LLVMC does not support on-the-fly reloading of
 configuration, so it will be necessary to recompile its source

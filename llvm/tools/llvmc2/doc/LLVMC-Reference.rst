@@ -1,3 +1,4 @@
+===================================
 Customizing LLVMC: Reference Manual
 ===================================
 
@@ -15,8 +16,12 @@ purposes - for example, as a build tool for game resources.
 Because LLVMC employs TableGen [1]_ as its configuration language, you
 need to be familiar with it to customize LLVMC.
 
+
+.. contents::
+
+
 Compiling with LLVMC
---------------------
+====================
 
 LLVMC tries hard to be as compatible with ``gcc`` as possible,
 although there are some small differences. Most of the time, however,
@@ -50,9 +55,30 @@ impossible for LLVMC to choose the right linker in that case::
     $ ./a.out
     hello
 
+Predefined options
+==================
+
+LLVMC has some built-in options that can't be overridden in the
+configuration files:
+
+* ``-o FILE`` - Output file name.
+
+* ``-x LANGUAGE`` - Specify the language of the following input files
+  until the next -x option.
+
+* ``-v`` - Enable verbose mode, i.e. print out all executed commands.
+
+* ``--view-graph`` - Show a graphical representation of the compilation
+  graph. Requires that you have ``dot`` and ``gv`` commands
+  installed. Hidden option, useful for debugging.
+
+* ``--write-graph`` - Write a ``compilation-graph.dot`` file in the
+  current directory with the compilation graph description in the
+  Graphviz format. Hidden option, useful for debugging.
+
 
 Customizing LLVMC: the compilation graph
-----------------------------------------
+========================================
 
 At the time of writing LLVMC does not support on-the-fly reloading of
 configuration, so to customize LLVMC you'll have to recompile the
@@ -125,65 +151,8 @@ debugging), run ``llvmc2 --view-graph``. You will need ``dot`` and
 ``gsview`` installed for this to work properly.
 
 
-The 'case' expression
----------------------
-
-The 'case' construct can be used to calculate weights of the optional
-edges and to choose between several alternative command line strings
-in the ``cmd_line`` tool property. It is designed after the
-similarly-named construct in functional languages and takes the form
-``(case (test_1), statement_1, (test_2), statement_2, ... (test_N),
-statement_N)``. The statements are evaluated only if the corresponding
-tests evaluate to true.
-
-Examples::
-
-    // Increases edge weight by 5 if "-A" is provided on the
-    // command-line, and by 5 more if "-B" is also provided.
-    (case
-        (switch_on "A"), (inc_weight 5),
-        (switch_on "B"), (inc_weight 5))
-
-    // Evaluates to "cmdline1" if option "-A" is provided on the
-    // command line, otherwise to "cmdline2"
-    (case
-        (switch_on "A"), ("cmdline1"),
-        (default), ("cmdline2"))
-
-
-* Possible tests are:
-
-  - ``switch_on`` - Returns true if a given command-line option is
-    provided by the user. Example: ``(switch_on "opt")``. Note that
-    you have to define all possible command-line options separately in
-    the tool descriptions. See the next section for the discussion of
-    different kinds of command-line options.
-
-  - ``parameter_equals`` - Returns true if a command-line parameter equals
-    a given value. Example: ``(parameter_equals "W", "all")``.
-
-  - ``element_in_list`` - Returns true if a command-line parameter list
-    includes a given value. Example: ``(parameter_in_list "l", "pthread")``.
-
-  - ``input_languages_contain`` - Returns true if a given language
-    belongs to the current input language set. Example:
-    ```(input_languages_contain "c++")``.
-
-  - ``default`` - Always evaluates to true. Should always be the last
-    test in the ``case`` expression.
-
-  - ``and`` - A standard logical combinator that returns true iff all
-    of its arguments return true. Used like this: ``(and (test1),
-    (test2), ... (testN))``. Nesting of ``and`` and ``or`` is allowed,
-    but not encouraged.
-
-  - ``or`` - Another logical combinator that returns true only if any
-    one of its arguments returns true. Example: ``(or (test1),
-    (test2), ... (testN))``.
-
-
 Writing a tool description
---------------------------
+==========================
 
 As was said earlier, nodes in the compilation graph represent tools,
 which are described separately. A tool definition looks like this
@@ -285,8 +254,8 @@ currently implemented option types and properties are described below:
    - ``required`` - this option is obligatory.
 
 
-Hooks and environment variables
--------------------------------
+Using hooks and environment variables in the ``cmd_line`` property
+==================================================================
 
 Normally, LLVMC executes programs from the system ``PATH``. Sometimes,
 this is not sufficient: for example, we may want to specify tool names
@@ -303,7 +272,7 @@ It is also possible to use environment variables in the same manner::
    (cmd_line "$ENV(VAR1)/path/to/file -o $ENV(VAR2)")
 
 To change the command line string based on user-provided options use
-the ``case`` expression (which we have already seen before)::
+the ``case`` expression (documented below)::
 
     (cmd_line
       (case
@@ -312,9 +281,89 @@ the ``case`` expression (which we have already seen before)::
         (default),
            "llvm-g++ -c -x c $INFILE -o $OUTFILE -emit-llvm"))
 
+Conditional evaluation: the ``case`` expression
+===============================================
+
+The 'case' construct can be used to calculate weights of the optional
+edges and to choose between several alternative command line strings
+in the ``cmd_line`` tool property. It is designed after the
+similarly-named construct in functional languages and takes the form
+``(case (test_1), statement_1, (test_2), statement_2, ... (test_N),
+statement_N)``. The statements are evaluated only if the corresponding
+tests evaluate to true.
+
+Examples::
+
+    // Increases edge weight by 5 if "-A" is provided on the
+    // command-line, and by 5 more if "-B" is also provided.
+    (case
+        (switch_on "A"), (inc_weight 5),
+        (switch_on "B"), (inc_weight 5))
+
+    // Evaluates to "cmdline1" if option "-A" is provided on the
+    // command line, otherwise to "cmdline2"
+    (case
+        (switch_on "A"), "cmdline1",
+        (switch_on "B"), "cmdline2",
+        (default), "cmdline3")
+
+Note the slight difference in 'case' expression handling in contexts
+of edge weights and command line specification - in the second example
+the value of the ``"B"`` switch is never checked when switch ``"A"`` is
+enabled, and the whole expression always evaluates to ``"cmdline1"`` in
+that case.
+
+Case expressions can also be nested, i.e. the following is legal::
+
+    (case (switch_on "E"), (case (switch_on "o"), ..., (default), ...)
+          (default), ...)
+
+You should, however, try to avoid doing that because it hurts
+readability. It is usually better to split tool descriptions and/or
+use TableGen inheritance instead.
+
+* Possible tests are:
+
+  - ``switch_on`` - Returns true if a given command-line option is
+    provided by the user. Example: ``(switch_on "opt")``. Note that
+    you have to define all possible command-line options separately in
+    the tool descriptions. See the next section for the discussion of
+    different kinds of command-line options.
+
+  - ``parameter_equals`` - Returns true if a command-line parameter equals
+    a given value. Example: ``(parameter_equals "W", "all")``.
+
+  - ``element_in_list`` - Returns true if a command-line parameter list
+    includes a given value. Example: ``(parameter_in_list "l", "pthread")``.
+
+  - ``input_languages_contain`` - Returns true if a given language
+    belongs to the current input language set. Example:
+    ```(input_languages_contain "c++")``.
+
+  - ``in_language`` - Evaluates to true if the language of the input
+    file equals to the argument. Valid only when using ``case``
+    expression in a ``cmd_line`` tool property. Example:
+    ```(in_language "c++")``.
+
+  - ``not_empty`` - Returns true if a given option (which should be
+    either a parameter or a parameter list) is set by the
+    user. Example: ```(not_empty "o")``.
+
+  - ``default`` - Always evaluates to true. Should always be the last
+    test in the ``case`` expression.
+
+  - ``and`` - A standard logical combinator that returns true iff all
+    of its arguments return true. Used like this: ``(and (test1),
+    (test2), ... (testN))``. Nesting of ``and`` and ``or`` is allowed,
+    but not encouraged.
+
+  - ``or`` - Another logical combinator that returns true only if any
+    one of its arguments returns true. Example: ``(or (test1),
+    (test2), ... (testN))``.
+
 
 Language map
-------------
+============
 
 One last thing that you will need to modify when adding support for a
 new language to LLVMC is the language map, which defines mappings from
