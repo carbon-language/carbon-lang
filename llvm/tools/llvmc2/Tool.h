@@ -15,9 +15,9 @@
 #define LLVM_TOOLS_LLVMC2_TOOL_H
 
 #include "Action.h"
-#include "StringSet.h"
 
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/System/Path.h"
 
 #include <string>
@@ -26,6 +26,7 @@
 namespace llvmc {
 
   typedef std::vector<llvm::sys::Path> PathVector;
+  typedef llvm::StringSet<> InputLanguagesSet;
 
   /// Tool - A class
   class Tool : public llvm::RefCountedBaseVPTR<Tool> {
@@ -35,11 +36,11 @@ namespace llvmc {
 
     virtual Action GenerateAction (const PathVector& inFiles,
                                    const llvm::sys::Path& outFile,
-                                   const StringSet<>& InLangs) const = 0;
+                                   const InputLanguagesSet& InLangs) const = 0;
 
     virtual Action GenerateAction (const llvm::sys::Path& inFile,
                                    const llvm::sys::Path& outFile,
-                                   const StringSet<>& InLangs) const = 0;
+                                   const InputLanguagesSet& InLangs) const = 0;
 
     virtual const char* Name() const = 0;
     virtual const char* InputLanguage() const = 0;
@@ -58,7 +59,7 @@ namespace llvmc {
     bool JoinListEmpty() const { return JoinList_.empty(); }
 
     Action GenerateAction(const llvm::sys::Path& outFile,
-                          const StringSet<>& InLangs) const {
+                          const InputLanguagesSet& InLangs) const {
       return GenerateAction(JoinList_, outFile, InLangs);
     }
     // We shouldn't shadow base class's version of GenerateAction.
