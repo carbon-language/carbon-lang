@@ -479,8 +479,12 @@ CodeGenTypes::getCGRecordLayout(const TagDecl *TD) const {
 /// the layout built by the AST.  (We have to do struct layout to do Sema,
 /// and there's no point to duplicating the work.)
 void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
-  // FIXME : Use SmallVector
+  // FIXME: This code currently always generates packed structures.
+  // Unpacked structures are more readable, and sometimes more efficient!
+  // (But note that any changes here are likely to impact CGExprConstant,
+  // which makes some messy assumptions.)
   uint64_t llvmSize = 0;
+  // FIXME: Make this a SmallVector
   std::vector<const llvm::Type*> LLVMFields;
   int NumMembers = RD.getNumMembers();
 
