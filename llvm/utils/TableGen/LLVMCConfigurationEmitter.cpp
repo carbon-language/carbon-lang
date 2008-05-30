@@ -1015,10 +1015,10 @@ void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
       O << "vec.push_back(\"" << cmd << "\");\n";
     }
   }
-  O << IndentLevel << "ret = Action("
+  O << IndentLevel << "cmd = "
     << ((StrVec[0][0] == '$') ? SubstituteSpecialCommands(StrVec[0])
         : "\"" + StrVec[0] + "\"")
-    << ", vec);\n";
+    << ";\n";
 }
 
 /// EmitCmdLineVecFillCallback - A function object wrapper around
@@ -1052,7 +1052,7 @@ void EmitGenerateActionMethod (const ToolProperties& P,
   O << Indent2 << "const sys::Path& outFile,\n"
     << Indent2 << "const InputLanguagesSet& InLangs) const\n"
     << Indent1 << "{\n"
-    << Indent2 << "Action ret;\n"
+    << Indent2 << "std::string cmd;\n"
     << Indent2 << "std::vector<std::string> vec;\n";
 
   // cmd_line is either a string or a 'case' construct.
@@ -1078,7 +1078,7 @@ void EmitGenerateActionMethod (const ToolProperties& P,
       << Indent2 << "}\n";
   }
 
-  O << Indent2 << "return ret;\n"
+  O << Indent2 << "return Action(cmd, vec);\n"
     << Indent1 << "}\n\n";
 }
 
@@ -1214,7 +1214,7 @@ void EmitOptionDescriptions (const GlobalOptionDescriptions& descs,
 {
   std::vector<GlobalOptionDescription> Aliases;
 
-  // Emit static cl::Option variables
+  // Emit static cl::Option variables.
   for (GlobalOptionDescriptions::const_iterator B = descs.begin(),
          E = descs.end(); B!=E; ++B) {
     const GlobalOptionDescription& val = B->second;
