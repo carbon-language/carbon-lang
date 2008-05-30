@@ -71,8 +71,8 @@ int main(int argc, char** argv) {
   try {
     CompilationGraph graph;
 
-    cl::ParseCommandLineOptions(argc, argv,
-                                "LLVM Compiler Driver (Work In Progress)");
+    cl::ParseCommandLineOptions
+      (argc, argv, "LLVM Compiler Driver (Work In Progress)", true);
     PopulateCompilationGraph(graph);
 
     if (WriteGraph) {
