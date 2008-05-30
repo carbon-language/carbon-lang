@@ -776,13 +776,22 @@ void EmitForwardOptionPropertyHandlingCode (const ToolOptionDescription& D,
   }
 }
 
+// A helper function used by EmitOptionPropertyHandlingCode() that
+// tells us whether we should emit any code at all.
+bool ToolOptionHasInterestingProperties(const ToolOptionDescription& D) {
+  if (!D.isForward() && !D.isUnpackValues() && D.Props.empty())
+    return false;
+  return true;
+}
+
 /// EmitOptionPropertyHandlingCode - Helper function used by
 /// EmitGenerateActionMethod(). Emits code that handles option
 /// properties.
-void EmitOptionPropertyHandlingCode (const ToolProperties& P,
-                                     const ToolOptionDescription& D,
+void EmitOptionPropertyHandlingCode (const ToolOptionDescription& D,
                                      std::ostream& O)
 {
+  if (!ToolOptionHasInterestingProperties(D))
+    return;
   // Start of the if-clause.
   O << Indent2 << "if (";
   if (D.Type == OptionType::Switch)
@@ -878,7 +887,8 @@ class EmitCmdLineVecFillCallback {
   void operator()(const Init* Statement, const char* IndentLevel,
                   std::ostream& O) const
   {
-    EmitCmdLineVecFill(Statement, ToolName, Version, IndentLevel, O);
+    EmitCmdLineVecFill(Statement, ToolName, Version,
+                       (std::string(IndentLevel) + Indent1).c_str(), O);
   }
 };
 
@@ -910,7 +920,7 @@ void EmitGenerateActionMethod (const ToolProperties& P,
   for (ToolOptionDescriptions::const_iterator B = P.OptDescs.begin(),
         E = P.OptDescs.end(); B != E; ++B) {
     const ToolOptionDescription& val = B->second;
-    EmitOptionPropertyHandlingCode(P, val, O);
+    EmitOptionPropertyHandlingCode(val, O);
   }
 
   // Handle the Sink property.
