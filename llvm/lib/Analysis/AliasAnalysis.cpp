@@ -163,7 +163,7 @@ AliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
 //
 AliasAnalysis::~AliasAnalysis() {}
 
-/// setTargetData - Subclasses must call this method to initialize the
+/// InitializeAliasAnalysis - Subclasses must call this method to initialize the
 /// AliasAnalysis interface before any other methods are called.
 ///
 void AliasAnalysis::InitializeAliasAnalysis(Pass *P) {
