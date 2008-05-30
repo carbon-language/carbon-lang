@@ -879,6 +879,7 @@ public:
   
   virtual void Initialize(ASTContext &Context) {
     if (!TU) TU = new TranslationUnit(Context, lang);
+    TU->SetOwnsDecls(false);
   }
   
   virtual void HandleTopLevelDecl(Decl *D) {
