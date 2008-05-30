@@ -762,12 +762,11 @@ void EmitCaseTest(const DagInit& d, const char* IndentLevel,
 // void F(Init* Statement, const char* IndentLevel, std::ostream& O).
 template <typename F>
 void EmitCaseConstructHandler(const DagInit* d, const char* IndentLevel,
-                              const F& Callback, bool DefaultRequired,
+                              const F& Callback,
                               const GlobalOptionDescriptions& OptDescs,
                               std::ostream& O) {
   assert(d->getOperator()->getAsString() == "case");
 
-  bool DefaultProvided = false;
   unsigned numArgs = d->getNumArgs();
   if (d->getNumArgs() < 2)
     throw "There should be at least one clause in the 'case' expression:\n"
@@ -778,7 +777,6 @@ void EmitCaseConstructHandler(const DagInit* d, const char* IndentLevel,
 
     // Emit the test.
     if (Test.getOperator()->getAsString() == "default") {
-      DefaultProvided = true;
       if (i+2 != numArgs)
         throw std::string("The 'default' clause should be the last in the"
                           "'case' construct!");
@@ -799,10 +797,6 @@ void EmitCaseConstructHandler(const DagInit* d, const char* IndentLevel,
     Callback(d->getArg(i), IndentLevel, O);
     O << IndentLevel << "}\n";
   }
-
-  if (DefaultRequired && !DefaultProvided)
-    throw "Case expression: the 'default' clause is required in this case:\n"
-      + d->getAsString();
 }
 
 /// EmitForwardOptionPropertyHandlingCode - Helper function used to
@@ -1036,7 +1030,7 @@ void EmitGenerateActionMethod (const ToolProperties& P,
   else
     EmitCaseConstructHandler(&InitPtrToDag(P.CmdLine), Indent2,
                              EmitCmdLineVecFillCallback(Version, P.Name),
-                             false, OptDescs, O);
+                             OptDescs, O);
 
   // For every understood option, emit handling code.
   for (ToolOptionDescriptions::const_iterator B = P.OptDescs.begin(),
@@ -1337,7 +1331,7 @@ void EmitEdgeClass (unsigned N, const std::string& Target,
     << Indent2 << "unsigned ret = 0;\n";
 
   // Handle the 'case' construct.
-  EmitCaseConstructHandler(Case, Indent2, IncDecWeight, false, OptDescs, O);
+  EmitCaseConstructHandler(Case, Indent2, IncDecWeight, OptDescs, O);
 
   O << Indent2 << "return ret;\n"
     << Indent1 << "};\n\n};\n\n";
