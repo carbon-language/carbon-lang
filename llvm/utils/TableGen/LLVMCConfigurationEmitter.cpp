@@ -691,11 +691,17 @@ bool EmitCaseTest1Arg(const std::string& TestName,
     O << "GetLanguage(inFile) == \"" << OptName << '\"';
     return true;
   } else if (TestName == "not_empty") {
-    const GlobalOptionDescription& OptDesc = OptDescs.FindOption(OptName);
-    if (OptDesc.Type == OptionType::Switch)
-      throw OptName + ": incorrect option type!";
-    O << '!' << OptDesc.GenVariableName() << ".empty()";
-    return true;
+    if (OptName == "o") {
+      O << "!OutputFilename.empty()";
+      return true;
+    }
+    else {
+      const GlobalOptionDescription& OptDesc = OptDescs.FindOption(OptName);
+      if (OptDesc.Type == OptionType::Switch)
+        throw OptName + ": incorrect option type!";
+      O << '!' << OptDesc.GenVariableName() << ".empty()";
+      return true;
+    }
   }
 
   return false;
