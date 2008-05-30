@@ -484,6 +484,14 @@ void StmtPrinter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
   OS << Node->getDecl()->getName();
 }
 
+void StmtPrinter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
+  if (Node->getBase()) {
+    PrintExpr(Node->getBase());
+    OS << ".";
+  }
+  // FIXME: OS << Node->getDecl()->getName();
+}
+
 void StmtPrinter::VisitPreDefinedExpr(PreDefinedExpr *Node) {
   switch (Node->getIdentType()) {
     default:

@@ -988,6 +988,21 @@ ObjCIvarRefExpr* ObjCIvarRefExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   return dr;
 }
 
+void ObjCPropertyRefExpr::EmitImpl(Serializer& S) const {
+  S.Emit(Loc);
+  S.Emit(getType());
+  S.EmitPtr(getDecl());
+}
+  
+ObjCPropertyRefExpr* ObjCPropertyRefExpr::CreateImpl(Deserializer& D, 
+                                                     ASTContext& C) {
+  SourceLocation Loc = SourceLocation::ReadVal(D);
+  QualType T = QualType::ReadVal(D);
+  ObjCPropertyRefExpr* dr = new ObjCPropertyRefExpr(NULL,T,Loc,0);
+  D.ReadPtr(dr->D,false);  
+  return dr;
+}
+
 void ObjCMessageExpr::EmitImpl(Serializer& S) const {
   S.EmitBool(getReceiver() ? true : false);
   S.Emit(getType());

@@ -605,6 +605,36 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(&Member, clsDeclared))
       return new ObjCIvarRefExpr(IV, IV->getType(), MemberLoc, BaseExpr, 
                                  OpKind==tok::arrow);
+  } else if (isObjCObjectPointerType(BaseType)) {
+    PointerType *pointerType = static_cast<PointerType*>(BaseType.getTypePtr());
+    BaseType = pointerType->getPointeeType();
+    ObjCInterfaceDecl *IFace;
+    if (isa<ObjCInterfaceType>(BaseType.getCanonicalType()))
+      IFace = dyn_cast<ObjCInterfaceType>(BaseType)->getDecl();
+    else
+      IFace = dyn_cast<ObjCQualifiedInterfaceType>(BaseType)->getDecl();
+    ObjCInterfaceDecl *clsDeclared;
+    if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(&Member, clsDeclared))
+      return new ObjCIvarRefExpr(IV, IV->getType(), MemberLoc, BaseExpr, 
+                                 OpKind==tok::arrow);
+    // Check for properties.
+    if (OpKind==tok::period) {
+      // Before we look for explicit property declarations, we check for
+      // nullary methods (which allow '.' notation).
+      Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
+      ObjCMethodDecl *MD = IFace->lookupInstanceMethod(Sel);
+      if (MD) 
+        return new ObjCPropertyRefExpr(MD, MD->getResultType(), 
+                                       MemberLoc, BaseExpr);
+      // FIXME: Need to deal with setter methods that take 1 argument. E.g.:
+      // @interface NSBundle : NSObject {}
+      // - (NSString *)bundlePath;
+      // - (void)setBundlePath:(NSString *)x;
+      // @end
+      // void someMethod() { frameworkBundle.bundlePath = 0; }
+      //
+      // FIXME: lookup explicit properties...
+    }
   }
   return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion,
               SourceRange(MemberLoc));

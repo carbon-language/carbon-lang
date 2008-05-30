@@ -189,6 +189,41 @@ public:
   static ObjCIvarRefExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
+/// ObjCPropertyRefExpr - A reference to an ObjC property.
+class ObjCPropertyRefExpr : public Expr {
+  class Decl *D; // an ObjCMethodDecl or ObjCPropertyDecl
+  SourceLocation Loc;
+  Expr *Base;
+  
+public:
+  ObjCPropertyRefExpr(Decl *d, QualType t, SourceLocation l, Expr *base) : 
+    Expr(ObjCPropertyRefExprClass, t), D(d), Loc(l), Base(base) {}
+  
+  Decl *getDecl() { return D; }
+  const Decl *getDecl() const { return D; }
+  
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(getBase()->getLocStart(), Loc); 
+  }
+  const Expr *getBase() const { return Base; }
+  Expr *getBase() { return Base; }
+  void setBase(Expr * base) { Base = base; }
+  
+  SourceLocation getLocation() const { return Loc; }
+
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ObjCPropertyRefExprClass; 
+  }
+  static bool classof(const ObjCPropertyRefExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ObjCPropertyRefExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+
 class ObjCMessageExpr : public Expr {
   enum { RECEIVER=0, ARGS_START=1 };
 
