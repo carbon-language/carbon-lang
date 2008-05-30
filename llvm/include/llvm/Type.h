@@ -230,6 +230,15 @@ public:
             ID == IntegerTyID || ID == PointerTyID || ID == VectorTyID;
   }
 
+  /// isAggregateType - Return true if the type is an aggregate type. This
+  /// means it is valid as the first operand of an insertvalue or
+  /// extractvalue instruction. This includes struct and array types, but
+  /// does not include vector types.
+  ///
+  inline bool isAggregateType() const {
+    return ID == StructTyID || ID == ArrayTyID;
+  }
+
   /// isSized - Return true if it makes sense to take the size of this type.  To
   /// get the actual size for a particular target, it is reasonable to use the
   /// TargetData subsystem to do this.
