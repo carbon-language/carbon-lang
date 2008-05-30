@@ -18,6 +18,7 @@
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Target/TargetData.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -73,9 +74,10 @@ public:
     return Visit(DAE->getExpr());
   }
 
-  llvm::Constant *EmitArrayInitialization(InitListExpr *ILE,
-                                          const llvm::ArrayType *AType) {
+  llvm::Constant *EmitArrayInitialization(InitListExpr *ILE) {
     std::vector<llvm::Constant*> Elts;
+    const llvm::ArrayType *AType =
+        cast<llvm::ArrayType>(ConvertType(ILE->getType()));
     unsigned NumInitElements = ILE->getNumInits();
     // FIXME: Check for wide strings
     if (NumInitElements > 0 && isa<StringLiteral>(ILE->getInit(0)) &&
@@ -92,7 +94,6 @@ public:
     unsigned i = 0;
     for (; i < NumInitableElts; ++i) {
       llvm::Constant *C = Visit(ILE->getInit(i));
-      assert (C && "Failed to create initializer expression");
       Elts.push_back(C);
     }
     
@@ -103,9 +104,56 @@ public:
     return llvm::ConstantArray::get(AType, Elts);    
   }
 
-  llvm::Constant *EmitStructInitialization(InitListExpr *ILE,
-                                           const llvm::StructType *SType) {
+  void InsertBitfieldIntoStruct(std::vector<llvm::Constant*>& Elts,
+                                FieldDecl* Field, Expr* E) {
+    // Calculate the value to insert
+    llvm::Constant *C = Visit(E);
+    llvm::ConstantInt *CI = dyn_cast<llvm::ConstantInt>(C);
+    if (!CI) {
+      CGM.WarnUnsupported(E, "bitfield initialization");
+      return;
+    }
+    llvm::APInt V = CI->getValue();
 
+    // Calculate information about the relevant field
+    const llvm::Type* Ty = CI->getType();
+    unsigned size = CGM.getTypes().getTargetData().getTypeStoreSizeInBits(Ty);
+    unsigned fieldOffset = CGM.getTypes().getLLVMFieldNo(Field) * size;
+    CodeGenTypes::BitFieldInfo bitFieldInfo =
+        CGM.getTypes().getBitFieldInfo(Field);
+    fieldOffset += bitFieldInfo.Begin;
+
+    // Find where to start the insertion
+    // FIXME: This is O(n^2) in the number of bit-fields!
+    // FIXME: This won't work if the struct isn't completely packed!
+    unsigned offset = 0, i = 0;
+    while (offset < (fieldOffset & -8))
+      offset += CGM.getTypes().getTargetData().getTypeStoreSizeInBits(Elts[i++]->getType());
+
+    // Insert the bits into the struct
+    // FIXME: This algorthm is only correct on X86!
+    // FIXME: THis algorthm assumes bit-fields only have byte-size elements!
+    unsigned bitsToInsert = bitFieldInfo.Size;
+    unsigned curBits = std::min(8 - (fieldOffset & 7), bitsToInsert);
+    unsigned byte = V.getLoBits(curBits).getZExtValue() << (fieldOffset & 7);
+    do {
+      llvm::Constant* byteC = llvm::ConstantInt::get(llvm::Type::Int8Ty, byte);
+      Elts[i] = llvm::ConstantExpr::getOr(Elts[i], byteC);
+      ++i;
+      V = V.lshr(curBits);
+      bitsToInsert -= curBits;
+
+      if (!bitsToInsert)
+        break;
+
+      curBits = bitsToInsert > 8 ? 8 : bitsToInsert;
+      byte = V.getLoBits(curBits).getZExtValue();
+    } while (true);
+  }
+
+  llvm::Constant *EmitStructInitialization(InitListExpr *ILE) {
+    const llvm::StructType *SType =
+        cast<llvm::StructType>(ConvertType(ILE->getType()));
     RecordDecl *RD = ILE->getType()->getAsRecordType()->getDecl();
     std::vector<llvm::Constant*> Elts;
 
@@ -124,13 +172,11 @@ public:
       if (!curField->getIdentifier())
         continue;
 
-      llvm::Constant *C = Visit(ILE->getInit(EltNo));
-      assert (C && "Failed to create initializer expression");
-
       if (curField->isBitField()) {
-        CGM.WarnUnsupported(ILE->getInit(EltNo), "bitfield initialization");
+        InsertBitfieldIntoStruct(Elts, curField, ILE->getInit(EltNo));
       } else {
-        Elts[CGM.getTypes().getLLVMFieldNo(curField)] = C;
+        Elts[CGM.getTypes().getLLVMFieldNo(curField)] =
+            Visit(ILE->getInit(EltNo));
       }
       EltNo++;
     }
@@ -138,20 +184,75 @@ public:
     return llvm::ConstantStruct::get(SType, Elts);
   }
 
-  llvm::Constant *EmitVectorInitialization(InitListExpr *ILE,
-                                           const llvm::VectorType *VType) {
+  llvm::Constant *EmitUnionInitialization(InitListExpr *ILE) {
+    // FIXME: Need to make this work correctly for unions in structs/arrays
+    CGM.WarnUnsupported(ILE, "bitfield initialization");
+    return llvm::UndefValue::get(CGM.getTypes().ConvertType(ILE->getType()));
 
+    // Following is a partial implementation; it doesn't work correctly
+    // because the parent struct/arrays don't adapt their type yet, though
+    RecordDecl *RD = ILE->getType()->getAsRecordType()->getDecl();
+    const llvm::Type *Ty = ConvertType(ILE->getType());
+
+    // Find the field decl we're initializing, if any
+    int FieldNo = 0; // Field no in RecordDecl
+    FieldDecl* curField;
+    do {
+      curField = RD->getMember(FieldNo);
+      FieldNo++;
+    } while (!curField->getIdentifier() && FieldNo < RD->getNumMembers());
+
+    if (ILE->getNumInits() == 0 || !curField->getIdentifier())
+      return llvm::Constant::getNullValue(Ty);
+
+    if (curField->isBitField()) {
+      // Create a dummy struct for bit-field insertion
+      unsigned NumElts = CGM.getTargetData().getABITypeSize(Ty) / 8;
+      llvm::Constant* NV = llvm::Constant::getNullValue(llvm::Type::Int8Ty);
+      std::vector<llvm::Constant*> Elts(NumElts, NV);
+
+      InsertBitfieldIntoStruct(Elts, curField, ILE->getInit(0));
+      const llvm::ArrayType *RetTy =
+          llvm::ArrayType::get(NV->getType(), NumElts);
+      return llvm::ConstantArray::get(RetTy, Elts);
+    }
+
+    llvm::Constant *C = Visit(ILE->getInit(0));
+
+    // Build a struct with the union sub-element as the first member,
+    // and padded to the appropriate size
+    std::vector<llvm::Constant*> Elts;
+    std::vector<const llvm::Type*> Types;
+    Elts.push_back(C);
+    Types.push_back(C->getType());
+    unsigned CurSize = CGM.getTargetData().getTypeStoreSize(C->getType());
+    unsigned TotalSize = CGM.getTargetData().getTypeStoreSize(Ty);
+    while (CurSize < TotalSize) {
+      Elts.push_back(llvm::Constant::getNullValue(llvm::Type::Int8Ty));
+      Types.push_back(llvm::Type::Int8Ty);
+      CurSize++;
+    }
+
+    // This always generates a packed struct
+    // FIXME: Try to generate an unpacked struct when we can
+    llvm::StructType* STy = llvm::StructType::get(Types, true);
+    return llvm::ConstantStruct::get(STy, Elts);
+  }
+
+  llvm::Constant *EmitVectorInitialization(InitListExpr *ILE) {
+    const llvm::VectorType *VType =
+        cast<llvm::VectorType>(ConvertType(ILE->getType()));
     std::vector<llvm::Constant*> Elts;    
     unsigned NumInitElements = ILE->getNumInits();      
     unsigned NumElements = VType->getNumElements();
 
+    // FIXME: Handle case in assertion correctly
     assert (NumInitElements == NumElements 
             && "Unsufficient vector init elelments");
     // Copy initializer elements.
     unsigned i = 0;
     for (; i < NumElements; ++i) {
       llvm::Constant *C = Visit(ILE->getInit(i));
-      assert (C && "Failed to create initializer expression");
       Elts.push_back(C);
     }
 
@@ -159,24 +260,27 @@ public:
   }
                                           
   llvm::Constant *VisitInitListExpr(InitListExpr *ILE) {
-    const llvm::CompositeType *CType = 
-      dyn_cast<llvm::CompositeType>(ConvertType(ILE->getType()));
-
-    if (!CType) {
-        // We have a scalar in braces. Just use the first element.
+    if (ILE->getType()->isScalarType()) {
+      // We have a scalar in braces. Just use the first element.
+      if (ILE->getNumInits() > 0)
         return Visit(ILE->getInit(0));
+
+      const llvm::Type* RetTy = CGM.getTypes().ConvertType(ILE->getType());
+      return llvm::Constant::getNullValue(RetTy);
     }
-      
-    if (const llvm::ArrayType *AType = dyn_cast<llvm::ArrayType>(CType))
-      return EmitArrayInitialization(ILE, AType);
 
-    if (const llvm::StructType *SType = dyn_cast<llvm::StructType>(CType))
-      return EmitStructInitialization(ILE, SType);
+    if (ILE->getType()->isArrayType())
+      return EmitArrayInitialization(ILE);
 
-    if (const llvm::VectorType *VType = dyn_cast<llvm::VectorType>(CType))
-      return EmitVectorInitialization(ILE, VType);
-    
-    // Make sure we have an array at this point
+    if (ILE->getType()->isStructureType())
+      return EmitStructInitialization(ILE);
+
+    if (ILE->getType()->isUnionType())
+      return EmitUnionInitialization(ILE);
+
+    if (ILE->getType()->isVectorType())
+      return EmitVectorInitialization(ILE);
+
     assert(0 && "Unable to handle InitListExpr");
     // Get rid of control reaches end of void function warning.
     // Not reached.
