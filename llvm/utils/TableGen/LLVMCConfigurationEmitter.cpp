@@ -1058,7 +1058,7 @@ void EmitGenerateActionMethod (const ToolProperties& P,
   O << Indent2 << "const sys::Path& outFile,\n"
     << Indent2 << "const InputLanguagesSet& InLangs) const\n"
     << Indent1 << "{\n"
-    << Indent2 << "std::string cmd;\n"
+    << Indent2 << "const char* cmd;\n"
     << Indent2 << "std::vector<std::string> vec;\n";
 
   // cmd_line is either a string or a 'case' construct.
@@ -1130,15 +1130,8 @@ void EmitIsLastMethod (const ToolProperties& P, std::ostream& O) {
 /// EmitInOutLanguageMethods - Emit the [Input,Output]Language()
 /// methods for a given Tool class.
 void EmitInOutLanguageMethods (const ToolProperties& P, std::ostream& O) {
-  O << Indent1 << "StrVector InputLanguages() const {\n"
-    << Indent2 << "StrVector ret;\n";
-
-  for (StrVector::const_iterator B = P.InLanguage.begin(),
-         E = P.InLanguage.end(); B != E; ++B) {
-    O << Indent2 << "ret.push_back(\"" << *B << "\");\n";
-  }
-
-  O << Indent2 << "return ret;\n"
+  O << Indent1 << "const char** InputLanguages() const {\n"
+    << Indent2 << "return InputLanguages_;\n"
     << Indent1 << "}\n\n";
 
   O << Indent1 << "const char* OutputLanguage() const {\n"
@@ -1187,6 +1180,16 @@ void EmitIsJoinMethod (const ToolProperties& P, std::ostream& O) {
   O << Indent1 << "}\n\n";
 }
 
+/// EmitStaticMemberDefinitions - Emit static member definitions for a
+/// given Tool class.
+void EmitStaticMemberDefinitions(const ToolProperties& P, std::ostream& O) {
+  O << "const char* " << P.Name << "::InputLanguages_[] = {";
+  for (StrVector::const_iterator B = P.InLanguage.begin(),
+         E = P.InLanguage.end(); B != E; ++B)
+    O << '\"' << *B << "\", ";
+  O << "0};\n\n";
+}
+
 /// EmitToolClassDefinition - Emit a Tool class definition.
 void EmitToolClassDefinition (const ToolProperties& P,
                               const GlobalOptionDescriptions& OptDescs,
@@ -1200,8 +1203,11 @@ void EmitToolClassDefinition (const ToolProperties& P,
     O << "JoinTool";
   else
     O << "Tool";
-  O << " {\npublic:\n";
 
+  O << "{\nprivate:\n"
+    << Indent1 << "static const char* InputLanguages_[];\n\n";
+
+  O << "public:\n";
   EmitNameMethod(P, O);
   EmitInOutLanguageMethods(P, O);
   EmitOutputSuffixMethod(P, O);
@@ -1210,7 +1216,10 @@ void EmitToolClassDefinition (const ToolProperties& P,
   EmitIsLastMethod(P, O);
 
   // Close class definition
-  O << "};\n\n";
+  O << "};\n";
+
+  EmitStaticMemberDefinitions(P, O);
+
 }
 
 /// EmitOptionDescriptions - Iterate over a list of option

@@ -123,10 +123,9 @@ void CompilationGraph::insertNode(Tool* V) {
 void CompilationGraph::insertEdge(const std::string& A, Edge* Edg) {
   Node& B = getNode(Edg->ToolName());
   if (A == "root") {
-    const StrVector& InputLanguages = B.ToolPtr->InputLanguages();
-    for (StrVector::const_iterator B = InputLanguages.begin(),
-           E = InputLanguages.end(); B != E; ++B)
-      ToolsMap[*B].push_back(IntrusiveRefCntPtr<Edge>(Edg));
+    const char** InLangs = B.ToolPtr->InputLanguages();
+    for (;*InLangs; ++InLangs)
+      ToolsMap[*InLangs].push_back(IntrusiveRefCntPtr<Edge>(Edg));
     NodesMap["root"].AddEdge(Edg);
   }
   else {
@@ -392,15 +391,17 @@ namespace llvm {
         return N->ToolPtr->OutputLanguage();
       }
       else {
-        const StrVector& InputLanguages = I->ToolPtr->InputLanguages();
+        const char** InLangs = I->ToolPtr->InputLanguages();
         std::string ret;
 
-        for (StrVector::const_iterator B = InputLanguages.begin(),
-               E = InputLanguages.end(); B != E; ++B) {
-          if (llvm::next(B) != E)
-            ret += *B + ", ";
-          else
-            ret += *B;
+        for (; *InLangs; ++InLangs) {
+          if (*(InLangs + 1)) {
+            ret += *InLangs;
+            ret +=  ", ";
+          }
+          else {
+            ret += *InLangs;
+          }
         }
 
         return ret;
