@@ -1628,7 +1628,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     // process, no libcalls can/will be inserted, guaranteeing that no calls
     // can overlap.
     assert(!IsLegalizingCall && "Inconsistent sequentialization of calls!");
-    SDOperand InCallSEQ = LastCALLSEQ_END;
     // Note that we are selecting this call!
     LastCALLSEQ_END = SDOperand(CallEnd, 0);
     IsLegalizingCall = true;
