@@ -307,6 +307,11 @@ public:
     return true;
   }
   bool operator!=(const SmallVectorImpl &RHS) const { return !(*this == RHS); }
+
+  bool operator<(const SmallVectorImpl &RHS) const {
+    return std::lexicographical_compare(begin(), end(),
+                                        RHS.begin(), RHS.end());
+  }
   
 private:
   /// isSmall - Return true if this is a smallvector which has not had dynamic
