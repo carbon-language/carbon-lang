@@ -139,8 +139,17 @@ void CompilationGraph::insertEdge(const std::string& A, Edge* Edg) {
 namespace {
   sys::Path MakeTempFile(const sys::Path& TempDir, const std::string& BaseName,
                          const std::string& Suffix) {
-    sys::Path Out = TempDir;
-    Out.appendComponent(BaseName);
+    sys::Path Out;
+
+    // Make sure we don't end up with path names like '/file.o' if the
+    // TempDir is empty.
+    if (TempDir.empty()) {
+      Out.set(BaseName);
+    }
+    else {
+      Out = TempDir;
+      Out.appendComponent(BaseName);
+    }
     Out.appendSuffix(Suffix);
     Out.makeUnique(true, NULL);
     return Out;

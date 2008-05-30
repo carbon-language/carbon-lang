@@ -79,8 +79,6 @@ namespace llvmc {
     { OutEdges.push_back(llvm::IntrusiveRefCntPtr<Edge>(E)); }
 
     // Inward edge counter. Used to implement topological sort.
-    // TOTHINK: Move the mutable counter back into Tool classes? Makes
-    // us more const-correct.
     void IncrInEdges() { ++InEdges; }
     void DecrInEdges() { --InEdges; }
     bool HasNoInEdges() const { return InEdges == 0; }

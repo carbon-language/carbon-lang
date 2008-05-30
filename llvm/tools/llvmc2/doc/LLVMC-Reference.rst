@@ -76,6 +76,12 @@ configuration files:
   current directory with the compilation graph description in the
   Graphviz format. Hidden option, useful for debugging.
 
+* ``--save-temps`` - Write temporary files to the current directory
+  and do not delete them on exit. Hidden option, useful for debugging.
+
+* ``--help``, ``--help-hidden``, ``--version`` - These options have
+  their standard meaning.
+
 
 Customizing LLVMC: the compilation graph
 ========================================
