@@ -43,7 +43,7 @@ namespace llvmc {
                                    const InputLanguagesSet& InLangs) const = 0;
 
     virtual const char* Name() const = 0;
-    virtual const char* InputLanguage() const = 0;
+    virtual StrVector InputLanguages() const = 0;
     virtual const char* OutputLanguage() const = 0;
     virtual const char* OutputSuffix() const = 0;
 

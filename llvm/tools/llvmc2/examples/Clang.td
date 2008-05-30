@@ -4,12 +4,8 @@
 
 include "Common.td"
 
-// TOFIX: It should be possible to use a string list in the 'in_language'
-// tool property. There should be also an 'in_language' test in the
-// 'case' construct.
-
 def clang : Tool<
-[(in_language "c"),
+[(in_language ["c", "c++", "objective-c"]),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
  (cmd_line (case (switch_on "E"), "clang -E $INFILE -o $OUTFILE",

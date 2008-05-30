@@ -115,16 +115,18 @@ void CompilationGraph::insertNode(Tool* V) {
   }
 }
 
-void CompilationGraph::insertEdge(const std::string& A, Edge* E) {
-  Node& B = getNode(E->ToolName());
+void CompilationGraph::insertEdge(const std::string& A, Edge* Edg) {
+  Node& B = getNode(Edg->ToolName());
   if (A == "root") {
-    const std::string& InputLanguage = B.ToolPtr->InputLanguage();
-    ToolsMap[InputLanguage].push_back(IntrusiveRefCntPtr<Edge>(E));
-    NodesMap["root"].AddEdge(E);
+    const StrVector& InputLanguages = B.ToolPtr->InputLanguages();
+    for (StrVector::const_iterator B = InputLanguages.begin(),
+           E = InputLanguages.end(); B != E; ++B)
+      ToolsMap[*B].push_back(IntrusiveRefCntPtr<Edge>(Edg));
+    NodesMap["root"].AddEdge(Edg);
   }
   else {
     Node& N = getNode(A);
-    N.AddEdge(E);
+    N.AddEdge(Edg);
   }
   // Increase the inward edge counter.
   B.IncrInEdges();
@@ -381,10 +383,23 @@ namespace llvm {
 
     template<typename EdgeIter>
     static std::string getEdgeSourceLabel(const Node* N, EdgeIter I) {
-      if (N->ToolPtr)
+      if (N->ToolPtr) {
         return N->ToolPtr->OutputLanguage();
-      else
-        return I->ToolPtr->InputLanguage();
+      }
+      else {
+        const StrVector& InputLanguages = I->ToolPtr->InputLanguages();
+        std::string ret;
+
+        for (StrVector::const_iterator B = InputLanguages.begin(),
+               E = InputLanguages.end(); B != E; ++B) {
+          if (llvm::next(B) != E)
+            ret += *B + ", ";
+          else
+            ret += *B;
+        }
+
+        return ret;
+      }
     }
   };
 
