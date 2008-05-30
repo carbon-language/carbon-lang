@@ -724,15 +724,23 @@ void EmitCaseTest(const DagInit& d, const char* IndentLevel,
 // void F(Init* Statement, const char* IndentLevel, std::ostream& O).
 template <typename F>
 void EmitCaseConstructHandler(const DagInit* d, const char* IndentLevel,
-                              const F& Callback,
+                              const F& Callback, bool DefaultRequired,
                               const GlobalOptionDescriptions& OptDescs,
                               std::ostream& O) {
   assert(d->getOperator()->getAsString() == "case");
 
-  for (unsigned i = 0, numArgs = d->getNumArgs(); i != numArgs; ++i) {
+  bool DefaultProvided = false;
+  unsigned numArgs = d->getNumArgs();
+  if (d->getNumArgs() < 2)
+    throw "There should be at least one clause in the 'case' expression:\n"
+      + d->getAsString();
+
+  for (unsigned i = 0; i != numArgs; ++i) {
     const DagInit& Test = InitPtrToDagInitRef(d->getArg(i));
 
+    // Emit the test.
     if (Test.getOperator()->getAsString() == "default") {
+      DefaultProvided = true;
       if (i+2 != numArgs)
         throw std::string("The 'default' clause should be the last in the"
                           "'case' construct!");
@@ -744,6 +752,7 @@ void EmitCaseConstructHandler(const DagInit* d, const char* IndentLevel,
       O << ") {\n";
     }
 
+    // Emit the corresponding statement.
     ++i;
     if (i == numArgs)
       throw "Case construct handler: no corresponding action "
@@ -752,6 +761,10 @@ void EmitCaseConstructHandler(const DagInit* d, const char* IndentLevel,
     Callback(d->getArg(i), IndentLevel, O);
     O << IndentLevel << "}\n";
   }
+
+  if (DefaultRequired && !DefaultProvided)
+    throw "Case expression: the 'default' clause is required in this case:\n"
+      + d->getAsString();
 }
 
 /// EmitForwardOptionPropertyHandlingCode - Helper function used to
@@ -985,7 +998,7 @@ void EmitGenerateActionMethod (const ToolProperties& P,
   else
     EmitCaseConstructHandler(&InitPtrToDagInitRef(P.CmdLine), Indent2,
                              EmitCmdLineVecFillCallback(Version, P.Name),
-                             OptDescs, O);
+                             true, OptDescs, O);
 
   // For every understood option, emit handling code.
   for (ToolOptionDescriptions::const_iterator B = P.OptDescs.begin(),
@@ -1273,7 +1286,7 @@ void EmitEdgeClass (unsigned N, const std::string& Target,
     << Indent2 << "unsigned ret = 0;\n";
 
   // Handle the 'case' construct.
-  EmitCaseConstructHandler(Case, Indent2, IncDecWeight, OptDescs, O);
+  EmitCaseConstructHandler(Case, Indent2, IncDecWeight, false, OptDescs, O);
 
   O << Indent2 << "return ret;\n"
     << Indent1 << "};\n\n};\n\n";
