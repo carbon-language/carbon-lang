@@ -41,6 +41,7 @@ def llvm_gcc_cpp : Tool<
  (output_suffix "bc"),
  (cmd_line (case
             (switch_on "E"),
+              // TOFIX: this does not play well with -o
               "llvm-g++ -E -x c++ $INFILE",
             (default),
               "llvm-g++ -c -x c++ $INFILE -o $OUTFILE -emit-llvm")),

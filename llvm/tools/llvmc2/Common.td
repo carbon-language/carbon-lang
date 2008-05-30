@@ -56,6 +56,8 @@ def switch_on;
 def parameter_equals;
 def element_in_list;
 def input_languages_contain;
+def not_empty;
+// TOTHINK: remove?
 def default;
 
 // Boolean operators.

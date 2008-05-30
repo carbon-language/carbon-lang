@@ -111,8 +111,6 @@ namespace llvmc {
     llvm::SmallVector<llvm::IntrusiveRefCntPtr<Edge>, 3> tools_vector_type;
     typedef llvm::StringMap<tools_vector_type> tools_map_type;
 
-    /// ExtsToLangs - Map from file extensions to language names.
-    LanguageMap ExtsToLangs;
     /// ToolsMap - Map from language names to lists of tool names.
     tools_map_type ToolsMap;
     /// NodesMap - Map from tool names to Tool objects.
@@ -134,7 +132,7 @@ namespace llvmc {
     /// options are passed implicitly as global variables.
     int Build(llvm::sys::Path const& tempDir);
 
-    /// getNode -Return a reference to the node correponding to the
+    /// getNode - Return a reference to the node correponding to the
     /// given tool name. Throws std::runtime_error.
     Node& getNode(const std::string& ToolName);
     const Node& getNode(const std::string& ToolName) const;
@@ -152,14 +150,9 @@ namespace llvmc {
     // GraphTraits support.
     friend NodesIterator GraphBegin(CompilationGraph*);
     friend NodesIterator GraphEnd(CompilationGraph*);
-    friend void PopulateCompilationGraph(CompilationGraph&);
 
   private:
     // Helper functions.
-
-    /// getLanguage - Find out which language corresponds to the
-    /// suffix of this file.
-    const std::string& getLanguage(const llvm::sys::Path& File) const;
 
     /// getToolsVector - Return a reference to the list of tool names
     /// corresponding to the given language name. Throws

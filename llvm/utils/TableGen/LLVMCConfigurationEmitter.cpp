@@ -667,6 +667,16 @@ bool EmitCaseTest1Arg(const std::string& TestName,
   } else if (TestName == "input_languages_contain") {
     O << "InLangs.count(\"" << OptName << "\") != 0";
     return true;
+  } else if (TestName == "in_language") {
+    // Works only for cmd_line!
+    O << "GetLanguage(inFile) == \"" << OptName << '\"';
+    return true;
+  } else if (TestName == "not_empty") {
+    const GlobalOptionDescription& OptDesc = OptDescs.FindOption(OptName);
+    if (OptDesc.Type == OptionType::Switch)
+      throw OptName + ": incorrect option type!";
+    O << '!' << OptDesc.GenVariableName() << ".empty()";
+    return true;
   }
 
   return false;
@@ -1026,7 +1036,7 @@ void EmitGenerateActionMethod (const ToolProperties& P,
   else
     EmitCaseConstructHandler(&InitPtrToDag(P.CmdLine), Indent2,
                              EmitCmdLineVecFillCallback(Version, P.Name),
-                             true, OptDescs, O);
+                             false, OptDescs, O);
 
   // For every understood option, emit handling code.
   for (ToolOptionDescriptions::const_iterator B = P.OptDescs.begin(),
@@ -1222,7 +1232,7 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, std::ostream& O)
     throw std::string("Error in the language map definition!");
 
   // Generate code
-  O << "void llvmc::PopulateLanguageMap(LanguageMap& language_map) {\n";
+  O << "void llvmc::PopulateLanguageMap() {\n";
 
   for (unsigned i = 0; i < LangsToSuffixesList->size(); ++i) {
     Record* LangToSuffixes = LangsToSuffixesList->getElementAsRecord(i);
@@ -1231,7 +1241,7 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, std::ostream& O)
     const ListInit* Suffixes = LangToSuffixes->getValueAsListInit("suffixes");
 
     for (unsigned i = 0; i < Suffixes->size(); ++i)
-      O << Indent1 << "language_map[\""
+      O << Indent1 << "GlobalLanguageMap[\""
         << InitPtrToString(Suffixes->getElement(i))
         << "\"] = \"" << Lang << "\";\n";
   }
@@ -1360,7 +1370,7 @@ void EmitPopulateCompilationGraph (Record* CompilationGraph,
 
   // Generate code
   O << "void llvmc::PopulateCompilationGraph(CompilationGraph& G) {\n"
-    << Indent1 << "PopulateLanguageMap(G.ExtsToLangs);\n\n";
+    << Indent1 << "PopulateLanguageMap();\n\n";
 
   // Insert vertices
 

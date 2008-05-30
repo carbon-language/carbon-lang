@@ -32,6 +32,19 @@ extern cl::list<std::string> InputFilenames;
 extern cl::opt<std::string> OutputFilename;
 extern cl::list<std::string> Languages;
 
+namespace llvmc {
+  /// ExtsToLangs - Map from file extensions to language names.
+  LanguageMap GlobalLanguageMap;
+
+  /// GetLanguage -  Find the language name corresponding to the given file.
+  const std::string& GetLanguage(const sys::Path& File) {
+    LanguageMap::const_iterator Lang = GlobalLanguageMap.find(File.getSuffix());
+    if (Lang == GlobalLanguageMap.end())
+      throw std::runtime_error("Unknown suffix: " + File.getSuffix());
+    return Lang->second;
+  }
+}
+
 namespace {
 
   /// ChooseEdge - Return the edge with the maximum weight.
@@ -85,14 +98,6 @@ const Node& CompilationGraph::getNode(const std::string& ToolName) const {
   if (I == NodesMap.end())
     throw std::runtime_error("Node " + ToolName + " is not in the graph!");
   return I->second;
-}
-
-// Find the language name corresponding to the given file.
-const std::string& CompilationGraph::getLanguage(const sys::Path& File) const {
-  LanguageMap::const_iterator Lang = ExtsToLangs.find(File.getSuffix());
-  if (Lang == ExtsToLangs.end())
-    throw std::runtime_error("Unknown suffix: " + File.getSuffix());
-  return Lang->second;
 }
 
 // Find the tools list corresponding to the given language name.
@@ -200,7 +205,7 @@ FindToolChain(const sys::Path& In, const std::string* forceLanguage,
 
   // Determine the input language.
   const std::string& InLanguage =
-    forceLanguage ? *forceLanguage : getLanguage(In);
+    forceLanguage ? *forceLanguage : GetLanguage(In);
 
   // Add the current input language to the input language set.
   InLangs.insert(InLanguage);
