@@ -56,7 +56,7 @@ namespace {
     ModRefResult AnalyzeLibCallDetails(const LibCallFunctionInfo *FI,
                                        CallSite CS, Value *P, unsigned Size);
   };
-}  // End of llvm namespace
+}  // End of anonymous namespace
   
 // Register this pass...
 char LibCallAliasAnalysis::ID = 0;
