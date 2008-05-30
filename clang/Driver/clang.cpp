@@ -489,8 +489,8 @@ WarnUndefMacros("Wundef",
    llvm::cl::desc("Warn on use of undefined macros in #if's"));
 
 static llvm::cl::opt<bool>
-WarnImplicitFunctionDeclaration("Wimplicit-function-declaration"
-                             "Warn about use of implicitly defined functions");
+WarnImplicitFunctionDeclaration("Wimplicit-function-declaration",
+   llvm::cl::desc("Warn about uses of implicitly defined functions"));
 
 /// InitializeDiagnostics - Initialize the diagnostic object, based on the
 /// current command line option settings.
