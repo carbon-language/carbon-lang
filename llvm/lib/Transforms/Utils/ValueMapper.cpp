@@ -36,38 +36,40 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
         isa<UndefValue>(C))
       return VMSlot = C;           // Primitive constants map directly
     else if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
-      for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i) {
-        Value *MV = MapValue(CA->getOperand(i), VM);
-        if (MV != CA->getOperand(i)) {
+      for (User::op_iterator b = CA->op_begin(), i = b, e = CA->op_end();
+           i != e; ++i) {
+        Value *MV = MapValue(*i, VM);
+        if (MV != *i) {
           // This array must contain a reference to a global, make a new array
           // and return it.
           //
           std::vector<Constant*> Values;
           Values.reserve(CA->getNumOperands());
-          for (unsigned j = 0; j != i; ++j)
-            Values.push_back(CA->getOperand(j));
+          for (User::op_iterator j = b; j != i; ++j)
+            Values.push_back(cast<Constant>(*j));
           Values.push_back(cast<Constant>(MV));
           for (++i; i != e; ++i)
-            Values.push_back(cast<Constant>(MapValue(CA->getOperand(i), VM)));
+            Values.push_back(cast<Constant>(MapValue(*i, VM)));
           return VM[V] = ConstantArray::get(CA->getType(), Values);
         }
       }
       return VM[V] = C;
 
     } else if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
-      for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i) {
-        Value *MV = MapValue(CS->getOperand(i), VM);
-        if (MV != CS->getOperand(i)) {
+      for (User::op_iterator b = CS->op_begin(), i = b, e = CS->op_end();
+           i != e; ++i) {
+        Value *MV = MapValue(*i, VM);
+        if (MV != *i) {
           // This struct must contain a reference to a global, make a new struct
           // and return it.
           //
           std::vector<Constant*> Values;
           Values.reserve(CS->getNumOperands());
-          for (unsigned j = 0; j != i; ++j)
-            Values.push_back(CS->getOperand(j));
+          for (User::op_iterator j = b; j != i; ++j)
+            Values.push_back(cast<Constant>(*j));
           Values.push_back(cast<Constant>(MV));
           for (++i; i != e; ++i)
-            Values.push_back(cast<Constant>(MapValue(CS->getOperand(i), VM)));
+            Values.push_back(cast<Constant>(MapValue(*i, VM)));
           return VM[V] = ConstantStruct::get(CS->getType(), Values);
         }
       }
@@ -75,23 +77,24 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
 
     } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
       std::vector<Constant*> Ops;
-      for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i)
-        Ops.push_back(cast<Constant>(MapValue(CE->getOperand(i), VM)));
+      for (User::op_iterator i = CE->op_begin(), e = CE->op_end(); i != e; ++i)
+        Ops.push_back(cast<Constant>(MapValue(*i, VM)));
       return VM[V] = CE->getWithOperands(Ops);
     } else if (ConstantVector *CP = dyn_cast<ConstantVector>(C)) {
-      for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i) {
-        Value *MV = MapValue(CP->getOperand(i), VM);
-        if (MV != CP->getOperand(i)) {
+      for (User::op_iterator b = CP->op_begin(), i = b, e = CP->op_end();
+           i != e; ++i) {
+        Value *MV = MapValue(*i, VM);
+        if (MV != *i) {
           // This vector value must contain a reference to a global, make a new
           // vector constant and return it.
           //
           std::vector<Constant*> Values;
           Values.reserve(CP->getNumOperands());
-          for (unsigned j = 0; j != i; ++j)
-            Values.push_back(CP->getOperand(j));
+          for (User::op_iterator j = b; j != i; ++j)
+            Values.push_back(cast<Constant>(*j));
           Values.push_back(cast<Constant>(MV));
           for (++i; i != e; ++i)
-            Values.push_back(cast<Constant>(MapValue(CP->getOperand(i), VM)));
+            Values.push_back(cast<Constant>(MapValue(*i, VM)));
           return VM[V] = ConstantVector::get(Values);
         }
       }
@@ -109,10 +112,9 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
 /// current values into those specified by ValueMap.
 ///
 void llvm::RemapInstruction(Instruction *I, ValueMapTy &ValueMap) {
-  for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
-    const Value *Op = I->getOperand(op);
-    Value *V = MapValue(Op, ValueMap);
+  for (User::op_iterator op = I->op_begin(), E = I->op_end(); op != E; ++op) {
+    Value *V = MapValue(*op, ValueMap);
     assert(V && "Referenced value not in value map!");
-    I->setOperand(op, V);
+    *op = V;
   }
 }
