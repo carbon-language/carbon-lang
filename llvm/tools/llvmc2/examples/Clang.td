@@ -8,7 +8,8 @@ def clang : Tool<
 [(in_language ["c", "c++", "objective-c"]),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
- (cmd_line (case (switch_on "E"), "clang -E $INFILE -o $OUTFILE",
+ // TOFIX: We should be able to test the language of the input file
+ (cmd_line (case (switch_on "E"), "clang -E $INFILE",
                  (default), "clang -emit-llvm-bc $INFILE -o $OUTFILE")),
  (switch_option "E", (stop_compilation), (output_suffix "i"),
    (help "Stop after the preprocessing stage, do not run the compiler")),

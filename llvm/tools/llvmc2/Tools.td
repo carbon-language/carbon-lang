@@ -27,10 +27,10 @@ def llvm_gcc_c : Tool<
  (output_suffix "bc"),
  (cmd_line (case
             (switch_on "E"),
-              "llvm-g++ -E -x c $INFILE -o $OUTFILE",
+              "llvm-g++ -E -x c $INFILE",
             (default),
               "llvm-g++ -c -x c $INFILE -o $OUTFILE -emit-llvm")),
- (switch_option "E", (stop_compilation),(output_suffix "i"),
+ (switch_option "E", (stop_compilation),
    (help "Stop after the preprocessing stage, do not run the compiler")),
  (sink)
 ]>;
@@ -41,10 +41,10 @@ def llvm_gcc_cpp : Tool<
  (output_suffix "bc"),
  (cmd_line (case
             (switch_on "E"),
-              "llvm-g++ -E -x c++ $INFILE -o $OUTFILE",
+              "llvm-g++ -E -x c++ $INFILE",
             (default),
               "llvm-g++ -c -x c++ $INFILE -o $OUTFILE -emit-llvm")),
- (switch_option "E", (stop_compilation), (output_suffix "i")),
+ (switch_option "E", (stop_compilation)),
  (sink)
 ]>;
 
