@@ -27,13 +27,13 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/RegisterCoalescer.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 using namespace llvm;
-
 
 namespace {
   struct VISIBILITY_HIDDEN StrongPHIElimination : public MachineFunctionPass {
@@ -74,6 +74,7 @@ namespace {
       
       // TODO: Actually make this true.
       AU.addPreserved<LiveIntervals>();
+      AU.addPreserved<RegisterCoalescer>();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
     
@@ -920,6 +921,8 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
     LI.RemoveMachineInstrFromMaps(PInstr);
     PInstr->eraseFromParent();
   }
+  
+  LI.computeNumbering();
   
   return true;
 }
