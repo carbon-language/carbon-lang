@@ -30,10 +30,7 @@ def llvm_gcc_c : Tool<
               "llvm-g++ -E -x c $INFILE -o $OUTFILE -emit-llvm",
             (default),
               "llvm-g++ -c -x c $INFILE -o $OUTFILE -emit-llvm")),
- // TOFIX: Preprocessed files currently have suffix ".bc".
- (switch_option "E", (stop_compilation),
-    // Make this possible:
-    // (output_suffix "i"),
+ (switch_option "E", (stop_compilation),(output_suffix "i"),
    (help "Stop after the preprocessing stage, do not run the compiler")),
  (sink)
 ]>;
@@ -47,7 +44,7 @@ def llvm_gcc_cpp : Tool<
               "llvm-g++ -E -x c++ $INFILE -o $OUTFILE -emit-llvm",
             (default),
               "llvm-g++ -c -x c++ $INFILE -o $OUTFILE -emit-llvm")),
- (switch_option "E", (stop_compilation)),
+ (switch_option "E", (stop_compilation), (output_suffix "i")),
  (sink)
 ]>;
 

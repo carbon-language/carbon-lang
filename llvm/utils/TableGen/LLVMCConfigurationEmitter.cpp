@@ -250,7 +250,7 @@ namespace ToolOptionDescriptionFlags {
                                     Forward = 0x2, UnpackValues = 0x4};
 }
 namespace OptionPropertyType {
-  enum OptionPropertyType { AppendCmd };
+  enum OptionPropertyType { AppendCmd, OutputSuffix };
 }
 
 typedef std::pair<OptionPropertyType::OptionPropertyType, std::string>
@@ -397,6 +397,8 @@ public:
       optionPropertyHandlers_["append_cmd"] = &CollectProperties::onAppendCmd;
       optionPropertyHandlers_["forward"] = &CollectProperties::onForward;
       optionPropertyHandlers_["help"] = &CollectProperties::onHelp;
+      optionPropertyHandlers_["output_suffix"] =
+        &CollectProperties::onOutputSuffixOptionProp;
       optionPropertyHandlers_["required"] = &CollectProperties::onRequired;
       optionPropertyHandlers_["stop_compilation"] =
         &CollectProperties::onStopCompilation;
@@ -487,9 +489,21 @@ private:
 
   void onAppendCmd (const DagInit* d, GlobalOptionDescription& o) {
     checkNumberOfArguments(d, 1);
-    std::string const& cmd = InitPtrToString(d->getArg(0));
+    const std::string& cmd = InitPtrToString(d->getArg(0));
 
     toolProps_.OptDescs[o.Name].AddProperty(OptionPropertyType::AppendCmd, cmd);
+  }
+
+  void onOutputSuffixOptionProp (const DagInit* d, GlobalOptionDescription& o) {
+    checkNumberOfArguments(d, 1);
+    const std::string& suf = InitPtrToString(d->getArg(0));
+
+    if (toolProps_.OptDescs[o.Name].Type != OptionType::Switch)
+      throw "Option " + o.Name
+        + " can't have 'output_suffix' property since it isn't a switch!";
+
+    toolProps_.OptDescs[o.Name].AddProperty
+      (OptionPropertyType::OutputSuffix, suf);
   }
 
   void onForward (const DagInit* d, GlobalOptionDescription& o) {
@@ -1021,7 +1035,22 @@ void EmitInOutLanguageMethods (const ToolProperties& P, std::ostream& O) {
 /// given Tool class.
 void EmitOutputSuffixMethod (const ToolProperties& P, std::ostream& O) {
   O << Indent1 << "const char* OutputSuffix() const {\n"
-    << Indent2 << "return \"" << P.OutputSuffix << "\";\n"
+    << Indent2 << "const char* ret = \"" << P.OutputSuffix << "\";\n";
+
+  for (ToolOptionDescriptions::const_iterator B = P.OptDescs.begin(),
+         E = P.OptDescs.end(); B != E; ++B) {
+    const ToolOptionDescription& OptDesc = B->second;
+    for (OptionPropertyList::const_iterator B = OptDesc.Props.begin(),
+           E = OptDesc.Props.end(); B != E; ++B) {
+      const OptionProperty& OptProp = *B;
+      if (OptProp.first == OptionPropertyType::OutputSuffix) {
+        O << Indent2 << "if (" << OptDesc.GenVariableName() << ")\n"
+          << Indent3 << "ret = \"" << OptProp.second << "\";\n";
+      }
+    }
+  }
+
+  O << Indent2 << "return ret;\n"
     << Indent1 << "}\n\n";
 }
 
