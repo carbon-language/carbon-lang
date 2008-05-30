@@ -45,10 +45,10 @@ static cl::opt<bool, true> PrintCode("print-machineinstrs",
   cl::location(PrintMachineCode), cl::init(false));
 
 static cl::opt<bool, true>
-  DisableFPElim("disable-fp-elim",
-                cl::desc("Disable frame pointer elimination optimization"),
-                cl::location(NoFramePointerElim),
-                cl::init(false));
+DisableFPElim("disable-fp-elim",
+              cl::desc("Disable frame pointer elimination optimization"),
+              cl::location(NoFramePointerElim),
+              cl::init(false));
 static cl::opt<bool, true>
 DisableExcessPrecision("disable-excess-fp-precision",
              cl::desc("Disable optimizations that may increase FP precision"),
@@ -135,8 +135,8 @@ EnablePerformTailCallOpt("tailcallopt",
 static cl::opt<bool, true>
 EnableOptimizeForSize("optimize-size",
                       cl::desc("Optimize for size."),
-                         cl::location(OptimizeForSize),
-                         cl::init(false));
+                      cl::location(OptimizeForSize),
+                      cl::init(false));
 
 static cl::opt<bool, true>
 EnableRealignStack("realign-stack",
