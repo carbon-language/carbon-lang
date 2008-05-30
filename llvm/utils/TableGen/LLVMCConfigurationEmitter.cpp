@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <cassert>
 #include <functional>
+#include <stdexcept>
 #include <string>
 
 using namespace llvm;
@@ -1470,6 +1471,7 @@ void EmitHookDeclarations(const ToolPropertiesList& ToolProps,
 
 /// run - The back-end entry point.
 void LLVMCConfigurationEmitter::run (std::ostream &O) {
+  try {
 
   // Emit file header.
   EmitSourceFileHeader("LLVMC Configuration Library", O);
@@ -1513,4 +1515,7 @@ void LLVMCConfigurationEmitter::run (std::ostream &O) {
   EmitPopulateCompilationGraph(CompilationGraphRecord, O);
 
   // EOF
+  } catch (std::exception& Error) {
+    throw Error.what() + std::string(" - usually this means a syntax error.");
+  }
 }
