@@ -68,15 +68,18 @@ const DagInit& InitPtrToDagInitRef(Init* ptr) {
   return val;
 }
 
-
 // checkNumberOfArguments - Ensure that the number of args in d is
-// less than or equal to min_arguments, otherwise throw an exception .
+// less than or equal to min_arguments, otherwise throw an exception.
 void checkNumberOfArguments (const DagInit* d, unsigned min_arguments) {
   if (d->getNumArgs() < min_arguments)
     throw "Property " + d->getOperator()->getAsString()
       + " has too few arguments!";
 }
 
+// isDagEmpty - is this DAG marked with an empty marker?
+bool isDagEmpty (const DagInit* d) {
+  return d->getOperator()->getAsString() == "empty";
+}
 
 //===----------------------------------------------------------------------===//
 /// Back-end specific code
@@ -974,21 +977,21 @@ void TypecheckGraph (Record* CompilationGraph,
   }
 }
 
-/// EmitEdgePropertyTest1Arg - Helper function used by
-/// EmitEdgePropertyTest.
-bool EmitEdgePropertyTest1Arg(const std::string& PropName,
-                              const DagInit& Prop,
-                              const GlobalOptionDescriptions& OptDescs,
-                              std::ostream& O) {
-  checkNumberOfArguments(&Prop, 1);
-  const std::string& OptName = InitPtrToString(Prop.getArg(0));
-  if (PropName == "switch_on") {
+/// EmitCaseTest1Arg - Helper function used by
+/// EmitCaseConstructHandler.
+bool EmitCaseTest1Arg(const std::string& TestName,
+                      const DagInit& d,
+                      const GlobalOptionDescriptions& OptDescs,
+                      std::ostream& O) {
+  checkNumberOfArguments(&d, 1);
+  const std::string& OptName = InitPtrToString(d.getArg(0));
+  if (TestName == "switch_on") {
     const GlobalOptionDescription& OptDesc = OptDescs.FindOption(OptName);
     if (OptDesc.Type != OptionType::Switch)
       throw OptName + ": incorrect option type!";
     O << OptDesc.GenVariableName();
     return true;
-  } else if (PropName == "if_input_languages_contain") {
+  } else if (TestName == "input_languages_contain") {
     O << "InLangs.count(\"" << OptName << "\") != 0";
     return true;
   }
@@ -996,31 +999,32 @@ bool EmitEdgePropertyTest1Arg(const std::string& PropName,
   return false;
 }
 
-/// EmitEdgePropertyTest2Args - Helper function used by
-/// EmitEdgePropertyTest.
-bool EmitEdgePropertyTest2Args(const std::string& PropName,
-                               const DagInit& Prop,
-                               const GlobalOptionDescriptions& OptDescs,
-                               std::ostream& O) {
-  checkNumberOfArguments(&Prop, 2);
-  const std::string& OptName = InitPtrToString(Prop.getArg(0));
-  const std::string& OptArg = InitPtrToString(Prop.getArg(1));
+/// EmitCaseTest2Args - Helper function used by
+/// EmitCaseConstructHandler.
+bool EmitCaseTest2Args(const std::string& TestName,
+                       const DagInit& d,
+                       const char* IndentLevel,
+                       const GlobalOptionDescriptions& OptDescs,
+                       std::ostream& O) {
+  checkNumberOfArguments(&d, 2);
+  const std::string& OptName = InitPtrToString(d.getArg(0));
+  const std::string& OptArg = InitPtrToString(d.getArg(1));
   const GlobalOptionDescription& OptDesc = OptDescs.FindOption(OptName);
 
-  if (PropName == "parameter_equals") {
+  if (TestName == "parameter_equals") {
     if (OptDesc.Type != OptionType::Parameter
         && OptDesc.Type != OptionType::Prefix)
       throw OptName + ": incorrect option type!";
     O << OptDesc.GenVariableName() << " == \"" << OptArg << "\"";
     return true;
   }
-  else if (PropName == "element_in_list") {
+  else if (TestName == "element_in_list") {
     if (OptDesc.Type != OptionType::ParameterList
         && OptDesc.Type != OptionType::PrefixList)
       throw OptName + ": incorrect option type!";
     const std::string& VarName = OptDesc.GenVariableName();
     O << "std::find(" << VarName << ".begin(),\n"
-      << Indent3 << VarName << ".end(), \""
+      << IndentLevel << Indent1 << VarName << ".end(), \""
       << OptArg << "\") != " << VarName << ".end()";
     return true;
   }
@@ -1029,47 +1033,95 @@ bool EmitEdgePropertyTest2Args(const std::string& PropName,
 }
 
 // Forward declaration.
-void EmitEdgePropertyTest(const DagInit& Prop,
-                          const GlobalOptionDescriptions& OptDescs,
-                          std::ostream& O);
+// EmitLogicalOperationTest and EmitCaseTest are mutually recursive.
+void EmitCaseTest(const DagInit& d, const char* IndentLevel,
+                  const GlobalOptionDescriptions& OptDescs,
+                  std::ostream& O);
 
 /// EmitLogicalOperationTest - Helper function used by
-/// EmitEdgePropertyTest.
-void EmitLogicalOperationTest(const DagInit& Prop, const char* LogicOp,
+/// EmitCaseConstructHandler.
+void EmitLogicalOperationTest(const DagInit& d, const char* LogicOp,
+                              const char* IndentLevel,
                               const GlobalOptionDescriptions& OptDescs,
                               std::ostream& O) {
   O << '(';
-  for (unsigned j = 0, NumArgs = Prop.getNumArgs(); j < NumArgs; ++j) {
-    const DagInit& InnerProp = InitPtrToDagInitRef(Prop.getArg(j));
-    EmitEdgePropertyTest(InnerProp, OptDescs, O);
+  for (unsigned j = 0, NumArgs = d.getNumArgs(); j < NumArgs; ++j) {
+    const DagInit& InnerTest = InitPtrToDagInitRef(d.getArg(j));
+    EmitCaseTest(InnerTest, IndentLevel, OptDescs, O);
     if (j != NumArgs - 1)
-      O << ")\n" << Indent3 << ' ' << LogicOp << " (";
+      O << ")\n" << IndentLevel << Indent1 << ' ' << LogicOp << " (";
     else
       O << ')';
   }
 }
 
-/// EmitEdgePropertyTest - Helper function used by EmitEdgeClass.
-void EmitEdgePropertyTest(const DagInit& Prop,
-                          const GlobalOptionDescriptions& OptDescs,
-                          std::ostream& O) {
-  const std::string& PropName = Prop.getOperator()->getAsString();
+/// EmitCaseTest - Helper function used by EmitCaseConstructHandler.
+void EmitCaseTest(const DagInit& d, const char* IndentLevel,
+                  const GlobalOptionDescriptions& OptDescs,
+                  std::ostream& O) {
+  const std::string& TestName = d.getOperator()->getAsString();
 
-  if (PropName == "and")
-    EmitLogicalOperationTest(Prop, "&&", OptDescs, O);
-  else if (PropName == "or")
-    EmitLogicalOperationTest(Prop, "||", OptDescs, O);
-  else if (EmitEdgePropertyTest1Arg(PropName, Prop, OptDescs, O))
+  if (TestName == "and")
+    EmitLogicalOperationTest(d, "&&", IndentLevel, OptDescs, O);
+  else if (TestName == "or")
+    EmitLogicalOperationTest(d, "||", IndentLevel, OptDescs, O);
+  else if (EmitCaseTest1Arg(TestName, d, OptDescs, O))
     return;
-  else if (EmitEdgePropertyTest2Args(PropName, Prop, OptDescs, O))
+  else if (EmitCaseTest2Args(TestName, d, IndentLevel, OptDescs, O))
     return;
   else
-    throw PropName + ": unknown edge property!";
+    throw TestName + ": unknown edge property!";
+}
+
+// Emit code that handles the 'case' construct.
+// Takes a function object that should emit code for every case clause.
+template <typename F>
+void EmitCaseConstructHandler(DagInit* d, const char* IndentLevel,
+                              const F& Callback,
+                              const GlobalOptionDescriptions& OptDescs,
+                              std::ostream& O) {
+  assert(d->getOperator()->getAsString() == "case");
+
+  for (DagInit::arg_iterator B = d->arg_begin(), E = d->arg_end();
+       B != E; ++B) {
+    const DagInit& Test = InitPtrToDagInitRef(*B);
+    O << IndentLevel << "if (";
+    EmitCaseTest(Test, IndentLevel, OptDescs, O);
+    O << ") {\n";
+
+    ++B;
+    if (B == E)
+      throw "Case construct handler: no corresponding action "
+        "found for the test " + Test.getAsString() + '!';
+
+    const DagInit& Action = InitPtrToDagInitRef(*B);
+    Callback(IndentLevel, Action, O);
+    O << IndentLevel << "}\n";
+  }
+}
+
+// Helper function passed to EmitCaseConstructHandler by EmitEdgeClass.
+void IncDecWeight(const char* IndentLevel,
+                  const DagInit& d, std::ostream& O) {
+  const std::string& OpName = d.getOperator()->getAsString();
+
+  if (OpName == "inc_weight")
+    O << IndentLevel << Indent1 << "ret += ";
+  else if (OpName == "dec_weight")
+    O << IndentLevel << Indent1 << "ret -= ";
+  else
+    throw "Unknown operator in edge properties list: " + OpName + '!';
+
+  if (d.getNumArgs() > 0)
+    O << InitPtrToInt(d.getArg(0)) << ";\n";
+  else
+    O << "2;\n";
+
 }
 
 /// EmitEdgeClass - Emit a single Edge# class.
 void EmitEdgeClass(unsigned N, const std::string& Target,
-                   ListInit* Props, const GlobalOptionDescriptions& OptDescs,
+                   DagInit* Case, const GlobalOptionDescriptions& OptDescs,
                    std::ostream& O) {
 
   // Class constructor.
@@ -1082,26 +1134,8 @@ void EmitEdgeClass(unsigned N, const std::string& Target,
     << Indent1 << "unsigned Weight(const InputLanguagesSet& InLangs) const {\n"
     << Indent2 << "unsigned ret = 0;\n";
 
-  // Emit tests for every edge property.
-  for (size_t i = 0, PropsSize = Props->size(); i < PropsSize; ++i) {
-    const DagInit& Prop = InitPtrToDagInitRef(Props->getElement(i));
-    const std::string& PropName = Prop.getOperator()->getAsString();
-    unsigned N = 2;
-
-    O << Indent2 << "if (";
-
-    if (PropName == "weight") {
-      checkNumberOfArguments(&Prop, 2);
-      N = InitPtrToInt(Prop.getArg(0));
-      const DagInit& InnerProp = InitPtrToDagInitRef(Prop.getArg(1));
-      EmitEdgePropertyTest(InnerProp, OptDescs, O);
-    }
-    else {
-      EmitEdgePropertyTest(Prop, OptDescs, O);
-    }
-
-    O << ")\n" << Indent3 << "ret += " << N << ";\n";
-  }
+  // Handle the 'case' construct.
+  EmitCaseConstructHandler(Case, Indent2, IncDecWeight, OptDescs, O);
 
   O << Indent2 << "return ret;\n"
     << Indent1 << "};\n\n};\n\n";
@@ -1116,12 +1150,12 @@ void EmitEdgeClasses (Record* CompilationGraph,
   for (unsigned i = 0; i < edges->size(); ++i) {
     Record* Edge = edges->getElementAsRecord(i);
     Record* B = Edge->getValueAsDef("b");
-    ListInit* Props = Edge->getValueAsListInit("props");
+    DagInit* Weight = Edge->getValueAsDag("weight");
 
-    if (Props->empty())
+    if (isDagEmpty(Weight))
       continue;
 
-    EmitEdgeClass(i, B->getName(), Props, OptDescs, O);
+    EmitEdgeClass(i, B->getName(), Weight, OptDescs, O);
   }
 }
 
@@ -1156,11 +1190,11 @@ void EmitPopulateCompilationGraph (Record* CompilationGraph,
     Record* Edge = edges->getElementAsRecord(i);
     Record* A = Edge->getValueAsDef("a");
     Record* B = Edge->getValueAsDef("b");
-    ListInit* Props = Edge->getValueAsListInit("props");
+    DagInit* Weight = Edge->getValueAsDag("weight");
 
     O << Indent1 << "G.insertEdge(\"" << A->getName() << "\", ";
 
-    if (Props->empty())
+    if (isDagEmpty(Weight))
       O << "new SimpleEdge(\"" << B->getName() << "\")";
     else
       O << "new Edge" << i << "()";

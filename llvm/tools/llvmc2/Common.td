@@ -45,18 +45,25 @@ def unpack_values;
 def help;
 def required;
 
-// Possible edge properties
+// Marker for an empty DAG.
+def empty;
 
-// 'Atomic' properties.
+// The 'case' construct.
+def case;
+
+// Primitive tests.
 def switch_on;
 def parameter_equals;
 def element_in_list;
-def if_input_languages_contain;
+def input_languages_contain;
 
-// Edge property combinators.
-def weight;
+// Boolean operators.
 def and;
 def or;
+
+// Increase/decrease the edge weight.
+def inc_weight;
+def dec_weight;
 
 // Map from suffixes to language names
 
@@ -71,19 +78,19 @@ class LanguageMap<list<LangToSuffixes> lst> {
 
 // Compilation graph
 
-class EdgeBase<Tool t1, Tool t2, list<dag> lst> {
+class EdgeBase<Tool t1, Tool t2, dag d> {
       Tool a = t1;
       Tool b = t2;
-      list<dag> props = lst;
+      dag weight = d;
 }
 
-class Edge<Tool t1, Tool t2> : EdgeBase<t1, t2, []>;
+class Edge<Tool t1, Tool t2> : EdgeBase<t1, t2, (empty)>;
 
 // Edge and SimpleEdge are synonyms.
-class SimpleEdge<Tool t1, Tool t2> : EdgeBase<t1, t2, []>;
+class SimpleEdge<Tool t1, Tool t2> : EdgeBase<t1, t2, (empty)>;
 
 // Optionally enabled edge.
-class OptionalEdge<Tool t1, Tool t2, list<dag> lst> : EdgeBase<t1, t2, lst>;
+class OptionalEdge<Tool t1, Tool t2, dag props> : EdgeBase<t1, t2, props>;
 
 class CompilationGraph<list<EdgeBase> lst> {
       list<EdgeBase> edges = lst;
