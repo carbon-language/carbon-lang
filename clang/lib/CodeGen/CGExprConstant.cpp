@@ -92,14 +92,25 @@ public:
 
     // Copy initializer elements.
     unsigned i = 0;
+    bool RewriteType = false;
     for (; i < NumInitableElts; ++i) {
       llvm::Constant *C = Visit(ILE->getInit(i));
+      RewriteType |= (C->getType() != ElemTy);
       Elts.push_back(C);
     }
-    
+
     // Initialize remaining array elements.
     for (; i < NumElements; ++i)
       Elts.push_back(llvm::Constant::getNullValue(ElemTy));
+
+    if (RewriteType) {
+      // FIXME: Try to avoid packing the array
+      std::vector<const llvm::Type*> Types;
+      for (unsigned i = 0; i < Elts.size(); ++i)
+        Types.push_back(Elts[i]->getType());
+      const llvm::StructType *SType = llvm::StructType::get(Types, true);
+      return llvm::ConstantStruct::get(SType, Elts);
+    }
 
     return llvm::ConstantArray::get(AType, Elts);    
   }
@@ -166,6 +177,7 @@ public:
     // Copy initializer elements. Skip padding fields.
     unsigned EltNo = 0;  // Element no in ILE
     int FieldNo = 0; // Field no in RecordDecl
+    bool RewriteType = false;
     while (EltNo < ILE->getNumInits() && FieldNo < RD->getNumMembers()) {
       FieldDecl* curField = RD->getMember(FieldNo);
       FieldNo++;
@@ -175,22 +187,27 @@ public:
       if (curField->isBitField()) {
         InsertBitfieldIntoStruct(Elts, curField, ILE->getInit(EltNo));
       } else {
-        Elts[CGM.getTypes().getLLVMFieldNo(curField)] =
-            Visit(ILE->getInit(EltNo));
+        unsigned FieldNo = CGM.getTypes().getLLVMFieldNo(curField);
+        llvm::Constant* C = Visit(ILE->getInit(EltNo));
+        RewriteType |= (C->getType() != Elts[FieldNo]->getType());
+        Elts[FieldNo] = C;
       }
       EltNo++;
+    }
+
+    if (RewriteType) {
+      // FIXME: Make this work for non-packed structs
+      assert(SType->isPacked() && "Cannot recreate unpacked structs");
+      std::vector<const llvm::Type*> Types;
+      for (unsigned i = 0; i < Elts.size(); ++i)
+        Types.push_back(Elts[i]->getType());
+      SType = llvm::StructType::get(Types, true);
     }
 
     return llvm::ConstantStruct::get(SType, Elts);
   }
 
   llvm::Constant *EmitUnionInitialization(InitListExpr *ILE) {
-    // FIXME: Need to make this work correctly for unions in structs/arrays
-    CGM.WarnUnsupported(ILE, "bitfield initialization");
-    return llvm::UndefValue::get(CGM.getTypes().ConvertType(ILE->getType()));
-
-    // Following is a partial implementation; it doesn't work correctly
-    // because the parent struct/arrays don't adapt their type yet, though
     RecordDecl *RD = ILE->getType()->getAsRecordType()->getDecl();
     const llvm::Type *Ty = ConvertType(ILE->getType());
 
