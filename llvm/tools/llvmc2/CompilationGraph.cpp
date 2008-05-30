@@ -177,7 +177,7 @@ void CompilationGraph::PassThroughGraph (const sys::Path& InFile,
       Out = MakeTempFile(TempDir, In.getBasename(), CurTool->OutputSuffix());
     }
 
-    if (int ret = CurTool->GenerateAction(In, Out).Execute())
+    if (int ret = CurTool->GenerateAction(In, Out, InLangs).Execute())
       throw error_code(ret);
 
     if (Last)
@@ -343,7 +343,7 @@ int CompilationGraph::Build (const sys::Path& TempDir) {
       Out = MakeTempFile(TempDir, "tmp", JT->OutputSuffix());
     }
 
-    if (int ret = JT->GenerateAction(Out).Execute())
+    if (int ret = JT->GenerateAction(Out, InLangs).Execute())
       throw error_code(ret);
 
     if (!IsLast) {

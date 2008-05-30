@@ -25,9 +25,10 @@ namespace llvmc {
   class Action {
     /// Command_ - The actual command (for example, 'ls').
     std::string Command_;
-    /// Args_ - Command arguments. Stdout redirection is allowed.
+    /// Args_ - Command arguments. Stdout redirection ("> file") is allowed.
     std::vector<std::string> Args_;
   public:
+    Action() {}
     Action (const std::string& C,
             const StringVector& A)
       : Command_(C), Args_(A)

@@ -56,6 +56,7 @@ def switch_on;
 def parameter_equals;
 def element_in_list;
 def input_languages_contain;
+def default;
 
 // Boolean operators.
 def and;
