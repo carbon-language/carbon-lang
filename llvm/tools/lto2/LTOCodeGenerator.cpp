@@ -352,11 +352,6 @@ bool LTOCodeGenerator::generateAssemblyCode(std::ostream& out, std::string& errM
     // keep one copy of each constant...
     passes.add(createConstantMergePass());
 
-    // If the -s command line option was specified, strip the symbols out of the
-    // resulting program to make it smaller.  -s is a GLD option that we are
-    // supporting.
-    passes.add(createStripSymbolsPass());
-    
     // Remove unused arguments from functions...
     passes.add(createDeadArgEliminationPass());
 
