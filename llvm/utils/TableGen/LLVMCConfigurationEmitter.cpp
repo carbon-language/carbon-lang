@@ -763,7 +763,7 @@ void EmitCaseTest(const DagInit& d, const char* IndentLevel,
 // void F(Init* Statement, const char* IndentLevel, std::ostream& O).
 template <typename F>
 void EmitCaseConstructHandler(const DagInit* d, const char* IndentLevel,
-                              const F& Callback,
+                              const F& Callback, bool EmitElseIf,
                               const GlobalOptionDescriptions& OptDescs,
                               std::ostream& O) {
   assert(d->getOperator()->getAsString() == "case");
@@ -784,7 +784,7 @@ void EmitCaseConstructHandler(const DagInit* d, const char* IndentLevel,
       O << IndentLevel << "else {\n";
     }
     else {
-      O << IndentLevel << "if (";
+      O << IndentLevel << ((i != 0 && EmitElseIf) ? "else if (" : "if (");
       EmitCaseTest(Test, IndentLevel, OptDescs, O);
       O << ") {\n";
     }
@@ -795,7 +795,16 @@ void EmitCaseConstructHandler(const DagInit* d, const char* IndentLevel,
       throw "Case construct handler: no corresponding action "
         "found for the test " + Test.getAsString() + '!';
 
-    Callback(d->getArg(i), IndentLevel, O);
+    Init* arg = d->getArg(i);
+    if (dynamic_cast<DagInit*>(arg)
+        && static_cast<DagInit*>(arg)->getOperator()->getAsString() == "case") {
+      EmitCaseConstructHandler(static_cast<DagInit*>(arg),
+                               (std::string(IndentLevel) + Indent1).c_str(),
+                               Callback, EmitElseIf, OptDescs, O);
+    }
+    else {
+      Callback(arg, IndentLevel, O);
+    }
     O << IndentLevel << "}\n";
   }
 }
@@ -1031,7 +1040,7 @@ void EmitGenerateActionMethod (const ToolProperties& P,
   else
     EmitCaseConstructHandler(&InitPtrToDag(P.CmdLine), Indent2,
                              EmitCmdLineVecFillCallback(Version, P.Name),
-                             OptDescs, O);
+                             true, OptDescs, O);
 
   // For every understood option, emit handling code.
   for (ToolOptionDescriptions::const_iterator B = P.OptDescs.begin(),
@@ -1332,7 +1341,7 @@ void EmitEdgeClass (unsigned N, const std::string& Target,
     << Indent2 << "unsigned ret = 0;\n";
 
   // Handle the 'case' construct.
-  EmitCaseConstructHandler(Case, Indent2, IncDecWeight, OptDescs, O);
+  EmitCaseConstructHandler(Case, Indent2, IncDecWeight, false, OptDescs, O);
 
   O << Indent2 << "return ret;\n"
     << Indent1 << "};\n\n};\n\n";
@@ -1420,30 +1429,40 @@ void ExtractHookNames(const Init* CmdLine, StrVector& HookNames) {
   }
 }
 
+/// ExtractHookNamesFromCaseConstruct - Extract hook names from the
+/// 'case' expression, handle nesting. Helper function used by
+/// FillInHookNames().
+void ExtractHookNamesFromCaseConstruct(Init* Case, StrVector& HookNames) {
+  const DagInit& d = InitPtrToDag(Case);
+  bool even = false;
+  for (DagInit::const_arg_iterator B = d.arg_begin(), E = d.arg_end();
+       B != E; ++B) {
+    Init* arg = *B;
+    if (even && dynamic_cast<DagInit*>(arg)
+        && static_cast<DagInit*>(arg)->getOperator()->getAsString() == "case")
+      ExtractHookNamesFromCaseConstruct(arg, HookNames);
+    else if (even)
+      ExtractHookNames(arg, HookNames);
+    even = !even;
+  }
+}
+
 /// FillInHookNames - Actually extract the hook names from all command
 /// line strings. Helper function used by EmitHookDeclarations().
 void FillInHookNames(const ToolPropertiesList& TPList,
                      StrVector& HookNames) {
+  // For all command lines:
   for (ToolPropertiesList::const_iterator B = TPList.begin(),
          E = TPList.end(); B != E; ++B) {
     const ToolProperties& P = *(*B);
     if (!P.CmdLine)
       continue;
-    if (typeid(*P.CmdLine) == typeid(StringInit)) {
+    if (dynamic_cast<StringInit*>(P.CmdLine))
       // This is a string.
       ExtractHookNames(P.CmdLine, HookNames);
-    }
-    else {
+    else
       // This is a 'case' construct.
-      const DagInit& d = InitPtrToDag(P.CmdLine);
-      bool even = false;
-      for (DagInit::const_arg_iterator B = d.arg_begin(), E = d.arg_end();
-           B != E; ++B) {
-        if (even)
-          ExtractHookNames(*B, HookNames);
-        even = !even;
-      }
-    }
+      ExtractHookNamesFromCaseConstruct(P.CmdLine, HookNames);
   }
 }
 
