@@ -231,6 +231,11 @@ currently implemented option types and properties are described below:
    - ``prefix_list_option`` - same as the above, but more than one
      occurence of the option is allowed; example: ``-lm -lpthread``.
 
+   - ``alias_option`` - a special option type for creating
+     aliases. Unlike other option types, aliases are not allowed to
+     have any properties besides the aliased option name. Usage
+     example: ``(alias_option "preprocess", "E")``
+
 
 * Possible option properties:
 
@@ -253,6 +258,28 @@ currently implemented option types and properties are described below:
 
    - ``required`` - this option is obligatory.
 
+
+Option list - specifying all options in a single place
+======================================================
+
+It can be handy to have all information about options gathered in a
+single place to provide an overview. This can be achieved by using a
+so-called ``OptionList``::
+
+    def Options : OptionList<[
+    (switch_option "E", (help "Help string")),
+    (alias_option "quiet", "q")
+    ...
+    ]>;
+
+``OptionList`` is also a good place to specify option aliases.
+
+Tool-specific option properties like ``append_cmd`` have (obviously)
+no meaning in the context of ``OptionList``, so the only properties
+allowed there are ``help`` and ``required``.
+
+Option lists are used at the file scope. See file
+``examples/Clang.td`` for an example of ``OptionList`` usage.
 
 Using hooks and environment variables in the ``cmd_line`` property
 ==================================================================
