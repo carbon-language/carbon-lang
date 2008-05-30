@@ -520,6 +520,61 @@ void processOptionProperties (const DagInit* d, ToolProperties* t,
   std::for_each(B, d->arg_end(), CollectOptionProperties(t, o));
 }
 
+/// AddOption - A function object wrapper for
+/// processOptionProperties. Used by CollectProperties and
+/// CollectPropertiesFromOptionList.
+class AddOption {
+private:
+  GlobalOptionDescriptions& OptDescs_;
+  ToolProperties* ToolProps_;
+
+public:
+  explicit AddOption(GlobalOptionDescriptions& OD, ToolProperties* TP = 0)
+    : OptDescs_(OD), ToolProps_(TP)
+  {}
+
+  void operator()(const Init* i) {
+    const DagInit& d = InitPtrToDag(i);
+    checkNumberOfArguments(&d, 2);
+
+    const OptionType::OptionType Type =
+      getOptionType(d.getOperator()->getAsString());
+    const std::string& Name = InitPtrToString(d.getArg(0));
+
+    GlobalOptionDescription OD(Type, Name);
+    if (Type != OptionType::Alias) {
+      processOptionProperties(&d, ToolProps_, OD);
+      if (ToolProps_) {
+        ToolProps_->OptDescs[Name].Type = Type;
+        ToolProps_->OptDescs[Name].Name = Name;
+      }
+    }
+    else {
+      OD.Help = InitPtrToString(d.getArg(1));
+    }
+    OptDescs_.insertDescription(OD);
+  }
+
+private:
+  OptionType::OptionType getOptionType(const std::string& T) const {
+    if (T == "alias_option")
+      return OptionType::Alias;
+    else if (T == "switch_option")
+      return OptionType::Switch;
+    else if (T == "parameter_option")
+      return OptionType::Parameter;
+    else if (T == "parameter_list_option")
+      return OptionType::ParameterList;
+    else if (T == "prefix_option")
+      return OptionType::Prefix;
+    else if (T == "prefix_list_option")
+      return OptionType::PrefixList;
+    else
+      throw "Unknown option type: " + T + '!';
+  }
+};
+
+
 /// CollectProperties - Function object for iterating over a list of
 /// tool property records.
 class CollectProperties {
@@ -560,15 +615,15 @@ public:
       propertyHandlers_["out_language"] = &CollectProperties::onOutLanguage;
       propertyHandlers_["output_suffix"] = &CollectProperties::onOutputSuffix;
       propertyHandlers_["parameter_option"]
-        = &CollectProperties::onParameter;
+        = &CollectProperties::addOption;
       propertyHandlers_["parameter_list_option"] =
-        &CollectProperties::onParameterList;
-      propertyHandlers_["prefix_option"] = &CollectProperties::onPrefix;
+        &CollectProperties::addOption;
+      propertyHandlers_["prefix_option"] = &CollectProperties::addOption;
       propertyHandlers_["prefix_list_option"] =
-        &CollectProperties::onPrefixList;
+        &CollectProperties::addOption;
       propertyHandlers_["sink"] = &CollectProperties::onSink;
-      propertyHandlers_["switch_option"] = &CollectProperties::onSwitch;
-      propertyHandlers_["alias_option"] = &CollectProperties::onAlias;
+      propertyHandlers_["switch_option"] = &CollectProperties::addOption;
+      propertyHandlers_["alias_option"] = &CollectProperties::addOption;
 
       staticMembersInitialized_ = true;
     }
@@ -650,47 +705,11 @@ private:
     toolProps_.setSink();
   }
 
-  void onAlias (const DagInit* d) {
+  // Just forwards to the AddOption function object. Somewhat
+  // non-optimal, but avoids code duplication.
+  void addOption (const DagInit* d) {
     checkNumberOfArguments(d, 2);
-    // We just need a GlobalOptionDescription for the aliases.
-    optDescs_.insertDescription
-      (GlobalOptionDescription(OptionType::Alias,
-                               InitPtrToString(d->getArg(0)),
-                               InitPtrToString(d->getArg(1))));
-  }
-
-  void onSwitch (const DagInit* d) {
-    addOption(d, OptionType::Switch);
-  }
-
-  void onParameter (const DagInit* d) {
-    addOption(d, OptionType::Parameter);
-  }
-
-  void onParameterList (const DagInit* d) {
-    addOption(d, OptionType::ParameterList);
-  }
-
-  void onPrefix (const DagInit* d) {
-    addOption(d, OptionType::Prefix);
-  }
-
-  void onPrefixList (const DagInit* d) {
-    addOption(d, OptionType::PrefixList);
-  }
-
-  /// Helper functions
-
-  // Add an option of type t
-  void addOption (const DagInit* d, OptionType::OptionType t) {
-    checkNumberOfArguments(d, 2);
-    const std::string& Name = InitPtrToString(d->getArg(0));
-    GlobalOptionDescription OD(t, Name);
-
-    toolProps_.OptDescs[Name].Type = t;
-    toolProps_.OptDescs[Name].Name = Name;
-    processOptionProperties(d, &toolProps_, OD);
-    optDescs_.insertDescription(OD);
+    AddOption(optDescs_, &toolProps_)(d);
   }
 
 };
@@ -723,46 +742,6 @@ void CollectToolProperties (RecordVector::const_iterator B,
   }
 }
 
-/// AddOption - A helper function object used by
-/// CollectPropertiesFromOptionList.
-// TOFIX: this largely duplicates CollectProperties::addOption, find a
-// way to merge them.
-class AddOption {
-private:
-  GlobalOptionDescriptions& OptDescs_;
-
-public:
-  explicit AddOption(GlobalOptionDescriptions& OD) : OptDescs_(OD)
-  {}
-
-  void operator()(Init* i) {
-    const DagInit& d = InitPtrToDag(i);
-    checkNumberOfArguments(&d, 2);
-    const std::string& Type = d.getOperator()->getAsString();
-    const std::string& Name = InitPtrToString(d.getArg(0));
-    GlobalOptionDescription OD(AddOption::getType(Type), Name);
-    if (OD.Type != OptionType::Alias)
-      processOptionProperties(&d, 0, OD);
-    OptDescs_.insertDescription(OD);
-  }
-
-  OptionType::OptionType getType(const std::string& T) const {
-    if (T == "alias_option")
-      return OptionType::Alias;
-    else if (T == "switch_option")
-      return OptionType::Switch;
-    else if (T == "parameter_option")
-      return OptionType::Parameter;
-    else if (T == "parameter_list_option")
-      return OptionType::ParameterList;
-    else if (T == "prefix_option")
-      return OptionType::Prefix;
-    else if (T == "prefix_list_option")
-      return OptionType::PrefixList;
-    else
-      throw "Unknown option type: " + T + '!';
-  }
-};
 
 /// CollectPropertiesFromOptionList - Gather information about
 /// *global* option properties from the OptionList.
