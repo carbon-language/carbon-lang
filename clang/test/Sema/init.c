@@ -42,3 +42,11 @@ short *a2(void)
 
   return bp;
 }
+
+int pbool(void) {
+  typedef const _Bool cbool;
+  _Bool pbool1 = (void *) 0;
+  cbool pbool2 = &pbool;
+  return pbool2;
+}
+

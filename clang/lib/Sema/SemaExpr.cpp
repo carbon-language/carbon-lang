@@ -1267,10 +1267,10 @@ Sema::AssignConvertType
 Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   // Get canonical types.  We're not formatting these types, just comparing
   // them.
-  lhsType = lhsType.getCanonicalType();
-  rhsType = rhsType.getCanonicalType();
-  
-  if (lhsType.getUnqualifiedType() == rhsType.getUnqualifiedType())
+  lhsType = lhsType.getCanonicalType().getUnqualifiedType();
+  rhsType = rhsType.getCanonicalType().getUnqualifiedType();
+
+  if (lhsType == rhsType)
     return Compatible; // Common case: fast path an exact match.
 
   if (lhsType->isReferenceType() || rhsType->isReferenceType()) {
@@ -1278,7 +1278,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
       return Compatible;
     return Incompatible;
   }
-  
+
   if (lhsType->isObjCQualifiedIdType() || rhsType->isObjCQualifiedIdType()) {
     if (ObjCQualifiedIdTypesAreCompatible(lhsType, rhsType, false))
       return Compatible;
@@ -1291,7 +1291,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
       if (LV->getElementType().getTypePtr() == rhsType.getTypePtr())
         return Compatible;
     }
-    
+
     // If LHS and RHS are both vectors of integer or both vectors of floating
     // point types, and the total vector length is the same, allow the
     // conversion.  This is a bitcast; no bits are changed but the result type
@@ -1306,14 +1306,14 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     }
     return Incompatible;
   }      
-  
+
   if (lhsType->isArithmeticType() && rhsType->isArithmeticType())
     return Compatible;
-  
+
   if (isa<PointerType>(lhsType)) {
     if (rhsType->isIntegerType())
       return IntToPointer;
-      
+
     if (isa<PointerType>(rhsType))
       return CheckPointerTypesForAssignment(lhsType, rhsType);
     return Incompatible;
@@ -1321,14 +1321,17 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
 
   if (isa<PointerType>(rhsType)) {
     // C99 6.5.16.1p1: the left operand is _Bool and the right is a pointer.
-    if (lhsType->isIntegerType() && lhsType != Context.BoolTy)
+    if (lhsType == Context.BoolTy)
+      return Compatible;
+
+    if (lhsType->isIntegerType())
       return PointerToInt;
 
     if (isa<PointerType>(lhsType)) 
       return CheckPointerTypesForAssignment(lhsType, rhsType);
     return Incompatible;
   }
-  
+
   if (isa<TagType>(lhsType) && isa<TagType>(rhsType)) {
     if (Context.typesAreCompatible(lhsType, rhsType))
       return Compatible;
