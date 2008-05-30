@@ -151,6 +151,10 @@ namespace {
       Out.appendComponent(BaseName);
     }
     Out.appendSuffix(Suffix);
+    // NOTE: makeUnique always *creates* a unique temporary file,
+    // which is good, since there will be no races. However, some
+    // tools do not like it when the output file already exists, so
+    // they have to be placated with -f or something like that.
     Out.makeUnique(true, NULL);
     return Out;
   }

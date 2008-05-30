@@ -27,9 +27,12 @@ def llvm_gcc_c : Tool<
  (output_suffix "bc"),
  (cmd_line (case
             (switch_on "E"),
-              "llvm-g++ -E -x c $INFILE",
+              (case (not_empty "o"),
+                    "llvm-gcc -E -x c++ $INFILE -o $OUTFILE",
+                    (default),
+                    "llvm-gcc -E -x c++ $INFILE"),
             (default),
-              "llvm-g++ -c -x c $INFILE -o $OUTFILE -emit-llvm")),
+              "llvm-gcc -c -x c $INFILE -o $OUTFILE -emit-llvm")),
  (switch_option "E", (stop_compilation),
    (help "Stop after the preprocessing stage, do not run the compiler")),
  (sink)
@@ -41,8 +44,10 @@ def llvm_gcc_cpp : Tool<
  (output_suffix "bc"),
  (cmd_line (case
             (switch_on "E"),
-              // TOFIX: this does not play well with -o
-              "llvm-g++ -E -x c++ $INFILE",
+              (case (not_empty "o"),
+                    "llvm-g++ -E -x c++ $INFILE -o $OUTFILE",
+                    (default),
+                    "llvm-g++ -E -x c++ $INFILE"),
             (default),
               "llvm-g++ -c -x c++ $INFILE -o $OUTFILE -emit-llvm")),
  (switch_option "E", (stop_compilation)),
@@ -54,7 +59,7 @@ def opt : Tool<
  (out_language "llvm-bitcode"),
  (switch_option "opt", (help "Enable opt")),
  (output_suffix "bc"),
- (cmd_line "opt $INFILE -o $OUTFILE")
+ (cmd_line "opt -f $INFILE -o $OUTFILE")
 ]>;
 
 def llvm_as : Tool<
