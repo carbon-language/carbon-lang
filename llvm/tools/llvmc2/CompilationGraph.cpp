@@ -102,7 +102,7 @@ CompilationGraph::getToolsVector(const std::string& LangName) const
   tools_map_type::const_iterator I = ToolsMap.find(LangName);
   if (I == ToolsMap.end())
     throw std::runtime_error("No tool corresponding to the language "
-                             + LangName + "found");
+                             + LangName + " found");
   return I->second;
 }
 
@@ -391,14 +391,15 @@ namespace llvm {
 }
 
 void CompilationGraph::writeGraph() {
-  std::ofstream O("CompilationGraph.dot");
+  std::ofstream O("compilation-graph.dot");
 
   if (O.good()) {
     llvm::WriteGraph(this, "compilation-graph");
     O.close();
   }
   else {
-    throw std::runtime_error("Error opening file for writing");
+    throw std::runtime_error("Error opening file 'compilation-graph.dot'"
+                             " for writing!");
   }
 }
 
