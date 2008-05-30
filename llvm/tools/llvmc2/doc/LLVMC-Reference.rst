@@ -125,15 +125,31 @@ debugging), run ``llvmc2 --view-graph``. You will need ``dot`` and
 ``gsview`` installed for this to work properly.
 
 
-The 'case' construct
---------------------
+The 'case' expression
+---------------------
 
-The 'case' construct can be used to calculate weights for optional
+The 'case' construct can be used to calculate weights of the optional
 edges and to choose between several alternative command line strings
 in the ``cmd_line`` tool property. It is designed after the
-similarly-named construct in functional languages and takes the
-form ``(case (test_1), statement_1, (test_2), statement_2,
-... (test_N), statement_N)``.
+similarly-named construct in functional languages and takes the form
+``(case (test_1), statement_1, (test_2), statement_2, ... (test_N),
+statement_N)``. The statements are evaluated only if the corresponding
+tests evaluate to true.
+
+Examples::
+
+    // Increases edge weight by 5 if "-A" is provided on the
+    // command-line, and by 5 more if "-B" is also provided.
+    (case
+        (switch_on "A"), (inc_weight 5),
+        (switch_on "B"), (inc_weight 5))
+
+    // Evaluates to "cmdline1" if option "-A" is provided on the
+    // command line, otherwise to "cmdline2"
+    (case
+        (switch_on "A"), ("cmdline1"),
+        (default), ("cmdline2"))
+
 
 * Possible tests are:
 
@@ -153,7 +169,8 @@ form ``(case (test_1), statement_1, (test_2), statement_2,
     belongs to the current input language set. Example:
     ```(input_languages_contain "c++")``.
 
-  - ``default`` - Always evaluates to true. Should be used
+  - ``default`` - Always evaluates to true. Should always be the last
+    test in the ``case`` expression.
 
   - ``and`` - A standard logical combinator that returns true iff all
     of its arguments return true. Used like this: ``(and (test1),
