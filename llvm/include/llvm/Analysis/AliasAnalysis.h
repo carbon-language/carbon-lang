@@ -187,7 +187,7 @@ public:
   };
 
   /// getModRefBehavior - Return the behavior when calling the given call site.
-  ModRefBehavior getModRefBehavior(CallSite CS,
+  ModRefBehavior getModRefBehavior(CallSite cs,
                                    std::vector<PointerAccessInfo> *Info = 0);
 
   /// getModRefBehavior - Return the behavior when calling the given function.
@@ -206,8 +206,8 @@ public:
   ///
   /// This property corresponds to the GCC 'const' attribute.
   ///
-  bool doesNotAccessMemory(CallSite CS) {
-    return getModRefBehavior(CS) == DoesNotAccessMemory;
+  bool doesNotAccessMemory(CallSite cs) {
+    return getModRefBehavior(cs) == DoesNotAccessMemory;
   }
 
   /// doesNotAccessMemory - If the specified function is known to never read or
@@ -226,8 +226,8 @@ public:
   ///
   /// This property corresponds to the GCC 'pure' attribute.
   ///
-  bool onlyReadsMemory(CallSite CS) {
-    ModRefBehavior MRB = getModRefBehavior(CS);
+  bool onlyReadsMemory(CallSite cs) {
+    ModRefBehavior MRB = getModRefBehavior(cs);
     return MRB == DoesNotAccessMemory || MRB == OnlyReadsMemory;
   }
 
@@ -249,7 +249,7 @@ public:
   /// a particular call site modifies or reads the memory specified by the
   /// pointer.
   ///
-  virtual ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
+  virtual ModRefResult getModRefInfo(CallSite cs, Value *P, unsigned Size);
 
   /// getModRefInfo - Return information about whether two call sites may refer
   /// to the same set of memory locations.  This function returns NoModRef if
@@ -257,7 +257,7 @@ public:
   /// written by CS2, Mod if CS1 writes to memory read or written by CS2, or
   /// ModRef if CS1 might read or write memory accessed by CS2.
   ///
-  virtual ModRefResult getModRefInfo(CallSite CS1, CallSite CS2);
+  virtual ModRefResult getModRefInfo(CallSite cs1, CallSite cs2);
 
   /// hasNoModRefInfoForCalls - Return true if the analysis has no mod/ref
   /// information for pairs of function calls (other than "pure" and "const"
@@ -271,7 +271,7 @@ protected:
   /// getModRefBehavior - Return the behavior of the specified function if
   /// called from the specified call site.  The call site may be null in which
   /// case the most generic behavior of this function should be returned.
-  virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
+  virtual ModRefBehavior getModRefBehavior(Function *F, CallSite cs,
                                      std::vector<PointerAccessInfo> *Info = 0);
 
 public:

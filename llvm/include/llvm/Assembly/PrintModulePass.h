@@ -31,8 +31,8 @@ public:
   static char ID;
   PrintModulePass() : ModulePass(intptr_t(&ID)), Out(&cerr), 
                       DeleteStream(false) {}
-  PrintModulePass(OStream *o, bool DS = false)
-    : ModulePass(intptr_t(&ID)), Out(o), DeleteStream(DS) {}
+  PrintModulePass(OStream *o, bool ds = false)
+    : ModulePass(intptr_t(&ID)), Out(o), DeleteStream(ds) {}
 
   ~PrintModulePass() {
     if (DeleteStream) delete Out;
@@ -57,8 +57,8 @@ public:
   PrintFunctionPass() : FunctionPass(intptr_t(&ID)), Banner(""), Out(&cerr), 
                         DeleteStream(false) {}
   PrintFunctionPass(const std::string &B, OStream *o = &cout,
-                    bool DS = false)
-    : FunctionPass(intptr_t(&ID)), Banner(B), Out(o), DeleteStream(DS) {}
+                    bool ds = false)
+    : FunctionPass(intptr_t(&ID)), Banner(B), Out(o), DeleteStream(ds) {}
 
   inline ~PrintFunctionPass() {
     if (DeleteStream) delete Out;

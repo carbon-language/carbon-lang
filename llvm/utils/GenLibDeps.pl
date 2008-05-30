@@ -96,7 +96,7 @@ sub gen_one_entry {
     print "  <dt><b>$lib</b</dt><dd><ul>\n";
   }
   open UNDEFS, 
-    "$nmPath -g -u $Directory/$lib | sed -e 's/^  *U //' | sort | uniq |";
+    "$nmPath -g -u $Directory/$lib | sed -e 's/^[ 0]* U //' | sort | uniq |";
   my %DepLibs;
   while (<UNDEFS>) {
     chomp;
