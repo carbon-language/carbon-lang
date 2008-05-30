@@ -1,4 +1,4 @@
-//===--- Tools.h - The LLVM Compiler Driver ---------------------*- C++ -*-===//
+//===--- Action.cpp - The LLVM Compiler Driver ------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -26,7 +26,7 @@ extern cl::opt<bool> VerboseMode;
 
 namespace {
   int ExecuteProgram(const std::string& name,
-                     const StringVector& args) {
+                     const StrVector& args) {
     sys::Path prog = sys::Program::FindProgramByName(name);
 
     if (prog.isEmpty())
@@ -42,7 +42,7 @@ namespace {
     argv.reserve((args.size()+2));
     argv.push_back(name.c_str());
 
-    for (StringVector::const_iterator B = args.begin(), E = args.end();
+    for (StrVector::const_iterator B = args.begin(), E = args.end();
          B!=E; ++B) {
       if (*B == ">") {
         ++B;

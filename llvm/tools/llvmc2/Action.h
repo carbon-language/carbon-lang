@@ -1,4 +1,4 @@
-//===--- Tools.h - The LLVM Compiler Driver ---------------------*- C++ -*-===//
+//===--- Action.h - The LLVM Compiler Driver --------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -19,7 +19,7 @@
 
 namespace llvmc {
 
-  typedef std::vector<std::string> StringVector;
+  typedef std::vector<std::string> StrVector;
 
   /// Action - A class that encapsulates a single shell command.
   class Action {
@@ -29,8 +29,7 @@ namespace llvmc {
     std::vector<std::string> Args_;
   public:
     Action() {}
-    Action (const std::string& C,
-            const StringVector& A)
+    Action (const std::string& C, const StrVector& A)
       : Command_(C), Args_(A)
     {}
 
