@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "CGDebugInfo.h"
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "clang/AST/AST.h"
@@ -18,6 +19,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Type.h"
+#include "llvm/Support/Dwarf.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -143,7 +145,16 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   llvm::Value *&DMEntry = LocalDeclMap[&D];
   assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
   DMEntry = DeclPtr;
-  
+
+  // Emit debug info for local var declaration.
+  CGDebugInfo *DI = CGM.getDebugInfo();
+  if(DI) {
+    if(D.getLocation().isValid())
+      DI->setLocation(D.getLocation());
+    DI->EmitDeclare(&D, llvm::dwarf::DW_TAG_auto_variable,
+                    DeclPtr, Builder);
+  }
+
   // If this local has an initializer, emit it now.
   if (const Expr *Init = D.getInit()) {
     if (!hasAggregateLLVMType(Init->getType())) {
@@ -188,5 +199,15 @@ void CodeGenFunction::EmitParmDecl(const ParmVarDecl &D, llvm::Value *Arg) {
   llvm::Value *&DMEntry = LocalDeclMap[&D];
   assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
   DMEntry = DeclPtr;
+
+  // Emit debug info for param declaration.
+  CGDebugInfo *DI = CGM.getDebugInfo();
+  if(DI) {
+    if(D.getLocation().isValid())
+      DI->setLocation(D.getLocation());
+    DI->EmitDeclare(&D, llvm::dwarf::DW_TAG_arg_variable,
+                    DeclPtr, Builder);
+  }
+
 }
 

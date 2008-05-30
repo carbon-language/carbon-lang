@@ -30,11 +30,13 @@ namespace llvm {
   class DebugInfoDesc;
   class Value;
   class TypeDesc;
+  class VariableDesc;
   class SubprogramDesc;
 }
 
 namespace clang {
   class FunctionDecl;
+  class VarDecl;
 namespace CodeGen {
   class CodeGenModule;
 
@@ -61,7 +63,8 @@ private:
   llvm::Function *RegionEndFn;
   llvm::AnchorDesc *CompileUnitAnchor;
   llvm::AnchorDesc *SubprogramAnchor;
-  std::vector<llvm::DebugInfoDesc *> RegionStack;  
+  std::vector<llvm::DebugInfoDesc *> RegionStack;
+  std::vector<llvm::VariableDesc *> VariableDescList;
   llvm::SubprogramDesc *Subprogram;
 
   /// Helper functions for getOrCreateType.
@@ -98,6 +101,10 @@ public:
   /// EmitRegionEnd - Emit call to llvm.dbg.region.end to indicate end of a 
   /// block.
   void EmitRegionEnd(llvm::Function *Fn, llvm::IRBuilder &Builder);
+
+  /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
+  void EmitDeclare(const VarDecl *decl, unsigned Tag, llvm::Value *AI,
+                   llvm::IRBuilder &Builder);
  
   /// getOrCreateCompileUnit - Get the compile unit from the cache or create a
   /// new one if necessary.

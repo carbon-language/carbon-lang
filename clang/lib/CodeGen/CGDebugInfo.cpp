@@ -44,6 +44,7 @@ CGDebugInfo::CGDebugInfo(CodeGenModule *m)
 , CompileUnitAnchor(NULL)
 , SubprogramAnchor(NULL)
 , RegionStack()
+, VariableDescList()
 , Subprogram(NULL)
 {
   SR = new llvm::DISerializer();
@@ -72,7 +73,12 @@ CGDebugInfo::~CGDebugInfo()
        = RegionStack.begin(); I != RegionStack.end(); ++I) {
     delete *I;
   }
-  
+
+  for (std::vector<llvm::VariableDesc *>::iterator I 
+       = VariableDescList.begin(); I != VariableDescList.end(); ++I) {
+    delete *I;
+  }
+
   delete CompileUnitAnchor;
   delete SubprogramAnchor;
 }
@@ -517,5 +523,46 @@ void CGDebugInfo::EmitRegionEnd(llvm::Function *Fn, llvm::IRBuilder &Builder)
   llvm::DebugInfoDesc *DID = RegionStack.back();
   Builder.CreateCall(RegionEndFn, getCastValueFor(DID), "");
   RegionStack.pop_back();
+}
+
+/// EmitDeclare - Emit local variable declaration debug info.
+void CGDebugInfo::EmitDeclare(const VarDecl *decl, unsigned Tag,
+                              llvm::Value *AI,
+                              llvm::IRBuilder &Builder)
+{
+  // FIXME: If it is a compiler generated temporary then return.
+
+  // Construct llvm.dbg.declare function.
+  if (!DeclareFn)
+    DeclareFn = llvm::Intrinsic::getDeclaration(&M->getModule(), 
+			llvm::Intrinsic::dbg_declare);
+
+  // Get type information.
+  llvm::CompileUnitDesc *Unit = getOrCreateCompileUnit(CurLoc);
+  llvm::TypeDesc *TyDesc = getOrCreateType(decl->getType(), Unit);
+
+  SourceManager &SM = M->getContext().getSourceManager();
+  uint64_t Loc = SM.getLogicalLineNumber(CurLoc);
+
+  // Construct variable.
+  llvm::VariableDesc *Variable = new llvm::VariableDesc(Tag);
+  Variable->setContext(RegionStack.back());
+  Variable->setName(decl->getName());
+  Variable->setFile(Unit);
+  Variable->setLine(Loc);
+  Variable->setType(TyDesc);
+
+  // Push it onto the list so that we can free it.
+  VariableDescList.push_back(Variable);
+
+  // Cast the AllocA result to a {}* for the call to llvm.dbg.declare.
+  // These bit cast instructions will get freed when the basic block is
+  // deleted. So do not need to free them explicity.
+  const llvm::PointerType *EmpPtr = SR->getEmptyStructPtrType();
+  llvm::Value *AllocACast =  new llvm::BitCastInst(AI, EmpPtr, decl->getName(),
+                               Builder.GetInsertBlock());
+
+  // Call llvm.dbg.declare.
+  Builder.CreateCall2(DeclareFn, AllocACast, getCastValueFor(Variable), "");
 }
 
