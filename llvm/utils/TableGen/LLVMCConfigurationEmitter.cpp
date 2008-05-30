@@ -251,6 +251,19 @@ struct GlobalOptionDescriptions {
       throw OptName + ": no such option!";
   }
 
+  // Insert new GlobalOptionDescription into GlobalOptionDescriptions list
+  void insertDescription (const GlobalOptionDescription& o)
+  {
+    container_type::iterator I = Descriptions.find(o.Name);
+    if (I != Descriptions.end()) {
+      GlobalOptionDescription& D = I->second;
+      D.Merge(o);
+    }
+    else {
+      Descriptions[o.Name] = o;
+    }
+  }
+
   // Support for STL-style iteration
   const_iterator begin() const { return Descriptions.begin(); }
   const_iterator end() const { return Descriptions.end(); }
@@ -348,12 +361,171 @@ struct ToolProperties : public RefCountedBase<ToolProperties> {
 typedef std::vector<IntrusiveRefCntPtr<ToolProperties> > ToolPropertiesList;
 
 
+/// CollectOptionProperties - Function object for iterating over a
+/// list (usually, a DAG) of option property records.
+class CollectOptionProperties {
+private:
+  // Implementation details.
+
+  /// OptionPropertyHandler - a function that extracts information
+  /// about a given option property from its DAG representation.
+  typedef void (CollectOptionProperties::* OptionPropertyHandler)
+  (const DagInit*);
+
+  /// OptionPropertyHandlerMap - A map from option property names to
+  /// option property handlers
+  typedef StringMap<OptionPropertyHandler> OptionPropertyHandlerMap;
+
+  static OptionPropertyHandlerMap optionPropertyHandlers_;
+  static bool staticMembersInitialized_;
+
+  /// This is where the information is stored
+
+  /// toolProps_ -  Properties of the current Tool.
+  ToolProperties* toolProps_;
+  /// optDescs_ - OptionDescriptions table (used to register options
+  /// globally).
+  GlobalOptionDescription& optDesc_;
+
+public:
+
+  explicit CollectOptionProperties(ToolProperties* TP,
+                                   GlobalOptionDescription& OD)
+    : toolProps_(TP), optDesc_(OD)
+  {
+    if (!staticMembersInitialized_) {
+      optionPropertyHandlers_["append_cmd"] =
+        &CollectOptionProperties::onAppendCmd;
+      optionPropertyHandlers_["forward"] =
+        &CollectOptionProperties::onForward;
+      optionPropertyHandlers_["help"] =
+        &CollectOptionProperties::onHelp;
+      optionPropertyHandlers_["output_suffix"] =
+        &CollectOptionProperties::onOutputSuffix;
+      optionPropertyHandlers_["required"] =
+        &CollectOptionProperties::onRequired;
+      optionPropertyHandlers_["stop_compilation"] =
+        &CollectOptionProperties::onStopCompilation;
+      optionPropertyHandlers_["unpack_values"] =
+        &CollectOptionProperties::onUnpackValues;
+
+      staticMembersInitialized_ = true;
+    }
+  }
+
+  /// operator() - Gets called for every option property; Just forwards
+  /// to the corresponding property handler.
+  void operator() (Init* i) {
+    const DagInit& option_property = InitPtrToDag(i);
+    const std::string& option_property_name
+      = option_property.getOperator()->getAsString();
+    OptionPropertyHandlerMap::iterator method
+      = optionPropertyHandlers_.find(option_property_name);
+
+    if (method != optionPropertyHandlers_.end()) {
+      OptionPropertyHandler h = method->second;
+      (this->*h)(&option_property);
+    }
+    else {
+      throw "Unknown option property: " + option_property_name + "!";
+    }
+  }
+
+private:
+
+  /// Option property handlers --
+  /// Methods that handle properties that are common for all types of
+  /// options (like append_cmd, stop_compilation)
+
+  void onAppendCmd (const DagInit* d) {
+    checkNumberOfArguments(d, 1);
+    checkToolProps(d);
+    const std::string& cmd = InitPtrToString(d->getArg(0));
+
+    toolProps_->OptDescs[optDesc_.Name].
+      AddProperty(OptionPropertyType::AppendCmd, cmd);
+  }
+
+  void onOutputSuffix (const DagInit* d) {
+    checkNumberOfArguments(d, 1);
+    checkToolProps(d);
+    const std::string& suf = InitPtrToString(d->getArg(0));
+
+    if (toolProps_->OptDescs[optDesc_.Name].Type != OptionType::Switch)
+      throw "Option " + optDesc_.Name
+        + " can't have 'output_suffix' property since it isn't a switch!";
+
+    toolProps_->OptDescs[optDesc_.Name].AddProperty
+      (OptionPropertyType::OutputSuffix, suf);
+  }
+
+  void onForward (const DagInit* d) {
+    checkNumberOfArguments(d, 0);
+    checkToolProps(d);
+    toolProps_->OptDescs[optDesc_.Name].setForward();
+  }
+
+  void onHelp (const DagInit* d) {
+    checkNumberOfArguments(d, 1);
+    const std::string& help_message = InitPtrToString(d->getArg(0));
+
+    optDesc_.Help = help_message;
+  }
+
+  void onRequired (const DagInit* d) {
+    checkNumberOfArguments(d, 0);
+    checkToolProps(d);
+    optDesc_.setRequired();
+  }
+
+  void onStopCompilation (const DagInit* d) {
+    checkNumberOfArguments(d, 0);
+    checkToolProps(d);
+    if (optDesc_.Type != OptionType::Switch)
+      throw std::string("Only options of type Switch can stop compilation!");
+    toolProps_->OptDescs[optDesc_.Name].setStopCompilation();
+  }
+
+  void onUnpackValues (const DagInit* d) {
+    checkNumberOfArguments(d, 0);
+    checkToolProps(d);
+    toolProps_->OptDescs[optDesc_.Name].setUnpackValues();
+  }
+
+  // Helper functions
+
+  /// checkToolProps - Throw an error if toolProps_ == 0.
+  void checkToolProps(const DagInit* d) {
+    if (!d)
+      throw "Option property " + d->getOperator()->getAsString()
+        + " can't be used in this context";
+  }
+
+};
+
+CollectOptionProperties::OptionPropertyHandlerMap
+CollectOptionProperties::optionPropertyHandlers_;
+
+bool CollectOptionProperties::staticMembersInitialized_ = false;
+
+
+/// processOptionProperties - Go through the list of option
+/// properties and call a corresponding handler for each.
+void processOptionProperties (const DagInit* d, ToolProperties* t,
+                              GlobalOptionDescription& o) {
+  checkNumberOfArguments(d, 2);
+  DagInit::const_arg_iterator B = d->arg_begin();
+  // Skip the first argument: it's always the option name.
+  ++B;
+  std::for_each(B, d->arg_end(), CollectOptionProperties(t, o));
+}
+
 /// CollectProperties - Function object for iterating over a list of
 /// tool property records.
 class CollectProperties {
 private:
 
-  /// Implementation details
+  // Implementation details
 
   /// PropertyHandler - a function that extracts information
   /// about a given tool property from its DAG representation
@@ -363,18 +535,8 @@ private:
   /// handlers.
   typedef StringMap<PropertyHandler> PropertyHandlerMap;
 
-  /// OptionPropertyHandler - a function that extracts information
-  /// about a given option property from its DAG representation.
-  typedef void (CollectProperties::* OptionPropertyHandler)
-  (const DagInit*, GlobalOptionDescription &);
-
-  /// OptionPropertyHandlerMap - A map from option property names to
-  /// option property handlers
-  typedef StringMap<OptionPropertyHandler> OptionPropertyHandlerMap;
-
   // Static maps from strings to CollectProperties methods("handlers")
   static PropertyHandlerMap propertyHandlers_;
-  static OptionPropertyHandlerMap optionPropertyHandlers_;
   static bool staticMembersInitialized_;
 
 
@@ -392,7 +554,6 @@ public:
     : toolProps_(p), optDescs_(d)
   {
     if (!staticMembersInitialized_) {
-      // Init tool property handlers
       propertyHandlers_["cmd_line"] = &CollectProperties::onCmdLine;
       propertyHandlers_["in_language"] = &CollectProperties::onInLanguage;
       propertyHandlers_["join"] = &CollectProperties::onJoin;
@@ -408,18 +569,6 @@ public:
       propertyHandlers_["sink"] = &CollectProperties::onSink;
       propertyHandlers_["switch_option"] = &CollectProperties::onSwitch;
       propertyHandlers_["alias_option"] = &CollectProperties::onAlias;
-
-      // Init option property handlers
-      optionPropertyHandlers_["append_cmd"] = &CollectProperties::onAppendCmd;
-      optionPropertyHandlers_["forward"] = &CollectProperties::onForward;
-      optionPropertyHandlers_["help"] = &CollectProperties::onHelp;
-      optionPropertyHandlers_["output_suffix"] =
-        &CollectProperties::onOutputSuffixOptionProp;
-      optionPropertyHandlers_["required"] = &CollectProperties::onRequired;
-      optionPropertyHandlers_["stop_compilation"] =
-        &CollectProperties::onStopCompilation;
-      optionPropertyHandlers_["unpack_values"] =
-        &CollectProperties::onUnpackValues;
 
       staticMembersInitialized_ = true;
     }
@@ -504,7 +653,7 @@ private:
   void onAlias (const DagInit* d) {
     checkNumberOfArguments(d, 2);
     // We just need a GlobalOptionDescription for the aliases.
-    insertDescription
+    optDescs_.insertDescription
       (GlobalOptionDescription(OptionType::Alias,
                                InitPtrToString(d->getArg(0)),
                                InitPtrToString(d->getArg(1))));
@@ -530,120 +679,24 @@ private:
     addOption(d, OptionType::PrefixList);
   }
 
-  /// Option property handlers --
-  /// Methods that handle properties that are common for all types of
-  /// options (like append_cmd, stop_compilation)
-
-  void onAppendCmd (const DagInit* d, GlobalOptionDescription& o) {
-    checkNumberOfArguments(d, 1);
-    const std::string& cmd = InitPtrToString(d->getArg(0));
-
-    toolProps_.OptDescs[o.Name].AddProperty(OptionPropertyType::AppendCmd, cmd);
-  }
-
-  void onOutputSuffixOptionProp (const DagInit* d, GlobalOptionDescription& o) {
-    checkNumberOfArguments(d, 1);
-    const std::string& suf = InitPtrToString(d->getArg(0));
-
-    if (toolProps_.OptDescs[o.Name].Type != OptionType::Switch)
-      throw "Option " + o.Name
-        + " can't have 'output_suffix' property since it isn't a switch!";
-
-    toolProps_.OptDescs[o.Name].AddProperty
-      (OptionPropertyType::OutputSuffix, suf);
-  }
-
-  void onForward (const DagInit* d, GlobalOptionDescription& o) {
-    checkNumberOfArguments(d, 0);
-    toolProps_.OptDescs[o.Name].setForward();
-  }
-
-  void onHelp (const DagInit* d, GlobalOptionDescription& o) {
-    checkNumberOfArguments(d, 1);
-    const std::string& help_message = InitPtrToString(d->getArg(0));
-
-    o.Help = help_message;
-  }
-
-  void onRequired (const DagInit* d, GlobalOptionDescription& o) {
-    checkNumberOfArguments(d, 0);
-    o.setRequired();
-  }
-
-  void onStopCompilation (const DagInit* d, GlobalOptionDescription& o) {
-    checkNumberOfArguments(d, 0);
-    if (o.Type != OptionType::Switch)
-      throw std::string("Only options of type Switch can stop compilation!");
-    toolProps_.OptDescs[o.Name].setStopCompilation();
-  }
-
-  void onUnpackValues (const DagInit* d, GlobalOptionDescription& o) {
-    checkNumberOfArguments(d, 0);
-    toolProps_.OptDescs[o.Name].setUnpackValues();
-  }
-
   /// Helper functions
 
   // Add an option of type t
   void addOption (const DagInit* d, OptionType::OptionType t) {
     checkNumberOfArguments(d, 2);
-    const std::string& name = InitPtrToString(d->getArg(0));
+    const std::string& Name = InitPtrToString(d->getArg(0));
+    GlobalOptionDescription OD(t, Name);
 
-    GlobalOptionDescription o(t, name);
-    toolProps_.OptDescs[name].Type = t;
-    toolProps_.OptDescs[name].Name = name;
-    processOptionProperties(d, o);
-    insertDescription(o);
+    toolProps_.OptDescs[Name].Type = t;
+    toolProps_.OptDescs[Name].Name = Name;
+    processOptionProperties(d, &toolProps_, OD);
+    optDescs_.insertDescription(OD);
   }
 
-  // Insert new GlobalOptionDescription into GlobalOptionDescriptions list
-  void insertDescription (const GlobalOptionDescription& o)
-  {
-    if (optDescs_.Descriptions.count(o.Name)) {
-      GlobalOptionDescription& D = optDescs_.Descriptions[o.Name];
-      D.Merge(o);
-    }
-    else {
-      optDescs_.Descriptions[o.Name] = o;
-    }
-  }
-
-  /// processOptionProperties - Go through the list of option
-  /// properties and call a corresponding handler for each.
-  ///
-  /// Parameters:
-  /// name - option name
-  /// d - option property list
-  void processOptionProperties (const DagInit* d, GlobalOptionDescription& o) {
-    // First argument is option name
-    checkNumberOfArguments(d, 2);
-
-    for (unsigned B = 1, E = d->getNumArgs(); B!=E; ++B) {
-      const DagInit& option_property
-        = InitPtrToDag(d->getArg(B));
-      const std::string& option_property_name
-        = option_property.getOperator()->getAsString();
-      OptionPropertyHandlerMap::iterator method
-        = optionPropertyHandlers_.find(option_property_name);
-
-      if (method != optionPropertyHandlers_.end()) {
-        OptionPropertyHandler h = method->second;
-        (this->*h)(&option_property, o);
-      }
-      else {
-        throw "Unknown option property: " + option_property_name + "!";
-      }
-    }
-  }
 };
 
-// Static members of CollectProperties
-CollectProperties::PropertyHandlerMap
-CollectProperties::propertyHandlers_;
-
-CollectProperties::OptionPropertyHandlerMap
-CollectProperties::optionPropertyHandlers_;
-
+// Defintions of static members of CollectProperties.
+CollectProperties::PropertyHandlerMap CollectProperties::propertyHandlers_;
 bool CollectProperties::staticMembersInitialized_ = false;
 
 
@@ -670,25 +723,61 @@ void CollectToolProperties (RecordVector::const_iterator B,
   }
 }
 
-/// CollectToolPropertiesFromOptionList - Gather information about
+/// AddOption - A helper function object used by
+/// CollectPropertiesFromOptionList.
+// TOFIX: this largely duplicates CollectProperties::addOption, find a
+// way to merge them.
+class AddOption {
+private:
+  GlobalOptionDescriptions& OptDescs_;
+
+public:
+  explicit AddOption(GlobalOptionDescriptions& OD) : OptDescs_(OD)
+  {}
+
+  void operator()(Init* i) {
+    const DagInit& d = InitPtrToDag(i);
+    checkNumberOfArguments(&d, 2);
+    const std::string& Type = d.getOperator()->getAsString();
+    const std::string& Name = InitPtrToString(d.getArg(0));
+    GlobalOptionDescription OD(AddOption::getType(Type), Name);
+    if (OD.Type != OptionType::Alias)
+      processOptionProperties(&d, 0, OD);
+    OptDescs_.insertDescription(OD);
+  }
+
+  OptionType::OptionType getType(const std::string& T) const {
+    if (T == "alias_option")
+      return OptionType::Alias;
+    else if (T == "switch_option")
+      return OptionType::Switch;
+    else if (T == "parameter_option")
+      return OptionType::Parameter;
+    else if (T == "parameter_list_option")
+      return OptionType::ParameterList;
+    else if (T == "prefix_option")
+      return OptionType::Prefix;
+    else if (T == "prefix_list_option")
+      return OptionType::PrefixList;
+    else
+      throw "Unknown option type: " + T + '!';
+  }
+};
+
+/// CollectPropertiesFromOptionList - Gather information about
 /// *global* option properties from the OptionList.
-// TOFIX - This is kinda hacky, since it allows to use arbitrary tool
-// properties in the OptionList. CollectProperties function object
-// should be split into two parts that collect tool and option
-// properties, respectively.
 void CollectPropertiesFromOptionList (RecordVector::const_iterator B,
                                       RecordVector::const_iterator E,
                                       GlobalOptionDescriptions& OptDescs)
 {
   // Iterate over a properties list of every Tool definition
-  ToolProperties ToolProps("dummy");
+
   for (;B!=E;++B) {
     RecordVector::value_type T = *B;
     // Throws an exception if the value does not exist.
     ListInit* PropList = T->getValueAsListInit("options");
 
-    std::for_each(PropList->begin(), PropList->end(),
-                  CollectProperties(ToolProps, OptDescs));
+    std::for_each(PropList->begin(), PropList->end(), AddOption(OptDescs));
   }
 }
 
