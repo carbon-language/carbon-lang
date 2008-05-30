@@ -18,6 +18,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 
+#include <cstdlib>
 #include <stdexcept>
 
 using namespace llvm;

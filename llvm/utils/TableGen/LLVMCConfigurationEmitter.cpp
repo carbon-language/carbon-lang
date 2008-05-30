@@ -845,12 +845,32 @@ void EmitOptionPropertyHandlingCode (const ToolOptionDescription& D,
   O << Indent2 << "}\n";
 }
 
+/// SubstituteSpecialCommands - Perform string substitution for $CALL
+/// and $ENV. Helper function used by EmitCmdLineVecFill().
+std::string SubstituteSpecialCommands(const std::string& cmd) {
+ if (cmd.find("$CALL(") == 0) {
+   if (cmd.size() == 6)
+     throw std::string("$CALL invocation: empty argument list!");
+   return std::string("hooks::") + (cmd.c_str() + 6) + "()";
+ }
+ else if (cmd.find("$ENV(") == 0) {
+   if (cmd.size() == 5)
+     throw std::string("$ENV invocation: empty argument list!");
+   return std::string("std::getenv(\"") + (cmd.c_str() + 5) + "\")";
+ }
+ else {
+   throw "Unknown special command: " + cmd;
+ }
+}
+
+/// EmitCmdLineVecFill - Emit code that fills in the command line
+/// vector. Helper function used by EmitGenerateActionMethod().
 void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
                         bool Version, const char* IndentLevel,
                         std::ostream& O) {
   StrVector StrVec;
-  SplitString(InitPtrToString(CmdLine), StrVec);
-  if (InitPtrToString(CmdLine).empty())
+  SplitString(InitPtrToString(CmdLine), StrVec, ") ");
+  if (StrVec.empty())
     throw "Tool " + ToolName + " has empty command line!";
 
   StrVector::const_iterator I = StrVec.begin();
@@ -858,25 +878,36 @@ void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
   for (StrVector::const_iterator E = StrVec.end(); I != E; ++I) {
     const std::string& cmd = *I;
     O << IndentLevel;
-    if (cmd == "$INFILE") {
-      if (Version)
-        O << "for (PathVector::const_iterator B = inFiles.begin()"
-          << ", E = inFiles.end();\n"
-          << IndentLevel << "B != E; ++B)\n"
-          << IndentLevel << Indent1 << "vec.push_back(B->toString());\n";
-      else
-        O << "vec.push_back(inFile.toString());\n";
-    }
-    else if (cmd == "$OUTFILE") {
-      O << "vec.push_back(outFile.toString());\n";
+    if (cmd.at(0) == '$') {
+      if (cmd == "$INFILE") {
+        if (Version)
+          O << "for (PathVector::const_iterator B = inFiles.begin()"
+            << ", E = inFiles.end();\n"
+            << IndentLevel << "B != E; ++B)\n"
+            << IndentLevel << Indent1 << "vec.push_back(B->toString());\n";
+        else
+          O << "vec.push_back(inFile.toString());\n";
+      }
+      else if (cmd == "$OUTFILE") {
+        O << "vec.push_back(outFile.toString());\n";
+      }
+      else {
+        O << "vec.push_back(" << SubstituteSpecialCommands(cmd) << ");\n";
+      }
     }
     else {
       O << "vec.push_back(\"" << cmd << "\");\n";
     }
   }
-  O << IndentLevel << "ret = Action(\"" << StrVec.at(0) << "\", vec);\n";
+  O << IndentLevel << "ret = Action("
+    << ((StrVec[0][0] == '$') ? SubstituteSpecialCommands(StrVec[0])
+        : "\"" + StrVec[0] + "\"")
+    << ", vec);\n";
 }
 
+/// EmitCmdLineVecFillCallback - A function object wrapper around
+/// EmitCmdLineVecFill(). Used by EmitGenerateActionMethod() as an
+/// argument to EmitCaseConstructHandler().
 class EmitCmdLineVecFillCallback {
   bool Version;
   const std::string& ToolName;
@@ -1150,7 +1181,8 @@ void TypecheckGraph (Record* CompilationGraph,
   }
 }
 
-// Helper function passed to EmitCaseConstructHandler by EmitEdgeClass.
+/// IncDecWeight - Helper function passed to EmitCaseConstructHandler()
+/// by EmitEdgeClass().
 void IncDecWeight (const Init* i, const char* IndentLevel,
                    std::ostream& O) {
   const DagInit& d = InitPtrToDagInitRef(i);
@@ -1192,7 +1224,7 @@ void EmitEdgeClass (unsigned N, const std::string& Target,
     << Indent1 << "};\n\n};\n\n";
 }
 
-// Emit Edge* classes that represent graph edges.
+/// EmitEdgeClasses - Emit Edge* classes that represent graph edges.
 void EmitEdgeClasses (Record* CompilationGraph,
                       const GlobalOptionDescriptions& OptDescs,
                       std::ostream& O) {
@@ -1256,6 +1288,68 @@ void EmitPopulateCompilationGraph (Record* CompilationGraph,
   O << "}\n\n";
 }
 
+/// ExtractHookNames - Extract the hook names from all instances of
+/// $CALL(HookName) in the provided command line string. Helper
+/// function used by FillInHookNames().
+void ExtractHookNames(const Init* CmdLine, StrVector& HookNames) {
+  StrVector cmds;
+  llvm::SplitString(InitPtrToString(CmdLine), cmds, ") ");
+  for (StrVector::const_iterator B = cmds.begin(), E = cmds.end();
+       B != E; ++B) {
+    const std::string& cmd = *B;
+    if (cmd.find("$CALL(") == 0) {
+      if (cmd.size() == 6)
+        throw std::string("$CALL invocation: empty argument list!");
+      HookNames.push_back(std::string(cmd.c_str() + 6));
+    }
+  }
+}
+
+/// FillInHookNames - Actually extract the hook names from all command
+/// line strings. Helper function used by EmitHookDeclarations().
+void FillInHookNames(const ToolPropertiesList& TPList,
+                     StrVector& HookNames) {
+  for (ToolPropertiesList::const_iterator B = TPList.begin(),
+         E = TPList.end(); B != E; ++B) {
+    const ToolProperties& P = *(*B);
+    if (!P.CmdLine)
+      continue;
+    if (typeid(*P.CmdLine) == typeid(StringInit)) {
+      // This is a string.
+      ExtractHookNames(P.CmdLine, HookNames);
+    }
+    else {
+      // This is a 'case' construct.
+      const DagInit& d = InitPtrToDagInitRef(P.CmdLine);
+      bool even = false;
+      for (DagInit::const_arg_iterator B = d.arg_begin(), E = d.arg_end();
+           B != E; ++B) {
+        if (even)
+          ExtractHookNames(*B, HookNames);
+        even = !even;
+      }
+    }
+  }
+}
+
+/// EmitHookDeclarations - Parse CmdLine fields of all the tool
+/// property records and emit hook function declaration for each
+/// instance of $CALL(HookName).
+void EmitHookDeclarations(const ToolPropertiesList& ToolProps,
+                          std::ostream& O) {
+  StrVector HookNames;
+  FillInHookNames(ToolProps, HookNames);
+  if (HookNames.empty())
+    return;
+  std::sort(HookNames.begin(), HookNames.end());
+  StrVector::const_iterator E = std::unique(HookNames.begin(), HookNames.end());
+
+  O << "namespace hooks {\n";
+  for (StrVector::const_iterator B = HookNames.begin(); B != E; ++B)
+    O << Indent1 << "std::string " << *B << "();\n";
+
+  O << "}\n\n";
+}
 
 // End of anonymous namespace
 }
@@ -1278,6 +1372,9 @@ void LLVMCConfigurationEmitter::run (std::ostream &O) {
 
   // Emit global option registration code.
   EmitOptionDescriptions(opt_descs, O);
+
+  // Emit hook declarations.
+  EmitHookDeclarations(tool_props, O);
 
   // Emit PopulateLanguageMap() function
   // (a language map maps from file extensions to language names).
