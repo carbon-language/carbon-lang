@@ -30,6 +30,7 @@ def sink;
 
 // Possible option types
 
+def alias_option;
 def switch_option;
 def parameter_option;
 def parameter_list_option;
@@ -45,7 +46,7 @@ def unpack_values;
 def help;
 def required;
 
-// Marker for an empty DAG.
+// Empty DAG marker.
 def empty;
 
 // The 'case' construct.
