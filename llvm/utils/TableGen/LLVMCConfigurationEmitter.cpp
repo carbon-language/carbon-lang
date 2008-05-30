@@ -243,6 +243,7 @@ struct GlobalOptionDescriptions {
   /// HasSink - Should the emitter generate a "cl::sink" option?
   bool HasSink;
 
+  /// FindOption - exception-throwing wrapper for find().
   const GlobalOptionDescription& FindOption(const std::string& OptName) const {
     const_iterator I = Descriptions.find(OptName);
     if (I != Descriptions.end())
@@ -251,7 +252,8 @@ struct GlobalOptionDescriptions {
       throw OptName + ": no such option!";
   }
 
-  // Insert new GlobalOptionDescription into GlobalOptionDescriptions list
+  /// insertDescription - Insert new GlobalOptionDescription into
+  /// GlobalOptionDescriptions list
   void insertDescription (const GlobalOptionDescription& o)
   {
     container_type::iterator I = Descriptions.find(o.Name);
@@ -750,7 +752,6 @@ void CollectPropertiesFromOptionList (RecordVector::const_iterator B,
                                       GlobalOptionDescriptions& OptDescs)
 {
   // Iterate over a properties list of every Tool definition
-
   for (;B!=E;++B) {
     RecordVector::value_type T = *B;
     // Throws an exception if the value does not exist.
@@ -760,12 +761,43 @@ void CollectPropertiesFromOptionList (RecordVector::const_iterator B,
   }
 }
 
+/// CheckForSuperfluousOptions - Check that there are no side
+/// effect-free options (specified only in the OptionList). Otherwise,
+/// output a warning.
+void CheckForSuperfluousOptions (const ToolPropertiesList& TPList,
+                                 const GlobalOptionDescriptions& OptDescs) {
+  llvm::StringSet<> nonSuperfluousOptions;
+
+  // Add all options mentioned in the TPList to the set of
+  // non-superfluous options.
+  for (ToolPropertiesList::const_iterator B = TPList.begin(),
+         E = TPList.end(); B != E; ++B) {
+    const ToolProperties& TP = *(*B);
+    for (ToolOptionDescriptions::const_iterator B = TP.OptDescs.begin(),
+           E = TP.OptDescs.end(); B != E; ++B) {
+      nonSuperfluousOptions.insert(B->first());
+    }
+  }
+
+  // Check that all options in OptDescs belong to the set of
+  // non-superfluous options.
+  for (GlobalOptionDescriptions::const_iterator B = OptDescs.begin(),
+         E = OptDescs.end(); B != E; ++B) {
+    const GlobalOptionDescription& Val = B->second;
+    if (!nonSuperfluousOptions.count(Val.Name)
+        && Val.Type != OptionType::Alias)
+      cerr << "Warning: option '-" << Val.Name << "' has no effect! "
+        "Probable cause: this option is specified only in the OptionList.\n";
+  }
+}
+
 /// EmitCaseTest1Arg - Helper function used by
 /// EmitCaseConstructHandler.
 bool EmitCaseTest1Arg(const std::string& TestName,
                       const DagInit& d,
                       const GlobalOptionDescriptions& OptDescs,
                       std::ostream& O) {
+  // TOFIX - Add a mechanism for OS detection.
   checkNumberOfArguments(&d, 1);
   const std::string& OptName = InitPtrToString(d.getArg(0));
   if (TestName == "switch_on") {
@@ -1665,6 +1697,10 @@ void LLVMCConfigurationEmitter::run (std::ostream &O) {
   RecordVector OptionLists = Records.getAllDerivedDefinitions("OptionList");
   CollectPropertiesFromOptionList(OptionLists.begin(), OptionLists.end(),
                                   opt_descs);
+
+  // Check that there are no options without side effects (specified
+  // only in the OptionList).
+  CheckForSuperfluousOptions(tool_props, opt_descs);
 
   // Emit global option registration code.
   EmitOptionDescriptions(opt_descs, O);

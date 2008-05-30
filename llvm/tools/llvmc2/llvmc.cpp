@@ -32,6 +32,9 @@ using namespace llvmc;
 // Built-in command-line options.
 // External linkage here is intentional.
 
+// TOFIX: Add a --keep-temps option.
+// TOFIX: Write a 'driver driver' (easier to do as a separate
+// executable that drives llvmc2 proper).
 cl::list<std::string> InputFilenames(cl::Positional, cl::desc("<input file>"),
                                      cl::ZeroOrMore);
 cl::opt<std::string> OutputFilename("o", cl::desc("Output file name"),
