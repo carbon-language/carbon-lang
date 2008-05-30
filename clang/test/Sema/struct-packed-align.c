@@ -69,3 +69,23 @@ struct packedtest {
   int ted_likes_cheese;
   void *args[] __attribute__((packed));
 };
+
+// Packed union
+union __attribute__((packed)) au4 {char c; int x;};
+extern int h1[sizeof(union au4) == 4 ? 1 : -1];
+extern int h2[__alignof(union au4) == 1 ? 1 : -1];
+
+// Aligned union
+union au5 {__attribute__((aligned(4))) char c;};
+extern int h1[sizeof(union au5) == 4 ? 1 : -1];
+extern int h2[__alignof(union au5) == 4 ? 1 : -1];
+
+// Alignment+packed
+struct as6 {char c; __attribute__((packed, aligned(2))) int x;};
+extern int i1[sizeof(struct as6) == 6 ? 1 : -1];
+extern int i2[__alignof(struct as6) == 2 ? 1 : -1];
+
+union au6 {char c; __attribute__((packed, aligned(2))) int x;};
+extern int k1[sizeof(union au6) == 4 ? 1 : -1];
+extern int k2[__alignof(union au6) == 2 ? 1 : -1];
+

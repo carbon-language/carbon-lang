@@ -210,8 +210,8 @@ ASTContext::getTypeInfo(QualType T) {
     std::pair<uint64_t, unsigned> EltInfo = 
       getTypeInfo(cast<VectorType>(T)->getElementType());
     Width = EltInfo.first*cast<VectorType>(T)->getNumElements();
-    // FIXME: Vector alignment is not the alignment of its elements.
-    Align = EltInfo.second;
+    // FIXME: This isn't right for unusual vectors
+    Align = Width;
     break;
   }
 
@@ -316,121 +316,102 @@ ASTContext::getTypeInfo(QualType T) {
 /// position information.
 const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
   assert(D->isDefinition() && "Cannot get layout of forward declarations!");
-  
+
   // Look up this layout, if already laid out, return what we have.
   const ASTRecordLayout *&Entry = ASTRecordLayouts[D];
   if (Entry) return *Entry;
-  
+
   // Allocate and assign into ASTRecordLayouts here.  The "Entry" reference can
   // be invalidated (dangle) if the ASTRecordLayouts hashtable is inserted into.
   ASTRecordLayout *NewEntry = new ASTRecordLayout();
   Entry = NewEntry;
-  
+
   uint64_t *FieldOffsets = new uint64_t[D->getNumMembers()];
   uint64_t RecordSize = 0;
   unsigned RecordAlign = 8;  // Default alignment = 1 byte = 8 bits.
+  bool StructIsPacked = D->getAttr<PackedAttr>();
+  bool IsUnion = (D->getKind() == Decl::Union);
 
-  if (D->getKind() != Decl::Union) {
-    if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
-      RecordAlign = std::max(RecordAlign, AA->getAlignment());
-        
-    bool StructIsPacked = D->getAttr<PackedAttr>();
-    
-    // Layout each field, for now, just sequentially, respecting alignment.  In
-    // the future, this will need to be tweakable by targets.
-    for (unsigned i = 0, e = D->getNumMembers(); i != e; ++i) {
-      const FieldDecl *FD = D->getMember(i);
-      bool FieldIsPacked = StructIsPacked || FD->getAttr<PackedAttr>();
-      uint64_t FieldSize;
-      unsigned FieldAlign;
-      
-      if (const Expr *BitWidthExpr = FD->getBitWidth()) {
-        llvm::APSInt I(32);
-        bool BitWidthIsICE = 
-          BitWidthExpr->isIntegerConstantExpr(I, *this);
-        assert (BitWidthIsICE  && "Invalid BitField size expression");
-        FieldSize = I.getZExtValue();
+  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
+    RecordAlign = std::max(RecordAlign, AA->getAlignment());
 
-        std::pair<uint64_t, unsigned> TypeInfo = getTypeInfo(FD->getType());
-        uint64_t TypeSize = TypeInfo.first;
-        
-        if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>())
-          FieldAlign = AA->getAlignment();
-        else if (FieldIsPacked)
-          FieldAlign = 8;
-        else {
-          FieldAlign = TypeInfo.second;
-        }
+  // Layout each field, for now, just sequentially, respecting alignment.  In
+  // the future, this will need to be tweakable by targets.
+  for (unsigned i = 0, e = D->getNumMembers(); i != e; ++i) {
+    const FieldDecl *FD = D->getMember(i);
+    bool FieldIsPacked = StructIsPacked || FD->getAttr<PackedAttr>();
+    uint64_t FieldOffset = IsUnion ? 0 : RecordSize;
+    uint64_t FieldSize;
+    unsigned FieldAlign;
 
-        // Check if we need to add padding to give the field the correct
-        // alignment.
-        if (RecordSize % FieldAlign + FieldSize > TypeSize)
-          RecordSize = (RecordSize+FieldAlign-1) & ~(FieldAlign-1);
+    if (const Expr *BitWidthExpr = FD->getBitWidth()) {
+      // TODO: Need to check this algorithm on other targets!
+      //       (tested on Linux-X86)
+      llvm::APSInt I(32);
+      bool BitWidthIsICE = 
+        BitWidthExpr->isIntegerConstantExpr(I, *this);
+      assert (BitWidthIsICE  && "Invalid BitField size expression");
+      FieldSize = I.getZExtValue();
 
-      } else {
-        if (FD->getType()->isIncompleteType()) {
-          // This must be a flexible array member; we can't directly
-          // query getTypeInfo about these, so we figure it out here.
-          // Flexible array members don't have any size, but they
-          // have to be aligned appropriately for their element type.
-        
-          if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>())
-            FieldAlign = AA->getAlignment();
-          else if (FieldIsPacked)
-            FieldAlign = 8;
-          else {
-            const ArrayType* ATy = FD->getType()->getAsArrayType();
-            FieldAlign = getTypeAlign(ATy->getElementType());
-          }
-          FieldSize = 0;
-        } else {
-          std::pair<uint64_t, unsigned> FieldInfo = getTypeInfo(FD->getType());
-          FieldSize = FieldInfo.first;
-        
-          if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>())
-            FieldAlign = AA->getAlignment();
-          else if (FieldIsPacked)
-            FieldAlign = 8;
-          else
-            FieldAlign = FieldInfo.second;
-        }
-
-        // Round up the current record size to the field's alignment boundary.
-        RecordSize = (RecordSize+FieldAlign-1) & ~(FieldAlign-1);
-      }
-      
-      // Place this field at the current location.
-      FieldOffsets[i] = RecordSize;
-      
-      // Reserve space for this field.
-      RecordSize += FieldSize;
-      
-      // Remember max struct/class alignment.
-      RecordAlign = std::max(RecordAlign, FieldAlign);
-    }
-    
-    // Finally, round the size of the total struct up to the alignment of the
-    // struct itself.
-    RecordSize = (RecordSize+RecordAlign-1) & ~(RecordAlign-1);
-  } else {
-    // Union layout just puts each member at the start of the record.
-    for (unsigned i = 0, e = D->getNumMembers(); i != e; ++i) {
-      const FieldDecl *FD = D->getMember(i);
       std::pair<uint64_t, unsigned> FieldInfo = getTypeInfo(FD->getType());
-      uint64_t FieldSize = FieldInfo.first;
-      unsigned FieldAlign = FieldInfo.second;
+      uint64_t TypeSize = FieldInfo.first;
+
+      FieldAlign = FieldInfo.second;
+      if (FieldIsPacked)
+        FieldAlign = 1;
+      if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>())
+        FieldAlign = std::max(FieldAlign, AA->getAlignment());
+
+      // Check if we need to add padding to give the field the correct
+      // alignment.
+      if (FieldSize == 0 || (FieldOffset & (FieldAlign-1)) + FieldSize > TypeSize)
+        FieldOffset = (FieldOffset + (FieldAlign-1)) & ~(FieldAlign-1);
+
+      // Padding members don't affect overall alignment
+      if (!FD->getIdentifier())
+        FieldAlign = 1;
+    } else {
+      if (FD->getType()->isIncompleteType()) {
+        // This must be a flexible array member; we can't directly
+        // query getTypeInfo about these, so we figure it out here.
+        // Flexible array members don't have any size, but they
+        // have to be aligned appropriately for their element type.
+        FieldSize = 0;
+        const ArrayType* ATy = FD->getType()->getAsArrayType();
+        FieldAlign = getTypeAlign(ATy->getElementType());
+      } else {
+        std::pair<uint64_t, unsigned> FieldInfo = getTypeInfo(FD->getType());
+        FieldSize = FieldInfo.first;
+        FieldAlign = FieldInfo.second;
+      }
+
+      if (FieldIsPacked)
+        FieldAlign = 8;
+      if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>())
+        FieldAlign = std::max(FieldAlign, AA->getAlignment());
 
       // Round up the current record size to the field's alignment boundary.
-      RecordSize = std::max(RecordSize, FieldSize);
-
-      // Place this field at the start of the record.
-      FieldOffsets[i] = 0;
-
-      // Remember max struct/class alignment.
-      RecordAlign = std::max(RecordAlign, FieldAlign);
+      FieldOffset = (FieldOffset + (FieldAlign-1)) & ~(FieldAlign-1);
     }
+
+    // Place this field at the current location.
+    FieldOffsets[i] = FieldOffset;
+
+    // Reserve space for this field.
+    if (IsUnion) {
+      RecordSize = std::max(RecordSize, FieldSize);
+    } else {
+      RecordSize = FieldOffset + FieldSize;
+    }
+
+    // Remember max struct/class alignment.
+    RecordAlign = std::max(RecordAlign, FieldAlign);
   }
-  
+
+  // Finally, round the size of the total struct up to the alignment of the
+  // struct itself.
+  RecordSize = (RecordSize + (RecordAlign-1)) & ~(RecordAlign-1);
+
   NewEntry->SetLayout(RecordSize, RecordAlign, FieldOffsets);
   return *NewEntry;
 }
