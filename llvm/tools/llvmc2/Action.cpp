@@ -22,6 +22,7 @@
 using namespace llvm;
 using namespace llvmc;
 
+extern cl::opt<bool> DryRun;
 extern cl::opt<bool> VerboseMode;
 
 namespace {
@@ -65,10 +66,13 @@ namespace {
 }
 
 int llvmc::Action::Execute() const {
-  if (VerboseMode) {
+  if (DryRun || VerboseMode) {
     std::cerr << Command_ << " ";
     std::for_each(Args_.begin(), Args_.end(), print_string);
     std::cerr << '\n';
   }
-  return ExecuteProgram(Command_, Args_);
+  if (DryRun)
+    return 0;
+  else
+    return ExecuteProgram(Command_, Args_);
 }

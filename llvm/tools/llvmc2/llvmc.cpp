@@ -41,6 +41,8 @@ cl::opt<std::string> OutputFilename("o", cl::desc("Output file name"),
 cl::list<std::string> Languages("x",
           cl::desc("Specify the language of the following input files"),
           cl::ZeroOrMore);
+cl::opt<bool> DryRun("dry-run",
+                          cl::desc("only pretend to run commands"));
 cl::opt<bool> VerboseMode("v",
                           cl::desc("Enable verbose mode"));
 cl::opt<bool> WriteGraph("write-graph",
