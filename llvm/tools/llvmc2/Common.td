@@ -69,6 +69,11 @@ def or;
 def inc_weight;
 def dec_weight;
 
+// Option list - used to specify aliases and sometimes help strings.
+class OptionList<list<dag> l> {
+      list<dag> options = l;
+}
+
 // Map from suffixes to language names
 
 class LangToSuffixes<string str, list<string> lst> {

@@ -647,9 +647,9 @@ CollectProperties::optionPropertyHandlers_;
 bool CollectProperties::staticMembersInitialized_ = false;
 
 
-/// CollectToolProperties - Gather information from the parsed
-/// TableGen data (basically a wrapper for the CollectProperties
-/// function object).
+/// CollectToolProperties - Gather information about tool properties
+/// from the parsed TableGen data (basically a wrapper for the
+/// CollectProperties function object).
 void CollectToolProperties (RecordVector::const_iterator B,
                             RecordVector::const_iterator E,
                             ToolPropertiesList& TPList,
@@ -657,7 +657,8 @@ void CollectToolProperties (RecordVector::const_iterator B,
 {
   // Iterate over a properties list of every Tool definition
   for (;B!=E;++B) {
-    RecordVector::value_type T = *B;
+    Record* T = *B;
+    // Throws an exception if the value does not exist.
     ListInit* PropList = T->getValueAsListInit("properties");
 
     IntrusiveRefCntPtr<ToolProperties>
@@ -666,6 +667,28 @@ void CollectToolProperties (RecordVector::const_iterator B,
     std::for_each(PropList->begin(), PropList->end(),
                   CollectProperties(*ToolProps, OptDescs));
     TPList.push_back(ToolProps);
+  }
+}
+
+/// CollectToolPropertiesFromOptionList - Gather information about
+/// *global* option properties from the OptionList.
+// TOFIX - This is kinda hacky, since it allows to use arbitrary tool
+// properties in the OptionList. CollectProperties function object
+// should be split into two parts that collect tool and option
+// properties, respectively.
+void CollectPropertiesFromOptionList (RecordVector::const_iterator B,
+                                      RecordVector::const_iterator E,
+                                      GlobalOptionDescriptions& OptDescs)
+{
+  // Iterate over a properties list of every Tool definition
+  ToolProperties ToolProps("dummy");
+  for (;B!=E;++B) {
+    RecordVector::value_type T = *B;
+    // Throws an exception if the value does not exist.
+    ListInit* PropList = T->getValueAsListInit("options");
+
+    std::for_each(PropList->begin(), PropList->end(),
+                  CollectProperties(ToolProps, OptDescs));
   }
 }
 
@@ -1570,6 +1593,10 @@ void LLVMCConfigurationEmitter::run (std::ostream &O) {
   ToolPropertiesList tool_props;
   GlobalOptionDescriptions opt_descs;
   CollectToolProperties(Tools.begin(), Tools.end(), tool_props, opt_descs);
+
+  RecordVector OptionLists = Records.getAllDerivedDefinitions("OptionList");
+  CollectPropertiesFromOptionList(OptionLists.begin(), OptionLists.end(),
+                                  opt_descs);
 
   // Emit global option registration code.
   EmitOptionDescriptions(opt_descs, O);
