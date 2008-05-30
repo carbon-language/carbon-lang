@@ -1304,23 +1304,38 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
   if (Init->isNullPointerConstant(Context))
     return false;
   if (Init->getType()->isArithmeticType()) {
-    // Special check for pointer cast to int; we allow
-    // an address constant cast to an integer if the integer
-    // is of an appropriate width (this sort of code is apparently used
-    // in some places).
-    // FIXME: Add pedwarn?
-    Expr* SubE = 0;
-    if (ImplicitCastExpr* ICE = dyn_cast<ImplicitCastExpr>(Init))
-      SubE = ICE->getSubExpr();
-    else if (CastExpr* CE = dyn_cast<CastExpr>(Init))
-      SubE = CE->getSubExpr();
-    if (SubE && (SubE->getType()->isPointerType() ||
-                 SubE->getType()->isArrayType() ||
-                 SubE->getType()->isFunctionType())) {
-      unsigned IntWidth = Context.getTypeSize(Init->getType());
-      unsigned PointerWidth = Context.getTypeSize(Context.VoidPtrTy);
-      if (IntWidth >= PointerWidth)
-        return CheckAddressConstantExpression(Init);
+    QualType InitTy = Init->getType().getCanonicalType().getUnqualifiedType();
+    if (InitTy == Context.BoolTy) {
+      // Special handling for pointers implicitly cast to bool;
+      // (e.g. "_Bool rr = &rr;"). This is only legal at the top level.
+      if (ImplicitCastExpr* ICE = dyn_cast<ImplicitCastExpr>(Init)) {
+        Expr* SubE = ICE->getSubExpr();
+        if (SubE->getType()->isPointerType() ||
+            SubE->getType()->isArrayType() ||
+            SubE->getType()->isFunctionType()) {
+          return CheckAddressConstantExpression(Init);
+        }
+      }
+    } else if (InitTy->isIntegralType()) {
+      Expr* SubE = 0;
+      if (ImplicitCastExpr* ICE = dyn_cast<ImplicitCastExpr>(Init))
+        SubE = ICE->getSubExpr();
+      else if (CastExpr* CE = dyn_cast<CastExpr>(Init))
+        SubE = CE->getSubExpr();
+      // Special check for pointer cast to int; we allow as an extension
+      // an address constant cast to an integer if the integer
+      // is of an appropriate width (this sort of code is apparently used
+      // in some places).
+      // FIXME: Add pedwarn?
+      // FIXME: Don't allow bitfields here!  Need the FieldDecl for that.
+      if (SubE && (SubE->getType()->isPointerType() ||
+                   SubE->getType()->isArrayType() ||
+                   SubE->getType()->isFunctionType())) {
+        unsigned IntWidth = Context.getTypeSize(Init->getType());
+        unsigned PointerWidth = Context.getTypeSize(Context.VoidPtrTy);
+        if (IntWidth >= PointerWidth)
+          return CheckAddressConstantExpression(Init);
+      }
     }
 
     return CheckArithmeticConstantExpression(Init);
@@ -1329,6 +1344,8 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
   if (Init->getType()->isPointerType())
     return CheckAddressConstantExpression(Init);
 
+  // An array type at the top level that isn't an init-list must
+  // be a string literal
   if (Init->getType()->isArrayType())
     return false;
 
