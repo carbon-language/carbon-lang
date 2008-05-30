@@ -17,7 +17,6 @@
 #include "VirtRegMap.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/Value.h"
-#include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
@@ -66,7 +65,6 @@ void SimpleRegisterCoalescing::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreservedID(MachineDominatorsID);
   AU.addPreservedID(PHIEliminationID);
   AU.addPreservedID(TwoAddressInstructionPassID);
-  AU.addRequired<LiveVariables>();
   AU.addRequired<LiveIntervals>();
   AU.addRequired<MachineLoopInfo>();
   MachineFunctionPass::getAnalysisUsage(AU);
@@ -967,10 +965,10 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         // if this will cause a high use density interval to target a smaller
         // set of registers.
         if (SmallRegSize > Threshold || LargeRegSize > Threshold) {
-          LiveVariables::VarInfo &svi = lv_->getVarInfo(LargeReg);
-          LiveVariables::VarInfo &dvi = lv_->getVarInfo(SmallReg);
-          if ((float)dvi.NumUses / SmallRegSize <
-              (float)svi.NumUses / LargeRegSize) {
+          if ((float)std::distance(mri_->use_begin(SmallReg),
+                                   mri_->use_end()) / SmallRegSize <
+              (float)std::distance(mri_->use_begin(LargeReg),
+                                   mri_->use_end()) / LargeRegSize) {
             Again = true;  // May be possible to coalesce later.
             return false;
           }
@@ -1026,9 +1024,9 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       // do not join them, instead mark the physical register as its allocation
       // preference.
       unsigned Length = JoinVInt.getSize() / InstrSlots::NUM;
-      LiveVariables::VarInfo &vi = lv_->getVarInfo(JoinVReg);
       if (Length > Threshold &&
-          (((float)vi.NumUses / Length) < (1.0 / Threshold))) {
+          (((float)std::distance(mri_->use_begin(JoinVReg),
+                              mri_->use_end()) / Length) < (1.0 / Threshold))) {
         JoinVInt.preference = JoinPReg;
         ++numAborts;
         DOUT << "\tMay tie down a physical register, abort!\n";
@@ -1111,11 +1109,6 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     for (const unsigned *AS = tri_->getSubRegisters(DstReg); *AS; ++AS)
       li_->getOrCreateInterval(*AS).MergeInClobberRanges(*ResSrcInt,
                                                  li_->getVNInfoAllocator());
-  } else {
-    // Merge use info if the destination is a virtual register.
-    LiveVariables::VarInfo& dVI = lv_->getVarInfo(DstReg);
-    LiveVariables::VarInfo& sVI = lv_->getVarInfo(SrcReg);
-    dVI.NumUses += sVI.NumUses;
   }
 
   // If this is a EXTRACT_SUBREG, make sure the result of coalescing is the
@@ -2011,7 +2004,6 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
   tri_ = tm_->getRegisterInfo();
   tii_ = tm_->getInstrInfo();
   li_ = &getAnalysis<LiveIntervals>();
-  lv_ = &getAnalysis<LiveVariables>();
   loopInfo = &getAnalysis<MachineLoopInfo>();
 
   DOUT << "********** SIMPLE REGISTER COALESCING **********\n"
