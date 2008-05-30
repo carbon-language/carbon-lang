@@ -626,7 +626,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
 
     // Finally, remove the old call from the program, reducing the use-count of
     // F.
-    Call->getParent()->getInstList().erase(Call);
+    Call->eraseFromParent();
   }
 
   // Since we have now created the new function, splice the body of the old
@@ -665,7 +665,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
       }
 
   // Now that the old function is dead, delete it.
-  F->getParent()->getFunctionList().erase(F);
+  F->eraseFromParent();
 }
 
 bool DAE::runOnModule(Module &M) {
