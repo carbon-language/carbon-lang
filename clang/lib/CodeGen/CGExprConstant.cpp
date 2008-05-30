@@ -242,19 +242,22 @@ public:
   llvm::Constant *EmitVectorInitialization(InitListExpr *ILE) {
     const llvm::VectorType *VType =
         cast<llvm::VectorType>(ConvertType(ILE->getType()));
-    std::vector<llvm::Constant*> Elts;    
-    unsigned NumInitElements = ILE->getNumInits();      
+    const llvm::Type *ElemTy = VType->getElementType();
+    std::vector<llvm::Constant*> Elts;
     unsigned NumElements = VType->getNumElements();
+    unsigned NumInitElements = ILE->getNumInits();
 
-    // FIXME: Handle case in assertion correctly
-    assert (NumInitElements == NumElements 
-            && "Unsufficient vector init elelments");
+    unsigned NumInitableElts = std::min(NumInitElements, NumElements);
+
     // Copy initializer elements.
     unsigned i = 0;
-    for (; i < NumElements; ++i) {
+    for (; i < NumInitableElts; ++i) {
       llvm::Constant *C = Visit(ILE->getInit(i));
       Elts.push_back(C);
     }
+
+    for (; i < NumElements; ++i)
+      Elts.push_back(llvm::Constant::getNullValue(ElemTy));
 
     return llvm::ConstantVector::get(VType, Elts);    
   }
