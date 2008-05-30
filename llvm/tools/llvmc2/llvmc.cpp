@@ -87,8 +87,7 @@ int main(int argc, char** argv) {
     }
 
     if (InputFilenames.empty()) {
-      std::cerr << "No input files.\n";
-      return 1;
+      throw std::runtime_error("no input files");
     }
 
     return BuildTargets(graph);
@@ -97,10 +96,10 @@ int main(int argc, char** argv) {
     return ec.code();
   }
   catch(const std::exception& ex) {
-    std::cerr << ex.what() << '\n';
+    std::cerr << argv[0] << ": " << ex.what() << '\n';
   }
   catch(...) {
-    std::cerr << "Unknown error!\n";
+    std::cerr << argv[0] << ": unknown error!\n";
   }
   return 1;
 }
