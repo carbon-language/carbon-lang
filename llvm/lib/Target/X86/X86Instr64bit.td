@@ -751,7 +751,7 @@ def OR64mi8  : RIi8<0x83, MRM1m, (outs), (ins i64mem:$dst, i64i8imm:$src),
                   [(store (or (load addr:$dst), i64immSExt8:$src), addr:$dst)]>;
 
 let isTwoAddress = 1 in {
-let isCommutable = 1 in
+let isCommutable = 1, isAsCheapAsAMove = 1 in
 def XOR64rr  : RI<0x31, MRMDestReg,  (outs GR64:$dst), (ins GR64:$src1, GR64:$src2), 
                   "xor{q}\t{$src2, $dst|$dst, $src2}",
                   [(set GR64:$dst, (xor GR64:$src1, GR64:$src2))]>;
@@ -1091,7 +1091,8 @@ def Int_CVTTSS2SI64rm: RSSI<0x2C, MRMSrcMem, (outs GR64:$dst), (ins f32mem:$src)
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
 // FIXME: AddedComplexity gives MOV64r0 a higher priority than MOV64ri32. Remove
 // when we have a better way to specify isel priority.
-let Defs = [EFLAGS], AddedComplexity = 1, isReMaterializable = 1 in
+let Defs = [EFLAGS], AddedComplexity = 1,
+    isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def MOV64r0  : RI<0x31, MRMInitReg,  (outs GR64:$dst), (ins),
                  "xor{l}\t${dst:subreg32}, ${dst:subreg32}",
                  [(set GR64:$dst, 0)]>;
