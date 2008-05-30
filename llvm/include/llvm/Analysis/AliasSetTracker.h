@@ -230,10 +230,10 @@ private:
 
   void addPointer(AliasSetTracker &AST, HashNodePair &Entry, unsigned Size,
                   bool KnownMustAlias = false);
-  void addCallSite(CallSite cs, AliasAnalysis &AA);
-  void removeCallSite(CallSite cs) {
+  void addCallSite(CallSite CS, AliasAnalysis &AA);
+  void removeCallSite(CallSite CS) {
     for (size_t i = 0, e = CallSites.size(); i != e; ++i)
-      if (CallSites[i].getInstruction() == cs.getInstruction()) {
+      if (CallSites[i].getInstruction() == CS.getInstruction()) {
         CallSites[i] = CallSites.back();
         CallSites.pop_back();
       }
@@ -244,7 +244,7 @@ private:
   /// alias one of the members in the set.
   ///
   bool aliasesPointer(const Value *Ptr, unsigned Size, AliasAnalysis &AA) const;
-  bool aliasesCallSite(CallSite cs, AliasAnalysis &AA) const;
+  bool aliasesCallSite(CallSite CS, AliasAnalysis &AA) const;
 };
 
 inline std::ostream& operator<<(std::ostream &OS, const AliasSet &AS) {
@@ -283,7 +283,7 @@ public:
   bool add(StoreInst *SI);
   bool add(FreeInst *FI);
   bool add(VAArgInst *VAAI);
-  bool add(CallSite cs);          // Call/Invoke instructions
+  bool add(CallSite CS);          // Call/Invoke instructions
   bool add(CallInst *CI)   { return add(CallSite(CI)); }
   bool add(InvokeInst *II) { return add(CallSite(II)); }
   bool add(Instruction *I);       // Dispatch to one of the other add methods...
@@ -298,7 +298,7 @@ public:
   bool remove(StoreInst *SI);
   bool remove(FreeInst *FI);
   bool remove(VAArgInst *VAAI);
-  bool remove(CallSite cs);
+  bool remove(CallSite CS);
   bool remove(CallInst *CI)   { return remove(CallSite(CI)); }
   bool remove(InvokeInst *II) { return remove(CallSite(II)); }
   bool remove(Instruction *I);
@@ -383,7 +383,7 @@ private:
   }
   AliasSet *findAliasSetForPointer(const Value *Ptr, unsigned Size);
 
-  AliasSet *findAliasSetForCallSite(CallSite cs);
+  AliasSet *findAliasSetForCallSite(CallSite CS);
 };
 
 inline std::ostream& operator<<(std::ostream &OS, const AliasSetTracker &AST) {

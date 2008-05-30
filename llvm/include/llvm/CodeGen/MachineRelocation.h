@@ -133,7 +133,7 @@ public:
   /// symbol, like "free".
   ///
   static MachineRelocation getExtSym(intptr_t offset, unsigned RelocationType, 
-                                     const char *es, intptr_t cst = 0,
+                                     const char *ES, intptr_t cst = 0,
                                      bool GOTrelative = 0) {
     assert((RelocationType & ~63) == 0 && "Relocation type too large!");
     MachineRelocation Result;
@@ -143,7 +143,7 @@ public:
     Result.AddrType = isExtSym;
     Result.NeedStub = true;
     Result.GOTRelative = GOTrelative;
-    Result.Target.ExtSym = es;
+    Result.Target.ExtSym = ES;
     return Result;
   }
 

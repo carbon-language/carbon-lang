@@ -53,12 +53,12 @@ struct Inliner : public CallGraphSCCPass {
   /// returned is greater than the current inline threshold, the call site is
   /// not inlined.
   ///
-  virtual int getInlineCost(CallSite cs) = 0;
+  virtual int getInlineCost(CallSite CS) = 0;
 
   // getInlineFudgeFactor - Return a > 1.0 factor if the inliner should use a
   // higher threshold to determine if the function call should be inlined.
   ///
-  virtual float getInlineFudgeFactor(CallSite cs) = 0;
+  virtual float getInlineFudgeFactor(CallSite CS) = 0;
 
 private:
   // InlineThreshold - Cache the value here for easy access.

@@ -451,11 +451,6 @@ ifdef UNIVERSAL
   DISABLE_AUTO_DEPENDENCIES=1
 endif
 
-# Solaris requires the following flags to compile
-ifeq ($(OS),SunOS)
-CXX.Flags += -D_POSIX_C_SOURCE=199506L -U_XOPEN_SOURCE 
-endif
-
 LD.Flags      += -L$(LibDir) -L$(LLVMLibDir) 
 CPP.BaseFlags += -D_GNU_SOURCE -D__STDC_LIMIT_MACROS
 # All -I flags should go here, so that they don't confuse llvm-config.

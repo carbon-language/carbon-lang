@@ -184,7 +184,7 @@ std::vector<BasicBlock *> CloneTrace(const std::vector<BasicBlock*> &origTrace);
 ///
 bool InlineFunction(CallInst *C, CallGraph *CG = 0, const TargetData *TD = 0);
 bool InlineFunction(InvokeInst *II, CallGraph *CG = 0, const TargetData *TD =0);
-bool InlineFunction(CallSite cs, CallGraph *CG = 0, const TargetData *TD = 0);
+bool InlineFunction(CallSite CS, CallGraph *CG = 0, const TargetData *TD = 0);
 
 } // End llvm namespace
 

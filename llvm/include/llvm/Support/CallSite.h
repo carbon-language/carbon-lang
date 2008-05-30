@@ -36,11 +36,11 @@ public:
   CallSite(CallInst *CI) : I(reinterpret_cast<Instruction*>(CI)) {}
   CallSite(InvokeInst *II) : I(reinterpret_cast<Instruction*>(II)) {}
   CallSite(Instruction *C);
-  CallSite(const CallSite &cs) : I(cs.I) {}
-  CallSite &operator=(const CallSite &cs) { I = cs.I; return *this; }
+  CallSite(const CallSite &CS) : I(CS.I) {}
+  CallSite &operator=(const CallSite &CS) { I = CS.I; return *this; }
 
-  bool operator==(const CallSite &cs) const { return I == cs.I; }
-  bool operator!=(const CallSite &cs) const { return I != cs.I; }
+  bool operator==(const CallSite &CS) const { return I == CS.I; }
+  bool operator!=(const CallSite &CS) const { return I != CS.I; }
   
   /// CallSite::get - This static method is sort of like a constructor.  It will
   /// create an appropriate call site for a Call or Invoke instruction, but it
@@ -148,8 +148,8 @@ public:
   bool arg_empty() const { return arg_end() == arg_begin(); }
   unsigned arg_size() const { return unsigned(arg_end() - arg_begin()); }
 
-  bool operator<(const CallSite &cs) const {
-    return getInstruction() < cs.getInstruction();
+  bool operator<(const CallSite &CS) const {
+    return getInstruction() < CS.getInstruction();
   }
 };
 

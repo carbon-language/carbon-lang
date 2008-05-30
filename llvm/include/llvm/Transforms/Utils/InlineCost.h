@@ -77,12 +77,12 @@ namespace llvm {
     // getInlineCost - The heuristic used to determine if we should inline the
     // function call or not.
     //
-    int getInlineCost(CallSite cs,
+    int getInlineCost(CallSite CS,
                       SmallPtrSet<const Function *, 16> &NeverInline);
 
     // getInlineFudgeFactor - Return a > 1.0 factor if the inliner should use a
     // higher threshold to determine if the function call should be inlined.
-    float getInlineFudgeFactor(CallSite cs);
+    float getInlineFudgeFactor(CallSite CS);
   };
 }
 

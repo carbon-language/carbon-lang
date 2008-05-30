@@ -70,7 +70,7 @@ namespace llvm {
   /// The type 'TargetMachineImpl' should provide a constructor with two 
   /// parameters:
   /// - const Module& M: the module that is being compiled:
-  /// - const std::string& fs: target-specific string describing target 
+  /// - const std::string& FS: target-specific string describing target 
   ///   flavour.
   
   template<class TargetMachineImpl>
@@ -86,8 +86,8 @@ namespace llvm {
     TargetMachineRegistry::entry Entry;
     TargetMachineRegistry::node Node;
     
-    static TargetMachine *Allocator(const Module &M, const std::string &fs) {
-      return new TargetMachineImpl(M, fs);
+    static TargetMachine *Allocator(const Module &M, const std::string &FS) {
+      return new TargetMachineImpl(M, FS);
     }
   };
 

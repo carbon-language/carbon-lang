@@ -216,8 +216,8 @@ public:
 
   /// addCalledFunction add a function to the list of functions called by this
   /// one.
-  void addCalledFunction(CallSite cs, CallGraphNode *M) {
-    CalledFunctions.push_back(std::make_pair(cs, M));
+  void addCalledFunction(CallSite CS, CallGraphNode *M) {
+    CalledFunctions.push_back(std::make_pair(CS, M));
   }
 
   /// removeCallEdgeTo - This method removes a *single* edge to the specified
@@ -228,7 +228,7 @@ public:
   /// removeCallEdgeFor - This method removes the edge in the node for the
   /// specified call site.  Note that this method takes linear time, so it
   /// should be used sparingly.
-  void removeCallEdgeFor(CallSite cs);
+  void removeCallEdgeFor(CallSite CS);
   
   /// removeAnyCallEdgeTo - This method removes any call edges from this node to
   /// the specified callee function.  This takes more time to execute than
