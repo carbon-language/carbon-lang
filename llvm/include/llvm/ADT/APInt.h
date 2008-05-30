@@ -898,7 +898,7 @@ public:
 
   /// Computes the minimum bit width for this APInt while considering it to be
   /// a signed (and probably negative) value. If the value is not negative, 
-  /// this function returns the same value as getActiveBits(). Otherwise, it
+  /// this function returns the same value as getActiveBits()+1. Otherwise, it
   /// returns the smallest bit width that will retain the negative value. For
   /// example, -1 can be written as 0b1 or 0xFFFFFFFFFF. 0b1 is shorter and so
   /// for -1, this function will always return 1.
@@ -1106,8 +1106,6 @@ public:
       return -(*this);
     return *this;
   }
-
-  /// @}
 
   /// @}
   /// @name Building-block Operations for APInt and APFloat
