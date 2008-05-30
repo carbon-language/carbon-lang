@@ -246,20 +246,15 @@ llvm::Constant *CodeGenModule::GetAddrOfFunctionDecl(const FunctionDecl *D,
   return Entry = NewFn;
 }
 
-static bool IsZeroElementArray(const llvm::Type *Ty) {
-  if (const llvm::ArrayType *ATy = dyn_cast<llvm::ArrayType>(Ty))
-    return ATy->getNumElements() == 0;
-  return false;
-}
-
 llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
                                                   bool isDefinition) {
   assert(D->hasGlobalStorage() && "Not a global variable");
-  
+  assert(!isDefinition && "This shouldn't be called for definitions!");
+
   // See if it is already in the map.
   llvm::Constant *&Entry = GlobalDeclMap[D];
   if (Entry) return Entry;
-  
+
   QualType ASTTy = D->getType();
   const llvm::Type *Ty = getTypes().ConvertTypeForMem(ASTTy);
 
@@ -273,53 +268,11 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
                                             0, D->getName(), &getModule(), 0,
                                             ASTTy.getAddressSpace());
   }
-  
-  // If the pointer type matches, just return it.
-  llvm::Type *PTy = llvm::PointerType::getUnqual(Ty);
-  if (PTy == GV->getType()) return Entry = GV;
-  
-  // If this isn't a definition, just return it casted to the right type.
-  if (!isDefinition)
-    return Entry = llvm::ConstantExpr::getBitCast(GV, PTy);
-  
-  
-  // Otherwise, we have a definition after a prototype with the wrong type.
-  // GV is the GlobalVariable* for the one with the wrong type, we must make a
-  /// new GlobalVariable* and update everything that used GV (a declaration)
-  // with the new GlobalVariable* (which will be a definition).
-  //
-  // This happens if there is a prototype for a global (e.g. "extern int x[];")
-  // and then a definition of a different type (e.g. "int x[10];").  Start by
-  // making a new global of the correct type, RAUW, then steal the name.
-  llvm::GlobalVariable *NewGV = 
-    new llvm::GlobalVariable(Ty, false, llvm::GlobalValue::ExternalLinkage,
-                             0, D->getName(), &getModule(), 0,
-                             ASTTy.getAddressSpace());
-  NewGV->takeName(GV);
-  
-  // Replace uses of GV with the globalvalue we will endow with a body.
-  llvm::Constant *NewPtrForOldDecl = 
-    llvm::ConstantExpr::getBitCast(NewGV, GV->getType());
-  GV->replaceAllUsesWith(NewPtrForOldDecl);
-  
-  // FIXME: Update the globaldeclmap for the previous decl of this name.  We
-  // really want a way to walk all of these, but we don't have it yet.  This
-  // is incredibly slow!
-  ReplaceMapValuesWith(GV, NewPtrForOldDecl);
-  
-  // Verify that GV was a declaration or something like x[] which turns into
-  // [0 x type].
-  assert((GV->isDeclaration() || 
-          IsZeroElementArray(GV->getType()->getElementType())) &&
-         "Shouldn't replace non-declaration");
-         
-  // Ok, delete the old global now, which is dead.
-  GV->eraseFromParent();
-  
-  // Return the new global which has the right type.
-  return Entry = NewGV;
-}
 
+  // Otherwise, it already exists; return the existing version
+  llvm::PointerType *PTy = llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
+  return Entry = llvm::ConstantExpr::getBitCast(GV, PTy);
+}
 
 void CodeGenModule::EmitObjCMethod(const ObjCMethodDecl *OMD) {
   // If this is not a prototype, emit the body.
@@ -449,23 +402,65 @@ void CodeGenModule::EmitGlobalVar(const VarDecl *D) {
 }
 
 void CodeGenModule::EmitGlobalVarInit(const VarDecl *D) {
-  // Get the global, forcing it to be a direct reference.
-  llvm::GlobalVariable *GV = 
-    cast<llvm::GlobalVariable>(GetAddrOfGlobalVar(D, true));
-  
-  // Convert the initializer, or use zero if appropriate.
+  assert(D->hasGlobalStorage() && "Not a global variable");
+
   llvm::Constant *Init = 0;
+  QualType ASTTy = D->getType();
+  const llvm::Type *VarTy = getTypes().ConvertTypeForMem(ASTTy);
+  const llvm::Type *VarPtrTy =
+      llvm::PointerType::get(VarTy, ASTTy.getAddressSpace());
+
   if (D->getInit() == 0) {
-    Init = llvm::Constant::getNullValue(GV->getType()->getElementType());
-  } else if (D->getType()->isIntegerType()) {
-    llvm::APSInt Value(static_cast<uint32_t>(
-      getContext().getTypeSize(D->getInit()->getType())));
-    if (D->getInit()->isIntegerConstantExpr(Value, Context))
-      Init = llvm::ConstantInt::get(Value);
+    Init = llvm::Constant::getNullValue(VarTy);
+  } else {
+    Init = EmitGlobalInit(D->getInit());
+  }
+  const llvm::Type* InitType = Init->getType();
+
+  llvm::GlobalVariable *GV = getModule().getGlobalVariable(D->getName(), true);
+
+  if (!GV) {
+    GV = new llvm::GlobalVariable(InitType, false, 
+                                  llvm::GlobalValue::ExternalLinkage,
+                                  0, D->getName(), &getModule(), 0,
+                                  ASTTy.getAddressSpace());
+  } else if (GV->getType()->getElementType() != InitType ||
+             GV->getType()->getAddressSpace() != ASTTy.getAddressSpace()) {
+    // We have a definition after a prototype with the wrong type.
+    // We must make a new GlobalVariable* and update everything that used OldGV
+    // (a declaration or tentative definition) with the new GlobalVariable*
+    // (which will be a definition).
+    //
+    // This happens if there is a prototype for a global (e.g. "extern int x[];")
+    // and then a definition of a different type (e.g. "int x[10];"). This also
+    // happens when an initializer has a different type from the type of the
+    // global (this happens with unions).
+
+    // Save the old global
+    llvm::GlobalVariable *OldGV = GV;
+
+    // Make a new global with the correct type
+    GV = new llvm::GlobalVariable(InitType, false, 
+                                  llvm::GlobalValue::ExternalLinkage,
+                                  0, D->getName(), &getModule(), 0,
+                                  ASTTy.getAddressSpace());
+    // Steal the name of the old global
+    GV->takeName(OldGV);
+
+    // Replace all uses of the old global with the new global
+    llvm::Constant *NewPtrForOldDecl = 
+        llvm::ConstantExpr::getBitCast(GV, OldGV->getType());
+    OldGV->replaceAllUsesWith(NewPtrForOldDecl);
+    // Make sure we don't keep around any stale references to globals
+    // FIXME: This is really slow; we need a better way to walk all
+    // the decls with the same name
+    ReplaceMapValuesWith(OldGV, NewPtrForOldDecl);
+
+    // Erase the old global, since it is no longer used.
+    OldGV->eraseFromParent();
   }
 
-  if (!Init)
-    Init = EmitGlobalInit(D->getInit());
+  GlobalDeclMap[D] = llvm::ConstantExpr::getBitCast(GV, VarPtrTy);
 
   if (const AnnotateAttr *AA = D->getAttr<AnnotateAttr>()) {
     SourceManager &SM = Context.getSourceManager();
@@ -473,8 +468,6 @@ void CodeGenModule::EmitGlobalVarInit(const VarDecl *D) {
                                    SM.getLogicalLineNumber(D->getLocation())));
   }
 
-  assert(GV->getType()->getElementType() == Init->getType() &&
-         "Initializer codegen type mismatch!");
   GV->setInitializer(Init);
 
   unsigned Align = Context.getTypeAlign(D->getType());
