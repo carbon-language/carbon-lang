@@ -27,7 +27,7 @@ def llvm_gcc_c : Tool<
  (output_suffix "bc"),
  (cmd_line (case
             (switch_on "E"),
-              "llvm-g++ -E -x c $INFILE -o $OUTFILE -emit-llvm",
+              "llvm-g++ -E -x c $INFILE -o $OUTFILE",
             (default),
               "llvm-g++ -c -x c $INFILE -o $OUTFILE -emit-llvm")),
  (switch_option "E", (stop_compilation),(output_suffix "i"),
@@ -41,7 +41,7 @@ def llvm_gcc_cpp : Tool<
  (output_suffix "bc"),
  (cmd_line (case
             (switch_on "E"),
-              "llvm-g++ -E -x c++ $INFILE -o $OUTFILE -emit-llvm",
+              "llvm-g++ -E -x c++ $INFILE -o $OUTFILE",
             (default),
               "llvm-g++ -c -x c++ $INFILE -o $OUTFILE -emit-llvm")),
  (switch_option "E", (stop_compilation), (output_suffix "i")),

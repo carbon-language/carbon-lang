@@ -790,12 +790,20 @@ void EmitForwardOptionPropertyHandlingCode (const ToolOptionDescription& D,
   }
 }
 
-// A helper function used by EmitOptionPropertyHandlingCode() that
-// tells us whether we should emit any code at all.
+// ToolOptionHasInterestingProperties - A helper function used by
+// EmitOptionPropertyHandlingCode() that tells us whether we should
+// emit any property handling code at all.
 bool ToolOptionHasInterestingProperties(const ToolOptionDescription& D) {
-  if (!D.isForward() && !D.isUnpackValues() && D.Props.empty())
-    return false;
-  return true;
+  bool ret = false;
+  for (OptionPropertyList::const_iterator B = D.Props.begin(),
+         E = D.Props.end(); B != E; ++B) {
+      const OptionProperty& OptProp = *B;
+      if (OptProp.first == OptionPropertyType::AppendCmd)
+        ret = true;
+    }
+  if (D.isForward() || D.isUnpackValues())
+    ret = true;
+  return ret;
 }
 
 /// EmitOptionPropertyHandlingCode - Helper function used by
