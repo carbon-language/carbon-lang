@@ -55,9 +55,9 @@ protected:
   ///
   void InitializeAliasAnalysis(Pass *P);
 
-  // getAnalysisUsage - All alias analysis implementations should invoke this
-  // directly (using AliasAnalysis::getAnalysisUsage(AU)) to make sure that
-  // TargetData is required by the pass.
+  /// getAnalysisUsage - All alias analysis implementations should invoke this
+  /// directly (using AliasAnalysis::getAnalysisUsage(AU)) to make sure that
+  /// TargetData is required by the pass.
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
 public:
