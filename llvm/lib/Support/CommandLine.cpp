@@ -120,7 +120,7 @@ static void GetOptionInfo(std::vector<Option*> &PositionalOpts,
       if (!OptionsMap.insert(std::pair<std::string,Option*>(OptionNames[i],
                                                             O)).second) {
         cerr << ProgramName << ": CommandLine Error: Argument '"
-             << OptionNames[0] << "' defined more than once!\n";
+             << OptionNames[i] << "' defined more than once!\n";
       }
     }
 
