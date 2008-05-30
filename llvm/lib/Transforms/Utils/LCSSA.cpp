@@ -253,8 +253,7 @@ Value *LCSSA::GetValueForBlock(DomTreeNode *BB, Instruction *OrigInst,
     return UndefValue::get(OrigInst->getType());
                                  
   // If we have already computed this value, return the previously computed val.
-  Value *&V = Phis[BB];
-  if (V) return V;
+  if (Phis.count(BB)) return Phis[BB];
 
   DomTreeNode *IDom = BB->getIDom();
 
@@ -272,7 +271,9 @@ Value *LCSSA::GetValueForBlock(DomTreeNode *BB, Instruction *OrigInst,
   if (!inLoop(IDom->getBlock())) {
     // Idom is not in the loop, we must still be "below" the exit block and must
     // be fully dominated by the value live in the idom.
-    return V = GetValueForBlock(IDom, OrigInst, Phis);
+    Value* val = GetValueForBlock(IDom, OrigInst, Phis);
+    Phis.insert(std::make_pair(BB, val));
+    return val;
   }
   
   BasicBlock *BBN = BB->getBlock();
@@ -282,7 +283,7 @@ Value *LCSSA::GetValueForBlock(DomTreeNode *BB, Instruction *OrigInst,
   PHINode *PN = PHINode::Create(OrigInst->getType(),
                                 OrigInst->getName() + ".lcssa", BBN->begin());
   PN->reserveOperandSpace(std::distance(pred_begin(BBN), pred_end(BBN)));
-  V = PN;
+  Phis.insert(std::make_pair(BB, PN));
                                  
   // Fill in the incoming values for the block.
   for (pred_iterator PI = pred_begin(BBN), E = pred_end(BBN); PI != E; ++PI)
