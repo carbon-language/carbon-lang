@@ -862,19 +862,36 @@ void EmitOptionPropertyHandlingCode (const ToolOptionDescription& D,
 /// SubstituteSpecialCommands - Perform string substitution for $CALL
 /// and $ENV. Helper function used by EmitCmdLineVecFill().
 std::string SubstituteSpecialCommands(const std::string& cmd) {
- if (cmd.find("$CALL(") == 0) {
-   if (cmd.size() == 6)
-     throw std::string("$CALL invocation: empty argument list!");
-   return std::string("hooks::") + (cmd.c_str() + 6) + "()";
- }
- else if (cmd.find("$ENV(") == 0) {
-   if (cmd.size() == 5)
-     throw std::string("$ENV invocation: empty argument list!");
-   return std::string("std::getenv(\"") + (cmd.c_str() + 5) + "\")";
- }
- else {
-   throw "Unknown special command: " + cmd;
- }
+  size_t cparen = cmd.find(")");
+  std::string ret;
+
+  if (cmd.find("$CALL(") == 0) {
+    if (cmd.size() == 6)
+      throw std::string("$CALL invocation: empty argument list!");
+
+    ret += "hooks::";
+    ret += std::string(cmd.begin() + 6, cmd.begin() + cparen);
+    ret += "()";
+  }
+  else if (cmd.find("$ENV(") == 0) {
+    if (cmd.size() == 5)
+      throw std::string("$ENV invocation: empty argument list!");
+
+    ret += "std::getenv(\"";
+    ret += std::string(cmd.begin() + 5, cmd.begin() + cparen);
+    ret += "\")";
+  }
+  else {
+    throw "Unknown special command: " + cmd;
+  }
+
+  if (cmd.begin() + cparen + 1 != cmd.end()) {
+    ret += " + std::string(\"";
+    ret += (cmd.c_str() + cparen + 1);
+    ret += "\")";
+  }
+
+  return ret;
 }
 
 /// EmitCmdLineVecFill - Emit code that fills in the command line
@@ -883,7 +900,7 @@ void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
                         bool Version, const char* IndentLevel,
                         std::ostream& O) {
   StrVector StrVec;
-  SplitString(InitPtrToString(CmdLine), StrVec, ") ");
+  SplitString(InitPtrToString(CmdLine), StrVec);
   if (StrVec.empty())
     throw "Tool " + ToolName + " has empty command line!";
 
@@ -906,7 +923,8 @@ void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
         O << "vec.push_back(outFile.toString());\n";
       }
       else {
-        O << "vec.push_back(" << SubstituteSpecialCommands(cmd) << ");\n";
+        O << "vec.push_back(" << SubstituteSpecialCommands(cmd);
+        O << ");\n";
       }
     }
     else {
@@ -1322,14 +1340,15 @@ void EmitPopulateCompilationGraph (Record* CompilationGraph,
 /// function used by FillInHookNames().
 void ExtractHookNames(const Init* CmdLine, StrVector& HookNames) {
   StrVector cmds;
-  llvm::SplitString(InitPtrToString(CmdLine), cmds, ") ");
+  llvm::SplitString(InitPtrToString(CmdLine), cmds);
   for (StrVector::const_iterator B = cmds.begin(), E = cmds.end();
        B != E; ++B) {
     const std::string& cmd = *B;
     if (cmd.find("$CALL(") == 0) {
       if (cmd.size() == 6)
         throw std::string("$CALL invocation: empty argument list!");
-      HookNames.push_back(std::string(cmd.c_str() + 6));
+      HookNames.push_back(std::string(cmd.begin() + 6,
+                                      cmd.begin() + cmd.find(")")));
     }
   }
 }
