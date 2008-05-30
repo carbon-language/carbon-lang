@@ -411,7 +411,18 @@ void CodeGenModule::EmitGlobalVarInit(const VarDecl *D) {
       llvm::PointerType::get(VarTy, ASTTy.getAddressSpace());
 
   if (D->getInit() == 0) {
-    Init = llvm::Constant::getNullValue(VarTy);
+    // This is a tentative definition; tentative definitions are
+    // implicitly initialized with { 0 }
+    const llvm::Type* InitTy;
+    if (ASTTy->isIncompleteArrayType()) {
+      // An incomplete array is normally [ TYPE x 0 ], but we need
+      // to fix it to [ TYPE x 1 ].
+      const llvm::ArrayType* ATy = cast<llvm::ArrayType>(VarTy);
+      InitTy = llvm::ArrayType::get(ATy->getElementType(), 1);
+    } else {
+      InitTy = VarTy;
+    }
+    Init = llvm::Constant::getNullValue(InitTy);
   } else {
     Init = EmitGlobalInit(D->getInit());
   }
@@ -435,6 +446,10 @@ void CodeGenModule::EmitGlobalVarInit(const VarDecl *D) {
     // and then a definition of a different type (e.g. "int x[10];"). This also
     // happens when an initializer has a different type from the type of the
     // global (this happens with unions).
+    //
+    // FIXME: This also ends up happening if there's a definition followed by
+    // a tentative definition!  (Although Sema rejects that construct
+    // at the moment.)
 
     // Save the old global
     llvm::GlobalVariable *OldGV = GV;
@@ -470,7 +485,12 @@ void CodeGenModule::EmitGlobalVarInit(const VarDecl *D) {
 
   GV->setInitializer(Init);
 
-  unsigned Align = Context.getTypeAlign(D->getType());
+  // FIXME: This is silly; getTypeAlign should just work for incomplete arrays
+  unsigned Align;
+  if (const IncompleteArrayType* IAT = D->getType()->getAsIncompleteArrayType())
+    Align = Context.getTypeAlign(IAT->getElementType());
+  else
+    Align = Context.getTypeAlign(D->getType());
   if (const AlignedAttr* AA = D->getAttr<AlignedAttr>()) {
     Align = std::max(Align, AA->getAlignment());
   }
