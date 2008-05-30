@@ -39,7 +39,7 @@ EnableSinking("enable-sinking", cl::init(false), cl::Hidden,
               cl::desc("Perform sinking on machine code"));
 static cl::opt<bool>
 AlignLoops("align-loops", cl::init(true), cl::Hidden,
-              cl::desc("Align loop headers"));
+           cl::desc("Align loop headers"));
 static cl::opt<bool>
 PerformLICM("machine-licm",
             cl::init(false), cl::Hidden,
