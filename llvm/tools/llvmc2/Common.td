@@ -1,4 +1,4 @@
-//===- Tools.td - Common definitions for LLVMCC  -----------*- tablegen -*-===//
+//===- Common.td - Common definitions for LLVMCC  ----------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

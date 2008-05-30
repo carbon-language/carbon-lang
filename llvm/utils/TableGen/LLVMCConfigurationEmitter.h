@@ -1,4 +1,4 @@
-//===- LLVMCConfigurationEmitter.cpp - Generate LLVMCC config -------------===//
+//===- LLVMCConfigurationEmitter.cpp - Generate LLVMCC config ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

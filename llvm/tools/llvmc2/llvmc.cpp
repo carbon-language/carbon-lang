@@ -1,4 +1,4 @@
-//===--- llvmc.cpp - The LLVM Compiler Driver ------------------*- C++ -*-===//
+//===--- llvmc.cpp - The LLVM Compiler Driver -------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

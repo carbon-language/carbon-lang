@@ -1,4 +1,4 @@
-//===- Example.td - LLVMCC toolchain descriptions  ---------*- tablegen -*-===//
+//===- Graph.td - LLVMCC toolchain descriptions ------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

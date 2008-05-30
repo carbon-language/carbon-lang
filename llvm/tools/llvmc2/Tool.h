@@ -1,4 +1,4 @@
-//===--- Tools.h - The LLVM Compiler Driver ---------------------*- C++ -*-===//
+//===--- Tool.h - The LLVM Compiler Driver ----------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
