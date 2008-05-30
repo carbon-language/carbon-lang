@@ -405,6 +405,8 @@ Expr::isLvalueResult Expr::isLvalue() const {
     return LV_Valid;
   case ObjCIvarRefExprClass: // ObjC instance variables are lvalues.
     return LV_Valid;
+  case ObjCPropertyRefExprClass: // FIXME: check if read-only property.
+    return LV_Valid;
   case PreDefinedExprClass:
     return LV_Valid;
   case CXXDefaultArgExprClass:
