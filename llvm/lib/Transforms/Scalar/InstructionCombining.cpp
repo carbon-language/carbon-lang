@@ -2551,9 +2551,6 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
-  if (I.getType() == Type::Int1Ty)
-    return BinaryOperator::CreateXor(LHS, RHS);
-
   if (Constant *RHSC = dyn_cast<Constant>(RHS)) {
     // X + undef -> undef
     if (isa<UndefValue>(RHS))
@@ -2637,8 +2634,11 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     }
   }
 
+  if (I.getType() == Type::Int1Ty)
+    return BinaryOperator::CreateXor(LHS, RHS);
+
   // X + X --> X << 1
-  if (I.getType()->isInteger() && I.getType() != Type::Int1Ty) {
+  if (I.getType()->isInteger()) {
     if (Instruction *Result = AssociativeOpt(I, AddRHS(RHS))) return Result;
 
     if (Instruction *RHSI = dyn_cast<Instruction>(RHS)) {
@@ -2976,6 +2976,9 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         return NV;
   }
 
+  if (I.getType() == Type::Int1Ty)
+    return BinaryOperator::CreateXor(Op0, Op1);
+
   if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1)) {
     if (Op1I->getOpcode() == Instruction::Add &&
         !Op0->getType()->isFPOrFPVector()) {
@@ -3170,12 +3173,15 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
     if (Value *Op1v = dyn_castNegVal(I.getOperand(1)))
       return BinaryOperator::CreateMul(Op0v, Op1v);
 
+  if (I.getType() == Type::Int1Ty)
+    return BinaryOperator::CreateAnd(Op0, I.getOperand(1));
+
   // If one of the operands of the multiply is a cast from a boolean value, then
   // we know the bool is either zero or one, so this is a 'masking' multiply.
   // See if we can simplify things based on how the boolean was originally
   // formed.
   CastInst *BoolCast = 0;
-  if (ZExtInst *CI = dyn_cast<ZExtInst>(I.getOperand(0)))
+  if (ZExtInst *CI = dyn_cast<ZExtInst>(Op0))
     if (CI->getOperand(0)->getType() == Type::Int1Ty)
       BoolCast = CI;
   if (!BoolCast)
@@ -3330,6 +3336,10 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
   if (ConstantInt *LHS = dyn_cast<ConstantInt>(Op0))
     if (LHS->equalsInt(0))
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
+
+  // It can't be division by zero, hence it must be division by one.
+  if (I.getType() == Type::Int1Ty)
+    return ReplaceInstUsesWith(I, Op0);
 
   return 0;
 }
