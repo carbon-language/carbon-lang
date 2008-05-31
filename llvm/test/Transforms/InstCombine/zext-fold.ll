@@ -1,6 +1,5 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {zext } | count 1
 ; PR1570
-; XFAIL: *
 
 define i32 @test2(float %X, float %Y) {
 entry:

@@ -5013,6 +5013,25 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
                             FCI->getOperand(0), FCI->getOperand(1));
     }
 
+    // fold (xor(zext(cmp)), 1) and (xor(sext(cmp)), -1) to ext(!cmp).
+    if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
+      if (CmpInst *CI = dyn_cast<CmpInst>(Op0C->getOperand(0))) {
+        if (CI->hasOneUse() && Op0C->hasOneUse()) {
+          Instruction::CastOps Opcode = Op0C->getOpcode();
+          if (Opcode == Instruction::ZExt || Opcode == Instruction::SExt) {
+            if (RHS == ConstantExpr::getCast(Opcode, ConstantInt::getTrue(),
+                                             Op0C->getDestTy())) {
+              Instruction *NewCI = InsertNewInstBefore(CmpInst::Create(
+                                     CI->getOpcode(), CI->getInversePredicate(),
+                                     CI->getOperand(0), CI->getOperand(1)), I);
+              NewCI->takeName(CI);
+              return CastInst::Create(Opcode, NewCI, Op0C->getType());
+            }
+          }
+        }
+      }
+    }
+
     if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
       // ~(c-X) == X-c-1 == X+(-c-1)
       if (Op0I->getOpcode() == Instruction::Sub && RHS->isAllOnesValue())
@@ -5206,6 +5225,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         }
       }
   }
+
   return Changed ? &I : 0;
 }
 
