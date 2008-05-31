@@ -738,16 +738,23 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
       PushValueAndType(I.getOperand(i), InstID, Vals, VE);
     break;
-  case Instruction::ExtractValue:
+  case Instruction::ExtractValue: {
     Code = bitc::FUNC_CODE_INST_EXTRACTVAL;
-    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
-      PushValueAndType(I.getOperand(i), InstID, Vals, VE);
+    PushValueAndType(I.getOperand(0), InstID, Vals, VE);
+    const ExtractValueInst *EVI = cast<ExtractValueInst>(&I);
+    for (const unsigned *i = EVI->idx_begin(), *e = EVI->idx_end(); i != e; ++i)
+      Vals.push_back(*i);
     break;
-  case Instruction::InsertValue:
+  }
+  case Instruction::InsertValue: {
     Code = bitc::FUNC_CODE_INST_INSERTVAL;
-    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
-      PushValueAndType(I.getOperand(i), InstID, Vals, VE);
+    PushValueAndType(I.getOperand(0), InstID, Vals, VE);
+    PushValueAndType(I.getOperand(1), InstID, Vals, VE);
+    const InsertValueInst *IVI = cast<InsertValueInst>(&I);
+    for (const unsigned *i = IVI->idx_begin(), *e = IVI->idx_end(); i != e; ++i)
+      Vals.push_back(*i);
     break;
+  }
   case Instruction::Select:
     Code = bitc::FUNC_CODE_INST_SELECT;
     PushValueAndType(I.getOperand(1), InstID, Vals, VE);

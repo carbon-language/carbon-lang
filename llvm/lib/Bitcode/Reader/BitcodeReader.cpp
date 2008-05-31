@@ -774,7 +774,7 @@ bool BitcodeReader::ParseConstants() {
                                     // CE_EXTRACTVAL: [opty, opval, n x indices]
       const Type *AggTy = getTypeByID(Record[0]);
       if (!AggTy || !AggTy->isAggregateType())
-        return Error("Invalid CE_INSERTVAL record");
+        return Error("Invalid CE_EXTRACTVAL record");
       Constant *Agg = ValueList.getConstantFwdRef(Record[1], AggTy);
       SmallVector<unsigned, 4> Indices;
       for (unsigned i = 2, e = Record.size(); i != e; ++i) {
@@ -796,7 +796,7 @@ bool BitcodeReader::ParseConstants() {
         return Error("Invalid CE_INSERTVAL record");
       Constant *Agg = ValueList.getConstantFwdRef(Record[1], AggTy);
       const Type *ValTy = getTypeByID(Record[2]);
-      Constant *Val = ValueList.getConstantFwdRef(Record[2], ValTy);
+      Constant *Val = ValueList.getConstantFwdRef(Record[3], ValTy);
       SmallVector<unsigned, 4> Indices;
       for (unsigned i = 4, e = Record.size(); i != e; ++i) {
         uint64_t Index = Record[i];
