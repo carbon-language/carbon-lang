@@ -19,3 +19,26 @@
   return self;
 }
 @end
+
+@interface DTFilterOutputStream2
+- nextOutputStream;
+@end
+
+@implementation DTFilterOutputStream2 // expected-warning {{incomplete implementation}} expected-warning {{method definition for 'nextOutputStream' not found}}
+- (id)initWithNextOutputStream:(id <DTOutputStreams>) outputStream {
+  id <DTOutputStreams> nextOutputStream = [self nextOutputStream];
+  // GCC warns about both of these.
+  self = nextOutputStream; // expected-error {{incompatible type assigning 'id<DTOutputStreams>', expected 'DTFilterOutputStream2 *'}}
+  return nextOutputStream ? nextOutputStream : self; // expected-error {{incompatible operand types ('id<DTOutputStreams>' and 'DTFilterOutputStream2 *')}}
+}
+@end
+
+// No @interface declaration for DTFilterOutputStream3
+@implementation DTFilterOutputStream3 // expected-warning {{cannot find interface declaration for 'DTFilterOutputStream3'}}
+- (id)initWithNextOutputStream:(id <DTOutputStreams>) outputStream {
+  id <DTOutputStreams> nextOutputStream = [self nextOutputStream];
+  // GCC warns about both of these as well (no errors).
+  self = nextOutputStream; // expected-error {{incompatible type assigning 'id<DTOutputStreams>', expected 'DTFilterOutputStream3 *'}}
+  return nextOutputStream ? nextOutputStream : self; // expected-error {{incompatible operand types ('id<DTOutputStreams>' and 'DTFilterOutputStream3 *')}}
+}
+@end
