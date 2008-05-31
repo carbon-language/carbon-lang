@@ -1529,7 +1529,7 @@ class ExtractValueInst : public Instruction {
   ExtractValueInst(Value *Agg, unsigned Idx,
                     const std::string &Name, BasicBlock *InsertAtEnd);
 public:
-  // allocate space for exactly two operands
+  // allocate space for exactly one operand
   void *operator new(size_t s) {
     return User::operator new(s, 1);
   }
