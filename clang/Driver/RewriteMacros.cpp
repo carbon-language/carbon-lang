@@ -24,9 +24,15 @@ using namespace clang;
 /// isSameToken - Return true if the two specified tokens start have the same
 /// content.
 static bool isSameToken(Token &RawTok, Token &PPTok) {
-  if (PPTok.getKind() == RawTok.getKind())
+  // If two tokens have the same kind and the same identifier info, they are
+  // obviously the same.
+  if (PPTok.getKind() == RawTok.getKind() &&
+      PPTok.getIdentifierInfo() == RawTok.getIdentifierInfo())
     return true;
   
+  // Otherwise, if they are different but have the same identifier info, they
+  // are also considered to be the same.  This allows keywords and raw lexed
+  // identifiers with the same name to be treated the same.
   if (PPTok.getIdentifierInfo() &&
       PPTok.getIdentifierInfo() == RawTok.getIdentifierInfo())
     return true;
