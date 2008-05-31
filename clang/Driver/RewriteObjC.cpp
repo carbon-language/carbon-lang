@@ -1801,6 +1801,17 @@ Stmt *RewriteObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   QualType strType = getConstantStringStructType();
 
   std::string S = "__NSConstantStringImpl_";
+
+  std::string tmpName = InFileName;
+  unsigned i;
+  for (i=0; i < tmpName.length(); i++) {
+    char c = tmpName.at(i);
+    // replace any non alphanumeric characters with '_'.
+    if (!isalpha(c) && (c < '0' || c > '9'))
+      tmpName[i] = '_';
+  }
+  S += tmpName;
+  S += "_";
   S += utostr(NumObjCStringLiterals++);
 
   Preamble += "static __NSConstantStringImpl " + S;
