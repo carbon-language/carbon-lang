@@ -161,6 +161,7 @@ namespace {
     ObjCInterfaceDecl *isSuperReceiver(Expr *recExpr);
     QualType getSuperStructType();
     QualType getConstantStringStructType();
+    bool BufferContainsPPDirectives(const char *startBuf, const char *endBuf);
     
     // Expression Rewriting.
     Stmt *RewriteFunctionBodyOrGlobalInitializer(Stmt *S);
@@ -2247,6 +2248,32 @@ Stmt *RewriteObjC::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
   
 }
 
+bool RewriteObjC::BufferContainsPPDirectives(const char *startBuf, 
+                                             const char *endBuf) {
+  while (startBuf < endBuf) {
+    if (*startBuf == '#') {
+      // Skip whitespace.
+      for (++startBuf; startBuf[0] == ' ' || startBuf[0] == '\t'; ++startBuf)
+        ;
+      if (!strncmp(startBuf, "if", strlen("if")) ||
+          !strncmp(startBuf, "ifdef", strlen("ifdef")) ||
+          !strncmp(startBuf, "ifndef", strlen("ifndef")) ||
+          !strncmp(startBuf, "define", strlen("define")) ||
+          !strncmp(startBuf, "undef", strlen("undef")) ||
+          !strncmp(startBuf, "else", strlen("else")) ||
+          !strncmp(startBuf, "elif", strlen("elif")) ||
+          !strncmp(startBuf, "endif", strlen("endif")) ||
+          !strncmp(startBuf, "pragma", strlen("pragma")) ||
+          !strncmp(startBuf, "include", strlen("include")) ||
+          !strncmp(startBuf, "import", strlen("import")) ||
+          !strncmp(startBuf, "include_next", strlen("include_next")))
+        return true;
+    }
+    startBuf++;
+  }
+  return false;
+}
+
 /// SynthesizeObjCInternalStruct - Rewrite one internal struct corresponding to
 /// an objective-c class with ivars.
 void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
@@ -2263,6 +2290,7 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
   
   const char *startBuf = SM->getCharacterData(LocStart);
   const char *endBuf = SM->getCharacterData(LocEnd);
+  
   // If no ivars and no root or if its root, directly or indirectly,
   // have no ivars (thus not synthesized) then no need to synthesize this class.
   if ((CDecl->isForwardDecl() || NumIvars == 0) &&
@@ -2283,9 +2311,38 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
     const char *cursor = strchr(startBuf, '{');
     assert((cursor && endBuf) 
            && "SynthesizeObjCInternalStruct - malformed @interface");
-    
-    // rewrite the original header *without* disturbing the '{'
-    ReplaceText(LocStart, cursor-startBuf-1, Result.c_str(), Result.size());
+    // If the buffer contains preprocessor directives, we do more fine-grained
+    // rewrites. This is intended to fix code that looks like (which occurs in
+    // NSURL.h, for example):
+    //
+    // #ifdef XYZ
+    // @interface Foo : NSObject
+    // #else
+    // @interface FooBar : NSObject
+    // #endif
+    // {
+    //    int i;
+    // }
+    // @end
+    //
+    // This clause is segregated to avoid breaking the common case.
+    if (BufferContainsPPDirectives(startBuf, cursor)) {
+      SourceLocation L = RCDecl ? CDecl->getSuperClassLoc() : 
+                                  CDecl->getClassLoc();
+      const char *endHeader = SM->getCharacterData(L);
+      endHeader += Lexer::MeasureTokenLength(L, *SM);
+
+      if (CDecl->getNumIntfRefProtocols()) {
+        // advance to the end of the referenced protocols.
+        while (endHeader < cursor && *endHeader != '>') endHeader++;
+        endHeader++;
+      }
+      // rewrite the original header
+      ReplaceText(LocStart, endHeader-startBuf, Result.c_str(), Result.size());
+    } else {
+      // rewrite the original header *without* disturbing the '{'
+      ReplaceText(LocStart, cursor-startBuf-1, Result.c_str(), Result.size());
+    }
     if (RCDecl && ObjCSynthesizedStructs.count(RCDecl)) {
       Result = "\n    struct ";
       Result += RCDecl->getName();
