@@ -870,13 +870,23 @@ static void AddEnvVarPaths(const char *Name, HeaderSearch &Headers) {
 /// HeaderSearch object.
 static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
                                    FileManager &FM, const LangOptions &Lang) {
-  // Handle -F... options.
-  for (unsigned i = 0, e = F_dirs.size(); i != e; ++i)
-    AddPath(F_dirs[i], Angled, false, true, true, Headers);
+  // Handle -I... and -F... options, walking the lists in parallel.
+  unsigned Iidx = 0, Fidx = 0;
+  while (Iidx < I_dirs.size() && Fidx < F_dirs.size()) {
+    if (I_dirs.getPosition(Iidx) < F_dirs.getPosition(Fidx)) {
+      AddPath(I_dirs[Iidx], Angled, false, true, false, Headers);
+      ++Iidx;
+    } else {
+      AddPath(F_dirs[Fidx], Angled, false, true, true, Headers);
+      ++Fidx;
+    }
+  }
   
-  // Handle -I... options.
-  for (unsigned i = 0, e = I_dirs.size(); i != e; ++i)
-    AddPath(I_dirs[i], Angled, false, true, false, Headers);
+  // Consume what's left from whatever list was longer.
+  for (; Iidx != I_dirs.size(); ++Iidx)
+    AddPath(I_dirs[Iidx], Angled, false, true, false, Headers);
+  for (; Fidx != F_dirs.size(); ++Fidx)
+    AddPath(F_dirs[Fidx], Angled, false, true, true, Headers);
   
   // Handle -idirafter... options.
   for (unsigned i = 0, e = idirafter_dirs.size(); i != e; ++i)
