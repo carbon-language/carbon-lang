@@ -199,11 +199,12 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
   
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
   Expr *RExpr = static_cast<Expr *>(receiver);
-  QualType receiverType = RExpr->getType().getCanonicalType();
+  QualType receiverType;
   QualType returnType;
   ObjCMethodDecl *Method = 0;
+
+  receiverType = RExpr->getType().getCanonicalType().getUnqualifiedType();
   
-  // FIXME: This code is not stripping off type qualifiers! Should it?
   if (receiverType == Context.getObjCIdType().getCanonicalType() ||
       receiverType == Context.getObjCClassType().getCanonicalType()) {
     Method = InstanceMethodPool[Sel].Method;
