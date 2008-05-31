@@ -1520,9 +1520,6 @@ static void scanToNextArgument(const char *&argRef) {
 
 bool RewriteObjC::needToScanForQualifiers(QualType T) {
   
-  if (T == Context->getObjCIdType())
-    return true;
-    
   if (T->isObjCQualifiedIdType())
     return true;
   
@@ -1561,7 +1558,7 @@ void RewriteObjC::RewriteObjCQualifiedInterfaceTypes(Decl *Dcl) {
     
     const char *endBuf = SM->getCharacterData(Loc);
     const char *startBuf = endBuf;
-    while (*startBuf != ';' && startBuf != MainFileStart)
+    while (*startBuf != ';' && *startBuf != '<' && startBuf != MainFileStart)
       startBuf--; // scan backward (from the decl location) for return type.
     const char *startRef = 0, *endRef = 0;
     if (scanForProtocolRefs(startBuf, endBuf, startRef, endRef)) {
