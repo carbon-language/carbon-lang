@@ -2497,10 +2497,9 @@ bool CmpInst::isEquality() {
 }
 
 
-ICmpInst::Predicate ICmpInst::getInversePredicate(Predicate pred) {
+CmpInst::Predicate CmpInst::getInversePredicate(Predicate pred) {
   switch (pred) {
-    default:
-      assert(!"Unknown icmp predicate!");
+    default: assert(!"Unknown cmp predicate!");
     case ICMP_EQ: return ICMP_NE;
     case ICMP_NE: return ICMP_EQ;
     case ICMP_UGT: return ICMP_ULE;
@@ -2511,22 +2510,23 @@ ICmpInst::Predicate ICmpInst::getInversePredicate(Predicate pred) {
     case ICMP_SLT: return ICMP_SGE;
     case ICMP_SGE: return ICMP_SLT;
     case ICMP_SLE: return ICMP_SGT;
-  }
-}
 
-ICmpInst::Predicate ICmpInst::getSwappedPredicate(Predicate pred) {
-  switch (pred) {
-    default: assert(! "Unknown icmp predicate!");
-    case ICMP_EQ: case ICMP_NE:
-      return pred;
-    case ICMP_SGT: return ICMP_SLT;
-    case ICMP_SLT: return ICMP_SGT;
-    case ICMP_SGE: return ICMP_SLE;
-    case ICMP_SLE: return ICMP_SGE;
-    case ICMP_UGT: return ICMP_ULT;
-    case ICMP_ULT: return ICMP_UGT;
-    case ICMP_UGE: return ICMP_ULE;
-    case ICMP_ULE: return ICMP_UGE;
+    case FCMP_OEQ: return FCMP_UNE;
+    case FCMP_ONE: return FCMP_UEQ;
+    case FCMP_OGT: return FCMP_ULE;
+    case FCMP_OLT: return FCMP_UGE;
+    case FCMP_OGE: return FCMP_ULT;
+    case FCMP_OLE: return FCMP_UGT;
+    case FCMP_UEQ: return FCMP_ONE;
+    case FCMP_UNE: return FCMP_OEQ;
+    case FCMP_UGT: return FCMP_OLE;
+    case FCMP_ULT: return FCMP_OGE;
+    case FCMP_UGE: return FCMP_OLT;
+    case FCMP_ULE: return FCMP_OGT;
+    case FCMP_ORD: return FCMP_UNO;
+    case FCMP_UNO: return FCMP_ORD;
+    case FCMP_TRUE: return FCMP_FALSE;
+    case FCMP_FALSE: return FCMP_TRUE;
   }
 }
 
@@ -2602,32 +2602,20 @@ ICmpInst::makeConstantRange(Predicate pred, const APInt &C) {
   return ConstantRange(Lower, Upper);
 }
 
-FCmpInst::Predicate FCmpInst::getInversePredicate(Predicate pred) {
+CmpInst::Predicate CmpInst::getSwappedPredicate(Predicate pred) {
   switch (pred) {
-    default:
-      assert(!"Unknown icmp predicate!");
-    case FCMP_OEQ: return FCMP_UNE;
-    case FCMP_ONE: return FCMP_UEQ;
-    case FCMP_OGT: return FCMP_ULE;
-    case FCMP_OLT: return FCMP_UGE;
-    case FCMP_OGE: return FCMP_ULT;
-    case FCMP_OLE: return FCMP_UGT;
-    case FCMP_UEQ: return FCMP_ONE;
-    case FCMP_UNE: return FCMP_OEQ;
-    case FCMP_UGT: return FCMP_OLE;
-    case FCMP_ULT: return FCMP_OGE;
-    case FCMP_UGE: return FCMP_OLT;
-    case FCMP_ULE: return FCMP_OGT;
-    case FCMP_ORD: return FCMP_UNO;
-    case FCMP_UNO: return FCMP_ORD;
-    case FCMP_TRUE: return FCMP_FALSE;
-    case FCMP_FALSE: return FCMP_TRUE;
-  }
-}
-
-FCmpInst::Predicate FCmpInst::getSwappedPredicate(Predicate pred) {
-  switch (pred) {
-    default: assert(!"Unknown fcmp predicate!");
+    default: assert(!"Unknown cmp predicate!");
+    case ICMP_EQ: case ICMP_NE:
+      return pred;
+    case ICMP_SGT: return ICMP_SLT;
+    case ICMP_SLT: return ICMP_SGT;
+    case ICMP_SGE: return ICMP_SLE;
+    case ICMP_SLE: return ICMP_SGE;
+    case ICMP_UGT: return ICMP_ULT;
+    case ICMP_ULT: return ICMP_UGT;
+    case ICMP_UGE: return ICMP_ULE;
+    case ICMP_ULE: return ICMP_UGE;
+  
     case FCMP_FALSE: case FCMP_TRUE:
     case FCMP_OEQ: case FCMP_ONE:
     case FCMP_UEQ: case FCMP_UNE:

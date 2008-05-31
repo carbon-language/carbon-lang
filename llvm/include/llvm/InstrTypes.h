@@ -656,16 +656,40 @@ public:
     return static_cast<OtherOps>(Instruction::getOpcode());
   }
 
-  /// The predicate for CmpInst is defined by the subclasses but stored in 
-  /// the SubclassData field (see Value.h).  We allow it to be fetched here
-  /// as the predicate but there is no enum type for it, just the raw unsigned 
-  /// short. This facilitates comparison of CmpInst instances without delving
-  /// into the subclasses since predicate values are distinct between the
-  /// CmpInst subclasses.
   /// @brief Return the predicate for this instruction.
-  unsigned short getPredicate() const {
-    return SubclassData;
+  Predicate getPredicate() const { return Predicate(SubclassData); }
+
+  /// @brief Set the predicate for this instruction to the specified value.
+  void setPredicate(Predicate P) { SubclassData = P; }
+  
+  /// For example, EQ -> NE, UGT -> ULE, SLT -> SGE,
+  ///              OEQ -> UNE, UGT -> OLE, OLT -> UGE, etc.
+  /// @returns the inverse predicate for the instruction's current predicate. 
+  /// @brief Return the inverse of the instruction's predicate.
+  Predicate getInversePredicate() const {
+    return getInversePredicate(getPredicate());
   }
+
+  /// For example, EQ -> NE, UGT -> ULE, SLT -> SGE,
+  ///              OEQ -> UNE, UGT -> OLE, OLT -> UGE, etc.
+  /// @returns the inverse predicate for predicate provided in \p pred. 
+  /// @brief Return the inverse of a given predicate
+  static Predicate getInversePredicate(Predicate pred);
+
+  /// For example, EQ->EQ, SLE->SGE, ULT->UGT,
+  ///              OEQ->OEQ, ULE->UGE, OLT->OGT, etc.
+  /// @returns the predicate that would be the result of exchanging the two 
+  /// operands of the CmpInst instruction without changing the result 
+  /// produced.  
+  /// @brief Return the predicate as if the operands were swapped
+  Predicate getSwappedPredicate() const {
+    return getSwappedPredicate(getPredicate());
+  }
+
+  /// This is a static version that you can use without an instruction 
+  /// available.
+  /// @brief Return the predicate as if the operands were swapped.
+  static Predicate getSwappedPredicate(Predicate pred);
 
   /// @brief Provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
