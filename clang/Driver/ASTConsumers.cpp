@@ -877,9 +877,8 @@ public:
     
   virtual ~ASTSerializer() { delete TU; }
   
-  virtual void Initialize(ASTContext &Context) {
-    if (!TU) TU = new TranslationUnit(Context, lang);
-    TU->SetOwnsDecls(false);
+  virtual void InitializeTU(TranslationUnit &TU) {
+    TU.SetOwnsDecls(false);
   }
   
   virtual void HandleTopLevelDecl(Decl *D) {

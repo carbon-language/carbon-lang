@@ -46,7 +46,7 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer, bool PrintStats) {
   // Initialize the parser.
   P.Initialize();
   
-  Consumer->Initialize(Context);
+  Consumer->InitializeTU(TU);
   
   Parser::DeclTy *ADecl;
   

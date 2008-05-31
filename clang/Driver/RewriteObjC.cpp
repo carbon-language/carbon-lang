@@ -15,6 +15,7 @@
 #include "clang/Rewrite/Rewriter.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/AST/TranslationUnit.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/Diagnostic.h"
@@ -94,7 +95,12 @@ namespace {
     
     static const int OBJC_ABI_VERSION =7 ;
   public:
-    void Initialize(ASTContext &context);
+    virtual void Initialize(ASTContext &context);
+
+    virtual void InitializeTU(TranslationUnit &TU) {
+      TU.SetOwnsDecls(false);
+      Initialize(TU.getContext());
+    }
     
 
     // Top Level Driver code.

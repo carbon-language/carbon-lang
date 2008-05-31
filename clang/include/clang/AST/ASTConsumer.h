@@ -16,6 +16,7 @@
 
 namespace clang {
   class ASTContext;
+  class TranslationUnit;
   class Decl;
   class TagDecl;
   class HandleTagDeclDefinition;
@@ -30,6 +31,8 @@ public:
   /// Initialize - This is called to initialize the consumer, providing the
   /// ASTContext.
   virtual void Initialize(ASTContext &Context) {}
+  
+  virtual void InitializeTU(TranslationUnit& TU);
   
   /// HandleTopLevelDecl - Handle the specified top-level declaration.  This is
   ///  called by HandleTopLevelDeclaration to process every top-level Decl*.
