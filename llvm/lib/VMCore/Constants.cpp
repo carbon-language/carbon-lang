@@ -551,7 +551,7 @@ public:
     Op<0>() = Agg;
   }
 
-  /// Indicies - These identify which value to extract.
+  /// Indices - These identify which value to extract.
   const SmallVector<unsigned, 4> Indices;
 
   /// Transparently provide more efficient getOperand methods.
@@ -577,7 +577,7 @@ public:
     Op<1>() = Val;
   }
 
-  /// Indicies - These identify the position for the insertion.
+  /// Indices - These identify the position for the insertion.
   const SmallVector<unsigned, 4> Indices;
 
   /// Transparently provide more efficient getOperand methods.
@@ -2339,7 +2339,7 @@ Constant *ConstantExpr::getExtractValueTy(const Type *ReqTy, Constant *Agg,
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> ArgVec;
   ArgVec.push_back(Agg);
-  SmallVector<unsigned, 4> Indices;
+  SmallVector<unsigned, 4> Indices(Idxs, Idxs + NumIdx);
   const ExprMapKeyType Key(Instruction::ExtractValue, ArgVec, 0, Indices);
   return ExprConstants->getOrCreate(ReqTy, Key);
 }

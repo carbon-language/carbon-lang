@@ -1590,10 +1590,8 @@ public:
   }  
   static const Type *getIndexedType(const Type *Ptr, unsigned Idx);
 
-  inline op_iterator       idx_begin()       { return op_begin()+1; }
-  inline const_op_iterator idx_begin() const { return op_begin()+1; }
-  inline op_iterator       idx_end()         { return op_end(); }
-  inline const_op_iterator idx_end()   const { return op_end(); }
+  inline const unsigned *idx_begin() const { return Indices.begin(); }
+  inline const unsigned *idx_end()   const { return Indices.end(); }
 
   Value *getAggregateOperand() {
     return getOperand(0);
@@ -1606,11 +1604,11 @@ public:
   }
 
   unsigned getNumIndices() const {  // Note: always non-negative
-    return getNumOperands() - 1;
+    return Indices.size();
   }
 
   bool hasIndices() const {
-    return getNumOperands() > 1;
+    return true;
   }
   
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -1762,10 +1760,8 @@ public:
     return reinterpret_cast<const PointerType*>(Instruction::getType());
   }
 
-  inline unsigned         *idx_begin()       { return Indices.begin(); }
-  inline const unsigned   *idx_begin() const { return Indices.begin(); }
-  inline unsigned         *idx_end()         { return Indices.end(); }
-  inline const unsigned   *idx_end()   const { return Indices.end(); }
+  inline const unsigned *idx_begin() const { return Indices.begin(); }
+  inline const unsigned *idx_end()   const { return Indices.end(); }
 
   Value *getAggregateOperand() {
     return getOperand(0);
@@ -1788,11 +1784,11 @@ public:
   }
 
   unsigned getNumIndices() const {  // Note: always non-negative
-    return getNumOperands() - 2;
+    return Indices.size();
   }
 
   bool hasIndices() const {
-    return getNumOperands() > 2;
+    return true;
   }
   
   // Methods for support type inquiry through isa, cast, and dyn_cast:
