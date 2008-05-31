@@ -41,7 +41,9 @@ private:
                   std::vector<std::pair<unsigned, std::string> > &GeneratedCode,
                               std::set<std::string> &GeneratedDecl,
                               std::vector<std::string> &TargetOpcodes,
-                              std::vector<std::string> &TargetVTs);
+                              std::vector<std::string> &TargetVTs,
+                              bool &OutputIsVariadic,
+                              unsigned &NumInputRootOps);
   void EmitPatterns(std::vector<std::pair<const PatternToMatch*, 
                   std::vector<std::pair<unsigned, std::string> > > > &Patterns, 
                     unsigned Indent, std::ostream &OS);

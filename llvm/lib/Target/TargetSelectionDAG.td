@@ -62,7 +62,7 @@ class SDTCisIntVectorOfSameSize<int ThisOp, int OtherOp>
 
 /// SDTCisEltOfVec - This indicates that ThisOp is a scalar type of the same
 /// type as the element type of OtherOp, which is a vector type.
-class  SDTCisEltOfVec<int ThisOp, int OtherOp>
+class SDTCisEltOfVec<int ThisOp, int OtherOp>
   : SDTypeConstraint<ThisOp> {
   int OtherOpNum = OtherOp;
 }
@@ -470,7 +470,6 @@ class PatLeaf<dag frag, code pred = [{}], SDNodeXForm xform = NOOP_SDNodeXForm>
 def vtInt      : PatLeaf<(vt),  [{ return MVT::isInteger(N->getVT()); }]>;
 def vtFP       : PatLeaf<(vt),  [{ return MVT::isFloatingPoint(N->getVT()); }]>;
 
-def immAllZeros : PatLeaf<(imm), [{ return N->isNullValue(); }]>;
 def immAllOnes : PatLeaf<(imm), [{ return N->isAllOnesValue(); }]>;
 def immAllOnesV: PatLeaf<(build_vector), [{
   return ISD::isBuildVectorAllOnes(N);

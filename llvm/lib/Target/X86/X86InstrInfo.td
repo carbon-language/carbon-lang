@@ -322,9 +322,9 @@ let neverHasSideEffects = 1, isNotDuplicable = 1 in
 // Return instructions.
 let isTerminator = 1, isReturn = 1, isBarrier = 1,
     hasCtrlDep = 1, FPForm = SpecialFP, FPFormBits = SpecialFP.Value in {
-  def RET    : I   <0xC3, RawFrm, (outs), (ins discard:$amt, variable_ops),
+  def RET    : I   <0xC3, RawFrm, (outs), (ins variable_ops),
                     "ret",
-                    [(X86retflag immAllZeros:$amt)]>;
+                    [(X86retflag 0)]>;
   def RETI   : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt, variable_ops),
                     "ret\t$amt",
                     [(X86retflag imm:$amt)]>;

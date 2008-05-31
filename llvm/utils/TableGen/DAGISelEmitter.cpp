@@ -331,6 +331,15 @@ private:
   /// instructions.
   std::vector<std::string> &TargetOpcodes;
   std::vector<std::string> &TargetVTs;
+  /// OutputIsVariadic - Records whether the instruction output pattern uses
+  /// variable_ops.  This requires that the Emit function be passed an
+  /// additional argument to indicate where the input varargs operands
+  /// begin.
+  bool &OutputIsVariadic;
+  /// NumInputRootOps - Records the number of operands the root node of the
+  /// input pattern has.  This information is used in the generated code to
+  /// pass to Emit functions when variable_ops processing is needed.
+  unsigned &NumInputRootOps;
 
   std::string ChainName;
   unsigned TmpNo;
@@ -367,10 +376,13 @@ public:
                      std::vector<std::pair<unsigned, std::string> > &gc,
                      std::set<std::string> &gd,
                      std::vector<std::string> &to,
-                     std::vector<std::string> &tv)
+                     std::vector<std::string> &tv,
+                     bool &oiv,
+                     unsigned &niro)
   : CGP(cgp), Predicates(preds), Pattern(pattern), Instruction(instr),
     GeneratedCode(gc), GeneratedDecl(gd),
     TargetOpcodes(to), TargetVTs(tv),
+    OutputIsVariadic(oiv), NumInputRootOps(niro),
     TmpNo(0), OpcNo(0), VTNo(0) {}
 
   /// EmitMatchCode - Emit a matcher for N, going to the label for PatternNo
@@ -392,6 +404,9 @@ public:
     bool isRoot = (P == NULL);
     // Emit instruction predicates. Each predicate is just a string for now.
     if (isRoot) {
+      // Record input varargs info.
+      NumInputRootOps = N->getNumChildren();
+
       std::string PredicateCheck;
       for (unsigned i = 0, e = Predicates->getSize(); i != e; ++i) {
         if (DefInit *Pred = dynamic_cast<DefInit*>(Predicates->getElement(i))) {
@@ -887,7 +902,7 @@ public:
       if (InstPatNode && InstPatNode->getOperator()->getName() == "set") {
         InstPatNode = InstPatNode->getChild(InstPatNode->getNumChildren()-1);
       }
-      bool HasVarOps     = isRoot && II.isVariadic;
+      bool IsVariadic = isRoot && II.isVariadic;
       // FIXME: fix how we deal with physical register operands.
       bool HasImpInputs  = isRoot && Inst.getNumImpOperands() > 0;
       bool HasImpResults = isRoot && DstRegs.size() > 0;
@@ -904,11 +919,14 @@ public:
       unsigned NumResults = Inst.getNumResults();    
       unsigned NumDstRegs = HasImpResults ? DstRegs.size() : 0;
 
+      // Record output varargs info.
+      OutputIsVariadic = IsVariadic;
+
       if (NodeHasOptInFlag) {
         emitCode("bool HasInFlag = "
            "(N.getOperand(N.getNumOperands()-1).getValueType() == MVT::Flag);");
       }
-      if (HasVarOps)
+      if (IsVariadic)
         emitCode("SmallVector<SDOperand, 8> Ops" + utostr(OpcNo) + ";");
 
       // How many results is this pattern expected to produce?
@@ -946,20 +964,15 @@ public:
       // in the 'execute always' values.  Match up the node operands to the
       // instruction operands to do this.
       std::vector<std::string> AllOps;
-      unsigned NumEAInputs = 0; // # of synthesized 'execute always' inputs.
-      unsigned InputIndex = 0;
       for (unsigned ChildNo = 0, InstOpNo = NumResults;
            InstOpNo != II.OperandList.size(); ++InstOpNo) {
         std::vector<std::string> Ops;
         
         // Determine what to emit for this operand.
         Record *OperandNode = II.OperandList[InstOpNo].Rec;
-        if (OperandNode->getName() == "discard") {
-          // This is a "discard" operand; emit nothing. Just note it.
-          ++InputIndex;
-        } else if ((OperandNode->isSubClassOf("PredicateOperand") ||
-                    OperandNode->isSubClassOf("OptionalDefOperand")) &&
-                   !CGP.getDefaultOperand(OperandNode).DefaultOps.empty()) {
+        if ((OperandNode->isSubClassOf("PredicateOperand") ||
+             OperandNode->isSubClassOf("OptionalDefOperand")) &&
+            !CGP.getDefaultOperand(OperandNode).DefaultOps.empty()) {
           // This is a predicate or optional def operand; emit the
           // 'default ops' operands.
           const DAGDefaultOperand &DefaultOp =
@@ -968,9 +981,7 @@ public:
             Ops = EmitResultCode(DefaultOp.DefaultOps[i], DstRegs,
                                  InFlagDecled, ResNodeDecled);
             AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
-            NumEAInputs += Ops.size();
           }
-          ++InputIndex;
         } else {
           // Otherwise this is a normal operand or a predicate operand without
           // 'execute always'; emit it.
@@ -978,7 +989,6 @@ public:
                                InFlagDecled, ResNodeDecled);
           AllOps.insert(AllOps.end(), Ops.begin(), Ops.end());
           ++ChildNo;
-          ++InputIndex;
         }
       }
 
@@ -1057,15 +1067,7 @@ public:
           Code += ", MVT::Flag";
 
         // Inputs.
-        if (HasVarOps) {
-          // Figure out how many fixed inputs the node has.  This is important
-          // to know which inputs are the variable ones if present. Include
-          // the 'discard' and chain inputs in the count, and adjust for the
-          // number of operands that are 'execute always'. This is the index
-          // where we should start copying operands into the 'variable_ops'
-          // portion of the output.
-          InputIndex += NodeHasChain - NumEAInputs;
-        
+        if (IsVariadic) {
           for (unsigned i = 0, e = AllOps.size(); i != e; ++i)
             emitCode("Ops" + utostr(OpsNo) + ".push_back(" + AllOps[i] + ");");
           AllOps.clear();
@@ -1078,7 +1080,7 @@ public:
           else if (NodeHasOptInFlag)
             EndAdjust = "-(HasInFlag?1:0)"; // May have a flag.
 
-          emitCode("for (unsigned i = " + utostr(InputIndex) +
+          emitCode("for (unsigned i = NumInputRootOps + " + utostr(NodeHasChain) +
                    ", e = N.getNumOperands()" + EndAdjust + "; i != e; ++i) {");
 
           emitCode("  AddToISelQueue(N.getOperand(i));");
@@ -1087,13 +1089,13 @@ public:
         }
 
         if (NodeHasChain) {
-          if (HasVarOps)
+          if (IsVariadic)
             emitCode("Ops" + utostr(OpsNo) + ".push_back(" + ChainName + ");");
           else
             AllOps.push_back(ChainName);
         }
 
-        if (HasVarOps) {
+        if (IsVariadic) {
           if (NodeHasInFlag || HasImpInputs)
             emitCode("Ops" + utostr(OpsNo) + ".push_back(InFlag);");
           else if (NodeHasOptInFlag) {
@@ -1358,11 +1360,17 @@ void DAGISelEmitter::GenerateCodeForPattern(const PatternToMatch &Pattern,
                   std::vector<std::pair<unsigned, std::string> > &GeneratedCode,
                                            std::set<std::string> &GeneratedDecl,
                                         std::vector<std::string> &TargetOpcodes,
-                                          std::vector<std::string> &TargetVTs) {
+                                            std::vector<std::string> &TargetVTs,
+                                            bool &OutputIsVariadic,
+                                            unsigned &NumInputRootOps) {
+  OutputIsVariadic = false;
+  NumInputRootOps = 0;
+
   PatternCodeEmitter Emitter(CGP, Pattern.getPredicates(),
                              Pattern.getSrcPattern(), Pattern.getDstPattern(),
                              GeneratedCode, GeneratedDecl,
-                             TargetOpcodes, TargetVTs);
+                             TargetOpcodes, TargetVTs,
+                             OutputIsVariadic, NumInputRootOps);
 
   // Emit the matcher, capturing named arguments in VariableMap.
   bool FoundChain = false;
@@ -1652,17 +1660,24 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       std::vector<std::vector<std::string> > PatternOpcodes;
       std::vector<std::vector<std::string> > PatternVTs;
       std::vector<std::set<std::string> > PatternDecls;
+      std::vector<bool> OutputIsVariadicFlags;
+      std::vector<unsigned> NumInputRootOpsCounts;
       for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
         CodeList GeneratedCode;
         std::set<std::string> GeneratedDecl;
         std::vector<std::string> TargetOpcodes;
         std::vector<std::string> TargetVTs;
+        bool OutputIsVariadic;
+        unsigned NumInputRootOps;
         GenerateCodeForPattern(*Patterns[i], GeneratedCode, GeneratedDecl,
-                               TargetOpcodes, TargetVTs);
+                               TargetOpcodes, TargetVTs,
+                               OutputIsVariadic, NumInputRootOps);
         CodeForPatterns.push_back(std::make_pair(Patterns[i], GeneratedCode));
         PatternDecls.push_back(GeneratedDecl);
         PatternOpcodes.push_back(TargetOpcodes);
         PatternVTs.push_back(TargetVTs);
+        OutputIsVariadicFlags.push_back(OutputIsVariadic);
+        NumInputRootOpsCounts.push_back(NumInputRootOps);
       }
     
       // Scan the code to see if all of the patterns are reachable and if it is
@@ -1697,6 +1712,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
         std::vector<std::string> &TargetOpcodes = PatternOpcodes[i];
         std::vector<std::string> &TargetVTs = PatternVTs[i];
         std::set<std::string> Decls = PatternDecls[i];
+        bool OutputIsVariadic = OutputIsVariadicFlags[i];
+        unsigned NumInputRootOps = NumInputRootOpsCounts[i];
         std::vector<std::string> AddedInits;
         int CodeSize = (int)GeneratedCode.size();
         int LastPred = -1;
@@ -1723,6 +1740,12 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
           CalleeCode += ", SDOperand &" + Name;
           CallerCode += ", " + Name;
         }
+
+        if (OutputIsVariadic) {
+          CalleeCode += ", unsigned NumInputRootOps";
+          CallerCode += ", " + utostr(NumInputRootOps);
+        }
+
         CallerCode += ");";
         CalleeCode += ") ";
         // Prevent emission routines from being inlined to reduce selection

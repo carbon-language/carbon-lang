@@ -259,12 +259,6 @@ def ins;
 /// of operands.
 def variable_ops;
 
-/// discard definition - Mark this operand as being matched in the input
-/// but omitted from the output. This is necessary in some situations
-/// involving variable_ops to help the pattern matcher determine which
-/// input nodes to forward on to the variable_ops portion of the output.
-def discard;
-
 /// ptr_rc definition - Mark this operand as being a pointer value whose
 /// register class is resolved dynamically via a callback to TargetInstrInfo.
 /// FIXME: We should probably change this to a class which contain a list of
