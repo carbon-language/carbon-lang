@@ -25,6 +25,7 @@
 #include "llvm/OperandTraits.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 
@@ -576,10 +577,10 @@ protected:
   static Constant *getShuffleVectorTy(const Type *Ty, Constant *V1,
                                       Constant *V2, Constant *Mask);
   static Constant *getExtractValueTy(const Type *Ty, Constant *Agg,
-                                     Constant * const *Idxs, unsigned NumIdxs);
+                                     const unsigned *Idxs, unsigned NumIdxs);
   static Constant *getInsertValueTy(const Type *Ty, Constant *Agg,
                                     Constant *Val,
-                                    Constant * const *Idxs, unsigned NumIdxs);
+                                    const unsigned *Idxs, unsigned NumIdxs);
 
 public:
   // Static methods to construct a ConstantExpr of different kinds.  Note that
@@ -656,6 +657,10 @@ public:
   /// @brief Return true if this is a compare constant expression
   bool isCompare() const;
 
+  /// @brief Return true if this is an insertvalue or extractvalue expression,
+  /// and the getIndices() method may be used.
+  bool hasIndices() const;
+
   /// Select constant expr
   ///
   static Constant *getSelect(Constant *C, Constant *V1, Constant *V2) {
@@ -712,9 +717,9 @@ public:
   static Constant *getInsertElement(Constant *Vec, Constant *Elt,Constant *Idx);
   static Constant *getShuffleVector(Constant *V1, Constant *V2, Constant *Mask);
   static Constant *getExtractValue(Constant *Agg,
-                                   Constant* const *IdxList, unsigned NumIdx);
+                                   const unsigned *IdxList, unsigned NumIdx);
   static Constant *getInsertValue(Constant *Agg, Constant *Val,
-                                  Constant* const *IdxList, unsigned NumIdx);
+                                  const unsigned *IdxList, unsigned NumIdx);
 
   /// Floating point negation must be implemented with f(x) = -0.0 - x. This
   /// method returns the negative zero constant for floating point or vector
@@ -731,6 +736,10 @@ public:
   /// getPredicate - Return the ICMP or FCMP predicate value. Assert if this is
   /// not an ICMP or FCMP constant expression.
   unsigned getPredicate() const;
+
+  /// getIndices - Assert that this is an insertvalue or exactvalue
+  /// expression and return the list of indices.
+  const SmallVector<unsigned, 4> &getIndices() const;
 
   /// getOpcodeName - Return a string representation for an opcode.
   const char *getOpcodeName() const;

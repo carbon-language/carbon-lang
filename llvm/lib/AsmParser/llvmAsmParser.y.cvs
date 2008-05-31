@@ -731,6 +731,10 @@ ParseGlobalVariable(std::string *NameStr,
     GenerateError("Cannot declare global vars of function type");
     return 0;
   }
+  if (Ty == Type::LabelTy) {
+    GenerateError("Cannot declare global vars of label type");
+    return 0;
+  }
 
   const PointerType *PTy = PointerType::get(Ty, AddressSpace);
 
@@ -959,6 +963,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
   llvm::PATypeHolder                     *TypeVal;
   llvm::Value                            *ValueVal;
   std::vector<llvm::Value*>              *ValueList;
+  std::vector<unsigned>                  *ConstantList;
   llvm::ArgListType                      *ArgList;
   llvm::TypeWithAttrs                     TypeWithAttrs;
   llvm::TypeWithAttrsList                *TypeWithAttrsList;
@@ -1004,6 +1009,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 %type <PHIList>       PHIList
 %type <ParamList>     ParamList      // For call param lists & GEP indices
 %type <ValueList>     IndexList         // For GEP indices
+%type <ConstantList>  ConstantIndexList // For insertvalue/extractvalue indices
 %type <TypeList>      TypeListI 
 %type <TypeWithAttrsList> ArgTypeList ArgTypeListI
 %type <TypeWithAttrs> ArgType
@@ -1402,7 +1408,7 @@ Types
   }
 
   | '[' EUINT64VAL 'x' Types ']' {          // Sized array type?
-    $$ = new PATypeHolder(HandleUpRefs(ArrayType::get(*$4, (unsigned)$2)));
+    $$ = new PATypeHolder(HandleUpRefs(ArrayType::get(*$4, $2)));
     delete $4;
     CHECK_FOR_ERROR
   }
@@ -1850,12 +1856,14 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     CHECK_FOR_ERROR
   }
   | INTTYPE TRUETOK {                      // Boolean constants
-    assert(cast<IntegerType>($1)->getBitWidth() == 1 && "Not Bool?");
+    if (cast<IntegerType>($1)->getBitWidth() != 1)
+      GEN_ERROR("Constant true must have type i1");
     $$ = ConstantInt::getTrue();
     CHECK_FOR_ERROR
   }
   | INTTYPE FALSETOK {                     // Boolean constants
-    assert(cast<IntegerType>($1)->getBitWidth() == 1 && "Not Bool?");
+    if (cast<IntegerType>($1)->getBitWidth() != 1)
+      GEN_ERROR("Constant false must have type i1");
     $$ = ConstantInt::getFalse();
     CHECK_FOR_ERROR
   }
@@ -1968,46 +1976,20 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     $$ = ConstantExpr::getShuffleVector($3, $5, $7);
     CHECK_FOR_ERROR
   }
-  | EXTRACTVALUE '(' ConstVal IndexList ')' {
+  | EXTRACTVALUE '(' ConstVal ConstantIndexList ')' {
     if (!isa<StructType>($3->getType()) && !isa<ArrayType>($3->getType()))
       GEN_ERROR("ExtractValue requires an aggregate operand");
 
-    const Type *IdxTy =
-      ExtractValueInst::getIndexedType($3->getType(), $4->begin(), $4->end());
-    if (!IdxTy)
-      GEN_ERROR("Index list invalid for constant extractvalue");
-
-    SmallVector<Constant*, 8> IdxVec;
-    for (unsigned i = 0, e = $4->size(); i != e; ++i)
-      if (Constant *C = dyn_cast<Constant>((*$4)[i]))
-        IdxVec.push_back(C);
-      else
-        GEN_ERROR("Indices to constant extractvalue must be constants");
-
+    $$ = ConstantExpr::getExtractValue($3, &(*$4)[0], $4->size());
     delete $4;
-
-    $$ = ConstantExpr::getExtractValue($3, &IdxVec[0], IdxVec.size());
     CHECK_FOR_ERROR
   }
-  | INSERTVALUE '(' ConstVal ',' ConstVal IndexList ')' {
+  | INSERTVALUE '(' ConstVal ',' ConstVal ConstantIndexList ')' {
     if (!isa<StructType>($3->getType()) && !isa<ArrayType>($3->getType()))
       GEN_ERROR("InsertValue requires an aggregate operand");
 
-    const Type *IdxTy =
-      ExtractValueInst::getIndexedType($3->getType(), $6->begin(), $6->end());
-    if (IdxTy != $5->getType())
-      GEN_ERROR("Index list invalid for constant insertvalue");
-
-    SmallVector<Constant*, 8> IdxVec;
-    for (unsigned i = 0, e = $6->size(); i != e; ++i)
-      if (Constant *C = dyn_cast<Constant>((*$6)[i]))
-        IdxVec.push_back(C);
-      else
-        GEN_ERROR("Indices to constant insertvalue must be constants");
-
+    $$ = ConstantExpr::getInsertValue($3, $5, &(*$6)[0], $6->size());
     delete $6;
-
-    $$ = ConstantExpr::getInsertValue($3, $5, &IdxVec[0], IdxVec.size());
     CHECK_FOR_ERROR
   };
 
@@ -2250,8 +2232,8 @@ LibList : LibList ',' STRINGCONSTANT {
 ArgListH : ArgListH ',' Types OptParamAttrs OptLocalName {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
-    if (*$3 == Type::VoidTy)
-      GEN_ERROR("void typed arguments are invalid");
+    if (!(*$3)->isFirstClassType())
+      GEN_ERROR("Argument types must be first-class");
     ArgListEntry E; E.Attrs = $4; E.Ty = $3; E.Name = $5;
     $$ = $1;
     $1->push_back(E);
@@ -2260,8 +2242,8 @@ ArgListH : ArgListH ',' Types OptParamAttrs OptLocalName {
   | Types OptParamAttrs OptLocalName {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$1)->getDescription());
-    if (*$1 == Type::VoidTy)
-      GEN_ERROR("void typed arguments are invalid");
+    if (!(*$1)->isFirstClassType())
+      GEN_ERROR("Argument types must be first-class");
     ArgListEntry E; E.Attrs = $2; E.Ty = $1; E.Name = $3;
     $$ = new ArgListType;
     $$->push_back(E);
@@ -2498,6 +2480,9 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
   | '<' ConstVector '>' { // Nonempty unsized packed vector
     const Type *ETy = (*$2)[0]->getType();
     int NumElements = $2->size(); 
+
+    if (!ETy->isInteger() && !ETy->isFloatingPoint())
+      GEN_ERROR("Invalid vector element type: " + ETy->getDescription());
     
     VectorType* pt = VectorType::get(ETy, NumElements);
     PATypeHolder* PTy = new PATypeHolder(
@@ -2639,7 +2624,8 @@ BBTerminatorInst :
     $$ = BranchInst::Create(tmpBB);
   }                                               // Conditional Branch...
   | BR INTTYPE ValueRef ',' LABEL ValueRef ',' LABEL ValueRef {  
-    assert(cast<IntegerType>($2)->getBitWidth() == 1 && "Not Bool?");
+    if (cast<IntegerType>($2)->getBitWidth() != 1)
+      GEN_ERROR("Branch condition must have type i1");
     BasicBlock* tmpBBA = getBBVal($6);
     CHECK_FOR_ERROR
     BasicBlock* tmpBBB = getBBVal($9);
@@ -2870,6 +2856,22 @@ IndexList       // Used for gep instructions and constant expressions
   : /*empty*/ { $$ = new std::vector<Value*>(); }
   | IndexList ',' ResolvedVal {
     $$ = $1;
+    $$->push_back($3);
+    CHECK_FOR_ERROR
+  }
+  ;
+
+ConstantIndexList       // Used for insertvalue and extractvalue instructions
+  : ',' EUINT64VAL {
+    $$ = new std::vector<unsigned>();
+    if ((unsigned)$2 != $2)
+      GEN_ERROR("Index " + utostr($2) + " is not valid for insertvalue or extractvalue.");
+    $$->push_back($2);
+  }
+  | ConstantIndexList ',' EUINT64VAL {
+    $$ = $1;
+    if ((unsigned)$3 != $3)
+      GEN_ERROR("Index " + utostr($3) + " is not valid for insertvalue or extractvalue.");
     $$->push_back($3);
     CHECK_FOR_ERROR
   }
@@ -3149,6 +3151,8 @@ MemoryInst : MALLOC Types OptCAlign {
   | MALLOC Types ',' INTTYPE ValueRef OptCAlign {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$2)->getDescription());
+    if ($4 != Type::Int32Ty)
+      GEN_ERROR("Malloc array size is not a 32-bit integer!");
     Value* tmpVal = getVal($4, $5);
     CHECK_FOR_ERROR
     $$ = new MallocInst(*$2, tmpVal, $6);
@@ -3164,6 +3168,8 @@ MemoryInst : MALLOC Types OptCAlign {
   | ALLOCA Types ',' INTTYPE ValueRef OptCAlign {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$2)->getDescription());
+    if ($4 != Type::Int32Ty)
+      GEN_ERROR("Alloca array size is not a 32-bit integer!");
     Value* tmpVal = getVal($4, $5);
     CHECK_FOR_ERROR
     $$ = new AllocaInst(*$2, tmpVal, $6);
@@ -3231,7 +3237,7 @@ MemoryInst : MALLOC Types OptCAlign {
     delete $2; 
     delete $4;
   }
-  | EXTRACTVALUE Types ValueRef IndexList {
+  | EXTRACTVALUE Types ValueRef ConstantIndexList {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$2)->getDescription());
     if (!isa<StructType>($2->get()) && !isa<ArrayType>($2->get()))
@@ -3246,7 +3252,7 @@ MemoryInst : MALLOC Types OptCAlign {
     delete $2; 
     delete $4;
   }
-  | INSERTVALUE Types ValueRef ',' Types ValueRef IndexList {
+  | INSERTVALUE Types ValueRef ',' Types ValueRef ConstantIndexList {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$2)->getDescription());
     if (!isa<StructType>($2->get()) && !isa<ArrayType>($2->get()))

@@ -22,6 +22,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/ParameterAttributes.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 
@@ -1518,9 +1519,11 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ShuffleVectorInst, Value)
 /// element value from an aggregate value.
 ///
 class ExtractValueInst : public Instruction {
+  SmallVector<unsigned, 4> Indices;
+
   ExtractValueInst(const ExtractValueInst &EVI);
-  void init(Value *Agg, Value* const *Idx, unsigned NumIdx);
-  void init(Value *Agg, Value *Idx);
+  void init(Value *Agg, const unsigned *Idx, unsigned NumIdx);
+  void init(Value *Agg, unsigned Idx);
 
   template<typename InputIterator>
   void init(Value *Agg, InputIterator IdxBegin, InputIterator IdxEnd,
@@ -1530,14 +1533,15 @@ class ExtractValueInst : public Instruction {
             std::random_access_iterator_tag) {
     unsigned NumIdx = static_cast<unsigned>(std::distance(IdxBegin, IdxEnd));
     
-    if (NumIdx > 0) {
-      // This requires that the iterator points to contiguous memory.
-      init(Agg, &*IdxBegin, NumIdx); // FIXME: for the general case
-                                     // we have to build an array here
-    }
-    else {
-      init(Agg, 0, NumIdx);
-    }
+    // There's no fundamental reason why we require at least one index
+    // (other than weirdness with &*IdxBegin being invalid; see
+    // getelementptr's init routine for example). But there's no
+    // present need to support it.
+    assert(NumIdx > 0 && "ExtractValueInst must have at least one index");
+
+    // This requires that the iterator points to contiguous memory.
+    init(Agg, &*IdxBegin, NumIdx); // FIXME: for the general case
+                                   // we have to build an array here
 
     setName(Name);
   }
@@ -1549,7 +1553,7 @@ class ExtractValueInst : public Instruction {
   /// pointer type.
   ///
   static const Type *getIndexedType(const Type *Agg,
-                                    Value* const *Idx, unsigned NumIdx);
+                                    const unsigned *Idx, unsigned NumIdx);
 
   template<typename InputIterator>
   static const Type *getIndexedType(const Type *Ptr,
@@ -1563,9 +1567,9 @@ class ExtractValueInst : public Instruction {
 
     if (NumIdx > 0)
       // This requires that the iterator points to contiguous memory.
-      return getIndexedType(Ptr, (Value *const *)&*IdxBegin, NumIdx);
+      return getIndexedType(Ptr, (const unsigned *)&*IdxBegin, NumIdx);
     else
-      return getIndexedType(Ptr, (Value *const*)0, NumIdx);
+      return getIndexedType(Ptr, (const unsigned *)0, NumIdx);
   }
 
   /// Constructors - Create a extractvalue instruction with a base aggregate
@@ -1575,55 +1579,53 @@ class ExtractValueInst : public Instruction {
   template<typename InputIterator>
   inline ExtractValueInst(Value *Agg, InputIterator IdxBegin, 
                           InputIterator IdxEnd,
-                          unsigned Values,
                           const std::string &Name,
                           Instruction *InsertBefore);
   template<typename InputIterator>
   inline ExtractValueInst(Value *Agg,
                           InputIterator IdxBegin, InputIterator IdxEnd,
-                          unsigned Values,
                           const std::string &Name, BasicBlock *InsertAtEnd);
 
   /// Constructors - These two constructors are convenience methods because one
   /// and two index extractvalue instructions are so common.
-  ExtractValueInst(Value *Agg, Value *Idx, const std::string &Name = "",
+  ExtractValueInst(Value *Agg, unsigned Idx, const std::string &Name = "",
                     Instruction *InsertBefore = 0);
-  ExtractValueInst(Value *Agg, Value *Idx,
+  ExtractValueInst(Value *Agg, unsigned Idx,
                     const std::string &Name, BasicBlock *InsertAtEnd);
 public:
+  // allocate space for exactly two operands
+  void *operator new(size_t s) {
+    return User::operator new(s, 1);
+  }
+
   template<typename InputIterator>
   static ExtractValueInst *Create(Value *Agg, InputIterator IdxBegin, 
                                   InputIterator IdxEnd,
                                   const std::string &Name = "",
                                   Instruction *InsertBefore = 0) {
-    typename std::iterator_traits<InputIterator>::difference_type Values = 
-      1 + std::distance(IdxBegin, IdxEnd);
-    return new(Values)
-      ExtractValueInst(Agg, IdxBegin, IdxEnd, Values, Name, InsertBefore);
+    return new
+      ExtractValueInst(Agg, IdxBegin, IdxEnd, Name, InsertBefore);
   }
   template<typename InputIterator>
   static ExtractValueInst *Create(Value *Agg,
                                   InputIterator IdxBegin, InputIterator IdxEnd,
                                   const std::string &Name,
                                   BasicBlock *InsertAtEnd) {
-    typename std::iterator_traits<InputIterator>::difference_type Values = 
-      1 + std::distance(IdxBegin, IdxEnd);
-    return new(Values)
-      ExtractValueInst(Agg, IdxBegin, IdxEnd, Values, Name, InsertAtEnd);
+    return new ExtractValueInst(Agg, IdxBegin, IdxEnd, Name, InsertAtEnd);
   }
 
   /// Constructors - These two creators are convenience methods because one
   /// index extractvalue instructions are much more common than those with
   /// more than one.
-  static ExtractValueInst *Create(Value *Agg, Value *Idx,
+  static ExtractValueInst *Create(Value *Agg, unsigned Idx,
                                   const std::string &Name = "",
                                   Instruction *InsertBefore = 0) {
-    return new(2) ExtractValueInst(Agg, Idx, Name, InsertBefore);
+    return new ExtractValueInst(Agg, Idx, Name, InsertBefore);
   }
-  static ExtractValueInst *Create(Value *Agg, Value *Idx,
+  static ExtractValueInst *Create(Value *Agg, unsigned Idx,
                                   const std::string &Name,
                                   BasicBlock *InsertAtEnd) {
-    return new(2) ExtractValueInst(Agg, Idx, Name, InsertAtEnd);
+    return new ExtractValueInst(Agg, Idx, Name, InsertAtEnd);
   }
 
   virtual ExtractValueInst *clone() const;
@@ -1650,7 +1652,7 @@ public:
                           typename std::iterator_traits<InputIterator>::
                           iterator_category());
   }  
-  static const Type *getIndexedType(const Type *Ptr, Value *Idx);
+  static const Type *getIndexedType(const Type *Ptr, unsigned Idx);
 
   inline op_iterator       idx_begin()       { return op_begin()+1; }
   inline const_op_iterator idx_begin() const { return op_begin()+1; }
@@ -1686,20 +1688,19 @@ public:
 };
 
 template <>
-struct OperandTraits<ExtractValueInst> : VariadicOperandTraits<1> {
+struct OperandTraits<ExtractValueInst> : FixedNumOperandTraits<1> {
 };
 
 template<typename InputIterator>
 ExtractValueInst::ExtractValueInst(Value *Agg,
                                    InputIterator IdxBegin, 
                                    InputIterator IdxEnd,
-                                   unsigned Values,
                                    const std::string &Name,
                                    Instruction *InsertBefore)
   : Instruction(checkType(getIndexedType(Agg->getType(), IdxBegin, IdxEnd)),
                 ExtractValue,
-                OperandTraits<ExtractValueInst>::op_end(this) - Values,
-                Values, InsertBefore) {
+                OperandTraits<ExtractValueInst>::op_begin(this),
+                1, InsertBefore) {
   init(Agg, IdxBegin, IdxEnd, Name,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
@@ -1707,17 +1708,12 @@ template<typename InputIterator>
 ExtractValueInst::ExtractValueInst(Value *Agg,
                                    InputIterator IdxBegin,
                                    InputIterator IdxEnd,
-                                   unsigned Values,
                                    const std::string &Name,
                                    BasicBlock *InsertAtEnd)
-  : Instruction(PointerType::get(checkType(
-                                   getIndexedType(Agg->getType(),
-                                                  IdxBegin, IdxEnd)),
-                                 cast<PointerType>(Agg->getType())
-                                   ->getAddressSpace()),
+  : Instruction(checkType(getIndexedType(Agg->getType(), IdxBegin, IdxEnd)),
                 ExtractValue,
-                OperandTraits<ExtractValueInst>::op_end(this) - Values,
-                Values, InsertAtEnd) {
+                OperandTraits<ExtractValueInst>::op_begin(this),
+                1, InsertAtEnd) {
   init(Agg, IdxBegin, IdxEnd, Name,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
@@ -1733,9 +1729,12 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ExtractValueInst, Value)
 /// value into an aggregate value.
 ///
 class InsertValueInst : public Instruction {
+  SmallVector<unsigned, 4> Indices;
+
+  void *operator new(size_t, unsigned); // Do not implement
   InsertValueInst(const InsertValueInst &IVI);
-  void init(Value *Agg, Value *Val, Value* const *Idx, unsigned NumIdx);
-  void init(Value *Agg, Value *Val, Value *Idx);
+  void init(Value *Agg, Value *Val, const unsigned *Idx, unsigned NumIdx);
+  void init(Value *Agg, Value *Val, unsigned Idx);
 
   template<typename InputIterator>
   void init(Value *Agg, Value *Val,
@@ -1746,14 +1745,15 @@ class InsertValueInst : public Instruction {
             std::random_access_iterator_tag) {
     unsigned NumIdx = static_cast<unsigned>(std::distance(IdxBegin, IdxEnd));
     
-    if (NumIdx > 0) {
-      // This requires that the iterator points to contiguous memory.
-      init(Agg, Val, &*IdxBegin, NumIdx); // FIXME: for the general case
-                                     // we have to build an array here
-    }
-    else {
-      init(Agg, Val, 0, NumIdx);
-    }
+    // There's no fundamental reason why we require at least one index
+    // (other than weirdness with &*IdxBegin being invalid; see
+    // getelementptr's init routine for example). But there's no
+    // present need to support it.
+    assert(NumIdx > 0 && "InsertValueInst must have at least one index");
+
+    // This requires that the iterator points to contiguous memory.
+    init(Agg, Val, &*IdxBegin, NumIdx); // FIXME: for the general case
+                                        // we have to build an array here
 
     setName(Name);
   }
@@ -1765,56 +1765,55 @@ class InsertValueInst : public Instruction {
   template<typename InputIterator>
   inline InsertValueInst(Value *Agg, Value *Val, InputIterator IdxBegin, 
                          InputIterator IdxEnd,
-                         unsigned Values,
                          const std::string &Name,
                          Instruction *InsertBefore);
   template<typename InputIterator>
   inline InsertValueInst(Value *Agg, Value *Val,
                          InputIterator IdxBegin, InputIterator IdxEnd,
-                         unsigned Values,
                          const std::string &Name, BasicBlock *InsertAtEnd);
 
   /// Constructors - These two constructors are convenience methods because one
   /// and two index insertvalue instructions are so common.
   InsertValueInst(Value *Agg, Value *Val,
-                  Value *Idx, const std::string &Name = "",
+                  unsigned Idx, const std::string &Name = "",
                   Instruction *InsertBefore = 0);
-  InsertValueInst(Value *Agg, Value *Val, Value *Idx,
+  InsertValueInst(Value *Agg, Value *Val, unsigned Idx,
                   const std::string &Name, BasicBlock *InsertAtEnd);
 public:
+  // allocate space for exactly two operands
+  void *operator new(size_t s) {
+    return User::operator new(s, 2);
+  }
+
   template<typename InputIterator>
   static InsertValueInst *Create(Value *Agg, Value *Val, InputIterator IdxBegin, 
                                  InputIterator IdxEnd,
                                  const std::string &Name = "",
                                  Instruction *InsertBefore = 0) {
-    typename std::iterator_traits<InputIterator>::difference_type Values = 
-      1 + std::distance(IdxBegin, IdxEnd);
-    return new(Values)
-      InsertValueInst(Agg, Val, IdxBegin, IdxEnd, Values, Name, InsertBefore);
+    return new InsertValueInst(Agg, Val, IdxBegin, IdxEnd,
+                               Name, InsertBefore);
   }
   template<typename InputIterator>
   static InsertValueInst *Create(Value *Agg, Value *Val,
                                  InputIterator IdxBegin, InputIterator IdxEnd,
                                  const std::string &Name,
                                  BasicBlock *InsertAtEnd) {
-    typename std::iterator_traits<InputIterator>::difference_type Values = 
-      1 + std::distance(IdxBegin, IdxEnd);
-    return new(Values)
-      InsertValueInst(Agg, Val, IdxBegin, IdxEnd, Values, Name, InsertAtEnd);
+    return new InsertValueInst(Agg, Val, IdxBegin, IdxEnd,
+                               Name, InsertAtEnd);
   }
 
   /// Constructors - These two creators are convenience methods because one
   /// index insertvalue instructions are much more common than those with
   /// more than one.
-  static InsertValueInst *Create(Value *Agg, Value *Val, Value *Idx,
+  static InsertValueInst *Create(Value *Agg, Value *Val, unsigned Idx,
                                  const std::string &Name = "",
                                  Instruction *InsertBefore = 0) {
-    return new(3) InsertValueInst(Agg, Val, Idx, Name, InsertBefore);
+    return new InsertValueInst(Agg, Val, Idx, Name, InsertBefore);
   }
-  static InsertValueInst *Create(Value *Agg, Value *Val, Value *Idx,
+  static InsertValueInst *Create(Value *Agg, Value *Val, unsigned Idx,
                                  const std::string &Name,
                                  BasicBlock *InsertAtEnd) {
-    return new(3) InsertValueInst(Agg, Val, Idx, Name, InsertAtEnd);
+    return new InsertValueInst(Agg, Val, Idx, Name, InsertAtEnd);
   }
 
   virtual InsertValueInst *clone() const;
@@ -1827,10 +1826,10 @@ public:
     return reinterpret_cast<const PointerType*>(Instruction::getType());
   }
 
-  inline op_iterator       idx_begin()       { return op_begin()+1; }
-  inline const_op_iterator idx_begin() const { return op_begin()+1; }
-  inline op_iterator       idx_end()         { return op_end(); }
-  inline const_op_iterator idx_end()   const { return op_end(); }
+  inline unsigned         *idx_begin()       { return Indices.begin(); }
+  inline const unsigned   *idx_begin() const { return Indices.begin(); }
+  inline unsigned         *idx_end()         { return Indices.end(); }
+  inline const unsigned   *idx_end()   const { return Indices.end(); }
 
   Value *getAggregateOperand() {
     return getOperand(0);
@@ -1871,7 +1870,7 @@ public:
 };
 
 template <>
-struct OperandTraits<InsertValueInst> : VariadicOperandTraits<2> {
+struct OperandTraits<InsertValueInst> : FixedNumOperandTraits<2> {
 };
 
 template<typename InputIterator>
@@ -1879,15 +1878,11 @@ InsertValueInst::InsertValueInst(Value *Agg,
                                  Value *Val,
                                  InputIterator IdxBegin, 
                                  InputIterator IdxEnd,
-                                 unsigned Values,
                                  const std::string &Name,
                                  Instruction *InsertBefore)
-  : Instruction(checkType(ExtractValueInst::getIndexedType(
-                                     Agg->getType(),
-                                     IdxBegin, IdxEnd)),
-                InsertValue,
-                OperandTraits<InsertValueInst>::op_end(this) - Values,
-                Values, InsertBefore) {
+  : Instruction(Agg->getType(), InsertValue,
+                OperandTraits<InsertValueInst>::op_begin(this),
+                2, InsertBefore) {
   init(Agg, Val, IdxBegin, IdxEnd, Name,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
@@ -1896,18 +1891,11 @@ InsertValueInst::InsertValueInst(Value *Agg,
                                  Value *Val,
                                  InputIterator IdxBegin,
                                  InputIterator IdxEnd,
-                                 unsigned Values,
                                  const std::string &Name,
                                  BasicBlock *InsertAtEnd)
-  : Instruction(PointerType::get(checkType(
-                                   ExtractValueInst::getIndexedType(
-                                     Val->getType(),
-                                     IdxBegin, IdxEnd)),
-                                 cast<PointerType>(Val->getType())
-                                   ->getAddressSpace()),
-                InsertValue,
-                OperandTraits<InsertValueInst>::op_end(this) - Values,
-                Values, InsertAtEnd) {
+  : Instruction(Agg->getType(), InsertValue,
+                OperandTraits<InsertValueInst>::op_begin(this),
+                2, InsertAtEnd) {
   init(Agg, Val, IdxBegin, IdxEnd, Name,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }

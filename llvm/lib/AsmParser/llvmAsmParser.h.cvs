@@ -354,7 +354,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 949 "/Users/gohman/LLVM/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 953 "/Users/gohman/LLVM/llvm/lib/AsmParser/llvmAsmParser.y"
 {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -368,6 +368,7 @@ typedef union YYSTYPE
   llvm::PATypeHolder                     *TypeVal;
   llvm::Value                            *ValueVal;
   std::vector<llvm::Value*>              *ValueList;
+  std::vector<unsigned>                  *ConstantList;
   llvm::ArgListType                      *ArgList;
   llvm::TypeWithAttrs                     TypeWithAttrs;
   llvm::TypeWithAttrsList                *TypeWithAttrsList;
@@ -402,7 +403,7 @@ typedef union YYSTYPE
   llvm::FCmpInst::Predicate         FPredicate;
 }
 /* Line 1529 of yacc.c.  */
-#line 406 "llvmAsmParser.tab.h"
+#line 407 "llvmAsmParser.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

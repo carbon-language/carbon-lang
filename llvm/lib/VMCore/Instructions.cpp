@@ -1058,7 +1058,22 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
   if (NumIdx == 0)
     return Agg;
 
-  return ExtractValueInst::getIndexedType(Agg, Idxs+1, Idxs+NumIdx);
+  unsigned CurIdx = 1;
+  for (; CurIdx != NumIdx; ++CurIdx) {
+    const CompositeType *CT = dyn_cast<CompositeType>(Agg);
+    if (!CT || isa<PointerType>(CT)) return 0;
+    Value *Index = Idxs[CurIdx];
+    if (!CT->indexValid(Index)) return 0;
+    Agg = CT->getTypeAtIndex(Index);
+
+    // If the new type forwards to another type, then it is in the middle
+    // of being refined to another type (and hence, may have dropped all
+    // references to what it was using before).  So, use the new forwarded
+    // type.
+    if (const Type *Ty = Agg->getForwardedType())
+      Agg = Ty;
+  }
+  return CurIdx == NumIdx ? Agg : 0;
 }
 
 const Type* GetElementPtrInst::getIndexedType(const Type *Ptr, Value *Idx) {
@@ -1335,64 +1350,51 @@ int ShuffleVectorInst::getMaskValue(unsigned i) const {
 //                             InsertValueInst Class
 //===----------------------------------------------------------------------===//
 
-void InsertValueInst::init(Value *Agg, Value *Val, Value* const *Idx, unsigned NumIdx) {
-  assert(NumOperands == 1+NumIdx && "NumOperands not initialized?");
-  Use *OL = OperandList;
-  OL[0] = Agg;
-  OL[1] = Val;
+void InsertValueInst::init(Value *Agg, Value *Val,
+                           const unsigned *Idx, unsigned NumIdx) {
+  assert(NumOperands == 2 && "NumOperands not initialized?");
+  Op<0>() = Agg;
+  Op<1>() = Val;
 
-  for (unsigned i = 0; i != NumIdx; ++i)
-    OL[i+2] = Idx[i];
+  Indices.insert(Indices.end(), Idx, Idx + NumIdx);
 }
 
-void InsertValueInst::init(Value *Agg, Value *Val, Value *Idx) {
-  assert(NumOperands == 3 && "NumOperands not initialized?");
-  Use *OL = OperandList;
-  OL[0] = Agg;
-  OL[1] = Val;
-  OL[2] = Idx;
+void InsertValueInst::init(Value *Agg, Value *Val, unsigned Idx) {
+  assert(NumOperands == 2 && "NumOperands not initialized?");
+  Op<0>() = Agg;
+  Op<1>() = Val;
+
+  Indices.push_back(Idx);
 }
 
 InsertValueInst::InsertValueInst(const InsertValueInst &IVI)
   : Instruction(IVI.getType(), InsertValue,
-                OperandTraits<InsertValueInst>::op_end(this)
-                - IVI.getNumOperands(),
-                IVI.getNumOperands()) {
-  Use *OL = OperandList;
-  Use *IVIOL = IVI.OperandList;
-  for (unsigned i = 0, E = NumOperands; i != E; ++i)
-    OL[i] = IVIOL[i];
+                OperandTraits<InsertValueInst>::op_begin(this), 2),
+    Indices(IVI.Indices) {
 }
 
 //===----------------------------------------------------------------------===//
 //                             ExtractValueInst Class
 //===----------------------------------------------------------------------===//
 
-void ExtractValueInst::init(Value *Agg, Value* const *Idx, unsigned NumIdx) {
-  assert(NumOperands == 1+NumIdx && "NumOperands not initialized?");
-  Use *OL = OperandList;
-  OL[0] = Agg;
+void ExtractValueInst::init(Value *Agg, const unsigned *Idx, unsigned NumIdx) {
+  assert(NumOperands == 1 && "NumOperands not initialized?");
+  Op<0>() = Agg;
 
-  for (unsigned i = 0; i != NumIdx; ++i)
-    OL[i+1] = Idx[i];
+  Indices.insert(Indices.end(), Idx, Idx + NumIdx);
 }
 
-void ExtractValueInst::init(Value *Agg, Value *Idx) {
-  assert(NumOperands == 2 && "NumOperands not initialized?");
-  Use *OL = OperandList;
-  OL[0] = Agg;
-  OL[1] = Idx;
+void ExtractValueInst::init(Value *Agg, unsigned Idx) {
+  assert(NumOperands == 1 && "NumOperands not initialized?");
+  Op<0>() = Agg;
+
+  Indices.push_back(Idx);
 }
 
 ExtractValueInst::ExtractValueInst(const ExtractValueInst &EVI)
   : Instruction(reinterpret_cast<const Type*>(EVI.getType()), ExtractValue,
-                OperandTraits<ExtractValueInst>::op_end(this)
-                - EVI.getNumOperands(),
-                EVI.getNumOperands()) {
-  Use *OL = OperandList;
-  Use *EVIOL = EVI.OperandList;
-  for (unsigned i = 0, E = NumOperands; i != E; ++i)
-    OL[i] = EVIOL[i];
+                OperandTraits<ExtractValueInst>::op_begin(this), 1),
+    Indices(EVI.Indices) {
 }
 
 // getIndexedType - Returns the type of the element that would be extracted
@@ -1402,13 +1404,13 @@ ExtractValueInst::ExtractValueInst(const ExtractValueInst &EVI)
 // pointer type.
 //
 const Type* ExtractValueInst::getIndexedType(const Type *Agg,
-                                             Value* const *Idxs,
+                                             const unsigned *Idxs,
                                              unsigned NumIdx) {
   unsigned CurIdx = 0;
   for (; CurIdx != NumIdx; ++CurIdx) {
     const CompositeType *CT = dyn_cast<CompositeType>(Agg);
-    if (!CT || isa<PointerType>(CT)) return 0;
-    Value *Index = Idxs[CurIdx];
+    if (!CT || isa<PointerType>(CT) || isa<VectorType>(CT)) return 0;
+    unsigned Index = Idxs[CurIdx];
     if (!CT->indexValid(Index)) return 0;
     Agg = CT->getTypeAtIndex(Index);
 
@@ -2869,10 +2871,10 @@ VICmpInst* VICmpInst::clone() const {
 }
 
 ExtractValueInst *ExtractValueInst::clone() const {
-  return new(getNumOperands()) ExtractValueInst(*this);
+  return new ExtractValueInst(*this);
 }
 InsertValueInst *InsertValueInst::clone() const {
-  return new(getNumOperands()) InsertValueInst(*this);
+  return new InsertValueInst(*this);
 }
 
 

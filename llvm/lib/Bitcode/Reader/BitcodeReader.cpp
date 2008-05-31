@@ -770,27 +770,45 @@ bool BitcodeReader::ParseConstants() {
       V = ConstantExpr::getGetElementPtr(Elts[0], &Elts[1], Elts.size()-1);
       break;
     }
-    case bitc::CST_CODE_CE_EXTRACTVAL: { // CE_EXTRACTVAL: [n x operands]
-      if (Record.size() & 1) return Error("Invalid CE_EXTRACTVAL record");
-      SmallVector<Constant*, 16> Elts;
-      for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
-        const Type *ElTy = getTypeByID(Record[i]);
-        if (!ElTy) return Error("Invalid CE_EXTRACTVAL record");
-        Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], ElTy));
+    case bitc::CST_CODE_CE_EXTRACTVAL: {
+                                    // CE_EXTRACTVAL: [opty, opval, n x indices]
+      const Type *AggTy = getTypeByID(Record[0]);
+      if (!AggTy || !AggTy->isAggregateType())
+        return Error("Invalid CE_INSERTVAL record");
+      Constant *Agg = ValueList.getConstantFwdRef(Record[1], AggTy);
+      SmallVector<unsigned, 4> Indices;
+      for (unsigned i = 2, e = Record.size(); i != e; ++i) {
+        uint64_t Index = Record[i];
+        if ((unsigned)Index != Index)
+          return Error("Invalid CE_EXTRACTVAL record");
+        Indices.push_back((unsigned)Index);
       }
-      V = ConstantExpr::getExtractValue(Elts[0], &Elts[1], Elts.size()-1);
+      if (!ExtractValueInst::getIndexedType(AggTy,
+                                            Indices.begin(), Indices.end()))
+        return Error("Invalid CE_EXTRACTVAL record");
+      V = ConstantExpr::getExtractValue(Agg, &Indices[0], Indices.size());
       break;
     }
-    case bitc::CST_CODE_CE_INSERTVAL: { // CE_INSERTVAL: [n x operands]
-      if (Record.size() & 1) return Error("Invalid CE_INSERTVAL record");
-      SmallVector<Constant*, 16> Elts;
-      for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
-        const Type *ElTy = getTypeByID(Record[i]);
-        if (!ElTy) return Error("Invalid CE_INSERTVAL record");
-        Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], ElTy));
+    case bitc::CST_CODE_CE_INSERTVAL: {
+                        // CE_INSERTVAL: [opty, opval, opty, opval, n x indices]
+      const Type *AggTy = getTypeByID(Record[0]);
+      if (!AggTy || !AggTy->isAggregateType())
+        return Error("Invalid CE_INSERTVAL record");
+      Constant *Agg = ValueList.getConstantFwdRef(Record[1], AggTy);
+      const Type *ValTy = getTypeByID(Record[2]);
+      Constant *Val = ValueList.getConstantFwdRef(Record[2], ValTy);
+      SmallVector<unsigned, 4> Indices;
+      for (unsigned i = 4, e = Record.size(); i != e; ++i) {
+        uint64_t Index = Record[i];
+        if ((unsigned)Index != Index)
+          return Error("Invalid CE_INSERTVAL record");
+        Indices.push_back((unsigned)Index);
       }
-      V = ConstantExpr::getInsertValue(Elts[0], Elts[1],
-                                       &Elts[2], Elts.size()-1);
+      if (ExtractValueInst::getIndexedType(AggTy,
+                                           Indices.begin(),
+                                           Indices.end()) != ValTy)
+        return Error("Invalid CE_INSERTVAL record");
+      V = ConstantExpr::getInsertValue(Agg, Val, &Indices[0], Indices.size());
       break;
     }
     case bitc::CST_CODE_CE_SELECT:  // CE_SELECT: [opval#, opval#, opval#]
@@ -1324,18 +1342,20 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       break;
     }
       
-    case bitc::FUNC_CODE_INST_EXTRACTVAL: { // EXTRACTVAL: [n x operands]
+    case bitc::FUNC_CODE_INST_EXTRACTVAL: {
+                                       // EXTRACTVAL: [opty, opval, n x indices]
       unsigned OpNum = 0;
       Value *Agg;
       if (getValueTypePair(Record, OpNum, NextValueNo, Agg))
         return Error("Invalid EXTRACTVAL record");
 
-      SmallVector<Value*, 16> EXTRACTVALIdx;
-      while (OpNum != Record.size()) {
-        Value *Op;
-        if (getValueTypePair(Record, OpNum, NextValueNo, Op))
-          return Error("Invalid EXTRACTVAL record");
-        EXTRACTVALIdx.push_back(Op);
+      SmallVector<unsigned, 4> EXTRACTVALIdx;
+      for (unsigned RecSize = Record.size();
+           OpNum != RecSize; ++OpNum) {
+        uint64_t Index = Record[OpNum];
+        if ((unsigned)Index != Index)
+          return Error("Invalid EXTRACTVAL index");
+        EXTRACTVALIdx.push_back((unsigned)Index);
       }
 
       I = ExtractValueInst::Create(Agg,
@@ -1343,7 +1363,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       break;
     }
       
-    case bitc::FUNC_CODE_INST_INSERTVAL: { // INSERTVAL: [n x operands]
+    case bitc::FUNC_CODE_INST_INSERTVAL: {
+                           // INSERTVAL: [opty, opval, opty, opval, n x indices]
       unsigned OpNum = 0;
       Value *Agg;
       if (getValueTypePair(Record, OpNum, NextValueNo, Agg))
@@ -1352,12 +1373,13 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       if (getValueTypePair(Record, OpNum, NextValueNo, Val))
         return Error("Invalid INSERTVAL record");
 
-      SmallVector<Value*, 16> INSERTVALIdx;
-      while (OpNum != Record.size()) {
-        Value *Op;
-        if (getValueTypePair(Record, OpNum, NextValueNo, Op))
-          return Error("Invalid INSERTVAL record");
-        INSERTVALIdx.push_back(Op);
+      SmallVector<unsigned, 4> INSERTVALIdx;
+      for (unsigned RecSize = Record.size();
+           OpNum != RecSize; ++OpNum) {
+        uint64_t Index = Record[OpNum];
+        if ((unsigned)Index != Index)
+          return Error("Invalid INSERTVAL index");
+        INSERTVALIdx.push_back((unsigned)Index);
       }
 
       I = InsertValueInst::Create(Agg, Val,

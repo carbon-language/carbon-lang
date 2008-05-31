@@ -2918,7 +2918,7 @@ or array element from an aggregate value.
 The first operand of an '<tt>extractvalue</tt>' instruction is a
 value of <a href="#t_struct">struct</a> or <a href="#t_array">array</a>
 type.  The operands are constant indices to specify which value to extract
-in the same manner as indices in a
+in a similar manner as indices in a
 '<tt><a href="#i_getelementptr">getelementptr</a></tt>' instruction.
 </p>
 
@@ -2932,7 +2932,7 @@ the index operands.
 <h5>Example:</h5>
 
 <pre>
-  %result = extractvalue {i32, float} %agg, i32 0    <i>; yields i32</i>
+  %result = extractvalue {i32, float} %agg, 0    <i>; yields i32</i>
 </pre>
 </div>
 
@@ -2947,7 +2947,7 @@ the index operands.
 <h5>Syntax:</h5>
 
 <pre>
-  &lt;result&gt; = insertvalue &lt;aggregate type&gt; &lt;val&gt;, &lt;ty&gt; &lt;val&gt;, i32 &lt;idx&gt;    <i>; yields &lt;n x &lt;ty&gt;&gt;</i>
+  &lt;result&gt; = insertvalue &lt;aggregate type&gt; &lt;val&gt;, &lt;ty&gt; &lt;val&gt;, &lt;idx&gt;    <i>; yields &lt;n x &lt;ty&gt;&gt;</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2965,7 +2965,7 @@ The first operand of an '<tt>insertvalue</tt>' instruction is a
 value of <a href="#t_struct">struct</a> or <a href="#t_array">array</a> type.
 The second operand is a first-class value to insert.
 The following operands are constant indices
-indicating the position at which to insert the value in the same manner as
+indicating the position at which to insert the value in a similar manner as
 indices in a
 '<tt><a href="#i_getelementptr">getelementptr</a></tt>' instruction.
 The value to insert must have the same type as the value identified
@@ -2982,7 +2982,7 @@ specified by the indices is that of <tt>elt</tt>.
 <h5>Example:</h5>
 
 <pre>
-  %result = insertvalue {i32, float} %agg, i32 1, i32 0    <i>; yields {i32, float}</i>
+  %result = insertvalue {i32, float} %agg, 1, 0    <i>; yields {i32, float}</i>
 </pre>
 </div>
 

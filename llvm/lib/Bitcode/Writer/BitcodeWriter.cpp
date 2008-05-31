@@ -610,20 +610,26 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
           Record.push_back(VE.getValueID(C->getOperand(i)));
         }
         break;
-      case Instruction::ExtractValue:
+      case Instruction::ExtractValue: {
         Code = bitc::CST_CODE_CE_EXTRACTVAL;
-        for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i) {
-          Record.push_back(VE.getTypeID(C->getOperand(i)->getType()));
-          Record.push_back(VE.getValueID(C->getOperand(i)));
-        }
+        Record.push_back(VE.getTypeID(C->getOperand(0)->getType()));
+        Record.push_back(VE.getValueID(C->getOperand(0)));
+        const SmallVector<unsigned, 4> &Indices = CE->getIndices();
+        for (unsigned i = 0, e = Indices.size(); i != e; ++i)
+          Record.push_back(Indices[i]);
         break;
-      case Instruction::InsertValue:
+      }
+      case Instruction::InsertValue: {
         Code = bitc::CST_CODE_CE_INSERTVAL;
-        for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i) {
-          Record.push_back(VE.getTypeID(C->getOperand(i)->getType()));
-          Record.push_back(VE.getValueID(C->getOperand(i)));
-        }
+        Record.push_back(VE.getTypeID(C->getOperand(0)->getType()));
+        Record.push_back(VE.getValueID(C->getOperand(0)));
+        Record.push_back(VE.getTypeID(C->getOperand(1)->getType()));
+        Record.push_back(VE.getValueID(C->getOperand(1)));
+        const SmallVector<unsigned, 4> &Indices = CE->getIndices();
+        for (unsigned i = 0, e = Indices.size(); i != e; ++i)
+          Record.push_back(Indices[i]);
         break;
+      }
       case Instruction::Select:
         Code = bitc::CST_CODE_CE_SELECT;
         Record.push_back(VE.getValueID(C->getOperand(0)));

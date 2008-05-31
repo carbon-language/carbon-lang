@@ -963,6 +963,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
   llvm::PATypeHolder                     *TypeVal;
   llvm::Value                            *ValueVal;
   std::vector<llvm::Value*>              *ValueList;
+  std::vector<unsigned>                  *ConstantList;
   llvm::ArgListType                      *ArgList;
   llvm::TypeWithAttrs                     TypeWithAttrs;
   llvm::TypeWithAttrsList                *TypeWithAttrsList;
@@ -1008,6 +1009,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 %type <PHIList>       PHIList
 %type <ParamList>     ParamList      // For call param lists & GEP indices
 %type <ValueList>     IndexList         // For GEP indices
+%type <ConstantList>  ConstantIndexList // For insertvalue/extractvalue indices
 %type <TypeList>      TypeListI 
 %type <TypeWithAttrsList> ArgTypeList ArgTypeListI
 %type <TypeWithAttrs> ArgType
@@ -1974,46 +1976,20 @@ ConstExpr: CastOps '(' ConstVal TO Types ')' {
     $$ = ConstantExpr::getShuffleVector($3, $5, $7);
     CHECK_FOR_ERROR
   }
-  | EXTRACTVALUE '(' ConstVal IndexList ')' {
+  | EXTRACTVALUE '(' ConstVal ConstantIndexList ')' {
     if (!isa<StructType>($3->getType()) && !isa<ArrayType>($3->getType()))
       GEN_ERROR("ExtractValue requires an aggregate operand");
 
-    const Type *IdxTy =
-      ExtractValueInst::getIndexedType($3->getType(), $4->begin(), $4->end());
-    if (!IdxTy)
-      GEN_ERROR("Index list invalid for constant extractvalue");
-
-    SmallVector<Constant*, 8> IdxVec;
-    for (unsigned i = 0, e = $4->size(); i != e; ++i)
-      if (Constant *C = dyn_cast<Constant>((*$4)[i]))
-        IdxVec.push_back(C);
-      else
-        GEN_ERROR("Indices to constant extractvalue must be constants");
-
+    $$ = ConstantExpr::getExtractValue($3, &(*$4)[0], $4->size());
     delete $4;
-
-    $$ = ConstantExpr::getExtractValue($3, &IdxVec[0], IdxVec.size());
     CHECK_FOR_ERROR
   }
-  | INSERTVALUE '(' ConstVal ',' ConstVal IndexList ')' {
+  | INSERTVALUE '(' ConstVal ',' ConstVal ConstantIndexList ')' {
     if (!isa<StructType>($3->getType()) && !isa<ArrayType>($3->getType()))
       GEN_ERROR("InsertValue requires an aggregate operand");
 
-    const Type *IdxTy =
-      ExtractValueInst::getIndexedType($3->getType(), $6->begin(), $6->end());
-    if (IdxTy != $5->getType())
-      GEN_ERROR("Index list invalid for constant insertvalue");
-
-    SmallVector<Constant*, 8> IdxVec;
-    for (unsigned i = 0, e = $6->size(); i != e; ++i)
-      if (Constant *C = dyn_cast<Constant>((*$6)[i]))
-        IdxVec.push_back(C);
-      else
-        GEN_ERROR("Indices to constant insertvalue must be constants");
-
+    $$ = ConstantExpr::getInsertValue($3, $5, &(*$6)[0], $6->size());
     delete $6;
-
-    $$ = ConstantExpr::getInsertValue($3, $5, &IdxVec[0], IdxVec.size());
     CHECK_FOR_ERROR
   };
 
@@ -2885,6 +2861,22 @@ IndexList       // Used for gep instructions and constant expressions
   }
   ;
 
+ConstantIndexList       // Used for insertvalue and extractvalue instructions
+  : ',' EUINT64VAL {
+    $$ = new std::vector<unsigned>();
+    if ((unsigned)$2 != $2)
+      GEN_ERROR("Index " + utostr($2) + " is not valid for insertvalue or extractvalue.");
+    $$->push_back($2);
+  }
+  | ConstantIndexList ',' EUINT64VAL {
+    $$ = $1;
+    if ((unsigned)$3 != $3)
+      GEN_ERROR("Index " + utostr($3) + " is not valid for insertvalue or extractvalue.");
+    $$->push_back($3);
+    CHECK_FOR_ERROR
+  }
+  ;
+
 OptTailCall : TAIL CALL {
     $$ = true;
     CHECK_FOR_ERROR
@@ -3245,7 +3237,7 @@ MemoryInst : MALLOC Types OptCAlign {
     delete $2; 
     delete $4;
   }
-  | EXTRACTVALUE Types ValueRef IndexList {
+  | EXTRACTVALUE Types ValueRef ConstantIndexList {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$2)->getDescription());
     if (!isa<StructType>($2->get()) && !isa<ArrayType>($2->get()))
@@ -3260,7 +3252,7 @@ MemoryInst : MALLOC Types OptCAlign {
     delete $2; 
     delete $4;
   }
-  | INSERTVALUE Types ValueRef ',' Types ValueRef IndexList {
+  | INSERTVALUE Types ValueRef ',' Types ValueRef ConstantIndexList {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$2)->getDescription());
     if (!isa<StructType>($2->get()) && !isa<ArrayType>($2->get()))
