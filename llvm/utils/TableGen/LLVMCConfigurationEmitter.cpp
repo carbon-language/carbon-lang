@@ -910,7 +910,7 @@ void EmitCaseTest(const DagInit& d, const char* IndentLevel,
 // void F(Init* Statement, const char* IndentLevel, std::ostream& O).
 template <typename F>
 void EmitCaseConstructHandler(const DagInit* d, const char* IndentLevel,
-                              const F& Callback, bool EmitElseIf,
+                              F Callback, bool EmitElseIf,
                               const GlobalOptionDescriptions& OptDescs,
                               std::ostream& O) {
   assert(d->getOperator()->getAsString() == "case");
