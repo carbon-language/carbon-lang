@@ -2762,7 +2762,6 @@ static SDOperand getMemmoveLoadsAndStores(SelectionDAG &DAG,
                                 DAG, TLI))
     return SDOperand();
 
-  std::string Str;
   uint64_t SrcOff = 0, DstOff = 0;
 
   SmallVector<SDOperand, 8> LoadValues;
