@@ -972,7 +972,13 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
       return compositeType;
     }
   }
-  
+  // Need to handle "id<xx>" explicitly. Unlike "id", whose canonical type
+  // evaluates to "struct objc_object *" (and is handled above when comparing
+  // id with statically typed objects). FIXME: Do we need an ImpCastExprToType?
+  if (lexT->isObjCQualifiedIdType() || rexT->isObjCQualifiedIdType()) {
+    if (ObjCQualifiedIdTypesAreCompatible(lexT, rexT, true))
+      return Context.getObjCIdType();
+  }
   // Otherwise, the operands are not compatible.
   Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands,
        lexT.getAsString(), rexT.getAsString(),
