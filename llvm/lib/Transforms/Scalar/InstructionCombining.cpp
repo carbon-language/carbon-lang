@@ -2551,6 +2551,9 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
+  if (I.getType() == Type::Int1Ty)
+    return BinaryOperator::CreateXor(LHS, RHS);
+
   if (Constant *RHSC = dyn_cast<Constant>(RHS)) {
     // X + undef -> undef
     if (isa<UndefValue>(RHS))
