@@ -129,8 +129,12 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     if (!Target.useGlobalsForAutomaticVariables()) {
       // A normal fixed sized variable becomes an alloca in the entry block.
       const llvm::Type *LTy = ConvertType(Ty);
-      // TODO: Alignment
-      DeclPtr = CreateTempAlloca(LTy, D.getName());
+      llvm::AllocaInst * Alloc = CreateTempAlloca(LTy, D.getName());
+      unsigned align = getContext().getTypeAlign(Ty);
+      if (const AlignedAttr* AA = D.getAttr<AlignedAttr>())
+        align = std::max(align, AA->getAlignment());
+      Alloc->setAlignment(align >> 3);
+      DeclPtr = Alloc;
     } else {
       // Targets that don't support recursion emit locals as globals.
       const char *Class =
