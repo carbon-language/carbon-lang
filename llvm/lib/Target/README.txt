@@ -317,11 +317,6 @@ this construct.
 
 //===---------------------------------------------------------------------===//
 
-Instcombine misses several of these cases (see the testcase in the patch):
-http://gcc.gnu.org/ml/gcc-patches/2006-10/msg01519.html
-
-//===---------------------------------------------------------------------===//
-
 viterbi speeds up *significantly* if the various "history" related copy loops
 are turned into memcpy calls at the source level.  We need a "loops to memcpy"
 pass.
