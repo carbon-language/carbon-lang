@@ -623,6 +623,29 @@ assert(isa&lt;PHINode&gt;(Succ-&gt;front()) &amp;&amp; "Only works on PHId BBs!"
 
 <p>You get the idea...</p>
 
+<p>Please be aware when adding assert statements that not all compilers are aware of
+the semantics of the assert.  In some places, asserts are used to indicate a piece of
+code that should not be reached.  These are typically of the form:</p>
+
+<div class="doc_code">
+<pre>
+assert(0 && "Some helpful error message");
+</pre>
+</div>
+
+<p>When used in a function that returns a value, they should be followed with a return
+statement and a comment indicating that this line is never reached.  This will prevent
+a compiler which is unable to deduce that the assert statement never returns from
+generating a warning.</p>
+
+<div class="doc_code">
+<pre>
+assert(0 && "Some helpful error message");
+// Not reached
+return 0;
+</pre>
+</div>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
