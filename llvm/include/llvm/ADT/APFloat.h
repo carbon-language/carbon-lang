@@ -244,6 +244,7 @@ namespace llvm {
     bool isZero() const { return category == fcZero; }
     bool isNonZero() const { return category != fcZero; }
     bool isNaN() const { return category == fcNaN; }
+    bool isInfinity() const { return category == fcInfinity; }
     bool isNegative() const { return sign; }
     bool isPosZero() const { return isZero() && !isNegative(); }
     bool isNegZero() const { return isZero() && isNegative(); }
