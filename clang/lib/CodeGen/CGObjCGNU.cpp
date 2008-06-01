@@ -183,7 +183,6 @@ CGObjCGNU::CGObjCGNU(llvm::Module &M,
       PtrToInt8Ty,
       NULL);
   SelectorTy = llvm::PointerType::getUnqual(SelStructTy);
-  M.addTypeName(".objc_selector", SelectorTy);
   PtrToIntTy = llvm::PointerType::getUnqual(IntTy);
   PtrTy = PtrToInt8Ty;
  
@@ -194,14 +193,12 @@ CGObjCGNU::CGObjCGNU(llvm::Module &M,
   llvm::cast<llvm::OpaqueType>(OpaqueObjTy.get())->refineAbstractTypeTo(IdTy);
   IdTy = llvm::cast<llvm::StructType>(OpaqueObjTy.get());
   IdTy = llvm::PointerType::getUnqual(IdTy);
-  M.addTypeName(".objc_id", IdTy);
  
   // IMP type
   std::vector<const llvm::Type*> IMPArgs;
   IMPArgs.push_back(IdTy);
   IMPArgs.push_back(SelectorTy);
   IMPTy = llvm::FunctionType::get(IdTy, IMPArgs, true);
-  M.addTypeName(".objc_imp", IMPTy);
 }
 // This has to perform the lookup every time, since posing and related
 // techniques can modify the name -> class mapping.
@@ -734,7 +731,12 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
       ExistingProtocols.empty() && TypedSelectors.empty() &&
       UntypedSelectors.empty())
     return NULL;
-  
+
+  // Name the ObjC types to make the IR a bit easier to read
+  TheModule.addTypeName(".objc_selector", SelectorTy);
+  TheModule.addTypeName(".objc_id", IdTy);
+  TheModule.addTypeName(".objc_imp", IMPTy);
+
   std::vector<llvm::Constant*> Elements;
   // Generate statics list:
   llvm::ArrayType *StaticsArrayTy = llvm::ArrayType::get(PtrToInt8Ty,
