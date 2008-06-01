@@ -282,6 +282,11 @@ void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
     
     resp = cached;
     
+    // Update the reverse non-local dependency cache
+    for (DenseMap<BasicBlock*, Value*>::iterator I = resp.begin(), E = resp.end();
+         I != E; ++I)
+      reverseDepNonLocal[I->second].insert(query);
+    
     return;
   } else
     NumUncacheNonlocal++;
