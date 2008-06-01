@@ -580,13 +580,18 @@ bool MemCpyOpt::performCallSlotOptzn(MemCpyInst *cpy, CallInst *C) {
     return false;
 
   // All the checks have passed, so do the transformation.
+  bool changedArgument = false;
   for (unsigned i = 0; i < CS.arg_size(); ++i)
     if (CS.getArgument(i) == cpySrc) {
       if (cpySrc->getType() != cpyDest->getType())
         cpyDest = CastInst::CreatePointerCast(cpyDest, cpySrc->getType(),
                                               cpyDest->getName(), C);
+      changedArgument = true;
       CS.setArgument(i, cpyDest);
     }
+
+  if (!changedArgument)
+    return false;
 
   // Drop any cached information about the call, because we may have changed
   // its dependence information by changing its parameter.
