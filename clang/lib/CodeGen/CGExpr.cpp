@@ -711,6 +711,29 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType,
   }
   
   llvm::CallInst *CI = Builder.CreateCall(Callee,&Args[0],&Args[0]+Args.size());
+
+  // Note that there is parallel code in SetFunctionAttributes in CodeGenModule
+  llvm::SmallVector<llvm::ParamAttrsWithIndex, 8> ParamAttrList;
+  if (hasAggregateLLVMType(ResultType))
+    ParamAttrList.push_back(
+        llvm::ParamAttrsWithIndex::get(1, llvm::ParamAttr::StructRet));
+  unsigned increment = hasAggregateLLVMType(ResultType) ? 2 : 1;
+  for (unsigned i = 0; i < NumArgs; i++) {
+    QualType ParamType = ArgExprs[i]->getType();
+    unsigned ParamAttrs = 0;
+    if (ParamType->isRecordType())
+      ParamAttrs |= llvm::ParamAttr::ByVal;
+    if (ParamType->isSignedIntegerType() && ParamType->isPromotableIntegerType())
+      ParamAttrs |= llvm::ParamAttr::SExt;
+    if (ParamType->isUnsignedIntegerType() && ParamType->isPromotableIntegerType())
+      ParamAttrs |= llvm::ParamAttr::ZExt;
+    if (ParamAttrs)
+      ParamAttrList.push_back(llvm::ParamAttrsWithIndex::get(i + increment,
+                                                             ParamAttrs));
+  }
+  CI->setParamAttrs(llvm::PAListPtr::get(ParamAttrList.begin(),
+                                         ParamAttrList.size()));
+
   if (const llvm::Function *F = dyn_cast<llvm::Function>(Callee))
     CI->setCallingConv(F->getCallingConv());
   if (CI->getType() != llvm::Type::VoidTy)

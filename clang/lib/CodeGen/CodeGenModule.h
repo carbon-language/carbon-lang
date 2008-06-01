@@ -26,6 +26,7 @@ namespace llvm {
   class Function;
   class GlobalValue;
   class TargetData;
+  class FunctionType;
 }
 
 namespace clang {
@@ -149,6 +150,10 @@ private:
   /// searches for any entries in GlobalDeclMap that point to OldVal, changing
   /// them to point to NewVal.  This is badbadbad, FIXME!
   void ReplaceMapValuesWith(llvm::Constant *OldVal, llvm::Constant *NewVal);
+
+  void SetFunctionAttributes(const FunctionDecl *FD,
+                             llvm::Function *F,
+                             const llvm::FunctionType *FTy);
   
 };
 }  // end namespace CodeGen

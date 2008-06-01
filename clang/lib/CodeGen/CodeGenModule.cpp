@@ -183,6 +183,66 @@ void CodeGenModule::ReplaceMapValuesWith(llvm::Constant *OldVal,
     if (I->second == OldVal) I->second = NewVal;
 }
 
+bool hasAggregateLLVMType(QualType T) {
+  return !T->isRealType() && !T->isPointerLikeType() &&
+         !T->isVoidType() && !T->isVectorType() && !T->isFunctionType();
+}
+
+void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
+                                          llvm::Function *F,
+                                          const llvm::FunctionType *FTy) {
+  unsigned FuncAttrs = 0;
+  if (FD->getAttr<NoThrowAttr>())
+    FuncAttrs |= llvm::ParamAttr::NoUnwind;
+  if (FD->getAttr<NoReturnAttr>())
+    FuncAttrs |= llvm::ParamAttr::NoReturn;
+
+  llvm::SmallVector<llvm::ParamAttrsWithIndex, 8> ParamAttrList;
+  if (FuncAttrs)
+    ParamAttrList.push_back(llvm::ParamAttrsWithIndex::get(0, FuncAttrs));
+  // Note that there is parallel code in CodeGenFunction::EmitCallExpr
+  bool AggregateReturn = hasAggregateLLVMType(FD->getResultType());
+  if (AggregateReturn)
+    ParamAttrList.push_back(
+        llvm::ParamAttrsWithIndex::get(1, llvm::ParamAttr::StructRet));
+  unsigned increment = AggregateReturn ? 2 : 1;
+  for (unsigned i = 0; i < FD->getNumParams(); i++) {
+    QualType ParamType = FD->getParamDecl(i)->getType();
+    unsigned ParamAttrs = 0;
+    if (ParamType->isRecordType())
+      ParamAttrs |= llvm::ParamAttr::ByVal;
+    if (ParamType->isSignedIntegerType() && ParamType->isPromotableIntegerType())
+      ParamAttrs |= llvm::ParamAttr::SExt;
+    if (ParamType->isUnsignedIntegerType() && ParamType->isPromotableIntegerType())
+      ParamAttrs |= llvm::ParamAttr::ZExt;
+    if (ParamAttrs)
+      ParamAttrList.push_back(llvm::ParamAttrsWithIndex::get(i + increment,
+                                                             ParamAttrs));
+  }
+  F->setParamAttrs(llvm::PAListPtr::get(ParamAttrList.begin(),
+                                        ParamAttrList.size()));
+
+  // Set the appropriate calling convention for the Function.
+  if (FD->getAttr<FastCallAttr>())
+    F->setCallingConv(llvm::CallingConv::Fast);
+
+  // TODO: Set up linkage and many other things.  Note, this is a simple 
+  // approximation of what we really want.
+  if (FD->getStorageClass() == FunctionDecl::Static)
+    F->setLinkage(llvm::Function::InternalLinkage);
+  else if (FD->getAttr<DLLImportAttr>())
+    F->setLinkage(llvm::Function::DLLImportLinkage);
+  else if (FD->getAttr<DLLExportAttr>())
+    F->setLinkage(llvm::Function::DLLExportLinkage);
+  else if (FD->getAttr<WeakAttr>() || FD->isInline())
+    F->setLinkage(llvm::Function::WeakLinkage);
+
+  if (const VisibilityAttr *attr = FD->getAttr<VisibilityAttr>())
+    CodeGenModule::setVisibility(F, attr->getVisibility());
+  // FIXME: else handle -fvisibility
+}
+
+
 
 llvm::Constant *CodeGenModule::GetAddrOfFunctionDecl(const FunctionDecl *D,
                                                      bool isDefinition) {
@@ -202,9 +262,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunctionDecl(const FunctionDecl *D,
     F = llvm::Function::Create(FTy, llvm::Function::ExternalLinkage,
                                D->getName(), &getModule());
 
-    // Set the appropriate calling convention for the Function.
-    if (D->getAttr<FastCallAttr>())
-      F->setCallingConv(llvm::CallingConv::Fast);
+    SetFunctionAttributes(D, F, FTy);
     return Entry = F;
   }
   
@@ -243,6 +301,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunctionDecl(const FunctionDecl *D,
   assert(F->isDeclaration() && "Shouldn't replace non-declaration");
   F->eraseFromParent();
 
+  SetFunctionAttributes(D, NewFn, FTy);
   // Return the new function which has the right type.
   return Entry = NewFn;
 }

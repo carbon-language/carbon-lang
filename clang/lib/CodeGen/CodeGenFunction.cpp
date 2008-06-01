@@ -167,37 +167,6 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
 
   CurFn = cast<llvm::Function>(CGM.GetAddrOfFunctionDecl(FD, true));
   assert(CurFn->isDeclaration() && "Function already has body?");
-  
-  // TODO: Set up linkage and many other things.  Note, this is a simple 
-  // approximation of what we really want.
-  if (FD->getStorageClass() == FunctionDecl::Static)
-    CurFn->setLinkage(llvm::Function::InternalLinkage);
-  else if (FD->getAttr<DLLImportAttr>())
-    CurFn->setLinkage(llvm::Function::DLLImportLinkage);
-  else if (FD->getAttr<DLLExportAttr>())
-    CurFn->setLinkage(llvm::Function::DLLExportLinkage);
-  else if (FD->getAttr<WeakAttr>() || FD->isInline())
-    CurFn->setLinkage(llvm::Function::WeakLinkage);
-
-  if (FD->getAttr<FastCallAttr>())
-    CurFn->setCallingConv(llvm::CallingConv::Fast);
-
-  if (const VisibilityAttr *attr = FD->getAttr<VisibilityAttr>())
-    CodeGenModule::setVisibility(CurFn, attr->getVisibility());
-  // FIXME: else handle -fvisibility
-
-
-  unsigned FuncAttrs = 0;
-  if (FD->getAttr<NoThrowAttr>())
-    FuncAttrs |= llvm::ParamAttr::NoUnwind;
-  if (FD->getAttr<NoReturnAttr>())
-    FuncAttrs |= llvm::ParamAttr::NoReturn;
-  
-  if (FuncAttrs) {
-    llvm::ParamAttrsWithIndex PAWI = 
-      llvm::ParamAttrsWithIndex::get(0, FuncAttrs);
-    CurFn->setParamAttrs(llvm::PAListPtr::get(&PAWI, 1));
-  }
 
   llvm::BasicBlock *EntryBB = llvm::BasicBlock::Create("entry", CurFn);
   
