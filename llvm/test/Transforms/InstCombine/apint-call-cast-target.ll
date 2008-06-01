@@ -10,4 +10,8 @@ entry:
 	ret i32 %tmp
 }
 
-declare i7* @ctime(i999*)
+define i7* @ctime(i999*) {
+entry:
+	%tmp = call i7* bitcast (i32 ()* @main to i7* ()*)( )
+	ret i7* %tmp
+}

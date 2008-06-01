@@ -9450,27 +9450,28 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   //
   const FunctionType *FT = Callee->getFunctionType();
   const Type *OldRetTy = Caller->getType();
+  const Type *NewRetTy = FT->getReturnType();
 
-  if (isa<StructType>(FT->getReturnType()))
+  if (isa<StructType>(NewRetTy))
     return false; // TODO: Handle multiple return values.
 
   // Check to see if we are changing the return type...
-  if (OldRetTy != FT->getReturnType()) {
+  if (OldRetTy != NewRetTy) {
     if (Callee->isDeclaration() &&
-        // Conversion is ok if changing from pointer to int of same size.
-        !(isa<PointerType>(FT->getReturnType()) &&
-          TD->getIntPtrType() == OldRetTy))
+        // Conversion is ok if changing from one pointer type to another or from
+        // a pointer to an integer of the same size.
+        !((isa<PointerType>(OldRetTy) || OldRetTy == TD->getIntPtrType()) &&
+          isa<PointerType>(NewRetTy) || NewRetTy == TD->getIntPtrType()))
       return false;   // Cannot transform this return value.
 
     if (!Caller->use_empty() &&
         // void -> non-void is handled specially
-        FT->getReturnType() != Type::VoidTy &&
-        !CastInst::isCastable(FT->getReturnType(), OldRetTy))
+        NewRetTy != Type::VoidTy && !CastInst::isCastable(NewRetTy, OldRetTy))
       return false;   // Cannot transform this return value.
 
     if (!CallerPAL.isEmpty() && !Caller->use_empty()) {
       ParameterAttributes RAttrs = CallerPAL.getParamAttrs(0);
-      if (RAttrs & ParamAttr::typeIncompatible(FT->getReturnType()))
+      if (RAttrs & ParamAttr::typeIncompatible(NewRetTy))
         return false;   // Attribute not compatible with transformed value.
     }
 
@@ -9502,15 +9503,11 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if (CallerPAL.getParamAttrs(i + 1) & ParamAttr::typeIncompatible(ParamTy))
       return false;   // Attribute not compatible with transformed value.
 
-    ConstantInt *c = dyn_cast<ConstantInt>(*AI);
-    // Some conversions are safe even if we do not have a body.
-    // Either we can cast directly, or we can upconvert the argument
+    // Converting from one pointer type to another or between a pointer and an
+    // integer of the same size is safe even if we do not have a body.
     bool isConvertible = ActTy == ParamTy ||
-      (isa<PointerType>(ParamTy) && isa<PointerType>(ActTy)) ||
-      (ParamTy->isInteger() && ActTy->isInteger() &&
-       ParamTy->getPrimitiveSizeInBits() >= ActTy->getPrimitiveSizeInBits()) ||
-      (c && ParamTy->getPrimitiveSizeInBits() >= ActTy->getPrimitiveSizeInBits()
-       && c->getValue().isStrictlyPositive());
+      ((isa<PointerType>(ParamTy) || ParamTy == TD->getIntPtrType()) &&
+       (isa<PointerType>(ActTy) || ActTy == TD->getIntPtrType()));
     if (Callee->isDeclaration() && !isConvertible) return false;
   }
 
@@ -9543,7 +9540,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
   // If the return value is not being used, the type may not be compatible
   // with the existing attributes.  Wipe out any problematic attributes.
-  RAttrs &= ~ParamAttr::typeIncompatible(FT->getReturnType());
+  RAttrs &= ~ParamAttr::typeIncompatible(NewRetTy);
 
   // Add the new return attributes.
   if (RAttrs)
@@ -9598,7 +9595,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     }
   }
 
-  if (FT->getReturnType() == Type::VoidTy)
+  if (NewRetTy == Type::VoidTy)
     Caller->setName("");   // Void type should not have a name.
 
   const PAListPtr &NewCallerPAL = PAListPtr::get(attrVec.begin(),attrVec.end());
