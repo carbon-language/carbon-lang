@@ -336,14 +336,9 @@ Decl::~Decl() {
   DeclAttrMapTy::iterator it = DeclAttrs->find(this);
   assert(it != DeclAttrs->end() && "No attrs found but HasAttrs is true!");
 
-  // FIXME: Properly release attributes.
-  // delete it->second;
-  DeclAttrs->erase(it);
-  
-  if (DeclAttrs->empty()) {
-    delete DeclAttrs;
-    DeclAttrs = 0;
-  }        
+  // release attributes.
+  delete it->second;
+  invalidateAttrs();
 }
 
 void Decl::addAttr(Attr *NewAttr) {
@@ -356,6 +351,19 @@ void Decl::addAttr(Attr *NewAttr) {
   ExistingAttr = NewAttr;
   
   HasAttrs = true;
+}
+
+void Decl::invalidateAttrs() {
+  if (!HasAttrs) return;
+
+  HasAttrs = false;
+  (*DeclAttrs)[this] = 0;
+  DeclAttrs->erase(this);
+
+  if (DeclAttrs->empty()) {
+    delete DeclAttrs;
+    DeclAttrs = 0;
+  }
 }
 
 const Attr *Decl::getAttrs() const {

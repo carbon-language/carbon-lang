@@ -276,7 +276,6 @@ static bool DeclHasAttr(const Decl *decl, const Attr *target) {
 static void MergeAttributes(Decl *New, Decl *Old) {
   Attr *attr = const_cast<Attr*>(Old->getAttrs()), *tmp;
 
-// FIXME: fix this code to cleanup the Old attrs correctly
   while (attr) {
      tmp = attr;
      attr = attr->getNext();
@@ -288,6 +287,8 @@ static void MergeAttributes(Decl *New, Decl *Old) {
        delete(tmp);
     }
   }
+
+  Old->invalidateAttrs();
 }
 
 /// MergeFunctionDecl - We just parsed a function 'New' from
