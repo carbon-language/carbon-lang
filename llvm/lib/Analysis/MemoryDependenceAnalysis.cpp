@@ -58,6 +58,9 @@ void MemoryDependenceAnalysis::ping(Instruction *D) {
   for (nonLocalDepMapType::iterator I = depGraphNonLocal.begin(), E = depGraphNonLocal.end();
        I != E; ++I) {
     assert(I->first != D);
+    for (DenseMap<BasicBlock*, Value*>::iterator II = I->second.begin(),
+         EE = I->second.end(); II  != EE; ++II)
+      assert(II->second != D);
   }
 
   for (reverseDepMapType::iterator I = reverseDep.begin(), E = reverseDep.end();
