@@ -67,6 +67,24 @@ namespace {
       
       if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
         Builder->EmitFunction(FD);
+      } else if (isa<ObjCClassDecl>(D)){
+        //Forward declaration.  Only used for type checking.
+      } else if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D)){
+        // Generate Protocol object.
+        Builder->EmitObjCProtocolImplementation(PD);
+      } else if (isa<ObjCCategoryDecl>(D)){
+        //Only used for typechecking.
+      } else if (ObjCCategoryImplDecl *OCD = dyn_cast<ObjCCategoryImplDecl>(D)){
+        // Generate methods, attach to category structure
+        Builder->EmitObjCCategoryImpl(OCD);
+      } else if (ObjCImplementationDecl * OID = 
+          dyn_cast<ObjCImplementationDecl>(D)){
+        // Generate methods, attach to class structure
+        Builder->EmitObjCClassImplementation(OID);
+      } else if (isa<ObjCInterfaceDecl>(D)){
+        // Ignore - generated when the implementation decl is CodeGen'd
+      } else if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)){
+        Builder->EmitObjCMethod(OMD);
       } else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
         if (VD->isFileVarDecl())
           Builder->EmitGlobalVarDeclarator(VD);

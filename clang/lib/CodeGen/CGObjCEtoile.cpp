@@ -46,10 +46,15 @@ public:
   llvm::Value *getSelector(llvm::IRBuilder &Builder,
       llvm::Value *SelName,
       llvm::Value *SelTypes);
-  virtual llvm::Function *MethodPreamble(const llvm::Type *ReturnTy,
+  virtual llvm::Function *MethodPreamble(
+                                         const std::string &ClassName,
+                                         const std::string &CategoryName,
+                                         const std::string &MethodName,
+                                         const llvm::Type *ReturnTy,
                                          const llvm::Type *SelfTy,
                                          const llvm::Type **ArgTy,
                                          unsigned ArgC,
+                                         bool isClassMethod,
                                          bool isVarArg);
 };
 } // end anonymous namespace
@@ -207,10 +212,14 @@ llvm::Value *CGObjCEtoile::generateMessageSend(llvm::IRBuilder &Builder,
 /// Generates an LLVM Function object corresponding to the Objective-C method,
 /// including the implicit arguments.
 llvm::Function *CGObjCEtoile::MethodPreamble(
+                                         const std::string &ClassName,
+                                         const std::string &CategoryName,
+                                         const std::string &MethodName,
                                          const llvm::Type *ReturnTy,
                                          const llvm::Type *SelfTy,
                                          const llvm::Type **ArgTy,
                                          unsigned ArgC,
+                                         bool isClassMethod,
                                          bool isVarArg) {
   std::vector<const llvm::Type*> Args;
   //Args.push_back(SelfTy);

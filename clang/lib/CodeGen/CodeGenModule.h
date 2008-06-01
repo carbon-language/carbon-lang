@@ -32,6 +32,9 @@ namespace clang {
   class ASTContext;
   class FunctionDecl;
   class ObjCMethodDecl;
+  class ObjCImplementationDecl;
+  class ObjCCategoryImplDecl;
+  class ObjCProtocolDecl;
   class Decl;
   class Expr;
   class Stmt;
@@ -114,6 +117,9 @@ public:
   void EmitStatics(void);
 
   void EmitObjCMethod(const ObjCMethodDecl *OMD);
+  void EmitObjCCategoryImpl(const ObjCCategoryImplDecl *OCD);
+  void EmitObjCClassImplementation(const ObjCImplementationDecl *OID);
+  void EmitObjCProtocolImplementation(const ObjCProtocolDecl *PD);
   void EmitFunction(const FunctionDecl *FD);
   void EmitGlobalVar(const VarDecl *D);
   void EmitGlobalVarInit(const VarDecl *D);

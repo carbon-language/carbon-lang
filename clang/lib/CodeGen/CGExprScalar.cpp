@@ -495,7 +495,7 @@ Value *ScalarExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   llvm::Constant *Selector = CGF.CGM.GetAddrOfConstantString(SelStr);
 
   llvm::Value *SelPtr = Builder.CreateStructGEP(Selector, 0);
-  return Runtime->generateMessageSend(Builder, ConvertType(E->getType()),
+  return Runtime->GenerateMessageSend(Builder, ConvertType(E->getType()),
                                       CGF.LoadObjCSelf(),
                                       Receiver, SelPtr,
                                       &Args[0], Args.size());

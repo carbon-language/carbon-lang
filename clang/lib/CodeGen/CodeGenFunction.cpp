@@ -65,11 +65,22 @@ void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
   for (unsigned i=0 ; i<OMD->param_size() ; i++) {
     ParamTypes.push_back(ConvertType(OMD->getParamDecl(i)->getType()));
   }
-  CurFn =CGM.getObjCRuntime()->MethodPreamble(ConvertType(OMD->getResultType()),
-                      llvm::PointerType::getUnqual(llvm::Type::Int32Ty),
-                                              ParamTypes.begin(),
-                                              OMD->param_size(),
-                                              OMD->isVariadic());
+  std::string CategoryName = "";
+  if (ObjCCategoryImplDecl *OCD =
+    dyn_cast<ObjCCategoryImplDecl>(OMD->getMethodContext())) {
+    CategoryName = OCD->getName();
+  }
+
+  CurFn =CGM.getObjCRuntime()->MethodPreamble(
+                            OMD->getClassInterface()->getName(),
+                            CategoryName,
+                            OMD->getSelector().getName(),
+                            ConvertType(OMD->getResultType()),
+                            llvm::PointerType::getUnqual(llvm::Type::Int32Ty),
+                            ParamTypes.begin(),
+                            OMD->param_size(),
+                            !OMD->isInstance(),
+                            OMD->isVariadic());
   llvm::BasicBlock *EntryBB = llvm::BasicBlock::Create("entry", CurFn);
   
   // Create a marker to make it easy to insert allocas into the entryblock
