@@ -1059,17 +1059,18 @@ void Preprocessor::HandleIfDirective(Token &IfToken,
   IdentifierInfo *IfNDefMacro = 0;
   bool ConditionalTrue = EvaluateDirectiveExpression(IfNDefMacro);
   
+
+  // If this condition is equivalent to #ifndef X, and if this is the first
+  // directive seen, handle it for the multiple-include optimization.
+  if (CurLexer->getConditionalStackDepth() == 0) {
+    if (!ReadAnyTokensBeforeDirective && IfNDefMacro)
+      CurLexer->MIOpt.EnterTopLevelIFNDEF(IfNDefMacro);
+    else
+      CurLexer->MIOpt.EnterTopLevelConditional();
+  }
+
   // Should we include the stuff contained by this directive?
   if (ConditionalTrue) {
-    // If this condition is equivalent to #ifndef X, and if this is the first
-    // directive seen, handle it for the multiple-include optimization.
-    if (CurLexer->getConditionalStackDepth() == 0) {
-      if (!ReadAnyTokensBeforeDirective && IfNDefMacro)
-        CurLexer->MIOpt.EnterTopLevelIFNDEF(IfNDefMacro);
-      else
-        CurLexer->MIOpt.EnterTopLevelConditional();
-    }
-    
     // Yes, remember that we are inside a conditional, then lex the next token.
     CurLexer->pushConditionalLevel(IfToken.getLocation(), /*wasskip*/false,
                                    /*foundnonskip*/true, /*foundelse*/false);
