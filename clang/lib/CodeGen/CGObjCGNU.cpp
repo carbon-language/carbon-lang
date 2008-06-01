@@ -732,7 +732,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   // Only emit an ObjC load function if no Objective-C stuff has been called
   if (Classes.empty() && Categories.empty() && ConstantStrings.empty() &&
       ExistingProtocols.empty() && TypedSelectors.empty() &&
-      UntypedSelectors.empty() == 0)
+      UntypedSelectors.empty())
     return NULL;
   
   std::vector<llvm::Constant*> Elements;
