@@ -352,8 +352,8 @@ struct ToolProperties : public RefCountedBase<ToolProperties> {
 
   // Default ctor here is needed because StringMap can only store
   // DefaultConstructible objects
-  ToolProperties() : Flags(0) {}
-  ToolProperties (const std::string& n) : Name(n), Flags(0) {}
+  ToolProperties() : CmdLine(0), Flags(0) {}
+  ToolProperties (const std::string& n) : Name(n), CmdLine(0), Flags(0) {}
 };
 
 
