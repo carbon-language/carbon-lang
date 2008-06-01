@@ -365,6 +365,12 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
   Chain  = DAG.getNode(MipsISD::JmpLink, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
+  Chain = DAG.getCALLSEQ_END(Chain,
+                             DAG.getConstant(NumBytes, getPointerTy()),
+                             DAG.getConstant(0, getPointerTy()),
+                             InFlag);
+  InFlag = Chain.getValue(1);
+
   // Create a stack location to hold GP when PIC is used. This stack 
   // location is used on function prologue to save GP and also after all 
   // emited CALL's to restore GP. 
@@ -391,14 +397,10 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
       Chain = GPLoad.getValue(1);
       Chain = DAG.getCopyToReg(Chain, DAG.getRegister(Mips::GP, MVT::i32), 
                                GPLoad, SDOperand(0,0));
+      InFlag = Chain.getValue(1);
   }      
 
   // Create the CALLSEQ_END node.
-  Chain = DAG.getCALLSEQ_END(Chain,
-                             DAG.getConstant(NumBytes, getPointerTy()),
-                             DAG.getConstant(0, getPointerTy()),
-                             InFlag);
-  InFlag = Chain.getValue(1);
 
   // Handle result values, copying them out of physregs into vregs that we
   // return.
