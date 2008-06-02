@@ -2115,10 +2115,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     break;
   case ISD::OR:
   case ISD::XOR:
+  case ISD::ADD:
+  case ISD::SUB:
     assert(MVT::isInteger(VT) && N1.getValueType() == N2.getValueType() &&
            N1.getValueType() == VT && "Binary operator types must match!");
-    // (X ^| 0) -> X.  This commonly occurs when legalizing i64 values, so it's
-    // worth handling here.
+    // (X ^|+- 0) -> X.  This commonly occurs when legalizing i64 values, so
+    // it's worth handling here.
     if (N2C && N2C->isNullValue())
       return N1;
     break;
@@ -2128,8 +2130,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   case ISD::MULHS:
     assert(MVT::isInteger(VT) && "This operator does not apply to FP types!");
     // fall through
-  case ISD::ADD:
-  case ISD::SUB:
   case ISD::MUL:
   case ISD::SDIV:
   case ISD::SREM:
