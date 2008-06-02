@@ -223,8 +223,8 @@ ConstExpr::= CastOps "(" ^ ConstVal to Types ^ ")"
  | extractelement "(" ^ ConstVal ^ "," ConstVal ^ ")"
  | insertelement "(" ^ ConstVal ^ "," ConstVal ^ "," ConstVal ^ ")"
  | shufflevector "(" ^ ConstVal ^ "," ConstVal ^ "," ConstVal ^ ")"
- | extractvalue "(" ^ ConstVal IndexList ^ ")"
- | insertvalue "(" ^ ConstVal ^ "," ConstVal IndexList ^ ")" ;
+ | extractvalue "(" ^ ConstVal ^ ConstantIndexList ^ ")"
+ | insertvalue "(" ^ ConstVal ^ "," ConstVal ^ ConstantIndexList ^ ")" ;
 
 ConstVector ::= ConstVector ^ "," ConstVal | ConstVal ;
 
@@ -345,6 +345,8 @@ ParamList ::= Types OptParamAttrs ValueRef OptParamAttrs
 
 IndexList ::= _ | IndexList ^ "," ResolvedVal ;
 
+ConstantIndexList ::= "," EUINT64VAL | ConstantIndexList ^ "," EUINT64VAL ;
+
 OptTailCall ::= tail call | call ;
 
 InstVal ::=
@@ -376,5 +378,5 @@ MemoryInst ::= malloc Types OptCAlign
  | OptVolatile store ResolvedVal ^ "," Types ValueRef OptCAlign
  | getresult Types ValueRef ^ "," EUINT64VAL
  | getelementptr Types ValueRef IndexList
- | extractvalue Types ValueRef IndexList 
- | insertvalue Types ValueRef ^ "," Types ValueRef IndexList ;
+ | extractvalue Types ValueRef ^ ConstantIndexList 
+ | insertvalue Types ValueRef ^ "," Types ValueRef ^ ConstantIndexList ;
