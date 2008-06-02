@@ -128,13 +128,11 @@ void LiveIntervals::computeNumbering() {
             i++;
           } while (!newInstr);
           
-          MachineInstr* preceding = i2miMap_[(mi2iMap_[newInstr] - 
-                                    InstrSlots::NUM) / InstrSlots::NUM];
-          if (preceding->getParent() == newInstr->getParent() &&
-              preceding->modifiesRegister(I->second.reg))
-            LI->start = mi2iMap_[newInstr] - InstrSlots::NUM + offset;
-          else
+          if (mi2iMap_[newInstr] ==
+              MBB2IdxMap[newInstr->getParent()->getNumber()].first)
             LI->start = mi2iMap_[newInstr];
+          else
+            LI->start = mi2iMap_[newInstr] - InstrSlots::NUM + offset;
         }
         
         // Remap the ending index in the same way that we remapped the start,
@@ -172,13 +170,11 @@ void LiveIntervals::computeNumbering() {
             i++;
           } while (!newInstr);
           
-          MachineInstr* preceding = i2miMap_[(mi2iMap_[newInstr] - 
-                                    InstrSlots::NUM) / InstrSlots::NUM];
-          if (preceding->getParent() == newInstr->getParent() &&
-              preceding->modifiesRegister(I->second.reg))
-            vni->def = mi2iMap_[newInstr] - InstrSlots::NUM + offset;
-          else
+          if (mi2iMap_[newInstr] ==
+              MBB2IdxMap[newInstr->getParent()->getNumber()].first)
             vni->def = mi2iMap_[newInstr];
+          else
+            vni->def = mi2iMap_[newInstr] - InstrSlots::NUM + offset;
         }
         
         // Remap the VNInfo kill indices, which works the same as
