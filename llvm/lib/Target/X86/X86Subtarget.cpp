@@ -44,9 +44,12 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
                GV->hasCommonLinkage() ||
                (GV->isDeclaration() && !GV->hasNotBeenReadFromBitcode())));
     } else if (isTargetELF()) {
-      // Extra load is needed for all non-statics.
-      return (!isDirectCall &&
-              (GV->isDeclaration() || !GV->hasInternalLinkage()));
+      // Extra load is needed for all externally visible.
+      if (isDirectCall)
+        return false;
+      if (GV->hasInternalLinkage() || GV->hasHiddenVisibility())
+        return false;
+      return true;
     } else if (isTargetCygMing() || isTargetWindows()) {
       return (GV->hasDLLImportLinkage());
     }
