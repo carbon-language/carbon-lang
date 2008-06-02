@@ -101,12 +101,13 @@ STMT(73, ObjCSelectorExpr     , Expr)
 STMT(74, ObjCProtocolExpr     , Expr)
 STMT(75, ObjCIvarRefExpr      , Expr)
 STMT(76, ObjCPropertyRefExpr  , Expr)
+STMT(77, ObjCSuperRefExpr     , Expr)
 
 // Clang Extensions.
-STMT(77, OverloadExpr         , Expr)
-STMT(78, ShuffleVectorExpr    , Expr)
+STMT(78, OverloadExpr         , Expr)
+STMT(79, ShuffleVectorExpr    , Expr)
 
-LAST_EXPR(78)
+LAST_EXPR(79)
 
 #undef STMT
 #undef FIRST_STMT

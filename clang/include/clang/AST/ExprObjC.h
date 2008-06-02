@@ -335,6 +335,28 @@ public:
   static ObjCMessageExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
+/// ObjCSuperRefExpr - A reference to super.
+class ObjCSuperRefExpr : public Expr {
+  SourceLocation Loc;
+public:
+  ObjCSuperRefExpr(QualType t, SourceLocation l) : 
+    Expr(ObjCSuperRefExprClass, t), Loc(l) {}
+  
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
+  
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ObjCSuperRefExprClass; 
+  }
+  static bool classof(const ObjCSuperRefExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ObjCSuperRefExpr* CreateImpl(llvm::Deserializer& D, ASTContext& C);
+};
+
 }  // end namespace clang
 
 #endif

@@ -518,6 +518,17 @@ DeclRefExpr* DeclRefExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   return new DeclRefExpr(decl,T,Loc);
 }
 
+void ObjCSuperRefExpr::EmitImpl(Serializer& S) const {
+  S.Emit(Loc);
+  S.Emit(getType());
+}
+
+ObjCSuperRefExpr* ObjCSuperRefExpr::CreateImpl(Deserializer& D, ASTContext& C) {
+  SourceLocation Loc = SourceLocation::ReadVal(D);
+  QualType T = QualType::ReadVal(D); 
+  return new ObjCSuperRefExpr(T, Loc); 
+}
+
 DeclStmt* DeclStmt::CreateImpl(Deserializer& D, ASTContext& C) {
   ScopedDecl* decl = cast<ScopedDecl>(D.ReadOwnedPtr<Decl>(C));
   SourceLocation StartLoc = SourceLocation::ReadVal(D);
