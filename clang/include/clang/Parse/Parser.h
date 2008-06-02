@@ -403,6 +403,9 @@ private:
   ExprResult ParseObjCMessageExpressionBody(SourceLocation LBracloc,
                                             IdentifierInfo *ReceiverName,
                                             ExprTy *ReceiverExpr);
+  ExprResult ParseAssignmentExprWithObjCMessageExprStart(SourceLocation LBracloc,
+                                                         IdentifierInfo *ReceiverName,
+                                                         ExprTy *ReceiverExpr);
     
   //===--------------------------------------------------------------------===//
   // C99 6.8: Statements and Blocks.

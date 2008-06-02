@@ -3,6 +3,7 @@
 
 @interface NSNumber;
 - () METH;
+- (unsigned) METH2;
 @end
 
 void test1() {
@@ -14,4 +15,9 @@ void test2(NSNumber x) {
 	return 0;
 }
 
+
+// rdar://5977581
+void test3() {
+  unsigned x[] = {[NSNumber METH2]+2};
+}
 

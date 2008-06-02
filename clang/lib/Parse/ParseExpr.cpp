@@ -200,6 +200,27 @@ Parser::ExprResult Parser::ParseAssignmentExpression() {
   return ParseRHSOfBinaryExpression(LHS, prec::Assignment);
 }
 
+/// ParseAssignmentExprWithObjCMessageExprStart - Parse an assignment expression
+/// where part of an objc message send has already been parsed.  In this case
+/// LBracLoc indicates the location of the '[' of the message send, and either
+/// ReceiverName or ReceiverExpr is non-null indicating the receiver of the
+/// message.
+///
+/// Since this handles full assignment-expression's, it handles postfix
+/// expressions and other binary operators for these expressions as well.
+Parser::ExprResult 
+Parser::ParseAssignmentExprWithObjCMessageExprStart(SourceLocation LBracLoc,
+                                                   IdentifierInfo *ReceiverName,
+                                                    ExprTy *ReceiverExpr) {
+  ExprResult R = ParseObjCMessageExpressionBody(LBracLoc, ReceiverName,
+                                                ReceiverExpr);
+  if (R.isInvalid) return R;
+  R = ParsePostfixExpressionSuffix(R);
+  if (R.isInvalid) return R;
+  return ParseRHSOfBinaryExpression(R, 2);
+}
+
+
 Parser::ExprResult Parser::ParseConstantExpression() {
   ExprResult LHS = ParseCastExpression(false);
   if (LHS.isInvalid) return LHS;

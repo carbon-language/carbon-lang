@@ -98,8 +98,7 @@ Parser::ExprResult Parser::ParseInitializerWithPotentialDesignator() {
         // [4][foo bar].
         IdentifierInfo *Name = Tok.getIdentifierInfo();
         ConsumeToken();
-        ExprResult R = ParseObjCMessageExpressionBody(StartLoc, Name, 0);
-        return ParsePostfixExpressionSuffix(R);
+        return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, Name, 0);
       }
       
       // Note that we parse this as an assignment expression, not a constant
@@ -113,13 +112,13 @@ Parser::ExprResult Parser::ParseInitializerWithPotentialDesignator() {
       
       // Given an expression, we could either have a designator (if the next
       // tokens are '...' or ']' or an objc message send.  If this is an objc
-      // message send, handle it now.
+      // message send, handle it now.  An objc-message send is the start of 
+      // an assignment-expression production.
       if (getLang().ObjC1 && Tok.isNot(tok::ellipsis) && 
           Tok.isNot(tok::r_square)) {
         // FIXME: Emit ext_gnu_missing_equal_designator for inits like
         // [4][foo bar].
-        ExprResult R = ParseObjCMessageExpressionBody(StartLoc, 0, Idx.Val);
-        return ParsePostfixExpressionSuffix(R);
+        return ParseAssignmentExprWithObjCMessageExprStart(StartLoc, 0,Idx.Val);
       }
       
       // Handle the gnu array range extension.
