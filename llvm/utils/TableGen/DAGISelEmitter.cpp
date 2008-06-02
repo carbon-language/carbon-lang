@@ -992,18 +992,6 @@ public:
         }
       }
 
-      // Generate MemOperandSDNodes nodes for each memory accesses covered by 
-      // this pattern.
-      if (II.isSimpleLoad | II.mayLoad | II.mayStore) {
-        std::vector<std::string>::const_iterator mi, mie;
-        for (mi = LSI.begin(), mie = LSI.end(); mi != mie; ++mi) {
-          emitCode("SDOperand LSI_" + *mi + " = "
-                   "CurDAG->getMemOperand(cast<LSBaseSDNode>(" +
-                   *mi + ")->getMemOperand());");
-          AllOps.push_back("LSI_" + *mi);
-        }
-      }
-
       // Emit all the chain and CopyToReg stuff.
       bool ChainEmitted = NodeHasChain;
       if (NodeHasChain)
@@ -1086,6 +1074,21 @@ public:
           emitCode("  AddToISelQueue(N.getOperand(i));");
           emitCode("  Ops" + utostr(OpsNo) + ".push_back(N.getOperand(i));");
           emitCode("}");
+        }
+
+        // Generate MemOperandSDNodes nodes for each memory accesses covered by 
+        // this pattern.
+        if (II.isSimpleLoad | II.mayLoad | II.mayStore) {
+          std::vector<std::string>::const_iterator mi, mie;
+          for (mi = LSI.begin(), mie = LSI.end(); mi != mie; ++mi) {
+            emitCode("SDOperand LSI_" + *mi + " = "
+                     "CurDAG->getMemOperand(cast<LSBaseSDNode>(" +
+                     *mi + ")->getMemOperand());");
+            if (IsVariadic)
+              emitCode("Ops" + utostr(OpsNo) + ".push_back(LSI_" + *mi + ");");
+            else
+              AllOps.push_back("LSI_" + *mi);
+          }
         }
 
         if (NodeHasChain) {
