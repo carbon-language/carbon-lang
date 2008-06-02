@@ -687,7 +687,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
         if (isa<ConstantInt>(GEP1Ops[i]) && 
             !cast<ConstantInt>(GEP1Ops[i])->isZero()) {
           // Yup, there's a constant in the tail.  Set all variables to
-          // constants in the GEP instruction to make it suiteable for
+          // constants in the GEP instruction to make it suitable for
           // TargetData::getIndexedOffset.
           for (i = 0; i != MaxOperands; ++i)
             if (!isa<ConstantInt>(GEP1Ops[i]))
@@ -702,9 +702,15 @@ BasicAliasAnalysis::CheckGEPInstructions(
           int64_t Offset2 = TD.getIndexedOffset(GEPPointerTy, GEP1Ops,
                                                 MinOperands);
 
+          // Make sure we compare the absolute difference.
+          if (Offset1 > Offset2)
+            std::swap(Offset1, Offset2);
+
           // If the tail provided a bit enough offset, return noalias!
           if ((uint64_t)(Offset2-Offset1) >= SizeMax)
             return NoAlias;
+          // Otherwise break - we don't look for another constant in the tail.
+          break;
         }
     }
 
