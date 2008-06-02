@@ -565,12 +565,9 @@ unsigned llvm::ComputeNumSignBits(Value *V, TargetData *TD, unsigned Depth) {
   unsigned Tmp, Tmp2;
   unsigned FirstAnswer = 1;
 
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
-    if (CI->getValue().isNegative())
-      return CI->getValue().countLeadingOnes();
-    return CI->getValue().countLeadingZeros();
-  }
-  
+  // Note that ConstantInt is handled by the general ComputeMaskedBits case
+  // below.
+
   if (Depth == 6)
     return 1;  // Limit search depth.
   
