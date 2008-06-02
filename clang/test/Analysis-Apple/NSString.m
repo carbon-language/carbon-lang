@@ -71,23 +71,15 @@ NSString* f10() {
 }
 
 @interface C1 : NSObject {}
-
 - (NSString*) getShared;
 + (C1*) sharedInstance;
-
 @end
-
 @implementation C1 : NSObject {}
-
 - (NSString*) getShared {
-  
   static NSString* s = nil;
-  
-  if (!s) s = [[NSString alloc] init];
-    
+  if (!s) s = [[NSString alloc] init];    
   return s; // no-warning  
 }
-
 + (C1 *)sharedInstance {
   static C1 *sharedInstance = nil;
   if (!sharedInstance) {
@@ -95,6 +87,25 @@ NSString* f10() {
   }
   return sharedInstance; // no-warning
 }
-
 @end
 
+@interface SharedClass : NSObject
++ (id)sharedInstance;
+@end
+@implementation SharedClass
+
+- (id)_init {
+    if ((self = [super init])) {
+        NSLog(@"Bar");
+    }
+    return self;
+}
+
++ (id)sharedInstance {
+    static SharedClass *_sharedInstance = nil;
+    if (!_sharedInstance) {
+        _sharedInstance = [[SharedClass alloc] _init];
+    }
+    return _sharedInstance; // no-warning
+}
+@end

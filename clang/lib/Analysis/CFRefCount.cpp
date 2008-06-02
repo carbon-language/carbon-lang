@@ -607,7 +607,7 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME) {
   const char* s = S.getIdentifierInfoForSlot(0)->getName();
   assert (ScratchArgs.empty());
   
-  if (strncmp(s, "init", 4) == 0)
+  if (strncmp(s, "init", 4) == 0 || strncmp(s, "_init", 5) == 0)
     return getInitMethodSummary(S);  
   
   // "copyXXX", "createXXX", "newXXX": allocators.  
