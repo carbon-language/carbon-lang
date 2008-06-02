@@ -219,8 +219,10 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // Custom lower i32 multiplications
   setOperationAction(ISD::MUL,  MVT::i32,    Custom);
 
-  // Need to custom handle (some) common i8 math ops
+  // Need to custom handle (some) common i8, i64 math ops
+  setOperationAction(ISD::ADD,  MVT::i64,    Custom);
   setOperationAction(ISD::SUB,  MVT::i8,     Custom);
+  setOperationAction(ISD::SUB,  MVT::i64,    Custom);
   setOperationAction(ISD::MUL,  MVT::i8,     Custom);
   
   // SPU does not have BSWAP. It does have i32 support CTLZ.
@@ -238,7 +240,7 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
 
   setOperationAction(ISD::CTLZ , MVT::i32,   Legal);
   
-  // SPU has a version of select that implements (a&~c)|(b|c), just like
+  // SPU has a version of select that implements (a&~c)|(b&c), just like
   // select ought to work:
   setOperationAction(ISD::SELECT, MVT::i1,   Promote);
   setOperationAction(ISD::SELECT, MVT::i8,   Legal);
@@ -427,8 +429,14 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
     node_names[(unsigned) SPUISD::ROTBYTES_LEFT] = "SPUISD::ROTBYTES_LEFT";
     node_names[(unsigned) SPUISD::ROTBYTES_LEFT_CHAINED] =
       "SPUISD::ROTBYTES_LEFT_CHAINED";
-    node_names[(unsigned) SPUISD::FSMBI] = "SPUISD::FSMBI";
+    node_names[(unsigned) SPUISD::ROTBYTES_LEFT_BITS] =
+      "SPUISD::ROTBYTES_LEFT_BITS";
+    node_names[(unsigned) SPUISD::SELECT_MASK] = "SPUISD::SELECT_MASK";
     node_names[(unsigned) SPUISD::SELB] = "SPUISD::SELB";
+    node_names[(unsigned) SPUISD::ADD_EXTENDED] = "SPUISD::ADD_EXTENDED";
+    node_names[(unsigned) SPUISD::CARRY_GENERATE] = "SPUISD::CARRY_GENERATE";
+    node_names[(unsigned) SPUISD::SUB_EXTENDED] = "SPUISD::SUB_EXTENDED";
+    node_names[(unsigned) SPUISD::BORROW_GENERATE] = "SPUISD::BORROW_GENERATE";
     node_names[(unsigned) SPUISD::FPInterp] = "SPUISD::FPInterp";
     node_names[(unsigned) SPUISD::FPRecipEst] = "SPUISD::FPRecipEst";
     node_names[(unsigned) SPUISD::SEXT32TO64] = "SPUISD::SEXT32TO64";
@@ -1706,33 +1714,33 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
       }
 
       for (int i = 0; i < 4; ++i) {
+        uint64_t val = 0;
         for (int j = 0; j < 4; ++j) {
           SDOperand V;
           bool process_upper, process_lower;
-          uint64_t val = 0;
-
+          val <<= 8;
           process_upper = (upper_special && (i & 1) == 0);
           process_lower = (lower_special && (i & 1) == 1);
 
           if (process_upper || process_lower) {
             if ((process_upper && upper == 0)
                 || (process_lower && lower == 0))
-              val = 0x80;
+              val |= 0x80;
             else if ((process_upper && upper == 0xffffffff)
                      || (process_lower && lower == 0xffffffff))
-              val = 0xc0;
+              val |= 0xc0;
             else if ((process_upper && upper == 0x80000000)
                      || (process_lower && lower == 0x80000000))
-              val = (j == 0 ? 0xe0 : 0x80);
+              val |= (j == 0 ? 0xe0 : 0x80);
           } else
-            val = i * 4 + j + ((i & 1) * 16);
-
-          ShufBytes.push_back(DAG.getConstant(val, MVT::i8));
+            val |= i * 4 + j + ((i & 1) * 16);
         }
+
+        ShufBytes.push_back(DAG.getConstant(val, MVT::i32));
       }
 
       return DAG.getNode(SPUISD::SHUFB, VT, HI32, LO32,
-                         DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8,
+                         DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
                                      &ShufBytes[0], ShufBytes.size()));
     }
   }
@@ -1904,7 +1912,7 @@ static SDOperand LowerVectorMUL(SDOperand Op, SelectionDAG &DAG) {
   // b) multiply upper halves, rotate left by 16 bits (inserts 16 lower zeroes)
   // c) Use SELB to select upper and lower halves from the intermediate results
   //
-  // NOTE: We really want to move the FSMBI to earlier to actually get the
+  // NOTE: We really want to move the SELECT_MASK to earlier to actually get the
   // dual-issue. This code does manage to do this, even if it's a little on
   // the wacky side
   case MVT::v8i16: {
@@ -1918,7 +1926,7 @@ static SDOperand LowerVectorMUL(SDOperand Op, SelectionDAG &DAG) {
 
     SDOperand FSMBOp =
       DAG.getCopyToReg(Chain, FSMBIreg,
-                       DAG.getNode(SPUISD::FSMBI, MVT::v8i16,
+                       DAG.getNode(SPUISD::SELECT_MASK, MVT::v8i16,
                                    DAG.getConstant(0xcccc, MVT::i16)));
 
     SDOperand HHProd =
@@ -1962,7 +1970,7 @@ static SDOperand LowerVectorMUL(SDOperand Op, SelectionDAG &DAG) {
       DAG.getNode(SPUISD::VEC_SHL, MVT::v8i16,
                   DAG.getNode(SPUISD::MPY, MVT::v8i16, rALH, rBLH), c8);
 
-    SDOperand FSMBmask = DAG.getNode(SPUISD::FSMBI, MVT::v8i16,
+    SDOperand FSMBmask = DAG.getNode(SPUISD::SELECT_MASK, MVT::v8i16,
                                      DAG.getConstant(0x2222, MVT::i16));
 
     SDOperand LoProdParts =
@@ -2293,6 +2301,64 @@ static SDOperand LowerI64Math(SDOperand Op, SelectionDAG &DAG, unsigned Opc)
                                                DAG.getConstant(4, MVT::i32))));
   }
 
+  case ISD::ADD: {
+    // Turn operands into vectors to satisfy type checking (shufb works on
+    // vectors)
+    SDOperand Op0 =
+      DAG.getNode(SPUISD::PROMOTE_SCALAR, MVT::v2i64, Op.getOperand(0));
+    SDOperand Op1 =
+      DAG.getNode(SPUISD::PROMOTE_SCALAR, MVT::v2i64, Op.getOperand(1));
+    SmallVector<SDOperand, 16> ShufBytes;
+
+    // Create the shuffle mask for "rotating" the borrow up one register slot
+    // once the borrow is generated.
+    ShufBytes.push_back(DAG.getConstant(0x04050607, MVT::i32));
+    ShufBytes.push_back(DAG.getConstant(0x80808080, MVT::i32));
+    ShufBytes.push_back(DAG.getConstant(0x0c0d0e0f, MVT::i32));
+    ShufBytes.push_back(DAG.getConstant(0x80808080, MVT::i32));
+
+    SDOperand CarryGen =
+      DAG.getNode(SPUISD::CARRY_GENERATE, MVT::v2i64, Op0, Op1);
+    SDOperand ShiftedCarry =
+      DAG.getNode(SPUISD::SHUFB, MVT::v2i64,
+                  CarryGen, CarryGen,
+                  DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                              &ShufBytes[0], ShufBytes.size()));
+
+    return DAG.getNode(SPUISD::EXTRACT_ELT0, MVT::i64,
+                       DAG.getNode(SPUISD::ADD_EXTENDED, MVT::v2i64,
+                                   Op0, Op1, ShiftedCarry));
+  }
+
+  case ISD::SUB: {
+    // Turn operands into vectors to satisfy type checking (shufb works on
+    // vectors)
+    SDOperand Op0 =
+      DAG.getNode(SPUISD::PROMOTE_SCALAR, MVT::v2i64, Op.getOperand(0));
+    SDOperand Op1 =
+      DAG.getNode(SPUISD::PROMOTE_SCALAR, MVT::v2i64, Op.getOperand(1));
+    SmallVector<SDOperand, 16> ShufBytes;
+
+    // Create the shuffle mask for "rotating" the borrow up one register slot
+    // once the borrow is generated.
+    ShufBytes.push_back(DAG.getConstant(0x04050607, MVT::i32));
+    ShufBytes.push_back(DAG.getConstant(0xc0c0c0c0, MVT::i32));
+    ShufBytes.push_back(DAG.getConstant(0x0c0d0e0f, MVT::i32));
+    ShufBytes.push_back(DAG.getConstant(0xc0c0c0c0, MVT::i32));
+
+    SDOperand BorrowGen =
+      DAG.getNode(SPUISD::BORROW_GENERATE, MVT::v2i64, Op0, Op1);
+    SDOperand ShiftedBorrow =
+      DAG.getNode(SPUISD::SHUFB, MVT::v2i64,
+                  BorrowGen, BorrowGen,
+                  DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32,
+                              &ShufBytes[0], ShufBytes.size()));
+
+    return DAG.getNode(SPUISD::EXTRACT_ELT0, MVT::i64,
+                       DAG.getNode(SPUISD::SUB_EXTENDED, MVT::v2i64,
+                                   Op0, Op1, ShiftedBorrow));
+  }
+
   case ISD::SHL: {
     SDOperand ShiftAmt = Op.getOperand(1);
     unsigned ShiftAmtVT = unsigned(ShiftAmt.getValueType());
@@ -2301,7 +2367,7 @@ static SDOperand LowerI64Math(SDOperand Op, SelectionDAG &DAG, unsigned Opc)
       DAG.getNode(SPUISD::SELB, VecVT,
                   Op0Vec,
                   DAG.getConstant(0, VecVT),
-                  DAG.getNode(SPUISD::FSMBI, VecVT,
+                  DAG.getNode(SPUISD::SELECT_MASK, VecVT,
                               DAG.getConstant(0xff00ULL, MVT::i16)));
     SDOperand ShiftAmtBytes =
       DAG.getNode(ISD::SRL, ShiftAmtVT,
@@ -2336,6 +2402,43 @@ static SDOperand LowerI64Math(SDOperand Op, SelectionDAG &DAG, unsigned Opc)
                        DAG.getNode(SPUISD::ROTQUAD_RZ_BYTES, VT,
                                    Op0, ShiftAmtBytes),
                        ShiftAmtBits);
+  }
+
+  case ISD::SRA: {
+    // Promote Op0 to vector
+    SDOperand Op0 =
+      DAG.getNode(SPUISD::PROMOTE_SCALAR, MVT::v2i64, Op.getOperand(0));
+    SDOperand ShiftAmt = Op.getOperand(1);
+    unsigned ShiftVT = ShiftAmt.getValueType();
+
+    // Negate variable shift amounts
+    if (!isa<ConstantSDNode>(ShiftAmt)) {
+      ShiftAmt = DAG.getNode(ISD::SUB, ShiftVT,
+                             DAG.getConstant(0, ShiftVT), ShiftAmt);
+    }
+
+    SDOperand UpperHalfSign =
+      DAG.getNode(SPUISD::EXTRACT_ELT0, MVT::i32,
+                  DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32,
+                              DAG.getNode(SPUISD::VEC_SRA, MVT::v2i64,
+                                          Op0, DAG.getConstant(31, MVT::i32))));
+    SDOperand UpperHalfSignMask =
+      DAG.getNode(SPUISD::SELECT_MASK, MVT::v2i64, UpperHalfSign);
+    SDOperand UpperLowerMask =
+      DAG.getNode(SPUISD::SELECT_MASK, MVT::v2i64,
+                  DAG.getConstant(0xff00, MVT::i16));
+    SDOperand UpperLowerSelect =
+      DAG.getNode(SPUISD::SELB, MVT::v2i64,
+                  UpperHalfSignMask, Op0, UpperLowerMask);
+    SDOperand RotateLeftBytes =
+      DAG.getNode(SPUISD::ROTBYTES_LEFT_BITS, MVT::v2i64,
+                  UpperLowerSelect, ShiftAmt);
+    SDOperand RotateLeftBits =
+      DAG.getNode(SPUISD::ROTBYTES_LEFT, MVT::v2i64,
+                  RotateLeftBytes, ShiftAmt);
+
+    return DAG.getNode(SPUISD::EXTRACT_ELT0, MVT::i64,
+                       RotateLeftBits);
   }
   }
 
@@ -2567,17 +2670,19 @@ SPUTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG)
   case ISD::ZERO_EXTEND:
   case ISD::SIGN_EXTEND:
   case ISD::ANY_EXTEND:
+  case ISD::ADD:
   case ISD::SUB:
   case ISD::ROTR:
   case ISD::ROTL:
   case ISD::SRL:
   case ISD::SHL:
-  case ISD::SRA:
+  case ISD::SRA: {
     if (VT == MVT::i8)
       return LowerI8Math(Op, DAG, Opc);
     else if (VT == MVT::i64)
       return LowerI64Math(Op, DAG, Opc);
     break;
+  }
 
   // Vector-related lowering.
   case ISD::BUILD_VECTOR:
@@ -2641,9 +2746,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
   case ISD::ADD: {
     SDOperand Op1 = N->getOperand(1);
 
-    if ((Op1.getOpcode() == ISD::Constant
-         || Op1.getOpcode() == ISD::TargetConstant)
-        && Op0.getOpcode() == SPUISD::IndirectAddr) {
+    if (isa<ConstantSDNode>(Op1) && Op0.getOpcode() == SPUISD::IndirectAddr) {
       SDOperand Op01 = Op0.getOperand(1);
       if (Op01.getOpcode() == ISD::Constant
           || Op01.getOpcode() == ISD::TargetConstant) {
@@ -2662,8 +2765,7 @@ SPUTargetLowering::PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const
         return DAG.getNode(SPUISD::IndirectAddr, Op0.getValueType(),
                            Op0.getOperand(0), combinedConst);
       }
-    } else if ((Op0.getOpcode() == ISD::Constant
-                || Op0.getOpcode() == ISD::TargetConstant)
+    } else if (isa<ConstantSDNode>(Op0)
                && Op1.getOpcode() == SPUISD::IndirectAddr) {
       SDOperand Op11 = Op1.getOperand(1);
       if (Op11.getOpcode() == ISD::Constant
@@ -2899,11 +3001,11 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
   case SPUISD::ROTBYTES_RIGHT_S:
   case SPUISD::ROTBYTES_LEFT:
   case SPUISD::ROTBYTES_LEFT_CHAINED:
-  case FSMBI:
-  case SELB:
-  case FPInterp:
-  case FPRecipEst:
-  case SEXT32TO64:
+  case SPUISD::SELECT_MASK:
+  case SPUISD::SELB:
+  case SPUISD::FPInterp:
+  case SPUISD::FPRecipEst:
+  case SPUISD::SEXT32TO64:
 #endif
   }
 }

@@ -36,29 +36,25 @@ def SDT_SPUshuffle   : SDTypeProfile<1, 3, [
 ]>;
 
 // Unary, binary v16i8 operator type constraints:
-def SPUv16i8_unop: SDTypeProfile<1, 1, [
-  SDTCisVT<0, v16i8>, SDTCisSameAs<0, 1>]>;
-
 def SPUv16i8_binop: SDTypeProfile<1, 2, [
   SDTCisVT<0, v16i8>, SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>]>;
 
 // Binary v8i16 operator type constraints:
-def SPUv8i16_unop: SDTypeProfile<1, 1, [
-  SDTCisVT<0, v8i16>, SDTCisSameAs<0, 1>]>;
-
 def SPUv8i16_binop: SDTypeProfile<1, 2, [
   SDTCisVT<0, v8i16>, SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>]>;
 
 // Binary v4i32 operator type constraints:
-def SPUv4i32_unop: SDTypeProfile<1, 1, [
-  SDTCisVT<0, v4i32>, SDTCisSameAs<0, 1>]>;
-
 def SPUv4i32_binop: SDTypeProfile<1, 2, [
   SDTCisVT<0, v4i32>, SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>]>;
 
-// FSMBI type constraints: There are several variations for the various
+// Trinary operators, e.g., addx, carry generate
+def SPUIntTrinaryOp : SDTypeProfile<1, 3, [
+  SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisSameAs<0, 3>, SDTCisInt<0>
+]>;
+
+// SELECT_MASK type constraints: There are several variations for the various
 // vector types (this avoids having to bit_convert all over the place.)
-def SPUfsmbi_type: SDTypeProfile<1, 1, [
+def SPUselmask_type: SDTypeProfile<1, 1, [
   SDTCisInt<1>
 ]>;
 
@@ -74,10 +70,16 @@ def SPUvecshift_type: SDTypeProfile<1, 2, [
 // Synthetic/pseudo-instructions
 //===----------------------------------------------------------------------===//
 
+/// Add extended, carry generate:
+def SPUaddx : SDNode<"SPUISD::ADD_EXTENDED", SPUIntTrinaryOp, []>;
+def SPUcarry_gen : SDNode<"SPUISD::CARRY_GENERATE", SDTIntBinOp, []>;
+
+// Subtract extended, borrow generate
+def SPUsubx : SDNode<"SPUISD::SUB_EXTENDED", SPUIntTrinaryOp, []>;
+def SPUborrow_gen : SDNode<"SPUISD::BORROW_GENERATE", SDTIntBinOp, []>;
+
 // SPU CNTB:
-def SPUcntb_v16i8: SDNode<"SPUISD::CNTB", SPUv16i8_unop, []>;
-def SPUcntb_v8i16: SDNode<"SPUISD::CNTB", SPUv8i16_unop, []>;
-def SPUcntb_v4i32: SDNode<"SPUISD::CNTB", SPUv4i32_unop, []>;
+def SPUcntb : SDNode<"SPUISD::CNTB", SDTIntUnaryOp>;
 
 // SPU vector shuffle node, matched by the SPUISD::SHUFB enum (see
 // SPUISelLowering.h):
@@ -122,14 +124,23 @@ def SPUrotquad_rz_bits: SDNode<"SPUISD::ROTQUAD_RZ_BITS",
 def SPUrotbytes_right_sfill: SDNode<"SPUISD::ROTBYTES_RIGHT_S",
                                     SPUvecshift_type, []>;
 
+// Vector rotate left, bits shifted out of the left are rotated in on the right
 def SPUrotbytes_left: SDNode<"SPUISD::ROTBYTES_LEFT",
                              SPUvecshift_type, []>;
 
+// Same as above, but the node also has a chain associated (used in loads and
+// stores)
 def SPUrotbytes_left_chained : SDNode<"SPUISD::ROTBYTES_LEFT_CHAINED",
                                       SPUvecshift_type, [SDNPHasChain]>;
 
+// Vector rotate left by bytes, but the count is given in bits and the SPU
+// internally converts it to bytes (saves an instruction to mask off lower
+// three bits)
+def SPUrotbytes_left_bits : SDNode<"SPUISD::ROTBYTES_LEFT_BITS",
+                                   SPUvecshift_type>;
+
 // SPU form select mask for bytes, immediate
-def SPUfsmbi: SDNode<"SPUISD::FSMBI", SPUfsmbi_type, []>;
+def SPUselmask: SDNode<"SPUISD::SELECT_MASK", SPUselmask_type, []>;
 
 // SPU select bits instruction
 def SPUselb: SDNode<"SPUISD::SELB", SPUselb_type, []>;

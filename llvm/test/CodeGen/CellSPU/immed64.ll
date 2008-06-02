@@ -1,16 +1,16 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
-; RUN: grep lqa      %t1.s | count 13
-; RUN: grep il       %t1.s | count 22
-; RUN: grep shufb    %t1.s | count 13
-; RUN: grep    65520 %t1.s | count 1
-; RUN: grep    43981 %t1.s | count 1
-; RUN: grep    13702 %t1.s | count 1
-; RUN: grep       81 %t1.s | count 2
-; RUN: grep    28225 %t1.s | count 1
-; RUN: grep    30720 %t1.s | count 1
-; RUN: grep      192 %t1.s | count 32
-; RUN: grep      128 %t1.s | count 30
-; RUN: grep      224 %t1.s | count 2
+; RUN: grep lqa        %t1.s | count 13
+; RUN: grep il         %t1.s | count 22
+; RUN: grep shufb      %t1.s | count 13
+; RUN: grep      65520 %t1.s | count  1
+; RUN: grep      43981 %t1.s | count  1
+; RUN: grep      13702 %t1.s | count  1
+; RUN: grep      28225 %t1.s | count  1
+; RUN: grep      30720 %t1.s | count  1
+; RUN: grep 3233857728 %t1.s | count  8
+; RUN: grep 2155905152 %t1.s | count  6
+; RUN: grep      66051 %t1.s | count  7
+; RUN: grep  471670303 %t1.s | count 11
 
 target datalayout = "E-p:32:32:128-f64:64:128-f32:32:128-i64:32:128-i32:32:128-i16:16:128-i8:8:128-i1:8:128-a0:0:128-v128:128:128-s0:128:128"
 target triple = "spu"

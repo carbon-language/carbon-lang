@@ -62,8 +62,13 @@ namespace llvm {
       ROTBYTES_RIGHT_S,         ///< Vector rotate right, by bytes, sign fill
       ROTBYTES_LEFT,            ///< Rotate bytes (loads -> ROTQBYI)
       ROTBYTES_LEFT_CHAINED,    ///< Rotate bytes (loads -> ROTQBYI), with chain
-      FSMBI,                    ///< Form Select Mask for Bytes, Immediate
+      ROTBYTES_LEFT_BITS,       ///< Rotate bytes left by bit shift count
+      SELECT_MASK,              ///< Select Mask (FSM, FSMB, FSMH, FSMBI)
       SELB,                     ///< Select bits -> (b & mask) | (a & ~mask)
+      ADD_EXTENDED,             ///< Add extended, with carry
+      CARRY_GENERATE,           ///< Carry generate for ADD_EXTENDED
+      SUB_EXTENDED,             ///< Subtract extended, with borrow
+      BORROW_GENERATE,          ///< Borrow generate for SUB_EXTENDED
       FPInterp,                 ///< Floating point interpolate
       FPRecipEst,               ///< Floating point reciprocal estimate
       SEXT32TO64,               ///< Sign-extended 32-bit const -> 64-bits
