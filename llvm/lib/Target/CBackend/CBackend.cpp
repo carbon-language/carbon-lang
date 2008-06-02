@@ -171,7 +171,7 @@ namespace {
 
     void printModule(Module *M);
     void printModuleTypes(const TypeSymbolTable &ST);
-    void printContainedStructs(const Type *Ty, std::set<const StructType *> &);
+    void printContainedStructs(const Type *Ty, std::set<const Type *> &);
     void printFloatingPointConstants(Function &F);
     void printFunctionSignature(const Function *F, bool Prototype);
 
@@ -210,7 +210,8 @@ namespace {
       // emit it inline where it would go.
       if (I.getType() == Type::VoidTy || !I.hasOneUse() ||
           isa<TerminatorInst>(I) || isa<CallInst>(I) || isa<PHINode>(I) ||
-          isa<LoadInst>(I) || isa<VAArgInst>(I) || isa<InsertElementInst>(I))
+          isa<LoadInst>(I) || isa<VAArgInst>(I) || isa<InsertElementInst>(I) ||
+          isa<InsertValueInst>(I))
         // Don't inline a load across a store or other bad things!
         return false;
 
@@ -286,6 +287,9 @@ namespace {
     void visitShuffleVectorInst(ShuffleVectorInst &SVI);
     void visitGetResultInst(GetResultInst &GRI);
 
+    void visitInsertValueInst(InsertValueInst &I);
+    void visitExtractValueInst(ExtractValueInst &I);
+
     void visitInstruction(Instruction &I) {
       cerr << "C Writer does not know about " << I;
       abort();
@@ -325,9 +329,10 @@ bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
        TI != TE; ) {
     TypeSymbolTable::iterator I = TI++;
     
-    // If this isn't a struct type, remove it from our set of types to name.
-    // This simplifies emission later.
-    if (!isa<StructType>(I->second) && !isa<OpaqueType>(I->second)) {
+    // If this isn't a struct or array type, remove it from our set of types
+    // to name. This simplifies emission later.
+    if (!isa<StructType>(I->second) && !isa<OpaqueType>(I->second) &&
+        !isa<ArrayType>(I->second)) {
       TST.remove(I);
     } else {
       // If this is not used, remove it from the symbol table.
@@ -346,8 +351,8 @@ bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
   unsigned RenameCounter = 0;
   for (std::set<const Type *>::const_iterator I = UT.begin(), E = UT.end();
        I != E; ++I)
-    if (const StructType *ST = dyn_cast<StructType>(*I)) {
-      while (M.addTypeName("unnamed"+utostr(RenameCounter), ST))
+    if (isa<StructType>(*I) || isa<ArrayType>(*I)) {
+      while (M.addTypeName("unnamed"+utostr(RenameCounter), *I))
         ++RenameCounter;
       Changed = true;
     }
@@ -557,8 +562,12 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     const ArrayType *ATy = cast<ArrayType>(Ty);
     unsigned NumElements = ATy->getNumElements();
     if (NumElements == 0) NumElements = 1;
-    return printType(Out, ATy->getElementType(), false,
-                     NameSoFar + "[" + utostr(NumElements) + "]");
+    // Arrays are wrapped in structs to allow them to have normal
+    // value semantics (avoiding the array "decay").
+    Out << NameSoFar << " { ";
+    printType(Out, ATy->getElementType(), false,
+              "array[" + utostr(NumElements) + "]");
+    return Out << "; }";
   }
 
   case Type::OpaqueTyID: {
@@ -1013,6 +1022,7 @@ void CWriter::printConstant(Constant *CPV) {
   }
 
   case Type::ArrayTyID:
+    Out << "{ "; // Arrays are wrapped in struct types.
     if (ConstantArray *CA = dyn_cast<ConstantArray>(CPV)) {
       printConstantArray(CA);
     } else {
@@ -1030,6 +1040,7 @@ void CWriter::printConstant(Constant *CPV) {
       }
       Out << " }";
     }
+    Out << " }"; // Arrays are wrapped in struct types.
     break;
 
   case Type::VectorTyID:
@@ -1760,9 +1771,12 @@ bool CWriter::doInitialization(Module &M) {
           // the compiler figure out the rest of the zeros.
           Out << " = " ;
           if (isa<StructType>(I->getInitializer()->getType()) ||
-              isa<ArrayType>(I->getInitializer()->getType()) ||
               isa<VectorType>(I->getInitializer()->getType())) {
             Out << "{ 0 }";
+          } else if (isa<ArrayType>(I->getInitializer()->getType())) {
+            // As with structs and vectors, but with an extra set of braces
+            // because arrays are wrapped in structs.
+            Out << "{ { 0 } }";
           } else {
             // Just print it out normally.
             writeOperand(I->getInitializer());
@@ -1904,16 +1918,16 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
   Out << '\n';
 
   // Keep track of which structures have been printed so far...
-  std::set<const StructType *> StructPrinted;
+  std::set<const Type *> StructPrinted;
 
   // Loop over all structures then push them into the stack so they are
   // printed in the correct order.
   //
   Out << "/* Structure contents */\n";
   for (I = TST.begin(); I != End; ++I)
-    if (const StructType *STy = dyn_cast<StructType>(I->second))
+    if (isa<StructType>(I->second) || isa<ArrayType>(I->second))
       // Only print out used types!
-      printContainedStructs(STy, StructPrinted);
+      printContainedStructs(I->second, StructPrinted);
 }
 
 // Push the struct onto the stack and recursively push all structs
@@ -1922,7 +1936,7 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
 // TODO:  Make this work properly with vector types
 //
 void CWriter::printContainedStructs(const Type *Ty,
-                                    std::set<const StructType*> &StructPrinted){
+                                    std::set<const Type*> &StructPrinted) {
   // Don't walk through pointers.
   if (isa<PointerType>(Ty) || Ty->isPrimitiveType() || Ty->isInteger()) return;
   
@@ -1931,12 +1945,12 @@ void CWriter::printContainedStructs(const Type *Ty,
        E = Ty->subtype_end(); I != E; ++I)
     printContainedStructs(*I, StructPrinted);
   
-  if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+  if (isa<StructType>(Ty) || isa<ArrayType>(Ty)) {
     // Check to see if we have already printed this struct.
-    if (StructPrinted.insert(STy).second) {
+    if (StructPrinted.insert(Ty).second) {
       // Print structure type out.
-      std::string Name = TypeNames[STy];
-      printType(Out, STy, false, Name, true);
+      std::string Name = TypeNames[Ty];
+      printType(Out, Ty, false, Name, true);
       Out << ";\n\n";
     }
   }
@@ -3097,6 +3111,10 @@ void CWriter::printGEPExpression(Value *Ptr, gep_type_iterator I,
   for (; I != E; ++I) {
     if (isa<StructType>(*I)) {
       Out << ".field" << cast<ConstantInt>(I.getOperand())->getZExtValue();
+    } else if (isa<ArrayType>(*I)) {
+      Out << ".array[";
+      writeOperandWithCast(I.getOperand(), Instruction::GetElementPtr);
+      Out << ']';
     } else if (!isa<VectorType>(*I)) {
       Out << '[';
       writeOperandWithCast(I.getOperand(), Instruction::GetElementPtr);
@@ -3251,6 +3269,47 @@ void CWriter::visitGetResultInst(GetResultInst &GRI) {
     Out << ") 0/*UNDEF*/";
   } else {
     Out << GetValueName(GRI.getOperand(0)) << ".field" << GRI.getIndex();
+  }
+  Out << ")";
+}
+
+void CWriter::visitInsertValueInst(InsertValueInst &IVI) {
+  // Start by copying the entire aggregate value into the result variable.
+  writeOperand(IVI.getOperand(0));
+  Out << ";\n  ";
+
+  // Then do the insert to update the field.
+  Out << GetValueName(&IVI);
+  for (const unsigned *b = IVI.idx_begin(), *i = b, *e = IVI.idx_end();
+       i != e; ++i) {
+    const Type *IndexedTy =
+      ExtractValueInst::getIndexedType(IVI.getOperand(0)->getType(), b, i+1);
+    if (isa<ArrayType>(IndexedTy))
+      Out << ".array[" << *i << "]";
+    else
+      Out << ".field" << *i;
+  }
+  Out << " = ";
+  writeOperand(IVI.getOperand(1));
+}
+
+void CWriter::visitExtractValueInst(ExtractValueInst &EVI) {
+  Out << "(";
+  if (isa<UndefValue>(EVI.getOperand(0))) {
+    Out << "(";
+    printType(Out, EVI.getType());
+    Out << ") 0/*UNDEF*/";
+  } else {
+    Out << GetValueName(EVI.getOperand(0));
+    for (const unsigned *b = EVI.idx_begin(), *i = b, *e = EVI.idx_end();
+         i != e; ++i) {
+      const Type *IndexedTy =
+        ExtractValueInst::getIndexedType(EVI.getOperand(0)->getType(), b, i+1);
+      if (isa<ArrayType>(IndexedTy))
+        Out << ".array[" << *i << "]";
+      else
+        Out << ".field" << *i;
+    }
   }
   Out << ")";
 }
