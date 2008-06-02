@@ -344,6 +344,7 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "void **itemsPtr;\n\t";
   Preamble += "unsigned long *mutationsPtr;\n\t";
   Preamble += "unsigned long extra[5];\n};\n";
+  Preamble += "__OBJC_RW_EXTERN void objc_enumerationMutation(struct objc_object *);\n";
   Preamble += "#define __FASTENUMERATIONSTATE\n";
   Preamble += "#endif\n";
   Preamble += "#ifndef __NSCONSTANTSTRINGIMPL\n";
