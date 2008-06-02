@@ -569,7 +569,6 @@ void LoopUnswitch::EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
 
   // Insert the new branch.
   BranchInst::Create(TrueDest, FalseDest, BranchVal, InsertPt);
-
 }
 
 
@@ -607,6 +606,10 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
   // insert the new conditional branch.
   EmitPreheaderBranchOnCondition(Cond, Val, NewExit, NewPH, 
                                  OrigPH->getTerminator());
+  if (DT) {
+    DT->changeImmediateDominator(NewExit, OrigPH);
+    DT->changeImmediateDominator(NewPH, OrigPH);
+  }
   LPM->deleteSimpleAnalysisValue(OrigPH->getTerminator(), L);
   OrigPH->getTerminator()->eraseFromParent();
 
