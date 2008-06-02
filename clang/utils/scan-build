@@ -496,10 +496,11 @@ sub RunBuildCommand {
   my $Args = shift;
   my $IgnoreErrors = shift;
   my $Cmd = $Args->[0];
+  my $CCAnalyzer = shift;
   
   if ($Cmd eq "gcc" or $Cmd eq "cc" or $Cmd eq "llvm-gcc") {
     shift @$Args;
-    unshift @$Args, "ccc-analyzer"
+    unshift @$Args, $CCAnalyzer;
   }
   elsif ($IgnoreErrors) {
     if ($Cmd eq "make" or $Cmd eq "gmake") {
@@ -715,7 +716,7 @@ $ENV{'CCC_ANALYZER_ANALYSIS'} = $Analysis;
 
 # Run the build.
 
-RunBuildCommand(\@ARGV, $IgnoreErrors);
+RunBuildCommand(\@ARGV, $IgnoreErrors, $Cmd);
 
 # Postprocess the HTML directory.
 
