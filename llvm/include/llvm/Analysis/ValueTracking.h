@@ -28,6 +28,9 @@ namespace llvm {
                          APInt &KnownOne, TargetData *TD = 0,
                          unsigned Depth = 0);
   
+  /// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
+  /// this predicate to simplify operations downstream.  Mask is known to be
+  /// zero for bits that V cannot have.
   bool MaskedValueIsZero(Value *V, const APInt &Mask, 
                          TargetData *TD = 0, unsigned Depth = 0);
 
@@ -43,6 +46,10 @@ namespace llvm {
   unsigned ComputeNumSignBits(Value *Op, TargetData *TD = 0,
                               unsigned Depth = 0);
 
+  /// CannotBeNegativeZero - Return true if we can prove that the specified FP 
+  /// value is never equal to -0.0.
+  ///
+  bool CannotBeNegativeZero(const Value *V, unsigned Depth = 0);
 } // end namespace llvm
 
 #endif

@@ -1839,50 +1839,6 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
 }
 
 
-/// CannotBeNegativeZero - Return true if we can prove that the specified FP 
-/// value is never equal to -0.0.
-///
-/// Note that this function will need to be revisited when we support nondefault
-/// rounding modes!
-///
-static bool CannotBeNegativeZero(const Value *V) {
-  if (const ConstantFP *CFP = dyn_cast<ConstantFP>(V))
-    return !CFP->getValueAPF().isNegZero();
-
-  if (const Instruction *I = dyn_cast<Instruction>(V)) {
-    // (add x, 0.0) is guaranteed to return +0.0, not -0.0.
-    if (I->getOpcode() == Instruction::Add &&
-        isa<ConstantFP>(I->getOperand(1)) && 
-        cast<ConstantFP>(I->getOperand(1))->isNullValue())
-      return true;
-    
-    // sitofp and uitofp turn into +0.0 for zero.
-    if (isa<SIToFPInst>(I) || isa<UIToFPInst>(I))
-      return true;
-    
-    if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
-      if (II->getIntrinsicID() == Intrinsic::sqrt)
-        return CannotBeNegativeZero(II->getOperand(1));
-    
-    if (const CallInst *CI = dyn_cast<CallInst>(I))
-      if (const Function *F = CI->getCalledFunction()) {
-        if (F->isDeclaration()) {
-          switch (F->getNameLen()) {
-          case 3:  // abs(x) != -0.0
-            if (!strcmp(F->getNameStart(), "abs")) return true;
-            break;
-          case 4:  // abs[lf](x) != -0.0
-            if (!strcmp(F->getNameStart(), "absf")) return true;
-            if (!strcmp(F->getNameStart(), "absl")) return true;
-            break;
-          }
-        }
-      }
-  }
-  
-  return false;
-}
-
 /// WillNotOverflowSignedAdd - Return true if we can prove that:
 ///    (sext (add LHS, RHS))  === (add (sext LHS), (sext RHS))
 /// This basically requires proving that the add in the original type would not
@@ -2268,13 +2224,6 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   return Changed ? &I : 0;
 }
 
-// isSignBit - Return true if the value represented by the constant only has the
-// highest order bit set.
-static bool isSignBit(ConstantInt *CI) {
-  uint32_t NumBits = CI->getType()->getPrimitiveSizeInBits();
-  return CI->getValue() == APInt::getSignBit(NumBits);
-}
-
 Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
@@ -2460,8 +2409,7 @@ static bool isSignBitCheck(ICmpInst::Predicate pred, ConstantInt *RHS,
   case ICmpInst::ICMP_UGE: 
     // True if LHS u>= RHS and RHS == high-bit-mask (2^7, 2^15, 2^31, etc)
     TrueIfSigned = true;
-    return RHS->getValue() == 
-      APInt::getSignBit(RHS->getType()->getPrimitiveSizeInBits());
+    return RHS->getValue().isSignBit();
   default:
     return false;
   }
@@ -6124,7 +6072,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
                                 Constant::getNullValue(RHS->getType()));
           
           // Replace (and X, (1 << size(X)-1) != 0) with x s< 0
-          if (isSignBit(BOC)) {
+          if (BOC->getValue().isSignBit()) {
             Value *X = BO->getOperand(0);
             Constant *Zero = Constant::getNullValue(X->getType());
             ICmpInst::Predicate pred = isICMP_NE ? 

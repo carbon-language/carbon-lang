@@ -707,3 +707,53 @@ unsigned llvm::ComputeNumSignBits(Value *V, TargetData *TD, unsigned Depth) {
   // shifting.  We don't want to return '64' as for an i32 "0".
   return std::max(FirstAnswer, std::min(TyBits, Mask.countLeadingZeros()));
 }
+
+/// CannotBeNegativeZero - Return true if we can prove that the specified FP 
+/// value is never equal to -0.0.
+///
+/// NOTE: this function will need to be revisited when we support non-default
+/// rounding modes!
+///
+bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
+  if (const ConstantFP *CFP = dyn_cast<ConstantFP>(V))
+    return !CFP->getValueAPF().isNegZero();
+  
+  if (Depth == 6)
+    return 1;  // Limit search depth.
+
+  const Instruction *I = dyn_cast<Instruction>(V);
+  if (I == 0) return false;
+  
+  // (add x, 0.0) is guaranteed to return +0.0, not -0.0.
+  if (I->getOpcode() == Instruction::Add &&
+      isa<ConstantFP>(I->getOperand(1)) && 
+      cast<ConstantFP>(I->getOperand(1))->isNullValue())
+    return true;
+    
+  // sitofp and uitofp turn into +0.0 for zero.
+  if (isa<SIToFPInst>(I) || isa<UIToFPInst>(I))
+    return true;
+  
+  if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
+    // sqrt(-0.0) = -0.0, no other negative results are possible.
+    if (II->getIntrinsicID() == Intrinsic::sqrt)
+      return CannotBeNegativeZero(II->getOperand(1), Depth+1);
+  
+  if (const CallInst *CI = dyn_cast<CallInst>(I))
+    if (const Function *F = CI->getCalledFunction()) {
+      if (F->isDeclaration()) {
+        switch (F->getNameLen()) {
+        case 3:  // abs(x) != -0.0
+          if (!strcmp(F->getNameStart(), "abs")) return true;
+          break;
+        case 4:  // abs[lf](x) != -0.0
+          if (!strcmp(F->getNameStart(), "absf")) return true;
+          if (!strcmp(F->getNameStart(), "absl")) return true;
+          break;
+        }
+      }
+    }
+  
+  return false;
+}
+
