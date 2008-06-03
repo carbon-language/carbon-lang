@@ -621,9 +621,15 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
     std::map<AnalysisID, Pass*>::iterator Info = I++;
     if (!dynamic_cast<ImmutablePass*>(Info->second)
         && std::find(PreservedSet.begin(), PreservedSet.end(), Info->first) == 
-           PreservedSet.end())
+        PreservedSet.end()) {
       // Remove this analysis
       AvailableAnalysis.erase(Info);
+      if (PassDebugging >= Details) {
+        Pass *S = Info->second;
+        cerr << " -- " <<  P->getPassName() << " is not preserving ";
+        cerr << S->getPassName() << "\n";
+      }
+    }
   }
 
   // Check inherited analysis also. If P is not preserving analysis
