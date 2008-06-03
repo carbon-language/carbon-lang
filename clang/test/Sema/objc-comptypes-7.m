@@ -27,7 +27,7 @@ int main()
   obj = i; // expected-warning {{incompatible integer to pointer conversion assigning 'int', expected 'id'}}
   obj = j; // expected-warning {{incompatible pointer types assigning 'int *', expected 'id'}}
 
-  obj_p = i; // expected-error {{incompatible type assigning 'int', expected 'id<MyProtocol>' }}
+  obj_p = i; // expected-warning {{incompatible integer to pointer conversion assigning 'int', expected 'id<MyProtocol>'}}
   obj_p = j; // expected-error {{incompatible type assigning 'int *', expected 'id<MyProtocol>'}}
   
   obj_c = i; // expected-warning {{incompatible integer to pointer conversion assigning 'int', expected 'MyClass *'}}
@@ -37,7 +37,7 @@ int main()
   obj_C = j; // expected-warning {{incompatible pointer types assigning 'int *', expected 'Class'}}
   
   i = obj;   // expected-warning {{incompatible pointer to integer conversion assigning 'id', expected 'int'}}
-  i = obj_p; // expected-error {{incompatible type assigning 'id<MyProtocol>', expected 'int'}}
+  i = obj_p; // expected-warning {{incompatible pointer to integer conversion assigning 'id<MyProtocol>', expected 'int'}}
   i = obj_c; // expected-warning {{incompatible pointer to integer conversion assigning 'MyClass *', expected 'int'}}
   i = obj_C; // expected-warning {{incompatible pointer to integer conversion assigning 'Class', expected 'int'}}
   
@@ -56,8 +56,8 @@ int main()
   if (obj_c == j) foo() ; // expected-warning {{comparison of distinct pointer types ('MyClass *' and 'int *')}}
   if (j == obj_c) foo() ; // expected-warning {{comparison of distinct pointer types ('int *' and 'MyClass *')}}
 
-  if (obj_p == i) foo() ; // expected-error {{invalid operands to binary expression ('id<MyProtocol>' and 'int')}}
-  if (i == obj_p) foo() ; // expected-error {{invalid operands to binary expression ('int' and 'id<MyProtocol>')}}
+  if (obj_p == i) foo() ; // expected-warning {{comparison between pointer and integer ('id<MyProtocol>' and 'int')}}
+  if (i == obj_p) foo() ; // expected-warning {{comparison between pointer and integer ('int' and 'id<MyProtocol>')}}
   if (obj_p == j) foo() ; // expected-error {{invalid operands to binary expression ('id<MyProtocol>' and 'int *')}}
   if (j == obj_p) foo() ; // expected-error {{invalid operands to binary expression ('int *' and 'id<MyProtocol>')}}
 

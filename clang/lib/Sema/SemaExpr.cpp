@@ -1301,6 +1301,11 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   if (lhsType->isObjCQualifiedIdType() || rhsType->isObjCQualifiedIdType()) {
     if (ObjCQualifiedIdTypesAreCompatible(lhsType, rhsType, false))
       return Compatible;
+    // Relax integer conversions like we do for pointers below.
+    if (rhsType->isIntegerType())
+      return IntToPointer;
+    if (lhsType->isIntegerType())
+      return PointerToInt;
     return Incompatible;
   }
 
@@ -1647,12 +1652,14 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
     ImpCastExprToType(rex, lType); // promote the pointer to pointer
     return Context.IntTy;
   }
-  if ((lType->isObjCQualifiedIdType() || rType->isObjCQualifiedIdType())
-      && ObjCQualifiedIdTypesAreCompatible(lType, rType, true)) {
-    ImpCastExprToType(rex, lType); 
-    return Context.IntTy;
+  if ((lType->isObjCQualifiedIdType() || rType->isObjCQualifiedIdType())) {
+    if (ObjCQualifiedIdTypesAreCompatible(lType, rType, true)) {
+      ImpCastExprToType(rex, lType);
+      return Context.IntTy;
+    }
   }
-  if (lType->isPointerType() && rType->isIntegerType()) {
+  if ((lType->isPointerType() || lType->isObjCQualifiedIdType()) && 
+       rType->isIntegerType()) {
     if (!RHSIsNull)
       Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
            lType.getAsString(), rType.getAsString(),
@@ -1660,7 +1667,8 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
     ImpCastExprToType(rex, lType); // promote the integer to pointer
     return Context.IntTy;
   }
-  if (lType->isIntegerType() && rType->isPointerType()) {
+  if (lType->isIntegerType() && 
+      (rType->isPointerType() || rType->isObjCQualifiedIdType())) {
     if (!LHSIsNull)
       Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,
            lType.getAsString(), rType.getAsString(),
