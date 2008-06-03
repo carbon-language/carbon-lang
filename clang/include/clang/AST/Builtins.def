@@ -103,6 +103,7 @@ BUILTIN(__builtin_frame_address, "v*Ui", "n")
 BUILTIN(__builtin___memcpy_chk, "v*v*vC*zz", "n")
 BUILTIN(__builtin___memmove_chk, "v*v*vC*zz", "n")
 BUILTIN(__builtin___mempcpy_chk, "v*v*vC*zz", "n")
+BUILTIN(__builtin___strncpy_chk, "cC*cC*cC*zz", "n")
 BUILTIN(__builtin_expect, "iii"   , "nc")
 
 BUILTIN(__builtin_shufflevector, "v."   , "nc")
