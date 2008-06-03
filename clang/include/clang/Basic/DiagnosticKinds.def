@@ -922,6 +922,8 @@ DIAG(err_typecheck_cond_expect_scalar, ERROR,
      "used type '%0' where arithmetic or pointer type is required")
 DIAG(ext_typecheck_cond_one_void, EXTENSION,
      "C99 forbids conditional expressions with only one void side")
+DIAG(ext_typecheck_cast_nonscalar, EXTENSION,
+     "C99 forbids casting nonscalar to the same type")
 DIAG(err_typecheck_expect_scalar_operand, ERROR,
      "operand of type '%0' where arithmetic or pointer type is required")
 DIAG(err_typecheck_cond_incompatible_operands, ERROR,
