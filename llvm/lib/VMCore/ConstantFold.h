@@ -41,10 +41,13 @@ namespace llvm {
   Constant *ConstantFoldShuffleVectorInstruction(const Constant *V1,
                                                  const Constant *V2,
                                                  const Constant *Mask);
-  Constant *ConstantFoldExtractValue(const Constant *Agg,
-                                     Constant* const *Idxs, unsigned NumIdx);
-  Constant *ConstantFoldInsertValue(const Constant *Agg, const Constant *Val,
-                                    Constant* const *Idxs, unsigned NumIdx);
+  Constant *ConstantFoldExtractValueInstruction(const Constant *Agg,
+                                                const unsigned *Idxs,
+                                                unsigned NumIdx);
+  Constant *ConstantFoldInsertValueInstruction(const Constant *Agg,
+                                               const Constant *Val,
+                                               const unsigned* Idxs,
+                                               unsigned NumIdx);
   Constant *ConstantFoldBinaryInstruction(unsigned Opcode, const Constant *V1,
                                           const Constant *V2);
   Constant *ConstantFoldCompareInstruction(unsigned short predicate, 

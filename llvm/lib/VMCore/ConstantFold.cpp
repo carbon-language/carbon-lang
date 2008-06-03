@@ -394,6 +394,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
     }
     return ConstantVector::get(Ops);
   }
+
   return 0;
 }
 
@@ -447,18 +448,112 @@ Constant *llvm::ConstantFoldShuffleVectorInstruction(const Constant *V1,
   return ConstantVector::get(&Result[0], Result.size());
 }
 
-Constant *llvm::ConstantFoldExtractValue(const Constant *Agg,
-                                         Constant* const *Idxs,
-                                         unsigned NumIdx) {
-  // FIXME: implement some constant folds
-  return 0;
+Constant *llvm::ConstantFoldExtractValueInstruction(const Constant *Agg,
+                                                    const unsigned *Idxs,
+                                                    unsigned NumIdx) {
+  // Base case: no indices, so return the entire value.
+  if (NumIdx == 0)
+    return const_cast<Constant *>(Agg);
+
+  if (isa<UndefValue>(Agg))  // ev(undef, x) -> undef
+    return UndefValue::get(ExtractValueInst::getIndexedType(Agg->getType(),
+                                                            Idxs,
+                                                            Idxs + NumIdx));
+
+  if (isa<ConstantAggregateZero>(Agg))  // ev(0, x) -> 0
+    return
+      Constant::getNullValue(ExtractValueInst::getIndexedType(Agg->getType(),
+                                                              Idxs,
+                                                              Idxs + NumIdx));
+
+  // Otherwise recurse.
+  return ConstantFoldExtractValueInstruction(Agg->getOperand(*Idxs),
+                                             Idxs+1, NumIdx-1);
 }
 
-Constant *llvm::ConstantFoldInsertValue(const Constant *Agg,
-                                        const Constant *Val,
-                                        Constant* const *Idxs,
-                                        unsigned NumIdx) {
-  // FIXME: implement some constant folds
+Constant *llvm::ConstantFoldInsertValueInstruction(const Constant *Agg,
+                                                   const Constant *Val,
+                                                   const unsigned *Idxs,
+                                                   unsigned NumIdx) {
+  // Base case: no indices, so replace the entire value.
+  if (NumIdx == 0)
+    return const_cast<Constant *>(Val);
+
+  if (isa<UndefValue>(Agg)) {
+    // Insertion of constant into aggregate undef
+    // Optimize away insertion of undef
+    if (isa<UndefValue>(Val))
+      return const_cast<Constant*>(Agg);
+    // Otherwise break the aggregate undef into multiple undefs and do
+    // the insertion
+    const CompositeType *AggTy = cast<CompositeType>(Agg->getType());
+    unsigned numOps;
+    if (const ArrayType *AR = dyn_cast<ArrayType>(AggTy))
+      numOps = AR->getNumElements();
+    else
+      numOps = cast<StructType>(AggTy)->getNumElements();
+    std::vector<Constant*> Ops(numOps); 
+    for (unsigned i = 0; i < numOps; ++i) {
+      const Type *MemberTy = AggTy->getTypeAtIndex(i);
+      const Constant *Op =
+        (*Idxs == i) ?
+        ConstantFoldInsertValueInstruction(UndefValue::get(MemberTy),
+                                           Val, Idxs+1, NumIdx-1) :
+        UndefValue::get(MemberTy);
+      Ops[i] = const_cast<Constant*>(Op);
+    }
+    if (isa<StructType>(AggTy))
+      return ConstantStruct::get(Ops);
+    else
+      return ConstantArray::get(cast<ArrayType>(AggTy), Ops);
+  }
+  if (isa<ConstantAggregateZero>(Agg)) {
+    // Insertion of constant into aggregate zero
+    // Optimize away insertion of zero
+    if (Val->isNullValue())
+      return const_cast<Constant*>(Agg);
+    // Otherwise break the aggregate zero into multiple zeros and do
+    // the insertion
+    const CompositeType *AggTy = cast<CompositeType>(Agg->getType());
+    unsigned numOps;
+    if (const ArrayType *AR = dyn_cast<ArrayType>(AggTy))
+      numOps = AR->getNumElements();
+    else
+      numOps = cast<StructType>(AggTy)->getNumElements();
+    std::vector<Constant*> Ops(numOps);
+    for (unsigned i = 0; i < numOps; ++i) {
+      const Type *MemberTy = AggTy->getTypeAtIndex(i);
+      const Constant *Op =
+        (*Idxs == i) ?
+        ConstantFoldInsertValueInstruction(Constant::getNullValue(MemberTy),
+                                           Val, Idxs+1, NumIdx-1) :
+        Constant::getNullValue(MemberTy);
+      Ops[i] = const_cast<Constant*>(Op);
+    }
+    if (isa<StructType>(AggTy))
+      return ConstantStruct::get(Ops);
+    else
+      return ConstantArray::get(cast<ArrayType>(AggTy), Ops);
+  }
+  if (isa<ConstantStruct>(Agg) || isa<ConstantArray>(Agg)) {
+    // Insertion of constant into aggregate constant
+    std::vector<Constant*> Ops(Agg->getNumOperands());
+    for (unsigned i = 0; i < Agg->getNumOperands(); ++i) {
+      const Constant *Op =
+        (*Idxs == i) ?
+        ConstantFoldInsertValueInstruction(Agg->getOperand(i),
+                                           Val, Idxs+1, NumIdx-1) :
+        Agg->getOperand(i);
+      Ops[i] = const_cast<Constant*>(Op);
+    }
+    Constant *C;
+    if (isa<StructType>(Agg->getType()))
+      C = ConstantStruct::get(Ops);
+    else
+      C = ConstantArray::get(cast<ArrayType>(Agg->getType()), Ops);
+    return C;
+  }
+
   return 0;
 }
 

@@ -2305,9 +2305,10 @@ Constant *ConstantExpr::getInsertValueTy(const Type *ReqTy, Constant *Agg,
          "insertvalue indices invalid!");
   assert(Agg->getType() == ReqTy &&
          "insertvalue type invalid!");
-
   assert(Agg->getType()->isFirstClassType() &&
          "Non-first-class type for constant InsertValue expression");
+  if (Constant *FC = ConstantFoldInsertValueInstruction(Agg, Val, Idxs, NumIdx))
+    return FC;          // Fold a few common cases...
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> ArgVec;
   ArgVec.push_back(Agg);
@@ -2336,6 +2337,8 @@ Constant *ConstantExpr::getExtractValueTy(const Type *ReqTy, Constant *Agg,
          "extractvalue indices invalid!");
   assert(Agg->getType()->isFirstClassType() &&
          "Non-first-class type for constant extractvalue expression");
+  if (Constant *FC = ConstantFoldExtractValueInstruction(Agg, Idxs, NumIdx))
+    return FC;          // Fold a few common cases...
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> ArgVec;
   ArgVec.push_back(Agg);
