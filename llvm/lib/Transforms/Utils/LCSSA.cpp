@@ -17,8 +17,8 @@
 //   else                     else
 //     X2 = ...                 X2 = ...
 //   X3 = phi(X1, X2)         X3 = phi(X1, X2)
-// ... = X3 + 4              X4 = phi(X3)
-//                           ... = X4 + 4
+// ... = X3 + 4             X4 = phi(X3)
+//                          ... = X4 + 4
 //
 // This is still valid LLVM; the extra phi nodes are purely redundant, and will
 // be trivially eliminated by InstCombine.  The major benefit of this 
