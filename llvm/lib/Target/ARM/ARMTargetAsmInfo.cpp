@@ -48,6 +48,7 @@ ARMTargetAsmInfo::ARMTargetAsmInfo(const ARMTargetMachine &TM) {
   if (Subtarget->isTargetDarwin()) {
     GlobalPrefix = "_";
     PrivateGlobalPrefix = "L";
+    StringConstantPrefix = "\1LC";
     BSSSection = 0;                       // no BSS section.
     ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
     SetDirective = "\t.set\t";

@@ -45,6 +45,7 @@ TargetAsmInfo::TargetAsmInfo() :
   InlineAsmStart("#APP"),
   InlineAsmEnd("#NO_APP"),
   AssemblerDialect(0),
+  StringConstantPrefix(".str"),
   ZeroDirective("\t.zero\t"),
   ZeroDirectiveSuffix(0),
   AsciiDirective("\t.ascii\t"),

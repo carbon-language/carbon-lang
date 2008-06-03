@@ -147,6 +147,10 @@ namespace llvm {
     /// AssemblerDialect - Which dialect of an assembler variant to use.
     unsigned AssemblerDialect;            // Defaults to 0
 
+    /// StringConstantPrefix - Prefix to use when generating unnamed
+    /// constant strings.  These names get run through the Mangler later.
+    const char *StringConstantPrefix;     // Defaults to ".str"
+
     //===--- Data Emission Directives -------------------------------------===//
 
     /// ZeroDirective - this should be set to the directive used to get some
@@ -495,6 +499,9 @@ namespace llvm {
     }
     unsigned getAssemblerDialect() const {
       return AssemblerDialect;
+    }
+    const char *getStringConstantPrefix() const {
+      return StringConstantPrefix;
     }
     const char *getZeroDirective() const {
       return ZeroDirective;
