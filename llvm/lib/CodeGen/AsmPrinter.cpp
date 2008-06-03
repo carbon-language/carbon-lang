@@ -1074,6 +1074,11 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, bool Packed) {
   const Type *type = CV->getType();
   printDataDirective(type);
   EmitConstantValueOnly(CV);
+  if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
+    O << "\t\t\t"
+      << TAI->getCommentString()
+      << " 0x" << CI->getValue().toStringUnsigned(16);
+  }
   O << "\n";
 }
 
