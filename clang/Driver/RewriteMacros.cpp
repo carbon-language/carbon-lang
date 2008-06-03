@@ -115,8 +115,9 @@ void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
     // deleted.  Comment out the raw token.
     if (RawOffs <= PPOffs) {
       // Comment out a whole run of tokens instead of bracketing each one with
-      // comments.
-      RB.InsertTextAfter(RawOffs, "/*", 2);
+      // comments.  Add a leading space if RawTok didn't have one.
+      bool HasSpace = RawTok.hasLeadingSpace();
+      RB.InsertTextAfter(RawOffs, " /*"+HasSpace, 2+!HasSpace);
       unsigned EndPos;
 
       // Switch on comment lexing.  If we get a comment, we don't want to
