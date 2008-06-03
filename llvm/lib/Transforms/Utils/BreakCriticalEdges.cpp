@@ -235,9 +235,12 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
       DominanceFrontier::iterator I = DF->find(DestBB);
       if (I != DF->end()) {
         DF->addBasicBlock(NewBB, I->second);
-        // However NewBB's frontier does not include DestBB.
-        DominanceFrontier::iterator NF = DF->find(NewBB);
-        DF->removeFromFrontier(NF, DestBB);
+        
+        if (I->second.count(DestBB)) {
+          // However NewBB's frontier does not include DestBB.
+          DominanceFrontier::iterator NF = DF->find(NewBB);
+          DF->removeFromFrontier(NF, DestBB);
+        }
       }
       else
         DF->addBasicBlock(NewBB, DominanceFrontier::DomSetType());
