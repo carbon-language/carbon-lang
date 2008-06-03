@@ -930,7 +930,11 @@ void PMDataManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
   // When Pass manager is not able to order required analysis info, Pass manager
   // checks whether any lower level manager will be able to provide this 
   // analysis info on demand or not.
-  assert (0 && "Unable to handle Pass that requires lower level Analysis pass");
+#ifndef NDEBUG
+  cerr << "Unable to schedule " << RequiredPass->getPassName();
+  cerr << " required by " << P->getPassName() << "\n";
+#endif
+  assert (0 && "Unable to schedule pass");
 }
 
 // Destructor
