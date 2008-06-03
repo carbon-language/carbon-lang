@@ -638,7 +638,9 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
       // @end
       // void someMethod() { frameworkBundle.bundlePath = 0; }
       //
-      // FIXME: lookup explicit properties...
+      ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(&Member);
+      if (PD)
+        return new ObjCPropertyRefExpr(PD, PD->getType(), MemberLoc, BaseExpr);
     }
   }
   return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion,
