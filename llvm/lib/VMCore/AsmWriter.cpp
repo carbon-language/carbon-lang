@@ -979,7 +979,11 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
 }
 
 void AssemblyWriter::printAlias(const GlobalAlias *GA) {
-  Out << getLLVMName(GA->getName(), GlobalPrefix) << " = ";
+  // Don't crash when dumping partially built GA
+  if (!GA->hasName())
+    Out << "<<nameless>> = ";
+  else
+    Out << getLLVMName(GA->getName(), GlobalPrefix) << " = ";
   switch (GA->getVisibility()) {
   default: assert(0 && "Invalid visibility style!");
   case GlobalValue::DefaultVisibility: break;
