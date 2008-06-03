@@ -362,7 +362,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
       FFI->setObjectOffset(i, -Offset);        // Set the computed offset
     }
   } else {
-    for (unsigned i = MaxCSFrameIndex; i >= MinCSFrameIndex; --i) {
+    int MaxCSFI = MaxCSFrameIndex, MinCSFI = MinCSFrameIndex;
+    for (int i = MaxCSFI; i >= MinCSFI ; --i) {
       unsigned Align = FFI->getObjectAlignment(i);
       // If the alignment of this object is greater than that of the stack, then
       // increase the stack alignment to match.
