@@ -1193,15 +1193,19 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         if (Tok.isNot(tok::ellipsis)) {
           DeclSpec DS;
           ParseDeclarationSpecifiers(DS);
-          // FIXME: Is BlockContext right?
-          Declarator DeclaratorInfo(DS, Declarator::BlockContext);
+          // For some odd reason, the name of the exception variable is 
+          // optional. As a result, we need to use PrototypeContext.
+          Declarator DeclaratorInfo(DS, Declarator::PrototypeContext);
           ParseDeclarator(DeclaratorInfo);
-          DeclTy *aBlockVarDecl = Actions.ActOnDeclarator(CurScope, 
+          if (DeclaratorInfo.getIdentifier()) {
+            DeclTy *aBlockVarDecl = Actions.ActOnDeclarator(CurScope, 
                                                           DeclaratorInfo, 0);
-          StmtResult stmtResult =
-            Actions.ActOnDeclStmt(aBlockVarDecl, DS.getSourceRange().getBegin(),
-                                  DeclaratorInfo.getSourceRange().getEnd());
-          FirstPart = stmtResult.isInvalid ? 0 : stmtResult.Val;
+            StmtResult stmtResult =
+              Actions.ActOnDeclStmt(aBlockVarDecl, 
+                                    DS.getSourceRange().getBegin(),
+                                    DeclaratorInfo.getSourceRange().getEnd());
+            FirstPart = stmtResult.isInvalid ? 0 : stmtResult.Val;
+          }
         } else
           ConsumeToken(); // consume '...'
         SourceLocation RParenLoc = ConsumeParen();
