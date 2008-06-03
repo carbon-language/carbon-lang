@@ -918,11 +918,6 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     if (!SubExpr->getType()->isArithmeticType() ||
         !getType()->isIntegerType()) {
       if (Loc) *Loc = SubExpr->getLocStart();
-      // GCC accepts pointers as an extension.
-      // FIXME: check getLangOptions().NoExtensions. At the moment, it doesn't
-      // appear possible to get langOptions() from the Expr.
-      if (SubExpr->getType()->isPointerType()) // && !NoExtensions
-        return true;
       return false;
     }
 

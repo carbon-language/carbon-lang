@@ -896,6 +896,11 @@ private:
 
   
   void InitBuiltinVaListType();
+
+  // Helper method to turn variable array types into
+  // constant array types in certain situations which would otherwise
+  // be errors
+  QualType TryFixInvalidVariablyModifiedType(QualType T);
   
   //===--------------------------------------------------------------------===//
   // Extra semantic analysis beyond the C type system

@@ -721,6 +721,8 @@ DIAG(warn_enum_too_large, WARNING,
      "enumeration values exceed range of largest integer")
 DIAG(err_case_label_not_integer_constant_expr, ERROR,
      "case label does not reduce to an integer constant")
+DIAG(warn_illegal_constant_array_size, EXTENSION,
+     "size of static array must be an integer constant expression")
 DIAG(err_typecheck_illegal_vla, ERROR,
      "arrays with static storage duration must have constant integer length")
 DIAG(err_typecheck_negative_array_size, ERROR,

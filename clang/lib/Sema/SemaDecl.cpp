@@ -1842,6 +1842,52 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   return New;
 }
 
+static bool CalcFakeICEVal(const Expr* Expr,
+                           llvm::APSInt& Result,
+                           ASTContext& Context) {
+  // Calculate the value of an expression that has a calculatable
+  // value, but isn't an ICE. Currently, this only supports
+  // a very narrow set of extensions, but it can be expanded if needed.
+  if (const ParenExpr *PE = dyn_cast<ParenExpr>(Expr))
+    return CalcFakeICEVal(PE->getSubExpr(), Result, Context);
+
+  if (const CastExpr *CE = dyn_cast<CastExpr>(Expr)) {
+    QualType CETy = CE->getType();
+    if ((CETy->isIntegralType() && !CETy->isBooleanType()) ||
+        CETy->isPointerType()) {
+      if (CalcFakeICEVal(CE->getSubExpr(), Result, Context)) {
+        Result.extOrTrunc(Context.getTypeSize(CETy));
+        // FIXME: This assumes pointers are signed.
+        Result.setIsSigned(CETy->isSignedIntegerType() ||
+                           CETy->isPointerType());
+        return true;
+      }
+    }
+  }
+
+  if (Expr->getType()->isIntegralType())
+    return Expr->isIntegerConstantExpr(Result, Context);
+
+  return false;
+}
+
+QualType Sema::TryFixInvalidVariablyModifiedType(QualType T) {
+  // This method tries to turn a variable array into a constant
+  // array even when the size isn't an ICE.  This is necessary
+  // for compatibility with code that depends on gcc's buggy
+  // constant expression folding, like struct {char x[(int)(char*)2];}
+  if (const VariableArrayType* VLATy = dyn_cast<VariableArrayType>(T)) {
+    llvm::APSInt Result(32);
+    if (VLATy->getSizeExpr() &&
+        CalcFakeICEVal(VLATy->getSizeExpr(), Result, Context) &&
+        Result > llvm::APSInt(Result.getBitWidth(), Result.isUnsigned())) {
+      return Context.getConstantArrayType(VLATy->getElementType(),
+                                          Result, ArrayType::Normal, 0);
+    }
+  }
+  return QualType();
+}
+
 /// ActOnField - Each field of a struct/union/class is passed into this in order
 /// to create a FieldDecl object for it.
 Sema::DeclTy *Sema::ActOnField(Scope *S,
@@ -1877,9 +1923,15 @@ Sema::DeclTy *Sema::ActOnField(Scope *S,
   // C99 6.7.2.1p8: A member of a structure or union may have any type other
   // than a variably modified type.
   if (T->isVariablyModifiedType()) {
-    // FIXME: This diagnostic needs work
-    Diag(Loc, diag::err_typecheck_illegal_vla, Loc);
-    InvalidDecl = true;
+    QualType FixedTy = TryFixInvalidVariablyModifiedType(T);
+    if (!FixedTy.isNull()) {
+      Diag(Loc, diag::warn_illegal_constant_array_size, Loc);
+      T = FixedTy;
+    } else {
+      // FIXME: This diagnostic needs work
+      Diag(Loc, diag::err_typecheck_illegal_vla, Loc);
+      InvalidDecl = true;
+    }
   }
   // FIXME: Chain fielddecls together.
   FieldDecl *NewFD = FieldDecl::Create(Context, Loc, II, T, BitWidth);
