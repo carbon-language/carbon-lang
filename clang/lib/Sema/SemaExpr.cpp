@@ -848,10 +848,11 @@ ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
     if (!castType->isScalarType() && !castType->isVectorType()) {
       // GCC struct/union extension.
       if (castType == castExpr->getType() &&
-          castType->isStructureType() || castType->isUnionType())
-        return Diag(LParenLoc, diag::ext_typecheck_cast_nonscalar,
-                    SourceRange(LParenLoc, RParenLoc));
-      else
+          castType->isStructureType() || castType->isUnionType()) {
+        Diag(LParenLoc, diag::ext_typecheck_cast_nonscalar,
+             SourceRange(LParenLoc, RParenLoc));
+        return new CastExpr(castType, castExpr, LParenLoc);
+      } else
         return Diag(LParenLoc, diag::err_typecheck_cond_expect_scalar, 
                     castType.getAsString(), SourceRange(LParenLoc, RParenLoc));
     }
