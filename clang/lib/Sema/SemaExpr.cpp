@@ -99,7 +99,7 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
                                  static_cast<Expr*>(SelfExpr.Val), true, true);
       }
     }
-    if (!strncmp(II.getName(), "super", 5)) {
+    if (SD == 0 && !strncmp(II.getName(), "super", 5)) {
       QualType T = Context.getPointerType(Context.getObjCInterfaceType(
                      CurMethodDecl->getClassInterface()));
       return new ObjCSuperRefExpr(T, Loc);
