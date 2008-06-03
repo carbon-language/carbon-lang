@@ -4447,12 +4447,11 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
 
     unsigned VT2 = Tmp2.getValueType();
     assert(VT2 == Tmp3.getValueType()
-           && "PromoteOp: Operands 2 and 3 ValueTypes don't match");
-    // Ensure tha NVT is the same as the operands' value types, because we
-    // cannot assume that TLI.getSetCCValueType() is constant.
-    if (NVT != VT2)
-      NVT = VT2;
-    Result = DAG.getNode(ISD::SELECT, NVT, Node->getOperand(0), Tmp2, Tmp3);
+           && "PromoteOp SELECT: Operands 2 and 3 ValueTypes don't match");
+    // Ensure that the resulting node is at least the same size as the operands'
+    // value types, because we cannot assume that TLI.getSetCCValueType() is
+    // constant.
+    Result = DAG.getNode(ISD::SELECT, VT2, Node->getOperand(0), Tmp2, Tmp3);
     break;
   }
   case ISD::SELECT_CC:
