@@ -358,6 +358,20 @@ LiveInterval::FindLiveRangeContaining(unsigned Idx) {
   return end();
 }
 
+/// findDefinedVNInfo - Find the VNInfo that's defined at the specified index
+/// (register interval) or defined by the specified register (stack inteval).
+VNInfo *LiveInterval::findDefinedVNInfo(unsigned DefIdxOrReg) const {
+  VNInfo *VNI = NULL;
+  for (LiveInterval::const_vni_iterator i = vni_begin(), e = vni_end();
+       i != e; ++i)
+    if ((*i)->def == DefIdxOrReg) {
+      VNI = *i;
+      break;
+    }
+  return VNI;
+}
+
+
 /// join - Join two live intervals (this, and other) together.  This applies
 /// mappings to the value numbers in the LHS/RHS intervals as specified.  If
 /// the intervals are not joinable, this aborts.
@@ -664,7 +678,9 @@ void LiveRange::dump() const {
 
 void LiveInterval::print(std::ostream &OS,
                          const TargetRegisterInfo *TRI) const {
-  if (TRI && TargetRegisterInfo::isPhysicalRegister(reg))
+  if (isSS)
+    OS << "SS#" << reg;
+  else if (TRI && TargetRegisterInfo::isPhysicalRegister(reg))
     OS << TRI->getName(reg);
   else
     OS << "%reg" << reg;
@@ -672,7 +688,7 @@ void LiveInterval::print(std::ostream &OS,
   OS << ',' << weight;
 
   if (empty())
-    OS << "EMPTY";
+    OS << " EMPTY";
   else {
     OS << " = ";
     for (LiveInterval::Ranges::const_iterator I = ranges.begin(),

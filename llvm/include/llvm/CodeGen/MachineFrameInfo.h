@@ -195,12 +195,26 @@ public:
   ///
   int getObjectIndexEnd() const { return (int)Objects.size()-NumFixedObjects; }
 
+  /// getNumFixedObjects() - Return the number of fixed objects.
+  unsigned getNumFixedObjects() const { return NumFixedObjects; }
+
+  /// getNumObjects() - Return the number of objects.
+  ///
+  unsigned getNumObjects() const { return Objects.size(); }
+
   /// getObjectSize - Return the size of the specified object
   ///
   int64_t getObjectSize(int ObjectIdx) const {
     assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
            "Invalid Object Idx!");
     return Objects[ObjectIdx+NumFixedObjects].Size;
+  }
+
+  // setObjectSize - Change the size of the specified stack object...
+  void setObjectSize(int ObjectIdx, int64_t Size) {
+    assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
+           "Invalid Object Idx!");
+    Objects[ObjectIdx+NumFixedObjects].Size = Size;
   }
 
   /// getObjectAlignment - Return the alignment of the specified stack object...
@@ -324,12 +338,8 @@ public:
   /// RemoveStackObject - Remove or mark dead a statically sized stack object.
   ///
   void RemoveStackObject(int ObjectIdx) {
-    if (ObjectIdx == (int)(Objects.size()-NumFixedObjects-1))
-      // Last object, simply pop it off the list.
-      Objects.pop_back();
-    else
-      // Mark it dead.
-      Objects[ObjectIdx+NumFixedObjects].Size = ~0ULL;
+    // Mark it dead.
+    Objects[ObjectIdx+NumFixedObjects].Size = ~0ULL;
   }
 
   /// CreateVariableSizedObject - Notify the MachineFrameInfo object that a

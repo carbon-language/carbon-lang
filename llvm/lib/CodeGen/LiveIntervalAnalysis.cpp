@@ -65,6 +65,7 @@ void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 void LiveIntervals::releaseMemory() {
+  MBB2IdxMap.clear();
   Idx2MBBMap.clear();
   mi2iMap_.clear();
   i2miMap_.clear();
@@ -229,8 +230,8 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 void LiveIntervals::print(std::ostream &O, const Module* ) const {
   O << "********** INTERVALS **********\n";
   for (const_iterator I = begin(), E = end(); I != E; ++I) {
-    I->second.print(DOUT, tri_);
-    DOUT << "\n";
+    I->second.print(O, tri_);
+    O << "\n";
   }
 
   O << "********** MACHINEINSTRS **********\n";
@@ -1160,17 +1161,6 @@ bool LiveIntervals::anyKillInMBBAfterIdx(const LiveInterval &li,
   return false;
 }
 
-static const VNInfo *findDefinedVNInfo(const LiveInterval &li, unsigned DefIdx) {
-  const VNInfo *VNI = NULL;
-  for (LiveInterval::const_vni_iterator i = li.vni_begin(),
-         e = li.vni_end(); i != e; ++i)
-    if ((*i)->def == DefIdx) {
-      VNI = *i;
-      break;
-    }
-  return VNI;
-}
-
 /// RewriteInfo - Keep track of machine instrs that will be rewritten
 /// during spilling.
 namespace {
@@ -1318,7 +1308,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
           HasKill = anyKillInMBBAfterIdx(li, I->valno, MBB, getDefIndex(index));
         else {
           // If this is a two-address code, then this index starts a new VNInfo.
-          const VNInfo *VNI = findDefinedVNInfo(li, getDefIndex(index));
+          const VNInfo *VNI = li.findDefinedVNInfo(getDefIndex(index));
           if (VNI)
             HasKill = anyKillInMBBAfterIdx(li, VNI, MBB, getDefIndex(index));
         }

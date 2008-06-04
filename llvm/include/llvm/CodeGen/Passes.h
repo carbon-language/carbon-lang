@@ -172,6 +172,9 @@ namespace llvm {
   /// createMachineSinkingPass - This pass performs sinking on machine
   /// instructions.
   FunctionPass *createMachineSinkingPass();
+
+  /// createStackSlotColoringPass - This pass performs stack slot coloring.
+  FunctionPass *createStackSlotColoringPass();
   
 } // End llvm namespace
 
