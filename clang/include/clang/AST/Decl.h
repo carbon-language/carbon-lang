@@ -492,7 +492,7 @@ public:
   unsigned getMinRequiredArguments() const;
 
   QualType getResultType() const { 
-    return cast<FunctionType>(getType())->getResultType();
+    return getType()->getAsFunctionType()->getResultType();
   }
   StorageClass getStorageClass() const { return StorageClass(SClass); }
   bool isInline() const { return IsInline; }
