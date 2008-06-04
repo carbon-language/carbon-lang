@@ -39,7 +39,7 @@ EnableSinking("enable-sinking", cl::init(false), cl::Hidden,
               cl::desc("Perform sinking on machine code"));
 static cl::opt<bool>
 EnableStackColoring("stack-coloring",
-            cl::init(true), cl::Hidden,
+            cl::init(false), cl::Hidden,
             cl::desc("Perform stack slot coloring"));
 static cl::opt<bool>
 EnableLICM("machine-licm",
