@@ -30,10 +30,6 @@ namespace {
       return "Subregister lowering instruction pass";
     }
 
-    void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.setPreservesAll();
-    }
-
     /// runOnMachineFunction - pass entry point
     bool runOnMachineFunction(MachineFunction&);
     
