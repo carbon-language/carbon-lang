@@ -30,3 +30,15 @@ void test6();
 void test7(int);
 void* test8() {return 1 ? test6 : test7;}
 
+
+void _efree(void *ptr);
+
+void _php_stream_free3()
+{
+	(1 ? free(0) : _efree(0));
+}
+
+void _php_stream_free4()
+{
+	1 ? _efree(0) : free(0);
+}

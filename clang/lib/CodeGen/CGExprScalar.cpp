@@ -1074,7 +1074,7 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   
   CGF.EmitBlock(ContBlock);
   
-  if (!LHS) {
+  if (!LHS || !RHS) {
     assert(E->getType()->isVoidType() && "Non-void value should have a value");
     return 0;
   }
