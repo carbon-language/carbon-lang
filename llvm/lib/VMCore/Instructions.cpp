@@ -1350,21 +1350,24 @@ int ShuffleVectorInst::getMaskValue(unsigned i) const {
 //                             InsertValueInst Class
 //===----------------------------------------------------------------------===//
 
-void InsertValueInst::init(Value *Agg, Value *Val,
-                           const unsigned *Idx, unsigned NumIdx) {
+void InsertValueInst::init(Value *Agg, Value *Val, const unsigned *Idx, 
+                           unsigned NumIdx, const std::string &Name) {
   assert(NumOperands == 2 && "NumOperands not initialized?");
   Op<0>() = Agg;
   Op<1>() = Val;
 
   Indices.insert(Indices.end(), Idx, Idx + NumIdx);
+  setName(Name);
 }
 
-void InsertValueInst::init(Value *Agg, Value *Val, unsigned Idx) {
+void InsertValueInst::init(Value *Agg, Value *Val, unsigned Idx, 
+                           const std::string &Name) {
   assert(NumOperands == 2 && "NumOperands not initialized?");
   Op<0>() = Agg;
   Op<1>() = Val;
 
   Indices.push_back(Idx);
+  setName(Name);
 }
 
 InsertValueInst::InsertValueInst(const InsertValueInst &IVI)
@@ -1373,22 +1376,46 @@ InsertValueInst::InsertValueInst(const InsertValueInst &IVI)
     Indices(IVI.Indices) {
 }
 
+InsertValueInst::InsertValueInst(Value *Agg,
+                                 Value *Val,
+                                 unsigned Idx, 
+                                 const std::string &Name,
+                                 Instruction *InsertBefore)
+  : Instruction(Agg->getType(), InsertValue,
+                OperandTraits<InsertValueInst>::op_begin(this),
+                2, InsertBefore) {
+  init(Agg, Val, Idx, Name);
+}
+
+InsertValueInst::InsertValueInst(Value *Agg,
+                                 Value *Val,
+                                 unsigned Idx, 
+                                 const std::string &Name,
+                                 BasicBlock *InsertAtEnd)
+  : Instruction(Agg->getType(), InsertValue,
+                OperandTraits<InsertValueInst>::op_begin(this),
+                2, InsertAtEnd) {
+  init(Agg, Val, Idx, Name);
+}
+
 //===----------------------------------------------------------------------===//
 //                             ExtractValueInst Class
 //===----------------------------------------------------------------------===//
 
-void ExtractValueInst::init(Value *Agg, const unsigned *Idx, unsigned NumIdx) {
+void ExtractValueInst::init(Value *Agg, const unsigned *Idx, unsigned NumIdx, const std::string &Name) {
   assert(NumOperands == 1 && "NumOperands not initialized?");
   Op<0>() = Agg;
 
   Indices.insert(Indices.end(), Idx, Idx + NumIdx);
+  setName(Name);
 }
 
-void ExtractValueInst::init(Value *Agg, unsigned Idx) {
+void ExtractValueInst::init(Value *Agg, unsigned Idx, const std::string &Name) {
   assert(NumOperands == 1 && "NumOperands not initialized?");
   Op<0>() = Agg;
 
   Indices.push_back(Idx);
+  setName(Name);
 }
 
 ExtractValueInst::ExtractValueInst(const ExtractValueInst &EVI)
@@ -1422,6 +1449,28 @@ const Type* ExtractValueInst::getIndexedType(const Type *Agg,
       Agg = Ty;
   }
   return CurIdx == NumIdx ? Agg : 0;
+}
+
+ExtractValueInst::ExtractValueInst(Value *Agg,
+                                   unsigned Idx,
+                                   const std::string &Name,
+                                   BasicBlock *InsertAtEnd)
+  : Instruction(checkType(getIndexedType(Agg->getType(), &Idx, 1)),
+                ExtractValue,
+                OperandTraits<ExtractValueInst>::op_begin(this),
+                1, InsertAtEnd) {
+  init(Agg, Idx, Name);
+}
+
+ExtractValueInst::ExtractValueInst(Value *Agg,
+                                   unsigned Idx,
+                                   const std::string &Name,
+                                   Instruction *InsertBefore)
+  : Instruction(checkType(getIndexedType(Agg->getType(), &Idx, 1)),
+                ExtractValue,
+                OperandTraits<ExtractValueInst>::op_begin(this),
+                1, InsertBefore) {
+  init(Agg, Idx, Name);
 }
 
 //===----------------------------------------------------------------------===//

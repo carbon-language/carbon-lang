@@ -1458,8 +1458,8 @@ class ExtractValueInst : public Instruction {
   SmallVector<unsigned, 4> Indices;
 
   ExtractValueInst(const ExtractValueInst &EVI);
-  void init(Value *Agg, const unsigned *Idx, unsigned NumIdx);
-  void init(Value *Agg, unsigned Idx);
+  void init(Value *Agg, const unsigned *Idx, unsigned NumIdx, const std::string &Name);
+  void init(Value *Agg, unsigned Idx, const std::string &Name);
 
   template<typename InputIterator>
   void init(Value *Agg, InputIterator IdxBegin, InputIterator IdxEnd,
@@ -1476,10 +1476,8 @@ class ExtractValueInst : public Instruction {
     assert(NumIdx > 0 && "ExtractValueInst must have at least one index");
 
     // This requires that the iterator points to contiguous memory.
-    init(Agg, &*IdxBegin, NumIdx); // FIXME: for the general case
-                                   // we have to build an array here
-
-    setName(Name);
+    init(Agg, &*IdxBegin, NumIdx, Name); // FIXME: for the general case
+                                         // we have to build an array here
   }
 
   /// getIndexedType - Returns the type of the element that would be extracted
@@ -1667,8 +1665,8 @@ class InsertValueInst : public Instruction {
 
   void *operator new(size_t, unsigned); // Do not implement
   InsertValueInst(const InsertValueInst &IVI);
-  void init(Value *Agg, Value *Val, const unsigned *Idx, unsigned NumIdx);
-  void init(Value *Agg, Value *Val, unsigned Idx);
+  void init(Value *Agg, Value *Val, const unsigned *Idx, unsigned NumIdx, const std::string &Name);
+  void init(Value *Agg, Value *Val, unsigned Idx, const std::string &Name);
 
   template<typename InputIterator>
   void init(Value *Agg, Value *Val,
@@ -1686,10 +1684,8 @@ class InsertValueInst : public Instruction {
     assert(NumIdx > 0 && "InsertValueInst must have at least one index");
 
     // This requires that the iterator points to contiguous memory.
-    init(Agg, Val, &*IdxBegin, NumIdx); // FIXME: for the general case
-                                        // we have to build an array here
-
-    setName(Name);
+    init(Agg, Val, &*IdxBegin, NumIdx, Name); // FIXME: for the general case
+                                              // we have to build an array here
   }
 
   /// Constructors - Create a insertvalue instruction with a base aggregate
