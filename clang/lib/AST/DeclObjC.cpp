@@ -150,6 +150,13 @@ ObjCPropertyDecl *
     if (property->getIdentifier() == PropertyId)
       return property;
   }
+  // Look through categories.
+  for (ObjCCategoryDecl *Category = getCategoryList();
+       Category; Category = Category->getNextClassCategory()) {
+    ObjCPropertyDecl *property = Category->FindPropertyDeclaration(PropertyId);
+    if (property)
+      return property;
+  }
   if (getSuperClass())
     return getSuperClass()->FindPropertyDeclaration(PropertyId);
   return 0;
