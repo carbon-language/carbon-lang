@@ -26,9 +26,7 @@ using namespace llvm;
 /// takes the address of the function.
 static bool isOnlyADirectCall(Function *F, CallSite CS) {
   if (!CS.getInstruction()) return false;
-  for (CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end(); I != E; ++I)
-    if (*I == F) return false;
-  return true;
+  return !CS.hasArgument(F);
 }
 
 namespace {

@@ -331,13 +331,11 @@ void DAE::SurveyFunction(Function &F) {
           }
 
       // If the function is PASSED IN as an argument, its address has been taken
-      for (CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
-           AI != E; ++AI)
-        if (AI->get() == &F) {
-          FunctionIntrinsicallyLive = true;
-          break;
-        }
-      if (FunctionIntrinsicallyLive) break;
+      
+      if (CS.hasArgument(&F)) {
+        FunctionIntrinsicallyLive = true;
+        break;
+      }
     }
 
   if (FunctionIntrinsicallyLive) {
