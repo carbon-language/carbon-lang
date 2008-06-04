@@ -467,7 +467,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
       } else {
         // Otherwise, add it to the renaming set
         LiveInterval& I = LI.getOrCreateInterval(SrcReg);
-        unsigned idx = LI.getMBBEndIdx(P->getOperand(i).getMBB());
+        unsigned idx = LI.getMBBEndIdx(P->getOperand(i).getMBB()) - 1;
         VNInfo* VN = I.getLiveRangeContaining(idx)->valno;
         
         assert(VN && "No VNInfo for register?");
