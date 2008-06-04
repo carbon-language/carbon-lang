@@ -1639,7 +1639,16 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
       return isObjCIdType(RHS);
     if (isa<ObjCInterfaceType>(RHS))
       return isObjCIdType(LHS);
-    
+
+    // ID is compatible with all qualified id types.
+    if (isa<ObjCQualifiedIdType>(LHS)) {
+      if (const PointerType *PT = RHS->getAsPointerType())
+        return isObjCIdType(PT->getPointeeType());
+    }
+    if (isa<ObjCQualifiedIdType>(RHS)) {
+      if (const PointerType *PT = LHS->getAsPointerType())
+        return isObjCIdType(PT->getPointeeType());
+    }    
     // C99 6.7.2.2p4: Each enumerated type shall be compatible with char,
     // a signed integer type, or an unsigned integer type. 
     if (LHS->isEnumeralType() && RHS->isIntegralType()) {
