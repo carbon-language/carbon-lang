@@ -339,6 +339,8 @@ static bool ClassImplementsProtocol(ObjCProtocolDecl *lProto,
     // In gcc, it is also allowed assigning a protocol-qualified 'id'
     // type to a LHS object when protocol in qualified LHS is in list
     // of protocols in the rhs 'id' object. This IMO, should be a bug.
+    // FIXME: Treat this as an extension, and flag this as an error when
+    //  GCC extensions are not enabled.
     else if (RHSIsQualifiedID &&
              ProtocolCompatibleWithProtocol(protoList[i], lProto))
       return true;
