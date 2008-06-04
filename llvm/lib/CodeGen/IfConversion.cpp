@@ -149,7 +149,7 @@ namespace {
     IfConverter() : MachineFunctionPass((intptr_t)&ID) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
-    virtual const char *getPassName() const { return "If converter"; }
+    virtual const char *getPassName() const { return "If Converter"; }
 
   private:
     bool ReverseBranchCondition(BBInfo &BBI);
@@ -214,6 +214,9 @@ namespace {
 
   char IfConverter::ID = 0;
 }
+
+static RegisterPass<IfConverter>
+X("if-converter", "If Converter");
 
 FunctionPass *llvm::createIfConverterPass() { return new IfConverter(); }
 
