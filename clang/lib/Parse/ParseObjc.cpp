@@ -1143,7 +1143,13 @@ Parser::StmtResult Parser::ParseObjCSynchronizedStmt(SourceLocation atLoc) {
     Diag (Tok, diag::err_expected_lbrace);
     return true;
   }
+  // Enter a scope to hold everything within the compound stmt.  Compound
+  // statements can always hold declarations.
+  EnterScope(Scope::DeclScope);
+
   StmtResult SynchBody = ParseCompoundStatementBody();
+  
+  ExitScope();
   if (SynchBody.isInvalid)
     SynchBody = Actions.ActOnNullStmt(Tok.getLocation());
   return Actions.ActOnObjCAtSynchronizedStmt(atLoc, Res.Val, SynchBody.Val);
