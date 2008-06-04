@@ -327,12 +327,20 @@ static bool ProtocolCompatibleWithProtocol(ObjCProtocolDecl *lProto,
 /// lookupCategory is true). 
 static bool ClassImplementsProtocol(ObjCProtocolDecl *lProto,
                                     ObjCInterfaceDecl *IDecl, 
-                                    bool lookupCategory) {
+                                    bool lookupCategory,
+                                    bool RHSIsQualifiedID = false) {
   
   // 1st, look up the class.
   ObjCProtocolDecl **protoList = IDecl->getReferencedProtocols();
   for (unsigned i = 0; i < IDecl->getNumIntfRefProtocols(); i++) {
     if (ProtocolCompatibleWithProtocol(lProto, protoList[i]))
+      return true;
+    // This is dubious and is added to be compatible with gcc.
+    // In gcc, it is also allowed assigning a protocol-qualified 'id'
+    // type to a LHS object when protocol in qualified LHS is in list
+    // of protocols in the rhs 'id' object. This IMO, should be a bug.
+    else if (RHSIsQualifiedID &&
+             ProtocolCompatibleWithProtocol(protoList[i], lProto))
       return true;
   }
   
@@ -350,7 +358,8 @@ static bool ClassImplementsProtocol(ObjCProtocolDecl *lProto,
   // 3rd, look up the super class(s)
   if (IDecl->getSuperClass())
     return 
-      ClassImplementsProtocol(lProto, IDecl->getSuperClass(), lookupCategory);
+      ClassImplementsProtocol(lProto, IDecl->getSuperClass(), lookupCategory,
+                              RHSIsQualifiedID);
   
   return false;
 }
@@ -481,7 +490,7 @@ bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
     ObjCInterfaceDecl *lhsID = IT->getDecl();
     for (unsigned j = 0; j < rhsQID->getNumProtocols(); j++) {
       ObjCProtocolDecl *rhsProto = rhsQID->getProtocols(j);
-      if (!ClassImplementsProtocol(rhsProto, lhsID, compare))
+      if (!ClassImplementsProtocol(rhsProto, lhsID, compare, true))
         return false;
     }
     return true;
