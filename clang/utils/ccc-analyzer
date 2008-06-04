@@ -241,6 +241,15 @@ def main(args):
     if arg == '-o':
         output = args[i+1]
         i += 1
+                
+    # Arguments we currently ignore with one option.
+    if arg in ['-install_name', '-exported_symbols_list', 
+               '-current_version', '-compatibility_version']:
+      i += 1
+      
+    # Arguments we currently ignore with three options.
+    if arg in ['-sectorder']:
+      i += 3
 
     i += 1
 
