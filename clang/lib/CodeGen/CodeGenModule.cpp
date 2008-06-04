@@ -206,19 +206,23 @@ void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
     ParamAttrList.push_back(
         llvm::ParamAttrsWithIndex::get(1, llvm::ParamAttr::StructRet));
   unsigned increment = AggregateReturn ? 2 : 1;
-  for (unsigned i = 0; i < FD->getNumParams(); i++) {
-    QualType ParamType = FD->getParamDecl(i)->getType();
-    unsigned ParamAttrs = 0;
-    if (ParamType->isRecordType())
-      ParamAttrs |= llvm::ParamAttr::ByVal;
-    if (ParamType->isSignedIntegerType() && ParamType->isPromotableIntegerType())
-      ParamAttrs |= llvm::ParamAttr::SExt;
-    if (ParamType->isUnsignedIntegerType() && ParamType->isPromotableIntegerType())
-      ParamAttrs |= llvm::ParamAttr::ZExt;
-    if (ParamAttrs)
-      ParamAttrList.push_back(llvm::ParamAttrsWithIndex::get(i + increment,
-                                                             ParamAttrs));
+  const FunctionTypeProto* FTP = dyn_cast<FunctionTypeProto>(FD->getType());
+  if (FTP) {
+    for (unsigned i = 0; i < FTP->getNumArgs(); i++) {
+      QualType ParamType = FTP->getArgType(i);
+      unsigned ParamAttrs = 0;
+      if (ParamType->isRecordType())
+        ParamAttrs |= llvm::ParamAttr::ByVal;
+      if (ParamType->isSignedIntegerType() && ParamType->isPromotableIntegerType())
+        ParamAttrs |= llvm::ParamAttr::SExt;
+      if (ParamType->isUnsignedIntegerType() && ParamType->isPromotableIntegerType())
+        ParamAttrs |= llvm::ParamAttr::ZExt;
+      if (ParamAttrs)
+        ParamAttrList.push_back(llvm::ParamAttrsWithIndex::get(i + increment,
+                                                               ParamAttrs));
+    }
   }
+
   F->setParamAttrs(llvm::PAListPtr::get(ParamAttrList.begin(),
                                         ParamAttrList.size()));
 
