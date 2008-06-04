@@ -33,7 +33,7 @@ namespace llvm {
     virtual const TargetAsmInfo *createTargetAsmInfo() const;
   
   public:
-    MipsTargetMachine(const Module &M, const std::string &FS);
+    MipsTargetMachine(const Module &M, const std::string &FS, bool isLittle);
 
     virtual const MipsInstrInfo   *getInstrInfo()     const 
     { return &InstrInfo; }
@@ -60,6 +60,16 @@ namespace llvm {
     virtual bool addAssemblyEmitter(PassManagerBase &PM, bool Fast, 
                                     std::ostream &Out);
   };
+
+/// MipselTargetMachine - Mipsel target machine.
+///
+class MipselTargetMachine : public MipsTargetMachine {
+public:
+  MipselTargetMachine(const Module &M, const std::string &FS);
+
+  static unsigned getModuleMatchQuality(const Module &M);
+};
+
 } // End llvm namespace
 
 #endif

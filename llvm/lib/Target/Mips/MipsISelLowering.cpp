@@ -365,6 +365,7 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
   Chain  = DAG.getNode(MipsISD::JmpLink, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
+  // Create the CALLSEQ_END node.
   Chain = DAG.getCALLSEQ_END(Chain,
                              DAG.getConstant(NumBytes, getPointerTy()),
                              DAG.getConstant(0, getPointerTy()),
@@ -399,8 +400,6 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
                                GPLoad, SDOperand(0,0));
       InFlag = Chain.getValue(1);
   }      
-
-  // Create the CALLSEQ_END node.
 
   // Handle result values, copying them out of physregs into vregs that we
   // return.

@@ -547,5 +547,7 @@ doFinalization(Module &M)
     }
   }
 
+  O << "\n";
+
   return AsmPrinter::doFinalization(M);
 }

@@ -135,7 +135,6 @@ class ArithOverflowR<bits<6> op, bits<6> func, string instr_asm>:
       [], IIAlu>;
 
 // Arithmetic 2 register operands
-let isCommutable = 1 in
 class ArithI<bits<6> op, string instr_asm, SDNode OpNode,
              Operand Od, PatLeaf imm_type> :
   FI< op,
