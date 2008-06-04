@@ -2633,8 +2633,9 @@ bool MeetsMaxMemopRequirement(std::vector<MVT::ValueType> &MemOps,
           if (AllowUnalign)
             VT = MVT::iAny;
         } else {
-          // Give the stack frame object a larger alignment.
-          MFI->setObjectAlignment(FI, NewAlign);
+          // Give the stack frame object a larger alignment if needed.
+          if (MFI->getObjectAlignment(FI) < NewAlign)
+            MFI->setObjectAlignment(FI, NewAlign);
           Align = NewAlign;
         }
       }
