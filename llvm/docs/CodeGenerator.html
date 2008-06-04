@@ -621,9 +621,9 @@ copies a virtual register into or out of a physical register when needed.</p>
 
 <div class="doc_code">
 <pre>
-int %test(int %X, int %Y) {
-  %Z = div int %X, %Y
-  ret int %Z
+define i32 @test(i32 %X, i32 %Y) {
+  %Z = udiv i32 %X, %Y
+  ret i32 %Z
 }
 </pre>
 </div>
