@@ -32,7 +32,6 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
-#include <list>
 using namespace llvm;
 
 STATISTIC(NumGVNInstr, "Number of instructions deleted");
