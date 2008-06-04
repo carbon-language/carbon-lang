@@ -917,12 +917,14 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   // C99 6.5.15p5: "If both operands have void type, the result has void type."
   // The following || allows only one side to be void (a GCC-ism).
   if (lexT->isVoidType() || rexT->isVoidType()) {
-    if (!lexT->isVoidType())
+    if (!lexT->isVoidType()) {
       Diag(rex->getLocStart(), diag::ext_typecheck_cond_one_void, 
            rex->getSourceRange());
+      return rexT.getUnqualifiedType();
+    }
     if (!rexT->isVoidType())
       Diag(lex->getLocStart(), diag::ext_typecheck_cond_one_void,
-           lex->getSourceRange());    
+           lex->getSourceRange());
     return lexT.getUnqualifiedType();
   }
   // C99 6.5.15p6 - "if one operand is a null pointer constant, the result has
