@@ -38,6 +38,7 @@
 		35EF67700DAD1D2C00B19414 /* SemaDeclCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35EF676F0DAD1D2C00B19414 /* SemaDeclCXX.cpp */; };
 		35EFEFB60DB67ED60020783D /* GRTransferFuncs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */; };
 		35F8D0D60D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35F8D0D50D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp */; };
+		35FE6BCF0DF6EE1F00739712 /* DeclBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35FE6BCE0DF6EE1F00739712 /* DeclBase.cpp */; };
 		72D16C1F0D9975C400E6DA4A /* HTMLRewrite.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 72D16C1E0D9975C400E6DA4A /* HTMLRewrite.cpp */; };
 		72D16C220D9975EA00E6DA4A /* HTMLPrint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 72D16C210D9975EA00E6DA4A /* HTMLPrint.cpp */; };
 		84AF36A10CB17A3B00C820A5 /* DeclObjC.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 84AF36A00CB17A3B00C820A5 /* DeclObjC.h */; };
@@ -314,6 +315,7 @@
 		35F9B1530D1C6ADF00DDFDAE /* ExprDeclBitVector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExprDeclBitVector.h; path = clang/Analysis/Support/ExprDeclBitVector.h; sourceTree = "<group>"; };
 		35F9B1550D1C6B2E00DDFDAE /* LiveVariables.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LiveVariables.h; path = clang/Analysis/Analyses/LiveVariables.h; sourceTree = "<group>"; };
 		35F9B1560D1C6B2E00DDFDAE /* UninitializedValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UninitializedValues.h; path = clang/Analysis/Analyses/UninitializedValues.h; sourceTree = "<group>"; };
+		35FE6BCE0DF6EE1F00739712 /* DeclBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeclBase.cpp; path = lib/AST/DeclBase.cpp; sourceTree = "<group>"; };
 		72D16C1E0D9975C400E6DA4A /* HTMLRewrite.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTMLRewrite.cpp; path = lib/Rewrite/HTMLRewrite.cpp; sourceTree = "<group>"; };
 		72D16C210D9975EA00E6DA4A /* HTMLPrint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTMLPrint.cpp; path = Driver/HTMLPrint.cpp; sourceTree = "<group>"; };
 		84AF36A00CB17A3B00C820A5 /* DeclObjC.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = DeclObjC.h; path = clang/AST/DeclObjC.h; sourceTree = "<group>"; };
@@ -794,6 +796,7 @@
 				DE1732FF0B068B700080B521 /* ASTContext.cpp */,
 				DED677C80B6C854100AAD4A3 /* Builtins.cpp */,
 				DEC63B190C7B940200DBF169 /* CFG.cpp */,
+				35FE6BCE0DF6EE1F00739712 /* DeclBase.cpp */,
 				DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */,
 				DE38CF260D8C9E6C00A273B6 /* DeclObjC.cpp */,
 				3513185F0CD14468006B66F7 /* DeclSerialization.cpp */,
@@ -1087,6 +1090,7 @@
 				DEA0EBDA0DD2D3C8007A02A9 /* RewriteMacros.cpp in Sources */,
 				35A3E7020DD3874400757F74 /* CGDebugInfo.cpp in Sources */,
 				3599299B0DE2425300A8A33E /* SemaInit.cpp in Sources */,
+				35FE6BCF0DF6EE1F00739712 /* DeclBase.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
