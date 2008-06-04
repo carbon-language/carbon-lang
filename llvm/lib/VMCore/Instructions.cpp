@@ -91,6 +91,13 @@ void CallSite::setDoesNotThrow(bool doesNotThrow) {
     cast<InvokeInst>(I)->setDoesNotThrow(doesNotThrow);
 }
 
+bool CallSite::hasArgument(Value *Arg) {
+  for (arg_iterator AI = this->arg_begin(), E = this->arg_end(); AI != E; ++AI)
+    if (AI->get() == Arg)
+      return true;
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 //                            TerminatorInst Class
 //===----------------------------------------------------------------------===//
