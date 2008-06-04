@@ -492,7 +492,7 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
     const FieldDecl *FD = RD.getMember(curField);
     uint64_t offset = RL.getFieldOffset(curField);
     const llvm::Type *Ty = CGT.ConvertTypeRecursive(FD->getType());
-    uint64_t size = CGT.getTargetData().getTypeStoreSizeInBits(Ty);
+    uint64_t size = CGT.getTargetData().getABITypeSizeInBits(Ty);
 
     if (FD->isBitField()) {
       Expr *BitWidth = FD->getBitWidth();
