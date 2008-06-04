@@ -379,8 +379,8 @@ static inline const Type *checkType(const Type *Ty) {
 ///
 class GetElementPtrInst : public Instruction {
   GetElementPtrInst(const GetElementPtrInst &GEPI);
-  void init(Value *Ptr, Value* const *Idx, unsigned NumIdx);
-  void init(Value *Ptr, Value *Idx);
+  void init(Value *Ptr, Value* const *Idx, unsigned NumIdx, const std::string &Name);
+  void init(Value *Ptr, Value *Idx, const std::string &Name);
 
   template<typename InputIterator>
   void init(Value *Ptr, InputIterator IdxBegin, InputIterator IdxEnd,
@@ -392,14 +392,12 @@ class GetElementPtrInst : public Instruction {
     
     if (NumIdx > 0) {
       // This requires that the iterator points to contiguous memory.
-      init(Ptr, &*IdxBegin, NumIdx); // FIXME: for the general case
+      init(Ptr, &*IdxBegin, NumIdx, Name); // FIXME: for the general case
                                      // we have to build an array here
     }
     else {
-      init(Ptr, 0, NumIdx);
+      init(Ptr, 0, NumIdx, Name);
     }
-
-    setName(Name);
   }
 
   /// getIndexedType - Returns the type of the element that would be loaded with

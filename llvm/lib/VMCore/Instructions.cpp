@@ -992,20 +992,24 @@ static unsigned retrieveAddrSpace(const Value *Val) {
   return cast<PointerType>(Val->getType())->getAddressSpace();
 }
 
-void GetElementPtrInst::init(Value *Ptr, Value* const *Idx, unsigned NumIdx) {
+void GetElementPtrInst::init(Value *Ptr, Value* const *Idx, unsigned NumIdx, const std::string &Name) {
   assert(NumOperands == 1+NumIdx && "NumOperands not initialized?");
   Use *OL = OperandList;
   OL[0] = Ptr;
 
   for (unsigned i = 0; i != NumIdx; ++i)
     OL[i+1] = Idx[i];
+
+  setName(Name);
 }
 
-void GetElementPtrInst::init(Value *Ptr, Value *Idx) {
+void GetElementPtrInst::init(Value *Ptr, Value *Idx, const std::string &Name) {
   assert(NumOperands == 2 && "NumOperands not initialized?");
   Use *OL = OperandList;
   OL[0] = Ptr;
   OL[1] = Idx;
+
+  setName(Name);
 }
 
 GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
@@ -1026,8 +1030,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
                 GetElementPtr,
                 OperandTraits<GetElementPtrInst>::op_end(this) - 2,
                 2, InBe) {
-  init(Ptr, Idx);
-  setName(Name);
+  init(Ptr, Idx, Name);
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
@@ -1037,8 +1040,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
                 GetElementPtr,
                 OperandTraits<GetElementPtrInst>::op_end(this) - 2,
                 2, IAE) {
-  init(Ptr, Idx);
-  setName(Name);
+  init(Ptr, Idx, Name);
 }
 
 // getIndexedType - Returns the type of the element that would be loaded with
