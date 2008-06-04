@@ -19,7 +19,6 @@
 
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Streams.h"
