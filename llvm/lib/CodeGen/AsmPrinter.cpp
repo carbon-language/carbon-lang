@@ -889,11 +889,9 @@ void AsmPrinter::EmitString(const ConstantArray *CVA) const {
 }
 
 /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
-/// If Packed is false, pad to the ABI size.
-void AsmPrinter::EmitGlobalConstant(const Constant *CV, bool Packed) {
+void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
   const TargetData *TD = TM.getTargetData();
-  unsigned Size = Packed ?
-    TD->getTypeStoreSize(CV->getType()) : TD->getABITypeSize(CV->getType());
+  unsigned Size = TD->getABITypeSize(CV->getType());
 
   if (CV->isNullValue() || isa<UndefValue>(CV)) {
     EmitZeros(Size);
@@ -903,7 +901,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, bool Packed) {
       EmitString(CVA);
     } else { // Not a string.  Print the values in successive locations
       for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i)
-        EmitGlobalConstant(CVA->getOperand(i), false);
+        EmitGlobalConstant(CVA->getOperand(i));
     }
     return;
   } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
@@ -914,13 +912,13 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, bool Packed) {
       const Constant* field = CVS->getOperand(i);
 
       // Check if padding is needed and insert one or more 0s.
-      uint64_t fieldSize = TD->getTypeStoreSize(field->getType());
+      uint64_t fieldSize = TD->getABITypeSize(field->getType());
       uint64_t padSize = ((i == e-1 ? Size : cvsLayout->getElementOffset(i+1))
                           - cvsLayout->getElementOffset(i)) - fieldSize;
       sizeSoFar += fieldSize + padSize;
 
-      // Now print the actual field value without ABI size padding.
-      EmitGlobalConstant(field, true);
+      // Now print the actual field value.
+      EmitGlobalConstant(field);
 
       // Insert padding - this may include padding to increase the size of the
       // current field up to the ABI size (if the struct is not packed) as well
@@ -1066,7 +1064,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, bool Packed) {
     const VectorType *PTy = CP->getType();
     
     for (unsigned I = 0, E = PTy->getNumElements(); I < E; ++I)
-      EmitGlobalConstant(CP->getOperand(I), false);
+      EmitGlobalConstant(CP->getOperand(I));
     
     return;
   }

@@ -48,10 +48,7 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
   // Loop over each of the elements, placing them in memory...
   for (unsigned i = 0, e = NumElements; i != e; ++i) {
     const Type *Ty = ST->getElementType(i);
-    unsigned TyAlign = ST->isPacked() ?
-      1 : TD.getABITypeAlignment(Ty);
-    uint64_t TySize  = ST->isPacked() ?
-      TD.getTypeStoreSize(Ty) : TD.getABITypeSize(Ty);
+    unsigned TyAlign = ST->isPacked() ? 1 : TD.getABITypeAlignment(Ty);
 
     // Add padding if necessary to align the data element properly...
     StructSize = (StructSize + TyAlign - 1)/TyAlign * TyAlign;
@@ -60,7 +57,7 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
     StructAlignment = std::max(TyAlign, StructAlignment);
 
     MemberOffsets[i] = StructSize;
-    StructSize += TySize;                 // Consume space for this data item
+    StructSize += TD.getABITypeSize(Ty); // Consume space for this data item
   }
 
   // Empty structures have alignment of 1 byte.
