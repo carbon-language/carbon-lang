@@ -467,6 +467,8 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
       } else {
         // Otherwise, add it to the renaming set
         LiveInterval& I = LI.getOrCreateInterval(SrcReg);
+        // We need to subtract one from the index because live ranges are open
+        // at the end.
         unsigned idx = LI.getMBBEndIdx(P->getOperand(i).getMBB()) - 1;
         VNInfo* VN = I.getLiveRangeContaining(idx)->valno;
         
@@ -632,7 +634,7 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
 /// of Static Single Assignment Form" by Briggs, et al.
 void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
                                           std::set<unsigned>& pushed) {
-  // FIXME: This function needs to update LiveVariables
+  // FIXME: This function needs to update LiveIntervals
   std::map<unsigned, unsigned>& copy_set= Waiting[MBB];
   
   std::map<unsigned, unsigned> worklist;
@@ -660,6 +662,8 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
   MachineFunction* MF = MBB->getParent();
   MachineRegisterInfo& MRI = MF->getRegInfo();
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
+  
+  SmallVector<std::pair<unsigned, MachineInstr*>, 4> InsertedPHIDests;
   
   // Iterate over the worklist, inserting copies
   while (!worklist.empty() || !copy_set.empty()) {
@@ -691,6 +695,11 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
                         map[curr.first], RC, RC);
       map[curr.first] = curr.second;
       
+      // Push this copy onto InsertedPHICopies so we can
+      // update LiveIntervals with it.
+      MachineBasicBlock::iterator MI = MBB->getFirstTerminator();
+      InsertedPHIDests.push_back(std::make_pair(curr.second, --MI));
+      
       // If curr.first is a destination in copy_set...
       for (std::map<unsigned, unsigned>::iterator I = copy_set.begin(),
            E = copy_set.end(); I != E; )
@@ -721,6 +730,34 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
       map[curr.second] = t;
       
       worklist.insert(curr);
+    }
+  }
+  
+  // Renumber the instructions so that we can perform the index computations
+  // needed to create new live intervals.
+  LI.computeNumbering();
+  
+  // For copies that we inserted at the ends of predecessors, we construct
+  // live intervals.  This is pretty easy, since we know that the destination
+  // register cannot have be in live at that point previously.  We just have
+  // to make sure that, for registers that serve as inputs to more than one
+  // PHI, we don't create multiple overlapping live intervals.
+  std::set<unsigned> RegHandled;
+  for (SmallVector<std::pair<unsigned, MachineInstr*>, 4>::iterator I =
+       InsertedPHIDests.begin(), E = InsertedPHIDests.end(); I != E; ++I) {
+    if (!RegHandled.count(I->first)) {
+      LiveInterval& Interval = LI.getOrCreateInterval(I->first);
+      VNInfo* VN = Interval.getNextValue(
+          LI.getInstructionIndex(I->second) + LiveIntervals::InstrSlots::DEF,
+                                         I->second, LI.getVNInfoAllocator());
+      VN->hasPHIKill = true;
+      VN->kills.push_back(LI.getMBBEndIdx(I->second->getParent()));
+      LiveRange LR(LI.getInstructionIndex(I->second) +
+                      LiveIntervals::InstrSlots::DEF,
+                   LI.getMBBEndIdx(I->second->getParent()) + 1, VN);
+      Interval.addRange(LR);
+      
+      RegHandled.insert(I->first);
     }
   }
 }
