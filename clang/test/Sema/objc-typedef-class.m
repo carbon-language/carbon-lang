@@ -1,0 +1,79 @@
+// RUN: clang -fsyntax-only -verify %s
+typedef signed char BOOL;
+typedef unsigned int NSUInteger;
+typedef struct _NSZone NSZone;
+
+@class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
+
+@protocol NSObject - (BOOL) isEqual:(id) object; @end
+@protocol NSCopying - (id) copyWithZone:(NSZone *) zone; @end
+@protocol NSCoding - (void) encodeWithCoder:(NSCoder *) aCoder; @end
+
+@interface NSObject < NSObject > {}
++(id) alloc;
+@end
+
+typedef float CGFloat;
+
+@interface NSTask:NSObject
+- (id) init;
+@end
+
+typedef NSUInteger NSControlSize;
+typedef struct __CFlags {} _CFlags;
+
+@interface NSCell:NSObject < NSCopying, NSCoding > {}
+@end
+
+@interface NSActionCell:NSCell {} @end
+
+@class NSAttributedString, NSFont, NSImage, NSSound;
+
+typedef struct _XCElementInset {} XCElementInset;
+
+@protocol XCElementP < NSObject >
+-(BOOL) vertical;
+@end
+
+@protocol XCElementDisplayDelegateP;
+@protocol XCElementDisplayDelegateP < NSObject >
+-(void) configureForControlSize:(NSControlSize)size font:(NSFont *)font addDefaultSpace:(XCElementInset) additionalSpace;
+@end
+
+@protocol XCElementSpacerP < XCElementP >
+@end
+
+typedef NSObject < XCElementSpacerP > XCElementSpacer;
+
+@protocol XCElementTogglerP < XCElementP > -(void) setDisplayed:(BOOL) displayed;
+@end
+
+// FIXME: investigate this redefinition error - gcc apparently accepts it.
+typedef NSObject < XCElementTogglerP > XCElementToggler; // expected-error{{previous definition is here}}
+
+@interface XCElementRootFace:NSObject {} @end
+
+@interface XCElementFace:XCElementRootFace {} @end
+
+@class XCElementToggler; // expected-error{{redefinition of 'XCElementToggler' as different kind of symbol}}
+
+@interface XCRASlice:XCElementFace {} @end
+
+@class XCElementSpacings;
+
+@interface XCElementDisplay:NSObject < XCElementDisplayDelegateP > {} @end
+@interface XCElementDisplayRect:XCElementDisplay {} @end
+
+typedef XCElementDisplayRect XCElementGraphicsRect;
+
+@interface XCElementDisplayFillerImage:XCElementDisplay {} @end
+
+@implementation XCRASlice
+- (void) addSliceWithLabel:(NSString *)label statusKey:(NSString *)statusKey disclosed:(BOOL)disclosed
+{
+  static XCElementGraphicsRect *_sGraphicsDelegate = ((void *) 0);
+  if (!_sGraphicsDelegate) {
+    _sGraphicsDelegate =[[XCElementGraphicsRect alloc] init]; // expected-warning{{method '+alloc' not found (return type defaults to 'id')}}
+  }
+}
+@end

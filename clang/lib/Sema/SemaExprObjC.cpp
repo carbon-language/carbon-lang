@@ -166,19 +166,31 @@ Sema::ExprResult Sema::ActOnClassMessage(
   } else
     ClassDecl = getObjCInterfaceDecl(receiverName);
   
-  // FIXME: can ClassDecl ever be null?
-  ObjCMethodDecl *Method = ClassDecl->lookupClassMethod(Sel);
+  // ClassDecl is null in the following case.
+  //
+  //  typedef XCElementDisplayRect XCElementGraphicsRect;
+  //
+  //  @implementation XCRASlice
+  //  - whatever { // Note that XCElementGraphicsRect is a typedef name.
+  //    _sGraphicsDelegate =[[XCElementGraphicsRect alloc] init];
+  //  }
+  //
+  // FIXME: Investigate why GCC allows the above.
+  ObjCMethodDecl *Method = 0;
   QualType returnType;
-  
-  // If we have an implementation in scope, check "private" methods.
-  if (!Method) {
-    if (ObjCImplementationDecl *ImpDecl = 
-        ObjCImplementations[ClassDecl->getIdentifier()])
-      Method = ImpDecl->getClassMethod(Sel);
+  if (ClassDecl) {
+    Method = ClassDecl->lookupClassMethod(Sel);
+    
+    // If we have an implementation in scope, check "private" methods.
+    if (!Method) {
+      if (ObjCImplementationDecl *ImpDecl = 
+          ObjCImplementations[ClassDecl->getIdentifier()])
+        Method = ImpDecl->getClassMethod(Sel);
+    }
+    // Before we give up, check if the selector is an instance method.
+    if (!Method)
+      Method = ClassDecl->lookupInstanceMethod(Sel);
   }
-  // Before we give up, check if the selector is an instance method.
-  if (!Method)
-    Method = ClassDecl->lookupInstanceMethod(Sel);
   if (!Method) {
     Diag(lbrac, diag::warn_method_not_found, std::string("+"), Sel.getName(),
          SourceRange(lbrac, rbrac));
