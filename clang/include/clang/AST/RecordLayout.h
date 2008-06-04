@@ -29,15 +29,29 @@ class ASTRecordLayout {
   uint64_t *FieldOffsets;
   friend class ASTContext;
   
-  ASTRecordLayout() {}
+  ASTRecordLayout() : Size(0), Alignment(8) {}
   ~ASTRecordLayout() {
     delete [] FieldOffsets;
   }
-  
-  void SetLayout(uint64_t size, unsigned alignment, uint64_t *fieldOffsets) {
-    Size = size; Alignment = alignment;
-    FieldOffsets = fieldOffsets;
+
+  /// Initialize record layout. N is the number of fields in this record.
+  void InitializeLayout(unsigned N) {
+    FieldOffsets = new uint64_t[N];
   }
+  
+  /// Finalize record layout. Adjust record size based on the alignment.
+  void FinalizeLayout() {
+    // Finally, round the size of the record up to the alignment of the
+    // record itself.
+    Size = (Size + (Alignment-1)) & ~(Alignment-1);
+  }
+
+  void SetAlignment(unsigned A) {  Alignment = A; }
+
+  /// LayoutField - Field layout.
+  void LayoutField(const FieldDecl *FD, unsigned FieldNo,
+                   bool IsUnion, bool StructIsPacked,
+                   ASTContext &Context);
   
   ASTRecordLayout(const ASTRecordLayout&);   // DO NOT IMPLEMENT
   void operator=(const ASTRecordLayout&); // DO NOT IMPLEMENT
