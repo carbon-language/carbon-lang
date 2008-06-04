@@ -703,8 +703,8 @@ class DarwinI386TargetInfo : public DarwinTargetInfo {
 public:
   DarwinI386TargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {
     DoubleAlign = LongLongAlign = 32;
-    LongDoubleWidth = 96;
-    LongDoubleAlign = 32;
+    LongDoubleWidth = 128;
+    LongDoubleAlign = 128;
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
 
