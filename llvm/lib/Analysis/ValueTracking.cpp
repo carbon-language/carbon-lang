@@ -19,6 +19,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
+#include <cstring>
 using namespace llvm;
 
 /// getOpcode - If this is an Instruction or a ConstantExpr, return the
