@@ -13,7 +13,7 @@
 #ifndef LLVM_CLANG_TRANSLATION_UNIT_H
 #define LLVM_CLANG_TRANSLATION_UNIT_H
 
-#include "clang/Basic/LangOptions.h"
+#include "clang/AST/ASTContext.h"
 #include "llvm/Bitcode/SerializationFwd.h"
 #include "llvm/System/Path.h"
 #include <vector>
@@ -31,7 +31,6 @@ class Decl;
 class FileEntry;
   
 class TranslationUnit {
-  LangOptions LangOpts;
   ASTContext* Context;
   std::vector<Decl*> TopLevelDecls;
   bool OwnsMetaData;
@@ -42,15 +41,13 @@ class TranslationUnit {
                                OwnsDecls(true) {}
   
 public:
-  explicit TranslationUnit(ASTContext& Ctx, const LangOptions& lopt)
-    : LangOpts(lopt), Context(&Ctx), OwnsMetaData(false),
-      OwnsDecls(true) {}
+  explicit TranslationUnit(ASTContext& Ctx)
+    : Context(&Ctx), OwnsMetaData(false), OwnsDecls(true) {}
 
   void SetOwnsDecls(bool val) { OwnsDecls = val; }
 
   ~TranslationUnit();
 
-  const LangOptions& getLangOpts() const { return LangOpts; }
   const std::string& getSourceFile() const;
   
   /// Emit - Emit the translation unit to an arbitray bitcode stream.
@@ -60,7 +57,7 @@ public:
   static TranslationUnit* Create(llvm::Deserializer& D, FileManager& FMgr);
   
   // Accessors
-  const LangOptions& getLangOptions() const { return LangOpts; }
+  const LangOptions& getLangOptions() const { return Context->getLangOptions();}
 
   ASTContext&        getContext() { return *Context; }
   const ASTContext&  getContext() const { return *Context; }

@@ -33,26 +33,16 @@ using namespace clang;
 namespace {
   
 class SerializationTest : public ASTConsumer {
-  llvm::OwningPtr<TranslationUnit> TU;
+  TranslationUnit* TU;
   Diagnostic &Diags;
   FileManager &FMgr;  
-  const LangOptions& lopts;
 public:  
-  SerializationTest(Diagnostic &d, FileManager& fmgr, const LangOptions& LOpts)
-                    : Diags(d), FMgr(fmgr), lopts(LOpts) {}
+  SerializationTest(Diagnostic &d, FileManager& fmgr)
+                    : TU(0), Diags(d), FMgr(fmgr) {}
   
   ~SerializationTest();
 
-  virtual void Initialize(ASTContext& context) {
-    if (!TU) {
-      TU.reset(new TranslationUnit(context, lopts));
-      TU->SetOwnsDecls(false);
-    }
-  }  
-
-  virtual void HandleTopLevelDecl(Decl *D) {
-    TU->AddTopLevelDecl(D);
-  }
+  virtual void InitializeTU(TranslationUnit& tu) { TU = &tu; }  
   
 private:
   bool Serialize(llvm::sys::Path& Filename, llvm::sys::Path& FNameDeclPrint);
@@ -62,10 +52,8 @@ private:
 } // end anonymous namespace
 
 ASTConsumer*
-clang::CreateSerializationTest(Diagnostic &Diags, FileManager& FMgr,
-                               const LangOptions &LOpts) {
-  
-  return new SerializationTest(Diags,FMgr,LOpts);
+clang::CreateSerializationTest(Diagnostic &Diags, FileManager& FMgr) {  
+  return new SerializationTest(Diags, FMgr);
 }
 
 
@@ -89,7 +77,7 @@ bool SerializationTest::Deserialize(llvm::sys::Path& Filename,
                                     llvm::sys::Path& FNameDeclPrint) {
   
   // Deserialize the translation unit.
-  TranslationUnit* NewTU = ReadASTBitcodeFile(Filename,FMgr);
+  TranslationUnit* NewTU = ReadASTBitcodeFile(Filename, FMgr);
 
   if (!NewTU)
     return false;

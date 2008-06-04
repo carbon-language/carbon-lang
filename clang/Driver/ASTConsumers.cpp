@@ -868,12 +868,10 @@ namespace {
 class ASTSerializer : public ASTConsumer {
 protected:
   Diagnostic &Diags;
-  const LangOptions& lang;
   TranslationUnit* TU;
 
 public:
-  ASTSerializer(Diagnostic& diags, const LangOptions& LO)
-    : Diags(diags), lang(LO), TU(0) {}
+  ASTSerializer(Diagnostic& diags) : Diags(diags), TU(0) {}
     
   virtual ~ASTSerializer() { delete TU; }
   
@@ -892,9 +890,8 @@ public:
 class SingleFileSerializer : public ASTSerializer {
   const llvm::sys::Path FName;
 public:
-  SingleFileSerializer(const llvm::sys::Path& F, Diagnostic &diags,
-                          const LangOptions &LO)
-  : ASTSerializer(diags,LO), FName(F) {}    
+  SingleFileSerializer(const llvm::sys::Path& F, Diagnostic &diags)
+  : ASTSerializer(diags), FName(F) {}    
   
   ~SingleFileSerializer() {
     EmitASTBitcodeFile(TU, FName);
@@ -904,9 +901,8 @@ public:
 class BuildSerializer : public ASTSerializer {
   llvm::sys::Path EmitDir;  
 public:
-  BuildSerializer(const llvm::sys::Path& dir, Diagnostic &diags,
-                  const LangOptions &LO)
-  : ASTSerializer(diags,LO), EmitDir(dir) {}
+  BuildSerializer(const llvm::sys::Path& dir, Diagnostic &diags)
+  : ASTSerializer(diags), EmitDir(dir) {}
   
   ~BuildSerializer() {
 
@@ -950,8 +946,7 @@ public:
 
 ASTConsumer* clang::CreateASTSerializer(const std::string& InFile,
                                         const std::string& OutputFile,
-                                        Diagnostic &Diags,
-                                        const LangOptions &Features) {
+                                        Diagnostic &Diags) {
   
   if (OutputFile.size()) {
     if (InFile == "-") {
@@ -982,7 +977,7 @@ ASTConsumer* clang::CreateASTSerializer(const std::string& InFile,
     
     // FIXME: We should probably only allow using BuildSerializer when
     // the ASTs come from parsed source files, and not from .ast files.
-    return new BuildSerializer(EmitDir, Diags, Features);
+    return new BuildSerializer(EmitDir, Diags);
   }
 
   // The user did not specify an output directory for serialized ASTs.
@@ -991,5 +986,5 @@ ASTConsumer* clang::CreateASTSerializer(const std::string& InFile,
   
   llvm::sys::Path FName(InFile.c_str());
   FName.appendSuffix("ast");
-  return new SingleFileSerializer(FName, Diags, Features);  
+  return new SingleFileSerializer(FName, Diags);  
 }

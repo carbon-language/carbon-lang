@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_ASTCONTEXT_H
 #define LLVM_CLANG_AST_ASTCONTEXT_H
 
+#include "clang/Basic/LangOptions.h"
 #include "clang/AST/Builtins.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecordLayout.h"
@@ -77,15 +78,24 @@ class ASTContext {
 
   TranslationUnitDecl *TUDecl;
 
+  /// SourceMgr - The associated SourceManager object.
   SourceManager &SourceMgr;
+  
+  /// LangOpts - The language options used to create the AST associated with
+  ///  this ASTContext object.
+  LangOptions LangOpts;
+
+  /// Allocator - The allocator object used to create AST objects.
   llvm::MallocAllocator Allocator;
+
 public:
   TargetInfo &Target;
   IdentifierTable &Idents;
   SelectorTable &Selectors;
   
   SourceManager& getSourceManager() { return SourceMgr; }
-  llvm::MallocAllocator &getAllocator() { return Allocator; }
+  llvm::MallocAllocator &getAllocator() { return Allocator; }  
+  const LangOptions& getLangOptions() const { return LangOpts; }
   
   FullSourceLoc getFullLoc(SourceLocation Loc) const { 
     return FullSourceLoc(Loc,SourceMgr);
@@ -109,9 +119,10 @@ public:
   QualType FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
   QualType VoidPtrTy;
   
-  ASTContext(SourceManager &SM, TargetInfo &t, IdentifierTable &idents,
-             SelectorTable &sels, unsigned size_reserve=0 ) : 
-    CFConstantStringTypeDecl(0), SourceMgr(SM), Target(t), 
+  ASTContext(const LangOptions& LOpts, SourceManager &SM, TargetInfo &t,
+             IdentifierTable &idents, SelectorTable &sels,
+             unsigned size_reserve=0 ) : 
+    CFConstantStringTypeDecl(0), SourceMgr(SM), LangOpts(LOpts), Target(t), 
     Idents(idents), Selectors(sels) {
 
     if (size_reserve > 0) Types.reserve(size_reserve);    

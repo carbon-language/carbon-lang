@@ -124,16 +124,13 @@ void TranslationUnit::Emit(llvm::Serializer& Sezr) const {
   
   Sezr.EnterBlock(BasicMetadataBlock);
   
-  // Block for SourceManager, LangOptions, and Target.  Allows easy skipping
+  // Block for SourceManager and Target.  Allows easy skipping
   // around to the block for the Selectors during deserialization.
   Sezr.EnterBlock();
     
   // Emit the SourceManager.
   Sezr.Emit(Context->getSourceManager());
-  
-  // Emit the LangOptions.
-  Sezr.Emit(LangOpts);
-  
+    
   // Emit the Target.
   Sezr.EmitPtr(&Context->Target);
   Sezr.EmitCStr(Context->Target.getTargetTriple());
@@ -211,10 +208,7 @@ TranslationUnit* TranslationUnit::Create(llvm::Deserializer& Dezr,
   
   // Read the SourceManager.
   SourceManager::CreateAndRegister(Dezr,FMgr);
-  
-  // Read the LangOptions.
-  TU->LangOpts.Read(Dezr);
-  
+    
   { // Read the TargetInfo.
     llvm::SerializedPtrID PtrID = Dezr.ReadPtrID();
     char* triple = Dezr.ReadCStr(NULL,0,true);

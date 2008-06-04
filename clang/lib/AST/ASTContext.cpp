@@ -1701,6 +1701,7 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
 
 /// Emit - Serialize an ASTContext object to Bitcode.
 void ASTContext::Emit(llvm::Serializer& S) const {
+  S.Emit(LangOpts);
   S.EmitRef(SourceMgr);
   S.EmitRef(Target);
   S.EmitRef(Idents);
@@ -1720,6 +1721,11 @@ void ASTContext::Emit(llvm::Serializer& S) const {
 }
 
 ASTContext* ASTContext::Create(llvm::Deserializer& D) {
+  
+  // Read the language options.
+  LangOptions LOpts;
+  LOpts.Read(D);
+  
   SourceManager &SM = D.ReadRef<SourceManager>();
   TargetInfo &t = D.ReadRef<TargetInfo>();
   IdentifierTable &idents = D.ReadRef<IdentifierTable>();
@@ -1727,7 +1733,7 @@ ASTContext* ASTContext::Create(llvm::Deserializer& D) {
 
   unsigned size_reserve = D.ReadInt();
   
-  ASTContext* A = new ASTContext(SM,t,idents,sels,size_reserve);
+  ASTContext* A = new ASTContext(LOpts, SM, t, idents, sels, size_reserve);
   
   for (unsigned i = 0; i < size_reserve; ++i)
     Type::Create(*A,i,D);

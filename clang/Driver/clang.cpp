@@ -1189,7 +1189,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
                                 OutputFile, VisualizeEG, TrimGraph, AnalyzeAll);
       
     case TestSerialization:
-      return CreateSerializationTest(Diag, FileMgr, LangOpts);
+      return CreateSerializationTest(Diag, FileMgr);
       
     case EmitLLVM:
     case EmitBC:
@@ -1198,7 +1198,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
 
     case SerializeAST:
       // FIXME: Allow user to tailor where the file is written.
-      return CreateASTSerializer(InFile, OutputFile, Diag, LangOpts);
+      return CreateASTSerializer(InFile, OutputFile, Diag);
       
     case RewriteObjC:
       return CreateCodeRewriterTest(InFile, OutputFile, Diag, LangOpts);
@@ -1362,8 +1362,8 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
   // translation unit, rather than InFile.
   llvm::Module *DestModule;
   llvm::OwningPtr<ASTConsumer>
-    Consumer(CreateASTConsumer(InFile, Diag, FileMgr, TU->getLangOpts(), 0, 0,
-                               DestModule));
+    Consumer(CreateASTConsumer(InFile, Diag, FileMgr, TU->getLangOptions(),
+                               0, 0, DestModule));
   
   if (!Consumer) {      
     fprintf(stderr, "Unsupported program action with serialized ASTs!\n");

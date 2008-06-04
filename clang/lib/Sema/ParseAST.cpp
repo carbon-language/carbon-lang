@@ -34,10 +34,11 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer, bool PrintStats) {
     Stmt::CollectingStats(true);
   }
   
-  ASTContext Context(PP.getSourceManager(), PP.getTargetInfo(),
+  ASTContext Context(PP.getLangOptions(), PP.getSourceManager(),
+                     PP.getTargetInfo(),
                      PP.getIdentifierTable(), PP.getSelectorTable());
   
-  TranslationUnit TU(Context, PP.getLangOptions());
+  TranslationUnit TU(Context);
 
   Sema S(PP, Context, *Consumer);
   Parser P(PP, S);

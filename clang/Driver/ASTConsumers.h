@@ -67,13 +67,11 @@ ASTConsumer* CreateHTMLPrinter(const std::string &OutFile, Diagnostic &D,
                                Preprocessor *PP, PreprocessorFactory* PPF);
 
 ASTConsumer *CreateSerializationTest(Diagnostic &Diags,
-                                     FileManager& FMgr, 
-                                     const LangOptions &LOpts);
+                                     FileManager& FMgr);
   
 ASTConsumer *CreateASTSerializer(const std::string& InFile,
                                  const std::string& EmitDir,
-                                 Diagnostic &Diags,
-                                 const LangOptions &LOpts);
+                                 Diagnostic &Diags);
 
 } // end clang namespace
 
