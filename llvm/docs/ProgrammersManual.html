@@ -1484,8 +1484,8 @@ small example that shows how to dump all instructions in a function to the stand
 #include "<a href="/doxygen/InstIterator_8h-source.html">llvm/Support/InstIterator.h</a>"
 
 // <i>F is a pointer to a Function instance</i>
-for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)
-  llvm::cerr &lt;&lt; *i &lt;&lt; "\n";
+for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
+  llvm::cerr &lt;&lt; *I &lt;&lt; "\n";
 </pre>
 </div>
 
@@ -1497,7 +1497,10 @@ F, all you would need to do is something like:</p>
 <div class="doc_code">
 <pre>
 std::set&lt;Instruction*&gt; worklist;
-worklist.insert(inst_begin(F), inst_end(F));
+// or better yet, SmallPtrSet&lt;Instruction*, 64&gt; worklist;
+
+for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
+   worklist.insert(&amp;*I);
 </pre>
 </div>
 
