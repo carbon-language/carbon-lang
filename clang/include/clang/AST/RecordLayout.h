@@ -20,9 +20,13 @@ namespace clang {
   class ASTContext;
   class RecordDecl;
 
-/// ASTRecordLayout - This class contains layout information for one RecordDecl,
+/// ASTRecordLayout - 
+/// This class contains layout information for one RecordDecl,
 /// which is a struct/union/class.  The decl represented must be a definition,
-/// not a forward declaration.  These objects are managed by ASTContext.
+/// not a forward declaration.  
+/// This class is also used to contain layout informaiton for one 
+/// ObjCInterfaceDecl. FIXME - Find appropriate name.
+/// These objects are managed by ASTContext.
 class ASTRecordLayout {
   uint64_t Size;        // Size of record in bits.
   unsigned Alignment;   // Alignment of record in bits.

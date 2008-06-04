@@ -295,6 +295,13 @@ ASTContext::getTypeInfo(QualType T) {
     Align = EltInfo.second;
     break;
   }
+  case Type::ObjCInterface: {
+    ObjCInterfaceType *ObjCI = cast<ObjCInterfaceType>(T);
+    const ASTRecordLayout &Layout = getASTObjCInterfaceLayout(ObjCI->getDecl());
+    Width = Layout.getSize();
+    Align = Layout.getAlignment();
+    break;
+  }
   case Type::Tagged: {
     if (EnumType *ET = dyn_cast<EnumType>(cast<TagType>(T)))
       return getTypeInfo(ET->getDecl()->getIntegerType());
@@ -384,6 +391,42 @@ void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
   
   // Remember max struct/class alignment.
   Alignment = std::max(Alignment, FieldAlign);
+}
+
+
+/// getASTObjcInterfaceLayout - Get or compute information about the layout of the
+/// specified Objective C, which indicates its size and ivar
+/// position information.
+const ASTRecordLayout &
+ASTContext::getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D) {
+  // Look up this layout, if already laid out, return what we have.
+  const ASTRecordLayout *&Entry = ASTObjCInterfaces[D];
+  if (Entry) return *Entry;
+
+  // Allocate and assign into ASTRecordLayouts here.  The "Entry" reference can
+  // be invalidated (dangle) if the ASTRecordLayouts hashtable is inserted into.
+  ASTRecordLayout *NewEntry = new ASTRecordLayout();
+  Entry = NewEntry;
+
+  NewEntry->InitializeLayout(D->ivar_size());
+  bool IsPacked = D->getAttr<PackedAttr>();
+
+  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
+    NewEntry->SetAlignment(std::max(NewEntry->getAlignment(), 
+                                    AA->getAlignment()));
+
+  // Layout each ivar sequentially.
+  unsigned i = 0;
+  for (ObjCInterfaceDecl::ivar_iterator IVI = D->ivar_begin(), 
+       IVE = D->ivar_end(); IVI != IVE; ++IVI) {
+    const ObjCIvarDecl* Ivar = (*IVI);
+    NewEntry->LayoutField(Ivar, i++, false, IsPacked, *this);
+  }
+
+  // Finally, round the size of the total struct up to the alignment of the
+  // struct itself.
+  NewEntry->FinalizeLayout();
+  return *NewEntry;
 }
 
 /// getASTRecordLayout - Get or compute information about the layout of the

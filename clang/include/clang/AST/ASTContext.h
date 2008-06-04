@@ -49,6 +49,8 @@ class ASTContext {
   /// ASTRecordLayouts - A cache mapping from RecordDecls to ASTRecordLayouts.
   ///  This is lazily created.  This is intentionally not serialized.
   llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*> ASTRecordLayouts;
+  llvm::DenseMap<const ObjCInterfaceDecl*, 
+                 const ASTRecordLayout*> ASTObjCInterfaces;
   
   llvm::SmallVector<const RecordType *, 8> EncodingRecordTypes;
     
@@ -304,6 +306,7 @@ public:
   /// position information.
   const ASTRecordLayout &getASTRecordLayout(const RecordDecl *D);
   
+  const ASTRecordLayout &getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D);
   //===--------------------------------------------------------------------===//
   //                            Type Operators
   //===--------------------------------------------------------------------===//
