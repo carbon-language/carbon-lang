@@ -170,6 +170,12 @@ Sema::ExprResult Sema::ActOnClassMessage(
   ObjCMethodDecl *Method = ClassDecl->lookupClassMethod(Sel);
   QualType returnType;
   
+  // If we have an implementation in scope, check "private" methods.
+  if (!Method) {
+    if (ObjCImplementationDecl *ImpDecl = 
+        ObjCImplementations[ClassDecl->getIdentifier()])
+      Method = ImpDecl->getClassMethod(Sel);
+  }
   // Before we give up, check if the selector is an instance method.
   if (!Method)
     Method = ClassDecl->lookupInstanceMethod(Sel);
