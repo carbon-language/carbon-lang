@@ -81,7 +81,7 @@ It includes a large number of features and refinements from LLVM 2.2.</p>
 <p>LLVM 2.2 was the last LLVM release to support llvm-gcc 4.0 and llvm-upgrade.
 llvm-gcc 4.0 has been replaced with llvm-gcc 4.2.  llvm-upgrade was useful for
 upgrading LLVM 1.9 files to LLVM 2.x syntax, but you can always use a previous
-LLVM release to do this.  One nice impact of this is that the LLVM regressionn
+LLVM release to do this.  One nice impact of this is that the LLVM regression
 test suite no longer depends on llvm-upgrade, which makes it run faster.</p>
 
 <p>LLVM 2.3 renames the LLVMBuilder and LLVMFoldingBuilder classes to
@@ -113,14 +113,14 @@ superset of the features as the 'gcc' driver.</p>
 dispatching them to different tools.</li>
 <li>Flexible (and extensible) rules for defining different tools.</li>
 <li>The different intermediate steps performed by tools are represented
-as edged in the abstract graph.</li>
-</l>The 'language' for driver behaviour definition is tablegen and thus
+as edges in the abstract graph.</li>
+<li>The 'language' for driver behaviour definition is tablegen and thus
 it's relatively easy to add new features.</li>
 <li>The definition of driver is transformed into set of C++ classes, thus
 no runtime interpretation is needed.</li>
 </ul>
-
 </li>
+
 
 <li>Reimplemented <a href="LinkTimeOptimization.html">LTO interface</a> in
  C.</li>
@@ -196,7 +196,7 @@ faster:</p>
 <ul>
 <li>MemOperand in the code generator: describe me!.</li>
 <li>Target-independent codegen infastructure now uses LLVM's APInt class for
-    handling integer values, which allow it to support integer types larger
+    handling integer values, which allows it to support integer types larger
     than 64 bits. Note that support for such types is also dependent on
     target-specific support. Use of APInt is also a step toward support for
     non-power-of-2 integer sizes.</li>
@@ -220,12 +220,12 @@ LLVM 2.3 optimizers support a few major enhancements:</p>
 <ul>
 
 <li>Loop index set splitting on by default: describe me.</li>
-<li>LLVM includes a new memcpy optimization pass which optimizes out dead
-memcpy calls, unneeded copies of aggregates, and handles the return slot
+<li>LLVM includes a new <tt>memcpy</tt> optimization pass which optimizes out dead
+<tt>memcpy</tt> calls, unneeded copies of aggregates, and handles the return slot
 optimization.  The LLVM optimizer now notices long sequences of consequtive
-stores and merges them into memcpy's where profitable.</li>
-<li>Alignment detection for vector memory references and for memcpy and
-memset is now more aggressive.</li> 
+stores and merges them into <tt>memcpy</tt>s where profitable.</li>
+<li>Alignment detection for vector memory references and for <tt>memcpy</tt> and
+<tt>memset</tt> is now more aggressive.</li> 
 </ul>
 
 </div>
@@ -242,7 +242,7 @@ memset is now more aggressive.</li>
 
 <ul>
 <li>llvm-gcc's X86-64 ABI conformance is far improved, particularly in the
-    area of passing and returning structures by value.  llvm-gcc Compiled code
+    area of passing and returning structures by value.  llvm-gcc compiled code
     now interoperates very well on X86-64 systems with other compilers.</li>
 
 <li>The LLVM X86 backend now supports the support SSE 4.1 instruction set, and
@@ -281,7 +281,7 @@ memset is now more aggressive.</li>
 </p>
 
 <ul>
-<li>The LLVM C backend now supports vectors code.</li>
+<li>The LLVM C backend now supports vector code.</li>
     
 
 </ul>
@@ -301,7 +301,7 @@ memset is now more aggressive.</li>
 
 <ul>
 <li>LLVM now builds with GCC 4.3.</li>
-<li>llvm2cpp tool was moved into llc, use llc -march=cpp</li>
+<li>llvm2cpp tool has been folded into llc, use <tt>llc -march=cpp</tt></li>
 </ul>
   
 </div>
@@ -317,16 +317,16 @@ memset is now more aggressive.</li>
 <p>LLVM is known to work on the following platforms:</p>
 
 <ul>
-<li>Intel and AMD machines running Red Hat Linux, Fedora Core and FreeBSD 
+<li>Intel and AMD machines (IA32) running Red Hat Linux, Fedora Core and FreeBSD 
       (and probably other unix-like systems).</li>
 <li>PowerPC and X86-based Mac OS X systems, running 10.3 and above in 32-bit and
     64-bit modes.</li>
 <li>Intel and AMD machines running on Win32 using MinGW libraries (native).</li>
 <li>Intel and AMD machines running on Win32 with the Cygwin libraries (limited
     support is available for native builds with Visual C++).</li>
-<li>Sun UltraSPARC workstations running Solaris 8.</li>
+<li>Sun UltraSPARC workstations running Solaris 10.</li>
 <li>Alpha-based machines running Debian GNU/Linux.</li>
-<li>Itanium-based machines running Linux and HP-UX.</li>
+<li>Itanium-based (IA64) machines running Linux and HP-UX.</li>
 </ul>
 
 <p>The core LLVM infrastructure uses GNU autoconf to adapt itself
@@ -573,11 +573,11 @@ crashing if an exception is raised.  Workaround: do not use -E.</li>
 or finish at a non-byte offset</a> in a record.  Workaround: do not pack records
 or use representation clauses that result in a field of a non-discrete type
 starting or finishing in the middle of a byte.</li>
-<li>The lli interpreter <a href="http://llvm.org/PR2009">considers 'main'
+<li>The <tt>lli</tt> interpreter <a href="http://llvm.org/PR2009">considers 'main'
 as generated by the Ada binder to be invalid</a>.
-Workaround: hand edit the file to use pointers for argv and envp rather than
+Workaround: hand edit the file to use pointers for <tt>argv</tt> and <tt>envp</tt> rather than
 integers.</li>
-<li>The -fstack-check option <a href="http://llvm.org/PR2008">is ignored</a>.</li>
+<li>The <tt>-fstack-check</tt> option <a href="http://llvm.org/PR2008">is ignored</a>.</li>
 </ul>
 </div>
 
@@ -590,7 +590,7 @@ integers.</li>
 
 <ul>
 <li>The llvm-gcc 4.2 gfortran front-end supports a broad range of Fortran code, but does
-<a href="http://llvm.org/PR1971">not support EQUIVALENCE yet</a>.</li>
+<a href="http://llvm.org/PR1971">not support <tt>EQUIVALENCE</tt> yet</a>.</li>
 </ul>
 </div>
 
