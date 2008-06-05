@@ -195,9 +195,9 @@ faster:</p>
 
 <ul>
 <li>MemOperand in the code generator: describe me!.</li>
-<li>Target-independent codegen infastructure now uses LLVM's APInt class for
-    handling integer values, which allows it to support integer types larger
-    than 64 bits. Note that support for such types is also dependent on
+<li>The target-independent code generator infrastructure now uses LLVM's APInt
+    class to handle integer values, which allows it to support integer types
+    larger than 64 bits. Note that support for such types is also dependent on
     target-specific support. Use of APInt is also a step toward support for
     non-power-of-2 integer sizes.</li>
 <li>Several compile time speedups for code with large basic blocks.</li>
