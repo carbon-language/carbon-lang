@@ -312,9 +312,6 @@ href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
 <ul>
 <li>The X86 backend does not yet support <a href="http://llvm.org/PR879">inline
     assembly that uses the X86 floating point stack</a>.</li>
-<li>The X86 backend occasionally has <a href="http://llvm.org/PR1649">alignment
-    problems</a> on operating systems that don't require 16-byte stack alignment
-    (including most non-darwin OS's like linux).</li>
 <li>The X86 backend generates inefficient floating point code when configured to
     generate code for systems that don't have SSE2.</li>
 </ul>
@@ -422,10 +419,8 @@ programs.</li>
 <div class="doc_text">
 
 <ul>
-<li><a href="http://llvm.org/PR802">The C backend does not support inline
-    assembly code</a>.</li>
-<li><a href="http://llvm.org/PR1126">The C backend does not support vectors
-    yet</a>.</li>
+<li><a href="http://llvm.org/PR802">The C backend has only basic support for
+    inline assembly code</a>.</li>
 <li><a href="http://llvm.org/PR1658">The C backend violates the ABI of common
     C++ programs</a>, preventing intermixing between C++ compiled by the CBE and
     C++ code compiled with LLC or native compilers.</li>
@@ -437,7 +432,7 @@ programs.</li>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="c-fe">Known problems with the C front-end</a>
+  <a name="c-fe">Known problems with the llvm-gcc C front-end</a>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -449,57 +444,20 @@ programs.</li>
 Optimization</a> on most platforms "out-of-the-box".  Please inquire on the
 llvmdev mailing list if you are interested.</p>
 
-</div>
+<p>The only major language feature of GCC not supported by llvm-gcc is
+    the <tt>__builtin_apply</tt> family of builtins.   However, some extensions
+    are only supported on some targets.  For example, trampolines are only
+    supported on some targets, which are used when you take the address of a
+    nested function.</p>
 
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  Notes
-</div>
-
-<div class="doc_text">
-<ul>
-
-<li><p>llvm-gcc does <b>not</b> support <tt>__builtin_apply</tt> yet.
-  See <a href="http://gcc.gnu.org/onlinedocs/gcc/Constructing-Calls.html#Constructing%20Calls">Constructing Calls</a>: Dispatching a call to another function.</p>
-</li>
-
-<li><p>llvm-gcc <b>partially</b> supports these GCC extensions:</p>
-  <ol>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Nested-Functions.html#Nested%20Functions">Nested Functions</a>:
-
-      As in Algol and Pascal, lexical scoping of functions.
-      Nested functions are supported, but llvm-gcc does not support
-      taking the address of a nested function (except on X86 targets)
-      or non-local gotos.</li>
-
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html#Function%20Attributes">Function Attributes</a>:
-
-      Declaring that functions have no side effects or that they can never
-      return.<br>
-
-      <b>Supported:</b> <tt>alias</tt>, <tt>always_inline</tt>, <tt>cdecl</tt>, 
-      <tt>const</tt>, <tt>constructor</tt>, <tt>destructor</tt>, 
-      <tt>deprecated</tt>, <tt>fastcall</tt>, <tt>format</tt>, 
-      <tt>format_arg</tt>, <tt>non_null</tt>, <tt>noinline</tt>, 
-      <tt>noreturn</tt>, <tt>nothrow</tt>, <tt>pure</tt>, <tt>regparm</tt>
-      <tt>section</tt>, <tt>stdcall</tt>, <tt>unused</tt>, <tt>used</tt>, 
-      <tt>visibility</tt>, <tt>warn_unused_result</tt>, <tt>weak</tt><br>
-
-      <b>Ignored:</b> <tt>malloc</tt>,
-      <tt>no_instrument_function</tt></li>
-  </ol>
-</li>
-
-</ul>
-
-<p>If you run into GCC extensions which have not been included in any of these
-lists, please let us know (also including whether or not they work).</p>
+<p>If you run into GCC extensions which are not supported, please let us know.
+</p>
 
 </div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="c++-fe">Known problems with the C++ front-end</a>
+  <a name="c++-fe">Known problems with the llvm-gcc C++ front-end</a>
 </div>
 
 <div class="doc_text">
@@ -509,8 +467,9 @@ tested and works for a number of non-trivial programs, including LLVM
 itself, Qt, Mozilla, etc.</p>
 
 <ul>
-<li>Exception handling only works well on the X86 and PowerPC targets.
-It works well for x86-64 darwin but not x86-64 linux.</li>
+<li>Exception handling works well on the X86 and PowerPC targets, including
+x86-64 darwin.  This works when linking to a libstdc++ compiled by GCC.  It is
+supported on x86-64 linux, but that is disabled by default in this release.</li>
 </ul>
 
 </div>
@@ -518,7 +477,7 @@ It works well for x86-64 darwin but not x86-64 linux.</li>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="ada-fe">Known problems with the Ada front-end</a>
+  <a name="ada-fe">Known problems with the llvm-gcc Ada front-end</a>
 </div>
 
 <div class="doc_text">
@@ -551,7 +510,7 @@ integers.</li>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="fortran-fe">Known problems with the Fortran front-end</a>
+  <a name="fortran-fe">Known problems with the llvm-gcc Fortran front-end</a>
 </div>
 
 <div class="doc_text">
