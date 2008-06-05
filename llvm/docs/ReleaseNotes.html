@@ -23,9 +23,6 @@
   <p>Written by the <a href="http://llvm.org">LLVM Team</a><p>
 </div>
 
-<h1><font color="red">THIS IS A WORK IN PROGRESS FOR LLVM 2.3 (currently in
-progress on SVN HEAD)</font></h1>
-
 <!-- *********************************************************************** -->
 <div class="doc_section">
   <a name="intro">Introduction</a>
@@ -62,7 +59,7 @@ current one.  To see the release notes for a specific releases, please see the
 <div class="doc_text">
 
 <p>This is the fourteenth public release of the LLVM Compiler Infrastructure. 
-It includes many features and refinements from LLVM 2.2.</p>
+It includes a large number of features and refinements from LLVM 2.2.</p>
 
 </div>
 
@@ -82,28 +79,9 @@ It includes many features and refinements from LLVM 2.2.</p>
 
 <p>LLVM 2.2 was the last LLVM release to support llvm-gcc 4.0 and llvm-upgrade.
 llvm-gcc 4.0 has been replaced with llvm-gcc 4.2.  llvm-upgrade was useful for
-upgrading llvm 1.9 files to llvm 2.x syntax, but you can always use a previous
-llvm release to do this.</p>
-
-</div>
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="frontends">llvm-gcc 4.2 and clang</a>
-</div>
-
-<div class="doc_text">
-
-<p>LLVM 2.3 fully supports llvm-gcc 4.2 front-end. </p>
-
-<p>The <a href="http://clang.llvm.org/">clang project</a> is an effort to build
-a set of new 'llvm native' front-end technologies for the LLVM optimizer
-and code generator.  Currently, its C and Objective-C support is maturing 
-nicely, and it has advanced source-to-source analysis and transformation
-capabilities.  If you are interested in building source-level tools for C and
-Objective-C (and eventually C++), you should take a look.  However, note that
-clang is not an official part of the LLVM 2.3 release.  If you are interested in
-this project, please see its <a href="http://clang.llvm.org/">web site</a>.</p>
+upgrading LLVM 1.9 files to LLVM 2.x syntax, but you can always use a previous
+LLVM release to do this.  One nice impact of this is that the LLVM regressionn
+test suite no longer depends on llvm-upgrade, which makes it run faster.</p>
 
 </div>
 
@@ -117,9 +95,38 @@ this project, please see its <a href="http://clang.llvm.org/">web site</a>.</p>
 <p>LLVM 2.3 includes several major new capabilities:</p>
 
 <ul>
+<li>Multiple Return Value Support</li>
 </ul>
 
 </div>
+
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="frontends">llvm-gcc 4.2 Improvements and Clang</a>
+</div>
+
+<div class="doc_text">
+
+<p>LLVM 2.3 fully supports llvm-gcc 4.2 front-end.</p>
+
+<p>llvm-gcc 4.2 includes numerous fixes to better support the Objective-C
+front-end.  Objective-C now works very well on Mac OS/X.</p>
+
+<p>llvm-gcc 4.2 includes many other fixes which improve conformance with the
+relevant parts of the GCC testsuite.</p>
+
+<p>The <a href="http://clang.llvm.org/">clang project</a> is an effort to build
+a set of new 'llvm native' front-end technologies for the LLVM optimizer
+and code generator.  Currently, its C and Objective-C support is maturing 
+nicely, and it has advanced source-to-source analysis and transformation
+capabilities.  If you are interested in building source-level tools for C and
+Objective-C (and eventually C++), you should take a look.  However, note that
+clang is not an official part of the LLVM 2.3 release.  If you are interested in
+this project, please see its <a href="http://clang.llvm.org/">web site</a>.</p>
+
+</div>
+
 
 <!--=========================================================================-->
 <div class="doc_subsection">
@@ -130,8 +137,12 @@ this project, please see its <a href="http://clang.llvm.org/">web site</a>.</p>
 <p>New features include:
 </p>
 
-<ul>
 
+Common linkage?
+
+Atomic operation support, Alpha, X86, PowerPC. "__sync_syncronize"
+
+<ul>
 </ul>
   
 </div>
@@ -148,7 +159,8 @@ which allows us to implement more aggressive algorithms and make it run
 faster:</p>
 
 <ul>
-<li>MemOperand in the code generator.</li>
+<li>MemOperand in the code generator: describe me!.</li>
+<li>i128 support and APInt through most of codegen.</li>
 </ul>
 
 </div>
@@ -165,8 +177,9 @@ LLVM 2.3 optimizers support a few major enhancements:</p>
 
 <ul>
 
-<li>Index set splitting on by default.</li>
-
+<li>Loop index set splitting on by default: describe me.</li>
+<li>LLVM includes a new memcpy optimization pass which optimizes out dead
+memcpy calls and unneeded copies of aggregates.</li>
 </ul>
 
 </div>
@@ -182,6 +195,25 @@ LLVM 2.3 optimizers support a few major enhancements:</p>
 </p>
 
 <ul>
+<li>llvm-gcc's X86-64 ABI conformance is far improved, particularly in the
+    area of passing and returning structures by value.  llvm-gcc Compiled code
+    now interoperates very well on X86-64 systems with other compilers.</li>
+
+<li>The LLVM X86 backend now supports the support SSE 4.1 instruction set, and
+    the llvm-gcc 4.2 front-end supports the SSE 4.1 compiler builtins.</li>
+       
+<li>The X86 backend now does a number of optimizations that aim to avoid
+    converting numbers back and forth from SSE registers to the X87 floating
+    point stack.</li>
+
+<li>The X86 backend now supports the "sseregparm" options in GCC, which allow
+    functions to be tagged as passing floating point values in SSE
+    registers.</li>
+
+<li>Trampolines (taking the address of a nested function) now work on
+    Linux/x86-64.</li>
+    
+
 </ul>
   
 </div>
