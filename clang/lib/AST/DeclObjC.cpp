@@ -157,6 +157,14 @@ ObjCPropertyDecl *
     if (property)
       return property;
   }
+  // Look through protocols.
+  for (ObjCInterfaceDecl::protocol_iterator I = protocol_begin(),
+       E = protocol_end(); I != E; ++I) {
+    ObjCProtocolDecl *Protocol = *I;
+    ObjCPropertyDecl *property = Protocol->FindPropertyDeclaration(PropertyId);
+    if (property)
+      return property;
+  }
   if (getSuperClass())
     return getSuperClass()->FindPropertyDeclaration(PropertyId);
   return 0;
@@ -389,6 +397,20 @@ void ObjCCategoryDecl::addMethods(ObjCMethodDecl **insMethods,
 ObjCPropertyDecl *
 ObjCCategoryDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
   for (ObjCCategoryDecl::classprop_iterator I = classprop_begin(),
+       E = classprop_end(); I != E; ++I) {
+    ObjCPropertyDecl *property = *I;
+    if (property->getIdentifier() == PropertyId)
+      return property;
+  }
+  return 0;
+}
+
+/// FindPropertyDeclaration - Finds declaration of the property given its name
+/// in 'PropertyId' and returns it. It returns 0, if not found.
+///
+ObjCPropertyDecl *
+ObjCProtocolDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
+  for (ObjCProtocolDecl::classprop_iterator I = classprop_begin(),
        E = classprop_end(); I != E; ++I) {
     ObjCPropertyDecl *property = *I;
     if (property->getIdentifier() == PropertyId)

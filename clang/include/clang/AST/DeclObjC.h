@@ -543,6 +543,8 @@ public:
   
   unsigned getNumInstanceMethods() const { return NumInstanceMethods; }
   unsigned getNumClassMethods() const { return NumClassMethods; }
+
+  ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
   
   unsigned getNumPropertyDecl() const { return NumPropertyDecl; }
   

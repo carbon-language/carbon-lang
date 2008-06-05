@@ -602,10 +602,11 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     return new ExtVectorElementExpr(ret, BaseExpr, Member, MemberLoc);
   } else if (BaseType->isObjCInterfaceType()) {
     ObjCInterfaceDecl *IFace;
-    if (isa<ObjCInterfaceType>(BaseType.getCanonicalType()))
-      IFace = dyn_cast<ObjCInterfaceType>(BaseType)->getDecl();
+    QualType CanonType = BaseType.getCanonicalType();
+    if (isa<ObjCInterfaceType>(CanonType))
+      IFace = dyn_cast<ObjCInterfaceType>(CanonType)->getDecl();
     else
-      IFace = dyn_cast<ObjCQualifiedInterfaceType>(BaseType)->getDecl();
+      IFace = dyn_cast<ObjCQualifiedInterfaceType>(CanonType)->getDecl();
     ObjCInterfaceDecl *clsDeclared;
     if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(&Member, clsDeclared))
       return new ObjCIvarRefExpr(IV, IV->getType(), MemberLoc, BaseExpr, 
@@ -614,10 +615,11 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     PointerType *pointerType = static_cast<PointerType*>(BaseType.getTypePtr());
     BaseType = pointerType->getPointeeType();
     ObjCInterfaceDecl *IFace;
-    if (isa<ObjCInterfaceType>(BaseType.getCanonicalType()))
-      IFace = dyn_cast<ObjCInterfaceType>(BaseType)->getDecl();
+    QualType CanonType = BaseType.getCanonicalType();
+    if (isa<ObjCInterfaceType>(CanonType))
+      IFace = dyn_cast<ObjCInterfaceType>(CanonType)->getDecl();
     else
-      IFace = dyn_cast<ObjCQualifiedInterfaceType>(BaseType)->getDecl();
+      IFace = dyn_cast<ObjCQualifiedInterfaceType>(CanonType)->getDecl();
     ObjCInterfaceDecl *clsDeclared;
     if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(&Member, clsDeclared))
       return new ObjCIvarRefExpr(IV, IV->getType(), MemberLoc, BaseExpr, 
@@ -639,6 +641,15 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
       // void someMethod() { frameworkBundle.bundlePath = 0; }
       //
       ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(&Member);
+      
+      if (!PD) { // Lastly, check protocols on qualified interfaces.
+        if (ObjCQualifiedInterfaceType *QIT = 
+            dyn_cast<ObjCQualifiedInterfaceType>(CanonType)) {
+          for (unsigned i = 0; i < QIT->getNumProtocols(); i++)
+            if ((PD = QIT->getProtocols(i)->FindPropertyDeclaration(&Member)))
+              break;
+        }
+      }
       if (PD)
         return new ObjCPropertyRefExpr(PD, PD->getType(), MemberLoc, BaseExpr);
     }
