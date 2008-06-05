@@ -165,6 +165,10 @@ bool SRETPromotion::isSafeToUpdateAllCallers(Function *F) {
 
     CallSite CS = CallSite::get(*FnUseI);
     Instruction *Call = CS.getInstruction();
+    // The function is used by something else than a call or invoke instruction,
+    // we can't change it!
+    if (!Call)
+      return false;
     CallSite::arg_iterator AI = CS.arg_begin();
     Value *FirstArg = *AI;
 
