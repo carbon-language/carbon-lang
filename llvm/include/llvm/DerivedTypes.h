@@ -292,7 +292,7 @@ public:
   inline const Type *getElementType() const { return ContainedTys[0]; }
 
   virtual bool indexValid(const Value *V) const;
-  virtual bool indexValid(unsigned Idx) const {
+  virtual bool indexValid(unsigned) const {
     return true;
   }
 
@@ -302,7 +302,7 @@ public:
   virtual const Type *getTypeAtIndex(const Value *) const {
     return ContainedTys[0];
   }
-  virtual const Type *getTypeAtIndex(unsigned Idx) const {
+  virtual const Type *getTypeAtIndex(unsigned) const {
     return ContainedTys[0];
   }
 
