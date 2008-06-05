@@ -1602,7 +1602,7 @@ public:
   }
 
   unsigned getNumIndices() const {  // Note: always non-negative
-    return Indices.size();
+    return (unsigned)Indices.size();
   }
 
   bool hasIndices() const {
@@ -1781,7 +1781,7 @@ public:
   }
 
   unsigned getNumIndices() const {  // Note: always non-negative
-    return Indices.size();
+    return (unsigned)Indices.size();
   }
 
   bool hasIndices() const {
