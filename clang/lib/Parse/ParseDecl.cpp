@@ -323,7 +323,7 @@ void Parser::ParseSpecifierQualifierList(DeclSpec &DS) {
   
   // Validate declspec for type-name.
   unsigned Specs = DS.getParsedSpecifiers();
-  if (Specs == DeclSpec::PQ_None)
+  if (Specs == DeclSpec::PQ_None && !DS.getNumProtocolQualifiers())
     Diag(Tok, diag::err_typename_requires_specqual);
   
   // Issue diagnostic and remove storage class if present.
@@ -548,6 +548,21 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     case tok::kw_inline:
       isInvalid = DS.SetFunctionSpecInline(Loc, PrevSpec);
       break;
+      
+    // Gross GCC-ism that we are forced support. FIXME: make an extension?
+    case tok::less:
+      if (!DS.hasTypeSpecifier()) {
+        SourceLocation endProtoLoc;
+        llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
+        ParseObjCProtocolReferences(ProtocolRefs, endProtoLoc);
+        llvm::SmallVector<DeclTy *, 8> *ProtocolDecl = 
+                new llvm::SmallVector<DeclTy *, 8>;
+        DS.setProtocolQualifiers(ProtocolDecl);
+        Actions.FindProtocolDeclaration(Loc, 
+                  &ProtocolRefs[0], ProtocolRefs.size(),
+                  *ProtocolDecl);
+      }
+      continue;
     }
     // If the specifier combination wasn't legal, issue a diagnostic.
     if (isInvalid) {
@@ -872,6 +887,8 @@ bool Parser::isTypeSpecifierQualifier() const {
   case tok::kw___attribute:
     // GNU typeof support.
   case tok::kw_typeof:
+    // GNU bizarre protocol extension. FIXME: make an extension?
+  case tok::less:
   
     // type-specifiers
   case tok::kw_short:
@@ -962,6 +979,9 @@ bool Parser::isDeclarationSpecifier() const {
     
     // GNU attributes.
   case tok::kw___attribute:
+  
+    // GNU bizarre protocol extension. FIXME: make an extension?
+  case tok::less:
     return true;
     
     // typedef-name
