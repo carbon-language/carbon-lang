@@ -155,8 +155,8 @@ LibCallAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   
   // If this is a direct call to a function that LCI knows about, get the
   // information about the runtime function.
-  if (Function *F = CS.getCalledFunction()) {
-    if (LCI && F->isDeclaration()) {
+  if (LCI) {
+    if (Function *F = CS.getCalledFunction()) {
       if (const LibCallFunctionInfo *FI = LCI->getFunctionInfo(F)) {
         MRInfo = ModRefResult(MRInfo & AnalyzeLibCallDetails(FI, CS, P, Size));
         if (MRInfo == NoModRef) return NoModRef;
