@@ -244,7 +244,8 @@ def main(args):
                 
     # Arguments we currently ignore with one option.
     if arg in ['-install_name', '-exported_symbols_list', 
-               '-current_version', '-compatibility_version']:
+               '-current_version', '-compatibility_version', '-init', '-e',
+               '-seg1addr']:
       i += 1
       
     # Arguments we currently ignore with three options.
