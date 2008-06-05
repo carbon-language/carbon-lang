@@ -23,6 +23,8 @@
   <p>Written by the <a href="http://llvm.org">LLVM Team</a><p>
 </div>
 
+<!-- Done through Week-of-Mon-20080324.txt -->
+
 <!-- *********************************************************************** -->
 <div class="doc_section">
   <a name="intro">Introduction</a>
@@ -64,7 +66,6 @@ It includes a large number of features and refinements from LLVM 2.2.</p>
 </div>
 
 <!-- Unfinished features in 2.3:
-  Index Set Splitting not enabled by default
   Machine LICM
   Machine Sinking
   LegalizeDAGTypes
@@ -72,7 +73,7 @@ It includes a large number of features and refinements from LLVM 2.2.</p>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="deprecation">Removed features in LLVM 2.3</a>
+<a name="changes">Major Changes in LLVM 2.3</a>
 </div>
 
 <div class="doc_text">
@@ -82,6 +83,9 @@ llvm-gcc 4.0 has been replaced with llvm-gcc 4.2.  llvm-upgrade was useful for
 upgrading LLVM 1.9 files to LLVM 2.x syntax, but you can always use a previous
 LLVM release to do this.  One nice impact of this is that the LLVM regressionn
 test suite no longer depends on llvm-upgrade, which makes it run faster.</p>
+
+<p>LLVM 2.3 renames the LLVMBuilder and LLVMFoldingBuilder classes to
+   IRBuilder.</p>
 
 </div>
 
@@ -118,8 +122,11 @@ no runtime interpretation is needed.</li>
 
 </li>
 
+<li>Reimplemented <a href="LinkTimeOptimization.html">LTO interface</a> in
+ C.</li>
 
 
+<li>kaleidoscope tutorial in ocaml.</li>
 
 </ul>
 
@@ -165,7 +172,7 @@ this project, please see its <a href="http://clang.llvm.org/">web site</a>.</p>
 
 Common linkage?
 
-Atomic operation support, Alpha, X86, PowerPC. "__sync_syncronize"
+Atomic operation support, Alpha, X86, X86-64, PowerPC. "__sync_synchronize"
 
 <ul>
 </ul>
@@ -186,6 +193,7 @@ faster:</p>
 <ul>
 <li>MemOperand in the code generator: describe me!.</li>
 <li>i128 support and APInt through most of codegen.</li>
+<li>Several compile time speedups for code with large basic blocks.</li>
 </ul>
 
 </div>
@@ -204,7 +212,9 @@ LLVM 2.3 optimizers support a few major enhancements:</p>
 
 <li>Loop index set splitting on by default: describe me.</li>
 <li>LLVM includes a new memcpy optimization pass which optimizes out dead
-memcpy calls and unneeded copies of aggregates.</li>
+memcpy calls, unneeded copies of aggregates, and handles the return slot
+optimization.  The LLVM optimizer now notices long sequences of consequtive
+stores and merges them into memcpy's where profitable.</li>
 </ul>
 
 </div>
@@ -212,7 +222,7 @@ memcpy calls and unneeded copies of aggregates.</li>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="targetspecific">Target Specific Improvements</a>
+<a name="x86specific">X86/X86-64 Specific Improvements</a>
 </div>
 
 <div class="doc_text">
@@ -241,10 +251,31 @@ memcpy calls and unneeded copies of aggregates.</li>
 <li>Trampolines (taking the address of a nested function) now work on
     Linux/x86-64.</li>
     
+<li><tt>__builtin_prefetch</tt> is now compiled into the appropriate prefetch
+    instructions instead of being ignored.</li>
 
 </ul>
   
 </div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="targetspecific">Other Target Specific Improvements</a>
+</div>
+
+<div class="doc_text">
+<p>New target-specific features include:
+</p>
+
+<ul>
+<li>The LLVM C backend now supports vectors code.</li>
+    
+
+</ul>
+  
+</div>
+
+
 
 <!--=========================================================================-->
 <div class="doc_subsection">
@@ -257,6 +288,7 @@ memcpy calls and unneeded copies of aggregates.</li>
 
 <ul>
 <li>LLVM now builds with GCC 4.3.</li>
+<li>llvm2cpp tool was moved into llc, use llc -march=cpp</li>
 </ul>
   
 </div>
@@ -337,8 +369,9 @@ href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
 <div class="doc_text">
 
 <ul>
-<li>The X86 backend does not yet support <a href="http://llvm.org/PR879">inline
-    assembly that uses the X86 floating point stack</a>.</li>
+<li>The X86 backend does not yet support all <a 
+    href="http://llvm.org/PR879">inline assembly that uses the X86 floating
+    point stack</a>.  It supports the 'f' and 't' constraints, but not 'u'.</li>
 <li>The X86 backend generates inefficient floating point code when configured to
     generate code for systems that don't have SSE2.</li>
 </ul>
