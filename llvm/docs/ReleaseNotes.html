@@ -200,7 +200,6 @@ faster:</p>
     than 64 bits. Note that support for such types is also dependent on
     target-specific support. Use of APInt is also a step toward support for
     non-power-of-2 integer sizes.</li>
-<li>Support for 128-bit integers on X86-64.</li>
 <li>Several compile time speedups for code with large basic blocks.</li>
 <li>Several improvements which make llc's <tt>--view-sunit-dags</tt>
     visualization of scheduling dependency graphs easier to understand.</li>
@@ -265,6 +264,8 @@ memset is now more aggressive.</li>
     
 <li><tt>__builtin_prefetch</tt> is now compiled into the appropriate prefetch
     instructions instead of being ignored.</li>
+
+<li>128-bit integers are now supported on x86-64 targets.</li>
 
 </ul>
   
