@@ -379,7 +379,8 @@ static inline const Type *checkType(const Type *Ty) {
 ///
 class GetElementPtrInst : public Instruction {
   GetElementPtrInst(const GetElementPtrInst &GEPI);
-  void init(Value *Ptr, Value* const *Idx, unsigned NumIdx, const std::string &Name);
+  void init(Value *Ptr, Value* const *Idx, unsigned NumIdx,
+            const std::string &Name);
   void init(Value *Ptr, Value *Idx, const std::string &Name);
 
   template<typename InputIterator>
@@ -1456,7 +1457,8 @@ class ExtractValueInst : public Instruction {
   SmallVector<unsigned, 4> Indices;
 
   ExtractValueInst(const ExtractValueInst &EVI);
-  void init(Value *Agg, const unsigned *Idx, unsigned NumIdx, const std::string &Name);
+  void init(Value *Agg, const unsigned *Idx, unsigned NumIdx,
+            const std::string &Name);
   void init(Value *Agg, unsigned Idx, const std::string &Name);
 
   template<typename InputIterator>
@@ -1663,7 +1665,8 @@ class InsertValueInst : public Instruction {
 
   void *operator new(size_t, unsigned); // Do not implement
   InsertValueInst(const InsertValueInst &IVI);
-  void init(Value *Agg, Value *Val, const unsigned *Idx, unsigned NumIdx, const std::string &Name);
+  void init(Value *Agg, Value *Val, const unsigned *Idx, unsigned NumIdx,
+            const std::string &Name);
   void init(Value *Agg, Value *Val, unsigned Idx, const std::string &Name);
 
   template<typename InputIterator>
@@ -1714,7 +1717,7 @@ public:
   }
 
   template<typename InputIterator>
-  static InsertValueInst *Create(Value *Agg, Value *Val, InputIterator IdxBegin, 
+  static InsertValueInst *Create(Value *Agg, Value *Val, InputIterator IdxBegin,
                                  InputIterator IdxEnd,
                                  const std::string &Name = "",
                                  Instruction *InsertBefore = 0) {
