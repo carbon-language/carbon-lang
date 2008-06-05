@@ -302,6 +302,41 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
       continue;
     }
     
+    // Replace %res = load { i32, i32 }* %alloc
+    // by
+    // %load.0 = load i32* %alloc.0
+    // %insert.0 insertvalue { i32, i32 } zeroinitializer, i32 %load.0, 0 
+    // %load.1 = load i32* %alloc.1
+    // %insert = insertvalue { i32, i32 } %insert.0, i32 %load.1, 1 
+    // (Also works for arrays instead of structs)
+    if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
+      Value *Insert = UndefValue::get(LI->getType());
+      for (unsigned i = 0, e = ElementAllocas.size(); i != e; ++i) {
+        Value *Load = new LoadInst(ElementAllocas[i], "load", LI);
+        Insert = InsertValueInst::Create(Insert, Load, i, "insert", LI);
+      }
+      LI->replaceAllUsesWith(Insert);
+      LI->eraseFromParent();
+      continue;
+    }
+
+    // Replace store { i32, i32 } %val, { i32, i32 }* %alloc
+    // by
+    // %val.0 = extractvalue { i32, i32 } %val, 0 
+    // store i32 %val.0, i32* %alloc.0
+    // %val.1 = extractvalue { i32, i32 } %val, 1 
+    // store i32 %val.1, i32* %alloc.1
+    // (Also works for arrays instead of structs)
+    if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+      Value *Val = SI->getOperand(0);
+      for (unsigned i = 0, e = ElementAllocas.size(); i != e; ++i) {
+        Value *Extract = ExtractValueInst::Create(Val, i, Val->getName(), SI);
+        new StoreInst(Extract, ElementAllocas[i], SI);
+      }
+      SI->eraseFromParent();
+      continue;
+    }
+    
     GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
     // We now know that the GEP is of the form: GEP <ptr>, 0, <cst>
     unsigned Idx =
@@ -440,6 +475,12 @@ void SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI,
   if (BitCastInst *C = dyn_cast<BitCastInst>(User))
     return isSafeUseOfBitCastedAllocation(C, AI, Info);
 
+  if (isa<LoadInst>(User))
+    return; // Loads (returning a first class aggregrate) are always rewritable
+
+  if (isa<StoreInst>(User) && User->getOperand(0) != AI)
+    return; // Store is ok if storing INTO the pointer, not storing the pointer
+ 
   GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User);
   if (GEPI == 0)
     return MarkUnsafe(Info);
@@ -961,12 +1002,22 @@ const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
     Instruction *User = cast<Instruction>(*UI);
     
     if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
+      // FIXME: Loads of a first class aggregrate value could be converted to a
+      // series of loads and insertvalues
+      if (!LI->getType()->isSingleValueType())
+        return 0;
+
       if (MergeInType(LI->getType(), UsedType, TD))
         return 0;
       
     } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       // Storing the pointer, not into the value?
       if (SI->getOperand(0) == V) return 0;
+
+      // FIXME: Stores of a first class aggregrate value could be converted to a
+      // series of extractvalues and stores
+      if (!SI->getOperand(0)->getType()->isSingleValueType())
+        return 0;
       
       // NOTE: We could handle storing of FP imms into integers here!
       
