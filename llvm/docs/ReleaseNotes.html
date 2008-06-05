@@ -96,6 +96,31 @@ test suite no longer depends on llvm-upgrade, which makes it run faster.</p>
 
 <ul>
 <li>Multiple Return Value Support</li>
+
+
+<li><p>LLVM 2.3 includes a complete reimplementation of the "llvmc" tool.  It is
+designed to overcome several problems of the original llvmc and to provide a
+superset of the features as the 'gcc' driver.</p>
+
+<p>The main features of llvmc2 is:</p>
+
+<ul>
+<li>Extended handling of command line options and smart rules for
+dispatching them to different tools.</li>
+<li>Flexible (and extensible) rules for defining different tools.</li>
+<li>The different intermediate steps performed by tools are represented
+as edged in the abstract graph.</li>
+</l>The 'language' for driver behaviour definition is tablegen and thus
+it's relatively easy to add new features.</li>
+<li>The definition of driver is transformed into set of C++ classes, thus
+no runtime interpretation is needed.</li>
+</ul>
+
+</li>
+
+
+
+
 </ul>
 
 </div>
@@ -205,6 +230,9 @@ memcpy calls and unneeded copies of aggregates.</li>
 <li>The X86 backend now does a number of optimizations that aim to avoid
     converting numbers back and forth from SSE registers to the X87 floating
     point stack.</li>
+    
+<li>The X86 backend supports stack realignment, which is particularly useful for
+    vector code on OS's without 16-byte aligned stacks.</li>
 
 <li>The X86 backend now supports the "sseregparm" options in GCC, which allow
     functions to be tagged as passing floating point values in SSE
@@ -228,6 +256,7 @@ memcpy calls and unneeded copies of aggregates.</li>
 </p>
 
 <ul>
+<li>LLVM now builds with GCC 4.3.</li>
 </ul>
   
 </div>
@@ -255,8 +284,7 @@ memcpy calls and unneeded copies of aggregates.</li>
 <li>Itanium-based machines running Linux and HP-UX.</li>
 </ul>
 
-<p>The core LLVM infrastructure uses
-<a href="http://www.gnu.org/software/autoconf/">GNU autoconf</a> to adapt itself
+<p>The core LLVM infrastructure uses GNU autoconf to adapt itself
 to the machine and operating system on which it is built.  However, minor
 porting may be required to get LLVM to work on new platforms.  We welcome your
 portability patches and reports of successful builds or error messages.</p>
@@ -297,7 +325,6 @@ href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
 <li>The MSIL, IA64, Alpha, SPU, and MIPS backends are experimental.</li>
 <li>The LLC "<tt>-filetype=asm</tt>" (the default) is the only supported
     value for this option.</li>
-<li>The llvmc tool is not supported.</li>
 </ul>
 
 </div>
