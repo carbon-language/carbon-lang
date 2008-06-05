@@ -1830,3 +1830,18 @@ void LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
     }
   }
 }
+
+LiveRange LiveIntervals::addLiveRangeToEndOfBlock(unsigned reg,
+                                                   MachineInstr* startInst) {
+  LiveInterval& Interval = getOrCreateInterval(reg);
+  VNInfo* VN = Interval.getNextValue(
+            getInstructionIndex(startInst) + InstrSlots::DEF,
+            startInst, getVNInfoAllocator());
+  VN->hasPHIKill = true;
+  VN->kills.push_back(getMBBEndIdx(startInst->getParent()));
+  LiveRange LR(getInstructionIndex(startInst) + InstrSlots::DEF,
+               getMBBEndIdx(startInst->getParent()) + 1, VN);
+  Interval.addRange(LR);
+  
+  return LR;
+}

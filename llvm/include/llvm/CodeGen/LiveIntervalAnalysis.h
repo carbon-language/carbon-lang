@@ -220,6 +220,11 @@ namespace llvm {
         I = r2iMap_.insert(I, std::make_pair(reg, createInterval(reg)));
       return I->second;
     }
+    
+    /// addLiveRangeToEndOfBlock - Given a register and an instruction,
+    /// adds a live range from that instruction to the end of its MBB.
+    LiveRange addLiveRangeToEndOfBlock(unsigned reg,
+                                        MachineInstr* startInst);
 
     // Interval removal
 
