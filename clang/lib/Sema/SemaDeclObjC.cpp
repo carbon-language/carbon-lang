@@ -42,15 +42,17 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   // Insert the invisible arguments, self and _cmd!
   PI.Ident = &Context.Idents.get("self");
   PI.IdentLoc = SourceLocation(); // synthesized vars have a null location.
-  QualType selfTy = Context.getObjCIdType();
+  QualType selfTy;
   if (MDecl->isInstance()) {
+    selfTy = Context.getObjCIdType();
     if (ObjCInterfaceDecl *OID = MDecl->getClassInterface()) {
       // There may be no interface context due to error in declaration of the 
       // interface (which has been reported). Recover gracefully
       selfTy = Context.getObjCInterfaceType(OID);
       selfTy = Context.getPointerType(selfTy);
     }
-  }
+  } else // we have a factory method.
+    selfTy = Context.getObjCClassType();
   CurMethodDecl->setSelfDecl(CreateImplicitParameter(FnBodyScope, PI.Ident, 
                                                      PI.IdentLoc, selfTy));
   

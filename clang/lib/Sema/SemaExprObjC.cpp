@@ -223,11 +223,33 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
 
   receiverType = RExpr->getType().getCanonicalType().getUnqualifiedType();
   
-  if (receiverType == Context.getObjCIdType().getCanonicalType() ||
-      receiverType == Context.getObjCClassType().getCanonicalType()) {
+  if (receiverType == Context.getObjCIdType().getCanonicalType()) {
     Method = InstanceMethodPool[Sel].Method;
     if (!Method)
       Method = FactoryMethodPool[Sel].Method;
+    if (!Method) {
+      Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
+           SourceRange(lbrac, rbrac));
+      returnType = Context.getObjCIdType();
+    } else {
+      returnType = Method->getResultType();
+      if (Sel.getNumArgs())
+        if (CheckMessageArgumentTypes(ArgExprs, Sel.getNumArgs(), Method))
+          return true;
+    }
+  } else if (receiverType == Context.getObjCClassType().getCanonicalType()) {
+    if (CurMethodDecl) {
+      ObjCInterfaceDecl* ClassDecl = CurMethodDecl->getClassInterface();
+      // If we have an implementation in scope, check "private" methods.
+      if (ClassDecl)
+        if (ObjCImplementationDecl *ImpDecl = 
+            ObjCImplementations[ClassDecl->getIdentifier()])
+          Method = ImpDecl->getClassMethod(Sel);
+    }
+    if (!Method)
+      Method = FactoryMethodPool[Sel].Method;
+    if (!Method)
+      Method = InstanceMethodPool[Sel].Method;
     if (!Method) {
       Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
            SourceRange(lbrac, rbrac));
