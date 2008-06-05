@@ -352,6 +352,7 @@ Sema::DeclTy *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
         // We won't add this decl to the current scope. We want the namespace
         // name to return the original namespace decl during a name lookup.
       } else {
+        printf("Weird\n");
         // This is an invalid name redefinition.
         Diag(Namespc->getLocation(), diag::err_redefinition_different_kind,
           Namespc->getName());

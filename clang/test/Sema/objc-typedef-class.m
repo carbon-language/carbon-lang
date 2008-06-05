@@ -48,14 +48,13 @@ typedef NSObject < XCElementSpacerP > XCElementSpacer;
 @protocol XCElementTogglerP < XCElementP > -(void) setDisplayed:(BOOL) displayed;
 @end
 
-// FIXME: investigate this redefinition error - gcc apparently accepts it.
-typedef NSObject < XCElementTogglerP > XCElementToggler; // expected-error{{previous definition is here}}
+typedef NSObject < XCElementTogglerP > XCElementToggler;
 
 @interface XCElementRootFace:NSObject {} @end
 
 @interface XCElementFace:XCElementRootFace {} @end
 
-@class XCElementToggler; // expected-error{{redefinition of 'XCElementToggler' as different kind of symbol}}
+@class XCElementToggler; 
 
 @interface XCRASlice:XCElementFace {} @end
 

@@ -712,9 +712,18 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     // Check for another declaration kind with the same name.
     Decl *PrevDecl = LookupDecl(IdentList[i], Decl::IDNS_Ordinary, TUScope);
     if (PrevDecl && !isa<ObjCInterfaceDecl>(PrevDecl)) {
-      Diag(AtClassLoc, diag::err_redefinition_different_kind,
-           IdentList[i]->getName());
-      Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+      // GCC apparently allows the following idiom:
+      //
+      // typedef NSObject < XCElementTogglerP > XCElementToggler;
+      // @class XCElementToggler;
+      //
+      // FIXME: Make an extension? 
+      TypedefDecl *TDD = dyn_cast<TypedefDecl>(PrevDecl);
+      if (!TDD || !isa<ObjCInterfaceType>(TDD->getUnderlyingType())) {
+        Diag(AtClassLoc, diag::err_redefinition_different_kind,
+             IdentList[i]->getName());
+        Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+      }
     }
     ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl); 
     if (!IDecl) {  // Not already seen?  Make a forward decl.
