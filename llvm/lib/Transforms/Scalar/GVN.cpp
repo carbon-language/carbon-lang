@@ -10,6 +10,9 @@
 // This pass performs global value numbering to eliminate fully redundant
 // instructions.  It also performs simple dead load elimination.
 //
+// Note that this pass does the value numbering itself, it does not use the
+// ValueNumbering analysis passes.
+//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "gvn"

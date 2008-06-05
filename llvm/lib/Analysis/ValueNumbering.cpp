@@ -10,6 +10,10 @@
 // This file implements the non-abstract Value Numbering methods as well as a
 // default implementation for the analysis group.
 //
+// The ValueNumbering analysis pass is mostly deprecated. It is only used by the
+// Global Common Subexpression Elimination pass, which is deprecated by the
+// Global Value Numbering pass (which does its value numbering on its own).
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Passes.h"

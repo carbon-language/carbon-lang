@@ -9,8 +9,11 @@
 //
 // This pass is designed to be a very quick global transformation that
 // eliminates global common subexpressions from a function.  It does this by
-// using an existing value numbering implementation to identify the common
+// using an existing value numbering analysis pass to identify the common
 // subexpressions, eliminating them when possible.
+//
+// This pass is deprecated by the Global Value Numbering pass (which does a
+// better job with its own value numbering).
 //
 //===----------------------------------------------------------------------===//
 

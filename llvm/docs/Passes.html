@@ -298,7 +298,7 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="basicvn">Basic Value Numbering (default GVN impl)</a>
+  <a name="basicvn">Basic Value Numbering (default Value Numbering impl)</a>
 </div>
 <div class="doc_text">
   <p>
@@ -306,6 +306,12 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   interface.  It walks the SSA def-use chains to trivially identify
   lexically identical expressions.  This does not require any ahead of time
   analysis, so it is a very fast default implementation.
+  </p>
+  <p>
+  The ValueNumbering analysis passes are mostly deprecated. They are only used
+  by the <a href="#gcse">Global Common Subexpression Elimination pass</a>, which
+  is deprecated by the <a href="#gvn">Global Value Numbering pass</a> (which
+  does its value numbering on its own).
   </p>
 </div>
 
@@ -859,8 +865,12 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <p>
   This pass is designed to be a very quick global transformation that
   eliminates global common subexpressions from a function.  It does this by
-  using an existing value numbering implementation to identify the common
+  using an existing value numbering analysis pass to identify the common
   subexpressions, eliminating them when possible.
+  </p>
+  <p>
+  This pass is deprecated by the <a href="#gvn">Global Value Numbering pass</a>
+  (which does a better job with its own value numbering).
   </p>
 </div>
 
@@ -899,6 +909,10 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   This pass performs global value numbering to eliminate fully redundant
   instructions.  It also performs simple dead load elimination.
   </p>
+  <p>
+  Note that this pass does the value numbering itself, it does not use the
+  ValueNumbering analysis passes.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -915,6 +929,10 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   unneeded computation, it also increases register pressure by creating large
   live ranges, and should be used with caution on platforms that are very 
   sensitive to register pressure.
+  </p>
+  <p>
+  Note that this pass does the value numbering itself, it does not use the
+  ValueNumbering analysis passes.
   </p>
 </div>
 

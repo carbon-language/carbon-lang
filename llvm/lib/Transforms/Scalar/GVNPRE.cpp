@@ -16,6 +16,9 @@
 // live ranges, and should be used with caution on platforms that are very 
 // sensitive to register pressure.
 //
+// Note that this pass does the value numbering itself, it does not use the
+// ValueNumbering analysis passes.
+//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "gvnpre"
