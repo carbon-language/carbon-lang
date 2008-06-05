@@ -11,52 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/LibCallAliasAnalysis.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/LibCallSemantics.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetData.h"
 using namespace llvm;
-
-namespace {
-  /// LibCallAliasAnalysis - Alias analysis driven from LibCallInfo.
-  struct LibCallAliasAnalysis : public FunctionPass, AliasAnalysis {
-    static char ID; // Class identification
-    
-    LibCallInfo *LCI;
-    
-    explicit LibCallAliasAnalysis(LibCallInfo *LC = 0)
-      : FunctionPass((intptr_t)&ID), LCI(LC) {
-    }
-    ~LibCallAliasAnalysis() {
-      delete LCI;
-    }
-    
-    ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
-    ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
-      // TODO: Could compare two direct calls against each other if we cared to.
-      return AliasAnalysis::getModRefInfo(CS1,CS2);
-    }
-    
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AliasAnalysis::getAnalysisUsage(AU);
-      AU.addRequired<TargetData>();
-      AU.setPreservesAll();                         // Does not transform code
-    }
-    
-    virtual bool runOnFunction(Function &F) {
-      InitializeAliasAnalysis(this);                 // set up super class
-      return false;
-    }
-    
-    /// hasNoModRefInfoForCalls - We can provide mod/ref information against
-    /// non-escaping allocations.
-    virtual bool hasNoModRefInfoForCalls() const { return false; }
-  private:
-    ModRefResult AnalyzeLibCallDetails(const LibCallFunctionInfo *FI,
-                                       CallSite CS, Value *P, unsigned Size);
-  };
-}  // End of anonymous namespace
   
 // Register this pass...
 char LibCallAliasAnalysis::ID = 0;
@@ -69,6 +30,17 @@ static RegisterAnalysisGroup<AliasAnalysis> Y(X);
 FunctionPass *llvm::createLibCallAliasAnalysisPass(LibCallInfo *LCI) {
   return new LibCallAliasAnalysis(LCI);
 }
+
+LibCallAliasAnalysis::~LibCallAliasAnalysis() {
+  delete LCI;
+}
+
+void LibCallAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
+  AliasAnalysis::getAnalysisUsage(AU);
+  AU.addRequired<TargetData>();
+  AU.setPreservesAll();                         // Does not transform code
+}
+
 
 
 /// AnalyzeLibCallDetails - Given a call to a function with the specified
