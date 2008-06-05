@@ -302,6 +302,12 @@ void DAE::SurveyFunction(Function &F) {
     FunctionIntrinsicallyLive = true;
   else
     for (Value::use_iterator I = F.use_begin(), E = F.use_end(); I != E; ++I) {
+      // If the function is PASSED IN as an argument, its address has been taken
+      if (I.getOperandNo() != 0) {
+        FunctionIntrinsicallyLive = true;
+        break;
+      }
+
       // If this use is anything other than a call site, the function is alive.
       CallSite CS = CallSite::get(*I);
       Instruction *TheCall = CS.getInstruction();
@@ -329,13 +335,6 @@ void DAE::SurveyFunction(Function &F) {
             RetValLiveness = Live;
             break;
           }
-
-      // If the function is PASSED IN as an argument, its address has been taken
-      
-      if (CS.hasArgument(&F)) {
-        FunctionIntrinsicallyLive = true;
-        break;
-      }
     }
 
   if (FunctionIntrinsicallyLive) {
