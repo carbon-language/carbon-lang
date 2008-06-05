@@ -594,10 +594,7 @@ void Verifier::visitReturnInst(ReturnInst &RI) {
     Assert2(N == 0,
             "Found return instr that returns void in Function of non-void "
             "return type!", &RI, F->getReturnType());
-  else if (N > 1) {
-    const StructType *STy = dyn_cast<StructType>(F->getReturnType());
-    Assert2(STy, "Return instr with multiple values, but return type is not "
-                 "a struct", &RI, F->getReturnType());
+  else if (const StructType *STy = dyn_cast<StructType>(F->getReturnType())) {
     Assert2(STy->getNumElements() == N,
             "Incorrect number of return values in ret instruction!",
             &RI, F->getReturnType());
