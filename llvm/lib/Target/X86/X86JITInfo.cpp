@@ -396,8 +396,8 @@ void *X86JITInfo::emitGlobalValueLazyPtr(const GlobalValue* GV, void *ptr,
                                          MachineCodeEmitter &MCE) {
 #if defined (X86_64_JIT)
   MCE.startFunctionStub(GV, 8, 8);
-  MCE.emitWordLE(((unsigned *)&ptr)[0]);
-  MCE.emitWordLE(((unsigned *)&ptr)[1]);
+  MCE.emitWordLE((unsigned)(intptr_t)ptr);
+  MCE.emitWordLE((unsigned)(((intptr_t)ptr) >> 32));
 #else
   MCE.startFunctionStub(GV, 4, 4);
   MCE.emitWordLE((intptr_t)ptr);
@@ -420,8 +420,8 @@ void *X86JITInfo::emitFunctionStub(const Function* F, void *Fn,
     MCE.startFunctionStub(F, 13, 4);
     MCE.emitByte(0x49);          // REX prefix
     MCE.emitByte(0xB8+2);        // movabsq r10
-    MCE.emitWordLE(((unsigned *)&Fn)[0]);
-    MCE.emitWordLE(((unsigned *)&Fn)[1]);
+    MCE.emitWordLE((unsigned)(intptr_t)Fn);
+    MCE.emitWordLE((unsigned)(((intptr_t)Fn) >> 32));
     MCE.emitByte(0x41);          // REX prefix
     MCE.emitByte(0xFF);          // jmpq *r10
     MCE.emitByte(2 | (4 << 3) | (3 << 6));
@@ -437,8 +437,8 @@ void *X86JITInfo::emitFunctionStub(const Function* F, void *Fn,
   MCE.startFunctionStub(F, 14, 4);
   MCE.emitByte(0x49);          // REX prefix
   MCE.emitByte(0xB8+2);        // movabsq r10
-  MCE.emitWordLE(((unsigned *)&Fn)[0]);
-  MCE.emitWordLE(((unsigned *)&Fn)[1]);
+  MCE.emitWordLE((unsigned)(intptr_t)Fn);
+  MCE.emitWordLE((unsigned)(((intptr_t)Fn) >> 32));
   MCE.emitByte(0x41);          // REX prefix
   MCE.emitByte(0xFF);          // callq *r10
   MCE.emitByte(2 | (2 << 3) | (3 << 6));
