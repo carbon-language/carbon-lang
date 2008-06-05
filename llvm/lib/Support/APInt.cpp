@@ -1113,7 +1113,7 @@ APInt APInt::ashr(uint32_t shiftAmt) const {
   // issues in the algorithm below.
   if (shiftAmt == BitWidth) {
     if (isNegative())
-      return APInt(BitWidth, -1ULL);
+      return APInt(BitWidth, -1ULL, true);
     else
       return APInt(BitWidth, 0);
   }
