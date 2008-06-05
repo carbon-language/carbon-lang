@@ -558,7 +558,7 @@ my $NumFilesInCVS = 0;
 my $NumDirsInCVS  = 0;
 if ($USESVN) {
   $NumFilesInCVS = `egrep '^A' $COLog | wc -l` + 0;
-  $NumDirsInCVS  = `sed -e 's#/[^/]*$##' $COLog | sort | uniq | wc -l` + 0;
+  $NumDirsInCVS  = `sed -e 's#/[^/]*\$##' $COLog | sort | uniq | wc -l` + 0;
 } else {
   $NumFilesInCVS = `egrep '^U' $COLog | wc -l` + 0;
   $NumDirsInCVS  = `egrep '^cvs (checkout|server|update):' $COLog | wc -l` + 0;
