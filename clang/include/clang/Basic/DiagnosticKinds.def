@@ -425,7 +425,7 @@ DIAG(err_duplicate_protocol_def, ERROR,
      "duplicate protocol declaration of '%0'")
 DIAG(err_undef_interface, ERROR,
      "cannot find interface declaration for '%0'")
-DIAG(err_dup_category_def, ERROR,
+DIAG(warn_dup_category_def, WARNING,
      "duplicate interface declaration for category '%0(%1)'")
 DIAG(warn_undef_interface, WARNING,
      "cannot find interface declaration for '%0'")

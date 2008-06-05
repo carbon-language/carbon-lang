@@ -406,13 +406,13 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(
   /// Check that class of this category is already completely declared.
   if (!IDecl || IDecl->isForwardDecl())
     Diag(ClassLoc, diag::err_undef_interface, ClassName->getName());
-  else {
+  else if (CategoryName) {
     /// Check for duplicate interface declaration for this category
     ObjCCategoryDecl *CDeclChain;
     for (CDeclChain = IDecl->getCategoryList(); CDeclChain;
          CDeclChain = CDeclChain->getNextClassCategory()) {
       if (CDeclChain->getIdentifier() == CategoryName) {
-        Diag(CategoryLoc, diag::err_dup_category_def, ClassName->getName(),
+        Diag(CategoryLoc, diag::warn_dup_category_def, ClassName->getName(),
              CategoryName->getName());
         break;
       }
