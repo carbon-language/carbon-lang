@@ -158,6 +158,10 @@ bool SRETPromotion::isSafeToUpdateAllCallers(Function *F) {
 
   for (Value::use_iterator FnUseI = F->use_begin(), FnUseE = F->use_end();
        FnUseI != FnUseE; ++FnUseI) {
+    // The function is passed in as an argument to (possibly) another function,
+    // we can't change it!
+    if (FnUseI.getOperandNo() != 0)
+      return false;
 
     CallSite CS = CallSite::get(*FnUseI);
     Instruction *Call = CS.getInstruction();
