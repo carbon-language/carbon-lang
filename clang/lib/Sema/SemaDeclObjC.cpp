@@ -408,19 +408,19 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(
   /// Check that class of this category is already completely declared.
   if (!IDecl || IDecl->isForwardDecl())
     Diag(ClassLoc, diag::err_undef_interface, ClassName->getName());
-  else if (CategoryName) {
+  else {
     /// Check for duplicate interface declaration for this category
     ObjCCategoryDecl *CDeclChain;
     for (CDeclChain = IDecl->getCategoryList(); CDeclChain;
          CDeclChain = CDeclChain->getNextClassCategory()) {
-      if (CDeclChain->getIdentifier() == CategoryName) {
+      if (CategoryName && CDeclChain->getIdentifier() == CategoryName) {
         Diag(CategoryLoc, diag::warn_dup_category_def, ClassName->getName(),
              CategoryName->getName());
         break;
       }
     }
-  if (!CDeclChain)
-    CDecl->insertNextClassCategory();
+    if (!CDeclChain)
+      CDecl->insertNextClassCategory();
   }
 
   if (NumProtoRefs) {
