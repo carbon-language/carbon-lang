@@ -219,7 +219,21 @@ LLVM 2.3 optimizers support a few major enhancements:</p>
 
 <ul>
 
-<li>Loop index set splitting on by default: describe me.</li>
+<li>Loop index set splitting on by default.<p>
+This transformation hoists conditions from loop bodies and reduces loop's
+iteration space to improve performance. For example, <p>
+<pre>
+for (i = LB; i < UB; ++i)
+  if (i <= NV)
+    LOOP_BODY
+</pre>
+is transformed into
+<pre>
+NUB = min(NV+1, UB)
+for (i = LB; i < NUB; ++i)
+  LOOP_BODY
+</pre>
+</li>
 <li>LLVM includes a new <tt>memcpy</tt> optimization pass which optimizes out dead
 <tt>memcpy</tt> calls, unneeded copies of aggregates, and handles the return slot
 optimization.  The LLVM optimizer now notices long sequences of consequtive
