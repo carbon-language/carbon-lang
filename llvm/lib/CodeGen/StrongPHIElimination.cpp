@@ -800,8 +800,6 @@ void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
 bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   LiveIntervals& LI = getAnalysis<LiveIntervals>();
   
-  LI.dump();
-  
   // Compute DFS numbers of each block
   computeDFS(Fn);
   
@@ -863,8 +861,6 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   }
   
   LI.computeNumbering();
-  
-  LI.dump();
   
   return true;
 }
