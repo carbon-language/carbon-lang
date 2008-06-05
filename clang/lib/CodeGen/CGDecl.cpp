@@ -116,6 +116,15 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   }
 
   DMEntry = GV;
+
+  // Emit global variable debug descriptor for static vars.
+  CGDebugInfo *DI = CGM.getDebugInfo();
+  if(DI) {
+    if(D.getLocation().isValid())
+      DI->setLocation(D.getLocation());
+    DI->EmitGlobalVariable(static_cast<llvm::GlobalVariable *>(GV), &D);
+  }
+
 }
   
 /// EmitLocalBlockVarDecl - Emit code and set up an entry in LocalDeclMap for a

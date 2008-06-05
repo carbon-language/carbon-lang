@@ -32,6 +32,8 @@ namespace llvm {
   class TypeDesc;
   class VariableDesc;
   class SubprogramDesc;
+  class GlobalVariable;
+  class GlobalVariableDesc;
 }
 
 namespace clang {
@@ -63,8 +65,10 @@ private:
   llvm::Function *RegionEndFn;
   llvm::AnchorDesc *CompileUnitAnchor;
   llvm::AnchorDesc *SubprogramAnchor;
+  llvm::AnchorDesc *GlobalVariableAnchor;
   std::vector<llvm::DebugInfoDesc *> RegionStack;
   std::vector<llvm::VariableDesc *> VariableDescList;
+  std::vector<llvm::GlobalVariableDesc *> GlobalVarDescList;
   llvm::SubprogramDesc *Subprogram;
 
   /// Helper functions for getOrCreateType.
@@ -105,6 +109,9 @@ public:
   /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
   void EmitDeclare(const VarDecl *decl, unsigned Tag, llvm::Value *AI,
                    llvm::IRBuilder &Builder);
+
+  /// EmitGlobalVariable - Emit information about a global variable.
+  void EmitGlobalVariable(llvm::GlobalVariable *GV, const VarDecl *decl);
  
   /// getOrCreateCompileUnit - Get the compile unit from the cache or create a
   /// new one if necessary.

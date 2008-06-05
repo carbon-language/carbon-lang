@@ -43,8 +43,10 @@ CGDebugInfo::CGDebugInfo(CodeGenModule *m)
 , RegionEndFn(NULL)
 , CompileUnitAnchor(NULL)
 , SubprogramAnchor(NULL)
+, GlobalVariableAnchor(NULL)
 , RegionStack()
 , VariableDescList()
+, GlobalVarDescList(NULL)
 , Subprogram(NULL)
 {
   SR = new llvm::DISerializer();
@@ -79,8 +81,14 @@ CGDebugInfo::~CGDebugInfo()
     delete *I;
   }
 
+  for (std::vector<llvm::GlobalVariableDesc *>::iterator I 
+       = GlobalVarDescList.begin(); I != GlobalVarDescList.end(); ++I) {
+    delete *I;
+  }
+
   delete CompileUnitAnchor;
   delete SubprogramAnchor;
+  delete GlobalVariableAnchor;
 }
 
 void CGDebugInfo::setLocation(SourceLocation loc)
@@ -564,5 +572,43 @@ void CGDebugInfo::EmitDeclare(const VarDecl *decl, unsigned Tag,
 
   // Call llvm.dbg.declare.
   Builder.CreateCall2(DeclareFn, AllocACast, getCastValueFor(Variable), "");
+}
+
+/// EmitGlobalVariable - Emit information about a global variable.
+void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *GV, 
+                                     const VarDecl *decl)
+{
+  // Create global variable debug descriptor.
+  llvm::GlobalVariableDesc *Global = new llvm::GlobalVariableDesc();
+
+  // Push it onto the list so that we can free it.
+  GlobalVarDescList.push_back(Global);
+
+  // Make sure we have an anchor.
+  if (!GlobalVariableAnchor)
+    GlobalVariableAnchor = new llvm::AnchorDesc(Global);
+
+  // Get name information.
+  Global->setName(decl->getName());
+  Global->setFullName(decl->getName());
+
+  llvm::CompileUnitDesc *Unit = getOrCreateCompileUnit(CurLoc);
+  SourceManager &SM = M->getContext().getSourceManager();
+  uint64_t Loc = SM.getLogicalLineNumber(CurLoc);
+
+  llvm::TypeDesc *TyD = getOrCreateType(decl->getType(), Unit);
+
+  // Fill in the Global information.
+  Global->setAnchor(GlobalVariableAnchor);
+  Global->setContext(Unit);
+  Global->setFile(Unit);
+  Global->setLine(Loc);
+  Global->setType(TyD);
+  Global->setIsDefinition(true);
+  Global->setIsStatic(GV->hasInternalLinkage());
+  Global->setGlobalVariable(GV);
+
+  // Make sure global is created if needed.
+  getValueFor(Global);
 }
 
