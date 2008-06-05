@@ -132,7 +132,7 @@ public:
   
   /// hasArgument - Returns true if this CallSite passes the given Value* as an
   /// argument to the called function.
-  bool hasArgument(Value *Arg);
+  bool hasArgument(const Value *Arg) const;
 
   /// arg_iterator - The type of iterator to use when looping over actual
   /// arguments at this call site...
