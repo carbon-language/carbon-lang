@@ -1480,6 +1480,12 @@ int main(int argc, char **argv) {
       // Process the -I options and set them in the HeaderInfo.
       HeaderSearch HeaderInfo(FileMgr);
       if (TextDiagClient) TextDiagClient->setHeaderSearch(HeaderInfo);
+      
+      // FIXME: Sink IncludeGroup into this loop.
+      IncludeGroup[0].clear();
+      IncludeGroup[1].clear();
+      IncludeGroup[2].clear();
+      IncludeGroup[3].clear();
       InitializeIncludePaths(argv[0], HeaderInfo, FileMgr, LangInfo);
       
       // Set up the preprocessor with these options.
