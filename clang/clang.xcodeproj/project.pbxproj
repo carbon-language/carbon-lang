@@ -299,6 +299,7 @@
 		35BB2D7C0D19951A00944DB5 /* TranslationUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TranslationUnit.cpp; path = lib/AST/TranslationUnit.cpp; sourceTree = "<group>"; };
 		35BB2D7E0D19954000944DB5 /* ASTConsumer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTConsumer.cpp; path = lib/AST/ASTConsumer.cpp; sourceTree = "<group>"; };
 		35BFBD2B0C9EDE1E006CB644 /* ASTConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTConsumer.h; path = clang/AST/ASTConsumer.h; sourceTree = "<group>"; };
+		35CEA05A0DF9E82700A41296 /* ExprObjC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExprObjC.h; path = clang/AST/ExprObjC.h; sourceTree = "<group>"; };
 		35CFFDFF0CA1CBCB00E6F2BE /* StmtViz.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StmtViz.cpp; path = lib/AST/StmtViz.cpp; sourceTree = "<group>"; };
 		35CFFE010CA1CBDD00E6F2BE /* StmtGraphTraits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StmtGraphTraits.h; path = clang/AST/StmtGraphTraits.h; sourceTree = "<group>"; };
 		35D1DDD10CA9C6D50096E967 /* DataflowSolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DataflowSolver.h; path = clang/Analysis/FlowSensitive/DataflowSolver.h; sourceTree = "<group>"; };
@@ -761,6 +762,7 @@
 		DEC8D98B0A9433BC00353FCA /* AST */ = {
 			isa = PBXGroup;
 			children = (
+				35CEA05A0DF9E82700A41296 /* ExprObjC.h */,
 				DEC8D9A30A94346E00353FCA /* AST.h */,
 				35BFBD2B0C9EDE1E006CB644 /* ASTConsumer.h */,
 				DE75ED280B044DC90020CF81 /* ASTContext.h */,
