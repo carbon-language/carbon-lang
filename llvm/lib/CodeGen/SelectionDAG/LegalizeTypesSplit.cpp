@@ -19,18 +19,17 @@ using namespace llvm;
 
 /// GetSplitDestVTs - Compute the VTs needed for the low/hi parts of a vector
 /// type that needs to be split.  This handles non-power of two vectors.
-static void GetSplitDestVTs(MVT::ValueType InVT,
-                            MVT::ValueType &Lo, MVT::ValueType &Hi) {
-  MVT::ValueType NewEltVT = MVT::getVectorElementType(InVT);
-  unsigned NumElements = MVT::getVectorNumElements(InVT);
+static void GetSplitDestVTs(MVT InVT, MVT &Lo, MVT &Hi) {
+  MVT NewEltVT = InVT.getVectorElementType();
+  unsigned NumElements = InVT.getVectorNumElements();
   if ((NumElements & (NumElements-1)) == 0) {  // Simple power of two vector.
     NumElements >>= 1;
-    Lo = Hi =  MVT::getVectorType(NewEltVT, NumElements);
+    Lo = Hi =  MVT::getVectorVT(NewEltVT, NumElements);
   } else {                                     // Non-power-of-two vectors.
     unsigned NewNumElts_Lo = 1 << Log2_32(NumElements);
     unsigned NewNumElts_Hi = NumElements - NewNumElts_Lo;
-    Lo = MVT::getVectorType(NewEltVT, NewNumElts_Lo);
-    Hi = MVT::getVectorType(NewEltVT, NewNumElts_Hi);
+    Lo = MVT::getVectorVT(NewEltVT, NewNumElts_Lo);
+    Hi = MVT::getVectorVT(NewEltVT, NewNumElts_Hi);
   }
 }
 
@@ -117,7 +116,7 @@ void DAGTypeLegalizer::SplitResult(SDNode *N, unsigned ResNo) {
 }
 
 void DAGTypeLegalizer::SplitRes_UNDEF(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
-  MVT::ValueType LoVT, HiVT;
+  MVT LoVT, HiVT;
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
 
   Lo = DAG.getNode(ISD::UNDEF, LoVT);
@@ -127,7 +126,7 @@ void DAGTypeLegalizer::SplitRes_UNDEF(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
 void DAGTypeLegalizer::SplitRes_LOAD(LoadSDNode *LD, 
                                      SDOperand &Lo, SDOperand &Hi) {
   // FIXME: Add support for indexed loads.
-  MVT::ValueType LoVT, HiVT;
+  MVT LoVT, HiVT;
   GetSplitDestVTs(LD->getValueType(0), LoVT, HiVT);
   
   SDOperand Ch = LD->getChain();
@@ -138,7 +137,7 @@ void DAGTypeLegalizer::SplitRes_LOAD(LoadSDNode *LD,
   bool isVolatile = LD->isVolatile();
   
   Lo = DAG.getLoad(LoVT, Ch, Ptr, SV, SVOffset, isVolatile, Alignment);
-  unsigned IncrementSize = MVT::getSizeInBits(LoVT)/8;
+  unsigned IncrementSize = LoVT.getSizeInBits()/8;
   Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                     DAG.getIntPtrConstant(IncrementSize));
   SVOffset += IncrementSize;
@@ -166,7 +165,7 @@ void DAGTypeLegalizer::SplitRes_INSERT_VECTOR_ELT(SDNode *N, SDOperand &Lo,
   GetSplitOp(N->getOperand(0), Lo, Hi);
   unsigned Index = cast<ConstantSDNode>(N->getOperand(2))->getValue();
   SDOperand ScalarOp = N->getOperand(1);
-  unsigned LoNumElts = MVT::getVectorNumElements(Lo.getValueType());
+  unsigned LoNumElts = Lo.getValueType().getVectorNumElements();
   if (Index < LoNumElts)
     Lo = DAG.getNode(ISD::INSERT_VECTOR_ELT, Lo.getValueType(), Lo, ScalarOp,
                      N->getOperand(2));
@@ -180,10 +179,10 @@ void DAGTypeLegalizer::SplitRes_VECTOR_SHUFFLE(SDNode *N,
   // Build the low part.
   SDOperand Mask = N->getOperand(2);
   SmallVector<SDOperand, 16> Ops;
-  MVT::ValueType LoVT, HiVT;
+  MVT LoVT, HiVT;
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
-  MVT::ValueType EltVT = MVT::getVectorElementType(LoVT);
-  unsigned LoNumElts = MVT::getVectorNumElements(LoVT);
+  MVT EltVT = LoVT.getVectorElementType();
+  unsigned LoNumElts = LoVT.getVectorNumElements();
   unsigned NumElements = Mask.getNumOperands();
 
   // Insert all of the elements from the input that are needed.  We use 
@@ -217,9 +216,9 @@ void DAGTypeLegalizer::SplitRes_VECTOR_SHUFFLE(SDNode *N,
 
 void DAGTypeLegalizer::SplitRes_BUILD_VECTOR(SDNode *N, SDOperand &Lo, 
                                              SDOperand &Hi) {
-  MVT::ValueType LoVT, HiVT;
+  MVT LoVT, HiVT;
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
-  unsigned LoNumElts = MVT::getVectorNumElements(LoVT);
+  unsigned LoNumElts = LoVT.getVectorNumElements();
   SmallVector<SDOperand, 8> LoOps(N->op_begin(), N->op_begin()+LoNumElts);
   Lo = DAG.getNode(ISD::BUILD_VECTOR, LoVT, &LoOps[0], LoOps.size());
   
@@ -237,7 +236,7 @@ void DAGTypeLegalizer::SplitRes_CONCAT_VECTORS(SDNode *N,
     return;
   }
 
-  MVT::ValueType LoVT, HiVT;
+  MVT LoVT, HiVT;
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
 
   SmallVector<SDOperand, 8> LoOps(N->op_begin(), N->op_begin()+NumSubvectors);
@@ -251,11 +250,11 @@ void DAGTypeLegalizer::SplitRes_BIT_CONVERT(SDNode *N,
                                             SDOperand &Lo, SDOperand &Hi) {
   // We know the result is a vector.  The input may be either a vector or a
   // scalar value.
-  MVT::ValueType LoVT, HiVT;
+  MVT LoVT, HiVT;
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
 
   SDOperand InOp = N->getOperand(0);
-  MVT::ValueType InVT = InOp.getValueType();
+  MVT InVT = InOp.getValueType();
 
   // Handle some special cases efficiently.
   switch (getTypeAction(InVT)) {
@@ -289,8 +288,8 @@ void DAGTypeLegalizer::SplitRes_BIT_CONVERT(SDNode *N,
   }
 
   // In the general case, convert the input to an integer and split it by hand.
-  MVT::ValueType LoIntVT = MVT::getIntegerType(MVT::getSizeInBits(LoVT));
-  MVT::ValueType HiIntVT = MVT::getIntegerType(MVT::getSizeInBits(HiVT));
+  MVT LoIntVT = MVT::getIntegerVT(LoVT.getSizeInBits());
+  MVT HiIntVT = MVT::getIntegerVT(HiVT.getSizeInBits());
   if (TLI.isBigEndian())
     std::swap(LoIntVT, HiIntVT);
 
@@ -314,7 +313,7 @@ void DAGTypeLegalizer::SplitRes_BinOp(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
 
 void DAGTypeLegalizer::SplitRes_UnOp(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
   // Get the dest types.  This doesn't always match input types, e.g. int_to_fp.
-  MVT::ValueType LoVT, HiVT;
+  MVT LoVT, HiVT;
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
 
   GetSplitOp(N->getOperand(0), Lo, Hi);
@@ -410,7 +409,7 @@ SDOperand DAGTypeLegalizer::SplitOp_STORE(StoreSDNode *N, unsigned OpNo) {
   SDOperand Lo, Hi;
   GetSplitOp(N->getOperand(1), Lo, Hi);
 
-  unsigned IncrementSize = MVT::getSizeInBits(Lo.getValueType())/8;
+  unsigned IncrementSize = Lo.getValueType().getSizeInBits()/8;
 
   Lo = DAG.getStore(Ch, Lo, Ptr, N->getSrcValue(), SVOffset, isVol, Alignment);
   
@@ -455,17 +454,16 @@ SDOperand DAGTypeLegalizer::SplitOp_BIT_CONVERT(SDNode *N) {
 SDOperand DAGTypeLegalizer::SplitOp_EXTRACT_VECTOR_ELT(SDNode *N) {
   SDOperand Vec = N->getOperand(0);
   SDOperand Idx = N->getOperand(1);
-  MVT::ValueType VecVT = Vec.getValueType();
+  MVT VecVT = Vec.getValueType();
 
   if (isa<ConstantSDNode>(Idx)) {
     uint64_t IdxVal = cast<ConstantSDNode>(Idx)->getValue();
-    assert(IdxVal < MVT::getVectorNumElements(VecVT) &&
-           "Invalid vector index!");
+    assert(IdxVal < VecVT.getVectorNumElements() && "Invalid vector index!");
 
     SDOperand Lo, Hi;
     GetSplitOp(Vec, Lo, Hi);
 
-    uint64_t LoElts = MVT::getVectorNumElements(Lo.getValueType());
+    uint64_t LoElts = Lo.getValueType().getVectorNumElements();
 
     if (IdxVal < LoElts)
       return DAG.UpdateNodeOperands(SDOperand(N, 0), Lo, Idx);
@@ -480,13 +478,12 @@ SDOperand DAGTypeLegalizer::SplitOp_EXTRACT_VECTOR_ELT(SDNode *N) {
   SDOperand Store = DAG.getStore(DAG.getEntryNode(), Vec, StackPtr, NULL, 0);
 
   // Add the offset to the index.
-  MVT::ValueType EltVT = MVT::getVectorElementType(VecVT);
-  unsigned EltSize = MVT::getSizeInBits(EltVT)/8; // FIXME: should be ABI size.
+  MVT EltVT = VecVT.getVectorElementType();
+  unsigned EltSize = EltVT.getSizeInBits()/8; // FIXME: should be ABI size.
   Idx = DAG.getNode(ISD::MUL, Idx.getValueType(), Idx,
                     DAG.getConstant(EltSize, Idx.getValueType()));
 
-  if (MVT::getSizeInBits(Idx.getValueType()) >
-      MVT::getSizeInBits(TLI.getPointerTy()))
+  if (Idx.getValueType().getSizeInBits() > TLI.getPointerTy().getSizeInBits())
     Idx = DAG.getNode(ISD::TRUNCATE, TLI.getPointerTy(), Idx);
   else
     Idx = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), Idx);
@@ -498,16 +495,16 @@ SDOperand DAGTypeLegalizer::SplitOp_EXTRACT_VECTOR_ELT(SDNode *N) {
 SDOperand DAGTypeLegalizer::SplitOp_EXTRACT_SUBVECTOR(SDNode *N) {
   // We know that the extracted result type is legal.  For now, assume the index
   // is a constant.
-  MVT::ValueType SubVT = N->getValueType(0);
+  MVT SubVT = N->getValueType(0);
   SDOperand Idx = N->getOperand(1);
   SDOperand Lo, Hi;
   GetSplitOp(N->getOperand(0), Lo, Hi);
 
-  uint64_t LoElts = MVT::getVectorNumElements(Lo.getValueType());
+  uint64_t LoElts = Lo.getValueType().getVectorNumElements();
   uint64_t IdxVal = cast<ConstantSDNode>(Idx)->getValue();
 
   if (IdxVal < LoElts) {
-    assert(IdxVal + MVT::getVectorNumElements(SubVT) <= LoElts &&
+    assert(IdxVal + SubVT.getVectorNumElements() <= LoElts &&
            "Extracted subvector crosses vector split!");
     return DAG.getNode(ISD::EXTRACT_SUBVECTOR, SubVT, Lo, Idx);
   } else {
@@ -519,7 +516,7 @@ SDOperand DAGTypeLegalizer::SplitOp_EXTRACT_SUBVECTOR(SDNode *N) {
 SDOperand DAGTypeLegalizer::SplitOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo) {
   assert(OpNo == 2 && "Shuffle source type differs from result type?");
   SDOperand Mask = N->getOperand(2);
-  unsigned MaskLength = MVT::getVectorNumElements(Mask.getValueType());
+  unsigned MaskLength = Mask.getValueType().getVectorNumElements();
   unsigned LargestMaskEntryPlusOne = 2 * MaskLength;
   unsigned MinimumBitWidth = Log2_32_Ceil(LargestMaskEntryPlusOne);
 
@@ -532,12 +529,12 @@ SDOperand DAGTypeLegalizer::SplitOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo) {
        EltVT = MVT::SimpleValueType(EltVT + 1)) {
 
     // Is the element type big enough to hold the values?
-    if (MVT::getSizeInBits(EltVT) < MinimumBitWidth)
+    if (MVT(EltVT).getSizeInBits() < MinimumBitWidth)
       // Nope.
       continue;
 
     // Is the vector type legal?
-    MVT::ValueType VecVT = MVT::getVectorType(EltVT, MaskLength);
+    MVT VecVT = MVT::getVectorVT(EltVT, MaskLength);
     if (!isTypeLegal(VecVT))
       // Nope.
       continue;

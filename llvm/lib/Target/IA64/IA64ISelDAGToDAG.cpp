@@ -119,7 +119,7 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
 
   bool isFP=false;
 
-  if(MVT::isFloatingPoint(Tmp1.getValueType()))
+  if(Tmp1.getValueType().isFloatingPoint())
     isFP=true;
     
   bool isModulus=false; // is it a division or a modulus?
@@ -469,9 +469,9 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
     AddToISelQueue(Chain);
     AddToISelQueue(Address);
 
-    MVT::ValueType TypeBeingLoaded = LD->getMemoryVT();
+    MVT TypeBeingLoaded = LD->getMemoryVT();
     unsigned Opc;
-    switch (TypeBeingLoaded) {
+    switch (TypeBeingLoaded.getSimpleVT()) {
     default:
 #ifndef NDEBUG
       N->dump(CurDAG);
@@ -511,7 +511,7 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
    
     unsigned Opc;
     if (ISD::isNON_TRUNCStore(N)) {
-      switch (N->getOperand(1).getValueType()) {
+      switch (N->getOperand(1).getValueType().getSimpleVT()) {
       default: assert(0 && "unknown type in store");
       case MVT::i1: { // this is a bool
         Opc = IA64::ST1; // we store either 0 or 1 as a byte 
@@ -531,7 +531,7 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
       case MVT::f64: Opc = IA64::STF8; break;
       }
     } else { // Truncating store
-      switch(ST->getMemoryVT()) {
+      switch(ST->getMemoryVT().getSimpleVT()) {
       default: assert(0 && "unknown type in truncstore");
       case MVT::i8:  Opc = IA64::ST1;  break;
       case MVT::i16: Opc = IA64::ST2;  break;

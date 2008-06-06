@@ -2193,14 +2193,14 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   // Emit the load instruction.
   SDNode *Load = 0;
   if (FoldedLoad) {
-    MVT::ValueType VT = *RC->vt_begin();
+    MVT VT = *RC->vt_begin();
     Load = DAG.getTargetNode(getLoadRegOpcode(RC, RI.getStackAlignment()), VT,
                              MVT::Other, &AddrOps[0], AddrOps.size());
     NewNodes.push_back(Load);
   }
 
   // Emit the data processing instruction.
-  std::vector<MVT::ValueType> VTs;
+  std::vector<MVT> VTs;
   const TargetRegisterClass *DstRC = 0;
   if (TID.getNumDefs() > 0) {
     const TargetOperandInfo &DstTOI = TID.OpInfo[0];
@@ -2209,7 +2209,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
     VTs.push_back(*DstRC->vt_begin());
   }
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
-    MVT::ValueType VT = N->getValueType(i);
+    MVT VT = N->getValueType(i);
     if (VT != MVT::Other && i >= (unsigned)TID.getNumDefs())
       VTs.push_back(VT);
   }

@@ -215,7 +215,7 @@ namespace {
 
     /// getTruncate - return an SDNode that implements a subreg based truncate
     /// of the specified operand to the the specified value type.
-    SDNode *getTruncate(SDOperand N0, MVT::ValueType VT);
+    SDNode *getTruncate(SDOperand N0, MVT VT);
 
 #ifndef NDEBUG
     unsigned Indent;
@@ -329,7 +329,7 @@ bool X86DAGToDAGISel::CanBeFoldedBy(SDNode *N, SDNode *U, SDNode *Root) const {
   // NU), then TF is a predecessor of FU and a successor of NU. But since
   // NU and FU are flagged together, this effectively creates a cycle.
   bool HasFlagUse = false;
-  MVT::ValueType VT = Root->getValueType(Root->getNumValues()-1);
+  MVT VT = Root->getValueType(Root->getNumValues()-1);
   while ((VT == MVT::Flag && !Root->use_empty())) {
     SDNode *FU = findFlagUse(Root);
     if (FU == NULL)
@@ -440,8 +440,8 @@ void X86DAGToDAGISel::PreprocessForRMW(SelectionDAG &DAG) {
 
     SDOperand N1 = I->getOperand(1);
     SDOperand N2 = I->getOperand(2);
-    if ((MVT::isFloatingPoint(N1.getValueType()) &&
-         !MVT::isVector(N1.getValueType())) ||
+    if ((N1.getValueType().isFloatingPoint() &&
+         !N1.getValueType().isVector()) ||
         !N1.hasOneUse())
       continue;
 
@@ -505,8 +505,8 @@ void X86DAGToDAGISel::PreprocessForFPConvert(SelectionDAG &DAG) {
     
     // If the source and destination are SSE registers, then this is a legal
     // conversion that should not be lowered.
-    MVT::ValueType SrcVT = N->getOperand(0).getValueType();
-    MVT::ValueType DstVT = N->getValueType(0);
+    MVT SrcVT = N->getOperand(0).getValueType();
+    MVT DstVT = N->getValueType(0);
     bool SrcIsSSE = X86Lowering.isScalarFPTypeInSSEReg(SrcVT);
     bool DstIsSSE = X86Lowering.isScalarFPTypeInSSEReg(DstVT);
     if (SrcIsSSE && DstIsSSE)
@@ -524,7 +524,7 @@ void X86DAGToDAGISel::PreprocessForFPConvert(SelectionDAG &DAG) {
     // Here we could have an FP stack truncation or an FPStack <-> SSE convert.
     // FPStack has extload and truncstore.  SSE can fold direct loads into other
     // operations.  Based on this, decide what we want to do.
-    MVT::ValueType MemVT;
+    MVT MemVT;
     if (N->getOpcode() == ISD::FP_ROUND)
       MemVT = DstVT;  // FP_ROUND must use DstVT, we can't do a 'trunc load'.
     else
@@ -942,7 +942,7 @@ bool X86DAGToDAGISel::SelectAddr(SDOperand Op, SDOperand N, SDOperand &Base,
   if (MatchAddress(N, AM))
     return false;
 
-  MVT::ValueType VT = N.getValueType();
+  MVT VT = N.getValueType();
   if (AM.BaseType == X86ISelAddressMode::RegBase) {
     if (!AM.Base.Reg.Val)
       AM.Base.Reg = CurDAG->getRegister(0, VT);
@@ -1016,7 +1016,7 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDOperand Op, SDOperand N,
   if (MatchAddress(N, AM))
     return false;
 
-  MVT::ValueType VT = N.getValueType();
+  MVT VT = N.getValueType();
   unsigned Complexity = 0;
   if (AM.BaseType == X86ISelAddressMode::RegBase)
     if (AM.Base.Reg.Val)
@@ -1110,16 +1110,17 @@ static SDNode *FindCallStartFromCall(SDNode *Node) {
   return FindCallStartFromCall(Node->getOperand(0).Val);
 }
 
-SDNode *X86DAGToDAGISel::getTruncate(SDOperand N0, MVT::ValueType VT) {
+SDNode *X86DAGToDAGISel::getTruncate(SDOperand N0, MVT VT) {
     SDOperand SRIdx;
-    switch (VT) {
+    switch (VT.getSimpleVT()) {
+    default: assert(0 && "Unknown truncate!");
     case MVT::i8:
       SRIdx = CurDAG->getTargetConstant(1, MVT::i32); // SubRegSet 1
       // Ensure that the source register has an 8-bit subreg on 32-bit targets
       if (!Subtarget->is64Bit()) { 
         unsigned Opc;
-        MVT::ValueType VT;
-        switch (N0.getValueType()) {
+        MVT VT;
+        switch (N0.getValueType().getSimpleVT()) {
         default: assert(0 && "Unknown truncate!");
         case MVT::i16:
           Opc = X86::MOV16to16_;
@@ -1141,7 +1142,6 @@ SDNode *X86DAGToDAGISel::getTruncate(SDOperand N0, MVT::ValueType VT) {
     case MVT::i32:
       SRIdx = CurDAG->getTargetConstant(3, MVT::i32); // SubRegSet 3
       break;
-    default: assert(0 && "Unknown truncate!"); break;
     }
     return CurDAG->getTargetNode(X86::EXTRACT_SUBREG, VT, N0, SRIdx);
 }
@@ -1149,7 +1149,7 @@ SDNode *X86DAGToDAGISel::getTruncate(SDOperand N0, MVT::ValueType VT) {
 
 SDNode *X86DAGToDAGISel::Select(SDOperand N) {
   SDNode *Node = N.Val;
-  MVT::ValueType NVT = Node->getValueType(0);
+  MVT NVT = Node->getValueType(0);
   unsigned Opc, MOpc;
   unsigned Opcode = Node->getOpcode();
 
@@ -1183,7 +1183,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       // RIP-relative addressing.
       if (TM.getCodeModel() != CodeModel::Small)
         break;
-      MVT::ValueType PtrVT = TLI.getPointerTy();
+      MVT PtrVT = TLI.getPointerTy();
       SDOperand N0 = N.getOperand(0);
       SDOperand N1 = N.getOperand(1);
       if (N.Val->getValueType(0) == PtrVT &&
@@ -1224,7 +1224,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
 
       bool isSigned = Opcode == ISD::SMUL_LOHI;
       if (!isSigned)
-        switch (NVT) {
+        switch (NVT.getSimpleVT()) {
         default: assert(0 && "Unsupported VT!");
         case MVT::i8:  Opc = X86::MUL8r;  MOpc = X86::MUL8m;  break;
         case MVT::i16: Opc = X86::MUL16r; MOpc = X86::MUL16m; break;
@@ -1232,7 +1232,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
         case MVT::i64: Opc = X86::MUL64r; MOpc = X86::MUL64m; break;
         }
       else
-        switch (NVT) {
+        switch (NVT.getSimpleVT()) {
         default: assert(0 && "Unsupported VT!");
         case MVT::i8:  Opc = X86::IMUL8r;  MOpc = X86::IMUL8m;  break;
         case MVT::i16: Opc = X86::IMUL16r; MOpc = X86::IMUL16m; break;
@@ -1241,7 +1241,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
         }
 
       unsigned LoReg, HiReg;
-      switch (NVT) {
+      switch (NVT.getSimpleVT()) {
       default: assert(0 && "Unsupported VT!");
       case MVT::i8:  LoReg = X86::AL;  HiReg = X86::AH;  break;
       case MVT::i16: LoReg = X86::AX;  HiReg = X86::DX;  break;
@@ -1334,7 +1334,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
 
       bool isSigned = Opcode == ISD::SDIVREM;
       if (!isSigned)
-        switch (NVT) {
+        switch (NVT.getSimpleVT()) {
         default: assert(0 && "Unsupported VT!");
         case MVT::i8:  Opc = X86::DIV8r;  MOpc = X86::DIV8m;  break;
         case MVT::i16: Opc = X86::DIV16r; MOpc = X86::DIV16m; break;
@@ -1342,7 +1342,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
         case MVT::i64: Opc = X86::DIV64r; MOpc = X86::DIV64m; break;
         }
       else
-        switch (NVT) {
+        switch (NVT.getSimpleVT()) {
         default: assert(0 && "Unsupported VT!");
         case MVT::i8:  Opc = X86::IDIV8r;  MOpc = X86::IDIV8m;  break;
         case MVT::i16: Opc = X86::IDIV16r; MOpc = X86::IDIV16m; break;
@@ -1352,7 +1352,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
 
       unsigned LoReg, HiReg;
       unsigned ClrOpcode, SExtOpcode;
-      switch (NVT) {
+      switch (NVT.getSimpleVT()) {
       default: assert(0 && "Unsupported VT!");
       case MVT::i8:
         LoReg = X86::AL;  HiReg = X86::AH;
@@ -1493,7 +1493,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       
       SDOperand N0 = Node->getOperand(0);
       // Get the subregsiter index for the type to extend.
-      MVT::ValueType N0VT = N0.getValueType();
+      MVT N0VT = N0.getValueType();
       unsigned Idx = (N0VT == MVT::i32) ? X86::SUBREG_32BIT :
                       (N0VT == MVT::i16) ? X86::SUBREG_16BIT :
                         (Subtarget->is64Bit()) ? X86::SUBREG_8BIT : 0;
@@ -1523,30 +1523,30 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       SDOperand N0 = Node->getOperand(0);
       AddToISelQueue(N0);
       
-      MVT::ValueType SVT = cast<VTSDNode>(Node->getOperand(1))->getVT();
+      MVT SVT = cast<VTSDNode>(Node->getOperand(1))->getVT();
       SDOperand TruncOp = SDOperand(getTruncate(N0, SVT), 0);
       unsigned Opc = 0;
-      switch (NVT) {
+      switch (NVT.getSimpleVT()) {
+      default: assert(0 && "Unknown sign_extend_inreg!");
       case MVT::i16:
         if (SVT == MVT::i8) Opc = X86::MOVSX16rr8;
         else assert(0 && "Unknown sign_extend_inreg!");
         break;
       case MVT::i32:
-        switch (SVT) {
+        switch (SVT.getSimpleVT()) {
+        default: assert(0 && "Unknown sign_extend_inreg!");
         case MVT::i8:  Opc = X86::MOVSX32rr8;  break;
         case MVT::i16: Opc = X86::MOVSX32rr16; break;
-        default: assert(0 && "Unknown sign_extend_inreg!");
         }
         break;
       case MVT::i64:
-        switch (SVT) {
+        switch (SVT.getSimpleVT()) {
+        default: assert(0 && "Unknown sign_extend_inreg!");
         case MVT::i8:  Opc = X86::MOVSX64rr8;  break;
         case MVT::i16: Opc = X86::MOVSX64rr16; break;
         case MVT::i32: Opc = X86::MOVSX64rr32; break;
-        default: assert(0 && "Unknown sign_extend_inreg!");
         }
         break;
-      default: assert(0 && "Unknown sign_extend_inreg!");
       }
       
       SDNode *ResNode = CurDAG->getTargetNode(Opc, NVT, TruncOp);

@@ -250,7 +250,7 @@ Select(SDOperand N)
       AddToISelQueue(LHS);
       AddToISelQueue(RHS);
 
-      MVT::ValueType VT = LHS.getValueType();
+      MVT VT = LHS.getValueType();
       SDNode *Carry = CurDAG->getTargetNode(Mips::SLTu, VT, Ops, 2);
       SDNode *AddCarry = CurDAG->getTargetNode(Mips::ADDu, VT, 
                                                SDOperand(Carry,0), RHS);

@@ -108,8 +108,7 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
 }
 
 
-MVT::ValueType
-MipsTargetLowering::getSetCCResultType(const SDOperand &) const {
+MVT MipsTargetLowering::getSetCCResultType(const SDOperand &) const {
   return MVT::i32;
 }
 
@@ -223,7 +222,7 @@ LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG)
 
   SDOperand HiPart; 
   if (!isPIC) {
-    const MVT::ValueType *VTs = DAG.getNodeValueTypes(MVT::i32);
+    const MVT *VTs = DAG.getNodeValueTypes(MVT::i32);
     SDOperand Ops[] = { GA };
     HiPart = DAG.getNode(MipsISD::Hi, VTs, 1, Ops, 1);
   } else // Emit Load from Global Pointer
@@ -256,7 +255,7 @@ LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG)
   SDOperand False = Op.getOperand(3);
   SDOperand CC    = Op.getOperand(4);
 
-  const MVT::ValueType *VTs = DAG.getNodeValueTypes(MVT::i32);
+  const MVT *VTs = DAG.getNodeValueTypes(MVT::i32);
   SDOperand Ops[] = { LHS, RHS, CC };
   SDOperand SetCCRes = DAG.getNode(ISD::SETCC, VTs, 1, Ops, 3); 
 
@@ -270,12 +269,12 @@ LowerJumpTable(SDOperand Op, SelectionDAG &DAG)
   SDOperand ResNode;
   SDOperand HiPart; 
 
-  MVT::ValueType PtrVT = Op.getValueType();
+  MVT PtrVT = Op.getValueType();
   JumpTableSDNode *JT  = cast<JumpTableSDNode>(Op);
   SDOperand JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT);
 
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
-    const MVT::ValueType *VTs = DAG.getNodeValueTypes(MVT::i32);
+    const MVT *VTs = DAG.getNodeValueTypes(MVT::i32);
     SDOperand Ops[] = { JTI };
     HiPart = DAG.getNode(MipsISD::Hi, VTs, 1, Ops, 1);
   } else // Emit Load from Global Pointer
@@ -341,7 +340,7 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
 
   // To meet ABI, Mips must always allocate 16 bytes on
   // the stack (even if less than 4 are used as arguments)
-  int VTsize = MVT::getSizeInBits(MVT::i32)/8;
+  int VTsize = MVT(MVT::i32).getSizeInBits()/8;
   MFI->CreateFixedObject(VTsize, (VTsize*3));
 
   CCInfo.AnalyzeCallOperands(Op.Val, CC_Mips);
@@ -391,7 +390,7 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
     // This guarantees that when allocating Local Area the firsts
     // 16 bytes which are alwayes reserved won't be overwritten.
     LastStackLoc = (16 + VA.getLocMemOffset());
-    int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
+    int FI = MFI->CreateFixedObject(VA.getValVT().getSizeInBits()/8,
                                     LastStackLoc);
 
     SDOperand PtrOff = DAG.getFrameIndex(FI,getPointerTy());
@@ -575,7 +574,7 @@ LowerCCCArguments(SDOperand Op, SelectionDAG &DAG)
 
     // Arguments stored on registers
     if (VA.isRegLoc()) {
-      MVT::ValueType RegVT = VA.getLocVT();
+      MVT RegVT = VA.getLocVT();
       TargetRegisterClass *RC;
             
       if (RegVT == MVT::i32)
@@ -738,8 +737,7 @@ getConstraintType(const std::string &Constraint) const
 }
 
 std::pair<unsigned, const TargetRegisterClass*> MipsTargetLowering::
-getRegForInlineAsmConstraint(const std::string &Constraint,
-                             MVT::ValueType VT) const 
+getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const
 {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
@@ -753,7 +751,7 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
 
 std::vector<unsigned> MipsTargetLowering::
 getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                  MVT::ValueType VT) const 
+                                  MVT VT) const
 {
   if (Constraint.size() != 1)
     return std::vector<unsigned>();

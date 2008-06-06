@@ -27,13 +27,13 @@ static cl::opt<unsigned>
 AsmWriterNum("asmwriternum", cl::init(0),
              cl::desc("Make -gen-asm-writer emit assembly writer #N"));
 
-/// getValueType - Return the MCV::ValueType that the specified TableGen record
-/// corresponds to.
-MVT::ValueType llvm::getValueType(Record *Rec) {
-  return (MVT::ValueType)Rec->getValueAsInt("Value");
+/// getValueType - Return the MVT::SimpleValueType that the specified TableGen
+/// record corresponds to.
+MVT::SimpleValueType llvm::getValueType(Record *Rec) {
+  return (MVT::SimpleValueType)Rec->getValueAsInt("Value");
 }
 
-std::string llvm::getName(MVT::ValueType T) {
+std::string llvm::getName(MVT::SimpleValueType T) {
   switch (T) {
   case MVT::Other: return "UNKNOWN";
   case MVT::i1:    return "MVT::i1";
@@ -69,7 +69,7 @@ std::string llvm::getName(MVT::ValueType T) {
   }
 }
 
-std::string llvm::getEnumName(MVT::ValueType T) {
+std::string llvm::getEnumName(MVT::SimpleValueType T) {
   switch (T) {
   case MVT::Other: return "MVT::Other";
   case MVT::i1:    return "MVT::i1";
@@ -181,7 +181,7 @@ std::vector<unsigned char> CodeGenTarget::getRegisterVTs(Record *R) const {
     const CodeGenRegisterClass &RC = RegisterClasses[i];
     for (unsigned ei = 0, ee = RC.Elements.size(); ei != ee; ++ei) {
       if (R == RC.Elements[ei]) {
-        const std::vector<MVT::ValueType> &InVTs = RC.getValueTypes();
+        const std::vector<MVT::SimpleValueType> &InVTs = RC.getValueTypes();
         for (unsigned i = 0, e = InVTs.size(); i != e; ++i)
           Result.push_back(InVTs[i]);
       }
@@ -231,7 +231,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
   unsigned Size = R->getValueAsInt("Size");
 
   Namespace = R->getValueAsString("Namespace");
-  SpillSize = Size ? Size : MVT::getSizeInBits(VTs[0]);
+  SpillSize = Size ? Size : MVT(VTs[0]).getSizeInBits();
   SpillAlignment = R->getValueAsInt("Alignment");
   CopyCost = R->getValueAsInt("CopyCost");
   MethodBodies = R->getValueAsCode("MethodBodies");
@@ -443,7 +443,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
   for (unsigned i = 0, e = TypeList->getSize(); i != e; ++i) {
     Record *TyEl = TypeList->getElementAsRecord(i);
     assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
-    MVT::ValueType VT = getValueType(TyEl->getValueAsDef("VT"));
+    MVT::SimpleValueType VT = getValueType(TyEl->getValueAsDef("VT"));
     isOverloaded |= VT == MVT::iAny || VT == MVT::fAny;
     ArgVTs.push_back(VT);
     ArgTypeDefs.push_back(TyEl);

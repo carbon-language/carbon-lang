@@ -29,13 +29,13 @@ namespace llvm {
     std::string EnumName;      // The name of the enum "bswap_i32"
     std::string GCCBuiltinName;// Name of the corresponding GCC builtin, or "".
     std::string TargetPrefix;  // Target prefix, e.g. "ppc" for t-s intrinsics.
-    
-    /// ArgVTs - The MVT::ValueType for each argument type.  Note that this list
-    /// is only populated when in the context of a target .td file.  When
-    /// building Intrinsics.td, this isn't available, because we don't know the
-    /// target pointer size.
-    std::vector<MVT::ValueType> ArgVTs;
-    
+
+    /// ArgVTs - The MVT::SimpleValueType for each argument type.  Note that
+    /// this list is only populated when in the context of a target .td file.
+    /// When building Intrinsics.td, this isn't available, because we don't know
+    /// the target pointer size.
+    std::vector<MVT::SimpleValueType> ArgVTs;
+
     /// ArgTypeDefs - The records for each argument type.
     ///
     std::vector<Record*> ArgTypeDefs;

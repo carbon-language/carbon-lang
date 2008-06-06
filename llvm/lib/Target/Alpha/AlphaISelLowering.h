@@ -67,7 +67,7 @@ namespace llvm {
     explicit AlphaTargetLowering(TargetMachine &TM);
     
     /// getSetCCResultType - Get the SETCC result ValueType
-    virtual MVT::ValueType getSetCCResultType(const SDOperand &) const;
+    virtual MVT getSetCCResultType(const SDOperand &) const;
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///
@@ -88,7 +88,7 @@ namespace llvm {
 
     std::vector<unsigned> 
       getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                        MVT::ValueType VT) const;
+                                        MVT VT) const;
 
     bool hasITOF() { return useITOF; }
 

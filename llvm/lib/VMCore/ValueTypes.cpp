@@ -1,4 +1,4 @@
-//===-- ValueTypes.cpp - Implementation of MVT::ValueType methods ---------===//
+//===----------- ValueTypes.cpp - Implementation of MVT methods -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -17,17 +17,17 @@
 #include "llvm/DerivedTypes.h"
 using namespace llvm;
 
-/// MVT::getValueTypeString - This function returns value type as a string,
-/// e.g. "i32".
-std::string MVT::getValueTypeString(MVT::ValueType VT) {
-  switch (VT) {
+/// getMVTString - This function returns value type as a string, e.g. "i32".
+std::string MVT::getMVTString() const {
+  switch (V) {
   default:
-    if (isVector(VT))
-      return "v" + utostr(getVectorNumElements(VT)) +
-             getValueTypeString(getVectorElementType(VT));
-    if (isInteger(VT))
-      return "i" + utostr(getSizeInBits(VT));
-    assert(0 && "Invalid ValueType!");
+    if (isVector())
+      return "v" + utostr(getVectorNumElements()) +
+             getVectorElementType().getMVTString();
+    if (isInteger())
+      return "i" + utostr(getSizeInBits());
+    assert(0 && "Invalid MVT!");
+    return "?";
   case MVT::i1:      return "i1";
   case MVT::i8:      return "i8";
   case MVT::i16:     return "i16";
@@ -58,19 +58,20 @@ std::string MVT::getValueTypeString(MVT::ValueType VT) {
   }
 }
 
-/// MVT::getTypeForValueType - This method returns an LLVM type corresponding
-/// to the specified ValueType.  Note that this will abort for types that cannot
-/// be represented.
-const Type *MVT::getTypeForValueType(MVT::ValueType VT) {
-  switch (VT) {
+/// getTypeForMVT - This method returns an LLVM type corresponding to the
+/// specified MVT.  For integer types, this returns an unsigned type.  Note
+/// that this will abort for types that cannot be represented.
+const Type *MVT::getTypeForMVT() const {
+  switch (V) {
   default:
-    if (isVector(VT))
-      return VectorType::get(getTypeForValueType(getVectorElementType(VT)),
-                             getVectorNumElements(VT));
-    if (isInteger(VT))
-      return IntegerType::get(getSizeInBits(VT));
-    assert(0 && "ValueType does not correspond to LLVM type!");
-  case MVT::isVoid:return Type::VoidTy;
+    if (isVector())
+      return VectorType::get(getVectorElementType().getTypeForMVT(),
+                             getVectorNumElements());
+    if (isInteger())
+      return IntegerType::get(getSizeInBits());
+    assert(0 && "MVT does not correspond to LLVM type!");
+    return Type::VoidTy;
+  case MVT::isVoid:  return Type::VoidTy;
   case MVT::i1:      return Type::Int1Ty;
   case MVT::i8:      return Type::Int8Ty;
   case MVT::i16:     return Type::Int16Ty;
@@ -98,18 +99,19 @@ const Type *MVT::getTypeForValueType(MVT::ValueType VT) {
   }
 }
 
-/// MVT::getValueType - Return the value type corresponding to the specified
-/// type.  This returns all pointers as MVT::iPTR.  If HandleUnknown is true,
-/// unknown types are returned as Other, otherwise they are invalid.
-MVT::ValueType MVT::getValueType(const Type *Ty, bool HandleUnknown) {
+/// getMVT - Return the value type corresponding to the specified type.  This
+/// returns all pointers as MVT::iPTR.  If HandleUnknown is true, unknown types
+/// are returned as Other, otherwise they are invalid.
+MVT MVT::getMVT(const Type *Ty, bool HandleUnknown){
   switch (Ty->getTypeID()) {
   default:
     if (HandleUnknown) return MVT::Other;
     assert(0 && "Unknown type!");
+    return MVT::isVoid;
   case Type::VoidTyID:
     return MVT::isVoid;
   case Type::IntegerTyID:
-    return getIntegerType(cast<IntegerType>(Ty)->getBitWidth());
+    return getIntegerVT(cast<IntegerType>(Ty)->getBitWidth());
   case Type::FloatTyID:     return MVT::f32;
   case Type::DoubleTyID:    return MVT::f64;
   case Type::X86_FP80TyID:  return MVT::f80;
@@ -118,8 +120,8 @@ MVT::ValueType MVT::getValueType(const Type *Ty, bool HandleUnknown) {
   case Type::PointerTyID:   return MVT::iPTR;
   case Type::VectorTyID: {
     const VectorType *VTy = cast<VectorType>(Ty);
-    return getVectorType(getValueType(VTy->getElementType(), false),
-                         VTy->getNumElements());
+    return getVectorVT(getMVT(VTy->getElementType(), false),
+                       VTy->getNumElements());
   }
   }
 }

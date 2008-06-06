@@ -91,9 +91,9 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   std::vector<SDOperand> OutChains;
 
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
-    MVT::ValueType ObjectVT = getValueType(I->getType());
+    MVT ObjectVT = getValueType(I->getType());
     
-    switch (ObjectVT) {
+    switch (ObjectVT.getSimpleVT()) {
     default: assert(0 && "Unhandled argument type!");
     case MVT::i1:
     case MVT::i8:
@@ -123,7 +123,7 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
           ISD::LoadExtType LoadOp = ISD::SEXTLOAD;
 
           // Sparc is big endian, so add an offset based on the ObjectVT.
-          unsigned Offset = 4-std::max(1U, MVT::getSizeInBits(ObjectVT)/8);
+          unsigned Offset = 4-std::max(1U, ObjectVT.getSizeInBits()/8);
           FIPtr = DAG.getNode(ISD::ADD, MVT::i32, FIPtr,
                               DAG.getConstant(Offset, MVT::i32));
           Load = DAG.getExtLoad(LoadOp, MVT::i32, Root, FIPtr,
@@ -246,7 +246,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   // Count the size of the outgoing arguments.
   unsigned ArgsSize = 0;
   for (unsigned i = 5, e = Op.getNumOperands(); i != e; i += 2) {
-    switch (Op.getOperand(i).getValueType()) {
+    switch (Op.getOperand(i).getValueType().getSimpleVT()) {
       default: assert(0 && "Unknown value type!");
       case MVT::i1:
       case MVT::i8:
@@ -323,10 +323,10 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
 
   for (unsigned i = 5, e = Op.getNumOperands(); i != e; i += 2) {
     SDOperand Val = Op.getOperand(i);
-    MVT::ValueType ObjectVT = Val.getValueType();
+    MVT ObjectVT = Val.getValueType();
     SDOperand ValToStore(0, 0);
     unsigned ObjSize;
-    switch (ObjectVT) {
+    switch (ObjectVT.getSimpleVT()) {
     default: assert(0 && "Unhandled argument type!");
     case MVT::i32:
       ObjSize = 4;
@@ -414,7 +414,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(E->getSymbol(), MVT::i32);
 
-  std::vector<MVT::ValueType> NodeTys;
+  std::vector<MVT> NodeTys;
   NodeTys.push_back(MVT::Other);   // Returns a chain
   NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
   SDOperand Ops[] = { Chain, Callee, InFlag };
@@ -744,7 +744,7 @@ static SDOperand LowerBR_CC(SDOperand Op, SelectionDAG &DAG) {
   // Get the condition flag.
   SDOperand CompareFlag;
   if (LHS.getValueType() == MVT::i32) {
-    std::vector<MVT::ValueType> VTs;
+    std::vector<MVT> VTs;
     VTs.push_back(MVT::i32);
     VTs.push_back(MVT::Flag);
     SDOperand Ops[2] = { LHS, RHS };
@@ -774,7 +774,7 @@ static SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG) {
   
   SDOperand CompareFlag;
   if (LHS.getValueType() == MVT::i32) {
-    std::vector<MVT::ValueType> VTs;
+    std::vector<MVT> VTs;
     VTs.push_back(LHS.getValueType());   // subcc returns a value
     VTs.push_back(MVT::Flag);
     SDOperand Ops[2] = { LHS, RHS };
@@ -804,14 +804,14 @@ static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
 
 static SDOperand LowerVAARG(SDOperand Op, SelectionDAG &DAG) {
   SDNode *Node = Op.Val;
-  MVT::ValueType VT = Node->getValueType(0);
+  MVT VT = Node->getValueType(0);
   SDOperand InChain = Node->getOperand(0);
   SDOperand VAListPtr = Node->getOperand(1);
   const Value *SV = cast<SrcValueSDNode>(Node->getOperand(2))->getValue();
   SDOperand VAList = DAG.getLoad(MVT::i32, InChain, VAListPtr, SV, 0);
   // Increment the pointer, VAList, to the next vaarg
   SDOperand NextPtr = DAG.getNode(ISD::ADD, MVT::i32, VAList, 
-                                  DAG.getConstant(MVT::getSizeInBits(VT)/8, 
+                                  DAG.getConstant(VT.getSizeInBits()/8,
                                                   MVT::i32));
   // Store the incremented VAList to the legalized pointer
   InChain = DAG.getStore(VAList.getValue(1), NextPtr,
@@ -846,7 +846,7 @@ static SDOperand LowerDYNAMIC_STACKALLOC(SDOperand Op, SelectionDAG &DAG) {
   // to provide a register spill area.
   SDOperand NewVal = DAG.getNode(ISD::ADD, MVT::i32, NewSP,
                                  DAG.getConstant(96, MVT::i32));
-  std::vector<MVT::ValueType> Tys;
+  std::vector<MVT> Tys;
   Tys.push_back(MVT::i32);
   Tys.push_back(MVT::Other);
   SDOperand Ops[2] = { NewVal, Chain };

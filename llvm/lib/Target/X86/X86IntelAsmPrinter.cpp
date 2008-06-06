@@ -120,7 +120,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     if (TargetRegisterInfo::isPhysicalRegister(MO.getReg())) {
       unsigned Reg = MO.getReg();
       if (Modifier && strncmp(Modifier, "subreg", strlen("subreg")) == 0) {
-        MVT::ValueType VT = (strcmp(Modifier,"subreg64") == 0) ?
+        MVT VT = (strcmp(Modifier,"subreg64") == 0) ?
           MVT::i64 : ((strcmp(Modifier, "subreg32") == 0) ? MVT::i32 :
                       ((strcmp(Modifier,"subreg16") == 0) ? MVT::i16 :MVT::i8));
         Reg = getX86SubSuperRegister(Reg, VT);

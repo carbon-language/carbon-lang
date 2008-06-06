@@ -215,7 +215,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     O << '%';
     unsigned Reg = MO.getReg();
     if (Modifier && strncmp(Modifier, "subreg", strlen("subreg")) == 0) {
-      MVT::ValueType VT = (strcmp(Modifier+6,"64") == 0) ?
+      MVT VT = (strcmp(Modifier+6,"64") == 0) ?
         MVT::i64 : ((strcmp(Modifier+6, "32") == 0) ? MVT::i32 :
                     ((strcmp(Modifier+6,"16") == 0) ? MVT::i16 : MVT::i8));
       Reg = getX86SubSuperRegister(Reg, VT);

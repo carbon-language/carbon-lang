@@ -334,7 +334,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand Op) {
   case ISD::TargetConstantFP: {
     ConstantFPSDNode *CN = cast<ConstantFPSDNode>(N);
     bool isDouble = N->getValueType(0) == MVT::f64;
-    MVT::ValueType T = isDouble ? MVT::f64 : MVT::f32;
+    MVT T = isDouble ? MVT::f64 : MVT::f32;
     if (CN->getValueAPF().isPosZero()) {
       return CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYST : Alpha::CPYSS,
                                   T, CurDAG->getRegister(Alpha::F31, T),
@@ -350,7 +350,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand Op) {
   }
 
   case ISD::SETCC:
-    if (MVT::isFloatingPoint(N->getOperand(0).Val->getValueType(0))) {
+    if (N->getOperand(0).Val->getValueType(0).isFloatingPoint()) {
       ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
 
       unsigned Opc = Alpha::WTF;
@@ -404,9 +404,9 @@ SDNode *AlphaDAGToDAGISel::Select(SDOperand Op) {
     break;
 
   case ISD::SELECT:
-    if (MVT::isFloatingPoint(N->getValueType(0)) &&
+    if (N->getValueType(0).isFloatingPoint() &&
         (N->getOperand(0).getOpcode() != ISD::SETCC ||
-         !MVT::isFloatingPoint(N->getOperand(0).getOperand(1).getValueType()))) {
+         !N->getOperand(0).getOperand(1).getValueType().isFloatingPoint())) {
       //This should be the condition not covered by the Patterns
       //FIXME: Don't have SelectCode die, but rather return something testable
       // so that things like this can be caught in fall though code
@@ -472,7 +472,7 @@ void AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
   AddToISelQueue(Chain);
 
    std::vector<SDOperand> CallOperands;
-   std::vector<MVT::ValueType> TypeOperands;
+   std::vector<MVT> TypeOperands;
   
    //grab the arguments
    for(int i = 2, e = N->getNumOperands(); i < e; ++i) {
@@ -489,7 +489,7 @@ void AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
    
    for (int i = 6; i < count; ++i) {
      unsigned Opc = Alpha::WTF;
-     if (MVT::isInteger(TypeOperands[i])) {
+     if (TypeOperands[i].isInteger()) {
        Opc = Alpha::STQ;
      } else if (TypeOperands[i] == MVT::f32) {
        Opc = Alpha::STS;
@@ -504,7 +504,7 @@ void AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
      Chain = SDOperand(CurDAG->getTargetNode(Opc, MVT::Other, Ops, 4), 0);
    }
    for (int i = 0; i < std::min(6, count); ++i) {
-     if (MVT::isInteger(TypeOperands[i])) {
+     if (TypeOperands[i].isInteger()) {
        Chain = CurDAG->getCopyToReg(Chain, args_int[i], CallOperands[i], InFlag);
        InFlag = Chain.getValue(1);
      } else if (TypeOperands[i] == MVT::f32 || TypeOperands[i] == MVT::f64) {
@@ -533,7 +533,7 @@ void AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
 
    std::vector<SDOperand> CallResults;
   
-   switch (N->getValueType(0)) {
+   switch (N->getValueType(0).getSimpleVT()) {
    default: assert(0 && "Unexpected ret value!");
      case MVT::Other: break;
    case MVT::i64:

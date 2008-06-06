@@ -191,7 +191,7 @@ void ScheduleDAG::BuildSchedUnits() {
         assert(OpSU && "Node has no SUnit!");
         if (OpSU == SU) continue;           // In the same group.
 
-        MVT::ValueType OpVT = N->getOperand(i).getValueType();
+        MVT OpVT = N->getOperand(i).getValueType();
         assert(OpVT != MVT::Flag && "Flagged nodes should be in same sunit!");
         bool isChain = OpVT == MVT::Other;
 
@@ -433,7 +433,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
         SDOperand Op = Use->getOperand(i);
         if (Op.Val != Node || Op.ResNo != ResNo)
           continue;
-        MVT::ValueType VT = Node->getValueType(Op.ResNo);
+        MVT VT = Node->getValueType(Op.ResNo);
         if (VT != MVT::Other && VT != MVT::Flag)
           Match = false;
       }
@@ -677,7 +677,7 @@ static const TargetRegisterClass *getSubRegisterRegClass(
 static const TargetRegisterClass *getSuperregRegisterClass(
         const TargetRegisterClass *TRC,
         unsigned SubIdx,
-        MVT::ValueType VT) {
+        MVT VT) {
   // Pick the register class of the superegister for this type
   for (TargetRegisterInfo::regclass_iterator I = TRC->superregclasses_begin(),
          E = TRC->superregclasses_end(); I != E; ++I)

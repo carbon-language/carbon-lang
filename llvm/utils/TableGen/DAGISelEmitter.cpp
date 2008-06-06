@@ -51,8 +51,8 @@ static const ComplexPattern *NodeGetComplexPattern(TreePatternNode *N,
 /// patterns before small ones.  This is used to determine the size of a
 /// pattern.
 static unsigned getPatternSize(TreePatternNode *P, CodeGenDAGPatterns &CGP) {
-  assert((MVT::isExtIntegerInVTs(P->getExtTypes()) || 
-          MVT::isExtFloatingPointInVTs(P->getExtTypes()) ||
+  assert((EMVT::isExtIntegerInVTs(P->getExtTypes()) ||
+          EMVT::isExtFloatingPointInVTs(P->getExtTypes()) ||
           P->getExtTypeNum(0) == MVT::isVoid ||
           P->getExtTypeNum(0) == MVT::Flag ||
           P->getExtTypeNum(0) == MVT::iPTR) && 
@@ -160,7 +160,7 @@ struct PatternSortingPredicate {
 
 /// getRegisterValueType - Look up and return the first ValueType of specified 
 /// RegisterClass record
-static MVT::ValueType getRegisterValueType(Record *R, const CodeGenTarget &T) {
+static MVT::SimpleValueType getRegisterValueType(Record *R, const CodeGenTarget &T) {
   if (const CodeGenRegisterClass *RC = T.getRegisterClassForRegister(R))
     return RC->getValueTypeNum(0);
   return MVT::Other;
@@ -932,7 +932,7 @@ public:
       // How many results is this pattern expected to produce?
       unsigned NumPatResults = 0;
       for (unsigned i = 0, e = Pattern->getExtTypes().size(); i != e; i++) {
-        MVT::ValueType VT = Pattern->getTypeNum(i);
+        MVT::SimpleValueType VT = Pattern->getTypeNum(i);
         if (VT != MVT::isVoid && VT != MVT::Flag)
           NumPatResults++;
       }
@@ -1045,7 +1045,7 @@ public:
         for (unsigned i = 0; i < NumDstRegs; i++) {
           Record *RR = DstRegs[i];
           if (RR->isSubClassOf("Register")) {
-            MVT::ValueType RVT = getRegisterValueType(RR, CGT);
+            MVT::SimpleValueType RVT = getRegisterValueType(RR, CGT);
             Code += ", " + getEnumName(RVT);
           }
         }
@@ -1311,7 +1311,7 @@ private:
 
           Record *RR = DI->getDef();
           if (RR->isSubClassOf("Register")) {
-            MVT::ValueType RVT = getRegisterValueType(RR, T);
+            MVT::SimpleValueType RVT = getRegisterValueType(RR, T);
             if (RVT == MVT::Flag) {
               if (!InFlagDecled) {
                 emitCode("SDOperand InFlag = " + RootName + utostr(OpNo) + ";");
@@ -1634,12 +1634,13 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
                      PatternSortingPredicate(CGP));
 
     // Split them into groups by type.
-    std::map<MVT::ValueType, std::vector<const PatternToMatch*> >PatternsByType;
+    std::map<MVT::SimpleValueType,
+             std::vector<const PatternToMatch*> > PatternsByType;
     for (unsigned i = 0, e = PatternsOfOp.size(); i != e; ++i) {
       const PatternToMatch *Pat = PatternsOfOp[i];
       TreePatternNode *SrcPat = Pat->getSrcPattern();
-      MVT::ValueType VT = SrcPat->getTypeNum(0);
-      std::map<MVT::ValueType, 
+      MVT::SimpleValueType VT = SrcPat->getTypeNum(0);
+      std::map<MVT::SimpleValueType,
                std::vector<const PatternToMatch*> >::iterator TI = 
         PatternsByType.find(VT);
       if (TI != PatternsByType.end())
@@ -1651,10 +1652,11 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       }
     }
 
-    for (std::map<MVT::ValueType, std::vector<const PatternToMatch*> >::iterator
+    for (std::map<MVT::SimpleValueType,
+                  std::vector<const PatternToMatch*> >::iterator
            II = PatternsByType.begin(), EE = PatternsByType.end(); II != EE;
          ++II) {
-      MVT::ValueType OpVT = II->first;
+      MVT::SimpleValueType OpVT = II->first;
       std::vector<const PatternToMatch*> &Patterns = II->second;
       typedef std::vector<std::pair<unsigned,std::string> > CodeList;
       typedef std::vector<std::pair<unsigned,std::string> >::iterator CodeListI;
@@ -1734,7 +1736,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
           CallerCode += ", " + TargetOpcodes[j];
         }
         for (unsigned j = 0, e = TargetVTs.size(); j != e; ++j) {
-          CalleeCode += ", MVT::ValueType VT" + utostr(j);
+          CalleeCode += ", MVT VT" + utostr(j);
           CallerCode += ", " + TargetVTs[j];
         }
         for (std::set<std::string>::iterator
@@ -1852,7 +1854,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  for (unsigned j = 0, e = Ops.size(); j != e; ++j)\n"
      << "    AddToISelQueue(Ops[j]);\n\n"
     
-     << "  std::vector<MVT::ValueType> VTs;\n"
+     << "  std::vector<MVT> VTs;\n"
      << "  VTs.push_back(MVT::Other);\n"
      << "  VTs.push_back(MVT::Flag);\n"
      << "  SDOperand New = CurDAG->getNode(ISD::INLINEASM, VTs, &Ops[0], "
@@ -1931,7 +1933,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "INSTRUCTION_LIST_END)) {\n"
      << "    return NULL;   // Already selected.\n"
      << "  }\n\n"
-     << "  MVT::ValueType NVT = N.Val->getValueType(0);\n"
+     << "  MVT::SimpleValueType NVT = N.Val->getValueType(0).getSimpleVT();\n"
      << "  switch (N.getOpcode()) {\n"
      << "  default: break;\n"
      << "  case ISD::EntryToken:       // These leaves remain the same.\n"
@@ -2008,7 +2010,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
       
     // If there is an iPTR result version of this pattern, emit it here.
     if (HasPtrPattern) {
-      OS << "      if (NVT == TLI.getPointerTy())\n";
+      OS << "      if (TLI.getPointerTy() == NVT)\n";
       OS << "        return Select_" << getLegalCName(OpName) <<"_iPTR(N);\n";
     }
     if (HasDefaultPattern) {

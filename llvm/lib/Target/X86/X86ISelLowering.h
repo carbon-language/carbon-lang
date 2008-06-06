@@ -345,8 +345,8 @@ namespace llvm {
     /// lowering. It returns MVT::iAny if SelectionDAG should be responsible for
     /// determining it.
     virtual
-    MVT::ValueType getOptimalMemOpType(uint64_t Size, unsigned Align,
-                                       bool isSrcConst, bool isSrcStr) const;
+    MVT getOptimalMemOpType(uint64_t Size, unsigned Align,
+                            bool isSrcConst, bool isSrcStr) const;
     
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///
@@ -369,7 +369,7 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType - Return the ISD::SETCC ValueType
-    virtual MVT::ValueType getSetCCResultType(const SDOperand &) const;
+    virtual MVT getSetCCResultType(const SDOperand &) const;
 
     /// computeMaskedBitsForTargetNode - Determine which of the bits specified 
     /// in Mask are known to be either zero or one and return them in the 
@@ -390,9 +390,9 @@ namespace llvm {
      
     std::vector<unsigned> 
       getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                        MVT::ValueType VT) const;
+                                        MVT VT) const;
 
-    virtual const char *LowerXConstraint(MVT::ValueType ConstraintVT) const;
+    virtual const char *LowerXConstraint(MVT ConstraintVT) const;
 
     /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
     /// vector.  If it is invalid, don't add anything to Ops.
@@ -407,7 +407,7 @@ namespace llvm {
     /// error, this returns a register number of 0.
     std::pair<unsigned, const TargetRegisterClass*> 
       getRegForInlineAsmConstraint(const std::string &Constraint,
-                                   MVT::ValueType VT) const;
+                                   MVT VT) const;
     
     /// isLegalAddressingMode - Return true if the addressing mode represented
     /// by AM is legal for this target, for a load/store of the specified type.
@@ -417,26 +417,25 @@ namespace llvm {
     /// type Ty1 to type Ty2. e.g. On x86 it's free to truncate a i32 value in
     /// register EAX to i16 by referencing its sub-register AX.
     virtual bool isTruncateFree(const Type *Ty1, const Type *Ty2) const;
-    virtual bool isTruncateFree(MVT::ValueType VT1, MVT::ValueType VT2) const;
+    virtual bool isTruncateFree(MVT VT1, MVT VT2) const;
   
     /// isShuffleMaskLegal - Targets can use this to indicate that they only
     /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
     /// By default, if a target supports the VECTOR_SHUFFLE node, all mask
     /// values are assumed to be legal.
-    virtual bool isShuffleMaskLegal(SDOperand Mask, MVT::ValueType VT) const;
+    virtual bool isShuffleMaskLegal(SDOperand Mask, MVT VT) const;
 
     /// isVectorClearMaskLegal - Similar to isShuffleMaskLegal. This is
     /// used by Targets can use this to indicate if there is a suitable
     /// VECTOR_SHUFFLE that can be used to replace a VAND with a constant
     /// pool entry.
     virtual bool isVectorClearMaskLegal(const std::vector<SDOperand> &BVOps,
-                                        MVT::ValueType EVT,
-                                        SelectionDAG &DAG) const;
+                                        MVT EVT, SelectionDAG &DAG) const;
 
     /// ShouldShrinkFPConstant - If true, then instruction selection should
     /// seek to shrink the FP constant of the specified type to a smaller type
     /// in order to save space and / or reduce runtime.
-    virtual bool ShouldShrinkFPConstant(MVT::ValueType VT) const {
+    virtual bool ShouldShrinkFPConstant(MVT VT) const {
       // Don't shrink FP constpool if SSE2 is available since cvtss2sd is more
       // expensive than a straight movsd. On the other hand, it's important to
       // shrink long double fp constant since fldt is very slow.
@@ -456,7 +455,7 @@ namespace llvm {
 
     /// isScalarFPTypeInSSEReg - Return true if the specified scalar FP type is
     /// computed in an SSE register, not on the X87 floating point stack.
-    bool isScalarFPTypeInSSEReg(MVT::ValueType VT) const {
+    bool isScalarFPTypeInSSEReg(MVT VT) const {
       return (VT == MVT::f64 && X86ScalarSSEf64) || // f64 is when SSE2
       (VT == MVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
     }

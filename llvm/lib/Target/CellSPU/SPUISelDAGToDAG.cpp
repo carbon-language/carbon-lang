@@ -110,7 +110,7 @@ namespace {
   bool
   isIntS16Immediate(ConstantSDNode *CN, short &Imm)
   {
-    MVT::ValueType vt = CN->getValueType(0);
+    MVT vt = CN->getValueType(0);
     Imm = (short) CN->getValue();
     if (vt >= MVT::i1 && vt <= MVT::i16) {
       return true;
@@ -139,7 +139,7 @@ namespace {
   static bool
   isFPS16Immediate(ConstantFPSDNode *FPN, short &Imm)
   {
-    MVT::ValueType vt = FPN->getValueType(0);
+    MVT vt = FPN->getValueType(0);
     if (vt == MVT::f32) {
       int val = FloatToBits(FPN->getValueAPF().convertToFloat());
       int sval = (int) ((val << 16) >> 16);
@@ -161,10 +161,10 @@ namespace {
   }
 
   //===------------------------------------------------------------------===//
-  //! MVT::ValueType to "useful stuff" mapping structure:
+  //! MVT to "useful stuff" mapping structure:
 
   struct valtype_map_s {
-    MVT::ValueType VT;
+    MVT VT;
     unsigned ldresult_ins;      /// LDRESULT instruction (0 = undefined)
     bool ldresult_imm;          /// LDRESULT instruction requires immediate?
     int prefslot_byte;          /// Byte offset of the "preferred" slot
@@ -189,7 +189,7 @@ namespace {
 
   const size_t n_valtype_map = sizeof(valtype_map) / sizeof(valtype_map[0]);
 
-  const valtype_map_s *getValueTypeMapEntry(MVT::ValueType VT)
+  const valtype_map_s *getValueTypeMapEntry(MVT VT)
   {
     const valtype_map_s *retval = 0;
     for (size_t i = 0; i < n_valtype_map; ++i) {
@@ -203,7 +203,7 @@ namespace {
 #ifndef NDEBUG
     if (retval == 0) {
       cerr << "SPUISelDAGToDAG.cpp: getValueTypeMapEntry returns NULL for "
-           << MVT::getValueTypeString(VT)
+           << VT.getMVTString()
            << "\n";
       abort();
     }
@@ -364,7 +364,7 @@ bool
 SPUDAGToDAGISel::SelectAFormAddr(SDOperand Op, SDOperand N, SDOperand &Base,
                     SDOperand &Index) {
   // These match the addr256k operand type:
-  MVT::ValueType OffsVT = MVT::i16;
+  MVT OffsVT = MVT::i16;
   SDOperand Zero = CurDAG->getTargetConstant(0, OffsVT);
 
   switch (N.getOpcode()) {
@@ -446,7 +446,7 @@ SPUDAGToDAGISel::DFormAddressPredicate(SDOperand Op, SDOperand N, SDOperand &Bas
                                       SDOperand &Index, int minOffset,
                                       int maxOffset) {
   unsigned Opc = N.getOpcode();
-  unsigned PtrTy = SPUtli.getPointerTy();
+  MVT PtrTy = SPUtli.getPointerTy();
 
   if (Opc == ISD::FrameIndex) {
     // Stack frame index must be less than 512 (divided by 16):
@@ -587,7 +587,7 @@ SPUDAGToDAGISel::Select(SDOperand Op) {
   unsigned Opc = N->getOpcode();
   int n_ops = -1;
   unsigned NewOpc;
-  MVT::ValueType OpVT = Op.getValueType();
+  MVT OpVT = Op.getValueType();
   SDOperand Ops[8];
 
   if (Opc >= ISD::BUILTIN_OP_END && Opc < SPUISD::FIRST_NUMBER) {
@@ -596,7 +596,7 @@ SPUDAGToDAGISel::Select(SDOperand Op) {
     // Selects to (add $sp, FI * stackSlotSize)
     int FI =
       SPUFrameInfo::FItoStackOffset(cast<FrameIndexSDNode>(N)->getIndex());
-    MVT::ValueType PtrVT = SPUtli.getPointerTy();
+    MVT PtrVT = SPUtli.getPointerTy();
 
     // Adjust stack slot to actual offset in frame:
     if (isS10Constant(FI)) {
@@ -636,7 +636,7 @@ SPUDAGToDAGISel::Select(SDOperand Op) {
     }
   } else if (Opc == SPUISD::LDRESULT) {
     // Custom select instructions for LDRESULT
-    unsigned VT = N->getValueType(0);
+    MVT VT = N->getValueType(0);
     SDOperand Arg = N->getOperand(0);
     SDOperand Chain = N->getOperand(1);
     SDNode *Result;
@@ -644,7 +644,7 @@ SPUDAGToDAGISel::Select(SDOperand Op) {
 
     if (vtm->ldresult_ins == 0) {
       cerr << "LDRESULT for unsupported type: "
-           << MVT::getValueTypeString(VT)
+           << VT.getMVTString()
            << "\n";
       abort();
     }
@@ -670,7 +670,7 @@ SPUDAGToDAGISel::Select(SDOperand Op) {
         /* || Op0.getOpcode() == SPUISD::AFormAddr) */
       // (IndirectAddr (LDRESULT, imm))
       SDOperand Op1 = Op.getOperand(1);
-      MVT::ValueType VT = Op.getValueType();
+      MVT VT = Op.getValueType();
 
       DEBUG(cerr << "CellSPU: IndirectAddr(LDRESULT, imm):\nOp0 = ");
       DEBUG(Op.getOperand(0).Val->dump(CurDAG));

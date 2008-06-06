@@ -55,7 +55,7 @@ public:
 
   virtual bool runOnFunction(Function &Fn);
 
-  unsigned MakeReg(MVT::ValueType VT);
+  unsigned MakeReg(MVT VT);
 
   virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {}
   virtual void InstructionSelectBasicBlock(SelectionDAG &SD) = 0;

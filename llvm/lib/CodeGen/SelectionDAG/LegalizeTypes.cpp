@@ -68,7 +68,7 @@ void DAGTypeLegalizer::run() {
     unsigned i = 0;
     unsigned NumResults = N->getNumValues();
     do {
-      MVT::ValueType ResultVT = N->getValueType(i);
+      MVT ResultVT = N->getValueType(i);
       switch (getTypeAction(ResultVT)) {
       default:
         assert(false && "Unknown action!");
@@ -98,7 +98,7 @@ void DAGTypeLegalizer::run() {
     unsigned NumOperands = N->getNumOperands();
     bool NeedsRevisit = false;
     for (i = 0; i != NumOperands; ++i) {
-      MVT::ValueType OpVT = N->getOperand(i).getValueType();
+      MVT OpVT = N->getOperand(i).getValueType();
       switch (getTypeAction(OpVT)) {
       default:
         assert(false && "Unknown action!");
@@ -472,13 +472,12 @@ void DAGTypeLegalizer::SetSplitOp(SDOperand Op, SDOperand Lo, SDOperand Hi) {
 
 /// BitConvertToInteger - Convert to an integer of the same size.
 SDOperand DAGTypeLegalizer::BitConvertToInteger(SDOperand Op) {
-  return DAG.getNode(ISD::BIT_CONVERT,
-                     MVT::getIntegerType(MVT::getSizeInBits(Op.getValueType())),
-                     Op);
+  unsigned BitWidth = Op.getValueType().getSizeInBits();
+  return DAG.getNode(ISD::BIT_CONVERT, MVT::getIntegerVT(BitWidth), Op);
 }
 
 SDOperand DAGTypeLegalizer::CreateStackStoreLoad(SDOperand Op, 
-                                                 MVT::ValueType DestVT) {
+                                                 MVT DestVT) {
   // Create the stack frame object.
   SDOperand FIPtr = DAG.CreateStackTemporary(DestVT);
   
@@ -490,14 +489,13 @@ SDOperand DAGTypeLegalizer::CreateStackStoreLoad(SDOperand Op,
 
 /// JoinIntegers - Build an integer with low bits Lo and high bits Hi.
 SDOperand DAGTypeLegalizer::JoinIntegers(SDOperand Lo, SDOperand Hi) {
-  MVT::ValueType LVT = Lo.getValueType();
-  MVT::ValueType HVT = Hi.getValueType();
-  MVT::ValueType NVT = MVT::getIntegerType(MVT::getSizeInBits(LVT) +
-                                           MVT::getSizeInBits(HVT));
+  MVT LVT = Lo.getValueType();
+  MVT HVT = Hi.getValueType();
+  MVT NVT = MVT::getIntegerVT(LVT.getSizeInBits() + HVT.getSizeInBits());
 
   Lo = DAG.getNode(ISD::ZERO_EXTEND, NVT, Lo);
   Hi = DAG.getNode(ISD::ANY_EXTEND, NVT, Hi);
-  Hi = DAG.getNode(ISD::SHL, NVT, Hi, DAG.getConstant(MVT::getSizeInBits(LVT),
+  Hi = DAG.getNode(ISD::SHL, NVT, Hi, DAG.getConstant(LVT.getSizeInBits(),
                                                       TLI.getShiftAmountTy()));
   return DAG.getNode(ISD::OR, NVT, Lo, Hi);
 }
@@ -505,13 +503,13 @@ SDOperand DAGTypeLegalizer::JoinIntegers(SDOperand Lo, SDOperand Hi) {
 /// SplitInteger - Return the lower LoVT bits of Op in Lo and the upper HiVT
 /// bits in Hi.
 void DAGTypeLegalizer::SplitInteger(SDOperand Op,
-                                    MVT::ValueType LoVT, MVT::ValueType HiVT,
+                                    MVT LoVT, MVT HiVT,
                                     SDOperand &Lo, SDOperand &Hi) {
-  assert(MVT::getSizeInBits(LoVT) + MVT::getSizeInBits(HiVT) ==
-         MVT::getSizeInBits(Op.getValueType()) && "Invalid integer splitting!");
+  assert(LoVT.getSizeInBits() + HiVT.getSizeInBits() ==
+         Op.getValueType().getSizeInBits() && "Invalid integer splitting!");
   Lo = DAG.getNode(ISD::TRUNCATE, LoVT, Op);
   Hi = DAG.getNode(ISD::SRL, Op.getValueType(), Op,
-                   DAG.getConstant(MVT::getSizeInBits(LoVT),
+                   DAG.getConstant(LoVT.getSizeInBits(),
                                    TLI.getShiftAmountTy()));
   Hi = DAG.getNode(ISD::TRUNCATE, HiVT, Hi);
 }
@@ -520,14 +518,13 @@ void DAGTypeLegalizer::SplitInteger(SDOperand Op,
 /// half the size of Op's.
 void DAGTypeLegalizer::SplitInteger(SDOperand Op,
                                     SDOperand &Lo, SDOperand &Hi) {
-  MVT::ValueType HalfVT =
-    MVT::getIntegerType(MVT::getSizeInBits(Op.getValueType())/2);
+  MVT HalfVT = MVT::getIntegerVT(Op.getValueType().getSizeInBits()/2);
   SplitInteger(Op, HalfVT, HalfVT, Lo, Hi);
 }
 
 /// MakeLibCall - Generate a libcall taking the given operands as arguments and
 /// returning a result of type RetVT.
-SDOperand DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, MVT::ValueType RetVT,
+SDOperand DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
                                         const SDOperand *Ops, unsigned NumOps,
                                         bool isSigned) {
   TargetLowering::ArgListTy Args;
@@ -536,7 +533,7 @@ SDOperand DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, MVT::ValueType RetVT,
   TargetLowering::ArgListEntry Entry;
   for (unsigned i = 0; i != NumOps; ++i) {
     Entry.Node = Ops[i];
-    Entry.Ty = MVT::getTypeForValueType(Entry.Node.getValueType());
+    Entry.Ty = Entry.Node.getValueType().getTypeForMVT();
     Entry.isSExt = isSigned;
     Entry.isZExt = !isSigned;
     Args.push_back(Entry);
@@ -544,7 +541,7 @@ SDOperand DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, MVT::ValueType RetVT,
   SDOperand Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
                                            TLI.getPointerTy());
 
-  const Type *RetTy = MVT::getTypeForValueType(RetVT);
+  const Type *RetTy = RetVT.getTypeForMVT();
   std::pair<SDOperand,SDOperand> CallInfo =
     TLI.LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
                     CallingConv::C, false, Callee, Args, DAG);

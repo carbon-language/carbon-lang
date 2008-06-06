@@ -139,8 +139,7 @@ const char *IA64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
   
-MVT::ValueType
-IA64TargetLowering::getSetCCResultType(const SDOperand &) const {
+MVT IA64TargetLowering::getSetCCResultType(const SDOperand &) const {
   return MVT::i1;
 }
 
@@ -181,7 +180,7 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       SDOperand newroot, argt;
       if(count < 8) { // need to fix this logic? maybe.
 
-        switch (getValueType(I->getType())) {
+        switch (getValueType(I->getType()).getSimpleVT()) {
           default:
             assert(0 && "ERROR in LowerArgs: can't lower this type of arg.\n"); 
           case MVT::f32:
@@ -286,7 +285,7 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
   // Finally, inform the code generator which regs we return values in.
   // (see the ISD::RET: case in the instruction selector)
-  switch (getValueType(F.getReturnType())) {
+  switch (getValueType(F.getReturnType()).getSimpleVT()) {
   default: assert(0 && "i have no idea where to return this type!");
   case MVT::isVoid: break;
   case MVT::i1:
@@ -347,10 +346,10 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   for (unsigned i = 0, e = Args.size(); i != e; ++i)
     {
       SDOperand Val = Args[i].Node;
-      MVT::ValueType ObjectVT = Val.getValueType();
+      MVT ObjectVT = Val.getValueType();
       SDOperand ValToStore(0, 0), ValToConvert(0, 0);
       unsigned ObjSize=8;
-      switch (ObjectVT) {
+      switch (ObjectVT.getSimpleVT()) {
       default: assert(0 && "unexpected argument type!");
       case MVT::i1:
       case MVT::i8:
@@ -442,7 +441,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   // flagged for now, but shouldn't have to be (TODO)
   unsigned seenConverts = 0;
   for (unsigned i = 0, e = RegValuesToPass.size(); i != e; ++i) {
-    if(MVT::isFloatingPoint(RegValuesToPass[i].getValueType())) {
+    if(RegValuesToPass[i].getValueType().isFloatingPoint()) {
       Chain = DAG.getCopyToReg(Chain, IntArgRegs[i], Converts[seenConverts++], 
                                InFlag);
       InFlag = Chain.getValue(1);
@@ -453,7 +452,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   unsigned usedFPArgs = 0;
   for (unsigned i = 0, e = RegValuesToPass.size(); i != e; ++i) {
     Chain = DAG.getCopyToReg(Chain,
-      MVT::isInteger(RegValuesToPass[i].getValueType()) ?
+      RegValuesToPass[i].getValueType().isInteger() ?
         IntArgRegs[i] : FPArgRegs[usedFPArgs++], RegValuesToPass[i], InFlag);
     InFlag = Chain.getValue(1);
   }
@@ -466,7 +465,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   }
 */
 
-  std::vector<MVT::ValueType> NodeTys;
+  std::vector<MVT> NodeTys;
   std::vector<SDOperand> CallOperands;
   NodeTys.push_back(MVT::Other);   // Returns a chain
   NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
@@ -492,14 +491,14 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   Chain = DAG.getCopyToReg(Chain, IA64::rp, RPBeforeCall, InFlag);
   InFlag = Chain.getValue(1);
  
-  std::vector<MVT::ValueType> RetVals;
+  std::vector<MVT> RetVals;
   RetVals.push_back(MVT::Other);
   RetVals.push_back(MVT::Flag);
  
-  MVT::ValueType RetTyVT = getValueType(RetTy);
+  MVT RetTyVT = getValueType(RetTy);
   SDOperand RetVal;
   if (RetTyVT != MVT::isVoid) {
-    switch (RetTyVT) {
+    switch (RetTyVT.getSimpleVT()) {
     default: assert(0 && "Unknown value type to return!");
     case MVT::i1: { // bools are just like other integers (returned in r8)
       // we *could* fall through to the truncate below, but this saves a
@@ -573,8 +572,8 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       return DAG.getNode(IA64ISD::RET_FLAG, MVT::Other, AR_PFSVal);
     case 3: {
       // Copy the result into the output register & restore ar.pfs
-      MVT::ValueType ArgVT = Op.getOperand(1).getValueType();
-      unsigned ArgReg = MVT::isInteger(ArgVT) ? IA64::r8 : IA64::F8;
+      MVT ArgVT = Op.getOperand(1).getValueType();
+      unsigned ArgReg = ArgVT.isInteger() ? IA64::r8 : IA64::F8;
 
       AR_PFSVal = DAG.getCopyFromReg(Op.getOperand(0), VirtGPR, MVT::i64);
       Copy = DAG.getCopyToReg(AR_PFSVal.getValue(1), ArgReg, Op.getOperand(1),
@@ -588,13 +587,13 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return SDOperand();
   }
   case ISD::VAARG: {
-    MVT::ValueType VT = getPointerTy();
+    MVT VT = getPointerTy();
     const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
     SDOperand VAList = DAG.getLoad(VT, Op.getOperand(0), Op.getOperand(1), 
                                    SV, 0);
     // Increment the pointer, VAList, to the next vaarg
     SDOperand VAIncr = DAG.getNode(ISD::ADD, VT, VAList, 
-                                   DAG.getConstant(MVT::getSizeInBits(VT)/8, 
+                                   DAG.getConstant(VT.getSizeInBits()/8,
                                                    VT));
     // Store the incremented VAList to the legalized pointer
     VAIncr = DAG.getStore(VAList.getValue(1), VAIncr,

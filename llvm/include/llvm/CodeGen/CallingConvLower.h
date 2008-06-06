@@ -49,14 +49,14 @@ private:
   LocInfo HTP : 7;
   
   /// ValVT - The type of the value being assigned.
-  MVT::ValueType ValVT;
+  MVT ValVT;
 
   /// LocVT - The type of the location being assigned to.
-  MVT::ValueType LocVT;
+  MVT LocVT;
 public:
     
-  static CCValAssign getReg(unsigned ValNo, MVT::ValueType ValVT,
-                            unsigned RegNo, MVT::ValueType LocVT,
+  static CCValAssign getReg(unsigned ValNo, MVT ValVT,
+                            unsigned RegNo, MVT LocVT,
                             LocInfo HTP) {
     CCValAssign Ret;
     Ret.ValNo = ValNo;
@@ -67,8 +67,8 @@ public:
     Ret.LocVT = LocVT;
     return Ret;
   }
-  static CCValAssign getMem(unsigned ValNo, MVT::ValueType ValVT,
-                            unsigned Offset, MVT::ValueType LocVT,
+  static CCValAssign getMem(unsigned ValNo, MVT ValVT,
+                            unsigned Offset, MVT LocVT,
                             LocInfo HTP) {
     CCValAssign Ret;
     Ret.ValNo = ValNo;
@@ -81,14 +81,14 @@ public:
   }
   
   unsigned getValNo() const { return ValNo; }
-  MVT::ValueType getValVT() const { return ValVT; }
+  MVT getValVT() const { return ValVT; }
 
   bool isRegLoc() const { return !isMem; }
   bool isMemLoc() const { return isMem; }
   
   unsigned getLocReg() const { assert(isRegLoc()); return Loc; }
   unsigned getLocMemOffset() const { assert(isMemLoc()); return Loc; }
-  MVT::ValueType getLocVT() const { return LocVT; }
+  MVT getLocVT() const { return LocVT; }
   
   LocInfo getLocInfo() const { return HTP; }
 };
@@ -96,8 +96,8 @@ public:
 
 /// CCAssignFn - This function assigns a location for Val, updating State to
 /// reflect the change.
-typedef bool CCAssignFn(unsigned ValNo, MVT::ValueType ValVT,
-                        MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,
+typedef bool CCAssignFn(unsigned ValNo, MVT ValVT,
+                        MVT LocVT, CCValAssign::LocInfo LocInfo,
                         ISD::ArgFlagsTy ArgFlags, CCState &State);
 
   
@@ -217,8 +217,8 @@ public:
   // HandleByVal - Allocate a stack slot large enough to pass an argument by
   // value. The size and alignment information of the argument is encoded in its
   // parameter attribute.
-  void HandleByVal(unsigned ValNo, MVT::ValueType ValVT,
-                   MVT::ValueType LocVT, CCValAssign::LocInfo LocInfo,
+  void HandleByVal(unsigned ValNo, MVT ValVT,
+                   MVT LocVT, CCValAssign::LocInfo LocInfo,
                    int MinSize, int MinAlign, ISD::ArgFlagsTy ArgFlags);
 
 private:

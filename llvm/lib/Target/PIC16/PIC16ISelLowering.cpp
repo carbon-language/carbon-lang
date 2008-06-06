@@ -204,7 +204,7 @@ SDOperand PIC16TargetLowering:: LowerOperation(SDOperand Op, SelectionDAG &DAG)
 
 SDOperand PIC16TargetLowering::LowerBR_CC(SDOperand Op, SelectionDAG &DAG) 
 {
-  MVT::ValueType VT = Op.getValueType();
+  MVT VT = Op.getValueType();
   SDOperand Chain = Op.getOperand(0);
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(1))->get();
   SDOperand LHS = Op.getOperand(2);
@@ -278,7 +278,7 @@ SDOperand PIC16TargetLowering::LowerBR_CC(SDOperand Op, SelectionDAG &DAG)
 SDOperand
 PIC16TargetLowering::LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) 
 {
-  MVT::ValueType PtrVT = getPointerTy();
+  MVT PtrVT = getPointerTy();
   GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
   GlobalValue *GV = GSDN->getGlobal();
 
@@ -626,7 +626,10 @@ SDOperand PIC16TargetLowering::PerformDAGCombine(SDNode *N,
         return Stores[0];
       }
 
-      switch(Src.getValueType()) {
+      switch(Src.getValueType().getSimpleVT()) {
+        default:
+          assert(false && "Invalid value type!");
+
         case MVT::i8:  
           break;
 

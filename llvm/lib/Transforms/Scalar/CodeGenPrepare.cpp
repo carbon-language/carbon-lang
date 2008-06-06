@@ -333,11 +333,11 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
 /// Return true if any changes are made.
 static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
   // If this is a noop copy, 
-  MVT::ValueType SrcVT = TLI.getValueType(CI->getOperand(0)->getType());
-  MVT::ValueType DstVT = TLI.getValueType(CI->getType());
+  MVT SrcVT = TLI.getValueType(CI->getOperand(0)->getType());
+  MVT DstVT = TLI.getValueType(CI->getType());
   
   // This is an fp<->int conversion?
-  if (MVT::isInteger(SrcVT) != MVT::isInteger(DstVT))
+  if (SrcVT.isInteger() != DstVT.isInteger())
     return false;
   
   // If this is an extension, it will be a zero or sign extension, which

@@ -1331,7 +1331,7 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID,
 
   // Note that "arg#0" is the return type.
   for (unsigned ArgNo = 0; ArgNo < Count; ++ArgNo) {
-    MVT::ValueType VT = va_arg(VA, MVT::ValueType);
+    int VT = va_arg(VA, int); // An MVT::SimpleValueType when non-negative.
 
     if (VT == MVT::isVoid && ArgNo > 0) {
       if (!FTy->isVarArg())
@@ -1351,8 +1351,8 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID,
       EltTy = VTy->getElementType();
       NumElts = VTy->getNumElements();
     }
-    
-    if ((int)VT < 0) {
+
+    if (VT < 0) {
       int Match = ~VT;
       if (Match == 0) {
         if (Ty != FTy->getReturnType()) {
@@ -1403,7 +1403,7 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID,
       Suffix += ".";
       if (EltTy != Ty)
         Suffix += "v" + utostr(NumElts);
-      Suffix += MVT::getValueTypeString(MVT::getValueType(EltTy));
+      Suffix += MVT::getMVT(EltTy).getMVTString();
     } else if (VT == MVT::iPTR) {
       if (!isa<PointerType>(Ty)) {
         if (ArgNo == 0)
@@ -1414,19 +1414,20 @@ void Verifier::VerifyIntrinsicPrototype(Intrinsic::ID ID,
                       "pointer and a pointer is required.", F);
         break;
       }
-    } else if (MVT::isVector(VT)) {
+    } else if (MVT((MVT::SimpleValueType)VT).isVector()) {
+      MVT VVT = MVT((MVT::SimpleValueType)VT);
       // If this is a vector argument, verify the number and type of elements.
-      if (MVT::getVectorElementType(VT) != MVT::getValueType(EltTy)) {
+      if (VVT.getVectorElementType() != MVT::getMVT(EltTy)) {
         CheckFailed("Intrinsic prototype has incorrect vector element type!",
                     F);
         break;
       }
-      if (MVT::getVectorNumElements(VT) != NumElts) {
+      if (VVT.getVectorNumElements() != NumElts) {
         CheckFailed("Intrinsic prototype has incorrect number of "
                     "vector elements!",F);
         break;
       }
-    } else if (MVT::getTypeForValueType(VT) != EltTy) {
+    } else if (MVT((MVT::SimpleValueType)VT).getTypeForMVT() != EltTy) {
       if (ArgNo == 0)
         CheckFailed("Intrinsic prototype has incorrect result type!", F);
       else

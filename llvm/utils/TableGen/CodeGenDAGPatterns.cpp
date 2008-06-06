@@ -27,9 +27,9 @@ using namespace llvm;
 /// FilterVTs - Filter a list of VT's according to a predicate.
 ///
 template<typename T>
-static std::vector<MVT::ValueType> 
-FilterVTs(const std::vector<MVT::ValueType> &InVTs, T Filter) {
-  std::vector<MVT::ValueType> Result;
+static std::vector<MVT::SimpleValueType>
+FilterVTs(const std::vector<MVT::SimpleValueType> &InVTs, T Filter) {
+  std::vector<MVT::SimpleValueType> Result;
   for (unsigned i = 0, e = InVTs.size(); i != e; ++i)
     if (Filter(InVTs[i]))
       Result.push_back(InVTs[i]);
@@ -41,17 +41,29 @@ static std::vector<unsigned char>
 FilterEVTs(const std::vector<unsigned char> &InVTs, T Filter) {
   std::vector<unsigned char> Result;
   for (unsigned i = 0, e = InVTs.size(); i != e; ++i)
-    if (Filter((MVT::ValueType)InVTs[i]))
+    if (Filter((MVT::SimpleValueType)InVTs[i]))
       Result.push_back(InVTs[i]);
   return Result;
 }
 
 static std::vector<unsigned char>
-ConvertVTs(const std::vector<MVT::ValueType> &InVTs) {
+ConvertVTs(const std::vector<MVT::SimpleValueType> &InVTs) {
   std::vector<unsigned char> Result;
   for (unsigned i = 0, e = InVTs.size(); i != e; ++i)
     Result.push_back(InVTs[i]);
   return Result;
+}
+
+static inline bool isInteger(MVT::SimpleValueType VT) {
+  return MVT(VT).isInteger();
+}
+
+static inline bool isFloatingPoint(MVT::SimpleValueType VT) {
+  return MVT(VT).isFloatingPoint();
+}
+
+static inline bool isVector(MVT::SimpleValueType VT) {
+  return MVT(VT).isVector();
 }
 
 static bool LHSIsSubsetOfRHS(const std::vector<unsigned char> &LHS,
@@ -66,7 +78,7 @@ static bool LHSIsSubsetOfRHS(const std::vector<unsigned char> &LHS,
 /// isExtIntegerVT - Return true if the specified extended value type vector
 /// contains isInt or an integer value type.
 namespace llvm {
-namespace MVT {
+namespace EMVT {
 bool isExtIntegerInVTs(const std::vector<unsigned char> &EVTs) {
   assert(!EVTs.empty() && "Cannot check for integer in empty ExtVT list!");
   return EVTs[0] == isInt || !(FilterEVTs(EVTs, isInteger).empty());
@@ -78,7 +90,7 @@ bool isExtFloatingPointInVTs(const std::vector<unsigned char> &EVTs) {
   assert(!EVTs.empty() && "Cannot check for integer in empty ExtVT list!");
   return EVTs[0] == isFP || !(FilterEVTs(EVTs, isFloatingPoint).empty());
 }
-} // end namespace MVT.
+} // end namespace EMVT.
 } // end namespace llvm.
 
 
@@ -223,23 +235,23 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
   }
   case SDTCisInt: {
     // If there is only one integer type supported, this must be it.
-    std::vector<MVT::ValueType> IntVTs =
-      FilterVTs(CGT.getLegalValueTypes(), MVT::isInteger);
+    std::vector<MVT::SimpleValueType> IntVTs =
+      FilterVTs(CGT.getLegalValueTypes(), isInteger);
 
     // If we found exactly one supported integer type, apply it.
     if (IntVTs.size() == 1)
       return NodeToApply->UpdateNodeType(IntVTs[0], TP);
-    return NodeToApply->UpdateNodeType(MVT::isInt, TP);
+    return NodeToApply->UpdateNodeType(EMVT::isInt, TP);
   }
   case SDTCisFP: {
     // If there is only one FP type supported, this must be it.
-    std::vector<MVT::ValueType> FPVTs =
-      FilterVTs(CGT.getLegalValueTypes(), MVT::isFloatingPoint);
+    std::vector<MVT::SimpleValueType> FPVTs =
+      FilterVTs(CGT.getLegalValueTypes(), isFloatingPoint);
         
     // If we found exactly one supported FP type, apply it.
     if (FPVTs.size() == 1)
       return NodeToApply->UpdateNodeType(FPVTs[0], TP);
-    return NodeToApply->UpdateNodeType(MVT::isFP, TP);
+    return NodeToApply->UpdateNodeType(EMVT::isFP, TP);
   }
   case SDTCisSameAs: {
     TreePatternNode *OtherNode =
@@ -255,9 +267,9 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
         !static_cast<DefInit*>(NodeToApply->getLeafValue())->getDef()
                ->isSubClassOf("ValueType"))
       TP.error(N->getOperator()->getName() + " expects a VT operand!");
-    MVT::ValueType VT =
+    MVT::SimpleValueType VT =
      getValueType(static_cast<DefInit*>(NodeToApply->getLeafValue())->getDef());
-    if (!MVT::isInteger(VT))
+    if (!isInteger(VT))
       TP.error(N->getOperator()->getName() + " VT operand must be integer!");
     
     TreePatternNode *OtherNode =
@@ -265,7 +277,7 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
     
     // It must be integer.
     bool MadeChange = false;
-    MadeChange |= OtherNode->UpdateNodeType(MVT::isInt, TP);
+    MadeChange |= OtherNode->UpdateNodeType(EMVT::isInt, TP);
     
     // This code only handles nodes that have one type set.  Assert here so
     // that we can change this if we ever need to deal with multiple value
@@ -285,26 +297,26 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
     // This code does not currently handle nodes which have multiple types,
     // where some types are integer, and some are fp.  Assert that this is not
     // the case.
-    assert(!(MVT::isExtIntegerInVTs(NodeToApply->getExtTypes()) &&
-             MVT::isExtFloatingPointInVTs(NodeToApply->getExtTypes())) &&
-           !(MVT::isExtIntegerInVTs(BigOperand->getExtTypes()) &&
-             MVT::isExtFloatingPointInVTs(BigOperand->getExtTypes())) &&
+    assert(!(EMVT::isExtIntegerInVTs(NodeToApply->getExtTypes()) &&
+             EMVT::isExtFloatingPointInVTs(NodeToApply->getExtTypes())) &&
+           !(EMVT::isExtIntegerInVTs(BigOperand->getExtTypes()) &&
+             EMVT::isExtFloatingPointInVTs(BigOperand->getExtTypes())) &&
            "SDTCisOpSmallerThanOp does not handle mixed int/fp types!");
-    if (MVT::isExtIntegerInVTs(NodeToApply->getExtTypes()))
-      MadeChange |= BigOperand->UpdateNodeType(MVT::isInt, TP);
-    else if (MVT::isExtFloatingPointInVTs(NodeToApply->getExtTypes()))
-      MadeChange |= BigOperand->UpdateNodeType(MVT::isFP, TP);
-    if (MVT::isExtIntegerInVTs(BigOperand->getExtTypes()))
-      MadeChange |= NodeToApply->UpdateNodeType(MVT::isInt, TP);
-    else if (MVT::isExtFloatingPointInVTs(BigOperand->getExtTypes()))
-      MadeChange |= NodeToApply->UpdateNodeType(MVT::isFP, TP);
+    if (EMVT::isExtIntegerInVTs(NodeToApply->getExtTypes()))
+      MadeChange |= BigOperand->UpdateNodeType(EMVT::isInt, TP);
+    else if (EMVT::isExtFloatingPointInVTs(NodeToApply->getExtTypes()))
+      MadeChange |= BigOperand->UpdateNodeType(EMVT::isFP, TP);
+    if (EMVT::isExtIntegerInVTs(BigOperand->getExtTypes()))
+      MadeChange |= NodeToApply->UpdateNodeType(EMVT::isInt, TP);
+    else if (EMVT::isExtFloatingPointInVTs(BigOperand->getExtTypes()))
+      MadeChange |= NodeToApply->UpdateNodeType(EMVT::isFP, TP);
 
-    std::vector<MVT::ValueType> VTs = CGT.getLegalValueTypes();
-    
-    if (MVT::isExtIntegerInVTs(NodeToApply->getExtTypes())) {
-      VTs = FilterVTs(VTs, MVT::isInteger);
-    } else if (MVT::isExtFloatingPointInVTs(NodeToApply->getExtTypes())) {
-      VTs = FilterVTs(VTs, MVT::isFloatingPoint);
+    std::vector<MVT::SimpleValueType> VTs = CGT.getLegalValueTypes();
+
+    if (EMVT::isExtIntegerInVTs(NodeToApply->getExtTypes())) {
+      VTs = FilterVTs(VTs, isInteger);
+    } else if (EMVT::isExtFloatingPointInVTs(NodeToApply->getExtTypes())) {
+      VTs = FilterVTs(VTs, isFloatingPoint);
     } else {
       VTs.clear();
     }
@@ -331,11 +343,12 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
       getOperandNum(x.SDTCisIntVectorOfSameSize_Info.OtherOperandNum,
                     N, NumResults);
     if (OtherOperand->hasTypeSet()) {
-      if (!MVT::isVector(OtherOperand->getTypeNum(0)))
+      if (!isVector(OtherOperand->getTypeNum(0)))
         TP.error(N->getOperator()->getName() + " VT operand must be a vector!");
-      MVT::ValueType IVT = OtherOperand->getTypeNum(0);
-      IVT = MVT::getIntVectorWithNumElements(MVT::getVectorNumElements(IVT));
-      return NodeToApply->UpdateNodeType(IVT, TP);
+      MVT IVT = OtherOperand->getTypeNum(0);
+      unsigned NumElements = IVT.getVectorNumElements();
+      IVT = MVT::getIntVectorWithNumElements(NumElements);
+      return NodeToApply->UpdateNodeType(IVT.getSimpleVT(), TP);
     }
     return false;
   }
@@ -344,11 +357,11 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
       getOperandNum(x.SDTCisIntVectorOfSameSize_Info.OtherOperandNum,
                     N, NumResults);
     if (OtherOperand->hasTypeSet()) {
-      if (!MVT::isVector(OtherOperand->getTypeNum(0)))
+      if (!isVector(OtherOperand->getTypeNum(0)))
         TP.error(N->getOperator()->getName() + " VT operand must be a vector!");
-      MVT::ValueType IVT = OtherOperand->getTypeNum(0);
-      IVT = MVT::getVectorElementType(IVT);
-      return NodeToApply->UpdateNodeType(IVT, TP);
+      MVT IVT = OtherOperand->getTypeNum(0);
+      IVT = IVT.getVectorElementType();
+      return NodeToApply->UpdateNodeType(IVT.getSimpleVT(), TP);
     }
     return false;
   }
@@ -421,7 +434,7 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
                                      TreePattern &TP) {
   assert(!ExtVTs.empty() && "Cannot update node type with empty type vector!");
   
-  if (ExtVTs[0] == MVT::isUnknown || LHSIsSubsetOfRHS(getExtTypes(), ExtVTs)) 
+  if (ExtVTs[0] == EMVT::isUnknown || LHSIsSubsetOfRHS(getExtTypes(), ExtVTs))
     return false;
   if (isTypeCompletelyUnknown() || LHSIsSubsetOfRHS(ExtVTs, getExtTypes())) {
     setTypes(ExtVTs);
@@ -429,10 +442,10 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
   }
 
   if (getExtTypeNum(0) == MVT::iPTR) {
-    if (ExtVTs[0] == MVT::iPTR || ExtVTs[0] == MVT::isInt)
+    if (ExtVTs[0] == MVT::iPTR || ExtVTs[0] == EMVT::isInt)
       return false;
-    if (MVT::isExtIntegerInVTs(ExtVTs)) {
-      std::vector<unsigned char> FVTs = FilterEVTs(ExtVTs, MVT::isInteger);
+    if (EMVT::isExtIntegerInVTs(ExtVTs)) {
+      std::vector<unsigned char> FVTs = FilterEVTs(ExtVTs, isInteger);
       if (FVTs.size()) {
         setTypes(ExtVTs);
         return true;
@@ -440,17 +453,17 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
     }
   }
   
-  if (ExtVTs[0] == MVT::isInt && MVT::isExtIntegerInVTs(getExtTypes())) {
+  if (ExtVTs[0] == EMVT::isInt && EMVT::isExtIntegerInVTs(getExtTypes())) {
     assert(hasTypeSet() && "should be handled above!");
-    std::vector<unsigned char> FVTs = FilterEVTs(getExtTypes(), MVT::isInteger);
+    std::vector<unsigned char> FVTs = FilterEVTs(getExtTypes(), isInteger);
     if (getExtTypes() == FVTs)
       return false;
     setTypes(FVTs);
     return true;
   }
-  if (ExtVTs[0] == MVT::iPTR && MVT::isExtIntegerInVTs(getExtTypes())) {
+  if (ExtVTs[0] == MVT::iPTR && EMVT::isExtIntegerInVTs(getExtTypes())) {
     //assert(hasTypeSet() && "should be handled above!");
-    std::vector<unsigned char> FVTs = FilterEVTs(getExtTypes(), MVT::isInteger);
+    std::vector<unsigned char> FVTs = FilterEVTs(getExtTypes(), isInteger);
     if (getExtTypes() == FVTs)
       return false;
     if (FVTs.size()) {
@@ -458,10 +471,10 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
       return true;
     }
   }      
-  if (ExtVTs[0] == MVT::isFP  && MVT::isExtFloatingPointInVTs(getExtTypes())) {
+  if (ExtVTs[0] == EMVT::isFP  && EMVT::isExtFloatingPointInVTs(getExtTypes())) {
     assert(hasTypeSet() && "should be handled above!");
     std::vector<unsigned char> FVTs =
-      FilterEVTs(getExtTypes(), MVT::isFloatingPoint);
+      FilterEVTs(getExtTypes(), isFloatingPoint);
     if (getExtTypes() == FVTs)
       return false;
     setTypes(FVTs);
@@ -473,12 +486,14 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
   //
   // Similarly, we should probably set the type here to the intersection of
   // {isInt|isFP} and ExtVTs
-  if ((getExtTypeNum(0) == MVT::isInt && MVT::isExtIntegerInVTs(ExtVTs)) ||
-      (getExtTypeNum(0) == MVT::isFP  && MVT::isExtFloatingPointInVTs(ExtVTs))){
+  if ((getExtTypeNum(0) == EMVT::isInt &&
+       EMVT::isExtIntegerInVTs(ExtVTs)) ||
+      (getExtTypeNum(0) == EMVT::isFP &&
+       EMVT::isExtFloatingPointInVTs(ExtVTs))) {
     setTypes(ExtVTs);
     return true;
   }
-  if (getExtTypeNum(0) == MVT::isInt && ExtVTs[0] == MVT::iPTR) {
+  if (getExtTypeNum(0) == EMVT::isInt && ExtVTs[0] == MVT::iPTR) {
     setTypes(ExtVTs);
     return true;
   }
@@ -506,9 +521,9 @@ void TreePatternNode::print(std::ostream &OS) const {
   // nodes that are multiply typed.
   switch (getExtTypeNum(0)) {
   case MVT::Other: OS << ":Other"; break;
-  case MVT::isInt: OS << ":isInt"; break;
-  case MVT::isFP : OS << ":isFP"; break;
-  case MVT::isUnknown: ; /*OS << ":?";*/ break;
+  case EMVT::isInt: OS << ":isInt"; break;
+  case EMVT::isFP : OS << ":isFP"; break;
+  case EMVT::isUnknown: ; /*OS << ":?";*/ break;
   case MVT::iPTR:  OS << ":iPTR"; break;
   default: {
     std::string VTName = llvm::getName(getTypeNum(0));
@@ -672,7 +687,7 @@ TreePatternNode *TreePatternNode::InlinePatternFragments(TreePattern &TP) {
 static std::vector<unsigned char> getImplicitType(Record *R, bool NotRegisters,
                                       TreePattern &TP) {
   // Some common return values
-  std::vector<unsigned char> Unknown(1, MVT::isUnknown);
+  std::vector<unsigned char> Unknown(1, EMVT::isUnknown);
   std::vector<unsigned char> Other(1, MVT::Other);
 
   // Check to see if this is a register or a register class...
@@ -740,27 +755,29 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       return UpdateNodeType(getImplicitType(DI->getDef(), NotRegisters, TP),TP);
     } else if (IntInit *II = dynamic_cast<IntInit*>(getLeafValue())) {
       // Int inits are always integers. :)
-      bool MadeChange = UpdateNodeType(MVT::isInt, TP);
+      bool MadeChange = UpdateNodeType(EMVT::isInt, TP);
       
       if (hasTypeSet()) {
         // At some point, it may make sense for this tree pattern to have
         // multiple types.  Assert here that it does not, so we revisit this
         // code when appropriate.
         assert(getExtTypes().size() >= 1 && "TreePattern doesn't have a type!");
-        MVT::ValueType VT = getTypeNum(0);
+        MVT::SimpleValueType VT = getTypeNum(0);
         for (unsigned i = 1, e = getExtTypes().size(); i != e; ++i)
           assert(getTypeNum(i) == VT && "TreePattern has too many types!");
         
         VT = getTypeNum(0);
         if (VT != MVT::iPTR) {
-          unsigned Size = MVT::getSizeInBits(VT);
+          unsigned Size = MVT(VT).getSizeInBits();
           // Make sure that the value is representable for this type.
           if (Size < 32) {
             int Val = (II->getValue() << (32-Size)) >> (32-Size);
             if (Val != II->getValue()) {
               // If sign-extended doesn't fit, does it fit as unsigned?
-              unsigned ValueMask = unsigned(MVT::getIntVTBitMask(VT));
-              unsigned UnsignedVal = unsigned(II->getValue());
+              unsigned ValueMask;
+              unsigned UnsignedVal;
+              ValueMask = unsigned(MVT(VT).getIntegerVTBitMask());
+              UnsignedVal = unsigned(II->getValue());
 
               if ((ValueMask & UnsignedVal) != UnsignedVal) {
                 TP.error("Integer value '" + itostr(II->getValue())+
@@ -803,10 +820,10 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     return MadeChange;
   } else if (const CodeGenIntrinsic *Int = getIntrinsicInfo(CDP)) {
     bool MadeChange = false;
-    
+
     // Apply the result type to the node.
     MadeChange = UpdateNodeType(Int->ArgVTs[0], TP);
-    
+
     if (getNumChildren() != Int->ArgVTs.size())
       TP.error("Intrinsic '" + Int->Name + "' expects " +
                utostr(Int->ArgVTs.size()-1) + " operands, not " +
@@ -816,7 +833,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     MadeChange |= getChild(0)->UpdateNodeType(MVT::iPTR, TP);
     
     for (unsigned i = 1, e = getNumChildren(); i != e; ++i) {
-      MVT::ValueType OpVT = Int->ArgVTs[i];
+      MVT::SimpleValueType OpVT = Int->ArgVTs[i];
       MadeChange |= getChild(i)->UpdateNodeType(OpVT, TP);
       MadeChange |= getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
     }
@@ -838,11 +855,11 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     if (getOperator()->getName() == "vector_shuffle" &&
         getChild(2)->getOperator()->getName() == "build_vector") {
       TreePatternNode *BV = getChild(2);
-      const std::vector<MVT::ValueType> &LegalVTs
+      const std::vector<MVT::SimpleValueType> &LegalVTs
         = CDP.getTargetInfo().getLegalValueTypes();
-      MVT::ValueType LegalIntVT = MVT::Other;
+      MVT::SimpleValueType LegalIntVT = MVT::Other;
       for (unsigned i = 0, e = LegalVTs.size(); i != e; ++i)
-        if (MVT::isInteger(LegalVTs[i]) && !MVT::isVector(LegalVTs[i])) {
+        if (isInteger(LegalVTs[i]) && !isVector(LegalVTs[i])) {
           LegalIntVT = LegalVTs[i];
           break;
         }
@@ -874,7 +891,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
         MadeChange = UpdateNodeType(VT, TP);
       } else if (ResultNode->getName() == "unknown") {
         std::vector<unsigned char> VT;
-        VT.push_back(MVT::isUnknown);
+        VT.push_back(EMVT::isUnknown);
         MadeChange = UpdateNodeType(VT, TP);
       } else {
         assert(ResultNode->isSubClassOf("RegisterClass") &&
@@ -903,7 +920,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
         TP.error("Instruction '" + getOperator()->getName() +
                  "' expects more operands than were provided.");
       
-      MVT::ValueType VT;
+      MVT::SimpleValueType VT;
       TreePatternNode *Child = getChild(ChildNo++);
       if (OperandNode->isSubClassOf("RegisterClass")) {
         const CodeGenRegisterClass &RC = 
@@ -915,7 +932,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       } else if (OperandNode->getName() == "ptr_rc") {
         MadeChange |= Child->UpdateNodeType(MVT::iPTR, TP);
       } else if (OperandNode->getName() == "unknown") {
-        MadeChange |= Child->UpdateNodeType(MVT::isUnknown, TP);
+        MadeChange |= Child->UpdateNodeType(EMVT::isUnknown, TP);
       } else {
         assert(0 && "Unknown operand type!");
         abort();

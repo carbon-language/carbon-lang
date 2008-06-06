@@ -336,7 +336,7 @@ std::string Intrinsic::getName(ID id, const Type **Tys, unsigned numTys) {
   std::string Result(Table[id]);
   for (unsigned i = 0; i < numTys; ++i) 
     if (Tys[i])
-      Result += "." + MVT::getValueTypeString(MVT::getValueType(Tys[i]));
+      Result += "." + MVT::getMVT(Tys[i]).getMVTString();
   return Result;
 }
 

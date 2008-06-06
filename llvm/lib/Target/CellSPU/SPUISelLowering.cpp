@@ -38,9 +38,9 @@ using namespace llvm;
 namespace {
   std::map<unsigned, const char *> node_names;
 
-  //! MVT::ValueType mapping to useful data for Cell SPU
+  //! MVT mapping to useful data for Cell SPU
   struct valtype_map_s {
-    const MVT::ValueType        valtype;
+    const MVT        valtype;
     const int                   prefslot_byte;
   };
   
@@ -57,7 +57,7 @@ namespace {
 
   const size_t n_valtype_map = sizeof(valtype_map) / sizeof(valtype_map[0]);
 
-  const valtype_map_s *getValueTypeMapEntry(MVT::ValueType VT) {
+  const valtype_map_s *getValueTypeMapEntry(MVT VT) {
     const valtype_map_s *retval = 0;
 
     for (size_t i = 0; i < n_valtype_map; ++i) {
@@ -70,7 +70,7 @@ namespace {
 #ifndef NDEBUG
     if (retval == 0) {
       cerr << "getValueTypeMapEntry returns NULL for "
-           << MVT::getValueTypeString(VT)
+           << VT.getMVTString()
            << "\n";
       abort();
     }
@@ -162,8 +162,10 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // SPU's loads and stores have to be custom lowered:
   for (unsigned sctype = (unsigned) MVT::i1; sctype < (unsigned) MVT::f128;
        ++sctype) {
-    setOperationAction(ISD::LOAD, sctype, Custom);
-    setOperationAction(ISD::STORE, sctype, Custom);
+    MVT VT = (MVT::SimpleValueType)sctype;
+
+    setOperationAction(ISD::LOAD, VT, Custom);
+    setOperationAction(ISD::STORE, VT, Custom);
   }
 
   // Custom lower BRCOND for i1, i8 to "promote" the result to
@@ -296,9 +298,11 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // appropriate instructions to materialize the address.
   for (unsigned sctype = (unsigned) MVT::i1; sctype < (unsigned) MVT::f128;
        ++sctype) {
-    setOperationAction(ISD::GlobalAddress, sctype, Custom);
-    setOperationAction(ISD::ConstantPool,  sctype, Custom);
-    setOperationAction(ISD::JumpTable,     sctype, Custom);
+    MVT VT = (MVT::SimpleValueType)sctype;
+
+    setOperationAction(ISD::GlobalAddress, VT, Custom);
+    setOperationAction(ISD::ConstantPool,  VT, Custom);
+    setOperationAction(ISD::JumpTable,     VT, Custom);
   }
 
   // RET must be custom lowered, to meet ABI requirements
@@ -335,36 +339,38 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   addRegisterClass(MVT::v4f32, SPU::VECREGRegisterClass);
   addRegisterClass(MVT::v2f64, SPU::VECREGRegisterClass);
 
-  for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-       VT <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++VT) {
-    // add/sub are legal for all supported vector VT's.
-    setOperationAction(ISD::ADD , (MVT::ValueType)VT, Legal);
-    setOperationAction(ISD::SUB , (MVT::ValueType)VT, Legal);
-    // mul has to be custom lowered.
-    setOperationAction(ISD::MUL , (MVT::ValueType)VT, Custom);
+  for (unsigned i = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
+       i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++i) {
+    MVT VT = (MVT::SimpleValueType)i;
 
-    setOperationAction(ISD::AND   , (MVT::ValueType)VT, Legal);
-    setOperationAction(ISD::OR    , (MVT::ValueType)VT, Legal);
-    setOperationAction(ISD::XOR   , (MVT::ValueType)VT, Legal);
-    setOperationAction(ISD::LOAD  , (MVT::ValueType)VT, Legal);
-    setOperationAction(ISD::SELECT, (MVT::ValueType)VT, Legal);
-    setOperationAction(ISD::STORE,  (MVT::ValueType)VT, Legal);
+    // add/sub are legal for all supported vector VT's.
+    setOperationAction(ISD::ADD , VT, Legal);
+    setOperationAction(ISD::SUB , VT, Legal);
+    // mul has to be custom lowered.
+    setOperationAction(ISD::MUL , VT, Custom);
+
+    setOperationAction(ISD::AND   , VT, Legal);
+    setOperationAction(ISD::OR    , VT, Legal);
+    setOperationAction(ISD::XOR   , VT, Legal);
+    setOperationAction(ISD::LOAD  , VT, Legal);
+    setOperationAction(ISD::SELECT, VT, Legal);
+    setOperationAction(ISD::STORE,  VT, Legal);
     
     // These operations need to be expanded:
-    setOperationAction(ISD::SDIV, (MVT::ValueType)VT, Expand);
-    setOperationAction(ISD::SREM, (MVT::ValueType)VT, Expand);
-    setOperationAction(ISD::UDIV, (MVT::ValueType)VT, Expand);
-    setOperationAction(ISD::UREM, (MVT::ValueType)VT, Expand);
-    setOperationAction(ISD::FDIV, (MVT::ValueType)VT, Custom);
+    setOperationAction(ISD::SDIV, VT, Expand);
+    setOperationAction(ISD::SREM, VT, Expand);
+    setOperationAction(ISD::UDIV, VT, Expand);
+    setOperationAction(ISD::UREM, VT, Expand);
+    setOperationAction(ISD::FDIV, VT, Custom);
 
     // Custom lower build_vector, constant pool spills, insert and
     // extract vector elements:
-    setOperationAction(ISD::BUILD_VECTOR, (MVT::ValueType)VT, Custom);
-    setOperationAction(ISD::ConstantPool, (MVT::ValueType)VT, Custom);
-    setOperationAction(ISD::SCALAR_TO_VECTOR, (MVT::ValueType)VT, Custom);
-    setOperationAction(ISD::EXTRACT_VECTOR_ELT, (MVT::ValueType)VT, Custom);
-    setOperationAction(ISD::INSERT_VECTOR_ELT, (MVT::ValueType)VT, Custom);
-    setOperationAction(ISD::VECTOR_SHUFFLE, (MVT::ValueType)VT, Custom);
+    setOperationAction(ISD::BUILD_VECTOR, VT, Custom);
+    setOperationAction(ISD::ConstantPool, VT, Custom);
+    setOperationAction(ISD::SCALAR_TO_VECTOR, VT, Custom);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
+    setOperationAction(ISD::INSERT_VECTOR_ELT, VT, Custom);
+    setOperationAction(ISD::VECTOR_SHUFFLE, VT, Custom);
   }
 
   setOperationAction(ISD::MUL, MVT::v16i8, Custom);
@@ -447,10 +453,9 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
   return ((i != node_names.end()) ? i->second : 0);
 }
 
-MVT::ValueType
-SPUTargetLowering::getSetCCResultType(const SDOperand &Op) const {
-  MVT::ValueType VT = Op.getValueType();
-  if (MVT::isInteger(VT))
+MVT SPUTargetLowering::getSetCCResultType(const SDOperand &Op) const {
+  MVT VT = Op.getValueType();
+  if (VT.isInteger())
     return VT;
   else
     return MVT::i32;
@@ -490,9 +495,9 @@ static SDOperand
 AlignedLoad(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST,
             LSBaseSDNode *LSN,
             unsigned &alignment, int &alignOffs, int &prefSlotOffs,
-            MVT::ValueType &VT, bool &was16aligned)
+            MVT &VT, bool &was16aligned)
 {
-  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   const valtype_map_s *vtm = getValueTypeMapEntry(VT);
   SDOperand basePtr = LSN->getBasePtr();
   SDOperand chain = LSN->getChain();
@@ -573,8 +578,8 @@ static SDOperand
 LowerLOAD(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   LoadSDNode *LN = cast<LoadSDNode>(Op);
   SDOperand the_chain = LN->getChain();
-  MVT::ValueType VT = LN->getMemoryVT();
-  MVT::ValueType OpVT = Op.Val->getValueType(0);
+  MVT VT = LN->getMemoryVT();
+  MVT OpVT = Op.Val->getValueType(0);
   ISD::LoadExtType ExtType = LN->getExtensionType();
   unsigned alignment = LN->getAlignment();
   SDOperand Ops[8];
@@ -601,7 +606,7 @@ LowerLOAD(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       if (was16aligned) {
         Ops[2] = DAG.getConstant(rotamt, MVT::i16);
       } else {
-        MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+        MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
         LoadSDNode *LN1 = cast<LoadSDNode>(result);
         Ops[2] = DAG.getNode(ISD::ADD, PtrVT, LN1->getBasePtr(),
                              DAG.getConstant(rotamt, PtrVT));
@@ -613,15 +618,15 @@ LowerLOAD(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
     if (VT == OpVT || ExtType == ISD::EXTLOAD) {
       SDVTList scalarvts;
-      MVT::ValueType vecVT = MVT::v16i8;
+      MVT vecVT = MVT::v16i8;
     
       // Convert the loaded v16i8 vector to the appropriate vector type
       // specified by the operand:
       if (OpVT == VT) {
         if (VT != MVT::i1)
-          vecVT = MVT::getVectorType(VT, (128 / MVT::getSizeInBits(VT)));
+          vecVT = MVT::getVectorVT(VT, (128 / VT.getSizeInBits()));
       } else
-        vecVT = MVT::getVectorType(OpVT, (128 / MVT::getSizeInBits(OpVT)));
+        vecVT = MVT::getVectorVT(OpVT, (128 / OpVT.getSizeInBits()));
 
       Ops[0] = the_chain;
       Ops[1] = DAG.getNode(ISD::BIT_CONVERT, vecVT, result);
@@ -681,9 +686,9 @@ static SDOperand
 LowerSTORE(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   StoreSDNode *SN = cast<StoreSDNode>(Op);
   SDOperand Value = SN->getValue();
-  MVT::ValueType VT = Value.getValueType();
-  MVT::ValueType StVT = (!SN->isTruncatingStore() ? VT : SN->getMemoryVT());
-  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  MVT VT = Value.getValueType();
+  MVT StVT = (!SN->isTruncatingStore() ? VT : SN->getMemoryVT());
+  MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   unsigned alignment = SN->getAlignment();
 
   switch (SN->getAddressingMode()) {
@@ -693,11 +698,11 @@ LowerSTORE(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
     // The vector type we really want to load from the 16-byte chunk, except
     // in the case of MVT::i1, which has to be v16i8.
-    unsigned vecVT, stVecVT = MVT::v16i8;
+    MVT vecVT, stVecVT = MVT::v16i8;
  
     if (StVT != MVT::i1)
-      stVecVT = MVT::getVectorType(StVT, (128 / MVT::getSizeInBits(StVT)));
-    vecVT = MVT::getVectorType(VT, (128 / MVT::getSizeInBits(VT)));
+      stVecVT = MVT::getVectorVT(StVT, (128 / StVT.getSizeInBits()));
+    vecVT = MVT::getVectorVT(VT, (128 / VT.getSizeInBits()));
 
     SDOperand alignLoadVec =
       AlignedLoad(Op, DAG, ST, SN, alignment,
@@ -773,7 +778,7 @@ LowerSTORE(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 /// Generate the address of a constant pool entry.
 static SDOperand
 LowerConstantPool(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
-  MVT::ValueType PtrVT = Op.getValueType();
+  MVT PtrVT = Op.getValueType();
   ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
   Constant *C = CP->getConstVal();
   SDOperand CPI = DAG.getTargetConstantPool(C, PtrVT, CP->getAlignment());
@@ -798,7 +803,7 @@ LowerConstantPool(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
 static SDOperand
 LowerJumpTable(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
-  MVT::ValueType PtrVT = Op.getValueType();
+  MVT PtrVT = Op.getValueType();
   JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
   SDOperand JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT);
   SDOperand Zero = DAG.getConstant(0, PtrVT);
@@ -821,7 +826,7 @@ LowerJumpTable(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
 static SDOperand
 LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
-  MVT::ValueType PtrVT = Op.getValueType();
+  MVT PtrVT = Op.getValueType();
   GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
   GlobalValue *GV = GSDN->getGlobal();
   SDOperand GA = DAG.getTargetGlobalAddress(GV, PtrVT, GSDN->getOffset());
@@ -853,7 +858,7 @@ LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
  */
 static SDOperand
 LowerConstant(SDOperand Op, SelectionDAG &DAG) {
-  unsigned VT = Op.getValueType();
+  MVT VT = Op.getValueType();
   ConstantSDNode *CN = cast<ConstantSDNode>(Op.Val);
 
   if (VT == MVT::i64) {
@@ -862,7 +867,7 @@ LowerConstant(SDOperand Op, SelectionDAG &DAG) {
                        DAG.getNode(ISD::BUILD_VECTOR, MVT::v2i64, T, T));
   } else {
     cerr << "LowerConstant: unhandled constant type "
-         << MVT::getValueTypeString(VT)
+         << VT.getMVTString()
          << "\n";
     abort();
     /*NOTREACHED*/
@@ -874,7 +879,7 @@ LowerConstant(SDOperand Op, SelectionDAG &DAG) {
 //! Custom lower double precision floating point constants
 static SDOperand
 LowerConstantFP(SDOperand Op, SelectionDAG &DAG) {
-  unsigned VT = Op.getValueType();
+  MVT VT = Op.getValueType();
   ConstantFPSDNode *FP = cast<ConstantFPSDNode>(Op.Val);
 
   assert((FP != 0) &&
@@ -894,8 +899,8 @@ static SDOperand
 LowerBRCOND(SDOperand Op, SelectionDAG &DAG)
 {
   SDOperand Cond = Op.getOperand(1);
-  MVT::ValueType CondVT = Cond.getValueType();
-  MVT::ValueType CondNVT;
+  MVT CondVT = Cond.getValueType();
+  MVT CondNVT;
 
   if (CondVT == MVT::i1 || CondVT == MVT::i8) {
     CondNVT = (CondVT == MVT::i1 ? MVT::i32 : MVT::i16);
@@ -924,19 +929,19 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
   unsigned ArgRegIdx = 0;
   unsigned StackSlotSize = SPUFrameInfo::stackSlotSize();
   
-  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   
   // Add DAG nodes to load the arguments or copy them out of registers.
   for (unsigned ArgNo = 0, e = Op.Val->getNumValues()-1; ArgNo != e; ++ArgNo) {
     SDOperand ArgVal;
     bool needsLoad = false;
-    MVT::ValueType ObjectVT = Op.getValue(ArgNo).getValueType();
-    unsigned ObjSize = MVT::getSizeInBits(ObjectVT)/8;
+    MVT ObjectVT = Op.getValue(ArgNo).getValueType();
+    unsigned ObjSize = ObjectVT.getSizeInBits()/8;
 
-    switch (ObjectVT) {
+    switch (ObjectVT.getSimpleVT()) {
     default: {
       cerr << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
-           << MVT::getValueTypeString(ObjectVT)
+           << ObjectVT.getMVTString()
            << "\n";
       abort();
     }
@@ -1032,7 +1037,7 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
   // If the function takes variable number of arguments, make a frame index for
   // the start of the first vararg value... for expansion of llvm.va_start.
   if (isVarArg) {
-    VarArgsFrameIndex = MFI->CreateFixedObject(MVT::getSizeInBits(PtrVT)/8,
+    VarArgsFrameIndex = MFI->CreateFixedObject(PtrVT.getSizeInBits()/8,
                                                ArgOffset);
     SDOperand FIN = DAG.getFrameIndex(VarArgsFrameIndex, PtrVT);
     // If this function is vararg, store any remaining integer argument regs to
@@ -1046,7 +1051,7 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
       SDOperand Store = DAG.getStore(Val.getValue(1), Val, FIN, NULL, 0);
       MemOps.push_back(Store);
       // Increment the address by four for the next argument to store
-      SDOperand PtrOff = DAG.getConstant(MVT::getSizeInBits(PtrVT)/8, PtrVT);
+      SDOperand PtrOff = DAG.getConstant(PtrVT.getSizeInBits()/8, PtrVT);
       FIN = DAG.getNode(ISD::ADD, PtrOff.getValueType(), FIN, PtrOff);
     }
     if (!MemOps.empty())
@@ -1056,7 +1061,7 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
   ArgValues.push_back(Root);
  
   // Return the new list of results.
-  std::vector<MVT::ValueType> RetVT(Op.Val->value_begin(),
+  std::vector<MVT> RetVT(Op.Val->value_begin(),
                                     Op.Val->value_end());
   return DAG.getNode(ISD::MERGE_VALUES, RetVT, &ArgValues[0], ArgValues.size());
 }
@@ -1090,7 +1095,7 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   const unsigned NumArgRegs = SPURegisterInfo::getNumArgRegs();
 
   // Handy pointer type
-  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   
   // Accumulate how many bytes are to be pushed on the stack, including the
   // linkage area, and parameter passing area.  According to the SPU ABI,
@@ -1120,7 +1125,7 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     SDOperand PtrOff = DAG.getConstant(ArgOffset, StackPtr.getValueType());
     PtrOff = DAG.getNode(ISD::ADD, PtrVT, StackPtr, PtrOff);
 
-    switch (Arg.getValueType()) {
+    switch (Arg.getValueType().getSimpleVT()) {
     default: assert(0 && "Unexpected ValueType for argument!");
     case MVT::i32:
     case MVT::i64:
@@ -1174,7 +1179,7 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     InFlag = Chain.getValue(1);
   }
   
-  std::vector<MVT::ValueType> NodeTys;
+  std::vector<MVT> NodeTys;
   NodeTys.push_back(MVT::Other);   // Returns a chain
   NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
 
@@ -1186,7 +1191,7 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   // node so that legalize doesn't hack it.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     GlobalValue *GV = G->getGlobal();
-    unsigned CalleeVT = Callee.getValueType();
+    MVT CalleeVT = Callee.getValueType();
     SDOperand Zero = DAG.getConstant(0, PtrVT);
     SDOperand GA = DAG.getTargetGlobalAddress(GV, CalleeVT);
 
@@ -1243,7 +1248,7 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   NodeTys.clear();
   
   // If the call has results, copy the values out of the ret val registers.
-  switch (Op.Val->getValueType(0)) {
+  switch (Op.Val->getValueType(0).getSimpleVT()) {
   default: assert(0 && "Unexpected ret value!");
   case MVT::Other: break;
   case MVT::i32:
@@ -1365,7 +1370,7 @@ getVecImm(SDNode *N) {
 /// and the value fits into an unsigned 18-bit constant, and if so, return the
 /// constant
 SDOperand SPU::get_vec_u18imm(SDNode *N, SelectionDAG &DAG,
-                              MVT::ValueType ValueType) {
+                              MVT ValueType) {
   if (ConstantSDNode *CN = getVecImm(N)) {
     uint64_t Value = CN->getValue();
     if (ValueType == MVT::i64) {
@@ -1387,7 +1392,7 @@ SDOperand SPU::get_vec_u18imm(SDNode *N, SelectionDAG &DAG,
 /// and the value fits into a signed 16-bit constant, and if so, return the
 /// constant
 SDOperand SPU::get_vec_i16imm(SDNode *N, SelectionDAG &DAG,
-                              MVT::ValueType ValueType) {
+                              MVT ValueType) {
   if (ConstantSDNode *CN = getVecImm(N)) {
     int64_t Value = CN->getSignExtended();
     if (ValueType == MVT::i64) {
@@ -1410,7 +1415,7 @@ SDOperand SPU::get_vec_i16imm(SDNode *N, SelectionDAG &DAG,
 /// and the value fits into a signed 10-bit constant, and if so, return the
 /// constant
 SDOperand SPU::get_vec_i10imm(SDNode *N, SelectionDAG &DAG,
-                              MVT::ValueType ValueType) {
+                              MVT ValueType) {
   if (ConstantSDNode *CN = getVecImm(N)) {
     int64_t Value = CN->getSignExtended();
     if (ValueType == MVT::i64) {
@@ -1436,7 +1441,7 @@ SDOperand SPU::get_vec_i10imm(SDNode *N, SelectionDAG &DAG,
 /// constant vectors. Thus, we test to see if the upper and lower bytes are the
 /// same value.
 SDOperand SPU::get_vec_i8imm(SDNode *N, SelectionDAG &DAG,
-                             MVT::ValueType ValueType) {
+                             MVT ValueType) {
   if (ConstantSDNode *CN = getVecImm(N)) {
     int Value = (int) CN->getValue();
     if (ValueType == MVT::i16
@@ -1455,7 +1460,7 @@ SDOperand SPU::get_vec_i8imm(SDNode *N, SelectionDAG &DAG,
 /// and the value fits into a signed 16-bit constant, and if so, return the
 /// constant
 SDOperand SPU::get_ILHUvec_imm(SDNode *N, SelectionDAG &DAG,
-                               MVT::ValueType ValueType) {
+                               MVT ValueType) {
   if (ConstantSDNode *CN = getVecImm(N)) {
     uint64_t Value = CN->getValue();
     if ((ValueType == MVT::i32
@@ -1495,7 +1500,7 @@ static bool GetConstantBuildVectorBits(SDNode *BV, uint64_t VectorBits[2],
   // Start with zero'd results.
   VectorBits[0] = VectorBits[1] = UndefBits[0] = UndefBits[1] = 0;
   
-  unsigned EltBitSize = MVT::getSizeInBits(BV->getOperand(0).getValueType());
+  unsigned EltBitSize = BV->getOperand(0).getValueType().getSizeInBits();
   for (unsigned i = 0, e = BV->getNumOperands(); i != e; ++i) {
     SDOperand OpVal = BV->getOperand(i);
     
@@ -1597,7 +1602,7 @@ static bool isConstantSplat(const uint64_t Bits128[2],
 // this case more efficiently than a constant pool load, lower it to the
 // sequence of ops that should be used.
 static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
-  MVT::ValueType VT = Op.getValueType();
+  MVT VT = Op.getValueType();
   // If this is a vector of constants or undefs, get the bits.  A bit in
   // UndefBits is set if the corresponding element of the vector is an 
   // ISD::UNDEF value.  For undefs, the corresponding VectorBits values are
@@ -1608,11 +1613,11 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
   int SplatSize;
   if (GetConstantBuildVectorBits(Op.Val, VectorBits, UndefBits)
       || !isConstantSplat(VectorBits, UndefBits,
-                          MVT::getSizeInBits(MVT::getVectorElementType(VT)),
+                          VT.getVectorElementType().getSizeInBits(),
                           SplatBits, SplatUndef, SplatSize))
     return SDOperand();   // Not a constant vector, not a splat.
   
-  switch (VT) {
+  switch (VT.getSimpleVT()) {
   default:
   case MVT::v4f32: {
     uint32_t Value32 = SplatBits;
@@ -1649,14 +1654,14 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
       Value16 = (unsigned short) (SplatBits & 0xffff);
     else
       Value16 = (unsigned short) (SplatBits | (SplatBits << 8));
-    SDOperand T = DAG.getConstant(Value16, MVT::getVectorElementType(VT));
+    SDOperand T = DAG.getConstant(Value16, VT.getVectorElementType());
     SDOperand Ops[8];
     for (int i = 0; i < 8; ++i) Ops[i] = T;
     return DAG.getNode(ISD::BUILD_VECTOR, VT, Ops, 8);
   }
   case MVT::v4i32: {
     unsigned int Value = SplatBits;
-    SDOperand T = DAG.getConstant(Value, MVT::getVectorElementType(VT));
+    SDOperand T = DAG.getConstant(Value, VT.getVectorElementType());
     return DAG.getNode(ISD::BUILD_VECTOR, VT, T, T, T, T);
   }
   case MVT::v2i64: {
@@ -1772,7 +1777,7 @@ static SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   // If we have a single element being moved from V1 to V2, this can be handled
   // using the C*[DX] compute mask instructions, but the vector elements have
   // to be monotonically increasing with one exception element.
-  MVT::ValueType EltVT = MVT::getVectorElementType(V1.getValueType());
+  MVT EltVT = V1.getValueType().getVectorElementType();
   unsigned EltsFromV2 = 0;
   unsigned V2Elt = 0;
   unsigned V2EltIdx0 = 0;
@@ -1811,7 +1816,7 @@ static SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
     MachineFunction &MF = DAG.getMachineFunction();
     MachineRegisterInfo &RegInfo = MF.getRegInfo();
     unsigned VReg = RegInfo.createVirtualRegister(&SPU::R32CRegClass);
-    MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+    MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
     // Initialize temporary register to 0
     SDOperand InitTempReg =
       DAG.getCopyToReg(DAG.getEntryNode(), VReg, DAG.getConstant(0, PtrVT));
@@ -1824,7 +1829,7 @@ static SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(SPUISD::SHUFB, V1.getValueType(), V2, V1, ShufMaskOp);
   } else {
     // Convert the SHUFFLE_VECTOR mask's input element units to the actual bytes.
-    unsigned BytesPerElement = MVT::getSizeInBits(EltVT)/8;
+    unsigned BytesPerElement = EltVT.getSizeInBits()/8;
     
     SmallVector<SDOperand, 16> ResultMask;
     for (unsigned i = 0, e = PermMask.getNumOperands(); i != e; ++i) {
@@ -1855,11 +1860,11 @@ static SDOperand LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG) {
 
     ConstantSDNode *CN = cast<ConstantSDNode>(Op0.Val);
     SmallVector<SDOperand, 16> ConstVecValues;
-    MVT::ValueType VT;
+    MVT VT;
     size_t n_copies;
 
     // Create a constant vector:
-    switch (Op.getValueType()) {
+    switch (Op.getValueType().getSimpleVT()) {
     default: assert(0 && "Unexpected constant value type in "
                          "LowerSCALAR_TO_VECTOR");
     case MVT::v16i8: n_copies = 16; VT = MVT::i8; break;
@@ -1878,7 +1883,7 @@ static SDOperand LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG) {
                        &ConstVecValues[0], ConstVecValues.size());
   } else {
     // Otherwise, copy the value from one register to another:
-    switch (Op0.getValueType()) {
+    switch (Op0.getValueType().getSimpleVT()) {
     default: assert(0 && "Unexpected value type in LowerSCALAR_TO_VECTOR");
     case MVT::i8:
     case MVT::i16:
@@ -1894,7 +1899,14 @@ static SDOperand LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG) {
 }
 
 static SDOperand LowerVectorMUL(SDOperand Op, SelectionDAG &DAG) {
-  switch (Op.getValueType()) {
+  switch (Op.getValueType().getSimpleVT()) {
+  default:
+    cerr << "CellSPU: Unknown vector multiplication, got "
+         << Op.getValueType().getMVTString()
+         << "\n";
+    abort();
+    /*NOTREACHED*/
+
   case MVT::v4i32: {
     SDOperand rA = Op.getOperand(0);
     SDOperand rB = Op.getOperand(1);
@@ -2020,13 +2032,6 @@ static SDOperand LowerVectorMUL(SDOperand Op, SelectionDAG &DAG) {
                        DAG.getNode(ISD::OR, MVT::v4i32,
                                    LoProd, HiProd));
   }
-
-  default:
-    cerr << "CellSPU: Unknown vector multiplication, got "
-         << MVT::getValueTypeString(Op.getValueType())
-         << "\n";
-    abort();
-    /*NOTREACHED*/
   }
 
   return SDOperand();
@@ -2038,7 +2043,7 @@ static SDOperand LowerFDIVf32(SDOperand Op, SelectionDAG &DAG) {
 
   SDOperand A = Op.getOperand(0);
   SDOperand B = Op.getOperand(1);
-  unsigned VT = Op.getValueType();
+  MVT VT = Op.getValueType();
 
   unsigned VRegBR, VRegC;
 
@@ -2077,7 +2082,7 @@ static SDOperand LowerFDIVf32(SDOperand Op, SelectionDAG &DAG) {
 }
 
 static SDOperand LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
-  unsigned VT = Op.getValueType();
+  MVT VT = Op.getValueType();
   SDOperand N = Op.getOperand(0);
   SDOperand Elt = Op.getOperand(1);
   SDOperand ShufMask[16];
@@ -2104,9 +2109,11 @@ static SDOperand LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
 
   // Need to generate shuffle mask and extract:
   int prefslot_begin = -1, prefslot_end = -1;
-  int elt_byte = EltNo * MVT::getSizeInBits(VT) / 8;
+  int elt_byte = EltNo * VT.getSizeInBits() / 8;
 
-  switch (VT) {
+  switch (VT.getSimpleVT()) {
+  default:
+    assert(false && "Invalid value type!");
   case MVT::i8: {
     prefslot_begin = prefslot_end = 3;
     break;
@@ -2159,12 +2166,12 @@ static SDOperand LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
   SDOperand VecOp = Op.getOperand(0);
   SDOperand ValOp = Op.getOperand(1);
   SDOperand IdxOp = Op.getOperand(2);
-  MVT::ValueType VT = Op.getValueType();
+  MVT VT = Op.getValueType();
 
   ConstantSDNode *CN = cast<ConstantSDNode>(IdxOp);
   assert(CN != 0 && "LowerINSERT_VECTOR_ELT: Index is not constant!");
 
-  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  MVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   // Use $2 because it's always 16-byte aligned and it's available:
   SDOperand PtrBase = DAG.getRegister(SPU::R2, PtrVT);
 
@@ -2270,9 +2277,8 @@ static SDOperand LowerI8Math(SDOperand Op, SelectionDAG &DAG, unsigned Opc)
 
 static SDOperand LowerI64Math(SDOperand Op, SelectionDAG &DAG, unsigned Opc)
 {
-  MVT::ValueType VT = Op.getValueType();
-  unsigned VecVT =
-    MVT::getVectorType(VT, (128 / MVT::getSizeInBits(VT)));
+  MVT VT = Op.getValueType();
+  MVT VecVT = MVT::getVectorVT(VT, (128 / VT.getSizeInBits()));
 
   SDOperand Op0 = Op.getOperand(0);
 
@@ -2280,9 +2286,8 @@ static SDOperand LowerI64Math(SDOperand Op, SelectionDAG &DAG, unsigned Opc)
   case ISD::ZERO_EXTEND:
   case ISD::SIGN_EXTEND:
   case ISD::ANY_EXTEND: {
-    MVT::ValueType Op0VT = Op0.getValueType();
-    unsigned Op0VecVT =
-      MVT::getVectorType(Op0VT, (128 / MVT::getSizeInBits(Op0VT)));
+    MVT Op0VT = Op0.getValueType();
+    MVT Op0VecVT = MVT::getVectorVT(Op0VT, (128 / Op0VT.getSizeInBits()));
 
     assert(Op0VT == MVT::i32
            && "CellSPU: Zero/sign extending something other than i32");
@@ -2361,7 +2366,7 @@ static SDOperand LowerI64Math(SDOperand Op, SelectionDAG &DAG, unsigned Opc)
 
   case ISD::SHL: {
     SDOperand ShiftAmt = Op.getOperand(1);
-    unsigned ShiftAmtVT = unsigned(ShiftAmt.getValueType());
+    MVT ShiftAmtVT = ShiftAmt.getValueType();
     SDOperand Op0Vec = DAG.getNode(SPUISD::PROMOTE_SCALAR, VecVT, Op0);
     SDOperand MaskLower =
       DAG.getNode(SPUISD::SELB, VecVT,
@@ -2386,9 +2391,9 @@ static SDOperand LowerI64Math(SDOperand Op, SelectionDAG &DAG, unsigned Opc)
   }
 
   case ISD::SRL: {
-    unsigned VT = unsigned(Op.getValueType());
+    MVT VT = Op.getValueType();
     SDOperand ShiftAmt = Op.getOperand(1);
-    unsigned ShiftAmtVT = unsigned(ShiftAmt.getValueType());
+    MVT ShiftAmtVT = ShiftAmt.getValueType();
     SDOperand ShiftAmtBytes =
       DAG.getNode(ISD::SRL, ShiftAmtVT,
                   ShiftAmt,
@@ -2409,7 +2414,7 @@ static SDOperand LowerI64Math(SDOperand Op, SelectionDAG &DAG, unsigned Opc)
     SDOperand Op0 =
       DAG.getNode(SPUISD::PROMOTE_SCALAR, MVT::v2i64, Op.getOperand(0));
     SDOperand ShiftAmt = Op.getOperand(1);
-    unsigned ShiftVT = ShiftAmt.getValueType();
+    MVT ShiftVT = ShiftAmt.getValueType();
 
     // Negate variable shift amounts
     if (!isa<ConstantSDNode>(ShiftAmt)) {
@@ -2450,7 +2455,7 @@ static SDOperand
 LowerByteImmed(SDOperand Op, SelectionDAG &DAG) {
   SDOperand ConstVec;
   SDOperand Arg;
-  MVT::ValueType VT = Op.getValueType();
+  MVT VT = Op.getValueType();
 
   ConstVec = Op.getOperand(0);
   Arg = Op.getOperand(1);
@@ -2474,7 +2479,7 @@ LowerByteImmed(SDOperand Op, SelectionDAG &DAG) {
 
     if (!GetConstantBuildVectorBits(ConstVec.Val, VectorBits, UndefBits)
         && isConstantSplat(VectorBits, UndefBits,
-                           MVT::getSizeInBits(MVT::getVectorElementType(VT)),
+                           VT.getVectorElementType().getSizeInBits(),
                            SplatBits, SplatUndef, SplatSize)) {
       SDOperand tcVec[16];
       SDOperand tc = DAG.getTargetConstant(SplatBits & 0xff, MVT::i8);
@@ -2493,12 +2498,12 @@ LowerByteImmed(SDOperand Op, SelectionDAG &DAG) {
 }
 
 //! Lower i32 multiplication
-static SDOperand LowerMUL(SDOperand Op, SelectionDAG &DAG, unsigned VT,
+static SDOperand LowerMUL(SDOperand Op, SelectionDAG &DAG, MVT VT,
                           unsigned Opc) {
-  switch (VT) {
+  switch (VT.getSimpleVT()) {
   default:
     cerr << "CellSPU: Unknown LowerMUL value type, got "
-         << MVT::getValueTypeString(Op.getValueType())
+         << Op.getValueType().getMVTString()
          << "\n";
     abort();
     /*NOTREACHED*/
@@ -2525,10 +2530,12 @@ static SDOperand LowerMUL(SDOperand Op, SelectionDAG &DAG, unsigned VT,
   ones per byte, which then have to be accumulated.
 */
 static SDOperand LowerCTPOP(SDOperand Op, SelectionDAG &DAG) {
-  unsigned VT = Op.getValueType();
-  unsigned vecVT = MVT::getVectorType(VT, (128 / MVT::getSizeInBits(VT)));
+  MVT VT = Op.getValueType();
+  MVT vecVT = MVT::getVectorVT(VT, (128 / VT.getSizeInBits()));
 
-  switch (VT) {
+  switch (VT.getSimpleVT()) {
+  default:
+    assert(false && "Invalid value type!");
   case MVT::i8: {
     SDOperand N = Op.getOperand(0);
     SDOperand Elt0 = DAG.getConstant(0, MVT::i32);
@@ -2630,7 +2637,7 @@ SDOperand
 SPUTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG)
 {
   unsigned Opc = (unsigned) Op.getOpcode();
-  unsigned VT = (unsigned) Op.getValueType();
+  MVT VT = Op.getValueType();
 
   switch (Opc) {
   default: {
@@ -2704,7 +2711,7 @@ SPUTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG)
 
   // Vector and i8 multiply:
   case ISD::MUL:
-    if (MVT::isVector(VT))
+    if (VT.isVector())
       return LowerVectorMUL(Op, DAG);
     else if (VT == MVT::i8)
       return LowerI8Math(Op, DAG, Opc);
@@ -2911,7 +2918,7 @@ SPUTargetLowering::getConstraintType(const std::string &ConstraintLetter) const 
 
 std::pair<unsigned, const TargetRegisterClass*> 
 SPUTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
-                                                MVT::ValueType VT) const
+                                                MVT VT) const
 {
   if (Constraint.size() == 1) {
     // GCC RS6000 Constraint Letters
@@ -2961,9 +2968,9 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
 
   case SPUISD::PROMOTE_SCALAR: {
     SDOperand Op0 = Op.getOperand(0);
-    MVT::ValueType Op0VT = Op0.getValueType();
-    unsigned Op0VTBits = MVT::getSizeInBits(Op0VT);
-    uint64_t InMask = MVT::getIntVTBitMask(Op0VT);
+    MVT Op0VT = Op0.getValueType();
+    unsigned Op0VTBits = Op0VT.getSizeInBits();
+    uint64_t InMask = Op0VT.getIntegerVTBitMask();
     KnownZero |= APInt(Op0VTBits, ~InMask, false);
     KnownOne |= APInt(Op0VTBits, InMask, false);
     break;
@@ -2972,9 +2979,9 @@ SPUTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
   case SPUISD::LDRESULT:
   case SPUISD::EXTRACT_ELT0:
   case SPUISD::EXTRACT_ELT0_CHAINED: {
-    MVT::ValueType OpVT = Op.getValueType();
-    unsigned OpVTBits = MVT::getSizeInBits(OpVT);
-    uint64_t InMask = MVT::getIntVTBitMask(OpVT);
+    MVT OpVT = Op.getValueType();
+    unsigned OpVTBits = OpVT.getSizeInBits();
+    uint64_t InMask = OpVT.getIntegerVTBitMask();
     KnownZero |= APInt(OpVTBits, ~InMask, false);
     KnownOne |= APInt(OpVTBits, InMask, false);
     break;

@@ -88,10 +88,10 @@ defaultListDAGScheduler("default", "  Best scheduler for the target",
 namespace { struct SDISelAsmOperandInfo; }
 
 /// ComputeValueVTs - Given an LLVM IR type, compute a sequence of
-/// MVT::ValueTypes that represent all the individual underlying
+/// MVTs that represent all the individual underlying
 /// non-aggregate types that comprise it.
 static void ComputeValueVTs(const TargetLowering &TLI, const Type *Ty,
-                            SmallVectorImpl<MVT::ValueType> &ValueVTs) {
+                            SmallVectorImpl<MVT> &ValueVTs) {
   // Given a struct type, recursively traverse the elements.
   if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     for (StructType::element_iterator EI = STy->element_begin(),
@@ -107,7 +107,7 @@ static void ComputeValueVTs(const TargetLowering &TLI, const Type *Ty,
       ComputeValueVTs(TLI, EltTy, ValueVTs);
     return;
   }
-  // Base case: we can get an MVT::ValueType for this LLVM IR type.
+  // Base case: we can get an MVT for this LLVM IR type.
   ValueVTs.push_back(TLI.getValueType(Ty));
 }
 
@@ -129,7 +129,7 @@ namespace {
     /// ValueVTs - The value types of the values, which may not be legal, and
     /// may need be promoted or synthesized from one or more registers.
     ///
-    SmallVector<MVT::ValueType, 4> ValueVTs;
+    SmallVector<MVT, 4> ValueVTs;
     
     /// RegVTs - The value types of the registers. This is the same size as
     /// ValueVTs and it records, for each value, what the type of the assigned
@@ -140,7 +140,7 @@ namespace {
     /// getRegisterType member function, however when with physical registers
     /// it is necessary to have a separate record of the types.
     ///
-    SmallVector<MVT::ValueType, 4> RegVTs;
+    SmallVector<MVT, 4> RegVTs;
     
     /// Regs - This list holds the registers assigned to the values.
     /// Each legal or promoted value requires one register, and each
@@ -152,21 +152,21 @@ namespace {
     
     RegsForValue(const TargetLowering &tli,
                  const SmallVector<unsigned, 4> &regs, 
-                 MVT::ValueType regvt, MVT::ValueType valuevt)
+                 MVT regvt, MVT valuevt)
       : TLI(&tli),  ValueVTs(1, valuevt), RegVTs(1, regvt), Regs(regs) {}
     RegsForValue(const TargetLowering &tli,
                  const SmallVector<unsigned, 4> &regs, 
-                 const SmallVector<MVT::ValueType, 4> &regvts,
-                 const SmallVector<MVT::ValueType, 4> &valuevts)
+                 const SmallVector<MVT, 4> &regvts,
+                 const SmallVector<MVT, 4> &valuevts)
       : TLI(&tli), ValueVTs(valuevts), RegVTs(regvts), Regs(regs) {}
     RegsForValue(const TargetLowering &tli,
                  unsigned Reg, const Type *Ty) : TLI(&tli) {
       ComputeValueVTs(tli, Ty, ValueVTs);
 
       for (unsigned Value = 0, e = ValueVTs.size(); Value != e; ++Value) {
-        MVT::ValueType ValueVT = ValueVTs[Value];
+        MVT ValueVT = ValueVTs[Value];
         unsigned NumRegs = TLI->getNumRegisters(ValueVT);
-        MVT::ValueType RegisterVT = TLI->getRegisterType(ValueVT);
+        MVT RegisterVT = TLI->getRegisterType(ValueVT);
         for (unsigned i = 0; i != NumRegs; ++i)
           Regs.push_back(Reg + i);
         RegVTs.push_back(RegisterVT);
@@ -254,7 +254,7 @@ namespace llvm {
     SmallSet<Instruction*, 8> CatchInfoFound;
 #endif
 
-    unsigned MakeReg(MVT::ValueType VT) {
+    unsigned MakeReg(MVT VT) {
       return RegInfo.createVirtualRegister(TLI.getRegClassFor(VT));
     }
     
@@ -359,7 +359,7 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
     for (BasicBlock::iterator I = BB->begin();(PN = dyn_cast<PHINode>(I)); ++I){
       if (PN->use_empty()) continue;
       
-      MVT::ValueType VT = TLI.getValueType(PN->getType());
+      MVT VT = TLI.getValueType(PN->getType());
       unsigned NumRegisters = TLI.getNumRegisters(VT);
       unsigned PHIReg = ValueMap[PN];
       assert(PHIReg && "PHI node does not have an assigned virtual register!");
@@ -378,13 +378,13 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
 /// will assign registers for each member or element.
 ///
 unsigned FunctionLoweringInfo::CreateRegForValue(const Value *V) {
-  SmallVector<MVT::ValueType, 4> ValueVTs;
+  SmallVector<MVT, 4> ValueVTs;
   ComputeValueVTs(TLI, V->getType(), ValueVTs);
 
   unsigned FirstReg = 0;
   for (unsigned Value = 0, e = ValueVTs.size(); Value != e; ++Value) {
-    MVT::ValueType ValueVT = ValueVTs[Value];
-    MVT::ValueType RegisterVT = TLI.getRegisterType(ValueVT);
+    MVT ValueVT = ValueVTs[Value];
+    MVT RegisterVT = TLI.getRegisterType(ValueVT);
 
     unsigned NumRegs = TLI.getNumRegisters(ValueVT);
     for (unsigned i = 0; i != NumRegs; ++i) {
@@ -751,8 +751,8 @@ private:
 static SDOperand getCopyFromParts(SelectionDAG &DAG,
                                   const SDOperand *Parts,
                                   unsigned NumParts,
-                                  MVT::ValueType PartVT,
-                                  MVT::ValueType ValueVT,
+                                  MVT PartVT,
+                                  MVT ValueVT,
                                   ISD::NodeType AssertOp = ISD::DELETED_NODE) {
   assert(NumParts > 0 && "No parts to assemble!");
   TargetLowering &TLI = DAG.getTargetLoweringInfo();
@@ -760,20 +760,20 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
 
   if (NumParts > 1) {
     // Assemble the value from multiple parts.
-    if (!MVT::isVector(ValueVT)) {
-      unsigned PartBits = MVT::getSizeInBits(PartVT);
-      unsigned ValueBits = MVT::getSizeInBits(ValueVT);
+    if (!ValueVT.isVector()) {
+      unsigned PartBits = PartVT.getSizeInBits();
+      unsigned ValueBits = ValueVT.getSizeInBits();
 
       // Assemble the power of 2 part.
       unsigned RoundParts = NumParts & (NumParts - 1) ?
         1 << Log2_32(NumParts) : NumParts;
       unsigned RoundBits = PartBits * RoundParts;
-      MVT::ValueType RoundVT = RoundBits == ValueBits ?
-        ValueVT : MVT::getIntegerType(RoundBits);
+      MVT RoundVT = RoundBits == ValueBits ?
+        ValueVT : MVT::getIntegerVT(RoundBits);
       SDOperand Lo, Hi;
 
       if (RoundParts > 2) {
-        MVT::ValueType HalfVT = MVT::getIntegerType(RoundBits/2);
+        MVT HalfVT = MVT::getIntegerVT(RoundBits/2);
         Lo = getCopyFromParts(DAG, Parts, RoundParts/2, PartVT, HalfVT);
         Hi = getCopyFromParts(DAG, Parts+RoundParts/2, RoundParts/2,
                               PartVT, HalfVT);
@@ -788,24 +788,24 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
       if (RoundParts < NumParts) {
         // Assemble the trailing non-power-of-2 part.
         unsigned OddParts = NumParts - RoundParts;
-        MVT::ValueType OddVT = MVT::getIntegerType(OddParts * PartBits);
+        MVT OddVT = MVT::getIntegerVT(OddParts * PartBits);
         Hi = getCopyFromParts(DAG, Parts+RoundParts, OddParts, PartVT, OddVT);
 
         // Combine the round and odd parts.
         Lo = Val;
         if (TLI.isBigEndian())
           std::swap(Lo, Hi);
-        MVT::ValueType TotalVT = MVT::getIntegerType(NumParts * PartBits);
+        MVT TotalVT = MVT::getIntegerVT(NumParts * PartBits);
         Hi = DAG.getNode(ISD::ANY_EXTEND, TotalVT, Hi);
         Hi = DAG.getNode(ISD::SHL, TotalVT, Hi,
-                         DAG.getConstant(MVT::getSizeInBits(Lo.getValueType()),
+                         DAG.getConstant(Lo.getValueType().getSizeInBits(),
                                          TLI.getShiftAmountTy()));
         Lo = DAG.getNode(ISD::ZERO_EXTEND, TotalVT, Lo);
         Val = DAG.getNode(ISD::OR, TotalVT, Lo, Hi);
       }
     } else {
       // Handle a multi-element vector.
-      MVT::ValueType IntermediateVT, RegisterVT;
+      MVT IntermediateVT, RegisterVT;
       unsigned NumIntermediates;
       unsigned NumRegs =
         TLI.getVectorTypeBreakdown(ValueVT, IntermediateVT, NumIntermediates,
@@ -837,7 +837,7 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
 
       // Build a vector with BUILD_VECTOR or CONCAT_VECTORS from the intermediate
       // operands.
-      Val = DAG.getNode(MVT::isVector(IntermediateVT) ?
+      Val = DAG.getNode(IntermediateVT.isVector() ?
                         ISD::CONCAT_VECTORS : ISD::BUILD_VECTOR,
                         ValueVT, &Ops[0], NumIntermediates);
     }
@@ -849,21 +849,21 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
   if (PartVT == ValueVT)
     return Val;
 
-  if (MVT::isVector(PartVT)) {
-    assert(MVT::isVector(ValueVT) && "Unknown vector conversion!");
+  if (PartVT.isVector()) {
+    assert(ValueVT.isVector() && "Unknown vector conversion!");
     return DAG.getNode(ISD::BIT_CONVERT, ValueVT, Val);
   }
 
-  if (MVT::isVector(ValueVT)) {
-    assert(MVT::getVectorElementType(ValueVT) == PartVT &&
-           MVT::getVectorNumElements(ValueVT) == 1 &&
+  if (ValueVT.isVector()) {
+    assert(ValueVT.getVectorElementType() == PartVT &&
+           ValueVT.getVectorNumElements() == 1 &&
            "Only trivial scalar-to-vector conversions should get here!");
     return DAG.getNode(ISD::BUILD_VECTOR, ValueVT, Val);
   }
 
-  if (MVT::isInteger(PartVT) &&
-      MVT::isInteger(ValueVT)) {
-    if (MVT::getSizeInBits(ValueVT) < MVT::getSizeInBits(PartVT)) {
+  if (PartVT.isInteger() &&
+      ValueVT.isInteger()) {
+    if (ValueVT.getSizeInBits() < PartVT.getSizeInBits()) {
       // For a truncate, see if we have any information to
       // indicate whether the truncated bits will always be
       // zero or sign-extension.
@@ -876,7 +876,7 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
     }
   }
 
-  if (MVT::isFloatingPoint(PartVT) && MVT::isFloatingPoint(ValueVT)) {
+  if (PartVT.isFloatingPoint() && ValueVT.isFloatingPoint()) {
     if (ValueVT < Val.getValueType())
       // FP_ROUND's are always exact here.
       return DAG.getNode(ISD::FP_ROUND, ValueVT, Val,
@@ -884,7 +884,7 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
     return DAG.getNode(ISD::FP_EXTEND, ValueVT, Val);
   }
 
-  if (MVT::getSizeInBits(PartVT) == MVT::getSizeInBits(ValueVT))
+  if (PartVT.getSizeInBits() == ValueVT.getSizeInBits())
     return DAG.getNode(ISD::BIT_CONVERT, ValueVT, Val);
 
   assert(0 && "Unknown mismatch!");
@@ -898,43 +898,43 @@ static void getCopyToParts(SelectionDAG &DAG,
                            SDOperand Val,
                            SDOperand *Parts,
                            unsigned NumParts,
-                           MVT::ValueType PartVT,
+                           MVT PartVT,
                            ISD::NodeType ExtendKind = ISD::ANY_EXTEND) {
   TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  MVT::ValueType PtrVT = TLI.getPointerTy();
-  MVT::ValueType ValueVT = Val.getValueType();
-  unsigned PartBits = MVT::getSizeInBits(PartVT);
+  MVT PtrVT = TLI.getPointerTy();
+  MVT ValueVT = Val.getValueType();
+  unsigned PartBits = PartVT.getSizeInBits();
   assert(TLI.isTypeLegal(PartVT) && "Copying to an illegal type!");
 
   if (!NumParts)
     return;
 
-  if (!MVT::isVector(ValueVT)) {
+  if (!ValueVT.isVector()) {
     if (PartVT == ValueVT) {
       assert(NumParts == 1 && "No-op copy with multiple parts!");
       Parts[0] = Val;
       return;
     }
 
-    if (NumParts * PartBits > MVT::getSizeInBits(ValueVT)) {
+    if (NumParts * PartBits > ValueVT.getSizeInBits()) {
       // If the parts cover more bits than the value has, promote the value.
-      if (MVT::isFloatingPoint(PartVT) && MVT::isFloatingPoint(ValueVT)) {
+      if (PartVT.isFloatingPoint() && ValueVT.isFloatingPoint()) {
         assert(NumParts == 1 && "Do not know what to promote to!");
         Val = DAG.getNode(ISD::FP_EXTEND, PartVT, Val);
-      } else if (MVT::isInteger(PartVT) && MVT::isInteger(ValueVT)) {
-        ValueVT = MVT::getIntegerType(NumParts * PartBits);
+      } else if (PartVT.isInteger() && ValueVT.isInteger()) {
+        ValueVT = MVT::getIntegerVT(NumParts * PartBits);
         Val = DAG.getNode(ExtendKind, ValueVT, Val);
       } else {
         assert(0 && "Unknown mismatch!");
       }
-    } else if (PartBits == MVT::getSizeInBits(ValueVT)) {
+    } else if (PartBits == ValueVT.getSizeInBits()) {
       // Different types of the same size.
       assert(NumParts == 1 && PartVT != ValueVT);
       Val = DAG.getNode(ISD::BIT_CONVERT, PartVT, Val);
-    } else if (NumParts * PartBits < MVT::getSizeInBits(ValueVT)) {
+    } else if (NumParts * PartBits < ValueVT.getSizeInBits()) {
       // If the parts cover less bits than value has, truncate the value.
-      if (MVT::isInteger(PartVT) && MVT::isInteger(ValueVT)) {
-        ValueVT = MVT::getIntegerType(NumParts * PartBits);
+      if (PartVT.isInteger() && ValueVT.isInteger()) {
+        ValueVT = MVT::getIntegerVT(NumParts * PartBits);
         Val = DAG.getNode(ISD::TRUNCATE, ValueVT, Val);
       } else {
         assert(0 && "Unknown mismatch!");
@@ -943,7 +943,7 @@ static void getCopyToParts(SelectionDAG &DAG,
 
     // The value may have changed - recompute ValueVT.
     ValueVT = Val.getValueType();
-    assert(NumParts * PartBits == MVT::getSizeInBits(ValueVT) &&
+    assert(NumParts * PartBits == ValueVT.getSizeInBits() &&
            "Failed to tile the value with PartVT!");
 
     if (NumParts == 1) {
@@ -955,7 +955,7 @@ static void getCopyToParts(SelectionDAG &DAG,
     // Expand the value into multiple parts.
     if (NumParts & (NumParts - 1)) {
       // The number of parts is not a power of 2.  Split off and copy the tail.
-      assert(MVT::isInteger(PartVT) && MVT::isInteger(ValueVT) &&
+      assert(PartVT.isInteger() && ValueVT.isInteger() &&
              "Do not know what to expand to!");
       unsigned RoundParts = 1 << Log2_32(NumParts);
       unsigned RoundBits = RoundParts * PartBits;
@@ -968,19 +968,19 @@ static void getCopyToParts(SelectionDAG &DAG,
         // The odd parts were reversed by getCopyToParts - unreverse them.
         std::reverse(Parts + RoundParts, Parts + NumParts);
       NumParts = RoundParts;
-      ValueVT = MVT::getIntegerType(NumParts * PartBits);
+      ValueVT = MVT::getIntegerVT(NumParts * PartBits);
       Val = DAG.getNode(ISD::TRUNCATE, ValueVT, Val);
     }
 
     // The number of parts is a power of 2.  Repeatedly bisect the value using
     // EXTRACT_ELEMENT.
     Parts[0] = DAG.getNode(ISD::BIT_CONVERT,
-                           MVT::getIntegerType(MVT::getSizeInBits(ValueVT)),
+                           MVT::getIntegerVT(ValueVT.getSizeInBits()),
                            Val);
     for (unsigned StepSize = NumParts; StepSize > 1; StepSize /= 2) {
       for (unsigned i = 0; i < NumParts; i += StepSize) {
         unsigned ThisBits = StepSize * PartBits / 2;
-        MVT::ValueType ThisVT = MVT::getIntegerType (ThisBits);
+        MVT ThisVT = MVT::getIntegerVT (ThisBits);
         SDOperand &Part0 = Parts[i];
         SDOperand &Part1 = Parts[i+StepSize/2];
 
@@ -1005,11 +1005,11 @@ static void getCopyToParts(SelectionDAG &DAG,
   // Vector ValueVT.
   if (NumParts == 1) {
     if (PartVT != ValueVT) {
-      if (MVT::isVector(PartVT)) {
+      if (PartVT.isVector()) {
         Val = DAG.getNode(ISD::BIT_CONVERT, PartVT, Val);
       } else {
-        assert(MVT::getVectorElementType(ValueVT) == PartVT &&
-               MVT::getVectorNumElements(ValueVT) == 1 &&
+        assert(ValueVT.getVectorElementType() == PartVT &&
+               ValueVT.getVectorNumElements() == 1 &&
                "Only trivial vector-to-scalar conversions should get here!");
         Val = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, PartVT, Val,
                           DAG.getConstant(0, PtrVT));
@@ -1021,13 +1021,13 @@ static void getCopyToParts(SelectionDAG &DAG,
   }
 
   // Handle a multi-element vector.
-  MVT::ValueType IntermediateVT, RegisterVT;
+  MVT IntermediateVT, RegisterVT;
   unsigned NumIntermediates;
   unsigned NumRegs =
     DAG.getTargetLoweringInfo()
       .getVectorTypeBreakdown(ValueVT, IntermediateVT, NumIntermediates,
                               RegisterVT);
-  unsigned NumElements = MVT::getVectorNumElements(ValueVT);
+  unsigned NumElements = ValueVT.getVectorNumElements();
 
   assert(NumRegs == NumParts && "Part count doesn't match vector breakdown!");
   NumParts = NumRegs; // Silence a compiler warning.
@@ -1036,7 +1036,7 @@ static void getCopyToParts(SelectionDAG &DAG,
   // Split the vector into intermediate operands.
   SmallVector<SDOperand, 8> Ops(NumIntermediates);
   for (unsigned i = 0; i != NumIntermediates; ++i)
-    if (MVT::isVector(IntermediateVT))
+    if (IntermediateVT.isVector())
       Ops[i] = DAG.getNode(ISD::EXTRACT_SUBVECTOR,
                            IntermediateVT, Val,
                            DAG.getConstant(i * (NumElements / NumIntermediates),
@@ -1069,7 +1069,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
   if (N.Val) return N;
   
   if (Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V))) {
-    MVT::ValueType VT = TLI.getValueType(V->getType(), true);
+    MVT VT = TLI.getValueType(V->getType(), true);
     
     if (ConstantInt *CI = dyn_cast<ConstantInt>(C))
       return N = DAG.getConstant(CI->getValue(), VT);
@@ -1105,12 +1105,12 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
     } else {
       assert((isa<ConstantAggregateZero>(C) || isa<UndefValue>(C)) &&
              "Unknown vector constant!");
-      MVT::ValueType EltVT = TLI.getValueType(VecTy->getElementType());
+      MVT EltVT = TLI.getValueType(VecTy->getElementType());
 
       SDOperand Op;
       if (isa<UndefValue>(C))
         Op = DAG.getNode(ISD::UNDEF, EltVT);
-      else if (MVT::isFloatingPoint(EltVT))
+      else if (EltVT.isFloatingPoint())
         Op = DAG.getConstantFP(0, EltVT);
       else
         Op = DAG.getConstant(0, EltVT);
@@ -1149,18 +1149,18 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
   NewValues.push_back(getControlRoot());
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {  
     SDOperand RetOp = getValue(I.getOperand(i));
-    MVT::ValueType VT = RetOp.getValueType();
+    MVT VT = RetOp.getValueType();
 
     // FIXME: C calling convention requires the return type to be promoted to
     // at least 32-bit. But this is not necessary for non-C calling conventions.
-    if (MVT::isInteger(VT)) {
-      MVT::ValueType MinVT = TLI.getRegisterType(MVT::i32);
-      if (MVT::getSizeInBits(VT) < MVT::getSizeInBits(MinVT))
+    if (VT.isInteger()) {
+      MVT MinVT = TLI.getRegisterType(MVT::i32);
+      if (VT.getSizeInBits() < MinVT.getSizeInBits())
         VT = MinVT;
     }
 
     unsigned NumParts = TLI.getNumRegisters(VT);
-    MVT::ValueType PartVT = TLI.getRegisterType(VT);
+    MVT PartVT = TLI.getRegisterType(VT);
     SmallVector<SDOperand, 4> Parts(NumParts);
     ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
 
@@ -1475,7 +1475,7 @@ void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
     uint64_t High  = cast<ConstantInt>(CB.CmpRHS)->getSExtValue();
 
     SDOperand CmpOp = getValue(CB.CmpMHS);
-    MVT::ValueType VT = CmpOp.getValueType();
+    MVT VT = CmpOp.getValueType();
 
     if (cast<ConstantInt>(CB.CmpLHS)->isMinValue(true)) {
       Cond = DAG.getSetCC(MVT::i1, CmpOp, DAG.getConstant(High, VT), ISD::SETLE);
@@ -1517,7 +1517,7 @@ void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
 void SelectionDAGLowering::visitJumpTable(SelectionDAGISel::JumpTable &JT) {
   // Emit the code for the jump table
   assert(JT.Reg != -1U && "Should lower JT Header first!");
-  MVT::ValueType PTy = TLI.getPointerTy();
+  MVT PTy = TLI.getPointerTy();
   SDOperand Index = DAG.getCopyFromReg(getControlRoot(), JT.Reg, PTy);
   SDOperand Table = DAG.getJumpTable(JT.JTI, PTy);
   DAG.setRoot(DAG.getNode(ISD::BR_JT, MVT::Other, Index.getValue(1),
@@ -1533,7 +1533,7 @@ void SelectionDAGLowering::visitJumpTableHeader(SelectionDAGISel::JumpTable &JT,
   // and conditional branch to default mbb if the result is greater than the
   // difference between smallest and largest cases.
   SDOperand SwitchOp = getValue(JTH.SValue);
-  MVT::ValueType VT = SwitchOp.getValueType();
+  MVT VT = SwitchOp.getValueType();
   SDOperand SUB = DAG.getNode(ISD::SUB, VT, SwitchOp,
                               DAG.getConstant(JTH.First, VT));
   
@@ -1542,7 +1542,7 @@ void SelectionDAGLowering::visitJumpTableHeader(SelectionDAGISel::JumpTable &JT,
   // register so it can be used as an index into the jump table in a 
   // subsequent basic block.  This value may be smaller or larger than the
   // target's pointer type, and therefore require extension or truncating.
-  if (MVT::getSizeInBits(VT) > MVT::getSizeInBits(TLI.getPointerTy()))
+  if (VT.getSizeInBits() > TLI.getPointerTy().getSizeInBits())
     SwitchOp = DAG.getNode(ISD::TRUNCATE, TLI.getPointerTy(), SUB);
   else
     SwitchOp = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), SUB);
@@ -1582,7 +1582,7 @@ void SelectionDAGLowering::visitJumpTableHeader(SelectionDAGISel::JumpTable &JT,
 void SelectionDAGLowering::visitBitTestHeader(SelectionDAGISel::BitTestBlock &B) {
   // Subtract the minimum value
   SDOperand SwitchOp = getValue(B.SValue);
-  MVT::ValueType VT = SwitchOp.getValueType();
+  MVT VT = SwitchOp.getValueType();
   SDOperand SUB = DAG.getNode(ISD::SUB, VT, SwitchOp,
                               DAG.getConstant(B.First, VT));
 
@@ -1592,7 +1592,7 @@ void SelectionDAGLowering::visitBitTestHeader(SelectionDAGISel::BitTestBlock &B)
                                     ISD::SETUGT);
 
   SDOperand ShiftOp;
-  if (MVT::getSizeInBits(VT) > MVT::getSizeInBits(TLI.getShiftAmountTy()))
+  if (VT.getSizeInBits() > TLI.getShiftAmountTy().getSizeInBits())
     ShiftOp = DAG.getNode(ISD::TRUNCATE, TLI.getShiftAmountTy(), SUB);
   else
     ShiftOp = DAG.getNode(ISD::ZERO_EXTEND, TLI.getShiftAmountTy(), SUB);
@@ -2005,7 +2005,7 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
                                                     CaseRecVector& WorkList,
                                                     Value* SV,
                                                     MachineBasicBlock* Default){
-  unsigned IntPtrBits = MVT::getSizeInBits(TLI.getPointerTy());
+  unsigned IntPtrBits = TLI.getPointerTy().getSizeInBits();
 
   Case& FrontCase = *CR.Range.first;
   Case& BackCase  = *(CR.Range.second-1);
@@ -2271,8 +2271,8 @@ void SelectionDAGLowering::visitShift(User &I, unsigned Opcode) {
   SDOperand Op1 = getValue(I.getOperand(0));
   SDOperand Op2 = getValue(I.getOperand(1));
   
-  if (MVT::getSizeInBits(TLI.getShiftAmountTy()) <
-      MVT::getSizeInBits(Op2.getValueType()))
+  if (TLI.getShiftAmountTy().getSizeInBits() <
+      Op2.getValueType().getSizeInBits())
     Op2 = DAG.getNode(ISD::TRUNCATE, TLI.getShiftAmountTy(), Op2);
   else if (TLI.getShiftAmountTy() > Op2.getValueType())
     Op2 = DAG.getNode(ISD::ANY_EXTEND, TLI.getShiftAmountTy(), Op2);
@@ -2410,7 +2410,7 @@ void SelectionDAGLowering::visitVFCmp(User &I) {
   else 
     Condition = FPC;
     
-  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  MVT DestVT = TLI.getValueType(I.getType());
     
   setValue(&I, DAG.getVSetCC(DestVT, Op1, Op2, Condition));
 }
@@ -2427,7 +2427,7 @@ void SelectionDAGLowering::visitSelect(User &I) {
 void SelectionDAGLowering::visitTrunc(User &I) {
   // TruncInst cannot be a no-op cast because sizeof(src) > sizeof(dest).
   SDOperand N = getValue(I.getOperand(0));
-  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  MVT DestVT = TLI.getValueType(I.getType());
   setValue(&I, DAG.getNode(ISD::TRUNCATE, DestVT, N));
 }
 
@@ -2435,7 +2435,7 @@ void SelectionDAGLowering::visitZExt(User &I) {
   // ZExt cannot be a no-op cast because sizeof(src) < sizeof(dest).
   // ZExt also can't be a cast to bool for same reason. So, nothing much to do
   SDOperand N = getValue(I.getOperand(0));
-  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  MVT DestVT = TLI.getValueType(I.getType());
   setValue(&I, DAG.getNode(ISD::ZERO_EXTEND, DestVT, N));
 }
 
@@ -2443,49 +2443,49 @@ void SelectionDAGLowering::visitSExt(User &I) {
   // SExt cannot be a no-op cast because sizeof(src) < sizeof(dest).
   // SExt also can't be a cast to bool for same reason. So, nothing much to do
   SDOperand N = getValue(I.getOperand(0));
-  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  MVT DestVT = TLI.getValueType(I.getType());
   setValue(&I, DAG.getNode(ISD::SIGN_EXTEND, DestVT, N));
 }
 
 void SelectionDAGLowering::visitFPTrunc(User &I) {
   // FPTrunc is never a no-op cast, no need to check
   SDOperand N = getValue(I.getOperand(0));
-  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  MVT DestVT = TLI.getValueType(I.getType());
   setValue(&I, DAG.getNode(ISD::FP_ROUND, DestVT, N, DAG.getIntPtrConstant(0)));
 }
 
 void SelectionDAGLowering::visitFPExt(User &I){ 
   // FPTrunc is never a no-op cast, no need to check
   SDOperand N = getValue(I.getOperand(0));
-  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  MVT DestVT = TLI.getValueType(I.getType());
   setValue(&I, DAG.getNode(ISD::FP_EXTEND, DestVT, N));
 }
 
 void SelectionDAGLowering::visitFPToUI(User &I) { 
   // FPToUI is never a no-op cast, no need to check
   SDOperand N = getValue(I.getOperand(0));
-  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  MVT DestVT = TLI.getValueType(I.getType());
   setValue(&I, DAG.getNode(ISD::FP_TO_UINT, DestVT, N));
 }
 
 void SelectionDAGLowering::visitFPToSI(User &I) {
   // FPToSI is never a no-op cast, no need to check
   SDOperand N = getValue(I.getOperand(0));
-  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  MVT DestVT = TLI.getValueType(I.getType());
   setValue(&I, DAG.getNode(ISD::FP_TO_SINT, DestVT, N));
 }
 
 void SelectionDAGLowering::visitUIToFP(User &I) { 
   // UIToFP is never a no-op cast, no need to check
   SDOperand N = getValue(I.getOperand(0));
-  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  MVT DestVT = TLI.getValueType(I.getType());
   setValue(&I, DAG.getNode(ISD::UINT_TO_FP, DestVT, N));
 }
 
 void SelectionDAGLowering::visitSIToFP(User &I){ 
   // UIToFP is never a no-op cast, no need to check
   SDOperand N = getValue(I.getOperand(0));
-  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  MVT DestVT = TLI.getValueType(I.getType());
   setValue(&I, DAG.getNode(ISD::SINT_TO_FP, DestVT, N));
 }
 
@@ -2493,10 +2493,10 @@ void SelectionDAGLowering::visitPtrToInt(User &I) {
   // What to do depends on the size of the integer and the size of the pointer.
   // We can either truncate, zero extend, or no-op, accordingly.
   SDOperand N = getValue(I.getOperand(0));
-  MVT::ValueType SrcVT = N.getValueType();
-  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  MVT SrcVT = N.getValueType();
+  MVT DestVT = TLI.getValueType(I.getType());
   SDOperand Result;
-  if (MVT::getSizeInBits(DestVT) < MVT::getSizeInBits(SrcVT))
+  if (DestVT.getSizeInBits() < SrcVT.getSizeInBits())
     Result = DAG.getNode(ISD::TRUNCATE, DestVT, N);
   else 
     // Note: ZERO_EXTEND can handle cases where the sizes are equal too
@@ -2508,9 +2508,9 @@ void SelectionDAGLowering::visitIntToPtr(User &I) {
   // What to do depends on the size of the integer and the size of the pointer.
   // We can either truncate, zero extend, or no-op, accordingly.
   SDOperand N = getValue(I.getOperand(0));
-  MVT::ValueType SrcVT = N.getValueType();
-  MVT::ValueType DestVT = TLI.getValueType(I.getType());
-  if (MVT::getSizeInBits(DestVT) < MVT::getSizeInBits(SrcVT))
+  MVT SrcVT = N.getValueType();
+  MVT DestVT = TLI.getValueType(I.getType());
+  if (DestVT.getSizeInBits() < SrcVT.getSizeInBits())
     setValue(&I, DAG.getNode(ISD::TRUNCATE, DestVT, N));
   else 
     // Note: ZERO_EXTEND can handle cases where the sizes are equal too
@@ -2519,7 +2519,7 @@ void SelectionDAGLowering::visitIntToPtr(User &I) {
 
 void SelectionDAGLowering::visitBitCast(User &I) { 
   SDOperand N = getValue(I.getOperand(0));
-  MVT::ValueType DestVT = TLI.getValueType(I.getType());
+  MVT DestVT = TLI.getValueType(I.getType());
 
   // BitCast assures us that source and destination are the same size so this 
   // is either a BIT_CONVERT or a no-op.
@@ -2640,7 +2640,7 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
              I.getAlignment());
 
   SDOperand AllocSize = getValue(I.getArraySize());
-  MVT::ValueType IntPtr = TLI.getPointerTy();
+  MVT IntPtr = TLI.getPointerTy();
   if (IntPtr < AllocSize.getValueType())
     AllocSize = DAG.getNode(ISD::TRUNCATE, IntPtr, AllocSize);
   else if (IntPtr > AllocSize.getValueType())
@@ -2666,7 +2666,7 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
                           DAG.getIntPtrConstant(~(uint64_t)(StackAlign-1)));
 
   SDOperand Ops[] = { getRoot(), AllocSize, DAG.getIntPtrConstant(Align) };
-  const MVT::ValueType *VTs = DAG.getNodeValueTypes(AllocSize.getValueType(),
+  const MVT *VTs = DAG.getNodeValueTypes(AllocSize.getValueType(),
                                                     MVT::Other);
   SDOperand DSA = DAG.getNode(ISD::DYNAMIC_STACKALLOC, VTs, 2, Ops, 3);
   setValue(&I, DSA);
@@ -2746,14 +2746,14 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
     Ops.push_back(Op);
   }
 
-  std::vector<MVT::ValueType> VTs;
+  std::vector<MVT> VTs;
   if (I.getType() != Type::VoidTy) {
-    MVT::ValueType VT = TLI.getValueType(I.getType());
-    if (MVT::isVector(VT)) {
+    MVT VT = TLI.getValueType(I.getType());
+    if (VT.isVector()) {
       const VectorType *DestTy = cast<VectorType>(I.getType());
-      MVT::ValueType EltVT = TLI.getValueType(DestTy->getElementType());
+      MVT EltVT = TLI.getValueType(DestTy->getElementType());
       
-      VT = MVT::getVectorType(EltVT, DestTy->getNumElements());
+      VT = MVT::getVectorVT(EltVT, DestTy->getNumElements());
       assert(VT != MVT::Other && "Intrinsic uses a non-legal type?");
     }
     
@@ -2763,7 +2763,7 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
   if (HasChain)
     VTs.push_back(MVT::Other);
 
-  const MVT::ValueType *VTList = DAG.getNodeValueTypes(VTs);
+  const MVT *VTList = DAG.getNodeValueTypes(VTs);
 
   // Create the node.
   SDOperand Result;
@@ -2786,7 +2786,7 @@ void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I,
   }
   if (I.getType() != Type::VoidTy) {
     if (const VectorType *PTy = dyn_cast<VectorType>(I.getType())) {
-      MVT::ValueType VT = TLI.getValueType(PTy);
+      MVT VT = TLI.getValueType(PTy);
       Result = DAG.getNode(ISD::BIT_CONVERT, VT, Result);
     } 
     setValue(&I, Result);
@@ -3038,7 +3038,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::eh_selector_i32:
   case Intrinsic::eh_selector_i64: {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
-    MVT::ValueType VT = (Intrinsic == Intrinsic::eh_selector_i32 ?
+    MVT VT = (Intrinsic == Intrinsic::eh_selector_i32 ?
                          MVT::i32 : MVT::i64);
     
     if (MMI) {
@@ -3071,7 +3071,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::eh_typeid_for_i32:
   case Intrinsic::eh_typeid_for_i64: {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
-    MVT::ValueType VT = (Intrinsic == Intrinsic::eh_typeid_for_i32 ?
+    MVT VT = (Intrinsic == Intrinsic::eh_typeid_for_i32 ?
                          MVT::i32 : MVT::i64);
     
     if (MMI) {
@@ -3114,9 +3114,9 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
    }
 
    case Intrinsic::eh_dwarf_cfa: {
-     MVT::ValueType VT = getValue(I.getOperand(1)).getValueType();
+     MVT VT = getValue(I.getOperand(1)).getValueType();
      SDOperand CfaArg;
-     if (MVT::getSizeInBits(VT) > MVT::getSizeInBits(TLI.getPointerTy()))
+     if (VT.getSizeInBits() > TLI.getPointerTy().getSizeInBits())
        CfaArg = DAG.getNode(ISD::TRUNCATE,
                             TLI.getPointerTy(), getValue(I.getOperand(1)));
      else
@@ -3196,21 +3196,21 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   case Intrinsic::cttz: {
     SDOperand Arg = getValue(I.getOperand(1));
-    MVT::ValueType Ty = Arg.getValueType();
+    MVT Ty = Arg.getValueType();
     SDOperand result = DAG.getNode(ISD::CTTZ, Ty, Arg);
     setValue(&I, result);
     return 0;
   }
   case Intrinsic::ctlz: {
     SDOperand Arg = getValue(I.getOperand(1));
-    MVT::ValueType Ty = Arg.getValueType();
+    MVT Ty = Arg.getValueType();
     SDOperand result = DAG.getNode(ISD::CTLZ, Ty, Arg);
     setValue(&I, result);
     return 0;
   }
   case Intrinsic::ctpop: {
     SDOperand Arg = getValue(I.getOperand(1));
-    MVT::ValueType Ty = Arg.getValueType();
+    MVT Ty = Arg.getValueType();
     SDOperand result = DAG.getNode(ISD::CTPOP, Ty, Arg);
     setValue(&I, result);
     return 0;
@@ -3503,9 +3503,9 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
   SmallVector<SDOperand, 8> Parts;
   for (unsigned Value = 0, Part = 0, e = ValueVTs.size(); Value != e; ++Value) {
     // Copy the legal parts from the registers.
-    MVT::ValueType ValueVT = ValueVTs[Value];
+    MVT ValueVT = ValueVTs[Value];
     unsigned NumRegs = TLI->getNumRegisters(ValueVT);
-    MVT::ValueType RegisterVT = RegVTs[Value];
+    MVT RegisterVT = RegVTs[Value];
 
     Parts.resize(NumRegs);
     for (unsigned i = 0; i != NumRegs; ++i) {
@@ -3543,9 +3543,9 @@ void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
   unsigned NumRegs = Regs.size();
   SmallVector<SDOperand, 8> Parts(NumRegs);
   for (unsigned Value = 0, Part = 0, e = ValueVTs.size(); Value != e; ++Value) {
-    MVT::ValueType ValueVT = ValueVTs[Value];
+    MVT ValueVT = ValueVTs[Value];
     unsigned NumParts = TLI->getNumRegisters(ValueVT);
-    MVT::ValueType RegisterVT = RegVTs[Value];
+    MVT RegisterVT = RegVTs[Value];
 
     getCopyToParts(DAG, Val.getValue(Val.ResNo + Value),
                    &Parts[Part], NumParts, RegisterVT);
@@ -3586,11 +3586,11 @@ void RegsForValue::getCopyToRegs(SDOperand Val, SelectionDAG &DAG,
 /// values added into it.
 void RegsForValue::AddInlineAsmOperands(unsigned Code, SelectionDAG &DAG,
                                         std::vector<SDOperand> &Ops) const {
-  MVT::ValueType IntPtrTy = DAG.getTargetLoweringInfo().getPointerTy();
+  MVT IntPtrTy = DAG.getTargetLoweringInfo().getPointerTy();
   Ops.push_back(DAG.getTargetConstant(Code | (Regs.size() << 3), IntPtrTy));
   for (unsigned Value = 0, Reg = 0, e = ValueVTs.size(); Value != e; ++Value) {
     unsigned NumRegs = TLI->getNumRegisters(ValueVTs[Value]);
-    MVT::ValueType RegisterVT = RegVTs[Value];
+    MVT RegisterVT = RegVTs[Value];
     for (unsigned i = 0; i != NumRegs; ++i)
       Ops.push_back(DAG.getRegister(Regs[Reg++], RegisterVT));
   }
@@ -3603,11 +3603,11 @@ static const TargetRegisterClass *
 isAllocatableRegister(unsigned Reg, MachineFunction &MF,
                       const TargetLowering &TLI,
                       const TargetRegisterInfo *TRI) {
-  MVT::ValueType FoundVT = MVT::Other;
+  MVT FoundVT = MVT::Other;
   const TargetRegisterClass *FoundRC = 0;
   for (TargetRegisterInfo::regclass_iterator RCI = TRI->regclass_begin(),
        E = TRI->regclass_end(); RCI != E; ++RCI) {
-    MVT::ValueType ThisVT = MVT::Other;
+    MVT ThisVT = MVT::Other;
 
     const TargetRegisterClass *RC = *RCI;
     // If none of the the value types for this register class are valid, we 
@@ -3619,7 +3619,7 @@ isAllocatableRegister(unsigned Reg, MachineFunction &MF,
         // choose the one with the largest VT specified.  For example, on
         // PowerPC, we favor f64 register classes over f32.
         if (FoundVT == MVT::Other || 
-            MVT::getSizeInBits(FoundVT) < MVT::getSizeInBits(*I)) {
+            FoundVT.getSizeInBits() < (*I).getSizeInBits()) {
           ThisVT = *I;
           break;
         }
@@ -3745,8 +3745,8 @@ GetRegistersForValue(SDISelAsmOperandInfo &OpInfo, bool HasEarlyClobber,
   unsigned NumRegs = 1;
   if (OpInfo.ConstraintVT != MVT::Other)
     NumRegs = TLI.getNumRegisters(OpInfo.ConstraintVT);
-  MVT::ValueType RegVT;
-  MVT::ValueType ValueVT = OpInfo.ConstraintVT;
+  MVT RegVT;
+  MVT ValueVT = OpInfo.ConstraintVT;
   
 
   // If this is a constraint for a specific physical register, like {r17},
@@ -3895,7 +3895,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     ConstraintOperands.push_back(SDISelAsmOperandInfo(ConstraintInfos[i]));
     SDISelAsmOperandInfo &OpInfo = ConstraintOperands.back();
     
-    MVT::ValueType OpVT = MVT::Other;
+    MVT OpVT = MVT::Other;
 
     // Compute the value type for each operand.
     switch (OpInfo.Type) {
@@ -4227,12 +4227,12 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     // bit_convert.
     if (const StructType *ResSTy = dyn_cast<StructType>(CS.getType())) {
       for (unsigned i = 0, e = ResSTy->getNumElements(); i != e; ++i) {
-        if (MVT::isVector(Val.Val->getValueType(i)))
+        if (Val.Val->getValueType(i).isVector())
           Val = DAG.getNode(ISD::BIT_CONVERT,
                             TLI.getValueType(ResSTy->getElementType(i)), Val);
       }
     } else {
-      if (MVT::isVector(Val.getValueType()))
+      if (Val.getValueType().isVector())
         Val = DAG.getNode(ISD::BIT_CONVERT, TLI.getValueType(CS.getType()),
                           Val);
     }
@@ -4267,7 +4267,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
 void SelectionDAGLowering::visitMalloc(MallocInst &I) {
   SDOperand Src = getValue(I.getOperand(0));
 
-  MVT::ValueType IntPtr = TLI.getPointerTy();
+  MVT IntPtr = TLI.getPointerTy();
 
   if (IntPtr < Src.getValueType())
     Src = DAG.getNode(ISD::TRUNCATE, IntPtr, Src);
@@ -4298,7 +4298,7 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
   Entry.Node = getValue(I.getOperand(0));
   Entry.Ty = TLI.getTargetData()->getIntPtrType();
   Args.push_back(Entry);
-  MVT::ValueType IntPtr = TLI.getPointerTy();
+  MVT IntPtr = TLI.getPointerTy();
   std::pair<SDOperand,SDOperand> Result =
     TLI.LowerCallTo(getRoot(), Type::VoidTy, false, false, false,
                     CallingConv::C, true,
@@ -4361,11 +4361,11 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   Ops.push_back(DAG.getConstant(F.isVarArg(), getPointerTy()));
 
   // Add one result value for each formal argument.
-  std::vector<MVT::ValueType> RetVals;
+  std::vector<MVT> RetVals;
   unsigned j = 1;
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
        I != E; ++I, ++j) {
-    MVT::ValueType VT = getValueType(I->getType());
+    MVT VT = getValueType(I->getType());
     ISD::ArgFlagsTy Flags;
     unsigned OriginalAlignment =
       getTargetData()->getABITypeAlignment(I->getType());
@@ -4395,7 +4395,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       Flags.setNest();
     Flags.setOrigAlign(OriginalAlignment);
 
-    MVT::ValueType RegisterVT = getRegisterType(VT);
+    MVT RegisterVT = getRegisterType(VT);
     unsigned NumRegs = getNumRegisters(VT);
     for (unsigned i = 0; i != NumRegs; ++i) {
       RetVals.push_back(RegisterVT);
@@ -4438,8 +4438,8 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   unsigned Idx = 1;
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; 
       ++I, ++Idx) {
-    MVT::ValueType VT = getValueType(I->getType());
-    MVT::ValueType PartVT = getRegisterType(VT);
+    MVT VT = getValueType(I->getType());
+    MVT PartVT = getRegisterType(VT);
 
     unsigned NumParts = getNumRegisters(VT);
     SmallVector<SDOperand, 4> Parts(NumParts);
@@ -4479,7 +4479,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   
   // Handle all of the outgoing arguments.
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-    MVT::ValueType VT = getValueType(Args[i].Ty);
+    MVT VT = getValueType(Args[i].Ty);
     SDOperand Op = Args[i].Node;
     ISD::ArgFlagsTy Flags;
     unsigned OriginalAlignment =
@@ -4510,7 +4510,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       Flags.setNest();
     Flags.setOrigAlign(OriginalAlignment);
 
-    MVT::ValueType PartVT = getRegisterType(VT);
+    MVT PartVT = getRegisterType(VT);
     unsigned NumParts = getNumRegisters(VT);
     SmallVector<SDOperand, 4> Parts(NumParts);
     ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
@@ -4537,14 +4537,14 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   
   // Figure out the result value types. We start by making a list of
   // the potentially illegal return value types.
-  SmallVector<MVT::ValueType, 4> LoweredRetTys;
-  SmallVector<MVT::ValueType, 4> RetTys;
+  SmallVector<MVT, 4> LoweredRetTys;
+  SmallVector<MVT, 4> RetTys;
   ComputeValueVTs(*this, RetTy, RetTys);
 
   // Then we translate that to a list of legal types.
   for (unsigned I = 0, E = RetTys.size(); I != E; ++I) {
-    MVT::ValueType VT = RetTys[I];
-    MVT::ValueType RegisterVT = getRegisterType(VT);
+    MVT VT = RetTys[I];
+    MVT RegisterVT = getRegisterType(VT);
     unsigned NumRegs = getNumRegisters(VT);
     for (unsigned i = 0; i != NumRegs; ++i)
       LoweredRetTys.push_back(RegisterVT);
@@ -4571,8 +4571,8 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     SmallVector<SDOperand, 4> ReturnValues;
     unsigned RegNo = 0;
     for (unsigned I = 0, E = RetTys.size(); I != E; ++I) {
-      MVT::ValueType VT = RetTys[I];
-      MVT::ValueType RegisterVT = getRegisterType(VT);
+      MVT VT = RetTys[I];
+      MVT RegisterVT = getRegisterType(VT);
       unsigned NumRegs = getNumRegisters(VT);
       unsigned RegNoEnd = NumRegs + RegNo;
       SmallVector<SDOperand, 4> Results;
@@ -4609,7 +4609,7 @@ SDOperand TargetLowering::CustomPromoteOperation(SDOperand Op,
 // SelectionDAGISel code
 //===----------------------------------------------------------------------===//
 
-unsigned SelectionDAGISel::MakeReg(MVT::ValueType VT) {
+unsigned SelectionDAGISel::MakeReg(MVT VT) {
   return RegInfo->createVirtualRegister(TLI.getRegClassFor(VT));
 }
 
@@ -4798,7 +4798,7 @@ static void CheckDAGForTailCallsAndFixThem(SelectionDAG &DAG,
             MachineFrameInfo *MFI = MF.getFrameInfo();
             if (!isByVal &&
                 IsPossiblyOverwrittenArgumentOfTailCall(Arg, MFI)) {
-              MVT::ValueType VT = Arg.getValueType();
+              MVT VT = Arg.getValueType();
               unsigned VReg = MF.getRegInfo().
                 createVirtualRegister(TLI.getRegClassFor(VT));
               Chain = DAG.getCopyToReg(Chain, VReg, Arg, InFlag);
@@ -4951,7 +4951,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
 
       // Remember that this register needs to added to the machine PHI node as
       // the input for this MBB.
-      MVT::ValueType VT = TLI.getValueType(PN->getType());
+      MVT VT = TLI.getValueType(PN->getType());
       unsigned NumRegisters = TLI.getNumRegisters(VT);
       for (unsigned i = 0, e = NumRegisters; i != e; ++i)
         PHINodesToUpdate.push_back(std::make_pair(MBBI++, Reg+i));
@@ -5356,7 +5356,7 @@ SelectInlineAsmMemoryOperands(std::vector<SDOperand> &Ops, SelectionDAG &DAG) {
       }
       
       // Add this to the output node.
-      MVT::ValueType IntPtrTy = DAG.getTargetLoweringInfo().getPointerTy();
+      MVT IntPtrTy = DAG.getTargetLoweringInfo().getPointerTy();
       Ops.push_back(DAG.getTargetConstant(4/*MEM*/ | (SelOps.size() << 3),
                                           IntPtrTy));
       Ops.insert(Ops.end(), SelOps.begin(), SelOps.end());

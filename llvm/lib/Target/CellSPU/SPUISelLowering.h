@@ -79,15 +79,15 @@ namespace llvm {
   /// Predicates that are used for node matching:
   namespace SPU {
     SDOperand get_vec_u18imm(SDNode *N, SelectionDAG &DAG,
-                             MVT::ValueType ValueType);
+                             MVT ValueType);
     SDOperand get_vec_i16imm(SDNode *N, SelectionDAG &DAG,
-                             MVT::ValueType ValueType);
+                             MVT ValueType);
     SDOperand get_vec_i10imm(SDNode *N, SelectionDAG &DAG,
-                             MVT::ValueType ValueType);
+                             MVT ValueType);
     SDOperand get_vec_i8imm(SDNode *N, SelectionDAG &DAG,
-                            MVT::ValueType ValueType);
+                            MVT ValueType);
     SDOperand get_ILHUvec_imm(SDNode *N, SelectionDAG &DAG,
-                              MVT::ValueType ValueType);
+                              MVT ValueType);
     SDOperand get_v4i32_imm(SDNode *N, SelectionDAG &DAG);
     SDOperand get_v2i64_imm(SDNode *N, SelectionDAG &DAG);
   }
@@ -109,7 +109,7 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType - Return the ValueType for ISD::SETCC
-    virtual MVT::ValueType getSetCCResultType(const SDOperand &) const;
+    virtual MVT getSetCCResultType(const SDOperand &) const;
     
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///
@@ -128,7 +128,7 @@ namespace llvm {
 
     std::pair<unsigned, const TargetRegisterClass*> 
       getRegForInlineAsmConstraint(const std::string &Constraint,
-                                   MVT::ValueType VT) const;
+                                   MVT VT) const;
 
     void LowerAsmOperandForConstraint(SDOperand Op, char ConstraintLetter,
                                       std::vector<SDOperand> &Ops,

@@ -790,7 +790,8 @@ to the node defining the used value.  Because nodes may define multiple values,
 edges are represented by instances of the <tt>SDOperand</tt> class, which is 
 a <tt>&lt;SDNode, unsigned&gt;</tt> pair, indicating the node and result
 value being used, respectively.  Each value produced by an <tt>SDNode</tt> has
-an associated <tt>MVT::ValueType</tt> indicating what type the value is.</p>
+an associated <tt>MVT</tt> (Machine Value Type) indicating what the type of the
+value is.</p>
 
 <p>SelectionDAGs contain two different kinds of values: those that represent
 data flow and those that represent control flow dependencies.  Data values are

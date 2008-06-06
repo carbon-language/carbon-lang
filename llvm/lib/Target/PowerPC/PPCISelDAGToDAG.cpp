@@ -921,7 +921,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
   case ISD::LOAD: {
     // Handle preincrement loads.
     LoadSDNode *LD = cast<LoadSDNode>(Op);
-    MVT::ValueType LoadedVT = LD->getMemoryVT();
+    MVT LoadedVT = LD->getMemoryVT();
     
     // Normal loads are handled by code generated from the .td file.
     if (LD->getAddressingMode() != ISD::PRE_INC)
@@ -936,7 +936,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
       if (LD->getValueType(0) != MVT::i64) {
         // Handle PPC32 integer and normal FP loads.
         assert((!isSExt || LoadedVT == MVT::i16) && "Invalid sext update load");
-        switch (LoadedVT) {
+        switch (LoadedVT.getSimpleVT()) {
           default: assert(0 && "Invalid PPC load type!");
           case MVT::f64: Opcode = PPC::LFDU; break;
           case MVT::f32: Opcode = PPC::LFSU; break;
@@ -948,7 +948,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
       } else {
         assert(LD->getValueType(0) == MVT::i64 && "Unknown load result type!");
         assert((!isSExt || LoadedVT == MVT::i16) && "Invalid sext update load");
-        switch (LoadedVT) {
+        switch (LoadedVT.getSimpleVT()) {
           default: assert(0 && "Invalid PPC load type!");
           case MVT::i64: Opcode = PPC::LDU; break;
           case MVT::i32: Opcode = PPC::LWZU8; break;

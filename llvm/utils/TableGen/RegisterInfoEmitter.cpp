@@ -221,7 +221,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     // Emit the register list now.
     OS << "  // " << Name 
        << " Register Class Value Types...\n"
-       << "  static const MVT::ValueType " << Name
+       << "  static const MVT " << Name
        << "[] = {\n    ";
     for (unsigned i = 0, e = RC.VTs.size(); i != e; ++i)
       OS << getEnumName(RC.VTs[i]) << ", ";

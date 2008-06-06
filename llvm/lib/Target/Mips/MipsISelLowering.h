@@ -66,7 +66,7 @@ namespace llvm {
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// getSetCCResultType - get the ISD::SETCC result ValueType
-    MVT::ValueType getSetCCResultType(const SDOperand &) const;
+    MVT getSetCCResultType(const SDOperand &) const;
 
   private:
     // Lower Operand helpers
@@ -93,11 +93,11 @@ namespace llvm {
 
     std::pair<unsigned, const TargetRegisterClass*> 
               getRegForInlineAsmConstraint(const std::string &Constraint,
-              MVT::ValueType VT) const;
+              MVT VT) const;
 
     std::vector<unsigned>
     getRegClassForInlineAsmConstraint(const std::string &Constraint,
-              MVT::ValueType VT) const;
+              MVT VT) const;
   };
 }
 

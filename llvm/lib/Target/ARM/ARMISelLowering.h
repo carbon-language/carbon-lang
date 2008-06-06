@@ -114,10 +114,10 @@ namespace llvm {
     ConstraintType getConstraintType(const std::string &Constraint) const;
     std::pair<unsigned, const TargetRegisterClass*> 
       getRegForInlineAsmConstraint(const std::string &Constraint,
-                                   MVT::ValueType VT) const;
+                                   MVT VT) const;
     std::vector<unsigned>
     getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                      MVT::ValueType VT) const;
+                                      MVT VT) const;
 
     virtual const ARMSubtarget* getSubtarget() {
       return Subtarget;

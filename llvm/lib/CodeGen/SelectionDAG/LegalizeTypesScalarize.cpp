@@ -89,12 +89,12 @@ void DAGTypeLegalizer::ScalarizeResult(SDNode *N, unsigned ResNo) {
 }
 
 SDOperand DAGTypeLegalizer::ScalarizeRes_UNDEF(SDNode *N) {
-  return DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(N->getValueType(0)));
+  return DAG.getNode(ISD::UNDEF, N->getValueType(0).getVectorElementType());
 }
 
 SDOperand DAGTypeLegalizer::ScalarizeRes_LOAD(LoadSDNode *N) {
   // FIXME: Add support for indexed loads.
-  SDOperand Result = DAG.getLoad(MVT::getVectorElementType(N->getValueType(0)),
+  SDOperand Result = DAG.getLoad(N->getValueType(0).getVectorElementType(),
                                  N->getChain(), N->getBasePtr(), 
                                  N->getSrcValue(), N->getSrcValueOffset(),
                                  N->isVolatile(), N->getAlignment());
@@ -125,8 +125,8 @@ SDOperand DAGTypeLegalizer::ScalarizeRes_INSERT_VECTOR_ELT(SDNode *N) {
   // The value to insert may have a wider type than the vector element type,
   // so be sure to truncate it to the element type if necessary.
   SDOperand Op = N->getOperand(1);
-  MVT::ValueType EltVT = MVT::getVectorElementType(N->getValueType(0));
-  if (MVT::getSizeInBits(Op.getValueType()) > MVT::getSizeInBits(EltVT))
+  MVT EltVT = N->getValueType(0).getVectorElementType();
+  if (Op.getValueType().getSizeInBits() > EltVT.getSizeInBits())
     Op = DAG.getNode(ISD::TRUNCATE, EltVT, Op);
   assert(Op.getValueType() == EltVT && "Invalid type for inserted value!");
   return Op;
@@ -140,7 +140,7 @@ SDOperand DAGTypeLegalizer::ScalarizeRes_VECTOR_SHUFFLE(SDNode *N) {
 }
 
 SDOperand DAGTypeLegalizer::ScalarizeRes_BIT_CONVERT(SDNode *N) {
-  MVT::ValueType NewVT = MVT::getVectorElementType(N->getValueType(0));
+  MVT NewVT = N->getValueType(0).getVectorElementType();
   return DAG.getNode(ISD::BIT_CONVERT, NewVT, N->getOperand(0));
 }
 
