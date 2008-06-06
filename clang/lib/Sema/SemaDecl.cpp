@@ -514,17 +514,6 @@ bool Sema::CheckSingleInitializer(Expr *&Init, QualType DeclType) {
                                   InitType, Init, "initializing");
 }
 
-bool Sema::CheckInitExpr(Expr *expr, InitListExpr *IList, unsigned slot,
-                         QualType ElementType) {
-  Expr *savExpr = expr; // Might be promoted by CheckSingleInitializer.
-  if (CheckSingleInitializer(expr, ElementType))
-    return true; // types weren't compatible.
-  
-  if (savExpr != expr) // The type was promoted, update initializer list.
-    IList->setInit(slot, expr);
-  return false;
-}
-
 bool Sema::CheckStringLiteralInit(StringLiteral *strLiteral, QualType &DeclT) {
   if (const IncompleteArrayType *IAT = DeclT->getAsIncompleteArrayType()) {
     // C99 6.7.8p14. We have an array of character type with unknown size 
@@ -557,200 +546,6 @@ StringLiteral *Sema::IsStringLiteralInit(Expr *Init, QualType DeclType) {
   return 0;
 }
 
-// CheckInitializerListTypes - Checks the types of elements of an initializer
-// list. This function is recursive: it calls itself to initialize subelements
-// of aggregate types.  Note that the topLevel parameter essentially refers to
-// whether this expression "owns" the initializer list passed in, or if this
-// initialization is taking elements out of a parent initializer.  Each
-// call to this function adds zero or more to startIndex, reports any errors,
-// and returns true if it found any inconsistent types.
-bool Sema::CheckInitializerListTypes(InitListExpr*& IList, QualType &DeclType,
-                                     bool topLevel, unsigned& startIndex) {
-  bool hadError = false;
-
-  if (DeclType->isScalarType()) {
-    // The simplest case: initializing a single scalar
-    if (topLevel) {
-      Diag(IList->getLocStart(), diag::warn_braces_around_scalar_init, 
-           IList->getSourceRange());
-    }
-    if (startIndex < IList->getNumInits()) {
-      Expr* expr = IList->getInit(startIndex);
-      if (InitListExpr *SubInitList = dyn_cast<InitListExpr>(expr)) {
-        // FIXME: Should an error be reported here instead?
-        unsigned newIndex = 0;
-        CheckInitializerListTypes(SubInitList, DeclType, true, newIndex);
-      } else {
-        hadError |= CheckInitExpr(expr, IList, startIndex, DeclType);
-      }
-      ++startIndex;
-    }
-    // FIXME: Should an error be reported for empty initializer list + scalar?
-  } else if (DeclType->isVectorType()) {
-    if (startIndex < IList->getNumInits()) {
-      const VectorType *VT = DeclType->getAsVectorType();
-      int maxElements = VT->getNumElements();
-      QualType elementType = VT->getElementType();
-      
-      for (int i = 0; i < maxElements; ++i) {
-        // Don't attempt to go past the end of the init list
-        if (startIndex >= IList->getNumInits())
-          break;
-        Expr* expr = IList->getInit(startIndex);
-        if (InitListExpr *SubInitList = dyn_cast<InitListExpr>(expr)) {
-          unsigned newIndex = 0;
-          hadError |= CheckInitializerListTypes(SubInitList, elementType, 
-                                                true, newIndex);
-          ++startIndex;
-        } else {
-          hadError |= CheckInitializerListTypes(IList, elementType, 
-                                                false, startIndex);
-        }
-      }
-    }
-  } else if (DeclType->isAggregateType() || DeclType->isUnionType()) {
-    if (DeclType->isStructureType() || DeclType->isUnionType()) {
-      if (startIndex < IList->getNumInits() && !topLevel &&
-          Context.typesAreCompatible(IList->getInit(startIndex)->getType(), 
-                                     DeclType)) {
-        // We found a compatible struct; per the standard, this initializes the
-        // struct.  (The C standard technically says that this only applies for
-        // initializers for declarations with automatic scope; however, this
-        // construct is unambiguous anyway because a struct cannot contain
-        // a type compatible with itself. We'll output an error when we check
-        // if the initializer is constant.)
-        // FIXME: Is a call to CheckSingleInitializer required here?
-        ++startIndex;
-      } else {
-        RecordDecl* structDecl = DeclType->getAsRecordType()->getDecl();
-        
-        // If the record is invalid, some of it's members are invalid. To avoid
-        // confusion, we forgo checking the intializer for the entire record.
-        if (structDecl->isInvalidDecl())
-          return true;
-          
-        // If structDecl is a forward declaration, this loop won't do anything;
-        // That's okay, because an error should get printed out elsewhere. It
-        // might be worthwhile to skip over the rest of the initializer, though.
-        int numMembers = structDecl->getNumMembers() -
-                         structDecl->hasFlexibleArrayMember();
-        for (int i = 0; i < numMembers; i++) {
-          // Don't attempt to go past the end of the init list
-          if (startIndex >= IList->getNumInits())
-            break;
-          FieldDecl * curField = structDecl->getMember(i);
-          if (!curField->getIdentifier()) {
-            // Don't initialize unnamed fields, e.g. "int : 20;"
-            continue;
-          }
-          QualType fieldType = curField->getType();
-          Expr* expr = IList->getInit(startIndex);
-          if (InitListExpr *SubInitList = dyn_cast<InitListExpr>(expr)) {
-            unsigned newStart = 0;
-            hadError |= CheckInitializerListTypes(SubInitList, fieldType, 
-                                                  true, newStart);
-            ++startIndex;
-          } else {
-            hadError |= CheckInitializerListTypes(IList, fieldType, 
-                                                  false, startIndex);
-          }
-          if (DeclType->isUnionType())
-            break;
-        }
-        // FIXME: Implement flexible array initialization GCC extension (it's a 
-        // really messy extension to implement, unfortunately...the necessary
-        // information isn't actually even here!)
-      }
-    } else if (DeclType->isArrayType()) {
-      // Check for the special-case of initializing an array with a string.
-      if (startIndex < IList->getNumInits()) {
-        if (StringLiteral *lit = IsStringLiteralInit(IList->getInit(startIndex), 
-                                                     DeclType)) {
-          CheckStringLiteralInit(lit, DeclType);
-          ++startIndex;
-          if (topLevel && startIndex < IList->getNumInits()) {
-            // We have leftover initializers; warn
-            Diag(IList->getInit(startIndex)->getLocStart(), 
-                 diag::err_excess_initializers_in_char_array_initializer, 
-                 IList->getInit(startIndex)->getSourceRange());
-          }
-          return false;
-        }
-      }
-      int maxElements;
-      if (DeclType->isIncompleteArrayType()) {
-        // FIXME: use a proper constant
-        maxElements = 0x7FFFFFFF;
-      } else if (const VariableArrayType *VAT =
-                                DeclType->getAsVariableArrayType()) {
-        // Check for VLAs; in standard C it would be possible to check this
-        // earlier, but I don't know where clang accepts VLAs (gcc accepts
-        // them in all sorts of strange places).
-        Diag(VAT->getSizeExpr()->getLocStart(),
-             diag::err_variable_object_no_init,
-             VAT->getSizeExpr()->getSourceRange());
-        hadError = true;
-        maxElements = 0x7FFFFFFF;
-      } else {
-        const ConstantArrayType *CAT = DeclType->getAsConstantArrayType();
-        maxElements = static_cast<int>(CAT->getSize().getZExtValue());
-      }
-      QualType elementType = DeclType->getAsArrayType()->getElementType();
-      int numElements = 0;
-      for (int i = 0; i < maxElements; ++i, ++numElements) {
-        // Don't attempt to go past the end of the init list
-        if (startIndex >= IList->getNumInits())
-          break;
-        Expr* expr = IList->getInit(startIndex);
-        if (InitListExpr *SubInitList = dyn_cast<InitListExpr>(expr)) {
-          unsigned newIndex = 0;
-          hadError |= CheckInitializerListTypes(SubInitList, elementType, 
-                                                true, newIndex);
-          ++startIndex;
-        } else {
-          hadError |= CheckInitializerListTypes(IList, elementType, 
-                                                false, startIndex);
-        }
-      }
-      if (DeclType->isIncompleteArrayType()) {
-        // If this is an incomplete array type, the actual type needs to
-        // be calculated here
-        if (numElements == 0) {
-          // Sizing an array implicitly to zero is not allowed
-          // (It could in theory be allowed, but it doesn't really matter.)
-          Diag(IList->getLocStart(),
-               diag::err_at_least_one_initializer_needed_to_size_array);
-          hadError = true;
-        } else {
-          llvm::APSInt ConstVal(32);
-          ConstVal = numElements;
-          DeclType = Context.getConstantArrayType(elementType, ConstVal, 
-                                                  ArrayType::Normal, 0);
-        }
-      }
-    } else {
-      assert(0 && "Aggregate that isn't a function or array?!");
-    }
-  } else {
-    // In C, all types are either scalars or aggregates, but
-    // additional handling is needed here for C++ (and possibly others?). 
-    assert(0 && "Unsupported initializer type");
-  }
-
-  // If this init list is a base list, we set the type; an initializer doesn't
-  // fundamentally have a type, but this makes the ASTs a bit easier to read
-  if (topLevel)
-    IList->setType(DeclType);
-
-  if (topLevel && startIndex < IList->getNumInits()) {
-    // We have leftover initializers; warn
-    Diag(IList->getInit(startIndex)->getLocStart(), 
-         diag::warn_excess_initializers, 
-         IList->getInit(startIndex)->getSourceRange());
-  }
-  return hadError;
-}
-
 bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType) {  
   // C99 6.7.8p3: The type of the entity to be initialized shall be an array
   // of unknown size ("[]") or an object type that is not a variable array type.
@@ -772,13 +567,9 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType) {
 
     return CheckSingleInitializer(Init, DeclType);
   }
-#if 0
-  unsigned newIndex = 0;
-  return CheckInitializerListTypes(InitList, DeclType, true, newIndex);
-#else
+
   InitListChecker CheckInitList(this, InitList, DeclType);
   return CheckInitList.HadError();
-#endif
 }
 
 Sema::DeclTy *

@@ -862,10 +862,6 @@ private:
   friend class InitListChecker;
   bool CheckInitializerTypes(Expr *&simpleInit_or_initList, QualType &declType);
   bool CheckSingleInitializer(Expr *&simpleInit, QualType declType);
-  bool CheckInitExpr(Expr *expr, InitListExpr *IList, unsigned slot,
-                     QualType ElementType);
-  bool CheckInitializerListTypes(InitListExpr*& IList, QualType &DeclType,
-                                 bool topLevel, unsigned& startIndex);
   bool CheckForConstantInitializer(Expr *e, QualType t);
   bool CheckArithmeticConstantExpression(const Expr* e);
   bool CheckAddressConstantExpression(const Expr* e);
