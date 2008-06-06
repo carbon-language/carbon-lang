@@ -231,6 +231,7 @@ public:
   ~SourceManager() {}
   
   void clearIDTables() {
+    MainFileID = 0;
     FileIDs.clear();
     MacroIDs.clear();
     LastLineNoFileIDQuery = ~0U;

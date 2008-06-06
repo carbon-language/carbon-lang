@@ -1459,6 +1459,8 @@ int main(int argc, char **argv) {
     exit(1);
   }
   
+  llvm::OwningPtr<SourceManager> SourceMgr;
+  
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
     
@@ -1467,7 +1469,10 @@ int main(int argc, char **argv) {
     else {            
       /// Create a SourceManager object.  This tracks and owns all the file
       /// buffers allocated to a translation unit.
-      SourceManager SourceMgr;
+      if (!SourceMgr)
+        SourceMgr.reset(new SourceManager());
+      else
+        SourceMgr->clearIDTables();
       
       // Initialize language options, inferring file types from input filenames.
       LangOptions LangInfo;
@@ -1490,7 +1495,7 @@ int main(int argc, char **argv) {
       
       // Set up the preprocessor with these options.
       DriverPreprocessorFactory PPFactory(InFile, Diags, LangInfo, *Target,
-                                          SourceMgr, HeaderInfo);
+                                          *SourceMgr.get(), HeaderInfo);
       
       llvm::OwningPtr<Preprocessor> PP(PPFactory.CreatePreprocessor());
             
@@ -1498,12 +1503,13 @@ int main(int argc, char **argv) {
         continue;
       
       ProcessInputFile(*PP, PPFactory, InFile);
-      HeaderInfo.ClearFileInfo();
+      HeaderInfo.ClearFileInfo();      
       
       if (Stats)
-        SourceMgr.PrintStats();
+        SourceMgr->PrintStats();
     }
   }
+  
   
   delete Target;
 
