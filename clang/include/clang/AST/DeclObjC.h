@@ -109,8 +109,12 @@ private:
     SelName(SelInfo), MethodDeclType(T), 
     ParamInfo(0), NumMethodParams(0),
     MethodAttrs(M), EndLoc(endLoc), Body(0), SelfDecl(0) {}
+
   ~ObjCMethodDecl();
 public:
+  
+  /// Destroy - Call destructors and release memory.
+  virtual void Destroy(ASTContext& C);
 
   static ObjCMethodDecl *Create(ASTContext &C,
                                 SourceLocation beginLoc, 
@@ -262,7 +266,13 @@ class ObjCInterfaceDecl : public NamedDecl, public DeclContext {
       ClassLoc(CLoc) {
         AllocIntfRefProtocols(numRefProtos);
       }
+  
+  ~ObjCInterfaceDecl();
+  
 public:
+
+  /// Destroy - Call destructors and release memory.
+  virtual void Destroy(ASTContext& C);
 
   static ObjCInterfaceDecl *Create(ASTContext &C,
                                    SourceLocation atLoc,

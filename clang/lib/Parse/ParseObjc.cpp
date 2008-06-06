@@ -224,7 +224,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
 ///
 void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
                                         tok::ObjCKeywordKind contextKey) {
-  llvm::SmallVector<DeclTy*, 32>  allMethods;
+  llvm::SmallVector<DeclTy*, 32> allMethods;
   llvm::SmallVector<DeclTy*, 16> allProperties;
   tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword;
   SourceLocation AtEndLoc;
@@ -314,8 +314,11 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
     }
   }
   /// Insert collected methods declarations into the @interface object.
-  Actions.ActOnAtEnd(AtEndLoc, interfaceDecl, &allMethods[0], allMethods.size(), 
-                     &allProperties[0], allProperties.size());
+  Actions.ActOnAtEnd(AtEndLoc, interfaceDecl,
+                     allMethods.empty() ? 0 : &allMethods[0],
+                     allMethods.size(), 
+                     allProperties.empty() ? 0 : &allProperties[0],
+                     allProperties.size());
 }
 
 ///   Parse property attribute declarations.

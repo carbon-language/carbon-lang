@@ -35,6 +35,21 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
                                   isVariadic, isSynthesized, impControl);
 }
 
+ObjCMethodDecl::~ObjCMethodDecl() {  
+  delete [] ParamInfo;
+  //delete [] MethodAttrs;  // FIXME: Also destroy the stored Expr*.
+}
+
+void ObjCMethodDecl::Destroy(ASTContext& C) {
+  if (Body) Body->Destroy(C);
+  if (SelfDecl) SelfDecl->Destroy(C);
+  
+  for (param_iterator I=param_begin(), E=param_end(); I!=E; ++I)
+    if (*I) (*I)->Destroy(C);
+  
+  Decl::Destroy(C);
+}
+
 ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
                                              SourceLocation atLoc,
                                              unsigned numRefProtos,
@@ -46,6 +61,34 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
                                      Id, ClassLoc, ForwardDecl,
                                      isInternal);
 }
+
+ObjCInterfaceDecl::~ObjCInterfaceDecl() {
+  delete [] Ivars;
+  delete [] InstanceMethods;
+  delete [] ClassMethods;
+  delete [] PropertyDecl;
+  // FIXME: CategoryList?
+}
+
+void ObjCInterfaceDecl::Destroy(ASTContext& C) {  
+  for (ivar_iterator I=ivar_begin(), E=ivar_end(); I!=E; ++I)
+    if (*I) (*I)->Destroy(C);
+  
+  for (instmeth_iterator I=instmeth_begin(), E=instmeth_end(); I!=E; ++I)
+    if (*I) (*I)->Destroy(C);
+  
+  for (classmeth_iterator I=classmeth_begin(), E=classmeth_end(); I!=E; ++I)
+    if (*I) (*I)->Destroy(C);
+  
+  // FIXME: Cannot destroy properties right now because the properties of
+  //  both the super class and this class are in this array.  This can
+  //  cause double-deletions.
+  //for (classprop_iterator I=classprop_begin(), E=classprop_end(); I!=E; ++I)
+//    if (*I) (*I)->Destroy(C);
+//  
+  Decl::Destroy(C);
+}
+
 
 ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, SourceLocation L,
                                    IdentifierInfo *Id, QualType T) {
@@ -133,10 +176,6 @@ void ObjCMethodDecl::setMethodParams(ParmVarDecl **NewParamInfo,
     memcpy(ParamInfo, NewParamInfo, sizeof(ParmVarDecl*)*NumParams);
     NumMethodParams = NumParams;
   }
-}
-
-ObjCMethodDecl::~ObjCMethodDecl() {
-  delete[] ParamInfo;
 }
 
 /// FindPropertyDeclaration - Finds declaration of the property given its name
