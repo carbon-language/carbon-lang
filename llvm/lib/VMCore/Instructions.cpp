@@ -999,7 +999,8 @@ static unsigned retrieveAddrSpace(const Value *Val) {
   return cast<PointerType>(Val->getType())->getAddressSpace();
 }
 
-void GetElementPtrInst::init(Value *Ptr, Value* const *Idx, unsigned NumIdx, const std::string &Name) {
+void GetElementPtrInst::init(Value *Ptr, Value* const *Idx, unsigned NumIdx,
+			     const std::string &Name) {
   assert(NumOperands == 1+NumIdx && "NumOperands not initialized?");
   Use *OL = OperandList;
   OL[0] = Ptr;
@@ -1411,7 +1412,8 @@ InsertValueInst::InsertValueInst(Value *Agg,
 //                             ExtractValueInst Class
 //===----------------------------------------------------------------------===//
 
-void ExtractValueInst::init(Value *Agg, const unsigned *Idx, unsigned NumIdx, const std::string &Name) {
+void ExtractValueInst::init(Value *Agg, const unsigned *Idx, unsigned NumIdx,
+			    const std::string &Name) {
   assert(NumOperands == 1 && "NumOperands not initialized?");
   Op<0>() = Agg;
 
@@ -1428,8 +1430,7 @@ void ExtractValueInst::init(Value *Agg, unsigned Idx, const std::string &Name) {
 }
 
 ExtractValueInst::ExtractValueInst(const ExtractValueInst &EVI)
-  : Instruction(reinterpret_cast<const Type*>(EVI.getType()), ExtractValue,
-                OperandTraits<ExtractValueInst>::op_begin(this), 1),
+  : UnaryInstruction(EVI.getType(), ExtractValue, EVI.getOperand(0)),
     Indices(EVI.Indices) {
 }
 
@@ -1464,10 +1465,8 @@ ExtractValueInst::ExtractValueInst(Value *Agg,
                                    unsigned Idx,
                                    const std::string &Name,
                                    BasicBlock *InsertAtEnd)
-  : Instruction(checkType(getIndexedType(Agg->getType(), &Idx, 1)),
-                ExtractValue,
-                OperandTraits<ExtractValueInst>::op_begin(this),
-                1, InsertAtEnd) {
+  : UnaryInstruction(checkType(getIndexedType(Agg->getType(), &Idx, 1)),
+		     ExtractValue, Agg, InsertAtEnd) {
   init(Agg, Idx, Name);
 }
 
@@ -1475,10 +1474,8 @@ ExtractValueInst::ExtractValueInst(Value *Agg,
                                    unsigned Idx,
                                    const std::string &Name,
                                    Instruction *InsertBefore)
-  : Instruction(checkType(getIndexedType(Agg->getType(), &Idx, 1)),
-                ExtractValue,
-                OperandTraits<ExtractValueInst>::op_begin(this),
-                1, InsertBefore) {
+  : UnaryInstruction(checkType(getIndexedType(Agg->getType(), &Idx, 1)),
+		     ExtractValue, Agg, InsertBefore) {
   init(Agg, Idx, Name);
 }
 

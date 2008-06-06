@@ -1453,7 +1453,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ShuffleVectorInst, Value)
 /// ExtractValueInst - This instruction extracts a struct member or array
 /// element value from an aggregate value.
 ///
-class ExtractValueInst : public Instruction {
+class ExtractValueInst : public UnaryInstruction {
   SmallVector<unsigned, 4> Indices;
 
   ExtractValueInst(const ExtractValueInst &EVI);
@@ -1526,12 +1526,13 @@ class ExtractValueInst : public Instruction {
                     Instruction *InsertBefore = 0);
   ExtractValueInst(Value *Agg, unsigned Idx,
                     const std::string &Name, BasicBlock *InsertAtEnd);
-public:
+
   // allocate space for exactly one operand
   void *operator new(size_t s) {
     return User::operator new(s, 1);
   }
 
+public:
   template<typename InputIterator>
   static ExtractValueInst *Create(Value *Agg, InputIterator IdxBegin, 
                                   InputIterator IdxEnd,
@@ -1563,9 +1564,6 @@ public:
   }
 
   virtual ExtractValueInst *clone() const;
-
-  /// Transparently provide more efficient getOperand methods.
-  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
   // getType - Overload to return most specific pointer type...
   const PointerType *getType() const {
@@ -1619,20 +1617,15 @@ public:
   }
 };
 
-template <>
-struct OperandTraits<ExtractValueInst> : FixedNumOperandTraits<1> {
-};
-
 template<typename InputIterator>
 ExtractValueInst::ExtractValueInst(Value *Agg,
                                    InputIterator IdxBegin, 
                                    InputIterator IdxEnd,
                                    const std::string &Name,
                                    Instruction *InsertBefore)
-  : Instruction(checkType(getIndexedType(Agg->getType(), IdxBegin, IdxEnd)),
-                ExtractValue,
-                OperandTraits<ExtractValueInst>::op_begin(this),
-                1, InsertBefore) {
+  : UnaryInstruction(checkType(getIndexedType(Agg->getType(),
+					      IdxBegin, IdxEnd)),
+		     ExtractValue, Agg, InsertBefore) {
   init(Agg, IdxBegin, IdxEnd, Name,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
@@ -1642,15 +1635,12 @@ ExtractValueInst::ExtractValueInst(Value *Agg,
                                    InputIterator IdxEnd,
                                    const std::string &Name,
                                    BasicBlock *InsertAtEnd)
-  : Instruction(checkType(getIndexedType(Agg->getType(), IdxBegin, IdxEnd)),
-                ExtractValue,
-                OperandTraits<ExtractValueInst>::op_begin(this),
-                1, InsertAtEnd) {
+  : UnaryInstruction(checkType(getIndexedType(Agg->getType(),
+					      IdxBegin, IdxEnd)),
+		     ExtractValue, Agg, InsertAtEnd) {
   init(Agg, IdxBegin, IdxEnd, Name,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
-
-DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ExtractValueInst, Value)
 
 
 //===----------------------------------------------------------------------===//
