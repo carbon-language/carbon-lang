@@ -240,6 +240,11 @@ optimization.  The LLVM optimizer now notices long sequences of consequtive
 stores and merges them into <tt>memcpy</tt>s where profitable.</li>
 <li>Alignment detection for vector memory references and for <tt>memcpy</tt> and
 <tt>memset</tt> is now more aggressive.</li> 
+
+<li>The aggressive dead code elimination (ADCE) optimization has been rewritten to make
+it both faster and safer in the presence of code containing infinite loops.  
+Some of its prior functionality has been factored out into the loop deletion
+pass, which <em>is</em> safe for infinite loops.</li>
 </ul>
 
 </div>
