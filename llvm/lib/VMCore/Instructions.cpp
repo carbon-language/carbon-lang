@@ -1412,18 +1412,16 @@ InsertValueInst::InsertValueInst(Value *Agg,
 //                             ExtractValueInst Class
 //===----------------------------------------------------------------------===//
 
-void ExtractValueInst::init(Value *Agg, const unsigned *Idx, unsigned NumIdx,
+void ExtractValueInst::init(const unsigned *Idx, unsigned NumIdx,
 			    const std::string &Name) {
   assert(NumOperands == 1 && "NumOperands not initialized?");
-  Op<0>() = Agg;
 
   Indices.insert(Indices.end(), Idx, Idx + NumIdx);
   setName(Name);
 }
 
-void ExtractValueInst::init(Value *Agg, unsigned Idx, const std::string &Name) {
+void ExtractValueInst::init(unsigned Idx, const std::string &Name) {
   assert(NumOperands == 1 && "NumOperands not initialized?");
-  Op<0>() = Agg;
 
   Indices.push_back(Idx);
   setName(Name);
@@ -1467,7 +1465,7 @@ ExtractValueInst::ExtractValueInst(Value *Agg,
                                    BasicBlock *InsertAtEnd)
   : UnaryInstruction(checkType(getIndexedType(Agg->getType(), &Idx, 1)),
 		     ExtractValue, Agg, InsertAtEnd) {
-  init(Agg, Idx, Name);
+  init(Idx, Name);
 }
 
 ExtractValueInst::ExtractValueInst(Value *Agg,
@@ -1476,7 +1474,7 @@ ExtractValueInst::ExtractValueInst(Value *Agg,
                                    Instruction *InsertBefore)
   : UnaryInstruction(checkType(getIndexedType(Agg->getType(), &Idx, 1)),
 		     ExtractValue, Agg, InsertBefore) {
-  init(Agg, Idx, Name);
+  init(Idx, Name);
 }
 
 //===----------------------------------------------------------------------===//

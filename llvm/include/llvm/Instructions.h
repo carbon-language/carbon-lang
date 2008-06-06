@@ -1457,12 +1457,12 @@ class ExtractValueInst : public UnaryInstruction {
   SmallVector<unsigned, 4> Indices;
 
   ExtractValueInst(const ExtractValueInst &EVI);
-  void init(Value *Agg, const unsigned *Idx, unsigned NumIdx,
+  void init(const unsigned *Idx, unsigned NumIdx,
             const std::string &Name);
-  void init(Value *Agg, unsigned Idx, const std::string &Name);
+  void init(unsigned Idx, const std::string &Name);
 
   template<typename InputIterator>
-  void init(Value *Agg, InputIterator IdxBegin, InputIterator IdxEnd,
+  void init(InputIterator IdxBegin, InputIterator IdxEnd,
             const std::string &Name,
             // This argument ensures that we have an iterator we can
             // do arithmetic on in constant time
@@ -1476,7 +1476,7 @@ class ExtractValueInst : public UnaryInstruction {
     assert(NumIdx > 0 && "ExtractValueInst must have at least one index");
 
     // This requires that the iterator points to contiguous memory.
-    init(Agg, &*IdxBegin, NumIdx, Name); // FIXME: for the general case
+    init(&*IdxBegin, NumIdx, Name); // FIXME: for the general case
                                          // we have to build an array here
   }
 
@@ -1626,7 +1626,7 @@ ExtractValueInst::ExtractValueInst(Value *Agg,
   : UnaryInstruction(checkType(getIndexedType(Agg->getType(),
 					      IdxBegin, IdxEnd)),
 		     ExtractValue, Agg, InsertBefore) {
-  init(Agg, IdxBegin, IdxEnd, Name,
+  init(IdxBegin, IdxEnd, Name,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
 template<typename InputIterator>
@@ -1638,7 +1638,7 @@ ExtractValueInst::ExtractValueInst(Value *Agg,
   : UnaryInstruction(checkType(getIndexedType(Agg->getType(),
 					      IdxBegin, IdxEnd)),
 		     ExtractValue, Agg, InsertAtEnd) {
-  init(Agg, IdxBegin, IdxEnd, Name,
+  init(IdxBegin, IdxEnd, Name,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
 
