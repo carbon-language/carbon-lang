@@ -134,6 +134,21 @@ bool DynamicLibrary::LoadLibraryPermanently(const char *filename,
   #if defined(__MINGW32__)
     EXPLICIT_SYMBOL_DEF(_alloca);
     EXPLICIT_SYMBOL_DEF(__main);
+    EXPLICIT_SYMBOL_DEF(__ashldi3);
+    EXPLICIT_SYMBOL_DEF(__ashrdi3);
+    EXPLICIT_SYMBOL_DEF(__cmpdi2);
+    EXPLICIT_SYMBOL_DEF(__divdi3);
+    EXPLICIT_SYMBOL_DEF(__eprintf);
+    EXPLICIT_SYMBOL_DEF(__fixdfdi);
+    EXPLICIT_SYMBOL_DEF(__fixsfdi);
+    EXPLICIT_SYMBOL_DEF(__fixunsdfdi);
+    EXPLICIT_SYMBOL_DEF(__fixunssfdi);
+    EXPLICIT_SYMBOL_DEF(__floatdidf);
+    EXPLICIT_SYMBOL_DEF(__floatdisf);
+    EXPLICIT_SYMBOL_DEF(__lshrdi3);
+    EXPLICIT_SYMBOL_DEF(__moddi3);
+    EXPLICIT_SYMBOL_DEF(__udivdi3);
+    EXPLICIT_SYMBOL_DEF(__umoddi3);
   #elif defined(_MSC_VER)
     EXPLICIT_SYMBOL_DEF(_alloca_probe);
   #endif
@@ -157,6 +172,21 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
   {
     EXPLICIT_SYMBOL(_alloca);
     EXPLICIT_SYMBOL(__main);
+    EXPLICIT_SYMBOL(__ashldi3);
+    EXPLICIT_SYMBOL(__ashrdi3);
+    EXPLICIT_SYMBOL(__cmpdi2);
+    EXPLICIT_SYMBOL(__divdi3);
+    EXPLICIT_SYMBOL(__eprintf);
+    EXPLICIT_SYMBOL(__fixdfdi);
+    EXPLICIT_SYMBOL(__fixsfdi);
+    EXPLICIT_SYMBOL(__fixunsdfdi);
+    EXPLICIT_SYMBOL(__fixunssfdi);
+    EXPLICIT_SYMBOL(__floatdidf);
+    EXPLICIT_SYMBOL(__floatdisf);
+    EXPLICIT_SYMBOL(__lshrdi3);
+    EXPLICIT_SYMBOL(__moddi3);
+    EXPLICIT_SYMBOL(__udivdi3);
+    EXPLICIT_SYMBOL(__umoddi3);
 
     EXPLICIT_SYMBOL2(alloca, _alloca);
 #undef EXPLICIT_SYMBOL
