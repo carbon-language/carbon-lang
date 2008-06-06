@@ -1236,7 +1236,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
         
       // If the input sign bit is known to be zero, or if none of the top bits
       // are demanded, turn this into an unsigned shift right.
-      if (BitWidth == ShiftAmt || RHSKnownZero[BitWidth-ShiftAmt-1] || 
+      if (BitWidth <= ShiftAmt || RHSKnownZero[BitWidth-ShiftAmt-1] || 
           (HighBits & ~DemandedMask) == HighBits) {
         // Perform the logical shift right.
         Value *NewVal = BinaryOperator::CreateLShr(
