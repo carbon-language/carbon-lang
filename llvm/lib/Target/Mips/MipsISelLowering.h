@@ -37,6 +37,9 @@ namespace llvm {
       // No relation with Mips Lo register
       Lo, 
 
+      // Select CC Pseudo Instruction
+      SelectCC,
+
       // Return 
       Ret
     };
@@ -80,6 +83,10 @@ namespace llvm {
     SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG);
+
+    virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
+                                                        MachineBasicBlock *MBB);
 
     // Inline asm support
     ConstraintType getConstraintType(const std::string &Constraint) const;

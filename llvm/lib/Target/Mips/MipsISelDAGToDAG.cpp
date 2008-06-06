@@ -226,6 +226,52 @@ Select(SDOperand N)
 
     default: break;
 
+    case ISD::ADDE: {
+      // ADDE is usally attached with a ADDC instruction, we must
+      // compare ADDC operands and set a register if we have a carry.
+      SDOperand InFlag = Node->getOperand(2);
+      unsigned Opc = InFlag.getOpcode();
+      assert((Opc == ISD::ADDC || Opc == ISD::ADDE) &&  
+             "ADDE flag operand must come from a ADDC or ADDE");
+      SDOperand Ops[] = { InFlag.getValue(0), InFlag.getOperand(1) };
+
+      SDOperand LHS = Node->getOperand(0);
+      SDOperand RHS = Node->getOperand(1);
+      AddToISelQueue(LHS);
+      AddToISelQueue(RHS);
+
+      MVT::ValueType VT = LHS.getValueType();
+      SDNode *Carry = CurDAG->getTargetNode(Mips::SLTu, VT, Ops, 2);
+      SDNode *AddCarry = CurDAG->getTargetNode(Mips::ADDu, VT, 
+                                               SDOperand(Carry,0), RHS);
+
+      return CurDAG->SelectNodeTo(N.Val, Mips::ADDu, VT, MVT::Flag, 
+                                  LHS, SDOperand(AddCarry,0));
+    }
+
+    case ISD::SUBE: {
+      // SUBE is usally attached with a SUBC instruction, we must
+      // compare SUBC operands and set a register if we have a carry.
+      SDOperand InFlag = Node->getOperand(2);
+      unsigned Opc = InFlag.getOpcode();
+      assert((Opc == ISD::SUBC || Opc == ISD::SUBE) &&  
+             "SUBE flag operand must come from a SUBC or SUBE");
+      SDOperand Ops[] = { InFlag.getOperand(0), InFlag.getOperand(1) };
+
+      SDOperand LHS = Node->getOperand(0);
+      SDOperand RHS = Node->getOperand(1);
+      AddToISelQueue(LHS);
+      AddToISelQueue(RHS);
+
+      MVT::ValueType VT = LHS.getValueType();
+      SDNode *Carry = CurDAG->getTargetNode(Mips::SLTu, VT, Ops, 2);
+      SDNode *AddCarry = CurDAG->getTargetNode(Mips::ADDu, VT, 
+                                               SDOperand(Carry,0), RHS);
+
+      return CurDAG->SelectNodeTo(N.Val, Mips::SUBu, VT, MVT::Flag, 
+                                  LHS, SDOperand(AddCarry,0));
+    }
+
     /// Special Mul operations
     case ISD::MULHS:
     case ISD::MULHU: {

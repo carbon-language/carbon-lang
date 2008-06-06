@@ -43,6 +43,11 @@ def callseq_start   : SDNode<"ISD::CALLSEQ_START", SDT_MipsCallSeqStart,
 def callseq_end     : SDNode<"ISD::CALLSEQ_END", SDT_MipsCallSeqEnd,
                              [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
+// Select CC
+def SDT_MipsSelectCC : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, 
+                                            SDTCisSameAs<1, 2>, SDTCisInt<3>]>;
+def MipsSelectCC : SDNode<"MipsISD::SelectCC", SDT_MipsSelectCC>;
+
 //===----------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.
 //===----------------------------------------------------------------------===//
@@ -346,10 +351,10 @@ class EffectiveAddress<string instr_asm> :
 
 // As stack alignment is always done with addiu, we need a 16-bit immediate
 let Defs = [SP], Uses = [SP] in {
-def ADJCALLSTACKDOWN : PseudoInstMips<(outs), (ins uimm16:$amt),
+def ADJCALLSTACKDOWN : MipsPseudo<(outs), (ins uimm16:$amt),
                                       "!ADJCALLSTACKDOWN $amt",
                                       [(callseq_start imm:$amt)]>;
-def ADJCALLSTACKUP   : PseudoInstMips<(outs), (ins uimm16:$amt1, uimm16:$amt2),
+def ADJCALLSTACKUP   : MipsPseudo<(outs), (ins uimm16:$amt1, uimm16:$amt2),
                                       "!ADJCALLSTACKUP $amt1",
                                       [(callseq_end imm:$amt1, imm:$amt2)]>;
 }
@@ -358,10 +363,22 @@ def ADJCALLSTACKUP   : PseudoInstMips<(outs), (ins uimm16:$amt1, uimm16:$amt2),
 // directives. If the real instructions corresponding these directives
 // are used, we have the same behavior, but get also a bunch of warnings
 // from the assembler.
-def CPLOAD: PseudoInstMips<(outs), (ins CPURegs:$reg),
-                          ".set noreorder\n\t.cpload $reg\n\t.set reorder\n", []>;
-def CPRESTORE: PseudoInstMips<(outs), (ins uimm16:$loc),
-                              ".cprestore $loc\n", []>;
+def CPLOAD : MipsPseudo<(outs), (ins CPURegs:$reg),
+                            ".set noreorder\n\t.cpload $reg\n\t.set reorder\n", 
+                            []>;
+def CPRESTORE : MipsPseudo<(outs), (ins uimm16:$loc),
+                               ".cprestore $loc\n", []>;
+
+// The supported Mips ISAs dont have any instruction close to the SELECT_CC 
+// operation. The solution is to create a Mips pseudo SELECT_CC instruction
+// (MipsSelectCC), use LowerSELECT_CC to generate this instruction and finally 
+// replace it for real supported nodes into EmitInstrWithCustomInserter
+let usesCustomDAGSchedInserter = 1 in {
+  def Select_CC : MipsPseudo<(outs CPURegs:$dst), 
+    (ins CPURegs:$CmpRes, CPURegs:$T, CPURegs:$F), "# MipsSelect_CC", 
+    [(set CPURegs:$dst, (MipsSelectCC CPURegs:$CmpRes, 
+                                      CPURegs:$T, CPURegs:$F))]>;
+}
 
 //===----------------------------------------------------------------------===//
 // Instruction definition
@@ -502,6 +519,14 @@ def : Pat<(i32 immZExt16:$in),
 def : Pat<(i32 imm:$imm),
           (ORi (LUi (HI16 imm:$imm)), (LO16 imm:$imm))>;
 
+// Carry patterns
+def : Pat<(subc CPURegs:$lhs, CPURegs:$rhs),
+          (SUBu CPURegs:$lhs, CPURegs:$rhs)>;
+def : Pat<(addc CPURegs:$lhs, CPURegs:$rhs),
+          (ADDu CPURegs:$lhs, CPURegs:$rhs)>;
+def : Pat<(addc  CPURegs:$src, imm:$imm),
+          (ADDiu CPURegs:$src, imm:$imm)>;
+
 // Call
 def : Pat<(MipsJmpLink (i32 tglobaladdr:$dst)),
           (JAL tglobaladdr:$dst)>;
@@ -529,7 +554,7 @@ def : Pat<(i32 (extloadi1  addr:$src)), (LBu addr:$src)>;
 def : Pat<(i32 (extloadi8  addr:$src)), (LBu addr:$src)>;
 def : Pat<(i32 (extloadi16 addr:$src)), (LHu addr:$src)>;
 
-// some peepholes
+// peepholes
 def : Pat<(store (i32 0), addr:$dst), (SW ZERO, addr:$dst)>;
 
 ///

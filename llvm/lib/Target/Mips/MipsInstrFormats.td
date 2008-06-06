@@ -43,7 +43,7 @@ class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern,
 }
 
 // Mips Pseudo Instructions Format
-class PseudoInstMips<dag outs, dag ins, string asmstr, list<dag> pattern>:
+class MipsPseudo<dag outs, dag ins, string asmstr, list<dag> pattern>:
       MipsInst<outs, ins, asmstr, pattern, IIPseudo>;
 
 //===----------------------------------------------------------------------===//

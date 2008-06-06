@@ -39,11 +39,12 @@ getTargetNodeName(unsigned Opcode) const
 {
   switch (Opcode) 
   {
-    case MipsISD::JmpLink : return "MipsISD::JmpLink";
-    case MipsISD::Hi      : return "MipsISD::Hi";
-    case MipsISD::Lo      : return "MipsISD::Lo";
-    case MipsISD::Ret     : return "MipsISD::Ret";
-    default               : return NULL;
+    case MipsISD::JmpLink   : return "MipsISD::JmpLink";
+    case MipsISD::Hi        : return "MipsISD::Hi";
+    case MipsISD::Lo        : return "MipsISD::Lo";
+    case MipsISD::Ret       : return "MipsISD::Ret";
+    case MipsISD::SelectCC  : return "MipsISD::SelectCC";
+    default                 : return NULL;
   }
 }
 
@@ -65,6 +66,7 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::GlobalTLSAddress, MVT::i32, Custom);
   setOperationAction(ISD::RET, MVT::Other, Custom);
   setOperationAction(ISD::JumpTable, MVT::i32, Custom);
+  setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
 
   // Load extented operations for i1 types must be promoted 
   setLoadXAction(ISD::EXTLOAD,  MVT::i1,  Promote);
@@ -75,7 +77,6 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::BR_JT,     MVT::Other, Expand);
   setOperationAction(ISD::BR_CC,     MVT::Other, Expand);
   setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
-  setOperationAction(ISD::SELECT_CC, MVT::i32,   Expand);
   setOperationAction(ISD::SELECT,    MVT::i32,   Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
@@ -124,8 +125,73 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG)
     case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
     case ISD::GlobalTLSAddress: return LowerGlobalTLSAddress(Op, DAG);
     case ISD::JumpTable:        return LowerJumpTable(Op, DAG);
+    case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
   }
   return SDOperand();
+}
+
+MachineBasicBlock *
+MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
+                                                MachineBasicBlock *BB) 
+{
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  switch (MI->getOpcode()) {
+  default: assert(false && "Unexpected instr type to insert");
+  case Mips::Select_CC: {
+    // To "insert" a SELECT_CC instruction, we actually have to insert the
+    // diamond control-flow pattern.  The incoming instruction knows the
+    // destination vreg to set, the condition code register to branch on, the
+    // true/false values to select between, and a branch opcode to use.
+    const BasicBlock *LLVM_BB = BB->getBasicBlock();
+    ilist<MachineBasicBlock>::iterator It = BB;
+    ++It;
+
+    //  thisMBB:
+    //  ...
+    //   TrueVal = ...
+    //   setcc r1, r2, r3
+    //   bNE   r1, r0, copy1MBB
+    //   fallthrough --> copy0MBB
+    MachineBasicBlock *thisMBB  = BB;
+    MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
+    MachineBasicBlock *sinkMBB  = new MachineBasicBlock(LLVM_BB);
+    BuildMI(BB, TII->get(Mips::BNE)).addReg(MI->getOperand(1).getReg())
+      .addReg(Mips::ZERO).addMBB(sinkMBB);
+    MachineFunction *F = BB->getParent();
+    F->getBasicBlockList().insert(It, copy0MBB);
+    F->getBasicBlockList().insert(It, sinkMBB);
+    // Update machine-CFG edges by first adding all successors of the current
+    // block to the new block which will contain the Phi node for the select.
+    for(MachineBasicBlock::succ_iterator i = BB->succ_begin(),
+        e = BB->succ_end(); i != e; ++i)
+      sinkMBB->addSuccessor(*i);
+    // Next, remove all successors of the current block, and add the true
+    // and fallthrough blocks as its successors.
+    while(!BB->succ_empty())
+      BB->removeSuccessor(BB->succ_begin());
+    BB->addSuccessor(copy0MBB);
+    BB->addSuccessor(sinkMBB);
+
+    //  copy0MBB:
+    //   %FalseValue = ...
+    //   # fallthrough to sinkMBB
+    BB = copy0MBB;
+
+    // Update machine-CFG edges
+    BB->addSuccessor(sinkMBB);
+
+    //  sinkMBB:
+    //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
+    //  ...
+    BB = sinkMBB;
+    BuildMI(BB, TII->get(Mips::PHI), MI->getOperand(0).getReg())
+      .addReg(MI->getOperand(2).getReg()).addMBB(copy0MBB)
+      .addReg(MI->getOperand(3).getReg()).addMBB(thisMBB);
+
+    delete MI;   // The pseudo instruction is gone now.
+    return BB;
+  }
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -179,6 +245,23 @@ LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG)
 {
   assert(0 && "TLS not implemented for MIPS.");
   return SDOperand(); // Not reached
+}
+
+SDOperand MipsTargetLowering::
+LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG) 
+{
+  SDOperand LHS   = Op.getOperand(0); 
+  SDOperand RHS   = Op.getOperand(1); 
+  SDOperand True  = Op.getOperand(2);
+  SDOperand False = Op.getOperand(3);
+  SDOperand CC    = Op.getOperand(4);
+
+  const MVT::ValueType *VTs = DAG.getNodeValueTypes(MVT::i32);
+  SDOperand Ops[] = { LHS, RHS, CC };
+  SDOperand SetCCRes = DAG.getNode(ISD::SETCC, VTs, 1, Ops, 3); 
+
+  return DAG.getNode(MipsISD::SelectCC, True.getValueType(), 
+                     SetCCRes, True, False);
 }
 
 SDOperand MipsTargetLowering::
