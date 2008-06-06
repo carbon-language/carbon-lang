@@ -213,13 +213,15 @@ public:
 
     // Find the field decl we're initializing, if any
     int FieldNo = 0; // Field no in RecordDecl
-    FieldDecl* curField;
-    do {
+    FieldDecl* curField = 0;
+    while (FieldNo < RD->getNumMembers()) {
       curField = RD->getMember(FieldNo);
       FieldNo++;
-    } while (!curField->getIdentifier() && FieldNo < RD->getNumMembers());
+      if (curField->getIdentifier())
+        break;
+    }
 
-    if (ILE->getNumInits() == 0 || !curField->getIdentifier())
+    if (!curField || !curField->getIdentifier() || ILE->getNumInits() == 0)
       return llvm::Constant::getNullValue(Ty);
 
     if (curField->isBitField()) {
