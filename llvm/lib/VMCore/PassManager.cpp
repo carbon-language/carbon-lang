@@ -665,9 +665,10 @@ void PMDataManager::removeDeadPasses(Pass *P, const char *Msg,
 
   TPM->collectLastUses(DeadPasses, P);
 
-  if (PassDebugging >= Details) {
+  if (PassDebugging >= Details && !DeadPasses.empty()) {
     cerr << " -*- " <<  P->getPassName();
-    cerr << " is the last users of following passes. Free them\n";
+    cerr << " is the last user of following pass instances.";
+    cerr << " Free these instances\n";
   }
 
   for (SmallVector<Pass *, 12>::iterator I = DeadPasses.begin(),
