@@ -37,6 +37,20 @@ TranslationUnit::~TranslationUnit() {
       if (Killed.count(*I)) continue;
 
       Killed.insert(*I);
+      
+      // FIXME: This is a horrible hack.  Because there is no clear ownership
+      //  role between ObjCInterfaceDecls and the ObjCPropertyDecls that they
+      //  reference, we need to destroy ObjCPropertyDecls here.  This will
+      //  eventually be fixed when the ownership of ObjCPropertyDecls gets
+      //  cleaned up.
+      if (ObjCInterfaceDecl* IDecl = dyn_cast<ObjCInterfaceDecl>(*I))
+        for (ObjCInterfaceDecl::classprop_iterator ID=IDecl->classprop_begin(),
+             ED=IDecl->classprop_end(); ID!=ED; ++ID) {
+          if (Killed.count(*ID)) continue;
+          Killed.insert(*ID);
+          (*ID)->Destroy(*Context);
+        }
+      
       (*I)->Destroy(*Context);
     }
   }

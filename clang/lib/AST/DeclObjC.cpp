@@ -79,13 +79,11 @@ void ObjCInterfaceDecl::Destroy(ASTContext& C) {
   
   for (classmeth_iterator I=classmeth_begin(), E=classmeth_end(); I!=E; ++I)
     if (*I) (*I)->Destroy(C);
-  
-  // FIXME: Cannot destroy properties right now because the properties of
-  //  both the super class and this class are in this array.  This can
-  //  cause double-deletions.
-  //for (classprop_iterator I=classprop_begin(), E=classprop_end(); I!=E; ++I)
-//    if (*I) (*I)->Destroy(C);
-//  
+
+  // FIXME: Because there is no clear ownership
+  //  role between ObjCInterfaceDecls and the ObjCPropertyDecls that they
+  //  reference, we destroy ObjCPropertyDecls in ~TranslationUnit.
+
   Decl::Destroy(C);
 }
 
