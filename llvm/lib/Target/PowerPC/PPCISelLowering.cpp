@@ -364,7 +364,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
 
   computeRegisterProperties();
 
-  // Perferred loop alignment is 16.
+  // Preferred loop alignment is 16.
   setPrefLoopAlignment(16);
 }
 
