@@ -38,10 +38,6 @@ static cl::opt<bool>
 EnableSinking("enable-sinking", cl::init(false), cl::Hidden,
               cl::desc("Perform sinking on machine code"));
 static cl::opt<bool>
-EnableStackColoring("stack-coloring",
-            cl::init(false), cl::Hidden,
-            cl::desc("Perform stack slot coloring"));
-static cl::opt<bool>
 EnableLICM("machine-licm",
            cl::init(false), cl::Hidden,
            cl::desc("Perform loop-invariant code motion on machine code"));
@@ -103,8 +99,7 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   PM.add(createRegisterAllocator());
   
   // Perform stack slot coloring.
-  if (EnableStackColoring)
-    PM.add(createStackSlotColoringPass());
+  PM.add(createStackSlotColoringPass());
 
   if (PrintMachineCode)  // Print the register-allocated code
     PM.add(createMachineFunctionPrinterPass(cerr));
@@ -240,8 +235,7 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
   PM.add(createRegisterAllocator());
 
   // Perform stack slot coloring.
-  if (EnableStackColoring)
-    PM.add(createStackSlotColoringPass());
+  PM.add(createStackSlotColoringPass());
 
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));

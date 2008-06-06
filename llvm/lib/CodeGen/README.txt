@@ -197,3 +197,12 @@ It would be really nice to be able to write patterns in .td files for copies,
 which would eliminate a bunch of explicit predicates on them (e.g. no side 
 effects).  Once this is in place, it would be even better to have tblgen 
 synthesize the various copy insertion/inspection methods in TargetInstrInfo.
+
+//===---------------------------------------------------------------------===//
+
+Stack coloring improvments:
+
+1. Do proper LiveStackAnalysis on all stack objects including those which are
+   not spill slots.
+2. Reorder objects to fill in gaps between objects.
+   e.g. 4, 1, <gap>, 4, 1, 1, 1, <gap>, 4 => 4, 1, 1, 1, 1, 4, 4
