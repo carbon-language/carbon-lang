@@ -66,8 +66,9 @@ TranslationUnit::~TranslationUnit() {
             
       // FIXME: There is no clear ownership policy now for ObjCInterfaceDecls
       //  referenced by ObjCClassDecls.  Some of them can be forward decls that
-      //  are never later defined (in which case the ObjCClassDecl owns them)
-      //  or the ObjCInterfaceDecl later becomes a real definition later. 
+      //  are never later defined (and forward decls can be referenced by
+      //  multiple ObjCClassDecls) or the ObjCInterfaceDecl later
+      //  becomes a real definition. 
       //  Ideally we should have separate objects for forward declarations and
       //  definitions, obviating this problem.  Because of this situation,
       //  referenced ObjCInterfaceDecls are destroyed here.      
@@ -78,6 +79,23 @@ TranslationUnit::~TranslationUnit() {
           Killed.insert(*ID);
           (*ID)->Destroy(*Context);
         }
+      
+      // FIXME: There is no clear ownership policy now for ObjCProtocolDecls
+      //  referenced by ObjCForwardProtocolDecl.  Some of them can be forward 
+      //  decls that are never later defined (and forward decls can be
+      //  referenced by multiple ObjCClassDecls) or the ObjCProtocolDecl 
+      //  later becomes a real definition. 
+      //  Ideally we should have separate objects for forward declarations and
+      //  definitions, obviating this problem.  Because of this situation,
+      //  referenced ObjCProtocolDecls are destroyed here.  
+      if (ObjCForwardProtocolDecl* FDec = dyn_cast<ObjCForwardProtocolDecl>(*I))
+        for (ObjCForwardProtocolDecl::iterator ID=FDec->begin(),
+             ED=FDec->end(); ID!=ED; ++ID) {          
+          if (!*ID || Killed.count(*ID)) continue;
+          Killed.insert(*ID);
+          (*ID)->Destroy(*Context);
+        }
+      
             
       (*I)->Destroy(*Context);
     }

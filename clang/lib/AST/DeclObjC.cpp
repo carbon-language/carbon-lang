@@ -159,6 +159,10 @@ ObjCForwardProtocolDecl::Create(ASTContext &C,
   return new (Mem) ObjCForwardProtocolDecl(L, Elts, NumElts);
 }
 
+ObjCForwardProtocolDecl::~ObjCForwardProtocolDecl() {
+  delete [] ReferencedProtocols;
+}
+
 ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C,
                                            SourceLocation L,
                                            IdentifierInfo *Id) {

@@ -692,6 +692,9 @@ class ObjCForwardProtocolDecl : public Decl {
       ReferencedProtocols = 0;
     }
   }
+  
+  virtual ~ObjCForwardProtocolDecl();
+  
 public:
   static ObjCForwardProtocolDecl *Create(ASTContext &C, SourceLocation L, 
                                          ObjCProtocolDecl **Elts, unsigned Num);
@@ -712,6 +715,10 @@ public:
     assert(idx < NumReferencedProtocols && "index out of range");
     return ReferencedProtocols[idx];
   }
+  
+  typedef ObjCProtocolDecl * const * iterator;
+  iterator begin() const { return ReferencedProtocols; }
+  iterator end() const { return ReferencedProtocols+NumReferencedProtocols; }
   
   static bool classof(const Decl *D) {
     return D->getKind() == ObjCForwardProtocol;
