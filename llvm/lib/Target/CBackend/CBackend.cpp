@@ -1224,6 +1224,10 @@ std::string CWriter::GetValueName(const Value *Operand) {
     Name = "llvm_cbe_" + VarName;
   } else {
     Name = Mang->getValueName(Operand);
+
+    // Check, if operand has assembler identifier and handle it separately
+    if (Operand->getNameStart()[0] == 1)
+      Name = "llvm_cbe_asmname_" + Name;
   }
 
   return Name;
@@ -1652,6 +1656,11 @@ bool CWriter::doInitialization(Module &M) {
 
       if (I->hasExternalWeakLinkage())
          Out << " __EXTERNAL_WEAK__";
+
+      // Special handling for assembler identifiers
+      if (I->getNameStart()[0] == 1)
+        Out << " LLVM_ASM(\"" << I->getName().c_str()+1 << "\")";
+
       Out << ";\n";
     }
   }
@@ -1661,7 +1670,7 @@ bool CWriter::doInitialization(Module &M) {
   Out << "double fmod(double, double);\n";   // Support for FP rem
   Out << "float fmodf(float, float);\n";
   Out << "long double fmodl(long double, long double);\n";
-  
+
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     // Don't print declarations for intrinsic functions.
     if (!I->isIntrinsic() && I->getName() != "setjmp" &&
@@ -1669,7 +1678,7 @@ bool CWriter::doInitialization(Module &M) {
       if (I->hasExternalWeakLinkage())
         Out << "extern ";
       printFunctionSignature(I, true);
-      if (I->hasWeakLinkage() || I->hasLinkOnceLinkage()) 
+      if (I->hasWeakLinkage() || I->hasLinkOnceLinkage())
         Out << " __ATTRIBUTE_WEAK__";
       if (I->hasExternalWeakLinkage())
         Out << " __EXTERNAL_WEAK__";
@@ -1679,10 +1688,11 @@ bool CWriter::doInitialization(Module &M) {
         Out << " __ATTRIBUTE_DTOR__";
       if (I->hasHiddenVisibility())
         Out << " __HIDDEN__";
-      
-      if (I->hasName() && I->getName()[0] == 1)
+
+      // Special handling for assembler identifiers
+      if (I->getNameStart()[0] == 1)
         Out << " LLVM_ASM(\"" << I->getName().c_str()+1 << "\")";
-          
+
       Out << ";\n";
     }
   }
@@ -1719,6 +1729,11 @@ bool CWriter::doInitialization(Module &M) {
           Out << " __EXTERNAL_WEAK__";
         if (I->hasHiddenVisibility())
           Out << " __HIDDEN__";
+
+        // Special handling for assembler identifiers
+        if (I->getNameStart()[0] == 1)
+          Out << " LLVM_ASM(\"" << I->getName().c_str()+1 << "\")";
+
         Out << ";\n";
       }
   }
@@ -1726,7 +1741,7 @@ bool CWriter::doInitialization(Module &M) {
   // Output the global variable definitions and contents...
   if (!M.global_empty()) {
     Out << "\n\n/* Global Variable Definitions and Initialization */\n";
-    for (Module::global_iterator I = M.global_begin(), E = M.global_end(); 
+    for (Module::global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I)
       if (!I->isDeclaration()) {
         // Ignore special globals, such as debug info.
