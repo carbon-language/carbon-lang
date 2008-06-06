@@ -646,7 +646,14 @@ class ObjCClassDecl : public Decl {
     }
     NumForwardDecls = nElts;
   }
+  
+  virtual ~ObjCClassDecl();
+  
 public:
+  
+  /// Destroy - Call destructors and release memory.
+  virtual void Destroy(ASTContext& C);
+  
   static ObjCClassDecl *Create(ASTContext &C, SourceLocation L,
                                ObjCInterfaceDecl **Elts, unsigned nElts);
   
@@ -656,6 +663,10 @@ public:
   }
   ObjCInterfaceDecl** getForwardDecls() const { return ForwardDecls; }
   int getNumForwardDecls() const { return NumForwardDecls; }
+  
+  typedef ObjCInterfaceDecl * const * iterator;
+  iterator begin() const { return ForwardDecls; }
+  iterator end() const { return ForwardDecls+NumForwardDecls; }
   
   static bool classof(const Decl *D) { return D->getKind() == ObjCClass; }
   static bool classof(const ObjCClassDecl *D) { return true; }

@@ -134,6 +134,23 @@ ObjCClassDecl *ObjCClassDecl::Create(ASTContext &C,
   return new (Mem) ObjCClassDecl(L, Elts, nElts);
 }
 
+ObjCClassDecl::~ObjCClassDecl() {
+  delete [] ForwardDecls;
+}
+
+void ObjCClassDecl::Destroy(ASTContext& C) {
+  
+  // FIXME: There is no clear ownership policy now for referenced
+  //  ObjCInterfaceDecls.  Some of them can be forward declarations that
+  //  are never later defined (in which case the ObjCClassDecl owns them)
+  //  or the ObjCInterfaceDecl later becomes a real definition later.  Ideally
+  //  we should have separate objects for forward declarations and definitions,
+  //  obviating this problem.  Because of this situation, referenced
+  //  ObjCInterfaceDecls are destroyed in ~TranslationUnit.
+  
+  Decl::Destroy(C);
+}
+
 ObjCForwardProtocolDecl *
 ObjCForwardProtocolDecl::Create(ASTContext &C,
                                 SourceLocation L, 

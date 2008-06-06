@@ -57,13 +57,28 @@ TranslationUnit::~TranslationUnit() {
       //  eventually be fixed when the ownership of ObjCPropertyDecls gets
       //  cleaned up.
       if (ObjCProtocolDecl* PDecl = dyn_cast<ObjCProtocolDecl>(*I))
-        for (ObjCInterfaceDecl::classprop_iterator PD=PDecl->classprop_begin(),
-             ED=PDecl->classprop_end(); PD!=ED; ++PD) {          
-          if (!*PD || Killed.count(*PD)) continue;
-          Killed.insert(*PD);
-          (*PD)->Destroy(*Context);
+        for (ObjCProtocolDecl::classprop_iterator ID=PDecl->classprop_begin(),
+             ED=PDecl->classprop_end(); ID!=ED; ++ID) {
+          if (!*ID || Killed.count(*ID)) continue;
+          Killed.insert(*ID);
+          (*ID)->Destroy(*Context);
         }
-      
+            
+      // FIXME: There is no clear ownership policy now for ObjCInterfaceDecls
+      //  referenced by ObjCClassDecls.  Some of them can be forward decls that
+      //  are never later defined (in which case the ObjCClassDecl owns them)
+      //  or the ObjCInterfaceDecl later becomes a real definition later. 
+      //  Ideally we should have separate objects for forward declarations and
+      //  definitions, obviating this problem.  Because of this situation,
+      //  referenced ObjCInterfaceDecls are destroyed here.      
+      if (ObjCClassDecl* CDecl = dyn_cast<ObjCClassDecl>(*I))
+        for (ObjCClassDecl::iterator ID=CDecl->begin(),
+             ED=CDecl->end(); ID!=ED; ++ID) {          
+          if (!*ID || Killed.count(*ID)) continue;
+          Killed.insert(*ID);
+          (*ID)->Destroy(*Context);
+        }
+            
       (*I)->Destroy(*Context);
     }
   }
