@@ -73,6 +73,7 @@ namespace {
       AU.addPreserved<LoopInfo>();
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<DominanceFrontier>();
+      AU.addPreserved<AliasAnalysis>();
       AU.addPreservedID(BreakCriticalEdgesID);  // No critical edges added.
     }
 
@@ -252,9 +253,10 @@ ReprocessLoop:
   for (BasicBlock::iterator I = L->getHeader()->begin();
        (PN = dyn_cast<PHINode>(I++)); )
     if (Value *V = PN->hasConstantValue()) {
-        PN->replaceAllUsesWith(V);
-        PN->eraseFromParent();
-      }
+      if (AA) AA->deleteValue(PN);
+      PN->replaceAllUsesWith(V);
+      PN->eraseFromParent();
+    }
 
   return Changed;
 }
