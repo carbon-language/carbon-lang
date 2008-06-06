@@ -405,10 +405,22 @@ ASTContext::getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D) {
 
   // Allocate and assign into ASTRecordLayouts here.  The "Entry" reference can
   // be invalidated (dangle) if the ASTRecordLayouts hashtable is inserted into.
-  ASTRecordLayout *NewEntry = new ASTRecordLayout();
+  ASTRecordLayout *NewEntry = NULL;
+  unsigned FieldCount = D->ivar_size();
+  if (ObjCInterfaceDecl *SD = D->getSuperClass()) {
+    FieldCount++;
+    const ASTRecordLayout &SL = getASTObjCInterfaceLayout(SD);
+    unsigned Alignment = SL.getAlignment();
+    uint64_t Size = SL.getSize();
+    NewEntry = new ASTRecordLayout(Size, Alignment);
+    NewEntry->InitializeLayout(FieldCount);
+    NewEntry->SetFieldOffset(0, 0); // Super class is at the beginning of the layout.
+  } else {
+    NewEntry = new ASTRecordLayout();
+    NewEntry->InitializeLayout(FieldCount);
+  }
   Entry = NewEntry;
 
-  NewEntry->InitializeLayout(D->ivar_size());
   bool IsPacked = D->getAttr<PackedAttr>();
 
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())

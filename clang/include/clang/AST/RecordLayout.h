@@ -30,16 +30,19 @@ namespace clang {
 class ASTRecordLayout {
   uint64_t Size;        // Size of record in bits.
   unsigned Alignment;   // Alignment of record in bits.
+  unsigned FieldCount;  // Number of fields
   uint64_t *FieldOffsets;
   friend class ASTContext;
-  
-  ASTRecordLayout() : Size(0), Alignment(8) {}
+
+  ASTRecordLayout(uint64_t S = 0, unsigned A = 8) 
+    : Size(S), Alignment(A), FieldCount(0) {}
   ~ASTRecordLayout() {
     delete [] FieldOffsets;
   }
 
   /// Initialize record layout. N is the number of fields in this record.
   void InitializeLayout(unsigned N) {
+    FieldCount = N;
     FieldOffsets = new uint64_t[N];
   }
   
@@ -48,6 +51,11 @@ class ASTRecordLayout {
     // Finally, round the size of the record up to the alignment of the
     // record itself.
     Size = (Size + (Alignment-1)) & ~(Alignment-1);
+  }
+
+  void SetFieldOffset(unsigned FieldNo, uint64_t Offset) {
+    assert (FieldNo < FieldCount && "Invalid Field No");
+    FieldOffsets[FieldNo] = Offset;
   }
 
   void SetAlignment(unsigned A) {  Alignment = A; }
@@ -65,6 +73,7 @@ public:
   uint64_t getSize() const { return Size; }
   
   uint64_t getFieldOffset(unsigned FieldNo) const {
+    assert (FieldNo < FieldCount && "Invalid Field No");
     return FieldOffsets[FieldNo];
   }
     
