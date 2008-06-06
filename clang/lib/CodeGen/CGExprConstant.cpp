@@ -447,9 +447,19 @@ public:
       // int - int
       return llvm::ConstantExpr::getSub(LHS, RHS);
     }
-    
-    assert(0 && "Unhandled bin sub case!");
-    return 0;
+
+    assert(isa<llvm::PointerType>(LHS->getType()));
+
+    const llvm::Type *ResultType = ConvertType(E->getType());
+    const QualType Type = E->getLHS()->getType();
+    const QualType ElementType = Type->getAsPointerType()->getPointeeType();
+
+    LHS = llvm::ConstantExpr::getPtrToInt(LHS, ResultType);
+    RHS = llvm::ConstantExpr::getPtrToInt(RHS, ResultType);
+
+    llvm::Constant *sub = llvm::ConstantExpr::getSub(LHS, RHS);
+    llvm::Constant *size = EmitSizeAlignOf(ElementType, E->getType(), true);
+    return llvm::ConstantExpr::getSDiv(sub, size);
   }
     
   llvm::Constant *VisitBinShl(const BinaryOperator *E) {
