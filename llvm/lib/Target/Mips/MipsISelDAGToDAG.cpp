@@ -226,14 +226,24 @@ Select(SDOperand N)
 
     default: break;
 
+    case ISD::SUBE: 
     case ISD::ADDE: {
-      // ADDE is usally attached with a ADDC instruction, we must
-      // compare ADDC operands and set a register if we have a carry.
-      SDOperand InFlag = Node->getOperand(2);
-      unsigned Opc = InFlag.getOpcode();
-      assert((Opc == ISD::ADDC || Opc == ISD::ADDE) &&  
-             "ADDE flag operand must come from a ADDC or ADDE");
-      SDOperand Ops[] = { InFlag.getValue(0), InFlag.getOperand(1) };
+      SDOperand InFlag = Node->getOperand(2), CmpLHS;
+      unsigned Opc = InFlag.getOpcode(), MOp;
+
+      assert(((Opc == ISD::ADDC || Opc == ISD::ADDE) || 
+              (Opc == ISD::SUBC || Opc == ISD::SUBE)) &&  
+             "(ADD|SUB)E flag operand must come from (ADD|SUB)C/E insn");
+
+      if (Opcode == ISD::ADDE) {
+        CmpLHS = InFlag.getValue(0);
+        MOp = Mips::ADDu;
+      } else { 
+        CmpLHS = InFlag.getOperand(0);
+        MOp = Mips::SUBu;
+      }
+
+      SDOperand Ops[] = { CmpLHS, InFlag.getOperand(1) };
 
       SDOperand LHS = Node->getOperand(0);
       SDOperand RHS = Node->getOperand(1);
@@ -245,34 +255,45 @@ Select(SDOperand N)
       SDNode *AddCarry = CurDAG->getTargetNode(Mips::ADDu, VT, 
                                                SDOperand(Carry,0), RHS);
 
-      return CurDAG->SelectNodeTo(N.Val, Mips::ADDu, VT, MVT::Flag, 
+      return CurDAG->SelectNodeTo(N.Val, MOp, VT, MVT::Flag, 
                                   LHS, SDOperand(AddCarry,0));
     }
 
-    case ISD::SUBE: {
-      // SUBE is usally attached with a SUBC instruction, we must
-      // compare SUBC operands and set a register if we have a carry.
-      SDOperand InFlag = Node->getOperand(2);
-      unsigned Opc = InFlag.getOpcode();
-      assert((Opc == ISD::SUBC || Opc == ISD::SUBE) &&  
-             "SUBE flag operand must come from a SUBC or SUBE");
-      SDOperand Ops[] = { InFlag.getOperand(0), InFlag.getOperand(1) };
+    /// Mul/Div with two results
+    case ISD::SDIVREM:
+    case ISD::UDIVREM:
+    case ISD::SMUL_LOHI:
+    case ISD::UMUL_LOHI: {
+      SDOperand Op1 = Node->getOperand(0);
+      SDOperand Op2 = Node->getOperand(1);
+      AddToISelQueue(Op1);
+      AddToISelQueue(Op2);
 
-      SDOperand LHS = Node->getOperand(0);
-      SDOperand RHS = Node->getOperand(1);
-      AddToISelQueue(LHS);
-      AddToISelQueue(RHS);
+      unsigned Op;
+      if (Opcode == ISD::UMUL_LOHI || Opcode == ISD::SMUL_LOHI)
+        Op = (Opcode == ISD::UMUL_LOHI ? Mips::MULTu : Mips::MULT);
+      else
+        Op = (Opcode == ISD::UDIVREM ? Mips::DIVu : Mips::DIV);
 
-      MVT::ValueType VT = LHS.getValueType();
-      SDNode *Carry = CurDAG->getTargetNode(Mips::SLTu, VT, Ops, 2);
-      SDNode *AddCarry = CurDAG->getTargetNode(Mips::ADDu, VT, 
-                                               SDOperand(Carry,0), RHS);
+      SDNode *Node = CurDAG->getTargetNode(Op, MVT::Flag, Op1, Op2);
 
-      return CurDAG->SelectNodeTo(N.Val, Mips::SUBu, VT, MVT::Flag, 
-                                  LHS, SDOperand(AddCarry,0));
+      SDOperand InFlag = SDOperand(Node, 0);
+      SDNode *Lo = CurDAG->getTargetNode(Mips::MFLO, MVT::i32, MVT::Flag, InFlag);
+
+      InFlag = SDOperand(Lo,1);
+      SDNode *Hi = CurDAG->getTargetNode(Mips::MFHI, MVT::i32, InFlag);
+
+      if (!N.getValue(0).use_empty()) 
+        ReplaceUses(N.getValue(0), SDOperand(Lo,0));
+
+      if (!N.getValue(1).use_empty()) 
+        ReplaceUses(N.getValue(1), SDOperand(Hi,0));
+
+      return NULL;
     }
 
-    /// Special Mul operations
+    /// Special Muls
+    case ISD::MUL: 
     case ISD::MULHS:
     case ISD::MULHU: {
       SDOperand MulOp1 = Node->getOperand(0);
@@ -283,38 +304,36 @@ Select(SDOperand N)
       unsigned MulOp  = (Opcode == ISD::MULHU ? Mips::MULTu : Mips::MULT);
       SDNode *MulNode = CurDAG->getTargetNode(MulOp, MVT::Flag, MulOp1, MulOp2);
 
-      SDOperand MFInFlag = SDOperand(MulNode, 0);
-      return CurDAG->getTargetNode(Mips::MFHI, MVT::i32, MFInFlag);
+      SDOperand InFlag = SDOperand(MulNode, 0);
+
+      if (MulOp == ISD::MUL)
+        return CurDAG->getTargetNode(Mips::MFLO, MVT::i32, InFlag);
+      else
+        return CurDAG->getTargetNode(Mips::MFHI, MVT::i32, InFlag);
     }
 
-    /// Div operations
+    /// Div/Rem operations
+    case ISD::SREM:
+    case ISD::UREM:
     case ISD::SDIV: 
     case ISD::UDIV: {
-      SDOperand DivOp1 = Node->getOperand(0);
-      SDOperand DivOp2 = Node->getOperand(1);
-      AddToISelQueue(DivOp1);
-      AddToISelQueue(DivOp2);
+      SDOperand Op1 = Node->getOperand(0);
+      SDOperand Op2 = Node->getOperand(1);
+      AddToISelQueue(Op1);
+      AddToISelQueue(Op2);
 
-      unsigned DivOp  = (Opcode == ISD::SDIV ? Mips::DIV : Mips::DIVu);
-      SDNode *DivNode = CurDAG->getTargetNode(DivOp, MVT::Flag, DivOp1, DivOp2);
+      unsigned Op, MOp;
+      if (Opcode == ISD::SDIV || Opcode == ISD::UDIV) {
+        Op  = (Opcode == ISD::SDIV ? Mips::DIV : Mips::DIVu);
+        MOp = Mips::MFLO;
+      } else {
+        Op  = (Opcode == ISD::SREM ? Mips::DIV : Mips::DIVu);
+        MOp = Mips::MFHI;
+      }
+      SDNode *Node = CurDAG->getTargetNode(Op, MVT::Flag, Op1, Op2);
 
-      SDOperand MFInFlag = SDOperand(DivNode, 0);
-      return CurDAG->getTargetNode(Mips::MFLO, MVT::i32, MFInFlag);
-    }
-
-    /// Rem operations
-    case ISD::SREM: 
-    case ISD::UREM: {
-      SDOperand RemOp1 = Node->getOperand(0);
-      SDOperand RemOp2 = Node->getOperand(1);
-      AddToISelQueue(RemOp1);
-      AddToISelQueue(RemOp2);
-      
-      unsigned RemOp  = (Opcode == ISD::SREM ? Mips::DIV : Mips::DIVu);
-      SDNode *RemNode = CurDAG->getTargetNode(RemOp, MVT::Flag, RemOp1, RemOp2);
-
-      SDOperand MFInFlag = SDOperand(RemNode, 0);
-      return CurDAG->getTargetNode(Mips::MFHI, MVT::i32, MFInFlag);
+      SDOperand InFlag = SDOperand(Node, 0);
+      return CurDAG->getTargetNode(MOp, MVT::i32, InFlag);
     }
 
     // Get target GOT address.

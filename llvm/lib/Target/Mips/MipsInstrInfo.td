@@ -172,7 +172,7 @@ class LogicI<bits<6> op, string instr_asm, SDNode OpNode>:
       (outs CPURegs:$dst),
       (ins CPURegs:$b, uimm16:$c),
       !strconcat(instr_asm, " $dst, $b, $c"),
-      [(set CPURegs:$dst, (OpNode CPURegs:$b, immSExt16:$c))], IIAlu>;
+      [(set CPURegs:$dst, (OpNode CPURegs:$b, immZExt16:$c))], IIAlu>;
 
 class LogicNOR<bits<6> op, bits<6> func, string instr_asm>:
   FR< op,
@@ -392,9 +392,10 @@ let usesCustomDAGSchedInserter = 1 in {
 
 // ADDiu just accept 16-bit immediates but we handle this on Pat's.
 // immZExt32 is used here so it can match GlobalAddress immediates.
+// MUL is a assembly macro in the current used ISAs.
 def ADDiu   : ArithI<0x09, "addiu", add, uimm16, immZExt16>;
 def ADDi    : ArithI<0x08, "addi",  add, simm16, immSExt16>;
-def MUL     : ArithR<0x1c, 0x02, "mul", mul, IIImul>;
+//def MUL     : ArithR<0x1c, 0x02, "mul", mul, IIImul>;
 def ADDu    : ArithR<0x00, 0x21, "addu", add, IIAlu>;
 def SUBu    : ArithR<0x00, 0x23, "subu", sub, IIAlu>;
 def ADD     : ArithOverflowR<0x00, 0x20, "add">;
