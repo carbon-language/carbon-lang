@@ -110,7 +110,8 @@ private:
     ParamInfo(0), NumMethodParams(0),
     MethodAttrs(M), EndLoc(endLoc), Body(0), SelfDecl(0) {}
 
-  ~ObjCMethodDecl();
+  virtual ~ObjCMethodDecl();
+  
 public:
   
   /// Destroy - Call destructors and release memory.
@@ -267,7 +268,7 @@ class ObjCInterfaceDecl : public NamedDecl, public DeclContext {
         AllocIntfRefProtocols(numRefProtos);
       }
   
-  ~ObjCInterfaceDecl();
+  virtual ~ObjCInterfaceDecl();
   
 public:
 
@@ -520,7 +521,14 @@ class ObjCProtocolDecl : public NamedDecl {
       isForwardProtoDecl(true) {
     AllocReferencedProtocols(numRefProtos);
   }
+  
+  virtual ~ObjCProtocolDecl();
+  
 public:
+    
+  /// Destroy - Call destructors and release memory.
+  virtual void Destroy(ASTContext& C);
+  
   static ObjCProtocolDecl *Create(ASTContext &C, SourceLocation L,
                                   unsigned numRefProtos, IdentifierInfo *Id);
 

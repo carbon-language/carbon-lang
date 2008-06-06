@@ -46,9 +46,22 @@ TranslationUnit::~TranslationUnit() {
       if (ObjCInterfaceDecl* IDecl = dyn_cast<ObjCInterfaceDecl>(*I))
         for (ObjCInterfaceDecl::classprop_iterator ID=IDecl->classprop_begin(),
              ED=IDecl->classprop_end(); ID!=ED; ++ID) {
-          if (Killed.count(*ID)) continue;
+          if (!*ID || Killed.count(*ID)) continue;
           Killed.insert(*ID);
           (*ID)->Destroy(*Context);
+        }
+      
+      // FIXME: This is a horrible hack.  Because there is no clear ownership
+      //  role between ObjCProtocolDecls and the ObjCPropertyDecls that they
+      //  reference, we need to destroy ObjCPropertyDecls here.  This will
+      //  eventually be fixed when the ownership of ObjCPropertyDecls gets
+      //  cleaned up.
+      if (ObjCProtocolDecl* PDecl = dyn_cast<ObjCProtocolDecl>(*I))
+        for (ObjCInterfaceDecl::classprop_iterator PD=PDecl->classprop_begin(),
+             ED=PDecl->classprop_end(); PD!=ED; ++PD) {          
+          if (!*PD || Killed.count(*PD)) continue;
+          Killed.insert(*PD);
+          (*PD)->Destroy(*Context);
         }
       
       (*I)->Destroy(*Context);
