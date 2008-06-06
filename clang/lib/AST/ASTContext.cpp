@@ -405,7 +405,15 @@ ASTContext::getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D) {
 
   // Allocate and assign into ASTRecordLayouts here.  The "Entry" reference can
   // be invalidated (dangle) if the ASTRecordLayouts hashtable is inserted into.
-  ASTRecordLayout *NewEntry = new ASTRecordLayout();
+  unsigned Alignment = 8;
+  uint64_t Size = 0;
+  if (ObjCInterfaceDecl *SD = D->getSuperClass()) {
+    const ASTRecordLayout &SL = getASTObjCInterfaceLayout(SD);
+    Alignment = SL.getAlignment();
+    Size = SL.getSize();
+  } 
+  ASTRecordLayout *NewEntry = new ASTRecordLayout(Size, Alignment);
+
   Entry = NewEntry;
 
   NewEntry->InitializeLayout(D->ivar_size());
