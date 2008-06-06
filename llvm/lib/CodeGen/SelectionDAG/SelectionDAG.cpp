@@ -416,7 +416,7 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
     LoadSDNode *LD = cast<LoadSDNode>(N);
     ID.AddInteger(LD->getAddressingMode());
     ID.AddInteger(LD->getExtensionType());
-    ID.AddInteger(LD->getMemoryVT().V);
+    ID.AddInteger(LD->getMemoryVT().getRawBits());
     ID.AddInteger(LD->getAlignment());
     ID.AddInteger(LD->isVolatile());
     break;
@@ -425,7 +425,7 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
     StoreSDNode *ST = cast<StoreSDNode>(N);
     ID.AddInteger(ST->getAddressingMode());
     ID.AddInteger(ST->isTruncatingStore());
-    ID.AddInteger(ST->getMemoryVT().V);
+    ID.AddInteger(ST->getMemoryVT().getRawBits());
     ID.AddInteger(ST->getAlignment());
     ID.AddInteger(ST->isVolatile());
     break;
@@ -684,13 +684,13 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
   if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
     ID.AddInteger(LD->getAddressingMode());
     ID.AddInteger(LD->getExtensionType());
-    ID.AddInteger(LD->getMemoryVT().V);
+    ID.AddInteger(LD->getMemoryVT().getRawBits());
     ID.AddInteger(LD->getAlignment());
     ID.AddInteger(LD->isVolatile());
   } else if (const StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
     ID.AddInteger(ST->getAddressingMode());
     ID.AddInteger(ST->isTruncatingStore());
-    ID.AddInteger(ST->getMemoryVT().V);
+    ID.AddInteger(ST->getMemoryVT().getRawBits());
     ID.AddInteger(ST->getAlignment());
     ID.AddInteger(ST->isVolatile());
   }
@@ -2984,7 +2984,7 @@ SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain,
   FoldingSetNodeID ID;
   SDOperand Ops[] = {Chain, Ptr, Cmp, Swp};
   AddNodeIDNode(ID, Opcode, VTs, Ops, 4);
-  ID.AddInteger(VT.V);
+  ID.AddInteger(VT.getRawBits());
   void* IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
@@ -3007,7 +3007,7 @@ SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain,
   FoldingSetNodeID ID;
   SDOperand Ops[] = {Chain, Ptr, Val};
   AddNodeIDNode(ID, Opcode, VTs, Ops, 3);
-  ID.AddInteger(VT.V);
+  ID.AddInteger(VT.getRawBits());
   void* IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
@@ -3064,7 +3064,7 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
   AddNodeIDNode(ID, ISD::LOAD, VTs, Ops, 3);
   ID.AddInteger(AM);
   ID.AddInteger(ExtType);
-  ID.AddInteger(EVT.V);
+  ID.AddInteger(EVT.getRawBits());
   ID.AddInteger(Alignment);
   ID.AddInteger(isVolatile);
   void *IP = 0;
@@ -3132,7 +3132,7 @@ SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Val,
   AddNodeIDNode(ID, ISD::STORE, VTs, Ops, 4);
   ID.AddInteger(ISD::UNINDEXED);
   ID.AddInteger(false);
-  ID.AddInteger(VT.V);
+  ID.AddInteger(VT.getRawBits());
   ID.AddInteger(Alignment);
   ID.AddInteger(isVolatile);
   void *IP = 0;
@@ -3178,7 +3178,7 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
   AddNodeIDNode(ID, ISD::STORE, VTs, Ops, 4);
   ID.AddInteger(ISD::UNINDEXED);
   ID.AddInteger(1);
-  ID.AddInteger(SVT.V);
+  ID.AddInteger(SVT.getRawBits());
   ID.AddInteger(Alignment);
   ID.AddInteger(isVolatile);
   void *IP = 0;
@@ -3203,7 +3203,7 @@ SelectionDAG::getIndexedStore(SDOperand OrigStore, SDOperand Base,
   AddNodeIDNode(ID, ISD::STORE, VTs, Ops, 4);
   ID.AddInteger(AM);
   ID.AddInteger(ST->isTruncatingStore());
-  ID.AddInteger(ST->getMemoryVT().V);
+  ID.AddInteger(ST->getMemoryVT().getRawBits());
   ID.AddInteger(ST->getAlignment());
   ID.AddInteger(ST->isVolatile());
   void *IP = 0;

@@ -25,6 +25,7 @@ namespace llvm {
   class Type;
 
   struct MVT { // MVT = Machine Value Type
+  public:
 
     enum SimpleValueType {
       // If you change this numbering, you must change the values in
@@ -107,6 +108,8 @@ namespace llvm {
     ///  |               |      Vector element     |
     ///
 
+  private:
+
     static const int SimpleTypeBits = 8;
     static const int PrecisionBits  = 8;
     static const int VectorBits     = 32 - SimpleTypeBits - PrecisionBits;
@@ -124,6 +127,8 @@ namespace llvm {
       (~uint32_t(0) << VectorBits) >> VectorBits;
 
     uint32_t V;
+
+  public:
 
     MVT() {}
     MVT(SimpleValueType S) { V = S; }
@@ -194,9 +199,8 @@ namespace llvm {
         if (NumElements == 2)  return v2f64;
         break;
       }
-      // Set the length with the top bit forced to zero (needed by the verifier).
       MVT Result;
-      Result.V = VT.V | (((NumElements + 1) << (33 - VectorBits)) >> 1);
+      Result.V = VT.V | ((NumElements + 1) << (32 - VectorBits));
       assert(Result.getVectorElementType() == VT &&
              "Bad vector element type!");
       assert(Result.getVectorNumElements() == NumElements &&
@@ -406,6 +410,9 @@ namespace llvm {
     /// This returns all pointers as iPTR.  If HandleUnknown is true, unknown
     /// types are returned as Other, otherwise they are invalid.
     static MVT getMVT(const Type *Ty, bool HandleUnknown = false);
+
+    /// getRawBits - Represent the type as a bunch of bits.
+    uint32_t getRawBits() const { return V; }
   };
 
 } // End llvm namespace
