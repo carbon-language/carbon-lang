@@ -23,6 +23,7 @@
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/System/Program.h"
 using namespace llvm;
 
 /// These are manifest constants used by the bitcode writer. They do not need to
@@ -1292,6 +1293,10 @@ void llvm::WriteBitcodeToFile(const Module *M, std::ostream &Out) {
   // Emit the module.
   WriteModule(M, Stream);
   
+  // If writing to stdout, set binary mode.
+  if (llvm::cout == Out)
+      sys::Program::ChangeStdoutToBinary();
+
   // Write the generated bitstream to "Out".
   Out.write((char*)&Buffer.front(), Buffer.size());
   
