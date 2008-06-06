@@ -283,10 +283,12 @@ namespace llvm {
     }
 
     /// addIntervalsForSpills - Create new intervals for spilled defs / uses of
-    /// the given interval.
+    /// the given interval. FIXME: It also returns the weight of the spill slot
+    /// (if any is created) by reference. This is temporary.
     std::vector<LiveInterval*>
     addIntervalsForSpills(const LiveInterval& i,
-                          const MachineLoopInfo *loopInfo, VirtRegMap& vrm);
+                          const MachineLoopInfo *loopInfo, VirtRegMap& vrm,
+                          float &SSWeight);
 
     /// spillPhysRegAroundRegDefsUses - Spill the specified physical register
     /// around all defs and uses of the specified interval.
@@ -424,7 +426,7 @@ namespace llvm {
         SmallVector<int, 4> &ReMatIds, const MachineLoopInfo *loopInfo,
         unsigned &NewVReg, unsigned ImpUse, bool &HasDef, bool &HasUse,
         std::map<unsigned,unsigned> &MBBVRegsMap,
-        std::vector<LiveInterval*> &NewLIs);
+        std::vector<LiveInterval*> &NewLIs, float &SSWeight);
     void rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
         LiveInterval::Ranges::const_iterator &I,
         MachineInstr *OrigDefMI, MachineInstr *DefMI, unsigned Slot, int LdSlot,
@@ -436,7 +438,7 @@ namespace llvm {
         BitVector &RestoreMBBs,
         std::map<unsigned,std::vector<SRInfo> > &RestoreIdxes,
         std::map<unsigned,unsigned> &MBBVRegsMap,
-        std::vector<LiveInterval*> &NewLIs);
+        std::vector<LiveInterval*> &NewLIs, float &SSWeight);
 
     static LiveInterval createInterval(unsigned Reg);
 
