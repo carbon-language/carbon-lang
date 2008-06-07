@@ -1,7 +1,5 @@
 // RUN: clang -rewrite-objc %s -o =-
 
-#include <objc/objc.h>
-
 @interface NSMapTable @end
 @interface NSEnumerator @end
 
