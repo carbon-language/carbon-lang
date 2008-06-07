@@ -632,7 +632,7 @@ public:
 
     // Handle pointer conversions next: pointers can only be converted to/from
     // other pointers and integers.
-    if (isa<PointerType>(DstType)) {
+    if (isa<llvm::PointerType>(DstTy)) {
       // The source value may be an integer, or a pointer.
       if (isa<llvm::PointerType>(Src->getType()))
         return llvm::ConstantExpr::getBitCast(Src, DstTy);
@@ -640,7 +640,7 @@ public:
       return llvm::ConstantExpr::getIntToPtr(Src, DstTy);
     }
     
-    if (isa<PointerType>(SrcType)) {
+    if (isa<llvm::PointerType>(Src->getType())) {
       // Must be an ptr to int cast.
       assert(isa<llvm::IntegerType>(DstTy) && "not ptr->int?");
       return llvm::ConstantExpr::getPtrToInt(Src, DstTy);
