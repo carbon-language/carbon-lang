@@ -183,7 +183,8 @@ Sema::ExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
 
   QualType type = getLangOptions().CPlusPlus ? Context.CharTy : Context.IntTy;
 
-  return new CharacterLiteral(Literal.getValue(), type, Tok.getLocation());
+  return new CharacterLiteral(Literal.getValue(), Literal.isWide(), type,
+                              Tok.getLocation());
 }
 
 Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {

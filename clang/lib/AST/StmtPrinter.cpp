@@ -513,8 +513,9 @@ void StmtPrinter::VisitPreDefinedExpr(PreDefinedExpr *Node) {
 }
 
 void StmtPrinter::VisitCharacterLiteral(CharacterLiteral *Node) {
-  // FIXME should print an L for wchar_t constants
   unsigned value = Node->getValue();
+  if (Node->isWide())
+    OS << "L";
   switch (value) {
   case '\\':
     OS << "'\\\\'";

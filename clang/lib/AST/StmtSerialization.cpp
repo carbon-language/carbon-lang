@@ -375,14 +375,16 @@ CastExpr* CastExpr::CreateImpl(Deserializer& D, ASTContext& C) {
 void CharacterLiteral::EmitImpl(Serializer& S) const {
   S.Emit(Value);
   S.Emit(Loc);
+  S.EmitBool(IsWide);
   S.Emit(getType());
 }
 
 CharacterLiteral* CharacterLiteral::CreateImpl(Deserializer& D, ASTContext& C) {
   unsigned value = D.ReadInt();
   SourceLocation Loc = SourceLocation::ReadVal(D);
+  bool iswide = D.ReadBool();
   QualType T = QualType::ReadVal(D);
-  return new CharacterLiteral(value,T,Loc);
+  return new CharacterLiteral(value,iswide,T,Loc);
 }
 
 void CompoundAssignOperator::EmitImpl(Serializer& S) const {

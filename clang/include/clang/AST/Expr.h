@@ -234,12 +234,14 @@ public:
 class CharacterLiteral : public Expr {
   unsigned Value;
   SourceLocation Loc;
+  bool IsWide;
 public:
   // type should be IntTy
-  CharacterLiteral(unsigned value, QualType type, SourceLocation l)
-    : Expr(CharacterLiteralClass, type), Value(value), Loc(l) {
+  CharacterLiteral(unsigned value, bool iswide, QualType type, SourceLocation l)
+    : Expr(CharacterLiteralClass, type), Value(value), Loc(l), IsWide(iswide) {
   }
   SourceLocation getLoc() const { return Loc; }
+  bool isWide() const { return IsWide; }
   
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
   
