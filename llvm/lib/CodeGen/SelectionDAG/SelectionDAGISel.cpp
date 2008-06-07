@@ -87,28 +87,83 @@ defaultListDAGScheduler("default", "  Best scheduler for the target",
 
 namespace { struct SDISelAsmOperandInfo; }
 
-/// ComputeValueVTs - Given an LLVM IR type, compute a sequence of
-/// MVTs that represent all the individual underlying
-/// non-aggregate types that comprise it.
-static void ComputeValueVTs(const TargetLowering &TLI, const Type *Ty,
-                            SmallVectorImpl<MVT> &ValueVTs) {
+/// ComputeLinearIndex - Given an LLVM IR aggregate type and a sequence
+/// insertvalue or extractvalue indices that identify a member, return
+/// the linearized index of the start of the member.
+///
+static unsigned ComputeLinearIndex(const TargetLowering &TLI, const Type *Ty,
+                                   const unsigned *Indices,
+                                   const unsigned *IndicesEnd,
+                                   unsigned CurIndex = 0) {
+  // Base case: We're done.
+  if (Indices == IndicesEnd)
+    return CurIndex;
+
+  // Otherwise we need to recurse. A non-negative value is used to
+  // indicate the final result value; a negative value carries the
+  // complemented position to continue the search.
+  CurIndex = ~CurIndex;
+
   // Given a struct type, recursively traverse the elements.
   if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     for (StructType::element_iterator EI = STy->element_begin(),
-                                      EB = STy->element_end();
-        EI != EB; ++EI)
-      ComputeValueVTs(TLI, *EI, ValueVTs);
+                                      EE = STy->element_end();
+        EI != EE; ++EI) {
+      CurIndex = ComputeLinearIndex(TLI, *EI, Indices+1, IndicesEnd,
+                                    ~CurIndex);
+      if ((int)CurIndex >= 0)
+        return CurIndex;
+    }
+  }
+  // Given an array type, recursively traverse the elements.
+  else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
+    const Type *EltTy = ATy->getElementType();
+    for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
+      CurIndex = ComputeLinearIndex(TLI, EltTy, Indices+1, IndicesEnd,
+                                    ~CurIndex);
+      if ((int)CurIndex >= 0)
+        return CurIndex;
+    }
+  }
+  // We haven't found the type we're looking for, so keep searching.
+  return CurIndex;
+}
+
+/// ComputeValueVTs - Given an LLVM IR type, compute a sequence of
+/// MVTs that represent all the individual underlying
+/// non-aggregate types that comprise it.
+///
+/// If Offsets is non-null, it points to a vector to be filled in
+/// with the in-memory offsets of each of the individual values.
+///
+static void ComputeValueVTs(const TargetLowering &TLI, const Type *Ty,
+                            SmallVectorImpl<MVT> &ValueVTs,
+                            SmallVectorImpl<uint64_t> *Offsets = 0,
+                            uint64_t StartingOffset = 0) {
+  // Given a struct type, recursively traverse the elements.
+  if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    const StructLayout *SL = TLI.getTargetData()->getStructLayout(STy);
+    for (StructType::element_iterator EB = STy->element_begin(),
+                                      EI = EB,
+                                      EE = STy->element_end();
+         EI != EE; ++EI)
+      ComputeValueVTs(TLI, *EI, ValueVTs, Offsets,
+                      StartingOffset + SL->getElementOffset(EI - EB));
     return;
   }
   // Given an array type, recursively traverse the elements.
   if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     const Type *EltTy = ATy->getElementType();
+    uint64_t EltSize = TLI.getTargetData()->getABITypeSize(EltTy);
     for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i)
-      ComputeValueVTs(TLI, EltTy, ValueVTs);
+      ComputeValueVTs(TLI, EltTy, ValueVTs, Offsets,
+                      StartingOffset + i * EltSize);
     return;
   }
   // Base case: we can get an MVT for this LLVM IR type.
   ValueVTs.push_back(TLI.getValueType(Ty));
+  if (Offsets)
+    Offsets->push_back(StartingOffset);
 }
 
 namespace {
@@ -703,8 +758,8 @@ public:
   void visitInsertElement(User &I);
   void visitShuffleVector(User &I);
 
-  void visitExtractValue(User &I);
-  void visitInsertValue(User &I);
+  void visitExtractValue(ExtractValueInst &I);
+  void visitInsertValue(InsertValueInst &I);
 
   void visitGetElementPtr(User &I);
   void visitSelect(User &I);
@@ -1083,7 +1138,8 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
     if (ConstantFP *CFP = dyn_cast<ConstantFP>(C))
       return N = DAG.getConstantFP(CFP->getValueAPF(), VT);
     
-    if (isa<UndefValue>(C) && !isa<VectorType>(V->getType()))
+    if (isa<UndefValue>(C) && !isa<VectorType>(V->getType()) &&
+        !V->getType()->isAggregateType())
       return N = DAG.getNode(ISD::UNDEF, VT);
 
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
@@ -1093,6 +1149,63 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       return N1;
     }
     
+    if (isa<ConstantStruct>(C) || isa<ConstantArray>(C)) {
+      SmallVector<SDOperand, 4> Constants;
+      SmallVector<MVT, 4> ValueVTs;
+      for (User::const_op_iterator OI = C->op_begin(), OE = C->op_end();
+           OI != OE; ++OI) {
+        SDNode *Val = getValue(*OI).Val;
+        for (unsigned i = 0, e = Val->getNumValues(); i != e; ++i) {
+          Constants.push_back(SDOperand(Val, i));
+          ValueVTs.push_back(Val->getValueType(i));
+        }
+      }
+      return DAG.getNode(ISD::MERGE_VALUES,
+                         DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
+                         &Constants[0], Constants.size());
+    }
+
+    if (const ArrayType *ATy = dyn_cast<ArrayType>(C->getType())) {
+      assert((isa<ConstantAggregateZero>(C) || isa<UndefValue>(C)) &&
+             "Unknown array constant!");
+      unsigned NumElts = ATy->getNumElements();
+      MVT EltVT = TLI.getValueType(ATy->getElementType());
+      SmallVector<SDOperand, 4> Constants(NumElts);
+      SmallVector<MVT, 4> ValueVTs(NumElts, EltVT);
+      for (unsigned i = 0, e = NumElts; i != e; ++i) {
+        if (isa<UndefValue>(C))
+          Constants[i] = DAG.getNode(ISD::UNDEF, EltVT);
+        else if (EltVT.isFloatingPoint())
+          Constants[i] = DAG.getConstantFP(0, EltVT);
+        else
+          Constants[i] = DAG.getConstant(0, EltVT);
+      }
+      return DAG.getNode(ISD::MERGE_VALUES,
+                         DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
+                         &Constants[0], Constants.size());
+    }
+
+    if (const StructType *STy = dyn_cast<StructType>(C->getType())) {
+      assert((isa<ConstantAggregateZero>(C) || isa<UndefValue>(C)) &&
+             "Unknown struct constant!");
+      unsigned NumElts = STy->getNumElements();
+      SmallVector<SDOperand, 4> Constants(NumElts);
+      SmallVector<MVT, 4> ValueVTs(NumElts);
+      for (unsigned i = 0, e = NumElts; i != e; ++i) {
+        MVT EltVT = TLI.getValueType(STy->getElementType(i));
+        ValueVTs[i] = EltVT;
+        if (isa<UndefValue>(C))
+          Constants[i] = DAG.getNode(ISD::UNDEF, EltVT);
+        else if (EltVT.isFloatingPoint())
+          Constants[i] = DAG.getConstantFP(0, EltVT);
+        else
+          Constants[i] = DAG.getConstant(0, EltVT);
+      }
+      return DAG.getNode(ISD::MERGE_VALUES,
+                         DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
+                         &Constants[0], Constants.size());
+    }
+
     const VectorType *VecTy = cast<VectorType>(V->getType());
     unsigned NumElements = VecTy->getNumElements();
     
@@ -2560,14 +2673,72 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
                            V1, V2, Mask));
 }
 
-void SelectionDAGLowering::visitInsertValue(User &I) {
-  assert(0 && "insertvalue instruction not implemented");
-  abort();
+void SelectionDAGLowering::visitInsertValue(InsertValueInst &I) {
+  const Value *Op0 = I.getOperand(0);
+  const Value *Op1 = I.getOperand(1);
+  const Type *AggTy = I.getType();
+  const Type *ValTy = Op1->getType();
+  bool IntoUndef = isa<UndefValue>(Op0);
+  bool FromUndef = isa<UndefValue>(Op1);
+
+  unsigned LinearIndex = ComputeLinearIndex(TLI, AggTy,
+                                            I.idx_begin(), I.idx_end());
+
+  SmallVector<MVT, 4> AggValueVTs;
+  ComputeValueVTs(TLI, AggTy, AggValueVTs);
+  SmallVector<MVT, 4> ValValueVTs;
+  ComputeValueVTs(TLI, ValTy, ValValueVTs);
+
+  unsigned NumAggValues = AggValueVTs.size();
+  unsigned NumValValues = ValValueVTs.size();
+  SmallVector<SDOperand, 4> Values(NumAggValues);
+
+  SDOperand Agg = getValue(Op0);
+  SDOperand Val = getValue(Op1);
+  unsigned i = 0;
+  // Copy the beginning value(s) from the original aggregate.
+  for (; i != LinearIndex; ++i)
+    Values[i] = IntoUndef ? DAG.getNode(ISD::UNDEF, AggValueVTs[i]) :
+                SDOperand(Agg.Val, Agg.ResNo + i);
+  // Copy values from the inserted value(s).
+  for (; i != LinearIndex + NumValValues; ++i)
+    Values[i] = FromUndef ? DAG.getNode(ISD::UNDEF, AggValueVTs[i]) :
+                SDOperand(Val.Val, Val.ResNo + i - LinearIndex);
+  // Copy remaining value(s) from the original aggregate.
+  for (; i != NumAggValues; ++i)
+    Values[i] = IntoUndef ? DAG.getNode(ISD::UNDEF, AggValueVTs[i]) :
+                SDOperand(Agg.Val, Agg.ResNo + i);
+
+  setValue(&I, DAG.getNode(ISD::MERGE_VALUES,
+                           DAG.getVTList(&AggValueVTs[0], NumAggValues),
+                           &Values[0], NumAggValues));
 }
 
-void SelectionDAGLowering::visitExtractValue(User &I) {
-  assert(0 && "extractvalue instruction not implemented");
-  abort();
+void SelectionDAGLowering::visitExtractValue(ExtractValueInst &I) {
+  const Value *Op0 = I.getOperand(0);
+  const Type *AggTy = Op0->getType();
+  const Type *ValTy = I.getType();
+  bool OutOfUndef = isa<UndefValue>(Op0);
+
+  unsigned LinearIndex = ComputeLinearIndex(TLI, AggTy,
+                                            I.idx_begin(), I.idx_end());
+
+  SmallVector<MVT, 4> ValValueVTs;
+  ComputeValueVTs(TLI, ValTy, ValValueVTs);
+
+  unsigned NumValValues = ValValueVTs.size();
+  SmallVector<SDOperand, 4> Values(NumValValues);
+
+  SDOperand Agg = getValue(Op0);
+  // Copy out the selected value(s).
+  for (unsigned i = LinearIndex; i != LinearIndex + NumValValues; ++i)
+    Values[i - LinearIndex] =
+      OutOfUndef ? DAG.getNode(ISD::UNDEF, Agg.Val->getValueType(i)) :
+                   SDOperand(Agg.Val, Agg.ResNo + i - LinearIndex);
+
+  setValue(&I, DAG.getNode(ISD::MERGE_VALUES,
+                           DAG.getVTList(&ValValueVTs[0], NumValValues),
+                           &Values[0], NumValValues));
 }
 
 
@@ -2698,25 +2869,61 @@ SDOperand SelectionDAGLowering::getLoadFrom(const Type *Ty, SDOperand Ptr,
                                             const Value *SV, SDOperand Root,
                                             bool isVolatile, 
                                             unsigned Alignment) {
-  SDOperand L =
-    DAG.getLoad(TLI.getValueType(Ty), Root, Ptr, SV, 0, 
-                isVolatile, Alignment);
+  SmallVector<MVT, 4> ValueVTs;
+  SmallVector<uint64_t, 4> Offsets;
+  ComputeValueVTs(TLI, Ty, ValueVTs, &Offsets);
+  unsigned NumValues = ValueVTs.size();
 
-  if (isVolatile)
-    DAG.setRoot(L.getValue(1));
-  else
-    PendingLoads.push_back(L.getValue(1));
+  SmallVector<SDOperand, 4> Values(NumValues);
+  SmallVector<SDOperand, 4> Chains(NumValues);
+  MVT PtrVT = Ptr.getValueType();
+  for (unsigned i = 0; i != NumValues; ++i) {
+    SDOperand L = DAG.getLoad(ValueVTs[i], Root,
+                              DAG.getNode(ISD::ADD, PtrVT, Ptr,
+                                          DAG.getConstant(Offsets[i], PtrVT)),
+                              SV, Offsets[i],
+                              isVolatile, Alignment);
+    Values[i] = L;
+    Chains[i] = L.getValue(1);
+  }
   
-  return L;
+  SDOperand Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                                &Chains[0], NumValues);
+  if (isVolatile)
+    DAG.setRoot(Chain);
+  else
+    PendingLoads.push_back(Chain);
+
+  return DAG.getNode(ISD::MERGE_VALUES,
+                     DAG.getVTList(&ValueVTs[0], NumValues),
+                     &Values[0], NumValues);
 }
 
 
 void SelectionDAGLowering::visitStore(StoreInst &I) {
   Value *SrcV = I.getOperand(0);
   SDOperand Src = getValue(SrcV);
-  SDOperand Ptr = getValue(I.getOperand(1));
-  DAG.setRoot(DAG.getStore(getRoot(), Src, Ptr, I.getOperand(1), 0,
-                           I.isVolatile(), I.getAlignment()));
+  Value *PtrV = I.getOperand(1);
+  SDOperand Ptr = getValue(PtrV);
+
+  SmallVector<MVT, 4> ValueVTs;
+  SmallVector<uint64_t, 4> Offsets;
+  ComputeValueVTs(TLI, SrcV->getType(), ValueVTs, &Offsets);
+  unsigned NumValues = ValueVTs.size();
+
+  SDOperand Root = getRoot();
+  SmallVector<SDOperand, 4> Chains(NumValues);
+  MVT PtrVT = Ptr.getValueType();
+  bool isVolatile = I.isVolatile();
+  unsigned Alignment = I.getAlignment();
+  for (unsigned i = 0; i != NumValues; ++i)
+    Chains[i] = DAG.getStore(Root, SDOperand(Src.Val, Src.ResNo + i),
+                             DAG.getNode(ISD::ADD, PtrVT, Ptr,
+                                         DAG.getConstant(Offsets[i], PtrVT)),
+                             PtrV, Offsets[i],
+                             isVolatile, Alignment);
+
+  DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, &Chains[0], NumValues));
 }
 
 /// visitTargetIntrinsic - Lower a call of a target intrinsic to an INTRINSIC
