@@ -408,6 +408,10 @@
 				RelativePath="..\..\lib\Analysis\ValueNumbering.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\..\lib\Analysis\ValueTracking.cpp"
+				>
+			</File>
 			<Filter
 				Name="IPA"
 				>
