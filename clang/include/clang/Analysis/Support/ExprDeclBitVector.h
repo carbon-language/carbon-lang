@@ -31,8 +31,8 @@ struct DeclBitVector_Types {
   class Idx {
     unsigned I;
   public:
-    Idx(unsigned i) : I(i) {}
-    explicit Idx() : I(~0U) {}
+    explicit Idx(unsigned i) : I(i) {}
+    Idx() : I(~0U) {}
     
     bool isValid() const {
       return I != ~0U;
