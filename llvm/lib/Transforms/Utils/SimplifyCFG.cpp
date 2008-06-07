@@ -955,6 +955,109 @@ HoistTerminator:
   return true;
 }
 
+/// SpeculativelyExecuteBB - Given a conditional branch that goes to BB1
+/// and an BB2 and the only successor of BB1 is BB2, hoist simple code
+/// (for now, restricted to a single instruction that's side effect free) from
+/// the BB1 into the branch block to speculatively execute it.
+static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
+  // Only speculatively execution a single instruction (not counting the
+  // terminator) for now.
+  if (BB1->size() != 2)
+    return false;
+
+  // If BB1 is actually on the false edge of the conditional branch, remember
+  // to swap the select operands later.
+  bool Invert = false;
+  if (BB1 != BI->getSuccessor(0)) {
+    assert(BB1 == BI->getSuccessor(1) && "No edge from 'if' block?");
+    Invert = true;
+  }
+
+  // Turn
+  // BB:
+  //     %t1 = icmp
+  //     br i1 %t1, label %BB1, label %BB2
+  // BB1:
+  //     %t3 = add %t2, c
+  //     br label BB2
+  // BB2:
+  // =>
+  // BB:
+  //     %t1 = icmp
+  //     %t4 = add %t2, c
+  //     %t3 = select i1 %t1, %t2, %t3
+  Instruction *I = BB1->begin();
+  switch (I->getOpcode()) {
+  default: return false;  // Not safe / profitable to hoist.
+  case Instruction::Add:
+  case Instruction::Sub:
+  case Instruction::And:
+  case Instruction::Or:
+  case Instruction::Xor:
+  case Instruction::Shl:
+  case Instruction::LShr:
+  case Instruction::AShr:
+    if (I->getOperand(0)->getType()->isFPOrFPVector())
+      return false;  // FP arithmetic might trap.
+    break;   // These are all cheap and non-trapping instructions.
+  }
+
+  // Can we speculatively execute the instruction? And what is the value 
+  // if the condition is false? Consider the phi uses, if the incoming value
+  // from the "if" block are all the same V, then V is the value of the
+  // select if the condition is false.
+  BasicBlock *BIParent = BI->getParent();
+  SmallVector<PHINode*, 4> PHIUses;
+  Value *FalseV = NULL;
+  for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
+       UI != E; ++UI) {
+    PHINode *PN = dyn_cast<PHINode>(UI);
+    if (!PN)
+      continue;
+    PHIUses.push_back(PN);
+    Value *PHIV = PN->getIncomingValueForBlock(BIParent);
+    if (!FalseV)
+      FalseV = PHIV;
+    else if (FalseV != PHIV)
+      return false;  // Don't know the value when condition is false.
+  }
+  if (!FalseV)  // Can this happen?
+    return false;
+
+  // If we get here, we can hoist the instruction. Try to place it before the
+  // icmp / fcmp instruction preceeding the conditional branch.
+  BasicBlock::iterator InsertPos = BI;
+  if (InsertPos != BIParent->begin())
+    --InsertPos;
+  if (InsertPos->getOpcode() == Instruction::ICmp ||
+      InsertPos->getOpcode() == Instruction::FCmp)
+    BIParent->getInstList().splice(InsertPos, BB1->getInstList(), I);
+  else
+    BIParent->getInstList().splice(BI, BB1->getInstList(), I);
+
+  // Create a select whose true value is the speculatively executed value and
+  // false value is the previously determined FalseV.
+  SelectInst *SI;
+  if (Invert)
+    SI = SelectInst::Create(BI->getCondition(), FalseV, I,
+                            FalseV->getName() + "." + I->getName(), BI);
+  else
+    SI = SelectInst::Create(BI->getCondition(), I, FalseV,
+                            I->getName() + "." + FalseV->getName(), BI);
+
+  // Make the PHI node use the select for all incoming values for "then" and
+  // "if" blocks.
+  for (unsigned i = 0, e = PHIUses.size(); i != e; ++i) {
+    PHINode *PN = PHIUses[i];
+    for (unsigned j = 0, ee = PN->getNumIncomingValues(); j != ee; ++j)
+      if (PN->getIncomingBlock(j) == BB1 ||
+          PN->getIncomingBlock(j) == BIParent)
+        PN->setIncomingValue(j, SI);
+  }
+
+  return true;
+}
+
 /// BlockIsSimpleEnoughToThreadThrough - Return true if we can thread a branch
 /// across this block.
 static bool BlockIsSimpleEnoughToThreadThrough(BasicBlock *BB) {
@@ -1928,6 +2031,24 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           // so see if there is any identical code in the "then" and "else"
           // blocks.  If so, we can hoist it up to the branching block.
           Changed |= HoistThenElseCodeToIf(BI);
+        } else {
+          OnlySucc = NULL;
+          for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB);
+               SI != SE; ++SI) {
+            if (!OnlySucc)
+              OnlySucc = *SI;
+            else if (*SI != OnlySucc) {
+              OnlySucc = 0;     // There are multiple distinct successors!
+              break;
+            }
+          }
+
+          if (OnlySucc == OtherBB) {
+            // If BB's only successor is the other successor of the predecessor,
+            // i.e. a triangle, see if we can hoist any code from this block up
+            // to the "if" block.
+            Changed |= SpeculativelyExecuteBB(BI, BB);
+          }
         }
       }
 
