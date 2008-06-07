@@ -271,17 +271,11 @@ public:
   
   bool isExact() const { return IsExact; }
 
-  /// getValueAsDouble - This returns the value as an inaccurate double.  Note
-  /// that this may cause loss of precision, but is useful for debugging dumps
-  /// etc.
-  double getValueAsDouble() const {
-    // FIXME: We need something for long double here.
-    if (cast<BuiltinType>(getType())->getKind() == BuiltinType::Float)
-      return Value.convertToFloat();
-    else
-      return Value.convertToDouble();
-  }
-  
+  /// getValueAsApproximateDouble - This returns the value as an inaccurate
+  /// double.  Note that this may cause loss of precision, but is useful for
+  /// debugging dumps, etc.
+  double getValueAsApproximateDouble() const;
+ 
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   static bool classof(const Stmt *T) { 

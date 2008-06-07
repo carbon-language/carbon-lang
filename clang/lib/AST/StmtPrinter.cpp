@@ -577,7 +577,7 @@ void StmtPrinter::VisitIntegerLiteral(IntegerLiteral *Node) {
 }
 void StmtPrinter::VisitFloatingLiteral(FloatingLiteral *Node) {
   // FIXME: print value more precisely.
-  OS << Node->getValueAsDouble();
+  OS << Node->getValueAsApproximateDouble();
 }
 
 void StmtPrinter::VisitImaginaryLiteral(ImaginaryLiteral *Node) {

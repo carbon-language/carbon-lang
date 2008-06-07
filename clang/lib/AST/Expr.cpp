@@ -22,6 +22,16 @@ using namespace clang;
 // Primary Expressions.
 //===----------------------------------------------------------------------===//
 
+/// getValueAsApproximateDouble - This returns the value as an inaccurate
+/// double.  Note that this may cause loss of precision, but is useful for
+/// debugging dumps, etc.
+double FloatingLiteral::getValueAsApproximateDouble() const {
+  llvm::APFloat V = getValue();
+  V.convert(llvm::APFloat::IEEEdouble, llvm::APFloat::rmNearestTiesToEven);
+  return V.convertToDouble();
+}
+
+
 StringLiteral::StringLiteral(const char *strData, unsigned byteLength, 
                              bool Wide, QualType t, SourceLocation firstLoc,
                              SourceLocation lastLoc) : 
