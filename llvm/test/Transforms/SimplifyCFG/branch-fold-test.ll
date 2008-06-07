@@ -1,7 +1,7 @@
 ; This test ensures that the simplifycfg pass continues to constant fold
 ; terminator instructions.
 
-; RUN: llvm-as < %s | opt -simplifycfg | not grep br
+; RUN: llvm-as < %s | opt -simplifycfg | llvm-dis | not grep br
 
 define i32 @test(i32 %A, i32 %B) {
 J:
