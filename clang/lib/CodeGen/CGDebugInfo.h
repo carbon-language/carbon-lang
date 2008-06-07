@@ -34,6 +34,7 @@ namespace llvm {
   class SubprogramDesc;
   class GlobalVariable;
   class GlobalVariableDesc;
+  class EnumeratorDesc;
 }
 
 namespace clang {
@@ -69,6 +70,7 @@ private:
   std::vector<llvm::DebugInfoDesc *> RegionStack;
   std::vector<llvm::VariableDesc *> VariableDescList;
   std::vector<llvm::GlobalVariableDesc *> GlobalVarDescList;
+  std::vector<llvm::EnumeratorDesc *> EnumDescList;
   llvm::SubprogramDesc *Subprogram;
 
   /// Helper functions for getOrCreateType.
@@ -81,6 +83,12 @@ private:
   llvm::TypeDesc *getOrCreatePointerType(QualType type, 
                                      llvm::CompileUnitDesc *unit);
   llvm::TypeDesc *getOrCreateFunctionType(QualType type, 
+                                     llvm::CompileUnitDesc *unit);
+  llvm::TypeDesc *getOrCreateRecordType(QualType type,
+                                     llvm::CompileUnitDesc *unit);
+  llvm::TypeDesc *getOrCreateEnumType(QualType type,
+                                     llvm::CompileUnitDesc *unit);
+  llvm::TypeDesc *getOrCreateTaggedType(QualType type,
                                      llvm::CompileUnitDesc *unit);
 
 public:

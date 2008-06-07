@@ -47,6 +47,7 @@ CGDebugInfo::CGDebugInfo(CodeGenModule *m)
 , RegionStack()
 , VariableDescList()
 , GlobalVarDescList(NULL)
+, EnumDescList(NULL)
 , Subprogram(NULL)
 {
   SR = new llvm::DISerializer();
@@ -71,18 +72,27 @@ CGDebugInfo::~CGDebugInfo()
   }
   TypeCache.clear();
 
+  // Free region descriptors.
   for (std::vector<llvm::DebugInfoDesc *>::iterator I 
        = RegionStack.begin(); I != RegionStack.end(); ++I) {
     delete *I;
   }
 
+  // Free local var descriptors.
   for (std::vector<llvm::VariableDesc *>::iterator I 
        = VariableDescList.begin(); I != VariableDescList.end(); ++I) {
     delete *I;
   }
 
+  // Free global var descriptors.
   for (std::vector<llvm::GlobalVariableDesc *>::iterator I 
        = GlobalVarDescList.begin(); I != GlobalVarDescList.end(); ++I) {
+    delete *I;
+  }
+
+  // Free enum constants descriptors.
+  for (std::vector<llvm::EnumeratorDesc *>::iterator I 
+       = EnumDescList.begin(); I != EnumDescList.end(); ++I) {
     delete *I;
   }
 
@@ -160,6 +170,8 @@ llvm::CompileUnitDesc
 }
 
 
+/// getOrCreateCVRType - Get the CVR qualified type from the cache or create 
+/// a new one if necessary.
 llvm::TypeDesc *
 CGDebugInfo::getOrCreateCVRType(QualType type, llvm::CompileUnitDesc *Unit)
 {
@@ -189,7 +201,7 @@ CGDebugInfo::getOrCreateCVRType(QualType type, llvm::CompileUnitDesc *Unit)
 }
 
    
-/// getOrCreateType - Get the Basic type from the cache or create a new
+/// getOrCreateBuiltinType - Get the Basic type from the cache or create a new
 /// one if necessary.
 llvm::TypeDesc *
 CGDebugInfo::getOrCreateBuiltinType(QualType type, llvm::CompileUnitDesc *Unit)
@@ -351,15 +363,118 @@ CGDebugInfo::getOrCreateFunctionType(QualType type, llvm::CompileUnitDesc *Unit)
   return SubrTy;
 }
 
+/// getOrCreateRecordType - get structure or union type.
+llvm::TypeDesc *
+CGDebugInfo::getOrCreateRecordType(QualType type, llvm::CompileUnitDesc *Unit)
+{
+  llvm::CompositeTypeDesc *RecType;
+  if(type->isStructureType())
+    RecType = new llvm::CompositeTypeDesc(llvm::dwarf::DW_TAG_structure_type);
+  else if(type->isUnionType())
+    RecType = new llvm::CompositeTypeDesc(llvm::dwarf::DW_TAG_union_type);
+  else
+    return NULL;
 
+  RecordDecl *RecDecl = type->getAsRecordType()->getDecl();
+  const ASTRecordLayout &RL = M->getContext().getASTRecordLayout(RecDecl);
+
+  SourceManager &SM = M->getContext().getSourceManager();
+  uint64_t Line = SM.getLogicalLineNumber(RecDecl->getLocation());
+
+  std::vector<llvm::DebugInfoDesc *> &Elements = RecType->getElements();
+
+  // Add the members.
+  int NumMembers = RecDecl->getNumMembers();
+  for (int i = 0; i < NumMembers; i++) {
+    FieldDecl *Member = RecDecl->getMember(i);
+    llvm::TypeDesc *MemberTy = getOrCreateType(Member->getType(), Unit);
+    MemberTy->setOffset(RL.getFieldOffset(i));
+    Elements.push_back(MemberTy);
+  }
+
+  // Fill in the blanks.
+  if(RecType) {
+    RecType->setContext(Unit);
+    RecType->setName(RecDecl->getName());
+    RecType->setFile(getOrCreateCompileUnit(RecDecl->getLocation()));
+    RecType->setLine(Line);
+    RecType->setSize(RL.getSize());
+    RecType->setAlign(RL.getAlignment());
+    RecType->setOffset(0);
+  }
+  return(RecType);
+}
+
+/// getOrCreateEnumType - get Enum type.
+llvm::TypeDesc *
+CGDebugInfo::getOrCreateEnumType(QualType type, llvm::CompileUnitDesc *Unit)
+{
+  llvm::CompositeTypeDesc *EnumTy 
+    = new llvm::CompositeTypeDesc(llvm::dwarf::DW_TAG_enumeration_type);
+
+  EnumType *EType = dyn_cast<EnumType>(type);
+  if (!EType) return(NULL);
+
+  EnumDecl *EDecl = EType->getDecl();
+  SourceManager &SM = M->getContext().getSourceManager();
+  uint64_t Line = SM.getLogicalLineNumber(EDecl->getLocation());
+
+  // Size, align and offset of the type.
+  uint64_t Size = M->getContext().getTypeSize(type);
+  uint64_t Align = M->getContext().getTypeAlign(type);
+  
+  // Create descriptors for enum members.
+  std::vector<llvm::DebugInfoDesc *> &Elements = EnumTy->getElements();
+  EnumConstantDecl *ElementList = EDecl->getEnumConstantList();
+  while (ElementList) {
+    llvm::EnumeratorDesc *EnumDesc = new llvm::EnumeratorDesc();
+    // push it to the enum desc list so that we can free it later.
+    EnumDescList.push_back(EnumDesc);
+
+    const char *ElementName = ElementList->getName();
+    uint64_t Value = ElementList->getInitVal().getZExtValue();
+
+    EnumDesc->setName(ElementName);
+    EnumDesc->setValue(Value);
+    Elements.push_back(EnumDesc);
+    if (ElementList->getNextDeclarator())
+      ElementList 
+        = dyn_cast<EnumConstantDecl>(ElementList->getNextDeclarator());
+    else
+      break;
+  }
+
+  // Fill in the blanks.
+  if (EnumTy) {
+    EnumTy->setContext(Unit);
+    EnumTy->setName(EDecl->getName());
+    EnumTy->setSize(Size);
+    EnumTy->setAlign(Align);    
+    EnumTy->setOffset(0);
+    EnumTy->setFile(getOrCreateCompileUnit(EDecl->getLocation()));
+    EnumTy->setLine(Line);
+  }
+  return EnumTy;
+}
+
+
+/// getOrCreateTaggedType - get or create structure/union/Enum type.
+llvm::TypeDesc *
+CGDebugInfo::getOrCreateTaggedType(QualType type, llvm::CompileUnitDesc *Unit)
+{
+  if (type->isStructureType() || type->isUnionType())
+    return getOrCreateRecordType(type, Unit);
+  else if (type->isEnumeralType())
+    return getOrCreateEnumType(type, Unit);
+  else
+    return NULL;
+}
   
 /// getOrCreateType - Get the type from the cache or create a new
 /// one if necessary.
 llvm::TypeDesc *
 CGDebugInfo::getOrCreateType(QualType type, llvm::CompileUnitDesc *Unit)
 {
-  // TODO: Re-enable once we can generate all types
-  return 0;
   if (type.isNull())
     return NULL;
 
@@ -382,7 +497,6 @@ CGDebugInfo::getOrCreateType(QualType type, llvm::CompileUnitDesc *Unit)
     case Type::IncompleteArray:
     case Type::Vector:
     case Type::ExtVector:
-    case Type::Tagged:
     case Type::ASQual:
     case Type::ObjCInterface:
     case Type::ObjCQualifiedInterface:
@@ -391,7 +505,6 @@ CGDebugInfo::getOrCreateType(QualType type, llvm::CompileUnitDesc *Unit)
     case Type::TypeOfTyp:
     default:
     {
-      assert (0 && "Unsupported type");
       return NULL;
     }
 
@@ -410,6 +523,10 @@ CGDebugInfo::getOrCreateType(QualType type, llvm::CompileUnitDesc *Unit)
 
     case Type::Pointer:
       Slot = getOrCreatePointerType(type, Unit);
+      break;
+
+    case Type::Tagged:
+      Slot = getOrCreateTaggedType(type, Unit);
       break;
   }
 
