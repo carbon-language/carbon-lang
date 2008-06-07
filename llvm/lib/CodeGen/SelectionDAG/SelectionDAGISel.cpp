@@ -1381,13 +1381,13 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
     NextBlock = BBI;
 
   if (I.isUnconditional()) {
+    // Update machine-CFG edges.
+    CurMBB->addSuccessor(Succ0MBB);
+    
     // If this is not a fall-through branch, emit the branch.
     if (Succ0MBB != NextBlock)
       DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getControlRoot(),
                               DAG.getBasicBlock(Succ0MBB)));
-
-    // Update machine-CFG edges.
-    CurMBB->addSuccessor(Succ0MBB);
     return;
   }
 
@@ -1484,8 +1484,11 @@ void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
       Cond = DAG.getSetCC(MVT::i1, SUB,
                           DAG.getConstant(High-Low, VT), ISD::SETULE);
     }
-    
   }
+  
+  // Update successor info
+  CurMBB->addSuccessor(CB.TrueBB);
+  CurMBB->addSuccessor(CB.FalseBB);
   
   // Set NextBlock to be the MBB immediately after the current one, if any.
   // This is used to avoid emitting unnecessary branches to the next block.
@@ -1508,9 +1511,6 @@ void SelectionDAGLowering::visitSwitchCase(SelectionDAGISel::CaseBlock &CB) {
   else
     DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, BrCond, 
                             DAG.getBasicBlock(CB.FalseBB)));
-  // Update successor info
-  CurMBB->addSuccessor(CB.TrueBB);
-  CurMBB->addSuccessor(CB.FalseBB);
 }
 
 /// visitJumpTable - Emit JumpTable node in the current MBB
@@ -1606,9 +1606,6 @@ void SelectionDAGLowering::visitBitTestHeader(SelectionDAGISel::BitTestBlock &B)
   SDOperand CopyTo = DAG.getCopyToReg(getControlRoot(), SwitchReg, SwitchVal);
   B.Reg = SwitchReg;
 
-  SDOperand BrRange = DAG.getNode(ISD::BRCOND, MVT::Other, CopyTo, RangeCmp,
-                                  DAG.getBasicBlock(B.Default));
-
   // Set NextBlock to be the MBB immediately after the current one, if any.
   // This is used to avoid emitting unnecessary branches to the next block.
   MachineBasicBlock *NextBlock = 0;
@@ -1617,14 +1614,18 @@ void SelectionDAGLowering::visitBitTestHeader(SelectionDAGISel::BitTestBlock &B)
     NextBlock = BBI;
 
   MachineBasicBlock* MBB = B.Cases[0].ThisBB;
+
+  CurMBB->addSuccessor(B.Default);
+  CurMBB->addSuccessor(MBB);
+
+  SDOperand BrRange = DAG.getNode(ISD::BRCOND, MVT::Other, CopyTo, RangeCmp,
+                                  DAG.getBasicBlock(B.Default));
+  
   if (MBB == NextBlock)
     DAG.setRoot(BrRange);
   else
     DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, CopyTo,
                             DAG.getBasicBlock(MBB)));
-
-  CurMBB->addSuccessor(B.Default);
-  CurMBB->addSuccessor(MBB);
 
   return;
 }
@@ -1643,6 +1644,10 @@ void SelectionDAGLowering::visitBitTestCase(MachineBasicBlock* NextMBB,
   SDOperand AndCmp = DAG.getSetCC(TLI.getSetCCResultType(AndOp), AndOp,
                                   DAG.getConstant(0, TLI.getPointerTy()),
                                   ISD::SETNE);
+
+  CurMBB->addSuccessor(B.TargetBB);
+  CurMBB->addSuccessor(NextMBB);
+  
   SDOperand BrAnd = DAG.getNode(ISD::BRCOND, MVT::Other, getControlRoot(),
                                 AndCmp, DAG.getBasicBlock(B.TargetBB));
 
@@ -1658,9 +1663,6 @@ void SelectionDAGLowering::visitBitTestCase(MachineBasicBlock* NextMBB,
   else
     DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, BrAnd,
                             DAG.getBasicBlock(NextMBB)));
-
-  CurMBB->addSuccessor(B.TargetBB);
-  CurMBB->addSuccessor(NextMBB);
 
   return;
 }
@@ -1683,13 +1685,13 @@ void SelectionDAGLowering::visitInvoke(InvokeInst &I) {
       CopyValueToVirtualRegister(&I, VMI->second);
   }
 
-  // Drop into normal successor.
-  DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getControlRoot(),
-                          DAG.getBasicBlock(Return)));
-
   // Update successor info
   CurMBB->addSuccessor(Return);
   CurMBB->addSuccessor(LandingPad);
+
+  // Drop into normal successor.
+  DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getControlRoot(),
+                          DAG.getBasicBlock(Return)));
 }
 
 void SelectionDAGLowering::visitUnwind(UnwindInst &I) {
@@ -2178,11 +2180,11 @@ void SelectionDAGLowering::visitSwitch(SwitchInst &SI) {
     // Update machine-CFG edges.
 
     // If this is not a fall-through branch, emit the branch.
+    CurMBB->addSuccessor(Default);
     if (Default != NextBlock)
       DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getControlRoot(),
                               DAG.getBasicBlock(Default)));
-
-    CurMBB->addSuccessor(Default);
+    
     return;
   }
   
