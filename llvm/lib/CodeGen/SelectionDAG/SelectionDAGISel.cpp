@@ -918,7 +918,7 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
 
   if (PartVT.isInteger() &&
       ValueVT.isInteger()) {
-    if (ValueVT.getSizeInBits() < PartVT.getSizeInBits()) {
+    if (ValueVT.bitsLT(PartVT)) {
       // For a truncate, see if we have any information to
       // indicate whether the truncated bits will always be
       // zero or sign-extension.
@@ -932,7 +932,7 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
   }
 
   if (PartVT.isFloatingPoint() && ValueVT.isFloatingPoint()) {
-    if (ValueVT < Val.getValueType())
+    if (ValueVT.bitsLT(Val.getValueType()))
       // FP_ROUND's are always exact here.
       return DAG.getNode(ISD::FP_ROUND, ValueVT, Val,
                          DAG.getIntPtrConstant(1));
@@ -1268,7 +1268,7 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
     // at least 32-bit. But this is not necessary for non-C calling conventions.
     if (VT.isInteger()) {
       MVT MinVT = TLI.getRegisterType(MVT::i32);
-      if (VT.getSizeInBits() < MinVT.getSizeInBits())
+      if (VT.bitsLT(MinVT))
         VT = MinVT;
     }
 
@@ -1655,7 +1655,7 @@ void SelectionDAGLowering::visitJumpTableHeader(SelectionDAGISel::JumpTable &JT,
   // register so it can be used as an index into the jump table in a 
   // subsequent basic block.  This value may be smaller or larger than the
   // target's pointer type, and therefore require extension or truncating.
-  if (VT.getSizeInBits() > TLI.getPointerTy().getSizeInBits())
+  if (VT.bitsGT(TLI.getPointerTy()))
     SwitchOp = DAG.getNode(ISD::TRUNCATE, TLI.getPointerTy(), SUB);
   else
     SwitchOp = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), SUB);
@@ -1705,7 +1705,7 @@ void SelectionDAGLowering::visitBitTestHeader(SelectionDAGISel::BitTestBlock &B)
                                     ISD::SETUGT);
 
   SDOperand ShiftOp;
-  if (VT.getSizeInBits() > TLI.getShiftAmountTy().getSizeInBits())
+  if (VT.bitsGT(TLI.getShiftAmountTy()))
     ShiftOp = DAG.getNode(ISD::TRUNCATE, TLI.getShiftAmountTy(), SUB);
   else
     ShiftOp = DAG.getNode(ISD::ZERO_EXTEND, TLI.getShiftAmountTy(), SUB);
@@ -2386,10 +2386,9 @@ void SelectionDAGLowering::visitShift(User &I, unsigned Opcode) {
   SDOperand Op1 = getValue(I.getOperand(0));
   SDOperand Op2 = getValue(I.getOperand(1));
   
-  if (TLI.getShiftAmountTy().getSizeInBits() <
-      Op2.getValueType().getSizeInBits())
+  if (TLI.getShiftAmountTy().bitsLT(Op2.getValueType()))
     Op2 = DAG.getNode(ISD::TRUNCATE, TLI.getShiftAmountTy(), Op2);
-  else if (TLI.getShiftAmountTy() > Op2.getValueType())
+  else if (TLI.getShiftAmountTy().bitsGT(Op2.getValueType()))
     Op2 = DAG.getNode(ISD::ANY_EXTEND, TLI.getShiftAmountTy(), Op2);
   
   setValue(&I, DAG.getNode(Opcode, Op1.getValueType(), Op1, Op2));
@@ -2611,7 +2610,7 @@ void SelectionDAGLowering::visitPtrToInt(User &I) {
   MVT SrcVT = N.getValueType();
   MVT DestVT = TLI.getValueType(I.getType());
   SDOperand Result;
-  if (DestVT.getSizeInBits() < SrcVT.getSizeInBits())
+  if (DestVT.bitsLT(SrcVT))
     Result = DAG.getNode(ISD::TRUNCATE, DestVT, N);
   else 
     // Note: ZERO_EXTEND can handle cases where the sizes are equal too
@@ -2625,7 +2624,7 @@ void SelectionDAGLowering::visitIntToPtr(User &I) {
   SDOperand N = getValue(I.getOperand(0));
   MVT SrcVT = N.getValueType();
   MVT DestVT = TLI.getValueType(I.getType());
-  if (DestVT.getSizeInBits() < SrcVT.getSizeInBits())
+  if (DestVT.bitsLT(SrcVT))
     setValue(&I, DAG.getNode(ISD::TRUNCATE, DestVT, N));
   else 
     // Note: ZERO_EXTEND can handle cases where the sizes are equal too
@@ -2777,9 +2776,9 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
 
       // If the index is smaller or larger than intptr_t, truncate or extend
       // it.
-      if (IdxN.getValueType() < N.getValueType()) {
+      if (IdxN.getValueType().bitsLT(N.getValueType())) {
         IdxN = DAG.getNode(ISD::SIGN_EXTEND, N.getValueType(), IdxN);
-      } else if (IdxN.getValueType() > N.getValueType())
+      } else if (IdxN.getValueType().bitsGT(N.getValueType()))
         IdxN = DAG.getNode(ISD::TRUNCATE, N.getValueType(), IdxN);
 
       // If this is a multiply by a power of two, turn it into a shl
@@ -2814,9 +2813,9 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
 
   SDOperand AllocSize = getValue(I.getArraySize());
   MVT IntPtr = TLI.getPointerTy();
-  if (IntPtr < AllocSize.getValueType())
+  if (IntPtr.bitsLT(AllocSize.getValueType()))
     AllocSize = DAG.getNode(ISD::TRUNCATE, IntPtr, AllocSize);
-  else if (IntPtr > AllocSize.getValueType())
+  else if (IntPtr.bitsGT(AllocSize.getValueType()))
     AllocSize = DAG.getNode(ISD::ZERO_EXTEND, IntPtr, AllocSize);
 
   AllocSize = DAG.getNode(ISD::MUL, IntPtr, AllocSize,
@@ -3325,7 +3324,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
    case Intrinsic::eh_dwarf_cfa: {
      MVT VT = getValue(I.getOperand(1)).getValueType();
      SDOperand CfaArg;
-     if (VT.getSizeInBits() > TLI.getPointerTy().getSizeInBits())
+     if (VT.bitsGT(TLI.getPointerTy()))
        CfaArg = DAG.getNode(ISD::TRUNCATE,
                             TLI.getPointerTy(), getValue(I.getOperand(1)));
      else
@@ -3827,8 +3826,7 @@ isAllocatableRegister(unsigned Reg, MachineFunction &MF,
         // If we have already found this register in a different register class,
         // choose the one with the largest VT specified.  For example, on
         // PowerPC, we favor f64 register classes over f32.
-        if (FoundVT == MVT::Other || 
-            FoundVT.getSizeInBits() < (*I).getSizeInBits()) {
+        if (FoundVT == MVT::Other || FoundVT.bitsLT(*I)) {
           ThisVT = *I;
           break;
         }
@@ -4478,9 +4476,9 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
 
   MVT IntPtr = TLI.getPointerTy();
 
-  if (IntPtr < Src.getValueType())
+  if (IntPtr.bitsLT(Src.getValueType()))
     Src = DAG.getNode(ISD::TRUNCATE, IntPtr, Src);
-  else if (IntPtr > Src.getValueType())
+  else if (IntPtr.bitsGT(Src.getValueType()))
     Src = DAG.getNode(ISD::ZERO_EXTEND, IntPtr, Src);
 
   // Scale the source by the type size.

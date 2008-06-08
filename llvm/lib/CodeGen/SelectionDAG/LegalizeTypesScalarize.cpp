@@ -126,7 +126,7 @@ SDOperand DAGTypeLegalizer::ScalarizeRes_INSERT_VECTOR_ELT(SDNode *N) {
   // so be sure to truncate it to the element type if necessary.
   SDOperand Op = N->getOperand(1);
   MVT EltVT = N->getValueType(0).getVectorElementType();
-  if (Op.getValueType().getSizeInBits() > EltVT.getSizeInBits())
+  if (Op.getValueType().bitsGT(EltVT))
     Op = DAG.getNode(ISD::TRUNCATE, EltVT, Op);
   assert(Op.getValueType() == EltVT && "Invalid type for inserted value!");
   return Op;

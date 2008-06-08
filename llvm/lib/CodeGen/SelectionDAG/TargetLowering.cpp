@@ -384,7 +384,7 @@ unsigned TargetLowering::getVectorTypeBreakdown(MVT VT,
 
   MVT DestVT = getTypeToTransformTo(NewVT);
   RegisterVT = DestVT;
-  if (DestVT < NewVT) {
+  if (DestVT.bitsLT(NewVT)) {
     // Value is expanded, e.g. i64 -> i16.
     return NumVectorRegs*(NewVT.getSizeInBits()/DestVT.getSizeInBits());
   } else {

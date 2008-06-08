@@ -2218,7 +2218,7 @@ static SDOperand LowerI8Math(SDOperand Op, SelectionDAG &DAG, unsigned Opc)
     N0 = (N0.getOpcode() != ISD::Constant
           ? DAG.getNode(ISD::ZERO_EXTEND, MVT::i16, N0)
           : DAG.getConstant(cast<ConstantSDNode>(N0)->getValue(), MVT::i16));
-    N1Opc = (N1.getValueType() < MVT::i16 ? ISD::ZERO_EXTEND : ISD::TRUNCATE);
+    N1Opc = N1.getValueType().bitsLT(MVT::i16) ? ISD::ZERO_EXTEND : ISD::TRUNCATE;
     N1 = (N1.getOpcode() != ISD::Constant
           ? DAG.getNode(N1Opc, MVT::i16, N1)
           : DAG.getConstant(cast<ConstantSDNode>(N1)->getValue(), MVT::i16));
@@ -2236,7 +2236,7 @@ static SDOperand LowerI8Math(SDOperand Op, SelectionDAG &DAG, unsigned Opc)
     N0 = (N0.getOpcode() != ISD::Constant
           ? DAG.getNode(ISD::ZERO_EXTEND, MVT::i16, N0)
           : DAG.getConstant(cast<ConstantSDNode>(N0)->getValue(), MVT::i16));
-    N1Opc = (N1.getValueType() < MVT::i16 ? ISD::ZERO_EXTEND : ISD::TRUNCATE);
+    N1Opc = N1.getValueType().bitsLT(MVT::i16) ? ISD::ZERO_EXTEND : ISD::TRUNCATE;
     N1 = (N1.getOpcode() != ISD::Constant
           ? DAG.getNode(N1Opc, MVT::i16, N1)
           : DAG.getConstant(cast<ConstantSDNode>(N1)->getValue(), MVT::i16));
@@ -2249,7 +2249,7 @@ static SDOperand LowerI8Math(SDOperand Op, SelectionDAG &DAG, unsigned Opc)
     N0 = (N0.getOpcode() != ISD::Constant
           ? DAG.getNode(ISD::SIGN_EXTEND, MVT::i16, N0)
           : DAG.getConstant(cast<ConstantSDNode>(N0)->getValue(), MVT::i16));
-    N1Opc = (N1.getValueType() < MVT::i16 ? ISD::SIGN_EXTEND : ISD::TRUNCATE);
+    N1Opc = N1.getValueType().bitsLT(MVT::i16) ? ISD::SIGN_EXTEND : ISD::TRUNCATE;
     N1 = (N1.getOpcode() != ISD::Constant
           ? DAG.getNode(N1Opc, MVT::i16, N1)
           : DAG.getConstant(cast<ConstantSDNode>(N1)->getValue(), MVT::i16));
@@ -2262,7 +2262,7 @@ static SDOperand LowerI8Math(SDOperand Op, SelectionDAG &DAG, unsigned Opc)
     N0 = (N0.getOpcode() != ISD::Constant
           ? DAG.getNode(ISD::SIGN_EXTEND, MVT::i16, N0)
           : DAG.getConstant(cast<ConstantSDNode>(N0)->getValue(), MVT::i16));
-    N1Opc = (N1.getValueType() < MVT::i16 ? ISD::SIGN_EXTEND : ISD::TRUNCATE);
+    N1Opc = N1.getValueType().bitsLT(MVT::i16) ? ISD::SIGN_EXTEND : ISD::TRUNCATE;
     N1 = (N1.getOpcode() != ISD::Constant
           ? DAG.getNode(N1Opc, MVT::i16, N1)
           : DAG.getConstant(cast<ConstantSDNode>(N1)->getValue(), MVT::i16));

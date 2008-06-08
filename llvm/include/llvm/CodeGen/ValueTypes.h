@@ -132,15 +132,9 @@ namespace llvm {
 
     MVT() {}
     MVT(SimpleValueType S) { V = S; }
+
     inline bool operator== (const MVT VT) const { return V == VT.V; }
     inline bool operator!= (const MVT VT) const { return V != VT.V; }
-
-    /// FIXME: The following comparison methods are bogus - they are only here
-    /// to ease the transition to a struct type.
-    inline bool operator<  (const MVT VT) const { return V <  VT.V; }
-    inline bool operator<= (const MVT VT) const { return V <= VT.V; }
-    inline bool operator>  (const MVT VT) const { return V >  VT.V; }
-    inline bool operator>= (const MVT VT) const { return V >= VT.V; }
 
     /// getIntegerVT - Returns the MVT that represents an integer with the given
     /// number of bits.
@@ -265,6 +259,27 @@ namespace llvm {
       return (V==v16i8 || V==v8i16 || V==v4i32 || V==v2i64 ||
               V==v4f32 || V==v2f64 ||
               (isExtended() && isVector() && getSizeInBits()==128));
+    }
+
+
+    /// bitsGT - Return true if this has more bits than VT.
+    inline bool bitsGT(MVT VT) const {
+      return getSizeInBits() > VT.getSizeInBits();
+    }
+
+    /// bitsGE - Return true if this has no less bits than VT.
+    inline bool bitsGE(MVT VT) const {
+      return getSizeInBits() >= VT.getSizeInBits();
+    }
+
+    /// bitsLT - Return true if this has less bits than VT.
+    inline bool bitsLT(MVT VT) const {
+      return getSizeInBits() < VT.getSizeInBits();
+    }
+
+    /// bitsLE - Return true if this has no more bits than VT.
+    inline bool bitsLE(MVT VT) const {
+      return getSizeInBits() <= VT.getSizeInBits();
     }
 
 
@@ -413,6 +428,14 @@ namespace llvm {
 
     /// getRawBits - Represent the type as a bunch of bits.
     uint32_t getRawBits() const { return V; }
+
+    /// compareRawBits - A meaningless but well-behaved order, useful for
+    /// constructing containers.
+    struct compareRawBits {
+      bool operator()(MVT L, MVT R) const {
+        return L.getRawBits() < R.getRawBits();
+      }
+    };
   };
 
 } // End llvm namespace

@@ -789,7 +789,7 @@ PerformInsertVectorEltInMemory(SDOperand Vec, SDOperand Val, SDOperand Idx) {
                               SPFI);
 
   // Truncate or zero extend offset to target pointer type.
-  unsigned CastOpc = (IdxVT > PtrVT) ? ISD::TRUNCATE : ISD::ZERO_EXTEND;
+  unsigned CastOpc = IdxVT.bitsGT(PtrVT) ? ISD::TRUNCATE : ISD::ZERO_EXTEND;
   Tmp3 = DAG.getNode(CastOpc, PtrVT, Tmp3);
   // Add the offset to the index.
   unsigned EltSize = EltVT.getSizeInBits()/8;
@@ -4063,7 +4063,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   MVT NVT = TLI.getTypeToTransformTo(VT);
   assert(getTypeAction(VT) == Promote &&
          "Caller should expand or legalize operands that are not promotable!");
-  assert(NVT > VT && NVT.isInteger() == VT.isInteger() &&
+  assert(NVT.bitsGT(VT) && NVT.isInteger() == VT.isInteger() &&
          "Cannot promote to smaller type!");
 
   SDOperand Tmp1, Tmp2, Tmp3;
@@ -4110,9 +4110,9 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Legal:
       Result = LegalizeOp(Node->getOperand(0));
-      assert(Result.getValueType() >= NVT &&
+      assert(Result.getValueType().bitsGE(NVT) &&
              "This truncation doesn't make sense!");
-      if (Result.getValueType() > NVT)    // Truncate to NVT instead of VT
+      if (Result.getValueType().bitsGT(NVT))    // Truncate to NVT instead of VT
         Result = DAG.getNode(ISD::TRUNCATE, NVT, Result);
       break;
     case Promote:
@@ -4574,7 +4574,7 @@ SDOperand SelectionDAGLegalize::ExpandEXTRACT_VECTOR_ELT(SDOperand Op) {
     Idx = DAG.getNode(ISD::MUL, Idx.getValueType(), Idx,
                       DAG.getConstant(EltSize, Idx.getValueType()));
 
-    if (Idx.getValueType().getSizeInBits() > TLI.getPointerTy().getSizeInBits())
+    if (Idx.getValueType().bitsGT(TLI.getPointerTy()))
       Idx = DAG.getNode(ISD::TRUNCATE, TLI.getPointerTy(), Idx);
     else
       Idx = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), Idx);
@@ -5352,7 +5352,7 @@ ExpandIntToFP(bool isSigned, MVT DestTy, SDOperand Source) {
     if (DestTy == MVT::f32)
       FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx,
                                PseudoSourceValue::getConstantPool(), 0);
-    else if (DestTy.getSizeInBits() > MVT(MVT::f32).getSizeInBits())
+    else if (DestTy.bitsGT(MVT::f32))
       // FIXME: Avoid the extend by construction the right constantpool?
       FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, DestTy, DAG.getEntryNode(),
                                   CPIdx,
@@ -5493,12 +5493,10 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     if (DestVT == MVT::f64) {
       // do nothing
       Result = Sub;
-    } else if (DestVT.getSizeInBits() <
-               MVT(MVT::f64).getSizeInBits()) {
+    } else if (DestVT.bitsLT(MVT::f64)) {
       Result = DAG.getNode(ISD::FP_ROUND, DestVT, Sub,
                            DAG.getIntPtrConstant(0));
-    } else if (DestVT.getSizeInBits() >
-               MVT(MVT::f64).getSizeInBits()) {
+    } else if (DestVT.bitsGT(MVT::f64)) {
       Result = DAG.getNode(ISD::FP_EXTEND, DestVT, Sub);
     }
     return Result;
@@ -5785,7 +5783,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   MVT NVT = TLI.getTypeToTransformTo(VT);
   SDNode *Node = Op.Val;
   assert(getTypeAction(VT) == Expand && "Not an expanded type!");
-  assert(((NVT.isInteger() && NVT < VT) || VT.isFloatingPoint() ||
+  assert(((NVT.isInteger() && NVT.bitsLT(VT)) || VT.isFloatingPoint() ||
          VT.isVector()) && "Cannot expand to FP value or to larger int value!");
 
   // See if we already expanded it.

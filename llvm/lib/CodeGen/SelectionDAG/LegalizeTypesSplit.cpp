@@ -483,7 +483,7 @@ SDOperand DAGTypeLegalizer::SplitOp_EXTRACT_VECTOR_ELT(SDNode *N) {
   Idx = DAG.getNode(ISD::MUL, Idx.getValueType(), Idx,
                     DAG.getConstant(EltSize, Idx.getValueType()));
 
-  if (Idx.getValueType().getSizeInBits() > TLI.getPointerTy().getSizeInBits())
+  if (Idx.getValueType().bitsGT(TLI.getPointerTy()))
     Idx = DAG.getNode(ISD::TRUNCATE, TLI.getPointerTy(), Idx);
   else
     Idx = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), Idx);

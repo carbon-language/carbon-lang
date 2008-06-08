@@ -112,7 +112,7 @@ namespace {
   {
     MVT vt = CN->getValueType(0);
     Imm = (short) CN->getValue();
-    if (vt >= MVT::i1 && vt <= MVT::i16) {
+    if (vt.getSimpleVT() >= MVT::i1 && vt.getSimpleVT() <= MVT::i16) {
       return true;
     } else if (vt == MVT::i32) {
       int32_t i_val = (int32_t) CN->getValue();

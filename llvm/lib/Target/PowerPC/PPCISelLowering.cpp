@@ -1173,7 +1173,7 @@ SDOperand PPCTargetLowering::LowerSETCC(SDOperand Op, SelectionDAG &DAG) {
     if (C->isNullValue() && CC == ISD::SETEQ) {
       MVT VT = Op.getOperand(0).getValueType();
       SDOperand Zext = Op.getOperand(0);
-      if (VT < MVT::i32) {
+      if (VT.bitsLT(MVT::i32)) {
         VT = MVT::i32;
         Zext = DAG.getNode(ISD::ZERO_EXTEND, VT, Op.getOperand(0));
       } 

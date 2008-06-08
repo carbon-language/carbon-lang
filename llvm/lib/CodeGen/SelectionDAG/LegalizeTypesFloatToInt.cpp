@@ -252,12 +252,10 @@ SDOperand DAGTypeLegalizer::FloatToIntRes_XINT_TO_FP(SDNode *N) {
     if (DestVT == MVT::f64) {
       // do nothing
       Result = Sub;
-    } else if (DestVT.getSizeInBits() <
-               MVT(MVT::f64).getSizeInBits()) {
+    } else if (DestVT.bitsLT(MVT::f64)) {
       Result = DAG.getNode(ISD::FP_ROUND, DestVT, Sub,
                            DAG.getIntPtrConstant(0));
-    } else if (DestVT.getSizeInBits() >
-               MVT(MVT::f64).getSizeInBits()) {
+    } else if (DestVT.bitsGT(MVT::f64)) {
       Result = DAG.getNode(ISD::FP_EXTEND, DestVT, Sub);
     }
     return BitConvertToInteger(Result);

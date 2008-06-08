@@ -339,10 +339,10 @@ static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
   // This is an fp<->int conversion?
   if (SrcVT.isInteger() != DstVT.isInteger())
     return false;
-  
+
   // If this is an extension, it will be a zero or sign extension, which
   // isn't a noop.
-  if (SrcVT < DstVT) return false;
+  if (SrcVT.bitsLT(DstVT)) return false;
   
   // If these values will be promoted, find out what they will be promoted
   // to.  This helps us consider truncates on PPC as noop copies when they

@@ -4410,7 +4410,7 @@ SDOperand X86TargetLowering::LowerShift(SDOperand Op, SelectionDAG &DAG) {
 
 SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   MVT SrcVT = Op.getOperand(0).getValueType();
-  assert(SrcVT <= MVT::i64 && SrcVT >= MVT::i16 &&
+  assert(SrcVT.getSimpleVT() <= MVT::i64 && SrcVT.getSimpleVT() >= MVT::i16 &&
          "Unknown SINT_TO_FP to lower!");
   
   // These are really Legal; caller falls through into that case.
@@ -4470,7 +4470,8 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
 
 std::pair<SDOperand,SDOperand> X86TargetLowering::
 FP_TO_SINTHelper(SDOperand Op, SelectionDAG &DAG) {
-  assert(Op.getValueType() <= MVT::i64 && Op.getValueType() >= MVT::i16 &&
+  assert(Op.getValueType().getSimpleVT() <= MVT::i64 &&
+         Op.getValueType().getSimpleVT() >= MVT::i16 &&
          "Unknown FP_TO_SINT to lower!");
 
   // These are really Legal.
@@ -4607,12 +4608,12 @@ SDOperand X86TargetLowering::LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
   MVT SrcVT = Op1.getValueType();
 
   // If second operand is smaller, extend it first.
-  if (SrcVT.getSizeInBits() < VT.getSizeInBits()) {
+  if (SrcVT.bitsLT(VT)) {
     Op1 = DAG.getNode(ISD::FP_EXTEND, VT, Op1);
     SrcVT = VT;
   }
   // And if it is bigger, shrink it first.
-  if (SrcVT.getSizeInBits() > VT.getSizeInBits()) {
+  if (SrcVT.bitsGT(VT)) {
     Op1 = DAG.getNode(ISD::FP_ROUND, VT, Op1, DAG.getIntPtrConstant(1));
     SrcVT = VT;
   }
@@ -4639,7 +4640,7 @@ SDOperand X86TargetLowering::LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
   SDOperand SignBit = DAG.getNode(X86ISD::FAND, SrcVT, Op1, Mask1);
 
   // Shift sign bit right or left if the two operands have different types.
-  if (SrcVT.getSizeInBits() > VT.getSizeInBits()) {
+  if (SrcVT.bitsGT(VT)) {
     // Op0 is MVT::f32, Op1 is MVT::f64.
     SignBit = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v2f64, SignBit);
     SignBit = DAG.getNode(X86ISD::FSRL, MVT::v2f64, SignBit,
@@ -4909,7 +4910,7 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG,
         break;
     }
 
-    if (AVT > MVT::i8) {
+    if (AVT.bitsGT(MVT::i8)) {
       unsigned UBytes = AVT.getSizeInBits() / 8;
       Count = DAG.getIntPtrConstant(SizeVal / UBytes);
       BytesLeft = SizeVal % UBytes;

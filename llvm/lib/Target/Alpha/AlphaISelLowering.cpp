@@ -356,7 +356,7 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   std::vector<MVT> RetVals;
   MVT RetTyVT = getValueType(RetTy);
   MVT ActualRetTyVT = RetTyVT;
-  if (RetTyVT >= MVT::i1 && RetTyVT <= MVT::i32)
+  if (RetTyVT.getSimpleVT() >= MVT::i1 && RetTyVT.getSimpleVT() <= MVT::i32)
     ActualRetTyVT = MVT::i64;
 
   if (RetTyVT != MVT::isVoid)

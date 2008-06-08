@@ -406,9 +406,9 @@ public:
            "This operation isn't promoted!");
 
     // See if this has an explicit type specified.
-    std::map<std::pair<unsigned, MVT>,
-             MVT>::const_iterator PTTI =
-      PromoteToType.find(std::make_pair(Op, VT));
+    std::map<std::pair<unsigned, MVT::SimpleValueType>,
+             MVT::SimpleValueType>::const_iterator PTTI =
+      PromoteToType.find(std::make_pair(Op, VT.getSimpleVT()));
     if (PTTI != PromoteToType.end()) return PTTI->second;
 
     assert((VT.isInteger() || VT.isFloatingPoint()) &&
@@ -898,7 +898,8 @@ protected:
   /// one that works.  If that default is insufficient, this method can be used
   /// by the target to override the default.
   void AddPromotedToType(unsigned Opc, MVT OrigVT, MVT DestVT) {
-    PromoteToType[std::make_pair(Opc, OrigVT)] = DestVT;
+    PromoteToType[std::make_pair(Opc, OrigVT.getSimpleVT())] =
+      DestVT.getSimpleVT();
   }
 
   /// addLegalFPImmediate - Indicate that this target can instruction select
@@ -1427,7 +1428,8 @@ private:
   ///
   /// Targets add entries to this map with AddPromotedToType(..), clients access
   /// this with getTypeToPromoteTo(..).
-  std::map<std::pair<unsigned, MVT>, MVT> PromoteToType;
+  std::map<std::pair<unsigned, MVT::SimpleValueType>, MVT::SimpleValueType>
+    PromoteToType;
 
   /// LibcallRoutineNames - Stores the name each libcall.
   ///

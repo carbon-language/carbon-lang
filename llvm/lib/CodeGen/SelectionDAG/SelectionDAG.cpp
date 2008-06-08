@@ -1983,7 +1983,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT, SDOperand Operand) {
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&
            "Invalid SIGN_EXTEND!");
     if (Operand.getValueType() == VT) return Operand;   // noop extension
-    assert(Operand.getValueType().getSizeInBits() < VT.getSizeInBits()
+    assert(Operand.getValueType().bitsLT(VT)
            && "Invalid sext node, dst < src!");
     if (OpOpcode == ISD::SIGN_EXTEND || OpOpcode == ISD::ZERO_EXTEND)
       return getNode(OpOpcode, VT, Operand.Val->getOperand(0));
@@ -1992,7 +1992,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT, SDOperand Operand) {
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&
            "Invalid ZERO_EXTEND!");
     if (Operand.getValueType() == VT) return Operand;   // noop extension
-    assert(Operand.getValueType().getSizeInBits() < VT.getSizeInBits()
+    assert(Operand.getValueType().bitsLT(VT)
            && "Invalid zext node, dst < src!");
     if (OpOpcode == ISD::ZERO_EXTEND)   // (zext (zext x)) -> (zext x)
       return getNode(ISD::ZERO_EXTEND, VT, Operand.Val->getOperand(0));
@@ -2001,7 +2001,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT, SDOperand Operand) {
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&
            "Invalid ANY_EXTEND!");
     if (Operand.getValueType() == VT) return Operand;   // noop extension
-    assert(Operand.getValueType().getSizeInBits() < VT.getSizeInBits()
+    assert(Operand.getValueType().bitsLT(VT)
            && "Invalid anyext node, dst < src!");
     if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND)
       // (ext (zext x)) -> (zext x)  and  (ext (sext x)) -> (sext x)
@@ -2011,18 +2011,16 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT, SDOperand Operand) {
     assert(VT.isInteger() && Operand.getValueType().isInteger() &&
            "Invalid TRUNCATE!");
     if (Operand.getValueType() == VT) return Operand;   // noop truncate
-    assert(Operand.getValueType().getSizeInBits() > VT.getSizeInBits()
+    assert(Operand.getValueType().bitsGT(VT)
            && "Invalid truncate node, src < dst!");
     if (OpOpcode == ISD::TRUNCATE)
       return getNode(ISD::TRUNCATE, VT, Operand.Val->getOperand(0));
     else if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND ||
              OpOpcode == ISD::ANY_EXTEND) {
       // If the source is smaller than the dest, we still need an extend.
-      if (Operand.Val->getOperand(0).getValueType().getSizeInBits()
-          < VT.getSizeInBits())
+      if (Operand.Val->getOperand(0).getValueType().bitsLT(VT))
         return getNode(OpOpcode, VT, Operand.Val->getOperand(0));
-      else if (Operand.Val->getOperand(0).getValueType().getSizeInBits()
-               > VT.getSizeInBits())
+      else if (Operand.Val->getOperand(0).getValueType().bitsGT(VT))
         return getNode(ISD::TRUNCATE, VT, Operand.Val->getOperand(0));
       else
         return Operand.Val->getOperand(0);
@@ -2156,15 +2154,14 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
     assert(VT == N1.getValueType() && "Not an inreg round!");
     assert(VT.isFloatingPoint() && EVT.isFloatingPoint() &&
            "Cannot FP_ROUND_INREG integer types");
-    assert(EVT.getSizeInBits() <= VT.getSizeInBits() &&
-           "Not rounding down!");
+    assert(EVT.bitsLE(VT) && "Not rounding down!");
     if (cast<VTSDNode>(N2)->getVT() == VT) return N1;  // Not actually rounding.
     break;
   }
   case ISD::FP_ROUND:
     assert(VT.isFloatingPoint() &&
            N1.getValueType().isFloatingPoint() &&
-           VT.getSizeInBits() <= N1.getValueType().getSizeInBits() &&
+           VT.bitsLE(N1.getValueType()) &&
            isa<ConstantSDNode>(N2) && "Invalid FP_ROUND!");
     if (N1.getValueType() == VT) return N1;  // noop conversion.
     break;
@@ -2174,8 +2171,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
     assert(VT == N1.getValueType() && "Not an inreg extend!");
     assert(VT.isInteger() && EVT.isInteger() &&
            "Cannot *_EXTEND_INREG FP types");
-    assert(EVT.getSizeInBits() <= VT.getSizeInBits() &&
-           "Not extending!");
+    assert(EVT.bitsLE(VT) && "Not extending!");
     if (VT == EVT) return N1; // noop assertion.
     break;
   }
@@ -2184,8 +2180,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
     assert(VT == N1.getValueType() && "Not an inreg extend!");
     assert(VT.isInteger() && EVT.isInteger() &&
            "Cannot *_EXTEND_INREG FP types");
-    assert(EVT.getSizeInBits() <= VT.getSizeInBits() &&
-           "Not extending!");
+    assert(EVT.bitsLE(VT) && "Not extending!");
     if (EVT == VT) return N1;  // Not actually extending
 
     if (N1C) {
@@ -2652,7 +2647,7 @@ bool MeetsMaxMemopRequirement(std::vector<MVT> &MemOps,
       LVT = (MVT::SimpleValueType)(LVT.getSimpleVT() - 1);
     assert(LVT.isInteger());
 
-    if (VT > LVT)
+    if (VT.bitsGT(LVT))
       VT = LVT;
   }
 
@@ -2959,7 +2954,7 @@ SDOperand SelectionDAG::getMemset(SDOperand Chain, SDOperand Dst,
   Entry.Node = Dst; Entry.Ty = IntPtrTy;
   Args.push_back(Entry);
   // Extend or truncate the argument to be an i32 value for the call.
-  if (Src.getValueType() > MVT::i32)
+  if (Src.getValueType().bitsGT(MVT::i32))
     Src = getNode(ISD::TRUNCATE, MVT::i32, Src);
   else
     Src = getNode(ISD::ZERO_EXTEND, MVT::i32, Src);
@@ -3045,7 +3040,7 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
     if (VT.isVector())
       assert(EVT == VT.getVectorElementType() && "Invalid vector extload!");
     else
-      assert(EVT.getSizeInBits() < VT.getSizeInBits() &&
+      assert(EVT.bitsLT(VT) &&
              "Should only be an extending load, not truncating!");
     assert((ExtType == ISD::EXTLOAD || VT.isInteger()) &&
            "Cannot sign/zero extend a FP/Vector load!");
@@ -3154,8 +3149,7 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
   if (VT == SVT)
     return getStore(Chain, Val, Ptr, SV, SVOffset, isVolatile, Alignment);
 
-  assert(VT.getSizeInBits() > SVT.getSizeInBits() &&
-         "Not a truncation?");
+  assert(VT.bitsGT(SVT) && "Not a truncation?");
   assert(VT.isInteger() == SVT.isInteger() &&
          "Can't do FP-INT conversion!");
 
@@ -4228,7 +4222,7 @@ void SDNode::Profile(FoldingSetNodeID &ID) {
 ///
 const MVT *SDNode::getValueTypeList(MVT VT) {
   if (VT.isExtended()) {
-    static std::set<MVT> EVTs;
+    static std::set<MVT, MVT::compareRawBits> EVTs;
     return &(*EVTs.insert(VT).first);
   } else {
     static MVT VTs[MVT::LAST_VALUETYPE];

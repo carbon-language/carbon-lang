@@ -1786,7 +1786,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
         EVT = MVT::Other;
     
       LoadedVT = LN0->getMemoryVT();
-      if (EVT != MVT::Other && LoadedVT > EVT &&
+      if (EVT != MVT::Other && LoadedVT.bitsGT(EVT) &&
           (!AfterLegalize || TLI.isLoadXLegal(ISD::ZEXTLOAD, EVT))) {
         MVT PtrType = N0.getOperand(1).getValueType();
         // For big endian targets, we need to add an offset to the pointer to
@@ -2393,7 +2393,7 @@ SDOperand DAGCombiner::visitSRA(SDNode *N) {
     case 16: EVT = MVT::i16;   break;
     case 32: EVT = MVT::i32;   break;
     }
-    if (EVT > MVT::Other && TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG, EVT))
+    if (EVT != MVT::Other && TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG, EVT))
       return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0.getOperand(0),
                          DAG.getValueType(EVT));
   }
@@ -2609,7 +2609,7 @@ SDOperand DAGCombiner::visitSELECT(SDNode *N) {
     if (VT == VT0)
       return XORNode;
     AddToWorkList(XORNode.Val);
-    if (VT.getSizeInBits() > VT0.getSizeInBits())
+    if (VT.bitsGT(VT0))
       return DAG.getNode(ISD::ZERO_EXTEND, VT, XORNode);
     return DAG.getNode(ISD::TRUNCATE, VT, XORNode);
   }
@@ -2816,9 +2816,9 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     // fold (sext (truncate x)) -> (sextinreg x).
     if (!AfterLegalize || TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG,
                                                N0.getValueType())) {
-      if (Op.getValueType() < VT)
+      if (Op.getValueType().bitsLT(VT))
         Op = DAG.getNode(ISD::ANY_EXTEND, VT, Op);
-      else if (Op.getValueType() > VT)
+      else if (Op.getValueType().bitsGT(VT))
         Op = DAG.getNode(ISD::TRUNCATE, VT, Op);
       return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, Op,
                          DAG.getValueType(N0.getValueType()));
@@ -2925,9 +2925,9 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   if (N0.getOpcode() == ISD::TRUNCATE &&
       (!AfterLegalize || TLI.isOperationLegal(ISD::AND, VT))) {
     SDOperand Op = N0.getOperand(0);
-    if (Op.getValueType() < VT) {
+    if (Op.getValueType().bitsLT(VT)) {
       Op = DAG.getNode(ISD::ANY_EXTEND, VT, Op);
-    } else if (Op.getValueType() > VT) {
+    } else if (Op.getValueType().bitsGT(VT)) {
       Op = DAG.getNode(ISD::TRUNCATE, VT, Op);
     }
     return DAG.getZeroExtendInReg(Op, N0.getValueType());
@@ -2938,9 +2938,9 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
       N0.getOperand(0).getOpcode() == ISD::TRUNCATE &&
       N0.getOperand(1).getOpcode() == ISD::Constant) {
     SDOperand X = N0.getOperand(0).getOperand(0);
-    if (X.getValueType() < VT) {
+    if (X.getValueType().bitsLT(VT)) {
       X = DAG.getNode(ISD::ANY_EXTEND, VT, X);
-    } else if (X.getValueType() > VT) {
+    } else if (X.getValueType().bitsGT(VT)) {
       X = DAG.getNode(ISD::TRUNCATE, VT, X);
     }
     APInt Mask = cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue();
@@ -3045,7 +3045,7 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
     SDOperand TruncOp = N0.getOperand(0);
     if (TruncOp.getValueType() == VT)
       return TruncOp; // x iff x size == zext size.
-    if (TruncOp.getValueType() > VT)
+    if (TruncOp.getValueType().bitsGT(VT))
       return DAG.getNode(ISD::TRUNCATE, VT, TruncOp);
     return DAG.getNode(ISD::ANY_EXTEND, VT, TruncOp);
   }
@@ -3055,9 +3055,9 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
       N0.getOperand(0).getOpcode() == ISD::TRUNCATE &&
       N0.getOperand(1).getOpcode() == ISD::Constant) {
     SDOperand X = N0.getOperand(0).getOperand(0);
-    if (X.getValueType() < VT) {
+    if (X.getValueType().bitsLT(VT)) {
       X = DAG.getNode(ISD::ANY_EXTEND, VT, X);
-    } else if (X.getValueType() > VT) {
+    } else if (X.getValueType().bitsGT(VT)) {
       X = DAG.getNode(ISD::TRUNCATE, VT, X);
     }
     APInt Mask = cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue();
@@ -3251,7 +3251,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   
   // fold (sext_in_reg (sext_in_reg x, VT2), VT1) -> (sext_in_reg x, minVT) pt2
   if (N0.getOpcode() == ISD::SIGN_EXTEND_INREG &&
-      EVT < cast<VTSDNode>(N0.getOperand(1))->getVT()) {
+      EVT.bitsLT(cast<VTSDNode>(N0.getOperand(1))->getVT())) {
     return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0.getOperand(0), N1);
   }
 
@@ -3333,10 +3333,10 @@ SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
   // fold (truncate (ext x)) -> (ext x) or (truncate x) or x
   if (N0.getOpcode() == ISD::ZERO_EXTEND || N0.getOpcode() == ISD::SIGN_EXTEND||
       N0.getOpcode() == ISD::ANY_EXTEND) {
-    if (N0.getOperand(0).getValueType() < VT)
+    if (N0.getOperand(0).getValueType().bitsLT(VT))
       // if the source is smaller than the dest, we still need an extend
       return DAG.getNode(N0.getOpcode(), VT, N0.getOperand(0));
-    else if (N0.getOperand(0).getValueType() > VT)
+    else if (N0.getOperand(0).getValueType().bitsGT(VT))
       // if the source is larger than the dest, than we just need the truncate
       return DAG.getNode(ISD::TRUNCATE, VT, N0.getOperand(0));
     else
@@ -3946,7 +3946,7 @@ SDOperand DAGCombiner::visitFP_EXTEND(SDNode *N) {
   if (N0.getOpcode() == ISD::FP_ROUND && N0.Val->getConstantOperandVal(1) == 1){
     SDOperand In = N0.getOperand(0);
     if (In.getValueType() == VT) return In;
-    if (VT < In.getValueType())
+    if (VT.bitsLT(In.getValueType()))
       return DAG.getNode(ISD::FP_ROUND, VT, In, N0.getOperand(1));
     return DAG.getNode(ISD::FP_EXTEND, VT, In);
   }
@@ -4700,9 +4700,7 @@ SDOperand DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     MVT LVT = EVT;
     if (InVec.getOpcode() == ISD::BIT_CONVERT) {
       MVT BCVT = InVec.getOperand(0).getValueType();
-      if (!BCVT.isVector()
-          || (EVT.getSizeInBits() >
-              BCVT.getVectorElementType().getSizeInBits()))
+      if (!BCVT.isVector() || EVT.bitsGT(BCVT.getVectorElementType()))
         return SDOperand();
       InVec = InVec.getOperand(0);
       EVT = BCVT.getVectorElementType();
@@ -5261,7 +5259,7 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
        (N1C->getAPIntValue() == 1 && N0 == N2))) {   // (a < 1) ? a : 0
     MVT XType = N0.getValueType();
     MVT AType = N2.getValueType();
-    if (XType >= AType) {
+    if (XType.bitsGE(AType)) {
       // and (sra X, size(X)-1, A) -> "and (srl X, C2), A" iff A is a
       // single-bit constant.
       if (N2C && ((N2C->getAPIntValue() & (N2C->getAPIntValue()-1)) == 0)) {
@@ -5270,7 +5268,7 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
         SDOperand ShCt = DAG.getConstant(ShCtV, TLI.getShiftAmountTy());
         SDOperand Shift = DAG.getNode(ISD::SRL, XType, N0, ShCt);
         AddToWorkList(Shift.Val);
-        if (XType > AType) {
+        if (XType.bitsGT(AType)) {
           Shift = DAG.getNode(ISD::TRUNCATE, AType, Shift);
           AddToWorkList(Shift.Val);
         }
@@ -5280,7 +5278,7 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
                                     DAG.getConstant(XType.getSizeInBits()-1,
                                                     TLI.getShiftAmountTy()));
       AddToWorkList(Shift.Val);
-      if (XType > AType) {
+      if (XType.bitsGT(AType)) {
         Shift = DAG.getNode(ISD::TRUNCATE, AType, Shift);
         AddToWorkList(Shift.Val);
       }
@@ -5304,7 +5302,7 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
     // cast from setcc result type to select result type
     if (AfterLegalize) {
       SCC  = DAG.getSetCC(TLI.getSetCCResultType(N0), N0, N1, CC);
-      if (N2.getValueType() < SCC.getValueType())
+      if (N2.getValueType().bitsLT(SCC.getValueType()))
         Temp = DAG.getZeroExtendInReg(SCC, N2.getValueType());
       else
         Temp = DAG.getNode(ISD::ZERO_EXTEND, N2.getValueType(), SCC);

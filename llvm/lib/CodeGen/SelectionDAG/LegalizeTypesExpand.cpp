@@ -150,7 +150,7 @@ void DAGTypeLegalizer::ExpandResult_ANY_EXTEND(SDNode *N,
                                                SDOperand &Lo, SDOperand &Hi) {
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   SDOperand Op = N->getOperand(0);
-  if (Op.getValueType().getSizeInBits() <= NVT.getSizeInBits()) {
+  if (Op.getValueType().bitsLE(NVT)) {
     // The low part is any extension of the input (which degenerates to a copy).
     Lo = DAG.getNode(ISD::ANY_EXTEND, NVT, Op);
     Hi = DAG.getNode(ISD::UNDEF, NVT);   // The high part is undefined.
@@ -171,7 +171,7 @@ void DAGTypeLegalizer::ExpandResult_ZERO_EXTEND(SDNode *N,
                                                 SDOperand &Lo, SDOperand &Hi) {
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   SDOperand Op = N->getOperand(0);
-  if (Op.getValueType().getSizeInBits() <= NVT.getSizeInBits()) {
+  if (Op.getValueType().bitsLE(NVT)) {
     // The low part is zero extension of the input (which degenerates to a copy).
     Lo = DAG.getNode(ISD::ZERO_EXTEND, NVT, N->getOperand(0));
     Hi = DAG.getConstant(0, NVT);   // The high part is just a zero.
@@ -195,7 +195,7 @@ void DAGTypeLegalizer::ExpandResult_SIGN_EXTEND(SDNode *N,
                                                 SDOperand &Lo, SDOperand &Hi) {
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   SDOperand Op = N->getOperand(0);
-  if (Op.getValueType().getSizeInBits() <= NVT.getSizeInBits()) {
+  if (Op.getValueType().bitsLE(NVT)) {
     // The low part is sign extension of the input (which degenerates to a copy).
     Lo = DAG.getNode(ISD::SIGN_EXTEND, NVT, N->getOperand(0));
     // The high part is obtained by SRA'ing all but one of the bits of low part.
@@ -301,7 +301,7 @@ ExpandResult_SIGN_EXTEND_INREG(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
   GetExpandedOp(N->getOperand(0), Lo, Hi);
   MVT EVT = cast<VTSDNode>(N->getOperand(1))->getVT();
 
-  if (EVT.getSizeInBits() <= Lo.getValueType().getSizeInBits()) {
+  if (EVT.bitsLE(Lo.getValueType())) {
     // sext_inreg the low part if needed.
     Lo = DAG.getNode(ISD::SIGN_EXTEND_INREG, Lo.getValueType(), Lo,
                      N->getOperand(1));
@@ -411,7 +411,7 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
     // Handle endianness of the load.
     if (TLI.isBigEndian())
       std::swap(Lo, Hi);
-  } else if (N->getMemoryVT().getSizeInBits() <= NVT.getSizeInBits()) {
+  } else if (N->getMemoryVT().bitsLE(NVT)) {
     MVT EVT = N->getMemoryVT();
 
     Lo = DAG.getExtLoad(ExtType, NVT, Ch, Ptr, N->getSrcValue(), SVOffset, EVT,
@@ -834,7 +834,7 @@ void DAGTypeLegalizer::ExpandResult_EXTRACT_VECTOR_ELT(SDNode *N,
   SDOperand Idx = N->getOperand(1);
 
   // Make sure the type of Idx is big enough to hold the new values.
-  if (Idx.getValueType().getSizeInBits() < TLI.getPointerTy().getSizeInBits())
+  if (Idx.getValueType().bitsLT(TLI.getPointerTy()))
     Idx = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), Idx);
 
   Idx = DAG.getNode(ISD::ADD, Idx.getValueType(), Idx, Idx);
@@ -1179,7 +1179,7 @@ SDOperand DAGTypeLegalizer::ExpandOperand_UINT_TO_FP(SDOperand Source,
   SDOperand FudgeInReg;
   if (DestTy == MVT::f32)
     FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx, NULL, 0);
-  else if (DestTy.getSizeInBits() > MVT(MVT::f32).getSizeInBits())
+  else if (DestTy.bitsGT(MVT::f32))
     // FIXME: Avoid the extend by construction the right constantpool?
     FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, DestTy, DAG.getEntryNode(),
                                 CPIdx, NULL, 0, MVT::f32);
@@ -1371,7 +1371,7 @@ SDOperand DAGTypeLegalizer::ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo) {
     Hi = DAG.getStore(Ch, Hi, Ptr, N->getSrcValue(), SVOffset+IncrementSize,
                       isVolatile, MinAlign(Alignment, IncrementSize));
     return DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
-  } else if (N->getMemoryVT().getSizeInBits() <= NVT.getSizeInBits()) {
+  } else if (N->getMemoryVT().bitsLE(NVT)) {
     GetExpandedOp(N->getValue(), Lo, Hi);
     return DAG.getTruncStore(Ch, Lo, Ptr, N->getSrcValue(), SVOffset,
                              N->getMemoryVT(), isVolatile, Alignment);
