@@ -306,17 +306,20 @@ faster:</p>
     area of passing and returning structures by value.  llvm-gcc compiled code
     now interoperates very well on X86-64 systems with other compilers.</li>
 
+<li>Support for Win64 was added. This includes codegeneration itself, JIT
+    support and necessary changes to llvm-gcc.</li>
+
 <li>The LLVM X86 backend now supports the support SSE 4.1 instruction set, and
     the llvm-gcc 4.2 front-end supports the SSE 4.1 compiler builtins.  Various
     generic vector operations (insert/extract/shuffle) are much more efficient
     when SSE 4.1 is enabled.  The JIT automatically takes advantage of these
     instructions, but llvm-gcc must be explicitly told to use them, e.g. with
     <tt>-march=penryn</tt>.</li>
-       
+
 <li>The X86 backend now does a number of optimizations that aim to avoid
     converting numbers back and forth from SSE registers to the X87 floating
     point stack.</li>
-    
+
 <li>The X86 backend supports stack realignment, which is particularly useful for
     vector code on OS's without 16-byte aligned stacks.</li>
 
@@ -326,7 +329,7 @@ faster:</p>
 
 <li>Trampolines (taking the address of a nested function) now work on
     Linux/x86-64.</li>
-    
+
 <li><tt>__builtin_prefetch</tt> is now compiled into the appropriate prefetch
     instructions instead of being ignored.</li>
 
@@ -450,11 +453,17 @@ href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
 <div class="doc_text">
 
 <ul>
-<li>The X86 backend does not yet support all <a 
-    href="http://llvm.org/PR879">inline assembly that uses the X86 floating
-    point stack</a>.  It supports the 'f' and 't' constraints, but not 'u'.</li>
-<li>The X86 backend generates inefficient floating point code when configured to
+  <li>The X86 backend does not yet support
+    all <a href="http://llvm.org/PR879">inline assembly that uses the X86
+    floating point stack</a>.  It supports the 'f' and 't' constraints, but not
+    'u'.</li>
+  <li>The X86 backend generates inefficient floating point code when configured to
     generate code for systems that don't have SSE2.</li>
+  <li>Win64 codegeneration wasn't widely tested. Everything should work, but we
+    expect small issues to happen. Also, llvm-gcc cannot build mingw64 runtime
+    currently due
+    to <a href="http://llvm.org/PR2255">several</a>
+    <a href="http://llvm.org/PR2257">bugs</a> in FP stackifier
 </ul>
 
 </div>
