@@ -101,9 +101,14 @@ It includes a large number of features and refinements from LLVM 2.2.</p>
     standardize on <tt>FOOCLASS::Create</tt> for all IR classes in the future,
     but not all of them have been moved over yet.</li>
 <li>LLVM 2.3 renames the LLVMBuilder and LLVMFoldingBuilder classes to
-   IRBuilder.</li>
-<li>MRegisterInfo was renamed to TargetRegisterInfo.</li>
-<li>The MappedFile class is gone, please use MemoryBuffer instead.</li>
+    <a href="http://llvm.org/doxygen/classllvm_1_1IRBuilder.html">IRBuilder</a>.
+    </li>
+<li>MRegisterInfo was renamed to
+    <a href="http://llvm.org/doxygen/classllvm_1_1TargetRegisterInfo.html">
+    TargetRegisterInfo</a>.</li>
+<li>The MappedFile class is gone, please use
+    <a href="http://llvm.org/doxygen/classllvm_1_1MemoryBuffer.html">
+    MemoryBuffer</a> instead.</li>
 <li>The '<tt>-enable-eh</tt>' flag to llc has been removed.  Now code should 
     encode whether it is safe to omit unwind information for a function by
     tagging the Function object with the '<tt>nounwind</tt>' attribute.</li>
@@ -372,7 +377,8 @@ faster:</p>
     both pre-pass and post-pass scheduling, and to improve compiler-debugging
     output.</li>
 
-<li>The target-independent code generator infrastructure now uses LLVM's APInt
+<li>The target-independent code generator infrastructure now uses LLVM's
+    <a href="http://llvm.org/doxygen/classllvm_1_1APInt.html">APInt</a>
     class to handle integer values, which allows it to support integer types
     larger than 64 bits. Note that support for such types is also dependent on
     target-specific support. Use of APInt is also a step toward support for
