@@ -93,8 +93,9 @@ CodeGenFunction::GenerateStaticBlockVarDecl(const VarDecl &D,
   else
     assert(0 && "Unknown context for block var decl"); // FIXME Handle objc.
 
-  llvm::GlobalValue *GV = 
-    new llvm::GlobalVariable(LTy, false, llvm::GlobalValue::InternalLinkage,
+  llvm::GlobalValue *GV =
+    new llvm::GlobalVariable(Init->getType(), false,
+                             llvm::GlobalValue::InternalLinkage,
                              Init, ContextName + Separator + D.getName(),
                              &CGM.getModule(), 0, Ty.getAddressSpace());
 
@@ -115,7 +116,10 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
     CGM.AddAnnotation(Ann);
   }
 
-  DMEntry = GV;
+  const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(D.getType());
+  const llvm::Type *LPtrTy =
+    llvm::PointerType::get(LTy, D.getType().getAddressSpace());
+  DMEntry = llvm::ConstantExpr::getBitCast(GV, LPtrTy);
 
   // Emit global variable debug descriptor for static vars.
   CGDebugInfo *DI = CGM.getDebugInfo();
