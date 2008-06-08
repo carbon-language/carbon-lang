@@ -213,14 +213,14 @@ LLVM 2.3 optimizers support a few major enhancements:</p>
 This transformation hoists conditions from loop bodies and reduces loop's
 iteration space to improve performance. For example, <p>
 <pre>
-for (i = LB; i < UB; ++i)
-  if (i <= NV)
+for (i = LB; i &lt; UB; ++i)
+  if (i &lt;= NV)
     LOOP_BODY
 </pre>
 is transformed into
 <pre>
 NUB = min(NV+1, UB)
-for (i = LB; i < NUB; ++i)
+for (i = LB; i &lt; NUB; ++i)
   LOOP_BODY
 </pre>
 </li>
