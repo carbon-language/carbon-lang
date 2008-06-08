@@ -96,7 +96,7 @@ test suite no longer depends on llvm-upgrade, which makes it run faster.</p>
    IRBuilder.</li>
 <li>MRegisterInfo was renamed to TargetRegisterInfo.</li>
 <li>The MappedFile class is gone, please use MemoryBuffer instead.</li>
-<li>The '-enable-eh' flag to LLC has been removed.  Now code should encode
+<li>The '-enable-eh' flag to llc has been removed.  Now code should encode
     whether it is safe to not generate unwind information for a function by
     tagging the Function object with the 'nounwind' attribute.</li>
 
@@ -113,12 +113,12 @@ test suite no longer depends on llvm-upgrade, which makes it run faster.</p>
 <p>LLVM 2.3 includes several major new capabilities:</p>
 
 <ul>
-<li>Multiple Return Value Support</li>
+<li>Multiple Return Value Support.</li>
 
 
 <li><p>LLVM 2.3 includes a complete reimplementation of the "llvmc" tool.  It is
-designed to overcome several problems of the original llvmc and to provide a
-superset of the features as the 'gcc' driver.</p>
+designed to overcome several problems with the original llvmc and to provide a
+superset of the features of the 'gcc' driver.</p>
 
 <p>The main features of llvmc2 is:</p>
 
@@ -140,7 +140,7 @@ no runtime interpretation is needed.</li>
  C.</li>
 
 
-<li>kaleidoscope tutorial in ocaml.</li>
+<li>Kaleidoscope tutorial in Ocaml.</li>
 
 </ul>
 
@@ -154,7 +154,7 @@ no runtime interpretation is needed.</li>
 
 <div class="doc_text">
 
-<p>LLVM 2.3 fully supports llvm-gcc 4.2 front-end.</p>
+<p>LLVM 2.3 fully supports the llvm-gcc 4.2 front-end.</p>
 
 <p>llvm-gcc 4.2 includes numerous fixes to better support the Objective-C
 front-end.  Objective-C now works very well on Mac OS/X.</p>
@@ -225,10 +225,10 @@ for (i = LB; i < NUB; ++i)
 </pre>
 </li>
 
-<li>LLVM includes a new <tt>memcpy</tt> optimization pass which optimizes out
-dead <tt>memcpy</tt> calls, unneeded copies of aggregates, and handles the
+<li>LLVM includes a new <tt>memcpy</tt> optimization pass removes
+dead <tt>memcpy</tt> calls, unneeded copies of aggregates, and performs
 return slot optimization.  The LLVM optimizer now notices long sequences of
-consecutive stores and merges them into <tt>memcpy</tt>s where profitable.</li>
+consecutive stores and merges them into <tt>memcpy</tt>'s where profitable.</li>
 
 <li>Alignment detection for vector memory references and for <tt>memcpy</tt> and
 <tt>memset</tt> is now more aggressive.</li> 
@@ -245,13 +245,12 @@ deletion pass, which <em>is</em> safe for infinite loops.</li>
     functions for C-based languages, has been rewritten to be a FunctionPass
     instead a ModulePass.  This allows it to be run more often and to be
     included at -O1 in llvm-gcc.  It was also extended to include more
-    optimizations and several corner case bugs are fixed.</li>
+    optimizations and several corner case bugs were fixed.</li>
 
 <li>LLVM now includes a simple 'Jump Threading' pass, which attempts to simplify
-    the conditional branches with information about predecessor blocks.  This
-    simplifies the control flow graph.  This pass is pretty basic at this point,
-    but catches some important cases and provides a foundation to build off
-    of.</li>
+    conditional branches using information about predecessor blocks, simplifying
+    the control flow graph.  This pass is pretty basic at this point, but catches
+    some important cases and provides a foundation to build on.</li>
 </ul>
 
 </div>
@@ -328,12 +327,12 @@ faster:</p>
     registers.</li>
 
 <li>Trampolines (taking the address of a nested function) now work on
-    Linux/x86-64.</li>
+    Linux/X86-64.</li>
 
 <li><tt>__builtin_prefetch</tt> is now compiled into the appropriate prefetch
     instructions instead of being ignored.</li>
 
-<li>128-bit integers are now supported on x86-64 targets.</li>
+<li>128-bit integers are now supported on X86-64 targets.</li>
 
 <li>The register allocator can now rematerialize PIC-base computations.</li>
 
@@ -439,7 +438,7 @@ href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
 
 <ul>
 <li>The MSIL, IA64, Alpha, SPU, and MIPS backends are experimental.</li>
-<li>The LLC "<tt>-filetype=asm</tt>" (the default) is the only supported
+<li>The llc "<tt>-filetype=asm</tt>" (the default) is the only supported
     value for this option.</li>
 </ul>
 
@@ -573,7 +572,7 @@ programs.</li>
     inline assembly code</a>.</li>
 <li><a href="http://llvm.org/PR1658">The C backend violates the ABI of common
     C++ programs</a>, preventing intermixing between C++ compiled by the CBE and
-    C++ code compiled with LLC or native compilers.</li>
+    C++ code compiled with llc or native compilers.</li>
 <li>The C backend does not support all exception handling constructs.</li>
 </ul>
 
@@ -597,8 +596,8 @@ llvmdev mailing list if you are interested.</p>
 <p>The only major language feature of GCC not supported by llvm-gcc is
     the <tt>__builtin_apply</tt> family of builtins.   However, some extensions
     are only supported on some targets.  For example, trampolines are only
-    supported on some targets, which are used when you take the address of a
-    nested function.</p>
+    supported on some targets (these are used when you take the address of a
+    nested function).</p>
 
 <p>If you run into GCC extensions which are not supported, please let us know.
 </p>
@@ -618,8 +617,8 @@ itself, Qt, Mozilla, etc.</p>
 
 <ul>
 <li>Exception handling works well on the X86 and PowerPC targets, including
-x86-64 darwin.  This works when linking to a libstdc++ compiled by GCC.  It is
-supported on x86-64 linux, but that is disabled by default in this release.</li>
+X86-64 darwin.  This works when linking to a libstdc++ compiled by GCC.  It is
+supported on X86-64 linux, but that is disabled by default in this release.</li>
 </ul>
 
 </div>
@@ -634,15 +633,17 @@ supported on x86-64 linux, but that is disabled by default in this release.</li>
 The llvm-gcc 4.2 Ada compiler works fairly well, however this is not a mature
 technology and problems should be expected.
 <ul>
-<li>The Ada front-end currently only builds on x86-32.  This is mainly due
+<li>The Ada front-end currently only builds on X86-32.  This is mainly due
 to lack of trampoline support (pointers to nested functions) on other platforms,
-however it <a href="http://llvm.org/PR2006">also fails to build on x86-64</a>
+however it <a href="http://llvm.org/PR2006">also fails to build on X86-64</a>
 which does support trampolines.</li>
 <li>The Ada front-end <a href="http://llvm.org/PR2007">fails to bootstrap</a>.
 Workaround: configure with --disable-bootstrap.</li>
 <li>The c380004 and <a href="http://llvm.org/PR2010">c393010</a> ACATS tests
-fail (c380004 also fails with gcc-4.2 mainline).</li>
-<li>Many gcc specific Ada tests continue to crash the compiler.</li>
+fail (c380004 also fails with gcc-4.2 mainline).  When built at -O3, the
+<a href="http://llvm.org/PR2421">cxg2021</a> ACATS test also fails.</li>
+<li>Some gcc specific Ada tests continue to crash the compiler.  The testsuite
+reports most tests as having failed even though they pass.</li>
 <li>The -E binder option (exception backtraces)
 <a href="http://llvm.org/PR1982">does not work</a> and will result in programs
 crashing if an exception is raised.  Workaround: do not use -E.</li>
