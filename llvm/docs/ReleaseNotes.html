@@ -606,6 +606,11 @@ href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
     currently due
     to <a href="http://llvm.org/PR2255">several</a>
     <a href="http://llvm.org/PR2257">bugs</a> in FP stackifier
+  <li>The X86-64 backend does not yet support position-independent code (PIC)
+      generation on Linux targets.</li>
+  <li>The X86-64 backend does not yet support the LLVM IR instruction
+      <tt>va_arg</tt>. Currently, the llvm-gcc front-end supports variadic
+      argument constructs on X86-64 by lowering them manually.</li>
 </ul>
 
 </div>
