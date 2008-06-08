@@ -363,9 +363,6 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   }
 
   computeRegisterProperties();
-
-  // Preferred loop alignment is 16.
-  setPrefLoopAlignment(16);
 }
 
 /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
