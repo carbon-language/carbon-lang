@@ -320,7 +320,7 @@ for (i = LB; i &lt; NUB; ++i)
 </pre>
 </li>
 
-<li>LLVM includes a new <tt>memcpy</tt> optimization pass removes
+<li>LLVM includes a new <tt>memcpy</tt> optimization pass which removes
 dead <tt>memcpy</tt> calls, unneeded copies of aggregates, and performs
 return slot optimization.  The LLVM optimizer now notices long sequences of
 consecutive stores and merges them into <tt>memcpy</tt>'s where profitable.</li>
