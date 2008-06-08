@@ -400,16 +400,17 @@ faster:</p>
 <li>The target-independent code generator infrastructure now uses LLVM's
     <a href="http://llvm.org/doxygen/classllvm_1_1APInt.html">APInt</a>
     class to handle integer values, which allows it to support integer types
-    larger than 64 bits. Note that support for such types is also dependent on
-    target-specific support. Use of APInt is also a step toward support for
-    non-power-of-2 integer sizes.</li>
+    larger than 64 bits (for example i128). Note that support for such types is
+    also dependent on target-specific support.  Use of APInt is also a step
+    toward support for non-power-of-2 integer sizes.</li>
     
 <li>LLVM 2.3 includes several compile time speedups for code with large basic
     blocks, particularly in the instruction selection phase, register
     allocation, scheduling, and tail merging/jump threading.</li>
 
-<li>Several improvements which make llc's <tt>--view-sunit-dags</tt>
-    visualization of scheduling dependency graphs easier to understand.</li>
+<li>LLVM 2.3 includes several improvements which make llc's
+    <tt>--view-sunit-dags</tt> visualization of scheduling dependency graphs
+    easier to understand.</li>
     
 <li>The code generator allows targets to write patterns that generate subreg
     references directly in .td files now.</li>
@@ -447,7 +448,7 @@ faster:</p>
     now interoperates very well on X86-64 systems with other compilers.</li>
 
 <li>Support for Win64 was added. This includes code generation itself, JIT
-    support and necessary changes to llvm-gcc.</li>
+    support, and necessary changes to llvm-gcc.</li>
 
 <li>The LLVM X86 backend now supports the support SSE 4.1 instruction set, and
     the llvm-gcc 4.2 front-end supports the SSE 4.1 compiler builtins.  Various
@@ -458,10 +459,13 @@ faster:</p>
 
 <li>The X86 backend now does a number of optimizations that aim to avoid
     converting numbers back and forth from SSE registers to the X87 floating
-    point stack.</li>
+    point stack.  This is important because most X86 ABIs require return values
+    to be on the X87 Floating Point stack, but most CPUs prefer computation in
+    the SSE units.</li>
 
 <li>The X86 backend supports stack realignment, which is particularly useful for
-    vector code on OS's without 16-byte aligned stacks.</li>
+    vector code on OS's without 16-byte aligned stacks, such as Linux and
+    Windows.</li>
 
 <li>The X86 backend now supports the "sseregparm" options in GCC, which allow
     functions to be tagged as passing floating point values in SSE
@@ -473,9 +477,11 @@ faster:</p>
 <li><tt>__builtin_prefetch</tt> is now compiled into the appropriate prefetch
     instructions instead of being ignored.</li>
 
-<li>128-bit integers are now supported on X86-64 targets.</li>
+<li>128-bit integers are now supported on X86-64 targets.  This can be used
+    through <tt>__attribute__((TImode))</tt> in llvm-gcc.</li>
 
-<li>The register allocator can now rematerialize PIC-base computations.</li>
+<li>The register allocator can now rematerialize PIC-base computations, which is
+    an important optimization for register use.</li>
 
 <li>The "t" and "f" inline assembly constraints for the X87 floating point stack
     now work.  However, the "u" constraint is still not fully supported.</li>
@@ -495,6 +501,8 @@ faster:</p>
 
 <ul>
 <li>The LLVM C backend now supports vector code.</li>
+<li>The Cell SPU backend includes a number of improvements. It generates better
+    code and its stability/completeness is improving.</li>
 </ul>
   
 </div>
