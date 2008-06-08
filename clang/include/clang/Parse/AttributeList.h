@@ -43,6 +43,7 @@ public:
   
   enum Kind {              // Please keep this list alphabetized.
     AT_address_space,
+    AT_alias,
     AT_aligned,
     AT_annotate,
     AT_deprecated,

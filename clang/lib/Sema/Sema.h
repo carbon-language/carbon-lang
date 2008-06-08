@@ -319,6 +319,7 @@ private:
   void HandleExtVectorTypeAttribute(TypedefDecl *d, AttributeList *rawAttr);
   
   void HandleAlignedAttribute(Decl *d, AttributeList *rawAttr);
+  void HandleAliasAttribute(Decl *d, AttributeList *rawAttr);
   void HandlePackedAttribute(Decl *d, AttributeList *rawAttr);
   void HandleAnnotateAttribute(Decl *d, AttributeList *rawAttr);
   void HandleNoReturnAttribute(Decl *d, AttributeList *rawAttr);

@@ -23,6 +23,7 @@ namespace clang {
 class Attr {
 public:
   enum Kind {
+    Alias,
     Aligned,
     Packed,
     Annotate,
@@ -106,7 +107,20 @@ public:
   }
   static bool classof(const AnnotateAttr *A) { return true; }
 };
-  
+
+class AliasAttr : public Attr {
+  std::string Aliasee;
+public:
+  AliasAttr(const std::string &aliasee) : Attr(Alias), Aliasee(aliasee) {}
+
+  const std::string& getAliasee() const { return Aliasee; }
+
+  // Implement isa/cast/dyncast/etc.
+
+  static bool classof(const Attr *A) { return A->getKind() == Alias; }
+  static bool classof(const AliasAttr *A) { return true; }
+};
+
 class NoReturnAttr : public Attr {
 public:
   NoReturnAttr() : Attr(NoReturn) {}

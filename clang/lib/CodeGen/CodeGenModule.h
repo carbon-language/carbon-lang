@@ -154,6 +154,9 @@ private:
   void SetFunctionAttributes(const FunctionDecl *FD,
                              llvm::Function *F,
                              const llvm::FunctionType *FTy);
+
+  void SetGlobalValueAttributes(const FunctionDecl *FD,
+                                llvm::GlobalValue *GV);
   
 };
 }  // end namespace CodeGen

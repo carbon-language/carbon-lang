@@ -188,6 +188,24 @@ bool hasAggregateLLVMType(QualType T) {
          !T->isVoidType() && !T->isVectorType() && !T->isFunctionType();
 }
 
+void CodeGenModule::SetGlobalValueAttributes(const FunctionDecl *FD,
+                                             llvm::GlobalValue *GV) {
+  // TODO: Set up linkage and many other things.  Note, this is a simple 
+  // approximation of what we really want.
+  if (FD->getStorageClass() == FunctionDecl::Static)
+    GV->setLinkage(llvm::Function::InternalLinkage);
+  else if (FD->getAttr<DLLImportAttr>())
+    GV->setLinkage(llvm::Function::DLLImportLinkage);
+  else if (FD->getAttr<DLLExportAttr>())
+    GV->setLinkage(llvm::Function::DLLExportLinkage);
+  else if (FD->getAttr<WeakAttr>() || FD->isInline())
+    GV->setLinkage(llvm::Function::WeakLinkage);
+
+  if (const VisibilityAttr *attr = FD->getAttr<VisibilityAttr>())
+    CodeGenModule::setVisibility(GV, attr->getVisibility());
+  // FIXME: else handle -fvisibility
+}
+
 void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
                                           llvm::Function *F,
                                           const llvm::FunctionType *FTy) {
@@ -230,20 +248,7 @@ void CodeGenModule::SetFunctionAttributes(const FunctionDecl *FD,
   if (FD->getAttr<FastCallAttr>())
     F->setCallingConv(llvm::CallingConv::Fast);
 
-  // TODO: Set up linkage and many other things.  Note, this is a simple 
-  // approximation of what we really want.
-  if (FD->getStorageClass() == FunctionDecl::Static)
-    F->setLinkage(llvm::Function::InternalLinkage);
-  else if (FD->getAttr<DLLImportAttr>())
-    F->setLinkage(llvm::Function::DLLImportLinkage);
-  else if (FD->getAttr<DLLExportAttr>())
-    F->setLinkage(llvm::Function::DLLExportLinkage);
-  else if (FD->getAttr<WeakAttr>() || FD->isInline())
-    F->setLinkage(llvm::Function::WeakLinkage);
-
-  if (const VisibilityAttr *attr = FD->getAttr<VisibilityAttr>())
-    CodeGenModule::setVisibility(F, attr->getVisibility());
-  // FIXME: else handle -fvisibility
+  SetGlobalValueAttributes(FD, F);
 }
 
 
@@ -263,8 +268,20 @@ llvm::Constant *CodeGenModule::GetAddrOfFunctionDecl(const FunctionDecl *D,
   // If it doesn't already exist, just create and return an entry.
   if (F == 0) {
     // FIXME: param attributes for sext/zext etc.
-    F = llvm::Function::Create(FTy, llvm::Function::ExternalLinkage,
-                               D->getName(), &getModule());
+    if (D->getBody() || !D->getAttr<AliasAttr>())
+      F = llvm::Function::Create(FTy, llvm::Function::ExternalLinkage,
+                                 D->getName(), &getModule());
+    else {
+      const std::string& aliaseeName = D->getAttr<AliasAttr>()->getAliasee();
+      llvm::Function *aliasee = getModule().getFunction(aliaseeName);
+      llvm::GlobalValue *alias = new llvm::GlobalAlias(aliasee->getType(),
+                                                       llvm::Function::ExternalLinkage,
+                                                       D->getName(),
+                                                       aliasee,
+                                                       &getModule());
+      SetGlobalValueAttributes(D, alias);
+      return Entry = alias;
+    }
 
     SetFunctionAttributes(D, F, FTy);
     return Entry = F;
@@ -494,8 +511,11 @@ void CodeGenModule::EmitObjCClassImplementation(
 
 void CodeGenModule::EmitFunction(const FunctionDecl *FD) {
   // If this is not a prototype, emit the body.
-  if (!FD->isThisDeclarationADefinition())
+  if (!FD->isThisDeclarationADefinition()) {
+    if (FD->getAttr<AliasAttr>())
+      GetAddrOfFunctionDecl(FD, true);
     return;
+  }
   
   // If the function is a static, defer code generation until later so we can
   // easily omit unused statics.
@@ -534,6 +554,8 @@ void CodeGenModule::EmitStatics() {
       if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
         if (FD->getBody())
           CodeGenFunction(*this).GenerateCode(FD);
+        else if (FD->getAttr<AliasAttr>())
+          GetAddrOfFunctionDecl(FD, true);
       } else {
         EmitGlobalVarInit(cast<VarDecl>(D));
       }

@@ -24,3 +24,7 @@ int t6 __attribute__((visibility("protected")));
 // RUN: clang -emit-llvm < %s | grep 't7.*nounwind'
 void t7() __attribute__((noreturn, nothrow));
 void t7() {}
+
+// RUN: clang -emit-llvm < %s | grep 't9.*alias.*weak.*t8'
+void __t8() {}
+void t9() __attribute__((weak, alias("__t8")));

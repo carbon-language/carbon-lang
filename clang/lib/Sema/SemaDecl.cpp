@@ -2250,6 +2250,9 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *Attr) {
     }
     // FIXME: Diagnostic?
     break;
+  case AttributeList::AT_alias:
+    HandleAliasAttribute(New, Attr);
+    break;
   case AttributeList::AT_deprecated:
     HandleDeprecatedAttribute(New, Attr);
     break;
@@ -2436,6 +2439,32 @@ void Sema::HandlePackedAttribute(Decl *d, AttributeList *rawAttr) {
   } else
     Diag(rawAttr->getLoc(), diag::warn_attribute_ignored,
          rawAttr->getName()->getName());
+}
+
+void Sema::HandleAliasAttribute(Decl *d, AttributeList *rawAttr) {
+  // check the attribute arguments.
+  if (rawAttr->getNumArgs() != 1) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("1"));
+    return;
+  }
+
+  Expr *Arg = static_cast<Expr*>(rawAttr->getArg(0));
+  Arg = Arg->IgnoreParenCasts();
+  StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
+
+  if (Str == 0 || Str->isWide()) {
+    Diag(rawAttr->getLoc(), diag::err_attribute_argument_n_not_string,
+         "alias", std::string("1"));
+    return;
+  }
+
+  const char *Alias = Str->getStrData();
+  unsigned AliasLen = Str->getByteLength();
+
+  // FIXME: check if target symbol exists in current file
+
+  d->addAttr(new AliasAttr(std::string(Alias, AliasLen)));
 }
 
 void Sema::HandleNoReturnAttribute(Decl *d, AttributeList *rawAttr) {
