@@ -128,7 +128,7 @@ dispatching them to different tools.</li>
 <li>Flexible (and extensible) rules for defining different tools.</li>
 <li>The different intermediate steps performed by tools are represented
 as edges in the abstract graph.</li>
-<li>The 'language' for driver behaviour definition is tablegen and thus
+<li>The 'language' for driver behavior definition is tablegen and thus
 it's relatively easy to add new features.</li>
 <li>The definition of driver is transformed into set of C++ classes, thus
 no runtime interpretation is needed.</li>
@@ -228,7 +228,7 @@ for (i = LB; i < NUB; ++i)
 <li>LLVM includes a new <tt>memcpy</tt> optimization pass which optimizes out
 dead <tt>memcpy</tt> calls, unneeded copies of aggregates, and handles the
 return slot optimization.  The LLVM optimizer now notices long sequences of
-consequtive stores and merges them into <tt>memcpy</tt>s where profitable.</li>
+consecutive stores and merges them into <tt>memcpy</tt>s where profitable.</li>
 
 <li>Alignment detection for vector memory references and for <tt>memcpy</tt> and
 <tt>memset</tt> is now more aggressive.</li> 
@@ -247,7 +247,7 @@ deletion pass, which <em>is</em> safe for infinite loops.</li>
     included at -O1 in llvm-gcc.  It was also extended to include more
     optimizations and several corner case bugs are fixed.</li>
 
-<li>LLVM now includes a simple 'Jump Threading' pass, which attemps to simplify
+<li>LLVM now includes a simple 'Jump Threading' pass, which attempts to simplify
     the conditional branches with information about predecessor blocks.  This
     simplifies the control flow graph.  This pass is pretty basic at this point,
     but catches some important cases and provides a foundation to build off
@@ -306,7 +306,7 @@ faster:</p>
     area of passing and returning structures by value.  llvm-gcc compiled code
     now interoperates very well on X86-64 systems with other compilers.</li>
 
-<li>Support for Win64 was added. This includes codegeneration itself, JIT
+<li>Support for Win64 was added. This includes code generation itself, JIT
     support and necessary changes to llvm-gcc.</li>
 
 <li>The LLVM X86 backend now supports the support SSE 4.1 instruction set, and
@@ -459,7 +459,7 @@ href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
     'u'.</li>
   <li>The X86 backend generates inefficient floating point code when configured to
     generate code for systems that don't have SSE2.</li>
-  <li>Win64 codegeneration wasn't widely tested. Everything should work, but we
+  <li>Win64 code generation wasn't widely tested. Everything should work, but we
     expect small issues to happen. Also, llvm-gcc cannot build mingw64 runtime
     currently due
     to <a href="http://llvm.org/PR2255">several</a>
@@ -554,7 +554,7 @@ compilers.</li>
 output with code built with other compilers, particularly for floating-point
 programs.</li>
 
-<li>Defining vararg functions is not supported (but calling them is ok).</li>
+<li>Defining vararg functions is not supported (but calling them is OK).</li>
 
 <li>The Itanium backend has bitrotted somewhat.</li>
 </ul>
