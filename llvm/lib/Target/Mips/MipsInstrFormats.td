@@ -10,7 +10,7 @@
 //===----------------------------------------------------------------------===//
 //  Describe MIPS instructions format
 //
-//  All the possible Mips fields are:
+//  CPU INSTRUCTION FORMATS
 //
 //  opcode  - operation code.
 //  rs      - src reg.
@@ -102,3 +102,60 @@ class FJ<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
   let Inst{25-0} = addr;
 }
 
+//===----------------------------------------------------------------------===//
+//
+//  FLOAT POINT INSTRUCTION FORMATS
+//
+//  opcode  - operation code.
+//  fs      - src reg.
+//  ft      - dst reg (on a 2 regs instr) or src reg (on a 3 reg instr).
+//  fd      - dst reg, only used on 3 regs instr.
+//  fmt     - double or single precision.
+//  funct   - combined with opcode field give us an operation code.
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// Format FR instruction class in Mips : <|opcode|fmt|ft|fs|fd|funct|>
+//===----------------------------------------------------------------------===//
+
+class FFR<bits<6> op, bits<6> _funct, bits<5> _fmt, dag outs, dag ins, 
+          string asmstr, list<dag> pattern, InstrItinClass itin> : 
+          MipsInst<outs, ins, asmstr, pattern, itin> 
+{
+  bits<5>  fd;
+  bits<5>  fs;
+  bits<5>  ft;
+  bits<5>  fmt;
+  bits<6>  funct;
+
+  let opcode = op;
+  let funct  = _funct;
+  let fmt    = _fmt;
+
+  let Inst{25-21} = fmt;
+  let Inst{20-16} = ft; 
+  let Inst{15-11} = fs;
+  let Inst{10-6}  = fd;
+  let Inst{5-0}   = funct;
+}
+
+//===----------------------------------------------------------------------===//
+// Format FI instruction class in Mips : <|opcode|fmt|ft|immediate|>
+//===----------------------------------------------------------------------===//
+
+class FFI<bits<6> op, bits<5> _fmt, dag outs, dag ins, string asmstr, 
+          list<dag> pattern, InstrItinClass itin>: 
+          MipsInst<outs, ins, asmstr, pattern, itin> 
+{
+  bits<5>  ft;
+  bits<5>  fmt;
+  bits<16> imm16;
+
+  let opcode = op;
+  let fmt    = _fmt;
+
+  let Inst{25-21} = fmt;
+  let Inst{20-16} = ft; 
+  let Inst{15-0}  = imm16;
+}
