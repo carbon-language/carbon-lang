@@ -46,8 +46,8 @@ CGDebugInfo::CGDebugInfo(CodeGenModule *m)
 , GlobalVariableAnchor(NULL)
 , RegionStack()
 , VariableDescList()
-, GlobalVarDescList(NULL)
-, EnumDescList(NULL)
+, GlobalVarDescList()
+, EnumDescList()
 , Subprogram(NULL)
 {
   SR = new llvm::DISerializer();
