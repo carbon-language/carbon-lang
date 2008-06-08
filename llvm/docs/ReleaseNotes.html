@@ -613,7 +613,8 @@ href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
     expect small issues to happen. Also, llvm-gcc cannot build mingw64 runtime
     currently due
     to <a href="http://llvm.org/PR2255">several</a>
-    <a href="http://llvm.org/PR2257">bugs</a> in FP stackifier
+    <a href="http://llvm.org/PR2257">bugs</a> due to lack of support for the
+    'u' inline assembly constraint and X87 floating point inline assembly.</li>
   <li>The X86-64 backend does not yet support position-independent code (PIC)
       generation on Linux targets.</li>
   <li>The X86-64 backend does not yet support the LLVM IR instruction
@@ -694,25 +695,9 @@ appropriate nops inserted to ensure restartability.</li>
 <div class="doc_text">
 
 <ul>
-
-<li>C++ programs are likely to fail on IA64, as calls to <tt>setjmp</tt> are
-made where the argument is not 16-byte aligned, as required on IA64. (Strictly
-speaking this is not a bug in the IA64 back-end; it will also be encountered
-when building C++ programs using the C back-end.)</li>
-
-<li>The C++ front-end does not use <a href="http://llvm.org/PR406">IA64
-ABI compliant layout of v-tables</a>.  In particular, it just stores function
-pointers instead of function descriptors in the vtable.  This bug prevents
-mixing C++ code compiled with LLVM with C++ objects compiled by other C++
-compilers.</li>
-
-<li>There are a few ABI violations which will lead to problems when mixing LLVM
-output with code built with other compilers, particularly for floating-point
-programs.</li>
-
-<li>Defining vararg functions is not supported (but calling them is OK).</li>
-
-<li>The Itanium backend has bitrotted somewhat.</li>
+<li>The Itanium backend is highly experimental, and has a number of known
+    issues.  We are looking for a maintainer for the Itanium backend.  If you
+    are interested, please contact the llvmdev mailing list.</li>
 </ul>
 
 </div>
@@ -740,9 +725,6 @@ programs.</li>
 <div class="doc_subsection">
   <a name="c-fe">Known problems with the llvm-gcc C front-end</a>
 </div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">Bugs</div>
 
 <div class="doc_text">
 
