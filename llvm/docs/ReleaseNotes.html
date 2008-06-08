@@ -13,6 +13,7 @@
  
 <ol>
   <li><a href="#intro">Introduction</a></li>
+  <li><a href="#changes">Major Changes and Sub-project Status</a></li>
   <li><a href="#whatsnew">What's New?</a></li>
   <li><a href="GettingStarted.html">Installation Instructions</a></li>
   <li><a href="#portability">Portability and Supported Platforms</a></li>
@@ -55,7 +56,7 @@ current one.  To see the release notes for a specific releases, please see the
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
-  <a name="whatsnew">What's New?</a>
+  <a name="changes">Major Changes and Sub-project Status</a>
 </div>
 <!-- *********************************************************************** -->
 
@@ -116,21 +117,78 @@ It includes a large number of features and refinements from LLVM 2.2.</p>
 </div>
 
 <div class="doc_text">
+<p>
+The core LLVM 2.3 distribution currently consists of code from the core LLVM
+repository (which roughly contains the LLVM optimizer, code generators and
+supporting tools) and the llvm-gcc repository.  In addition to this code, the
+LLVM Project includes other sub-projects that are in development.  The two which
+are the most actively developed are the new <a href="#vmkit">vmkit Project</a>
+and the <a href="#clang">Clang Project</a>. 
+</p>
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsubsection">
+<a name="vmkit">vmkit</a>
+</div>
+
+<div class="doc_text">
+<p>
+The "vmkit" project is a new addition to the LLVM family.  It is an
+implementation of a JVM and a CLI Virtual Machines (Microsoft .NET is an
+implementation of the CLI) using the Just-In-Time compiler of LLVM.</p>
+
+<p>The JVM, called JnJVM, executes real-world applications such as Apache
+projects (e.g. Felix and Tomcat) and the SpecJVM98 benchmark.  It uses the GNU
+Classpath project for the base classes.  The CLI implementation, called N3, is
+its in early stages but can execute simple applications and the "pnetmark"
+benchmark. It uses the pnetlib project as its core library.</p>
+
+<p>The 'vmkit' VMs compare in performance with industrial and top open-source
+VMs on scientific applications.  Besides the JIT, the VMs use many features of
+the LLVM framework, including the standard set of optimizations, atomic
+operations, custom function provider and memory manager for JITed methods, and
+specific virtual machine optimizations. vmkit is not an official part of LLVM
+2.3 release. It is publicly available under the LLVM license and can be
+downloaded from:
+</p>
 
 <p>
-<p>The <a href="http://clang.llvm.org/">clang project</a> is an effort to build
-a set of new 'llvm native' front-end technologies for the LLVM optimizer
-and code generator.  Currently, its C and Objective-C support is maturing 
-nicely, and it has advanced source-to-source analysis and transformation
-capabilities.  If you are interested in building source-level tools for C and
-Objective-C (and eventually C++), you should take a look.  However, note that
-clang is not an official part of the LLVM 2.3 release.  If you are interested in
-this project, please see its <a href="http://clang.llvm.org/">web site</a>.</p>
-
-
+<tt>svn co http://llvm.org/svn/llvm-project/vmkit/trunk vmkit</tt>
 </p>
 
 </div>
+
+<!--=========================================================================-->
+<div class="doc_subsubsection">
+<a name="clang">Clang</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <a href="http://clang.llvm.org/">Clang project</a> is an effort to build
+a set of new 'LLVM native' front-end technologies for the LLVM optimizer
+and code generator.  Clang is continuing to make major strides forward in all
+areas.  Its C and Objective-C parsing support is very solid, and the code
+generation support is far enough along to build many C applications.  While not
+yet production quality, it is progressing very nicely.  In addition, C++
+front-end work has started to make significant progress.</p>
+
+<p>At this point, Clang is most useful if you are interested in source-to-source
+transformations (such as refactoring) and other source-level tools for C and
+Objective-C.  Clang now also includes tools for turning C code into pretty HTML,
+and includes a new <a href="http://clang.llvm.org/StaticAnalysis.html">static
+analysis tool</a> in development.  This tool is automatically focused on finding
+bugs in C and Objective-C code.</p>
+
+</div>
+
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="whatsnew">What's New?</a>
+</div>
+<!-- *********************************************************************** -->
 
 <!--=========================================================================-->
 <div class="doc_subsection">
@@ -156,7 +214,6 @@ this project, please see its <a href="http://clang.llvm.org/">web site</a>.</p>
     the ability to return multiple registers from functions, and we use MRVs to
     accomplish this in a direct way.</p></li>
 
-
 <li><p>LLVM 2.3 includes a complete reimplementation of the "<tt>llvmc</tt>"
     tool.  It is designed to overcome several problems with the original 
     <tt>llvmc</tt> and to provide a superset of the features of the
@@ -175,7 +232,6 @@ this project, please see its <a href="http://clang.llvm.org/">web site</a>.</p>
     no runtime interpretation is needed.</li>
     </ul></p>
     </li>
-
 
 <li><p>LLVM 2.3 includes a completely rewritten interface for <a
     href="LinkTimeOptimization.html">Link Time Optimization</a>.  This interface
@@ -204,6 +260,8 @@ this project, please see its <a href="http://clang.llvm.org/">web site</a>.</p>
 
 <p>llvm-gcc 4.2 includes numerous fixes to better support the Objective-C
 front-end.  Objective-C now works very well on Mac OS/X.</p>
+
+<p>Fortran EQUIVALENCEs are now supported by the gfortran front-end.</p>
 
 <p>llvm-gcc 4.2 includes many other fixes which improve conformance with the
 relevant parts of the GCC testsuite.</p>
