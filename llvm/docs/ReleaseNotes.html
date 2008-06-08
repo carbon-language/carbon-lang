@@ -365,7 +365,12 @@ which allows us to implement more aggressive algorithms and make it run
 faster:</p>
 
 <ul>
-<li>MemOperand in the code generator: describe me!.</li>
+<li>The code generator now has support for carrying information about memory
+    references throughout the entire code generation process, via the
+    <a href="http://llvm.org/doxygen/classllvm_1_1MachineMemOperand.html">
+    MachineMemOperand</a> class. In the future this will be used to improve
+    both pre-pass and post-pass scheduling, and to improve compiler-debugging
+    output.</li>
 
 <li>The target-independent code generator infrastructure now uses LLVM's APInt
     class to handle integer values, which allows it to support integer types
