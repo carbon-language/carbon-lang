@@ -79,31 +79,57 @@ It includes a large number of features and refinements from LLVM 2.2.</p>
 
 <div class="doc_text">
 
-<p>LLVM 2.2 was the last LLVM release to support llvm-gcc 4.0 and llvm-upgrade.
-llvm-gcc 4.0 has been replaced with llvm-gcc 4.2.  llvm-upgrade was useful for
-upgrading LLVM 1.9 files to LLVM 2.x syntax, but you can always use a previous
-LLVM release to do this.  One nice impact of this is that the LLVM regression
-test suite no longer depends on llvm-upgrade, which makes it run faster.</p>
+<p>LLVM 2.3 no longer supports llvm-gcc 4.0, it has been replaced with
+   llvm-gcc 4.2.</p>
 
-<p><tt>llvm2cpp</tt> tool has been folded into llc, use
+<p>LLVM 2.3 no longer includes the <tt>llvm-upgrade</tt> tool.  It was useful
+   for upgrading LLVM 1.9 files to LLVM 2.x syntax, but you can always use a
+   previous LLVM release to do this.  One nice impact of this is that the LLVM
+   regression test suite no longer depends on llvm-upgrade, which makes it run
+   faster.</p>
+
+<p>The <tt>llvm2cpp</tt> tool has been folded into llc, use
     <tt>llc -march=cpp</tt> instead of <tt>llvm2cpp</tt>.</p>
 
 <p>LLVM API Changes:</p>
 
 <ul>
-<li>Several core LLVM IR classes have migrated to use 'FOOCLASS::Create(...)'
-    instead of 'new FOOCLASS(...)' (e.g. where FOOCLASS=BasicBlock).  We hope to
-    standardize on FOOCLASS::Create for all IR classes in the future, but not
-    all of them have been moved over yet.</li>
+<li>Several core LLVM IR classes have migrated to use the
+    '<tt>FOOCLASS::Create(...)</tt>' pattern instead of '<tt>new 
+    FOOCLASS(...)</tt>' (e.g. where FOOCLASS=<tt>BasicBlock</tt>).  We hope to
+    standardize on <tt>FOOCLASS::Create</tt> for all IR classes in the future,
+    but not all of them have been moved over yet.</li>
 <li>LLVM 2.3 renames the LLVMBuilder and LLVMFoldingBuilder classes to
    IRBuilder.</li>
 <li>MRegisterInfo was renamed to TargetRegisterInfo.</li>
 <li>The MappedFile class is gone, please use MemoryBuffer instead.</li>
-<li>The '-enable-eh' flag to llc has been removed.  Now code should encode
-    whether it is safe to not generate unwind information for a function by
-    tagging the Function object with the 'nounwind' attribute.</li>
+<li>The '<tt>-enable-eh</tt>' flag to llc has been removed.  Now code should 
+    encode whether it is safe to omit unwind information for a function by
+    tagging the Function object with the '<tt>nounwind</tt>' attribute.</li>
 
 </ul>
+</div>
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="otherprojects">Other LLVM Sub-Projects</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+<p>The <a href="http://clang.llvm.org/">clang project</a> is an effort to build
+a set of new 'llvm native' front-end technologies for the LLVM optimizer
+and code generator.  Currently, its C and Objective-C support is maturing 
+nicely, and it has advanced source-to-source analysis and transformation
+capabilities.  If you are interested in building source-level tools for C and
+Objective-C (and eventually C++), you should take a look.  However, note that
+clang is not an official part of the LLVM 2.3 release.  If you are interested in
+this project, please see its <a href="http://clang.llvm.org/">web site</a>.</p>
+
+
+</p>
+
 </div>
 
 <!--=========================================================================-->
@@ -116,34 +142,51 @@ test suite no longer depends on llvm-upgrade, which makes it run faster.</p>
 <p>LLVM 2.3 includes several major new capabilities:</p>
 
 <ul>
-<li>Multiple Return Value Support.</li>
+<li><p>The biggest change in LLVM 2.3 is Multiple Return Value (MRV) support.
+    MRVs allow LLVM IR to directly represent functions that return multiple
+    values without having to pass them "by reference" in the LLVM IR.  This
+    allows a front-end to generate more efficient code, as MRVs are generally
+    returned in registers if a target supports them.  See the <a
+    href="LangRef.html#i_getresult">LLVM IR Reference</a> for more details.</p>
+    
+ <p>MRVs are fully supported in the LLVM IR, but are not yet fully supported in
+    on all targets.  However, it is generally safe to return up to 2 values from
+    a function: most targets should be able to handle at least that.  MRV
+    support is a critical requirement for X86-64 ABI support, as X86-64 requires
+    the ability to return multiple registers from functions, and we use MRVs to
+    accomplish this in a direct way.</p></li>
 
 
-<li><p>LLVM 2.3 includes a complete reimplementation of the "llvmc" tool.  It is
-designed to overcome several problems with the original llvmc and to provide a
-superset of the features of the 'gcc' driver.</p>
+<li><p>LLVM 2.3 includes a complete reimplementation of the "<tt>llvmc</tt>"
+    tool.  It is designed to overcome several problems with the original 
+    <tt>llvmc</tt> and to provide a superset of the features of the
+    '<tt>gcc</tt>' driver.</p>
 
-<p>The main features of llvmc2 is:</p>
-
-<ul>
-<li>Extended handling of command line options and smart rules for
-dispatching them to different tools.</li>
-<li>Flexible (and extensible) rules for defining different tools.</li>
-<li>The different intermediate steps performed by tools are represented
-as edges in the abstract graph.</li>
-<li>The 'language' for driver behavior definition is tablegen and thus
-it's relatively easy to add new features.</li>
-<li>The definition of driver is transformed into set of C++ classes, thus
-no runtime interpretation is needed.</li>
-</ul>
-</li>
-
-
-<li>Reimplemented <a href="LinkTimeOptimization.html">LTO interface</a> in
- C.</li>
+<p>The main features of <tt>llvmc2</tt> are:
+    <ul>
+    <li>Extended handling of command line options and smart rules for
+    dispatching them to different tools.</li>
+    <li>Flexible (and extensible) rules for defining different tools.</li>
+    <li>The different intermediate steps performed by tools are represented
+    as edges in the abstract graph.</li>
+    <li>The 'language' for driver behavior definition is tablegen and thus
+    it's relatively easy to add new features.</li>
+    <li>The definition of driver is transformed into set of C++ classes, thus
+    no runtime interpretation is needed.</li>
+    </ul></p>
+    </li>
 
 
-<li>Kaleidoscope tutorial in Ocaml.</li>
+<li><p>LLVM 2.3 includes a completely rewritten interface for <a
+    href="LinkTimeOptimization.html">Link Time Optimization</a>.  This interface
+    is written in C, which allows for easier integration with C code bases, and
+    incorporates improvements we learned about from the first incarnation of the
+    interface.</p></li>
+
+<li><p>The <a href="tutorial/LangImpl1.html">Kaleidoscope tutorial</a> now
+    includes a "port" of the tutorial that <a 
+    href="tutorial/OCamlLangImpl1.html">uses the Ocaml bindings</a> to implement
+    the Kaleidoscope language.</p></li>
 
 </ul>
 
@@ -152,7 +195,7 @@ no runtime interpretation is needed.</li>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="frontends">llvm-gcc 4.2 Improvements and Clang</a>
+<a name="llvm-gcc">llvm-gcc 4.2 Improvements</a>
 </div>
 
 <div class="doc_text">
@@ -164,15 +207,6 @@ front-end.  Objective-C now works very well on Mac OS/X.</p>
 
 <p>llvm-gcc 4.2 includes many other fixes which improve conformance with the
 relevant parts of the GCC testsuite.</p>
-
-<p>The <a href="http://clang.llvm.org/">clang project</a> is an effort to build
-a set of new 'llvm native' front-end technologies for the LLVM optimizer
-and code generator.  Currently, its C and Objective-C support is maturing 
-nicely, and it has advanced source-to-source analysis and transformation
-capabilities.  If you are interested in building source-level tools for C and
-Objective-C (and eventually C++), you should take a look.  However, note that
-clang is not an official part of the LLVM 2.3 release.  If you are interested in
-this project, please see its <a href="http://clang.llvm.org/">web site</a>.</p>
 
 </div>
 
