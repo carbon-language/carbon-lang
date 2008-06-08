@@ -5043,8 +5043,12 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
     if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
       switch (LHSI->getOpcode()) {
       case Instruction::PHI:
-        if (Instruction *NV = FoldOpIntoPhi(I))
-          return NV;
+        // Only fold fcmp into the PHI if the phi and fcmp are in the same
+        // block.  If in the same block, we're encouraging jump threading.  If
+        // not, we are just pessimizing the code by making an i1 phi.
+        if (LHSI->getParent() == I.getParent())
+          if (Instruction *NV = FoldOpIntoPhi(I))
+            return NV;
         break;
       case Instruction::SIToFP:
       case Instruction::UIToFP:
@@ -5348,8 +5352,12 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         break;
 
       case Instruction::PHI:
-        if (Instruction *NV = FoldOpIntoPhi(I))
-          return NV;
+        // Only fold icmp into the PHI if the phi and fcmp are in the same
+        // block.  If in the same block, we're encouraging jump threading.  If
+        // not, we are just pessimizing the code by making an i1 phi.
+        if (LHSI->getParent() == I.getParent())
+          if (Instruction *NV = FoldOpIntoPhi(I))
+            return NV;
         break;
       case Instruction::Select: {
         // If either operand of the select is a constant, we can fold the
