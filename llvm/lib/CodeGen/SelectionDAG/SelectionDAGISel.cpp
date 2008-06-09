@@ -649,10 +649,6 @@ public:
 
   void setCurrentBasicBlock(MachineBasicBlock *MBB) { CurMBB = MBB; }
 
-  SDOperand getLoadFrom(const Type *Ty, SDOperand Ptr,
-                        const Value *SV, SDOperand Root,
-                        bool isVolatile, unsigned Alignment);
-
   SDOperand getValue(const Value *V);
 
   void setValue(const Value *V, SDOperand NewN) {
@@ -1169,6 +1165,8 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       assert((isa<ConstantAggregateZero>(C) || isa<UndefValue>(C)) &&
              "Unknown array constant!");
       unsigned NumElts = ATy->getNumElements();
+      if (NumElts == 0)
+        return SDOperand(); // empty array
       MVT EltVT = TLI.getValueType(ATy->getElementType());
       SmallVector<SDOperand, 4> Constants(NumElts);
       SmallVector<MVT, 4> ValueVTs(NumElts, EltVT);
@@ -1189,6 +1187,8 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       assert((isa<ConstantAggregateZero>(C) || isa<UndefValue>(C)) &&
              "Unknown struct constant!");
       unsigned NumElts = STy->getNumElements();
+      if (NumElts == 0)
+        return SDOperand(); // empty struct
       SmallVector<SDOperand, 4> Constants(NumElts);
       SmallVector<MVT, 4> ValueVTs(NumElts);
       for (unsigned i = 0, e = NumElts; i != e; ++i) {
@@ -2850,7 +2850,19 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
 }
 
 void SelectionDAGLowering::visitLoad(LoadInst &I) {
-  SDOperand Ptr = getValue(I.getOperand(0));
+  const Value *SV = I.getOperand(0);
+  SDOperand Ptr = getValue(SV);
+
+  const Type *Ty = I.getType();
+  bool isVolatile = I.isVolatile();
+  unsigned Alignment = I.getAlignment();
+
+  SmallVector<MVT, 4> ValueVTs;
+  SmallVector<uint64_t, 4> Offsets;
+  ComputeValueVTs(TLI, Ty, ValueVTs, &Offsets);
+  unsigned NumValues = ValueVTs.size();
+  if (NumValues == 0)
+    return;
 
   SDOperand Root;
   if (I.isVolatile())
@@ -2859,19 +2871,6 @@ void SelectionDAGLowering::visitLoad(LoadInst &I) {
     // Do not serialize non-volatile loads against each other.
     Root = DAG.getRoot();
   }
-
-  setValue(&I, getLoadFrom(I.getType(), Ptr, I.getOperand(0),
-                           Root, I.isVolatile(), I.getAlignment()));
-}
-
-SDOperand SelectionDAGLowering::getLoadFrom(const Type *Ty, SDOperand Ptr,
-                                            const Value *SV, SDOperand Root,
-                                            bool isVolatile, 
-                                            unsigned Alignment) {
-  SmallVector<MVT, 4> ValueVTs;
-  SmallVector<uint64_t, 4> Offsets;
-  ComputeValueVTs(TLI, Ty, ValueVTs, &Offsets);
-  unsigned NumValues = ValueVTs.size();
 
   SmallVector<SDOperand, 4> Values(NumValues);
   SmallVector<SDOperand, 4> Chains(NumValues);
@@ -2893,9 +2892,9 @@ SDOperand SelectionDAGLowering::getLoadFrom(const Type *Ty, SDOperand Ptr,
   else
     PendingLoads.push_back(Chain);
 
-  return DAG.getNode(ISD::MERGE_VALUES,
-                     DAG.getVTList(&ValueVTs[0], NumValues),
-                     &Values[0], NumValues);
+  setValue(&I, DAG.getNode(ISD::MERGE_VALUES,
+                           DAG.getVTList(&ValueVTs[0], NumValues),
+                           &Values[0], NumValues));
 }
 
 
@@ -2909,6 +2908,8 @@ void SelectionDAGLowering::visitStore(StoreInst &I) {
   SmallVector<uint64_t, 4> Offsets;
   ComputeValueVTs(TLI, SrcV->getType(), ValueVTs, &Offsets);
   unsigned NumValues = ValueVTs.size();
+  if (NumValues == 0)
+    return;
 
   SDOperand Root = getRoot();
   SmallVector<SDOperand, 4> Chains(NumValues);
