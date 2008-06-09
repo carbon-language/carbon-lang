@@ -827,19 +827,22 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
                               &Dest->getTypeSymbolTable(), "");
     }
 
+    if (DF && DF->hasInternalLinkage())
+      DF = NULL;
+    
     // Check visibility
-    if (DF && !DF->hasInternalLinkage() &&
-        SF->getVisibility() != DF->getVisibility()) {
+    if (DF && SF->getVisibility() != DF->getVisibility()) {
       // If one is a prototype, ignore its visibility.  Prototypes are always
       // overridden by the definition.
       if (!SF->isDeclaration() && !DF->isDeclaration())
         return Error(Err, "Linking functions named '" + SF->getName() +
                      "': symbols have different visibilities!");
+      
+      // Otherwise, replace the visibility of DF if DF is a prototype.
+      if (DF->isDeclaration())
+        DF->setVisibility(SF->getVisibility());
     }
     
-    if (DF && DF->hasInternalLinkage())
-      DF = NULL;
-
     if (DF && DF->getType() != SF->getType()) {
       if (DF->isDeclaration() && !SF->isDeclaration()) {
         // We have a definition of the same name but different type in the
@@ -911,8 +914,6 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // Link the external functions, update linkage qualifiers
       ValueMap.insert(std::make_pair(SF, DF));
       DF->setLinkage(SF->getLinkage());
-      // Visibility of prototype is overridden by vis of definition.
-      DF->setVisibility(SF->getVisibility());
     } else if (SF->hasWeakLinkage() || SF->hasLinkOnceLinkage() ||
                SF->hasCommonLinkage()) {
       // At this point we know that DF has LinkOnce, Weak, or External* linkage.
