@@ -1065,6 +1065,10 @@ namespace {
     }
 
     switch (I->getOpcode()) {
+    default:
+      error("Invalid instruction");
+      break;
+
     case Instruction::Ret: {
       const ReturnInst* ret =  cast<ReturnInst>(I);
       Out << "ReturnInst::Create("
