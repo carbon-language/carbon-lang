@@ -1487,7 +1487,9 @@ TargetLowering::SimplifySetCC(MVT VT, SDOperand N0, SDOperand N1,
 bool TargetLowering::isGAPlusOffset(SDNode *N, GlobalValue* &GA,
                                     int64_t &Offset) const {
   if (isa<GlobalAddressSDNode>(N)) {
-    GA = cast<GlobalAddressSDNode>(N)->getGlobal();
+    GlobalAddressSDNode *GASD = cast<GlobalAddressSDNode>(N);
+    GA = GASD->getGlobal();
+    Offset += GASD->getOffset();
     return true;
   }
 
