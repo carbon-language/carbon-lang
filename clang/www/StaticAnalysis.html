@@ -4,7 +4,6 @@
   <style type="text/css">
    body { color:#000000; background-color:#ffffff }
    body { font-family: Helvetica, sans-serif; font-size:9pt }
-   h1 { font-size:12pt }
    thead {
      background-color:#eee; color:#666666;
      font-weight: bold; cursor: default;
@@ -15,7 +14,7 @@
    } 
    table { border: 1px #000000 solid }
    table { border-collapse: collapse; border-spacing: 0px }
-   table { margin-left:20px; margin-top:20px; margin-bottom:20px; width:80%;}
+   table { margin-left:20px; margin-top:20px; margin-bottom:20px }
    td { border-bottom: 1px #000000 dotted }
    td { padding:5px; padding-left:8px; padding-right:8px }
    td { text-align:left; font-size:9pt }
@@ -26,25 +25,32 @@
 
 <h1>Information on using the Static Analyzer ("LLVM Checker")</h1>
 
-<p>
-This documents provides some notes on using the LLVM/clang static analyzer to
-find bugs in C and Objective-C programs.
+<p>This documents provides some notes on using the LLVM/clang static analyzer
+to find bugs in C and Objective-C programs. Please note that this tool is very
+earlier in development, and there are many planned enhancements to improve both
+the analysis precision of the tool and the number of bugs it will find.</p>
 
 <p>This document is arranged into the following sections:</p>
 
 <ul>
-  <li><a href="#Contents">Downloadable Package Contents</a></li> 
+  <li><a href="#Contents">Obtaining the Analyzer</a></li> 
   <li><a href="#BasicUsage">Basic Usage</a></li> 
   <li><a href="#Output">Output of the Analyzer</a></li>
   <li><a href="#RecommendedUsageGuidelines">Recommended Usage Guidelines</a></li>
   <li><a href="#Debugging">Debugging the Analyzer</a>
 </ul>
 
-<h2 id="ReleaseContents">Package Contents</h2>
+<h2 id="ReleaseContents">Obtaining the Analyzer</h2>
 
-<p>The static analyzer is released as a single tarball:
-<tt>checker-XXX.tar.gz</tt>, where <b>XXX</b> is the release tag. The tarball
-expands to the following files:</p>
+<p> Semi-regular builds of the analyzer on Mac OS X (10.5) are available <a
+href="http://keeda.stanford.edu/~kremenek/checker">here</a>. Packaged builds for
+other platforms may eventually be provided, but as the tool is in its early
+stages we are not actively promoting releases yet.</p>
+
+<p>Packaged builds consist of a few files from the Clang source tree, meaning
+that <b>anyone</b> who can build Clang can use the static analyzer. The packaged
+builds of the analyzer expand to the following files that are taken from the
+<tt>utils</tt> and <tt>Driver</tt> subdirectories in the Clang tree:</p>
 
 <table>
 <thead><tr><td>File</td><td>Purpose</td></tr></thead>
@@ -53,6 +59,13 @@ expands to the following files:</p>
 <tr><td><tt>clang</tt></td><td>Static Analyzer (called by ccc-analyzer)</td><tr>
 <tr><td><tt>sorttable.js</tt></td><td>JavaScript used for displaying error reports</td></tr>
 </table>
+
+<p> Using the analyzer involves executing <tt>scan-build</tt> (see <a
+href="#BasicUsage">Basic Usage</a>). <tt>scan-build</tt> will first look for a
+<tt>clang</tt> executable in the same directory as <tt>scan-build</tt>, and then
+search your path. If one is using the analyzer directly from the Clang sources,
+it suffices to just directly execute <tt>scan-build</tt> in the <tt>utils</tt>
+directory. No other special installation is needed.</p>
 
 <h2 id="BasicUsage">Basic Usage</h2>
 
