@@ -817,21 +817,47 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
   // Loop over all of the functions in the src module, mapping them over
   for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
     const Function *SF = I;   // SrcFunction
+    
     Function *DF = 0;
+    
+    // If this function is internal or has no name, it doesn't participate in
+    // linkage.
     if (SF->hasName() && !SF->hasInternalLinkage()) {
       // Check to see if may have to link the function.
       DF = Dest->getFunction(SF->getName());
-      if (DF && SF->getType() != DF->getType())
-        // If types don't agree because of opaque, try to resolve them
-        RecursiveResolveTypes(SF->getType(), DF->getType(), 
-                              &Dest->getTypeSymbolTable(), "");
+      if (DF && DF->hasInternalLinkage())
+        DF = 0;
     }
-
-    if (DF && DF->hasInternalLinkage())
-      DF = NULL;
     
-    // Check visibility
-    if (DF && SF->getVisibility() != DF->getVisibility()) {
+    // If there is no linkage to be performed, just bring over SF without
+    // modifying it.
+    if (DF == 0) {
+      // Function does not already exist, simply insert an function signature
+      // identical to SF into the dest module.
+      Function *NewDF = Function::Create(SF->getFunctionType(),
+                                         SF->getLinkage(),
+                                         SF->getName(), Dest);
+      CopyGVAttributes(NewDF, SF);
+      
+      // If the LLVM runtime renamed the function, but it is an externally
+      // visible symbol, DF must be an existing function with internal linkage.
+      // Rename it.
+      if (!NewDF->hasInternalLinkage() && NewDF->getName() != SF->getName())
+        ForceRenaming(NewDF, SF->getName());
+      
+      // ... and remember this mapping...
+      ValueMap[SF] = NewDF;
+      continue;
+    }
+    
+    
+    // If types don't agree because of opaque, try to resolve them.
+    if (SF->getType() != DF->getType())
+      RecursiveResolveTypes(SF->getType(), DF->getType(), 
+                            &Dest->getTypeSymbolTable(), "");
+    
+    // Check visibility, merging if a definition overrides a prototype.
+    if (SF->getVisibility() != DF->getVisibility()) {
       // If one is a prototype, ignore its visibility.  Prototypes are always
       // overridden by the definition.
       if (!SF->isDeclaration() && !DF->isDeclaration())
@@ -843,7 +869,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
         DF->setVisibility(SF->getVisibility());
     }
     
-    if (DF && DF->getType() != SF->getType()) {
+    if (DF->getType() != SF->getType()) {
       if (DF->isDeclaration() && !SF->isDeclaration()) {
         // We have a definition of the same name but different type in the
         // source module. Copy the prototype to the destination and replace
@@ -882,23 +908,10 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
                      ToStr(SF->getFunctionType(), Src) + "' and '" +
                      ToStr(DF->getFunctionType(), Dest) + "'");
       }
-    } else if (!DF || SF->hasInternalLinkage() || DF->hasInternalLinkage()) {
-      // Function does not already exist, simply insert an function signature
-      // identical to SF into the dest module.
-      Function *NewDF = Function::Create(SF->getFunctionType(),
-                                         SF->getLinkage(),
-                                         SF->getName(), Dest);
-      CopyGVAttributes(NewDF, SF);
-
-      // If the LLVM runtime renamed the function, but it is an externally
-      // visible symbol, DF must be an existing function with internal linkage.
-      // Rename it.
-      if (NewDF->getName() != SF->getName() && !NewDF->hasInternalLinkage())
-        ForceRenaming(NewDF, SF->getName());
-
-      // ... and remember this mapping...
-      ValueMap[SF] = NewDF;
-    } else if (SF->isDeclaration()) {
+      continue;
+    }
+    
+    if (SF->isDeclaration()) {
       // If SF is a declaration or if both SF & DF are declarations, just link 
       // the declarations, we aren't adding anything.
       if (SF->hasDLLImportLinkage()) {
