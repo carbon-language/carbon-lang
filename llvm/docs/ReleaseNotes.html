@@ -112,6 +112,9 @@ It includes a large number of features and refinements from LLVM 2.2.</p>
 <li>The '<tt>-enable-eh</tt>' flag to llc has been removed.  Now code should 
     encode whether it is safe to omit unwind information for a function by
     tagging the Function object with the '<tt>nounwind</tt>' attribute.</li>
+<li>The ConstantFP::get method that uses APFloat now takes one argument
+    instead of two. The type argument has been removed, and the type is
+    now inferred from the size of the given APFloat value.</li>
 
 </ul>
 </div>
