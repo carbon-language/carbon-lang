@@ -29,28 +29,19 @@
 
 <div class="doc_text">
 
-<p>This section describes how to acquire and build llvm-gcc 4.0 and 4.2, which are
-based on the GCC 4.0.1/4.2.1 front-ends respectively.  Both front-ends support C,
-C++, Objective-C and Objective-C++.  The 4.2 front-end also supports Ada and
-Fortran to some extent.  Note that the instructions for building these front-ends
-are completely different (and much easier!) than those for building llvm-gcc3 in
-the past.</p>
+<p>This section describes how to acquire and build llvm-gcc 4.2, which is based
+on the GCC 4.2.1 front-end.  Supported languages are Ada, C, C++, Fortran,
+Objective-C and Objective-C++.  Note that the instructions for building these
+front-ends are completely different (and much easier!) than those for building
+llvm-gcc3 in the past.</p>
 
 <ol>
-  <li><p>Retrieve the appropriate llvm-gcc4.x-y.z.source.tar.gz archive from the
+  <li><p>Retrieve the appropriate llvm-gcc-4.2-x.y.source.tar.gz archive from the
          <a href="http://llvm.org/releases/">llvm web site</a>.</p>
 
       <p>It is also possible to download the sources of the llvm-gcc front end
-         from a read-only mirror using subversion.  To check out the 4.0 code
+         from a read-only mirror using subversion.  To check out the 4.2 code
          for first time use:</p>
-
-<div class="doc_code">
-<pre>
-svn co http://llvm.org/svn/llvm-project/llvm-gcc-4.0/trunk <i>dst-directory</i>
-</pre>
-</div>
-
-<p>To check out the 4.2 code use:</p>
 
 <div class="doc_code">
 <pre>
@@ -93,19 +84,17 @@ top-level <tt>README.LLVM</tt> file, adding ",ada" to EXTRALANGS, for example:
   <li><p>The build requires having a compiler that supports Ada, C and C++.
       The Ada front-end is written in Ada so an Ada compiler is needed to
       build it.  Compilers known to work with the
-      <a href="http://llvm.org/releases/download.html">LLVM 2.2 release</a>
+      <a href="http://llvm.org/releases/download.html">LLVM 2.3 release</a>
       are <a href="http://gcc.gnu.org/releases.html">gcc-4.2</a> and the
-      <a href="http://libre.adacore.com/">2005 GNAT GPL Edition</a>.
-      <a href="GettingStarted.html#checkout">LLVM from subversion</a>
-      also works with the
-      <a href="http://libre.adacore.com/">2006 and 2007 GNAT GPL Editions</a>.
+      2005, 2006 and 2007 versions of the
+      <a href="http://libre.adacore.com/">GNAT GPL Edition</a>.
       The LLVM parts of llvm-gcc are written in C++ so a C++ compiler is
       needed to build them.  The rest of gcc is written in C.
       Some linux distributions provide a version of gcc that supports all
       three languages (the Ada part often comes as an add-on package to
       the rest of gcc).  Otherwise it is possible to combine two versions
       of gcc, one that supports Ada and C (such as the
-      <a href="http://libre.adacore.com/">2005 GNAT GPL Edition</a>)
+      <a href="http://libre.adacore.com/">2007 GNAT GPL Edition</a>)
       and another which supports C++, see below.</p></li>
   <li><p>Because the Ada front-end is experimental, it is wise to build the
       compiler with checking enabled.  This causes it to run much slower, but
@@ -121,9 +110,9 @@ top-level <tt>README.LLVM</tt> file, adding ",ada" to EXTRALANGS, for example:
       and unpack it:</p>
 
 <div class="doc_code">
-<pre>wget http://llvm.org/releases/2.2/llvm-2.2.tar.gz
-tar xzf llvm-2.2.tar.gz
-mv llvm-2.2 llvm</pre>
+<pre>wget http://llvm.org/releases/2.3/llvm-2.3.tar.gz
+tar xzf llvm-2.3.tar.gz
+mv llvm-2.3 llvm</pre>
 </div>
 
       <p>or <a href="GettingStarted.html#checkout">check out the
@@ -139,9 +128,9 @@ mv llvm-2.2 llvm</pre>
       and unpack it:</p>
 
 <div class="doc_code">
-<pre>wget http://llvm.org/releases/2.2/llvm-gcc4.2-2.2.source.tar.gz
-tar xzf llvm-gcc4.2-2.2.source.tar.gz
-mv llvm-gcc4.2-2.2.source llvm-gcc-4.2</pre>
+<pre>wget http://llvm.org/releases/2.3/llvm-gcc-4.2-2.3.source.tar.gz
+tar xzf llvm-gcc-4.2-2.3.source.tar.gz
+mv llvm-gcc4.2-2.3.source llvm-gcc-4.2</pre>
 </div>
 
       <p>or <a href="GettingStarted.html#checkout">check out the
@@ -186,7 +175,7 @@ cd llvm-objects</pre>
   <li><p>Install LLVM (optional):</p>
 
 <div class="doc_code">
-<pre>make install</pre>
+<pre>make ENABLE_OPTIMIZED=0 install</pre>
 </div>
       </li>
 
@@ -203,12 +192,12 @@ cd llvm-gcc-4.2-objects</pre>
 
   <li><p>Configure llvm-gcc (here it is configured to install into <tt>/usr/local</tt>).
       The <tt>--enable-checking</tt> flag turns on sanity checks inside the compiler.
-      If you omit it then LLVM must be built with <tt>make ENABLE_OPTIMIZED=1</tt>.
+      If you omit it then LLVM should be built with <tt>make ENABLE_OPTIMIZED=1</tt>.
       Additional languages can be appended to the --enable-languages switch,
       for example <tt>--enable-languages=ada,c,c++</tt>.</p>
 
 <div class="doc_code">
-<pre>../llvm-gcc-4.2/configure --prefix=<b>/usr/local</b> --enable-languages=ada,c --enable-checking --enable-llvm=$PWD/../llvm-objects --disable-shared --disable-bootstrap --disable-multilib</pre>
+<pre>../llvm-gcc-4.2/configure --prefix=<b>/usr/local</b> --enable-languages=ada,c --enable-checking --enable-llvm=$PWD/../llvm-objects --disable-bootstrap --disable-multilib</pre>
 </div>
 
       <p>If you have a multi-compiler setup, then you can configure like this:</p>
@@ -217,7 +206,7 @@ cd llvm-gcc-4.2-objects</pre>
 <pre>
 export CC=<b>PATH_TO_C_AND_ADA_COMPILER</b>
 export CXX=<b>PATH_TO_C++_COMPILER</b>
-../llvm-gcc-4.2/configure --prefix=<b>/usr/local</b> --enable-languages=ada,c --enable-checking --enable-llvm=$PWD/../llvm-objects --disable-shared --disable-bootstrap --disable-multilib</pre>
+../llvm-gcc-4.2/configure --prefix=<b>/usr/local</b> --enable-languages=ada,c --enable-checking --enable-llvm=$PWD/../llvm-objects --disable-bootstrap --disable-multilib</pre>
 </div>
       </li>
 
