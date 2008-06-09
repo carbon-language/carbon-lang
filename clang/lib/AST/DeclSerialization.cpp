@@ -384,7 +384,8 @@ FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   
   void *Mem = C.getAllocator().Allocate<FunctionDecl>();
   FunctionDecl* decl = new (Mem)
-    FunctionDecl(0, SourceLocation(), NULL, QualType(), SClass, IsInline, 0);
+    FunctionDecl(Function, 0, SourceLocation(), NULL,
+                 QualType(), SClass, IsInline, 0);
   
   decl->ValueDecl::ReadInRec(D, C);
   D.ReadPtr(decl->DeclChain);

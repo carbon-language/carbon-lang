@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the Decl interface and subclasses.
+//  This file defines the Decl subclasses.
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_DECL_H
 
 #include "clang/AST/DeclBase.h"
+#include "clang/Parse/AccessSpecifier.h"
 
 namespace clang {
 class Expr;
@@ -382,11 +383,6 @@ private:
   /// function.
   ScopedDecl *DeclChain;
   
-  // NOTE: VC++ treats enums as signed, avoid using the StorageClass enum
-  unsigned SClass : 2;
-  bool IsInline : 1;
-  bool IsImplicit : 1;
-  
   /// PreviousDeclaration - A link to the previous declaration of this
   /// same function, NULL if this is the first declaration. For
   /// example, in the following code, the PreviousDeclaration can be
@@ -398,13 +394,19 @@ private:
   ///   int f(int x, int y) { return x + y; }
   FunctionDecl *PreviousDeclaration;
 
-  FunctionDecl(DeclContext *DC, SourceLocation L,
+  // NOTE: VC++ treats enums as signed, avoid using the StorageClass enum
+  unsigned SClass : 2;
+  bool IsInline : 1;
+  bool IsImplicit : 1;
+
+protected:
+  FunctionDecl(Kind DK, DeclContext *DC, SourceLocation L,
                IdentifierInfo *Id, QualType T,
                StorageClass S, bool isInline, ScopedDecl *PrevDecl)
-    : ValueDecl(Function, DC, L, Id, T, PrevDecl), 
-      DeclContext(Function),
-      ParamInfo(0), Body(0), DeclChain(0), SClass(S), 
-      IsInline(isInline), IsImplicit(0), PreviousDeclaration(0) {}
+    : ValueDecl(DK, DC, L, Id, T, PrevDecl), 
+      DeclContext(DK),
+      ParamInfo(0), Body(0), DeclChain(0), PreviousDeclaration(0),
+      SClass(S), IsInline(isInline), IsImplicit(0) {}
 
   virtual ~FunctionDecl();
   virtual void Destroy(ASTContext& C);
@@ -498,7 +500,9 @@ public:
   bool isInline() const { return IsInline; }
  
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == Function; }
+  static bool classof(const Decl *D) {
+    return D->getKind() >= FunctionFirst && D->getKind() <= FunctionLast;
+  }
   static bool classof(const FunctionDecl *D) { return true; }
 
 protected:
@@ -608,6 +612,9 @@ protected:
            IdentifierInfo *Id, ScopedDecl *PrevDecl)
     : ScopedDecl(DK, DC, L, Id, PrevDecl), TypeForDecl(0) {}
 public:
+  void setAccess(AccessSpecifier AS) { Access = AS; }
+  AccessSpecifier getAccess() const { return AccessSpecifier(Access); }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() >= TypeFirst && D->getKind() <= TypeLast;
@@ -759,7 +766,8 @@ class RecordDecl : public TagDecl {
   /// Members/NumMembers - This is a new[]'d array of pointers to Decls.
   FieldDecl **Members;   // Null if not defined.
   int NumMembers;   // -1 if not defined.
-  
+
+protected:
   RecordDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id, 
              ScopedDecl *PrevDecl) : TagDecl(DK, DC, L, Id, PrevDecl) {
     HasFlexibleArrayMember = false;

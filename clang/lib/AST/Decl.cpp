@@ -62,7 +62,7 @@ FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
                                    StorageClass S, bool isInline, 
                                    ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<FunctionDecl>();
-  return new (Mem) FunctionDecl(DC, L, Id, T, S, isInline, PrevDecl);
+  return new (Mem) FunctionDecl(Function, DC, L, Id, T, S, isInline, PrevDecl);
 }
 
 FieldDecl *FieldDecl::Create(ASTContext &C, SourceLocation L,

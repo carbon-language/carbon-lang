@@ -21,9 +21,11 @@
 namespace clang {
 class TranslationUnitDecl;
 class NamespaceDecl;
+class ScopedDecl;
 class FunctionDecl;
-class ObjCMethodDecl;
+class CXXRecordDecl;
 class EnumDecl;
+class ObjCMethodDecl;
 class ObjCInterfaceDecl;
 
 /// Decl - This represents one declaration (or definition), e.g. a variable, 
@@ -35,11 +37,13 @@ public:
     // This lists the concrete classes of Decl in order of the inheritance
     // hierarchy.  This allows us to do efficient classof tests based on the
     // enums below.   The commented out names are abstract class names.
+    // [DeclContext] indicatea that the class also inherits from DeclContext.
     
     // Decl
-         TranslationUnit,
+         TranslationUnit,  // [DeclContext]
     //   NamedDecl
            Field,
+             CXXField,
              ObjCIvar,
            ObjCCategory,
            ObjCCategoryImpl,
@@ -47,23 +51,29 @@ public:
            ObjCProtocol,
            ObjCProperty,
     //     ScopedDecl
-             Namespace,
+             Namespace,  // [DeclContext]
     //       TypeDecl
                Typedef,
     //         TagDecl
-                 Enum,
+                 Enum,  // [DeclContext]
     //           RecordDecl
                    Struct,
                    Union,
                    Class,
+    //             CXXRecordDecl  [DeclContext]
+                     CXXStruct,
+                     CXXUnion,
+                     CXXClass,
     //       ValueDecl
                EnumConstant,
-               Function,
+               Function,  // [DeclContext]
+                 CXXMethod,
                Var,
+                 CXXClassVar,
                  ParmVar,
-         ObjCInterface,
+         ObjCInterface,  // [DeclContext]
          ObjCCompatibleAlias,
-         ObjCMethod,
+         ObjCMethod,  // [DeclContext]
          ObjCClass,
          ObjCForwardProtocol,
          ObjCPropertyImpl,
@@ -72,14 +82,16 @@ public:
   
     // For each non-leaf class, we now define a mapping to the first/last member
     // of the class, to allow efficient classof.
-    NamedFirst  = Field,         NamedLast  = ParmVar,
-    FieldFirst  = Field,         FieldLast  = ObjCIvar,
-    ScopedFirst = Namespace,     ScopedLast = ParmVar,
-    TypeFirst   = Typedef,       TypeLast   = Class,
-    TagFirst    = Enum         , TagLast    = Class,
-    RecordFirst = Struct       , RecordLast = Class,
-    ValueFirst  = EnumConstant , ValueLast  = ParmVar,
-    VarFirst    = Var          , VarLast    = ParmVar
+    NamedFirst     = Field        , NamedLast     = ParmVar,
+    FieldFirst     = Field        , FieldLast     = ObjCIvar,
+    ScopedFirst    = Namespace    , ScopedLast    = ParmVar,
+    TypeFirst      = Typedef      , TypeLast      = CXXClass,
+    TagFirst       = Enum         , TagLast       = CXXClass,
+    RecordFirst    = Struct       , RecordLast    = CXXClass,
+    CXXRecordFirst = CXXStruct    , CXXRecordLast = CXXClass,
+    ValueFirst     = EnumConstant , ValueLast     = ParmVar,
+    FunctionFirst  = Function     , FunctionLast  = CXXMethod,
+    VarFirst       = Var          , VarLast       = ParmVar
   };
 
   /// IdentifierNamespace - According to C99 6.2.3, there are four namespaces,
@@ -118,7 +130,13 @@ private:
   
   /// HasAttrs - This indicates whether the decl has attributes or not.
   unsigned int HasAttrs : 1;
-protected:
+
+ protected:
+  /// Access - Used by C++ decls for the access specifier.
+  // NOTE: VC++ treats enums as signed, avoid using the AccessSpecifier enum
+  unsigned Access : 2;
+  friend class CXXClassMemberWrapper;
+
   Decl(Kind DK, SourceLocation L) : Loc(L), DeclKind(DK), InvalidDecl(0),
     HasAttrs(false) {
     if (Decl::CollectingStats()) addDeclKind(DK);
@@ -161,10 +179,14 @@ public:
     case EnumConstant:
     case ObjCInterface:
     case ObjCCompatibleAlias:
+    case CXXField:
       return IDNS_Ordinary;
     case Struct:
     case Union:
     case Class:
+    case CXXStruct:
+    case CXXUnion:
+    case CXXClass:
     case Enum:
       return IDNS_Tag;
     case Namespace:
@@ -206,8 +228,9 @@ protected:
 ///   TranslationUnitDecl
 ///   NamespaceDecl
 ///   FunctionDecl
-///   ObjCMethodDecl
+///   CXXRecordDecl
 ///   EnumDecl
+///   ObjCMethodDecl
 ///   ObjCInterfaceDecl
 ///
 class DeclContext {
@@ -230,15 +253,18 @@ class DeclContext {
         return static_cast<TranslationUnitDecl*>(const_cast<From*>(D));
       case Decl::Namespace:
         return static_cast<NamespaceDecl*>(const_cast<From*>(D));
-      case Decl::Function:
-        return static_cast<FunctionDecl*>(const_cast<From*>(D));
+      case Decl::Enum:
+        return static_cast<EnumDecl*>(const_cast<From*>(D));
       case Decl::ObjCMethod:
         return static_cast<ObjCMethodDecl*>(const_cast<From*>(D));
       case Decl::ObjCInterface:
         return static_cast<ObjCInterfaceDecl*>(const_cast<From*>(D));
-      case Decl::Enum:
-        return static_cast<EnumDecl*>(const_cast<From*>(D));
       default:
+        if (DK >= Decl::FunctionFirst && DK <= Decl::FunctionLast)
+          return static_cast<FunctionDecl*>(const_cast<From*>(D));
+        if (DK >= Decl::CXXRecordFirst && DK <= Decl::CXXRecordLast)
+          return static_cast<CXXRecordDecl*>(const_cast<From*>(D));
+
         assert(false && "a decl that inherits DeclContext isn't handled");
         return 0;
     }
@@ -255,6 +281,7 @@ public:
   bool isFunctionOrMethod() const {
     switch (DeclKind) {
       case Decl::Function:
+      case Decl::CXXMethod:
       case Decl::ObjCMethod:
         return true;
       default:
@@ -272,12 +299,17 @@ public:
     switch (D->getKind()) {
       case Decl::TranslationUnit:
       case Decl::Namespace:
-      case Decl::Function:
+      case Decl::Enum:
       case Decl::ObjCMethod:
       case Decl::ObjCInterface:
-      case Decl::Enum:
         return true;
       default:
+        if (D->getKind() >= Decl::FunctionFirst &&
+            D->getKind() <= Decl::FunctionLast)
+          return true;
+        if (D->getKind() >= Decl::CXXRecordFirst &&
+            D->getKind() <= Decl::CXXRecordLast)
+          return true;
         return false;
     }
   }
@@ -285,8 +317,9 @@ public:
   static bool classof(const TranslationUnitDecl *D) { return true; }
   static bool classof(const NamespaceDecl *D) { return true; }
   static bool classof(const FunctionDecl *D) { return true; }
-  static bool classof(const ObjCMethodDecl *D) { return true; }
+  static bool classof(const CXXRecordDecl *D) { return true; }
   static bool classof(const EnumDecl *D) { return true; }
+  static bool classof(const ObjCMethodDecl *D) { return true; }
   static bool classof(const ObjCInterfaceDecl *D) { return true; }
 };
 

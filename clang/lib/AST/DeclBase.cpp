@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/DeclBase.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/ASTContext.h"
 #include "llvm/ADT/DenseMap.h"
 using namespace clang;
@@ -206,6 +207,13 @@ void Decl::addDeclKind(Kind k) {
   case LinkageSpec:         nLinkageSpecDecl++; break;
   case FileScopeAsm:        nFileScopeAsmDecl++; break;
   case TranslationUnit:     break;
+
+  // FIXME: Statistics for C++ decls.
+  case CXXField:
+  case CXXStruct:  case CXXUnion:  case CXXClass:
+  case CXXMethod:
+  case CXXClassVar:
+    break;
   }
 }
 
