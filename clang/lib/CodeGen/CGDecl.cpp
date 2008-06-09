@@ -35,6 +35,9 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::Union:     // union X;
   case Decl::Class:     // class X;
   case Decl::Enum:      // enum X;
+  case Decl::CXXStruct: // struct X; [C++]
+  case Decl::CXXUnion:  // union X; [C++]
+  case Decl::CXXClass:  // class X; [C++]
     // None of these decls require codegen support.
     return;
     
