@@ -57,7 +57,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   PushOnScopeChains(IDecl, TUScope);
   
   // Synthesize "typedef struct objc_selector *SEL;"
-  RecordDecl *SelTag = RecordDecl::Create(Context, Decl::Struct, CurContext,
+  RecordDecl *SelTag = RecordDecl::Create(Context, TagDecl::TK_struct, CurContext,
                                           SourceLocation(), 
                                           &Context.Idents.get("objc_selector"),
                                           0);
@@ -98,7 +98,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
     TranslationUnitDecl *TUDecl = Context.getTranslationUnitDecl();
 
     // Synthesize "typedef struct objc_class *Class;"
-    RecordDecl *ClassTag = RecordDecl::Create(Context, Decl::Struct,
+    RecordDecl *ClassTag = RecordDecl::Create(Context, TagDecl::TK_struct,
                                               TUDecl,
                                               SourceLocation(),
                                               &IT.get("objc_class"), 0);
@@ -117,7 +117,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
     
     // Synthesize "typedef struct objc_object { Class isa; } *id;"
     RecordDecl *ObjectTag = 
-      RecordDecl::Create(Context, Decl::Struct, TUDecl,
+      RecordDecl::Create(Context, TagDecl::TK_struct, TUDecl,
                          SourceLocation(),
                          &IT.get("objc_object"), 0);
     FieldDecl *IsaDecl = FieldDecl::Create(Context, SourceLocation(),

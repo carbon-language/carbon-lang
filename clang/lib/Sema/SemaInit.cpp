@@ -42,7 +42,7 @@ int InitListChecker::numStructUnionElements(QualType DeclType) {
   for (int i = 0; i < structDecl->getNumMembers(); i++)
     if (structDecl->getMember(i)->getIdentifier())
       ++InitializableMembers;
-  if (structDecl->getKind() == Decl::Union)
+  if (structDecl->isUnion())
     return std::min(InitializableMembers, 1);
   return InitializableMembers - structDecl->hasFlexibleArrayMember();
 }

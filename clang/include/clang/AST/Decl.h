@@ -658,6 +658,15 @@ protected:
 
 /// TagDecl - Represents the declaration of a struct/union/class/enum.
 class TagDecl : public TypeDecl {
+public:
+  enum TagKind {
+    TK_struct,
+    TK_union,
+    TK_class,
+    TK_enum
+  };
+
+private:
   /// IsDefinition - True if this is a definition ("struct foo {};"), false if
   /// it is a declaration ("struct foo;").
   bool IsDefinition : 1;
@@ -675,14 +684,29 @@ public:
   }
   
   const char *getKindName() const {
-    switch (getKind()) {
-    default: assert(0 && "Unknown TagDecl!");
-    case Struct: return "struct";
-    case Union:  return "union";
-    case Class:  return "class";
-    case Enum:   return "enum";
+    switch (getTagKind()) {
+    default: assert(0 && "Unknown TagKind!");
+    case TK_struct: return "struct";
+    case TK_union:  return "union";
+    case TK_class:  return "class";
+    case TK_enum:   return "enum";
     }
   }
+
+  TagKind getTagKind() const {
+    switch (getKind()) {
+    default: assert(0 && "Unknown TagDecl!");
+    case Struct: case CXXStruct: return TK_struct;
+    case Union:  case CXXUnion:  return TK_union;
+    case Class:  case CXXClass:  return TK_class;
+    case Enum:                   return TK_enum;
+    }
+  }
+
+  bool isStruct() const { return getKind() == Struct || getKind() == CXXStruct;}
+  bool isClass()  const { return getKind() == Class  || getKind() == CXXClass; }
+  bool isUnion()  const { return getKind() == Union  || getKind() == CXXUnion; }
+  bool isEnum()   const { return getKind() == Enum; }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -777,7 +801,7 @@ protected:
   }
 public:
   
-  static RecordDecl *Create(ASTContext &C, Kind DK, DeclContext *DC,
+  static RecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
                             SourceLocation L, IdentifierInfo *Id,
                             ScopedDecl *PrevDecl);
   

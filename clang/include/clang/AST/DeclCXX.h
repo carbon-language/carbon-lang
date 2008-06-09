@@ -49,7 +49,7 @@ protected:
     assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
   }
 public:
-  static CXXRecordDecl *Create(ASTContext &C, Kind DK, DeclContext *DC,
+  static CXXRecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
                             SourceLocation L, IdentifierInfo *Id,
                             ScopedDecl *PrevDecl);
   

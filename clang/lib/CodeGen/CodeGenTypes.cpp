@@ -375,7 +375,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   
   // Okay, this is a definition of a type.  Compile the implementation now.
   
-  if (TD->getKind() == Decl::Enum) {
+  if (TD->isEnum()) {
     // Don't bother storing enums in TagDeclTypes.
     return ConvertTypeRecursive(cast<EnumDecl>(TD)->getIntegerType());
   }
@@ -391,7 +391,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   
   const llvm::Type *ResultType;
   const RecordDecl *RD = cast<const RecordDecl>(TD);
-  if (TD->getKind() == Decl::Struct || TD->getKind() == Decl::Class) {
+  if (TD->isStruct() || TD->isClass()) {
     // Layout fields.
     RecordOrganizer RO(*this, *RD);
     
@@ -402,7 +402,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
                                              RO.getPaddingFields());
     ResultType = RO.getLLVMType();
     
-  } else if (TD->getKind() == Decl::Union) {
+  } else if (TD->isUnion()) {
     // Just use the largest element of the union, breaking ties with the
     // highest aligned member.
     if (RD->getNumMembers() != 0) {

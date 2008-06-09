@@ -63,8 +63,7 @@ bool Type::isDerivedType() const {
     return true;
   case Tagged: {
     const TagType *TT = cast<TagType>(CanonicalType);
-    const Decl::Kind Kind = TT->getDecl()->getKind();
-    return Kind == Decl::Struct || Kind == Decl::Union;
+    return !TT->getDecl()->isEnum();
   }
   default:
     return false;
@@ -73,19 +72,19 @@ bool Type::isDerivedType() const {
 
 bool Type::isClassType() const {
   if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType))
-    if (RT->getDecl()->getKind() == Decl::Class)
+    if (RT->getDecl()->isClass())
       return true;
   return false;
 }
 bool Type::isStructureType() const {
   if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType))
-    if (RT->getDecl()->getKind() == Decl::Struct)
+    if (RT->getDecl()->isStruct())
       return true;
   return false;
 }
 bool Type::isUnionType() const {
   if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType))
-    if (RT->getDecl()->getKind() == Decl::Union)
+    if (RT->getDecl()->isUnion())
       return true;
   return false;
 }
@@ -349,13 +348,13 @@ const RecordType *Type::getAsRecordType() const {
 const RecordType *Type::getAsStructureType() const {
   // If this is directly a structure type, return it.
   if (const RecordType *RT = dyn_cast<RecordType>(this)) {
-    if (RT->getDecl()->getKind() == Decl::Struct)
+    if (RT->getDecl()->isStruct())
       return RT;
   }
 
   // If the canonical form of this type isn't the right kind, reject it.
   if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType)) {
-    if (RT->getDecl()->getKind() != Decl::Struct)
+    if (!RT->getDecl()->isStruct())
       return 0;
     
     // If this is a typedef for a structure type, strip the typedef off without
@@ -371,13 +370,13 @@ const RecordType *Type::getAsStructureType() const {
 const RecordType *Type::getAsUnionType() const { 
   // If this is directly a union type, return it.
   if (const RecordType *RT = dyn_cast<RecordType>(this)) {
-    if (RT->getDecl()->getKind() == Decl::Union)
+    if (RT->getDecl()->isUnion())
       return RT;
   }
     
   // If the canonical form of this type isn't the right kind, reject it.
   if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType)) {
-    if (RT->getDecl()->getKind() != Decl::Union)
+    if (!RT->getDecl()->isUnion())
       return 0;
 
     // If this is a typedef for a union type, strip the typedef off without
@@ -470,7 +469,7 @@ bool Type::isIntegerType() const {
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::LongLong;
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
-    if (TT->getDecl()->getKind() == Decl::Enum)
+    if (TT->getDecl()->isEnum())
       return true;
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isIntegerType();
@@ -484,7 +483,7 @@ bool Type::isIntegralType() const {
     return BT->getKind() >= BuiltinType::Bool &&
     BT->getKind() <= BuiltinType::LongLong;
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
-    if (TT->getDecl()->getKind() == Decl::Enum)
+    if (TT->getDecl()->isEnum())
       return true;
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
     return ASQT->getBaseType()->isIntegralType();
@@ -493,7 +492,7 @@ bool Type::isIntegralType() const {
 
 bool Type::isEnumeralType() const {
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
-    return TT->getDecl()->getKind() == Decl::Enum;
+    return TT->getDecl()->isEnum();
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
     return ASQT->getBaseType()->isEnumeralType();
   return false;
@@ -587,7 +586,7 @@ bool Type::isRealType() const {
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::LongDouble;
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
-    return TT->getDecl()->getKind() == Decl::Enum;
+    return TT->getDecl()->isEnum();
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isRealType();
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
@@ -611,7 +610,7 @@ bool Type::isScalarType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() != BuiltinType::Void;
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType)) {
-    if (TT->getDecl()->getKind() == Decl::Enum)
+    if (TT->getDecl()->isEnum())
       return true;
     return false;
   }
@@ -623,7 +622,7 @@ bool Type::isScalarType() const {
 
 bool Type::isAggregateType() const {
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType)) {
-    if (TT->getDecl()->getKind() == Decl::Struct)
+    if (TT->getDecl()->isStruct())
       return true;
     return false;
   }

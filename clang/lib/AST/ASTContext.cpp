@@ -70,12 +70,12 @@ void ASTContext::PrintStats() const {
       ++NumTypeName;
     else if (TagType *TT = dyn_cast<TagType>(T)) {
       ++NumTagged;
-      switch (TT->getDecl()->getKind()) {
+      switch (TT->getDecl()->getTagKind()) {
       default: assert(0 && "Unknown tagged type!");
-      case Decl::Struct: ++NumTagStruct; break;
-      case Decl::Union:  ++NumTagUnion; break;
-      case Decl::Class:  ++NumTagClass; break; 
-      case Decl::Enum:   ++NumTagEnum; break;
+      case TagDecl::TK_struct: ++NumTagStruct; break;
+      case TagDecl::TK_union:  ++NumTagUnion; break;
+      case TagDecl::TK_class:  ++NumTagClass; break; 
+      case TagDecl::TK_enum:   ++NumTagEnum; break;
       }
     } else if (isa<ObjCInterfaceType>(T))
       ++NumObjCInterfaces;
@@ -458,7 +458,7 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
 
   NewEntry->InitializeLayout(D->getNumMembers());
   bool StructIsPacked = D->getAttr<PackedAttr>();
-  bool IsUnion = (D->getKind() == Decl::Union);
+  bool IsUnion = D->isUnion();
 
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
     NewEntry->SetAlignment(std::max(NewEntry->getAlignment(), 
@@ -1214,7 +1214,7 @@ int ASTContext::getIntegerTypeOrder(QualType LHS, QualType RHS) {
 QualType ASTContext::getCFConstantStringType() {
   if (!CFConstantStringTypeDecl) {
     CFConstantStringTypeDecl = 
-      RecordDecl::Create(*this, Decl::Struct, TUDecl, SourceLocation(), 
+      RecordDecl::Create(*this, TagDecl::TK_struct, TUDecl, SourceLocation(), 
                          &Idents.get("NSConstantString"), 0);
     QualType FieldTypes[4];
   

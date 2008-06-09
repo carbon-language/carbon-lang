@@ -101,10 +101,17 @@ EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
   return new (Mem) EnumDecl(DC, L, Id, PrevDecl);
 }
 
-RecordDecl *RecordDecl::Create(ASTContext &C, Kind DK, DeclContext *DC,
+RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id,
                                ScopedDecl *PrevDecl) {
   void *Mem = C.getAllocator().Allocate<RecordDecl>();
+  Kind DK;
+  switch (TK) {
+  case TK_enum:   assert(0 && "Enum TagKind passed for Record!");
+  case TK_struct: DK = Struct; break;
+  case TK_union:  DK = Union;  break;
+  case TK_class:  DK = Class;  break;
+  }
   return new (Mem) RecordDecl(DK, DC, L, Id, PrevDecl);
 }
 

@@ -285,7 +285,7 @@ void Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
 
   // C++ [class.union]p1:
   //   A union shall not have base classes.
-  if (Decl->getKind() == Decl::Union) {
+  if (Decl->isUnion()) {
     Diag(Decl->getLocation(), diag::err_base_clause_on_union,
          SpecifierRange);
     Decl->setInvalidDecl();

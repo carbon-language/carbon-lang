@@ -1637,13 +1637,13 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   assert((Name != 0 || TK == TK_Definition) &&
          "Nameless record must be a definition!");
   
-  Decl::Kind Kind;
+  TagDecl::TagKind Kind;
   switch (TagType) {
   default: assert(0 && "Unknown tag type!");
-  case DeclSpec::TST_struct: Kind = Decl::Struct; break;
-  case DeclSpec::TST_union:  Kind = Decl::Union; break;
-  case DeclSpec::TST_class:  Kind = Decl::Class; break;
-  case DeclSpec::TST_enum:   Kind = Decl::Enum; break;
+  case DeclSpec::TST_struct: Kind = TagDecl::TK_struct; break;
+  case DeclSpec::TST_union:  Kind = TagDecl::TK_union; break;
+  case DeclSpec::TST_class:  Kind = TagDecl::TK_class; break;
+  case DeclSpec::TST_enum:   Kind = TagDecl::TK_enum; break;
   }
   
   // If this is a named struct, check to see if there was a previous forward
@@ -1662,7 +1662,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
           IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
         // Make sure that this wasn't declared as an enum and now used as a struct
         // or something similar.
-        if (PrevDecl->getKind() != Kind) {
+        if (PrevTagDecl->getTagKind() != Kind) {
           Diag(KWLoc, diag::err_use_with_wrong_tag, Name->getName());
           Diag(PrevDecl->getLocation(), diag::err_previous_use);
         }
@@ -1705,22 +1705,18 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   
   // Otherwise, if this is the first time we've seen this tag, create the decl.
   TagDecl *New;
-  switch (Kind) {
-  default: assert(0 && "Unknown tag kind!");
-  case Decl::Enum:
+  if (Kind == TagDecl::TK_enum) {
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // enum X { A, B, C } D;    D should chain to X.
     New = EnumDecl::Create(Context, CurContext, Loc, Name, 0);
     // If this is an undefined enum, warn.
     if (TK != TK_Definition) Diag(Loc, diag::ext_forward_ref_enum);
-    break;
-  case Decl::Union:
-  case Decl::Struct:
-  case Decl::Class:
+  } else {
+    // struct/union/class
+
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // struct X { int A; } D;    D should chain to X.
     New = RecordDecl::Create(Context, Kind, CurContext, Loc, Name, 0);
-    break;
   }    
   
   // If this has an identifier, add it to the scope stack.
@@ -1959,7 +1955,7 @@ void Sema::ActOnFields(Scope* S,
         continue;
       }
       if (i != NumFields-1 ||                   // ... that the last member ...
-          Record->getKind() != Decl::Struct ||  // ... of a structure ...
+          !Record->isStruct() ||  // ... of a structure ...
           !FDTy->isArrayType()) {         //... may have incomplete array type.
         Diag(FD->getLocation(), diag::err_field_incomplete, FD->getName());
         FD->setInvalidDecl();
@@ -1982,7 +1978,7 @@ void Sema::ActOnFields(Scope* S,
     if (const RecordType *FDTTy = FDTy->getAsRecordType()) {
       if (FDTTy->getDecl()->hasFlexibleArrayMember()) {
         // If this is a member of a union, then entire union becomes "flexible".
-        if (Record && Record->getKind() == Decl::Union) {
+        if (Record && Record->isUnion()) {
           Record->setHasFlexibleArrayMember(true);
         } else {
           // If this is a struct/class and this is not the last element, reject

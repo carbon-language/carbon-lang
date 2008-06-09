@@ -836,7 +836,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
       std::string RecName = clsDeclared->getIdentifier()->getName();
       RecName += "_IMPL";
       IdentifierInfo *II = &Context->Idents.get(RecName.c_str());
-      RecordDecl *RD = RecordDecl::Create(*Context, Decl::Struct, TUDecl,
+      RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
                                           SourceLocation(), II, 0);
       assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
       QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
@@ -877,7 +877,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
       std::string RecName = clsDeclared->getIdentifier()->getName();
       RecName += "_IMPL";
       IdentifierInfo *II = &Context->Idents.get(RecName.c_str());
-      RecordDecl *RD = RecordDecl::Create(*Context, Decl::Struct, TUDecl,
+      RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
                                           SourceLocation(), II, 0);
       assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
       QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
@@ -1692,7 +1692,7 @@ void RewriteObjC::SynthMsgSendFunctionDecl() {
 void RewriteObjC::SynthMsgSendSuperFunctionDecl() {
   IdentifierInfo *msgSendIdent = &Context->Idents.get("objc_msgSendSuper");
   llvm::SmallVector<QualType, 16> ArgTys;
-  RecordDecl *RD = RecordDecl::Create(*Context, Decl::Struct, TUDecl,
+  RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
                                       SourceLocation(),
                                       &Context->Idents.get("objc_super"), 0);
   QualType argT = Context->getPointerType(Context->getTagDeclType(RD));
@@ -1735,7 +1735,7 @@ void RewriteObjC::SynthMsgSendSuperStretFunctionDecl() {
   IdentifierInfo *msgSendIdent = 
     &Context->Idents.get("objc_msgSendSuper_stret");
   llvm::SmallVector<QualType, 16> ArgTys;
-  RecordDecl *RD = RecordDecl::Create(*Context, Decl::Struct, TUDecl,
+  RecordDecl *RD = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
                                       SourceLocation(),
                                       &Context->Idents.get("objc_super"), 0);
   QualType argT = Context->getPointerType(Context->getTagDeclType(RD));
@@ -1878,7 +1878,7 @@ ObjCInterfaceDecl *RewriteObjC::isSuperReceiver(Expr *recExpr) {
 // struct objc_super { struct objc_object *receiver; struct objc_class *super; };
 QualType RewriteObjC::getSuperStructType() {
   if (!SuperStructDecl) {
-    SuperStructDecl = RecordDecl::Create(*Context, Decl::Struct, TUDecl,
+    SuperStructDecl = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
                                          SourceLocation(), 
                                          &Context->Idents.get("objc_super"), 0);
     QualType FieldTypes[2];
@@ -1901,7 +1901,7 @@ QualType RewriteObjC::getSuperStructType() {
 
 QualType RewriteObjC::getConstantStringStructType() {
   if (!ConstantStringDecl) {
-    ConstantStringDecl = RecordDecl::Create(*Context, Decl::Struct, TUDecl,
+    ConstantStringDecl = RecordDecl::Create(*Context, TagDecl::TK_struct, TUDecl,
                                             SourceLocation(), 
                          &Context->Idents.get("__NSConstantStringImpl"), 0);
     QualType FieldTypes[4];
@@ -3106,5 +3106,7 @@ void RewriteObjC::RewriteImplementations(std::string &Result) {
     Result += "#pragma data_seg(pop)\n\n";
   }
 }
+
+
 
 
