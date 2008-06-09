@@ -48,6 +48,7 @@ CGDebugInfo::CGDebugInfo(CodeGenModule *m)
 , VariableDescList()
 , GlobalVarDescList()
 , EnumDescList()
+, SubrangeDescList()
 , Subprogram(NULL)
 {
   SR = new llvm::DISerializer();
@@ -93,6 +94,12 @@ CGDebugInfo::~CGDebugInfo()
   // Free enum constants descriptors.
   for (std::vector<llvm::EnumeratorDesc *>::iterator I 
        = EnumDescList.begin(); I != EnumDescList.end(); ++I) {
+    delete *I;
+  }
+
+  // Free subrange descriptors.
+  for (std::vector<llvm::SubrangeDesc *>::iterator I
+       = SubrangeDescList.begin(); I != SubrangeDescList.end(); ++I) {
     delete *I;
   }
 
@@ -457,6 +464,52 @@ CGDebugInfo::getOrCreateEnumType(QualType type, llvm::CompileUnitDesc *Unit)
   return EnumTy;
 }
 
+/// getOrCreateArrayType - get or create array types.
+llvm::TypeDesc *
+CGDebugInfo::getOrCreateArrayType(QualType type, llvm::CompileUnitDesc *Unit)
+{
+  llvm::CompositeTypeDesc *ArrayTy 
+    = new llvm::CompositeTypeDesc(llvm::dwarf::DW_TAG_array_type);
+
+  // Size, align and offset of the type.
+  uint64_t Size = M->getContext().getTypeSize(type);
+  uint64_t Align = M->getContext().getTypeAlign(type);
+
+  SourceManager &SM = M->getContext().getSourceManager();
+  uint64_t Line = SM.getLogicalLineNumber(CurLoc);
+
+  // Add the dimensions of the array.
+  std::vector<llvm::DebugInfoDesc *> &Elements = ArrayTy->getElements();
+  do {
+    llvm::SubrangeDesc *Subrange = new llvm::SubrangeDesc();
+
+    // push it back on the subrange desc list so that we can free it later.
+    SubrangeDescList.push_back(Subrange);
+
+    uint64_t Upper = 0;
+    if (type->getTypeClass() == Type::ConstantArray) {
+      const ConstantArrayType *ConstArrTy = type->getAsConstantArrayType();
+      Upper = ConstArrTy->getSize().getZExtValue() - 1;
+    }
+    Subrange->setLo(0);
+    Subrange->setHi(Upper);
+    Elements.push_back(Subrange);
+    type = type->getAsArrayType()->getElementType();
+  } while (type->isArrayType());
+
+  ArrayTy->setFromType(getOrCreateType(type, Unit));
+
+  if (ArrayTy) {
+    ArrayTy->setContext(Unit);
+    ArrayTy->setSize(Size);
+    ArrayTy->setAlign(Align);
+    ArrayTy->setOffset(0);
+    ArrayTy->setFile(getOrCreateCompileUnit(CurLoc));
+    ArrayTy->setLine(Line);
+  }
+  return ArrayTy;
+}
+
 
 /// getOrCreateTaggedType - get or create structure/union/Enum type.
 llvm::TypeDesc *
@@ -492,9 +545,6 @@ CGDebugInfo::getOrCreateType(QualType type, llvm::CompileUnitDesc *Unit)
   switch(type->getTypeClass()) {
     case Type::Complex:
     case Type::Reference:
-    case Type::ConstantArray:
-    case Type::VariableArray:
-    case Type::IncompleteArray:
     case Type::Vector:
     case Type::ExtVector:
     case Type::ASQual:
@@ -527,6 +577,12 @@ CGDebugInfo::getOrCreateType(QualType type, llvm::CompileUnitDesc *Unit)
 
     case Type::Tagged:
       Slot = getOrCreateTaggedType(type, Unit);
+      break;
+
+    case Type::ConstantArray:
+    case Type::VariableArray:
+    case Type::IncompleteArray:
+      Slot = getOrCreateArrayType(type, Unit);
       break;
   }
 

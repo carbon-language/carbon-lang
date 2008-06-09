@@ -35,6 +35,7 @@ namespace llvm {
   class GlobalVariable;
   class GlobalVariableDesc;
   class EnumeratorDesc;
+  class SubrangeDesc;
 }
 
 namespace clang {
@@ -71,6 +72,7 @@ private:
   std::vector<llvm::VariableDesc *> VariableDescList;
   std::vector<llvm::GlobalVariableDesc *> GlobalVarDescList;
   std::vector<llvm::EnumeratorDesc *> EnumDescList;
+  std::vector<llvm::SubrangeDesc *> SubrangeDescList;
   llvm::SubprogramDesc *Subprogram;
 
   /// Helper functions for getOrCreateType.
@@ -89,6 +91,8 @@ private:
   llvm::TypeDesc *getOrCreateEnumType(QualType type,
                                      llvm::CompileUnitDesc *unit);
   llvm::TypeDesc *getOrCreateTaggedType(QualType type,
+                                     llvm::CompileUnitDesc *unit);
+  llvm::TypeDesc *getOrCreateArrayType(QualType type,
                                      llvm::CompileUnitDesc *unit);
 
 public:
