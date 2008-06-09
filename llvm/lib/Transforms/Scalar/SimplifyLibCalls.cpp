@@ -984,6 +984,27 @@ struct VISIBILITY_HIDDEN IsAsciiOpt : public LibCallOptimization {
     return B.CreateZExt(Op, CI->getType());
   }
 };
+  
+//===---------------------------------------===//
+// 'abs', 'labs', 'llabs' Optimizations
+
+struct VISIBILITY_HIDDEN AbsOpt : public LibCallOptimization {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder &B) {
+    const FunctionType *FT = Callee->getFunctionType();
+    // We require integer(integer) where the types agree.
+    if (FT->getNumParams() != 1 || !isa<IntegerType>(FT->getReturnType()) ||
+        FT->getParamType(0) != FT->getReturnType())
+      return 0;
+    
+    // abs(x) -> x >s -1 ? x : -x
+    Value *Op = CI->getOperand(1);
+    Value *Pos = B.CreateICmpSGT(Op,ConstantInt::getAllOnesValue(Op->getType()),
+                                 "ispos");
+    Value *Neg = B.CreateNeg(Op, "neg");
+    return B.CreateSelect(Pos, Op, Neg);
+  }
+};
+  
 
 //===---------------------------------------===//
 // 'toascii' Optimizations
@@ -1258,7 +1279,8 @@ namespace {
     // Math Library Optimizations
     PowOpt Pow; Exp2Opt Exp2; UnaryDoubleFPOpt UnaryDoubleFP;
     // Integer Optimizations
-    FFSOpt FFS; IsDigitOpt IsDigit; IsAsciiOpt IsAscii; ToAsciiOpt ToAscii;
+    FFSOpt FFS; AbsOpt Abs; IsDigitOpt IsDigit; IsAsciiOpt IsAscii;
+    ToAsciiOpt ToAscii;
     // Formatting and IO Optimizations
     SPrintFOpt SPrintF; PrintFOpt PrintF;
     FWriteOpt FWrite; FPutsOpt FPuts; FPrintFOpt FPrintF;
@@ -1328,6 +1350,9 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["ffs"] = &FFS;
   Optimizations["ffsl"] = &FFS;
   Optimizations["ffsll"] = &FFS;
+  Optimizations["abs"] = &Abs;
+  Optimizations["labs"] = &Abs;
+  Optimizations["llabs"] = &Abs;
   Optimizations["isdigit"] = &IsDigit;
   Optimizations["isascii"] = &IsAscii;
   Optimizations["toascii"] = &ToAscii;
