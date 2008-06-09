@@ -1775,18 +1775,17 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     if (LN0->getExtensionType() != ISD::SEXTLOAD &&
         LN0->isUnindexed() && N0.hasOneUse()) {
-      MVT EVT, LoadedVT;
-      if (N1C->getAPIntValue() == 255)
-        EVT = MVT::i8;
-      else if (N1C->getAPIntValue() == 65535)
-        EVT = MVT::i16;
-      else if (N1C->getAPIntValue() == ~0U)
-        EVT = MVT::i32;
-      else
-        EVT = MVT::Other;
-    
-      LoadedVT = LN0->getMemoryVT();
+      MVT EVT = MVT::Other;
+      uint32_t ActiveBits = N1C->getAPIntValue().getActiveBits();
+      if (ActiveBits > 0 && APIntOps::isMask(ActiveBits, N1C->getAPIntValue()))
+        EVT = MVT::getIntegerVT(ActiveBits);
+
+      MVT LoadedVT = LN0->getMemoryVT();
       if (EVT != MVT::Other && LoadedVT.bitsGT(EVT) &&
+          // Loading a non-byte sized integer is only valid if the extra bits
+          // in memory that complete the byte are zero, which is not known here.
+          // TODO: remove isSimple check when apint codegen support lands.
+          EVT.isSimple() && EVT.getSizeInBits() == EVT.getStoreSizeInBits() &&
           (!AfterLegalize || TLI.isLoadXLegal(ISD::ZEXTLOAD, EVT))) {
         MVT PtrType = N0.getOperand(1).getValueType();
         // For big endian targets, we need to add an offset to the pointer to
@@ -2385,15 +2384,10 @@ SDOperand DAGCombiner::visitSRA(SDNode *N) {
   // sext_inreg.
   if (N1C && N0.getOpcode() == ISD::SHL && N1 == N0.getOperand(1)) {
     unsigned LowBits = VT.getSizeInBits() - (unsigned)N1C->getValue();
-    MVT EVT;
-    switch (LowBits) {
-    default: EVT = MVT::Other; break;
-    case  1: EVT = MVT::i1;    break;
-    case  8: EVT = MVT::i8;    break;
-    case 16: EVT = MVT::i16;   break;
-    case 32: EVT = MVT::i32;   break;
-    }
-    if (EVT != MVT::Other && TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG, EVT))
+    MVT EVT = MVT::getIntegerVT(LowBits);
+    // TODO: turn on when apint codegen support lands.
+    // if (!AfterLegalize || TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG, EVT))
+    if (EVT.isSimple() && TLI.isOperationLegal(ISD::SIGN_EXTEND_INREG, EVT))
       return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0.getOperand(0),
                          DAG.getValueType(EVT));
   }
@@ -3184,11 +3178,10 @@ SDOperand DAGCombiner::ReduceLoadWidth(SDNode *N) {
   }
 
   if (ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse() &&
-      // Do not allow folding to i1 here.  i1 is implicitly stored in memory in
-      // zero extended form: by shrinking the load, we lose track of the fact
-      // that it is already zero extended.
-      // FIXME: This should be reevaluated.
-      VT != MVT::i1) {
+      // Do not allow folding to a non-byte-sized integer here.  These only
+      // load correctly if the extra bits in memory that complete the byte
+      // are zero, which is not known here.
+      VT.getSizeInBits() == VT.getStoreSizeInBits()) {
     assert(N0.getValueType().getSizeInBits() > EVTBits &&
            "Cannot truncate to larger type!");
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
@@ -3550,7 +3543,7 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT DstEltVT) {
     // Convert the input float vector to a int vector where the elements are the
     // same sizes.
     assert((SrcEltVT == MVT::f32 || SrcEltVT == MVT::f64) && "Unknown FP VT!");
-    MVT IntVT = SrcEltVT == MVT::f32 ? MVT::i32 : MVT::i64;
+    MVT IntVT = MVT::getIntegerVT(SrcEltVT.getSizeInBits());
     BV = ConstantFoldBIT_CONVERTofBUILD_VECTOR(BV, IntVT).Val;
     SrcEltVT = IntVT;
   }
@@ -3559,7 +3552,7 @@ ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *BV, MVT DstEltVT) {
   // convert to integer first, then to FP of the right size.
   if (DstEltVT.isFloatingPoint()) {
     assert((DstEltVT == MVT::f32 || DstEltVT == MVT::f64) && "Unknown FP VT!");
-    MVT TmpVT = DstEltVT == MVT::f32 ? MVT::i32 : MVT::i64;
+    MVT TmpVT = MVT::getIntegerVT(DstEltVT.getSizeInBits());
     SDNode *Tmp = ConstantFoldBIT_CONVERTofBUILD_VECTOR(BV, TmpVT).Val;
     
     // Next, convert to FP elements of the same size.
@@ -4058,7 +4051,7 @@ SDOperand DAGCombiner::visitBR_CC(SDNode *N) {
   CondCodeSDNode *CC = cast<CondCodeSDNode>(N->getOperand(1));
   SDOperand CondLHS = N->getOperand(2), CondRHS = N->getOperand(3);
   
-  // Use SimplifySetCC  to simplify SETCC's.
+  // Use SimplifySetCC to simplify SETCC's.
   SDOperand Simp = SimplifySetCC(MVT::i1, CondLHS, CondRHS, CC->get(), false);
   if (Simp.Val) AddToWorkList(Simp.Val);
 

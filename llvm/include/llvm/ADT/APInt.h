@@ -130,7 +130,7 @@ class APInt {
       // the word size (64).
       return *this;
 
-    // Mask out the hight bits.
+    // Mask out the high bits.
     uint64_t mask = ~uint64_t(0ULL) >> (APINT_BITS_PER_WORD - wordBits);
     if (isSingleWord())
       VAL &= mask;
@@ -1280,7 +1280,8 @@ inline bool isSignedIntN(uint32_t N, const APInt& APIVal) {
 /// @returns true if the argument APInt value is a sequence of ones
 /// starting at the least significant bit with the remainder zero.
 inline bool isMask(uint32_t numBits, const APInt& APIVal) {
-  return APIVal.getBoolValue() && ((APIVal + APInt(numBits,1)) & APIVal) == 0;
+  return numBits <= APIVal.getBitWidth() &&
+    APIVal == APInt::getLowBitsSet(APIVal.getBitWidth(), numBits);
 }
 
 /// @returns true if the argument APInt value contains a sequence of ones
