@@ -94,7 +94,7 @@ SDOperand DAGTypeLegalizer::PromoteResult_Constant(SDNode *N) {
   MVT VT = N->getValueType(0);
   // Zero extend things like i1, sign extend everything else.  It shouldn't
   // matter in theory which one we pick, but this tends to give better code?
-  unsigned Opc = VT != MVT::i1 ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
+  unsigned Opc = VT.isByteSized() ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
   SDOperand Result = DAG.getNode(Opc, TLI.getTypeToTransformTo(VT),
                                  SDOperand(N, 0));
   assert(isa<ConstantSDNode>(Result) && "Didn't constant fold ext?");

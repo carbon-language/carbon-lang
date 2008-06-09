@@ -1785,7 +1785,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
           // Loading a non-byte sized integer is only valid if the extra bits
           // in memory that complete the byte are zero, which is not known here.
           // TODO: remove isSimple check when apint codegen support lands.
-          EVT.isSimple() && EVT.getSizeInBits() == EVT.getStoreSizeInBits() &&
+          EVT.isSimple() && EVT.isByteSized() &&
           (!AfterLegalize || TLI.isLoadXLegal(ISD::ZEXTLOAD, EVT))) {
         MVT PtrType = N0.getOperand(1).getValueType();
         // For big endian targets, we need to add an offset to the pointer to
@@ -3181,7 +3181,7 @@ SDOperand DAGCombiner::ReduceLoadWidth(SDNode *N) {
       // Do not allow folding to a non-byte-sized integer here.  These only
       // load correctly if the extra bits in memory that complete the byte
       // are zero, which is not known here.
-      VT.getSizeInBits() == VT.getStoreSizeInBits()) {
+      VT.isByteSized()) {
     assert(N0.getValueType().getSizeInBits() > EVTBits &&
            "Cannot truncate to larger type!");
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);

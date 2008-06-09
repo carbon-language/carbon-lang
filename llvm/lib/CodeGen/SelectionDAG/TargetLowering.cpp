@@ -250,7 +250,7 @@ void TargetLowering::computeRegisterProperties() {
   NumRegistersForVT[MVT::isVoid] = 0;
 
   // Find the largest integer register class.
-  unsigned LargestIntReg = MVT::i128;
+  unsigned LargestIntReg = MVT::LAST_INTEGER_VALUETYPE;
   for (; RegClassForVT[LargestIntReg] == 0; --LargestIntReg)
     assert(LargestIntReg != MVT::i1 && "No integer registers defined!");
 

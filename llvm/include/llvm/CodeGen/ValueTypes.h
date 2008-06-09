@@ -261,6 +261,10 @@ namespace llvm {
               (isExtended() && isVector() && getSizeInBits()==128));
     }
 
+    /// isByteSized - Return true if the bit size is a multiple of 8.
+    inline bool isByteSized() const {
+      return (getSizeInBits() & 7) == 0;
+    }
 
     /// bitsGT - Return true if this has more bits than VT.
     inline bool bitsGT(MVT VT) const {
