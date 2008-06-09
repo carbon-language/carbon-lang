@@ -594,7 +594,10 @@ void Verifier::visitReturnInst(ReturnInst &RI) {
     Assert2(N == 0,
             "Found return instr that returns void in Function of non-void "
             "return type!", &RI, F->getReturnType());
-  else if (const StructType *STy = dyn_cast<StructType>(F->getReturnType())) {
+  else if (N == 1 && F->getReturnType() == RI.getOperand(0)->getType()) {
+    // Exactly one return value and it matches the return type. Good.
+  } else if (const StructType *STy = dyn_cast<StructType>(F->getReturnType())) {
+    // The return type is a struct; check for multiple return values.
     Assert2(STy->getNumElements() == N,
             "Incorrect number of return values in ret instruction!",
             &RI, F->getReturnType());
@@ -602,10 +605,18 @@ void Verifier::visitReturnInst(ReturnInst &RI) {
       Assert2(STy->getElementType(i) == RI.getOperand(i)->getType(),
               "Function return type does not match operand "
               "type of return inst!", &RI, F->getReturnType());
+  } else if (const ArrayType *ATy = dyn_cast<ArrayType>(F->getReturnType())) {
+    // The return type is an array; check for multiple return values.
+    Assert2(ATy->getNumElements() == N,
+            "Incorrect number of return values in ret instruction!",
+            &RI, F->getReturnType());
+    for (unsigned i = 0; i != N; ++i)
+      Assert2(ATy->getElementType() == RI.getOperand(i)->getType(),
+              "Function return type does not match operand "
+              "type of return inst!", &RI, F->getReturnType());
   } else {
-    Assert2(N == 1 && F->getReturnType() == RI.getOperand(0)->getType(),
-            "Function return type does not match operand "
-            "type of return inst!", &RI, F->getReturnType());
+    CheckFailed("Function return type does not match operand "
+                "type of return inst!", &RI, F->getReturnType());
   }
   
   // Check to make sure that the return value has necessary properties for
