@@ -221,10 +221,6 @@ namespace {
     if (CFP->getType() == Type::FloatTy)
       APF.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven);
     Out << "ConstantFP::get(";
-    if (CFP->getType() == Type::DoubleTy)
-      Out << "Type::DoubleTy, ";
-    else
-      Out << "Type::FloatTy, ";
     Out << "APFloat(";
 #if HAVE_PRINTF_A
     char Buffer[100];
