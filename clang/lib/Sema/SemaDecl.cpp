@@ -935,6 +935,97 @@ bool Sema::CheckAddressConstantExpression(const Expr* Init) {
   }
 }
 
+static const Expr* FindExpressionBaseAddress(const Expr* E);
+
+static const Expr* FindExpressionBaseAddressLValue(const Expr* E) {
+  switch (E->getStmtClass()) {
+  default:
+    return E;
+  case Expr::ParenExprClass: {
+    const ParenExpr* PE = cast<ParenExpr>(E);
+    return FindExpressionBaseAddressLValue(PE->getSubExpr());
+  }
+  case Expr::MemberExprClass: {
+    const MemberExpr *M = cast<MemberExpr>(E);
+    if (M->isArrow())
+      return FindExpressionBaseAddress(M->getBase());
+    return FindExpressionBaseAddressLValue(M->getBase());
+  }
+  case Expr::ArraySubscriptExprClass: {
+    const ArraySubscriptExpr *ASE = cast<ArraySubscriptExpr>(E);
+    return FindExpressionBaseAddress(ASE->getBase());
+  }
+  case Expr::UnaryOperatorClass: {
+    const UnaryOperator *Exp = cast<UnaryOperator>(E);
+
+    if (Exp->getOpcode() == UnaryOperator::Deref)
+      return FindExpressionBaseAddress(Exp->getSubExpr());
+
+    return E;
+  }
+  }
+}
+
+static const Expr* FindExpressionBaseAddress(const Expr* E) {
+  switch (E->getStmtClass()) {
+  default:
+    return E;
+  case Expr::ParenExprClass: {
+    const ParenExpr* PE = cast<ParenExpr>(E);
+    return FindExpressionBaseAddress(PE->getSubExpr());
+  }
+  case Expr::UnaryOperatorClass: {
+    const UnaryOperator *Exp = cast<UnaryOperator>(E);
+
+    // C99 6.6p9
+    if (Exp->getOpcode() == UnaryOperator::AddrOf)
+      return FindExpressionBaseAddressLValue(Exp->getSubExpr());
+
+    if (Exp->getOpcode() == UnaryOperator::Extension)
+      return FindExpressionBaseAddress(Exp->getSubExpr());
+  
+    return E;
+  }
+  case Expr::BinaryOperatorClass: {
+    const BinaryOperator *Exp = cast<BinaryOperator>(E);
+
+    Expr *PExp = Exp->getLHS();
+    Expr *IExp = Exp->getRHS();
+    if (IExp->getType()->isPointerType())
+      std::swap(PExp, IExp);
+
+    return FindExpressionBaseAddress(PExp);
+  }
+  case Expr::ImplicitCastExprClass: {
+    const Expr* SubExpr = cast<ImplicitCastExpr>(E)->getSubExpr();
+
+    // Check for implicit promotion
+    if (SubExpr->getType()->isFunctionType() ||
+        SubExpr->getType()->isArrayType())
+      return FindExpressionBaseAddressLValue(SubExpr);
+
+    // Check for pointer->pointer cast
+    if (SubExpr->getType()->isPointerType())
+      return FindExpressionBaseAddress(SubExpr);
+
+    // We assume that we have an arithmetic expression here;
+    // if we don't, we'll figure it out later
+    return 0;
+  }
+  case Expr::CastExprClass: {
+    const Expr* SubExpr = cast<CastExpr>(E)->getSubExpr();
+
+    // Check for pointer->pointer cast
+    if (SubExpr->getType()->isPointerType())
+      return FindExpressionBaseAddress(SubExpr);
+
+    // We assume that we have an arithmetic expression here;
+    // if we don't, we'll figure it out later
+    return 0;
+  }
+  }
+}
+
 bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
   switch (Init->getStmtClass()) {
   default:
@@ -1025,6 +1116,20 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
         Exp->getRHS()->getType()->isArithmeticType()) {
       return CheckArithmeticConstantExpression(Exp->getLHS()) ||
              CheckArithmeticConstantExpression(Exp->getRHS());
+    }
+
+    if (Exp->getLHS()->getType()->isPointerType() &&
+        Exp->getRHS()->getType()->isPointerType()) {
+      const Expr* LHSBase = FindExpressionBaseAddress(Exp->getLHS());
+      const Expr* RHSBase = FindExpressionBaseAddress(Exp->getRHS());
+
+      // Only allow a null (constant integer) base; we could
+      // allow some additional cases if necessary, but this
+      // is sufficient to cover offsetof-like constructs.
+      if (!LHSBase && !RHSBase) {
+        return CheckAddressConstantExpression(Exp->getLHS()) ||
+               CheckAddressConstantExpression(Exp->getRHS());
+      }
     }
 
     Diag(Init->getExprLoc(),

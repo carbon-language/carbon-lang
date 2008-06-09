@@ -9,5 +9,4 @@ char a;
 
 const zend_ini_entry ini_entries[] = {
 	{  ((char*)&((zend_ini_entry*)0)->mh_arg1 - (char*)(void*)0)},
-	{  ((long long*)&a - (long long*)(void*)2)},
 };
