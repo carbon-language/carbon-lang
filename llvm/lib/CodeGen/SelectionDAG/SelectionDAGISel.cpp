@@ -4573,47 +4573,53 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   unsigned j = 1;
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
        I != E; ++I, ++j) {
-    MVT VT = getValueType(I->getType());
-    ISD::ArgFlagsTy Flags;
-    unsigned OriginalAlignment =
-      getTargetData()->getABITypeAlignment(I->getType());
+    SmallVector<MVT, 4> ValueVTs;
+    ComputeValueVTs(*this, I->getType(), ValueVTs);
+    for (unsigned Value = 0, NumValues = ValueVTs.size();
+         Value != NumValues; ++Value) {
+      MVT VT = ValueVTs[Value];
+      const Type *ArgTy = VT.getTypeForMVT();
+      ISD::ArgFlagsTy Flags;
+      unsigned OriginalAlignment =
+        getTargetData()->getABITypeAlignment(ArgTy);
 
-    if (F.paramHasAttr(j, ParamAttr::ZExt))
-      Flags.setZExt();
-    if (F.paramHasAttr(j, ParamAttr::SExt))
-      Flags.setSExt();
-    if (F.paramHasAttr(j, ParamAttr::InReg))
-      Flags.setInReg();
-    if (F.paramHasAttr(j, ParamAttr::StructRet))
-      Flags.setSRet();
-    if (F.paramHasAttr(j, ParamAttr::ByVal)) {
-      Flags.setByVal();
-      const PointerType *Ty = cast<PointerType>(I->getType());
-      const Type *ElementTy = Ty->getElementType();
-      unsigned FrameAlign = getByValTypeAlignment(ElementTy);
-      unsigned FrameSize  = getTargetData()->getABITypeSize(ElementTy);
-      // For ByVal, alignment should be passed from FE.  BE will guess if
-      // this info is not there but there are cases it cannot get right.
-      if (F.getParamAlignment(j))
-        FrameAlign = F.getParamAlignment(j);
-      Flags.setByValAlign(FrameAlign);
-      Flags.setByValSize(FrameSize);
-    }
-    if (F.paramHasAttr(j, ParamAttr::Nest))
-      Flags.setNest();
-    Flags.setOrigAlign(OriginalAlignment);
+      if (F.paramHasAttr(j, ParamAttr::ZExt))
+        Flags.setZExt();
+      if (F.paramHasAttr(j, ParamAttr::SExt))
+        Flags.setSExt();
+      if (F.paramHasAttr(j, ParamAttr::InReg))
+        Flags.setInReg();
+      if (F.paramHasAttr(j, ParamAttr::StructRet))
+        Flags.setSRet();
+      if (F.paramHasAttr(j, ParamAttr::ByVal)) {
+        Flags.setByVal();
+        const PointerType *Ty = cast<PointerType>(I->getType());
+        const Type *ElementTy = Ty->getElementType();
+        unsigned FrameAlign = getByValTypeAlignment(ElementTy);
+        unsigned FrameSize  = getTargetData()->getABITypeSize(ElementTy);
+        // For ByVal, alignment should be passed from FE.  BE will guess if
+        // this info is not there but there are cases it cannot get right.
+        if (F.getParamAlignment(j))
+          FrameAlign = F.getParamAlignment(j);
+        Flags.setByValAlign(FrameAlign);
+        Flags.setByValSize(FrameSize);
+      }
+      if (F.paramHasAttr(j, ParamAttr::Nest))
+        Flags.setNest();
+      Flags.setOrigAlign(OriginalAlignment);
 
-    MVT RegisterVT = getRegisterType(VT);
-    unsigned NumRegs = getNumRegisters(VT);
-    for (unsigned i = 0; i != NumRegs; ++i) {
-      RetVals.push_back(RegisterVT);
-      ISD::ArgFlagsTy MyFlags = Flags;
-      if (NumRegs > 1 && i == 0)
-        MyFlags.setSplit();
-      // if it isn't first piece, alignment must be 1
-      else if (i > 0)
-        MyFlags.setOrigAlign(1);
-      Ops.push_back(DAG.getArgFlags(MyFlags));
+      MVT RegisterVT = getRegisterType(VT);
+      unsigned NumRegs = getNumRegisters(VT);
+      for (unsigned i = 0; i != NumRegs; ++i) {
+        RetVals.push_back(RegisterVT);
+        ISD::ArgFlagsTy MyFlags = Flags;
+        if (NumRegs > 1 && i == 0)
+          MyFlags.setSplit();
+        // if it isn't first piece, alignment must be 1
+        else if (i > 0)
+          MyFlags.setOrigAlign(1);
+        Ops.push_back(DAG.getArgFlags(MyFlags));
+      }
     }
   }
 
@@ -4646,22 +4652,27 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   unsigned Idx = 1;
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; 
       ++I, ++Idx) {
-    MVT VT = getValueType(I->getType());
-    MVT PartVT = getRegisterType(VT);
+    SmallVector<MVT, 4> ValueVTs;
+    ComputeValueVTs(*this, I->getType(), ValueVTs);
+    for (unsigned Value = 0, NumValues = ValueVTs.size();
+         Value != NumValues; ++Value) {
+      MVT VT = ValueVTs[Value];
+      MVT PartVT = getRegisterType(VT);
 
-    unsigned NumParts = getNumRegisters(VT);
-    SmallVector<SDOperand, 4> Parts(NumParts);
-    for (unsigned j = 0; j != NumParts; ++j)
-      Parts[j] = SDOperand(Result, i++);
+      unsigned NumParts = getNumRegisters(VT);
+      SmallVector<SDOperand, 4> Parts(NumParts);
+      for (unsigned j = 0; j != NumParts; ++j)
+        Parts[j] = SDOperand(Result, i++);
 
-    ISD::NodeType AssertOp = ISD::DELETED_NODE;
-    if (F.paramHasAttr(Idx, ParamAttr::SExt))
-      AssertOp = ISD::AssertSext;
-    else if (F.paramHasAttr(Idx, ParamAttr::ZExt))
-      AssertOp = ISD::AssertZext;
+      ISD::NodeType AssertOp = ISD::DELETED_NODE;
+      if (F.paramHasAttr(Idx, ParamAttr::SExt))
+        AssertOp = ISD::AssertSext;
+      else if (F.paramHasAttr(Idx, ParamAttr::ZExt))
+        AssertOp = ISD::AssertZext;
 
-    Ops.push_back(getCopyFromParts(DAG, &Parts[0], NumParts, PartVT, VT,
-                                   AssertOp));
+      Ops.push_back(getCopyFromParts(DAG, &Parts[0], NumParts, PartVT, VT,
+                                     AssertOp));
+    }
   }
   assert(i == NumArgRegs && "Argument register count mismatch!");
   return Ops;
@@ -4687,59 +4698,65 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   
   // Handle all of the outgoing arguments.
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-    MVT VT = getValueType(Args[i].Ty);
-    SDOperand Op = Args[i].Node;
-    ISD::ArgFlagsTy Flags;
-    unsigned OriginalAlignment =
-      getTargetData()->getABITypeAlignment(Args[i].Ty);
+    SmallVector<MVT, 4> ValueVTs;
+    ComputeValueVTs(*this, Args[i].Ty, ValueVTs);
+    for (unsigned Value = 0, NumValues = ValueVTs.size();
+         Value != NumValues; ++Value) {
+      MVT VT = ValueVTs[Value];
+      const Type *ArgTy = VT.getTypeForMVT();
+      SDOperand Op = SDOperand(Args[i].Node.Val, Args[i].Node.ResNo + Value);
+      ISD::ArgFlagsTy Flags;
+      unsigned OriginalAlignment =
+        getTargetData()->getABITypeAlignment(ArgTy);
 
-    if (Args[i].isZExt)
-      Flags.setZExt();
-    if (Args[i].isSExt)
-      Flags.setSExt();
-    if (Args[i].isInReg)
-      Flags.setInReg();
-    if (Args[i].isSRet)
-      Flags.setSRet();
-    if (Args[i].isByVal) {
-      Flags.setByVal();
-      const PointerType *Ty = cast<PointerType>(Args[i].Ty);
-      const Type *ElementTy = Ty->getElementType();
-      unsigned FrameAlign = getByValTypeAlignment(ElementTy);
-      unsigned FrameSize  = getTargetData()->getABITypeSize(ElementTy);
-      // For ByVal, alignment should come from FE.  BE will guess if this
-      // info is not there but there are cases it cannot get right.
-      if (Args[i].Alignment)
-        FrameAlign = Args[i].Alignment;
-      Flags.setByValAlign(FrameAlign);
-      Flags.setByValSize(FrameSize);
-    }
-    if (Args[i].isNest)
-      Flags.setNest();
-    Flags.setOrigAlign(OriginalAlignment);
+      if (Args[i].isZExt)
+        Flags.setZExt();
+      if (Args[i].isSExt)
+        Flags.setSExt();
+      if (Args[i].isInReg)
+        Flags.setInReg();
+      if (Args[i].isSRet)
+        Flags.setSRet();
+      if (Args[i].isByVal) {
+        Flags.setByVal();
+        const PointerType *Ty = cast<PointerType>(Args[i].Ty);
+        const Type *ElementTy = Ty->getElementType();
+        unsigned FrameAlign = getByValTypeAlignment(ElementTy);
+        unsigned FrameSize  = getTargetData()->getABITypeSize(ElementTy);
+        // For ByVal, alignment should come from FE.  BE will guess if this
+        // info is not there but there are cases it cannot get right.
+        if (Args[i].Alignment)
+          FrameAlign = Args[i].Alignment;
+        Flags.setByValAlign(FrameAlign);
+        Flags.setByValSize(FrameSize);
+      }
+      if (Args[i].isNest)
+        Flags.setNest();
+      Flags.setOrigAlign(OriginalAlignment);
 
-    MVT PartVT = getRegisterType(VT);
-    unsigned NumParts = getNumRegisters(VT);
-    SmallVector<SDOperand, 4> Parts(NumParts);
-    ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
+      MVT PartVT = getRegisterType(VT);
+      unsigned NumParts = getNumRegisters(VT);
+      SmallVector<SDOperand, 4> Parts(NumParts);
+      ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
 
-    if (Args[i].isSExt)
-      ExtendKind = ISD::SIGN_EXTEND;
-    else if (Args[i].isZExt)
-      ExtendKind = ISD::ZERO_EXTEND;
+      if (Args[i].isSExt)
+        ExtendKind = ISD::SIGN_EXTEND;
+      else if (Args[i].isZExt)
+        ExtendKind = ISD::ZERO_EXTEND;
 
-    getCopyToParts(DAG, Op, &Parts[0], NumParts, PartVT, ExtendKind);
+      getCopyToParts(DAG, Op, &Parts[0], NumParts, PartVT, ExtendKind);
 
-    for (unsigned i = 0; i != NumParts; ++i) {
-      // if it isn't first piece, alignment must be 1
-      ISD::ArgFlagsTy MyFlags = Flags;
-      if (NumParts > 1 && i == 0)
-        MyFlags.setSplit();
-      else if (i != 0)
-        MyFlags.setOrigAlign(1);
+      for (unsigned i = 0; i != NumParts; ++i) {
+        // if it isn't first piece, alignment must be 1
+        ISD::ArgFlagsTy MyFlags = Flags;
+        if (NumParts > 1 && i == 0)
+          MyFlags.setSplit();
+        else if (i != 0)
+          MyFlags.setOrigAlign(1);
 
-      Ops.push_back(Parts[i]);
-      Ops.push_back(DAG.getArgFlags(MyFlags));
+        Ops.push_back(Parts[i]);
+        Ops.push_back(DAG.getArgFlags(MyFlags));
+      }
     }
   }
   
@@ -4888,10 +4905,18 @@ LowerArguments(BasicBlock *LLVMBB, SelectionDAGLowering &SDL) {
 
   unsigned a = 0;
   for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end();
-       AI != E; ++AI, ++a)
+       AI != E; ++AI) {
+    SmallVector<MVT, 4> ValueVTs;
+    ComputeValueVTs(TLI, AI->getType(), ValueVTs);
+    unsigned NumValues = ValueVTs.size();
     if (!AI->use_empty()) {
-      SDL.setValue(AI, Args[a]);
-
+      SmallVector<MVT, 4> LegalValueVTs(NumValues);
+      for (unsigned VI = 0; VI != NumValues; ++VI) 
+        LegalValueVTs[VI] = Args[a + VI].getValueType();
+      SDL.setValue(AI, SDL.DAG.getNode(ISD::MERGE_VALUES,
+                                       SDL.DAG.getVTList(&LegalValueVTs[0],
+                                                         NumValues),
+                                       &Args[a], NumValues));
       // If this argument is live outside of the entry block, insert a copy from
       // whereever we got it to the vreg that other BB's will reference it as.
       DenseMap<const Value*, unsigned>::iterator VMI=FuncInfo.ValueMap.find(AI);
@@ -4899,6 +4924,8 @@ LowerArguments(BasicBlock *LLVMBB, SelectionDAGLowering &SDL) {
         SDL.CopyValueToVirtualRegister(AI, VMI->second);
       }
     }
+    a += NumValues;
+  }
 
   // Finally, if the target has anything special to do, allow it to do so.
   // FIXME: this should insert code into the DAG!
