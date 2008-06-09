@@ -867,31 +867,21 @@ namespace {
 
 class ASTSerializer : public ASTConsumer {
 protected:
-  Diagnostic &Diags;
   TranslationUnit* TU;
 
 public:
-  ASTSerializer(Diagnostic& diags) : Diags(diags), TU(0) {}
-    
-  virtual ~ASTSerializer() { delete TU; }
-  
-  virtual void InitializeTU(TranslationUnit &TU) {
-    TU.SetOwnsDecls(false);
+  ASTSerializer() : TU(0) {}
+
+  virtual void InitializeTU(TranslationUnit &tu) {
+    TU = &tu;
   }
-  
-  virtual void HandleTopLevelDecl(Decl *D) {
-    if (Diags.hasErrorOccurred())
-      return;
-    
-    if (TU) TU->AddTopLevelDecl(D);
-  }
+
 };
-    
+
 class SingleFileSerializer : public ASTSerializer {
   const llvm::sys::Path FName;
 public:
-  SingleFileSerializer(const llvm::sys::Path& F, Diagnostic &diags)
-  : ASTSerializer(diags), FName(F) {}    
+  SingleFileSerializer(const llvm::sys::Path& F) : FName(F) {}    
   
   ~SingleFileSerializer() {
     EmitASTBitcodeFile(TU, FName);
@@ -901,8 +891,7 @@ public:
 class BuildSerializer : public ASTSerializer {
   llvm::sys::Path EmitDir;  
 public:
-  BuildSerializer(const llvm::sys::Path& dir, Diagnostic &diags)
-  : ASTSerializer(diags), EmitDir(dir) {}
+  BuildSerializer(const llvm::sys::Path& dir) : EmitDir(dir) {}
   
   ~BuildSerializer() {
 
@@ -977,7 +966,7 @@ ASTConsumer* clang::CreateASTSerializer(const std::string& InFile,
     
     // FIXME: We should probably only allow using BuildSerializer when
     // the ASTs come from parsed source files, and not from .ast files.
-    return new BuildSerializer(EmitDir, Diags);
+    return new BuildSerializer(EmitDir);
   }
 
   // The user did not specify an output directory for serialized ASTs.
@@ -986,5 +975,5 @@ ASTConsumer* clang::CreateASTSerializer(const std::string& InFile,
   
   llvm::sys::Path FName(InFile.c_str());
   FName.appendSuffix("ast");
-  return new SingleFileSerializer(FName, Diags);  
+  return new SingleFileSerializer(FName);
 }
