@@ -161,9 +161,9 @@ specific virtual machine optimizations. vmkit is not an official part of LLVM
 downloaded from:
 </p>
 
-<p>
-<tt>svn co http://llvm.org/svn/llvm-project/vmkit/trunk vmkit</tt>
-</p>
+<div class="doc_code">
+<pre>svn co http://llvm.org/svn/llvm-project/vmkit/trunk vmkit</pre>
+</div>
 
 </div>
 
@@ -280,7 +280,8 @@ for the C, C++, Objective-C, Ada, and Fortran front-ends.</p>
 <li>llvm-gcc 4.2 includes numerous fixes to better support the Objective-C
 front-end.  Objective-C now works very well on Mac OS/X.</li>
 
-<li>Fortran EQUIVALENCEs are now supported by the gfortran front-end.</li>
+<li>Fortran <tt>EQUIVALENCE</tt>s are now supported by the gfortran
+front-end.</li>
 
 <li>llvm-gcc 4.2 includes many other fixes which improve conformance with the
 relevant parts of the GCC testsuite.</li>
@@ -303,10 +304,10 @@ relevant parts of the GCC testsuite.</li>
 <li>LLVM IR now directly represents "common" linkage, instead of representing it
 as a form of weak linkage.</li>
 
-<li>LLVM IR now has support for atomic operations, and this functionality can
-be accessed through the llvm-gcc "__sync_synchronize",
-"__sync_val_compare_and_swap", and related builtins.  Support for atomics are
-available in the Alpha, X86, X86-64, and PowerPC backends.</li>
+<li>LLVM IR now has support for atomic operations, and this functionality can be
+accessed through the llvm-gcc "<tt>__sync_synchronize</tt>",
+"<tt>__sync_val_compare_and_swap</tt>", and related builtins.  Support for
+atomics are available in the Alpha, X86, X86-64, and PowerPC backends.</li>
 
 <li>The C and Ocaml bindings have extended to cover pass managers, several
 transformation passes, iteration over the LLVM IR, target data, and parameter
@@ -331,19 +332,24 @@ LLVM 2.3 optimizers support a few major enhancements:</p>
 This transformation hoists conditions from loop bodies and reduces a loop's
 iteration space to improve performance. For example,</p>
 
+<div class="doc_code">
 <pre>
 for (i = LB; i &lt; UB; ++i)
   if (i &lt;= NV)
     LOOP_BODY
 </pre>
+</div>
 
 <p>is transformed into:</p>
 
+<p><div class="doc_code">
 <pre>
 NUB = min(NV+1, UB)
 for (i = LB; i &lt; NUB; ++i)
   LOOP_BODY
 </pre>
+</div>
+</p>
 </li>
 
 <li>LLVM now includes a new <tt>memcpy</tt> optimization pass which removes
