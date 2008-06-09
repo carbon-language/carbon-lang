@@ -93,9 +93,9 @@ is:</p>
     href="http://llvm.org/docs/ProgrammersManual.html#ViewGraph">set up graphviz
      and rebuild llvm first</a>)</li>
     <li><tt>clang file.c -emit-llvm</tt> (print out unoptimized llvm code)</li>
-    <li><tt>clang file.c -emit-llvm | llvm-as | opt -std-compile-opts |
+    <li><tt>clang file.c -emit-llvm -o - | llvm-as | opt -std-compile-opts |
          llvm-dis</tt> (print out optimized llvm code)</li>
-    <li><tt>clang file.c -emit-llvm | llvm-as | opt -std-compile-opts | llc
+    <li><tt>clang file.c -emit-llvm -o - | llvm-as | opt -std-compile-opts | llc
          &gt; file.s</tt> (output native machine code)</li>
   </ul>
 </ol>
@@ -181,19 +181,19 @@ V foo(V a, V b) {
 <h4>Code generation with LLVM:</h4>
 
 <pre class="code">
-$ <b>clang ~/t.c -emit-llvm | llvm-as | opt -std-compile-opts | llvm-dis</b>
+$ <b>clang ~/t.c -emit-llvm -o - | llvm-as | opt -std-compile-opts | llvm-dis</b>
 define &lt;4 x float&gt; @foo(&lt;4 x float&gt; %a, &lt;4 x float&gt; %b) {
 entry:
          %mul = mul &lt;4 x float&gt; %b, %a
          %add = add &lt;4 x float&gt; %mul, %a
          ret &lt;4 x float&gt; %add
 }
-$ <b>clang ~/t.c -emit-llvm | llvm-as | opt -std-compile-opts | llc -march=ppc32 -mcpu=g5</b>
+$ <b>clang ~/t.c -emit-llvm -o - | llvm-as | opt -std-compile-opts | llc -march=ppc32 -mcpu=g5</b>
 ..
 _foo:
          vmaddfp v2, v3, v2, v2
          blr
-$ <b>clang ~/t.c -emit-llvm | llvm-as | opt -std-compile-opts | llc -march=x86 -mcpu=yonah</b>
+$ <b>clang ~/t.c -emit-llvm -o - | llvm-as | opt -std-compile-opts | llc -march=x86 -mcpu=yonah</b>
 ..
 _foo:
          mulps %xmm0, %xmm1
