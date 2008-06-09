@@ -916,20 +916,26 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // the declarations, we aren't adding anything.
       if (SF->hasDLLImportLinkage()) {
         if (DF->isDeclaration()) {
-          ValueMap.insert(std::make_pair(SF, DF));
+          ValueMap[SF] = DF;
           DF->setLinkage(SF->getLinkage());          
-        }        
+        }
       } else {
         ValueMap[SF] = DF;
-      }      
-    } else if (DF->isDeclaration() && !DF->hasDLLImportLinkage()) {
-      // If DF is external but SF is not...
-      // Link the external functions, update linkage qualifiers
+      }
+      continue;
+    }
+    
+    // If DF is external but SF is not, link the external functions, update
+    // linkage qualifiers.
+    if (DF->isDeclaration() && !DF->hasDLLImportLinkage()) {
       ValueMap.insert(std::make_pair(SF, DF));
       DF->setLinkage(SF->getLinkage());
-    } else if (SF->hasWeakLinkage() || SF->hasLinkOnceLinkage() ||
-               SF->hasCommonLinkage()) {
-      // At this point we know that DF has LinkOnce, Weak, or External* linkage.
+      continue;
+    }
+    
+    // At this point we know that DF has LinkOnce, Weak, or External* linkage.
+    if (SF->hasWeakLinkage() || SF->hasLinkOnceLinkage() ||
+        SF->hasCommonLinkage()) {
       ValueMap[SF] = DF;
 
       // Linkonce+Weak = Weak
@@ -938,24 +944,34 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
               (SF->hasWeakLinkage() || SF->hasCommonLinkage())) ||
           DF->hasExternalWeakLinkage())
         DF->setLinkage(SF->getLinkage());
-    } else if (DF->hasWeakLinkage() || DF->hasLinkOnceLinkage() ||
-               DF->hasCommonLinkage()) {
+      continue;
+    }
+    
+    if (DF->hasWeakLinkage() || DF->hasLinkOnceLinkage() ||
+        DF->hasCommonLinkage()) {
       // At this point we know that SF has LinkOnce or External* linkage.
       ValueMap[SF] = DF;
-      if (!SF->hasLinkOnceLinkage() && !SF->hasExternalWeakLinkage())
-        // Don't inherit linkonce & external weak linkage
+      
+      // If the source function has stronger linkage than the destination, 
+      // its body and linkage should override ours.
+      if (!SF->hasLinkOnceLinkage() && !SF->hasExternalWeakLinkage()) {
+        // Don't inherit linkonce & external weak linkage.
         DF->setLinkage(SF->getLinkage());
-    } else if (SF->getLinkage() != DF->getLinkage()) {
-        return Error(Err, "Functions named '" + SF->getName() +
-                     "' have different linkage specifiers!");
-    } else if (SF->hasExternalLinkage()) {
-      // The function is defined identically in both modules!!
+        DF->deleteBody();
+      }
+      continue;
+    }
+    
+    if (SF->getLinkage() != DF->getLinkage())
+      return Error(Err, "Functions named '" + SF->getName() +
+                   "' have different linkage specifiers!");
+
+    // The function is defined identically in both modules!
+    if (SF->hasExternalLinkage())
       return Error(Err, "Function '" +
                    ToStr(SF->getFunctionType(), Src) + "':\"" +
                    SF->getName() + "\" - Function is already defined!");
-    } else {
-      assert(0 && "Unknown linkage configuration found!");
-    }
+    assert(0 && "Unknown linkage configuration found!");
   }
   return false;
 }
