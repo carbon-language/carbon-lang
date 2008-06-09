@@ -295,6 +295,13 @@ ConstValueRef ::= ESINT64VAL
  | undef
  | zeroinitializer
  | "<" ConstVector ">"
+ | "[" ConstVector "]"
+ | "[" "]"
+ | "c" ^ STRINGCONSTANT
+ | "{" ConstVector "}"
+ | "{" "}"
+ | "<" ^ "{" ConstVector "}" ^ ">"
+ | "<" ^ "{" "}" ^ ">"
  | ConstExpr
  | asm OptSideEffect STRINGCONSTANT ^ "," STRINGCONSTANT ;
 

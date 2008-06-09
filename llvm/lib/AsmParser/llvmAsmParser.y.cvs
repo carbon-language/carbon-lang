@@ -2485,13 +2485,7 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
       GEN_ERROR("Invalid vector element type: " + ETy->getDescription());
     
     VectorType* pt = VectorType::get(ETy, NumElements);
-    PATypeHolder* PTy = new PATypeHolder(
-                                         HandleUpRefs(
-                                            VectorType::get(
-                                                ETy, 
-                                                NumElements)
-                                            )
-                                         );
+    PATypeHolder* PTy = new PATypeHolder(HandleUpRefs(pt));
     
     // Verify all elements are correct type!
     for (unsigned i = 0; i < $2->size(); i++) {
@@ -2503,6 +2497,80 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
 
     $$ = ValID::create(ConstantVector::get(pt, *$2));
     delete PTy; delete $2;
+    CHECK_FOR_ERROR
+  }
+  | '[' ConstVector ']' { // Nonempty unsized arr
+    const Type *ETy = (*$2)[0]->getType();
+    int NumElements = $2->size(); 
+
+    if (!ETy->isFirstClassType())
+      GEN_ERROR("Invalid array element type: " + ETy->getDescription());
+
+    ArrayType *ATy = ArrayType::get(ETy, NumElements);
+    PATypeHolder* PTy = new PATypeHolder(HandleUpRefs(ATy));
+
+    // Verify all elements are correct type!
+    for (unsigned i = 0; i < $2->size(); i++) {
+      if (ETy != (*$2)[i]->getType())
+        GEN_ERROR("Element #" + utostr(i) + " is not of type '" + 
+                       ETy->getDescription() +"' as required!\nIt is of type '"+
+                       (*$2)[i]->getType()->getDescription() + "'.");
+    }
+
+    $$ = ValID::create(ConstantArray::get(ATy, *$2));
+    delete PTy; delete $2;
+    CHECK_FOR_ERROR
+  }
+  | '[' ']' {
+    $$ = ValID::createUndef();
+    CHECK_FOR_ERROR
+  }
+  | 'c' STRINGCONSTANT {
+    int NumElements = $2->length();
+    const Type *ETy = Type::Int8Ty;
+
+    ArrayType *ATy = ArrayType::get(ETy, NumElements);
+
+    std::vector<Constant*> Vals;
+    for (unsigned i = 0; i < $2->length(); ++i)
+      Vals.push_back(ConstantInt::get(ETy, (*$2)[i]));
+    delete $2;
+    $$ = ValID::create(ConstantArray::get(ATy, Vals));
+    CHECK_FOR_ERROR
+  }
+  | '{' ConstVector '}' {
+    std::vector<const Type*> Elements($2->size());
+    for (unsigned i = 0, e = $2->size(); i != e; ++i)
+      Elements[i] = (*$2)[i]->getType();
+
+    const StructType *STy = StructType::get(Elements);
+    PATypeHolder* PTy = new PATypeHolder(HandleUpRefs(STy));
+
+    $$ = ValID::create(ConstantStruct::get(STy, *$2));
+    delete PTy; delete $2;
+    CHECK_FOR_ERROR
+  }
+  | '{' '}' {
+    const StructType *STy = StructType::get(std::vector<const Type*>());
+    $$ = ValID::create(ConstantStruct::get(STy, std::vector<Constant*>()));
+    CHECK_FOR_ERROR
+  }
+  | '<' '{' ConstVector '}' '>' {
+    std::vector<const Type*> Elements($3->size());
+    for (unsigned i = 0, e = $3->size(); i != e; ++i)
+      Elements[i] = (*$3)[i]->getType();
+
+    const StructType *STy = StructType::get(Elements, /*isPacked=*/true);
+    PATypeHolder* PTy = new PATypeHolder(HandleUpRefs(STy));
+
+    $$ = ValID::create(ConstantStruct::get(STy, *$3));
+    delete PTy; delete $3;
+    CHECK_FOR_ERROR
+  }
+  | '<' '{' '}' '>' {
+    const StructType *STy = StructType::get(std::vector<const Type*>(),
+                                            /*isPacked=*/true);
+    $$ = ValID::create(ConstantStruct::get(STy, std::vector<Constant*>()));
     CHECK_FOR_ERROR
   }
   | ConstExpr {
