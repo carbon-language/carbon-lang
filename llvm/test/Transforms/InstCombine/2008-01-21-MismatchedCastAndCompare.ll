@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -instcombine | notcast
-; RUN: llvm-as < %s | opt -instcombine | not grep {icmp s}
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | notcast
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep {icmp s}
 ; PR1940
 
 define i1 @test1(i8 %A, i8 %B) {
