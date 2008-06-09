@@ -1442,6 +1442,40 @@ namespace {
       Out << "\", " << bbname << ");";
       break;
     }
+    case Instruction::ExtractValue: {
+      const ExtractValueInst *evi = cast<ExtractValueInst>(I);
+      Out << "std::vector<unsigned> " << iName << "_indices;";
+      nl(Out);
+      for (unsigned i = 0; i < evi->getNumIndices(); ++i) {
+        Out << iName << "_indices.push_back("
+            << evi->idx_begin()[i] << ");";
+        nl(Out);
+      }
+      Out << "ExtractValueInst* " << getCppName(evi)
+          << " = ExtractValueInst::Create(" << opNames[0]
+          << ", "
+          << iName << "_indices.begin(), " << iName << "_indices.end(), \"";
+      printEscapedString(evi->getName());
+      Out << "\", " << bbname << ");";
+      break;
+    }
+    case Instruction::InsertValue: {
+      const InsertValueInst *ivi = cast<InsertValueInst>(I);
+      Out << "std::vector<unsigned> " << iName << "_indices;";
+      nl(Out);
+      for (unsigned i = 0; i < ivi->getNumIndices(); ++i) {
+        Out << iName << "_indices.push_back("
+            << ivi->idx_begin()[i] << ");";
+        nl(Out);
+      }
+      Out << "InsertValueInst* " << getCppName(ivi)
+          << " = InsertValueInst::Create(" << opNames[0]
+          << ", " << opNames[1] << ", "
+          << iName << "_indices.begin(), " << iName << "_indices.end(), \"";
+      printEscapedString(ivi->getName());
+      Out << "\", " << bbname << ");";
+      break;
+    }
   }
   DefinedValues.insert(I);
   nl(Out);
