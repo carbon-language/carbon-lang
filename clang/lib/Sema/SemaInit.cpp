@@ -165,7 +165,9 @@ void InitListChecker::CheckSubElementType(InitListExpr *IList,
   } else if (ElemType->isScalarType()) {
     CheckScalarType(IList, ElemType, Index);
   } else if (expr->getType()->getAsRecordType() &&
-             SemaRef->Context.typesAreCompatible(expr->getType(), ElemType)) {
+             SemaRef->Context.typesAreCompatible(
+               expr->getType().getUnqualifiedType(),
+               ElemType.getUnqualifiedType())) {
     Index++;
     // FIXME: Add checking
   } else {
