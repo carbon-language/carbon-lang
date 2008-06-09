@@ -197,11 +197,16 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-static inline bool printGOT(TargetMachine &TM, const X86Subtarget* ST) {
+static inline bool shouldPrintGOT(TargetMachine &TM, const X86Subtarget* ST) {
   return ST->isPICStyleGOT() && TM.getRelocationModel() == Reloc::PIC_;
 }
 
-static inline bool printStub(TargetMachine &TM, const X86Subtarget* ST) {
+static inline bool shouldPrintPLT(TargetMachine &TM, const X86Subtarget* ST) {
+  return ST->isTargetELF() && TM.getRelocationModel() == Reloc::PIC_ &&
+      (ST->isPICStyleRIPRel() || ST->isPICStyleGOT());
+}
+
+static inline bool shouldPrintStub(TargetMachine &TM, const X86Subtarget* ST) {
   return ST->isPICStyleStub() && TM.getRelocationModel() != Reloc::Static;
 }
 
@@ -304,7 +309,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       needCloseParen = true;
     }
 
-    if (printStub(TM, Subtarget)) {
+    if (shouldPrintStub(TM, Subtarget)) {
       // Link-once, declaration, or Weakly-linked global variables need
       // non-lazily-resolved stubs
       if (GV->isDeclaration() ||
@@ -333,11 +338,11 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       }       
       O << Name;
 
-      if (isCallOp && isa<Function>(GV)) {
-        if (printGOT(TM, Subtarget)) {
-          // Assemble call via PLT for non-local symbols
-          if (!(GV->hasHiddenVisibility() || GV->hasProtectedVisibility()) ||
-              GV->isDeclaration())
+      if (isCallOp) {
+        if (shouldPrintPLT(TM, Subtarget)) {
+          // Assemble call via PLT for externally visible symbols
+          if (!GV->hasHiddenVisibility() && !GV->hasProtectedVisibility() &&
+              !GV->hasInternalLinkage())
             O << "@PLT";
         }
         if (Subtarget->isTargetCygMing() && GV->isDeclaration())
@@ -364,7 +369,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         else
           O << "@NTPOFF"; // local exec TLS model
     } else if (isMemOp) {
-      if (printGOT(TM, Subtarget)) {
+      if (shouldPrintGOT(TM, Subtarget)) {
         if (Subtarget->GVRequiresExtraLoad(GV, TM, false))
           O << "@GOT";
         else
@@ -396,7 +401,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     bool needCloseParen = false;
     std::string Name(TAI->getGlobalPrefix());
     Name += MO.getSymbolName();
-    if (isCallOp && printStub(TM, Subtarget)) {
+    if (isCallOp && shouldPrintStub(TM, Subtarget)) {
       FnStubs.insert(Name);
       printSuffixedName(Name, "$stub");
       return;
@@ -412,7 +417,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
 
     O << Name;
 
-    if (printGOT(TM, Subtarget)) {
+    if (shouldPrintPLT(TM, Subtarget)) {
       std::string GOTName(TAI->getGlobalPrefix());
       GOTName+="_GLOBAL_OFFSET_TABLE_";
       if (Name == GOTName)
@@ -646,4 +651,3 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 
 // Include the auto-generated portion of the assembly writer.
 #include "X86GenAsmWriter.inc"
-
