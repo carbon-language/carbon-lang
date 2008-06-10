@@ -1,8 +1,9 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep foos+5
-; RUN: llvm-as < %s | llc -march=x86 | grep foos+1
-; RUN: llvm-as < %s | llc -march=x86 | grep foos+9
-; RUN: llvm-as < %s | llc -march=x86 | grep bara+19
-; RUN: llvm-as < %s | llc -march=x86 | grep bara+4
+; RUN: llvm-as < %s | llc -march=x86 > %t
+; RUN: grep foos+5 %t
+; RUN: grep foos+1 %t
+; RUN: grep foos+9 %t
+; RUN: grep bara+19 %t
+; RUN: grep bara+4 %t
 
 ; make sure we compute the correct offset for a packed structure
 

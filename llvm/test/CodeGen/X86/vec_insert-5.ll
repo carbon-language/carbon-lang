@@ -1,7 +1,8 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep psllq  | grep 32
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pslldq | grep 12
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep psrldq | grep 8
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep psrldq | grep 12
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 > %t
+; RUN: grep psllq %t | grep 32
+; RUN: grep pslldq %t | grep 12
+; RUN: grep psrldq %t | grep 8
+; RUN: grep psrldq %t | grep 12
 
 define void  @t1(i32 %a, <1 x i64>* %P) nounwind {
        %tmp12 = shl i32 %a, 12

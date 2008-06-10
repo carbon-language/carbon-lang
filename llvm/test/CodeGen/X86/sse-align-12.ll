@@ -1,8 +1,9 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep unpck | count 2
-; RUN: llvm-as < %s | llc -march=x86-64 | grep shuf | count 2
-; RUN: llvm-as < %s | llc -march=x86-64 | grep ps | count 4
-; RUN: llvm-as < %s | llc -march=x86-64 | grep pd | count 4
-; RUN: llvm-as < %s | llc -march=x86-64 | grep movup | count 4
+; RUN: llvm-as < %s | llc -march=x86-64 > %t
+; RUN: grep unpck %t | count 2
+; RUN: grep shuf %t | count 2
+; RUN: grep ps %t | count 4
+; RUN: grep pd %t | count 4
+; RUN: grep movup %t | count 4
 
 define <4 x float> @a(<4 x float>* %y) nounwind {
   %x = load <4 x float>* %y, align 4

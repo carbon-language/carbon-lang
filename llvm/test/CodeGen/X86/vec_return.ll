@@ -1,7 +1,7 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep xorps | count 1
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movaps | count 1
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not grep shuf
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 > %t
+; RUN: grep xorps %t | count 1
+; RUN: grep movaps %t | count 1
+; RUN: not grep shuf %t
 
 define <2 x double> @test() {
 	ret <2 x double> zeroinitializer

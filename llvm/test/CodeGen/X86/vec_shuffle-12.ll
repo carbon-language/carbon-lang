@@ -1,9 +1,9 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | not grep punpck
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pextrw | count 4
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pinsrw | count 6
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pshuflw | count 3
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pshufhw | count 2
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 > %t
+; RUN: not grep punpck %t
+; RUN: grep pextrw %t | count 4
+; RUN: grep pinsrw %t | count 6
+; RUN: grep pshuflw %t | count 3
+; RUN: grep pshufhw %t | count 2
 
 define <8 x i16> @t1(<8 x i16>* %A, <8 x i16>* %B) {
 	%tmp1 = load <8 x i16>* %A
