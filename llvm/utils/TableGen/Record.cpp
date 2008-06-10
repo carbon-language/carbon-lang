@@ -666,8 +666,6 @@ Init *FieldInit::resolveReferences(Record &R, const RecordVal *RV) {
   }
 
   if (NewRec != Rec) {
-    dump();
-    NewRec->dump(); cerr << "\n";
     return new FieldInit(NewRec, FieldName);
   }
   return this;
