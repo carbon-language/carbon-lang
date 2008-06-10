@@ -159,7 +159,7 @@ we'll do numeric literals:</p>
 <div class="doc_code">
 <pre>
 Value *NumberExprAST::Codegen() {
-  return ConstantFP::get(Type::DoubleTy, APFloat(Val));
+  return ConstantFP::get(APFloat(Val));
 }
 </pre>
 </div>
@@ -1033,7 +1033,7 @@ static std::map&lt;std::string, Value*&gt; NamedValues;
 Value *ErrorV(const char *Str) { Error(Str); return 0; }
 
 Value *NumberExprAST::Codegen() {
-  return ConstantFP::get(Type::DoubleTy, APFloat(Val));
+  return ConstantFP::get(APFloat(Val));
 }
 
 Value *VariableExprAST::Codegen() {

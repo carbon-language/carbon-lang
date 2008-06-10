@@ -1364,7 +1364,7 @@ static FunctionPassManager *TheFPM;
 Value *ErrorV(const char *Str) { Error(Str); return 0; }
 
 Value *NumberExprAST::Codegen() {
-  return ConstantFP::get(Type::DoubleTy, APFloat(Val));
+  return ConstantFP::get(APFloat(Val));
 }
 
 Value *VariableExprAST::Codegen() {
@@ -1435,7 +1435,7 @@ Value *IfExprAST::Codegen() {
   
   // Convert condition to a bool by comparing equal to 0.0.
   CondV = Builder.CreateFCmpONE(CondV, 
-                                ConstantFP::get(Type::DoubleTy, APFloat(0.0)),
+                                ConstantFP::get(APFloat(0.0)),
                                 "ifcond");
   
   Function *TheFunction = Builder.GetInsertBlock()-&gt;getParent();
@@ -1534,7 +1534,7 @@ Value *ForExprAST::Codegen() {
     if (StepVal == 0) return 0;
   } else {
     // If not specified, use 1.0.
-    StepVal = ConstantFP::get(Type::DoubleTy, APFloat(1.0));
+    StepVal = ConstantFP::get(APFloat(1.0));
   }
   
   Value *NextVar = Builder.CreateAdd(Variable, StepVal, "nextvar");
@@ -1545,7 +1545,7 @@ Value *ForExprAST::Codegen() {
   
   // Convert condition to a bool by comparing equal to 0.0.
   EndCond = Builder.CreateFCmpONE(EndCond, 
-                                  ConstantFP::get(Type::DoubleTy, APFloat(0.0)),
+                                  ConstantFP::get(APFloat(0.0)),
                                   "loopcond");
   
   // Create the "after loop" block and insert it.

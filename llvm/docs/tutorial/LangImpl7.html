@@ -923,7 +923,7 @@ that we replace in OldBindings.</p>
       InitVal = Init-&gt;Codegen();
       if (InitVal == 0) return 0;
     } else { // If not specified, use 0.0.
-      InitVal = ConstantFP::get(Type::DoubleTy, APFloat(0.0));
+      InitVal = ConstantFP::get(APFloat(0.0));
     }
     
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName);
@@ -1622,7 +1622,7 @@ static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
 
 
 Value *NumberExprAST::Codegen() {
-  return ConstantFP::get(Type::DoubleTy, APFloat(Val));
+  return ConstantFP::get(APFloat(Val));
 }
 
 Value *VariableExprAST::Codegen() {
@@ -1715,7 +1715,7 @@ Value *IfExprAST::Codegen() {
   
   // Convert condition to a bool by comparing equal to 0.0.
   CondV = Builder.CreateFCmpONE(CondV, 
-                                ConstantFP::get(Type::DoubleTy, APFloat(0.0)),
+                                ConstantFP::get(APFloat(0.0)),
                                 "ifcond");
   
   Function *TheFunction = Builder.GetInsertBlock()-&gt;getParent();
@@ -1821,7 +1821,7 @@ Value *ForExprAST::Codegen() {
     if (StepVal == 0) return 0;
   } else {
     // If not specified, use 1.0.
-    StepVal = ConstantFP::get(Type::DoubleTy, APFloat(1.0));
+    StepVal = ConstantFP::get(APFloat(1.0));
   }
   
   // Compute the end condition.
@@ -1836,7 +1836,7 @@ Value *ForExprAST::Codegen() {
   
   // Convert condition to a bool by comparing equal to 0.0.
   EndCond = Builder.CreateFCmpONE(EndCond, 
-                                  ConstantFP::get(Type::DoubleTy, APFloat(0.0)),
+                                  ConstantFP::get(APFloat(0.0)),
                                   "loopcond");
   
   // Create the "after loop" block and insert it.
@@ -1880,7 +1880,7 @@ Value *VarExprAST::Codegen() {
       InitVal = Init-&gt;Codegen();
       if (InitVal == 0) return 0;
     } else { // If not specified, use 0.0.
-      InitVal = ConstantFP::get(Type::DoubleTy, APFloat(0.0));
+      InitVal = ConstantFP::get(APFloat(0.0));
     }
     
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName);
