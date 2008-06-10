@@ -1,5 +1,7 @@
 // RUN: %llvmgcc -S %s -o - | llvm-as -f -o /dev/null
 
+#include <stdio.h>
+
 union U{
   int i[8];
   char s[80];

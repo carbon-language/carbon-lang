@@ -21,7 +21,7 @@ int test2(short F) {
 }
 
 // Make sure that normal unions work.  duh :)
-volatile union {
+volatile union U_t {
   short S;
   int i;
 } U;

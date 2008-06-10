@@ -4,6 +4,8 @@
 // RUN: %llvmgcc %s -S -emit-llvm -O1 -o - | grep {call.*ldexp}
 // RUN: %llvmgcc %s -S -emit-llvm -O3 -fno-builtin -o - | grep {call.*exp2f}
 
+float exp2f(float);
+
 float t4(unsigned char x) {
   return exp2f(x);
 }

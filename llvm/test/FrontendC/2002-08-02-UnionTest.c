@@ -13,7 +13,7 @@ union X foo() {
   return Global;
 }
 
-void main() {
+int main() {
   union X test = foo();
   printf("0x%p", test.B);
 }

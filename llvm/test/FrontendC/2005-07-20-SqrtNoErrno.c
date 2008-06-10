@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -o - -fno-math-errno | gccas | llvm-dis | grep llvm.sqrt
+// RUN: %llvmgcc %s -S -o - -fno-math-errno | grep llvm.sqrt
 #include <math.h>
 
 float foo(float X) {
