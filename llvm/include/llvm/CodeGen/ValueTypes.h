@@ -103,7 +103,7 @@ namespace llvm {
     /// an arbitrary precision integer) and the remaining VectorBits upper bits
     /// encode the vector length, offset by one.
     ///
-    /// 31--------------16-----------8-------------0
+    /// 32--------------16-----------8-------------0
     ///  | Vector length | Precision | Simple type |
     ///  |               |      Vector element     |
     ///
