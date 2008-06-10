@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only %s
+// RUN: clang -fsyntax-only -verify < %s
 
 %:include <stdio.h>
 
