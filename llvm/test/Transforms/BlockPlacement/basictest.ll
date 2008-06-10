@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -block-placement -disable-output -print
+; RUN: llvm-as < %s | opt -block-placement -disable-output -print 2> /dev/null
 
 define i32 @test() {
         br i1 true, label %X, label %Y

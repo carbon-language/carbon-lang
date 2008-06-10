@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -inline -disable-output -print
+; RUN: llvm-as < %s | opt -inline -disable-output -print 2> /dev/null
 
 define i32 @func(i32 %i) {
         ret i32 %i

@@ -1,4 +1,4 @@
-;RUN: llvm-as < %s | opt -analyze -print-cfg-only -disable-output
+;RUN: llvm-as < %s | opt -analyze -print-cfg-only -disable-output 2>/dev/null
 ;PR 1497
 
 define void @foo() {
