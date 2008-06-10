@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=att | grep (\$bar) | count 1
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=att | grep (\$qux) | count 1
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=att | grep (\$hen) | count 1
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=att | grep {(\$bar)} | count 1
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=att | grep {(\$qux)} | count 1
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=att | grep {(\$hen)} | count 1
 ; PR1339
 
 @"$bar" = global i32 zeroinitializer

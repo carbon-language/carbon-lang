@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -o - | grep \$7 | count 1
-; RUN: llvm-as < %s | llc -march=x86 -o - | grep \$6 | count 1
+; RUN: llvm-as < %s | llc -march=x86 -o - | grep {\$7} | count 1
+; RUN: llvm-as < %s | llc -march=x86 -o - | grep {\$6} | count 1
 ; RUN: llvm-as < %s | llc -march=x86 -o - | grep 1024 | count 1
 ; RUN: llvm-as < %s | llc -march=x86 -o - | grep jb | count 2
 ; RUN: llvm-as < %s | llc -march=x86 -o - | grep je | count 1
