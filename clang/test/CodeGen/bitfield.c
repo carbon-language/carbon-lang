@@ -2,9 +2,9 @@
 // RUN: grep "shl i32 %tmp, 19" %t1 &&
 // RUN: grep "ashr i32 %tmp1, 19" %t1 &&
 // RUN: grep "shl i16 %tmp4, 1" %t1 &&
-// RUN: grep "lshr i16 %tmp5, 9" %t1
-// RUN: grep "and i32 %tmp, -8192" %t1
-// RUN: grep "and i16 %tmp5, -32513" %t1
+// RUN: grep "lshr i16 %tmp5, 9" %t1 &&
+// RUN: grep "and i32 %tmp, -8192" %t1 &&
+// RUN: grep "and i16 %tmp5, -32513" %t1 &&
 // RUN: grep "getelementptr (i32\* bitcast (.struct.STestB2\* @stb2 to i32\*), i32 1)" %t1
 // Test bitfield access
 
