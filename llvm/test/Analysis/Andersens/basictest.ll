@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -anders-aa -aa-eval
+; RUN: llvm-as < %s | opt -anders-aa -aa-eval 2>/dev/null
 
 define void @test1() {
 	%X = malloc i32*

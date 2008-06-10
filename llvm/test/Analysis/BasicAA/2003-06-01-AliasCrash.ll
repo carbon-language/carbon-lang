@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -basicaa -aa-eval -disable-output
+; RUN: llvm-as < %s | opt -basicaa -aa-eval -disable-output 2>/dev/null
 
 define i32 @MTConcat([3 x i32]* %a.1) {
 	%tmp.961 = getelementptr [3 x i32]* %a.1, i64 0, i64 4

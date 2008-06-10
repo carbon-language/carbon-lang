@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -basicaa -aa-eval -disable-output
+; RUN: llvm-as < %s | opt -basicaa -aa-eval -disable-output 2>/dev/null
 
 %struct..RefPoint = type { i32, { i32, i8, i8 } }
 %struct..RefRect = type { %struct..RefPoint, %struct..RefPoint }
