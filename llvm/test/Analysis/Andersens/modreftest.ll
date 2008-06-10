@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -anders-aa -load-vn -gcse -instcombine | llvm-dis \  
+; RUN: llvm-as < %s | opt -anders-aa -load-vn -gcse -instcombine | llvm-dis \
 ; RUN: | grep {ret i1 true}
 
 @G = internal global i32* null

@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -anders-aa -gvn | llvm-dis \  
+; RUN: llvm-as < %s | opt -anders-aa -gvn | llvm-dis \
 ; RUN: | not grep {ret i32 undef}
 
 ;; From PR 2160
