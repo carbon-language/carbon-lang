@@ -84,7 +84,7 @@ def analyze(clang, args,language,output,files,verbose,htmldir,file,analysis_type
     print >> sys.stderr, ' '.join(command+print_args)
     print >> sys.stderr, '\n'
 
-  subprocess.call(args)
+#  subprocess.call(args)
 
 def extension(path):
     return path.split(".")[-1]
@@ -110,7 +110,7 @@ def inferlanguage(extension):
       return "objective-c"
   elif extension == "mi":
       return "objective-c-cpp-output"
-  elif extension == "s" or extension == "o":
+  elif extension in [ "s", "o", "a", "so" ]:
       return "skip"
   else:
       return "unknown"
@@ -245,7 +245,7 @@ def main(args):
     # Arguments we currently ignore with one option.
     if arg in ['-install_name', '-exported_symbols_list', 
                '-current_version', '-compatibility_version', '-init', '-e',
-               '-seg1addr']:
+               '-seg1addr', '-bundle_loader', '-multiply_defined']:
       i += 1
       
     # Arguments we currently ignore with three options.
