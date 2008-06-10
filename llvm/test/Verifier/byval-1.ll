@@ -1,2 +1,2 @@
-; RUN: not llvm-as %s -o /dev/null -f
+; RUN: not llvm-as < %s >& /dev/null
 declare void @h(i32 byval %num)

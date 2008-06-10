@@ -1,4 +1,4 @@
-// RUN: not tblgen < %s
+// RUN: not tblgen < %s >& /dev/null
 
 def x;
 

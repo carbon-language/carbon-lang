@@ -1,4 +1,4 @@
-; RUN: not llvm-as < %s
+; RUN: not llvm-as < %s >& /dev/null
 ; PR1633
 
 %meta = type { i8* }

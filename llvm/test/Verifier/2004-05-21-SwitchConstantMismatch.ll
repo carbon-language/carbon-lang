@@ -1,4 +1,4 @@
-; RUN: not llvm-as -f %s -o /dev/null
+; RUN: not llvm-as < %s >& /dev/null
 
 
 

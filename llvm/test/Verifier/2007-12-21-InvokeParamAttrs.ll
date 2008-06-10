@@ -1,4 +1,4 @@
-; RUN: not llvm-as < %s
+; RUN: not llvm-as < %s >& /dev/null
 
 declare void @foo(i8*)
 

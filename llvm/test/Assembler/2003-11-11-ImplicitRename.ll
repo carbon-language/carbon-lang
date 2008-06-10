@@ -1,4 +1,4 @@
-; RUN: not llvm-as < %s > /dev/null
+; RUN: not llvm-as < %s >& /dev/null
 
 void %test() {
   %X = add int 0, 1

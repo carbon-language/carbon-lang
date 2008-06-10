@@ -1,4 +1,4 @@
-; RUN: not llvm-as < %s
+; RUN: not llvm-as < %s >& /dev/null
 
 	%list = type { i32, %list* }
 	%meta = type opaque
