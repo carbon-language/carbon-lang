@@ -1,4 +1,5 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
+; Ignore stderr, we expect warnings there
+; RUN: llvm-as < %s 2> /dev/null | opt -instcombine | llvm-dis | \
 ; RUN:    grep call | notcast
 ; END.
 
