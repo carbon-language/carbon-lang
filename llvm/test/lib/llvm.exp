@@ -31,8 +31,12 @@ proc execOneLine { test PRS outcome lineno line } {
         set resultmsg "$test$PRS\nFailed with posix($posixNum,$posixMsg)$errmsg"
       }
       NONE {
+        # Any other error such as stderr output of a program, or syntax error in
+        # the RUN line.
+        set resultmsg "$test$PRS\nFailed with unknown error (or has stderr output)$errmsg" 
       }
       default {
+        set resultmsg "$test$PRS\nFailed with unknown error$errmsg" 
       }
     }
   } 
