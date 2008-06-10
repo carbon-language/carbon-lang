@@ -411,8 +411,8 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
 
       // Okay, we can only really hoist these out if their operands are not
       // defined in the conditional region.
-      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-        if (!DominatesMergePoint(I->getOperand(i), BB, 0))
+      for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i)
+        if (!DominatesMergePoint(*i, BB, 0))
           return false;
       // Okay, it's safe to do this!  Remember this instruction.
       AggressiveInsts->insert(I);
@@ -515,8 +515,8 @@ static void ErasePossiblyDeadInstructionTree(Instruction *I) {
       }
 
     // Add operands of dead instruction to worklist.
-    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-      if (Instruction *OpI = dyn_cast<Instruction>(I->getOperand(i)))
+    for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i)
+      if (Instruction *OpI = dyn_cast<Instruction>(*i))
         InstrsToInspect.push_back(OpI);
 
     // Remove dead instruction.
@@ -1149,11 +1149,12 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
           if (BBI->hasName()) N->setName(BBI->getName()+".c");
           
           // Update operands due to translation.
-          for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+          for (User::op_iterator i = N->op_begin(), e = N->op_end();
+               i != e; ++i) {
             std::map<Value*, Value*>::iterator PI =
-              TranslateMap.find(N->getOperand(i));
+              TranslateMap.find(*i);
             if (PI != TranslateMap.end())
-              N->setOperand(i, PI->second);
+              *i = PI->second;
           }
           
           // Check for trivial simplification.
@@ -1503,10 +1504,11 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
 
           // If the return instruction returns a value, and if the value was a
           // PHI node in "BB", propagate the right value into the return.
-          for (unsigned i = 0, e = NewRet->getNumOperands(); i != e; ++i)
-            if (PHINode *PN = dyn_cast<PHINode>(NewRet->getOperand(i)))
+          for (User::op_iterator i = NewRet->op_begin(), e = NewRet->op_end();
+               i != e; ++i)
+            if (PHINode *PN = dyn_cast<PHINode>(*i))
               if (PN->getParent() == BB)
-                NewRet->setOperand(i, PN->getIncomingValueForBlock(Pred));
+                *i = PN->getIncomingValueForBlock(Pred);
           
           // Update any PHI nodes in the returning block to realize that we no
           // longer branch to them.
@@ -1561,7 +1563,8 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           // Insert the call now...
           SmallVector<Value*,8> Args(II->op_begin()+3, II->op_end());
           CallInst *CI = CallInst::Create(II->getCalledValue(),
-                                          Args.begin(), Args.end(), II->getName(), BI);
+                                          Args.begin(), Args.end(),
+                                          II->getName(), BI);
           CI->setCallingConv(II->getCallingConv());
           CI->setParamAttrs(II->getParamAttrs());
           // If the invoke produced a value, the Call now does instead
@@ -1709,8 +1712,8 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
               // that merges in the constant and simplify the block result.
               if (BlockIsSimpleEnoughToThreadThrough(BB)) {
                 PHINode *NewPN = PHINode::Create(Type::Int1Ty,
-                                                 BI->getCondition()->getName()+".pr",
-                                                 BB->begin());
+                                                 BI->getCondition()->getName()
+                                                 + ".pr", BB->begin());
                 for (PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
                   if ((PBI = dyn_cast<BranchInst>((*PI)->getTerminator())) &&
                       PBI != BI && PBI->isConditional() &&
