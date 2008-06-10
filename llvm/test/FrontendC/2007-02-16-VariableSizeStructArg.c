@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S %s -o - 
+// RUN: %llvmgcc -S -w %s -o - 
 // PR1170
 int f(int a, struct {int b[a];} c) {  return c.b[0]; }
 

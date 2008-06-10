@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -S -o /dev/null %s
+// RUN: %llvmgcc -w -S -o /dev/null %s
 // PR2264.
 unsigned foo = 8L;
 unsigned bar = 0L;

@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -o -
+// RUN: %llvmgcc %s -w -S -o -
 void* p (int n) {
   struct f {
     char w; char x[n]; char z[];
