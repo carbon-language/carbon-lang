@@ -25,13 +25,7 @@ int main() { return 0; }
 
 #define I 1.0iF
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
-#include <complex.h>
-#elif defined(__APPLE__)
 #include <math.h>
-#else
-#include <tgmath.h>
-#endif
 
 #include <stdio.h>
 
