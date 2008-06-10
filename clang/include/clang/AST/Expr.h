@@ -972,7 +972,7 @@ public:
   //  e.g: x ?: y is shorthand for x ? x : y, except that the expression "x"
   //  is only evaluated once.  
   Expr *getTrueExpr() const {
-    return SubExprs[LHS] ? SubExprs[COND] : SubExprs[LHS];
+    return SubExprs[LHS] ? SubExprs[LHS] : SubExprs[COND];
   }
   
   // getTrueExpr - Return the subexpression representing the value of the ?:
