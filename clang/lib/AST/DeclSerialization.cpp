@@ -30,10 +30,13 @@ using namespace clang;
 void Decl::Emit(Serializer& S) const {
   S.EmitInt(getKind());
   EmitImpl(S);
+  if (const DeclContext *DC = dyn_cast<const DeclContext>(this))
+    DC->EmitOutRec(S);
 }
 
 Decl* Decl::Create(Deserializer& D, ASTContext& C) {
 
+  Decl *Dcl;
   Kind k = static_cast<Kind>(D.ReadInt());
 
   switch (k) {
@@ -42,39 +45,56 @@ Decl* Decl::Create(Deserializer& D, ASTContext& C) {
       break;
 
     case TranslationUnit:
-      return TranslationUnitDecl::CreateImpl(D, C);
+      Dcl = TranslationUnitDecl::CreateImpl(D, C);
+      break;
 
     case Namespace:
-      return NamespaceDecl::CreateImpl(D, C);
+      Dcl = NamespaceDecl::CreateImpl(D, C);
+      break;
 
     case Var:
-      return VarDecl::CreateImpl(D, C);
+      Dcl = VarDecl::CreateImpl(D, C);
+      break;
       
     case Enum:
-      return EnumDecl::CreateImpl(D, C);
+      Dcl = EnumDecl::CreateImpl(D, C);
+      break;
       
     case EnumConstant:
-      return EnumConstantDecl::CreateImpl(D, C);
+      Dcl = EnumConstantDecl::CreateImpl(D, C);
+      break;
       
     case Field:
-      return FieldDecl::CreateImpl(D, C);
+      Dcl = FieldDecl::CreateImpl(D, C);
+      break;
       
     case ParmVar:
-      return ParmVarDecl::CreateImpl(D, C);
+      Dcl = ParmVarDecl::CreateImpl(D, C);
+      break;
       
     case Function:
-      return FunctionDecl::CreateImpl(D, C);
-     
+      Dcl = FunctionDecl::CreateImpl(D, C);
+      break;
+    
+    case Class:
     case Union:
     case Struct:
-      return RecordDecl::CreateImpl(k, D, C);
+      Dcl = RecordDecl::CreateImpl(k, D, C);
+      break;
       
     case Typedef:
-      return TypedefDecl::CreateImpl(D, C);
+      Dcl = TypedefDecl::CreateImpl(D, C);
+      break;
       
     case FileScopeAsm:
-      return FileScopeAsmDecl::CreateImpl(D, C);
+      Dcl = FileScopeAsmDecl::CreateImpl(D, C);
+      break;
   }
+
+  if (DeclContext *DC = dyn_cast<DeclContext>(Dcl))
+    DC->ReadOutRec(D, C);
+
+  return Dcl;
 }
 
 //===----------------------------------------------------------------------===//
@@ -87,6 +107,18 @@ void Decl::EmitInRec(Serializer& S) const {
 
 void Decl::ReadInRec(Deserializer& D, ASTContext& C) {
   Loc = SourceLocation::ReadVal(D);                 // From Decl.
+}
+
+//===----------------------------------------------------------------------===//
+//      Common serialization logic for subclasses of DeclContext.
+//===----------------------------------------------------------------------===//
+
+void DeclContext::EmitOutRec(Serializer& S) const {
+  S.EmitPtr(DeclChain);
+}
+
+void DeclContext::ReadOutRec(Deserializer& D, ASTContext& C) {
+  D.ReadPtr(DeclChain);
 }
 
 //===----------------------------------------------------------------------===//
@@ -283,7 +315,7 @@ void EnumDecl::EmitImpl(Serializer& S) const {
   ScopedDecl::EmitInRec(S);
   S.EmitBool(isDefinition());
   S.Emit(IntegerType);  
-  S.BatchEmitOwnedPtrs(ElementList,getNextDeclarator());
+  S.BatchEmitOwnedPtrs(getEnumConstantList(),getNextDeclarator());
 }
 
 EnumDecl* EnumDecl::CreateImpl(Deserializer& D, ASTContext& C) {
@@ -299,7 +331,7 @@ EnumDecl* EnumDecl::CreateImpl(Deserializer& D, ASTContext& C) {
   
   D.BatchReadOwnedPtrs(Elist, next_declarator, C);
   
-  decl->ElementList = cast_or_null<EnumConstantDecl>(Elist);
+  decl->setDeclChain(cast_or_null<EnumConstantDecl>(Elist));
   decl->setNextDeclarator(cast_or_null<ScopedDecl>(next_declarator));
   
   return decl;
@@ -361,7 +393,6 @@ void FunctionDecl::EmitImpl(Serializer& S) const {
   S.EmitInt(SClass);           // From FunctionDecl.
   S.EmitBool(IsInline);        // From FunctionDecl.
   ValueDecl::EmitInRec(S);
-  S.EmitPtr(DeclChain);
   S.EmitPtr(PreviousDeclaration);
   
   // NOTE: We do not need to serialize out the number of parameters, because
@@ -388,7 +419,6 @@ FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D, ASTContext& C) {
                  QualType(), SClass, IsInline, 0);
   
   decl->ValueDecl::ReadInRec(D, C);
-  D.ReadPtr(decl->DeclChain);
   D.ReadPtr(decl->PreviousDeclaration);
 
   Decl* next_declarator;

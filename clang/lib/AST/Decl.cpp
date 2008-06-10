@@ -116,7 +116,7 @@ RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
 }
 
 void EnumDecl::Destroy(ASTContext& C) {
-  if (ElementList) ElementList->Destroy(C);
+  if (getEnumConstantList()) getEnumConstantList()->Destroy(C);
   Decl::Destroy(C);
 }
 

@@ -379,10 +379,6 @@ private:
   
   Stmt *Body;  // Null if a prototype.
   
-  /// DeclChain - Linked list of declarations that are defined inside this
-  /// function.
-  ScopedDecl *DeclChain;
-  
   /// PreviousDeclaration - A link to the previous declaration of this
   /// same function, NULL if this is the first declaration. For
   /// example, in the following code, the PreviousDeclaration can be
@@ -405,7 +401,7 @@ protected:
                StorageClass S, bool isInline, ScopedDecl *PrevDecl)
     : ValueDecl(DK, DC, L, Id, T, PrevDecl), 
       DeclContext(DK),
-      ParamInfo(0), Body(0), DeclChain(0), PreviousDeclaration(0),
+      ParamInfo(0), Body(0), PreviousDeclaration(0),
       SClass(S), IsInline(isInline), IsImplicit(0) {}
 
   virtual ~FunctionDecl();
@@ -438,9 +434,6 @@ public:
   
   bool isImplicit() { return IsImplicit; }
   void setImplicit() { IsImplicit = true; }
-  
-  ScopedDecl *getDeclChain() const { return DeclChain; }
-  void setDeclChain(ScopedDecl *D) { DeclChain = D; }
 
   /// getPreviousDeclaration - Return the previous declaration of this
   /// function.
@@ -720,10 +713,9 @@ protected:
 /// EnumDecl - Represents an enum.  As an extension, we allow forward-declared
 /// enums.
 class EnumDecl : public TagDecl, public DeclContext {
-  /// ElementList - this is a linked list of EnumConstantDecl's which are linked
-  /// together through their getNextDeclarator pointers.
-  EnumConstantDecl *ElementList;
-  
+  // EnumDecl's DeclChain points to a linked list of EnumConstantDecl's which
+  // are linked together through their getNextDeclarator pointers.
+
   /// IntegerType - This represent the integer type that the enum corresponds
   /// to for code generation purposes.  Note that the enumerator constants may
   /// have a different type than this does.
@@ -732,7 +724,6 @@ class EnumDecl : public TagDecl, public DeclContext {
   EnumDecl(DeclContext *DC, SourceLocation L,
            IdentifierInfo *Id, ScopedDecl *PrevDecl)
     : TagDecl(Enum, DC, L, Id, PrevDecl), DeclContext(Enum) {
-      ElementList = 0;
       IntegerType = QualType();
     }
 public:
@@ -747,7 +738,7 @@ public:
   /// specified list of enums.
   void defineElements(EnumConstantDecl *ListHead, QualType NewType) {
     assert(!isDefinition() && "Cannot redefine enums!");
-    ElementList = ListHead;
+    setDeclChain(ListHead);
     setDefinition(true);
     
     IntegerType = NewType;
@@ -759,8 +750,12 @@ public:
   
   /// getEnumConstantList - Return the first EnumConstantDecl in the enum.
   ///
-  EnumConstantDecl *getEnumConstantList() { return ElementList; }
-  const EnumConstantDecl *getEnumConstantList() const { return ElementList; }
+  EnumConstantDecl *getEnumConstantList() {
+    return cast_or_null<EnumConstantDecl>(getDeclChain());
+  }
+  const EnumConstantDecl *getEnumConstantList() const {
+    return cast_or_null<const EnumConstantDecl>(getDeclChain());
+  }
   
   static bool classof(const Decl *D) { return D->getKind() == Enum; }
   static bool classof(const EnumDecl *D) { return true; }

@@ -237,6 +237,10 @@ class DeclContext {
   /// DeclKind - This indicates which class this is.
   Decl::Kind DeclKind   :  8;
 
+  /// DeclChain - Linked list of declarations that are defined inside this
+  /// declaration context.
+  ScopedDecl *DeclChain;
+
   // Used in the CastTo template to get the DeclKind
   // from a Decl or a DeclContext. DeclContext doesn't have a getKind() method
   // to avoid 'ambiguous access' compiler errors.
@@ -271,7 +275,7 @@ class DeclContext {
   }
 
 protected:
-  DeclContext(Decl::Kind K) : DeclKind(K) {}
+  DeclContext(Decl::Kind K) : DeclKind(K), DeclChain(0) {}
 
 public:
   /// getParent - Returns the containing DeclContext if this is a ScopedDecl,
@@ -288,6 +292,9 @@ public:
         return false;
     }
   }
+
+  ScopedDecl *getDeclChain() const { return DeclChain; }
+  void setDeclChain(ScopedDecl *D) { DeclChain = D; }
 
   /// ToDecl and FromDecl make Decl <-> DeclContext castings.
   /// They are intended to be used by the simplify_type and cast_convert_val
@@ -321,6 +328,12 @@ public:
   static bool classof(const EnumDecl *D) { return true; }
   static bool classof(const ObjCMethodDecl *D) { return true; }
   static bool classof(const ObjCInterfaceDecl *D) { return true; }
+
+private:
+  void EmitOutRec(llvm::Serializer& S) const;
+  void ReadOutRec(llvm::Deserializer& D, ASTContext& C);
+
+  friend class Decl;
 };
 
 template<> struct DeclContext::KindTrait<DeclContext> {

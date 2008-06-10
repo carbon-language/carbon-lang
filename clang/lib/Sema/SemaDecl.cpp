@@ -17,6 +17,7 @@
 #include "clang/AST/Attr.h"
 #include "clang/AST/Builtins.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
 #include "clang/Parse/DeclSpec.h"
@@ -90,34 +91,27 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
   if (S->decl_empty()) return;
   assert((S->getFlags() & Scope::DeclScope) &&"Scope shouldn't contain decls!");
 
-  // We only want to remove the decls from the identifier decl chains for local
-  // scopes, when inside a function/method.
-  if (S->getFnParent() == 0)
-    return;
-         
   for (Scope::decl_iterator I = S->decl_begin(), E = S->decl_end();
        I != E; ++I) {
     Decl *TmpD = static_cast<Decl*>(*I);
     assert(TmpD && "This decl didn't get pushed??");
-    ScopedDecl *D = dyn_cast<ScopedDecl>(TmpD);
-    assert(D && "This decl isn't a ScopedDecl?");
+
+    if (isa<CXXFieldDecl>(TmpD)) continue;
+
+    assert(isa<ScopedDecl>(TmpD) && "Decl isn't ScopedDecl?");
+    ScopedDecl *D = cast<ScopedDecl>(TmpD);
     
     IdentifierInfo *II = D->getIdentifier();
     if (!II) continue;
     
-    // Unlink this decl from the identifier.
-    IdResolver.RemoveDecl(D);
+    // We only want to remove the decls from the identifier decl chains for local
+    // scopes, when inside a function/method.
+    if (S->getFnParent() != 0)
+      IdResolver.RemoveDecl(D);
 
-    // This will have to be revisited for C++: there we want to nest stuff in
-    // namespace decls etc.  Even for C, we might want a top-level translation
-    // unit decl or something.
-    if (!CurFunctionDecl)
-      continue;
-
-    // Chain this decl to the containing function, it now owns the memory for
-    // the decl.
-    D->setNext(CurFunctionDecl->getDeclChain());
-    CurFunctionDecl->setDeclChain(D);
+    // Chain this decl to the containing DeclContext.
+    D->setNext(CurContext->getDeclChain());
+    CurContext->setDeclChain(D);
   }
 }
 
