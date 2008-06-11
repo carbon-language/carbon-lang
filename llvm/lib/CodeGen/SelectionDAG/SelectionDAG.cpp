@@ -495,7 +495,7 @@ void SelectionDAG::RemoveDeadNode(SDNode *N, DAGUpdateListener *UpdateListener){
     DeadNodes.pop_back();
     
     if (UpdateListener)
-      UpdateListener->NodeDeleted(N);
+      UpdateListener->NodeDeleted(N, 0);
     
     // Take the node out of the appropriate CSE map.
     RemoveNodeFromCSEMaps(N);
@@ -3886,7 +3886,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand To,
       ReplaceAllUsesWith(U, Existing, UpdateListener);
       // U is now dead.  Inform the listener if it exists and delete it.
       if (UpdateListener) 
-        UpdateListener->NodeDeleted(U);
+        UpdateListener->NodeDeleted(U, Existing);
       DeleteNodeNotInCSEMaps(U);
     } else {
       // If the node doesn't already exist, we updated it.  Inform a listener if
@@ -3933,7 +3933,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
       ReplaceAllUsesWith(U, Existing, UpdateListener);
       // U is now dead.  Inform the listener if it exists and delete it.
       if (UpdateListener) 
-        UpdateListener->NodeDeleted(U);
+        UpdateListener->NodeDeleted(U, Existing);
       DeleteNodeNotInCSEMaps(U);
     } else {
       // If the node doesn't already exist, we updated it.  Inform a listener if
@@ -3978,7 +3978,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
       ReplaceAllUsesWith(U, Existing, UpdateListener);
       // U is now dead.  Inform the listener if it exists and delete it.
       if (UpdateListener) 
-        UpdateListener->NodeDeleted(U);
+        UpdateListener->NodeDeleted(U, Existing);
       DeleteNodeNotInCSEMaps(U);
     } else {
       // If the node doesn't already exist, we updated it.  Inform a listener if
@@ -4002,9 +4002,9 @@ namespace {
                               SelectionDAG::DAGUpdateListener *chain)
       : Set(set), Chain(chain) {}
  
-    virtual void NodeDeleted(SDNode *N) {
+    virtual void NodeDeleted(SDNode *N, SDNode *E) {
       Set.remove(N);
-      if (Chain) Chain->NodeDeleted(N);
+      if (Chain) Chain->NodeDeleted(N, E);
     }
     virtual void NodeUpdated(SDNode *N) {
       if (Chain) Chain->NodeUpdated(N);
@@ -4086,7 +4086,7 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
     ReplaceAllUsesWith(User, Existing, &CSUL);
     
     // User is now dead.  Notify a listener if present.
-    if (UpdateListener) UpdateListener->NodeDeleted(User);
+    if (UpdateListener) UpdateListener->NodeDeleted(User, Existing);
     DeleteNodeNotInCSEMaps(User);
   }
 }

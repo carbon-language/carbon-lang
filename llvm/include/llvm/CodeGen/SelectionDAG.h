@@ -485,7 +485,12 @@ public:
   class DAGUpdateListener {
   public:
     virtual ~DAGUpdateListener();
-    virtual void NodeDeleted(SDNode *N) = 0;
+
+    /// NodeDeleted - The node N that was deleted and, if E is not null, an
+    /// equivalent node E that replaced it.
+    virtual void NodeDeleted(SDNode *N, SDNode *E) = 0;
+
+    /// NodeUpdated - The node N that was updated.
     virtual void NodeUpdated(SDNode *N) = 0;
   };
   

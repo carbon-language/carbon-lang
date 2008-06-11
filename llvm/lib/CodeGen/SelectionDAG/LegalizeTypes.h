@@ -153,6 +153,12 @@ public:
     AnalyzeNewNode(N);
   }
 
+  void NoteReplacement(SDOperand From, SDOperand To) {
+    ExpungeNode(From);
+    ExpungeNode(To);
+    ReplacedNodes[From] = To;
+  }
+
 private:
   void AnalyzeNewNode(SDNode *&N);
 
@@ -160,6 +166,7 @@ private:
   void ReplaceNodeWith(SDNode *From, SDNode *To);
 
   void RemapNode(SDOperand &N);
+  void ExpungeNode(SDOperand N);
 
   // Common routines.
   SDOperand BitConvertToInteger(SDOperand Op);
@@ -391,9 +398,6 @@ private:
   SDOperand SplitOp_RET(SDNode *N, unsigned OpNo);
   SDOperand SplitOp_STORE(StoreSDNode *N, unsigned OpNo);
   SDOperand SplitOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo);
-
-public:
-  void SanityCheck(SDNode *N);
 };
 
 } // end namespace llvm.

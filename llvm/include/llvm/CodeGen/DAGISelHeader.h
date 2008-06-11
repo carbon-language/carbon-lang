@@ -95,14 +95,14 @@ class VISIBILITY_HIDDEN ISelQueueUpdater :
       : ISelQueue(isq), HadDelete(false) {}
     
     bool hadDelete() const { return HadDelete; }
-    
+
     /// NodeDeleted - remove node from the selection queue.
-    virtual void NodeDeleted(SDNode *N) {
+    virtual void NodeDeleted(SDNode *N, SDNode *E) {
       ISelQueue.erase(std::remove(ISelQueue.begin(), ISelQueue.end(), N),
                       ISelQueue.end());
       HadDelete = true;
     }
-    
+
     /// NodeUpdated - Ignore updates for now.
     virtual void NodeUpdated(SDNode *N) {}
   };

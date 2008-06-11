@@ -272,7 +272,7 @@ class VISIBILITY_HIDDEN WorkListRemover :
 public:
   explicit WorkListRemover(DAGCombiner &dc) : DC(dc) {}
   
-  virtual void NodeDeleted(SDNode *N) {
+  virtual void NodeDeleted(SDNode *N, SDNode *E) {
     DC.removeFromWorkList(N);
   }
   
