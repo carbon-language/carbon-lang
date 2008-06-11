@@ -5,17 +5,17 @@
   
   <div class="submenu">
     <label>Clang Info</label>
-    <a href="index.html">About</a>
-    <a href="features.html">Features</a>
-    <a href="comparison.html">Comparisons</a>
-    <a href="get_started.html">Get&nbsp;Started</a>
-    <a href="get_involved.html">Get&nbsp;Involved</a>
-    <a href="http://clang.llvm.org/docs/InternalsManual.html">Clang&nbsp;Internals</a>
+    <a href="/index.html">About</a>
+    <a href="/features.html">Features</a>
+    <a href="/comparison.html">Comparisons</a>
+    <a href="/get_started.html">Get&nbsp;Started</a>
+    <a href="/get_involved.html">Get&nbsp;Involved</a>
+    <a href="/docs/InternalsManual.html">Clang&nbsp;Internals</a>
   </div>
   
   <div class="submenu">
     <label>Clang Tools</label>
-    <a href="StaticAnalysis.html">Automatic Bug-Finding</a>
+    <a href="/StaticAnalysis.html">Automatic Bug-Finding</a>
   </div>
   
   <div class="submenu">
