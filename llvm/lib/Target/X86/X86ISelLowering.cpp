@@ -4803,16 +4803,18 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDOperand Op,
                                            SelectionDAG &DAG) {
   assert(Subtarget->isTargetCygMing() &&
          "This should be used only on Cygwin/Mingw targets");
-  
+
   // Get the inputs.
   SDOperand Chain = Op.getOperand(0);
   SDOperand Size  = Op.getOperand(1);
   // FIXME: Ensure alignment here
 
   SDOperand Flag;
-  
+
   MVT IntPtr = getPointerTy();
   MVT SPTy = Subtarget->is64Bit() ? MVT::i64 : MVT::i32;
+
+  Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(0));
 
   Chain = DAG.getCopyToReg(Chain, X86::EAX, Size, Flag);
   Flag = Chain.getValue(1);
@@ -4821,12 +4823,18 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDOperand Op,
   SDOperand Ops[] = { Chain,
                       DAG.getTargetExternalSymbol("_alloca", IntPtr),
                       DAG.getRegister(X86::EAX, IntPtr),
+                      DAG.getRegister(X86StackPtr, SPTy),
                       Flag };
-  Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops, 4);
+  Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops, 5);
   Flag = Chain.getValue(1);
 
+  Chain = DAG.getCALLSEQ_END(Chain,
+                             DAG.getIntPtrConstant(0),
+                             DAG.getIntPtrConstant(0),
+                             Flag);
+
   Chain = DAG.getCopyFromReg(Chain, X86StackPtr, SPTy).getValue(1);
-  
+
   std::vector<MVT> Tys;
   Tys.push_back(SPTy);
   Tys.push_back(MVT::Other);
