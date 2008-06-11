@@ -14,6 +14,11 @@
   </div>
   
   <div class="submenu">
+    <label>Clang Tools</label>
+    <a href="StaticAnalysis.html">Automatic Bug-Finding (Static Analysis)</a>
+  </div>
+  
+  <div class="submenu">
     <label>Quick Links</label>
     <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev</a>
     <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-commits">cfe-commits</a>
