@@ -32,9 +32,9 @@ CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
   Kind DK;
   switch (TK) {
   case TK_enum:   assert(0 && "Enum TagKind passed for Record!");
-  case TK_struct: DK = Struct; break;
-  case TK_union:  DK = Union;  break;
-  case TK_class:  DK = Class;  break;
+  case TK_struct: DK = CXXStruct; break;
+  case TK_union:  DK = CXXUnion;  break;
+  case TK_class:  DK = CXXClass;  break;
   }
   void *Mem = C.getAllocator().Allocate<CXXRecordDecl>();
   return new (Mem) CXXRecordDecl(DK, DC, L, Id, PrevDecl);
