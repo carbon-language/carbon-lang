@@ -28,7 +28,7 @@ int LLVMWriteBitcodeToFile(LLVMModuleRef M, const char *Path) {
   return 0;
 }
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && (__GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR >= 4)
 #include <ext/stdio_filebuf.h>
 
 // FIXME: Control this with configure? Provide some portable abstraction in
@@ -47,6 +47,12 @@ int LLVMWriteBitcodeToFileHandle(LLVMModuleRef M, int FileHandle) {
     return -1;
   
   return 0;
+}
+
+#else
+
+int LLVMWriteBitcodeToFileHandle(LLVMModuleRef M, int FileHandle) {
+  return -1; // Not supported.
 }
 
 #endif
