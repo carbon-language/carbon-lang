@@ -33,6 +33,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include <map>
 using namespace llvm;
 
@@ -50,10 +51,12 @@ namespace {
     static char ID; // Pass identification, replacement for typeid
     TailDup() : FunctionPass((intptr_t)&ID) {}
 
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
   private:
     inline bool shouldEliminateUnconditionalBranch(TerminatorInst *, unsigned);
     inline void eliminateUnconditionalBranch(BranchInst *BI);
     SmallPtrSet<BasicBlock*, 4> CycleDetector;
+    LoopInfo *LI;  // The current loop information
   };
 }
 
@@ -69,6 +72,9 @@ FunctionPass *llvm::createTailDuplicationPass() { return new TailDup(); }
 /// a place it already pointed to earlier; see PR 2323.
 bool TailDup::runOnFunction(Function &F) {
   bool Changed = false;
+
+  LI = &getAnalysis<LoopInfo>();
+
   CycleDetector.clear();
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ) {
     if (shouldEliminateUnconditionalBranch(I->getTerminator(),
@@ -81,6 +87,10 @@ bool TailDup::runOnFunction(Function &F) {
     }
   }
   return Changed;
+}
+
+void TailDup::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<LoopInfo>();
 }
 
 /// shouldEliminateUnconditionalBranch - Return true if this branch looks
@@ -184,6 +194,14 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI,
   // Finally, check that we haven't redirected to this target block earlier;
   // there are cases where we loop forever if we don't check this (PR 2323).
   if (!CycleDetector.insert(Dest))
+    return false;
+
+  // Avoid non-natural loops:
+  // If a loop header is duplicated, the former natural loop will contain two
+  // paths into the loop --> the loop it not natural anymore. We want to avoid
+  // this, because other optimizaions may fail to improve the loop because of 
+  // this.
+  if (LI->isLoopHeader(Dest))
     return false;
 
   return true;
