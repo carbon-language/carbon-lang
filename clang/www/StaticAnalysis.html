@@ -36,7 +36,25 @@ find bugs in C and Objective-C programs.</p>
 <b>many planned enhancements</b> to improve both the precision and scope of its
 analysis algorithms as well as the kinds bugs it will find.</p>
 
-<p>This document is arranged into the following sections:</p>
+<h3>High-Level Summary</h3>
+
+<p>Currently the analyzer is invoked as a command-line tool. It is intended to
+run in synchronous with a build of a project or code base. Analysis results are
+deposited in a directory as HTML files, which can then viewed using a web
+browser.</p>
+
+<p>The analyzer performs a variety of checks on code, each requiring different
+levels of analysis precision (more precision = more CPU time). While the
+analyzer is being designed to be as fast and light-weight as possible, please
+<b>do not expect it to be as fast as compiling a program</b> (even with
+optimizations enabled). Some of the algorithms needed to find bugs require in
+the worst case exponential time. The analyzer runs in a reasonable amount of
+time by both bounding the amount of checking work it will do as well as using
+clever algorithms to reduce the amount of work it must do to find bugs.</p>
+
+<h3>Organization</h3>
+
+<p>This page is arranged into the following sections:</p>
 
 <ul>
   <li><a href="#Contents">Obtaining the Analyzer</a></li> 
