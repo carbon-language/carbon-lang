@@ -230,28 +230,31 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
   // FIXME: Verify the underlying types are equivalent!
   if (getLangOptions().ObjC1 && isBuiltinObjCType(New))
     return Old;
-  
+
+  if (getLangOptions().Microsoft) return New;
+
   // Redeclaration of a type is a constraint violation (6.7.2.3p1).
   // Apparently GCC, Intel, and Sun all silently ignore the redeclaration if
   // *either* declaration is in a system header. The code below implements
   // this adhoc compatibility rule. FIXME: The following code will not
   // work properly when compiling ".i" files (containing preprocessed output).
   SourceManager &SrcMgr = Context.getSourceManager();
-  const FileEntry *OldDeclFile = SrcMgr.getFileEntryForLoc(Old->getLocation());
-  const FileEntry *NewDeclFile = SrcMgr.getFileEntryForLoc(New->getLocation());
   HeaderSearch &HdrInfo = PP.getHeaderSearchInfo();
-  DirectoryLookup::DirType OldDirType = HdrInfo.getFileDirFlavor(OldDeclFile);
-  DirectoryLookup::DirType NewDirType = HdrInfo.getFileDirFlavor(NewDeclFile);
-  
-  // Allow reclarations in both SystemHeaderDir and ExternCSystemHeaderDir.
-  if ((OldDirType != DirectoryLookup::NormalHeaderDir ||
-       NewDirType != DirectoryLookup::NormalHeaderDir) ||
-      getLangOptions().Microsoft)
-    return New;
-      
-  // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
-  // TODO: This is totally simplistic.  It should handle merging functions
-  // together etc, merging extern int X; int X; ...
+  const FileEntry *OldDeclFile = SrcMgr.getFileEntryForLoc(Old->getLocation());
+  if (OldDeclFile) {
+    DirectoryLookup::DirType OldDirType = HdrInfo.getFileDirFlavor(OldDeclFile);
+    // Allow reclarations in both SystemHeaderDir and ExternCSystemHeaderDir.
+    if (OldDirType != DirectoryLookup::NormalHeaderDir)
+      return New;
+  }
+  const FileEntry *NewDeclFile = SrcMgr.getFileEntryForLoc(New->getLocation());
+  if (NewDeclFile) {
+    DirectoryLookup::DirType NewDirType = HdrInfo.getFileDirFlavor(NewDeclFile);
+    // Allow reclarations in both SystemHeaderDir and ExternCSystemHeaderDir.
+    if (NewDirType != DirectoryLookup::NormalHeaderDir)
+      return New;
+  }
+
   Diag(New->getLocation(), diag::err_redefinition, New->getName());
   Diag(Old->getLocation(), diag::err_previous_definition);
   return New;
