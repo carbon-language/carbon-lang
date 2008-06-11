@@ -15,7 +15,7 @@
   
   <div class="submenu">
     <label>Clang Tools</label>
-    <a href="StaticAnalysis.html">Automatic Bug-Finding (Static Analysis)</a>
+    <a href="StaticAnalysis.html">Automatic Bug-Finding</a>
   </div>
   
   <div class="submenu">
