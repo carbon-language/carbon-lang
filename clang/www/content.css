@@ -1,8 +1,9 @@
 html, body {
-	padding:0px;	
-	color:#000000; background-color:#ffffff;
-  font-family: Arial, sans-serif;
+  padding:0px;	
+  font: 12px/18px "Lucida Grande", "Lucida Sans Unicode", Arial, Verdana, sans-serif; background-color: #fff; color: #333;
 }
+
+h1, h2, h3, tt { color: #000; }
 
 /* Slides */
 IMG.img_slide {
