@@ -232,6 +232,7 @@ namespace {
     Instruction *visitInsertElementInst(InsertElementInst &IE);
     Instruction *visitExtractElementInst(ExtractElementInst &EI);
     Instruction *visitShuffleVectorInst(ShuffleVectorInst &SVI);
+    Instruction *visitExtractValueInst(ExtractValueInst &EV);
 
     // visitInstruction - Specify what to return for unhandled instructions...
     Instruction *visitInstruction(Instruction &I) { return 0; }
@@ -397,6 +398,22 @@ namespace {
                                     int &NumCastsRemoved);
     unsigned GetOrEnforceKnownAlignment(Value *V,
                                         unsigned PrefAlign = 0);
+
+    // visitExtractValue helpers
+    Value *FindScalarValue(Value *V,
+                           const unsigned *idx_begin,
+                           const unsigned *idx_end,
+                           Instruction &InsertBefore);
+    Value *BuildSubAggregate(Value *From,
+                             const unsigned *idx_begin,
+                             const unsigned *idx_end,
+                             Instruction &InsertBefore);
+    Value *BuildSubAggregate(Value *From,
+                             Value* To,
+                             const Type *IndexedType,
+                             SmallVector<unsigned, 10> &Idxs,
+                             unsigned IdxSkip,
+                             Instruction &InsertBefore);
   };
 }
 
@@ -10506,6 +10523,146 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
         return &SI;
       }
   }
+  return 0;
+}
+
+// This is the recursive version of BuildSubAggregate. It takes a few different
+// arguments. Idxs is the index within the nested struct From that we are
+// looking at now (which is of type IndexedType). IdxSkip is the number of
+// indices from Idxs that should be left out when inserting into the resulting
+// struct. To is the result struct built so far, new insertvalue instructions
+// build on that.
+Value *InstCombiner::BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
+                                 SmallVector<unsigned, 10> &Idxs,
+                                 unsigned IdxSkip,
+                                 Instruction &InsertBefore) {
+  const llvm::StructType *STy = llvm::dyn_cast<llvm::StructType>(IndexedType);
+  if (STy) {
+    // General case, the type indexed by Idxs is a struct
+    for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+      // Process each struct element recursively
+      Idxs.push_back(i);
+      To = BuildSubAggregate(From, To, STy->getElementType(i), Idxs, IdxSkip, InsertBefore);
+      Idxs.pop_back();
+    }
+    return To;
+  } else {
+    // Base case, the type indexed by SourceIdxs is not a struct
+    // Load the value from the nested struct into the sub struct (and skip
+    // IdxSkip indices when indexing the sub struct).
+    Instruction *V = llvm::ExtractValueInst::Create(From, Idxs.begin(), Idxs.end(), "tmp");
+    InsertNewInstBefore(V, InsertBefore);
+    Instruction *Ins = llvm::InsertValueInst::Create(To, V, Idxs.begin() + IdxSkip, Idxs.end(), "tmp");
+    InsertNewInstBefore(Ins, InsertBefore);
+    return Ins;
+  }
+}
+
+// This helper takes a nested struct and extracts a part of it (which is again a
+// struct) into a new value. For example, given the struct:
+// { a, { b, { c, d }, e } }
+// and the indices "1, 1" this returns
+// { c, d }.
+//
+// It does this by inserting an extractvalue and insertvalue for each element in
+// the resulting struct, as opposed to just inserting a single struct. This
+// allows for later folding of these individual extractvalue instructions with
+// insertvalue instructions that fill the nested struct.
+//
+// Any inserted instructions are inserted before InsertBefore
+Value *InstCombiner::BuildSubAggregate(Value *From, const unsigned *idx_begin, const unsigned *idx_end, Instruction &InsertBefore) {
+  const Type *IndexedType = ExtractValueInst::getIndexedType(From->getType(), idx_begin, idx_end);
+  Value *To = UndefValue::get(IndexedType);
+  SmallVector<unsigned, 10> Idxs(idx_begin, idx_end);
+  unsigned IdxSkip = Idxs.size();
+
+  return BuildSubAggregate(From, To, IndexedType, Idxs, IdxSkip, InsertBefore);
+}
+
+/// FindScalarValue - Given an aggregrate and an sequence of indices, see if the
+/// scalar value indexed is already around as a register, for example if it were
+/// inserted directly into the aggregrate.
+Value *InstCombiner::FindScalarValue(Value *V, const unsigned *idx_begin,
+                                const unsigned *idx_end, Instruction &InsertBefore) {
+  // Nothing to index? Just return V then (this is useful at the end of our
+  // recursion)
+  if (idx_begin == idx_end)
+    return V;
+  // We have indices, so V should have an indexable type
+  assert((isa<StructType>(V->getType()) || isa<ArrayType>(V->getType()))
+         && "Not looking at a struct or array?");
+  assert(ExtractValueInst::getIndexedType(V->getType(), idx_begin, idx_end)
+         && "Invalid indices for type?");
+  const CompositeType *PTy = cast<CompositeType>(V->getType());
+  
+  if (isa<UndefValue>(V))
+    return UndefValue::get(ExtractValueInst::getIndexedType(PTy,
+                                                              idx_begin,
+                                                              idx_end));
+  else if (isa<ConstantAggregateZero>(V))
+    return Constant::getNullValue(ExtractValueInst::getIndexedType(PTy, 
+                                                                     idx_begin,
+                                                                     idx_end));
+  else if (Constant *C = dyn_cast<Constant>(V)) {
+    if (isa<ConstantArray>(C) || isa<ConstantStruct>(C))
+      // Recursively process this constant
+      return FindScalarValue(C->getOperand(*idx_begin), ++idx_begin, idx_end, InsertBefore);
+  } else if (InsertValueInst *I = dyn_cast<InsertValueInst>(V)) {
+    // Loop the indices for the insertvalue instruction in parallel with the
+    // requested indices
+    const unsigned *req_idx = idx_begin;
+    for (const unsigned *i = I->idx_begin(), *e = I->idx_end(); i != e; ++i, ++req_idx) {
+      if (req_idx == idx_end)
+        // The requested index is a part of a nested aggregate. Handle this
+        // specially.
+        return BuildSubAggregate(V, idx_begin, req_idx, InsertBefore);
+      
+      // This insert value inserts something else than what we are looking for.
+      // See if the (aggregrate) value inserted into has the value we are
+      // looking for, then.
+      if (*req_idx != *i)
+        return FindScalarValue(I->getAggregateOperand(), idx_begin, idx_end, InsertBefore);
+    }
+    // If we end up here, the indices of the insertvalue match with those
+    // requested (though possibly only partially). Now we recursively look at
+    // the inserted value, passing any remaining indices.
+    return FindScalarValue(I->getInsertedValueOperand(), req_idx, idx_end, InsertBefore);
+  } else if (ExtractValueInst *I = dyn_cast<ExtractValueInst>(V)) {
+    // If we're extracting a value from an aggregrate that was extracted from
+    // something else, we can extract from that something else directly instead.
+    // However, we will need to chain I's indices with the requested indices.
+   
+    // Calculate the number of indices required 
+    unsigned size = I->getNumIndices() + (idx_end - idx_begin);
+    // Allocate some space to put the new indices in
+    unsigned *new_begin = new unsigned[size];
+    // Auto cleanup this array
+    std::auto_ptr<unsigned> newptr(new_begin);
+    // Start inserting at the beginning
+    unsigned *new_end = new_begin;
+    // Add indices from the extract value instruction
+    for (const unsigned *i = I->idx_begin(), *e = I->idx_end(); i != e; ++i, ++new_end)
+      *new_end = *i;
+    
+    // Add requested indices
+    for (const unsigned *i = idx_begin, *e = idx_end; i != e; ++i, ++new_end)
+      *new_end = *i;
+
+    assert((unsigned)(new_end - new_begin) == size && "Number of indices added not correct?");
+    
+    return FindScalarValue(I->getAggregateOperand(), new_begin, new_end, InsertBefore);
+  }
+  // Otherwise, we don't know (such as, extracting from a function return value
+  // or load instruction)
+  return 0;
+}
+
+Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
+  // See if we are trying to extract a known value. If so, use that instead.
+  if (Value *Elt = FindScalarValue(EV.getOperand(0), EV.idx_begin(), EV.idx_end(), EV))
+    return ReplaceInstUsesWith(EV, Elt);
+
+  // No changes
   return 0;
 }
 
