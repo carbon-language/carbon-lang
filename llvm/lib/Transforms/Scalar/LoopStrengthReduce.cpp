@@ -246,8 +246,8 @@ DeleteTriviallyDeadInstructions(SmallPtrSet<Instruction*,16> &Insts) {
     }
 
     if (isInstructionTriviallyDead(I)) {
-      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-        if (Instruction *U = dyn_cast<Instruction>(I->getOperand(i)))
+      for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i)
+        if (Instruction *U = dyn_cast<Instruction>(*i))
           Insts.insert(U);
       SE->deleteValueFromRecords(I);
       I->eraseFromParent();
@@ -289,24 +289,25 @@ SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp) {
 
   gep_type_iterator GTI = gep_type_begin(GEP);
   
-  for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i, ++GTI) {
+  for (User::op_iterator i = GEP->op_begin() + 1, e = GEP->op_end();
+       i != e; ++i, ++GTI) {
     // If this is a use of a recurrence that we can analyze, and it comes before
     // Op does in the GEP operand list, we will handle this when we process this
     // operand.
     if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
       const StructLayout *SL = TD->getStructLayout(STy);
-      unsigned Idx = cast<ConstantInt>(GEP->getOperand(i))->getZExtValue();
+      unsigned Idx = cast<ConstantInt>(*i)->getZExtValue();
       uint64_t Offset = SL->getElementOffset(Idx);
       GEPVal = SE->getAddExpr(GEPVal,
                              SE->getIntegerSCEV(Offset, UIntPtrTy));
     } else {
       unsigned GEPOpiBits = 
-        GEP->getOperand(i)->getType()->getPrimitiveSizeInBits();
+        (*i)->getType()->getPrimitiveSizeInBits();
       unsigned IntPtrBits = UIntPtrTy->getPrimitiveSizeInBits();
       Instruction::CastOps opcode = (GEPOpiBits < IntPtrBits ? 
           Instruction::SExt : (GEPOpiBits > IntPtrBits ? Instruction::Trunc :
             Instruction::BitCast));
-      Value *OpVal = getCastedVersionOf(opcode, GEP->getOperand(i));
+      Value *OpVal = getCastedVersionOf(opcode, *i);
       SCEVHandle Idx = SE->getSCEV(OpVal);
 
       uint64_t TypeSize = TD->getABITypeSize(GTI.getIndexedType());
@@ -628,7 +629,8 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
       if (NewBasePt && isa<PHINode>(OperandValToReplace)) {
         InsertPt = NewBasePt;
         ++InsertPt;
-      } else if (Instruction *OpInst = dyn_cast<Instruction>(OperandValToReplace)) { 
+      } else if (Instruction *OpInst
+                 = dyn_cast<Instruction>(OperandValToReplace)) {
         InsertPt = OpInst;
         while (isa<PHINode>(InsertPt)) ++InsertPt;
       }
@@ -1593,8 +1595,8 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
         ? UIntPtrTy->getPrimitiveSizeInBits()
         : NewCmpTy->getPrimitiveSizeInBits();
       if (RequiresTypeConversion(NewCmpTy, CmpTy)) {
-        // Check if it is possible to rewrite it using a iv / stride of a smaller
-        // integer type.
+        // Check if it is possible to rewrite it using
+        // an iv / stride of a smaller integer type.
         bool TruncOk = false;
         if (NewCmpTy->isInteger()) {
           unsigned Bits = NewTyBits;
