@@ -10613,7 +10613,6 @@ static Value *FindScalarElement(Value *V, unsigned EltNo) {
 }
 
 Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
-
   // If vector val is undef, replace extract with scalar undef.
   if (isa<UndefValue>(EI.getOperand(0)))
     return ReplaceInstUsesWith(EI, UndefValue::get(EI.getType()));
@@ -10623,8 +10622,9 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
     return ReplaceInstUsesWith(EI, Constant::getNullValue(EI.getType()));
   
   if (ConstantVector *C = dyn_cast<ConstantVector>(EI.getOperand(0))) {
-    // If vector val is constant with uniform operands, replace EI
-    // with that operand
+    // If vector val is constant with all elements the same, replace EI with
+    // that element. When the elements are not identical, we cannot replace yet
+    // (we do that below, but only when the index is constant).
     Constant *op0 = C->getOperand(0);
     for (unsigned i = 1; i < C->getNumOperands(); ++i)
       if (C->getOperand(i) != op0) {
