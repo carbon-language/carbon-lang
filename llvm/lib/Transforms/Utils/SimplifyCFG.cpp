@@ -965,6 +965,12 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
   if (BB1->size() != 2)
     return false;
 
+  // Be conservative for now. FP select instruction can often be expensive.
+  Value *BrCond = BI->getCondition();
+  if (isa<Instruction>(BrCond) &&
+      cast<Instruction>(BrCond)->getOpcode() == Instruction::FCmp)
+    return false;
+
   // If BB1 is actually on the false edge of the conditional branch, remember
   // to swap the select operands later.
   bool Invert = false;
@@ -1029,8 +1035,7 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
   BasicBlock::iterator InsertPos = BI;
   if (InsertPos != BIParent->begin())
     --InsertPos;
-  if (InsertPos->getOpcode() == Instruction::ICmp ||
-      InsertPos->getOpcode() == Instruction::FCmp)
+  if (InsertPos == BrCond)
     BIParent->getInstList().splice(InsertPos, BB1->getInstList(), I);
   else
     BIParent->getInstList().splice(BI, BB1->getInstList(), I);
@@ -1039,10 +1044,10 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
   // false value is the previously determined FalseV.
   SelectInst *SI;
   if (Invert)
-    SI = SelectInst::Create(BI->getCondition(), FalseV, I,
+    SI = SelectInst::Create(BrCond, FalseV, I,
                             FalseV->getName() + "." + I->getName(), BI);
   else
-    SI = SelectInst::Create(BI->getCondition(), I, FalseV,
+    SI = SelectInst::Create(BrCond, I, FalseV,
                             I->getName() + "." + FalseV->getName(), BI);
 
   // Make the PHI node use the select for all incoming values for "then" and
