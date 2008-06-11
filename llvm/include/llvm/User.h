@@ -278,15 +278,14 @@ public:
   // dropAllReferences() - This function is in charge of "letting go" of all
   // objects that this User refers to.  This allows one to
   // 'delete' a whole class at a time, even though there may be circular
-  // references... first all references are dropped, and all use counts go to
-  // zero.  Then everything is delete'd for real.  Note that no operations are
+  // references...  First all references are dropped, and all use counts go to
+  // zero.  Then everything is deleted for real.  Note that no operations are
   // valid on an object that has "dropped all references", except operator
   // delete.
   //
   void dropAllReferences() {
-    Use *OL = OperandList;
-    for (unsigned i = 0, e = NumOperands; i != e; ++i)
-      OL[i].set(0);
+    for (op_iterator i = op_begin(), e = op_end(); i != e; ++i)
+      i->set(0);
   }
 
   /// replaceUsesOfWith - Replaces all references to the "From" definition with
