@@ -122,8 +122,8 @@ namespace {
     /// the work lists because they might get more simplified now.
     ///
     void AddUsesToWorkList(Instruction &I) {
-      for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
-        if (Instruction *Op = dyn_cast<Instruction>(I.getOperand(i)))
+      for (User::op_iterator i = I.op_begin(), e = I.op_end(); i != e; ++i)
+        if (Instruction *Op = dyn_cast<Instruction>(*i))
           AddToWorkList(Op);
     }
     
@@ -136,11 +136,11 @@ namespace {
     Value *AddSoonDeadInstToWorklist(Instruction &I, unsigned op) {
       Value *R = I.getOperand(op);
       
-      for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
-        if (Instruction *Op = dyn_cast<Instruction>(I.getOperand(i))) {
+      for (User::op_iterator i = I.op_begin(), e = I.op_end(); i != e; ++i)
+        if (Instruction *Op = dyn_cast<Instruction>(*i)) {
           AddToWorkList(Op);
           // Set the operand to undef to drop the use.
-          I.setOperand(i, UndefValue::get(Op->getType()));
+          *i = UndefValue::get(Op->getType());
         }
       
       return R;
@@ -4585,8 +4585,9 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
   unsigned IntPtrWidth = TD.getPointerSizeInBits();
   uint64_t PtrSizeMask = ~0ULL >> (64-IntPtrWidth);
 
-  for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i, ++GTI) {
-    Value *Op = GEP->getOperand(i);
+  for (User::op_iterator i = GEP->op_begin() + 1, e = GEP->op_end(); i != e;
+       ++i, ++GTI) {
+    Value *Op = *i;
     uint64_t Size = TD.getABITypeSize(GTI.getIndexedType()) & PtrSizeMask;
     if (ConstantInt *OpC = dyn_cast<ConstantInt>(Op)) {
       if (OpC->isZero()) continue;
@@ -8286,9 +8287,9 @@ static unsigned EnforceKnownAlignment(Value *V,
   case Instruction::GetElementPtr: {
     // If all indexes are zero, it is just the alignment of the base pointer.
     bool AllZeroOperands = true;
-    for (unsigned i = 1, e = U->getNumOperands(); i != e; ++i)
-      if (!isa<Constant>(U->getOperand(i)) ||
-          !cast<Constant>(U->getOperand(i))->isNullValue()) {
+    for (User::op_iterator i = U->op_begin(), e = U->op_end(); i != e; ++i)
+      if (!isa<Constant>(*i) ||
+          !cast<Constant>(*i)->isNullValue()) {
         AllZeroOperands = false;
         break;
       }
@@ -9536,9 +9537,10 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   bool MadeChange = false;
   
   gep_type_iterator GTI = gep_type_begin(GEP);
-  for (unsigned i = 1, e = GEP.getNumOperands(); i != e; ++i, ++GTI) {
+  for (User::op_iterator i = GEP.op_begin() + 1, e = GEP.op_end();
+       i != e; ++i, ++GTI) {
     if (isa<SequentialType>(*GTI)) {
-      if (CastInst *CI = dyn_cast<CastInst>(GEP.getOperand(i))) {
+      if (CastInst *CI = dyn_cast<CastInst>(*i)) {
         if (CI->getOpcode() == Instruction::ZExt ||
             CI->getOpcode() == Instruction::SExt) {
           const Type *SrcTy = CI->getOperand(0)->getType();
@@ -9546,7 +9548,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           // is a 32-bit pointer target.
           if (SrcTy->getPrimitiveSizeInBits() >= TD->getPointerSizeInBits()) {
             MadeChange = true;
-            GEP.setOperand(i, CI->getOperand(0));
+            *i = CI->getOperand(0);
           }
         }
       }
@@ -9554,15 +9556,15 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // to what we need.  If the incoming value needs a cast instruction,
       // insert it.  This explicit cast can make subsequent optimizations more
       // obvious.
-      Value *Op = GEP.getOperand(i);
+      Value *Op = *i;
       if (TD->getTypeSizeInBits(Op->getType()) > TD->getPointerSizeInBits()) {
         if (Constant *C = dyn_cast<Constant>(Op)) {
-          GEP.setOperand(i, ConstantExpr::getTrunc(C, TD->getIntPtrType()));
+          *i = ConstantExpr::getTrunc(C, TD->getIntPtrType());
           MadeChange = true;
         } else {
           Op = InsertCastBefore(Instruction::Trunc, Op, TD->getIntPtrType(),
                                 GEP);
-          GEP.setOperand(i, Op);
+          *i = Op;
           MadeChange = true;
         }
       }
@@ -10717,11 +10719,11 @@ static std::vector<unsigned> getShuffleMask(const ShuffleVectorInst *SVI) {
 
   std::vector<unsigned> Result;
   const ConstantVector *CP = cast<ConstantVector>(SVI->getOperand(2));
-  for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
-    if (isa<UndefValue>(CP->getOperand(i)))
+  for (User::const_op_iterator i = CP->op_begin(), e = CP->op_end(); i!=e; ++i)
+    if (isa<UndefValue>(*i))
       Result.push_back(NElts*2);  // undef -> 8
     else
-      Result.push_back(cast<ConstantInt>(CP->getOperand(i))->getZExtValue());
+      Result.push_back(cast<ConstantInt>(*i)->getZExtValue());
   return Result;
 }
 
