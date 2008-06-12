@@ -170,14 +170,21 @@ Program::ExecuteAndWait(const Path& path,
     case 0: {
       // Redirect file descriptors...
       if (redirects) {
+        // Redirect stdin
         if (RedirectIO(redirects[0], 0, ErrMsg)) { return -1; }
+        // Redirect stdout
         if (RedirectIO(redirects[1], 1, ErrMsg)) { return -1; }
         if (redirects[1] && redirects[2] && 
-            *(redirects[1]) != *(redirects[2])) {
+            *(redirects[1]) == *(redirects[2])) {
+          // If stdout and stderr should go to the same place, redirect stderr
+          // to the FD already open for stdout.
+          if (-1 == dup2(1,2)) {
+            MakeErrMsg(ErrMsg, "Can't redirect stderr to stdout");
+            return -1;
+          }
+        } else {
+          // Just redirect stderr
           if (RedirectIO(redirects[2], 2, ErrMsg)) { return -1; }
-        } else if (-1 == dup2(1,2)) {
-          MakeErrMsg(ErrMsg, "Can't redirect");
-          return -1;
         }
       }
 

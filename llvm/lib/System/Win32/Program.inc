@@ -176,7 +176,14 @@ Program::ExecuteAndWait(const Path& path,
       MakeErrMsg(ErrMsg, "can't redirect stdout");
       return -1;
     }
-    if (redirects[1] && redirects[2] && *(redirects[1]) != *(redirects[2])) {
+    if (redirects[1] && redirects[2] && *(redirects[1]) == *(redirects[2])) {
+      // If stdout and stderr should go to the same place, redirect stderr
+      // to the handle already open for stdout.
+      DuplicateHandle(GetCurrentProcess(), si.hStdOutput,
+                      GetCurrentProcess(), &si.hStdError,
+                      0, TRUE, DUPLICATE_SAME_ACCESS);
+    } else {
+      // Just redirect stderr
       si.hStdError = RedirectIO(redirects[2], 2, ErrMsg);
       if (si.hStdError == INVALID_HANDLE_VALUE) {
         CloseHandle(si.hStdInput);
@@ -184,10 +191,6 @@ Program::ExecuteAndWait(const Path& path,
         MakeErrMsg(ErrMsg, "can't redirect stderr");
         return -1;
       }
-    } else {
-      DuplicateHandle(GetCurrentProcess(), si.hStdOutput,
-                      GetCurrentProcess(), &si.hStdError,
-                      0, TRUE, DUPLICATE_SAME_ACCESS);
     }
   }
   
