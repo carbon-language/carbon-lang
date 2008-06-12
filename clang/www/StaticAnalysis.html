@@ -32,25 +32,43 @@
 <p>This documents provides some notes on using the LLVM/clang static analyzer to
 find bugs in C and Objective-C programs.</p>
 
-<p>Please note that this tool is <b>very early</b> in development, and there are
-<b>many planned enhancements</b> to improve both the precision and scope of its
-analysis algorithms as well as the kinds bugs it will find.</p>
-
-<h3>High-Level Summary</h3>
-
 <p>Currently the analyzer is invoked as a command-line tool. It is intended to
-run in synchronous with a build of a project or code base. Analysis results are
+run in tandem with a build of a project or code base. Analysis results are
 deposited in a directory as HTML files, which can then viewed using a web
-browser.</p>
+browser (open the generated <tt>index.html</tt> file to view a list of flagged
+errors).</p>
 
-<p>The analyzer performs a variety of checks on code, each requiring different
-levels of analysis precision (more precision = more CPU time). While the
-analyzer is being designed to be as fast and light-weight as possible, please
-<b>do not expect it to be as fast as compiling a program</b> (even with
-optimizations enabled). Some of the algorithms needed to find bugs require in
-the worst case exponential time. The analyzer runs in a reasonable amount of
-time by both bounding the amount of checking work it will do as well as using
-clever algorithms to reduce the amount of work it must do to find bugs.</p>
+<h3>Important Notes (Please Read)</h3>
+
+<p>Here are some important points we ask you to consider when using the static
+analyzer:</p>
+
+<ul>
+
+<li><b>This tool is <b>very early</b> in development.</b> There are many planned
+enhancements to improve both the precision and scope of its analysis algorithms
+as well as the kinds bugs it will find.</li>
+
+<li><b>False positives.</b> Static analysis reasons about the run-time behavior
+of a program without actually running the program. Static analysis is not
+perfect, and can falsely flag bugs in a program where the code behaves
+correctly. Because some code checks performed by the analyzer require more
+analysis than others, the frequency of false positives can vary widely between
+different checks. Our goal is to have the analyzer have a low false positive
+rate for most code on all checks, and we will reach this goal by gradually
+improving over time the analysis precision of the tool.</li>
+
+<li><b>Static analysis can be much slower than compilation.</b> The analyzer
+performs a variety of checks on code, each requiring different levels of
+analysis precision (more precision = more CPU time). While the analyzer is being
+designed to be as fast and light-weight as possible, please do not expect it to
+be as fast as compiling a program (even with optimizations enabled). Some of the
+algorithms needed to find bugs require in the worst case exponential time. The
+analyzer runs in a reasonable amount of time by both bounding the amount of
+checking work it will do as well as using clever algorithms to reduce the amount
+of work it must do to find bugs.</li>
+
+</ul>
 
 <h3>Organization</h3>
 
@@ -61,7 +79,8 @@ clever algorithms to reduce the amount of work it must do to find bugs.</p>
   <li><a href="#BasicUsage">Basic Usage</a></li> 
   <li><a href="#Output">Output of the Analyzer</a></li>
   <li><a href="#RecommendedUsageGuidelines">Recommended Usage Guidelines</a></li>
-  <li><a href="#Debugging">Debugging the Analyzer</a>
+  <li><a href="#Debugging">Debugging the Analyzer</a></li>
+  <li><a href="#filingbugs">Filing Bugs</a></li>
 </ul>
 
 <h2 id="ReleaseContents">Obtaining the Analyzer</h2>
@@ -77,19 +96,17 @@ other special installation is needed.</p>
 
 <h3>Packaged Builds (Mac OS X)</h3>
 
-<p>Semi-regular pre-built binaries of the analyzer(packaged as a gzipped tar
-file) are available on Mac OS X (10.5).</p>
+<p>Semi-regular pre-built binaries of the analyzer are available on Mac OS X
+(10.5).</p>
 
 <p>The latest build is: <b><a
-href="http://keeda.stanford.edu/~kremenek/checker/checker-36.tar.gz">checker-36</a></b></p>
+href="http://keeda.stanford.edu/~kremenek/checker/checker-36.tar.gz">checker-36.tar.gz</a></b> (built June 11, 2008)</p>
 
-<p>The entire set of previous builds can be found <a
-href="http://keeda.stanford.edu/~kremenek/checker">here</a>. Packaged builds for
-other platforms may eventually be provided, but as the tool is in its early
-stages we are not actively promoting releases yet. If you wish to help
-contribute regular builds of the analyzer on other platforms, please email the
-<a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">Clang Developers'
-mailing list</a>.</p>
+Packaged builds for other platforms may eventually be provided, but as the tool
+is in its early stages we are not actively promoting releases yet. If you wish
+to help contribute regular builds of the analyzer on other platforms, please
+email the <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">Clang
+Developers' mailing list</a>.</p>
 
 <p>Packaged builds of the analyzer expand to the following files:</p>
 
@@ -236,10 +253,10 @@ Here are a few recommendations with running the analyzer:
 
 <h3>Always Analyze a Project in its "Debug" Configuration</h3>
 
-Most projects can be built in a "debug" mode that enables assertions. Assertions
-are picked up by the static analyzer to prune infeasible paths, which in some
-cases can greatly reduce the number of false positives (bogus error reports)
-emitted by the tool.
+<p>Most projects can be built in a "debug" mode that enables assertions.
+Assertions are picked up by the static analyzer to prune infeasible paths, which
+in some cases can greatly reduce the number of false positives (bogus error
+reports) emitted by the tool.</p>
 
 <h3>Pass -k to <tt>scan-build</tt></h3>
 
@@ -254,24 +271,24 @@ compile-debug cycle.</p>
 
 <h3>Use Verbose Output when Debugging <tt>scan-build</tt></h3>
 
-<tt>scan-build</tt> takes a <b>-v</b> option to emit verbose output about what
-it's doing; two <b>-v</b> options emit more information. Redirecting the output
-of <tt>scan-build</tt> to a text file (make sure to redirect standard error) is
-useful for filing bug reports against <tt>scan-build</tt> or the analyzer, as we
-can see the exact options (and files) passed to the analyzer. For more
-comprehendible logs, don't perform a parallel build.
+<p><tt>scan-build</tt> takes a <b>-v</b> option to emit verbose output about
+what it's doing; two <b>-v</b> options emit more information. Redirecting the
+output of <tt>scan-build</tt> to a text file (make sure to redirect standard
+error) is useful for filing bug reports against <tt>scan-build</tt> or the
+analyzer, as we can see the exact options (and files) passed to the analyzer.
+For more comprehendible logs, don't perform a parallel build.</p>
 
 <h2 id="Debugging">Debugging the Analyzer</h2>
 
-This section provides information on debugging the analyzer, and troubleshooting
-it when you have problems analyzing a particular project.
+<p>This section provides information on debugging the analyzer, and troubleshooting
+it when you have problems analyzing a particular project.</p>
 
 <h3>How it Works</h3>
 
-To analyze a project, <tt>scan-build</tt> simply sets the environment variable
+<p>To analyze a project, <tt>scan-build</tt> simply sets the environment variable
 <tt>CC</tt> to the full path to <tt>ccc-analyzer</tt>. It also sets a few other
 environment variables to communicate to <tt>ccc-analyzer</tt> where to dump HTML
-report files.
+report files.</p>
 
 <p>Some Makefiles (or equivalent project files) hardcode the compiler; for such
 projects simply overriding <tt>CC</tt> won't cause <tt>ccc-analyzer</tt> to be
@@ -298,18 +315,21 @@ calling <tt>clang</tt>). <tt>ccc-analyzer</tt> tries to correctly forward all
 the arguments over to <tt>gcc</tt>, but this may not work perfectly (please
 report bugs of this kind).
 
-<h3>Filing Bugs</h3>
+<h2 id="filingbugs">Filing Bugs</h2>
 
-We encourage users to file bug reports for any problems that they encounter.
+<p>We encourage users to file bug reports for any problems that they
+encounter.</p>
 
-<p><b>Outside Apple</b>: Please <a
-href="http://llvm.org/bugs/enter_bug.cgi?product=clang">file bugs</a> (against
-Clang) in LLVM's Bugzilla database.</p>
+<h3>Outside Apple</h3>
 
-<p><b>Apple-internal</b>:  Please file bugs in Radar against the <b>llvm - clang</b>
-component.</p>
+<p>Please <a href="http://llvm.org/bugs/enter_bug.cgi?product=clang">file
+bugs</a> (against Clang) in LLVM's Bugzilla database.</p>
+
+<h3>Apple-internal Users</h3>
+
+<p>Please file bugs in Radar against the <b>llvm - clang</b> component.</p>
+
 
 </div>
-
 </body>
 </html>

@@ -5,6 +5,10 @@ html, body {
 
 h1, h2, h3, tt { color: #000; }
 
+h2 { padding-top: 1em; }
+h3 { padding-top: 0.5em; margin-bottom: -0.25em; }
+li { padding-bottom: 0.5em; }
+
 /* Slides */
 IMG.img_slide {
     display: block;
