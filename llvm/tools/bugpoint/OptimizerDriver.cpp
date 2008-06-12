@@ -114,6 +114,8 @@ int BugDriver::runPassesAsChild(const std::vector<const PassInfo*> &Passes) {
   return 0;
 }
 
+cl::opt<bool> SilencePasses("silence-passes", cl::desc("Suppress output of running passes (both stdout and stderr)"));
+
 /// runPasses - Run the specified passes on Program, outputting a bitcode file
 /// and writing the filename into OutputFile if successful.  If the
 /// optimizations fail for some reason (optimizer crashes), return true,
@@ -192,7 +194,12 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
     prog = sys::Program::FindProgramByName("valgrind");
   else
     prog = tool;
-  int result = sys::Program::ExecuteAndWait(prog, args, 0, 0,
+  
+  // Redirect stdout and stderr to nowhere if SilencePasses is given
+  sys::Path Nowhere;
+  const sys::Path *Redirects[3] = {0, &Nowhere, &Nowhere};
+
+  int result = sys::Program::ExecuteAndWait(prog, args, 0, (SilencePasses ? Redirects : 0),
                                             Timeout, MemoryLimit, &ErrMsg);
 
   // If we are supposed to delete the bitcode file or if the passes crashed,
