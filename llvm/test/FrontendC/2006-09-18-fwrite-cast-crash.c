@@ -1,4 +1,4 @@
-// RUN: %llvmgcc %s -S -o -
+// RUN: %llvmgcc %s -S -o /dev/null
 // PR910
 
 struct l_struct_2E_FILE { char x; };

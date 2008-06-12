@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | opt -scalarrepl | llvm-dis | \
-; RUN:   grep alloca | grep {\\{}
+; RUN:   grep alloca | grep \\{
 
 declare i32 @.callback_1(i8*)
 

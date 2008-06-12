@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -xc %s -c -o - | llc
+// RUN: %llvmgcc -xc %s -w -c -o - | llc
 
 #include <stdarg.h>
 
