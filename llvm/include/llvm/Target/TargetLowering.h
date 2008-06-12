@@ -295,8 +295,9 @@ public:
   /// isOperationLegal - Return true if the specified operation is legal on this
   /// target.
   bool isOperationLegal(unsigned Op, MVT VT) const {
-    return getOperationAction(Op, VT) == Legal ||
-           getOperationAction(Op, VT) == Custom;
+    return VT.isSimple() &&
+      (getOperationAction(Op, VT) == Legal ||
+       getOperationAction(Op, VT) == Custom);
   }
   
   /// getLoadXAction - Return how this load with extension should be treated:
@@ -309,7 +310,7 @@ public:
            "Table isn't big enough!");
     return (LegalizeAction)((LoadXActions[LType] >> (2*VT.getSimpleVT())) & 3);
   }
-  
+
   /// isLoadXLegal - Return true if the specified load with extension is legal
   /// on this target.
   bool isLoadXLegal(unsigned LType, MVT VT) const {
@@ -317,7 +318,7 @@ public:
       (getLoadXAction(LType, VT) == Legal ||
        getLoadXAction(LType, VT) == Custom);
   }
-  
+
   /// getTruncStoreAction - Return how this store with truncation should be
   /// treated: either it is legal, needs to be promoted to a larger size, needs
   /// to be expanded to some other code sequence, or the target has a custom
@@ -330,7 +331,7 @@ public:
     return (LegalizeAction)((TruncStoreActions[ValVT.getSimpleVT()] >>
                              (2*MemVT.getSimpleVT())) & 3);
   }
-  
+
   /// isTruncStoreLegal - Return true if the specified store with truncation is
   /// legal on this target.
   bool isTruncStoreLegal(MVT ValVT, MVT MemVT) const {
@@ -355,10 +356,11 @@ public:
   /// isIndexedLoadLegal - Return true if the specified indexed load is legal
   /// on this target.
   bool isIndexedLoadLegal(unsigned IdxMode, MVT VT) const {
-    return getIndexedLoadAction(IdxMode, VT) == Legal ||
-           getIndexedLoadAction(IdxMode, VT) == Custom;
+    return VT.isSimple() &&
+      (getIndexedLoadAction(IdxMode, VT) == Legal ||
+       getIndexedLoadAction(IdxMode, VT) == Custom);
   }
-  
+
   /// getIndexedStoreAction - Return how the indexed store should be treated:
   /// either it is legal, needs to be promoted to a larger size, needs to be
   /// expanded to some other code sequence, or the target has a custom expander
@@ -375,10 +377,11 @@ public:
   /// isIndexedStoreLegal - Return true if the specified indexed load is legal
   /// on this target.
   bool isIndexedStoreLegal(unsigned IdxMode, MVT VT) const {
-    return getIndexedStoreAction(IdxMode, VT) == Legal ||
-           getIndexedStoreAction(IdxMode, VT) == Custom;
+    return VT.isSimple() &&
+      (getIndexedStoreAction(IdxMode, VT) == Legal ||
+       getIndexedStoreAction(IdxMode, VT) == Custom);
   }
-  
+
   /// getConvertAction - Return how the conversion should be treated:
   /// either it is legal, needs to be promoted to a larger size, needs to be
   /// expanded to some other code sequence, or the target has a custom expander
@@ -395,8 +398,9 @@ public:
   /// isConvertLegal - Return true if the specified conversion is legal
   /// on this target.
   bool isConvertLegal(MVT FromVT, MVT ToVT) const {
-    return getConvertAction(FromVT, ToVT) == Legal ||
-           getConvertAction(FromVT, ToVT) == Custom;
+    return FromVT.isSimple() && ToVT.isSimple() &&
+      (getConvertAction(FromVT, ToVT) == Legal ||
+       getConvertAction(FromVT, ToVT) == Custom);
   }
 
   /// getTypeToPromoteTo - If the action for this operation is to promote, this
