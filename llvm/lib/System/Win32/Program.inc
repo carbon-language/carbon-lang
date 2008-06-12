@@ -77,10 +77,12 @@ static HANDLE RedirectIO(const Path *path, int fd, std::string* ErrMsg) {
                     0, TRUE, DUPLICATE_SAME_ACCESS);
     return h;
   }
-
-  const char *fname = path->toString().c_str();
-  if (*fname == 0)
+  
+  const char *fname;
+  if (path->isEmpty())
     fname = "NUL";
+  else
+    fname = path->toString().c_str();
 
   SECURITY_ATTRIBUTES sa;
   sa.nLength = sizeof(sa);
