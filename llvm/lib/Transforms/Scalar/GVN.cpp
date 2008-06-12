@@ -25,6 +25,7 @@
 #include "llvm/Value.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/ScopedHashTable.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SparseBitVector.h"
@@ -667,53 +668,23 @@ void ValueTable::erase(Value* V) {
 }
 
 //===----------------------------------------------------------------------===//
-//                       ValueNumberedSet Class
-//===----------------------------------------------------------------------===//
-namespace {
-class VISIBILITY_HIDDEN ValueNumberedSet {
-  private:
-    SmallPtrSet<Value*, 8> contents;
-    SparseBitVector<64> numbers;
-  public:
-    ValueNumberedSet() { }
-    ValueNumberedSet(const ValueNumberedSet& other) {
-      numbers = other.numbers;
-      contents = other.contents;
-    }
-    
-    typedef SmallPtrSet<Value*, 8>::iterator iterator;
-    
-    iterator begin() { return contents.begin(); }
-    iterator end() { return contents.end(); }
-    
-    bool insert(Value* v) { return contents.insert(v); }
-    void insert(iterator I, iterator E) { contents.insert(I, E); }
-    void erase(Value* v) { contents.erase(v); }
-    unsigned count(Value* v) { return contents.count(v); }
-    size_t size() { return contents.size(); }
-    
-    void set(unsigned i)  {
-      numbers.set(i);
-    }
-    
-    void operator=(const ValueNumberedSet& other) {
-      contents = other.contents;
-      numbers = other.numbers;
-    }
-    
-    void reset(unsigned i)  {
-      numbers.reset(i);
-    }
-    
-    bool test(unsigned i)  {
-      return numbers.test(i);
-    }
-};
-}
-
-//===----------------------------------------------------------------------===//
 //                         GVN Pass
 //===----------------------------------------------------------------------===//
+
+namespace llvm {
+  template<> struct DenseMapInfo<uint32_t> {
+    static inline uint32_t getEmptyKey() { return ~0; }
+    static inline uint32_t getTombstoneKey() { return ~0 - 1; }
+    static unsigned getHashValue(const uint32_t& Val) { return Val; }
+    static bool isPod() { return true; }
+    static bool isEqual(const uint32_t& LHS, const uint32_t& RHS) {
+      return LHS == RHS;
+    }
+  };
+}
+
+typedef ScopedHashTable<uint32_t, Value*> ValueNumberMap;
+typedef ScopedHashTableScope<uint32_t, Value*> ValueNumberScope;
 
 namespace {
 
@@ -726,7 +697,8 @@ namespace {
   private:
     ValueTable VN;
     
-    DenseMap<BasicBlock*, ValueNumberedSet> availableOut;
+    DenseMap<BasicBlock*, ValueNumberScope> availableOut;
+    ValueNumberMap BaseMap;
     
     typedef DenseMap<Value*, SmallPtrSet<Instruction*, 4> > PhiMapType;
     PhiMapType phiMap;
@@ -744,17 +716,15 @@ namespace {
   
     // Helper fuctions
     // FIXME: eliminate or document these better
-    Value* find_leader(ValueNumberedSet& vals, uint32_t v) ;
-    void val_insert(ValueNumberedSet& s, Value* v);
     bool processLoad(LoadInst* L,
                      DenseMap<Value*, LoadInst*> &lastLoad,
                      SmallVectorImpl<Instruction*> &toErase);
     bool processInstruction(Instruction* I,
-                            ValueNumberedSet& currAvail,
                             DenseMap<Value*, LoadInst*>& lastSeenLoad,
                             SmallVectorImpl<Instruction*> &toErase);
     bool processNonLocalLoad(LoadInst* L,
                              SmallVectorImpl<Instruction*> &toErase);
+    bool processBlock(DomTreeNode* DTN);
     Value *GetValueForBlock(BasicBlock *BB, LoadInst* orig,
                             DenseMap<BasicBlock*, Value*> &Phis,
                             bool top_level = false);
@@ -772,30 +742,6 @@ FunctionPass *llvm::createGVNPass() { return new GVN(); }
 
 static RegisterPass<GVN> X("gvn",
                            "Global Value Numbering");
-
-/// find_leader - Given a set and a value number, return the first
-/// element of the set with that value number, or 0 if no such element
-/// is present
-Value* GVN::find_leader(ValueNumberedSet& vals, uint32_t v) {
-  if (!vals.test(v))
-    return 0;
-  
-  for (ValueNumberedSet::iterator I = vals.begin(), E = vals.end();
-       I != E; ++I)
-    if (v == VN.lookup(*I))
-      return *I;
-  
-  assert(0 && "No leader found, but present bit is set?");
-  return 0;
-}
-
-/// val_insert - Insert a value into a set only if there is not a value
-/// with the same value number already in the set
-void GVN::val_insert(ValueNumberedSet& s, Value* v) {
-  uint32_t num = VN.lookup(v);
-  if (!s.test(num))
-    s.insert(v);
-}
 
 void GVN::dump(DenseMap<BasicBlock*, Value*>& d) {
   printf("{\n");
@@ -1061,7 +1007,7 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
 
 /// processInstruction - When calculating availability, handle an instruction
 /// by inserting it into the appropriate sets
-bool GVN::processInstruction(Instruction *I, ValueNumberedSet &currAvail,
+bool GVN::processInstruction(Instruction *I,
                              DenseMap<Value*, LoadInst*> &lastSeenLoad,
                              SmallVectorImpl<Instruction*> &toErase) {
   if (LoadInst* L = dyn_cast<LoadInst>(I))
@@ -1088,8 +1034,8 @@ bool GVN::processInstruction(Instruction *I, ValueNumberedSet &currAvail,
       toErase.push_back(p);
     }
   // Perform value-number based elimination
-  } else if (currAvail.test(num)) {
-    Value* repl = find_leader(currAvail, num);
+  } else if (BaseMap.begin(num) != BaseMap.end()) {
+    Value* repl = *BaseMap.begin(num);
     
     // Remove it!
     MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
@@ -1100,8 +1046,7 @@ bool GVN::processInstruction(Instruction *I, ValueNumberedSet &currAvail,
     toErase.push_back(I);
     return true;
   } else if (!I->isTerminator()) {
-    currAvail.set(num);
-    currAvail.insert(I);
+    BaseMap.insert(num, I);
   }
   
   return false;
@@ -1127,72 +1072,57 @@ bool GVN::runOnFunction(Function& F) {
 }
 
 
+bool GVN::processBlock(DomTreeNode* DTN) {
+  BasicBlock* BB = DTN->getBlock();
+  ValueNumberScope NewScope(BaseMap);
+
+  SmallVector<Instruction*, 8> toErase;
+  DenseMap<Value*, LoadInst*> lastSeenLoad;
+  bool changed_function = false;
+
+  for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
+       BI != BE;) {
+    changed_function |= processInstruction(BI, lastSeenLoad, toErase);
+    if (toErase.empty()) {
+      ++BI;
+      continue;
+    }
+    
+    // If we need some instructions deleted, do it now.
+    NumGVNInstr += toErase.size();
+    
+    // Avoid iterator invalidation.
+    bool AtStart = BI == BB->begin();
+    if (!AtStart)
+      --BI;
+
+    for (SmallVector<Instruction*, 4>::iterator I = toErase.begin(),
+         E = toErase.end(); I != E; ++I)
+      (*I)->eraseFromParent();
+
+    if (AtStart)
+      BI = BB->begin();
+    else
+      ++BI;
+    
+    toErase.clear();
+  }
+  
+  for (DomTreeNode::iterator I = DTN->begin(), E = DTN->end(); I != E; ++I)
+    changed_function |= processBlock(*I);
+  
+  return changed_function;
+}
+
 // GVN::iterateOnFunction - Executes one iteration of GVN
 bool GVN::iterateOnFunction(Function &F) {
   // Clean out global sets from any previous functions
   VN.clear();
   availableOut.clear();
   phiMap.clear();
- 
-  bool changed_function = false;
   
   DominatorTree &DT = getAnalysis<DominatorTree>();   
-  
-  SmallVector<Instruction*, 8> toErase;
-  DenseMap<Value*, LoadInst*> lastSeenLoad;
-  DenseMap<DomTreeNode*, size_t> numChildrenVisited;
 
   // Top-down walk of the dominator tree
-  for (df_iterator<DomTreeNode*> DI = df_begin(DT.getRootNode()),
-         E = df_end(DT.getRootNode()); DI != E; ++DI) {
-    
-    // Get the set to update for this block
-    ValueNumberedSet& currAvail = availableOut[DI->getBlock()];     
-    lastSeenLoad.clear();
-
-    BasicBlock* BB = DI->getBlock();
-  
-    // A block inherits AVAIL_OUT from its dominator
-    if (DI->getIDom() != 0) {
-      currAvail = availableOut[DI->getIDom()->getBlock()];
-      
-      numChildrenVisited[DI->getIDom()]++;
-      
-      if (numChildrenVisited[DI->getIDom()] == DI->getIDom()->getNumChildren()) {
-        availableOut.erase(DI->getIDom()->getBlock());
-        numChildrenVisited.erase(DI->getIDom());
-      }
-    }
-
-    for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
-         BI != BE;) {
-      changed_function |= processInstruction(BI, currAvail,
-                                             lastSeenLoad, toErase);
-      if (toErase.empty()) {
-        ++BI;
-        continue;
-      }
-      
-      // If we need some instructions deleted, do it now.
-      NumGVNInstr += toErase.size();
-      
-      // Avoid iterator invalidation.
-      bool AtStart = BI == BB->begin();
-      if (!AtStart)
-        --BI;
-
-      for (SmallVector<Instruction*, 4>::iterator I = toErase.begin(),
-           E = toErase.end(); I != E; ++I)
-        (*I)->eraseFromParent();
-
-      if (AtStart)
-        BI = BB->begin();
-      else
-        ++BI;
-      
-      toErase.clear();
-    }
-  }
-  
-  return changed_function;
+  return processBlock(DT.getRootNode());
 }
