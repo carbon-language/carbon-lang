@@ -1,4 +1,4 @@
-// RUN: clang %s -emit-llvm -o - | grep 0x3BFD83C940000000 | count 2
+// RUN: clang %s -emit-llvm -o - | grep 0x3BFD83C940000000 | count 2 &&
 // RUN: clang %s -emit-llvm -o - | grep 2.000000e+32 | count 2
 
 float  F  = 1e-19f;

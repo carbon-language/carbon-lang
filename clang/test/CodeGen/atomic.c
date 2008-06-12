@@ -1,14 +1,14 @@
-// RUN: clang %s -emit-llvm -o - > %t1
-// RUN: grep @llvm.atomic.las.i32 %t1
-// RUN: grep @llvm.atomic.lss.i32 %t1
-// RUN: grep @llvm.atomic.load.min.i32 %t1
-// RUN: grep @llvm.atomic.load.max.i32 %t1
-// RUN: grep @llvm.atomic.load.umin.i32 %t1
-// RUN: grep @llvm.atomic.load.umax.i32 %t1
-// RUN: grep @llvm.atomic.swap.i32 %t1
-// RUN: grep @llvm.atomic.lcs.i32 %t1
-// RUN: grep @llvm.atomic.load.and.i32 %t1
-// RUN: grep @llvm.atomic.load.or.i32 %t1
+// RUN: clang %s -emit-llvm -o - > %t1 &&
+// RUN: grep @llvm.atomic.las.i32 %t1 &&
+// RUN: grep @llvm.atomic.lss.i32 %t1 &&
+// RUN: grep @llvm.atomic.load.min.i32 %t1 &&
+// RUN: grep @llvm.atomic.load.max.i32 %t1 &&
+// RUN: grep @llvm.atomic.load.umin.i32 %t1 &&
+// RUN: grep @llvm.atomic.load.umax.i32 %t1 &&
+// RUN: grep @llvm.atomic.swap.i32 %t1 &&
+// RUN: grep @llvm.atomic.lcs.i32 %t1 &&
+// RUN: grep @llvm.atomic.load.and.i32 %t1 &&
+// RUN: grep @llvm.atomic.load.or.i32 %t1 &&
 // RUN: grep @llvm.atomic.load.xor.i32 %t1
 
 

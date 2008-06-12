@@ -1,4 +1,4 @@
-// RUN: not clang %s -std=c90
+// RUN: not clang %s -std=c90 &&
 // RUN: clang %s -std=c99
 
 int f (int z) { 

@@ -1,5 +1,5 @@
 // RUN: clang -E %s | grep '^a: x$' &&
-// RUN: clang -E %s | grep '^b: x y, z,h$'
+// RUN: clang -E %s | grep '^b: x y, z,h$' &&
 // RUN: clang -E %s | grep '^c: foo(x)$'
 
 #define A(b, c...) b c

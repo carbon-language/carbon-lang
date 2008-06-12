@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -fno-caret-diagnostics -pedantic %s 2>&1 | grep warning | wc -l | grep 1
+// RUN: clang -fsyntax-only -fno-caret-diagnostics -pedantic %s 2>&1 | grep warning | wc -l | grep 1 &&
 // RUN: clang -fsyntax-only -verify -pedantic %s
 
 char ((((                       /* expected-error {{to match this '('}} */

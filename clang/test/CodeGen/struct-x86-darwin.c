@@ -5,8 +5,8 @@
 // RUN: grep "STestB1 = type <{ i8, i8 }>" %t1 &&
 // RUN: grep "STestB2 = type <{ i8, i8, i8 }>" %t1 &&
 // RUN: grep "STestB3 = type <{ i8, i8 }>" %t1 &&
-// RUN: grep "STestB4 = type <{ i8, i8, i8, i8 }>" %t1
-// RUN: grep "STestB5 = type <{ i8, i8, i8, i8, i8, i8 }>" %t1
+// RUN: grep "STestB4 = type <{ i8, i8, i8, i8 }>" %t1 &&
+// RUN: grep "STestB5 = type <{ i8, i8, i8, i8, i8, i8 }>" %t1 &&
 // RUN: grep "STestB6 = type <{ i8, i8, i8, i8 }>" %t1
 // Test struct layout for x86-darwin target
 
