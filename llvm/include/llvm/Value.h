@@ -161,6 +161,8 @@ public:
   ///
   bool hasNUsesOrMore(unsigned N) const;
 
+  bool isUsedInBasicBlock(BasicBlock *BB) const;
+
   /// getNumUses - This method computes the number of uses of this Value.  This
   /// is a linear time operation.  Use hasOneUse, hasNUses, or hasMoreThanNUses
   /// to check for specific values.

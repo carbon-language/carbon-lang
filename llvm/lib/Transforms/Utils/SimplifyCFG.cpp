@@ -23,11 +23,14 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/Statistic.h"
 #include <algorithm>
 #include <functional>
 #include <set>
 #include <map>
 using namespace llvm;
+
+STATISTIC(NumSpeculations, "Number of speculative executed instructions");
 
 /// SafeToMergeTerminators - Return true if it is safe to merge these two
 /// terminator instructions together.
@@ -1030,12 +1033,22 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
   if (!FalseV)  // Can this happen?
     return false;
 
+  // Do not hoist the instruction if any of its operands are defined but not
+  // used in this BB. The transformation will prevent the operand from
+  // being sunk into the use block.
+  for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i) {
+    Instruction *OpI = dyn_cast<Instruction>(*i);
+    if (OpI && OpI->getParent() == BIParent &&
+        !OpI->isUsedInBasicBlock(BIParent))
+      return false;
+  }
+
   // If we get here, we can hoist the instruction. Try to place it before the
-  // icmp / fcmp instruction preceeding the conditional branch.
+  // icmp instruction preceeding the conditional branch.
   BasicBlock::iterator InsertPos = BI;
   if (InsertPos != BIParent->begin())
     --InsertPos;
-  if (InsertPos == BrCond)
+  if (InsertPos == BrCond && !isa<PHINode>(BrCond))
     BIParent->getInstList().splice(InsertPos, BB1->getInstList(), I);
   else
     BIParent->getInstList().splice(BI, BB1->getInstList(), I);
@@ -1060,6 +1073,7 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
         PN->setIncomingValue(j, SI);
   }
 
+  ++NumSpeculations;
   return true;
 }
 

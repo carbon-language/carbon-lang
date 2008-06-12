@@ -93,6 +93,17 @@ bool Value::hasNUsesOrMore(unsigned N) const {
   return true;
 }
 
+/// isUsedInBasicBlock - Return true if this value is used in the specified
+/// basic block.
+bool Value::isUsedInBasicBlock(BasicBlock *BB) const {
+  for (use_const_iterator I = use_begin(), E = use_end(); I != E; ++I) {
+    const Instruction *User = dyn_cast<Instruction>(*I);
+    if (User && User->getParent() == BB)
+      return true;
+  }
+  return false;
+}
+
 
 /// getNumUses - This method computes the number of uses of this Value.  This
 /// is a linear time operation.  Use hasOneUse or hasNUses to check for specific
