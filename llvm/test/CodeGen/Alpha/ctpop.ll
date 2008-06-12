@@ -4,8 +4,6 @@
 ; RUN:   grep -i ctpop
 ; RUN: llvm-as < %s | llc -march=alpha -mcpu=ev6 | \
 ; RUN:   not grep -i ctpop
-; RUN: llvm-as < %s | llc -march=alpha -mcpu=ev56 | \
-; RUN:   not grep -i ctpop
 ; RUN: llvm-as < %s | llc -march=alpha -mattr=-CIX | \
 ; RUN:   not grep -i ctpop
 
