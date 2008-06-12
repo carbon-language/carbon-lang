@@ -8287,7 +8287,7 @@ static unsigned EnforceKnownAlignment(Value *V,
   case Instruction::GetElementPtr: {
     // If all indexes are zero, it is just the alignment of the base pointer.
     bool AllZeroOperands = true;
-    for (User::op_iterator i = U->op_begin(), e = U->op_end(); i != e; ++i)
+    for (User::op_iterator i = U->op_begin() + 1, e = U->op_end(); i != e; ++i)
       if (!isa<Constant>(*i) ||
           !cast<Constant>(*i)->isNullValue()) {
         AllZeroOperands = false;
