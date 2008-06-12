@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm %s -o - | not grep "[5 x i8]" &&
+// RUN: clang -emit-llvm %s -o - | not grep -F "[5 x i8]" &&
 // RUN: clang -emit-llvm %s -o - | not grep "store"
 
 void test(void) {
