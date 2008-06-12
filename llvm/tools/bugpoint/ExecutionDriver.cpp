@@ -164,7 +164,10 @@ bool BugDriver::initializeExecutionEnvironment() {
     Message = "Sorry, this back-end is not supported by bugpoint right now!\n";
     break;
   }
-  std::cerr << Message;
+  if (!Interpreter)
+    std::cerr << Message;
+  else // Display informational messages on stdout instead of stderr
+    std::cout << Message;
 
   // Initialize auxiliary tools for debugging
   if (InterpreterSel == RunCBE) {
