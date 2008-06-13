@@ -1134,6 +1134,9 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA) {
   // Parsing the specified input file.
   P.ParseTranslationUnit();
   delete PA;
+
+  if (VerifyDiagnostics)
+    exit(CheckDiagnostics(PP));
 }
 
 //===----------------------------------------------------------------------===//

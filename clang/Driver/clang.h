@@ -43,6 +43,9 @@ void EmitLLVMFromASTs(Preprocessor &PP, bool PrintStats);
 /// CheckASTConsumer - Implement diagnostic checking for AST consumers.
 bool CheckASTConsumer(Preprocessor &PP, ASTConsumer* C);
 
+/// CheckDiagnostics - Gather the expected diagnostics and check them.
+bool CheckDiagnostics(Preprocessor &PP);
+
 
 }  // end namespace clang
 
