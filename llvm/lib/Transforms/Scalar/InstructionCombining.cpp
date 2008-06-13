@@ -10417,18 +10417,19 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
           return false;
         break;
       }
-      // If we find something that may be using the stored value, or if we run
-      // out of instructions, we can't do the xform.
-      if (isa<LoadInst>(BBI) || BBI->mayWriteToMemory() ||
+      // If we find something that may be using or overwriting the stored
+      // value, or if we run out of instructions, we can't do the xform.
+      if (BBI->mayReadFromMemory() || BBI->mayWriteToMemory() ||
           BBI == OtherBB->begin())
         return false;
     }
     
     // In order to eliminate the store in OtherBr, we have to
-    // make sure nothing reads the stored value in StoreBB.
+    // make sure nothing reads or overwrites the stored value in
+    // StoreBB.
     for (BasicBlock::iterator I = StoreBB->begin(); &*I != &SI; ++I) {
       // FIXME: This should really be AA driven.
-      if (isa<LoadInst>(I) || I->mayWriteToMemory())
+      if (I->mayReadFromMemory() || I->mayWriteToMemory())
         return false;
     }
   }
