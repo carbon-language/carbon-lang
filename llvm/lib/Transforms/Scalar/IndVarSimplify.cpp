@@ -522,11 +522,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   DOUT << "INDVARS: New CanIV: " << *IndVar;
 
   if (!isa<SCEVCouldNotCompute>(IterationCount)) {
-    if (IterationCount->getType()->getPrimitiveSizeInBits() <
-        LargestType->getPrimitiveSizeInBits())
-      IterationCount = SE->getZeroExtendExpr(IterationCount, LargestType);
-    else if (IterationCount->getType() != LargestType)
-      IterationCount = SE->getTruncateExpr(IterationCount, LargestType);
+    IterationCount = SE->getTruncateOrZeroExtend(IterationCount, LargestType);
     if (Instruction *DI = LinearFunctionTestReplace(L, IterationCount,Rewriter))
       DeadInsts.insert(DI);
   }
