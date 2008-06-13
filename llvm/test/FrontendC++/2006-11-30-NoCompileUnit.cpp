@@ -8,6 +8,8 @@
 // RUN: gdb -q -batch -n -x %t2 NoCompileUnit.exe | \
 // RUN:   tee NoCompileUnit.out | not grep {"low == high"}
 // XFAIL: alpha|ia64|arm
+// XFAIL: *
+// See PR2454
 
 
 class MamaDebugTest {

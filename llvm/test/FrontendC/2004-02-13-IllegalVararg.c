@@ -1,4 +1,6 @@
 // RUN: %llvmgcc -xc %s -w -c -o - | llc
+// XFAIL: *
+// See PR2425
 
 #include <stdarg.h>
 

@@ -1,4 +1,7 @@
 // RUN: %llvmgcc %s -S -o -
+// XFAIL: *
+// See PR2425
+
 #pragma pack(push, 2)
 struct H {
   unsigned long f1;
