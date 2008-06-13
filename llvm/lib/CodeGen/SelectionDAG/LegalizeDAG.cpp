@@ -2384,7 +2384,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
             Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
                                   SVOffset, isVolatile, Alignment);
             break;
-          } else if (getTypeAction(MVT::i32) == Legal) {
+          } else if (getTypeAction(MVT::i32) == Legal && !ST->isVolatile()) {
             // Otherwise, if the target supports 32-bit registers, use 2 32-bit
             // stores.  If the target supports neither 32- nor 64-bits, this
             // xform is certainly not worth it.

@@ -132,7 +132,7 @@ public:
     assert(RC && "This value type is not natively supported!");
     return RC;
   }
-  
+
   /// isTypeLegal - Return true if the target has native support for the
   /// specified value type.  This means that it has a register that directly
   /// holds it without promotions or expansions.
@@ -179,7 +179,7 @@ public:
   const ValueTypeActionImpl &getValueTypeActions() const {
     return ValueTypeActions;
   }
-  
+
   /// getTypeAction - Return how we should legalize values of this type, either
   /// it is already legal (return 'Legal') or we need to promote it to a larger
   /// type (return 'Promote'), or we need to expand it into multiple registers
@@ -291,15 +291,15 @@ public:
            "Table isn't big enough!");
     return (LegalizeAction)((OpActions[Op] >> (2*VT.getSimpleVT())) & 3);
   }
-  
+
   /// isOperationLegal - Return true if the specified operation is legal on this
   /// target.
   bool isOperationLegal(unsigned Op, MVT VT) const {
-    return VT.isSimple() &&
+    return (VT == MVT::Other || isTypeLegal(VT)) &&
       (getOperationAction(Op, VT) == Legal ||
        getOperationAction(Op, VT) == Custom);
   }
-  
+
   /// getLoadXAction - Return how this load with extension should be treated:
   /// either it is legal, needs to be promoted to a larger size, needs to be
   /// expanded to some other code sequence, or the target has a custom expander
@@ -335,7 +335,7 @@ public:
   /// isTruncStoreLegal - Return true if the specified store with truncation is
   /// legal on this target.
   bool isTruncStoreLegal(MVT ValVT, MVT MemVT) const {
-    return MemVT.isSimple() &&
+    return isTypeLegal(ValVT) && MemVT.isSimple() &&
       (getTruncStoreAction(ValVT, MemVT) == Legal ||
        getTruncStoreAction(ValVT, MemVT) == Custom);
   }
@@ -373,7 +373,7 @@ public:
     return (LegalizeAction)((IndexedModeActions[1][IdxMode] >>
                              (2*VT.getSimpleVT())) & 3);
   }  
-  
+
   /// isIndexedStoreLegal - Return true if the specified indexed load is legal
   /// on this target.
   bool isIndexedStoreLegal(unsigned IdxMode, MVT VT) const {
@@ -398,7 +398,7 @@ public:
   /// isConvertLegal - Return true if the specified conversion is legal
   /// on this target.
   bool isConvertLegal(MVT FromVT, MVT ToVT) const {
-    return FromVT.isSimple() && ToVT.isSimple() &&
+    return isTypeLegal(FromVT) && isTypeLegal(ToVT) &&
       (getConvertAction(FromVT, ToVT) == Legal ||
        getConvertAction(FromVT, ToVT) == Custom);
   }
