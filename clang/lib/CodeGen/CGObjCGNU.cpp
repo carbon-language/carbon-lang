@@ -222,6 +222,7 @@ llvm::Value *CGObjCGNU::GetSelector(llvm::IRBuilder &Builder,
     if (SelTypes == 0) {
       // If it's already cached, return it.
       if (UntypedSelectors[CName->getStringValue()]) {
+        // FIXME: Volatility
         return Builder.CreateLoad(UntypedSelectors[CName->getStringValue()]);
       }
       // If it isn't, cache it.
@@ -230,6 +231,7 @@ llvm::Value *CGObjCGNU::GetSelector(llvm::IRBuilder &Builder,
           llvm::GlobalValue::InternalLinkage, ".objc_untyped_selector_alias",
           NULL, &TheModule);
       UntypedSelectors[CName->getStringValue()] = Sel;
+      // FIXME: Volatility
       return Builder.CreateLoad(Sel);
     }
     // Typed selectors
@@ -238,6 +240,7 @@ llvm::Value *CGObjCGNU::GetSelector(llvm::IRBuilder &Builder,
           CTypes->getStringValue());
       // If it's already cached, return it.
       if (TypedSelectors[Selector]) {
+        // FIXME: Volatility
         return Builder.CreateLoad(TypedSelectors[Selector]);
       }
       // If it isn't, cache it.
@@ -246,6 +249,7 @@ llvm::Value *CGObjCGNU::GetSelector(llvm::IRBuilder &Builder,
           llvm::GlobalValue::InternalLinkage, ".objc_typed_selector_alias",
           NULL, &TheModule);
       TypedSelectors[Selector] = Sel;
+      // FIXME: Volatility
       return Builder.CreateLoad(Sel);
     }
   }
@@ -337,6 +341,7 @@ llvm::Value *CGObjCGNU::GenerateMessageSendSuper(llvm::IRBuilder &Builder,
   llvm::StructType *ObjCSuperTy = llvm::StructType::get(Receiver->getType(),
       IdTy, NULL);
   llvm::Value *ObjCSuper = Builder.CreateAlloca(ObjCSuperTy);
+  // FIXME: volatility
   Builder.CreateStore(Receiver, Builder.CreateStructGEP(ObjCSuper, 0));
   Builder.CreateStore(ReceiverClass, Builder.CreateStructGEP(ObjCSuper, 1));
 

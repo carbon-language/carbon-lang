@@ -208,7 +208,7 @@ void CodeGenFunction::EmitParmDecl(const ParmVarDecl &D, llvm::Value *Arg) {
                                      AllocaInsertPt);
       
       // Store the initial value into the alloca.
-      Builder.CreateStore(Arg, DeclPtr);
+      Builder.CreateStore(Arg, DeclPtr,Ty.isVolatileQualified());
     } else {
       // Otherwise, if this is an aggregate, just use the input pointer.
       DeclPtr = Arg;

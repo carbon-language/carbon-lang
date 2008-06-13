@@ -149,8 +149,7 @@ public:
 /// bitfields, this is not a simple LLVM pointer, it may be a pointer plus a
 /// bitrange.
 class LValue {
-  // FIXME: Volatility.  Restrict?
-  // alignment?
+  // FIXME: alignment?
   
   enum {
     Simple,       // This is a normal l-value, use getAddress().
@@ -174,12 +173,26 @@ class LValue {
       bool IsSigned;
     } BitfieldData;           // BitField start bit and size
   };
+
+  bool Volatile:1;
+  // FIXME: set but never used, what effect should it have?
+  bool Restrict:1;
+
+private:
+  static void SetQualifiers(unsigned Qualifiers, LValue& R) {
+    R.Volatile = (Qualifiers&QualType::Volatile)!=0;
+    R.Restrict = (Qualifiers&QualType::Restrict)!=0;
+  }
+
 public:
   bool isSimple() const { return LVType == Simple; }
   bool isVectorElt() const { return LVType == VectorElt; }
   bool isBitfield() const { return LVType == BitField; }
   bool isExtVectorElt() const { return LVType == ExtVectorElt; }
   
+  bool isVolatileQualified() const { return Volatile; }
+  bool isRestrictQualified() const { return Restrict; }
+
   // simple lvalue
   llvm::Value *getAddress() const { assert(isSimple()); return V; }
   // vector elt lvalue
@@ -206,37 +219,44 @@ public:
     return BitfieldData.IsSigned;
   }
 
-  static LValue MakeAddr(llvm::Value *V) {
+  static LValue MakeAddr(llvm::Value *V, unsigned Qualifiers) {
     LValue R;
     R.LVType = Simple;
     R.V = V;
+    SetQualifiers(Qualifiers,R);
     return R;
   }
   
-  static LValue MakeVectorElt(llvm::Value *Vec, llvm::Value *Idx) {
+  static LValue MakeVectorElt(llvm::Value *Vec, llvm::Value *Idx,
+                              unsigned Qualifiers) {
     LValue R;
     R.LVType = VectorElt;
     R.V = Vec;
     R.VectorIdx = Idx;
+    SetQualifiers(Qualifiers,R);
     return R;
   }
   
-  static LValue MakeExtVectorElt(llvm::Value *Vec, llvm::Constant *Elts) {
+  static LValue MakeExtVectorElt(llvm::Value *Vec, llvm::Constant *Elts,
+                                 unsigned Qualifiers) {
     LValue R;
     R.LVType = ExtVectorElt;
     R.V = Vec;
     R.VectorElts = Elts;
+    SetQualifiers(Qualifiers,R);
     return R;
   }
 
   static LValue MakeBitfield(llvm::Value *V, unsigned short StartBit,
-                             unsigned short Size, bool IsSigned) {
+                             unsigned short Size, bool IsSigned,
+                             unsigned Qualifiers) {
     LValue R;
     R.LVType = BitField;
     R.V = V;
     R.BitfieldData.StartBit = StartBit;
     R.BitfieldData.Size = Size;
     R.BitfieldData.IsSigned = IsSigned;
+    SetQualifiers(Qualifiers,R);
     return R;
   }
 };
@@ -440,7 +460,7 @@ public:
   LValue EmitCompoundLiteralLValue(const CompoundLiteralExpr *E);
 
   LValue EmitLValueForField(llvm::Value* Base, FieldDecl* Field,
-                            bool isUnion);
+                            bool isUnion, unsigned CVRQualifiers);
       
   LValue EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E);
   //===--------------------------------------------------------------------===//

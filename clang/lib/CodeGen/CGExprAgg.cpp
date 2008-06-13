@@ -280,6 +280,7 @@ void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
   llvm::Value *ArgValue = CGF.EmitLValue(VE->getSubExpr()).getAddress();
   llvm::Value *V = Builder.CreateVAArg(ArgValue, CGF.ConvertType(VE->getType()));
   if (DestPtr)
+    // FIXME: volatility
     Builder.CreateStore(V, DestPtr);
 }
 
@@ -299,6 +300,7 @@ void AggExprEmitter::EmitNonConstInit(InitListExpr *E) {
       if (isa<InitListExpr>(Init))
         CGF.EmitAggExpr(Init, NextVal, VolatileDest);
       else
+        // FIXME: volatility
         Builder.CreateStore(CGF.EmitScalarExpr(Init), NextVal);
     }
 
@@ -309,6 +311,7 @@ void AggExprEmitter::EmitNonConstInit(InitListExpr *E) {
     for (/*Do not initialize i*/; i < NumArrayElements; ++i) {
       llvm::Value *NextVal = Builder.CreateStructGEP(DestPtr, i, ".array");
       if (EType->isSingleValueType())
+        // FIXME: volatility
         Builder.CreateStore(llvm::Constant::getNullValue(EType), NextVal);
       else
         EmitAggregateClear(NextVal, QType);
@@ -333,6 +336,7 @@ void AggExprEmitter::EmitNullInitializationToLValue(LValue LV, QualType T) {
     // For non-aggregates, we can store zero
     const llvm::Type *T =
        cast<llvm::PointerType>(LV.getAddress()->getType())->getElementType();
+    // FIXME: volatility
     Builder.CreateStore(llvm::Constant::getNullValue(T), LV.getAddress());
   } else {
     // Otherwise, just memset the whole thing to zero.  This is legal
@@ -382,12 +386,16 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     uint64_t NumArrayElements = AType->getNumElements();
     QualType ElementType = E->getType()->getAsArrayType()->getElementType();
     
+    unsigned CVRqualifier = E->getType().getCanonicalType()->getAsArrayType()
+                            ->getElementType().getCVRQualifiers();
+
     for (uint64_t i = 0; i != NumArrayElements; ++i) {
       llvm::Value *NextVal = Builder.CreateStructGEP(DestPtr, i, ".array");
       if (i < NumInitElements)
-        EmitInitializationToLValue(E->getInit(i), LValue::MakeAddr(NextVal));
+        EmitInitializationToLValue(E->getInit(i),
+                                   LValue::MakeAddr(NextVal, CVRqualifier));
       else
-        EmitNullInitializationToLValue(LValue::MakeAddr(NextVal),
+        EmitNullInitializationToLValue(LValue::MakeAddr(NextVal, CVRqualifier),
                                        ElementType);
     }
     return;
@@ -418,7 +426,8 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       // Initializers can't initialize unnamed fields, e.g. "int : 20;"
       continue;
     }
-    LValue FieldLoc = CGF.EmitLValueForField(DestPtr, CurField, isUnion);
+    // FIXME: volatility
+    LValue FieldLoc = CGF.EmitLValueForField(DestPtr, CurField, isUnion,0);
     if (CurInitVal < NumInitElements) {
       // Store the initializer into the field
       // This will probably have to get a bit smarter when we support

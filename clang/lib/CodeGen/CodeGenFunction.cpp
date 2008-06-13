@@ -114,6 +114,7 @@ void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
                                    AllocaInsertPt);
 
   // Store the initial value into the alloca.
+  // FIXME: volatility
   Builder.CreateStore(AI, DeclPtr);
   DMEntry = DeclPtr;
   ++AI; ++AI;
@@ -152,6 +153,7 @@ llvm::Value *CodeGenFunction::LoadObjCSelf(void)
 {
   if(const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(CurFuncDecl)) {
     llvm::Value *SelfPtr = LocalDeclMap[&(*OMD->getSelfDecl())];
+    // FIXME: Volatility
     return Builder.CreateLoad(SelfPtr, "self");
   }
   return NULL;

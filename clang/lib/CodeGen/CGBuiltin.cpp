@@ -143,7 +143,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     
     Value *SrcPtr = CreateTempAlloca(SrcValue->getType(), "dst_ptr");
     
-    // FIXME: Volatile
     Builder.CreateStore(SrcValue, SrcPtr, false);
 
     const llvm::Type *Type = 
