@@ -1529,6 +1529,15 @@ namespace {
 ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
                                                 IVStrideUse* &CondUse,
                                                 const SCEVHandle* &CondStride) {
+  // Forgo this transformation if the condition has multiple uses. This is
+  // over-conservative, but simpler than alternatives. It guards against
+  // comparisons with a use that occurs earlier than the add instruction for the
+  // new stride index.  See
+  // test/Transforms/LoopStrengthReduce/change-compare-stride-trickiness.ll
+  // for an example of this situation.
+  if (!Cond->hasOneUse())
+    return Cond;
+
   if (StrideOrder.size() < 2 ||
       IVUsesByStride[*CondStride].Users.size() != 1)
     return Cond;
@@ -1654,9 +1663,9 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
       RHS = SCEVExpander::InsertCastOfTo(Instruction::IntToPtr, RHS, NewCmpTy);
     }
     // Insert new compare instruction.
-    Cond = new ICmpInst(Predicate, NewIncV, RHS);
-    Cond->setName(L->getHeader()->getName() + ".termcond");
-    OldCond->getParent()->getInstList().insert(OldCond, Cond);
+    Cond = new ICmpInst(Predicate, NewIncV, RHS,
+                        L->getHeader()->getName() + ".termcond",
+                        OldCond);
 
     // Remove the old compare instruction. The old indvar is probably dead too.
     DeadInsts.insert(cast<Instruction>(CondUse->OperandValToReplace));
