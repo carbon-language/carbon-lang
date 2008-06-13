@@ -1468,12 +1468,12 @@ instance, in situations where an instruction such as <tt>%a = ADD %b
 <div class="doc_code">
 <pre>
 %a = MOVE %b
-%a = ADD %a %b
+%a = ADD %a %c
 </pre>
 </div>
 
 <p>Notice that, internally, the second instruction is represented as
-<tt>ADD %a[def/use] %b</tt>. I.e., the register operand <tt>%a</tt> is
+<tt>ADD %a[def/use] %c</tt>. I.e., the register operand <tt>%a</tt> is
 both used and defined by the instruction.</p>
 
 </div>
