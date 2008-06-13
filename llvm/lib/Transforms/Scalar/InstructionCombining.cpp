@@ -10379,8 +10379,12 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
   }
   if (++PI != pred_end(DestBB))
     return false;
-  
-  
+
+  // Bail out if all the relevant blocks aren't distinct (this can happen,
+  // for example, if SI is in an infinite loop)
+  if (StoreBB == DestBB || OtherBB == DestBB)
+    return false;
+
   // Verify that the other block ends in a branch and is not otherwise empty.
   BasicBlock::iterator BBI = OtherBB->getTerminator();
   BranchInst *OtherBr = dyn_cast<BranchInst>(BBI);
