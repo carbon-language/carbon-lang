@@ -499,21 +499,6 @@ SCEVHandle ScalarEvolution::getIntegerSCEV(int Val, const Type *Ty) {
   return getUnknown(C);
 }
 
-/// getTruncateOrZeroExtend - Return a SCEV corresponding to a conversion of the
-/// input value to the specified type.  If the type must be extended, it is zero
-/// extended.
-static SCEVHandle getTruncateOrZeroExtend(const SCEVHandle &V, const Type *Ty,
-                                          ScalarEvolution &SE) {
-  const Type *SrcTy = V->getType();
-  assert(SrcTy->isInteger() && Ty->isInteger() &&
-         "Cannot truncate or zero extend with non-integer arguments!");
-  if (SrcTy->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
-    return V;  // No conversion
-  if (SrcTy->getPrimitiveSizeInBits() > Ty->getPrimitiveSizeInBits())
-    return SE.getTruncateExpr(V, Ty);
-  return SE.getZeroExtendExpr(V, Ty);
-}
-
 /// getNegativeSCEV - Return a SCEV corresponding to -V = -1*V
 ///
 SCEVHandle ScalarEvolution::getNegativeSCEV(const SCEVHandle &V) {
@@ -585,7 +570,7 @@ static SCEVHandle BinomialCoefficient(SCEVHandle It, unsigned K,
 #endif
 
   const IntegerType *DividendTy = IntegerType::get(DividendBits);
-  const SCEVHandle ExIt = SE.getZeroExtendExpr(It, DividendTy);
+  const SCEVHandle ExIt = SE.getTruncateOrZeroExtend(It, DividendTy);
 
   // The final number of bits we need to perform the division is the maximum of
   // dividend and divisor bitwidths.
@@ -607,7 +592,12 @@ static SCEVHandle BinomialCoefficient(SCEVHandle It, unsigned K,
       Dividend *= N-(K-1);
     if (DividendTy != DivisionTy)
       Dividend = Dividend.zext(DivisionTy->getBitWidth());
-    return SE.getConstant(Dividend.udiv(Divisor).trunc(It->getBitWidth()));
+
+    APInt Result = Dividend.udiv(Divisor);
+    if (Result.getBitWidth() != It->getBitWidth())
+      Result = Result.trunc(It->getBitWidth());
+
+    return SE.getConstant(Result);
   }
   
   SCEVHandle Dividend = ExIt;
@@ -615,11 +605,12 @@ static SCEVHandle BinomialCoefficient(SCEVHandle It, unsigned K,
     Dividend =
       SE.getMulExpr(Dividend,
                     SE.getMinusSCEV(ExIt, SE.getIntegerSCEV(i, DividendTy)));
-  if (DividendTy != DivisionTy)
-    Dividend = SE.getZeroExtendExpr(Dividend, DivisionTy);
-  return
-    SE.getTruncateExpr(SE.getUDivExpr(Dividend, SE.getConstant(Divisor)),
-                       It->getType());
+
+  return SE.getTruncateOrZeroExtend(
+             SE.getUDivExpr(
+                 SE.getTruncateOrZeroExtend(Dividend, DivisionTy),
+                 SE.getConstant(Divisor)
+             ), It->getType());
 }
 
 /// evaluateAtIteration - Return the value of this chain of recurrences at
@@ -701,6 +692,21 @@ SCEVHandle ScalarEvolution::getSignExtendExpr(const SCEVHandle &Op, const Type *
   SCEVSignExtendExpr *&Result = (*SCEVSignExtends)[std::make_pair(Op, Ty)];
   if (Result == 0) Result = new SCEVSignExtendExpr(Op, Ty);
   return Result;
+}
+
+/// getTruncateOrZeroExtend - Return a SCEV corresponding to a conversion
+/// of the input value to the specified type.  If the type must be
+/// extended, it is zero extended.
+SCEVHandle ScalarEvolution::getTruncateOrZeroExtend(const SCEVHandle &V,
+                                                    const Type *Ty) {
+  const Type *SrcTy = V->getType();
+  assert(SrcTy->isInteger() && Ty->isInteger() &&
+         "Cannot truncate or zero extend with non-integer arguments!");
+  if (SrcTy->getPrimitiveSizeInBits() == Ty->getPrimitiveSizeInBits())
+    return V;  // No conversion
+  if (SrcTy->getPrimitiveSizeInBits() > Ty->getPrimitiveSizeInBits())
+    return getTruncateExpr(V, Ty);
+  return getZeroExtendExpr(V, Ty);
 }
 
 // get - Get a canonical add expression, or something simpler if possible.
@@ -2432,8 +2438,8 @@ SCEVHandle ScalarEvolutionsImpl::getSCEVAtScope(SCEV *V, const Loop *L) {
       // loop iterates.  Compute this now.
       SCEVHandle IterationCount = getIterationCount(AddRec->getLoop());
       if (IterationCount == UnknownValue) return UnknownValue;
-      IterationCount = getTruncateOrZeroExtend(IterationCount,
-                                               AddRec->getType(), SE);
+      IterationCount = SE.getTruncateOrZeroExtend(IterationCount,
+                                                  AddRec->getType());
 
       // If the value is affine, simplify the expression evaluation to just
       // Start + Step*IterationCount.

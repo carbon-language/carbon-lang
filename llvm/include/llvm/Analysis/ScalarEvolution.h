@@ -253,6 +253,11 @@ namespace llvm {
     SCEVHandle getMinusSCEV(const SCEVHandle &LHS,
                             const SCEVHandle &RHS);
 
+    /// getTruncateOrZeroExtend - Return a SCEV corresponding to a conversion
+    /// of the input value to the specified type.  If the type must be
+    /// extended, it is zero extended.
+    SCEVHandle getTruncateOrZeroExtend(const SCEVHandle &V, const Type *Ty);
+
     /// getIntegerSCEV - Given an integer or FP type, create a constant for the
     /// specified signed integer value and return a SCEV for the constant.
     SCEVHandle getIntegerSCEV(int Val, const Type *Ty);
