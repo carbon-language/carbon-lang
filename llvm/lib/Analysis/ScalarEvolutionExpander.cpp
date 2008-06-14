@@ -185,14 +185,21 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
     Loop *InsertPtLoop = LI.getLoopFor(MulInsertPt->getParent());
     if (InsertPtLoop != L && InsertPtLoop &&
         L->contains(InsertPtLoop->getHeader())) {
-      while (InsertPtLoop != L) {
+      do {
         // If we cannot hoist the multiply out of this loop, don't.
         if (!InsertPtLoop->isLoopInvariant(F)) break;
 
-        // Otherwise, move the insert point to the preheader of the loop.
-        MulInsertPt = InsertPtLoop->getLoopPreheader()->getTerminator();
+        BasicBlock *InsertPtLoopPH = InsertPtLoop->getLoopPreheader();
+
+        // If this loop hasn't got a preheader, we aren't able to hoist the
+        // multiply.
+        if (!InsertPtLoopPH)
+          break;
+
+        // Otherwise, move the insert point to the preheader.
+        MulInsertPt = InsertPtLoopPH->getTerminator();
         InsertPtLoop = InsertPtLoop->getParentLoop();
-      }
+      } while (InsertPtLoop != L);
     }
     
     return InsertBinop(Instruction::Mul, I, F, MulInsertPt);
