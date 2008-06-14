@@ -4758,8 +4758,7 @@ SDOperand DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       // original load.
       unsigned NewAlign = TLI.getTargetMachine().getTargetData()->
         getABITypeAlignment(LVT.getTypeForMVT());
-      if (NewAlign > Align ||
-          (AfterLegalize && !TLI.isOperationLegal(ISD::LOAD, LVT)))
+      if (NewAlign > Align || !TLI.isOperationLegal(ISD::LOAD, LVT))
         return SDOperand();
       Align = NewAlign;
     }
@@ -5350,7 +5349,8 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
   // otherwise, go ahead with the folds.
   if (0 && N3C && N3C->isNullValue() && N2C && (N2C->getAPIntValue() == 1ULL)) {
     MVT XType = N0.getValueType();
-    if (TLI.isOperationLegal(ISD::SETCC, TLI.getSetCCResultType(N0))) {
+    if (!AfterLegalize ||
+        TLI.isOperationLegal(ISD::SETCC, TLI.getSetCCResultType(N0))) {
       SDOperand Res = DAG.getSetCC(TLI.getSetCCResultType(N0), N0, N1, CC);
       if (Res.getValueType() != VT)
         Res = DAG.getNode(ISD::ZERO_EXTEND, VT, Res);
@@ -5359,7 +5359,8 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
     
     // seteq X, 0 -> srl (ctlz X, log2(size(X)))
     if (N1C && N1C->isNullValue() && CC == ISD::SETEQ && 
-        TLI.isOperationLegal(ISD::CTLZ, XType)) {
+        (!AfterLegalize ||
+         TLI.isOperationLegal(ISD::CTLZ, XType))) {
       SDOperand Ctlz = DAG.getNode(ISD::CTLZ, XType, N0);
       return DAG.getNode(ISD::SRL, XType, Ctlz, 
                          DAG.getConstant(Log2_32(XType.getSizeInBits()),
