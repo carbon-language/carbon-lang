@@ -3526,6 +3526,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_OR);
   case Intrinsic::atomic_load_xor:
     return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_XOR);
+  case Intrinsic::atomic_load_nand:
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_NAND);
   case Intrinsic::atomic_load_min:
     return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_MIN);
   case Intrinsic::atomic_load_max:

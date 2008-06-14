@@ -367,6 +367,8 @@ def atomic_load_or  : SDNode<"ISD::ATOMIC_LOAD_OR" , STDAtomic2,
                          [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
 def atomic_load_xor : SDNode<"ISD::ATOMIC_LOAD_XOR" , STDAtomic2,
                          [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def atomic_load_nand: SDNode<"ISD::ATOMIC_LOAD_NAND", STDAtomic2,
+                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
 def atomic_load_min : SDNode<"ISD::ATOMIC_LOAD_MIN", STDAtomic2,
                          [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
 def atomic_load_max : SDNode<"ISD::ATOMIC_LOAD_MAX", STDAtomic2,

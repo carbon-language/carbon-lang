@@ -5963,7 +5963,8 @@ MachineBasicBlock *
 X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
                                                        MachineBasicBlock *MBB,
                                                        unsigned regOpc,
-                                                       unsigned immOpc) {
+                                                       unsigned immOpc,
+                                                       bool invSrc) {
   // For the atomic bitwise operator, we generate
   //   thisMBB:
   //   newMBB:
@@ -6012,7 +6013,14 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
   MachineInstrBuilder MIB = BuildMI(newMBB, TII->get(X86::MOV32rm), t1);
   for (int i=0; i <= lastAddrIndx; ++i)
     (*MIB).addOperand(*argOpers[i]);
-  
+
+  unsigned tt = F->getRegInfo().createVirtualRegister(X86::GR32RegisterClass);
+  if (invSrc) {
+    MIB = BuildMI(newMBB, TII->get(X86::NOT32r), tt).addReg(t1);
+  }
+  else 
+    tt = t1;
+
   unsigned t2 = F->getRegInfo().createVirtualRegister(X86::GR32RegisterClass);
   assert(   (argOpers[valArgIndx]->isReg() || argOpers[valArgIndx]->isImm())
          && "invalid operand");
@@ -6020,9 +6028,9 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
     MIB = BuildMI(newMBB, TII->get(regOpc), t2);
   else
     MIB = BuildMI(newMBB, TII->get(immOpc), t2);
-  MIB.addReg(t1);
+  MIB.addReg(tt);
   (*MIB).addOperand(*argOpers[valArgIndx]);
-  
+
   MIB = BuildMI(newMBB, TII->get(X86::MOV32rr), X86::EAX);
   MIB.addReg(t1);
   
@@ -6286,6 +6294,9 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::ATOMXOR32:
     return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::XOR32rr,
                                                        X86::XOR32ri);
+  case X86::ATOMNAND32:
+    return EmitAtomicBitwiseWithCustomInserter(MI, BB, X86::AND32rr,
+                                               X86::AND32ri, true);
   case X86::ATOMMIN32:
     return EmitAtomicMinMaxWithCustomInserter(MI, BB, X86::CMOVL32rr);
   case X86::ATOMMAX32:

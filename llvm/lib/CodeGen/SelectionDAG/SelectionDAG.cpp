@@ -2995,6 +2995,7 @@ SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain,
   assert((   Opcode == ISD::ATOMIC_LAS || Opcode == ISD::ATOMIC_LSS
           || Opcode == ISD::ATOMIC_SWAP || Opcode == ISD::ATOMIC_LOAD_AND
           || Opcode == ISD::ATOMIC_LOAD_OR || Opcode == ISD::ATOMIC_LOAD_XOR
+          || Opcode == ISD::ATOMIC_LOAD_NAND 
           || Opcode == ISD::ATOMIC_LOAD_MIN || Opcode == ISD::ATOMIC_LOAD_MAX
           || Opcode == ISD::ATOMIC_LOAD_UMIN || Opcode == ISD::ATOMIC_LOAD_UMAX) 
          && "Invalid Atomic Op");
@@ -4406,6 +4407,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::ATOMIC_LOAD_AND:  return "AtomicLoadAnd";
   case ISD::ATOMIC_LOAD_OR:   return "AtomicLoadOr";
   case ISD::ATOMIC_LOAD_XOR:  return "AtomicLoadXor";
+  case ISD::ATOMIC_LOAD_NAND: return "AtomicLoadNand";
   case ISD::ATOMIC_LOAD_MIN:  return "AtomicLoadMin";
   case ISD::ATOMIC_LOAD_MAX:  return "AtomicLoadMax";
   case ISD::ATOMIC_LOAD_UMIN: return "AtomicLoadUMin";

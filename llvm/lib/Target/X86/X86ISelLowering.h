@@ -567,7 +567,8 @@ namespace llvm {
                                                     MachineInstr *BInstr,
                                                     MachineBasicBlock *BB,
                                                     unsigned regOpc,
-                                                    unsigned immOpc);
+                                                    unsigned immOpc,
+                                                    bool invSrc = false);
     
     /// Utility function to emit atomic min and max.  It takes the min/max
     // instruction to expand, the associated basic block, and the associated

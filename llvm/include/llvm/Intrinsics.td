@@ -302,6 +302,11 @@ def int_atomic_load_xor  : Intrinsic<[llvm_anyint_ty,
                                   LLVMMatchType<0>],
                                  [IntrWriteArgMem]>,
                            GCCBuiltin<"__sync_fetch_and_xor">;
+def int_atomic_load_nand : Intrinsic<[llvm_anyint_ty,
+                                  LLVMPointerType<LLVMMatchType<0>>,
+                                  LLVMMatchType<0>],
+                                 [IntrWriteArgMem]>,
+                           GCCBuiltin<"__sync_fetch_and_nand">;
 def int_atomic_load_min  : Intrinsic<[llvm_anyint_ty,
                                    LLVMPointerType<LLVMMatchType<0>>,
                                    LLVMMatchType<0>],

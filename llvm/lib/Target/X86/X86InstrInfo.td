@@ -2633,45 +2633,25 @@ let Constraints = "$val = $dst", Defs = [EFLAGS],
 def ATOMAND32 : I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
                "#ATOMAND32 PSUEDO!", 
                [(set GR32:$dst, (atomic_load_and addr:$ptr, GR32:$val))]>;
-}
-
-let Constraints = "$val = $dst", Defs = [EFLAGS],
-                  usesCustomDAGSchedInserter = 1 in {
 def ATOMOR32 : I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
                "#ATOMOR32 PSUEDO!", 
                [(set GR32:$dst, (atomic_load_or addr:$ptr, GR32:$val))]>;
-}
-
-let Constraints = "$val = $dst", Defs = [EFLAGS],
-                  usesCustomDAGSchedInserter = 1 in {
 def ATOMXOR32 : I<0, Pseudo,(outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
                "#ATOMXOR32 PSUEDO!", 
                [(set GR32:$dst, (atomic_load_xor addr:$ptr, GR32:$val))]>;
-}
+def ATOMNAND32 : I<0, Pseudo,(outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
+               "#ATOMXOR32 PSUEDO!", 
+               [(set GR32:$dst, (atomic_load_nand addr:$ptr, GR32:$val))]>;
 
-let Constraints = "$val = $dst", Defs = [EFLAGS],
-                  usesCustomDAGSchedInserter = 1 in {
 def ATOMMIN32: I<0, Pseudo, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
                "#ATOMMIN32 PSUEDO!", 
                [(set GR32:$dst, (atomic_load_min addr:$ptr, GR32:$val))]>;
-}
-
-let Constraints = "$val = $dst", Defs = [EFLAGS],
-                  usesCustomDAGSchedInserter = 1 in {
 def ATOMMAX32: I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
                "#ATOMMAX32 PSUEDO!", 
                [(set GR32:$dst, (atomic_load_max addr:$ptr, GR32:$val))]>;
-}
-
-let Constraints = "$val = $dst", Defs = [EFLAGS],
-                  usesCustomDAGSchedInserter = 1 in {
 def ATOMUMIN32: I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
                "#ATOMUMIN32 PSUEDO!", 
                [(set GR32:$dst, (atomic_load_umin addr:$ptr, GR32:$val))]>;
-}
-
-let Constraints = "$val = $dst", Defs = [EFLAGS],
-                  usesCustomDAGSchedInserter = 1 in {
 def ATOMUMAX32: I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
                "#ATOMUMAX32 PSUEDO!", 
                [(set GR32:$dst, (atomic_load_umax addr:$ptr, GR32:$val))]>;

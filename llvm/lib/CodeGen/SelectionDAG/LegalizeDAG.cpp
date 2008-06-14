@@ -1254,6 +1254,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::ATOMIC_LOAD_AND:
   case ISD::ATOMIC_LOAD_OR:
   case ISD::ATOMIC_LOAD_XOR:
+  case ISD::ATOMIC_LOAD_NAND:
   case ISD::ATOMIC_LOAD_MIN:
   case ISD::ATOMIC_LOAD_MAX:
   case ISD::ATOMIC_LOAD_UMIN:
@@ -4285,6 +4286,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::ATOMIC_LOAD_AND:
   case ISD::ATOMIC_LOAD_OR:
   case ISD::ATOMIC_LOAD_XOR:
+  case ISD::ATOMIC_LOAD_NAND:
   case ISD::ATOMIC_LOAD_MIN:
   case ISD::ATOMIC_LOAD_MAX:
   case ISD::ATOMIC_LOAD_UMIN:
