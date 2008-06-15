@@ -73,7 +73,7 @@ Value *SCEVExpander::InsertCastOfTo(Instruction::CastOps opcode, Value *V,
 /// InsertBinop - Insert the specified binary operator, doing a small amount
 /// of work to avoid inserting an obviously redundant operation.
 Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
-                                 Value *RHS, Instruction *&InsertPt) {
+                                 Value *RHS, Instruction *InsertPt) {
   // Fold a binop with constant operands.
   if (Constant *CLHS = dyn_cast<Constant>(LHS))
     if (Constant *CRHS = dyn_cast<Constant>(RHS))
@@ -81,21 +81,21 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
 
   // Do a quick scan to see if we have this binop nearby.  If so, reuse it.
   unsigned ScanLimit = 6;
-  for (BasicBlock::iterator IP = InsertPt, E = InsertPt->getParent()->begin();
-       ScanLimit; --IP, --ScanLimit) {
-    if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(IP))
-      if (BinOp->getOpcode() == Opcode && BinOp->getOperand(0) == LHS &&
-          BinOp->getOperand(1) == RHS) {
-        // If we found the instruction *at* the insert point, insert later
-        // instructions after it.
-        if (BinOp == InsertPt)
-          InsertPt = ++IP;
-        return BinOp;
-      }
-    if (IP == E) break;
+  BasicBlock::iterator BlockBegin = InsertPt->getParent()->begin();
+  if (InsertPt != BlockBegin) {
+    // Scanning starts from the last instruction before InsertPt.
+    BasicBlock::iterator IP = InsertPt;
+    --IP;
+    for (; ScanLimit; --IP, --ScanLimit) {
+      if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(IP))
+        if (BinOp->getOpcode() == Opcode && BinOp->getOperand(0) == LHS &&
+            BinOp->getOperand(1) == RHS)
+          return BinOp;
+      if (IP == BlockBegin) break;
+    }
   }
-
-  // If we don't have 
+  
+  // If we haven't found this binop, insert it.
   return BinaryOperator::Create(Opcode, LHS, RHS, "tmp", InsertPt);
 }
 

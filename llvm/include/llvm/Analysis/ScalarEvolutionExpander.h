@@ -88,7 +88,7 @@ namespace llvm {
     /// InsertBinop - Insert the specified binary operator, doing a small amount
     /// of work to avoid inserting an obviously redundant operation.
     static Value *InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
-                              Value *RHS, Instruction *&InsertPt);
+                              Value *RHS, Instruction *InsertPt);
   protected:
     Value *expand(SCEV *S);
     
