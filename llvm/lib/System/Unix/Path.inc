@@ -314,7 +314,7 @@ Path::getSuffix() const {
 
   std::string::size_type dot = path.rfind('.');
   if (dot == std::string::npos || dot < slash)
-    return std::string()
+    return std::string();
   else
     return path.substr(dot + 1);
 }
