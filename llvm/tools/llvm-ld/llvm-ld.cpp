@@ -403,7 +403,11 @@ static void EmitShellScript(char **argv) {
   if (llvmstub.isEmpty())
     PrintAndExit("Could not find llvm-stub.exe executable!");
 
-  if (0 != sys::CopyFile(sys::Path(OutputFilename), llvmstub, &ErrMsg))
+  sys::Path OutPath(OutputFilename);
+  if (OutPath.getSuffix() != "exe")
+    OutPath.appendSuffix("exe");
+
+  if (0 != sys::CopyFile(OutPath, llvmstub, &ErrMsg))
     PrintAndExit(ErrMsg);
 
   return;
@@ -532,6 +536,12 @@ int main(int argc, char **argv, char **envp) {
 
     // Generate the bitcode for the optimized module.
     std::string RealBitcodeOutput = OutputFilename;
+
+#if defined(_WIN32) || defined(__CYGWIN__)
+    if (!LinkAsLibrary && sys::Path(OutputFilename).getSuffix() != "exe")
+      RealBitcodeOutput += ".exe";
+#endif
+
     if (!LinkAsLibrary) RealBitcodeOutput += ".bc";
     GenerateBitcode(Composite.get(), RealBitcodeOutput);
 
