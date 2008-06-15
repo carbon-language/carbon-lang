@@ -38,6 +38,7 @@
 int main(int argc, char** argv) {
   const char *Interp = getenv("LLVMINTERP");
   const char **Args;
+  int len;
   if (Interp == 0) Interp = "lli";
 
   /* Set up the command line options to pass to the JIT. */
@@ -45,11 +46,14 @@ int main(int argc, char** argv) {
   /* argv[0] is the JIT */
   Args[0] = Interp;
 
-#ifdef __CYGWIN32__
-  /* Cygwin strips the .exe suffix off of argv[0] to "help" us.  Put it back 
-   * on.
-   */
-  argv[0] = strcat(strcpy((char*)malloc(strlen(argv[0])+5), argv[0]), ".exe");
+#ifdef LLVM_ON_WIN32
+  len = strlen(argv[0]);
+  if (len < 4 || strcmp(argv[0] + len - 4, ".exe") != 0) {
+    /* .exe suffix is stripped off of argv[0] if the executable was run on the
+     * command line without one. Put it back on.
+     */
+    argv[0] = strcat(strcpy((char*)malloc(len + 5), argv[0]), ".exe");
+  }
 #endif
 
   /* argv[1] is argv[0] + ".bc". */
