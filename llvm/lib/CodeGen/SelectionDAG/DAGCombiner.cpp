@@ -4093,8 +4093,8 @@ SDOperand DAGCombiner::visitBR_CC(SDNode *N) {
 }
 
 
-/// CombineToPreIndexedLoadStore - Try turning a load / store and a
-/// pre-indexed load / store when the base pointer is a add or subtract
+/// CombineToPreIndexedLoadStore - Try turning a load / store into a
+/// pre-indexed load / store when the base pointer is an add or subtract
 /// and it has other uses besides the load / store. After the
 /// transformation, the new indexed load / store has effectively folded
 /// the add / subtract in and all of its other uses are redirected to the
@@ -4215,7 +4215,7 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
   return true;
 }
 
-/// CombineToPostIndexedLoadStore - Try combine a load / store with a
+/// CombineToPostIndexedLoadStore - Try to combine a load / store with a
 /// add / sub of the base pointer node into a post-indexed load / store.
 /// The transformation folded the add / subtract into the new indexed
 /// load / store effectively and all of its uses are redirected to the
@@ -4749,7 +4749,7 @@ SDOperand DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
         Elt = (Idx < NumElems) ? Idx : Idx - NumElems;
       }
     }
-    if (!LN0 || !LN0->hasOneUse())
+    if (!LN0 || !LN0->hasOneUse() || LN0->isVolatile())
       return SDOperand();
 
     unsigned Align = LN0->getAlignment();
