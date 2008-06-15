@@ -154,6 +154,33 @@ Program::ExecuteAndWait(const Path& path,
 
   *p = 0;
 
+  // The pointer to the environment block for the new process.
+  char *envblock = 0;
+  
+  if (envp) {
+    // An environment block consists of a null-terminated block of
+    // null-terminated strings. Convert the array of environment variables to
+    // an environment block by concatenating them.
+
+    // First, determine the length of the environment block.
+    len = 0;
+    for (unsigned i = 0; envp[i]; i++)
+      len += strlen(envp[i]) + 1;
+
+    // Now build the environment block.
+    envblock = reinterpret_cast<char *>(_alloca(len+1));
+    p = envblock;
+
+    for (unsigned i = 0; envp[i]; i++) {
+      const char *ev = envp[i];
+      size_t len = strlen(ev) + 1;
+      memcpy(p, ev, len);
+      p += len;
+    }
+
+    *p = 0;
+  }
+
   // Create a child process.
   STARTUPINFO si;
   memset(&si, 0, sizeof(si));
@@ -200,7 +227,7 @@ Program::ExecuteAndWait(const Path& path,
   fflush(stdout);
   fflush(stderr);
   BOOL rc = CreateProcess(path.c_str(), command, NULL, NULL, FALSE, 0,
-                          envp, NULL, &si, &pi);
+                          envblock, NULL, &si, &pi);
   DWORD err = GetLastError();
 
   // Regardless of whether the process got created or not, we are done with
