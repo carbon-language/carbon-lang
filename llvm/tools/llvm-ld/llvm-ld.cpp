@@ -532,15 +532,15 @@ int main(int argc, char **argv, char **envp) {
 
 #if defined(_WIN32) || defined(__CYGWIN__)
     if (!LinkAsLibrary) {
-      // Make sure the output executable has an "exe" suffix.
+      // Default to "a.exe" instead of "a.out".
+      if (OutputFilename.getNumOccurrences() == 0)
+        OutputFilename = "a.exe";
+
+      // If there is no suffix add an "exe" one.
       sys::Path ExeFile( OutputFilename );
-      if (ExeFile.getSuffix() != "exe") {
-        if (OutputFilename == "a.out") {
-          OutputFilename = "a.exe";
-        } else {
-          ExeFile.appendSuffix("exe");
-          OutputFilename = ExeFile.toString();
-        }
+      if (ExeFile.getSuffix() == "") {
+        ExeFile.appendSuffix("exe");
+        OutputFilename = ExeFile.toString();
       }
     }
 #endif
