@@ -403,11 +403,7 @@ static void EmitShellScript(char **argv) {
   if (llvmstub.isEmpty())
     PrintAndExit("Could not find llvm-stub.exe executable!");
 
-  sys::Path OutPath(OutputFilename);
-  if (OutPath.getSuffix() != "exe")
-    OutPath.appendSuffix("exe");
-
-  if (0 != sys::CopyFile(OutPath, llvmstub, &ErrMsg))
+  if (0 != sys::CopyFile(sys::Path(OutputFilename), llvmstub, &ErrMsg))
     PrintAndExit(ErrMsg);
 
   return;
@@ -534,13 +530,23 @@ int main(int argc, char **argv, char **envp) {
     // Optimize the module
     Optimize(Composite.get());
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+    if (!LinkAsLibrary) {
+      // Make sure the output executable has an "exe" suffix.
+      sys::Path ExeFile( OutputFilename );
+      if (ExeFile.getSuffix() != "exe") {
+        if (OutputFilename == "a.out") {
+          OutputFilename = "a.exe";
+        } else {
+          ExeFile.appendSuffix("exe");
+          OutputFilename = ExeFile.toString();
+        }
+      }
+    }
+#endif
+
     // Generate the bitcode for the optimized module.
     std::string RealBitcodeOutput = OutputFilename;
-
-#if defined(_WIN32) || defined(__CYGWIN__)
-    if (!LinkAsLibrary && sys::Path(OutputFilename).getSuffix() != "exe")
-      RealBitcodeOutput += ".exe";
-#endif
 
     if (!LinkAsLibrary) RealBitcodeOutput += ".bc";
     GenerateBitcode(Composite.get(), RealBitcodeOutput);
