@@ -162,16 +162,37 @@ void DAGTypeLegalizer::SplitRes_BUILD_PAIR(SDNode *N, SDOperand &Lo,
 
 void DAGTypeLegalizer::SplitRes_INSERT_VECTOR_ELT(SDNode *N, SDOperand &Lo,
                                                   SDOperand &Hi) {
-  GetSplitOp(N->getOperand(0), Lo, Hi);
-  unsigned Index = cast<ConstantSDNode>(N->getOperand(2))->getValue();
-  SDOperand ScalarOp = N->getOperand(1);
-  unsigned LoNumElts = Lo.getValueType().getVectorNumElements();
-  if (Index < LoNumElts)
-    Lo = DAG.getNode(ISD::INSERT_VECTOR_ELT, Lo.getValueType(), Lo, ScalarOp,
-                     N->getOperand(2));
-  else
-    Hi = DAG.getNode(ISD::INSERT_VECTOR_ELT, Hi.getValueType(), Hi, ScalarOp,
-                     DAG.getIntPtrConstant(Index - LoNumElts));
+  SDOperand Vec = N->getOperand(0);
+  SDOperand Elt = N->getOperand(1);
+  SDOperand Idx = N->getOperand(2);
+  GetSplitOp(Vec, Lo, Hi);
+
+  if (ConstantSDNode *CIdx = dyn_cast<ConstantSDNode>(Idx)) {
+    unsigned IdxVal = CIdx->getValue();
+    unsigned LoNumElts = Lo.getValueType().getVectorNumElements();
+    if (IdxVal < LoNumElts)
+      Lo = DAG.getNode(ISD::INSERT_VECTOR_ELT, Lo.getValueType(), Lo, Elt, Idx);
+    else
+      Hi = DAG.getNode(ISD::INSERT_VECTOR_ELT, Hi.getValueType(), Hi, Elt,
+                       DAG.getIntPtrConstant(IdxVal - LoNumElts));
+    return;
+  }
+
+  // Spill the vector to the stack.
+  MVT VecVT = Vec.getValueType();
+  SDOperand StackPtr = DAG.CreateStackTemporary(VecVT);
+  SDOperand Store = DAG.getStore(DAG.getEntryNode(), Vec, StackPtr, NULL, 0);
+
+  // Store the new element.
+  SDOperand EltPtr = GetVectorElementPointer(StackPtr,
+                                             VecVT.getVectorElementType(), Idx);
+  Store = DAG.getStore(Store, Elt, EltPtr, NULL, 0);
+
+  // Reload the vector from the stack.
+  SDOperand Load = DAG.getLoad(VecVT, Store, StackPtr, NULL, 0);
+
+  // Split it.
+  SplitRes_LOAD(cast<LoadSDNode>(Load.Val), Lo, Hi);
 }
 
 void DAGTypeLegalizer::SplitRes_VECTOR_SHUFFLE(SDNode *N, 
@@ -473,22 +494,13 @@ SDOperand DAGTypeLegalizer::SplitOp_EXTRACT_VECTOR_ELT(SDNode *N) {
                                                     Idx.getValueType()));
   }
 
-  // Store the vector to the stack and load back the required element.
+  // Store the vector to the stack.
+  MVT EltVT = VecVT.getVectorElementType();
   SDOperand StackPtr = DAG.CreateStackTemporary(VecVT);
   SDOperand Store = DAG.getStore(DAG.getEntryNode(), Vec, StackPtr, NULL, 0);
 
-  // Add the offset to the index.
-  MVT EltVT = VecVT.getVectorElementType();
-  unsigned EltSize = EltVT.getSizeInBits()/8; // FIXME: should be ABI size.
-  Idx = DAG.getNode(ISD::MUL, Idx.getValueType(), Idx,
-                    DAG.getConstant(EltSize, Idx.getValueType()));
-
-  if (Idx.getValueType().bitsGT(TLI.getPointerTy()))
-    Idx = DAG.getNode(ISD::TRUNCATE, TLI.getPointerTy(), Idx);
-  else
-    Idx = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), Idx);
-
-  StackPtr = DAG.getNode(ISD::ADD, Idx.getValueType(), Idx, StackPtr);
+  // Load back the required element.
+  StackPtr = GetVectorElementPointer(StackPtr, EltVT, Idx);
   return DAG.getLoad(EltVT, Store, StackPtr, NULL, 0);
 }
 

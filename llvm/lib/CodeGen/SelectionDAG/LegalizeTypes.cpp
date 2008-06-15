@@ -577,6 +577,23 @@ SDOperand DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
   return CallInfo.first;
 }
 
+SDOperand DAGTypeLegalizer::GetVectorElementPointer(SDOperand VecPtr, MVT EltVT,
+                                                    SDOperand Index) {
+  // Make sure the index type is big enough to compute in.
+  if (Index.getValueType().bitsGT(TLI.getPointerTy()))
+    Index = DAG.getNode(ISD::TRUNCATE, TLI.getPointerTy(), Index);
+  else
+    Index = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), Index);
+
+  // Calculate the element offset and add it to the pointer.
+  unsigned EltSize = EltVT.getSizeInBits() / 8; // FIXME: should be ABI size.
+
+  Index = DAG.getNode(ISD::MUL, Index.getValueType(), Index,
+                      DAG.getConstant(EltSize, Index.getValueType()));
+  return DAG.getNode(ISD::ADD, Index.getValueType(), Index, VecPtr);
+}
+
+
 //===----------------------------------------------------------------------===//
 //  Entry Point
 //===----------------------------------------------------------------------===//

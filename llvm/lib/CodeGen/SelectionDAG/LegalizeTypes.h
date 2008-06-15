@@ -169,14 +169,18 @@ private:
   void ExpungeNode(SDOperand N);
 
   // Common routines.
-  SDOperand BitConvertToInteger(SDOperand Op);
   SDOperand CreateStackStoreLoad(SDOperand Op, MVT DestVT);
+  SDOperand MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
+                        const SDOperand *Ops, unsigned NumOps, bool isSigned);
+
+  SDOperand BitConvertToInteger(SDOperand Op);
   SDOperand JoinIntegers(SDOperand Lo, SDOperand Hi);
   void SplitInteger(SDOperand Op, SDOperand &Lo, SDOperand &Hi);
   void SplitInteger(SDOperand Op, MVT LoVT, MVT HiVT,
                     SDOperand &Lo, SDOperand &Hi);
-  SDOperand MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
-                        const SDOperand *Ops, unsigned NumOps, bool isSigned);
+
+  SDOperand GetVectorElementPointer(SDOperand VecPtr, MVT EltVT,
+                                    SDOperand Index);
 
   //===--------------------------------------------------------------------===//
   // Promotion Support: LegalizeTypesPromote.cpp
