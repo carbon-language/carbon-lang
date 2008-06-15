@@ -185,11 +185,6 @@ bool Path::hasMagicNumber(const std::string &Magic) const {
   return false;
 }
 
-std::string
-Path::getSuffix() const {
-  return path.substr(path.rfind('.') + 1);
-}
-
 static void getPathList(const char*path, std::vector<Path>& Paths) {
   const char* at = path;
   const char* delim = strchr(at, PathSeparator);

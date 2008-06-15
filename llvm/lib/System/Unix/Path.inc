@@ -303,6 +303,22 @@ Path::getBasename() const {
     return path.substr(slash, dot - slash);
 }
 
+std::string
+Path::getSuffix() const {
+  // Find the last slash
+  std::string::size_type slash = path.rfind('/');
+  if (slash == std::string::npos)
+    slash = 0;
+  else
+    slash++;
+
+  std::string::size_type dot = path.rfind('.');
+  if (dot == std::string::npos || dot < slash)
+    return std::string()
+  else
+    return path.substr(dot + 1);
+}
+
 bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
   assert(len < 1024 && "Request for magic string too long");
   char* buf = (char*) alloca(1 + len);
