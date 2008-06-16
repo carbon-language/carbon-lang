@@ -6,7 +6,7 @@
 //
 // It includes the basic definitions for the test cases below.
 // Not directly including CoreFoundation.h directly makes this test case 
-// both svelt and portable to non-Mac platforms.
+// both svelte and portable to non-Mac platforms.
 //===----------------------------------------------------------------------===//
 
 typedef signed long CFIndex;

@@ -5,7 +5,7 @@
 // Foundation.h (Mac OS X).
 //
 // It includes the basic definitions for the test cases below.
-// Not including Foundation.h directly makes this test case both svelt and
+// Not including Foundation.h directly makes this test case both svelte and
 // portable to non-Mac platforms.
 //===----------------------------------------------------------------------===//
 
