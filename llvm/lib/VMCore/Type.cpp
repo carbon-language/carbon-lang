@@ -717,11 +717,11 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2) {
 // ever reach a non-abstract type, we know that we don't need to search the
 // subgraph.
 static bool AbstractTypeHasCycleThrough(const Type *TargetTy, const Type *CurTy,
-                                std::set<const Type*> &VisitedTypes) {
+                                SmallPtrSet<const Type*, 128> &VisitedTypes) {
   if (TargetTy == CurTy) return true;
   if (!CurTy->isAbstract()) return false;
 
-  if (!VisitedTypes.insert(CurTy).second)
+  if (!VisitedTypes.insert(CurTy))
     return false;  // Already been here.
 
   for (Type::subtype_iterator I = CurTy->subtype_begin(),
@@ -732,10 +732,10 @@ static bool AbstractTypeHasCycleThrough(const Type *TargetTy, const Type *CurTy,
 }
 
 static bool ConcreteTypeHasCycleThrough(const Type *TargetTy, const Type *CurTy,
-                                        std::set<const Type*> &VisitedTypes) {
+                                SmallPtrSet<const Type*, 128> &VisitedTypes) {
   if (TargetTy == CurTy) return true;
 
-  if (!VisitedTypes.insert(CurTy).second)
+  if (!VisitedTypes.insert(CurTy))
     return false;  // Already been here.
 
   for (Type::subtype_iterator I = CurTy->subtype_begin(),
@@ -748,7 +748,7 @@ static bool ConcreteTypeHasCycleThrough(const Type *TargetTy, const Type *CurTy,
 /// TypeHasCycleThroughItself - Return true if the specified type has a cycle
 /// back to itself.
 static bool TypeHasCycleThroughItself(const Type *Ty) {
-  std::set<const Type*> VisitedTypes;
+  SmallPtrSet<const Type*, 128> VisitedTypes;
 
   if (Ty->isAbstract()) {  // Optimized case for abstract types.
     for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
