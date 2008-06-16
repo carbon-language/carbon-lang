@@ -58,7 +58,7 @@ namespace llvm {
   Value *FindInsertedValue(Value *V,
                          const unsigned *idx_begin,
                          const unsigned *idx_end,
-                         Instruction &InsertBefore);
+                         Instruction *InsertBefore);
 } // end namespace llvm
 
 #endif

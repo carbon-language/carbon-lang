@@ -764,7 +764,7 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
 Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
                                  SmallVector<unsigned, 10> &Idxs,
                                  unsigned IdxSkip,
-                                 Instruction &InsertBefore) {
+                                 Instruction *InsertBefore) {
   const llvm::StructType *STy = llvm::dyn_cast<llvm::StructType>(IndexedType);
   if (STy) {
     // General case, the type indexed by Idxs is a struct
@@ -782,11 +782,11 @@ Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
     // IdxSkip indices when indexing the sub struct).
     Instruction *V = llvm::ExtractValueInst::Create(From, Idxs.begin(),
                                                     Idxs.end(), "tmp",
-                                                    &InsertBefore);
+                                                    InsertBefore);
     Instruction *Ins = llvm::InsertValueInst::Create(To, V,
                                                      Idxs.begin() + IdxSkip,
                                                      Idxs.end(), "tmp",
-                                                     &InsertBefore);
+                                                     InsertBefore);
     return Ins;
   }
 }
@@ -804,7 +804,7 @@ Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
 //
 // Any inserted instructions are inserted before InsertBefore
 Value *BuildSubAggregate(Value *From, const unsigned *idx_begin,
-                         const unsigned *idx_end, Instruction &InsertBefore) {
+                         const unsigned *idx_end, Instruction *InsertBefore) {
   const Type *IndexedType = ExtractValueInst::getIndexedType(From->getType(),
                                                              idx_begin,
                                                              idx_end);
@@ -819,7 +819,7 @@ Value *BuildSubAggregate(Value *From, const unsigned *idx_begin,
 /// the scalar value indexed is already around as a register, for example if it
 /// were inserted directly into the aggregrate.
 Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
-                         const unsigned *idx_end, Instruction &InsertBefore) {
+                         const unsigned *idx_end, Instruction *InsertBefore) {
   // Nothing to index? Just return V then (this is useful at the end of our
   // recursion)
   if (idx_begin == idx_end)
