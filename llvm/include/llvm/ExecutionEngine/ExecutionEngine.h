@@ -65,6 +65,7 @@ class ExecutionEngine {
   const TargetData *TD;
   ExecutionEngineState state;
   bool LazyCompilationDisabled;
+  bool SymbolSearchingDisabled;
 
 protected:
   /// Modules - This is a list of ModuleProvider's that we are JIT'ing from.  We
@@ -243,12 +244,21 @@ public:
   }
   
   /// DisableLazyCompilation - If called, the JIT will abort if lazy compilation
-  // is ever attempted.
-  void DisableLazyCompilation() {
-    LazyCompilationDisabled = true;
+  /// is ever attempted.
+  void DisableLazyCompilation(bool Disabled = true) {
+    LazyCompilationDisabled = Disabled;
   }
   bool isLazyCompilationDisabled() const {
     return LazyCompilationDisabled;
+  }
+  /// DisableSymbolSearching - If called, the JIT will not try to lookup unknown
+  /// symbols with dlsym.  A client can still use InstallLazyFunctionCreator to
+  /// resolve symbols in a custom way.
+  void DisableSymbolSearching(bool Disabled = true) {
+    SymbolSearchingDisabled = Disabled;
+  }
+  bool isSymbolSearchingDisabled() const {
+    return SymbolSearchingDisabled;
   }
   
   

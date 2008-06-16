@@ -91,44 +91,46 @@ static int jit_atexit(void (*Fn)(void)) {
 /// for resolving library symbols, not code generated symbols.
 ///
 void *JIT::getPointerToNamedFunction(const std::string &Name) {
-  // Check to see if this is one of the functions we want to intercept.  Note,
-  // we cast to intptr_t here to silence a -pedantic warning that complains
-  // about casting a function pointer to a normal pointer.
-  if (Name == "exit") return (void*)(intptr_t)&jit_exit;
-  if (Name == "atexit") return (void*)(intptr_t)&jit_atexit;
+  if (!isSymbolSearchingDisabled()) {
+    // Check to see if this is one of the functions we want to intercept.  Note,
+    // we cast to intptr_t here to silence a -pedantic warning that complains
+    // about casting a function pointer to a normal pointer.
+    if (Name == "exit") return (void*)(intptr_t)&jit_exit;
+    if (Name == "atexit") return (void*)(intptr_t)&jit_atexit;
 
-  const char *NameStr = Name.c_str();
-  // If this is an asm specifier, skip the sentinal.
-  if (NameStr[0] == 1) ++NameStr;
-  
-  // If it's an external function, look it up in the process image...
-  void *Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(NameStr);
-  if (Ptr) return Ptr;
-  
-  // If it wasn't found and if it starts with an underscore ('_') character, and
-  // has an asm specifier, try again without the underscore.
-  if (Name[0] == 1 && NameStr[0] == '_') {
-    Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(NameStr+1);
+    const char *NameStr = Name.c_str();
+    // If this is an asm specifier, skip the sentinal.
+    if (NameStr[0] == 1) ++NameStr;
+    
+    // If it's an external function, look it up in the process image...
+    void *Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(NameStr);
     if (Ptr) return Ptr;
-  }
-  
-  // darwin/ppc adds $LDBLStub suffixes to various symbols like printf.  These
-  // are references to hidden visibility symbols that dlsym cannot resolve.  If
-  // we have one of these, strip off $LDBLStub and try again.
+    
+    // If it wasn't found and if it starts with an underscore ('_') character,
+    // and has an asm specifier, try again without the underscore.
+    if (Name[0] == 1 && NameStr[0] == '_') {
+      Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(NameStr+1);
+      if (Ptr) return Ptr;
+    }
+    
+    // Darwin/PPC adds $LDBLStub suffixes to various symbols like printf.  These
+    // are references to hidden visibility symbols that dlsym cannot resolve.
+    // If we have one of these, strip off $LDBLStub and try again.
 #if defined(__APPLE__) && defined(__ppc__)
-  if (Name.size() > 9 && Name[Name.size()-9] == '$' &&
-      memcmp(&Name[Name.size()-8], "LDBLStub", 8) == 0) {
-    // First try turning $LDBLStub into $LDBL128.  If that fails, strip it off.
-    // This mirrors logic in libSystemStubs.a.
-    std::string Prefix = std::string(Name.begin(), Name.end()-9);
-    if (void *Ptr = getPointerToNamedFunction(Prefix+"$LDBL128"))
-      return Ptr;
-    if (void *Ptr = getPointerToNamedFunction(Prefix))
-      return Ptr;
-  }
+    if (Name.size() > 9 && Name[Name.size()-9] == '$' &&
+        memcmp(&Name[Name.size()-8], "LDBLStub", 8) == 0) {
+      // First try turning $LDBLStub into $LDBL128. If that fails, strip it off.
+      // This mirrors logic in libSystemStubs.a.
+      std::string Prefix = std::string(Name.begin(), Name.end()-9);
+      if (void *Ptr = getPointerToNamedFunction(Prefix+"$LDBL128"))
+        return Ptr;
+      if (void *Ptr = getPointerToNamedFunction(Prefix))
+        return Ptr;
+    }
 #endif
+  }
   
-  /// If a LazyFunctionCreator is installed, use it to get/create the function. 
+  /// If a LazyFunctionCreator is installed, use it to get/create the function.
   if (LazyFunctionCreator)
     if (void *RP = LazyFunctionCreator(Name))
       return RP;
