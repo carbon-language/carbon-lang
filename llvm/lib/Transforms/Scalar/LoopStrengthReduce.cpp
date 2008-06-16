@@ -136,7 +136,7 @@ namespace {
 
     /// DeadInsts - Keep track of instructions we may have made dead, so that
     /// we can remove them after we are done working.
-    SmallPtrSet<Instruction*,16> DeadInsts;
+    std::set<Instruction*> DeadInsts;
 
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// transformation profitability.
@@ -192,7 +192,7 @@ private:
     void StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                       IVUsersOfOneStride &Uses,
                                       Loop *L, bool isOnlyStride);
-    void DeleteTriviallyDeadInstructions(SmallPtrSet<Instruction*,16> &Insts);
+    void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
   };
 }
 
@@ -226,7 +226,7 @@ Value *LoopStrengthReduce::getCastedVersionOf(Instruction::CastOps opcode,
 /// specified set are trivially dead, delete them and see if this makes any of
 /// their operands subsequently dead.
 void LoopStrengthReduce::
-DeleteTriviallyDeadInstructions(SmallPtrSet<Instruction*,16> &Insts) {
+DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts) {
   while (!Insts.empty()) {
     Instruction *I = *Insts.begin();
     Insts.erase(I);
@@ -378,7 +378,7 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
 /// should use the post-inc value).
 static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
                                        Loop *L, DominatorTree *DT, Pass *P,
-                                       SmallPtrSet<Instruction*,16> &DeadInsts){
+                                       std::set<Instruction*> &DeadInsts){
   // If the user is in the loop, use the preinc value.
   if (L->contains(User->getParent())) return false;
   
@@ -546,7 +546,7 @@ namespace {
     void RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
                                         Instruction *InsertPt,
                                        SCEVExpander &Rewriter, Loop *L, Pass *P,
-                                       SmallPtrSet<Instruction*,16> &DeadInsts);
+                                       std::set<Instruction*> &DeadInsts);
     
     Value *InsertCodeForBaseAtPosition(const SCEVHandle &NewBase, 
                                        SCEVExpander &Rewriter,
@@ -612,7 +612,7 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase,
 void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
                                                Instruction *NewBasePt,
                                       SCEVExpander &Rewriter, Loop *L, Pass *P,
-                                      SmallPtrSet<Instruction*,16> &DeadInsts) {
+                                      std::set<Instruction*> &DeadInsts) {
   if (!isa<PHINode>(Inst)) {
     // By default, insert code at the user instruction.
     BasicBlock::iterator InsertPt = Inst;
