@@ -1,8 +1,9 @@
-; RUN: llvm-as < %s | opt -deadargelim | llvm-dis | grep nounwind | count 2
-; RUN: llvm-as < %s | opt -deadargelim | llvm-dis | grep signext | count 2
-; RUN: llvm-as < %s | opt -deadargelim | llvm-dis | not grep inreg
-; RUN: llvm-as < %s | opt -deadargelim | llvm-dis | not grep zeroext
-; RUN: llvm-as < %s | opt -deadargelim | llvm-dis | not grep byval
+; RUN: llvm-as < %s | opt -deadargelim | llvm-dis > %t
+; RUN: cat %t | grep nounwind | count 2
+; RUN: cat %t | grep signext | count 2
+; RUN: cat %t | not grep inreg
+; RUN: cat %t | not grep zeroext
+; RUN: cat %t | not grep byval
 
 	%struct = type { }
 
