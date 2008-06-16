@@ -157,69 +157,73 @@ protected:
 // RecursiveResolveTypes - This is just like ResolveTypes, except that it
 // recurses down into derived types, merging the used types if the parent types
 // are compatible.
-static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
-                                   const PATypeHolder &SrcTy,
+static bool RecursiveResolveTypesI(const Type *DstTy, const Type *SrcTy,
                                    LinkerTypeMap &Pointers) {
-  const Type *SrcTyT = SrcTy.get();
-  const Type *DestTyT = DestTy.get();
-  if (DestTyT == SrcTyT) return false;       // If already equal, noop
+  if (DstTy == SrcTy) return false;       // If already equal, noop
 
   // If we found our opaque type, resolve it now!
-  if (isa<OpaqueType>(DestTyT) || isa<OpaqueType>(SrcTyT))
-    return ResolveTypes(DestTyT, SrcTyT);
+  if (isa<OpaqueType>(DstTy) || isa<OpaqueType>(SrcTy))
+    return ResolveTypes(DstTy, SrcTy);
 
   // Two types cannot be resolved together if they are of different primitive
   // type.  For example, we cannot resolve an int to a float.
-  if (DestTyT->getTypeID() != SrcTyT->getTypeID()) return true;
+  if (DstTy->getTypeID() != SrcTy->getTypeID()) return true;
 
   // If neither type is abstract, then they really are just different types.
-  if (!DestTyT->isAbstract() && !SrcTyT->isAbstract())
+  if (!DstTy->isAbstract() && !SrcTy->isAbstract())
     return true;
   
   // Otherwise, resolve the used type used by this derived type...
-  switch (DestTyT->getTypeID()) {
+  switch (DstTy->getTypeID()) {
   default:
     return true;
   case Type::FunctionTyID: {
-    const FunctionType *DstFT = cast<FunctionType>(DestTyT);
-    const FunctionType *SrcFT = cast<FunctionType>(SrcTyT);
+    const FunctionType *DstFT = cast<FunctionType>(DstTy);
+    const FunctionType *SrcFT = cast<FunctionType>(SrcTy);
     if (DstFT->isVarArg() != SrcFT->isVarArg() ||
         DstFT->getNumContainedTypes() != SrcFT->getNumContainedTypes())
       return true;
-    for (unsigned i = 0, e = DstFT->getNumContainedTypes(); i != e; ++i)
-      if (RecursiveResolveTypesI(DstFT->getContainedType(i),
-                                 SrcFT->getContainedType(i), Pointers))
+    
+    // Use TypeHolder's so recursive resolution won't break us.
+    PATypeHolder ST(SrcFT), DT(DstFT);
+    for (unsigned i = 0, e = DstFT->getNumContainedTypes(); i != e; ++i) {
+      const Type *SE = ST->getContainedType(i), *DE = DT->getContainedType(i);
+      if (SE != DE && RecursiveResolveTypesI(DE, SE, Pointers))
         return true;
+    }
     return false;
   }
   case Type::StructTyID: {
-    const StructType *DstST = cast<StructType>(DestTyT);
-    const StructType *SrcST = cast<StructType>(SrcTyT);
+    const StructType *DstST = cast<StructType>(DstTy);
+    const StructType *SrcST = cast<StructType>(SrcTy);
     if (DstST->getNumContainedTypes() != SrcST->getNumContainedTypes())
       return true;
-    for (unsigned i = 0, e = DstST->getNumContainedTypes(); i != e; ++i)
-      if (RecursiveResolveTypesI(DstST->getContainedType(i),
-                                 SrcST->getContainedType(i), Pointers))
+    
+    PATypeHolder ST(SrcST), DT(DstST);
+    for (unsigned i = 0, e = DstST->getNumContainedTypes(); i != e; ++i) {
+      const Type *SE = ST->getContainedType(i), *DE = DT->getContainedType(i);
+      if (SE != DE && RecursiveResolveTypesI(DE, SE, Pointers))
         return true;
+    }
     return false;
   }
   case Type::ArrayTyID: {
-    const ArrayType *DAT = cast<ArrayType>(DestTy.get());
-    const ArrayType *SAT = cast<ArrayType>(SrcTy.get());
+    const ArrayType *DAT = cast<ArrayType>(DstTy);
+    const ArrayType *SAT = cast<ArrayType>(SrcTy);
     if (DAT->getNumElements() != SAT->getNumElements()) return true;
     return RecursiveResolveTypesI(DAT->getElementType(), SAT->getElementType(),
                                   Pointers);
   }
   case Type::VectorTyID: {
-    const VectorType *DVT = cast<VectorType>(DestTy.get());
-    const VectorType *SVT = cast<VectorType>(SrcTy.get());
+    const VectorType *DVT = cast<VectorType>(DstTy);
+    const VectorType *SVT = cast<VectorType>(SrcTy);
     if (DVT->getNumElements() != SVT->getNumElements()) return true;
     return RecursiveResolveTypesI(DVT->getElementType(), SVT->getElementType(),
                                   Pointers);
   }
   case Type::PointerTyID: {
-    const PointerType *DstPT = cast<PointerType>(DestTy.get());
-    const PointerType *SrcPT = cast<PointerType>(SrcTy.get());
+    const PointerType *DstPT = cast<PointerType>(DstTy);
+    const PointerType *SrcPT = cast<PointerType>(SrcTy);
     
     if (DstPT->getAddressSpace() != SrcPT->getAddressSpace())
       return true;
@@ -235,21 +239,20 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
     if (DstPT->isAbstract())
       if (const Type *ExistingSrcTy = Pointers.lookup(DstPT))
         return ExistingSrcTy != SrcPT;
-    
     // Otherwise, add the current pointers to the vector to stop recursion on
     // this pair.
     if (DstPT->isAbstract())
       Pointers.insert(DstPT, SrcPT);
     if (SrcPT->isAbstract())
       Pointers.insert(SrcPT, DstPT);
+    
     return RecursiveResolveTypesI(DstPT->getElementType(),
                                   SrcPT->getElementType(), Pointers);
   }
   }
 }
 
-static bool RecursiveResolveTypes(const PATypeHolder &DestTy,
-                                  const PATypeHolder &SrcTy) {
+static bool RecursiveResolveTypes(const Type *DestTy, const Type *SrcTy) {
   LinkerTypeMap PointerTypes;
   return RecursiveResolveTypesI(DestTy, SrcTy, PointerTypes);
 }
@@ -312,10 +315,7 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
       // two types: { int* } and { opaque* }
       for (unsigned i = 0, e = DelayedTypesToResolve.size(); i != e; ++i) {
         const std::string &Name = DelayedTypesToResolve[i];
-        PATypeHolder T1(SrcST->lookup(Name));
-        PATypeHolder T2(DestST->lookup(Name));
-
-        if (!RecursiveResolveTypes(T2, T1)) {
+        if (!RecursiveResolveTypes(SrcST->lookup(Name), DestST->lookup(Name))) {
           // We are making progress!
           DelayedTypesToResolve.erase(DelayedTypesToResolve.begin()+i);
 
