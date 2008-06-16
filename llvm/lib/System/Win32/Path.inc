@@ -1,4 +1,4 @@
-//===- llvm/System/Linux/Path.cpp - Linux Path Implementation ---*- C++ -*-===//
+//===- llvm/System/Win32/Path.cpp - Win32 Path Implementation ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
