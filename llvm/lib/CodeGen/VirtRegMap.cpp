@@ -1026,19 +1026,15 @@ bool LocalSpiller::CommuteToFoldReload(MachineBasicBlock &MBB,
            DefMI->getOperand(DefIdx).getReg() == SrcReg);
 
     // Now commute def instruction.
-    MachineInstr *CommutedMI = TII->commuteInstruction(DefMI);
+    MachineInstr *CommutedMI = TII->commuteInstruction(DefMI, true);
     if (!CommutedMI)
       return false;
     SmallVector<unsigned, 2> Ops;
     Ops.push_back(NewDstIdx);
     MachineInstr *FoldedMI = TII->foldMemoryOperand(MF, CommutedMI, Ops, SS);
-    if (!FoldedMI) {
-      if (CommutedMI == DefMI)
-        TII->commuteInstruction(CommutedMI);
-      else
-        MBB.erase(CommutedMI);
+    delete CommutedMI;  // Not needed since foldMemoryOperand returns new MI.
+    if (!FoldedMI)
       return false;
-    }
 
     VRM.addSpillSlotUse(SS, FoldedMI);
     VRM.virtFolded(VirtReg, FoldedMI, VirtRegMap::isRef);
@@ -1052,17 +1048,16 @@ bool LocalSpiller::CommuteToFoldReload(MachineBasicBlock &MBB,
     MII = MBB.insert(MII, FoldedMI);  // Update MII to backtrack.
 
     // Delete all 3 old instructions.
-    InvalidateKills(MI, RegKills, KillOps);
-    VRM.RemoveMachineInstrFromMaps(&MI);
-    MBB.erase(&MI);
-    if (CommutedMI != DefMI)
-      MBB.erase(CommutedMI);
-    InvalidateKills(*DefMI, RegKills, KillOps);
-    VRM.RemoveMachineInstrFromMaps(DefMI);
-    MBB.erase(DefMI);
     InvalidateKills(*ReloadMI, RegKills, KillOps);
     VRM.RemoveMachineInstrFromMaps(ReloadMI);
     MBB.erase(ReloadMI);
+    InvalidateKills(*DefMI, RegKills, KillOps);
+    VRM.RemoveMachineInstrFromMaps(DefMI);
+    MBB.erase(DefMI);
+    InvalidateKills(MI, RegKills, KillOps);
+    VRM.RemoveMachineInstrFromMaps(&MI);
+    MBB.erase(&MI);
+
     ++NumCommutes;
     return true;
   }
