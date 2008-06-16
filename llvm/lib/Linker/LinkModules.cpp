@@ -93,6 +93,10 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
   // type.  For example, we cannot resolve an int to a float.
   if (DestTyT->getTypeID() != SrcTyT->getTypeID()) return true;
 
+  // If neither type is abstract, then they really are just different types.
+  if (!DestTyT->isAbstract() && !SrcTyT->isAbstract())
+    return true;
+  
   // Otherwise, resolve the used type used by this derived type...
   switch (DestTyT->getTypeID()) {
   default:
