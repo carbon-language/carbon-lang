@@ -60,21 +60,17 @@ static std::string ToStr(const Type *Ty, const Module *M) {
 //  true  - There is an error and the types cannot yet be linked.
 //  false - No errors.
 //
-static bool ResolveTypes(const Type *DestTy, const Type *SrcTy,
-                         TypeSymbolTable *DestST) {
+static bool ResolveTypes(const Type *DestTy, const Type *SrcTy) {
   if (DestTy == SrcTy) return false;       // If already equal, noop
+  assert(DestTy && SrcTy && "Can't handle null types");
 
-  // Does the type already exist in the module?
-  if (DestTy && !isa<OpaqueType>(DestTy)) {  // Yup, the type already exists...
-    if (const OpaqueType *OT = dyn_cast<OpaqueType>(SrcTy)) {
-      const_cast<OpaqueType*>(OT)->refineAbstractTypeTo(DestTy);
-    } else {
-      return true;  // Cannot link types... neither is opaque and not-equal
-    }
-  } else {                       // Type not in dest module.  Add it now.
-    if (DestTy)                  // Type _is_ in module, just opaque...
-      const_cast<OpaqueType*>(cast<OpaqueType>(DestTy))
-                           ->refineAbstractTypeTo(SrcTy);
+  if (const OpaqueType *OT = dyn_cast<OpaqueType>(DestTy)) {
+    // Type _is_ in module, just opaque...
+    const_cast<OpaqueType*>(OT)->refineAbstractTypeTo(SrcTy);
+  } else if (const OpaqueType *OT = dyn_cast<OpaqueType>(SrcTy)) {
+    const_cast<OpaqueType*>(OT)->refineAbstractTypeTo(DestTy);
+  } else {
+    return true;  // Cannot link types... not-equal and neither is opaque.
   }
   return false;
 }
@@ -91,7 +87,6 @@ static const StructType *getST(const PATypeHolder &TH) {
 // are compatible.
 static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
                                    const PATypeHolder &SrcTy,
-                                   TypeSymbolTable *DestST,
                 std::vector<std::pair<PATypeHolder, PATypeHolder> > &Pointers) {
   const Type *SrcTyT = SrcTy.get();
   const Type *DestTyT = DestTy.get();
@@ -99,7 +94,7 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
 
   // If we found our opaque type, resolve it now!
   if (isa<OpaqueType>(DestTyT) || isa<OpaqueType>(SrcTyT))
-    return ResolveTypes(DestTyT, SrcTyT, DestST);
+    return ResolveTypes(DestTyT, SrcTyT);
 
   // Two types cannot be resolved together if they are of different primitive
   // type.  For example, we cannot resolve an int to a float.
@@ -121,8 +116,7 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
       return true;
     for (unsigned i = 0, e = getFT(DestTy)->getNumContainedTypes(); i != e; ++i)
       if (RecursiveResolveTypesI(getFT(DestTy)->getContainedType(i),
-                                 getFT(SrcTy)->getContainedType(i), DestST,
-                                 Pointers))
+                                 getFT(SrcTy)->getContainedType(i), Pointers))
         return true;
     return false;
   }
@@ -131,8 +125,7 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
         getST(SrcTy)->getNumContainedTypes()) return 1;
     for (unsigned i = 0, e = getST(DestTy)->getNumContainedTypes(); i != e; ++i)
       if (RecursiveResolveTypesI(getST(DestTy)->getContainedType(i),
-                                 getST(SrcTy)->getContainedType(i), DestST,
-                                 Pointers))
+                                 getST(SrcTy)->getContainedType(i), Pointers))
         return true;
     return false;
   }
@@ -141,7 +134,7 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
     const ArrayType *SAT = cast<ArrayType>(SrcTy.get());
     if (DAT->getNumElements() != SAT->getNumElements()) return true;
     return RecursiveResolveTypesI(DAT->getElementType(), SAT->getElementType(),
-                                  DestST, Pointers);
+                                  Pointers);
   }
   case Type::PointerTyID: {
     // If this is a pointer type, check to see if we have already seen it.  If
@@ -158,7 +151,7 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
     bool Result =
       RecursiveResolveTypesI(cast<PointerType>(DestTy.get())->getElementType(),
                              cast<PointerType>(SrcTy.get())->getElementType(),
-                             DestST, Pointers);
+                             Pointers);
     Pointers.pop_back();
     return Result;
   }
@@ -167,10 +160,9 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
 }
 
 static bool RecursiveResolveTypes(const PATypeHolder &DestTy,
-                                  const PATypeHolder &SrcTy,
-                                  TypeSymbolTable *DestST){
+                                  const PATypeHolder &SrcTy) {
   std::vector<std::pair<PATypeHolder, PATypeHolder> > PointerTypes;
-  return RecursiveResolveTypesI(DestTy, SrcTy, DestST, PointerTypes);
+  return RecursiveResolveTypesI(DestTy, SrcTy, PointerTypes);
 }
 
 
@@ -195,12 +187,14 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
     const std::string &Name = TI->first;
     const Type *RHS = TI->second;
 
-    // Check to see if this type name is already in the dest module...
+    // Check to see if this type name is already in the dest module.
     Type *Entry = DestST->lookup(Name);
 
-    if (Entry == 0 && !Name.empty())
-      DestST->insert(Name, const_cast<Type*>(RHS));
-    else if (ResolveTypes(Entry, RHS, DestST)) {
+    // If the name is just in the source module, bring it over to the dest.
+    if (Entry == 0) {
+      if (!Name.empty())
+        DestST->insert(Name, const_cast<Type*>(RHS));
+    } else if (ResolveTypes(Entry, RHS)) {
       // They look different, save the types 'till later to resolve.
       DelayedTypesToResolve.push_back(Name);
     }
@@ -216,7 +210,7 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
       const std::string &Name = DelayedTypesToResolve[i];
       Type *T1 = SrcST->lookup(Name);
       Type *T2 = DestST->lookup(Name);
-      if (!ResolveTypes(T2, T1, DestST)) {
+      if (!ResolveTypes(T2, T1)) {
         // We are making progress!
         DelayedTypesToResolve.erase(DelayedTypesToResolve.begin()+i);
         --i;
@@ -232,7 +226,7 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
         PATypeHolder T1(SrcST->lookup(Name));
         PATypeHolder T2(DestST->lookup(Name));
 
-        if (!RecursiveResolveTypes(T2, T1, DestST)) {
+        if (!RecursiveResolveTypes(T2, T1)) {
           // We are making progress!
           DelayedTypesToResolve.erase(DelayedTypesToResolve.begin()+i);
 
@@ -459,8 +453,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       DGV = Dest->getGlobalVariable(SGV->getName());
       if (DGV && DGV->getType() != SGV->getType())
         // If types don't agree due to opaque types, try to resolve them.
-        RecursiveResolveTypes(SGV->getType(), DGV->getType(), 
-                              &Dest->getTypeSymbolTable());
+        RecursiveResolveTypes(SGV->getType(), DGV->getType());
     }
 
     // Check to see if may have to link the global with the alias
@@ -468,8 +461,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       DGV = Dest->getNamedAlias(SGV->getName());
       if (DGV && DGV->getType() != SGV->getType())
         // If types don't agree due to opaque types, try to resolve them.
-        RecursiveResolveTypes(SGV->getType(), DGV->getType(), 
-                              &Dest->getTypeSymbolTable());
+        RecursiveResolveTypes(SGV->getType(), DGV->getType());
     }
 
     if (DGV && DGV->hasInternalLinkage())
@@ -629,8 +621,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
 
       // If types don't agree due to opaque types, try to resolve them.
       if (DGV && DGV->getType() != SGA->getType())
-        if (RecursiveResolveTypes(SGA->getType(), DGV->getType(),
-                                  &Dest->getTypeSymbolTable()))
+        if (RecursiveResolveTypes(SGA->getType(), DGV->getType()))
           return Error(Err, "Alias Collision on '" + SGA->getName()+
                        "': aliases have different types");
     }
@@ -640,8 +631,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
 
       // If types don't agree due to opaque types, try to resolve them.
       if (DGV && DGV->getType() != SGA->getType())
-        if (RecursiveResolveTypes(SGA->getType(), DGV->getType(),
-                                  &Dest->getTypeSymbolTable()))
+        if (RecursiveResolveTypes(SGA->getType(), DGV->getType()))
           return Error(Err, "Alias Collision on '" + SGA->getName()+
                        "': aliases have different types");
     }
@@ -651,8 +641,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
 
       // If types don't agree due to opaque types, try to resolve them.
       if (DGV && DGV->getType() != SGA->getType())
-        if (RecursiveResolveTypes(SGA->getType(), DGV->getType(),
-                                  &Dest->getTypeSymbolTable()))
+        if (RecursiveResolveTypes(SGA->getType(), DGV->getType()))
           return Error(Err, "Alias Collision on '" + SGA->getName()+
                        "': aliases have different types");
     }
@@ -850,8 +839,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
     
     // If types don't agree because of opaque, try to resolve them.
     if (SF->getType() != DF->getType())
-      RecursiveResolveTypes(SF->getType(), DF->getType(), 
-                            &Dest->getTypeSymbolTable());
+      RecursiveResolveTypes(SF->getType(), DF->getType());
     
     // Check visibility, merging if a definition overrides a prototype.
     if (SF->getVisibility() != DF->getVisibility()) {
