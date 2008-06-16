@@ -1517,12 +1517,10 @@ static void generateCompilerSpecificCode(std::ostream& Out,
   // Output typedefs for 128-bit integers. If these are needed with a
   // 32-bit target or with a C compiler that doesn't support mode(TI),
   // more drastic measures will be needed.
-  if (TD->getPointerSize() >= 8) {
-    Out << "#ifdef __GNUC__ /* 128-bit integer types */\n"
-        << "typedef int __attribute__((mode(TI))) llvmInt128;\n"
-        << "typedef unsigned __attribute__((mode(TI))) llvmUInt128;\n"
-        << "#endif\n\n";
-  }
+  Out << "#if __GNUC__ && __LP64__ /* 128-bit integer types */\n"
+      << "typedef int __attribute__((mode(TI))) llvmInt128;\n"
+      << "typedef unsigned __attribute__((mode(TI))) llvmUInt128;\n"
+      << "#endif\n\n";
 
   // Output target-specific code that should be inserted into main.
   Out << "#define CODE_FOR_MAIN() /* Any target-specific code for main()*/\n";
