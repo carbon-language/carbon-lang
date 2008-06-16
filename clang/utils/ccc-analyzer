@@ -94,7 +94,6 @@ def changeextension(path, newext):
     if i < 0:
         return path
     j = path.rfind('/', 0, i)
-    print path
     if j < 0:
         return path[:i] + "." + newext
     return path[j+1:i] + "." + newext

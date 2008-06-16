@@ -18,11 +18,37 @@ use File::Temp qw/ :mktemp /;
 use FindBin qw($RealBin);
 use Digest::MD5;
 use File::Basename;
+use Term::ANSIColor;
+use Term::ANSIColor qw(:constants);
 
 my $Verbose = 0;       # Verbose output from this script.
 my $Prog = "scan-build";
 my $BuildName;
 my $BuildDate;
+
+my $UseColor = (($ENV{'TERM'} eq 'xterm-color') and -t STDOUT);
+
+sub Diag {
+  if ($UseColor) {
+    print BOLD, MAGENTA "$Prog: @_";
+    print RESET;
+  }
+  else {
+    print "$Prog: @_";
+  }  
+}
+
+sub DieDiag {
+  if ($UseColor) {
+    print BOLD, RED "$Prog: ";
+    print RESET, RED @_;
+    print RESET;
+  }
+  else {
+    print "$Prog: ", @_;
+  }
+  exit(0);
+}
 
 ##----------------------------------------------------------------------------##
 # GetHTMLRunDir - Construct an HTML directory name for the current run.
@@ -51,7 +77,7 @@ sub GetHTMLRunDir {
   if (-d $Dir) {
     
     if (! -r $Dir) {
-      die "error: '$Dir' exists but is not readable.\n";
+      DieDiag("directory '$Dir' exists but is not readable.\n");
     }
     
     # Iterate over all files in the specified directory.
@@ -81,7 +107,7 @@ sub GetHTMLRunDir {
   else {
     
     if (-x $Dir) {
-      die "error: '$Dir' exists but is not a directory.\n";
+      DieDiag("'$Dir' exists but is not a directory.\n");
     }
     
     # $Dir does not exist.  It will be automatically created by the 
@@ -113,7 +139,7 @@ sub SetHtmlEnv {
   }
   
   if ($Verbose) {
-    print "$Prog: Emitting reports for this run to '$Dir'.\n";  
+    Diag("Emitting reports for this run to '$Dir'.\n");
   }
   
   $ENV{'CCC_ANALYZER_HTML'} = $Dir;
@@ -125,14 +151,14 @@ sub SetHtmlEnv {
 
 sub ComputeDigest {
   my $FName = shift;
-  die "Cannot read $FName" if (! -r $FName);  
+  DieDiag("Cannot read $FName to compute Digest.\n") if (! -r $FName);  
   
   # Use Digest::MD5.  We don't have to be cryptographically secure.  We're
   # just looking for duplicate files that come from a non-malicious source.
   # We use Digest::MD5 because it is a standard Perl module that should
   # come bundled on most systems.
   
-  open(FILE, $FName) or die "Cannot open $FName.";
+  open(FILE, $FName) or DieDiag("Cannot open $FName when computing Digest.\n");
   binmode FILE;
   my $Result = Digest::MD5->new->addfile(*FILE)->hexdigest;
   close(FILE);
@@ -226,7 +252,7 @@ sub ScanFile {
   `chmod 644 $Dir/$FName`;
   
   # Scan the report file for tags.
-  open(IN, "$Dir/$FName") or die "$Prog: Cannot open '$Dir/$FName'\n";
+  open(IN, "$Dir/$FName") or DieDiag("Cannot open '$Dir/$FName'\n");
 
   my $BugDesc = "";
   my $BugFile = "";
@@ -263,12 +289,12 @@ sub CopyJS {
 
   my $Dir = shift;
   
-  die "$Prog: Cannot find 'sorttable.js'.\n"
+  DieDiag("Cannot find 'sorttable.js'.\n")
     if (! -r "$RealBin/sorttable.js");  
 
   `cp $RealBin/sorttable.js $Dir`;
 
-  die "$Prog: Could not copy 'sorttable.js' to '$Dir'."
+  DieDiag("Could not copy 'sorttable.js' to '$Dir'.\n")
     if (! -r "$Dir/sorttable.js");
 }
 
@@ -285,6 +311,7 @@ sub Postprocess {
   die "No base directory specified." if (!defined($BaseDir));
   
   if (! -d $Dir) {
+    Diag("No bugs found.\n");
     return;
   }
   
@@ -293,8 +320,13 @@ sub Postprocess {
   closedir(DIR);
 
   if (scalar(@files) == 0) {
-    print "$Prog: Removing directory '$Dir' because it contains no reports.\n";
+    Diag("Removing directory '$Dir' because it contains no reports.\n");
     `rm -fR $Dir`;
+    
+    # Remove the base directory if it contains no files (don't use '-R').
+    `rm -f $BaseDir`;
+    
+    Diag("No bugs found.\n");
     return;
   }
   
@@ -308,7 +340,7 @@ sub Postprocess {
   
   my $FName = "$Dir/index.html";
   
-  open(OUT, ">$FName") or die "$Prog: Cannot create file '$FName'\n";
+  open(OUT, ">$FName") or DieDiag("Cannot create file '$FName'\n");
   
   # Print out the header.
   
@@ -468,6 +500,9 @@ ENDTEXT
   # Make sure $Dir and $BaseDir is world readable/executable.
   `chmod 755 $Dir`;
   `chmod 755 $BaseDir`;
+  
+  my $Num = scalar(@Index);
+  Diag("$Num bugs found.\n")
 }
 
 ##----------------------------------------------------------------------------##
@@ -615,13 +650,13 @@ while (@ARGV) {
     shift @ARGV;
 
     if (!@ARGV) {
-      die "$Prog: '-a' option requires an analysis type.\n";
+      DieDiag("'-a' option requires an analysis type.\n");
     }
     
     $Analysis = shift @ARGV;
     
     if (!($Analysis eq "checker-cfref" or $Analysis eq "fsyntax-only")) {
-      die "$Prog: Invalid argument '$Analysis' to -a.\n";
+      DieDiag("Invalid argument '$Analysis' to -a.\n");
     }
     
     next;
@@ -631,7 +666,7 @@ while (@ARGV) {
     shift @ARGV;
         
     if (!@ARGV) {
-      die "$Prog: '-o' option requires a target directory name.\n";
+      DieDiag("'-o' option requires a target directory name.\n");
     }
     
     $HtmlDir = shift @ARGV;
@@ -656,13 +691,13 @@ while (@ARGV) {
     next;
   }
   
-  die "$Prog: unrecognized option '$arg'\n" if ($arg =~ /^-/);
+  DieDiag("unrecognized option '$arg'\n") if ($arg =~ /^-/);
   
   last;
 }
 
 if (!@ARGV) {
-  print STDERR "$Prog: No build command specified.\n\n";
+  Diag("No build command specified.\n\n");
   DisplayHelp();
   exit 1;
 }
@@ -674,11 +709,11 @@ if (!defined($HtmlDir)) {
   $HtmlDir = mkdtemp("/tmp/$Prog-XXXXXX");
   
   if (!defined($HtmlDir)) {
-    die "error: Cannot create HTML directory in /tmp.\n";
+    DieDiag("Cannot create HTML directory in /tmp.\n");
   }
   
   if (!$Verbose) {
-    print "$Prog: Using '$HtmlDir' as base HTML report directory.\n";
+    Diag("Using '$HtmlDir' as base HTML report directory.\n");
   }
 }
 
@@ -691,13 +726,13 @@ SetHtmlEnv(\@ARGV, $HtmlDir);
 
 my $Cmd = "$RealBin/ccc-analyzer";
 
-die "$Prog: Executable 'ccc-analyzer' does not exist at '$Cmd'\n"
+DieDiag("Executable 'ccc-analyzer' does not exist at '$Cmd'\n")
   if (! -x $Cmd);
   
 my $Clang = "$RealBin/clang";
 
 if (! -x $Clang) {
-  print "$Prog: 'clang' executable not found in '$RealBin'.  Using 'clang' from path.\n";
+  Diag("'clang' executable not found in '$RealBin'.  Using 'clang' from path.\n");
   $Clang = "clang";
 }
 
