@@ -130,7 +130,8 @@ PHINode::PHINode(const PHINode &PN)
 }
 
 PHINode::~PHINode() {
-  dropHungoffUses(OperandList);
+  if (OperandList)
+    dropHungoffUses(OperandList);
 }
 
 // removeIncomingValue - Remove an incoming value.  This is useful if a
