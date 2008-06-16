@@ -767,28 +767,45 @@ Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
                                  Instruction *InsertBefore) {
   const llvm::StructType *STy = llvm::dyn_cast<llvm::StructType>(IndexedType);
   if (STy) {
+    // Save the original To argument so we can modify it
+    Value *OrigTo = To;
     // General case, the type indexed by Idxs is a struct
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
       // Process each struct element recursively
       Idxs.push_back(i);
+      Value *PrevTo = To;
       To = BuildSubAggregate(From, To, STy->getElementType(i), Idxs, IdxSkip,
                              InsertBefore);
       Idxs.pop_back();
+      if (!To) {
+        // Couldn't find any inserted value for this index? Cleanup
+        while (PrevTo != OrigTo) {
+          InsertValueInst* Del = cast<InsertValueInst>(PrevTo);
+          PrevTo = Del->getAggregateOperand();
+          Del->eraseFromParent();
+        }
+        // Stop processing elements
+        break;
+      }
     }
-    return To;
-  } else {
-    // Base case, the type indexed by SourceIdxs is not a struct
-    // Load the value from the nested struct into the sub struct (and skip
-    // IdxSkip indices when indexing the sub struct).
-    Instruction *V = llvm::ExtractValueInst::Create(From, Idxs.begin(),
-                                                    Idxs.end(), "tmp",
-                                                    InsertBefore);
-    Instruction *Ins = llvm::InsertValueInst::Create(To, V,
-                                                     Idxs.begin() + IdxSkip,
-                                                     Idxs.end(), "tmp",
-                                                     InsertBefore);
-    return Ins;
+    // If we succesfully found a value for each of our subaggregates 
+    if (To)
+      return To;
   }
+  // Base case, the type indexed by SourceIdxs is not a struct, or not all of
+  // the struct's elements had a value that was inserted directly. In the latter
+  // case, perhaps we can't determine each of the subelements individually, but
+  // we might be able to find the complete struct somewhere.
+  
+  // Find the value that is at that particular spot
+  Value *V = FindInsertedValue(From, Idxs.begin(), Idxs.end());
+
+  if (!V)
+    return NULL;
+
+  // Insert the value in the new (sub) aggregrate
+  return llvm::InsertValueInst::Create(To, V, Idxs.begin() + IdxSkip,
+                                       Idxs.end(), "tmp", InsertBefore);
 }
 
 // This helper takes a nested struct and extracts a part of it (which is again a
@@ -797,12 +814,12 @@ Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
 // and the indices "1, 1" this returns
 // { c, d }.
 //
-// It does this by inserting an extractvalue and insertvalue for each element in
-// the resulting struct, as opposed to just inserting a single struct. This
-// allows for later folding of these individual extractvalue instructions with
-// insertvalue instructions that fill the nested struct.
+// It does this by inserting an insertvalue for each element in the resulting
+// struct, as opposed to just inserting a single struct. This will only work if
+// each of the elements of the substruct are known (ie, inserted into From by an
+// insertvalue instruction somewhere).
 //
-// Any inserted instructions are inserted before InsertBefore
+// All inserted insertvalue instructions are inserted before InsertBefore
 Value *BuildSubAggregate(Value *From, const unsigned *idx_begin,
                          const unsigned *idx_end, Instruction *InsertBefore) {
   assert(InsertBefore && "Must have someplace to insert!");
@@ -819,6 +836,9 @@ Value *BuildSubAggregate(Value *From, const unsigned *idx_begin,
 /// FindInsertedValue - Given an aggregrate and an sequence of indices, see if
 /// the scalar value indexed is already around as a register, for example if it
 /// were inserted directly into the aggregrate.
+///
+/// If InsertBefore is not null, this function will duplicate (modified)
+/// insertvalues when a part of a nested struct is extracted.
 Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
                          const unsigned *idx_end, Instruction *InsertBefore) {
   // Nothing to index? Just return V then (this is useful at the end of our
@@ -853,8 +873,16 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
          i != e; ++i, ++req_idx) {
       if (req_idx == idx_end)
         if (InsertBefore)
-          // The requested index is a part of a nested aggregate. Handle this
-          // specially.
+          // The requested index identifies a part of a nested aggregate. Handle
+          // this specially. For example,
+          // %A = insertvalue { i32, {i32, i32 } } undef, i32 10, 1, 0
+          // %B = insertvalue { i32, {i32, i32 } } %A, i32 11, 1, 1
+          // %C = extractvalue {i32, { i32, i32 } } %B, 1
+          // This can be changed into
+          // %A = insertvalue {i32, i32 } undef, i32 10, 0
+          // %C = insertvalue {i32, i32 } %A, i32 11, 1
+          // which allows the unused 0,0 element from the nested struct to be
+          // removed.
           return BuildSubAggregate(V, idx_begin, req_idx, InsertBefore);
         else
           // We can't handle this without inserting insertvalues
