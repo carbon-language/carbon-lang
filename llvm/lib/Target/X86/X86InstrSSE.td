@@ -3330,7 +3330,7 @@ defm DPPS         : SS41I_binop_rmi_int<0x40, "dpps",
 defm DPPD         : SS41I_binop_rmi_int<0x41, "dppd",
                                         int_x86_sse41_dppd, 1>;
 defm MPSADBW      : SS41I_binop_rmi_int<0x42, "mpsadbw",
-                                        int_x86_sse41_mpsadbw, 0>;
+                                        int_x86_sse41_mpsadbw, 1>;
 
 
 /// SS41I_ternary_int - SSE 4.1 ternary operator
