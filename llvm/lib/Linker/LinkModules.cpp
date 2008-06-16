@@ -83,9 +83,12 @@ namespace {
 class LinkerTypeMap : public AbstractTypeUser {
   typedef DenseMap<const Type*, PATypeHolder> TheMapTy;
   TheMapTy TheMap;
-public:
   
-  LinkerTypeMap() {
+  LinkerTypeMap(const LinkerTypeMap&); // DO NOT IMPLEMENT
+  void operator=(const LinkerTypeMap&); // DO NOT IMPLEMENT
+public:
+  LinkerTypeMap() {}
+  ~LinkerTypeMap() {
     for (DenseMap<const Type*, PATypeHolder>::iterator I = TheMap.begin(),
          E = TheMap.end(); I != E; ++I)
       I->first->removeAbstractTypeUser(this);
