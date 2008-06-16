@@ -65,7 +65,8 @@ static bool AddressMightEscape(const Value *V) {
       break; // next use
     case Instruction::Call:
       // If the call is to a few known safe intrinsics, we know that it does
-      // not escape
+      // not escape.
+      // TODO: Eventually just check the 'nocapture' attribute.
       if (!isa<MemIntrinsic>(I))
         return true;
       break;  // next use
@@ -339,27 +340,20 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
         if (CI->isTailCall())
           return NoModRef;
     
-    // Allocations and byval arguments are "new" objects.
-    if (isa<AllocationInst>(Object) || isa<Argument>(Object)) {
-      // Okay, the pointer is to a stack allocated (or effectively so, for 
-      // for noalias parameters) object.  If the address of this object doesn't
-      // escape from this function body to a callee, then we know that no
-      // callees can mod/ref it unless they are actually passed it.
-      if (isa<AllocationInst>(Object) ||
-          cast<Argument>(Object)->hasByValAttr() ||
-          cast<Argument>(Object)->hasNoAliasAttr())
-        if (!AddressMightEscape(Object)) {
-          bool passedAsArg = false;
-          for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
-              CI != CE; ++CI)
-            if (isa<PointerType>((*CI)->getType()) &&
-                (getUnderlyingObject(*CI) == P ||
-                 alias(cast<Value>(CI), ~0U, P, ~0U) != NoAlias))
-              passedAsArg = true;
-          
-          if (!passedAsArg)
-            return NoModRef;
-        }
+    // If the pointer is to a locally allocated object that does not escape,
+    // then the call can not mod/ref the pointer unless the call takes the
+    // argument without capturing it.
+    if (isNonEscapingLocalObject(Object)) {
+      bool passedAsArg = false;
+      // TODO: Eventually only check 'nocapture' arguments.
+      for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
+           CI != CE; ++CI)
+        if (isa<PointerType>((*CI)->getType()) &&
+            alias(cast<Value>(CI), ~0U, P, ~0U) != NoAlias)
+          passedAsArg = true;
+      
+      if (!passedAsArg)
+        return NoModRef;
     }
   }
 
