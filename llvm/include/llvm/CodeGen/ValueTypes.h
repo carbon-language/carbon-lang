@@ -266,6 +266,12 @@ namespace llvm {
       return (getSizeInBits() & 7) == 0;
     }
 
+    /// isRound - Return true if the size is a power-of-two number of bytes.
+    inline bool isRound() const {
+      unsigned BitSize = getSizeInBits();
+      return BitSize >= 8 && !(BitSize & (BitSize - 1));
+    }
+
     /// bitsGT - Return true if this has more bits than VT.
     inline bool bitsGT(MVT VT) const {
       return getSizeInBits() > VT.getSizeInBits();

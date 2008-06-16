@@ -1787,10 +1787,9 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
         EVT = MVT::getIntegerVT(ActiveBits);
 
       MVT LoadedVT = LN0->getMemoryVT();
-      // Do not generate loads of extended integer types since these can be
-      // expensive (and would be wrong if the type is not byte sized).
-      if (EVT != MVT::Other && LoadedVT.bitsGT(EVT) && EVT.isSimple() &&
-          EVT.isByteSized() && // Exclude MVT::i1, which is simple.
+      // Do not generate loads of non-round integer types since these can
+      // be expensive (and would be wrong if the type is not byte sized).
+      if (EVT != MVT::Other && LoadedVT.bitsGT(EVT) && EVT.isRound() &&
           (!AfterLegalize || TLI.isLoadXLegal(ISD::ZEXTLOAD, EVT))) {
         MVT PtrType = N0.getOperand(1).getValueType();
         // For big endian targets, we need to add an offset to the pointer to
@@ -3187,10 +3186,9 @@ SDOperand DAGCombiner::ReduceLoadWidth(SDNode *N) {
     }
   }
 
-  // Do not generate loads of extended integer types since these can be
-  // expensive (and would be wrong if the type is not byte sized).
-  if (ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse() && VT.isSimple() &&
-      VT.isByteSized() && // Exclude MVT::i1, which is simple.
+  // Do not generate loads of non-round integer types since these can
+  // be expensive (and would be wrong if the type is not byte sized).
+  if (ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse() && VT.isRound() &&
       // Do not change the width of a volatile load.
       !cast<LoadSDNode>(N0)->isVolatile()) {
     assert(N0.getValueType().getSizeInBits() > EVTBits &&
