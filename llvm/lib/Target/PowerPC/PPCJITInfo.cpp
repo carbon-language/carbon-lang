@@ -333,9 +333,26 @@ extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
 /// SyncICache - On PPC, the JIT emitted code must be explicitly refetched to
 /// ensure correct execution.
 static void SyncICache(const void *Addr, size_t len) {
-#if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
-defined(__APPLE__)
+#if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
+  
+#ifdef __APPLE__
   sys_icache_invalidate(Addr, len);
+#elif defined(__GNUC__)
+  const size_t LineSize = 32;
+  
+  const intptr_t Mask = ~(LineSize - 1);
+  const intptr_t StartLine = ((intptr_t) Addr) & Mask;
+  const intptr_t EndLine = ((intptr_t) Addr + len + LineSize - 1) & Mask;
+
+  for (intptr_t Line = StartLine; Line < EndLine; Line += LineSize)
+      asm volatile("dcbf 0, %0" : : "r"(Line));
+  asm volatile("sync");
+
+  for (intptr_t Line = StartLine; Line < EndLine; Line += LineSize)
+      asm volatile("icbi 0, %0" : : "r"(Line));
+  asm volatile("isync");
+#endif
+  
 #endif
 }
 
