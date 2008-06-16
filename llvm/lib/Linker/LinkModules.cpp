@@ -26,6 +26,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Path.h"
+#include "llvm/ADT/DenseMap.h"
 #include <sstream>
 using namespace llvm;
 
@@ -75,12 +76,90 @@ static bool ResolveTypes(const Type *DestTy, const Type *SrcTy) {
   return false;
 }
 
+/// LinkerTypeMap - This implements a map of types that is stable
+/// even if types are resolved/refined to other types.  This is not a general
+/// purpose map, it is specific to the linker's use.
+namespace {
+class LinkerTypeMap : public AbstractTypeUser {
+  typedef DenseMap<const Type*, PATypeHolder> TheMapTy;
+  TheMapTy TheMap;
+public:
+  
+  LinkerTypeMap() {
+    for (DenseMap<const Type*, PATypeHolder>::iterator I = TheMap.begin(),
+         E = TheMap.end(); I != E; ++I)
+      I->first->removeAbstractTypeUser(this);
+  }
+  
+  /// lookup - Return the value for the specified type or null if it doesn't
+  /// exist.
+  const Type *lookup(const Type *Ty) const {
+    TheMapTy::const_iterator I = TheMap.find(Ty);
+    if (I != TheMap.end()) return I->second;
+    return 0;
+  }
+  
+  /// erase - Remove the specified type, returning true if it was in the set.
+  bool erase(const Type *Ty) {
+    if (!TheMap.erase(Ty))
+      return false;
+    if (Ty->isAbstract())
+      Ty->removeAbstractTypeUser(this);
+    return true;
+  }
+  
+  /// insert - This returns true if the pointer was new to the set, false if it
+  /// was already in the set.
+  bool insert(const Type *Src, const Type *Dst) {
+    if (!TheMap.insert(std::make_pair(Src, PATypeHolder(Dst))))
+      return false;  // Already in map.
+    if (Src->isAbstract())
+      Src->addAbstractTypeUser(this);
+    return true;
+  }
+  
+protected:
+  /// refineAbstractType - The callback method invoked when an abstract type is
+  /// resolved to another type.  An object must override this method to update
+  /// its internal state to reference NewType instead of OldType.
+  ///
+  virtual void refineAbstractType(const DerivedType *OldTy,
+                                  const Type *NewTy) {
+    TheMapTy::iterator I = TheMap.find(OldTy);
+    const Type *DstTy = I->second;
+    
+    TheMap.erase(I);
+    if (OldTy->isAbstract())
+      OldTy->removeAbstractTypeUser(this);
+
+    // Don't reinsert into the map if the key is concrete now.
+    if (NewTy->isAbstract())
+      insert(NewTy, DstTy);
+  }
+  
+  /// The other case which AbstractTypeUsers must be aware of is when a type
+  /// makes the transition from being abstract (where it has clients on it's
+  /// AbstractTypeUsers list) to concrete (where it does not).  This method
+  /// notifies ATU's when this occurs for a type.
+  virtual void typeBecameConcrete(const DerivedType *AbsTy) {
+    TheMap.erase(AbsTy);
+    AbsTy->removeAbstractTypeUser(this);
+  }
+  
+  // for debugging...
+  virtual void dump() const {
+    cerr << "AbstractTypeSet!\n";
+  }
+};
+}
+
+
 // RecursiveResolveTypes - This is just like ResolveTypes, except that it
 // recurses down into derived types, merging the used types if the parent types
 // are compatible.
 static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
                                    const PATypeHolder &SrcTy,
-                std::vector<std::pair<PATypeHolder, PATypeHolder> > &Pointers) {
+                                   LinkerTypeMap &Pointers) {
   const Type *SrcTyT = SrcTy.get();
   const Type *DestTyT = DestTy.get();
   if (DestTyT == SrcTyT) return false;       // If already equal, noop
@@ -148,14 +227,21 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
     // If this is a pointer type, check to see if we have already seen it.  If
     // so, we are in a recursive branch.  Cut off the search now.  We cannot use
     // an associative container for this search, because the type pointers (keys
-    // in the container) change whenever types get resolved...
-    for (unsigned i = 0, e = Pointers.size(); i != e; ++i)
-      if (Pointers[i].first == DestTy)
-        return Pointers[i].second != SrcTy;
-
+    // in the container) change whenever types get resolved.
+    if (SrcPT->isAbstract())
+      if (const Type *ExistingDestTy = Pointers.lookup(SrcPT))
+        return ExistingDestTy != DstPT;
+    
+    if (DstPT->isAbstract())
+      if (const Type *ExistingSrcTy = Pointers.lookup(DstPT))
+        return ExistingSrcTy != SrcPT;
+    
     // Otherwise, add the current pointers to the vector to stop recursion on
     // this pair.
-    Pointers.push_back(std::make_pair(DestTyT, SrcTyT));
+    if (DstPT->isAbstract())
+      Pointers.insert(DstPT, SrcPT);
+    if (SrcPT->isAbstract())
+      Pointers.insert(SrcPT, DstPT);
     return RecursiveResolveTypesI(DstPT->getElementType(),
                                   SrcPT->getElementType(), Pointers);
   }
@@ -164,7 +250,7 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
 
 static bool RecursiveResolveTypes(const PATypeHolder &DestTy,
                                   const PATypeHolder &SrcTy) {
-  std::vector<std::pair<PATypeHolder, PATypeHolder> > PointerTypes;
+  LinkerTypeMap PointerTypes;
   return RecursiveResolveTypesI(DestTy, SrcTy, PointerTypes);
 }
 
