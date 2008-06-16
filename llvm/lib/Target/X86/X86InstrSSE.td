@@ -2745,13 +2745,13 @@ let Constraints = "$src1 = $dst" in {
 
 defm PHADDW      : SS3I_binop_rm_int_16<0x01, "phaddw",
                                         int_x86_ssse3_phadd_w,
-                                        int_x86_ssse3_phadd_w_128, 1>;
+                                        int_x86_ssse3_phadd_w_128>;
 defm PHADDD      : SS3I_binop_rm_int_32<0x02, "phaddd",
                                         int_x86_ssse3_phadd_d,
-                                        int_x86_ssse3_phadd_d_128, 1>;
+                                        int_x86_ssse3_phadd_d_128>;
 defm PHADDSW     : SS3I_binop_rm_int_16<0x03, "phaddsw",
                                         int_x86_ssse3_phadd_sw,
-                                        int_x86_ssse3_phadd_sw_128, 1>;
+                                        int_x86_ssse3_phadd_sw_128>;
 defm PHSUBW      : SS3I_binop_rm_int_16<0x05, "phsubw",
                                         int_x86_ssse3_phsub_w,
                                         int_x86_ssse3_phsub_w_128>;
@@ -2763,7 +2763,7 @@ defm PHSUBSW     : SS3I_binop_rm_int_16<0x07, "phsubsw",
                                         int_x86_ssse3_phsub_sw_128>;
 defm PMADDUBSW   : SS3I_binop_rm_int_8 <0x04, "pmaddubsw",
                                         int_x86_ssse3_pmadd_ub_sw,
-                                        int_x86_ssse3_pmadd_ub_sw_128, 1>;
+                                        int_x86_ssse3_pmadd_ub_sw_128>;
 defm PMULHRSW    : SS3I_binop_rm_int_16<0x0B, "pmulhrsw",
                                         int_x86_ssse3_pmul_hr_sw,
                                         int_x86_ssse3_pmul_hr_sw_128, 1>;

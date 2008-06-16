@@ -553,24 +553,24 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_ssse3_phadd_w         : GCCBuiltin<"__builtin_ia32_phaddw">,
               Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
-                         llvm_v4i16_ty], [IntrNoMem, Commutative]>;
+                         llvm_v4i16_ty], [IntrNoMem]>;
   def int_x86_ssse3_phadd_w_128     : GCCBuiltin<"__builtin_ia32_phaddw128">,
               Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty,
-                         llvm_v8i16_ty], [IntrNoMem, Commutative]>;
+                         llvm_v8i16_ty], [IntrNoMem]>;
 
   def int_x86_ssse3_phadd_d         : GCCBuiltin<"__builtin_ia32_phaddd">,
               Intrinsic<[llvm_v2i32_ty, llvm_v2i32_ty,
-                         llvm_v2i32_ty], [IntrNoMem, Commutative]>;
+                         llvm_v2i32_ty], [IntrNoMem]>;
   def int_x86_ssse3_phadd_d_128     : GCCBuiltin<"__builtin_ia32_phaddd128">,
               Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty,
-                         llvm_v4i32_ty], [IntrNoMem, Commutative]>;
+                         llvm_v4i32_ty], [IntrNoMem]>;
 
   def int_x86_ssse3_phadd_sw        : GCCBuiltin<"__builtin_ia32_phaddsw">,
               Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
-                         llvm_v4i16_ty], [IntrNoMem, Commutative]>;
+                         llvm_v4i16_ty], [IntrNoMem]>;
   def int_x86_ssse3_phadd_sw_128    : GCCBuiltin<"__builtin_ia32_phaddsw128">,
               Intrinsic<[llvm_v4i32_ty, llvm_v4i32_ty,
-                         llvm_v4i32_ty], [IntrNoMem, Commutative]>;
+                         llvm_v4i32_ty], [IntrNoMem]>;
 
   def int_x86_ssse3_phsub_w         : GCCBuiltin<"__builtin_ia32_phsubw">,
               Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
@@ -595,11 +595,14 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 
   def int_x86_ssse3_pmadd_ub_sw     : GCCBuiltin<"__builtin_ia32_pmaddubsw">,
               Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
-                         llvm_v4i16_ty], [IntrNoMem, Commutative]>;
+                         llvm_v4i16_ty], [IntrNoMem]>;
   def int_x86_ssse3_pmadd_ub_sw_128 : GCCBuiltin<"__builtin_ia32_pmaddubsw128">,
               Intrinsic<[llvm_v8i16_ty, llvm_v8i16_ty,
-                         llvm_v8i16_ty], [IntrNoMem, Commutative]>;
+                         llvm_v8i16_ty], [IntrNoMem]>;
+}
 
+// Packed multiply high with round and scale
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_ssse3_pmul_hr_sw      : GCCBuiltin<"__builtin_ia32_pmulhrsw">,
               Intrinsic<[llvm_v4i16_ty, llvm_v4i16_ty,
                          llvm_v4i16_ty], [IntrNoMem, Commutative]>;
