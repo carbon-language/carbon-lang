@@ -1,6 +1,6 @@
 // RUN: %llvmgcc %s -S -o -
 // XFAIL: *
-// See PR2425
+// See PR2452
 
 #pragma pack(push, 2)
 struct H {

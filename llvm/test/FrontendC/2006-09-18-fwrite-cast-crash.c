@@ -1,7 +1,7 @@
 // RUN: %llvmgcc %s -S -o /dev/null
 // PR910
 // XFAIL: *
-// See PR2425
+// See PR2452
 
 struct l_struct_2E_FILE { char x; };
 unsigned fwrite(signed char *, unsigned , unsigned , signed char *);

@@ -1,7 +1,7 @@
 // RUN: %llvmgcc -xc -Os -c %s -o /dev/null
 // PR1641
 // XFAIL: *
-// See PR2425
+// See PR2452
 
 struct A {
   unsigned long l;
