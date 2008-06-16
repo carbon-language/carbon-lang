@@ -17,6 +17,7 @@
 
 namespace llvm {
   class Value;
+  class Instruction;
   class APInt;
   class TargetData;
   
@@ -50,6 +51,14 @@ namespace llvm {
   /// value is never equal to -0.0.
   ///
   bool CannotBeNegativeZero(const Value *V, unsigned Depth = 0);
+
+  /// FindScalarValue - Given an aggregrate and an sequence of indices, see if the
+  /// scalar value indexed is already around as a register, for example if it were
+  /// inserted directly into the aggregrate.
+  Value *FindInsertedValue(Value *V,
+                         const unsigned *idx_begin,
+                         const unsigned *idx_end,
+                         Instruction &InsertBefore);
 } // end namespace llvm
 
 #endif
