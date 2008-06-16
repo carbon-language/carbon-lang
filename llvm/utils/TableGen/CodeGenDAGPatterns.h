@@ -221,6 +221,10 @@ public:
   /// getIntrinsicInfo - If this node corresponds to an intrinsic, return the
   /// CodeGenIntrinsic information for it, otherwise return a null pointer.
   const CodeGenIntrinsic *getIntrinsicInfo(const CodeGenDAGPatterns &CDP) const;
+
+  /// isCommutativeIntrinsic - Return true if the node is an intrinsic which is
+  /// marked isCommutative.
+  bool isCommutativeIntrinsic(const CodeGenDAGPatterns &CDP) const;
   
   void print(std::ostream &OS) const;
   void dump() const;

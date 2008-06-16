@@ -742,6 +742,15 @@ getIntrinsicInfo(const CodeGenDAGPatterns &CDP) const {
   return &CDP.getIntrinsicInfo(IID);
 }
 
+/// isCommutativeIntrinsic - Return true if the node corresponds to a
+/// commutative intrinsic.
+bool
+TreePatternNode::isCommutativeIntrinsic(const CodeGenDAGPatterns &CDP) const {
+  if (const CodeGenIntrinsic *Int = getIntrinsicInfo(CDP))
+    return Int->isCommutative;
+  return false;
+}
+
 
 /// ApplyTypeConstraints - Apply all of the type constraints relevent to
 /// this node and its children in the tree.  This returns true if it makes a
@@ -999,11 +1008,13 @@ bool TreePatternNode::canPatternMatch(std::string &Reason,
   // If this node is a commutative operator, check that the LHS isn't an
   // immediate.
   const SDNodeInfo &NodeInfo = CDP.getSDNodeInfo(getOperator());
-  if (NodeInfo.hasProperty(SDNPCommutative)) {
+  bool isCommIntrinsic = isCommutativeIntrinsic(CDP);
+  if (NodeInfo.hasProperty(SDNPCommutative) || isCommIntrinsic) {
     // Scan all of the operands of the node and make sure that only the last one
     // is a constant node, unless the RHS also is.
     if (!OnlyOnRHSOfCommutative(getChild(getNumChildren()-1))) {
-      for (unsigned i = 0, e = getNumChildren()-1; i != e; ++i)
+      bool Skip = isCommIntrinsic ? 1 : 0; // First operand is intrinsic id.
+      for (unsigned i = Skip, e = getNumChildren()-1; i != e; ++i)
         if (OnlyOnRHSOfCommutative(getChild(i))) {
           Reason="Immediate value must be on the RHS of commutative operators!";
           return false;
@@ -2250,8 +2261,10 @@ static void GenerateVariantsOf(TreePatternNode *N,
   CombineChildVariants(N, ChildVariants, OutVariants, CDP, DepVars);
 
   // If this node is commutative, consider the commuted order.
-  if (NodeInfo.hasProperty(SDNPCommutative)) {
-    assert(N->getNumChildren()==2 &&"Commutative but doesn't have 2 children!");
+  bool isCommIntrinsic = N->isCommutativeIntrinsic(CDP);
+  if (NodeInfo.hasProperty(SDNPCommutative) || isCommIntrinsic) {
+    assert((N->getNumChildren()==2 || isCommIntrinsic) &&
+           "Commutative but doesn't have 2 children!");
     // Don't count children which are actually register references.
     unsigned NC = 0;
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
@@ -2265,7 +2278,20 @@ static void GenerateVariantsOf(TreePatternNode *N,
       NC++;
     }
     // Consider the commuted order.
-    if (NC == 2)
+    if (isCommIntrinsic) {
+      // Commutative intrinsic. First operand is the intrinsic id, 2nd and 3rd
+      // operands are the commutative operands, and there might be more operands
+      // after those.
+      assert(NC >= 3 &&
+             "Commutative intrinsic should have at least 3 childrean!");
+      std::vector<std::vector<TreePatternNode*> > Variants;
+      Variants.push_back(ChildVariants[0]); // Intrinsic id.
+      Variants.push_back(ChildVariants[2]);
+      Variants.push_back(ChildVariants[1]);
+      for (unsigned i = 3; i != NC; ++i)
+        Variants.push_back(ChildVariants[i]);
+      CombineChildVariants(N, Variants, OutVariants, CDP, DepVars);
+    } else if (NC == 2)
       CombineChildVariants(N, ChildVariants[1], ChildVariants[0],
                            OutVariants, CDP, DepVars);
   }

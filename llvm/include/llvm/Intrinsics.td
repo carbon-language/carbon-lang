@@ -48,6 +48,9 @@ def IntrWriteArgMem : IntrinsicProperty;
 // default if the intrinsic has no other Intr*Mem property.
 def IntrWriteMem : IntrinsicProperty;
 
+// Commutative - This intrinsic is commutative: X op Y == Y op X.
+def Commutative : IntrinsicProperty;
+
 //===----------------------------------------------------------------------===//
 // Types used by intrinsics.
 //===----------------------------------------------------------------------===//

@@ -49,6 +49,10 @@ namespace llvm {
     // types.
     bool isOverloaded;
 
+    // isCommutative - True if the intrinsic is commutative.
+    //
+    bool isCommutative;
+
     CodeGenIntrinsic(Record *R);
   };
 

@@ -404,6 +404,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
   std::string DefName = R->getName();
   ModRef = WriteMem;
   isOverloaded = false;
+  isCommutative = false;
   
   if (DefName.size() <= 4 || 
       std::string(DefName.begin(), DefName.begin()+4) != "int_")
@@ -469,6 +470,8 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
       ModRef = WriteArgMem;
     else if (Property->getName() == "IntrWriteMem")
       ModRef = WriteMem;
+    else if (Property->getName() == "Commutative")
+      isCommutative = true;
     else
       assert(0 && "Unknown property!");
   }
