@@ -365,14 +365,11 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // live interval.
     for (unsigned i = 0, e = vi.AliveBlocks.size(); i != e; ++i) {
       if (vi.AliveBlocks[i]) {
-        MachineBasicBlock *MBB = mf_->getBlockNumbered(i);
-        if (!MBB->empty()) {
-          LiveRange LR(getMBBStartIdx(i),
-                       getInstructionIndex(&MBB->back()) + InstrSlots::NUM,
-                       ValNo);
-          interval.addRange(LR);
-          DOUT << " +" << LR;
-        }
+        LiveRange LR(getMBBStartIdx(i),
+                     getMBBEndIdx(i),
+                     ValNo);
+        interval.addRange(LR);
+        DOUT << " +" << LR;
       }
     }
 
