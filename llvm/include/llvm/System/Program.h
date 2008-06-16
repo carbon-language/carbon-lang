@@ -65,6 +65,9 @@ namespace sys {
           ///< should have a size of at least three. If the pointer in the array
           ///< are not null, then the inferior process's stdin(0), stdout(1),
           ///< and stderr(2) will be redirected to the corresponding Paths.
+          ///< When an empty Path is passed in, the corresponding file
+          ///< descriptor will be disconnected (ie, /dev/null'd) in a portable
+          ///< way.
         unsigned secondsToWait = 0, ///< If non-zero, this specifies the amount
           ///< of time to wait for the child process to exit. If the time
           ///< expires, the child is killed and this call returns. If zero,
