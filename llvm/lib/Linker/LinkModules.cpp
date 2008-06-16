@@ -102,12 +102,8 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
 
   // Otherwise, resolve the used type used by this derived type...
   switch (DestTyT->getTypeID()) {
-  case Type::IntegerTyID: {
-    if (cast<IntegerType>(DestTyT)->getBitWidth() !=
-        cast<IntegerType>(SrcTyT)->getBitWidth())
-      return true;
-    return false;
-  }
+  default:
+    return true;
   case Type::FunctionTyID: {
     if (cast<FunctionType>(DestTyT)->isVarArg() !=
         cast<FunctionType>(SrcTyT)->isVarArg() ||
@@ -122,7 +118,8 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
   }
   case Type::StructTyID: {
     if (getST(DestTy)->getNumContainedTypes() !=
-        getST(SrcTy)->getNumContainedTypes()) return 1;
+        getST(SrcTy)->getNumContainedTypes())
+      return true;
     for (unsigned i = 0, e = getST(DestTy)->getNumContainedTypes(); i != e; ++i)
       if (RecursiveResolveTypesI(getST(DestTy)->getContainedType(i),
                                  getST(SrcTy)->getContainedType(i), Pointers))
@@ -134,6 +131,13 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
     const ArrayType *SAT = cast<ArrayType>(SrcTy.get());
     if (DAT->getNumElements() != SAT->getNumElements()) return true;
     return RecursiveResolveTypesI(DAT->getElementType(), SAT->getElementType(),
+                                  Pointers);
+  }
+  case Type::VectorTyID: {
+    const VectorType *DVT = cast<VectorType>(DestTy.get());
+    const VectorType *SVT = cast<VectorType>(SrcTy.get());
+    if (DVT->getNumElements() != SVT->getNumElements()) return true;
+    return RecursiveResolveTypesI(DVT->getElementType(), SVT->getElementType(),
                                   Pointers);
   }
   case Type::PointerTyID: {
@@ -155,7 +159,6 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
     Pointers.pop_back();
     return Result;
   }
-  default: assert(0 && "Unexpected type!"); return true;
   }
 }
 
