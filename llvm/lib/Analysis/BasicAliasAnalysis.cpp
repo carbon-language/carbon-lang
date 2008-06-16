@@ -317,6 +317,18 @@ static bool isKnownNonNull(const Value *V) {
   return false;
 }
 
+/// isNonEscapingLocalObject - Return true if the pointer is to a function-local
+/// object that never escapes from the function.
+static bool isNonEscapingLocalObject(const Value *V) {
+  // If this is a local allocation or byval argument, check to see if it
+  // escapes.
+  if (isa<AllocationInst>(V) ||
+      (isa<Argument>(V) && cast<Argument>(V)->hasByValAttr()))
+    return !AddressMightEscape(V);
+  return false;
+}
+
+
 /// isObjectSmallerThan - Return true if we can prove that the object specified
 /// by V is smaller than Size.
 static bool isObjectSmallerThan(const Value *V, unsigned Size,
@@ -393,7 +405,15 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
       (V2Size != ~0U && isObjectSmallerThan(O1, V2Size, TD)))
     return NoAlias;
   
-  
+  // If one pointer is the result of a call/invoke and the other is a
+  // non-escaping local object, then we know the object couldn't escape to a
+  // point where the call could return it.
+  if ((isa<CallInst>(O1) || isa<InvokeInst>(O1)) &&
+      isNonEscapingLocalObject(O2))
+    return NoAlias;
+  if ((isa<CallInst>(O2) || isa<InvokeInst>(O2)) &&
+      isNonEscapingLocalObject(O1))
+    return NoAlias;
   
   // If we have two gep instructions with must-alias'ing base pointers, figure
   // out if the indexes to the GEP tell us anything about the derived pointer.
