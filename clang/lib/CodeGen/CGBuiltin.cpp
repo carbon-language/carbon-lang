@@ -261,10 +261,13 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     return RValue::get(Builder.CreateZExt(LHS, ConvertType(E->getType()),
                                           "tmp"));
   }
-  case Builtin::BI__builtin_alloca:
-    return RValue::get(Builder.CreateAlloca(llvm::Type::Int8Ty,
-                                            EmitScalarExpr(E->getArg(0)),
+  case Builtin::BI__builtin_alloca: {
+    // FIXME: LLVM IR Should allow alloca with an i64 size!
+    Value *Size = EmitScalarExpr(E->getArg(0));
+    Size = Builder.CreateIntCast(Size, llvm::Type::Int32Ty, false, "tmp");
+    return RValue::get(Builder.CreateAlloca(llvm::Type::Int8Ty, Size,
                                             "tmp"));
+  }
   case Builtin::BI__builtin_memcpy: {
     Value* MemCpyOps[4] = {
       EmitScalarExpr(E->getArg(0)),
