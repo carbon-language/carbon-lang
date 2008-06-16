@@ -1530,15 +1530,6 @@ namespace {
 ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
                                                 IVStrideUse* &CondUse,
                                                 const SCEVHandle* &CondStride) {
-  // Forgo this transformation if the condition has multiple uses. This is
-  // over-conservative, but simpler than alternatives. It guards against
-  // comparisons with a use that occurs earlier than the add instruction for the
-  // new stride index.  See
-  // test/Transforms/LoopStrengthReduce/change-compare-stride-trickiness.ll
-  // for an example of this situation.
-  if (!Cond->hasOneUse())
-    return Cond;
-
   if (StrideOrder.size() < 2 ||
       IVUsesByStride[*CondStride].Users.size() != 1)
     return Cond;
@@ -1652,6 +1643,18 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
       break;
     }
   }
+
+  // Forgo this transformation if it the increment happens to be
+  // unfortunately positioned after the condition, and the condition
+  // has multiple uses which prevent it from being moved immediately
+  // before the branch. See
+  // test/Transforms/LoopStrengthReduce/change-compare-stride-trickiness-*.ll
+  // for an example of this situation.
+  if (!Cond->hasOneUse())
+    for (BasicBlock::iterator I = Cond, E = Cond->getParent()->end();
+         I != E; ++I)
+      if (I == NewIncV)
+        return Cond;
 
   if (NewCmpVal != CmpVal) {
     // Create a new compare instruction using new stride / iv.
