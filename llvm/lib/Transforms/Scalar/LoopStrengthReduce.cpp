@@ -31,6 +31,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
@@ -136,7 +137,7 @@ namespace {
 
     /// DeadInsts - Keep track of instructions we may have made dead, so that
     /// we can remove them after we are done working.
-    std::set<Instruction*> DeadInsts;
+    SetVector<Instruction*> DeadInsts;
 
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// transformation profitability.
@@ -192,7 +193,7 @@ private:
     void StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                       IVUsersOfOneStride &Uses,
                                       Loop *L, bool isOnlyStride);
-    void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
+    void DeleteTriviallyDeadInstructions(SetVector<Instruction*> &Insts);
   };
 }
 
@@ -226,10 +227,10 @@ Value *LoopStrengthReduce::getCastedVersionOf(Instruction::CastOps opcode,
 /// specified set are trivially dead, delete them and see if this makes any of
 /// their operands subsequently dead.
 void LoopStrengthReduce::
-DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts) {
+DeleteTriviallyDeadInstructions(SetVector<Instruction*> &Insts) {
   while (!Insts.empty()) {
-    Instruction *I = *Insts.begin();
-    Insts.erase(I);
+    Instruction *I = Insts.back();
+    Insts.pop_back();
 
     if (PHINode *PN = dyn_cast<PHINode>(I)) {
       // If all incoming values to the Phi are the same, we can replace the Phi
@@ -378,7 +379,7 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
 /// should use the post-inc value).
 static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
                                        Loop *L, DominatorTree *DT, Pass *P,
-                                       std::set<Instruction*> &DeadInsts){
+                                       SetVector<Instruction*> &DeadInsts){
   // If the user is in the loop, use the preinc value.
   if (L->contains(User->getParent())) return false;
   
@@ -546,7 +547,7 @@ namespace {
     void RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
                                         Instruction *InsertPt,
                                        SCEVExpander &Rewriter, Loop *L, Pass *P,
-                                       std::set<Instruction*> &DeadInsts);
+                                       SetVector<Instruction*> &DeadInsts);
     
     Value *InsertCodeForBaseAtPosition(const SCEVHandle &NewBase, 
                                        SCEVExpander &Rewriter,
@@ -612,7 +613,7 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase,
 void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
                                                Instruction *NewBasePt,
                                       SCEVExpander &Rewriter, Loop *L, Pass *P,
-                                      std::set<Instruction*> &DeadInsts) {
+                                      SetVector<Instruction*> &DeadInsts) {
   if (!isa<PHINode>(Inst)) {
     // By default, insert code at the user instruction.
     BasicBlock::iterator InsertPt = Inst;
