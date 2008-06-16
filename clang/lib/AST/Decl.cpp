@@ -107,10 +107,11 @@ RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
   void *Mem = C.getAllocator().Allocate<RecordDecl>();
   Kind DK;
   switch (TK) {
-  case TK_enum:   assert(0 && "Enum TagKind passed for Record!");
-  case TK_struct: DK = Struct; break;
-  case TK_union:  DK = Union;  break;
-  case TK_class:  DK = Class;  break;
+    default: assert(0 && "Invalid TagKind!");
+    case TK_enum: assert(0 && "Enum TagKind passed for Record!");
+    case TK_struct: DK = Struct; break;
+    case TK_union:  DK = Union;  break;
+    case TK_class:  DK = Class;  break;
   }
   return new (Mem) RecordDecl(DK, DC, L, Id, PrevDecl);
 }
