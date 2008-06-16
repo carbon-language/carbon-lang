@@ -155,7 +155,10 @@ public:
   /// return a new machine instruction.  If an instruction cannot commute, it
   /// can also return null.
   ///
-  virtual MachineInstr *commuteInstruction(MachineInstr *MI) const = 0;
+  /// If NewMI is true, then a new machine instruction must be created.
+  ///
+  virtual MachineInstr *commuteInstruction(MachineInstr *MI,
+                                           bool NewMI = false) const = 0;
 
   /// CommuteChangesDestination - Return true if commuting the specified
   /// instruction will also changes the destination operand. Also return the
@@ -411,7 +414,8 @@ protected:
   TargetInstrInfoImpl(const TargetInstrDesc *desc, unsigned NumOpcodes)
   : TargetInstrInfo(desc, NumOpcodes) {}
 public:
-  virtual MachineInstr *commuteInstruction(MachineInstr *MI) const;
+  virtual MachineInstr *commuteInstruction(MachineInstr *MI,
+                                           bool NewMI = false) const;
   virtual bool CommuteChangesDestination(MachineInstr *MI,
                                          unsigned &OpIdx) const;
   virtual bool PredicateInstruction(MachineInstr *MI,

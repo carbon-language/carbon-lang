@@ -1146,7 +1146,8 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
 /// commuteInstruction - We have a few instructions that must be hacked on to
 /// commute them.
 ///
-MachineInstr *X86InstrInfo::commuteInstruction(MachineInstr *MI) const {
+MachineInstr *
+X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
   switch (MI->getOpcode()) {
   case X86::SHRD16rri8: // A = SHRD16rri8 B, C, I -> A = SHLD16rri8 C, B, (16-I)
   case X86::SHLD16rri8: // A = SHLD16rri8 B, C, I -> A = SHRD16rri8 C, B, (16-I)
@@ -1276,7 +1277,7 @@ MachineInstr *X86InstrInfo::commuteInstruction(MachineInstr *MI) const {
     // Fallthrough intended.
   }
   default:
-    return TargetInstrInfoImpl::commuteInstruction(MI);
+    return TargetInstrInfoImpl::commuteInstruction(MI, NewMI);
   }
 }
 

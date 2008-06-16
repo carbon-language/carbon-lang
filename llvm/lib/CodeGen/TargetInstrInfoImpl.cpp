@@ -14,24 +14,39 @@
 
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 using namespace llvm;
 
 // commuteInstruction - The default implementation of this method just exchanges
 // operand 1 and 2.
-MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI) const {
+MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
+                                                      bool NewMI) const {
   assert(MI->getOperand(1).isRegister() && MI->getOperand(2).isRegister() &&
          "This only knows how to commute register operands so far");
   unsigned Reg1 = MI->getOperand(1).getReg();
   unsigned Reg2 = MI->getOperand(2).getReg();
   bool Reg1IsKill = MI->getOperand(1).isKill();
   bool Reg2IsKill = MI->getOperand(2).isKill();
+  bool ChangeReg0 = false;
   if (MI->getOperand(0).getReg() == Reg1) {
     // Must be two address instruction!
     assert(MI->getDesc().getOperandConstraint(0, TOI::TIED_TO) &&
            "Expecting a two-address instruction!");
     Reg2IsKill = false;
-    MI->getOperand(0).setReg(Reg2);
+    ChangeReg0 = true;
   }
+
+  if (NewMI) {
+    // Create a new instruction.
+    unsigned Reg0 = ChangeReg0 ? Reg2 : MI->getOperand(0).getReg();
+    bool Reg0IsDead = MI->getOperand(0).isDead();
+    return BuildMI(MI->getDesc()).addReg(Reg0, true, false, false, Reg0IsDead)
+      .addReg(Reg2, false, false, Reg2IsKill)
+      .addReg(Reg1, false, false, Reg1IsKill);
+  }
+
+  if (ChangeReg0)
+    MI->getOperand(0).setReg(Reg2);
   MI->getOperand(2).setReg(Reg1);
   MI->getOperand(1).setReg(Reg2);
   MI->getOperand(2).setIsKill(Reg1IsKill);

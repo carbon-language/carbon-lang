@@ -136,10 +136,11 @@ unsigned PPCInstrInfo::isStoreToStackSlot(MachineInstr *MI,
 
 // commuteInstruction - We can commute rlwimi instructions, but only if the
 // rotate amt is zero.  We also have to munge the immediates a bit.
-MachineInstr *PPCInstrInfo::commuteInstruction(MachineInstr *MI) const {
+MachineInstr *
+PPCInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
   // Normal instructions can be commuted the obvious way.
   if (MI->getOpcode() != PPC::RLWIMI)
-    return TargetInstrInfoImpl::commuteInstruction(MI);
+    return TargetInstrInfoImpl::commuteInstruction(MI, NewMI);
   
   // Cannot commute if it has a non-zero rotate count.
   if (MI->getOperand(3).getImm() != 0)
@@ -158,23 +159,40 @@ MachineInstr *PPCInstrInfo::commuteInstruction(MachineInstr *MI) const {
   unsigned Reg2 = MI->getOperand(2).getReg();
   bool Reg1IsKill = MI->getOperand(1).isKill();
   bool Reg2IsKill = MI->getOperand(2).isKill();
+  bool ChangeReg0 = false;
   // If machine instrs are no longer in two-address forms, update
   // destination register as well.
   if (Reg0 == Reg1) {
     // Must be two address instruction!
     assert(MI->getDesc().getOperandConstraint(0, TOI::TIED_TO) &&
            "Expecting a two-address instruction!");
-    MI->getOperand(0).setReg(Reg2);
     Reg2IsKill = false;
+    ChangeReg0 = true;
   }
+
+  // Masks.
+  unsigned MB = MI->getOperand(4).getImm();
+  unsigned ME = MI->getOperand(5).getImm();
+
+  if (NewMI) {
+    // Create a new instruction.
+    unsigned Reg0 = ChangeReg0 ? Reg2 : MI->getOperand(0).getReg();
+    bool Reg0IsDead = MI->getOperand(0).isDead();
+    return BuildMI(MI->getDesc()).addReg(Reg0, true, false, false, Reg0IsDead)
+      .addReg(Reg2, false, false, Reg2IsKill)
+      .addReg(Reg1, false, false, Reg1IsKill)
+      .addImm((ME+1) & 31)
+      .addImm((MB-1) & 31);
+  }
+
+  if (ChangeReg0)
+    MI->getOperand(0).setReg(Reg2);
   MI->getOperand(2).setReg(Reg1);
   MI->getOperand(1).setReg(Reg2);
   MI->getOperand(2).setIsKill(Reg1IsKill);
   MI->getOperand(1).setIsKill(Reg2IsKill);
   
   // Swap the mask around.
-  unsigned MB = MI->getOperand(4).getImm();
-  unsigned ME = MI->getOperand(5).getImm();
   MI->getOperand(4).setImm((ME+1) & 31);
   MI->getOperand(5).setImm((MB-1) & 31);
   return MI;

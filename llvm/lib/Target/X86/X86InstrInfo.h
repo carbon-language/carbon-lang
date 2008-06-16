@@ -283,7 +283,7 @@ public:
   /// commuteInstruction - We have a few instructions that must be hacked on to
   /// commute them.
   ///
-  virtual MachineInstr *commuteInstruction(MachineInstr *MI) const;
+  virtual MachineInstr *commuteInstruction(MachineInstr *MI, bool NewMI) const;
 
   // Branch analysis.
   virtual bool isUnpredicatedTerminator(const MachineInstr* MI) const;

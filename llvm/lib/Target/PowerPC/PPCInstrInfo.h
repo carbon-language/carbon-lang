@@ -96,7 +96,7 @@ public:
 
   // commuteInstruction - We can commute rlwimi instructions, but only if the
   // rotate amt is zero.  We also have to munge the immediates a bit.
-  virtual MachineInstr *commuteInstruction(MachineInstr *MI) const;
+  virtual MachineInstr *commuteInstruction(MachineInstr *MI, bool NewMI) const;
   
   virtual void insertNoop(MachineBasicBlock &MBB, 
                           MachineBasicBlock::iterator MI) const;
