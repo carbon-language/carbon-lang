@@ -226,6 +226,9 @@ public:
   /// casts from the specified value, returning the original uncasted value.
   /// Note that the returned value is guaranteed to have pointer type.
   Value *stripPointerCasts();
+  const Value *stripPointerCasts() const {
+    return const_cast<Value*>(this)->stripPointerCasts();
+  }
 };
 
 inline std::ostream &operator<<(std::ostream &OS, const Value &V) {
