@@ -84,7 +84,7 @@ def analyze(clang, args,language,output,files,verbose,htmldir,file,analysis_type
     print >> sys.stderr, ' '.join(command+print_args)
     print >> sys.stderr, '\n'
 
-#  subprocess.call(args)
+  subprocess.call(args)
 
 def extension(path):
     return path.split(".")[-1]
