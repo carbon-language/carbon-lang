@@ -10520,7 +10520,8 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
 
 Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
   // See if we are trying to extract a known value. If so, use that instead.
-  if (Value *Elt = FindInsertedValue(EV.getOperand(0), EV.idx_begin(), EV.idx_end(), EV))
+  if (Value *Elt = FindInsertedValue(EV.getOperand(0), EV.idx_begin(),
+                                     EV.idx_end(), EV))
     return ReplaceInstUsesWith(EV, Elt);
 
   // No changes

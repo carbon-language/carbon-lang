@@ -771,7 +771,8 @@ Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
       // Process each struct element recursively
       Idxs.push_back(i);
-      To = BuildSubAggregate(From, To, STy->getElementType(i), Idxs, IdxSkip, InsertBefore);
+      To = BuildSubAggregate(From, To, STy->getElementType(i), Idxs, IdxSkip,
+                             InsertBefore);
       Idxs.pop_back();
     }
     return To;
@@ -779,8 +780,13 @@ Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
     // Base case, the type indexed by SourceIdxs is not a struct
     // Load the value from the nested struct into the sub struct (and skip
     // IdxSkip indices when indexing the sub struct).
-    Instruction *V = llvm::ExtractValueInst::Create(From, Idxs.begin(), Idxs.end(), "tmp", &InsertBefore);
-    Instruction *Ins = llvm::InsertValueInst::Create(To, V, Idxs.begin() + IdxSkip, Idxs.end(), "tmp", &InsertBefore);
+    Instruction *V = llvm::ExtractValueInst::Create(From, Idxs.begin(),
+                                                    Idxs.end(), "tmp",
+                                                    &InsertBefore);
+    Instruction *Ins = llvm::InsertValueInst::Create(To, V,
+                                                     Idxs.begin() + IdxSkip,
+                                                     Idxs.end(), "tmp",
+                                                     &InsertBefore);
     return Ins;
   }
 }
@@ -797,8 +803,11 @@ Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
 // insertvalue instructions that fill the nested struct.
 //
 // Any inserted instructions are inserted before InsertBefore
-Value *BuildSubAggregate(Value *From, const unsigned *idx_begin, const unsigned *idx_end, Instruction &InsertBefore) {
-  const Type *IndexedType = ExtractValueInst::getIndexedType(From->getType(), idx_begin, idx_end);
+Value *BuildSubAggregate(Value *From, const unsigned *idx_begin,
+                         const unsigned *idx_end, Instruction &InsertBefore) {
+  const Type *IndexedType = ExtractValueInst::getIndexedType(From->getType(),
+                                                             idx_begin,
+                                                             idx_end);
   Value *To = UndefValue::get(IndexedType);
   SmallVector<unsigned, 10> Idxs(idx_begin, idx_end);
   unsigned IdxSkip = Idxs.size();
@@ -806,9 +815,9 @@ Value *BuildSubAggregate(Value *From, const unsigned *idx_begin, const unsigned 
   return BuildSubAggregate(From, To, IndexedType, Idxs, IdxSkip, InsertBefore);
 }
 
-/// FindInsertedValue - Given an aggregrate and an sequence of indices, see if the
-/// scalar value indexed is already around as a register, for example if it were
-/// inserted directly into the aggregrate.
+/// FindInsertedValue - Given an aggregrate and an sequence of indices, see if
+/// the scalar value indexed is already around as a register, for example if it
+/// were inserted directly into the aggregrate.
 Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
                          const unsigned *idx_end, Instruction &InsertBefore) {
   // Nothing to index? Just return V then (this is useful at the end of our
@@ -833,12 +842,14 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
   else if (Constant *C = dyn_cast<Constant>(V)) {
     if (isa<ConstantArray>(C) || isa<ConstantStruct>(C))
       // Recursively process this constant
-      return FindInsertedValue(C->getOperand(*idx_begin), ++idx_begin, idx_end, InsertBefore);
+      return FindInsertedValue(C->getOperand(*idx_begin), ++idx_begin, idx_end,
+                               InsertBefore);
   } else if (InsertValueInst *I = dyn_cast<InsertValueInst>(V)) {
     // Loop the indices for the insertvalue instruction in parallel with the
     // requested indices
     const unsigned *req_idx = idx_begin;
-    for (const unsigned *i = I->idx_begin(), *e = I->idx_end(); i != e; ++i, ++req_idx) {
+    for (const unsigned *i = I->idx_begin(), *e = I->idx_end();
+         i != e; ++i, ++req_idx) {
       if (req_idx == idx_end)
         // The requested index is a part of a nested aggregate. Handle this
         // specially.
@@ -848,12 +859,14 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
       // See if the (aggregrate) value inserted into has the value we are
       // looking for, then.
       if (*req_idx != *i)
-        return FindInsertedValue(I->getAggregateOperand(), idx_begin, idx_end, InsertBefore);
+        return FindInsertedValue(I->getAggregateOperand(), idx_begin, idx_end,
+                                 InsertBefore);
     }
     // If we end up here, the indices of the insertvalue match with those
     // requested (though possibly only partially). Now we recursively look at
     // the inserted value, passing any remaining indices.
-    return FindInsertedValue(I->getInsertedValueOperand(), req_idx, idx_end, InsertBefore);
+    return FindInsertedValue(I->getInsertedValueOperand(), req_idx, idx_end,
+                             InsertBefore);
   } else if (ExtractValueInst *I = dyn_cast<ExtractValueInst>(V)) {
     // If we're extracting a value from an aggregrate that was extracted from
     // something else, we can extract from that something else directly instead.
@@ -868,16 +881,19 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
     // Start inserting at the beginning
     unsigned *new_end = new_begin;
     // Add indices from the extract value instruction
-    for (const unsigned *i = I->idx_begin(), *e = I->idx_end(); i != e; ++i, ++new_end)
+    for (const unsigned *i = I->idx_begin(), *e = I->idx_end();
+         i != e; ++i, ++new_end)
       *new_end = *i;
     
     // Add requested indices
     for (const unsigned *i = idx_begin, *e = idx_end; i != e; ++i, ++new_end)
       *new_end = *i;
 
-    assert((unsigned)(new_end - new_begin) == size && "Number of indices added not correct?");
+    assert((unsigned)(new_end - new_begin) == size 
+           && "Number of indices added not correct?");
     
-    return FindInsertedValue(I->getAggregateOperand(), new_begin, new_end, InsertBefore);
+    return FindInsertedValue(I->getAggregateOperand(), new_begin, new_end,
+                             InsertBefore);
   }
   // Otherwise, we don't know (such as, extracting from a function return value
   // or load instruction)
