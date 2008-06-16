@@ -320,11 +320,15 @@ static bool isKnownNonNull(const Value *V) {
 /// isNonEscapingLocalObject - Return true if the pointer is to a function-local
 /// object that never escapes from the function.
 static bool isNonEscapingLocalObject(const Value *V) {
-  // If this is a local allocation or byval argument, check to see if it
-  // escapes.
-  if (isa<AllocationInst>(V) ||
-      (isa<Argument>(V) && cast<Argument>(V)->hasByValAttr()))
+  // If this is a local allocation, check to see if it escapes.
+  if (isa<AllocationInst>(V))
     return !AddressMightEscape(V);
+      
+  // If this is an argument that corresponds to a byval or noalias argument,
+  // it can't escape either.
+  if (const Argument *A = dyn_cast<Argument>(V))
+    if (A->hasByValAttr() || A->hasNoAliasAttr())
+      return !AddressMightEscape(V);
   return false;
 }
 
