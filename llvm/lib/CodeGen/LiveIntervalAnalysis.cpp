@@ -44,6 +44,8 @@ static cl::opt<bool> SplitAtBB("split-intervals-at-bb",
                                cl::init(true), cl::Hidden);
 static cl::opt<int> SplitLimit("split-limit",
                                cl::init(-1), cl::Hidden);
+static cl::opt<bool> EmptyBBIndex("empty-bb-index",
+                                  cl::init(false), cl::Hidden);
 
 STATISTIC(numIntervals, "Number of original intervals");
 STATISTIC(numIntervalsAfter, "Number of intervals after coalescing");
@@ -100,15 +102,23 @@ void LiveIntervals::computeNumbering() {
       i2miMap_.push_back(I);
       MIIndex += InstrSlots::NUM;
     }
-    
-    if (StartIdx == MIIndex) {
-      // Empty MBB
-      MIIndex += InstrSlots::NUM;
-      i2miMap_.push_back(0);
-    }
+
     // Set the MBB2IdxMap entry for this MBB.
-    MBB2IdxMap[MBB->getNumber()] = std::make_pair(StartIdx, MIIndex - 1);
-    Idx2MBBMap.push_back(std::make_pair(StartIdx, MBB));
+    if (!EmptyBBIndex) {
+      MBB2IdxMap[MBB->getNumber()] = (StartIdx == MIIndex)
+        ? std::make_pair(StartIdx, StartIdx)  // Empty MBB
+        : std::make_pair(StartIdx, MIIndex - 1);
+      Idx2MBBMap.push_back(std::make_pair(StartIdx, MBB));
+    } else {
+      if (StartIdx == MIIndex) {
+        // Empty MBB
+        MIIndex += InstrSlots::NUM;
+        i2miMap_.push_back(0);
+      }
+      
+      MBB2IdxMap[MBB->getNumber()] = std::make_pair(StartIdx, MIIndex - 1);
+      Idx2MBBMap.push_back(std::make_pair(StartIdx, MBB));
+    }
   }
   std::sort(Idx2MBBMap.begin(), Idx2MBBMap.end(), Idx2MBBCompare());
   
@@ -665,7 +675,9 @@ void LiveIntervals::computeIntervals() {
       MIIndex += InstrSlots::NUM;
     }
     
-    if (MBB->begin() == miEnd) MIIndex += InstrSlots::NUM; // Empty MBB
+    if (EmptyBBIndex) {
+      if (MBB->begin() == miEnd) MIIndex += InstrSlots::NUM; // Empty MBB
+    }
   }
 }
 
