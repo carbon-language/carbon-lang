@@ -32,110 +32,48 @@
 #include <algorithm>
 using namespace llvm;
 
-namespace {
-  /// NoAA - This class implements the -no-aa pass, which always returns "I
-  /// don't know" for alias queries.  NoAA is unlike other alias analysis
-  /// implementations, in that it does not chain to a previous analysis.  As
-  /// such it doesn't follow many of the rules that other alias analyses must.
-  ///
-  struct VISIBILITY_HIDDEN NoAA : public ImmutablePass, public AliasAnalysis {
-    static char ID; // Class identification, replacement for typeinfo
-    NoAA() : ImmutablePass((intptr_t)&ID) {}
-    explicit NoAA(intptr_t PID) : ImmutablePass(PID) { }
+//===----------------------------------------------------------------------===//
+// Useful predicates
+//===----------------------------------------------------------------------===//
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<TargetData>();
+// Determine if an AllocationInst instruction escapes from the function it is
+// contained in. If it does not escape, there is no way for another function to
+// mod/ref it.  We do this by looking at its uses and determining if the uses
+// can escape (recursively).
+static bool AddressMightEscape(const Value *V) {
+  for (Value::use_const_iterator UI = V->use_begin(), E = V->use_end();
+       UI != E; ++UI) {
+    const Instruction *I = cast<Instruction>(*UI);
+    switch (I->getOpcode()) {
+    case Instruction::Load: 
+      break; //next use.
+    case Instruction::Store:
+      if (I->getOperand(0) == V)
+        return true; // Escapes if the pointer is stored.
+      break; // next use.
+    case Instruction::GetElementPtr:
+      if (AddressMightEscape(I))
+        return true;
+      break; // next use.
+    case Instruction::BitCast:
+      if (AddressMightEscape(I))
+        return true;
+      break; // next use
+    case Instruction::Ret:
+      // If returned, the address will escape to calling functions, but no
+      // callees could modify it.
+      break; // next use
+    case Instruction::Call:
+      // If the call is to a few known safe intrinsics, we know that it does
+      // not escape
+      if (!isa<MemIntrinsic>(I))
+        return true;
+      break;  // next use
+    default:
+      return true;
     }
-
-    virtual void initializePass() {
-      TD = &getAnalysis<TargetData>();
-    }
-
-    virtual AliasResult alias(const Value *V1, unsigned V1Size,
-                              const Value *V2, unsigned V2Size) {
-      return MayAlias;
-    }
-
-    virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
-                                         std::vector<PointerAccessInfo> *Info) {
-      return UnknownModRefBehavior;
-    }
-
-    virtual void getArgumentAccesses(Function *F, CallSite CS,
-                                     std::vector<PointerAccessInfo> &Info) {
-      assert(0 && "This method may not be called on this function!");
-    }
-
-    virtual void getMustAliases(Value *P, std::vector<Value*> &RetVals) { }
-    virtual bool pointsToConstantMemory(const Value *P) { return false; }
-    virtual ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size) {
-      return ModRef;
-    }
-    virtual ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
-      return ModRef;
-    }
-    virtual bool hasNoModRefInfoForCalls() const { return true; }
-
-    virtual void deleteValue(Value *V) {}
-    virtual void copyValue(Value *From, Value *To) {}
-  };
-}  // End of anonymous namespace
-
-// Register this pass...
-char NoAA::ID = 0;
-static RegisterPass<NoAA>
-U("no-aa", "No Alias Analysis (always returns 'may' alias)", true, true);
-
-// Declare that we implement the AliasAnalysis interface
-static RegisterAnalysisGroup<AliasAnalysis> V(U);
-
-ImmutablePass *llvm::createNoAAPass() { return new NoAA(); }
-
-namespace {
-  /// BasicAliasAnalysis - This is the default alias analysis implementation.
-  /// Because it doesn't chain to a previous alias analysis (like -no-aa), it
-  /// derives from the NoAA class.
-  struct VISIBILITY_HIDDEN BasicAliasAnalysis : public NoAA {
-    static char ID; // Class identification, replacement for typeinfo
-    BasicAliasAnalysis() : NoAA((intptr_t)&ID) { }
-    AliasResult alias(const Value *V1, unsigned V1Size,
-                      const Value *V2, unsigned V2Size);
-
-    ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
-    ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
-      return NoAA::getModRefInfo(CS1,CS2);
-    }
-
-    /// hasNoModRefInfoForCalls - We can provide mod/ref information against
-    /// non-escaping allocations.
-    virtual bool hasNoModRefInfoForCalls() const { return false; }
-
-    /// pointsToConstantMemory - Chase pointers until we find a (constant
-    /// global) or not.
-    bool pointsToConstantMemory(const Value *P);
-
-  private:
-    // CheckGEPInstructions - Check two GEP instructions with known
-    // must-aliasing base pointers.  This checks to see if the index expressions
-    // preclude the pointers from aliasing...
-    AliasResult
-    CheckGEPInstructions(const Type* BasePtr1Ty,
-                         Value **GEP1Ops, unsigned NumGEP1Ops, unsigned G1Size,
-                         const Type *BasePtr2Ty,
-                         Value **GEP2Ops, unsigned NumGEP2Ops, unsigned G2Size);
-  };
-}  // End of anonymous namespace
-
-// Register this pass...
-char BasicAliasAnalysis::ID = 0;
-static RegisterPass<BasicAliasAnalysis>
-X("basicaa", "Basic Alias Analysis (default AA impl)", false, true);
-
-// Declare that we implement the AliasAnalysis interface
-static RegisterAnalysisGroup<AliasAnalysis, true> Y(X);
-
-ImmutablePass *llvm::createBasicAliasAnalysisPass() {
-  return new BasicAliasAnalysis();
+  }
+  return false;
 }
 
 /// getUnderlyingObject - This traverses the use chain to figure out what object
@@ -188,103 +126,6 @@ static const Value *GetGEPOperands(const Value *V,
     V = G->getOperand(0);
   }
   return V;
-}
-
-/// pointsToConstantMemory - Chase pointers until we find a (constant
-/// global) or not.
-bool BasicAliasAnalysis::pointsToConstantMemory(const Value *P) {
-  if (const GlobalVariable *GV = 
-        dyn_cast<GlobalVariable>(getUnderlyingObject(P)))
-    return GV->isConstant();
-  return false;
-}
-
-// Determine if an AllocationInst instruction escapes from the function it is
-// contained in. If it does not escape, there is no way for another function to
-// mod/ref it.  We do this by looking at its uses and determining if the uses
-// can escape (recursively).
-static bool AddressMightEscape(const Value *V) {
-  for (Value::use_const_iterator UI = V->use_begin(), E = V->use_end();
-       UI != E; ++UI) {
-    const Instruction *I = cast<Instruction>(*UI);
-    switch (I->getOpcode()) {
-    case Instruction::Load: 
-      break; //next use.
-    case Instruction::Store:
-      if (I->getOperand(0) == V)
-        return true; // Escapes if the pointer is stored.
-      break; // next use.
-    case Instruction::GetElementPtr:
-      if (AddressMightEscape(I))
-        return true;
-      break; // next use.
-    case Instruction::BitCast:
-      if (AddressMightEscape(I))
-        return true;
-      break; // next use
-    case Instruction::Ret:
-      // If returned, the address will escape to calling functions, but no
-      // callees could modify it.
-      break; // next use
-    case Instruction::Call:
-      // If the call is to a few known safe intrinsics, we know that it does
-      // not escape
-      if (!isa<MemIntrinsic>(I))
-        return true;
-      break;  // next use
-    default:
-      return true;
-    }
-  }
-  return false;
-}
-
-// getModRefInfo - Check to see if the specified callsite can clobber the
-// specified memory object.  Since we only look at local properties of this
-// function, we really can't say much about this query.  We do, however, use
-// simple "address taken" analysis on local objects.
-//
-AliasAnalysis::ModRefResult
-BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
-  if (!isa<Constant>(P)) {
-    const Value *Object = getUnderlyingObject(P);
-    
-    // If this is a tail call and P points to a stack location, we know that
-    // the tail call cannot access or modify the local stack.
-    // We cannot exclude byval arguments here; these belong to the caller of
-    // the current function not to the current function, and a tail callee
-    // may reference them.
-    if (isa<AllocaInst>(Object))
-      if (CallInst *CI = dyn_cast<CallInst>(CS.getInstruction()))
-        if (CI->isTailCall())
-          return NoModRef;
-    
-    // Allocations and byval arguments are "new" objects.
-    if (isa<AllocationInst>(Object) || isa<Argument>(Object)) {
-      // Okay, the pointer is to a stack allocated (or effectively so, for 
-      // for noalias parameters) object.  If the address of this object doesn't
-      // escape from this function body to a callee, then we know that no
-      // callees can mod/ref it unless they are actually passed it.
-      if (isa<AllocationInst>(Object) ||
-          cast<Argument>(Object)->hasByValAttr() ||
-          cast<Argument>(Object)->hasNoAliasAttr())
-        if (!AddressMightEscape(Object)) {
-          bool passedAsArg = false;
-          for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
-              CI != CE; ++CI)
-            if (isa<PointerType>((*CI)->getType()) &&
-                (getUnderlyingObject(*CI) == P ||
-                 alias(cast<Value>(CI), ~0U, P, ~0U) != NoAlias))
-              passedAsArg = true;
-          
-          if (!passedAsArg)
-            return NoModRef;
-        }
-    }
-  }
-
-  // The AliasAnalysis base class has some smarts, lets use them.
-  return AliasAnalysis::getModRefInfo(CS, P, Size);
 }
 
 /// isIdentifiedObject - Return true if this pointer refers to a distinct and
@@ -353,6 +194,179 @@ static bool isObjectSmallerThan(const Value *V, unsigned Size,
     return TD.getABITypeSize(AccessTy) < Size;
   return false;
 }
+
+//===----------------------------------------------------------------------===//
+// NoAA Pass
+//===----------------------------------------------------------------------===//
+
+namespace {
+  /// NoAA - This class implements the -no-aa pass, which always returns "I
+  /// don't know" for alias queries.  NoAA is unlike other alias analysis
+  /// implementations, in that it does not chain to a previous analysis.  As
+  /// such it doesn't follow many of the rules that other alias analyses must.
+  ///
+  struct VISIBILITY_HIDDEN NoAA : public ImmutablePass, public AliasAnalysis {
+    static char ID; // Class identification, replacement for typeinfo
+    NoAA() : ImmutablePass((intptr_t)&ID) {}
+    explicit NoAA(intptr_t PID) : ImmutablePass(PID) { }
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<TargetData>();
+    }
+
+    virtual void initializePass() {
+      TD = &getAnalysis<TargetData>();
+    }
+
+    virtual AliasResult alias(const Value *V1, unsigned V1Size,
+                              const Value *V2, unsigned V2Size) {
+      return MayAlias;
+    }
+
+    virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
+                                         std::vector<PointerAccessInfo> *Info) {
+      return UnknownModRefBehavior;
+    }
+
+    virtual void getArgumentAccesses(Function *F, CallSite CS,
+                                     std::vector<PointerAccessInfo> &Info) {
+      assert(0 && "This method may not be called on this function!");
+    }
+
+    virtual void getMustAliases(Value *P, std::vector<Value*> &RetVals) { }
+    virtual bool pointsToConstantMemory(const Value *P) { return false; }
+    virtual ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+      return ModRef;
+    }
+    virtual ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
+      return ModRef;
+    }
+    virtual bool hasNoModRefInfoForCalls() const { return true; }
+
+    virtual void deleteValue(Value *V) {}
+    virtual void copyValue(Value *From, Value *To) {}
+  };
+}  // End of anonymous namespace
+
+// Register this pass...
+char NoAA::ID = 0;
+static RegisterPass<NoAA>
+U("no-aa", "No Alias Analysis (always returns 'may' alias)", true, true);
+
+// Declare that we implement the AliasAnalysis interface
+static RegisterAnalysisGroup<AliasAnalysis> V(U);
+
+ImmutablePass *llvm::createNoAAPass() { return new NoAA(); }
+
+//===----------------------------------------------------------------------===//
+// BasicAA Pass
+//===----------------------------------------------------------------------===//
+
+namespace {
+  /// BasicAliasAnalysis - This is the default alias analysis implementation.
+  /// Because it doesn't chain to a previous alias analysis (like -no-aa), it
+  /// derives from the NoAA class.
+  struct VISIBILITY_HIDDEN BasicAliasAnalysis : public NoAA {
+    static char ID; // Class identification, replacement for typeinfo
+    BasicAliasAnalysis() : NoAA((intptr_t)&ID) { }
+    AliasResult alias(const Value *V1, unsigned V1Size,
+                      const Value *V2, unsigned V2Size);
+
+    ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
+    ModRefResult getModRefInfo(CallSite CS1, CallSite CS2) {
+      return NoAA::getModRefInfo(CS1,CS2);
+    }
+
+    /// hasNoModRefInfoForCalls - We can provide mod/ref information against
+    /// non-escaping allocations.
+    virtual bool hasNoModRefInfoForCalls() const { return false; }
+
+    /// pointsToConstantMemory - Chase pointers until we find a (constant
+    /// global) or not.
+    bool pointsToConstantMemory(const Value *P);
+
+  private:
+    // CheckGEPInstructions - Check two GEP instructions with known
+    // must-aliasing base pointers.  This checks to see if the index expressions
+    // preclude the pointers from aliasing...
+    AliasResult
+    CheckGEPInstructions(const Type* BasePtr1Ty,
+                         Value **GEP1Ops, unsigned NumGEP1Ops, unsigned G1Size,
+                         const Type *BasePtr2Ty,
+                         Value **GEP2Ops, unsigned NumGEP2Ops, unsigned G2Size);
+  };
+}  // End of anonymous namespace
+
+// Register this pass...
+char BasicAliasAnalysis::ID = 0;
+static RegisterPass<BasicAliasAnalysis>
+X("basicaa", "Basic Alias Analysis (default AA impl)", false, true);
+
+// Declare that we implement the AliasAnalysis interface
+static RegisterAnalysisGroup<AliasAnalysis, true> Y(X);
+
+ImmutablePass *llvm::createBasicAliasAnalysisPass() {
+  return new BasicAliasAnalysis();
+}
+
+
+/// pointsToConstantMemory - Chase pointers until we find a (constant
+/// global) or not.
+bool BasicAliasAnalysis::pointsToConstantMemory(const Value *P) {
+  if (const GlobalVariable *GV = 
+        dyn_cast<GlobalVariable>(getUnderlyingObject(P)))
+    return GV->isConstant();
+  return false;
+}
+
+// getModRefInfo - Check to see if the specified callsite can clobber the
+// specified memory object.  Since we only look at local properties of this
+// function, we really can't say much about this query.  We do, however, use
+// simple "address taken" analysis on local objects.
+//
+AliasAnalysis::ModRefResult
+BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
+  if (!isa<Constant>(P)) {
+    const Value *Object = getUnderlyingObject(P);
+    
+    // If this is a tail call and P points to a stack location, we know that
+    // the tail call cannot access or modify the local stack.
+    // We cannot exclude byval arguments here; these belong to the caller of
+    // the current function not to the current function, and a tail callee
+    // may reference them.
+    if (isa<AllocaInst>(Object))
+      if (CallInst *CI = dyn_cast<CallInst>(CS.getInstruction()))
+        if (CI->isTailCall())
+          return NoModRef;
+    
+    // Allocations and byval arguments are "new" objects.
+    if (isa<AllocationInst>(Object) || isa<Argument>(Object)) {
+      // Okay, the pointer is to a stack allocated (or effectively so, for 
+      // for noalias parameters) object.  If the address of this object doesn't
+      // escape from this function body to a callee, then we know that no
+      // callees can mod/ref it unless they are actually passed it.
+      if (isa<AllocationInst>(Object) ||
+          cast<Argument>(Object)->hasByValAttr() ||
+          cast<Argument>(Object)->hasNoAliasAttr())
+        if (!AddressMightEscape(Object)) {
+          bool passedAsArg = false;
+          for (CallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
+              CI != CE; ++CI)
+            if (isa<PointerType>((*CI)->getType()) &&
+                (getUnderlyingObject(*CI) == P ||
+                 alias(cast<Value>(CI), ~0U, P, ~0U) != NoAlias))
+              passedAsArg = true;
+          
+          if (!passedAsArg)
+            return NoModRef;
+        }
+    }
+  }
+
+  // The AliasAnalysis base class has some smarts, lets use them.
+  return AliasAnalysis::getModRefInfo(CS, P, Size);
+}
+
 
 // alias - Provide a bunch of ad-hoc rules to disambiguate in common cases, such
 // as array references.  Note that this function is heavily tail recursive.
