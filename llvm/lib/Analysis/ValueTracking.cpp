@@ -805,6 +805,7 @@ Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
 // Any inserted instructions are inserted before InsertBefore
 Value *BuildSubAggregate(Value *From, const unsigned *idx_begin,
                          const unsigned *idx_end, Instruction *InsertBefore) {
+  assert(InsertBefore && "Must have someplace to insert!");
   const Type *IndexedType = ExtractValueInst::getIndexedType(From->getType(),
                                                              idx_begin,
                                                              idx_end);
@@ -851,9 +852,13 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
     for (const unsigned *i = I->idx_begin(), *e = I->idx_end();
          i != e; ++i, ++req_idx) {
       if (req_idx == idx_end)
-        // The requested index is a part of a nested aggregate. Handle this
-        // specially.
-        return BuildSubAggregate(V, idx_begin, req_idx, InsertBefore);
+        if (InsertBefore)
+          // The requested index is a part of a nested aggregate. Handle this
+          // specially.
+          return BuildSubAggregate(V, idx_begin, req_idx, InsertBefore);
+        else
+          // We can't handle this without inserting insertvalues
+          return 0;
       
       // This insert value inserts something else than what we are looking for.
       // See if the (aggregrate) value inserted into has the value we are

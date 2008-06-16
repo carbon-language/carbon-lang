@@ -55,10 +55,13 @@ namespace llvm {
   /// FindScalarValue - Given an aggregrate and an sequence of indices, see if the
   /// scalar value indexed is already around as a register, for example if it were
   /// inserted directly into the aggregrate.
+  ///
+  /// If InsertBefore is not null, this function will duplicate (modified)
+  /// insertvalues when a part of a nested struct is extracted.
   Value *FindInsertedValue(Value *V,
                          const unsigned *idx_begin,
                          const unsigned *idx_end,
-                         Instruction *InsertBefore);
+                         Instruction *InsertBefore = 0);
 } // end namespace llvm
 
 #endif
