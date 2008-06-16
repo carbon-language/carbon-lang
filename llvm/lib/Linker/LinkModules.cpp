@@ -156,7 +156,6 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
       RecursiveResolveTypesI(cast<PointerType>(DestTy.get())->getElementType(),
                              cast<PointerType>(SrcTy.get())->getElementType(),
                              Pointers);
-    Pointers.pop_back();
     return Result;
   }
   }
