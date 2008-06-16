@@ -85,6 +85,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
   KnownFunctionIDs[id_sprintf]   = &IT.get("sprintf");
   KnownFunctionIDs[id_snprintf]  = &IT.get("snprintf");
   KnownFunctionIDs[id_asprintf]  = &IT.get("asprintf");
+  KnownFunctionIDs[id_NSLog]     = &IT.get("NSLog");
   KnownFunctionIDs[id_vsnprintf] = &IT.get("vsnprintf");
   KnownFunctionIDs[id_vasprintf] = &IT.get("vasprintf");
   KnownFunctionIDs[id_vfprintf]  = &IT.get("vfprintf");

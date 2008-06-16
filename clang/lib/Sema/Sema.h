@@ -124,6 +124,7 @@ class Sema : public Action {
     id_sprintf,
     id_snprintf,
     id_asprintf,
+    id_NSLog,
     id_vsnprintf,
     id_vasprintf,
     id_vfprintf,

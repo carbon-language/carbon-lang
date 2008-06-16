@@ -17,6 +17,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/ExprObjC.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/LiteralSupport.h"
 #include "clang/Basic/SourceManager.h"
@@ -86,6 +87,7 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCallRaw) {
     case id_sprintf:   format_idx = 1; break;
     case id_snprintf:  format_idx = 2; break;
     case id_asprintf:  format_idx = 1; break;
+    case id_NSLog:     format_idx = 0; break;
     case id_vsnprintf: format_idx = 2; HasVAListArg = true; break;
     case id_vasprintf: format_idx = 1; HasVAListArg = true; break;
     case id_vfprintf:  format_idx = 1; HasVAListArg = true; break;
@@ -361,7 +363,19 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
   // are string literals: (1) permits the checking of format strings by
   // the compiler and thereby (2) can practically remove the source of
   // many format string exploits.
-  StringLiteral *FExpr = dyn_cast<StringLiteral>(OrigFormatExpr);
+
+  // Format string can be either ObjC string (e.g. @"%d") or 
+  // C string (e.g. "%d")
+  // ObjC string uses the same format specifiers as C string, so we can use 
+  // the same format string checking logic for both ObjC and C strings.
+  ObjCStringLiteral *ObjCFExpr = dyn_cast<ObjCStringLiteral>(OrigFormatExpr);
+  StringLiteral *FExpr = NULL;
+
+  if(ObjCFExpr != NULL) 
+    FExpr = ObjCFExpr->getString();
+  else
+    FExpr = dyn_cast<StringLiteral>(OrigFormatExpr);
+
   if (FExpr == NULL) {
     // For vprintf* functions (i.e., HasVAListArg==true), we add a
     // special check to see if the format string is a function parameter
@@ -540,7 +554,25 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
       Diag(Loc, diag::warn_printf_write_back, Fn->getSourceRange());
       break;
     }
-                  
+             
+    // Handle "%@"
+    case '@':
+      // %@ is allowed in ObjC format strings only.
+      if(ObjCFExpr != NULL)
+        CurrentState = state_OrdChr; 
+      else {
+        // Issue a warning: invalid format conversion.
+        SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
+                                                    LastConversionIdx+1);
+    
+        Diag(Loc, diag::warn_printf_invalid_conversion, 
+          std::string(Str+LastConversionIdx, 
+          Str+std::min(LastConversionIdx+2, StrLen)),
+          Fn->getSourceRange());
+      }
+      ++numConversions;
+      break;
+    
     // Handle "%%"
     case '%':
       // Sanity check: Was the first "%" character the previous one?
