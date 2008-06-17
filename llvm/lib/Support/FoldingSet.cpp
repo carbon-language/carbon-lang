@@ -170,7 +170,7 @@ FoldingSetImpl::FoldingSetImpl(unsigned Log2InitSize) : NumNodes(0) {
   memset(Buckets, 0, NumBuckets*sizeof(void*));
   
   // Set the very last bucket to be a non-null "pointer".
-  Buckets[NumBuckets] = reinterpret_cast<void*>(-2);
+  Buckets[NumBuckets] = reinterpret_cast<void*>(-1);
 }
 FoldingSetImpl::~FoldingSetImpl() {
   delete [] Buckets;
