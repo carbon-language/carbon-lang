@@ -111,10 +111,26 @@ def main(args):
         if arg[:5] in ['-std=']:
             compile_opts.append(arg)
 
-        # Options with one argument that should pass through
-        if arg in ['-include', '-isysroot', '-arch']:
+        # Options with one argument that should pass through to compiler
+        if arg in [ '-include', '-idirafter', '-iprefix',
+                    '-iquote', '-isystem', '-iwithprefix',
+                    '-iwithprefixbefore']:
             compile_opts.append(arg)
             compile_opts.append(args[i+1])
+            i += 1
+
+        # Options with one argument that should pass through
+        if arg in ['-framework']:
+            link_opts.append(arg)
+            link_opts.append(args[i+1])
+            i += 1
+
+        # Options with one argument that should pass through to both
+        if arg in ['-isysroot', '-arch']:
+            compile_opts.append(arg)
+            compile_opts.append(args[i+1])
+            link_opts.append(arg)
+            link_opts.append(args[i+1])
             i += 1
 
         # Prefix matches for the link mode
@@ -122,12 +138,6 @@ def main(args):
             if arg == '-O': arg = '-O1'
             if arg == '-Os': arg = '-O2'
             link_opts.append(arg)
-
-        # Options with one argument that should pass through
-        if arg in ['-framework', '-isysroot', '-arch']:
-            link_opts.append(arg)
-            link_opts.append(args[i+1])
-            i += 1
 
         # Input files
         if arg == '-filelist':
