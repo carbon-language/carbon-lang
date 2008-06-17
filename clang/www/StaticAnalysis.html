@@ -25,24 +25,19 @@ analyzer:</p>
 enhancements to improve both the precision and scope of its analysis algorithms
 as well as the kinds bugs it will find.</li>
 
-<li><b>False positives.</b> Static analysis reasons about the run-time behavior
-of a program without actually running the program. Static analysis is not
-perfect, and can falsely flag bugs in a program where the code behaves
-correctly. Because some code checks performed by the analyzer require more
-analysis than others, the frequency of false positives can vary widely between
-different checks. Our goal is to have the analyzer have a low false positive
-rate for most code on all checks, and we will reach this goal by gradually
-improving over time the analysis precision of the tool.</li>
+<li><b>False positives.</b> Static analysis is not perfect. It can falsely flag
+bugs in a program where the code behaves correctly. Because some code checks
+require more analysis precision than others, the frequency of false positives
+can vary widely between different checks. Our eventual goal is to have the
+analyzer have a low false positive rate for most code on all checks.</li>
 
-<li><b>Static analysis can be much slower than compilation.</b> The analyzer
-performs a variety of checks on code, each requiring different levels of
-analysis precision (more precision = more CPU time). While the analyzer is being
-designed to be as fast and light-weight as possible, please do not expect it to
-be as fast as compiling a program (even with optimizations enabled). Some of the
-algorithms needed to find bugs require in the worst case exponential time. The
-analyzer runs in a reasonable amount of time by both bounding the amount of
-checking work it will do as well as using clever algorithms to reduce the amount
-of work it must do to find bugs.</li>
+<li><b>Static analysis can be much slower than compilation.</b> While the
+analyzer is being designed to be as fast and light-weight as possible, please do
+not expect it to be as fast as compiling a program (even with optimizations
+enabled). Some of the algorithms needed to find bugs require in the worst case
+exponential time. The analyzer runs in a reasonable amount of time by both
+bounding the amount of checking work it will do as well as using clever
+algorithms to reduce the amount of work it must do to find bugs.</li>
 
 </ul>
 
