@@ -26,7 +26,8 @@ my $Prog = "scan-build";
 my $BuildName;
 my $BuildDate;
 
-my $UseColor = (($ENV{'TERM'} eq 'xterm-color') and -t STDOUT);
+my $UseColor = ((($ENV{'TERM'} eq 'xterm-color') and -t STDOUT)
+                and defined($ENV{'SCAN_BUILD_COLOR'}));
 
 sub Diag {
   if ($UseColor) {
