@@ -62,6 +62,13 @@ namespace llvm {
                          const unsigned *idx_begin,
                          const unsigned *idx_end,
                          Instruction *InsertBefore = 0);
+
+  /// This is a convenience wrapper for finding values indexed by a single index
+  /// only.
+  inline Value *FindInsertedValue(Value *V, const unsigned Idx,
+                                 Instruction *InsertBefore = 0) {
+    return FindInsertedValue(V, &Idx, &Idx + 1, InsertBefore);
+  }
 } // end namespace llvm
 
 #endif
