@@ -4283,7 +4283,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
       // Copy the output from the appropriate register.  Find a register that
       // we can use.
       if (OpInfo.AssignedRegs.Regs.empty()) {
-        cerr << "Couldn't allocate output reg for contraint '"
+        cerr << "Couldn't allocate output reg for constraint '"
              << OpInfo.ConstraintCode << "'!\n";
         exit(1);
       }
