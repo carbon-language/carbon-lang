@@ -331,12 +331,12 @@ extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
 #endif
 
 void PPCJITInfo::InvalidateInstructionCache(const void *Addr, unsigned len) {
-#if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
-defined(__APPLE__)  
+#if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER))
+# if defined(__APPLE__)
   sys_icache_invalidate(Addr, len);
-#elif defined(__GNUC__)
+# elif defined(__GNUC__)
   const size_t LineSize = 32;
-  
+
   const intptr_t Mask = ~(LineSize - 1);
   const intptr_t StartLine = ((intptr_t) Addr) & Mask;
   const intptr_t EndLine = ((intptr_t) Addr + len + LineSize - 1) & Mask;
@@ -348,6 +348,7 @@ defined(__APPLE__)
   for (intptr_t Line = StartLine; Line < EndLine; Line += LineSize)
       asm volatile("icbi 0, %0" : : "r"(Line));
   asm volatile("isync");
+# endif
 #endif
 }
 
