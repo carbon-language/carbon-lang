@@ -908,24 +908,21 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
     // Calculate the number of indices required 
     unsigned size = I->getNumIndices() + (idx_end - idx_begin);
     // Allocate some space to put the new indices in
-    unsigned *new_begin = new unsigned[size];
-    // Auto cleanup this array
-    std::auto_ptr<unsigned> newptr(new_begin);
-    // Start inserting at the beginning
-    unsigned *new_end = new_begin;
+    SmallVector<unsigned, 5> Idxs;
+    Idxs.reserve(size);
     // Add indices from the extract value instruction
     for (const unsigned *i = I->idx_begin(), *e = I->idx_end();
-         i != e; ++i, ++new_end)
-      *new_end = *i;
+         i != e; ++i)
+      Idxs.push_back(*i);
     
     // Add requested indices
-    for (const unsigned *i = idx_begin, *e = idx_end; i != e; ++i, ++new_end)
-      *new_end = *i;
+    for (const unsigned *i = idx_begin, *e = idx_end; i != e; ++i)
+      Idxs.push_back(*i);
 
-    assert((unsigned)(new_end - new_begin) == size 
+    assert(Idxs.size() == size 
            && "Number of indices added not correct?");
     
-    return FindInsertedValue(I->getAggregateOperand(), new_begin, new_end,
+    return FindInsertedValue(I->getAggregateOperand(), Idxs.begin(), Idxs.end(),
                              InsertBefore);
   }
   // Otherwise, we don't know (such as, extracting from a function return value
