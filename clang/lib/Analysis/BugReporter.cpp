@@ -21,6 +21,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/Analysis/ProgramPoint.h"
 #include "clang/Analysis/PathDiagnostic.h"
+#include "llvm/ADT/DenseSet.h"
 #include <sstream>
 
 using namespace clang;
@@ -205,8 +206,15 @@ MakeReportGraph(ExplodedGraph<ValueState>* G, ExplodedNode<ValueState>* N) {
                                      
                                      
   ExplodedNode<ValueState> *Last = 0, *First = 0;
+  
+  // Sometimes TrimGraph can contain a cycle because there are multiple BFS
+  // paths with the same length.  We mark the nodes we visit so that we
+  // don't get stuck in a cycle.
+  llvm::DenseSet<void*> Visited;
 
   while (N) {
+    Visited.insert(N);
+    
     ExplodedNode<ValueState>* NewN =
       G->getNode(N->getLocation(), N->getState());
     
@@ -214,7 +222,23 @@ MakeReportGraph(ExplodedGraph<ValueState>* G, ExplodedNode<ValueState>* N) {
     if (Last) Last->addPredecessor(NewN);
     
     Last = NewN;
-    N = N->pred_empty() ? 0 : *(N->pred_begin());
+    
+    if (N->pred_empty())
+      break;
+    
+    ExplodedNode<ValueState>::pred_iterator PI = N->pred_begin();
+    ExplodedNode<ValueState>::pred_iterator PE = N->pred_end();   
+    N = 0;
+    
+    // Look for the first predecessor that we have not already visited.
+
+    for (; PI != PE; ++PI)      
+      if (!Visited.count(*PI)) {
+        N = *PI;
+        break;
+      }
+    
+    assert (N && "All predecessors involved in a cycle!");    
   }
   
   return std::make_pair(G, First);
