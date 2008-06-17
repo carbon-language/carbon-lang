@@ -44,7 +44,7 @@ of C support are:</p>
 well, but we'd love help from other interested contributors.  We expect C to be
 in good shape by mid to late 2008.</p>
 
-<h3><a name="build">Building clang / working with the code</a></h3>
+<h2 id="build">Building clang / working with the code</h2>
 
 <p>If you would like to check out and build the project, the current scheme
 is:</p>
@@ -121,7 +121,7 @@ is:</p>
 	<tt>svn update</tt> on all subdirectories related to subversion.</li>
   </ul>
 
-<h3>Examples of using clang</h3>
+<h2>Examples of using clang</h2>
 
 <p>The clang driver takes a lot of GCC compatible options, which you can see
 with 'clang --help'. Here are a few examples:</p>
@@ -137,7 +137,7 @@ V foo(V a, V b) { return a+b*a; }
 </pre>
 
 
-<h4>Preprocessing:</h4>
+<h3>Preprocessing:</h3>
 
 <pre class="code">
 $ <b>clang ~/t.c -E</b>
@@ -149,14 +149,14 @@ V foo(V a, V b) { return a+b*a; }
 </pre>
 
 
-<h4>Type checking:</h4>
+<h3>Type checking:</h3>
 
 <pre class="code">
 $ <b>clang -fsyntax-only ~/t.c</b>
 </pre>
 
 
-<h4>GCC options:</h4>
+<h3>GCC options:</h3>
 
 <pre class="code">
 $ <b>clang -fsyntax-only ~/t.c -pedantic</b>
@@ -167,7 +167,7 @@ typedef float V __attribute__((vector_size(16)));
 </pre>
 
 
-<h4>Pretty printing from the AST:</h4>
+<h3>Pretty printing from the AST:</h3>
 
 <pre class="code">
 $ <b>clang ~/t.c -ast-print</b>
@@ -178,7 +178,7 @@ V foo(V a, V b) {
 </pre>
 
 
-<h4>Code generation with LLVM:</h4>
+<h3>Code generation with LLVM:</h3>
 
 <pre class="code">
 $ <b>clang ~/t.c -emit-llvm -o - | llvm-as | opt -std-compile-opts | llvm-dis</b>
@@ -204,14 +204,14 @@ _foo:
 
 <h3>GCC "Emulation" Driver</h3>
 
-While the <tt>clang</tt> executable is a compiler driver that can perform code
-generation, program analysis, and other actions, it is not designed to be a
+<p>While the <tt>clang</tt> executable is a compiler driver that can perform
+code generation, program analysis, and other actions, it is not designed to be a
 drop-in replacement for GCC's <tt>cc</tt>. There is interest in developing such
 a driver for clang, but in the interim the clang source tree includes a Python
 script <tt>ccc</tt> in the <tt>utils</tt> subdirectory that provides some of
 this functionality (the script is intended to be used where GCC's <tt>cc</tt>
 could be used). It is currently a work in progress, and eventually will likely
-be replaced by a more complete driver.
+be replaced by a more complete driver.</p>
 
 <p>Example use:</p>
 
