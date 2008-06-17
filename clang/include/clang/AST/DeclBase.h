@@ -69,6 +69,7 @@ public:
                Function,  // [DeclContext]
                  CXXMethod,
                Var,
+                 ImplicitParam,
                  CXXClassVar,
                  ParmVar,
          ObjCInterface,  // [DeclContext]
@@ -172,6 +173,7 @@ public:
   IdentifierNamespace getIdentifierNamespace() const {
     switch (DeclKind) {
     default: assert(0 && "Unknown decl kind!");
+    case ImplicitParam:
     case Typedef:
     case Function:
     case Var:

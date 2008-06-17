@@ -53,12 +53,12 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
     }
   } else // we have a factory method.
     selfTy = Context.getObjCClassType();
-  CurMethodDecl->setSelfDecl(CreateImplicitParameter(FnBodyScope, PI.Ident, 
-                                                     PI.IdentLoc, selfTy));
+  CurMethodDecl->setSelfDecl(CreateImplicitParameter(FnBodyScope,
+        PI.Ident, PI.IdentLoc, selfTy));
   
   PI.Ident = &Context.Idents.get("_cmd");
-  CreateImplicitParameter(FnBodyScope, PI.Ident, PI.IdentLoc, 
-                          Context.getObjCSelType());
+  CurMethodDecl->setCmdDecl(CreateImplicitParameter(FnBodyScope,
+        PI.Ident, PI.IdentLoc, Context.getObjCSelType()));
 
   // Introduce all of the other parameters into this scope.
   for (unsigned i = 0, e = MDecl->getNumParams(); i != e; ++i) {

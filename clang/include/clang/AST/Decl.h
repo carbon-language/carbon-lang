@@ -308,6 +308,20 @@ protected:
   static VarDecl* CreateImpl(llvm::Deserializer& D, ASTContext& C);
 };
 
+class ImplicitParamDecl : public VarDecl {
+protected:
+  ImplicitParamDecl(Kind DK, DeclContext *DC, SourceLocation L,
+            IdentifierInfo *Id, QualType T, ScopedDecl *PrevDecl) 
+    : VarDecl(DK, DC, L, Id, T, VarDecl::None, PrevDecl) {}
+public:
+  static ImplicitParamDecl *Create(ASTContext &C, DeclContext *DC,
+                         SourceLocation L, IdentifierInfo *Id,
+                         QualType T, ScopedDecl *PrevDecl);
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const ImplicitParamDecl *D) { return true; }
+  static bool classof(const Decl *D) { return D->getKind() == ImplicitParam; }
+};
+
 /// ParmVarDecl - Represent a parameter to a function.
 class ParmVarDecl : public VarDecl {
   // NOTE: VC++ treats enums as signed, avoid using the ObjCDeclQualifier enum

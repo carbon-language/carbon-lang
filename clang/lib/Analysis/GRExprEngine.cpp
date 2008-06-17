@@ -144,12 +144,18 @@ ValueState* GRExprEngine::getInitialState() {
   
   for (LVDataTy::decl_iterator I=D.begin_decl(), E=D.end_decl(); I != E; ++I) {
     
-    VarDecl* VD = cast<VarDecl>(const_cast<ScopedDecl*>(I->first));
-    
-    if (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD)) {
-      RVal X = RVal::GetSymbolValue(SymMgr, VD);
-      StateMgr.BindVar(StateImpl, VD, X);
+    ScopedDecl *SD = const_cast<ScopedDecl*>(I->first);
+    if (VarDecl* VD = dyn_cast<VarDecl>(SD)) {
+      if (VD->hasGlobalStorage() || isa<ParmVarDecl>(VD)) {
+        RVal X = RVal::GetSymbolValue(SymMgr, VD);
+        StateMgr.BindVar(StateImpl, VD, X);
+      }
+    } else if (ImplicitParamDecl *IPD = dyn_cast<ImplicitParamDecl>(SD)) {
+        RVal X = RVal::GetSymbolValue(SymMgr, IPD);
+        StateMgr.BindVar(StateImpl, IPD, X);
     }
+      
+
   }
   
   return StateMgr.getPersistentState(StateImpl);

@@ -389,10 +389,12 @@ Expr::isLvalueResult Expr::isLvalue() const {
     if (cast<ArraySubscriptExpr>(this)->getBase()->getType()->isVectorType())
       return cast<ArraySubscriptExpr>(this)->getBase()->isLvalue();
     return LV_Valid;
-  case DeclRefExprClass: // C99 6.5.1p2
-    if (isa<VarDecl>(cast<DeclRefExpr>(this)->getDecl()))
+  case DeclRefExprClass: { // C99 6.5.1p2
+    const Decl *RefdDecl = cast<DeclRefExpr>(this)->getDecl();
+    if (isa<VarDecl>(RefdDecl) || isa<ImplicitParamDecl>(RefdDecl))
       return LV_Valid;
     break;
+  }
   case MemberExprClass: { // C99 6.5.2.3p4
     const MemberExpr *m = cast<MemberExpr>(this);
     return m->isArrow() ? LV_Valid : m->getBase()->isLvalue();

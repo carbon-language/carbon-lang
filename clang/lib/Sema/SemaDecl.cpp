@@ -480,11 +480,11 @@ bool Sema::CheckParmsForFunctionDef(FunctionDecl *FD) {
 /// in the scope S and with the given type. This routine is used, for
 /// example, to create the implicit "self" parameter in an Objective-C
 /// method.
-ParmVarDecl *
+ImplicitParamDecl *
 Sema::CreateImplicitParameter(Scope *S, IdentifierInfo *Id, 
                               SourceLocation IdLoc, QualType Type) {
-  ParmVarDecl *New = ParmVarDecl::Create(Context, CurContext, IdLoc, Id, Type, 
-                                         VarDecl::None, 0, 0);
+  ImplicitParamDecl *New = ImplicitParamDecl::Create(Context, CurContext,
+      IdLoc, Id, Type, 0);
   if (Id)
     PushOnScopeChains(New, S);
 

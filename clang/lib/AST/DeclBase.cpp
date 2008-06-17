@@ -206,6 +206,7 @@ void Decl::addDeclKind(Kind k) {
   case ObjCPropertyImpl:    nObjCPropertyImplDecl++; break;
   case LinkageSpec:         nLinkageSpecDecl++; break;
   case FileScopeAsm:        nFileScopeAsmDecl++; break;
+  case ImplicitParam:
   case TranslationUnit:     break;
 
   // FIXME: Statistics for C++ decls.

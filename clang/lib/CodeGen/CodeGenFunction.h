@@ -232,7 +232,7 @@ public:
   llvm::IRBuilder Builder;
   
   // Holds the Decl for the current function or method
-  const FunctionDecl *CurFuncDecl;
+  const Decl *CurFuncDecl;
   QualType FnRetTy;
   llvm::Function *CurFn;
 
@@ -277,11 +277,16 @@ public:
 
   void GenerateObjCMethod(const ObjCMethodDecl *OMD);
   void GenerateCode(const FunctionDecl *FD);
+  void GenerateFunction(const Stmt *Body);
   
   const llvm::Type *ConvertType(QualType T);
 
   llvm::Value *LoadObjCSelf();
-  
+
+  /// isObjCPointerType - Return true if the specificed AST type will map onto
+  /// some Objective-C pointer type.
+  static bool isObjCPointerType(QualType T);
+
   /// hasAggregateLLVMType - Return true if the specified AST type will map into
   /// an aggregate LLVM type or is void.
   static bool hasAggregateLLVMType(QualType T);

@@ -161,6 +161,13 @@ void CodeGenTypes::CollectObjCIvarTypes(ObjCInterfaceDecl *ObjCClass,
   }
 }
 
+const llvm::Type *CodeGenTypes::ConvertReturnType(QualType T) {
+  if (T->isVoidType())
+    return llvm::Type::VoidTy;    // Result of function uses llvm void.
+  else
+    return ConvertType(T);
+}
+
 static const llvm::Type* getTypeForFormat(const llvm::fltSemantics * format) {
   if (format == &llvm::APFloat::IEEEsingle)
     return llvm::Type::FloatTy;

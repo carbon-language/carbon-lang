@@ -60,6 +60,11 @@ public:
       AD.AlwaysLive(*I, AD) = Alive;      
   }
 
+  void VisitImplicitParamDecl(ImplicitParamDecl* IPD) {
+    // Register the VarDecl for tracking.
+    AD.Register(IPD);
+  }
+
   void VisitVarDecl(VarDecl* VD) {
     // Register the VarDecl for tracking.
     AD.Register(VD);

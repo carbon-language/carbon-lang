@@ -370,7 +370,8 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   const VarDecl *VD = dyn_cast<VarDecl>(E->getDecl());
   
-  if (VD && (VD->isBlockVarDecl() || isa<ParmVarDecl>(VD))) {
+  if (VD && (VD->isBlockVarDecl() || isa<ParmVarDecl>(VD) ||
+        isa<ImplicitParamDecl>(VD))) {
     if (VD->getStorageClass() == VarDecl::Extern)
       return LValue::MakeAddr(CGM.GetAddrOfGlobalVar(VD, false),
                               E->getType().getCVRQualifiers());
@@ -385,6 +386,12 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(E->getDecl())) {
     return LValue::MakeAddr(CGM.GetAddrOfFunctionDecl(FD, false),
                             E->getType().getCVRQualifiers());
+  }
+  else if (const ImplicitParamDecl *IPD =
+      dyn_cast<ImplicitParamDecl>(E->getDecl())) {
+    llvm::Value *V = LocalDeclMap[IPD];
+    assert(V && "BlockVarDecl not entered in LocalDeclMap?");
+    return LValue::MakeAddr(V, E->getType().getCVRQualifiers());
   }
   assert(0 && "Unimp declref");
   //an invalid LValue, but the assert will

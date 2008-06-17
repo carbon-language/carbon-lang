@@ -277,7 +277,7 @@ private:
 
   /// Helpers for dealing with function parameters
   bool CheckParmsForFunctionDef(FunctionDecl *FD);
-  ParmVarDecl *CreateImplicitParameter(Scope *S, IdentifierInfo *Id, 
+  ImplicitParamDecl *CreateImplicitParameter(Scope *S, IdentifierInfo *Id, 
                                        SourceLocation IdLoc, QualType Type);
   void CheckCXXDefaultArguments(FunctionDecl *FD);
   void CheckExtraCXXDefaultArguments(Declarator &D);

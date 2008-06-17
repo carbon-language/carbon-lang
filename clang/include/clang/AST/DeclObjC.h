@@ -91,7 +91,9 @@ private:
   // The following are only used for method definitions, null otherwise.
   // FIXME: space savings opportunity, consider a sub-class.
   Stmt *Body;
-  ParmVarDecl *SelfDecl;
+  // Decls for implicit parameters
+  ImplicitParamDecl *SelfDecl;
+  ImplicitParamDecl *CmdDecl;
   
   ObjCMethodDecl(SourceLocation beginLoc, SourceLocation endLoc,
                  Selector SelInfo, QualType T,
@@ -107,8 +109,8 @@ private:
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
     MethodContext(static_cast<NamedDecl*>(contextDecl)),
     SelName(SelInfo), MethodDeclType(T), 
-    ParamInfo(0), NumMethodParams(0),
-    MethodAttrs(M), EndLoc(endLoc), Body(0), SelfDecl(0) {}
+    ParamInfo(0), NumMethodParams(0), MethodAttrs(M), 
+    EndLoc(endLoc), Body(0), SelfDecl(0), CmdDecl(0) {}
 
   virtual ~ObjCMethodDecl();
   
@@ -164,6 +166,11 @@ public:
     ParamInfo[i] = pDecl;
   }  
   void setMethodParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
+
+  ImplicitParamDecl * getSelfDecl() const { return SelfDecl; }
+  void setSelfDecl(ImplicitParamDecl *decl) { SelfDecl = decl; }
+  ImplicitParamDecl * getCmdDecl() const { return CmdDecl; }
+  void setCmdDecl(ImplicitParamDecl *decl) { CmdDecl = decl; }
   
   AttributeList *getMethodAttrs() const {return MethodAttrs;}
   bool isInstance() const { return IsInstance; }
@@ -182,10 +189,6 @@ public:
   const Stmt *getBody() const { return Body; }
   void setBody(Stmt *B) { Body = B; }
 
-  const ParmVarDecl *getSelfDecl() const { return SelfDecl; }
-  ParmVarDecl *getSelfDecl() { return SelfDecl; }
-  void setSelfDecl(ParmVarDecl *PVD) { SelfDecl = PVD; }
-  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ObjCMethod; }
   static bool classof(const ObjCMethodDecl *D) { return true; }

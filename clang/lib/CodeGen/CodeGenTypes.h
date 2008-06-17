@@ -132,6 +132,9 @@ public:
   /// ConvertType - Convert type T into a llvm::Type.  
   const llvm::Type *ConvertType(QualType T);
   const llvm::Type *ConvertTypeRecursive(QualType T);
+  /// ConvertReturnType - Convert T into an llvm::Type assuming that it will be
+  /// used as a function return type.
+  const llvm::Type *ConvertReturnType(QualType T);
   
   /// ConvertTypeForMem - Convert type T into a llvm::Type.  This differs from
   /// ConvertType in that it is used to convert to the memory representation for
@@ -143,6 +146,8 @@ public:
       std::vector<const llvm::Type*> &IvarTypes);
   
   const CGRecordLayout *getCGRecordLayout(const TagDecl*) const;
+  /// Returns a StructType representing an Objective-C object
+  const llvm::Type *ConvertObjCInterfaceToStruct(const ObjCInterfaceDecl *OID);
   
   /// getLLVMFieldNo - Return llvm::StructType element number
   /// that corresponds to the field FD.

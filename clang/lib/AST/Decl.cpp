@@ -40,6 +40,12 @@ void NamespaceDecl::Destroy(ASTContext& C) {
 }
 
 
+ImplicitParamDecl *ImplicitParamDecl::Create(ASTContext &C, DeclContext *DC,
+    SourceLocation L, IdentifierInfo *Id, QualType T, ScopedDecl *PrevDecl) {
+  void *Mem = C.getAllocator().Allocate<ImplicitParamDecl>();
+  return new (Mem) ImplicitParamDecl(ImplicitParam, DC, L, Id, T, PrevDecl);
+}
+
 VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC,
                          SourceLocation L,
                          IdentifierInfo *Id, QualType T,
