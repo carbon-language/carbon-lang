@@ -42,7 +42,7 @@ void DAGTypeLegalizer::run() {
   // The root of the dag may dangle to deleted nodes until the type legalizer is
   // done.  Set it to null to avoid confusion.
   DAG.setRoot(SDOperand());
-  
+
   // Walk all nodes in the graph, assigning them a NodeID of 'ReadyToProcess'
   // (and remembering them) if they are leaves and assigning 'NewNode' if
   // non-leaves.
@@ -55,14 +55,14 @@ void DAGTypeLegalizer::run() {
       I->setNodeId(NewNode);
     }
   }
-  
+
   // Now that we have a set of nodes to process, handle them all.
   while (!Worklist.empty()) {
     SDNode *N = Worklist.back();
     Worklist.pop_back();
     assert(N->getNodeId() == ReadyToProcess &&
            "Node should be ready if on worklist!");
-    
+
     // Scan the values produced by the node, checking to see if any result
     // types are illegal.
     unsigned i = 0;
@@ -74,14 +74,17 @@ void DAGTypeLegalizer::run() {
         assert(false && "Unknown action!");
       case Legal:
         break;
-      case Promote:
-        PromoteResult(N, i);
+      case PromoteInteger:
+        PromoteIntegerResult(N, i);
         goto NodeDone;
-      case Expand:
-        ExpandResult(N, i);
+      case ExpandInteger:
+        ExpandIntegerResult(N, i);
         goto NodeDone;
-      case FloatToInt:
-        FloatToIntResult(N, i);
+      case PromoteFloat:
+        PromoteFloatResult(N, i);
+        goto NodeDone;
+      case ExpandFloat:
+        ExpandFloatResult(N, i);
         goto NodeDone;
       case Scalarize:
         ScalarizeResult(N, i);
@@ -104,14 +107,17 @@ void DAGTypeLegalizer::run() {
         assert(false && "Unknown action!");
       case Legal:
         continue;
-      case Promote:
-        NeedsRevisit = PromoteOperand(N, i);
+      case PromoteInteger:
+        NeedsRevisit = PromoteIntegerOperand(N, i);
         break;
-      case Expand:
-        NeedsRevisit = ExpandOperand(N, i);
+      case ExpandInteger:
+        NeedsRevisit = ExpandIntegerOperand(N, i);
         break;
-      case FloatToInt:
-        NeedsRevisit = FloatToIntOperand(N, i);
+      case PromoteFloat:
+        NeedsRevisit = PromoteFloatOperand(N, i);
+        break;
+      case ExpandFloat:
+        NeedsRevisit = ExpandFloatOperand(N, i);
         break;
       case Scalarize:
         NeedsRevisit = ScalarizeOperand(N, i);
@@ -126,7 +132,7 @@ void DAGTypeLegalizer::run() {
     // If the node needs revisiting, don't add all users to the worklist etc.
     if (NeedsRevisit)
       continue;
-    
+
     if (i == NumOperands)
       DEBUG(cerr << "Legally typed node: "; N->dump(&DAG); cerr << "\n");
     }
@@ -135,37 +141,37 @@ NodeDone:
     // If we reach here, the node was processed, potentially creating new nodes.
     // Mark it as processed and add its users to the worklist as appropriate.
     N->setNodeId(Processed);
-    
+
     for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end();
          UI != E; ++UI) {
       SDNode *User = UI->getUser();
       int NodeID = User->getNodeId();
       assert(NodeID != ReadyToProcess && NodeID != Processed &&
              "Invalid node id for user of unprocessed node!");
-      
+
       // This node has two options: it can either be a new node or its Node ID
       // may be a count of the number of operands it has that are not ready.
       if (NodeID > 0) {
         User->setNodeId(NodeID-1);
-        
+
         // If this was the last use it was waiting on, add it to the ready list.
         if (NodeID-1 == ReadyToProcess)
           Worklist.push_back(User);
         continue;
       }
-      
+
       // Otherwise, this node is new: this is the first operand of it that
       // became ready.  Its new NodeID is the number of operands it has minus 1
       // (as this node is now processed).
       assert(NodeID == NewNode && "Unknown node ID!");
       User->setNodeId(User->getNumOperands()-1);
-      
+
       // If the node only has a single operand, it is now ready.
       if (User->getNumOperands() == 1)
         Worklist.push_back(User);
     }
   }
-  
+
   // If the root changed (e.g. it was a dead load, update the root).
   DAG.setRoot(Dummy.getValue());
 
@@ -315,8 +321,8 @@ void DAGTypeLegalizer::ReplaceValueWith(SDOperand From, SDOperand To) {
   NodeUpdateListener NUL(*this);
   DAG.ReplaceAllUsesOfValueWith(From, To, &NUL);
 
-  // The old node may still be present in a map like ExpandedNodes or
-  // PromotedNodes.  Inform maps about the replacement.
+  // The old node may still be present in a map like ExpandedIntegers or
+  // PromotedIntegers.  Inform maps about the replacement.
   NoteReplacement(From, To);
 }
 
@@ -336,8 +342,8 @@ void DAGTypeLegalizer::ReplaceNodeWith(SDNode *From, SDNode *To) {
   NodeUpdateListener NUL(*this);
   DAG.ReplaceAllUsesWith(From, To, &NUL);
 
-  // The old node may still be present in a map like ExpandedNodes or
-  // PromotedNodes.  Inform maps about the replacement.
+  // The old node may still be present in a map like ExpandedIntegers or
+  // PromotedIntegers.  Inform maps about the replacement.
   for (unsigned i = 0, e = From->getNumValues(); i != e; ++i) {
     assert(From->getValueType(i) == To->getValueType(i) &&
            "Node results don't match");
@@ -380,29 +386,29 @@ void DAGTypeLegalizer::ExpungeNode(SDOperand N) {
         I->second = Replacement;
     }
 
-    for (DenseMap<SDOperand, SDOperand>::iterator I = PromotedNodes.begin(),
-         E = PromotedNodes.end(); I != E; ++I) {
+    for (DenseMap<SDOperand, SDOperand>::iterator I = PromotedIntegers.begin(),
+         E = PromotedIntegers.end(); I != E; ++I) {
       assert(I->first != N);
       if (I->second == N)
         I->second = Replacement;
     }
 
-    for (DenseMap<SDOperand, SDOperand>::iterator I = FloatToIntedNodes.begin(),
-         E = FloatToIntedNodes.end(); I != E; ++I) {
+    for (DenseMap<SDOperand, SDOperand>::iterator I = PromotedFloats.begin(),
+         E = PromotedFloats.end(); I != E; ++I) {
       assert(I->first != N);
       if (I->second == N)
         I->second = Replacement;
     }
 
-    for (DenseMap<SDOperand, SDOperand>::iterator I = ScalarizedNodes.begin(),
-         E = ScalarizedNodes.end(); I != E; ++I) {
+    for (DenseMap<SDOperand, SDOperand>::iterator I = ScalarizedVectors.begin(),
+         E = ScalarizedVectors.end(); I != E; ++I) {
       assert(I->first != N);
       if (I->second == N)
         I->second = Replacement;
     }
 
     for (DenseMap<SDOperand, std::pair<SDOperand, SDOperand> >::iterator
-         I = ExpandedNodes.begin(), E = ExpandedNodes.end(); I != E; ++I) {
+         I = ExpandedIntegers.begin(), E = ExpandedIntegers.end(); I != E; ++I){
       assert(I->first != N);
       if (I->second.first == N)
         I->second.first = Replacement;
@@ -411,7 +417,16 @@ void DAGTypeLegalizer::ExpungeNode(SDOperand N) {
     }
 
     for (DenseMap<SDOperand, std::pair<SDOperand, SDOperand> >::iterator
-         I = SplitNodes.begin(), E = SplitNodes.end(); I != E; ++I) {
+         I = ExpandedFloats.begin(), E = ExpandedFloats.end(); I != E; ++I) {
+      assert(I->first != N);
+      if (I->second.first == N)
+        I->second.first = Replacement;
+      if (I->second.second == N)
+        I->second.second = Replacement;
+    }
+
+    for (DenseMap<SDOperand, std::pair<SDOperand, SDOperand> >::iterator
+         I = SplitVectors.begin(), E = SplitVectors.end(); I != E; ++I) {
       assert(I->first != N);
       if (I->second.first == N)
         I->second.first = Replacement;
@@ -422,36 +437,36 @@ void DAGTypeLegalizer::ExpungeNode(SDOperand N) {
 }
 
 
-void DAGTypeLegalizer::SetPromotedOp(SDOperand Op, SDOperand Result) {
+void DAGTypeLegalizer::SetPromotedInteger(SDOperand Op, SDOperand Result) {
   ExpungeNode(Result);
   AnalyzeNewNode(Result.Val);
 
-  SDOperand &OpEntry = PromotedNodes[Op];
+  SDOperand &OpEntry = PromotedIntegers[Op];
   assert(OpEntry.Val == 0 && "Node is already promoted!");
   OpEntry = Result;
 }
 
-void DAGTypeLegalizer::SetIntegerOp(SDOperand Op, SDOperand Result) {
+void DAGTypeLegalizer::SetPromotedFloat(SDOperand Op, SDOperand Result) {
   ExpungeNode(Result);
   AnalyzeNewNode(Result.Val);
 
-  SDOperand &OpEntry = FloatToIntedNodes[Op];
+  SDOperand &OpEntry = PromotedFloats[Op];
   assert(OpEntry.Val == 0 && "Node is already converted to integer!");
   OpEntry = Result;
 }
 
-void DAGTypeLegalizer::SetScalarizedOp(SDOperand Op, SDOperand Result) {
+void DAGTypeLegalizer::SetScalarizedVector(SDOperand Op, SDOperand Result) {
   ExpungeNode(Result);
   AnalyzeNewNode(Result.Val);
 
-  SDOperand &OpEntry = ScalarizedNodes[Op];
+  SDOperand &OpEntry = ScalarizedVectors[Op];
   assert(OpEntry.Val == 0 && "Node is already scalarized!");
   OpEntry = Result;
 }
 
-void DAGTypeLegalizer::GetExpandedOp(SDOperand Op, SDOperand &Lo, 
-                                     SDOperand &Hi) {
-  std::pair<SDOperand, SDOperand> &Entry = ExpandedNodes[Op];
+void DAGTypeLegalizer::GetExpandedInteger(SDOperand Op, SDOperand &Lo,
+                                          SDOperand &Hi) {
+  std::pair<SDOperand, SDOperand> &Entry = ExpandedIntegers[Op];
   RemapNode(Entry.first);
   RemapNode(Entry.second);
   assert(Entry.first.Val && "Operand isn't expanded");
@@ -459,7 +474,8 @@ void DAGTypeLegalizer::GetExpandedOp(SDOperand Op, SDOperand &Lo,
   Hi = Entry.second;
 }
 
-void DAGTypeLegalizer::SetExpandedOp(SDOperand Op, SDOperand Lo, SDOperand Hi) {
+void DAGTypeLegalizer::SetExpandedInteger(SDOperand Op, SDOperand Lo,
+                                          SDOperand Hi) {
   ExpungeNode(Lo);
   ExpungeNode(Hi);
 
@@ -468,14 +484,41 @@ void DAGTypeLegalizer::SetExpandedOp(SDOperand Op, SDOperand Lo, SDOperand Hi) {
   AnalyzeNewNode(Hi.Val);
 
   // Remember that this is the result of the node.
-  std::pair<SDOperand, SDOperand> &Entry = ExpandedNodes[Op];
+  std::pair<SDOperand, SDOperand> &Entry = ExpandedIntegers[Op];
   assert(Entry.first.Val == 0 && "Node already expanded");
   Entry.first = Lo;
   Entry.second = Hi;
 }
 
-void DAGTypeLegalizer::GetSplitOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi) {
-  std::pair<SDOperand, SDOperand> &Entry = SplitNodes[Op];
+void DAGTypeLegalizer::GetExpandedFloat(SDOperand Op, SDOperand &Lo,
+                                        SDOperand &Hi) {
+  std::pair<SDOperand, SDOperand> &Entry = ExpandedFloats[Op];
+  RemapNode(Entry.first);
+  RemapNode(Entry.second);
+  assert(Entry.first.Val && "Operand isn't expanded");
+  Lo = Entry.first;
+  Hi = Entry.second;
+}
+
+void DAGTypeLegalizer::SetExpandedFloat(SDOperand Op, SDOperand Lo,
+                                        SDOperand Hi) {
+  ExpungeNode(Lo);
+  ExpungeNode(Hi);
+
+  // Lo/Hi may have been newly allocated, if so, add nodeid's as relevant.
+  AnalyzeNewNode(Lo.Val);
+  AnalyzeNewNode(Hi.Val);
+
+  // Remember that this is the result of the node.
+  std::pair<SDOperand, SDOperand> &Entry = ExpandedFloats[Op];
+  assert(Entry.first.Val == 0 && "Node already expanded");
+  Entry.first = Lo;
+  Entry.second = Hi;
+}
+
+void DAGTypeLegalizer::GetSplitVector(SDOperand Op, SDOperand &Lo,
+                                      SDOperand &Hi) {
+  std::pair<SDOperand, SDOperand> &Entry = SplitVectors[Op];
   RemapNode(Entry.first);
   RemapNode(Entry.second);
   assert(Entry.first.Val && "Operand isn't split");
@@ -483,7 +526,8 @@ void DAGTypeLegalizer::GetSplitOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi) {
   Hi = Entry.second;
 }
 
-void DAGTypeLegalizer::SetSplitOp(SDOperand Op, SDOperand Lo, SDOperand Hi) {
+void DAGTypeLegalizer::SetSplitVector(SDOperand Op, SDOperand Lo,
+                                      SDOperand Hi) {
   ExpungeNode(Lo);
   ExpungeNode(Hi);
 
@@ -492,7 +536,7 @@ void DAGTypeLegalizer::SetSplitOp(SDOperand Op, SDOperand Lo, SDOperand Hi) {
   AnalyzeNewNode(Hi.Val);
 
   // Remember that this is the result of the node.
-  std::pair<SDOperand, SDOperand> &Entry = SplitNodes[Op];
+  std::pair<SDOperand, SDOperand> &Entry = SplitVectors[Op];
   assert(Entry.first.Val == 0 && "Node already split");
   Entry.first = Lo;
   Entry.second = Hi;
@@ -505,11 +549,11 @@ SDOperand DAGTypeLegalizer::BitConvertToInteger(SDOperand Op) {
   return DAG.getNode(ISD::BIT_CONVERT, MVT::getIntegerVT(BitWidth), Op);
 }
 
-SDOperand DAGTypeLegalizer::CreateStackStoreLoad(SDOperand Op, 
+SDOperand DAGTypeLegalizer::CreateStackStoreLoad(SDOperand Op,
                                                  MVT DestVT) {
   // Create the stack frame object.
   SDOperand FIPtr = DAG.CreateStackTemporary(DestVT);
-  
+
   // Emit a store to the stack slot.
   SDOperand Store = DAG.getStore(DAG.getEntryNode(), Op, FIPtr, NULL, 0);
   // Result is a load from the stack slot.
@@ -605,6 +649,6 @@ SDOperand DAGTypeLegalizer::GetVectorElementPointer(SDOperand VecPtr, MVT EltVT,
 /// the graph.
 void SelectionDAG::LegalizeTypes() {
   if (ViewLegalizeTypesDAGs) viewGraph();
-  
+
   DAGTypeLegalizer(*this).run();
 }
