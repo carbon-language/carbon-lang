@@ -1578,6 +1578,28 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       return ResNode;
       break;
     }
+
+    case ISD::DECLARE: {
+      // Handle DECLARE nodes here because the second operand may have been
+      // wrapped in X86ISD::Wrapper.
+      SDOperand Chain = Node->getOperand(0);
+      SDOperand N1 = Node->getOperand(1);
+      SDOperand N2 = Node->getOperand(2);
+      if (isa<FrameIndexSDNode>(N1) &&
+          N2.getOpcode() == X86ISD::Wrapper &&
+          isa<GlobalAddressSDNode>(N2.getOperand(0))) {
+        int FI = cast<FrameIndexSDNode>(N1)->getIndex();
+        GlobalValue *GV =
+          cast<GlobalAddressSDNode>(N2.getOperand(0))->getGlobal();
+        SDOperand Tmp1 = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
+        SDOperand Tmp2 = CurDAG->getTargetGlobalAddress(GV, TLI.getPointerTy());
+        AddToISelQueue(Chain);
+        SDOperand Ops[] = { Tmp1, Tmp2, Chain };
+        return CurDAG->getTargetNode(TargetInstrInfo::DECLARE,
+                                     MVT::Other, Ops, 3);
+      }
+      break;
+    }
   }
 
   SDNode *ResNode = SelectCode(N);
