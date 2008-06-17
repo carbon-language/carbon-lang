@@ -41,6 +41,11 @@ namespace llvm {
     /// code.
     ///
     virtual void replaceMachineCodeForFunction(void *Old, void *New);
+
+    /// InvalidateInstructionCache - Before the JIT can run a block of code
+    // that has been emitted it must invalidate the instruction cache on some
+    // platforms.
+    virtual void InvalidateInstructionCache(const void *Addr, unsigned len);
   };
 }
 

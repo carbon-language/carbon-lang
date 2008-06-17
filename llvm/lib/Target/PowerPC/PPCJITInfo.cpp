@@ -330,12 +330,9 @@ defined(__APPLE__)
 extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
 #endif
 
-/// SyncICache - On PPC, the JIT emitted code must be explicitly refetched to
-/// ensure correct execution.
-static void SyncICache(const void *Addr, size_t len) {
-#if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
-  
-#ifdef __APPLE__
+void PPCJITInfo::InvalidateInstructionCache(const void *Addr, unsigned len) {
+#if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
+defined(__APPLE__)  
   sys_icache_invalidate(Addr, len);
 #elif defined(__GNUC__)
   const size_t LineSize = 32;
@@ -351,8 +348,6 @@ static void SyncICache(const void *Addr, size_t len) {
   for (intptr_t Line = StartLine; Line < EndLine; Line += LineSize)
       asm volatile("icbi 0, %0" : : "r"(Line));
   asm volatile("isync");
-#endif
-  
 #endif
 }
 
@@ -372,7 +367,7 @@ void *PPCJITInfo::emitFunctionStub(const Function* F, void *Fn,
     MCE.emitWordBE(0);
     MCE.emitWordBE(0);
     EmitBranchToAt(Addr, (intptr_t)Fn, false, is64Bit);
-    SyncICache((void*)Addr, 7*4);
+    InvalidateInstructionCache((void*)Addr, 7*4);
     return MCE.finishFunctionStub(F);
   }
 
@@ -400,7 +395,7 @@ void *PPCJITInfo::emitFunctionStub(const Function* F, void *Fn,
   MCE.emitWordBE(0);
   MCE.emitWordBE(0);
   EmitBranchToAt(BranchAddr, (intptr_t)Fn, true, is64Bit);
-  SyncICache((void*)Addr, 10*4);
+  InvalidateInstructionCache((void*)Addr, 10*4);
   return MCE.finishFunctionStub(F);
 }
 

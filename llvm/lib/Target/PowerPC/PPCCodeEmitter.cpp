@@ -80,10 +80,6 @@ FunctionPass *llvm::createPPCCodeEmitterPass(PPCTargetMachine &TM,
   return new PPCCodeEmitter(TM, MCE);
 }
 
-#ifdef __APPLE__ 
-extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
-#endif
-
 bool PPCCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   assert((MF.getTarget().getRelocationModel() != Reloc::Default ||
           MF.getTarget().getRelocationModel() != Reloc::Static) &&

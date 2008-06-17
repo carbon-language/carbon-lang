@@ -145,20 +145,6 @@ namespace {
 
 JITResolver *JITResolver::TheJITResolver = 0;
 
-#if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
-    defined(__APPLE__)
-extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
-#endif
-
-/// synchronizeICache - On some targets, the JIT emitted code must be
-/// explicitly refetched to ensure correct execution.
-static void synchronizeICache(const void *Addr, size_t len) {
-#if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
-    defined(__APPLE__)
-  sys_icache_invalidate(Addr, len);
-#endif
-}
-
 /// getFunctionStub - This returns a pointer to a function stub, creating
 /// one on demand as needed.
 void *JITResolver::getFunctionStub(Function *F) {
@@ -756,7 +742,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   }
 
   // Invalidate the icache if necessary.
-  synchronizeICache(FnStart, FnEnd-FnStart);
+  TheJIT->getJITInfo().InvalidateInstructionCache(FnStart, FnEnd-FnStart);
   
   // Add it to the JIT symbol table if the host wants it.
   AddFunctionToSymbolTable(F.getFunction()->getNameStart(),

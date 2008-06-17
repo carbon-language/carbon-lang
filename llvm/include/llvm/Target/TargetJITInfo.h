@@ -94,6 +94,11 @@ namespace llvm {
       assert(NumRelocs == 0 && "This target does not have relocations!");
     }
 
+    /// InvalidateInstructionCache - Before the JIT can run a block of code
+    // that has been emitted it must invalidate the instruction cache on some
+    // platforms.
+    virtual void InvalidateInstructionCache(const void *Addr, unsigned len) {}
+
     /// needsGOT - Allows a target to specify that it would like the
     // JIT to manage a GOT for it.
     bool needsGOT() const { return useGOT; }
