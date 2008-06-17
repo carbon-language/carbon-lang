@@ -1,12 +1,13 @@
 html, body {
   padding:0px;	
-  font: 12px/18px "Lucida Grande", "Lucida Sans Unicode", Arial, Verdana, Helvetica, sans-serif; background-color: #fff; color: #222;
+  font-size:12px; font-family:"Lucida Grande", "Lucida Sans Unicode", Arial, Verdana, Helvetica, sans-serif; background-color: #fff; color: #222;
+  line-height:1.5;
 }
 
-h1, h2, h3, tt { color: #000; line-height:1.1; }
+h1, h2, h3, tt { color: #000 }
 
-h2 { padding-top: 1em; }
-h3 { padding-top: 0.5em; margin-bottom: -0.25em; }
+h2 { color:#333333; padding-top:1em; }
+h3 { padding-top: 0.5em; margin-bottom: -0.25em; color:#2d58b7}
 li { padding-bottom: 0.5em; }
 
 /* Slides */
