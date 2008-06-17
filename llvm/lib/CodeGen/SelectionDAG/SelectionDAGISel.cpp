@@ -48,6 +48,10 @@
 #include <algorithm>
 using namespace llvm;
 
+static cl::opt<bool>
+EnableValueProp("enable-value-prop", cl::Hidden, cl::init(false));
+
+
 #ifndef NDEBUG
 static cl::opt<bool>
 ViewISelDAGs("view-isel-dags", cl::Hidden,
@@ -326,6 +330,16 @@ namespace llvm {
       assert(R == 0 && "Already initialized this value register!");
       return R = CreateRegForValue(V);
     }
+    
+    struct LiveOutInfo {
+      unsigned NumSignBits;
+      APInt KnownOne, KnownZero;
+      LiveOutInfo() : NumSignBits(0) {}
+    };
+    
+    /// LiveOutRegInfo - Information about live out vregs, indexed by their
+    /// register number offset by 'FirstVirtualRegister'.
+    std::vector<LiveOutInfo> LiveOutRegInfo;
   };
 }
 
@@ -1748,12 +1762,11 @@ void SelectionDAGLowering::visitBitTestCase(MachineBasicBlock* NextMBB,
                                             unsigned Reg,
                                             SelectionDAGISel::BitTestCase &B) {
   // Emit bit tests and jumps
-  SDOperand SwitchVal = DAG.getCopyFromReg(getControlRoot(), Reg, TLI.getPointerTy());
+  SDOperand SwitchVal = DAG.getCopyFromReg(getControlRoot(), Reg, 
+                                           TLI.getPointerTy());
   
-  SDOperand AndOp = DAG.getNode(ISD::AND, TLI.getPointerTy(),
-                                SwitchVal,
-                                DAG.getConstant(B.Mask,
-                                                TLI.getPointerTy()));
+  SDOperand AndOp = DAG.getNode(ISD::AND, TLI.getPointerTy(), SwitchVal,
+                                DAG.getConstant(B.Mask, TLI.getPointerTy()));
   SDOperand AndCmp = DAG.getSetCC(TLI.getSetCCResultType(AndOp), AndOp,
                                   DAG.getConstant(0, TLI.getPointerTy()),
                                   ISD::SETNE);
@@ -3706,7 +3719,7 @@ void SelectionDAGLowering::visitGetResult(GetResultInst &I) {
 /// this value and returns the result as a ValueVT value.  This uses 
 /// Chain/Flag as the input and updates them for the output Chain/Flag.
 /// If the Flag pointer is NULL, no flag is used.
-SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
+SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG, 
                                         SDOperand &Chain,
                                         SDOperand *Flag) const {
   // Assemble the legal parts into the final values.
@@ -3728,6 +3741,49 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
         *Flag = P.getValue(2);
       }
       Chain = P.getValue(1);
+      
+      // If the source register was virtual and if we know something about it,
+      // add an assert node.
+      if (TargetRegisterInfo::isVirtualRegister(Regs[Part+i]) &&
+          RegisterVT.isInteger() && !RegisterVT.isVector()) {
+        unsigned SlotNo = Regs[Part+i]-TargetRegisterInfo::FirstVirtualRegister;
+        FunctionLoweringInfo &FLI = DAG.getFunctionLoweringInfo();
+        if (FLI.LiveOutRegInfo.size() > SlotNo) {
+          FunctionLoweringInfo::LiveOutInfo &LOI = FLI.LiveOutRegInfo[SlotNo];
+          
+          unsigned RegSize = RegisterVT.getSizeInBits();
+          unsigned NumSignBits = LOI.NumSignBits;
+          unsigned NumZeroBits = LOI.KnownZero.countLeadingOnes();
+          
+          // FIXME: We capture more information than the dag can represent.  For
+          // now, just use the tightest assertzext/assertsext possible.
+          bool isSExt = true;
+          MVT FromVT(MVT::Other);
+          if (NumSignBits == RegSize)
+            isSExt = true, FromVT = MVT::i1;   // ASSERT SEXT 1
+          else if (NumZeroBits >= RegSize-1)
+            isSExt = false, FromVT = MVT::i1;  // ASSERT ZEXT 1
+          else if (NumSignBits > RegSize-8)
+            isSExt = true, FromVT = MVT::i8;   // ASSERT SEXT 8
+          else if (NumZeroBits >= RegSize-9)
+            isSExt = false, FromVT = MVT::i8;  // ASSERT ZEXT 8
+          else if (NumSignBits > RegSize-16)
+            isSExt = true, FromVT = MVT::i16;   // ASSERT SEXT 16
+          else if (NumZeroBits >= RegSize-17)
+            isSExt = false, FromVT = MVT::i16;  // ASSERT ZEXT 16
+          else if (NumSignBits > RegSize-32)
+            isSExt = true, FromVT = MVT::i32;   // ASSERT SEXT 32
+          else if (NumZeroBits >= RegSize-33)
+            isSExt = false, FromVT = MVT::i32;  // ASSERT ZEXT 32
+          
+          if (FromVT != MVT::Other) {
+            P = DAG.getNode(isSExt ? ISD::AssertSext : ISD::AssertZext,
+                            RegisterVT, P, DAG.getValueType(FromVT));
+
+          }
+        }
+      }
+      
       Parts[Part+i] = P;
     }
   
@@ -5218,6 +5274,61 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   CheckDAGForTailCallsAndFixThem(DAG, TLI);
 }
 
+void SelectionDAGISel::ComputeLiveOutVRegInfo(SelectionDAG &DAG) {
+  SmallPtrSet<SDNode*, 128> VisitedNodes;
+  SmallVector<SDNode*, 128> Worklist;
+  
+  Worklist.push_back(DAG.getRoot().Val);
+  
+  APInt Mask;
+  APInt KnownZero;
+  APInt KnownOne;
+  
+  while (!Worklist.empty()) {
+    SDNode *N = Worklist.back();
+    Worklist.pop_back();
+    
+    // If we've already seen this node, ignore it.
+    if (!VisitedNodes.insert(N))
+      continue;
+    
+    // Otherwise, add all chain operands to the worklist.
+    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+      if (N->getOperand(i).getValueType() == MVT::Other)
+        Worklist.push_back(N->getOperand(i).Val);
+    
+    // If this is a CopyToReg with a vreg dest, process it.
+    if (N->getOpcode() != ISD::CopyToReg)
+      continue;
+    
+    unsigned DestReg = cast<RegisterSDNode>(N->getOperand(1))->getReg();
+    if (!TargetRegisterInfo::isVirtualRegister(DestReg))
+      continue;
+    
+    // Ignore non-scalar or non-integer values.
+    SDOperand Src = N->getOperand(2);
+    MVT SrcVT = Src.getValueType();
+    if (!SrcVT.isInteger() || SrcVT.isVector())
+      continue;
+    
+    unsigned NumSignBits = DAG.ComputeNumSignBits(Src);
+    Mask = APInt::getAllOnesValue(SrcVT.getSizeInBits());
+    DAG.ComputeMaskedBits(Src, Mask, KnownZero, KnownOne);
+    
+    // Only install this information if it tells us something.
+    if (NumSignBits != 1 || KnownZero != 0 || KnownOne != 0) {
+      DestReg -= TargetRegisterInfo::FirstVirtualRegister;
+      FunctionLoweringInfo &FLI = DAG.getFunctionLoweringInfo();
+      if (DestReg >= FLI.LiveOutRegInfo.size())
+        FLI.LiveOutRegInfo.resize(DestReg+1);
+      FunctionLoweringInfo::LiveOutInfo &LOI = FLI.LiveOutRegInfo[DestReg];
+      LOI.NumSignBits = NumSignBits;
+      LOI.KnownOne = NumSignBits;
+      LOI.KnownZero = NumSignBits;
+    }
+  }
+}
+
 void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   DOUT << "Lowered selection DAG:\n";
   DEBUG(DAG.dump());
@@ -5246,6 +5357,9 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   DEBUG(DAG.dump());
 
   if (ViewISelDAGs) DAG.viewGraph();
+  
+  if (EnableValueProp)  // FIXME: Only do this if !fast.
+    ComputeLiveOutVRegInfo(DAG);
 
   // Third, instruction select all of the operations to machine code, adding the
   // code to the MachineBasicBlock.
@@ -5259,7 +5373,8 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
                                         FunctionLoweringInfo &FuncInfo) {
   std::vector<std::pair<MachineInstr*, unsigned> > PHINodesToUpdate;
   {
-    SelectionDAG DAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
+    SelectionDAG DAG(TLI, MF, FuncInfo, 
+                     getAnalysisToUpdate<MachineModuleInfo>());
     CurDAG = &DAG;
   
     // First step, lower LLVM code to some DAG.  This DAG may use operations and
@@ -5293,7 +5408,8 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   for (unsigned i = 0, e = BitTestCases.size(); i != e; ++i) {
     // Lower header first, if it wasn't already lowered
     if (!BitTestCases[i].Emitted) {
-      SelectionDAG HSDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
+      SelectionDAG HSDAG(TLI, MF, FuncInfo, 
+                         getAnalysisToUpdate<MachineModuleInfo>());
       CurDAG = &HSDAG;
       SelectionDAGLowering HSDL(HSDAG, TLI, *AA, FuncInfo, GCI);
       // Set the current basic block to the mbb we wish to insert the code into
@@ -5306,7 +5422,8 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     }    
 
     for (unsigned j = 0, ej = BitTestCases[i].Cases.size(); j != ej; ++j) {
-      SelectionDAG BSDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
+      SelectionDAG BSDAG(TLI, MF, FuncInfo, 
+                         getAnalysisToUpdate<MachineModuleInfo>());
       CurDAG = &BSDAG;
       SelectionDAGLowering BSDL(BSDAG, TLI, *AA, FuncInfo, GCI);
       // Set the current basic block to the mbb we wish to insert the code into
@@ -5363,7 +5480,8 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   for (unsigned i = 0, e = JTCases.size(); i != e; ++i) {
     // Lower header first, if it wasn't already lowered
     if (!JTCases[i].first.Emitted) {
-      SelectionDAG HSDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
+      SelectionDAG HSDAG(TLI, MF, FuncInfo, 
+                         getAnalysisToUpdate<MachineModuleInfo>());
       CurDAG = &HSDAG;
       SelectionDAGLowering HSDL(HSDAG, TLI, *AA, FuncInfo, GCI);
       // Set the current basic block to the mbb we wish to insert the code into
@@ -5375,7 +5493,8 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
       CodeGenAndEmitDAG(HSDAG);
     }
     
-    SelectionDAG JSDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
+    SelectionDAG JSDAG(TLI, MF, FuncInfo, 
+                       getAnalysisToUpdate<MachineModuleInfo>());
     CurDAG = &JSDAG;
     SelectionDAGLowering JSDL(JSDAG, TLI, *AA, FuncInfo, GCI);
     // Set the current basic block to the mbb we wish to insert the code into
@@ -5423,7 +5542,8 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   // If we generated any switch lowering information, build and codegen any
   // additional DAGs necessary.
   for (unsigned i = 0, e = SwitchCases.size(); i != e; ++i) {
-    SelectionDAG SDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
+    SelectionDAG SDAG(TLI, MF, FuncInfo, 
+                      getAnalysisToUpdate<MachineModuleInfo>());
     CurDAG = &SDAG;
     SelectionDAGLowering SDL(SDAG, TLI, *AA, FuncInfo, GCI);
     

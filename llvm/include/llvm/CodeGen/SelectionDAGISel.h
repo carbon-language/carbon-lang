@@ -158,6 +158,7 @@ public:
     MachineBasicBlock *Default;
     BitTestInfo Cases;
   };
+  
 protected:
   /// Pick a safe ordering and emit instructions for each target node in the
   /// graph.
@@ -183,6 +184,8 @@ private:
                          FunctionLoweringInfo &FuncInfo);
   void CodeGenAndEmitDAG(SelectionDAG &DAG);
   void LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL);
+  
+  void ComputeLiveOutVRegInfo(SelectionDAG &DAG);
 
   /// SwitchCases - Vector of CaseBlock structures used to communicate
   /// SwitchInst code generation information.

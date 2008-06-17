@@ -31,6 +31,7 @@ namespace llvm {
   class MachineModuleInfo;
   class MachineFunction;
   class MachineConstantPoolValue;
+  class FunctionLoweringInfo;
 
 /// SelectionDAG class - This is used to represent a portion of an LLVM function
 /// in a low-level Data Dependence DAG representation suitable for instruction
@@ -46,6 +47,7 @@ namespace llvm {
 class SelectionDAG {
   TargetLowering &TLI;
   MachineFunction &MF;
+  FunctionLoweringInfo &FLI;
   MachineModuleInfo *MMI;
 
   /// Root - The root of the entire DAG.  EntryNode - The starting token.
@@ -59,8 +61,9 @@ class SelectionDAG {
   FoldingSet<SDNode> CSEMap;
 
 public:
-  SelectionDAG(TargetLowering &tli, MachineFunction &mf, MachineModuleInfo *mmi)
-  : TLI(tli), MF(mf), MMI(mmi) {
+  SelectionDAG(TargetLowering &tli, MachineFunction &mf, 
+               FunctionLoweringInfo &fli, MachineModuleInfo *mmi)
+  : TLI(tli), MF(mf), FLI(fli), MMI(mmi) {
     EntryNode = Root = getNode(ISD::EntryToken, MVT::Other);
   }
   ~SelectionDAG();
@@ -68,6 +71,7 @@ public:
   MachineFunction &getMachineFunction() const { return MF; }
   const TargetMachine &getTarget() const;
   TargetLowering &getTargetLoweringInfo() const { return TLI; }
+  FunctionLoweringInfo &getFunctionLoweringInfo() const { return FLI; }
   MachineModuleInfo *getMachineModuleInfo() const { return MMI; }
 
   /// viewGraph - Pop up a GraphViz/gv window with the DAG rendered using 'dot'.
