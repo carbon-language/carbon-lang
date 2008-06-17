@@ -8783,7 +8783,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
         // Conversion is ok if changing from one pointer type to another or from
         // a pointer to an integer of the same size.
         !((isa<PointerType>(OldRetTy) || OldRetTy == TD->getIntPtrType()) &&
-          isa<PointerType>(NewRetTy) || NewRetTy == TD->getIntPtrType()))
+          (isa<PointerType>(NewRetTy) || NewRetTy == TD->getIntPtrType())))
       return false;   // Cannot transform this return value.
 
     if (!Caller->use_empty() &&
