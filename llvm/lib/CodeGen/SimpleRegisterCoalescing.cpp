@@ -381,10 +381,21 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   // simply extend BLR if CopyMI doesn't end the range.
   DOUT << "\nExtending: "; IntB.print(DOUT, tri_);
 
-  IntB.removeValNo(BValNo);
+  // Remove val#'s defined by copies that will be coalesced away.
   for (unsigned i = 0, e = BDeadValNos.size(); i != e; ++i)
     IntB.removeValNo(BDeadValNos[i]);
-  VNInfo *ValNo = IntB.getNextValue(AValNo->def, 0, li_->getVNInfoAllocator());
+
+  // Extend BValNo by merging in IntA live ranges of AValNo. Val# definition
+  // is updated. Kills are also updated.
+  VNInfo *ValNo = BValNo;
+  ValNo->def = AValNo->def;
+  ValNo->copy = NULL;
+  for (unsigned j = 0, ee = ValNo->kills.size(); j != ee; ++j) {
+    unsigned Kill = ValNo->kills[j];
+    if (Kill != BLR->end)
+      BKills.push_back(Kill);
+  }
+  ValNo->kills.clear();
   for (LiveInterval::iterator AI = IntA.begin(), AE = IntA.end();
        AI != AE; ++AI) {
     if (AI->valno != AValNo) continue;
