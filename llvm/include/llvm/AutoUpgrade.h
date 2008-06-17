@@ -35,6 +35,12 @@ namespace llvm {
   /// so that it can update all calls to the old function.
   void UpgradeCallsToIntrinsic(Function* F);
 
+  /// This is an auto-upgrade hook for mutiple-value return statements.
+  /// This function auto-upgrades all such return statements in the given
+  /// function to use aggregate return values built with insertvalue
+  /// instructions.
+  void UpgradeMultipleReturnValues(Function *F);
+
 } // End llvm namespace
 
 #endif
