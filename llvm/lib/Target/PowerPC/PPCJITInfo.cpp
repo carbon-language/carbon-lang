@@ -331,7 +331,8 @@ extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
 #endif
 
 void PPCJITInfo::InvalidateInstructionCache(const void *Addr, unsigned len) {
-#if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER))
+#if (defined(__POWERPC__) || defined (__ppc__) || \
+     defined(_POWER) || defined(_ARCH_PPC))
 # if defined(__APPLE__)
   sys_icache_invalidate(Addr, len);
 # elif defined(__GNUC__)
