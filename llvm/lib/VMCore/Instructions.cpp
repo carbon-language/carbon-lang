@@ -1385,6 +1385,8 @@ InsertValueInst::InsertValueInst(const InsertValueInst &IVI)
   : Instruction(IVI.getType(), InsertValue,
                 OperandTraits<InsertValueInst>::op_begin(this), 2),
     Indices(IVI.Indices) {
+  Op<0>() = IVI.getOperand(0);
+  Op<1>() = IVI.getOperand(1);
 }
 
 InsertValueInst::InsertValueInst(Value *Agg,
