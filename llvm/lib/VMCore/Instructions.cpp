@@ -1460,6 +1460,12 @@ const Type* ExtractValueInst::getIndexedType(const Type *Agg,
   return CurIdx == NumIdx ? Agg : 0;
 }
 
+const Type* ExtractValueInst::getIndexedType(const Type *Agg,
+                                             const unsigned Idx) {
+  const unsigned Idxs[1] = { Idx };
+  return getIndexedType(Agg, &Idxs[0], 1);
+}
+
 ExtractValueInst::ExtractValueInst(Value *Agg,
                                    unsigned Idx,
                                    const std::string &Name,
