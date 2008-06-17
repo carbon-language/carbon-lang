@@ -54,12 +54,12 @@ These features are:
 </ul>
 
 <!--*************************************************************************-->
-<h1><a name="enduser">End-User Features</a></h1>
+<h2><a name="enduser">End-User Features</a></h2>
 <!--*************************************************************************-->
 
 
 <!--=======================================================================-->
-<h2><a name="performance">Fast compiles and Low Memory Use</a></h2>
+<h3><a name="performance">Fast compiles and Low Memory Use</a></h3>
 <!--=======================================================================-->
 
 <p>A major focus of our work on clang is to make it fast, light and scalable.
@@ -130,7 +130,7 @@ to tap the full potential of the clang design.</p>
 
 
 <!--=======================================================================-->
-<h2><a name="expressivediags">Expressive Diagnostics</a></h2>
+<h3><a name="expressivediags">Expressive Diagnostics</a></h3>
 <!--=======================================================================-->
 
 <p>Clang is designed to efficiently capture range information for expressions
@@ -162,7 +162,7 @@ also very useful in C code in some cases as well (e.g. "<tt>__m128"</tt> vs
 "<tt>float __attribute__((__vector_size__(16)))</tt>").</p>
 
 <!--=======================================================================-->
-<h2><a name="gcccompat">GCC Compatibility</a></h2>
+<h3><a name="gcccompat">GCC Compatibility</a></h3>
 <!--=======================================================================-->
 
 <p>GCC is currently the defacto-standard open source compiler today, and it
@@ -183,11 +183,11 @@ diagnostics, which can be mapped to warnings, errors, or just ignored.
 
 
 <!--*************************************************************************-->
-<h1><a name="applications">Utility and Applications</a></h1>
+<h2><a name="applications">Utility and Applications</a></h2>
 <!--*************************************************************************-->
 
 <!--=======================================================================-->
-<h2><a name="libraryarch">Library Based Architecture</a></h2>
+<h3><a name="libraryarch">Library Based Architecture</a></h3>
 <!--=======================================================================-->
 
 <p>A major design concept for clang is its use of a library-based
@@ -245,7 +245,7 @@ various clang libraries, please see the <a href="docs/InternalsManual.html">
 clang Internals Manual</a>.</p>
 
 <!--=======================================================================-->
-<h2><a name="diverseclients">Support Diverse Clients</a></h2>
+<h3><a name="diverseclients">Support Diverse Clients</a></h3>
 <!--=======================================================================-->
 
 <p>Clang is designed and built with many grand plans for how we can use it.  The
@@ -292,7 +292,7 @@ hard, and we don't always get it right the first time, but we fix any problems
 when we realize we made a mistake.</p>
 
 <!--=======================================================================-->
-<h2><a name="ideintegration">Integration with IDEs</h2>
+<h3><a name="ideintegration">Integration with IDEs</h3>
 <!--=======================================================================-->
 
 <p>
@@ -319,7 +319,7 @@ specifically designed and built to capture this information.
 
 
 <!--=======================================================================-->
-<h2><a name="license">Use the LLVM 'BSD' License</a></h2>
+<h3><a name="license">Use the LLVM 'BSD' License</a></h3>
 <!--=======================================================================-->
 
 <p>We actively indend for clang (and a LLVM as a whole) to be used for
@@ -338,11 +338,11 @@ Description</a> for more information.</p>
 
 
 <!--*************************************************************************-->
-<h1><a name="design">Internal Design and Implementation</a></h1>
+<h2><a name="design">Internal Design and Implementation</a></h2>
 <!--*************************************************************************-->
 
 <!--=======================================================================-->
-<h2><a name="real">A real-world, production quality compiler</a></h2>
+<h3><a name="real">A real-world, production quality compiler</a></h3>
 <!--=======================================================================-->
 
 <p>
@@ -360,7 +360,7 @@ the early development stages, we strongly believe that this will become a
 reality.</p>
 
 <!--=======================================================================-->
-<h2><a name="simplecode">A simple and hackable code base</a></h2>
+<h3><a name="simplecode">A simple and hackable code base</a></h3>
 <!--=======================================================================-->
 
 <p>Our goal is to make it possible for anyone with a basic understanding
@@ -377,8 +377,8 @@ a set of AST dumpers, printers, and visualizers that make it easy to put code in
 and see how it is represented.</p>
 
 <!--=======================================================================-->
-<h2><a name="unifiedparser">A single unified parser for C, Objective C, C++,
-and Objective C++</a></h2>
+<h3><a name="unifiedparser">A single unified parser for C, Objective C, C++,
+and Objective C++</a></h3>
 <!--=======================================================================-->
 
 <p>Clang is the "C Language Family Front-end", which means we intend to support
@@ -394,8 +394,8 @@ end result easier to maintain and evolve than maintaining a separate C and C++
 parser which must be bugfixed and maintained independently of each other.</p>
 
 <!--=======================================================================-->
-<h2><a name="conformance">Conformance with C/C++/ObjC and their
- variants</a></h2>
+<h3><a name="conformance">Conformance with C/C++/ObjC and their
+ variants</a></h3>
 <!--=======================================================================-->
 
 <p>When you start work on implementing a language, you find out that there is a
