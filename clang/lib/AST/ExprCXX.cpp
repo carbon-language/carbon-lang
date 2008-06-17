@@ -20,12 +20,8 @@ using namespace clang;
 
 
 // CXXCastExpr
-Stmt::child_iterator CXXCastExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&Op);
-}
-Stmt::child_iterator CXXCastExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&Op)+1;
-}
+Stmt::child_iterator CXXCastExpr::child_begin() { return &Op; }
+Stmt::child_iterator CXXCastExpr::child_end() { return &Op+1; }
 
 // CXXBoolLiteralExpr
 Stmt::child_iterator CXXBoolLiteralExpr::child_begin() { 
@@ -36,14 +32,10 @@ Stmt::child_iterator CXXBoolLiteralExpr::child_end() {
 }
 
 // CXXThrowExpr
-Stmt::child_iterator CXXThrowExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&Op);
-}
+Stmt::child_iterator CXXThrowExpr::child_begin() { return &Op; }
 Stmt::child_iterator CXXThrowExpr::child_end() {
   // If Op is 0, we are processing throw; which has no children.
-  if (Op == 0)
-    return reinterpret_cast<Stmt**>(&Op)+0;
-  return reinterpret_cast<Stmt**>(&Op)+1;
+  return Op ? &Op+1 : &Op;
 }
 
 // CXXDefaultArgExpr

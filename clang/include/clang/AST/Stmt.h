@@ -626,14 +626,15 @@ public:
 /// IndirectGotoStmt - This represents an indirect goto.
 ///
 class IndirectGotoStmt : public Stmt {
-  Expr *Target;
+  Stmt *Target;
   // FIXME: Add location information (e.g. SourceLocation objects).
   //        When doing so, update the serialization routines.
 public:
-  IndirectGotoStmt(Expr *target) : Stmt(IndirectGotoStmtClass), Target(target){}
+  IndirectGotoStmt(Expr *target) : Stmt(IndirectGotoStmtClass),
+                                   Target((Stmt*)target){}
   
-  Expr *getTarget() { return Target; }
-  const Expr *getTarget() const { return Target; }
+  Expr *getTarget();
+  const Expr *getTarget() const;
 
   virtual SourceRange getSourceRange() const { return SourceRange(); }
   
@@ -707,14 +708,14 @@ public:
 /// depend on the return type of the function and the presence of an argument.
 ///
 class ReturnStmt : public Stmt {
-  Expr *RetExpr;
+  Stmt *RetExpr;
   SourceLocation RetLoc;
 public:
   ReturnStmt(SourceLocation RL, Expr *E = 0) : Stmt(ReturnStmtClass), 
-    RetExpr(E), RetLoc(RL) {}
+    RetExpr((Stmt*) E), RetLoc(RL) {}
   
-  const Expr *getRetValue() const { return RetExpr; }
-  Expr *getRetValue() { return RetExpr; }
+  const Expr *getRetValue() const;
+  Expr *getRetValue();
 
   virtual SourceRange getSourceRange() const;
   

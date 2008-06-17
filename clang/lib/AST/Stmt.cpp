@@ -246,11 +246,11 @@ Stmt::child_iterator GotoStmt::child_begin() { return child_iterator(); }
 Stmt::child_iterator GotoStmt::child_end() { return child_iterator(); }
 
 // IndirectGotoStmt
-Stmt::child_iterator IndirectGotoStmt::child_begin() { 
-  return reinterpret_cast<Stmt**>(&Target); 
-}
+Expr* IndirectGotoStmt::getTarget() { return cast<Expr>(Target); }
+const Expr* IndirectGotoStmt::getTarget() const { return cast<Expr>(Target); }
 
-Stmt::child_iterator IndirectGotoStmt::child_end() { return ++child_begin(); }
+Stmt::child_iterator IndirectGotoStmt::child_begin() { return &Target; }
+Stmt::child_iterator IndirectGotoStmt::child_end() { return &Target+1; }
 
 // ContinueStmt
 Stmt::child_iterator ContinueStmt::child_begin() { return child_iterator(); }
@@ -261,14 +261,18 @@ Stmt::child_iterator BreakStmt::child_begin() { return child_iterator(); }
 Stmt::child_iterator BreakStmt::child_end() { return child_iterator(); }
 
 // ReturnStmt
-Stmt::child_iterator ReturnStmt::child_begin() {
-  if (RetExpr) return reinterpret_cast<Stmt**>(&RetExpr);
-  else return child_iterator();
+const Expr* ReturnStmt::getRetValue() const {
+  return cast_or_null<Expr>(RetExpr);
+}
+Expr* ReturnStmt::getRetValue() {
+  return cast_or_null<Expr>(RetExpr);
 }
 
-Stmt::child_iterator ReturnStmt::child_end() { 
-  if (RetExpr) return reinterpret_cast<Stmt**>(&RetExpr)+1;
-  else return child_iterator();
+Stmt::child_iterator ReturnStmt::child_begin() {
+  return &RetExpr;
+}
+Stmt::child_iterator ReturnStmt::child_end() {
+  return RetExpr ? &RetExpr+1 : &RetExpr;
 }
 
 // AsmStmt
