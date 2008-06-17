@@ -152,7 +152,7 @@ public:
 class ObjCIvarRefExpr : public Expr {
   class ObjCIvarDecl *D; 
   SourceLocation Loc;
-  Expr *Base;
+  Stmt *Base;
   bool IsArrow:1;      // True if this is "X->F", false if this is "X.F".
   bool IsFreeIvar:1;   // True if ivar reference has no base (self assumed).
   
@@ -168,8 +168,8 @@ public:
     return isFreeIvar() ? SourceRange(Loc)
                         : SourceRange(getBase()->getLocStart(), Loc); 
   }
-  const Expr *getBase() const { return Base; }
-  Expr *getBase() { return Base; }
+  const Expr *getBase() const { return cast<Expr>(Base); }
+  Expr *getBase() { return cast<Expr>(Base); }
   void setBase(Expr * base) { Base = base; }
   bool isArrow() const { return IsArrow; }
   bool isFreeIvar() const { return IsFreeIvar; }
@@ -193,7 +193,7 @@ public:
 class ObjCPropertyRefExpr : public Expr {
   class Decl *D; // an ObjCMethodDecl or ObjCPropertyDecl
   SourceLocation Loc;
-  Expr *Base;
+  Stmt *Base;
   
 public:
   ObjCPropertyRefExpr(Decl *d, QualType t, SourceLocation l, Expr *base) : 
@@ -205,8 +205,8 @@ public:
   virtual SourceRange getSourceRange() const { 
     return SourceRange(getBase()->getLocStart(), Loc); 
   }
-  const Expr *getBase() const { return Base; }
-  Expr *getBase() { return Base; }
+  const Expr *getBase() const { return cast<Expr>(Base); }
+  Expr *getBase() { return cast<Expr>(Base); }
   void setBase(Expr * base) { Base = base; }
   
   SourceLocation getLocation() const { return Loc; }
@@ -227,7 +227,7 @@ public:
 class ObjCMessageExpr : public Expr {
   enum { RECEIVER=0, ARGS_START=1 };
 
-  Expr **SubExprs;
+  Stmt **SubExprs;
   
   unsigned NumArgs;
   
@@ -297,11 +297,11 @@ public:
   /// getArg - Return the specified argument.
   Expr *getArg(unsigned Arg) {
     assert(Arg < NumArgs && "Arg access out of range!");
-    return SubExprs[Arg+ARGS_START];
+    return cast<Expr>(SubExprs[Arg+ARGS_START]);
   }
   const Expr *getArg(unsigned Arg) const {
     assert(Arg < NumArgs && "Arg access out of range!");
-    return SubExprs[Arg+ARGS_START];
+    return cast<Expr>(SubExprs[Arg+ARGS_START]);
   }
   /// setArg - Set the specified argument.
   void setArg(unsigned Arg, Expr *ArgExpr) {
@@ -322,13 +322,13 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  typedef Expr** arg_iterator;
-  typedef const Expr* const* const_arg_iterator;
+  typedef ExprIterator arg_iterator;
+  typedef ConstExprIterator const_arg_iterator;
   
   arg_iterator arg_begin() { return &SubExprs[ARGS_START]; }
-  arg_iterator arg_end()   { return arg_begin() + NumArgs; }
+  arg_iterator arg_end()   { return &SubExprs[ARGS_START] + NumArgs; }
   const_arg_iterator arg_begin() const { return &SubExprs[ARGS_START]; }
-  const_arg_iterator arg_end() const { return arg_begin() + NumArgs; }
+  const_arg_iterator arg_end() const { return &SubExprs[ARGS_START] + NumArgs; }
   
   // Serialization.
   virtual void EmitImpl(llvm::Serializer& S) const;

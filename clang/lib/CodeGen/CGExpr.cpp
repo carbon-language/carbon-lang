@@ -650,13 +650,15 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
         
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
   return EmitCallExpr(Callee, E->getCallee()->getType(),
-                      E->arg_begin(), E->getNumArgs());
+                      E->arg_begin(), E->arg_end());
 }
 
-RValue CodeGenFunction::EmitCallExpr(Expr *FnExpr, Expr *const *Args,
-                                     unsigned NumArgs) {
+RValue CodeGenFunction::EmitCallExpr(Expr *FnExpr,
+                                     CallExpr::const_arg_iterator ArgBeg,
+                                     CallExpr::const_arg_iterator ArgEnd) {
+
   llvm::Value *Callee = EmitScalarExpr(FnExpr);
-  return EmitCallExpr(Callee, FnExpr->getType(), Args, NumArgs);
+  return EmitCallExpr(Callee, FnExpr->getType(), ArgBeg, ArgEnd);
 }
 
 LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {
@@ -702,7 +704,9 @@ LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
 }
 
 RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType, 
-                                     Expr *const *ArgExprs, unsigned NumArgs) {
+                                     CallExpr::const_arg_iterator ArgBeg,
+                                     CallExpr::const_arg_iterator ArgEnd) {
+  
   // The callee type will always be a pointer to function type, get the function
   // type.
   FnType = cast<PointerType>(FnType.getCanonicalType())->getPointeeType();
@@ -718,20 +722,20 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType,
     // FIXME: set the stret attribute on the argument.
   }
   
-  for (unsigned i = 0, e = NumArgs; i != e; ++i) {
-    QualType ArgTy = ArgExprs[i]->getType();
+  for (CallExpr::const_arg_iterator I = ArgBeg; I != ArgEnd; ++I) {
+    QualType ArgTy = I->getType();
 
     if (!hasAggregateLLVMType(ArgTy)) {
       // Scalar argument is passed by-value.
-      Args.push_back(EmitScalarExpr(ArgExprs[i]));
+      Args.push_back(EmitScalarExpr(*I));
     } else if (ArgTy->isAnyComplexType()) {
       // Make a temporary alloca to pass the argument.
       llvm::Value *DestMem = CreateTempAlloca(ConvertType(ArgTy));
-      EmitComplexExprIntoAddr(ArgExprs[i], DestMem, false);
+      EmitComplexExprIntoAddr(*I, DestMem, false);
       Args.push_back(DestMem);
     } else {
       llvm::Value *DestMem = CreateTempAlloca(ConvertType(ArgTy));
-      EmitAggExpr(ArgExprs[i], DestMem, false);
+      EmitAggExpr(*I, DestMem, false);
       Args.push_back(DestMem);
     }
   }
@@ -744,8 +748,10 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType,
     ParamAttrList.push_back(
         llvm::ParamAttrsWithIndex::get(1, llvm::ParamAttr::StructRet));
   unsigned increment = hasAggregateLLVMType(ResultType) ? 2 : 1;
-  for (unsigned i = 0; i < NumArgs; i++) {
-    QualType ParamType = ArgExprs[i]->getType();
+  
+  unsigned i = 0;
+  for (CallExpr::const_arg_iterator I = ArgBeg; I != ArgEnd; ++I, ++i) {
+    QualType ParamType = I->getType();
     unsigned ParamAttrs = 0;
     if (ParamType->isRecordType())
       ParamAttrs |= llvm::ParamAttr::ByVal;

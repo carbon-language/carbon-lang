@@ -246,8 +246,8 @@ ComplexPairTy ComplexExprEmitter::VisitCallExpr(const CallExpr *E) {
 }
 
 ComplexPairTy ComplexExprEmitter::VisitOverloadExpr(const OverloadExpr *E) {
-  return CGF.EmitCallExpr(E->getFn(), E->arg_begin(),
-                          E->getNumArgs(CGF.getContext())).getComplexVal();
+  return CGF.EmitCallExpr(E->getFn(), E->arg_begin(), 
+                          E->arg_end(CGF.getContext())).getComplexVal();
 }
 
 ComplexPairTy ComplexExprEmitter::VisitStmtExpr(const StmtExpr *E) {

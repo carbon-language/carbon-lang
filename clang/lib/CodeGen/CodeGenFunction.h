@@ -18,6 +18,9 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/IRBuilder.h"
+#include "clang/AST/Expr.h"
+#include "clang/AST/ExprObjC.h"
+
 #include <vector>
 
 namespace llvm {
@@ -31,50 +34,7 @@ namespace clang {
   class ObjCMethodDecl;
   class TargetInfo;
   class FunctionTypeProto;
-  
-  class Stmt;
-  class CompoundStmt;
-  class LabelStmt;
-  class GotoStmt;
-  class IfStmt;
-  class WhileStmt;
-  class DoStmt;
-  class ForStmt;
-  class ReturnStmt;
-  class DeclStmt;
-  class CaseStmt;
-  class DefaultStmt;
-  class SwitchStmt;
-  class AsmStmt;
-  
-  class Expr;
-  class DeclRefExpr;
-  class StringLiteral;
-  class IntegerLiteral;
-  class FloatingLiteral;
-  class CharacterLiteral;
-  class TypesCompatibleExpr;
-  
-  class ImplicitCastExpr;
-  class CastExpr;
-  class CallExpr;
-  class UnaryOperator;
-  class BinaryOperator;
-  class CompoundAssignOperator;
-  class ArraySubscriptExpr;
-  class ExtVectorElementExpr;
-  class ConditionalOperator;
-  class ChooseExpr;
-  class PreDefinedExpr;
-  class ObjCStringLiteral;
-  class ObjCIvarRefExpr;
-  class MemberExpr;
-  class CompoundLiteralExpr;
 
-  class VarDecl;
-  class EnumConstantDecl;
-  class ParmVarDecl;
-  class FieldDecl;
 namespace CodeGen {
   class CodeGenModule;
   class CodeGenTypes;
@@ -468,9 +428,14 @@ public:
   //===--------------------------------------------------------------------===//
 
   RValue EmitCallExpr(const CallExpr *E);
-  RValue EmitCallExpr(Expr *FnExpr, Expr *const *Args, unsigned NumArgs);
+
+  RValue EmitCallExpr(Expr *FnExpr, CallExpr::const_arg_iterator ArgBeg,
+                      CallExpr::const_arg_iterator ArgEnd);
+
   RValue EmitCallExpr(llvm::Value *Callee, QualType FnType,
-                      Expr *const *Args, unsigned NumArgs);
+                      CallExpr::const_arg_iterator ArgBeg,
+                      CallExpr::const_arg_iterator ArgEnd);
+  
   RValue EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
 
   llvm::Value *EmitX86BuiltinExpr(unsigned BuiltinID, const CallExpr *E);

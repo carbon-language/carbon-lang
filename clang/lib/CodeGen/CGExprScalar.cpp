@@ -1095,7 +1095,7 @@ Value *ScalarExprEmitter::VisitChooseExpr(ChooseExpr *E) {
 
 Value *ScalarExprEmitter::VisitOverloadExpr(OverloadExpr *E) {
   return CGF.EmitCallExpr(E->getFn(), E->arg_begin(),
-                          E->getNumArgs(CGF.getContext())).getScalarVal();
+                          E->arg_end(CGF.getContext())).getScalarVal();
 }
 
 Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {

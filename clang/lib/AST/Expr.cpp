@@ -92,7 +92,7 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
 CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t,
                    SourceLocation rparenloc)
   : Expr(CallExprClass, t), NumArgs(numargs) {
-  SubExprs = new Expr*[numargs+1];
+  SubExprs = new Stmt*[numargs+1];
   SubExprs[FN] = fn;
   for (unsigned i = 0; i != numargs; ++i)
     SubExprs[i+ARGS_START] = args[i];
@@ -115,7 +115,7 @@ void CallExpr::setNumArgs(unsigned NumArgs) {
   }
 
   // Otherwise, we are growing the # arguments.  New an bigger argument array.
-  Expr **NewSubExprs = new Expr*[NumArgs+1];
+  Stmt **NewSubExprs = new Stmt*[NumArgs+1];
   // Copy over args.
   for (unsigned i = 0; i != getNumArgs()+ARGS_START; ++i)
     NewSubExprs[i] = SubExprs[i];
@@ -1109,7 +1109,7 @@ ObjCMessageExpr::ObjCMessageExpr(Expr *receiver, Selector selInfo,
   : Expr(ObjCMessageExprClass, retType), SelName(selInfo), 
     MethodProto(mproto) {
   NumArgs = nargs;
-  SubExprs = new Expr*[NumArgs+1];
+  SubExprs = new Stmt*[NumArgs+1];
   SubExprs[RECEIVER] = receiver;
   if (NumArgs) {
     for (unsigned i = 0; i != NumArgs; ++i)
@@ -1128,7 +1128,7 @@ ObjCMessageExpr::ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
   : Expr(ObjCMessageExprClass, retType), SelName(selInfo), 
     MethodProto(mproto) {
   NumArgs = nargs;
-  SubExprs = new Expr*[NumArgs+1];
+  SubExprs = new Stmt*[NumArgs+1];
   SubExprs[RECEIVER] = (Expr*) ((uintptr_t) clsName | 0x1);
   if (NumArgs) {
     for (unsigned i = 0; i != NumArgs; ++i)
@@ -1184,7 +1184,7 @@ int64_t UnaryOperator::evaluateOffsetOf(ASTContext& C) const
   assert(Opc == OffsetOf && "Unary operator not offsetof!");
   
   unsigned CharSize = C.Target.getCharWidth();
-  return ::evaluateOffsetOf(C, Val) / CharSize;
+  return ::evaluateOffsetOf(C, cast<Expr>(Val)) / CharSize;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1196,22 +1196,12 @@ Stmt::child_iterator DeclRefExpr::child_begin() { return child_iterator(); }
 Stmt::child_iterator DeclRefExpr::child_end() { return child_iterator(); }
 
 // ObjCIvarRefExpr
-Stmt::child_iterator ObjCIvarRefExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&Base);
-}
-
-Stmt::child_iterator ObjCIvarRefExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&Base)+1;
-}
+Stmt::child_iterator ObjCIvarRefExpr::child_begin() { return &Base; }
+Stmt::child_iterator ObjCIvarRefExpr::child_end() { return &Base+1; }
 
 // ObjCPropertyRefExpr
-Stmt::child_iterator ObjCPropertyRefExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&Base);
-}
-
-Stmt::child_iterator ObjCPropertyRefExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&Base)+1;
-}
+Stmt::child_iterator ObjCPropertyRefExpr::child_begin() { return &Base; }
+Stmt::child_iterator ObjCPropertyRefExpr::child_end() { return &Base+1; }
 
 // ObjCSuperRefExpr
 Stmt::child_iterator ObjCSuperRefExpr::child_begin() { return child_iterator();}
@@ -1234,32 +1224,20 @@ Stmt::child_iterator FloatingLiteral::child_begin() { return child_iterator(); }
 Stmt::child_iterator FloatingLiteral::child_end() { return child_iterator(); }
 
 // ImaginaryLiteral
-Stmt::child_iterator ImaginaryLiteral::child_begin() {
-  return reinterpret_cast<Stmt**>(&Val);
-}
-Stmt::child_iterator ImaginaryLiteral::child_end() {
-  return reinterpret_cast<Stmt**>(&Val)+1;
-}
+Stmt::child_iterator ImaginaryLiteral::child_begin() { return &Val; }
+Stmt::child_iterator ImaginaryLiteral::child_end() { return &Val+1; }
 
 // StringLiteral
 Stmt::child_iterator StringLiteral::child_begin() { return child_iterator(); }
 Stmt::child_iterator StringLiteral::child_end() { return child_iterator(); }
 
 // ParenExpr
-Stmt::child_iterator ParenExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&Val);
-}
-Stmt::child_iterator ParenExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&Val)+1;
-}
+Stmt::child_iterator ParenExpr::child_begin() { return &Val; }
+Stmt::child_iterator ParenExpr::child_end() { return &Val+1; }
 
 // UnaryOperator
-Stmt::child_iterator UnaryOperator::child_begin() {
-  return reinterpret_cast<Stmt**>(&Val);
-}
-Stmt::child_iterator UnaryOperator::child_end() {
-  return reinterpret_cast<Stmt**>(&Val+1);
-}
+Stmt::child_iterator UnaryOperator::child_begin() { return &Val; }
+Stmt::child_iterator UnaryOperator::child_end() { return &Val+1; }
 
 // SizeOfAlignOfTypeExpr
 Stmt::child_iterator SizeOfAlignOfTypeExpr::child_begin() { 
@@ -1276,74 +1254,54 @@ Stmt::child_iterator SizeOfAlignOfTypeExpr::child_end() {
 
 // ArraySubscriptExpr
 Stmt::child_iterator ArraySubscriptExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&SubExprs);
+  return &SubExprs[0];
 }
 Stmt::child_iterator ArraySubscriptExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&SubExprs)+END_EXPR;
+  return &SubExprs[0]+END_EXPR;
 }
 
 // CallExpr
 Stmt::child_iterator CallExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&SubExprs[0]);
+  return &SubExprs[0];
 }
 Stmt::child_iterator CallExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&SubExprs[NumArgs+ARGS_START]);
+  return &SubExprs[0]+NumArgs+ARGS_START;
 }
 
 // MemberExpr
-Stmt::child_iterator MemberExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&Base);
-}
-Stmt::child_iterator MemberExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&Base)+1;
-}
+Stmt::child_iterator MemberExpr::child_begin() { return &Base; }
+Stmt::child_iterator MemberExpr::child_end() { return &Base+1; }
 
 // ExtVectorElementExpr
-Stmt::child_iterator ExtVectorElementExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&Base);
-}
-Stmt::child_iterator ExtVectorElementExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&Base)+1;
-}
+Stmt::child_iterator ExtVectorElementExpr::child_begin() { return &Base; }
+Stmt::child_iterator ExtVectorElementExpr::child_end() { return &Base+1; }
 
 // CompoundLiteralExpr
-Stmt::child_iterator CompoundLiteralExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&Init);
-}
-Stmt::child_iterator CompoundLiteralExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&Init)+1;
-}
+Stmt::child_iterator CompoundLiteralExpr::child_begin() { return &Init; }
+Stmt::child_iterator CompoundLiteralExpr::child_end() { return &Init+1; }
 
 // ImplicitCastExpr
-Stmt::child_iterator ImplicitCastExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&Op);
-}
-Stmt::child_iterator ImplicitCastExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&Op)+1;
-}
+Stmt::child_iterator ImplicitCastExpr::child_begin() { return &Op; }
+Stmt::child_iterator ImplicitCastExpr::child_end() { return &Op+1; }
 
 // CastExpr
-Stmt::child_iterator CastExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&Op);
-}
-Stmt::child_iterator CastExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&Op)+1;
-}
+Stmt::child_iterator CastExpr::child_begin() { return &Op; }
+Stmt::child_iterator CastExpr::child_end() { return &Op+1; }
 
 // BinaryOperator
 Stmt::child_iterator BinaryOperator::child_begin() {
-  return reinterpret_cast<Stmt**>(&SubExprs);
+  return &SubExprs[0];
 }
 Stmt::child_iterator BinaryOperator::child_end() {
-  return reinterpret_cast<Stmt**>(&SubExprs)+END_EXPR;
+  return &SubExprs[0]+END_EXPR;
 }
 
 // ConditionalOperator
 Stmt::child_iterator ConditionalOperator::child_begin() {
-  return reinterpret_cast<Stmt**>(&SubExprs);
+  return &SubExprs[0];
 }
 Stmt::child_iterator ConditionalOperator::child_end() {
-  return reinterpret_cast<Stmt**>(&SubExprs)+END_EXPR;
+  return &SubExprs[0]+END_EXPR;
 }
 
 // AddrLabelExpr
@@ -1351,12 +1309,8 @@ Stmt::child_iterator AddrLabelExpr::child_begin() { return child_iterator(); }
 Stmt::child_iterator AddrLabelExpr::child_end() { return child_iterator(); }
 
 // StmtExpr
-Stmt::child_iterator StmtExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&SubStmt);
-}
-Stmt::child_iterator StmtExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&SubStmt)+1;
-}
+Stmt::child_iterator StmtExpr::child_begin() { return &SubStmt; }
+Stmt::child_iterator StmtExpr::child_end() { return &SubStmt+1; }
 
 // TypesCompatibleExpr
 Stmt::child_iterator TypesCompatibleExpr::child_begin() {
@@ -1368,47 +1322,31 @@ Stmt::child_iterator TypesCompatibleExpr::child_end() {
 }
 
 // ChooseExpr
-Stmt::child_iterator ChooseExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&SubExprs);
-}
-
-Stmt::child_iterator ChooseExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&SubExprs)+END_EXPR;
-}
+Stmt::child_iterator ChooseExpr::child_begin() { return &SubExprs[0]; }
+Stmt::child_iterator ChooseExpr::child_end() { return &SubExprs[0]+END_EXPR; }
 
 // OverloadExpr
-Stmt::child_iterator OverloadExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&SubExprs[0]);
-}
-Stmt::child_iterator OverloadExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&SubExprs[NumExprs]);
-}
+Stmt::child_iterator OverloadExpr::child_begin() { return &SubExprs[0]; }
+Stmt::child_iterator OverloadExpr::child_end() { return &SubExprs[0]+NumExprs; }
 
 // ShuffleVectorExpr
 Stmt::child_iterator ShuffleVectorExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&SubExprs[0]);
+  return &SubExprs[0];
 }
 Stmt::child_iterator ShuffleVectorExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&SubExprs[NumExprs]);
+  return &SubExprs[0]+NumExprs;
 }
 
 // VAArgExpr
-Stmt::child_iterator VAArgExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(&Val);
-}
-
-Stmt::child_iterator VAArgExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&Val)+1;
-}
+Stmt::child_iterator VAArgExpr::child_begin() { return &Val; }
+Stmt::child_iterator VAArgExpr::child_end() { return &Val+1; }
 
 // InitListExpr
 Stmt::child_iterator InitListExpr::child_begin() {
-  return reinterpret_cast<Stmt**>(InitExprs.size() ? 
-                                  &InitExprs[0] : 0);
+  return InitExprs.size() ? &InitExprs[0] : 0;
 }
 Stmt::child_iterator InitListExpr::child_end() {
-  return reinterpret_cast<Stmt**>(InitExprs.size() ? 
-                                  &InitExprs[0] + InitExprs.size() : 0);
+  return InitExprs.size() ? &InitExprs[0] + InitExprs.size() : 0;
 }
 
 // ObjCStringLiteral
@@ -1441,9 +1379,9 @@ Stmt::child_iterator ObjCProtocolExpr::child_end() {
 
 // ObjCMessageExpr
 Stmt::child_iterator ObjCMessageExpr::child_begin() {  
-  return reinterpret_cast<Stmt**>(&SubExprs[ getReceiver() ? 0 : ARGS_START ]);
+  return getReceiver() ? &SubExprs[0] : &SubExprs[0] + ARGS_START;
 }
 Stmt::child_iterator ObjCMessageExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&SubExprs[getNumArgs()+ARGS_START]);
+  return &SubExprs[0]+ARGS_START+getNumArgs();
 }
 

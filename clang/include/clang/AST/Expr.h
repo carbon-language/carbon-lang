@@ -142,6 +142,50 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+// ExprIterator - Iterators for iterating over Stmt* arrays that contain
+//  only Expr*.  This is needed because AST nodes use Stmt* arrays to store
+//  references to children (to be compatible with StmtIterator).
+//===----------------------------------------------------------------------===//
+  
+class ExprIterator {
+  Stmt** I;
+public:
+  ExprIterator(Stmt** i) : I(i) {}
+  ExprIterator() : I(0) {}    
+  ExprIterator& operator++() { ++I; return *this; }
+  ExprIterator operator-(size_t i) { return I-i; }
+  ExprIterator operator+(size_t i) { return I+i; }
+  Expr* operator[](size_t idx) { return cast<Expr>(I[idx]); }
+  // FIXME: Verify that this will correctly return a signed distance.
+  signed operator-(const ExprIterator& R) const { return I - R.I; }
+  Expr* operator*() const { return cast<Expr>(*I); }
+  Expr* operator->() const { return cast<Expr>(*I); }
+  bool operator==(const ExprIterator& R) const { return I == R.I; }
+  bool operator!=(const ExprIterator& R) const { return I != R.I; }
+  bool operator>(const ExprIterator& R) const { return I > R.I; }
+  bool operator>=(const ExprIterator& R) const { return I >= R.I; }
+};
+
+class ConstExprIterator {
+  Stmt* const * I;
+public:
+  ConstExprIterator(Stmt* const* i) : I(i) {}
+  ConstExprIterator() : I(0) {}    
+  ConstExprIterator& operator++() { ++I; return *this; }
+  ConstExprIterator operator+(size_t i) { return I+i; }
+  ConstExprIterator operator-(size_t i) { return I-i; }
+  Expr * const operator[](size_t idx) { return cast<Expr>(I[idx]); }
+  signed operator-(const ConstExprIterator& R) const { return I - R.I; }
+  Expr * const operator*() const { return cast<Expr>(*I); }
+  Expr * const operator->() const { return cast<Expr>(*I); }
+  bool operator==(const ConstExprIterator& R) const { return I == R.I; }
+  bool operator!=(const ConstExprIterator& R) const { return I != R.I; }
+  bool operator>(const ConstExprIterator& R) const { return I > R.I; }
+  bool operator>=(const ConstExprIterator& R) const { return I >= R.I; }
+}; 
+  
+  
+//===----------------------------------------------------------------------===//
 // Primary Expressions.
 //===----------------------------------------------------------------------===//
 
@@ -299,13 +343,13 @@ public:
 /// whose element type matches the subexpression.
 ///
 class ImaginaryLiteral : public Expr {
-  Expr *Val;
+  Stmt *Val;
 public:
   ImaginaryLiteral(Expr *val, QualType Ty)
     : Expr(ImaginaryLiteralClass, Ty), Val(val) {}
   
-  const Expr *getSubExpr() const { return Val; }
-  Expr *getSubExpr() { return Val; }
+  const Expr *getSubExpr() const { return cast<Expr>(Val); }
+  Expr *getSubExpr() { return cast<Expr>(Val); }
   
   virtual SourceRange getSourceRange() const { return Val->getSourceRange(); }
   static bool classof(const Stmt *T) { 
@@ -363,13 +407,13 @@ public:
 /// AST node is only formed if full location information is requested.
 class ParenExpr : public Expr {
   SourceLocation L, R;
-  Expr *Val;
+  Stmt *Val;
 public:
   ParenExpr(SourceLocation l, SourceLocation r, Expr *val)
     : Expr(ParenExprClass, val->getType()), L(l), R(r), Val(val) {}
   
-  const Expr *getSubExpr() const { return Val; }
-  Expr *getSubExpr() { return Val; }
+  const Expr *getSubExpr() const { return cast<Expr>(Val); }
+  Expr *getSubExpr() { return cast<Expr>(Val); }
   virtual SourceRange getSourceRange() const { return SourceRange(L, R); }
 
   static bool classof(const Stmt *T) { 
@@ -415,7 +459,7 @@ public:
     OffsetOf          // __builtin_offsetof
   };
 private:
-  Expr *Val;
+  Stmt *Val;
   Opcode Opc;
   SourceLocation Loc;
 public:  
@@ -424,7 +468,7 @@ public:
     : Expr(UnaryOperatorClass, type), Val(input), Opc(opc), Loc(l) {}
 
   Opcode getOpcode() const { return Opc; }
-  Expr *getSubExpr() const { return Val; }
+  Expr *getSubExpr() const { return cast<Expr>(Val); }
   
   /// getOperatorLoc - Return the location of the operator.
   SourceLocation getOperatorLoc() const { return Loc; }
@@ -507,7 +551,7 @@ public:
 /// ArraySubscriptExpr - [C99 6.5.2.1] Array Subscripting.
 class ArraySubscriptExpr : public Expr {
   enum { LHS, RHS, END_EXPR=2 };
-  Expr* SubExprs[END_EXPR]; 
+  Stmt* SubExprs[END_EXPR]; 
   SourceLocation RBracketLoc;
 public:
   ArraySubscriptExpr(Expr *lhs, Expr *rhs, QualType t,
@@ -526,26 +570,26 @@ public:
   /// predicate the format conversion in getBase and getIdx only on the
   /// the type of the RHS, as it is possible for the LHS to be a vector of
   /// integer type
-  Expr *getLHS() { return SubExprs[LHS]; }
-  const Expr *getLHS() const { return SubExprs[LHS]; }
+  Expr *getLHS() { return cast<Expr>(SubExprs[LHS]); }
+  const Expr *getLHS() const { return cast<Expr>(SubExprs[LHS]); }
   
-  Expr *getRHS() { return SubExprs[RHS]; }
-  const Expr *getRHS() const { return SubExprs[RHS]; }
+  Expr *getRHS() { return cast<Expr>(SubExprs[RHS]); }
+  const Expr *getRHS() const { return cast<Expr>(SubExprs[RHS]); }
   
   Expr *getBase() { 
-    return (getRHS()->getType()->isIntegerType()) ? getLHS() : getRHS();
+    return cast<Expr>(getRHS()->getType()->isIntegerType() ? getLHS():getRHS());
   }
     
   const Expr *getBase() const { 
-    return (getRHS()->getType()->isIntegerType()) ? getLHS() : getRHS();
+    return cast<Expr>(getRHS()->getType()->isIntegerType() ? getLHS():getRHS());
   }
   
   Expr *getIdx() { 
-    return (getRHS()->getType()->isIntegerType()) ? getRHS() : getLHS();
+    return cast<Expr>(getRHS()->getType()->isIntegerType() ? getRHS():getLHS());
   }
   
   const Expr *getIdx() const {
-    return (getRHS()->getType()->isIntegerType()) ? getRHS() : getLHS(); 
+    return cast<Expr>(getRHS()->getType()->isIntegerType() ? getRHS():getLHS());
   }  
   
   virtual SourceRange getSourceRange() const { 
@@ -572,12 +616,12 @@ public:
 ///
 class CallExpr : public Expr {
   enum { FN=0, ARGS_START=1 };
-  Expr **SubExprs;
+  Stmt **SubExprs;
   unsigned NumArgs;
   SourceLocation RParenLoc;
   
   // This version of the ctor is for deserialization.
-  CallExpr(Expr** subexprs, unsigned numargs, QualType t, 
+  CallExpr(Stmt** subexprs, unsigned numargs, QualType t, 
            SourceLocation rparenloc)
   : Expr(CallExprClass,t), SubExprs(subexprs), 
     NumArgs(numargs), RParenLoc(rparenloc) {}
@@ -589,8 +633,8 @@ public:
     delete [] SubExprs;
   }
   
-  const Expr *getCallee() const { return SubExprs[FN]; }
-  Expr *getCallee() { return SubExprs[FN]; }
+  const Expr *getCallee() const { return cast<Expr>(SubExprs[FN]); }
+  Expr *getCallee() { return cast<Expr>(SubExprs[FN]); }
   void setCallee(Expr *F) { SubExprs[FN] = F; }
   
   /// getNumArgs - Return the number of actual arguments to this call.
@@ -600,11 +644,11 @@ public:
   /// getArg - Return the specified argument.
   Expr *getArg(unsigned Arg) {
     assert(Arg < NumArgs && "Arg access out of range!");
-    return SubExprs[Arg+ARGS_START];
+    return cast<Expr>(SubExprs[Arg+ARGS_START]);
   }
   const Expr *getArg(unsigned Arg) const {
     assert(Arg < NumArgs && "Arg access out of range!");
-    return SubExprs[Arg+ARGS_START];
+    return cast<Expr>(SubExprs[Arg+ARGS_START]);
   }
   /// setArg - Set the specified argument.
   void setArg(unsigned Arg, Expr *ArgExpr) {
@@ -617,13 +661,13 @@ public:
   /// to null.
   void setNumArgs(unsigned NumArgs);
   
-  typedef Expr **arg_iterator;
-  typedef Expr * const *arg_const_iterator;
+  typedef ExprIterator arg_iterator;
+  typedef ConstExprIterator const_arg_iterator;
+    
   arg_iterator arg_begin() { return SubExprs+ARGS_START; }
   arg_iterator arg_end() { return SubExprs+ARGS_START+getNumArgs(); }
-  arg_const_iterator arg_begin() const { return SubExprs+ARGS_START; }
-  arg_const_iterator arg_end() const { return SubExprs+ARGS_START+getNumArgs(); }
-  
+  const_arg_iterator arg_begin() const { return SubExprs+ARGS_START; }
+  const_arg_iterator arg_end() const { return SubExprs+ARGS_START+getNumArgs();}
   
   /// getNumCommas - Return the number of commas that must have been present in
   /// this function call.
@@ -656,7 +700,7 @@ public:
 /// MemberExpr - [C99 6.5.2.3] Structure and Union Members.
 ///
 class MemberExpr : public Expr {
-  Expr *Base;
+  Stmt *Base;
   FieldDecl *MemberDecl;
   SourceLocation MemberLoc;
   bool IsArrow;      // True if this is "X->F", false if this is "X.F".
@@ -666,7 +710,7 @@ public:
     : Expr(MemberExprClass, ty),
       Base(base), MemberDecl(memberdecl), MemberLoc(l), IsArrow(isarrow) {}
 
-  Expr *getBase() const { return Base; }
+  Expr *getBase() const { return cast<Expr>(Base); }
   FieldDecl *getMemberDecl() const { return MemberDecl; }
   bool isArrow() const { return IsArrow; }
 
@@ -694,7 +738,7 @@ public:
 /// the following is legal:  "V.xy = V.zw" if V is a 4 element extended vector.
 ///
 class ExtVectorElementExpr : public Expr {
-  Expr *Base;
+  Stmt *Base;
   IdentifierInfo &Accessor;
   SourceLocation AccessorLoc;
 public:
@@ -703,8 +747,8 @@ public:
     : Expr(ExtVectorElementExprClass, ty), 
       Base(base), Accessor(accessor), AccessorLoc(loc) {}
                      
-  const Expr *getBase() const { return Base; }
-  Expr *getBase() { return Base; }
+  const Expr *getBase() const { return cast<Expr>(Base); }
+  Expr *getBase() { return cast<Expr>(Base); }
   
   IdentifierInfo &getAccessor() const { return Accessor; }
   
@@ -740,14 +784,14 @@ class CompoundLiteralExpr : public Expr {
   /// compound literal like "(int){4}".  This can be null if this is a
   /// synthesized compound expression.
   SourceLocation LParenLoc;
-  Expr *Init;
+  Stmt *Init;
   bool FileScope;
 public:
   CompoundLiteralExpr(SourceLocation lparenloc, QualType ty, Expr *init, bool fileScope) : 
     Expr(CompoundLiteralExprClass, ty), LParenLoc(lparenloc), Init(init), FileScope(fileScope) {}
   
-  const Expr *getInitializer() const { return Init; }
-  Expr *getInitializer() { return Init; }
+  const Expr *getInitializer() const { return cast<Expr>(Init); }
+  Expr *getInitializer() { return cast<Expr>(Init); }
 
   bool isFileScope() const { return FileScope; }
   
@@ -780,13 +824,13 @@ public:
 /// float->double, short->int, etc.
 ///
 class ImplicitCastExpr : public Expr {
-  Expr *Op;
+  Stmt *Op;
 public:
   ImplicitCastExpr(QualType ty, Expr *op) : 
     Expr(ImplicitCastExprClass, ty), Op(op) {}
     
-  Expr *getSubExpr() { return Op; }
-  const Expr *getSubExpr() const { return Op; }
+  Expr *getSubExpr() { return cast<Expr>(Op); }
+  const Expr *getSubExpr() const { return cast<Expr>(Op); }
 
   virtual SourceRange getSourceRange() const { return Op->getSourceRange(); }
 
@@ -806,7 +850,7 @@ public:
 /// CastExpr - [C99 6.5.4] Cast Operators.
 ///
 class CastExpr : public Expr {
-  Expr *Op;
+  Stmt *Op;
   SourceLocation Loc; // the location of the left paren
 public:
   CastExpr(QualType ty, Expr *op, SourceLocation l) : 
@@ -814,7 +858,7 @@ public:
 
   SourceLocation getLParenLoc() const { return Loc; }
   
-  Expr *getSubExpr() const { return Op; }
+  Expr *getSubExpr() const { return cast<Expr>(Op); }
   
   virtual SourceRange getSourceRange() const {
     return SourceRange(Loc, getSubExpr()->getSourceRange().getEnd());
@@ -857,7 +901,7 @@ public:
   };
 private:
   enum { LHS, RHS, END_EXPR };
-  Expr* SubExprs[END_EXPR];
+  Stmt* SubExprs[END_EXPR];
   Opcode Opc;
   SourceLocation OpLoc;
 public:  
@@ -873,8 +917,8 @@ public:
 
   SourceLocation getOperatorLoc() const { return OpLoc; }
   Opcode getOpcode() const { return Opc; }
-  Expr *getLHS() const { return SubExprs[LHS]; }
-  Expr *getRHS() const { return SubExprs[RHS]; }
+  Expr *getLHS() const { return cast<Expr>(SubExprs[LHS]); }
+  Expr *getRHS() const { return cast<Expr>(SubExprs[RHS]); }
   virtual SourceRange getSourceRange() const {
     return SourceRange(getLHS()->getLocStart(), getRHS()->getLocEnd());
   }
@@ -952,7 +996,7 @@ public:
 ///
 class ConditionalOperator : public Expr {
   enum { COND, LHS, RHS, END_EXPR };
-  Expr* SubExprs[END_EXPR]; // Left/Middle/Right hand sides.
+  Stmt* SubExprs[END_EXPR]; // Left/Middle/Right hand sides.
 public:
   ConditionalOperator(Expr *cond, Expr *lhs, Expr *rhs, QualType t)
     : Expr(ConditionalOperatorClass, t) {
@@ -963,7 +1007,7 @@ public:
 
   // getCond - Return the expression representing the condition for
   //  the ?: operator.
-  Expr *getCond() const { return SubExprs[COND]; }
+  Expr *getCond() const { return cast<Expr>(SubExprs[COND]); }
 
   // getTrueExpr - Return the subexpression representing the value of the ?:
   //  expression if the condition evaluates to true.  In most cases this value
@@ -972,15 +1016,15 @@ public:
   //  e.g: x ?: y is shorthand for x ? x : y, except that the expression "x"
   //  is only evaluated once.  
   Expr *getTrueExpr() const {
-    return SubExprs[LHS] ? SubExprs[LHS] : SubExprs[COND];
+    return cast<Expr>(SubExprs[LHS] ? SubExprs[LHS] : SubExprs[COND]);
   }
   
   // getTrueExpr - Return the subexpression representing the value of the ?:
   // expression if the condition evaluates to false. This is the same as getRHS.
-  Expr *getFalseExpr() const { return SubExprs[RHS]; }
+  Expr *getFalseExpr() const { return cast<Expr>(SubExprs[RHS]); }
   
-  Expr *getLHS() const { return SubExprs[LHS]; }
-  Expr *getRHS() const { return SubExprs[RHS]; }
+  Expr *getLHS() const { return cast_or_null<Expr>(SubExprs[LHS]); }
+  Expr *getRHS() const { return cast<Expr>(SubExprs[RHS]); }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(getCond()->getLocStart(), getRHS()->getLocEnd());
@@ -1030,15 +1074,15 @@ public:
 /// The StmtExpr contains a single CompoundStmt node, which it evaluates and
 /// takes the value of the last subexpression.
 class StmtExpr : public Expr {
-  CompoundStmt *SubStmt;
+  Stmt *SubStmt;
   SourceLocation LParenLoc, RParenLoc;
 public:
   StmtExpr(CompoundStmt *substmt, QualType T,
            SourceLocation lp, SourceLocation rp) :
     Expr(StmtExprClass, T), SubStmt(substmt),  LParenLoc(lp), RParenLoc(rp) { }
   
-  CompoundStmt *getSubStmt() { return SubStmt; }
-  const CompoundStmt *getSubStmt() const { return SubStmt; }
+  CompoundStmt *getSubStmt() { return cast<CompoundStmt>(SubStmt); }
+  const CompoundStmt *getSubStmt() const { return cast<CompoundStmt>(SubStmt); }
   
   virtual SourceRange getSourceRange() const {
     return SourceRange(LParenLoc, RParenLoc);
@@ -1100,7 +1144,7 @@ class ShuffleVectorExpr : public Expr {
   // function. The first two are vectors, and the rest are constant
   // indices.  The number of values in this list is always
   // 2+the number of indices in the vector type.
-  Expr **SubExprs;
+  Stmt **SubExprs;
   unsigned NumExprs;
 
 public:
@@ -1110,7 +1154,7 @@ public:
     Expr(ShuffleVectorExprClass, Type), BuiltinLoc(BLoc),
     RParenLoc(RP), NumExprs(nexpr) {
       
-    SubExprs = new Expr*[nexpr];
+    SubExprs = new Stmt*[nexpr];
     for (unsigned i = 0; i < nexpr; i++)
       SubExprs[i] = args[i];
   }
@@ -1135,11 +1179,11 @@ public:
   /// getExpr - Return the Expr at the specified index.
   Expr *getExpr(unsigned Index) {
     assert((Index < NumExprs) && "Arg access out of range!");
-    return SubExprs[Index];
+    return cast<Expr>(SubExprs[Index]);
   }
   const Expr *getExpr(unsigned Index) const {
     assert((Index < NumExprs) && "Arg access out of range!");
-    return SubExprs[Index];
+    return cast<Expr>(SubExprs[Index]);
   }
 
   unsigned getShuffleMaskIdx(ASTContext &Ctx, unsigned N) {
@@ -1163,7 +1207,7 @@ public:
 /// - does not evaluate the expression that was not chosen.
 class ChooseExpr : public Expr {
   enum { COND, LHS, RHS, END_EXPR };
-  Expr* SubExprs[END_EXPR]; // Left/Middle/Right hand sides.
+  Stmt* SubExprs[END_EXPR]; // Left/Middle/Right hand sides.
   SourceLocation BuiltinLoc, RParenLoc;
 public:
   ChooseExpr(SourceLocation BLoc, Expr *cond, Expr *lhs, Expr *rhs, QualType t,
@@ -1179,9 +1223,9 @@ public:
   /// statically knowable for a well-formed choosexpr.
   bool isConditionTrue(ASTContext &C) const;
   
-  Expr *getCond() const { return SubExprs[COND]; }
-  Expr *getLHS() const { return SubExprs[LHS]; }
-  Expr *getRHS() const { return SubExprs[RHS]; }
+  Expr *getCond() const { return cast<Expr>(SubExprs[COND]); }
+  Expr *getLHS() const { return cast<Expr>(SubExprs[LHS]); }
+  Expr *getRHS() const { return cast<Expr>(SubExprs[RHS]); }
 
   virtual SourceRange getSourceRange() const {
     return SourceRange(BuiltinLoc, RParenLoc);
@@ -1219,7 +1263,7 @@ class OverloadExpr : public Expr {
   // SubExpr[0] is a constant expression
   // SubExpr[1-N] are the parameters to pass to the matching function call
   // SubExpr[N-...] are the candidate functions, of type pointer to function.
-  Expr **SubExprs;
+  Stmt **SubExprs;
 
   // NumExprs - the size of the SubExprs array
   unsigned NumExprs;
@@ -1234,7 +1278,7 @@ public:
                SourceLocation bloc, SourceLocation rploc)
     : Expr(OverloadExprClass, t), NumExprs(nexprs), FnIndex(idx),
       BuiltinLoc(bloc), RParenLoc(rploc) {
-    SubExprs = new Expr*[nexprs];
+    SubExprs = new Stmt*[nexprs];
     for (unsigned i = 0; i != nexprs; ++i)
       SubExprs[i] = args[i];
   }
@@ -1245,14 +1289,17 @@ public:
   /// arg_begin - Return a pointer to the list of arguments that will be passed
   /// to the matching candidate function, skipping over the initial constant
   /// expression.
-  typedef Expr * const *arg_const_iterator;
-  arg_const_iterator arg_begin() const { return SubExprs+1; }
-
+  typedef ConstExprIterator const_arg_iterator;
+  const_arg_iterator arg_begin() const { return &SubExprs[0]+1; }
+  const_arg_iterator arg_end(ASTContext& Ctx) const {
+    return &SubExprs[0]+1+getNumArgs(Ctx);
+  }
+  
   /// getNumArgs - Return the number of arguments to pass to the candidate
   /// functions.
   unsigned getNumArgs(ASTContext &Ctx) const {
     llvm::APSInt constEval(32);
-    (void) SubExprs[0]->isIntegerConstantExpr(constEval, Ctx);
+    (void) cast<Expr>(SubExprs[0])->isIntegerConstantExpr(constEval, Ctx);
     return constEval.getZExtValue();
   }
 
@@ -1264,11 +1311,11 @@ public:
   /// getExpr - Return the Expr at the specified index.
   Expr *getExpr(unsigned Index) {
     assert((Index < NumExprs) && "Arg access out of range!");
-    return SubExprs[Index];
+    return cast<Expr>(SubExprs[Index]);
   }
   
   /// getFn - Return the matching candidate function for this OverloadExpr.
-  Expr *getFn() const { return SubExprs[FnIndex]; }
+  Expr *getFn() const { return cast<Expr>(SubExprs[FnIndex]); }
   
   virtual SourceRange getSourceRange() const {
     return SourceRange(BuiltinLoc, RParenLoc);
@@ -1285,7 +1332,7 @@ public:
 
 /// VAArgExpr, used for the builtin function __builtin_va_start.
 class VAArgExpr : public Expr {
-  Expr *Val;
+  Stmt *Val;
   SourceLocation BuiltinLoc, RParenLoc;
 public:
   VAArgExpr(SourceLocation BLoc, Expr* e, QualType t, SourceLocation RPLoc)
@@ -1294,8 +1341,8 @@ public:
       BuiltinLoc(BLoc),
       RParenLoc(RPLoc) { }
   
-  const Expr *getSubExpr() const { return Val; }
-  Expr *getSubExpr() { return Val; }
+  const Expr *getSubExpr() const { return cast<Expr>(Val); }
+  Expr *getSubExpr() { return cast<Expr>(Val); }
   virtual SourceRange getSourceRange() const {
     return SourceRange(BuiltinLoc, RParenLoc);
   }  
@@ -1329,7 +1376,7 @@ public:
 ///         int x = { 1 };  int y[2] = { {1}, {2} };
 ///
 class InitListExpr : public Expr {
-  std::vector<Expr *> InitExprs;
+  std::vector<Stmt *> InitExprs;
   SourceLocation LBraceLoc, RBraceLoc;
 public:
   InitListExpr(SourceLocation lbraceloc, Expr **initexprs, unsigned numinits,
@@ -1339,12 +1386,12 @@ public:
   
   const Expr* getInit(unsigned Init) const { 
     assert(Init < getNumInits() && "Initializer access out of range!");
-    return InitExprs[Init];
+    return cast<Expr>(InitExprs[Init]);
   }
   
   Expr* getInit(unsigned Init) { 
     assert(Init < getNumInits() && "Initializer access out of range!");
-    return InitExprs[Init];
+    return cast<Expr>(InitExprs[Init]);
   }
   
   void setInit(unsigned Init, Expr *expr) { 

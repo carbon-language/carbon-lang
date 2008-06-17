@@ -338,7 +338,7 @@ CallExpr* CallExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   QualType t = QualType::ReadVal(D);
   SourceLocation L = SourceLocation::ReadVal(D);
   unsigned NumArgs = D.ReadInt();
-  Expr** SubExprs = new Expr*[NumArgs+1];
+  Stmt** SubExprs = new Stmt*[NumArgs+1];
   D.BatchReadOwnedPtrs(NumArgs+1, SubExprs, C);
 
   return new CallExpr(SubExprs,NumArgs,t,L);  

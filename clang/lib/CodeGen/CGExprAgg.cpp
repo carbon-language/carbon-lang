@@ -206,7 +206,8 @@ void AggExprEmitter::VisitCallExpr(const CallExpr *E)
 void AggExprEmitter::VisitOverloadExpr(const OverloadExpr *E)
 {
   RValue RV = CGF.EmitCallExpr(E->getFn(), E->arg_begin(),
-                               E->getNumArgs(CGF.getContext()));
+                               E->arg_end(CGF.getContext()));
+  
   assert(RV.isAggregate() && "Return value must be aggregate value!");
   
   // If the result is ignored, don't copy from the value.

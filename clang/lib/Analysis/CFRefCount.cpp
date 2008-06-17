@@ -194,10 +194,10 @@ public:
     return Receiver;
   }
   
-  typedef ArgEffects::const_iterator arg_iterator;
+  typedef ArgEffects::const_iterator ExprIterator;
   
-  arg_iterator begin_args() const { return Args->begin(); }
-  arg_iterator end_args()   const { return Args->end(); }
+  ExprIterator begin_args() const { return Args->begin(); }
+  ExprIterator end_args()   const { return Args->end(); }
   
   static void Profile(llvm::FoldingSetNodeID& ID, ArgEffects* A,
                       RetEffect RetEff, ArgEffect DefaultEff,
@@ -998,7 +998,7 @@ public:
                    Expr* Ex,
                    Expr* Receiver,
                    RetainSummary* Summ,
-                   Expr** arg_beg, Expr** arg_end,                             
+                   ExprIterator arg_beg, ExprIterator arg_end,                             
                    ExplodedNode<ValueState>* Pred);
     
   virtual void EvalCall(ExplodedNodeSet<ValueState>& Dst,
@@ -1129,7 +1129,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
                              Expr* Ex,
                              Expr* Receiver,
                              RetainSummary* Summ,
-                             Expr** arg_beg, Expr** arg_end,                             
+                             ExprIterator arg_beg, ExprIterator arg_end,                             
                              ExplodedNode<ValueState>* Pred) {
   
   
@@ -1146,7 +1146,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
   Expr* ErrorExpr = NULL;
   SymbolID ErrorSym = 0;                                        
   
-  for (Expr **I = arg_beg, **E = arg_end; I != E; ++I, ++idx) {
+  for (ExprIterator I = arg_beg; I != arg_end; ++I, ++idx) {
     
     RVal V = StateMgr.GetRVal(St, *I);
     
@@ -1235,9 +1235,9 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
       
     case RetEffect::Alias: {
       unsigned idx = RE.getValue();
-      assert ((arg_end - arg_beg) >= 0);
+      assert (arg_end >= arg_beg);
       assert (idx < (unsigned) (arg_end - arg_beg));
-      RVal V = StateMgr.GetRVal(St, arg_beg[idx]);
+      RVal V = StateMgr.GetRVal(St, *(arg_beg+idx));
       St = StateMgr.SetRVal(St, Ex, V, Eng.getCFG().isBlkExpr(Ex), false);
       break;
     }
