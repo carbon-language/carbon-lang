@@ -52,9 +52,9 @@ namespace llvm {
   ///
   bool CannotBeNegativeZero(const Value *V, unsigned Depth = 0);
 
-  /// FindScalarValue - Given an aggregrate and an sequence of indices, see if the
-  /// scalar value indexed is already around as a register, for example if it were
-  /// inserted directly into the aggregrate.
+  /// FindScalarValue - Given an aggregrate and an sequence of indices, see if
+  /// the scalar value indexed is already around as a register, for example if
+  /// it were inserted directly into the aggregrate.
   ///
   /// If InsertBefore is not null, this function will duplicate (modified)
   /// insertvalues when a part of a nested struct is extracted.
