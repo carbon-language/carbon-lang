@@ -366,7 +366,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     for (unsigned i = 0, e = vi.AliveBlocks.size(); i != e; ++i) {
       if (vi.AliveBlocks[i]) {
         LiveRange LR(getMBBStartIdx(i),
-                     getMBBEndIdx(i),
+                     getMBBEndIdx(i)+1,  // MBB ends at -1.
                      ValNo);
         interval.addRange(LR);
         DOUT << " +" << LR;
