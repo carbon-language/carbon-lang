@@ -25,4 +25,10 @@
     <a href="http://llvm.org/bugs/">Bug Reports</a>
     <a href="http://llvm.org/svn/llvm-project/cfe/trunk/">Browse Source</a>
   </div>
+  
+  <div class="submenu">
+    <label>Events</label>
+    <a href="http://llvm.org/devmtg/">August 1, 2008 - LLVM/Clang Developer Meeting</a>
+  </div>
+
 </div>
