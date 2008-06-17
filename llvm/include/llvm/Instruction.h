@@ -102,6 +102,10 @@ public:
   ///
   void eraseFromParent();
 
+  /// insertBefore - Insert an unlinked instructions into a basic block
+  /// immediately before the specified instruction.
+  void insertBefore(Instruction *InsertPos);
+
   /// moveBefore - Unlink this instruction from its current basic block and
   /// insert it into the basic block that MovePos lives in, right before
   /// MovePos.
