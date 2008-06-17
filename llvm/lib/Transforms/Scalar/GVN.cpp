@@ -492,7 +492,7 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
 
           return nextValueNumber++;
         } else if (I->second != MemoryDependenceAnalysis::NonLocal) {
-          if (DT->dominates(I->first, C->getParent())) {
+          if (DT->properlyDominates(I->first, C->getParent())) {
             if (CallInst* CD = dyn_cast<CallInst>(I->second))
               cdep = CD;
             else {
