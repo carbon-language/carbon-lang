@@ -21,6 +21,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/Statistic.h"
@@ -140,9 +141,10 @@ bool IPCP::PropagateConstantsIntoArguments(Function &F) {
 }
 
 
-// Check to see if this function returns a constant.  If so, replace all callers
-// that user the return value with the returned valued.  If we can replace ALL
-// callers,
+// Check to see if this function returns one or more constants. If so, replace
+// all callers that use those return values with the constant value. This will
+// leave in the actual return values and instructions, but deadargelim will
+// clean that up.
 bool IPCP::PropagateConstantReturn(Function &F) {
   if (F.getReturnType() == Type::VoidTy)
     return false; // No return value.
@@ -156,48 +158,65 @@ bool IPCP::PropagateConstantReturn(Function &F) {
   SmallVector<Value *,4> RetVals;
   const StructType *STy = dyn_cast<StructType>(F.getReturnType());
   if (STy)
-    RetVals.assign(STy->getNumElements(), 0);
+    for (unsigned i = 0, e = STy->getNumElements(); i < e; ++i) 
+      RetVals.push_back(UndefValue::get(STy->getElementType(i)));
   else
-    RetVals.push_back(0);
+    RetVals.push_back(UndefValue::get(F.getReturnType()));
 
+  unsigned NumNonConstant = 0;
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
-      assert(RetVals.size() == RI->getNumOperands() &&
-             "Invalid ReturnInst operands!");
+      // Return type does not match operand type, this is an old style multiple
+      // return
+      bool OldReturn = (F.getReturnType() != RI->getOperand(0)->getType());
+
       for (unsigned i = 0, e = RetVals.size(); i != e; ++i) {
-        if (isa<UndefValue>(RI->getOperand(i)))
-          continue; // Ignore
-        Constant *C = dyn_cast<Constant>(RI->getOperand(i));
-        if (C == 0)
-          return false; // Does not return a constant.
-        
+        // Already found conflicting return values?
         Value *RV = RetVals[i];
-        if (RV == 0)
-          RetVals[i] = C;
-        else if (RV != C)
-          return false; // Does not return the same constant.
+        if (!RV)
+          continue;
+
+        // Find the returned value
+        Value *V;
+        if (!STy || OldReturn)
+          V = RI->getOperand(i);
+        else
+          V = FindInsertedValue(RI->getOperand(0), i);
+
+        if (V) {
+          // Ignore undefs, we can change them into anything
+          if (isa<UndefValue>(V))
+            continue;
+          
+          // Try to see if all the rets return the same constant.
+          if (isa<Constant>(V)) {
+            if (isa<UndefValue>(RV)) {
+              // No value found yet? Try the current one.
+              RetVals[i] = V;
+              continue;
+            }
+            // Returning the same value? Good.
+            if (RV == V)
+              continue;
+          }
+        }
+        // Different or no known return value? Don't propagate this return
+        // value.
+        RetVals[i] = 0;
+        // All values non constant? Stop looking.
+        if (++NumNonConstant == RetVals.size())
+          return false;
       }
     }
 
-  if (STy) {
-    for (unsigned i = 0, e = RetVals.size(); i < e; ++i) 
-      if (RetVals[i] == 0) 
-        RetVals[i] = UndefValue::get(STy->getElementType(i));
-  } else {
-    assert(RetVals.size() == 1);
-    if (RetVals[0] == 0)
-      RetVals[0] = UndefValue::get(F.getReturnType());
-  }
-
-  // If we got here, the function returns a constant value.  Loop over all
-  // users, replacing any uses of the return value with the returned constant.
-  bool ReplacedAllUsers = true;
+  // If we got here, the function returns at least one constant value.  Loop
+  // over all users, replacing any uses of the return value with the returned
+  // constant.
   bool MadeChange = false;
   for (Value::use_iterator UI = F.use_begin(), E = F.use_end(); UI != E; ++UI) {
     // Make sure this is an invoke or call and that the use is for the callee.
     if (!(isa<InvokeInst>(*UI) || isa<CallInst>(*UI)) ||
         UI.getOperandNo() != 0) {
-      ReplacedAllUsers = false;
       continue;
     }
     
@@ -212,28 +231,32 @@ bool IPCP::PropagateConstantReturn(Function &F) {
       continue;
     }
    
-    while (!Call->use_empty()) {
-      GetResultInst *GR = cast<GetResultInst>(Call->use_back());
-      GR->replaceAllUsesWith(RetVals[GR->getIndex()]);
-      GR->eraseFromParent();
-    }
-  }
-  
-  // If we replace all users with the returned constant, and there can be no
-  // other callers of the function, replace the constant being returned in the
-  // function with an undef value.
-  if (ReplacedAllUsers && F.hasInternalLinkage()) {
-    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-      if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
-        for (unsigned i = 0, e = RetVals.size(); i < e; ++i) {
-          Value *RetVal = RetVals[i];
-          if (isa<UndefValue>(RetVal))
-            continue;
-          Value *RV = UndefValue::get(RetVal->getType());
-          if (RI->getOperand(i) != RV) {
-            RI->setOperand(i, RV);
-            MadeChange = true;
-          }
+    for (Value::use_iterator I = Call->use_begin(), E = Call->use_end();
+         I != E;) {
+      Instruction *Ins = dyn_cast<Instruction>(*I);
+
+      // Increment now, so we can remove the use
+      ++I;
+
+      // Not an instruction? Ignore
+      if (!Ins)
+        continue;
+
+      // Find the index of the retval to replace with
+      int index = -1;
+      if (GetResultInst *GR = dyn_cast<GetResultInst>(Ins))
+        index = GR->getIndex();
+      else if (ExtractValueInst *EV = dyn_cast<ExtractValueInst>(Ins))
+        if (EV->hasIndices())
+          index = *EV->idx_begin();
+
+      // If this use uses a specific return value, and we have a replacement,
+      // replace it.
+      if (index != -1) {
+        Value *New = RetVals[index];
+        if (New) {
+          Ins->replaceAllUsesWith(New);
+          Ins->eraseFromParent();
         }
       }
     }
