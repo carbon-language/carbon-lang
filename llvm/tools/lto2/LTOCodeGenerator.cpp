@@ -264,22 +264,9 @@ bool LTOCodeGenerator::determineTarget(std::string& errMsg)
             return true;
 
         // construct LTModule, hand over ownership of module and target
-        //
-        // FIXME: This is an inelegant way of specifying the features of a
-        // subtarget. It would be better if we could encode this information
-        // into the IR. See <rdar://5972456>.
-        SubtargetFeatures Features;
-        std::string FeatureStr;
-        std::string TargetTriple = _linker.getModule()->getTargetTriple();
-
-        if (strncmp(TargetTriple.c_str(), "powerpc-apple-", 14) == 0) {
-          Features.AddFeature("altivec", true);
-        } else if (strncmp(TargetTriple.c_str(), "powerpc64-apple-", 16) == 0) {
-          Features.AddFeature("64bit", true);
-          Features.AddFeature("altivec", true);
-        }
-
-        _target = march->CtorFn(*mergedModule, Features.getString());
+        std::string FeatureStr =
+          getFeatureString(_linker.getModule()->getTargetTriple().c_str());
+        _target = march->CtorFn(*mergedModule, FeatureStr.c_str());
     }
     return false;
 }
