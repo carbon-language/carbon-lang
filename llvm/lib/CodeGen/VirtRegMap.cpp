@@ -37,7 +37,7 @@
 using namespace llvm;
 
 STATISTIC(NumSpills  , "Number of register spills");
-STATISTIC(NumPSpills ,"Number of physical register spills");
+STATISTIC(NumPSpills , "Number of physical register spills");
 STATISTIC(NumReMats  , "Number of re-materialization");
 STATISTIC(NumDRM     , "Number of re-materializable defs elided");
 STATISTIC(NumStores  , "Number of stores added");
