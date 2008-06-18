@@ -1,6 +1,4 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep sext
-; RUN: llvm-as < %s | llc -march=x86-64 | not grep movslq
-; RUN: llvm-as < %s | llc -march=x86 | not grep sar
 
 declare i32 @llvm.ctpop.i32(i32)
 declare i32 @llvm.ctlz.i32(i32)
@@ -50,3 +48,18 @@ define i32 @woo(i8 %a, i32 %f, i1 %p, i32* %z) {
   %n = sext i16 %s to i32
   ret i32 %n
 }
+
+; rdar://6013816
+define i16 @test(i16 %t, i1 %cond) nounwind {
+entry:
+	br i1 %cond, label %T, label %F
+T:
+	%t2 = sext i16 %t to i32
+	br label %F
+
+F:
+	%V = phi i32 [%t2, %T], [42, %entry]
+	%W = trunc i32 %V to i16
+	ret i16 %W
+}
+

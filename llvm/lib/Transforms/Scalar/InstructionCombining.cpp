@@ -6838,6 +6838,16 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
 ///
 /// This is a truncation operation if Ty is smaller than V->getType(), or an
 /// extension operation if Ty is larger.
+///
+/// If CastOpc is a truncation, then Ty will be a type smaller than V.  We
+/// should return true if trunc(V) can be computed by computing V in the smaller
+/// type.  If V is an instruction, then trunc(inst(x,y)) can be computed as
+/// inst(trunc(x),trunc(y)), which only makes sense if x and y can be
+/// efficiently truncated.
+///
+/// If CastOpc is a sext or zext, we are asking if the low bits of the value can
+/// bit computed in a larger type, which is then and'd or sext_in_reg'd to get
+/// the final result.
 bool InstCombiner::CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
                                               unsigned CastOpc,
                                               int &NumCastsRemoved) {
@@ -6858,7 +6868,7 @@ bool InstCombiner::CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
       // If the first operand is itself a cast, and is eliminable, do not count
       // this as an eliminable cast.  We would prefer to eliminate those two
       // casts first.
-      if (!isa<CastInst>(I->getOperand(0)))
+      if (!isa<CastInst>(I->getOperand(0)) && I->hasOneUse())
         ++NumCastsRemoved;
       return true;
     }
@@ -6923,8 +6933,17 @@ bool InstCombiner::CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
     // of casts in the input.
     if (I->getOpcode() == CastOpc)
       return true;
-    
     break;
+      
+  case Instruction::PHI: {
+    // We can change a phi if we can change all operands.
+    PHINode *PN = cast<PHINode>(I);
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+      if (!CanEvaluateInDifferentType(PN->getIncomingValue(i), Ty, CastOpc,
+                                      NumCastsRemoved))
+        return false;
+    return true;
+  }
   default:
     // TODO: Can handle more cases here.
     break;
@@ -6957,7 +6976,7 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty,
     Value *LHS = EvaluateInDifferentType(I->getOperand(0), Ty, isSigned);
     Value *RHS = EvaluateInDifferentType(I->getOperand(1), Ty, isSigned);
     Res = BinaryOperator::Create((Instruction::BinaryOps)I->getOpcode(),
-                                 LHS, RHS, I->getName());
+                                 LHS, RHS);
     break;
   }    
   case Instruction::Trunc:
@@ -6969,16 +6988,27 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty,
     if (I->getOperand(0)->getType() == Ty)
       return I->getOperand(0);
     
-    // Otherwise, must be the same type of case, so just reinsert a new one.
+    // Otherwise, must be the same type of cast, so just reinsert a new one.
     Res = CastInst::Create(cast<CastInst>(I)->getOpcode(), I->getOperand(0),
-                           Ty, I->getName());
+                           Ty);
     break;
+  case Instruction::PHI: {
+    PHINode *OPN = cast<PHINode>(I);
+    PHINode *NPN = PHINode::Create(Ty);
+    for (unsigned i = 0, e = OPN->getNumIncomingValues(); i != e; ++i) {
+      Value *V =EvaluateInDifferentType(OPN->getIncomingValue(i), Ty, isSigned);
+      NPN->addIncoming(V, OPN->getIncomingBlock(i));
+    }
+    Res = NPN;
+    break;
+  }
   default: 
     // TODO: Can handle more cases here.
     assert(0 && "Unreachable!");
     break;
   }
   
+  Res->takeName(I);
   return InsertNewInstBefore(Res, *I);
 }
 
