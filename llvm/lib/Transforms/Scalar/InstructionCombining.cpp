@@ -1304,6 +1304,46 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     KnownZero = APInt::getHighBitsSet(BitWidth, Leaders) & DemandedMask;
     break;
   }
+  case Instruction::Call:
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
+      switch (II->getIntrinsicID()) {
+      default: break;
+      case Intrinsic::bswap: {
+        // If the only bits demanded come from one byte of the bswap result,
+        // just shift the input byte into position to eliminate the bswap.
+        unsigned NLZ = DemandedMask.countLeadingZeros();
+        unsigned NTZ = DemandedMask.countTrailingZeros();
+          
+        // Round NTZ down to the next byte.  If we have 11 trailing zeros, then
+        // we need all the bits down to bit 8.  Likewise, round NLZ.  If we
+        // have 14 leading zeros, round to 8.
+        NLZ &= ~7;
+        NTZ &= ~7;
+        // If we need exactly one byte, we can do this transformation.
+        if (BitWidth-NLZ-NTZ == 8) {
+          unsigned ResultBit = NTZ;
+          unsigned InputBit = BitWidth-NTZ-8;
+          
+          // Replace this with either a left or right shift to get the byte into
+          // the right place.
+          Instruction *NewVal;
+          if (InputBit > ResultBit)
+            NewVal = BinaryOperator::CreateLShr(I->getOperand(1),
+                    ConstantInt::get(I->getType(), InputBit-ResultBit));
+          else
+            NewVal = BinaryOperator::CreateShl(I->getOperand(1),
+                    ConstantInt::get(I->getType(), ResultBit-InputBit));
+          NewVal->takeName(I);
+          InsertNewInstBefore(NewVal, *I);
+          return UpdateValueUsesWith(I, NewVal);
+        }
+          
+        // TODO: Could compute known zero/one bits based on the input.
+        break;
+      }
+      }
+    }
+    break;
   }
   
   // If the client is only demanding bits that we know, return the known
@@ -8533,144 +8573,150 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     }
           
     if (Changed) return II;
-  } else {
-    switch (II->getIntrinsicID()) {
-    default: break;
-    case Intrinsic::ppc_altivec_lvx:
-    case Intrinsic::ppc_altivec_lvxl:
-    case Intrinsic::x86_sse_loadu_ps:
-    case Intrinsic::x86_sse2_loadu_pd:
-    case Intrinsic::x86_sse2_loadu_dq:
-      // Turn PPC lvx     -> load if the pointer is known aligned.
-      // Turn X86 loadups -> load if the pointer is known aligned.
-      if (GetOrEnforceKnownAlignment(II->getOperand(1), 16) >= 16) {
-        Value *Ptr = InsertBitCastBefore(II->getOperand(1),
-                                         PointerType::getUnqual(II->getType()),
-                                         CI);
-        return new LoadInst(Ptr);
-      }
-      break;
-    case Intrinsic::ppc_altivec_stvx:
-    case Intrinsic::ppc_altivec_stvxl:
-      // Turn stvx -> store if the pointer is known aligned.
-      if (GetOrEnforceKnownAlignment(II->getOperand(2), 16) >= 16) {
-        const Type *OpPtrTy = 
-          PointerType::getUnqual(II->getOperand(1)->getType());
-        Value *Ptr = InsertBitCastBefore(II->getOperand(2), OpPtrTy, CI);
-        return new StoreInst(II->getOperand(1), Ptr);
-      }
-      break;
-    case Intrinsic::x86_sse_storeu_ps:
-    case Intrinsic::x86_sse2_storeu_pd:
-    case Intrinsic::x86_sse2_storeu_dq:
-    case Intrinsic::x86_sse2_storel_dq:
-      // Turn X86 storeu -> store if the pointer is known aligned.
-      if (GetOrEnforceKnownAlignment(II->getOperand(1), 16) >= 16) {
-        const Type *OpPtrTy = 
-          PointerType::getUnqual(II->getOperand(2)->getType());
-        Value *Ptr = InsertBitCastBefore(II->getOperand(1), OpPtrTy, CI);
-        return new StoreInst(II->getOperand(2), Ptr);
-      }
-      break;
-      
-    case Intrinsic::x86_sse_cvttss2si: {
-      // These intrinsics only demands the 0th element of its input vector.  If
-      // we can simplify the input based on that, do so now.
-      uint64_t UndefElts;
-      if (Value *V = SimplifyDemandedVectorElts(II->getOperand(1), 1, 
-                                                UndefElts)) {
-        II->setOperand(1, V);
-        return II;
-      }
-      break;
+  }
+  
+  switch (II->getIntrinsicID()) {
+  default: break;
+  case Intrinsic::bswap:
+    // bswap(bswap(x)) -> x
+    if (IntrinsicInst *Operand = dyn_cast<IntrinsicInst>(II->getOperand(1)))
+      if (Operand->getIntrinsicID() == Intrinsic::bswap)
+        return ReplaceInstUsesWith(CI, Operand->getOperand(1));
+    break;
+  case Intrinsic::ppc_altivec_lvx:
+  case Intrinsic::ppc_altivec_lvxl:
+  case Intrinsic::x86_sse_loadu_ps:
+  case Intrinsic::x86_sse2_loadu_pd:
+  case Intrinsic::x86_sse2_loadu_dq:
+    // Turn PPC lvx     -> load if the pointer is known aligned.
+    // Turn X86 loadups -> load if the pointer is known aligned.
+    if (GetOrEnforceKnownAlignment(II->getOperand(1), 16) >= 16) {
+      Value *Ptr = InsertBitCastBefore(II->getOperand(1),
+                                       PointerType::getUnqual(II->getType()),
+                                       CI);
+      return new LoadInst(Ptr);
     }
+    break;
+  case Intrinsic::ppc_altivec_stvx:
+  case Intrinsic::ppc_altivec_stvxl:
+    // Turn stvx -> store if the pointer is known aligned.
+    if (GetOrEnforceKnownAlignment(II->getOperand(2), 16) >= 16) {
+      const Type *OpPtrTy = 
+        PointerType::getUnqual(II->getOperand(1)->getType());
+      Value *Ptr = InsertBitCastBefore(II->getOperand(2), OpPtrTy, CI);
+      return new StoreInst(II->getOperand(1), Ptr);
+    }
+    break;
+  case Intrinsic::x86_sse_storeu_ps:
+  case Intrinsic::x86_sse2_storeu_pd:
+  case Intrinsic::x86_sse2_storeu_dq:
+  case Intrinsic::x86_sse2_storel_dq:
+    // Turn X86 storeu -> store if the pointer is known aligned.
+    if (GetOrEnforceKnownAlignment(II->getOperand(1), 16) >= 16) {
+      const Type *OpPtrTy = 
+        PointerType::getUnqual(II->getOperand(2)->getType());
+      Value *Ptr = InsertBitCastBefore(II->getOperand(1), OpPtrTy, CI);
+      return new StoreInst(II->getOperand(2), Ptr);
+    }
+    break;
+    
+  case Intrinsic::x86_sse_cvttss2si: {
+    // These intrinsics only demands the 0th element of its input vector.  If
+    // we can simplify the input based on that, do so now.
+    uint64_t UndefElts;
+    if (Value *V = SimplifyDemandedVectorElts(II->getOperand(1), 1, 
+                                              UndefElts)) {
+      II->setOperand(1, V);
+      return II;
+    }
+    break;
+  }
+    
+  case Intrinsic::ppc_altivec_vperm:
+    // Turn vperm(V1,V2,mask) -> shuffle(V1,V2,mask) if mask is a constant.
+    if (ConstantVector *Mask = dyn_cast<ConstantVector>(II->getOperand(3))) {
+      assert(Mask->getNumOperands() == 16 && "Bad type for intrinsic!");
       
-    case Intrinsic::ppc_altivec_vperm:
-      // Turn vperm(V1,V2,mask) -> shuffle(V1,V2,mask) if mask is a constant.
-      if (ConstantVector *Mask = dyn_cast<ConstantVector>(II->getOperand(3))) {
-        assert(Mask->getNumOperands() == 16 && "Bad type for intrinsic!");
+      // Check that all of the elements are integer constants or undefs.
+      bool AllEltsOk = true;
+      for (unsigned i = 0; i != 16; ++i) {
+        if (!isa<ConstantInt>(Mask->getOperand(i)) && 
+            !isa<UndefValue>(Mask->getOperand(i))) {
+          AllEltsOk = false;
+          break;
+        }
+      }
+      
+      if (AllEltsOk) {
+        // Cast the input vectors to byte vectors.
+        Value *Op0 =InsertBitCastBefore(II->getOperand(1),Mask->getType(),CI);
+        Value *Op1 =InsertBitCastBefore(II->getOperand(2),Mask->getType(),CI);
+        Value *Result = UndefValue::get(Op0->getType());
         
-        // Check that all of the elements are integer constants or undefs.
-        bool AllEltsOk = true;
+        // Only extract each element once.
+        Value *ExtractedElts[32];
+        memset(ExtractedElts, 0, sizeof(ExtractedElts));
+        
         for (unsigned i = 0; i != 16; ++i) {
-          if (!isa<ConstantInt>(Mask->getOperand(i)) && 
-              !isa<UndefValue>(Mask->getOperand(i))) {
-            AllEltsOk = false;
-            break;
+          if (isa<UndefValue>(Mask->getOperand(i)))
+            continue;
+          unsigned Idx=cast<ConstantInt>(Mask->getOperand(i))->getZExtValue();
+          Idx &= 31;  // Match the hardware behavior.
+          
+          if (ExtractedElts[Idx] == 0) {
+            Instruction *Elt = 
+              new ExtractElementInst(Idx < 16 ? Op0 : Op1, Idx&15, "tmp");
+            InsertNewInstBefore(Elt, CI);
+            ExtractedElts[Idx] = Elt;
           }
-        }
         
-        if (AllEltsOk) {
-          // Cast the input vectors to byte vectors.
-          Value *Op0 =InsertBitCastBefore(II->getOperand(1),Mask->getType(),CI);
-          Value *Op1 =InsertBitCastBefore(II->getOperand(2),Mask->getType(),CI);
-          Value *Result = UndefValue::get(Op0->getType());
-          
-          // Only extract each element once.
-          Value *ExtractedElts[32];
-          memset(ExtractedElts, 0, sizeof(ExtractedElts));
-          
-          for (unsigned i = 0; i != 16; ++i) {
-            if (isa<UndefValue>(Mask->getOperand(i)))
-              continue;
-            unsigned Idx=cast<ConstantInt>(Mask->getOperand(i))->getZExtValue();
-            Idx &= 31;  // Match the hardware behavior.
-            
-            if (ExtractedElts[Idx] == 0) {
-              Instruction *Elt = 
-                new ExtractElementInst(Idx < 16 ? Op0 : Op1, Idx&15, "tmp");
-              InsertNewInstBefore(Elt, CI);
-              ExtractedElts[Idx] = Elt;
-            }
-          
-            // Insert this value into the result vector.
-            Result = InsertElementInst::Create(Result, ExtractedElts[Idx],
-                                               i, "tmp");
-            InsertNewInstBefore(cast<Instruction>(Result), CI);
-          }
-          return CastInst::Create(Instruction::BitCast, Result, CI.getType());
+          // Insert this value into the result vector.
+          Result = InsertElementInst::Create(Result, ExtractedElts[Idx],
+                                             i, "tmp");
+          InsertNewInstBefore(cast<Instruction>(Result), CI);
         }
+        return CastInst::Create(Instruction::BitCast, Result, CI.getType());
       }
-      break;
+    }
+    break;
 
-    case Intrinsic::stackrestore: {
-      // If the save is right next to the restore, remove the restore.  This can
-      // happen when variable allocas are DCE'd.
-      if (IntrinsicInst *SS = dyn_cast<IntrinsicInst>(II->getOperand(1))) {
-        if (SS->getIntrinsicID() == Intrinsic::stacksave) {
-          BasicBlock::iterator BI = SS;
-          if (&*++BI == II)
-            return EraseInstFromFunction(CI);
-        }
+  case Intrinsic::stackrestore: {
+    // If the save is right next to the restore, remove the restore.  This can
+    // happen when variable allocas are DCE'd.
+    if (IntrinsicInst *SS = dyn_cast<IntrinsicInst>(II->getOperand(1))) {
+      if (SS->getIntrinsicID() == Intrinsic::stacksave) {
+        BasicBlock::iterator BI = SS;
+        if (&*++BI == II)
+          return EraseInstFromFunction(CI);
       }
-      
-      // Scan down this block to see if there is another stack restore in the
-      // same block without an intervening call/alloca.
-      BasicBlock::iterator BI = II;
-      TerminatorInst *TI = II->getParent()->getTerminator();
-      bool CannotRemove = false;
-      for (++BI; &*BI != TI; ++BI) {
-        if (isa<AllocaInst>(BI)) {
+    }
+    
+    // Scan down this block to see if there is another stack restore in the
+    // same block without an intervening call/alloca.
+    BasicBlock::iterator BI = II;
+    TerminatorInst *TI = II->getParent()->getTerminator();
+    bool CannotRemove = false;
+    for (++BI; &*BI != TI; ++BI) {
+      if (isa<AllocaInst>(BI)) {
+        CannotRemove = true;
+        break;
+      }
+      if (isa<CallInst>(BI)) {
+        if (!isa<IntrinsicInst>(BI)) {
           CannotRemove = true;
           break;
         }
-        if (isa<CallInst>(BI)) {
-          if (!isa<IntrinsicInst>(BI)) {
-            CannotRemove = true;
-            break;
-          }
-          // If there is a stackrestore below this one, remove this one.
-          return EraseInstFromFunction(CI);
-        }
-      }
-      
-      // If the stack restore is in a return/unwind block and if there are no
-      // allocas or calls between the restore and the return, nuke the restore.
-      if (!CannotRemove && (isa<ReturnInst>(TI) || isa<UnwindInst>(TI)))
+        // If there is a stackrestore below this one, remove this one.
         return EraseInstFromFunction(CI);
-      break;
+      }
     }
-    }
+    
+    // If the stack restore is in a return/unwind block and if there are no
+    // allocas or calls between the restore and the return, nuke the restore.
+    if (!CannotRemove && (isa<ReturnInst>(TI) || isa<UnwindInst>(TI)))
+      return EraseInstFromFunction(CI);
+    break;
+  }
   }
 
   return visitCallSite(II);
