@@ -126,8 +126,7 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
   assert(Ty->isInteger() && "Cannot expand fp recurrences yet!");
 
   // {X,+,F} --> X + {0,+,F}
-  if (!isa<SCEVConstant>(S->getStart()) ||
-      !cast<SCEVConstant>(S->getStart())->getValue()->isZero()) {
+  if (!S->getStart()->isZero()) {
     Value *Start = expand(S->getStart());
     std::vector<SCEVHandle> NewOps(S->op_begin(), S->op_end());
     NewOps[0] = SE.getIntegerSCEV(0, Ty);

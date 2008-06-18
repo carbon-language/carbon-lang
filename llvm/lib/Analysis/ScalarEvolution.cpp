@@ -132,6 +132,12 @@ uint32_t SCEV::getBitWidth() const {
   return 0;
 }
 
+bool SCEV::isZero() const {
+  if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(this))
+    return SC->getValue()->isZero();
+  return false;
+}
+
 
 SCEVCouldNotCompute::SCEVCouldNotCompute() : SCEV(scCouldNotCompute) {}
 
@@ -1136,11 +1142,10 @@ SCEVHandle ScalarEvolution::getAddRecExpr(std::vector<SCEVHandle> &Operands,
                                const Loop *L) {
   if (Operands.size() == 1) return Operands[0];
 
-  if (SCEVConstant *StepC = dyn_cast<SCEVConstant>(Operands.back()))
-    if (StepC->getValue()->isZero()) {
-      Operands.pop_back();
-      return getAddRecExpr(Operands, L);             // { X,+,0 }  -->  X
-    }
+  if (Operands.back()->isZero()) {
+    Operands.pop_back();
+    return getAddRecExpr(Operands, L);             // { X,+,0 }  -->  X
+  }
 
   SCEVAddRecExpr *&Result =
     (*SCEVAddRecExprs)[std::make_pair(L, std::vector<SCEV*>(Operands.begin(),
@@ -2583,9 +2588,8 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToZero(SCEV *V, const Loop *L) {
         // value at this index.  When solving for "X*X != 5", for example, we
         // should not accept a root of 2.
         SCEVHandle Val = AddRec->evaluateAtIteration(R1, SE);
-        if (SCEVConstant *EvalVal = dyn_cast<SCEVConstant>(Val))
-          if (EvalVal->getValue()->isZero())
-            return R1;  // We found a quadratic root!
+        if (Val->isZero())
+          return R1;  // We found a quadratic root!
       }
     }
   }

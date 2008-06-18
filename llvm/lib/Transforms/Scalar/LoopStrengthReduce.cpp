@@ -586,9 +586,8 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase,
   }
   
   // If there is no immediate value, skip the next part.
-  if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Imm))
-    if (SC->getValue()->isZero())
-      return Rewriter.expandCodeFor(NewBase, BaseInsertPt);
+  if (Imm->isZero())
+    return Rewriter.expandCodeFor(NewBase, BaseInsertPt);
 
   Value *Base = Rewriter.expandCodeFor(NewBase, BaseInsertPt);
 
@@ -891,8 +890,7 @@ static void SeparateSubExprs(std::vector<SCEVHandle> &SubExprs,
 
       SeparateSubExprs(SubExprs, SARE->getOperand(0), SE);
     }
-  } else if (!isa<SCEVConstant>(Expr) ||
-             !cast<SCEVConstant>(Expr)->getValue()->isZero()) {
+  } else if (!Expr->isZero()) {
     // Do not add zero.
     SubExprs.push_back(Expr);
   }
@@ -979,14 +977,6 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
   return Result;
 }
 
-/// isZero - returns true if the scalar evolution expression is zero.
-///
-static bool isZero(const SCEVHandle &V) {
-  if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(V))
-    return SC->getValue()->isZero();
-  return false;
-}
-
 /// ValidStride - Check whether the given Scale is valid for all loads and 
 /// stores in UsersToProcess.
 ///
@@ -1009,7 +999,7 @@ bool LoopStrengthReduce::ValidStride(bool HasBaseReg,
     TargetLowering::AddrMode AM;
     if (SCEVConstant *SC = dyn_cast<SCEVConstant>(UsersToProcess[i].Imm))
       AM.BaseOffs = SC->getValue()->getSExtValue();
-    AM.HasBaseReg = HasBaseReg || !isZero(UsersToProcess[i].Base);
+    AM.HasBaseReg = HasBaseReg || !UsersToProcess[i].Base->isZero();
     AM.Scale = Scale;
 
     // If load[imm+r*scale] is illegal, bail out.
@@ -1069,7 +1059,7 @@ unsigned LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
                IE = SI->second.IVs.end(); II != IE; ++II)
           // FIXME: Only handle base == 0 for now.
           // Only reuse previous IV if it would not require a type conversion.
-          if (isZero(II->Base) &&
+          if (II->Base->isZero() &&
               !RequiresTypeConversion(II->Base->getType(), Ty)) {
             IV = *II;
             return Scale;
@@ -1233,7 +1223,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   // their value in a register and add it in for each use. This will take up
   // a register operand, which potentially restricts what stride values are
   // valid.
-  bool HaveCommonExprs = !isZero(CommonExprs);
+  bool HaveCommonExprs = !CommonExprs->isZero();
   
   // If all uses are addresses, check if it is possible to reuse an IV with a
   // stride that is a factor of this stride. And that the multiple is a number
@@ -1629,7 +1619,7 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
       // Avoid rewriting the compare instruction with an iv of new stride
       // if it's likely the new stride uses will be rewritten using the
       if (AllUsesAreAddresses &&
-          ValidStride(!isZero(CommonExprs), Scale, UsersToProcess)) {        
+          ValidStride(!CommonExprs->isZero(), Scale, UsersToProcess)) {
         NewCmpVal = CmpVal;
         continue;
       }

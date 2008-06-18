@@ -81,6 +81,10 @@ namespace llvm {
     /// 
     uint32_t getBitWidth() const;
 
+    /// isZero - Return true if the expression is a constant zero.
+    ///
+    bool isZero() const;
+
     /// replaceSymbolicValuesWithConcrete - If this SCEV internally references
     /// the symbolic value "Sym", construct and return a new SCEV that produces
     /// the same value, but which uses the concrete value Conc instead of the
