@@ -944,6 +944,9 @@ public:
     // itself is not member of NewBB's dominance frontier.
     DominanceFrontier::iterator NewDFI = find(NewBB);
     DominanceFrontier::iterator DFI = find(BB);
+    // If BB was an entry block then its frontier is empty.
+    if (DFI == end())
+      return;
     DominanceFrontier::DomSetType BBSet = DFI->second;
     for (DominanceFrontier::DomSetType::iterator BBSetI = BBSet.begin(),
            BBSetE = BBSet.end(); BBSetI != BBSetE; ++BBSetI) {
