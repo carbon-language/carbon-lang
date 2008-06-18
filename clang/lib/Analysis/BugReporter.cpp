@@ -21,7 +21,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/Analysis/ProgramPoint.h"
 #include "clang/Analysis/PathDiagnostic.h"
-#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/DenseMap.h"
 #include <sstream>
 
 using namespace clang;
@@ -204,43 +204,86 @@ MakeReportGraph(ExplodedGraph<ValueState>* G, ExplodedNode<ValueState>* N) {
   G = new ExplodedGraph<ValueState>(GTrim->getCFG(), GTrim->getCodeDecl(),
                                      GTrim->getContext());
                                      
-                                     
-  ExplodedNode<ValueState> *Last = 0, *First = 0;
+  // Sometimes TrimGraph can contain a cycle.  Perform a reverse DFS
+  // to the root node, and then construct a new graph that contains only
+  // a single path.
+  llvm::DenseMap<void*,unsigned> Visited;
+  llvm::SmallVector<ExplodedNode<ValueState>*, 10> WS;
+  WS.push_back(N);
+  unsigned cnt = 0;
+  ExplodedNode<ValueState>* Root = 0;
   
-  // Sometimes TrimGraph can contain a cycle because there are multiple BFS
-  // paths with the same length.  We mark the nodes we visit so that we
-  // don't get stuck in a cycle.
-  llvm::DenseSet<void*> Visited;
+  while (!WS.empty()) {
+    ExplodedNode<ValueState>* Node = WS.back();
+    WS.pop_back();
+    
+    if (Visited.find(Node) != Visited.end())
+      continue;
+    
+    Visited[Node] = cnt++;
+    
+    if (Node->pred_empty()) {
+      Root = Node;
+      break;
+    }
+    
+    for (ExplodedNode<ValueState>::pred_iterator I=Node->pred_begin(),
+         E=Node->pred_end(); I!=E; ++I)
+      WS.push_back(*I);
+  }
 
-  while (N) {
-    Visited.insert(N);
+  assert (Root);
+  
+  // Now walk from the root down the DFS path, always taking the successor
+  // with the lowest number.
+  ExplodedNode<ValueState> *Last = 0, *First = 0;  
     
+  for ( N = Root ;;) {
+    
+    // Lookup the number associated with the current node.
+    llvm::DenseMap<void*,unsigned>::iterator I=Visited.find(N);
+    assert (I != Visited.end());
+    
+    // Create the equivalent node in the new graph with the same state
+    // and location.
     ExplodedNode<ValueState>* NewN =
-      G->getNode(N->getLocation(), N->getState());
-    
-    if (!First) First = NewN;
-    if (Last) Last->addPredecessor(NewN);
+      G->getNode(N->getLocation(), N->getState());    
+
+    // Link up the new node with the previous node.
+    if (Last)
+      NewN->addPredecessor(Last);
     
     Last = NewN;
-    
-    if (N->pred_empty())
+
+    // Are we at the final node?
+    if (I->second == 0) {
+      First = NewN;
       break;
-    
-    ExplodedNode<ValueState>::pred_iterator PI = N->pred_begin();
-    ExplodedNode<ValueState>::pred_iterator PE = N->pred_end();   
+    }
+
+    // Find the next successor node.  We choose the node that is marked
+    // with the lowest DFS number.
+    ExplodedNode<ValueState>::succ_iterator SI = N->succ_begin();
+    ExplodedNode<ValueState>::succ_iterator SE = N->succ_end();
     N = 0;
     
-    // Look for the first predecessor that we have not already visited.
+    for (unsigned MinVal = 0; SI != SE; ++SI) {
 
-    for (; PI != PE; ++PI)      
-      if (!Visited.count(*PI)) {
-        N = *PI;
-        break;
+      I = Visited.find(*SI);
+      
+      if (I == Visited.end())
+        continue;
+      
+      if (!N || I->second < MinVal) {
+        N = *SI;
+        MinVal = I->second;
       }
-    
-    assert (N && "All predecessors involved in a cycle!");    
+    }
+
+    assert (N);
   }
-  
+
+  assert (First);
   return std::make_pair(G, First);
 }
 

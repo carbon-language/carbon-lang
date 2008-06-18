@@ -149,20 +149,25 @@ public:
   unsigned getCurrentBlockCount() const {
     return getBlockCounter().getNumVisited(B.getBlockID());
   }  
-  
-  ExplodedNodeImpl* generateNodeImpl(Stmt* S, void* State,
-                                     ExplodedNodeImpl* Pred,
-                                     bool isLoad = false);
+    
+  ExplodedNodeImpl*
+  generateNodeImpl(Stmt* S, void* State, ExplodedNodeImpl* Pred,
+                   ProgramPoint::Kind K = ProgramPoint::PostStmtKind);
 
-  inline ExplodedNodeImpl* generateNodeImpl(Stmt* S, void* State,
-                                            bool isLoad = false) {
+  ExplodedNodeImpl*
+  generateNodeImpl(Stmt* S, void* State,
+                   ProgramPoint::Kind K = ProgramPoint::PostStmtKind) {    
     ExplodedNodeImpl* N = getLastNode();
     assert (N && "Predecessor of new node is infeasible.");
-    return generateNodeImpl(S, State, N, isLoad);
+    return generateNodeImpl(S, State, N, K);
   }
   
+  /// getStmt - Return the current block-level expression associated with
+  ///  this builder.
   Stmt* getStmt() const { return B[Idx]; }
   
+  /// getBlock - Return the CFGBlock associated with the block-level expression
+  ///  of this builder.
   CFGBlock* getBlock() const { return &B; }
 };
   
@@ -182,6 +187,7 @@ public:
   GRStmtNodeBuilder(GRStmtNodeBuilderImpl& nb) : NB(nb),
     CallExprAuditBeg(0), CallExprAuditEnd(0),
     ObjCMsgExprAuditBeg(0), ObjCMsgExprAuditEnd(0),
+    PurgingDeadSymbols(false),
     BuildSinks(false), HasGeneratedNode(false) {
       
     CleanedState = getLastNode()->getState();
@@ -203,14 +209,22 @@ public:
     return static_cast<NodeTy*>(NB.getLastNode());
   }
   
-  NodeTy* generateNode(Stmt* S, StateTy* St, NodeTy* Pred, bool isLoad = false){
+  NodeTy*
+  generateNode(Stmt* S, StateTy* St, NodeTy* Pred,
+               ProgramPoint::Kind K = ProgramPoint::PostStmtKind) {
+
     HasGeneratedNode = true;
-    return static_cast<NodeTy*>(NB.generateNodeImpl(S, St, Pred, isLoad));
+    if (PurgingDeadSymbols) K = ProgramPoint::PostPurgeDeadSymbolsKind;      
+    return static_cast<NodeTy*>(NB.generateNodeImpl(S, St, Pred, K));
   }
   
-  NodeTy* generateNode(Stmt* S, StateTy* St, bool isLoad = false) {
+  NodeTy*
+  generateNode(Stmt* S, StateTy* St,
+               ProgramPoint::Kind K = ProgramPoint::PostStmtKind) {
+      
     HasGeneratedNode = true;
-    return static_cast<NodeTy*>(NB.generateNodeImpl(S, St, isLoad));    
+    if (PurgingDeadSymbols) K = ProgramPoint::PostPurgeDeadSymbolsKind;      
+    return static_cast<NodeTy*>(NB.generateNodeImpl(S, St, K));
   }
   
   GRBlockCounter getBlockCounter() const {
@@ -274,6 +288,7 @@ public:
     return N;
   }
   
+  bool PurgingDeadSymbols;
   bool BuildSinks;
   bool HasGeneratedNode;
 };
@@ -338,7 +353,7 @@ public:
     return getPredecessor()->getState();
   }
 
-  inline NodeTy* generateNode(StateTy* St, bool branch) {
+  NodeTy* generateNode(StateTy* St, bool branch) {
     return static_cast<NodeTy*>(NB.generateNodeImpl(St, branch));
   }
   
@@ -350,7 +365,7 @@ public:
     return NB.getTargetBlock(branch);
   }
   
-  inline void markInfeasible(bool branch) {
+  void markInfeasible(bool branch) {
     NB.markInfeasible(branch);
   }
 };
@@ -393,8 +408,8 @@ public:
   ExplodedNodeImpl* generateNodeImpl(const Iterator& I, void* State,
                                      bool isSink);
   
-  inline Expr* getTarget() const { return E; }
-  inline void* getState() const { return Pred->State; }
+  Expr* getTarget() const { return E; }
+  void* getState() const { return Pred->State; }
 };
   
 template<typename STATE>
@@ -410,16 +425,16 @@ public:
   
   typedef GRIndirectGotoNodeBuilderImpl::Iterator     iterator;
 
-  inline iterator begin() { return NB.begin(); }
-  inline iterator end() { return NB.end(); }
+  iterator begin() { return NB.begin(); }
+  iterator end() { return NB.end(); }
   
-  inline Expr* getTarget() const { return NB.getTarget(); }
+  Expr* getTarget() const { return NB.getTarget(); }
   
-  inline NodeTy* generateNode(const iterator& I, StateTy* St, bool isSink=false){    
+  NodeTy* generateNode(const iterator& I, StateTy* St, bool isSink=false){    
     return static_cast<NodeTy*>(NB.generateNodeImpl(I, St, isSink));
   }
   
-  inline StateTy* getState() const {
+  StateTy* getState() const {
     return static_cast<StateTy*>(NB.getState());
   }    
 };
@@ -459,8 +474,8 @@ public:
   ExplodedNodeImpl* generateCaseStmtNodeImpl(const Iterator& I, void* State);
   ExplodedNodeImpl* generateDefaultCaseNodeImpl(void* State, bool isSink);
   
-  inline Expr* getCondition() const { return Condition; }
-  inline void* getState() const { return Pred->State; }
+  Expr* getCondition() const { return Condition; }
+  void* getState() const { return Pred->State; }
 };
 
 template<typename STATE>
@@ -476,20 +491,20 @@ public:
   
   typedef GRSwitchNodeBuilderImpl::Iterator     iterator;
   
-  inline iterator begin() { return NB.begin(); }
-  inline iterator end() { return NB.end(); }
+  iterator begin() { return NB.begin(); }
+  iterator end() { return NB.end(); }
   
-  inline Expr* getCondition() const { return NB.getCondition(); }
+  Expr* getCondition() const { return NB.getCondition(); }
   
-  inline NodeTy* generateCaseStmtNode(const iterator& I, StateTy* St) {
+  NodeTy* generateCaseStmtNode(const iterator& I, StateTy* St) {
     return static_cast<NodeTy*>(NB.generateCaseStmtNodeImpl(I, St));
   }
   
-  inline NodeTy* generateDefaultCaseNode(StateTy* St, bool isSink = false) {    
+  NodeTy* generateDefaultCaseNode(StateTy* St, bool isSink = false) {    
     return static_cast<NodeTy*>(NB.generateDefaultCaseNodeImpl(St, isSink));
   }
   
-  inline StateTy* getState() const {
+  StateTy* getState() const {
     return static_cast<StateTy*>(NB.getState());
   }    
 };

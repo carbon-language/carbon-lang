@@ -214,6 +214,9 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
     SaveAndRestore<bool> OldSink(Builder->BuildSinks);
     SaveOr OldHasGen(Builder->HasGeneratedNode);
 
+    SaveAndRestore<bool> OldPurgeDeadSymbols(Builder->PurgingDeadSymbols);
+    Builder->PurgingDeadSymbols = true;
+    
     TF->EvalDeadSymbols(Tmp, *this, *Builder, EntryNode, S, 
                         CleanedState, DeadSymbols);
 
@@ -965,7 +968,10 @@ ValueState* GRExprEngine::EvalLocation(Expr* Ex, NodeTy* Pred,
   
   // Check for loads/stores from/to undefined values.  
   if (location.isUndef()) {
-    if (NodeTy* Succ = Builder->generateNode(Ex, St, Pred, isLoad)) {
+    ProgramPoint::Kind K =
+      isLoad ? ProgramPoint::PostLoadKind : ProgramPoint::PostStmtKind;
+    
+    if (NodeTy* Succ = Builder->generateNode(Ex, St, Pred, K)) {
       Succ->markAsSink();
       UndefDeref.insert(Succ);
     }
@@ -1000,7 +1006,10 @@ ValueState* GRExprEngine::EvalLocation(Expr* Ex, NodeTy* Pred,
     // We don't use "MakeNode" here because the node will be a sink
     // and we have no intention of processing it later.
     
-    NodeTy* NullNode = Builder->generateNode(Ex, StNull, Pred, isLoad);
+    ProgramPoint::Kind K =
+      isLoad ? ProgramPoint::PostLoadKind : ProgramPoint::PostStmtKind;
+
+    NodeTy* NullNode = Builder->generateNode(Ex, StNull, Pred, K);
     
     if (NullNode) {
       
@@ -2437,6 +2446,7 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         break;
         
       case ProgramPoint::PostLoadKind:
+      case ProgramPoint::PostPurgeDeadSymbolsKind:
       case ProgramPoint::PostStmtKind: {
         const PostStmt& L = cast<PostStmt>(Loc);        
         Stmt* S = L.getStmt();
