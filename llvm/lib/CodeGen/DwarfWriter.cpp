@@ -296,6 +296,7 @@ public:
     isString,
     isLabel,
     isAsIsLabel,
+    isSectionOffset,
     isDelta,
     isEntry,
     isBlock
@@ -500,6 +501,56 @@ public:
 #ifndef NDEBUG
   virtual void print(std::ostream &O) {
     O << "Obj: " << Label;
+  }
+#endif
+};
+
+//===----------------------------------------------------------------------===//
+/// DIESectionOffset - A section offset DIE.
+//
+class DIESectionOffset : public DIEValue {
+public:
+  const DWLabel Label;
+  const DWLabel Section;
+  bool IsEH : 1;
+  bool UseSet : 1;
+  
+  DIESectionOffset(const DWLabel &Lab, const DWLabel &Sec,
+                   bool isEH = false, bool useSet = true)
+  : DIEValue(isSectionOffset), Label(Lab), Section(Sec),
+                               IsEH(isEH), UseSet(useSet) {}
+
+  // Implement isa/cast/dyncast.
+  static bool classof(const DIESectionOffset *)  { return true; }
+  static bool classof(const DIEValue *D) { return D->Type == isSectionOffset; }
+  
+  /// EmitValue - Emit section offset.
+  ///
+  virtual void EmitValue(DwarfDebug &DD, unsigned Form);
+  
+  /// SizeOf - Determine size of section offset value in bytes.
+  ///
+  virtual unsigned SizeOf(const DwarfDebug &DD, unsigned Form) const;
+  
+  /// Profile - Used to gather unique data for the value folding set.
+  ///
+  static void Profile(FoldingSetNodeID &ID, const DWLabel &Label,
+                                            const DWLabel &Section) {
+    ID.AddInteger(isSectionOffset);
+    Label.Profile(ID);
+    Section.Profile(ID);
+    // IsEH and UseSet are specific to the Label/Section that we will emit
+    // the offset for; so Label/Section are enough for uniqueness.
+  }
+  virtual void Profile(FoldingSetNodeID &ID) { Profile(ID, Label, Section); }
+
+#ifndef NDEBUG
+  virtual void print(std::ostream &O) {
+    O << "Off: ";
+    Label.print(O);
+    O << "-";
+    Section.print(O);
+    O << "-" << IsEH << "-" << UseSet;
   }
 #endif
 };
@@ -1275,6 +1326,24 @@ public:
     Die->AddValue(Attribute, Form, Value);
   }
       
+  /// AddSectionOffset - Add a section offset label attribute data and value.
+  ///
+  void AddSectionOffset(DIE *Die, unsigned Attribute, unsigned Form,
+                        const DWLabel &Label, const DWLabel &Section,
+                        bool isEH = false, bool useSet = true) {
+    FoldingSetNodeID ID;
+    DIESectionOffset::Profile(ID, Label, Section);
+    void *Where;
+    DIEValue *Value = ValuesSet.FindNodeOrInsertPos(ID, Where);
+    if (!Value) {
+      Value = new DIESectionOffset(Label, Section, isEH, useSet);
+      ValuesSet.InsertNode(Value, Where);
+      Values.push_back(Value);
+    }
+  
+    Die->AddValue(Attribute, Form, Value);
+  }
+      
   /// AddDelta - Add a label delta attribute data and value.
   ///
   void AddDelta(DIE *Die, unsigned Attribute, unsigned Form,
@@ -1714,11 +1783,8 @@ private:
   CompileUnit *NewCompileUnit(CompileUnitDesc *UnitDesc, unsigned ID) {
     // Construct debug information entry.
     DIE *Die = new DIE(DW_TAG_compile_unit);
-    if (TAI->isAbsoluteDebugSectionOffsets())
-      AddLabel(Die, DW_AT_stmt_list, DW_FORM_data4, DWLabel("section_line", 0));
-    else
-      AddDelta(Die, DW_AT_stmt_list, DW_FORM_data4, DWLabel("section_line", 0),
-               DWLabel("section_line", 0));      
+    AddSectionOffset(Die, DW_AT_stmt_list, DW_FORM_data4,
+              DWLabel("section_line", 0), DWLabel("section_line", 0), false);
     AddString(Die, DW_AT_producer,  DW_FORM_string, UnitDesc->getProducer());
     AddUInt  (Die, DW_AT_language,  DW_FORM_data1,  UnitDesc->getLanguage());
     AddString(Die, DW_AT_name,      DW_FORM_string, UnitDesc->getFileName());
@@ -3609,6 +3675,23 @@ void DIEObjectLabel::EmitValue(DwarfDebug &DD, unsigned Form) {
 /// SizeOf - Determine size of label value in bytes.
 ///
 unsigned DIEObjectLabel::SizeOf(const DwarfDebug &DD, unsigned Form) const {
+  if (Form == DW_FORM_data4) return 4;
+  return DD.getTargetData()->getPointerSize();
+}
+    
+//===----------------------------------------------------------------------===//
+
+/// EmitValue - Emit delta value.
+///
+void DIESectionOffset::EmitValue(DwarfDebug &DD, unsigned Form) {
+  bool IsSmall = Form == DW_FORM_data4;
+  DD.EmitSectionOffset(Label.Tag, Section.Tag,
+                       Label.Number, Section.Number, IsSmall, IsEH, UseSet);
+}
+
+/// SizeOf - Determine size of delta value in bytes.
+///
+unsigned DIESectionOffset::SizeOf(const DwarfDebug &DD, unsigned Form) const {
   if (Form == DW_FORM_data4) return 4;
   return DD.getTargetData()->getPointerSize();
 }
