@@ -32,6 +32,7 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/CodeGen/FileWriters.h"
+#include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -261,8 +262,24 @@ bool LTOCodeGenerator::determineTarget(std::string& errMsg)
                                                        *mergedModule, errMsg);
         if ( march == NULL )
             return true;
-        std::string features;
-        _target = march->CtorFn(*mergedModule, features);
+
+        // construct LTModule, hand over ownership of module and target
+        //
+        // FIXME: This is an inelegant way of specifying the features of a
+        // subtarget. It would be better if we could encode this information
+        // into the IR. See <rdar://5972456>.
+        SubtargetFeatures Features;
+        std::string FeatureStr;
+        std::string TargetTriple = _linker.getModule()->getTargetTriple();
+
+        if (strncmp(TargetTriple.c_str(), "powerpc-apple-", 14) == 0) {
+          Features.AddFeature("altivec", true);
+        } else if (strncmp(TargetTriple.c_str(), "powerpc64-apple-", 16) == 0) {
+          Features.AddFeature("64bit", true);
+          Features.AddFeature("altivec", true);
+        }
+
+        _target = march->CtorFn(*mergedModule, Features.getString());
     }
     return false;
 }
@@ -301,7 +318,6 @@ void LTOCodeGenerator::applyScopeRestrictions()
         _scopeRestrictionsDone = true;
     }
 }
-
 
 /// Optimize merged modules using various IPO passes
 bool LTOCodeGenerator::generateAssemblyCode(std::ostream& out, std::string& errMsg)
@@ -360,12 +376,9 @@ bool LTOCodeGenerator::generateAssemblyCode(std::ostream& out, std::string& errM
     // function pointers.  When this happens, we often have to resolve varargs
     // calls, etc, so let instcombine do this.
     passes.add(createInstructionCombiningPass());
-
-    passes.add(createFunctionInliningPass()); // Inline small functions
-
-    passes.add(createPruneEHPass());            // Remove dead EH info
-
-    passes.add(createGlobalDCEPass());          // Remove dead functions
+    passes.add(createFunctionInliningPass());     // Inline small functions
+    passes.add(createPruneEHPass());              // Remove dead EH info
+    passes.add(createGlobalDCEPass());            // Remove dead functions
 
     // If we didn't decide to inline a function, check to see if we can
     // transform it to pass arguments by value instead of by reference.
@@ -377,16 +390,14 @@ bool LTOCodeGenerator::generateAssemblyCode(std::ostream& out, std::string& errM
     passes.add(createScalarReplAggregatesPass()); // Break up allocas
 
     // Run a few AA driven optimizations here and now, to cleanup the code.
-    passes.add(createGlobalsModRefPass());      // IP alias analysis
-
-    passes.add(createLICMPass());               // Hoist loop invariants
-    passes.add(createGVNPass());               // Remove common subexprs
-    passes.add(createMemCpyOptPass());  // Remove dead memcpy's
+    passes.add(createGlobalsModRefPass());        // IP alias analysis
+    passes.add(createLICMPass());                 // Hoist loop invariants
+    passes.add(createGVNPass());                  // Remove common subexprs
+    passes.add(createMemCpyOptPass());            // Remove dead memcpy's
     passes.add(createDeadStoreEliminationPass()); // Nuke dead stores
 
     // Cleanup and simplify the code after the scalar optimizations.
     passes.add(createInstructionCombiningPass());
-
     passes.add(createJumpThreadingPass());        // Thread jumps.
 
     // Delete basic blocks, which optimization passes may have killed...
@@ -431,13 +442,13 @@ bool LTOCodeGenerator::generateAssemblyCode(std::ostream& out, std::string& errM
 
     // Run the code generator, and write assembly file
     codeGenPasses->doInitialization();
-    for (Module::iterator it = mergedModule->begin(),
-                e = mergedModule->end(); it != e; ++it) {
-        if (!it->isDeclaration())
-            codeGenPasses->run(*it);
-    }
-    codeGenPasses->doFinalization();
 
+    for (Module::iterator
+           it = mergedModule->begin(), e = mergedModule->end(); it != e; ++it)
+      if (!it->isDeclaration())
+        codeGenPasses->run(*it);
+
+    codeGenPasses->doFinalization();
     return false; // success
 }
 

@@ -24,10 +24,10 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Process.h"
+#include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Target/TargetAsmInfo.h"
-
 
 #include <fstream>
 
@@ -125,11 +125,27 @@ LTOModule* LTOModule::makeLTOModule(MemoryBuffer* buffer, std::string& errMsg)
     // find machine architecture for this module
     const TargetMachineRegistry::entry* march = 
             TargetMachineRegistry::getClosestStaticTargetForModule(*m, errMsg);
+
     if ( march == NULL ) 
         return NULL;
+
     // construct LTModule, hand over ownership of module and target
-    std::string     features;
-    TargetMachine*  target = march->CtorFn(*m, features);
+    //
+    // FIXME: This is an inelegant way of specifying the features of a
+    // subtarget. It would be better if we could encode this information into
+    // the IR. See <rdar://5972456>.
+    SubtargetFeatures Features;
+    std::string FeatureStr;
+    const char *TargetTriple = m->getTargetTriple().c_str();
+
+    if (strncmp(TargetTriple, "powerpc-apple-", 14) == 0) {
+      Features.AddFeature("altivec", true);
+    } else if (strncmp(TargetTriple, "powerpc64-apple-", 16) == 0) {
+      Features.AddFeature("64bit", true);
+      Features.AddFeature("altivec", true);
+    }
+
+    TargetMachine* target = march->CtorFn(*m, Features.getString());
     return new LTOModule(m.take(), target);
 }
 
