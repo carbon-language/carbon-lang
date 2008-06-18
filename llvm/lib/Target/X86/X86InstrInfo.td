@@ -578,7 +578,7 @@ def MOV16rr : I<0x89, MRMDestReg, (outs GR16:$dst), (ins GR16:$src),
 def MOV32rr : I<0x89, MRMDestReg, (outs GR32:$dst), (ins GR32:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", []>;
 }
-let isReMaterializable = 1 in {
+let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
 def MOV8ri  : Ii8 <0xB0, AddRegFrm, (outs GR8 :$dst), (ins i8imm :$src),
                    "mov{b}\t{$src, $dst|$dst, $src}",
                    [(set GR8:$dst, imm:$src)]>;
@@ -1312,8 +1312,7 @@ let isTwoAddress = 0 in {
 } // isTwoAddress = 0
 
 
-let isAsCheapAsAMove = 1,
-    isCommutable = 1 in { // X = XOR Y, Z --> X = XOR Z, Y
+let isCommutable = 1 in { // X = XOR Y, Z --> X = XOR Z, Y
   def XOR8rr   : I<0x30, MRMDestReg,
                    (outs GR8 :$dst), (ins GR8 :$src1, GR8 :$src2),
                    "xor{b}\t{$src2, $dst|$dst, $src2}",
@@ -1326,7 +1325,7 @@ let isAsCheapAsAMove = 1,
                    (outs GR32:$dst), (ins GR32:$src1, GR32:$src2), 
                    "xor{l}\t{$src2, $dst|$dst, $src2}",
                    [(set GR32:$dst, (xor GR32:$src1, GR32:$src2))]>;
-} // isAsCheapAsAMove = 1, isCommutable = 1
+} // isCommutable = 1
 
 def XOR8rm   : I<0x32, MRMSrcMem , 
                  (outs GR8 :$dst), (ins GR8:$src1, i8mem :$src2), 
