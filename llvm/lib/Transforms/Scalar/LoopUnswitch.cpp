@@ -610,6 +610,23 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
     DT->changeImmediateDominator(NewExit, OrigPH);
     DT->changeImmediateDominator(NewPH, OrigPH);
   }
+   
+  if (DF) {
+    // NewExit is now part of NewPH and Loop Header's dominance
+    // frontier.
+    DominanceFrontier::iterator  DFI = DF->find(NewPH);
+    if (DFI != DF->end())
+      DF->addToFrontier(DFI, NewExit);
+    DFI = DF->find(L->getHeader());
+    DF->addToFrontier(DFI, NewExit);
+
+    // ExitBlock does not have successors then NewExit is part of
+    // its dominance frontier.
+    if (succ_begin(ExitBlock) == succ_end(ExitBlock)) {
+      DFI = DF->find(ExitBlock);
+      DF->addToFrontier(DFI, NewExit);
+    }
+  }
   LPM->deleteSimpleAnalysisValue(OrigPH->getTerminator(), L);
   OrigPH->getTerminator()->eraseFromParent();
 
