@@ -40,6 +40,8 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -49,9 +51,10 @@ STATISTIC(NumTwoAddressInstrs, "Number of two-address instructions");
 STATISTIC(NumCommuted        , "Number of instructions commuted to coalesce");
 STATISTIC(NumConvertedTo3Addr, "Number of instructions promoted to 3-address");
 STATISTIC(Num3AddrSunk,        "Number of 3-address instructions sunk");
+STATISTIC(NumReMats,           "Number of instructions re-materialized");
 
 static cl::opt<bool>
-EnableReMat("2-addr-remat", cl::init(false), cl::Hidden,
+EnableReMat("two-addr-remat", cl::init(false), cl::Hidden,
             cl::desc("Two-addr conversion should remat when possible."));
 
 namespace {
@@ -65,6 +68,12 @@ namespace {
     bool Sink3AddrInstruction(MachineBasicBlock *MBB, MachineInstr *MI,
                               unsigned Reg,
                               MachineBasicBlock::iterator OldPos);
+
+    bool isSafeToReMat(unsigned DstReg, MachineInstr *MI);
+    bool isProfitableToReMat(unsigned Reg, const TargetRegisterClass *RC,
+                             MachineInstr *MI, unsigned Loc,
+                             MachineInstr *DefMI, MachineBasicBlock *MBB,
+                             DenseMap<MachineInstr*, unsigned> &DistanceMap);
   public:
     static char ID; // Pass identification, replacement for typeid
     TwoAddressInstructionPass() : MachineFunctionPass((intptr_t)&ID) {}
@@ -93,7 +102,6 @@ const PassInfo *const llvm::TwoAddressInstructionPassID = &X;
 /// three-address instruction to avoid clobbering a register. Try to sink it
 /// past the instruction that would kill the above mentioned register to reduce
 /// register pressure.
-/// 
 bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
                                            MachineInstr *MI, unsigned SavedReg,
                                            MachineBasicBlock::iterator OldPos) {
@@ -127,7 +135,6 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
 
   // Find the instruction that kills SavedReg.
   MachineInstr *KillMI = NULL;
-
   for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(SavedReg),
          UE = MRI->use_end(); UI != UE; ++UI) {
     MachineOperand &UseMO = UI.getOperand();
@@ -144,15 +151,18 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
   // position and the kill use, then it's not safe to sink it.
   // 
   // FIXME: This can be sped up if there is an easy way to query whether an
-  // instruction if before or after another instruction. Then we can use
+  // instruction is before or after another instruction. Then we can use
   // MachineRegisterInfo def / use instead.
   MachineOperand *KillMO = NULL;
   MachineBasicBlock::iterator KillPos = KillMI;
   ++KillPos;
 
+  unsigned NumVisited = 0;
   for (MachineBasicBlock::iterator I = next(OldPos); I != KillPos; ++I) {
     MachineInstr *OtherMI = I;
-
+    if (NumVisited > 30)  // FIXME: Arbitrary limit to reduce compile time cost.
+      return false;
+    ++NumVisited;
     for (unsigned i = 0, e = OtherMI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = OtherMI->getOperand(i);
       if (!MO.isRegister())
@@ -165,8 +175,8 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
 
       if (MO.isKill()) {
         if (OtherMI == KillMI && MOReg == SavedReg)
-          // Save the operand that kills the register. We want unset the kill
-          // marker is we can sink MI past it.
+          // Save the operand that kills the register. We want to unset the kill
+          // marker if we can sink MI past it.
           KillMO = &MO;
         else if (UseRegs.count(MOReg))
           // One of the uses is killed before the destination.
@@ -191,6 +201,80 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
   return true;
 }
 
+/// isSafeToReMat - Return true if it's safe to rematerialize the specified
+/// instruction which defined the specified register instead of copying it.
+bool
+TwoAddressInstructionPass::isSafeToReMat(unsigned DstReg, MachineInstr *MI) {
+  const TargetInstrDesc &TID = MI->getDesc();
+  if (!TID.isAsCheapAsAMove())
+    return false;
+  bool SawStore = false;
+  if (!MI->isSafeToMove(TII, SawStore))
+    return false;
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isRegister())
+      continue;
+    // FIXME: For now, do not remat any instruction with register operands.
+    // Later on, we can loosen the restriction is the register operands have
+    // not been modified between the def and use. Note, this is different from
+    // MachineSink because the code in no longer in two-address form (at least
+    // partially).
+    if (MO.isUse())
+      return false;
+    else if (!MO.isDead() && MO.getReg() != DstReg)
+      return false;
+  }
+  return true;
+}
+
+/// isTwoAddrUse - Return true if the specified MI is using the specified
+/// register as a two-address operand.
+static bool isTwoAddrUse(MachineInstr *UseMI, unsigned Reg) {
+  const TargetInstrDesc &TID = UseMI->getDesc();
+  for (unsigned i = 0, e = TID.getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = UseMI->getOperand(i);
+    if (MO.getReg() == Reg &&
+        (MO.isDef() || TID.getOperandConstraint(i, TOI::TIED_TO) != -1))
+      // Earlier use is a two-address one.
+      return true;
+  }
+  return false;
+}
+
+/// isProfitableToReMat - Return true if the heuristics determines it is likely
+/// to be profitable to re-materialize the definition of Reg rather than copy
+/// the register.
+bool
+TwoAddressInstructionPass::isProfitableToReMat(unsigned Reg,
+                                const TargetRegisterClass *RC,
+                                MachineInstr *MI, unsigned Loc,
+                                MachineInstr *DefMI, MachineBasicBlock *MBB,
+                                DenseMap<MachineInstr*, unsigned> &DistanceMap) {
+  if (DefMI->getParent() != MBB)
+    return true;
+  // If earlier uses in MBB are not two-address uses, then don't remat.
+  bool OtherUse = false;
+  for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg),
+         UE = MRI->use_end(); UI != UE; ++UI) {
+    MachineOperand &UseMO = UI.getOperand();
+    if (!UseMO.isUse())
+      continue;
+    MachineInstr *UseMI = UseMO.getParent();
+    if (UseMI->getParent() != MBB)
+      continue;
+    DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(UseMI);
+    if (DI != DistanceMap.end() && DI->second == Loc)
+      continue;  // Current use.
+    OtherUse = true;
+    // There is at least one other use in the MBB that will clobber the
+    // register. 
+    if (isTwoAddrUse(UseMI, Reg))
+      return true;
+  }
+  return !OtherUse;
+}
+
 /// runOnMachineFunction - Reduce two-address instructions to two operands.
 ///
 bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
@@ -206,16 +290,25 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   DOUT << "********** REWRITING TWO-ADDR INSTRS **********\n";
   DOUT << "********** Function: " << MF.getFunction()->getName() << '\n';
 
-  SmallPtrSet<MachineInstr*, 8> ReMattedInstrs;
+  // ReMatRegs - Keep track of the registers whose def's are remat'ed.
+  BitVector ReMatRegs;
+  ReMatRegs.resize(MRI->getLastVirtReg()+1);
+
+  // DistanceMap - Keep track the distance of a MI from the start of the
+  // current basic block.
+  DenseMap<MachineInstr*, unsigned> DistanceMap;
 
   for (MachineFunction::iterator mbbi = MF.begin(), mbbe = MF.end();
        mbbi != mbbe; ++mbbi) {
+    unsigned Dist = 0;
+    DistanceMap.clear();
     for (MachineBasicBlock::iterator mi = mbbi->begin(), me = mbbi->end();
          mi != me; ) {
       MachineBasicBlock::iterator nmi = next(mi);
       const TargetInstrDesc &TID = mi->getDesc();
       bool FirstTied = true;
 
+      DistanceMap.insert(std::make_pair(mi, ++Dist));
       for (unsigned si = 1, e = TID.getNumOperands(); si < e; ++si) {
         int ti = TID.getOperandConstraint(si, TOI::TIED_TO);
         if (ti == -1)
@@ -284,6 +377,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                     mbbi->insert(mi, NewMI);           // Insert the new inst
                     mbbi->erase(mi);                   // Nuke the old inst.
                     mi = NewMI;
+                    DistanceMap.insert(std::make_pair(NewMI, Dist));
                   }
 
                   ++NumCommuted;
@@ -303,21 +397,23 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                 assert(TID.getOperandConstraint(i, TOI::TIED_TO) == -1);
 #endif
 
-              if (MachineInstr *New=TII->convertToThreeAddress(mbbi, mi, *LV)) {
+              MachineInstr *NewMI = TII->convertToThreeAddress(mbbi, mi, *LV);
+              if (NewMI) {
                 DOUT << "2addr: CONVERTING 2-ADDR: " << *mi;
-                DOUT << "2addr:         TO 3-ADDR: " << *New;
+                DOUT << "2addr:         TO 3-ADDR: " << *NewMI;
                 bool Sunk = false;
 
-                if (New->findRegisterUseOperand(regB, false, TRI))
+                if (NewMI->findRegisterUseOperand(regB, false, TRI))
                   // FIXME: Temporary workaround. If the new instruction doesn't
                   // uses regB, convertToThreeAddress must have created more
                   // then one instruction.
-                  Sunk = Sink3AddrInstruction(mbbi, New, regB, mi);
+                  Sunk = Sink3AddrInstruction(mbbi, NewMI, regB, mi);
 
                 mbbi->erase(mi); // Nuke the old inst.
 
                 if (!Sunk) {
-                  mi = New;
+                  DistanceMap.insert(std::make_pair(NewMI, Dist));
+                  mi = NewMI;
                   nmi = next(mi);
                 }
 
@@ -328,17 +424,17 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           }
 
         InstructionRearranged:
-          const TargetRegisterClass* rc = MF.getRegInfo().getRegClass(regA);
-          MachineInstr *Orig = MRI->getVRegDef(regB);
-          const TargetInstrDesc &OrigTID = Orig->getDesc();
-          bool SawStore = false;
-
-          if (EnableReMat && Orig && Orig->isSafeToMove(TII, SawStore) &&
-              OrigTID.isAsCheapAsAMove() && !OrigTID.mayLoad() &&
-              !OrigTID.isSimpleLoad()) {
-            DEBUG(cerr << "2addr: REMATTING : " << *Orig << "\n");
-            TII->reMaterialize(*mbbi, mi, regA, Orig);
-            ReMattedInstrs.insert(Orig);
+          const TargetRegisterClass* rc = MRI->getRegClass(regA);
+          MachineInstr *DefMI = MRI->getVRegDef(regB);
+          // If it's safe and profitable, remat the definition instead of
+          // copying it.
+          if (EnableReMat && DefMI &&
+              isSafeToReMat(regB, DefMI) &&
+              isProfitableToReMat(regB, rc, mi, Dist, DefMI, mbbi,DistanceMap)){
+            DEBUG(cerr << "2addr: REMATTING : " << *DefMI << "\n");
+            TII->reMaterialize(*mbbi, mi, regA, DefMI);
+            ReMatRegs.set(regB);
+            ++NumReMats;
           } else {
             TII->copyRegToReg(*mbbi, mi, regA, regB, rc, rc);
           }
@@ -378,33 +474,16 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   }
 
   if (EnableReMat) {
-    // Check to see if the instructions that we rematerialized are now dead. If
-    // they are, expunge them here.
-    SmallPtrSet<MachineInstr*, 8>::iterator I = ReMattedInstrs.begin();
-    SmallPtrSet<MachineInstr*, 8>::iterator E = ReMattedInstrs.end();
-
-    for (; I != E; ++I) {
-      MachineInstr *MI = *I;
-      bool InstrDead = true;
-      
-      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-        const MachineOperand &MO = MI->getOperand(i);
-        if (!MO.isRegister())
-          continue;
-        unsigned MOReg = MO.getReg();
-
-        if (!MOReg || !MO.isDef() || (MO.isImplicit() && MO.isDead()))
-          continue;
-
-        if (MRI->use_begin(MOReg) != MRI->use_end()) {
-          InstrDead = false;
-          break;
-        }
+    // Some remat'ed instructions are dead.
+    int VReg = ReMatRegs.find_first();
+    while (VReg != -1) {
+      if (MRI->use_empty(VReg)) {
+        MachineInstr *DefMI = MRI->getVRegDef(VReg);
+        DefMI->eraseFromParent();
       }
-
-      if (InstrDead)
-        MI->eraseFromParent();
+      VReg = ReMatRegs.find_next(VReg);
     }
+
   }
 
   return MadeChange;
