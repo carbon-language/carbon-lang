@@ -145,6 +145,10 @@ bool IPCP::PropagateConstantsIntoArguments(Function &F) {
 // all callers that use those return values with the constant value. This will
 // leave in the actual return values and instructions, but deadargelim will
 // clean that up.
+//
+// Additionally if a function always returns one of its arguments directly,
+// callers will be updated to use the value they pass in directly instead of
+// using the return value.
 bool IPCP::PropagateConstantReturn(Function &F) {
   if (F.getReturnType() == Type::VoidTy)
     return false; // No return value.
@@ -188,8 +192,8 @@ bool IPCP::PropagateConstantReturn(Function &F) {
           if (isa<UndefValue>(V))
             continue;
           
-          // Try to see if all the rets return the same constant.
-          if (isa<Constant>(V)) {
+          // Try to see if all the rets return the same constant or argument.
+          if (isa<Constant>(V) || isa<Argument>(V)) {
             if (isa<UndefValue>(RV)) {
               // No value found yet? Try the current one.
               RetVals[i] = V;
@@ -227,7 +231,13 @@ bool IPCP::PropagateConstantReturn(Function &F) {
     MadeChange = true;
 
     if (STy == 0) {
-      Call->replaceAllUsesWith(RetVals[0]);
+      Value* New = RetVals[0];
+      if (Argument *A = dyn_cast<Argument>(New))
+        // Was an argument returned? Then find the corresponding argument in
+        // the call instruction and use that. Add 1 to the argument number
+        // to skip the first argument (the function itself).
+        New = Call->getOperand(A->getArgNo() + 1);
+      Call->replaceAllUsesWith(New);
       continue;
     }
    
@@ -255,6 +265,11 @@ bool IPCP::PropagateConstantReturn(Function &F) {
       if (index != -1) {
         Value *New = RetVals[index];
         if (New) {
+          if (Argument *A = dyn_cast<Argument>(New))
+            // Was an argument returned? Then find the corresponding argument in
+            // the call instruction and use that. Add 1 to the argument number
+            // to skip the first argument (the function itself).
+            New = Call->getOperand(A->getArgNo() + 1);
           Ins->replaceAllUsesWith(New);
           Ins->eraseFromParent();
         }
