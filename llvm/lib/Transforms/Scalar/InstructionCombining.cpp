@@ -1343,6 +1343,7 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
       }
       }
     }
+    ComputeMaskedBits(V, DemandedMask, RHSKnownZero, RHSKnownOne, Depth);
     break;
   }
   
