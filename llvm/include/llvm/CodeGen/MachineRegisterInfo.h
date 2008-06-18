@@ -90,6 +90,10 @@ public:
   }
   static use_iterator use_end() { return use_iterator(0); }
   
+  /// use_empty - Return true if there are no instructions using the specified
+  /// register.
+  bool use_empty(unsigned RegNo) const { return use_begin(RegNo) == use_end(); }
+
   
   /// replaceRegWith - Replace all instances of FromReg with ToReg in the
   /// machine function.  This is like llvm-level X->replaceAllUsesWith(Y),
