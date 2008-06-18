@@ -99,6 +99,16 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode, Value *LHS,
   return BinaryOperator::Create(Opcode, LHS, RHS, "tmp", InsertPt);
 }
 
+Value *SCEVExpander::visitAddExpr(SCEVAddExpr *S) {
+  Value *V = expand(S->getOperand(S->getNumOperands()-1));
+
+  // Emit a bunch of add instructions
+  for (int i = S->getNumOperands()-2; i >= 0; --i)
+    V = InsertBinop(Instruction::Add, V, expand(S->getOperand(i)),
+                    InsertPt);
+  return V;
+}
+    
 Value *SCEVExpander::visitMulExpr(SCEVMulExpr *S) {
   int FirstOp = 0;  // Set if we should emit a subtract.
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(S->getOperand(0)))

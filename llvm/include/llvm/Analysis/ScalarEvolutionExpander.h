@@ -111,15 +111,7 @@ namespace llvm {
       return CastInst::CreateSExtOrBitCast(V, S->getType(), "tmp.", InsertPt);
     }
 
-    Value *visitAddExpr(SCEVAddExpr *S) {
-      Value *V = expand(S->getOperand(S->getNumOperands()-1));
-
-      // Emit a bunch of add instructions
-      for (int i = S->getNumOperands()-2; i >= 0; --i)
-        V = InsertBinop(Instruction::Add, V, expand(S->getOperand(i)),
-                        InsertPt);
-      return V;
-    }
+    Value *visitAddExpr(SCEVAddExpr *S);
 
     Value *visitMulExpr(SCEVMulExpr *S);
 
