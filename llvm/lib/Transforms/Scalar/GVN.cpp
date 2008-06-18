@@ -25,10 +25,8 @@
 #include "llvm/Value.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
-#include "llvm/ADT/ScopedHashTable.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/SparseBitVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -40,6 +38,7 @@ using namespace llvm;
 
 STATISTIC(NumGVNInstr, "Number of instructions deleted");
 STATISTIC(NumGVNLoad, "Number of loads deleted");
+STATISTIC(NumGVNPRE, "Number of instructions PRE'd");
 
 //===----------------------------------------------------------------------===//
 //                         ValueTable Class
@@ -414,6 +413,11 @@ Expression ValueTable::create_expression(GetElementPtrInst* G) {
 //                     ValueTable External Functions
 //===----------------------------------------------------------------------===//
 
+/// add - Insert a value into the table with a specified value number.
+void ValueTable::add(Value* V, uint32_t num) {
+  valueNumbering.insert(std::make_pair(V, num));
+}
+
 /// lookup_or_add - Returns the value number for the specified value, assigning
 /// it a new number if it did not have one before.
 uint32_t ValueTable::lookup_or_add(Value* V) {
@@ -675,16 +679,13 @@ namespace llvm {
   template<> struct DenseMapInfo<uint32_t> {
     static inline uint32_t getEmptyKey() { return ~0; }
     static inline uint32_t getTombstoneKey() { return ~0 - 1; }
-    static unsigned getHashValue(const uint32_t& Val) { return Val; }
+    static unsigned getHashValue(const uint32_t& Val) { return Val * 37; }
     static bool isPod() { return true; }
     static bool isEqual(const uint32_t& LHS, const uint32_t& RHS) {
       return LHS == RHS;
     }
   };
 }
-
-typedef ScopedHashTable<uint32_t, Value*> ValueNumberMap;
-typedef ScopedHashTableScope<uint32_t, Value*> ValueNumberScope;
 
 namespace {
 
@@ -696,9 +697,7 @@ namespace {
 
   private:
     ValueTable VN;
-    
-    DenseMap<BasicBlock*, ValueNumberScope> availableOut;
-    ValueNumberMap BaseMap;
+    DenseMap<BasicBlock*, DenseMap<uint32_t, Value*> > localAvail;
     
     typedef DenseMap<Value*, SmallPtrSet<Instruction*, 4> > PhiMapType;
     PhiMapType phiMap;
@@ -728,10 +727,11 @@ namespace {
     Value *GetValueForBlock(BasicBlock *BB, LoadInst* orig,
                             DenseMap<BasicBlock*, Value*> &Phis,
                             bool top_level = false);
-    void dump(DenseMap<BasicBlock*, Value*>& d);
+    void dump(DenseMap<uint32_t, Value*>& d);
     bool iterateOnFunction(Function &F);
     Value* CollapsePhi(PHINode* p);
     bool isSafeReplacement(PHINode* p, Instruction* inst);
+    bool performPRE(Function& F);
   };
   
   char GVN::ID = 0;
@@ -743,13 +743,11 @@ FunctionPass *llvm::createGVNPass() { return new GVN(); }
 static RegisterPass<GVN> X("gvn",
                            "Global Value Numbering");
 
-void GVN::dump(DenseMap<BasicBlock*, Value*>& d) {
+void GVN::dump(DenseMap<uint32_t, Value*>& d) {
   printf("{\n");
-  for (DenseMap<BasicBlock*, Value*>::iterator I = d.begin(),
+  for (DenseMap<uint32_t, Value*>::iterator I = d.begin(),
        E = d.end(); I != E; ++I) {
-    if (I->second == MemoryDependenceAnalysis::None)
-      printf("None\n");
-    else
+      printf("%d\n", I->first);
       I->second->dump();
   }
   printf("}\n");
@@ -1010,15 +1008,25 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
 bool GVN::processInstruction(Instruction *I,
                              DenseMap<Value*, LoadInst*> &lastSeenLoad,
                              SmallVectorImpl<Instruction*> &toErase) {
-  if (LoadInst* L = dyn_cast<LoadInst>(I))
-    return processLoad(L, lastSeenLoad, toErase);
+  if (LoadInst* L = dyn_cast<LoadInst>(I)) {
+    bool changed = processLoad(L, lastSeenLoad, toErase);
+    
+    if (!changed) {
+      unsigned num = VN.lookup_or_add(L);
+      localAvail[I->getParent()].insert(std::make_pair(num, L));
+    }
+    
+    return changed;
+  }
+  
+  unsigned num = VN.lookup_or_add(I);
   
   // Allocations are always uniquely numbered, so we can save time and memory
   // by fast failing them.
-  if (isa<AllocationInst>(I))
+  if (isa<AllocationInst>(I)) {
+    localAvail[I->getParent()].insert(std::make_pair(num, I));
     return false;
-  
-  unsigned num = VN.lookup_or_add(I);
+  }
   
   // Collapse PHI nodes
   if (PHINode* p = dyn_cast<PHINode>(I)) {
@@ -1032,10 +1040,12 @@ bool GVN::processInstruction(Instruction *I,
         
       p->replaceAllUsesWith(constVal);
       toErase.push_back(p);
+    } else {
+      localAvail[I->getParent()].insert(std::make_pair(num, I));
     }
   // Perform value-number based elimination
-  } else if (BaseMap.begin(num) != BaseMap.end()) {
-    Value* repl = *BaseMap.begin(num);
+  } else if (localAvail[I->getParent()].count(num)) {
+    Value* repl = localAvail[I->getParent()][num];
     
     // Remove it!
     MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
@@ -1046,7 +1056,7 @@ bool GVN::processInstruction(Instruction *I,
     toErase.push_back(I);
     return true;
   } else if (!I->isTerminator()) {
-    BaseMap.insert(num, I);
+    localAvail[I->getParent()].insert(std::make_pair(num, I));
   }
   
   return false;
@@ -1074,12 +1084,15 @@ bool GVN::runOnFunction(Function& F) {
 
 bool GVN::processBlock(DomTreeNode* DTN) {
   BasicBlock* BB = DTN->getBlock();
-  ValueNumberScope NewScope(BaseMap);
 
   SmallVector<Instruction*, 8> toErase;
   DenseMap<Value*, LoadInst*> lastSeenLoad;
   bool changed_function = false;
-
+  
+  if (DTN->getIDom())
+    localAvail.insert(std::make_pair(BB,
+                      localAvail[DTN->getIDom()->getBlock()]));
+  
   for (BasicBlock::iterator BI = BB->begin(), BE = BB->end();
        BI != BE;) {
     changed_function |= processInstruction(BI, lastSeenLoad, toErase);
@@ -1108,21 +1121,146 @@ bool GVN::processBlock(DomTreeNode* DTN) {
     toErase.clear();
   }
   
-  for (DomTreeNode::iterator I = DTN->begin(), E = DTN->end(); I != E; ++I)
-    changed_function |= processBlock(*I);
-  
   return changed_function;
+}
+
+/// performPRE - Perform a purely local form of PRE that looks for diamond
+/// control flow patterns and attempts to perform simple PRE at the join point.
+bool GVN::performPRE(Function& F) {
+  bool changed = false;
+  for (df_iterator<BasicBlock*> DI = df_begin(&F.getEntryBlock()),
+       DE = df_end(&F.getEntryBlock()); DI != DE; ++DI) {
+    BasicBlock* CurrentBlock = *DI;
+    
+    // Nothing to PRE in the entry block.
+    if (CurrentBlock == &F.getEntryBlock()) continue;
+    
+    for (BasicBlock::iterator BI = CurrentBlock->begin(),
+         BE = CurrentBlock->end(); BI != BE; ) {
+      if (isa<AllocaInst>(BI) || isa<TerminatorInst>(BI) ||
+          isa<LoadInst>(BI) || isa<StoreInst>(BI) ||
+          isa<CallInst>(BI) || isa<PHINode>(BI)) {
+        BI++;
+        continue;
+      }
+      
+      uint32_t valno = VN.lookup(BI);
+      
+      // Look for the predecessors for PRE opportunities.  We're
+      // only trying to solve the basic diamond case, where
+      // a value is computed in the successor and one predecessor,
+      // but not the other.  We also explicitly disallow cases
+      // where the successor is its own predecessor, because they're
+      // more complicated to get right.
+      unsigned numWith = 0;
+      unsigned numWithout = 0;
+      BasicBlock* PREPred = 0;
+      for (pred_iterator PI = pred_begin(CurrentBlock),
+           PE = pred_end(CurrentBlock); PI != PE; ++PI) {
+        // We're not interested in PRE where the block is its
+        // own predecessor.
+        if (*PI == CurrentBlock)
+          numWithout = 2;
+          
+        if (!localAvail[*PI].count(valno)) {
+          PREPred = *PI;
+          numWithout++;
+        } else if (localAvail[*PI][valno] == BI) {
+          numWithout = 2;
+        } else {
+          numWith++;
+        }
+      }
+      
+      // Don't do PRE when it might increase code size, i.e. when
+      // we would need to insert instructions in more than one pred.
+      if (numWithout != 1 || numWith == 0) {
+        BI++;
+        continue;
+      }
+      
+      // Instantiate the expression the in predecessor that lacked it.
+      // Because we are going top-down through the block, all value numbers
+      // will be available in the predecessor by the time we need them.  Any
+      // that weren't original present will have been instantiated earlier
+      // in this loop.
+      Instruction* PREInstr = BI->clone();
+      bool success = true;
+      for (unsigned i = 0; i < BI->getNumOperands(); ++i) {
+        Value* op = BI->getOperand(i);
+        if (isa<Argument>(op) || isa<Constant>(op) || isa<GlobalValue>(op))
+          PREInstr->setOperand(i, op);
+        else if (!localAvail[PREPred].count(VN.lookup(op))) {
+          success = false;
+          break;
+        } else
+          PREInstr->setOperand(i, localAvail[PREPred][VN.lookup(op)]);
+      }
+      
+      // Fail out if we encounter an operand that is not available in
+      // the PRE predecessor.  This is typically because of loads which 
+      // are not value numbered precisely.
+      if (!success) {
+        delete PREInstr;
+        BI++;
+        continue;
+      }
+      
+      PREInstr->insertBefore(PREPred->getTerminator());
+      PREInstr->setName(BI->getName() + ".pre");
+      VN.add(PREInstr, valno);
+      NumGVNPRE++;
+      
+      // Update the availability map to include the new instruction.
+      localAvail[PREPred].insert(std::make_pair(valno, PREInstr));
+      
+      // Create a PHI to make the value available in this block.
+      PHINode* Phi = PHINode::Create(BI->getType(),
+                                     BI->getName() + ".pre-phi",
+                                     CurrentBlock->begin());
+      for (pred_iterator PI = pred_begin(CurrentBlock),
+           PE = pred_end(CurrentBlock); PI != PE; ++PI)
+        Phi->addIncoming(localAvail[*PI][valno], *PI);
+      
+      VN.add(Phi, valno);
+      
+      // The newly created PHI completely replaces the old instruction,
+      // so we need to update the maps to reflect this.
+      for (DenseMap<BasicBlock*, DenseMap<uint32_t, Value*> >::iterator
+           UI = localAvail.begin(), UE = localAvail.end(); UI != UE; ++UI)
+        for (DenseMap<uint32_t, Value*>::iterator UUI = UI->second.begin(),
+             UUE = UI->second.end(); UUI != UUE; ++UUI)
+            if (UUI->second == BI)
+              UUI->second = Phi;
+      
+      BI->replaceAllUsesWith(Phi);
+      
+      Instruction* erase = BI;
+      BI++;
+      erase->eraseFromParent();
+      
+      changed = true;
+    }
+  }
+  
+  return changed;
 }
 
 // GVN::iterateOnFunction - Executes one iteration of GVN
 bool GVN::iterateOnFunction(Function &F) {
   // Clean out global sets from any previous functions
   VN.clear();
-  availableOut.clear();
+  localAvail.clear();
   phiMap.clear();
   
   DominatorTree &DT = getAnalysis<DominatorTree>();   
 
   // Top-down walk of the dominator tree
-  return processBlock(DT.getRootNode());
+  bool changed = false;
+  for (df_iterator<DomTreeNode*> DI = df_begin(DT.getRootNode()),
+       DE = df_end(DT.getRootNode()); DI != DE; ++DI)
+    changed |= processBlock(*DI);
+    
+  changed |= performPRE(F);
+  return changed;
 }
