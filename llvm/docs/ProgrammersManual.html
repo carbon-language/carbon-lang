@@ -2235,82 +2235,96 @@ insert entries into the symbol table.</p>
 User</a></tt> class provides a base for expressing the ownership of <tt>User</tt>
 towards other <tt><a href="http://llvm.org/doxygen/classllvm_1_1Value.html">
 Value</a></tt>s. The <tt><a href="http://llvm.org/doxygen/classllvm_1_1Use.html">
-Use</a></tt> helper class is employed to do the bookkeeping and facilitate O(1)
+Use</a></tt> helper class is employed to do the bookkeeping and to facilitate <i>O(1)</i>
 addition and removal.</p>
 
-<pre>
-   -----------------------------------------------------------------
-   --- Interaction and relationship between User and Use objects ---
-   -----------------------------------------------------------------
+<!-- ______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="PATypeHolder">Interaction and relationship between <tt>User</tt> and <tt>Use</tt> objects</a>
+</div>
 
-
-A subclass of User can choose between incorporating its Use objects
+<div class="doc_text">
+<p>
+A subclass of <tt>User</tt> can choose between incorporating its <tt>Use</tt> objects
 or refer to them out-of-line by means of a pointer. A mixed variant
-(some Uses inline others hung off) is impractical and breaks the invariant
-that the Use objects belonging to the same User form a contiguous array.
+(some <tt>Use</tt>s inline others hung off) is impractical and breaks the invariant
+that the <tt>Use</tt> objects belonging to the same <tt>User</tt> form a contiguous array.
+</p>
+</div>
 
-We have 2 different layouts in the User (sub)classes:
+<p>
+We have 2 different layouts in the <tt>User</tt> (sub)classes:
+<ul>
+<li><p>Layout a)
+The <tt>Use</tt> object(s) are inside (resp. at fixed offset) of the <tt>User</tt>
+object and there are a fixed number of them.</p>
 
-Layout a)
-The Use object(s) are inside (resp. at fixed offset) of the User
-object and there are a fixed number of them.
-
-Layout b)
-The Use object(s) are referenced by a pointer to an
-array from the User object and there may be a variable
-number of them.
-
+<li><p>Layout b)
+The <tt>Use</tt> object(s) are referenced by a pointer to an
+array from the <tt>User</tt> object and there may be a variable
+number of them.</p>
+</ul>
+<p>
 Initially each layout will possess a direct pointer to the
-start of the array of Uses. Though not mandatory for layout a),
+start of the array of <tt>Use</tt>s. Though not mandatory for layout a),
 we stick to this redundancy for the sake of simplicity.
-The User object will also store the number of Use objects it
+The <tt>User</tt> object will also store the number of <tt>Use</tt> objects it
 has. (Theoretically this information can also be calculated
-given the scheme presented below.)
+given the scheme presented below.)</p>
+<p>
+Special forms of allocation operators (<tt>operator new</tt>)
+will enforce the following memory layouts:</p>
 
-Special forms of allocation operators (operator new)
-will enforce the following memory layouts:
+<ul>
+<li><p>Layout a) will be modelled by prepending the <tt>User</tt> object by the <tt>Use[]</tt> array.</p>
 
+<pre>
+...---.---.---.---.-------...
+  | P | P | P | P | User
+'''---'---'---'---'-------'''
+</pre>
 
-#  Layout a) will be modelled by prepending the User object
-#  by the Use[] array.
-#      
-#      ...---.---.---.---.-------...
-#        | P | P | P | P | User
-#      '''---'---'---'---'-------'''
+<li><p>Layout b) will be modelled by pointing at the Use[] array.</p>
+<pre>
+.-------...
+| User
+'-------'''
+    |
+    v
+    .---.---.---.---...
+    | P | P | P | P |
+    '---'---'---'---'''
+</pre>
+</ul>
+<i>(In the above figures '<tt>P</tt>' stands for the <tt>Use**</tt> that
+    is stored in each <tt>Use</tt> object in the member <tt>Use::Prev</tt>)</i>
 
+<!-- ______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="PATypeHolder">The waymarking algorithm</a>
+</div>
 
-#  Layout b) will be modelled by pointing at the Use[] array.
-#      
-#      .-------...
-#      | User
-#      '-------'''
-#          |
-#          v
-#          .---.---.---.---...
-#          | P | P | P | P |
-#          '---'---'---'---'''
+<div class="doc_text">
+<p>
+Since the <tt>Use</tt> objects will be deprived of the direct pointer to
+their <tt>User</tt> objects, there must be a fast and exact method to
+recover it. This is accomplished by the following scheme:</p>
+</div>
 
-   (In the above figures 'P' stands for the Use** that
-    is stored in each Use object in the member Use::Prev)
-
-
-Since the Use objects will be deprived of the direct pointer to
-their User objects, there must be a fast and exact method to
-recover it. This is accomplished by the following scheme:
-
-A bit-encoding in the 2 LSBits of the Use::Prev will allow to find the
-start of the User object:
-
-00 --> binary digit 0
-01 --> binary digit 1
-10 --> stop and calc (s)
-11 --> full stop (S)
-
-Given a Use*, all we have to do is to walk till we get
-a stop and we either have a User immediately behind or
+A bit-encoding in the 2 LSBits (least significant bits) of the <tt>Use::Prev</tt> will allow to find the
+start of the <tt>User</tt> object:
+<ul>
+<li><tt>00</tt> &mdash;&gt; binary digit 0</li>
+<li><tt>01</tt> &mdash;&gt; binary digit 1</li>
+<li><tt>10</tt> &mdash;&gt; stop and calculate (<tt>s</tt>)</li>
+<li><tt>11</tt> &mdash;&gt; full stop (<tt>S</tt>)</li>
+</ul>
+<p>
+Given a <tt>Use*</tt>, all we have to do is to walk till we get
+a stop and we either have a <tt>User</tt> immediately behind or
 we have to walk to the next stop picking up digits
-and calculating the offset:
-
+and calculating the offset:</p>
+<pre>
 .---.---.---.---.---.---.---.---.---.---.---.---.---.---.---.---.----------------
 | 1 | s | 1 | 0 | 1 | 0 | s | 1 | 1 | 0 | s | 1 | 1 | s | 1 | S | User (or User*)
 '---'---'---'---'---'---'---'---'---'---'---'---'---'---'---'---'----------------
@@ -2320,14 +2334,24 @@ and calculating the offset:
     |                   |               |______________________>
     |                   |______________________________________>
     |__________________________________________________________>
-
-
+</pre>
+<p>
 Only the significant number of bits need to be stored between the
-stops, so that the worst case is 20 memory accesses when there are
-1000 Use objects.
+stops, so that the <i>worst case is 20 memory accesses</i> when there are
+1000 <tt>Use</tt> objects associated with a <tt>User</tt>.</p>
 
-The following literate Haskell fragment demonstrates the concept:
+<!-- ______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="PATypeHolder">Reference implementation</a>
+</div>
 
+<div class="doc_text">
+<p>
+The following literate Haskell fragment demonstrates the concept:</p>
+</div>
+
+<div class="doc_code">
+<pre>
 > import Test.QuickCheck
 > 
 > digits :: Int -> [Char] -> [Char]
@@ -2345,13 +2369,16 @@ The following literate Haskell fragment demonstrates the concept:
 > 
 > test = takeLast 40 $ dist 20 []
 > 
+</pre>
+</div>
+<p>
+Printing &lt;test&gt; gives: <tt>"1s100000s11010s10100s1111s1010s110s11s1S"</tt></p>
+<p>
+The reverse algorithm computes the length of the string just by examining
+a certain prefix:</p>
 
-Printing <test> gives: "1s100000s11010s10100s1111s1010s110s11s1S"
-
-The reverse algorithm computes the
-length of the string just by examining
-a certain prefix:
-
+<div class="doc_code">
+<pre>
 > pref :: [Char] -> Int
 > pref "S" = 1
 > pref ('s':'1':rest) = decode 2 1 rest
@@ -2361,44 +2388,63 @@ a certain prefix:
 > decode walk acc ('1':rest) = decode (walk + 1) (acc * 2 + 1) rest
 > decode walk acc _ = walk + acc
 > 
+</pre>
+</div>
+<p>
+Now, as expected, printing &lt;pref test&gt; gives <tt>40</tt>.</p>
+<p>
+We can <i>quickCheck</i> this with following property:</p>
 
-Now, as expected, printing <pref test> gives 40.
-
-We can quickCheck this with following property:
-
+<div class="doc_code">
+<pre>
 > testcase = dist 2000 []
 > testcaseLength = length testcase
 > 
 > identityProp n = n > 0 && n <= testcaseLength ==> length arr == pref arr
 >     where arr = takeLast n testcase
+> 
+</pre>
+</div>
+<p>
+As expected &lt;quickCheck identityProp&gt; gives:</p>
 
-As expected <quickCheck identityProp> gives:
-
+<pre>
 *Main> quickCheck identityProp
 OK, passed 100 tests.
+</pre>
+<p>
+Let's be a bit more exhaustive:</p>
 
-Let's be a bit more exhaustive:
-
+<div class="doc_code">
+<pre>
 > 
 > deepCheck p = check (defaultConfig { configMaxTest = 500 }) p
 > 
+</pre>
+</div>
+<p>
+And here is the result of &lt;deepCheck identityProp&gt;:</p>
 
-And here is the result of <deepCheck identityProp>:
-
+<pre>
 *Main> deepCheck identityProp
 OK, passed 500 tests.
-
-
-To maintain the invariant that the 2 LSBits of each Use** in Use
-never change after being set up, setters of Use::Prev must re-tag the
-new Use** on every modification. Accordingly getters must strip the
-tag bits.
-
-For layout b) instead of the User we will find a pointer (User* with LSBit set).
-Following this pointer brings us to the User. A portable trick will ensure
-that the first bytes of User (if interpreted as a pointer) will never have
-the LSBit set.
 </pre>
+
+<!-- ______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="PATypeHolder">Tagging considerations</a>
+</div>
+
+<p>
+To maintain the invariant that the 2 LSBits of each <tt>Use**</tt> in <tt>Use</tt>
+never change after being set up, setters of <tt>Use::Prev</tt> must re-tag the
+new <tt>Use**</tt> on every modification. Accordingly getters must strip the
+tag bits.</p>
+<p>
+For layout b) instead of the <tt>User</tt> we will find a pointer (<tt>User*</tt> with LSBit set).
+Following this pointer brings us to the <tt>User</tt>. A portable trick will ensure
+that the first bytes of <tt>User</tt> (if interpreted as a pointer) will never have
+the LSBit set.</p>
 
 </div>
 
