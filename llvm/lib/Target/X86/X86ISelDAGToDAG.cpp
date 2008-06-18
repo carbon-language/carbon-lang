@@ -1585,10 +1585,14 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       SDOperand Chain = Node->getOperand(0);
       SDOperand N1 = Node->getOperand(1);
       SDOperand N2 = Node->getOperand(2);
-      if (isa<FrameIndexSDNode>(N1) &&
-          N2.getOpcode() == X86ISD::Wrapper &&
+      if (!isa<FrameIndexSDNode>(N1))
+        break;
+      int FI = cast<FrameIndexSDNode>(N1)->getIndex();
+      if (N2.getOpcode() == ISD::ADD &&
+          N2.getOperand(0).getOpcode() == X86ISD::GlobalBaseReg)
+        N2 = N2.getOperand(1);
+      if (N2.getOpcode() == X86ISD::Wrapper &&
           isa<GlobalAddressSDNode>(N2.getOperand(0))) {
-        int FI = cast<FrameIndexSDNode>(N1)->getIndex();
         GlobalValue *GV =
           cast<GlobalAddressSDNode>(N2.getOperand(0))->getGlobal();
         SDOperand Tmp1 = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
