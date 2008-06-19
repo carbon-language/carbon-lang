@@ -218,13 +218,15 @@ bool IPCP::PropagateConstantReturn(Function &F) {
   // constant.
   bool MadeChange = false;
   for (Value::use_iterator UI = F.use_begin(), E = F.use_end(); UI != E; ++UI) {
-    // Make sure this is an invoke or call and that the use is for the callee.
-    if (!(isa<InvokeInst>(*UI) || isa<CallInst>(*UI)) ||
-        UI.getOperandNo() != 0) {
+    CallSite CS = CallSite::get(*UI);
+    Instruction* Call = CS.getInstruction();
+
+    // Not a call instruction or a call instruction that's not calling F
+    // directly?
+    if (!Call || UI.getOperandNo() != 0)
       continue;
-    }
     
-    Instruction *Call = cast<Instruction>(*UI);
+    // Call result not used?
     if (Call->use_empty())
       continue;
 
@@ -234,9 +236,8 @@ bool IPCP::PropagateConstantReturn(Function &F) {
       Value* New = RetVals[0];
       if (Argument *A = dyn_cast<Argument>(New))
         // Was an argument returned? Then find the corresponding argument in
-        // the call instruction and use that. Add 1 to the argument number
-        // to skip the first argument (the function itself).
-        New = Call->getOperand(A->getArgNo() + 1);
+        // the call instruction and use that.
+        New = CS.getArgument(A->getArgNo());
       Call->replaceAllUsesWith(New);
       continue;
     }
@@ -267,9 +268,8 @@ bool IPCP::PropagateConstantReturn(Function &F) {
         if (New) {
           if (Argument *A = dyn_cast<Argument>(New))
             // Was an argument returned? Then find the corresponding argument in
-            // the call instruction and use that. Add 1 to the argument number
-            // to skip the first argument (the function itself).
-            New = Call->getOperand(A->getArgNo() + 1);
+            // the call instruction and use that.
+            New = CS.getArgument(A->getArgNo());
           Ins->replaceAllUsesWith(New);
           Ins->eraseFromParent();
         }
