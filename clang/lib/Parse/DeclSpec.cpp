@@ -23,7 +23,7 @@ unsigned DeclSpec::getParsedSpecifiers() const {
   if (StorageClassSpec != SCS_unspecified ||
       SCS_thread_specified)
     Res |= PQ_StorageClassSpecifier;
-  
+
   if (TypeQualifiers != TQ_unspecified)
     Res |= PQ_TypeQualifier;
   
