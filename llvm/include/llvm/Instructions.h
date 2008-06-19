@@ -1586,8 +1586,9 @@ public:
   }  
   static const Type *getIndexedType(const Type *Ptr, unsigned Idx);
 
-  inline const unsigned *idx_begin() const { return Indices.begin(); }
-  inline const unsigned *idx_end()   const { return Indices.end(); }
+  typedef const unsigned* idx_iterator;
+  inline idx_iterator idx_begin() const { return Indices.begin(); }
+  inline idx_iterator idx_end()   const { return Indices.end(); }
 
   Value *getAggregateOperand() {
     return getOperand(0);
@@ -1747,8 +1748,9 @@ public:
     return reinterpret_cast<const PointerType*>(Instruction::getType());
   }
 
-  inline const unsigned *idx_begin() const { return Indices.begin(); }
-  inline const unsigned *idx_end()   const { return Indices.end(); }
+  typedef const unsigned* idx_iterator;
+  inline idx_iterator idx_begin() const { return Indices.begin(); }
+  inline idx_iterator idx_end()   const { return Indices.end(); }
 
   Value *getAggregateOperand() {
     return getOperand(0);
