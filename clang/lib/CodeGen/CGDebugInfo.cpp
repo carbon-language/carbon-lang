@@ -364,7 +364,7 @@ CGDebugInfo::getOrCreateFunctionType(QualType type, llvm::CompileUnitDesc *Unit)
     }
   }
 
-  // FIXME: set other fields file, line here.	
+  // FIXME: set other fields file, line here.
   SubrTy->setContext(Unit);
 
   return SubrTy;
@@ -716,7 +716,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *decl, unsigned Tag,
   // Construct llvm.dbg.declare function.
   if (!DeclareFn)
     DeclareFn = llvm::Intrinsic::getDeclaration(&M->getModule(), 
-			llvm::Intrinsic::dbg_declare);
+                        llvm::Intrinsic::dbg_declare);
 
   // Get type information.
   llvm::CompileUnitDesc *Unit = getOrCreateCompileUnit(CurLoc);
