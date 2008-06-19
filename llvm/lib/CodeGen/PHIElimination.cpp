@@ -97,7 +97,7 @@ bool PNE::runOnMachineFunction(MachineFunction &Fn) {
          E = ImpDefs.end(); I != E; ++I) {
     MachineInstr *DefMI = *I;
     unsigned DefReg = DefMI->getOperand(0).getReg();
-    if (MRI->use_begin(DefReg) == MRI->use_end())
+    if (MRI->use_empty(DefReg))
       DefMI->eraseFromParent();
   }
 
@@ -127,8 +127,10 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
   return true;
 }
 
+/// isSourceDefinedByImplicitDef - Return true if all sources of the phi node
+/// are implicit_def's.
 static bool isSourceDefinedByImplicitDef(const MachineInstr *MPhi,
-                                         const MachineRegisterInfo  *MRI) {
+                                         const MachineRegisterInfo *MRI) {
   for (unsigned i = 1; i != MPhi->getNumOperands(); i += 2) {
     unsigned SrcReg = MPhi->getOperand(i).getReg();
     const MachineInstr *DefMI = MRI->getVRegDef(SrcReg);
@@ -229,7 +231,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
     // Find a safe location to insert the copy, this may be the first terminator
     // in the block (or end()).
     MachineBasicBlock::iterator InsertPos = opBlock.getFirstTerminator();
-    
+
     // Insert the copy.
     TII->copyRegToReg(opBlock, InsertPos, IncomingReg, SrcReg, RC, RC);
 
