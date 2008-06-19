@@ -234,7 +234,7 @@ static bool isTwoAddrUse(MachineInstr *UseMI, unsigned Reg) {
   const TargetInstrDesc &TID = UseMI->getDesc();
   for (unsigned i = 0, e = TID.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = UseMI->getOperand(i);
-    if (MO.getReg() == Reg &&
+    if (MO.isRegister() && MO.getReg() == Reg &&
         (MO.isDef() || TID.getOperandConstraint(i, TOI::TIED_TO) != -1))
       // Earlier use is a two-address one.
       return true;
