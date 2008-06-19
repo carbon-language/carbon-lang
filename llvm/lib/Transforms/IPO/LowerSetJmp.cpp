@@ -341,29 +341,25 @@ LowerSetJmp::SwitchValuePair LowerSetJmp::GetSJSwitch(Function* Func,
   if (SwitchValMap[Func].first) return SwitchValMap[Func];
 
   BasicBlock* LongJmpPre = BasicBlock::Create("LongJmpBlkPre", Func);
-  BasicBlock::InstListType& LongJmpPreIL = LongJmpPre->getInstList();
 
   // Keep track of the preliminary basic block for some of the other
   // transformations.
   PrelimBBMap[Func] = LongJmpPre;
 
   // Grab the exception.
-  CallInst* Cond = CallInst::Create(IsLJException, "IsLJExcept");
-  LongJmpPreIL.push_back(Cond);
+  CallInst* Cond = CallInst::Create(IsLJException, "IsLJExcept", LongJmpPre);
 
   // The "decision basic block" gets the number associated with the
   // setjmp call returning to switch on and the value returned by
   // longjmp.
   BasicBlock* DecisionBB = BasicBlock::Create("LJDecisionBB", Func);
-  BasicBlock::InstListType& DecisionBBIL = DecisionBB->getInstList();
 
   BranchInst::Create(DecisionBB, Rethrow, Cond, LongJmpPre);
 
   // Fill in the "decision" basic block.
-  CallInst* LJVal = CallInst::Create(GetLJValue, "LJVal");
-  DecisionBBIL.push_back(LJVal);
-  CallInst* SJNum = CallInst::Create(TryCatchLJ, GetSetJmpMap(Func), "SJNum");
-  DecisionBBIL.push_back(SJNum);
+  CallInst* LJVal = CallInst::Create(GetLJValue, "LJVal", DecisionBB);
+  CallInst* SJNum = CallInst::Create(TryCatchLJ, GetSetJmpMap(Func), "SJNum",
+                                     DecisionBB);
 
   SwitchInst* SI = SwitchInst::Create(SJNum, Rethrow, 0, DecisionBB);
   return SwitchValMap[Func] = SwitchValuePair(SI, LJVal);
@@ -508,12 +504,11 @@ void LowerSetJmp::visitInvokeInst(InvokeInst& II)
 
   Function* Func = BB->getParent();
   BasicBlock* NewExceptBB = BasicBlock::Create("InvokeExcept", Func);
-  BasicBlock::InstListType& InstList = NewExceptBB->getInstList();
 
   // If this is a longjmp exception, then branch to the preliminary BB of
   // the longjmp exception handling. Otherwise, go to the old exception.
-  CallInst* IsLJExcept = CallInst::Create(IsLJException, "IsLJExcept");
-  InstList.push_back(IsLJExcept);
+  CallInst* IsLJExcept = CallInst::Create(IsLJException, "IsLJExcept",
+                                          NewExceptBB);
 
   BranchInst::Create(PrelimBBMap[Func], ExceptBB, IsLJExcept, NewExceptBB);
 
