@@ -1672,9 +1672,8 @@ static Instruction *AssociativeOpt(BinaryOperator &Root, const Functor &F) {
       }
       Root.replaceAllUsesWith(TmpLHSI);          // Users now use TmpLHSI
       TmpLHSI->setOperand(1, &Root);             // TmpLHSI now uses the root
-      TmpLHSI->getParent()->getInstList().remove(TmpLHSI);
       BasicBlock::iterator ARI = &Root; ++ARI;
-      BB->getInstList().insert(ARI, TmpLHSI);    // Move TmpLHSI to after Root
+      TmpLHSI->moveBefore(ARI);                  // Move TmpLHSI to after Root
       ARI = Root;
 
       // Now propagate the ExtraOperand down the chain of instructions until we
@@ -1683,8 +1682,7 @@ static Instruction *AssociativeOpt(BinaryOperator &Root, const Functor &F) {
         Instruction *NextLHSI = cast<Instruction>(TmpLHSI->getOperand(0));
         // Move the instruction to immediately before the chain we are
         // constructing to avoid breaking dominance properties.
-        NextLHSI->getParent()->getInstList().remove(NextLHSI);
-        BB->getInstList().insert(ARI, NextLHSI);
+        NextLHSI->moveBefore(ARI);
         ARI = NextLHSI;
 
         Value *NextOp = NextLHSI->getOperand(1);
