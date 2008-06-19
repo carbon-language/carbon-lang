@@ -1655,8 +1655,6 @@ static Instruction *AssociativeOpt(BinaryOperator &Root, const Functor &F) {
     // If the functor wants to apply the optimization to the RHS of LHSI,
     // reassociate the expression from ((? op A) op B) to (? op (A op B))
     if (ShouldApply) {
-      BasicBlock *BB = Root.getParent();
-
       // Now all of the instructions are in the current basic block, go ahead
       // and perform the reassociation.
       Instruction *TmpLHSI = cast<Instruction>(Root.getOperand(0));
