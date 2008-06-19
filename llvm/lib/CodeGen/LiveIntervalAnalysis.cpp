@@ -988,6 +988,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
   unsigned loopDepth = loopInfo->getLoopDepth(MBB);
   bool CanFold = false;
  RestartInstruction:
+  bool isMem = MI->getDesc().mayLoad() || MI->getDesc().mayStore();
   for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
     MachineOperand& mop = MI->getOperand(i);
     if (!mop.isRegister())
@@ -1055,7 +1056,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
     }
 
     // Update stack slot spill weight if we are splitting.
-    float Weight = getSpillWeight(HasDef, HasUse, loopDepth);
+    float Weight = getSpillWeight(HasDef, HasUse, isMem, loopDepth);
       if (!TrySplit)
       SSWeight += Weight;
 
@@ -1248,6 +1249,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     bool MIHasUse = rwi.HasUse;
     bool MIHasDef = rwi.HasDef;
     MachineInstr *MI = rwi.MI;
+    bool isMem = MI->getDesc().mayLoad() || MI->getDesc().mayStore();
     // If MI def and/or use the same register multiple times, then there
     // are multiple entries.
     unsigned NumUses = MIHasUse;
@@ -1395,7 +1397,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
 
     // Update spill weight.
     unsigned loopDepth = loopInfo->getLoopDepth(MBB);
-    nI.weight += getSpillWeight(HasDef, HasUse, loopDepth);
+    nI.weight += getSpillWeight(HasDef, HasUse, isMem, loopDepth);
   }
 
   if (NewVReg && TrySplit && AllCanFold) {
@@ -1637,6 +1639,7 @@ addIntervalsForSpills(const LiveInterval &li,
         LiveInterval &nI = getOrCreateInterval(VReg);
         bool isReMat = vrm.isReMaterialized(VReg);
         MachineInstr *MI = getInstructionFromIndex(index);
+        bool isMem = MI->getDesc().mayLoad() || MI->getDesc().mayStore();
         bool CanFold = false;
         bool FoundUse = false;
         Ops.clear();
@@ -1689,7 +1692,7 @@ addIntervalsForSpills(const LiveInterval &li,
 
         // Update spill slot weight.
         if (!isReMat)
-          SSWeight += getSpillWeight(true, false, loopDepth);
+          SSWeight += getSpillWeight(true, false, isMem, loopDepth);
       }
       Id = SpillMBBs.find_next(Id);
     }
@@ -1709,6 +1712,7 @@ addIntervalsForSpills(const LiveInterval &li,
       LiveInterval &nI = getOrCreateInterval(VReg);
       bool isReMat = vrm.isReMaterialized(VReg);
       MachineInstr *MI = getInstructionFromIndex(index);
+      bool isMem = MI->getDesc().mayLoad() || MI->getDesc().mayStore();
       bool CanFold = false;
       Ops.clear();
       if (restores[i].canFold) {
@@ -1762,7 +1766,7 @@ addIntervalsForSpills(const LiveInterval &li,
 
       // Update spill slot weight.
       if (!isReMat)
-        SSWeight += getSpillWeight(false, true, loopDepth);
+        SSWeight += getSpillWeight(false, true, isMem, loopDepth);
     }
     Id = RestoreMBBs.find_next(Id);
   }

@@ -121,8 +121,12 @@ namespace llvm {
       return getBaseIndex(index) + InstrSlots::STORE;
     }
 
-    static float getSpillWeight(bool isDef, bool isUse, unsigned loopDepth) {
-      return (isDef + isUse) * powf(10.0F, (float)loopDepth);
+    static float getSpillWeight(bool isDef, bool isUse, bool isMem,
+                                unsigned loopDepth) {
+      float Weight = isDef;
+      if (isUse)
+        Weight += isMem ? 1.2f : 1.0f;
+      return Weight * powf(10.0F, (float)loopDepth);
     }
 
     typedef Reg2IntervalMap::iterator iterator;

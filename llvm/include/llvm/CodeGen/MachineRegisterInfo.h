@@ -135,6 +135,13 @@ public:
     assert(Reg < VRegInfo.size() && "Invalid vreg!");
     return VRegInfo[Reg].first;
   }
+
+  /// setRegClass - Set the register class of the specified virtual register.
+  void setRegClass(unsigned Reg, const TargetRegisterClass *RC) {
+    Reg -= TargetRegisterInfo::FirstVirtualRegister;
+    assert(Reg < VRegInfo.size() && "Invalid vreg!");
+    VRegInfo[Reg].first = RC;
+  }
   
   /// createVirtualRegister - Create and return a new virtual register in the
   /// function with the specified register class.
