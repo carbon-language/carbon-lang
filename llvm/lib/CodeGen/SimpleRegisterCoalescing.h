@@ -165,9 +165,13 @@ namespace llvm {
     /// joins them and returns true.
     bool SimpleJoin(LiveInterval &LHS, LiveInterval &RHS);
     
-    /// Return true if the two specified registers belong to different
-    /// register classes.  The registers may be either phys or virt regs.
-    bool differingRegisterClasses(unsigned RegA, unsigned RegB) const;
+    /// Return true if the two specified registers belong to different register
+    /// classes.  The registers may be either phys or virt regs. In the
+    /// case where both registers are virtual registers, it would also returns
+    /// true by reference the RegB register class in SubRC if it is a subset of
+    /// RegA's register class.
+    bool differingRegisterClasses(unsigned RegA, unsigned RegB,
+                                  const TargetRegisterClass *&SubRC) const;
 
 
     /// AdjustCopiesBackFrom - We found a non-trivially-coalescable copy. If
@@ -204,6 +208,12 @@ namespace llvm {
     /// def and it is being removed. Turn all copies from this value# into
     /// identity copies so they will be removed.
     void RemoveCopiesFromValNo(LiveInterval &li, VNInfo *VNI);
+
+    /// isProfitableToCoalesceToSubRC - Given that register class of DstReg is
+    /// a subset of the register class of SrcReg, return true if it's profitable
+    /// to coalesce the two registers.
+    bool isProfitableToCoalesceToSubRC(unsigned SrcReg, unsigned DstReg,
+                                       MachineBasicBlock *MBB);
 
     /// RangeIsDefinedByCopyFromReg - Return true if the specified live range of
     /// the specified live interval is defined by a copy from the specified
