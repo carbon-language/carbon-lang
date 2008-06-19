@@ -5832,7 +5832,6 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Lo  = ExpandEXTRACT_VECTOR_ELT(Op);
     return ExpandOp(Lo, Lo, Hi);
   case ISD::UNDEF:
-    NVT = TLI.getTypeToExpandTo(VT);
     Lo = DAG.getNode(ISD::UNDEF, NVT);
     Hi = DAG.getNode(ISD::UNDEF, NVT);
     break;
