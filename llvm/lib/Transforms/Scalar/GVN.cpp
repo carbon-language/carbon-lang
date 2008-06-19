@@ -34,6 +34,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 using namespace llvm;
 
 STATISTIC(NumGVNInstr, "Number of instructions deleted");
@@ -1128,6 +1129,7 @@ bool GVN::processBlock(DomTreeNode* DTN) {
 /// control flow patterns and attempts to perform simple PRE at the join point.
 bool GVN::performPRE(Function& F) {
   bool changed = false;
+  SmallVector<std::pair<TerminatorInst*, unsigned>, 4> toSplit;
   for (df_iterator<BasicBlock*> DI = df_begin(&F.getEntryBlock()),
        DE = df_end(&F.getEntryBlock()); DI != DE; ++DI) {
     BasicBlock* CurrentBlock = *DI;
@@ -1175,6 +1177,24 @@ bool GVN::performPRE(Function& F) {
       // Don't do PRE when it might increase code size, i.e. when
       // we would need to insert instructions in more than one pred.
       if (numWithout != 1 || numWith == 0) {
+        BI++;
+        continue;
+      }
+      
+      // We can't do PRE safely on a critical edge, so instead we schedule
+      // the edge to be split and perform the PRE the next time we iterate
+      // on the function.
+      unsigned succNum = 0;
+      for (unsigned i = 0, e = PREPred->getTerminator()->getNumSuccessors();
+           i != e; ++i)
+        if (PREPred->getTerminator()->getSuccessor(i) == PREPred) {
+          succNum = i;
+          break;
+        }
+        
+      if (isCriticalEdge(PREPred->getTerminator(), succNum)) {
+        toSplit.push_back(std::make_pair(PREPred->getTerminator(), succNum));
+        changed = true;
         BI++;
         continue;
       }
@@ -1243,6 +1263,10 @@ bool GVN::performPRE(Function& F) {
       changed = true;
     }
   }
+  
+  for (SmallVector<std::pair<TerminatorInst*, unsigned>, 4>::iterator
+       I = toSplit.begin(), E = toSplit.end(); I != E; ++I)
+    SplitCriticalEdge(I->first, I->second, this);
   
   return changed;
 }
