@@ -68,7 +68,7 @@ Attributes typeIncompatible(const Type *Ty);
 
 /// This turns an int alignment (a power of 2, normally) into the
 /// form used internally in ParameterAttributes.
-ParamAttr::Attributes inline constructAlignmentFromInt(unsigned i) {
+inline ParamAttr::Attributes constructAlignmentFromInt(unsigned i) {
   return (i << 16);
 }
 
