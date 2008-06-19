@@ -3445,8 +3445,6 @@ SDOperand LowerVECTOR_SHUFFLEv8i16(SDOperand V1, SDOperand V2,
         continue;
       SDOperand Elt = MaskElts[i];
       unsigned EltIdx = cast<ConstantSDNode>(Elt)->getValue();
-      if (EltIdx == i)
-        continue;
       SDOperand ExtOp = (EltIdx < 8)
         ? DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i16, V1,
                       DAG.getConstant(EltIdx, PtrVT))
