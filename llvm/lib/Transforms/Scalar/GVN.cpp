@@ -32,6 +32,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -40,6 +41,9 @@ using namespace llvm;
 STATISTIC(NumGVNInstr, "Number of instructions deleted");
 STATISTIC(NumGVNLoad, "Number of loads deleted");
 STATISTIC(NumGVNPRE, "Number of instructions PRE'd");
+
+static cl::opt<bool> DisablePRE("disable-pre",
+                                cl::init(false), cl::Hidden);
 
 //===----------------------------------------------------------------------===//
 //                         ValueTable Class
@@ -1285,7 +1289,9 @@ bool GVN::iterateOnFunction(Function &F) {
   for (df_iterator<DomTreeNode*> DI = df_begin(DT.getRootNode()),
        DE = df_end(DT.getRootNode()); DI != DE; ++DI)
     changed |= processBlock(*DI);
-    
-  changed |= performPRE(F);
+  
+  if (!DisablePRE)
+    changed |= performPRE(F);
+  
   return changed;
 }
