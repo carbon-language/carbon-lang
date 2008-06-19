@@ -381,11 +381,7 @@ MachineBasicBlock *BranchFolder::SplitMBBAt(MachineBasicBlock &CurMBB,
   CurMBB.getParent()->getBasicBlockList().insert(++MBBI, NewMBB);
 
   // Move all the successors of this block to the specified block.
-  while (!CurMBB.succ_empty()) {
-    MachineBasicBlock *S = *(CurMBB.succ_end()-1);
-    NewMBB->addSuccessor(S);
-    CurMBB.removeSuccessor(S);
-  }
+  NewMBB->transferSuccessors(&CurMBB);
  
   // Add an edge from CurMBB to NewMBB for the fall-through.
   CurMBB.addSuccessor(NewMBB);
