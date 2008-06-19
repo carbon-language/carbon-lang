@@ -1234,6 +1234,7 @@ bool GVN::performPRE(Function& F) {
               UUI->second = Phi;
       
       BI->replaceAllUsesWith(Phi);
+      VN.erase(BI);
       
       Instruction* erase = BI;
       BI++;
