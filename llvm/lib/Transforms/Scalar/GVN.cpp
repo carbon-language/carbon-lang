@@ -59,7 +59,7 @@ namespace {
                             SHUFFLE, SELECT, TRUNC, ZEXT, SEXT, FPTOUI,
                             FPTOSI, UITOFP, SITOFP, FPTRUNC, FPEXT, 
                             PTRTOINT, INTTOPTR, BITCAST, GEP, CALL, CONSTANT,
-                            EXTRACTVALUE, INSERTVALUE, EMPTY, TOMBSTONE };
+                            EMPTY, TOMBSTONE };
 
     ExpressionOpcode opcode;
     const Type* type;
@@ -150,8 +150,6 @@ namespace {
       Expression create_expression(GetElementPtrInst* G);
       Expression create_expression(CallInst* C);
       Expression create_expression(Constant* C);
-      Expression create_expression(InsertValueInst* I);
-      Expression create_expression(ExtractValueInst* I);
     public:
       ValueTable() : nextValueNumber(1) { }
       uint32_t lookup_or_add(Value* V);
@@ -284,40 +282,6 @@ Expression::ExpressionOpcode ValueTable::getOpcode(CastInst* C) {
   case Instruction::IntToPtr: return Expression::INTTOPTR;
   case Instruction::BitCast:  return Expression::BITCAST;
   }
-}
-
-Expression ValueTable::create_expression(InsertValueInst* I) {
-  Expression e;
-  
-  e.type = I->getType();
-  e.firstVN = lookup_or_add(I->getOperand(0));
-  e.secondVN = lookup_or_add(I->getOperand(1));
-  e.thirdVN = 0;
-  e.function = 0;
-  e.opcode = Expression::INSERTVALUE;
-  
-  for (InsertValueInst::op_iterator OI = I->op_begin()+2,
-       OE = I->op_end(); OI != OE; ++OI)
-    e.varargs.push_back(lookup_or_add(I));
-  
-  return e;
-}
-
-Expression ValueTable::create_expression(ExtractValueInst* I) {
-  Expression e;
-  
-  e.type = I->getType();
-  e.firstVN = lookup_or_add(I->getOperand(0));
-  e.secondVN = lookup_or_add(I->getOperand(1));
-  e.thirdVN = 0;
-  e.function = 0;
-  e.opcode = Expression::EXTRACTVALUE;
-  
-  for (InsertValueInst::op_iterator OI = I->op_begin()+2,
-       OE = I->op_end(); OI != OE; ++OI)
-    e.varargs.push_back(lookup_or_add(I));
-  
-  return e;
 }
 
 Expression ValueTable::create_expression(CallInst* C) {
@@ -575,32 +539,6 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
       
     } else {
       valueNumbering.insert(std::make_pair(V, nextValueNumber));
-      return nextValueNumber++;
-    }
-  } else if (InsertValueInst* II = dyn_cast<InsertValueInst>(V)) {
-    Expression e = create_expression(II);
-    
-    DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
-    if (EI != expressionNumbering.end()) {
-      valueNumbering.insert(std::make_pair(V, EI->second));
-      return EI->second;
-    } else {
-      expressionNumbering.insert(std::make_pair(e, nextValueNumber));
-      valueNumbering.insert(std::make_pair(V, nextValueNumber));
-      
-      return nextValueNumber++;
-    }
-  } else if (ExtractValueInst* E = dyn_cast<ExtractValueInst>(V)) {
-    Expression e = create_expression(E);
-    
-    DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
-    if (EI != expressionNumbering.end()) {
-      valueNumbering.insert(std::make_pair(V, EI->second));
-      return EI->second;
-    } else {
-      expressionNumbering.insert(std::make_pair(e, nextValueNumber));
-      valueNumbering.insert(std::make_pair(V, nextValueNumber));
-      
       return nextValueNumber++;
     }
   } else if (BinaryOperator* BO = dyn_cast<BinaryOperator>(V)) {
