@@ -1596,7 +1596,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
       
     default:
       break;
-      
+          
     case UnaryOperator::Deref: {
       
       Expr* Ex = U->getSubExpr()->IgnoreParens();
@@ -1616,10 +1616,57 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
 
       return;
     }
-
       
+    case UnaryOperator::Real: {
+      
+      Expr* Ex = U->getSubExpr()->IgnoreParens();
+      NodeSet Tmp;
+      Visit(Ex, Pred, Tmp);
+      
+      for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
+        
+        // FIXME: We don't have complex RValues yet.
+        if (Ex->getType()->isAnyComplexType()) {
+          // Just report "Unknown."
+          Dst.Add(*I);
+          continue;
+        }
+        
+        // For all other types, UnaryOperator::Real is an identity operation.
+        assert (U->getType() == Ex->getType());
+        ValueState* St = GetState(*I);
+        MakeNode(Dst, U, *I, SetRVal(St, U, GetRVal(St, Ex)));
+      } 
+      
+      return;
+    }
+      
+    case UnaryOperator::Imag: {
+      
+      Expr* Ex = U->getSubExpr()->IgnoreParens();
+      NodeSet Tmp;
+      Visit(Ex, Pred, Tmp);
+      
+      for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
+        // FIXME: We don't have complex RValues yet.
+        if (Ex->getType()->isAnyComplexType()) {
+          // Just report "Unknown."
+          Dst.Add(*I);
+          continue;
+        }
+        
+        // For all other types, UnaryOperator::Float returns 0.
+        assert (Ex->getType()->isIntegerType());
+        ValueState* St = GetState(*I);
+        RVal X = NonLVal::MakeVal(BasicVals, 0, Ex->getType());
+        MakeNode(Dst, U, *I, SetRVal(St, U, X));
+      }
+      
+      return;
+    }
+      
+      // FIXME: Just report "Unknown" for OffsetOf.      
     case UnaryOperator::OffsetOf:
-      // FIXME: Just report "Unknown" known for OffsetOf.
       Dst.Add(Pred);
       return;
       
