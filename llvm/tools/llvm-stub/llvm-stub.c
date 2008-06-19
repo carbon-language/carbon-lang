@@ -38,7 +38,6 @@
 int main(int argc, char** argv) {
   const char *Interp = getenv("LLVMINTERP");
   const char **Args;
-  int len;
   if (Interp == 0) Interp = "lli";
 
   /* Set up the command line options to pass to the JIT. */
@@ -47,12 +46,14 @@ int main(int argc, char** argv) {
   Args[0] = Interp;
 
 #ifdef LLVM_ON_WIN32
-  len = strlen(argv[0]);
-  if (len < 4 || strcmp(argv[0] + len - 4, ".exe") != 0) {
-    /* .exe suffix is stripped off of argv[0] if the executable was run on the
-     * command line without one. Put it back on.
-     */
-    argv[0] = strcat(strcpy((char*)malloc(len + 5), argv[0]), ".exe");
+  {
+    int len = strlen(argv[0]);
+    if (len < 4 || strcmp(argv[0] + len - 4, ".exe") != 0) {
+      /* .exe suffix is stripped off of argv[0] if the executable was run on the
+       * command line without one. Put it back on.
+       */
+      argv[0] = strcat(strcpy((char*)malloc(len + 5), argv[0]), ".exe");
+    }
   }
 #endif
 

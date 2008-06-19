@@ -871,7 +871,7 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
     const unsigned *req_idx = idx_begin;
     for (const unsigned *i = I->idx_begin(), *e = I->idx_end();
          i != e; ++i, ++req_idx) {
-      if (req_idx == idx_end)
+      if (req_idx == idx_end) {
         if (InsertBefore)
           // The requested index identifies a part of a nested aggregate. Handle
           // this specially. For example,
@@ -887,6 +887,7 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
         else
           // We can't handle this without inserting insertvalues
           return 0;
+      }
       
       // This insert value inserts something else than what we are looking for.
       // See if the (aggregrate) value inserted into has the value we are
