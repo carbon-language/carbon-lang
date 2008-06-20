@@ -35,6 +35,8 @@
 		35CFFE000CA1CBCB00E6F2BE /* StmtViz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35CFFDFF0CA1CBCB00E6F2BE /* StmtViz.cpp */; };
 		35D55B270D81D8C60092E734 /* BasicValueFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35D55B240D81D8C60092E734 /* BasicValueFactory.cpp */; };
 		35D55B280D81D8C60092E734 /* CFRefCount.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35D55B250D81D8C60092E734 /* CFRefCount.cpp */; };
+		35EE48B10E0C4CCA00715C54 /* DeclCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35EE48AF0E0C4CCA00715C54 /* DeclCXX.cpp */; };
+		35EE48B20E0C4CCA00715C54 /* ParentMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35EE48B00E0C4CCA00715C54 /* ParentMap.cpp */; };
 		35EF67700DAD1D2C00B19414 /* SemaDeclCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35EF676F0DAD1D2C00B19414 /* SemaDeclCXX.cpp */; };
 		35EFEFB60DB67ED60020783D /* GRTransferFuncs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */; };
 		35F8D0D60D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35F8D0D50D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp */; };
@@ -307,6 +309,10 @@
 		35D55B240D81D8C60092E734 /* BasicValueFactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BasicValueFactory.cpp; path = lib/Analysis/BasicValueFactory.cpp; sourceTree = "<group>"; };
 		35D55B250D81D8C60092E734 /* CFRefCount.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CFRefCount.cpp; path = lib/Analysis/CFRefCount.cpp; sourceTree = "<group>"; };
 		35D55B290D81D8E50092E734 /* BasicValueFactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BasicValueFactory.h; path = clang/Analysis/PathSensitive/BasicValueFactory.h; sourceTree = "<group>"; };
+		35EE48AD0E0C4CB200715C54 /* DeclCXX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DeclCXX.h; path = clang/AST/DeclCXX.h; sourceTree = "<group>"; };
+		35EE48AE0E0C4CB200715C54 /* ParentMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ParentMap.h; path = clang/AST/ParentMap.h; sourceTree = "<group>"; };
+		35EE48AF0E0C4CCA00715C54 /* DeclCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeclCXX.cpp; path = lib/AST/DeclCXX.cpp; sourceTree = "<group>"; };
+		35EE48B00E0C4CCA00715C54 /* ParentMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ParentMap.cpp; path = lib/AST/ParentMap.cpp; sourceTree = "<group>"; };
 		35EF676F0DAD1D2C00B19414 /* SemaDeclCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaDeclCXX.cpp; path = lib/Sema/SemaDeclCXX.cpp; sourceTree = "<group>"; };
 		35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRTransferFuncs.cpp; path = lib/Analysis/GRTransferFuncs.cpp; sourceTree = "<group>"; };
 		35F2BE7B0DAC2963006E7668 /* HTMLRewrite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTMLRewrite.h; path = clang/Rewrite/HTMLRewrite.h; sourceTree = "<group>"; };
@@ -762,6 +768,8 @@
 		DEC8D98B0A9433BC00353FCA /* AST */ = {
 			isa = PBXGroup;
 			children = (
+				35EE48AD0E0C4CB200715C54 /* DeclCXX.h */,
+				35EE48AE0E0C4CB200715C54 /* ParentMap.h */,
 				35CEA05A0DF9E82700A41296 /* ExprObjC.h */,
 				DEC8D9A30A94346E00353FCA /* AST.h */,
 				35BFBD2B0C9EDE1E006CB644 /* ASTConsumer.h */,
@@ -794,6 +802,8 @@
 		DEC8D9920A9433F400353FCA /* AST */ = {
 			isa = PBXGroup;
 			children = (
+				35EE48AF0E0C4CCA00715C54 /* DeclCXX.cpp */,
+				35EE48B00E0C4CCA00715C54 /* ParentMap.cpp */,
 				35BB2D7E0D19954000944DB5 /* ASTConsumer.cpp */,
 				DE1732FF0B068B700080B521 /* ASTContext.cpp */,
 				DED677C80B6C854100AAD4A3 /* Builtins.cpp */,
@@ -1093,6 +1103,8 @@
 				35A3E7020DD3874400757F74 /* CGDebugInfo.cpp in Sources */,
 				3599299B0DE2425300A8A33E /* SemaInit.cpp in Sources */,
 				35FE6BCF0DF6EE1F00739712 /* DeclBase.cpp in Sources */,
+				35EE48B10E0C4CCA00715C54 /* DeclCXX.cpp in Sources */,
+				35EE48B20E0C4CCA00715C54 /* ParentMap.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
