@@ -673,10 +673,6 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   while (!F->use_empty()) {
     CallSite CS = CallSite::get(F->use_back());
     Instruction *Call = CS.getInstruction();
-    if (!Call) {
-      DOUT << "Old: " << *FTy << "\n";
-      DOUT << "New: " << *NFTy << "\n";
-    }
 
     ParamAttrsVec.clear();
     const PAListPtr &CallPAL = CS.getParamAttrs();
