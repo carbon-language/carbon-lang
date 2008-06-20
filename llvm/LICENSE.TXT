@@ -62,7 +62,6 @@ licenses, and/or restrictions:
 Program             Directory
 -------             ---------
 System Library      llvm/lib/System
-Compiler Driver     llvm/tools/llvmc
 Autoconf            llvm/autoconf
                     llvm/projects/ModuleMaker/autoconf
                     llvm/projects/sample/autoconf
