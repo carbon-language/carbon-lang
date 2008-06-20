@@ -443,8 +443,9 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
     // uses of the returned value.
     if (!TheCall->use_empty()) {
       ReturnInst *R = Returns[0];
-      if (isa<StructType>(TheCall->getType())) {
-        // Multiple return values.
+      if (isa<StructType>(TheCall->getType()) &&
+          TheCall->getType() != R->getOperand(0)->getType()) {
+        // Multiple-value return statements.
         while (!TheCall->use_empty()) {
           GetResultInst *GR = cast<GetResultInst>(TheCall->use_back());
           Value *RV = R->getOperand(GR->getIndex());
@@ -509,6 +510,13 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   // any users of the original call/invoke instruction.
   const Type *RTy = CalledFunc->getReturnType();
   const StructType *STy = dyn_cast<StructType>(RTy);
+
+  // We do special handling for multiple-value return statements. If this is
+  // a plain aggregate return, don't do the special handling.
+  if (!Returns.empty() && Returns[0]->getNumOperands() != 0 &&
+      Returns[0]->getOperand(0)->getType() == STy)
+    STy = 0;
+
   if (Returns.size() > 1 || STy) {
     // The PHI node should go at the front of the new basic block to merge all
     // possible incoming values.
