@@ -1328,7 +1328,7 @@ bool GVN::iterateOnFunction(Function &F) {
        DE = df_end(DT.getRootNode()); DI != DE; ++DI)
     changed |= processBlock(*DI);
   
-  if (!EnablePRE)
+  if (EnablePRE)
     changed |= performPRE(F);
   
   return changed;
