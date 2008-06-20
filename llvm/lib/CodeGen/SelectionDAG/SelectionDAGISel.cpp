@@ -100,37 +100,31 @@ static unsigned ComputeLinearIndex(const TargetLowering &TLI, const Type *Ty,
                                    const unsigned *IndicesEnd,
                                    unsigned CurIndex = 0) {
   // Base case: We're done.
-  if (Indices == IndicesEnd)
+  if (Indices && Indices == IndicesEnd)
     return CurIndex;
-
-  // Otherwise we need to recurse. A non-negative value is used to
-  // indicate the final result value; a negative value carries the
-  // complemented position to continue the search.
-  CurIndex = ~CurIndex;
 
   // Given a struct type, recursively traverse the elements.
   if (const StructType *STy = dyn_cast<StructType>(Ty)) {
-    for (StructType::element_iterator EI = STy->element_begin(),
+    for (StructType::element_iterator EB = STy->element_begin(),
+                                      EI = EB,
                                       EE = STy->element_end();
         EI != EE; ++EI) {
-      CurIndex = ComputeLinearIndex(TLI, *EI, Indices+1, IndicesEnd,
-                                    ~CurIndex);
-      if ((int)CurIndex >= 0)
-        return CurIndex;
+      if (Indices && *Indices == unsigned(EI - EB))
+        return ComputeLinearIndex(TLI, *EI, Indices+1, IndicesEnd, CurIndex);
+      CurIndex = ComputeLinearIndex(TLI, *EI, 0, 0, CurIndex);
     }
   }
   // Given an array type, recursively traverse the elements.
   else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     const Type *EltTy = ATy->getElementType();
     for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
-      CurIndex = ComputeLinearIndex(TLI, EltTy, Indices+1, IndicesEnd,
-                                    ~CurIndex);
-      if ((int)CurIndex >= 0)
-        return CurIndex;
+      if (Indices && *Indices == i)
+        return ComputeLinearIndex(TLI, EltTy, Indices+1, IndicesEnd, CurIndex);
+      CurIndex = ComputeLinearIndex(TLI, EltTy, 0, 0, CurIndex);
     }
   }
   // We haven't found the type we're looking for, so keep searching.
-  return CurIndex;
+  return CurIndex + 1;
 }
 
 /// ComputeValueVTs - Given an LLVM IR type, compute a sequence of
