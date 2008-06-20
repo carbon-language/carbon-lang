@@ -20,6 +20,7 @@
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/CFG.h"
+#include "clang/AST/ParentMap.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
@@ -640,7 +641,8 @@ namespace {
     }
     
     virtual void VisitCFG(CFG& C, Decl& CD) {
-      CheckDeadStores(C, *Ctx, Diags);
+      llvm::OwningPtr<ParentMap> PM(new ParentMap(CD.getCodeBody()));
+      CheckDeadStores(C, *Ctx, *PM, Diags);
     }
     
     virtual bool printFuncDeclStart() { return false; }
