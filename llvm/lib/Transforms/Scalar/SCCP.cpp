@@ -705,9 +705,9 @@ void SCCPSolver::visitGetResultInst(GetResultInst &GRI) {
 }
 
 void SCCPSolver::visitExtractValueInst(ExtractValueInst &EVI) {
-  Value *Aggr = EVI.getOperand(0);
+  Value *Aggr = EVI.getAggregateOperand();
 
-  // If the operand to the getresult is an undef, the result is undef.
+  // If the operand to the extractvalue is an undef, the result is undef.
   if (isa<UndefValue>(Aggr))
     return;
 
@@ -746,10 +746,10 @@ void SCCPSolver::visitExtractValueInst(ExtractValueInst &EVI) {
 }
 
 void SCCPSolver::visitInsertValueInst(InsertValueInst &IVI) {
-  Value *Aggr = IVI.getOperand(0);
-  Value *Val = IVI.getOperand(1);
+  Value *Aggr = IVI.getAggregateOperand();
+  Value *Val = IVI.getInsertedValueOperand();
 
-  // If the operand to the getresult is an undef, the result is undef.
+  // If the operands to the insertvalue are undef, the result is undef.
   if (isa<UndefValue>(Aggr) && isa<UndefValue>(Val))
     return;
 
@@ -785,8 +785,8 @@ void SCCPSolver::visitInsertValueInst(InsertValueInst &IVI) {
   if (It != TrackedMultipleRetVals.end())
     mergeInValue(It->second, F, getValueState(Val));
 
-  // Mark the aggregate result of the IVI overdefined; any tracking that we do will
-  // be done on the individual member values.
+  // Mark the aggregate result of the IVI overdefined; any tracking that we do
+  // will be done on the individual member values.
   markOverdefined(&IVI);
 }
 
@@ -1269,13 +1269,13 @@ CallOverdefined:
          UI != E; ++UI) {
       if (GetResultInst *GRI = dyn_cast<GetResultInst>(*UI)) {
         mergeInValue(GRI, 
-                     TrackedMultipleRetVals[std::make_pair(F, GRI->getIndex())]);
+                TrackedMultipleRetVals[std::make_pair(F, GRI->getIndex())]);
         continue;
       }
       if (ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(*UI)) {
         if (EVI->getNumIndices() == 1) {
           mergeInValue(EVI, 
-                       TrackedMultipleRetVals[std::make_pair(F, *EVI->idx_begin())]);
+                  TrackedMultipleRetVals[std::make_pair(F, *EVI->idx_begin())]);
           continue;
         }
       }
