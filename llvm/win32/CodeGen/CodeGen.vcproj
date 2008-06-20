@@ -516,27 +516,23 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\LegalizeFloatTypes.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\LegalizeIntegerTypes.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\LegalizeTypes.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\lib\CodeGen\SelectionDAG\LegalizeTypesExpand.cpp"
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\LegalizeTypesGeneric.cpp"
 					>
 				</File>
 				<File
-					RelativePath="..\..\lib\CodeGen\SelectionDAG\LegalizeTypesFloatToInt.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\CodeGen\SelectionDAG\LegalizeTypesPromote.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\CodeGen\SelectionDAG\LegalizeTypesScalarize.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\lib\CodeGen\SelectionDAG\LegalizeTypesSplit.cpp"
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\LegalizeVectorTypes.cpp"
 					>
 				</File>
 				<File
