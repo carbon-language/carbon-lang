@@ -10062,10 +10062,16 @@ static bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom) {
   while (BBI != E) {
     --BBI;
 
+    // If we see a free or a call (which might do a free) the pointer could be
+    // marked invalid.
+    if (isa<FreeInst>(BBI) || isa<CallInst>(BBI))
+      return false;
+    
     if (LoadInst *LI = dyn_cast<LoadInst>(BBI)) {
       if (LI->getOperand(0) == V) return true;
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(BBI)) {
       if (SI->getOperand(1) == V) return true;
+    }
 
   }
   return false;
