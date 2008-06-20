@@ -229,8 +229,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   { // Scope to destroy ValueMap after cloning.
     DenseMap<const Value*, Value*> ValueMap;
 
-    assert(std::distance(CalledFunc->arg_begin(), CalledFunc->arg_end()) ==
-           std::distance(CS.arg_begin(), CS.arg_end()) &&
+    assert(CalledFunc->arg_size() == CS.arg_size() &&
            "No varargs calls can be inlined!");
     
     // Calculate the vector of arguments to pass into the function cloner, which
