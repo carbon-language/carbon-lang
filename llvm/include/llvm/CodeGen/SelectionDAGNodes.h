@@ -2143,60 +2143,71 @@ namespace ISD {
   /// isNormalLoad - Returns true if the specified node is a non-extending
   /// and unindexed load.
   inline bool isNormalLoad(const SDNode *N) {
-    if (N->getOpcode() != ISD::LOAD)
-      return false;
-    const LoadSDNode *Ld = cast<LoadSDNode>(N);
-    return Ld->getExtensionType() == ISD::NON_EXTLOAD &&
+    const LoadSDNode *Ld = dyn_cast<LoadSDNode>(N);
+    return Ld && Ld->getExtensionType() == ISD::NON_EXTLOAD &&
       Ld->getAddressingMode() == ISD::UNINDEXED;
   }
 
   /// isNON_EXTLoad - Returns true if the specified node is a non-extending
   /// load.
   inline bool isNON_EXTLoad(const SDNode *N) {
-    return N->getOpcode() == ISD::LOAD &&
+    return isa<LoadSDNode>(N) &&
       cast<LoadSDNode>(N)->getExtensionType() == ISD::NON_EXTLOAD;
   }
 
   /// isEXTLoad - Returns true if the specified node is a EXTLOAD.
   ///
   inline bool isEXTLoad(const SDNode *N) {
-    return N->getOpcode() == ISD::LOAD &&
+    return isa<LoadSDNode>(N) &&
       cast<LoadSDNode>(N)->getExtensionType() == ISD::EXTLOAD;
   }
 
   /// isSEXTLoad - Returns true if the specified node is a SEXTLOAD.
   ///
   inline bool isSEXTLoad(const SDNode *N) {
-    return N->getOpcode() == ISD::LOAD &&
+    return isa<LoadSDNode>(N) &&
       cast<LoadSDNode>(N)->getExtensionType() == ISD::SEXTLOAD;
   }
 
   /// isZEXTLoad - Returns true if the specified node is a ZEXTLOAD.
   ///
   inline bool isZEXTLoad(const SDNode *N) {
-    return N->getOpcode() == ISD::LOAD &&
+    return isa<LoadSDNode>(N) &&
       cast<LoadSDNode>(N)->getExtensionType() == ISD::ZEXTLOAD;
   }
 
-  /// isUNINDEXEDLoad - Returns true if the specified node is a unindexed load.
+  /// isUNINDEXEDLoad - Returns true if the specified node is an unindexed load.
   ///
   inline bool isUNINDEXEDLoad(const SDNode *N) {
-    return N->getOpcode() == ISD::LOAD &&
+    return isa<LoadSDNode>(N) &&
       cast<LoadSDNode>(N)->getAddressingMode() == ISD::UNINDEXED;
+  }
+
+  /// isNormalStore - Returns true if the specified node is a non-truncating
+  /// and unindexed store.
+  inline bool isNormalStore(const SDNode *N) {
+    const StoreSDNode *St = dyn_cast<StoreSDNode>(N);
+    return St && !St->isTruncatingStore() &&
+      St->getAddressingMode() == ISD::UNINDEXED;
   }
 
   /// isNON_TRUNCStore - Returns true if the specified node is a non-truncating
   /// store.
   inline bool isNON_TRUNCStore(const SDNode *N) {
-    return N->getOpcode() == ISD::STORE &&
-      !cast<StoreSDNode>(N)->isTruncatingStore();
+    return isa<StoreSDNode>(N) && !cast<StoreSDNode>(N)->isTruncatingStore();
   }
 
   /// isTRUNCStore - Returns true if the specified node is a truncating
   /// store.
   inline bool isTRUNCStore(const SDNode *N) {
-    return N->getOpcode() == ISD::STORE &&
-      cast<StoreSDNode>(N)->isTruncatingStore();
+    return isa<StoreSDNode>(N) && cast<StoreSDNode>(N)->isTruncatingStore();
+  }
+
+  /// isUNINDEXEDStore - Returns true if the specified node is an
+  /// unindexed store.
+  inline bool isUNINDEXEDStore(const SDNode *N) {
+    return isa<StoreSDNode>(N) &&
+      cast<StoreSDNode>(N)->getAddressingMode() == ISD::UNINDEXED;
   }
 }
 
