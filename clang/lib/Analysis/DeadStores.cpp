@@ -164,12 +164,17 @@ namespace {
 class VISIBILITY_HIDDEN DiagBugReport : public RangedBugReport {
   std::list<std::string> Strs;
   FullSourceLoc L;
+  const char* description;
 public:
-  DiagBugReport(BugType& D, FullSourceLoc l) :
-    RangedBugReport(D, NULL), L(l) {}
+  DiagBugReport(const char* desc, BugType& D, FullSourceLoc l) :
+    RangedBugReport(D, NULL), L(l), description(desc) {}
   
   virtual ~DiagBugReport() {}
   virtual FullSourceLoc getLocation(SourceManager&) { return L; }
+  
+  virtual const char* getDescription() const {
+    return description;
+  }
   
   void addString(const std::string& s) { Strs.push_back(s); }  
   
@@ -198,7 +203,7 @@ public:
     // FIXME: Use a map from diag::kind to BugType, instead of having just
     //  one BugType.
     
-    Reports.push_back(DiagBugReport(D, Pos));
+    Reports.push_back(DiagBugReport(Diags.getDescription(ID), D, Pos));
     DiagBugReport& R = Reports.back();
     
     for ( ; NumRanges ; --NumRanges, ++Ranges)
