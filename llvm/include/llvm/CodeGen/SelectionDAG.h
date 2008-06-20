@@ -104,6 +104,7 @@ public:
   typedef ilist<SDNode>::iterator allnodes_iterator;
   allnodes_iterator allnodes_begin() { return AllNodes.begin(); }
   allnodes_iterator allnodes_end() { return AllNodes.end(); }
+  ilist<SDNode>::size_type allnodes_size() const { return AllNodes.size(); }
   
   /// getRoot - Return the root tag of the SelectionDAG.
   ///
