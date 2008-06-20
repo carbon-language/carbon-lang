@@ -750,13 +750,30 @@ void SCCPSolver::visitInsertValueInst(InsertValueInst &IVI) {
   Value *Val = IVI.getOperand(1);
 
   // If the operand to the getresult is an undef, the result is undef.
-  if (isa<UndefValue>(Aggr))
+  if (isa<UndefValue>(Aggr) && isa<UndefValue>(Val))
     return;
 
   // Currently only handle single-index insertvalues.
   if (IVI.getNumIndices() != 1) {
     markOverdefined(&IVI);
     return;
+  }
+
+  // Currently only handle insertvalue instructions that are in a single-use
+  // chain that builds up a return value.
+  for (const InsertValueInst *TmpIVI = &IVI; ; ) {
+    if (!TmpIVI->hasOneUse()) {
+      markOverdefined(&IVI);
+      return;
+    }
+    const Value *V = *TmpIVI->use_begin();
+    if (isa<ReturnInst>(V))
+      break;
+    TmpIVI = dyn_cast<InsertValueInst>(V);
+    if (!TmpIVI) {
+      markOverdefined(&IVI);
+      return;
+    }
   }
   
   // See if we are tracking the result of the callee.
