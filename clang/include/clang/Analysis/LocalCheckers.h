@@ -25,8 +25,10 @@ class PathDiagnosticClient;
 class GRTransferFuncs;
 class BugType;
 class LangOptions;
+class ParentMap;
   
-void CheckDeadStores(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags); 
+void CheckDeadStores(CFG& cfg, ASTContext &Ctx, ParentMap& Parents,
+                     Diagnostic &Diags); 
   
 void CheckUninitializedValues(CFG& cfg, ASTContext& Ctx, Diagnostic& Diags,
                               bool FullUninitTaint=false);

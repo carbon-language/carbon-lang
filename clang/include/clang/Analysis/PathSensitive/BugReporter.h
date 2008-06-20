@@ -34,6 +34,7 @@ class GRExprEngine;
 class ValueState;
 class Stmt;
 class BugReport;
+class ParentMap;
   
 class BugType {
 public:
@@ -155,6 +156,8 @@ public:
   ValueStateManager& getStateManager();
   
   CFG& getCFG() { return getGraph().getCFG(); }
+  
+  ParentMap& getParentMap();
   
   void EmitWarning(BugReport& R);
   

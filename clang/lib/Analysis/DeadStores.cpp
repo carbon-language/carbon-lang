@@ -19,28 +19,49 @@
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ParentMap.h"
 #include "llvm/Support/Compiler.h"
 
 using namespace clang;
 
 namespace {
-  
+
 class VISIBILITY_HIDDEN DeadStoreObs : public LiveVariables::ObserverTy {
   ASTContext &Ctx;
   Diagnostic &Diags;
   DiagnosticClient &Client;
+  ParentMap& Parents;
+    
 public:
-  DeadStoreObs(ASTContext &ctx, Diagnostic &diags, DiagnosticClient &client)
-    : Ctx(ctx), Diags(diags), Client(client) {}    
+  DeadStoreObs(ASTContext &ctx, Diagnostic &diags, DiagnosticClient &client,
+               ParentMap& parents)
+    : Ctx(ctx), Diags(diags), Client(client), Parents(parents) {}
   
   virtual ~DeadStoreObs() {}
   
-  unsigned GetDiag(VarDecl* VD) {      
-    std::string msg = "value stored to '" + std::string(VD->getName()) +
-                      "' is never used";
+  unsigned GetDiag(VarDecl* VD, bool inEnclosing = false) {    
+    std::string name(VD->getName());
     
-    return Diags.getCustomDiagID(Diagnostic::Warning, msg.c_str());
-                               
+    std::string msg = inEnclosing
+      ? "Although the value stored to '" + name +
+        "' is used in the enclosing expression, the value is never actually read"
+        " from '" + name + "'"
+      : "Value stored to '" + name + "' is never read";
+    
+    return Diags.getCustomDiagID(Diagnostic::Warning, msg.c_str());                               
+  }
+  
+  void CheckVarDecl(VarDecl* VD, Expr* Ex, Expr* Val,
+                    bool hasEnclosing,
+                    const LiveVariables::AnalysisDataTy& AD,
+                    const LiveVariables::ValTy& Live) {
+
+    if (VD->hasLocalStorage() && !Live(VD, AD)) {
+      SourceRange R = Val->getSourceRange();        
+      Diags.Report(&Client,
+                   Ctx.getFullLoc(Ex->getSourceRange().getBegin()),
+                   GetDiag(VD, hasEnclosing), 0, 0, &R, 1);
+    }
   }
   
   void CheckDeclRef(DeclRefExpr* DR, Expr* Val,
@@ -48,12 +69,7 @@ public:
                     const LiveVariables::ValTy& Live) {
     
     if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))
-      if (VD->hasLocalStorage() && !Live(VD, AD)) {
-        SourceRange R = Val->getSourceRange();        
-        Diags.Report(&Client,
-                     Ctx.getFullLoc(DR->getSourceRange().getBegin()),
-                     GetDiag(VD), 0, 0, &R, 1);
-      }
+      CheckVarDecl(VD, DR, Val, false, AD, Live);
   }
   
   virtual void ObserveStmt(Stmt* S,
@@ -68,7 +84,22 @@ public:
       if (!B->isAssignmentOp()) return; // Skip non-assignments.
       
       if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(B->getLHS()))
-        CheckDeclRef(DR, B->getRHS(), AD, Live);
+        if (VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
+     
+          // Special case: check for assigning null to a pointer.  This
+          //  is a common form of defensive programming.
+          // FIXME: Make this optional?
+          
+          Expr* Val = B->getRHS();
+          llvm::APSInt Result(Ctx.getTypeSize(Val->getType()));
+          
+          if (VD->getType()->isPointerType() &&
+              Val->IgnoreParenCasts()->isIntegerConstantExpr(Result, Ctx, 0))
+            if (Result == 0)
+              return;
+
+          CheckVarDecl(VD, DR, Val, Parents.isSubExpr(B), AD, Live);
+        }              
     }
     else if (UnaryOperator* U = dyn_cast<UnaryOperator>(S)) {
       if (!U->isIncrementOp())
@@ -116,10 +147,11 @@ public:
 // Driver function to invoke the Dead-Stores checker on a CFG.
 //===----------------------------------------------------------------------===//
 
-void clang::CheckDeadStores(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags) {  
+void clang::CheckDeadStores(CFG& cfg, ASTContext &Ctx,
+                            ParentMap& Parents, Diagnostic &Diags) {  
   LiveVariables L(cfg);
   L.runOnCFG(cfg);
-  DeadStoreObs A(Ctx, Diags, Diags.getClient());
+  DeadStoreObs A(Ctx, Diags, Diags.getClient(), Parents);
   L.runOnAllBlocks(cfg, &A);
 }
 
@@ -197,9 +229,10 @@ public:
     
     // Run the dead store checker and collect the diagnostics.
     DiagCollector C(*this);    
-    DeadStoreObs A(BR.getContext(), BR.getDiagnostic(), C);
-    GRExprEngine& Eng = BR.getEngine();
-    Eng.getLiveness().runOnAllBlocks(Eng.getCFG(), &A);
+    DeadStoreObs A(BR.getContext(), BR.getDiagnostic(), C, BR.getParentMap());
+    
+    GRExprEngine& Eng = BR.getEngine();    
+    Eng.getLiveness().runOnAllBlocks(BR.getCFG(), &A);
     
     // Emit the bug reports.
     

@@ -47,19 +47,10 @@ protected:
   friend class GRIndirectGotoNodeBuilderImpl;
   friend class GRSwitchNodeBuilderImpl;
   friend class GREndPathNodeBuilderImpl;
-  
-  typedef llvm::DenseMap<Stmt*,Stmt*> ParentMapTy;
     
   /// G - The simulation graph.  Each node is a (location,state) pair.
   llvm::OwningPtr<ExplodedGraphImpl> G;
-  
-  /// ParentMap - A lazily populated map from a Stmt* to its parent Stmt*.
-  void* ParentMap;
-  
-  /// CurrentBlkExpr - The current Block-level expression being processed.
-  ///  This is used when lazily populating ParentMap.
-  Stmt* CurrentBlkExpr;
-  
+      
   /// WList - A set of queued nodes that need to be processed by the
   ///  worklist algorithm.  It is up to the implementation of WList to decide
   ///  the order that nodes are processed.

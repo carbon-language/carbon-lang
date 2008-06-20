@@ -253,19 +253,6 @@ void GRCoreEngineImpl::HandlePostStmt(const PostStmt& L, CFGBlock* B,
   }
 }
 
-typedef llvm::DenseMap<Stmt*,Stmt*> ParentMapTy;
-/// PopulateParentMap - Recurse the AST starting at 'Parent' and add the
-///  mappings between child and parent to ParentMap.
-static void PopulateParentMap(Stmt* Parent, ParentMapTy& M) {
-  for (Stmt::child_iterator I=Parent->child_begin(), 
-       E=Parent->child_end(); I!=E; ++I) {
-    
-    assert (M.find(*I) == M.end());
-    M[*I] = Parent;
-    PopulateParentMap(*I, M);
-  }
-}
-
 /// GenerateNode - Utility method to generate nodes, hook up successors,
 ///  and add nodes to the worklist.
 void GRCoreEngineImpl::GenerateNode(const ProgramPoint& Loc, void* State,

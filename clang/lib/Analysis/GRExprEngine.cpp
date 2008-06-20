@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/AST/ParentMap.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Basic/SourceManager.h"
@@ -41,6 +42,7 @@ static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
 GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx)
   : CoreEngine(cfg, CD, Ctx, *this), 
     G(CoreEngine.getGraph()),
+    Parents(0),
     Liveness(G.getCFG()),
     Builder(NULL),
     StateMgr(G.getContext(), G.getAllocator()),
@@ -56,7 +58,7 @@ GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx)
   Liveness.runOnAllBlocks(G.getCFG(), NULL, true);
 }
 
-GRExprEngine::~GRExprEngine() {
+GRExprEngine::~GRExprEngine() {    
   for (BugTypeSet::iterator I = BugTypes.begin(), E = BugTypes.end(); I!=E; ++I)
     delete *I;
     
@@ -69,6 +71,17 @@ GRExprEngine::~GRExprEngine() {
     delete *I;  
   
   delete [] NSExceptionInstanceRaiseSelectors;
+  
+  delete Parents;
+}
+
+ParentMap& GRExprEngine::getParentMap() {
+  if (!Parents) {
+    Stmt* Body = getGraph().getCodeDecl().getCodeBody();
+    Parents = new ParentMap(Body);  
+  }
+  
+  return *Parents;
 }
 
 //===----------------------------------------------------------------------===//

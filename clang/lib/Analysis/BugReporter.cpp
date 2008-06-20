@@ -39,6 +39,10 @@ ValueStateManager& BugReporter::getStateManager() {
   return Eng.getStateManager();
 }
 
+ParentMap& BugReporter::getParentMap() {
+  return Eng.getParentMap();
+}
+
 static inline Stmt* GetStmt(const ProgramPoint& P) {
   if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {
     return PS->getStmt();
