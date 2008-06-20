@@ -29,6 +29,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ConstantFolding.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Compiler.h"
@@ -390,6 +391,8 @@ private:
   void visitExtractElementInst(ExtractElementInst &I);
   void visitInsertElementInst(InsertElementInst &I);
   void visitShuffleVectorInst(ShuffleVectorInst &I);
+  void visitExtractValueInst(ExtractValueInst &EVI);
+  void visitInsertValueInst(InsertValueInst &IVI);
 
   // Instructions that cannot be folded away...
   void visitStoreInst     (Instruction &I);
@@ -630,6 +633,17 @@ void SCCPSolver::visitReturnInst(ReturnInst &I) {
       if (It == TrackedMultipleRetVals.end()) break;
       mergeInValue(It->second, F, getValueState(I.getOperand(i)));
     }
+  } else if (!TrackedMultipleRetVals.empty() &&
+             I.getNumOperands() == 1 &&
+             isa<StructType>(I.getOperand(0)->getType())) {
+    for (unsigned i = 0, e = I.getOperand(0)->getType()->getNumContainedTypes();
+         i != e; ++i) {
+      std::map<std::pair<Function*, unsigned>, LatticeVal>::iterator
+        It = TrackedMultipleRetVals.find(std::make_pair(F, i));
+      if (It == TrackedMultipleRetVals.end()) break;
+      Value *Val = FindInsertedValue(I.getOperand(0), i);
+      mergeInValue(It->second, F, getValueState(Val));
+    }
   }
 }
 
@@ -688,6 +702,75 @@ void SCCPSolver::visitGetResultInst(GetResultInst &GRI) {
   
   // Otherwise, the value will be merged in here as a result of CallSite
   // handling.
+}
+
+void SCCPSolver::visitExtractValueInst(ExtractValueInst &EVI) {
+  Value *Aggr = EVI.getOperand(0);
+
+  // If the operand to the getresult is an undef, the result is undef.
+  if (isa<UndefValue>(Aggr))
+    return;
+
+  // Currently only handle single-index extractvalues.
+  if (EVI.getNumIndices() != 1) {
+    markOverdefined(&EVI);
+    return;
+  }
+  
+  Function *F = 0;
+  if (CallInst *CI = dyn_cast<CallInst>(Aggr))
+    F = CI->getCalledFunction();
+  else if (InvokeInst *II = dyn_cast<InvokeInst>(Aggr))
+    F = II->getCalledFunction();
+
+  // TODO: If IPSCCP resolves the callee of this function, we could propagate a
+  // result back!
+  if (F == 0 || TrackedMultipleRetVals.empty()) {
+    markOverdefined(&EVI);
+    return;
+  }
+  
+  // See if we are tracking the result of the callee.
+  std::map<std::pair<Function*, unsigned>, LatticeVal>::iterator
+    It = TrackedMultipleRetVals.find(std::make_pair(F, *EVI.idx_begin()));
+
+  // If not tracking this function (for example, it is a declaration) just move
+  // to overdefined.
+  if (It == TrackedMultipleRetVals.end()) {
+    markOverdefined(&EVI);
+    return;
+  }
+  
+  // Otherwise, the value will be merged in here as a result of CallSite
+  // handling.
+}
+
+void SCCPSolver::visitInsertValueInst(InsertValueInst &IVI) {
+  Value *Aggr = IVI.getOperand(0);
+  Value *Val = IVI.getOperand(1);
+
+  // If the operand to the getresult is an undef, the result is undef.
+  if (isa<UndefValue>(Aggr))
+    return;
+
+  // Currently only handle single-index insertvalues.
+  if (IVI.getNumIndices() != 1) {
+    markOverdefined(&IVI);
+    return;
+  }
+  
+  // See if we are tracking the result of the callee.
+  Function *F = IVI.getParent()->getParent();
+  std::map<std::pair<Function*, unsigned>, LatticeVal>::iterator
+    It = TrackedMultipleRetVals.find(std::make_pair(F, *IVI.idx_begin()));
+
+  // Merge in the inserted member value.
+  if (It != TrackedMultipleRetVals.end())
+    mergeInValue(It->second, F, getValueState(Val));
+
+  // Mark the aggregate result of the IVI overdefined; any tracking that we do will
+  // be done on the individual member values.
+  markOverdefined(&IVI);
 }
 
 void SCCPSolver::visitSelectInst(SelectInst &I) {
@@ -1149,17 +1232,11 @@ CallOverdefined:
   }
 
   // If this is a single/zero retval case, see if we're tracking the function.
-  const StructType *RetSTy = dyn_cast<StructType>(I->getType());
-  if (RetSTy == 0) {
-    // Check to see if we're tracking this callee, if not, handle it in the
-    // common path above.
-    DenseMap<Function*, LatticeVal>::iterator TFRVI = TrackedRetVals.find(F);
-    if (TFRVI == TrackedRetVals.end())
-      goto CallOverdefined;
-    
+  DenseMap<Function*, LatticeVal>::iterator TFRVI = TrackedRetVals.find(F);
+  if (TFRVI != TrackedRetVals.end()) {
     // If so, propagate the return value of the callee into this call result.
     mergeInValue(I, TFRVI->second);
-  } else {
+  } else if (isa<StructType>(I->getType())) {
     // Check to see if we're tracking this callee, if not, handle it in the
     // common path above.
     std::map<std::pair<Function*, unsigned>, LatticeVal>::iterator
@@ -1168,13 +1245,30 @@ CallOverdefined:
       goto CallOverdefined;
     
     // If we are tracking this callee, propagate the return values of the call
-    // into this call site.  We do this by walking all the getresult uses.
+    // into this call site.  We do this by walking all the uses. Single-index
+    // ExtractValueInst uses can be tracked; anything more complicated is
+    // currently handled conservatively.
     for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
          UI != E; ++UI) {
-      GetResultInst *GRI = cast<GetResultInst>(*UI);
-      mergeInValue(GRI, 
-                   TrackedMultipleRetVals[std::make_pair(F, GRI->getIndex())]);
+      if (GetResultInst *GRI = dyn_cast<GetResultInst>(*UI)) {
+        mergeInValue(GRI, 
+                     TrackedMultipleRetVals[std::make_pair(F, GRI->getIndex())]);
+        continue;
+      }
+      if (ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(*UI)) {
+        if (EVI->getNumIndices() == 1) {
+          mergeInValue(EVI, 
+                       TrackedMultipleRetVals[std::make_pair(F, *EVI->idx_begin())]);
+          continue;
+        }
+      }
+      // The aggregate value is used in a way not handled here. Assume nothing.
+      markOverdefined(*UI);
     }
+  } else {
+    // Otherwise we're not tracking this callee, so handle it in the
+    // common path above.
+    goto CallOverdefined;
   }
    
   // Finally, if this is the first call to the function hit, mark its entry
