@@ -91,6 +91,9 @@ int LLVMFindFunction(LLVMExecutionEngineRef EE, const char *Name,
 
 LLVMTargetDataRef LLVMGetExecutionEngineTargetData(LLVMExecutionEngineRef EE);
 
+void LLVMAddGlobalMapping(LLVMExecutionEngineRef EE, LLVMValueRef Global,
+                          void* Addr);
+
 #ifdef __cplusplus
 }
 

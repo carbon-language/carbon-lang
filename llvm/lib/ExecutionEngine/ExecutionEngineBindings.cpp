@@ -192,3 +192,8 @@ int LLVMFindFunction(LLVMExecutionEngineRef EE, const char *Name,
 LLVMTargetDataRef LLVMGetExecutionEngineTargetData(LLVMExecutionEngineRef EE) {
   return wrap(unwrap(EE)->getTargetData());
 }
+
+void LLVMAddGlobalMapping(LLVMExecutionEngineRef EE, LLVMValueRef Global,
+                          void* Addr) {
+  unwrap(EE)->addGlobalMapping(unwrap<GlobalValue>(Global), Addr);
+}
