@@ -43,6 +43,11 @@ STATISTIC(NumIters     , "Number of iterations performed");
 STATISTIC(NumBacktracks, "Number of times we had to backtrack");
 STATISTIC(NumCoalesce,   "Number of copies coalesced");
 
+static cl::opt<bool>
+NewHeuristic("new-spilling-heuristic",
+             cl::desc("Use new spilling heuristic"),
+             cl::init(false), cl::Hidden);
+
 static RegisterRegAlloc
 linearscanRegAlloc("linearscan", "  linear scan register allocator",
                    createLinearScanRegisterAllocator);
@@ -62,6 +67,7 @@ namespace {
     std::map<unsigned, const TargetRegisterClass*> OneClassForEachPhysReg;
 
     MachineFunction* mf_;
+    MachineRegisterInfo* mri_;
     const TargetMachine* tm_;
     const TargetRegisterInfo* tri_;
     const TargetInstrInfo* tii_;
@@ -135,6 +141,15 @@ namespace {
     /// assignRegOrStackSlotAtInterval - assign a register if one
     /// is available, or spill.
     void assignRegOrStackSlotAtInterval(LiveInterval* cur);
+
+    /// findIntervalsToSpill - Determine the intervals to spill for the
+    /// specified interval. It's passed the physical registers whose spill
+    /// weight is the lowest among all the registers whose live intervals
+    /// conflict with the interval.
+    void findIntervalsToSpill(LiveInterval *cur,
+                            std::vector<std::pair<unsigned,float> > &Candidates,
+                            unsigned NumCands,
+                            SmallVector<LiveInterval*, 8> &SpillIntervals);
 
     /// attemptTrivialCoalescing - If a simple interval is defined by a copy,
     /// try allocate the definition the same register as the source register
@@ -259,6 +274,7 @@ unsigned RALinScan::attemptTrivialCoalescing(LiveInterval &cur, unsigned Reg) {
 
 bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
   mf_ = &fn;
+  mri_ = &fn.getRegInfo();
   tm_ = &fn.getTarget();
   tri_ = tm_->getRegisterInfo();
   tii_ = tm_->getInstrInfo();
@@ -534,6 +550,107 @@ static void addStackInterval(LiveInterval *cur, LiveStacks *ls_,
   SI.MergeRangesInAsValue(RI, VNI);
 }
 
+/// getConflictWeight - Return the number of conflicts between cur
+/// live interval and defs and uses of Reg weighted by loop depthes.
+static float getConflictWeight(LiveInterval *cur, unsigned Reg,
+                                  LiveIntervals *li_,
+                                  MachineRegisterInfo *mri_,
+                                  const MachineLoopInfo *loopInfo) {
+  float Conflicts = 0;
+  for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(Reg),
+         E = mri_->reg_end(); I != E; ++I) {
+    MachineInstr *MI = &*I;
+    if (cur->liveAt(li_->getInstructionIndex(MI))) {
+      unsigned loopDepth = loopInfo->getLoopDepth(MI->getParent());
+      Conflicts += powf(10.0f, (float)loopDepth);
+    }
+  }
+  return Conflicts;
+}
+
+/// findIntervalsToSpill - Determine the intervals to spill for the
+/// specified interval. It's passed the physical registers whose spill
+/// weight is the lowest among all the registers whose live intervals
+/// conflict with the interval.
+void RALinScan::findIntervalsToSpill(LiveInterval *cur,
+                            std::vector<std::pair<unsigned,float> > &Candidates,
+                            unsigned NumCands,
+                            SmallVector<LiveInterval*, 8> &SpillIntervals) {
+  // We have figured out the *best* register to spill. But there are other
+  // registers that are pretty good as well (spill weight within 3%). Spill
+  // the one that has fewest defs and uses that conflict with cur.
+  float Conflicts[3] = { 0.0f, 0.0f, 0.0f };
+  SmallVector<LiveInterval*, 8> SLIs[3];
+
+  DOUT << "\tConsidering " << NumCands << " candidates: ";
+  DEBUG(for (unsigned i = 0; i != NumCands; ++i)
+          DOUT << tri_->getName(Candidates[i].first) << " ";
+        DOUT << "\n";);
+  
+  // Calculate the number of conflicts of each candidate.
+  for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
+    unsigned Reg = i->first->reg;
+    unsigned PhysReg = vrm_->getPhys(Reg);
+    if (!cur->overlapsFrom(*i->first, i->second))
+      continue;
+    for (unsigned j = 0; j < NumCands; ++j) {
+      unsigned Candidate = Candidates[j].first;
+      if (tri_->regsOverlap(PhysReg, Candidate)) {
+        if (NumCands > 1)
+          Conflicts[j] += getConflictWeight(cur, Reg, li_, mri_, loopInfo);
+        SLIs[j].push_back(i->first);
+      }
+    }
+  }
+
+  for (IntervalPtrs::iterator i = inactive_.begin(); i != inactive_.end(); ++i){
+    unsigned Reg = i->first->reg;
+    unsigned PhysReg = vrm_->getPhys(Reg);
+    if (!cur->overlapsFrom(*i->first, i->second-1))
+      continue;
+    for (unsigned j = 0; j < NumCands; ++j) {
+      unsigned Candidate = Candidates[j].first;
+      if (tri_->regsOverlap(PhysReg, Candidate)) {
+        if (NumCands > 1)
+          Conflicts[j] += getConflictWeight(cur, Reg, li_, mri_, loopInfo);
+        SLIs[j].push_back(i->first);
+      }
+    }
+  }
+
+  // Which is the best candidate?
+  unsigned BestCandidate = 0;
+  float MinConflicts = Conflicts[0];
+  for (unsigned i = 1; i != NumCands; ++i) {
+    if (Conflicts[i] < MinConflicts) {
+      BestCandidate = i;
+      MinConflicts = Conflicts[i];
+    }
+  }
+
+  std::copy(SLIs[BestCandidate].begin(), SLIs[BestCandidate].end(),
+            std::back_inserter(SpillIntervals));
+}
+
+namespace {
+  struct WeightCompare {
+    typedef std::pair<unsigned, float> RegWeightPair;
+    bool operator()(const RegWeightPair &LHS, const RegWeightPair &RHS) const {
+      return LHS.second < RHS.second;
+    }
+  };
+}
+
+static bool weightsAreClose(float w1, float w2) {
+  if (!NewHeuristic)
+    return false;
+
+  float diff = w1 - w2;
+  if (diff <= 0.02f)  // Within 0.02f
+    return true;
+  return (diff / w2) <= 0.05f;  // Within 5%.
+}
+
 /// assignRegOrStackSlotAtInterval - assign a register if one is available, or
 /// spill.
 void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
@@ -682,7 +799,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   DOUT << "no free registers\n";
 
   // Compile the spill weights into an array that is better for scanning.
-  std::vector<float> SpillWeights(tri_->getNumRegs(), 0.0);
+  std::vector<float> SpillWeights(tri_->getNumRegs(), 0.0f);
   for (std::vector<std::pair<unsigned, float> >::iterator
        I = SpillWeightsToAdd.begin(), E = SpillWeightsToAdd.end(); I != E; ++I)
     updateSpillWeights(SpillWeights, I->first, I->second, tri_);
@@ -701,44 +818,56 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 
   // Find a register to spill.
   float minWeight = HUGE_VALF;
-  unsigned minReg = cur->preference;  // Try the preferred register first.
-  
+  unsigned minReg = 0; /*cur->preference*/;  // Try the preferred register first.
+
+  bool Found = false;
+  std::vector<std::pair<unsigned,float> > RegsWeights;
   if (!minReg || SpillWeights[minReg] == HUGE_VALF)
     for (TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_),
            e = RC->allocation_order_end(*mf_); i != e; ++i) {
       unsigned reg = *i;
-      if (minWeight > SpillWeights[reg]) {
-        minWeight = SpillWeights[reg];
-        minReg = reg;
-      }
+      float regWeight = SpillWeights[reg];
+      if (minWeight > regWeight)
+        Found = true;
+      RegsWeights.push_back(std::make_pair(reg, regWeight));
     }
   
   // If we didn't find a register that is spillable, try aliases?
-  if (!minReg) {
+  if (!Found) {
     for (TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_),
            e = RC->allocation_order_end(*mf_); i != e; ++i) {
       unsigned reg = *i;
       // No need to worry about if the alias register size < regsize of RC.
       // We are going to spill all registers that alias it anyway.
-      for (const unsigned* as = tri_->getAliasSet(reg); *as; ++as) {
-        if (minWeight > SpillWeights[*as]) {
-          minWeight = SpillWeights[*as];
-          minReg = *as;
-        }
-      }
-    }
-
-    // All registers must have inf weight. Just grab one!
-    if (!minReg) {
-        minReg = BestPhysReg ? BestPhysReg : *RC->allocation_order_begin(*mf_);
-        if (cur->weight == HUGE_VALF || cur->getSize() == 1)
-          // Spill a physical register around defs and uses.
-          li_->spillPhysRegAroundRegDefsUses(*cur, minReg, *vrm_);
+      for (const unsigned* as = tri_->getAliasSet(reg); *as; ++as)
+        RegsWeights.push_back(std::make_pair(*as, SpillWeights[*as]));
     }
   }
-  
-  DOUT << "\t\tregister with min weight: "
-       << tri_->getName(minReg) << " (" << minWeight << ")\n";
+
+  // Sort all potential spill candidates by weight.
+  std::sort(RegsWeights.begin(), RegsWeights.end(), WeightCompare());
+  minReg = RegsWeights[0].first;
+  minWeight = RegsWeights[0].second;
+  if (minWeight == HUGE_VALF) {
+    // All registers must have inf weight. Just grab one!
+    minReg = BestPhysReg ? BestPhysReg : *RC->allocation_order_begin(*mf_);
+    if (cur->weight == HUGE_VALF || cur->getSize() == 1)
+      // Spill a physical register around defs and uses.
+      li_->spillPhysRegAroundRegDefsUses(*cur, minReg, *vrm_);
+  }
+
+  // Find up to 3 registers to consider as spill candidates.
+  unsigned LastCandidate = RegsWeights.size() >= 3 ? 3 : 1;
+  while (LastCandidate > 1) {
+    if (weightsAreClose(RegsWeights[LastCandidate-1].second, minWeight))
+      break;
+    --LastCandidate;
+  }
+
+  DOUT << "\t\tregister(s) with min weight(s): ";
+  DEBUG(for (unsigned i = 0; i != LastCandidate; ++i)
+          DOUT << tri_->getName(RegsWeights[i].first)
+               << " (" << RegsWeights[i].second << ")\n");
 
   // if the current has the minimum weight, we need to spill it and
   // add any added intervals back to unhandled, and restart
@@ -767,60 +896,41 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   // should go back right in the front of the list
   unhandled_.push(cur);
 
-  // otherwise we spill all intervals aliasing the register with
-  // minimum weight, rollback to the interval with the earliest
-  // start point and let the linear scan algorithm run again
-  std::vector<LiveInterval*> added;
   assert(TargetRegisterInfo::isPhysicalRegister(minReg) &&
          "did not choose a register to spill?");
-  BitVector toSpill(tri_->getNumRegs());
 
-  // We are going to spill minReg and all its aliases.
-  toSpill[minReg] = true;
-  for (const unsigned* as = tri_->getAliasSet(minReg); *as; ++as)
-    toSpill[*as] = true;
+  // We spill all intervals aliasing the register with
+  // minimum weight, rollback to the interval with the earliest
+  // start point and let the linear scan algorithm run again
+  SmallVector<LiveInterval*, 8> spillIs;
 
-  // the earliest start of a spilled interval indicates up to where
+  // Determine which intervals have to be spilled.
+  findIntervalsToSpill(cur, RegsWeights, LastCandidate, spillIs);
+
+  // Set of spilled vregs (used later to rollback properly)
+  SmallSet<unsigned, 8> spilled;
+
+  // The earliest start of a Spilled interval indicates up to where
   // in handled we need to roll back
   unsigned earliestStart = cur->beginNumber();
 
-  // set of spilled vregs (used later to rollback properly)
-  SmallSet<unsigned, 32> spilled;
-
-  // spill live intervals of virtual regs mapped to the physical register we
+  // Spill live intervals of virtual regs mapped to the physical register we
   // want to clear (and its aliases).  We only spill those that overlap with the
   // current interval as the rest do not affect its allocation. we also keep
   // track of the earliest start of all spilled live intervals since this will
   // mark our rollback point.
-  for (IntervalPtrs::iterator i = active_.begin(); i != active_.end(); ++i) {
-    unsigned reg = i->first->reg;
-    if (//TargetRegisterInfo::isVirtualRegister(reg) &&
-        toSpill[vrm_->getPhys(reg)] &&
-        cur->overlapsFrom(*i->first, i->second)) {
-      DOUT << "\t\t\tspilling(a): " << *i->first << '\n';
-      earliestStart = std::min(earliestStart, i->first->beginNumber());
-      float SSWeight;
-      std::vector<LiveInterval*> newIs =
-        li_->addIntervalsForSpills(*i->first, loopInfo, *vrm_, SSWeight);
-      addStackInterval(i->first, ls_, li_, SSWeight, *vrm_);
-      std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
-      spilled.insert(reg);
-    }
-  }
-  for (IntervalPtrs::iterator i = inactive_.begin(); i != inactive_.end(); ++i){
-    unsigned reg = i->first->reg;
-    if (//TargetRegisterInfo::isVirtualRegister(reg) &&
-        toSpill[vrm_->getPhys(reg)] &&
-        cur->overlapsFrom(*i->first, i->second-1)) {
-      DOUT << "\t\t\tspilling(i): " << *i->first << '\n';
-      earliestStart = std::min(earliestStart, i->first->beginNumber());
-      float SSWeight;
-      std::vector<LiveInterval*> newIs =
-        li_->addIntervalsForSpills(*i->first, loopInfo, *vrm_, SSWeight);
-      addStackInterval(i->first, ls_, li_, SSWeight, *vrm_);
-      std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
-      spilled.insert(reg);
-    }
+  std::vector<LiveInterval*> added;
+  while (!spillIs.empty()) {
+    LiveInterval *sli = spillIs.back();
+    spillIs.pop_back();
+    DOUT << "\t\t\tspilling(a): " << *sli << '\n';
+    earliestStart = std::min(earliestStart, sli->beginNumber());
+    float SSWeight;
+    std::vector<LiveInterval*> newIs =
+      li_->addIntervalsForSpills(*sli, loopInfo, *vrm_, SSWeight);
+    addStackInterval(sli, ls_, li_, SSWeight, *vrm_);
+    std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
+    spilled.insert(sli->reg);
   }
 
   DOUT << "\t\trolling back to: " << earliestStart << '\n';
