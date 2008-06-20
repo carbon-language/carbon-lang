@@ -1,6 +1,4 @@
 // RUN: %llvmgcc %s -S -o -
-// XFAIL: *
-// See PR2452
 
 #pragma pack(push, 2)
 struct H {
@@ -28,12 +26,12 @@ extern long bork(FuncPtr handler, const struct E *list);
 
 static long hndlr()
 {
-  struct H cmd = { 4, 'fart' };
+  struct H cmd = { 4, 412 };
   return 0;
 }
 void foo(void *inWindow) {
   static const struct E events[] = {
-    { 'cmds', 1 }
+    { 123124, 1 }
   };
   bork(hndlr, events);
 }
