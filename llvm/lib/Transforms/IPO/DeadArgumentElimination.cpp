@@ -743,11 +743,18 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     Args.clear();
 
     if (!Call->use_empty()) {
-      if (New->getType() == Type::VoidTy)
-        // Our return value was unused, replace by null for now, uses will get
-        // removed later on
+      if (New->getType() == Call->getType()) {
+        // Return type not changed? Just replace users then
+        Call->replaceAllUsesWith(New);
+        New->takeName(Call);
+      } else if (New->getType() == Type::VoidTy) {
+        // Our return value has uses, but they will get removed later on.
+        // Replace by null for now.
         Call->replaceAllUsesWith(Constant::getNullValue(Call->getType()));
-      else if (isa<StructType>(RetTy)) {
+      } else {
+        assert(isa<StructType>(RetTy) && "Return type changed, but not into a"
+                                         "void. The old return type must have"
+                                         "been a struct!");
         // The original return value was a struct, update all uses (which are
         // all extractvalue instructions).
         for (Value::use_iterator I = Call->use_begin(), E = Call->use_end();
@@ -781,11 +788,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
           }
         }
         New->takeName(Call);
-      } else {
-        // The original function had a single return value
-        Call->replaceAllUsesWith(New);
-        New->takeName(Call);
-      }
+      } 
     }
 
     // Finally, remove the old call from the program, reducing the use-count of
