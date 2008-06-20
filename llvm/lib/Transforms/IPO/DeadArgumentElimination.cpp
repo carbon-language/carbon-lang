@@ -568,6 +568,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   const Type *RetTy = FTy->getReturnType();
   const Type *NRetTy;
   unsigned RetCount = NumRetVals(F);
+  // Explicitely track if anything changed, for debugging
+  bool Changed = false;
   // -1 means unused, other numbers are the new index
   SmallVector<int, 5> NewRetIdxs(RetCount, -1);
   std::vector<const Type*> RetTypes;
@@ -582,7 +584,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
           NewRetIdxs[i] = RetTypes.size() - 1;
         } else {
           ++NumRetValsEliminated;
-        DOUT << "DAE - Removing return value " << i << " from " << F->getNameStart() << "\n";
+          DOUT << "DAE - Removing return value " << i << " from " << F->getNameStart() << "\n";
+          Changed = true;
         }
       }
     else
@@ -593,6 +596,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       } else {
         DOUT << "DAE - Removing return value from " << F->getNameStart() << "\n";
         ++NumRetValsEliminated;
+        Changed = true;
       } 
     if (RetTypes.size() == 0)
       // No return types? Make it void
@@ -632,6 +636,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     } else {
       ++NumArgumentsEliminated;
       DOUT << "DAE - Removing argument " << i << " (" << I->getNameStart() << ") from " << F->getNameStart() << "\n";
+      Changed = true;
     }
   }
 
@@ -656,6 +661,10 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   // No change?
   if (NFTy == FTy)
     return false;
+
+  // The function type is only allowed to be different if we actually left out
+  // an argument or return value
+  assert(Changed && "Function type changed while no arguments or retrurn values were removed!");
 
   // Create the new function body and insert it into the module...
   Function *NF = Function::Create(NFTy, F->getLinkage());
