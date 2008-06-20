@@ -543,6 +543,10 @@ void DAGTypeLegalizer::SetSplitVector(SDOperand Op, SDOperand Lo,
 }
 
 
+//===----------------------------------------------------------------------===//
+// Utilities.
+//===----------------------------------------------------------------------===//
+
 /// BitConvertToInteger - Convert to an integer of the same size.
 SDOperand DAGTypeLegalizer::BitConvertToInteger(SDOperand Op) {
   unsigned BitWidth = Op.getValueType().getSizeInBits();
@@ -635,6 +639,26 @@ SDOperand DAGTypeLegalizer::GetVectorElementPointer(SDOperand VecPtr, MVT EltVT,
   Index = DAG.getNode(ISD::MUL, Index.getValueType(), Index,
                       DAG.getConstant(EltSize, Index.getValueType()));
   return DAG.getNode(ISD::ADD, Index.getValueType(), Index, VecPtr);
+}
+
+/// GetSplitDestVTs - Compute the VTs needed for the low/hi parts of a type
+/// which is split into two not necessarily identical pieces.
+void DAGTypeLegalizer::GetSplitDestVTs(MVT InVT, MVT &LoVT, MVT &HiVT) {
+  if (!InVT.isVector()) {
+    LoVT = HiVT = TLI.getTypeToTransformTo(InVT);
+  } else {
+    MVT NewEltVT = InVT.getVectorElementType();
+    unsigned NumElements = InVT.getVectorNumElements();
+    if ((NumElements & (NumElements-1)) == 0) {  // Simple power of two vector.
+      NumElements >>= 1;
+      LoVT = HiVT =  MVT::getVectorVT(NewEltVT, NumElements);
+    } else {                                     // Non-power-of-two vectors.
+      unsigned NewNumElts_Lo = 1 << Log2_32(NumElements);
+      unsigned NewNumElts_Hi = NumElements - NewNumElts_Lo;
+      LoVT = MVT::getVectorVT(NewEltVT, NewNumElts_Lo);
+      HiVT = MVT::getVectorVT(NewEltVT, NewNumElts_Hi);
+    }
+  }
 }
 
 

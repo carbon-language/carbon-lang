@@ -267,19 +267,14 @@ private:
   void ExpandIntegerResult(SDNode *N, unsigned ResNo);
   void ExpandIntRes_ANY_EXTEND        (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_AssertZext        (SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void ExpandIntRes_BIT_CONVERT       (SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void ExpandIntRes_BUILD_PAIR        (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_Constant          (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_CTLZ              (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_CTPOP             (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_CTTZ              (SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void ExpandIntRes_EXTRACT_VECTOR_ELT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_LOAD          (LoadSDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void ExpandIntRes_MERGE_VALUES      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_SIGN_EXTEND       (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_SIGN_EXTEND_INREG (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_TRUNCATE          (SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void ExpandIntRes_UNDEF             (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_ZERO_EXTEND       (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_FP_TO_SINT        (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_FP_TO_UINT        (SDNode *N, SDOperand &Lo, SDOperand &Hi);
@@ -289,8 +284,6 @@ private:
   void ExpandIntRes_ADDSUB            (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_ADDSUBC           (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_ADDSUBE           (SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void ExpandIntRes_SELECT            (SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void ExpandIntRes_SELECT_CC         (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_MUL               (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_SDIV              (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_SREM              (SDNode *N, SDOperand &Lo, SDOperand &Hi);
@@ -372,22 +365,22 @@ private:
 
   // Vector Result Scalarization: <1 x ty> -> ty.
   void ScalarizeResult(SDNode *N, unsigned OpNo);
-  SDOperand ScalarizeRes_BinOp(SDNode *N);
-  SDOperand ScalarizeRes_UnaryOp(SDNode *N);
+  SDOperand ScalarizeVecRes_BinOp(SDNode *N);
+  SDOperand ScalarizeVecRes_UnaryOp(SDNode *N);
 
-  SDOperand ScalarizeRes_BIT_CONVERT(SDNode *N);
-  SDOperand ScalarizeRes_FPOWI(SDNode *N);
-  SDOperand ScalarizeRes_INSERT_VECTOR_ELT(SDNode *N);
-  SDOperand ScalarizeRes_LOAD(LoadSDNode *N);
-  SDOperand ScalarizeRes_SELECT(SDNode *N);
-  SDOperand ScalarizeRes_UNDEF(SDNode *N);
-  SDOperand ScalarizeRes_VECTOR_SHUFFLE(SDNode *N);
+  SDOperand ScalarizeVecRes_BIT_CONVERT(SDNode *N);
+  SDOperand ScalarizeVecRes_FPOWI(SDNode *N);
+  SDOperand ScalarizeVecRes_INSERT_VECTOR_ELT(SDNode *N);
+  SDOperand ScalarizeVecRes_LOAD(LoadSDNode *N);
+  SDOperand ScalarizeVecRes_SELECT(SDNode *N);
+  SDOperand ScalarizeVecRes_UNDEF(SDNode *N);
+  SDOperand ScalarizeVecRes_VECTOR_SHUFFLE(SDNode *N);
 
   // Vector Operand Scalarization: <1 x ty> -> ty.
   bool ScalarizeOperand(SDNode *N, unsigned OpNo);
-  SDOperand ScalarizeOp_BIT_CONVERT(SDNode *N);
-  SDOperand ScalarizeOp_EXTRACT_VECTOR_ELT(SDNode *N);
-  SDOperand ScalarizeOp_STORE(StoreSDNode *N, unsigned OpNo);
+  SDOperand ScalarizeVecOp_BIT_CONVERT(SDNode *N);
+  SDOperand ScalarizeVecOp_EXTRACT_VECTOR_ELT(SDNode *N);
+  SDOperand ScalarizeVecOp_STORE(StoreSDNode *N, unsigned OpNo);
 
   //===--------------------------------------------------------------------===//
   // Vector Splitting Support: LegalizeVectorTypes.cpp
@@ -399,29 +392,85 @@ private:
   // Vector Result Splitting: <128 x ty> -> 2 x <64 x ty>.
   void SplitResult(SDNode *N, unsigned OpNo);
 
-  void SplitRes_UNDEF(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void SplitRes_LOAD(LoadSDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void SplitRes_BUILD_PAIR(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void SplitRes_INSERT_VECTOR_ELT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void SplitRes_VECTOR_SHUFFLE(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_UNDEF(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_LOAD(LoadSDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_BUILD_PAIR(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_VECTOR_SHUFFLE(SDNode *N, SDOperand &Lo, SDOperand &Hi);
 
-  void SplitRes_BUILD_VECTOR(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void SplitRes_CONCAT_VECTORS(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void SplitRes_BIT_CONVERT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void SplitRes_UnOp(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void SplitRes_BinOp(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void SplitRes_FPOWI(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void SplitRes_SELECT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_BUILD_VECTOR(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_CONCAT_VECTORS(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_BIT_CONVERT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_UnOp(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_BinOp(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_FPOWI(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_SELECT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
 
   // Vector Operand Splitting: <128 x ty> -> 2 x <64 x ty>.
   bool SplitOperand(SDNode *N, unsigned OpNo);
 
-  SDOperand SplitOp_BIT_CONVERT(SDNode *N);
-  SDOperand SplitOp_EXTRACT_SUBVECTOR(SDNode *N);
-  SDOperand SplitOp_EXTRACT_VECTOR_ELT(SDNode *N);
-  SDOperand SplitOp_RET(SDNode *N, unsigned OpNo);
-  SDOperand SplitOp_STORE(StoreSDNode *N, unsigned OpNo);
-  SDOperand SplitOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo);
+  SDOperand SplitVecOp_BIT_CONVERT(SDNode *N);
+  SDOperand SplitVecOp_EXTRACT_SUBVECTOR(SDNode *N);
+  SDOperand SplitVecOp_EXTRACT_VECTOR_ELT(SDNode *N);
+  SDOperand SplitVecOp_RET(SDNode *N, unsigned OpNo);
+  SDOperand SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo);
+  SDOperand SplitVecOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo);
+
+  //===--------------------------------------------------------------------===//
+  // Generic Splitting: LegalizeTypesGeneric.cpp
+  //===--------------------------------------------------------------------===//
+
+  // Legalization methods which only use that the illegal type is split into two
+  // not necessarily identical types.  As such they can be used for splitting
+  // vectors and expanding integers and floats.
+
+  void GetSplitOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi) {
+    if (Op.getValueType().isVector())
+      GetSplitVector(Op, Lo, Hi);
+    else if (Op.getValueType().isInteger())
+      GetExpandedInteger(Op, Lo, Hi);
+    else
+      GetExpandedFloat(Op, Lo, Hi);
+  }
+
+  /// GetSplitDestVTs - Compute the VTs needed for the low/hi parts of a type
+  /// which is split (or expanded) into two not necessarily identical pieces.
+  void GetSplitDestVTs(MVT InVT, MVT &LoVT, MVT &HiVT);
+
+  // Generic Result Splitting.
+  void SplitRes_MERGE_VALUES(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitRes_SELECT      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitRes_SELECT_CC   (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitRes_UNDEF       (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+
+  //===--------------------------------------------------------------------===//
+  // Generic Expansion: LegalizeTypesGeneric.cpp
+  //===--------------------------------------------------------------------===//
+
+  // Legalization methods which only use that the illegal type is split into two
+  // identical types of half the size, and that the Lo/Hi part is stored first
+  // in memory on little/big-endian machines, followed by the Hi/Lo part.  As
+  // such they can be used for expanding integers and floats.
+
+  void GetExpandedOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi) {
+    if (Op.getValueType().isInteger())
+      GetExpandedInteger(Op, Lo, Hi);
+    else
+      GetExpandedFloat(Op, Lo, Hi);
+  }
+
+  // Generic Result Expansion.
+  void ExpandRes_BIT_CONVERT       (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandRes_BUILD_PAIR        (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandRes_NON_EXTLOAD       (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+
+  // Generic Operand Expansion.
+  SDOperand ExpandOp_BIT_CONVERT    (SDNode *N);
+  SDOperand ExpandOp_BUILD_VECTOR   (SDNode *N);
+  SDOperand ExpandOp_EXTRACT_ELEMENT(SDNode *N);
+  SDOperand ExpandOp_NON_TRUNCStore (SDNode *N, unsigned OpNo);
+
 };
 
 } // end namespace llvm.

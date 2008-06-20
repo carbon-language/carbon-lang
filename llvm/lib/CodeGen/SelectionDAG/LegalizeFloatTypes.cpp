@@ -14,7 +14,7 @@
 // The resulting integer value is the same as what you would get by performing
 // the floating point operation and bitcasting the result to the integer type.
 // Expansion is the act of changing a computation in an illegal type to be a
-// computation in multiple registers of a smaller type.  For example,
+// computation in two identical registers of a smaller type.  For example,
 // implementing ppcf128 arithmetic in two f64 registers.
 //
 //===----------------------------------------------------------------------===//
@@ -395,6 +395,15 @@ void DAGTypeLegalizer::ExpandFloatResult(SDNode *N, unsigned ResNo) {
 #endif
     assert(0 && "Do not know how to expand the result of this operator!");
     abort();
+
+  case ISD::MERGE_VALUES: SplitRes_MERGE_VALUES(N, Lo, Hi); break;
+  case ISD::UNDEF:        SplitRes_UNDEF(N, Lo, Hi); break;
+  case ISD::SELECT:       SplitRes_SELECT(N, Lo, Hi); break;
+  case ISD::SELECT_CC:    SplitRes_SELECT_CC(N, Lo, Hi); break;
+
+  case ISD::BIT_CONVERT:        ExpandRes_BIT_CONVERT(N, Lo, Hi); break;
+  case ISD::BUILD_PAIR:         ExpandRes_BUILD_PAIR(N, Lo, Hi); break;
+  case ISD::EXTRACT_VECTOR_ELT: ExpandRes_EXTRACT_VECTOR_ELT(N, Lo, Hi); break;
   }
 
   // If Lo/Hi is null, the sub-method took care of registering results etc.
@@ -428,6 +437,10 @@ bool DAGTypeLegalizer::ExpandFloatOperand(SDNode *N, unsigned OpNo) {
   #endif
       assert(0 && "Do not know how to expand this operator's operand!");
       abort();
+
+    case ISD::BIT_CONVERT:     Res = ExpandOp_BIT_CONVERT(N); break;
+    case ISD::BUILD_VECTOR:    Res = ExpandOp_BUILD_VECTOR(N); break;
+    case ISD::EXTRACT_ELEMENT: Res = ExpandOp_EXTRACT_ELEMENT(N); break;
     }
   }
 
