@@ -42,7 +42,7 @@ STATISTIC(NumGVNInstr, "Number of instructions deleted");
 STATISTIC(NumGVNLoad, "Number of loads deleted");
 STATISTIC(NumGVNPRE, "Number of instructions PRE'd");
 
-static cl::opt<bool> DisablePRE("disable-pre",
+static cl::opt<bool> EnablePRE("enable-pre",
                                 cl::init(false), cl::Hidden);
 
 //===----------------------------------------------------------------------===//
@@ -1290,7 +1290,7 @@ bool GVN::iterateOnFunction(Function &F) {
        DE = df_end(DT.getRootNode()); DI != DE; ++DI)
     changed |= processBlock(*DI);
   
-  if (!DisablePRE)
+  if (!EnablePRE)
     changed |= performPRE(F);
   
   return changed;
