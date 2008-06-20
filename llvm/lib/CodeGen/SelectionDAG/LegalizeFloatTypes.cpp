@@ -7,13 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements float type expansion and conversion of float types to
-// integer types on behalf of LegalizeTypes.
-// Converting to integer is the act of turning a computation in an illegal
-// floating point type into a computation in an integer type of the same size.
-// For example, turning f32 arithmetic into operations using i32.  Also known as
-// "soft float".  The result is equivalent to bitcasting the float value to the
-// integer type.
+// This file implements float type expansion and softening for LegalizeTypes.
+// Softening is the act of turning a computation in an illegal floating point
+// type into a computation in an integer type of the same size; also known as
+// "soft float".  For example, turning f32 arithmetic into operations using i32.
+// The resulting integer value is the same as what you would get by performing
+// the floating point operation and bitcasting the result to the integer type.
 // Expansion is the act of changing a computation in an illegal type to be a
 // computation in multiple registers of a smaller type.  For example,
 // implementing ppcf128 arithmetic in two f64 registers.
@@ -44,8 +43,8 @@ static RTLIB::Libcall GetFPLibCall(MVT VT,
 //  Result Float to Integer Conversion.
 //===----------------------------------------------------------------------===//
 
-void DAGTypeLegalizer::PromoteFloatResult(SDNode *N, unsigned ResNo) {
-  DEBUG(cerr << "Promote float result " << ResNo << ": "; N->dump(&DAG);
+void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
+  DEBUG(cerr << "Soften float result " << ResNo << ": "; N->dump(&DAG);
         cerr << "\n");
   SDOperand R = SDOperand();
 
@@ -67,37 +66,37 @@ void DAGTypeLegalizer::PromoteFloatResult(SDNode *N, unsigned ResNo) {
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
-    cerr << "PromoteFloatResult #" << ResNo << ": ";
+    cerr << "SoftenFloatResult #" << ResNo << ": ";
     N->dump(&DAG); cerr << "\n";
 #endif
     assert(0 && "Do not know how to convert the result of this operator!");
     abort();
 
-    case ISD::BIT_CONVERT: R = PromoteFloatRes_BIT_CONVERT(N); break;
-    case ISD::BUILD_PAIR:  R = PromoteFloatRes_BUILD_PAIR(N); break;
+    case ISD::BIT_CONVERT: R = SoftenFloatRes_BIT_CONVERT(N); break;
+    case ISD::BUILD_PAIR:  R = SoftenFloatRes_BUILD_PAIR(N); break;
     case ISD::ConstantFP:
-      R = PromoteFloatRes_ConstantFP(cast<ConstantFPSDNode>(N));
+      R = SoftenFloatRes_ConstantFP(cast<ConstantFPSDNode>(N));
       break;
-    case ISD::FCOPYSIGN:   R = PromoteFloatRes_FCOPYSIGN(N); break;
-    case ISD::LOAD:        R = PromoteFloatRes_LOAD(N); break;
+    case ISD::FCOPYSIGN:   R = SoftenFloatRes_FCOPYSIGN(N); break;
+    case ISD::LOAD:        R = SoftenFloatRes_LOAD(N); break;
     case ISD::SINT_TO_FP:
-    case ISD::UINT_TO_FP:  R = PromoteFloatRes_XINT_TO_FP(N); break;
+    case ISD::UINT_TO_FP:  R = SoftenFloatRes_XINT_TO_FP(N); break;
 
-    case ISD::FADD: R = PromoteFloatRes_FADD(N); break;
-    case ISD::FMUL: R = PromoteFloatRes_FMUL(N); break;
-    case ISD::FSUB: R = PromoteFloatRes_FSUB(N); break;
+    case ISD::FADD: R = SoftenFloatRes_FADD(N); break;
+    case ISD::FMUL: R = SoftenFloatRes_FMUL(N); break;
+    case ISD::FSUB: R = SoftenFloatRes_FSUB(N); break;
   }
 
   // If R is null, the sub-method took care of registering the result.
   if (R.Val)
-    SetPromotedFloat(SDOperand(N, ResNo), R);
+    SetSoftenedFloat(SDOperand(N, ResNo), R);
 }
 
-SDOperand DAGTypeLegalizer::PromoteFloatRes_BIT_CONVERT(SDNode *N) {
+SDOperand DAGTypeLegalizer::SoftenFloatRes_BIT_CONVERT(SDNode *N) {
   return BitConvertToInteger(N->getOperand(0));
 }
 
-SDOperand DAGTypeLegalizer::PromoteFloatRes_BUILD_PAIR(SDNode *N) {
+SDOperand DAGTypeLegalizer::SoftenFloatRes_BUILD_PAIR(SDNode *N) {
   // Convert the inputs to integers, and build a new pair out of them.
   return DAG.getNode(ISD::BUILD_PAIR,
                      TLI.getTypeToTransformTo(N->getValueType(0)),
@@ -105,15 +104,15 @@ SDOperand DAGTypeLegalizer::PromoteFloatRes_BUILD_PAIR(SDNode *N) {
                      BitConvertToInteger(N->getOperand(1)));
 }
 
-SDOperand DAGTypeLegalizer::PromoteFloatRes_ConstantFP(ConstantFPSDNode *N) {
+SDOperand DAGTypeLegalizer::SoftenFloatRes_ConstantFP(ConstantFPSDNode *N) {
   return DAG.getConstant(N->getValueAPF().convertToAPInt(),
                          TLI.getTypeToTransformTo(N->getValueType(0)));
 }
 
-SDOperand DAGTypeLegalizer::PromoteFloatRes_FADD(SDNode *N) {
+SDOperand DAGTypeLegalizer::SoftenFloatRes_FADD(SDNode *N) {
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
-  SDOperand Ops[2] = { GetPromotedFloat(N->getOperand(0)),
-                       GetPromotedFloat(N->getOperand(1)) };
+  SDOperand Ops[2] = { GetSoftenedFloat(N->getOperand(0)),
+                       GetSoftenedFloat(N->getOperand(1)) };
   return MakeLibCall(GetFPLibCall(N->getValueType(0),
                                   RTLIB::ADD_F32,
                                   RTLIB::ADD_F64,
@@ -122,8 +121,8 @@ SDOperand DAGTypeLegalizer::PromoteFloatRes_FADD(SDNode *N) {
                      NVT, Ops, 2, false/*sign irrelevant*/);
 }
 
-SDOperand DAGTypeLegalizer::PromoteFloatRes_FCOPYSIGN(SDNode *N) {
-  SDOperand LHS = GetPromotedFloat(N->getOperand(0));
+SDOperand DAGTypeLegalizer::SoftenFloatRes_FCOPYSIGN(SDNode *N) {
+  SDOperand LHS = GetSoftenedFloat(N->getOperand(0));
   SDOperand RHS = BitConvertToInteger(N->getOperand(1));
 
   MVT LVT = LHS.getValueType();
@@ -161,10 +160,10 @@ SDOperand DAGTypeLegalizer::PromoteFloatRes_FCOPYSIGN(SDNode *N) {
   return DAG.getNode(ISD::OR, LVT, LHS, SignBit);
 }
 
-SDOperand DAGTypeLegalizer::PromoteFloatRes_FMUL(SDNode *N) {
+SDOperand DAGTypeLegalizer::SoftenFloatRes_FMUL(SDNode *N) {
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
-  SDOperand Ops[2] = { GetPromotedFloat(N->getOperand(0)),
-                       GetPromotedFloat(N->getOperand(1)) };
+  SDOperand Ops[2] = { GetSoftenedFloat(N->getOperand(0)),
+                       GetSoftenedFloat(N->getOperand(1)) };
   return MakeLibCall(GetFPLibCall(N->getValueType(0),
                                   RTLIB::MUL_F32,
                                   RTLIB::MUL_F64,
@@ -173,10 +172,10 @@ SDOperand DAGTypeLegalizer::PromoteFloatRes_FMUL(SDNode *N) {
                      NVT, Ops, 2, false/*sign irrelevant*/);
 }
 
-SDOperand DAGTypeLegalizer::PromoteFloatRes_FSUB(SDNode *N) {
+SDOperand DAGTypeLegalizer::SoftenFloatRes_FSUB(SDNode *N) {
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
-  SDOperand Ops[2] = { GetPromotedFloat(N->getOperand(0)),
-                       GetPromotedFloat(N->getOperand(1)) };
+  SDOperand Ops[2] = { GetSoftenedFloat(N->getOperand(0)),
+                       GetSoftenedFloat(N->getOperand(1)) };
   return MakeLibCall(GetFPLibCall(N->getValueType(0),
                                   RTLIB::SUB_F32,
                                   RTLIB::SUB_F64,
@@ -185,7 +184,7 @@ SDOperand DAGTypeLegalizer::PromoteFloatRes_FSUB(SDNode *N) {
                      NVT, Ops, 2, false/*sign irrelevant*/);
 }
 
-SDOperand DAGTypeLegalizer::PromoteFloatRes_LOAD(SDNode *N) {
+SDOperand DAGTypeLegalizer::SoftenFloatRes_LOAD(SDNode *N) {
   LoadSDNode *L = cast<LoadSDNode>(N);
   MVT VT = N->getValueType(0);
   MVT NVT = TLI.getTypeToTransformTo(VT);
@@ -206,7 +205,7 @@ SDOperand DAGTypeLegalizer::PromoteFloatRes_LOAD(SDNode *N) {
   return BitConvertToInteger(DAG.getNode(ISD::FP_EXTEND, VT, NL));
 }
 
-SDOperand DAGTypeLegalizer::PromoteFloatRes_XINT_TO_FP(SDNode *N) {
+SDOperand DAGTypeLegalizer::SoftenFloatRes_XINT_TO_FP(SDNode *N) {
   bool isSigned = N->getOpcode() == ISD::SINT_TO_FP;
   MVT DestVT = N->getValueType(0);
   SDOperand Op = N->getOperand(0);
@@ -311,8 +310,8 @@ SDOperand DAGTypeLegalizer::PromoteFloatRes_XINT_TO_FP(SDNode *N) {
 //  Operand Float to Integer Conversion..
 //===----------------------------------------------------------------------===//
 
-bool DAGTypeLegalizer::PromoteFloatOperand(SDNode *N, unsigned OpNo) {
-  DEBUG(cerr << "Promote float operand " << OpNo << ": "; N->dump(&DAG);
+bool DAGTypeLegalizer::SoftenFloatOperand(SDNode *N, unsigned OpNo) {
+  DEBUG(cerr << "Soften float operand " << OpNo << ": "; N->dump(&DAG);
         cerr << "\n");
   SDOperand Res(0, 0);
 
@@ -327,13 +326,13 @@ bool DAGTypeLegalizer::PromoteFloatOperand(SDNode *N, unsigned OpNo) {
     switch (N->getOpcode()) {
     default:
 #ifndef NDEBUG
-      cerr << "PromoteFloatOperand Op #" << OpNo << ": ";
+      cerr << "SoftenFloatOperand Op #" << OpNo << ": ";
       N->dump(&DAG); cerr << "\n";
 #endif
       assert(0 && "Do not know how to convert this operator's operand!");
       abort();
 
-      case ISD::BIT_CONVERT: Res = PromoteFloatOp_BIT_CONVERT(N); break;
+      case ISD::BIT_CONVERT: Res = SoftenFloatOp_BIT_CONVERT(N); break;
     }
   }
 
@@ -357,9 +356,9 @@ bool DAGTypeLegalizer::PromoteFloatOperand(SDNode *N, unsigned OpNo) {
   return false;
 }
 
-SDOperand DAGTypeLegalizer::PromoteFloatOp_BIT_CONVERT(SDNode *N) {
+SDOperand DAGTypeLegalizer::SoftenFloatOp_BIT_CONVERT(SDNode *N) {
   return DAG.getNode(ISD::BIT_CONVERT, N->getValueType(0),
-                     GetPromotedFloat(N->getOperand(0)));
+                     GetSoftenedFloat(N->getOperand(0)));
 }
 
 

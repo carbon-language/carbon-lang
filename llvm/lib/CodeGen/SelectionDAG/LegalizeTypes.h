@@ -62,7 +62,7 @@ private:
     Legal,          // The target natively supports this type.
     PromoteInteger, // Replace this integer type with a larger one.
     ExpandInteger,  // Split this integer type into two of half the size.
-    PromoteFloat,   // Convert this float type to a same size integer type.
+    SoftenFloat,    // Convert this float type to a same size integer type.
     ExpandFloat,    // Split this float type into two of half the size.
     Scalarize,      // Replace this one-element vector type with its element type.
     Split           // This vector type should be split into smaller vectors.
@@ -95,7 +95,7 @@ private:
           return ExpandInteger;
         else if (VT.getSizeInBits() ==
                  TLI.getTypeToTransformTo(VT).getSizeInBits())
-          return PromoteFloat;
+          return SoftenFloat;
         else
           return ExpandFloat;
       } else if (VT.getVectorNumElements() == 1) {
@@ -119,9 +119,9 @@ private:
   /// indicates which operands are the expanded version of the input.
   DenseMap<SDOperand, std::pair<SDOperand, SDOperand> > ExpandedIntegers;
 
-  /// PromotedFloats - For floating point nodes converted to integers of
+  /// SoftenedFloats - For floating point nodes converted to integers of
   /// the same size, this map indicates the converted value to use.
-  DenseMap<SDOperand, SDOperand> PromotedFloats;
+  DenseMap<SDOperand, SDOperand> SoftenedFloats;
 
   /// ExpandedFloats - For float nodes that need to be expanded this map
   /// indicates which operands are the expanded version of the input.
@@ -321,29 +321,29 @@ private:
   // Float to Integer Conversion Support: LegalizeFloatTypes.cpp
   //===--------------------------------------------------------------------===//
 
-  SDOperand GetPromotedFloat(SDOperand Op) {
-    SDOperand &PromotedOp = PromotedFloats[Op];
-    RemapNode(PromotedOp);
-    assert(PromotedOp.Val && "Operand wasn't converted to integer?");
-    return PromotedOp;
+  SDOperand GetSoftenedFloat(SDOperand Op) {
+    SDOperand &SoftenedOp = SoftenedFloats[Op];
+    RemapNode(SoftenedOp);
+    assert(SoftenedOp.Val && "Operand wasn't converted to integer?");
+    return SoftenedOp;
   }
-  void SetPromotedFloat(SDOperand Op, SDOperand Result);
+  void SetSoftenedFloat(SDOperand Op, SDOperand Result);
 
   // Result Float to Integer Conversion.
-  void PromoteFloatResult(SDNode *N, unsigned OpNo);
-  SDOperand PromoteFloatRes_BIT_CONVERT(SDNode *N);
-  SDOperand PromoteFloatRes_BUILD_PAIR(SDNode *N);
-  SDOperand PromoteFloatRes_ConstantFP(ConstantFPSDNode *N);
-  SDOperand PromoteFloatRes_FADD(SDNode *N);
-  SDOperand PromoteFloatRes_FCOPYSIGN(SDNode *N);
-  SDOperand PromoteFloatRes_FMUL(SDNode *N);
-  SDOperand PromoteFloatRes_FSUB(SDNode *N);
-  SDOperand PromoteFloatRes_LOAD(SDNode *N);
-  SDOperand PromoteFloatRes_XINT_TO_FP(SDNode *N);
+  void SoftenFloatResult(SDNode *N, unsigned OpNo);
+  SDOperand SoftenFloatRes_BIT_CONVERT(SDNode *N);
+  SDOperand SoftenFloatRes_BUILD_PAIR(SDNode *N);
+  SDOperand SoftenFloatRes_ConstantFP(ConstantFPSDNode *N);
+  SDOperand SoftenFloatRes_FADD(SDNode *N);
+  SDOperand SoftenFloatRes_FCOPYSIGN(SDNode *N);
+  SDOperand SoftenFloatRes_FMUL(SDNode *N);
+  SDOperand SoftenFloatRes_FSUB(SDNode *N);
+  SDOperand SoftenFloatRes_LOAD(SDNode *N);
+  SDOperand SoftenFloatRes_XINT_TO_FP(SDNode *N);
 
   // Operand Float to Integer Conversion.
-  bool PromoteFloatOperand(SDNode *N, unsigned OpNo);
-  SDOperand PromoteFloatOp_BIT_CONVERT(SDNode *N);
+  bool SoftenFloatOperand(SDNode *N, unsigned OpNo);
+  SDOperand SoftenFloatOp_BIT_CONVERT(SDNode *N);
 
   //===--------------------------------------------------------------------===//
   // Float Expansion Support: LegalizeFloatTypes.cpp

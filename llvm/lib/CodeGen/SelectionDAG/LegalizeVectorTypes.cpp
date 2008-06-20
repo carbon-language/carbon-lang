@@ -503,7 +503,7 @@ void DAGTypeLegalizer::SplitRes_BIT_CONVERT(SDNode *N,
     assert(false && "Unknown type action!");
   case Legal:
   case PromoteInteger:
-  case PromoteFloat:
+  case SoftenFloat:
   case Scalarize:
     break;
   case ExpandInteger:

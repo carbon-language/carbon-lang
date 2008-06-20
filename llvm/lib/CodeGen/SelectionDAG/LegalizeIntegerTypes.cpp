@@ -232,9 +232,9 @@ SDOperand DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
       // The input promotes to the same size.  Convert the promoted value.
       return DAG.getNode(ISD::BIT_CONVERT, OutVT, GetPromotedInteger(InOp));
     break;
-  case PromoteFloat:
+  case SoftenFloat:
     // Promote the integer operand by hand.
-    return DAG.getNode(ISD::ANY_EXTEND, OutVT, GetPromotedFloat(InOp));
+    return DAG.getNode(ISD::ANY_EXTEND, OutVT, GetSoftenedFloat(InOp));
   case ExpandInteger:
   case ExpandFloat:
     break;
@@ -963,9 +963,9 @@ void DAGTypeLegalizer::ExpandIntRes_BIT_CONVERT(SDNode *N,
     case Legal:
     case PromoteInteger:
       break;
-    case PromoteFloat:
+    case SoftenFloat:
       // Convert the integer operand instead.
-      SplitInteger(GetPromotedFloat(InOp), Lo, Hi);
+      SplitInteger(GetSoftenedFloat(InOp), Lo, Hi);
       Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Lo);
       Hi = DAG.getNode(ISD::BIT_CONVERT, NVT, Hi);
       return;

@@ -80,8 +80,8 @@ void DAGTypeLegalizer::run() {
       case ExpandInteger:
         ExpandIntegerResult(N, i);
         goto NodeDone;
-      case PromoteFloat:
-        PromoteFloatResult(N, i);
+      case SoftenFloat:
+        SoftenFloatResult(N, i);
         goto NodeDone;
       case ExpandFloat:
         ExpandFloatResult(N, i);
@@ -113,8 +113,8 @@ void DAGTypeLegalizer::run() {
       case ExpandInteger:
         NeedsRevisit = ExpandIntegerOperand(N, i);
         break;
-      case PromoteFloat:
-        NeedsRevisit = PromoteFloatOperand(N, i);
+      case SoftenFloat:
+        NeedsRevisit = SoftenFloatOperand(N, i);
         break;
       case ExpandFloat:
         NeedsRevisit = ExpandFloatOperand(N, i);
@@ -393,8 +393,8 @@ void DAGTypeLegalizer::ExpungeNode(SDOperand N) {
         I->second = Replacement;
     }
 
-    for (DenseMap<SDOperand, SDOperand>::iterator I = PromotedFloats.begin(),
-         E = PromotedFloats.end(); I != E; ++I) {
+    for (DenseMap<SDOperand, SDOperand>::iterator I = SoftenedFloats.begin(),
+         E = SoftenedFloats.end(); I != E; ++I) {
       assert(I->first != N);
       if (I->second == N)
         I->second = Replacement;
@@ -446,11 +446,11 @@ void DAGTypeLegalizer::SetPromotedInteger(SDOperand Op, SDOperand Result) {
   OpEntry = Result;
 }
 
-void DAGTypeLegalizer::SetPromotedFloat(SDOperand Op, SDOperand Result) {
+void DAGTypeLegalizer::SetSoftenedFloat(SDOperand Op, SDOperand Result) {
   ExpungeNode(Result);
   AnalyzeNewNode(Result.Val);
 
-  SDOperand &OpEntry = PromotedFloats[Op];
+  SDOperand &OpEntry = SoftenedFloats[Op];
   assert(OpEntry.Val == 0 && "Node is already converted to integer!");
   OpEntry = Result;
 }
