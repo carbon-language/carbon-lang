@@ -438,6 +438,10 @@ public:
     return getBody(Definition);
   }
 
+  virtual Stmt* getCodeBody() const {
+    return getBody();
+  }
+  
   /// isThisDeclarationADefinition - Returns whether this specific
   /// declaration of the function is also a definition. This does not
   /// determine whether the function has been defined (e.g., in a
