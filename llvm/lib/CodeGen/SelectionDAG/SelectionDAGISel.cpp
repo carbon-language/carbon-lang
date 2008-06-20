@@ -1270,32 +1270,38 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
   NewValues.push_back(getControlRoot());
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {  
     SDOperand RetOp = getValue(I.getOperand(i));
-    MVT VT = RetOp.getValueType();
 
-    // FIXME: C calling convention requires the return type to be promoted to
-    // at least 32-bit. But this is not necessary for non-C calling conventions.
-    if (VT.isInteger()) {
-      MVT MinVT = TLI.getRegisterType(MVT::i32);
-      if (VT.bitsLT(MinVT))
-        VT = MinVT;
-    }
+    SmallVector<MVT, 4> ValueVTs;
+    ComputeValueVTs(TLI, I.getOperand(i)->getType(), ValueVTs);
+    for (unsigned j = 0, f = ValueVTs.size(); j != f; ++j) {
+      MVT VT = ValueVTs[j];
 
-    unsigned NumParts = TLI.getNumRegisters(VT);
-    MVT PartVT = TLI.getRegisterType(VT);
-    SmallVector<SDOperand, 4> Parts(NumParts);
-    ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
+      // FIXME: C calling convention requires the return type to be promoted to
+      // at least 32-bit. But this is not necessary for non-C calling conventions.
+      if (VT.isInteger()) {
+        MVT MinVT = TLI.getRegisterType(MVT::i32);
+        if (VT.bitsLT(MinVT))
+          VT = MinVT;
+      }
 
-    const Function *F = I.getParent()->getParent();
-    if (F->paramHasAttr(0, ParamAttr::SExt))
-      ExtendKind = ISD::SIGN_EXTEND;
-    else if (F->paramHasAttr(0, ParamAttr::ZExt))
-      ExtendKind = ISD::ZERO_EXTEND;
+      unsigned NumParts = TLI.getNumRegisters(VT);
+      MVT PartVT = TLI.getRegisterType(VT);
+      SmallVector<SDOperand, 4> Parts(NumParts);
+      ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
+  
+      const Function *F = I.getParent()->getParent();
+      if (F->paramHasAttr(0, ParamAttr::SExt))
+        ExtendKind = ISD::SIGN_EXTEND;
+      else if (F->paramHasAttr(0, ParamAttr::ZExt))
+        ExtendKind = ISD::ZERO_EXTEND;
 
-    getCopyToParts(DAG, RetOp, &Parts[0], NumParts, PartVT, ExtendKind);
+      getCopyToParts(DAG, SDOperand(RetOp.Val, RetOp.ResNo + j),
+                     &Parts[0], NumParts, PartVT, ExtendKind);
 
-    for (unsigned i = 0; i < NumParts; ++i) {
-      NewValues.push_back(Parts[i]);
-      NewValues.push_back(DAG.getArgFlags(ISD::ArgFlagsTy()));
+      for (unsigned i = 0; i < NumParts; ++i) {
+        NewValues.push_back(Parts[i]);
+        NewValues.push_back(DAG.getArgFlags(ISD::ArgFlagsTy()));
+      }
     }
   }
   DAG.setRoot(DAG.getNode(ISD::RET, MVT::Other,
