@@ -23,7 +23,7 @@
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;..\common.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -291,7 +291,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\ADT\iterator.h"
-						CommandLine="copy &quot;$(InputPath)&quot; &quot;$(ProjectDir)..\llvm\ADT\iterator.h&quot;"
+						CommandLine="copy &quot;$(InputPath)&quot; &quot;$(ProjectDir)..\llvm\ADT\iterator.h&quot;&#x0D;&#x0A;"
 						Outputs="&quot;$(ProjectDir)..\llvm\ADT\iterator.h&quot;"
 					/>
 				</FileConfiguration>
