@@ -313,8 +313,7 @@ static void ComputeTopDownOrdering(SelectionDAG &DAG,
   }
 
   assert(Order.size() == Visited.size() &&
-         Order.size() == 
-         (unsigned)std::distance(DAG.allnodes_begin(), DAG.allnodes_end()) &&
+         Order.size() == DAG.allnodes_size() &&
          "Error: DAG is cyclic!");
 }
 

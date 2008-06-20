@@ -97,7 +97,7 @@ void ScheduleDAG::BuildSchedUnits() {
   // Reserve entries in the vector for each of the SUnits we are creating.  This
   // ensure that reallocation of the vector won't happen, so SUnit*'s won't get
   // invalidated.
-  SUnits.reserve(std::distance(DAG.allnodes_begin(), DAG.allnodes_end()));
+  SUnits.reserve(DAG.allnodes_size());
   
   for (SelectionDAG::allnodes_iterator NI = DAG.allnodes_begin(),
        E = DAG.allnodes_end(); NI != E; ++NI) {
@@ -105,7 +105,7 @@ void ScheduleDAG::BuildSchedUnits() {
       continue;
     
     // If this node has already been processed, stop now.
-    if (SUnitMap[NI].size()) continue;
+    if (!SUnitMap[NI].empty()) continue;
     
     SUnit *NodeSUnit = NewSUnit(NI);
     
