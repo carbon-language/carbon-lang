@@ -1463,9 +1463,8 @@ const Type* ExtractValueInst::getIndexedType(const Type *Agg,
 }
 
 const Type* ExtractValueInst::getIndexedType(const Type *Agg,
-                                             const unsigned Idx) {
-  const unsigned Idxs[1] = { Idx };
-  return getIndexedType(Agg, &Idxs[0], 1);
+                                             unsigned Idx) {
+  return getIndexedType(Agg, &Idx, 1);
 }
 
 ExtractValueInst::ExtractValueInst(Value *Agg,
