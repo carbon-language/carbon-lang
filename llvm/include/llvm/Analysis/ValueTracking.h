@@ -67,7 +67,8 @@ namespace llvm {
   /// only.
   inline Value *FindInsertedValue(Value *V, const unsigned Idx,
                                  Instruction *InsertBefore = 0) {
-    return FindInsertedValue(V, &Idx, &Idx + 1, InsertBefore);
+    const unsigned Idxs[1] = { Idx };
+    return FindInsertedValue(V, &Idxs[0], &Idxs[1], InsertBefore);
   }
 } // end namespace llvm
 
