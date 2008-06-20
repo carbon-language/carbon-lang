@@ -598,15 +598,21 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         ++NumRetValsEliminated;
         Changed = true;
       } 
-    if (RetTypes.size() == 0)
-      // No return types? Make it void
-      NRetTy = Type::VoidTy;
+    if (RetTypes.size() > 1 || (STy && STy->getNumElements() == RetTypes.size()))
+      // More than one return type? Return a struct with them. Also, if we used
+      // to return a struct and didn't change the number of return values,
+      // return a struct again. This prevents chaning {something} into something
+      // and {} into void.
+      // Make the new struct packed if we used to return a packed struct
+      // already. 
+      NRetTy = StructType::get(RetTypes, STy->isPacked());
     else if (RetTypes.size() == 1)
-      // One return type? Just a simple value then
+      // One return type? Just a simple value then, but only if we didn't use to
+      // return a struct with that simple value before.
       NRetTy = RetTypes.front();
-    else
-      // More return types? Return a struct with them
-      NRetTy = StructType::get(RetTypes);
+    else if (RetTypes.size() == 0)
+      // No return types? Make it void, but only if we didn't use to return {}
+      NRetTy = Type::VoidTy;
   } else {
     NRetTy = Type::VoidTy;
   }
