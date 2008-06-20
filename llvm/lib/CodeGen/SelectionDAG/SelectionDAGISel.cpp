@@ -2739,8 +2739,8 @@ void SelectionDAGLowering::visitExtractValue(ExtractValueInst &I) {
   // Copy out the selected value(s).
   for (unsigned i = LinearIndex; i != LinearIndex + NumValValues; ++i)
     Values[i - LinearIndex] =
-      OutOfUndef ? DAG.getNode(ISD::UNDEF, Agg.Val->getValueType(i)) :
-                   SDOperand(Agg.Val, Agg.ResNo + i - LinearIndex);
+      OutOfUndef ? DAG.getNode(ISD::UNDEF, Agg.Val->getValueType(Agg.ResNo + i)) :
+                   SDOperand(Agg.Val, Agg.ResNo + i);
 
   setValue(&I, DAG.getNode(ISD::MERGE_VALUES,
                            DAG.getVTList(&ValValueVTs[0], NumValValues),
