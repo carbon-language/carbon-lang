@@ -897,6 +897,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
     const Function *SF = I;   // SrcFunction
     
     Function *DF = 0;
+    Value *MappedDF;
     
     // If this function is internal or has no name, it doesn't participate in
     // linkage.
@@ -973,19 +974,14 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
         // Remember this mapping so uses in the source module get remapped
         // later by RemapOperand.
         ValueMap[SF] = NewDF;
-      } else if (SF->isDeclaration()) {
-        // We have two functions of the same name but different type and the
-        // source is a declaration while the destination is not. Any use of
-        // the source must be mapped to the destination, with a cast. 
-        ValueMap[SF] = ConstantExpr::getBitCast(DF, SF->getType());
+        continue;
       } else {
-        // We have two functions of the same name but different types and they
-        // are both definitions. This is an error.
-        return Error(Err, "Function '" + DF->getName() + "' defined as both '" +
-                     ToStr(SF->getFunctionType(), Src) + "' and '" +
-                     ToStr(DF->getFunctionType(), Dest) + "'");
+        // We have two functions of the same name but different type. Any use
+        // of the source must be mapped to the destination, with a cast. 
+        MappedDF = ConstantExpr::getBitCast(DF, SF->getType());
       }
-      continue;
+    } else {
+       MappedDF = DF;
     }
     
     if (SF->isDeclaration()) {
@@ -993,11 +989,11 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // the declarations, we aren't adding anything.
       if (SF->hasDLLImportLinkage()) {
         if (DF->isDeclaration()) {
-          ValueMap[SF] = DF;
+          ValueMap[SF] = MappedDF;
           DF->setLinkage(SF->getLinkage());          
         }
       } else {
-        ValueMap[SF] = DF;
+        ValueMap[SF] = MappedDF;
       }
       continue;
     }
@@ -1005,7 +1001,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
     // If DF is external but SF is not, link the external functions, update
     // linkage qualifiers.
     if (DF->isDeclaration() && !DF->hasDLLImportLinkage()) {
-      ValueMap.insert(std::make_pair(SF, DF));
+      ValueMap.insert(std::make_pair(SF, MappedDF));
       DF->setLinkage(SF->getLinkage());
       continue;
     }
@@ -1013,7 +1009,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
     // At this point we know that DF has LinkOnce, Weak, or External* linkage.
     if (SF->hasWeakLinkage() || SF->hasLinkOnceLinkage() ||
         SF->hasCommonLinkage()) {
-      ValueMap[SF] = DF;
+      ValueMap[SF] = MappedDF;
 
       // Linkonce+Weak = Weak
       // *+External Weak = *
@@ -1027,7 +1023,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
     if (DF->hasWeakLinkage() || DF->hasLinkOnceLinkage() ||
         DF->hasCommonLinkage()) {
       // At this point we know that SF has LinkOnce or External* linkage.
-      ValueMap[SF] = DF;
+      ValueMap[SF] = MappedDF;
       
       // If the source function has stronger linkage than the destination, 
       // its body and linkage should override ours.
@@ -1106,10 +1102,10 @@ static bool LinkFunctionBodies(Module *Dest, Module *Src,
   // go
   for (Module::iterator SF = Src->begin(), E = Src->end(); SF != E; ++SF) {
     if (!SF->isDeclaration()) {               // No body if function is external
-      Function *DF = cast<Function>(ValueMap[SF]); // Destination function
+      Function *DF = dyn_cast<Function>(ValueMap[SF]); // Destination function
 
       // DF not external SF external?
-      if (DF->isDeclaration())
+      if (DF && DF->isDeclaration())
         // Only provide the function body if there isn't one already.
         if (LinkFunctionBody(DF, SF, ValueMap, Err))
           return true;

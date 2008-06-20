@@ -6,5 +6,5 @@
 ; RUN: not llvm-link %t.foo1.bc %t.foo2.bc -o %t.bc |& \
 ; RUN:   grep {Function is already defined}
 ; RUN: not llvm-link %t.foo1.bc %t.foo3.bc -o %t.bc |& \
-; RUN:   grep {Function 'foo' defined as both}
+; RUN:   grep {Function is already defined}
 define void @foo() { ret void }
