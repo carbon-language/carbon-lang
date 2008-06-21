@@ -91,8 +91,7 @@ bool IntervalPartition::runOnFunction(Function &F) {
 //
 IntervalPartition::IntervalPartition(IntervalPartition &IP, bool)
   : FunctionPass((intptr_t) &ID) {
-  Interval *FunctionStart = IP.getRootInterval();
-  assert(FunctionStart && "Cannot operate on empty IntervalPartitions!");
+  assert(IP.getRootInterval() && "Cannot operate on empty IntervalPartitions!");
 
   // Pass false to intervals_begin because we take ownership of it's memory
   interval_part_interval_iterator I = intervals_begin(IP, false);
