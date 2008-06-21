@@ -1051,16 +1051,16 @@ private:
   /// NumOperands/NumValues - The number of entries in the Operand/Value list.
   unsigned short NumOperands, NumValues;
   
-  /// Prev/Next pointers - These pointers form the linked list of of the
-  /// AllNodes list in the current DAG.
-  SDNode *Prev, *Next;
-  friend struct ilist_traits<SDNode>;
-
   /// UsesSize - The size of the uses list.
   unsigned UsesSize;
 
   /// Uses - List of uses for this SDNode.
   SDUse *Uses;
+
+  /// Prev/Next pointers - These pointers form the linked list of of the
+  /// AllNodes list in the current DAG.
+  SDNode *Prev, *Next;
+  friend struct ilist_traits<SDNode>;
 
   /// addUse - add SDUse to the list of uses.
   void addUse(SDUse &U) { U.addToList(&Uses); }
