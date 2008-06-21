@@ -214,8 +214,6 @@ void ScheduleDAG::BuildSchedUnits() {
     // Remove MainNode from FlaggedNodes again.
     SU->FlaggedNodes.pop_back();
   }
-  
-  return;
 }
 
 void ScheduleDAG::ComputeLatency(SUnit *SU) {
