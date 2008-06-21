@@ -662,11 +662,7 @@ AlphaTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   MachineBasicBlock *llscMBB = new MachineBasicBlock(LLVM_BB);
   MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
 
-  for(MachineBasicBlock::succ_iterator i = thisMBB->succ_begin(), 
-        e = thisMBB->succ_end(); i != e; ++i)
-    sinkMBB->addSuccessor(*i);
-  while(!thisMBB->succ_empty())
-    thisMBB->removeSuccessor(thisMBB->succ_begin());
+  sinkMBB->transferSuccessors(thisMBB);
 
   MachineFunction *F = BB->getParent();
   F->getBasicBlockList().insert(It, llscMBB);
