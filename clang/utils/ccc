@@ -139,6 +139,10 @@ def main(args):
             if arg == '-Os': arg = '-O2'
             link_opts.append(arg)
 
+        # Enable threads
+        if arg == '-pthread':
+          link_opts.append('-lpthread')
+
         # Input files
         if arg == '-filelist':
             f = open(args[i+1])
@@ -148,6 +152,8 @@ def main(args):
             i += 1
         if arg == '-x':
             language = args[i+1]
+            compile_opts.append(arg)
+            compile_opts.append(args[i+1])
             i += 1
         if arg[0] != '-':
             files.append(arg)
