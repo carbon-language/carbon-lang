@@ -3691,8 +3691,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
           case ICmpInst::ICMP_UGT:
             switch (RHSCC) {
             default: assert(0 && "Unknown integer condition code!");
-            case ICmpInst::ICMP_EQ:         // (X u> 13 & X == 15) -> X > 13
-              return ReplaceInstUsesWith(I, LHS);
+            case ICmpInst::ICMP_EQ:         // (X u> 13 & X == 15) -> X == 15
             case ICmpInst::ICMP_UGT:        // (X u> 13 & X u> 15) -> X u> 15
               return ReplaceInstUsesWith(I, RHS);
             case ICmpInst::ICMP_SGT:        // (X u> 13 & X s> 15) -> no change
