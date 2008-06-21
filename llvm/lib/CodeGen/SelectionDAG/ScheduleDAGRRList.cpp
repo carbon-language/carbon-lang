@@ -1572,15 +1572,14 @@ static bool hasCopyToRegUse(SUnit *SU) {
 }
 
 /// canClobberPhysRegDefs - True if SU would clobber one of SuccSU's
-/// physical register def.
+/// physical register defs.
 static bool canClobberPhysRegDefs(SUnit *SuccSU, SUnit *SU,
                                   const TargetInstrInfo *TII,
                                   const TargetRegisterInfo *TRI) {
   SDNode *N = SuccSU->Node;
   unsigned NumDefs = TII->get(N->getTargetOpcode()).getNumDefs();
   const unsigned *ImpDefs = TII->get(N->getTargetOpcode()).getImplicitDefs();
-  if (!ImpDefs)
-    return false;
+  assert(ImpDefs && "Caller should check hasPhysRegDefs");
   const unsigned *SUImpDefs =
     TII->get(SU->Node->getTargetOpcode()).getImplicitDefs();
   if (!SUImpDefs)
