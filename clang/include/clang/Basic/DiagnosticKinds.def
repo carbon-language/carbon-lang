@@ -331,6 +331,8 @@ DIAG(err_expected_ident_lbrace, ERROR,
      "expected identifier or '{'")
 DIAG(err_expected_lbrace, ERROR,
      "expected '{'")
+DIAG(err_expected_lparen, ERROR,
+     "expected '('")
 DIAG(err_expected_rparen, ERROR,
      "expected ')'")
 DIAG(err_expected_rsquare, ERROR,
@@ -922,6 +924,8 @@ DIAG(err_typecheck_call_invalid_ordered_compare, ERROR,
      "ordered compare requires two args of floating point type ('%0' and '%1')")
 DIAG(err_typecheck_cond_expect_scalar, ERROR,
      "used type '%0' where arithmetic or pointer type is required")
+DIAG(err_typecheck_invalid_union_cast, ERROR,
+     "'%0' is not a member of '%1'")
 DIAG(ext_typecheck_cond_one_void, EXTENSION,
      "C99 forbids conditional expressions with only one void side")
 DIAG(ext_typecheck_cast_nonscalar, EXTENSION,

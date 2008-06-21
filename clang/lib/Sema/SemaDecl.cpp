@@ -1731,6 +1731,35 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
   return New;
 }
 
+/// Collect the instance variables declared in an Objective-C object.  Used in
+/// the creation of structures from objects using the @defs directive.
+static void CollectIvars(ObjCInterfaceDecl *Class,
+                         llvm::SmallVector<Sema::DeclTy*, 16> &ivars) {
+  if (Class->getSuperClass())
+    CollectIvars(Class->getSuperClass(), ivars);
+  ivars.append(Class->ivar_begin(), Class->ivar_end());
+}
+
+/// Called whenever @defs(ClassName) is encountered in the source.  Inserts the
+/// instance variables of ClassName into Decls.
+void Sema::ActOnDefs(Scope *S, SourceLocation DeclStart, 
+                     IdentifierInfo *ClassName,
+                     llvm::SmallVector<DeclTy*, 16> &Decls) {
+  // Check that ClassName is a valid class
+  ObjCInterfaceDecl *Class = getObjCInterfaceDecl(ClassName);
+  if (!Class) {
+    Diag(DeclStart, diag::err_undef_interface, ClassName->getName());
+    return;
+  }
+  // Add the isa pointer
+  Decls.push_back(FieldDecl::Create(Context, SourceLocation(),
+                                    &Context.Idents.get("isa"),
+                                    Context.getObjCClassType()));
+  // Collect the instance variables
+  CollectIvars(Class, Decls);
+}
+
+
 static bool CalcFakeICEVal(const Expr* Expr,
                            llvm::APSInt& Result,
                            ASTContext& Context) {

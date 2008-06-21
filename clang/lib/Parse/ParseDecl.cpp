@@ -707,7 +707,7 @@ ParseStructDeclaration(DeclSpec &DS,
 ///       struct-declaration-list:
 ///         struct-declaration
 ///         struct-declaration-list struct-declaration
-/// [OBC]   '@' 'defs' '(' class-name ')'                         [TODO]
+/// [OBC]   '@' 'defs' '(' class-name ')'
 ///
 void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
                                   unsigned TagType, DeclTy *TagDecl) {
@@ -736,18 +736,39 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
     // Parse all the comma separated declarators.
     DeclSpec DS;
     FieldDeclarators.clear();
-    ParseStructDeclaration(DS, FieldDeclarators);
-    
-    // Convert them all to fields.
-    for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
-      FieldDeclarator &FD = FieldDeclarators[i];
-      // Install the declarator into the current TagDecl.
-      DeclTy *Field = Actions.ActOnField(CurScope,
-                                         DS.getSourceRange().getBegin(),
-                                         FD.D, FD.BitfieldSize);
-      FieldDecls.push_back(Field);
-    }
-    
+    if (!Tok.is(tok::at)) {
+      ParseStructDeclaration(DS, FieldDeclarators);
+      
+      // Convert them all to fields.
+      for (unsigned i = 0, e = FieldDeclarators.size(); i != e; ++i) {
+        FieldDeclarator &FD = FieldDeclarators[i];
+        // Install the declarator into the current TagDecl.
+        DeclTy *Field = Actions.ActOnField(CurScope,
+                                           DS.getSourceRange().getBegin(),
+                                           FD.D, FD.BitfieldSize);
+        FieldDecls.push_back(Field);
+      }
+    } else { // Handle @defs
+      ConsumeToken();
+      if (!Tok.isObjCAtKeyword(tok::objc_defs)) {
+        Diag(Tok, diag::err_unexpected_at);
+        SkipUntil(tok::semi, true, true);
+        continue;
+      }
+      ConsumeToken();
+      ExpectAndConsume(tok::l_paren, diag::err_expected_lparen);
+      if (!Tok.is(tok::identifier)) {
+        Diag(Tok, diag::err_expected_ident);
+        SkipUntil(tok::semi, true, true);
+        continue;
+      }
+      llvm::SmallVector<DeclTy*, 16> Fields;
+      Actions.ActOnDefs(CurScope, Tok.getLocation(), Tok.getIdentifierInfo(),
+          Fields);
+      FieldDecls.insert(FieldDecls.end(), Fields.begin(), Fields.end());
+      ConsumeToken();
+      ExpectAndConsume(tok::r_paren, diag::err_expected_rparen);
+    } 
 
     if (Tok.is(tok::semi)) {
       ConsumeToken();

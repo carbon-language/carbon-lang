@@ -210,6 +210,11 @@ public:
     return 0;
   }
   
+  /// Act on @defs() element found when parsing a structure.  ClassName is the
+  /// name of the referenced class.   
+  virtual void ActOnDefs(Scope *S, SourceLocation DeclStart,
+                         IdentifierInfo *ClassName,
+                         llvm::SmallVector<DeclTy*, 16> &Decls) {}
   virtual DeclTy *ActOnField(Scope *S, SourceLocation DeclStart,
                              Declarator &D, ExprTy *BitfieldWidth) {
     return 0;

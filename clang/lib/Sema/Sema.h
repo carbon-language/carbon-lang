@@ -240,6 +240,8 @@ private:
   virtual DeclTy *ActOnTag(Scope *S, unsigned TagType, TagKind TK,
                            SourceLocation KWLoc, IdentifierInfo *Name,
                            SourceLocation NameLoc, AttributeList *Attr);
+  virtual void ActOnDefs(Scope *S, SourceLocation DeclStart, IdentifierInfo
+      *ClassName, llvm::SmallVector<DeclTy*, 16> &Decls);
   virtual DeclTy *ActOnField(Scope *S, SourceLocation DeclStart,
                              Declarator &D, ExprTy *BitfieldWidth);
   
