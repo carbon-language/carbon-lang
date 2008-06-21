@@ -223,8 +223,6 @@ public:
     Func,
     Function,
     PrettyFunction,
-    ObjCSelf, // self
-    ObjCCmd,  // _cmd
     ObjCSuper // super
   };
   

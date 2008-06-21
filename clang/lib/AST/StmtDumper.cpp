@@ -315,8 +315,6 @@ void StmtDumper::VisitPreDefinedExpr(PreDefinedExpr *Node) {
   case PreDefinedExpr::Func:           fprintf(F, " __func__"); break;
   case PreDefinedExpr::Function:       fprintf(F, " __FUNCTION__"); break;
   case PreDefinedExpr::PrettyFunction: fprintf(F, " __PRETTY_FUNCTION__");break;
-  case PreDefinedExpr::ObjCSelf:       fprintf(F, "self"); break;
-  case PreDefinedExpr::ObjCCmd:        fprintf(F, "_cmd"); break;
   case PreDefinedExpr::ObjCSuper:      fprintf(F, "super"); break;
   }
 }
