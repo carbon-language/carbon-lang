@@ -1,6 +1,6 @@
 // RUN: clang -checker-simple -verify %s
 
-#include <stdlib.h>
+#include <stdint.h>
 
 int f1(int * p) {
   
