@@ -1,4 +1,5 @@
 // RUN: clang -emit-llvm < %s -o -
+// PR2419
 
 struct Mem {
         union {
