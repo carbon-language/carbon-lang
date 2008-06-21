@@ -60,6 +60,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   PushOnScopeChains(SelTypedef, TUScope);
   Context.setObjCSelType(SelTypedef);
 
+  // FIXME: Make sure these don't leak!
   RecordDecl *ClassTag = RecordDecl::Create(Context, TagDecl::TK_struct,
                                             CurContext,
                                             SourceLocation(),
