@@ -254,7 +254,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
           continue;
 
         SDNode *OpN = SU->Node->getOperand(j).Val;
-        SUnit *OpSU = isPassiveNode(OpN) ? NULL : SUnitMap[OpN][SU->InstanceNo];
+        SUnit *OpSU = isPassiveNode(OpN) ? NULL : SUnitMap[OpN];
         if (OpSU && OperandSeen.count(OpSU) == 1) {
           // Ok, so SU is not the last use of OpSU, but SU is two-address so
           // it will clobber OpSU. Try to commute SU if no other source operands
@@ -263,7 +263,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
           for (unsigned k = 0; k < NumOps; ++k) {
             if (k != j) {
               OpN = SU->Node->getOperand(k).Val;
-              OpSU = isPassiveNode(OpN) ? NULL : SUnitMap[OpN][SU->InstanceNo];
+              OpSU = isPassiveNode(OpN) ? NULL : SUnitMap[OpN];
               if (OpSU && OperandSeen.count(OpSU) == 1) {
                 DoCommute = false;
                 break;
@@ -282,7 +282,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
     for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
          I != E; ++I) {
       if (!I->isCtrl)
-        OperandSeen.insert(I->Dep);
+        OperandSeen.insert(I->Dep->OrigNode);
     }
   }
 }
@@ -660,7 +660,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
   }
 
   if (TryUnfold) {
-    SmallVector<SDNode*, 4> NewNodes;
+    SmallVector<SDNode*, 2> NewNodes;
     if (!TII->unfoldMemoryOperand(DAG, N, NewNodes))
       return NULL;
 
@@ -677,7 +677,10 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
                                   SDOperand(LoadNode, 1));
 
     SUnit *NewSU = CreateNewSUnit(N);
-    SUnitMap[N].push_back(NewSU);
+    bool isNew = SUnitMap.insert(std::make_pair(N, NewSU));
+    isNew = isNew;
+    assert(isNew && "Node already inserted!");
+      
     const TargetInstrDesc &TID = TII->get(N->getTargetOpcode());
     for (unsigned i = 0; i != TID.getNumOperands(); ++i) {
       if (TID.getOperandConstraint(i, TOI::TIED_TO) != -1) {
@@ -697,14 +700,15 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     // but it has different alignment or volatileness.
     bool isNewLoad = true;
     SUnit *LoadSU;
-    DenseMap<SDNode*, std::vector<SUnit*> >::iterator SMI =
-      SUnitMap.find(LoadNode);
+    DenseMap<SDNode*, SUnit*>::iterator SMI = SUnitMap.find(LoadNode);
     if (SMI != SUnitMap.end()) {
-      LoadSU = SMI->second.front();
+      LoadSU = SMI->second;
       isNewLoad = false;
     } else {
       LoadSU = CreateNewSUnit(LoadNode);
-      SUnitMap[LoadNode].push_back(LoadSU);
+      bool isNew = SUnitMap.insert(std::make_pair(LoadNode, LoadSU));
+      isNew = isNew;
+      assert(isNew && "Node already inserted!");
 
       LoadSU->Depth = SU->Depth;
       LoadSU->Height = SU->Height;
@@ -943,7 +947,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
   unsigned CurCycle = 0;
   // Add root to Available queue.
   if (!SUnits.empty()) {
-    SUnit *RootSU = SUnitMap[DAG.getRoot().Val].front();
+    SUnit *RootSU = SUnitMap[DAG.getRoot().Val];
     assert(RootSU->Succs.empty() && "Graph root shouldn't have successors!");
     RootSU->isAvailable = true;
     AvailableQueue->push(RootSU);
@@ -952,6 +956,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back.  Schedule the node.
   SmallVector<SUnit*, 4> NotReady;
+  Sequence.reserve(SUnits.size());
   while (!AvailableQueue->empty()) {
     bool Delayed = false;
     DenseMap<SUnit*, SmallVector<unsigned, 4> > LRegsMap;
@@ -1174,6 +1179,7 @@ void ScheduleDAGRRList::ListScheduleTopDown() {
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back.  Schedule the node.
   std::vector<SUnit*> NotReady;
+  Sequence.reserve(SUnits.size());
   while (!AvailableQueue->empty()) {
     SUnit *CurSU = AvailableQueue->pop();
     while (CurSU && CurSU->CycleBound > CurCycle) {
@@ -1277,7 +1283,7 @@ namespace {
     RegReductionPriorityQueue() :
     Queue(SF(this)), currentQueueId(0) {}
     
-    virtual void initNodes(DenseMap<SDNode*, std::vector<SUnit*> > &sumap,
+    virtual void initNodes(DenseMap<SDNode*, SUnit*> &sumap,
                            std::vector<SUnit> &sunits) {}
 
     virtual void addNode(const SUnit *SU) {}
@@ -1327,7 +1333,7 @@ namespace {
   class VISIBILITY_HIDDEN BURegReductionPriorityQueue
    : public RegReductionPriorityQueue<bu_ls_rr_sort> {
     // SUnitMap SDNode to SUnit mapping (n -> n).
-    DenseMap<SDNode*, std::vector<SUnit*> > *SUnitMap;
+    DenseMap<SDNode*, SUnit*> *SUnitMap;
 
     // SUnits - The SUnits for the current graph.
     const std::vector<SUnit> *SUnits;
@@ -1343,7 +1349,7 @@ namespace {
                                          const TargetRegisterInfo *tri)
       : TII(tii), TRI(tri), scheduleDAG(NULL) {}
 
-    void initNodes(DenseMap<SDNode*, std::vector<SUnit*> > &sumap,
+    void initNodes(DenseMap<SDNode*, SUnit*> &sumap,
                    std::vector<SUnit> &sunits) {
       SUnitMap = &sumap;
       SUnits = &sunits;
@@ -1414,7 +1420,7 @@ namespace {
   class VISIBILITY_HIDDEN TDRegReductionPriorityQueue
    : public RegReductionPriorityQueue<td_ls_rr_sort> {
     // SUnitMap SDNode to SUnit mapping (n -> n).
-    DenseMap<SDNode*, std::vector<SUnit*> > *SUnitMap;
+    DenseMap<SDNode*, SUnit*> *SUnitMap;
 
     // SUnits - The SUnits for the current graph.
     const std::vector<SUnit> *SUnits;
@@ -1425,7 +1431,7 @@ namespace {
   public:
     TDRegReductionPriorityQueue() {}
 
-    void initNodes(DenseMap<SDNode*, std::vector<SUnit*> > &sumap,
+    void initNodes(DenseMap<SDNode*, SUnit*> &sumap,
                    std::vector<SUnit> &sunits) {
       SUnitMap = &sumap;
       SUnits = &sunits;
@@ -1560,7 +1566,7 @@ BURegReductionPriorityQueue::canClobber(const SUnit *SU, const SUnit *Op) {
       if (TID.getOperandConstraint(i+NumRes, TOI::TIED_TO) != -1) {
         SDNode *DU = SU->Node->getOperand(i).Val;
         if ((*SUnitMap).find(DU) != (*SUnitMap).end() &&
-            Op == (*SUnitMap)[DU][SU->InstanceNo])
+            Op->OrigNode == (*SUnitMap)[DU])
           return true;
       }
     }
@@ -1636,7 +1642,7 @@ void BURegReductionPriorityQueue::AddPseudoTwoAddrDeps() {
         SDNode *DU = SU->Node->getOperand(j).Val;
         if ((*SUnitMap).find(DU) == (*SUnitMap).end())
           continue;
-        SUnit *DUSU = (*SUnitMap)[DU][SU->InstanceNo];
+        SUnit *DUSU = (*SUnitMap)[DU];
         if (!DUSU) continue;
         for (SUnit::succ_iterator I = DUSU->Succs.begin(),E = DUSU->Succs.end();
              I != E; ++I) {

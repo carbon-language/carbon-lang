@@ -177,6 +177,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back.  Schedule the node.
   std::vector<SUnit*> NotReady;
+  Sequence.reserve(SUnits.size());
   while (!AvailableQueue->empty() || !PendingQueue.empty()) {
     // Check to see if any of the pending instructions are ready to issue.  If
     // so, add them to the available queue.
@@ -319,7 +320,7 @@ public:
     LatencyPriorityQueue() : Queue(latency_sort(this)) {
     }
     
-    void initNodes(DenseMap<SDNode*, std::vector<SUnit*> > &sumap,
+    void initNodes(DenseMap<SDNode*, SUnit*> &sumap,
                    std::vector<SUnit> &sunits) {
       SUnits = &sunits;
       // Calculate node priorities.

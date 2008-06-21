@@ -95,8 +95,8 @@ namespace llvm {
   struct SUnit {
     SDNode *Node;                       // Representative node.
     SmallVector<SDNode*,4> FlaggedNodes;// All nodes flagged to Node.
-    unsigned InstanceNo;                // Instance#. One SDNode can be multiple
-                                        // SUnit due to cloning.
+    SUnit *OrigNode;                    // If not this, the node from which
+                                        // this node was cloned.
     
     // Preds/Succs - The SUnits before/after us in the graph.  The boolean value
     // is true if the edge is a token chain edge, false if it is a value edge. 
@@ -129,7 +129,7 @@ namespace llvm {
     const TargetRegisterClass *CopySrcRC;
     
     SUnit(SDNode *node, unsigned nodenum)
-      : Node(node), InstanceNo(0), NodeNum(nodenum), NodeQueueId(0), Latency(0),
+      : Node(node), OrigNode(0), NodeNum(nodenum), NodeQueueId(0), Latency(0),
         NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
         isTwoAddress(false), isCommutable(false), hasPhysRegDefs(false),
         isPending(false), isAvailable(false), isScheduled(false),
@@ -215,7 +215,7 @@ namespace llvm {
   public:
     virtual ~SchedulingPriorityQueue() {}
   
-    virtual void initNodes(DenseMap<SDNode*, std::vector<SUnit*> > &SUMap,
+    virtual void initNodes(DenseMap<SDNode*, SUnit*> &SUMap,
                            std::vector<SUnit> &SUnits) = 0;
     virtual void addNode(const SUnit *SU) = 0;
     virtual void updateNode(const SUnit *SU) = 0;
@@ -251,8 +251,7 @@ namespace llvm {
     MachineConstantPool *ConstPool;       // Target constant pool
     std::vector<SUnit*> Sequence;         // The schedule. Null SUnit*'s
                                           // represent noop instructions.
-    DenseMap<SDNode*, std::vector<SUnit*> > SUnitMap;
-                                          // SDNode to SUnit mapping (n -> n).
+    DenseMap<SDNode*, SUnit*> SUnitMap;   // SDNode to SUnit mapping (n -> n).
     std::vector<SUnit> SUnits;            // The scheduling units.
     SmallSet<SDNode*, 16> CommuteSet;     // Nodes that should be commuted.
 
@@ -291,6 +290,7 @@ namespace llvm {
     ///
     SUnit *NewSUnit(SDNode *N) {
       SUnits.push_back(SUnit(N, (unsigned)SUnits.size()));
+      SUnits.back().OrigNode = &SUnits.back();
       return &SUnits.back();
     }
 
@@ -331,7 +331,7 @@ namespace llvm {
     /// VRBaseMap contains, for each already emitted node, the first virtual
     /// register number for the results of the node.
     ///
-    void EmitNode(SDNode *Node, unsigned InstNo,
+    void EmitNode(SDNode *Node, bool IsClone,
                   DenseMap<SDOperand, unsigned> &VRBaseMap);
     
     /// EmitNoop - Emit a noop instruction.
@@ -370,7 +370,7 @@ namespace llvm {
 
     /// EmitCopyFromReg - Generate machine code for an CopyFromReg node or an
     /// implicit physical register output.
-    void EmitCopyFromReg(SDNode *Node, unsigned ResNo, unsigned InstNo,
+    void EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone,
                          unsigned SrcReg,
                          DenseMap<SDOperand, unsigned> &VRBaseMap);
     

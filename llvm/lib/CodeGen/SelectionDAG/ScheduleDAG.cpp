@@ -79,13 +79,12 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *Use, unsigned Op,
 
 SUnit *ScheduleDAG::Clone(SUnit *Old) {
   SUnit *SU = NewSUnit(Old->Node);
+  SU->OrigNode = Old->OrigNode;
   SU->FlaggedNodes = Old->FlaggedNodes;
-  SU->InstanceNo = SUnitMap[Old->Node].size();
   SU->Latency = Old->Latency;
   SU->isTwoAddress = Old->isTwoAddress;
   SU->isCommutable = Old->isCommutable;
   SU->hasPhysRegDefs = Old->hasPhysRegDefs;
-  SUnitMap[Old->Node].push_back(SU);
   return SU;
 }
 
@@ -105,7 +104,7 @@ void ScheduleDAG::BuildSchedUnits() {
       continue;
     
     // If this node has already been processed, stop now.
-    if (!SUnitMap[NI].empty()) continue;
+    if (SUnitMap.count(NI)) continue;
     
     SUnit *NodeSUnit = NewSUnit(NI);
     
@@ -120,7 +119,9 @@ void ScheduleDAG::BuildSchedUnits() {
       do {
         N = N->getOperand(N->getNumOperands()-1).Val;
         NodeSUnit->FlaggedNodes.push_back(N);
-        SUnitMap[N].push_back(NodeSUnit);
+        bool isNew = SUnitMap.insert(std::make_pair(N, NodeSUnit));
+        isNew = isNew;
+        assert(isNew && "Node already inserted!");
       } while (N->getNumOperands() &&
                N->getOperand(N->getNumOperands()-1).getValueType()== MVT::Flag);
       std::reverse(NodeSUnit->FlaggedNodes.begin(),
@@ -140,7 +141,9 @@ void ScheduleDAG::BuildSchedUnits() {
         if (FlagVal.isOperandOf(UI->getUser())) {
           HasFlagUse = true;
           NodeSUnit->FlaggedNodes.push_back(N);
-          SUnitMap[N].push_back(NodeSUnit);
+          bool isNew = SUnitMap.insert(std::make_pair(N, NodeSUnit));
+          isNew = isNew;
+          assert(isNew && "Node already inserted!");
           N = UI->getUser();
           break;
         }
@@ -150,7 +153,9 @@ void ScheduleDAG::BuildSchedUnits() {
     // Now all flagged nodes are in FlaggedNodes and N is the bottom-most node.
     // Update the SUnit
     NodeSUnit->Node = N;
-    SUnitMap[N].push_back(NodeSUnit);
+    bool isNew = SUnitMap.insert(std::make_pair(N, NodeSUnit));
+    isNew = isNew;
+    assert(isNew && "Node already inserted!");
 
     ComputeLatency(NodeSUnit);
   }
@@ -187,7 +192,7 @@ void ScheduleDAG::BuildSchedUnits() {
       for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
         SDNode *OpN = N->getOperand(i).Val;
         if (isPassiveNode(OpN)) continue;   // Not scheduled.
-        SUnit *OpSU = SUnitMap[OpN].front();
+        SUnit *OpSU = SUnitMap[OpN];
         assert(OpSU && "Node has no SUnit!");
         if (OpSU == SU) continue;           // In the same group.
 
@@ -399,12 +404,12 @@ static const TargetRegisterClass *getInstrOperandRegClass(
 }
 
 void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
-                                  unsigned InstanceNo, unsigned SrcReg,
+                                  bool IsClone, unsigned SrcReg,
                                   DenseMap<SDOperand, unsigned> &VRBaseMap) {
   unsigned VRBase = 0;
   if (TargetRegisterInfo::isVirtualRegister(SrcReg)) {
     // Just use the input register directly!
-    if (InstanceNo > 0)
+    if (IsClone)
       VRBaseMap.erase(SDOperand(Node, ResNo));
     bool isNew = VRBaseMap.insert(std::make_pair(SDOperand(Node,ResNo),SrcReg));
     isNew = isNew; // Silence compiler warning.
@@ -463,7 +468,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
     TII->copyRegToReg(*BB, BB->end(), VRBase, SrcReg, DstRC, SrcRC);
   }
 
-  if (InstanceNo > 0)
+  if (IsClone)
     VRBaseMap.erase(SDOperand(Node, ResNo));
   bool isNew = VRBaseMap.insert(std::make_pair(SDOperand(Node,ResNo), VRBase));
   isNew = isNew; // Silence compiler warning.
@@ -783,7 +788,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
 
 /// EmitNode - Generate machine code for an node and needed dependencies.
 ///
-void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
+void ScheduleDAG::EmitNode(SDNode *Node, bool IsClone,
                            DenseMap<SDOperand, unsigned> &VRBaseMap) {
   // If machine instruction
   if (Node->isTargetOpcode()) {
@@ -858,7 +863,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
       for (unsigned i = II.getNumDefs(); i < NumResults; ++i) {
         unsigned Reg = II.getImplicitDefs()[i - II.getNumDefs()];
         if (Node->hasAnyUseOfValue(i))
-          EmitCopyFromReg(Node, i, InstanceNo, Reg, VRBaseMap);
+          EmitCopyFromReg(Node, i, IsClone, Reg, VRBaseMap);
       }
     }
   } else {
@@ -906,7 +911,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
     }
     case ISD::CopyFromReg: {
       unsigned SrcReg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
-      EmitCopyFromReg(Node, 0, InstanceNo, SrcReg, VRBaseMap);
+      EmitCopyFromReg(Node, 0, IsClone, SrcReg, VRBaseMap);
       break;
     }
     case ISD::INLINEASM: {
@@ -1118,11 +1123,11 @@ void ScheduleDAG::EmitSchedule() {
       continue;
     }
     for (unsigned j = 0, ee = SU->FlaggedNodes.size(); j != ee; ++j)
-      EmitNode(SU->FlaggedNodes[j], SU->InstanceNo, VRBaseMap);
+      EmitNode(SU->FlaggedNodes[j], SU->OrigNode != SU, VRBaseMap);
     if (!SU->Node)
       EmitCrossRCCopy(SU, CopyVRBaseMap);
     else
-      EmitNode(SU->Node, SU->InstanceNo, VRBaseMap);
+      EmitNode(SU->Node, SU->OrigNode != SU, VRBaseMap);
   }
 
   if (isEntryBB && SchedLiveInCopies)
