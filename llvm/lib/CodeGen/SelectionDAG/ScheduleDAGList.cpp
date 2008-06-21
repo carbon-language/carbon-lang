@@ -94,7 +94,7 @@ void ScheduleDAGList::Schedule() {
   // Build scheduling units.
   BuildSchedUnits();
 
-  AvailableQueue->initNodes(SUnitMap, SUnits);
+  AvailableQueue->initNodes(SUnits);
   
   ListScheduleTopDown();
   
@@ -320,8 +320,7 @@ public:
     LatencyPriorityQueue() : Queue(latency_sort(this)) {
     }
     
-    void initNodes(DenseMap<SDNode*, SUnit*> &sumap,
-                   std::vector<SUnit> &sunits) {
+    void initNodes(std::vector<SUnit> &sunits) {
       SUnits = &sunits;
       // Calculate node priorities.
       CalculatePriorities();

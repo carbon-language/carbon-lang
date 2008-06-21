@@ -214,8 +214,7 @@ namespace llvm {
   public:
     virtual ~SchedulingPriorityQueue() {}
   
-    virtual void initNodes(DenseMap<SDNode*, SUnit*> &SUMap,
-                           std::vector<SUnit> &SUnits) = 0;
+    virtual void initNodes(std::vector<SUnit> &SUnits) = 0;
     virtual void addNode(const SUnit *SU) = 0;
     virtual void updateNode(const SUnit *SU) = 0;
     virtual void releaseState() = 0;
@@ -250,7 +249,6 @@ namespace llvm {
     MachineConstantPool *ConstPool;       // Target constant pool
     std::vector<SUnit*> Sequence;         // The schedule. Null SUnit*'s
                                           // represent noop instructions.
-    DenseMap<SDNode*, SUnit*> SUnitMap;   // SDNode to SUnit mapping (n -> n).
     std::vector<SUnit> SUnits;            // The scheduling units.
     SmallSet<SDNode*, 16> CommuteSet;     // Nodes that should be commuted.
 

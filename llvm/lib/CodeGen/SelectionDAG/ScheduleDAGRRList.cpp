@@ -216,7 +216,7 @@ void ScheduleDAGRRList::Schedule() {
   CalculateHeights();
   InitDAGTopologicalSorting();
 
-  AvailableQueue->initNodes(SUnitMap, SUnits);
+  AvailableQueue->initNodes(SUnits);
   
   // Execute the actual scheduling loop Top-Down or Bottom-Up as appropriate.
   if (isBottomUp)
@@ -255,7 +255,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
           continue;
 
         SDNode *OpN = SU->Node->getOperand(j).Val;
-        SUnit *OpSU = isPassiveNode(OpN) ? NULL : SUnitMap[OpN];
+        SUnit *OpSU = isPassiveNode(OpN) ? NULL : &SUnits[OpN->getNodeId()];
         if (OpSU && OperandSeen.count(OpSU) == 1) {
           // Ok, so SU is not the last use of OpSU, but SU is two-address so
           // it will clobber OpSU. Try to commute SU if no other source operands
@@ -264,7 +264,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
           for (unsigned k = 0; k < NumOps; ++k) {
             if (k != j) {
               OpN = SU->Node->getOperand(k).Val;
-              OpSU = isPassiveNode(OpN) ? NULL : SUnitMap[OpN];
+              OpSU = isPassiveNode(OpN) ? NULL : &SUnits[OpN->getNodeId()];
               if (OpSU && OperandSeen.count(OpSU) == 1) {
                 DoCommute = false;
                 break;
@@ -678,9 +678,8 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
                                   SDOperand(LoadNode, 1));
 
     SUnit *NewSU = CreateNewSUnit(N);
-    bool isNew = SUnitMap.insert(std::make_pair(N, NewSU));
-    isNew = isNew;
-    assert(isNew && "Node already inserted!");
+    assert(N->getNodeId() == -1 && "Node already inserted!");
+    N->setNodeId(NewSU->NodeNum);
       
     const TargetInstrDesc &TID = TII->get(N->getTargetOpcode());
     for (unsigned i = 0; i != TID.getNumOperands(); ++i) {
@@ -701,15 +700,12 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     // but it has different alignment or volatileness.
     bool isNewLoad = true;
     SUnit *LoadSU;
-    DenseMap<SDNode*, SUnit*>::iterator SMI = SUnitMap.find(LoadNode);
-    if (SMI != SUnitMap.end()) {
-      LoadSU = SMI->second;
+    if (LoadNode->getNodeId() != -1) {
+      LoadSU = &SUnits[LoadNode->getNodeId()];
       isNewLoad = false;
     } else {
       LoadSU = CreateNewSUnit(LoadNode);
-      bool isNew = SUnitMap.insert(std::make_pair(LoadNode, LoadSU));
-      isNew = isNew;
-      assert(isNew && "Node already inserted!");
+      LoadNode->setNodeId(LoadSU->NodeNum);
 
       LoadSU->Depth = SU->Depth;
       LoadSU->Height = SU->Height;
@@ -948,7 +944,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
   unsigned CurCycle = 0;
   // Add root to Available queue.
   if (!SUnits.empty()) {
-    SUnit *RootSU = SUnitMap[DAG.getRoot().Val];
+    SUnit *RootSU = &SUnits[DAG.getRoot().Val->getNodeId()];
     assert(RootSU->Succs.empty() && "Graph root shouldn't have successors!");
     RootSU->isAvailable = true;
     AvailableQueue->push(RootSU);
@@ -1284,8 +1280,7 @@ namespace {
     RegReductionPriorityQueue() :
     Queue(SF(this)), currentQueueId(0) {}
     
-    virtual void initNodes(DenseMap<SDNode*, SUnit*> &sumap,
-                           std::vector<SUnit> &sunits) {}
+    virtual void initNodes(std::vector<SUnit> &sunits) {}
 
     virtual void addNode(const SUnit *SU) {}
 
@@ -1330,9 +1325,6 @@ namespace {
 
   class VISIBILITY_HIDDEN BURegReductionPriorityQueue
    : public RegReductionPriorityQueue<bu_ls_rr_sort> {
-    // SUnitMap SDNode to SUnit mapping (n -> n).
-    DenseMap<SDNode*, SUnit*> *SUnitMap;
-
     // SUnits - The SUnits for the current graph.
     const std::vector<SUnit> *SUnits;
     
@@ -1347,9 +1339,7 @@ namespace {
                                          const TargetRegisterInfo *tri)
       : TII(tii), TRI(tri), scheduleDAG(NULL) {}
 
-    void initNodes(DenseMap<SDNode*, SUnit*> &sumap,
-                   std::vector<SUnit> &sunits) {
-      SUnitMap = &sumap;
+    void initNodes(std::vector<SUnit> &sunits) {
       SUnits = &sunits;
       // Add pseudo dependency edges for two-address nodes.
       AddPseudoTwoAddrDeps();
@@ -1417,9 +1407,6 @@ namespace {
 
   class VISIBILITY_HIDDEN TDRegReductionPriorityQueue
    : public RegReductionPriorityQueue<td_ls_rr_sort> {
-    // SUnitMap SDNode to SUnit mapping (n -> n).
-    DenseMap<SDNode*, SUnit*> *SUnitMap;
-
     // SUnits - The SUnits for the current graph.
     const std::vector<SUnit> *SUnits;
     
@@ -1429,9 +1416,7 @@ namespace {
   public:
     TDRegReductionPriorityQueue() {}
 
-    void initNodes(DenseMap<SDNode*, SUnit*> &sumap,
-                   std::vector<SUnit> &sunits) {
-      SUnitMap = &sumap;
+    void initNodes(std::vector<SUnit> &sunits) {
       SUnits = &sunits;
       // Calculate node priorities.
       CalculateSethiUllmanNumbers();
@@ -1563,8 +1548,8 @@ BURegReductionPriorityQueue::canClobber(const SUnit *SU, const SUnit *Op) {
     for (unsigned i = 0; i != NumOps; ++i) {
       if (TID.getOperandConstraint(i+NumRes, TOI::TIED_TO) != -1) {
         SDNode *DU = SU->Node->getOperand(i).Val;
-        if ((*SUnitMap).find(DU) != (*SUnitMap).end() &&
-            Op->OrigNode == (*SUnitMap)[DU])
+        if (DU->getNodeId() != -1 &&
+            Op->OrigNode == &(*SUnits)[DU->getNodeId()])
           return true;
       }
     }
@@ -1638,12 +1623,12 @@ void BURegReductionPriorityQueue::AddPseudoTwoAddrDeps() {
     for (unsigned j = 0; j != NumOps; ++j) {
       if (TID.getOperandConstraint(j+NumRes, TOI::TIED_TO) != -1) {
         SDNode *DU = SU->Node->getOperand(j).Val;
-        if ((*SUnitMap).find(DU) == (*SUnitMap).end())
+        if (DU->getNodeId() == -1)
           continue;
-        SUnit *DUSU = (*SUnitMap)[DU];
+        const SUnit *DUSU = &(*SUnits)[DU->getNodeId()];
         if (!DUSU) continue;
-        for (SUnit::succ_iterator I = DUSU->Succs.begin(),E = DUSU->Succs.end();
-             I != E; ++I) {
+        for (SUnit::const_succ_iterator I = DUSU->Succs.begin(),
+             E = DUSU->Succs.end(); I != E; ++I) {
           if (I->isCtrl) continue;
           SUnit *SuccSU = I->Dep;
           if (SuccSU == SU)

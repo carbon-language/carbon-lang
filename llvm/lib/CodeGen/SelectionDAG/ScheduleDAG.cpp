@@ -97,13 +97,20 @@ void ScheduleDAG::BuildSchedUnits() {
   // invalidated.
   SUnits.reserve(DAG.allnodes_size());
   
+  // During scheduling, the NodeId field of SDNode is used to map SDNodes
+  // to their associated SUnits by holding SUnits table indices. A value
+  // of -1 means the SDNode does not yet have an associated SUnit.
+  for (SelectionDAG::allnodes_iterator NI = DAG.allnodes_begin(),
+       E = DAG.allnodes_end(); NI != E; ++NI)
+    NI->setNodeId(-1);
+
   for (SelectionDAG::allnodes_iterator NI = DAG.allnodes_begin(),
        E = DAG.allnodes_end(); NI != E; ++NI) {
     if (isPassiveNode(NI))  // Leaf node, e.g. a TargetImmediate.
       continue;
     
     // If this node has already been processed, stop now.
-    if (SUnitMap.count(NI)) continue;
+    if (NI->getNodeId() != -1) continue;
     
     SUnit *NodeSUnit = NewSUnit(NI);
     
@@ -118,9 +125,8 @@ void ScheduleDAG::BuildSchedUnits() {
       do {
         N = N->getOperand(N->getNumOperands()-1).Val;
         NodeSUnit->FlaggedNodes.push_back(N);
-        bool isNew = SUnitMap.insert(std::make_pair(N, NodeSUnit));
-        isNew = isNew;
-        assert(isNew && "Node already inserted!");
+        assert(N->getNodeId() == -1 && "Node already inserted!");
+        N->setNodeId(NodeSUnit->NodeNum);
       } while (N->getNumOperands() &&
                N->getOperand(N->getNumOperands()-1).getValueType()== MVT::Flag);
       std::reverse(NodeSUnit->FlaggedNodes.begin(),
@@ -140,9 +146,8 @@ void ScheduleDAG::BuildSchedUnits() {
         if (FlagVal.isOperandOf(UI->getUser())) {
           HasFlagUse = true;
           NodeSUnit->FlaggedNodes.push_back(N);
-          bool isNew = SUnitMap.insert(std::make_pair(N, NodeSUnit));
-          isNew = isNew;
-          assert(isNew && "Node already inserted!");
+          assert(N->getNodeId() == -1 && "Node already inserted!");
+          N->setNodeId(NodeSUnit->NodeNum);
           N = UI->getUser();
           break;
         }
@@ -152,9 +157,8 @@ void ScheduleDAG::BuildSchedUnits() {
     // Now all flagged nodes are in FlaggedNodes and N is the bottom-most node.
     // Update the SUnit
     NodeSUnit->Node = N;
-    bool isNew = SUnitMap.insert(std::make_pair(N, NodeSUnit));
-    isNew = isNew;
-    assert(isNew && "Node already inserted!");
+    assert(N->getNodeId() == -1 && "Node already inserted!");
+    N->setNodeId(NodeSUnit->NodeNum);
 
     ComputeLatency(NodeSUnit);
   }
@@ -191,7 +195,7 @@ void ScheduleDAG::BuildSchedUnits() {
       for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
         SDNode *OpN = N->getOperand(i).Val;
         if (isPassiveNode(OpN)) continue;   // Not scheduled.
-        SUnit *OpSU = SUnitMap[OpN];
+        SUnit *OpSU = &SUnits[OpN->getNodeId()];
         assert(OpSU && "Node has no SUnit!");
         if (OpSU == SU) continue;           // In the same group.
 
