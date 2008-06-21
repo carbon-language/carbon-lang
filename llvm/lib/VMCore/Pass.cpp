@@ -146,7 +146,7 @@ public:
   void RegisterPass(const PassInfo &PI) {
     bool Inserted =
       PassInfoMap.insert(std::make_pair(PI.getTypeInfo(),&PI)).second;
-    assert(Inserted && "Pass registered multiple times!");
+    assert(Inserted && "Pass registered multiple times!"); Inserted=Inserted;
   }
   
   void UnregisterPass(const PassInfo &PI) {

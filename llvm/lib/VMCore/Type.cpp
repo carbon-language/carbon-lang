@@ -901,7 +901,7 @@ public:
     // The old record is now out-of-date, because one of the children has been
     // updated.  Remove the obsolete entry from the map.
     unsigned NumErased = Map.erase(ValType::get(Ty));
-    assert(NumErased && "Element not found!");
+    assert(NumErased && "Element not found!"); NumErased = NumErased;
 
     // Remember the structural hash for the type before we start hacking on it,
     // in case we need it later.
@@ -1426,7 +1426,7 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   while (!AbstractTypeUsers.empty() && NewTy != this) {
     AbstractTypeUser *User = AbstractTypeUsers.back();
 
-    unsigned OldSize = AbstractTypeUsers.size();
+    unsigned OldSize = AbstractTypeUsers.size(); OldSize=OldSize;
 #ifdef DEBUG_MERGE_TYPES
     DOUT << " REFINING user " << OldSize-1 << "[" << (void*)User
          << "] of abstract type [" << (void*)this << " "
@@ -1453,7 +1453,7 @@ void DerivedType::notifyUsesThatTypeBecameConcrete() {
   DOUT << "typeIsREFINED type: " << (void*)this << " " << *this << "\n";
 #endif
 
-  unsigned OldSize = AbstractTypeUsers.size();
+  unsigned OldSize = AbstractTypeUsers.size(); OldSize=OldSize;
   while (!AbstractTypeUsers.empty()) {
     AbstractTypeUser *ATU = AbstractTypeUsers.back();
     ATU->typeBecameConcrete(this);
