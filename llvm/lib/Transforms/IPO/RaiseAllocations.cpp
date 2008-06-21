@@ -177,7 +177,7 @@ bool RaiseAllocations::runOnModule(Module &M) {
             BranchInst::Create(II->getNormalDest(), I);
 
           // Delete the old call site
-          MI->getParent()->getInstList().erase(I);
+          I->eraseFromParent();
           Changed = true;
           ++NumRaised;
         }

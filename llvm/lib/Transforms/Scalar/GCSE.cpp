@@ -201,5 +201,5 @@ void GCSE::ReplaceInstructionWith(Instruction *I, Value *V) {
   }
 
   // Erase the instruction from the program.
-  I->getParent()->getInstList().erase(I);
+  I->eraseFromParent();
 }

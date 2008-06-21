@@ -79,7 +79,7 @@ bool ConstantPropagation::runOnFunction(Function &F) {
 
         // Remove the dead instruction.
         WorkList.erase(I);
-        I->getParent()->getInstList().erase(I);
+        I->eraseFromParent();
 
         // We made a change to the function...
         Changed = true;

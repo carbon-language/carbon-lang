@@ -550,18 +550,18 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       ReturnInst::Create(Constant::getNullValue(OldFnRetTy), TheSwitch);
     }
 
-    TheSwitch->getParent()->getInstList().erase(TheSwitch);
+    TheSwitch->eraseFromParent();
     break;
   case 1:
     // Only a single destination, change the switch into an unconditional
     // branch.
     BranchInst::Create(TheSwitch->getSuccessor(1), TheSwitch);
-    TheSwitch->getParent()->getInstList().erase(TheSwitch);
+    TheSwitch->eraseFromParent();
     break;
   case 2:
     BranchInst::Create(TheSwitch->getSuccessor(1), TheSwitch->getSuccessor(2),
                        call, TheSwitch);
-    TheSwitch->getParent()->getInstList().erase(TheSwitch);
+    TheSwitch->eraseFromParent();
     break;
   default:
     // Otherwise, make the default destination of the switch instruction be one

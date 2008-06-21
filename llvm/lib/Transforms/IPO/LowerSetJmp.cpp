@@ -440,7 +440,7 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
   // Replace all uses of this instruction with the PHI node created by
   // the eradication of setjmp.
   Inst->replaceAllUsesWith(PHI);
-  Inst->getParent()->getInstList().erase(Inst);
+  Inst->eraseFromParent();
 
   ++SetJmpsTransformed;
 }
@@ -478,10 +478,10 @@ void LowerSetJmp::visitCallInst(CallInst& CI)
 
   // Replace the old call inst with the invoke inst and remove the call.
   CI.replaceAllUsesWith(II);
-  CI.getParent()->getInstList().erase(&CI);
+  CI.eraseFromParent();
 
   // The old terminator is useless now that we have the invoke inst.
-  Term->getParent()->getInstList().erase(Term);
+  Term->eraseFromParent();
   ++CallsTransformed;
 }
 

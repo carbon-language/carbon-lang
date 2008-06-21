@@ -119,7 +119,7 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
         BranchInst::Create(InvokeDest, UI);
         
         // Delete the unwind instruction!
-        UI->getParent()->getInstList().pop_back();
+        UI->eraseFromParent();
         
         // Update any PHI nodes in the exceptional block to indicate that
         // there is now a new entry in them.
@@ -455,10 +455,10 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
         TheCall->replaceAllUsesWith(R->getReturnValue());
     }
     // Since we are now done with the Call/Invoke, we can delete it.
-    TheCall->getParent()->getInstList().erase(TheCall);
+    TheCall->eraseFromParent();
 
     // Since we are now done with the return instruction, delete it also.
-    Returns[0]->getParent()->getInstList().erase(Returns[0]);
+    Returns[0]->eraseFromParent();
 
     // We are now done with the inlining.
     return true;

@@ -159,7 +159,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
       BranchInst::Create(SI->getSuccessor(1), SI->getSuccessor(0), Cond, SI);
 
       // Delete the old switch...
-      SI->getParent()->getInstList().erase(SI);
+      SI->eraseFromParent();
       return true;
     }
   }
