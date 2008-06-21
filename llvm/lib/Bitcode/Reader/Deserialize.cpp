@@ -85,7 +85,7 @@ bool Deserializer::AdvanceStream() {
         
       case bitc::END_BLOCK: {
         bool x = Stream.ReadBlockEnd();
-        assert (!x && "Error at block end.");
+        assert(!x && "Error at block end."); x=x;
         BlockStack.pop_back();
         continue;
       }
