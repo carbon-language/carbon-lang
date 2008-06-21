@@ -1875,7 +1875,7 @@ SDOperand DAGTypeLegalizer::ExpandIntOp_STORE(StoreSDNode *N, unsigned OpNo) {
   bool isVolatile = N->isVolatile();
   SDOperand Lo, Hi;
 
-  assert(!(NVT.getSizeInBits() & 7) && "Expanded type not byte sized!");
+  assert(NVT.isByteSized() && "Expanded type not byte sized!");
 
   if (N->getMemoryVT().bitsLE(NVT)) {
     GetExpandedInteger(N->getValue(), Lo, Hi);

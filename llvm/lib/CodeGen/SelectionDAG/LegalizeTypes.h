@@ -347,9 +347,11 @@ private:
 
   // Float Result Expansion.
   void ExpandFloatResult(SDNode *N, unsigned ResNo);
+  void ExpandFloatRes_LOAD(SDNode *N, SDOperand &Lo, SDOperand &Hi);
 
   // Float Operand Expansion.
   bool ExpandFloatOperand(SDNode *N, unsigned OperandNo);
+  SDOperand ExpandFloatOp_STORE(SDNode *N, unsigned OpNo);
 
   //===--------------------------------------------------------------------===//
   // Scalarization Support: LegalizeVectorTypes.cpp

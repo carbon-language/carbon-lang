@@ -404,11 +404,45 @@ void DAGTypeLegalizer::ExpandFloatResult(SDNode *N, unsigned ResNo) {
   case ISD::BIT_CONVERT:        ExpandRes_BIT_CONVERT(N, Lo, Hi); break;
   case ISD::BUILD_PAIR:         ExpandRes_BUILD_PAIR(N, Lo, Hi); break;
   case ISD::EXTRACT_VECTOR_ELT: ExpandRes_EXTRACT_VECTOR_ELT(N, Lo, Hi); break;
+
+  case ISD::LOAD: ExpandFloatRes_LOAD(N, Lo, Hi); break;
   }
 
   // If Lo/Hi is null, the sub-method took care of registering results etc.
   if (Lo.Val)
     SetExpandedFloat(SDOperand(N, ResNo), Lo, Hi);
+}
+
+void DAGTypeLegalizer::ExpandFloatRes_LOAD(SDNode *N, SDOperand &Lo,
+                                           SDOperand &Hi) {
+  if (ISD::isNON_EXTLoad(N)) {
+    ExpandRes_NON_EXTLOAD(N, Lo, Hi);
+    return;
+  }
+
+  assert(ISD::isUNINDEXEDLoad(N) && "Indexed load during type legalization!");
+  LoadSDNode *LD = cast<LoadSDNode>(N);
+  SDOperand Chain = LD->getChain();
+  SDOperand Ptr = LD->getBasePtr();
+
+  MVT NVT = TLI.getTypeToTransformTo(LD->getValueType(0));
+  assert(NVT.isByteSized() && "Expanded type not byte sized!");
+  assert(LD->getMemoryVT().bitsLE(NVT) && "Float type not round?");
+
+  Lo = DAG.getExtLoad(LD->getExtensionType(), NVT, Chain, Ptr,
+                      LD->getSrcValue(), LD->getSrcValueOffset(),
+                      LD->getMemoryVT(),
+                      LD->isVolatile(), LD->getAlignment());
+
+  // Remember the chain.
+  Chain = Lo.getValue(1);
+
+  // The high part is undefined.
+  Hi = DAG.getNode(ISD::UNDEF, NVT);
+
+  // Modified the chain - switch anything that used the old chain to use the
+  // new one.
+  ReplaceValueWith(SDOperand(LD, 1), Chain);
 }
 
 
@@ -441,6 +475,10 @@ bool DAGTypeLegalizer::ExpandFloatOperand(SDNode *N, unsigned OpNo) {
     case ISD::BIT_CONVERT:     Res = ExpandOp_BIT_CONVERT(N); break;
     case ISD::BUILD_VECTOR:    Res = ExpandOp_BUILD_VECTOR(N); break;
     case ISD::EXTRACT_ELEMENT: Res = ExpandOp_EXTRACT_ELEMENT(N); break;
+
+    case ISD::STORE:
+      Res = ExpandFloatOp_STORE(cast<StoreSDNode>(N), OpNo);
+      break;
     }
   }
 
@@ -461,4 +499,28 @@ bool DAGTypeLegalizer::ExpandFloatOperand(SDNode *N, unsigned OpNo) {
 
   ReplaceValueWith(SDOperand(N, 0), Res);
   return false;
+}
+
+SDOperand DAGTypeLegalizer::ExpandFloatOp_STORE(SDNode *N, unsigned OpNo) {
+  if (ISD::isNON_TRUNCStore(N))
+    return ExpandOp_NON_TRUNCStore(N, OpNo);
+
+  assert(ISD::isUNINDEXEDStore(N) && "Indexed store during type legalization!");
+  assert(OpNo == 1 && "Can only expand the stored value so far");
+  StoreSDNode *ST = cast<StoreSDNode>(N);
+
+  SDOperand Chain = ST->getChain();
+  SDOperand Ptr = ST->getBasePtr();
+
+  MVT NVT = TLI.getTypeToTransformTo(ST->getValue().getValueType());
+  assert(NVT.isByteSized() && "Expanded type not byte sized!");
+  assert(ST->getMemoryVT().bitsLE(NVT) && "Float type not round?");
+
+  SDOperand Lo, Hi;
+  GetExpandedOp(ST->getValue(), Lo, Hi);
+
+  return DAG.getTruncStore(Chain, Lo, Ptr,
+                           ST->getSrcValue(), ST->getSrcValueOffset(),
+                           ST->getMemoryVT(),
+                           ST->isVolatile(), ST->getAlignment());
 }
