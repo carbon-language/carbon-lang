@@ -3304,7 +3304,7 @@ private:
 
           // Try to merge with the previous call-site.
           if (PreviousIsInvoke) {
-            CallSiteEntry &Prev = CallSites[CallSites.size()-1];
+            CallSiteEntry &Prev = CallSites.back();
             if (Site.PadLabel == Prev.PadLabel && Site.Action == Prev.Action) {
               // Extend the range of the previous entry.
               Prev.EndLabel = Site.EndLabel;
