@@ -17,8 +17,7 @@ int LOOP();
 @implementation MyList (BasicTest)  // expected-error {{cannot find interface declaration for 'MyList'}}
 - (void)compilerTestAgainst {
 MyList * el;  // expected-error {{use of undeclared identifier 'MyList'}}
-     for (el in @"foo")    // expected-error {{use of undeclared identifier 'el'}} \
-			   // expected-error {{cannot find interface declaration for 'NSConstantString'}}
+     for (el in @"foo")    // expected-error {{use of undeclared identifier 'el'}}
 	  { LOOP(); }
 }
 @end

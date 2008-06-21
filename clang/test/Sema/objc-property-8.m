@@ -68,7 +68,7 @@ extern NSString *PBXWindowDidChangeFirstResponderNotification;
 @synthesize query = _query;
 - (void) _clearQuery
 {
-  [self.query removeObserver: self forKeyPath: @"matches"]; // expected-error{{cannot find interface declaration for 'NSConstantString'}}
+  [self.query removeObserver: self forKeyPath: @"matches"];
 }
 @end
 

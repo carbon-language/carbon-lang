@@ -59,6 +59,10 @@ public:
   llvm::Constant *VisitCXXBoolLiteralExpr(const CXXBoolLiteralExpr *E) {
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
   }
+  llvm::Constant *VisitObjCStringLiteral(const ObjCStringLiteral *E) {
+    return CGM.getObjCRuntime()->GenerateConstantString(
+        E->getString()->getStrData(), E->getString()->getByteLength());
+  }
   
   llvm::Constant *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
     return Visit(E->getInitializer());

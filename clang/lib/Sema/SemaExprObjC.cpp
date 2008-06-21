@@ -54,13 +54,17 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
     IdentifierInfo *NSIdent = &Context.Idents.get("NSConstantString");
     Decl *IFace = LookupDecl(NSIdent, Decl::IDNS_Ordinary, TUScope);
     ObjCInterfaceDecl *strIFace = dyn_cast_or_null<ObjCInterfaceDecl>(IFace);
-    if (!strIFace)
-      return Diag(S->getLocStart(), diag::err_undef_interface,
-                  NSIdent->getName());
-    Context.setObjCConstantStringInterface(strIFace);
+    if (strIFace)
+      Context.setObjCConstantStringInterface(strIFace);
   }
   QualType t = Context.getObjCConstantStringInterface();
-  t = Context.getPointerType(t);
+  // If there is no NSConstantString interface defined then treat constant
+  // strings as untyped objects and let the runtime figure it out later.
+  if (t == QualType()) {
+    t = Context.getObjCIdType();
+  } else {
+    t = Context.getPointerType(t);
+  }
   return new ObjCStringLiteral(S, t, AtLoc);
 }
 
@@ -298,9 +302,9 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
     else {
       ObjCInterfaceType *OCIReceiver =dyn_cast<ObjCInterfaceType>(receiverType);
       if (OCIReceiver == 0) {
-        Diag(lbrac, diag::error_bad_receiver_type,
-             RExpr->getType().getAsString());
-        return true;
+          Diag(lbrac, diag::error_bad_receiver_type,
+               RExpr->getType().getAsString());
+          return true;
       }
       ClassDecl = OCIReceiver->getDecl();
       // FIXME: consider using InstanceMethodPool, since it will be faster

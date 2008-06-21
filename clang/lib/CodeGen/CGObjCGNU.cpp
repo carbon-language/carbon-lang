@@ -302,9 +302,10 @@ llvm::Constant *CGObjCGNU::MakeGlobal(const llvm::ArrayType *Ty,
 //constant strings.
 llvm::Constant *CGObjCGNU::GenerateConstantString(const char *String, const
     size_t length) {
+  std::string Str(String, String +length);
   std::vector<llvm::Constant*> Ivars;
   Ivars.push_back(NULLPtr);
-  Ivars.push_back(MakeConstantString(String));
+  Ivars.push_back(MakeConstantString(Str));
   Ivars.push_back(llvm::ConstantInt::get(IntTy, length));
   llvm::Constant *ObjCStr = MakeGlobal(
     llvm::StructType::get(PtrToInt8Ty, PtrToInt8Ty, IntTy, NULL),
