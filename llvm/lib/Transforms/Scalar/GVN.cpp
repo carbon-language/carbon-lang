@@ -43,7 +43,7 @@ STATISTIC(NumGVNLoad, "Number of loads deleted");
 STATISTIC(NumGVNPRE, "Number of instructions PRE'd");
 
 static cl::opt<bool> EnablePRE("enable-pre",
-                                cl::init(false), cl::Hidden);
+                               cl::init(true), cl::Hidden);
 
 //===----------------------------------------------------------------------===//
 //                         ValueTable Class
