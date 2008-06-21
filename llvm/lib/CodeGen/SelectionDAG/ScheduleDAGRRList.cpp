@@ -1324,9 +1324,8 @@ namespace {
     }
   };
 
-  template<class SF>
   class VISIBILITY_HIDDEN BURegReductionPriorityQueue
-   : public RegReductionPriorityQueue<SF> {
+   : public RegReductionPriorityQueue<bu_ls_rr_sort> {
     // SUnitMap SDNode to SUnit mapping (n -> n).
     DenseMap<SDNode*, std::vector<SUnit*> > *SUnitMap;
 
@@ -1412,9 +1411,8 @@ namespace {
   };
 
 
-  template<class SF>
   class VISIBILITY_HIDDEN TDRegReductionPriorityQueue
-   : public RegReductionPriorityQueue<SF> {
+   : public RegReductionPriorityQueue<td_ls_rr_sort> {
     // SUnitMap SDNode to SUnit mapping (n -> n).
     DenseMap<SDNode*, std::vector<SUnit*> > *SUnitMap;
 
@@ -1551,8 +1549,8 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   return (left->NodeQueueId > right->NodeQueueId);
 }
 
-template<class SF> bool
-BURegReductionPriorityQueue<SF>::canClobber(const SUnit *SU, const SUnit *Op) {
+bool
+BURegReductionPriorityQueue::canClobber(const SUnit *SU, const SUnit *Op) {
   if (SU->isTwoAddress) {
     unsigned Opc = SU->Node->getTargetOpcode();
     const TargetInstrDesc &TID = TII->get(Opc);
@@ -1619,8 +1617,7 @@ static bool canClobberPhysRegDefs(SUnit *SuccSU, SUnit *SU,
 /// one that has a CopyToReg use (more likely to be a loop induction update).
 /// If both are two-address, but one is commutable while the other is not
 /// commutable, favor the one that's not commutable.
-template<class SF>
-void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
+void BURegReductionPriorityQueue::AddPseudoTwoAddrDeps() {
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i) {
     SUnit *SU = (SUnit *)&((*SUnits)[i]);
     if (!SU->isTwoAddress)
@@ -1681,8 +1678,7 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
 
 /// CalcNodeSethiUllmanNumber - Priority is the Sethi Ullman number. 
 /// Smaller number is the higher priority.
-template<class SF>
-unsigned BURegReductionPriorityQueue<SF>::
+unsigned BURegReductionPriorityQueue::
 CalcNodeSethiUllmanNumber(const SUnit *SU) {
   unsigned &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
   if (SethiUllmanNumber != 0)
@@ -1711,8 +1707,7 @@ CalcNodeSethiUllmanNumber(const SUnit *SU) {
 
 /// CalculateSethiUllmanNumbers - Calculate Sethi-Ullman numbers of all
 /// scheduling units.
-template<class SF>
-void BURegReductionPriorityQueue<SF>::CalculateSethiUllmanNumbers() {
+void BURegReductionPriorityQueue::CalculateSethiUllmanNumbers() {
   SethiUllmanNumbers.assign(SUnits->size(), 0);
   
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i)
@@ -1784,8 +1779,7 @@ bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
 
 /// CalcNodeSethiUllmanNumber - Priority is the Sethi Ullman number. 
 /// Smaller number is the higher priority.
-template<class SF>
-unsigned TDRegReductionPriorityQueue<SF>::
+unsigned TDRegReductionPriorityQueue::
 CalcNodeSethiUllmanNumber(const SUnit *SU) {
   unsigned &SethiUllmanNumber = SethiUllmanNumbers[SU->NodeNum];
   if (SethiUllmanNumber != 0)
@@ -1825,8 +1819,7 @@ CalcNodeSethiUllmanNumber(const SUnit *SU) {
 
 /// CalculateSethiUllmanNumbers - Calculate Sethi-Ullman numbers of all
 /// scheduling units.
-template<class SF>
-void TDRegReductionPriorityQueue<SF>::CalculateSethiUllmanNumbers() {
+void TDRegReductionPriorityQueue::CalculateSethiUllmanNumbers() {
   SethiUllmanNumbers.assign(SUnits->size(), 0);
   
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i)
@@ -1843,8 +1836,8 @@ llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAGISel *IS,
   const TargetInstrInfo *TII = DAG->getTarget().getInstrInfo();
   const TargetRegisterInfo *TRI = DAG->getTarget().getRegisterInfo();
   
-  BURegReductionPriorityQueue<bu_ls_rr_sort> *priorityQueue = 
-    new BURegReductionPriorityQueue<bu_ls_rr_sort>(TII, TRI);
+  BURegReductionPriorityQueue *priorityQueue = 
+    new BURegReductionPriorityQueue(TII, TRI);
 
   ScheduleDAGRRList * scheduleDAG = 
     new ScheduleDAGRRList(*DAG, BB, DAG->getTarget(), true, priorityQueue);
@@ -1856,6 +1849,6 @@ llvm::ScheduleDAG* llvm::createTDRRListDAGScheduler(SelectionDAGISel *IS,
                                                     SelectionDAG *DAG,
                                                     MachineBasicBlock *BB) {
   return new ScheduleDAGRRList(*DAG, BB, DAG->getTarget(), false,
-                              new TDRegReductionPriorityQueue<td_ls_rr_sort>());
+                              new TDRegReductionPriorityQueue());
 }
 
