@@ -1751,10 +1751,6 @@ void Sema::ActOnDefs(Scope *S, SourceLocation DeclStart,
     Diag(DeclStart, diag::err_undef_interface, ClassName->getName());
     return;
   }
-  // Add the isa pointer
-  Decls.push_back(FieldDecl::Create(Context, SourceLocation(),
-                                    &Context.Idents.get("isa"),
-                                    Context.getObjCClassType()));
   // Collect the instance variables
   CollectIvars(Class, Decls);
 }

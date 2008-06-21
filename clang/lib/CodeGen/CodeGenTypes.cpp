@@ -309,10 +309,6 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     // late-bound ivars.
     ObjCInterfaceType OIT = cast<ObjCInterfaceType>(Ty);
     std::vector<const llvm::Type*> IvarTypes;
-    // Pointer to the class.  This is just a placeholder.  Operations that
-    // actually use the isa pointer should cast it to the Class type provided
-    // by the runtime.
-    IvarTypes.push_back(llvm::PointerType::getUnqual(llvm::Type::Int8Ty));
     CollectObjCIvarTypes(OIT.getDecl(), IvarTypes);
     return llvm::StructType::get(IvarTypes);
   }
