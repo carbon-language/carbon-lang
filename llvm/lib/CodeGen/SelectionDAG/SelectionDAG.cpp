@@ -1406,7 +1406,7 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, const APInt &Mask,
   case ISD::CTPOP: {
     unsigned LowBits = Log2_32(BitWidth)+1;
     KnownZero = APInt::getHighBitsSet(BitWidth, BitWidth - LowBits);
-    KnownOne  = APInt(BitWidth, 0);
+    KnownOne.clear();
     return;
   }
   case ISD::LOAD: {
