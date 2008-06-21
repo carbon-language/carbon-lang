@@ -97,8 +97,15 @@ void DeclPrinter:: PrintDecl(Decl *D) {
   } else if (ObjCCompatibleAliasDecl *OID = 
              dyn_cast<ObjCCompatibleAliasDecl>(D)) {
     PrintObjCCompatibleAliasDecl(OID);
-  } else if (isa<ObjCClassDecl>(D)) {
-    Out << "@class [printing todo]\n";
+  } else if (ObjCClassDecl *OFCD = dyn_cast<ObjCClassDecl>(D)) {
+    Out << "@class ";
+    ObjCInterfaceDecl **ForwardDecls = OFCD->getForwardDecls();
+    for (unsigned i = 0, e = OFCD->getNumForwardDecls(); i != e; ++i) {
+      const ObjCInterfaceDecl *D = ForwardDecls[i];
+      if (i) Out << ", ";
+      Out << D->getName();
+    }
+    Out << ";\n";
   } else if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
     Out << "Read top-level tag decl: '" << TD->getName() << "'\n";
   } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
