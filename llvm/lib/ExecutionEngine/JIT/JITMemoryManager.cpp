@@ -369,7 +369,7 @@ DefaultJITMemoryManager::DefaultJITMemoryManager() {
   // Allocate a 16M block of memory for functions.
   sys::MemoryBlock MemBlock = getNewMemoryBlock(16 << 20);
 
-  unsigned char *MemBase = reinterpret_cast<unsigned char*>(MemBlock.base());
+  unsigned char *MemBase = static_cast<unsigned char*>(MemBlock.base());
 
   // Allocate stubs backwards from the base, allocate functions forward
   // from the base.
