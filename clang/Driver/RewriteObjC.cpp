@@ -1848,31 +1848,14 @@ ObjCInterfaceDecl *RewriteObjC::isSuperReceiver(Expr *recExpr) {
   // check if we are sending a message to 'super'
   if (!CurMethodDecl || !CurMethodDecl->isInstance()) return 0;
   
-  CastExpr *CE = dyn_cast<CastExpr>(recExpr);
-  if (!CE) return 0;
-  
-  DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CE->getSubExpr());
-  if (!DRE) return 0;
-  
-  ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(DRE->getDecl());
-  if (!PVD) return 0;
-  
-  if (strcmp(PVD->getName(), "self") != 0)
-    return 0;
-          
-  // is this id<P1..> type?
-  if (CE->getType()->isObjCQualifiedIdType())
-    return 0;
-  const PointerType *PT = CE->getType()->getAsPointerType();
-  if (!PT) return 0;
-  
-  ObjCInterfaceType *IT = dyn_cast<ObjCInterfaceType>(PT->getPointeeType());
-  if (!IT) return 0;
-  
-  if (IT->getDecl() != CurMethodDecl->getClassInterface()->getSuperClass())
-    return 0;
-              
-  return IT->getDecl();
+  if (PreDefinedExpr *PDE = dyn_cast<PreDefinedExpr>(recExpr))
+    if (PDE->getIdentType() == PreDefinedExpr::ObjCSuper) {
+      const PointerType *PT = PDE->getType()->getAsPointerType();
+      assert(PT);
+      ObjCInterfaceType *IT = cast<ObjCInterfaceType>(PT->getPointeeType());
+      return IT->getDecl();
+    }
+  return 0;
 }
 
 // struct objc_super { struct objc_object *receiver; struct objc_class *super; };

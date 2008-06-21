@@ -509,6 +509,9 @@ void StmtPrinter::VisitPreDefinedExpr(PreDefinedExpr *Node) {
     case PreDefinedExpr::PrettyFunction:
       OS << "__PRETTY_FUNCTION__";
       break;
+    case PreDefinedExpr::ObjCSuper:
+      OS << "super";
+      break;
   }
 }
 

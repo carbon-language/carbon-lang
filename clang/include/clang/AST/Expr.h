@@ -222,7 +222,10 @@ public:
   enum IdentType {
     Func,
     Function,
-    PrettyFunction
+    PrettyFunction,
+    ObjCSelf, // self
+    ObjCCmd,  // _cmd
+    ObjCSuper // super
   };
   
 private:
