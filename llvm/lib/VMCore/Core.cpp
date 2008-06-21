@@ -741,7 +741,7 @@ void LLVMSetCollector(LLVMValueRef Fn, const char *Coll) {
 unsigned LLVMCountParams(LLVMValueRef FnRef) {
   // This function is strictly redundant to
   //   LLVMCountParamTypes(LLVMGetElementType(LLVMTypeOf(FnRef)))
-  return unwrap<Function>(FnRef)->getArgumentList().size();
+  return unwrap<Function>(FnRef)->arg_size();
 }
 
 void LLVMGetParams(LLVMValueRef FnRef, LLVMValueRef *ParamRefs) {
@@ -826,7 +826,7 @@ LLVMValueRef LLVMGetBasicBlockParent(LLVMBasicBlockRef BB) {
 }
 
 unsigned LLVMCountBasicBlocks(LLVMValueRef FnRef) {
-  return unwrap<Function>(FnRef)->getBasicBlockList().size();
+  return unwrap<Function>(FnRef)->size();
 }
 
 void LLVMGetBasicBlocks(LLVMValueRef FnRef, LLVMBasicBlockRef *BasicBlocksRefs){
