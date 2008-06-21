@@ -420,8 +420,9 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
       Tok.is(tok::kw___attribute)) {  // int X() __attr__ -> not a function def
     // FALL THROUGH.
   } else if (DeclaratorInfo.isFunctionDeclarator() &&
-             (Tok.is(tok::l_brace) ||           // int X() {}
-              isDeclarationSpecifier())) {      // int X(f) int f; {}
+             (Tok.is(tok::l_brace) ||             // int X() {}
+              ( !getLang().CPlusPlus &&
+                isDeclarationSpecifier() ))) {    // int X(f) int f; {}
     if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
       Diag(Tok, diag::err_function_declared_typedef);
 
