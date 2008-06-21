@@ -24,12 +24,13 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/PriorityQueue.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <climits>
-#include <queue>
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
@@ -1276,7 +1277,7 @@ namespace {
   template<class SF>
   class VISIBILITY_HIDDEN RegReductionPriorityQueue
    : public SchedulingPriorityQueue {
-    std::set<SUnit*, SF> Queue;
+    PriorityQueue<SUnit*, std::vector<SUnit*>, SF> Queue;
     unsigned currentQueueId;
 
   public:
@@ -1303,7 +1304,7 @@ namespace {
     void push(SUnit *U) {
       assert(!U->NodeQueueId && "Node in the queue already");
       U->NodeQueueId = ++currentQueueId;
-      Queue.insert(U);
+      Queue.push(U);
     }
 
     void push_all(const std::vector<SUnit *> &Nodes) {
@@ -1313,19 +1314,16 @@ namespace {
     
     SUnit *pop() {
       if (empty()) return NULL;
-      typename std::set<SUnit*, SF>::iterator i = prior(Queue.end());
-      SUnit *V = *i;
-      Queue.erase(i);
+      SUnit *V = Queue.top();
+      Queue.pop();
       V->NodeQueueId = 0;
       return V;
     }
 
     void remove(SUnit *SU) {
       assert(!Queue.empty() && "Queue is empty!");
-      size_t RemovedNum = Queue.erase(SU);
-      RemovedNum = RemovedNum; // Silence compiler warning.
-      assert(RemovedNum > 0 && "Not in queue!");
-      assert(RemovedNum == 1 && "Multiple times in the queue!");
+      assert(SU->NodeQueueId != 0 && "Not in queue!");
+      Queue.erase_one(SU);
       SU->NodeQueueId = 0;
     }
   };
