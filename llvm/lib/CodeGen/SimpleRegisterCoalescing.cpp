@@ -2145,7 +2145,6 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
         mii = mbbi->erase(mii);
         ++numPeep;
       } else if (!isMove || !TurnCopyIntoImpDef(mii, mbb, DstReg, SrcReg)) {
-        bool isMem = mii->getDesc().mayLoad() || mii->getDesc().mayStore();
         SmallSet<unsigned, 4> UniqueUses;
         for (unsigned i = 0, e = mii->getNumOperands(); i != e; ++i) {
           const MachineOperand &mop = mii->getOperand(i);
@@ -2158,7 +2157,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
               continue;
             LiveInterval &RegInt = li_->getInterval(reg);
             RegInt.weight +=
-              li_->getSpillWeight(mop.isDef(), mop.isUse(), isMem, loopDepth);
+              li_->getSpillWeight(mop.isDef(), mop.isUse(), loopDepth);
             UniqueUses.insert(reg);
           }
         }

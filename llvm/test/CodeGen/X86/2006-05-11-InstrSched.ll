@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 -stats -realign-stack=0 |&\
-; RUN:     grep {asm-printer} | grep 31
+; RUN:     grep {asm-printer} | grep 32
 
 target datalayout = "e-p:32:32"
 define void @foo(i32* %mc, i32* %bp, i32* %ms, i32* %xmb, i32* %mpp, i32* %tpmm, i32* %ip, i32* %tpim, i32* %dpp, i32* %tpdm, i32* %bpi, i32 %M) nounwind {
