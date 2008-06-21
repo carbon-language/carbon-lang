@@ -2048,7 +2048,7 @@ std::string APInt::toString(uint8_t radix, bool wantSigned) const {
     result = "-";
     insert_at = 1;
   }
-  if (tmp == APInt(tmp.getBitWidth(), 0))
+  if (tmp == zero)
     result = "0";
   else while (tmp.ne(zero)) {
     APInt APdigit(1,0);
