@@ -1810,31 +1810,28 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
     DeleteTriviallyDeadInstructions(DeadInsts);
 
     BasicBlock::iterator I = L->getHeader()->begin();
-    PHINode *PN;
-    while ((PN = dyn_cast<PHINode>(I))) {
-      ++I;  // Preincrement iterator to avoid invalidating it when deleting PN.
-
-      // At this point, we know that we have killed one or more GEP
-      // instructions.  It is worth checking to see if the cann indvar is also
-      // dead, so that we can remove it as well.  The requirements for the cann
-      // indvar to be considered dead are:
-      // 1. the cann indvar has one use
-      // 2. the use is an add instruction
-      // 3. the add has one use
-      // 4. the add is used by the cann indvar
-      // If all four cases above are true, then we can remove both the add and
-      // the cann indvar.
+    while (PHINode *PN = dyn_cast<PHINode>(I++)) {
+      // At this point, we know that we have killed one or more IV users.
+      // It is worth checking to see if the cann indvar is also
+      // dead, so that we can remove it as well.
+      //
+      // We can remove a PHI if it is on a cycle in the def-use graph
+      // where each node in the cycle has degree one, i.e. only one use,
+      // and is an instruction with no side effects.
+      //
       // FIXME: this needs to eliminate an induction variable even if it's being
       // compared against some value to decide loop termination.
       if (PN->hasOneUse()) {
-        Instruction *BO = dyn_cast<Instruction>(*PN->use_begin());
-        if (BO && (isa<BinaryOperator>(BO) || isa<CmpInst>(BO))) {
-          if (BO->hasOneUse() && PN == *(BO->use_begin())) {
-            DeadInsts.insert(BO);
-            // Break the cycle, then delete the PHI.
+        for (Instruction *J = dyn_cast<Instruction>(*PN->use_begin());
+             J && J->hasOneUse() && !J->mayWriteToMemory();
+             J = dyn_cast<Instruction>(*J->use_begin())) {
+          // If we find the original PHI, we've discovered a cycle.
+          if (J == PN) {
+            // Break the cycle and mark the PHI for deletion.
             SE->deleteValueFromRecords(PN);
             PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
-            PN->eraseFromParent();
+            DeadInsts.insert(PN);
+            break;
           }
         }
       }
