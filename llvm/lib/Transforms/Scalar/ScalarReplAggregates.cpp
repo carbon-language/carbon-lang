@@ -178,6 +178,14 @@ bool SROA::performPromotion(Function &F) {
   return Changed;
 }
 
+/// getNumSAElements - Return the number of elements in the specific struct or
+/// array.
+static uint64_t getNumSAElements(const Type *T) {
+  if (const StructType *ST = dyn_cast<StructType>(T))
+    return ST->getNumElements();
+  return cast<ArrayType>(T)->getNumElements();
+}
+
 // performScalarRepl - This algorithm is a simple worklist driven algorithm,
 // which runs on all of the malloc/alloca instructions in the function, removing
 // them if they are only used by getelementptr instructions.
@@ -224,7 +232,10 @@ bool SROA::performScalarRepl(Function &F) {
         (isa<StructType>(AI->getAllocatedType()) ||
          isa<ArrayType>(AI->getAllocatedType())) &&
         AI->getAllocatedType()->isSized() &&
-        TD.getABITypeSize(AI->getAllocatedType()) < SRThreshold) {
+        // Do not promote any struct whose size is larger than "128" bytes.
+        TD.getABITypeSize(AI->getAllocatedType()) < SRThreshold &&
+        // Do not promote any struct into more than "32" separate vars.
+        getNumSAElements(AI->getAllocatedType()) < SRThreshold/4) {
       // Check that all of the users of the allocation are capable of being
       // transformed.
       switch (isSafeAllocaToScalarRepl(AI)) {
@@ -672,11 +683,9 @@ void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
       // If this is a memcpy/memmove, emit a GEP of the other element address.
       Value *OtherElt = 0;
       if (OtherPtr) {
-        Value *Idx[2];
-        Idx[0] = Zero;
-        Idx[1] = ConstantInt::get(Type::Int32Ty, i);
+        Value *Idx[2] = { Zero, ConstantInt::get(Type::Int32Ty, i) };
         OtherElt = GetElementPtrInst::Create(OtherPtr, Idx, Idx + 2,
-                                             OtherPtr->getNameStr()+"."+utostr(i),
+                                           OtherPtr->getNameStr()+"."+utostr(i),
                                              MI);
       }
 
