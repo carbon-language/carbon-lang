@@ -460,8 +460,9 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
   // L is now a subloop of our outer loop.
   NewOuter->addChildLoop(L);
 
-  for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i)
-    NewOuter->addBlockEntry(L->getBlocks()[i]);
+  for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
+       I != E; ++I)
+    NewOuter->addBlockEntry(*I);
 
   // Determine which blocks should stay in L and which should be moved out to
   // the Outer loop now.

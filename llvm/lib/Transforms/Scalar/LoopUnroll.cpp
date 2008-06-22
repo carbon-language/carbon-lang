@@ -67,8 +67,9 @@ LoopPass *llvm::createLoopUnrollPass() { return new LoopUnroll(); }
 /// ApproximateLoopSize - Approximate the size of the loop.
 static unsigned ApproximateLoopSize(const Loop *L) {
   unsigned Size = 0;
-  for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i) {
-    BasicBlock *BB = L->getBlocks()[i];
+  for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
+       I != E; ++I) {
+    BasicBlock *BB = *I;
     Instruction *Term = BB->getTerminator();
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
       if (isa<PHINode>(I) && BB == L->getHeader()) {

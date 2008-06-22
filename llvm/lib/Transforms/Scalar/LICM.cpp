@@ -258,10 +258,12 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Because subloops have already been incorporated into AST, we skip blocks in
   // subloops.
   //
-  for (std::vector<BasicBlock*>::const_iterator I = L->getBlocks().begin(),
-         E = L->getBlocks().end(); I != E; ++I)
-    if (LI->getLoopFor(*I) == L)        // Ignore blocks in subloops...
-      CurAST->add(**I);                 // Incorporate the specified basic block
+  for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
+       I != E; ++I) {
+    BasicBlock *BB = *I;
+    if (LI->getLoopFor(BB) == L)        // Ignore blocks in subloops...
+      CurAST->add(*BB);                 // Incorporate the specified basic block
+  }
 
   // We want to visit all of the instructions in this loop... that are not parts
   // of our subloops (they have already had their invariants hoisted out of
@@ -698,12 +700,11 @@ void LICM::PromoteValuesInLoop() {
   // Scan the basic blocks in the loop, replacing uses of our pointers with
   // uses of the allocas in question.
   //
-  const std::vector<BasicBlock*> &LoopBBs = CurLoop->getBlocks();
-  for (std::vector<BasicBlock*>::const_iterator I = LoopBBs.begin(),
-         E = LoopBBs.end(); I != E; ++I) {
+  for (Loop::block_iterator I = CurLoop->block_begin(),
+         E = CurLoop->block_end(); I != E; ++I) {
+    BasicBlock *BB = *I;
     // Rewrite all loads and stores in the block of the pointer...
-    for (BasicBlock::iterator II = (*I)->begin(), E = (*I)->end();
-         II != E; ++II) {
+    for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E; ++II) {
       if (LoadInst *L = dyn_cast<LoadInst>(II)) {
         std::map<Value*, AllocaInst*>::iterator
           I = ValueToAllocaMap.find(L->getOperand(0));

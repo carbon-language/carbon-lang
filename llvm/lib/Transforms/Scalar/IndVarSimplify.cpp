@@ -574,9 +574,10 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 #if 0
   // Now replace all derived expressions in the loop body with simpler
   // expressions.
-  for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i)
-    if (LI->getLoopFor(L->getBlocks()[i]) == L) {  // Not in a subloop...
-      BasicBlock *BB = L->getBlocks()[i];
+  for (LoopInfo::block_iterator I = L->block_begin(), E = L->block_end();
+       I != E; ++I) {
+    BasicBlock *BB = *I;
+    if (LI->getLoopFor(BB) == L) {  // Not in a subloop...
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
         if (I->getType()->isInteger() &&      // Is an integer instruction
             !I->use_empty() &&
@@ -593,6 +594,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
           }
         }
     }
+  }
 #endif
 
   DeleteTriviallyDeadInstructions(DeadInsts);
