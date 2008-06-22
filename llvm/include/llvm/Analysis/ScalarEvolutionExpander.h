@@ -75,11 +75,7 @@ namespace llvm {
     /// expandCodeFor - Insert code to directly compute the specified SCEV
     /// expression into the program.  The inserted code is inserted into the
     /// specified block.
-    Value *expandCodeFor(SCEVHandle SH, Instruction *IP) {
-      // Expand the code for this SCEV.
-      this->InsertPt = IP;
-      return expand(SH);
-    }
+    Value *expandCodeFor(SCEVHandle SH, Instruction *IP);
 
     /// InsertCastOfTo - Insert a cast of V to the specified type, doing what
     /// we can to share the casts.
@@ -96,20 +92,11 @@ namespace llvm {
       return S->getValue();
     }
 
-    Value *visitTruncateExpr(SCEVTruncateExpr *S) {
-      Value *V = expand(S->getOperand());
-      return CastInst::CreateTruncOrBitCast(V, S->getType(), "tmp.", InsertPt);
-    }
+    Value *visitTruncateExpr(SCEVTruncateExpr *S);
 
-    Value *visitZeroExtendExpr(SCEVZeroExtendExpr *S) {
-      Value *V = expand(S->getOperand());
-      return CastInst::CreateZExtOrBitCast(V, S->getType(), "tmp.", InsertPt);
-    }
+    Value *visitZeroExtendExpr(SCEVZeroExtendExpr *S);
 
-    Value *visitSignExtendExpr(SCEVSignExtendExpr *S) {
-      Value *V = expand(S->getOperand());
-      return CastInst::CreateSExtOrBitCast(V, S->getType(), "tmp.", InsertPt);
-    }
+    Value *visitSignExtendExpr(SCEVSignExtendExpr *S);
 
     Value *visitAddExpr(SCEVAddExpr *S);
 

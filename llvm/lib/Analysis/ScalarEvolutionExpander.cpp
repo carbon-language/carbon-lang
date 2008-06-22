@@ -226,6 +226,21 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
   return expand(V);
 }
 
+Value *SCEVExpander::visitTruncateExpr(SCEVTruncateExpr *S) {
+  Value *V = expand(S->getOperand());
+  return CastInst::createTruncOrBitCast(V, S->getType(), "tmp.", InsertPt);
+}
+
+Value *SCEVExpander::visitZeroExtendExpr(SCEVZeroExtendExpr *S) {
+  Value *V = expand(S->getOperand());
+  return CastInst::createZExtOrBitCast(V, S->getType(), "tmp.", InsertPt);
+}
+
+Value *SCEVExpander::visitSignExtendExpr(SCEVSignExtendExpr *S) {
+  Value *V = expand(S->getOperand());
+  return CastInst::createSExtOrBitCast(V, S->getType(), "tmp.", InsertPt);
+}
+
 Value *SCEVExpander::visitSMaxExpr(SCEVSMaxExpr *S) {
   Value *LHS = expand(S->getOperand(0));
   for (unsigned i = 1; i < S->getNumOperands(); ++i) {
@@ -244,6 +259,12 @@ Value *SCEVExpander::visitUMaxExpr(SCEVUMaxExpr *S) {
     LHS = SelectInst::Create(ICmp, LHS, RHS, "umax", InsertPt);
   }
   return LHS;
+}
+
+Value *SCEVExpander::expandCodeFor(SCEVHandle SH, Instruction *IP) {
+  // Expand the code for this SCEV.
+  this->InsertPt = IP;
+  return expand(SH);
 }
 
 Value *SCEVExpander::expand(SCEV *S) {
