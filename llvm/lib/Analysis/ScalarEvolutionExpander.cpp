@@ -147,7 +147,7 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
   }
 
   // {0,+,1} --> Insert a canonical induction variable into the loop!
-  if (S->getNumOperands() == 2 &&
+  if (S->isAffine() &&
       S->getOperand(1) == SE.getIntegerSCEV(1, Ty)) {
     // Create and insert the PHI node for the induction variable in the
     // specified loop.
@@ -178,7 +178,7 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
   Value *I = getOrInsertCanonicalInductionVariable(L, Ty);
 
   // If this is a simple linear addrec, emit it now as a special case.
-  if (S->getNumOperands() == 2) {   // {0,+,F} --> i*F
+  if (S->isAffine()) {   // {0,+,F} --> i*F
     Value *F = expand(S->getOperand(1));
     
     // IF the step is by one, just return the inserted IV.

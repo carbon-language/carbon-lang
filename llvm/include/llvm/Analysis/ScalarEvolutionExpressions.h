@@ -407,7 +407,7 @@ namespace llvm {
     /// indicating how much this expression steps by.  If this is a polynomial
     /// of degree N, it returns a chrec of degree N-1.
     SCEVHandle getStepRecurrence(ScalarEvolution &SE) const {
-      if (getNumOperands() == 2) return getOperand(1);
+      if (isAffine()) return getOperand(1);
       return SE.getAddRecExpr(std::vector<SCEVHandle>(op_begin()+1,op_end()),
                               getLoop());
     }
