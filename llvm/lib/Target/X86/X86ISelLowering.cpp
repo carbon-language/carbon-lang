@@ -25,7 +25,6 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/VectorExtras.h"
-#include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"

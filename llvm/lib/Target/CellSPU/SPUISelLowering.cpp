@@ -16,7 +16,6 @@
 #include "SPUTargetMachine.h"
 #include "SPUFrameInfo.h"
 #include "llvm/ADT/VectorExtras.h"
-#include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
