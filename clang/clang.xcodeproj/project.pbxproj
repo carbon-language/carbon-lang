@@ -399,6 +399,7 @@
 		DE5932CE0AD60FF400BC794C /* clang.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = clang.h; path = Driver/clang.h; sourceTree = "<group>"; };
 		DE5932CF0AD60FF400BC794C /* PrintParserCallbacks.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = PrintParserCallbacks.cpp; path = Driver/PrintParserCallbacks.cpp; sourceTree = "<group>"; };
 		DE5932D00AD60FF400BC794C /* PrintPreprocessedOutput.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = PrintPreprocessedOutput.cpp; path = Driver/PrintPreprocessedOutput.cpp; sourceTree = "<group>"; };
+		DE613EF30E0E148D00B05B79 /* APValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = APValue.h; path = clang/AST/APValue.h; sourceTree = "<group>"; };
 		DE67E70A0C020EC500F66BC5 /* SemaType.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = SemaType.cpp; path = lib/Sema/SemaType.cpp; sourceTree = "<group>"; };
 		DE67E70C0C020ECA00F66BC5 /* SemaStmt.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = SemaStmt.cpp; path = lib/Sema/SemaStmt.cpp; sourceTree = "<group>"; };
 		DE67E70E0C020ECF00F66BC5 /* SemaExprCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = SemaExprCXX.cpp; path = lib/Sema/SemaExprCXX.cpp; sourceTree = "<group>"; };
@@ -768,22 +769,24 @@
 		DEC8D98B0A9433BC00353FCA /* AST */ = {
 			isa = PBXGroup;
 			children = (
-				35EE48AD0E0C4CB200715C54 /* DeclCXX.h */,
-				35EE48AE0E0C4CB200715C54 /* ParentMap.h */,
-				35CEA05A0DF9E82700A41296 /* ExprObjC.h */,
+				DE613EF30E0E148D00B05B79 /* APValue.h */,
 				DEC8D9A30A94346E00353FCA /* AST.h */,
 				35BFBD2B0C9EDE1E006CB644 /* ASTConsumer.h */,
 				DE75ED280B044DC90020CF81 /* ASTContext.h */,
 				1A72BEAC0D641E9400B085E9 /* Attr.h */,
 				DED676D00B6C786700AAD4A3 /* Builtins.def */,
 				DED676F90B6C797B00AAD4A3 /* Builtins.h */,
+				1A68BC110D0CADDD001A28C8 /* PPCBuiltins.def */,
+				1A68BC130D0CADDD001A28C8 /* X86Builtins.def */,
 				DEC63B1B0C7B940600DBF169 /* CFG.h */,
 				DEC8D9900A9433CD00353FCA /* Decl.h */,
 				035611470DA6A45C00D2EF2A /* DeclBase.h */,
 				84AF36A00CB17A3B00C820A5 /* DeclObjC.h */,
+				35EE48AD0E0C4CB200715C54 /* DeclCXX.h */,
 				DE0FCA620A95859D00248FD5 /* Expr.h */,
 				1A30A9E80B93A4C800201A91 /* ExprCXX.h */,
-				1A68BC110D0CADDD001A28C8 /* PPCBuiltins.def */,
+				35CEA05A0DF9E82700A41296 /* ExprObjC.h */,
+				35EE48AE0E0C4CB200715C54 /* ParentMap.h */,
 				3547129D0C88881300B3E1D5 /* PrettyPrinter.h */,
 				DE6951C60C4D1F5D00A5826B /* RecordLayout.h */,
 				DE3452800AEF1B1800DBC861 /* Stmt.h */,
@@ -794,7 +797,6 @@
 				1A68BC120D0CADDD001A28C8 /* TargetBuiltins.h */,
 				35BB2D7A0D1994FA00944DB5 /* TranslationUnit.h */,
 				DE3464210B03040900DBC861 /* Type.h */,
-				1A68BC130D0CADDD001A28C8 /* X86Builtins.def */,
 			);
 			name = AST;
 			sourceTree = "<group>";
