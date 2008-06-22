@@ -6374,9 +6374,9 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // If the target wants to custom expand this, let them.
     if (TLI.getOperationAction(Node->getOpcode(), VT) ==
             TargetLowering::Custom) {
-      Op = TLI.LowerOperation(Op, DAG);
-      if (Op.Val) {
-        ExpandOp(Op, Lo, Hi);
+      SDOperand Result = TLI.LowerOperation(Op, DAG);
+      if (Result.Val) {
+        ExpandOp(Result, Lo, Hi);
         break;
       }
     }
