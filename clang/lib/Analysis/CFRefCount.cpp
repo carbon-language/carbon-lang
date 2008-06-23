@@ -232,7 +232,7 @@ class RetainSummaryManager {
           FuncSummariesTy;
   
   typedef llvm::DenseMap<Selector, RetainSummary*>
-          ObjCMethSummariesTy;
+          ObjCMethodSummariesTy;
     
   //==-----------------------------------------------------------------==//
   //  Data.
@@ -250,12 +250,12 @@ class RetainSummaryManager {
   // FuncSummaries - A map from FunctionDecls to summaries.
   FuncSummariesTy FuncSummaries; 
   
-  // ObjCInstMethSummaries - A map from selectors (for instance methods)
+  // ObjCClassMethodSummaries - A map from selectors (for instance methods)
   //  to summaries.
-  ObjCMethSummariesTy ObjCInstMethSummaries;
+  ObjCMethodSummariesTy ObjCClassMethodSummaries;
 
-  // ObjCMethSummaries - A map from selectors to summaries.
-  ObjCMethSummariesTy ObjCMethSummaries;
+  // ObjCMethodSummaries - A map from selectors to summaries.
+  ObjCMethodSummariesTy ObjCMethodSummaries;
 
   // ArgEffectsSet - A FoldingSet of uniqued ArgEffects.
   ArgEffectsSetTy ArgEffectsSet;
@@ -311,16 +311,16 @@ class RetainSummaryManager {
 
   RetainSummary* getInitMethodSummary(Selector S);
 
-  void InitializeInstMethSummaries();
-  void InitializeMethSummaries();
+  void InitializeClassMethodSummaries();
+  void InitializeMethodSummaries();
     
 public:
   
   RetainSummaryManager(ASTContext& ctx, bool gcenabled)
    : Ctx(ctx), GCEnabled(gcenabled), StopSummary(0) {
     
-     InitializeInstMethSummaries();
-     InitializeMethSummaries();
+     InitializeClassMethodSummaries();
+     InitializeMethodSummaries();
    }
   
   ~RetainSummaryManager();
@@ -328,7 +328,7 @@ public:
   RetainSummary* getSummary(FunctionDecl* FD, ASTContext& Ctx);
   
   RetainSummary* getMethodSummary(ObjCMessageExpr* ME);    
-  RetainSummary* getInstanceMethodSummary(IdentifierInfo* ClsName, Selector S);
+  RetainSummary* getClassMethodSummary(IdentifierInfo* ClsName, Selector S);
   
   bool isGCEnabled() const { return GCEnabled; }
 };
@@ -575,7 +575,7 @@ RetainSummaryManager::getInitMethodSummary(Selector S) {
   RetainSummary* Summ =
     getPersistentSummary(RetEffect::MakeReceiverAlias());
   
-  ObjCMethSummaries[S] = Summ;
+  ObjCMethodSummaries[S] = Summ;
   return Summ;
 }
 
@@ -585,9 +585,9 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME) {
   Selector S = ME->getSelector();
   
   // Look up a summary in our cache of Selectors -> Summaries.
-  ObjCMethSummariesTy::iterator I = ObjCMethSummaries.find(S);
+  ObjCMethodSummariesTy::iterator I = ObjCMethodSummaries.find(S);
   
-  if (I != ObjCMethSummaries.end())
+  if (I != ObjCMethodSummaries.end())
     return I->second;
   
 #if 0
@@ -596,7 +596,7 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME) {
 
   if (!isNSType(ME->getReceiver()->getType())) {
     RetainSummary* Summ = getPersistentStopSummary();
-    ObjCMethSummaries[S] = Summ;
+    ObjCMethodSummaries[S] = Summ;
     return Summ;
   }
 #endif 
@@ -624,7 +624,7 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME) {
                                 : RetEffect::MakeOwned(true);  
 
     RetainSummary* Summ = getPersistentSummary(E);
-    ObjCMethSummaries[S] = Summ;
+    ObjCMethodSummaries[S] = Summ;
     return Summ;
   }
   
@@ -632,19 +632,19 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME) {
 }
 
 RetainSummary*
-RetainSummaryManager::getInstanceMethodSummary(IdentifierInfo* ClsName,
-                                               Selector S) {
+RetainSummaryManager::getClassMethodSummary(IdentifierInfo* ClsName,
+                                            Selector S) {
   
   // Look up a summary in our cache of Selectors -> Summaries.
-  ObjCMethSummariesTy::iterator I = ObjCInstMethSummaries.find(S);
+  ObjCMethodSummariesTy::iterator I = ObjCClassMethodSummaries.find(S);
   
-  if (I != ObjCInstMethSummaries.end())
+  if (I != ObjCClassMethodSummaries.end())
     return I->second;
   
   return 0;
 }
 
-void RetainSummaryManager::InitializeInstMethSummaries() {
+void RetainSummaryManager::InitializeClassMethodSummaries() {
   
   assert (ScratchArgs.empty());
   
@@ -654,23 +654,23 @@ void RetainSummaryManager::InitializeInstMethSummaries() {
   RetainSummary* Summ = getPersistentSummary(E);
   
   // Create the "alloc" selector.
-  ObjCInstMethSummaries[ GetNullarySelector("alloc", Ctx) ] = Summ;
+  ObjCClassMethodSummaries[ GetNullarySelector("alloc", Ctx) ] = Summ;
   
   // Create the "new" selector.
-  ObjCInstMethSummaries[ GetNullarySelector("new", Ctx) ] = Summ;
+  ObjCClassMethodSummaries[ GetNullarySelector("new", Ctx) ] = Summ;
   
   // Create the "allocWithZone:" selector.
-  ObjCInstMethSummaries[ GetUnarySelector("allocWithZone", Ctx) ] = Summ;    
+  ObjCClassMethodSummaries[ GetUnarySelector("allocWithZone", Ctx) ] = Summ;    
 }
 
-void RetainSummaryManager::InitializeMethSummaries() {
+void RetainSummaryManager::InitializeMethodSummaries() {
   
   assert (ScratchArgs.empty());  
   
   // Create the "init" selector.  It just acts as a pass-through for the
   // receiver.
   RetainSummary* Summ = getPersistentSummary(RetEffect::MakeReceiverAlias());
-  ObjCMethSummaries[ GetNullarySelector("init", Ctx) ] = Summ;
+  ObjCMethodSummaries[ GetNullarySelector("init", Ctx) ] = Summ;
   
   // The next methods are allocators.
   RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
@@ -679,27 +679,27 @@ void RetainSummaryManager::InitializeMethSummaries() {
   Summ = getPersistentSummary(E);  
   
   // Create the "copy" selector.  
-  ObjCMethSummaries[ GetNullarySelector("copy", Ctx) ] = Summ;
+  ObjCMethodSummaries[ GetNullarySelector("copy", Ctx) ] = Summ;
   
   // Create the "mutableCopy" selector.
-  ObjCMethSummaries[ GetNullarySelector("mutableCopy", Ctx) ] = Summ;
+  ObjCMethodSummaries[ GetNullarySelector("mutableCopy", Ctx) ] = Summ;
 
   // Create the "retain" selector.
   E = RetEffect::MakeReceiverAlias();
   Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : IncRef);
-  ObjCMethSummaries[ GetNullarySelector("retain", Ctx) ] = Summ;
+  ObjCMethodSummaries[ GetNullarySelector("retain", Ctx) ] = Summ;
   
   // Create the "release" selector.
   Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : DecRef);
-  ObjCMethSummaries[ GetNullarySelector("release", Ctx) ] = Summ;
+  ObjCMethodSummaries[ GetNullarySelector("release", Ctx) ] = Summ;
   
   // Create the "drain" selector.
   Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : DecRef);
-  ObjCMethSummaries[ GetNullarySelector("drain", Ctx) ] = Summ;
+  ObjCMethodSummaries[ GetNullarySelector("drain", Ctx) ] = Summ;
 
   // Create the "autorelease" selector.
   Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : StopTracking);
-  ObjCMethSummaries[ GetNullarySelector("autorelease", Ctx) ] = Summ;
+  ObjCMethodSummaries[ GetNullarySelector("autorelease", Ctx) ] = Summ;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1284,8 +1284,8 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
   if (ME->getReceiver())
     Summ = Summaries.getMethodSummary(ME);
   else
-    Summ = Summaries.getInstanceMethodSummary(ME->getClassName(),
-                                              ME->getSelector());
+    Summ = Summaries.getClassMethodSummary(ME->getClassName(),
+                                           ME->getSelector());
 
   EvalSummary(Dst, Eng, Builder, ME, ME->getReceiver(), Summ,
               ME->arg_begin(), ME->arg_end(), Pred);
