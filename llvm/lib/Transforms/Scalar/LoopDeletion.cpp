@@ -209,7 +209,7 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
     for (BasicBlock::iterator BI = (*LI)->begin(), BE = (*LI)->end();
          BI != BE; ) {
       Instruction* I = BI++;
-      if (I->getNumUses() > 0 && IsLoopInvariantInst(I, L))
+      if (!I->use_empty() && IsLoopInvariantInst(I, L))
         I->moveBefore(preheader->getTerminator());
     }
   
