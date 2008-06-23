@@ -28,9 +28,9 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/PriorityQueue.h"
 #include "llvm/ADT/Statistic.h"
 #include <climits>
-#include <queue>
 using namespace llvm;
 
 STATISTIC(NumNoops , "Number of noops inserted");
@@ -315,7 +315,7 @@ namespace {
     /// mobility.
     std::vector<unsigned> NumNodesSolelyBlocking;
 
-    std::priority_queue<SUnit*, std::vector<SUnit*>, latency_sort> Queue;
+    PriorityQueue<SUnit*, std::vector<SUnit*>, latency_sort> Queue;
 public:
     LatencyPriorityQueue() : Queue(latency_sort(this)) {
     }
@@ -373,25 +373,9 @@ public:
       return V;
     }
 
-    /// remove - This is a really inefficient way to remove a node from a
-    /// priority queue.  We should roll our own heap to make this better or
-    /// something.
     void remove(SUnit *SU) {
-      std::vector<SUnit*> Temp;
-      
       assert(!Queue.empty() && "Not in queue!");
-      while (Queue.top() != SU) {
-        Temp.push_back(Queue.top());
-        Queue.pop();
-        assert(!Queue.empty() && "Not in queue!");
-      }
-
-      // Remove the node from the PQ.
-      Queue.pop();
-      
-      // Add all the other nodes back.
-      for (unsigned i = 0, e = Temp.size(); i != e; ++i)
-        Queue.push(Temp[i]);
+      Queue.erase_one(SU);
     }
 
     // ScheduledNode - As nodes are scheduled, we look to see if there are any
