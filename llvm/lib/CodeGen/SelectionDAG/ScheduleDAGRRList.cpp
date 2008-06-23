@@ -953,10 +953,11 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
   // While Available queue is not empty, grab the node with the highest
   // priority. If it is not ready put it back.  Schedule the node.
   SmallVector<SUnit*, 4> NotReady;
+  DenseMap<SUnit*, SmallVector<unsigned, 4> > LRegsMap;
   Sequence.reserve(SUnits.size());
   while (!AvailableQueue->empty()) {
     bool Delayed = false;
-    DenseMap<SUnit*, SmallVector<unsigned, 4> > LRegsMap;
+    LRegsMap.clear();
     SUnit *CurSU = AvailableQueue->pop();
     while (CurSU) {
       if (CurSU->CycleBound <= CurCycle) {
