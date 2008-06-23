@@ -377,6 +377,20 @@ public:
     V.Destroy(Allocator);
   }
 
+  bool erase(const char *Key) {
+    iterator I = find(Key);
+    if (I == end()) return false;
+    erase(I);
+    return true;
+  }
+
+  bool erase(std::string Key) {
+    iterator I = find(Key);
+    if (I == end()) return false;
+    erase(I);
+    return true;
+  }
+
   ~StringMap() {
     for (ItemBucket *I = TheTable, *E = TheTable+NumBuckets; I != E; ++I) {
       if (I->Item && I->Item != getTombstoneVal())
