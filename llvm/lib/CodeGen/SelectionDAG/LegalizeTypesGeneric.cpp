@@ -28,8 +28,8 @@ using namespace llvm;
 // little/big-endian machines, followed by the Hi/Lo part.  This means that
 // they cannot be used as is on vectors, for which Lo is always stored first.
 
-void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N,
-                                             SDOperand &Lo, SDOperand &Hi) {
+void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDOperand &Lo,
+                                             SDOperand &Hi) {
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   SDOperand InOp = N->getOperand(0);
   MVT InVT = InOp.getValueType();
@@ -78,15 +78,29 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N,
   ExpandRes_NormalLoad(Op.Val, Lo, Hi);
 }
 
-void DAGTypeLegalizer::ExpandRes_BUILD_PAIR(SDNode *N,
-                                            SDOperand &Lo, SDOperand &Hi) {
+void DAGTypeLegalizer::ExpandRes_BUILD_PAIR(SDNode *N, SDOperand &Lo,
+                                            SDOperand &Hi) {
   // Return the operands.
   Lo = N->getOperand(0);
   Hi = N->getOperand(1);
 }
 
-void DAGTypeLegalizer::ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N,
-                                                    SDOperand &Lo,
+void DAGTypeLegalizer::ExpandRes_EXTRACT_ELEMENT(SDNode *N, SDOperand &Lo,
+                                                 SDOperand &Hi) {
+  GetExpandedOp(N->getOperand(0), Lo, Hi);
+  SDOperand Part = cast<ConstantSDNode>(N->getOperand(1))->getValue() ? Hi : Lo;
+
+  assert(Part.getValueType() == N->getValueType(0) &&
+         "Type twice as big as expanded type not itself expanded!");
+  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+
+  Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, NVT, Part,
+                   DAG.getConstant(0, TLI.getPointerTy()));
+  Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, NVT, Part,
+                   DAG.getConstant(1, TLI.getPointerTy()));
+}
+
+void DAGTypeLegalizer::ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDOperand &Lo,
                                                     SDOperand &Hi) {
   SDOperand OldVec = N->getOperand(0);
   unsigned OldElts = OldVec.getValueType().getVectorNumElements();

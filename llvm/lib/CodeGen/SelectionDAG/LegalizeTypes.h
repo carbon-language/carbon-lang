@@ -280,10 +280,10 @@ private:
   void ExpandIntRes_FP_TO_UINT        (SDNode *N, SDOperand &Lo, SDOperand &Hi);
 
   void ExpandIntRes_Logical           (SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void ExpandIntRes_BSWAP             (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_ADDSUB            (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_ADDSUBC           (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_ADDSUBE           (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandIntRes_BSWAP             (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_MUL               (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_SDIV              (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_SREM              (SDNode *N, SDOperand &Lo, SDOperand &Hi);
@@ -464,6 +464,7 @@ private:
   // Generic Result Expansion.
   void ExpandRes_BIT_CONVERT       (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandRes_BUILD_PAIR        (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandRes_EXTRACT_ELEMENT   (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandRes_NormalLoad        (SDNode *N, SDOperand &Lo, SDOperand &Hi);
 
