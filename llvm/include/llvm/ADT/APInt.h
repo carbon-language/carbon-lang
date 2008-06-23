@@ -668,9 +668,11 @@ public:
     return this->urem(RHS);
   }
 
-  /// Sometimes it is convenient to divide two APInt values and obtain both
-  /// the quotient and remainder. This function does both operations in the
-  /// same computation making it a little more efficient.
+  /// Sometimes it is convenient to divide two APInt values and obtain both the
+  /// quotient and remainder. This function does both operations in the same
+  /// computation making it a little more efficient. The pair of input arguments
+  /// may overlap with the pair of output arguments. It is safe to call
+  /// udivrem(X, Y, X, Y), for example.
   /// @brief Dual division/remainder interface.
   static void udivrem(const APInt &LHS, const APInt &RHS, 
                       APInt &Quotient, APInt &Remainder);
@@ -1107,6 +1109,9 @@ public:
     return *this;
   }
 
+  /// @returns the multiplicative inverse for a given modulo.
+  APInt multiplicativeInverse(const APInt& modulo) const;
+
   /// @}
   /// @name Building-block Operations for APInt and APFloat
   /// @{
@@ -1301,7 +1306,7 @@ inline uint32_t logBase2(const APInt& APIVal) {
 }
 
 /// GreatestCommonDivisor - This function returns the greatest common
-/// divisor of the two APInt values using Enclid's algorithm.
+/// divisor of the two APInt values using Euclid's algorithm.
 /// @returns the greatest common divisor of Val1 and Val2
 /// @brief Compute GCD of two APInt values.
 APInt GreatestCommonDivisor(const APInt& Val1, const APInt& Val2);
