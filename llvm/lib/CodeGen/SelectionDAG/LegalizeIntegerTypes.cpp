@@ -1203,14 +1203,13 @@ void DAGTypeLegalizer::ExpandIntRes_MUL(SDNode *N,
     GetExpandedInteger(N->getOperand(0), LL, LH);
     GetExpandedInteger(N->getOperand(1), RL, RH);
     unsigned OuterBitSize = VT.getSizeInBits();
-    unsigned BitSize = NVT.getSizeInBits();
+    unsigned InnerBitSize = NVT.getSizeInBits();
     unsigned LHSSB = DAG.ComputeNumSignBits(N->getOperand(0));
     unsigned RHSSB = DAG.ComputeNumSignBits(N->getOperand(1));
 
-    if (DAG.MaskedValueIsZero(N->getOperand(0),
-                              APInt::getHighBitsSet(OuterBitSize, LHSSB)) &&
-        DAG.MaskedValueIsZero(N->getOperand(1),
-                              APInt::getHighBitsSet(OuterBitSize, RHSSB))) {
+    APInt HighMask = APInt::getHighBitsSet(OuterBitSize, InnerBitSize);
+    if (DAG.MaskedValueIsZero(N->getOperand(0), HighMask) &&
+        DAG.MaskedValueIsZero(N->getOperand(1), HighMask)) {
       // The inputs are both zero-extended.
       if (HasUMUL_LOHI) {
         // We can emit a umul_lohi.
@@ -1225,7 +1224,7 @@ void DAGTypeLegalizer::ExpandIntRes_MUL(SDNode *N,
         return;
       }
     }
-    if (LHSSB > BitSize && RHSSB > BitSize) {
+    if (LHSSB > InnerBitSize && RHSSB > InnerBitSize) {
       // The input values are both sign-extended.
       if (HasSMUL_LOHI) {
         // We can emit a smul_lohi.
@@ -1252,12 +1251,29 @@ void DAGTypeLegalizer::ExpandIntRes_MUL(SDNode *N,
       Hi = DAG.getNode(ISD::ADD, NVT, Hi, LH);
       return;
     }
+    if (HasMULHU) {
+      Lo = DAG.getNode(ISD::MUL, NVT, LL, RL);
+      Hi = DAG.getNode(ISD::MULHU, NVT, LL, RL);
+      RH = DAG.getNode(ISD::MUL, NVT, LL, RH);
+      LH = DAG.getNode(ISD::MUL, NVT, LH, RL);
+      Hi = DAG.getNode(ISD::ADD, NVT, Hi, RH);
+      Hi = DAG.getNode(ISD::ADD, NVT, Hi, LH);
+      return;
+    }
   }
 
   // If nothing else, we can make a libcall.
+  RTLIB::Libcall LC;
+  switch (VT.getSimpleVT()) {
+  default:
+    assert(false && "Unsupported MUL!");
+  case MVT::i64:
+    LC = RTLIB::MUL_I64;
+    break;
+  }
+
   SDOperand Ops[2] = { N->getOperand(0), N->getOperand(1) };
-  SplitInteger(MakeLibCall(RTLIB::MUL_I64, VT, Ops, 2, true/*sign irrelevant*/),
-               Lo, Hi);
+  SplitInteger(MakeLibCall(LC, VT, Ops, 2, true/*sign irrelevant*/), Lo, Hi);
 }
 
 void DAGTypeLegalizer::ExpandIntRes_SDIV(SDNode *N,
