@@ -16,6 +16,7 @@
 #define LLVM_CODEGEN_SELECTIONDAG_H
 
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 
@@ -621,9 +622,9 @@ private:
 
   std::vector<SDNode*> ValueTypeNodes;
   std::map<MVT, SDNode*, MVT::compareRawBits> ExtendedValueTypeNodes;
-  std::map<std::string, SDNode*> ExternalSymbols;
-  std::map<std::string, SDNode*> TargetExternalSymbols;
-  std::map<std::string, StringSDNode*> StringNodes;
+  StringMap<SDNode*> ExternalSymbols;
+  StringMap<SDNode*> TargetExternalSymbols;
+  StringMap<StringSDNode*> StringNodes;
 };
 
 template <> struct GraphTraits<SelectionDAG*> : public GraphTraits<SDNode*> {
