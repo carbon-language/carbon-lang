@@ -133,3 +133,11 @@ CFDateRef f8() {
   return date; // expected-warning{{leak}}
 }
 
+CFDateRef f9() {
+  CFDateRef date = CFDateCreate(0, CFAbsoluteTimeGetCurrent());
+  int *p = 0;
+  // test that the checker assumes that CFDateCreate returns a non-null
+  // pointer
+  if (!date) *p = 1; // no-warning
+  return date;
+}

@@ -113,8 +113,8 @@ namespace {
   
 class RetEffect {
 public:
-  enum Kind { NoRet = 0x0, Alias = 0x1, OwnedSymbol = 0x2,
-              NotOwnedSymbol = 0x3, ReceiverAlias=0x4 };
+  enum Kind { NoRet, Alias, OwnedSymbol, OwnedAllocatedSymbol,
+              NotOwnedSymbol, ReceiverAlias };
 
 private:
   unsigned Data;
@@ -133,7 +133,9 @@ public:
   
   static RetEffect MakeReceiverAlias() { return RetEffect(ReceiverAlias, 0); }
   
-  static RetEffect MakeOwned() { return RetEffect(OwnedSymbol, 0); }
+  static RetEffect MakeOwned(bool isAllocated = false) {
+    return RetEffect(isAllocated ? OwnedAllocatedSymbol : OwnedSymbol, 0);
+  }
   
   static RetEffect MakeNotOwned() { return RetEffect(NotOwnedSymbol, 0); }
   
@@ -534,7 +536,7 @@ RetainSummary* RetainSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
   //  just handle the default case.
 
   assert (ScratchArgs.empty());
-  return getPersistentSummary(RetEffect::MakeOwned());
+  return getPersistentSummary(RetEffect::MakeOwned(true));
 }
 
 RetainSummary* RetainSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
@@ -619,7 +621,7 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME) {
       CStrInCStrNoCase(s, "new")) {
     
     RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
-                                : RetEffect::MakeOwned();  
+                                : RetEffect::MakeOwned(true);  
 
     RetainSummary* Summ = getPersistentSummary(E);
     ObjCMethSummaries[S] = Summ;
@@ -640,57 +642,15 @@ RetainSummaryManager::getInstanceMethodSummary(IdentifierInfo* ClsName,
     return I->second;
   
   return 0;
-
-#if 0
-  return 0;
-  
-  // Don't track anything if using GC.
-  if (isGCEnabled())
-    return 0;  
-
-  // Inspect the class name and selecrtor to determine if this method
-  //  creates new objects.
-  const char* cls = ClsName->getName();
-  
-  if (cls[0] == 'N' && cls[1] == 'S')  // Ignore preceding "NS" (if present).
-    cls += 2;
-  
-  // Heuristic: XXXwithYYY, where XXX is the class name with the "NS"
-  //  stripped off is usually an allocation.
-  
-  const char* s = S.getIdentifierInfoForSlot(0)->getName();  
-  
-  if (cls[0] == '\0' || s[0] == '\0' || tolower(cls[0]) != s[0])
-    return 0;
-  
-  // Now look at the rest of the characters.
-  ++cls; ++s;
-  unsigned len = strlen(cls);
-  
-  // If the prefix doesn't match, don't generate a special summary.
-  if (strncmp(cls, s, len) != 0)
-    return 0;
-  
-  // Look at the text after the prefix.
-  s += len;  
-  
-  if (!(s[0] == '\0' || strncmp(s, "With", 4) == 0))
-    return 0;
-  
-  // Generate and return the summary.
-  assert (ScratchArgs.empty());
-  
-  RetainSummary* Summ = getPersistentSummary(RetEffect::MakeOwned());
-  ObjCInstMethSummaries[S] = Summ;
-  return Summ;
-#endif
 }
 
 void RetainSummaryManager::InitializeInstMethSummaries() {
   
   assert (ScratchArgs.empty());
   
-  RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet() : RetEffect::MakeOwned();  
+  RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
+                              : RetEffect::MakeOwned(true);  
+  
   RetainSummary* Summ = getPersistentSummary(E);
   
   // Create the "alloc" selector.
@@ -713,7 +673,9 @@ void RetainSummaryManager::InitializeMethSummaries() {
   ObjCMethSummaries[ GetNullarySelector("init", Ctx) ] = Summ;
   
   // The next methods are allocators.
-  RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet() : RetEffect::MakeOwned();  
+  RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
+                              : RetEffect::MakeOwned(true);
+  
   Summ = getPersistentSummary(E);  
   
   // Create the "copy" selector.  
@@ -1249,6 +1211,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
       break;
     }
       
+    case RetEffect::OwnedAllocatedSymbol:
     case RetEffect::OwnedSymbol: {
       unsigned Count = Builder.getCurrentBlockCount();
       SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
@@ -1260,6 +1223,10 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
       St = StateMgr.SetRVal(StateMgr.getPersistentState(StImpl),
                             Ex, lval::SymbolVal(Sym),
                             Eng.getCFG().isBlkExpr(Ex), false);
+      
+      // FIXME: Add a flag to the checker where allocations are allowed to fail.      
+      if (RE.getKind() == RetEffect::OwnedAllocatedSymbol)
+        St = StateMgr.AddNE(St, Sym, Eng.getBasicVals().getZeroWithPtrWidth());
       
       break;
     }
