@@ -22,6 +22,7 @@
 #include "llvm/Support/InstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
 
 using namespace llvm;
 
@@ -31,6 +32,9 @@ namespace {
   struct VISIBILITY_HIDDEN ADCE : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
     ADCE() : FunctionPass((intptr_t)&ID) {}
+    
+    SmallPtrSet<Instruction*, 1024> alive;
+    SmallVector<Instruction*, 1024> worklist;
     
     virtual bool runOnFunction(Function& F);
     
@@ -45,8 +49,8 @@ char ADCE::ID = 0;
 static RegisterPass<ADCE> X("adce", "Aggressive Dead Code Elimination");
 
 bool ADCE::runOnFunction(Function& F) {
-  SmallPtrSet<Instruction*, 32> alive;
-  std::vector<Instruction*> worklist;
+  alive.clear();
+  worklist.clear();
   
   // Collect the set of "root" instructions that are known live.
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
@@ -71,20 +75,20 @@ bool ADCE::runOnFunction(Function& F) {
   // The inverse of the live set is the dead set.  These are those instructions
   // which have no side effects and do not influence the control flow or return
   // value of the function, and may therefore be deleted safely.
-  SmallPtrSet<Instruction*, 32> dead;
+  // NOTE: We reuse the worklist vector here for memory efficiency.
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
     if (!alive.count(I.getInstructionIterator())) {
-      dead.insert(I.getInstructionIterator());
+      worklist.push_back(I.getInstructionIterator());
       I->dropAllReferences();
     }
   
-  for (SmallPtrSet<Instruction*, 32>::iterator I = dead.begin(),
-       E = dead.end(); I != E; ++I) {
+  for (SmallVector<Instruction*, 1024>::iterator I = worklist.begin(),
+       E = worklist.end(); I != E; ++I) {
     NumRemoved++;
     (*I)->eraseFromParent();
   }
     
-  return !dead.empty();
+  return !worklist.empty();
 }
 
 FunctionPass *llvm::createAggressiveDCEPass() {
