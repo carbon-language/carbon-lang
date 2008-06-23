@@ -29,10 +29,6 @@ DisableSharing("no-stack-slot-sharing",
              cl::init(false), cl::Hidden,
              cl::desc("Surpress slot sharing during stack coloring"));
 
-static cl::opt<int>
-DeleteLimit("slot-delete-limit", cl::init(-1), cl::Hidden,
-             cl::desc("Stack coloring slot deletion limit"));
-
 STATISTIC(NumEliminated,   "Number of stack slots eliminated due to coloring");
 
 namespace {
@@ -156,8 +152,7 @@ StackSlotColoring::OverlapWithAssignments(LiveInterval *li, int Color) const {
 int StackSlotColoring::ColorSlot(LiveInterval *li) {
   int Color = -1;
   bool Share = false;
-  if (!DisableSharing &&
-      (DeleteLimit == -1 || (int)NumEliminated < DeleteLimit)) {
+  if (!DisableSharing) {
     // Check if it's possible to reuse any of the used colors.
     Color = UsedColors.find_first();
     while (Color != -1) {
