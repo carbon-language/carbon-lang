@@ -1501,7 +1501,7 @@ class ExtractValueInst : public UnaryInstruction {
 
     if (NumIdx > 0)
       // This requires that the iterator points to contiguous memory.
-      return getIndexedType(Ptr, (const unsigned *)&*IdxBegin, NumIdx);
+      return getIndexedType(Ptr, &*IdxBegin, NumIdx);
     else
       return getIndexedType(Ptr, (const unsigned *)0, NumIdx);
   }
