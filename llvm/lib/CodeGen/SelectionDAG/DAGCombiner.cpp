@@ -1057,9 +1057,8 @@ SDOperand DAGCombiner::visitADDC(SDNode *N) {
                      DAG.getNode(ISD::CARRY_FALSE, MVT::Flag));
   
   // canonicalize constant to RHS.
-  if (N0C && !N1C) {
+  if (N0C && !N1C)
     return DAG.getNode(ISD::ADDC, N->getVTList(), N1, N0);
-  }
   
   // fold (addc x, 0) -> x + no carry out
   if (N1C && N1C->isNullValue())
@@ -1093,14 +1092,12 @@ SDOperand DAGCombiner::visitADDE(SDNode *N) {
   //MVT VT = N0.getValueType();
   
   // canonicalize constant to RHS
-  if (N0C && !N1C) {
+  if (N0C && !N1C)
     return DAG.getNode(ISD::ADDE, N->getVTList(), N1, N0, CarryIn);
-  }
   
   // fold (adde x, y, false) -> (addc x, y)
-  if (CarryIn.getOpcode() == ISD::CARRY_FALSE) {
+  if (CarryIn.getOpcode() == ISD::CARRY_FALSE)
     return DAG.getNode(ISD::ADDC, N->getVTList(), N1, N0);
-  }
   
   return SDOperand();
 }
