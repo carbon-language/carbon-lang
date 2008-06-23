@@ -192,7 +192,7 @@ SDOperand DAGTypeLegalizer::PromoteIntRes_SETCC(SDNode *N) {
 }
 
 SDOperand DAGTypeLegalizer::PromoteIntRes_LOAD(LoadSDNode *N) {
-  // FIXME: Add support for indexed loads.
+  assert(ISD::isUNINDEXEDLoad(N) && "Indexed load during type legalization!");
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   ISD::LoadExtType ExtType =
     ISD::isNON_EXTLoad(N) ? ISD::EXTLOAD : N->getExtensionType();
@@ -636,7 +636,7 @@ void DAGTypeLegalizer::PromoteSetCCOperands(SDOperand &NewLHS,SDOperand &NewRHS,
 }
 
 SDOperand DAGTypeLegalizer::PromoteIntOp_STORE(StoreSDNode *N, unsigned OpNo){
-  // FIXME: Add support for indexed stores.
+  assert(ISD::isUNINDEXEDStore(N) && "Indexed store during type legalization!");
   SDOperand Ch = N->getChain(), Ptr = N->getBasePtr();
   int SVOffset = N->getSrcValueOffset();
   unsigned Alignment = N->getAlignment();
@@ -1000,8 +1000,8 @@ void DAGTypeLegalizer::ExpandIntRes_FP_TO_UINT(SDNode *N, SDOperand &Lo,
 
 void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
                                          SDOperand &Lo, SDOperand &Hi) {
-  if (ISD::isNON_EXTLoad(N)) {
-    ExpandRes_NON_EXTLOAD(N, Lo, Hi);
+  if (ISD::isNormalLoad(N)) {
+    ExpandRes_NormalLoad(N, Lo, Hi);
     return;
   }
 
@@ -1860,8 +1860,8 @@ void DAGTypeLegalizer::ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
 }
 
 SDOperand DAGTypeLegalizer::ExpandIntOp_STORE(StoreSDNode *N, unsigned OpNo) {
-  if (ISD::isNON_TRUNCStore(N))
-    return ExpandOp_NON_TRUNCStore(N, OpNo);
+  if (ISD::isNormalStore(N))
+    return ExpandOp_NormalStore(N, OpNo);
 
   assert(ISD::isUNINDEXEDStore(N) && "Indexed store during type legalization!");
   assert(OpNo == 1 && "Can only expand the stored value so far");

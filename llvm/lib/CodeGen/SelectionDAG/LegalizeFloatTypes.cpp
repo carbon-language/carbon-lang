@@ -415,8 +415,8 @@ void DAGTypeLegalizer::ExpandFloatResult(SDNode *N, unsigned ResNo) {
 
 void DAGTypeLegalizer::ExpandFloatRes_LOAD(SDNode *N, SDOperand &Lo,
                                            SDOperand &Hi) {
-  if (ISD::isNON_EXTLoad(N)) {
-    ExpandRes_NON_EXTLOAD(N, Lo, Hi);
+  if (ISD::isNormalLoad(N)) {
+    ExpandRes_NormalLoad(N, Lo, Hi);
     return;
   }
 
@@ -502,8 +502,8 @@ bool DAGTypeLegalizer::ExpandFloatOperand(SDNode *N, unsigned OpNo) {
 }
 
 SDOperand DAGTypeLegalizer::ExpandFloatOp_STORE(SDNode *N, unsigned OpNo) {
-  if (ISD::isNON_TRUNCStore(N))
-    return ExpandOp_NON_TRUNCStore(N, OpNo);
+  if (ISD::isNormalStore(N))
+    return ExpandOp_NormalStore(N, OpNo);
 
   assert(ISD::isUNINDEXEDStore(N) && "Indexed store during type legalization!");
   assert(OpNo == 1 && "Can only expand the stored value so far");

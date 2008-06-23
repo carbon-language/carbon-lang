@@ -75,7 +75,7 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N,
 
   // Lower the bit-convert to a store/load from the stack, then expand the load.
   SDOperand Op = CreateStackStoreLoad(InOp, N->getValueType(0));
-  ExpandRes_NON_EXTLOAD(Op.Val, Lo, Hi);
+  ExpandRes_NormalLoad(Op.Val, Lo, Hi);
 }
 
 void DAGTypeLegalizer::ExpandRes_BUILD_PAIR(SDNode *N,
@@ -118,10 +118,9 @@ void DAGTypeLegalizer::ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N,
     std::swap(Lo, Hi);
 }
 
-void DAGTypeLegalizer::ExpandRes_NON_EXTLOAD(SDNode *N, SDOperand &Lo,
-                                             SDOperand &Hi) {
-  assert(ISD::isNON_EXTLoad(N) && "This routine is not for extending loads!");
-  assert(ISD::isUNINDEXEDLoad(N) && "Indexed load during type legalization!");
+void DAGTypeLegalizer::ExpandRes_NormalLoad(SDNode *N, SDOperand &Lo,
+                                            SDOperand &Hi) {
+  assert(ISD::isNormalLoad(N) && "This routine only for normal loads!");
 
   LoadSDNode *LD = cast<LoadSDNode>(N);
   MVT NVT = TLI.getTypeToTransformTo(LD->getValueType(0));
@@ -222,9 +221,8 @@ SDOperand DAGTypeLegalizer::ExpandOp_EXTRACT_ELEMENT(SDNode *N) {
   return cast<ConstantSDNode>(N->getOperand(1))->getValue() ? Hi : Lo;
 }
 
-SDOperand DAGTypeLegalizer::ExpandOp_NON_TRUNCStore(SDNode *N, unsigned OpNo) {
-  assert(ISD::isNON_TRUNCStore(N) && "This routine not for truncating stores!");
-  assert(ISD::isUNINDEXEDStore(N) && "Indexed store during type legalization!");
+SDOperand DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {
+  assert(ISD::isNormalStore(N) && "This routine only for normal stores!");
   assert(OpNo == 1 && "Can only expand the stored value so far");
 
   StoreSDNode *St = cast<StoreSDNode>(N);

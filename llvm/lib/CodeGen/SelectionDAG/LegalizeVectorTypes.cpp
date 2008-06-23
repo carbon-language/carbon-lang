@@ -100,7 +100,7 @@ SDOperand DAGTypeLegalizer::ScalarizeVecRes_UNDEF(SDNode *N) {
 }
 
 SDOperand DAGTypeLegalizer::ScalarizeVecRes_LOAD(LoadSDNode *N) {
-  // FIXME: Add support for indexed loads.
+  assert(ISD::isUNINDEXEDLoad(N) && "Indexed load during type legalization!");
   SDOperand Result = DAG.getLoad(N->getValueType(0).getVectorElementType(),
                                  N->getChain(), N->getBasePtr(),
                                  N->getSrcValue(), N->getSrcValueOffset(),
@@ -232,7 +232,7 @@ SDOperand DAGTypeLegalizer::ScalarizeVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
 /// ScalarizeVecOp_STORE - If the value to store is a vector that needs to be
 /// scalarized, it must be <1 x ty>.  Just store the element.
 SDOperand DAGTypeLegalizer::ScalarizeVecOp_STORE(StoreSDNode *N, unsigned OpNo){
-  // FIXME: Add support for indexed stores.
+  assert(ISD::isUNINDEXEDStore(N) && "Indexed store during type legalization!");
   assert(OpNo == 1 && "Do not know how to scalarize this operand!");
   return DAG.getStore(N->getChain(), GetScalarizedVector(N->getOperand(1)),
                       N->getBasePtr(), N->getSrcValue(), N->getSrcValueOffset(),
@@ -328,7 +328,7 @@ void DAGTypeLegalizer::SplitResult(SDNode *N, unsigned ResNo) {
 
 void DAGTypeLegalizer::SplitVecRes_LOAD(LoadSDNode *LD, SDOperand &Lo,
                                         SDOperand &Hi) {
-  // FIXME: Add support for indexed loads.
+  assert(ISD::isUNINDEXEDLoad(LD) && "Indexed load during type legalization!");
   MVT LoVT, HiVT;
   GetSplitDestVTs(LD->getValueType(0), LoVT, HiVT);
 
@@ -622,7 +622,7 @@ bool DAGTypeLegalizer::SplitOperand(SDNode *N, unsigned OpNo) {
 }
 
 SDOperand DAGTypeLegalizer::SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo) {
-  // FIXME: Add support for indexed stores.
+  assert(ISD::isUNINDEXEDStore(N) && "Indexed store during type legalization!");
   assert(OpNo == 1 && "Can only split the stored value");
 
   SDOperand Ch  = N->getChain();

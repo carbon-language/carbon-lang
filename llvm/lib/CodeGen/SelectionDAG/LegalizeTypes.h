@@ -465,13 +465,13 @@ private:
   void ExpandRes_BIT_CONVERT       (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandRes_BUILD_PAIR        (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void ExpandRes_NON_EXTLOAD       (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandRes_NormalLoad        (SDNode *N, SDOperand &Lo, SDOperand &Hi);
 
   // Generic Operand Expansion.
   SDOperand ExpandOp_BIT_CONVERT    (SDNode *N);
   SDOperand ExpandOp_BUILD_VECTOR   (SDNode *N);
   SDOperand ExpandOp_EXTRACT_ELEMENT(SDNode *N);
-  SDOperand ExpandOp_NON_TRUNCStore (SDNode *N, unsigned OpNo);
+  SDOperand ExpandOp_NormalStore    (SDNode *N, unsigned OpNo);
 
 };
 
