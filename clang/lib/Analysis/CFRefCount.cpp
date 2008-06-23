@@ -214,8 +214,52 @@ public:
     Profile(ID, Args, Ret, DefaultArgEffect, Receiver);
   }
 };
+} // end anonymous namespace
 
+namespace {
+  class VISIBILITY_HIDDEN ObjCSummaryKey {
+    ObjCInterfaceDecl* D;
+    Selector S;
+  public:    
+    ObjCSummaryKey(ObjCInterfaceDecl* d, Selector s) : D(d), S(s) {}
+    
+    ObjCInterfaceDecl* getDecl() const { return D; }
+    Selector getSelector() const { return S; }
+  };
+}
+
+namespace llvm {
+  template <> struct DenseMapInfo<ObjCSummaryKey> {
+    static inline ObjCSummaryKey getEmptyKey() {
+      return ObjCSummaryKey(DenseMapInfo<ObjCInterfaceDecl*>::getEmptyKey(),
+                            DenseMapInfo<Selector>::getEmptyKey());
+    }
+      
+    static inline ObjCSummaryKey getTombstoneKey() {
+      return ObjCSummaryKey(DenseMapInfo<ObjCInterfaceDecl*>::getTombstoneKey(),
+                            DenseMapInfo<Selector>::getTombstoneKey());      
+    }
+    
+    static unsigned getHashValue(const ObjCSummaryKey &V) {
+      return 
+        (DenseMapInfo<ObjCInterfaceDecl*>::getHashValue(V.getDecl())&0x88888888)
+        |(DenseMapInfo<Selector>::getHashValue(V.getSelector()) & 0x55555555);
+    }
+    
+    static bool isEqual(const ObjCSummaryKey& LHS, const ObjCSummaryKey& RHS) {
+      return
+        DenseMapInfo<ObjCInterfaceDecl*>::isEqual(LHS.getDecl(), RHS.getDecl())
+        && DenseMapInfo<Selector>::isEqual(LHS.getSelector(),RHS.getSelector());
+    }
+    
+    static bool isPod() {
+      return DenseMapInfo<ObjCInterfaceDecl*>::isPod() &&
+             DenseMapInfo<Selector>::isPod();
+    }
+  };
+} // end llvm namespace
   
+namespace {
 class RetainSummaryManager {
 
   //==-----------------------------------------------------------------==//
@@ -231,8 +275,65 @@ class RetainSummaryManager {
   typedef llvm::DenseMap<FunctionDecl*, RetainSummary*>
           FuncSummariesTy;
   
+  class ObjCSummaryCache {
+    typedef llvm::DenseMap<ObjCSummaryKey, RetainSummary*> MapTy;
+    MapTy M;
+  public:
+    ObjCSummaryCache() {}
+    
+    typedef MapTy::iterator iterator;
+    
+    iterator find(ObjCInterfaceDecl* D, Selector S) {
+
+      // Do a lookup with the (D,S) pair.  If we find a match return
+      // the iterator.
+      ObjCSummaryKey K(D, S);
+      MapTy::iterator I = M.find(K);
+
+      if (I != M.end() || !D)
+        return I;
+      
+      // Walk the super chain.  If we find a hit with a parent, we'll end
+      // up returning that summary.  We actually allow that key (null,S), as
+      // we cache summaries for the null ObjCInterfaceDecl* to allow us to
+      // generate initial summaries without having to worry about NSObject
+      // being declared.
+      // FIXME: We may change this at some point.
+      for (ObjCInterfaceDecl* C=D->getSuperClass() ;; C=C->getSuperClass()) {
+        if ((I = M.find(ObjCSummaryKey(C, S))) != M.end())
+          break;
+      
+        if (!C)
+          return I;
+      }
+      
+      // Cache the summary with original key to make the next lookup faster 
+      // and return the iterator.
+      M[K] = I->second;
+      return I;
+    }
+    
+    iterator find(Selector S) {
+      return find(0, S);
+    }
+    
+    iterator end() { return M.end(); }
+    
+    RetainSummary*& operator()(ObjCInterfaceDecl* D, Selector S) {
+      return M[ ObjCSummaryKey(D,S) ];
+    }
+    
+    RetainSummary*& operator[](Selector S) {
+      return M[ ObjCSummaryKey(0,S) ];
+    }    
+  };
+  
+#if 0
   typedef llvm::DenseMap<Selector, RetainSummary*>
           ObjCMethodSummariesTy;
+#else
+  typedef ObjCSummaryCache ObjCMethodSummariesTy;
+#endif
     
   //==-----------------------------------------------------------------==//
   //  Data.
