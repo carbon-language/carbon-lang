@@ -712,10 +712,8 @@ const SmallVector<unsigned, 4> &ConstantExpr::getIndices() const {
   if (const ExtractValueConstantExpr *EVCE =
         dyn_cast<ExtractValueConstantExpr>(this))
     return EVCE->Indices;
-  if (const InsertValueConstantExpr *IVCE =
-        dyn_cast<InsertValueConstantExpr>(this))
-    return IVCE->Indices;
-  assert(0 && "ConstantExpr does not have indices!");
+
+  return cast<InsertValueConstantExpr>(this)->Indices;
 }
 
 /// ConstantExpr::get* - Return some common constants without having to
@@ -829,7 +827,7 @@ ConstantExpr::getWithOperandReplaced(unsigned OpNo, Constant *Op) const {
     Op2 = (OpNo == 2) ? Op : getOperand(2);
     return ConstantExpr::getShuffleVector(Op0, Op1, Op2);
   case Instruction::InsertValue: {
-    const SmallVector<unsigned, 4> Indices = getIndices();
+    const SmallVector<unsigned, 4> &Indices = getIndices();
     Op0 = (OpNo == 0) ? Op : getOperand(0);
     Op1 = (OpNo == 1) ? Op : getOperand(1);
     return ConstantExpr::getInsertValue(Op0, Op1,
@@ -837,7 +835,7 @@ ConstantExpr::getWithOperandReplaced(unsigned OpNo, Constant *Op) const {
   }
   case Instruction::ExtractValue: {
     assert(OpNo == 0 && "ExtractaValue has only one operand!");
-    const SmallVector<unsigned, 4> Indices = getIndices();
+    const SmallVector<unsigned, 4> &Indices = getIndices();
     return
       ConstantExpr::getExtractValue(Op, &Indices[0], Indices.size());
   }
@@ -897,12 +895,12 @@ getWithOperands(const std::vector<Constant*> &Ops) const {
   case Instruction::ShuffleVector:
     return ConstantExpr::getShuffleVector(Ops[0], Ops[1], Ops[2]);
   case Instruction::InsertValue: {
-    const SmallVector<unsigned, 4> Indices = getIndices();
+    const SmallVector<unsigned, 4> &Indices = getIndices();
     return ConstantExpr::getInsertValue(Ops[0], Ops[1],
                                         &Indices[0], Indices.size());
   }
   case Instruction::ExtractValue: {
-    const SmallVector<unsigned, 4> Indices = getIndices();
+    const SmallVector<unsigned, 4> &Indices = getIndices();
     return ConstantExpr::getExtractValue(Ops[0],
                                          &Indices[0], Indices.size());
   }
