@@ -305,7 +305,7 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
   spiller_->runOnMachineFunction(*mf_, *vrm_);
   vrm_.reset();  // Free the VirtRegMap
 
-  while (!unhandled_.empty()) unhandled_.pop();
+  assert(unhandled_.empty() && "Unhandled live intervals remain!");
   fixed_.clear();
   active_.clear();
   inactive_.clear();
