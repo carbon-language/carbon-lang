@@ -1535,7 +1535,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
       GEN_ERROR("Cannot make array constant with type: '" + 
                      (*$1)->getDescription() + "'");
     const Type *ETy = ATy->getElementType();
-    int NumElements = ATy->getNumElements();
+    uint64_t NumElements = ATy->getNumElements();
 
     // Verify that we have the correct size...
     if (NumElements != -1 && NumElements != (int)$3->size())
@@ -1563,7 +1563,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
       GEN_ERROR("Cannot make array constant with type: '" + 
                      (*$1)->getDescription() + "'");
 
-    int NumElements = ATy->getNumElements();
+    uint64_t NumElements = ATy->getNumElements();
     if (NumElements != -1 && NumElements != 0) 
       GEN_ERROR("Type mismatch: constant sized array initialized with 0"
                      " arguments, but has size of " + itostr(NumElements) +"");
@@ -1579,7 +1579,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
       GEN_ERROR("Cannot make array constant with type: '" + 
                      (*$1)->getDescription() + "'");
 
-    int NumElements = ATy->getNumElements();
+    uint64_t NumElements = ATy->getNumElements();
     const Type *ETy = ATy->getElementType();
     if (NumElements != -1 && NumElements != int($3->length()))
       GEN_ERROR("Can't build string constant of size " + 
@@ -1606,7 +1606,7 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
       GEN_ERROR("Cannot make packed constant with type: '" + 
                      (*$1)->getDescription() + "'");
     const Type *ETy = PTy->getElementType();
-    int NumElements = PTy->getNumElements();
+    unsigned NumElements = PTy->getNumElements();
 
     // Verify that we have the correct size...
     if (NumElements != -1 && NumElements != (int)$3->size())
@@ -2479,7 +2479,7 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
   }
   | '<' ConstVector '>' { // Nonempty unsized packed vector
     const Type *ETy = (*$2)[0]->getType();
-    int NumElements = $2->size(); 
+    unsigned NumElements = $2->size(); 
 
     if (!ETy->isInteger() && !ETy->isFloatingPoint())
       GEN_ERROR("Invalid vector element type: " + ETy->getDescription());
@@ -2501,7 +2501,7 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
   }
   | '[' ConstVector ']' { // Nonempty unsized arr
     const Type *ETy = (*$2)[0]->getType();
-    int NumElements = $2->size(); 
+    uint64_t NumElements = $2->size(); 
 
     if (!ETy->isFirstClassType())
       GEN_ERROR("Invalid array element type: " + ETy->getDescription());
@@ -2522,11 +2522,13 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
     CHECK_FOR_ERROR
   }
   | '[' ']' {
+    // Use undef instead of an array because it's inconvenient to determine
+    // the element type at this point, there being no elements to examine.
     $$ = ValID::createUndef();
     CHECK_FOR_ERROR
   }
   | 'c' STRINGCONSTANT {
-    int NumElements = $2->length();
+    uint64_t NumElements = $2->length();
     const Type *ETy = Type::Int8Ty;
 
     ArrayType *ATy = ArrayType::get(ETy, NumElements);
