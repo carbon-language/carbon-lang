@@ -443,7 +443,7 @@ bool SimpleRegisterCoalescing::isBackEdgeCopy(MachineInstr *CopyMI,
     LI.FindLiveRangeContaining(li_->getDefIndex(DefIdx));
   if (DstLR == LI.end())
     return false;
-  unsigned KillIdx = li_->getInstructionIndex(&MBB->back()) + InstrSlots::NUM;
+  unsigned KillIdx = li_->getMBBEndIdx(MBB) + 1;
   if (DstLR->valno->kills.size() == 1 &&
       DstLR->valno->kills[0] == KillIdx && DstLR->valno->hasPHIKill)
     return true;
