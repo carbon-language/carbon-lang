@@ -719,10 +719,11 @@ namespace {
     
     // This transformation requires dominator postdominator info
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.setPreservesCFG();
       AU.addRequired<DominatorTree>();
       AU.addRequired<MemoryDependenceAnalysis>();
       AU.addRequired<AliasAnalysis>();
+      
+      AU.addPreserved<DominatorTree>();
       AU.addPreserved<AliasAnalysis>();
       AU.addPreserved<MemoryDependenceAnalysis>();
     }
@@ -1019,7 +1020,11 @@ bool GVN::processLoad(LoadInst *L, DenseMap<Value*, LoadInst*> &lastLoad,
 }
 
 Value* GVN::lookupNumber(BasicBlock* BB, uint32_t num) {
-  ValueNumberScope* locals = localAvail[BB];
+  DenseMap<BasicBlock*, ValueNumberScope*>::iterator I = localAvail.find(BB);
+  if (I == localAvail.end())
+    return 0;
+  
+  ValueNumberScope* locals = I->second;
   
   while (locals) {
     DenseMap<uint32_t, Value*>::iterator I = locals->table.find(num);
@@ -1167,9 +1172,9 @@ bool GVN::performPRE(Function& F) {
     
     for (BasicBlock::iterator BI = CurrentBlock->begin(),
          BE = CurrentBlock->end(); BI != BE; ) {
-      if (isa<AllocaInst>(BI) || isa<TerminatorInst>(BI) ||
-          isa<LoadInst>(BI) || isa<StoreInst>(BI) ||
-          isa<CallInst>(BI) || isa<PHINode>(BI)) {
+      if (isa<AllocationInst>(BI) || isa<TerminatorInst>(BI) ||
+          isa<PHINode>(BI) || BI->mayReadFromMemory() ||
+          BI->mayWriteToMemory()) {
         BI++;
         continue;
       }
@@ -1282,13 +1287,6 @@ bool GVN::performPRE(Function& F) {
         Phi->addIncoming(predMap[*PI], *PI);
       
       VN.add(Phi, valno);
-      
-      // The newly created PHI completely replaces the old instruction,
-      // so we need to update the maps to reflect this.
-      DomTreeNode* DTN = getAnalysis<DominatorTree>()[CurrentBlock];
-      for (DomTreeNode::iterator UI = DTN->begin(), UE = DTN->end();
-           UI != UE; ++UI)
-        localAvail[(*UI)->getBlock()]->table[valno] = Phi;
       localAvail[CurrentBlock]->table[valno] = Phi;
       
       BI->replaceAllUsesWith(Phi);
