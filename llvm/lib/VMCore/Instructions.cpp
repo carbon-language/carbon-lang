@@ -190,9 +190,7 @@ void PHINode::resizeOperands(unsigned NumOps) {
   ReservedSpace = NumOps;
   Use *OldOps = OperandList;
   Use *NewOps = allocHungoffUses(NumOps);
-  for (unsigned i = 0; i != e; ++i) {
-      NewOps[i] = OldOps[i];
-  }
+  std::copy(OldOps, OldOps + e, NewOps);
   OperandList = NewOps;
   if (OldOps) Use::zap(OldOps, OldOps + e, true);
 }
