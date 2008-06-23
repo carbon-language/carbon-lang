@@ -173,20 +173,18 @@ rm bin/.dir etc/llvm/.dir lib/.dir
 
 # Remove PPC64 fat slices.
 cd $DEST_DIR$DEST_ROOT/bin
-
 if [ $MACOSX_DEPLOYMENT_TARGET = "10.4" ]; then
     find . -perm 755 -type f -exec lipo -extract ppc -extract i386 {} -output {} \;
-else
+elif [ $MACOSX_DEPLOYMENT_TARGET = "10.5" ]; then
     find . -perm 755 -type f -exec lipo -extract ppc7400 -extract i386 {} -output {} \;
+else
+    find . -perm 755 -type f -exec lipo -extract ppc7400 -extract i386 -extract x86_64 {} -output {} \;
 fi
 
 cd $DEST_DIR$DEST_ROOT
-
 mkdir -p $DT_HOME/lib
 mv lib/libLTO.dylib $DT_HOME/lib/libLTO.dylib
 rm -f lib/libLTO.a lib/libLTO.la
-
-
 
 ################################################################################
 # Create SYM_DIR with information required for debugging.
