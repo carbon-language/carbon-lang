@@ -70,6 +70,12 @@ public:
   void reheapify() {
     std::make_heap(this->c.begin(), this->c.end(), this->comp);
   }
+
+  /// clear - Erase all elements from the queue.
+  ///
+  void clear() {
+    this->c.clear();
+  }
 };
 
 } // End llvm namespace
