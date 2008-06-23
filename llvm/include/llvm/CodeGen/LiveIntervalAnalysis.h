@@ -169,6 +169,15 @@ namespace llvm {
       return MBB2IdxMap[MBBNo].second;
     }
 
+    /// getIntervalSize - get the size of an interval in "units,"
+    /// where every function is composed of one thousand units.  This
+    /// measure scales properly with empty index slots in the function.
+    unsigned getScaledIntervalSize(LiveInterval& I) {
+      // Factor of 250 comes from 1000 units per function divided
+      // by four slots per instruction.
+      return (250 * I.getSize()) / i2miMap_.size();
+    }
+
     /// getMBBFromIndex - given an index in any instruction of an
     /// MBB return a pointer the MBB
     MachineBasicBlock* getMBBFromIndex(unsigned index) const {
