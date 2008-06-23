@@ -51,7 +51,7 @@ public:
     // Logarithmic-time heap bubble-up.
     while (i != 0) {
       typename Sequence::size_type parent = (i - 1) / 2;
-      std::swap(this->c[i], this->c[parent]);
+      this->c[i] = this->c[parent];
       i = parent;
     }
 
