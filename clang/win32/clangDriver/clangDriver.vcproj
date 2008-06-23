@@ -20,6 +20,7 @@
 			OutputDirectory="..\Debug"
 			IntermediateDirectory="Debug"
 			ConfigurationType="1"
+			InheritedPropertySheets="..\..\..\..\win32\common.vsprops"
 			CharacterSet="2"
 			ManagedExtensions="0"
 			>
@@ -101,6 +102,7 @@
 			OutputDirectory="..\Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="1"
+			InheritedPropertySheets="..\..\..\..\win32\common.vsprops"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>

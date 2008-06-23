@@ -20,6 +20,7 @@
 			OutputDirectory="..\Debug"
 			IntermediateDirectory="Debug"
 			ConfigurationType="4"
+			InheritedPropertySheets="..\..\..\..\win32\common.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -85,6 +86,7 @@
 			OutputDirectory="..\Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="4"
+			InheritedPropertySheets="..\..\..\..\win32\common.vsprops"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
@@ -193,6 +195,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\AST\ParentMap.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\AST\Stmt.cpp"
 				>
 			</File>
@@ -268,6 +274,10 @@
 			</File>
 			<File
 				RelativePath="..\..\include\clang\AST\ExprCXX.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\clang\AST\ParentMap.h"
 				>
 			</File>
 			<File

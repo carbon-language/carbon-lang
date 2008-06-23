@@ -20,6 +20,7 @@
 			OutputDirectory="..\Debug"
 			IntermediateDirectory="Debug"
 			ConfigurationType="4"
+			InheritedPropertySheets="..\..\..\..\win32\common.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -83,6 +84,7 @@
 			OutputDirectory="..\Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="4"
+			InheritedPropertySheets="..\..\..\..\win32\common.vsprops"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
