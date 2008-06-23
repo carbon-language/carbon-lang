@@ -139,8 +139,23 @@ void LiveVariables::HandleVirtRegUse(unsigned reg, MachineBasicBlock *MBB,
     assert(VRInfo.Kills[i]->getParent() != MBB && "entry should be at end!");
 #endif
 
-  assert(MBB != MRI->getVRegDef(reg)->getParent() &&
-         "Should have kill for defblock!");
+  // This situation can occur:
+  //
+  //     ,------.
+  //     |      |
+  //     |      v
+  //     |   t2 = phi ... t1 ...
+  //     |      |
+  //     |      v
+  //     |   t1 = ...
+  //     |  ... = ... t1 ...
+  //     |      |
+  //     `------'
+  //
+  // where there is a use in a PHI node that's a predecessor to the defining
+  // block. We don't want to mark all predecessors as having the value "alive"
+  // in this case.
+  if (MBB == MRI->getVRegDef(reg)->getParent()) return;
 
   // Add a new kill entry for this basic block. If this virtual register is
   // already marked as alive in this basic block, that means it is alive in at
