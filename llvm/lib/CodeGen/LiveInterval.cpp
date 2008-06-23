@@ -678,8 +678,8 @@ void LiveRange::dump() const {
 
 void LiveInterval::print(std::ostream &OS,
                          const TargetRegisterInfo *TRI) const {
-  if (isSS)
-    OS << "SS#" << reg;
+  if (isStackSlot())
+    OS << "SS#" << getStackSlotIndex();
   else if (TRI && TargetRegisterInfo::isPhysicalRegister(reg))
     OS << TRI->getName(reg);
   else

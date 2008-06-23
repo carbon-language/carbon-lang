@@ -1,4 +1,4 @@
-//===-- StackSlotColoring.cpp - Sinking for machine instructions ----------===//
+//===-- StackSlotColoring.cpp - Stack slot coloring pass. -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,9 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "stackcoloring"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -201,7 +201,6 @@ int StackSlotColoring::ColorSlot(LiveInterval *li) {
 bool StackSlotColoring::ColorSlots(MachineFunction &MF) {
   unsigned NumObjs = MFI->getObjectIndexEnd();
   std::vector<int> SlotMapping(NumObjs, -1);
-  SlotMapping.resize(NumObjs, -1);
 
   bool Changed = false;
   for (unsigned i = 0, e = SSIntervals.size(); i != e; ++i) {

@@ -101,8 +101,8 @@ namespace llvm {
     typedef SmallVector<LiveRange,4> Ranges;
     typedef SmallVector<VNInfo*,4> VNInfoList;
 
-    bool isSS;           // True if this represents a stack slot
     unsigned reg;        // the register or stack slot of this interval
+                         // if the top bits is set, it represents a stack slot.
     unsigned preference; // preferred register to allocate for this interval
     float weight;        // weight of this interval
     Ranges ranges;       // the ranges in which this register is live
@@ -110,7 +110,9 @@ namespace llvm {
 
   public:
     LiveInterval(unsigned Reg, float Weight, bool IsSS = false)
-      : isSS(IsSS), reg(Reg), preference(0), weight(Weight) {
+      : reg(Reg), preference(0), weight(Weight) {
+      if (IsSS)
+        reg = reg | (1U << (sizeof(unsigned)*8-1));
     }
 
     typedef Ranges::iterator iterator;
@@ -143,13 +145,15 @@ namespace llvm {
 
     /// isStackSlot - Return true if this is a stack slot interval.
     ///
-    bool isStackSlot() const { return isSS; }
+    bool isStackSlot() const {
+      return reg & (1U << (sizeof(unsigned)*8-1));
+    }
 
     /// getStackSlotIndex - Return stack slot index if this is a stack slot
     /// interval.
     int getStackSlotIndex() const {
       assert(isStackSlot() && "Interval is not a stack slot interval!");
-      return reg;
+      return reg & ~(1U << (sizeof(unsigned)*8-1));
     }
 
     bool containsOneValue() const { return valnos.size() == 1; }
