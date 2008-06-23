@@ -1465,24 +1465,6 @@ const Type* ExtractValueInst::getIndexedType(const Type *Agg,
   return getIndexedType(Agg, &Idx, 1);
 }
 
-ExtractValueInst::ExtractValueInst(Value *Agg,
-                                   unsigned Idx,
-                                   const std::string &Name,
-                                   BasicBlock *InsertAtEnd)
-  : UnaryInstruction(checkType(getIndexedType(Agg->getType(), &Idx, 1)),
-		     ExtractValue, Agg, InsertAtEnd) {
-  init(Idx, Name);
-}
-
-ExtractValueInst::ExtractValueInst(Value *Agg,
-                                   unsigned Idx,
-                                   const std::string &Name,
-                                   Instruction *InsertBefore)
-  : UnaryInstruction(checkType(getIndexedType(Agg->getType(), &Idx, 1)),
-		     ExtractValue, Agg, InsertBefore) {
-  init(Idx, Name);
-}
-
 //===----------------------------------------------------------------------===//
 //                             BinaryOperator Class
 //===----------------------------------------------------------------------===//

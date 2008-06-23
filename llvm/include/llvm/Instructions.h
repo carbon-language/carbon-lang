@@ -1520,13 +1520,6 @@ class ExtractValueInst : public UnaryInstruction {
                           InputIterator IdxBegin, InputIterator IdxEnd,
                           const std::string &Name, BasicBlock *InsertAtEnd);
 
-  /// Constructors - These two constructors are convenience methods because one
-  /// and two index extractvalue instructions are so common.
-  ExtractValueInst(Value *Agg, unsigned Idx, const std::string &Name = "",
-                    Instruction *InsertBefore = 0);
-  ExtractValueInst(Value *Agg, unsigned Idx,
-                    const std::string &Name, BasicBlock *InsertAtEnd);
-
   // allocate space for exactly one operand
   void *operator new(size_t s) {
     return User::operator new(s, 1);
@@ -1555,12 +1548,14 @@ public:
   static ExtractValueInst *Create(Value *Agg, unsigned Idx,
                                   const std::string &Name = "",
                                   Instruction *InsertBefore = 0) {
-    return new ExtractValueInst(Agg, Idx, Name, InsertBefore);
+    unsigned Idxs[1] = { Idx };
+    return new ExtractValueInst(Agg, Idxs, Idxs + 1, Name, InsertBefore);
   }
   static ExtractValueInst *Create(Value *Agg, unsigned Idx,
                                   const std::string &Name,
                                   BasicBlock *InsertAtEnd) {
-    return new ExtractValueInst(Agg, Idx, Name, InsertAtEnd);
+    unsigned Idxs[1] = { Idx };
+    return new ExtractValueInst(Agg, Idxs, Idxs + 1, Name, InsertAtEnd);
   }
 
   virtual ExtractValueInst *clone() const;
