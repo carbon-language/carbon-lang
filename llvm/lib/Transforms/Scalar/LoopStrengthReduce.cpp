@@ -1118,8 +1118,8 @@ static bool isAddressUse(Instruction *Inst, Value *OperandVal) {
 }
 
 // CollectIVUsers - Transform our list of users and offsets to a bit more
-// complex table. In this new vector, each 'BasedUser' contains 'Base' the base
-// of the strided accessas well as the old information from Uses. We
+// complex table. In this new vector, each 'BasedUser' contains 'Base', the base
+// of the strided accesses, as well as the old information from Uses. We
 // progressively move information from the Base field to the Imm field, until
 // we eventually have the full access expression to rewrite the use.
 SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
