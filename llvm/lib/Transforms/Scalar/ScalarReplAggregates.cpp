@@ -313,12 +313,13 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
       continue;
     }
     
-    // Replace %res = load { i32, i32 }* %alloc
-    // by
-    // %load.0 = load i32* %alloc.0
-    // %insert.0 insertvalue { i32, i32 } zeroinitializer, i32 %load.0, 0 
-    // %load.1 = load i32* %alloc.1
-    // %insert = insertvalue { i32, i32 } %insert.0, i32 %load.1, 1 
+    // Replace:
+    //   %res = load { i32, i32 }* %alloc
+    // with:
+    //   %load.0 = load i32* %alloc.0
+    //   %insert.0 insertvalue { i32, i32 } zeroinitializer, i32 %load.0, 0 
+    //   %load.1 = load i32* %alloc.1
+    //   %insert = insertvalue { i32, i32 } %insert.0, i32 %load.1, 1 
     // (Also works for arrays instead of structs)
     if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
       Value *Insert = UndefValue::get(LI->getType());
@@ -331,12 +332,13 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
       continue;
     }
 
-    // Replace store { i32, i32 } %val, { i32, i32 }* %alloc
-    // by
-    // %val.0 = extractvalue { i32, i32 } %val, 0 
-    // store i32 %val.0, i32* %alloc.0
-    // %val.1 = extractvalue { i32, i32 } %val, 1 
-    // store i32 %val.1, i32* %alloc.1
+    // Replace:
+    //   store { i32, i32 } %val, { i32, i32 }* %alloc
+    // with:
+    //   %val.0 = extractvalue { i32, i32 } %val, 0 
+    //   store i32 %val.0, i32* %alloc.0
+    //   %val.1 = extractvalue { i32, i32 } %val, 1 
+    //   store i32 %val.1, i32* %alloc.1
     // (Also works for arrays instead of structs)
     if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       Value *Val = SI->getOperand(0);
