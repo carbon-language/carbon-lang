@@ -23,6 +23,8 @@ Parser::Parser(Preprocessor &pp, Action &actions)
   NumCachedScopes = 0;
   ParenCount = BracketCount = BraceCount = 0;
   ObjCImpDecl = 0;
+  // Instantiate a LexedMethodsForTopClass for all the non-nested classes.
+  PushTopClassStack();
 }
 
 ///  Out-of-line virtual destructor to provide home for Action class.

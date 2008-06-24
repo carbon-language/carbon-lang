@@ -103,3 +103,19 @@ Parser::ExprResult Parser::ParseThrowExpression() {
     return Actions.ActOnCXXThrow(ThrowLoc, Expr.Val);
   }
 }
+
+/// ParseCXXThis - This handles the C++ 'this' pointer.
+///
+/// C++ 9.3.2: In the body of a non-static member function, the keyword this is
+/// a non-lvalue expression whose value is the address of the object for which
+/// the function is called.
+Parser::ExprResult Parser::ParseCXXThis() {
+  assert(Tok.is(tok::kw_this) && "Not 'this'!");
+  SourceLocation ThisLoc = ConsumeToken();
+
+  ExprResult Res = Actions.ActOnCXXThis(ThisLoc);
+  if (Res.isInvalid)
+    return Res;
+
+  return ParsePostfixExpressionSuffix(Res);
+}

@@ -16,6 +16,7 @@
 
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/Action.h"
+#include <stack>
 
 namespace clang {
   class DeclSpec;
@@ -268,6 +269,41 @@ private:
   typedef Action::StmtResult StmtResult;
     
   //===--------------------------------------------------------------------===//
+  // Lexing and parsing of C++ inline methods.
+
+  typedef llvm::SmallVector<Token, 32> TokensTy;
+  struct LexedMethod {
+    Action::DeclTy *D;
+    TokensTy Toks;
+    explicit LexedMethod(Action::DeclTy *MD) : D(MD) {}
+  };
+
+  /// LexedMethodsForTopClass - During parsing of a top (non-nested) C++ class,
+  /// its inline method definitions and the inline method definitions of its
+  /// nested classes are lexed and stored here.
+  typedef std::stack<LexedMethod> LexedMethodsForTopClass;
+
+  /// TopClassStacks - This is initialized with one LexedMethodsForTopClass used
+  /// for lexing all top classes, until a local class in an inline method is
+  /// encountered, at which point a new LexedMethodsForTopClass is pushed here
+  /// and used until the parsing of that local class is finished.
+  std::stack<LexedMethodsForTopClass> TopClassStacks;
+
+  LexedMethodsForTopClass &getCurTopClassStack() {
+    assert(!TopClassStacks.empty() && "No lexed method stacks!");
+    return TopClassStacks.top();
+  }
+
+  void PushTopClassStack() {
+    TopClassStacks.push(LexedMethodsForTopClass());
+  }
+  void PopTopClassStack() { TopClassStacks.pop(); }
+
+  DeclTy *ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D);
+  void ParseLexedMethodDefs();
+  bool ConsumeAndStoreUntil(tok::TokenKind T, TokensTy &Toks);
+
+  //===--------------------------------------------------------------------===//
   // C99 6.9: External Definitions.
   DeclTy *ParseExternalDeclaration();
   DeclTy *ParseDeclarationOrFunctionDefinition();
@@ -367,6 +403,10 @@ private:
   //===--------------------------------------------------------------------===//
   // C++ 5.2p1: C++ Casts
   ExprResult ParseCXXCasts();
+
+  //===--------------------------------------------------------------------===//
+  // C++ 9.3.2: C++ 'this' pointer
+  ExprResult ParseCXXThis();
 
   //===--------------------------------------------------------------------===//
   // C++ 15: C++ Throw Expression
@@ -486,6 +526,9 @@ private:
   //===--------------------------------------------------------------------===//
   // C++ 9: classes [class] and C structs/unions.
   void ParseClassSpecifier(DeclSpec &DS);
+  void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,
+                                   DeclTy *TagDecl);
+  DeclTy *ParseCXXClassMemberDeclaration(AccessSpecifier AS);
 
   //===--------------------------------------------------------------------===//
   // C++ 10: Derived classes [class.derived]

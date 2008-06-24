@@ -221,6 +221,9 @@ private:
   virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group);
 
   virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, Declarator &D);
+  // Until 'real' implementation is in place, override both
+  // 'ActOnStartOfFunctionDef' to satisfy the compiler.
+  virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, DeclTy *D) { return D; }
   virtual void ObjCActOnStartOfMethodDef(Scope *S, DeclTy *D);
   
   virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtTy *Body);

@@ -601,6 +601,8 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw_reinterpret_cast:
   case tok::kw_static_cast:
     return ParseCXXCasts();
+  case tok::kw_this:
+    return ParseCXXThis();
   case tok::at: {
     SourceLocation AtLoc = ConsumeToken();
     return ParseObjCAtExpression(AtLoc);

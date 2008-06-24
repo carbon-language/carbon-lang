@@ -138,7 +138,14 @@ public:
   /// information about formal arguments that are part of this function.
   virtual DeclTy *ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
     // Default to ActOnDeclarator.
-    return ActOnDeclarator(FnBodyScope, D, 0);
+    return ActOnStartOfFunctionDef(FnBodyScope,
+                                   ActOnDeclarator(FnBodyScope, D, 0));
+  }
+
+  /// ActOnStartOfFunctionDef - This is called at the start of a function
+  /// definition, after the FunctionDecl has already been created.
+  virtual DeclTy *ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
+    return D;
   }
 
   virtual void ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
@@ -555,6 +562,11 @@ public:
     return 0;
   }
 
+  /// ActOnCXXThis - Parse the C++ 'this' pointer.
+  virtual ExprResult ActOnCXXThis(SourceLocation ThisLoc) {
+    return 0;
+  }
+
   /// ActOnCXXBoolLiteral - Parse {true,false} literals.
   virtual ExprResult ActOnCXXBoolLiteral(SourceLocation OpLoc,
                                          tok::TokenKind Kind) {
@@ -572,6 +584,36 @@ public:
   virtual void ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
                                   bool Virtual, AccessSpecifier Access,
                                   DeclTy *basetype, SourceLocation BaseLoc) {
+  }
+
+  /// ActOnStartCXXClassDef - This is called at the start of a class/struct/union
+  /// definition, when on C++.
+  virtual void ActOnStartCXXClassDef(Scope *S, DeclTy *TagDecl,
+                                     SourceLocation LBrace) {
+  }
+  
+  /// ActOnCXXMemberDeclarator - This is invoked when a C++ class member
+  /// declarator is parsed. 'AS' is the access specifier, 'BitfieldWidth'
+  /// specifies the bitfield width if there is one and 'Init' specifies the
+  /// initializer if any. 'LastInGroup' is non-null for cases where one declspec
+  /// has multiple declarators on it.
+  virtual DeclTy *ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS,
+                                           Declarator &D, ExprTy *BitfieldWidth,
+                                           ExprTy *Init, DeclTy *LastInGroup) {
+    return 0;
+  }
+
+  /// ActOnFinishCXXMemberSpecification - Invoked after all member declarators
+  /// are parsed but *before* parsing of inline method definitions.
+  virtual void ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
+                                                 DeclTy *TagDecl,
+                                                 SourceLocation LBrac,
+                                                 SourceLocation RBrac) {
+  }
+
+  /// ActOnFinishCXXClassDef - This is called when a class/struct/union has
+  /// completed parsing, when on C++.
+  virtual void ActOnFinishCXXClassDef(DeclTy *TagDecl,SourceLocation RBrace) {
   }
 
   //===----------------------- Obj-C Declarations -------------------------===//

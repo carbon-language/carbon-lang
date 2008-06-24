@@ -42,7 +42,10 @@ public:
     
     /// DeclScope - This is a scope that can contain a declaration.  Some scopes
     /// just contain loop constructs but don't contain decls.
-    DeclScope = 0x08
+    DeclScope = 0x08,
+
+    /// CXXClassScope - The scope of a C++ struct/union/class definition.
+    CXXClassScope = 0x10
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit
@@ -118,6 +121,21 @@ public:
   /// declared in.
   bool isDeclScope(Action::DeclTy *D) {
     return DeclsInScope.count(D) != 0;
+  }
+
+  /// isCXXClassScope - Return true if this scope is a C++ class scope.
+  bool isCXXClassScope() const {
+    return (getFlags() & Scope::CXXClassScope);
+  }
+
+  /// isInCXXInlineMethodScope - Return true if this scope is a C++ inline
+  /// method scope or is inside one.
+  bool isInCXXInlineMethodScope() const {
+    if (const Scope *FnS = getFnParent()) {
+      assert(FnS->getParent() && "TUScope not created?");
+      return FnS->getParent()->isCXXClassScope();
+    }
+    return false;
   }
   
   /// Init - This is used by the parser to implement scope caching.

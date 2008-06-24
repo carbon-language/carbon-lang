@@ -229,7 +229,12 @@ void Parser::ParseClassSpecifier(DeclSpec &DS) {
 
   // If there is a body, parse it and inform the actions module.
   if (Tok.is(tok::l_brace))
-    ParseStructUnionBody(StartLoc, TagType, TagDecl);
+    // FIXME: Temporarily disable parsing for C++ classes until the Sema support
+    // is in place.
+    //if (getLang().CPlusPlus)
+    //  ParseCXXMemberSpecification(StartLoc, TagType, TagDecl);
+    //else
+      ParseStructUnionBody(StartLoc, TagType, TagDecl);
   else if (TK == Action::TK_Definition) {
     // FIXME: Complain that we have a base-specifier list but no
     // definition.
@@ -356,4 +361,264 @@ AccessSpecifier Parser::getAccessSpecifierIfPresent() const
   case tok::kw_protected: return AS_protected;
   case tok::kw_public: return AS_public;
   }
+}
+
+/// ParseCXXClassMemberDeclaration - Parse a C++ class member declaration.
+///
+///       member-declaration:
+///         decl-specifier-seq[opt] member-declarator-list[opt] ';'
+///         function-definition ';'[opt]
+///         ::[opt] nested-name-specifier template[opt] unqualified-id ';'[TODO]
+///         using-declaration                                            [TODO]
+/// [C++0x] static_assert-declaration                                    [TODO]
+///         template-declaration                                         [TODO]
+///
+///       member-declarator-list:
+///         member-declarator
+///         member-declarator-list ',' member-declarator
+///
+///       member-declarator:
+///         declarator pure-specifier[opt]
+///         declarator constant-initializer[opt]
+///         identifier[opt] ':' constant-expression
+///
+///       pure-specifier:   [TODO]
+///         '= 0'
+///
+///       constant-initializer:
+///         '=' constant-expression
+///
+Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
+  SourceLocation DSStart = Tok.getLocation();
+  // decl-specifier-seq:
+  // Parse the common declaration-specifiers piece.
+  DeclSpec DS;
+  ParseDeclarationSpecifiers(DS);
+
+  if (Tok.is(tok::semi)) {
+    ConsumeToken();
+    // C++ 9.2p7: The member-declarator-list can be omitted only after a
+    // class-specifier or an enum-specifier or in a friend declaration.
+    // FIXME: Friend declarations.
+    switch (DS.getTypeSpecType()) {
+      case DeclSpec::TST_struct:
+      case DeclSpec::TST_union:
+      case DeclSpec::TST_class:
+      case DeclSpec::TST_enum:
+        return Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
+      default:
+        Diag(DSStart, diag::err_no_declarators);
+        return 0;
+    }
+  }
+  
+  // Parse the first declarator.
+  Declarator DeclaratorInfo(DS, Declarator::MemberContext);
+  ParseDeclarator(DeclaratorInfo);
+  // Error parsing the declarator?
+  if (DeclaratorInfo.getIdentifier() == 0) {
+    // If so, skip until the semi-colon or a }.
+    SkipUntil(tok::r_brace, true);
+    if (Tok.is(tok::semi))
+      ConsumeToken();
+    return 0;
+  }
+
+  // function-definition:
+  if (Tok.is(tok::l_brace)) {
+    if (!DeclaratorInfo.isFunctionDeclarator()) {
+      Diag(Tok, diag::err_func_def_no_params);
+      ConsumeBrace();
+      SkipUntil(tok::r_brace, true);
+      return 0;
+    }
+
+    if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
+      Diag(Tok, diag::err_function_declared_typedef);
+      // This recovery skips the entire function body. It would be nice
+      // to simply call ParseCXXInlineMethodDef() below, however Sema
+      // assumes the declarator represents a function, not a typedef.
+      ConsumeBrace();
+      SkipUntil(tok::r_brace, true);
+      return 0;
+    }
+
+    return ParseCXXInlineMethodDef(AS, DeclaratorInfo);
+  }
+
+  // member-declarator-list:
+  //   member-declarator
+  //   member-declarator-list ',' member-declarator
+
+  DeclTy *LastDeclInGroup = 0;
+  ExprTy *BitfieldSize = 0;
+  ExprTy *Init = 0;
+
+  while (1) {
+
+    // member-declarator:
+    //   declarator pure-specifier[opt]
+    //   declarator constant-initializer[opt]
+    //   identifier[opt] ':' constant-expression
+
+    if (Tok.is(tok::colon)) {
+      ConsumeToken();
+      ExprResult Res = ParseConstantExpression();
+      if (Res.isInvalid)
+        SkipUntil(tok::comma, true, true);
+      else
+        BitfieldSize = Res.Val;
+    }
+    
+    // pure-specifier:
+    //   '= 0'
+    //
+    // constant-initializer:
+    //   '=' constant-expression
+
+    if (Tok.is(tok::equal)) {
+      ConsumeToken();
+      ExprResult Res = ParseInitializer();
+      if (Res.isInvalid)
+        SkipUntil(tok::comma, true, true);
+      else
+        Init = Res.Val;
+    }
+
+    // If attributes exist after the declarator, parse them.
+    if (Tok.is(tok::kw___attribute))
+      DeclaratorInfo.AddAttributes(ParseAttributes());
+
+    LastDeclInGroup = Actions.ActOnCXXMemberDeclarator(CurScope, AS,
+                                                       DeclaratorInfo,
+                                                       BitfieldSize, Init,
+                                                       LastDeclInGroup);
+
+    // If we don't have a comma, it is either the end of the list (a ';')
+    // or an error, bail out.
+    if (Tok.isNot(tok::comma))
+      break;
+    
+    // Consume the comma.
+    ConsumeToken();
+    
+    // Parse the next declarator.
+    DeclaratorInfo.clear();
+    BitfieldSize = Init = 0;
+    
+    // Attributes are only allowed on the second declarator.
+    if (Tok.is(tok::kw___attribute))
+      DeclaratorInfo.AddAttributes(ParseAttributes());
+
+    ParseDeclarator(DeclaratorInfo);
+  }
+
+  if (Tok.is(tok::semi)) {
+    ConsumeToken();
+    // Reverse the chain list.
+    return Actions.FinalizeDeclaratorGroup(CurScope, LastDeclInGroup);
+  }
+
+  Diag(Tok, diag::err_expected_semi_decl_list);
+  // Skip to end of block or statement
+  SkipUntil(tok::r_brace, true, true);
+  if (Tok.is(tok::semi))
+    ConsumeToken();
+  return 0;
+}
+
+/// ParseCXXMemberSpecification - Parse the class definition.
+///
+///       member-specification:
+///         member-declaration member-specification[opt]
+///         access-specifier ':' member-specification[opt]
+///
+void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
+                                         unsigned TagType, DeclTy *TagDecl) {
+  assert(TagType == DeclSpec::TST_struct ||
+         TagType == DeclSpec::TST_union  ||
+         TagType == DeclSpec::TST_class && "Invalid TagType!");
+
+  SourceLocation LBraceLoc = ConsumeBrace();
+
+  if (!CurScope->isCXXClassScope() && // Not about to define a nested class.
+      CurScope->isInCXXInlineMethodScope()) {
+    // We will define a local class of an inline method.
+    // Push a new LexedMethodsForTopClass for its inline methods.
+    PushTopClassStack();
+  }
+
+  // Enter a scope for the class.
+  EnterScope(Scope::CXXClassScope|Scope::DeclScope);
+
+  Actions.ActOnStartCXXClassDef(CurScope, TagDecl, LBraceLoc);
+
+  // C++ 11p3: Members of a class defined with the keyword class are private
+  // by default. Members of a class defined with the keywords struct or union
+  // are public by default.
+  AccessSpecifier CurAS;
+  if (TagType == DeclSpec::TST_class)
+    CurAS = AS_private;
+  else
+    CurAS = AS_public;
+
+  // While we still have something to read, read the member-declarations.
+  while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
+    // Each iteration of this loop reads one member-declaration.
+    
+    // Check for extraneous top-level semicolon.
+    if (Tok.is(tok::semi)) {
+      Diag(Tok, diag::ext_extra_struct_semi);
+      ConsumeToken();
+      continue;
+    }
+
+    AccessSpecifier AS = getAccessSpecifierIfPresent();
+    if (AS != AS_none) {
+      // Current token is a C++ access specifier.
+      CurAS = AS;
+      ConsumeToken();
+      ExpectAndConsume(tok::colon, diag::err_expected_colon);
+      continue;
+    }
+
+    // Parse all the comma separated declarators.
+    ParseCXXClassMemberDeclaration(CurAS);
+  }
+  
+  SourceLocation RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
+  
+  AttributeList *AttrList = 0;
+  // If attributes exist after class contents, parse them.
+  if (Tok.is(tok::kw___attribute))
+    AttrList = ParseAttributes(); // FIXME: where should I put them?
+
+  Actions.ActOnFinishCXXMemberSpecification(CurScope, RecordLoc, TagDecl,
+                                            LBraceLoc, RBraceLoc);
+
+  // C++ 9.2p2: Within the class member-specification, the class is regarded as
+  // complete within function bodies, default arguments,
+  // exception-specifications, and constructor ctor-initializers (including
+  // such things in nested classes).
+  //
+  // FIXME: Only function bodies are parsed correctly, fix the rest.
+  if (!CurScope->getParent()->isCXXClassScope()) {
+    // We are not inside a nested class. This class and its nested classes
+    // are complete and we can parse the lexed inline method definitions.
+    ParseLexedMethodDefs();
+
+    // For a local class of inline method, pop the LexedMethodsForTopClass that
+    // was previously pushed.
+
+    assert(CurScope->isInCXXInlineMethodScope() ||
+           TopClassStacks.size() == 1    &&
+           "MethodLexers not getting popped properly!");
+    if (CurScope->isInCXXInlineMethodScope())
+      PopTopClassStack();
+  }
+
+  // Leave the class scope.
+  ExitScope();
+
+  Actions.ActOnFinishCXXClassDef(TagDecl, RBraceLoc);
 }
