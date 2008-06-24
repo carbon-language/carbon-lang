@@ -182,6 +182,7 @@ public:
     case ObjCInterface:
     case ObjCCompatibleAlias:
     case CXXField:
+    case CXXMethod:
       return IDNS_Ordinary;
     case Struct:
     case Union:
