@@ -51,6 +51,13 @@ static TargetJITInfo::JITCompilerFn JITCompilerFunction;
 #define GETASMPREFIX(X) GETASMPREFIX2(X)
 #define ASMPREFIX GETASMPREFIX(__USER_LABEL_PREFIX__)
 
+// Check if building with -fPIC
+#if defined(__PIC__) && __PIC__ && defined(__linux__)
+#define ASMCALLSUFFIX "@PLT"
+#else
+#define ASMCALLSUFFIX
+#endif
+
 // Provide a convenient way for disabling usage of CFI directives.
 // This is needed for old/broken assemblers (for example, gas on
 // Darwin is pretty old and doesn't support these directives)
@@ -112,7 +119,7 @@ extern "C" {
     // JIT callee
     "movq    %rbp, %rdi\n"    // Pass prev frame and return address
     "movq    8(%rbp), %rsi\n"
-    "call    " ASMPREFIX "X86CompilationCallback2\n"
+    "call    " ASMPREFIX "X86CompilationCallback2" ASMCALLSUFFIX "\n"
     // Restore all XMM arg registers
     "movaps  112(%rsp), %xmm7\n"
     "movaps  96(%rsp), %xmm6\n"
@@ -186,7 +193,7 @@ extern "C" {
     "movl    4(%ebp), %eax\n" // Pass prev frame and return address
     "movl    %eax, 4(%esp)\n"
     "movl    %ebp, (%esp)\n"
-    "call    " ASMPREFIX "X86CompilationCallback2\n"
+    "call    " ASMPREFIX "X86CompilationCallback2" ASMCALLSUFFIX "\n"
     "movl    %ebp, %esp\n"    // Restore ESP
     CFI(".cfi_def_cfa_register %esp\n")
     "subl    $12, %esp\n"
@@ -240,7 +247,7 @@ extern "C" {
     "movl    4(%ebp), %eax\n" // Pass prev frame and return address
     "movl    %eax, 4(%esp)\n"
     "movl    %ebp, (%esp)\n"
-    "call    " ASMPREFIX "X86CompilationCallback2\n"
+    "call    " ASMPREFIX "X86CompilationCallback2" ASMCALLSUFFIX "\n"
     "addl    $16, %esp\n"
     "movaps  48(%esp), %xmm3\n"
     CFI(".cfi_restore %xmm3\n")
