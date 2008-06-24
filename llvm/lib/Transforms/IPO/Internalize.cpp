@@ -48,7 +48,7 @@ namespace {
     bool AllButMain;
   public:
     static char ID; // Pass identification, replacement for typeid
-    explicit InternalizePass(bool InternalizeEverything = true);
+    explicit InternalizePass(bool AllButMain = true);
     explicit InternalizePass(const std::vector <const char *>& exportList);
     void LoadFile(const char *Filename);
     virtual bool runOnModule(Module &M);
@@ -150,8 +150,8 @@ bool InternalizePass::runOnModule(Module &M) {
   return Changed;
 }
 
-ModulePass *llvm::createInternalizePass(bool InternalizeEverything) {
-  return new InternalizePass(InternalizeEverything);
+ModulePass *llvm::createInternalizePass(bool AllButMain) {
+  return new InternalizePass(AllButMain);
 }
 
 ModulePass *llvm::createInternalizePass(const std::vector <const char *> &el) {

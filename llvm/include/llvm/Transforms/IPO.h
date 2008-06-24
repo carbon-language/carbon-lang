@@ -108,7 +108,7 @@ Pass *createPruneEHPass();
 /// internalized and all others are.  Otherwise if AllButMain is set and the
 /// main function is found, all other globals are marked as internal.
 ///
-ModulePass *createInternalizePass(bool InternalizeEverything);
+ModulePass *createInternalizePass(bool AllButMain);
 
 /// createInternalizePass - This pass loops over all of the functions in the
 /// input module, internalizing all globals (functions and variables) not in the
