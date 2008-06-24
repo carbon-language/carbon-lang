@@ -451,6 +451,10 @@ ifdef UNIVERSAL
   DISABLE_AUTO_DEPENDENCIES=1
 endif
 
+ifeq ($(OS),SunOS)
+CPP.BaseFlags += -include llvm/System/Solaris.h
+endif
+
 LD.Flags      += -L$(LibDir) -L$(LLVMLibDir) 
 CPP.BaseFlags += -D_GNU_SOURCE -D__STDC_LIMIT_MACROS
 # All -I flags should go here, so that they don't confuse llvm-config.
