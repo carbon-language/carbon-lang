@@ -23,21 +23,10 @@ Parser::DeclTy *
 Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D) {
   assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
          "This isn't a function declarator!");
+  assert(Tok.is(tok::l_brace) && "Current token not a '{'!");
 
   DeclTy *FnD = Actions.ActOnCXXMemberDeclarator(CurScope, AS, D, 0, 0, 0);
 
-  // We should have an opening brace now.
-  if (Tok.isNot(tok::l_brace)) {
-    Diag(Tok, diag::err_expected_fn_body);
-
-    // Skip over garbage, until we get to '{'.  Don't eat the '{'.
-    SkipUntil(tok::l_brace, true, true);
-    
-    // If we didn't find the '{', bail out.
-    if (Tok.isNot(tok::l_brace))
-      return FnD;
-  }
-  
   // Consume the tokens and store them for later parsing.
 
   getCurTopClassStack().push(LexedMethod(FnD));
