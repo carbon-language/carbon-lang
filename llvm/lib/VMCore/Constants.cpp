@@ -1378,8 +1378,9 @@ bool ConstantArray::isCString() const {
 std::string ConstantArray::getAsString() const {
   assert(isString() && "Not a string!");
   std::string Result;
+  Result.reserve(getNumOperands());
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-    Result += (char)cast<ConstantInt>(getOperand(i))->getZExtValue();
+    Result[i] = (char)cast<ConstantInt>(getOperand(i))->getZExtValue();
   return Result;
 }
 
