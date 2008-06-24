@@ -755,10 +755,12 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
     llvm::StructType::get(PtrToInt8Ty, StaticsArrayTy, NULL);
   llvm::Constant *Statics = 
     MakeGlobal(StaticsListTy, Elements, ".objc_statics");
-  Statics = new
-    llvm::GlobalVariable(llvm::PointerType::getUnqual(StaticsListTy), false,
-        llvm::GlobalValue::InternalLinkage, Statics, ".objc_statics_ptr",
-        &TheModule);
+  llvm::ArrayType *StaticsListArrayTy =
+    llvm::ArrayType::get(llvm::PointerType::getUnqual(StaticsListTy), 2);
+  Elements.clear();
+  Elements.push_back(Statics);
+  Elements.push_back(llvm::ConstantPointerNull::get(llvm::PointerType::getUnqual(StaticsListTy)));
+  Statics = MakeGlobal(StaticsListArrayTy, Elements, ".objc_statics_ptr");
   Statics = llvm::ConstantExpr::getBitCast(Statics, PtrTy);
   // Array of classes, categories, and constant objects
   llvm::ArrayType *ClassListTy = llvm::ArrayType::get(PtrToInt8Ty,
