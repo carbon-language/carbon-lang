@@ -132,13 +132,13 @@ static ManagedStatic<std::vector<Timer*> > ActiveTimers;
 
 void Timer::startTimer() {
   Started = true;
+  ActiveTimers->push_back(this);
   TimeRecord TR = getTimeRecord(true);
   Elapsed    -= TR.Elapsed;
   UserTime   -= TR.UserTime;
   SystemTime -= TR.SystemTime;
   MemUsed    -= TR.MemUsed;
   PeakMemBase = TR.MemUsed;
-  ActiveTimers->push_back(this);
 }
 
 void Timer::stopTimer() {
