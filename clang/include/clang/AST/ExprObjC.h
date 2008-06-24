@@ -227,6 +227,9 @@ public:
 class ObjCMessageExpr : public Expr {
   enum { RECEIVER=0, ARGS_START=1 };
 
+  // Bit-swizziling flags.
+  enum { IsInstMeth=0, IsClsMethDeclUnknown, IsClsMethDeclKnown, Flags=0x3 };
+
   Stmt **SubExprs;
   
   unsigned NumArgs;
@@ -249,12 +252,21 @@ class ObjCMessageExpr : public Expr {
     MethodProto(NULL), LBracloc(LBrac), RBracloc(RBrac) {}
   
 public:
-  // constructor for class messages. 
-  // FIXME: clsName should be typed to ObjCInterfaceType
+  /// This constructor is used to represent class messages where the
+  /// ObjCInterfaceDecl* of the receiver is not known.
   ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
                   QualType retType, ObjCMethodDecl *methDecl,
                   SourceLocation LBrac, SourceLocation RBrac,
                   Expr **ArgExprs, unsigned NumArgs);
+
+  /// This constructor is used to represent class messages where the
+  /// ObjCInterfaceDecl* of the receiver is known.
+  // FIXME: clsName should be typed to ObjCInterfaceType
+  ObjCMessageExpr(ObjCInterfaceDecl *cls, Selector selInfo,
+                  QualType retType, ObjCMethodDecl *methDecl,
+                  SourceLocation LBrac, SourceLocation RBrac,
+                  Expr **ArgExprs, unsigned NumArgs);
+  
   // constructor for instance messages.
   ObjCMessageExpr(Expr *receiver, Selector selInfo,
                   QualType retType, ObjCMethodDecl *methDecl,
@@ -270,7 +282,7 @@ public:
   ///  class methods, use getClassName.
   Expr *getReceiver() { 
     uintptr_t x = (uintptr_t) SubExprs[RECEIVER];
-    return x & 0x1 ? NULL : (Expr*) x;
+    return (x & Flags) == IsInstMeth ? (Expr*) x : 0;
   }  
   const Expr *getReceiver() const {
     return const_cast<ObjCMessageExpr*>(this)->getReceiver();
@@ -280,16 +292,21 @@ public:
 
   const ObjCMethodDecl *getMethodDecl() const { return MethodProto; }
   ObjCMethodDecl *getMethodDecl() { return MethodProto; }
+
+  typedef std::pair<ObjCInterfaceDecl*, IdentifierInfo*> ClassInfo;
+  
+  /// getClassInfo - For class methods, this returns both the ObjCInterfaceDecl*
+  ///  and IdentifierInfo* of the invoked class.  Both can be NULL if this
+  ///  is an instance message, and the ObjCInterfaceDecl* can be NULL if none
+  ///  was available when this ObjCMessageExpr object was constructed.  
+  ClassInfo getClassInfo() const;  
   
   /// getClassName - For class methods, this returns the invoked class,
   ///  and returns NULL otherwise.  For instance methods, use getReceiver.  
-  IdentifierInfo *getClassName() {
-    uintptr_t x = (uintptr_t) SubExprs[RECEIVER];
-    return x & 0x1 ? (IdentifierInfo*) (x & ~0x1) : NULL;
-  }  
-  const IdentifierInfo *getClassName() const {
-    return const_cast<ObjCMessageExpr*>(this)->getClassName();
+  IdentifierInfo *getClassName() const {
+    return getClassInfo().second;
   }
+
   
   /// getNumArgs - Return the number of actual arguments to this call.
   unsigned getNumArgs() const { return NumArgs; }

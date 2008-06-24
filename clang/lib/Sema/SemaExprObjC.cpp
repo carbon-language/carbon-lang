@@ -202,8 +202,16 @@ Sema::ExprResult Sema::ActOnClassMessage(
         return true;
     }
   }
-  return new ObjCMessageExpr(receiverName, Sel, returnType, Method,
-                             lbrac, rbrac, ArgExprs, NumArgs);
+
+  // If we have the ObjCInterfaceDecl* for the class that is receiving
+  // the message, use that to construct the ObjCMessageExpr.  Otherwise
+  // pass on the IdentifierInfo* for the class.
+  if (ClassDecl)
+    return new ObjCMessageExpr(ClassDecl, Sel, returnType, Method,
+                               lbrac, rbrac, ArgExprs, NumArgs);
+  else
+    return new ObjCMessageExpr(receiverName, Sel, returnType, Method,
+                               lbrac, rbrac, ArgExprs, NumArgs);
 }
 
 // ActOnInstanceMessage - used for both unary and keyword messages.

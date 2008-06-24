@@ -1131,13 +1131,47 @@ ObjCMessageExpr::ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
     MethodProto(mproto) {
   NumArgs = nargs;
   SubExprs = new Stmt*[NumArgs+1];
-  SubExprs[RECEIVER] = (Expr*) ((uintptr_t) clsName | 0x1);
+  SubExprs[RECEIVER] = (Expr*) ((uintptr_t) clsName | IsClsMethDeclUnknown);
   if (NumArgs) {
     for (unsigned i = 0; i != NumArgs; ++i)
       SubExprs[i+ARGS_START] = static_cast<Expr *>(ArgExprs[i]);
   }
   LBracloc = LBrac;
   RBracloc = RBrac;
+}
+
+// constructor for class messages. 
+ObjCMessageExpr::ObjCMessageExpr(ObjCInterfaceDecl *cls, Selector selInfo,
+                                 QualType retType, ObjCMethodDecl *mproto,
+                                 SourceLocation LBrac, SourceLocation RBrac,
+                                 Expr **ArgExprs, unsigned nargs)
+: Expr(ObjCMessageExprClass, retType), SelName(selInfo), 
+MethodProto(mproto) {
+  NumArgs = nargs;
+  SubExprs = new Stmt*[NumArgs+1];
+  SubExprs[RECEIVER] = (Expr*) ((uintptr_t) cls | IsClsMethDeclKnown);
+  if (NumArgs) {
+    for (unsigned i = 0; i != NumArgs; ++i)
+      SubExprs[i+ARGS_START] = static_cast<Expr *>(ArgExprs[i]);
+  }
+  LBracloc = LBrac;
+  RBracloc = RBrac;
+}
+
+ObjCMessageExpr::ClassInfo ObjCMessageExpr::getClassInfo() const {
+  uintptr_t x = (uintptr_t) SubExprs[RECEIVER];
+  switch (x & Flags) {
+    default:
+      assert(false && "Invalid ObjCMessageExpr.");
+    case IsInstMeth:
+      return ClassInfo(0, 0);
+    case IsClsMethDeclUnknown:
+      return ClassInfo(0, (IdentifierInfo*) (x & ~Flags));
+    case IsClsMethDeclKnown: {
+      ObjCInterfaceDecl* D = (ObjCInterfaceDecl*) (x & ~Flags);
+      return ClassInfo(D, D->getIdentifier());
+    }
+  }
 }
 
 bool ChooseExpr::isConditionTrue(ASTContext &C) const {
