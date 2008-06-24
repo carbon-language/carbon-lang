@@ -337,12 +337,7 @@ class RetainSummaryManager {
     }    
   };
   
-#if 0
-  typedef llvm::DenseMap<Selector, RetainSummary*>
-          ObjCMethodSummariesTy;
-#else
   typedef ObjCSummaryCache ObjCMethodSummariesTy;
-#endif
     
   //==-----------------------------------------------------------------==//
   //  Data.
@@ -435,8 +430,7 @@ public:
   
   ~RetainSummaryManager();
   
-  RetainSummary* getSummary(FunctionDecl* FD, ASTContext& Ctx);
-  
+  RetainSummary* getSummary(FunctionDecl* FD);  
   RetainSummary* getMethodSummary(ObjCMessageExpr* ME);    
   RetainSummary* getClassMethodSummary(IdentifierInfo* ClsName, Selector S);
   
@@ -520,8 +514,7 @@ RetainSummaryManager::getPersistentSummary(ArgEffects* AE, RetEffect RetEff,
 // Summary creation for functions (largely uses of Core Foundation).
 //===----------------------------------------------------------------------===//
 
-RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD,
-                                                ASTContext& Ctx) {
+RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
 
   SourceLocation Loc = FD->getLocation();
   
@@ -1375,7 +1368,7 @@ void CFRefCount::EvalCall(ExplodedNodeSet<ValueState>& Dst,
   if (isa<lval::FuncVal>(L)) {  
     lval::FuncVal FV = cast<lval::FuncVal>(L);
     FunctionDecl* FD = FV.getDecl();
-    Summ = Summaries.getSummary(FD, Eng.getContext());
+    Summ = Summaries.getSummary(FD);
   }
   
   EvalSummary(Dst, Eng, Builder, CE, 0, Summ,
