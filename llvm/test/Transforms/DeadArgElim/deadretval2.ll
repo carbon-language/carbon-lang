@@ -1,4 +1,6 @@
-; RUN: llvm-as < %s | opt -deadargelim -die | llvm-dis | not grep DEAD
+; RUN: llvm-as < %s | opt -deadargelim -die | llvm-dis > %t
+; RUN: cat %t | not grep DEAD
+; RUN: cat %t | grep LIVE | count 4
 
 @P = external global i32                ; <i32*> [#uses=1]
 
@@ -30,4 +32,28 @@ define void @test4() {
         %DEAD = call i32 @foo( )                ; <i32> [#uses=1]
         %DEAD2 = call i32 @id( i32 %DEAD )              ; <i32> [#uses=0]
         ret void
+}
+
+; These test if returning another functions return value properly marks that
+; other function's return value as live. We do this twice, with the functions in
+; different orders (ie, first the caller, than the callee and first the callee
+; and then the caller) since DAE processes functions one by one and handles
+; these cases slightly different.
+
+define internal i32 @test5() {
+  ret i32 123 
+}
+
+define i32 @test6() {
+  %LIVE = call i32 @test5()
+  ret i32 %LIVE
+}
+
+define i32 @test7() {
+  %LIVE = call i32 @test8()
+  ret i32 %LIVE
+}
+
+define internal i32 @test8() {
+  ret i32 124
 }
