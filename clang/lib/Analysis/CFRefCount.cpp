@@ -218,12 +218,19 @@ public:
 
 namespace {
   class VISIBILITY_HIDDEN ObjCSummaryKey {
-    ObjCInterfaceDecl* D;
+    IdentifierInfo* II;
     Selector S;
   public:    
-    ObjCSummaryKey(ObjCInterfaceDecl* d, Selector s) : D(d), S(s) {}
+    ObjCSummaryKey(IdentifierInfo* ii, Selector s)
+      : II(ii), S(s) {}
+
+    ObjCSummaryKey(ObjCInterfaceDecl* d, Selector s)
+      : II(d ? d->getIdentifier() : 0), S(s) {}
     
-    ObjCInterfaceDecl* getDecl() const { return D; }
+    ObjCSummaryKey(Selector s)
+      : II(0), S(s) {}
+    
+    IdentifierInfo* getIdentifier() const { return II; }
     Selector getSelector() const { return S; }
   };
 }
@@ -231,25 +238,27 @@ namespace {
 namespace llvm {
   template <> struct DenseMapInfo<ObjCSummaryKey> {
     static inline ObjCSummaryKey getEmptyKey() {
-      return ObjCSummaryKey(DenseMapInfo<ObjCInterfaceDecl*>::getEmptyKey(),
+      return ObjCSummaryKey(DenseMapInfo<IdentifierInfo*>::getEmptyKey(),
                             DenseMapInfo<Selector>::getEmptyKey());
     }
       
     static inline ObjCSummaryKey getTombstoneKey() {
-      return ObjCSummaryKey(DenseMapInfo<ObjCInterfaceDecl*>::getTombstoneKey(),
+      return ObjCSummaryKey(DenseMapInfo<IdentifierInfo*>::getTombstoneKey(),
                             DenseMapInfo<Selector>::getTombstoneKey());      
     }
     
     static unsigned getHashValue(const ObjCSummaryKey &V) {
-      return 
-        (DenseMapInfo<ObjCInterfaceDecl*>::getHashValue(V.getDecl())&0x88888888)
-        |(DenseMapInfo<Selector>::getHashValue(V.getSelector()) & 0x55555555);
+      return (DenseMapInfo<IdentifierInfo*>::getHashValue(V.getIdentifier())
+              & 0x88888888) 
+          | (DenseMapInfo<Selector>::getHashValue(V.getSelector())
+              & 0x55555555);
     }
     
     static bool isEqual(const ObjCSummaryKey& LHS, const ObjCSummaryKey& RHS) {
-      return
-        DenseMapInfo<ObjCInterfaceDecl*>::isEqual(LHS.getDecl(), RHS.getDecl())
-        && DenseMapInfo<Selector>::isEqual(LHS.getSelector(),RHS.getSelector());
+      return DenseMapInfo<IdentifierInfo*>::isEqual(LHS.getIdentifier(),
+                                                    RHS.getIdentifier()) &&
+             DenseMapInfo<Selector>::isEqual(LHS.getSelector(),
+                                             RHS.getSelector());
     }
     
     static bool isPod() {
@@ -324,7 +333,7 @@ class RetainSummaryManager {
     }
     
     RetainSummary*& operator[](Selector S) {
-      return M[ ObjCSummaryKey(0,S) ];
+      return M[ ObjCSummaryKey(S) ];
     }    
   };
   
