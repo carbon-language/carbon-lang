@@ -172,10 +172,10 @@ namespace llvm {
     /// getIntervalSize - get the size of an interval in "units,"
     /// where every function is composed of one thousand units.  This
     /// measure scales properly with empty index slots in the function.
-    unsigned getScaledIntervalSize(LiveInterval& I) {
+    unsigned getScaledIntervalSize(LiveInterval& I) const {
       // Factor of 250 comes from 1000 units per function divided
       // by four slots per instruction.
-      return (250 * I.getSize()) / i2miMap_.size();
+      return (1000 / InstrSlots::NUM * I.getSize()) / i2miMap_.size();
     }
 
     /// getMBBFromIndex - given an index in any instruction of an
