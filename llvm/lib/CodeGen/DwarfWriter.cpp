@@ -140,7 +140,7 @@ private:
 
   /// Data - Raw data bytes for abbreviation.
   ///
-  std::vector<DIEAbbrevData> Data;
+  SmallVector<DIEAbbrevData, 8> Data;
 
 public:
 
@@ -155,7 +155,7 @@ public:
   unsigned getTag()                           const { return Tag; }
   unsigned getNumber()                        const { return Number; }
   unsigned getChildrenFlag()                  const { return ChildrenFlag; }
-  const std::vector<DIEAbbrevData> &getData() const { return Data; }
+  const SmallVector<DIEAbbrevData, 8> &getData() const { return Data; }
   void setTag(unsigned T)                           { Tag = T; }
   void setChildrenFlag(unsigned CF)                 { ChildrenFlag = CF; }
   void setNumber(unsigned N)                        { Number = N; }
@@ -219,7 +219,7 @@ protected:
   
   /// Attributes values.
   ///
-  std::vector<DIEValue *> Values;
+  SmallVector<DIEValue*, 32> Values;
   
 public:
   explicit DIE(unsigned Tag)
@@ -240,7 +240,7 @@ public:
   unsigned getOffset()                       const { return Offset; }
   unsigned getSize()                         const { return Size; }
   const std::vector<DIE *> &getChildren()    const { return Children; }
-  std::vector<DIEValue *> &getValues()       { return Values; }
+  SmallVector<DIEValue*, 32> &getValues()       { return Values; }
   void setTag(unsigned Tag)                  { Abbrev.setTag(Tag); }
   void setOffset(unsigned O)                 { Offset = O; }
   void setSize(unsigned S)                   { Size = S; }
@@ -2081,8 +2081,8 @@ private:
              ":0x" + utohexstr(Die->getSize()) + " " +
              TagString(Abbrev->getTag())));
     
-    std::vector<DIEValue *> &Values = Die->getValues();
-    const std::vector<DIEAbbrevData> &AbbrevData = Abbrev->getData();
+    SmallVector<DIEValue*, 32> &Values = Die->getValues();
+    const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev->getData();
     
     // Emit the DIE attribute values.
     for (unsigned i = 0, N = Values.size(); i < N; ++i) {
@@ -2139,8 +2139,8 @@ private:
     // Start the size with the size of abbreviation code.
     Offset += Asm->SizeULEB128(AbbrevNumber);
     
-    const std::vector<DIEValue *> &Values = Die->getValues();
-    const std::vector<DIEAbbrevData> &AbbrevData = Abbrev->getData();
+    const SmallVector<DIEValue*, 32> &Values = Die->getValues();
+    const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev->getData();
 
     // Size the DIE attribute values.
     for (unsigned i = 0, N = Values.size(); i < N; ++i) {
@@ -3726,7 +3726,7 @@ void DIEntry::EmitValue(DwarfDebug &DD, unsigned Form) {
 ///
 unsigned DIEBlock::ComputeSize(DwarfDebug &DD) {
   if (!Size) {
-    const std::vector<DIEAbbrevData> &AbbrevData = Abbrev.getData();
+    const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev.getData();
     
     for (unsigned i = 0, N = Values.size(); i < N; ++i) {
       Size += Values[i]->SizeOf(DD, AbbrevData[i].getForm());
@@ -3746,7 +3746,7 @@ void DIEBlock::EmitValue(DwarfDebug &DD, unsigned Form) {
   default: assert(0 && "Improper form for block");          break;
   }
   
-  const std::vector<DIEAbbrevData> &AbbrevData = Abbrev.getData();
+  const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev.getData();
 
   for (unsigned i = 0, N = Values.size(); i < N; ++i) {
     DD.getAsm()->EOL();
@@ -3819,7 +3819,7 @@ void DIE::print(std::ostream &O, unsigned IncIndent) {
   }
   O << "\n";
 
-  const std::vector<DIEAbbrevData> &Data = Abbrev.getData();
+  const SmallVector<DIEAbbrevData, 8> &Data = Abbrev.getData();
   
   IndentCount += 2;
   for (unsigned i = 0, N = Data.size(); i < N; ++i) {
