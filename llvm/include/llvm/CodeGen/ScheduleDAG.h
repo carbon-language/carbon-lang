@@ -229,8 +229,9 @@ namespace llvm {
     virtual void remove(SUnit *SU) = 0;
 
     /// ScheduledNode - As each node is scheduled, this method is invoked.  This
-    /// allows the priority function to adjust the priority of node that have
-    /// already been emitted.
+    /// allows the priority function to adjust the priority of related
+    /// unscheduled nodes, for example.
+    ///
     virtual void ScheduledNode(SUnit *) {}
 
     virtual void UnscheduledNode(SUnit *) {}
@@ -339,9 +340,10 @@ namespace llvm {
 
     void dumpSchedule() const;
 
-    /// Schedule - Order nodes according to selected style.
+    /// Schedule - Order nodes according to selected style, filling
+    /// in the Sequence member.
     ///
-    virtual void Schedule() {}
+    virtual void Schedule() = 0;
 
   private:
     /// EmitSubregNode - Generate machine code for subreg nodes.
