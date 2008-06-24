@@ -25,12 +25,14 @@ public:
   ~MallocAllocator() {}
   
   void Reset() {}
+
   void *Allocate(size_t Size, size_t Alignment) { return malloc(Size); }
   
   template <typename T>
-  void *Allocate() { return reinterpret_cast<T*>(malloc(sizeof(T))); }
+  T *Allocate() { return static_cast<T*>(malloc(sizeof(T))); }
   
   void Deallocate(void *Ptr) { free(Ptr); }
+
   void PrintStats() const {}
 };
 
@@ -45,15 +47,16 @@ public:
   ~BumpPtrAllocator();
   
   void Reset();
+
   void *Allocate(size_t Size, size_t Alignment);
 
   template <typename T>
-  void *Allocate() { 
-    return reinterpret_cast<T*>(Allocate(sizeof(T),AlignOf<T>::Alignment));
+  T *Allocate() { 
+    return static_cast<T*>(Allocate(sizeof(T),AlignOf<T>::Alignment));
   }
-
   
   void Deallocate(void *Ptr) {}
+
   void PrintStats() const;
 };
 
