@@ -25,7 +25,7 @@ namespace clang {
   class ObjCDeclSpec;
   class Declarator;
   class AttributeList;
-  class FieldDeclarator;
+  struct FieldDeclarator;
   // Parse.
   class Scope;
   class Action;
