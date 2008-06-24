@@ -832,6 +832,40 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI) const {
   return true;
 }
 
+/// isSafeToClobberEFLAGS - Return true if it's safe insert an instruction that
+/// would clobber the EFLAGS condition register. Note the result may be
+/// conservative. If it cannot definitely determine the safety after visiting
+/// two instructions it assumes it's not safe.
+static bool isSafeToClobberEFLAGS(MachineBasicBlock &MBB,
+                                  MachineBasicBlock::iterator I) {
+  // For compile time consideration, if we are not able to determine the
+  // safety after visiting 2 instructions, we will assume it's not safe.
+  for (unsigned i = 0; i < 2; ++i) {
+    if (I == MBB.end())
+      // Reached end of block, it's safe.
+      return true;
+    bool SeenDef = false;
+    for (unsigned j = 0, e = I->getNumOperands(); j != e; ++j) {
+      MachineOperand &MO = I->getOperand(j);
+      if (!MO.isRegister())
+        continue;
+      if (MO.getReg() == X86::EFLAGS) {
+        if (MO.isUse())
+          return false;
+        SeenDef = true;
+      }
+    }
+
+    if (SeenDef)
+      // This instruction defines EFLAGS, no need to look any further.
+      return true;
+    ++I;
+  }
+
+  // Conservative answer.
+  return false;
+}
+
 void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator I,
                                  unsigned DestReg,
@@ -846,25 +880,33 @@ void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
 
   // MOV32r0 etc. are implemented with xor which clobbers condition code.
   // Re-materialize them as movri instructions to avoid side effects.
+  bool Emitted = false;
   switch (Orig->getOpcode()) {
+  default: break;
   case X86::MOV8r0:
-    BuildMI(MBB, I, get(X86::MOV8ri), DestReg).addImm(0);
-    break;
   case X86::MOV16r0:
-    BuildMI(MBB, I, get(X86::MOV16ri), DestReg).addImm(0);
-    break;
   case X86::MOV32r0:
-    BuildMI(MBB, I, get(X86::MOV32ri), DestReg).addImm(0);
+  case X86::MOV64r0: {
+    if (!isSafeToClobberEFLAGS(MBB, I)) {
+      unsigned Opc = 0;
+      switch (Orig->getOpcode()) {
+      default: break;
+      case X86::MOV8r0:  Opc = X86::MOV8ri;  break;
+      case X86::MOV16r0: Opc = X86::MOV16ri; break;
+      case X86::MOV32r0: Opc = X86::MOV32ri; break;
+      case X86::MOV64r0: Opc = X86::MOV64ri32; break;
+      }
+      BuildMI(MBB, I, get(Opc), DestReg).addImm(0);
+      Emitted = true;
+    }
     break;
-  case X86::MOV64r0:
-    BuildMI(MBB, I, get(X86::MOV64ri32), DestReg).addImm(0);
-    break;
-  default: {
+  }
+  }
+
+  if (!Emitted) {
     MachineInstr *MI = Orig->clone();
     MI->getOperand(0).setReg(DestReg);
     MBB.insert(I, MI);
-    break;
-  }
   }
 
   if (ChangeSubIdx) {
