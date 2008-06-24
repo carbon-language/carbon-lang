@@ -1399,7 +1399,7 @@ bool LoopIndexSplit::splitLoop(SplitInfo &SD) {
 
   BasicBlock *SplitCondBlock = SD.SplitCondition->getParent();
   
-  // Unable to handle triange loops at the moment.
+  // Unable to handle triangle loops at the moment.
   // In triangle loop, split condition is in header and one of the
   // the split destination is loop latch. If split condition is EQ
   // then such loops are already handle in processOneIterationLoop().
