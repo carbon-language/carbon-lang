@@ -185,7 +185,7 @@ struct RegisterPass : public PassInfo {
 ///
 /// If no analysis implementing the interface is available, a default
 /// implementation is created and added.  A pass registers itself as the default
-/// implementation by specifying 'true' as the third template argument of this
+/// implementation by specifying 'true' as the second template argument of this
 /// class.
 ///
 /// In addition to registering itself as an analysis group member, a pass must
