@@ -266,8 +266,8 @@ public:
   }
   
   /// getReceiver - Returns the receiver of the message expression.
-  ///  This can be NULL if the message is for instance methods.  For
-  ///  instance methods, use getClassName.
+  ///  This can be NULL if the message is for class methods.  For
+  ///  class methods, use getClassName.
   Expr *getReceiver() { 
     uintptr_t x = (uintptr_t) SubExprs[RECEIVER];
     return x & 0x1 ? NULL : (Expr*) x;
@@ -281,8 +281,8 @@ public:
   const ObjCMethodDecl *getMethodDecl() const { return MethodProto; }
   ObjCMethodDecl *getMethodDecl() { return MethodProto; }
   
-  /// getClassName - For instance methods, this returns the invoked class,
-  ///  and returns NULL otherwise.  For regular methods, use getReceiver.  
+  /// getClassName - For class methods, this returns the invoked class,
+  ///  and returns NULL otherwise.  For instance methods, use getReceiver.  
   IdentifierInfo *getClassName() {
     uintptr_t x = (uintptr_t) SubExprs[RECEIVER];
     return x & 0x1 ? (IdentifierInfo*) (x & ~0x1) : NULL;
