@@ -528,20 +528,30 @@ def : Pat<(store (v4i16 VR64:$src), addr:$dst),
           (MMX_MOVQ64mr addr:$dst, VR64:$src)>;
 def : Pat<(store (v2i32 VR64:$src), addr:$dst),
           (MMX_MOVQ64mr addr:$dst, VR64:$src)>;
+def : Pat<(store (v2f32 VR64:$src), addr:$dst),
+          (MMX_MOVQ64mr addr:$dst, VR64:$src)>;
 def : Pat<(store (v1i64 VR64:$src), addr:$dst),
           (MMX_MOVQ64mr addr:$dst, VR64:$src)>;
 
 // Bit convert.
 def : Pat<(v8i8  (bitconvert (v1i64 VR64:$src))), (v8i8  VR64:$src)>;
 def : Pat<(v8i8  (bitconvert (v2i32 VR64:$src))), (v8i8  VR64:$src)>;
+def : Pat<(v8i8  (bitconvert (v2f32 VR64:$src))), (v8i8  VR64:$src)>;
 def : Pat<(v8i8  (bitconvert (v4i16 VR64:$src))), (v8i8  VR64:$src)>;
 def : Pat<(v4i16 (bitconvert (v1i64 VR64:$src))), (v4i16 VR64:$src)>;
 def : Pat<(v4i16 (bitconvert (v2i32 VR64:$src))), (v4i16 VR64:$src)>;
+def : Pat<(v4i16 (bitconvert (v2f32 VR64:$src))), (v4i16 VR64:$src)>;
 def : Pat<(v4i16 (bitconvert (v8i8  VR64:$src))), (v4i16 VR64:$src)>;
 def : Pat<(v2i32 (bitconvert (v1i64 VR64:$src))), (v2i32 VR64:$src)>;
+def : Pat<(v2i32 (bitconvert (v2f32 VR64:$src))), (v2i32 VR64:$src)>;
 def : Pat<(v2i32 (bitconvert (v4i16 VR64:$src))), (v2i32 VR64:$src)>;
 def : Pat<(v2i32 (bitconvert (v8i8  VR64:$src))), (v2i32 VR64:$src)>;
+def : Pat<(v2f32 (bitconvert (v1i64 VR64:$src))), (v2f32 VR64:$src)>;
+def : Pat<(v2f32 (bitconvert (v2i32 VR64:$src))), (v2f32 VR64:$src)>;
+def : Pat<(v2f32 (bitconvert (v4i16 VR64:$src))), (v2f32 VR64:$src)>;
+def : Pat<(v2f32 (bitconvert (v8i8  VR64:$src))), (v2f32 VR64:$src)>;
 def : Pat<(v1i64 (bitconvert (v2i32 VR64:$src))), (v1i64 VR64:$src)>;
+def : Pat<(v1i64 (bitconvert (v2f32 VR64:$src))), (v1i64 VR64:$src)>;
 def : Pat<(v1i64 (bitconvert (v4i16 VR64:$src))), (v1i64 VR64:$src)>;
 def : Pat<(v1i64 (bitconvert (v8i8  VR64:$src))), (v1i64 VR64:$src)>;
 
@@ -550,6 +560,8 @@ def : Pat<(v1i64 (bitconvert (i64 GR64:$src))),
           (MMX_MOVD64to64rr GR64:$src)>;
 def : Pat<(v2i32 (bitconvert (i64 GR64:$src))),
           (MMX_MOVD64to64rr GR64:$src)>;
+def : Pat<(v2f32 (bitconvert (i64 GR64:$src))),
+          (MMX_MOVD64to64rr GR64:$src)>;
 def : Pat<(v4i16 (bitconvert (i64 GR64:$src))),
           (MMX_MOVD64to64rr GR64:$src)>;
 def : Pat<(v8i8  (bitconvert (i64 GR64:$src))),
@@ -557,6 +569,8 @@ def : Pat<(v8i8  (bitconvert (i64 GR64:$src))),
 def : Pat<(i64 (bitconvert (v1i64 VR64:$src))),
           (MMX_MOVD64from64rr VR64:$src)>;
 def : Pat<(i64 (bitconvert (v2i32 VR64:$src))),
+          (MMX_MOVD64from64rr VR64:$src)>;
+def : Pat<(i64 (bitconvert (v2f32 VR64:$src))),
           (MMX_MOVD64from64rr VR64:$src)>;
 def : Pat<(i64 (bitconvert (v4i16 VR64:$src))),
           (MMX_MOVD64from64rr VR64:$src)>;

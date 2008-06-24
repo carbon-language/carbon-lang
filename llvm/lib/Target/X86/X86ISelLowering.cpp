@@ -536,6 +536,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     addRegisterClass(MVT::v8i8,  X86::VR64RegisterClass);
     addRegisterClass(MVT::v4i16, X86::VR64RegisterClass);
     addRegisterClass(MVT::v2i32, X86::VR64RegisterClass);
+    addRegisterClass(MVT::v2f32, X86::VR64RegisterClass);
     addRegisterClass(MVT::v1i64, X86::VR64RegisterClass);
 
     // FIXME: add MMX packed arithmetics
@@ -583,11 +584,14 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     AddPromotedToType (ISD::LOAD,               MVT::v4i16, MVT::v1i64);
     setOperationAction(ISD::LOAD,               MVT::v2i32, Promote);
     AddPromotedToType (ISD::LOAD,               MVT::v2i32, MVT::v1i64);
+    setOperationAction(ISD::LOAD,               MVT::v2f32, Promote);
+    AddPromotedToType (ISD::LOAD,               MVT::v2f32, MVT::v1i64);
     setOperationAction(ISD::LOAD,               MVT::v1i64, Legal);
 
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v8i8,  Custom);
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v4i16, Custom);
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v2i32, Custom);
+    setOperationAction(ISD::BUILD_VECTOR,       MVT::v2f32, Custom);
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v1i64, Custom);
 
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v8i8,  Custom);
@@ -894,7 +898,7 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
       // Don't emit a copytoreg.
       continue;
     }
-    
+
     Chain = DAG.getCopyToReg(Chain, VA.getLocReg(), ValToCopy, Flag);
     Flag = Chain.getValue(1);
   }
