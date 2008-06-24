@@ -18,6 +18,7 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Parse/Scope.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 
 namespace clang {
 
@@ -44,6 +45,9 @@ class IdentifierResolver {
     /// for EnumConstantDecls returns the parent context of their EnumDecl.
     static DeclContext *getContext(Decl *D) {
       DeclContext *Ctx;
+
+      if (CXXFieldDecl *FD = dyn_cast<CXXFieldDecl>(D))
+        return FD->getParent();
 
       if (EnumConstantDecl *EnumD = dyn_cast<EnumConstantDecl>(D)) {
         Ctx = EnumD->getDeclContext()->getParent();
