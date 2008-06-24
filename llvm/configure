@@ -951,6 +951,7 @@ ac_subdirs_all='projects/sample
 projects/privbracket
 projects/llvm-stacker
 projects/llvm-test
+projects/test-suite
 projects/llvm-reopt
 projects/llvm-gcc
 projects/llvm-java
@@ -2090,6 +2091,8 @@ do
       llvm-stacker) subdirs="$subdirs projects/llvm-stacker"
  ;;
       llvm-test)    subdirs="$subdirs projects/llvm-test"
+ ;;
+      test-suite)   subdirs="$subdirs projects/test-suite"
  ;;
       llvm-reopt)   subdirs="$subdirs projects/llvm-reopt"
 ;;

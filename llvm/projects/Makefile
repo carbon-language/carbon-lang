@@ -10,7 +10,9 @@ LEVEL=..
 
 include $(LEVEL)/Makefile.config
 
-DIRS:= $(filter-out llvm-test,$(patsubst $(PROJ_SRC_DIR)/%/Makefile,%,$(wildcard $(PROJ_SRC_DIR)/*/Makefile)))
+# Compile all subdirs, except for the test suite, which lives in test-suite.
+# Before 2008.06.24 it lived in llvm-test, so exclude that as well for now.
+DIRS:= $(filter-out llvm-test test-suite,$(patsubst $(PROJ_SRC_DIR)/%/Makefile,%,$(wildcard $(PROJ_SRC_DIR)/*/Makefile)))
 
 # Sparc cannot link shared libraries (libtool problem?)
 ifeq ($(ARCH), Sparc)
