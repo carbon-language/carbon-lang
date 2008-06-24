@@ -21,9 +21,88 @@
 using namespace clang;
 using namespace CodeGen;
 
+/// Emits an instance of NSConstantString representing the object.
 llvm::Value *CodeGenFunction::EmitObjCStringLiteral(const ObjCStringLiteral *E){
-  std::string S(E->getString()->getStrData(), E->getString()->getByteLength());
-  return CGM.GetAddrOfConstantCFString(S);
+  return CGM.getObjCRuntime()->GenerateConstantString(
+      E->getString()->getStrData(), E->getString()->getByteLength());
+}
+
+/// Emit a selector.
+llvm::Value *CodeGenFunction::EmitObjCSelectorExpr(const ObjCSelectorExpr *E) {
+  // Untyped selector.
+  // Note that this implementation allows for non-constant strings to be passed
+  // as arguments to @selector().  Currently, the only thing preventing this
+  // behaviour is the type checking in the front end.
+  return CGM.getObjCRuntime()->GetSelector(Builder,
+      CGM.GetAddrOfConstantString(E->getSelector().getName()), 0);
+}
+
+
+
+llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
+  // Only the lookup mechanism and first two arguments of the method
+  // implementation vary between runtimes.  We can get the receiver and
+  // arguments in generic code.
+  
+  CGObjCRuntime *Runtime = CGM.getObjCRuntime();
+  const Expr *ReceiverExpr = E->getReceiver();
+  bool isSuperMessage = false;
+  // Find the receiver
+  llvm::Value *Receiver;
+  if (!ReceiverExpr) {
+    const char * classname = E->getClassName()->getName();
+    if (!strcmp(classname, "super")) {
+      classname = E->getMethodDecl()->getClassInterface()->getName();
+    }
+    llvm::Value *ClassName = CGM.GetAddrOfConstantString(classname);
+    ClassName = Builder.CreateStructGEP(ClassName, 0);
+    Receiver = Runtime->LookupClass(Builder, ClassName);
+  } else if (dyn_cast<PreDefinedExpr>(E->getReceiver())) {
+    isSuperMessage = true;
+    Receiver = LoadObjCSelf();
+  } else {
+   Receiver = EmitScalarExpr(E->getReceiver());
+  }
+
+  // Process the arguments
+  unsigned ArgC = E->getNumArgs();
+  llvm::SmallVector<llvm::Value*, 16> Args;
+  for (unsigned i = 0; i != ArgC; ++i) {
+    const Expr *ArgExpr = E->getArg(i);
+    QualType ArgTy = ArgExpr->getType();
+    if (!hasAggregateLLVMType(ArgTy)) {
+      // Scalar argument is passed by-value.
+      Args.push_back(EmitScalarExpr(ArgExpr));
+    } else if (ArgTy->isAnyComplexType()) {
+      // Make a temporary alloca to pass the argument.
+      llvm::Value *DestMem = CreateTempAlloca(ConvertType(ArgTy));
+      EmitComplexExprIntoAddr(ArgExpr, DestMem, false);
+      Args.push_back(DestMem);
+    } else {
+      llvm::Value *DestMem = CreateTempAlloca(ConvertType(ArgTy));
+      EmitAggExpr(ArgExpr, DestMem, false);
+      Args.push_back(DestMem);
+    }
+  }
+
+  // Get the selector string
+  std::string SelStr = E->getSelector().getName();
+  llvm::Constant *Selector = CGM.GetAddrOfConstantString(SelStr);
+
+  llvm::Value *SelPtr = Builder.CreateStructGEP(Selector, 0);
+  if (isSuperMessage) {
+    const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(CurFuncDecl);
+    assert(OMD && "super is only valid in an Objective-C method");
+    const char *SuperClass = OMD->getClassInterface()->getSuperClass()->getName();
+    return Runtime->GenerateMessageSendSuper(Builder, ConvertType(E->getType()),
+                                        Receiver, SuperClass,
+                                        Receiver, SelPtr,
+                                        &Args[0], Args.size());
+  }
+  return Runtime->GenerateMessageSend(Builder, ConvertType(E->getType()),
+                                      LoadObjCSelf(),
+                                      Receiver, SelPtr,
+                                      &Args[0], Args.size());
 }
 
 /// Generate an Objective-C method.  An Objective-C method is a C function with

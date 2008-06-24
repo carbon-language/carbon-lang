@@ -86,6 +86,8 @@ public:
   void VisitOverloadExpr(const OverloadExpr *E);
   void VisitBinComma(const BinaryOperator *E);
 
+  void VisitObjCMessageExpr(ObjCMessageExpr *E);
+
   
   void VisitConditionalOperator(const ConditionalOperator *CO);
   void VisitInitListExpr(InitListExpr *E);
@@ -198,6 +200,16 @@ void AggExprEmitter::VisitCallExpr(const CallExpr *E)
   // If the result is ignored, don't copy from the value.
   if (DestPtr == 0)
     // FIXME: If the source is volatile, we must read from it.
+    return;
+  
+  EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
+}
+void AggExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) 
+{
+  RValue RV = RValue::getAggregate(CGF.EmitObjCMessageExpr(E));
+
+  // If the result is ignored, don't copy from the value.
+  if (DestPtr == 0)
     return;
   
   EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());

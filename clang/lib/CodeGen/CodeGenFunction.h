@@ -451,6 +451,10 @@ public:
                           bool isSplat = false);
   
   llvm::Value *EmitObjCStringLiteral(const ObjCStringLiteral *E);
+  llvm::Value *EmitObjCSelectorExpr(const ObjCSelectorExpr *E);
+  llvm::Value *EmitObjCMessageExpr(const ObjCMessageExpr *E);
+
+
 
   //===--------------------------------------------------------------------===//
   //                           Expression Emission

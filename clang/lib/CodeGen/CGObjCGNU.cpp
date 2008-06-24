@@ -405,11 +405,14 @@ llvm::Value *CGObjCGNU::GenerateMessageSend(llvm::IRBuilder &Builder,
   if (!ReturnTy->isSingleValueType()) {
     llvm::Value *Return = Builder.CreateAlloca(ReturnTy);
     Args.push_back(Return);
-    return Return;
   }
   Args.push_back(Receiver);
   Args.push_back(cmd);
   Args.insert(Args.end(), ArgV, ArgV+ArgC);
+  if (!ReturnTy->isSingleValueType()) {
+    Builder.CreateCall(imp, Args.begin(), Args.end());
+    return Args[0];
+  }
   return Builder.CreateCall(imp, Args.begin(), Args.end());
 }
 
@@ -887,7 +890,7 @@ llvm::Function *CGObjCGNU::MethodPreamble(
                                          bool isClassMethod,
                                          bool isVarArg) {
   std::vector<const llvm::Type*> Args;
-  if (!ReturnTy->isFirstClassType() && ReturnTy != llvm::Type::VoidTy) {
+  if (!ReturnTy->isSingleValueType() && ReturnTy != llvm::Type::VoidTy) {
     Args.push_back(llvm::PointerType::getUnqual(ReturnTy));
     ReturnTy = llvm::Type::VoidTy;
   }
