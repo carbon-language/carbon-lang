@@ -384,7 +384,7 @@ public:
     return true;
   }
 
-  bool erase(std::string Key) {
+  bool erase(const std::string &Key) {
     iterator I = find(Key);
     if (I == end()) return false;
     erase(I);
