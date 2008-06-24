@@ -1017,7 +1017,7 @@ ObjCPropertyRefExpr* ObjCPropertyRefExpr::CreateImpl(Deserializer& D,
 }
 
 void ObjCMessageExpr::EmitImpl(Serializer& S) const {
-  S.EmitBool(getReceiver() ? true : false);
+  S.EmitInt(getFlag());
   S.Emit(getType());
   S.Emit(SelName);
   S.Emit(LBracloc);
@@ -1027,14 +1027,18 @@ void ObjCMessageExpr::EmitImpl(Serializer& S) const {
   
   if (getReceiver())
     S.BatchEmitOwnedPtrs(NumArgs+1, SubExprs);
-  else {    
-    S.EmitPtr(getClassName());
+  else {
+    ClassInfo Info = getClassInfo();
+
+    if (Info.first) S.EmitPtr(Info.first);
+    else S.EmitPtr(Info.second);
+
     S.BatchEmitOwnedPtrs(NumArgs, &SubExprs[ARGS_START]);
   }
 }
 
 ObjCMessageExpr* ObjCMessageExpr::CreateImpl(Deserializer& D, ASTContext& C) {
-  bool isReceiver = D.ReadBool();
+  unsigned flags = D.ReadInt();
   QualType t = QualType::ReadVal(D);
   Selector S = Selector::ReadVal(D);
   SourceLocation L = SourceLocation::ReadVal(D);
@@ -1042,7 +1046,7 @@ ObjCMessageExpr* ObjCMessageExpr::CreateImpl(Deserializer& D, ASTContext& C) {
     
   // Construct an array for the subexpressions.
   unsigned NumArgs = D.ReadInt();
-  Expr** SubExprs = new Expr*[NumArgs+1];
+  Stmt** SubExprs = new Stmt*[NumArgs+1];
   
   // Construct the ObjCMessageExpr object using the special ctor.
   ObjCMessageExpr* ME = new ObjCMessageExpr(S, t, L, R, SubExprs, NumArgs);
@@ -1053,12 +1057,12 @@ ObjCMessageExpr* ObjCMessageExpr::CreateImpl(Deserializer& D, ASTContext& C) {
   
   // Now read in the arguments.
   
-  if (isReceiver)
+  if (flags & Flags == IsInstMeth)
     D.BatchReadOwnedPtrs(NumArgs+1, SubExprs, C);
   else {
-    // Read the pointer for ClassName.  The Deserializer will handle the
+    // Read the pointer for Cls/ClassName.  The Deserializer will handle the
     // bit-mangling automatically.
-    SubExprs[RECEIVER] = (Expr*) ((uintptr_t) 0x1);
+    SubExprs[RECEIVER] = (Stmt*) ((uintptr_t) flags);
     D.ReadUIntPtr((uintptr_t&) SubExprs[RECEIVER]);
     
     // Read the arguments.

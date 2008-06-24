@@ -225,13 +225,11 @@ public:
 };
 
 class ObjCMessageExpr : public Expr {
-  enum { RECEIVER=0, ARGS_START=1 };
-
-  // Bit-swizziling flags.
-  enum { IsInstMeth=0, IsClsMethDeclUnknown, IsClsMethDeclKnown, Flags=0x3 };
-
+  // SubExprs - The receiver and arguments of the message expression.
   Stmt **SubExprs;
   
+  // NumArgs - The number of arguments (not including the receiver) to the
+  //  message expression.
   unsigned NumArgs;
   
   // A unigue name for this message.
@@ -243,13 +241,21 @@ class ObjCMessageExpr : public Expr {
   ObjCMethodDecl *MethodProto;
 
   SourceLocation LBracloc, RBracloc;
+
+  // Constants for indexing into SubExprs.
+  enum { RECEIVER=0, ARGS_START=1 };
+
+  // Bit-swizziling flags.
+  enum { IsInstMeth=0, IsClsMethDeclUnknown, IsClsMethDeclKnown, Flags=0x3 };
+  unsigned getFlag() const { return (uintptr_t) SubExprs[RECEIVER] & Flags; }
   
   // constructor used during deserialization
   ObjCMessageExpr(Selector selInfo, QualType retType,
                   SourceLocation LBrac, SourceLocation RBrac,
-                  Expr **ArgExprs, unsigned nargs)
-  : Expr(ObjCMessageExprClass, retType), NumArgs(nargs), SelName(selInfo),
-    MethodProto(NULL), LBracloc(LBrac), RBracloc(RBrac) {}
+                  Stmt **subexprs, unsigned nargs)
+  : Expr(ObjCMessageExprClass, retType), SubExprs(subexprs),
+    NumArgs(nargs), SelName(selInfo), MethodProto(NULL),
+    LBracloc(LBrac), RBracloc(RBrac) {}
   
 public:
   /// This constructor is used to represent class messages where the
