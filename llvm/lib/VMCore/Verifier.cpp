@@ -1504,7 +1504,7 @@ bool llvm::verifyModule(const Module &M, VerifierFailureAction action,
   PassManager PM;
   Verifier *V = new Verifier(action);
   PM.add(V);
-  PM.run((Module&)M);
+  PM.run(const_cast<Module&>(M));
   
   if (ErrorInfo && V->Broken)
     *ErrorInfo = V->msgs.str();
