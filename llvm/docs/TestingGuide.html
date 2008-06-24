@@ -2,44 +2,44 @@
                       "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-  <title>LLVM Test Suite Guide</title>
+  <title>LLVM Testing Infrastructure Guide</title>
   <link rel="stylesheet" href="llvm.css" type="text/css">
 </head>
 <body>
       
 <div class="doc_title">
-  LLVM Test Suite Guide
+  LLVM Testing Infrastructure Guide
 </div>
 
 <ol>
   <li><a href="#overview">Overview</a></li>
-  <li><a href="#Requirements">Requirements</a></li>
-  <li><a href="#org">LLVM Test Suite Organization</a>
+  <li><a href="#requirements">Requirements</a></li>
+  <li><a href="#org">LLVM testing infrastructure organization</a>
     <ul>
-      <li><a href="#codefragments">Code Fragments</a></li>
-      <li><a href="#wholeprograms">Whole Programs</a></li>
+      <li><a href="#dejagnu">DejaGNU tests</a></li>
+      <li><a href="#testsuite">Test suite</a></li>
     </ul>
   </li>
-  <li><a href="#quick">Quick Start</a>
+  <li><a href="#quick">Quick start</a>
     <ul>
       <li><a href="#quickdejagnu">DejaGNU tests</a></li>
-      <li><a href="#quickllvmtest">llvm-test tests</a></li>
+      <li><a href="#quicktestsuite">Test suite</a></li>
    </ul>
   </li>
-  <li><a href="#dgstructure">DejaGNU Structure</a>
+  <li><a href="#dgstructure">DejaGNU structure</a>
     <ul>
-      <li><a href="#customdg">Writing new DejaGNU tests</a></li>
+      <li><a href="#dgcustom">Writing new DejaGNU tests</a></li>
       <li><a href="#dgvars">Variables and substitutions</a></li>
       <li><a href="#dgfeatures">Other features</a></li>
    </ul>
   </li>
-  <li><a href="#llvmteststructure"><tt>llvm-test</tt> Structure</a></li>
-  <li><a href="#runllvmtest">Running the LLVM Tests</a>
+  <li><a href="#testsuitestructure">Test suite structure</a></li>
+  <li><a href="#testsuiterun">Running the test suite</a>
     <ul>
-      <li><a href="#externaltests">Configuring external tests</a></li>
-      <li><a href="#llvmtesttests">Running different tests</a></li>
-      <li><a href="#llvmtestoutput">Generating test output</a></li>
-      <li><a href="#customtest">Writing custom tests for llvm-test</a></li>
+      <li><a href="#testsuiteexternal">Configuring external tests</a></li>
+      <li><a href="#testsuitetests">Running different tests</a></li>
+      <li><a href="#testsuiteoutput">Generating test output</a></li>
+      <li><a href="#testsuitecustom">Writing custom tests for llvm-test</a></li>
    </ul>
   </li>
   <li><a href="#nightly">Running the nightly tester</a></li>
@@ -56,19 +56,19 @@
 
 <div class="doc_text">
 
-<p>This document is the reference manual for the LLVM test suite.  It documents
-the structure of the LLVM test suite, the tools needed to use it, and how to add
-and run tests.</p>
+<p>This document is the reference manual for the LLVM testing infrastructure. It documents
+the structure of the LLVM testing infrastructure, the tools needed to use it,
+and how to add and run tests.</p>
 
 </div>
 
 <!--=========================================================================-->
-<div class="doc_section"><a name="Requirements">Requirements</a></div>
+<div class="doc_section"><a name="requirements">Requirements</a></div>
 <!--=========================================================================-->
 
 <div class="doc_text">
 
-<p>In order to use the LLVM test suite, you will need all of the software
+<p>In order to use the LLVM testing infrastructure, you will need all of the software
 required to build LLVM, plus the following:</p>
 
 <dl>
@@ -114,21 +114,22 @@ and tcl.</p>
 </div>
 
 <!--=========================================================================-->
-<div class="doc_section"><a name="org">LLVM Test Suite Organization</a></div>
+<div class="doc_section"><a name="org">LLVM testing infrastructure organization</a></div>
 <!--=========================================================================-->
 
 <div class="doc_text">
 
-<p>The LLVM test suite contains two major categories of tests: code
-fragments and whole programs. Code fragments are in the <tt>llvm</tt> module
-under the <tt>llvm/test</tt> directory. The whole programs
-test suite is in the <tt>llvm-test</tt> module under the main directory.</p>
+<p>The LLVM testing infrastructure contains two major categories of tests: code
+fragments and whole programs. Code fragments are referred to as the "DejaGNU
+tests" and are in the <tt>llvm</tt> module in subversion under the
+<tt>llvm/test</tt> directory. The whole programs tests are referred to as the
+"Test suite" and are in the <tt>test-suite</tt> module in subversion.
+</p>
 
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="codefragments">Code Fragments (a.k.a.
-DejaGNU tests)</a></div>
+<div class="doc_subsection"><a name="dejagnu">DejaGNU tests</a></div>
 <!-- _______________________________________________________________________ -->
 
 <div class="doc_text">
@@ -154,13 +155,12 @@ application or benchmark.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="wholeprograms">Whole Programs (a.k.a.
-<tt>llvm-test</tt> tests)</a></div>
+<div class="doc_subsection"><a name="testsuite">Test suite</a></div>
 <!-- _______________________________________________________________________ -->
 
 <div class="doc_text">
 
-<p>The <tt>llvm-test</tt> suite contains whole programs, which are pieces of
+<p>The test suite contains whole programs, which are pieces of
 code which can be compiled and linked into a stand-alone program that can be
 executed.  These programs are generally written in high level languages such as
 C or C++, but sometimes they are written straight in LLVM assembly.</p>
@@ -175,27 +175,26 @@ a way of benchmarking LLVM performance, both in terms of the efficiency of the
 programs generated as well as the speed with which LLVM compiles, optimizes, and
 generates code.</p>
 
-<p>All "whole program" tests are located in the <tt>test-suite</tt> Subversion
-module.</p> 
+<p>The test-suite is located in the <tt>test-suite</tt> Subversion module.</p> 
 
 </div>
 
 <!--=========================================================================-->
-<div class="doc_section"><a name="quick">Quick Start</a></div>
+<div class="doc_section"><a name="quick">Quick start</a></div>
 <!--=========================================================================-->
 
 <div class="doc_text">
 
-  <p>The tests are located in two separate Subversion modules. The code fragment
+  <p>The tests are located in two separate Subversion modules. The
   DejaGNU tests are in the main "llvm" module under the directory 
   <tt>llvm/test</tt> (so you get these tests for free with the main llvm tree).
-  The more comprehensive <tt>llvm-test</tt> suite that includes whole 
-programs in C and C++ is in the <tt>test-suite</tt> module. This module should 
-be checked out to the <tt>llvm/projects</tt> directory as llvm-test (don't use
-another name, for then the test suite will be run every time you run
-<tt>make</tt> in the main <tt>llvm</tt> directory).
+  The more comprehensive test suite that includes whole 
+programs in C and C++ is in the <tt>test-suite</tt> module. This module should
+be checked out to the <tt>llvm/projects</tt> directory (don't use another name
+then the default "test-suite", for then the test suite will be run every time
+you run <tt>make</tt> in the main <tt>llvm</tt> directory).
 When you <tt>configure</tt> the <tt>llvm</tt> module, 
-the <tt>llvm-test</tt> directory will be automatically configured. 
+the <tt>test-suite</tt> directory will be automatically configured. 
 Alternatively, you can configure the <tt>test-suite</tt> module manually.</p>
 
 <!-- _______________________________________________________________________ -->
@@ -218,8 +217,8 @@ Alternatively, you can configure the <tt>test-suite</tt> module manually.</p>
 </pre>
 </div>
 
-<p>To run only a subdirectory of tests in llvm/test using DejaGNU (ie.
-Regression/Transforms), just set the TESTSUITE variable to the path of the
+<p>To run only a subdirectory of tests in <tt>llvm/test</tt> using DejaGNU (ie.
+Transforms), just set the TESTSUITE variable to the path of the
 subdirectory (relative to <tt>llvm/test</tt>):</p>
 
 <div class="doc_code">
@@ -232,8 +231,8 @@ subdirectory (relative to <tt>llvm/test</tt>):</p>
 must have run the complete testsuite before you can specify a
 subdirectory.</b></p>
 
-<p>To run only a single test, set TESTONE to its path (relative to
-<tt>llvm/test</tt>) and make the check-one target:</p>
+<p>To run only a single test, set <tt>TESTONE</tt> to its path (relative to
+<tt>llvm/test</tt>) and make the <tt>check-one</tt> target:</p>
 
 <div class="doc_code">
 <pre>
@@ -242,7 +241,7 @@ subdirectory.</b></p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="quickllvmtest"><tt>llvm-test</tt> tests</a></div>
+<div class="doc_subsection"><a name="quicktestsuite">Test suite</a></div>
 <!-- _______________________________________________________________________ -->
 
 <p>To run the comprehensive test suite (tests that compile and execute whole 
@@ -251,7 +250,7 @@ programs), first checkout and setup the <tt>test-suite</tt> module:</p>
 <div class="doc_code">
 <pre>
 % cd llvm/projects
-% svn co http://llvm.org/svn/llvm-project/test-suite/trunk llvm-test
+% svn co http://llvm.org/svn/llvm-project/test-suite/trunk test-suite
 % cd ..
 % ./configure --with-llvmgccdir=$LLVM_GCC_DIR
 </pre>
@@ -259,12 +258,12 @@ programs), first checkout and setup the <tt>test-suite</tt> module:</p>
 llvm-gcc, not it's src or obj dir.</p>
 </div>
 
-<p>Then, run the entire test suite by running make in the <tt>llvm-test</tt>
+<p>Then, run the entire test suite by running make in the <tt>test-suite</tt>
 directory:</p>
 
 <div class="doc_code">
 <pre>
-% cd projects/llvm-test
+% cd projects/test-suite
 % gmake
 </pre>
 </div>
@@ -274,19 +273,19 @@ let it generate a report by running:</p>
 
 <div class="doc_code">
 <pre>
-% cd projects/llvm-test
+% cd projects/test-suite
 % gmake TEST=nightly report report.html
 </pre>
 </div>
 
 <p>Any of the above commands can also be run in a subdirectory of
-<tt>projects/llvm-test</tt> to run the specified test only on the programs in
+<tt>projects/test-suite</tt> to run the specified test only on the programs in
 that subdirectory.</p>
 
 </div>
 
 <!--=========================================================================-->
-<div class="doc_section"><a name="dgstructure">DejaGNU Structure</a></div>
+<div class="doc_section"><a name="dgstructure">DejaGNU structure</a></div>
 <!--=========================================================================-->
 <div class="doc_text">
   <p>The LLVM DejaGNU tests are driven by DejaGNU together with GNU Make and are
@@ -313,7 +312,7 @@ that subdirectory.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsection"><a name="customdg">Writing new DejaGNU tests</a></div>
+<div class="doc_subsection"><a name="dgcustom">Writing new DejaGNU tests</a></div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_text">
   <p>The DejaGNU structure is very simple, but does require some information to 
@@ -624,7 +623,7 @@ that subdirectory.</p>
 </div>
 
 <!--=========================================================================-->
-<div class="doc_section"><a name="llvmteststructure"><tt>llvm-test</tt> 
+<div class="doc_section"><a name="testsuitestructure">Test suite
 Structure</a></div>
 <!--=========================================================================-->
 
@@ -684,7 +683,7 @@ others are features that we haven't added yet (or may never add).  In DejaGNU,
 the result for such tests will be XFAIL (eXpected FAILure).  In this way, you
 can tell the difference between an expected and unexpected failure.</p>
 
-<p>The tests in <tt>llvm-test</tt> have no such feature at this time. If the
+<p>The tests in the test suite have no such feature at this time. If the
 test passes, only warnings and other miscellaneous output will be generated.  If
 a test fails, a large &lt;program&gt; FAILED message will be displayed.  This
 will help you separate benign warnings from actual test failures.</p>
@@ -692,7 +691,7 @@ will help you separate benign warnings from actual test failures.</p>
 </div>
 
 <!--=========================================================================-->
-<div class="doc_section"><a name="runllvmtest">Running the LLVM Tests</a></div>
+<div class="doc_section"><a name="testsuiterun">Running the test suite</a></div>
 <!--=========================================================================-->
 
 <div class="doc_text">
@@ -701,7 +700,7 @@ will help you separate benign warnings from actual test failures.</p>
 <i>are not</i> executed inside of the LLVM source tree. This is because the
 test suite creates temporary files during execution.</p>
 
-<p>To run the <tt>llvm-test</tt> suite, you need to use the following steps:</p>
+<p>To run the test suite, you need to use the following steps:</p>
 
 <ol>
   <li><tt>cd</tt> into the <tt>llvm/projects</tt> directory</li>
@@ -710,15 +709,15 @@ test suite creates temporary files during execution.</p>
 
 <div class="doc_code">
 <pre>
-% svn co http://llvm.org/svn/llvm-project/test-suite/trunk llvm-test
+% svn co http://llvm.org/svn/llvm-project/test-suite/trunk test-suite
 </pre>
 </div>
 
       <p>This will get the test suite into <tt>llvm/projects/llvm-test</tt></p>
 
-  <li><p>Configure the test suite using llvm configure. This will automatically configure llvm-test. 
-         You must do it from the top level otherwise llvm-gcc will not be set which is required to 
-        run llvm-test:</p>
+  <li><p>Configure the test suite using llvm configure. This will automatically
+  configure test-suite.  You must do it from the top level otherwise llvm-gcc
+  will not be set which is required to run llvm-test:</p>
 <div class="doc_code">
 <pre>
 % cd $LLVM_OBJ_ROOT ; $LLVM_SRC_ROOT/configure --with-llvmgccdir=$LLVM_GCC_DIR
@@ -728,7 +727,7 @@ test suite creates temporary files during execution.</p>
     <em>installed</em> llvm-gcc, not its src or obj directory.</p>
   </li>
 
-  <li><p>Change back to the <tt>llvm/projects/llvm-test</tt> directory you created before
+  <li><p>Change back to the <tt>llvm/projects/test-suite</tt> directory you created before
   and run <tt>gmake</tt> (or just "<tt>make</tt>" on systems where GNU make is
   the default, such as linux.</p></li>
 </ol>
@@ -738,11 +737,11 @@ the test code or configure script changes).</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection">
-<a name="externaltests">Configuring external tests</a></div>
+<a name="testsuiteexternal">Configuring external tests</a></div>
 <!-- _______________________________________________________________________ -->
 
 <div class="doc_text">
-<p>Note, when configuring the <tt>llvm-test</tt> module, you might want to
+<p>Note, when configuring the <tt>test-suite</tt> module, you might want to
 specify the following configuration options:</p>
 <dl>
   <dt><i>--enable-spec2000</i>
@@ -774,12 +773,12 @@ specify the following configuration options:</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection">
-<a name="llvmtesttests">Running different tests</a></div>
+<a name="testsuitetests">Running different tests</a></div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_text">
-<p>In addition to the regular "whole program"  tests, the <tt>llvm-test</tt>
+<p>In addition to the regular "whole program"  tests, the <tt>test-suite</tt>
 module also provides a mechanism for compiling the programs in different ways.
-If the variable TEST is defined on the gmake command line, the test system will
+If the variable TEST is defined on the <tt>gmake</tt> command line, the test system will
 include a Makefile named <tt>TEST.&lt;value of TEST variable&gt;.Makefile</tt>.
 This Makefile can modify build rules to yield different results.</p>
 
@@ -797,7 +796,7 @@ LLVM.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection">
-<a name="llvmtestoutput">Generating test output</a></div>
+<a name="testsuiteoutput">Generating test output</a></div>
 <!-- _______________________________________________________________________ -->
 <div class="doc_text">
   <p>There are a number of ways to run the tests and generate output. The most
@@ -828,12 +827,12 @@ LLVM.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection">
-<a name="customtest">Writing custom tests for llvm-test</a></div>
+<a name="testsuitecustom">Writing custom tests for the test suite</a></div>
 <!-- _______________________________________________________________________ -->
 
 <div class="doc_text">
 
-<p>Assuming you can run llvm-test, (e.g. "<tt>gmake TEST=nightly report</tt>"
+<p>Assuming you can run the test suite, (e.g. "<tt>gmake TEST=nightly report</tt>"
 should work), it is really easy to run optimizations or code generator
 components against every program in the tree, collecting statistics or running
 custom checks for correctness.  At base, this is how the nightly tester works,
@@ -846,10 +845,10 @@ will tally counts of things you care about.</p>
 
 <p>Following this, you can set up a test and a report that collects these and
 formats them for easy viewing.  This consists of two files, an
-"<tt>llvm-test/TEST.XXX.Makefile</tt>" fragment (where XXX is the name of your
+"<tt>test-suite/TEST.XXX.Makefile</tt>" fragment (where XXX is the name of your
 test) and an "<tt>llvm-test/TEST.XXX.report</tt>" file that indicates how to
 format the output into a table.  There are many example reports of various
-levels of sophistication included with llvm-test, and the framework is very
+levels of sophistication included with the test suite, and the framework is very
 general.</p>
 
 <p>If you are interested in testing an optimization pass, check out the
@@ -857,7 +856,7 @@ general.</p>
 
 <div class="doc_code">
 <pre>
-% cd llvm/projects/llvm-test/MultiSource/Benchmarks  # or some other level
+% cd llvm/projects/test-suite/MultiSource/Benchmarks  # or some other level
 % make TEST=libcalls report
 </pre>
 </div>
@@ -888,7 +887,7 @@ Prolangs-C/bison/mybison              | 74    | *     |
 You can also use the "TEST=libcalls report.html" target to get the table in HTML
 form, similarly for report.csv and report.tex.</p>
 
-<p>The source for this is in llvm-test/TEST.libcalls.*.  The format is pretty
+<p>The source for this is in test-suite/TEST.libcalls.*.  The format is pretty
 simple: the Makefile indicates how to run the test (in this case, 
 "<tt>opt -simplify-libcalls -stats</tt>"), and the report contains one line for
 each column of the output.  The first value is the header for the column and the
