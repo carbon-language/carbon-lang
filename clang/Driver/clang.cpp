@@ -990,6 +990,15 @@ static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
               false, Headers);
       AddPath("/usr/include/c++/4.1.2/backward", System, true, false, false, 
               Headers);
+
+      // Arch Linux 2008-06-24
+      AddPath("/usr/include/c++/4.3.1", System, true, false, false, Headers);
+      AddPath("/usr/include/c++/4.3.1/i686-pc-linux-gnu", System, true, false,
+              false, Headers);
+      AddPath("/usr/include/c++/4.3.1/backward", System, true, false, false,
+              Headers);
+      AddPath("/usr/include/c++/4.3.1/x86_64-unknown-linux-gnu", System, true,
+              false, false, Headers);
     }
     
     AddPath("/usr/local/include", System, false, false, false, Headers);
@@ -1032,6 +1041,16 @@ static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
     //Debian testing/lenny amd64
     AddPath("/usr/lib/gcc/x86_64-linux-gnu/4.2.3/include", System,
             false, false, false, Headers);
+
+    // Arch Linux 2008-06-24
+    AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.3.1/include", System,
+            false, false, false, Headers);
+    AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.3.1/include-fixed", System,
+            false, false, false, Headers);
+    AddPath("/usr/lib/gcc/x86_64-unknown-linux-gnu/4.3.1/include", System,
+            false, false, false, Headers);
+    AddPath("/usr/lib/gcc/x86_64-unknown-linux-gnu/4.3.1/include-fixed",
+            System, false, false, false, Headers);
 
     AddPath("/usr/include", System, false, false, false, Headers);
     AddPath("/System/Library/Frameworks", System, true, false, true, Headers);
