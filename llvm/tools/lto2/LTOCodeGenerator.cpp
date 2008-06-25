@@ -386,6 +386,8 @@ bool LTOCodeGenerator::generateAssemblyCode(std::ostream& out, std::string& errM
     // Cleanup and simplify the code after the scalar optimizations.
     passes.add(createInstructionCombiningPass());
     passes.add(createJumpThreadingPass());        // Thread jumps.
+    passes.add(createPromoteMemoryToRegisterPass()); // Cleanup after threading.
+
 
     // Delete basic blocks, which optimization passes may have killed...
     passes.add(createCFGSimplificationPass());
