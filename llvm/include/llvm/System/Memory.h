@@ -39,33 +39,36 @@ namespace sys {
   /// @since 1.4
   /// @brief An abstraction for memory operations.
   class Memory {
-    /// @name Functions
-    /// @{
-    public:
-      /// This method allocates a block of Read/Write/Execute memory that is
-      /// suitable for executing dynamically generated code (e.g. JIT). An
-      /// attempt to allocate \p NumBytes bytes of virtual memory is made.
-      /// \p NearBlock may point to an existing allocation in which case
-      /// an attempt is made to allocate more memory near the existing block.
-      ///
-      /// On success, this returns a non-null memory block, otherwise it returns
-      /// a null memory block and fills in *ErrMsg.
-      /// 
-      /// @brief Allocate Read/Write/Execute memory.
-      static MemoryBlock AllocateRWX(unsigned NumBytes,
-                                     const MemoryBlock *NearBlock,
-                                     std::string *ErrMsg = 0);
+  public:
+    /// This method allocates a block of Read/Write/Execute memory that is
+    /// suitable for executing dynamically generated code (e.g. JIT). An
+    /// attempt to allocate \p NumBytes bytes of virtual memory is made.
+    /// \p NearBlock may point to an existing allocation in which case
+    /// an attempt is made to allocate more memory near the existing block.
+    ///
+    /// On success, this returns a non-null memory block, otherwise it returns
+    /// a null memory block and fills in *ErrMsg.
+    /// 
+    /// @brief Allocate Read/Write/Execute memory.
+    static MemoryBlock AllocateRWX(unsigned NumBytes,
+                                   const MemoryBlock *NearBlock,
+                                   std::string *ErrMsg = 0);
 
-      /// This method releases a block of Read/Write/Execute memory that was
-      /// allocated with the AllocateRWX method. It should not be used to
-      /// release any memory block allocated any other way.
-      ///
-      /// On success, this returns false, otherwise it returns true and fills
-      /// in *ErrMsg.
-      /// @throws std::string if an error occurred.
-      /// @brief Release Read/Write/Execute memory.
-      static bool ReleaseRWX(MemoryBlock &block, std::string *ErrMsg = 0);
-    /// @}
+    /// This method releases a block of Read/Write/Execute memory that was
+    /// allocated with the AllocateRWX method. It should not be used to
+    /// release any memory block allocated any other way.
+    ///
+    /// On success, this returns false, otherwise it returns true and fills
+    /// in *ErrMsg.
+    /// @throws std::string if an error occurred.
+    /// @brief Release Read/Write/Execute memory.
+    static bool ReleaseRWX(MemoryBlock &block, std::string *ErrMsg = 0);
+    
+    
+    /// InvalidateInstructionCache - Before the JIT can run a block of code
+    /// that has been emitted it must invalidate the instruction cache on some
+    /// platforms.
+    static void InvalidateInstructionCache(const void *Addr, size_t Len);
   };
 }
 }
