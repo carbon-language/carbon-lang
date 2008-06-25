@@ -297,7 +297,7 @@ void LiveIntervals::printRegName(unsigned reg) const {
 
 void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
                                              MachineBasicBlock::iterator mi,
-                                             unsigned MIIdx,
+                                             unsigned MIIdx, MachineOperand& MO,
                                              LiveInterval &interval) {
   DOUT << "\t\tregister: "; DEBUG(printRegName(interval.reg));
   LiveVariables::VarInfo& vi = lv_->getVarInfo(interval.reg);
@@ -428,7 +428,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 
       // If this redefinition is dead, we need to add a dummy unit live
       // range covering the def slot.
-      if (mi->registerDefIsDead(interval.reg, tri_))
+      if (MO.isDead())
         interval.addRange(LiveRange(RedefIndex, RedefIndex+1, OldValNo));
 
       DOUT << " RESULT: ";
@@ -491,6 +491,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
                                               MachineBasicBlock::iterator mi,
                                               unsigned MIIdx,
+                                              MachineOperand& MO,
                                               LiveInterval &interval,
                                               MachineInstr *CopyMI) {
   // A physical register cannot be live across basic block, so its
@@ -504,7 +505,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   // If it is not used after definition, it is considered dead at
   // the instruction defining it. Hence its interval is:
   // [defSlot(def), defSlot(def)+1)
-  if (mi->registerDefIsDead(interval.reg, tri_)) {
+  if (MO.isDead()) {
     DOUT << " dead";
     end = getDefIndex(start) + 1;
     goto exit;
@@ -552,23 +553,26 @@ exit:
 void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator MI,
                                       unsigned MIIdx,
-                                      unsigned reg) {
-  if (TargetRegisterInfo::isVirtualRegister(reg))
-    handleVirtualRegisterDef(MBB, MI, MIIdx, getOrCreateInterval(reg));
-  else if (allocatableRegs_[reg]) {
+                                      MachineOperand& MO) {
+  if (TargetRegisterInfo::isVirtualRegister(MO.getReg()))
+    handleVirtualRegisterDef(MBB, MI, MIIdx, MO, 
+                             getOrCreateInterval(MO.getReg()));
+  else if (allocatableRegs_[MO.getReg()]) {
     MachineInstr *CopyMI = NULL;
     unsigned SrcReg, DstReg;
     if (MI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
         MI->getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
         tii_->isMoveInstr(*MI, SrcReg, DstReg))
       CopyMI = MI;
-    handlePhysicalRegisterDef(MBB, MI, MIIdx, getOrCreateInterval(reg), CopyMI);
+    handlePhysicalRegisterDef(MBB, MI, MIIdx, MO, 
+                              getOrCreateInterval(MO.getReg()), CopyMI);
     // Def of a register also defines its sub-registers.
-    for (const unsigned* AS = tri_->getSubRegisters(reg); *AS; ++AS)
+    for (const unsigned* AS = tri_->getSubRegisters(MO.getReg()); *AS; ++AS)
       // If MI also modifies the sub-register explicitly, avoid processing it
       // more than once. Do not pass in TRI here so it checks for exact match.
       if (!MI->modifiesRegister(*AS))
-        handlePhysicalRegisterDef(MBB, MI, MIIdx, getOrCreateInterval(*AS), 0);
+        handlePhysicalRegisterDef(MBB, MI, MIIdx, MO, 
+                                  getOrCreateInterval(*AS), 0);
   }
 }
 
@@ -656,7 +660,7 @@ void LiveIntervals::computeIntervals() {
         MachineOperand &MO = MI->getOperand(i);
         // handle register defs - build intervals
         if (MO.isRegister() && MO.getReg() && MO.isDef())
-          handleRegisterDef(MBB, MI, MIIndex, MO.getReg());
+          handleRegisterDef(MBB, MI, MIIndex, MO);
       }
       
       MIIndex += InstrSlots::NUM;
