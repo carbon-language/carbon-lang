@@ -167,6 +167,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Parse\ParseCXXInlineMethods.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Parse\ParseDecl.cpp"
 				>
 			</File>
