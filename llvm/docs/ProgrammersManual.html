@@ -2265,18 +2265,18 @@ array from the <tt>User</tt> object and there may be a variable
 number of them.</p>
 </ul>
 <p>
-Initially each layout will possess a direct pointer to the
+As of v2.4 each layout still possesses a direct pointer to the
 start of the array of <tt>Use</tt>s. Though not mandatory for layout a),
 we stick to this redundancy for the sake of simplicity.
-The <tt>User</tt> object will also store the number of <tt>Use</tt> objects it
+The <tt>User</tt> object also stores the number of <tt>Use</tt> objects it
 has. (Theoretically this information can also be calculated
 given the scheme presented below.)</p>
 <p>
 Special forms of allocation operators (<tt>operator new</tt>)
-will enforce the following memory layouts:</p>
+enforce the following memory layouts:</p>
 
 <ul>
-<li><p>Layout a) will be modelled by prepending the <tt>User</tt> object by the <tt>Use[]</tt> array.</p>
+<li><p>Layout a) is modelled by prepending the <tt>User</tt> object by the <tt>Use[]</tt> array.</p>
 
 <pre>
 ...---.---.---.---.-------...
@@ -2284,7 +2284,7 @@ will enforce the following memory layouts:</p>
 '''---'---'---'---'-------'''
 </pre>
 
-<li><p>Layout b) will be modelled by pointing at the Use[] array.</p>
+<li><p>Layout b) is modelled by pointing at the <tt>Use[]</tt> array.</p>
 <pre>
 .-------...
 | User
@@ -2306,12 +2306,12 @@ will enforce the following memory layouts:</p>
 
 <div class="doc_text">
 <p>
-Since the <tt>Use</tt> objects will be deprived of the direct pointer to
+Since the <tt>Use</tt> objects are deprived of the direct (back)pointer to
 their <tt>User</tt> objects, there must be a fast and exact method to
 recover it. This is accomplished by the following scheme:</p>
 </div>
 
-A bit-encoding in the 2 LSBits (least significant bits) of the <tt>Use::Prev</tt> will allow to find the
+A bit-encoding in the 2 LSBits (least significant bits) of the <tt>Use::Prev</tt> allows to find the
 start of the <tt>User</tt> object:
 <ul>
 <li><tt>00</tt> &mdash;&gt; binary digit 0</li>
@@ -2441,9 +2441,9 @@ never change after being set up, setters of <tt>Use::Prev</tt> must re-tag the
 new <tt>Use**</tt> on every modification. Accordingly getters must strip the
 tag bits.</p>
 <p>
-For layout b) instead of the <tt>User</tt> we will find a pointer (<tt>User*</tt> with LSBit set).
-Following this pointer brings us to the <tt>User</tt>. A portable trick will ensure
-that the first bytes of <tt>User</tt> (if interpreted as a pointer) will never have
+For layout b) instead of the <tt>User</tt> we find a pointer (<tt>User*</tt> with LSBit set).
+Following this pointer brings us to the <tt>User</tt>. A portable trick ensures
+that the first bytes of <tt>User</tt> (if interpreted as a pointer) never has
 the LSBit set.</p>
 
 </div>
