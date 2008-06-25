@@ -199,7 +199,7 @@ let neverHasSideEffects = 1 in
 def MOV64rr : RI<0x89, MRMDestReg, (outs GR64:$dst), (ins GR64:$src),
                  "mov{q}\t{$src, $dst|$dst, $src}", []>;
 
-let isReMaterializable = 1 in {
+let isReMaterializable = 1, isAsCheapAsAMove = 1  in {
 def MOV64ri : RIi64<0xB8, AddRegFrm, (outs GR64:$dst), (ins i64imm:$src),
                     "movabs{q}\t{$src, $dst|$dst, $src}",
                     [(set GR64:$dst, imm:$src)]>;

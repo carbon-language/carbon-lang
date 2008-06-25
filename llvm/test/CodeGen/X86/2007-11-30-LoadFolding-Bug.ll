@@ -3,7 +3,7 @@
 
 declare fastcc void @rdft(i32, i32, double*, i32*, double*)
 
-define fastcc void @mp_sqrt(i32 %n, i32 %radix, i32* %in, i32* %out, i32* %tmp1, i32* %tmp2, i32 %nfft, double* %tmp1fft, double* %tmp2fft, i32* %ip, double* %w) {
+define fastcc void @mp_sqrt(i32 %n, i32 %radix, i32* %in, i32* %out, i32* %tmp1, i32* %tmp2, i32 %nfft, double* %tmp1fft, double* %tmp2fft, i32* %ip, double* %w) nounwind {
 entry:
 	br label %bb.i5
 

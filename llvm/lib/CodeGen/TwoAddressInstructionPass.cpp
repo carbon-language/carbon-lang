@@ -53,10 +53,6 @@ STATISTIC(NumConvertedTo3Addr, "Number of instructions promoted to 3-address");
 STATISTIC(Num3AddrSunk,        "Number of 3-address instructions sunk");
 STATISTIC(NumReMats,           "Number of instructions re-materialized");
 
-static cl::opt<bool>
-EnableReMat("two-addr-remat", cl::init(false), cl::Hidden,
-            cl::desc("Two-addr conversion should remat when possible."));
-
 namespace {
   class VISIBILITY_HIDDEN TwoAddressInstructionPass
     : public MachineFunctionPass {
@@ -71,8 +67,8 @@ namespace {
 
     bool isSafeToReMat(unsigned DstReg, MachineInstr *MI);
     bool isProfitableToReMat(unsigned Reg, const TargetRegisterClass *RC,
-                             MachineInstr *MI, unsigned Loc,
-                             MachineInstr *DefMI, MachineBasicBlock *MBB,
+                             MachineInstr *MI, MachineInstr *DefMI,
+                             MachineBasicBlock *MBB, unsigned Loc,
                              DenseMap<MachineInstr*, unsigned> &DistanceMap);
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -248,12 +244,9 @@ static bool isTwoAddrUse(MachineInstr *UseMI, unsigned Reg) {
 bool
 TwoAddressInstructionPass::isProfitableToReMat(unsigned Reg,
                                 const TargetRegisterClass *RC,
-                                MachineInstr *MI, unsigned Loc,
-                                MachineInstr *DefMI, MachineBasicBlock *MBB,
-                                DenseMap<MachineInstr*, unsigned> &DistanceMap) {
-  if (DefMI->getParent() != MBB)
-    return true;
-  // If earlier uses in MBB are not two-address uses, then don't remat.
+                                MachineInstr *MI, MachineInstr *DefMI,
+                                MachineBasicBlock *MBB, unsigned Loc,
+                                DenseMap<MachineInstr*, unsigned> &DistanceMap){
   bool OtherUse = false;
   for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg),
          UE = MRI->use_end(); UI != UE; ++UI) {
@@ -261,18 +254,26 @@ TwoAddressInstructionPass::isProfitableToReMat(unsigned Reg,
     if (!UseMO.isUse())
       continue;
     MachineInstr *UseMI = UseMO.getParent();
-    if (UseMI->getParent() != MBB)
-      continue;
-    DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(UseMI);
-    if (DI != DistanceMap.end() && DI->second == Loc)
-      continue;  // Current use.
-    OtherUse = true;
-    // There is at least one other use in the MBB that will clobber the
-    // register. 
-    if (isTwoAddrUse(UseMI, Reg))
-      return true;
+    MachineBasicBlock *UseMBB = UseMI->getParent();
+    if (UseMBB == MBB) {
+      DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(UseMI);
+      if (DI != DistanceMap.end() && DI->second == Loc)
+        continue;  // Current use.
+      OtherUse = true;
+      // There is at least one other use in the MBB that will clobber the
+      // register. 
+      if (isTwoAddrUse(UseMI, Reg))
+        return true;
+    }
   }
-  return !OtherUse;
+
+  // If other uses in MBB are not two-address uses, then don't remat.
+  if (OtherUse)
+    return false;
+
+  // No other uses in the same block, remat if it's defined in the same
+  // block so it does not unnecessarily extend the live range.
+  return MBB == DefMI->getParent();
 }
 
 /// runOnMachineFunction - Reduce two-address instructions to two operands.
@@ -428,9 +429,9 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           MachineInstr *DefMI = MRI->getVRegDef(regB);
           // If it's safe and profitable, remat the definition instead of
           // copying it.
-          if (EnableReMat && DefMI &&
+          if (DefMI &&
               isSafeToReMat(regB, DefMI) &&
-              isProfitableToReMat(regB, rc, mi, Dist, DefMI, mbbi,DistanceMap)){
+              isProfitableToReMat(regB, rc, mi, DefMI, mbbi, Dist,DistanceMap)){
             DEBUG(cerr << "2addr: REMATTING : " << *DefMI << "\n");
             TII->reMaterialize(*mbbi, mi, regA, DefMI);
             ReMatRegs.set(regB);
@@ -473,17 +474,14 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  if (EnableReMat) {
-    // Some remat'ed instructions are dead.
-    int VReg = ReMatRegs.find_first();
-    while (VReg != -1) {
-      if (MRI->use_empty(VReg)) {
-        MachineInstr *DefMI = MRI->getVRegDef(VReg);
-        DefMI->eraseFromParent();
-      }
-      VReg = ReMatRegs.find_next(VReg);
+  // Some remat'ed instructions are dead.
+  int VReg = ReMatRegs.find_first();
+  while (VReg != -1) {
+    if (MRI->use_empty(VReg)) {
+      MachineInstr *DefMI = MRI->getVRegDef(VReg);
+      DefMI->eraseFromParent();
     }
-
+    VReg = ReMatRegs.find_next(VReg);
   }
 
   return MadeChange;
