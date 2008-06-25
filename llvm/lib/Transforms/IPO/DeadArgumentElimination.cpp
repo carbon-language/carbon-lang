@@ -613,7 +613,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         ++NumRetValsEliminated;
         Changed = true;
       }
-    if (RetTypes.size() > 1 || STy && STy->getNumElements() == RetTypes.size())
+    if (RetTypes.size() > 1 || (STy && STy->getNumElements()==RetTypes.size()))
       // More than one return type? Return a struct with them. Also, if we used
       // to return a struct and didn't change the number of return values,
       // return a struct again. This prevents changing {something} into something
