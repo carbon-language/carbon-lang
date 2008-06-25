@@ -148,7 +148,8 @@ void Optimize(Module* M) {
     addPass(Passes, createInstructionCombiningPass());
 
     addPass(Passes, createJumpThreadingPass());        // Thread jumps.
-
+    addPass(Passes, createPromoteMemoryToRegisterPass()); // Cleanup jumpthread.
+    
     // Delete basic blocks, which optimization passes may have killed...
     addPass(Passes, createCFGSimplificationPass());
 
