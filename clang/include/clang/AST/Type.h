@@ -160,6 +160,10 @@ public:
   void getAsStringInternal(std::string &Str) const;
   
   void dump(const char *s = 0) const;
+  
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    ID.AddPointer(getAsOpaquePtr());
+  }
 
 //private:
   /// getCanonicalType - Return the canonical version of this type, with the
