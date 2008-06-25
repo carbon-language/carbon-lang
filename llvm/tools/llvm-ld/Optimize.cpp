@@ -35,35 +35,6 @@ static cl::list<const PassInfo*, bool, PassNameParser>
 //Don't verify at the end
 static cl::opt<bool> DontVerify("disable-verify", cl::ReallyHidden);
 
-// Optimization Enumeration
-enum OptimizationLevels {
-  OPT_FAST_COMPILE         = 1,
-  OPT_SIMPLE               = 2,
-  OPT_AGGRESSIVE           = 3,
-  OPT_LINK_TIME            = 4,
-  OPT_AGGRESSIVE_LINK_TIME = 5
-};
-
-// Optimization Options
-static cl::opt<OptimizationLevels> OptLevel(
-  cl::desc("Choose level of optimization to apply:"),
-  cl::init(OPT_FAST_COMPILE), cl::values(
-    clEnumValN(OPT_FAST_COMPILE,"O0",
-      "An alias for the -O1 option."),
-    clEnumValN(OPT_FAST_COMPILE,"O1",
-      "Optimize for linking speed, not execution speed."),
-    clEnumValN(OPT_SIMPLE,"O2",
-      "Perform only required/minimal optimizations"),
-    clEnumValN(OPT_AGGRESSIVE,"O3",
-      "An alias for the -O2 option."),
-    clEnumValN(OPT_LINK_TIME,"O4",
-      "Perform standard link time optimizations"),
-    clEnumValN(OPT_AGGRESSIVE_LINK_TIME,"O5",
-      "Perform aggressive link time optimizations"),
-    clEnumValEnd
-  )
-);
-
 static cl::opt<bool> DisableInline("disable-inlining",
   cl::desc("Do not run the inliner pass"));
 
