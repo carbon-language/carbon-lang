@@ -1380,7 +1380,7 @@ std::string ConstantArray::getAsString() const {
   std::string Result;
   Result.reserve(getNumOperands());
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-    Result[i] = (char)cast<ConstantInt>(getOperand(i))->getZExtValue();
+    Result.push_back((char)cast<ConstantInt>(getOperand(i))->getZExtValue());
   return Result;
 }
 
