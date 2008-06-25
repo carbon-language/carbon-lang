@@ -159,34 +159,6 @@ code generator.
 
 =over 
 
-=item B<-O0>
-
-An alias for the -O1 option.
-
-=item B<-O1>
-
-Optimize for linking speed, not execution speed. The optimizer will attempt to
-reduce the size of the linked program to reduce I/O but will not otherwise
-perform any link-time optimizations.
-
-=item B<-O2>
-
-Perform only the minimal or required set of scalar optimizations.
-
-=item B<-03>
-
-An alias for the -O2 option.
-
-=item B<-04>
-
-Perform the standard link time inter-procedural optimizations. This will 
-attempt to optimize the program taking the entire program into consideration.
-
-=item B<-O5>
-
-Perform aggressive link time optimizations. This is the same as -O4 but works
-more aggressively to optimize the program.
-
 =item B<-disable-inlining>
 
 Do not run the inlining pass. Functions will not be inlined into other
