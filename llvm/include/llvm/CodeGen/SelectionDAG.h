@@ -370,13 +370,13 @@ public:
   /// getAtomic - Gets a node for an atomic op, produces result and chain, takes
   /// 3 operands
   SDOperand getAtomic(unsigned Opcode, SDOperand Chain, SDOperand Ptr, 
-                      SDOperand Cmp, SDOperand Swp, MVT VT, const Value* PtrVal,
+                      SDOperand Cmp, SDOperand Swp, const Value* PtrVal,
                       unsigned Alignment=0);
 
   /// getAtomic - Gets a node for an atomic op, produces result and chain, takes
   /// 2 operands
   SDOperand getAtomic(unsigned Opcode, SDOperand Chain, SDOperand Ptr, 
-                      SDOperand Val, MVT VT, const Value* PtrVal,
+                      SDOperand Val, const Value* PtrVal,
                       unsigned Alignment = 0);
 
   /// getLoad - Loads are not normal binary operators: their result type is not

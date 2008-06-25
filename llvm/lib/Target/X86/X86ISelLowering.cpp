@@ -5656,7 +5656,7 @@ SDOperand X86TargetLowering::LowerCTTZ(SDOperand Op, SelectionDAG &DAG) {
 }
 
 SDOperand X86TargetLowering::LowerCMP_SWAP(SDOperand Op, SelectionDAG &DAG) {
-  MVT T = cast<AtomicSDNode>(Op.Val)->getVT();
+  MVT T = Op.getValueType();
   unsigned Reg = 0;
   unsigned size = 0;
   switch(T.getSimpleVT()) {
@@ -5687,7 +5687,7 @@ SDOperand X86TargetLowering::LowerCMP_SWAP(SDOperand Op, SelectionDAG &DAG) {
 }
 
 SDNode* X86TargetLowering::ExpandATOMIC_CMP_SWAP(SDNode* Op, SelectionDAG &DAG) {
-  MVT T = cast<AtomicSDNode>(Op)->getVT();
+  MVT T = Op->getValueType(0);
   assert (T == MVT::i64 && "Only know how to expand i64 Cmp and Swap");
   SDOperand cpInL, cpInH;
   cpInL = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op->getOperand(3),
@@ -5723,12 +5723,12 @@ SDNode* X86TargetLowering::ExpandATOMIC_CMP_SWAP(SDNode* Op, SelectionDAG &DAG) 
 }
 
 SDNode* X86TargetLowering::ExpandATOMIC_LOAD_SUB(SDNode* Op, SelectionDAG &DAG) {
-  MVT T = cast<AtomicSDNode>(Op)->getVT();
+  MVT T = Op->getValueType(0);
   assert (T == MVT::i32 && "Only know how to expand i32 Atomic Load Sub");
   SDOperand negOp = DAG.getNode(ISD::SUB, T,
                                 DAG.getConstant(0, T), Op->getOperand(2));
   return DAG.getAtomic(ISD::ATOMIC_LOAD_ADD, Op->getOperand(0),
-                       Op->getOperand(1), negOp, T,
+                       Op->getOperand(1), negOp,
                        cast<AtomicSDNode>(Op)->getSrcValue(),
                        cast<AtomicSDNode>(Op)->getAlignment()).Val;
 }

@@ -3085,10 +3085,9 @@ static void addCatchInfo(CallInst &I, MachineModuleInfo *MMI,
 const char *
 SelectionDAGLowering::implVisitBinaryAtomic(CallInst& I, ISD::NodeType Op) {
   SDOperand Root = getRoot();   
-  SDOperand O2 = getValue(I.getOperand(2));
   SDOperand L = DAG.getAtomic(Op, Root, 
                               getValue(I.getOperand(1)), 
-                              O2, O2.getValueType(),
+                              getValue(I.getOperand(2)),
                               I.getOperand(1));
   setValue(&I, L);
   DAG.setRoot(L.getValue(1));
@@ -3521,11 +3520,10 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   }
   case Intrinsic::atomic_cmp_swap: {
     SDOperand Root = getRoot();   
-    SDOperand O3 = getValue(I.getOperand(3));
     SDOperand L = DAG.getAtomic(ISD::ATOMIC_CMP_SWAP, Root, 
                                 getValue(I.getOperand(1)), 
                                 getValue(I.getOperand(2)),
-                                O3, O3.getValueType(),
+                                getValue(I.getOperand(3)),
                                 I.getOperand(1));
     setValue(&I, L);
     DAG.setRoot(L.getValue(1));

@@ -2989,7 +2989,7 @@ SDOperand SelectionDAG::getMemset(SDOperand Chain, SDOperand Dst,
 
 SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain, 
                                   SDOperand Ptr, SDOperand Cmp, 
-                                  SDOperand Swp, MVT VT, const Value* PtrVal,
+                                  SDOperand Swp, const Value* PtrVal,
                                   unsigned Alignment) {
   assert(Opcode == ISD::ATOMIC_CMP_SWAP && "Invalid Atomic Op");
   assert(Cmp.getValueType() == Swp.getValueType() && "Invalid Atomic Op Types");
@@ -2997,11 +2997,10 @@ SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain,
   FoldingSetNodeID ID;
   SDOperand Ops[] = {Chain, Ptr, Cmp, Swp};
   AddNodeIDNode(ID, Opcode, VTs, Ops, 4);
-  ID.AddInteger(VT.getRawBits());
   void* IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode* N = new AtomicSDNode(Opcode, VTs, Chain, Ptr, Cmp, Swp, VT,
+  SDNode* N = new AtomicSDNode(Opcode, VTs, Chain, Ptr, Cmp, Swp,
                                PtrVal, Alignment);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
@@ -3010,7 +3009,7 @@ SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain,
 
 SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain, 
                                   SDOperand Ptr, SDOperand Val, 
-                                  MVT VT, const Value* PtrVal,
+                                  const Value* PtrVal,
                                   unsigned Alignment) {
   assert((   Opcode == ISD::ATOMIC_LOAD_ADD || Opcode == ISD::ATOMIC_LOAD_SUB
           || Opcode == ISD::ATOMIC_SWAP || Opcode == ISD::ATOMIC_LOAD_AND
@@ -3023,11 +3022,10 @@ SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain,
   FoldingSetNodeID ID;
   SDOperand Ops[] = {Chain, Ptr, Val};
   AddNodeIDNode(ID, Opcode, VTs, Ops, 3);
-  ID.AddInteger(VT.getRawBits());
   void* IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode* N = new AtomicSDNode(Opcode, VTs, Chain, Ptr, Val, VT,
+  SDNode* N = new AtomicSDNode(Opcode, VTs, Chain, Ptr, Val,
                                PtrVal, Alignment);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
@@ -4217,7 +4215,7 @@ GlobalAddressSDNode::GlobalAddressSDNode(bool isTarget, const GlobalValue *GA,
 /// getMemOperand - Return a MachineMemOperand object describing the memory
 /// reference performed by this atomic.
 MachineMemOperand AtomicSDNode::getMemOperand() const {
-  int Size = (getVT().getSizeInBits() + 7) >> 3;
+  int Size = (getValueType(0).getSizeInBits() + 7) >> 3;
   int Flags = MachineMemOperand::MOLoad | MachineMemOperand::MOStore;
   if (isVolatile()) Flags |= MachineMemOperand::MOVolatile;
   

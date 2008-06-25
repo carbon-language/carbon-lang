@@ -768,75 +768,75 @@ def post_truncstf32 : PatFrag<(ops node:$val, node:$base, node:$offset),
 def atomic_cmp_swap_8 : PatFrag<(ops node:$ptr, node:$cmp, node:$swp),
                     (atomic_cmp_swap node:$ptr, node:$cmp, node:$swp), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
-        return V->getVT() == MVT::i8;
+        return V->getValueType(0) == MVT::i8;
   return false;
 }]>;
 def atomic_cmp_swap_16 : PatFrag<(ops node:$ptr, node:$cmp, node:$swp), 
                     (atomic_cmp_swap node:$ptr, node:$cmp, node:$swp), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
-        return V->getVT() == MVT::i16;
+        return V->getValueType(0) == MVT::i16;
   return false;
 }]>;
 def atomic_cmp_swap_32 : PatFrag<(ops node:$ptr, node:$cmp, node:$swp), 
                     (atomic_cmp_swap node:$ptr, node:$cmp, node:$swp), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
-        return V->getVT() == MVT::i32;
+        return V->getValueType(0) == MVT::i32;
   return false;
 }]>;
 def atomic_cmp_swap_64 : PatFrag<(ops node:$ptr, node:$cmp, node:$swp), 
                     (atomic_cmp_swap node:$ptr, node:$cmp, node:$swp), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
-        return V->getVT() == MVT::i64;
+        return V->getValueType(0) == MVT::i64;
   return false;
 }]>;
 
 def atomic_load_add_8 : PatFrag<(ops node:$ptr, node:$inc),
                     (atomic_load_add node:$ptr, node:$inc), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
-        return V->getVT() == MVT::i8;
+        return V->getValueType(0) == MVT::i8;
   return false;
 }]>;
 def atomic_load_add_16 : PatFrag<(ops node:$ptr, node:$inc), 
                     (atomic_load_add node:$ptr, node:$inc), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
-        return V->getVT() == MVT::i16;
+        return V->getValueType(0) == MVT::i16;
   return false;
 }]>;
 def atomic_load_add_32 : PatFrag<(ops node:$ptr, node:$inc), 
                     (atomic_load_add node:$ptr, node:$inc), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
-        return V->getVT() == MVT::i32;
+        return V->getValueType(0) == MVT::i32;
   return false;
 }]>;
 def atomic_load_add_64 : PatFrag<(ops node:$ptr, node:$inc), 
                     (atomic_load_add node:$ptr, node:$inc), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
-        return V->getVT() == MVT::i64;
+        return V->getValueType(0) == MVT::i64;
   return false;
 }]>;
 
 def atomic_swap_8 : PatFrag<(ops node:$ptr, node:$inc),
                     (atomic_swap node:$ptr, node:$inc), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
-        return V->getVT() == MVT::i8;
+        return V->getValueType(0) == MVT::i8;
   return false;
 }]>;
 def atomic_swap_16 : PatFrag<(ops node:$ptr, node:$inc), 
                     (atomic_swap node:$ptr, node:$inc), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
-        return V->getVT() == MVT::i16;
+        return V->getValueType(0) == MVT::i16;
   return false;
 }]>;
 def atomic_swap_32 : PatFrag<(ops node:$ptr, node:$inc), 
                     (atomic_swap node:$ptr, node:$inc), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
-        return V->getVT() == MVT::i32;
+        return V->getValueType(0) == MVT::i32;
   return false;
 }]>;
 def atomic_swap_64 : PatFrag<(ops node:$ptr, node:$inc), 
                     (atomic_swap node:$ptr, node:$inc), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
-        return V->getVT() == MVT::i64;
+        return V->getValueType(0) == MVT::i64;
   return false;
 }]>;
 

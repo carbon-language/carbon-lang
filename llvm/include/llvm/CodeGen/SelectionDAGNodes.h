@@ -1491,7 +1491,6 @@ public:
 class AtomicSDNode : public MemSDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
   SDUse Ops[4];
-  MVT OrigVT;
   
  public:
   // Opc:   opcode for atomic
@@ -1500,13 +1499,12 @@ class AtomicSDNode : public MemSDNode {
   // Ptr:    address to update as a SDOperand
   // Cmp:    compare value
   // Swp:    swap value
-  // VT:     resulting value type
   // SrcVal: address to update as a Value (used for MemOperand)
   // Align:  alignment of memory
   AtomicSDNode(unsigned Opc, SDVTList VTL, SDOperand Chain, SDOperand Ptr, 
-               SDOperand Cmp, SDOperand Swp, MVT VT, const Value* SrcVal,
+               SDOperand Cmp, SDOperand Swp, const Value* SrcVal,
                unsigned Align=0)
-    : MemSDNode(Opc, VTL, SrcVal, Align), OrigVT(VT) {
+    : MemSDNode(Opc, VTL, SrcVal, Align) {
     Ops[0] = Chain;
     Ops[1] = Ptr;
     Ops[2] = Swp;
@@ -1514,15 +1512,14 @@ class AtomicSDNode : public MemSDNode {
     InitOperands(Ops, 4);
   }
   AtomicSDNode(unsigned Opc, SDVTList VTL, SDOperand Chain, SDOperand Ptr, 
-               SDOperand Val, MVT VT, const Value* SrcVal, unsigned Align=0)
-    : MemSDNode(Opc, VTL, SrcVal, Align), OrigVT(VT) {
+               SDOperand Val, const Value* SrcVal, unsigned Align=0)
+    : MemSDNode(Opc, VTL, SrcVal, Align) {
     Ops[0] = Chain;
     Ops[1] = Ptr;
     Ops[2] = Val;
     InitOperands(Ops, 3);
   }
   
-  MVT getVT() const { return OrigVT; }
   const SDOperand &getChain() const { return getOperand(0); }
   const SDOperand &getBasePtr() const { return getOperand(1); }
   const SDOperand &getVal() const { return getOperand(2); }

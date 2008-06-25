@@ -4276,7 +4276,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Tmp3 = PromoteOp(Node->getOperand(3));
     Result = DAG.getAtomic(Node->getOpcode(), AtomNode->getChain(), 
                            AtomNode->getBasePtr(), Tmp2, Tmp3,
-                           AtomNode->getVT(), AtomNode->getSrcValue(),
+                           AtomNode->getSrcValue(),
                            AtomNode->getAlignment());
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
@@ -4297,7 +4297,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Tmp2 = PromoteOp(Node->getOperand(2));
     Result = DAG.getAtomic(Node->getOpcode(), AtomNode->getChain(), 
                            AtomNode->getBasePtr(), Tmp2,
-                           AtomNode->getVT(), AtomNode->getSrcValue(),
+                           AtomNode->getSrcValue(),
                            AtomNode->getAlignment());
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
