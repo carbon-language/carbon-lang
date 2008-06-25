@@ -21,7 +21,7 @@ using namespace clang;
 /// ObjCActOnStartOfMethodDef - This routine sets up parameters; invisible
 /// and user declared, in the method definition's AST.
 void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
-  assert(CurFunctionDecl == 0 && "Method parsing confused");
+  assert(CurMethodDecl == 0 && "Method parsing confused");
   ObjCMethodDecl *MDecl = dyn_cast<ObjCMethodDecl>(static_cast<Decl *>(D));
   assert(MDecl != 0 && "Not a method declarator!");
 
