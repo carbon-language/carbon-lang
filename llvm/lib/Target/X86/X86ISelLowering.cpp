@@ -2933,12 +2933,12 @@ unsigned getNumOfConsecutiveZeros(SDOperand Op, SDOperand Mask,
                                   SelectionDAG &DAG) {
   unsigned NumZeros = 0;
   for (unsigned i = 0; i < NumElems; ++i) {
-    SDOperand Idx = Mask.getOperand(Low ? i : NumElems-i-1);
+    unsigned Index = Low ? i : NumElems-i-1;
+    SDOperand Idx = Mask.getOperand(Index);
     if (Idx.getOpcode() == ISD::UNDEF) {
       ++NumZeros;
       continue;
     }
-    unsigned Index = cast<ConstantSDNode>(Idx)->getValue();
     SDOperand Elt = DAG.getShuffleScalarElt(Op.Val, Index);
     if (Elt.Val && isZeroNode(Elt))
       ++NumZeros;
@@ -6373,8 +6373,7 @@ static bool EltsFromConsecutiveLoads(SDNode *N, SDOperand PermMask,
       continue;
     }
 
-    unsigned Index = cast<ConstantSDNode>(Idx)->getValue();
-    SDOperand Elt = DAG.getShuffleScalarElt(N, Index);
+    SDOperand Elt = DAG.getShuffleScalarElt(N, i);
     if (!Elt.Val ||
         (Elt.getOpcode() != ISD::UNDEF && !ISD::isNON_EXTLoad(Elt.Val)))
       return false;

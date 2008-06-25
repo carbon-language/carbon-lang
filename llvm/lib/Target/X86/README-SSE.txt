@@ -808,3 +808,34 @@ LC0:
 With SSE4, it should be
       movdqa  .LC0(%rip), %xmm0
       pinsrb  $6, %edi, %xmm0
+
+//===---------------------------------------------------------------------===//
+
+We should transform a shuffle of two vectors of constants into a single vector
+of constants. Also, insertelement of a constant into a vector of constants
+should also result in a vector of constants. e.g. 2008-06-25-VecISelBug.ll.
+
+We compiled it to something horrible:
+
+	.align	4
+LCPI1_1:					##  float
+	.long	1065353216	## float 1
+	.const
+
+	.align	4
+LCPI1_0:					##  <4 x float>
+	.space	4
+	.long	1065353216	## float 1
+	.space	4
+	.long	1065353216	## float 1
+	.text
+	.align	4,0x90
+	.globl	_t
+_t:
+	xorps	%xmm0, %xmm0
+	movhps	LCPI1_0, %xmm0
+	movss	LCPI1_1, %xmm1
+	movaps	%xmm0, %xmm2
+	shufps	$2, %xmm1, %xmm2
+	shufps	$132, %xmm2, %xmm0
+	movaps	%xmm0, 0

@@ -1859,12 +1859,16 @@ bool SelectionDAG::isVerifiedDebugInfoDesc(SDOperand Op) const {
 
 /// getShuffleScalarElt - Returns the scalar element that will make up the ith
 /// element of the result of the vector shuffle.
-SDOperand SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned Idx) {
+SDOperand SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned i) {
   MVT VT = N->getValueType(0);
   SDOperand PermMask = N->getOperand(2);
+  SDOperand Idx = PermMask.getOperand(i);
+  if (Idx.getOpcode() == ISD::UNDEF)
+    return getNode(ISD::UNDEF, VT.getVectorElementType());
+  unsigned Index = cast<ConstantSDNode>(Idx)->getValue();
   unsigned NumElems = PermMask.getNumOperands();
-  SDOperand V = (Idx < NumElems) ? N->getOperand(0) : N->getOperand(1);
-  Idx %= NumElems;
+  SDOperand V = (Index < NumElems) ? N->getOperand(0) : N->getOperand(1);
+  Index %= NumElems;
 
   if (V.getOpcode() == ISD::BIT_CONVERT) {
     V = V.getOperand(0);
@@ -1872,16 +1876,12 @@ SDOperand SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned Idx) {
       return SDOperand();
   }
   if (V.getOpcode() == ISD::SCALAR_TO_VECTOR)
-    return (Idx == 0) ? V.getOperand(0)
+    return (Index == 0) ? V.getOperand(0)
                       : getNode(ISD::UNDEF, VT.getVectorElementType());
   if (V.getOpcode() == ISD::BUILD_VECTOR)
-    return V.getOperand(Idx);
-  if (V.getOpcode() == ISD::VECTOR_SHUFFLE) {
-    SDOperand Elt = PermMask.getOperand(Idx);
-    if (Elt.getOpcode() == ISD::UNDEF)
-      return getNode(ISD::UNDEF, VT.getVectorElementType());
-    return getShuffleScalarElt(V.Val,cast<ConstantSDNode>(Elt)->getValue());
-  }
+    return V.getOperand(Index);
+  if (V.getOpcode() == ISD::VECTOR_SHUFFLE)
+    return getShuffleScalarElt(V.Val, Index);
   return SDOperand();
 }
 
