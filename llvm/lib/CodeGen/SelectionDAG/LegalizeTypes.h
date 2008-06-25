@@ -301,14 +301,15 @@ private:
   SDOperand ExpandIntOp_BR_CC(SDNode *N);
   SDOperand ExpandIntOp_BUILD_VECTOR(SDNode *N);
   SDOperand ExpandIntOp_EXTRACT_ELEMENT(SDNode *N);
+  SDOperand ExpandIntOp_SELECT_CC(SDNode *N);
   SDOperand ExpandIntOp_SETCC(SDNode *N);
   SDOperand ExpandIntOp_SINT_TO_FP(SDOperand Source, MVT DestTy);
   SDOperand ExpandIntOp_STORE(StoreSDNode *N, unsigned OpNo);
   SDOperand ExpandIntOp_TRUNCATE(SDNode *N);
   SDOperand ExpandIntOp_UINT_TO_FP(SDOperand Source, MVT DestTy);
 
-  void ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
-                           ISD::CondCode &CCCode);
+  void IntegerExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
+                                  ISD::CondCode &CCCode);
 
   //===--------------------------------------------------------------------===//
   // Float to Integer Conversion Support: LegalizeFloatTypes.cpp
@@ -337,6 +338,12 @@ private:
   // Operand Float to Integer Conversion.
   bool SoftenFloatOperand(SDNode *N, unsigned OpNo);
   SDOperand SoftenFloatOp_BIT_CONVERT(SDNode *N);
+  SDOperand SoftenFloatOp_BR_CC(SDNode *N);
+  SDOperand SoftenFloatOp_SELECT_CC(SDNode *N);
+  SDOperand SoftenFloatOp_SETCC(SDNode *N);
+
+  void SoftenSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
+                           ISD::CondCode &CCCode);
 
   //===--------------------------------------------------------------------===//
   // Float Expansion Support: LegalizeFloatTypes.cpp
@@ -351,7 +358,13 @@ private:
 
   // Float Operand Expansion.
   bool ExpandFloatOperand(SDNode *N, unsigned OperandNo);
+  SDOperand ExpandFloatOp_BR_CC(SDNode *N);
+  SDOperand ExpandFloatOp_SELECT_CC(SDNode *N);
+  SDOperand ExpandFloatOp_SETCC(SDNode *N);
   SDOperand ExpandFloatOp_STORE(SDNode *N, unsigned OpNo);
+
+  void FloatExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
+                                ISD::CondCode &CCCode);
 
   //===--------------------------------------------------------------------===//
   // Scalarization Support: LegalizeVectorTypes.cpp

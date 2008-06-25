@@ -332,7 +332,11 @@ bool DAGTypeLegalizer::SoftenFloatOperand(SDNode *N, unsigned OpNo) {
       assert(0 && "Do not know how to convert this operator's operand!");
       abort();
 
-      case ISD::BIT_CONVERT: Res = SoftenFloatOp_BIT_CONVERT(N); break;
+    case ISD::BIT_CONVERT: Res = SoftenFloatOp_BIT_CONVERT(N); break;
+
+    case ISD::BR_CC:     Res = SoftenFloatOp_BR_CC(N); break;
+    case ISD::SELECT_CC: Res = SoftenFloatOp_BR_CC(N); break;
+    case ISD::SETCC:     Res = SoftenFloatOp_BR_CC(N); break;
     }
   }
 
@@ -356,9 +360,146 @@ bool DAGTypeLegalizer::SoftenFloatOperand(SDNode *N, unsigned OpNo) {
   return false;
 }
 
+/// SoftenSetCCOperands - Soften the operands of a comparison.  This code is
+/// shared among BR_CC, SELECT_CC, and SETCC handlers.
+void DAGTypeLegalizer::SoftenSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
+                                           ISD::CondCode &CCCode) {
+  SDOperand LHSInt = GetSoftenedFloat(NewLHS);
+  SDOperand RHSInt = GetSoftenedFloat(NewRHS);
+  MVT VT  = NewLHS.getValueType();
+  MVT NVT = LHSInt.getValueType();
+
+  assert((VT == MVT::f32 || VT == MVT::f64) && "Unsupported setcc type!");
+
+  // Expand into one or more soft-fp libcall(s).
+  RTLIB::Libcall LC1, LC2 = RTLIB::UNKNOWN_LIBCALL;
+  switch (CCCode) {
+  case ISD::SETEQ:
+  case ISD::SETOEQ:
+    LC1 = (VT == MVT::f32) ? RTLIB::OEQ_F32 : RTLIB::OEQ_F64;
+    break;
+  case ISD::SETNE:
+  case ISD::SETUNE:
+    LC1 = (VT == MVT::f32) ? RTLIB::UNE_F32 : RTLIB::UNE_F64;
+    break;
+  case ISD::SETGE:
+  case ISD::SETOGE:
+    LC1 = (VT == MVT::f32) ? RTLIB::OGE_F32 : RTLIB::OGE_F64;
+    break;
+  case ISD::SETLT:
+  case ISD::SETOLT:
+    LC1 = (VT == MVT::f32) ? RTLIB::OLT_F32 : RTLIB::OLT_F64;
+    break;
+  case ISD::SETLE:
+  case ISD::SETOLE:
+    LC1 = (VT == MVT::f32) ? RTLIB::OLE_F32 : RTLIB::OLE_F64;
+    break;
+  case ISD::SETGT:
+  case ISD::SETOGT:
+    LC1 = (VT == MVT::f32) ? RTLIB::OGT_F32 : RTLIB::OGT_F64;
+    break;
+  case ISD::SETUO:
+    LC1 = (VT == MVT::f32) ? RTLIB::UO_F32 : RTLIB::UO_F64;
+    break;
+  case ISD::SETO:
+    break;
+  default:
+    LC1 = (VT == MVT::f32) ? RTLIB::UO_F32 : RTLIB::UO_F64;
+    switch (CCCode) {
+    case ISD::SETONE:
+      // SETONE = SETOLT | SETOGT
+      LC1 = (VT == MVT::f32) ? RTLIB::OLT_F32 : RTLIB::OLT_F64;
+      // Fallthrough
+    case ISD::SETUGT:
+      LC2 = (VT == MVT::f32) ? RTLIB::OGT_F32 : RTLIB::OGT_F64;
+      break;
+    case ISD::SETUGE:
+      LC2 = (VT == MVT::f32) ? RTLIB::OGE_F32 : RTLIB::OGE_F64;
+      break;
+    case ISD::SETULT:
+      LC2 = (VT == MVT::f32) ? RTLIB::OLT_F32 : RTLIB::OLT_F64;
+      break;
+    case ISD::SETULE:
+      LC2 = (VT == MVT::f32) ? RTLIB::OLE_F32 : RTLIB::OLE_F64;
+      break;
+    case ISD::SETUEQ:
+      LC2 = (VT == MVT::f32) ? RTLIB::OEQ_F32 : RTLIB::OEQ_F64;
+      break;
+    default: assert(false && "Do not know how to soften this setcc!");
+    }
+  }
+
+  SDOperand Ops[2] = { LHSInt, RHSInt };
+  NewLHS = MakeLibCall(LC1, NVT, Ops, 2, false/*sign irrelevant*/);
+  NewRHS = DAG.getConstant(0, NVT);
+  if (LC2 != RTLIB::UNKNOWN_LIBCALL) {
+    SDOperand Tmp = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(NewLHS),
+                                NewLHS, NewRHS,
+                                DAG.getCondCode(TLI.getCmpLibcallCC(LC1)));
+    NewLHS = MakeLibCall(LC2, NVT, Ops, 2, false/*sign irrelevant*/);
+    NewLHS = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(NewLHS), NewLHS,
+                         NewRHS, DAG.getCondCode(TLI.getCmpLibcallCC(LC2)));
+    NewLHS = DAG.getNode(ISD::OR, Tmp.getValueType(), Tmp, NewLHS);
+    NewRHS = SDOperand();
+  }
+}
+
 SDOperand DAGTypeLegalizer::SoftenFloatOp_BIT_CONVERT(SDNode *N) {
   return DAG.getNode(ISD::BIT_CONVERT, N->getValueType(0),
                      GetSoftenedFloat(N->getOperand(0)));
+}
+
+SDOperand DAGTypeLegalizer::SoftenFloatOp_BR_CC(SDNode *N) {
+  SDOperand NewLHS = N->getOperand(2), NewRHS = N->getOperand(3);
+  ISD::CondCode CCCode = cast<CondCodeSDNode>(N->getOperand(1))->get();
+  SoftenSetCCOperands(NewLHS, NewRHS, CCCode);
+
+  // If SoftenSetCCOperands returned a scalar, we need to compare the result
+  // against zero to select between true and false values.
+  if (NewRHS.Val == 0) {
+    NewRHS = DAG.getConstant(0, NewLHS.getValueType());
+    CCCode = ISD::SETNE;
+  }
+
+  // Update N to have the operands specified.
+  return DAG.UpdateNodeOperands(SDOperand(N, 0), N->getOperand(0),
+                                DAG.getCondCode(CCCode), NewLHS, NewRHS,
+                                N->getOperand(4));
+}
+
+SDOperand DAGTypeLegalizer::SoftenFloatOp_SELECT_CC(SDNode *N) {
+  SDOperand NewLHS = N->getOperand(0), NewRHS = N->getOperand(1);
+  ISD::CondCode CCCode = cast<CondCodeSDNode>(N->getOperand(4))->get();
+  SoftenSetCCOperands(NewLHS, NewRHS, CCCode);
+
+  // If SoftenSetCCOperands returned a scalar, we need to compare the result
+  // against zero to select between true and false values.
+  if (NewRHS.Val == 0) {
+    NewRHS = DAG.getConstant(0, NewLHS.getValueType());
+    CCCode = ISD::SETNE;
+  }
+
+  // Update N to have the operands specified.
+  return DAG.UpdateNodeOperands(SDOperand(N, 0), NewLHS, NewRHS,
+                                N->getOperand(2), N->getOperand(3),
+                                DAG.getCondCode(CCCode));
+}
+
+SDOperand DAGTypeLegalizer::SoftenFloatOp_SETCC(SDNode *N) {
+  SDOperand NewLHS = N->getOperand(0), NewRHS = N->getOperand(1);
+  ISD::CondCode CCCode = cast<CondCodeSDNode>(N->getOperand(2))->get();
+  SoftenSetCCOperands(NewLHS, NewRHS, CCCode);
+
+  // If SoftenSetCCOperands returned a scalar, use it.
+  if (NewRHS.Val == 0) {
+    assert(NewLHS.getValueType() == N->getValueType(0) &&
+           "Unexpected setcc expansion!");
+    return NewLHS;
+  }
+
+  // Otherwise, update N to have the operands specified.
+  return DAG.UpdateNodeOperands(SDOperand(N, 0), NewLHS, NewRHS,
+                                DAG.getCondCode(CCCode));
 }
 
 
@@ -477,6 +618,10 @@ bool DAGTypeLegalizer::ExpandFloatOperand(SDNode *N, unsigned OpNo) {
     case ISD::BUILD_VECTOR:    Res = ExpandOp_BUILD_VECTOR(N); break;
     case ISD::EXTRACT_ELEMENT: Res = ExpandOp_EXTRACT_ELEMENT(N); break;
 
+    case ISD::BR_CC:     Res = ExpandFloatOp_BR_CC(N); break;
+    case ISD::SELECT_CC: Res = ExpandFloatOp_BR_CC(N); break;
+    case ISD::SETCC:     Res = ExpandFloatOp_BR_CC(N); break;
+
     case ISD::STORE:
       Res = ExpandFloatOp_STORE(cast<StoreSDNode>(N), OpNo);
       break;
@@ -500,6 +645,87 @@ bool DAGTypeLegalizer::ExpandFloatOperand(SDNode *N, unsigned OpNo) {
 
   ReplaceValueWith(SDOperand(N, 0), Res);
   return false;
+}
+
+/// FloatExpandSetCCOperands - Expand the operands of a comparison.  This code
+/// is shared among BR_CC, SELECT_CC, and SETCC handlers.
+void DAGTypeLegalizer::FloatExpandSetCCOperands(SDOperand &NewLHS,
+                                                SDOperand &NewRHS,
+                                                ISD::CondCode &CCCode) {
+  SDOperand LHSLo, LHSHi, RHSLo, RHSHi;
+  GetExpandedFloat(NewLHS, LHSLo, LHSHi);
+  GetExpandedFloat(NewRHS, RHSLo, RHSHi);
+
+  MVT VT = NewLHS.getValueType();
+  assert(VT == MVT::ppcf128 && "Unsupported setcc type!");
+
+  // FIXME:  This generated code sucks.  We want to generate
+  //         FCMP crN, hi1, hi2
+  //         BNE crN, L:
+  //         FCMP crN, lo1, lo2
+  // The following can be improved, but not that much.
+  SDOperand Tmp1, Tmp2, Tmp3;
+  Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, ISD::SETEQ);
+  Tmp2 = DAG.getSetCC(TLI.getSetCCResultType(LHSLo), LHSLo, RHSLo, CCCode);
+  Tmp3 = DAG.getNode(ISD::AND, Tmp1.getValueType(), Tmp1, Tmp2);
+  Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, ISD::SETNE);
+  Tmp2 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, CCCode);
+  Tmp1 = DAG.getNode(ISD::AND, Tmp1.getValueType(), Tmp1, Tmp2);
+  NewLHS = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp3);
+  NewRHS = SDOperand();   // LHS is the result, not a compare.
+}
+
+SDOperand DAGTypeLegalizer::ExpandFloatOp_BR_CC(SDNode *N) {
+  SDOperand NewLHS = N->getOperand(2), NewRHS = N->getOperand(3);
+  ISD::CondCode CCCode = cast<CondCodeSDNode>(N->getOperand(1))->get();
+  FloatExpandSetCCOperands(NewLHS, NewRHS, CCCode);
+
+  // If ExpandSetCCOperands returned a scalar, we need to compare the result
+  // against zero to select between true and false values.
+  if (NewRHS.Val == 0) {
+    NewRHS = DAG.getConstant(0, NewLHS.getValueType());
+    CCCode = ISD::SETNE;
+  }
+
+  // Update N to have the operands specified.
+  return DAG.UpdateNodeOperands(SDOperand(N, 0), N->getOperand(0),
+                                DAG.getCondCode(CCCode), NewLHS, NewRHS,
+                                N->getOperand(4));
+}
+
+SDOperand DAGTypeLegalizer::ExpandFloatOp_SELECT_CC(SDNode *N) {
+  SDOperand NewLHS = N->getOperand(0), NewRHS = N->getOperand(1);
+  ISD::CondCode CCCode = cast<CondCodeSDNode>(N->getOperand(4))->get();
+  FloatExpandSetCCOperands(NewLHS, NewRHS, CCCode);
+
+  // If ExpandSetCCOperands returned a scalar, we need to compare the result
+  // against zero to select between true and false values.
+  if (NewRHS.Val == 0) {
+    NewRHS = DAG.getConstant(0, NewLHS.getValueType());
+    CCCode = ISD::SETNE;
+  }
+
+  // Update N to have the operands specified.
+  return DAG.UpdateNodeOperands(SDOperand(N, 0), NewLHS, NewRHS,
+                                N->getOperand(2), N->getOperand(3),
+                                DAG.getCondCode(CCCode));
+}
+
+SDOperand DAGTypeLegalizer::ExpandFloatOp_SETCC(SDNode *N) {
+  SDOperand NewLHS = N->getOperand(0), NewRHS = N->getOperand(1);
+  ISD::CondCode CCCode = cast<CondCodeSDNode>(N->getOperand(2))->get();
+  FloatExpandSetCCOperands(NewLHS, NewRHS, CCCode);
+
+  // If ExpandSetCCOperands returned a scalar, use it.
+  if (NewRHS.Val == 0) {
+    assert(NewLHS.getValueType() == N->getValueType(0) &&
+           "Unexpected setcc expansion!");
+    return NewLHS;
+  }
+
+  // Otherwise, update N to have the operands specified.
+  return DAG.UpdateNodeOperands(SDOperand(N, 0), NewLHS, NewRHS,
+                                DAG.getCondCode(CCCode));
 }
 
 SDOperand DAGTypeLegalizer::ExpandFloatOp_STORE(SDNode *N, unsigned OpNo) {

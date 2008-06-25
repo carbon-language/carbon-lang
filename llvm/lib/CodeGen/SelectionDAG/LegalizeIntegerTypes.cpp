@@ -441,9 +441,9 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
   case ISD::UINT_TO_FP:  Res = PromoteIntOp_INT_TO_FP(N); break;
   case ISD::BUILD_PAIR:  Res = PromoteIntOp_BUILD_PAIR(N); break;
 
-  case ISD::SELECT:      Res = PromoteIntOp_SELECT(N, OpNo); break;
   case ISD::BRCOND:      Res = PromoteIntOp_BRCOND(N, OpNo); break;
   case ISD::BR_CC:       Res = PromoteIntOp_BR_CC(N, OpNo); break;
+  case ISD::SELECT:      Res = PromoteIntOp_SELECT(N, OpNo); break;
   case ISD::SETCC:       Res = PromoteIntOp_SETCC(N, OpNo); break;
 
   case ISD::STORE:       Res = PromoteIntOp_STORE(cast<StoreSDNode>(N),
@@ -601,10 +601,6 @@ void DAGTypeLegalizer::PromoteSetCCOperands(SDOperand &NewLHS,SDOperand &NewRHS,
   NewLHS = GetPromotedInteger(NewLHS);
   NewRHS = GetPromotedInteger(NewRHS);
 
-  // If this is an FP compare, the operands have already been extended.
-  if (!NewLHS.getValueType().isInteger())
-    return;
-
   // Otherwise, we have to insert explicit sign or zero extends.  Note
   // that we could insert sign extends for ALL conditions, but zero extend
   // is cheaper on many machines (an AND instead of two shifts), so prefer
@@ -622,7 +618,7 @@ void DAGTypeLegalizer::PromoteSetCCOperands(SDOperand &NewLHS,SDOperand &NewRHS,
     // usually a simpler/cheaper operation, so prefer it.
     NewLHS = DAG.getZeroExtendInReg(NewLHS, VT);
     NewRHS = DAG.getZeroExtendInReg(NewRHS, VT);
-    return;
+    break;
   case ISD::SETGE:
   case ISD::SETGT:
   case ISD::SETLT:
@@ -631,7 +627,7 @@ void DAGTypeLegalizer::PromoteSetCCOperands(SDOperand &NewLHS,SDOperand &NewRHS,
                          DAG.getValueType(VT));
     NewRHS = DAG.getNode(ISD::SIGN_EXTEND_INREG, NewRHS.getValueType(), NewRHS,
                          DAG.getValueType(VT));
-    return;
+    break;
   }
 }
 
@@ -1610,8 +1606,9 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
       Res = ExpandIntOp_UINT_TO_FP(N->getOperand(0), N->getValueType(0));
       break;
 
-    case ISD::BR_CC:           Res = ExpandIntOp_BR_CC(N); break;
-    case ISD::SETCC:           Res = ExpandIntOp_SETCC(N); break;
+    case ISD::BR_CC:     Res = ExpandIntOp_BR_CC(N); break;
+    case ISD::SELECT_CC: Res = ExpandIntOp_SELECT_CC(N); break;
+    case ISD::SETCC:     Res = ExpandIntOp_SETCC(N); break;
 
     case ISD::STORE:
       Res = ExpandIntOp_STORE(cast<StoreSDNode>(N), OpNo);
@@ -1735,7 +1732,7 @@ SDOperand DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDOperand Source,
 SDOperand DAGTypeLegalizer::ExpandIntOp_BR_CC(SDNode *N) {
   SDOperand NewLHS = N->getOperand(2), NewRHS = N->getOperand(3);
   ISD::CondCode CCCode = cast<CondCodeSDNode>(N->getOperand(1))->get();
-  ExpandSetCCOperands(NewLHS, NewRHS, CCCode);
+  IntegerExpandSetCCOperands(NewLHS, NewRHS, CCCode);
 
   // If ExpandSetCCOperands returned a scalar, we need to compare the result
   // against zero to select between true and false values.
@@ -1750,55 +1747,63 @@ SDOperand DAGTypeLegalizer::ExpandIntOp_BR_CC(SDNode *N) {
                                 N->getOperand(4));
 }
 
+SDOperand DAGTypeLegalizer::ExpandIntOp_SELECT_CC(SDNode *N) {
+  SDOperand NewLHS = N->getOperand(0), NewRHS = N->getOperand(1);
+  ISD::CondCode CCCode = cast<CondCodeSDNode>(N->getOperand(4))->get();
+  IntegerExpandSetCCOperands(NewLHS, NewRHS, CCCode);
+
+  // If ExpandSetCCOperands returned a scalar, we need to compare the result
+  // against zero to select between true and false values.
+  if (NewRHS.Val == 0) {
+    NewRHS = DAG.getConstant(0, NewLHS.getValueType());
+    CCCode = ISD::SETNE;
+  }
+
+  // Update N to have the operands specified.
+  return DAG.UpdateNodeOperands(SDOperand(N, 0), NewLHS, NewRHS,
+                                N->getOperand(2), N->getOperand(3),
+                                DAG.getCondCode(CCCode));
+}
+
 SDOperand DAGTypeLegalizer::ExpandIntOp_SETCC(SDNode *N) {
   SDOperand NewLHS = N->getOperand(0), NewRHS = N->getOperand(1);
   ISD::CondCode CCCode = cast<CondCodeSDNode>(N->getOperand(2))->get();
-  ExpandSetCCOperands(NewLHS, NewRHS, CCCode);
+  IntegerExpandSetCCOperands(NewLHS, NewRHS, CCCode);
 
   // If ExpandSetCCOperands returned a scalar, use it.
-  if (NewRHS.Val == 0) return NewLHS;
+  if (NewRHS.Val == 0) {
+    assert(NewLHS.getValueType() == N->getValueType(0) &&
+           "Unexpected setcc expansion!");
+    return NewLHS;
+  }
 
   // Otherwise, update N to have the operands specified.
   return DAG.UpdateNodeOperands(SDOperand(N, 0), NewLHS, NewRHS,
                                 DAG.getCondCode(CCCode));
 }
 
-/// ExpandSetCCOperands - Expand the operands of a comparison.  This code is
-/// shared among BR_CC, SELECT_CC, and SETCC handlers.
-void DAGTypeLegalizer::ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
-                                           ISD::CondCode &CCCode) {
+/// IntegerExpandSetCCOperands - Expand the operands of a comparison.  This code
+/// is shared among BR_CC, SELECT_CC, and SETCC handlers.
+void DAGTypeLegalizer::IntegerExpandSetCCOperands(SDOperand &NewLHS,
+                                                  SDOperand &NewRHS,
+                                                  ISD::CondCode &CCCode) {
   SDOperand LHSLo, LHSHi, RHSLo, RHSHi;
   GetExpandedInteger(NewLHS, LHSLo, LHSHi);
   GetExpandedInteger(NewRHS, RHSLo, RHSHi);
 
   MVT VT = NewLHS.getValueType();
-  if (VT == MVT::ppcf128) {
-    // FIXME:  This generated code sucks.  We want to generate
-    //         FCMP crN, hi1, hi2
-    //         BNE crN, L:
-    //         FCMP crN, lo1, lo2
-    // The following can be improved, but not that much.
-    SDOperand Tmp1, Tmp2, Tmp3;
-    Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, ISD::SETEQ);
-    Tmp2 = DAG.getSetCC(TLI.getSetCCResultType(LHSLo), LHSLo, RHSLo, CCCode);
-    Tmp3 = DAG.getNode(ISD::AND, Tmp1.getValueType(), Tmp1, Tmp2);
-    Tmp1 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, ISD::SETNE);
-    Tmp2 = DAG.getSetCC(TLI.getSetCCResultType(LHSHi), LHSHi, RHSHi, CCCode);
-    Tmp1 = DAG.getNode(ISD::AND, Tmp1.getValueType(), Tmp1, Tmp2);
-    NewLHS = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp3);
-    NewRHS = SDOperand();   // LHS is the result, not a compare.
-    return;
-  }
 
   if (CCCode == ISD::SETEQ || CCCode == ISD::SETNE) {
-    if (RHSLo == RHSHi)
-      if (ConstantSDNode *RHSCST = dyn_cast<ConstantSDNode>(RHSLo))
+    if (RHSLo == RHSHi) {
+      if (ConstantSDNode *RHSCST = dyn_cast<ConstantSDNode>(RHSLo)) {
         if (RHSCST->isAllOnesValue()) {
           // Equality comparison to -1.
           NewLHS = DAG.getNode(ISD::AND, LHSLo.getValueType(), LHSLo, LHSHi);
           NewRHS = RHSLo;
           return;
         }
+      }
+    }
 
     NewLHS = DAG.getNode(ISD::XOR, LHSLo.getValueType(), LHSLo, RHSLo);
     NewRHS = DAG.getNode(ISD::XOR, LHSLo.getValueType(), LHSHi, RHSHi);
