@@ -1228,7 +1228,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   }
 
-  case ISD::ATOMIC_LCS: {
+  case ISD::ATOMIC_CMP_SWAP: {
     unsigned int num_operands = 4;
     assert(Node->getNumOperands() == num_operands && "Invalid Atomic node!");
     SDOperand Ops[4];
@@ -1248,8 +1248,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
     return Result.getValue(Op.ResNo);
   }      
-  case ISD::ATOMIC_LAS:
-  case ISD::ATOMIC_LSS:
+  case ISD::ATOMIC_LOAD_ADD:
+  case ISD::ATOMIC_LOAD_SUB:
   case ISD::ATOMIC_LOAD_AND:
   case ISD::ATOMIC_LOAD_OR:
   case ISD::ATOMIC_LOAD_XOR:
@@ -4270,18 +4270,20 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     break;
   }
     
-  case ISD::ATOMIC_LCS: {
+  case ISD::ATOMIC_CMP_SWAP: {
+    AtomicSDNode* AtomNode = cast<AtomicSDNode>(Node);
     Tmp2 = PromoteOp(Node->getOperand(2));
     Tmp3 = PromoteOp(Node->getOperand(3));
-    Result = DAG.getAtomic(Node->getOpcode(), Node->getOperand(0), 
-                           Node->getOperand(1), Tmp2, Tmp3,
-                           cast<AtomicSDNode>(Node)->getVT());
+    Result = DAG.getAtomic(Node->getOpcode(), AtomNode->getChain(), 
+                           AtomNode->getBasePtr(), Tmp2, Tmp3,
+                           AtomNode->getVT(), AtomNode->getSrcValue(),
+                           AtomNode->getAlignment());
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
     break;
   }
-  case ISD::ATOMIC_LAS:
-  case ISD::ATOMIC_LSS:
+  case ISD::ATOMIC_LOAD_ADD:
+  case ISD::ATOMIC_LOAD_SUB:
   case ISD::ATOMIC_LOAD_AND:
   case ISD::ATOMIC_LOAD_OR:
   case ISD::ATOMIC_LOAD_XOR:
@@ -4291,10 +4293,12 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::ATOMIC_LOAD_UMIN:
   case ISD::ATOMIC_LOAD_UMAX:
   case ISD::ATOMIC_SWAP: {
+    AtomicSDNode* AtomNode = cast<AtomicSDNode>(Node);
     Tmp2 = PromoteOp(Node->getOperand(2));
-    Result = DAG.getAtomic(Node->getOpcode(), Node->getOperand(0), 
-                           Node->getOperand(1), Tmp2,
-                           cast<AtomicSDNode>(Node)->getVT());
+    Result = DAG.getAtomic(Node->getOpcode(), AtomNode->getChain(), 
+                           AtomNode->getBasePtr(), Tmp2,
+                           AtomNode->getVT(), AtomNode->getSrcValue(),
+                           AtomNode->getAlignment());
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), LegalizeOp(Result.getValue(1)));
     break;
@@ -6151,7 +6155,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
   }
 
-  case ISD::ATOMIC_LCS: {
+  case ISD::ATOMIC_CMP_SWAP: {
     SDOperand Tmp = TLI.LowerOperation(Op, DAG);
     assert(Tmp.Val && "Node must be custom expanded!");
     ExpandOp(Tmp.getValue(0), Lo, Hi);

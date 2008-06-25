@@ -220,6 +220,7 @@ def SDNPOptInFlag   : SDNodeProperty;   // Optionally read a flag operand
 def SDNPMayStore    : SDNodeProperty;   // May write to memory, sets 'mayStore'.
 def SDNPMayLoad     : SDNodeProperty;   // May read memory, sets 'mayLoad'.
 def SDNPSideEffect  : SDNodeProperty;   // Sets 'HasUnmodelledSideEffects'.
+def SDNPMemOperand  : SDNodeProperty;   // Touches memory, has assoc MemOperand
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Node definitions.
@@ -353,39 +354,39 @@ def membarrier : SDNode<"ISD::MEMBARRIER" , STDMemBarrier,
                         [SDNPHasChain, SDNPSideEffect]>;
 
 // Do not use atomic_* directly, use atomic_*_size (see below)
-def atomic_lcs  : SDNode<"ISD::ATOMIC_LCS" , STDAtomic3,
-                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
-def atomic_las  : SDNode<"ISD::ATOMIC_LAS" , STDAtomic2,
-                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
-def atomic_swap : SDNode<"ISD::ATOMIC_SWAP", STDAtomic2,
-                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
-def atomic_lss  : SDNode<"ISD::ATOMIC_LSS" , STDAtomic2,
-                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+def atomic_cmp_swap : SDNode<"ISD::ATOMIC_CMP_SWAP" , STDAtomic3,
+                    [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
+def atomic_load_add : SDNode<"ISD::ATOMIC_LOAD_ADD" , STDAtomic2,
+                    [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
+def atomic_swap     : SDNode<"ISD::ATOMIC_SWAP", STDAtomic2,
+                    [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
+def atomic_load_sub : SDNode<"ISD::ATOMIC_LOAD_SUB" , STDAtomic2,
+                    [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
 def atomic_load_and : SDNode<"ISD::ATOMIC_LOAD_AND" , STDAtomic2,
-                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+                    [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
 def atomic_load_or  : SDNode<"ISD::ATOMIC_LOAD_OR" , STDAtomic2,
-                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+                    [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
 def atomic_load_xor : SDNode<"ISD::ATOMIC_LOAD_XOR" , STDAtomic2,
-                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+                    [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
 def atomic_load_nand: SDNode<"ISD::ATOMIC_LOAD_NAND", STDAtomic2,
-                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+                    [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
 def atomic_load_min : SDNode<"ISD::ATOMIC_LOAD_MIN", STDAtomic2,
-                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+                    [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
 def atomic_load_max : SDNode<"ISD::ATOMIC_LOAD_MAX", STDAtomic2,
-                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+                    [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
 def atomic_load_umin : SDNode<"ISD::ATOMIC_LOAD_UMIN", STDAtomic2,
-                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+                    [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
 def atomic_load_umax : SDNode<"ISD::ATOMIC_LOAD_UMAX", STDAtomic2,
-                         [SDNPHasChain, SDNPMayStore, SDNPMayLoad]>;
+                    [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
 
 // Do not use ld, st directly. Use load, extload, sextload, zextload, store,
 // and truncst (see below).
 def ld         : SDNode<"ISD::LOAD"       , SDTLoad,
-                        [SDNPHasChain, SDNPMayLoad]>;
+                        [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
 def st         : SDNode<"ISD::STORE"      , SDTStore,
-                        [SDNPHasChain, SDNPMayStore]>;
+                        [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
 def ist        : SDNode<"ISD::STORE"      , SDTIStore,
-                        [SDNPHasChain, SDNPMayStore]>;
+                        [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
 
 def vector_shuffle : SDNode<"ISD::VECTOR_SHUFFLE", SDTVecShuffle, []>;
 def build_vector : SDNode<"ISD::BUILD_VECTOR", SDTypeProfile<1, 0, []>, []>;
@@ -764,51 +765,51 @@ def post_truncstf32 : PatFrag<(ops node:$val, node:$base, node:$offset),
 }]>;
 
 //Atomic patterns
-def atomic_lcs_8 : PatFrag<(ops node:$ptr, node:$cmp, node:$swp),
-                    (atomic_lcs node:$ptr, node:$cmp, node:$swp), [{
+def atomic_cmp_swap_8 : PatFrag<(ops node:$ptr, node:$cmp, node:$swp),
+                    (atomic_cmp_swap node:$ptr, node:$cmp, node:$swp), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
         return V->getVT() == MVT::i8;
   return false;
 }]>;
-def atomic_lcs_16 : PatFrag<(ops node:$ptr, node:$cmp, node:$swp), 
-                    (atomic_lcs node:$ptr, node:$cmp, node:$swp), [{
+def atomic_cmp_swap_16 : PatFrag<(ops node:$ptr, node:$cmp, node:$swp), 
+                    (atomic_cmp_swap node:$ptr, node:$cmp, node:$swp), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
         return V->getVT() == MVT::i16;
   return false;
 }]>;
-def atomic_lcs_32 : PatFrag<(ops node:$ptr, node:$cmp, node:$swp), 
-                    (atomic_lcs node:$ptr, node:$cmp, node:$swp), [{
+def atomic_cmp_swap_32 : PatFrag<(ops node:$ptr, node:$cmp, node:$swp), 
+                    (atomic_cmp_swap node:$ptr, node:$cmp, node:$swp), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
         return V->getVT() == MVT::i32;
   return false;
 }]>;
-def atomic_lcs_64 : PatFrag<(ops node:$ptr, node:$cmp, node:$swp), 
-                    (atomic_lcs node:$ptr, node:$cmp, node:$swp), [{
+def atomic_cmp_swap_64 : PatFrag<(ops node:$ptr, node:$cmp, node:$swp), 
+                    (atomic_cmp_swap node:$ptr, node:$cmp, node:$swp), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
         return V->getVT() == MVT::i64;
   return false;
 }]>;
 
-def atomic_las_8 : PatFrag<(ops node:$ptr, node:$inc),
-                    (atomic_las node:$ptr, node:$inc), [{
+def atomic_load_add_8 : PatFrag<(ops node:$ptr, node:$inc),
+                    (atomic_load_add node:$ptr, node:$inc), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
         return V->getVT() == MVT::i8;
   return false;
 }]>;
-def atomic_las_16 : PatFrag<(ops node:$ptr, node:$inc), 
-                    (atomic_las node:$ptr, node:$inc), [{
+def atomic_load_add_16 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_load_add node:$ptr, node:$inc), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
         return V->getVT() == MVT::i16;
   return false;
 }]>;
-def atomic_las_32 : PatFrag<(ops node:$ptr, node:$inc), 
-                    (atomic_las node:$ptr, node:$inc), [{
+def atomic_load_add_32 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_load_add node:$ptr, node:$inc), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
         return V->getVT() == MVT::i32;
   return false;
 }]>;
-def atomic_las_64 : PatFrag<(ops node:$ptr, node:$inc), 
-                    (atomic_las node:$ptr, node:$inc), [{
+def atomic_load_add_64 : PatFrag<(ops node:$ptr, node:$inc), 
+                    (atomic_load_add node:$ptr, node:$inc), [{
   if (AtomicSDNode* V = dyn_cast<AtomicSDNode>(N))
         return V->getVT() == MVT::i64;
   return false;

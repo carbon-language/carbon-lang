@@ -430,7 +430,24 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
     ID.AddInteger(ST->isVolatile());
     break;
   }
+  case ISD::ATOMIC_CMP_SWAP:
+  case ISD::ATOMIC_LOAD_ADD:
+  case ISD::ATOMIC_SWAP:
+  case ISD::ATOMIC_LOAD_SUB:
+  case ISD::ATOMIC_LOAD_AND:
+  case ISD::ATOMIC_LOAD_OR:
+  case ISD::ATOMIC_LOAD_XOR:
+  case ISD::ATOMIC_LOAD_NAND:
+  case ISD::ATOMIC_LOAD_MIN:
+  case ISD::ATOMIC_LOAD_MAX:
+  case ISD::ATOMIC_LOAD_UMIN:
+  case ISD::ATOMIC_LOAD_UMAX: {
+    AtomicSDNode *AT = cast<AtomicSDNode>(N);
+    ID.AddInteger(AT->getAlignment());
+    ID.AddInteger(AT->isVolatile());
+    break;
   }
+  } // end switch (N->getOpcode())
 }
 
 //===----------------------------------------------------------------------===//
@@ -2972,8 +2989,9 @@ SDOperand SelectionDAG::getMemset(SDOperand Chain, SDOperand Dst,
 
 SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain, 
                                   SDOperand Ptr, SDOperand Cmp, 
-                                  SDOperand Swp, MVT VT) {
-  assert(Opcode == ISD::ATOMIC_LCS && "Invalid Atomic Op");
+                                  SDOperand Swp, MVT VT, const Value* PtrVal,
+                                  unsigned Alignment) {
+  assert(Opcode == ISD::ATOMIC_CMP_SWAP && "Invalid Atomic Op");
   assert(Cmp.getValueType() == Swp.getValueType() && "Invalid Atomic Op Types");
   SDVTList VTs = getVTList(Cmp.getValueType(), MVT::Other);
   FoldingSetNodeID ID;
@@ -2983,7 +3001,8 @@ SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain,
   void* IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode* N = new AtomicSDNode(Opcode, VTs, Chain, Ptr, Cmp, Swp, VT);
+  SDNode* N = new AtomicSDNode(Opcode, VTs, Chain, Ptr, Cmp, Swp, VT,
+                               PtrVal, Alignment);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -2991,8 +3010,9 @@ SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain,
 
 SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain, 
                                   SDOperand Ptr, SDOperand Val, 
-                                  MVT VT) {
-  assert((   Opcode == ISD::ATOMIC_LAS || Opcode == ISD::ATOMIC_LSS
+                                  MVT VT, const Value* PtrVal,
+                                  unsigned Alignment) {
+  assert((   Opcode == ISD::ATOMIC_LOAD_ADD || Opcode == ISD::ATOMIC_LOAD_SUB
           || Opcode == ISD::ATOMIC_SWAP || Opcode == ISD::ATOMIC_LOAD_AND
           || Opcode == ISD::ATOMIC_LOAD_OR || Opcode == ISD::ATOMIC_LOAD_XOR
           || Opcode == ISD::ATOMIC_LOAD_NAND 
@@ -3007,7 +3027,8 @@ SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain,
   void* IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode* N = new AtomicSDNode(Opcode, VTs, Chain, Ptr, Val, VT);
+  SDNode* N = new AtomicSDNode(Opcode, VTs, Chain, Ptr, Val, VT,
+                               PtrVal, Alignment);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -4171,6 +4192,7 @@ void ExternalSymbolSDNode::ANCHOR() {}
 void CondCodeSDNode::ANCHOR() {}
 void ARG_FLAGSSDNode::ANCHOR() {}
 void VTSDNode::ANCHOR() {}
+void MemSDNode::ANCHOR() {}
 void LoadSDNode::ANCHOR() {}
 void StoreSDNode::ANCHOR() {}
 void AtomicSDNode::ANCHOR() {}
@@ -4193,13 +4215,31 @@ GlobalAddressSDNode::GlobalAddressSDNode(bool isTarget, const GlobalValue *GA,
 }
 
 /// getMemOperand - Return a MachineMemOperand object describing the memory
+/// reference performed by this atomic.
+MachineMemOperand AtomicSDNode::getMemOperand() const {
+  int Size = (getVT().getSizeInBits() + 7) >> 3;
+  int Flags = MachineMemOperand::MOLoad | MachineMemOperand::MOStore;
+  if (isVolatile()) Flags |= MachineMemOperand::MOVolatile;
+  
+  // Check if the atomic references a frame index
+  const FrameIndexSDNode *FI = 
+  dyn_cast<const FrameIndexSDNode>(getBasePtr().Val);
+  if (!getSrcValue() && FI)
+    return MachineMemOperand(PseudoSourceValue::getFixedStack(), Flags,
+                             FI->getIndex(), Size, getAlignment());
+  else
+    return MachineMemOperand(getSrcValue(), Flags, getSrcValueOffset(),
+                             Size, getAlignment());
+}
+
+/// getMemOperand - Return a MachineMemOperand object describing the memory
 /// reference performed by this load or store.
 MachineMemOperand LSBaseSDNode::getMemOperand() const {
   int Size = (getMemoryVT().getSizeInBits() + 7) >> 3;
   int Flags =
     getOpcode() == ISD::LOAD ? MachineMemOperand::MOLoad :
                                MachineMemOperand::MOStore;
-  if (IsVolatile) Flags |= MachineMemOperand::MOVolatile;
+  if (isVolatile()) Flags |= MachineMemOperand::MOVolatile;
 
   // Check if the load references a frame index, and does not have
   // an SV attached.
@@ -4207,10 +4247,10 @@ MachineMemOperand LSBaseSDNode::getMemOperand() const {
     dyn_cast<const FrameIndexSDNode>(getBasePtr().Val);
   if (!getSrcValue() && FI)
     return MachineMemOperand(PseudoSourceValue::getFixedStack(), Flags,
-                             FI->getIndex(), Size, Alignment);
+                             FI->getIndex(), Size, getAlignment());
   else
     return MachineMemOperand(getSrcValue(), Flags,
-                             getSrcValueOffset(), Size, Alignment);
+                             getSrcValueOffset(), Size, getAlignment());
 }
 
 /// Profile - Gather unique data for the node.
@@ -4401,9 +4441,9 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
    
   case ISD::PREFETCH:      return "Prefetch";
   case ISD::MEMBARRIER:    return "MemBarrier";
-  case ISD::ATOMIC_LCS:    return "AtomicLCS";
-  case ISD::ATOMIC_LAS:    return "AtomicLAS";
-  case ISD::ATOMIC_LSS:    return "AtomicLSS";
+  case ISD::ATOMIC_CMP_SWAP:  return "AtomicCmpSwap";
+  case ISD::ATOMIC_LOAD_ADD:  return "AtomicLoadAdd";
+  case ISD::ATOMIC_LOAD_SUB:  return "AtomicLoadSub";
   case ISD::ATOMIC_LOAD_AND:  return "AtomicLoadAnd";
   case ISD::ATOMIC_LOAD_OR:   return "AtomicLoadOr";
   case ISD::ATOMIC_LOAD_XOR:  return "AtomicLoadXor";
@@ -4756,7 +4796,8 @@ void SDNode::dump(const SelectionDAG *G) const {
     cerr << N->getArgFlags().getArgFlagsString();
   } else if (const VTSDNode *N = dyn_cast<VTSDNode>(this)) {
     cerr << ":" << N->getVT().getMVTString();
-  } else if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(this)) {
+  }
+  else if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(this)) {
     const Value *SrcValue = LD->getSrcValue();
     int SrcOffset = LD->getSrcValueOffset();
     cerr << " <";
@@ -4808,6 +4849,18 @@ void SDNode::dump(const SelectionDAG *G) const {
     if (ST->isVolatile())
       cerr << " <volatile>";
     cerr << " alignment=" << ST->getAlignment();
+  } else if (const AtomicSDNode* AT = dyn_cast<AtomicSDNode>(this)) {
+    const Value *SrcValue = AT->getSrcValue();
+    int SrcOffset = AT->getSrcValueOffset();
+    cerr << " <";
+    if (SrcValue)
+      cerr << SrcValue;
+    else
+      cerr << "null";
+    cerr << ":" << SrcOffset << ">";
+    if (AT->isVolatile())
+      cerr << " <volatile>";
+    cerr << " alignment=" << AT->getAlignment();
   }
 }
 

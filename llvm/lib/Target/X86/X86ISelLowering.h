@@ -541,11 +541,11 @@ namespace llvm {
     SDOperand LowerFLT_ROUNDS_(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerCTLZ(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerCTTZ(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerLCS(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerCMP_SWAP(SDOperand Op, SelectionDAG &DAG);
     SDNode *ExpandFP_TO_SINT(SDNode *N, SelectionDAG &DAG);
     SDNode *ExpandREADCYCLECOUNTER(SDNode *N, SelectionDAG &DAG);
-    SDNode *ExpandATOMIC_LCS(SDNode *N, SelectionDAG &DAG);
-    SDNode *ExpandATOMIC_LSS(SDNode *N, SelectionDAG &DAG);
+    SDNode *ExpandATOMIC_CMP_SWAP(SDNode *N, SelectionDAG &DAG);
+    SDNode *ExpandATOMIC_LOAD_SUB(SDNode *N, SelectionDAG &DAG);
     
     SDOperand EmitTargetCodeForMemset(SelectionDAG &DAG,
                                       SDOperand Chain,

@@ -368,14 +368,16 @@ public:
                      SDOperand SV);
 
   /// getAtomic - Gets a node for an atomic op, produces result and chain, takes
-  // 3 operands
+  /// 3 operands
   SDOperand getAtomic(unsigned Opcode, SDOperand Chain, SDOperand Ptr, 
-                      SDOperand Cmp, SDOperand Swp, MVT VT);
+                      SDOperand Cmp, SDOperand Swp, MVT VT, const Value* PtrVal,
+                      unsigned Alignment=0);
 
   /// getAtomic - Gets a node for an atomic op, produces result and chain, takes
-  // 2 operands
+  /// 2 operands
   SDOperand getAtomic(unsigned Opcode, SDOperand Chain, SDOperand Ptr, 
-                      SDOperand Val, MVT VT);
+                      SDOperand Val, MVT VT, const Value* PtrVal,
+                      unsigned Alignment = 0);
 
   /// getLoad - Loads are not normal binary operators: their result type is not
   /// determined by their operands, and they produce a value AND a token chain.

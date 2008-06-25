@@ -366,8 +366,8 @@ namespace llvm {
     SDOperand LowerDYNAMIC_STACKALLOC(SDOperand Op, SelectionDAG &DAG,
                                       const PPCSubtarget &Subtarget);
     SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerAtomicLAS(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerAtomicLCS(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerAtomicLOAD_ADD(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerAtomicCMP_SWAP(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerAtomicSWAP(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG);

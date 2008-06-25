@@ -160,14 +160,14 @@ def MEMLABEL : PseudoInstAlpha<(outs), (ins s64imm:$i, s64imm:$j, s64imm:$k, s64
 
 let usesCustomDAGSchedInserter = 1 in {   // Expanded by the scheduler.
 def CAS32 : PseudoInstAlpha<(outs GPRC:$dst), (ins GPRC:$ptr, GPRC:$cmp, GPRC:$swp), "",
-        [(set GPRC:$dst, (atomic_lcs_32 GPRC:$ptr, GPRC:$cmp, GPRC:$swp))], s_pseudo>;
+      [(set GPRC:$dst, (atomic_cmp_swap_32 GPRC:$ptr, GPRC:$cmp, GPRC:$swp))], s_pseudo>;
 def CAS64 : PseudoInstAlpha<(outs GPRC:$dst), (ins GPRC:$ptr, GPRC:$cmp, GPRC:$swp), "",
-        [(set GPRC:$dst, (atomic_lcs_64 GPRC:$ptr, GPRC:$cmp, GPRC:$swp))], s_pseudo>;
+      [(set GPRC:$dst, (atomic_cmp_swap_64 GPRC:$ptr, GPRC:$cmp, GPRC:$swp))], s_pseudo>;
 
 def LAS32 : PseudoInstAlpha<(outs GPRC:$dst), (ins GPRC:$ptr, GPRC:$swp), "",
-        [(set GPRC:$dst, (atomic_las_32 GPRC:$ptr, GPRC:$swp))], s_pseudo>;
+      [(set GPRC:$dst, (atomic_load_add_32 GPRC:$ptr, GPRC:$swp))], s_pseudo>;
 def LAS64 :PseudoInstAlpha<(outs GPRC:$dst), (ins GPRC:$ptr, GPRC:$swp), "",
-        [(set GPRC:$dst, (atomic_las_64 GPRC:$ptr, GPRC:$swp))], s_pseudo>;
+      [(set GPRC:$dst, (atomic_load_add_64 GPRC:$ptr, GPRC:$swp))], s_pseudo>;
 
 def SWAP32 : PseudoInstAlpha<(outs GPRC:$dst), (ins GPRC:$ptr, GPRC:$swp), "",
         [(set GPRC:$dst, (atomic_swap_32 GPRC:$ptr, GPRC:$swp))], s_pseudo>;

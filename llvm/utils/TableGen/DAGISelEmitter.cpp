@@ -394,11 +394,8 @@ public:
 
     // Save loads/stores matched by a pattern.
     if (!N->isLeaf() && N->getName().empty()) {
-      std::string EnumName = N->getOperator()->getValueAsString("Opcode");
-      if (EnumName == "ISD::LOAD" ||
-          EnumName == "ISD::STORE") {
+      if (NodeHasProperty(N, SDNPMemOperand, CGP))
         LSI.push_back(RootName);
-      }
     }
 
     bool isRoot = (P == NULL);
@@ -1082,7 +1079,7 @@ public:
           std::vector<std::string>::const_iterator mi, mie;
           for (mi = LSI.begin(), mie = LSI.end(); mi != mie; ++mi) {
             emitCode("SDOperand LSI_" + *mi + " = "
-                     "CurDAG->getMemOperand(cast<LSBaseSDNode>(" +
+                     "CurDAG->getMemOperand(cast<MemSDNode>(" +
                      *mi + ")->getMemOperand());");
             if (IsVariadic)
               emitCode("Ops" + utostr(OpsNo) + ".push_back(LSI_" + *mi + ");");

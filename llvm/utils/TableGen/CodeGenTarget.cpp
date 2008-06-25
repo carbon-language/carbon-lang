@@ -366,6 +366,8 @@ ComplexPattern::ComplexPattern(Record *R) {
       Properties |= 1 << SDNPMayLoad;
     } else if (PropList[i]->getName() == "SDNPSideEffect") {
       Properties |= 1 << SDNPSideEffect;
+    } else if (PropList[i]->getName() == "SDNPMemOperand") {
+      Properties |= 1 << SDNPMemOperand;
     } else {
       cerr << "Unsupported SD Node property '" << PropList[i]->getName()
            << "' on ComplexPattern '" << R->getName() << "'!\n";

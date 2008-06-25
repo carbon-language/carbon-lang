@@ -1124,7 +1124,7 @@ def LCMPXCHG64 : RI<0xB1, MRMDestMem, (outs), (ins i64mem:$ptr, GR64:$swap),
 let Constraints = "$val = $dst", Defs = [EFLAGS] in {
 def LXADD64 : RI<0xC1, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$ptr,GR64:$val),
                "lock xadd $val, $ptr", 
-               [(set GR64:$dst, (atomic_las_64 addr:$ptr, GR64:$val))]>,
+               [(set GR64:$dst, (atomic_load_add_64 addr:$ptr, GR64:$val))]>,
                 TB, LOCK;
 def XCHG64rm : RI<0x87, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$ptr,GR64:$val),
                   "xchg $val, $ptr", 

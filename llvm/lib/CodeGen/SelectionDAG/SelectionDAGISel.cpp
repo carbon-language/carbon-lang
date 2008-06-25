@@ -3088,7 +3088,8 @@ SelectionDAGLowering::implVisitBinaryAtomic(CallInst& I, ISD::NodeType Op) {
   SDOperand O2 = getValue(I.getOperand(2));
   SDOperand L = DAG.getAtomic(Op, Root, 
                               getValue(I.getOperand(1)), 
-                              O2, O2.getValueType());
+                              O2, O2.getValueType(),
+                              I.getOperand(1));
   setValue(&I, L);
   DAG.setRoot(L.getValue(1));
   return 0;
@@ -3518,21 +3519,22 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(DAG.getNode(ISD::MEMBARRIER, MVT::Other, &Ops[0], 6));
     return 0;
   }
-  case Intrinsic::atomic_lcs: {
+  case Intrinsic::atomic_cmp_swap: {
     SDOperand Root = getRoot();   
     SDOperand O3 = getValue(I.getOperand(3));
-    SDOperand L = DAG.getAtomic(ISD::ATOMIC_LCS, Root, 
+    SDOperand L = DAG.getAtomic(ISD::ATOMIC_CMP_SWAP, Root, 
                                 getValue(I.getOperand(1)), 
                                 getValue(I.getOperand(2)),
-                                O3, O3.getValueType());
+                                O3, O3.getValueType(),
+                                I.getOperand(1));
     setValue(&I, L);
     DAG.setRoot(L.getValue(1));
     return 0;
   }
-  case Intrinsic::atomic_las:
-    return implVisitBinaryAtomic(I, ISD::ATOMIC_LAS);
-  case Intrinsic::atomic_lss:
-    return implVisitBinaryAtomic(I, ISD::ATOMIC_LSS);
+  case Intrinsic::atomic_load_add:
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_ADD);
+  case Intrinsic::atomic_load_sub:
+    return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_SUB);
   case Intrinsic::atomic_load_and:
     return implVisitBinaryAtomic(I, ISD::ATOMIC_LOAD_AND);
   case Intrinsic::atomic_load_or:

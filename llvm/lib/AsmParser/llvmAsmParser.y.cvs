@@ -1538,10 +1538,10 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     uint64_t NumElements = ATy->getNumElements();
 
     // Verify that we have the correct size...
-    if (NumElements != -1 && NumElements != (int)$3->size())
+    if (NumElements != uint64_t(-1) && NumElements != $3->size())
       GEN_ERROR("Type mismatch: constant sized array initialized with " +
                      utostr($3->size()) +  " arguments, but has size of " + 
-                     itostr(NumElements) + "");
+                     utostr(NumElements) + "");
 
     // Verify all elements are correct type!
     for (unsigned i = 0; i < $3->size(); i++) {
@@ -1564,9 +1564,9 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
                      (*$1)->getDescription() + "'");
 
     uint64_t NumElements = ATy->getNumElements();
-    if (NumElements != -1 && NumElements != 0) 
+    if (NumElements != uint64_t(-1) && NumElements != 0) 
       GEN_ERROR("Type mismatch: constant sized array initialized with 0"
-                     " arguments, but has size of " + itostr(NumElements) +"");
+                     " arguments, but has size of " + utostr(NumElements) +"");
     $$ = ConstantArray::get(ATy, std::vector<Constant*>());
     delete $1;
     CHECK_FOR_ERROR
@@ -1581,13 +1581,13 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
 
     uint64_t NumElements = ATy->getNumElements();
     const Type *ETy = ATy->getElementType();
-    if (NumElements != -1 && NumElements != int($3->length()))
+    if (NumElements != uint64_t(-1) && NumElements != $3->length())
       GEN_ERROR("Can't build string constant of size " + 
-                     itostr((int)($3->length())) +
-                     " when array has size " + itostr(NumElements) + "");
+                     utostr($3->length()) +
+                     " when array has size " + utostr(NumElements) + "");
     std::vector<Constant*> Vals;
     if (ETy == Type::Int8Ty) {
-      for (unsigned i = 0; i < $3->length(); ++i)
+      for (uint64_t i = 0; i < $3->length(); ++i)
         Vals.push_back(ConstantInt::get(ETy, (*$3)[i]));
     } else {
       delete $3;
@@ -1609,10 +1609,10 @@ ConstVal: Types '[' ConstVector ']' { // Nonempty unsized arr
     unsigned NumElements = PTy->getNumElements();
 
     // Verify that we have the correct size...
-    if (NumElements != -1 && NumElements != (int)$3->size())
+    if (NumElements != unsigned(-1) && NumElements != (unsigned)$3->size())
       GEN_ERROR("Type mismatch: constant sized packed initialized with " +
                      utostr($3->size()) +  " arguments, but has size of " + 
-                     itostr(NumElements) + "");
+                     utostr(NumElements) + "");
 
     // Verify all elements are correct type!
     for (unsigned i = 0; i < $3->size(); i++) {

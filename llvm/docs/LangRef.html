@@ -216,9 +216,18 @@
           <li><a href="#int_atomics">Atomic intrinsics</a>
             <ol>
               <li><a href="#int_memory_barrier"><tt>llvm.memory_barrier</tt></a></li>
-              <li><a href="#int_atomic_lcs"><tt>llvm.atomic.lcs</tt></a></li>
-              <li><a href="#int_atomic_las"><tt>llvm.atomic.las</tt></a></li>
+              <li><a href="#int_atomic_cmp_swap"><tt>llvm.atomic.cmp.swap</tt></a></li>
               <li><a href="#int_atomic_swap"><tt>llvm.atomic.swap</tt></a></li>
+              <li><a href="#int_atomic_load_add"><tt>llvm.atomic.load.add</tt></a></li>
+              <li><a href="#int_atomic_load_sub"><tt>llvm.atomic.load.sub</tt></a></li>
+              <li><a href="#int_atomic_load_and"><tt>llvm.atomic.load.and</tt></a></li>
+              <li><a href="#int_atomic_load_nand"><tt>llvm.atomic.load.nand</tt></a></li>
+              <li><a href="#int_atomic_load_or"><tt>llvm.atomic.load.or</tt></a></li>
+              <li><a href="#int_atomic_load_xor"><tt>llvm.atomic.load.xor</tt></a></li>
+              <li><a href="#int_atomic_load_max"><tt>llvm.atomic.load.max</tt></a></li>
+              <li><a href="#int_atomic_load_min"><tt>llvm.atomic.load.min</tt></a></li>
+              <li><a href="#int_atomic_load_umax"><tt>llvm.atomic.load.umax</tt></a></li>
+              <li><a href="#int_atomic_load_umin"><tt>llvm.atomic.load.umin</tt></a></li>
             </ol>
           </li>
       <li><a href="#int_general">General intrinsics</a>
@@ -5777,19 +5786,19 @@ i1 &lt;device&gt; )
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="int_atomic_lcs">'<tt>llvm.atomic.lcs.*</tt>' Intrinsic</a>
+  <a name="int_atomic_cmp_swap">'<tt>llvm.atomic.cmp.swap.*</tt>' Intrinsic</a>
 </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
 <p>
-  This is an overloaded intrinsic. You can use <tt>llvm.atomic.lcs</tt> on any 
+  This is an overloaded intrinsic. You can use <tt>llvm.atomic.cmp.swap</tt> on any 
   integer bit width. Not all targets support all bit widths however.</p>
 
 <pre>
-declare i8 @llvm.atomic.lcs.i8( i8* &lt;ptr&gt;, i8 &lt;cmp&gt;, i8 &lt;val&gt; )
-declare i16 @llvm.atomic.lcs.i16( i16* &lt;ptr&gt;, i16 &lt;cmp&gt;, i16 &lt;val&gt; )
-declare i32 @llvm.atomic.lcs.i32( i32* &lt;ptr&gt;, i32 &lt;cmp&gt;, i32 &lt;val&gt; )
-declare i64 @llvm.atomic.lcs.i64( i64* &lt;ptr&gt;, i64 &lt;cmp&gt;, i64 &lt;val&gt; )
+declare i8 @llvm.atomic.cmp.swap.i8( i8* &lt;ptr&gt;, i8 &lt;cmp&gt;, i8 &lt;val&gt; )
+declare i16 @llvm.atomic.cmp.swap.i16( i16* &lt;ptr&gt;, i16 &lt;cmp&gt;, i16 &lt;val&gt; )
+declare i32 @llvm.atomic.cmp.swap.i32( i32* &lt;ptr&gt;, i32 &lt;cmp&gt;, i32 &lt;val&gt; )
+declare i64 @llvm.atomic.cmp.swap.i64( i64* &lt;ptr&gt;, i64 &lt;cmp&gt;, i64 &lt;val&gt; )
 
 </pre>
 <h5>Overview:</h5>
@@ -5799,7 +5808,7 @@ declare i64 @llvm.atomic.lcs.i64( i64* &lt;ptr&gt;, i64 &lt;cmp&gt;, i64 &lt;val
 </p>
 <h5>Arguments:</h5>
 <p>
-  The <tt>llvm.atomic.lcs</tt> intrinsic takes three arguments. The result as 
+  The <tt>llvm.atomic.cmp.swap</tt> intrinsic takes three arguments. The result as 
   well as both <tt>cmp</tt> and <tt>val</tt> must be integer values with the 
   same bit width. The <tt>ptr</tt> argument must be a pointer to a value of 
   this integer type. While any bit width integer may be used, targets may only 
@@ -5821,13 +5830,13 @@ declare i64 @llvm.atomic.lcs.i64( i64* &lt;ptr&gt;, i64 &lt;cmp&gt;, i64 &lt;val
             store i32 4, %ptr
 
 %val1     = add i32 4, 4
-%result1  = call i32 @llvm.atomic.lcs.i32( i32* %ptr, i32 4, %val1 )
+%result1  = call i32 @llvm.atomic.cmp.swap.i32( i32* %ptr, i32 4, %val1 )
                                           <i>; yields {i32}:result1 = 4</i>
 %stored1  = icmp eq i32 %result1, 4       <i>; yields {i1}:stored1 = true</i>
 %memval1  = load i32* %ptr                <i>; yields {i32}:memval1 = 8</i>
 
 %val2     = add i32 1, 1
-%result2  = call i32 @llvm.atomic.lcs.i32( i32* %ptr, i32 5, %val2 )
+%result2  = call i32 @llvm.atomic.cmp.swap.i32( i32* %ptr, i32 5, %val2 )
                                           <i>; yields {i32}:result2 = 8</i>
 %stored2  = icmp eq i32 %result2, 5       <i>; yields {i1}:stored2 = false</i>
 
@@ -5861,7 +5870,7 @@ declare i64 @llvm.atomic.swap.i64( i64* &lt;ptr&gt;, i64 &lt;val&gt; )
 <h5>Arguments:</h5>
 
 <p>
-  The <tt>llvm.atomic.ls</tt> intrinsic takes two arguments. Both the 
+  The <tt>llvm.atomic.swap</tt> intrinsic takes two arguments. Both the 
   <tt>val</tt> argument and the result must be integers of the same bit width. 
   The first argument, <tt>ptr</tt>, must be a pointer to a value of this 
   integer type. The targets may only lower integer representations they 
@@ -5896,19 +5905,19 @@ declare i64 @llvm.atomic.swap.i64( i64* &lt;ptr&gt;, i64 &lt;val&gt; )
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="int_atomic_las">'<tt>llvm.atomic.las.*</tt>' Intrinsic</a>
+  <a name="int_atomic_load_add">'<tt>llvm.atomic.load.add.*</tt>' Intrinsic</a>
 
 </div>
 <div class="doc_text">
 <h5>Syntax:</h5>
 <p>
-  This is an overloaded intrinsic. You can use <tt>llvm.atomic.las</tt> on any 
+  This is an overloaded intrinsic. You can use <tt>llvm.atomic.load.add</tt> on any 
   integer bit width. Not all targets support all bit widths however.</p>
 <pre>
-declare i8 @llvm.atomic.las.i8.( i8* &lt;ptr&gt;, i8 &lt;delta&gt; )
-declare i16 @llvm.atomic.las.i16.( i16* &lt;ptr&gt;, i16 &lt;delta&gt; )
-declare i32 @llvm.atomic.las.i32.( i32* &lt;ptr&gt;, i32 &lt;delta&gt; )
-declare i64 @llvm.atomic.las.i64.( i64* &lt;ptr&gt;, i64 &lt;delta&gt; )
+declare i8 @llvm.atomic.load.add.i8.( i8* &lt;ptr&gt;, i8 &lt;delta&gt; )
+declare i16 @llvm.atomic.load.add.i16.( i16* &lt;ptr&gt;, i16 &lt;delta&gt; )
+declare i32 @llvm.atomic.load.add.i32.( i32* &lt;ptr&gt;, i32 &lt;delta&gt; )
+declare i64 @llvm.atomic.load.add.i64.( i64* &lt;ptr&gt;, i64 &lt;delta&gt; )
 
 </pre>
 <h5>Overview:</h5>
@@ -5935,16 +5944,235 @@ declare i64 @llvm.atomic.las.i64.( i64* &lt;ptr&gt;, i64 &lt;delta&gt; )
 <pre>
 %ptr      = malloc i32
         store i32 4, %ptr
-%result1  = call i32 @llvm.atomic.las.i32( i32* %ptr, i32 4 )
+%result1  = call i32 @llvm.atomic.load.add.i32( i32* %ptr, i32 4 )
                                 <i>; yields {i32}:result1 = 4</i>
-%result2  = call i32 @llvm.atomic.las.i32( i32* %ptr, i32 2 )
+%result2  = call i32 @llvm.atomic.load.add.i32( i32* %ptr, i32 2 )
                                 <i>; yields {i32}:result2 = 8</i>
-%result3  = call i32 @llvm.atomic.las.i32( i32* %ptr, i32 5 )
+%result3  = call i32 @llvm.atomic.load.add.i32( i32* %ptr, i32 5 )
                                 <i>; yields {i32}:result3 = 10</i>
-%memval   = load i32* %ptr      <i>; yields {i32}:memval1 = 15</i>
+%memval1  = load i32* %ptr      <i>; yields {i32}:memval1 = 15</i>
 </pre>
 </div>
 
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_atomic_load_sub">'<tt>llvm.atomic.load.sub.*</tt>' Intrinsic</a>
+
+</div>
+<div class="doc_text">
+<h5>Syntax:</h5>
+<p>
+  This is an overloaded intrinsic. You can use <tt>llvm.atomic.load.sub</tt> on
+  any integer bit width. Not all targets support all bit widths however.</p>
+<pre>
+declare i8 @llvm.atomic.load.sub.i8.( i8* &lt;ptr&gt;, i8 &lt;delta&gt; )
+declare i16 @llvm.atomic.load.sub.i16.( i16* &lt;ptr&gt;, i16 &lt;delta&gt; )
+declare i32 @llvm.atomic.load.sub.i32.( i32* &lt;ptr&gt;, i32 &lt;delta&gt; )
+declare i64 @llvm.atomic.load.sub.i64.( i64* &lt;ptr&gt;, i64 &lt;delta&gt; )
+
+</pre>
+<h5>Overview:</h5>
+<p>
+  This intrinsic subtracts <tt>delta</tt> to the value stored in memory at 
+  <tt>ptr</tt>. It yields the original value at <tt>ptr</tt>.
+</p>
+<h5>Arguments:</h5>
+<p>
+
+  The intrinsic takes two arguments, the first a pointer to an integer value 
+  and the second an integer value. The result is also an integer value. These 
+  integer types can have any bit width, but they must all have the same bit 
+  width. The targets may only lower integer representations they support.
+</p>
+<h5>Semantics:</h5>
+<p>
+  This intrinsic does a series of operations atomically. It first loads the 
+  value stored at <tt>ptr</tt>. It then subtracts <tt>delta</tt>, stores the
+  result to <tt>ptr</tt>. It yields the original value stored at <tt>ptr</tt>.
+</p>
+
+<h5>Examples:</h5>
+<pre>
+%ptr      = malloc i32
+        store i32 8, %ptr
+%result1  = call i32 @llvm.atomic.load.sub.i32( i32* %ptr, i32 4 )
+                                <i>; yields {i32}:result1 = 8</i>
+%result2  = call i32 @llvm.atomic.load.sub.i32( i32* %ptr, i32 2 )
+                                <i>; yields {i32}:result2 = 4</i>
+%result3  = call i32 @llvm.atomic.load.sub.i32( i32* %ptr, i32 5 )
+                                <i>; yields {i32}:result3 = 2</i>
+%memval1  = load i32* %ptr      <i>; yields {i32}:memval1 = -3</i>
+</pre>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_atomic_load_and">'<tt>llvm.atomic.load.and.*</tt>' Intrinsic</a><br>
+  <a name="int_atomic_load_nand">'<tt>llvm.atomic.load.nand.*</tt>' Intrinsic</a><br>
+  <a name="int_atomic_load_or">'<tt>llvm.atomic.load.or.*</tt>' Intrinsic</a><br>
+  <a name="int_atomic_load_xor">'<tt>llvm.atomic.load.xor.*</tt>' Intrinsic</a><br>
+
+</div>
+<div class="doc_text">
+<h5>Syntax:</h5>
+<p>
+  These are overloaded intrinsics. You can use <tt>llvm.atomic.load_and</tt>,
+  <tt>llvm.atomic.load_nand</tt>, <tt>llvm.atomic.load_or</tt>, and
+  <tt>llvm.atomic.load_xor</tt> on any integer bit width. Not all targets
+  support all bit widths however.</p>
+<pre>
+declare i8 @llvm.atomic.load.and.i8.( i8* &lt;ptr&gt;, i8 &lt;delta&gt; )
+declare i16 @llvm.atomic.load.and.i16.( i16* &lt;ptr&gt;, i16 &lt;delta&gt; )
+declare i32 @llvm.atomic.load.and.i32.( i32* &lt;ptr&gt;, i32 &lt;delta&gt; )
+declare i64 @llvm.atomic.load.and.i64.( i64* &lt;ptr&gt;, i64 &lt;delta&gt; )
+
+</pre>
+
+<pre>
+declare i8 @llvm.atomic.load.or.i8.( i8* &lt;ptr&gt;, i8 &lt;delta&gt; )
+declare i16 @llvm.atomic.load.or.i16.( i16* &lt;ptr&gt;, i16 &lt;delta&gt; )
+declare i32 @llvm.atomic.load.or.i32.( i32* &lt;ptr&gt;, i32 &lt;delta&gt; )
+declare i64 @llvm.atomic.load.or.i64.( i64* &lt;ptr&gt;, i64 &lt;delta&gt; )
+
+</pre>
+
+<pre>
+declare i8 @llvm.atomic.load.nand.i8.( i8* &lt;ptr&gt;, i8 &lt;delta&gt; )
+declare i16 @llvm.atomic.load.nand.i16.( i16* &lt;ptr&gt;, i16 &lt;delta&gt; )
+declare i32 @llvm.atomic.load.nand.i32.( i32* &lt;ptr&gt;, i32 &lt;delta&gt; )
+declare i64 @llvm.atomic.load.nand.i64.( i64* &lt;ptr&gt;, i64 &lt;delta&gt; )
+
+</pre>
+
+<pre>
+declare i8 @llvm.atomic.load.xor.i8.( i8* &lt;ptr&gt;, i8 &lt;delta&gt; )
+declare i16 @llvm.atomic.load.xor.i16.( i16* &lt;ptr&gt;, i16 &lt;delta&gt; )
+declare i32 @llvm.atomic.load.xor.i32.( i32* &lt;ptr&gt;, i32 &lt;delta&gt; )
+declare i64 @llvm.atomic.load.xor.i64.( i64* &lt;ptr&gt;, i64 &lt;delta&gt; )
+
+</pre>
+<h5>Overview:</h5>
+<p>
+  These intrinsics bitwise the operation (and, nand, or, xor) <tt>delta</tt> to
+  the value stored in memory at <tt>ptr</tt>. It yields the original value
+  at <tt>ptr</tt>.
+</p>
+<h5>Arguments:</h5>
+<p>
+
+  These intrinsics take two arguments, the first a pointer to an integer value 
+  and the second an integer value. The result is also an integer value. These 
+  integer types can have any bit width, but they must all have the same bit 
+  width. The targets may only lower integer representations they support.
+</p>
+<h5>Semantics:</h5>
+<p>
+  These intrinsics does a series of operations atomically. They first load the 
+  value stored at <tt>ptr</tt>. They then do the bitwise operation
+  <tt>delta</tt>, store the result to <tt>ptr</tt>. They yield the original
+  value stored at <tt>ptr</tt>.
+</p>
+
+<h5>Examples:</h5>
+<pre>
+%ptr      = malloc i32
+        store i32 0x0F0F, %ptr
+%result0  = call i32 @llvm.atomic.load.nand.i32( i32* %ptr, i32 0xFF )
+                                <i>; yields {i32}:result0 = 0x0F0F</i>
+%result1  = call i32 @llvm.atomic.load.and.i32( i32* %ptr, i32 0xFF )
+                                <i>; yields {i32}:result1 = 0xFFFFFFF0</i>
+%result2  = call i32 @llvm.atomic.load.or.i32( i32* %ptr, i32 0F )
+                                <i>; yields {i32}:result2 = 0xF0</i>
+%result3  = call i32 @llvm.atomic.load.xor.i32( i32* %ptr, i32 0F )
+                                <i>; yields {i32}:result3 = FF</i>
+%memval1  = load i32* %ptr      <i>; yields {i32}:memval1 = F0</i>
+</pre>
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_atomic_load_max">'<tt>llvm.atomic.load.max.*</tt>' Intrinsic</a><br>
+  <a name="int_atomic_load_min">'<tt>llvm.atomic.load.min.*</tt>' Intrinsic</a><br>
+  <a name="int_atomic_load_umax">'<tt>llvm.atomic.load.umax.*</tt>' Intrinsic</a><br>
+  <a name="int_atomic_load_umin">'<tt>llvm.atomic.load.umin.*</tt>' Intrinsic</a><br>
+
+</div>
+<div class="doc_text">
+<h5>Syntax:</h5>
+<p>
+  These are overloaded intrinsics. You can use <tt>llvm.atomic.load_max</tt>,
+  <tt>llvm.atomic.load_min</tt>, <tt>llvm.atomic.load_umax</tt>, and
+  <tt>llvm.atomic.load_umin</tt> on any integer bit width. Not all targets
+  support all bit widths however.</p>
+<pre>
+declare i8 @llvm.atomic.load.max.i8.( i8* &lt;ptr&gt;, i8 &lt;delta&gt; )
+declare i16 @llvm.atomic.load.max.i16.( i16* &lt;ptr&gt;, i16 &lt;delta&gt; )
+declare i32 @llvm.atomic.load.max.i32.( i32* &lt;ptr&gt;, i32 &lt;delta&gt; )
+declare i64 @llvm.atomic.load.max.i64.( i64* &lt;ptr&gt;, i64 &lt;delta&gt; )
+
+</pre>
+
+<pre>
+declare i8 @llvm.atomic.load.min.i8.( i8* &lt;ptr&gt;, i8 &lt;delta&gt; )
+declare i16 @llvm.atomic.load.min.i16.( i16* &lt;ptr&gt;, i16 &lt;delta&gt; )
+declare i32 @llvm.atomic.load.min.i32.( i32* &lt;ptr&gt;, i32 &lt;delta&gt; )
+declare i64 @llvm.atomic.load.min.i64.( i64* &lt;ptr&gt;, i64 &lt;delta&gt; )
+
+</pre>
+
+<pre>
+declare i8 @llvm.atomic.load.umax.i8.( i8* &lt;ptr&gt;, i8 &lt;delta&gt; )
+declare i16 @llvm.atomic.load.umax.i16.( i16* &lt;ptr&gt;, i16 &lt;delta&gt; )
+declare i32 @llvm.atomic.load.umax.i32.( i32* &lt;ptr&gt;, i32 &lt;delta&gt; )
+declare i64 @llvm.atomic.load.umax.i64.( i64* &lt;ptr&gt;, i64 &lt;delta&gt; )
+
+</pre>
+
+<pre>
+declare i8 @llvm.atomic.load.umin.i8.( i8* &lt;ptr&gt;, i8 &lt;delta&gt; )
+declare i16 @llvm.atomic.load.umin.i16.( i16* &lt;ptr&gt;, i16 &lt;delta&gt; )
+declare i32 @llvm.atomic.load.umin.i32.( i32* &lt;ptr&gt;, i32 &lt;delta&gt; )
+declare i64 @llvm.atomic.load.umin.i64.( i64* &lt;ptr&gt;, i64 &lt;delta&gt; )
+
+</pre>
+<h5>Overview:</h5>
+<p>
+  These intrinsics takes the signed or unsigned minimum or maximum of 
+  <tt>delta</tt> and the value stored in memory at <tt>ptr</tt>. It yields the
+  original value at <tt>ptr</tt>.
+</p>
+<h5>Arguments:</h5>
+<p>
+
+  These intrinsics take two arguments, the first a pointer to an integer value 
+  and the second an integer value. The result is also an integer value. These 
+  integer types can have any bit width, but they must all have the same bit 
+  width. The targets may only lower integer representations they support.
+</p>
+<h5>Semantics:</h5>
+<p>
+  These intrinsics does a series of operations atomically. They first load the 
+  value stored at <tt>ptr</tt>. They then do the signed or unsigned min or max
+  <tt>delta</tt> and the value, store the result to <tt>ptr</tt>. They yield
+  the original value stored at <tt>ptr</tt>.
+</p>
+
+<h5>Examples:</h5>
+<pre>
+%ptr      = malloc i32
+        store i32 7, %ptr
+%result0  = call i32 @llvm.atomic.load.min.i32( i32* %ptr, i32 -2 )
+                                <i>; yields {i32}:result0 = 7</i>
+%result1  = call i32 @llvm.atomic.load.max.i32( i32* %ptr, i32 8 )
+                                <i>; yields {i32}:result1 = -2</i>
+%result2  = call i32 @llvm.atomic.load.umin.i32( i32* %ptr, i32 10 )
+                                <i>; yields {i32}:result2 = 8</i>
+%result3  = call i32 @llvm.atomic.load.umax.i32( i32* %ptr, i32 30 )
+                                <i>; yields {i32}:result3 = 8</i>
+%memval1  = load i32* %ptr      <i>; yields {i32}:memval1 = 30</i>
+</pre>
+</div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">

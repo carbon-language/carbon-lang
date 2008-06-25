@@ -2614,19 +2614,19 @@ def LCMPXCHG8 : I<0xB0, MRMDestMem, (outs), (ins i8mem:$ptr, GR8:$swap),
 let Constraints = "$val = $dst", Defs = [EFLAGS] in {
 def LXADD32 : I<0xC1, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),
                "lock xadd{l}\t{$val, $ptr|$ptr, $val}", 
-               [(set GR32:$dst, (atomic_las_32 addr:$ptr, GR32:$val))]>,
+               [(set GR32:$dst, (atomic_load_add_32 addr:$ptr, GR32:$val))]>,
                 TB, LOCK;
 def LXADD16 : I<0xC1, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$ptr, GR16:$val),
                "lock xadd{w}\t{$val, $ptr|$ptr, $val}", 
-               [(set GR16:$dst, (atomic_las_16 addr:$ptr, GR16:$val))]>,
+               [(set GR16:$dst, (atomic_load_add_16 addr:$ptr, GR16:$val))]>,
                 TB, OpSize, LOCK;
 def LXADD8  : I<0xC0, MRMSrcMem, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
                "lock xadd{b}\t{$val, $ptr|$ptr, $val}", 
-               [(set GR8:$dst, (atomic_las_8 addr:$ptr, GR8:$val))]>,
+               [(set GR8:$dst, (atomic_load_add_8 addr:$ptr, GR8:$val))]>,
                 TB, LOCK;
 }
 
-// Atomic exchange and and, or, xor
+// Atomic exchange, and, or, xor
 let Constraints = "$val = $dst", Defs = [EFLAGS],
                   usesCustomDAGSchedInserter = 1 in {
 def ATOMAND32 : I<0, Pseudo, (outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
@@ -2639,7 +2639,7 @@ def ATOMXOR32 : I<0, Pseudo,(outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
                "#ATOMXOR32 PSUEDO!", 
                [(set GR32:$dst, (atomic_load_xor addr:$ptr, GR32:$val))]>;
 def ATOMNAND32 : I<0, Pseudo,(outs GR32:$dst),(ins i32mem:$ptr, GR32:$val),
-               "#ATOMXOR32 PSUEDO!", 
+               "#ATOMNAND32 PSUEDO!", 
                [(set GR32:$dst, (atomic_load_nand addr:$ptr, GR32:$val))]>;
 
 def ATOMMIN32: I<0, Pseudo, (outs GR32:$dst), (ins i32mem:$ptr, GR32:$val),

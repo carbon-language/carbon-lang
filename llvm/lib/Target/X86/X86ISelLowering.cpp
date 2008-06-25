@@ -292,11 +292,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::MEMBARRIER    , MVT::Other, Expand);
 
   // Expand certain atomics
-  setOperationAction(ISD::ATOMIC_LCS     , MVT::i8, Custom);
-  setOperationAction(ISD::ATOMIC_LCS     , MVT::i16, Custom);
-  setOperationAction(ISD::ATOMIC_LCS     , MVT::i32, Custom);
-  setOperationAction(ISD::ATOMIC_LCS     , MVT::i64, Custom);
-  setOperationAction(ISD::ATOMIC_LSS     , MVT::i32, Expand);
+  setOperationAction(ISD::ATOMIC_CMP_SWAP , MVT::i8, Custom);
+  setOperationAction(ISD::ATOMIC_CMP_SWAP , MVT::i16, Custom);
+  setOperationAction(ISD::ATOMIC_CMP_SWAP , MVT::i32, Custom);
+  setOperationAction(ISD::ATOMIC_CMP_SWAP , MVT::i64, Custom);
+  setOperationAction(ISD::ATOMIC_LOAD_SUB , MVT::i32, Expand);
 
   // Use the default ISD::LOCATION, ISD::DECLARE expansion.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
@@ -5655,7 +5655,7 @@ SDOperand X86TargetLowering::LowerCTTZ(SDOperand Op, SelectionDAG &DAG) {
   return Op;
 }
 
-SDOperand X86TargetLowering::LowerLCS(SDOperand Op, SelectionDAG &DAG) {
+SDOperand X86TargetLowering::LowerCMP_SWAP(SDOperand Op, SelectionDAG &DAG) {
   MVT T = cast<AtomicSDNode>(Op.Val)->getVT();
   unsigned Reg = 0;
   unsigned size = 0;
@@ -5669,7 +5669,7 @@ SDOperand X86TargetLowering::LowerLCS(SDOperand Op, SelectionDAG &DAG) {
     if (Subtarget->is64Bit()) {
       Reg = X86::RAX; size = 8;
     } else //Should go away when LowerType stuff lands
-      return SDOperand(ExpandATOMIC_LCS(Op.Val, DAG), 0);
+      return SDOperand(ExpandATOMIC_CMP_SWAP(Op.Val, DAG), 0);
     break;
   };
   SDOperand cpIn = DAG.getCopyToReg(Op.getOperand(0), Reg,
@@ -5686,9 +5686,9 @@ SDOperand X86TargetLowering::LowerLCS(SDOperand Op, SelectionDAG &DAG) {
   return cpOut;
 }
 
-SDNode* X86TargetLowering::ExpandATOMIC_LCS(SDNode* Op, SelectionDAG &DAG) {
+SDNode* X86TargetLowering::ExpandATOMIC_CMP_SWAP(SDNode* Op, SelectionDAG &DAG) {
   MVT T = cast<AtomicSDNode>(Op)->getVT();
-  assert (T == MVT::i64 && "Only know how to expand i64 CAS");
+  assert (T == MVT::i64 && "Only know how to expand i64 Cmp and Swap");
   SDOperand cpInL, cpInH;
   cpInL = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op->getOperand(3),
                       DAG.getConstant(0, MVT::i32));
@@ -5722,13 +5722,15 @@ SDNode* X86TargetLowering::ExpandATOMIC_LCS(SDNode* Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::MERGE_VALUES, Tys, ResultVal, cpOutH.getValue(1)).Val;
 }
 
-SDNode* X86TargetLowering::ExpandATOMIC_LSS(SDNode* Op, SelectionDAG &DAG) {
+SDNode* X86TargetLowering::ExpandATOMIC_LOAD_SUB(SDNode* Op, SelectionDAG &DAG) {
   MVT T = cast<AtomicSDNode>(Op)->getVT();
-  assert (T == MVT::i32 && "Only know how to expand i32 LSS");
+  assert (T == MVT::i32 && "Only know how to expand i32 Atomic Load Sub");
   SDOperand negOp = DAG.getNode(ISD::SUB, T,
                                 DAG.getConstant(0, T), Op->getOperand(2));
-  return DAG.getAtomic(ISD::ATOMIC_LAS, Op->getOperand(0),
-                       Op->getOperand(1), negOp, T).Val;
+  return DAG.getAtomic(ISD::ATOMIC_LOAD_ADD, Op->getOperand(0),
+                       Op->getOperand(1), negOp, T,
+                       cast<AtomicSDNode>(Op)->getSrcValue(),
+                       cast<AtomicSDNode>(Op)->getAlignment()).Val;
 }
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
@@ -5736,7 +5738,7 @@ SDNode* X86TargetLowering::ExpandATOMIC_LSS(SDNode* Op, SelectionDAG &DAG) {
 SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Should not custom lower this!");
-  case ISD::ATOMIC_LCS:         return LowerLCS(Op,DAG);
+  case ISD::ATOMIC_CMP_SWAP:    return LowerCMP_SWAP(Op,DAG);
   case ISD::BUILD_VECTOR:       return LowerBUILD_VECTOR(Op, DAG);
   case ISD::VECTOR_SHUFFLE:     return LowerVECTOR_SHUFFLE(Op, DAG);
   case ISD::EXTRACT_VECTOR_ELT: return LowerEXTRACT_VECTOR_ELT(Op, DAG);
@@ -5788,8 +5790,8 @@ SDNode *X86TargetLowering::ExpandOperationResult(SDNode *N, SelectionDAG &DAG) {
   default: assert(0 && "Should not custom lower this!");
   case ISD::FP_TO_SINT:         return ExpandFP_TO_SINT(N, DAG);
   case ISD::READCYCLECOUNTER:   return ExpandREADCYCLECOUNTER(N, DAG);
-  case ISD::ATOMIC_LCS:         return ExpandATOMIC_LCS(N, DAG);
-  case ISD::ATOMIC_LSS:         return ExpandATOMIC_LSS(N,DAG);
+  case ISD::ATOMIC_CMP_SWAP:    return ExpandATOMIC_CMP_SWAP(N, DAG);
+  case ISD::ATOMIC_LOAD_SUB:    return ExpandATOMIC_LOAD_SUB(N,DAG);
   }
 }
 

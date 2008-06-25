@@ -39,6 +39,30 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
   Module *M = F->getParent();
   switch (Name[5]) {
   default: break;
+  case 'a':
+    // This upgrades the llvm.atomic.lcs, llvm.atomic.las, and llvm.atomic.lss
+    // to their new function name
+    if (Name.compare(5,8,"atomic.l",8) == 0) {
+      if (Name.compare(12,3,"lcs",3) == 0) {
+        std::string::size_type delim = Name.find('.',12);
+        F->setName("llvm.atomic.cmp.swap"+Name.substr(delim));
+        NewFn = F;
+        return true;
+      }
+      else if (Name.compare(12,3,"las",3) == 0) {
+        std::string::size_type delim = Name.find('.',12);
+        F->setName("llvm.atomic.load.add"+Name.substr(delim));
+        NewFn = F;
+        return true;
+      }
+      else if (Name.compare(12,3,"lss",3) == 0) {
+        std::string::size_type delim = Name.find('.',12);
+        F->setName("llvm.atomic.load.sub"+Name.substr(delim));
+        NewFn = F;
+        return true;
+      }
+    }
+    break;
   case 'b':
     //  This upgrades the name of the llvm.bswap intrinsic function to only use 
     //  a single type name for overloading. We only care about the old format

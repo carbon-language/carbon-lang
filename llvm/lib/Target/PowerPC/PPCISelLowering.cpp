@@ -204,12 +204,12 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Custom);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64  , Custom);
 
-  setOperationAction(ISD::ATOMIC_LAS        , MVT::i32  , Custom);
-  setOperationAction(ISD::ATOMIC_LCS        , MVT::i32  , Custom);
+  setOperationAction(ISD::ATOMIC_LOAD_ADD   , MVT::i32  , Custom);
+  setOperationAction(ISD::ATOMIC_CMP_SWAP   , MVT::i32  , Custom);
   setOperationAction(ISD::ATOMIC_SWAP       , MVT::i32  , Custom);
   if (TM.getSubtarget<PPCSubtarget>().has64BitSupport()) {
-    setOperationAction(ISD::ATOMIC_LAS      , MVT::i64  , Custom);
-    setOperationAction(ISD::ATOMIC_LCS      , MVT::i64  , Custom);
+    setOperationAction(ISD::ATOMIC_LOAD_ADD , MVT::i64  , Custom);
+    setOperationAction(ISD::ATOMIC_CMP_SWAP , MVT::i64  , Custom);
     setOperationAction(ISD::ATOMIC_SWAP     , MVT::i64  , Custom);
   }
 
@@ -2721,7 +2721,7 @@ SDOperand PPCTargetLowering::LowerDYNAMIC_STACKALLOC(SDOperand Op,
   return DAG.getNode(PPCISD::DYNALLOC, VTs, Ops, 3);
 }
 
-SDOperand PPCTargetLowering::LowerAtomicLAS(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerAtomicLOAD_ADD(SDOperand Op, SelectionDAG &DAG) {
   MVT VT = Op.Val->getValueType(0);
   SDOperand Chain   = Op.getOperand(0);
   SDOperand Ptr     = Op.getOperand(1);
@@ -2757,7 +2757,7 @@ SDOperand PPCTargetLowering::LowerAtomicLAS(SDOperand Op, SelectionDAG &DAG) {
                      OutOps, 2);
 }
 
-SDOperand PPCTargetLowering::LowerAtomicLCS(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerAtomicCMP_SWAP(SDOperand Op, SelectionDAG &DAG) {
   MVT VT = Op.Val->getValueType(0);
   SDOperand Chain   = Op.getOperand(0);
   SDOperand Ptr     = Op.getOperand(1);
@@ -3942,8 +3942,8 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::DYNAMIC_STACKALLOC:
     return LowerDYNAMIC_STACKALLOC(Op, DAG, PPCSubTarget);
 
-  case ISD::ATOMIC_LAS:         return LowerAtomicLAS(Op, DAG);
-  case ISD::ATOMIC_LCS:         return LowerAtomicLCS(Op, DAG);
+  case ISD::ATOMIC_LOAD_ADD:    return LowerAtomicLOAD_ADD(Op, DAG);
+  case ISD::ATOMIC_CMP_SWAP:    return LowerAtomicCMP_SWAP(Op, DAG);
   case ISD::ATOMIC_SWAP:        return LowerAtomicSWAP(Op, DAG);
     
   case ISD::SELECT_CC:          return LowerSELECT_CC(Op, DAG);

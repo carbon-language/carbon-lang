@@ -30,6 +30,8 @@ struct CodeGenRegister;
 class CodeGenTarget;
 
 // SelectionDAG node properties.
+//  SDNPMemOperand: indicates that a node touches memory and therefore must
+//                  have an associated memory operand that describes the access.
 enum SDNP {
   SDNPCommutative, 
   SDNPAssociative, 
@@ -39,7 +41,8 @@ enum SDNP {
   SDNPOptInFlag,
   SDNPMayLoad,
   SDNPMayStore,
-  SDNPSideEffect
+  SDNPSideEffect,
+  SDNPMemOperand
 };
 
 // ComplexPattern attributes.
