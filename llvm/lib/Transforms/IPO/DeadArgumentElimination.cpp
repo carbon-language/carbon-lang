@@ -72,7 +72,7 @@ namespace {
 
     /// Liveness enum - During our initial pass over the program, we determine
     /// that things are either alive or maybe alive. We don't mark anything
-    /// explicitely dead (even if we know they are), since anything not alive
+    /// explicitly dead (even if we know they are), since anything not alive
     /// with no registered uses (in Uses) will never be marked alive and will
     /// thus become dead in the end.
     enum Liveness { Live, MaybeLive };
@@ -616,7 +616,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     if (RetTypes.size() > 1 || STy && STy->getNumElements() == RetTypes.size())
       // More than one return type? Return a struct with them. Also, if we used
       // to return a struct and didn't change the number of return values,
-      // return a struct again. This prevents chaning {something} into something
+      // return a struct again. This prevents changing {something} into something
       // and {} into void.
       // Make the new struct packed if we used to return a packed struct
       // already.
@@ -626,7 +626,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       // return a struct with that simple value before.
       NRetTy = RetTypes.front();
     else if (RetTypes.size() == 0)
-      // No return types? Make it void, but only if we didn't use to return {}
+      // No return types? Make it void, but only if we didn't use to return {}.
       NRetTy = Type::VoidTy;
   } else {
     NRetTy = Type::VoidTy;
@@ -685,8 +685,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     return false;
 
   // The function type is only allowed to be different if we actually left out
-  // an argument or return value
-  assert(Changed && "Function type changed while no arguments or retrurn values"
+  // an argument or return value.
+  assert(Changed && "Function type changed while no arguments or return values"
                     "were removed!");
 
   // Create the new function body and insert it into the module...
@@ -694,7 +694,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   NF->copyAttributesFrom(F);
   NF->setParamAttrs(NewPAL);
   // Insert the new function before the old function, so we won't be processing
-  // it again
+  // it again.
   F->getParent()->getFunctionList().insert(F, NF);
   NF->takeName(F);
 
