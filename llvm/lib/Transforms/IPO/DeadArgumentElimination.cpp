@@ -579,7 +579,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   // Find out the new return value
 
   const Type *RetTy = FTy->getReturnType();
-  const Type *NRetTy;
+  const Type *NRetTy = NULL;
   unsigned RetCount = NumRetVals(F);
   // Explicitely track if anything changed, for debugging
   bool Changed = false;
@@ -631,6 +631,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   } else {
     NRetTy = Type::VoidTy;
   }
+
+  assert(NRetTy && "No new return type found?");
 
   // Remove any incompatible attributes
   RAttrs &= ~ParamAttr::typeIncompatible(NRetTy);
