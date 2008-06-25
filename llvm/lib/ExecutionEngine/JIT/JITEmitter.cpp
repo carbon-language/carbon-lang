@@ -551,6 +551,8 @@ void *JITEmitter::getPointerToGlobal(GlobalValue *V, void *Reference,
     /// global immediately instead of queuing it for codegen later!
     return TheJIT->getOrEmitGlobalVariable(GV);
   }
+  if (GlobalAlias *GA = dyn_cast<GlobalAlias>(V))
+    return TheJIT->getPointerToGlobal(GA->resolveAliasedGlobal());
 
   // If we have already compiled the function, return a pointer to its body.
   Function *F = cast<Function>(V);
