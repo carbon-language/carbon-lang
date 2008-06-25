@@ -965,8 +965,11 @@ HoistTerminator:
 static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
   // Only speculatively execution a single instruction (not counting the
   // terminator) for now.
-  if (BB1->size() != 2)
-    return false;
+  BasicBlock::iterator BBI = BB1->begin();
+  ++BBI; // must have at least a terminator
+  if (BBI == BB1->end()) return false; // only one inst
+  ++BBI;
+  if (BBI != BB1->end()) return false; // more than 2 insts.
 
   // Be conservative for now. FP select instruction can often be expensive.
   Value *BrCond = BI->getCondition();
@@ -1006,8 +1009,9 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
-    if (I->getOperand(0)->getType()->isFPOrFPVector())
-      return false;  // FP arithmetic might trap.
+    if (!I->getOperand(0)->getType()->isInteger())
+      // FP arithmetic might trap. Not worth doing for vector ops.
+      return false;
     break;   // These are all cheap and non-trapping instructions.
   }
 
