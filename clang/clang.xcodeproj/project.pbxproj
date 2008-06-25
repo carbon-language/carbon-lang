@@ -19,6 +19,7 @@
 		35260CA50C7F75C000D66CE9 /* ExprCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35260CA40C7F75C000D66CE9 /* ExprCXX.cpp */; };
 		352712510DAFE54700C76352 /* IdentifierResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352712500DAFE54700C76352 /* IdentifierResolver.cpp */; };
 		352981090CC58344008B5E84 /* SerializationTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352981080CC58344008B5E84 /* SerializationTest.cpp */; };
+		3534A01D0E129849002709B2 /* ParseCXXInlineMethods.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3534A01C0E129849002709B2 /* ParseCXXInlineMethods.cpp */; };
 		356EF9B50C8F7DDF006650F5 /* LiveVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */; };
 		35707EFE0CD0F5CC000B2204 /* SourceLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */; };
 		3574BC2B0D9B531D00DF491A /* HTMLDiagnostics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3574BC2A0D9B531D00DF491A /* HTMLDiagnostics.cpp */; };
@@ -275,6 +276,7 @@
 		352C19DD0CA321C80045DB98 /* CFGRecStmtVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGRecStmtVisitor.h; path = clang/Analysis/Visitors/CFGRecStmtVisitor.h; sourceTree = "<group>"; };
 		352C19DE0CA321C80045DB98 /* CFGStmtVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGStmtVisitor.h; path = clang/Analysis/Visitors/CFGStmtVisitor.h; sourceTree = "<group>"; };
 		352C19DF0CA321C80045DB98 /* CFGVarDeclVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGVarDeclVisitor.h; path = clang/Analysis/Visitors/CFGVarDeclVisitor.h; sourceTree = "<group>"; };
+		3534A01C0E129849002709B2 /* ParseCXXInlineMethods.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ParseCXXInlineMethods.cpp; path = lib/Parse/ParseCXXInlineMethods.cpp; sourceTree = "<group>"; };
 		3547129D0C88881300B3E1D5 /* PrettyPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PrettyPrinter.h; path = clang/AST/PrettyPrinter.h; sourceTree = "<group>"; };
 		355CF6820C90A8B600A08AA3 /* LocalCheckers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LocalCheckers.h; path = clang/Analysis/LocalCheckers.h; sourceTree = "<group>"; };
 		356B89760D9BFDC100CBEBE9 /* BasicObjCFoundationChecks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BasicObjCFoundationChecks.h; path = lib/Analysis/BasicObjCFoundationChecks.h; sourceTree = "<group>"; };
@@ -645,6 +647,7 @@
 				DE2255FB0C8004E600D370A5 /* ParseDeclCXX.cpp */,
 				DE3460120AFDCCDA00DBC861 /* ParseExpr.cpp */,
 				DE06756B0C051CFE00EBBFD8 /* ParseExprCXX.cpp */,
+				3534A01C0E129849002709B2 /* ParseCXXInlineMethods.cpp */,
 				DE3460040AFDCC6500DBC861 /* ParseInit.cpp */,
 				DE345FFF0AFDCC1900DBC861 /* ParseObjc.cpp */,
 				DE34600A0AFDCCBF00DBC861 /* ParseStmt.cpp */,
@@ -1107,6 +1110,7 @@
 				35FE6BCF0DF6EE1F00739712 /* DeclBase.cpp in Sources */,
 				35EE48B10E0C4CCA00715C54 /* DeclCXX.cpp in Sources */,
 				35EE48B20E0C4CCA00715C54 /* ParentMap.cpp in Sources */,
+				3534A01D0E129849002709B2 /* ParseCXXInlineMethods.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
