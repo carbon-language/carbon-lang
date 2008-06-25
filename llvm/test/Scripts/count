@@ -9,7 +9,7 @@
 
 set -e
 set -u
-input_lines=$(wc -l)
+input_lines=`wc -l`
 if [ "$input_lines" -ne "$1" ]; then
   echo "count: expected $1 lines and got ${input_lines}."
   exit 1
