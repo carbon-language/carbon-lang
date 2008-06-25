@@ -287,9 +287,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     return RValue::get(Builder.CreateCall(F, EmitScalarExpr(E->getArg(0))));
   }
   case Builtin::BI__sync_fetch_and_add:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_las, E);
+    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_add, E);
   case Builtin::BI__sync_fetch_and_sub:
-    return EmitBinaryAtomic(*this, Intrinsic::atomic_lss, E);
+    return EmitBinaryAtomic(*this, Intrinsic::atomic_load_sub, E);
   case Builtin::BI__sync_fetch_and_min:
     return EmitBinaryAtomic(*this, Intrinsic::atomic_load_min, E);
   case Builtin::BI__sync_fetch_and_max:
@@ -310,7 +310,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     Args[1] = EmitScalarExpr(E->getArg(1));
     Args[2] = EmitScalarExpr(E->getArg(2));
     const llvm::Type *ResType = ConvertType(E->getType());
-    Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_lcs, &ResType, 1);
+    Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_cmp_swap, &ResType, 1);
     return RValue::get(Builder.CreateCall(AtomF, &Args[0], &Args[1]+2));
   }
   case Builtin::BI__sync_lock_test_and_set:
@@ -749,7 +749,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return EmitShuffleVector(Ops[0], Ops[1], 
                              i & 0x3, (i & 0xc) >> 2, 
                              ((i & 0x30) >> 4) + 4, 
-                             ((i & 0x60) >> 6) + 4, "shufps");
+                             ((i & 0xc0) >> 6) + 4, "shufps");
   }
   case X86::BI__builtin_ia32_punpcklbw128:
     return EmitShuffleVector(Ops[0], Ops[1], 0, 16, 1, 17, 2, 18, 3, 19,
