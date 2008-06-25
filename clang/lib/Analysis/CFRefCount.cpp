@@ -33,7 +33,7 @@ using namespace clang;
 using llvm::CStrInCStrNoCase;
 
 //===----------------------------------------------------------------------===//
-// Utility functions.
+// Selector creation functions.
 //===----------------------------------------------------------------------===//
 
 static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
@@ -46,13 +46,16 @@ static inline Selector GetUnarySelector(const char* name, ASTContext& Ctx) {
   return Ctx.Selectors.getSelector(1, &II);
 }
 
+//===----------------------------------------------------------------------===//
+// Type querying functions.
+//===----------------------------------------------------------------------===//
+
 static bool isCFRefType(QualType T) {
   
   if (!T->isPointerType())
     return false;
   
-  // Check the typedef for the name "CF" and the substring "Ref".
-  
+  // Check the typedef for the name "CF" and the substring "Ref".  
   TypedefType* TD = dyn_cast<TypedefType>(T.getTypePtr());
   
   if (!TD)
@@ -90,64 +93,80 @@ static bool isNSType(QualType T) {
 }
 
 //===----------------------------------------------------------------------===//
-// Symbolic Evaluation of Reference Counting Logic
+// Primitives used for constructing summaries for function/method calls.
 //===----------------------------------------------------------------------===//
 
-namespace {  
-  enum ArgEffect { IncRef, DecRef, DoNothing, StopTracking, MayEscape };
-  typedef std::vector<std::pair<unsigned,ArgEffect> > ArgEffects;
+namespace {
+/// ArgEffect is used to summarize a function/method call's effect on a
+/// particular argument.
+enum ArgEffect { IncRef, DecRef, DoNothing, StopTracking, MayEscape,
+                 SelfOwn };
+
+/// ArgEffects summarizes the effects of a function/method call on all of
+/// its arguments.
+typedef std::vector<std::pair<unsigned,ArgEffect> > ArgEffects;
 }
 
 namespace llvm {
-  template <> struct FoldingSetTrait<ArgEffects> {
-    static void Profile(const ArgEffects& X, FoldingSetNodeID& ID) {
-      for (ArgEffects::const_iterator I = X.begin(), E = X.end(); I!= E; ++I) {
-        ID.AddInteger(I->first);
-        ID.AddInteger((unsigned) I->second);
-      }
-    }    
-  };
+template <> struct FoldingSetTrait<ArgEffects> {
+  static void Profile(const ArgEffects& X, FoldingSetNodeID& ID) {
+    for (ArgEffects::const_iterator I = X.begin(), E = X.end(); I!= E; ++I) {
+      ID.AddInteger(I->first);
+      ID.AddInteger((unsigned) I->second);
+    }
+  }    
+};
 } // end llvm namespace
 
 namespace {
-  
-class RetEffect {
+
+///  RetEffect is used to summarize a function/method call's behavior with
+///  respect to its return value.  
+class VISIBILITY_HIDDEN RetEffect {
 public:
   enum Kind { NoRet, Alias, OwnedSymbol, OwnedAllocatedSymbol,
               NotOwnedSymbol, ReceiverAlias };
-
+  
 private:
   unsigned Data;
-  RetEffect(Kind k, unsigned D) { Data = (D << 3) | (unsigned) k; }
+  RetEffect(Kind k, unsigned D = 0) { Data = (D << 3) | (unsigned) k; }
   
 public:
-
+  
   Kind getKind() const { return (Kind) (Data & 0x7); }
-
-  unsigned getValue() const { 
+  
+  unsigned getIndex() const { 
     assert(getKind() == Alias);
     return Data >> 3;
   }
-    
-  static RetEffect MakeAlias(unsigned Idx) { return RetEffect(Alias, Idx); }
   
-  static RetEffect MakeReceiverAlias() { return RetEffect(ReceiverAlias, 0); }
-  
+  static RetEffect MakeAlias(unsigned Idx) {
+    return RetEffect(Alias, Idx);
+  }
+  static RetEffect MakeReceiverAlias() {
+    return RetEffect(ReceiverAlias);
+  }  
   static RetEffect MakeOwned(bool isAllocated = false) {
-    return RetEffect(isAllocated ? OwnedAllocatedSymbol : OwnedSymbol, 0);
+    return RetEffect(isAllocated ? OwnedAllocatedSymbol : OwnedSymbol);
+  }  
+  static RetEffect MakeNotOwned() {
+    return RetEffect(NotOwnedSymbol);
+  }  
+  static RetEffect MakeNoRet() {
+    return RetEffect(NoRet);
   }
   
-  static RetEffect MakeNotOwned() { return RetEffect(NotOwnedSymbol, 0); }
+  operator Kind() const {
+    return getKind();
+  }  
   
-  static RetEffect MakeNoRet() { return RetEffect(NoRet, 0); }
-  
-  operator Kind() const { return getKind(); }
-  
-  void Profile(llvm::FoldingSetNodeID& ID) const { ID.AddInteger(Data); }
+  void Profile(llvm::FoldingSetNodeID& ID) const {
+    ID.AddInteger(Data);
+  }
 };
-
   
-class RetainSummary : public llvm::FoldingSetNode {
+  
+class VISIBILITY_HIDDEN RetainSummary : public llvm::FoldingSetNode {
   /// Args - an ordered vector of (index, ArgEffect) pairs, where index
   ///  specifies the argument (starting from 0).  This can be sparsely
   ///  populated; arguments with no entry in Args use 'DefaultArgEffect'.
@@ -157,14 +176,23 @@ class RetainSummary : public llvm::FoldingSetNode {
   ///  do not have an entry in Args.
   ArgEffect   DefaultArgEffect;
   
+  /// Receiver - If this summary applies to an Objective-C message expression,
+  ///  this is the effect applied to the state of the receiver.
   ArgEffect   Receiver;
+  
+  /// Ret - The effect on the return value.  Used to indicate if the
+  ///  function/method call returns a new tracked symbol, returns an
+  ///  alias of one of the arguments in the call, and so on.
   RetEffect   Ret;
+  
 public:
   
   RetainSummary(ArgEffects* A, RetEffect R, ArgEffect defaultEff,
                 ArgEffect ReceiverEff)
     : Args(A), DefaultArgEffect(defaultEff), Receiver(ReceiverEff), Ret(R) {}  
   
+  /// getArg - Return the argument effect on the argument specified by
+  ///  idx (starting from 0).
   ArgEffect getArg(unsigned idx) const {
 
     if (!Args)
@@ -173,8 +201,7 @@ public:
     // If Args is present, it is likely to contain only 1 element.
     // Just do a linear search.  Do it from the back because functions with
     // large numbers of arguments will be tail heavy with respect to which
-    // argument they actually modify with respect to the reference count.
-    
+    // argument they actually modify with respect to the reference count.    
     for (ArgEffects::reverse_iterator I=Args->rbegin(), E=Args->rend();
            I!=E; ++I) {
       
@@ -188,10 +215,13 @@ public:
     return DefaultArgEffect;
   }
   
+  /// getRetEffect - Returns the effect on the return value of the call.
   RetEffect getRetEffect() const {
     return Ret;
   }
   
+  /// getReceiverEffect - Returns the effect on the receiver of the call.
+  ///  This is only meaningful if the summary applies to an ObjCMessageExpr*.
   ArgEffect getReceiverEffect() const {
     return Receiver;
   }
@@ -216,60 +246,154 @@ public:
 };
 } // end anonymous namespace
 
-namespace {
-  class VISIBILITY_HIDDEN ObjCSummaryKey {
-    IdentifierInfo* II;
-    Selector S;
-  public:    
-    ObjCSummaryKey(IdentifierInfo* ii, Selector s)
-      : II(ii), S(s) {}
+//===----------------------------------------------------------------------===//
+// Data structures for constructing summaries.
+//===----------------------------------------------------------------------===//
 
-    ObjCSummaryKey(ObjCInterfaceDecl* d, Selector s)
-      : II(d ? d->getIdentifier() : 0), S(s) {}
-    
-    ObjCSummaryKey(Selector s)
-      : II(0), S(s) {}
-    
-    IdentifierInfo* getIdentifier() const { return II; }
-    Selector getSelector() const { return S; }
-  };
+namespace {
+class VISIBILITY_HIDDEN ObjCSummaryKey {
+  IdentifierInfo* II;
+  Selector S;
+public:    
+  ObjCSummaryKey(IdentifierInfo* ii, Selector s)
+    : II(ii), S(s) {}
+
+  ObjCSummaryKey(ObjCInterfaceDecl* d, Selector s)
+    : II(d ? d->getIdentifier() : 0), S(s) {}
+  
+  ObjCSummaryKey(Selector s)
+    : II(0), S(s) {}
+  
+  IdentifierInfo* getIdentifier() const { return II; }
+  Selector getSelector() const { return S; }
+};
 }
 
 namespace llvm {
-  template <> struct DenseMapInfo<ObjCSummaryKey> {
-    static inline ObjCSummaryKey getEmptyKey() {
-      return ObjCSummaryKey(DenseMapInfo<IdentifierInfo*>::getEmptyKey(),
-                            DenseMapInfo<Selector>::getEmptyKey());
-    }
-      
-    static inline ObjCSummaryKey getTombstoneKey() {
-      return ObjCSummaryKey(DenseMapInfo<IdentifierInfo*>::getTombstoneKey(),
-                            DenseMapInfo<Selector>::getTombstoneKey());      
-    }
+template <> struct DenseMapInfo<ObjCSummaryKey> {
+  static inline ObjCSummaryKey getEmptyKey() {
+    return ObjCSummaryKey(DenseMapInfo<IdentifierInfo*>::getEmptyKey(),
+                          DenseMapInfo<Selector>::getEmptyKey());
+  }
     
-    static unsigned getHashValue(const ObjCSummaryKey &V) {
-      return (DenseMapInfo<IdentifierInfo*>::getHashValue(V.getIdentifier())
-              & 0x88888888) 
-          | (DenseMapInfo<Selector>::getHashValue(V.getSelector())
-              & 0x55555555);
-    }
-    
-    static bool isEqual(const ObjCSummaryKey& LHS, const ObjCSummaryKey& RHS) {
-      return DenseMapInfo<IdentifierInfo*>::isEqual(LHS.getIdentifier(),
-                                                    RHS.getIdentifier()) &&
-             DenseMapInfo<Selector>::isEqual(LHS.getSelector(),
-                                             RHS.getSelector());
-    }
-    
-    static bool isPod() {
-      return DenseMapInfo<ObjCInterfaceDecl*>::isPod() &&
-             DenseMapInfo<Selector>::isPod();
-    }
-  };
+  static inline ObjCSummaryKey getTombstoneKey() {
+    return ObjCSummaryKey(DenseMapInfo<IdentifierInfo*>::getTombstoneKey(),
+                          DenseMapInfo<Selector>::getTombstoneKey());      
+  }
+  
+  static unsigned getHashValue(const ObjCSummaryKey &V) {
+    return (DenseMapInfo<IdentifierInfo*>::getHashValue(V.getIdentifier())
+            & 0x88888888) 
+        | (DenseMapInfo<Selector>::getHashValue(V.getSelector())
+            & 0x55555555);
+  }
+  
+  static bool isEqual(const ObjCSummaryKey& LHS, const ObjCSummaryKey& RHS) {
+    return DenseMapInfo<IdentifierInfo*>::isEqual(LHS.getIdentifier(),
+                                                  RHS.getIdentifier()) &&
+           DenseMapInfo<Selector>::isEqual(LHS.getSelector(),
+                                           RHS.getSelector());
+  }
+  
+  static bool isPod() {
+    return DenseMapInfo<ObjCInterfaceDecl*>::isPod() &&
+           DenseMapInfo<Selector>::isPod();
+  }
+};
 } // end llvm namespace
   
 namespace {
-class RetainSummaryManager {
+class VISIBILITY_HIDDEN ObjCSummaryCache {
+  typedef llvm::DenseMap<ObjCSummaryKey, RetainSummary*> MapTy;
+  MapTy M;
+public:
+  ObjCSummaryCache() {}
+  
+  typedef MapTy::iterator iterator;
+  
+  iterator find(ObjCInterfaceDecl* D, Selector S) {
+    
+    // Do a lookup with the (D,S) pair.  If we find a match return
+    // the iterator.
+    ObjCSummaryKey K(D, S);
+    MapTy::iterator I = M.find(K);
+    
+    if (I != M.end() || !D)
+      return I;
+    
+    // Walk the super chain.  If we find a hit with a parent, we'll end
+    // up returning that summary.  We actually allow that key (null,S), as
+    // we cache summaries for the null ObjCInterfaceDecl* to allow us to
+    // generate initial summaries without having to worry about NSObject
+    // being declared.
+    // FIXME: We may change this at some point.
+    for (ObjCInterfaceDecl* C=D->getSuperClass() ;; C=C->getSuperClass()) {
+      if ((I = M.find(ObjCSummaryKey(C, S))) != M.end())
+        break;
+      
+      if (!C)
+        return I;
+    }
+    
+    // Cache the summary with original key to make the next lookup faster 
+    // and return the iterator.
+    M[K] = I->second;
+    return I;
+  }
+  
+  
+  iterator find(Expr* Receiver, Selector S) {
+    return find(getReceiverDecl(Receiver), S);
+  }
+  
+  iterator find(IdentifierInfo* II, Selector S) {
+    // FIXME: Class method lookup.  Right now we dont' have a good way
+    // of going between IdentifierInfo* and the class hierarchy.
+    iterator I = M.find(ObjCSummaryKey(II, S));
+    return I == M.end() ? M.find(ObjCSummaryKey(S)) : I;
+  }
+  
+  ObjCInterfaceDecl* getReceiverDecl(Expr* E) {
+    
+    const PointerType* PT = E->getType()->getAsPointerType();
+    if (!PT) return 0;
+    
+    ObjCInterfaceType* OI = dyn_cast<ObjCInterfaceType>(PT->getPointeeType());
+    if (!OI) return 0;
+    
+    return OI ? OI->getDecl() : 0;
+  }
+  
+  iterator end() { return M.end(); }
+  
+  RetainSummary*& operator[](ObjCMessageExpr* ME) {
+    
+    Selector S = ME->getSelector();
+    
+    if (Expr* Receiver = ME->getReceiver()) {
+      ObjCInterfaceDecl* OD = getReceiverDecl(Receiver);
+      return OD ? M[ObjCSummaryKey(OD->getIdentifier(), S)] : M[S];
+    }
+    
+    return M[ObjCSummaryKey(ME->getClassName(), S)];
+  }
+  
+  RetainSummary*& operator[](ObjCSummaryKey K) {
+    return M[K];
+  }
+  
+  RetainSummary*& operator[](Selector S) {
+    return M[ ObjCSummaryKey(S) ];
+  }
+};   
+} // end anonymous namespace
+
+//===----------------------------------------------------------------------===//
+// Data structures for managing collections of summaries.
+//===----------------------------------------------------------------------===//
+
+namespace {
+class VISIBILITY_HIDDEN RetainSummaryManager {
 
   //==-----------------------------------------------------------------==//
   //  Typedefs.
@@ -284,92 +408,42 @@ class RetainSummaryManager {
   typedef llvm::DenseMap<FunctionDecl*, RetainSummary*>
           FuncSummariesTy;
   
-  class ObjCSummaryCache {
-    typedef llvm::DenseMap<ObjCSummaryKey, RetainSummary*> MapTy;
-    MapTy M;
-  public:
-    ObjCSummaryCache() {}
-    
-    typedef MapTy::iterator iterator;
-    
-    iterator find(ObjCInterfaceDecl* D, Selector S) {
-
-      // Do a lookup with the (D,S) pair.  If we find a match return
-      // the iterator.
-      ObjCSummaryKey K(D, S);
-      MapTy::iterator I = M.find(K);
-
-      if (I != M.end() || !D)
-        return I;
-      
-      // Walk the super chain.  If we find a hit with a parent, we'll end
-      // up returning that summary.  We actually allow that key (null,S), as
-      // we cache summaries for the null ObjCInterfaceDecl* to allow us to
-      // generate initial summaries without having to worry about NSObject
-      // being declared.
-      // FIXME: We may change this at some point.
-      for (ObjCInterfaceDecl* C=D->getSuperClass() ;; C=C->getSuperClass()) {
-        if ((I = M.find(ObjCSummaryKey(C, S))) != M.end())
-          break;
-      
-        if (!C)
-          return I;
-      }
-      
-      // Cache the summary with original key to make the next lookup faster 
-      // and return the iterator.
-      M[K] = I->second;
-      return I;
-    }
-    
-    iterator find(Selector S) {
-      return find(0, S);
-    }
-    
-    iterator end() { return M.end(); }
-    
-    RetainSummary*& operator()(ObjCInterfaceDecl* D, Selector S) {
-      return M[ ObjCSummaryKey(D,S) ];
-    }
-    
-    RetainSummary*& operator[](Selector S) {
-      return M[ ObjCSummaryKey(S) ];
-    }    
-  };
-  
   typedef ObjCSummaryCache ObjCMethodSummariesTy;
     
   //==-----------------------------------------------------------------==//
   //  Data.
   //==-----------------------------------------------------------------==//
   
-  // Ctx - The ASTContext object for the analyzed ASTs.
+  /// Ctx - The ASTContext object for the analyzed ASTs.
   ASTContext& Ctx;
   
-  // GCEnabled - Records whether or not the analyzed code runs in GC mode.
+  /// NSWindowII - An IdentifierInfo* representing the identifier "NSWindow."
+  IdentifierInfo* NSWindowII;
+  
+  /// GCEnabled - Records whether or not the analyzed code runs in GC mode.
   const bool GCEnabled;
   
-  // SummarySet - A FoldingSet of uniqued summaries.
+  /// SummarySet - A FoldingSet of uniqued summaries.
   SummarySetTy SummarySet;
   
-  // FuncSummaries - A map from FunctionDecls to summaries.
+  /// FuncSummaries - A map from FunctionDecls to summaries.
   FuncSummariesTy FuncSummaries; 
   
-  // ObjCClassMethodSummaries - A map from selectors (for instance methods)
-  //  to summaries.
+  /// ObjCClassMethodSummaries - A map from selectors (for instance methods)
+  ///  to summaries.
   ObjCMethodSummariesTy ObjCClassMethodSummaries;
 
-  // ObjCMethodSummaries - A map from selectors to summaries.
+  /// ObjCMethodSummaries - A map from selectors to summaries.
   ObjCMethodSummariesTy ObjCMethodSummaries;
 
-  // ArgEffectsSet - A FoldingSet of uniqued ArgEffects.
+  /// ArgEffectsSet - A FoldingSet of uniqued ArgEffects.
   ArgEffectsSetTy ArgEffectsSet;
   
-  // BPAlloc - A BumpPtrAllocator used for allocating summaries, ArgEffects,
-  //  and all other data used by the checker.
+  /// BPAlloc - A BumpPtrAllocator used for allocating summaries, ArgEffects,
+  ///  and all other data used by the checker.
   llvm::BumpPtrAllocator BPAlloc;
   
-  // ScratchArgs - A holding buffer for construct ArgEffects.
+  /// ScratchArgs - A holding buffer for construct ArgEffects.
   ArgEffects ScratchArgs;
   
   RetainSummary* StopSummary;
@@ -378,8 +452,8 @@ class RetainSummaryManager {
   //  Methods.
   //==-----------------------------------------------------------------==//
   
-  // getArgEffects - Returns a persistent ArgEffects object based on the
-  //  data in ScratchArgs.
+  /// getArgEffects - Returns a persistent ArgEffects object based on the
+  ///  data in ScratchArgs.
   ArgEffects*   getArgEffects();
 
   enum UnaryFuncKind { cfretain, cfrelease, cfmakecollectable };  
@@ -402,7 +476,6 @@ class RetainSummaryManager {
     return getPersistentSummary(getArgEffects(), RE, ReceiverEff, DefaultEff);
   }
   
-
   
   RetainSummary* getPersistentStopSummary() {
     if (StopSummary)
@@ -414,24 +487,37 @@ class RetainSummaryManager {
     return StopSummary;
   }  
 
-  RetainSummary* getInitMethodSummary(Selector S);
+  RetainSummary* getInitMethodSummary(ObjCMessageExpr* ME);
 
   void InitializeClassMethodSummaries();
   void InitializeMethodSummaries();
     
+  void addNSObjectClsMethSummary(Selector S, RetainSummary *Summ) {
+    ObjCClassMethodSummaries[S] = Summ;
+  }
+    
+  void addNSObjectMethSummary(Selector S, RetainSummary *Summ) {
+    ObjCMethodSummaries[S] = Summ;
+  }
+  
+  void addNSWindowMethSummary(Selector S, RetainSummary *Summ) {
+    ObjCMethodSummaries[ObjCSummaryKey(NSWindowII, S)] = Summ;
+  }
+  
 public:
   
   RetainSummaryManager(ASTContext& ctx, bool gcenabled)
-   : Ctx(ctx), GCEnabled(gcenabled), StopSummary(0) {
-    
-     InitializeClassMethodSummaries();
-     InitializeMethodSummaries();
-   }
+   : Ctx(ctx), NSWindowII(&ctx.Idents.get("NSWindow")),
+     GCEnabled(gcenabled), StopSummary(0) {
+
+    InitializeClassMethodSummaries();
+    InitializeMethodSummaries();
+  }
   
   ~RetainSummaryManager();
   
   RetainSummary* getSummary(FunctionDecl* FD);  
-  RetainSummary* getMethodSummary(ObjCMessageExpr* ME);    
+  RetainSummary* getMethodSummary(ObjCMessageExpr* ME, ObjCInterfaceDecl* ID);
   RetainSummary* getClassMethodSummary(IdentifierInfo* ClsName, Selector S);
   
   bool isGCEnabled() const { return GCEnabled; }
@@ -460,14 +546,11 @@ ArgEffects* RetainSummaryManager::getArgEffects() {
     return NULL;
   
   // Compute a profile for a non-empty ScratchArgs.
-  
   llvm::FoldingSetNodeID profile;
-    
   profile.Add(ScratchArgs);
   void* InsertPos;
   
   // Look up the uniqued copy, or create a new one.
-  
   llvm::FoldingSetNodeWrapper<ArgEffects>* E =
     ArgEffectsSet.FindNodeOrInsertPos(profile, InsertPos);
   
@@ -477,7 +560,7 @@ ArgEffects* RetainSummaryManager::getArgEffects() {
   }
   
   E = (llvm::FoldingSetNodeWrapper<ArgEffects>*)
-      BPAlloc.Allocate<llvm::FoldingSetNodeWrapper<ArgEffects> >();
+        BPAlloc.Allocate<llvm::FoldingSetNodeWrapper<ArgEffects> >();
                        
   new (E) llvm::FoldingSetNodeWrapper<ArgEffects>(ScratchArgs);
   ArgEffectsSet.InsertNode(E, InsertPos);
@@ -672,38 +755,29 @@ RetainSummary* RetainSummaryManager::getCFSummaryGetRule(FunctionDecl* FD) {
 //===----------------------------------------------------------------------===//
 
 RetainSummary*
-RetainSummaryManager::getInitMethodSummary(Selector S) {
+RetainSummaryManager::getInitMethodSummary(ObjCMessageExpr* ME) {
   assert(ScratchArgs.empty());
     
   RetainSummary* Summ =
     getPersistentSummary(RetEffect::MakeReceiverAlias());
   
-  ObjCMethodSummaries[S] = Summ;
+  ObjCMethodSummaries[ME] = Summ;
   return Summ;
 }
 
+
 RetainSummary*
-RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME) {
+RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME,
+                                       ObjCInterfaceDecl* ID) {
 
   Selector S = ME->getSelector();
   
-  // Look up a summary in our cache of Selectors -> Summaries.
-  ObjCMethodSummariesTy::iterator I = ObjCMethodSummaries.find(S);
+  // Look up a summary in our summary cache.  
+  ObjCMethodSummariesTy::iterator I = ObjCMethodSummaries.find(ID, S);
   
   if (I != ObjCMethodSummaries.end())
     return I->second;
-  
-#if 0
-  // Only generate real summaries for methods involving
-  // NSxxxx objects.
-
-  if (!isNSType(ME->getReceiver()->getType())) {
-    RetainSummary* Summ = getPersistentStopSummary();
-    ObjCMethodSummaries[S] = Summ;
-    return Summ;
-  }
-#endif 
-  
+    
   if (!ME->getType()->isPointerType())
     return 0;
   
@@ -713,7 +787,7 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME) {
   assert (ScratchArgs.empty());
   
   if (strncmp(s, "init", 4) == 0 || strncmp(s, "_init", 5) == 0)
-    return getInitMethodSummary(S);  
+    return getInitMethodSummary(ME);  
   
   // "copyXXX", "createXXX", "newXXX": allocators.  
 
@@ -727,7 +801,7 @@ RetainSummaryManager::getMethodSummary(ObjCMessageExpr* ME) {
                                 : RetEffect::MakeOwned(true);  
 
     RetainSummary* Summ = getPersistentSummary(E);
-    ObjCMethodSummaries[S] = Summ;
+    ObjCMethodSummaries[ME] = Summ;
     return Summ;
   }
   
@@ -738,8 +812,12 @@ RetainSummary*
 RetainSummaryManager::getClassMethodSummary(IdentifierInfo* ClsName,
                                             Selector S) {
   
+  // FIXME: Eventually we should properly do class method summaries, but
+  // it requires us being able to walk the type hierarchy.  Unfortunately,
+  // we cannot do this with just an IdentifierInfo* for the class name.
+  
   // Look up a summary in our cache of Selectors -> Summaries.
-  ObjCMethodSummariesTy::iterator I = ObjCClassMethodSummaries.find(S);
+  ObjCMethodSummariesTy::iterator I = ObjCClassMethodSummaries.find(ClsName, S);
   
   if (I != ObjCClassMethodSummaries.end())
     return I->second;
@@ -756,14 +834,11 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
   
   RetainSummary* Summ = getPersistentSummary(E);
   
-  // Create the "alloc" selector.
-  ObjCClassMethodSummaries[ GetNullarySelector("alloc", Ctx) ] = Summ;
-  
-  // Create the "new" selector.
-  ObjCClassMethodSummaries[ GetNullarySelector("new", Ctx) ] = Summ;
-  
-  // Create the "allocWithZone:" selector.
-  ObjCClassMethodSummaries[ GetUnarySelector("allocWithZone", Ctx) ] = Summ;    
+  // Create the summaries for "alloc", "new", and "allocWithZone:" for
+  // NSObject and its derivatives.
+  addNSObjectClsMethSummary(GetNullarySelector("alloc", Ctx), Summ);
+  addNSObjectClsMethSummary(GetNullarySelector("new", Ctx), Summ);
+  addNSObjectClsMethSummary(GetUnarySelector("allocWithZone", Ctx), Summ);
 }
 
 void RetainSummaryManager::InitializeMethodSummaries() {
@@ -773,7 +848,7 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   // Create the "init" selector.  It just acts as a pass-through for the
   // receiver.
   RetainSummary* Summ = getPersistentSummary(RetEffect::MakeReceiverAlias());
-  ObjCMethodSummaries[ GetNullarySelector("init", Ctx) ] = Summ;
+  addNSObjectMethSummary(GetNullarySelector("init", Ctx), Summ);
   
   // The next methods are allocators.
   RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
@@ -782,27 +857,44 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   Summ = getPersistentSummary(E);  
   
   // Create the "copy" selector.  
-  ObjCMethodSummaries[ GetNullarySelector("copy", Ctx) ] = Summ;
+  addNSObjectMethSummary(GetNullarySelector("copy", Ctx), Summ);
   
   // Create the "mutableCopy" selector.
-  ObjCMethodSummaries[ GetNullarySelector("mutableCopy", Ctx) ] = Summ;
+  addNSObjectMethSummary(GetNullarySelector("mutableCopy", Ctx), Summ);
 
   // Create the "retain" selector.
   E = RetEffect::MakeReceiverAlias();
   Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : IncRef);
-  ObjCMethodSummaries[ GetNullarySelector("retain", Ctx) ] = Summ;
+  addNSObjectMethSummary(GetNullarySelector("retain", Ctx), Summ);
   
   // Create the "release" selector.
   Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : DecRef);
-  ObjCMethodSummaries[ GetNullarySelector("release", Ctx) ] = Summ;
+  addNSObjectMethSummary(GetNullarySelector("release", Ctx), Summ);
   
   // Create the "drain" selector.
   Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : DecRef);
-  ObjCMethodSummaries[ GetNullarySelector("drain", Ctx) ] = Summ;
+  addNSObjectMethSummary(GetNullarySelector("drain", Ctx), Summ);
 
   // Create the "autorelease" selector.
   Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : StopTracking);
-  ObjCMethodSummaries[ GetNullarySelector("autorelease", Ctx) ] = Summ;
+  addNSObjectMethSummary(GetNullarySelector("autorelease", Ctx), Summ);
+
+  // For NSWindow, allocated objects are (initially) self-owned.
+  Summ = getPersistentSummary(RetEffect::MakeReceiverAlias(), SelfOwn);
+
+  // Create the "initWithContentRect:styleMask:backing:defer:" selector.
+  llvm::SmallVector<IdentifierInfo*, 5> II;
+  II.push_back(&Ctx.Idents.get("initWithContentRect"));
+  II.push_back(&Ctx.Idents.get("styleMask"));
+  II.push_back(&Ctx.Idents.get("backing"));
+  II.push_back(&Ctx.Idents.get("defer"));  
+  Selector S = Ctx.Selectors.getSelector(II.size(), &II[0]);      
+  addNSWindowMethSummary(S, Summ);
+
+  // Create the "initWithContentRect:styleMask:backing:defer:screen:" selector.
+  II.push_back(&Ctx.Idents.get("screen"));
+  S = Ctx.Selectors.getSelector(II.size(), &II[0]);
+  addNSWindowMethSummary(S, Summ);
 }
 
 //===----------------------------------------------------------------------===//
@@ -829,16 +921,17 @@ private:
   
   Kind kind;
   unsigned Cnt;
-    
-  RefVal(Kind k, unsigned cnt) : kind(k), Cnt(cnt) {}
-  
-  RefVal(Kind k) : kind(k), Cnt(0) {}
+  QualType T;
+
+  RefVal(Kind k, unsigned cnt, QualType t) : kind(k), Cnt(cnt), T(t) {}
+  RefVal(Kind k, unsigned cnt = 0) : kind(k), Cnt(cnt) {}
 
 public:  
   
   Kind getKind() const { return kind; }
 
-  unsigned getCount() const { return Cnt; }
+  unsigned getCount() const { return Cnt; }  
+  QualType getType() const { return T; }
   
   // Useful predicates.
   
@@ -869,12 +962,12 @@ public:
   
   // State creation: normal state.
   
-  static RefVal makeOwned(unsigned Count = 1) {
-    return RefVal(Owned, Count);
+  static RefVal makeOwned(QualType t, unsigned Count = 1) {
+    return RefVal(Owned, Count, t);
   }
   
-  static RefVal makeNotOwned(unsigned Count = 0) {
-    return RefVal(NotOwned, Count);
+  static RefVal makeNotOwned(QualType t, unsigned Count = 0) {
+    return RefVal(NotOwned, Count, t);
   }
 
   static RefVal makeReturnedOwned(unsigned Count) {
@@ -886,27 +979,46 @@ public:
   }
   
   // State creation: errors.
-  
+
+#if 0
   static RefVal makeLeak(unsigned Count) { return RefVal(ErrorLeak, Count); }  
   static RefVal makeReleased() { return RefVal(Released); }
   static RefVal makeUseAfterRelease() { return RefVal(ErrorUseAfterRelease); }
   static RefVal makeReleaseNotOwned() { return RefVal(ErrorReleaseNotOwned); }
-    
+#endif
+  
   // Comparison, profiling, and pretty-printing.
   
   bool operator==(const RefVal& X) const {
-    return kind == X.kind && Cnt == X.Cnt;
+    return kind == X.kind && Cnt == X.Cnt && T == X.T;
   }
+  
+  RefVal operator-(size_t i) const {
+    return RefVal(getKind(), getCount() - i, getType());
+  }
+  
+  RefVal operator+(size_t i) const {
+    return RefVal(getKind(), getCount() + i, getType());
+  }
+  
+  RefVal operator^(Kind k) const {
+    return RefVal(k, getCount(), getType());
+  }
+    
   
   void Profile(llvm::FoldingSetNodeID& ID) const {
     ID.AddInteger((unsigned) kind);
     ID.AddInteger(Cnt);
+    ID.Add(T);
   }
 
   void print(std::ostream& Out) const;
 };
   
 void RefVal::print(std::ostream& Out) const {
+  if (!T.isNull())
+    Out << "Tracked Type:" << T.getAsString() << '\n';
+    
   switch (getKind()) {
     default: assert(false);
     case Owned: { 
@@ -961,9 +1073,9 @@ void RefVal::print(std::ostream& Out) const {
 
 class VISIBILITY_HIDDEN CFRefCount : public GRSimpleVals {
 public:
-  // Type definitions.
-  
+  // Type definitions.  
   typedef llvm::ImmutableMap<SymbolID, RefVal> RefBindings;
+  
   typedef RefBindings::Factory RefBFactoryTy;
   
   typedef llvm::DenseMap<GRExprEngine::NodeTy*,std::pair<Expr*, SymbolID> >
@@ -1188,6 +1300,40 @@ void CFRefCount::ProcessNonLeakError(ExplodedNodeSet<ValueState>& Dst,
   }
 }
 
+/// GetReturnType - Used to get the return type of a message expression or
+///  function call with the intention of affixing that type to a tracked symbol.
+///  While the the return type can be queried directly from RetEx, when
+///  invoking class methods we augment to the return type to be that of
+///  a pointer to the class (as opposed it just being id).
+static QualType GetReturnType(Expr* RetE, ASTContext& Ctx) {
+
+  QualType RetTy = RetE->getType();
+
+  // FIXME: We aren't handling id<...>.
+  const PointerType* PT = RetTy.getCanonicalType()->getAsPointerType();
+  
+  if (!PT)
+    return RetTy;
+    
+  // If RetEx is not a message expression just return its type.
+  // If RetEx is a message expression, return its types if it is something
+  /// more specific than id.
+  
+  ObjCMessageExpr* ME = dyn_cast<ObjCMessageExpr>(RetE);
+  
+  if (!ME || !Ctx.isObjCIdType(PT->getPointeeType()))
+    return RetTy;
+  
+  ObjCInterfaceDecl* D = ME->getClassInfo().first;  
+
+  // At this point we know the return type of the message expression is id.
+  // If we have an ObjCInterceDecl, we know this is a call to a class method
+  // whose type we can resolve.  In such cases, promote the return type to
+  // Class*.  
+  return !D ? RetTy : Ctx.getPointerType(Ctx.getObjCInterfaceType(D));
+}
+
+
 void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
                              GRExprEngine& Eng,
                              GRStmtNodeBuilder<ValueState>& Builder,
@@ -1197,14 +1343,11 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
                              ExprIterator arg_beg, ExprIterator arg_end,                             
                              ExplodedNode<ValueState>* Pred) {
   
-  
   // Get the state.
   ValueStateManager& StateMgr = Eng.getStateManager();  
   ValueState* St = Builder.GetState(Pred);
-  
 
   // Evaluate the effect of the arguments.
-  
   ValueState StVals = *St;
   RefVal::Kind hasErr = (RefVal::Kind) 0;
   unsigned idx = 0;
@@ -1238,8 +1381,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
       StateMgr.Unbind(StVals, cast<nonlval::LValAsInteger>(V).getLVal());
   } 
   
-  // Evaluate the effect on the message receiver.
-  
+  // Evaluate the effect on the message receiver.  
   if (!ErrorExpr && Receiver) {
     RVal V = StateMgr.GetRVal(St, Receiver);
 
@@ -1259,20 +1401,17 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
     }
   }
 
-  // Get the persistent state.
-  
+  // Get the persistent state.  
   St = StateMgr.getPersistentState(StVals);
   
-  // Process any errors.
-  
+  // Process any errors.  
   if (hasErr) {
     ProcessNonLeakError(Dst, Builder, Ex, ErrorExpr, Pred, St,
                         hasErr, ErrorSym);
     return;
   }
   
-  // Finally, consult the summary for the return value.
-  
+  // Finally, consult the summary for the return value.  
   RetEffect RE = GetRetEffect(Summ);
   
   switch (RE.getKind()) {
@@ -1299,7 +1438,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
       break;
       
     case RetEffect::Alias: {
-      unsigned idx = RE.getValue();
+      unsigned idx = RE.getIndex();
       assert (arg_end >= arg_beg);
       assert (idx < (unsigned) (arg_end - arg_beg));
       RVal V = StateMgr.GetRVal(St, *(arg_beg+idx));
@@ -1318,10 +1457,11 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
     case RetEffect::OwnedSymbol: {
       unsigned Count = Builder.getCurrentBlockCount();
       SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
+      QualType RetT = GetReturnType(Ex, Eng.getContext());
       
       ValueState StImpl = *St;
       RefBindings B = GetRefBindings(StImpl);
-      SetRefBindings(StImpl, RefBFactory.Add(B, Sym, RefVal::makeOwned()));
+      SetRefBindings(StImpl, RefBFactory.Add(B, Sym, RefVal::makeOwned(RetT)));
       
       St = StateMgr.SetRVal(StateMgr.getPersistentState(StImpl),
                             Ex, lval::SymbolVal(Sym),
@@ -1337,10 +1477,12 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
     case RetEffect::NotOwnedSymbol: {
       unsigned Count = Builder.getCurrentBlockCount();
       SymbolID Sym = Eng.getSymbolManager().getConjuredSymbol(Ex, Count);
+      QualType RetT = GetReturnType(Ex, Eng.getContext());
       
       ValueState StImpl = *St;
       RefBindings B = GetRefBindings(StImpl);
-      SetRefBindings(StImpl, RefBFactory.Add(B, Sym, RefVal::makeNotOwned()));
+      SetRefBindings(StImpl, RefBFactory.Add(B, Sym,
+                                             RefVal::makeNotOwned(RetT)));
       
       St = StateMgr.SetRVal(StateMgr.getPersistentState(StImpl),
                             Ex, lval::SymbolVal(Sym),
@@ -1384,8 +1526,33 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
   
   RetainSummary* Summ;
   
-  if (ME->getReceiver())
-    Summ = Summaries.getMethodSummary(ME);
+  if (Expr* Receiver = ME->getReceiver()) {
+    // We need the type-information of the tracked receiver object
+    // Retrieve it from the state.
+    ObjCInterfaceDecl* ID = 0;
+
+    // FIXME: Wouldn't it be great if this code could be reduced?  It's just
+    // a chain of lookups.
+    ValueState* St = Builder.GetState(Pred);
+    RVal V = Eng.getStateManager().GetRVal(St, Receiver );
+
+    if (isa<lval::SymbolVal>(V)) {
+      SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
+      
+      if (RefBindings::TreeTy* T  = GetRefBindings(*St).SlimFind(Sym)) {
+        QualType Ty = T->getValue().second.getType();
+        
+        if (const PointerType* PT = Ty->getAsPointerType()) {
+          QualType PointeeTy = PT->getPointeeType();
+          
+          if (ObjCInterfaceType* IT = dyn_cast<ObjCInterfaceType>(PointeeTy))
+            ID = IT->getDecl();
+        }
+      }
+    }
+    
+    Summ = Summaries.getMethodSummary(ME, ID);
+  }
   else
     Summ = Summaries.getClassMethodSummary(ME->getClassName(),
                                            ME->getSelector());
@@ -1456,10 +1623,8 @@ ValueState* CFRefCount::HandleSymbolDeath(ValueStateManager& VMgr,
     return NukeBinding(VMgr, St, sid);
   
   RefBindings B = GetRefBindings(*St);
-  ValueState StImpl = *St;  
-
-  StImpl.CheckerState =
-    RefBFactory.Add(B, sid, RefVal::makeLeak(V.getCount())).getRoot();
+  ValueState StImpl = *St;
+  StImpl.CheckerState = RefBFactory.Add(B, sid, V^RefVal::ErrorLeak).getRoot();
   
   return VMgr.getPersistentState(StImpl);
 }
@@ -1653,9 +1818,10 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
     default:
       assert (false && "Unhandled CFRef transition.");
 
+          
     case MayEscape:
       if (V.getKind() == RefVal::Owned) {
-        V = RefVal::makeNotOwned(V.getCount());
+        V = V ^ RefVal::NotOwned;
         break;
       }
 
@@ -1663,7 +1829,7 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
       
     case DoNothing:
       if (!isGCEnabled() && V.getKind() == RefVal::Released) {
-        V = RefVal::makeUseAfterRelease();        
+        V = V ^ RefVal::ErrorUseAfterRelease;
         hasErr = V.getKind();
         break;
       }
@@ -1679,18 +1845,15 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
           assert(false);
 
         case RefVal::Owned:
-          V = RefVal::makeOwned(V.getCount()+1);
-          break;
-                    
         case RefVal::NotOwned:
-          V = RefVal::makeNotOwned(V.getCount()+1);
+          V = V + 1;
           break;
           
         case RefVal::Released:
           if (isGCEnabled())
-            V = RefVal::makeOwned();
+            V = V ^ RefVal::Owned;
           else {          
-            V = RefVal::makeUseAfterRelease();
+            V = V ^ RefVal::ErrorUseAfterRelease;
             hasErr = V.getKind();
           }
           
@@ -1699,32 +1862,30 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
       
       break;
       
+    case SelfOwn:
+      V = V ^ RefVal::NotOwned;
+      
     case DecRef:
       switch (V.getKind()) {
         default:
           assert (false);
           
-        case RefVal::Owned: {
-          unsigned Count = V.getCount();
-          V = Count > 1 ? RefVal::makeOwned(Count - 1) : RefVal::makeReleased();
+        case RefVal::Owned:
+          V = V.getCount() > 1 ? V - 1 : V ^ RefVal::Released;
           break;
-        }
           
-        case RefVal::NotOwned: {
-          unsigned Count = V.getCount();
-          
-          if (Count > 0)
-            V = RefVal::makeNotOwned(Count - 1);
+        case RefVal::NotOwned:
+          if (V.getCount() > 0)
+            V = V - 1;
           else {
-            V = RefVal::makeReleaseNotOwned();
+            V = V ^ RefVal::ErrorReleaseNotOwned;
             hasErr = V.getKind();
           }
           
           break;
-        }
 
         case RefVal::Released:
-          V = RefVal::makeUseAfterRelease();
+          V = V ^ RefVal::ErrorUseAfterRelease;
           hasErr = V.getKind();
           break;          
       }
