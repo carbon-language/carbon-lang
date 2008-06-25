@@ -97,6 +97,7 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::FPTOSINT_F64_I128] = "__fixdfti";
   Names[RTLIB::FPTOSINT_F80_I64] = "__fixxfdi";
   Names[RTLIB::FPTOSINT_F80_I128] = "__fixxfti";
+  Names[RTLIB::FPTOSINT_PPCF128_I32] = "__fixtfsi";
   Names[RTLIB::FPTOSINT_PPCF128_I64] = "__fixtfdi";
   Names[RTLIB::FPTOSINT_PPCF128_I128] = "__fixtfti";
   Names[RTLIB::FPTOUINT_F32_I32] = "__fixunssfsi";
@@ -108,6 +109,7 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::FPTOUINT_F80_I32] = "__fixunsxfsi";
   Names[RTLIB::FPTOUINT_F80_I64] = "__fixunsxfdi";
   Names[RTLIB::FPTOUINT_F80_I128] = "__fixunsxfti";
+  Names[RTLIB::FPTOUINT_PPCF128_I32] = "__fixunstfsi";
   Names[RTLIB::FPTOUINT_PPCF128_I64] = "__fixunstfdi";
   Names[RTLIB::FPTOUINT_PPCF128_I128] = "__fixunstfti";
   Names[RTLIB::SINTTOFP_I32_F32] = "__floatsisf";

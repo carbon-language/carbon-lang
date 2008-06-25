@@ -354,11 +354,20 @@ private:
 
   // Float Result Expansion.
   void ExpandFloatResult(SDNode *N, unsigned ResNo);
-  void ExpandFloatRes_LOAD(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandFloatRes_ConstantFP(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandFloatRes_FADD      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandFloatRes_FDIV      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandFloatRes_FMUL      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandFloatRes_FSUB      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandFloatRes_LOAD      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandFloatRes_XINT_TO_FP(SDNode *N, SDOperand &Lo, SDOperand &Hi);
 
   // Float Operand Expansion.
   bool ExpandFloatOperand(SDNode *N, unsigned OperandNo);
   SDOperand ExpandFloatOp_BR_CC(SDNode *N);
+  SDOperand ExpandFloatOp_FP_ROUND(SDNode *N);
+  SDOperand ExpandFloatOp_FP_TO_SINT(SDNode *N);
+  SDOperand ExpandFloatOp_FP_TO_UINT(SDNode *N);
   SDOperand ExpandFloatOp_SELECT_CC(SDNode *N);
   SDOperand ExpandFloatOp_SETCC(SDNode *N);
   SDOperand ExpandFloatOp_STORE(SDNode *N, unsigned OpNo);

@@ -2244,10 +2244,9 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
     break;
   case ISD::EXTRACT_ELEMENT:
     assert(N2C && (unsigned)N2C->getValue() < 2 && "Bad EXTRACT_ELEMENT!");
-    assert(!N1.getValueType().isVector() &&
-           N1.getValueType().isInteger() &&
-           !VT.isVector() && VT.isInteger() &&
-           "EXTRACT_ELEMENT only applies to integers!");
+    assert(!N1.getValueType().isVector() && !VT.isVector() &&
+           (N1.getValueType().isInteger() == VT.isInteger()) &&
+           "Wrong types for EXTRACT_ELEMENT!");
 
     // EXTRACT_ELEMENT of BUILD_PAIR is often formed while legalize is expanding
     // 64-bit integers into 32-bit parts.  Instead of building the extract of
