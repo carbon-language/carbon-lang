@@ -8697,13 +8697,18 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         CannotRemove = true;
         break;
       }
-      if (isa<CallInst>(BI)) {
-        if (!isa<IntrinsicInst>(BI)) {
+      if (CallInst *BCI = dyn_cast<CallInst>(BI)) {
+        if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(BCI)) {
+          // If there is a stackrestore below this one, remove this one.
+          if (II->getIntrinsicID() == Intrinsic::stackrestore)
+            return EraseInstFromFunction(CI);
+          // Otherwise, ignore the intrinsic.
+        } else {
+          // If we found a non-intrinsic call, we can't remove the stack
+          // restore.
           CannotRemove = true;
           break;
         }
-        // If there is a stackrestore below this one, remove this one.
-        return EraseInstFromFunction(CI);
       }
     }
     
