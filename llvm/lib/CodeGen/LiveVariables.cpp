@@ -602,7 +602,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
            I = MF->getRegInfo().liveout_begin(),
            E = MF->getRegInfo().liveout_end(); I != E; ++I) {
         assert(TargetRegisterInfo::isPhysicalRegister(*I) &&
-               "Cannot have a live-in virtual register!");
+               "Cannot have a live-out virtual register!");
         HandlePhysRegUse(*I, Ret);
 
         // Add live-out registers as implicit uses.
