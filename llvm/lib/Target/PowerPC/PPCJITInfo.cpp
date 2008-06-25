@@ -17,7 +17,7 @@
 #include "PPCTargetMachine.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
-#include "llvm/Config/alloca.h"
+#include "llvm/System/Memory.h"
 #include "llvm/Support/Debug.h"
 #include <set>
 using namespace llvm;
@@ -330,29 +330,6 @@ defined(__APPLE__)
 extern "C" void sys_icache_invalidate(const void *Addr, size_t len);
 #endif
 
-void PPCJITInfo::InvalidateInstructionCache(const void *Addr, unsigned len) {
-#if (defined(__POWERPC__) || defined (__ppc__) || \
-     defined(_POWER) || defined(_ARCH_PPC))
-# if defined(__APPLE__)
-  sys_icache_invalidate(Addr, len);
-# elif defined(__GNUC__)
-  const size_t LineSize = 32;
-
-  const intptr_t Mask = ~(LineSize - 1);
-  const intptr_t StartLine = ((intptr_t) Addr) & Mask;
-  const intptr_t EndLine = ((intptr_t) Addr + len + LineSize - 1) & Mask;
-
-  for (intptr_t Line = StartLine; Line < EndLine; Line += LineSize)
-      asm volatile("dcbf 0, %0" : : "r"(Line));
-  asm volatile("sync");
-
-  for (intptr_t Line = StartLine; Line < EndLine; Line += LineSize)
-      asm volatile("icbi 0, %0" : : "r"(Line));
-  asm volatile("isync");
-# endif
-#endif
-}
-
 void *PPCJITInfo::emitFunctionStub(const Function* F, void *Fn,
                                    MachineCodeEmitter &MCE) {
   // If this is just a call to an external function, emit a branch instead of a
@@ -369,7 +346,7 @@ void *PPCJITInfo::emitFunctionStub(const Function* F, void *Fn,
     MCE.emitWordBE(0);
     MCE.emitWordBE(0);
     EmitBranchToAt(Addr, (intptr_t)Fn, false, is64Bit);
-    InvalidateInstructionCache((void*)Addr, 7*4);
+    sys::Memory::InvalidateInstructionCache((void*)Addr, 7*4);
     return MCE.finishFunctionStub(F);
   }
 
@@ -397,7 +374,7 @@ void *PPCJITInfo::emitFunctionStub(const Function* F, void *Fn,
   MCE.emitWordBE(0);
   MCE.emitWordBE(0);
   EmitBranchToAt(BranchAddr, (intptr_t)Fn, true, is64Bit);
-  InvalidateInstructionCache((void*)Addr, 10*4);
+  sys::Memory::InvalidateInstructionCache((void*)Addr, 10*4);
   return MCE.finishFunctionStub(F);
 }
 

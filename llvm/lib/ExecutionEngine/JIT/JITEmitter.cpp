@@ -32,6 +32,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/System/Disassembler.h"
+#include "llvm/System/Memory.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
@@ -742,7 +743,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   }
 
   // Invalidate the icache if necessary.
-  TheJIT->getJITInfo().InvalidateInstructionCache(FnStart, FnEnd-FnStart);
+  sys::Memory::InvalidateInstructionCache(FnStart, FnEnd-FnStart);
   
   // Add it to the JIT symbol table if the host wants it.
   AddFunctionToSymbolTable(F.getFunction()->getNameStart(),
