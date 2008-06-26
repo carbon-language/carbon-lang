@@ -231,11 +231,9 @@ public:
   }
   virtual void Apply(std::string &Field) {
     Constant *C = CI->getOperand(I++);
-    std::string S;
-    if (GetConstantStringInfo(C, S))
-      Field = S;
-    else
-      Field = "";
+    // Fills in the string if it succeeds
+    if (!GetConstantStringInfo(C, Field))
+      Field.clear();
   }
   virtual void Apply(DebugInfoDesc *&Field) {
     Constant *C = CI->getOperand(I++);
