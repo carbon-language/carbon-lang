@@ -39,9 +39,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
     Types(C, M, TD), MemCpyFn(0), MemMoveFn(0), MemSetFn(0),
     CFConstantStringClassRef(0) {
   //TODO: Make this selectable at runtime
-  Runtime = CreateObjCRuntime(M,
-      getTypes().ConvertType(getContext().IntTy),
-      getTypes().ConvertType(getContext().LongTy));
+  Runtime = CreateObjCRuntime(*this);
 
   // If debug info generation is enabled, create the CGDebugInfo object.
   if (GenerateDebugInfo)

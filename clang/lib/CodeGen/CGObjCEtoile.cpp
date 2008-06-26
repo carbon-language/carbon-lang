@@ -243,11 +243,3 @@ llvm::Function *CGObjCEtoile::MethodPreamble(
   return Method;
 }
 
-/*
-clang::CodeGen::CGObjCRuntime *clang::CodeGen::CreateObjCRuntime(
-    llvm::Module &M,
-    const llvm::Type *LLVMIntType,
-    const llvm::Type *LLVMLongType) {
-  return new CGObjCEtoile(M, LLVMIntType, LLVMLongType);
-}
-*/

@@ -15,12 +15,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "CGObjCRuntime.h"
+#include "CodeGenModule.h"
+#include "clang/AST/ASTContext.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include <map>
+using namespace clang;
 
 // FIXME: Remove THIS!
 #include "llvm/Analysis/ValueTracking.h"
@@ -39,8 +42,9 @@ static const int RuntimeVersion = 8;
 static const int ProtocolVersion = 2;
 
 namespace {
-class CGObjCGNU : public clang::CodeGen::CGObjCRuntime {
+class CGObjCGNU : public CodeGen::CGObjCRuntime {
 private:
+  CodeGen::CodeGenModule &CGM;
   llvm::Module &TheModule;
   const llvm::StructType *SelStructTy;
   const llvm::Type *SelectorTy;
@@ -94,9 +98,7 @@ private:
   llvm::Constant *MakeGlobal(const llvm::ArrayType *Ty,
       std::vector<llvm::Constant*> &V, const std::string &Name="");
 public:
-  CGObjCGNU(llvm::Module &Mp,
-    const llvm::Type *LLVMIntType,
-    const llvm::Type *LLVMLongType);
+  CGObjCGNU(CodeGen::CodeGenModule &cgm);
   virtual llvm::Constant *GenerateConstantString(const char *String, 
       const size_t length);
   virtual llvm::Value *GenerateMessageSend(llvm::IRBuilder &Builder,
@@ -172,13 +174,11 @@ static std::string SymbolNameForMethod(const std::string &ClassName, const
             (isClassMethod ? "+" : "-") + MethodName;
 }
 
-CGObjCGNU::CGObjCGNU(llvm::Module &M,
-    const llvm::Type *LLVMIntType,
-    const llvm::Type *LLVMLongType) : 
-  TheModule(M),
-  IntTy(LLVMIntType),
-  LongTy(LLVMLongType)
-{
+CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
+  : CGM(cgm), TheModule(CGM.getModule()) {
+  IntTy = CGM.getTypes().ConvertType(CGM.getContext().IntTy);
+  LongTy = CGM.getTypes().ConvertType(CGM.getContext().LongTy);
+    
   Zeros[0] = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
   Zeros[1] = Zeros[0];
   NULLPtr = llvm::ConstantPointerNull::get(
@@ -928,9 +928,6 @@ llvm::Function *CGObjCGNU::MethodPreamble(
   return Method;
 }
 
-clang::CodeGen::CGObjCRuntime *clang::CodeGen::CreateObjCRuntime(
-    llvm::Module &M,
-    const llvm::Type *LLVMIntType,
-    const llvm::Type *LLVMLongType) {
-  return new CGObjCGNU(M, LLVMIntType, LLVMLongType);
+CodeGen::CGObjCRuntime *CodeGen::CreateObjCRuntime(CodeGen::CodeGenModule &CGM){
+  return new CGObjCGNU(CGM);
 }

@@ -29,6 +29,7 @@ namespace llvm {
 
 namespace clang {
 namespace CodeGen {
+  class CodeGenModule;
 
 //FIXME Several methods should be pure virtual but aren't to avoid the
 //partially-implemented subclass breaking.
@@ -119,9 +120,7 @@ public:
 
 /// Creates an instance of an Objective-C runtime class.  
 //TODO: This should include some way of selecting which runtime to target.
-CGObjCRuntime *CreateObjCRuntime(llvm::Module &M,
-                                 const llvm::Type *LLVMIntType,
-                                 const llvm::Type *LLVMLongType);
+CGObjCRuntime *CreateObjCRuntime(CodeGenModule &CGM);
 }
 }
 #endif
