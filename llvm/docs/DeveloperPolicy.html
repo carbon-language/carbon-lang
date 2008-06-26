@@ -116,6 +116,15 @@
   <em>attachment</em> to the message, not embedded into the text of the
   message.  This ensures that your mailer will not mangle the patch when it 
   sends it (e.g. by making whitespace changes or by wrapping lines).</p>
+  
+  <p><em>For Thunderbird users:</em> Before submitting a patch, please open 
+  <em>Preferences &#8594; Advanced &#8594; General &#8594; Config Editor</em>,
+  find the key <tt>mail.content_disposition_type</tt>, and set its value to
+  <tt>1</tt>. Without this setting, Thunderbird sends your attachment using
+  <tt>Content-Disposition: inline</tt> rather than <tt>Content-Disposition:
+  attachment</tt>. Apple Mail gamely displays such a file inline, making it
+  difficult to work with for reviewers using that program.</p>
+</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
