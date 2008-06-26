@@ -57,7 +57,9 @@ llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
     llvm::Value *ClassName = CGM.GetAddrOfConstantString(classname);
     ClassName = Builder.CreateStructGEP(ClassName, 0);
     Receiver = Runtime->LookupClass(Builder, ClassName);
-  } else if (dyn_cast<PreDefinedExpr>(E->getReceiver())) {
+  } else if (isa<PreDefinedExpr>(E->getReceiver())) {
+    assert(cast<PreDefinedExpr>(E->getReceiver())->getIdentType() == 
+           PreDefinedExpr::ObjCSuper);
     isSuperMessage = true;
     Receiver = LoadObjCSelf();
   } else {
@@ -93,11 +95,12 @@ llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
   if (isSuperMessage) {
     const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(CurFuncDecl);
     assert(OMD && "super is only valid in an Objective-C method");
-    const char *SuperClass = OMD->getClassInterface()->getSuperClass()->getName();
+    const char *SuperClass =
+      OMD->getClassInterface()->getSuperClass()->getName();
     return Runtime->GenerateMessageSendSuper(Builder, ConvertType(E->getType()),
-                                        Receiver, SuperClass,
-                                        Receiver, SelPtr,
-                                        &Args[0], Args.size());
+                                             Receiver, SuperClass,
+                                             Receiver, SelPtr,
+                                             &Args[0], Args.size());
   }
   return Runtime->GenerateMessageSend(Builder, ConvertType(E->getType()),
                                       LoadObjCSelf(),
@@ -122,9 +125,10 @@ void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
       dyn_cast<ObjCCategoryImplDecl>(OMD->getMethodContext())) {
     CategoryName = OCD->getName();
   }
-  const llvm::Type *ReturnTy = CGM.getTypes().ConvertReturnType(OMD->getResultType());
+  const llvm::Type *ReturnTy = 
+    CGM.getTypes().ConvertReturnType(OMD->getResultType());
   CurFn = CGM.getObjCRuntime()->MethodPreamble(
-                                              OMD->getClassInterface()->getName(),
+                                          OMD->getClassInterface()->getName(),
                                               CategoryName,
                                               OMD->getSelector().getName(),
                                               ReturnTy,

@@ -766,25 +766,23 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   Elements.push_back(llvm::ConstantArray::get(StaticsArrayTy, ConstantStrings));
   llvm::StructType *StaticsListTy = 
     llvm::StructType::get(PtrToInt8Ty, StaticsArrayTy, NULL);
+  llvm::Type *StaticsListPtrTy = llvm::PointerType::getUnqual(StaticsListTy);
   llvm::Constant *Statics = 
     MakeGlobal(StaticsListTy, Elements, ".objc_statics");
   llvm::ArrayType *StaticsListArrayTy =
-    llvm::ArrayType::get(llvm::PointerType::getUnqual(StaticsListTy), 2);
+    llvm::ArrayType::get(StaticsListPtrTy, 2);
   Elements.clear();
   Elements.push_back(Statics);
-  Elements.push_back(llvm::ConstantPointerNull::get(llvm::PointerType::getUnqual(StaticsListTy)));
+  Elements.push_back(llvm::Constant::getNullValue(StaticsListPtrTy));
   Statics = MakeGlobal(StaticsListArrayTy, Elements, ".objc_statics_ptr");
   Statics = llvm::ConstantExpr::getBitCast(Statics, PtrTy);
   // Array of classes, categories, and constant objects
   llvm::ArrayType *ClassListTy = llvm::ArrayType::get(PtrToInt8Ty,
       Classes.size() + Categories.size()  + 2);
-  llvm::StructType *SymTabTy = llvm::StructType::get(
-      LongTy,
-      SelectorTy,
-      llvm::Type::Int16Ty,
-      llvm::Type::Int16Ty,
-      ClassListTy,
-      NULL);
+  llvm::StructType *SymTabTy = llvm::StructType::get(LongTy, SelectorTy,
+                                                     llvm::Type::Int16Ty,
+                                                     llvm::Type::Int16Ty,
+                                                     ClassListTy, NULL);
 
   Elements.clear();
   // Pointer to an array of selectors used in this module.
@@ -792,18 +790,17 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   for (std::map<TypedSelector, llvm::GlobalAlias*>::iterator
      iter = TypedSelectors.begin(), iterEnd = TypedSelectors.end();
      iter != iterEnd ; ++iter) {
-    Elements.push_back(MakeConstantString((*iter).first.first,
-          ".objc_sel_name"));
-    Elements.push_back(MakeConstantString((*iter).first.second,
-          ".objc_sel_types"));
+    Elements.push_back(MakeConstantString(iter->first.first, ".objc_sel_name"));
+    Elements.push_back(MakeConstantString(iter->first.second,
+                                          ".objc_sel_types"));
     Selectors.push_back(llvm::ConstantStruct::get(SelStructTy, Elements));
     Elements.clear();
   }
   for (llvm::StringMap<llvm::GlobalAlias*>::iterator
       iter = UntypedSelectors.begin(), iterEnd = UntypedSelectors.end();
-      iter != iterEnd; iter++) {
+      iter != iterEnd; ++iter) {
     Elements.push_back(
-        MakeConstantString((*iter).getKeyData(), ".objc_sel_name"));
+        MakeConstantString(iter->getKeyData(), ".objc_sel_name"));
     Elements.push_back(NULLPtr);
     Selectors.push_back(llvm::ConstantStruct::get(SelStructTy, Elements));
     Elements.clear();
