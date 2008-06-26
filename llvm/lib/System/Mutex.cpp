@@ -75,7 +75,7 @@ Mutex::Mutex( bool recursive)
     errorcode = pthread_mutexattr_settype(&attr, kind);
     assert(errorcode == 0);
 
-#if !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__NetBSD__)
+#if !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__NetBSD__) && !defined(__DragonFly__)
     // Make it a process local mutex
     errorcode = pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_PRIVATE);
 #endif

@@ -1415,7 +1415,7 @@ static void generateCompilerSpecificCode(std::ostream& Out,
       << "extern void *__builtin_alloca(unsigned int);\n"
       << "#endif\n"
       << "#define alloca(x) __builtin_alloca(x)\n"
-      << "#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)\n"
+      << "#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)\n"
       << "#define alloca(x) __builtin_alloca(x)\n"
       << "#elif defined(_MSC_VER)\n"
       << "#define inline _inline\n"
