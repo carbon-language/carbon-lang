@@ -11,6 +11,7 @@
 #define LLVM_CLANG_AST_TARGET_BUILTINS_H
 
 #include "clang/AST/Builtins.h"
+#undef PPC
 
 namespace clang {
   /// X86 builtins

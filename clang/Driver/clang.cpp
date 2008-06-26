@@ -1052,6 +1052,10 @@ static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
     AddPath("/usr/lib/gcc/x86_64-unknown-linux-gnu/4.3.1/include-fixed",
             System, false, false, false, Headers);
 
+    // Debian testing/lenny ppc32
+    AddPath("/usr/lib/gcc/powerpc-linux-gnu/4.2.3/include", System,
+            false, false, false, Headers);
+
     AddPath("/usr/include", System, false, false, false, Headers);
     AddPath("/System/Library/Frameworks", System, true, false, true, Headers);
     AddPath("/Library/Frameworks", System, true, false, true, Headers);
