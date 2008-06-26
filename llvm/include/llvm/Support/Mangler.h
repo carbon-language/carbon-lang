@@ -14,6 +14,7 @@
 #ifndef LLVM_SUPPORT_MANGLER_H
 #define LLVM_SUPPORT_MANGLER_H
 
+#include "llvm/ADT/DenseMap.h"
 #include <map>
 #include <set>
 #include <string>
@@ -40,7 +41,7 @@ class Mangler {
   
   /// Memo - This is used to remember the name that we assign a value.
   ///
-  std::map<const Value*, std::string> Memo;
+  DenseMap<const Value*, std::string> Memo;
 
   /// Count - This simple counter is used to unique value names.
   ///
