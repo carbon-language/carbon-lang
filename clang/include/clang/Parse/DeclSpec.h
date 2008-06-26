@@ -265,7 +265,8 @@ public:
     AttrList = alist;
   }
   void SetAttributes(AttributeList *AL) { AttrList = AL; }
-  AttributeList *getAttributes() const { return AttrList; }
+  const AttributeList *getAttributes() const { return AttrList; }
+  AttributeList *getAttributes() { return AttrList; }
   
   /// TakeAttributes - Return the current attribute list and remove them from
   /// the DeclSpec so that it doesn't own them.
