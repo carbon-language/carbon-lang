@@ -3844,10 +3844,22 @@ SDOperand DAGCombiner::visitSINT_TO_FP(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   MVT VT = N->getValueType(0);
-  
+  MVT OpVT = N0.getValueType();
+
   // fold (sint_to_fp c1) -> c1fp
-  if (N0C && N0.getValueType() != MVT::ppcf128)
+  if (N0C && OpVT != MVT::ppcf128)
     return DAG.getNode(ISD::SINT_TO_FP, VT, N0);
+  
+  // If the input is a legal type, and SINT_TO_FP is not legal on this target,
+  // but UINT_TO_FP is legal on this target, try to convert.
+  if (TLI.isTypeLegal(OpVT) && !TLI.isOperationLegal(ISD::SINT_TO_FP, OpVT) &&
+      TLI.isOperationLegal(ISD::UINT_TO_FP, OpVT)) {
+    // If the sign bit is known to be zero, we can change this to UINT_TO_FP. 
+    if (DAG.SignBitIsZero(N0))
+      return DAG.getNode(ISD::UINT_TO_FP, VT, N0);
+  }
+  
+  
   return SDOperand();
 }
 
@@ -3855,10 +3867,21 @@ SDOperand DAGCombiner::visitUINT_TO_FP(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   MVT VT = N->getValueType(0);
+  MVT OpVT = N0.getValueType();
 
   // fold (uint_to_fp c1) -> c1fp
-  if (N0C && N0.getValueType() != MVT::ppcf128)
+  if (N0C && OpVT != MVT::ppcf128)
     return DAG.getNode(ISD::UINT_TO_FP, VT, N0);
+  
+  // If the input is a legal type, and UINT_TO_FP is not legal on this target,
+  // but SINT_TO_FP is legal on this target, try to convert.
+  if (TLI.isTypeLegal(OpVT) && !TLI.isOperationLegal(ISD::UINT_TO_FP, OpVT) &&
+      TLI.isOperationLegal(ISD::SINT_TO_FP, OpVT)) {
+    // If the sign bit is known to be zero, we can change this to SINT_TO_FP. 
+    if (DAG.SignBitIsZero(N0))
+      return DAG.getNode(ISD::SINT_TO_FP, VT, N0);
+  }
+  
   return SDOperand();
 }
 
