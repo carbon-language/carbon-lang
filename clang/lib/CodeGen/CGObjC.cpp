@@ -99,7 +99,7 @@ llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
       OMD->getClassInterface()->getSuperClass()->getName();
     return Runtime->GenerateMessageSendSuper(Builder, ConvertType(E->getType()),
                                              Receiver, SuperClass,
-                                             Receiver, SelPtr,
+                                             Receiver, E->getSelector(),
                                              &Args[0], Args.size());
   }
   return Runtime->GenerateMessageSend(Builder, ConvertType(E->getType()),

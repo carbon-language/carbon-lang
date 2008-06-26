@@ -28,6 +28,8 @@ namespace llvm {
 }
 
 namespace clang {
+  class Selector;
+  
 namespace CodeGen {
   class CodeGenModule;
 
@@ -82,13 +84,13 @@ public:
   virtual llvm::Value *GenerateProtocolRef(llvm::IRBuilder &Builder, const char
       *ProtocolName) =0;
   virtual llvm::Value *GenerateMessageSendSuper(llvm::IRBuilder &Builder,
-                                            const llvm::Type *ReturnTy,
-                                            llvm::Value *Sender,
-                                            const char *SuperClassName,
-                                            llvm::Value *Receiver,
-                                            llvm::Value *Selector,
-                                            llvm::Value** ArgV,
-                                            unsigned ArgC) {return NULL;};
+                                                const llvm::Type *ReturnTy,
+                                                llvm::Value *Sender,
+                                                const char *SuperClassName,
+                                                llvm::Value *Receiver,
+                                                Selector Sel,
+                                                llvm::Value** ArgV,
+                                                unsigned ArgC) = 0;
   /// Generate the named protocol.  Protocols contain method metadata but no 
   /// implementations. 
   virtual void GenerateProtocol(const char *ProtocolName,

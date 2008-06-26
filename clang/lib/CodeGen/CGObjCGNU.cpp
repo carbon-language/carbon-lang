@@ -109,18 +109,20 @@ public:
                                            llvm::Value** ArgV,
                                            unsigned ArgC);
   virtual llvm::Value *GenerateMessageSendSuper(llvm::IRBuilder &Builder,
-                                            const llvm::Type *ReturnTy,
-                                            llvm::Value *Sender,
-                                            const char *SuperClassName,
-                                            llvm::Value *Receiver,
-                                            llvm::Value *Selector,
-                                            llvm::Value** ArgV,
-                                            unsigned ArgC);
+                                                const llvm::Type *ReturnTy,
+                                                llvm::Value *Sender,
+                                                const char *SuperClassName,
+                                                llvm::Value *Receiver,
+                                                Selector Sel,
+                                                llvm::Value** ArgV,
+                                                unsigned ArgC);
   virtual llvm::Value *LookupClass(llvm::IRBuilder &Builder, llvm::Value
       *ClassName);
   virtual llvm::Value *GetSelector(llvm::IRBuilder &Builder,
-      llvm::Value *SelName,
-      llvm::Value *SelTypes);
+                                   llvm::Value *SelName,
+                                   llvm::Value *SelTypes);
+  llvm::Value *GetSelector(llvm::IRBuilder &Builder, Selector Sel);
+  
   virtual llvm::Function *MethodPreamble(
                                          const std::string &ClassName,
                                          const std::string &CategoryName,
@@ -217,6 +219,20 @@ llvm::Value *CGObjCGNU::LookupClass(llvm::IRBuilder &Builder,
     TheModule.getOrInsertFunction("objc_lookup_class", IdTy, PtrToInt8Ty,
         NULL);
   return Builder.CreateCall(ClassLookupFn, ClassName);
+}
+
+/// GetSelector - Return the pointer to the unique'd string for this selector.
+llvm::Value *CGObjCGNU::GetSelector(llvm::IRBuilder &Builder, Selector Sel) {
+  // FIXME: uniquing on the string is wasteful, unique on Sel instead!
+  llvm::GlobalAlias *&US = UntypedSelectors[Sel.getName()];
+  if (US == 0)
+    US = new llvm::GlobalAlias(llvm::PointerType::getUnqual(SelectorTy),
+                               llvm::GlobalValue::InternalLinkage,
+                               ".objc_untyped_selector_alias",
+                               NULL, &TheModule);
+  
+  return Builder.CreateLoad(US);
+  
 }
 
 /// Looks up the selector for the specified name / type pair.
@@ -319,17 +335,17 @@ llvm::Constant *CGObjCGNU::GenerateConstantString(const char *String, const
 ///send to self with special delivery semantics indicating which class's method
 ///should be called.
 llvm::Value *CGObjCGNU::GenerateMessageSendSuper(llvm::IRBuilder &Builder,
-                                            const llvm::Type *ReturnTy,
-                                            llvm::Value *Sender,
-                                            const char *SuperClassName,
-                                            llvm::Value *Receiver,
-                                            llvm::Value *Selector,
-                                            llvm::Value** ArgV,
-                                            unsigned ArgC) {
+                                                 const llvm::Type *ReturnTy,
+                                                 llvm::Value *Sender,
+                                                 const char *SuperClassName,
+                                                 llvm::Value *Receiver,
+                                                 Selector Sel,
+                                                 llvm::Value** ArgV,
+                                                 unsigned ArgC) {
   // TODO: This should be cached, not looked up every time.
   llvm::Value *ReceiverClass = LookupClass(Builder,
       MakeConstantString(SuperClassName));
-  llvm::Value *cmd = GetSelector(Builder, Selector, 0);
+  llvm::Value *cmd = GetSelector(Builder, Sel);
   std::vector<const llvm::Type*> impArgTypes;
   impArgTypes.push_back(Receiver->getType());
   impArgTypes.push_back(SelectorTy);
