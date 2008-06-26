@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Constants.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/GlobalAlias.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
@@ -2594,8 +2595,7 @@ static bool isMemSrcFromString(SDOperand Src, std::string &Str,
 
   GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
   if (GV && GV->isConstant()) {
-    Str = GV->getStringValue(false);
-    if (!Str.empty()) {
+    if (GetConstantStringInfo(GV, Str)) {
       SrcOff += SrcDelta;
       return true;
     }

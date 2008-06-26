@@ -15,6 +15,8 @@
 #ifndef LLVM_ANALYSIS_VALUETRACKING_H
 #define LLVM_ANALYSIS_VALUETRACKING_H
 
+#include <string>
+
 namespace llvm {
   class Value;
   class Instruction;
@@ -70,6 +72,11 @@ namespace llvm {
     const unsigned Idxs[1] = { Idx };
     return FindInsertedValue(V, &Idxs[0], &Idxs[1], InsertBefore);
   }
+  
+  /// GetConstantStringInfo - This function computes the length of a
+  /// null-terminated C string pointed to by V.  If successful, it returns true
+  /// and returns the string in Str.  If unsuccessful, it returns false.
+  bool GetConstantStringInfo(Value *V, std::string &Str);
 } // end namespace llvm
 
 #endif
