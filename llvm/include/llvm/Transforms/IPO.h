@@ -118,7 +118,7 @@ ModulePass *createInternalizePass(bool AllButMain);
 ///
 /// Note that commandline options that are used with the above function are not
 /// used now! Also, when exportList is empty, nothing is internalized.
-ModulePass *createInternalizePass(const std::vector<const char *> &exportList)
+ModulePass *createInternalizePass(const std::vector<const char *> &exportList);
 
 //===----------------------------------------------------------------------===//
 /// createDeadArgEliminationPass - This pass removes arguments from functions
