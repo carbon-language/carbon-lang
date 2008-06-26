@@ -432,7 +432,7 @@ public:
                                           FileManager &FMgr);
   
 private:
-  friend class SrcMgr::ContentCache; // Used for deserialization.
+  friend struct SrcMgr::ContentCache; // Used for deserialization.
   
   /// createFileID - Create a new fileID for the specified ContentCache and
   ///  include position.  This works regardless of whether the ContentCache
