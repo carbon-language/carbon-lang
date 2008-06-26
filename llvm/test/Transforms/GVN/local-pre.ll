@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -gvn | llvm-dis | grep {b.pre}
+; RUN: llvm-as < %s | opt -gvn -enable-pre | llvm-dis | grep {b.pre}
 
 define i32 @main(i32 %p) {
 block1:
