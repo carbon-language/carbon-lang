@@ -1449,9 +1449,9 @@ private:
   unsigned Alignment;
 
 public:
-  MemSDNode(unsigned Opc, SDVTList VTs, const Value *SrcValue,
-            unsigned Alignment)
-    : SDNode(Opc, VTs), SrcValue(SrcValue), Alignment(Alignment) {}
+  MemSDNode(unsigned Opc, SDVTList VTs, const Value *srcValue,
+            unsigned alignment)
+    : SDNode(Opc, VTs), SrcValue(srcValue), Alignment(alignment) {}
   
   virtual ~MemSDNode() {}
 

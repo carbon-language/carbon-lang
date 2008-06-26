@@ -130,10 +130,10 @@ class StringMapEntry : public StringMapEntryBase {
 public:
   ValueTy second;
 
-  explicit StringMapEntry(unsigned StrLen)
-    : StringMapEntryBase(StrLen), second() {}
-  StringMapEntry(unsigned StrLen, const ValueTy &V)
-    : StringMapEntryBase(StrLen), second(V) {}
+  explicit StringMapEntry(unsigned strLen)
+    : StringMapEntryBase(strLen), second() {}
+  StringMapEntry(unsigned strLen, const ValueTy &V)
+    : StringMapEntryBase(strLen), second(V) {}
 
   const ValueTy &getValue() const { return second; }
   ValueTy &getValue() { return second; }

@@ -26,7 +26,7 @@ public:
   
   void Reset() {}
 
-  void *Allocate(size_t Size, size_t Alignment) { return malloc(Size); }
+  void *Allocate(size_t Size, size_t /*Alignment*/) { return malloc(Size); }
   
   template <typename T>
   T *Allocate() { return static_cast<T*>(malloc(sizeof(T))); }
@@ -55,7 +55,7 @@ public:
     return static_cast<T*>(Allocate(sizeof(T),AlignOf<T>::Alignment));
   }
   
-  void Deallocate(void *Ptr) {}
+  void Deallocate(void */*Ptr*/) {}
 
   void PrintStats() const;
 };
