@@ -3852,7 +3852,7 @@ SDOperand DAGCombiner::visitSINT_TO_FP(SDNode *N) {
   
   // If the input is a legal type, and SINT_TO_FP is not legal on this target,
   // but UINT_TO_FP is legal on this target, try to convert.
-  if (TLI.isTypeLegal(OpVT) && !TLI.isOperationLegal(ISD::SINT_TO_FP, OpVT) &&
+  if (!TLI.isOperationLegal(ISD::SINT_TO_FP, OpVT) &&
       TLI.isOperationLegal(ISD::UINT_TO_FP, OpVT)) {
     // If the sign bit is known to be zero, we can change this to UINT_TO_FP. 
     if (DAG.SignBitIsZero(N0))
@@ -3875,7 +3875,7 @@ SDOperand DAGCombiner::visitUINT_TO_FP(SDNode *N) {
   
   // If the input is a legal type, and UINT_TO_FP is not legal on this target,
   // but SINT_TO_FP is legal on this target, try to convert.
-  if (TLI.isTypeLegal(OpVT) && !TLI.isOperationLegal(ISD::UINT_TO_FP, OpVT) &&
+  if (!TLI.isOperationLegal(ISD::UINT_TO_FP, OpVT) &&
       TLI.isOperationLegal(ISD::SINT_TO_FP, OpVT)) {
     // If the sign bit is known to be zero, we can change this to SINT_TO_FP. 
     if (DAG.SignBitIsZero(N0))
