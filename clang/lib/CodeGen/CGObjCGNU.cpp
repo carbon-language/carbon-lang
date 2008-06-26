@@ -22,6 +22,15 @@
 #include "llvm/ADT/StringMap.h"
 #include <map>
 
+// FIXME: Remove THIS!
+#include "llvm/Analysis/ValueTracking.h"
+std::string getStringValue(llvm::Constant *C) {
+  std::string R;
+  bool V = GetConstantStringInfo(C, R);
+  assert(V && "Couldn't convert string");
+  return R;
+}
+
 using llvm::dyn_cast;
 
 // The version of the runtime that this class targets.  Must match the version
@@ -221,23 +230,23 @@ llvm::Value *CGObjCGNU::GetSelector(llvm::IRBuilder &Builder,
     // Untyped selector
     if (SelTypes == 0) {
       // If it's already cached, return it.
-      if (UntypedSelectors[CName->getStringValue()]) {
+      if (UntypedSelectors[getStringValue(CName)]) {
         // FIXME: Volatility
-        return Builder.CreateLoad(UntypedSelectors[CName->getStringValue()]);
+        return Builder.CreateLoad(UntypedSelectors[getStringValue(CName)]);
       }
       // If it isn't, cache it.
       llvm::GlobalAlias *Sel = new llvm::GlobalAlias(
           llvm::PointerType::getUnqual(SelectorTy),
           llvm::GlobalValue::InternalLinkage, ".objc_untyped_selector_alias",
           NULL, &TheModule);
-      UntypedSelectors[CName->getStringValue()] = Sel;
+      UntypedSelectors[getStringValue(CName)] = Sel;
       // FIXME: Volatility
       return Builder.CreateLoad(Sel);
     }
     // Typed selectors
     if (llvm::Constant *CTypes = dyn_cast<llvm::Constant>(SelTypes)) {
-      TypedSelector Selector = TypedSelector(CName->getStringValue(),
-          CTypes->getStringValue());
+      TypedSelector Selector = TypedSelector(getStringValue(CName),
+                                             getStringValue(CTypes));
       // If it's already cached, return it.
       if (TypedSelectors[Selector]) {
         // FIXME: Volatility
@@ -439,7 +448,8 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const std::string &ClassName,
           llvm::ConstantExpr::getGetElementPtr(MethodTypes[i], Zeros, 2));
     llvm::Constant *Method =
       TheModule.getFunction(SymbolNameForMethod(ClassName, CategoryName,
-            MethodNames[i]->getStringValue(), isClassMethodList));
+                                                getStringValue(MethodNames[i]),
+                                                isClassMethodList));
     Method = llvm::ConstantExpr::getBitCast(Method,
         llvm::PointerType::getUnqual(IMPTy));
     Elements.push_back(Method);
@@ -567,7 +577,7 @@ llvm::Constant *CGObjCGNU::GenerateClassStructure(
   Elements.push_back(NullP);
   // Create an instance of the structure
   return MakeGlobal(ClassTy, Elements,
-      SymbolNameForClass(Name->getStringValue()));
+                    SymbolNameForClass(getStringValue(Name)));
 }
 
 llvm::Constant *CGObjCGNU::GenerateProtocolMethodList(
