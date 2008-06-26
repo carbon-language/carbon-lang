@@ -95,6 +95,12 @@ public:
   /// doFinalization - Run all of the finalizers for the function passes.
   ///
   bool doFinalization();
+  
+  /// getModuleProvider - Return the module provider that this passmanager is
+  /// currently using.  This is the module provider that it uses when a function
+  /// is optimized that is non-resident in the module.
+  ModuleProvider *getModuleProvider() const { return MP; }
+  void setModuleProvider(ModuleProvider *NewMP) { MP = NewMP; }
 
 private:
   FunctionPassManagerImpl *FPM;
