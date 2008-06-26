@@ -24,16 +24,6 @@
 #include "llvm/ADT/StringMap.h"
 #include <map>
 using namespace clang;
-
-// FIXME: Remove THIS!
-#include "llvm/Analysis/ValueTracking.h"
-std::string getStringValue(llvm::Constant *C) {
-  std::string R;
-  bool V = GetConstantStringInfo(C, R);
-  assert(V && "Couldn't convert string");
-  return R;
-}
-
 using llvm::dyn_cast;
 
 // The version of the runtime that this class targets.  Must match the version
@@ -73,7 +63,7 @@ private:
       const llvm::SmallVectorImpl<llvm::Constant *>  &IvarOffsets);
   llvm::Constant *GenerateMethodList(const std::string &ClassName,
       const std::string &CategoryName,
-      const llvm::SmallVectorImpl<llvm::Constant *>  &MethodNames, 
+      const llvm::SmallVectorImpl<Selector>  &MethodSels, 
       const llvm::SmallVectorImpl<llvm::Constant *>  &MethodTypes, 
       bool isClassMethodList);
   llvm::Constant *GenerateProtocolList(
@@ -131,9 +121,9 @@ public:
                                          bool isClassMethod,
                                          bool isVarArg);
   virtual void GenerateCategory(const char *ClassName, const char *CategoryName,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodNames,
+           const llvm::SmallVectorImpl<Selector>  &InstanceMethodSels,
            const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodTypes,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodNames,
+           const llvm::SmallVectorImpl<Selector>  &ClassMethodSels,
            const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes,
            const llvm::SmallVectorImpl<std::string> &Protocols);
   virtual void GenerateClass(
@@ -143,9 +133,9 @@ public:
            const llvm::SmallVectorImpl<llvm::Constant *>  &IvarNames,
            const llvm::SmallVectorImpl<llvm::Constant *>  &IvarTypes,
            const llvm::SmallVectorImpl<llvm::Constant *>  &IvarOffsets,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodNames,
+           const llvm::SmallVectorImpl<Selector>  &InstanceMethodSels,
            const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodTypes,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodNames,
+           const llvm::SmallVectorImpl<Selector>  &ClassMethodSels,
            const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes,
            const llvm::SmallVectorImpl<std::string> &Protocols);
   virtual llvm::Value *GenerateProtocolRef(llvm::IRBuilder &Builder, const char
@@ -376,8 +366,8 @@ llvm::Value *CGObjCGNU::GenerateMessageSend(llvm::IRBuilder &Builder,
 /// Generates a MethodList.  Used in construction of a objc_class and 
 /// objc_category structures.
 llvm::Constant *CGObjCGNU::GenerateMethodList(const std::string &ClassName,
-    const std::string &CategoryName, 
-    const llvm::SmallVectorImpl<llvm::Constant *> &MethodNames, 
+                                              const std::string &CategoryName, 
+    const llvm::SmallVectorImpl<Selector> &MethodSels, 
     const llvm::SmallVectorImpl<llvm::Constant *> &MethodTypes, 
     bool isClassMethodList) {
   // Get the method structure type.  
@@ -390,13 +380,13 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const std::string &ClassName,
   std::vector<llvm::Constant*> Elements;
   for (unsigned int i = 0, e = MethodTypes.size(); i < e; ++i) {
     Elements.clear();
-    Elements.push_back(llvm::ConstantExpr::getGetElementPtr(MethodNames[i],
-                                                            Zeros, 2));
+    llvm::Constant *C = CGM.GetAddrOfConstantString(MethodSels[i].getName());
+    Elements.push_back(llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2));
     Elements.push_back(
           llvm::ConstantExpr::getGetElementPtr(MethodTypes[i], Zeros, 2));
     llvm::Constant *Method =
       TheModule.getFunction(SymbolNameForMethod(ClassName, CategoryName,
-                                                getStringValue(MethodNames[i]),
+                                                MethodSels[i].getName(),
                                                 isClassMethodList));
     Method = llvm::ConstantExpr::getBitCast(Method,
         llvm::PointerType::getUnqual(IMPTy));
@@ -406,7 +396,7 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const std::string &ClassName,
 
   // Array of method structures
   llvm::ArrayType *ObjCMethodArrayTy = llvm::ArrayType::get(ObjCMethodTy,
-                                                            MethodNames.size());
+                                                            MethodSels.size());
   llvm::Constant *MethodArray = llvm::ConstantArray::get(ObjCMethodArrayTy,
                                                          Methods);
 
@@ -625,9 +615,9 @@ void CGObjCGNU::GenerateProtocol(const char *ProtocolName,
 void CGObjCGNU::GenerateCategory(
            const char *ClassName,
            const char *CategoryName,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodNames,
+           const llvm::SmallVectorImpl<Selector>  &InstanceMethodSels,
            const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodTypes,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodNames,
+           const llvm::SmallVectorImpl<Selector>  &ClassMethodSels,
            const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes,
            const llvm::SmallVectorImpl<std::string> &Protocols) {
   std::vector<llvm::Constant*> Elements;
@@ -635,11 +625,11 @@ void CGObjCGNU::GenerateCategory(
   Elements.push_back(MakeConstantString(ClassName));
   // Instance method list 
   Elements.push_back(llvm::ConstantExpr::getBitCast(GenerateMethodList(
-          ClassName, CategoryName, InstanceMethodNames, InstanceMethodTypes,
+          ClassName, CategoryName, InstanceMethodSels, InstanceMethodTypes,
           false), PtrTy));
   // Class method list
   Elements.push_back(llvm::ConstantExpr::getBitCast(GenerateMethodList(
-          ClassName, CategoryName, ClassMethodNames, ClassMethodTypes, true),
+          ClassName, CategoryName, ClassMethodSels, ClassMethodTypes, true),
         PtrTy));
   // Protocol list
   Elements.push_back(llvm::ConstantExpr::getBitCast(
@@ -655,9 +645,9 @@ void CGObjCGNU::GenerateClass(
            const llvm::SmallVectorImpl<llvm::Constant *>  &IvarNames,
            const llvm::SmallVectorImpl<llvm::Constant *>  &IvarTypes,
            const llvm::SmallVectorImpl<llvm::Constant *>  &IvarOffsets,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodNames,
+           const llvm::SmallVectorImpl<Selector>  &InstanceMethodSels,
            const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodTypes,
-           const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodNames,
+           const llvm::SmallVectorImpl<Selector>  &ClassMethodSels,
            const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes,
            const llvm::SmallVectorImpl<std::string> &Protocols) {
   // Get the superclass pointer.
@@ -672,9 +662,9 @@ void CGObjCGNU::GenerateClass(
   llvm::SmallVector<llvm::Constant*, 1>  empty;
   // Generate the method and instance variable lists
   llvm::Constant *MethodList = GenerateMethodList(ClassName, "",
-      InstanceMethodNames, InstanceMethodTypes, false);
+      InstanceMethodSels, InstanceMethodTypes, false);
   llvm::Constant *ClassMethodList = GenerateMethodList(ClassName, "",
-      ClassMethodNames, ClassMethodTypes, true);
+      ClassMethodSels, ClassMethodTypes, true);
   llvm::Constant *IvarList = GenerateIvarList(IvarNames, IvarTypes,
       IvarOffsets);
   //Generate metaclass for class methods

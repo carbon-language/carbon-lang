@@ -60,9 +60,9 @@ public:
   /// Generate a category.  A category contains a list of methods (and
   /// accompanying metadata) and a list of protocols.
   virtual void GenerateCategory(const char *ClassName, const char *CategoryName,
-             const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodNames,
+             const llvm::SmallVectorImpl<Selector>  &InstanceMethodSels,
              const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodTypes,
-             const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodNames,
+             const llvm::SmallVectorImpl<Selector>  &ClassMethodSels,
              const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes,
              const llvm::SmallVectorImpl<std::string> &Protocols) =0;
   /// Generate a class stucture for this class.
@@ -73,9 +73,9 @@ public:
              const llvm::SmallVectorImpl<llvm::Constant *>  &IvarNames,
              const llvm::SmallVectorImpl<llvm::Constant *>  &IvarTypes,
              const llvm::SmallVectorImpl<llvm::Constant *>  &IvarOffsets,
-             const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodNames,
+             const llvm::SmallVectorImpl<Selector>  &InstanceMethodSels,
              const llvm::SmallVectorImpl<llvm::Constant *>  &InstanceMethodTypes,
-             const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodNames,
+             const llvm::SmallVectorImpl<Selector>  &ClassMethodSels,
              const llvm::SmallVectorImpl<llvm::Constant *>  &ClassMethodTypes,
              const llvm::SmallVectorImpl<std::string> &Protocols) =0;
   /// Generate a reference to the named protocol.
