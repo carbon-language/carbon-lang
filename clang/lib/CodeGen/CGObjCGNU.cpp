@@ -82,7 +82,7 @@ private:
       llvm::Constant *MetaClass,
       llvm::Constant *SuperClass,
       unsigned info,
-      llvm::Constant *Name,
+      const char *Name,
       llvm::Constant *Version,
       llvm::Constant *InstanceSize,
       llvm::Constant *IVars,
@@ -480,7 +480,7 @@ llvm::Constant *CGObjCGNU::GenerateClassStructure(
     llvm::Constant *MetaClass,
     llvm::Constant *SuperClass,
     unsigned info,
-    llvm::Constant *Name,
+    const char *Name,
     llvm::Constant *Version,
     llvm::Constant *InstanceSize,
     llvm::Constant *IVars,
@@ -512,7 +512,7 @@ llvm::Constant *CGObjCGNU::GenerateClassStructure(
   std::vector<llvm::Constant*> Elements;
   Elements.push_back(llvm::ConstantExpr::getBitCast(MetaClass, PtrToInt8Ty));
   Elements.push_back(SuperClass);
-  Elements.push_back(Name);
+  Elements.push_back(MakeConstantString(Name, ".class_name"));
   Elements.push_back(Zero);
   Elements.push_back(llvm::ConstantInt::get(LongTy, info));
   Elements.push_back(InstanceSize);
@@ -525,7 +525,7 @@ llvm::Constant *CGObjCGNU::GenerateClassStructure(
   Elements.push_back(NullP);
   // Create an instance of the structure
   return MakeGlobal(ClassTy, Elements,
-                    SymbolNameForClass(getStringValue(Name)));
+                    SymbolNameForClass(Name));
 }
 
 llvm::Constant *CGObjCGNU::GenerateProtocolMethodList(
@@ -668,7 +668,6 @@ void CGObjCGNU::GenerateClass(
     SuperClass = llvm::ConstantPointerNull::get(
         llvm::cast<llvm::PointerType>(PtrToInt8Ty));
   }
-  llvm::Constant * Name = MakeConstantString(ClassName, ".class_name");
   // Empty vector used to construct empty method lists
   llvm::SmallVector<llvm::Constant*, 1>  empty;
   // Generate the method and instance variable lists
@@ -680,11 +679,11 @@ void CGObjCGNU::GenerateClass(
       IvarOffsets);
   //Generate metaclass for class methods
   llvm::Constant *MetaClassStruct = GenerateClassStructure(NULLPtr,
-      NULLPtr, 0x2L, NULLPtr, 0, Zeros[0], GenerateIvarList(
+      NULLPtr, 0x2L, /*name*/0, 0, Zeros[0], GenerateIvarList(
         empty, empty, empty), ClassMethodList, NULLPtr);
   // Generate the class structure
   llvm::Constant *ClassStruct = GenerateClassStructure(MetaClassStruct,
-      SuperClass, 0x1L, Name, 0,
+      SuperClass, 0x1L, ClassName, 0,
       llvm::ConstantInt::get(llvm::Type::Int32Ty, instanceSize), IvarList,
       MethodList, GenerateProtocolList(Protocols));
   // Add class structure to list to be added to the symtab later
