@@ -54,9 +54,6 @@ public:
   virtual llvm::Function *ModuleInitFunction() =0;
   /// Get a selector for the specified name and type values
   virtual llvm::Value *GetSelector(llvm::IRBuilder &Builder, Selector Sel) = 0;
-  virtual llvm::Value *GetSelector(llvm::IRBuilder &Builder,
-                                   llvm::Value *SelName,
-                                   llvm::Value *SelTypes) = 0;
   /// Generate a constant string object
   virtual llvm::Constant *GenerateConstantString(const char *String,
                                                  const size_t Length) = 0;
