@@ -106,14 +106,19 @@ Pass *createPruneEHPass();
 /// of the api.  If a list of symbols is specified with the
 /// -internalize-public-api-* command line options, those symbols are not
 /// internalized and all others are.  Otherwise if AllButMain is set and the
-/// main function is found, all other globals are marked as internal.
+/// main function is found, all other globals are marked as internal. If no api
+/// is supplied and AllButMain is not set, or no main function is found, nothing
+/// is internalized.
 ///
 ModulePass *createInternalizePass(bool AllButMain);
 
 /// createInternalizePass - This pass loops over all of the functions in the
 /// input module, internalizing all globals (functions and variables) not in the
 /// given exportList.
-ModulePass *createInternalizePass(const std::vector<const char *> &exportList);
+///
+/// Note that commandline options that are used with the above function are not
+/// used now! Also, when exportList is empty, nothing is internalized.
+ModulePass *createInternalizePass(const std::vector<const char *> &exportList)
 
 //===----------------------------------------------------------------------===//
 /// createDeadArgEliminationPass - This pass removes arguments from functions
