@@ -64,6 +64,8 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
      << "  virtual int getDwarfRegNumFull(unsigned RegNum, "
      << "unsigned Flavour) const;\n"
      << "  virtual int getDwarfRegNum(unsigned RegNum, bool isEH) const = 0;\n"
+     << "  virtual bool needsStackRealignment(const MachineFunction &) const\n"
+     << "     { return false; }\n"
      << "  unsigned getSubReg(unsigned RegNo, unsigned Index) const;\n"
      << "};\n\n";
 

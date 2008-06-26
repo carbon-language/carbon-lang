@@ -516,6 +516,13 @@ public:
     return !hasFP(MF);
   }
 
+  // needsStackRealignment - true if storage within the function requires the
+  // stack pointer to be aligned more than the normal calling convention calls
+  // for.
+  virtual bool needsStackRealignment(const MachineFunction &MF) const {
+    return false;
+  }
+
   /// getCallFrameSetup/DestroyOpcode - These methods return the opcode of the
   /// frame setup/destroy instructions if they exist (-1 otherwise).  Some
   /// targets use pseudo instructions in order to abstract away the difference

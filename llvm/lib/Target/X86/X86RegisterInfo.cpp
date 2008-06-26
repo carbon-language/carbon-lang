@@ -302,11 +302,9 @@ X86RegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
       // Skip the saved EBP
       Offset += SlotSize;
     else {
-      unsigned MaxAlign = MF.getFrameInfo()->getMaxAlignment();
-      uint64_t FrameSize =
-        (StackSize - SlotSize + MaxAlign - 1)/MaxAlign*MaxAlign;
-
-      return Offset + FrameSize - SlotSize;
+      unsigned Align = MF.getFrameInfo()->getObjectAlignment(FI);
+      assert( (-(Offset + StackSize)) % Align == 0);
+      return Offset + StackSize;
     }
 
     // FIXME: Support tail calls
