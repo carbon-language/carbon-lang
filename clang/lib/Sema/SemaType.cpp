@@ -21,7 +21,7 @@ using namespace clang;
 
 /// ConvertDeclSpecToType - Convert the specified declspec to the appropriate
 /// type object.  This returns null on error.
-QualType Sema::ConvertDeclSpecToType(DeclSpec &DS) {
+QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
   // FIXME: Should move the logic from DeclSpec::Finish to here for validity
   // checking.
   QualType Result;
@@ -168,8 +168,8 @@ QualType Sema::ConvertDeclSpecToType(DeclSpec &DS) {
   
   // See if there are any attributes on the declspec that apply to the type (as
   // opposed to the decl).
-  if (AttributeList *AL = DS.getAttributes())
-    DS.SetAttributes(ProcessTypeAttributes(Result, AL));
+  if (const AttributeList *AL = DS.getAttributes())
+    ProcessTypeAttributes(Result, AL);
     
   // Apply const/volatile/restrict qualifiers to T.
   if (unsigned TypeQuals = DS.getTypeQualifiers()) {
@@ -258,8 +258,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       T = Context.getPointerType(T).getQualifiedType(DeclType.Ptr.TypeQuals);
         
       // See if there are any attributes on the pointer that apply to it.
-      if (AttributeList *AL = DeclType.Ptr.AttrList)
-        DeclType.Ptr.AttrList = ProcessTypeAttributes(T, AL);
+      if (const AttributeList *AL = DeclType.Ptr.AttrList)
+        ProcessTypeAttributes(T, AL);
         
       break;
     case DeclaratorChunk::Reference:
@@ -288,8 +288,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         T.addRestrict();
         
       // See if there are any attributes on the pointer that apply to it.
-      if (AttributeList *AL = DeclType.Ref.AttrList)
-        DeclType.Ref.AttrList = ProcessTypeAttributes(T, AL);
+      if (const AttributeList *AL = DeclType.Ref.AttrList)
+        ProcessTypeAttributes(T, AL);
       break;
     case DeclaratorChunk::Array: {
       DeclaratorChunk::ArrayTypeInfo &ATI = DeclType.Arr;
@@ -513,46 +513,27 @@ Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
   return T.getAsOpaquePtr();
 }
 
-AttributeList *Sema::ProcessTypeAttributes(QualType &Result, AttributeList *AL){
+void Sema::ProcessTypeAttributes(QualType &Result, const AttributeList *AL) {
   // Scan through and apply attributes to this type where it makes sense.  Some
   // attributes (such as __address_space__, __vector_size__, etc) apply to the
   // type, but others can be present in the type specifiers even though they
-  // apply to the decl.  Here we apply and delete attributes that apply to the
-  // type and leave the others alone.
-  llvm::SmallVector<AttributeList *, 8> LeftOverAttrs;
-  while (AL) {
-    // Unlink this attribute from the chain, so we can process it independently.
-    AttributeList *ThisAttr = AL;
-    AL = AL->getNext();
-    ThisAttr->setNext(0);
-    
+  // apply to the decl.  Here we apply type attributes and ignore the rest.
+  for (; AL; AL = AL->getNext()) {
     // If this is an attribute we can handle, do so now, otherwise, add it to
     // the LeftOverAttrs list for rechaining.
-    switch (ThisAttr->getKind()) {
+    switch (AL->getKind()) {
     default: break;
     case AttributeList::AT_address_space:
-      Result = HandleAddressSpaceTypeAttribute(Result, ThisAttr);
-      delete ThisAttr;  // Consume the attribute.
+      Result = HandleAddressSpaceTypeAttribute(Result, AL);
       continue;
     }
-    
-    LeftOverAttrs.push_back(ThisAttr);
   }
-  
-  // Rechain any attributes that haven't been deleted to the DeclSpec.
-  AttributeList *List = 0;
-  for (unsigned i = 0, e = LeftOverAttrs.size(); i != e; ++i) {
-    LeftOverAttrs[i]->setNext(List);
-    List = LeftOverAttrs[i];
-  }
-  
-  return List;
 }
 
 /// HandleAddressSpaceTypeAttribute - Process an address_space attribute on the
 /// specified type.
 QualType Sema::HandleAddressSpaceTypeAttribute(QualType Type, 
-                                               AttributeList *Attr) {
+                                               const AttributeList *Attr) {
   // If this type is already address space qualified, reject it.
   // Clause 6.7.3 - Type qualifiers: "No type shall be qualified by qualifiers
   // for two or more different address spaces."

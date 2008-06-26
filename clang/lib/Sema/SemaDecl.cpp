@@ -2350,17 +2350,7 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *Attr) {
            diag::err_typecheck_ext_vector_not_typedef);
     break;
   case AttributeList::AT_address_space:
-    if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New)) {
-      QualType newType = HandleAddressSpaceTypeAttribute(
-                                                  tDecl->getUnderlyingType(), 
-                                                  Attr);
-      tDecl->setUnderlyingType(newType);
-    } else if (ValueDecl *vDecl = dyn_cast<ValueDecl>(New)) {
-      QualType newType = HandleAddressSpaceTypeAttribute(vDecl->getType(), 
-                                                         Attr);
-      // install the new addr spaced type into the decl
-      vDecl->setType(newType);
-    }
+    // Ignore this, this is a type attribute, handled by ProcessTypeAttributes.
     break;
   case AttributeList::AT_mode:
     if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New)) {
@@ -2430,10 +2420,25 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *Attr) {
 
 void Sema::HandleDeclAttributes(Decl *New, AttributeList *declspec_prefix,
                                 AttributeList *declarator_postfix) {
+  if (declspec_prefix == 0 && declarator_postfix == 0) return;
+  
   while (declspec_prefix) {
     HandleDeclAttribute(New, declspec_prefix);
     declspec_prefix = declspec_prefix->getNext();
   }
+  
+  // If there are any type attributes that were in the declarator, apply them to
+  // its top level type.
+  if (ValueDecl *VD = dyn_cast<ValueDecl>(New)) {
+    QualType DT = VD->getType();
+    ProcessTypeAttributes(DT, declarator_postfix);
+    VD->setType(DT);
+  } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(New)) {
+    QualType DT = TD->getUnderlyingType();
+    ProcessTypeAttributes(DT, declarator_postfix);
+    TD->setUnderlyingType(DT);
+  }
+  
   while (declarator_postfix) {
     HandleDeclAttribute(New, declarator_postfix);
     declarator_postfix = declarator_postfix->getNext();

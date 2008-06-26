@@ -198,8 +198,8 @@ public:
   //===--------------------------------------------------------------------===//
   // Type Analysis / Processing: SemaType.cpp.
   //
-  QualType ConvertDeclSpecToType(DeclSpec &DS);
-  AttributeList *ProcessTypeAttributes(QualType &Result, AttributeList *AL);
+  QualType ConvertDeclSpecToType(const DeclSpec &DS);
+  void ProcessTypeAttributes(QualType &Result, const AttributeList *AL);
   QualType GetTypeForDeclarator(Declarator &D, Scope *S);
 
   
@@ -305,7 +305,7 @@ private:
   /// The raw attribute contains 1 argument, the id of the address space 
   /// for the type.
   QualType HandleAddressSpaceTypeAttribute(QualType curType, 
-                                           AttributeList *rawAttr);
+                                           const AttributeList *rawAttr);
 
   /// HandleModeTypeAttribute - this attribute modifies the width of a
   /// primitive type.  Note that this is a variable attribute, and not
