@@ -91,8 +91,8 @@ sys::IdentifyFileType(const char*magic, unsigned length) {
       break;
 
     case 0xFE:
-    case 0xCE:
-      uint16_t type;
+    case 0xCE: {
+      uint16_t type = 0;
       if (magic[0] == char(0xFE) && magic[1] == char(0xED) && 
           magic[2] == char(0xFA) && magic[3] == char(0xCE)) {
         /* Native endian */
@@ -101,7 +101,7 @@ sys::IdentifyFileType(const char*magic, unsigned length) {
                  magic[2] == char(0xED) && magic[3] == char(0xFE)) {
         /* Reverse endian */
         if (length >= 14) type = magic[13] << 8 | magic[12];
-      } 
+      }
       switch (type) {
         default: break;      
         case 1: return Mach_O_Object_FileType; 
@@ -116,7 +116,7 @@ sys::IdentifyFileType(const char*magic, unsigned length) {
         case 10: break; // FIXME: MH_DSYM companion file with only debug.
       }
       break;
-
+    }
     case 0xF0: // PowerPC Windows
     case 0x83: // Alpha 32-bit
     case 0x84: // Alpha 64-bit
