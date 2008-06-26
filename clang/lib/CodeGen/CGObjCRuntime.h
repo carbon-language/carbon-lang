@@ -46,7 +46,7 @@ public:
                                            const llvm::Type *ReturnTy,
                                            llvm::Value *Sender,
                                            llvm::Value *Receiver,
-                                           llvm::Value *Selector,
+                                           Selector Sel,
                                            llvm::Value** ArgV,
                                            unsigned ArgC) =0;
   /// Generate the function required to register all Objective-C components in

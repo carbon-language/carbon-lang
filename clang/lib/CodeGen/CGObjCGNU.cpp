@@ -105,7 +105,7 @@ public:
                                            const llvm::Type *ReturnTy,
                                            llvm::Value *Sender,
                                            llvm::Value *Receiver,
-                                           llvm::Value *Selector,
+                                           Selector Sel,
                                            llvm::Value** ArgV,
                                            unsigned ArgC);
   virtual llvm::Value *GenerateMessageSendSuper(llvm::IRBuilder &Builder,
@@ -116,8 +116,8 @@ public:
                                                 Selector Sel,
                                                 llvm::Value** ArgV,
                                                 unsigned ArgC);
-  virtual llvm::Value *LookupClass(llvm::IRBuilder &Builder, llvm::Value
-      *ClassName);
+  virtual llvm::Value *LookupClass(llvm::IRBuilder &Builder,
+                                   llvm::Value *ClassName);
   virtual llvm::Value *GetSelector(llvm::IRBuilder &Builder, Selector Sel);
   virtual llvm::Value *GetSelector(llvm::IRBuilder &Builder,
                                    llvm::Value *SelName,
@@ -385,10 +385,10 @@ llvm::Value *CGObjCGNU::GenerateMessageSend(llvm::IRBuilder &Builder,
                                             const llvm::Type *ReturnTy,
                                             llvm::Value *Sender,
                                             llvm::Value *Receiver,
-                                            llvm::Value *Selector,
+                                            Selector Sel,
                                             llvm::Value** ArgV,
                                             unsigned ArgC) {
-  llvm::Value *cmd = GetSelector(Builder, Selector, 0);
+  llvm::Value *cmd = GetSelector(Builder, Sel);
 
   // Look up the method implementation.
   std::vector<const llvm::Type*> impArgTypes;

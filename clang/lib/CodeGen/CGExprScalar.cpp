@@ -490,14 +490,9 @@ Value *ScalarExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
     }
   }
 
-  // Get the selector string
-  std::string SelStr = E->getSelector().getName();
-  llvm::Constant *Selector = CGF.CGM.GetAddrOfConstantString(SelStr);
-
-  llvm::Value *SelPtr = Builder.CreateStructGEP(Selector, 0);
   return Runtime->GenerateMessageSend(Builder, ConvertType(E->getType()),
                                       CGF.LoadObjCSelf(),
-                                      Receiver, SelPtr,
+                                      Receiver, E->getSelector(),
                                       &Args[0], Args.size());
 }
 

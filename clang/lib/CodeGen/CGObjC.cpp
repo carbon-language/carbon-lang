@@ -86,14 +86,9 @@ llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
     }
   }
 
-  // Get the selector string
-  std::string SelStr = E->getSelector().getName();
-  llvm::Constant *Selector = CGM.GetAddrOfConstantString(SelStr);
-
-  llvm::Value *SelPtr = Builder.CreateStructGEP(Selector, 0);
   if (isSuperMessage) {
-    const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(CurFuncDecl);
-    assert(OMD && "super is only valid in an Objective-C method");
+    // super is only valid in an Objective-C method
+    const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
     const char *SuperClass =
       OMD->getClassInterface()->getSuperClass()->getName();
     return Runtime->GenerateMessageSendSuper(Builder, ConvertType(E->getType()),
@@ -103,7 +98,7 @@ llvm::Value *CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E) {
   }
   return Runtime->GenerateMessageSend(Builder, ConvertType(E->getType()),
                                       LoadObjCSelf(),
-                                      Receiver, SelPtr,
+                                      Receiver, E->getSelector(),
                                       &Args[0], Args.size());
 }
 
