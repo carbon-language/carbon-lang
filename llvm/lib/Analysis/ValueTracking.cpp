@@ -1004,6 +1004,7 @@ bool llvm::GetConstantStringInfo(Value *V, std::string &Str) {
   
   // Traverse the constant array from StartIdx (derived above) which is
   // the place the GEP refers to in the array.
+  Str.reserve(NumElts);
   for (unsigned i = StartIdx; i < NumElts; ++i) {
     Constant *Elt = Array->getOperand(i);
     ConstantInt *CI = dyn_cast<ConstantInt>(Elt);
