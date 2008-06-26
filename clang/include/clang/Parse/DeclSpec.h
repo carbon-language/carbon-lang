@@ -570,8 +570,15 @@ public:
 
   /// getDeclSpec - Return the declaration-specifier that this declarator was
   /// declared with.
-  DeclSpec &getDeclSpec() const { return DS; }
+  const DeclSpec &getDeclSpec() const { return DS; }
   
+  /// getMutableDeclSpec - Return a non-const version of the DeclSpec.  This
+  /// should be used with extreme care: declspecs can often be shared between
+  /// multiple declarators, so mutating the DeclSpec affects all of the
+  /// Declarators.  This should only be done when the declspec is known to not
+  /// be shared or when in error recovery etc.
+  DeclSpec &getMutableDeclSpec() { return DS; }
+
   TheContext getContext() const { return Context; }
   
   // getSourceRange - FIXME: This should be implemented.

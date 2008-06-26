@@ -296,9 +296,9 @@ private:
   ScopedDecl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
                                  Scope *S);
   // Decl attributes - this routine is the top level dispatcher. 
-  void HandleDeclAttributes(Decl *New, AttributeList *declspec_prefix,
-                            AttributeList *declarator_postfix);
-  void HandleDeclAttribute(Decl *New, AttributeList *rawAttr);
+  void HandleDeclAttributes(Decl *New, const AttributeList *DeclSpecAttrs,
+                            const AttributeList *DeclaratorAttrs);
+  void HandleDeclAttribute(Decl *New, const AttributeList *rawAttr);
 
   /// HandleAddressSpaceTypeAttribute - this attribute is only applicable to 
   /// objects without automatic storage duration. 
@@ -311,7 +311,7 @@ private:
   /// primitive type.  Note that this is a variable attribute, and not
   /// a type attribute.
   QualType HandleModeTypeAttribute(QualType curType, 
-                                   AttributeList *rawAttr);                                
+                                   const AttributeList *rawAttr);
 
   // HandleVectorTypeAttribute - this attribute is only applicable to 
   // integral and float scalars, although arrays, pointers, and function
@@ -321,24 +321,26 @@ private:
   // The raw attribute should contain precisely 1 argument, the vector size 
   // for the variable, measured in bytes. If curType and rawAttr are well
   // formed, this routine will return a new vector type.
-  QualType HandleVectorTypeAttribute(QualType curType, AttributeList *rawAttr);
-  void HandleExtVectorTypeAttribute(TypedefDecl *d, AttributeList *rawAttr);
+  QualType HandleVectorTypeAttribute(QualType curType,
+                                     const AttributeList *rawAttr);
+  void HandleExtVectorTypeAttribute(TypedefDecl *d, 
+                                    const AttributeList *rawAttr);
   
-  void HandleAlignedAttribute(Decl *d, AttributeList *rawAttr);
-  void HandleAliasAttribute(Decl *d, AttributeList *rawAttr);
-  void HandlePackedAttribute(Decl *d, AttributeList *rawAttr);
-  void HandleAnnotateAttribute(Decl *d, AttributeList *rawAttr);
-  void HandleNoReturnAttribute(Decl *d, AttributeList *rawAttr);
-  void HandleDeprecatedAttribute(Decl *d, AttributeList *rawAttr);
-  void HandleWeakAttribute(Decl *d, AttributeList *rawAttr);
-  void HandleDLLImportAttribute(Decl *d, AttributeList *rawAttr);
-  void HandleDLLExportAttribute(Decl *d, AttributeList *rawAttr);
-  void HandleVisibilityAttribute(Decl *d, AttributeList *rawAttr);
-  void HandleNothrowAttribute(Decl *d, AttributeList *rawAttr);
-  void HandleFormatAttribute(Decl *d, AttributeList *rawAttr);
-  void HandleStdCallAttribute(Decl *d, AttributeList *rawAttr);
-  void HandleFastCallAttribute(Decl *d, AttributeList *rawAttr);
-  void HandleTransparentUnionAttribute(Decl *d, AttributeList *rawAttr);
+  void HandleAlignedAttribute(Decl *d, const AttributeList *rawAttr);
+  void HandleAliasAttribute(Decl *d, const AttributeList *rawAttr);
+  void HandlePackedAttribute(Decl *d, const AttributeList *rawAttr);
+  void HandleAnnotateAttribute(Decl *d, const AttributeList *rawAttr);
+  void HandleNoReturnAttribute(Decl *d, const AttributeList *rawAttr);
+  void HandleDeprecatedAttribute(Decl *d, const AttributeList *rawAttr);
+  void HandleWeakAttribute(Decl *d, const AttributeList *rawAttr);
+  void HandleDLLImportAttribute(Decl *d, const AttributeList *rawAttr);
+  void HandleDLLExportAttribute(Decl *d, const AttributeList *rawAttr);
+  void HandleVisibilityAttribute(Decl *d, const AttributeList *rawAttr);
+  void HandleNothrowAttribute(Decl *d, const AttributeList *rawAttr);
+  void HandleFormatAttribute(Decl *d, const AttributeList *rawAttr);
+  void HandleStdCallAttribute(Decl *d, const AttributeList *rawAttr);
+  void HandleFastCallAttribute(Decl *d, const AttributeList *rawAttr);
+  void HandleTransparentUnionAttribute(Decl *d, const AttributeList *rawAttr);
   
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl);

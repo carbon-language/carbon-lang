@@ -563,7 +563,7 @@ QualType Sema::HandleAddressSpaceTypeAttribute(QualType Type,
 /// HandleModeTypeAttribute - Process a mode attribute on the
 /// specified type.
 QualType Sema::HandleModeTypeAttribute(QualType Type, 
-                                       AttributeList *Attr) {
+                                       const AttributeList *Attr) {
   // This attribute isn't documented, but glibc uses it.  It changes
   // the width of an int or unsigned int to the specified size.
 

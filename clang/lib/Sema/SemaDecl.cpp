@@ -1379,19 +1379,19 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
 /// to introduce parameters into function prototype scope.
 Sema::DeclTy *
 Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
-  DeclSpec &DS = D.getDeclSpec();
+  const DeclSpec &DS = D.getDeclSpec();
   
   // Verify C99 6.7.5.3p2: The only SCS allowed is 'register'.
   if (DS.getStorageClassSpec() != DeclSpec::SCS_unspecified &&
       DS.getStorageClassSpec() != DeclSpec::SCS_register) {
     Diag(DS.getStorageClassSpecLoc(),
          diag::err_invalid_storage_class_in_func_decl);
-    DS.ClearStorageClassSpecs();
+    D.getMutableDeclSpec().ClearStorageClassSpecs();
   }
   if (DS.isThreadSpecified()) {
     Diag(DS.getThreadSpecLoc(),
          diag::err_invalid_storage_class_in_func_decl);
-    DS.ClearStorageClassSpecs();
+    D.getMutableDeclSpec().ClearStorageClassSpecs();
   }
   
   // Check that there are no default arguments inside the type of this
@@ -2326,7 +2326,7 @@ Sema::DeclTy* Sema::ActOnLinkageSpec(SourceLocation Loc,
   return LinkageSpecDecl::Create(Context, Loc, Language, dcl);
 }
 
-void Sema::HandleDeclAttribute(Decl *New, AttributeList *Attr) {
+void Sema::HandleDeclAttribute(Decl *New, const AttributeList *Attr) {
   
   switch (Attr->getKind()) {
   case AttributeList::AT_vector_size:
@@ -2421,35 +2421,35 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *Attr) {
   }
 }
 
-void Sema::HandleDeclAttributes(Decl *New, AttributeList *declspec_prefix,
-                                AttributeList *declarator_postfix) {
-  if (declspec_prefix == 0 && declarator_postfix == 0) return;
+void Sema::HandleDeclAttributes(Decl *New, const AttributeList *DeclSpecAttrs,
+                                const AttributeList *DeclaratorAttrs) {
+  if (DeclSpecAttrs == 0 && DeclaratorAttrs == 0) return;
   
-  while (declspec_prefix) {
-    HandleDeclAttribute(New, declspec_prefix);
-    declspec_prefix = declspec_prefix->getNext();
+  while (DeclSpecAttrs) {
+    HandleDeclAttribute(New, DeclSpecAttrs);
+    DeclSpecAttrs = DeclSpecAttrs->getNext();
   }
   
   // If there are any type attributes that were in the declarator, apply them to
   // its top level type.
   if (ValueDecl *VD = dyn_cast<ValueDecl>(New)) {
     QualType DT = VD->getType();
-    ProcessTypeAttributes(DT, declarator_postfix);
+    ProcessTypeAttributes(DT, DeclaratorAttrs);
     VD->setType(DT);
   } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(New)) {
     QualType DT = TD->getUnderlyingType();
-    ProcessTypeAttributes(DT, declarator_postfix);
+    ProcessTypeAttributes(DT, DeclaratorAttrs);
     TD->setUnderlyingType(DT);
   }
   
-  while (declarator_postfix) {
-    HandleDeclAttribute(New, declarator_postfix);
-    declarator_postfix = declarator_postfix->getNext();
+  while (DeclaratorAttrs) {
+    HandleDeclAttribute(New, DeclaratorAttrs);
+    DeclaratorAttrs = DeclaratorAttrs->getNext();
   }
 }
 
 void Sema::HandleExtVectorTypeAttribute(TypedefDecl *tDecl, 
-                                        AttributeList *rawAttr) {
+                                        const AttributeList *rawAttr) {
   QualType curType = tDecl->getUnderlyingType();
   // check the attribute arguments.
   if (rawAttr->getNumArgs() != 1) {
@@ -2488,7 +2488,7 @@ void Sema::HandleExtVectorTypeAttribute(TypedefDecl *tDecl,
 }
 
 QualType Sema::HandleVectorTypeAttribute(QualType curType, 
-                                         AttributeList *rawAttr) {
+                                         const AttributeList *rawAttr) {
   // check the attribute arugments.
   if (rawAttr->getNumArgs() != 1) {
     Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
@@ -2547,7 +2547,7 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
   return Context.getVectorType(curType, vectorSize/typeSize);
 }
 
-void Sema::HandlePackedAttribute(Decl *d, AttributeList *rawAttr) {
+void Sema::HandlePackedAttribute(Decl *d, const AttributeList *rawAttr) {
   // check the attribute arguments.
   if (rawAttr->getNumArgs() > 0) {
     Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
@@ -2572,7 +2572,7 @@ void Sema::HandlePackedAttribute(Decl *d, AttributeList *rawAttr) {
          rawAttr->getName()->getName());
 }
 
-void Sema::HandleAliasAttribute(Decl *d, AttributeList *rawAttr) {
+void Sema::HandleAliasAttribute(Decl *d, const AttributeList *rawAttr) {
   // check the attribute arguments.
   if (rawAttr->getNumArgs() != 1) {
     Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
@@ -2598,7 +2598,7 @@ void Sema::HandleAliasAttribute(Decl *d, AttributeList *rawAttr) {
   d->addAttr(new AliasAttr(std::string(Alias, AliasLen)));
 }
 
-void Sema::HandleNoReturnAttribute(Decl *d, AttributeList *rawAttr) {
+void Sema::HandleNoReturnAttribute(Decl *d, const AttributeList *rawAttr) {
   // check the attribute arguments.
   if (rawAttr->getNumArgs() != 0) {
     Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
@@ -2617,7 +2617,7 @@ void Sema::HandleNoReturnAttribute(Decl *d, AttributeList *rawAttr) {
   d->addAttr(new NoReturnAttr());
 }
 
-void Sema::HandleDeprecatedAttribute(Decl *d, AttributeList *rawAttr) {
+void Sema::HandleDeprecatedAttribute(Decl *d, const AttributeList *rawAttr) {
   // check the attribute arguments.
   if (rawAttr->getNumArgs() != 0) {
     Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
@@ -2628,7 +2628,7 @@ void Sema::HandleDeprecatedAttribute(Decl *d, AttributeList *rawAttr) {
   d->addAttr(new DeprecatedAttr());
 }
 
-void Sema::HandleVisibilityAttribute(Decl *d, AttributeList *rawAttr) {
+void Sema::HandleVisibilityAttribute(Decl *d, const AttributeList *rawAttr) {
   // check the attribute arguments.
   if (rawAttr->getNumArgs() != 1) {
     Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
@@ -2667,7 +2667,7 @@ void Sema::HandleVisibilityAttribute(Decl *d, AttributeList *rawAttr) {
   d->addAttr(new VisibilityAttr(type));
 }
 
-void Sema::HandleWeakAttribute(Decl *d, AttributeList *rawAttr) {
+void Sema::HandleWeakAttribute(Decl *d, const AttributeList *rawAttr) {
   // check the attribute arguments.
   if (rawAttr->getNumArgs() != 0) {
     Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
@@ -2678,7 +2678,7 @@ void Sema::HandleWeakAttribute(Decl *d, AttributeList *rawAttr) {
   d->addAttr(new WeakAttr());
 }
 
-void Sema::HandleDLLImportAttribute(Decl *d, AttributeList *rawAttr) {
+void Sema::HandleDLLImportAttribute(Decl *d, const AttributeList *rawAttr) {
   // check the attribute arguments.
   if (rawAttr->getNumArgs() != 0) {
     Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
@@ -2689,7 +2689,7 @@ void Sema::HandleDLLImportAttribute(Decl *d, AttributeList *rawAttr) {
   d->addAttr(new DLLImportAttr());
 }
 
-void Sema::HandleDLLExportAttribute(Decl *d, AttributeList *rawAttr) {
+void Sema::HandleDLLExportAttribute(Decl *d, const AttributeList *rawAttr) {
   // check the attribute arguments.
   if (rawAttr->getNumArgs() != 0) {
     Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
@@ -2700,7 +2700,7 @@ void Sema::HandleDLLExportAttribute(Decl *d, AttributeList *rawAttr) {
   d->addAttr(new DLLExportAttr());
 }
 
-void Sema::HandleStdCallAttribute(Decl *d, AttributeList *rawAttr) {
+void Sema::HandleStdCallAttribute(Decl *d, const AttributeList *rawAttr) {
   // check the attribute arguments.
   if (rawAttr->getNumArgs() != 0) {
     Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
@@ -2711,7 +2711,7 @@ void Sema::HandleStdCallAttribute(Decl *d, AttributeList *rawAttr) {
   d->addAttr(new StdCallAttr());
 }
 
-void Sema::HandleFastCallAttribute(Decl *d, AttributeList *rawAttr) {
+void Sema::HandleFastCallAttribute(Decl *d, const AttributeList *rawAttr) {
   // check the attribute arguments.
   if (rawAttr->getNumArgs() != 0) {
     Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
@@ -2722,7 +2722,7 @@ void Sema::HandleFastCallAttribute(Decl *d, AttributeList *rawAttr) {
   d->addAttr(new FastCallAttr());
 }
 
-void Sema::HandleNothrowAttribute(Decl *d, AttributeList *rawAttr) {
+void Sema::HandleNothrowAttribute(Decl *d, const AttributeList *rawAttr) {
   // check the attribute arguments.
   if (rawAttr->getNumArgs() != 0) {
     Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
@@ -2775,7 +2775,7 @@ static inline bool isNSStringType(QualType T, ASTContext &Ctx) {
 
 /// Handle __attribute__((format(type,idx,firstarg))) attributes
 /// based on http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
-void Sema::HandleFormatAttribute(Decl *d, AttributeList *rawAttr) {
+void Sema::HandleFormatAttribute(Decl *d, const AttributeList *rawAttr) {
 
   if (!rawAttr->getParameterName()) {
     Diag(rawAttr->getLoc(), diag::err_attribute_argument_n_not_string,
@@ -2921,7 +2921,8 @@ void Sema::HandleFormatAttribute(Decl *d, AttributeList *rawAttr) {
                             Idx.getZExtValue(), FirstArg.getZExtValue()));
 }
 
-void Sema::HandleTransparentUnionAttribute(Decl *d, AttributeList *rawAttr) {
+void Sema::HandleTransparentUnionAttribute(Decl *d,
+                                           const AttributeList *rawAttr) {
   // check the attribute arguments.
   if (rawAttr->getNumArgs() != 0) {
     Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
@@ -2944,7 +2945,7 @@ void Sema::HandleTransparentUnionAttribute(Decl *d, AttributeList *rawAttr) {
 // Ty->addAttr(new TransparentUnionAttr());
 }
 
-void Sema::HandleAnnotateAttribute(Decl *d, AttributeList *rawAttr) {
+void Sema::HandleAnnotateAttribute(Decl *d, const AttributeList *rawAttr) {
   // check the attribute arguments.
   if (rawAttr->getNumArgs() != 1) {
     Diag(rawAttr->getLoc(), diag::err_attribute_wrong_number_arguments,
@@ -2964,7 +2965,7 @@ void Sema::HandleAnnotateAttribute(Decl *d, AttributeList *rawAttr) {
                                           SE->getByteLength())));
 }
 
-void Sema::HandleAlignedAttribute(Decl *d, AttributeList *rawAttr)
+void Sema::HandleAlignedAttribute(Decl *d, const AttributeList *rawAttr)
 {
   // check the attribute arguments.
   if (rawAttr->getNumArgs() > 1) {
