@@ -118,10 +118,10 @@ public:
                                                 unsigned ArgC);
   virtual llvm::Value *LookupClass(llvm::IRBuilder &Builder, llvm::Value
       *ClassName);
+  virtual llvm::Value *GetSelector(llvm::IRBuilder &Builder, Selector Sel);
   virtual llvm::Value *GetSelector(llvm::IRBuilder &Builder,
                                    llvm::Value *SelName,
                                    llvm::Value *SelTypes);
-  llvm::Value *GetSelector(llvm::IRBuilder &Builder, Selector Sel);
   
   virtual llvm::Function *MethodPreamble(
                                          const std::string &ClassName,

@@ -33,8 +33,7 @@ llvm::Value *CodeGenFunction::EmitObjCSelectorExpr(const ObjCSelectorExpr *E) {
   // Note that this implementation allows for non-constant strings to be passed
   // as arguments to @selector().  Currently, the only thing preventing this
   // behaviour is the type checking in the front end.
-  return CGM.getObjCRuntime()->GetSelector(Builder,
-      CGM.GetAddrOfConstantString(E->getSelector().getName()), 0);
+  return CGM.getObjCRuntime()->GetSelector(Builder, E->getSelector());
 }
 
 
