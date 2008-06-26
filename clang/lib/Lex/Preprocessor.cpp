@@ -414,6 +414,9 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   
   // Get the target #defines.
   PP.getTargetInfo().getTargetDefines(Buf);
+
+  DefineBuiltinMacro(Buf, "__llvm__=1");   // LLVM Backend
+  DefineBuiltinMacro(Buf, "__clang__=1");  // Clang Frontend
   
   // Compiler set macros.
   DefineBuiltinMacro(Buf, "__APPLE_CC__=5250");
