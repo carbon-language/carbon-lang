@@ -222,62 +222,53 @@ llvm::Value *CGObjCGNU::LookupClass(llvm::IRBuilder &Builder,
 /// Looks up the selector for the specified name / type pair.
 // FIXME: Selectors should be statically cached, not looked up on every call.
 llvm::Value *CGObjCGNU::GetSelector(llvm::IRBuilder &Builder,
-    llvm::Value *SelName,
-    llvm::Value *SelTypes) {
+                                    llvm::Value *SelName,
+                                    llvm::Value *SelTypes) {
   // For static selectors, we return an alias for now then store them all in a
   // list that the runtime will initialise later.
   if (llvm::Constant *CName = dyn_cast<llvm::Constant>(SelName)) {
     // Untyped selector
     if (SelTypes == 0) {
       // If it's already cached, return it.
-      if (UntypedSelectors[getStringValue(CName)]) {
-        // FIXME: Volatility
-        return Builder.CreateLoad(UntypedSelectors[getStringValue(CName)]);
+      llvm::GlobalAlias *&US = UntypedSelectors[getStringValue(CName)];
+      if (US == 0) {
+        // If it isn't, cache it.
+        US = new llvm::GlobalAlias(llvm::PointerType::getUnqual(SelectorTy),
+                                   llvm::GlobalValue::InternalLinkage,
+                                   ".objc_untyped_selector_alias",
+                                   NULL, &TheModule);
       }
-      // If it isn't, cache it.
-      llvm::GlobalAlias *Sel = new llvm::GlobalAlias(
-          llvm::PointerType::getUnqual(SelectorTy),
-          llvm::GlobalValue::InternalLinkage, ".objc_untyped_selector_alias",
-          NULL, &TheModule);
-      UntypedSelectors[getStringValue(CName)] = Sel;
-      // FIXME: Volatility
-      return Builder.CreateLoad(Sel);
+      return Builder.CreateLoad(US);
     }
     // Typed selectors
     if (llvm::Constant *CTypes = dyn_cast<llvm::Constant>(SelTypes)) {
       TypedSelector Selector = TypedSelector(getStringValue(CName),
                                              getStringValue(CTypes));
       // If it's already cached, return it.
-      if (TypedSelectors[Selector]) {
-        // FIXME: Volatility
-        return Builder.CreateLoad(TypedSelectors[Selector]);
+      llvm::GlobalAlias *&TS = TypedSelectors[Selector];
+      if (TS == 0) {
+        // If it isn't, cache it.
+        TS = new llvm::GlobalAlias(llvm::PointerType::getUnqual(SelectorTy),
+                                   llvm::GlobalValue::InternalLinkage,
+                                   ".objc_typed_selector_alias",
+                                   NULL, &TheModule);
       }
-      // If it isn't, cache it.
-      llvm::GlobalAlias *Sel = new llvm::GlobalAlias(
-          llvm::PointerType::getUnqual(SelectorTy),
-          llvm::GlobalValue::InternalLinkage, ".objc_typed_selector_alias",
-          NULL, &TheModule);
-      TypedSelectors[Selector] = Sel;
-      // FIXME: Volatility
-      return Builder.CreateLoad(Sel);
+      return Builder.CreateLoad(TS);
     }
   }
   // Dynamically look up selectors from non-constant sources
   llvm::Value *cmd;
   if (SelTypes == 0) {
     llvm::Constant *SelFunction = TheModule.getOrInsertFunction("sel_get_uid", 
-        SelectorTy, 
-        PtrToInt8Ty, 
-        NULL);
+                                                                SelectorTy, 
+                                                                PtrToInt8Ty, 
+                                                                NULL);
     cmd = Builder.CreateCall(SelFunction, SelName);
   }
   else {
     llvm::Constant *SelFunction = 
       TheModule.getOrInsertFunction("sel_get_typed_uid",
-          SelectorTy,
-          PtrToInt8Ty,
-          PtrToInt8Ty,
-          NULL);
+                                    SelectorTy, PtrToInt8Ty, PtrToInt8Ty, NULL);
     cmd = Builder.CreateCall2(SelFunction, SelName, SelTypes);
   }
   return cmd;
