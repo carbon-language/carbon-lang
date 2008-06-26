@@ -2353,6 +2353,9 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *Attr) {
     // Ignore this, this is a type attribute, handled by ProcessTypeAttributes.
     break;
   case AttributeList::AT_mode:
+    // Despite what would be logical, the mode attribute is a decl attribute,
+    // not a type attribute: 'int ** __attribute((mode(HI))) *G;' tries to make
+    // 'G' be HImode, not an intermediate pointer.
     if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New)) {
       QualType newType = HandleModeTypeAttribute(tDecl->getUnderlyingType(),
                                                  Attr);
