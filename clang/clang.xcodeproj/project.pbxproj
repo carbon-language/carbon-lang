@@ -1142,6 +1142,7 @@
 					"-lLLVMBitWriter",
 					"-lLLVMBitReader",
 					"-lLLVMCodeGen",
+					"-lLLVMAnalysis",
 					"-lLLVMTarget",
 				);
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
@@ -1164,6 +1165,16 @@
 				GCC_THREADSAFE_STATICS = NO;
 				GCC_USE_GCC3_PFE_SUPPORT = NO;
 				INSTALL_PATH = "$(HOME)/bin";
+				OTHER_LDFLAGS = (
+					"-lLLVMCore",
+					"-lLLVMSupport",
+					"-lLLVMSystem",
+					"-lLLVMBitWriter",
+					"-lLLVMBitReader",
+					"-lLLVMCodeGen",
+					"-lLLVMAnalysis",
+					"-lLLVMTarget",
+				);
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				PRODUCT_NAME = clang;
 			};
@@ -1172,7 +1183,7 @@
 		1DEB923608733DC60010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_VERSION = 4.2;
+				GCC_VERSION = "";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
@@ -1180,14 +1191,7 @@
 					include,
 				);
 				LIBRARY_SEARCH_PATHS = ../../Debug/lib;
-				OTHER_LDFLAGS = (
-					"-lLLVMSupport",
-					"-lLLVMSystem",
-					"-lLLVMCore",
-					"-lLLVMBitReader",
-					"-lLLVMBitWriter",
-					"-lLLVMTarget",
-				);
+				OTHER_LDFLAGS = "";
 				PREBINDING = NO;
 			};
 			name = Debug;
@@ -1202,14 +1206,7 @@
 					include,
 				);
 				LIBRARY_SEARCH_PATHS = ../../Release;
-				OTHER_LDFLAGS = (
-					"-lLLVMSupport",
-					"-lLLVMSystem",
-					"-lLLVMCore",
-					"-lLLVMBitReader",
-					"-lLLVMBitWriter",
-					"-lLLVMTarget",
-				);
+				OTHER_LDFLAGS = "";
 				PREBINDING = NO;
 			};
 			name = Release;
