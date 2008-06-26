@@ -680,6 +680,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\ADT\PriorityQueue.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\Adt\SCCIterator.h"
 				>
 			</File>
