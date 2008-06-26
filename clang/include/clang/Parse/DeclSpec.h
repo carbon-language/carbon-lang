@@ -661,7 +661,8 @@ public:
     assert((AttrList == 0) && "Declarator already has an attribute list");
     AttrList = alist;
   }
-  AttributeList *getAttributes() const { return AttrList; }
+  const AttributeList *getAttributes() const { return AttrList; }
+  AttributeList *getAttributes() { return AttrList; }
   
   void setInvalidType(bool flag) { InvalidType = flag; }
   bool getInvalidType() const { return InvalidType; }
