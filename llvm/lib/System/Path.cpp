@@ -80,26 +80,40 @@ sys::IdentifyFileType(const char*magic, unsigned length) {
       break;
 
     case 0xCA:
-      // This is complicated by an overlap with Java class files. 
-      // See the Mach-O section in /usr/share/file/magic for details.
       if (magic[1] == char(0xFE) && magic[2] == char(0xBA) && 
           magic[3] == char(0xBE)) {
-        return Mach_O_DynamicallyLinkedSharedLib_FileType;
-        
-        // FIXME: How does this work?
-        if (length >= 14 && magic[13] == 0)
-          switch (magic[12]) {
-            default: break;
-            case 1: return Mach_O_Object_FileType;
-            case 2: return Mach_O_Executable_FileType;
-            case 3: return Mach_O_FixedVirtualMemorySharedLib_FileType;
-            case 4: return Mach_O_Core_FileType;
-            case 5: return Mach_O_PreloadExectuable_FileType;
-            case 6: return Mach_O_DynamicallyLinkedSharedLib_FileType;
-            case 7: return Mach_O_DynamicLinker_FileType;
-            case 8: return Mach_O_Bundle_FileType;
-            case 9: return Mach_O_DynamicallyLinkedSharedLibStub_FileType;
-          }
+        // This is complicated by an overlap with Java class files. 
+        // See the Mach-O section in /usr/share/file/magic for details.
+        if (length >= 8 && magic[7] < 43) 
+          // FIXME: Universal Binary of any type.
+          return Mach_O_DynamicallyLinkedSharedLib_FileType;
+      }
+      break;
+
+    case 0xFE:
+    case 0xCE:
+      uint16_t type;
+      if (magic[0] == char(0xFE) && magic[1] == char(0xED) && 
+          magic[2] == char(0xFA) && magic[3] == char(0xCE)) {
+        /* Native endian */
+        if (length >= 16) type = magic[14] << 8 | magic[15];
+      } else if (magic[0] == char(0xCE) && magic[1] == char(0xFA) && 
+                 magic[2] == char(0xED) && magic[3] == char(0xFE)) {
+        /* Reverse endian */
+        if (length >= 14) type = magic[13] << 8 | magic[12];
+      } 
+      switch (type) {
+        default: break;      
+        case 1: return Mach_O_Object_FileType; 
+        case 2: return Mach_O_Executable_FileType;
+        case 3: return Mach_O_FixedVirtualMemorySharedLib_FileType;
+        case 4: return Mach_O_Core_FileType;
+        case 5: return Mach_O_PreloadExectuable_FileType;
+        case 6: return Mach_O_DynamicallyLinkedSharedLib_FileType;
+        case 7: return Mach_O_DynamicLinker_FileType;
+        case 8: return Mach_O_Bundle_FileType;
+        case 9: return Mach_O_DynamicallyLinkedSharedLibStub_FileType;
+        case 10: break; // FIXME: MH_DSYM companion file with only debug.
       }
       break;
 
