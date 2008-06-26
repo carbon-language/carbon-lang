@@ -395,7 +395,7 @@ void CodeGenModule::EmitObjCCategoryImpl(const ObjCCategoryImplDecl *OCD) {
   for (ObjCCategoryDecl::instmeth_iterator iter = OCD->instmeth_begin(),
       endIter = OCD->instmeth_end() ; iter != endIter ; iter++) {
     std::string TypeStr;
-    Context.getObjCEncodingForMethodDecl((*iter),TypeStr);
+    Context.getObjCEncodingForMethodDecl(*iter,TypeStr);
     InstanceMethodNames.push_back(
         GetAddrOfConstantString((*iter)->getSelector().getName()));
     InstanceMethodTypes.push_back(GetAddrOfConstantString(TypeStr));
@@ -407,7 +407,7 @@ void CodeGenModule::EmitObjCCategoryImpl(const ObjCCategoryImplDecl *OCD) {
   for (ObjCCategoryDecl::classmeth_iterator iter = OCD->classmeth_begin(),
       endIter = OCD->classmeth_end() ; iter != endIter ; iter++) {
     std::string TypeStr;
-    Context.getObjCEncodingForMethodDecl((*iter),TypeStr);
+    Context.getObjCEncodingForMethodDecl(*iter,TypeStr);
     ClassMethodNames.push_back(
         GetAddrOfConstantString((*iter)->getSelector().getName()));
     ClassMethodTypes.push_back(GetAddrOfConstantString(TypeStr));

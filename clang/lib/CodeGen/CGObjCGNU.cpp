@@ -390,8 +390,8 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const std::string &ClassName,
   std::vector<llvm::Constant*> Elements;
   for (unsigned int i = 0, e = MethodTypes.size(); i < e; ++i) {
     Elements.clear();
-    Elements.push_back( llvm::ConstantExpr::getGetElementPtr(MethodNames[i],
-          Zeros, 2));
+    Elements.push_back(llvm::ConstantExpr::getGetElementPtr(MethodNames[i],
+                                                            Zeros, 2));
     Elements.push_back(
           llvm::ConstantExpr::getGetElementPtr(MethodTypes[i], Zeros, 2));
     llvm::Constant *Method =
@@ -406,9 +406,9 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const std::string &ClassName,
 
   // Array of method structures
   llvm::ArrayType *ObjCMethodArrayTy = llvm::ArrayType::get(ObjCMethodTy,
-      MethodNames.size());
+                                                            MethodNames.size());
   llvm::Constant *MethodArray = llvm::ConstantArray::get(ObjCMethodArrayTy,
-      Methods);
+                                                         Methods);
 
   // Structure containing list pointer, array and array count
   llvm::SmallVector<const llvm::Type*, 16> ObjCMethodListFields;
