@@ -33,6 +33,10 @@ class ValueStateManager;
   
 GRSimpleAPICheck* CreateBasicObjCFoundationChecks(ASTContext& Ctx,
                                                   ValueStateManager* VMgr);
+  
+GRSimpleAPICheck* CreateAuditCFNumberCreate(ASTContext& Ctx,
+                                            ValueStateManager* VMgr);
+
 
 } // end clang namespace
 

@@ -354,11 +354,15 @@ void GRSimpleVals::RegisterChecks(GRExprEngine& Eng) {
   Eng.Register(MakeDeadStoresChecker());  
   
   // Add extra checkers.
+  ASTContext& Ctx = Eng.getContext();
+  ValueStateManager* VMgr = &Eng.getStateManager();
 
-  GRSimpleAPICheck* FoundationCheck =
-    CreateBasicObjCFoundationChecks(Eng.getContext(), &Eng.getStateManager());
+  GRSimpleAPICheck* Check = CreateBasicObjCFoundationChecks(Ctx, VMgr);  
+  Eng.AddObjCMessageExprCheck(Check);
   
-  Eng.AddObjCMessageExprCheck(FoundationCheck);
+  Check = CreateAuditCFNumberCreate(Ctx, VMgr);  
+  Eng.AddCallCheck(Check);
+  
 }
 
 //===----------------------------------------------------------------------===//
