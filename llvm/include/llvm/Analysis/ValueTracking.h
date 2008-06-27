@@ -76,7 +76,7 @@ namespace llvm {
   /// GetConstantStringInfo - This function computes the length of a
   /// null-terminated C string pointed to by V.  If successful, it returns true
   /// and returns the string in Str.  If unsuccessful, it returns false.
-  bool GetConstantStringInfo(Value *V, std::string &Str);
+  bool GetConstantStringInfo(Value *V, std::string &Str, uint64_t Offset = 0);
 } // end namespace llvm
 
 #endif

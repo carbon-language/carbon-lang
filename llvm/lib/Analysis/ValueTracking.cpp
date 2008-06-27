@@ -935,13 +935,13 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
 /// GetConstantStringInfo - This function computes the length of a
 /// null-terminated C string pointed to by V.  If successful, it returns true
 /// and returns the string in Str.  If unsuccessful, it returns false.
-bool llvm::GetConstantStringInfo(Value *V, std::string &Str) {
+bool llvm::GetConstantStringInfo(Value *V, std::string &Str, uint64_t Offset) {
   // If V is NULL then return false;
   if (V == NULL) return false;
 
   // Look through bitcast instructions.
   if (BitCastInst *BCI = dyn_cast<BitCastInst>(V))
-    return GetConstantStringInfo(BCI->getOperand(0), Str);
+    return GetConstantStringInfo(BCI->getOperand(0), Str, Offset);
   
   // If the value is not a GEP instruction nor a constant expression with a
   // GEP instruction, then return false because ConstantArray can't occur
@@ -953,35 +953,36 @@ bool llvm::GetConstantStringInfo(Value *V, std::string &Str) {
     if (CE->getOpcode() != Instruction::GetElementPtr)
       return false;
     GEP = CE;
-  } else {
-    return false;
   }
   
-  // Make sure the GEP has exactly three arguments.
-  if (GEP->getNumOperands() != 3)
-    return false;
-  
-  // Check to make sure that the first operand of the GEP is an integer and
-  // has value 0 so that we are sure we're indexing into the initializer.
-  if (ConstantInt *Idx = dyn_cast<ConstantInt>(GEP->getOperand(1))) {
-    if (!Idx->isZero())
+  if (GEP) {
+    // Make sure the GEP has exactly three arguments.
+    if (GEP->getNumOperands() != 3)
       return false;
-  } else
-    return false;
-  
-  // If the second index isn't a ConstantInt, then this is a variable index
-  // into the array.  If this occurs, we can't say anything meaningful about
-  // the string.
-  uint64_t StartIdx = 0;
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(GEP->getOperand(2)))
-    StartIdx = CI->getZExtValue();
-  else
-    return false;
+    
+    // Check to make sure that the first operand of the GEP is an integer and
+    // has value 0 so that we are sure we're indexing into the initializer.
+    if (ConstantInt *Idx = dyn_cast<ConstantInt>(GEP->getOperand(1))) {
+      if (!Idx->isZero())
+        return false;
+    } else
+      return false;
+    
+    // If the second index isn't a ConstantInt, then this is a variable index
+    // into the array.  If this occurs, we can't say anything meaningful about
+    // the string.
+    uint64_t StartIdx = 0;
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(GEP->getOperand(2)))
+      StartIdx = CI->getZExtValue();
+    else
+      return false;
+    return GetConstantStringInfo(GEP->getOperand(0), Str, StartIdx+Offset);
+  }
   
   // The GEP instruction, constant or instruction, must reference a global
   // variable that is a constant and is initialized. The referenced constant
   // initializer is the array that we'll use for optimization.
-  GlobalVariable* GV = dyn_cast<GlobalVariable>(GEP->getOperand(0));
+  GlobalVariable* GV = dyn_cast<GlobalVariable>(V);
   if (!GV || !GV->isConstant() || !GV->hasInitializer())
     return false;
   Constant *GlobalInit = GV->getInitializer();
@@ -1002,10 +1003,13 @@ bool llvm::GetConstantStringInfo(Value *V, std::string &Str) {
   // Get the number of elements in the array
   uint64_t NumElts = Array->getType()->getNumElements();
   
-  // Traverse the constant array from StartIdx (derived above) which is
-  // the place the GEP refers to in the array.
-  Str.reserve(NumElts);
-  for (unsigned i = StartIdx; i < NumElts; ++i) {
+  if (Offset > NumElts)
+    return false;
+  
+  // Traverse the constant array from 'Offset' which is the place the GEP refers
+  // to in the array.
+  Str.reserve(NumElts-Offset);
+  for (unsigned i = Offset; i != NumElts; ++i) {
     Constant *Elt = Array->getOperand(i);
     ConstantInt *CI = dyn_cast<ConstantInt>(Elt);
     if (!CI) // This array isn't suitable, non-int initializer.
@@ -1015,5 +1019,6 @@ bool llvm::GetConstantStringInfo(Value *V, std::string &Str) {
     Str += (char)CI->getZExtValue();
   }
   
-  return false; // The array isn't null terminated.
+  // The array isn't null terminated, but maybe this is a memcpy, not a strcpy.
+  return true;
 }
