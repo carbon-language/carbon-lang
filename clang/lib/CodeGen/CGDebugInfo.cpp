@@ -24,6 +24,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/MachineDebugInfoDesc.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Target/TargetMachine.h"
