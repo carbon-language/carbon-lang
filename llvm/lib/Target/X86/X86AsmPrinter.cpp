@@ -368,32 +368,32 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     SwitchToDataSection(".section .drectve");
   }
 
-  for (std::set<std::string>::iterator i = DLLExportedGVs.begin(),
+  for (StringSet<>::iterator i = DLLExportedGVs.begin(),
          e = DLLExportedGVs.end();
          i != e; ++i) {
-    O << "\t.ascii \" -export:" << *i << ",data\"\n";
-  }    
+    O << "\t.ascii \" -export:" << i->getKeyData() << ",data\"\n";
+  }
 
   if (!DLLExportedFns.empty()) {
     SwitchToDataSection(".section .drectve");
   }
 
-  for (std::set<std::string>::iterator i = DLLExportedFns.begin(),
+  for (StringSet<>::iterator i = DLLExportedFns.begin(),
          e = DLLExportedFns.end();
          i != e; ++i) {
-    O << "\t.ascii \" -export:" << *i << "\"\n";
-  }    
+    O << "\t.ascii \" -export:" << i->getKeyData() << "\"\n";
+  }
 
   if (Subtarget->isTargetDarwin()) {
     SwitchToDataSection("");
 
     // Output stubs for dynamically-linked functions
     unsigned j = 1;
-    for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
+    for (StringSet<>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i, ++j) {
       SwitchToDataSection("\t.section __IMPORT,__jump_table,symbol_stubs,"
                           "self_modifying_code+pure_instructions,5", 0);
-      std::string p = *i;
+      std::string p = i->getKeyData();
       printSuffixedName(p, "$stub");
       O << ":\n";
       O << "\t.indirect_symbol " << p << "\n";
@@ -416,9 +416,9 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     if (!GVStubs.empty())
       SwitchToDataSection(
                     "\t.section __IMPORT,__pointers,non_lazy_symbol_pointers");
-    for (std::set<std::string>::iterator i = GVStubs.begin(), e = GVStubs.end();
+    for (StringSet<>::iterator i = GVStubs.begin(), e = GVStubs.end();
          i != e; ++i) {
-      std::string p = *i;
+      std::string p = i->getKeyData();
       printSuffixedName(p, "$non_lazy_ptr");
       O << ":\n";
       O << "\t.indirect_symbol " << p << "\n";
@@ -436,16 +436,16 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     O << "\t.subsections_via_symbols\n";
   } else if (Subtarget->isTargetCygMing()) {
     // Emit type information for external functions
-    for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
+    for (StringSet<>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i) {
-      O << "\t.def\t " << *i
+      O << "\t.def\t " << i->getKeyData()
         << ";\t.scl\t" << COFF::C_EXT
         << ";\t.type\t" << (COFF::DT_FCN << COFF::N_BTSHFT)
         << ";\t.endef\n";
     }
-    
+
     // Emit final debug information.
-    DW.EndModule();    
+    DW.EndModule();
   } else if (Subtarget->isTargetELF()) {
     // Emit final debug information.
     DW.EndModule();

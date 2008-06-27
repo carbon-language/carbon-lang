@@ -425,23 +425,23 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
     O << "_drectve\t segment info alias('.drectve')\n";
   }
 
-  for (std::set<std::string>::iterator i = DLLExportedGVs.begin(),
+  for (StringSet<>::iterator i = DLLExportedGVs.begin(),
          e = DLLExportedGVs.end();
          i != e; ++i) {
-    O << "\t db ' /EXPORT:" << *i << ",data'\n";
-  }    
+    O << "\t db ' /EXPORT:" << i->getKeyData() << ",data'\n";
+  }
 
-  for (std::set<std::string>::iterator i = DLLExportedFns.begin(),
+  for (StringSet<>::iterator i = DLLExportedFns.begin(),
          e = DLLExportedFns.end();
          i != e; ++i) {
-    O << "\t db ' /EXPORT:" << *i << "'\n";
-  }    
+    O << "\t db ' /EXPORT:" << i->getKeyData() << "'\n";
+  }
 
   if (!DLLExportedGVs.empty() ||
       !DLLExportedFns.empty()) {
-    O << "_drectve\t ends\n";    
+    O << "_drectve\t ends\n";
   }
-  
+
   // Bypass X86SharedAsmPrinter::doFinalization().
   bool Result = AsmPrinter::doFinalization(M);
   SwitchToDataSection("");

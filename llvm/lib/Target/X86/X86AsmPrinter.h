@@ -19,12 +19,11 @@
 #include "X86.h"
 #include "X86MachineFunctionInfo.h"
 #include "X86TargetMachine.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/Support/Compiler.h"
-#include <set>
-
 
 namespace llvm {
 
@@ -70,10 +69,10 @@ struct VISIBILITY_HIDDEN X86SharedAsmPrinter : public AsmPrinter {
   const X86Subtarget *Subtarget;
 
   // Necessary for Darwin to print out the apprioriate types of linker stubs
-  std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;
+  StringSet<> FnStubs, GVStubs, LinkOnceStubs;
 
   // Necessary for dllexport support
-  std::set<std::string> DLLExportedFns, DLLExportedGVs;
+  StringSet<> DLLExportedFns, DLLExportedGVs;
 
   inline static bool isScale(const MachineOperand &MO) {
     return MO.isImmediate() &&
