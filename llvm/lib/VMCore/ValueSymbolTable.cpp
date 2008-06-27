@@ -15,7 +15,7 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/Type.h"
 #include "llvm/ValueSymbolTable.h"
-#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Debug.h"
 using namespace llvm;
 
@@ -29,21 +29,6 @@ ValueSymbolTable::~ValueSymbolTable() {
   assert(vmap.empty() && "Values remain in symbol table!");
 #endif
 }
-
-// getUniqueName - Given a base name, return a string that is either equal to
-// it (or derived from it) that does not already occur in the symbol table for
-// the specified type.
-//
-std::string ValueSymbolTable::getUniqueName(const std::string &BaseName) const {
-  std::string TryName = BaseName;
-
-  // See if the name exists
-  while (vmap.find(&TryName[0], &TryName[TryName.size()]) != vmap.end())
-    // Loop until we find a free name in the symbol table.
-    TryName = BaseName + utostr(++LastUnique);
-  return TryName;
-}
-
 
 // lookup a value - Returns null on failure...
 //
@@ -73,18 +58,17 @@ void ValueSymbolTable::reinsertValue(Value* V) {
     return;
   }
   
-  // FIXME: this could be much more efficient.
-  
   // Otherwise, there is a naming conflict.  Rename this value.
-  std::string UniqueName = V->getName();
-  
+  SmallString<128> UniqueName(V->getNameStart(), V->getNameEnd());
+
+  // The name is too already used, just free it so we can allocate a new name.
   V->Name->Destroy();
   
   unsigned BaseSize = UniqueName.size();
   while (1) {
     // Trim any suffix off.
     UniqueName.resize(BaseSize);
-    UniqueName += utostr(++LastUnique);
+    UniqueName.append_uint_32(++LastUnique);
     // Try insert the vmap entry with this suffix.
     ValueName &NewName = vmap.GetOrCreateValue(&UniqueName[0],
                                                &UniqueName[UniqueName.size()]);
@@ -100,7 +84,7 @@ void ValueSymbolTable::reinsertValue(Value* V) {
 
 void ValueSymbolTable::removeValueName(ValueName *V) {
   //DEBUG(DOUT << " Removing Value: " << V->getKeyData() << "\n");
-  // Remove the value from the plane.
+  // Remove the value from the symbol table.
   vmap.remove(V);
 }
 
@@ -109,6 +93,7 @@ void ValueSymbolTable::removeValueName(ValueName *V) {
 /// auto-renames the name and returns that instead.
 ValueName *ValueSymbolTable::createValueName(const char *NameStart,
                                              unsigned NameLen, Value *V) {
+  // In the common case, the name is not already in the symbol table.
   ValueName &Entry = vmap.GetOrCreateValue(NameStart, NameStart+NameLen);
   if (Entry.getValue() == 0) {
     Entry.setValue(V);
@@ -117,14 +102,14 @@ ValueName *ValueSymbolTable::createValueName(const char *NameStart,
     return &Entry;
   }
   
-  // FIXME: this could be much more efficient.
-  
   // Otherwise, there is a naming conflict.  Rename this value.
-  std::string UniqueName(NameStart, NameStart+NameLen);
+  SmallString<128> UniqueName(NameStart, NameStart+NameLen);
+  
   while (1) {
     // Trim any suffix off.
     UniqueName.resize(NameLen);
-    UniqueName += utostr(++LastUnique);
+    UniqueName.append_uint_32(++LastUnique);
+    
     // Try insert the vmap entry with this suffix.
     ValueName &NewName = vmap.GetOrCreateValue(&UniqueName[0],
                                                &UniqueName[UniqueName.size()]);

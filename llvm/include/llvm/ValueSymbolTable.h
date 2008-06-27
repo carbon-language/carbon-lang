@@ -76,12 +76,6 @@ public:
   /// @brief The number of name/type pairs is returned.
   inline unsigned size() const { return unsigned(vmap.size()); }
 
-  /// Given a base name, return a string that is either equal to it or
-  /// derived from it that does not already occur in the symbol table
-  /// for the specified type.
-  /// @brief Get a name unique to this symbol table
-  std::string getUniqueName(const std::string &BaseName) const;
-
   /// This function can be used from the debugger to display the
   /// content of the symbol table while debugging.
   /// @brief Print out symbol table on stderr
