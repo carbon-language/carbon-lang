@@ -93,6 +93,8 @@ public:
   /// Note that names can have null characters within the string as well as at
   /// their end.  This always returns a non-null pointer.
   const char *getNameStart() const;
+  /// getNameEnd - Return a pointer to the end of the name.
+  const char *getNameEnd() const { return getNameStart() + getNameLen(); }
   
   /// isName - Return true if this value has the name specified by the provided
   /// nul terminated string.
