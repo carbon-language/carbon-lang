@@ -575,7 +575,8 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       GlobalVariable *NewDGV =
         new GlobalVariable(SGV->getType()->getElementType(),
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
-                           SGV->getName(), Dest);
+                           SGV->getName(), Dest, false,
+                           SGV->getType()->getAddressSpace());
       // Propagate alignment, visibility and section info.
       CopyGVAttributes(NewDGV, SGV);
 
@@ -599,7 +600,8 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       GlobalVariable *NewDGV =
         new GlobalVariable(SGV->getType()->getElementType(),
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
-                           "", Dest);
+                           "", Dest, false,
+                           SGV->getType()->getAddressSpace());
 
       // Set alignment allowing CopyGVAttributes merge it with alignment of SGV.
       NewDGV->setAlignment(DGV->getAlignment());
@@ -634,7 +636,8 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
           GlobalVariable *NewDGV =
             new GlobalVariable(SGV->getType()->getElementType(),
                                DGVar->isConstant(), DGVar->getLinkage(),
-                               /*init*/0, DGVar->getName(), Dest);
+                               /*init*/0, DGVar->getName(), Dest, false,
+                               SGV->getType()->getAddressSpace());
           CopyGVAttributes(NewDGV, DGVar);
           DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewDGV,
                                                            DGVar->getType()));
@@ -1166,7 +1169,8 @@ static bool LinkAppendingVars(Module *M,
       // Create the new global variable...
       GlobalVariable *NG =
         new GlobalVariable(NewType, G1->isConstant(), G1->getLinkage(),
-                           /*init*/0, First->first, M, G1->isThreadLocal());
+                           /*init*/0, First->first, M, G1->isThreadLocal(),
+                           G1->getType()->getAddressSpace());
 
       // Propagate alignment, visibility and section info.
       CopyGVAttributes(NG, G1);
