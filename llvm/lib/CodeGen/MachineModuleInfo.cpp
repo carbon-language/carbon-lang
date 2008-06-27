@@ -38,7 +38,7 @@ char MachineModuleInfo::ID = 0;
 /// getGlobalVariablesUsing - Return all of the GlobalVariables which have the
 /// specified value in their initializer somewhere.
 static void
-getGlobalVariablesUsing(Value *V, SmallVectorImpl<GlobalVariable*> &Result) {
+getGlobalVariablesUsing(Value *V, std::vector<GlobalVariable*> &Result) {
   // Scan though value users.
   for (Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I) {
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(*I)) {
@@ -55,7 +55,7 @@ getGlobalVariablesUsing(Value *V, SmallVectorImpl<GlobalVariable*> &Result) {
 /// named GlobalVariable.
 static void
 getGlobalVariablesUsing(Module &M, const std::string &RootName,
-                        SmallVectorImpl<GlobalVariable*> &Result) {
+                        std::vector<GlobalVariable*> &Result) {
   std::vector<const Type*> FieldTypes;
   FieldTypes.push_back(Type::Int32Ty);
   FieldTypes.push_back(Type::Int32Ty);
@@ -513,6 +513,9 @@ const PointerType *DISerializer::getEmptyStructPtrType() {
   // Construct the pointer to empty structure type.
   const StructType *EmptyStructTy =
     StructType::get(std::vector<const Type*>());
+
+  // Construct the pointer to empty structure type.
+  EmptyStructPtrTy = PointerType::getUnqual(EmptyStructTy);
   return EmptyStructPtrTy;
 }
 
@@ -831,7 +834,7 @@ const UniqueVector<CompileUnitDesc *> MachineModuleInfo::getCompileUnits()const{
 void
 MachineModuleInfo::getAnchoredDescriptors(Module &M, const AnchoredDesc *Desc,
                                           std::vector<void*> &AnchoredDescs) {
-  SmallVector<GlobalVariable*, 64> Globals;
+  std::vector<GlobalVariable*> Globals;
   getGlobalVariablesUsing(M, Desc->getAnchorString(), Globals);
 
   for (unsigned i = 0, N = Globals.size(); i < N; ++i) {
