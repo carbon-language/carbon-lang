@@ -34,6 +34,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/alloca.h"
 #include <algorithm>
@@ -387,7 +388,7 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg) {
 
 void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
   // What parts of the register are previously defined?
-  std::set<unsigned> Live;
+  SmallSet<unsigned, 32> Live;
   if (PhysRegDef[Reg] || PhysRegUse[Reg]) {
     Live.insert(Reg);
     for (const unsigned *SS = TRI->getSubRegisters(Reg); *SS; ++SS)
