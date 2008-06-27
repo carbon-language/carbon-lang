@@ -38,7 +38,7 @@ char MachineModuleInfo::ID = 0;
 /// getGlobalVariablesUsing - Return all of the GlobalVariables which have the
 /// specified value in their initializer somewhere.
 static void
-getGlobalVariablesUsing(Value *V, std::vector<GlobalVariable*> &Result) {
+getGlobalVariablesUsing(Value *V, SmallVectorImpl<GlobalVariable*> &Result) {
   // Scan though value users.
   for (Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I) {
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(*I)) {
@@ -55,7 +55,7 @@ getGlobalVariablesUsing(Value *V, std::vector<GlobalVariable*> &Result) {
 /// named GlobalVariable.
 static void
 getGlobalVariablesUsing(Module &M, const std::string &RootName,
-                        std::vector<GlobalVariable*> &Result) {
+                        SmallVectorImpl<GlobalVariable*> &Result) {
   std::vector<const Type*> FieldTypes;
   FieldTypes.push_back(Type::Int32Ty);
   FieldTypes.push_back(Type::Int32Ty);
@@ -180,10 +180,7 @@ private:
 
 public:
   DIDeserializeVisitor(DIDeserializer &D, GlobalVariable *GV)
-  : DIVisitor()
-  , DR(D)
-  , I(0)
-  , CI(cast<ConstantStruct>(GV->getInitializer()))
+    : DIVisitor(), DR(D), I(0), CI(cast<ConstantStruct>(GV->getInitializer()))
   {}
   
   /// Apply - Set the value of each of the fields.
@@ -276,7 +273,7 @@ public:
     Elements.push_back(ConstantInt::get(Type::Int1Ty, Field));
   }
   virtual void Apply(std::string &Field) {
-      Elements.push_back(SR.getString(Field));
+    Elements.push_back(SR.getString(Field));
   }
   virtual void Apply(DebugInfoDesc *&Field) {
     GlobalVariable *GV = NULL;
@@ -511,14 +508,11 @@ const PointerType *DISerializer::getStrPtrType() {
 ///
 const PointerType *DISerializer::getEmptyStructPtrType() {
   // If not already defined.
-  if (!EmptyStructPtrTy) {
-    // Construct the empty structure type.
-    const StructType *EmptyStructTy = StructType::get(NULL, NULL);
+  if (EmptyStructPtrTy) return EmptyStructPtrTy;
 
-    // Construct the pointer to empty structure type.
-    EmptyStructPtrTy = PointerType::getUnqual(EmptyStructTy);
-  }
-  
+  // Construct the pointer to empty structure type.
+  const StructType *EmptyStructTy =
+    StructType::get(std::vector<const Type*>());
   return EmptyStructPtrTy;
 }
 
@@ -532,7 +526,6 @@ const StructType *DISerializer::getTagType(DebugInfoDesc *DD) {
   if (!Ty) {
     // Set up fields vector.
     std::vector<const Type*> Fields;
-
     // Get types of fields.
     DIGetTypesVisitor GTAM(*this, Fields);
     GTAM.ApplyToFields(DD);
@@ -551,7 +544,7 @@ const StructType *DISerializer::getTagType(DebugInfoDesc *DD) {
 ///
 Constant *DISerializer::getString(const std::string &String) {
   // Check string cache for previous edition.
-  Constant *&Slot = StringCache[String];
+  Constant *&Slot = StringCache[String.c_str()];
 
   // Return Constant if previously defined.
   if (Slot) return Slot;
@@ -599,7 +592,6 @@ GlobalVariable *DISerializer::Serialize(DebugInfoDesc *DD) {
  
   // Set up elements vector
   std::vector<Constant*> Elements;
-
   // Add fields.
   DISerializeVisitor SRAM(*this, Elements);
   SRAM.ApplyToFields(DD);
@@ -839,7 +831,7 @@ const UniqueVector<CompileUnitDesc *> MachineModuleInfo::getCompileUnits()const{
 void
 MachineModuleInfo::getAnchoredDescriptors(Module &M, const AnchoredDesc *Desc,
                                           std::vector<void*> &AnchoredDescs) {
-  std::vector<GlobalVariable*> Globals;
+  SmallVector<GlobalVariable*, 64> Globals;
   getGlobalVariablesUsing(M, Desc->getAnchorString(), Globals);
 
   for (unsigned i = 0, N = Globals.size(); i < N; ++i) {
@@ -1003,11 +995,9 @@ void MachineModuleInfo::addCatchTypeInfo(MachineBasicBlock *LandingPad,
 void MachineModuleInfo::addFilterTypeInfo(MachineBasicBlock *LandingPad,
                                         std::vector<GlobalVariable *> &TyInfo) {
   LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
-  SmallVector<unsigned, 32> IdsInFilter(TyInfo.size());
-
+  std::vector<unsigned> IdsInFilter (TyInfo.size());
   for (unsigned I = 0, E = TyInfo.size(); I != E; ++I)
     IdsInFilter[I] = getTypeIDFor(TyInfo[I]);
-
   LP.TypeIds.push_back(getFilterIDFor(IdsInFilter));
 }
 
@@ -1075,14 +1065,13 @@ unsigned MachineModuleInfo::getTypeIDFor(GlobalVariable *TI) {
 
 /// getFilterIDFor - Return the filter id for the specified typeinfos.  This is
 /// function wide.
-int MachineModuleInfo::getFilterIDFor(SmallVectorImpl<unsigned> &TyIds) {
+int MachineModuleInfo::getFilterIDFor(std::vector<unsigned> &TyIds) {
   // If the new filter coincides with the tail of an existing filter, then
   // re-use the existing filter.  Folding filters more than this requires
   // re-ordering filters and/or their elements - probably not worth it.
-  unsigned TyIDSize = TyIds.size();
   for (std::vector<unsigned>::iterator I = FilterEnds.begin(),
        E = FilterEnds.end(); I != E; ++I) {
-    unsigned i = *I, j = TyIDSize;
+    unsigned i = *I, j = TyIds.size();
 
     while (i && j)
       if (FilterIds[--i] != TyIds[--j])
@@ -1091,18 +1080,16 @@ int MachineModuleInfo::getFilterIDFor(SmallVectorImpl<unsigned> &TyIds) {
     if (!j)
       // The new filter coincides with range [i, end) of the existing filter.
       return -(1 + i);
+
 try_next:;
   }
 
   // Add the new filter.
-  unsigned FilterIDSize = FilterIds.size();
-  int FilterID = -(1 + FilterIDSize);
-  FilterIds.reserve(FilterIDSize + TyIDSize + 1);
-
-  for (unsigned I = 0, N = TyIDSize; I != N; ++I)
+  int FilterID = -(1 + FilterIds.size());
+  FilterIds.reserve(FilterIds.size() + TyIds.size() + 1);
+  for (unsigned I = 0, N = TyIds.size(); I != N; ++I)
     FilterIds.push_back(TyIds[I]);
-
-  FilterEnds.push_back(FilterIDSize);
+  FilterEnds.push_back(FilterIds.size());
   FilterIds.push_back(0); // terminator
   return FilterID;
 }
@@ -1120,13 +1107,13 @@ unsigned MachineModuleInfo::getPersonalityIndex() const {
   const Function* Personality = NULL;
   
   // Scan landing pads. If there is at least one non-NULL personality - use it.
-  for (unsigned i = 0, e = LandingPads.size(); i != e; ++i)
+  for (unsigned i = 0; i != LandingPads.size(); ++i)
     if (LandingPads[i].Personality) {
       Personality = LandingPads[i].Personality;
       break;
     }
   
-  for (unsigned i = 0, e = Personalities.size(); i < e; ++i) {
+  for (unsigned i = 0; i < Personalities.size(); ++i) {
     if (Personalities[i] == Personality)
       return i;
   }

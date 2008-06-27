@@ -407,10 +407,10 @@ public:
   SubrangeDesc();
   
   // Accessors
-  int64_t getLo() const { return Lo; }
-  int64_t getHi() const { return Hi; }
-  void setLo(int64_t L) { Lo = L; }
-  void setHi(int64_t H) { Hi = H; }
+  int64_t getLo()                            const { return Lo; }
+  int64_t getHi()                            const { return Hi; }
+  void setLo(int64_t L)                            { Lo = L; }
+  void setHi(int64_t H)                            { Hi = H; }
   
   /// ApplyToFields - Target the visitor to the fields of the SubrangeDesc.
   ///
@@ -552,34 +552,32 @@ protected:
   explicit GlobalDesc(unsigned T);
 public:
   // Accessors
-  DebugInfoDesc *getContext() const         { return Context; }
-  const std::string &getName() const        { return Name; }
-  const std::string &getFullName() const    { return FullName; }
-  const std::string &getLinkageName() const { return LinkageName; }
+  DebugInfoDesc *getContext()                const { return Context; }
+  const std::string &getName()               const { return Name; }
+  const std::string &getFullName()           const { return FullName; }
+  const std::string &getLinkageName()        const { return LinkageName; }
   CompileUnitDesc *getFile() const {
     return static_cast<CompileUnitDesc *>(File);
   }
-  unsigned getLine() const { return Line; }
+  unsigned getLine()                         const { return Line; }
   TypeDesc *getType() const {
     return static_cast<TypeDesc *>(TyDesc);
   }
-
-  bool isStatic() const     { return IsStatic; }
-  bool isDefinition() const { return IsDefinition; }
-
-  void setContext(DebugInfoDesc *C)         { Context = C; }
-  void setName(const std::string &N)        { Name = N; }
-  void setFullName(const std::string &N)    { FullName = N; }
-  void setLinkageName(const std::string &N) { LinkageName = N; }
+  bool isStatic()                            const { return IsStatic; }
+  bool isDefinition()                        const { return IsDefinition; }
+  void setContext(DebugInfoDesc *C)                { Context = C; }
+  void setName(const std::string &N)               { Name = N; }
+  void setFullName(const std::string &N)           { FullName = N; }
+  void setLinkageName(const std::string &N)        { LinkageName = N; }
   void setFile(CompileUnitDesc *U) {
     File = static_cast<DebugInfoDesc *>(U);
   }
-  void setLine(unsigned L) { Line = L; }
+  void setLine(unsigned L)                         { Line = L; }
   void setType(TypeDesc *T) {
     TyDesc = static_cast<DebugInfoDesc *>(T);
   }
-  void setIsStatic(bool IS)     { IsStatic = IS; }
-  void setIsDefinition(bool ID) { IsDefinition = ID; }
+  void setIsStatic(bool IS)                        { IsStatic = IS; }
+  void setIsDefinition(bool ID)                    { IsDefinition = ID; }
 
   /// ApplyToFields - Target the visitor to the fields of the GlobalDesc.
   ///
@@ -595,8 +593,8 @@ public:
   GlobalVariableDesc();
 
   // Accessors.
-  GlobalVariable *getGlobalVariable() const { return Global; }
-  void setGlobalVariable(GlobalVariable *GV) { Global = GV; }
+  GlobalVariable *getGlobalVariable()        const { return Global; }
+  void setGlobalVariable(GlobalVariable *GV)       { Global = GV; }
   
   /// ApplyToFields - Target the visitor to the fields of the
   /// GlobalVariableDesc.
@@ -675,8 +673,8 @@ public:
   BlockDesc();
   
   // Accessors
-  DebugInfoDesc *getContext() const { return Context; }
-  void setContext(DebugInfoDesc *C) { Context = C; }
+  DebugInfoDesc *getContext()                const { return Context; }
+  void setContext(DebugInfoDesc *C)                { Context = C; }
   
   /// ApplyToFields - Target the visitor to the fields of the BlockDesc.
   ///
