@@ -87,9 +87,9 @@ public:
 /// into DebugInfoDesc objects.
 class DIDeserializer {
   // Previously defined gloabls.
-  DenseMap<GlobalVariable*, DebugInfoDesc*> GlobalDescs;
+  std::map<GlobalVariable*, DebugInfoDesc*> GlobalDescs;
 public:
-  const DenseMap<GlobalVariable *, DebugInfoDesc *> &getGlobalDescs() const {
+  const std::map<GlobalVariable *, DebugInfoDesc *> &getGlobalDescs() const {
     return GlobalDescs;
   }
 
