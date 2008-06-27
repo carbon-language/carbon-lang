@@ -238,7 +238,7 @@ proc llvm_gcc_supports { lang } {
     c++     { set file cc1plus }
     objc    { set file cc1 }
     objc++  { set file cc1 }
-    fortran { set file fcc1 }
+    fortran { set file f951 }
     default { return 0 }
   }
   foreach supported_lang [split "$llvmgcc_langs" ,] {
