@@ -780,7 +780,7 @@ bool MachineInstr::addRegisterDead(unsigned IncomingReg,
                                    const TargetRegisterInfo *RegInfo,
                                    bool AddIfNotFound) {
   bool isPhysReg = TargetRegisterInfo::isPhysicalRegister(IncomingReg);
-  bool hasAliases = isPhysReg && RegInfo->getAliasSet(IncomingReg) == 0;
+  bool hasAliases = isPhysReg && RegInfo->getAliasSet(IncomingReg);
   bool Found = false;
   SmallVector<unsigned,4> DeadOps;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
@@ -792,7 +792,7 @@ bool MachineInstr::addRegisterDead(unsigned IncomingReg,
       MO.setIsDead();
       Found = true;
     } else if (hasAliases && MO.isDead() &&
-        TargetRegisterInfo::isPhysicalRegister(Reg)) {
+               TargetRegisterInfo::isPhysicalRegister(Reg)) {
       // There exists a super-register that's marked dead.
       if (RegInfo->isSuperRegister(IncomingReg, Reg))
         Found = true;
