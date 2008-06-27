@@ -69,16 +69,18 @@ public:
   
   /// Insert - Insert and return the specified instruction.
   template<typename InstTy>
-  InstTy *Insert(InstTy *I) const {
-    InsertHelper(I);
+  InstTy *Insert(InstTy *I, const char *Name = "") const {
+    InsertHelper(I, Name);
     return I;
   }
   
   /// InsertHelper - Insert the specified instruction at the specified insertion
   /// point.  This is split out of Insert so that it isn't duplicated for every
   /// template instantiation.
-  void InsertHelper(Instruction *I) const {
+  void InsertHelper(Instruction *I, const char *Name) const {
     if (BB) BB->getInstList().insert(InsertPt, I);
+    if (Name[0])
+      I->setName(Name);
   }
   
   //===--------------------------------------------------------------------===//
@@ -98,12 +100,12 @@ public:
   }
 
   ReturnInst *CreateRet(Value * const* retVals, unsigned N) {
-    return Insert(ReturnInst::Create(retVals,  N));
+    return Insert(ReturnInst::Create(retVals, N));
   }
   
   GetResultInst *CreateGetResult(Value *V, unsigned Index, 
                                  const char *Name = "") {
-    return Insert(new GetResultInst(V, Index, Name));
+    return Insert(new GetResultInst(V, Index), Name);
   }
     
   /// CreateBr - Create an unconditional 'br label X' instruction.
@@ -130,7 +132,7 @@ public:
                            BasicBlock *UnwindDest, InputIterator ArgBegin, 
                            InputIterator ArgEnd, const char *Name = "") {
     return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest,
-                                     ArgBegin, ArgEnd, Name));
+                                     ArgBegin, ArgEnd), Name);
   }
   
   UnwindInst *CreateUnwind() {
@@ -149,103 +151,103 @@ public:
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getAdd(LC, RC);      
-    return Insert(BinaryOperator::CreateAdd(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateAdd(LHS, RHS), Name);
   }
   Value *CreateSub(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getSub(LC, RC);
-    return Insert(BinaryOperator::CreateSub(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateSub(LHS, RHS), Name);
   }
   Value *CreateMul(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getMul(LC, RC);
-    return Insert(BinaryOperator::CreateMul(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateMul(LHS, RHS), Name);
   }
   Value *CreateUDiv(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getUDiv(LC, RC);
-    return Insert(BinaryOperator::CreateUDiv(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateUDiv(LHS, RHS), Name);
   }
   Value *CreateSDiv(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getSDiv(LC, RC);      
-    return Insert(BinaryOperator::CreateSDiv(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateSDiv(LHS, RHS), Name);
   }
   Value *CreateFDiv(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getFDiv(LC, RC);      
-    return Insert(BinaryOperator::CreateFDiv(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateFDiv(LHS, RHS), Name);
   }
   Value *CreateURem(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getURem(LC, RC);
-    return Insert(BinaryOperator::CreateURem(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateURem(LHS, RHS), Name);
   }
   Value *CreateSRem(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getSRem(LC, RC);
-    return Insert(BinaryOperator::CreateSRem(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateSRem(LHS, RHS), Name);
   }
   Value *CreateFRem(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getFRem(LC, RC);
-    return Insert(BinaryOperator::CreateFRem(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateFRem(LHS, RHS), Name);
   }
   Value *CreateShl(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getShl(LC, RC);
-    return Insert(BinaryOperator::CreateShl(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateShl(LHS, RHS), Name);
   }
   Value *CreateLShr(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getLShr(LC, RC);
-    return Insert(BinaryOperator::CreateLShr(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateLShr(LHS, RHS), Name);
   }
   Value *CreateAShr(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getAShr(LC, RC);
-    return Insert(BinaryOperator::CreateAShr(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateAShr(LHS, RHS), Name);
   }
   Value *CreateAnd(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getAnd(LC, RC);
-    return Insert(BinaryOperator::CreateAnd(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateAnd(LHS, RHS), Name);
   }
   Value *CreateOr(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getOr(LC, RC);
-    return Insert(BinaryOperator::CreateOr(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateOr(LHS, RHS), Name);
   }
   Value *CreateXor(Value *LHS, Value *RHS, const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getXor(LC, RC);
-    return Insert(BinaryOperator::CreateXor(LHS, RHS, Name));
+    return Insert(BinaryOperator::CreateXor(LHS, RHS), Name);
   }
 
   BinaryOperator *CreateBinOp(Instruction::BinaryOps Opc,
                               Value *LHS, Value *RHS, const char *Name = "") {
-    return Insert(BinaryOperator::Create(Opc, LHS, RHS, Name));
+    return Insert(BinaryOperator::Create(Opc, LHS, RHS), Name);
   }
   
   BinaryOperator *CreateNeg(Value *V, const char *Name = "") {
-    return Insert(BinaryOperator::CreateNeg(V, Name));
+    return Insert(BinaryOperator::CreateNeg(V), Name);
   }
   BinaryOperator *CreateNot(Value *V, const char *Name = "") {
-    return Insert(BinaryOperator::CreateNot(V, Name));
+    return Insert(BinaryOperator::CreateNot(V), Name);
   }
   
   //===--------------------------------------------------------------------===//
@@ -254,11 +256,11 @@ public:
   
   MallocInst *CreateMalloc(const Type *Ty, Value *ArraySize = 0,
                            const char *Name = "") {
-    return Insert(new MallocInst(Ty, ArraySize, Name));
+    return Insert(new MallocInst(Ty, ArraySize), Name);
   }
   AllocaInst *CreateAlloca(const Type *Ty, Value *ArraySize = 0,
                            const char *Name = "") {
-    return Insert(new AllocaInst(Ty, ArraySize, Name));
+    return Insert(new AllocaInst(Ty, ArraySize), Name);
   }
   FreeInst *CreateFree(Value *Ptr) {
     return Insert(new FreeInst(Ptr));
@@ -284,15 +286,16 @@ public:
           break;
       }
       if (i == IdxEnd)
-        return ConstantExpr::getGetElementPtr(PC, &IdxBegin[0], IdxEnd - IdxBegin);
+        return ConstantExpr::getGetElementPtr(PC, &IdxBegin[0], 
+                                              IdxEnd - IdxBegin);
     }      
-    return(Insert(GetElementPtrInst::Create(Ptr, IdxBegin, IdxEnd, Name)));
+    return(Insert(GetElementPtrInst::Create(Ptr, IdxBegin, IdxEnd), Name));
   }
   Value *CreateGEP(Value *Ptr, Value *Idx, const char *Name = "") {
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       if (Constant *IC = dyn_cast<Constant>(Idx))
         return ConstantExpr::getGetElementPtr(PC, &IC, 1);
-    return Insert(GetElementPtrInst::Create(Ptr, Idx, Name));
+    return Insert(GetElementPtrInst::Create(Ptr, Idx), Name);
   }
   Value *CreateStructGEP(Value *Ptr, unsigned Idx, const char *Name = "") {
     llvm::Value *Idxs[] = {
@@ -303,7 +306,7 @@ public:
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       return ConstantExpr::getGetElementPtr(PC, Idxs, 2);
     
-    return Insert(GetElementPtrInst::Create(Ptr, Idxs, Idxs+2, Name));
+    return Insert(GetElementPtrInst::Create(Ptr, Idxs, Idxs+2), Name);
   }
   
   //===--------------------------------------------------------------------===//
@@ -357,7 +360,7 @@ public:
       return V;
     if (Constant *VC = dyn_cast<Constant>(V))
       return ConstantExpr::getCast(Op, VC, DestTy);      
-    return Insert(CastInst::Create(Op, V, DestTy, Name));
+    return Insert(CastInst::Create(Op, V, DestTy), Name);
   }
   Value *CreateIntCast(Value *V, const Type *DestTy, bool isSigned,
                         const char *Name = "") {
@@ -365,7 +368,7 @@ public:
       return V;
     if (Constant *VC = dyn_cast<Constant>(V))
       return ConstantExpr::getIntegerCast(VC, DestTy, isSigned);
-    return Insert(CastInst::CreateIntegerCast(V, DestTy, isSigned, Name));
+    return Insert(CastInst::CreateIntegerCast(V, DestTy, isSigned), Name);
   }
 
   //===--------------------------------------------------------------------===//
@@ -451,14 +454,14 @@ public:
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getCompare(P, LC, RC);      
-    return Insert(new ICmpInst(P, LHS, RHS, Name));
+    return Insert(new ICmpInst(P, LHS, RHS), Name);
   }
   Value *CreateFCmp(CmpInst::Predicate P, Value *LHS, Value *RHS, 
                     const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getCompare(P, LC, RC);
-    return Insert(new FCmpInst(P, LHS, RHS, Name));
+    return Insert(new FCmpInst(P, LHS, RHS), Name);
   }
 
   Value *CreateVICmp(CmpInst::Predicate P, Value *LHS, Value *RHS, 
@@ -466,14 +469,14 @@ public:
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getCompare(P, LC, RC);      
-    return Insert(new VICmpInst(P, LHS, RHS, Name));
+    return Insert(new VICmpInst(P, LHS, RHS), Name);
   }
   Value *CreateVFCmp(CmpInst::Predicate P, Value *LHS, Value *RHS, 
                      const char *Name = "") {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getCompare(P, LC, RC);
-    return Insert(new VFCmpInst(P, LHS, RHS, Name));
+    return Insert(new VFCmpInst(P, LHS, RHS), Name);
   }
 
   //===--------------------------------------------------------------------===//
@@ -481,35 +484,35 @@ public:
   //===--------------------------------------------------------------------===//
 
   PHINode *CreatePHI(const Type *Ty, const char *Name = "") {
-    return Insert(PHINode::Create(Ty, Name));
+    return Insert(PHINode::Create(Ty), Name);
   }
 
   CallInst *CreateCall(Value *Callee, const char *Name = "") {
-    return Insert(CallInst::Create(Callee, Name));
+    return Insert(CallInst::Create(Callee), Name);
   }
   CallInst *CreateCall(Value *Callee, Value *Arg, const char *Name = "") {
-    return Insert(CallInst::Create(Callee, Arg, Name));
+    return Insert(CallInst::Create(Callee, Arg), Name);
   }
   CallInst *CreateCall2(Value *Callee, Value *Arg1, Value *Arg2,
                         const char *Name = "") {
     Value *Args[] = { Arg1, Arg2 };
-    return Insert(CallInst::Create(Callee, Args, Args+2, Name));
+    return Insert(CallInst::Create(Callee, Args, Args+2), Name);
   }
   CallInst *CreateCall3(Value *Callee, Value *Arg1, Value *Arg2, Value *Arg3,
                         const char *Name = "") {
     Value *Args[] = { Arg1, Arg2, Arg3 };
-    return Insert(CallInst::Create(Callee, Args, Args+3, Name));
+    return Insert(CallInst::Create(Callee, Args, Args+3), Name);
   }
   CallInst *CreateCall4(Value *Callee, Value *Arg1, Value *Arg2, Value *Arg3,
                         Value *Arg4, const char *Name = "") {
     Value *Args[] = { Arg1, Arg2, Arg3, Arg4 };
-    return Insert(CallInst::Create(Callee, Args, Args+4, Name));
+    return Insert(CallInst::Create(Callee, Args, Args+4), Name);
   }
   
   template<typename InputIterator>
   CallInst *CreateCall(Value *Callee, InputIterator ArgBegin, 
                        InputIterator ArgEnd, const char *Name = "") {
-    return Insert(CallInst::Create(Callee, ArgBegin, ArgEnd, Name));
+    return Insert(CallInst::Create(Callee, ArgBegin, ArgEnd), Name);
   }
 
   Value *CreateSelect(Value *C, Value *True, Value *False,
@@ -518,11 +521,11 @@ public:
       if (Constant *TC = dyn_cast<Constant>(True))
         if (Constant *FC = dyn_cast<Constant>(False))
           return ConstantExpr::getSelect(CC, TC, FC);      
-    return Insert(SelectInst::Create(C, True, False, Name));
+    return Insert(SelectInst::Create(C, True, False), Name);
   }
 
   VAArgInst *CreateVAArg(Value *List, const Type *Ty, const char *Name = "") {
-    return Insert(new VAArgInst(List, Ty, Name));
+    return Insert(new VAArgInst(List, Ty), Name);
   }
 
   Value *CreateExtractElement(Value *Vec, Value *Idx,
@@ -530,7 +533,7 @@ public:
     if (Constant *VC = dyn_cast<Constant>(Vec))
       if (Constant *IC = dyn_cast<Constant>(Idx))
         return ConstantExpr::getExtractElement(VC, IC);
-    return Insert(new ExtractElementInst(Vec, Idx, Name));
+    return Insert(new ExtractElementInst(Vec, Idx), Name);
   }
 
   Value *CreateInsertElement(Value *Vec, Value *NewElt, Value *Idx,
@@ -539,7 +542,7 @@ public:
       if (Constant *NC = dyn_cast<Constant>(NewElt))
         if (Constant *IC = dyn_cast<Constant>(Idx))
           return ConstantExpr::getInsertElement(VC, NC, IC);
-    return Insert(InsertElementInst::Create(Vec, NewElt, Idx, Name));
+    return Insert(InsertElementInst::Create(Vec, NewElt, Idx), Name);
   }
 
   Value *CreateShuffleVector(Value *V1, Value *V2, Value *Mask,
@@ -548,7 +551,7 @@ public:
       if (Constant *V2C = dyn_cast<Constant>(V2))
         if (Constant *MC = dyn_cast<Constant>(Mask))
           return ConstantExpr::getShuffleVector(V1C, V2C, MC);      
-    return Insert(new ShuffleVectorInst(V1, V2, Mask, Name));
+    return Insert(new ShuffleVectorInst(V1, V2, Mask), Name);
   }
 };
   
