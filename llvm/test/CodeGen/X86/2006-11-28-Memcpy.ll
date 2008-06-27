@@ -8,7 +8,7 @@
 @bytes = constant [4 x i8] c"\AA\BB\CC\DD"              ; <[4 x i8]*> [#uses=1]
 @bytes2 = global [4 x i8] c"\AA\BB\CC\DD"               ; <[4 x i8]*> [#uses=1]
 
-define i32 @test1() {
+define i32 @test1() nounwind {
         %y = alloca i32         ; <i32*> [#uses=2]
         %c = bitcast i32* %y to i8*             ; <i8*> [#uses=1]
         %z = getelementptr [4 x i8]* @bytes, i32 0, i32 0               ; <i8*> [#uses=1]
@@ -19,7 +19,7 @@ define i32 @test1() {
         ret i32 0
 }
 
-define void @test2() {
+define void @test2() nounwind {
         %y = alloca i32         ; <i32*> [#uses=2]
         %c = bitcast i32* %y to i8*             ; <i8*> [#uses=1]
         %z = getelementptr [4 x i8]* @bytes2, i32 0, i32 0              ; <i8*> [#uses=1]
