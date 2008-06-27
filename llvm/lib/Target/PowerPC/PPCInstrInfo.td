@@ -531,8 +531,8 @@ def DCBZL  : DCB_Form<1014, 1, (outs), (ins memrr:$dst),
                       PPC970_DGroup_Single;
 
 // Atomic operations.
-def LWARX : Pseudo<(outs GPRC:$rD), (ins memrr:$ptr, i32imm:$label),
-                   "\nLa${label}_entry:\n\tlwarx $rD, $ptr",
+def LWARX : XForm_1<31,  20, (outs GPRC:$rD), (ins memrr:$ptr, i32imm:$label),
+                   "\nLa${label}_entry:\n\tlwarx $rD, $ptr", LdStLWARX,
                    [(set GPRC:$rD, (PPClarx xoaddr:$ptr, imm:$label))]>;
 
 let Defs = [CR0] in {
