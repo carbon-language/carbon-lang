@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/ValueTypes.h"
 #include <cassert>
 #include <functional>
+#include <set>
 
 namespace llvm {
 
@@ -285,6 +286,7 @@ private:
   regclass_iterator RegClassBegin, RegClassEnd;   // List of regclasses
 
   int CallFrameSetupOpcode, CallFrameDestroyOpcode;
+  std::set<std::pair<unsigned, unsigned> > Subregs;
 protected:
   TargetRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
                      regclass_iterator RegClassBegin,
@@ -419,9 +421,7 @@ public:
   /// isSubRegister - Returns true if regB is a sub-register of regA.
   ///
   bool isSubRegister(unsigned regA, unsigned regB) const {
-    for (const unsigned *SR = getSubRegisters(regA); *SR; ++SR)
-      if (*SR == regB) return true;
-    return false;
+    return Subregs.count(std::make_pair(regA, regB));
   }
 
   /// isSuperRegister - Returns true if regB is a super-register of regA.

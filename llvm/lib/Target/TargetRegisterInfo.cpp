@@ -29,6 +29,16 @@ TargetRegisterInfo::TargetRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
 
   CallFrameSetupOpcode   = CFSO;
   CallFrameDestroyOpcode = CFDO;
+  
+  for (unsigned i = 0; i < NumRegs; ++i) {
+    const TargetRegisterDesc* CurrReg = Desc + i;
+    
+    // Initialize the Subregs set, which stores pairs (a, b) where
+    // b is a subreg of a.
+    if (CurrReg->SubRegs)
+      for (const unsigned* CurrSR = CurrReg->SubRegs; *CurrSR; ++CurrSR)
+        Subregs.insert(std::make_pair(i, *CurrSR));
+  }
 }
 
 TargetRegisterInfo::~TargetRegisterInfo() {}
