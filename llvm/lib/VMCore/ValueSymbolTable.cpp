@@ -54,6 +54,14 @@ Value *ValueSymbolTable::lookup(const std::string &Name) const {
   return 0;
 }
 
+Value *ValueSymbolTable::lookup(const char *NameBegin,
+                                const char *NameEnd) const {
+  const_iterator VI = vmap.find(NameBegin, NameEnd);
+  if (VI != vmap.end())                   // We found the symbol
+    return VI->getValue();
+  return 0;
+}
+
 // Insert a value into the symbol table with the specified name...
 //
 void ValueSymbolTable::reinsertValue(Value* V) {

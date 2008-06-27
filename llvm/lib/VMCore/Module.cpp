@@ -201,6 +201,11 @@ Function *Module::getFunction(const std::string &Name) const {
   return dyn_cast_or_null<Function>(SymTab.lookup(Name));
 }
 
+Function *Module::getFunction(const char *Name) const {
+  const ValueSymbolTable &SymTab = getValueSymbolTable();
+  return dyn_cast_or_null<Function>(SymTab.lookup(Name, Name+strlen(Name)));
+}
+
 //===----------------------------------------------------------------------===//
 // Methods for easy access to the global variables in the module.
 //

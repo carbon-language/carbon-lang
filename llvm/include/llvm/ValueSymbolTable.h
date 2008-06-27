@@ -67,6 +67,7 @@ public:
   /// @returns the value associated with the \p name
   /// @brief Lookup a named Value.
   Value *lookup(const std::string &name) const;
+  Value *lookup(const char *NameBegin, const char *NameEnd) const;
 
   /// @returns true iff the symbol table is empty
   /// @brief Determine if the symbol table is empty

@@ -209,6 +209,7 @@ public:
   /// getFunction - Look up the specified function in the module symbol table.
   /// If it does not exist, return null.
   Function *getFunction(const std::string &Name) const;
+  Function *getFunction(const char *Name) const;
 
 /// @}
 /// @name Global Variable Accessors
