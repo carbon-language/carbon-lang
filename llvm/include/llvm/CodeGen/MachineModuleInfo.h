@@ -591,7 +591,7 @@ public:
 
   /// getFilterIDFor - Return the id of the filter encoded by TyIds.  This is
   /// function wide.
-  int getFilterIDFor(std::vector<unsigned> &TyIds);
+  int getFilterIDFor(SmallVectorImpl<unsigned> &TyIds);
 
   /// TidyLandingPads - Remap landing pad labels and remove any deleted landing
   /// pads.

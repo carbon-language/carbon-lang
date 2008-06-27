@@ -513,8 +513,8 @@ const PointerType *DISerializer::getEmptyStructPtrType() {
   // If not already defined.
   if (!EmptyStructPtrTy) {
     // Construct the empty structure type.
-    const StructType *EmptyStructTy =
-                                    StructType::get(std::vector<const Type*>());
+    const StructType *EmptyStructTy = StructType::get(NULL, NULL);
+
     // Construct the pointer to empty structure type.
     EmptyStructPtrTy = PointerType::getUnqual(EmptyStructTy);
   }
@@ -532,6 +532,7 @@ const StructType *DISerializer::getTagType(DebugInfoDesc *DD) {
   if (!Ty) {
     // Set up fields vector.
     std::vector<const Type*> Fields;
+
     // Get types of fields.
     DIGetTypesVisitor GTAM(*this, Fields);
     GTAM.ApplyToFields(DD);
@@ -551,22 +552,27 @@ const StructType *DISerializer::getTagType(DebugInfoDesc *DD) {
 Constant *DISerializer::getString(const std::string &String) {
   // Check string cache for previous edition.
   Constant *&Slot = StringCache[String];
+
   // Return Constant if previously defined.
   if (Slot) return Slot;
+
   // If empty string then use a sbyte* null instead.
   if (String.empty()) {
     Slot = ConstantPointerNull::get(getStrPtrType());
   } else {
     // Construct string as an llvm constant.
     Constant *ConstStr = ConstantArray::get(String);
+
     // Otherwise create and return a new string global.
     GlobalVariable *StrGV = new GlobalVariable(ConstStr->getType(), true,
                                                GlobalVariable::InternalLinkage,
                                                ConstStr, ".str", M);
     StrGV->setSection("llvm.metadata");
+
     // Convert to generic string pointer.
     Slot = ConstantExpr::getBitCast(StrGV, getStrPtrType());
   }
+
   return Slot;
   
 }
@@ -593,6 +599,7 @@ GlobalVariable *DISerializer::Serialize(DebugInfoDesc *DD) {
  
   // Set up elements vector
   std::vector<Constant*> Elements;
+
   // Add fields.
   DISerializeVisitor SRAM(*this, Elements);
   SRAM.ApplyToFields(DD);
@@ -996,9 +1003,11 @@ void MachineModuleInfo::addCatchTypeInfo(MachineBasicBlock *LandingPad,
 void MachineModuleInfo::addFilterTypeInfo(MachineBasicBlock *LandingPad,
                                         std::vector<GlobalVariable *> &TyInfo) {
   LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
-  std::vector<unsigned> IdsInFilter (TyInfo.size());
+  SmallVector<unsigned, 32> IdsInFilter(TyInfo.size());
+
   for (unsigned I = 0, E = TyInfo.size(); I != E; ++I)
     IdsInFilter[I] = getTypeIDFor(TyInfo[I]);
+
   LP.TypeIds.push_back(getFilterIDFor(IdsInFilter));
 }
 
@@ -1066,13 +1075,14 @@ unsigned MachineModuleInfo::getTypeIDFor(GlobalVariable *TI) {
 
 /// getFilterIDFor - Return the filter id for the specified typeinfos.  This is
 /// function wide.
-int MachineModuleInfo::getFilterIDFor(std::vector<unsigned> &TyIds) {
+int MachineModuleInfo::getFilterIDFor(SmallVectorImpl<unsigned> &TyIds) {
   // If the new filter coincides with the tail of an existing filter, then
   // re-use the existing filter.  Folding filters more than this requires
   // re-ordering filters and/or their elements - probably not worth it.
+  unsigned TyIDSize = TyIds.size();
   for (std::vector<unsigned>::iterator I = FilterEnds.begin(),
        E = FilterEnds.end(); I != E; ++I) {
-    unsigned i = *I, j = TyIds.size();
+    unsigned i = *I, j = TyIDSize;
 
     while (i && j)
       if (FilterIds[--i] != TyIds[--j])
@@ -1081,16 +1091,18 @@ int MachineModuleInfo::getFilterIDFor(std::vector<unsigned> &TyIds) {
     if (!j)
       // The new filter coincides with range [i, end) of the existing filter.
       return -(1 + i);
-
 try_next:;
   }
 
   // Add the new filter.
-  int FilterID = -(1 + FilterIds.size());
-  FilterIds.reserve(FilterIds.size() + TyIds.size() + 1);
-  for (unsigned I = 0, N = TyIds.size(); I != N; ++I)
+  unsigned FilterIDSize = FilterIds.size();
+  int FilterID = -(1 + FilterIDSize);
+  FilterIds.reserve(FilterIDSize + TyIDSize + 1);
+
+  for (unsigned I = 0, N = TyIDSize; I != N; ++I)
     FilterIds.push_back(TyIds[I]);
-  FilterEnds.push_back(FilterIds.size());
+
+  FilterEnds.push_back(FilterIDSize);
   FilterIds.push_back(0); // terminator
   return FilterID;
 }
@@ -1108,13 +1120,13 @@ unsigned MachineModuleInfo::getPersonalityIndex() const {
   const Function* Personality = NULL;
   
   // Scan landing pads. If there is at least one non-NULL personality - use it.
-  for (unsigned i = 0; i != LandingPads.size(); ++i)
+  for (unsigned i = 0, e = LandingPads.size(); i != e; ++i)
     if (LandingPads[i].Personality) {
       Personality = LandingPads[i].Personality;
       break;
     }
   
-  for (unsigned i = 0; i < Personalities.size(); ++i) {
+  for (unsigned i = 0, e = Personalities.size(); i < e; ++i) {
     if (Personalities[i] == Personality)
       return i;
   }
