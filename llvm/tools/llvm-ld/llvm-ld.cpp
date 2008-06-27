@@ -251,6 +251,9 @@ static int GenerateAssembly(const std::string &OutputFilename,
   // Run LLC to convert the bitcode file into assembly code.
   std::vector<const char*> args;
   args.push_back(llc.c_str());
+  // We will use GCC to assemble the program so set the assembly syntax to AT&T,
+  // regardless of what the target in the bitcode file is.
+  args.push_back("-x86-asm-syntax=att");
   args.push_back("-f");
   args.push_back("-o");
   args.push_back(OutputFilename.c_str());
