@@ -1045,10 +1045,12 @@ void Sema::DefaultArgumentPromotion(Expr *&Expr) {
   QualType Ty = Expr->getType();
   assert(!Ty.isNull() && "DefaultArgumentPromotion - missing type");
 
-  if (Ty == Context.FloatTy)
-    ImpCastExprToType(Expr, Context.DoubleTy);
-  else
-    UsualUnaryConversions(Expr);
+  // If this is a 'float' (CVR qualified or typedef) promote to double.
+  if (const BuiltinType *BT = Ty->getAsBuiltinType())
+    if (BT->getKind() == BuiltinType::Float)
+      return ImpCastExprToType(Expr, Context.DoubleTy);
+  
+  UsualUnaryConversions(Expr);
 }
 
 /// DefaultFunctionArrayConversion (C99 6.3.2.1p3, C99 6.3.2.1p4).

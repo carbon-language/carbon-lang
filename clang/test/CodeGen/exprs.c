@@ -1,4 +1,4 @@
-// RUN: clang %s -emit-llvm
+// RUN: clang %s -emit-llvm -o -
 
 // PR1895
 // sizeof function
@@ -32,5 +32,10 @@ void test4() {
   
   t1 = sizeof(test4());
   t2 = __alignof__(test4());
+}
+
+// 'const float' promotes to double in varargs.
+int test5(const float x, float float_number) {
+  return __builtin_isless(x, float_number);
 }
 
