@@ -16,6 +16,7 @@
 #define LLVM_ANALYSIS_VALUETRACKING_H
 
 #include <string>
+#include <llvm/Support/DataTypes.h>
 
 namespace llvm {
   class Value;

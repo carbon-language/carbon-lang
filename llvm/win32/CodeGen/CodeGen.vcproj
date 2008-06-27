@@ -377,6 +377,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\MachineDebugInfoDesc.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\MachineDominators.cpp"
 				>
 			</File>
@@ -640,6 +644,10 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\MachineConstantPool.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\CodeGen\MachineDebugInfoDesc.h"
 				>
 			</File>
 			<File
