@@ -306,7 +306,7 @@ public:
     ArrayType *AT = ArrayType::get(EmptyTy, N);
     std::vector<Constant *> ArrayElements;
 
-    for (unsigned i = 0, N = Field.size(); i < N; ++i) {
+    for (unsigned i = 0; i < N; ++i) {
       if (DebugInfoDesc *Element = Field[i]) {
         GlobalVariable *GVE = SR.Serialize(Element);
         Constant *CE = ConstantExpr::getBitCast(GVE, EmptyTy);
@@ -711,8 +711,8 @@ bool DIVerifier::isVerified(GlobalVariable *GV) {
 //===----------------------------------------------------------------------===//
 
 DebugScope::~DebugScope() {
-  for (unsigned i = 0, N = Scopes.size(); i < N; ++i) delete Scopes[i];
-  for (unsigned j = 0, M = Variables.size(); j < M; ++j) delete Variables[j];
+  for (unsigned i = 0, e = Scopes.size(); i < e; ++i) delete Scopes[i];
+  for (unsigned i = 0, e = Variables.size(); i < e; ++i) delete Variables[i];
 }
 
 //===----------------------------------------------------------------------===//
@@ -819,7 +819,7 @@ void MachineModuleInfo::SetupCompileUnits(Module &M) {
   CompileUnitDesc CUD;
   getAnchoredDescriptors(M, &CUD, CUList);
   
-  for (unsigned i = 0, N = CUList.size(); i < N; i++)
+  for (unsigned i = 0, e = CUList.size(); i < e; i++)
     CompileUnits.insert((CompileUnitDesc*)CUList[i]);
 }
 
@@ -837,7 +837,7 @@ MachineModuleInfo::getAnchoredDescriptors(Module &M, const AnchoredDesc *Desc,
   std::vector<GlobalVariable*> Globals;
   getGlobalVariablesUsing(M, Desc->getAnchorString(), Globals);
 
-  for (unsigned i = 0, N = Globals.size(); i < N; ++i) {
+  for (unsigned i = 0, e = Globals.size(); i < e; ++i) {
     GlobalVariable *GV = Globals[i];
 
     // FIXME - In the short term, changes are too drastic to continue.
@@ -939,9 +939,10 @@ DebugScope *MachineModuleInfo::getOrCreateScope(DebugInfoDesc *ScopeDesc) {
 
 /// getOrCreateLandingPadInfo - Find or create an LandingPadInfo for the
 /// specified MachineBasicBlock.
-LandingPadInfo &MachineModuleInfo::getOrCreateLandingPadInfo
-    (MachineBasicBlock *LandingPad) {
+LandingPadInfo &
+MachineModuleInfo::getOrCreateLandingPadInfo(MachineBasicBlock *LandingPad) {
   unsigned N = LandingPads.size();
+
   for (unsigned i = 0; i < N; ++i) {
     LandingPadInfo &LP = LandingPads[i];
     if (LP.LandingPadBlock == LandingPad)
@@ -977,7 +978,7 @@ void MachineModuleInfo::addPersonality(MachineBasicBlock *LandingPad,
   LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
   LP.Personality = Personality;
 
-  for (unsigned i = 0; i < Personalities.size(); ++i)
+  for (unsigned i = 0, e = Personalities.size(); i < e; ++i)
     if (Personalities[i] == Personality)
       return;
   
@@ -998,9 +999,12 @@ void MachineModuleInfo::addCatchTypeInfo(MachineBasicBlock *LandingPad,
 void MachineModuleInfo::addFilterTypeInfo(MachineBasicBlock *LandingPad,
                                         std::vector<GlobalVariable *> &TyInfo) {
   LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
-  std::vector<unsigned> IdsInFilter (TyInfo.size());
-  for (unsigned I = 0, E = TyInfo.size(); I != E; ++I)
+  unsigned TyInfoSize = TyInfo.size();
+  std::vector<unsigned> IdsInFilter(TyInfoSize);
+
+  for (unsigned I = 0; I != TyInfoSize; ++I)
     IdsInFilter[I] = getTypeIDFor(TyInfo[I]);
+
   LP.TypeIds.push_back(getFilterIDFor(IdsInFilter));
 }
 
@@ -1025,7 +1029,7 @@ void MachineModuleInfo::TidyLandingPads() {
       continue;
     }
 
-    for (unsigned j=0; j != LandingPads[i].BeginLabels.size(); ) {
+    for (unsigned j = 0; j != LandingPads[i].BeginLabels.size(); ) {
       unsigned BeginLabel = MappedLabel(LandingPad.BeginLabels[j]);
       unsigned EndLabel = MappedLabel(LandingPad.EndLabels[j]);
 
@@ -1059,8 +1063,9 @@ void MachineModuleInfo::TidyLandingPads() {
 /// getTypeIDFor - Return the type id for the specified typeinfo.  This is 
 /// function wide.
 unsigned MachineModuleInfo::getTypeIDFor(GlobalVariable *TI) {
-  for (unsigned i = 0, N = TypeInfos.size(); i != N; ++i)
-    if (TypeInfos[i] == TI) return i + 1;
+  for (unsigned i = 0, e = TypeInfos.size(); i != e; ++i)
+    if (TypeInfos[i] == TI)
+      return i + 1;
 
   TypeInfos.push_back(TI);
   return TypeInfos.size();
@@ -1090,8 +1095,10 @@ try_next:;
   // Add the new filter.
   int FilterID = -(1 + FilterIds.size());
   FilterIds.reserve(FilterIds.size() + TyIds.size() + 1);
+
   for (unsigned I = 0, N = TyIds.size(); I != N; ++I)
     FilterIds.push_back(TyIds[I]);
+
   FilterEnds.push_back(FilterIds.size());
   FilterIds.push_back(0); // terminator
   return FilterID;
@@ -1110,16 +1117,15 @@ unsigned MachineModuleInfo::getPersonalityIndex() const {
   const Function* Personality = NULL;
   
   // Scan landing pads. If there is at least one non-NULL personality - use it.
-  for (unsigned i = 0; i != LandingPads.size(); ++i)
+  for (unsigned i = 0, e = LandingPads.size(); i != e; ++i)
     if (LandingPads[i].Personality) {
       Personality = LandingPads[i].Personality;
       break;
     }
   
-  for (unsigned i = 0; i < Personalities.size(); ++i) {
+  for (unsigned i = 0, e = Personalities.size(); i < e; ++i)
     if (Personalities[i] == Personality)
       return i;
-  }
 
   // This should never happen
   assert(0 && "Personality function should be set!");
