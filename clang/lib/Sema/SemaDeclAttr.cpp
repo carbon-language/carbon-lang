@@ -13,7 +13,7 @@
 
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
-
+#include "clang/Basic/TargetInfo.h"
 using namespace clang;
 
 static const FunctionTypeProto *getFunctionProto(Decl *d) {
@@ -80,20 +80,7 @@ void Sema::HandleDeclAttribute(Decl *New, const AttributeList *Attr) {
   case AttributeList::AT_address_space:
     // Ignore this, this is a type attribute, handled by ProcessTypeAttributes.
     break;
-  case AttributeList::AT_mode:
-    // Despite what would be logical, the mode attribute is a decl attribute,
-    // not a type attribute: 'int ** __attribute((mode(HI))) *G;' tries to make
-    // 'G' be HImode, not an intermediate pointer.
-    if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New)) {
-      QualType newType = HandleModeTypeAttribute(tDecl->getUnderlyingType(),
-                                                 Attr);
-      tDecl->setUnderlyingType(newType);
-    } else if (ValueDecl *vDecl = dyn_cast<ValueDecl>(New)) {
-      QualType newType = HandleModeTypeAttribute(vDecl->getType(), Attr);
-      vDecl->setType(newType);
-    }
-    // FIXME: Diagnostic?
-    break;
+  case AttributeList::AT_mode:       HandleModeAttribute(New, *Attr);  break;
   case AttributeList::AT_alias:      HandleAliasAttribute(New, Attr); break;
   case AttributeList::AT_deprecated: HandleDeprecatedAttribute(New, Attr);break;
   case AttributeList::AT_visibility: HandleVisibilityAttribute(New, Attr);break;
@@ -652,4 +639,130 @@ void Sema::HandleAlignedAttribute(Decl *d, const AttributeList *rawAttr) {
   }
 
   d->addAttr(new AlignedAttr(Align));
+}
+
+/// HandleModeAttribute - Process a mode attribute on the specified decl.
+///
+/// Despite what would be logical, the mode attribute is a decl attribute,
+/// not a type attribute: 'int ** __attribute((mode(HI))) *G;' tries to make
+/// 'G' be HImode, not an intermediate pointer.
+///
+void Sema::HandleModeAttribute(Decl *D, const AttributeList &Attr) {
+  // This attribute isn't documented, but glibc uses it.  It changes
+  // the width of an int or unsigned int to the specified size.
+
+  // Check that there aren't any arguments
+  if (Attr.getNumArgs() != 0) {
+    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("0"));
+    return;
+  }
+
+  IdentifierInfo *Name = Attr.getParameterName();
+  if (!Name) {
+    Diag(Attr.getLoc(), diag::err_attribute_missing_parameter_name);
+    return;
+  }
+  const char *Str = Name->getName();
+  unsigned Len = Name->getLength();
+
+  // Normalize the attribute name, __foo__ becomes foo.
+  if (Len > 4 && Str[0] == '_' && Str[1] == '_' &&
+      Str[Len - 2] == '_' && Str[Len - 1] == '_') {
+    Str += 2;
+    Len -= 4;
+  }
+
+  unsigned DestWidth = 0;
+  bool IntegerMode = true;
+  switch (Len) {
+  case 2:
+    if (!memcmp(Str, "QI", 2)) { DestWidth =  8; break; }
+    if (!memcmp(Str, "HI", 2)) { DestWidth = 16; break; }
+    if (!memcmp(Str, "SI", 2)) { DestWidth = 32; break; }
+    if (!memcmp(Str, "DI", 2)) { DestWidth = 64; break; }
+    if (!memcmp(Str, "TI", 2)) { DestWidth = 128; break; }
+    if (!memcmp(Str, "SF", 2)) { DestWidth = 32; IntegerMode = false; break; }
+    if (!memcmp(Str, "DF", 2)) { DestWidth = 64; IntegerMode = false; break; }
+    if (!memcmp(Str, "XF", 2)) { DestWidth = 96; IntegerMode = false; break; }
+    if (!memcmp(Str, "TF", 2)) { DestWidth = 128; IntegerMode = false; break; }
+    break;
+  case 4:
+    // FIXME: glibc uses 'word' to define register_t; this is narrower than a
+    // pointer on PIC16 and other embedded platforms.
+    if (!memcmp(Str, "word", 4))
+      DestWidth = Context.Target.getPointerWidth(0);
+    if (!memcmp(Str, "byte", 4))
+      DestWidth = Context.Target.getCharWidth();
+    break;
+  case 7:
+    if (!memcmp(Str, "pointer", 7))
+      DestWidth = Context.Target.getPointerWidth(0);
+    break;
+  }
+
+  QualType OldTy;
+  if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D))
+    OldTy = TD->getUnderlyingType();
+  else if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
+    OldTy = VD->getType();
+  else {
+    Diag(D->getLocation(), diag::err_mode_wrong_decl,
+         SourceRange(Attr.getLoc(), Attr.getLoc()));
+    return;
+  }
+  
+  // FIXME: Need proper fixed-width types
+  QualType NewTy;
+  switch (DestWidth) {
+  case 0:
+    Diag(Attr.getLoc(), diag::err_unknown_machine_mode, Name->getName());
+    return;
+  default:
+    Diag(Attr.getLoc(), diag::err_unsupported_machine_mode, Name->getName());
+    return;
+  case 8:
+    assert(IntegerMode);
+    if (OldTy->isSignedIntegerType())
+      NewTy = Context.SignedCharTy;
+    else
+      NewTy = Context.UnsignedCharTy;
+    break;
+  case 16:
+    assert(IntegerMode);
+    if (OldTy->isSignedIntegerType())
+      NewTy = Context.ShortTy;
+    else
+      NewTy = Context.UnsignedShortTy;
+    break;
+  case 32:
+    if (!IntegerMode)
+      NewTy = Context.FloatTy;
+    else if (OldTy->isSignedIntegerType())
+      NewTy = Context.IntTy;
+    else
+      NewTy = Context.UnsignedIntTy;
+    break;
+  case 64:
+    if (!IntegerMode)
+      NewTy = Context.DoubleTy;
+    else if (OldTy->isSignedIntegerType())
+      NewTy = Context.LongLongTy;
+    else
+      NewTy = Context.UnsignedLongLongTy;
+    break;
+  }
+
+  if (!OldTy->getAsBuiltinType())
+    Diag(Attr.getLoc(), diag::err_mode_not_primitive);
+  else if (!(IntegerMode && OldTy->isIntegerType()) &&
+           !(!IntegerMode && OldTy->isFloatingType())) {
+    Diag(Attr.getLoc(), diag::err_mode_wrong_type);
+  }
+
+  // Install the new type.
+  if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D))
+    TD->setUnderlyingType(NewTy);
+  else
+    cast<ValueDecl>(D)->setType(NewTy);
 }
