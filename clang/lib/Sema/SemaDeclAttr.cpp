@@ -259,7 +259,7 @@ void Sema::HandlePackedAttribute(Decl *d, const AttributeList &Attr) {
   }
   
   if (TagDecl *TD = dyn_cast<TagDecl>(d))
-    TD->addAttr(new PackedAttr);
+    TD->addAttr(new PackedAttr());
   else if (FieldDecl *FD = dyn_cast<FieldDecl>(d)) {
     // If the alignment is less than or equal to 8 bits, the packed attribute
     // has no effect.
@@ -269,7 +269,7 @@ void Sema::HandlePackedAttribute(Decl *d, const AttributeList &Attr) {
            diag::warn_attribute_ignored_for_field_of_type,
            Attr.getName()->getName(), FD->getType().getAsString());
     else
-      FD->addAttr(new PackedAttr);
+      FD->addAttr(new PackedAttr());
   } else
     Diag(Attr.getLoc(), diag::warn_attribute_ignored,
          Attr.getName()->getName());
@@ -310,7 +310,6 @@ void Sema::HandleNoReturnAttribute(Decl *d, const AttributeList &Attr) {
   }
   
   FunctionDecl *Fn = dyn_cast<FunctionDecl>(d);
-  
   if (!Fn) {
     Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
          "noreturn", "function");
@@ -458,7 +457,7 @@ void Sema::HandleFormatAttribute(Decl *d, const AttributeList &Attr) {
 
   if (!proto) {
     Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
-           "format", "function");
+         "format", "function");
     return;
   }
 
@@ -636,25 +635,21 @@ void Sema::HandleAlignedAttribute(Decl *d, const AttributeList &Attr) {
   }
 
   unsigned Align = 0;
-  
   if (Attr.getNumArgs() == 0) {
     // FIXME: This should be the target specific maximum alignment.
     // (For now we just use 128 bits which is the maximum on X86.
     Align = 128;
     return;
-  } else {
-    Expr *alignmentExpr = static_cast<Expr *>(Attr.getArg(0));
-    llvm::APSInt alignment(32);
-    if (!alignmentExpr->isIntegerConstantExpr(alignment, Context)) {
-      Diag(Attr.getLoc(), diag::err_attribute_argument_not_int,
-           "aligned", alignmentExpr->getSourceRange());
-      return;
-    }
-    
-    Align = alignment.getZExtValue() * 8;
   }
-
-  d->addAttr(new AlignedAttr(Align));
+  
+  Expr *alignmentExpr = static_cast<Expr *>(Attr.getArg(0));
+  llvm::APSInt Alignment(32);
+  if (!alignmentExpr->isIntegerConstantExpr(Alignment, Context)) {
+    Diag(Attr.getLoc(), diag::err_attribute_argument_not_int,
+         "aligned", alignmentExpr->getSourceRange());
+    return;
+  }
+  d->addAttr(new AlignedAttr(Alignment.getZExtValue() * 8));
 }
 
 /// HandleModeAttribute - This attribute modifies the width of a decl with
