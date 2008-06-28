@@ -29,8 +29,22 @@ namespace llvm {
     };
   }
 
+  namespace SectionKind {
+    enum Kind {
+      Text,             ///< Text section
+      Data,             ///< Data section
+      BSS,              ///< BSS section
+      ROData,           ///< Readonly data section
+      RODataMergeStr,   ///< Readonly data section (mergeable strings)
+      RODataMergeConst, ///< Readonly data section (mergeable constants)
+      ThreadData,       ///< Initialized TLS data objects
+      ThreadBSS         ///< Uninitialized TLS data objects
+    };
+  }
+
   class TargetMachine;
   class CallInst;
+  class GlobalValue;
 
   /// TargetAsmInfo - This class is intended to be used as a base class for asm
   /// properties and features specific to the target.
@@ -427,7 +441,11 @@ namespace llvm {
     /// if the symbol can be relocated.
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
-    
+
+    /// SectionKindForGlobal - This hook allows the target to select proper
+    /// section kind used for global emission.
+    SectionKind::Kind SectionKindForGlobal(const GlobalValue *GV) const;
+
     // Accessors.
     //
     const char *getTextSection() const {
@@ -642,7 +660,7 @@ namespace llvm {
     }
     const char *getDwarfSectionOffsetDirective() const {
       return DwarfSectionOffsetDirective;
-    }    
+    }
     const char *getDwarfAbbrevSection() const {
       return DwarfAbbrevSection;
     }

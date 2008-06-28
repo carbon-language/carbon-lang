@@ -12,7 +12,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Constants.h"
+#include "llvm/GlobalVariable.h"
+#include "llvm/Function.h"
+#include "llvm/Module.h"
+#include "llvm/Type.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Dwarf.h"
 #include <cctype>
 #include <cstring>
@@ -142,3 +148,46 @@ unsigned TargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
   return dwarf::DW_EH_PE_absptr;
 }
 
+static bool isSuitableForBSS(const GlobalVariable *GV) {
+  if (!GV->hasInitializer())
+    return true;
+
+  // Leave constant zeros in readonly constant sections, so they can be shared
+  Constant *C = GV->getInitializer();
+  return (C->isNullValue() && !GV->isConstant() && !NoZerosInBSS);
+}
+
+SectionKind::Kind
+TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
+  // Early exit - functions should be always in text sections.
+  if (isa<Function>(GV))
+    return SectionKind::Text;
+
+  const GlobalVariable* GVar = dyn_cast<GlobalVariable>(GV);
+  bool isThreadLocal = GVar->isThreadLocal();
+  assert(GVar && "Invalid global value for section selection");
+
+  SectionKind::Kind kind;
+  if (isSuitableForBSS(GVar)) {
+    // Variable can be easily put to BSS section.
+    return (isThreadLocal ? SectionKind::ThreadBSS : SectionKind::BSS);
+  } else if (GVar->isConstant() && !isThreadLocal) {
+    // Now we know, that varible has initializer and it is constant. We need to
+    // check its initializer to decide, which section to output it into. Also
+    // note, there is no thread-local r/o section.
+    Constant *C = GVar->getInitializer();
+    if (C->ContainsRelocations())
+      kind = SectionKind::ROData;
+    else {
+      const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
+      // Check, if initializer is a null-terminated string
+      if (CVA && CVA->isCString())
+        kind = SectionKind::RODataMergeStr;
+      else
+        kind = SectionKind::RODataMergeConst;
+    }
+  }
+
+  // Variable is not constant or thread-local - emit to generic data section.
+  return (isThreadLocal ? SectionKind::ThreadData : SectionKind::Data);
+}
