@@ -303,14 +303,14 @@ private:
   // Decl attributes - this routine is the top level dispatcher. 
   void HandleDeclAttributes(Decl *New, const AttributeList *DeclSpecAttrs,
                             const AttributeList *DeclaratorAttrs);
-  void HandleDeclAttribute(Decl *New, const AttributeList *rawAttr);
+  void HandleDeclAttribute(Decl *New, const AttributeList &Attr);
 
   /// HandleAddressSpaceTypeAttribute - this attribute is only applicable to 
   /// objects without automatic storage duration. 
   /// The raw attribute contains 1 argument, the id of the address space 
   /// for the type.
   QualType HandleAddressSpaceTypeAttribute(QualType curType, 
-                                           const AttributeList *rawAttr);
+                                           const AttributeList &Attr);
 
   /// HandleModeAttribute - this attribute modifies the width of a decl with
   /// primitive type.  Note that this is a variable attribute, and not
@@ -326,25 +326,23 @@ private:
   // for the variable, measured in bytes. If curType and rawAttr are well
   // formed, this routine will return a new vector type.
   QualType HandleVectorTypeAttribute(QualType curType,
-                                     const AttributeList *rawAttr);
-  void HandleExtVectorTypeAttribute(TypedefDecl *d, 
-                                    const AttributeList *rawAttr);
-  
-  void HandleAlignedAttribute(Decl *d, const AttributeList *rawAttr);
-  void HandleAliasAttribute(Decl *d, const AttributeList *rawAttr);
-  void HandlePackedAttribute(Decl *d, const AttributeList *rawAttr);
-  void HandleAnnotateAttribute(Decl *d, const AttributeList *rawAttr);
-  void HandleNoReturnAttribute(Decl *d, const AttributeList *rawAttr);
-  void HandleDeprecatedAttribute(Decl *d, const AttributeList *rawAttr);
-  void HandleWeakAttribute(Decl *d, const AttributeList *rawAttr);
-  void HandleDLLImportAttribute(Decl *d, const AttributeList *rawAttr);
-  void HandleDLLExportAttribute(Decl *d, const AttributeList *rawAttr);
-  void HandleVisibilityAttribute(Decl *d, const AttributeList *rawAttr);
-  void HandleNothrowAttribute(Decl *d, const AttributeList *rawAttr);
-  void HandleFormatAttribute(Decl *d, const AttributeList *rawAttr);
-  void HandleStdCallAttribute(Decl *d, const AttributeList *rawAttr);
-  void HandleFastCallAttribute(Decl *d, const AttributeList *rawAttr);
-  void HandleTransparentUnionAttribute(Decl *d, const AttributeList *rawAttr);
+                                     const AttributeList &Attr);
+  void HandleExtVectorTypeAttribute(Decl *d, const AttributeList &Attr);
+  void HandleAlignedAttribute(Decl *d, const AttributeList &Attr);
+  void HandleAliasAttribute(Decl *d, const AttributeList &Attr);
+  void HandlePackedAttribute(Decl *d, const AttributeList &Attr);
+  void HandleAnnotateAttribute(Decl *d, const AttributeList &Attr);
+  void HandleNoReturnAttribute(Decl *d, const AttributeList &Attr);
+  void HandleDeprecatedAttribute(Decl *d, const AttributeList &Attr);
+  void HandleWeakAttribute(Decl *d, const AttributeList &Attr);
+  void HandleDLLImportAttribute(Decl *d, const AttributeList &Attr);
+  void HandleDLLExportAttribute(Decl *d, const AttributeList &Attr);
+  void HandleVisibilityAttribute(Decl *d, const AttributeList &Attr);
+  void HandleNothrowAttribute(Decl *d, const AttributeList &Attr);
+  void HandleFormatAttribute(Decl *d, const AttributeList &Attr);
+  void HandleStdCallAttribute(Decl *d, const AttributeList &Attr);
+  void HandleFastCallAttribute(Decl *d, const AttributeList &Attr);
+  void HandleTransparentUnionAttribute(Decl *d, const AttributeList &Attr);
   
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl);

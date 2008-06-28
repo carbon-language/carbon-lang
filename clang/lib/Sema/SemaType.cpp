@@ -524,7 +524,7 @@ void Sema::ProcessTypeAttributes(QualType &Result, const AttributeList *AL) {
     switch (AL->getKind()) {
     default: break;
     case AttributeList::AT_address_space:
-      Result = HandleAddressSpaceTypeAttribute(Result, AL);
+      Result = HandleAddressSpaceTypeAttribute(Result, *AL);
       continue;
     }
   }
@@ -533,25 +533,25 @@ void Sema::ProcessTypeAttributes(QualType &Result, const AttributeList *AL) {
 /// HandleAddressSpaceTypeAttribute - Process an address_space attribute on the
 /// specified type.
 QualType Sema::HandleAddressSpaceTypeAttribute(QualType Type, 
-                                               const AttributeList *Attr) {
+                                               const AttributeList &Attr) {
   // If this type is already address space qualified, reject it.
   // Clause 6.7.3 - Type qualifiers: "No type shall be qualified by qualifiers
   // for two or more different address spaces."
   if (Type.getAddressSpace()) {
-    Diag(Attr->getLoc(), diag::err_attribute_address_multiple_qualifiers);
+    Diag(Attr.getLoc(), diag::err_attribute_address_multiple_qualifiers);
     return Type;
   }
   
   // Check the attribute arguments.
-  if (Attr->getNumArgs() != 1) {
-    Diag(Attr->getLoc(), diag::err_attribute_wrong_number_arguments,
+  if (Attr.getNumArgs() != 1) {
+    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
          std::string("1"));
     return Type;
   }
-  Expr *ASArgExpr = static_cast<Expr *>(Attr->getArg(0));
+  Expr *ASArgExpr = static_cast<Expr *>(Attr.getArg(0));
   llvm::APSInt addrSpace(32);
   if (!ASArgExpr->isIntegerConstantExpr(addrSpace, Context)) {
-    Diag(Attr->getLoc(), diag::err_attribute_address_space_not_int,
+    Diag(Attr.getLoc(), diag::err_attribute_address_space_not_int,
          ASArgExpr->getSourceRange());
     return Type;
   }
