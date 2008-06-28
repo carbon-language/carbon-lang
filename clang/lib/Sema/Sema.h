@@ -301,9 +301,10 @@ private:
   ScopedDecl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
                                  Scope *S);
   // Decl attributes - this routine is the top level dispatcher. 
-  void HandleDeclAttributes(Decl *New, const AttributeList *DeclSpecAttrs,
-                            const AttributeList *DeclaratorAttrs);
-  void HandleDeclAttribute(Decl *New, const AttributeList &Attr);
+  void ProcessDeclAttributes(Decl *New, const AttributeList *DeclSpecAttrs,
+                             const AttributeList *DeclaratorAttrs);
+  void ProcessDeclAttributeList(Decl *D, const AttributeList *AttrList);
+  void ProcessDeclAttribute(Decl *D, const AttributeList &Attr);
 
   /// HandleAddressSpaceTypeAttribute - this attribute is only applicable to 
   /// objects without automatic storage duration. 

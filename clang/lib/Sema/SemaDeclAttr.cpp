@@ -54,62 +54,65 @@ static inline bool isNSStringType(QualType T, ASTContext &Ctx) {
          ClsName == &Ctx.Idents.get("NSMutableString");
 }
 
-void Sema::HandleDeclAttributes(Decl *New, const AttributeList *DeclSpecAttrs,
-                                const AttributeList *DeclaratorAttrs) {
+void Sema::ProcessDeclAttributes(Decl *D, const AttributeList *DeclSpecAttrs,
+                                 const AttributeList *DeclaratorAttrs) {
   if (DeclSpecAttrs == 0 && DeclaratorAttrs == 0) return;
-  
-  while (DeclSpecAttrs) {
-    HandleDeclAttribute(New, *DeclSpecAttrs);
-    DeclSpecAttrs = DeclSpecAttrs->getNext();
-  }
+
+  ProcessDeclAttributeList(D, DeclSpecAttrs);
   
   // If there are any type attributes that were in the declarator, apply them to
   // its top level type.
-  if (ValueDecl *VD = dyn_cast<ValueDecl>(New)) {
+  if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     QualType DT = VD->getType();
     ProcessTypeAttributes(DT, DeclaratorAttrs);
     VD->setType(DT);
-  } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(New)) {
+  } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
     QualType DT = TD->getUnderlyingType();
     ProcessTypeAttributes(DT, DeclaratorAttrs);
     TD->setUnderlyingType(DT);
   }
   
-  while (DeclaratorAttrs) {
-    HandleDeclAttribute(New, *DeclaratorAttrs);
-    DeclaratorAttrs = DeclaratorAttrs->getNext();
+  ProcessDeclAttributeList(D, DeclaratorAttrs);
+}
+
+/// ProcessDeclAttributeList - Apply all the decl attributes in the specified
+/// attribute list to the specified decl, ignoring any type attributes.
+void Sema::ProcessDeclAttributeList(Decl *D, const AttributeList *AttrList) {
+  while (AttrList) {
+    ProcessDeclAttribute(D, *AttrList);
+    AttrList = AttrList->getNext();
   }
 }
 
 /// HandleDeclAttribute - Apply the specific attribute to the specified decl if
 /// the attribute applies to decls.  If the attribute is a type attribute, just
 /// silently ignore it.
-void Sema::HandleDeclAttribute(Decl *New, const AttributeList &Attr) {
+void Sema::ProcessDeclAttribute(Decl *D, const AttributeList &Attr) {
   switch (Attr.getKind()) {
   case AttributeList::AT_address_space:
     // Ignore this, this is a type attribute, handled by ProcessTypeAttributes.
     break;
-  case AttributeList::AT_vector_size:HandleVectorSizeAttribute(New, Attr);break;
-  case AttributeList::AT_ext_vector_type:
-    HandleExtVectorTypeAttribute(New, Attr);
+  case AttributeList::AT_vector_size: HandleVectorSizeAttribute(D, Attr); break;
+  case AttributeList::AT_ext_vector_type: 
+    HandleExtVectorTypeAttribute(D, Attr);
     break;
-  case AttributeList::AT_mode:       HandleModeAttribute(New, Attr);  break;
-  case AttributeList::AT_alias:      HandleAliasAttribute(New, Attr); break;
-  case AttributeList::AT_deprecated: HandleDeprecatedAttribute(New, Attr);break;
-  case AttributeList::AT_visibility: HandleVisibilityAttribute(New, Attr);break;
-  case AttributeList::AT_weak:       HandleWeakAttribute(New, Attr); break;
-  case AttributeList::AT_dllimport:  HandleDLLImportAttribute(New, Attr); break;
-  case AttributeList::AT_dllexport:  HandleDLLExportAttribute(New, Attr); break;
-  case AttributeList::AT_nothrow:    HandleNothrowAttribute(New, Attr); break;
-  case AttributeList::AT_stdcall:    HandleStdCallAttribute(New, Attr); break;
-  case AttributeList::AT_fastcall:   HandleFastCallAttribute(New, Attr); break;
-  case AttributeList::AT_aligned:    HandleAlignedAttribute(New, Attr); break;
-  case AttributeList::AT_packed:     HandlePackedAttribute(New, Attr); break;
-  case AttributeList::AT_annotate:   HandleAnnotateAttribute(New, Attr); break;
-  case AttributeList::AT_noreturn:   HandleNoReturnAttribute(New, Attr); break;
-  case AttributeList::AT_format:     HandleFormatAttribute(New, Attr); break;
+  case AttributeList::AT_mode:       HandleModeAttribute(D, Attr);  break;
+  case AttributeList::AT_alias:      HandleAliasAttribute(D, Attr); break;
+  case AttributeList::AT_deprecated: HandleDeprecatedAttribute(D, Attr);break;
+  case AttributeList::AT_visibility: HandleVisibilityAttribute(D, Attr);break;
+  case AttributeList::AT_weak:       HandleWeakAttribute(D, Attr); break;
+  case AttributeList::AT_dllimport:  HandleDLLImportAttribute(D, Attr); break;
+  case AttributeList::AT_dllexport:  HandleDLLExportAttribute(D, Attr); break;
+  case AttributeList::AT_nothrow:    HandleNothrowAttribute(D, Attr); break;
+  case AttributeList::AT_stdcall:    HandleStdCallAttribute(D, Attr); break;
+  case AttributeList::AT_fastcall:   HandleFastCallAttribute(D, Attr); break;
+  case AttributeList::AT_aligned:    HandleAlignedAttribute(D, Attr); break;
+  case AttributeList::AT_packed:     HandlePackedAttribute(D, Attr); break;
+  case AttributeList::AT_annotate:   HandleAnnotateAttribute(D, Attr); break;
+  case AttributeList::AT_noreturn:   HandleNoReturnAttribute(D, Attr); break;
+  case AttributeList::AT_format:     HandleFormatAttribute(D, Attr); break;
   case AttributeList::AT_transparent_union:
-    HandleTransparentUnionAttribute(New, Attr);
+    HandleTransparentUnionAttribute(D, Attr);
     break;
   default:
 #if 0
