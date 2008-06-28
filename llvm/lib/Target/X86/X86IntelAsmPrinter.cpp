@@ -318,7 +318,7 @@ void X86IntelAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 }
 
 bool X86IntelAsmPrinter::doInitialization(Module &M) {
-  bool Result = X86SharedAsmPrinter::doInitialization(M);
+  bool Result = AsmPrinter::doInitialization(M);
 
   Mang->markCharUnacceptable('.');
 
@@ -415,8 +415,7 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
   }
 
     // Output linker support code for dllexported globals
-  if (!DLLExportedGVs.empty() ||
-      !DLLExportedFns.empty()) {
+  if (!DLLExportedGVs.empty() || !DLLExportedFns.empty()) {
     SwitchToDataSection("");
     O << "; WARNING: The following code is valid only with MASM v8.x and (possible) higher\n"
       << "; This version of MASM is usually shipped with Microsoft Visual Studio 2005\n"
@@ -427,20 +426,16 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
 
   for (StringSet<>::iterator i = DLLExportedGVs.begin(),
          e = DLLExportedGVs.end();
-         i != e; ++i) {
+         i != e; ++i)
     O << "\t db ' /EXPORT:" << i->getKeyData() << ",data'\n";
-  }
 
   for (StringSet<>::iterator i = DLLExportedFns.begin(),
          e = DLLExportedFns.end();
-         i != e; ++i) {
+         i != e; ++i)
     O << "\t db ' /EXPORT:" << i->getKeyData() << "'\n";
-  }
 
-  if (!DLLExportedGVs.empty() ||
-      !DLLExportedFns.empty()) {
+  if (!DLLExportedGVs.empty() || !DLLExportedFns.empty())
     O << "_drectve\t ends\n";
-  }
 
   // Bypass X86SharedAsmPrinter::doFinalization().
   bool Result = AsmPrinter::doFinalization(M);
