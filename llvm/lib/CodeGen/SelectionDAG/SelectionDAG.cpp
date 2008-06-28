@@ -2594,7 +2594,7 @@ static bool isMemSrcFromString(SDOperand Src, std::string &Str,
     return false;
 
   GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
-  if (GV && GetConstantStringInfo(GV, Str)) {
+  if (GV && GetConstantStringInfo(GV, Str, SrcDelta, false)) {
     SrcOff += SrcDelta;
     return true;
   }

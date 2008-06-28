@@ -935,13 +935,14 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
 /// GetConstantStringInfo - This function computes the length of a
 /// null-terminated C string pointed to by V.  If successful, it returns true
 /// and returns the string in Str.  If unsuccessful, it returns false.
-bool llvm::GetConstantStringInfo(Value *V, std::string &Str, uint64_t Offset) {
+bool llvm::GetConstantStringInfo(Value *V, std::string &Str, uint64_t Offset,
+                                 bool StopAtNul) {
   // If V is NULL then return false;
   if (V == NULL) return false;
 
   // Look through bitcast instructions.
   if (BitCastInst *BCI = dyn_cast<BitCastInst>(V))
-    return GetConstantStringInfo(BCI->getOperand(0), Str, Offset);
+    return GetConstantStringInfo(BCI->getOperand(0), Str, Offset, StopAtNul);
   
   // If the value is not a GEP instruction nor a constant expression with a
   // GEP instruction, then return false because ConstantArray can't occur
@@ -951,7 +952,7 @@ bool llvm::GetConstantStringInfo(Value *V, std::string &Str, uint64_t Offset) {
     GEP = GEPI;
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
     if (CE->getOpcode() == Instruction::BitCast)
-      return GetConstantStringInfo(CE->getOperand(0), Str, Offset);
+      return GetConstantStringInfo(CE->getOperand(0), Str, Offset, StopAtNul);
     if (CE->getOpcode() != Instruction::GetElementPtr)
       return false;
     GEP = CE;
@@ -982,7 +983,8 @@ bool llvm::GetConstantStringInfo(Value *V, std::string &Str, uint64_t Offset) {
       StartIdx = CI->getZExtValue();
     else
       return false;
-    return GetConstantStringInfo(GEP->getOperand(0), Str, StartIdx+Offset);
+    return GetConstantStringInfo(GEP->getOperand(0), Str, StartIdx+Offset,
+                                 StopAtNul);
   }
   
   // The GEP instruction, constant or instruction, must reference a global
@@ -1020,7 +1022,7 @@ bool llvm::GetConstantStringInfo(Value *V, std::string &Str, uint64_t Offset) {
     ConstantInt *CI = dyn_cast<ConstantInt>(Elt);
     if (!CI) // This array isn't suitable, non-int initializer.
       return false;
-    if (CI->isZero())
+    if (StopAtNul && CI->isZero())
       return true; // we found end of string, success!
     Str += (char)CI->getZExtValue();
   }
