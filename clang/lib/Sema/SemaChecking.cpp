@@ -151,11 +151,11 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
   
   // Determine whether the current function is variadic or not.
   bool isVariadic;
-  if (CurFunctionDecl)
+  if (getCurFunctionDecl())
     isVariadic =
-      cast<FunctionTypeProto>(CurFunctionDecl->getType())->isVariadic();
+      cast<FunctionTypeProto>(getCurFunctionDecl()->getType())->isVariadic();
   else
-    isVariadic = CurMethodDecl->isVariadic();
+    isVariadic = getCurMethodDecl()->isVariadic();
   
   if (!isVariadic) {
     Diag(Fn->getLocStart(), diag::err_va_start_used_in_non_variadic_function);
@@ -172,10 +172,10 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
       // FIXME: This isn't correct for methods (results in bogus warning).
       // Get the last formal in the current function.
       const ParmVarDecl *LastArg;
-      if (CurFunctionDecl)
-        LastArg = *(CurFunctionDecl->param_end()-1);
+      if (getCurFunctionDecl())
+        LastArg = *(getCurFunctionDecl()->param_end()-1);
       else
-        LastArg = *(CurMethodDecl->param_end()-1);
+        LastArg = *(getCurMethodDecl()->param_end()-1);
       SecondArgIsLastNamedArgument = PV == LastArg;
     }
   }

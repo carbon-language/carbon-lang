@@ -147,12 +147,12 @@ Sema::ExprResult Sema::ActOnClassMessage(
 
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
   ObjCInterfaceDecl* ClassDecl = 0;
-  if (!strcmp(receiverName->getName(), "super") && CurMethodDecl) {
-    ClassDecl = CurMethodDecl->getClassInterface()->getSuperClass();
+  if (!strcmp(receiverName->getName(), "super") && getCurMethodDecl()) {
+    ClassDecl = getCurMethodDecl()->getClassInterface()->getSuperClass();
     if (!ClassDecl)
       return Diag(lbrac, diag::error_no_super_class,
-                  CurMethodDecl->getClassInterface()->getName());
-    if (CurMethodDecl->isInstance()) {
+                  getCurMethodDecl()->getClassInterface()->getName());
+    if (getCurMethodDecl()->isInstance()) {
       QualType superTy = Context.getObjCInterfaceType(ClassDecl);
       superTy = Context.getPointerType(superTy);
       ExprResult ReceiverExpr = new PreDefinedExpr(SourceLocation(), superTy,
@@ -246,8 +246,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
           return true;
     }
   } else if (receiverType == Context.getObjCClassType().getCanonicalType()) {
-    if (CurMethodDecl) {
-      ObjCInterfaceDecl* ClassDecl = CurMethodDecl->getClassInterface();
+    if (getCurMethodDecl()) {
+      ObjCInterfaceDecl* ClassDecl = getCurMethodDecl()->getClassInterface();
       // If we have an implementation in scope, check "private" methods.
       if (ClassDecl)
         if (ObjCImplementationDecl *ImpDecl = 

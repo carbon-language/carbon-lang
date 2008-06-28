@@ -1463,7 +1463,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
 }
 
 Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
-  assert(CurFunctionDecl == 0 && "Function parsing confused");
+  assert(getCurFunctionDecl() == 0 && "Function parsing confused");
   assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
          "Not a function declarator!");
   DeclaratorChunk::FunctionTypeInfo &FTI = D.getTypeObject(0).Fun;
@@ -1512,7 +1512,6 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   }
   Decl *decl = static_cast<Decl*>(ActOnDeclarator(GlobalScope, D, 0));
   FunctionDecl *FD = cast<FunctionDecl>(decl);
-  CurFunctionDecl = FD;
   PushDeclContext(FD);
     
   // Check the validity of our function parameters
@@ -1533,11 +1532,9 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtTy *Body) {
   Decl *dcl = static_cast<Decl *>(D);
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(dcl)) {
     FD->setBody((Stmt*)Body);
-    assert(FD == CurFunctionDecl && "Function parsing confused");
-    CurFunctionDecl = 0;
+    assert(FD == getCurFunctionDecl() && "Function parsing confused");
   } else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(dcl)) {
     MD->setBody((Stmt*)Body);
-    CurMethodDecl = 0;
   }  
   PopDeclContext();
   // Verify and clean out per-function state.

@@ -21,7 +21,7 @@ using namespace clang;
 /// ObjCActOnStartOfMethodDef - This routine sets up parameters; invisible
 /// and user declared, in the method definition's AST.
 void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
-  assert(CurMethodDecl == 0 && "Method parsing confused");
+  assert(getCurMethodDecl() == 0 && "Method parsing confused");
   ObjCMethodDecl *MDecl = dyn_cast<ObjCMethodDecl>(static_cast<Decl *>(D));
   assert(MDecl != 0 && "Not a method declarator!");
 
@@ -32,7 +32,6 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
     AddFactoryMethodToGlobalPool(MDecl);
   
   // Allow all of Sema to see that we are entering a method definition.
-  CurMethodDecl = MDecl;
   PushDeclContext(MDecl);
 
   // Create Decl objects for each parameter, entrring them in the scope for
@@ -53,11 +52,11 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
     }
   } else // we have a factory method.
     selfTy = Context.getObjCClassType();
-  CurMethodDecl->setSelfDecl(CreateImplicitParameter(FnBodyScope,
+  getCurMethodDecl()->setSelfDecl(CreateImplicitParameter(FnBodyScope,
         PI.Ident, PI.IdentLoc, selfTy));
   
   PI.Ident = &Context.Idents.get("_cmd");
-  CurMethodDecl->setCmdDecl(CreateImplicitParameter(FnBodyScope,
+  getCurMethodDecl()->setCmdDecl(CreateImplicitParameter(FnBodyScope,
         PI.Ident, PI.IdentLoc, Context.getObjCSelType()));
 
   // Introduce all of the other parameters into this scope.
@@ -1191,4 +1190,3 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
     
   return PIDecl;
 }
-

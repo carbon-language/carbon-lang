@@ -81,7 +81,7 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
   
   // If this reference is in an Objective-C method, then ivar lookup happens as
   // well.
-  if (CurMethodDecl) {
+  if (getCurMethodDecl()) {
     ScopedDecl *SD = dyn_cast_or_null<ScopedDecl>(D);
     // There are two cases to handle here.  1) scoped lookup could have failed,
     // in which case we should look for an ivar.  2) scoped lookup could have
@@ -89,7 +89,8 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
     // variable).  In these two cases, we do a lookup for an ivar with this
     // name, if the lookup suceeds, we replace it our current decl.
     if (SD == 0 || SD->isDefinedOutsideFunctionOrMethod()) {
-      ObjCInterfaceDecl *IFace = CurMethodDecl->getClassInterface(), *DeclClass;
+      ObjCInterfaceDecl *IFace = getCurMethodDecl()->getClassInterface();
+      ObjCInterfaceDecl *DeclClass;
       if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(&II, DeclClass)) {
         // FIXME: This should use a new expr for a direct reference, don't turn
         // this into Self->ivar, just return a BareIVarExpr or something.
@@ -101,7 +102,7 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
     }
     if (SD == 0 && !strcmp(II.getName(), "super")) {
       QualType T = Context.getPointerType(Context.getObjCInterfaceType(
-                     CurMethodDecl->getClassInterface()));
+                     getCurMethodDecl()->getClassInterface()));
       return new ObjCSuperRefExpr(T, Loc);
     }
   }
@@ -153,16 +154,16 @@ Sema::ExprResult Sema::ActOnPreDefinedExpr(SourceLocation Loc,
   }
 
   // Verify that this is in a function context.
-  if (CurFunctionDecl == 0 && CurMethodDecl == 0)
+  if (getCurFunctionDecl() == 0 && getCurMethodDecl() == 0)
     return Diag(Loc, diag::err_predef_outside_function);
   
   // Pre-defined identifiers are of type char[x], where x is the length of the
   // string.
   unsigned Length;
-  if (CurFunctionDecl)
-    Length = CurFunctionDecl->getIdentifier()->getLength();
+  if (getCurFunctionDecl())
+    Length = getCurFunctionDecl()->getIdentifier()->getLength();
   else
-    Length = CurMethodDecl->getSynthesizedMethodSize();
+    Length = getCurMethodDecl()->getSynthesizedMethodSize();
   
   llvm::APInt LengthI(32, Length + 1);
   QualType ResTy = Context.CharTy.getQualifiedType(QualType::Const);
@@ -805,7 +806,7 @@ ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
   if (CheckInitializerTypes(literalExpr, literalType))
     return true;
 
-  bool isFileScope = !CurFunctionDecl && !CurMethodDecl;
+  bool isFileScope = !getCurFunctionDecl() && !getCurMethodDecl();
   if (isFileScope) { // 6.5.2.5p3
     if (CheckForConstantInitializer(literalExpr, literalType))
       return true;
@@ -2459,6 +2460,3 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
        SrcExpr->getSourceRange());
   return isInvalid;
 }
-
-
-

@@ -68,15 +68,8 @@ class Sema : public Action {
   Preprocessor &PP;
   ASTContext &Context;
   ASTConsumer &Consumer;
-  
-  /// CurFunctionDecl - If inside of a function body, this contains a pointer to
-  /// the function decl for the function being parsed.
-  FunctionDecl *CurFunctionDecl;
 
-  /// CurMethodDecl - If inside of a method body, this contains a pointer to
-  /// the method decl for the method being parsed.
-  ObjCMethodDecl *CurMethodDecl;
-
+  /// CurContext - This is the current declaration context of parsing.
   DeclContext *CurContext;
 
   /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
@@ -267,6 +260,18 @@ private:
   /// Set the current declaration context until it gets popped.
   void PushDeclContext(DeclContext *DC);
   void PopDeclContext();
+  
+  /// CurFunctionDecl - If inside of a function body, this returns a pointer to
+  /// the function decl for the function being parsed.
+  FunctionDecl *getCurFunctionDecl() {
+    return dyn_cast<FunctionDecl>(CurContext);
+  }
+
+  /// CurMethodDecl - If inside of a method body, this returns a pointer to
+  /// the method decl for the method being parsed.
+  ObjCMethodDecl *getCurMethodDecl() {
+    return dyn_cast<ObjCMethodDecl>(CurContext);
+  }
 
   /// Add this decl to the scope shadowed decl chains.
   void PushOnScopeChains(NamedDecl *D, Scope *S);
