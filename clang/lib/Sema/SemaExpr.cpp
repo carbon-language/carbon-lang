@@ -1221,12 +1221,35 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     }
   }
   // Finally, we have two differing integer types.
-  if (Context.getIntegerTypeOrder(lhs, rhs) >= 0) { // convert the rhs
-    if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
-    return lhs;
+  // The rules for this case are in C99 6.3.1.8
+  int compare = Context.getIntegerTypeOrder(lhs, rhs);
+  bool lhsSigned = lhs->isSignedIntegerType(),
+       rhsSigned = rhs->isSignedIntegerType();
+  QualType destType;
+  if (lhsSigned == rhsSigned) {
+    // Same signedness; use the higher-ranked type
+    destType = compare >= 0 ? lhs : rhs;
+  } else if (compare != (lhsSigned ? 1 : -1)) {
+    // The unsigned type has greater than or equal rank to the
+    // signed type, so use the unsigned type
+    destType = lhsSigned ? rhs : lhs;
+  } else if (Context.getIntWidth(lhs) != Context.getIntWidth(rhs)) {
+    // The two types are different widths; if we are here, that
+    // means the signed type is larger than the unsigned type, so
+    // use the signed type.
+    destType = lhsSigned ? lhs : rhs;
+  } else {
+    // The signed type is higher-ranked than the unsigned type,
+    // but isn't actually any bigger (like unsigned int and long
+    // on most 32-bit systems).  Use the unsigned type corresponding
+    // to the signed type.
+    destType = Context.getCorrespondingUnsignedType(lhsSigned ? lhs : rhs);
   }
-  if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs); // convert the lhs
-  return rhs;
+  if (!isCompAssign) {
+    ImpCastExprToType(lhsExpr, destType);
+    ImpCastExprToType(rhsExpr, destType);
+  }
+  return destType;
 }
 
 // CheckPointerTypesForAssignment - This is a very tricky routine (despite

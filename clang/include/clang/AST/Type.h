@@ -48,6 +48,7 @@ namespace clang {
   class VariableArrayType;
   class IncompleteArrayType;
   class RecordType;
+  class EnumType;
   class ComplexType;
   class TagType;
   class TypedefType;
@@ -352,6 +353,7 @@ public:
   const RecordType *getAsStructureType() const;
   const TypedefType *getAsTypedefType() const;
   const RecordType *getAsUnionType() const;
+  const EnumType *getAsEnumType() const;
   const VectorType *getAsVectorType() const; // GCC vector type.
   const ComplexType *getAsComplexType() const;
   const ComplexType *getAsComplexIntegerType() const; // GCC complex int type.

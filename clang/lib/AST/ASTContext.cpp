@@ -1757,6 +1757,41 @@ bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
 }
 
 //===----------------------------------------------------------------------===//
+//                         Integer Predicates
+//===----------------------------------------------------------------------===//
+unsigned ASTContext::getIntWidth(QualType T) {
+  if (T == BoolTy)
+    return 1;
+  // At the moment, only bool has padding bits
+  return (unsigned)getTypeSize(T);
+}
+
+QualType ASTContext::getCorrespondingUnsignedType(QualType T) {
+  assert(T->isSignedIntegerType() && "Unexpected type");
+  if (const EnumType* ETy = T->getAsEnumType())
+    T = ETy->getDecl()->getIntegerType();
+  const BuiltinType* BTy = T->getAsBuiltinType();
+  assert (BTy && "Unexpected signed integer type");
+  switch (BTy->getKind()) {
+  case BuiltinType::Char_S:
+  case BuiltinType::SChar:
+    return UnsignedCharTy;
+  case BuiltinType::Short:
+    return UnsignedShortTy;
+  case BuiltinType::Int:
+    return UnsignedIntTy;
+  case BuiltinType::Long:
+    return UnsignedLongTy;
+  case BuiltinType::LongLong:
+    return UnsignedLongLongTy;
+  default:
+    assert(0 && "Unexpected signed integer type");
+    return QualType();
+  }
+}
+
+
+//===----------------------------------------------------------------------===//
 //                         Serialization Support
 //===----------------------------------------------------------------------===//
 

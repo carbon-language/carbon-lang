@@ -390,6 +390,13 @@ const RecordType *Type::getAsUnionType() const {
   return 0;
 }
 
+const EnumType *Type::getAsEnumType() const {
+  // Check the canonicalized unqualified type directly; the more complex
+  // version is unnecessary because there isn't any typedef information
+  // to preserve.
+  return dyn_cast<EnumType>(CanonicalType.getUnqualifiedType());
+}
+
 const ComplexType *Type::getAsComplexType() const {
   // Are we directly a complex type?
   if (const ComplexType *CTy = dyn_cast<ComplexType>(this))
