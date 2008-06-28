@@ -312,21 +312,9 @@ private:
   QualType HandleAddressSpaceTypeAttribute(QualType curType, 
                                            const AttributeList &Attr);
 
-  /// HandleModeAttribute - this attribute modifies the width of a decl with
-  /// primitive type.  Note that this is a variable attribute, and not
-  /// a type attribute.
   void HandleModeAttribute(Decl *d, const AttributeList &Attr);
 
-  // HandleVectorTypeAttribute - this attribute is only applicable to 
-  // integral and float scalars, although arrays, pointers, and function
-  // return values are allowed in conjunction with this construct. Aggregates
-  // with this attribute are invalid, even if they are of the same size as a
-  // corresponding scalar.
-  // The raw attribute should contain precisely 1 argument, the vector size 
-  // for the variable, measured in bytes. If curType and rawAttr are well
-  // formed, this routine will return a new vector type.
-  QualType HandleVectorTypeAttribute(QualType curType,
-                                     const AttributeList &Attr);
+  void HandleVectorSizeAttribute(Decl *d, const AttributeList &Attr);
   void HandleExtVectorTypeAttribute(Decl *d, const AttributeList &Attr);
   void HandleAlignedAttribute(Decl *d, const AttributeList &Attr);
   void HandleAliasAttribute(Decl *d, const AttributeList &Attr);

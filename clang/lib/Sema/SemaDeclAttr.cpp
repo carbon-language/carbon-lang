@@ -89,19 +89,7 @@ void Sema::HandleDeclAttribute(Decl *New, const AttributeList &Attr) {
   case AttributeList::AT_address_space:
     // Ignore this, this is a type attribute, handled by ProcessTypeAttributes.
     break;
-  case AttributeList::AT_vector_size:
-    if (ValueDecl *vDecl = dyn_cast<ValueDecl>(New)) {
-      QualType newType = HandleVectorTypeAttribute(vDecl->getType(), Attr);
-      if (!newType.isNull()) // install the new vector type into the decl
-        vDecl->setType(newType);
-    } 
-    if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New)) {
-      QualType newType = HandleVectorTypeAttribute(tDecl->getUnderlyingType(), 
-                                                   Attr);
-      if (!newType.isNull()) // install the new vector type into the decl
-        tDecl->setUnderlyingType(newType);
-    }
-    break;
+  case AttributeList::AT_vector_size:HandleVectorSizeAttribute(New, Attr);break;
   case AttributeList::AT_ext_vector_type:
     HandleExtVectorTypeAttribute(New, Attr);
     break;
@@ -177,24 +165,43 @@ void Sema::HandleExtVectorTypeAttribute(Decl *d, const AttributeList &Attr) {
   ExtVectorDecls.push_back(tDecl);
 }
 
-QualType Sema::HandleVectorTypeAttribute(QualType curType, 
-                                         const AttributeList &Attr) {
-  // check the attribute arugments.
+
+/// HandleVectorSizeAttribute - this attribute is only applicable to 
+/// integral and float scalars, although arrays, pointers, and function
+/// return values are allowed in conjunction with this construct. Aggregates
+/// with this attribute are invalid, even if they are of the same size as a
+/// corresponding scalar.
+/// The raw attribute should contain precisely 1 argument, the vector size 
+/// for the variable, measured in bytes. If curType and rawAttr are well
+/// formed, this routine will return a new vector type.
+void Sema::HandleVectorSizeAttribute(Decl *D, const AttributeList &Attr) {
+  QualType CurType;
+  if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
+    CurType = VD->getType();
+  else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D))
+    CurType = TD->getUnderlyingType();
+  else {
+    Diag(D->getLocation(), diag::err_attr_wrong_decl,std::string("vector_size"),
+         SourceRange(Attr.getLoc(), Attr.getLoc()));
+    return;
+  }
+    
+  // Check the attribute arugments.
   if (Attr.getNumArgs() != 1) {
     Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
          std::string("1"));
-    return QualType();
+    return;
   }
   Expr *sizeExpr = static_cast<Expr *>(Attr.getArg(0));
   llvm::APSInt vecSize(32);
   if (!sizeExpr->isIntegerConstantExpr(vecSize, Context)) {
     Diag(Attr.getLoc(), diag::err_attribute_argument_not_int,
          "vector_size", sizeExpr->getSourceRange());
-    return QualType();
+    return;
   }
   // navigate to the base type - we need to provide for vector pointers, 
   // vector arrays, and functions returning vectors.
-  Type *canonType = curType.getCanonicalType().getTypePtr();
+  Type *canonType = CurType.getCanonicalType().getTypePtr();
   
   if (canonType->isPointerType() || canonType->isArrayType() ||
       canonType->isFunctionType()) {
@@ -214,10 +221,10 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
   // the base type must be integer or float.
   if (!(canonType->isIntegerType() || canonType->isRealFloatingType())) {
     Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type,
-         curType.getCanonicalType().getAsString());
-    return QualType();
+         CurType.getCanonicalType().getAsString());
+    return;
   }
-  unsigned typeSize = static_cast<unsigned>(Context.getTypeSize(curType));
+  unsigned typeSize = static_cast<unsigned>(Context.getTypeSize(CurType));
   // vecSize is specified in bytes - convert to bits.
   unsigned vectorSize = static_cast<unsigned>(vecSize.getZExtValue() * 8); 
   
@@ -225,16 +232,22 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
   if (vectorSize % typeSize) {
     Diag(Attr.getLoc(), diag::err_attribute_invalid_size,
          sizeExpr->getSourceRange());
-    return QualType();
+    return;
   }
   if (vectorSize == 0) {
     Diag(Attr.getLoc(), diag::err_attribute_zero_size,
          sizeExpr->getSourceRange());
-    return QualType();
+    return;
   }
-  // Instantiate the vector type, the number of elements is > 0, and not
-  // required to be a power of 2, unlike GCC.
-  return Context.getVectorType(curType, vectorSize/typeSize);
+  
+  // Success! Instantiate the vector type, the number of elements is > 0, and
+  // not required to be a power of 2, unlike GCC.
+  CurType = Context.getVectorType(CurType, vectorSize/typeSize);
+  
+  if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
+    VD->setType(CurType);
+  else 
+    cast<TypedefDecl>(D)->setUnderlyingType(CurType);
 }
 
 void Sema::HandlePackedAttribute(Decl *d, const AttributeList &Attr) {
@@ -644,7 +657,8 @@ void Sema::HandleAlignedAttribute(Decl *d, const AttributeList &Attr) {
   d->addAttr(new AlignedAttr(Align));
 }
 
-/// HandleModeAttribute - Process a mode attribute on the specified decl.
+/// HandleModeAttribute - This attribute modifies the width of a decl with
+/// primitive type.
 ///
 /// Despite what would be logical, the mode attribute is a decl attribute,
 /// not a type attribute: 'int ** __attribute((mode(HI))) *G;' tries to make
@@ -710,7 +724,7 @@ void Sema::HandleModeAttribute(Decl *D, const AttributeList &Attr) {
   else if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
     OldTy = VD->getType();
   else {
-    Diag(D->getLocation(), diag::err_mode_wrong_decl,
+    Diag(D->getLocation(), diag::err_attr_wrong_decl, "mode",
          SourceRange(Attr.getLoc(), Attr.getLoc()));
     return;
   }

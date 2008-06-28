@@ -650,8 +650,8 @@ DIAG(err_mode_not_primitive, ERROR,
      "mode attribute only supported for integer and floating-point types")
 DIAG(err_mode_wrong_type, ERROR,
      "type of machine mode does not match type of base type")
-DIAG(err_mode_wrong_decl, ERROR,
-     "declaration does not allow mode attribute")
+DIAG(err_attr_wrong_decl, ERROR,
+     "'%0' attribute invalid on this declaration, requires typedef or value")
 
 // Function Parameter Semantic Analysis.
 DIAG(err_param_with_void_type, ERROR,
