@@ -227,6 +227,23 @@ namespace X86II {
   };
 }
 
+inline static bool isScale(const MachineOperand &MO) {
+  return MO.isImmediate() &&
+    (MO.getImm() == 1 || MO.getImm() == 2 ||
+     MO.getImm() == 4 || MO.getImm() == 8);
+}
+
+inline static bool isMem(const MachineInstr *MI, unsigned Op) {
+  if (MI->getOperand(Op).isFrameIndex()) return true;
+  return Op+4 <= MI->getNumOperands() &&
+    MI->getOperand(Op  ).isRegister() && isScale(MI->getOperand(Op+1)) &&
+    MI->getOperand(Op+2).isRegister() &&
+    (MI->getOperand(Op+3).isImmediate() ||
+     MI->getOperand(Op+3).isGlobalAddress() ||
+     MI->getOperand(Op+3).isConstantPoolIndex() ||
+     MI->getOperand(Op+3).isJumpTableIndex());
+}
+
 class X86InstrInfo : public TargetInstrInfoImpl {
   X86TargetMachine &TM;
   const X86RegisterInfo RI;

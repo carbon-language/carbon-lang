@@ -15,19 +15,108 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "X86IntelAsmPrinter.h"
+#include "X86InstrInfo.h"
 #include "X86TargetAsmInfo.h"
 #include "X86.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
+
+static X86MachineFunctionInfo calculateFunctionInfo(const Function *F,
+                                                    const TargetData *TD) {
+  X86MachineFunctionInfo Info;
+  uint64_t Size = 0;
+
+  switch (F->getCallingConv()) {
+  case CallingConv::X86_StdCall:
+    Info.setDecorationStyle(StdCall);
+    break;
+  case CallingConv::X86_FastCall:
+    Info.setDecorationStyle(FastCall);
+    break;
+  default:
+    return Info;
+  }
+
+  unsigned argNum = 1;
+  for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
+       AI != AE; ++AI, ++argNum) {
+    const Type* Ty = AI->getType();
+
+    // 'Dereference' type in case of byval parameter attribute
+    if (F->paramHasAttr(argNum, ParamAttr::ByVal))
+      Ty = cast<PointerType>(Ty)->getElementType();
+
+    // Size should be aligned to DWORD boundary
+    Size += ((TD->getABITypeSize(Ty) + 3)/4)*4;
+  }
+
+  // We're not supporting tooooo huge arguments :)
+  Info.setBytesToPopOnReturn((unsigned int)Size);
+  return Info;
+}
+
+
+/// decorateName - Query FunctionInfoMap and use this information for various
+/// name decoration.
+void X86IntelAsmPrinter::decorateName(std::string &Name,
+                                      const GlobalValue *GV) {
+  const Function *F = dyn_cast<Function>(GV);
+  if (!F) return;
+
+  // We don't want to decorate non-stdcall or non-fastcall functions right now
+  unsigned CC = F->getCallingConv();
+  if (CC != CallingConv::X86_StdCall && CC != CallingConv::X86_FastCall)
+    return;
+
+  FMFInfoMap::const_iterator info_item = FunctionInfoMap.find(F);
+
+  const X86MachineFunctionInfo *Info;
+  if (info_item == FunctionInfoMap.end()) {
+    // Calculate apropriate function info and populate map
+    FunctionInfoMap[F] = calculateFunctionInfo(F, TM.getTargetData());
+    Info = &FunctionInfoMap[F];
+  } else {
+    Info = &info_item->second;
+  }
+
+  const FunctionType *FT = F->getFunctionType();
+  switch (Info->getDecorationStyle()) {
+  case None:
+    break;
+  case StdCall:
+    // "Pure" variadic functions do not receive @0 suffix.
+    if (!FT->isVarArg() || (FT->getNumParams() == 0) ||
+        (FT->getNumParams() == 1 && F->hasStructRetAttr()))
+      Name += '@' + utostr_32(Info->getBytesToPopOnReturn());
+    break;
+  case FastCall:
+    // "Pure" variadic functions do not receive @0 suffix.
+    if (!FT->isVarArg() || (FT->getNumParams() == 0) ||
+        (FT->getNumParams() == 1 && F->hasStructRetAttr()))
+      Name += '@' + utostr_32(Info->getBytesToPopOnReturn());
+
+    if (Name[0] == '_')
+      Name[0] = '@';
+    else
+      Name = '@' + Name;
+
+    break;
+  default:
+    assert(0 && "Unsupported DecorationStyle");
+  }
+}
+
 
 std::string X86IntelAsmPrinter::getSectionForFunction(const Function &F) const {
   // Intel asm always emits functions to _text.
@@ -53,7 +142,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (CC == CallingConv::X86_StdCall || CC == CallingConv::X86_FastCall)
     FunctionInfoMap[F] = *MF.getInfo<X86MachineFunctionInfo>();
 
-  X86SharedAsmPrinter::decorateName(CurrentFnName, F);
+  decorateName(CurrentFnName, F);
 
   SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
 
@@ -162,7 +251,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     GlobalValue *GV = MO.getGlobal();
     std::string Name = Mang->getValueName(GV);
 
-    X86SharedAsmPrinter::decorateName(Name, GV);
+    decorateName(Name, GV);
 
     if (!isMemOp && !isCallOp) O << "OFFSET ";
     if (GV->hasDLLImportLinkage()) {
@@ -328,7 +417,7 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (I->isDeclaration()) {
       std::string Name = Mang->getValueName(I);
-      X86SharedAsmPrinter::decorateName(Name, I);
+      decorateName(Name, I);
 
       O << "\textern " ;
       if (I->hasDLLImportLinkage()) {

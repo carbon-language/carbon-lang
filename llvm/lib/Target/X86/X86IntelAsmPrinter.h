@@ -14,16 +14,19 @@
 #ifndef X86INTELASMPRINTER_H
 #define X86INTELASMPRINTER_H
 
-#include "X86AsmPrinter.h"
-#include "llvm/CodeGen/ValueTypes.h"
-#include "llvm/Target/TargetRegisterInfo.h"
+#include "X86.h"
+#include "X86MachineFunctionInfo.h"
+#include "X86TargetMachine.h"
+#include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/ADT/StringSet.h"
+#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 
-struct VISIBILITY_HIDDEN X86IntelAsmPrinter : public X86SharedAsmPrinter {
+struct VISIBILITY_HIDDEN X86IntelAsmPrinter : public AsmPrinter {
   X86IntelAsmPrinter(std::ostream &O, X86TargetMachine &TM,
                      const TargetAsmInfo *T)
-      : X86SharedAsmPrinter(O, TM, T) {
+      : AsmPrinter(O, TM, T) {
   }
 
   virtual const char *getPassName() const {
@@ -110,12 +113,31 @@ struct VISIBILITY_HIDDEN X86IntelAsmPrinter : public X86SharedAsmPrinter {
   bool runOnMachineFunction(MachineFunction &F);
   bool doInitialization(Module &M);
   bool doFinalization(Module &M);
-  
+
+  // We have to propagate some information about MachineFunction to
+  // AsmPrinter. It's ok, when we're printing the function, since we have
+  // access to MachineFunction and can get the appropriate MachineFunctionInfo.
+  // Unfortunately, this is not possible when we're printing reference to
+  // Function (e.g. calling it and so on). Even more, there is no way to get the
+  // corresponding MachineFunctions: it can even be not created at all. That's
+  // why we should use additional structure, when we're collecting all necessary
+  // information.
+  //
+  // This structure is using e.g. for name decoration for stdcall & fastcall'ed
+  // function, since we have to use arguments' size for decoration.
+  typedef std::map<const Function*, X86MachineFunctionInfo> FMFInfoMap;
+  FMFInfoMap FunctionInfoMap;
+
+  void decorateName(std::string& Name, const GlobalValue* GV);
+
   /// getSectionForFunction - Return the section that we should emit the
   /// specified function body into.
   virtual std::string getSectionForFunction(const Function &F) const;
 
   virtual void EmitString(const ConstantArray *CVA) const;
+
+  // Necessary for dllexport support
+  StringSet<> DLLExportedFns, DLLExportedGVs;
 };
 
 } // end namespace llvm
