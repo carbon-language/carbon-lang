@@ -658,7 +658,7 @@ void X86ATTAsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
     printBasicBlockLabel(MBB, false, false, false);
 }
 
-bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO,
+bool X86ATTAsmPrinter::PrintAsmMRegister(const MachineOperand &MO,
                                          const char Mode) {
   unsigned Reg = MO.getReg();
   switch (Mode) {
@@ -688,7 +688,7 @@ bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO,
 
 /// PrintAsmOperand - Print out an operand for an inline asm expression.
 ///
-bool X86ATTAsmPrinter::printAsmOperand(const MachineInstr *MI, unsigned OpNo,
+bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                                        unsigned AsmVariant,
                                        const char *ExtraCode) {
   // Does this asm operand have a single letter operand modifier?
@@ -892,8 +892,6 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     }
     break;
    case GlobalValue::DLLExportLinkage:
-    DLLExportedGVs.insert(Mang->makeNameProper(GVar->getName(),""));
-    // FALL THROUGH
    case GlobalValue::AppendingLinkage:
     // FIXME: appending linkage variables should go into a section of
     // their name or something.  For now, just emit them as external.
@@ -983,8 +981,12 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 bool X86ATTAsmPrinter::doFinalization(Module &M) {
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I)
+       I != E; ++I) {
     printModuleLevelGV(I);
+
+    if (I->hasDLLExportLinkage())
+      DLLExportedGVs.insert(Mang->makeNameProper(I->getName(),""));
+  }
 
   // Output linker support code for dllexported globals
   if (!DLLExportedGVs.empty())

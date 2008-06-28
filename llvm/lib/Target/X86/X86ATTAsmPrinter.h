@@ -98,9 +98,9 @@ struct VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   }
 
   bool printAsmMRegister(const MachineOperand &MO, const char Mode);
-  bool printAsmOperand(const MachineInstr *MI, unsigned OpNo,
+  bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                        unsigned AsmVariant, const char *ExtraCode);
-  bool printAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
+  bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                              unsigned AsmVariant, const char *ExtraCode);
 
   void printMachineInstruction(const MachineInstr *MI);
