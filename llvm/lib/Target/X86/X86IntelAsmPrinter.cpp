@@ -62,18 +62,18 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   default: assert(0 && "Unsupported linkage type!");
   case Function::InternalLinkage:
     EmitAlignment(FnAlign);
-    break;    
+    break;
   case Function::DLLExportLinkage:
     DLLExportedFns.insert(CurrentFnName);
     //FALLS THROUGH
   case Function::ExternalLinkage:
     O << "\tpublic " << CurrentFnName << "\n";
     EmitAlignment(FnAlign);
-    break;    
+    break;
   }
-  
+
   O << CurrentFnName << "\tproc near\n";
-  
+
   // Print out code for the function.
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
@@ -113,10 +113,10 @@ void X86IntelAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
   }
 }
 
-void X86IntelAsmPrinter::printOp(const MachineOperand &MO, 
+void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
                                  const char *Modifier) {
   switch (MO.getType()) {
-  case MachineOperand::MO_Register: {      
+  case MachineOperand::MO_Register: {
     if (TargetRegisterInfo::isPhysicalRegister(MO.getReg())) {
       unsigned Reg = MO.getReg();
       if (Modifier && strncmp(Modifier, "subreg", strlen("subreg")) == 0) {
@@ -142,7 +142,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
       << "_" << MO.getIndex();
     return;
-  }    
+  }
   case MachineOperand::MO_ConstantPoolIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << "OFFSET ";
@@ -159,7 +159,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
   case MachineOperand::MO_GlobalAddress: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
-    GlobalValue *GV = MO.getGlobal();    
+    GlobalValue *GV = MO.getGlobal();
     std::string Name = Mang->getValueName(GV);
 
     X86SharedAsmPrinter::decorateName(Name, GV);
@@ -168,8 +168,8 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     if (GV->hasDLLImportLinkage()) {
       // FIXME: This should be fixed with full support of stdcall & fastcall
       // CC's
-      O << "__imp_";          
-    } 
+      O << "__imp_";
+    }
     O << Name;
     int Offset = MO.getOffset();
     if (Offset > 0)
@@ -235,11 +235,11 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
   O << "]";
 }
 
-void X86IntelAsmPrinter::printPICJumpTableSetLabel(unsigned uid, 
+void X86IntelAsmPrinter::printPICJumpTableSetLabel(unsigned uid,
                                            const MachineBasicBlock *MBB) const {
   if (!TAI->getSetDirective())
     return;
-  
+
   O << TAI->getSetDirective() << ' ' << TAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
   printBasicBlockLabel(MBB, false, false, false);
@@ -277,12 +277,12 @@ bool X86IntelAsmPrinter::printAsmMRegister(const MachineOperand &MO,
 /// PrintAsmOperand - Print out an operand for an inline asm expression.
 ///
 bool X86IntelAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                                         unsigned AsmVariant, 
+                                         unsigned AsmVariant,
                                          const char *ExtraCode) {
   // Does this asm operand have a single letter operand modifier?
   if (ExtraCode && ExtraCode[0]) {
     if (ExtraCode[1] != 0) return true; // Unknown modifier.
-    
+
     switch (ExtraCode[0]) {
     default: return true;  // Unknown modifier.
     case 'b': // Print QImode register
@@ -292,14 +292,14 @@ bool X86IntelAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
       return printAsmMRegister(MI->getOperand(OpNo), ExtraCode[0]);
     }
   }
-  
+
   printOperand(MI, OpNo);
   return false;
 }
 
 bool X86IntelAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
                                                unsigned OpNo,
-                                               unsigned AsmVariant, 
+                                               unsigned AsmVariant,
                                                const char *ExtraCode) {
   if (ExtraCode && ExtraCode[0])
     return true; // Unknown modifier.
@@ -319,7 +319,7 @@ void X86IntelAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 
 bool X86IntelAsmPrinter::doInitialization(Module &M) {
   bool Result = X86SharedAsmPrinter::doInitialization(M);
-  
+
   Mang->markCharUnacceptable('.');
 
   O << "\t.686\n\t.model flat\n\n";
@@ -333,10 +333,10 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
       O << "\textern " ;
       if (I->hasDLLImportLinkage()) {
         O << "__imp_";
-      }      
+      }
       O << Name << ":near\n";
     }
-  
+
   // Emit declarations for external globals.  Note that VC++ always declares
   // external globals to have type byte, and if that's good enough for VC++...
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
@@ -347,7 +347,7 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
       O << "\textern " ;
       if (I->hasDLLImportLinkage()) {
         O << "__imp_";
-      }      
+      }
       O << Name << ":byte\n";
     }
   }
@@ -362,11 +362,11 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
     if (I->isDeclaration()) continue;   // External global require no code
-    
+
     // Check to see if this is a special global used by LLVM, if so, emit it.
     if (EmitSpecialLLVMGlobal(I))
       continue;
-    
+
     std::string name = Mang->getValueName(I);
     Constant *C = I->getInitializer();
     unsigned Align = TD->getPreferredAlignmentLog(I);
