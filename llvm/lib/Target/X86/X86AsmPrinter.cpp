@@ -37,7 +37,7 @@ static X86MachineFunctionInfo calculateFunctionInfo(const Function *F,
                                                     const TargetData *TD) {
   X86MachineFunctionInfo Info;
   uint64_t Size = 0;
-  
+
   switch (F->getCallingConv()) {
   case CallingConv::X86_StdCall:
     Info.setDecorationStyle(StdCall);

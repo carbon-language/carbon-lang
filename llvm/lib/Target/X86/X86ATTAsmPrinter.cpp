@@ -51,7 +51,7 @@ static std::string getPICLabelString(unsigned FnNum,
 std::string X86ATTAsmPrinter::getSectionForFunction(const Function &F) const {
   switch (F.getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
-  case Function::InternalLinkage: 
+  case Function::InternalLinkage:
   case Function::DLLExportLinkage:
   case Function::ExternalLinkage:
     return TAI->getTextSection();
@@ -97,7 +97,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   X86SharedAsmPrinter::decorateName(CurrentFnName, F);
 
   SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
-    
+
   unsigned FnAlign = OptimizeForSize ? 1 : 4;
   switch (F->getLinkage()) {
   default: assert(0 && "Unknown linkage type!");
@@ -109,7 +109,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     //FALLS THROUGH
   case Function::ExternalLinkage:
     EmitAlignment(FnAlign, F);
-    O << "\t.globl\t" << CurrentFnName << "\n";    
+    O << "\t.globl\t" << CurrentFnName << "\n";
     break;
   case Function::LinkOnceLinkage:
   case Function::WeakLinkage:
@@ -192,7 +192,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
-  
+
   // We didn't modify anything.
   return false;
 }
@@ -252,7 +252,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       else if (Subtarget->isPICStyleGOT())
         O << "@GOTOFF";
     }
-    
+
     if (isMemOp && Subtarget->isPICStyleRIPRel() && !NotRIPRel)
       O << "(%rip)";
     return;
@@ -270,7 +270,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       else if (Subtarget->isPICStyleGOT())
         O << "@GOTOFF";
     }
-    
+
     int Offset = MO.getOffset();
     if (Offset > 0)
       O << "+" << Offset;
@@ -299,7 +299,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
 
     std::string Name = Mang->getValueName(GV);
     X86SharedAsmPrinter::decorateName(Name, GV);
-    
+
     if (!isMemOp && !isCallOp)
       O << '$';
     else if (Name[0] == '$') {
@@ -326,16 +326,16 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         }
       } else {
         if (GV->hasDLLImportLinkage())
-          O << "__imp_";          
+          O << "__imp_";
         O << Name;
       }
-      
+
       if (!isCallOp && TM.getRelocationModel() == Reloc::PIC_)
         O << '-' << getPICLabelString(getFunctionNumber(), TAI, Subtarget);
     } else {
       if (GV->hasDLLImportLinkage()) {
-        O << "__imp_";          
-      }       
+        O << "__imp_";
+      }
       O << Name;
 
       if (isCallOp) {
@@ -484,7 +484,7 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
   if (IndexReg.getReg() || BaseReg.getReg()) {
     unsigned ScaleVal = MI->getOperand(Op+1).getImm();
     unsigned BaseRegOperand = 0, IndexRegOperand = 2;
-      
+
     // There are cases where we can end up with ESP/RSP in the indexreg slot.
     // If this happens, swap the base/index register to support assemblers that
     // don't work when the index is *SP.
@@ -493,7 +493,7 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
       std::swap(BaseReg, IndexReg);
       std::swap(BaseRegOperand, IndexRegOperand);
     }
-    
+
     O << "(";
     if (BaseReg.getReg())
       printOperand(MI, Op+BaseRegOperand, Modifier);
@@ -508,7 +508,7 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
   }
 }
 
-void X86ATTAsmPrinter::printPICJumpTableSetLabel(unsigned uid, 
+void X86ATTAsmPrinter::printPICJumpTableSetLabel(unsigned uid,
                                            const MachineBasicBlock *MBB) const {
   if (!TAI->getSetDirective())
     return;
@@ -516,12 +516,12 @@ void X86ATTAsmPrinter::printPICJumpTableSetLabel(unsigned uid,
   // We don't need .set machinery if we have GOT-style relocations
   if (Subtarget->isPICStyleGOT())
     return;
-    
+
   O << TAI->getSetDirective() << ' ' << TAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
   printBasicBlockLabel(MBB, false, false, false);
   if (Subtarget->isPICStyleRIPRel())
-    O << '-' << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
+    O << '-' << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
       << '_' << uid << '\n';
   else
     O << '-' << getPICLabelString(getFunctionNumber(), TAI, Subtarget) << '\n';
@@ -535,8 +535,8 @@ void X86ATTAsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
 
 void X86ATTAsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
                                               const MachineBasicBlock *MBB,
-                                              unsigned uid) const 
-{  
+                                              unsigned uid) const
+{
   const char *JTEntryDirective = MJTI->getEntrySize() == 4 ?
     TAI->getData32bitsDirective() : TAI->getData64bitsDirective();
 
@@ -586,12 +586,12 @@ bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO,
 /// PrintAsmOperand - Print out an operand for an inline asm expression.
 ///
 bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                                       unsigned AsmVariant, 
+                                       unsigned AsmVariant,
                                        const char *ExtraCode) {
   // Does this asm operand have a single letter operand modifier?
   if (ExtraCode && ExtraCode[0]) {
     if (ExtraCode[1] != 0) return true; // Unknown modifier.
-    
+
     switch (ExtraCode[0]) {
     default: return true;  // Unknown modifier.
     case 'c': // Don't print "$" before a global var name or constant.
@@ -606,24 +606,24 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
         return printAsmMRegister(MI->getOperand(OpNo), ExtraCode[0]);
       printOperand(MI, OpNo);
       return false;
-      
+
     case 'P': // Don't print @PLT, but do print as memory.
       printOperand(MI, OpNo, "mem");
       return false;
     }
   }
-  
+
   printOperand(MI, OpNo);
   return false;
 }
 
 bool X86ATTAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
                                              unsigned OpNo,
-                                             unsigned AsmVariant, 
+                                             unsigned AsmVariant,
                                              const char *ExtraCode) {
   if (ExtraCode && ExtraCode[0]) {
     if (ExtraCode[1] != 0) return true; // Unknown modifier.
-    
+
     switch (ExtraCode[0]) {
     default: return true;  // Unknown modifier.
     case 'b': // Print QImode register
