@@ -2578,8 +2578,7 @@ static SDOperand getMemBasePlusOffset(SDOperand Base, unsigned Offset,
 
 /// isMemSrcFromString - Returns true if memcpy source is a string constant.
 ///
-static bool isMemSrcFromString(SDOperand Src, std::string &Str,
-                               uint64_t &SrcOff) {
+static bool isMemSrcFromString(SDOperand Src, std::string &Str) {
   unsigned SrcDelta = 0;
   GlobalAddressSDNode *G = NULL;
   if (Src.getOpcode() == ISD::GlobalAddress)
@@ -2594,10 +2593,8 @@ static bool isMemSrcFromString(SDOperand Src, std::string &Str,
     return false;
 
   GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
-  if (GV && GetConstantStringInfo(GV, Str, SrcDelta, false)) {
-    SrcOff += SrcDelta;
+  if (GV && GetConstantStringInfo(GV, Str, SrcDelta, false))
     return true;
-  }
 
   return false;
 }
@@ -2614,8 +2611,7 @@ bool MeetsMaxMemopRequirement(std::vector<MVT> &MemOps,
   bool AllowUnalign = TLI.allowsUnalignedMemoryAccesses();
 
   std::string Str;
-  uint64_t SrcOff = 0;
-  bool isSrcStr = isMemSrcFromString(Src, Str, SrcOff);
+  bool isSrcStr = isMemSrcFromString(Src, Str);
   bool isSrcConst = isa<ConstantSDNode>(Src);
   MVT VT= TLI.getOptimalMemOpType(Size, Align, isSrcConst, isSrcStr);
   if (VT != MVT::iAny) {
@@ -2710,11 +2706,11 @@ static SDOperand getMemcpyLoadsAndStores(SelectionDAG &DAG,
     return SDOperand();
 
   std::string Str;
-  uint64_t SrcOff = 0, DstOff = 0;
-  bool CopyFromStr = isMemSrcFromString(Src, Str, SrcOff);
+  bool CopyFromStr = isMemSrcFromString(Src, Str);
 
   SmallVector<SDOperand, 8> OutChains;
   unsigned NumMemOps = MemOps.size();
+  uint64_t SrcOff = 0, DstOff = 0;
   for (unsigned i = 0; i < NumMemOps; i++) {
     MVT VT = MemOps[i];
     unsigned VTSize = VT.getSizeInBits() / 8;
