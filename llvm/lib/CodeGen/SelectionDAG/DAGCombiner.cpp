@@ -3445,7 +3445,7 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
     if (Align <= OrigAlign) {
       SDOperand Load = DAG.getLoad(VT, LN0->getChain(), LN0->getBasePtr(),
                                    LN0->getSrcValue(), LN0->getSrcValueOffset(),
-                                   LN0->isVolatile(), Align);
+                                   LN0->isVolatile(), OrigAlign);
       AddToWorkList(N);
       CombineTo(N0.Val, DAG.getNode(ISD::BIT_CONVERT, N0.getValueType(), Load),
                 Load.getValue(1));
@@ -4547,7 +4547,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
         ((!AfterLegalize && !ST->isVolatile()) ||
          TLI.isOperationLegal(ISD::STORE, SVT)))
       return DAG.getStore(Chain, Value.getOperand(0), Ptr, ST->getSrcValue(),
-                          ST->getSrcValueOffset(), ST->isVolatile(), Align);
+                          ST->getSrcValueOffset(), ST->isVolatile(), OrigAlign);
   }
 
   // Turn 'store float 1.0, Ptr' -> 'store int 0x12345678, Ptr'
