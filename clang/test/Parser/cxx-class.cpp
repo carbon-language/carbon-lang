@@ -8,6 +8,7 @@ protected:
   struct S {};
   enum {};
   int; // expected-error {{error: declaration does not declare anything}}
+  int : 1, : 2;
 
 public:
   void m() {

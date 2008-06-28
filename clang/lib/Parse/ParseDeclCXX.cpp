@@ -412,38 +412,41 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     }
   }
   
-  // Parse the first declarator.
   Declarator DeclaratorInfo(DS, Declarator::MemberContext);
-  ParseDeclarator(DeclaratorInfo);
-  // Error parsing the declarator?
-  if (DeclaratorInfo.getIdentifier() == 0) {
-    // If so, skip until the semi-colon or a }.
-    SkipUntil(tok::r_brace, true);
-    if (Tok.is(tok::semi))
-      ConsumeToken();
-    return 0;
-  }
 
-  // function-definition:
-  if (Tok.is(tok::l_brace)) {
-    if (!DeclaratorInfo.isFunctionDeclarator()) {
-      Diag(Tok, diag::err_func_def_no_params);
-      ConsumeBrace();
+  if (Tok.isNot(tok::colon)) {
+    // Parse the first declarator.
+    ParseDeclarator(DeclaratorInfo);
+    // Error parsing the declarator?
+    if (DeclaratorInfo.getIdentifier() == 0) {
+      // If so, skip until the semi-colon or a }.
       SkipUntil(tok::r_brace, true);
+      if (Tok.is(tok::semi))
+        ConsumeToken();
       return 0;
     }
 
-    if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
-      Diag(Tok, diag::err_function_declared_typedef);
-      // This recovery skips the entire function body. It would be nice
-      // to simply call ParseCXXInlineMethodDef() below, however Sema
-      // assumes the declarator represents a function, not a typedef.
-      ConsumeBrace();
-      SkipUntil(tok::r_brace, true);
-      return 0;
-    }
+    // function-definition:
+    if (Tok.is(tok::l_brace)) {
+      if (!DeclaratorInfo.isFunctionDeclarator()) {
+        Diag(Tok, diag::err_func_def_no_params);
+        ConsumeBrace();
+        SkipUntil(tok::r_brace, true);
+        return 0;
+      }
 
-    return ParseCXXInlineMethodDef(AS, DeclaratorInfo);
+      if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
+        Diag(Tok, diag::err_function_declared_typedef);
+        // This recovery skips the entire function body. It would be nice
+        // to simply call ParseCXXInlineMethodDef() below, however Sema
+        // assumes the declarator represents a function, not a typedef.
+        ConsumeBrace();
+        SkipUntil(tok::r_brace, true);
+        return 0;
+      }
+
+      return ParseCXXInlineMethodDef(AS, DeclaratorInfo);
+    }
   }
 
   // member-declarator-list:
@@ -510,7 +513,8 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     if (Tok.is(tok::kw___attribute))
       DeclaratorInfo.AddAttributes(ParseAttributes());
 
-    ParseDeclarator(DeclaratorInfo);
+    if (Tok.isNot(tok::colon))
+      ParseDeclarator(DeclaratorInfo);
   }
 
   if (Tok.is(tok::semi)) {
