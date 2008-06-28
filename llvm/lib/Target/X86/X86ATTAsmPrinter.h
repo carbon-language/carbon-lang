@@ -118,6 +118,8 @@ struct VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
                               unsigned uid) const;
 
   void printPICLabel(const MachineInstr *MI, unsigned Op);
+  void printModuleLevelGV(const GlobalVariable* GVar);
+
   bool runOnMachineFunction(MachineFunction &F);
 
   /// getSectionForFunction - Return the section that we should emit the
