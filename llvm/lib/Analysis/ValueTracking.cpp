@@ -950,6 +950,8 @@ bool llvm::GetConstantStringInfo(Value *V, std::string &Str, uint64_t Offset) {
   if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(V)) {
     GEP = GEPI;
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
+    if (CE->getOpcode() == Instruction::BitCast)
+      return GetConstantStringInfo(CE->getOperand(0), Str, Offset);
     if (CE->getOpcode() != Instruction::GetElementPtr)
       return false;
     GEP = CE;
@@ -960,12 +962,16 @@ bool llvm::GetConstantStringInfo(Value *V, std::string &Str, uint64_t Offset) {
     if (GEP->getNumOperands() != 3)
       return false;
     
+    // Make sure the index-ee is a pointer to array of i8.
+    const PointerType *PT = cast<PointerType>(GEP->getOperand(0)->getType());
+    const ArrayType *AT = dyn_cast<ArrayType>(PT->getElementType());
+    if (AT == 0 || AT->getElementType() != Type::Int8Ty)
+      return false;
+    
     // Check to make sure that the first operand of the GEP is an integer and
     // has value 0 so that we are sure we're indexing into the initializer.
-    if (ConstantInt *Idx = dyn_cast<ConstantInt>(GEP->getOperand(1))) {
-      if (!Idx->isZero())
-        return false;
-    } else
+    ConstantInt *FirstIdx = dyn_cast<ConstantInt>(GEP->getOperand(1));
+    if (FirstIdx == 0 || !FirstIdx->isZero())
       return false;
     
     // If the second index isn't a ConstantInt, then this is a variable index
