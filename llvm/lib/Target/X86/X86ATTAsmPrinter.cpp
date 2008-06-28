@@ -688,7 +688,7 @@ bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO,
 
 /// PrintAsmOperand - Print out an operand for an inline asm expression.
 ///
-bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
+bool X86ATTAsmPrinter::printAsmOperand(const MachineInstr *MI, unsigned OpNo,
                                        unsigned AsmVariant,
                                        const char *ExtraCode) {
   // Does this asm operand have a single letter operand modifier?
@@ -720,7 +720,7 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
   return false;
 }
 
-bool X86ATTAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
+bool X86ATTAsmPrinter::printAsmMemoryOperand(const MachineInstr *MI,
                                              unsigned OpNo,
                                              unsigned AsmVariant,
                                              const char *ExtraCode) {
