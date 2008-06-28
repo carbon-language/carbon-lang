@@ -167,31 +167,8 @@ std::string X86ATTAsmPrinter::getSectionForFunction(const Function &F) const {
   }
 }
 
-/// runOnMachineFunction - This uses the printMachineInstruction()
-/// method to print assembly for each instruction.
-///
-bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  if (TAI->doesSupportDebugInformation()) {
-    // Let PassManager know we need debug information and relay
-    // the MachineModuleInfo address on to DwarfWriter.
-    MMI = &getAnalysis<MachineModuleInfo>();
-    DW.SetModuleInfo(MMI);
-  }
-
-  SetupMachineFunction(MF);
-  O << "\n\n";
-
-  // Print out constants referenced by the function
-  EmitConstantPool(MF.getConstantPool());
-
-  // Print out labels for the function.
+void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   const Function *F = MF.getFunction();
-  unsigned CC = F->getCallingConv();
-
-  // Populate function information map.  Actually, We don't want to populate
-  // non-stdcall or non-fastcall functions' information right now.
-  if (CC == CallingConv::X86_StdCall || CC == CallingConv::X86_FastCall)
-    FunctionInfoMap[F] = *MF.getInfo<X86MachineFunctionInfo>();
 
   decorateName(CurrentFnName, F);
 
@@ -204,8 +181,6 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     EmitAlignment(FnAlign, F);
     break;
   case Function::DLLExportLinkage:
-    DLLExportedFns.insert(Mang->makeNameProper(F->getName(), ""));
-    //FALLS THROUGH
   case Function::ExternalLinkage:
     EmitAlignment(FnAlign, F);
     O << "\t.globl\t" << CurrentFnName << "\n";
@@ -248,12 +223,42 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       (F->getLinkage() == Function::LinkOnceLinkage ||
        F->getLinkage() == Function::WeakLinkage))
     O << "Lllvm$workaround$fake$stub$" << CurrentFnName << ":\n";
+}
 
-  if (TAI->doesSupportDebugInformation() ||
-      TAI->doesSupportExceptionHandling()) {
-    // Emit pre-function debug and/or EH information.
-    DW.BeginFunction(&MF);
+/// runOnMachineFunction - This uses the printMachineInstruction()
+/// method to print assembly for each instruction.
+///
+bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  const Function *F = MF.getFunction();
+  unsigned CC = F->getCallingConv();
+
+  if (TAI->doesSupportDebugInformation()) {
+    // Let PassManager know we need debug information and relay
+    // the MachineModuleInfo address on to DwarfWriter.
+    MMI = &getAnalysis<MachineModuleInfo>();
+    DW.SetModuleInfo(MMI);
   }
+
+  SetupMachineFunction(MF);
+  O << "\n\n";
+
+  // Populate function information map.  Actually, We don't want to populate
+  // non-stdcall or non-fastcall functions' information right now.
+  if (CC == CallingConv::X86_StdCall || CC == CallingConv::X86_FastCall)
+    FunctionInfoMap[F] = *MF.getInfo<X86MachineFunctionInfo>();
+
+  // Print out constants referenced by the function
+  EmitConstantPool(MF.getConstantPool());
+
+  if (F->hasDLLExportLinkage())
+    DLLExportedFns.insert(Mang->makeNameProper(F->getName(), ""));
+
+  // Print the 'header' of function
+  emitFunctionHeader(MF);
+
+  // Emit pre-function debug and/or EH information.
+  if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling())
+    DW.BeginFunction(&MF);
 
   // Print out code for the function.
   bool hasAnyRealCode = false;
@@ -284,10 +289,9 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (TAI->hasDotTypeDotSizeDirective())
     O << "\t.size\t" << CurrentFnName << ", .-" << CurrentFnName << "\n";
 
-  if (TAI->doesSupportDebugInformation()) {
-    // Emit post-function debug information.
+  // Emit post-function debug information.
+  if (TAI->doesSupportDebugInformation())
     DW.EndFunction();
-  }
 
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);

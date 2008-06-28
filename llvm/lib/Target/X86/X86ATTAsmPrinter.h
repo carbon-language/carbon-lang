@@ -124,6 +124,8 @@ struct VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   /// specified function body into.
   virtual std::string getSectionForFunction(const Function &F) const;
 
+  void emitFunctionHeader(const MachineFunction &MF);
+
   // Necessary for Darwin to print out the apprioriate types of linker stubs
   StringSet<> FnStubs, GVStubs, LinkOnceStubs;
 
