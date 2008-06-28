@@ -982,15 +982,13 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
   }
 
   // Output linker support code for dllexported globals
-  if (!DLLExportedGVs.empty()) {
+  if (!DLLExportedGVs.empty())
     SwitchToDataSection(".section .drectve");
-  }
 
   for (StringSet<>::iterator i = DLLExportedGVs.begin(),
          e = DLLExportedGVs.end();
-         i != e; ++i) {
+         i != e; ++i)
     O << "\t.ascii \" -export:" << i->getKeyData() << ",data\"\n";
-  }
 
   if (!DLLExportedFns.empty()) {
     SwitchToDataSection(".section .drectve");
@@ -998,9 +996,8 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
 
   for (StringSet<>::iterator i = DLLExportedFns.begin(),
          e = DLLExportedFns.end();
-         i != e; ++i) {
+         i != e; ++i)
     O << "\t.ascii \" -export:" << i->getKeyData() << "\"\n";
-  }
 
   if (Subtarget->isTargetDarwin()) {
     SwitchToDataSection("");
