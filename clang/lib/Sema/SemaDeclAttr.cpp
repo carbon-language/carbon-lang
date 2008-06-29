@@ -61,33 +61,34 @@ static inline bool isNSStringType(QualType T, ASTContext &Ctx) {
 // Attribute Implementations
 //===----------------------------------------------------------------------===//
 
-void Sema::HandleExtVectorTypeAttribute(Decl *d, const AttributeList &Attr) {
+static void HandleExtVectorTypeAttr(Decl *d, const AttributeList &Attr,
+                                    Sema &S) {
   TypedefDecl *tDecl = dyn_cast<TypedefDecl>(d);
   if (tDecl == 0) {
-    Diag(Attr.getLoc(), diag::err_typecheck_ext_vector_not_typedef);
+    S.Diag(Attr.getLoc(), diag::err_typecheck_ext_vector_not_typedef);
     return;
   }
   
   QualType curType = tDecl->getUnderlyingType();
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("1"));
     return;
   }
   Expr *sizeExpr = static_cast<Expr *>(Attr.getArg(0));
   llvm::APSInt vecSize(32);
-  if (!sizeExpr->isIntegerConstantExpr(vecSize, Context)) {
-    Diag(Attr.getLoc(), diag::err_attribute_argument_not_int,
-         "ext_vector_type", sizeExpr->getSourceRange());
+  if (!sizeExpr->isIntegerConstantExpr(vecSize, S.Context)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int,
+           "ext_vector_type", sizeExpr->getSourceRange());
     return;
   }
   // unlike gcc's vector_size attribute, we do not allow vectors to be defined
   // in conjunction with complex types (pointers, arrays, functions, etc.).
   Type *canonType = curType.getCanonicalType().getTypePtr();
   if (!(canonType->isIntegerType() || canonType->isRealFloatingType())) {
-    Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type,
-         curType.getCanonicalType().getAsString());
+    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type,
+           curType.getCanonicalType().getAsString());
     return;
   }
   // unlike gcc's vector_size attribute, the size is specified as the 
@@ -95,14 +96,14 @@ void Sema::HandleExtVectorTypeAttribute(Decl *d, const AttributeList &Attr) {
   unsigned vectorSize = static_cast<unsigned>(vecSize.getZExtValue()); 
   
   if (vectorSize == 0) {
-    Diag(Attr.getLoc(), diag::err_attribute_zero_size,
-         sizeExpr->getSourceRange());
+    S.Diag(Attr.getLoc(), diag::err_attribute_zero_size,
+           sizeExpr->getSourceRange());
     return;
   }
   // Instantiate/Install the vector type, the number of elements is > 0.
-  tDecl->setUnderlyingType(Context.getExtVectorType(curType, vectorSize));
+  tDecl->setUnderlyingType(S.Context.getExtVectorType(curType, vectorSize));
   // Remember this typedef decl, we will need it later for diagnostics.
-  ExtVectorDecls.push_back(tDecl);
+  S.ExtVectorDecls.push_back(tDecl);
 }
 
 
@@ -114,29 +115,30 @@ void Sema::HandleExtVectorTypeAttribute(Decl *d, const AttributeList &Attr) {
 /// The raw attribute should contain precisely 1 argument, the vector size 
 /// for the variable, measured in bytes. If curType and rawAttr are well
 /// formed, this routine will return a new vector type.
-void Sema::HandleVectorSizeAttribute(Decl *D, const AttributeList &Attr) {
+static void HandleVectorSizeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   QualType CurType;
   if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
     CurType = VD->getType();
   else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D))
     CurType = TD->getUnderlyingType();
   else {
-    Diag(D->getLocation(), diag::err_attr_wrong_decl,std::string("vector_size"),
-         SourceRange(Attr.getLoc(), Attr.getLoc()));
+    S.Diag(D->getLocation(), diag::err_attr_wrong_decl,
+           std::string("vector_size"),
+           SourceRange(Attr.getLoc(), Attr.getLoc()));
     return;
   }
     
   // Check the attribute arugments.
   if (Attr.getNumArgs() != 1) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("1"));
     return;
   }
   Expr *sizeExpr = static_cast<Expr *>(Attr.getArg(0));
   llvm::APSInt vecSize(32);
-  if (!sizeExpr->isIntegerConstantExpr(vecSize, Context)) {
-    Diag(Attr.getLoc(), diag::err_attribute_argument_not_int,
-         "vector_size", sizeExpr->getSourceRange());
+  if (!sizeExpr->isIntegerConstantExpr(vecSize, S.Context)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int,
+           "vector_size", sizeExpr->getSourceRange());
     return;
   }
   // navigate to the base type - we need to provide for vector pointers, 
@@ -160,29 +162,29 @@ void Sema::HandleVectorSizeAttribute(Decl *D, const AttributeList &Attr) {
   }
   // the base type must be integer or float.
   if (!(canonType->isIntegerType() || canonType->isRealFloatingType())) {
-    Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type,
-         CurType.getCanonicalType().getAsString());
+    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type,
+           CurType.getCanonicalType().getAsString());
     return;
   }
-  unsigned typeSize = static_cast<unsigned>(Context.getTypeSize(CurType));
+  unsigned typeSize = static_cast<unsigned>(S.Context.getTypeSize(CurType));
   // vecSize is specified in bytes - convert to bits.
   unsigned vectorSize = static_cast<unsigned>(vecSize.getZExtValue() * 8); 
   
   // the vector size needs to be an integral multiple of the type size.
   if (vectorSize % typeSize) {
-    Diag(Attr.getLoc(), diag::err_attribute_invalid_size,
-         sizeExpr->getSourceRange());
+    S.Diag(Attr.getLoc(), diag::err_attribute_invalid_size,
+           sizeExpr->getSourceRange());
     return;
   }
   if (vectorSize == 0) {
-    Diag(Attr.getLoc(), diag::err_attribute_zero_size,
-         sizeExpr->getSourceRange());
+    S.Diag(Attr.getLoc(), diag::err_attribute_zero_size,
+           sizeExpr->getSourceRange());
     return;
   }
   
   // Success! Instantiate the vector type, the number of elements is > 0, and
   // not required to be a power of 2, unlike GCC.
-  CurType = Context.getVectorType(CurType, vectorSize/typeSize);
+  CurType = S.Context.getVectorType(CurType, vectorSize/typeSize);
   
   if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
     VD->setType(CurType);
@@ -190,11 +192,11 @@ void Sema::HandleVectorSizeAttribute(Decl *D, const AttributeList &Attr) {
     cast<TypedefDecl>(D)->setUnderlyingType(CurType);
 }
 
-void Sema::HandlePackedAttribute(Decl *d, const AttributeList &Attr) {
+static void HandlePackedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() > 0) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("0"));
     return;
   }
   
@@ -204,22 +206,22 @@ void Sema::HandlePackedAttribute(Decl *d, const AttributeList &Attr) {
     // If the alignment is less than or equal to 8 bits, the packed attribute
     // has no effect.
     if (!FD->getType()->isIncompleteType() &&
-        Context.getTypeAlign(FD->getType()) <= 8)
-      Diag(Attr.getLoc(), 
-           diag::warn_attribute_ignored_for_field_of_type,
-           Attr.getName()->getName(), FD->getType().getAsString());
+        S.Context.getTypeAlign(FD->getType()) <= 8)
+      S.Diag(Attr.getLoc(), 
+             diag::warn_attribute_ignored_for_field_of_type,
+             Attr.getName()->getName(), FD->getType().getAsString());
     else
       FD->addAttr(new PackedAttr());
   } else
-    Diag(Attr.getLoc(), diag::warn_attribute_ignored,
-         Attr.getName()->getName());
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored,
+           Attr.getName()->getName());
 }
 
-void Sema::HandleAliasAttribute(Decl *d, const AttributeList &Attr) {
+static void HandleAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("1"));
     return;
   }
   
@@ -228,8 +230,8 @@ void Sema::HandleAliasAttribute(Decl *d, const AttributeList &Attr) {
   StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
   
   if (Str == 0 || Str->isWide()) {
-    Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string,
-         "alias", std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string,
+           "alias", std::string("1"));
     return;
   }
   
@@ -241,40 +243,40 @@ void Sema::HandleAliasAttribute(Decl *d, const AttributeList &Attr) {
   d->addAttr(new AliasAttr(std::string(Alias, AliasLen)));
 }
 
-void Sema::HandleNoReturnAttribute(Decl *d, const AttributeList &Attr) {
+static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("0"));
     return;
   }
   
   FunctionDecl *Fn = dyn_cast<FunctionDecl>(d);
   if (!Fn) {
-    Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
-         "noreturn", "function");
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
+           "noreturn", "function");
     return;
   }
   
   d->addAttr(new NoReturnAttr());
 }
 
-void Sema::HandleDeprecatedAttribute(Decl *d, const AttributeList &Attr) {
+static void HandleDeprecatedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("0"));
     return;
   }
   
   d->addAttr(new DeprecatedAttr());
 }
 
-void Sema::HandleVisibilityAttribute(Decl *d, const AttributeList &Attr) {
+static void HandleVisibilityAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("1"));
     return;
   }
   
@@ -283,8 +285,8 @@ void Sema::HandleVisibilityAttribute(Decl *d, const AttributeList &Attr) {
   StringLiteral *Str = dyn_cast<StringLiteral>(Arg);
   
   if (Str == 0 || Str->isWide()) {
-    Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string,
-         "visibility", std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string,
+           "visibility", std::string("1"));
     return;
   }
   
@@ -301,74 +303,74 @@ void Sema::HandleVisibilityAttribute(Decl *d, const AttributeList &Attr) {
   else if (TypeLen == 9 && !memcmp(TypeStr, "protected", 9))
     type = VisibilityAttr::ProtectedVisibility;
   else {
-    Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported,
-         "visibility", TypeStr);
+    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported,
+           "visibility", TypeStr);
     return;
   }
   
   d->addAttr(new VisibilityAttr(type));
 }
 
-void Sema::HandleWeakAttribute(Decl *d, const AttributeList &Attr) {
+static void HandleWeakAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("0"));
     return;
   }
   
   d->addAttr(new WeakAttr());
 }
 
-void Sema::HandleDLLImportAttribute(Decl *d, const AttributeList &Attr) {
+static void HandleDLLImportAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("0"));
     return;
   }
   
   d->addAttr(new DLLImportAttr());
 }
 
-void Sema::HandleDLLExportAttribute(Decl *d, const AttributeList &Attr) {
+static void HandleDLLExportAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("0"));
     return;
   }
   
   d->addAttr(new DLLExportAttr());
 }
 
-void Sema::HandleStdCallAttribute(Decl *d, const AttributeList &Attr) {
+static void HandleStdCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("0"));
     return;
   }
   
   d->addAttr(new StdCallAttr());
 }
 
-void Sema::HandleFastCallAttribute(Decl *d, const AttributeList &Attr) {
+static void HandleFastCallAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("0"));
     return;
   }
   
   d->addAttr(new FastCallAttr());
 }
 
-void Sema::HandleNothrowAttribute(Decl *d, const AttributeList &Attr) {
+static void HandleNothrowAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("0"));
     return;
   }
   
@@ -377,17 +379,17 @@ void Sema::HandleNothrowAttribute(Decl *d, const AttributeList &Attr) {
 
 /// Handle __attribute__((format(type,idx,firstarg))) attributes
 /// based on http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
-void Sema::HandleFormatAttribute(Decl *d, const AttributeList &Attr) {
+static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
   if (!Attr.getParameterName()) {
-    Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string,
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_string,
            "format", std::string("1"));
     return;
   }
 
   if (Attr.getNumArgs() != 2) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("3"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("3"));
     return;
   }
 
@@ -396,8 +398,8 @@ void Sema::HandleFormatAttribute(Decl *d, const AttributeList &Attr) {
   const FunctionTypeProto *proto = getFunctionProto(d);
 
   if (!proto) {
-    Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
-         "format", "function");
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
+           "format", "function");
     return;
   }
 
@@ -423,15 +425,9 @@ void Sema::HandleFormatAttribute(Decl *d, const AttributeList &Attr) {
   
   switch (FormatLen) {
   default: break;
-  case 5:
-    Supported = !memcmp(Format, "scanf", 5);
-    break;
-  case 6:
-    Supported = !memcmp(Format, "printf", 6);
-    break;
-  case 7:
-    Supported = !memcmp(Format, "strfmon", 7);
-    break;
+  case 5: Supported = !memcmp(Format, "scanf", 5); break;
+  case 6: Supported = !memcmp(Format, "printf", 6); break;
+  case 7: Supported = !memcmp(Format, "strfmon", 7); break;
   case 8:
     Supported = (is_strftime = !memcmp(Format, "strftime", 8)) || 
                 (is_NSString = !memcmp(Format, "NSString", 8));
@@ -439,22 +435,22 @@ void Sema::HandleFormatAttribute(Decl *d, const AttributeList &Attr) {
   }
       
   if (!Supported) {
-    Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported,
+    S.Diag(Attr.getLoc(), diag::warn_attribute_type_not_supported,
            "format", Attr.getParameterName()->getName());
     return;
   }
 
   // checks for the 2nd argument
   Expr *IdxExpr = static_cast<Expr *>(Attr.getArg(0));
-  llvm::APSInt Idx(Context.getTypeSize(IdxExpr->getType()));
-  if (!IdxExpr->isIntegerConstantExpr(Idx, Context)) {
-    Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int,
+  llvm::APSInt Idx(32);
+  if (!IdxExpr->isIntegerConstantExpr(Idx, S.Context)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int,
            "format", std::string("2"), IdxExpr->getSourceRange());
     return;
   }
 
   if (Idx.getZExtValue() < FirstIdx || Idx.getZExtValue() > NumArgs) {
-    Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds,
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds,
            "format", std::string("2"), IdxExpr->getSourceRange());
     return;
   }
@@ -468,27 +464,27 @@ void Sema::HandleFormatAttribute(Decl *d, const AttributeList &Attr) {
   if (is_NSString) {
     // FIXME: do we need to check if the type is NSString*?  What are
     //  the semantics?
-    if (!isNSStringType(Ty, Context)) {
+    if (!isNSStringType(Ty, S.Context)) {
       // FIXME: Should highlight the actual expression that has the
       // wrong type.
-      Diag(Attr.getLoc(), diag::err_format_attribute_not_NSString,
-           IdxExpr->getSourceRange());
+      S.Diag(Attr.getLoc(), diag::err_format_attribute_not_NSString,
+             IdxExpr->getSourceRange());
       return;
     }    
   } else if (!Ty->isPointerType() ||
              !Ty->getAsPointerType()->getPointeeType()->isCharType()) {
     // FIXME: Should highlight the actual expression that has the
     // wrong type.
-    Diag(Attr.getLoc(), diag::err_format_attribute_not_string,
-         IdxExpr->getSourceRange());
+    S.Diag(Attr.getLoc(), diag::err_format_attribute_not_string,
+           IdxExpr->getSourceRange());
     return;
   }
 
   // check the 3rd argument
   Expr *FirstArgExpr = static_cast<Expr *>(Attr.getArg(1));
-  llvm::APSInt FirstArg(Context.getTypeSize(FirstArgExpr->getType()));
-  if (!FirstArgExpr->isIntegerConstantExpr(FirstArg, Context)) {
-    Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int,
+  llvm::APSInt FirstArg(32);
+  if (!FirstArgExpr->isIntegerConstantExpr(FirstArg, S.Context)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_n_not_int,
            "format", std::string("3"), FirstArgExpr->getSourceRange());
     return;
   }
@@ -498,7 +494,7 @@ void Sema::HandleFormatAttribute(Decl *d, const AttributeList &Attr) {
     if (proto->isVariadic()) {
       ++NumArgs; // +1 for ...
     } else {
-      Diag(d->getLocation(), diag::err_format_attribute_requires_variadic);
+      S.Diag(d->getLocation(), diag::err_format_attribute_requires_variadic);
       return;
     }
   }
@@ -507,13 +503,13 @@ void Sema::HandleFormatAttribute(Decl *d, const AttributeList &Attr) {
   // the input is just the current time + the format string
   if (is_strftime) {
     if (FirstArg != 0) {
-      Diag(Attr.getLoc(), diag::err_format_strftime_third_parameter,
+      S.Diag(Attr.getLoc(), diag::err_format_strftime_third_parameter,
              FirstArgExpr->getSourceRange());
       return;
     }
   // if 0 it disables parameter checking (to use with e.g. va_list)
   } else if (FirstArg != 0 && FirstArg != NumArgs) {
-    Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds,
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds,
            "format", std::string("3"), FirstArgExpr->getSourceRange());
     return;
   }
@@ -566,11 +562,11 @@ static void HandleAnnotateAttr(Decl *d, const AttributeList &Attr, Sema &S) {
                                           SE->getByteLength())));
 }
 
-void Sema::HandleAlignedAttribute(Decl *d, const AttributeList &Attr) {
+static void HandleAlignedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() > 1) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("1"));
     return;
   }
 
@@ -584,9 +580,9 @@ void Sema::HandleAlignedAttribute(Decl *d, const AttributeList &Attr) {
   
   Expr *alignmentExpr = static_cast<Expr *>(Attr.getArg(0));
   llvm::APSInt Alignment(32);
-  if (!alignmentExpr->isIntegerConstantExpr(Alignment, Context)) {
-    Diag(Attr.getLoc(), diag::err_attribute_argument_not_int,
-         "aligned", alignmentExpr->getSourceRange());
+  if (!alignmentExpr->isIntegerConstantExpr(Alignment, S.Context)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int,
+           "aligned", alignmentExpr->getSourceRange());
     return;
   }
   d->addAttr(new AlignedAttr(Alignment.getZExtValue() * 8));
@@ -723,6 +719,56 @@ static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
 // Top Level Sema Entry Points
 //===----------------------------------------------------------------------===//
 
+/// HandleDeclAttribute - Apply the specific attribute to the specified decl if
+/// the attribute applies to decls.  If the attribute is a type attribute, just
+/// silently ignore it.
+static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
+  switch (Attr.getKind()) {
+  case AttributeList::AT_address_space:
+    // Ignore this, this is a type attribute, handled by ProcessTypeAttributes.
+    break;
+  case AttributeList::AT_ext_vector_type:
+    HandleExtVectorTypeAttr(D, Attr, S);
+    break;
+  case AttributeList::AT_vector_size: HandleVectorSizeAttr(D, Attr, S); break;
+  case AttributeList::AT_mode:        HandleModeAttr      (D, Attr, S); break;
+  case AttributeList::AT_alias:       HandleAliasAttr     (D, Attr, S); break;
+  case AttributeList::AT_deprecated:  HandleDeprecatedAttr(D, Attr, S); break;
+  case AttributeList::AT_visibility:  HandleVisibilityAttr(D, Attr, S); break;
+  case AttributeList::AT_weak:        HandleWeakAttr      (D, Attr, S); break;
+  case AttributeList::AT_dllimport:   HandleDLLImportAttr (D, Attr, S); break;
+  case AttributeList::AT_dllexport:   HandleDLLExportAttr (D, Attr, S); break;
+  case AttributeList::AT_nothrow:     HandleNothrowAttr   (D, Attr, S); break;
+  case AttributeList::AT_stdcall:     HandleStdCallAttr   (D, Attr, S); break;
+  case AttributeList::AT_fastcall:    HandleFastCallAttr  (D, Attr, S); break;
+  case AttributeList::AT_aligned:     HandleAlignedAttr   (D, Attr, S); break;
+  case AttributeList::AT_packed:      HandlePackedAttr    (D, Attr, S); break;
+  case AttributeList::AT_annotate:    HandleAnnotateAttr  (D, Attr, S); break;
+  case AttributeList::AT_noreturn:    HandleNoReturnAttr  (D, Attr, S); break;
+  case AttributeList::AT_format:      HandleFormatAttr    (D, Attr, S); break;
+  case AttributeList::AT_transparent_union:
+    HandleTransparentUnionAttr(D, Attr, S);
+    break;
+  default:
+#if 0
+    // TODO: when we have the full set of attributes, warn about unknown ones.
+    S.Diag(Attr->getLoc(), diag::warn_attribute_ignored,
+           Attr->getName()->getName());
+#endif
+    break;
+  }
+}
+
+/// ProcessDeclAttributeList - Apply all the decl attributes in the specified
+/// attribute list to the specified decl, ignoring any type attributes.
+void Sema::ProcessDeclAttributeList(Decl *D, const AttributeList *AttrList) {
+  while (AttrList) {
+    ProcessDeclAttribute(D, *AttrList, *this);
+    AttrList = AttrList->getNext();
+  }
+}
+
+
 /// ProcessDeclAttributes - Given a declarator (PD) with attributes indicated in
 /// it, apply them to D.  This is a bit tricky because PD can have attributes
 /// specified in many different places, and we need to find and apply them all.
@@ -730,7 +776,7 @@ void Sema::ProcessDeclAttributes(Decl *D, const Declarator &PD) {
   // Apply decl attributes from the DeclSpec if present.
   if (const AttributeList *Attrs = PD.getDeclSpec().getAttributes())
     ProcessDeclAttributeList(D, Attrs);
-
+  
   // Walk the declarator structure, applying decl attributes that were in a type
   // position to the decl itself.  This handles cases like:
   //   int *__attr__(x)** D;
@@ -742,54 +788,5 @@ void Sema::ProcessDeclAttributes(Decl *D, const Declarator &PD) {
   // Finally, apply any attributes on the decl itself.
   if (const AttributeList *Attrs = PD.getAttributes())
     ProcessDeclAttributeList(D, Attrs);
-}
-
-/// ProcessDeclAttributeList - Apply all the decl attributes in the specified
-/// attribute list to the specified decl, ignoring any type attributes.
-void Sema::ProcessDeclAttributeList(Decl *D, const AttributeList *AttrList) {
-  while (AttrList) {
-    ProcessDeclAttribute(D, *AttrList);
-    AttrList = AttrList->getNext();
-  }
-}
-
-/// HandleDeclAttribute - Apply the specific attribute to the specified decl if
-/// the attribute applies to decls.  If the attribute is a type attribute, just
-/// silently ignore it.
-void Sema::ProcessDeclAttribute(Decl *D, const AttributeList &Attr) {
-  switch (Attr.getKind()) {
-  case AttributeList::AT_address_space:
-    // Ignore this, this is a type attribute, handled by ProcessTypeAttributes.
-    break;
-  case AttributeList::AT_vector_size: HandleVectorSizeAttribute(D, Attr); break;
-  case AttributeList::AT_ext_vector_type: 
-    HandleExtVectorTypeAttribute(D, Attr);
-    break;
-  case AttributeList::AT_mode:       HandleModeAttr(D, Attr, *this);  break;
-  case AttributeList::AT_alias:      HandleAliasAttribute(D, Attr); break;
-  case AttributeList::AT_deprecated: HandleDeprecatedAttribute(D, Attr);break;
-  case AttributeList::AT_visibility: HandleVisibilityAttribute(D, Attr);break;
-  case AttributeList::AT_weak:       HandleWeakAttribute(D, Attr); break;
-  case AttributeList::AT_dllimport:  HandleDLLImportAttribute(D, Attr); break;
-  case AttributeList::AT_dllexport:  HandleDLLExportAttribute(D, Attr); break;
-  case AttributeList::AT_nothrow:    HandleNothrowAttribute(D, Attr); break;
-  case AttributeList::AT_stdcall:    HandleStdCallAttribute(D, Attr); break;
-  case AttributeList::AT_fastcall:   HandleFastCallAttribute(D, Attr); break;
-  case AttributeList::AT_aligned:    HandleAlignedAttribute(D, Attr); break;
-  case AttributeList::AT_packed:     HandlePackedAttribute(D, Attr); break;
-  case AttributeList::AT_annotate:   HandleAnnotateAttr(D, Attr, *this); break;
-  case AttributeList::AT_noreturn:   HandleNoReturnAttribute(D, Attr); break;
-  case AttributeList::AT_format:     HandleFormatAttribute(D, Attr); break;
-  case AttributeList::AT_transparent_union:
-      HandleTransparentUnionAttr(D, Attr, *this);
-    break;
-  default:
-#if 0
-    // TODO: when we have the full set of attributes, warn about unknown ones.
-    Diag(Attr->getLoc(), diag::warn_attribute_ignored,
-         Attr->getName()->getName());
-#endif
-    break;
-  }
 }
 

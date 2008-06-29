@@ -304,7 +304,6 @@ private:
   // Decl attributes - this routine is the top level dispatcher. 
   void ProcessDeclAttributes(Decl *D, const Declarator &PD);
   void ProcessDeclAttributeList(Decl *D, const AttributeList *AttrList);
-  void ProcessDeclAttribute(Decl *D, const AttributeList &Attr);
 
   /// HandleAddressSpaceTypeAttribute - this attribute is only applicable to 
   /// objects without automatic storage duration. 
@@ -312,21 +311,6 @@ private:
   /// for the type.
   QualType HandleAddressSpaceTypeAttribute(QualType curType, 
                                            const AttributeList &Attr);
-  void HandleVectorSizeAttribute(Decl *d, const AttributeList &Attr);
-  void HandleExtVectorTypeAttribute(Decl *d, const AttributeList &Attr);
-  void HandleAlignedAttribute(Decl *d, const AttributeList &Attr);
-  void HandleAliasAttribute(Decl *d, const AttributeList &Attr);
-  void HandlePackedAttribute(Decl *d, const AttributeList &Attr);
-  void HandleNoReturnAttribute(Decl *d, const AttributeList &Attr);
-  void HandleDeprecatedAttribute(Decl *d, const AttributeList &Attr);
-  void HandleWeakAttribute(Decl *d, const AttributeList &Attr);
-  void HandleDLLImportAttribute(Decl *d, const AttributeList &Attr);
-  void HandleDLLExportAttribute(Decl *d, const AttributeList &Attr);
-  void HandleVisibilityAttribute(Decl *d, const AttributeList &Attr);
-  void HandleNothrowAttribute(Decl *d, const AttributeList &Attr);
-  void HandleFormatAttribute(Decl *d, const AttributeList &Attr);
-  void HandleStdCallAttribute(Decl *d, const AttributeList &Attr);
-  void HandleFastCallAttribute(Decl *d, const AttributeList &Attr);
   
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl);
