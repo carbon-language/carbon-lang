@@ -14,7 +14,6 @@
 
 #include "llvm/Debugger/ProgramInfo.h"
 #include "llvm/Constants.h"
-#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
@@ -116,10 +115,8 @@ SourceFileInfo::SourceFileInfo(const GlobalVariable *Desc,
         if (ConstantInt *CUI = dyn_cast<ConstantInt>(CS->getOperand(1)))
           Version = CUI->getZExtValue();
 
-        if (!GetConstantStringInfo(CS->getOperand(3), BaseName))
-          BaseName = "";
-        if (!GetConstantStringInfo(CS->getOperand(4), Directory))
-          Directory = "";
+        BaseName  = CS->getOperand(3)->getStringValue();
+        Directory = CS->getOperand(4)->getStringValue();
       }
 }
 
@@ -159,8 +156,7 @@ SourceFunctionInfo::SourceFunctionInfo(ProgramInfo &PI,
           SourceFile = &PI.getSourceFile(GV);
 
         // Entry #2 is the function name.
-        if (!GetConstantStringInfo(CS->getOperand(2), Name))
-          Name = "";
+        Name = CS->getOperand(2)->getStringValue();
       }
 }
 

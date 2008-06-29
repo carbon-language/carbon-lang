@@ -72,16 +72,7 @@ namespace llvm {
                                  Instruction *InsertBefore = 0) {
     const unsigned Idxs[1] = { Idx };
     return FindInsertedValue(V, &Idxs[0], &Idxs[1], InsertBefore);
-  }
-  
-  /// GetConstantStringInfo - This function computes the length of a
-  /// null-terminated C string pointed to by V.  If successful, it returns true
-  /// and returns the string in Str.  If unsuccessful, it returns false.  If
-  /// StopAtNul is set to true (the default), the returned string is truncated
-  /// by a nul character in the global.  If StopAtNul is false, the nul
-  /// character is included in the result string.
-  bool GetConstantStringInfo(Value *V, std::string &Str, uint64_t Offset = 0,
-                             bool StopAtNul = true);
+  }  
 } // end namespace llvm
 
 #endif

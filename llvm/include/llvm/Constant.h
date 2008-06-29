@@ -115,6 +115,13 @@ public:
            "implemented for all constants that have operands!");
     assert(0 && "Constants that do not have operands cannot be using 'From'!");
   }
+
+  /// getStringValue - Turn an LLVM constant pointer that eventually points to a
+  /// global into a string value.  Return an empty string if we can't do it.
+  /// Parameter Chop determines if the result is chopped at the first null
+  /// terminator.
+  ///
+  std::string getStringValue(bool Chop = true, unsigned Offset = 0);
 };
 
 } // End llvm namespace

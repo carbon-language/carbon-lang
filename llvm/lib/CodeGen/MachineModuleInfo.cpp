@@ -10,7 +10,6 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 
 #include "llvm/Constants.h"
-#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineLocation.h"
@@ -207,9 +206,7 @@ public:
   }
   virtual void Apply(std::string &Field) {
     Constant *C = CI->getOperand(I++);
-    // Fills in the string if it succeeds
-    if (!GetConstantStringInfo(C, Field))
-      Field.clear();
+    Field = C->getStringValue();
   }
   virtual void Apply(DebugInfoDesc *&Field) {
     Constant *C = CI->getOperand(I++);
