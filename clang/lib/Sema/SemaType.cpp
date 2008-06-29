@@ -169,7 +169,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
   // See if there are any attributes on the declspec that apply to the type (as
   // opposed to the decl).
   if (const AttributeList *AL = DS.getAttributes())
-    ProcessTypeAttributes(Result, AL);
+    ProcessTypeAttributeList(Result, AL);
     
   // Apply const/volatile/restrict qualifiers to T.
   if (unsigned TypeQuals = DS.getTypeQualifiers()) {
@@ -256,11 +256,6 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
         
       // Apply the pointer typequals to the pointer object.
       T = Context.getPointerType(T).getQualifiedType(DeclType.Ptr.TypeQuals);
-        
-      // See if there are any attributes on the pointer that apply to it.
-      if (const AttributeList *AL = DeclType.Ptr.AttrList)
-        ProcessTypeAttributes(T, AL);
-        
       break;
     case DeclaratorChunk::Reference:
       if (const ReferenceType *RT = T->getAsReferenceType()) {
@@ -286,10 +281,6 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       // Handle restrict on references.
       if (DeclType.Ref.HasRestrict)
         T.addRestrict();
-        
-      // See if there are any attributes on the pointer that apply to it.
-      if (const AttributeList *AL = DeclType.Ref.AttrList)
-        ProcessTypeAttributes(T, AL);
       break;
     case DeclaratorChunk::Array: {
       DeclaratorChunk::ArrayTypeInfo &ATI = DeclType.Arr;
@@ -454,12 +445,16 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       }
       break;
     }
+    
+    // See if there are any attributes on this declarator chunk.
+    if (const AttributeList *AL = DeclType.getAttrs())
+      ProcessTypeAttributeList(T, AL);
   }
   
   // If there were any type attributes applied to the decl itself (not the
   // type, apply the type attribute to the type!)
   if (const AttributeList *Attrs = D.getAttributes())
-    ProcessTypeAttributes(T, Attrs);
+    ProcessTypeAttributeList(T, Attrs);
   
   return T;
 }
@@ -518,7 +513,44 @@ Sema::TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
   return T.getAsOpaquePtr();
 }
 
-void Sema::ProcessTypeAttributes(QualType &Result, const AttributeList *AL) {
+
+
+//===----------------------------------------------------------------------===//
+// Type Attribute Processing
+//===----------------------------------------------------------------------===//
+
+/// HandleAddressSpaceTypeAttribute - Process an address_space attribute on the
+/// specified type.  The attribute contains 1 argument, the id of the address
+/// space for the type.
+static void HandleAddressSpaceTypeAttribute(QualType &Type, 
+                                            const AttributeList &Attr, Sema &S){
+  // If this type is already address space qualified, reject it.
+  // Clause 6.7.3 - Type qualifiers: "No type shall be qualified by qualifiers
+  // for two or more different address spaces."
+  if (Type.getAddressSpace()) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_address_multiple_qualifiers);
+    return;
+  }
+  
+  // Check the attribute arguments.
+  if (Attr.getNumArgs() != 1) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("1"));
+    return;
+  }
+  Expr *ASArgExpr = static_cast<Expr *>(Attr.getArg(0));
+  llvm::APSInt addrSpace(32);
+  if (!ASArgExpr->isIntegerConstantExpr(addrSpace, S.Context)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_address_space_not_int,
+           ASArgExpr->getSourceRange());
+    return;
+  }
+
+  unsigned ASIdx = static_cast<unsigned>(addrSpace.getZExtValue()); 
+  Type = S.Context.getASQualType(Type, ASIdx);
+}
+
+void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
   // Scan through and apply attributes to this type where it makes sense.  Some
   // attributes (such as __address_space__, __vector_size__, etc) apply to the
   // type, but others can be present in the type specifiers even though they
@@ -529,40 +561,10 @@ void Sema::ProcessTypeAttributes(QualType &Result, const AttributeList *AL) {
     switch (AL->getKind()) {
     default: break;
     case AttributeList::AT_address_space:
-      Result = HandleAddressSpaceTypeAttribute(Result, *AL);
-      continue;
+      HandleAddressSpaceTypeAttribute(Result, *AL, *this);
+      break;
     }
   }
-}
-
-/// HandleAddressSpaceTypeAttribute - Process an address_space attribute on the
-/// specified type.
-QualType Sema::HandleAddressSpaceTypeAttribute(QualType Type, 
-                                               const AttributeList &Attr) {
-  // If this type is already address space qualified, reject it.
-  // Clause 6.7.3 - Type qualifiers: "No type shall be qualified by qualifiers
-  // for two or more different address spaces."
-  if (Type.getAddressSpace()) {
-    Diag(Attr.getLoc(), diag::err_attribute_address_multiple_qualifiers);
-    return Type;
-  }
-  
-  // Check the attribute arguments.
-  if (Attr.getNumArgs() != 1) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("1"));
-    return Type;
-  }
-  Expr *ASArgExpr = static_cast<Expr *>(Attr.getArg(0));
-  llvm::APSInt addrSpace(32);
-  if (!ASArgExpr->isIntegerConstantExpr(addrSpace, Context)) {
-    Diag(Attr.getLoc(), diag::err_attribute_address_space_not_int,
-         ASArgExpr->getSourceRange());
-    return Type;
-  }
-
-  unsigned ASIdx = static_cast<unsigned>(addrSpace.getZExtValue()); 
-  return Context.getASQualType(Type, ASIdx);
 }
 
 

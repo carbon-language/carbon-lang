@@ -193,7 +193,7 @@ public:
   // Type Analysis / Processing: SemaType.cpp.
   //
   QualType ConvertDeclSpecToType(const DeclSpec &DS);
-  void ProcessTypeAttributes(QualType &Result, const AttributeList *AL);
+  void ProcessTypeAttributeList(QualType &Result, const AttributeList *AL);
   QualType GetTypeForDeclarator(Declarator &D, Scope *S);
 
   
@@ -305,13 +305,6 @@ private:
   void ProcessDeclAttributes(Decl *D, const Declarator &PD);
   void ProcessDeclAttributeList(Decl *D, const AttributeList *AttrList);
 
-  /// HandleAddressSpaceTypeAttribute - this attribute is only applicable to 
-  /// objects without automatic storage duration. 
-  /// The raw attribute contains 1 argument, the id of the address space 
-  /// for the type.
-  QualType HandleAddressSpaceTypeAttribute(QualType curType, 
-                                           const AttributeList &Attr);
-  
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl);
                            
