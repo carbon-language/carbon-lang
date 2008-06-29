@@ -612,8 +612,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     if (!NewTD) return 0;
 
     // Handle attributes prior to checking for duplicates in MergeVarDecl
-    ProcessDeclAttributes(NewTD, D.getDeclSpec().getAttributes(),
-                          D.getAttributes());
+    ProcessDeclAttributes(NewTD, D);
     // Merge the decl with the existing one if appropriate. If the decl is
     // in an outer scope, it isn't the same thing.
     if (PrevDecl && IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
@@ -652,8 +651,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
                                                II, R, SC, isInline,
                                                LastDeclarator);
     // Handle attributes.
-    ProcessDeclAttributes(NewFD, D.getDeclSpec().getAttributes(),
-                          D.getAttributes());
+    ProcessDeclAttributes(NewFD, D);
 
     // Copy the parameter declarations from the declarator D to
     // the function declaration NewFD, if they are available.
@@ -745,8 +743,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
                               II, R, SC, LastDeclarator);
     }
     // Handle attributes prior to checking for duplicates in MergeVarDecl
-    ProcessDeclAttributes(NewVD, D.getDeclSpec().getAttributes(),
-                          D.getAttributes());
+    ProcessDeclAttributes(NewVD, D);
 
     // Emit an error if an address space was applied to decl with local storage.
     // This includes arrays of objects with address space qualifiers, but not
@@ -1456,8 +1453,7 @@ Sema::ActOnParamDeclarator(Scope *S, Declarator &D) {
   if (II)
     PushOnScopeChains(New, S);
 
-  ProcessDeclAttributes(New, D.getDeclSpec().getAttributes(),
-                        D.getAttributes());
+  ProcessDeclAttributes(New, D);
   return New;
 
 }
@@ -1849,8 +1845,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S,
   // FIXME: Chain fielddecls together.
   FieldDecl *NewFD = FieldDecl::Create(Context, Loc, II, T, BitWidth);
   
-  ProcessDeclAttributes(NewFD, D.getDeclSpec().getAttributes(),
-                        D.getAttributes());
+  ProcessDeclAttributes(NewFD, D);
 
   if (D.getInvalidType() || InvalidDecl)
     NewFD->setInvalidDecl();
@@ -1913,8 +1908,7 @@ Sema::DeclTy *Sema::ActOnIvar(Scope *S,
   
   ObjCIvarDecl *NewID = ObjCIvarDecl::Create(Context, Loc, II, T);
   
-  ProcessDeclAttributes(NewID, D.getDeclSpec().getAttributes(),
-                        D.getAttributes());
+  ProcessDeclAttributes(NewID, D);
   
   if (D.getInvalidType() || InvalidDecl)
     NewID->setInvalidDecl();

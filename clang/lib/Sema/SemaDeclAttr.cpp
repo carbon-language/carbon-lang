@@ -54,8 +54,10 @@ static inline bool isNSStringType(QualType T, ASTContext &Ctx) {
          ClsName == &Ctx.Idents.get("NSMutableString");
 }
 
-void Sema::ProcessDeclAttributes(Decl *D, const AttributeList *DeclSpecAttrs,
-                                 const AttributeList *DeclaratorAttrs) {
+void Sema::ProcessDeclAttributes(Decl *D, Declarator &PD) {
+  const AttributeList *DeclSpecAttrs = PD.getDeclSpec().getAttributes();
+  const AttributeList *DeclaratorAttrs = PD.getAttributes();
+  
   if (DeclSpecAttrs == 0 && DeclaratorAttrs == 0) return;
 
   ProcessDeclAttributeList(D, DeclSpecAttrs);

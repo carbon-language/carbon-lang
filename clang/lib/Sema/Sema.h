@@ -301,8 +301,7 @@ private:
   ScopedDecl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
                                  Scope *S);
   // Decl attributes - this routine is the top level dispatcher. 
-  void ProcessDeclAttributes(Decl *New, const AttributeList *DeclSpecAttrs,
-                             const AttributeList *DeclaratorAttrs);
+  void ProcessDeclAttributes(Decl *D, Declarator &PD);
   void ProcessDeclAttributeList(Decl *D, const AttributeList *AttrList);
   void ProcessDeclAttribute(Decl *D, const AttributeList &Attr);
 
@@ -312,9 +311,7 @@ private:
   /// for the type.
   QualType HandleAddressSpaceTypeAttribute(QualType curType, 
                                            const AttributeList &Attr);
-
   void HandleModeAttribute(Decl *d, const AttributeList &Attr);
-
   void HandleVectorSizeAttribute(Decl *d, const AttributeList &Attr);
   void HandleExtVectorTypeAttribute(Decl *d, const AttributeList &Attr);
   void HandleAlignedAttribute(Decl *d, const AttributeList &Attr);
