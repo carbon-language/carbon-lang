@@ -456,6 +456,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
     }
   }
   
+  // If there were any type attributes applied to the decl itself (not the
+  // type, apply the type attribute to the type!)
+  if (const AttributeList *Attrs = D.getAttributes())
+    ProcessTypeAttributes(T, Attrs);
+  
   return T;
 }
 

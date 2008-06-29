@@ -78,23 +78,8 @@ void Sema::ProcessDeclAttributes(Decl *D, const Declarator &PD) {
       ProcessDeclAttributeList(D, Attrs);
   
   // Finally, apply any attributes on the decl itself.
-  if (const AttributeList *Attrs = PD.getAttributes()) {
+  if (const AttributeList *Attrs = PD.getAttributes())
     ProcessDeclAttributeList(D, Attrs);
-   
-    // If there are any type attributes that were in the declarator, apply them to
-    // its top-level type.
-    // FIXME: we shouldn't allow type attributes here. :(
-    if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
-      QualType DT = VD->getType();
-      ProcessTypeAttributes(DT, Attrs);
-      VD->setType(DT);
-    } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
-      QualType DT = TD->getUnderlyingType();
-      ProcessTypeAttributes(DT, Attrs);
-      TD->setUnderlyingType(DT);
-    }
-    // FIXME: field decl?
-  }
 }
 
 /// ProcessDeclAttributeList - Apply all the decl attributes in the specified
