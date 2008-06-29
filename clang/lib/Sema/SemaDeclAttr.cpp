@@ -522,19 +522,19 @@ void Sema::HandleFormatAttribute(Decl *d, const AttributeList &Attr) {
                             Idx.getZExtValue(), FirstArg.getZExtValue()));
 }
 
-void Sema::HandleTransparentUnionAttribute(Decl *d,
-                                           const AttributeList &Attr) {
+static void HandleTransparentUnionAttr(Decl *d, const AttributeList &Attr,
+                                       Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
          std::string("0"));
     return;
   }
 
   TypeDecl *decl = dyn_cast<TypeDecl>(d);
 
-  if (!decl || !Context.getTypeDeclType(decl)->isUnionType()) {
-    Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
+  if (!decl || !S.Context.getTypeDeclType(decl)->isUnionType()) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
          "transparent_union", "union");
     return;
   }
@@ -546,11 +546,11 @@ void Sema::HandleTransparentUnionAttribute(Decl *d,
 // Ty->addAttr(new TransparentUnionAttr());
 }
 
-void Sema::HandleAnnotateAttribute(Decl *d, const AttributeList &Attr) {
+static void HandleAnnotateAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("1"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("1"));
     return;
   }
   Expr *argExpr = static_cast<Expr *>(Attr.getArg(0));
@@ -559,7 +559,7 @@ void Sema::HandleAnnotateAttribute(Decl *d, const AttributeList &Attr) {
   // Make sure that there is a string literal as the annotation's single
   // argument.
   if (!SE) {
-    Diag(Attr.getLoc(), diag::err_attribute_annotate_no_string);
+    S.Diag(Attr.getLoc(), diag::err_attribute_annotate_no_string);
     return;
   }
   d->addAttr(new AnnotateAttr(std::string(SE->getStrData(),
@@ -592,27 +592,27 @@ void Sema::HandleAlignedAttribute(Decl *d, const AttributeList &Attr) {
   d->addAttr(new AlignedAttr(Alignment.getZExtValue() * 8));
 }
 
-/// HandleModeAttribute - This attribute modifies the width of a decl with
+/// HandleModeAttr - This attribute modifies the width of a decl with
 /// primitive type.
 ///
 /// Despite what would be logical, the mode attribute is a decl attribute,
 /// not a type attribute: 'int ** __attribute((mode(HI))) *G;' tries to make
 /// 'G' be HImode, not an intermediate pointer.
 ///
-void Sema::HandleModeAttribute(Decl *D, const AttributeList &Attr) {
+static void HandleModeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   // This attribute isn't documented, but glibc uses it.  It changes
   // the width of an int or unsigned int to the specified size.
 
   // Check that there aren't any arguments
   if (Attr.getNumArgs() != 0) {
-    Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
-         std::string("0"));
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("0"));
     return;
   }
 
   IdentifierInfo *Name = Attr.getParameterName();
   if (!Name) {
-    Diag(Attr.getLoc(), diag::err_attribute_missing_parameter_name);
+    S.Diag(Attr.getLoc(), diag::err_attribute_missing_parameter_name);
     return;
   }
   const char *Str = Name->getName();
@@ -643,13 +643,13 @@ void Sema::HandleModeAttribute(Decl *D, const AttributeList &Attr) {
     // FIXME: glibc uses 'word' to define register_t; this is narrower than a
     // pointer on PIC16 and other embedded platforms.
     if (!memcmp(Str, "word", 4))
-      DestWidth = Context.Target.getPointerWidth(0);
+      DestWidth = S.Context.Target.getPointerWidth(0);
     if (!memcmp(Str, "byte", 4))
-      DestWidth = Context.Target.getCharWidth();
+      DestWidth = S.Context.Target.getCharWidth();
     break;
   case 7:
     if (!memcmp(Str, "pointer", 7))
-      DestWidth = Context.Target.getPointerWidth(0);
+      DestWidth = S.Context.Target.getPointerWidth(0);
     break;
   }
 
@@ -659,8 +659,8 @@ void Sema::HandleModeAttribute(Decl *D, const AttributeList &Attr) {
   else if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
     OldTy = VD->getType();
   else {
-    Diag(D->getLocation(), diag::err_attr_wrong_decl, "mode",
-         SourceRange(Attr.getLoc(), Attr.getLoc()));
+    S.Diag(D->getLocation(), diag::err_attr_wrong_decl, "mode",
+           SourceRange(Attr.getLoc(), Attr.getLoc()));
     return;
   }
   
@@ -668,48 +668,48 @@ void Sema::HandleModeAttribute(Decl *D, const AttributeList &Attr) {
   QualType NewTy;
   switch (DestWidth) {
   case 0:
-    Diag(Attr.getLoc(), diag::err_unknown_machine_mode, Name->getName());
+    S.Diag(Attr.getLoc(), diag::err_unknown_machine_mode, Name->getName());
     return;
   default:
-    Diag(Attr.getLoc(), diag::err_unsupported_machine_mode, Name->getName());
+    S.Diag(Attr.getLoc(), diag::err_unsupported_machine_mode, Name->getName());
     return;
   case 8:
     assert(IntegerMode);
     if (OldTy->isSignedIntegerType())
-      NewTy = Context.SignedCharTy;
+      NewTy = S.Context.SignedCharTy;
     else
-      NewTy = Context.UnsignedCharTy;
+      NewTy = S.Context.UnsignedCharTy;
     break;
   case 16:
     assert(IntegerMode);
     if (OldTy->isSignedIntegerType())
-      NewTy = Context.ShortTy;
+      NewTy = S.Context.ShortTy;
     else
-      NewTy = Context.UnsignedShortTy;
+      NewTy = S.Context.UnsignedShortTy;
     break;
   case 32:
     if (!IntegerMode)
-      NewTy = Context.FloatTy;
+      NewTy = S.Context.FloatTy;
     else if (OldTy->isSignedIntegerType())
-      NewTy = Context.IntTy;
+      NewTy = S.Context.IntTy;
     else
-      NewTy = Context.UnsignedIntTy;
+      NewTy = S.Context.UnsignedIntTy;
     break;
   case 64:
     if (!IntegerMode)
-      NewTy = Context.DoubleTy;
+      NewTy = S.Context.DoubleTy;
     else if (OldTy->isSignedIntegerType())
-      NewTy = Context.LongLongTy;
+      NewTy = S.Context.LongLongTy;
     else
-      NewTy = Context.UnsignedLongLongTy;
+      NewTy = S.Context.UnsignedLongLongTy;
     break;
   }
 
   if (!OldTy->getAsBuiltinType())
-    Diag(Attr.getLoc(), diag::err_mode_not_primitive);
+    S.Diag(Attr.getLoc(), diag::err_mode_not_primitive);
   else if (!(IntegerMode && OldTy->isIntegerType()) &&
            !(!IntegerMode && OldTy->isFloatingType())) {
-    Diag(Attr.getLoc(), diag::err_mode_wrong_type);
+    S.Diag(Attr.getLoc(), diag::err_mode_wrong_type);
   }
 
   // Install the new type.
@@ -765,7 +765,7 @@ void Sema::ProcessDeclAttribute(Decl *D, const AttributeList &Attr) {
   case AttributeList::AT_ext_vector_type: 
     HandleExtVectorTypeAttribute(D, Attr);
     break;
-  case AttributeList::AT_mode:       HandleModeAttribute(D, Attr);  break;
+  case AttributeList::AT_mode:       HandleModeAttr(D, Attr, *this);  break;
   case AttributeList::AT_alias:      HandleAliasAttribute(D, Attr); break;
   case AttributeList::AT_deprecated: HandleDeprecatedAttribute(D, Attr);break;
   case AttributeList::AT_visibility: HandleVisibilityAttribute(D, Attr);break;
@@ -777,11 +777,11 @@ void Sema::ProcessDeclAttribute(Decl *D, const AttributeList &Attr) {
   case AttributeList::AT_fastcall:   HandleFastCallAttribute(D, Attr); break;
   case AttributeList::AT_aligned:    HandleAlignedAttribute(D, Attr); break;
   case AttributeList::AT_packed:     HandlePackedAttribute(D, Attr); break;
-  case AttributeList::AT_annotate:   HandleAnnotateAttribute(D, Attr); break;
+  case AttributeList::AT_annotate:   HandleAnnotateAttr(D, Attr, *this); break;
   case AttributeList::AT_noreturn:   HandleNoReturnAttribute(D, Attr); break;
   case AttributeList::AT_format:     HandleFormatAttribute(D, Attr); break;
   case AttributeList::AT_transparent_union:
-    HandleTransparentUnionAttribute(D, Attr);
+      HandleTransparentUnionAttr(D, Attr, *this);
     break;
   default:
 #if 0

@@ -65,6 +65,7 @@ namespace clang {
 
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
+public:
   Preprocessor &PP;
   ASTContext &Context;
   ASTConsumer &Consumer;
@@ -311,13 +312,11 @@ private:
   /// for the type.
   QualType HandleAddressSpaceTypeAttribute(QualType curType, 
                                            const AttributeList &Attr);
-  void HandleModeAttribute(Decl *d, const AttributeList &Attr);
   void HandleVectorSizeAttribute(Decl *d, const AttributeList &Attr);
   void HandleExtVectorTypeAttribute(Decl *d, const AttributeList &Attr);
   void HandleAlignedAttribute(Decl *d, const AttributeList &Attr);
   void HandleAliasAttribute(Decl *d, const AttributeList &Attr);
   void HandlePackedAttribute(Decl *d, const AttributeList &Attr);
-  void HandleAnnotateAttribute(Decl *d, const AttributeList &Attr);
   void HandleNoReturnAttribute(Decl *d, const AttributeList &Attr);
   void HandleDeprecatedAttribute(Decl *d, const AttributeList &Attr);
   void HandleWeakAttribute(Decl *d, const AttributeList &Attr);
@@ -328,7 +327,6 @@ private:
   void HandleFormatAttribute(Decl *d, const AttributeList &Attr);
   void HandleStdCallAttribute(Decl *d, const AttributeList &Attr);
   void HandleFastCallAttribute(Decl *d, const AttributeList &Attr);
-  void HandleTransparentUnionAttribute(Decl *d, const AttributeList &Attr);
   
   void WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                            bool &IncompleteImpl);
