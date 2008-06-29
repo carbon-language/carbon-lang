@@ -13,3 +13,5 @@ typedef int invalid_2 __attribute((mode())); // expected-error{{attribute requir
 typedef int invalid_3 __attribute((mode(II))); // expected-error{{unknown machine mode}}
 typedef struct {int i,j,k;} invalid_4 __attribute((mode(SI))); // expected-error{{mode attribute only supported for integer and floating-point types}}
 typedef float invalid_5 __attribute((mode(SI))); // expected-error{{type of machine mode does not match type of base type}}
+
+int **__attribute((mode(QI)))* i32;  // expected-error{{mode attribute}}

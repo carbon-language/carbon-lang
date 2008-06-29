@@ -457,6 +457,19 @@ struct DeclaratorChunk {
   };
   
   
+  /// getAttrs - If there are attributes applied to this declaratorchunk, return
+  /// them.
+  const AttributeList *getAttrs() const {
+    switch (Kind) {
+    default: assert(0 && "Unknown declarator kind!");
+    case Pointer:   return Ptr.AttrList;
+    case Reference: return Ref.AttrList;
+    case Array:    return 0;
+    case Function:  return 0;
+    }
+  }
+  
+  
   /// getPointer - Return a DeclaratorChunk for a pointer.
   ///
   static DeclaratorChunk getPointer(unsigned TypeQuals, SourceLocation Loc,

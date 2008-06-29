@@ -16,9 +16,12 @@
 #include "clang/Basic/TargetInfo.h"
 using namespace clang;
 
+//===----------------------------------------------------------------------===//
+//  Helper functions
+//===----------------------------------------------------------------------===//
+
 static const FunctionTypeProto *getFunctionProto(Decl *d) {
   QualType Ty;
-  
   if (ValueDecl *decl = dyn_cast<ValueDecl>(d))
     Ty = decl->getType();
   else if (FieldDecl *decl = dyn_cast<FieldDecl>(d))
@@ -54,27 +57,44 @@ static inline bool isNSStringType(QualType T, ASTContext &Ctx) {
          ClsName == &Ctx.Idents.get("NSMutableString");
 }
 
-void Sema::ProcessDeclAttributes(Decl *D, Declarator &PD) {
-  const AttributeList *DeclSpecAttrs = PD.getDeclSpec().getAttributes();
-  const AttributeList *DeclaratorAttrs = PD.getAttributes();
-  
-  if (DeclSpecAttrs == 0 && DeclaratorAttrs == 0) return;
+//===----------------------------------------------------------------------===//
+// Top Level Sema Entry Points
+//===----------------------------------------------------------------------===//
 
-  ProcessDeclAttributeList(D, DeclSpecAttrs);
+/// ProcessDeclAttributes - Given a declarator (PD) with attributes indicated in
+/// it, apply them to D.  This is a bit tricky because PD can have attributes
+/// specified in many different places, and we need to find and apply them all.
+void Sema::ProcessDeclAttributes(Decl *D, const Declarator &PD) {
+  // Apply decl attributes from the DeclSpec if present.
+  if (const AttributeList *Attrs = PD.getDeclSpec().getAttributes())
+    ProcessDeclAttributeList(D, Attrs);
+
+  // Walk the declarator structure, applying decl attributes that were in a type
+  // position to the decl itself.  This handles cases like:
+  //   int *__attr__(x)** D;
+  // when X is a decl attribute.
+  for (unsigned i = 0, e = PD.getNumTypeObjects(); i != e; ++i)
+    if (const AttributeList *Attrs = PD.getTypeObject(i).getAttrs())
+      ProcessDeclAttributeList(D, Attrs);
   
-  // If there are any type attributes that were in the declarator, apply them to
-  // its top level type.
-  if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
-    QualType DT = VD->getType();
-    ProcessTypeAttributes(DT, DeclaratorAttrs);
-    VD->setType(DT);
-  } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
-    QualType DT = TD->getUnderlyingType();
-    ProcessTypeAttributes(DT, DeclaratorAttrs);
-    TD->setUnderlyingType(DT);
+  // Finally, apply any attributes on the decl itself.
+  if (const AttributeList *Attrs = PD.getAttributes()) {
+    ProcessDeclAttributeList(D, Attrs);
+   
+    // If there are any type attributes that were in the declarator, apply them to
+    // its top-level type.
+    // FIXME: we shouldn't allow type attributes here. :(
+    if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
+      QualType DT = VD->getType();
+      ProcessTypeAttributes(DT, Attrs);
+      VD->setType(DT);
+    } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
+      QualType DT = TD->getUnderlyingType();
+      ProcessTypeAttributes(DT, Attrs);
+      TD->setUnderlyingType(DT);
+    }
+    // FIXME: field decl?
   }
-  
-  ProcessDeclAttributeList(D, DeclaratorAttrs);
 }
 
 /// ProcessDeclAttributeList - Apply all the decl attributes in the specified
@@ -125,6 +145,10 @@ void Sema::ProcessDeclAttribute(Decl *D, const AttributeList &Attr) {
     break;
   }
 }
+
+//===----------------------------------------------------------------------===//
+// Attribute Implementations
+//===----------------------------------------------------------------------===//
 
 void Sema::HandleExtVectorTypeAttribute(Decl *d, const AttributeList &Attr) {
   TypedefDecl *tDecl = dyn_cast<TypedefDecl>(d);

@@ -301,7 +301,7 @@ private:
   ScopedDecl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
                                  Scope *S);
   // Decl attributes - this routine is the top level dispatcher. 
-  void ProcessDeclAttributes(Decl *D, Declarator &PD);
+  void ProcessDeclAttributes(Decl *D, const Declarator &PD);
   void ProcessDeclAttributeList(Decl *D, const AttributeList *AttrList);
   void ProcessDeclAttribute(Decl *D, const AttributeList &Attr);
 
