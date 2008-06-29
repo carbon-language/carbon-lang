@@ -58,80 +58,6 @@ static inline bool isNSStringType(QualType T, ASTContext &Ctx) {
 }
 
 //===----------------------------------------------------------------------===//
-// Top Level Sema Entry Points
-//===----------------------------------------------------------------------===//
-
-/// ProcessDeclAttributes - Given a declarator (PD) with attributes indicated in
-/// it, apply them to D.  This is a bit tricky because PD can have attributes
-/// specified in many different places, and we need to find and apply them all.
-void Sema::ProcessDeclAttributes(Decl *D, const Declarator &PD) {
-  // Apply decl attributes from the DeclSpec if present.
-  if (const AttributeList *Attrs = PD.getDeclSpec().getAttributes())
-    ProcessDeclAttributeList(D, Attrs);
-
-  // Walk the declarator structure, applying decl attributes that were in a type
-  // position to the decl itself.  This handles cases like:
-  //   int *__attr__(x)** D;
-  // when X is a decl attribute.
-  for (unsigned i = 0, e = PD.getNumTypeObjects(); i != e; ++i)
-    if (const AttributeList *Attrs = PD.getTypeObject(i).getAttrs())
-      ProcessDeclAttributeList(D, Attrs);
-  
-  // Finally, apply any attributes on the decl itself.
-  if (const AttributeList *Attrs = PD.getAttributes())
-    ProcessDeclAttributeList(D, Attrs);
-}
-
-/// ProcessDeclAttributeList - Apply all the decl attributes in the specified
-/// attribute list to the specified decl, ignoring any type attributes.
-void Sema::ProcessDeclAttributeList(Decl *D, const AttributeList *AttrList) {
-  while (AttrList) {
-    ProcessDeclAttribute(D, *AttrList);
-    AttrList = AttrList->getNext();
-  }
-}
-
-/// HandleDeclAttribute - Apply the specific attribute to the specified decl if
-/// the attribute applies to decls.  If the attribute is a type attribute, just
-/// silently ignore it.
-void Sema::ProcessDeclAttribute(Decl *D, const AttributeList &Attr) {
-  switch (Attr.getKind()) {
-  case AttributeList::AT_address_space:
-    // Ignore this, this is a type attribute, handled by ProcessTypeAttributes.
-    break;
-  case AttributeList::AT_vector_size: HandleVectorSizeAttribute(D, Attr); break;
-  case AttributeList::AT_ext_vector_type: 
-    HandleExtVectorTypeAttribute(D, Attr);
-    break;
-  case AttributeList::AT_mode:       HandleModeAttribute(D, Attr);  break;
-  case AttributeList::AT_alias:      HandleAliasAttribute(D, Attr); break;
-  case AttributeList::AT_deprecated: HandleDeprecatedAttribute(D, Attr);break;
-  case AttributeList::AT_visibility: HandleVisibilityAttribute(D, Attr);break;
-  case AttributeList::AT_weak:       HandleWeakAttribute(D, Attr); break;
-  case AttributeList::AT_dllimport:  HandleDLLImportAttribute(D, Attr); break;
-  case AttributeList::AT_dllexport:  HandleDLLExportAttribute(D, Attr); break;
-  case AttributeList::AT_nothrow:    HandleNothrowAttribute(D, Attr); break;
-  case AttributeList::AT_stdcall:    HandleStdCallAttribute(D, Attr); break;
-  case AttributeList::AT_fastcall:   HandleFastCallAttribute(D, Attr); break;
-  case AttributeList::AT_aligned:    HandleAlignedAttribute(D, Attr); break;
-  case AttributeList::AT_packed:     HandlePackedAttribute(D, Attr); break;
-  case AttributeList::AT_annotate:   HandleAnnotateAttribute(D, Attr); break;
-  case AttributeList::AT_noreturn:   HandleNoReturnAttribute(D, Attr); break;
-  case AttributeList::AT_format:     HandleFormatAttribute(D, Attr); break;
-  case AttributeList::AT_transparent_union:
-    HandleTransparentUnionAttribute(D, Attr);
-    break;
-  default:
-#if 0
-    // TODO: when we have the full set of attributes, warn about unknown ones.
-    Diag(Attr->getLoc(), diag::warn_attribute_ignored,
-         Attr->getName()->getName());
-#endif
-    break;
-  }
-}
-
-//===----------------------------------------------------------------------===//
 // Attribute Implementations
 //===----------------------------------------------------------------------===//
 
@@ -792,3 +718,78 @@ void Sema::HandleModeAttribute(Decl *D, const AttributeList &Attr) {
   else
     cast<ValueDecl>(D)->setType(NewTy);
 }
+
+//===----------------------------------------------------------------------===//
+// Top Level Sema Entry Points
+//===----------------------------------------------------------------------===//
+
+/// ProcessDeclAttributes - Given a declarator (PD) with attributes indicated in
+/// it, apply them to D.  This is a bit tricky because PD can have attributes
+/// specified in many different places, and we need to find and apply them all.
+void Sema::ProcessDeclAttributes(Decl *D, const Declarator &PD) {
+  // Apply decl attributes from the DeclSpec if present.
+  if (const AttributeList *Attrs = PD.getDeclSpec().getAttributes())
+    ProcessDeclAttributeList(D, Attrs);
+
+  // Walk the declarator structure, applying decl attributes that were in a type
+  // position to the decl itself.  This handles cases like:
+  //   int *__attr__(x)** D;
+  // when X is a decl attribute.
+  for (unsigned i = 0, e = PD.getNumTypeObjects(); i != e; ++i)
+    if (const AttributeList *Attrs = PD.getTypeObject(i).getAttrs())
+      ProcessDeclAttributeList(D, Attrs);
+  
+  // Finally, apply any attributes on the decl itself.
+  if (const AttributeList *Attrs = PD.getAttributes())
+    ProcessDeclAttributeList(D, Attrs);
+}
+
+/// ProcessDeclAttributeList - Apply all the decl attributes in the specified
+/// attribute list to the specified decl, ignoring any type attributes.
+void Sema::ProcessDeclAttributeList(Decl *D, const AttributeList *AttrList) {
+  while (AttrList) {
+    ProcessDeclAttribute(D, *AttrList);
+    AttrList = AttrList->getNext();
+  }
+}
+
+/// HandleDeclAttribute - Apply the specific attribute to the specified decl if
+/// the attribute applies to decls.  If the attribute is a type attribute, just
+/// silently ignore it.
+void Sema::ProcessDeclAttribute(Decl *D, const AttributeList &Attr) {
+  switch (Attr.getKind()) {
+  case AttributeList::AT_address_space:
+    // Ignore this, this is a type attribute, handled by ProcessTypeAttributes.
+    break;
+  case AttributeList::AT_vector_size: HandleVectorSizeAttribute(D, Attr); break;
+  case AttributeList::AT_ext_vector_type: 
+    HandleExtVectorTypeAttribute(D, Attr);
+    break;
+  case AttributeList::AT_mode:       HandleModeAttribute(D, Attr);  break;
+  case AttributeList::AT_alias:      HandleAliasAttribute(D, Attr); break;
+  case AttributeList::AT_deprecated: HandleDeprecatedAttribute(D, Attr);break;
+  case AttributeList::AT_visibility: HandleVisibilityAttribute(D, Attr);break;
+  case AttributeList::AT_weak:       HandleWeakAttribute(D, Attr); break;
+  case AttributeList::AT_dllimport:  HandleDLLImportAttribute(D, Attr); break;
+  case AttributeList::AT_dllexport:  HandleDLLExportAttribute(D, Attr); break;
+  case AttributeList::AT_nothrow:    HandleNothrowAttribute(D, Attr); break;
+  case AttributeList::AT_stdcall:    HandleStdCallAttribute(D, Attr); break;
+  case AttributeList::AT_fastcall:   HandleFastCallAttribute(D, Attr); break;
+  case AttributeList::AT_aligned:    HandleAlignedAttribute(D, Attr); break;
+  case AttributeList::AT_packed:     HandlePackedAttribute(D, Attr); break;
+  case AttributeList::AT_annotate:   HandleAnnotateAttribute(D, Attr); break;
+  case AttributeList::AT_noreturn:   HandleNoReturnAttribute(D, Attr); break;
+  case AttributeList::AT_format:     HandleFormatAttribute(D, Attr); break;
+  case AttributeList::AT_transparent_union:
+    HandleTransparentUnionAttribute(D, Attr);
+    break;
+  default:
+#if 0
+    // TODO: when we have the full set of attributes, warn about unknown ones.
+    Diag(Attr->getLoc(), diag::warn_attribute_ignored,
+         Attr->getName()->getName());
+#endif
+    break;
+  }
+}
+
