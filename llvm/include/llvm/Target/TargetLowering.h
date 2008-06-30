@@ -1288,24 +1288,18 @@ private:
   TargetMachine &TM;
   const TargetData *TD;
 
-  /// IsLittleEndian - True if this is a little endian target.
-  ///
-  bool IsLittleEndian;
-
   /// PointerTy - The type to use for pointers, usually i32 or i64.
   ///
   MVT PointerTy;
+
+  /// IsLittleEndian - True if this is a little endian target.
+  ///
+  bool IsLittleEndian;
 
   /// UsesGlobalOffsetTable - True if this target uses a GOT for PIC codegen.
   ///
   bool UsesGlobalOffsetTable;
   
-  /// ShiftAmountTy - The type to use for shift amounts, usually i8 or whatever
-  /// PointerTy is.
-  MVT ShiftAmountTy;
-
-  OutOfRangeShiftAmount ShiftAmtHandling;
-
   /// SelectIsExpensive - Tells the code generator not to expand operations
   /// into sequences that use the select operations if possible.
   bool SelectIsExpensive;
@@ -1321,14 +1315,6 @@ private:
   /// it.
   bool Pow2DivIsCheap;
   
-  /// SetCCResultContents - Information about the contents of the high-bits in
-  /// the result of a setcc comparison operation.
-  SetCCResultValue SetCCResultContents;
-
-  /// SchedPreferenceInfo - The target scheduling preference: shortest possible
-  /// total cycles or lowest register usage.
-  SchedPreference SchedPreferenceInfo;
-  
   /// UseUnderscoreSetJmp - This target prefers to use _setjmp to implement
   /// llvm.setjmp.  Defaults to false.
   bool UseUnderscoreSetJmp;
@@ -1337,6 +1323,20 @@ private:
   /// llvm.longjmp.  Defaults to false.
   bool UseUnderscoreLongJmp;
 
+  /// ShiftAmountTy - The type to use for shift amounts, usually i8 or whatever
+  /// PointerTy is.
+  MVT ShiftAmountTy;
+
+  OutOfRangeShiftAmount ShiftAmtHandling;
+
+  /// SetCCResultContents - Information about the contents of the high-bits in
+  /// the result of a setcc comparison operation.
+  SetCCResultValue SetCCResultContents;
+
+  /// SchedPreferenceInfo - The target scheduling preference: shortest possible
+  /// total cycles or lowest register usage.
+  SchedPreference SchedPreferenceInfo;
+  
   /// JumpBufSize - The size, in bytes, of the target's jmp_buf buffers
   unsigned JumpBufSize;
   
