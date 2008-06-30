@@ -542,8 +542,8 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG)
   // FIXME: Just copy right now.
   ArgValues.push_back(Root);
 
-  return DAG.getNode(ISD::MERGE_VALUES, Op.Val->getVTList(), &ArgValues[0], 
-                     ArgValues.size()).getValue(Op.ResNo);
+  return DAG.getMergeValues(Op.Val->getVTList(), &ArgValues[0],
+                            ArgValues.size()).getValue(Op.ResNo);
 }
 
 

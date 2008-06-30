@@ -1165,9 +1165,8 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
           ValueVTs.push_back(Val->getValueType(i));
         }
       }
-      return DAG.getNode(ISD::MERGE_VALUES,
-                         DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
-                         &Constants[0], Constants.size());
+      return DAG.getMergeValues(DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
+                                &Constants[0], Constants.size());
     }
 
     if (const ArrayType *ATy = dyn_cast<ArrayType>(C->getType())) {
@@ -1187,9 +1186,8 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
         else
           Constants[i] = DAG.getConstant(0, EltVT);
       }
-      return DAG.getNode(ISD::MERGE_VALUES,
-                         DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
-                         &Constants[0], Constants.size());
+      return DAG.getMergeValues(DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
+                                &Constants[0], Constants.size());
     }
 
     if (const StructType *STy = dyn_cast<StructType>(C->getType())) {
@@ -1210,9 +1208,8 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
         else
           Constants[i] = DAG.getConstant(0, EltVT);
       }
-      return DAG.getNode(ISD::MERGE_VALUES,
-                         DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
-                         &Constants[0], Constants.size());
+      return DAG.getMergeValues(DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
+                                &Constants[0], Constants.size());
     }
 
     const VectorType *VecTy = cast<VectorType>(V->getType());
@@ -2722,9 +2719,8 @@ void SelectionDAGLowering::visitInsertValue(InsertValueInst &I) {
     Values[i] = IntoUndef ? DAG.getNode(ISD::UNDEF, AggValueVTs[i]) :
                 SDOperand(Agg.Val, Agg.ResNo + i);
 
-  setValue(&I, DAG.getNode(ISD::MERGE_VALUES,
-                           DAG.getVTList(&AggValueVTs[0], NumAggValues),
-                           &Values[0], NumAggValues));
+  setValue(&I, DAG.getMergeValues(DAG.getVTList(&AggValueVTs[0], NumAggValues),
+                                  &Values[0], NumAggValues));
 }
 
 void SelectionDAGLowering::visitExtractValue(ExtractValueInst &I) {
@@ -2749,9 +2745,8 @@ void SelectionDAGLowering::visitExtractValue(ExtractValueInst &I) {
       OutOfUndef ? DAG.getNode(ISD::UNDEF, Agg.Val->getValueType(Agg.ResNo + i)) :
                    SDOperand(Agg.Val, Agg.ResNo + i);
 
-  setValue(&I, DAG.getNode(ISD::MERGE_VALUES,
-                           DAG.getVTList(&ValValueVTs[0], NumValValues),
-                           &Values[0], NumValValues));
+  setValue(&I, DAG.getMergeValues(DAG.getVTList(&ValValueVTs[0], NumValValues),
+                                  &Values[0], NumValValues));
 }
 
 
@@ -2906,9 +2901,8 @@ void SelectionDAGLowering::visitLoad(LoadInst &I) {
   else
     PendingLoads.push_back(Chain);
 
-  setValue(&I, DAG.getNode(ISD::MERGE_VALUES,
-                           DAG.getVTList(&ValueVTs[0], NumValues),
-                           &Values[0], NumValues));
+  setValue(&I, DAG.getMergeValues(DAG.getVTList(&ValueVTs[0], NumValues),
+                                  &Values[0], NumValues));
 }
 
 
@@ -3796,9 +3790,8 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
   if (ValueVTs.size() == 1)
     return Values[0];
     
-  return DAG.getNode(ISD::MERGE_VALUES,
-                     DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
-                     &Values[0], ValueVTs.size());
+  return DAG.getMergeValues(DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
+                            &Values[0], ValueVTs.size());
 }
 
 /// getCopyToRegs - Emit a series of CopyToReg nodes that copies the
@@ -4867,10 +4860,8 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
                          AssertOp);
       ReturnValues.push_back(ReturnValue);
     }
-    Res = ReturnValues.size() == 1 ? ReturnValues.front() :
-          DAG.getNode(ISD::MERGE_VALUES,
-                      DAG.getVTList(&RetTys[0], RetTys.size()),
-                      &ReturnValues[0], ReturnValues.size());
+    Res = DAG.getMergeValues(DAG.getVTList(&RetTys[0], RetTys.size()),
+                             &ReturnValues[0], ReturnValues.size());
   }
 
   return std::make_pair(Res, Chain);
@@ -4972,10 +4963,10 @@ LowerArguments(BasicBlock *LLVMBB, SelectionDAGLowering &SDL) {
       SmallVector<MVT, 4> LegalValueVTs(NumValues);
       for (unsigned VI = 0; VI != NumValues; ++VI) 
         LegalValueVTs[VI] = Args[a + VI].getValueType();
-      SDL.setValue(AI, SDL.DAG.getNode(ISD::MERGE_VALUES,
-                                       SDL.DAG.getVTList(&LegalValueVTs[0],
-                                                         NumValues),
-                                       &Args[a], NumValues));
+      SDL.setValue(AI,
+                   SDL.DAG.getMergeValues(SDL.DAG.getVTList(&LegalValueVTs[0],
+                                                            NumValues),
+                                          &Args[a], NumValues));
       // If this argument is live outside of the entry block, insert a copy from
       // whereever we got it to the vreg that other BB's will reference it as.
       DenseMap<const Value*, unsigned>::iterator VMI=FuncInfo.ValueMap.find(AI);

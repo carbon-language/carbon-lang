@@ -654,8 +654,8 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     return Chain;
 
   ResultVals.push_back(Chain);
-  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys, &ResultVals[0],
-                              ResultVals.size());
+  SDOperand Res = DAG.getMergeValues(DAG.getVTList(&NodeTys[0], NodeTys.size()),
+                                     &ResultVals[0], ResultVals.size());
   return Res.getValue(Op.ResNo);
 }
 
@@ -1025,9 +1025,8 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
   ArgValues.push_back(Root);
 
   // Return the new list of results.
-  std::vector<MVT> RetVT(Op.Val->value_begin(),
-                                    Op.Val->value_end());
-  return DAG.getNode(ISD::MERGE_VALUES, RetVT, &ArgValues[0], ArgValues.size());
+  return DAG.getMergeValues(Op.Val->getVTList(), &ArgValues[0],
+                            ArgValues.size());
 }
 
 /// isFloatingPointZero - Return true if this is +0.0.

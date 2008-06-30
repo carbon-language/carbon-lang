@@ -1060,9 +1060,8 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
   ArgValues.push_back(Root);
  
   // Return the new list of results.
-  std::vector<MVT> RetVT(Op.Val->value_begin(),
-                                    Op.Val->value_end());
-  return DAG.getNode(ISD::MERGE_VALUES, RetVT, &ArgValues[0], ArgValues.size());
+  return DAG.getMergeValues(Op.Val->getVTList(), &ArgValues[0],
+                            ArgValues.size());
 }
 
 /// isLSAAddress - Return the immediate to use if the specified
@@ -1301,8 +1300,8 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   
   // Otherwise, merge everything together with a MERGE_VALUES node.
   ResultVals[NumResults++] = Chain;
-  SDOperand Res = DAG.getNode(ISD::MERGE_VALUES, NodeTys,
-                              ResultVals, NumResults);
+  SDOperand Res = DAG.getMergeValues(DAG.getVTList(&NodeTys[0], NodeTys.size()),
+                                     ResultVals, NumResults);
   return Res.getValue(Op.ResNo);
 }
 

@@ -517,8 +517,8 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
   ResultVals.push_back(Chain);
 
   // Merge everything together with a MERGE_VALUES node.
-  return DAG.getNode(ISD::MERGE_VALUES, TheCall->getVTList(),
-                     &ResultVals[0], ResultVals.size()).Val;                       
+  return DAG.getMergeValues(TheCall->getVTList(), &ResultVals[0],
+                            ResultVals.size()).Val;
 }
 
 //===----------------------------------------------------------------------===//
@@ -649,8 +649,8 @@ LowerCCCArguments(SDOperand Op, SelectionDAG &DAG)
   ArgValues.push_back(Root);
 
   // Return the new list of results.
-  return DAG.getNode(ISD::MERGE_VALUES, Op.Val->getVTList(),
-                     &ArgValues[0], ArgValues.size()).getValue(Op.ResNo);
+  return DAG.getMergeValues(Op.Val->getVTList(), &ArgValues[0],
+                            ArgValues.size()).getValue(Op.ResNo);
 }
 
 //===----------------------------------------------------------------------===//

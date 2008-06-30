@@ -379,6 +379,15 @@ public:
                       SDOperand Val, const Value* PtrVal,
                       unsigned Alignment = 0);
 
+  /// getMergeValues - Create a MERGE_VALUES node from the given types and ops.
+  /// Allowed to return something different (and simpler) if Simplify is true.
+  SDOperand getMergeValues(SDVTList VTs, SDOperandPtr Ops, unsigned NumOps,
+                           bool Simplify = true) {
+    if (Simplify && NumOps == 1)
+      return Ops[0];
+    return getNode(ISD::MERGE_VALUES, VTs, Ops, NumOps);
+  }
+
   /// getLoad - Loads are not normal binary operators: their result type is not
   /// determined by their operands, and they produce a value AND a token chain.
   ///

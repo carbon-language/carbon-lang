@@ -280,9 +280,8 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   ArgValues.push_back(Root);
 
   // Return the new list of results.
-  std::vector<MVT> RetVT(Op.Val->value_begin(),
-                                    Op.Val->value_end());
-  return DAG.getNode(ISD::MERGE_VALUES, RetVT, &ArgValues[0], ArgValues.size());
+  return DAG.getMergeValues(Op.Val->getVTList(), &ArgValues[0],
+                            ArgValues.size());
 }
 
 static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
