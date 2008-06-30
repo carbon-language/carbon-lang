@@ -534,6 +534,11 @@ sub RunBuildCommand {
   my $Cmd = $Args->[0];
   my $CCAnalyzer = shift;
   
+  # Get only the part of the command after the last '/'.
+  if ($Cmd =~ /\/([^\/]+)$/) {
+    $Cmd = $1;
+  }
+  
   if ($Cmd eq "gcc" or $Cmd eq "cc" or $Cmd eq "llvm-gcc") {
     shift @$Args;
     unshift @$Args, $CCAnalyzer;
