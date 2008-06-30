@@ -5314,11 +5314,17 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo(SelectionDAG &DAG) {
 }
 
 void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
+  NamedRegionTimer *RegionTimer = 0;
+
   DOUT << "Lowered selection DAG:\n";
   DEBUG(DAG.dump());
 
   // Run the DAG combiner in pre-legalize mode.
+  if (TimePassesIsEnabled)
+    RegionTimer = new NamedRegionTimer("DAG Combining 1");
   DAG.Combine(false, *AA);
+  if (TimePassesIsEnabled)
+    delete RegionTimer;
   
   DOUT << "Optimized lowered selection DAG:\n";
   DEBUG(DAG.dump());
@@ -5329,13 +5335,21 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   DAG.LegalizeTypes();
   // Someday even later, enable a dag combine pass here.
 #endif
+  if (TimePassesIsEnabled)
+    RegionTimer = new NamedRegionTimer("DAG Legalization");
   DAG.Legalize();
+  if (TimePassesIsEnabled)
+    delete RegionTimer;
   
   DOUT << "Legalized selection DAG:\n";
   DEBUG(DAG.dump());
   
   // Run the DAG combiner in post-legalize mode.
+  if (TimePassesIsEnabled)
+    RegionTimer = new NamedRegionTimer("DAG Combining 2");
   DAG.Combine(true, *AA);
+  if (TimePassesIsEnabled)
+    delete RegionTimer;
   
   DOUT << "Optimized legalized selection DAG:\n";
   DEBUG(DAG.dump());
@@ -5347,14 +5361,26 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
 
   // Third, instruction select all of the operations to machine code, adding the
   // code to the MachineBasicBlock.
+  if (TimePassesIsEnabled)
+    RegionTimer = new NamedRegionTimer("Instruction Selection");
   InstructionSelect(DAG);
+  if (TimePassesIsEnabled)
+    delete RegionTimer;
 
   // Emit machine code to BB.  This can change 'BB' to the last block being 
   // inserted into.
+  if (TimePassesIsEnabled)
+    RegionTimer = new NamedRegionTimer("Instruction Scheduling");
   ScheduleAndEmitDAG(DAG);
+  if (TimePassesIsEnabled)
+    delete RegionTimer;
 
   // Perform target specific isel post processing.
+  if (TimePassesIsEnabled)
+    RegionTimer = new NamedRegionTimer("Instruction Selection Post Processing");
   InstructionSelectPostProcessing(DAG);
+  if (TimePassesIsEnabled)
+    delete RegionTimer;
   
   DOUT << "Selected machine code:\n";
   DEBUG(BB->dump());
