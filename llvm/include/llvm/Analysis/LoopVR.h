@@ -37,8 +37,8 @@ public:
   void releaseMemory();
 
   void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired<LoopInfo>();
-    AU.addRequired<ScalarEvolution>();
+    AU.addRequiredTransitive<LoopInfo>();
+    AU.addRequiredTransitive<ScalarEvolution>();
     AU.setPreservesAll();
   }
 
