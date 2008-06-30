@@ -792,6 +792,10 @@ public:
     DT->splitBlock(NewBB);
   }
   
+  bool isReachableFromEntry(BasicBlock* A) {
+    return DT->isReachableFromEntry(A);
+  }
+  
   
   virtual void releaseMemory() { 
     DT->releaseMemory();
