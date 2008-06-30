@@ -464,7 +464,8 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // works.
   if (!RegInfo->targetHandlesStackFrameRounding() &&
       (FFI->hasCalls() || FFI->hasVarSizedObjects() || 
-       RegInfo->needsStackRealignment(Fn))) {
+       (RegInfo->needsStackRealignment(Fn) &&
+        FFI->getObjectIndexEnd() != 0))) {
     // If we have reserved argument space for call sites in the function
     // immediately on entry to the current function, count it as part of the
     // overall stack size.
