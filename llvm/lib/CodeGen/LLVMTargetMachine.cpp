@@ -99,7 +99,8 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   PM.add(createRegisterAllocator());
   
   // Perform stack slot coloring.
-  PM.add(createStackSlotColoringPass());
+  if (!Fast)
+    PM.add(createStackSlotColoringPass());
 
   if (PrintMachineCode)  // Print the register-allocated code
     PM.add(createMachineFunctionPrinterPass(cerr));
@@ -235,7 +236,8 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
   PM.add(createRegisterAllocator());
 
   // Perform stack slot coloring.
-  PM.add(createStackSlotColoringPass());
+  if (!Fast)
+    PM.add(createStackSlotColoringPass());
 
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
