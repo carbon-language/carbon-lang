@@ -679,7 +679,10 @@ TreePatternNode *TreePatternNode::InlinePatternFragments(TreePattern &TP) {
   
   // Get a new copy of this fragment to stitch into here.
   //delete this;    // FIXME: implement refcounting!
-  return FragTree;
+  
+  // The fragment we inlined could have recursive inlining that is needed.  See
+  // if there are any pattern fragments in it and inline them as needed.
+  return FragTree->InlinePatternFragments(TP);
 }
 
 /// getImplicitType - Check to see if the specified record has an implicit
@@ -1383,9 +1386,8 @@ void CodeGenDAGPatterns::ParsePatternFragments() {
   
   // Now that we've parsed all of the tree fragments, do a closure on them so
   // that there are not references to PatFrags left inside of them.
-  for (std::map<Record*, TreePattern*>::iterator I = PatternFragments.begin(),
-       E = PatternFragments.end(); I != E; ++I) {
-    TreePattern *ThePat = I->second;
+  for (unsigned i = 0, e = Fragments.size(); i != e; ++i) {
+    TreePattern *ThePat = PatternFragments[Fragments[i]];
     ThePat->InlinePatternFragments();
         
     // Infer as many types as possible.  Don't worry about it if we don't infer
