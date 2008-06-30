@@ -74,11 +74,11 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
 /// LowerArguments - V8 uses a very simple ABI, where all values are passed in
 /// either one or two GPRs, including FP values.  TODO: we should pass FP values
 /// in FP registers for fastcc functions.
-std::vector<SDOperand>
-SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
+void
+SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
+                                    SmallVectorImpl<SDOperand> &ArgValues) {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
-  std::vector<SDOperand> ArgValues;
   
   static const unsigned ArgRegs[] = {
     SP::I0, SP::I1, SP::I2, SP::I3, SP::I4, SP::I5
@@ -221,8 +221,6 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   if (!OutChains.empty())
     DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other,
                             &OutChains[0], OutChains.size()));
-  
-  return ArgValues;
 }
 
 static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {

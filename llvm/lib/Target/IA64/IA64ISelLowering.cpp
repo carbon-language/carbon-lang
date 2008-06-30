@@ -143,9 +143,8 @@ MVT IA64TargetLowering::getSetCCResultType(const SDOperand &) const {
   return MVT::i1;
 }
 
-std::vector<SDOperand>
-IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
-  std::vector<SDOperand> ArgValues;
+void IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
+                                        SmallVectorImpl<SDOperand> &ArgValues) {
   //
   // add beautiful description of IA64 stack frame format
   // here (from intel 24535803.pdf most likely)
@@ -300,8 +299,6 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     MF.getRegInfo().addLiveOut(IA64::F8);
     break;
   }
-
-  return ArgValues;
 }
 
 std::pair<SDOperand, SDOperand>

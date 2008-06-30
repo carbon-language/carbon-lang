@@ -57,8 +57,8 @@ namespace llvm {
                                                 const SelectionDAG &DAG,
                                                 unsigned Depth = 0) const;
     
-    virtual std::vector<SDOperand>
-      LowerArguments(Function &F, SelectionDAG &DAG);
+    virtual void LowerArguments(Function &F, SelectionDAG &DAG,
+                                SmallVectorImpl<SDOperand> &ArgValues);
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
                                                         MachineBasicBlock *MBB);
     

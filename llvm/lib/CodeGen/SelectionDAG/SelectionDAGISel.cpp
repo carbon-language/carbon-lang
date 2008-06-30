@@ -474,7 +474,7 @@ class SelectionDAGLowering {
   /// them up and then emit token factor nodes when possible.  This allows us to
   /// get simple disambiguation between loads without worrying about alias
   /// analysis.
-  std::vector<SDOperand> PendingLoads;
+  SmallVector<SDOperand, 8> PendingLoads;
 
   /// PendingExports - CopyToReg nodes that copy values to virtual registers
   /// for export to other blocks need to be emitted before any terminator
@@ -4612,16 +4612,16 @@ void SelectionDAGLowering::visitVACopy(CallInst &I) {
 /// implementation, which just inserts a FORMAL_ARGUMENTS node.  FIXME: When all
 /// targets are migrated to using FORMAL_ARGUMENTS, this hook should be 
 /// integrated into SDISel.
-std::vector<SDOperand> 
-TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
+void TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
+                                    SmallVectorImpl<SDOperand> &ArgValues) {
   // Add CC# and isVararg as operands to the FORMAL_ARGUMENTS node.
-  std::vector<SDOperand> Ops;
+  SmallVector<SDOperand, 3+16> Ops;
   Ops.push_back(DAG.getRoot());
   Ops.push_back(DAG.getConstant(F.getCallingConv(), getPointerTy()));
   Ops.push_back(DAG.getConstant(F.isVarArg(), getPointerTy()));
 
   // Add one result value for each formal argument.
-  std::vector<MVT> RetVals;
+  SmallVector<MVT, 16> RetVals;
   unsigned j = 1;
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
        I != E; ++I, ++j) {
@@ -4699,7 +4699,6 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   DAG.setRoot(SDOperand(Result, NumArgRegs));
 
   // Set up the return result vector.
-  Ops.clear();
   unsigned i = 0;
   unsigned Idx = 1;
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; 
@@ -4722,12 +4721,11 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       else if (F.paramHasAttr(Idx, ParamAttr::ZExt))
         AssertOp = ISD::AssertZext;
 
-      Ops.push_back(getCopyFromParts(DAG, &Parts[0], NumParts, PartVT, VT,
-                                     AssertOp));
+      ArgValues.push_back(getCopyFromParts(DAG, &Parts[0], NumParts, PartVT, VT,
+                                           AssertOp));
     }
   }
   assert(i == NumArgRegs && "Argument register count mismatch!");
-  return Ops;
 }
 
 
@@ -4951,7 +4949,8 @@ LowerArguments(BasicBlock *LLVMBB, SelectionDAGLowering &SDL) {
   Function &F = *LLVMBB->getParent();
   FunctionLoweringInfo &FuncInfo = SDL.FuncInfo;
   SDOperand OldRoot = SDL.DAG.getRoot();
-  std::vector<SDOperand> Args = TLI.LowerArguments(F, SDL.DAG);
+  SmallVector<SDOperand, 16> Args;
+  TLI.LowerArguments(F, SDL.DAG, Args);
 
   unsigned a = 0;
   for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end();
