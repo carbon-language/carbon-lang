@@ -85,24 +85,39 @@ public:
     iterator() : L(0) {}
     iterator(ImmutableList l) : L(l.getInternalPointer()) {}
     
-    iterator& operator++() { L = L->Tail; }
+    iterator& operator++() { L = L->Tail; return *this; }
     bool operator==(const iterator& I) const { return L == I.L; }
     ImmutableList operator*() const { return L; }
   };
 
+  /// begin - Returns an iterator referring to the head of the list, or
+  ///  an iterator denoting the end of the list if the list is empty.
   iterator begin() const { return iterator(X); }
+    
+  /// end - Returns an iterator denoting the end of the list.  This iterator
+  ///  does not refer to a valid list element.
   iterator end() const { return iterator(); }
 
+  /// isEmpty - Returns true if the list is empty.
   bool isEmpty() const { return !X; }
   
+  /// isEqual - Returns true if two lists are equal.  Because all lists created
+  ///  from the same ImmutableListFactory are uniqued, this has O(1) complexity
+  ///  because it the contents of the list do not need to be compared.  Note
+  ///  that you should only compare two lists created from the same
+  ///  ImmutableListFactory.
   bool isEqual(const ImmutableList& L) const { return X == L.X; }  
+
   bool operator==(const ImmutableList& L) const { return isEqual(L); }
 
+  /// getHead - Returns the head of the list.
   const T& getHead() {
     assert (!isEmpty() && "Cannot get the head of an empty list.");
     return X->getHead();
   }
   
+  /// getTail - Returns the tail of the list, which is another (possibly empty)
+  ///  ImmutableList.
   ImmutableList getTail() {
     return X ? X->getTail() : 0;
   }  
