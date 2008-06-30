@@ -444,7 +444,7 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
     if (hasDebugInfo) {
       // Mark effective beginning of when frame pointer becomes valid.
       FrameLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, TII.get(ISD::LABEL)).addImm(FrameLabelId).addImm(0);
+      BuildMI(MBB, MBBI, TII.get(SPU::LABEL)).addImm(FrameLabelId).addImm(0);
     }
   
     // Adjust stack pointer, spilling $lr -> 16($sp) and $sp -> -FrameSize($sp)
@@ -504,7 +504,7 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
     
       // Mark effective beginning of when frame pointer is ready.
       unsigned ReadyLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, TII.get(ISD::LABEL)).addImm(ReadyLabelId).addImm(0);
+      BuildMI(MBB, MBBI, TII.get(SPU::LABEL)).addImm(ReadyLabelId).addImm(0);
     
       MachineLocation FPDst(SPU::R1);
       MachineLocation FPSrc(MachineLocation::VirtualFP);
