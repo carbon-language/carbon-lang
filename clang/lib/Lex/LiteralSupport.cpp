@@ -193,7 +193,6 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
 ///       floating-constant: [C99 6.4.4.2]
 ///         TODO: add rules...
 ///
-
 NumericLiteralParser::
 NumericLiteralParser(const char *begin, const char *end,
                      SourceLocation TokLoc, Preprocessor &pp)
@@ -209,88 +208,9 @@ NumericLiteralParser(const char *begin, const char *end,
   hadError = false;
   
   if (*s == '0') { // parse radix
-    s++;
-    if ((*s == 'x' || *s == 'X') && (isxdigit(s[1]) || s[1] == '.')) {
-      s++;
-      radix = 16;
-      DigitsBegin = s;
-      s = SkipHexDigits(s);
-      if (s == ThisTokEnd) {
-        // Done.
-      } else if (*s == '.') {
-        s++;
-        saw_period = true;
-        s = SkipHexDigits(s);
-      }
-      // A binary exponent can appear with or with a '.'. If dotted, the
-      // binary exponent is required. 
-      if ((*s == 'p' || *s == 'P') && PP.getLangOptions().HexFloats) {
-        const char *Exponent = s;
-        s++;
-        saw_exponent = true;
-        if (*s == '+' || *s == '-')  s++; // sign
-        const char *first_non_digit = SkipDigits(s);
-        if (first_non_digit != s) {
-          s = first_non_digit;
-        } else {
-          Diag(PP.AdvanceToTokenCharacter(TokLoc, Exponent-begin),
-               diag::err_exponent_has_no_digits);
-          return;
-        }
-      } else if (saw_period) {
-        Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
-             diag::err_hexconstant_requires_exponent);
-        return;
-      }
-    } else if (*s == 'b' || *s == 'B') {
-      // 0b101010 is a GCC extension.
-      ++s;
-      radix = 2;
-      DigitsBegin = s;
-      s = SkipBinaryDigits(s);
-      if (s == ThisTokEnd) {
-        // Done.
-      } else if (isxdigit(*s)) {
-        Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
-             diag::err_invalid_binary_digit, std::string(s, s+1));
-        return;
-      }
-      PP.Diag(TokLoc, diag::ext_binary_literal);
-    } else {
-      // For now, the radix is set to 8. If we discover that we have a
-      // floating point constant, the radix will change to 10. Octal floating
-      // point constants are not permitted (only decimal and hexadecimal). 
-      radix = 8;
-      DigitsBegin = s;
-      s = SkipOctalDigits(s);
-      if (s == ThisTokEnd) {
-        // Done.
-      } else if (isxdigit(*s) && !(*s == 'e' || *s == 'E')) {
-        Diag(PP.AdvanceToTokenCharacter(TokLoc, s-begin),
-             diag::err_invalid_octal_digit, std::string(s, s+1));
-        return;
-      } else if (*s == '.') {
-        s++;
-        radix = 10;
-        saw_period = true;
-        s = SkipDigits(s);
-      }
-      if (*s == 'e' || *s == 'E') { // exponent
-        const char *Exponent = s;
-        s++;
-        radix = 10;
-        saw_exponent = true;
-        if (*s == '+' || *s == '-')  s++; // sign
-        const char *first_non_digit = SkipDigits(s);
-        if (first_non_digit != s) {
-          s = first_non_digit;
-        } else {
-          Diag(PP.AdvanceToTokenCharacter(TokLoc, Exponent-begin), 
-               diag::err_exponent_has_no_digits);
-          return;
-        }
-      }
-    }
+    ParseNumberStartingWithZero(TokLoc);
+    if (hadError)
+      return;
   } else { // the first digit is non-zero
     radix = 10;
     s = SkipDigits(s);
@@ -409,6 +329,107 @@ NumericLiteralParser(const char *begin, const char *end,
     return;
   }
 }
+
+/// ParseNumberStartingWithZero - This method is called when the first character
+/// of the number is found to be a zero.  This means it is either an octal
+/// number (like '04') or a hex number ('0x123a') a binary number ('0b1010') or
+/// a floating point number (01239.123e4).  Eat the prefix, determining the 
+/// radix etc.
+void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
+  assert(s[0] == '0' && "Invalid method call");
+  s++;
+  
+  // Handle a hex number like 0x1234.
+  if ((*s == 'x' || *s == 'X') && (isxdigit(s[1]) || s[1] == '.')) {
+    s++;
+    radix = 16;
+    DigitsBegin = s;
+    s = SkipHexDigits(s);
+    if (s == ThisTokEnd) {
+      // Done.
+    } else if (*s == '.') {
+      s++;
+      saw_period = true;
+      s = SkipHexDigits(s);
+    }
+    // A binary exponent can appear with or with a '.'. If dotted, the
+    // binary exponent is required. 
+    if ((*s == 'p' || *s == 'P') && PP.getLangOptions().HexFloats) {
+      const char *Exponent = s;
+      s++;
+      saw_exponent = true;
+      if (*s == '+' || *s == '-')  s++; // sign
+      const char *first_non_digit = SkipDigits(s);
+      if (first_non_digit != s) {
+        s = first_non_digit;
+      } else {
+        Diag(PP.AdvanceToTokenCharacter(TokLoc, Exponent-ThisTokBegin),
+             diag::err_exponent_has_no_digits);
+      }
+    } else if (saw_period) {
+      Diag(PP.AdvanceToTokenCharacter(TokLoc, s-ThisTokBegin),
+           diag::err_hexconstant_requires_exponent);
+    }
+    return;
+  }
+  
+  // Handle simple binary numbers 0b01010
+  if (*s == 'b' || *s == 'B') {
+    // 0b101010 is a GCC extension.
+    ++s;
+    radix = 2;
+    DigitsBegin = s;
+    s = SkipBinaryDigits(s);
+    if (s == ThisTokEnd) {
+      // Done.
+    } else if (isxdigit(*s)) {
+      Diag(PP.AdvanceToTokenCharacter(TokLoc, s-ThisTokBegin),
+           diag::err_invalid_binary_digit, std::string(s, s+1));
+      return;
+    }
+    // Otherwise suffixes will be diagnosed by the caller.
+    PP.Diag(TokLoc, diag::ext_binary_literal);
+    return;
+  }
+  
+  // For now, the radix is set to 8. If we discover that we have a
+  // floating point constant, the radix will change to 10. Octal floating
+  // point constants are not permitted (only decimal and hexadecimal). 
+  radix = 8;
+  DigitsBegin = s;
+  s = SkipOctalDigits(s);
+  if (s == ThisTokEnd)
+    return; // Done, simple octal number like 01234
+  
+  if (isxdigit(*s) && *s != 'e' && *s != 'E') {
+    Diag(PP.AdvanceToTokenCharacter(TokLoc, s-ThisTokBegin),
+         diag::err_invalid_octal_digit, std::string(s, s+1));
+    return;
+  }
+  
+  if (*s == '.') {
+    s++;
+    radix = 10;
+    saw_period = true;
+    s = SkipDigits(s);
+  }
+  if (*s == 'e' || *s == 'E') { // exponent
+    const char *Exponent = s;
+    s++;
+    radix = 10;
+    saw_exponent = true;
+    if (*s == '+' || *s == '-')  s++; // sign
+    const char *first_non_digit = SkipDigits(s);
+    if (first_non_digit != s) {
+      s = first_non_digit;
+    } else {
+      Diag(PP.AdvanceToTokenCharacter(TokLoc, Exponent-ThisTokBegin), 
+           diag::err_exponent_has_no_digits);
+      return;
+    }
+  }
+}
+
 
 /// GetIntegerValue - Convert this numeric literal value to an APInt that
 /// matches Val's input width.  If there is an overflow, set Val to the low bits

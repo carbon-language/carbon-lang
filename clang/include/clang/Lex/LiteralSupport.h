@@ -87,6 +87,8 @@ private:
   void Diag(SourceLocation Loc, unsigned DiagID, 
             const std::string &M = std::string());
   
+  void ParseNumberStartingWithZero(SourceLocation TokLoc);
+  
   /// SkipHexDigits - Read and skip over any hex digits, up to End.
   /// Return a pointer to the first non-hex digit or End.
   const char *SkipHexDigits(const char *ptr) {
