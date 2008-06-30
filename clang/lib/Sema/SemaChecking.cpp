@@ -46,9 +46,8 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCallRaw) {
       return true;
     return TheCall.take();
   case Builtin::BI__builtin_va_start:
-    if (SemaBuiltinVAStart(TheCall.get())) {
+    if (SemaBuiltinVAStart(TheCall.get()))
       return true;
-    }
     return TheCall.take();
   case Builtin::BI__builtin_isgreater:
   case Builtin::BI__builtin_isgreaterequal:

@@ -182,6 +182,20 @@ void ASTContext::InitBuiltinTypes() {
 //                         Type Sizing and Analysis
 //===----------------------------------------------------------------------===//
 
+/// getFloatTypeSemantics - Return the APFloat 'semantics' for the specified
+/// scalar floating point type.
+const llvm::fltSemantics &ASTContext::getFloatTypeSemantics(QualType T) const {
+  const BuiltinType *BT = T->getAsBuiltinType();
+  assert(BT && "Not a floating point type!");
+  switch (BT->getKind()) {
+  default: assert(0 && "Not a floating point type!");
+  case BuiltinType::Float:      return Target.getFloatFormat();
+  case BuiltinType::Double:     return Target.getDoubleFormat();
+  case BuiltinType::LongDouble: return Target.getLongDoubleFormat();
+  }
+}
+
+
 /// getTypeSize - Return the size of the specified type, in bits.  This method
 /// does not work on incomplete types.
 std::pair<uint64_t, unsigned>

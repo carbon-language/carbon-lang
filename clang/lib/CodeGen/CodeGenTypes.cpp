@@ -168,18 +168,18 @@ const llvm::Type *CodeGenTypes::ConvertReturnType(QualType T) {
     return ConvertType(T);
 }
 
-static const llvm::Type* getTypeForFormat(const llvm::fltSemantics * format) {
-  if (format == &llvm::APFloat::IEEEsingle)
+static const llvm::Type* getTypeForFormat(const llvm::fltSemantics &format) {
+  if (&format == &llvm::APFloat::IEEEsingle)
     return llvm::Type::FloatTy;
-  if (format == &llvm::APFloat::IEEEdouble)
+  if (&format == &llvm::APFloat::IEEEdouble)
     return llvm::Type::DoubleTy;
-  if (format == &llvm::APFloat::IEEEquad)
+  if (&format == &llvm::APFloat::IEEEquad)
     return llvm::Type::FP128Ty;
-  if (format == &llvm::APFloat::PPCDoubleDouble)
+  if (&format == &llvm::APFloat::PPCDoubleDouble)
     return llvm::Type::PPC_FP128Ty;
-  if (format == &llvm::APFloat::x87DoubleExtended)
+  if (&format == &llvm::APFloat::x87DoubleExtended)
     return llvm::Type::X86_FP80Ty;
-  assert(9 && "Unknown float format!");
+  assert(0 && "Unknown float format!");
   return 0;
 }
 
@@ -218,11 +218,9 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
         static_cast<unsigned>(Context.getTypeSize(T)));
       
     case BuiltinType::Float:
-      return getTypeForFormat(Context.Target.getFloatFormat());
     case BuiltinType::Double:
-      return getTypeForFormat(Context.Target.getDoubleFormat());
     case BuiltinType::LongDouble:
-      return getTypeForFormat(Context.Target.getLongDoubleFormat());
+      return getTypeForFormat(Context.getFloatTypeSemantics(T));
     }
     break;
   }

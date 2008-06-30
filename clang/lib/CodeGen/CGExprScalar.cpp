@@ -613,7 +613,7 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
         llvm::ConstantFP::get(llvm::APFloat(static_cast<double>(AmountVal)));
     else {
       llvm::APFloat F(static_cast<float>(AmountVal));
-      F.convert(*CGF.Target.getLongDoubleFormat(), llvm::APFloat::rmTowardZero);
+      F.convert(CGF.Target.getLongDoubleFormat(), llvm::APFloat::rmTowardZero);
       NextVal = llvm::ConstantFP::get(F);
     }
     NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");

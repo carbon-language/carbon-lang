@@ -26,6 +26,10 @@
 #include "llvm/Support/Allocator.h"
 #include <vector>
 
+namespace llvm {
+  struct fltSemantics;
+}
+
 namespace clang {
   class TargetInfo;
   class IdentifierTable;
@@ -284,6 +288,10 @@ public:
   //===--------------------------------------------------------------------===//
   //                         Type Sizing and Analysis
   //===--------------------------------------------------------------------===//
+  
+  /// getFloatTypeSemantics - Return the APFloat 'semantics' for the specified
+  /// scalar floating point type.
+  const llvm::fltSemantics &getFloatTypeSemantics(QualType T) const;
   
   /// getTypeInfo - Get the size and alignment of the specified complete type in
   /// bits.

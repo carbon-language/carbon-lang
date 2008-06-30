@@ -143,7 +143,7 @@ public:
   const llvm::Type *ConvertTypeForMem(QualType T);
   
   void CollectObjCIvarTypes(ObjCInterfaceDecl *ObjCClass,
-      std::vector<const llvm::Type*> &IvarTypes);
+                            std::vector<const llvm::Type*> &IvarTypes);
   
   const CGRecordLayout *getCGRecordLayout(const TagDecl*) const;
   /// Returns a StructType representing an Objective-C object

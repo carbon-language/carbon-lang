@@ -38,74 +38,8 @@ static RValue EmitBinaryAtomic(CodeGenFunction& CFG,
 
 RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   switch (BuiltinID) {
-  default: {
-    if (getContext().BuiltinInfo.isLibFunction(BuiltinID))
-      return EmitCallExpr(CGM.getBuiltinLibFunction(BuiltinID), 
-                          E->getCallee()->getType(), E->arg_begin(),
-                          E->arg_end());
-  
-    // See if we have a target specific intrinsic.
-    Intrinsic::ID IntrinsicID;
-    const char *TargetPrefix = Target.getTargetPrefix();
-    const char *BuiltinName = getContext().BuiltinInfo.GetName(BuiltinID);
-#define GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
-#include "llvm/Intrinsics.gen"
-#undef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
-    
-    if (IntrinsicID != Intrinsic::not_intrinsic) {
-      SmallVector<Value*, 16> Args;
+  default: break;  // Handle intrinsics and libm functions below.
       
-      Function *F = CGM.getIntrinsic(IntrinsicID);
-      const llvm::FunctionType *FTy = F->getFunctionType();
-      
-      for (unsigned i = 0, e = E->getNumArgs(); i != e; ++i) {
-        Value *ArgValue = EmitScalarExpr(E->getArg(i));
-  
-        // If the intrinsic arg type is different from the builtin arg type
-        // we need to do a bit cast.
-        const llvm::Type *PTy = FTy->getParamType(i);
-        if (PTy != ArgValue->getType()) {
-          assert(PTy->canLosslesslyBitCastTo(FTy->getParamType(i)) &&
-                 "Must be able to losslessly bit cast to param");
-          ArgValue = Builder.CreateBitCast(ArgValue, PTy);
-        }
-
-        Args.push_back(ArgValue);
-      }
-            
-      Value *V = Builder.CreateCall(F, &Args[0], &Args[0] + Args.size());
-      QualType BuiltinRetType = E->getType();
-      
-      const llvm::Type *RetTy = llvm::Type::VoidTy;
-      if (!BuiltinRetType->isVoidType()) RetTy = ConvertType(BuiltinRetType);
-
-      if (RetTy != V->getType()) {
-        assert(V->getType()->canLosslesslyBitCastTo(RetTy) &&
-               "Must be able to losslessly bit cast result type");
-        V = Builder.CreateBitCast(V, RetTy);
-      }
-      
-      return RValue::get(V);
-    }
-
-    // See if we have a target specific builtin that needs to be lowered.
-    Value *V = 0;
-    
-    if (strcmp(TargetPrefix, "x86") == 0)
-      V = EmitX86BuiltinExpr(BuiltinID, E);
-    else if (strcmp(TargetPrefix, "ppc") == 0)
-      V = EmitPPCBuiltinExpr(BuiltinID, E);
-
-    if (V)
-      return RValue::get(V);
-    
-    WarnUnsupported(E, "builtin function");
-
-    // Unknown builtin, for now just dump it out and return undef.
-    if (hasAggregateLLVMType(E->getType()))
-      return RValue::getAggregate(CreateTempAlloca(ConvertType(E->getType())));
-    return RValue::get(UndefValue::get(ConvertType(E->getType())));
-  }    
   case Builtin::BI__builtin___CFStringMakeConstantString: {
     const Expr *Arg = E->getArg(0);
     
@@ -214,16 +148,29 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     Value *F = CGM.getIntrinsic(Intrinsic::bswap, &ArgType, 1);
     return RValue::get(Builder.CreateCall(F, ArgValue, "tmp"));
   }
-  case Builtin::BI__builtin_inff: {
-    APFloat f(APFloat::IEEEsingle, APFloat::fcInfinity, false);
-    return RValue::get(ConstantFP::get(f));
-  }
+  case Builtin::BI__builtin_inff:
   case Builtin::BI__builtin_huge_val:
   case Builtin::BI__builtin_inf:
-  // FIXME: mapping long double onto double.      
   case Builtin::BI__builtin_infl: {
-    APFloat f(APFloat::IEEEdouble, APFloat::fcInfinity, false);
-    return RValue::get(ConstantFP::get(f));
+    const llvm::fltSemantics &Sem =
+      CGM.getContext().getFloatTypeSemantics(E->getType());
+    return RValue::get(ConstantFP::get(APFloat::getInf(Sem)));
+  }
+  case Builtin::BI__builtin_nanf:
+  case Builtin::BI__builtin_nan:
+  case Builtin::BI__builtin_nanl: {
+    // If this is __builtin_nan("") turn this into a simple nan, otherwise just
+    // call libm nan.
+    if (const StringLiteral *S = 
+          dyn_cast<StringLiteral>(E->getArg(0)->IgnoreParenCasts())) {
+      if (!S->isWide() && S->getByteLength() == 0) { // empty string.
+        const llvm::fltSemantics &Sem = 
+          CGM.getContext().getFloatTypeSemantics(E->getType());
+        return RValue::get(ConstantFP::get(APFloat::getNaN(Sem)));
+      }
+    }
+    // Otherwise, call libm 'nan'.
+    break;
   }
   case Builtin::BI__builtin_isgreater:
   case Builtin::BI__builtin_isgreaterequal:
@@ -316,8 +263,76 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   case Builtin::BI__sync_lock_test_and_set:
     return EmitBinaryAtomic(*this, Intrinsic::atomic_swap, E);
   }
-  return RValue::get(0);
-}
+  
+  // If this is an alias for a libm function (e.g. __builtin_sin) turn it into
+  // that function.
+  if (getContext().BuiltinInfo.isLibFunction(BuiltinID))
+    return EmitCallExpr(CGM.getBuiltinLibFunction(BuiltinID), 
+                        E->getCallee()->getType(), E->arg_begin(),
+                        E->arg_end());
+  
+  // See if we have a target specific intrinsic.
+  Intrinsic::ID IntrinsicID;
+  const char *TargetPrefix = Target.getTargetPrefix();
+  const char *BuiltinName = getContext().BuiltinInfo.GetName(BuiltinID);
+#define GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
+#include "llvm/Intrinsics.gen"
+#undef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
+  
+  if (IntrinsicID != Intrinsic::not_intrinsic) {
+    SmallVector<Value*, 16> Args;
+    
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    const llvm::FunctionType *FTy = F->getFunctionType();
+    
+    for (unsigned i = 0, e = E->getNumArgs(); i != e; ++i) {
+      Value *ArgValue = EmitScalarExpr(E->getArg(i));
+      
+      // If the intrinsic arg type is different from the builtin arg type
+      // we need to do a bit cast.
+      const llvm::Type *PTy = FTy->getParamType(i);
+      if (PTy != ArgValue->getType()) {
+        assert(PTy->canLosslesslyBitCastTo(FTy->getParamType(i)) &&
+               "Must be able to losslessly bit cast to param");
+        ArgValue = Builder.CreateBitCast(ArgValue, PTy);
+      }
+      
+      Args.push_back(ArgValue);
+    }
+    
+    Value *V = Builder.CreateCall(F, &Args[0], &Args[0] + Args.size());
+    QualType BuiltinRetType = E->getType();
+    
+    const llvm::Type *RetTy = llvm::Type::VoidTy;
+    if (!BuiltinRetType->isVoidType()) RetTy = ConvertType(BuiltinRetType);
+    
+    if (RetTy != V->getType()) {
+      assert(V->getType()->canLosslesslyBitCastTo(RetTy) &&
+             "Must be able to losslessly bit cast result type");
+      V = Builder.CreateBitCast(V, RetTy);
+    }
+    
+    return RValue::get(V);
+  }
+  
+  // See if we have a target specific builtin that needs to be lowered.
+  Value *V = 0;
+  
+  if (strcmp(TargetPrefix, "x86") == 0)
+    V = EmitX86BuiltinExpr(BuiltinID, E);
+  else if (strcmp(TargetPrefix, "ppc") == 0)
+    V = EmitPPCBuiltinExpr(BuiltinID, E);
+  
+  if (V)
+    return RValue::get(V);
+  
+  WarnUnsupported(E, "builtin function");
+  
+  // Unknown builtin, for now just dump it out and return undef.
+  if (hasAggregateLLVMType(E->getType()))
+    return RValue::getAggregate(CreateTempAlloca(ConvertType(E->getType())));
+  return RValue::get(UndefValue::get(ConvertType(E->getType())));
+}    
 
 Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID, 
                                            const CallExpr *E) {

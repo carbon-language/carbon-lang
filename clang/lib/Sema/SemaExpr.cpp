@@ -214,23 +214,18 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
   
   if (Literal.isFloatingLiteral()) {
     QualType Ty;
-    const llvm::fltSemantics *Format;
-
-    if (Literal.isFloat) {
+    if (Literal.isFloat)
       Ty = Context.FloatTy;
-      Format = Context.Target.getFloatFormat();
-    } else if (!Literal.isLong) {
+    else if (!Literal.isLong)
       Ty = Context.DoubleTy;
-      Format = Context.Target.getDoubleFormat();
-    } else {
+    else
       Ty = Context.LongDoubleTy;
-      Format = Context.Target.getLongDoubleFormat();
-    }
-    
+
+    const llvm::fltSemantics &Format = Context.getFloatTypeSemantics(Ty);
+
     // isExact will be set by GetFloatValue().
     bool isExact = false;
-    
-    Res = new FloatingLiteral(Literal.GetFloatValue(*Format,&isExact), &isExact, 
+    Res = new FloatingLiteral(Literal.GetFloatValue(Format, &isExact), &isExact,
                               Ty, Tok.getLocation());
     
   } else if (!Literal.isIntegerLiteral()) {

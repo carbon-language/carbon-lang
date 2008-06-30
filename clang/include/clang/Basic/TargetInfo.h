@@ -118,19 +118,19 @@ public:
   /// getFloatWidth/Align/Format - Return the size/align/format of 'float'.
   unsigned getFloatWidth() const { return FloatWidth; }
   unsigned getFloatAlign() const { return FloatAlign; }
-  const llvm::fltSemantics *getFloatFormat() const { return FloatFormat; }
+  const llvm::fltSemantics &getFloatFormat() const { return *FloatFormat; }
 
   /// getDoubleWidth/Align/Format - Return the size/align/format of 'double'.
   unsigned getDoubleWidth() const { return DoubleWidth; }
   unsigned getDoubleAlign() const { return DoubleAlign; }
-  const llvm::fltSemantics *getDoubleFormat() const { return DoubleFormat; }
+  const llvm::fltSemantics &getDoubleFormat() const { return *DoubleFormat; }
 
   /// getLongDoubleWidth/Align/Format - Return the size/align/format of 'long
   /// double'.
   unsigned getLongDoubleWidth() const { return LongDoubleWidth; }
   unsigned getLongDoubleAlign() const { return LongDoubleAlign; }
-  const llvm::fltSemantics *getLongDoubleFormat() const {
-    return LongDoubleFormat;
+  const llvm::fltSemantics &getLongDoubleFormat() const {
+    return *LongDoubleFormat;
   }
   
   /// getIntMaxTWidth - Return the size of intmax_t and uintmax_t for this
