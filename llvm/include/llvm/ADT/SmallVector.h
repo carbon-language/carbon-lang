@@ -84,7 +84,7 @@ public:
 
     // If this wasn't grown from the inline copy, deallocate the old space.
     if (!isSmall())
-      delete[] reinterpret_cast<char*>(Begin);
+      operator delete(static_cast<void*>(Begin));
   }
   
   typedef size_t size_type;
@@ -317,8 +317,8 @@ private:
   /// isSmall - Return true if this is a smallvector which has not had dynamic
   /// memory allocated for it.
   bool isSmall() const {
-    return reinterpret_cast<const void*>(Begin) == 
-           reinterpret_cast<const void*>(&FirstEl);
+    return static_cast<const void*>(Begin) == 
+           static_cast<const void*>(&FirstEl);
   }
 
   /// grow - double the size of the allocated memory, guaranteeing space for at
@@ -346,7 +346,7 @@ void SmallVectorImpl<T>::grow(size_t MinSize) {
   size_t NewCapacity = 2*CurCapacity;
   if (NewCapacity < MinSize)
     NewCapacity = MinSize;
-  T *NewElts = reinterpret_cast<T*>(new char[NewCapacity*sizeof(T)]);
+  T *NewElts = static_cast<T*>(operator new(NewCapacity*sizeof(T)));
   
   // Copy the elements over.
   std::uninitialized_copy(Begin, End, NewElts);
@@ -356,7 +356,7 @@ void SmallVectorImpl<T>::grow(size_t MinSize) {
   
   // If this wasn't grown from the inline copy, deallocate the old space.
   if (!isSmall())
-    delete[] reinterpret_cast<char*>(Begin);
+    operator delete(static_cast<void*>(Begin));
   
   Begin = NewElts;
   End = NewElts+CurSize;
