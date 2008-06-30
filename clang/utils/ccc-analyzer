@@ -47,6 +47,17 @@ def analyze(clang, args,language,output,files,verbose,htmldir,file,analysis_type
   if language.rfind("c++") >= 0:
     return
 
+  RunAnalyzer = 0;
+
+  if language.find("header") > 0:
+    target = remove_pch_extension(output)
+    command = ['cp']
+    args = command + files + [ target ]
+  else:
+    command = clang.split() + analysis_type.split()
+    args = command + args;
+    RunAnalyzer = 1
+
   print_args = []
   
   if verbose:
@@ -57,17 +68,6 @@ def analyze(clang, args,language,output,files,verbose,htmldir,file,analysis_type
     while i < len(args):
       print_args.append(''.join([ '\'', args[i], '\'' ]))
       i += 1
-
-  RunAnalyzer = 0;
-
-  if language.find("header") > 0:
-    target = remove_pch_extension(output)
-    command = 'cp'.split()
-    args = command + files + target.split()      
-  else:
-    command = clang.split() + analysis_type.split()
-    args = command + args;
-    RunAnalyzer = 1
 
   if verbose == 2:
     print >> sys.stderr, '#SHELL (cd ' + os.getcwd() + ' && ' + ' '.join(command + print_args) + ')\n'
