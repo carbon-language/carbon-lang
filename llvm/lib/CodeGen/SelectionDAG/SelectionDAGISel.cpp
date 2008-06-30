@@ -3210,8 +3210,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       assert(DD && "Not a debug information descriptor");
       SubprogramDesc *Subprogram = cast<SubprogramDesc>(DD);
       const CompileUnitDesc *CompileUnit = Subprogram->getFile();
-      unsigned SrcFile = MMI->RecordSource(CompileUnit->getDirectory(),
-                                           CompileUnit->getFileName());
+      unsigned SrcFile = MMI->RecordSource(CompileUnit);
       // Record the source line but does create a label. It will be emitted
       // at asm emission time.
       MMI->RecordSourceLine(Subprogram->getLine(), 0, SrcFile);
