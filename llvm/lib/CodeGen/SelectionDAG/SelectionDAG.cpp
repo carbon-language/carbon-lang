@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Constants.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/GlobalAlias.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
@@ -747,18 +748,14 @@ SDOperand SelectionDAG::getString(const std::string &Val) {
 }
 
 SDOperand SelectionDAG::getConstant(uint64_t Val, MVT VT, bool isT) {
-  MVT EltVT =
-    VT.isVector() ? VT.getVectorElementType() : VT;
-
+  MVT EltVT = VT.isVector() ? VT.getVectorElementType() : VT;
   return getConstant(APInt(EltVT.getSizeInBits(), Val), VT, isT);
 }
 
 SDOperand SelectionDAG::getConstant(const APInt &Val, MVT VT, bool isT) {
   assert(VT.isInteger() && "Cannot create FP integer constant!");
 
-  MVT EltVT =
-    VT.isVector() ? VT.getVectorElementType() : VT;
-  
+  MVT EltVT = VT.isVector() ? VT.getVectorElementType() : VT;
   assert(Val.getBitWidth() == EltVT.getSizeInBits() &&
          "APInt size does not match type size!");
 
@@ -2554,6 +2551,16 @@ static SDOperand getMemsetValue(SDOperand Value, MVT VT, SelectionDAG &DAG) {
 static SDOperand getMemsetStringVal(MVT VT, SelectionDAG &DAG,
                                     const TargetLowering &TLI,
                                     std::string &Str, unsigned Offset) {
+  // Handle vector with all elements zero.
+  if (Str.empty()) {
+    if (VT.isInteger())
+      return DAG.getConstant(0, VT);
+    unsigned NumElts = VT.getVectorNumElements();
+    MVT EltVT = (VT.getVectorElementType() == MVT::f32) ? MVT::i32 : MVT::i64;
+    return DAG.getNode(ISD::BIT_CONVERT, VT,
+                       DAG.getConstant(0, MVT::getVectorVT(EltVT, NumElts)));
+  }
+
   assert(!VT.isVector() && "Can't handle vector type here!");
   unsigned NumBits = VT.getSizeInBits();
   unsigned MSB = NumBits / 8;
@@ -2577,8 +2584,7 @@ static SDOperand getMemBasePlusOffset(SDOperand Base, unsigned Offset,
 
 /// isMemSrcFromString - Returns true if memcpy source is a string constant.
 ///
-static bool isMemSrcFromString(SDOperand Src, std::string &Str,
-                               uint64_t &SrcOff) {
+static bool isMemSrcFromString(SDOperand Src, std::string &Str) {
   unsigned SrcDelta = 0;
   GlobalAddressSDNode *G = NULL;
   if (Src.getOpcode() == ISD::GlobalAddress)
@@ -2593,13 +2599,8 @@ static bool isMemSrcFromString(SDOperand Src, std::string &Str,
     return false;
 
   GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
-  if (GV && GV->isConstant()) {
-    Str = GV->getStringValue(false);
-    if (!Str.empty()) {
-      SrcOff += SrcDelta;
-      return true;
-    }
-  }
+  if (GV && GetConstantStringInfo(GV, Str, SrcDelta, false))
+    return true;
 
   return false;
 }
@@ -2611,14 +2612,12 @@ static
 bool MeetsMaxMemopRequirement(std::vector<MVT> &MemOps,
                               SDOperand Dst, SDOperand Src,
                               unsigned Limit, uint64_t Size, unsigned &Align,
+                              std::string &Str, bool &isSrcStr,
                               SelectionDAG &DAG,
                               const TargetLowering &TLI) {
-  bool AllowUnalign = TLI.allowsUnalignedMemoryAccesses();
-
-  std::string Str;
-  uint64_t SrcOff = 0;
-  bool isSrcStr = isMemSrcFromString(Src, Str, SrcOff);
+  isSrcStr = isMemSrcFromString(Src, Str);
   bool isSrcConst = isa<ConstantSDNode>(Src);
+  bool AllowUnalign = TLI.allowsUnalignedMemoryAccesses();
   MVT VT= TLI.getOptimalMemOpType(Size, Align, isSrcConst, isSrcStr);
   if (VT != MVT::iAny) {
     unsigned NewAlign = (unsigned)
@@ -2707,26 +2706,28 @@ static SDOperand getMemcpyLoadsAndStores(SelectionDAG &DAG,
   if (!AlwaysInline)
     Limit = TLI.getMaxStoresPerMemcpy();
   unsigned DstAlign = Align;  // Destination alignment can change.
+  std::string Str;
+  bool CopyFromStr;
   if (!MeetsMaxMemopRequirement(MemOps, Dst, Src, Limit, Size, DstAlign,
-                                DAG, TLI))
+                                Str, CopyFromStr, DAG, TLI))
     return SDOperand();
 
-  std::string Str;
-  uint64_t SrcOff = 0, DstOff = 0;
-  bool CopyFromStr = isMemSrcFromString(Src, Str, SrcOff);
 
+  bool isZeroStr = CopyFromStr && Str.empty();
   SmallVector<SDOperand, 8> OutChains;
   unsigned NumMemOps = MemOps.size();
+  uint64_t SrcOff = 0, DstOff = 0;
   for (unsigned i = 0; i < NumMemOps; i++) {
     MVT VT = MemOps[i];
     unsigned VTSize = VT.getSizeInBits() / 8;
     SDOperand Value, Store;
 
-    if (CopyFromStr && !VT.isVector()) {
+    if (CopyFromStr && (isZeroStr || !VT.isVector())) {
       // It's unlikely a store of a vector immediate can be done in a single
       // instruction. It would require a load from a constantpool first.
-      // FIXME: Handle cases where store of vector immediate is done in a
-      // single instruction.
+      // We also handle store a vector with all zero's.
+      // FIXME: Handle other cases where store of vector immediate is done in
+      // a single instruction.
       Value = getMemsetStringVal(VT, DAG, TLI, Str, SrcOff);
       Store = DAG.getStore(Chain, Value,
                            getMemBasePlusOffset(Dst, DstOff, DAG),
@@ -2763,8 +2764,10 @@ static SDOperand getMemmoveLoadsAndStores(SelectionDAG &DAG,
   if (!AlwaysInline)
     Limit = TLI.getMaxStoresPerMemmove();
   unsigned DstAlign = Align;  // Destination alignment can change.
+  std::string Str;
+  bool CopyFromStr;
   if (!MeetsMaxMemopRequirement(MemOps, Dst, Src, Limit, Size, DstAlign,
-                                DAG, TLI))
+                                Str, CopyFromStr, DAG, TLI))
     return SDOperand();
 
   uint64_t SrcOff = 0, DstOff = 0;
@@ -2814,8 +2817,10 @@ static SDOperand getMemsetStores(SelectionDAG &DAG,
   // Expand memset to a series of load/store ops if the size operand
   // falls below a certain threshold.
   std::vector<MVT> MemOps;
+  std::string Str;
+  bool CopyFromStr;
   if (!MeetsMaxMemopRequirement(MemOps, Dst, Src, TLI.getMaxStoresPerMemset(),
-                                Size, Align, DAG, TLI))
+                                Size, Align, Str, CopyFromStr, DAG, TLI))
     return SDOperand();
 
   SmallVector<SDOperand, 8> OutChains;

@@ -28,6 +28,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Constants.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/MachineDebugInfoDesc.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 using namespace llvm;
@@ -58,20 +59,20 @@ Value *DbgInfoIntrinsic::StripCast(Value *C) {
 /// DbgStopPointInst - This represents the llvm.dbg.stoppoint instruction.
 ///
 
-std::string DbgStopPointInst::getFileName() const {
+Value *DbgStopPointInst::getFileName() const {
   // Once the operand indices are verified, update this assert
   assert(LLVMDebugVersion == (6 << 16) && "Verify operand indices");
   GlobalVariable *GV = cast<GlobalVariable>(getContext());
-  if (!GV->hasInitializer()) return "";
+  if (!GV->hasInitializer()) return NULL;
   ConstantStruct *CS = cast<ConstantStruct>(GV->getInitializer());
-  return CS->getOperand(3)->getStringValue();
+  return CS->getOperand(4);
 }
 
-std::string DbgStopPointInst::getDirectory() const {
+Value *DbgStopPointInst::getDirectory() const {
   // Once the operand indices are verified, update this assert
   assert(LLVMDebugVersion == (6 << 16) && "Verify operand indices");
   GlobalVariable *GV = cast<GlobalVariable>(getContext());
-  if (!GV->hasInitializer()) return "";
+  if (!GV->hasInitializer()) return NULL;
   ConstantStruct *CS = cast<ConstantStruct>(GV->getInitializer());
-  return CS->getOperand(4)->getStringValue();
+  return CS->getOperand(4);
 }

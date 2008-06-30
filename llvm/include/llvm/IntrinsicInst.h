@@ -96,8 +96,8 @@ namespace llvm {
       return unsigned(cast<ConstantInt>(getOperand(2))->getZExtValue());
     }
     
-    std::string getFileName() const;
-    std::string getDirectory() const;
+    Value* getFileName() const;
+    Value* getDirectory() const;
 
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const DbgStopPointInst *) { return true; }
