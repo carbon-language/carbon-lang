@@ -376,6 +376,7 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
   // Handle simple binary numbers 0b01010
   if (*s == 'b' || *s == 'B') {
     // 0b101010 is a GCC extension.
+    PP.Diag(TokLoc, diag::ext_binary_literal);
     ++s;
     radix = 2;
     DigitsBegin = s;
@@ -385,10 +386,8 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
     } else if (isxdigit(*s)) {
       Diag(PP.AdvanceToTokenCharacter(TokLoc, s-ThisTokBegin),
            diag::err_invalid_binary_digit, std::string(s, s+1));
-      return;
     }
-    // Otherwise suffixes will be diagnosed by the caller.
-    PP.Diag(TokLoc, diag::ext_binary_literal);
+    // Other suffixes will be diagnosed by the caller.
     return;
   }
   
@@ -401,6 +400,18 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
   if (s == ThisTokEnd)
     return; // Done, simple octal number like 01234
   
+  // If we have some other non-octal digit that *is* a decimal digit, see if
+  // this is part of a floating point number like 094.123 or 09e1.
+  if (isdigit(*s)) {
+    const char *EndDecimal = SkipDigits(s);
+    if (EndDecimal[0] == '.' || EndDecimal[0] == 'e' || EndDecimal[0] == 'E') {
+      s = EndDecimal;
+      radix = 10;
+    }
+  }
+  
+  // If we have a hex digit other than 'e' (which denotes a FP exponent) then
+  // the code is using an incorrect base.
   if (isxdigit(*s) && *s != 'e' && *s != 'E') {
     Diag(PP.AdvanceToTokenCharacter(TokLoc, s-ThisTokBegin),
          diag::err_invalid_octal_digit, std::string(s, s+1));
@@ -411,7 +422,7 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
     s++;
     radix = 10;
     saw_period = true;
-    s = SkipDigits(s);
+    s = SkipDigits(s); // Skip suffix.
   }
   if (*s == 'e' || *s == 'E') { // exponent
     const char *Exponent = s;
