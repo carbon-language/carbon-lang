@@ -6895,6 +6895,22 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     }
     break;
   }
+  case ISD::SELECT_CC: {
+    SDOperand CondLHS = Node->getOperand(0);
+    SDOperand CondRHS = Node->getOperand(1);
+    SDOperand CondCode = Node->getOperand(4);
+    
+    SDOperand LL, LH, RL, RH;
+    SplitVectorOp(Node->getOperand(2), LL, LH);
+    SplitVectorOp(Node->getOperand(3), RL, RH);
+    
+    // Handle a simple select with vector operands.
+    Lo = DAG.getNode(ISD::SELECT_CC, NewVT_Lo, CondLHS, CondRHS,
+                     LL, RL, CondCode);
+    Hi = DAG.getNode(ISD::SELECT_CC, NewVT_Hi, CondLHS, CondRHS, 
+                     LH, RH, CondCode);
+    break;
+  }
   case ISD::VSETCC: {
     SDOperand LL, LH, RL, RH;
     SplitVectorOp(Node->getOperand(0), LL, LH);
@@ -7121,6 +7137,13 @@ SDOperand SelectionDAGLegalize::ScalarizeVectorOp(SDOperand Op) {
     Result = DAG.getNode(ISD::SELECT, NewVT, Op.getOperand(0),
                          ScalarizeVectorOp(Op.getOperand(1)),
                          ScalarizeVectorOp(Op.getOperand(2)));
+    break;
+  case ISD::SELECT_CC:
+    Result = DAG.getNode(ISD::SELECT_CC, NewVT, Node->getOperand(0), 
+                         Node->getOperand(1),
+                         ScalarizeVectorOp(Op.getOperand(2)),
+                         ScalarizeVectorOp(Op.getOperand(3)),
+                         Node->getOperand(4));
     break;
   case ISD::VSETCC: {
     SDOperand Op0 = ScalarizeVectorOp(Op.getOperand(0));
