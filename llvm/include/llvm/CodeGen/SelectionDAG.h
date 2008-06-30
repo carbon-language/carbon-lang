@@ -173,7 +173,6 @@ public:
   //===--------------------------------------------------------------------===//
   // Node creation methods.
   //
-  SDOperand getString(const std::string &Val);
   SDOperand getConstant(uint64_t Val, MVT VT, bool isTarget = false);
   SDOperand getConstant(const APInt &Val, MVT VT, bool isTarget = false);
   SDOperand getIntPtrConstant(uint64_t Val, bool isTarget = false);
@@ -224,6 +223,8 @@ public:
   SDOperand getArgFlags(ISD::ArgFlagsTy Flags);
   SDOperand getValueType(MVT);
   SDOperand getRegister(unsigned Reg, MVT VT);
+  SDOperand getDbgStopPoint(SDOperand Root, unsigned Line, unsigned Col,
+                            const CompileUnitDesc *CU);
 
   SDOperand getCopyToReg(SDOperand Chain, unsigned Reg, SDOperand N) {
     return getNode(ISD::CopyToReg, MVT::Other, Chain,
@@ -635,7 +636,6 @@ private:
   std::map<MVT, SDNode*, MVT::compareRawBits> ExtendedValueTypeNodes;
   StringMap<SDNode*> ExternalSymbols;
   StringMap<SDNode*> TargetExternalSymbols;
-  StringMap<StringSDNode*> StringNodes;
 };
 
 template <> struct GraphTraits<SelectionDAG*> : public GraphTraits<SDNode*> {

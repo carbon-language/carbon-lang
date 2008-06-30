@@ -849,7 +849,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::VALUETYPE:
   case ISD::SRCVALUE:
   case ISD::MEMOPERAND:
-  case ISD::STRING:
   case ISD::CONDCODE:
   case ISD::ARG_FLAGS:
     // Primitives must all be legal.
@@ -1075,11 +1074,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     return Result.getValue(Op.ResNo);
   }    
 
-  case ISD::LOCATION:
-    assert(Node->getNumOperands() == 5 && "Invalid LOCATION node!");
+  case ISD::DBG_STOPPOINT:
+    assert(Node->getNumOperands() == 1 && "Invalid DBG_STOPPOINT node!");
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the input chain.
     
-    switch (TLI.getOperationAction(ISD::LOCATION, MVT::Other)) {
+    switch (TLI.getOperationAction(ISD::DBG_STOPPOINT, MVT::Other)) {
     case TargetLowering::Promote:
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Expand: {
@@ -1087,26 +1086,22 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       bool useDEBUG_LOC = TLI.isOperationLegal(ISD::DEBUG_LOC, MVT::Other);
       bool useLABEL = TLI.isOperationLegal(ISD::LABEL, MVT::Other);
       
+      const DbgStopPointSDNode *DSP = cast<DbgStopPointSDNode>(Node);
       if (MMI && (useDEBUG_LOC || useLABEL)) {
-        const std::string &FName =
-          cast<StringSDNode>(Node->getOperand(3))->getValue();
-        const std::string &DirName = 
-          cast<StringSDNode>(Node->getOperand(4))->getValue();
-        unsigned SrcFile = MMI->RecordSource(DirName, FName);
+        const CompileUnitDesc *CompileUnit = DSP->getCompileUnit();
+        unsigned SrcFile = MMI->RecordSource(CompileUnit);
 
         SmallVector<SDOperand, 8> Ops;
         Ops.push_back(Tmp1);  // chain
-        SDOperand LineOp = Node->getOperand(1);
-        SDOperand ColOp = Node->getOperand(2);
+        unsigned Line = DSP->getLine();
+        unsigned Col = DSP->getColumn();
         
         if (useDEBUG_LOC) {
-          Ops.push_back(LineOp);  // line #
-          Ops.push_back(ColOp);  // col #
+          Ops.push_back(DAG.getConstant(Line, MVT::i32));  // line #
+          Ops.push_back(DAG.getConstant(Col, MVT::i32));   // col #
           Ops.push_back(DAG.getConstant(SrcFile, MVT::i32));  // source file id
           Result = DAG.getNode(ISD::DEBUG_LOC, MVT::Other, &Ops[0], Ops.size());
         } else {
-          unsigned Line = cast<ConstantSDNode>(LineOp)->getValue();
-          unsigned Col = cast<ConstantSDNode>(ColOp)->getValue();
           unsigned ID = MMI->RecordSourceLine(Line, Col, SrcFile);
           Ops.push_back(DAG.getConstant(ID, MVT::i32));
           Ops.push_back(DAG.getConstant(0, MVT::i32)); // a debug label

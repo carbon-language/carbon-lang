@@ -298,8 +298,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::ATOMIC_CMP_SWAP , MVT::i64, Custom);
   setOperationAction(ISD::ATOMIC_LOAD_SUB , MVT::i32, Expand);
 
-  // Use the default ISD::LOCATION, ISD::DECLARE expansion.
-  setOperationAction(ISD::LOCATION, MVT::Other, Expand);
+  // Use the default ISD::DBG_STOPPOINT, ISD::DECLARE expansion.
+  setOperationAction(ISD::DBG_STOPPOINT, MVT::Other, Expand);
   // FIXME - use subtarget debug flags
   if (!Subtarget->isTargetDarwin() &&
       !Subtarget->isTargetELF() &&

@@ -382,6 +382,13 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
   case ISD::Register:
     ID.AddInteger(cast<RegisterSDNode>(N)->getReg());
     break;
+  case ISD::DBG_STOPPOINT: {
+    const DbgStopPointSDNode *DSP = cast<DbgStopPointSDNode>(N);
+    ID.AddInteger(DSP->getLine());
+    ID.AddInteger(DSP->getColumn());
+    ID.AddPointer(DSP->getCompileUnit());
+    break;
+  }
   case ISD::SRCVALUE:
     ID.AddPointer(cast<SrcValueSDNode>(N)->getValue());
     break;
@@ -575,9 +582,6 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   bool Erased = false;
   switch (N->getOpcode()) {
   case ISD::HANDLENODE: return;  // noop.
-  case ISD::STRING:
-    Erased = StringNodes.erase(cast<StringSDNode>(N)->getValue());
-    break;
   case ISD::CONDCODE:
     assert(CondCodeNodes[cast<CondCodeSDNode>(N)->get()] &&
            "Cond code doesn't exist!");
@@ -736,15 +740,6 @@ SDOperand SelectionDAG::getZeroExtendInReg(SDOperand Op, MVT VT) {
                                    VT.getSizeInBits());
   return getNode(ISD::AND, Op.getValueType(), Op,
                  getConstant(Imm, Op.getValueType()));
-}
-
-SDOperand SelectionDAG::getString(const std::string &Val) {
-  StringSDNode *&N = StringNodes[Val];
-  if (!N) {
-    N = new StringSDNode(Val);
-    AllNodes.push_back(N);
-  }
-  return SDOperand(N, 0);
 }
 
 SDOperand SelectionDAG::getConstant(uint64_t Val, MVT VT, bool isT) {
@@ -1000,6 +995,24 @@ SDOperand SelectionDAG::getRegister(unsigned RegNo, MVT VT) {
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
   SDNode *N = new RegisterSDNode(RegNo, VT);
+  CSEMap.InsertNode(N, IP);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getDbgStopPoint(SDOperand Root,
+                                        unsigned Line, unsigned Col,
+                                        const CompileUnitDesc *CU) {
+  FoldingSetNodeID ID;
+  SDOperand Ops[] = { Root };
+  AddNodeIDNode(ID, ISD::DBG_STOPPOINT, getVTList(MVT::Other), &Ops[0], 1);
+  ID.AddInteger(Line);
+  ID.AddInteger(Col);
+  ID.AddPointer(CU);
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode *N = new DbgStopPointSDNode(Root, Line, Col, CU);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -4178,7 +4191,6 @@ void UnarySDNode::ANCHOR() {}
 void BinarySDNode::ANCHOR() {}
 void TernarySDNode::ANCHOR() {}
 void HandleSDNode::ANCHOR() {}
-void StringSDNode::ANCHOR() {}
 void ConstantSDNode::ANCHOR() {}
 void ConstantFPSDNode::ANCHOR() {}
 void GlobalAddressSDNode::ANCHOR() {}
@@ -4189,6 +4201,7 @@ void BasicBlockSDNode::ANCHOR() {}
 void SrcValueSDNode::ANCHOR() {}
 void MemOperandSDNode::ANCHOR() {}
 void RegisterSDNode::ANCHOR() {}
+void DbgStopPointSDNode::ANCHOR() {}
 void ExternalSymbolSDNode::ANCHOR() {}
 void CondCodeSDNode::ANCHOR() {}
 void ARG_FLAGSSDNode::ANCHOR() {}
@@ -4463,7 +4476,6 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::AssertSext:    return "AssertSext";
   case ISD::AssertZext:    return "AssertZext";
 
-  case ISD::STRING:        return "String";
   case ISD::BasicBlock:    return "BasicBlock";
   case ISD::ARG_FLAGS:     return "ArgFlags";
   case ISD::VALUETYPE:     return "ValueType";
@@ -4624,7 +4636,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::CTLZ:    return "ctlz";
 
   // Debug info
-  case ISD::LOCATION: return "location";
+  case ISD::DBG_STOPPOINT: return "dbg_stoppoint";
   case ISD::DEBUG_LOC: return "debug_loc";
 
   // Trampolines

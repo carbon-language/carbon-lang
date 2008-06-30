@@ -3164,20 +3164,12 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
     DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
     if (MMI && SPI.getContext() && MMI->Verify(SPI.getContext())) {
-      SDOperand Ops[5];
-
-      Ops[0] = getRoot();
-      Ops[1] = getValue(SPI.getLineValue());
-      Ops[2] = getValue(SPI.getColumnValue());
-
       DebugInfoDesc *DD = MMI->getDescFor(SPI.getContext());
       assert(DD && "Not a debug information descriptor");
-      CompileUnitDesc *CompileUnit = cast<CompileUnitDesc>(DD);
-      
-      Ops[3] = DAG.getString(CompileUnit->getFileName());
-      Ops[4] = DAG.getString(CompileUnit->getDirectory());
-      
-      DAG.setRoot(DAG.getNode(ISD::LOCATION, MVT::Other, Ops, 5));
+      DAG.setRoot(DAG.getDbgStopPoint(getRoot(),
+                                      SPI.getLine(),
+                                      SPI.getColumn(),
+                                      cast<CompileUnitDesc>(DD)));
     }
 
     return 0;

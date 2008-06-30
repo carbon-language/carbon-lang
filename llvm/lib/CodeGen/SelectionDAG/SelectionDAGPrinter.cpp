@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineDebugInfoDesc.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/GraphWriter.h"
@@ -138,6 +139,11 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
     } else {
       Op += " #" + utostr(R->getReg());
     }
+  } else if (const DbgStopPointSDNode *D = dyn_cast<DbgStopPointSDNode>(Node)) {
+    Op += ": " + D->getCompileUnit()->getFileName();
+    Op += ":" + utostr(D->getLine());
+    if (D->getColumn() != 0)
+      Op += ":" + utostr(D->getColumn());
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(Node)) {
     Op += "'" + std::string(ES->getSymbol()) + "'";
@@ -155,8 +161,6 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
     Op = Op + " AF=" + N->getArgFlags().getArgFlagsString();
   } else if (const VTSDNode *N = dyn_cast<VTSDNode>(Node)) {
     Op = Op + " VT=" + N->getVT().getMVTString();
-  } else if (const StringSDNode *N = dyn_cast<StringSDNode>(Node)) {
-    Op = Op + "\"" + N->getValue() + "\"";
   } else if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(Node)) {
     bool doExt = true;
     switch (LD->getExtensionType()) {

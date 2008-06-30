@@ -37,6 +37,7 @@ class GlobalValue;
 class MachineBasicBlock;
 class MachineConstantPoolValue;
 class SDNode;
+class CompileUnitDesc;
 template <typename T> struct DenseMapInfo;
 template <typename T> struct simplify_type;
 template <typename T> struct ilist_traits;
@@ -82,7 +83,7 @@ namespace ISD {
     AssertSext, AssertZext,
 
     // Various leaf nodes.
-    STRING, BasicBlock, VALUETYPE, ARG_FLAGS, CONDCODE, Register,
+    BasicBlock, VALUETYPE, ARG_FLAGS, CONDCODE, Register,
     Constant, ConstantFP,
     GlobalAddress, GlobalTLSAddress, FrameIndex,
     JumpTable, ConstantPool, ExternalSymbol,
@@ -547,11 +548,11 @@ namespace ISD {
     // HANDLENODE node - Used as a handle for various purposes.
     HANDLENODE,
 
-    // LOCATION - This node is used to represent a source location for debug
-    // info.  It takes token chain as input, then a line number, then a column
-    // number, then a filename, then a working dir.  It produces a token chain
-    // as output.
-    LOCATION,
+    // DBG_STOPPOINT - This node is used to represent a source location for
+    // debug info.  It takes token chain as input, and carries a line number,
+    // column number, and a pointer to a CompileUnitDesc object identifying
+    // the containing compilation unit.  It produces a token chain as output.
+    DBG_STOPPOINT,
     
     // DEBUG_LOC - This node is used to represent source line information
     // embedded in the code.  It takes a token chain as input, then a line
@@ -1552,22 +1553,6 @@ class AtomicSDNode : public MemSDNode {
   }
 };
 
-class StringSDNode : public SDNode {
-  std::string Value;
-  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
-protected:
-  friend class SelectionDAG;
-  explicit StringSDNode(const std::string &val)
-    : SDNode(ISD::STRING, getSDVTList(MVT::Other)), Value(val) {
-  }
-public:
-  const std::string &getValue() const { return Value; }
-  static bool classof(const StringSDNode *) { return true; }
-  static bool classof(const SDNode *N) {
-    return N->getOpcode() == ISD::STRING;
-  }
-};  
-
 class ConstantSDNode : public SDNode {
   APInt Value;
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
@@ -1855,6 +1840,33 @@ public:
   static bool classof(const RegisterSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::Register;
+  }
+};
+
+class DbgStopPointSDNode : public SDNode {
+  SDUse Chain;
+  unsigned Line;
+  unsigned Column;
+  const CompileUnitDesc *CU;
+  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
+protected:
+  friend class SelectionDAG;
+  DbgStopPointSDNode(SDOperand ch, unsigned l, unsigned c,
+                     const CompileUnitDesc *cu)
+    : SDNode(ISD::DBG_STOPPOINT, getSDVTList(MVT::Other)),
+      Line(l), Column(c), CU(cu) {
+    Chain = ch;
+    InitOperands(&Chain, 1);
+  }
+public:
+
+  unsigned getLine() const { return Line; }
+  unsigned getColumn() const { return Column; }
+  const CompileUnitDesc *getCompileUnit() const { return CU; }
+
+  static bool classof(const DbgStopPointSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::DBG_STOPPOINT;
   }
 };
 

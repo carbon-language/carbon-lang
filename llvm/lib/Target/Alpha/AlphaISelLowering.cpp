@@ -104,7 +104,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::BIT_CONVERT, MVT::f32, Promote);
 
   // We don't have line number support yet.
-  setOperationAction(ISD::LOCATION, MVT::Other, Expand);
+  setOperationAction(ISD::DBG_STOPPOINT, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
   setOperationAction(ISD::LABEL, MVT::Other, Expand);
 
