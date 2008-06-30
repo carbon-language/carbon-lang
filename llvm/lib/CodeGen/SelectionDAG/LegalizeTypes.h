@@ -234,6 +234,7 @@ private:
   SDOperand PromoteIntRes_TRUNCATE(SDNode *N);
   SDOperand PromoteIntRes_UDIV(SDNode *N);
   SDOperand PromoteIntRes_UNDEF(SDNode *N);
+  SDOperand PromoteIntRes_VAARG(SDNode *N);
 
   // Integer Operand Promotion.
   bool PromoteIntegerOperand(SDNode *N, unsigned OperandNo);

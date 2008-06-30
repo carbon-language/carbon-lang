@@ -84,6 +84,8 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::EXTRACT_VECTOR_ELT:
     Result = PromoteIntRes_EXTRACT_VECTOR_ELT(N);
     break;
+
+  case ISD::VAARG : Result = PromoteIntRes_VAARG(N); break;
   }
 
   // If Result is null, the sub-method took care of registering the result.
@@ -409,6 +411,36 @@ SDOperand DAGTypeLegalizer::PromoteIntRes_EXTRACT_VECTOR_ELT(SDNode *N) {
   SDOperand Odd = DAG.getNode(ISD::AND, OldIdx.getValueType(), OldIdx,
                               DAG.getConstant(1, TLI.getShiftAmountTy()));
   return DAG.getNode(ISD::SELECT, NewVT, Odd, Hi, Lo);
+}
+
+SDOperand DAGTypeLegalizer::PromoteIntRes_VAARG(SDNode *N) {
+  SDOperand Chain = N->getOperand(0); // Get the chain.
+  SDOperand Ptr = N->getOperand(1); // Get the pointer.
+  MVT VT = N->getValueType(0);
+
+  const Value *V = cast<SrcValueSDNode>(N->getOperand(2))->getValue();
+  SDOperand VAList = DAG.getLoad(TLI.getPointerTy(), Chain, Ptr, V, 0);
+
+  // Increment the arg pointer, VAList, to the next vaarg
+  // FIXME: should the ABI size be used for the increment?  Think of
+  // x86 long double (10 bytes long, but aligned on 4 or 8 bytes) or
+  // integers of unusual size (such MVT::i1, which gives an increment
+  // of zero here!).
+  unsigned Increment = VT.getSizeInBits() / 8;
+  SDOperand Tmp = DAG.getNode(ISD::ADD, TLI.getPointerTy(), VAList,
+                              DAG.getConstant(Increment, TLI.getPointerTy()));
+
+  // Store the incremented VAList to the pointer.
+  Tmp = DAG.getStore(VAList.getValue(1), Tmp, Ptr, V, 0);
+
+  // Load the actual argument out of the arg pointer VAList.
+  Tmp = DAG.getExtLoad(ISD::EXTLOAD, TLI.getTypeToTransformTo(VT), Tmp,
+                       VAList, NULL, 0, VT);
+
+  // Legalized the chain result - switch anything that used the old chain to
+  // use the new one.
+  ReplaceValueWith(SDOperand(N, 1), Tmp.getValue(1));
+  return Tmp;
 }
 
 //===----------------------------------------------------------------------===//
