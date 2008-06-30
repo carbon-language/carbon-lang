@@ -1445,7 +1445,7 @@ private:
   ISD::CondCode CmpLibcallCCs[RTLIB::UNKNOWN_LIBCALL];
 
 protected:
-  /// When lowering %llvm.memset this field specifies the maximum number of
+  /// When lowering @llvm.memset this field specifies the maximum number of
   /// store operations that may be substituted for the call to memset. Targets
   /// must set this value based on the cost threshold for that target. Targets
   /// should assume that the memset will be done using as many of the largest
@@ -1456,7 +1456,7 @@ protected:
   /// @brief Specify maximum number of store instructions per memset call.
   unsigned maxStoresPerMemset;
 
-  /// When lowering %llvm.memcpy this field specifies the maximum number of
+  /// When lowering @llvm.memcpy this field specifies the maximum number of
   /// store operations that may be substituted for a call to memcpy. Targets
   /// must set this value based on the cost threshold for that target. Targets
   /// should assume that the memcpy will be done using as many of the largest
@@ -1468,7 +1468,7 @@ protected:
   /// @brief Specify maximum bytes of store instructions per memcpy call.
   unsigned maxStoresPerMemcpy;
 
-  /// When lowering %llvm.memmove this field specifies the maximum number of
+  /// When lowering @llvm.memmove this field specifies the maximum number of
   /// store instructions that may be substituted for a call to memmove. Targets
   /// must set this value based on the cost threshold for that target. Targets
   /// should assume that the memmove will be done using as many of the largest
