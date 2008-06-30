@@ -58,7 +58,9 @@ public:
   unsigned MakeReg(MVT VT);
 
   virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {}
-  virtual void InstructionSelectBasicBlock(SelectionDAG &SD) = 0;
+  virtual void InstructionSelect(SelectionDAG &SD) = 0;
+  virtual void InstructionSelectPostProcessing(SelectionDAG &DAG) {}
+  
   virtual void SelectRootInit() {
     DAGSize = CurDAG->AssignTopologicalOrder(TopOrder);
   }
@@ -160,10 +162,6 @@ public:
   };
   
 protected:
-  /// Pick a safe ordering and emit instructions for each target node in the
-  /// graph.
-  void ScheduleAndEmitDAG(SelectionDAG &DAG);
-  
   /// SelectInlineAsmMemoryOperands - Calls to this are automatically generated
   /// by tblgen.  Others should not call it.
   void SelectInlineAsmMemoryOperands(std::vector<SDOperand> &Ops,
@@ -186,6 +184,10 @@ private:
   void LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL);
   
   void ComputeLiveOutVRegInfo(SelectionDAG &DAG);
+
+  /// Pick a safe ordering and emit instructions for each target node in the
+  /// graph.
+  void ScheduleAndEmitDAG(SelectionDAG &DAG);
 
   /// SwitchCases - Vector of CaseBlock structures used to communicate
   /// SwitchInst code generation information.

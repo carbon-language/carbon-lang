@@ -173,9 +173,9 @@ namespace {
     SDOperand BuildSDIVSequence(SDNode *N);
     SDOperand BuildUDIVSequence(SDNode *N);
     
-    /// InstructionSelectBasicBlock - This callback is invoked by
+    /// InstructionSelect - This callback is invoked by
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-    virtual void InstructionSelectBasicBlock(SelectionDAG &DAG);
+    virtual void InstructionSelect(SelectionDAG &DAG);
     
     void InsertVRSaveCode(Function &Fn);
 
@@ -201,17 +201,14 @@ private:
   };
 }
 
-/// InstructionSelectBasicBlock - This callback is invoked by
+/// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void PPCDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
+void PPCDAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
   DEBUG(BB->dump());
 
   // Select target instructions for the DAG.
   DAG.setRoot(SelectRoot(DAG.getRoot()));
   DAG.RemoveDeadNodes();
-  
-  // Emit machine code to BB.
-  ScheduleAndEmitDAG(DAG);
 }
 
 /// InsertVRSaveCode - Once the entire function has been instruction selected,

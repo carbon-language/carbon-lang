@@ -78,9 +78,9 @@ namespace {
     /// operation.
     bool SelectAddr(SDOperand Addr, SDOperand &Op1, SDOperand &Op2);
 
-    /// InstructionSelectBasicBlock - This callback is invoked by
+    /// InstructionSelect - This callback is invoked by
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-    virtual void InstructionSelectBasicBlock(SelectionDAG &DAG);
+    virtual void InstructionSelect(SelectionDAG &DAG);
     
     virtual const char *getPassName() const {
       return "IA64 (Itanium) DAG->DAG Instruction Selector";
@@ -94,17 +94,14 @@ private:
   };
 }
 
-/// InstructionSelectBasicBlock - This callback is invoked by
+/// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void IA64DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
+void IA64DAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
   DEBUG(BB->dump());
 
   // Select target instructions for the DAG.
   DAG.setRoot(SelectRoot(DAG.getRoot()));
   DAG.RemoveDeadNodes();
-  
-  // Emit machine code to BB. 
-  ScheduleAndEmitDAG(DAG);
 }
 
 SDNode *IA64DAGToDAGISel::SelectDIV(SDOperand Op) {

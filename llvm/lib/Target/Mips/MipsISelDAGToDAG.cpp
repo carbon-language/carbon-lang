@@ -66,7 +66,7 @@ public:
         SelectionDAGISel(MipsLowering),
         TM(tm), MipsLowering(*TM.getTargetLowering()) {}
   
-  virtual void InstructionSelectBasicBlock(SelectionDAG &SD);
+  virtual void InstructionSelect(SelectionDAG &SD);
 
   // Pass Name
   virtual const char *getPassName() const {
@@ -100,10 +100,10 @@ private:
 
 }
 
-/// InstructionSelectBasicBlock - This callback is invoked by
+/// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
 void MipsDAGToDAGISel::
-InstructionSelectBasicBlock(SelectionDAG &SD) 
+InstructionSelect(SelectionDAG &SD) 
 {
   DEBUG(BB->dump());
   // Codegen the basic block.
@@ -120,9 +120,6 @@ InstructionSelectBasicBlock(SelectionDAG &SD)
   #endif
 
   SD.RemoveDeadNodes();
-  
-  // Emit machine code to BB. 
-  ScheduleAndEmitDAG(SD);
 }
 
 /// getGlobalBaseReg - Output the instructions required to put the

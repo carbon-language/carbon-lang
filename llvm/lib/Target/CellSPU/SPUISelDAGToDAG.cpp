@@ -317,9 +317,9 @@ public:
     return false;
   }
 
-  /// InstructionSelectBasicBlock - This callback is invoked by
+  /// InstructionSelect - This callback is invoked by
   /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-  virtual void InstructionSelectBasicBlock(SelectionDAG &DAG);
+  virtual void InstructionSelect(SelectionDAG &DAG);
 
   virtual const char *getPassName() const {
     return "Cell SPU DAG->DAG Pattern Instruction Selection";
@@ -339,19 +339,16 @@ public:
 
 }
 
-/// InstructionSelectBasicBlock - This callback is invoked by
+/// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
 void
-SPUDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG)
+SPUDAGToDAGISel::InstructionSelect(SelectionDAG &DAG)
 {
   DEBUG(BB->dump());
 
   // Select target instructions for the DAG.
   DAG.setRoot(SelectRoot(DAG.getRoot()));
   DAG.RemoveDeadNodes();
-  
-  // Emit machine code to BB.
-  ScheduleAndEmitDAG(DAG);
 }
 
 /*!

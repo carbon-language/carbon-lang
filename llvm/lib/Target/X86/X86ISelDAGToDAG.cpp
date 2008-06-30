@@ -32,7 +32,6 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
@@ -111,6 +110,10 @@ namespace {
     /// base register.
     unsigned GlobalBaseReg;
 
+    /// CurBB - Current BB being isel'd.
+    ///
+    MachineBasicBlock *CurBB;
+
   public:
     X86DAGToDAGISel(X86TargetMachine &tm, bool fast)
       : SelectionDAGISel(X86Lowering),
@@ -128,9 +131,13 @@ namespace {
       return "X86 DAG->DAG Instruction Selection";
     }
 
-    /// InstructionSelectBasicBlock - This callback is invoked by
+    /// InstructionSelect - This callback is invoked by
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-    virtual void InstructionSelectBasicBlock(SelectionDAG &DAG);
+    virtual void InstructionSelect(SelectionDAG &DAG);
+
+    /// InstructionSelectPostProcessing - Post processing of selected and
+    /// scheduled basic blocks.
+    virtual void InstructionSelectPostProcessing(SelectionDAG &DAG);
 
     virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF);
 
@@ -554,10 +561,10 @@ void X86DAGToDAGISel::PreprocessForFPConvert(SelectionDAG &DAG) {
 
 /// InstructionSelectBasicBlock - This callback is invoked by SelectionDAGISel
 /// when it has created a SelectionDAG for us to codegen.
-void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
-  DEBUG(BB->dump());
-  MachineFunction::iterator FirstMBB = BB;
+void X86DAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
+  CurBB = BB;  // BB can change as result of isel.
 
+  DEBUG(BB->dump());
   if (!FastISel)
     PreprocessForRMW(DAG);
 
@@ -575,11 +582,9 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 #endif
 
   DAG.RemoveDeadNodes();
+}
 
-  // Emit machine code to BB.  This can change 'BB' to the last block being 
-  // inserted into.
-  ScheduleAndEmitDAG(DAG);
-  
+void X86DAGToDAGISel::InstructionSelectPostProcessing(SelectionDAG &DAG) {
   // If we are emitting FP stack code, scan the basic block to determine if this
   // block defines any FP values.  If so, put an FP_REG_KILL instruction before
   // the terminator of the block.
@@ -592,7 +597,7 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 
   // Scan all of the machine instructions in these MBBs, checking for FP
   // stores.  (RFP32 and RFP64 will not exist in SSE mode, but RFP80 might.)
-  MachineFunction::iterator MBBI = FirstMBB;
+  MachineFunction::iterator MBBI = CurBB;
   MachineFunction::iterator EndMBB = BB; ++EndMBB;
   for (; MBBI != EndMBB; ++MBBI) {
     MachineBasicBlock *MBB = MBBI;

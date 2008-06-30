@@ -43,9 +43,10 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Support/MathExtras.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Timer.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -5354,7 +5355,14 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
 
   // Third, instruction select all of the operations to machine code, adding the
   // code to the MachineBasicBlock.
-  InstructionSelectBasicBlock(DAG);
+  InstructionSelect(DAG);
+
+  // Emit machine code to BB.  This can change 'BB' to the last block being 
+  // inserted into.
+  ScheduleAndEmitDAG(DAG);
+
+  // Perform target specific isel post processing.
+  InstructionSelectPostProcessing(DAG);
   
   DOUT << "Selected machine code:\n";
   DEBUG(BB->dump());

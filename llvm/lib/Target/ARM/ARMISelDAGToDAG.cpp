@@ -54,7 +54,7 @@ public:
   } 
   
   SDNode *Select(SDOperand Op);
-  virtual void InstructionSelectBasicBlock(SelectionDAG &DAG);
+  virtual void InstructionSelect(SelectionDAG &DAG);
   bool SelectAddrMode2(SDOperand Op, SDOperand N, SDOperand &Base,
                        SDOperand &Offset, SDOperand &Opc);
   bool SelectAddrMode2Offset(SDOperand Op, SDOperand N,
@@ -91,13 +91,11 @@ public:
 };
 }
 
-void ARMDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
+void ARMDAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
   DEBUG(BB->dump());
 
   DAG.setRoot(SelectRoot(DAG.getRoot()));
   DAG.RemoveDeadNodes();
-
-  ScheduleAndEmitDAG(DAG);
 }
 
 bool ARMDAGToDAGISel::SelectAddrMode2(SDOperand Op, SDOperand N,

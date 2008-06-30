@@ -47,9 +47,9 @@ public:
   bool SelectADDRri(SDOperand Op, SDOperand N, SDOperand &Base,
                     SDOperand &Offset);
   
-  /// InstructionSelectBasicBlock - This callback is invoked by
+  /// InstructionSelect - This callback is invoked by
   /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-  virtual void InstructionSelectBasicBlock(SelectionDAG &DAG);
+  virtual void InstructionSelect(SelectionDAG &DAG);
   
   virtual const char *getPassName() const {
     return "SPARC DAG->DAG Pattern Instruction Selection";
@@ -60,17 +60,14 @@ public:
 };
 }  // end anonymous namespace
 
-/// InstructionSelectBasicBlock - This callback is invoked by
+/// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void SparcDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
+void SparcDAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
   DEBUG(BB->dump());
   
   // Select target instructions for the DAG.
   DAG.setRoot(SelectRoot(DAG.getRoot()));
   DAG.RemoveDeadNodes();
-  
-  // Emit machine code to BB. 
-  ScheduleAndEmitDAG(DAG);
 }
 
 bool SparcDAGToDAGISel::SelectADDRri(SDOperand Op, SDOperand Addr,

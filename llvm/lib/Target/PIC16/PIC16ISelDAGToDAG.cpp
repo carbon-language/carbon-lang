@@ -61,7 +61,7 @@ public:
         SelectionDAGISel(PIC16Lowering),
         TM(tm), PIC16Lowering(*TM.getTargetLowering()) {}
   
-  virtual void InstructionSelectBasicBlock(SelectionDAG &SD);
+  virtual void InstructionSelect(SelectionDAG &SD);
 
   // Pass Name
   virtual const char *getPassName() const {
@@ -97,9 +97,9 @@ private:
 
 }
 
-/// InstructionSelectBasicBlock - This callback is invoked by
+/// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void PIC16DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &SD) 
+void PIC16DAGToDAGISel::InstructionSelect(SelectionDAG &SD) 
 {
   DEBUG(BB->dump());
   // Codegen the basic block.
@@ -115,9 +115,6 @@ void PIC16DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &SD)
   DOUT << "===== Instruction selection ends:\n";
 
   SD.RemoveDeadNodes();
-  
-  // Emit machine code to BB. 
-  ScheduleAndEmitDAG(SD);
 }
 
 

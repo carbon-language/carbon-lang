@@ -161,9 +161,9 @@ namespace {
     // target-specific node if it hasn't already been changed.
     SDNode *Select(SDOperand Op);
     
-    /// InstructionSelectBasicBlock - This callback is invoked by
+    /// InstructionSelect - This callback is invoked by
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-    virtual void InstructionSelectBasicBlock(SelectionDAG &DAG);
+    virtual void InstructionSelect(SelectionDAG &DAG);
     
     virtual const char *getPassName() const {
       return "Alpha DAG->DAG Pattern Instruction Selection";
@@ -230,17 +230,14 @@ SDOperand AlphaDAGToDAGISel::getGlobalRetAddr() {
                                 RA, MVT::i64);
 }
 
-/// InstructionSelectBasicBlock - This callback is invoked by
+/// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void AlphaDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
+void AlphaDAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
   DEBUG(BB->dump());
   
   // Select target instructions for the DAG.
   DAG.setRoot(SelectRoot(DAG.getRoot()));
   DAG.RemoveDeadNodes();
-  
-  // Emit machine code to BB. 
-  ScheduleAndEmitDAG(DAG);
 }
 
 // Select - Convert the specified operand from a target-independent to a
