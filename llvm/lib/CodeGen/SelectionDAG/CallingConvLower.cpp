@@ -26,7 +26,7 @@ CCState::CCState(unsigned CC, bool isVarArg, const TargetMachine &tm,
   // No stack is used.
   StackOffset = 0;
   
-  UsedRegs.resize(TRI.getNumRegs());
+  UsedRegs.resize((TRI.getNumRegs()+31)/32);
 }
 
 // HandleByVal - Allocate a stack slot large enough to pass an argument by
