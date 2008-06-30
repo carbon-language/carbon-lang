@@ -15,6 +15,7 @@
 #define LLVM_ADT_SMALLVECTOR_H
 
 #include "llvm/ADT/iterator.h"
+#include "llvm/Support/type_traits.h"
 #include <algorithm>
 #include <memory>
 
@@ -349,7 +350,11 @@ void SmallVectorImpl<T>::grow(size_t MinSize) {
   T *NewElts = static_cast<T*>(operator new(NewCapacity*sizeof(T)));
   
   // Copy the elements over.
-  std::uninitialized_copy(Begin, End, NewElts);
+  if (is_class<T>::value)
+    std::uninitialized_copy(Begin, End, NewElts);
+  else
+    // Use memcpy for PODs (std::uninitialized_copy optimizes to memmove).
+    memcpy(NewElts, Begin, CurSize * sizeof(T));
   
   // Destroy the original elements.
   destroy_range(Begin, End);
