@@ -592,6 +592,7 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
   AfterLegalize = RunningAfterLegalize;
 
   // Add all the dag nodes to the worklist.
+  WorkList.reserve(DAG.allnodes_size());
   for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
        E = DAG.allnodes_end(); I != E; ++I)
     WorkList.push_back(I);
