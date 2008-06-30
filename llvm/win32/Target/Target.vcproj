@@ -309,6 +309,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Target\Target.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Target\TargetAsmInfo.cpp"
 				>
 			</File>

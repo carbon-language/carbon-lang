@@ -352,6 +352,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\Transforms\IPO\ExtractGV.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\Transforms\Ipo\GlobalDCE.cpp"
 					>
 				</File>
@@ -553,10 +557,6 @@
 					RelativePath="..\..\lib\Transforms\Scalar\TailRecursionElimination.cpp"
 					>
 				</File>
-			</Filter>
-			<Filter
-				Name="Parallel"
-				>
 			</Filter>
 			<Filter
 				Name="Utils"

@@ -380,11 +380,11 @@
 			Name="Generated Files"
 			>
 			<File
-				RelativePath="..\..\lib\AsmParser\llvmAsmParser.cpp"
+				RelativePath=".\llvmAsmParser.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\lib\AsmParser\llvmAsmParser.h"
+				RelativePath=".\llvmAsmParser.h"
 				>
 			</File>
 		</Filter>

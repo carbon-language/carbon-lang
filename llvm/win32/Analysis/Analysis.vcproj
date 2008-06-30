@@ -405,6 +405,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\SparsePropagation.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\Trace.cpp"
 				>
 			</File>
