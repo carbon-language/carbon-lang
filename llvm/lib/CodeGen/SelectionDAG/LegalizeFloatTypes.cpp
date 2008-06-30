@@ -372,7 +372,7 @@ void DAGTypeLegalizer::SoftenSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
   assert((VT == MVT::f32 || VT == MVT::f64) && "Unsupported setcc type!");
 
   // Expand into one or more soft-fp libcall(s).
-  RTLIB::Libcall LC1, LC2 = RTLIB::UNKNOWN_LIBCALL;
+  RTLIB::Libcall LC1 = RTLIB::UNKNOWN_LIBCALL, LC2 = RTLIB::UNKNOWN_LIBCALL;
   switch (CCCode) {
   case ISD::SETEQ:
   case ISD::SETOEQ:
