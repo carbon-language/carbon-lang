@@ -975,12 +975,12 @@ public:
   struct ArgListEntry {
     SDOperand Node;
     const Type* Ty;
-    bool isSExt;
-    bool isZExt;
-    bool isInReg;
-    bool isSRet;
-    bool isNest;
-    bool isByVal;
+    bool isSExt  : 1;
+    bool isZExt  : 1;
+    bool isInReg : 1;
+    bool isSRet  : 1;
+    bool isNest  : 1;
+    bool isByVal : 1;
     uint16_t Alignment;
 
     ArgListEntry() : isSExt(false), isZExt(false), isInReg(false),
