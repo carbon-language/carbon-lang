@@ -18,6 +18,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Value.h"
 #include "llvm/Analysis/CallGraph.h"
+#include "llvm/Analysis/Dominators.h"
 #include <iostream>
 #include <fstream>
 using namespace llvm;
@@ -80,4 +81,35 @@ namespace {
   char CallGraphPrinter::ID = 0;
   RegisterPass<CallGraphPrinter> P2("print-callgraph",
                                     "Print Call Graph to 'dot' file");
+}
+
+//===----------------------------------------------------------------------===//
+//                            DomInfoPrinter Pass
+//===----------------------------------------------------------------------===//
+
+namespace {
+  class DomInfoPrinter : public FunctionPass {
+  public:
+    static char ID; // Pass identification, replacement for typeid
+    DomInfoPrinter() : FunctionPass((intptr_t)&ID) {}
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+      AU.addRequired<DominatorTree>();
+      AU.addRequired<DominanceFrontier>();
+
+    }
+
+    virtual bool runOnFunction(Function &F) {
+      DominatorTree &DT = getAnalysis<DominatorTree>();
+      DT.dump();
+      DominanceFrontier &DF = getAnalysis<DominanceFrontier>();
+      DF.dump();
+      return false;
+    }
+  };
+
+  char DomInfoPrinter::ID = 0;
+  static RegisterPass<DomInfoPrinter>
+  DIP("print-dom-info", "Dominator Info Printer", true, true);
 }
