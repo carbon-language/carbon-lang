@@ -100,7 +100,7 @@ namespace {
 /// ArgEffect is used to summarize a function/method call's effect on a
 /// particular argument.
 enum ArgEffect { IncRef, DecRef, DoNothing, StopTracking, MayEscape,
-                 SelfOwn };
+                 SelfOwn, Autorelease };
 
 /// ArgEffects summarizes the effects of a function/method call on all of
 /// its arguments.
@@ -876,7 +876,7 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   addNSObjectMethSummary(GetNullarySelector("drain", Ctx), Summ);
 
   // Create the "autorelease" selector.
-  Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : StopTracking);
+  Summ = getPersistentSummary(E, isGCEnabled() ? DoNothing : Autorelease);
   addNSObjectMethSummary(GetNullarySelector("autorelease", Ctx), Summ);
 
   // For NSWindow, allocated objects are (initially) self-owned.
@@ -1818,7 +1818,7 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
     default:
       assert (false && "Unhandled CFRef transition.");
 
-          
+    case Autorelease:          
     case MayEscape:
       if (V.getKind() == RefVal::Owned) {
         V = V ^ RefVal::NotOwned;
@@ -1835,7 +1835,7 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
       }
       
       return B;
-      
+
     case StopTracking:
       return RefBFactory.Remove(B, sym);
       
