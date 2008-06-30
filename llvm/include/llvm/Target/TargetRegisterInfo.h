@@ -42,18 +42,15 @@ class Type;
 /// Registers that this does not apply to simply should set this to null.
 /// The SubRegs field is a zero terminated array of registers that are
 /// sub-registers of the specific register, e.g. AL, AH are sub-registers of AX.
-/// The ImmsubRegs field is a subset of SubRegs. It includes only the immediate
-/// sub-registers. e.g. EAX has only one immediate sub-register of AX, not AH,
-/// AL which are immediate sub-registers of AX. The SuperRegs field is a zero
-/// terminated array of registers that are super-registers of the specific
-/// register, e.g. RAX, EAX, are super-registers of AX.
+/// The SuperRegs field is a zero terminated array of registers that are
+/// super-registers of the specific register, e.g. RAX, EAX, are super-registers
+/// of AX.
 ///
 struct TargetRegisterDesc {
   const char     *AsmName;      // Assembly language name for the register
   const char     *Name;         // Printable name for the reg (for debugging)
   const unsigned *AliasSet;     // Register Alias Set, described above
   const unsigned *SubRegs;      // Sub-register set, described above
-  const unsigned *ImmSubRegs;   // Immediate sub-register set, described above
   const unsigned *SuperRegs;    // Super-register set, described above
 };
 
@@ -362,14 +359,6 @@ public:
   ///
   const unsigned *getSubRegisters(unsigned RegNo) const {
     return get(RegNo).SubRegs;
-  }
-
-  /// getImmediateSubRegisters - Return the set of registers that are immediate
-  /// sub-registers of the specified register, or a null list of there are none.
-  /// The list returned is zero terminated.
-  ///
-  const unsigned *getImmediateSubRegisters(unsigned RegNo) const {
-    return get(RegNo).ImmSubRegs;
   }
 
   /// getSuperRegisters - Return the list of registers that are super-registers

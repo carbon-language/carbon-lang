@@ -418,7 +418,6 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   OS << "  };\n";
 
   // Emit register sub-registers / super-registers, aliases...
-  std::map<Record*, std::set<Record*> > RegisterImmSubRegs;
   std::map<Record*, std::set<Record*> > RegisterSubRegs;
   std::map<Record*, std::set<Record*> > RegisterSuperRegs;
   std::map<Record*, std::set<Record*> > RegisterAliases;
@@ -459,7 +458,6 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
         cerr << "Warning: register " << getQualifiedName(SubReg)
              << " specified as a sub-register of " << getQualifiedName(R)
              << " multiple times!\n";
-      RegisterImmSubRegs[R].insert(SubReg);
       addSubSuperReg(R, SubReg, RegisterSubRegs, RegisterSuperRegs,
                      RegisterAliases);
     }
@@ -502,21 +500,6 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     OS << "0 };\n";
   }
 
-  if (!RegisterImmSubRegs.empty())
-    OS << "\n\n  // Register Immediate Sub-registers Sets...\n";
-
-  // Loop over all of the registers which have sub-registers, emitting the
-  // sub-registers list to memory.
-  for (std::map<Record*, std::set<Record*> >::iterator
-         I = RegisterImmSubRegs.begin(), E = RegisterImmSubRegs.end();
-       I != E; ++I) {
-    OS << "  const unsigned " << I->first->getName() << "_ImmSubRegsSet[] = { ";
-    for (std::set<Record*>::iterator ASI = I->second.begin(),
-           E = I->second.end(); ASI != E; ++ASI)
-      OS << getQualifiedName(*ASI) << ", ";
-    OS << "0 };\n";
-  }
-
   if (!RegisterSuperRegs.empty())
     OS << "\n\n  // Register Super-registers Sets...\n";
 
@@ -540,7 +523,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   }
 
   OS<<"\n  const TargetRegisterDesc RegisterDescriptors[] = { // Descriptors\n";
-  OS << "    { \"NOREG\",\t\"NOREG\",\t0,\t0,\t0,\t0 },\n";
+  OS << "    { \"NOREG\",\t\"NOREG\",\t0,\t0,\t0 },\n";
 
   // Now that register alias and sub-registers sets have been emitted, emit the
   // register descriptors now.
@@ -569,10 +552,6 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       OS << "Empty_AliasSet,\t";
     if (RegisterSubRegs.count(Reg.TheDef))
       OS << Reg.getName() << "_SubRegsSet,\t";
-    else
-      OS << "Empty_SubRegsSet,\t";
-    if (RegisterImmSubRegs.count(Reg.TheDef))
-      OS << Reg.getName() << "_ImmSubRegsSet,\t";
     else
       OS << "Empty_SubRegsSet,\t";
     if (RegisterSuperRegs.count(Reg.TheDef))
