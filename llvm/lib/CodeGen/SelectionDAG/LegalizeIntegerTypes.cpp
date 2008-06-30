@@ -444,6 +444,7 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
   case ISD::BRCOND:      Res = PromoteIntOp_BRCOND(N, OpNo); break;
   case ISD::BR_CC:       Res = PromoteIntOp_BR_CC(N, OpNo); break;
   case ISD::SELECT:      Res = PromoteIntOp_SELECT(N, OpNo); break;
+  case ISD::SELECT_CC:   Res = PromoteIntOp_SELECT_CC(N, OpNo); break;
   case ISD::SETCC:       Res = PromoteIntOp_SETCC(N, OpNo); break;
 
   case ISD::STORE:       Res = PromoteIntOp_STORE(cast<StoreSDNode>(N),
@@ -568,7 +569,7 @@ SDOperand DAGTypeLegalizer::PromoteIntOp_BRCOND(SDNode *N, unsigned OpNo) {
 }
 
 SDOperand DAGTypeLegalizer::PromoteIntOp_BR_CC(SDNode *N, unsigned OpNo) {
-  assert(OpNo == 2 && "Don't know how to promote this operand");
+  assert(OpNo == 2 && "Don't know how to promote this operand!");
 
   SDOperand LHS = N->getOperand(2);
   SDOperand RHS = N->getOperand(3);
@@ -580,8 +581,20 @@ SDOperand DAGTypeLegalizer::PromoteIntOp_BR_CC(SDNode *N, unsigned OpNo) {
                                 N->getOperand(1), LHS, RHS, N->getOperand(4));
 }
 
+SDOperand DAGTypeLegalizer::PromoteIntOp_SELECT_CC(SDNode *N, unsigned OpNo) {
+  assert(OpNo == 0 && "Don't know how to promote this operand!");
+
+  SDOperand LHS = N->getOperand(0);
+  SDOperand RHS = N->getOperand(1);
+  PromoteSetCCOperands(LHS, RHS, cast<CondCodeSDNode>(N->getOperand(4))->get());
+
+  // The CC (#4) and the possible return values (#2 and #3) have legal types.
+  return DAG.UpdateNodeOperands(SDOperand(N, 0), LHS, RHS, N->getOperand(2),
+                                N->getOperand(3), N->getOperand(4));
+}
+
 SDOperand DAGTypeLegalizer::PromoteIntOp_SETCC(SDNode *N, unsigned OpNo) {
-  assert(OpNo == 0 && "Don't know how to promote this operand");
+  assert(OpNo == 0 && "Don't know how to promote this operand!");
 
   SDOperand LHS = N->getOperand(0);
   SDOperand RHS = N->getOperand(1);

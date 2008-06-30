@@ -248,6 +248,7 @@ private:
   SDOperand PromoteIntOp_INSERT_VECTOR_ELT(SDNode *N, unsigned OpNo);
   SDOperand PromoteIntOp_MEMBARRIER(SDNode *N);
   SDOperand PromoteIntOp_SELECT(SDNode *N, unsigned OpNo);
+  SDOperand PromoteIntOp_SELECT_CC(SDNode *N, unsigned OpNo);
   SDOperand PromoteIntOp_SETCC(SDNode *N, unsigned OpNo);
   SDOperand PromoteIntOp_SIGN_EXTEND(SDNode *N);
   SDOperand PromoteIntOp_STORE(StoreSDNode *N, unsigned OpNo);
@@ -428,7 +429,6 @@ private:
   void SplitVecRes_UnOp(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void SplitVecRes_BinOp(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void SplitVecRes_FPOWI(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void SplitVecRes_SELECT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
 
   // Vector Operand Splitting: <128 x ty> -> 2 x <64 x ty>.
   bool SplitOperand(SDNode *N, unsigned OpNo);
