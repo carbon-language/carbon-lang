@@ -364,16 +364,19 @@ void DAGTypeLegalizer::RemapNode(SDOperand &N) {
   }
 }
 
-/// ExpungeNode - If this is a deleted value that was kept around to speed up
-/// remapping, remove it globally now.  The only map that can have a deleted
-/// node as a source is ReplacedNodes.  Other maps can have deleted nodes as
-/// targets, but since their looked-up values are always immediately remapped
-/// using RemapNode, resulting in a not-deleted node, this is harmless as long
-/// as ReplacedNodes/RemapNode always performs correct mappings.  The mapping
-/// will always be correct as long as ExpungeNode is called on the source when
-/// adding a new node to ReplacedNodes, and called on the target when adding
-/// a new node to any map.
+/// ExpungeNode - If this is a reincarnation of a deleted value that was kept
+/// around to speed up remapping, remove it from all maps now.  The only map
+/// that can have a deleted node as a source is ReplacedNodes.  Other maps can
+/// have deleted nodes as targets, but since their looked-up values are always
+/// immediately remapped using RemapNode, resulting in a not-deleted node, this
+/// is harmless as long as ReplacedNodes/RemapNode always performs correct
+/// mappings.  The mapping will always be correct as long as ExpungeNode is
+/// called on the source when adding a new node to ReplacedNodes, and called on
+/// the target when adding a new node to any map.
 void DAGTypeLegalizer::ExpungeNode(SDOperand N) {
+  if (N.Val->getNodeId() != NewNode)
+    return;
+
   SDOperand Replacement = N;
   RemapNode(Replacement);
   if (Replacement != N) {
