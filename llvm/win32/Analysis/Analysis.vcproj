@@ -373,6 +373,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\LoopVR.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\MemoryDependenceAnalysis.cpp"
 				>
 			</File>
@@ -504,6 +508,10 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Analysis\LoopPass.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Analysis\LoopVR.h"
 				>
 			</File>
 			<File
