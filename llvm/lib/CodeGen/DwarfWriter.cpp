@@ -827,7 +827,7 @@ protected:
   ///
   AsmPrinter *Asm;
   
-  /// TAI - Target Asm Printer.
+  /// TAI - Target asm information.
   const TargetAsmInfo *TAI;
   
   /// TD - Target data.
@@ -3511,7 +3511,7 @@ public:
         shouldEmitTable = true;
 
       // See if we need frame move info.
-      if (MMI->hasDebugInfo() || 
+      if ((MMI->hasDebugInfo() && TAI->doesDebugInfoRequireFrameMoveInfo()) || 
           !MF->getFunction()->doesNotThrow() ||
           UnwindTablesMandatory)
         shouldEmitMoves = true;

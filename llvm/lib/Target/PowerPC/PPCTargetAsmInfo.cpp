@@ -66,6 +66,7 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
   DwarfEHFrameSection =
   ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
   DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
+  DebugInfoRequireFrameMoveInfo = false;
   GlobalEHDirective = "\t.globl\t";
   SupportsWeakOmittedEHFrame = false;
 
