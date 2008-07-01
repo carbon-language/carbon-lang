@@ -39,10 +39,10 @@ namespace {
       (void) llvm::createOcamlCollector();
       (void) llvm::createShadowStackCollector();
       
-      (void) llvm::createBURRListDAGScheduler(NULL, NULL, NULL);
-      (void) llvm::createTDRRListDAGScheduler(NULL, NULL, NULL);
-      (void) llvm::createTDListDAGScheduler(NULL, NULL, NULL);
-      (void) llvm::createDefaultScheduler(NULL, NULL, NULL);
+      (void) llvm::createBURRListDAGScheduler(NULL, NULL, NULL, false);
+      (void) llvm::createTDRRListDAGScheduler(NULL, NULL, NULL, false);
+      (void) llvm::createTDListDAGScheduler(NULL, NULL, NULL, false);
+      (void) llvm::createDefaultScheduler(NULL, NULL, NULL, false);
 
     }
   } ForceCodegenLinking; // Force link by creating a global definition.

@@ -44,10 +44,11 @@ public:
   std::vector<SDNode*> TopOrder;
   unsigned DAGSize;
   CollectorMetadata *GCI;
+  bool FastISel;
   static char ID;
 
-  explicit SelectionDAGISel(TargetLowering &tli) : 
-    FunctionPass((intptr_t)&ID), TLI(tli), DAGSize(0), GCI(0) {}
+  explicit SelectionDAGISel(TargetLowering &tli, bool fast = false) : 
+    FunctionPass((intptr_t)&ID), TLI(tli), DAGSize(0), GCI(0), FastISel(fast) {}
   
   TargetLowering &getTargetLowering() { return TLI; }
 

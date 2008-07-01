@@ -35,7 +35,7 @@ class RegisterScheduler : public MachinePassRegistryNode {
 public:
 
   typedef ScheduleDAG *(*FunctionPassCtor)(SelectionDAGISel*, SelectionDAG*,
-                                           MachineBasicBlock*);
+                                        MachineBasicBlock*, bool);
 
   static MachinePassRegistry Registry;
 

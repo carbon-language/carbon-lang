@@ -58,6 +58,8 @@ private:
   /// isBottomUp - This is true if the scheduling problem is bottom-up, false if
   /// it is top-down.
   bool isBottomUp;
+
+  bool Fast;
   
   /// AvailableQueue - The priority queue to use for the available SUnits.
   SchedulingPriorityQueue *AvailableQueue;
@@ -71,9 +73,9 @@ private:
 
 public:
   ScheduleDAGRRList(SelectionDAG &dag, MachineBasicBlock *bb,
-                  const TargetMachine &tm, bool isbottomup,
-                  SchedulingPriorityQueue *availqueue)
-    : ScheduleDAG(dag, bb, tm), isBottomUp(isbottomup),
+                    const TargetMachine &tm, bool isbottomup, bool f,
+                    SchedulingPriorityQueue *availqueue)
+    : ScheduleDAG(dag, bb, tm), isBottomUp(isbottomup), Fast(f),
       AvailableQueue(availqueue) {
     }
 
@@ -144,36 +146,6 @@ private:
   /// even after dynamic insertions of new edges.
   /// This allows a very fast implementation of IsReachable.
 
-
-  /** 
-  The idea of the algorithm is taken from 
-  "Online algorithms for managing the topological order of
-  a directed acyclic graph" by David J. Pearce and Paul H.J. Kelly
-  This is the MNR algorithm, which was first introduced by 
-  A. Marchetti-Spaccamela, U. Nanni and H. Rohnert in  
-  "Maintaining a topological order under edge insertions".
-
-  Short description of the algorithm: 
-  
-  Topological ordering, ord, of a DAG maps each node to a topological
-  index so that for all edges X->Y it is the case that ord(X) < ord(Y).
-  
-  This means that if there is a path from the node X to the node Z, 
-  then ord(X) < ord(Z).
-  
-  This property can be used to check for reachability of nodes:
-  if Z is reachable from X, then an insertion of the edge Z->X would 
-  create a cycle.
-   
-  The algorithm first computes a topological ordering for the DAG by initializing
-  the Index2Node and Node2Index arrays and then tries to keep the ordering
-  up-to-date after edge insertions by reordering the DAG.
-  
-  On insertion of the edge X->Y, the algorithm first marks by calling DFS the
-  nodes reachable from Y, and then shifts them using Shift to lie immediately
-  after X in Index2Node.
-  */
-
   /// InitDAGTopologicalSorting - create the initial topological 
   /// ordering from the DAG to be scheduled.
   void InitDAGTopologicalSorting();
@@ -212,8 +184,10 @@ void ScheduleDAGRRList::Schedule() {
 
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           SUnits[su].dumpAll(&DAG));
-  CalculateDepths();
-  CalculateHeights();
+  if (!Fast) {
+    CalculateDepths();
+    CalculateHeights();
+  }
   InitDAGTopologicalSorting();
 
   AvailableQueue->initNodes(SUnits);
@@ -225,8 +199,9 @@ void ScheduleDAGRRList::Schedule() {
     ListScheduleTopDown();
   
   AvailableQueue->releaseState();
-  
-  CommuteNodesToReducePressure();
+
+  if (!Fast)
+    CommuteNodesToReducePressure();
   
   DOUT << "*** Final schedule ***\n";
   DEBUG(dumpSchedule());
@@ -449,6 +424,33 @@ inline void ScheduleDAGRRList::Allocate(int n, int index) {
 
 /// InitDAGTopologicalSorting - create the initial topological 
 /// ordering from the DAG to be scheduled.
+
+/// The idea of the algorithm is taken from 
+/// "Online algorithms for managing the topological order of
+/// a directed acyclic graph" by David J. Pearce and Paul H.J. Kelly
+/// This is the MNR algorithm, which was first introduced by 
+/// A. Marchetti-Spaccamela, U. Nanni and H. Rohnert in  
+/// "Maintaining a topological order under edge insertions".
+///
+/// Short description of the algorithm: 
+///
+/// Topological ordering, ord, of a DAG maps each node to a topological
+/// index so that for all edges X->Y it is the case that ord(X) < ord(Y).
+///
+/// This means that if there is a path from the node X to the node Z, 
+/// then ord(X) < ord(Z).
+///
+/// This property can be used to check for reachability of nodes:
+/// if Z is reachable from X, then an insertion of the edge Z->X would 
+/// create a cycle.
+///
+/// The algorithm first computes a topological ordering for the DAG by
+/// initializing the Index2Node and Node2Index arrays and then tries to keep
+/// the ordering up-to-date after edge insertions by reordering the DAG.
+///
+/// On insertion of the edge X->Y, the algorithm first marks by calling DFS
+/// the nodes reachable from Y, and then shifts them using Shift to lie
+/// immediately after X in Index2Node.
 void ScheduleDAGRRList::InitDAGTopologicalSorting() {
   unsigned DAGSize = SUnits.size();
   std::vector<unsigned> InDegree(DAGSize);
@@ -1335,15 +1337,19 @@ namespace {
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
     ScheduleDAGRRList *scheduleDAG;
+
+    bool Fast;
   public:
     explicit BURegReductionPriorityQueue(const TargetInstrInfo *tii,
-                                         const TargetRegisterInfo *tri)
-      : TII(tii), TRI(tri), scheduleDAG(NULL) {}
+                                         const TargetRegisterInfo *tri,
+                                         bool f)
+      : TII(tii), TRI(tri), scheduleDAG(NULL), Fast(f) {}
 
     void initNodes(std::vector<SUnit> &sunits) {
       SUnits = &sunits;
       // Add pseudo dependency edges for two-address nodes.
-      AddPseudoTwoAddrDeps();
+      if (!Fast)
+        AddPseudoTwoAddrDeps();
       // Calculate node priorities.
       CalculateSethiUllmanNumbers();
     }
@@ -1821,23 +1827,25 @@ void TDRegReductionPriorityQueue::CalculateSethiUllmanNumbers() {
 
 llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAGISel *IS,
                                                     SelectionDAG *DAG,
-                                                    MachineBasicBlock *BB) {
+                                                    MachineBasicBlock *BB,
+                                                    bool Fast) {
   const TargetInstrInfo *TII = DAG->getTarget().getInstrInfo();
   const TargetRegisterInfo *TRI = DAG->getTarget().getRegisterInfo();
   
   BURegReductionPriorityQueue *priorityQueue = 
-    new BURegReductionPriorityQueue(TII, TRI);
+    new BURegReductionPriorityQueue(TII, TRI, Fast);
 
   ScheduleDAGRRList * scheduleDAG = 
-    new ScheduleDAGRRList(*DAG, BB, DAG->getTarget(), true, priorityQueue);
+    new ScheduleDAGRRList(*DAG, BB, DAG->getTarget(), true, Fast,priorityQueue);
   priorityQueue->setScheduleDAG(scheduleDAG);
   return scheduleDAG;  
 }
 
 llvm::ScheduleDAG* llvm::createTDRRListDAGScheduler(SelectionDAGISel *IS,
                                                     SelectionDAG *DAG,
-                                                    MachineBasicBlock *BB) {
-  return new ScheduleDAGRRList(*DAG, BB, DAG->getTarget(), false,
+                                                    MachineBasicBlock *BB,
+                                                    bool Fast) {
+  return new ScheduleDAGRRList(*DAG, BB, DAG->getTarget(), false, Fast,
                               new TDRegReductionPriorityQueue());
 }
 

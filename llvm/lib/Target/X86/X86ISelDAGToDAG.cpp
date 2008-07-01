@@ -90,10 +90,6 @@ namespace {
     /// register should set this to true.
     bool ContainsFPCode;
 
-    /// FastISel - Enable fast(er) instruction selection.
-    ///
-    bool FastISel;
-
     /// TM - Keep a reference to X86TargetMachine.
     ///
     X86TargetMachine &TM;
@@ -116,8 +112,8 @@ namespace {
 
   public:
     X86DAGToDAGISel(X86TargetMachine &tm, bool fast)
-      : SelectionDAGISel(X86Lowering),
-        ContainsFPCode(false), FastISel(fast), TM(tm),
+      : SelectionDAGISel(X86Lowering, fast),
+        ContainsFPCode(false), TM(tm),
         X86Lowering(*TM.getTargetLowering()),
         Subtarget(&TM.getSubtarget<X86Subtarget>()) {}
 

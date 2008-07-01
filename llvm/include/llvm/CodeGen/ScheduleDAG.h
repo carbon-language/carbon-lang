@@ -396,25 +396,29 @@ namespace llvm {
   /// reduction list scheduler.
   ScheduleDAG* createBURRListDAGScheduler(SelectionDAGISel *IS,
                                           SelectionDAG *DAG,
-                                          MachineBasicBlock *BB);
+                                          MachineBasicBlock *BB,
+                                          bool Fast);
   
   /// createTDRRListDAGScheduler - This creates a top down register usage
   /// reduction list scheduler.
   ScheduleDAG* createTDRRListDAGScheduler(SelectionDAGISel *IS,
                                           SelectionDAG *DAG,
-                                          MachineBasicBlock *BB);
+                                          MachineBasicBlock *BB,
+                                          bool Fast);
   
   /// createTDListDAGScheduler - This creates a top-down list scheduler with
   /// a hazard recognizer.
   ScheduleDAG* createTDListDAGScheduler(SelectionDAGISel *IS,
                                         SelectionDAG *DAG,
-                                        MachineBasicBlock *BB);
+                                        MachineBasicBlock *BB,
+                                        bool Fast);
                                         
   /// createDefaultScheduler - This creates an instruction scheduler appropriate
   /// for the target.
   ScheduleDAG* createDefaultScheduler(SelectionDAGISel *IS,
                                       SelectionDAG *DAG,
-                                      MachineBasicBlock *BB);
+                                      MachineBasicBlock *BB,
+                                      bool Fast);
 
   class SUnitIterator : public forward_iterator<SUnit, ptrdiff_t> {
     SUnit *Node;
