@@ -1318,8 +1318,7 @@ void AsmPrinter::printImplicitDef(const MachineInstr *MI) const {
 /// printLabel - This method prints a local label used by debug and
 /// exception handling tables.
 void AsmPrinter::printLabel(const MachineInstr *MI) const {
-  O << TAI->getPrivateGlobalPrefix()
-    << "label" << MI->getOperand(0).getImm() << ":\n";
+  printLabel(MI->getOperand(0).getImm());
 }
 
 void AsmPrinter::printLabel(unsigned Id) const {
