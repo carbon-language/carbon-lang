@@ -20,7 +20,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/System/DynamicLibrary.h"
