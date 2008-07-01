@@ -223,6 +223,7 @@ public:
     Func,
     Function,
     PrettyFunction,
+    CXXThis,
     ObjCSuper // super
   };
   

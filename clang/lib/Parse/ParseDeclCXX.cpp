@@ -229,11 +229,9 @@ void Parser::ParseClassSpecifier(DeclSpec &DS) {
 
   // If there is a body, parse it and inform the actions module.
   if (Tok.is(tok::l_brace))
-    // FIXME: Temporarily disable parsing for C++ classes until the Sema support
-    // is in place.
-    //if (getLang().CPlusPlus)
-    //  ParseCXXMemberSpecification(StartLoc, TagType, TagDecl);
-    //else
+    if (getLang().CPlusPlus)
+      ParseCXXMemberSpecification(StartLoc, TagType, TagDecl);
+    else
       ParseStructUnionBody(StartLoc, TagType, TagDecl);
   else if (TK == Action::TK_Definition) {
     // FIXME: Complain that we have a base-specifier list but no
@@ -411,7 +409,7 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
         return 0;
     }
   }
-  
+
   Declarator DeclaratorInfo(DS, Declarator::MemberContext);
 
   if (Tok.isNot(tok::colon)) {
@@ -492,6 +490,10 @@ Parser::DeclTy *Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS) {
     if (Tok.is(tok::kw___attribute))
       DeclaratorInfo.AddAttributes(ParseAttributes());
 
+    // NOTE: If Sema is the Action module and declarator is an instance field,
+    // this call will *not* return the created decl; LastDeclInGroup will be
+    // returned instead.
+    // See Sema::ActOnCXXMemberDeclarator for details.
     LastDeclInGroup = Actions.ActOnCXXMemberDeclarator(CurScope, AS,
                                                        DeclaratorInfo,
                                                        BitfieldSize, Init,

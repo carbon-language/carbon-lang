@@ -14,6 +14,7 @@
 #include "Sema.h"
 #include "SemaUtil.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
@@ -129,6 +130,29 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
     if (VD->isInvalidDecl())
       return true;
     return new DeclRefExpr(VD, VD->getType(), Loc);
+  }
+
+  if (CXXFieldDecl *FD = dyn_cast<CXXFieldDecl>(D)) {
+    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext)) {
+      if (MD->isStatic())
+        // "invalid use of member 'x' in static member function"
+        return Diag(Loc, diag::err_invalid_member_use_in_static_method,
+                    FD->getName());
+      if (cast<CXXRecordDecl>(MD->getParent()) != FD->getParent())
+        // "invalid use of nonstatic data member 'x'"
+        return Diag(Loc, diag::err_invalid_non_static_member_use,
+                    FD->getName());
+
+      if (FD->isInvalidDecl())
+        return true;
+
+      // FIXME: Use DeclRefExpr or a new Expr for a direct CXXField reference.
+      ExprResult ThisExpr = ActOnCXXThis(SourceLocation());
+      return new MemberExpr(static_cast<Expr*>(ThisExpr.Val),
+                            true, FD, Loc, FD->getType());
+    }
+
+    return Diag(Loc, diag::err_invalid_non_static_member_use, FD->getName());
   }
   
   if (isa<TypedefDecl>(D))

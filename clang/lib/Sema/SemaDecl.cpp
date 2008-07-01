@@ -44,19 +44,38 @@ Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) {
   return 0;
 }
 
+DeclContext *Sema::getDCParent(DeclContext *DC) {
+  // If CurContext is a ObjC method, getParent() will return NULL.
+  if (isa<ObjCMethodDecl>(DC))
+    return Context.getTranslationUnitDecl();
+
+  // A C++ inline method is parsed *after* the topmost class it was declared in
+  // is fully parsed (it's "complete").
+  // The parsing of a C++ inline method happens at the declaration context of
+  // the topmost (non-nested) class it is declared in.
+  if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(DC)) {
+    assert(isa<CXXRecordDecl>(MD->getParent()) && "C++ method not in Record.");
+    DC = MD->getParent();
+    while (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(DC->getParent()))
+      DC = RD;
+
+    // Return the declaration context of the topmost class the inline method is
+    // declared in.
+    return DC;
+  }
+
+  return DC->getParent();
+}
+
 void Sema::PushDeclContext(DeclContext *DC) {
-  assert( ( (isa<ObjCMethodDecl>(DC) && isa<TranslationUnitDecl>(CurContext))
-            || DC->getParent() == CurContext ) &&
-      "The next DeclContext should be directly contained in the current one.");
+  assert(getDCParent(DC) == CurContext &&
+       "The next DeclContext should be directly contained in the current one.");
   CurContext = DC;
 }
 
 void Sema::PopDeclContext() {
   assert(CurContext && "DeclContext imbalance!");
-  // If CurContext is a ObjC method, getParent() will return NULL.
-  CurContext = isa<ObjCMethodDecl>(CurContext)
-               ? Context.getTranslationUnitDecl()
-                 :  CurContext->getParent();
+  CurContext = getDCParent(CurContext);
 }
 
 /// Add this decl to the scope shadowed decl chains.
@@ -646,10 +665,19 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     }
 
     bool isInline = D.getDeclSpec().isInlineSpecified();
-    FunctionDecl *NewFD = FunctionDecl::Create(Context, CurContext,
-                                               D.getIdentifierLoc(),
-                                               II, R, SC, isInline,
-                                               LastDeclarator);
+    FunctionDecl *NewFD;
+    if (D.getContext() == Declarator::MemberContext) {
+      // This is a C++ method declaration.
+      NewFD = CXXMethodDecl::Create(Context, cast<CXXRecordDecl>(CurContext),
+                                    D.getIdentifierLoc(), II, R,
+                                    (SC == FunctionDecl::Static), isInline,
+                                    LastDeclarator);
+    } else {
+      NewFD = FunctionDecl::Create(Context, CurContext,
+                                   D.getIdentifierLoc(),
+                                   II, R, SC, isInline,
+                                   LastDeclarator);
+    }
     // Handle attributes.
     ProcessDeclAttributes(NewFD, D);
 
@@ -728,19 +756,27 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     case DeclSpec::SCS_register:       SC = VarDecl::Register; break;
     case DeclSpec::SCS_private_extern: SC = VarDecl::PrivateExtern; break;
     }    
-    if (S->getFnParent() == 0) {
-      // C99 6.9p2: The storage-class specifiers auto and register shall not
-      // appear in the declaration specifiers in an external declaration.
-      if (SC == VarDecl::Auto || SC == VarDecl::Register) {
-        Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope,
-             R.getAsString());
-        InvalidDecl = true;
-      }
-      NewVD = VarDecl::Create(Context, CurContext, D.getIdentifierLoc(),
-                              II, R, SC, LastDeclarator);
+    if (D.getContext() == Declarator::MemberContext) {
+      assert(SC == VarDecl::Static && "Invalid storage class for member!");
+      // This is a static data member for a C++ class.
+      NewVD = CXXClassVarDecl::Create(Context, cast<CXXRecordDecl>(CurContext),
+                                      D.getIdentifierLoc(), II,
+                                      R, LastDeclarator);
     } else {
-      NewVD = VarDecl::Create(Context, CurContext, D.getIdentifierLoc(),
-                              II, R, SC, LastDeclarator);
+      if (S->getFnParent() == 0) {
+        // C99 6.9p2: The storage-class specifiers auto and register shall not
+        // appear in the declaration specifiers in an external declaration.
+        if (SC == VarDecl::Auto || SC == VarDecl::Register) {
+          Diag(D.getIdentifierLoc(), diag::err_typecheck_sclass_fscope,
+               R.getAsString());
+          InvalidDecl = true;
+        }
+        NewVD = VarDecl::Create(Context, CurContext, D.getIdentifierLoc(),
+                                II, R, SC, LastDeclarator);
+      } else {
+        NewVD = VarDecl::Create(Context, CurContext, D.getIdentifierLoc(),
+                                II, R, SC, LastDeclarator);
+      }
     }
     // Handle attributes prior to checking for duplicates in MergeVarDecl
     ProcessDeclAttributes(NewVD, D);
@@ -1506,7 +1542,13 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
       }
     }
   }
-  Decl *decl = static_cast<Decl*>(ActOnDeclarator(GlobalScope, D, 0));
+
+  return ActOnStartOfFunctionDef(FnBodyScope,
+                                 ActOnDeclarator(GlobalScope, D, 0));
+}
+
+Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
+  Decl *decl = static_cast<Decl*>(D);
   FunctionDecl *FD = cast<FunctionDecl>(decl);
   PushDeclContext(FD);
     
@@ -1707,8 +1749,12 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
 
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // struct X { int A; } D;    D should chain to X.
-    New = RecordDecl::Create(Context, Kind, CurContext, Loc, Name, 0);
-  }    
+    if (getLangOptions().CPlusPlus)
+      // FIXME: Look for a way to use RecordDecl for simple structs.
+      New = CXXRecordDecl::Create(Context, Kind, CurContext, Loc, Name, 0);
+    else
+      New = RecordDecl::Create(Context, Kind, CurContext, Loc, Name, 0);
+  }
   
   // If this has an identifier, add it to the scope stack.
   if (Name) {
@@ -1843,7 +1889,17 @@ Sema::DeclTy *Sema::ActOnField(Scope *S,
     }
   }
   // FIXME: Chain fielddecls together.
-  FieldDecl *NewFD = FieldDecl::Create(Context, Loc, II, T, BitWidth);
+  FieldDecl *NewFD;
+
+  if (getLangOptions().CPlusPlus) {
+    // FIXME: Replace CXXFieldDecls with FieldDecls for simple structs.
+    NewFD = CXXFieldDecl::Create(Context, cast<CXXRecordDecl>(CurContext),
+                                 Loc, II, T, BitWidth);
+    if (II)
+      PushOnScopeChains(NewFD, S);
+  }
+  else
+    NewFD = FieldDecl::Create(Context, Loc, II, T, BitWidth);
   
   ProcessDeclAttributes(NewFD, D);
 

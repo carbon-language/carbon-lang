@@ -49,3 +49,21 @@ Action::ExprResult
 Sema::ActOnCXXThrow(SourceLocation OpLoc, ExprTy *E) {
   return new CXXThrowExpr((Expr*)E, Context.VoidTy, OpLoc);
 }
+
+Action::ExprResult Sema::ActOnCXXThis(SourceLocation ThisLoc) {
+  /// C++ 9.3.2: In the body of a non-static member function, the keyword this
+  /// is a non-lvalue expression whose value is the address of the object for
+  /// which the function is called.
+
+  if (!isa<FunctionDecl>(CurContext)) {
+    Diag(ThisLoc, diag::err_invalid_this_use);
+    return ExprResult(true);
+  }
+
+  if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CurContext))
+    if (MD->isInstance())
+      return new PreDefinedExpr(ThisLoc, MD->getThisType(Context),
+                                PreDefinedExpr::CXXThis);
+
+  return Diag(ThisLoc, diag::err_invalid_this_use);
+}

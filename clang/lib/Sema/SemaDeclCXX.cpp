@@ -14,6 +14,7 @@
 #include "Sema.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/StmtVisitor.h"
@@ -307,6 +308,175 @@ void Sema::ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
   // FIXME: Attach base class to the record.
 }
 
+//===----------------------------------------------------------------------===//
+// C++ class member Handling
+//===----------------------------------------------------------------------===//
+
+/// ActOnStartCXXClassDef - This is called at the start of a class/struct/union
+/// definition, when on C++.
+void Sema::ActOnStartCXXClassDef(Scope *S, DeclTy *D, SourceLocation LBrace) {
+  Decl *Dcl = static_cast<Decl *>(D);
+  PushDeclContext(cast<CXXRecordDecl>(Dcl));
+  FieldCollector->StartClass();
+}
+
+/// ActOnCXXMemberDeclarator - This is invoked when a C++ class member
+/// declarator is parsed. 'AS' is the access specifier, 'BW' specifies the
+/// bitfield width if there is one and 'InitExpr' specifies the initializer if
+/// any. 'LastInGroup' is non-null for cases where one declspec has multiple
+/// declarators on it.
+///
+/// NOTE: Because of CXXFieldDecl's inability to be chained like ScopedDecls, if
+/// an instance field is declared, a new CXXFieldDecl is created but the method
+/// does *not* return it; it returns LastInGroup instead. The other C++ members
+/// (which are all ScopedDecls) are returned after appending them to
+/// LastInGroup.
+Sema::DeclTy *
+Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
+                               ExprTy *BW, ExprTy *InitExpr,
+                               DeclTy *LastInGroup) {
+  const DeclSpec &DS = D.getDeclSpec();
+  IdentifierInfo *II = D.getIdentifier();
+  Expr *BitWidth = static_cast<Expr*>(BW);
+  Expr *Init = static_cast<Expr*>(InitExpr);
+  SourceLocation Loc = D.getIdentifierLoc();
+
+  // C++ 9.2p6: A member shall not be declared to have automatic storage
+  // duration (auto, register) or with the extern storage-class-specifier.
+  switch (DS.getStorageClassSpec()) {
+    case DeclSpec::SCS_unspecified:
+    case DeclSpec::SCS_typedef:
+    case DeclSpec::SCS_static:
+      // FALL THROUGH.
+      break;
+    default:
+      if (DS.getStorageClassSpecLoc().isValid())
+        Diag(DS.getStorageClassSpecLoc(),
+             diag::err_storageclass_invalid_for_member);
+      else
+        Diag(DS.getThreadSpecLoc(), diag::err_storageclass_invalid_for_member);
+      D.getMutableDeclSpec().ClearStorageClassSpecs();
+  }
+
+  QualType T = GetTypeForDeclarator(D, S);
+
+  // T->isFunctionType() is used instead of D.isFunctionDeclarator() to cover
+  // this case:
+  //
+  // typedef int f();
+  // f a;
+  bool isInstField = (DS.getStorageClassSpec() == DeclSpec::SCS_unspecified &&
+                      !T->isFunctionType());
+
+  Decl *Member;
+  bool InvalidDecl = false;
+
+  if (isInstField)
+    Member = static_cast<Decl*>(ActOnField(S, Loc, D, BitWidth));
+  else
+    Member = static_cast<Decl*>(ActOnDeclarator(S, D, LastInGroup));
+
+  if (!Member) return LastInGroup;
+
+  assert(II || isInstField && "No identifier for non-field ?");
+
+  // set/getAccess is not part of Decl's interface to avoid bloating it with C++
+  // specific methods. Use a wrapper class that can be used with all C++ class
+  // member decls.
+  CXXClassMemberWrapper(Member).setAccess(AS);
+
+  if (BitWidth) {
+    // C++ 9.6p2: Only when declaring an unnamed bit-field may the
+    // constant-expression be a value equal to zero.
+    // FIXME: Check this.
+
+    if (D.isFunctionDeclarator()) {
+      // FIXME: Emit diagnostic about only constructors taking base initializers
+      // or something similar, when constructor support is in place.
+      Diag(Loc, diag::err_not_bitfield_type,
+           II->getName(), BitWidth->getSourceRange());
+      InvalidDecl = true;
+
+    } else if (isInstField || isa<FunctionDecl>(Member)) {
+      // An instance field or a function typedef ("typedef int f(); f a;").
+      // C++ 9.6p3: A bit-field shall have integral or enumeration type.
+      if (!T->isIntegralType()) {
+        Diag(Loc, diag::err_not_integral_type_bitfield,
+             II->getName(), BitWidth->getSourceRange());
+        InvalidDecl = true;
+      }
+
+    } else if (isa<TypedefDecl>(Member)) {
+      // "cannot declare 'A' to be a bit-field type"
+      Diag(Loc, diag::err_not_bitfield_type, II->getName(), 
+           BitWidth->getSourceRange());
+      InvalidDecl = true;
+
+    } else {
+      assert(isa<CXXClassVarDecl>(Member) &&
+             "Didn't we cover all member kinds?");
+      // C++ 9.6p3: A bit-field shall not be a static member.
+      // "static member 'A' cannot be a bit-field"
+      Diag(Loc, diag::err_static_not_bitfield, II->getName(), 
+           BitWidth->getSourceRange());
+      InvalidDecl = true;
+    }
+  }
+
+  if (Init) {
+    // C++ 9.2p4: A member-declarator can contain a constant-initializer only
+    // if it declares a static member of const integral or const enumeration
+    // type.
+    if (CXXClassVarDecl *CVD =
+              dyn_cast<CXXClassVarDecl>(Member)) { // ...static member of...
+      CVD->setInit(Init);
+      QualType MemberTy = CVD->getType().getCanonicalType();
+      // ...const integral or const enumeration type.
+      if (MemberTy.isConstQualified() && MemberTy->isIntegralType()) {
+        if (CheckForConstantInitializer(Init, MemberTy)) // constant-initializer
+          InvalidDecl = true;
+
+      } else {
+        // not const integral.
+        Diag(Loc, diag::err_member_initialization,
+             II->getName(), Init->getSourceRange());
+        InvalidDecl = true;
+      }
+
+    } else {
+      // not static member.
+      Diag(Loc, diag::err_member_initialization,
+           II->getName(), Init->getSourceRange());
+      InvalidDecl = true;
+    }
+  }
+
+  if (InvalidDecl)
+    Member->setInvalidDecl();
+
+  if (isInstField) {
+    FieldCollector->Add(cast<CXXFieldDecl>(Member));
+    return LastInGroup;
+  }
+  return Member;
+}
+
+void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
+                                             DeclTy *TagDecl,
+                                             SourceLocation LBrac,
+                                             SourceLocation RBrac) {
+  ActOnFields(S, RLoc, TagDecl,
+              (DeclTy**)FieldCollector->getCurFields(),
+              FieldCollector->getCurNumFields(), LBrac, RBrac);
+}
+
+void Sema::ActOnFinishCXXClassDef(DeclTy *D,SourceLocation RBrace) {
+  Decl *Dcl = static_cast<Decl *>(D);
+  assert(isa<CXXRecordDecl>(Dcl) &&
+         "Invalid parameter, expected CXXRecordDecl");
+  FieldCollector->FinishClass();
+  PopDeclContext();
+}
 
 //===----------------------------------------------------------------------===//
 // Namespace Handling

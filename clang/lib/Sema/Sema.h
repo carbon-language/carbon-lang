@@ -16,11 +16,13 @@
 #define LLVM_CLANG_AST_SEMA_H
 
 #include "IdentifierResolver.h"
+#include "CXXFieldCollector.h"
 #include "clang/Parse/Action.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/OwningPtr.h"
 #include <vector>
 #include <string>
 
@@ -108,6 +110,9 @@ public:
   typedef llvm::DenseMap<const IdentifierInfo*, 
                          ObjCCompatibleAliasDecl*> ObjCAliasTy;
   ObjCAliasTy ObjCAliasDecls;
+
+  /// FieldCollector - Collects CXXFieldDecls during parsing of C++ classes.
+  llvm::OwningPtr<CXXFieldCollector> FieldCollector;
 
   IdentifierResolver IdResolver;
 
@@ -215,9 +220,7 @@ private:
   virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group);
 
   virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, Declarator &D);
-  // Until 'real' implementation is in place, override both
-  // 'ActOnStartOfFunctionDef' to satisfy the compiler.
-  virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, DeclTy *D) { return D; }
+  virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, DeclTy *D);
   virtual void ObjCActOnStartOfMethodDef(Scope *S, DeclTy *D);
   
   virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtTy *Body);
@@ -258,6 +261,8 @@ private:
   virtual void ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDecl,
                              DeclTy **Elements, unsigned NumElements);
 private:
+  DeclContext *getDCParent(DeclContext *DC);
+
   /// Set the current declaration context until it gets popped.
   void PushDeclContext(DeclContext *DC);
   void PopDeclContext();
@@ -545,6 +550,9 @@ public:
                                    SourceLocation LParenLoc, ExprTy *E,
                                    SourceLocation RParenLoc);
 
+  //// ActOnCXXThis -  Parse 'this' pointer.
+  virtual ExprResult ActOnCXXThis(SourceLocation ThisLoc);
+
   /// ActOnCXXBoolLiteral - Parse {true,false} literals.
   virtual ExprResult ActOnCXXBoolLiteral(SourceLocation OpLoc,
                                          tok::TokenKind Kind);
@@ -584,6 +592,20 @@ public:
   virtual void ActOnBaseSpecifier(DeclTy *classdecl, SourceRange SpecifierRange,
                                   bool Virtual, AccessSpecifier Access,
                                   DeclTy *basetype, SourceLocation BaseLoc);
+  
+  virtual void ActOnStartCXXClassDef(Scope *S, DeclTy *TagDecl,
+                                     SourceLocation LBrace);
+
+  virtual DeclTy *ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS,
+                                           Declarator &D, ExprTy *BitfieldWidth,
+                                           ExprTy *Init, DeclTy *LastInGroup);
+
+  virtual void ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
+                                                 DeclTy *TagDecl,
+                                                 SourceLocation LBrac,
+                                                 SourceLocation RBrac);
+
+  virtual void ActOnFinishCXXClassDef(DeclTy *TagDecl,SourceLocation RBrace);
   
 
   // Objective-C declarations.

@@ -116,6 +116,8 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer)
   KnownFunctionIDs[id_vprintf]   = &IT.get("vprintf");
 
   TUScope = 0;
+  if (getLangOptions().CPlusPlus)
+    FieldCollector.reset(new CXXFieldCollector());
 }
 
 /// ImpCastExprToType - If Expr is not of type 'Type', insert an implicit cast. 

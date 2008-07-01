@@ -589,6 +589,18 @@ DIAG(err_declarator_need_ident, ERROR,
 DIAG(err_bad_language, ERROR,
      "unknown linkage language")
 
+// C++ class members
+DIAG(err_storageclass_invalid_for_member, ERROR,
+     "storage class specified for a member declaration")
+DIAG(err_not_bitfield_type, ERROR,
+     "cannot declare '%0' to be a bit-field type")
+DIAG(err_static_not_bitfield, ERROR,
+     "static member '%0' cannot be a bit-field")
+DIAG(err_not_integral_type_bitfield, ERROR,
+     "bit-field '%0' with non-integral type")
+DIAG(err_member_initialization, ERROR,
+    "'%0' can only be initialized if it is a static const integral data member")
+
 // Attributes
 DIAG(err_attribute_wrong_number_arguments, ERROR,
      "attribute requires %0 argument(s)")
@@ -897,6 +909,13 @@ DIAG(ext_typecheck_comparison_of_distinct_pointers, WARNING,
      "comparison of distinct pointer types ('%0' and '%1')")
 DIAG(err_typecheck_assign_const, ERROR,
      "read-only variable is not assignable")
+
+DIAG(err_invalid_this_use, ERROR,
+     "invalid use of 'this' outside of a nonstatic member function")
+DIAG(err_invalid_member_use_in_static_method, ERROR,
+     "invalid use of member '%0' in static member function")
+DIAG(err_invalid_non_static_member_use, ERROR,
+     "invalid use of nonstatic data member '%0'")
 
 // assignment related diagnostics (also for argument passing, returning, etc).
 DIAG(err_typecheck_convert_incompatible, ERROR,
