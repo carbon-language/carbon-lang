@@ -5347,7 +5347,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
 
   if (ViewISelDAGs) DAG.viewGraph();
   
-  if (EnableValueProp)  // FIXME: Only do this if !fast.
+  if (!FastISel && EnableValueProp)
     ComputeLiveOutVRegInfo(DAG);
 
   // Third, instruction select all of the operations to machine code, adding the
