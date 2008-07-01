@@ -526,7 +526,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
        << "  unsigned SubregHashTableSize = 1;\n";
   }
   
-  free(SubregHashTable);
+  delete [] SubregHashTable;
 
   if (!RegisterAliases.empty())
     OS << "\n\n  // Register Alias Sets...\n";
