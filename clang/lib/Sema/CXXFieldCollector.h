@@ -57,10 +57,10 @@ public:
     ++FieldCount.back();
   }
 
-  /// getNumField - The number of fields added to the currently parsed class.
+  /// getCurNumField - The number of fields added to the currently parsed class.
   size_t getCurNumFields() const { return FieldCount.back(); }
 
-  /// getFields - Pointer to array of fields added to the currently parsed
+  /// getCurFields - Pointer to array of fields added to the currently parsed
   /// class.
   CXXFieldDecl **getCurFields() { return &*(Fields.end() - getCurNumFields()); }
 
