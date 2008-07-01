@@ -419,6 +419,9 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   
   /// NSWindowII - An IdentifierInfo* representing the identifier "NSWindow."
   IdentifierInfo* NSWindowII;
+
+  /// NSPanelII - An IdentifierInfo* representing the identifier "NSPanel."
+  IdentifierInfo* NSPanelII;
   
   /// GCEnabled - Records whether or not the analyzed code runs in GC mode.
   const bool GCEnabled;
@@ -504,10 +507,16 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
     ObjCMethodSummaries[ObjCSummaryKey(NSWindowII, S)] = Summ;
   }
   
+  void addNSPanelMethSummary(Selector S, RetainSummary *Summ) {
+    ObjCMethodSummaries[ObjCSummaryKey(NSPanelII, S)] = Summ;
+  }
+  
 public:
   
   RetainSummaryManager(ASTContext& ctx, bool gcenabled)
-   : Ctx(ctx), NSWindowII(&ctx.Idents.get("NSWindow")),
+   : Ctx(ctx),
+     NSWindowII(&ctx.Idents.get("NSWindow")),
+     NSPanelII(&ctx.Idents.get("NSPanel")),
      GCEnabled(gcenabled), StopSummary(0) {
 
     InitializeClassMethodSummaries();
@@ -847,14 +856,14 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   
   // Create the "init" selector.  It just acts as a pass-through for the
   // receiver.
-  RetainSummary* Summ = getPersistentSummary(RetEffect::MakeReceiverAlias());
-  addNSObjectMethSummary(GetNullarySelector("init", Ctx), Summ);
+  RetainSummary* InitSumm = getPersistentSummary(RetEffect::MakeReceiverAlias());
+  addNSObjectMethSummary(GetNullarySelector("init", Ctx), InitSumm);
   
   // The next methods are allocators.
   RetEffect E = isGCEnabled() ? RetEffect::MakeNoRet()
                               : RetEffect::MakeOwned(true);
   
-  Summ = getPersistentSummary(E);  
+  RetainSummary* Summ = getPersistentSummary(E);  
   
   // Create the "copy" selector.  
   addNSObjectMethSummary(GetNullarySelector("copy", Ctx), Summ);
@@ -880,7 +889,11 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   addNSObjectMethSummary(GetNullarySelector("autorelease", Ctx), Summ);
 
   // For NSWindow, allocated objects are (initially) self-owned.
-  Summ = getPersistentSummary(RetEffect::MakeReceiverAlias(), SelfOwn);
+  // For NSPanel (which subclasses NSWindow), allocated objects are not
+  //  self-owned.
+  
+  RetainSummary *NSWindowSumm =
+    getPersistentSummary(RetEffect::MakeReceiverAlias(), SelfOwn);
 
   // Create the "initWithContentRect:styleMask:backing:defer:" selector.
   llvm::SmallVector<IdentifierInfo*, 5> II;
@@ -889,12 +902,14 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   II.push_back(&Ctx.Idents.get("backing"));
   II.push_back(&Ctx.Idents.get("defer"));  
   Selector S = Ctx.Selectors.getSelector(II.size(), &II[0]);      
-  addNSWindowMethSummary(S, Summ);
-
+  addNSWindowMethSummary(S, NSWindowSumm);
+  addNSPanelMethSummary(S, InitSumm);
+  
   // Create the "initWithContentRect:styleMask:backing:defer:screen:" selector.
   II.push_back(&Ctx.Idents.get("screen"));
   S = Ctx.Selectors.getSelector(II.size(), &II[0]);
-  addNSWindowMethSummary(S, Summ);
+  addNSWindowMethSummary(S, NSWindowSumm);
+  addNSPanelMethSummary(S, InitSumm);
 }
 
 //===----------------------------------------------------------------------===//
