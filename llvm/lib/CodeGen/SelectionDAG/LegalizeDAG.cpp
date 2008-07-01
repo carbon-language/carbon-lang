@@ -4669,7 +4669,7 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
     MVT VT = LHS.getValueType();
     if (VT == MVT::f32 || VT == MVT::f64) {
       // Expand into one or more soft-fp libcall(s).
-      RTLIB::Libcall LC1, LC2 = RTLIB::UNKNOWN_LIBCALL;
+      RTLIB::Libcall LC1 = RTLIB::UNKNOWN_LIBCALL, LC2 = RTLIB::UNKNOWN_LIBCALL;
       switch (cast<CondCodeSDNode>(CC)->get()) {
       case ISD::SETEQ:
       case ISD::SETOEQ:
