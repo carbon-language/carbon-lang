@@ -275,8 +275,8 @@ public:
 ///
 class TargetRegisterInfo {
 protected:
-  unsigned* SubregHash;
-  unsigned SubregHashSize;
+  const unsigned* SubregHash;
+  const unsigned SubregHashSize;
 public:
   typedef const TargetRegisterClass * const * regclass_iterator;
 private:
@@ -291,7 +291,9 @@ protected:
                      regclass_iterator RegClassBegin,
                      regclass_iterator RegClassEnd,
                      int CallFrameSetupOpcode = -1,
-                     int CallFrameDestroyOpcode = -1);
+                     int CallFrameDestroyOpcode = -1,
+                     const unsigned* subregs = 0,
+                     const unsigned subregsize = 0);
   virtual ~TargetRegisterInfo();
 public:
 

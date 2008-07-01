@@ -501,29 +501,34 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   if (SubregHashTableSize) {
     std::string Namespace = Regs[0].TheDef->getValueAsString("Namespace");
     
-    OS << "\n\n  unsigned SubregHashTable[] = {";
+    OS << "\n\n  const unsigned SubregHashTable[] = { ";
     for (unsigned i = 0; i < SubregHashTableSize - 1; ++i) {
+      if (i != 0)
+        // Insert spaces for nice formatting.
+        OS << "                                       ";
+      
       if (SubregHashTable[2*i] != ~0U) {
         OS << getQualifiedName(Regs[SubregHashTable[2*i]].TheDef) << ", "
-           << getQualifiedName(Regs[SubregHashTable[2*i+1]].TheDef) << ", ";
+           << getQualifiedName(Regs[SubregHashTable[2*i+1]].TheDef) << ", \n";
       } else {
-        OS << Namespace << "::NoRegister, " << Namespace << "::NoRegister, ";
+        OS << Namespace << "::NoRegister, " << Namespace << "::NoRegister, \n";
       }
     }
     
     unsigned Idx = SubregHashTableSize*2-2;
     if (SubregHashTable[Idx] != ~0U) {
-      OS << getQualifiedName(Regs[SubregHashTable[Idx]].TheDef) << ", "
-         << getQualifiedName(Regs[SubregHashTable[Idx+1]].TheDef) << "};\n";
+      OS << "                                       "
+         << getQualifiedName(Regs[SubregHashTable[Idx]].TheDef) << ", "
+         << getQualifiedName(Regs[SubregHashTable[Idx+1]].TheDef) << " };\n";
     } else {
-      OS << Namespace << "::NoRegister, " << Namespace << "::NoRegister};\n";
+      OS << Namespace << "::NoRegister, " << Namespace << "::NoRegister };\n";
     }
     
-    OS << "  unsigned SubregHashTableSize = "
+    OS << "  const unsigned SubregHashTableSize = "
        << SubregHashTableSize << ";\n";
   } else {
-    OS << "\n\n  unsigned SubregHashTable[] = { ~0U, ~0U };\n"
-       << "  unsigned SubregHashTableSize = 1;\n";
+    OS << "\n\n  const unsigned SubregHashTable[] = { ~0U, ~0U };\n"
+       << "  const unsigned SubregHashTableSize = 1;\n";
   }
   
   delete [] SubregHashTable;
@@ -672,9 +677,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
      << "(int CallFrameSetupOpcode, int CallFrameDestroyOpcode)\n"
      << "  : TargetRegisterInfo(RegisterDescriptors, " << Registers.size()+1
      << ", RegisterClasses, RegisterClasses+" << RegisterClasses.size() <<",\n "
-     << "                 CallFrameSetupOpcode, CallFrameDestroyOpcode) {\n"
-     << "  this->SubregHash = SubregHashTable;\n"
-     << "  this->SubregHashSize = SubregHashTableSize;\n"
+     << "                 CallFrameSetupOpcode, CallFrameDestroyOpcode,\n"
+     << "                 SubregHashTable, SubregHashTableSize) {\n"
      << "}\n\n";
 
   // Collect all information about dwarf register numbers
