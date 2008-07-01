@@ -3179,9 +3179,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DbgRegionStartInst &RSI = cast<DbgRegionStartInst>(I);
     if (MMI && RSI.getContext() && MMI->Verify(RSI.getContext())) {
       unsigned LabelID = MMI->RecordRegionStart(RSI.getContext());
-      DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
-                              DAG.getConstant(LabelID, MVT::i32),
-                              DAG.getConstant(0, MVT::i32)));
+      DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getRoot(), LabelID));
     }
 
     return 0;
@@ -3191,9 +3189,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DbgRegionEndInst &REI = cast<DbgRegionEndInst>(I);
     if (MMI && REI.getContext() && MMI->Verify(REI.getContext())) {
       unsigned LabelID = MMI->RecordRegionEnd(REI.getContext());
-      DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
-                              DAG.getConstant(LabelID, MVT::i32),
-                              DAG.getConstant(0, MVT::i32)));
+      DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getRoot(), LabelID));
     }
 
     return 0;
@@ -3576,9 +3572,7 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDOperand Callee,
     // Both PendingLoads and PendingExports must be flushed here;
     // this call might not return.
     (void)getRoot();
-    DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getControlRoot(),
-                            DAG.getConstant(BeginLabel, MVT::i32),
-                            DAG.getConstant(1, MVT::i32)));
+    DAG.setRoot(DAG.getLabel(ISD::EH_LABEL, getControlRoot(), BeginLabel));
   }
 
   std::pair<SDOperand,SDOperand> Result =
@@ -3595,9 +3589,7 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDOperand Callee,
     // Insert a label at the end of the invoke call to mark the try range.  This
     // can be used to detect deletion of the invoke via the MachineModuleInfo.
     EndLabel = MMI->NextLabelID();
-    DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
-                            DAG.getConstant(EndLabel, MVT::i32),
-                            DAG.getConstant(1, MVT::i32)));
+    DAG.setRoot(DAG.getLabel(ISD::EH_LABEL, getRoot(), EndLabel));
 
     // Inform MachineModuleInfo of range.
     MMI->addInvoke(LandingPad, BeginLabel, EndLabel);
@@ -5112,9 +5104,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
     // Add a label to mark the beginning of the landing pad.  Deletion of the
     // landing pad can thus be detected via the MachineModuleInfo.
     unsigned LabelID = MMI->addLandingPad(BB);
-    DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, DAG.getEntryNode(),
-                            DAG.getConstant(LabelID, MVT::i32),
-                            DAG.getConstant(1, MVT::i32)));
+    DAG.setRoot(DAG.getLabel(ISD::EH_LABEL, DAG.getEntryNode(), LabelID));
 
     // Mark exception register as live in.
     unsigned Reg = TLI.getExceptionAddressRegister();

@@ -114,12 +114,12 @@ void BranchFolder::RemoveDeadBlock(MachineBasicBlock *MBB) {
   while (!MBB->succ_empty())
     MBB->removeSuccessor(MBB->succ_end()-1);
   
-  // If there is DWARF info to active, check to see if there are any LABEL
+  // If there is DWARF info to active, check to see if there are any DBG_LABEL
   // records in the basic block.  If so, unregister them from MachineModuleInfo.
   if (MMI && !MBB->empty()) {
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
          I != E; ++I) {
-      if ((unsigned)I->getOpcode() == TargetInstrInfo::LABEL) {
+      if ((unsigned)I->getOpcode() == TargetInstrInfo::DBG_LABEL) {
         // The label ID # is always operand #0, an immediate.
         MMI->InvalidateLabel(I->getOperand(0).getImm());
       }

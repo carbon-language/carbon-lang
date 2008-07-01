@@ -597,7 +597,8 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   // We don't have line number support yet.
   setOperationAction(ISD::DBG_STOPPOINT, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
-  setOperationAction(ISD::LABEL, MVT::Other, Expand);
+  setOperationAction(ISD::DBG_LABEL, MVT::Other, Expand);
+  setOperationAction(ISD::EH_LABEL, MVT::Other, Expand);
 
   // RET must be custom lowered, to meet ABI requirements
   setOperationAction(ISD::RET               , MVT::Other, Custom);
@@ -616,7 +617,8 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
 
   // No debug info support yet.
   setOperationAction(ISD::DBG_STOPPOINT, MVT::Other, Expand);
-  setOperationAction(ISD::LABEL, MVT::Other, Expand);
+  setOperationAction(ISD::DBG_LABEL, MVT::Other, Expand);
+  setOperationAction(ISD::EH_LABEL, MVT::Other, Expand);
   setOperationAction(ISD::DECLARE, MVT::Other, Expand);
     
   setStackPointerRegisterToSaveRestore(SP::O6);

@@ -342,9 +342,23 @@ def INLINEASM : Instruction {
   let AsmString = "";
   let Namespace = "TargetInstrInfo";
 }
-def LABEL : Instruction {
+def DBG_LABEL : Instruction {
   let OutOperandList = (ops);
-  let InOperandList = (ops i32imm:$id, i32imm:$flavor);
+  let InOperandList = (ops i32imm:$id);
+  let AsmString = "";
+  let Namespace = "TargetInstrInfo";
+  let hasCtrlDep = 1;
+}
+def EH_LABEL : Instruction {
+  let OutOperandList = (ops);
+  let InOperandList = (ops i32imm:$id);
+  let AsmString = "";
+  let Namespace = "TargetInstrInfo";
+  let hasCtrlDep = 1;
+}
+def GC_LABEL : Instruction {
+  let OutOperandList = (ops);
+  let InOperandList = (ops i32imm:$id);
   let AsmString = "";
   let Namespace = "TargetInstrInfo";
   let hasCtrlDep = 1;

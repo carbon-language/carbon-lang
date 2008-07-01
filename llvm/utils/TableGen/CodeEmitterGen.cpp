@@ -26,7 +26,9 @@ void CodeEmitterGen::reverseBits(std::vector<Record*> &Insts) {
     Record *R = *I;
     if (R->getName() == "PHI" ||
         R->getName() == "INLINEASM" ||
-        R->getName() == "LABEL" ||
+        R->getName() == "DBG_LABEL" ||
+        R->getName() == "EH_LABEL" ||
+        R->getName() == "GC_LABEL" ||
         R->getName() == "DECLARE" ||
         R->getName() == "EXTRACT_SUBREG" ||
         R->getName() == "INSERT_SUBREG" ||
@@ -102,7 +104,9 @@ void CodeEmitterGen::run(std::ostream &o) {
     
     if (R->getName() == "PHI" ||
         R->getName() == "INLINEASM" ||
-        R->getName() == "LABEL" ||
+        R->getName() == "DBG_LABEL" ||
+        R->getName() == "EH_LABEL" ||
+        R->getName() == "GC_LABEL" ||
         R->getName() == "DECLARE" ||
         R->getName() == "EXTRACT_SUBREG" ||
         R->getName() == "INSERT_SUBREG" ||
@@ -137,7 +141,9 @@ void CodeEmitterGen::run(std::ostream &o) {
     
     if (InstName == "PHI" ||
         InstName == "INLINEASM" ||
-        InstName == "LABEL"||
+        InstName == "DBG_LABEL"||
+        InstName == "EH_LABEL"||
+        InstName == "GC_LABEL"||
         InstName == "DECLARE"||
         InstName == "EXTRACT_SUBREG" ||
         InstName == "INSERT_SUBREG" ||

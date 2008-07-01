@@ -225,6 +225,7 @@ public:
   SDOperand getRegister(unsigned Reg, MVT VT);
   SDOperand getDbgStopPoint(SDOperand Root, unsigned Line, unsigned Col,
                             const CompileUnitDesc *CU);
+  SDOperand getLabel(unsigned Opcode, SDOperand Root, unsigned LabelID);
 
   SDOperand getCopyToReg(SDOperand Chain, unsigned Reg, SDOperand N) {
     return getNode(ISD::CopyToReg, MVT::Other, Chain,

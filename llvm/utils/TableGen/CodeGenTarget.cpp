@@ -286,9 +286,17 @@ getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
   if (I == Instructions.end()) throw "Could not find 'INLINEASM' instruction!";
   const CodeGenInstruction *INLINEASM = &I->second;
   
-  I = getInstructions().find("LABEL");
-  if (I == Instructions.end()) throw "Could not find 'LABEL' instruction!";
-  const CodeGenInstruction *LABEL = &I->second;
+  I = getInstructions().find("DBG_LABEL");
+  if (I == Instructions.end()) throw "Could not find 'DBG_LABEL' instruction!";
+  const CodeGenInstruction *DBG_LABEL = &I->second;
+  
+  I = getInstructions().find("EH_LABEL");
+  if (I == Instructions.end()) throw "Could not find 'EH_LABEL' instruction!";
+  const CodeGenInstruction *EH_LABEL = &I->second;
+  
+  I = getInstructions().find("GC_LABEL");
+  if (I == Instructions.end()) throw "Could not find 'GC_LABEL' instruction!";
+  const CodeGenInstruction *GC_LABEL = &I->second;
   
   I = getInstructions().find("DECLARE");
   if (I == Instructions.end()) throw "Could not find 'DECLARE' instruction!";
@@ -317,7 +325,9 @@ getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
   // Print out the rest of the instructions now.
   NumberedInstructions.push_back(PHI);
   NumberedInstructions.push_back(INLINEASM);
-  NumberedInstructions.push_back(LABEL);
+  NumberedInstructions.push_back(DBG_LABEL);
+  NumberedInstructions.push_back(EH_LABEL);
+  NumberedInstructions.push_back(GC_LABEL);
   NumberedInstructions.push_back(DECLARE);
   NumberedInstructions.push_back(EXTRACT_SUBREG);
   NumberedInstructions.push_back(INSERT_SUBREG);
@@ -326,7 +336,9 @@ getInstructionsByEnumValue(std::vector<const CodeGenInstruction*>
   for (inst_iterator II = inst_begin(), E = inst_end(); II != E; ++II)
     if (&II->second != PHI &&
         &II->second != INLINEASM &&
-        &II->second != LABEL &&
+        &II->second != DBG_LABEL &&
+        &II->second != EH_LABEL &&
+        &II->second != GC_LABEL &&
         &II->second != DECLARE &&
         &II->second != EXTRACT_SUBREG &&
         &II->second != INSERT_SUBREG &&

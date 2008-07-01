@@ -691,7 +691,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     if (needsFrameMoves) {
       // Mark effective beginning of when frame pointer becomes valid.
       FrameLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(FrameLabelId).addImm(0);
+      BuildMI(MBB, MBBI, TII.get(X86::DBG_LABEL)).addImm(FrameLabelId);
     }
 
     // Update EBP with the new base value...
@@ -710,7 +710,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (needsFrameMoves) {
     // Mark effective beginning of when frame pointer is ready.
     ReadyLabelId = MMI->NextLabelID();
-    BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(ReadyLabelId).addImm(0);
+    BuildMI(MBB, MBBI, TII.get(X86::DBG_LABEL)).addImm(ReadyLabelId);
   }
 
   // Skip the callee-saved push instructions.

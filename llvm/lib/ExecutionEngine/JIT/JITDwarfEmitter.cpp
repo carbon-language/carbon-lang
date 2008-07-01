@@ -325,7 +325,7 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
         I != E; ++I) {
     for (MachineBasicBlock::const_iterator MI = I->begin(), E = I->end();
           MI != E; ++MI) {
-      if (MI->getOpcode() != TargetInstrInfo::LABEL) {
+      if (!MI->isLabel()) {
         MayThrow |= MI->getDesc().isCall();
         continue;
       }
@@ -940,7 +940,7 @@ JITDwarfEmitter::GetExceptionTableSizeInBytes(MachineFunction* MF) const {
         I != E; ++I) {
     for (MachineBasicBlock::const_iterator MI = I->begin(), E = I->end();
           MI != E; ++MI) {
-      if (MI->getOpcode() != TargetInstrInfo::LABEL) {
+      if (!MI->isLabel()) {
         MayThrow |= MI->getDesc().isCall();
         continue;
       }

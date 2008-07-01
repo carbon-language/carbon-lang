@@ -3260,7 +3260,7 @@ private:
          I != E; ++I) {
       for (MachineBasicBlock::const_iterator MI = I->begin(), E = I->end();
            MI != E; ++MI) {
-        if (MI->getOpcode() != TargetInstrInfo::LABEL) {
+        if (!MI->isLabel()) {
           SawPotentiallyThrowing |= MI->getDesc().isCall();
           continue;
         }

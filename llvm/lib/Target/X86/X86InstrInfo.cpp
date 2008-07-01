@@ -2681,7 +2681,8 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
       FinalSize += AI->getInlineAsmLength(AsmStr);
       break;
     }
-    case TargetInstrInfo::LABEL:
+    case TargetInstrInfo::DBG_LABEL:
+    case TargetInstrInfo::EH_LABEL:
       break;
     case TargetInstrInfo::IMPLICIT_DEF:
     case TargetInstrInfo::DECLARE:

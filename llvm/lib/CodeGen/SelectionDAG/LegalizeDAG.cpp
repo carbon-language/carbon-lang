@@ -1084,28 +1084,26 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Expand: {
       MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
       bool useDEBUG_LOC = TLI.isOperationLegal(ISD::DEBUG_LOC, MVT::Other);
-      bool useLABEL = TLI.isOperationLegal(ISD::LABEL, MVT::Other);
+      bool useLABEL = TLI.isOperationLegal(ISD::DBG_LABEL, MVT::Other);
       
       const DbgStopPointSDNode *DSP = cast<DbgStopPointSDNode>(Node);
       if (MMI && (useDEBUG_LOC || useLABEL)) {
         const CompileUnitDesc *CompileUnit = DSP->getCompileUnit();
         unsigned SrcFile = MMI->RecordSource(CompileUnit);
 
-        SmallVector<SDOperand, 8> Ops;
-        Ops.push_back(Tmp1);  // chain
         unsigned Line = DSP->getLine();
         unsigned Col = DSP->getColumn();
         
         if (useDEBUG_LOC) {
+          SmallVector<SDOperand, 8> Ops;
+          Ops.push_back(Tmp1);  // chain
           Ops.push_back(DAG.getConstant(Line, MVT::i32));  // line #
           Ops.push_back(DAG.getConstant(Col, MVT::i32));   // col #
           Ops.push_back(DAG.getConstant(SrcFile, MVT::i32));  // source file id
           Result = DAG.getNode(ISD::DEBUG_LOC, MVT::Other, &Ops[0], Ops.size());
         } else {
           unsigned ID = MMI->RecordSourceLine(Line, Col, SrcFile);
-          Ops.push_back(DAG.getConstant(ID, MVT::i32));
-          Ops.push_back(DAG.getConstant(0, MVT::i32)); // a debug label
-          Result = DAG.getNode(ISD::LABEL, MVT::Other, &Ops[0], Ops.size());
+          Result = DAG.getLabel(ISD::DBG_LABEL, Tmp1, ID);
         }
       } else {
         Result = Tmp1;  // chain
@@ -1163,15 +1161,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;    
 
-  case ISD::LABEL:
-    assert(Node->getNumOperands() == 3 && "Invalid LABEL node!");
-    switch (TLI.getOperationAction(ISD::LABEL, MVT::Other)) {
+  case ISD::DBG_LABEL:
+  case ISD::EH_LABEL:
+    assert(Node->getNumOperands() == 1 && "Invalid LABEL node!");
+    switch (TLI.getOperationAction(Node->getOpcode(), MVT::Other)) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Legal:
       Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-      Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the label id.
-      Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the "flavor" operand.
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3);
+      Result = DAG.UpdateNodeOperands(Result, Tmp1);
       break;
     case TargetLowering::Expand:
       Result = LegalizeOp(Node->getOperand(0));

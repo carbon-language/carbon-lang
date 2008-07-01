@@ -144,6 +144,8 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
     Op += ":" + utostr(D->getLine());
     if (D->getColumn() != 0)
       Op += ":" + utostr(D->getColumn());
+  } else if (const LabelSDNode *L = dyn_cast<LabelSDNode>(Node)) {
+    Op += ": LabelID=" + utostr(L->getLabelID());
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(Node)) {
     Op += "'" + std::string(ES->getSymbol()) + "'";

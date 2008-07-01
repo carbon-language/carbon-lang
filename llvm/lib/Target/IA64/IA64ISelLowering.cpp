@@ -89,7 +89,8 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
   // We don't have line number support yet.
   setOperationAction(ISD::DBG_STOPPOINT, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
-  setOperationAction(ISD::LABEL, MVT::Other, Expand);
+  setOperationAction(ISD::DBG_LABEL, MVT::Other, Expand);
+  setOperationAction(ISD::EH_LABEL, MVT::Other, Expand);
 
   // IA64 has ctlz in the form of the 'fnorm' instruction.  The Legalizer 
   // expansion for ctlz/cttz in terms of ctpop is much larger, but lower

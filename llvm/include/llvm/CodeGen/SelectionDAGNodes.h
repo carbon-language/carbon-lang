@@ -482,14 +482,11 @@ namespace ISD {
     //   Operand #last: Optional, an incoming flag.
     INLINEASM,
     
-    // LABEL - Represents a label in mid basic block used to track
-    // locations needed for debug and exception handling tables.  This node
-    // returns a chain.
-    //   Operand #0 : input chain.
-    //   Operand #1 : module unique number use to identify the label.
-    //   Operand #2 : 0 indicates a debug label (e.g. stoppoint), 1 indicates
-    //                a EH label, 2 indicates unknown label type.
-    LABEL,
+    // DBG_LABEL, EH_LABEL - Represents a label in mid basic block used to track
+    // locations needed for debug and exception handling tables.  These nodes
+    // take a chain as input and return a chain.
+    DBG_LABEL,
+    EH_LABEL,
 
     // DECLARE - Represents a llvm.dbg.declare intrinsic. It's used to track
     // local variable declarations for debugging information. First operand is
@@ -642,8 +639,7 @@ namespace ISD {
   bool isScalarToVector(const SDNode *N);
 
   /// isDebugLabel - Return true if the specified node represents a debug
-  /// label (i.e. ISD::LABEL or TargetInstrInfo::LABEL node and third operand
-  /// is 0).
+  /// label (i.e. ISD::DBG_LABEL or TargetInstrInfo::DBG_LABEL node).
   bool isDebugLabel(const SDNode *N);
   
   //===--------------------------------------------------------------------===//
@@ -1859,7 +1855,6 @@ protected:
     InitOperands(&Chain, 1);
   }
 public:
-
   unsigned getLine() const { return Line; }
   unsigned getColumn() const { return Column; }
   const CompileUnitDesc *getCompileUnit() const { return CU; }
@@ -1867,6 +1862,27 @@ public:
   static bool classof(const DbgStopPointSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return N->getOpcode() == ISD::DBG_STOPPOINT;
+  }
+};
+
+class LabelSDNode : public SDNode {
+  SDUse Chain;
+  unsigned LabelID;
+  virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
+protected:
+  friend class SelectionDAG;
+  LabelSDNode(unsigned NodeTy, SDOperand ch, unsigned id)
+    : SDNode(NodeTy, getSDVTList(MVT::Other)), LabelID(id) {
+    Chain = ch;
+    InitOperands(&Chain, 1);
+  }
+public:
+  unsigned getLabelID() const { return LabelID; }
+
+  static bool classof(const LabelSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::DBG_LABEL ||
+           N->getOpcode() == ISD::EH_LABEL;
   }
 };
 

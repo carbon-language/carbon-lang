@@ -97,7 +97,8 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   // We don't have line number support yet.
   setOperationAction(ISD::DBG_STOPPOINT, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
-  setOperationAction(ISD::LABEL, MVT::Other, Expand);
+  setOperationAction(ISD::DBG_LABEL, MVT::Other, Expand);
+  setOperationAction(ISD::EH_LABEL, MVT::Other, Expand);
 
   // Use the default for now
   setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);

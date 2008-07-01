@@ -46,12 +46,14 @@ public:
   enum { 
     PHI = 0,
     INLINEASM = 1,
-    LABEL = 2,
-    DECLARE = 3,
-    EXTRACT_SUBREG = 4,
-    INSERT_SUBREG = 5,
-    IMPLICIT_DEF = 6,
-    SUBREG_TO_REG = 7
+    DBG_LABEL = 2,
+    EH_LABEL = 3,
+    GC_LABEL = 4,
+    DECLARE = 5,
+    EXTRACT_SUBREG = 6,
+    INSERT_SUBREG = 7,
+    IMPLICIT_DEF = 8,
+    SUBREG_TO_REG = 9
   };
 
   unsigned getNumOpcodes() const { return NumOpcodes; }

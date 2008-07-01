@@ -754,9 +754,10 @@ unsigned PPCInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
     const char *AsmStr = MI->getOperand(0).getSymbolName();
     return MF->getTarget().getTargetAsmInfo()->getInlineAsmLength(AsmStr);
   }
-  case PPC::LABEL: {
+  case PPC::DBG_LABEL:
+  case PPC::EH_LABEL:
+  case PPC::GC_LABEL:
     return 0;
-  }
   default:
     return 4; // PowerPC instructions are all 4 bytes
   }

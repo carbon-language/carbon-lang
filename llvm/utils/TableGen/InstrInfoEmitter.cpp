@@ -279,7 +279,9 @@ void InstrInfoEmitter::emitShiftedValue(Record *R, StringInit *Val,
     // This isn't an error if this is a builtin instruction.
     if (R->getName() != "PHI" &&
         R->getName() != "INLINEASM" &&
-        R->getName() != "LABEL" &&
+        R->getName() != "DBG_LABEL" &&
+        R->getName() != "EH_LABEL" &&
+        R->getName() != "GC_LABEL" &&
         R->getName() != "DECLARE" &&
         R->getName() != "EXTRACT_SUBREG" &&
         R->getName() != "INSERT_SUBREG" &&

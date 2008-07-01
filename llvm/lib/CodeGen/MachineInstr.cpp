@@ -523,10 +523,18 @@ unsigned MachineInstr::getNumExplicitOperands() const {
 }
 
 
+/// isLabel - Returns true if the MachineInstr represents a label.
+///
+bool MachineInstr::isLabel() const {
+  return getOpcode() == TargetInstrInfo::DBG_LABEL ||
+         getOpcode() == TargetInstrInfo::EH_LABEL ||
+         getOpcode() == TargetInstrInfo::GC_LABEL;
+}
+
 /// isDebugLabel - Returns true if the MachineInstr represents a debug label.
 ///
 bool MachineInstr::isDebugLabel() const {
-  return getOpcode() == TargetInstrInfo::LABEL && getOperand(1).getImm() == 0;
+  return getOpcode() == TargetInstrInfo::DBG_LABEL;
 }
 
 /// findRegisterUseOperandIdx() - Returns the MachineOperand that is a use of

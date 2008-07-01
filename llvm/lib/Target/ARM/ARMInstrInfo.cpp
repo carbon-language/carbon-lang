@@ -891,7 +891,7 @@ unsigned ARMInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
     // If this machine instr is an inline asm, measure it.
     if (MI->getOpcode() == ARM::INLINEASM)
       return TAI->getInlineAsmLength(MI->getOperand(0).getSymbolName());
-    if (MI->getOpcode() == ARM::LABEL)
+    if (MI->isLabel())
       return 0;
     if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
       return 0;

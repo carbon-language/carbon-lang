@@ -192,19 +192,15 @@ bool ISD::isScalarToVector(const SDNode *N) {
 
 
 /// isDebugLabel - Return true if the specified node represents a debug
-/// label (i.e. ISD::LABEL or TargetInstrInfo::LABEL node and third operand
-/// is 0).
+/// label (i.e. ISD::DBG_LABEL or TargetInstrInfo::DBG_LABEL node).
 bool ISD::isDebugLabel(const SDNode *N) {
   SDOperand Zero;
-  if (N->getOpcode() == ISD::LABEL)
-    Zero = N->getOperand(2);
-  else if (N->isTargetOpcode() &&
-           N->getTargetOpcode() == TargetInstrInfo::LABEL)
-    // Chain moved to last operand.
-    Zero = N->getOperand(1);
-  else
-    return false;
-  return isa<ConstantSDNode>(Zero) && cast<ConstantSDNode>(Zero)->isNullValue();
+  if (N->getOpcode() == ISD::DBG_LABEL)
+    return true;
+  if (N->isTargetOpcode() &&
+      N->getTargetOpcode() == TargetInstrInfo::DBG_LABEL)
+    return true;
+  return false;
 }
 
 /// getSetCCSwappedOperands - Return the operation corresponding to (Y op X)
@@ -389,6 +385,10 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
     ID.AddPointer(DSP->getCompileUnit());
     break;
   }
+  case ISD::DBG_LABEL:
+  case ISD::EH_LABEL:
+    ID.AddInteger(cast<LabelSDNode>(N)->getLabelID());
+    break;
   case ISD::SRCVALUE:
     ID.AddPointer(cast<SrcValueSDNode>(N)->getValue());
     break;
@@ -1013,6 +1013,22 @@ SDOperand SelectionDAG::getDbgStopPoint(SDOperand Root,
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
   SDNode *N = new DbgStopPointSDNode(Root, Line, Col, CU);
+  CSEMap.InsertNode(N, IP);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getLabel(unsigned Opcode,
+                                 SDOperand Root,
+                                 unsigned LabelID) {
+  FoldingSetNodeID ID;
+  SDOperand Ops[] = { Root };
+  AddNodeIDNode(ID, Opcode, getVTList(MVT::Other), &Ops[0], 1);
+  ID.AddInteger(LabelID);
+  void *IP = 0;
+  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
+    return SDOperand(E, 0);
+  SDNode *N = new LabelSDNode(Opcode, Root, LabelID);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -4202,6 +4218,7 @@ void SrcValueSDNode::ANCHOR() {}
 void MemOperandSDNode::ANCHOR() {}
 void RegisterSDNode::ANCHOR() {}
 void DbgStopPointSDNode::ANCHOR() {}
+void LabelSDNode::ANCHOR() {}
 void ExternalSymbolSDNode::ANCHOR() {}
 void CondCodeSDNode::ANCHOR() {}
 void ARG_FLAGSSDNode::ANCHOR() {}
@@ -4521,7 +4538,8 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::UNDEF:         return "undef";
   case ISD::MERGE_VALUES:  return "merge_values";
   case ISD::INLINEASM:     return "inlineasm";
-  case ISD::LABEL:         return "label";
+  case ISD::DBG_LABEL:     return "dbg_label";
+  case ISD::EH_LABEL:      return "eh_label";
   case ISD::DECLARE:       return "declare";
   case ISD::HANDLENODE:    return "handlenode";
   case ISD::FORMAL_ARGUMENTS: return "formal_arguments";

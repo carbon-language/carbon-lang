@@ -490,7 +490,8 @@ void Emitter::emitInstruction(const MachineInstr &MI,
     case TargetInstrInfo::INLINEASM:
       assert(0 && "JIT does not support inline asm!\n");
       break;
-    case TargetInstrInfo::LABEL:
+    case TargetInstrInfo::DBG_LABEL:
+    case TargetInstrInfo::EH_LABEL:
       MCE.emitLabel(MI.getOperand(0).getImm());
       break;
     case TargetInstrInfo::IMPLICIT_DEF:

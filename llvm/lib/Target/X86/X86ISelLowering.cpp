@@ -303,8 +303,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   // FIXME - use subtarget debug flags
   if (!Subtarget->isTargetDarwin() &&
       !Subtarget->isTargetELF() &&
-      !Subtarget->isTargetCygMing())
-    setOperationAction(ISD::LABEL, MVT::Other, Expand);
+      !Subtarget->isTargetCygMing()) {
+    setOperationAction(ISD::DBG_LABEL, MVT::Other, Expand);
+    setOperationAction(ISD::EH_LABEL, MVT::Other, Expand);
+  }
 
   setOperationAction(ISD::EXCEPTIONADDR, MVT::i64, Expand);
   setOperationAction(ISD::EHSELECTION,   MVT::i64, Expand);

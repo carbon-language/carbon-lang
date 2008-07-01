@@ -105,7 +105,8 @@ void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
     default:
       MCE.emitWordBE(getBinaryCodeForInstr(*I));
       break;
-    case TargetInstrInfo::LABEL:
+    case TargetInstrInfo::DBG_LABEL:
+    case TargetInstrInfo::EH_LABEL:
       MCE.emitLabel(MI.getOperand(0).getImm());
       break;
     case TargetInstrInfo::IMPLICIT_DEF:

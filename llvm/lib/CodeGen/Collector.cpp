@@ -337,7 +337,7 @@ void MachineCodeAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 unsigned MachineCodeAnalysis::InsertLabel(MachineBasicBlock &MBB, 
                                      MachineBasicBlock::iterator MI) const {
   unsigned Label = MMI->NextLabelID();
-  BuildMI(MBB, MI, TII->get(TargetInstrInfo::LABEL)).addImm(Label).addImm(2);
+  BuildMI(MBB, MI, TII->get(TargetInstrInfo::GC_LABEL)).addImm(Label);
   return Label;
 }
 

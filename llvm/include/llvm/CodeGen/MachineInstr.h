@@ -136,6 +136,10 @@ public:
     delete removeFromParent();
   }
 
+  /// isLabel - Returns true if the MachineInstr represents a label.
+  ///
+  bool isLabel() const;
+
   /// isDebugLabel - Returns true if the MachineInstr represents a debug label.
   ///
   bool isDebugLabel() const;

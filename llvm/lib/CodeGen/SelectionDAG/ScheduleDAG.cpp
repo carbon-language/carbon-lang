@@ -879,9 +879,16 @@ void ScheduleDAG::EmitNode(SDNode *Node, bool IsClone,
       assert(0 && "EntryToken should have been excluded from the schedule!");
       break;
     case ISD::TokenFactor: // fall thru
-    case ISD::LABEL:
     case ISD::DECLARE:
     case ISD::SRCVALUE:
+      break;
+    case ISD::DBG_LABEL:
+      BB->push_back(BuildMI(TII->get(TargetInstrInfo::DBG_LABEL))
+                      .addImm(cast<LabelSDNode>(Node)->getLabelID()));
+      break;
+    case ISD::EH_LABEL:
+      BB->push_back(BuildMI(TII->get(TargetInstrInfo::EH_LABEL))
+                      .addImm(cast<LabelSDNode>(Node)->getLabelID()));
       break;
     case ISD::CopyToReg: {
       unsigned SrcReg;
