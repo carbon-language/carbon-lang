@@ -42,7 +42,7 @@ enum PassDebugLevel {
   None, Arguments, Structure, Executions, Details
 };
 
-bool VerifyDomInfo = false;
+bool VerifyDomInfo = true;
 static cl::opt<bool,true>
 VerifyDomInfoX("verify-dom-info", cl::location(VerifyDomInfo),
                cl::desc("Verify dominator info (time consuming)"));
@@ -631,7 +631,7 @@ void PMDataManager::verifyDomInfo(Pass &P, Function &F) {
     cerr << "Pass " << P.getPassName() << "\n";
     cerr << "----- Valid -----\n";
     OtherDT.dump();
-    cerr << "----- InValid -----\n";
+    cerr << "----- Invalid -----\n";
     DT->dump();
     assert (0 && "Invalid dominator info");
   }
@@ -648,13 +648,13 @@ void PMDataManager::verifyDomInfo(Pass &P, Function &F) {
     cerr << "Pass " << P.getPassName() << "\n";
     cerr << "----- Valid -----\n";
     OtherDF.dump();
-    cerr << "----- InValid -----\n";
+    cerr << "----- Invalid -----\n";
     DF->dump();
     assert (0 && "Invalid dominator info");
   }
 }
 
-/// Remove Analyss not preserved by Pass P
+/// Remove Analysis not preserved by Pass P
 void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
   AnalysisUsage AnUsage;
   P->getAnalysisUsage(AnUsage);
@@ -1250,7 +1250,7 @@ bool FPPassManager::runOnFunction(Function &F) {
     recordAvailableAnalysis(FP);
     removeDeadPasses(FP, F.getNameStart(), ON_FUNCTION_MSG);
 
-    // Verify dominator information if it is available and preserved.
+    // If dominator information is available then verify the info if requested.
     verifyDomInfo(*FP, F);
   }
   return Changed;

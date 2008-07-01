@@ -234,7 +234,7 @@ bool LPPassManager::runOnFunction(Function &F) {
       recordAvailableAnalysis(P);
       removeDeadPasses(P, "", ON_LOOP_MSG);
 
-      // Verify dominator information if it is available and preserved.
+      // If dominator information is available then verify the info if requested.
       verifyDomInfo(*LP, F);
 
       if (skipThisLoop)

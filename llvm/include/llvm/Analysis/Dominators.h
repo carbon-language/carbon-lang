@@ -308,7 +308,7 @@ public:
   // FIXME: Should remove this
   virtual bool runOnFunction(Function &F) { return false; }
 
-  /// compare - Return false if the other dominator tree base maches this
+  /// compare - Return false if the other dominator tree base matches this
   /// dominator tree base. Otherwise return true.
   bool compare(DominatorTreeBase &Other) const {
 
@@ -735,7 +735,7 @@ public:
     return DT->getRootNode();
   }
 
-  /// compare - Return false if the other dominator tree maches this
+  /// compare - Return false if the other dominator tree matches this
   /// dominator tree. Otherwise return true.
   inline bool compare(DominatorTree &Other) const {
     DomTreeNode *R = getRootNode();
@@ -949,7 +949,7 @@ public:
   }
 
   /// compareDomSet - Return false if two domsets match. Otherwise
-  /// return ture;
+  /// return true;
   bool compareDomSet(DomSetType &DS1, const DomSetType &DS2) const {
     std::set<BasicBlock *> tmpSet;
     for (DomSetType::const_iterator I = DS2.begin(),
