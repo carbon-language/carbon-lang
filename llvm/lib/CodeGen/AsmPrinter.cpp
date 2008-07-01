@@ -21,7 +21,6 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
@@ -29,13 +28,11 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include <cerrno>
 using namespace llvm;
-
-static cl::opt<bool>
-AsmVerbose("asm-verbose", cl::Hidden, cl::desc("Add comments to directives."));
 
 char AsmPrinter::ID = 0;
 AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm,
@@ -553,7 +550,7 @@ void AsmPrinter::EOL() const {
 }
 
 void AsmPrinter::EOL(const std::string &Comment) const {
-  if (AsmVerbose && !Comment.empty()) {
+  if (VerboseAsm && !Comment.empty()) {
     O << '\t'
       << TAI->getCommentString()
       << ' '
@@ -563,7 +560,7 @@ void AsmPrinter::EOL(const std::string &Comment) const {
 }
 
 void AsmPrinter::EOL(const char* Comment) const {
-  if (AsmVerbose && *Comment) {
+  if (VerboseAsm && *Comment) {
     O << '\t'
       << TAI->getCommentString()
       << ' '

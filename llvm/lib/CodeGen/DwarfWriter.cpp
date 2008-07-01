@@ -2076,11 +2076,15 @@ private:
 
     // Emit the code (index) for the abbreviation.
     Asm->EmitULEB128Bytes(AbbrevNumber);
-    Asm->EOL(std::string("Abbrev [" +
-             utostr(AbbrevNumber) +
-             "] 0x" + utohexstr(Die->getOffset()) +
-             ":0x" + utohexstr(Die->getSize()) + " " +
-             TagString(Abbrev->getTag())));
+
+    if (VerboseAsm)
+      Asm->EOL(std::string("Abbrev [" +
+                           utostr(AbbrevNumber) +
+                           "] 0x" + utohexstr(Die->getOffset()) +
+                           ":0x" + utohexstr(Die->getSize()) + " " +
+                           TagString(Abbrev->getTag())));
+    else
+      Asm->EOL();
     
     SmallVector<DIEValue*, 32> &Values = Die->getValues();
     const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev->getData();
@@ -2297,8 +2301,7 @@ private:
     Asm->EmitInt8(1); Asm->EOL("DW_LNS_fixed_advance_pc arg count");
 
     const UniqueVector<std::string> &Directories = MMI->getDirectories();
-    const UniqueVector<SourceFileInfo>
-      &SourceFiles = MMI->getSourceFiles();
+    const UniqueVector<SourceFileInfo> &SourceFiles = MMI->getSourceFiles();
 
     // Emit directories.
     for (unsigned DirectoryID = 1, NDID = Directories.size();
@@ -2328,8 +2331,11 @@ private:
     for (unsigned j = 0, M = SectionSourceLines.size(); j < M; ++j) {
       // Isolate current sections line info.
       const std::vector<SourceLineInfo> &LineInfos = SectionSourceLines[j];
-      
-      Asm->EOL(std::string("Section ") + SectionMap[j + 1]);
+
+      if (VerboseAsm)
+        Asm->EOL(std::string("Section ") + SectionMap[j + 1]);
+      else
+        Asm->EOL();
 
       // Dwarf assumes we start with first line of first source file.
       unsigned Source = 1;
@@ -2344,10 +2350,13 @@ private:
         unsigned SourceID = LineInfo.getSourceID();
         const SourceFileInfo &SourceFile = SourceFiles[SourceID];
         unsigned DirectoryID = SourceFile.getDirectoryID();
-        Asm->EOL(Directories[DirectoryID]
-          + SourceFile.getName()
-          + ":"
-          + utostr_32(LineInfo.getLine()));
+        if (VerboseAsm)
+          Asm->EOL(Directories[DirectoryID]
+                   + SourceFile.getName()
+                   + ":"
+                   + utostr_32(LineInfo.getLine()));
+        else
+          Asm->EOL();
 
         // Define the line address.
         Asm->EmitInt8(0); Asm->EOL("Extended Op");

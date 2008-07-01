@@ -93,6 +93,10 @@ namespace llvm {
   /// RealignStack - This flag indicates, whether stack should be automatically
   /// realigned, if needed.
   extern bool RealignStack;
+
+  /// VerboseAsm - When this flag is set, the asm printer prints additional
+  /// comments to asm directives.
+  extern bool VerboseAsm;
 } // End llvm namespace
 
 #endif
