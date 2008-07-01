@@ -551,8 +551,19 @@ void AsmPrinter::PrintHex(int Value) const {
 void AsmPrinter::EOL() const {
   O << '\n';
 }
+
 void AsmPrinter::EOL(const std::string &Comment) const {
   if (AsmVerbose && !Comment.empty()) {
+    O << '\t'
+      << TAI->getCommentString()
+      << ' '
+      << Comment;
+  }
+  O << '\n';
+}
+
+void AsmPrinter::EOL(const char* Comment) const {
+  if (AsmVerbose && *Comment) {
     O << '\t'
       << TAI->getCommentString()
       << ' '

@@ -236,6 +236,7 @@ namespace llvm {
     /// then it will be printed first.  Comments should not contain '\n'.
     void EOL() const;
     void EOL(const std::string &Comment) const;
+    void EOL(const char* Comment) const;
     
     /// EmitULEB128Bytes - Emit an assembler byte data directive to compose an
     /// unsigned leb128 value.
