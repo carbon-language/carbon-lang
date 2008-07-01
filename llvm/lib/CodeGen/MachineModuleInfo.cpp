@@ -586,8 +586,10 @@ GlobalVariable *DISerializer::Serialize(DebugInfoDesc *DD) {
   const StructType *Ty = getTagType(DD);
 
   // Create the GlobalVariable early to prevent infinite recursion.
-  GlobalVariable *GV = new GlobalVariable(Ty, true, DD->getLinkage(),
-                                          NULL, DD->getDescString(), M);
+  GlobalVariable *GV =
+    new GlobalVariable(Ty, true,
+                       (GlobalValue::LinkageTypes)DD->getLinkage(),
+                       NULL, DD->getDescString(), M);
   GV->setSection("llvm.metadata");
 
   // Insert new GlobalVariable in DescGlobals map.

@@ -92,8 +92,8 @@ DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
 }
 
 /// getLinkage - get linkage appropriate for this type of descriptor.
-GlobalValue::LinkageTypes DebugInfoDesc::getLinkage() const {
-  return GlobalValue::InternalLinkage;
+unsigned DebugInfoDesc::getLinkage() const {
+  return (unsigned)GlobalValue::InternalLinkage;
 }
 
 /// ApplyToFields - Target the vistor to the fields of the descriptor.
@@ -104,11 +104,10 @@ void DebugInfoDesc::ApplyToFields(DIVisitor *Visitor) {
 //===----------------------------------------------------------------------===//
 
 AnchorDesc::AnchorDesc()
-  : DebugInfoDesc(DW_TAG_anchor), AnchorTag(0){
-}
+  : DebugInfoDesc(DW_TAG_anchor), AnchorTag(0) {}
+
 AnchorDesc::AnchorDesc(AnchoredDesc *D)
-  : DebugInfoDesc(DW_TAG_anchor), AnchorTag(D->getTag()) {
-}
+  : DebugInfoDesc(DW_TAG_anchor), AnchorTag(D->getTag()) {}
 
 // Implement isa/cast/dyncast.
 bool AnchorDesc::classof(const DebugInfoDesc *D) {
@@ -116,8 +115,8 @@ bool AnchorDesc::classof(const DebugInfoDesc *D) {
 }
   
 /// getLinkage - get linkage appropriate for this type of descriptor.
-GlobalValue::LinkageTypes AnchorDesc::getLinkage() const {
-  return GlobalValue::LinkOnceLinkage;
+unsigned AnchorDesc::getLinkage() const {
+  return (unsigned)GlobalValue::LinkOnceLinkage;
 }
 
 /// ApplyToFields - Target the visitor to the fields of the TransUnitDesc.
@@ -167,8 +166,7 @@ void AnchorDesc::dump() {
 //===----------------------------------------------------------------------===//
 
 AnchoredDesc::AnchoredDesc(unsigned T)
-  : DebugInfoDesc(T), Anchor(NULL) {
-}
+  : DebugInfoDesc(T), Anchor(NULL) {}
 
 /// ApplyToFields - Target the visitor to the fields of the AnchoredDesc.
 void AnchoredDesc::ApplyToFields(DIVisitor *Visitor) {
@@ -180,8 +178,7 @@ void AnchoredDesc::ApplyToFields(DIVisitor *Visitor) {
 
 CompileUnitDesc::CompileUnitDesc()
   : AnchoredDesc(DW_TAG_compile_unit), Language(0), FileName(""),
-    Directory(""), Producer("") {
-}
+    Directory(""), Producer("") {}
 
 // Implement isa/cast/dyncast.
 bool CompileUnitDesc::classof(const DebugInfoDesc *D) {
@@ -222,8 +219,7 @@ void CompileUnitDesc::dump() {
 
 TypeDesc::TypeDesc(unsigned T)
   : DebugInfoDesc(T), Context(NULL), Name(""), File(NULL), Line(0), Size(0),
-    Align(0), Offset(0), Flags(0) {
-}
+    Align(0), Offset(0), Flags(0) {}
 
 /// ApplyToFields - Target the visitor to the fields of the TypeDesc.
 ///
@@ -258,8 +254,7 @@ void TypeDesc::dump() {
 //===----------------------------------------------------------------------===//
 
 BasicTypeDesc::BasicTypeDesc()
-  : TypeDesc(DW_TAG_base_type), Encoding(0) {
-}
+  : TypeDesc(DW_TAG_base_type), Encoding(0) {}
 
 // Implement isa/cast/dyncast.
 bool BasicTypeDesc::classof(const DebugInfoDesc *D) {
@@ -287,8 +282,7 @@ void BasicTypeDesc::dump() {
 //===----------------------------------------------------------------------===//
 
 DerivedTypeDesc::DerivedTypeDesc(unsigned T)
-  : TypeDesc(T), FromType(NULL) {
-}
+  : TypeDesc(T), FromType(NULL) {}
 
 // Implement isa/cast/dyncast.
 bool DerivedTypeDesc::classof(const DebugInfoDesc *D) {
@@ -331,8 +325,7 @@ void DerivedTypeDesc::dump() {
 //===----------------------------------------------------------------------===//
 
 CompositeTypeDesc::CompositeTypeDesc(unsigned T)
-  : DerivedTypeDesc(T), Elements() {
-}
+  : DerivedTypeDesc(T), Elements() {}
   
 // Implement isa/cast/dyncast.
 bool CompositeTypeDesc::classof(const DebugInfoDesc *D) {
@@ -375,8 +368,7 @@ void CompositeTypeDesc::dump() {
 //===----------------------------------------------------------------------===//
 
 SubrangeDesc::SubrangeDesc()
-  : DebugInfoDesc(DW_TAG_subrange_type), Lo(0), Hi(0) {
-}
+  : DebugInfoDesc(DW_TAG_subrange_type), Lo(0), Hi(0) {}
 
 // Implement isa/cast/dyncast.
 bool SubrangeDesc::classof(const DebugInfoDesc *D) {
@@ -403,8 +395,7 @@ void SubrangeDesc::dump() {
 //===----------------------------------------------------------------------===//
 
 EnumeratorDesc::EnumeratorDesc()
-  : DebugInfoDesc(DW_TAG_enumerator), Name(""), Value(0) {
-}
+  : DebugInfoDesc(DW_TAG_enumerator), Name(""), Value(0) {}
 
 // Implement isa/cast/dyncast.
 bool EnumeratorDesc::classof(const DebugInfoDesc *D) {
@@ -431,8 +422,8 @@ void EnumeratorDesc::dump() {
 //===----------------------------------------------------------------------===//
 
 VariableDesc::VariableDesc(unsigned T)
-  : DebugInfoDesc(T), Context(NULL), Name(""), File(NULL), Line(0), TyDesc(0) {
-}
+  : DebugInfoDesc(T), Context(NULL), Name(""), File(NULL), Line(0), TyDesc(0)
+{}
 
 // Implement isa/cast/dyncast.
 bool VariableDesc::classof(const DebugInfoDesc *D) {
@@ -474,8 +465,7 @@ void VariableDesc::dump() {
 
 GlobalDesc::GlobalDesc(unsigned T)
   : AnchoredDesc(T), Context(0), Name(""), FullName(""), LinkageName(""),
-    File(NULL), Line(0), TyDesc(NULL), IsStatic(false), IsDefinition(false) {
-}
+    File(NULL), Line(0), TyDesc(NULL), IsStatic(false), IsDefinition(false) {}
 
 /// ApplyToFields - Target the visitor to the fields of the global.
 ///
@@ -495,8 +485,7 @@ void GlobalDesc::ApplyToFields(DIVisitor *Visitor) {
 //===----------------------------------------------------------------------===//
 
 GlobalVariableDesc::GlobalVariableDesc()
-  : GlobalDesc(DW_TAG_variable), Global(NULL) {
-}
+  : GlobalDesc(DW_TAG_variable), Global(NULL) {}
 
 // Implement isa/cast/dyncast.
 bool GlobalVariableDesc::classof(const DebugInfoDesc *D) {
@@ -530,8 +519,7 @@ void GlobalVariableDesc::dump() {
 //===----------------------------------------------------------------------===//
 
 SubprogramDesc::SubprogramDesc()
-  : GlobalDesc(DW_TAG_subprogram) {
-}
+  : GlobalDesc(DW_TAG_subprogram) {}
 
 // Implement isa/cast/dyncast.
 bool SubprogramDesc::classof(const DebugInfoDesc *D) {
@@ -563,8 +551,7 @@ void SubprogramDesc::dump() {
 //===----------------------------------------------------------------------===//
 
 BlockDesc::BlockDesc()
-  : DebugInfoDesc(DW_TAG_lexical_block), Context(NULL) {
-}
+  : DebugInfoDesc(DW_TAG_lexical_block), Context(NULL) {}
 
 // Implement isa/cast/dyncast.
 bool BlockDesc::classof(const DebugInfoDesc *D) {
