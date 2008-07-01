@@ -527,13 +527,16 @@ void SelectionDAG::RemoveDeadNode(SDNode *N, DAGUpdateListener *UpdateListener){
 
     // Next, brutally remove the operand list.  This is safe to do, as there are
     // no cycles in the graph.
+    unsigned op_num = 0;
     for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I) {
       SDNode *Operand = I->getVal();
-      Operand->removeUser(std::distance(N->op_begin(), I), N);
+      Operand->removeUser(op_num, N);
       
       // Now that we removed this operand, see if there are no uses of it left.
       if (Operand->use_empty())
         DeadNodes.push_back(Operand);
+      
+      op_num++;
     }
     if (N->OperandsNeedDelete) {
       delete[] N->OperandList;
