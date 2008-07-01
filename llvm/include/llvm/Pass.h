@@ -125,7 +125,6 @@ public:
     Resolver = AR; 
   }
   inline AnalysisResolver *getResolver() { 
-    assert (Resolver && "Resolver is not set");
     return Resolver; 
   }
 

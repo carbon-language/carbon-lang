@@ -102,7 +102,7 @@ public:
     Children.push_back(C);
     return C;
   }
-  
+
   size_t getNumChildren() const {
     return Children.size();
   }
@@ -307,6 +307,43 @@ public:
 
   // FIXME: Should remove this
   virtual bool runOnFunction(Function &F) { return false; }
+
+  /// compare - Return false if the other dominator tree base maches this
+  /// dominator tree base. Otherwise return true.
+  bool compare(DominatorTreeBase &Other) const {
+
+    // Collect nodes.
+    SmallPtrSet<const NodeT *,4> MyBBs;
+    for (typename DomTreeNodeMapType::const_iterator 
+           I = this->DomTreeNodes.begin(),
+           E = this->DomTreeNodes.end(); I != E; ++I) {
+      const NodeT *BB = I->first;
+      MyBBs.insert(BB);
+    }
+
+    SmallPtrSet<const NodeT *,4> OtherBBs;
+    const DomTreeNodeMapType &OtherDomTreeNodes = Other.DomTreeNodes;
+    for (typename DomTreeNodeMapType::const_iterator 
+           I = OtherDomTreeNodes.begin(),
+           E = OtherDomTreeNodes.end(); I != E; ++I) {
+      const NodeT *BB = I->first;
+      OtherBBs.insert(BB);
+    }
+
+    if (OtherBBs.size() != MyBBs.size())
+      return true;
+
+    // Compare node sets.
+    for (typename SmallPtrSet<const NodeT *,4>::const_iterator I = MyBBs.begin(),
+           E = MyBBs.end(); I != E; ++I) {
+      const NodeT *BB = *I;
+      if (OtherBBs.erase(BB) == 0)
+        return true;
+    }
+    if (!OtherBBs.empty())
+      return true;
+    return false;
+  }
 
   virtual void releaseMemory() { reset(); }
 
@@ -697,7 +734,22 @@ public:
   inline DomTreeNode *getRootNode() const {
     return DT->getRootNode();
   }
-  
+
+  /// compare - Return false if the other dominator tree maches this
+  /// dominator tree. Otherwise return true.
+  inline bool compare(DominatorTree &Other) const {
+    DomTreeNode *R = getRootNode();
+    DomTreeNode *OtherR = Other.getRootNode();
+    
+    if (!R || !OtherR || R->getBlock() != OtherR->getBlock())
+      return true;
+    
+    if (DT->compare(Other.getBase()))
+      return true;
+
+    return false;
+  }
+
   virtual bool runOnFunction(Function &F);
   
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -843,8 +895,8 @@ public:
   typedef std::map<BasicBlock*, DomSetType> DomSetMapType; // Dom set map
 protected:
   DomSetMapType Frontiers;
-    std::vector<BasicBlock*> Roots;
-    const bool IsPostDominators;
+  std::vector<BasicBlock*> Roots;
+  const bool IsPostDominators;
   
 public:
   DominanceFrontierBase(intptr_t ID, bool isPostDom) 
@@ -894,6 +946,58 @@ public:
     assert(I != end() && "BB is not in DominanceFrontier!");
     assert(I->second.count(Node) && "Node is not in DominanceFrontier of BB");
     I->second.erase(Node);
+  }
+
+  /// compareDomSet - Return false if two domsets match. Otherwise
+  /// return ture;
+  bool compareDomSet(DomSetType &DS1, const DomSetType &DS2) const {
+    std::set<BasicBlock *> tmpSet;
+    for (DomSetType::const_iterator I = DS2.begin(),
+           E = DS2.end(); I != E; ++I) 
+      tmpSet.insert(*I);
+
+    for (DomSetType::const_iterator I = DS1.begin(),
+           E = DS1.end(); I != E; ++I) {
+      BasicBlock *Node = *I;
+
+      if (tmpSet.erase(Node) == 0)
+        // Node is in DS1 but not in DS2.
+        return true;
+    }
+
+    if(!tmpSet.empty())
+      // There are nodes that are in DS2 but not in DS1.
+      return true;
+
+    // DS1 and DS2 matches.
+    return false;
+  }
+
+  /// compare - Return true if the other dominance frontier base matches
+  /// this dominance frontier base. Otherwise return false.
+  bool compare(DominanceFrontierBase &Other) const {
+    DomSetMapType tmpFrontiers;
+    for (DomSetMapType::const_iterator I = Other.begin(),
+           E = Other.end(); I != E; ++I) 
+      tmpFrontiers.insert(std::make_pair(I->first, I->second));
+
+    for (DomSetMapType::iterator I = tmpFrontiers.begin(),
+           E = tmpFrontiers.end(); I != E; ++I) {
+      BasicBlock *Node = I->first;
+      const_iterator DFI = find(Node);
+      if (DFI == end()) 
+        return true;
+
+      if (compareDomSet(I->second, DFI->second))
+        return true;
+
+      tmpFrontiers.erase(Node);
+    }
+
+    if (!tmpFrontiers.empty())
+      return true;
+
+    return false;
   }
 
   /// print - Convert to human readable form
@@ -962,7 +1066,6 @@ public:
     NewDFI->second.erase(BB);
   }
 
-private:
   const DomSetType &calculate(const DominatorTree &DT,
                               const DomTreeNode *Node);
 };

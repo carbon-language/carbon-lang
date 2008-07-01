@@ -19,6 +19,7 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm-c/Core.h"
 #include <algorithm>
 #include <vector>
@@ -40,6 +41,11 @@ namespace llvm {
 enum PassDebugLevel {
   None, Arguments, Structure, Executions, Details
 };
+
+bool VerifyDomInfo = false;
+static cl::opt<bool,true>
+VerifyDomInfoX("verify-dom-info", cl::location(VerifyDomInfo),
+               cl::desc("Verify dominator info (time consuming)"));
 
 static cl::opt<enum PassDebugLevel>
 PassDebugging("debug-pass", cl::Hidden,
@@ -608,6 +614,46 @@ void PMDataManager::verifyPreservedAnalysis(Pass *P) {
   }
 }
 
+/// verifyDomInfo - Verify dominator information if it is available.
+void PMDataManager::verifyDomInfo(Pass &P, Function &F) {
+  
+  if (!VerifyDomInfo || !P.getResolver())
+    return;
+
+  DominatorTree *DT = P.getAnalysisToUpdate<DominatorTree>();
+  if (!DT)
+    return;
+
+  DominatorTree OtherDT;
+  OtherDT.getBase().recalculate(F);
+  if (DT->compare(OtherDT)) {
+    cerr << "Dominator Information for " << F.getNameStart() << "\n";
+    cerr << "Pass " << P.getPassName() << "\n";
+    cerr << "----- Valid -----\n";
+    OtherDT.dump();
+    cerr << "----- InValid -----\n";
+    DT->dump();
+    assert (0 && "Invalid dominator info");
+  }
+
+  DominanceFrontier *DF = P.getAnalysisToUpdate<DominanceFrontier>();
+  if (!DF) 
+    return;
+
+  DominanceFrontier OtherDF;
+  std::vector<BasicBlock*> DTRoots = DT->getRoots();
+  OtherDF.calculate(*DT, DT->getNode(DTRoots[0]));
+  if (DF->compare(OtherDF)) {
+    cerr << "Dominator Information for " << F.getNameStart() << "\n";
+    cerr << "Pass " << P.getPassName() << "\n";
+    cerr << "----- Valid -----\n";
+    OtherDF.dump();
+    cerr << "----- InValid -----\n";
+    DF->dump();
+    assert (0 && "Invalid dominator info");
+  }
+}
+
 /// Remove Analyss not preserved by Pass P
 void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
   AnalysisUsage AnUsage;
@@ -650,7 +696,6 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
         InheritedAnalysis[Index]->erase(Info);
     }
   }
-
 }
 
 /// Remove analysis passes that are not used any longer
@@ -719,6 +764,7 @@ void PMDataManager::add(Pass *P,
       Pass *PRequired = *I;
       unsigned RDepth = 0;
 
+      assert (PRequired->getResolver() && "Analysis Resolver is not set");
       PMDataManager &DM = PRequired->getResolver()->getPMDataManager();
       RDepth = DM.getDepth();
 
@@ -813,6 +859,7 @@ void PMDataManager::initializeAnalysisImpl(Pass *P) {
       // If that is not the case then it will raise an assert when it is used.
       continue;
     AnalysisResolver *AR = P->getResolver();
+    assert (AR && "Analysis Resolver is not set");
     AR->addAnalysisImplsPair(*I, Impl);
   }
 }
@@ -1202,6 +1249,9 @@ bool FPPassManager::runOnFunction(Function &F) {
     removeNotPreservedAnalysis(FP);
     recordAvailableAnalysis(FP);
     removeDeadPasses(FP, F.getNameStart(), ON_FUNCTION_MSG);
+
+    // Verify dominator information if it is available and preserved.
+    verifyDomInfo(*FP, F);
   }
   return Changed;
 }
