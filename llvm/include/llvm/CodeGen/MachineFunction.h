@@ -32,7 +32,7 @@ class MachineJumpTableInfo;
 
 // ilist_traits
 template <>
-struct ilist_traits<MachineBasicBlock> {
+class ilist_traits<MachineBasicBlock> {
   // this is only set by the MachineFunction owning the ilist
   friend class MachineFunction;
   MachineFunction* Parent;
