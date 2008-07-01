@@ -466,15 +466,16 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   // Print the SubregHashTable, a simple quadratically probed
   // hash table for determining if a register is a subregister
   // of another register.
-  unsigned SubregHashTableSize = NextPowerOf2(2 * Regs.size());
-  unsigned* SubregHashTable =
-                  (unsigned*)malloc(2 * SubregHashTableSize * sizeof(unsigned));
-  for (unsigned i = 0; i < SubregHashTableSize * 2; ++i)
-    SubregHashTable[i] = ~0U;
-  
+  unsigned NumSubRegs = 0;
   std::map<Record*, unsigned> RegNo;
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i)
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
     RegNo[Regs[i].TheDef] = i;
+    NumSubRegs += RegisterSubRegs[Regs[i].TheDef].size();
+  }
+  
+  unsigned SubregHashTableSize = NextPowerOf2(2 * NumSubRegs);
+  unsigned* SubregHashTable = new unsigned[2 * SubregHashTableSize];
+  std::fill(SubregHashTable, SubregHashTable + 2 * SubregHashTableSize, ~0U);
   
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
     Record* R = Regs[i].TheDef;
@@ -484,11 +485,11 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       // We have to increase the indices of both registers by one when
       // computing the hash because, in the generated code, there
       // will be an extra empty slot at register 0.
-      size_t index = ((i+1) + (RegNo[RJ]+1) * 37) % SubregHashTableSize;
+      size_t index = ((i+1) + (RegNo[RJ]+1) * 37) & (SubregHashTableSize-1);
       unsigned ProbeAmt = 2;
       while (SubregHashTable[index*2] != ~0U &&
              SubregHashTable[index*2+1] != ~0U) {
-        index = (index + ProbeAmt) % SubregHashTableSize;
+        index = (index + ProbeAmt) & (SubregHashTableSize-1);
         ProbeAmt += 2;
       }
       

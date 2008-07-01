@@ -413,14 +413,14 @@ public:
   ///
   bool isSubRegister(unsigned regA, unsigned regB) const {
     // SubregHash is a simple quadratically probed hash table.
-    size_t index = (regA + regB * 37) % SubregHashSize;
+    size_t index = (regA + regB * 37) & (SubregHashSize-1);
     unsigned ProbeAmt = 2;
     while (SubregHash[index*2] != 0 &&
            SubregHash[index*2+1] != 0) {
       if (SubregHash[index*2] == regA && SubregHash[index*2+1] == regB)
         return true;
       
-      index = (index + ProbeAmt) % SubregHashSize;
+      index = (index + ProbeAmt) & (SubregHashSize-1);
       ProbeAmt += 2;
     }
     
