@@ -17,6 +17,7 @@
 #include "llvm/ADT/iterator.h"
 #include "llvm/Support/type_traits.h"
 #include <algorithm>
+#include <cstring>
 #include <memory>
 
 #ifdef _MSC_VER
