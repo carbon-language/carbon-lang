@@ -94,7 +94,7 @@ public:
   const std::vector<DomTreeNodeBase<NodeT>*> &getChildren() const {
     return Children;
   }
-  
+
   DomTreeNodeBase(NodeT *BB, DomTreeNodeBase<NodeT> *iDom)
     : TheBB(BB), IDom(iDom), DFSNumIn(-1), DFSNumOut(-1) { }
   
@@ -106,7 +106,29 @@ public:
   size_t getNumChildren() const {
     return Children.size();
   }
+
+  void clearAllChildren() {
+    Children.clear();
+  }
   
+  bool compare(DomTreeNodeBase<NodeT> *Other) {
+    if (getNumChildren() != Other->getNumChildren())
+      return true;
+
+    SmallPtrSet<NodeT *, 4> OtherChildren;
+    for(iterator I = Other->begin(), E = Other->end(); I != E; ++I) {
+      NodeT *Nd = (*I)->getBlock();
+      OtherChildren.insert(Nd);
+    }
+
+    for(iterator I = begin(), E = end(); I != E; ++I) {
+      NodeT *N = (*I)->getBlock();
+      if (OtherChildren.count(N) == 0)
+        return true;
+    }
+    return false;
+  }
+
   void setIDom(DomTreeNodeBase<NodeT> *NewIDom) {
     assert(IDom && "No immediate dominator?");
     if (IDom != NewIDom) {
@@ -312,36 +334,26 @@ public:
   /// dominator tree base. Otherwise return true.
   bool compare(DominatorTreeBase &Other) const {
 
-    // Collect nodes.
+    const DomTreeNodeMapType &OtherDomTreeNodes = Other.DomTreeNodes;
+    if (DomTreeNodes.size() != OtherDomTreeNodes.size())
+      return true;
+
     SmallPtrSet<const NodeT *,4> MyBBs;
     for (typename DomTreeNodeMapType::const_iterator 
            I = this->DomTreeNodes.begin(),
            E = this->DomTreeNodes.end(); I != E; ++I) {
-      const NodeT *BB = I->first;
-      MyBBs.insert(BB);
-    }
+      NodeT *BB = I->first;
+      typename DomTreeNodeMapType::const_iterator OI = OtherDomTreeNodes.find(BB);
+      if (OI == OtherDomTreeNodes.end())
+        return true;
 
-    SmallPtrSet<const NodeT *,4> OtherBBs;
-    const DomTreeNodeMapType &OtherDomTreeNodes = Other.DomTreeNodes;
-    for (typename DomTreeNodeMapType::const_iterator 
-           I = OtherDomTreeNodes.begin(),
-           E = OtherDomTreeNodes.end(); I != E; ++I) {
-      const NodeT *BB = I->first;
-      OtherBBs.insert(BB);
-    }
-
-    if (OtherBBs.size() != MyBBs.size())
-      return true;
-
-    // Compare node sets.
-    for (typename SmallPtrSet<const NodeT *,4>::const_iterator I = MyBBs.begin(),
-           E = MyBBs.end(); I != E; ++I) {
-      const NodeT *BB = *I;
-      if (OtherBBs.erase(BB) == 0)
+      DomTreeNodeBase<NodeT>* MyNd = I->second;
+      DomTreeNodeBase<NodeT>* OtherNd = OI->second;
+      
+      if (MyNd->compare(OtherNd))
         return true;
     }
-    if (!OtherBBs.empty())
-      return true;
+
     return false;
   }
 
