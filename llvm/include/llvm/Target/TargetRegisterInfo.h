@@ -274,6 +274,9 @@ public:
 /// descriptor.
 ///
 class TargetRegisterInfo {
+protected:
+  unsigned* SubregHash;
+  unsigned SubregHashSize;
 public:
   typedef const TargetRegisterClass * const * regclass_iterator;
 private:
@@ -283,7 +286,6 @@ private:
   regclass_iterator RegClassBegin, RegClassEnd;   // List of regclasses
 
   int CallFrameSetupOpcode, CallFrameDestroyOpcode;
-  std::set<std::pair<unsigned, unsigned> > Subregs;
 protected:
   TargetRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
                      regclass_iterator RegClassBegin,
@@ -410,7 +412,19 @@ public:
   /// isSubRegister - Returns true if regB is a sub-register of regA.
   ///
   bool isSubRegister(unsigned regA, unsigned regB) const {
-    return Subregs.count(std::make_pair(regA, regB));
+    // SubregHash is a simple quadratically probed hash table.
+    size_t index = (regA + regB * 37) % SubregHashSize;
+    unsigned ProbeAmt = 2;
+    while (SubregHash[index*2] != 0 &&
+           SubregHash[index*2+1] != 0) {
+      if (SubregHash[index*2] == regA && SubregHash[index*2+1] == regB)
+        return true;
+      
+      index = (index + ProbeAmt) % SubregHashSize;
+      ProbeAmt += 2;
+    }
+    
+    return false;
   }
 
   /// isSuperRegister - Returns true if regB is a super-register of regA.

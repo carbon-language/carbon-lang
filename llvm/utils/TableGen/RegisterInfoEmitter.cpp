@@ -462,6 +462,70 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
                      RegisterAliases);
     }
   }
+  
+  // Print the SubregHashTable, a simple quadratically probed
+  // hash table for determining if a register is a subregister
+  // of another register.
+  unsigned SubregHashTableSize = NextPowerOf2(2 * Regs.size());
+  unsigned* SubregHashTable =
+                  (unsigned*)malloc(2 * SubregHashTableSize * sizeof(unsigned));
+  for (unsigned i = 0; i < SubregHashTableSize * 2; ++i)
+    SubregHashTable[i] = ~0U;
+  
+  std::map<Record*, unsigned> RegNo;
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i)
+    RegNo[Regs[i].TheDef] = i;
+  
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    Record* R = Regs[i].TheDef;
+    for (std::set<Record*>::iterator I = RegisterSubRegs[R].begin(),
+         E = RegisterSubRegs[R].end(); I != E; ++I) {
+      Record* RJ = *I;
+      // We have to increase the indices of both registers by one when
+      // computing the hash because, in the generated code, there
+      // will be an extra empty slot at register 0.
+      size_t index = ((i+1) + (RegNo[RJ]+1) * 37) % SubregHashTableSize;
+      unsigned ProbeAmt = 2;
+      while (SubregHashTable[index*2] != ~0U &&
+             SubregHashTable[index*2+1] != ~0U) {
+        index = (index + ProbeAmt) % SubregHashTableSize;
+        ProbeAmt += 2;
+      }
+      
+      SubregHashTable[index*2] = i;
+      SubregHashTable[index*2+1] = RegNo[RJ];
+    }
+  }
+  
+  if (SubregHashTableSize) {
+    std::string Namespace = Regs[0].TheDef->getValueAsString("Namespace");
+    
+    OS << "\n\n  unsigned SubregHashTable[] = {";
+    for (unsigned i = 0; i < SubregHashTableSize - 1; ++i) {
+      if (SubregHashTable[2*i] != ~0U) {
+        OS << getQualifiedName(Regs[SubregHashTable[2*i]].TheDef) << ", "
+           << getQualifiedName(Regs[SubregHashTable[2*i+1]].TheDef) << ", ";
+      } else {
+        OS << Namespace << "::NoRegister, " << Namespace << "::NoRegister, ";
+      }
+    }
+    
+    unsigned Idx = SubregHashTableSize*2-2;
+    if (SubregHashTable[Idx] != ~0U) {
+      OS << getQualifiedName(Regs[SubregHashTable[Idx]].TheDef) << ", "
+         << getQualifiedName(Regs[SubregHashTable[Idx+1]].TheDef) << "};\n";
+    } else {
+      OS << Namespace << "::NoRegister, " << Namespace << "::NoRegister};\n";
+    }
+    
+    OS << "  unsigned SubregHashTableSize = "
+       << SubregHashTableSize << ";\n";
+  } else {
+    OS << "\n\n  unsigned SubregHashTable[] = { ~0U, ~0U };\n"
+       << "  unsigned SubregHashTableSize = 1;\n";
+  }
+  
+  free(SubregHashTable);
 
   if (!RegisterAliases.empty())
     OS << "\n\n  // Register Alias Sets...\n";
@@ -607,7 +671,10 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
      << "(int CallFrameSetupOpcode, int CallFrameDestroyOpcode)\n"
      << "  : TargetRegisterInfo(RegisterDescriptors, " << Registers.size()+1
      << ", RegisterClasses, RegisterClasses+" << RegisterClasses.size() <<",\n "
-     << "                 CallFrameSetupOpcode, CallFrameDestroyOpcode) {}\n\n";
+     << "                 CallFrameSetupOpcode, CallFrameDestroyOpcode) {\n"
+     << "  this->SubregHash = SubregHashTable;\n"
+     << "  this->SubregHashSize = SubregHashTableSize;\n"
+     << "}\n\n";
 
   // Collect all information about dwarf register numbers
 
