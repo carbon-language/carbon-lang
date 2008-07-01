@@ -220,6 +220,7 @@ public:
   void AddFloat(float F);
   void AddDouble(double D);
   void AddString(const std::string &String);
+  void AddString(const char* String);
   
   template <typename T>
   inline void Add(const T& x) { FoldingSetTrait<T>::Profile(x, *this); }
