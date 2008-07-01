@@ -19,6 +19,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetData.h"
@@ -82,6 +83,7 @@ void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
   AU.addRequiredTransitive<AliasAnalysis>();
   AU.addRequiredTransitive<TargetData>();
+  AU.addRequiredTransitive<DominatorTree>();
 }
 
 /// getCallSiteDependency - Private helper for finding the local dependencies
@@ -219,6 +221,17 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
       
       stack.pop_back();
       
+      continue;
+    }
+    
+    // Don't recur upwards if the current block is unreachable.
+    // Instead, mark it as having no dependency on this path,
+    // which will block optzns from occuring.  For this reason,
+    // eliminating unreachable blocks before running a memdep
+    // based optimization is recommended.
+    DominatorTree& DT = getAnalysis<DominatorTree>();
+    if (!DT.isReachableFromEntry(BB)) {
+      resp.insert(std::make_pair(BB, None));
       continue;
     }
     
