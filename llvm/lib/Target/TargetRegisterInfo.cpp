@@ -24,8 +24,8 @@ TargetRegisterInfo::TargetRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
                              regclass_iterator RCB, regclass_iterator RCE,
                              int CFSO, int CFDO,
                              const unsigned* subregs, const unsigned subregsize)
-  : Desc(D), NumRegs(NR), RegClassBegin(RCB), RegClassEnd(RCE),
-    SubregHash(subregs), SubregHashSize(subregsize) {
+  : SubregHash(subregs), SubregHashSize(subregsize), Desc(D), NumRegs(NR),
+    RegClassBegin(RCB), RegClassEnd(RCE) {
   assert(NumRegs < FirstVirtualRegister &&
          "Target has too many physical registers!");
 
