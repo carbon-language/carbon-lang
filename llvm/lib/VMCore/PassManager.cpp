@@ -42,7 +42,7 @@ enum PassDebugLevel {
   None, Arguments, Structure, Executions, Details
 };
 
-bool VerifyDomInfo = true;
+bool VerifyDomInfo = false;
 static cl::opt<bool,true>
 VerifyDomInfoX("verify-dom-info", cl::location(VerifyDomInfo),
                cl::desc("Verify dominator info (time consuming)"));
