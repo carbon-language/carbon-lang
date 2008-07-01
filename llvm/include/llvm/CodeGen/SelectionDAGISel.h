@@ -41,14 +41,13 @@ public:
   SelectionDAG *CurDAG;
   MachineBasicBlock *BB;
   AliasAnalysis *AA;
-  std::vector<SDNode*> TopOrder;
-  unsigned DAGSize;
   CollectorMetadata *GCI;
   bool FastISel;
+  std::vector<SDNode*> TopOrder;
   static char ID;
 
   explicit SelectionDAGISel(TargetLowering &tli, bool fast = false) : 
-    FunctionPass((intptr_t)&ID), TLI(tli), DAGSize(0), GCI(0), FastISel(fast) {}
+    FunctionPass((intptr_t)&ID), TLI(tli), GCI(0), FastISel(fast), DAGSize(0) {}
   
   TargetLowering &getTargetLowering() { return TLI; }
 
@@ -163,6 +162,10 @@ public:
   };
   
 protected:
+  /// DAGSize - Size of DAG being instruction selected.
+  ///
+  unsigned DAGSize;
+
   /// SelectInlineAsmMemoryOperands - Calls to this are automatically generated
   /// by tblgen.  Others should not call it.
   void SelectInlineAsmMemoryOperands(std::vector<SDOperand> &Ops,
