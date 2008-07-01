@@ -4517,7 +4517,8 @@ SDNode *X86TargetLowering::ExpandFP_TO_SINT(SDNode *N, SelectionDAG &DAG) {
   SDOperand Res = DAG.getLoad(VT, FIST, StackSlot, NULL, 0);
 
   // Use a MERGE_VALUES node to drop the chain result value.
-  return DAG.getMergeValues(DAG.getVTList(VT), &Res, 1, false).Val;
+  return DAG.getMergeValues(DAG.getVTList(VT), &Res, 1,
+                            false /* Require a node with one-result */).Val;
 }
 
 SDOperand X86TargetLowering::LowerFABS(SDOperand Op, SelectionDAG &DAG) {
