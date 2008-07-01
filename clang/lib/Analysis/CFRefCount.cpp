@@ -1818,7 +1818,6 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
     default:
       assert (false && "Unhandled CFRef transition.");
 
-    case Autorelease:          
     case MayEscape:
       if (V.getKind() == RefVal::Owned) {
         V = V ^ RefVal::NotOwned;
@@ -1836,6 +1835,7 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
       
       return B;
 
+    case Autorelease:          
     case StopTracking:
       return RefBFactory.Remove(B, sym);
       
