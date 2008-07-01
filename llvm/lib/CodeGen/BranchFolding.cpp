@@ -697,8 +697,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
   // transformations.)
 
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
-    if (!I->succ_empty() && I->pred_size() >= 2 && 
-         I->pred_size() < TailMergeThreshold) {
+    if (I->pred_size() >= 2 && I->pred_size() < TailMergeThreshold) {
       MachineBasicBlock *IBB = I;
       MachineBasicBlock *PredBB = prior(I);
       MergePotentials.clear();
