@@ -30,7 +30,7 @@ class TimerGroup;
 /// support it can also keep track of the RSS of the program at various points.
 /// By default, the Timer will print the amount of time it has captured to
 /// standard error when the laster timer is destroyed, otherwise it is printed
-/// when it's TimerGroup is destroyed.  Timer's do not print their information
+/// when its TimerGroup is destroyed.  Timers do not print their information
 /// if they are never started.
 ///
 class Timer {
