@@ -1860,8 +1860,26 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "}\n\n";
 
   OS << "SDNode *Select_UNDEF(const SDOperand &N) {\n"
-     << "  return CurDAG->getTargetNode(TargetInstrInfo::IMPLICIT_DEF,\n"
-     << "                               N.getValueType());\n"
+     << "  return CurDAG->SelectNodeTo(N.Val, TargetInstrInfo::IMPLICIT_DEF,\n"
+     << "                              N.getValueType());\n"
+     << "}\n\n";
+
+  OS << "SDNode *Select_DBG_LABEL(const SDOperand &N) {\n"
+     << "  SDOperand Chain = N.getOperand(0);\n"
+     << "  unsigned C = cast<LabelSDNode>(N)->getLabelID();\n"
+     << "  SDOperand Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
+     << "  AddToISelQueue(Chain);\n"
+     << "  return CurDAG->SelectNodeTo(N.Val, TargetInstrInfo::DBG_LABEL,\n"
+     << "                              MVT::Other, Tmp, Chain);\n"
+     << "}\n\n";
+
+  OS << "SDNode *Select_EH_LABEL(const SDOperand &N) {\n"
+     << "  SDOperand Chain = N.getOperand(0);\n"
+     << "  unsigned C = cast<LabelSDNode>(N)->getLabelID();\n"
+     << "  SDOperand Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
+     << "  AddToISelQueue(Chain);\n"
+     << "  return CurDAG->SelectNodeTo(N.Val, TargetInstrInfo::EH_LABEL,\n"
+     << "                              MVT::Other, Tmp, Chain);\n"
      << "}\n\n";
 
   OS << "SDNode *Select_DECLARE(const SDOperand &N) {\n"
@@ -1880,9 +1898,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  SDOperand Tmp2 = "
      << "CurDAG->getTargetGlobalAddress(GV, TLI.getPointerTy());\n"
      << "  AddToISelQueue(Chain);\n"
-     << "  SDOperand Ops[] = { Tmp1, Tmp2, Chain };\n"
-     << "  return CurDAG->getTargetNode(TargetInstrInfo::DECLARE,\n"
-     << "                               MVT::Other, Ops, 3);\n"
+     << "  return CurDAG->SelectNodeTo(N.Val, TargetInstrInfo::DECLARE,\n"
+     << "                              MVT::Other, Tmp1, Tmp2, Chain);\n"
      << "}\n\n";
 
   OS << "SDNode *Select_EXTRACT_SUBREG(const SDOperand &N) {\n"
@@ -1891,9 +1908,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  unsigned C = cast<ConstantSDNode>(N1)->getValue();\n"
      << "  SDOperand Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
      << "  AddToISelQueue(N0);\n"
-     << "  SDOperand Ops[] = { N0, Tmp };\n"
-     << "  return CurDAG->getTargetNode(TargetInstrInfo::EXTRACT_SUBREG,\n"
-     << "                               N.getValueType(), Ops, 2);\n"
+     << "  return CurDAG->SelectNodeTo(N.Val, TargetInstrInfo::EXTRACT_SUBREG,\n"
+     << "                              N.getValueType(), N0, Tmp);\n"
      << "}\n\n";
 
   OS << "SDNode *Select_INSERT_SUBREG(const SDOperand &N) {\n"
@@ -1903,10 +1919,9 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  unsigned C = cast<ConstantSDNode>(N2)->getValue();\n"
      << "  SDOperand Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
      << "  AddToISelQueue(N1);\n"
-     << "  SDOperand Ops[] = { N0, N1, Tmp };\n"
      << "  AddToISelQueue(N0);\n"
-     << "  return CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG,\n"
-     << "                               N.getValueType(), Ops, 3);\n"
+     << "  return CurDAG->SelectNodeTo(N.Val, TargetInstrInfo::INSERT_SUBREG,\n"
+     << "                              N.getValueType(), N0, N1, Tmp);\n"
      << "}\n\n";
 
   OS << "// The main instruction selector code.\n"
@@ -1942,13 +1957,13 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  case ISD::TokenFactor:\n"
      << "  case ISD::CopyFromReg:\n"
      << "  case ISD::CopyToReg: {\n"
-     << "  case ISD::DBG_LABEL:\n"
-     << "  case ISD::EH_LABEL:\n"
      << "    for (unsigned i = 0, e = N.getNumOperands(); i != e; ++i)\n"
      << "      AddToISelQueue(N.getOperand(i));\n"
      << "    return NULL;\n"
      << "  }\n"
      << "  case ISD::INLINEASM: return Select_INLINEASM(N);\n"
+     << "  case ISD::DBG_LABEL: return Select_DBG_LABEL(N);\n"
+     << "  case ISD::EH_LABEL: return Select_EH_LABEL(N);\n"
      << "  case ISD::DECLARE: return Select_DECLARE(N);\n"
      << "  case ISD::EXTRACT_SUBREG: return Select_EXTRACT_SUBREG(N);\n"
      << "  case ISD::INSERT_SUBREG: return Select_INSERT_SUBREG(N);\n"

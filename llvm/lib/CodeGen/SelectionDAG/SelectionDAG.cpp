@@ -3693,130 +3693,97 @@ void SDNode::MorphNodeTo(unsigned Opc, SDVTList L,
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                    MVT VT) {
   SDVTList VTs = getVTList(VT);
-  FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs, (SDOperand*)0, 0);
-  void *IP = 0;
-  if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return ON;
-   
-  RemoveNodeFromCSEMaps(N);
-  
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, SDOperandPtr(), 0);
-
-  CSEMap.InsertNode(N, IP);
-  return N;
+  return SelectNodeTo(N, TargetOpc, VTs, (SDOperand*)0, 0);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                    MVT VT, SDOperand Op1) {
-  // If an identical node already exists, use it.
   SDVTList VTs = getVTList(VT);
   SDOperand Ops[] = { Op1 };
-  
-  FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 1);
-  void *IP = 0;
-  if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return ON;
-                                       
-  RemoveNodeFromCSEMaps(N);
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 1);
-  CSEMap.InsertNode(N, IP);
-  return N;
+  return SelectNodeTo(N, TargetOpc, VTs, Ops, 1);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                    MVT VT, SDOperand Op1,
                                    SDOperand Op2) {
-  // If an identical node already exists, use it.
   SDVTList VTs = getVTList(VT);
   SDOperand Ops[] = { Op1, Op2 };
-  
-  FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 2);
-  void *IP = 0;
-  if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return ON;
-                                       
-  RemoveNodeFromCSEMaps(N);
-  
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 2);
-  
-  CSEMap.InsertNode(N, IP);   // Memoize the new node.
-  return N;
+  return SelectNodeTo(N, TargetOpc, VTs, Ops, 2);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                    MVT VT, SDOperand Op1,
                                    SDOperand Op2, SDOperand Op3) {
-  // If an identical node already exists, use it.
   SDVTList VTs = getVTList(VT);
   SDOperand Ops[] = { Op1, Op2, Op3 };
-  FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 3);
-  void *IP = 0;
-  if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return ON;
-                                       
-  RemoveNodeFromCSEMaps(N);
-  
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 3);
-
-  CSEMap.InsertNode(N, IP);   // Memoize the new node.
-  return N;
+  return SelectNodeTo(N, TargetOpc, VTs, Ops, 3);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                    MVT VT, SDOperandPtr Ops,
                                    unsigned NumOps) {
-  // If an identical node already exists, use it.
   SDVTList VTs = getVTList(VT);
-  FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, NumOps);
-  void *IP = 0;
-  if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return ON;
-                                       
-  RemoveNodeFromCSEMaps(N);
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, NumOps);
-  
-  CSEMap.InsertNode(N, IP);   // Memoize the new node.
-  return N;
+  return SelectNodeTo(N, TargetOpc, VTs, Ops, NumOps);
+}
+
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+                                   MVT VT1, MVT VT2, SDOperandPtr Ops,
+                                   unsigned NumOps) {
+  SDVTList VTs = getVTList(VT1, VT2);
+  return SelectNodeTo(N, TargetOpc, VTs, Ops, NumOps);
+}
+
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+                                   MVT VT1, MVT VT2) {
+  SDVTList VTs = getVTList(VT1, VT2);
+  return SelectNodeTo(N, TargetOpc, VTs, (SDOperand *)0, 0);
+}
+
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+                                   MVT VT1, MVT VT2, MVT VT3, SDOperandPtr Ops,
+                                   unsigned NumOps) {
+  SDVTList VTs = getVTList(VT1, VT2, VT3);
+  return SelectNodeTo(N, TargetOpc, VTs, Ops, NumOps);
+}
+
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc, 
+                                   MVT VT1, MVT VT2,
+                                   SDOperand Op1) {
+  SDVTList VTs = getVTList(VT1, VT2);
+  SDOperand Ops[] = { Op1 };
+  return SelectNodeTo(N, TargetOpc, VTs, Ops, 1);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc, 
                                    MVT VT1, MVT VT2,
                                    SDOperand Op1, SDOperand Op2) {
   SDVTList VTs = getVTList(VT1, VT2);
-  FoldingSetNodeID ID;
   SDOperand Ops[] = { Op1, Op2 };
-  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 2);
-  void *IP = 0;
-  if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return ON;
-
-  RemoveNodeFromCSEMaps(N);
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 2);
-  CSEMap.InsertNode(N, IP);   // Memoize the new node.
-  return N;
+  return SelectNodeTo(N, TargetOpc, VTs, Ops, 2);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                    MVT VT1, MVT VT2,
                                    SDOperand Op1, SDOperand Op2, 
                                    SDOperand Op3) {
-  // If an identical node already exists, use it.
   SDVTList VTs = getVTList(VT1, VT2);
   SDOperand Ops[] = { Op1, Op2, Op3 };
+  return SelectNodeTo(N, TargetOpc, VTs, Ops, 3);
+}
+
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+                                   SDVTList VTs, SDOperandPtr Ops,
+                                   unsigned NumOps) {
+  // If an identical node already exists, use it.
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 3);
+  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, NumOps);
   void *IP = 0;
   if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
     return ON;
 
   RemoveNodeFromCSEMaps(N);
 
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, 3);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, NumOps);
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
   return N;
 }
@@ -4109,8 +4076,7 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
   for (SDNode::use_iterator UI = From.Val->use_begin(), 
       E = From.Val->use_end(); UI != E; ++UI) {
     SDNode *User = UI->getUser();
-    if (!Users.count(User))
-      Users.insert(User);
+    Users.insert(User);
   }
 
   // When one of the recursive merges deletes nodes from the graph, we need to

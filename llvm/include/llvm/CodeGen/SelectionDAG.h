@@ -461,10 +461,19 @@ public:
                        SDOperand Op1, SDOperand Op2, SDOperand Op3);
   SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT VT,
                        SDOperandPtr Ops, unsigned NumOps);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT VT1, MVT VT2);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT VT1,
+                       MVT VT2, SDOperandPtr Ops, unsigned NumOps);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT VT1,
+                       MVT VT2, MVT VT3, SDOperandPtr Ops, unsigned NumOps);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT VT1,
+                       MVT VT2, SDOperand Op1);
   SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT VT1,
                        MVT VT2, SDOperand Op1, SDOperand Op2);
   SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT VT1,
                        MVT VT2, SDOperand Op1, SDOperand Op2, SDOperand Op3);
+  SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, SDVTList VTs,
+                       SDOperandPtr Ops, unsigned NumOps);
 
 
   /// getTargetNode - These are used for target selectors to create a new node

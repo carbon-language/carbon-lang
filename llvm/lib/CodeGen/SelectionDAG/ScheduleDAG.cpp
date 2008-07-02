@@ -885,16 +885,6 @@ void ScheduleDAG::EmitNode(SDNode *Node, bool IsClone,
     assert(0 && "EntryToken should have been excluded from the schedule!");
     break;
   case ISD::TokenFactor: // fall thru
-  case ISD::DECLARE:
-  case ISD::SRCVALUE:
-    break;
-  case ISD::DBG_LABEL:
-    BB->push_back(BuildMI(TII->get(TargetInstrInfo::DBG_LABEL))
-                  .addImm(cast<LabelSDNode>(Node)->getLabelID()));
-    break;
-  case ISD::EH_LABEL:
-    BB->push_back(BuildMI(TII->get(TargetInstrInfo::EH_LABEL))
-                  .addImm(cast<LabelSDNode>(Node)->getLabelID()));
     break;
   case ISD::CopyToReg: {
     unsigned SrcReg;
@@ -951,34 +941,14 @@ void ScheduleDAG::EmitNode(SDNode *Node, bool IsClone,
         
       switch (Flags & 7) {
       default: assert(0 && "Bad flags!");
-      case 1:  // Use of register.
-        for (; NumVals; --NumVals, ++i) {
-          unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
-          MI->addOperand(MachineOperand::CreateReg(Reg, false));
-        }
-        break;
       case 2:   // Def of register.
         for (; NumVals; --NumVals, ++i) {
           unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
           MI->addOperand(MachineOperand::CreateReg(Reg, true));
         }
         break;
-      case 3: { // Immediate.
-        for (; NumVals; --NumVals, ++i) {
-          if (ConstantSDNode *CS =
-              dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
-            MI->addOperand(MachineOperand::CreateImm(CS->getValue()));
-          } else if (GlobalAddressSDNode *GA = 
-                     dyn_cast<GlobalAddressSDNode>(Node->getOperand(i))) {
-            MI->addOperand(MachineOperand::CreateGA(GA->getGlobal(),
-                                                    GA->getOffset()));
-          } else {
-            BasicBlockSDNode *BB =cast<BasicBlockSDNode>(Node->getOperand(i));
-            MI->addOperand(MachineOperand::CreateMBB(BB->getBasicBlock()));
-          }
-        }
-        break;
-      }
+      case 1:  // Use of register.
+      case 3:  // Immediate.
       case 4:  // Addressing mode.
         // The addressing mode has been selected, just add all of the
         // operands to the machine instruction.
