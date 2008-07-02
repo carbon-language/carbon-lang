@@ -85,6 +85,13 @@ namespace {
     /// OrigLoopExitMap - This is used to map loop exiting block with 
     /// corresponding loop exit block, before updating CFG.
     DenseMap<BasicBlock *, BasicBlock *> OrigLoopExitMap;
+
+    // LoopBlocks contains all of the basic blocks of the loop, including the
+    // preheader of the loop, the body of the loop, and the exit blocks of the 
+    // loop, in that order.
+    std::vector<BasicBlock*> LoopBlocks;
+    // NewBlocks contained cloned copy of basic blocks from LoopBlocks.
+    std::vector<BasicBlock*> NewBlocks;
   public:
     static char ID; // Pass ID, replacement for typeid
     explicit LoopUnswitch(bool Os = false) : 
@@ -761,10 +768,8 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
        << " blocks] in Function " << F->getName()
        << " when '" << *Val << "' == " << *LIC << "\n";
 
-  // LoopBlocks contains all of the basic blocks of the loop, including the
-  // preheader of the loop, the body of the loop, and the exit blocks of the 
-  // loop, in that order.
-  std::vector<BasicBlock*> LoopBlocks;
+  LoopBlocks.clear();
+  NewBlocks.clear();
 
   // First step, split the preheader and exit blocks, and add these blocks to
   // the LoopBlocks list.
@@ -792,7 +797,6 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   // Next step, clone all of the basic blocks that make up the loop (including
   // the loop preheader and exit blocks), keeping track of the mapping between
   // the instructions and blocks.
-  std::vector<BasicBlock*> NewBlocks;
   NewBlocks.reserve(LoopBlocks.size());
   DenseMap<const Value*, Value*> ValueMap;
   for (unsigned i = 0, e = LoopBlocks.size(); i != e; ++i) {
