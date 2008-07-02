@@ -587,8 +587,7 @@ GlobalVariable *DISerializer::Serialize(DebugInfoDesc *DD) {
 
   // Create the GlobalVariable early to prevent infinite recursion.
   GlobalVariable *GV =
-    new GlobalVariable(Ty, true,
-                       (GlobalValue::LinkageTypes)DD->getLinkage(),
+    new GlobalVariable(Ty, true, DD->getLinkage(),
                        NULL, DD->getDescString(), M);
   GV->setSection("llvm.metadata");
 

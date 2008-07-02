@@ -14,6 +14,7 @@
 #ifndef LLVM_CODEGEN_MACHINEDEBUGINFODESC_H
 #define LLVM_CODEGEN_MACHINEDEBUGINFODESC_H
 
+#include "llvm/GlobalValue.h"
 #include "llvm/Support/DataTypes.h"
 #include <string>
 #include <vector>
@@ -67,7 +68,7 @@ public:
   
   /// getLinkage - get linkage appropriate for this type of descriptor.
   ///
-  virtual unsigned getLinkage() const;
+  virtual GlobalValue::LinkageTypes getLinkage() const;
     
   //===--------------------------------------------------------------------===//
   // Subclasses should supply the following virtual methods.
@@ -111,7 +112,7 @@ public:
 
   /// getLinkage - get linkage appropriate for this type of descriptor.
   ///
-  virtual unsigned getLinkage() const;
+  virtual GlobalValue::LinkageTypes getLinkage() const;
 
   /// ApplyToFields - Target the visitor to the fields of the AnchorDesc.
   ///

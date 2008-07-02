@@ -92,8 +92,8 @@ DebugInfoDesc *DebugInfoDesc::DescFactory(unsigned Tag) {
 }
 
 /// getLinkage - get linkage appropriate for this type of descriptor.
-unsigned DebugInfoDesc::getLinkage() const {
-  return (unsigned)GlobalValue::InternalLinkage;
+GlobalValue::LinkageTypes DebugInfoDesc::getLinkage() const {
+  return GlobalValue::InternalLinkage;
 }
 
 /// ApplyToFields - Target the vistor to the fields of the descriptor.
@@ -115,8 +115,8 @@ bool AnchorDesc::classof(const DebugInfoDesc *D) {
 }
   
 /// getLinkage - get linkage appropriate for this type of descriptor.
-unsigned AnchorDesc::getLinkage() const {
-  return (unsigned)GlobalValue::LinkOnceLinkage;
+GlobalValue::LinkageTypes AnchorDesc::getLinkage() const {
+  return GlobalValue::LinkOnceLinkage;
 }
 
 /// ApplyToFields - Target the visitor to the fields of the TransUnitDesc.
