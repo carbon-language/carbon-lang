@@ -1,4 +1,4 @@
-// RUN: clang -checker-cfref -verify %s
+// RUN: clang -checker-cfref -warn-dead-stores -verify %s
 
 // These declarations were reduced using Delta-Debugging from Foundation.h
 // on Mac OS X.  The test cases are below.
