@@ -582,7 +582,7 @@ public:
   /// CreateStackTemporary - Create a stack temporary, suitable for holding the
   /// specified value type.  If minAlign is specified, the slot size will have
   /// at least that alignment.
-  SDOperand CreateStackTemporary(MVT VT, unsigned minAlign = 0);
+  SDOperand CreateStackTemporary(MVT VT, unsigned minAlign = 1);
 
   /// FoldSetCC - Constant fold a setcc to true or false.
   SDOperand FoldSetCC(MVT VT, SDOperand N1,
