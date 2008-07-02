@@ -250,10 +250,7 @@ private:
   
 public:
   DISerializeVisitor(DISerializer &S, std::vector<Constant*> &E)
-  : DIVisitor()
-  , SR(S)
-  , Elements(E)
-  {}
+  : DIVisitor(), SR(S), Elements(E) {}
   
   /// Apply - Set the value of each of the fields.
   ///
@@ -337,10 +334,7 @@ private:
   
 public:
   DIGetTypesVisitor(DISerializer &S, std::vector<const Type*> &F)
-  : DIVisitor()
-  , SR(S)
-  , Fields(F)
-  {}
+    : DIVisitor(), SR(S), Fields(F) {}
   
   /// Apply - Set the value of each of the fields.
   ///
@@ -511,8 +505,7 @@ const PointerType *DISerializer::getEmptyStructPtrType() {
   if (EmptyStructPtrTy) return EmptyStructPtrTy;
 
   // Construct the pointer to empty structure type.
-  const StructType *EmptyStructTy =
-    StructType::get(std::vector<const Type*>());
+  const StructType *EmptyStructTy = StructType::get(NULL, NULL);
 
   // Construct the pointer to empty structure type.
   EmptyStructPtrTy = PointerType::getUnqual(EmptyStructTy);
@@ -529,6 +522,7 @@ const StructType *DISerializer::getTagType(DebugInfoDesc *DD) {
   if (!Ty) {
     // Set up fields vector.
     std::vector<const Type*> Fields;
+
     // Get types of fields.
     DIGetTypesVisitor GTAM(*this, Fields);
     GTAM.ApplyToFields(DD);
@@ -596,6 +590,7 @@ GlobalVariable *DISerializer::Serialize(DebugInfoDesc *DD) {
  
   // Set up elements vector
   std::vector<Constant*> Elements;
+
   // Add fields.
   DISerializeVisitor SRAM(*this, Elements);
   SRAM.ApplyToFields(DD);
