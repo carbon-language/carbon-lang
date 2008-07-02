@@ -350,9 +350,6 @@ void GRSimpleVals::RegisterChecks(GRExprEngine& Eng) {
   Eng.Register(new BadMsgExprArg());
   Eng.Register(new BadReceiver());
   
-  // Flow-sensitive checks.
-  Eng.Register(MakeDeadStoresChecker());  
-  
   // Add extra checkers.
   ASTContext& Ctx = Eng.getContext();
   ValueStateManager* VMgr = &Eng.getStateManager();

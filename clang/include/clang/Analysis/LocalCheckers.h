@@ -27,12 +27,9 @@ class BugType;
 class LangOptions;
 class ParentMap;
 class LiveVariables;
+class BugReporter;
   
-void CheckDeadStores(CFG& cfg, ASTContext &Ctx, ParentMap& Parents,
-                     Diagnostic &Diags); 
-  
-  void CheckDeadStores(CFG& cfg, ASTContext &Ctx, LiveVariables& L,
-                       ParentMap& Parents, Diagnostic &Diags); 
+void CheckDeadStores(LiveVariables& L, BugReporter& BR); 
   
 void CheckUninitializedValues(CFG& cfg, ASTContext& Ctx, Diagnostic& Diags,
                               bool FullUninitTaint=false);
@@ -41,7 +38,6 @@ GRTransferFuncs* MakeGRSimpleValsTF();
 GRTransferFuncs* MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
                                   bool StandardWarnings,
                                   const LangOptions& lopts); 
-BugType* MakeDeadStoresChecker();
   
 } // end namespace clang
 

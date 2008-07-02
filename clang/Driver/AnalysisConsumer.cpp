@@ -108,7 +108,6 @@ namespace {
     llvm::OwningPtr<CFG> cfg;
     llvm::OwningPtr<LiveVariables> liveness;
     llvm::OwningPtr<ParentMap> PM;
-    llvm::OwningPtr<PathDiagnosticClient> PD;
 
   public:
     AnalysisManager(AnalysisConsumer& c, Decl* d, Stmt* b) 
@@ -124,7 +123,8 @@ namespace {
     }
     
     virtual ParentMap& getParentMap() {
-      if (!PM) PM.reset(new ParentMap(getBody()));
+      if (!PM) 
+        PM.reset(new ParentMap(getBody()));
       return *PM.get();
     }
     
@@ -145,10 +145,10 @@ namespace {
     }
     
     virtual PathDiagnosticClient* getPathDiagnosticClient() {
-      if (PD.get() == 0 && !C.HTMLDir.empty())
-        PD.reset(CreateHTMLDiagnosticClient(C.HTMLDir, C.PP, C.PPF));
+      if (C.PD.get() == 0 && !C.HTMLDir.empty())
+        C.PD.reset(CreateHTMLDiagnosticClient(C.HTMLDir, C.PP, C.PPF));
       
-      return PD.get();      
+      return C.PD.get();      
     }
       
     virtual LiveVariables& getLiveVariables() {
@@ -267,9 +267,8 @@ void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions actions) {
 //===----------------------------------------------------------------------===//
 
 static void ActionDeadStores(AnalysisManager& mgr) {
-  CheckDeadStores(mgr.getCFG(), mgr.getContext(),
-                  mgr.getLiveVariables(), mgr.getParentMap(),
-                  mgr.getDiagnostic());
+  BugReporter BR(mgr);  
+  CheckDeadStores(mgr.getLiveVariables(), BR);
 }
 
 static void ActionUninitVals(AnalysisManager& mgr) {

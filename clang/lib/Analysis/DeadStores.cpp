@@ -44,8 +44,8 @@ public:
     
     std::string msg = inEnclosing
       ? "Although the value stored to '" + name +
-        "' is used in the enclosing expression, the value is never actually read"
-        " from '" + name + "'"
+        "' is used in the enclosing expression, the value is never actually"
+        " read from '" + name + "'"
       : "Value stored to '" + name + "' is never read";
     
     return Diags.getCustomDiagID(Diagnostic::Warning, msg.c_str());                               
@@ -144,115 +144,37 @@ public:
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
-// Driver function to invoke the Dead-Stores checker on a CFG.
-//===----------------------------------------------------------------------===//
-
-void clang::CheckDeadStores(CFG& cfg, ASTContext &Ctx,
-                            ParentMap& Parents, Diagnostic &Diags) {  
-  LiveVariables L(cfg);
-  L.runOnCFG(cfg);
-  CheckDeadStores(cfg, Ctx, L, Parents, Diags);
-}
-
-void clang::CheckDeadStores(CFG& cfg, ASTContext &Ctx, LiveVariables& L,
-                            ParentMap& Parents, Diagnostic &Diags) {  
-
-  DeadStoreObs A(Ctx, Diags, Diags.getClient(), Parents);
-  L.runOnAllBlocks(cfg, &A);
-}
-
-//===----------------------------------------------------------------------===//
 // BugReporter-based invocation of the Dead-Stores checker.
 //===----------------------------------------------------------------------===//
   
 namespace {
-
-class VISIBILITY_HIDDEN DiagBugReport : public RangedBugReport {
-  std::list<std::string> Strs;
-  FullSourceLoc L;
-  const char* description;
+  
+class SimpleBugType : public BugTypeCacheLocation {
+  const char* name;  
 public:
-  DiagBugReport(const char* desc, BugType& D, FullSourceLoc l) :
-    RangedBugReport(D, NULL), L(l), description(desc) {}
+  SimpleBugType(const char* n) : name(n) {}
   
-  virtual ~DiagBugReport() {}
-  virtual FullSourceLoc getLocation(SourceManager&) { return L; }
-  
-  virtual const char* getDescription() const {
-    return description;
-  }
-  
-  void addString(const std::string& s) { Strs.push_back(s); }  
-  
-  typedef std::list<std::string>::const_iterator str_iterator;
-  str_iterator str_begin() const { return Strs.begin(); }
-  str_iterator str_end() const { return Strs.end(); }
-};
-  
-class VISIBILITY_HIDDEN DiagCollector : public DiagnosticClient {
-  std::list<DiagBugReport> Reports;
-  BugType& D;
-public:
-  DiagCollector(BugType& d) : D(d) {}
-  
-  virtual ~DiagCollector() {}
-  
-  virtual void HandleDiagnostic(Diagnostic &Diags, 
-                                Diagnostic::Level DiagLevel,
-                                FullSourceLoc Pos,
-                                diag::kind ID,
-                                const std::string *Strs,
-                                unsigned NumStrs,
-                                const SourceRange *Ranges, 
-                                unsigned NumRanges) {
-    
-    // FIXME: Use a map from diag::kind to BugType, instead of having just
-    //  one BugType.
-    
-    Reports.push_back(DiagBugReport(Diags.getDescription(ID), D, Pos));
-    DiagBugReport& R = Reports.back();
-    
-    for ( ; NumRanges ; --NumRanges, ++Ranges)
-      R.addRange(*Ranges);
-    
-    for ( ; NumStrs ; --NumStrs, ++Strs)
-      R.addString(*Strs);    
-  }
-  
-  // Iterators.
-  
-  typedef std::list<DiagBugReport>::iterator iterator;
-  iterator begin() { return Reports.begin(); }
-  iterator end() { return Reports.end(); }
-};
-  
-class VISIBILITY_HIDDEN DeadStoresChecker : public BugTypeCacheLocation {
-public:
   virtual const char* getName() const {
-    return "dead store";
-  }
-  
-  virtual const char* getDescription() const {
-    return "Value stored to variable is never subsequently read.";
-  }
-  
-  virtual void EmitWarnings(BugReporter& BR) {
-    
-    // Run the dead store checker and collect the diagnostics.
-    DiagCollector C(*this);    
-    DeadStoreObs A(BR.getContext(), BR.getDiagnostic(), C, BR.getParentMap());
-    
-
-    BR.getLiveVariables().runOnAllBlocks(BR.getCFG(), &A);
-    
-    // Emit the bug reports.
-    
-    for (DiagCollector::iterator I = C.begin(), E = C.end(); I != E; ++I)
-      BR.EmitWarning(*I);    
+    return name;
   }
 };
 } // end anonymous namespace
 
-BugType* clang::MakeDeadStoresChecker() {
-  return new DeadStoresChecker();
+//===----------------------------------------------------------------------===//
+// Driver function to invoke the Dead-Stores checker on a CFG.
+//===----------------------------------------------------------------------===//
+
+void clang::CheckDeadStores(LiveVariables& L, BugReporter& BR) {  
+
+  SimpleBugType BT("dead store");
+  DiagCollector C(BT);  
+
+  DeadStoreObs A(BR.getContext(), BR.getDiagnostic(), C, BR.getParentMap());
+  L.runOnAllBlocks(BR.getCFG(), &A);
+  
+  // Emit the bug reports.
+  
+  for (DiagCollector::iterator I = C.begin(), E = C.end(); I != E; ++I)
+    BR.EmitWarning(*I);  
 }
+

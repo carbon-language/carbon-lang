@@ -15,12 +15,15 @@
 #ifndef LLVM_CLANG_ANALYSIS_BUGREPORTER
 #define LLVM_CLANG_ANALYSIS_BUGREPORTER
 
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include <vector>
+#include <list>
+
 
 namespace clang {
   
@@ -168,7 +171,7 @@ public:
   }
   
   SourceManager& getSourceManager() {
-    return getContext().getSourceManager();
+    return D.getSourceManager();
   }
   
   CFG& getCFG() {
@@ -221,6 +224,66 @@ public:
   static bool classof(const BugReporter* R) {
     return R->getKind() == GRBugReporterKind;
   }
+};
+  
+
+class DiagBugReport : public RangedBugReport {
+  std::list<std::string> Strs;
+  FullSourceLoc L;
+  const char* description;
+public:
+  DiagBugReport(const char* desc, BugType& D, FullSourceLoc l) :
+  RangedBugReport(D, NULL), L(l), description(desc) {}
+  
+  virtual ~DiagBugReport() {}
+  virtual FullSourceLoc getLocation(SourceManager&) { return L; }
+  
+  virtual const char* getDescription() const {
+    return description;
+  }
+  
+  void addString(const std::string& s) { Strs.push_back(s); }  
+  
+  typedef std::list<std::string>::const_iterator str_iterator;
+  str_iterator str_begin() const { return Strs.begin(); }
+  str_iterator str_end() const { return Strs.end(); }
+};
+
+class DiagCollector : public DiagnosticClient {
+  std::list<DiagBugReport> Reports;
+  BugType& D;
+public:
+  DiagCollector(BugType& d) : D(d) {}
+  
+  virtual ~DiagCollector() {}
+  
+  virtual void HandleDiagnostic(Diagnostic &Diags, 
+                                Diagnostic::Level DiagLevel,
+                                FullSourceLoc Pos,
+                                diag::kind ID,
+                                const std::string *Strs,
+                                unsigned NumStrs,
+                                const SourceRange *Ranges, 
+                                unsigned NumRanges) {
+    
+    // FIXME: Use a map from diag::kind to BugType, instead of having just
+    //  one BugType.
+    
+    Reports.push_back(DiagBugReport(Diags.getDescription(ID), D, Pos));
+    DiagBugReport& R = Reports.back();
+    
+    for ( ; NumRanges ; --NumRanges, ++Ranges)
+      R.addRange(*Ranges);
+    
+    for ( ; NumStrs ; --NumStrs, ++Strs)
+      R.addString(*Strs);    
+  }
+  
+  // Iterators.
+  
+  typedef std::list<DiagBugReport>::iterator iterator;
+  iterator begin() { return Reports.begin(); }
+  iterator end() { return Reports.end(); }
 };
   
 } // end clang namespace
