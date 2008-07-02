@@ -179,7 +179,7 @@ void Optimize(Module* M) {
   if (!DisableOptimizations) {
     addPass(Passes, createInstructionCombiningPass());
     addPass(Passes, createCFGSimplificationPass());
-    addPass(Passes, createDeadCodeEliminationPass());
+    addPass(Passes, createAggressiveDCEPass());
     addPass(Passes, createGlobalDCEPass());
   }
 
