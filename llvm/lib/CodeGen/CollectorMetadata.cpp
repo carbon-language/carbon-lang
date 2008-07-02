@@ -112,10 +112,7 @@ CollectorMetadata &CollectorModuleMetadata::get(const Function &F) {
 
 void CollectorModuleMetadata::clear() {
   Map.clear();
-  
-  // TODO: StringMap should provide a clear method.
-  while (!NameMap.empty())
-    NameMap.erase(NameMap.begin());
+  NameMap.clear();
   
   for (iterator I = begin(), E = end(); I != E; ++I)
     delete *I;

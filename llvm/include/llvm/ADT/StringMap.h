@@ -333,6 +333,12 @@ public:
     return true;
   }
 
+  // clear - Empties out the StringMap
+  void clear() {
+    while (!empty())
+      erase(begin());
+  }
+
   /// GetOrCreateValue - Look up the specified key in the table.  If a value
   /// exists, return it.  Otherwise, default construct a value, insert it, and
   /// return.
