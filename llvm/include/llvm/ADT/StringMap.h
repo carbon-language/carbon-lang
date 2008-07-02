@@ -335,8 +335,16 @@ public:
 
   // clear - Empties out the StringMap
   void clear() {
-    while (!empty())
-      erase(begin());
+    if (empty()) return;
+    
+    // Zap all values, resetting the keys back to non-present (not tombstone),
+    // which is safe because we're removing all elements.
+    for (ItemBucket *I = TheTable, *E = TheTable+NumBuckets; I != E; ++I) {
+      if (I->Item && I->Item != getTombstoneVal()) {
+        static_cast<MapEntryTy*>(I->Item)->Destroy(Allocator);
+        I->Item = 0;
+      }
+    }
   }
 
   /// GetOrCreateValue - Look up the specified key in the table.  If a value
@@ -398,10 +406,7 @@ public:
   }
 
   ~StringMap() {
-    for (ItemBucket *I = TheTable, *E = TheTable+NumBuckets; I != E; ++I) {
-      if (I->Item && I->Item != getTombstoneVal())
-        static_cast<MapEntryTy*>(I->Item)->Destroy(Allocator);
-    }
+    clear();
     free(TheTable);
   }
 private:
