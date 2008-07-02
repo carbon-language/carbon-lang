@@ -39,11 +39,12 @@ static inline Selector GetNullarySelector(const char* name, ASTContext& Ctx) {
 }
 
 
-GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx)
+GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
+                           LiveVariables& L)
   : CoreEngine(cfg, CD, Ctx, *this), 
     G(CoreEngine.getGraph()),
     Parents(0),
-    Liveness(G.getCFG()),
+    Liveness(L),
     Builder(NULL),
     StateMgr(G.getContext(), G.getAllocator()),
     BasicVals(StateMgr.getBasicValueFactory()),
@@ -51,12 +52,7 @@ GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx)
     SymMgr(StateMgr.getSymbolManager()),
     CurrentStmt(NULL),
   NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
-  RaiseSel(GetNullarySelector("raise", G.getContext())) {
-  
-  // Compute liveness information.
-  Liveness.runOnCFG(G.getCFG());
-  Liveness.runOnAllBlocks(G.getCFG(), NULL, true);
-}
+  RaiseSel(GetNullarySelector("raise", G.getContext())) {}
 
 GRExprEngine::~GRExprEngine() {    
   for (BugTypeSet::iterator I = BugTypes.begin(), E = BugTypes.end(); I!=E; ++I)

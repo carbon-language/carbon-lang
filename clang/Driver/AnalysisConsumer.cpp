@@ -154,6 +154,7 @@ namespace {
       if (!liveness) {
         liveness.reset(new LiveVariables(*getCFG()));
         liveness->runOnCFG(*getCFG());
+        liveness->runOnAllBlocks(*getCFG(), 0, true);
       }
       return liveness.get();
     }
@@ -284,7 +285,8 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf) {
     mgr.DisplayFunction();
   
   // Construct the analysis engine.
-  GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext());  
+  GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext(),
+                   *mgr.getLiveVariables());  
   Eng.setTransferFunctions(tf);
   
   // Execute the worklist algorithm.

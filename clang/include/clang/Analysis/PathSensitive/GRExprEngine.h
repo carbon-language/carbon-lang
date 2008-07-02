@@ -57,7 +57,7 @@ protected:
   
   /// Liveness - live-variables information the ValueDecl* and block-level
   ///  Expr* in the CFG.  Used to prune out dead state.
-  LiveVariables Liveness;
+  LiveVariables& Liveness;
   
   /// DeadSymbols - A scratch set used to record the set of symbols that
   ///  were just marked dead by a call to ValueStateManager::RemoveDeadBindings.
@@ -180,7 +180,7 @@ protected:
   UndefArgsTy MsgExprUndefArgs;
   
 public:
-  GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx);
+  GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx, LiveVariables& L);
   ~GRExprEngine();
   
   void ExecuteWorkList(unsigned Steps = 150000) {
