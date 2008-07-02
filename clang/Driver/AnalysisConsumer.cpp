@@ -29,6 +29,7 @@
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
+#include "llvm/Support/Streams.h"
 
 using namespace clang;
 
@@ -101,6 +102,7 @@ namespace {
     Decl* D;
     Stmt* Body;    
     AnalysisConsumer& C;
+    bool DisplayedFunction;
     
     llvm::OwningPtr<CFG> cfg;
     llvm::OwningPtr<LiveVariables> liveness;
@@ -109,7 +111,7 @@ namespace {
 
   public:
     AnalysisManager(AnalysisConsumer& c, Decl* d, Stmt* b) 
-    : D(d), Body(b), C(c) {}
+    : D(d), Body(b), C(c), DisplayedFunction(false) {}
     
     
     Decl* getCodeDecl() const { return D; }
@@ -147,6 +149,36 @@ namespace {
     LiveVariables* getLiveVariables() {
       if (!liveness) liveness.reset(new LiveVariables(*getCFG()));
       return liveness.get();
+    }
+    
+    bool shouldVisualize() const {
+      return C.Visualize;
+    }
+    
+    bool shouldTrimGraph() const {
+      return C.TrimGraph;
+    }
+    
+    void DisplayFunction() {
+      
+      if (DisplayedFunction)
+        return;
+      
+      DisplayedFunction = true;
+      
+      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(getCodeDecl())) {
+        llvm::cerr << "ANALYZE: "
+        << getContext().getSourceManager().getSourceName(FD->getLocation())
+        << ' '
+        << FD->getIdentifier()->getName()
+        << '\n';
+      }
+      else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(getCodeDecl())) {
+        llvm::cerr << "ANALYZE (ObjC Method): "
+        << getContext().getSourceManager().getSourceName(MD->getLocation())
+        << " '"
+        << MD->getSelector().getName() << "'\n";
+      }
     }
   };
   
@@ -231,6 +263,10 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf) {
   
   llvm::OwningPtr<GRTransferFuncs> TF(tf);
   
+  // Display progress.
+  if (!mgr.shouldVisualize())
+    mgr.DisplayFunction();
+  
   // Construct the analysis engine.
   GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext());  
   Eng.setTransferFunctions(tf);
@@ -239,7 +275,11 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf) {
   Eng.ExecuteWorkList();
   
   // Display warnings.
-  Eng.EmitWarnings(mgr.getDiagnostic(), mgr.getPathDiagnosticClient());   
+  Eng.EmitWarnings(mgr.getDiagnostic(), mgr.getPathDiagnosticClient());
+  
+  // Visualize the exploded graph.
+  if (mgr.shouldVisualize())
+    Eng.ViewGraph(mgr.shouldTrimGraph());
 }
 
 static void ActionRefLeakCheckerAux(AnalysisManager& mgr, bool GCEnabled,
