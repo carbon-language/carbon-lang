@@ -18,6 +18,8 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
 #include "llvm/Constants.h"
+#include "llvm/GlobalVariable.h"
+#include "llvm/Function.h"
 
 namespace llvm {
 
@@ -308,7 +310,24 @@ public:
     
     return Insert(GetElementPtrInst::Create(Ptr, Idxs, Idxs+2), Name);
   }
-  
+  Value *CreateGlobalString(const char *Str = "", const char *Name = "") {
+    Constant *StrConstant = ConstantArray::get(Str, true);
+    GlobalVariable *gv = new llvm::GlobalVariable(StrConstant->getType(),
+                                                  true, 
+                                                  GlobalValue::InternalLinkage,
+                                                  StrConstant,
+                                                  "",
+                                                  BB->getParent()->getParent(),
+                                                  false);
+    gv->setName(Name);
+    return gv;
+  }
+  Value *CreateGlobalStringPtr(const char *Str = "", const char *Name = "") {
+    Value *gv = CreateGlobalString(Str, Name);
+    Value *zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
+    Value *Args[] = { zero, zero };
+    return CreateGEP(gv, Args, Args+2, Name);    
+  }
   //===--------------------------------------------------------------------===//
   // Instruction creation methods: Cast/Conversion Operators
   //===--------------------------------------------------------------------===//
