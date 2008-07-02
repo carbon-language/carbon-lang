@@ -510,7 +510,7 @@ static void CloneDomInfo(BasicBlock *NewBB, BasicBlock *Orig,
   else if (Orig == NewPreheader)
     OrigIDom = OrigPreheader;
 
-  // Other as DT to find Orig's immediate dominator.
+  // Otherwise ask DT to find Orig's immediate dominator.
   else
      OrigIDom = OrigIDomNode->getBlock();
 
