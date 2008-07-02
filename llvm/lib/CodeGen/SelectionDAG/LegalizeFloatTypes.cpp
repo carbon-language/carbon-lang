@@ -335,8 +335,8 @@ bool DAGTypeLegalizer::SoftenFloatOperand(SDNode *N, unsigned OpNo) {
     case ISD::BIT_CONVERT: Res = SoftenFloatOp_BIT_CONVERT(N); break;
 
     case ISD::BR_CC:     Res = SoftenFloatOp_BR_CC(N); break;
-    case ISD::SELECT_CC: Res = SoftenFloatOp_BR_CC(N); break;
-    case ISD::SETCC:     Res = SoftenFloatOp_BR_CC(N); break;
+    case ISD::SELECT_CC: Res = SoftenFloatOp_SELECT_CC(N); break;
+    case ISD::SETCC:     Res = SoftenFloatOp_SETCC(N); break;
     }
   }
 
@@ -759,8 +759,8 @@ bool DAGTypeLegalizer::ExpandFloatOperand(SDNode *N, unsigned OpNo) {
     case ISD::EXTRACT_ELEMENT: Res = ExpandOp_EXTRACT_ELEMENT(N); break;
 
     case ISD::BR_CC:     Res = ExpandFloatOp_BR_CC(N); break;
-    case ISD::SELECT_CC: Res = ExpandFloatOp_BR_CC(N); break;
-    case ISD::SETCC:     Res = ExpandFloatOp_BR_CC(N); break;
+    case ISD::SELECT_CC: Res = ExpandFloatOp_SELECT_CC(N); break;
+    case ISD::SETCC:     Res = ExpandFloatOp_SETCC(N); break;
 
     case ISD::FP_ROUND:   Res = ExpandFloatOp_FP_ROUND(N); break;
     case ISD::FP_TO_SINT: Res = ExpandFloatOp_FP_TO_SINT(N); break;
