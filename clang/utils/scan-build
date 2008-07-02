@@ -634,7 +634,7 @@ ENDTEXT
 my $HtmlDir;           # Parent directory to store HTML files.
 my $IgnoreErrors = 0;  # Ignore build errors.
 my $ViewResults  = 0;  # View results when the build terminates.
-my $Analysis = "checker-cfref";
+my $Analysis;
 
 if (!@ARGV) {
   DisplayHelp();
@@ -753,7 +753,9 @@ if ($Verbose >= 3) {
   $ENV{'CCC_ANALYZER_LOG'} = 1;
 }
 
-$ENV{'CCC_ANALYZER_ANALYSIS'} = $Analysis;
+if (defined($Analysis)) {
+  $ENV{'CCC_ANALYZER_ANALYSIS'} = $Analysis;
+}
 
 # Run the build.
 

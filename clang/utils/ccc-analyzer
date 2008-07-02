@@ -70,7 +70,7 @@ def analyze(clang, args,language,output,files,verbose,htmldir,file,analysis_type
       i += 1
 
   if verbose == 2:
-    print >> sys.stderr, '#SHELL (cd ' + os.getcwd() + ' && ' + ' '.join(command + print_args) + ')\n'
+    print >> sys.stderr, '#SHELL (cd ' + os.getcwd() + ' && ' + ' '.join(print_args) + ')\n'
 
   if RunAnalyzer and htmldir is not None:
     args.append('-o')
@@ -81,7 +81,7 @@ def analyze(clang, args,language,output,files,verbose,htmldir,file,analysis_type
   if verbose == 1: 
     # We MUST print to stderr.  Some clients use the stdout output of
     # gcc for various purposes. 
-    print >> sys.stderr, ' '.join(command+print_args)
+    print >> sys.stderr, ' '.join(print_args)
     print >> sys.stderr, '\n'
 
   subprocess.call(args)
@@ -136,7 +136,7 @@ def main(args):
   if analysis_type is not None:
     analysis_type = "-" + analysis_type
   else:
-    analysis_type = "-checker-cfref"
+    analysis_type = "-warn-dead-stores -checker-cfref"
 
   # Determine the level of verbosity.
   if os.environ.get('CCC_ANALYZER_VERBOSE') is not None:
@@ -152,10 +152,7 @@ def main(args):
     clang = clang_env
   
   # Get the HTML output directory.
-  htmldir = None
-  
-  if analysis_type == "-checker-cfref":
-    htmldir = os.environ.get('CCC_ANALYZER_HTML')
+  htmldir = os.environ.get('CCC_ANALYZER_HTML')
 
   # Process the arguments.
   i = 0
