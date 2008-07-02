@@ -16,12 +16,15 @@
 
 #define DEBUG_TYPE "adce"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/InstIterator.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SmallVector.h"
 
 using namespace llvm;
@@ -35,6 +38,9 @@ namespace {
     
     DenseSet<Instruction*> alive;
     SmallVector<Instruction*, 1024> worklist;
+    
+    DenseSet<BasicBlock*> reachable;
+    SmallVector<BasicBlock*, 1024> unreachable;
     
     virtual bool runOnFunction(Function& F);
     
@@ -51,6 +57,42 @@ static RegisterPass<ADCE> X("adce", "Aggressive Dead Code Elimination");
 bool ADCE::runOnFunction(Function& F) {
   alive.clear();
   worklist.clear();
+  reachable.clear();
+  unreachable.clear();
+  
+  // First, collect the set of reachable blocks ...
+  for (df_iterator<BasicBlock*> DI = df_begin(&F.getEntryBlock()),
+       DE = df_end(&F.getEntryBlock()); DI != DE; ++DI)
+    reachable.insert(*DI);
+  
+  // ... and then invert it into the list of unreachable ones.  These
+  // blocks will be removed from the function.
+  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
+    if (!reachable.count(FI))
+      unreachable.push_back(FI);
+  
+  // Prepare to remove blocks by removing the PHI node entries for those blocks
+  // in their successors, and remove them from reference counting.
+  for (SmallVector<BasicBlock*, 1024>::iterator UI = unreachable.begin(),
+       UE = unreachable.end(); UI != UE; ++UI) {
+    BasicBlock* BB = *UI;
+    for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB);
+         SI != SE; ++SI) {
+      BasicBlock* succ = *SI;
+      BasicBlock::iterator succ_inst = succ->begin();
+      while (PHINode* P = dyn_cast<PHINode>(succ_inst)) {
+        P->removeIncomingValue(BB);
+        ++succ_inst;
+      }
+    }
+    
+    BB->dropAllReferences();
+  }
+  
+  // Finally, erase the unreachable blocks.
+  for (SmallVector<BasicBlock*, 1024>::iterator UI = unreachable.begin(),
+       UE = unreachable.end(); UI != UE; ++UI)
+    (*UI)->eraseFromParent();
   
   // Collect the set of "root" instructions that are known live.
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
