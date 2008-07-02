@@ -1,5 +1,7 @@
 // RUN: clang -warn-dead-stores -verify %s
-// RUN: clang -checker-simple -verify %s
+// RUN: clang -checker-simple -warn-dead-stores -verify %s
+// RUN: clang -warn-dead-stores -checker-simple -verify %s
+
 
 void f1() {
   int k, y;
