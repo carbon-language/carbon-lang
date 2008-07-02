@@ -41,8 +41,8 @@ public:
     return TheMap.count(V);
   }
   
-  void insert(const ValueT &V) {
-    TheMap[V] = 0;
+  bool insert(const ValueT &V) {
+    return TheMap.insert(std::make_pair(V, 0));
   }
   
   void erase(const ValueT &V) {
