@@ -161,10 +161,11 @@ public:
     AnalyzeNewNode(N);
   }
 
-  void NoteReplacement(SDOperand From, SDOperand To) {
-    ExpungeNode(From);
-    ExpungeNode(To);
-    ReplacedNodes[From] = To;
+  void NoteDeletion(SDNode *Old, SDNode *New) {
+    ExpungeNode(Old);
+    ExpungeNode(New);
+    for (unsigned i = 0, e = Old->getNumValues(); i != e; ++i)
+      ReplacedNodes[SDOperand(Old, i)] = SDOperand(New, i);
   }
 
 private:
@@ -174,7 +175,7 @@ private:
   void ReplaceNodeWith(SDNode *From, SDNode *To);
 
   void RemapNode(SDOperand &N);
-  void ExpungeNode(SDOperand N);
+  void ExpungeNode(SDNode *N);
 
   // Common routines.
   SDOperand CreateStackStoreLoad(SDOperand Op, MVT DestVT);
