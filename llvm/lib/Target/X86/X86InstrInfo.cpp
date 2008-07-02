@@ -978,7 +978,7 @@ static bool hasLiveCondCodeDef(MachineInstr *MI) {
 MachineInstr *
 X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
                                     MachineBasicBlock::iterator &MBBI,
-                                    LiveVariables &LV) const {
+                                    LiveVariables *LV) const {
   MachineInstr *MI = MBBI;
   // All instructions input are two-addr instructions.  Get the known operands.
   unsigned Dest = MI->getOperand(0).getReg();
@@ -1066,10 +1066,12 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       
       MFI->insert(MBBI, Undef);
       MFI->insert(MBBI, Ins);            // Insert the insert_subreg
-      LV.instructionChanged(MI, NewMI);  // Update live variables
-      LV.addVirtualRegisterKilled(leaInReg, NewMI);
+      if (LV) {
+        LV->instructionChanged(MI, NewMI);  // Update live variables
+        LV->addVirtualRegisterKilled(leaInReg, NewMI);
+      }
       MFI->insert(MBBI, NewMI);          // Insert the new inst
-      LV.addVirtualRegisterKilled(leaOutReg, Ext);
+      if (LV) LV->addVirtualRegisterKilled(leaOutReg, Ext);
       MFI->insert(MBBI, Ext);            // Insert the extract_subreg      
       return Ext;
     } else {
@@ -1180,7 +1182,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   if (!NewMI) return 0;
 
   NewMI->copyKillDeadInfo(MI);
-  LV.instructionChanged(MI, NewMI);  // Update live variables
+  if (LV) LV->instructionChanged(MI, NewMI);  // Update live variables
   MFI->insert(MBBI, NewMI);          // Insert the new inst    
   return NewMI;
 }

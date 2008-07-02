@@ -143,7 +143,7 @@ public:
   ///
   virtual MachineInstr *
   convertToThreeAddress(MachineFunction::iterator &MFI,
-                   MachineBasicBlock::iterator &MBBI, LiveVariables &LV) const {
+                   MachineBasicBlock::iterator &MBBI, LiveVariables *LV) const {
     return 0;
   }
 

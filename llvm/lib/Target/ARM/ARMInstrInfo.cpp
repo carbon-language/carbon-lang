@@ -191,7 +191,7 @@ static unsigned getUnindexedOpcode(unsigned Opc) {
 MachineInstr *
 ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
                                     MachineBasicBlock::iterator &MBBI,
-                                    LiveVariables &LV) const {
+                                    LiveVariables *LV) const {
   if (!EnableARM3Addr)
     return NULL;
 
@@ -300,22 +300,25 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     if (MO.isRegister() && MO.getReg() &&
         TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
       unsigned Reg = MO.getReg();
-      LiveVariables::VarInfo &VI = LV.getVarInfo(Reg);
-      if (MO.isDef()) {
-        MachineInstr *NewMI = (Reg == WBReg) ? UpdateMI : MemMI;
-        if (MO.isDead())
-          LV.addVirtualRegisterDead(Reg, NewMI);
-      }
-      if (MO.isUse() && MO.isKill()) {
-        for (unsigned j = 0; j < 2; ++j) {
-          // Look at the two new MI's in reverse order.
-          MachineInstr *NewMI = NewMIs[j];
-          if (!NewMI->readsRegister(Reg))
-            continue;
-          LV.addVirtualRegisterKilled(Reg, NewMI);
-          if (VI.removeKill(MI))
-            VI.Kills.push_back(NewMI);
-          break;
+      
+      if (LV) {
+        LiveVariables::VarInfo &VI = LV->getVarInfo(Reg);
+        if (MO.isDef()) {
+          MachineInstr *NewMI = (Reg == WBReg) ? UpdateMI : MemMI;
+          if (MO.isDead())
+            LV->addVirtualRegisterDead(Reg, NewMI);
+        }
+        if (MO.isUse() && MO.isKill()) {
+          for (unsigned j = 0; j < 2; ++j) {
+            // Look at the two new MI's in reverse order.
+            MachineInstr *NewMI = NewMIs[j];
+            if (!NewMI->readsRegister(Reg))
+              continue;
+            LV->addVirtualRegisterKilled(Reg, NewMI);
+            if (VI.removeKill(MI))
+              VI.Kills.push_back(NewMI);
+            break;
+          }
         }
       }
     }

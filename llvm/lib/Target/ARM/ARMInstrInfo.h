@@ -153,7 +153,7 @@ public:
 
   virtual MachineInstr *convertToThreeAddress(MachineFunction::iterator &MFI,
                                               MachineBasicBlock::iterator &MBBI,
-                                              LiveVariables &LV) const;
+                                              LiveVariables *LV) const;
 
   // Branch analysis.
   virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,

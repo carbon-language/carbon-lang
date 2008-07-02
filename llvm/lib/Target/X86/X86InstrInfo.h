@@ -295,7 +295,7 @@ public:
   ///
   virtual MachineInstr *convertToThreeAddress(MachineFunction::iterator &MFI,
                                               MachineBasicBlock::iterator &MBBI,
-                                              LiveVariables &LV) const;
+                                              LiveVariables *LV) const;
 
   /// commuteInstruction - We have a few instructions that must be hacked on to
   /// commute them.

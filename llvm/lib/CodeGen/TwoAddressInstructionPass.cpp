@@ -378,27 +378,6 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                     if (LV) {
                       // Update live variables
                       LV->instructionChanged(mi, NewMI); 
-                    } else {
-                      // Update flags manually
-                      for (unsigned i = 0, e = mi->getNumOperands();
-                           i != e; ++i) {
-                        MachineOperand &MO = mi->getOperand(i);
-                        if (MO.isRegister() && MO.getReg() &&
-                          TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
-                          unsigned Reg = MO.getReg();
-                          if (MO.isDef()) {
-                            if (MO.isDead()) {
-                              MO.setIsDead(false);
-                              NewMI->addRegisterDead(Reg, TRI);
-                            }
-                          }
-                          
-                          if (MO.isKill()) {
-                            MO.setIsKill(false);
-                            NewMI->addRegisterKilled(Reg, TRI);
-                          }
-                        }
-                      }
                     }
                     
                     mbbi->insert(mi, NewMI);           // Insert the new inst
@@ -424,7 +403,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                 assert(TID.getOperandConstraint(i, TOI::TIED_TO) == -1);
 #endif
 
-              MachineInstr *NewMI = TII->convertToThreeAddress(mbbi, mi, *LV);
+              MachineInstr *NewMI = TII->convertToThreeAddress(mbbi, mi, LV);
               if (NewMI) {
                 DOUT << "2addr: CONVERTING 2-ADDR: " << *mi;
                 DOUT << "2addr:         TO 3-ADDR: " << *NewMI;
@@ -481,30 +460,6 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
             if (LV->removeVirtualRegisterDead(regB, mbbi, mi))
               LV->addVirtualRegisterDead(regB, prevMi);
-          } else {
-            // Manually update kill/dead flags.
-            bool RemovedKill = false;
-            bool RemovedDead = false;
-            for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
-              MachineOperand &MO = mi->getOperand(i);
-              if (MO.isRegister() && MO.isKill() && MO.getReg() == regB) {
-                MO.setIsKill(false);
-                RemovedKill = true;
-                break;
-              } 
-              
-              if (MO.isRegister() && MO.isDef() && MO.getReg() == regB) {
-                MO.setIsDead(false);
-                RemovedDead = true;
-              }
-              
-              if (RemovedKill && RemovedDead) break;
-            }
-            
-            if (RemovedKill)
-              prevMi->addRegisterKilled(regB, TRI);
-            if (RemovedDead)
-              prevMi->addRegisterDead(regB, TRI);
           }
           
           // Replace all occurences of regB with regA.
