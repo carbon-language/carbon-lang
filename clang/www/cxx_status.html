@@ -59,6 +59,22 @@ This page tracks the status of C++ support in Clang.</p>
 	  };</td>
     <td>Partial Parser and Sema support, no Codegen support. </td>
   </tr>
+  <tr>
+    <td>Virtual functions</td>
+    <td>class C {<br/>
+      public:<br/>
+      &nbsp;&nbsp;&nbsp;virtual int doFoo() = 0;<br/>
+          };</td>
+    <td>Nonexistent</td>
+  </tr>
+  <tr>
+    <td>Templates</td>
+    <td>class C {<br/>
+      public:<br/>
+      &nbsp;&nbsp;&nbsp;template <typename T> T as();<br/>
+          };</td>
+    <td>Nonexistent</td>
+  </tr>
 </table>
 </div>
 </body>
