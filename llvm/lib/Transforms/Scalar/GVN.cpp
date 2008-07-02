@@ -808,6 +808,11 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, LoadInst* orig,
   DenseMap<BasicBlock*, Value*>::iterator V = Phis.find(BB);
   if (V != Phis.end() && !top_level) return V->second;
   
+  if (!getAnalysis<DominatorTree>().isReachableFromEntry(BB)) {
+    Phis[BB] = UndefValue::get(orig->getType());
+    return UndefValue::get(orig->getType());
+  }
+  
   BasicBlock* singlePred = BB->getSinglePredecessor();
   if (singlePred) {
     Value *ret = GetValueForBlock(singlePred, orig, Phis);
