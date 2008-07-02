@@ -757,6 +757,22 @@ void LoopUnswitch::SplitExitEdges(Loop *L,
 
 }
 
+/// addBBToDomFrontier - Helper function. Insert DFBB in Basic Block BB's
+/// dominance frontier using iterator DFI.
+static void addBBToDomFrontier(DominanceFrontier &DF,
+                               DominanceFrontier::iterator &DFI,
+                               BasicBlock *BB, BasicBlock *DFBB) {
+  if (DFI != DF.end()) {
+    DF.addToFrontier(DFI, DFBB);
+    return;
+  }
+
+  DominanceFrontier::DomSetType NSet;
+  NSet.insert(DFBB);
+  DF.addBasicBlock(BB, NSet);
+  DFI = DF.find(BB);
+}
+
 /// UnswitchNontrivialCondition - We determined that the loop is profitable 
 /// to unswitch when LIC equal Val.  Split it into loop versions and test the 
 /// condition outside of either loop.  Return the loops created as Out1/Out2.
@@ -1188,18 +1204,32 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
               // trying to update it is complicated.  So instead we preserve the
               // loop structure and put the block on an dead code path.
               
+              BasicBlock *SISucc = SI->getSuccessor(i);
               BasicBlock* Old = SI->getParent();
               BasicBlock* Split = SplitBlock(Old, SI, this);
               
               Instruction* OldTerm = Old->getTerminator();
-              BranchInst::Create(Split, SI->getSuccessor(i),
+              BranchInst::Create(Split, SISucc,
                                  ConstantInt::getTrue(), OldTerm);
+
+              if (DT) {
+                // Now, SISucc is dominated by Old.
+                DT->changeImmediateDominator(SISucc, Old);
+                if (DF) {
+                  // Now, Split does not dominate SISucc.
+                  // SISucc is the only member in Split's DF.
+                  DominanceFrontier::iterator S_DFI = DF->find(Split);
+                  if (S_DFI != DF->end())
+                    S_DFI->second.clear();
+                  addBBToDomFrontier(*DF, S_DFI, Split, SISucc);
+                }
+              }
 
               LPM->deleteSimpleAnalysisValue(Old->getTerminator(), L);
               Old->getTerminator()->eraseFromParent();
               
               PHINode *PN;
-              for (BasicBlock::iterator II = SI->getSuccessor(i)->begin();
+              for (BasicBlock::iterator II = SISucc->begin();
                    (PN = dyn_cast<PHINode>(II)); ++II) {
                 Value *InVal = PN->removeIncomingValue(Split, false);
                 PN->addIncoming(InVal, Old);
