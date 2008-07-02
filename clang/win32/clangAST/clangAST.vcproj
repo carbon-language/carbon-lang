@@ -179,6 +179,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\AST\DeclCXX.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\AST\DeclObjC.cpp"
 				>
 			</File>
@@ -262,6 +266,10 @@
 			</File>
 			<File
 				RelativePath="..\..\include\clang\AST\Decl.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\clang\AST\DeclCXX.h"
 				>
 			</File>
 			<File
