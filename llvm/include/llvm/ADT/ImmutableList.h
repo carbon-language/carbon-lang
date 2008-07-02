@@ -85,8 +85,9 @@ public:
     iterator() : L(0) {}
     iterator(ImmutableList l) : L(l.getInternalPointer()) {}
     
-    iterator& operator++() { L = L->Tail; return *this; }
+    iterator& operator++() { L = L->getTail(); return *this; }
     bool operator==(const iterator& I) const { return L == I.L; }
+    bool operator!=(const iterator& I) const { return L != I.L; }
     ImmutableList operator*() const { return L; }
   };
 
