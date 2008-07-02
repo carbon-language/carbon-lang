@@ -21,7 +21,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallVector.h"
 
 using namespace llvm;
@@ -33,7 +33,7 @@ namespace {
     static char ID; // Pass identification, replacement for typeid
     ADCE() : FunctionPass((intptr_t)&ID) {}
     
-    SmallPtrSet<Instruction*, 1024> alive;
+    DenseSet<Instruction*> alive;
     SmallVector<Instruction*, 1024> worklist;
     
     virtual bool runOnFunction(Function& F);
