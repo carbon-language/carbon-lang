@@ -90,73 +90,6 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;..\common.vsprops"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\include;.."
-				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;NDEBUG;_LIB;__STDC_LIMIT_MACROS"
-				StringPooling="true"
-				RuntimeLibrary="2"
-				ForceConformanceInForLoopScope="true"
-				RuntimeTypeInfo="true"
-				UsePrecompiledHeader="0"
-				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
-				DisableSpecificWarnings="4355,4146,4800"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/VMCore.lib"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
 			Name="Debug|x64"
 			OutputDirectory="$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
@@ -194,6 +127,73 @@
 				UsePrecompiledHeader="0"
 				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
 				BrowseInformation="1"
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
+				DisableSpecificWarnings="4355,4146,4800"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)/VMCore.lib"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory="$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="4"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;..\common.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="..\..\include;.."
+				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;NDEBUG;_LIB;__STDC_LIMIT_MACROS"
+				StringPooling="true"
+				RuntimeLibrary="2"
+				ForceConformanceInForLoopScope="true"
+				RuntimeTypeInfo="true"
+				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
@@ -372,6 +372,17 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Performing TableGen Step"
+						CommandLine="echo Building $(InputFileName) code emitter with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-intrinsic -I ..\..\include $(InputPath) -o $(SolutionDir)llvm\intrinsics.gen&#x0D;&#x0A;"
+						AdditionalDependencies="$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe;$(InputDir)IntrinsicsX86.td"
+						Outputs="$(SolutionDir)llvm\intrinsics.gen"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -383,24 +394,13 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Performing TableGen Step"
-						CommandLine="echo Building $(InputFileName) code emitter with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-intrinsic -I ..\..\include $(InputPath) -o $(SolutionDir)llvm\intrinsics.gen"
-						AdditionalDependencies="$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe;$(InputDir)IntrinsicsX86.td;$(InputDir)IntrinsicsPowerPC.td"
-						Outputs="$(SolutionDir)llvm\intrinsics.gen"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Performing TableGen Step"
-						CommandLine="echo Building $(InputFileName) code emitter with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-intrinsic -I ..\..\include $(InputPath) -o $(SolutionDir)llvm\intrinsics.gen"
-						AdditionalDependencies="$(ProjectDir)..\$(IntDir)\TableGen.exe;$(InputDir)IntrinsicsX86.td;$(InputDir)IntrinsicsPowerPC.td"
+						CommandLine="echo Building $(InputFileName) code emitter with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-intrinsic -I ..\..\include $(InputPath) -o $(SolutionDir)llvm\intrinsics.gen&#x0D;&#x0A;"
+						AdditionalDependencies="$(ProjectDir)..\$(IntDir)\TableGen.exe;$(InputDir)IntrinsicsX86.td"
 						Outputs="$(SolutionDir)llvm\intrinsics.gen"
 					/>
 				</FileConfiguration>
