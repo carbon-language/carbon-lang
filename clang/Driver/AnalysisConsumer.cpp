@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ASTConsumers.h"
+#include "HTMLDiagnostics.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
@@ -104,6 +105,7 @@ namespace {
     llvm::OwningPtr<CFG> cfg;
     llvm::OwningPtr<LiveVariables> liveness;
     llvm::OwningPtr<ParentMap> PM;
+    llvm::OwningPtr<PathDiagnosticClient> PD;
 
   public:
     AnalysisManager(AnalysisConsumer& c, Decl* d, Stmt* b) 
@@ -129,6 +131,17 @@ namespace {
     
     Diagnostic& getDiagnostic() {
       return C.Diags;
+    }
+    
+    const LangOptions& getLangOptions() const {
+      return C.LOpts;
+    }
+    
+    PathDiagnosticClient* getPathDiagnosticClient() {
+      if (PD.get() == 0 && !C.HTMLDir.empty())
+        PD.reset(CreateHTMLDiagnosticClient(C.HTMLDir, C.PP, C.PPF));
+      
+      return PD.get();      
     }
       
     LiveVariables* getLiveVariables() {
@@ -213,6 +226,47 @@ static void ActionUninitVals(AnalysisManager& mgr) {
                            mgr.getDiagnostic());
 }
 
+
+static void ActionRefLeakCheckerAux(AnalysisManager& mgr, bool GCEnabled,
+                                    bool StandardWarnings) {
+    
+  // Construct the analysis engine.
+  GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext());
+  
+  // Construct the transfer function object.
+  llvm::OwningPtr<GRTransferFuncs>
+  TF(MakeCFRefCountTF(mgr.getContext(), GCEnabled, StandardWarnings,
+                      mgr.getLangOptions()));
+     
+  Eng.setTransferFunctions(TF.get());
+
+  // Execute the worklist algorithm.
+  Eng.ExecuteWorkList();
+   
+  // Display warnings.
+  Eng.EmitWarnings(mgr.getDiagnostic(), mgr.getPathDiagnosticClient());     
+}
+
+static void ActionRefLeakChecker(AnalysisManager& mgr) {
+     
+ switch (mgr.getLangOptions().getGCMode()) {
+   default:
+     assert (false && "Invalid GC mode.");
+   case LangOptions::NonGC:
+     ActionRefLeakCheckerAux(mgr, false, true);
+     break;
+    
+   case LangOptions::GCOnly:
+     ActionRefLeakCheckerAux(mgr, true, true);
+     break;
+     
+   case LangOptions::HybridGC:
+     ActionRefLeakCheckerAux(mgr, false, true);
+     ActionRefLeakCheckerAux(mgr, true, false);
+     break;
+ }
+}
+
 //===----------------------------------------------------------------------===//
 // AnalysisConsumer creation.
 //===----------------------------------------------------------------------===//
@@ -238,6 +292,10 @@ ASTConsumer* clang::CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
         
       case WarnUninitVals:
         C->addCodeAction(&ActionUninitVals);
+        break;
+        
+      case CheckerCFRef:
+        C->addCodeAction(&ActionRefLeakChecker);
         break;
         
       default: break;

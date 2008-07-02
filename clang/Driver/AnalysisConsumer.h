@@ -18,7 +18,8 @@ namespace clang {
 
 enum Analyses {
   WarnDeadStores,
-  WarnUninitVals
+  WarnUninitVals,
+  CheckerCFRef
 };
   
 ASTConsumer* CreateAnalysisConsumer(Analyses* Beg, Analyses* End,

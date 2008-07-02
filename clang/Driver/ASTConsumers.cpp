@@ -765,58 +765,6 @@ ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags,
                                  Visualize, TrimGraph, AnalyzeAll);
 }
 
-
-//===----------------------------------------------------------------------===//
-// Core Foundation Reference Counting Checker
-
-namespace {
-class CFRefCountCheckerVisitor : public CheckerConsumer {
-  const LangOptions& LangOpts;
-public:
-  CFRefCountCheckerVisitor(Diagnostic &diags, Preprocessor* pp,
-                           PreprocessorFactory* ppf,
-                           const LangOptions& lopts,
-                           const std::string& fname,
-                           const std::string& htmldir,
-                           bool visualize, bool trim, bool analyzeAll)
-  : CheckerConsumer(diags, pp, ppf, fname, htmldir, visualize,
-                    trim, analyzeAll), LangOpts(lopts) {}
-  
-  virtual const char* getCheckerName() { return "CFRefCountChecker"; }
-  
-  virtual void getTransferFunctions(std::vector<GRTransferFuncs*>& TFs) {
-    switch (LangOpts.getGCMode()) {
-      case LangOptions::NonGC:
-        TFs.push_back(MakeCFRefCountTF(*Ctx, false, true, LangOpts));
-        break;
-        
-      case LangOptions::GCOnly:
-        TFs.push_back(MakeCFRefCountTF(*Ctx, true, true, LangOpts));
-        break;
-        
-      case LangOptions::HybridGC:
-        TFs.push_back(MakeCFRefCountTF(*Ctx, false, true, LangOpts));
-        TFs.push_back(MakeCFRefCountTF(*Ctx, true, false, LangOpts));
-        break;
-    }
-  }
-};
-} // end anonymous namespace
-
-ASTConsumer* clang::CreateCFRefChecker(Diagnostic &Diags,
-                                       Preprocessor* PP,
-                                       PreprocessorFactory* PPF,
-                                       const LangOptions& LangOpts,
-                                       const std::string& FunctionName,
-                                       const std::string& HTMLDir,
-                                       bool Visualize, bool TrimGraph,
-                                       bool AnalyzeAll) {
-  
-  return new CFRefCountCheckerVisitor(Diags, PP, PPF, LangOpts, FunctionName,
-                                      HTMLDir, Visualize, TrimGraph,
-                                      AnalyzeAll);
-}
-
 //===----------------------------------------------------------------------===//
 // AST Serializer
 

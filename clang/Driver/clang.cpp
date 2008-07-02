@@ -77,7 +77,6 @@ enum ProgActions {
   AnalysisLiveVariables,        // Print results of live-variable analysis.
   AnalysisGRSimpleVals,         // Perform graph-reachability constant prop.
   AnalysisGRSimpleValsView,     // Visualize results of path-sens. analysis.
-  CheckerCFRef,                 // Run the Core Foundation Ref. Count Checker.
   TestSerialization,            // Run experimental serialization code.
   ParsePrintCallbacks,          // Parse and print each callback.
   ParseSyntaxOnly,              // Parse and perform semantic analysis.
@@ -120,8 +119,6 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Print results of live variable analysis"),
              clEnumValN(AnalysisGRSimpleVals, "checker-simple",
                         "Perform path-sensitive constant propagation"),
-             clEnumValN(CheckerCFRef, "checker-cfref",
-                        "Run the Core Foundation reference count checker"),
              clEnumValN(TestSerialization, "test-pickling",
                         "Run prototype serialization code"),
              clEnumValN(EmitLLVM, "emit-llvm",
@@ -182,6 +179,8 @@ clEnumValN(WarnDeadStores, "warn-dead-stores",
            "Flag warnings of stores to dead variables"),
 clEnumValN(WarnUninitVals, "warn-uninit-values",
            "Flag warnings of uses of unitialized variables"),
+clEnumValN(CheckerCFRef, "checker-cfref",
+           "Run the [Core] Foundation reference count checker"),      
 clEnumValEnd));          
 
 //===----------------------------------------------------------------------===//
@@ -1204,11 +1203,6 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       
     case AnalysisGRSimpleVals:
       return CreateGRSimpleVals(Diag, PP, PPF, AnalyzeSpecificFunction,
-                                OutputFile, VisualizeEG, TrimGraph, AnalyzeAll);
-      
-    case CheckerCFRef:
-      return CreateCFRefChecker(Diag, PP, PPF, LangOpts,
-                                AnalyzeSpecificFunction,
                                 OutputFile, VisualizeEG, TrimGraph, AnalyzeAll);
       
     case TestSerialization:
