@@ -78,16 +78,14 @@ enum ProgActions {
   AnalysisGRSimpleVals,         // Perform graph-reachability constant prop.
   AnalysisGRSimpleValsView,     // Visualize results of path-sens. analysis.
   CheckerCFRef,                 // Run the Core Foundation Ref. Count Checker.
-  WarnDeadStores,               // Run DeadStores checker on parsed ASTs.
-  WarnDeadStoresCheck,          // Check diagnostics for "DeadStores".
-  WarnUninitVals,               // Run UnitializedVariables checker.
   TestSerialization,            // Run experimental serialization code.
   ParsePrintCallbacks,          // Parse and print each callback.
   ParseSyntaxOnly,              // Parse and perform semantic analysis.
   ParseNoop,                    // Parse with noop callbacks.
   RunPreprocessorOnly,          // Just lex, no output.
   PrintPreprocessedInput,       // -E mode.
-  DumpTokens                    // Token dump mode.
+  DumpTokens,                   // Token dump mode.
+  RunAnalysis                   // Run one or more source code analyses. 
 };
 
 static llvm::cl::opt<ProgActions> 
@@ -120,10 +118,6 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Run parser, then build and view CFGs with Graphviz"),
              clEnumValN(AnalysisLiveVariables, "dump-live-variables",
                         "Print results of live variable analysis"),
-             clEnumValN(WarnDeadStores, "warn-dead-stores",
-                        "Flag warnings of stores to dead variables"),
-             clEnumValN(WarnUninitVals, "warn-uninit-values",
-                        "Flag warnings of uses of unitialized variables"),
              clEnumValN(AnalysisGRSimpleVals, "checker-simple",
                         "Perform path-sensitive constant propagation"),
              clEnumValN(CheckerCFRef, "checker-cfref",
@@ -180,6 +174,15 @@ static llvm::cl::opt<bool>
 AnalyzeAll("checker-opt-analyze-headers",
     llvm::cl::desc("Force the static analyzer to analyze "
                    "functions defined in header files"));
+
+static llvm::cl::list<Analyses>
+AnalysisList(llvm::cl::desc("Available Source Code Analyses:"),
+llvm::cl::values(
+clEnumValN(WarnDeadStores, "warn-dead-stores",
+           "Flag warnings of stores to dead variables"),
+clEnumValN(WarnUninitVals, "warn-uninit-values",
+           "Flag warnings of uses of unitialized variables"),
+clEnumValEnd));          
 
 //===----------------------------------------------------------------------===//
 // Language Options
@@ -1199,12 +1202,6 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
     case AnalysisLiveVariables:
       return CreateLiveVarAnalyzer(AnalyzeSpecificFunction);
       
-    case WarnDeadStores:    
-      return CreateDeadStoreChecker(Diag);
-      
-    case WarnUninitVals:
-      return CreateUnitValsChecker(Diag);
-      
     case AnalysisGRSimpleVals:
       return CreateGRSimpleVals(Diag, PP, PPF, AnalyzeSpecificFunction,
                                 OutputFile, VisualizeEG, TrimGraph, AnalyzeAll);
@@ -1228,6 +1225,15 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       
     case RewriteObjC:
       return CreateCodeRewriterTest(InFile, OutputFile, Diag, LangOpts);
+      
+    case RunAnalysis:
+      assert (!AnalysisList.empty());
+      return CreateAnalysisConsumer(&AnalysisList[0],
+                                    &AnalysisList[0]+AnalysisList.size(),
+                                    Diag, PP, PPF, LangOpts,
+                                    AnalyzeSpecificFunction,
+                                    OutputFile, VisualizeEG, TrimGraph,
+                                    AnalyzeAll);
   }
 }
 
@@ -1484,6 +1490,11 @@ int main(int argc, char **argv) {
     fprintf(stderr, "Please use -triple or -arch.\n");
     exit(1);
   }
+  
+  // Are we invoking one or more source analyses?
+  if (!AnalysisList.empty() && ProgAction == ParseSyntaxOnly)
+    ProgAction = RunAnalysis;  
+  
   
   llvm::OwningPtr<SourceManager> SourceMgr;
   

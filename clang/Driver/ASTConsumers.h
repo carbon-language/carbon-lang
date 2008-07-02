@@ -30,7 +30,6 @@ struct LangOptions;
 class Preprocessor;
 class PreprocessorFactory;
 
-
 ASTConsumer *CreateASTPrinter(std::ostream* OS = NULL);
 
 ASTConsumer *CreateASTDumper();
@@ -41,10 +40,6 @@ ASTConsumer *CreateCFGDumper(bool ViewGraphs, const std::string& FName);
 
 ASTConsumer *CreateLiveVarAnalyzer(const std::string& fname);
 
-ASTConsumer *CreateDeadStoreChecker(Diagnostic &Diags);
-
-ASTConsumer *CreateUnitValsChecker(Diagnostic &Diags);
-  
 ASTConsumer *CreateGRSimpleVals(Diagnostic &Diags,
                                 Preprocessor* PP, PreprocessorFactory* PPF,
                                 const std::string& Function,
@@ -74,5 +69,7 @@ ASTConsumer *CreateASTSerializer(const std::string& InFile,
                                  Diagnostic &Diags);
 
 } // end clang namespace
+
+#include "AnalysisConsumer.h"
 
 #endif
