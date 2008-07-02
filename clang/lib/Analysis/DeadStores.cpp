@@ -151,6 +151,12 @@ void clang::CheckDeadStores(CFG& cfg, ASTContext &Ctx,
                             ParentMap& Parents, Diagnostic &Diags) {  
   LiveVariables L(cfg);
   L.runOnCFG(cfg);
+  CheckDeadStores(cfg, Ctx, L, Parents, Diags);
+}
+
+void clang::CheckDeadStores(CFG& cfg, ASTContext &Ctx, LiveVariables& L,
+                            ParentMap& Parents, Diagnostic &Diags) {  
+
   DeadStoreObs A(Ctx, Diags, Diags.getClient(), Parents);
   L.runOnAllBlocks(cfg, &A);
 }

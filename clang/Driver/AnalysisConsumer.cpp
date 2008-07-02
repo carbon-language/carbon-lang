@@ -264,7 +264,8 @@ void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions actions) {
 //===----------------------------------------------------------------------===//
 
 static void ActionDeadStores(AnalysisManager& mgr) {
-  CheckDeadStores(*mgr.getCFG(), mgr.getContext(), *mgr.getParentMap(),
+  CheckDeadStores(*mgr.getCFG(), mgr.getContext(),
+                  *mgr.getLiveVariables(), *mgr.getParentMap(),
                   mgr.getDiagnostic());
 }
 
