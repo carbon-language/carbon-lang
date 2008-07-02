@@ -20,11 +20,6 @@
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/CFG.h"
-#include "clang/AST/ParentMap.h"
-#include "clang/Analysis/Analyses/LiveVariables.h"
-#include "clang/Analysis/LocalCheckers.h"
-#include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
-#include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -607,31 +602,6 @@ namespace {
   
 ASTConsumer *clang::CreateCFGDumper(bool ViewGraphs, const std::string& FName) {
   return new CFGDumper(ViewGraphs, FName);
-}
-
-//===----------------------------------------------------------------------===//
-// AnalyzeLiveVariables - perform live variable analysis and dump results
-
-namespace {
-  class LivenessVisitor : public CFGVisitor {
-    SourceManager *SM;
-  public:
-    LivenessVisitor(const std::string& fname) : CFGVisitor(fname) {}
-    
-    virtual void Initialize(ASTContext &Context) {
-      SM = &Context.getSourceManager();
-    }
-
-    virtual void VisitCFG(CFG& C, Decl& CD) {
-      LiveVariables L(C);
-      L.runOnCFG(C);
-      L.dumpBlockLiveness(*SM);
-    }
-  };
-} // end anonymous namespace
-  
-ASTConsumer *clang::CreateLiveVarAnalyzer(const std::string& fname) {
-  return new LivenessVisitor(fname);
 }
 
 //===----------------------------------------------------------------------===//

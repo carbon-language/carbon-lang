@@ -74,7 +74,6 @@ enum ProgActions {
   ASTView,                      // Parse ASTs and view them in Graphviz.
   ParseCFGDump,                 // Parse ASTS. Build CFGs. Print CFGs.
   ParseCFGView,                 // Parse ASTS. Build CFGs. View CFGs.
-  AnalysisLiveVariables,        // Print results of live-variable analysis.
   TestSerialization,            // Run experimental serialization code.
   ParsePrintCallbacks,          // Parse and print each callback.
   ParseSyntaxOnly,              // Parse and perform semantic analysis.
@@ -113,8 +112,6 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Run parser, then build and print CFGs"),
              clEnumValN(ParseCFGView, "view-cfg",
                         "Run parser, then build and view CFGs with Graphviz"),
-             clEnumValN(AnalysisLiveVariables, "dump-live-variables",
-                        "Print results of live variable analysis"),
              clEnumValN(TestSerialization, "test-pickling",
                         "Run prototype serialization code"),
              clEnumValN(EmitLLVM, "emit-llvm",
@@ -171,6 +168,8 @@ AnalyzeAll("checker-opt-analyze-headers",
 static llvm::cl::list<Analyses>
 AnalysisList(llvm::cl::desc("Available Source Code Analyses:"),
 llvm::cl::values(
+clEnumValN(DisplayLiveVariables, "dump-live-variables",
+           "Print results of live variable analysis"),
 clEnumValN(WarnDeadStores, "warn-dead-stores",
            "Flag warnings of stores to dead variables"),
 clEnumValN(WarnUninitVals, "warn-uninit-values",
@@ -1196,9 +1195,6 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       return CreateCFGDumper(ProgAction == ParseCFGView,
                              AnalyzeSpecificFunction);
       
-    case AnalysisLiveVariables:
-      return CreateLiveVarAnalyzer(AnalyzeSpecificFunction);
-
     case TestSerialization:
       return CreateSerializationTest(Diag, FileMgr);
       

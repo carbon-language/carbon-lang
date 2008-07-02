@@ -131,6 +131,10 @@ namespace {
       return *C.Ctx;
     }
     
+    SourceManager& getSourceManager() {
+      return getContext().getSourceManager();
+    }
+    
     Diagnostic& getDiagnostic() {
       return C.Diags;
     }
@@ -147,7 +151,10 @@ namespace {
     }
       
     LiveVariables* getLiveVariables() {
-      if (!liveness) liveness.reset(new LiveVariables(*getCFG()));
+      if (!liveness) {
+        liveness.reset(new LiveVariables(*getCFG()));
+        liveness->runOnCFG(*getCFG());
+      }
       return liveness.get();
     }
     
@@ -200,6 +207,10 @@ void AnalysisConsumer::HandleTopLevelDecl(Decl *D) {
   switch (D->getKind()) {
     case Decl::Function: {
       FunctionDecl* FD = cast<FunctionDecl>(D);
+
+      if (FName.size() > 0 && FName != FD->getIdentifier()->getName())
+        break;
+      
       Stmt* Body = FD->getBody();
       if (Body) HandleCode(FD, Body, FunctionActions);
       break;
@@ -207,6 +218,10 @@ void AnalysisConsumer::HandleTopLevelDecl(Decl *D) {
       
     case Decl::ObjCMethod: {
       ObjCMethodDecl* MD = cast<ObjCMethodDecl>(D);
+      
+      if (FName.size() > 0 && FName != MD->getSelector().getName())
+        return;
+      
       Stmt* Body = MD->getBody();
       if (Body) HandleCode(MD, Body, ObjCMethodActions);
       break;
@@ -317,6 +332,11 @@ static void ActionSimpleChecks(AnalysisManager& mgr) {
   ActionGRExprEngine(mgr, MakeGRSimpleValsTF());
 }
 
+static void ActionLiveness(AnalysisManager& mgr) {
+  mgr.DisplayFunction();
+  mgr.getLiveVariables()->dumpBlockLiveness(mgr.getSourceManager());
+}
+
 //===----------------------------------------------------------------------===//
 // AnalysisConsumer creation.
 //===----------------------------------------------------------------------===//
@@ -342,6 +362,10 @@ ASTConsumer* clang::CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
         
       case WarnUninitVals:
         C->addCodeAction(&ActionUninitVals);
+        break;
+      
+      case DisplayLiveVariables:
+        C->addCodeAction(&ActionLiveness);
         break;
         
       case CheckerCFRef:

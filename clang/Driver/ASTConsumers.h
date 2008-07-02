@@ -38,8 +38,6 @@ ASTConsumer *CreateASTViewer();
 
 ASTConsumer *CreateCFGDumper(bool ViewGraphs, const std::string& FName);
 
-ASTConsumer *CreateLiveVarAnalyzer(const std::string& fname);
-
 ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
                                     const std::string& OutFile,
                                     Diagnostic &Diags,

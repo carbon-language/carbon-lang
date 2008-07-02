@@ -19,6 +19,7 @@ namespace clang {
 enum Analyses {
   WarnDeadStores,
   WarnUninitVals,
+  DisplayLiveVariables,
   CheckerCFRef,
   CheckerSimple
 };
