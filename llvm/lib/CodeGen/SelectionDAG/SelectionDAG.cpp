@@ -1080,15 +1080,16 @@ SDOperand SelectionDAG::getMemOperand(const MachineMemOperand &MO) {
 
 /// CreateStackTemporary - Create a stack temporary, suitable for holding the
 /// specified value type.
-SDOperand SelectionDAG::CreateStackTemporary(MVT VT) {
+SDOperand SelectionDAG::CreateStackTemporary(MVT VT, unsigned minAlign) {
   MachineFrameInfo *FrameInfo = getMachineFunction().getFrameInfo();
   unsigned ByteSize = VT.getSizeInBits()/8;
   const Type *Ty = VT.getTypeForMVT();
-  unsigned StackAlign = (unsigned)TLI.getTargetData()->getPrefTypeAlignment(Ty);
+  unsigned StackAlign =
+    std::max((unsigned)TLI.getTargetData()->getPrefTypeAlignment(Ty), minAlign);
+
   int FrameIdx = FrameInfo->CreateStackObject(ByteSize, StackAlign);
   return getFrameIndex(FrameIdx, TLI.getPointerTy());
 }
-
 
 SDOperand SelectionDAG::FoldSetCC(MVT VT, SDOperand N1,
                                   SDOperand N2, ISD::CondCode Cond) {
