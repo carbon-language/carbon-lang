@@ -337,6 +337,16 @@ static void ActionLiveness(AnalysisManager& mgr) {
   mgr.getLiveVariables()->dumpBlockLiveness(mgr.getSourceManager());
 }
 
+static void ActionCFGDump(AnalysisManager& mgr) {
+  mgr.DisplayFunction();
+  mgr.getCFG()->dump();
+}
+
+static void ActionCFGView(AnalysisManager& mgr) {
+  mgr.DisplayFunction();
+  mgr.getCFG()->viewCFG();  
+}
+
 //===----------------------------------------------------------------------===//
 // AnalysisConsumer creation.
 //===----------------------------------------------------------------------===//
@@ -374,6 +384,14 @@ ASTConsumer* clang::CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
         
       case CheckerSimple:
         C->addCodeAction(&ActionSimpleChecks);
+        break;
+        
+      case CFGDump:
+        C->addCodeAction(&ActionCFGDump);
+        break;
+        
+      case CFGView:
+        C->addCodeAction(&ActionCFGView);
         break;
         
       default: break;

@@ -17,6 +17,8 @@
 namespace clang {
 
 enum Analyses {
+  CFGDump,
+  CFGView,
   WarnDeadStores,
   WarnUninitVals,
   DisplayLiveVariables,

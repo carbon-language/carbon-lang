@@ -36,8 +36,6 @@ ASTConsumer *CreateASTDumper();
 
 ASTConsumer *CreateASTViewer();
 
-ASTConsumer *CreateCFGDumper(bool ViewGraphs, const std::string& FName);
-
 ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
                                     const std::string& OutFile,
                                     Diagnostic &Diags,

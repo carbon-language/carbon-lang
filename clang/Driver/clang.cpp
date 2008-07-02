@@ -72,8 +72,6 @@ enum ProgActions {
   ASTPrint,                     // Parse ASTs and print them.
   ASTDump,                      // Parse ASTs and dump them.
   ASTView,                      // Parse ASTs and view them in Graphviz.
-  ParseCFGDump,                 // Parse ASTS. Build CFGs. Print CFGs.
-  ParseCFGView,                 // Parse ASTS. Build CFGs. View CFGs.
   TestSerialization,            // Run experimental serialization code.
   ParsePrintCallbacks,          // Parse and print each callback.
   ParseSyntaxOnly,              // Parse and perform semantic analysis.
@@ -108,10 +106,6 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Build ASTs and then debug dump them"),
              clEnumValN(ASTView, "ast-view",
                         "Build ASTs and view them with GraphViz"),
-             clEnumValN(ParseCFGDump, "dump-cfg",
-                        "Run parser, then build and print CFGs"),
-             clEnumValN(ParseCFGView, "view-cfg",
-                        "Run parser, then build and view CFGs with Graphviz"),
              clEnumValN(TestSerialization, "test-pickling",
                         "Run prototype serialization code"),
              clEnumValN(EmitLLVM, "emit-llvm",
@@ -168,6 +162,8 @@ AnalyzeAll("checker-opt-analyze-headers",
 static llvm::cl::list<Analyses>
 AnalysisList(llvm::cl::desc("Available Source Code Analyses:"),
 llvm::cl::values(
+clEnumValN(CFGDump, "cfg-dump", "Display Control-Flow Graphs"),
+clEnumValN(CFGView, "cfg-view", "View Control-Flow Graphs using GraphViz"),
 clEnumValN(DisplayLiveVariables, "dump-live-variables",
            "Print results of live variable analysis"),
 clEnumValN(WarnDeadStores, "warn-dead-stores",
@@ -1189,12 +1185,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       
     case EmitHTML:
       return CreateHTMLPrinter(OutputFile, Diag, PP, PPF);
-      
-    case ParseCFGDump:
-    case ParseCFGView:
-      return CreateCFGDumper(ProgAction == ParseCFGView,
-                             AnalyzeSpecificFunction);
-      
+
     case TestSerialization:
       return CreateSerializationTest(Diag, FileMgr);
       

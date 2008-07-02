@@ -14,12 +14,10 @@
 #include "ASTConsumers.h"
 #include "HTMLDiagnostics.h"
 #include "clang/AST/TranslationUnit.h"
-#include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
-#include "clang/AST/CFG.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -517,92 +515,6 @@ namespace {
 }
 
 ASTConsumer *clang::CreateASTViewer() { return new ASTViewer(); }
-
-
-//===----------------------------------------------------------------------===//
-// CFGVisitor & VisitCFGs - Boilerplate interface and logic to visit
-//   the CFGs for all function definitions.
-
-namespace {
-
-class CFGVisitor : public ASTConsumer {
-  std::string FName;
-public:
-  CFGVisitor(const std::string& fname) : FName(fname) {}
-  CFGVisitor() : FName("") {}
-  
-  // CFG Visitor interface to be implemented by subclass.
-  virtual void VisitCFG(CFG& C, Decl& CD) = 0;
-  virtual bool printFuncDeclStart() { return true; }
-  
-  virtual void HandleTopLevelDecl(Decl *D);
-};
-
-} // end anonymous namespace
-
-void CFGVisitor::HandleTopLevelDecl(Decl *D) {
-  
-  CFG *C = NULL;
-  
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-
-    if (!FD->getBody())
-      return;
-  
-    if (FName.size() > 0 && FName != FD->getIdentifier()->getName())
-      return;
-      
-    if (printFuncDeclStart()) {
-      DeclPrinter().PrintFunctionDeclStart(FD);
-      llvm::cerr << '\n';
-    }
-      
-    C = CFG::buildCFG(FD->getBody());
-  }
-  else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
-    
-    if (!MD->getBody())
-      return;
-      
-    if (FName.size() > 0 && FName != MD->getSelector().getName())
-      return;
-    
-    if (printFuncDeclStart()) {
-      DeclPrinter().PrintObjCMethodDecl(MD);
-      llvm::cerr << '\n';
-    }
-    
-    C = CFG::buildCFG(MD->getBody());
-  }
-  
-  if (C) {  
-    VisitCFG(*C, *D);
-    delete C;
-  }
-}
-
-//===----------------------------------------------------------------------===//
-// DumpCFGs - Dump CFGs to stderr or visualize with Graphviz
-
-namespace {
-  class CFGDumper : public CFGVisitor {
-    const bool UseGraphviz;
-  public:
-    CFGDumper(bool use_graphviz, const std::string& fname) 
-     : CFGVisitor(fname), UseGraphviz(use_graphviz) {}
-    
-    virtual void VisitCFG(CFG& C, Decl&) {
-      if (UseGraphviz)
-        C.viewCFG();
-      else
-        C.dump();
-    }
-  }; 
-} // end anonymous namespace 
-  
-ASTConsumer *clang::CreateCFGDumper(bool ViewGraphs, const std::string& FName) {
-  return new CFGDumper(ViewGraphs, FName);
-}
 
 //===----------------------------------------------------------------------===//
 // AST Serializer
