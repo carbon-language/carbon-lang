@@ -22,10 +22,11 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/InstIterator.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/DepthFirstIterator.h"
-#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
+
 
 using namespace llvm;
 
@@ -35,12 +36,6 @@ namespace {
   struct VISIBILITY_HIDDEN ADCE : public FunctionPass {
     static char ID; // Pass identification, replacement for typeid
     ADCE() : FunctionPass((intptr_t)&ID) {}
-    
-    DenseSet<Instruction*> alive;
-    SmallVector<Instruction*, 1024> worklist;
-    
-    DenseSet<BasicBlock*> reachable;
-    SmallVector<BasicBlock*, 1024> unreachable;
     
     virtual bool runOnFunction(Function& F);
     
@@ -55,15 +50,17 @@ char ADCE::ID = 0;
 static RegisterPass<ADCE> X("adce", "Aggressive Dead Code Elimination");
 
 bool ADCE::runOnFunction(Function& F) {
-  alive.clear();
-  worklist.clear();
-  reachable.clear();
-  unreachable.clear();
+  SmallPtrSet<Instruction*, 128> alive;
+  SmallVector<Instruction*, 128> worklist;
+  
+  SmallPtrSet<BasicBlock*, 64> reachable;
+  SmallVector<BasicBlock*, 16> unreachable;
   
   // First, collect the set of reachable blocks ...
-  for (df_iterator<BasicBlock*> DI = df_begin(&F.getEntryBlock()),
-       DE = df_end(&F.getEntryBlock()); DI != DE; ++DI)
-    reachable.insert(*DI);
+  for (df_ext_iterator<BasicBlock*, SmallPtrSet<BasicBlock*, 64> >
+       DI = df_ext_begin(&F.getEntryBlock(), reachable),
+       DE = df_ext_end(&F.getEntryBlock(), reachable); DI != DE; ++DI)
+    ; // Deliberately empty, df_ext_iterator will fill in the set.
   
   // ... and then invert it into the list of unreachable ones.  These
   // blocks will be removed from the function.
@@ -73,7 +70,7 @@ bool ADCE::runOnFunction(Function& F) {
   
   // Prepare to remove blocks by removing the PHI node entries for those blocks
   // in their successors, and remove them from reference counting.
-  for (SmallVector<BasicBlock*, 1024>::iterator UI = unreachable.begin(),
+  for (SmallVector<BasicBlock*, 16>::iterator UI = unreachable.begin(),
        UE = unreachable.end(); UI != UE; ++UI) {
     BasicBlock* BB = *UI;
     for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB);
@@ -90,7 +87,7 @@ bool ADCE::runOnFunction(Function& F) {
   }
   
   // Finally, erase the unreachable blocks.
-  for (SmallVector<BasicBlock*, 1024>::iterator UI = unreachable.begin(),
+  for (SmallVector<BasicBlock*, 16>::iterator UI = unreachable.begin(),
        UE = unreachable.end(); UI != UE; ++UI)
     (*UI)->eraseFromParent();
   
