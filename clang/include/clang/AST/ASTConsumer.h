@@ -37,7 +37,10 @@ public:
   /// HandleTopLevelDecl - Handle the specified top-level declaration.  This is
   ///  called by HandleTopLevelDeclaration to process every top-level Decl*.
   virtual void HandleTopLevelDecl(Decl *D) {}
-    
+  
+  /// HandleTranslationUnit - This method is called when the ASTs for entire
+  ///  translation unit have been parsed.
+  virtual void HandleTranslationUnit(TranslationUnit& TU) {}    
   
   /// HandleTopLevelDeclaration - Handle the specified top-level declaration.
   ///  This is called only for Decl* that are the head of a chain of

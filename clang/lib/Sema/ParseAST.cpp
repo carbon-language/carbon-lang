@@ -63,6 +63,8 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer, bool PrintStats) {
       Consumer->HandleTopLevelDecl(D);
     }
   };
+  
+  Consumer->HandleTranslationUnit(TU);
 
   if (PrintStats) {
     fprintf(stderr, "\nSTATISTICS:\n");
