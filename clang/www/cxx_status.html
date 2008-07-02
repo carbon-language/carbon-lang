@@ -22,7 +22,15 @@
 <p>
 This page tracks the status of C++ support in Clang.<br>
 Currently most of the C++ features are missing; here you can find features that are at least partially supported in Clang. </p>
-<table width="689" border="1">
+
+<p>
+In this table, parser support means that the parser knows the grammar for
+the feature.  "Sema" support means that we do type checking, report errors 
+about misuses of the feature and build an AST.  CodeGen support means that we
+actually produce LLVM code for the feature with the -emit-llvm option.
+</p>
+
+<table width="689" border="1" cellspacing="0">
   <tr>
     <td width="150"><h3>Feature</h3></td>
     <td width="172"><h3>Example</h3></td>
@@ -32,6 +40,11 @@ Currently most of the C++ features are missing; here you can find features that 
     <td>Keywords </td>
     <td>reinterpret_cast</td>
     <td>Full support.</td>
+  </tr>
+  <tr>
+    <td>Named Casts </td>
+    <td>static_cast&lt;int&gt;(x)</td>
+    <td>Parser and Sema support, no codegen.</td>
   </tr>
   <tr>
     <td>References</td>
