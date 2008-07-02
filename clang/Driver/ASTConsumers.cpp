@@ -733,39 +733,6 @@ void CheckerConsumer::VisitCFG(CFG& C, Decl& CD) {
 }
 
 //===----------------------------------------------------------------------===//
-// GRSimpleVals - Perform intra-procedural, path-sensitive constant propagation.
-
-namespace {
-class GRSimpleValsVisitor : public CheckerConsumer {
-public:
-  GRSimpleValsVisitor(Diagnostic &diags, Preprocessor* pp,
-                      PreprocessorFactory* ppf,
-                      const std::string& fname, const std::string& htmldir,
-                      bool visualize, bool trim, bool analyzeAll)
-  : CheckerConsumer(diags, pp, ppf, fname, htmldir, visualize,
-                    trim, analyzeAll) {}
-
-  virtual const char* getCheckerName() { return "GRSimpleVals"; }
-  
-  virtual void getTransferFunctions(std::vector<GRTransferFuncs*>& TFs) {
-    return TFs.push_back(MakeGRSimpleValsTF());
-  }
-};
-} // end anonymous namespace
-
-ASTConsumer* clang::CreateGRSimpleVals(Diagnostic &Diags,
-                                       Preprocessor* PP,
-                                       PreprocessorFactory* PPF,
-                                       const std::string& FunctionName,
-                                       const std::string& HTMLDir,
-                                       bool Visualize, bool TrimGraph,
-                                       bool AnalyzeAll) {
-  
-  return new GRSimpleValsVisitor(Diags, PP, PPF, FunctionName, HTMLDir,
-                                 Visualize, TrimGraph, AnalyzeAll);
-}
-
-//===----------------------------------------------------------------------===//
 // AST Serializer
 
 namespace {

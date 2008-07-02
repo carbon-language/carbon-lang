@@ -227,24 +227,30 @@ static void ActionUninitVals(AnalysisManager& mgr) {
 }
 
 
-static void ActionRefLeakCheckerAux(AnalysisManager& mgr, bool GCEnabled,
-                                    bool StandardWarnings) {
-    
-  // Construct the analysis engine.
-  GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext());
+static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf) {
   
-  // Construct the transfer function object.
-  llvm::OwningPtr<GRTransferFuncs>
-  TF(MakeCFRefCountTF(mgr.getContext(), GCEnabled, StandardWarnings,
-                      mgr.getLangOptions()));
-     
-  Eng.setTransferFunctions(TF.get());
-
+  llvm::OwningPtr<GRTransferFuncs> TF(tf);
+  
+  // Construct the analysis engine.
+  GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext());  
+  Eng.setTransferFunctions(tf);
+  
   // Execute the worklist algorithm.
   Eng.ExecuteWorkList();
-   
+  
   // Display warnings.
-  Eng.EmitWarnings(mgr.getDiagnostic(), mgr.getPathDiagnosticClient());     
+  Eng.EmitWarnings(mgr.getDiagnostic(), mgr.getPathDiagnosticClient());   
+}
+
+static void ActionRefLeakCheckerAux(AnalysisManager& mgr, bool GCEnabled,
+                                    bool StandardWarnings) {
+
+  GRTransferFuncs* TF = MakeCFRefCountTF(mgr.getContext(),
+                                         GCEnabled,
+                                         StandardWarnings,
+                                         mgr.getLangOptions());
+    
+  ActionGRExprEngine(mgr, TF);
 }
 
 static void ActionRefLeakChecker(AnalysisManager& mgr) {
@@ -265,6 +271,10 @@ static void ActionRefLeakChecker(AnalysisManager& mgr) {
      ActionRefLeakCheckerAux(mgr, true, false);
      break;
  }
+}
+
+static void ActionSimpleChecks(AnalysisManager& mgr) {
+  ActionGRExprEngine(mgr, MakeGRSimpleValsTF());
 }
 
 //===----------------------------------------------------------------------===//
@@ -296,6 +306,10 @@ ASTConsumer* clang::CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
         
       case CheckerCFRef:
         C->addCodeAction(&ActionRefLeakChecker);
+        break;
+        
+      case CheckerSimple:
+        C->addCodeAction(&ActionSimpleChecks);
         break;
         
       default: break;

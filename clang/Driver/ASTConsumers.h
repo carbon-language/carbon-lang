@@ -40,12 +40,6 @@ ASTConsumer *CreateCFGDumper(bool ViewGraphs, const std::string& FName);
 
 ASTConsumer *CreateLiveVarAnalyzer(const std::string& fname);
 
-ASTConsumer *CreateGRSimpleVals(Diagnostic &Diags,
-                                Preprocessor* PP, PreprocessorFactory* PPF,
-                                const std::string& Function,
-                                const std::string& HTMLDir, bool Visualize,
-                                bool TrimGraph, bool AnalyzeAll);
-
 ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
                                     const std::string& OutFile,
                                     Diagnostic &Diags,

@@ -75,8 +75,6 @@ enum ProgActions {
   ParseCFGDump,                 // Parse ASTS. Build CFGs. Print CFGs.
   ParseCFGView,                 // Parse ASTS. Build CFGs. View CFGs.
   AnalysisLiveVariables,        // Print results of live-variable analysis.
-  AnalysisGRSimpleVals,         // Perform graph-reachability constant prop.
-  AnalysisGRSimpleValsView,     // Visualize results of path-sens. analysis.
   TestSerialization,            // Run experimental serialization code.
   ParsePrintCallbacks,          // Parse and print each callback.
   ParseSyntaxOnly,              // Parse and perform semantic analysis.
@@ -117,8 +115,6 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Run parser, then build and view CFGs with Graphviz"),
              clEnumValN(AnalysisLiveVariables, "dump-live-variables",
                         "Print results of live variable analysis"),
-             clEnumValN(AnalysisGRSimpleVals, "checker-simple",
-                        "Perform path-sensitive constant propagation"),
              clEnumValN(TestSerialization, "test-pickling",
                         "Run prototype serialization code"),
              clEnumValN(EmitLLVM, "emit-llvm",
@@ -179,8 +175,10 @@ clEnumValN(WarnDeadStores, "warn-dead-stores",
            "Flag warnings of stores to dead variables"),
 clEnumValN(WarnUninitVals, "warn-uninit-values",
            "Flag warnings of uses of unitialized variables"),
+clEnumValN(CheckerSimple, "checker-simple",
+           "Perform simple path-sensitive checks."),
 clEnumValN(CheckerCFRef, "checker-cfref",
-           "Run the [Core] Foundation reference count checker"),      
+           "Run the [Core] Foundation reference count checker"),   
 clEnumValEnd));          
 
 //===----------------------------------------------------------------------===//
@@ -1200,11 +1198,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       
     case AnalysisLiveVariables:
       return CreateLiveVarAnalyzer(AnalyzeSpecificFunction);
-      
-    case AnalysisGRSimpleVals:
-      return CreateGRSimpleVals(Diag, PP, PPF, AnalyzeSpecificFunction,
-                                OutputFile, VisualizeEG, TrimGraph, AnalyzeAll);
-      
+
     case TestSerialization:
       return CreateSerializationTest(Diag, FileMgr);
       
