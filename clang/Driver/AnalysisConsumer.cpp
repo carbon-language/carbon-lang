@@ -25,6 +25,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/AST/ParentMap.h"
+#include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
@@ -98,7 +99,7 @@ namespace {
   };
     
   
-  class VISIBILITY_HIDDEN AnalysisManager {
+  class VISIBILITY_HIDDEN AnalysisManager : public BugReporterData {
     Decl* D;
     Stmt* Body;    
     AnalysisConsumer& C;
@@ -117,25 +118,25 @@ namespace {
     Decl* getCodeDecl() const { return D; }
     Stmt* getBody() const { return Body; }
     
-    CFG* getCFG() {
+    virtual CFG& getCFG() {
       if (!cfg) cfg.reset(CFG::buildCFG(getBody()));
-      return cfg.get();
+      return *cfg.get();
     }
     
-    ParentMap* getParentMap() {
+    virtual ParentMap& getParentMap() {
       if (!PM) PM.reset(new ParentMap(getBody()));
-      return PM.get();
+      return *PM.get();
     }
     
-    ASTContext& getContext() {
+    virtual ASTContext& getContext() {
       return *C.Ctx;
     }
     
-    SourceManager& getSourceManager() {
+    virtual SourceManager& getSourceManager() {
       return getContext().getSourceManager();
     }
     
-    Diagnostic& getDiagnostic() {
+    virtual Diagnostic& getDiagnostic() {
       return C.Diags;
     }
     
@@ -143,20 +144,21 @@ namespace {
       return C.LOpts;
     }
     
-    PathDiagnosticClient* getPathDiagnosticClient() {
+    virtual PathDiagnosticClient* getPathDiagnosticClient() {
       if (PD.get() == 0 && !C.HTMLDir.empty())
         PD.reset(CreateHTMLDiagnosticClient(C.HTMLDir, C.PP, C.PPF));
       
       return PD.get();      
     }
       
-    LiveVariables* getLiveVariables() {
+    virtual LiveVariables& getLiveVariables() {
       if (!liveness) {
-        liveness.reset(new LiveVariables(*getCFG()));
-        liveness->runOnCFG(*getCFG());
-        liveness->runOnAllBlocks(*getCFG(), 0, true);
+        liveness.reset(new LiveVariables(getCFG()));
+        liveness->runOnCFG(getCFG());
+        liveness->runOnAllBlocks(getCFG(), 0, true);
       }
-      return liveness.get();
+      
+      return *liveness.get();
     }
     
     bool shouldVisualize() const {
@@ -255,7 +257,7 @@ void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions actions) {
   AnalysisManager mgr(*this, D, Body);
   
   // Dispatch on the actions.  
-  for (Actions::iterator I = actions.begin(), 
+  for (Actions::iterator I = actions.begin(),
                          E = actions.end(); I != E; ++I)
     ((*I).getHead())(mgr);  
 }
@@ -265,13 +267,13 @@ void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions actions) {
 //===----------------------------------------------------------------------===//
 
 static void ActionDeadStores(AnalysisManager& mgr) {
-  CheckDeadStores(*mgr.getCFG(), mgr.getContext(),
-                  *mgr.getLiveVariables(), *mgr.getParentMap(),
+  CheckDeadStores(mgr.getCFG(), mgr.getContext(),
+                  mgr.getLiveVariables(), mgr.getParentMap(),
                   mgr.getDiagnostic());
 }
 
 static void ActionUninitVals(AnalysisManager& mgr) {
-  CheckUninitializedValues(*mgr.getCFG(), mgr.getContext(),
+  CheckUninitializedValues(mgr.getCFG(), mgr.getContext(),
                            mgr.getDiagnostic());
 }
 
@@ -285,15 +287,15 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf) {
     mgr.DisplayFunction();
   
   // Construct the analysis engine.
-  GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext(),
-                   *mgr.getLiveVariables());  
+  GRExprEngine Eng(mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext(),
+                   mgr.getLiveVariables());  
   Eng.setTransferFunctions(tf);
   
   // Execute the worklist algorithm.
   Eng.ExecuteWorkList();
   
   // Display warnings.
-  Eng.EmitWarnings(mgr.getDiagnostic(), mgr.getPathDiagnosticClient());
+  Eng.EmitWarnings(mgr);
   
   // Visualize the exploded graph.
   if (mgr.shouldVisualize())
@@ -337,17 +339,17 @@ static void ActionSimpleChecks(AnalysisManager& mgr) {
 
 static void ActionLiveness(AnalysisManager& mgr) {
   mgr.DisplayFunction();
-  mgr.getLiveVariables()->dumpBlockLiveness(mgr.getSourceManager());
+  mgr.getLiveVariables().dumpBlockLiveness(mgr.getSourceManager());
 }
 
 static void ActionCFGDump(AnalysisManager& mgr) {
   mgr.DisplayFunction();
-  mgr.getCFG()->dump();
+  mgr.getCFG().dump();
 }
 
 static void ActionCFGView(AnalysisManager& mgr) {
   mgr.DisplayFunction();
-  mgr.getCFG()->viewCFG();  
+  mgr.getCFG().viewCFG();  
 }
 
 //===----------------------------------------------------------------------===//

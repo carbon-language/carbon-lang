@@ -242,8 +242,8 @@ public:
     DiagCollector C(*this);    
     DeadStoreObs A(BR.getContext(), BR.getDiagnostic(), C, BR.getParentMap());
     
-    GRExprEngine& Eng = BR.getEngine();    
-    Eng.getLiveness().runOnAllBlocks(BR.getCFG(), &A);
+
+    BR.getLiveVariables().runOnAllBlocks(BR.getCFG(), &A);
     
     // Emit the bug reports.
     

@@ -27,20 +27,18 @@
 using namespace clang;
 
 BugReporter::~BugReporter() {}
+GRBugReporter::~GRBugReporter() {}
+BugReporterData::~BugReporterData() {}
 BugType::~BugType() {}
 BugReport::~BugReport() {}
 RangedBugReport::~RangedBugReport() {}
 
-ExplodedGraph<ValueState>& BugReporter::getGraph() {
+ExplodedGraph<ValueState>& GRBugReporter::getGraph() {
   return Eng.getGraph();
 }
 
-ValueStateManager& BugReporter::getStateManager() { 
+ValueStateManager& GRBugReporter::getStateManager() { 
   return Eng.getStateManager();
-}
-
-ParentMap& BugReporter::getParentMap() {
-  return Eng.getParentMap();
 }
 
 static inline Stmt* GetStmt(const ProgramPoint& P) {
@@ -338,7 +336,7 @@ static void HandleNotableSymbol(ExplodedNode<ValueState>* N, Stmt* S,
   // specified symbol.  Are any of them not in the previous state.
   
   ValueState* St = N->getState();
-  ValueStateManager& VMgr = BR.getStateManager();
+  ValueStateManager& VMgr = cast<GRBugReporter>(BR).getStateManager();
   
   // FIXME: Later generalize for a broader memory model.
 
@@ -411,8 +409,8 @@ static void HandleNotableSymbol(ExplodedNode<ValueState>* N, Stmt* S,
   }
 }
 
-void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
-                                         BugReport& R) {
+void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
+                                           BugReport& R) {
 
   ExplodedNode<ValueState>* N = R.getEndNode();
 
@@ -438,6 +436,7 @@ void BugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   ExplodedNode<ValueState>* NextNode = N->pred_empty() 
                                        ? NULL : *(N->pred_begin());
   
+  ASTContext& Ctx = getContext();
   SourceManager& SMgr = Ctx.getSourceManager();
   
   while (NextNode) {
@@ -715,6 +714,8 @@ void BugReporter::EmitWarning(BugReport& R) {
 
   // Emit a full diagnostic for the path if we have a PathDiagnosticClient.
   
+  PathDiagnosticClient* PD = getPathDiagnosticClient();
+  
   if (PD && !D->empty()) { 
     PD->HandlePathDiagnostic(D.take());
     return;    
@@ -723,7 +724,7 @@ void BugReporter::EmitWarning(BugReport& R) {
   // We don't have a PathDiagnosticClient, but we can still emit a single
   // line diagnostic.  Determine the location.
   
-  FullSourceLoc L = D->empty() ? R.getLocation(Ctx.getSourceManager())
+  FullSourceLoc L = D->empty() ? R.getLocation(getSourceManager())
                                : D->back()->getLocation();
   
   
@@ -749,7 +750,6 @@ void BugReporter::EmitWarning(BugReport& R) {
   }
   else {
     std::ostringstream os;  
-    os << "[CHECKER] ";
     
     if (D->empty())
       os << R.getDescription();
@@ -757,6 +757,7 @@ void BugReporter::EmitWarning(BugReport& R) {
       os << D->back()->getString();
     
     
+    Diagnostic& Diag = getDiagnostic();
     unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning,
                                               os.str().c_str());
 

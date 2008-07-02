@@ -127,44 +127,100 @@ public:
   }
 };
   
+class BugReporterData {
+public:
+  virtual ~BugReporterData();
+  virtual Diagnostic& getDiagnostic() = 0;  
+  virtual PathDiagnosticClient* getPathDiagnosticClient() = 0;  
+  virtual ASTContext& getContext() = 0;
+  virtual SourceManager& getSourceManager() = 0;
+  virtual CFG& getCFG() = 0;
+  virtual ParentMap& getParentMap() = 0;
+  virtual LiveVariables& getLiveVariables() = 0;
+};
+  
 class BugReporter {
-  Diagnostic& Diag;
-  PathDiagnosticClient* PD;
-  ASTContext& Ctx;
-  GRExprEngine& Eng;
-  llvm::SmallSet<SymbolID, 10> NotableSymbols;
+public:
+  enum Kind { BaseBRKind, GRBugReporterKind };
+
+protected:
+  Kind kind;  
+  BugReporterData& D;
+  
+  BugReporter(BugReporterData& d, Kind k) : kind(k), D(d) {}
   
 public:
-  BugReporter(Diagnostic& diag, PathDiagnosticClient* pd,
-              ASTContext& ctx, GRExprEngine& eng)
-  : Diag(diag), PD(pd), Ctx(ctx), Eng(eng) {}
+  BugReporter(BugReporterData& d) : kind(BaseBRKind), D(d) {}
+  virtual ~BugReporter();
   
-  ~BugReporter();
+  Kind getKind() const { return kind; }
   
-  Diagnostic& getDiagnostic() { return Diag; }
+  Diagnostic& getDiagnostic() {
+    return D.getDiagnostic();
+  }
   
-  PathDiagnosticClient* getDiagnosticClient() { return PD; }
+  PathDiagnosticClient* getPathDiagnosticClient() {
+    return D.getPathDiagnosticClient();
+  }
   
-  ASTContext& getContext() { return Ctx; }
+  ASTContext& getContext() {
+    return D.getContext();
+  }
   
-  SourceManager& getSourceManager() { return Ctx.getSourceManager(); }
+  SourceManager& getSourceManager() {
+    return getContext().getSourceManager();
+  }
   
-  ExplodedGraph<ValueState>& getGraph();
+  CFG& getCFG() {
+    return D.getCFG();
+  }
+  
+  ParentMap& getParentMap() {
+    return D.getParentMap();  
+  }
+  
+  LiveVariables& getLiveVariables() {
+    return D.getLiveVariables();
+  }
+  
+  virtual void GeneratePathDiagnostic(PathDiagnostic& PD, BugReport& R) {}
 
-  GRExprEngine& getEngine() { return Eng; }
+  void EmitWarning(BugReport& R);
+  
+  static bool classof(const BugReporter* R) { return true; }
+};
+  
+class GRBugReporter : public BugReporter {
+  GRExprEngine& Eng;
+  llvm::SmallSet<SymbolID, 10> NotableSymbols;
+public:
+  
+  GRBugReporter(BugReporterData& d, GRExprEngine& eng)
+    : BugReporter(d, GRBugReporterKind), Eng(eng) {}
+  
+  virtual ~GRBugReporter();
+  
+  GRExprEngine& getEngine() {
+    return Eng;
+  }
+
+  ExplodedGraph<ValueState>& getGraph();
   
   ValueStateManager& getStateManager();
   
-  CFG& getCFG() { return getGraph().getCFG(); }
+  virtual void GeneratePathDiagnostic(PathDiagnostic& PD, BugReport& R);
+
+  void addNotableSymbol(SymbolID Sym) {
+    NotableSymbols.insert(Sym);
+  }
   
-  ParentMap& getParentMap();
+  bool isNotable(SymbolID Sym) const {
+    return (bool) NotableSymbols.count(Sym);
+  }
   
-  void EmitWarning(BugReport& R);
-  
-  void GeneratePathDiagnostic(PathDiagnostic& PD, BugReport& R);
-  
-  void addNotableSymbol(SymbolID Sym) { NotableSymbols.insert(Sym); }
-  bool isNotable(SymbolID Sym) const { return (bool) NotableSymbols.count(Sym);}
+  static bool classof(const BugReporter* R) {
+    return R->getKind() == GRBugReporterKind;
+  }
 };
   
 } // end clang namespace

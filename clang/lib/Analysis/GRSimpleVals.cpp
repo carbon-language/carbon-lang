@@ -66,7 +66,7 @@ public:
   }
   
   virtual void EmitWarnings(BugReporter& BR) {
-    GRExprEngine& Eng = BR.getEngine();
+    GRExprEngine& Eng = cast<GRBugReporter>(BR).getEngine();
     GenericEmitWarnings(BR, *this, Eng.null_derefs_begin(),
                         Eng.null_derefs_end());
   }
@@ -83,7 +83,7 @@ public:
   }
   
   virtual void EmitWarnings(BugReporter& BR) {
-    GRExprEngine& Eng = BR.getEngine();
+    GRExprEngine& Eng = cast<GRBugReporter>(BR).getEngine();
     GenericEmitWarnings(BR, *this, Eng.undef_derefs_begin(),
                         Eng.undef_derefs_end());
   }
@@ -113,7 +113,7 @@ public:
   }
   
   virtual void EmitWarnings(BugReporter& BR) {
-    GRExprEngine& Eng = BR.getEngine();
+    GRExprEngine& Eng = cast<GRBugReporter>(BR).getEngine();
     GenericEmitWarnings(BR, *this, Eng.explicit_bad_divides_begin(),
                         Eng.explicit_bad_divides_end());
   }
@@ -130,7 +130,7 @@ public:
   }
   
   virtual void EmitWarnings(BugReporter& BR) {
-    GRExprEngine& Eng = BR.getEngine();
+    GRExprEngine& Eng = cast<GRBugReporter>(BR).getEngine();
     GenericEmitWarnings(BR, *this, Eng.undef_results_begin(),
                         Eng.undef_results_end());
   }
@@ -147,7 +147,7 @@ public:
   }
   
   virtual void EmitWarnings(BugReporter& BR) {
-    GRExprEngine& Eng = BR.getEngine();
+    GRExprEngine& Eng = cast<GRBugReporter>(BR).getEngine();
     GenericEmitWarnings(BR, *this, Eng.bad_calls_begin(),
                         Eng.bad_calls_end());
   }
@@ -168,7 +168,7 @@ public:
   }  
 
   virtual void EmitWarnings(BugReporter& BR) {
-    GRExprEngine& Eng = BR.getEngine();
+    GRExprEngine& Eng = cast<GRBugReporter>(BR).getEngine();
 
     for (GRExprEngine::UndefArgsTy::iterator I = Eng.undef_arg_begin(),
          E = Eng.undef_arg_end(); I!=E; ++I) {
@@ -195,7 +195,7 @@ public:
   }
   
   virtual void EmitWarnings(BugReporter& BR) {
-    GRExprEngine& Eng = BR.getEngine();
+    GRExprEngine& Eng = cast<GRBugReporter>(BR).getEngine();
     
     for (GRExprEngine::UndefArgsTy::iterator I=Eng.msg_expr_undef_arg_begin(),
          E = Eng.msg_expr_undef_arg_end(); I!=E; ++I) {
@@ -221,7 +221,7 @@ public:
   }
   
   virtual void EmitWarnings(BugReporter& BR) {
-    GRExprEngine& Eng = BR.getEngine();
+    GRExprEngine& Eng = cast<GRBugReporter>(BR).getEngine();
     
     for (GRExprEngine::UndefReceiversTy::iterator I=Eng.undef_receivers_begin(),
          End = Eng.undef_receivers_end(); I!=End; ++I) {
@@ -252,7 +252,7 @@ public:
   }
   
   virtual void EmitWarnings(BugReporter& BR) {
-    GRExprEngine& Eng = BR.getEngine();
+    GRExprEngine& Eng = cast<GRBugReporter>(BR).getEngine();
     GenericEmitWarnings(BR, *this, Eng.ret_stackaddr_begin(),
                         Eng.ret_stackaddr_end());
   }
@@ -291,7 +291,7 @@ struct VISIBILITY_HIDDEN FindUndefExpr {
   
 void UndefBranch::EmitWarnings(BugReporter& BR) {
 
-  GRExprEngine& Eng = BR.getEngine();
+  GRExprEngine& Eng = cast<GRBugReporter>(BR).getEngine();
   
   for (GRExprEngine::undef_branch_iterator I=Eng.undef_branches_begin(),
        E=Eng.undef_branches_end(); I!=E; ++I) {

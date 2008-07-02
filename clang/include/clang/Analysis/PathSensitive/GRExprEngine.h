@@ -29,6 +29,7 @@ namespace clang {
   class PathDiagnosticClient;
   class Diagnostic;
   class ParentMap;
+  class BugReporterData;
 
 class GRExprEngine {
   
@@ -235,7 +236,7 @@ public:
     BugTypes.push_back(B);
   }
   
-  void EmitWarnings(Diagnostic& Diag, PathDiagnosticClient* PD);  
+  void EmitWarnings(BugReporterData& BRData);  
   
   bool isRetStackAddr(const NodeTy* N) const {
     return N->isSink() && RetsStackAddr.count(const_cast<NodeTy*>(N)) != 0;

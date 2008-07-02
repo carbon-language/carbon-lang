@@ -2202,7 +2202,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<ValueState>* N,
   // Add the range by scanning the children of the statement for any bindings
   // to Sym.
   
-  ValueStateManager& VSM = BR.getEngine().getStateManager();
+  ValueStateManager& VSM = cast<GRBugReporter>(BR).getStateManager();
   
   for (Stmt::child_iterator I = S->child_begin(), E = S->child_end(); I!=E; ++I)
     if (Expr* Exp = dyn_cast_or_null<Expr>(*I)) {
@@ -2266,7 +2266,7 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
 
   // Tell the BugReporter to report cases when the tracked symbol is
   // assigned to different variables, etc.
-  BR.addNotableSymbol(Sym);
+  cast<GRBugReporter>(BR).addNotableSymbol(Sym);
   
   if (!getBugType().isLeak())
     return RangedBugReport::getEndPath(BR, EndN);

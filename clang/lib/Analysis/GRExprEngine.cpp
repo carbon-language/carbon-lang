@@ -108,21 +108,21 @@ struct VISIBILITY_HIDDEN SaveOr {
 };
 
 
-void GRExprEngine::EmitWarnings(Diagnostic& Diag, PathDiagnosticClient* PD) {
+void GRExprEngine::EmitWarnings(BugReporterData& BRData) {
   for (bug_type_iterator I = bug_types_begin(), E = bug_types_end(); I!=E; ++I){
-    BugReporter BR(Diag, PD, getContext(), *this);
+    GRBugReporter BR(BRData, *this);
     (*I)->EmitWarnings(BR);
   }
   
   for (SimpleChecksTy::iterator I = CallChecks.begin(), E = CallChecks.end();
        I != E; ++I) {
-    BugReporter BR(Diag, PD, getContext(), *this);
+    GRBugReporter BR(BRData, *this);
     (*I)->EmitWarnings(BR);
   }
   
   for (SimpleChecksTy::iterator I=MsgExprChecks.begin(), E=MsgExprChecks.end();
        I != E; ++I) {
-    BugReporter BR(Diag, PD, getContext(), *this);
+    GRBugReporter BR(BRData, *this);
     (*I)->EmitWarnings(BR);
   }
 }
