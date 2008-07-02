@@ -2752,7 +2752,7 @@ SDOperand PPCTargetLowering::LowerAtomicLOAD_ADD(SDOperand Op, SelectionDAG &DAG
   };
   SDOperand Store = DAG.getNode(PPCISD::STCX, MVT::Other, Ops2, 4);
   SDOperand OutOps[] = { Load, Store };
-  return DAG.getMergeValues(DAG.getVTList(VT, MVT::Other), OutOps, 2);
+  return DAG.getMergeValues(OutOps, 2);
 }
 
 SDOperand PPCTargetLowering::LowerAtomicCMP_SWAP(SDOperand Op, SelectionDAG &DAG) {
@@ -2794,7 +2794,7 @@ SDOperand PPCTargetLowering::LowerAtomicCMP_SWAP(SDOperand Op, SelectionDAG &DAG
   };
   SDOperand Store = DAG.getNode(PPCISD::STCX, MVT::Other, Ops3, 4);
   SDOperand OutOps[] = { Load, Store };
-  return DAG.getMergeValues(DAG.getVTList(VT, MVT::Other), OutOps, 2);
+  return DAG.getMergeValues(OutOps, 2);
 }
 
 SDOperand PPCTargetLowering::LowerAtomicSWAP(SDOperand Op, SelectionDAG &DAG) {
@@ -2826,7 +2826,7 @@ SDOperand PPCTargetLowering::LowerAtomicSWAP(SDOperand Op, SelectionDAG &DAG) {
   };
   SDOperand Store = DAG.getNode(PPCISD::STCX, MVT::Other, Ops2, 4);
   SDOperand OutOps[] = { Load, Store };
-  return DAG.getMergeValues(DAG.getVTList(VT, MVT::Other), OutOps, 2);
+  return DAG.getMergeValues(OutOps, 2);
 }
 
 /// LowerSELECT_CC - Lower floating point select_cc's into fsel instruction when
@@ -3130,7 +3130,7 @@ SDOperand PPCTargetLowering::LowerSHL_PARTS(SDOperand Op, SelectionDAG &DAG) {
   SDOperand OutHi = DAG.getNode(ISD::OR, VT, Tmp4, Tmp6);
   SDOperand OutLo = DAG.getNode(PPCISD::SHL, VT, Lo, Amt);
   SDOperand OutOps[] = { OutLo, OutHi };
-  return DAG.getMergeValues(DAG.getVTList(VT, VT), OutOps, 2);
+  return DAG.getMergeValues(OutOps, 2);
 }
 
 SDOperand PPCTargetLowering::LowerSRL_PARTS(SDOperand Op, SelectionDAG &DAG) {
@@ -3158,7 +3158,7 @@ SDOperand PPCTargetLowering::LowerSRL_PARTS(SDOperand Op, SelectionDAG &DAG) {
   SDOperand OutLo = DAG.getNode(ISD::OR, VT, Tmp4, Tmp6);
   SDOperand OutHi = DAG.getNode(PPCISD::SRL, VT, Hi, Amt);
   SDOperand OutOps[] = { OutLo, OutHi };
-  return DAG.getMergeValues(DAG.getVTList(VT, VT), OutOps, 2);
+  return DAG.getMergeValues(OutOps, 2);
 }
 
 SDOperand PPCTargetLowering::LowerSRA_PARTS(SDOperand Op, SelectionDAG &DAG) {
@@ -3186,7 +3186,7 @@ SDOperand PPCTargetLowering::LowerSRA_PARTS(SDOperand Op, SelectionDAG &DAG) {
   SDOperand OutLo = DAG.getSelectCC(Tmp5, DAG.getConstant(0, AmtVT),
                                     Tmp4, Tmp6, ISD::SETLE);
   SDOperand OutOps[] = { OutLo, OutHi };
-  return DAG.getMergeValues(DAG.getVTList(VT, VT), OutOps, 2);
+  return DAG.getMergeValues(OutOps, 2);
 }
 
 //===----------------------------------------------------------------------===//

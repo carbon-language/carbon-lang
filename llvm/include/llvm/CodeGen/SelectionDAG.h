@@ -381,8 +381,14 @@ public:
                       SDOperand Val, const Value* PtrVal,
                       unsigned Alignment = 0);
 
+  /// getMergeValues - Create a MERGE_VALUES node from the given operands.
+  /// Allowed to return something different (and simpler) if Simplify is true.
+  SDOperand getMergeValues(SDOperandPtr Ops, unsigned NumOps,
+                           bool Simplify = true);
+
   /// getMergeValues - Create a MERGE_VALUES node from the given types and ops.
   /// Allowed to return something different (and simpler) if Simplify is true.
+  /// May be faster than the above version if VTs is known and NumOps is large.
   SDOperand getMergeValues(SDVTList VTs, SDOperandPtr Ops, unsigned NumOps,
                            bool Simplify = true) {
     if (Simplify && NumOps == 1)

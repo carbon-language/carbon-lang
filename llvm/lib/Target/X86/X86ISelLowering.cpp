@@ -978,7 +978,7 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
     
     ResultVals.push_back(Val);
   }
-  
+
   // Merge everything together with a MERGE_VALUES node.
   ResultVals.push_back(Chain);
   return DAG.getMergeValues(TheCall->getVTList(), &ResultVals[0],
@@ -4382,7 +4382,7 @@ SDOperand X86TargetLowering::LowerShift(SDOperand Op, SelectionDAG &DAG) {
   }
 
   SDOperand Ops[2] = { Lo, Hi };
-  return DAG.getMergeValues(DAG.getVTList(VT, VT), Ops, 2);
+  return DAG.getMergeValues(Ops, 2);
 }
 
 SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
@@ -4516,9 +4516,10 @@ SDNode *X86TargetLowering::ExpandFP_TO_SINT(SDNode *N, SelectionDAG &DAG) {
   // Return a load from the stack slot.
   SDOperand Res = DAG.getLoad(VT, FIST, StackSlot, NULL, 0);
 
-  // Use a MERGE_VALUES node to drop the chain result value.
-  return DAG.getMergeValues(DAG.getVTList(VT), &Res, 1,
-                            false /* Require a node with one-result */).Val;
+  // Use MERGE_VALUES to drop the chain result value and get a node with one
+  // result.  This requires turning off getMergeValues simplification, since
+  // otherwise it will give us Res back.
+  return DAG.getMergeValues(&Res, 1, false).Val;
 }
 
 SDOperand X86TargetLowering::LowerFABS(SDOperand Op, SelectionDAG &DAG) {
@@ -4816,7 +4817,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDOperand Op,
   Chain = DAG.getCopyFromReg(Chain, X86StackPtr, SPTy).getValue(1);
 
   SDOperand Ops1[2] = { Chain.getValue(0), Chain };
-  return DAG.getMergeValues(DAG.getVTList(SPTy, MVT::Other), Ops1, 2);
+  return DAG.getMergeValues(Ops1, 2);
 }
 
 SDOperand
@@ -5047,8 +5048,7 @@ SDNode *X86TargetLowering::ExpandREADCYCLECOUNTER(SDNode *N, SelectionDAG &DAG){
       DAG.getNode(ISD::OR, MVT::i64, rax, Tmp), rdx.getValue(1)
     };
     
-    Tys = DAG.getVTList(MVT::i64, MVT::Other);
-    return DAG.getMergeValues(Tys, Ops, 2).Val;
+    return DAG.getMergeValues(Ops, 2).Val;
   }
   
   SDOperand eax = DAG.getCopyFromReg(rd, X86::EAX, MVT::i32, rd.getValue(1));
@@ -5060,7 +5060,7 @@ SDNode *X86TargetLowering::ExpandREADCYCLECOUNTER(SDNode *N, SelectionDAG &DAG){
 
   // Use a MERGE_VALUES to return the value and chain.
   Ops[1] = edx.getValue(1);
-  return DAG.getMergeValues(DAG.getVTList(MVT::i64, MVT::Other), Ops, 2).Val;
+  return DAG.getMergeValues(Ops, 2).Val;
 }
 
 SDOperand X86TargetLowering::LowerVASTART(SDOperand Op, SelectionDAG &DAG) {
@@ -5441,7 +5441,7 @@ SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
 
     SDOperand Ops[] =
       { Trmp, DAG.getNode(ISD::TokenFactor, MVT::Other, OutChains, 6) };
-    return DAG.getMergeValues(Op.Val->getVTList(), Ops, 2);
+    return DAG.getMergeValues(Ops, 2);
   } else {
     const Function *Func =
       cast<Function>(cast<SrcValueSDNode>(Op.getOperand(5))->getValue());
@@ -5509,7 +5509,7 @@ SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
 
     SDOperand Ops[] =
       { Trmp, DAG.getNode(ISD::TokenFactor, MVT::Other, OutChains, 4) };
-    return DAG.getMergeValues(Op.Val->getVTList(), Ops, 2);
+    return DAG.getMergeValues(Ops, 2);
   }
 }
 
@@ -5697,7 +5697,7 @@ SDNode* X86TargetLowering::ExpandATOMIC_CMP_SWAP(SDNode* Op, SelectionDAG &DAG) 
   SDOperand OpsF[] = { cpOutL.getValue(0), cpOutH.getValue(0)};
   SDOperand ResultVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OpsF, 2);
   SDOperand Vals[2] = { ResultVal, cpOutH.getValue(1) };
-  return DAG.getMergeValues(DAG.getVTList(MVT::i64, MVT::Other), Vals, 2).Val;
+  return DAG.getMergeValues(Vals, 2).Val;
 }
 
 SDNode* X86TargetLowering::ExpandATOMIC_LOAD_SUB(SDNode* Op, SelectionDAG &DAG) {

@@ -587,10 +587,6 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     InFlag = Chain.getValue(1);
   }
 
-  std::vector<MVT> NodeTys;
-  NodeTys.push_back(MVT::Other);   // Returns a chain
-  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
-
   std::vector<SDOperand> Ops;
   Ops.push_back(Chain);
   Ops.push_back(Callee);
@@ -603,7 +599,9 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
 
   if (InFlag.Val)
     Ops.push_back(InFlag);
-  Chain = DAG.getNode(CallOpc, NodeTys, &Ops[0], Ops.size());
+  // Returns a chain and a flag for retval copy to use.
+  Chain = DAG.getNode(CallOpc, DAG.getVTList(MVT::Other, MVT::Flag),
+                      &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
   Chain = DAG.getCALLSEQ_END(Chain,
@@ -614,7 +612,6 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
     InFlag = Chain.getValue(1);
 
   std::vector<SDOperand> ResultVals;
-  NodeTys.clear();
 
   // If the call has results, copy the values out of the ret val registers.
   switch (RetVT.getSimpleVT()) {
@@ -629,33 +626,26 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
       Chain = DAG.getCopyFromReg(Chain, ARM::R1, MVT::i32,
                                  Chain.getValue(2)).getValue(1);
       ResultVals.push_back(Chain.getValue(0));
-      NodeTys.push_back(MVT::i32);
     }
-    NodeTys.push_back(MVT::i32);
     break;
   case MVT::f32:
     Chain = DAG.getCopyFromReg(Chain, ARM::R0, MVT::i32, InFlag).getValue(1);
     ResultVals.push_back(DAG.getNode(ISD::BIT_CONVERT, MVT::f32,
                                      Chain.getValue(0)));
-    NodeTys.push_back(MVT::f32);
     break;
   case MVT::f64: {
     SDOperand Lo = DAG.getCopyFromReg(Chain, ARM::R0, MVT::i32, InFlag);
     SDOperand Hi = DAG.getCopyFromReg(Lo, ARM::R1, MVT::i32, Lo.getValue(2));
     ResultVals.push_back(DAG.getNode(ARMISD::FMDRR, MVT::f64, Lo, Hi));
-    NodeTys.push_back(MVT::f64);
     break;
   }
   }
-
-  NodeTys.push_back(MVT::Other);
 
   if (ResultVals.empty())
     return Chain;
 
   ResultVals.push_back(Chain);
-  SDOperand Res = DAG.getMergeValues(DAG.getVTList(&NodeTys[0], NodeTys.size()),
-                                     &ResultVals[0], ResultVals.size());
+  SDOperand Res = DAG.getMergeValues(&ResultVals[0], ResultVals.size());
   return Res.getValue(Op.ResNo);
 }
 

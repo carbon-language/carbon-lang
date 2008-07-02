@@ -446,7 +446,7 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   }
   
   ResultVals.push_back(Chain);
-  
+
   // Merge everything together with a MERGE_VALUES node.
   return DAG.getMergeValues(Op.Val->getVTList(), &ResultVals[0],
                             ResultVals.size());
@@ -829,7 +829,7 @@ static SDOperand LowerVAARG(SDOperand Op, SelectionDAG &DAG) {
     DAG.getNode(ISD::BIT_CONVERT, MVT::f64, V),
     V.getValue(1)
   };
-  return DAG.getMergeValues(DAG.getVTList(MVT::f64, MVT::Other), Ops, 2);
+  return DAG.getMergeValues(Ops, 2);
 }
 
 static SDOperand LowerDYNAMIC_STACKALLOC(SDOperand Op, SelectionDAG &DAG) {
@@ -846,7 +846,7 @@ static SDOperand LowerDYNAMIC_STACKALLOC(SDOperand Op, SelectionDAG &DAG) {
   SDOperand NewVal = DAG.getNode(ISD::ADD, MVT::i32, NewSP,
                                  DAG.getConstant(96, MVT::i32));
   SDOperand Ops[2] = { NewVal, Chain };
-  return DAG.getMergeValues(DAG.getVTList(MVT::i32, MVT::Other), Ops, 2);
+  return DAG.getMergeValues(Ops, 2);
 }
 
 

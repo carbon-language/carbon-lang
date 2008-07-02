@@ -1177,10 +1177,6 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     InFlag = Chain.getValue(1);
   }
   
-  std::vector<MVT> NodeTys;
-  NodeTys.push_back(MVT::Other);   // Returns a chain
-  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
-
   SmallVector<SDOperand, 8> Ops;
   unsigned CallOpc = SPUISD::CALL;
   
@@ -1231,7 +1227,9 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   
   if (InFlag.Val)
     Ops.push_back(InFlag);
-  Chain = DAG.getNode(CallOpc, NodeTys, &Ops[0], Ops.size());
+  // Returns a chain and a flag for retval copy to use.
+  Chain = DAG.getNode(CallOpc, DAG.getVTList(MVT::Other, MVT::Flag),
+                      &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
   Chain = DAG.getCALLSEQ_END(Chain,
@@ -1243,7 +1241,6 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
   SDOperand ResultVals[3];
   unsigned NumResults = 0;
-  NodeTys.clear();
   
   // If the call has results, copy the values out of the ret val registers.
   switch (Op.Val->getValueType(0).getSimpleVT()) {
@@ -1257,19 +1254,16 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
                                  Chain.getValue(2)).getValue(1);
       ResultVals[1] = Chain.getValue(0);
       NumResults = 2;
-      NodeTys.push_back(MVT::i32);
     } else {
       Chain = DAG.getCopyFromReg(Chain, SPU::R3, MVT::i32, InFlag).getValue(1);
       ResultVals[0] = Chain.getValue(0);
       NumResults = 1;
     }
-    NodeTys.push_back(MVT::i32);
     break;
   case MVT::i64:
     Chain = DAG.getCopyFromReg(Chain, SPU::R3, MVT::i64, InFlag).getValue(1);
     ResultVals[0] = Chain.getValue(0);
     NumResults = 1;
-    NodeTys.push_back(MVT::i64);
     break;
   case MVT::f32:
   case MVT::f64:
@@ -1277,7 +1271,6 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
                                InFlag).getValue(1);
     ResultVals[0] = Chain.getValue(0);
     NumResults = 1;
-    NodeTys.push_back(Op.Val->getValueType(0));
     break;
   case MVT::v2f64:
   case MVT::v4f32:
@@ -1288,20 +1281,16 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
                                    InFlag).getValue(1);
     ResultVals[0] = Chain.getValue(0);
     NumResults = 1;
-    NodeTys.push_back(Op.Val->getValueType(0));
     break;
   }
-  
-  NodeTys.push_back(MVT::Other);
-  
+
   // If the function returns void, just return the chain.
   if (NumResults == 0)
     return Chain;
   
   // Otherwise, merge everything together with a MERGE_VALUES node.
   ResultVals[NumResults++] = Chain;
-  SDOperand Res = DAG.getMergeValues(DAG.getVTList(&NodeTys[0], NodeTys.size()),
-                                     ResultVals, NumResults);
+  SDOperand Res = DAG.getMergeValues(ResultVals, NumResults);
   return Res.getValue(Op.ResNo);
 }
 

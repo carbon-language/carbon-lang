@@ -3074,6 +3074,20 @@ SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain,
   return SDOperand(N, 0);
 }
 
+/// getMergeValues - Create a MERGE_VALUES node from the given operands.
+/// Allowed to return something different (and simpler) if Simplify is true.
+SDOperand SelectionDAG::getMergeValues(SDOperandPtr Ops, unsigned NumOps,
+                                       bool Simplify) {
+  if (Simplify && NumOps == 1)
+    return Ops[0];
+
+  SmallVector<MVT, 4> VTs;
+  VTs.reserve(NumOps);
+  for (unsigned i = 0; i < NumOps; ++i)
+    VTs.push_back(Ops[i].getValueType());
+  return getNode(ISD::MERGE_VALUES, getVTList(&VTs[0], NumOps), Ops, NumOps);
+}
+
 SDOperand
 SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
                       MVT VT, SDOperand Chain,

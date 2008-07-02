@@ -1158,17 +1158,13 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
     
     if (isa<ConstantStruct>(C) || isa<ConstantArray>(C)) {
       SmallVector<SDOperand, 4> Constants;
-      SmallVector<MVT, 4> ValueVTs;
       for (User::const_op_iterator OI = C->op_begin(), OE = C->op_end();
            OI != OE; ++OI) {
         SDNode *Val = getValue(*OI).Val;
-        for (unsigned i = 0, e = Val->getNumValues(); i != e; ++i) {
+        for (unsigned i = 0, e = Val->getNumValues(); i != e; ++i)
           Constants.push_back(SDOperand(Val, i));
-          ValueVTs.push_back(Val->getValueType(i));
-        }
       }
-      return DAG.getMergeValues(DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
-                                &Constants[0], Constants.size());
+      return DAG.getMergeValues(&Constants[0], Constants.size());
     }
 
     if (const ArrayType *ATy = dyn_cast<ArrayType>(C->getType())) {
@@ -1179,7 +1175,6 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
         return SDOperand(); // empty array
       MVT EltVT = TLI.getValueType(ATy->getElementType());
       SmallVector<SDOperand, 4> Constants(NumElts);
-      SmallVector<MVT, 4> ValueVTs(NumElts, EltVT);
       for (unsigned i = 0, e = NumElts; i != e; ++i) {
         if (isa<UndefValue>(C))
           Constants[i] = DAG.getNode(ISD::UNDEF, EltVT);
@@ -1188,8 +1183,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
         else
           Constants[i] = DAG.getConstant(0, EltVT);
       }
-      return DAG.getMergeValues(DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
-                                &Constants[0], Constants.size());
+      return DAG.getMergeValues(&Constants[0], Constants.size());
     }
 
     if (const StructType *STy = dyn_cast<StructType>(C->getType())) {
@@ -1199,10 +1193,8 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
       if (NumElts == 0)
         return SDOperand(); // empty struct
       SmallVector<SDOperand, 4> Constants(NumElts);
-      SmallVector<MVT, 4> ValueVTs(NumElts);
       for (unsigned i = 0, e = NumElts; i != e; ++i) {
         MVT EltVT = TLI.getValueType(STy->getElementType(i));
-        ValueVTs[i] = EltVT;
         if (isa<UndefValue>(C))
           Constants[i] = DAG.getNode(ISD::UNDEF, EltVT);
         else if (EltVT.isFloatingPoint())
@@ -1210,8 +1202,7 @@ SDOperand SelectionDAGLowering::getValue(const Value *V) {
         else
           Constants[i] = DAG.getConstant(0, EltVT);
       }
-      return DAG.getMergeValues(DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
-                                &Constants[0], Constants.size());
+      return DAG.getMergeValues(&Constants[0], Constants.size());
     }
 
     const VectorType *VecTy = cast<VectorType>(V->getType());
@@ -3771,10 +3762,7 @@ SDOperand RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
                                      ValueVT);
     Part += NumRegs;
   }
-  
-  if (ValueVTs.size() == 1)
-    return Values[0];
-    
+
   return DAG.getMergeValues(DAG.getVTList(&ValueVTs[0], ValueVTs.size()),
                             &Values[0], ValueVTs.size());
 }
@@ -4944,13 +4932,7 @@ LowerArguments(BasicBlock *LLVMBB, SelectionDAGLowering &SDL) {
     ComputeValueVTs(TLI, AI->getType(), ValueVTs);
     unsigned NumValues = ValueVTs.size();
     if (!AI->use_empty()) {
-      SmallVector<MVT, 4> LegalValueVTs(NumValues);
-      for (unsigned VI = 0; VI != NumValues; ++VI) 
-        LegalValueVTs[VI] = Args[a + VI].getValueType();
-      SDL.setValue(AI,
-                   SDL.DAG.getMergeValues(SDL.DAG.getVTList(&LegalValueVTs[0],
-                                                            NumValues),
-                                          &Args[a], NumValues));
+      SDL.setValue(AI, SDL.DAG.getMergeValues(&Args[a], NumValues));
       // If this argument is live outside of the entry block, insert a copy from
       // whereever we got it to the vreg that other BB's will reference it as.
       DenseMap<const Value*, unsigned>::iterator VMI=FuncInfo.ValueMap.find(AI);

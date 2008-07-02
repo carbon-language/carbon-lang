@@ -652,7 +652,7 @@ SDOperand ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
       Result = DAG.getNode(ISD::FP_EXTEND, VT, Result);
 
     SDOperand Ops[] = { Result, Chain };
-    return DAG.getMergeValues(DAG.getVTList(VT, MVT::Other), Ops, 2);
+    return DAG.getMergeValues(Ops, 2);
   }
   assert(LoadedVT.isInteger() && !LoadedVT.isVector() &&
          "Unaligned load of unsupported type.");
@@ -701,7 +701,7 @@ SDOperand ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
                              Hi.getValue(1));
 
   SDOperand Ops[] = { Result, TF };
-  return DAG.getMergeValues(DAG.getVTList(VT, MVT::Other), Ops, 2);
+  return DAG.getMergeValues(Ops, 2);
 }
 
 /// UnrollVectorOp - We know that the given vector has a legal type, however
@@ -931,7 +931,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // Fall Thru
     case TargetLowering::Legal: {
       SDOperand Ops[] = { DAG.getConstant(0, VT), Tmp1 };
-      Result = DAG.getMergeValues(DAG.getVTList(VT, MVT::Other), Ops, 2);
+      Result = DAG.getMergeValues(Ops, 2);
       break;
     }
     }
@@ -965,7 +965,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // Fall Thru
     case TargetLowering::Legal: {
       SDOperand Ops[] = { DAG.getConstant(0, VT), Tmp2 };
-      Result = DAG.getMergeValues(DAG.getVTList(VT, MVT::Other), Ops, 2);
+      Result = DAG.getMergeValues(Ops, 2);
       break;
     }
     }
@@ -4728,16 +4728,15 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
       }
 
       SDOperand Dummy;
-      Tmp1 = ExpandLibCall(LC1,
-                           DAG.getNode(ISD::MERGE_VALUES, VT, LHS, RHS).Val,
+      SDOperand Ops[2] = { LHS, RHS };
+      Tmp1 = ExpandLibCall(LC1, DAG.getMergeValues(Ops, 2).Val,
                            false /*sign irrelevant*/, Dummy);
       Tmp2 = DAG.getConstant(0, MVT::i32);
       CC = DAG.getCondCode(TLI.getCmpLibcallCC(LC1));
       if (LC2 != RTLIB::UNKNOWN_LIBCALL) {
         Tmp1 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(Tmp1), Tmp1, Tmp2,
                            CC);
-        LHS = ExpandLibCall(LC2,
-                            DAG.getNode(ISD::MERGE_VALUES, VT, LHS, RHS).Val,
+        LHS = ExpandLibCall(LC2, DAG.getMergeValues(Ops, 2).Val,
                             false /*sign irrelevant*/, Dummy);
         Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(LHS), LHS, Tmp2,
                            DAG.getCondCode(TLI.getCmpLibcallCC(LC2)));
