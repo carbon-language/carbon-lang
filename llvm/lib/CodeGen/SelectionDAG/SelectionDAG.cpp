@@ -2192,7 +2192,13 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
     assert(VT == N1.getValueType() &&
            "Shift operators return type must be the same as their first arg");
     assert(VT.isInteger() && N2.getValueType().isInteger() &&
-           VT != MVT::i1 && "Shifts only work on integers");
+           "Shifts only work on integers");
+
+    // Always fold shifts of i1 values so the code generator doesn't need to
+    // handle them.  Since we know the size of the shift has to be less than the
+    // size of the value, the shift/rotate count is guaranteed to be zero.
+    if (VT == MVT::i1)
+      return N1;
     break;
   case ISD::FP_ROUND_INREG: {
     MVT EVT = cast<VTSDNode>(N2)->getVT();
