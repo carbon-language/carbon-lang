@@ -217,6 +217,10 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath="..\..\lib\Sema\CXXFieldCollector.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Sema\IdentifierResolver.h"
 				>
 			</File>
