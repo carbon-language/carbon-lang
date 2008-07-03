@@ -144,23 +144,6 @@ public:
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
-// BugReporter-based invocation of the Dead-Stores checker.
-//===----------------------------------------------------------------------===//
-  
-namespace {
-  
-class SimpleBugType : public BugTypeCacheLocation {
-  const char* name;  
-public:
-  SimpleBugType(const char* n) : name(n) {}
-  
-  virtual const char* getName() const {
-    return name;
-  }
-};
-} // end anonymous namespace
-
-//===----------------------------------------------------------------------===//
 // Driver function to invoke the Dead-Stores checker on a CFG.
 //===----------------------------------------------------------------------===//
 

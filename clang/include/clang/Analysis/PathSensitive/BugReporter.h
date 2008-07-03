@@ -24,7 +24,6 @@
 #include <vector>
 #include <list>
 
-
 namespace clang {
   
 class PathDiagnostic;
@@ -284,6 +283,15 @@ public:
   typedef std::list<DiagBugReport>::iterator iterator;
   iterator begin() { return Reports.begin(); }
   iterator end() { return Reports.end(); }
+};
+  
+class SimpleBugType : public BugTypeCacheLocation {
+  const char* name;  
+public:
+  SimpleBugType(const char* n) : name(n) {}
+  
+  virtual const char* getName() const { return name; }
+  virtual const char* getDescription() const { return name; }
 };
   
 } // end clang namespace

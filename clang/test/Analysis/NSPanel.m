@@ -67,7 +67,8 @@ extern NSString *NSWindowDidBecomeKeyNotification;
 - (void)myMethod;
 - (void)myMethod2;
 @end
-@implementation MyClass
+
+@implementation MyClass // no-warning
 - (void)myMethod
 {
   NSPanel *panel = [[NSPanel alloc] initWithContentRect:NSMakeRect(0, 0, 200, 200) styleMask:NSBorderlessWindowMask backing:NSBackingStoreBuffered defer:(BOOL)1];

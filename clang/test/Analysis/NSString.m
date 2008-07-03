@@ -143,7 +143,7 @@ NSString* f10() {
 - (NSString*) getShared;
 + (C1*) sharedInstance;
 @end
-@implementation C1 : NSObject {}
+@implementation C1 : NSObject {} // expected-warning{{Objective-C class 'C1' lacks a 'dealloc' instance method}}
 - (NSString*) getShared {
   static NSString* s = 0;
   if (!s) s = [[NSString alloc] init];    
@@ -161,7 +161,7 @@ NSString* f10() {
 @interface SharedClass : NSObject
 + (id)sharedInstance;
 @end
-@implementation SharedClass
+@implementation SharedClass // expected-warning {{Objective-C class 'SharedClass' lacks a 'dealloc' instance method}}
 
 - (id)_init {
     if ((self = [super init])) {

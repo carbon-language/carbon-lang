@@ -17,7 +17,6 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/ADT/ImmutableList.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "clang/AST/CFG.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
@@ -25,12 +24,15 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/AST/ParentMap.h"
+#include "clang/AST/TranslationUnit.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "llvm/Support/Streams.h"
+
+#include <vector>
 
 using namespace clang;
 
@@ -53,11 +55,10 @@ namespace {
 namespace {
 
   class VISIBILITY_HIDDEN AnalysisConsumer : public ASTConsumer {
-    typedef llvm::ImmutableList<CodeAction> Actions;
+    typedef std::vector<CodeAction> Actions;
     Actions FunctionActions;
     Actions ObjCMethodActions;
-
-    Actions::Factory F;
+    Actions ObjCImplementationActions;
     
   public:
     const bool Visualize;
@@ -78,16 +79,19 @@ namespace {
                      const std::string& fname,
                      const std::string& htmldir,
                      bool visualize, bool trim, bool analyzeAll) 
-      : FunctionActions(F.GetEmptyList()), ObjCMethodActions(F.GetEmptyList()),
-        Visualize(visualize), TrimGraph(trim), LOpts(lopts), Diags(diags),
+      : Visualize(visualize), TrimGraph(trim), LOpts(lopts), Diags(diags),
         Ctx(0), PP(pp), PPF(ppf),
         HTMLDir(htmldir),
         FName(fname),
         AnalyzeAll(analyzeAll) {}
     
     void addCodeAction(CodeAction action) {
-      FunctionActions = F.Concat(action, FunctionActions);
-      ObjCMethodActions = F.Concat(action, ObjCMethodActions);      
+      FunctionActions.push_back(action);
+      ObjCMethodActions.push_back(action);
+    }
+    
+    void addObjCImplementationAction(CodeAction action) {
+      ObjCImplementationActions.push_back(action);
     }
     
     virtual void Initialize(ASTContext &Context) {
@@ -95,6 +99,8 @@ namespace {
     }
     
     virtual void HandleTopLevelDecl(Decl *D);
+    virtual void HandleTranslationUnit(TranslationUnit &TU);
+    
     void HandleCode(Decl* D, Stmt* Body, Actions actions);
   };
     
@@ -235,6 +241,18 @@ void AnalysisConsumer::HandleTopLevelDecl(Decl *D) {
   }
 }
 
+void AnalysisConsumer::HandleTranslationUnit(TranslationUnit& TU) {
+
+  if (ObjCImplementationActions.empty())
+    return;
+    
+  for (TranslationUnit::iterator I = TU.begin(), E = TU.end(); I!=E; ++I) {
+    
+    if (ObjCImplementationDecl* ID = dyn_cast<ObjCImplementationDecl>(*I))
+      HandleCode(ID, 0, ObjCImplementationActions);
+  }
+}
+
 void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions actions) {
   
   // Don't run the actions if an error has occured with parsing the file.
@@ -259,7 +277,7 @@ void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions actions) {
   // Dispatch on the actions.  
   for (Actions::iterator I = actions.begin(),
                          E = actions.end(); I != E; ++I)
-    ((*I).getHead())(mgr);  
+    (*I)(mgr);  
 }
 
 //===----------------------------------------------------------------------===//
@@ -351,6 +369,11 @@ static void ActionCFGView(AnalysisManager& mgr) {
   mgr.getCFG().viewCFG();  
 }
 
+static void ActionCheckObjCDealloc(AnalysisManager& mgr) {
+  BugReporter BR(mgr);
+  CheckObjCDealloc(cast<ObjCImplementationDecl>(mgr.getCodeDecl()), BR);  
+}
+
 //===----------------------------------------------------------------------===//
 // AnalysisConsumer creation.
 //===----------------------------------------------------------------------===//
@@ -400,6 +423,9 @@ ASTConsumer* clang::CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
         
       default: break;
     }
+  
+  // Checks we always perform:
+  C->addObjCImplementationAction(&ActionCheckObjCDealloc);  
   
   return C.take();
 }
