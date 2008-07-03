@@ -762,22 +762,6 @@ void LoopUnswitch::SplitExitEdges(Loop *L,
 
 }
 
-/// addBBToDomFrontier - Helper function. Insert DFBB in Basic Block BB's
-/// dominance frontier using iterator DFI.
-static void addBBToDomFrontier(DominanceFrontier &DF,
-                               DominanceFrontier::iterator &DFI,
-                               BasicBlock *BB, BasicBlock *DFBB) {
-  if (DFI != DF.end()) {
-    DF.addToFrontier(DFI, DFBB);
-    return;
-  }
-
-  DominanceFrontier::DomSetType NSet;
-  NSet.insert(DFBB);
-  DF.addBasicBlock(BB, NSet);
-  DFI = DF.find(BB);
-}
-
 /// UnswitchNontrivialCondition - We determined that the loop is profitable 
 /// to unswitch when LIC equal Val.  Split it into loop versions and test the 
 /// condition outside of either loop.  Return the loops created as Out1/Out2.
