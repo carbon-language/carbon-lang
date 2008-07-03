@@ -37,14 +37,14 @@ actually produce LLVM code for the feature with the -emit-llvm option.
     <td width="345"><h3>Status</h3></td>
   </tr>
   <tr>
-    <td>Keywords </td>
-    <td>reinterpret_cast</td>
+    <td>Bool type </td>
+    <td>bool x; </td>
     <td>Full support.</td>
   </tr>
   <tr>
     <td>Named Casts </td>
     <td>static_cast&lt;int&gt;(x)</td>
-    <td>Parser and Sema support, no codegen.</td>
+    <td>Partial Parser and Sema support, no codegen.</td>
   </tr>
   <tr>
     <td>References</td>
@@ -72,22 +72,6 @@ actually produce LLVM code for the feature with the -emit-llvm option.
 	  &nbsp;&nbsp;&nbsp;int x;<br/>
 	  };</td>
     <td>Partial Parser and Sema support, no Codegen support.</td>
-  </tr>
-  <tr>
-    <td>Virtual functions</td>
-    <td>class C {<br/>
-      public:<br/>
-      &nbsp;&nbsp;&nbsp;virtual int doFoo() = 0;<br/>
-          };</td>
-    <td>Nonexistent.</td>
-  </tr>
-  <tr>
-    <td>Templates</td>
-    <td>class C {<br/>
-      public:<br/>
-      &nbsp;&nbsp;&nbsp;template &lt;typename T&gt; T as();<br/>
-          };</td>
-    <td>Nonexistent.</td>
   </tr>
 </table>
 </div>
