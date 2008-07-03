@@ -28,3 +28,8 @@ int test2(int i)
 {
   ve + i;
 }
+
+// PR2020
+union u0;    // expected-error {{previous use is here}}
+enum u0 { U0A }; // expected-error {{error: use of 'u0' with tag type that does not match previous declaration}}
+

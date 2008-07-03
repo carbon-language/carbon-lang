@@ -1688,35 +1688,38 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     assert((isa<TagDecl>(PrevDecl) || isa<NamespaceDecl>(PrevDecl)) &&
             "unexpected Decl type");
     if (TagDecl *PrevTagDecl = dyn_cast<TagDecl>(PrevDecl)) {
-      // If this is a use of a previous tag, or if the tag is already declared in
-      // the same scope (so that the definition/declaration completes or
+      // If this is a use of a previous tag, or if the tag is already declared
+      // in the same scope (so that the definition/declaration completes or
       // rementions the tag), reuse the decl.
       if (TK == TK_Reference ||
           IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
-        // Make sure that this wasn't declared as an enum and now used as a struct
-        // or something similar.
+        // Make sure that this wasn't declared as an enum and now used as a
+        // struct or something similar.
         if (PrevTagDecl->getTagKind() != Kind) {
           Diag(KWLoc, diag::err_use_with_wrong_tag, Name->getName());
           Diag(PrevDecl->getLocation(), diag::err_previous_use);
-        }
-        
-        // If this is a use or a forward declaration, we're good.
-        if (TK != TK_Definition)
-          return PrevDecl;
-
-        // Diagnose attempts to redefine a tag.
-        if (PrevTagDecl->isDefinition()) {
-          Diag(NameLoc, diag::err_redefinition, Name->getName());
-          Diag(PrevDecl->getLocation(), diag::err_previous_definition);
-          // If this is a redefinition, recover by making this struct be
-          // anonymous, which will make any later references get the previous
-          // definition.
+          // Recover by making this an anonymous redefinition.
           Name = 0;
+          PrevDecl = 0;
         } else {
-          // Okay, this is definition of a previously declared or referenced tag.
-          // Move the location of the decl to be the definition site.
-          PrevDecl->setLocation(NameLoc);
-          return PrevDecl;
+          // If this is a use or a forward declaration, we're good.
+          if (TK != TK_Definition)
+            return PrevDecl;
+
+          // Diagnose attempts to redefine a tag.
+          if (PrevTagDecl->isDefinition()) {
+            Diag(NameLoc, diag::err_redefinition, Name->getName());
+            Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+            // If this is a redefinition, recover by making this struct be
+            // anonymous, which will make any later references get the previous
+            // definition.
+            Name = 0;
+          } else {
+            // Okay, this is definition of a previously declared or referenced
+            // tag. Move the location of the decl to be the definition site.
+            PrevDecl->setLocation(NameLoc);
+            return PrevDecl;
+          }
         }
       }
       // If we get here, this is a definition of a new struct type in a nested
