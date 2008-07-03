@@ -113,8 +113,8 @@ namespace {
       AU.addRequiredID(LCSSAID);
       AU.addPreservedID(LCSSAID);
       // FIXME: Loop Unswitch does not preserve dominator info in all cases.
-      // AU.addPreserved<DominatorTree>();
-      // AU.addPreserved<DominanceFrontier>();
+      AU.addPreserved<DominatorTree>();
+      AU.addPreserved<DominanceFrontier>();
     }
 
   private:
@@ -206,7 +206,6 @@ bool LoopUnswitch::runOnLoop(Loop *L, LPPassManager &LPM_Ref) {
   DT = getAnalysisToUpdate<DominatorTree>();
   currentLoop = L;
   bool Changed = false;
-
   do {
     assert(currentLoop->isLCSSAForm());
     redoLoop = false;
@@ -459,7 +458,13 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val){
   } else {
     UnswitchNontrivialCondition(LoopCond, Val, currentLoop);
   }
- 
+
+  // FIXME: Reconstruct dom info, because it is not preserved properly.
+  Function *F = loopHeader->getParent();
+  if (DT)
+    DT->runOnFunction(*F);
+  if (DF)
+    DF->runOnFunction(*F);
   return true;
 }
 
