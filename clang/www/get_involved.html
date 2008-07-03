@@ -89,12 +89,9 @@ of <a href="http://llvm.org/docs/SourceLevelDebugging.html">LLVM debug info</a>
 straight-forward if you follow the example of what llvm-gcc generates.</li>
 
 <li><b>Continue work on C++ support</b>: Implementing all of C++ is a very big
-job, but there are lots of little things that can be done.  Right now we support
-some small things like references and bool.  We also support parsing of
-namespaces, but don't build ASTs for it.  It would be straight-forward to
-implement support for representing namespaces, then add support for things like
-foo::bar::baz.  Likewise, lots of other little pieces can be picked off and
-implemented.</li>
+job, but there are lots of little pieces that can be picked off and implemented.
+See the <a href="cxx_status.html">C++ status report page</a> to find out what is
+missing and what is already at least partially supported.</li>
 
 <li><b>Improve target support</b>: The current target interfaces are heavily
 stubbed out and need to be implemented fully.  See the FIXME's in TargetInfo.
