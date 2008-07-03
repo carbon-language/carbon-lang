@@ -80,7 +80,7 @@ public:
   virtual Module *removeModuleProvider(ModuleProvider *MP,
                                        std::string *ErrInfo = 0);
 
-  /// run - Start execution with the specified function and arguments.
+  /// runFunction - Start execution with the specified function and arguments.
   ///
   virtual GenericValue runFunction(Function *F,
                                    const std::vector<GenericValue> &ArgValues);
