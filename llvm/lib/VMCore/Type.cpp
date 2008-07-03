@@ -90,7 +90,7 @@ void Type::destroy() const {
 
     // Finally, remove the memory as an array deallocation of the chars it was
     // constructed from.
-    delete [] reinterpret_cast<const char*>(this); 
+    operator delete(const_cast<Type *>(this));
 
     return;
   }
@@ -1124,8 +1124,8 @@ FunctionType *FunctionType::get(const Type *ReturnType,
   if (FT)
     return FT;
 
-  FT = (FunctionType*) new char[sizeof(FunctionType) + 
-                                sizeof(PATypeHandle)*(Params.size()+1)];
+  FT = (FunctionType*) operator new(sizeof(FunctionType) +
+                                    sizeof(PATypeHandle)*(Params.size()+1));
   new (FT) FunctionType(ReturnType, Params, isVarArg);
   FunctionTypes->add(VT, FT);
 
@@ -1266,8 +1266,8 @@ StructType *StructType::get(const std::vector<const Type*> &ETypes,
   if (ST) return ST;
 
   // Value not found.  Derive a new type!
-  ST = (StructType*) new char[sizeof(StructType) + 
-                              sizeof(PATypeHandle) * ETypes.size()];
+  ST = (StructType*) operator new(sizeof(StructType) +
+                                  sizeof(PATypeHandle) * ETypes.size());
   new (ST) StructType(ETypes, isPacked);
   StructTypes->add(STV, ST);
 
