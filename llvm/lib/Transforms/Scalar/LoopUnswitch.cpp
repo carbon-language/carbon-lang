@@ -112,8 +112,9 @@ namespace {
       AU.addPreserved<LoopInfo>();
       AU.addRequiredID(LCSSAID);
       AU.addPreservedID(LCSSAID);
-      AU.addPreserved<DominatorTree>();
-      AU.addPreserved<DominanceFrontier>();
+      // FIXME: Loop Unswitch does not preserve dominator info in all cases.
+      // AU.addPreserved<DominatorTree>();
+      // AU.addPreserved<DominanceFrontier>();
     }
 
   private:
