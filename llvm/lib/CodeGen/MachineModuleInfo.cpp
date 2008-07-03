@@ -52,10 +52,9 @@ getGlobalVariablesUsing(Value *V, std::vector<GlobalVariable*> &Result) {
 
 /// getGlobalVariablesUsing - Return all of the GlobalVariables that use the
 /// named GlobalVariable.
-static std::vector<GlobalVariable*>
-getGlobalVariablesUsing(Module &M, const std::string &RootName) {
-  std::vector<GlobalVariable*> Result;  // GlobalVariables matching criteria.
-  
+static void
+getGlobalVariablesUsing(Module &M, const std::string &RootName,
+                        std::vector<GlobalVariable*> &Result) {
   std::vector<const Type*> FieldTypes;
   FieldTypes.push_back(Type::Int32Ty);
   FieldTypes.push_back(Type::Int32Ty);
@@ -65,11 +64,8 @@ getGlobalVariablesUsing(Module &M, const std::string &RootName) {
                                                 StructType::get(FieldTypes));
 
   // If present and linkonce then scan for users.
-  if (UseRoot && UseRoot->hasLinkOnceLinkage()) {
+  if (UseRoot && UseRoot->hasLinkOnceLinkage())
     getGlobalVariablesUsing(UseRoot, Result);
-  }
-  
-  return Result;
 }
   
 /// isStringValue - Return true if the given value can be coerced to a string.
@@ -1593,7 +1589,8 @@ void MachineModuleInfo::AnalyzeModule(Module &M) {
 /// SetupCompileUnits - Set up the unique vector of compile units.
 ///
 void MachineModuleInfo::SetupCompileUnits(Module &M) {
-  std::vector<CompileUnitDesc *>CU = getAnchoredDescriptors<CompileUnitDesc>(M);
+  std::vector<CompileUnitDesc *> CU;
+  getAnchoredDescriptors<CompileUnitDesc>(M, CU);
   
   for (unsigned i = 0, N = CU.size(); i < N; i++) {
     CompileUnits.insert(CU[i]);
@@ -1608,10 +1605,11 @@ const UniqueVector<CompileUnitDesc *> MachineModuleInfo::getCompileUnits()const{
 
 /// getGlobalVariablesUsing - Return all of the GlobalVariables that use the
 /// named GlobalVariable.
-std::vector<GlobalVariable*>
+void
 MachineModuleInfo::getGlobalVariablesUsing(Module &M,
-                                           const std::string &RootName) {
-  return ::getGlobalVariablesUsing(M, RootName);
+                                           const std::string &RootName,
+                                           std::vector<GlobalVariable*>&Result){
+  return ::getGlobalVariablesUsing(M, RootName, Result);
 }
 
 /// RecordSourceLine - Records location information and associates it with a

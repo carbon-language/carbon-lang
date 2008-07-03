@@ -1152,16 +1152,17 @@ public:
   
   /// getGlobalVariablesUsing - Return all of the GlobalVariables that use the
   /// named GlobalVariable.
-  std::vector<GlobalVariable*>
-  getGlobalVariablesUsing(Module &M, const std::string &RootName);
+  void getGlobalVariablesUsing(Module &M, const std::string &RootName,
+                               std::vector<GlobalVariable*> &Result);
 
   /// getAnchoredDescriptors - Return a vector of anchored debug descriptors.
   ///
-  template <class T>std::vector<T *> getAnchoredDescriptors(Module &M) {
+  template <class T>
+  void getAnchoredDescriptors(Module &M, std::vector<T*> &AnchoredDescs) {
     T Desc;
-    std::vector<GlobalVariable *> Globals =
-                             getGlobalVariablesUsing(M, Desc.getAnchorString());
-    std::vector<T *> AnchoredDescs;
+    std::vector<GlobalVariable *> Globals;
+    getGlobalVariablesUsing(M, Desc.getAnchorString(), Globals);
+
     for (unsigned i = 0, N = Globals.size(); i < N; ++i) {
       GlobalVariable *GV = Globals[i];
 
@@ -1171,8 +1172,6 @@ public:
         AnchoredDescs.push_back(cast<T>(DR.Deserialize(GV)));
       }
     }
-
-    return AnchoredDescs;
   }
   
   /// RecordRegionStart - Indicate the start of a region.

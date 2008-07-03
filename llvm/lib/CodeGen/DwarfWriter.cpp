@@ -2630,8 +2630,8 @@ private:
   /// ConstructGlobalDIEs - Create DIEs for each of the externally visible
   /// global variables.
   void ConstructGlobalDIEs() {
-    std::vector<GlobalVariableDesc *> GlobalVariables =
-        MMI->getAnchoredDescriptors<GlobalVariableDesc>(*M);
+    std::vector<GlobalVariableDesc *> GlobalVariables;
+    MMI->getAnchoredDescriptors<GlobalVariableDesc>(*M, GlobalVariables);
     
     for (unsigned i = 0, N = GlobalVariables.size(); i < N; ++i) {
       GlobalVariableDesc *GVD = GlobalVariables[i];
@@ -2642,8 +2642,8 @@ private:
   /// ConstructSubprogramDIEs - Create DIEs for each of the externally visible
   /// subprograms.
   void ConstructSubprogramDIEs() {
-    std::vector<SubprogramDesc *> Subprograms =
-        MMI->getAnchoredDescriptors<SubprogramDesc>(*M);
+    std::vector<SubprogramDesc *> Subprograms;
+    MMI->getAnchoredDescriptors<SubprogramDesc>(*M, Subprograms);
     
     for (unsigned i = 0, N = Subprograms.size(); i < N; ++i) {
       SubprogramDesc *SPD = Subprograms[i];
