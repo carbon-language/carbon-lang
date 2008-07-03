@@ -17,3 +17,7 @@ void func() {
   void b; // expected-error {{variable has incomplete type 'void'}}
   struct foo f; // expected-error {{variable has incomplete type 'struct foo'}}
 }
+
+int h[]; 
+int (*i)[] = &h+1; // expected-error {{arithmetic on pointer to incomplete type 'int (*)[]'}}
+
