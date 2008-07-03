@@ -29,7 +29,6 @@
 #include "llvm/Constants.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/CodeGen/MachineDebugInfoDesc.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 using namespace llvm;
 

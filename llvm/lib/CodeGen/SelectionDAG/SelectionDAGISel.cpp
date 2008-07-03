@@ -27,7 +27,6 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/ParameterAttributes.h"
 #include "llvm/CodeGen/Collector.h"
-#include "llvm/CodeGen/MachineDebugInfoDesc.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

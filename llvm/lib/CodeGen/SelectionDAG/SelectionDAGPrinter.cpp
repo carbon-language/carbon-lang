@@ -18,7 +18,7 @@
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineDebugInfoDesc.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/GraphWriter.h"

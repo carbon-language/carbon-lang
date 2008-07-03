@@ -20,7 +20,6 @@
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/MachineDebugInfoDesc.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
@@ -2631,23 +2630,25 @@ private:
   /// ConstructGlobalDIEs - Create DIEs for each of the externally visible
   /// global variables.
   void ConstructGlobalDIEs() {
-    std::vector<void*> GlobalVariables;
-    GlobalVariableDesc GVD;
-    MMI->getAnchoredDescriptors(*M, &GVD, GlobalVariables);
+    std::vector<GlobalVariableDesc *> GlobalVariables =
+        MMI->getAnchoredDescriptors<GlobalVariableDesc>(*M);
     
-    for (unsigned i = 0, N = GlobalVariables.size(); i < N; ++i)
-      NewGlobalVariable((GlobalVariableDesc *)GlobalVariables[i]);
+    for (unsigned i = 0, N = GlobalVariables.size(); i < N; ++i) {
+      GlobalVariableDesc *GVD = GlobalVariables[i];
+      NewGlobalVariable(GVD);
+    }
   }
 
   /// ConstructSubprogramDIEs - Create DIEs for each of the externally visible
   /// subprograms.
   void ConstructSubprogramDIEs() {
-    std::vector<void*> Subprograms;
-    SubprogramDesc SPD;
-    MMI->getAnchoredDescriptors(*M, &SPD, Subprograms);
+    std::vector<SubprogramDesc *> Subprograms =
+        MMI->getAnchoredDescriptors<SubprogramDesc>(*M);
     
-    for (unsigned i = 0, N = Subprograms.size(); i < N; ++i)
-      NewSubprogram((SubprogramDesc*)Subprograms[i]);
+    for (unsigned i = 0, N = Subprograms.size(); i < N; ++i) {
+      SubprogramDesc *SPD = Subprograms[i];
+      NewSubprogram(SPD);
+    }
   }
 
 public:
