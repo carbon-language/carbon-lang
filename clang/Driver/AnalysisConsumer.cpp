@@ -385,7 +385,9 @@ static void ActionCFGView(AnalysisManager& mgr) {
 
 static void ActionCheckObjCDealloc(AnalysisManager& mgr) {
   BugReporter BR(mgr);
-  CheckObjCDealloc(cast<ObjCImplementationDecl>(mgr.getCodeDecl()), BR);  
+  
+  CheckObjCDealloc(cast<ObjCImplementationDecl>(mgr.getCodeDecl()), 
+                   mgr.getLangOptions(), BR);  
 }
 
 //===----------------------------------------------------------------------===//
@@ -439,7 +441,8 @@ ASTConsumer* clang::CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
     }
   
   // Checks we always perform:
-  C->addObjCImplementationAction(&ActionCheckObjCDealloc);  
+  if (lopts.getGCMode() != LangOptions::GCOnly)
+    C->addObjCImplementationAction(&ActionCheckObjCDealloc);  
   
   return C.take();
 }

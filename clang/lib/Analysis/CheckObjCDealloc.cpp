@@ -18,6 +18,7 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/Basic/LangOptions.h"
 #include <sstream>
 
 using namespace clang;
@@ -40,8 +41,11 @@ static bool scan_dealloc(Stmt* S, Selector Dealloc) {
   return false;
 }
 
-void clang::CheckObjCDealloc(ObjCImplementationDecl* D, BugReporter& BR) {
+void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
+                             const LangOptions& LOpts, BugReporter& BR) {
 
+  assert (LOpts.getGCMode() != LangOptions::GCOnly);
+  
   ASTContext& Ctx = BR.getContext();
 
   // Determine if the class subclasses NSObject.
@@ -74,7 +78,10 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D, BugReporter& BR) {
   if (!MD) { // No dealloc found.
     
     // FIXME: This code should be reduced to three lines if possible (Refactor).
-    SimpleBugType BT("missing -dealloc");
+    SimpleBugType BT(LOpts.getGCMode() == LangOptions::NonGC 
+                     ? "missing -dealloc" 
+                     : "missing -dealloc (Hybrid MM, non-GC)");
+    
     DiagCollector C(BT);
     
     std::ostringstream os;
@@ -97,12 +104,15 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D, BugReporter& BR) {
   if (MD->getBody() && !scan_dealloc(MD->getBody(), S)) {
     
     // FIXME: This code should be reduced to three lines if possible (Refactor).
-    SimpleBugType BT("missing [super dealloc]");
+    SimpleBugType BT(LOpts.getGCMode() == LangOptions::NonGC
+                     ? "missing [super dealloc]"
+                     : "missing [super dealloc] (Hybrid MM, non-GC)");
+                     
     DiagCollector C(BT);
     
     std::ostringstream os;
     os << "The 'dealloc' instance method in Objective-C class '" << D->getName()
-       << "' does not send a 'dealloc' message to it super class"
+       << "' does not send a 'dealloc' message to its super class"
            " (missing [super dealloc])";
     
     Diagnostic& Diag = BR.getDiagnostic();    

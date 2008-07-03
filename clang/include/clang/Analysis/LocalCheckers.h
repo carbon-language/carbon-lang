@@ -29,6 +29,7 @@ class ParentMap;
 class LiveVariables;
 class BugReporter;
 class ObjCImplementationDecl;
+class LangOptions;
   
 void CheckDeadStores(LiveVariables& L, BugReporter& BR); 
   
@@ -40,7 +41,8 @@ GRTransferFuncs* MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
                                   bool StandardWarnings,
                                   const LangOptions& lopts); 
   
-void CheckObjCDealloc(ObjCImplementationDecl* D, BugReporter& BR);
+void CheckObjCDealloc(ObjCImplementationDecl* D, const LangOptions& L,
+                      BugReporter& BR);
 
   
 } // end namespace clang
