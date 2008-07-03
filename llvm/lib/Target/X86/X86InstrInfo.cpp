@@ -1214,6 +1214,7 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
     unsigned A = MI->getOperand(0).getReg();
     unsigned B = MI->getOperand(1).getReg();
     unsigned C = MI->getOperand(2).getReg();
+    bool AisDead = MI->getOperand(0).isDead();
     bool BisKill = MI->getOperand(1).isKill();
     bool CisKill = MI->getOperand(2).isKill();
     // If machine instrs are no longer in two-address forms, update
@@ -1225,7 +1226,8 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
       A = C;
       CisKill = false;
     }
-    return BuildMI(get(Opc), A).addReg(C, false, false, CisKill)
+    return BuildMI(get(Opc)).addReg(A, true, false, false, AisDead)
+      .addReg(C, false, false, CisKill)
       .addReg(B, false, false, BisKill).addImm(Size-Amt);
   }
   case X86::CMOVB16rr:
