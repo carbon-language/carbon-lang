@@ -689,8 +689,7 @@ void LiveVariables::instructionChanged(MachineInstr *OldMI,
 void LiveVariables::replaceKillInstruction(unsigned Reg, MachineInstr *OldMI,
                                            MachineInstr *NewMI) {
   VarInfo &VI = getVarInfo(Reg);
-  if (VI.removeKill(OldMI))
-    VI.Kills.push_back(NewMI);   // Yes, there was a kill of it
+  std::replace(VI.Kills.begin(), VI.Kills.end(), OldMI, NewMI);
 }
 
 /// removeVirtualRegistersKilled - Remove all killed info for the specified
