@@ -17,6 +17,7 @@
 
 #include "llvm/Linker.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/SmallVector.h"
 
 #include <string>
 
@@ -38,7 +39,9 @@ public:
     bool                writeMergedModules(const char* path, 
                                                            std::string& errMsg);
     const void*         compile(size_t* length, std::string& errMsg);
-    
+    void                setCodeGenDebugOptions(const char *opts) {
+                          _codegenOptions.push_back(std::string(opts)); 
+                        }
 private:
     bool                generateAssemblyCode(std::ostream& out, 
                                                         std::string& errMsg);
@@ -56,6 +59,7 @@ private:
     lto_codegen_model           _codeModel;
     StringSet                   _mustPreserveSymbols;
     llvm::MemoryBuffer*         _nativeObjectFile;
+    llvm::SmallVector<std::string, 4> _codegenOptions;
 };
 
 #endif // LTO_CODE_GENERATOR_H

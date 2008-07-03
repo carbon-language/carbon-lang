@@ -237,5 +237,11 @@ lto_codegen_compile(lto_code_gen_t cg, size_t* length)
     return cg->compile(length, sLastErrorString);
 }
 
+extern void
+lto_codegen_debug_options(lto_code_gen_t cg, const char * opt)
+{
+  cg->setCodeGenDebugOptions(opt);
+}
+
 
 

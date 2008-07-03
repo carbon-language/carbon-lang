@@ -40,6 +40,7 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
 
 
@@ -115,7 +116,6 @@ bool LTOCodeGenerator::setCodePICModel(lto_codegen_model model,
     errMsg = "unknown pic model";
     return true;
 }
-
 
 void LTOCodeGenerator::addMustPreserveSymbol(const char* sym)
 {
@@ -333,6 +333,18 @@ bool LTOCodeGenerator::generateAssemblyCode(std::ostream& out, std::string& errM
             _target->setRelocationModel(Reloc::DynamicNoPIC);
             break;
     }
+
+    for (unsigned opt_index = 0, opt_size = _codegenOptions.size();
+         opt_index < opt_size; ++opt_index) {
+      std::vector<const char *> cgOpts;
+      std::string &optString = _codegenOptions[opt_index];
+      for (std::string Opt = getToken(optString);
+           !Opt.empty(); Opt = getToken(optString))
+        cgOpts.push_back(Opt.c_str());
+     
+      int pseudo_argc = cgOpts.size()-1;
+      cl::ParseCommandLineOptions(pseudo_argc, (char**)&cgOpts[0]);
+     }
 
     // Instantiate the pass manager to organize the passes.
     PassManager passes;
