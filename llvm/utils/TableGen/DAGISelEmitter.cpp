@@ -206,6 +206,28 @@ static bool PatternHasProperty(TreePatternNode *N, SDNP Property,
   return false;
 }
 
+static std::string getOpcodeName(Record *Op, CodeGenDAGPatterns &CGP) {
+  return CGP.getSDNodeInfo(Op).getEnumName();
+}
+
+static
+bool DisablePatternForFastISel(TreePatternNode *N, CodeGenDAGPatterns &CGP) {
+  bool isStore = !N->isLeaf() &&
+    getOpcodeName(N->getOperator(), CGP) == "ISD::STORE";
+  if (!isStore && NodeHasProperty(N, SDNPHasChain, CGP))
+    return false;
+
+  bool HasChain = false;
+  for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
+    TreePatternNode *Child = N->getChild(i);
+    if (PatternHasProperty(Child, SDNPHasChain, CGP)) {
+      HasChain = true;
+      break;
+    }
+  }
+  return HasChain;
+}
+
 //===----------------------------------------------------------------------===//
 // Node Transformation emitter implementation.
 //
@@ -404,6 +426,9 @@ public:
       // Record input varargs info.
       NumInputRootOps = N->getNumChildren();
 
+      if (DisablePatternForFastISel(N, CGP))
+        emitCheck("!FastISel");
+
       std::string PredicateCheck;
       for (unsigned i = 0, e = Predicates->getSize(); i != e; ++i) {
         if (DefInit *Pred = dynamic_cast<DefInit*>(Predicates->getElement(i))) {
@@ -480,10 +505,8 @@ public:
           //      /        [YY]
           //      |         ^
           //     [XX]-------|
-          bool NeedCheck = false;
-          if (P != Pattern)
-            NeedCheck = true;
-          else {
+          bool NeedCheck = P != Pattern;
+          if (!NeedCheck) {
             const SDNodeInfo &PInfo = CGP.getSDNodeInfo(P->getOperator());
             NeedCheck =
               P->getOperator() == CGP.get_intrinsic_void_sdnode() ||
@@ -1546,10 +1569,6 @@ void DAGISelEmitter::EmitPatterns(std::vector<std::pair<const PatternToMatch*,
   
   if (isPredicate)
     OS << std::string(Indent-2, ' ') << "}\n";
-}
-
-static std::string getOpcodeName(Record *Op, CodeGenDAGPatterns &CGP) {
-  return CGP.getSDNodeInfo(Op).getEnumName();
 }
 
 static std::string getLegalCName(std::string OpName) {
