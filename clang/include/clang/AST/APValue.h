@@ -18,9 +18,10 @@
 #include "llvm/ADT/APFloat.h"
 
 namespace clang {
+  class Expr;
 
 /// APValue - This class implements a discriminated union of [uninitialized]
-/// [APSInt] [APFloat], [Complex APSInt] [Complex APFloat].
+/// [APSInt] [APFloat], [Complex APSInt] [Complex APFloat], [Expr + Offset].
 class APValue {
   typedef llvm::APSInt APSInt;
   typedef llvm::APFloat APFloat;
@@ -30,7 +31,8 @@ public:
     SInt,
     Float,
     ComplexSInt,
-    ComplexFloat
+    ComplexFloat,
+    LValue
   };
 private:
   ValueKind Kind;
@@ -42,6 +44,11 @@ private:
   struct ComplexAPFloat {
     APFloat Real, Imag;
     ComplexAPFloat() : Real(0.0), Imag(0.0) {}
+  };
+  
+  struct LValue {
+    Expr* Base;
+    uint64_t Offset;
   };
   
   enum {

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "clang/AST/APValue.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Attr.h"
@@ -1799,48 +1800,20 @@ void Sema::ActOnDefs(Scope *S, SourceLocation DeclStart,
   CollectIvars(Class, Decls);
 }
 
-
-static bool CalcFakeICEVal(const Expr* Expr,
-                           llvm::APSInt& Result,
-                           ASTContext& Context) {
-  // Calculate the value of an expression that has a calculatable
-  // value, but isn't an ICE. Currently, this only supports
-  // a very narrow set of extensions, but it can be expanded if needed.
-  if (const ParenExpr *PE = dyn_cast<ParenExpr>(Expr))
-    return CalcFakeICEVal(PE->getSubExpr(), Result, Context);
-
-  if (const CastExpr *CE = dyn_cast<CastExpr>(Expr)) {
-    QualType CETy = CE->getType();
-    if ((CETy->isIntegralType() && !CETy->isBooleanType()) ||
-        CETy->isPointerType()) {
-      if (CalcFakeICEVal(CE->getSubExpr(), Result, Context)) {
-        Result.extOrTrunc(Context.getTypeSize(CETy));
-        // FIXME: This assumes pointers are signed.
-        Result.setIsSigned(CETy->isSignedIntegerType() ||
-                           CETy->isPointerType());
-        return true;
-      }
-    }
-  }
-
-  if (Expr->getType()->isIntegralType())
-    return Expr->isIntegerConstantExpr(Result, Context);
-
-  return false;
-}
-
 QualType Sema::TryFixInvalidVariablyModifiedType(QualType T) {
   // This method tries to turn a variable array into a constant
   // array even when the size isn't an ICE.  This is necessary
   // for compatibility with code that depends on gcc's buggy
   // constant expression folding, like struct {char x[(int)(char*)2];}
   if (const VariableArrayType* VLATy = dyn_cast<VariableArrayType>(T)) {
-    llvm::APSInt Result(32);
+    APValue Result;
     if (VLATy->getSizeExpr() &&
-        CalcFakeICEVal(VLATy->getSizeExpr(), Result, Context) &&
-        Result > llvm::APSInt(Result.getBitWidth(), Result.isUnsigned())) {
+        VLATy->getSizeExpr()->tryEvaluate(Result, Context) && Result.isSInt() &&
+        Result.getSInt() > llvm::APSInt(Result.getSInt().getBitWidth(), 
+                                        Result.getSInt().isUnsigned())) {
       return Context.getConstantArrayType(VLATy->getElementType(),
-                                          Result, ArrayType::Normal, 0);
+                                          Result.getSInt(), 
+                                          ArrayType::Normal, 0);
     }
   }
   return QualType();

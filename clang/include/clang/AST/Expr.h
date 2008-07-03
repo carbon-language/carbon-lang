@@ -29,7 +29,8 @@ namespace clang {
   class Selector;
   class Decl;
   class ASTContext;
-  
+  class APValue;
+    
 /// Expr - This represents one expression.  Note that Expr's are subclasses of
 /// Stmt.  This allows an expression to be transparently used any place a Stmt
 /// is required.
@@ -108,6 +109,8 @@ public:
   /// isConstantExpr - Return true if this expression is a valid constant expr.
   bool isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const;
   
+  bool tryEvaluate(APValue& Result, ASTContext &Ctx) const;
+
   /// hasGlobalStorage - Return true if this expression has static storage
   /// duration.  This means that the address of this expression is a link-time
   /// constant.
