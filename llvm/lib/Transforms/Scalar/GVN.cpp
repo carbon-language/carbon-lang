@@ -166,6 +166,7 @@ namespace {
       void setAliasAnalysis(AliasAnalysis* A) { AA = A; }
       void setMemDep(MemoryDependenceAnalysis* M) { MD = M; }
       void setDomTree(DominatorTree* D) { DT = D; }
+      uint32_t getNextUnusedValueNumber() { return nextValueNumber; }
   };
 }
 
@@ -1058,11 +1059,12 @@ bool GVN::processInstruction(Instruction *I,
     return changed;
   }
   
+  uint32_t nextNum = VN.getNextUnusedValueNumber();
   unsigned num = VN.lookup_or_add(I);
   
   // Allocations are always uniquely numbered, so we can save time and memory
   // by fast failing them.
-  if (isa<AllocationInst>(I)) {
+  if (isa<AllocationInst>(I) || isa<TerminatorInst>(I)) {
     localAvail[I->getParent()]->table.insert(std::make_pair(num, I));
     return false;
   }
@@ -1082,6 +1084,13 @@ bool GVN::processInstruction(Instruction *I,
     } else {
       localAvail[I->getParent()]->table.insert(std::make_pair(num, I));
     }
+  
+  // If the number we were assigned was a brand new VN, then we don't
+  // need to do a lookup to see if the number already exists
+  // somewhere in the domtree: it can't!
+  } else if (num == nextNum) {
+    localAvail[I->getParent()]->table.insert(std::make_pair(num, I));
+    
   // Perform value-number based elimination
   } else if (Value* repl = lookupNumber(I->getParent(), num)) {
     // Remove it!
@@ -1092,7 +1101,7 @@ bool GVN::processInstruction(Instruction *I,
     I->replaceAllUsesWith(repl);
     toErase.push_back(I);
     return true;
-  } else if (!I->isTerminator()) {
+  } else {
     localAvail[I->getParent()]->table.insert(std::make_pair(num, I));
   }
   
