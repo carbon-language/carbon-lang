@@ -1,4 +1,4 @@
-//===--- APValue.h - Union class for APFloat/APInt/Complex ------*- C++ -*-===//
+//===--- APValue.h - Union class for APFloat/APSInt/Complex -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,52 +14,55 @@
 #ifndef LLVM_CLANG_AST_APVALUE_H
 #define LLVM_CLANG_AST_APVALUE_H
 
-#include "llvm/ADT/APInt.h"
+#include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"
 
 namespace clang {
 
 /// APValue - This class implements a discriminated union of [uninitialized]
-/// [APInt] [APFloat], [Complex APInt] [Complex APFloat].
+/// [APSInt] [APFloat], [Complex APSInt] [Complex APFloat].
 class APValue {
-  typedef llvm::APInt APInt;
+  typedef llvm::APSInt APSInt;
   typedef llvm::APFloat APFloat;
 public:
   enum ValueKind {
     Uninitialized,
-    Int,
+    SInt,
     Float,
-    ComplexInt,
+    ComplexSInt,
     ComplexFloat
   };
 private:
   ValueKind Kind;
   
-  struct ComplexAPInt { APInt Real, Imag; };
+  struct ComplexAPSInt { 
+    APSInt Real, Imag; 
+    ComplexAPSInt() : Real(1), Imag(1) {}
+  };
   struct ComplexAPFloat {
     APFloat Real, Imag;
     ComplexAPFloat() : Real(0.0), Imag(0.0) {}
   };
   
   enum {
-    MaxSize = (sizeof(ComplexAPInt) > sizeof(ComplexAPFloat) ? 
-               sizeof(ComplexAPInt) : sizeof(ComplexAPFloat))
+    MaxSize = (sizeof(ComplexAPSInt) > sizeof(ComplexAPFloat) ? 
+               sizeof(ComplexAPSInt) : sizeof(ComplexAPFloat))
   };
   
   /// Data - space for the largest member in units of void*.  This is an effort
-  /// to ensure that the APInt/APFloat values have proper alignment.
+  /// to ensure that the APSInt/APFloat values have proper alignment.
   void *Data[(MaxSize+sizeof(void*)-1)/sizeof(void*)];
   
 public:
   APValue() : Kind(Uninitialized) {}
-  explicit APValue(const APInt &I) : Kind(Uninitialized) {
-    MakeInt(); setInt(I);
+  explicit APValue(const APSInt &I) : Kind(Uninitialized) {
+    MakeSInt(); setSInt(I);
   }
   explicit APValue(const APFloat &F) : Kind(Uninitialized) {
     MakeFloat(); setFloat(F);
   }
-  APValue(const APInt &R, const APInt &I) : Kind(Uninitialized) {
-    MakeComplexInt(); setComplexInt(R, I);
+  APValue(const APSInt &R, const APSInt &I) : Kind(Uninitialized) {
+    MakeComplexSInt(); setComplexSInt(R, I);
   }
   APValue(const APFloat &R, const APFloat &I) : Kind(Uninitialized) {
     MakeComplexFloat(); setComplexFloat(R, I);
@@ -73,26 +76,26 @@ public:
   
   ValueKind getKind() const { return Kind; }
   bool isUninit() const { return Kind == Uninitialized; }
-  bool isInt() const { return Kind == Int; }
+  bool isSInt() const { return Kind == SInt; }
   bool isFloat() const { return Kind == Float; }
-  bool isComplexInt() const { return Kind == ComplexInt; }
+  bool isComplexSInt() const { return Kind == ComplexSInt; }
   bool isComplexFloat() const { return Kind == ComplexFloat; }
   
-  const APInt &getInt() const {
-    assert(isInt() && "Invalid accessor");
-    return *(const APInt*)(const void*)Data;
+  const APSInt &getSInt() const {
+    assert(isSInt() && "Invalid accessor");
+    return *(const APSInt*)(const void*)Data;
   }
   const APFloat &getFloat() const {
     assert(isFloat() && "Invalid accessor");
     return *(const APFloat*)(const void*)Data;
   }
-  const APInt &getComplexIntReal() const {
-    assert(isComplexInt() && "Invalid accessor");
-    return ((const ComplexAPInt*)(const void*)Data)->Real;
+  const APSInt &getComplexSIntReal() const {
+    assert(isComplexSInt() && "Invalid accessor");
+    return ((const ComplexAPSInt*)(const void*)Data)->Real;
   }
-  const APInt &getComplexIntImag() const {
-    assert(isComplexInt() && "Invalid accessor");
-    return ((const ComplexAPInt*)(const void*)Data)->Imag;
+  const APSInt &getComplexSIntImag() const {
+    assert(isComplexSInt() && "Invalid accessor");
+    return ((const ComplexAPSInt*)(const void*)Data)->Imag;
   }
   const APFloat &getComplexFloatReal() const {
     assert(isComplexFloat() && "Invalid accessor");
@@ -103,18 +106,18 @@ public:
     return ((const ComplexAPFloat*)(const void*)Data)->Imag;
   }
   
-  void setInt(const APInt &I) {
-    assert(isInt() && "Invalid accessor");
-    *(APInt*)(void*)Data = I;
+  void setSInt(const APSInt &I) {
+    assert(isSInt() && "Invalid accessor");
+    *(APSInt*)(void*)Data = I;
   }
   void setFloat(const APFloat &F) {
     assert(isFloat() && "Invalid accessor");
     *(APFloat*)(void*)Data = F;
   }
-  void setComplexInt(const APInt &R, const APInt &I) {
-    assert(isComplexInt() && "Invalid accessor");
-    ((ComplexAPInt*)(void*)Data)->Real = R;
-    ((ComplexAPInt*)(void*)Data)->Imag = I;
+  void setComplexSInt(const APSInt &R, const APSInt &I) {
+    assert(isComplexSInt() && "Invalid accessor");
+    ((ComplexAPSInt*)(void*)Data)->Real = R;
+    ((ComplexAPSInt*)(void*)Data)->Imag = I;
   }
   void setComplexFloat(const APFloat &R, const APFloat &I) {
     assert(isComplexFloat() && "Invalid accessor");
@@ -125,21 +128,21 @@ public:
   const APValue &operator=(const APValue &RHS) {
     if (Kind != RHS.Kind) {
       MakeUninit();
-      if (RHS.isInt())
-        MakeInt();
+      if (RHS.isSInt())
+        MakeSInt();
       else if (RHS.isFloat())
         MakeFloat();
-      else if (RHS.isComplexInt())
-        MakeComplexInt();
+      else if (RHS.isComplexSInt())
+        MakeComplexSInt();
       else if (RHS.isComplexFloat())
         MakeComplexFloat();
     }
-    if (isInt())
-      setInt(RHS.getInt());
+    if (isSInt())
+      setSInt(RHS.getSInt());
     else if (isFloat())
       setFloat(RHS.getFloat());
-    else if (isComplexInt())
-      setComplexInt(RHS.getComplexIntReal(), RHS.getComplexIntImag());
+    else if (isComplexSInt())
+      setComplexSInt(RHS.getComplexSIntReal(), RHS.getComplexSIntImag());
     else if (isComplexFloat())
       setComplexFloat(RHS.getComplexFloatReal(), RHS.getComplexFloatImag());
     return *this;
@@ -147,29 +150,29 @@ public:
   
 private:
   void MakeUninit() {
-    if (Kind == Int)
-      ((APInt*)(void*)Data)->~APInt();
+    if (Kind == SInt)
+      ((APSInt*)(void*)Data)->~APSInt();
     else if (Kind == Float)
       ((APFloat*)(void*)Data)->~APFloat();
-    else if (Kind == ComplexInt)
-      ((ComplexAPInt*)(void*)Data)->~ComplexAPInt();
+    else if (Kind == ComplexSInt)
+      ((ComplexAPSInt*)(void*)Data)->~ComplexAPSInt();
     else if (Kind == ComplexFloat)
       ((ComplexAPFloat*)(void*)Data)->~ComplexAPFloat();
   }
-  void MakeInt() {
+  void MakeSInt() {
     assert(isUninit() && "Bad state change");
-    new ((void*)Data) APInt();
-    Kind = Int;
+    new ((void*)Data) APSInt(1);
+    Kind = SInt;
   }
   void MakeFloat() {
     assert(isUninit() && "Bad state change");
     new ((APFloat*)(void*)Data) APFloat(0.0);
     Kind = Float;
   }
-  void MakeComplexInt() {
+  void MakeComplexSInt() {
     assert(isUninit() && "Bad state change");
-    new ((ComplexAPInt*)(void*)Data) ComplexAPInt();
-    Kind = ComplexInt;
+    new ((ComplexAPSInt*)(void*)Data) ComplexAPSInt();
+    Kind = ComplexSInt;
   }
   void MakeComplexFloat() {
     assert(isUninit() && "Bad state change");
