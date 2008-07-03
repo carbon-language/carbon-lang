@@ -184,6 +184,9 @@ bool LPPassManager::runOnFunction(Function &F) {
   LI = &getAnalysis<LoopInfo>();
   bool Changed = false;
 
+  // Collect inherited analysis from Module level pass manager.
+  populateInheritedAnalysis(TPM->activeStack);
+
   // Populate Loop Queue
   for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
     addLoopIntoQueue(*I, LQ);
