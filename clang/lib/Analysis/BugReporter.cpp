@@ -118,7 +118,7 @@ Stmt* BugReport::getStmt(BugReporter& BR) const {
   Stmt *S = NULL;
   
   if (BlockEntrance* BE = dyn_cast<BlockEntrance>(&ProgP))
-    if (BE->getBlock() == &BR.getCFG().getExit())
+    if (BE->getBlock() == &BR.getCFG()->getExit())
       S = GetLastStmt(EndNode);
   if (!S)
     S = GetStmt(ProgP);  

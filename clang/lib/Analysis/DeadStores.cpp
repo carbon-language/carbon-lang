@@ -153,7 +153,7 @@ void clang::CheckDeadStores(LiveVariables& L, BugReporter& BR) {
   DiagCollector C(BT);  
 
   DeadStoreObs A(BR.getContext(), BR.getDiagnostic(), C, BR.getParentMap());
-  L.runOnAllBlocks(BR.getCFG(), &A);
+  L.runOnAllBlocks(*BR.getCFG(), &A);
   
   // Emit the bug reports.
   

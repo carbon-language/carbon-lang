@@ -136,9 +136,9 @@ public:
   virtual PathDiagnosticClient* getPathDiagnosticClient() = 0;  
   virtual ASTContext& getContext() = 0;
   virtual SourceManager& getSourceManager() = 0;
-  virtual CFG& getCFG() = 0;
+  virtual CFG* getCFG() = 0;
   virtual ParentMap& getParentMap() = 0;
-  virtual LiveVariables& getLiveVariables() = 0;
+  virtual LiveVariables* getLiveVariables() = 0;
 };
   
 class BugReporter {
@@ -173,7 +173,7 @@ public:
     return D.getSourceManager();
   }
   
-  CFG& getCFG() {
+  CFG* getCFG() {
     return D.getCFG();
   }
   
@@ -181,7 +181,7 @@ public:
     return D.getParentMap();  
   }
   
-  LiveVariables& getLiveVariables() {
+  LiveVariables* getLiveVariables() {
     return D.getLiveVariables();
   }
   

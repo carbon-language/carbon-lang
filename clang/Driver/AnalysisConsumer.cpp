@@ -123,9 +123,9 @@ namespace {
     Decl* getCodeDecl() const { return D; }
     Stmt* getBody() const { return Body; }
     
-    virtual CFG& getCFG() {
+    virtual CFG* getCFG() {
       if (!cfg) cfg.reset(CFG::buildCFG(getBody()));
-      return *cfg.get();
+      return cfg.get();
     }
     
     virtual ParentMap& getParentMap() {
@@ -157,14 +157,17 @@ namespace {
       return C.PD.get();      
     }
       
-    virtual LiveVariables& getLiveVariables() {
+    virtual LiveVariables* getLiveVariables() {
       if (!liveness) {
-        liveness.reset(new LiveVariables(getCFG()));
-        liveness->runOnCFG(getCFG());
-        liveness->runOnAllBlocks(getCFG(), 0, true);
+        CFG* c = getCFG();
+        if (!c) return 0;
+        
+        liveness.reset(new LiveVariables(*c));
+        liveness->runOnCFG(*c);
+        liveness->runOnAllBlocks(*c, 0, true);
       }
       
-      return *liveness.get();
+      return liveness.get();
     }
     
     bool shouldVisualize() const {
@@ -285,27 +288,32 @@ void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions actions) {
 //===----------------------------------------------------------------------===//
 
 static void ActionDeadStores(AnalysisManager& mgr) {
-  BugReporter BR(mgr);  
-  CheckDeadStores(mgr.getLiveVariables(), BR);
+  if (LiveVariables* L = mgr.getLiveVariables()) {
+    BugReporter BR(mgr);
+    CheckDeadStores(*L, BR);
+  }
 }
 
 static void ActionUninitVals(AnalysisManager& mgr) {
-  CheckUninitializedValues(mgr.getCFG(), mgr.getContext(),
-                           mgr.getDiagnostic());
+  if (CFG* c = mgr.getCFG())
+    CheckUninitializedValues(*c, mgr.getContext(), mgr.getDiagnostic());
 }
 
 
 static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf) {
   
+  
   llvm::OwningPtr<GRTransferFuncs> TF(tf);
+
+  // Construct the analysis engine.
+  LiveVariables* L = mgr.getLiveVariables();
+  if (!L) return;
   
   // Display progress.
   if (!mgr.shouldVisualize())
     mgr.DisplayFunction();
   
-  // Construct the analysis engine.
-  GRExprEngine Eng(mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext(),
-                   mgr.getLiveVariables());  
+  GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext(), *L);
   Eng.setTransferFunctions(tf);
   
   // Execute the worklist algorithm.
@@ -355,18 +363,24 @@ static void ActionSimpleChecks(AnalysisManager& mgr) {
 }
 
 static void ActionLiveness(AnalysisManager& mgr) {
-  mgr.DisplayFunction();
-  mgr.getLiveVariables().dumpBlockLiveness(mgr.getSourceManager());
+  if (LiveVariables* L = mgr.getLiveVariables()) {
+    mgr.DisplayFunction();  
+    L->dumpBlockLiveness(mgr.getSourceManager());
+  }
 }
 
 static void ActionCFGDump(AnalysisManager& mgr) {
-  mgr.DisplayFunction();
-  mgr.getCFG().dump();
+  if (CFG* c = mgr.getCFG()) {
+    mgr.DisplayFunction();
+    c->dump();
+  }
 }
 
 static void ActionCFGView(AnalysisManager& mgr) {
-  mgr.DisplayFunction();
-  mgr.getCFG().viewCFG();  
+  if (CFG* c = mgr.getCFG()) {
+    mgr.DisplayFunction();
+    c->viewCFG();  
+  }
 }
 
 static void ActionCheckObjCDealloc(AnalysisManager& mgr) {
