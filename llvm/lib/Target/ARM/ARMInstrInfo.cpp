@@ -677,30 +677,35 @@ MachineInstr *ARMInstrInfo::foldMemoryOperand(MachineFunction &MF,
     unsigned PredReg = MI->getOperand(3).getReg();
     if (OpNum == 0) { // move -> store
       unsigned SrcReg = MI->getOperand(1).getReg();
-      NewMI = BuildMI(get(ARM::STR)).addReg(SrcReg).addFrameIndex(FI)
-        .addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
+      bool isKill = MI->getOperand(1).isKill();
+      NewMI = BuildMI(get(ARM::STR)).addReg(SrcReg, false, false, isKill)
+        .addFrameIndex(FI).addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
     } else {          // move -> load
       unsigned DstReg = MI->getOperand(0).getReg();
-      NewMI = BuildMI(get(ARM::LDR), DstReg).addFrameIndex(FI).addReg(0)
-        .addImm(0).addImm(Pred).addReg(PredReg);
+      bool isDead = MI->getOperand(0).isDead();
+      NewMI = BuildMI(get(ARM::LDR)).addReg(DstReg, true, false, false, isDead)
+        .addFrameIndex(FI).addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
     }
     break;
   }
   case ARM::tMOVr: {
     if (OpNum == 0) { // move -> store
       unsigned SrcReg = MI->getOperand(1).getReg();
+      bool isKill = MI->getOperand(1).isKill();
       if (RI.isPhysicalRegister(SrcReg) && !RI.isLowRegister(SrcReg))
         // tSpill cannot take a high register operand.
         break;
-      NewMI = BuildMI(get(ARM::tSpill)).addReg(SrcReg).addFrameIndex(FI)
-        .addImm(0);
+      NewMI = BuildMI(get(ARM::tSpill)).addReg(SrcReg, false, false, isKill)
+        .addFrameIndex(FI).addImm(0);
     } else {          // move -> load
       unsigned DstReg = MI->getOperand(0).getReg();
       if (RI.isPhysicalRegister(DstReg) && !RI.isLowRegister(DstReg))
         // tRestore cannot target a high register operand.
         break;
-      NewMI = BuildMI(get(ARM::tRestore), DstReg).addFrameIndex(FI)
-        .addImm(0);
+      bool isDead = MI->getOperand(0).isDead();
+      NewMI = BuildMI(get(ARM::tRestore))
+        .addReg(DstReg, true, false, false, isDead)
+        .addFrameIndex(FI).addImm(0);
     }
     break;
   }
@@ -723,19 +728,19 @@ MachineInstr *ARMInstrInfo::foldMemoryOperand(MachineFunction &MF,
     unsigned PredReg = MI->getOperand(3).getReg();
     if (OpNum == 0) { // move -> store
       unsigned SrcReg = MI->getOperand(1).getReg();
-      NewMI = BuildMI(get(ARM::FSTD)).addReg(SrcReg).addFrameIndex(FI)
-        .addImm(0).addImm(Pred).addReg(PredReg);
+      bool isKill = MI->getOperand(1).isKill();
+      NewMI = BuildMI(get(ARM::FSTD)).addReg(SrcReg, false, false, isKill)
+        .addFrameIndex(FI).addImm(0).addImm(Pred).addReg(PredReg);
     } else {          // move -> load
       unsigned DstReg = MI->getOperand(0).getReg();
-      NewMI = BuildMI(get(ARM::FLDD), DstReg).addFrameIndex(FI)
-        .addImm(0).addImm(Pred).addReg(PredReg);
+      bool isDead = MI->getOperand(0).isDead();
+      NewMI = BuildMI(get(ARM::FLDD)).addReg(DstReg, true, false, false, isDead)
+        .addFrameIndex(FI).addImm(0).addImm(Pred).addReg(PredReg);
     }
     break;
   }
   }
 
-  if (NewMI)
-    NewMI->copyKillDeadInfo(MI);
   return NewMI;
 }
 

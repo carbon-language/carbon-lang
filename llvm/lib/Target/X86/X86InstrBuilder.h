@@ -70,15 +70,19 @@ inline const MachineInstrBuilder &addDirectMem(const MachineInstrBuilder &MIB,
 /// displacement. An example is: DWORD PTR [EAX + 4].
 ///
 inline const MachineInstrBuilder &addRegOffset(const MachineInstrBuilder &MIB,
-                                               unsigned Reg, int Offset) {
-  return MIB.addReg(Reg).addImm(1).addReg(0).addImm(Offset);
+                                               unsigned Reg, bool isKill,
+                                               int Offset) {
+  return MIB.addReg(Reg, false, false, isKill)
+    .addImm(1).addReg(0).addImm(Offset);
 }
 
 /// addRegReg - This function is used to add a memory reference of the form:
 /// [Reg + Reg].
 inline const MachineInstrBuilder &addRegReg(const MachineInstrBuilder &MIB,
-                                            unsigned Reg1, unsigned Reg2) {
-  return MIB.addReg(Reg1).addImm(1).addReg(Reg2).addImm(0);
+                                            unsigned Reg1, bool isKill1,
+                                            unsigned Reg2, bool isKill2) {
+  return MIB.addReg(Reg1, false, false, isKill1).addImm(1)
+    .addReg(Reg2, false, false, isKill2).addImm(0);
 }
 
 inline const MachineInstrBuilder &addFullAddress(const MachineInstrBuilder &MIB,

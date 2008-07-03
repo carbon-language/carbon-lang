@@ -647,9 +647,9 @@ void MachineInstr::copyPredicates(const MachineInstr *MI) {
   }
 }
 
-/// isSafeToMove - Return true if it is safe to this instruction. If SawStore is
-/// set to true, it means that there is a store (or call) between the
-/// instruction's location and its intended destination.
+/// isSafeToMove - Return true if it is safe to move this instruction. If
+/// SawStore is set to true, it means that there is a store (or call) between
+/// the instruction's location and its intended destination.
 bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII, bool &SawStore) {
   // Ignore stuff that we obviously can't move.
   if (TID->mayStore() || TID->isCall()) {
@@ -828,28 +828,4 @@ bool MachineInstr::addRegisterDead(unsigned IncomingReg,
     return true;
   }
   return false;
-}
-
-/// copyKillDeadInfo - copies killed/dead information from one instr to another
-void MachineInstr::copyKillDeadInfo(MachineInstr *OldMI,
-                                    const TargetRegisterInfo *RegInfo) {
-  // If the instruction defines any virtual registers, update the VarInfo,
-  // kill and dead information for the instruction.
-  for (unsigned i = 0, e = OldMI->getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = OldMI->getOperand(i);
-    if (MO.isRegister() && MO.getReg() &&
-        TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
-      unsigned Reg = MO.getReg();
-      if (MO.isDef()) {
-        if (MO.isDead()) {
-          MO.setIsDead(false);
-          addRegisterDead(Reg, RegInfo);
-        }
-      }
-      if (MO.isKill()) {
-        MO.setIsKill(false);
-        addRegisterKilled(Reg, RegInfo);
-      }
-    }
-  }
 }

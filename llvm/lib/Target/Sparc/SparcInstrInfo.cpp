@@ -247,16 +247,19 @@ MachineInstr *SparcInstrInfo::foldMemoryOperand(MachineFunction &MF,
     isFloat = true;
     // FALLTHROUGH
   case SP::FMOVD:
-    if (OpNum == 0)  // COPY -> STORE
+    if (OpNum == 0) { // COPY -> STORE
+      unsigned SrcReg = MI->getOperand(1).getReg();
+      bool isKill = MI->getOperand(1).isKill();
       NewMI = BuildMI(get(isFloat ? SP::STFri : SP::STDFri))
-               .addFrameIndex(FI).addImm(0).addReg(MI->getOperand(1).getReg());
-    else             // COPY -> LOAD
-      NewMI = BuildMI(get(isFloat ? SP::LDFri : SP::LDDFri),
-                     MI->getOperand(0).getReg()).addFrameIndex(FI).addImm(0);
+        .addFrameIndex(FI).addImm(0).addReg(SrcReg, false, false, isKill);
+    } else {             // COPY -> LOAD
+      unsigned DstReg = MI->getOperand(0).getReg();
+      bool isDead = MI->getOperand(0).isDead();
+      NewMI = BuildMI(get(isFloat ? SP::LDFri : SP::LDDFri))
+        .addReg(DstReg, true, false, false, isDead).addFrameIndex(FI).addImm(0);
+    }
     break;
   }
 
-  if (NewMI)
-    NewMI->copyKillDeadInfo(MI);
   return NewMI;
 }

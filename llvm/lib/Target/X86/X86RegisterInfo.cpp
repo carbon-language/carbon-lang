@@ -750,7 +750,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
           .addExternalSymbol("_alloca");
         // Restore EAX
         MachineInstr *MI = addRegOffset(BuildMI(TII.get(X86::MOV32rm),X86::EAX),
-                                        StackPtr, NumBytes-4);
+                                        StackPtr, false, NumBytes-4);
         MBB.insert(MBBI, MI);
       }
     } else {
@@ -846,7 +846,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     if (CSSize) {
       unsigned Opc = Is64Bit ? X86::LEA64r : X86::LEA32r;
       MachineInstr *MI = addRegOffset(BuildMI(TII.get(Opc), StackPtr),
-                                      FramePtr, -CSSize);
+                                      FramePtr, false, -CSSize);
       MBB.insert(MBBI, MI);
     } else
       BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),StackPtr).

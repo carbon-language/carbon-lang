@@ -661,45 +661,62 @@ MachineInstr *PPCInstrInfo::foldMemoryOperand(MachineFunction &MF,
        MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
-      NewMI = addFrameReference(BuildMI(get(PPC::STW)).addReg(InReg),
+      bool isKill = MI->getOperand(1).isKill();
+      NewMI = addFrameReference(BuildMI(get(PPC::STW))
+                                .addReg(InReg, false, false, isKill),
                                 FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
-      NewMI = addFrameReference(BuildMI(get(PPC::LWZ), OutReg),
+      bool isDead = MI->getOperand(0).isDead();
+      NewMI = addFrameReference(BuildMI(get(PPC::LWZ))
+                                .addReg(OutReg, true, false, false, isDead),
                                 FrameIndex);
     }
   } else if ((Opc == PPC::OR8 &&
               MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
-      NewMI = addFrameReference(BuildMI(get(PPC::STD)).addReg(InReg),
+      bool isKill = MI->getOperand(1).isKill();
+      NewMI = addFrameReference(BuildMI(get(PPC::STD))
+                                .addReg(InReg, false, false, isKill),
                                 FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
-      NewMI = addFrameReference(BuildMI(get(PPC::LD), OutReg), FrameIndex);
+      bool isDead = MI->getOperand(0).isDead();
+      NewMI = addFrameReference(BuildMI(get(PPC::LD))
+                                .addReg(OutReg, true, false, false, isDead),
+                                FrameIndex);
     }
   } else if (Opc == PPC::FMRD) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
-      NewMI = addFrameReference(BuildMI(get(PPC::STFD)).addReg(InReg),
+      bool isKill = MI->getOperand(1).isKill();
+      NewMI = addFrameReference(BuildMI(get(PPC::STFD))
+                                .addReg(InReg, false, false, isKill),
                                 FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
-      NewMI = addFrameReference(BuildMI(get(PPC::LFD), OutReg), FrameIndex);
+      bool isDead = MI->getOperand(0).isDead();
+      NewMI = addFrameReference(BuildMI(get(PPC::LFD))
+                                .addReg(OutReg, true, false, false, isDead),
+                                FrameIndex);
     }
   } else if (Opc == PPC::FMRS) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
-      NewMI = addFrameReference(BuildMI(get(PPC::STFS)).addReg(InReg),
+      bool isKill = MI->getOperand(1).isKill();
+      NewMI = addFrameReference(BuildMI(get(PPC::STFS))
+                                .addReg(InReg, false, false, isKill),
                                 FrameIndex);
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
-      NewMI = addFrameReference(BuildMI(get(PPC::LFS), OutReg), FrameIndex);
+      bool isDead = MI->getOperand(0).isDead();
+      NewMI = addFrameReference(BuildMI(get(PPC::LFS))
+                                .addReg(OutReg, true, false, false, isDead),
+                                FrameIndex);
     }
   }
 
-  if (NewMI)
-    NewMI->copyKillDeadInfo(MI);
   return NewMI;
 }
 

@@ -269,23 +269,25 @@ MachineInstr *AlphaInstrInfo::foldMemoryOperand(MachineFunction &MF,
      if (MI->getOperand(1).getReg() == MI->getOperand(2).getReg()) {
        if (Ops[0] == 0) {  // move -> store
          unsigned InReg = MI->getOperand(1).getReg();
+         bool isKill = MI->getOperand(1).isKill();
          Opc = (Opc == Alpha::BISr) ? Alpha::STQ : 
            ((Opc == Alpha::CPYSS) ? Alpha::STS : Alpha::STT);
-         NewMI = BuildMI(get(Opc)).addReg(InReg).addFrameIndex(FrameIndex)
+         NewMI = BuildMI(get(Opc)).addReg(InReg, false, false, isKill)
+           .addFrameIndex(FrameIndex)
            .addReg(Alpha::F31);
        } else {           // load -> move
          unsigned OutReg = MI->getOperand(0).getReg();
+         bool isDead = MI->getOperand(0).isDead();
          Opc = (Opc == Alpha::BISr) ? Alpha::LDQ : 
            ((Opc == Alpha::CPYSS) ? Alpha::LDS : Alpha::LDT);
-         NewMI = BuildMI(get(Opc), OutReg).addFrameIndex(FrameIndex)
+         NewMI = BuildMI(get(Opc)).addReg(OutReg, true, false, false, isDead)
+           .addFrameIndex(FrameIndex)
            .addReg(Alpha::F31);
        }
      }
      break;
    }
-  if (NewMI)
-    NewMI->copyKillDeadInfo(MI);
-  return 0;
+  return NewMI;
 }
 
 static unsigned AlphaRevCondCode(unsigned Opcode) {

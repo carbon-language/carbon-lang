@@ -653,37 +653,6 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   return false;
 }
 
-/// instructionChanged - When the address of an instruction changes, this method
-/// should be called so that live variables can update its internal data
-/// structures.  This removes the records for OldMI, transfering them to the
-/// records for NewMI.
-void LiveVariables::instructionChanged(MachineInstr *OldMI,
-                                       MachineInstr *NewMI) {
-  // If the instruction defines any virtual registers, update the VarInfo,
-  // kill and dead information for the instruction.
-  for (unsigned i = 0, e = OldMI->getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = OldMI->getOperand(i);
-    if (MO.isRegister() && MO.getReg() &&
-        TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
-      unsigned Reg = MO.getReg();
-      VarInfo &VI = getVarInfo(Reg);
-      if (MO.isDef()) {
-        if (MO.isDead()) {
-          MO.setIsDead(false);
-          addVirtualRegisterDead(Reg, NewMI);
-        }
-      }
-      if (MO.isKill()) {
-        MO.setIsKill(false);
-        addVirtualRegisterKilled(Reg, NewMI);
-      }
-      // If this is a kill of the value, update the VI kills list.
-      if (VI.removeKill(OldMI))
-        VI.Kills.push_back(NewMI);   // Yes, there was a kill of it
-    }
-  }
-}
-
 /// replaceKillInstruction - Update register kill info by replacing a kill
 /// instruction with a new one.
 void LiveVariables::replaceKillInstruction(unsigned Reg, MachineInstr *OldMI,
@@ -699,22 +668,6 @@ void LiveVariables::removeVirtualRegistersKilled(MachineInstr *MI) {
     MachineOperand &MO = MI->getOperand(i);
     if (MO.isRegister() && MO.isKill()) {
       MO.setIsKill(false);
-      unsigned Reg = MO.getReg();
-      if (TargetRegisterInfo::isVirtualRegister(Reg)) {
-        bool removed = getVarInfo(Reg).removeKill(MI);
-        assert(removed && "kill not in register's VarInfo?");
-      }
-    }
-  }
-}
-
-/// removeVirtualRegistersDead - Remove all of the dead registers for the
-/// specified instruction from the live variable information.
-void LiveVariables::removeVirtualRegistersDead(MachineInstr *MI) {
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = MI->getOperand(i);
-    if (MO.isRegister() && MO.isDead()) {
-      MO.setIsDead(false);
       unsigned Reg = MO.getReg();
       if (TargetRegisterInfo::isVirtualRegister(Reg)) {
         bool removed = getVarInfo(Reg).removeKill(MI);

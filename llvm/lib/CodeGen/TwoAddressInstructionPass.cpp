@@ -184,11 +184,8 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
   KillMO = MI->findRegisterUseOperand(SavedReg, false, TRI);
   KillMO->setIsKill(true);
   
-  if (LV) {
-    LiveVariables::VarInfo& VarInfo = LV->getVarInfo(SavedReg);
-    VarInfo.removeKill(KillMI);
-    VarInfo.Kills.push_back(MI);
-  }
+  if (LV)
+    LV->replaceKillInstruction(SavedReg, KillMI, MI);
 
   // Move instruction to its destination.
   MBB->remove(MI);
@@ -454,10 +451,10 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             // regB is used in this BB.
             varInfoB.UsedBlocks[mbbi->getNumber()] = true;
 
-            if (LV->removeVirtualRegisterKilled(regB, mbbi, mi))
+            if (LV->removeVirtualRegisterKilled(regB,  mi))
               LV->addVirtualRegisterKilled(regB, prevMi);
 
-            if (LV->removeVirtualRegisterDead(regB, mbbi, mi))
+            if (LV->removeVirtualRegisterDead(regB, mi))
               LV->addVirtualRegisterDead(regB, prevMi);
           }
           

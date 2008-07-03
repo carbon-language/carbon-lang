@@ -884,10 +884,6 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
 
     // Attempt to fold the memory reference into the instruction. If
     // we can do this, we don't need to insert spill code.
-    if (lv_)
-      lv_->instructionChanged(MI, fmi);
-    else
-      fmi->copyKillDeadInfo(MI, tri_);
     MachineBasicBlock &MBB = *MI->getParent();
     if (isSS && !mf_->getFrameInfo()->isImmutableObjectIndex(Slot))
       vrm.virtFolded(Reg, MI, fmi, (VirtRegMap::ModRef)MRInfo);
@@ -1464,10 +1460,6 @@ std::vector<LiveInterval*> LiveIntervals::
 addIntervalsForSpills(const LiveInterval &li,
                       const MachineLoopInfo *loopInfo, VirtRegMap &vrm,
                       float &SSWeight) {
-  // Since this is called after the analysis is done we don't know if
-  // LiveVariables is available
-  lv_ = getAnalysisToUpdate<LiveVariables>();
-
   assert(li.weight != HUGE_VALF &&
          "attempt to spill already spilled interval!");
 

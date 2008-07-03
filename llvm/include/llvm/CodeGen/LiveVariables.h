@@ -52,8 +52,7 @@ public:
   /// non-phi instructions that are the last users of the value.
   ///
   /// In the common case where a value is defined and killed in the same block,
-  /// DefInst is the defining inst, there is one killing instruction, and 
-  /// AliveBlocks is empty.
+  /// There is one killing instruction, and  AliveBlocks is empty.
   ///
   /// Otherwise, the value is live out of the block.  If the value is live
   /// across any blocks, these blocks are listed in AliveBlocks.  Blocks where
@@ -68,16 +67,11 @@ public:
   /// but does include the predecessor block in the AliveBlocks set (unless that
   /// block also defines the value).  This leads to the (perfectly sensical)
   /// situation where a value is defined in a block, and the last use is a phi
-  /// node in the successor.  In this case, DefInst will be the defining
-  /// instruction, AliveBlocks is empty (the value is not live across any 
-  /// blocks) and Kills is empty (phi nodes are not included).  This is sensical
-  /// because the value must be live to the end of the block, but is not live in
-  /// any successor blocks.
+  /// node in the successor.  In this case, AliveBlocks is empty (the value is
+  /// not live across any  blocks) and Kills is empty (phi nodes are not
+  /// included). This is sensical because the value must be live to the end of
+  /// the block, but is not live in any successor blocks.
   struct VarInfo {
-    /// DefInst - The machine instruction that defines this register.
-    ///
-    MachineInstr *DefInst;
-
     /// AliveBlocks - Set of blocks of which this value is alive completely
     /// through.  This is a bit set which uses the basic block number as an
     /// index.
@@ -97,7 +91,7 @@ public:
     ///
     std::vector<MachineInstr*> Kills;
 
-    VarInfo() : DefInst(0), NumUses(0) {}
+    VarInfo() : NumUses(0) {}
 
     /// removeKill - Delete a kill corresponding to the specified
     /// machine instruction. Returns true if there was a kill
@@ -183,12 +177,6 @@ public:
   //===--------------------------------------------------------------------===//
   //  API to update live variable information
 
-  /// instructionChanged - When the address of an instruction changes, this
-  /// method should be called so that live variables can update its internal
-  /// data structures.  This removes the records for OldMI, transfering them to
-  /// the records for NewMI.
-  void instructionChanged(MachineInstr *OldMI, MachineInstr *NewMI);
-
   /// replaceKillInstruction - Update register kill info by replacing a kill
   /// instruction with a new one.
   void replaceKillInstruction(unsigned Reg, MachineInstr *OldMI,
@@ -204,13 +192,11 @@ public:
       getVarInfo(IncomingReg).Kills.push_back(MI); 
   }
 
-  /// removeVirtualRegisterKilled - Remove the specified virtual
+  /// removeVirtualRegisterKilled - Remove the specified kill of the virtual
   /// register from the live variable information. Returns true if the
   /// variable was marked as killed by the specified instruction,
   /// false otherwise.
-  bool removeVirtualRegisterKilled(unsigned reg,
-                                   MachineBasicBlock *MBB,
-                                   MachineInstr *MI) {
+  bool removeVirtualRegisterKilled(unsigned reg, MachineInstr *MI) {
     if (!getVarInfo(reg).removeKill(MI))
       return false;
 
@@ -238,16 +224,14 @@ public:
   void addVirtualRegisterDead(unsigned IncomingReg, MachineInstr *MI,
                               bool AddIfNotFound = false) {
     if (MI->addRegisterDead(IncomingReg, TRI, AddIfNotFound))
-        getVarInfo(IncomingReg).Kills.push_back(MI);
+      getVarInfo(IncomingReg).Kills.push_back(MI);
   }
 
-  /// removeVirtualRegisterDead - Remove the specified virtual
+  /// removeVirtualRegisterDead - Remove the specified kill of the virtual
   /// register from the live variable information. Returns true if the
   /// variable was marked dead at the specified instruction, false
   /// otherwise.
-  bool removeVirtualRegisterDead(unsigned reg,
-                                 MachineBasicBlock *MBB,
-                                 MachineInstr *MI) {
+  bool removeVirtualRegisterDead(unsigned reg, MachineInstr *MI) {
     if (!getVarInfo(reg).removeKill(MI))
       return false;
 
@@ -264,10 +248,6 @@ public:
     return true;
   }
 
-  /// removeVirtualRegistersDead - Remove all of the dead registers for the
-  /// specified instruction from the live variable information.
-  void removeVirtualRegistersDead(MachineInstr *MI);
-  
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
   }

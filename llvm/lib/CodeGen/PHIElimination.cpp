@@ -152,36 +152,44 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
 
   unsigned NumSrcs = (MPhi->getNumOperands() - 1) / 2;
   unsigned DestReg = MPhi->getOperand(0).getReg();
+  bool isDead = MPhi->getOperand(0).isDead();
 
   // Create a new register for the incoming PHI arguments.
   MachineFunction &MF = *MBB.getParent();
   const TargetRegisterClass *RC = MF.getRegInfo().getRegClass(DestReg);
-  unsigned IncomingReg = MF.getRegInfo().createVirtualRegister(RC);
+  unsigned IncomingReg = 0;
 
   // Insert a register to register copy at the top of the current block (but
   // after any remaining phi nodes) which copies the new incoming register
   // into the phi node destination.
   const TargetInstrInfo *TII = MF.getTarget().getInstrInfo();
   if (isSourceDefinedByImplicitDef(MPhi, MRI))
-    // If all sources of a PHI node are implicit_def, just emit an implicit_def
-    // instead of a copy.
-    BuildMI(MBB, AfterPHIsIt, TII->get(TargetInstrInfo::IMPLICIT_DEF), DestReg);
-  else
+    // If all sources of a PHI node are implicit_def, just emit an
+    // implicit_def instead of a copy.
+    BuildMI(MBB, AfterPHIsIt,
+            TII->get(TargetInstrInfo::IMPLICIT_DEF), DestReg);
+  else {
+    IncomingReg = MF.getRegInfo().createVirtualRegister(RC);
     TII->copyRegToReg(MBB, AfterPHIsIt, DestReg, IncomingReg, RC, RC);
+  }
 
   // Update live variable information if there is any.
   LiveVariables *LV = getAnalysisToUpdate<LiveVariables>();
   if (LV) {
     MachineInstr *PHICopy = prior(AfterPHIsIt);
 
-    // Increment use count of the newly created virtual register.
-    LV->getVarInfo(IncomingReg).NumUses++;
+    if (IncomingReg) {
+      // Increment use count of the newly created virtual register.
+      LV->getVarInfo(IncomingReg).NumUses++;
 
-    // Add information to LiveVariables to know that the incoming value is
-    // killed.  Note that because the value is defined in several places (once
-    // each for each incoming block), the "def" block and instruction fields for
-    // the VarInfo is not filled in.
-    LV->addVirtualRegisterKilled(IncomingReg, PHICopy);
+      // Add information to LiveVariables to know that the incoming value is
+      // killed.  Note that because the value is defined in several places (once
+      // each for each incoming block), the "def" block and instruction fields
+      // for the VarInfo is not filled in.
+      LV->addVirtualRegisterKilled(IncomingReg, PHICopy);
+
+      LV->getVarInfo(IncomingReg).UsedBlocks[MBB.getNumber()] = true;
+    }
 
     // Since we are going to be deleting the PHI node, if it is the last use of
     // any registers, or if the value itself is dead, we need to move this
@@ -189,12 +197,10 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
     LV->removeVirtualRegistersKilled(MPhi);
 
     // If the result is dead, update LV.
-    if (MPhi->registerDefIsDead(DestReg)) {
+    if (isDead) {
       LV->addVirtualRegisterDead(DestReg, PHICopy);
-      LV->removeVirtualRegistersDead(MPhi);
+      LV->removeVirtualRegisterDead(DestReg, MPhi);
     }
-
-    LV->getVarInfo(IncomingReg).UsedBlocks[MBB.getNumber()] = true;
   }
 
   // Adjust the VRegPHIUseCount map to account for the removal of this PHI node.
@@ -211,7 +217,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
            "Machine PHI Operands must all be virtual registers!");
 
     // If source is defined by an implicit def, there is no need to insert a
-    // copy unless it's the only source.
+    // copy.
     MachineInstr *DefMI = MRI->getVRegDef(SrcReg);
     if (DefMI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
       ImpDefs.insert(DefMI);
