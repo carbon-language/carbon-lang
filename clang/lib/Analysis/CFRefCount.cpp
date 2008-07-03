@@ -1389,8 +1389,35 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
       }
     }  
     else if (isa<LVal>(V)) {
+#if 0
       // Nuke all arguments passed by reference.
       StateMgr.Unbind(StVals, cast<LVal>(V));
+#else
+      if (lval::DeclVal* DV = dyn_cast<lval::DeclVal>(&V)) {      
+        
+        // FIXME: Either this logic should also be replicated in GRSimpleVals
+        //  or should be pulled into a separate "constraint engine."
+        // FIXME: We can have collisions on the conjured symbol if the
+        //  expression *I also creates conjured symbols.  We probably want
+        //  to identify conjured symbols by an expression pair: the enclosing
+        //  expression (the context) and the expression itself.  This should
+        //  disambiguate conjured symbols.        
+        
+        // Invalidate the values of all variables passed by reference.
+        // Set the value of the variable to be a conjured symbol.
+        unsigned Count = Builder.getCurrentBlockCount();
+        SymbolID NewSym = Eng.getSymbolManager().getConjuredSymbol(*I, Count);
+      
+        StateMgr.BindVar(StVals, DV->getDecl(),
+                         LVal::IsLValType(DV->getDecl()->getType())
+                         ? cast<RVal>(lval::SymbolVal(NewSym))
+                         : cast<RVal>(nonlval::SymbolVal(NewSym)));
+      }
+      else {
+        // Nuke all other arguments passed by reference.
+        StateMgr.Unbind(StVals, cast<LVal>(V));
+      }
+#endif
     }
     else if (isa<nonlval::LValAsInteger>(V))
       StateMgr.Unbind(StVals, cast<nonlval::LValAsInteger>(V).getLVal());
