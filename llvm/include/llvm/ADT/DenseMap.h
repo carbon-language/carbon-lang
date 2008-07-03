@@ -82,7 +82,7 @@ public:
         P->second.~ValueT();
       P->first.~KeyT();
     }
-    delete[] reinterpret_cast<char*>(Buckets);
+    operator delete(Buckets);
   }
   
   typedef DenseMapIterator<KeyT, ValueT, KeyInfoT> iterator;
@@ -210,9 +210,9 @@ private:
     NumTombstones = other.NumTombstones;
     
     if (NumBuckets)
-      delete[] reinterpret_cast<char*>(Buckets);
-    Buckets = reinterpret_cast<BucketT*>(new char[sizeof(BucketT) *
-                                                  other.NumBuckets]);
+      operator delete(Buckets);
+    Buckets = static_cast<BucketT*>(operator new(sizeof(BucketT) *
+                                                 other.NumBuckets));
     
     if (KeyInfoT::isPod() && ValueInfoT::isPod())
       memcpy(Buckets, other.Buckets, other.NumBuckets * sizeof(BucketT));
@@ -315,7 +315,7 @@ private:
     NumBuckets = InitBuckets;
     assert(InitBuckets && (InitBuckets & (InitBuckets-1)) == 0 &&
            "# initial buckets must be a power of two!");
-    Buckets = reinterpret_cast<BucketT*>(new char[sizeof(BucketT)*InitBuckets]);
+    Buckets = static_cast<BucketT*>(operator new(sizeof(BucketT)*InitBuckets));
     // Initialize all the keys to EmptyKey.
     const KeyT EmptyKey = getEmptyKey();
     for (unsigned i = 0; i != InitBuckets; ++i)
@@ -330,7 +330,7 @@ private:
     while (NumBuckets <= AtLeast)
       NumBuckets <<= 1;
     NumTombstones = 0;
-    Buckets = reinterpret_cast<BucketT*>(new char[sizeof(BucketT)*NumBuckets]);
+    Buckets = static_cast<BucketT*>(operator new(sizeof(BucketT)*NumBuckets));
 
     // Initialize all the keys to EmptyKey.
     const KeyT EmptyKey = getEmptyKey();
@@ -357,7 +357,7 @@ private:
     }
     
     // Free the old table.
-    delete[] reinterpret_cast<char*>(OldBuckets);
+    operator delete(OldBuckets);
   }
   
   void shrink_and_clear() {
@@ -368,7 +368,7 @@ private:
     NumBuckets = NumEntries > 32 ? 1 << (Log2_32_Ceil(NumEntries) + 1)
                                  : 64;
     NumTombstones = 0;
-    Buckets = reinterpret_cast<BucketT*>(new char[sizeof(BucketT)*NumBuckets]);
+    Buckets = static_cast<BucketT*>(operator new(sizeof(BucketT)*NumBuckets));
 
     // Initialize all the keys to EmptyKey.
     const KeyT EmptyKey = getEmptyKey();
@@ -387,7 +387,7 @@ private:
     }
     
     // Free the old table.
-    delete[] reinterpret_cast<char*>(OldBuckets);
+    operator delete(OldBuckets);
     
     NumEntries = 0;
   }
