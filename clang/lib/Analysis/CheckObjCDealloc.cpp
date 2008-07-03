@@ -47,10 +47,15 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
   assert (LOpts.getGCMode() != LangOptions::GCOnly);
   
   ASTContext& Ctx = BR.getContext();
-
+  ObjCInterfaceDecl* ID = D->getClassInterface();
+  
+  // Does the class contain any ivars?  If not, skip the check entirely.
+  
+  if (ID->ivar_empty())
+    return;  
+  
   // Determine if the class subclasses NSObject.
   IdentifierInfo* NSObjectII = &Ctx.Idents.get("NSObject");
-  ObjCInterfaceDecl* ID = D->getClassInterface();
   
   for ( ; ID ; ID = ID->getSuperClass())
     if (ID->getIdentifier() == NSObjectII)
