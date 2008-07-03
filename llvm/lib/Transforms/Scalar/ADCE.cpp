@@ -53,44 +53,6 @@ bool ADCE::runOnFunction(Function& F) {
   SmallPtrSet<Instruction*, 128> alive;
   SmallVector<Instruction*, 128> worklist;
   
-  SmallPtrSet<BasicBlock*, 64> reachable;
-  SmallVector<BasicBlock*, 16> unreachable;
-  
-  // First, collect the set of reachable blocks ...
-  for (df_ext_iterator<BasicBlock*, SmallPtrSet<BasicBlock*, 64> >
-       DI = df_ext_begin(&F.getEntryBlock(), reachable),
-       DE = df_ext_end(&F.getEntryBlock(), reachable); DI != DE; ++DI)
-    ; // Deliberately empty, df_ext_iterator will fill in the set.
-  
-  // ... and then invert it into the list of unreachable ones.  These
-  // blocks will be removed from the function.
-  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
-    if (!reachable.count(FI))
-      unreachable.push_back(FI);
-  
-  // Prepare to remove blocks by removing the PHI node entries for those blocks
-  // in their successors, and remove them from reference counting.
-  for (SmallVector<BasicBlock*, 16>::iterator UI = unreachable.begin(),
-       UE = unreachable.end(); UI != UE; ++UI) {
-    BasicBlock* BB = *UI;
-    for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB);
-         SI != SE; ++SI) {
-      BasicBlock* succ = *SI;
-      BasicBlock::iterator succ_inst = succ->begin();
-      while (PHINode* P = dyn_cast<PHINode>(succ_inst)) {
-        P->removeIncomingValue(BB);
-        ++succ_inst;
-      }
-    }
-    
-    BB->dropAllReferences();
-  }
-  
-  // Finally, erase the unreachable blocks.
-  for (SmallVector<BasicBlock*, 16>::iterator UI = unreachable.begin(),
-       UE = unreachable.end(); UI != UE; ++UI)
-    (*UI)->eraseFromParent();
-  
   // Collect the set of "root" instructions that are known live.
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
     if (isa<TerminatorInst>(I.getInstructionIterator()) ||
