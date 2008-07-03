@@ -589,9 +589,8 @@ public:
   void dump() const;
 
   /// CreateStackTemporary - Create a stack temporary, suitable for holding the
-  /// specified value type.  If minAlign is specified, the slot size will have
-  /// at least that alignment.
-  SDOperand CreateStackTemporary(MVT VT, unsigned minAlign = 1);
+  /// specified value type.
+  SDOperand CreateStackTemporary(MVT VT);
 
   /// FoldSetCC - Constant fold a setcc to true or false.
   SDOperand FoldSetCC(MVT VT, SDOperand N1,

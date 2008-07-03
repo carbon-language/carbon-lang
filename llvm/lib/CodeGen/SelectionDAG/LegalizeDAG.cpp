@@ -4871,41 +4871,35 @@ SDOperand SelectionDAGLegalize::EmitStackConvert(SDOperand SrcOp,
                                                  MVT SlotVT,
                                                  MVT DestVT) {
   // Create the stack frame object.
-  unsigned SrcAlign = TLI.getTargetData()->getPrefTypeAlignment(
-                                          SrcOp.getValueType().getTypeForMVT());
-  SDOperand FIPtr = DAG.CreateStackTemporary(SlotVT, SrcAlign);
-  
+  SDOperand FIPtr = DAG.CreateStackTemporary(SlotVT);
+
   FrameIndexSDNode *StackPtrFI = cast<FrameIndexSDNode>(FIPtr);
   int SPFI = StackPtrFI->getIndex();
-  
+
   unsigned SrcSize = SrcOp.getValueType().getSizeInBits();
   unsigned SlotSize = SlotVT.getSizeInBits();
   unsigned DestSize = DestVT.getSizeInBits();
-  const Type* SlotTy = SlotVT.getTypeForMVT();
-  unsigned SlotAlign = TLI.getTargetData()->getPrefTypeAlignment(SlotTy);
   
   // Emit a store to the stack slot.  Use a truncstore if the input value is
   // later than DestVT.
   SDOperand Store;
-  
   if (SrcSize > SlotSize)
     Store = DAG.getTruncStore(DAG.getEntryNode(), SrcOp, FIPtr,
-                              PseudoSourceValue::getFixedStack(), SPFI, SlotVT, 
-                              false, SlotAlign);
+                              PseudoSourceValue::getFixedStack(),
+                              SPFI, SlotVT);
   else {
     assert(SrcSize == SlotSize && "Invalid store");
     Store = DAG.getStore(DAG.getEntryNode(), SrcOp, FIPtr,
-                         PseudoSourceValue::getFixedStack(), SPFI,
-                         false, SlotAlign);
+                         PseudoSourceValue::getFixedStack(),
+                         SPFI);
   }
   
   // Result is a load from the stack slot.
   if (SlotSize == DestSize)
-    return DAG.getLoad(DestVT, Store, FIPtr, NULL, 0, false, SlotAlign);
+    return DAG.getLoad(DestVT, Store, FIPtr, NULL, 0);
   
   assert(SlotSize < DestSize && "Unknown extension!");
-  return DAG.getExtLoad(ISD::EXTLOAD, DestVT, Store, FIPtr, NULL, 0, SlotVT,
-                        false, SlotAlign);
+  return DAG.getExtLoad(ISD::EXTLOAD, DestVT, Store, FIPtr, NULL, 0, SlotVT);
 }
 
 SDOperand SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
