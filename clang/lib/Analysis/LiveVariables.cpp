@@ -133,15 +133,23 @@ public:
 };
       
 void TransferFuncs::Visit(Stmt *S) {
-  if (AD.Observer)
-    AD.Observer->ObserveStmt(S,AD,LiveState);
   
   if (S == getCurrentBlkStmt()) {
+    
+    if (AD.Observer)
+      AD.Observer->ObserveStmt(S,AD,LiveState);
+    
     if (getCFG().isBlkExpr(S)) LiveState(S,AD) = Dead;
     StmtVisitor<TransferFuncs,void>::Visit(S);
   }
-  else if (!getCFG().isBlkExpr(S))
+  else if (!getCFG().isBlkExpr(S)) {
+    
+    if (AD.Observer)
+      AD.Observer->ObserveStmt(S,AD,LiveState);
+    
     StmtVisitor<TransferFuncs,void>::Visit(S);
+    
+  }
   else
     // For block-level expressions, mark that they are live.
     LiveState(S,AD) = Alive;
