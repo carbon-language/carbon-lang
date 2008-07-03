@@ -112,7 +112,9 @@ def inferlanguage(extension):
   elif extension in [ "s", "o", "a", "so" ]:
       return "skip"
   else:
-      return "unknown"
+      return "skip"  # Skip files with unknown extensions.  This
+                     # deviates from ccc, but this works very well for
+                     # the analyzer.
 
 def main(args):
   old_args = args
