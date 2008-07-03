@@ -684,6 +684,15 @@ void LiveVariables::instructionChanged(MachineInstr *OldMI,
   }
 }
 
+/// replaceKillInstruction - Update register kill info by replacing a kill
+/// instruction with a new one.
+void LiveVariables::replaceKillInstruction(unsigned Reg, MachineInstr *OldMI,
+                                           MachineInstr *NewMI) {
+  VarInfo &VI = getVarInfo(Reg);
+  if (VI.removeKill(OldMI))
+    VI.Kills.push_back(NewMI);   // Yes, there was a kill of it
+}
+
 /// removeVirtualRegistersKilled - Remove all killed info for the specified
 /// instruction.
 void LiveVariables::removeVirtualRegistersKilled(MachineInstr *MI) {

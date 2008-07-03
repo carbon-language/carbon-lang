@@ -375,10 +375,9 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                   DOUT << "2addr: COMMUTED TO: " << *NewMI;
                   // If the instruction changed to commute it, update livevar.
                   if (NewMI != mi) {
-                    if (LV) {
+                    if (LV)
                       // Update live variables
-                      LV->instructionChanged(mi, NewMI); 
-                    }
+                      LV->replaceKillInstruction(regC, mi, NewMI);
                     
                     mbbi->insert(mi, NewMI);           // Insert the new inst
                     mbbi->erase(mi);                   // Nuke the old inst.

@@ -189,6 +189,11 @@ public:
   /// the records for NewMI.
   void instructionChanged(MachineInstr *OldMI, MachineInstr *NewMI);
 
+  /// replaceKillInstruction - Update register kill info by replacing a kill
+  /// instruction with a new one.
+  void replaceKillInstruction(unsigned Reg, MachineInstr *OldMI,
+                              MachineInstr *NewMI);
+
   /// addVirtualRegisterKilled - Add information about the fact that the
   /// specified register is killed after being used by the specified
   /// instruction. If AddIfNotFound is true, add a implicit operand if it's
