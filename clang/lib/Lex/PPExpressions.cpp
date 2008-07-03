@@ -198,7 +198,8 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
       // large that it is unsigned" e.g. on 12345678901234567890 where intmax_t
       // is 64-bits.
       if (!Literal.isUnsigned && Result.Val.isNegative()) {
-        if (ValueLive)
+        // Don't warn for a hex literal: 0x8000..0 shouldn't warn.
+        if (ValueLive && Literal.getRadix() != 16)
           PP.Diag(PeekTok, diag::warn_integer_too_large_for_signed);
         Result.Val.setIsUnsigned(true);
       }
@@ -288,11 +289,8 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     // C99 6.5.3.3p3: The sign of the result matches the sign of the operand.
     Result.Val = -Result.Val;
     
-    bool Overflow = false;
-    if (Result.isUnsigned())
-      Overflow = Result.Val.isNegative();
-    else if (Result.Val.isMinSignedValue())
-      Overflow = true;   // -MININT is the only thing that overflows.
+    // -MININT is the only thing that overflows.  Unsigned never overflows.
+    bool Overflow = !Result.isUnsigned() && Result.Val.isMinSignedValue();
       
     // If this operator is live and overflowed, report the issue.
     if (Overflow && ValueLive)
