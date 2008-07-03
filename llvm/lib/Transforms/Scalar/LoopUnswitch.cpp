@@ -1204,32 +1204,18 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
               // trying to update it is complicated.  So instead we preserve the
               // loop structure and put the block on an dead code path.
               
-              BasicBlock *SISucc = SI->getSuccessor(i);
               BasicBlock* Old = SI->getParent();
               BasicBlock* Split = SplitBlock(Old, SI, this);
               
               Instruction* OldTerm = Old->getTerminator();
-              BranchInst::Create(Split, SISucc,
+              BranchInst::Create(Split, SI->getSuccessor(i),
                                  ConstantInt::getTrue(), OldTerm);
-
-              if (DT) {
-                // Now, SISucc is dominated by Old.
-                DT->changeImmediateDominator(SISucc, Old);
-                if (DF) {
-                  // Now, Split does not dominate SISucc.
-                  // SISucc is the only member in Split's DF.
-                  DominanceFrontier::iterator S_DFI = DF->find(Split);
-                  if (S_DFI != DF->end())
-                    S_DFI->second.clear();
-                  addBBToDomFrontier(*DF, S_DFI, Split, SISucc);
-                }
-              }
 
               LPM->deleteSimpleAnalysisValue(Old->getTerminator(), L);
               Old->getTerminator()->eraseFromParent();
               
               PHINode *PN;
-              for (BasicBlock::iterator II = SISucc->begin();
+              for (BasicBlock::iterator II = SI->getSuccessor(i)->begin();
                    (PN = dyn_cast<PHINode>(II)); ++II) {
                 Value *InVal = PN->removeIncomingValue(Split, false);
                 PN->addIncoming(InVal, Old);
