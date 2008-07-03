@@ -317,6 +317,7 @@ public:
   ivar_iterator ivar_begin() const { return Ivars; }
   ivar_iterator ivar_end() const { return Ivars + ivar_size();}
   unsigned ivar_size() const { return NumIvars; }
+  bool ivar_empty() const { return NumIvars == 0; }
   
   unsigned getNumInstanceMethods() const { return NumInstanceMethods; }
   unsigned getNumClassMethods() const { return NumClassMethods; }
