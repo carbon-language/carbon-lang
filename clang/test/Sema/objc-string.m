@@ -1,4 +1,4 @@
-// RUN: clang %s -verify -fsyntax-only
+// RUN: clang %s -verify -fsyntax-only &&
 // RUN: clang %s -verify -fsyntax-only -DDECLAREIT
 
 // a declaration of NSConstantString is not required.

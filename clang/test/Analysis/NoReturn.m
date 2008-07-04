@@ -1,4 +1,4 @@
-// RUN: clang -checker-simple -verify %s
+// RUN: clang -checker-simple -verify %s &&
 // RUN: clang -checker-cfref -verify %s
 
 #include <stdarg.h>
