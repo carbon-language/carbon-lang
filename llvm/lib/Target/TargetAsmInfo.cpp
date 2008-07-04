@@ -111,7 +111,6 @@ TargetAsmInfo::TargetAsmInfo() :
   DwarfMacInfoSection(".debug_macinfo"),
   DwarfEHFrameSection(".eh_frame"),
   DwarfExceptionSection(".gcc_except_table"),
-  DebugInfoRequireFrameMoveInfo(true),
   AsmTransCBE(0) {
 }
 

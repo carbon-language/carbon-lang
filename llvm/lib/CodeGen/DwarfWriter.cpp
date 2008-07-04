@@ -3512,9 +3512,7 @@ public:
         shouldEmitTable = true;
 
       // See if we need frame move info.
-      if ((MMI->hasDebugInfo() && TAI->doesDebugInfoRequireFrameMoveInfo()) || 
-          !MF->getFunction()->doesNotThrow() ||
-          UnwindTablesMandatory)
+      if (!MF->getFunction()->doesNotThrow() || UnwindTablesMandatory)
         shouldEmitMoves = true;
 
       if (shouldEmitMoves || shouldEmitTable)

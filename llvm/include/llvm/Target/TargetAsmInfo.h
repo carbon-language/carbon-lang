@@ -413,11 +413,6 @@ namespace llvm {
     ///
     const char *DwarfExceptionSection; // Defaults to ".gcc_except_table".
 
-    /// DebugInfoRequireFrameMoveInfo - Does debugging info require frame move
-    /// info.
-    ///
-    bool DebugInfoRequireFrameMoveInfo; // Defaults to "true"
-
     //===--- CBE Asm Translation Table -----------------------------------===//
 
     const char *const *AsmTransCBE; // Defaults to empty
@@ -702,9 +697,6 @@ namespace llvm {
     }
     const char *getDwarfExceptionSection() const {
       return DwarfExceptionSection;
-    }
-    bool doesDebugInfoRequireFrameMoveInfo() const {
-      return DebugInfoRequireFrameMoveInfo;
     }
     const char *const *getAsmCBE() const {
       return AsmTransCBE;
