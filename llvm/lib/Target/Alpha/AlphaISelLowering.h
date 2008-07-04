@@ -72,9 +72,9 @@ namespace llvm {
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
-    virtual SDOperand CustomPromoteOperation(SDOperand Op, SelectionDAG &DAG);
+    virtual SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG);
 
-    //Friendly names for dumps
+    // Friendly names for dumps
     const char *getTargetNodeName(unsigned Opcode) const;
 
     /// LowerCallTo - This hook lowers an abstract call to a function into an
@@ -94,6 +94,12 @@ namespace llvm {
 
     MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
                                                    MachineBasicBlock *BB);
+
+  private:
+    // Helpers for custom lowering.
+    void LowerVAARG(SDNode *N, SDOperand &Chain, SDOperand &DataPtr,
+                    SelectionDAG &DAG);
+
   };
 }
 

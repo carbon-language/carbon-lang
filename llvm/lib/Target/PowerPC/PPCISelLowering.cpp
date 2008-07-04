@@ -3964,7 +3964,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   return SDOperand();
 }
 
-SDNode *PPCTargetLowering::ExpandOperationResult(SDNode *N, SelectionDAG &DAG) {
+SDNode *PPCTargetLowering::ReplaceNodeResults(SDNode *N, SelectionDAG &DAG) {
   switch (N->getOpcode()) {
   default: assert(0 && "Wasn't expecting to be able to lower this!");
   case ISD::FP_TO_SINT: return LowerFP_TO_SINT(SDOperand(N, 0), DAG).Val;

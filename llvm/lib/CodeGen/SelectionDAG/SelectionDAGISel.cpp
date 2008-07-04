@@ -4843,12 +4843,6 @@ SDOperand TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   return SDOperand();
 }
 
-SDOperand TargetLowering::CustomPromoteOperation(SDOperand Op,
-                                                 SelectionDAG &DAG) {
-  assert(0 && "CustomPromoteOperation not implemented for this target!");
-  abort();
-  return SDOperand();
-}
 
 //===----------------------------------------------------------------------===//
 // SelectionDAGISel code

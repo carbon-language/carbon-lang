@@ -1055,19 +1055,19 @@ public:
   /// implement this.  The default implementation of this aborts.
   virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
 
-  /// ExpandOperationResult - This callback is invoked for operations that are 
+  /// ReplaceNodeResults - This callback is invoked for operations that are
   /// unsupported by the target, which are registered to use 'custom' lowering,
-  /// and whose result type needs to be expanded.  This must return a node whose
-  /// results precisely match the results of the input node.  This typically
-  /// involves a MERGE_VALUES node and/or BUILD_PAIR.
+  /// and whose result type is illegal.  This must return a node whose results
+  /// precisely match the results of the input node.  This typically involves a
+  /// MERGE_VALUES node and/or BUILD_PAIR.
   ///
   /// If the target has no operations that require custom lowering, it need not
-  /// implement this.  The default implementation of this aborts.
-  virtual SDNode *ExpandOperationResult(SDNode *N, SelectionDAG &DAG) {
-    assert(0 && "ExpandOperationResult not implemented for this target!");
+  /// implement this.  The default implementation aborts.
+  virtual SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG) {
+    assert(0 && "ReplaceNodeResults not implemented for this target!");
     return 0;
   }
-  
+
   /// IsEligibleForTailCallOptimization - Check whether the call is eligible for
   /// tail call optimization. Targets which want to do tail call optimization
   /// should override this function. 
@@ -1107,11 +1107,6 @@ public:
     return Chain;
   }
 
-  /// CustomPromoteOperation - This callback is invoked for operations that are
-  /// unsupported by the target, are registered to use 'custom' lowering, and
-  /// whose type needs to be promoted.
-  virtual SDOperand CustomPromoteOperation(SDOperand Op, SelectionDAG &DAG);
-  
   /// getTargetNodeName() - This method returns the name of a target specific
   /// DAG node.
   virtual const char *getTargetNodeName(unsigned Opcode) const;

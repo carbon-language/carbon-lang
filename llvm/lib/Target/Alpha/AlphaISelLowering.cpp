@@ -392,6 +392,34 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   return std::make_pair(RetVal, Chain);
 }
 
+void AlphaTargetLowering::LowerVAARG(SDNode *N, SDOperand &Chain,
+                                     SDOperand &DataPtr, SelectionDAG &DAG) {
+  Chain = N->getOperand(0);
+  SDOperand VAListP = N->getOperand(1);
+  const Value *VAListS = cast<SrcValueSDNode>(N->getOperand(2))->getValue();
+
+  SDOperand Base = DAG.getLoad(MVT::i64, Chain, VAListP, VAListS, 0);
+  SDOperand Tmp = DAG.getNode(ISD::ADD, MVT::i64, VAListP,
+                              DAG.getConstant(8, MVT::i64));
+  SDOperand Offset = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Base.getValue(1),
+                                    Tmp, NULL, 0, MVT::i32);
+  DataPtr = DAG.getNode(ISD::ADD, MVT::i64, Base, Offset);
+  if (N->getValueType(0).isFloatingPoint())
+  {
+    //if fp && Offset < 6*8, then subtract 6*8 from DataPtr
+    SDOperand FPDataPtr = DAG.getNode(ISD::SUB, MVT::i64, DataPtr,
+                                      DAG.getConstant(8*6, MVT::i64));
+    SDOperand CC = DAG.getSetCC(MVT::i64, Offset,
+                                DAG.getConstant(8*6, MVT::i64), ISD::SETLT);
+    DataPtr = DAG.getNode(ISD::SELECT, MVT::i64, CC, FPDataPtr, DataPtr);
+  }
+
+  SDOperand NewOffset = DAG.getNode(ISD::ADD, MVT::i64, Offset,
+                                    DAG.getConstant(8, MVT::i64));
+  Chain = DAG.getTruncStore(Offset.getValue(1), NewOffset, Tmp, NULL, 0,
+                            MVT::i32);
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
@@ -493,37 +521,15 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     break;
 
   case ISD::VAARG: {
-    SDOperand Chain = Op.getOperand(0);
-    SDOperand VAListP = Op.getOperand(1);
-    const Value *VAListS = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
-    
-    SDOperand Base = DAG.getLoad(MVT::i64, Chain, VAListP, VAListS, 0);
-    SDOperand Tmp = DAG.getNode(ISD::ADD, MVT::i64, VAListP,
-                                DAG.getConstant(8, MVT::i64));
-    SDOperand Offset = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Base.getValue(1),
-                                      Tmp, NULL, 0, MVT::i32);
-    SDOperand DataPtr = DAG.getNode(ISD::ADD, MVT::i64, Base, Offset);
-    if (Op.getValueType().isFloatingPoint())
-    {
-      //if fp && Offset < 6*8, then subtract 6*8 from DataPtr
-      SDOperand FPDataPtr = DAG.getNode(ISD::SUB, MVT::i64, DataPtr,
-                                        DAG.getConstant(8*6, MVT::i64));
-      SDOperand CC = DAG.getSetCC(MVT::i64, Offset,
-                                  DAG.getConstant(8*6, MVT::i64), ISD::SETLT);
-      DataPtr = DAG.getNode(ISD::SELECT, MVT::i64, CC, FPDataPtr, DataPtr);
-    }
+    SDOperand Chain, DataPtr;
+    LowerVAARG(Op.Val, Chain, DataPtr, DAG);
 
-    SDOperand NewOffset = DAG.getNode(ISD::ADD, MVT::i64, Offset,
-                                      DAG.getConstant(8, MVT::i64));
-    SDOperand Update = DAG.getTruncStore(Offset.getValue(1), NewOffset,
-                                         Tmp, NULL, 0, MVT::i32);
-    
     SDOperand Result;
     if (Op.getValueType() == MVT::i32)
-      Result = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Update, DataPtr,
+      Result = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Chain, DataPtr,
                               NULL, 0, MVT::i32);
     else
-      Result = DAG.getLoad(Op.getValueType(), Update, DataPtr, NULL, 0);
+      Result = DAG.getLoad(Op.getValueType(), Chain, DataPtr, NULL, 0);
     return Result;
   }
   case ISD::VACOPY: {
@@ -564,14 +570,15 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   return SDOperand();
 }
 
-SDOperand AlphaTargetLowering::CustomPromoteOperation(SDOperand Op, 
-                                                      SelectionDAG &DAG) {
-  assert(Op.getValueType() == MVT::i32 && 
-         Op.getOpcode() == ISD::VAARG &&
+SDNode *AlphaTargetLowering::ReplaceNodeResults(SDNode *N,
+                                                SelectionDAG &DAG) {
+  assert(N->getValueType(0) == MVT::i32 &&
+         N->getOpcode() == ISD::VAARG &&
          "Unknown node to custom promote!");
-  
-  // The code in LowerOperation already handles i32 vaarg
-  return LowerOperation(Op, DAG);
+
+  SDOperand Chain, DataPtr;
+  LowerVAARG(N, Chain, DataPtr, DAG);
+  return DAG.getLoad(N->getValueType(0), Chain, DataPtr, NULL, 0).Val;
 }
 
 

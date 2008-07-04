@@ -1418,9 +1418,9 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 }
 
 
-/// ExpandOperationResult - Provide custom lowering hooks for expanding
-/// operations.
-SDNode *ARMTargetLowering::ExpandOperationResult(SDNode *N, SelectionDAG &DAG) {
+/// ReplaceNodeResults - Provide custom lowering hooks for nodes with illegal
+/// result types.
+SDNode *ARMTargetLowering::ReplaceNodeResults(SDNode *N, SelectionDAG &DAG) {
   switch (N->getOpcode()) {
   default: assert(0 && "Don't know how to custom expand this!"); abort();
   case ISD::BIT_CONVERT:   return ExpandBIT_CONVERT(N, DAG);

@@ -5762,8 +5762,9 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
 }
 
-/// ExpandOperation - Provide custom lowering hooks for expanding operations.
-SDNode *X86TargetLowering::ExpandOperationResult(SDNode *N, SelectionDAG &DAG) {
+/// ReplaceNodeResults - Replace a node with an illegal result type
+/// with a new node built out of custom code.
+SDNode *X86TargetLowering::ReplaceNodeResults(SDNode *N, SelectionDAG &DAG) {
   switch (N->getOpcode()) {
   default: assert(0 && "Should not custom lower this!");
   case ISD::FP_TO_SINT:         return ExpandFP_TO_SINT(N, DAG);

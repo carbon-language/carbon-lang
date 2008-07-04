@@ -1236,7 +1236,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     AddLegalizedOperand(SDOperand(Node, 0), Result.getValue(0));
     AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
     return Result.getValue(Op.ResNo);
-  }      
+  }
   case ISD::ATOMIC_LOAD_ADD:
   case ISD::ATOMIC_LOAD_SUB:
   case ISD::ATOMIC_LOAD_AND:
@@ -1254,14 +1254,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     for (unsigned int x = 0; x < num_operands; ++x)
       Ops[x] = LegalizeOp(Node->getOperand(x));
     Result = DAG.UpdateNodeOperands(Result, &Ops[0], num_operands);
-    
+
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Custom:
       Result = TLI.LowerOperation(Result, DAG);
       break;
     case TargetLowering::Expand:
-      Result = SDOperand(TLI.ExpandOperationResult(Op.Val, DAG),0);
+      Result = SDOperand(TLI.ReplaceNodeResults(Op.Val, DAG),0);
       break;
     case TargetLowering::Legal:
       break;
@@ -1269,7 +1269,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     AddLegalizedOperand(SDOperand(Node, 0), Result.getValue(0));
     AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
     return Result.getValue(Op.ResNo);
-  }      
+  }
   case ISD::Constant: {
     ConstantSDNode *CN = cast<ConstantSDNode>(Node);
     unsigned opAction =
@@ -4399,7 +4399,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Tmp2 = Node->getOperand(1);   // Get the pointer.
     if (TLI.getOperationAction(ISD::VAARG, VT) == TargetLowering::Custom) {
       Tmp3 = DAG.getVAArg(VT, Tmp1, Tmp2, Node->getOperand(2));
-      Result = TLI.CustomPromoteOperation(Tmp3, DAG);
+      Result = TLI.LowerOperation(Tmp3, DAG);
     } else {
       const Value *V = cast<SrcValueSDNode>(Node->getOperand(2))->getValue();
       SDOperand VAList = DAG.getLoad(TLI.getPointerTy(), Tmp1, Tmp2, V, 0);
@@ -5640,15 +5640,15 @@ SDOperand SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDOperand LegalOp,
   
   // Okay, we found the operation and type to use.
   SDOperand Operation = DAG.getNode(OpToUse, NewOutTy, LegalOp);
-  
+
   // If the operation produces an invalid type, it must be custom lowered.  Use
   // the target lowering hooks to expand it.  Just keep the low part of the
   // expanded operation, we know that we're truncating anyway.
   if (getTypeAction(NewOutTy) == Expand) {
-    Operation = SDOperand(TLI.ExpandOperationResult(Operation.Val, DAG), 0);
+    Operation = SDOperand(TLI.ReplaceNodeResults(Operation.Val, DAG), 0);
     assert(Operation.Val && "Didn't return anything");
   }
-  
+
   // Truncate the result of the extended FP_TO_*INT operation to the desired
   // size.
   return DAG.getNode(ISD::TRUNCATE, DestVT, Operation);

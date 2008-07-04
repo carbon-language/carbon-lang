@@ -352,10 +352,10 @@ namespace llvm {
     ///
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
 
-    /// ExpandOperation - Custom lower the specified operation, splitting the
-    /// value into two pieces.
+    /// ReplaceNodeResults - Replace a node with an illegal result type
+    /// with a new node built out of custom code.
     ///
-    virtual SDNode *ExpandOperationResult(SDNode *N, SelectionDAG &DAG);
+    virtual SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG);
 
     
     virtual SDOperand PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;

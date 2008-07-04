@@ -32,21 +32,6 @@ void DAGTypeLegalizer::ScalarizeResult(SDNode *N, unsigned ResNo) {
         cerr << "\n");
   SDOperand R = SDOperand();
 
-  // FIXME: Custom lowering for scalarization?
-#if 0
-  // See if the target wants to custom expand this node.
-  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(0)) ==
-      TargetLowering::Custom) {
-    // If the target wants to, allow it to lower this itself.
-    if (SDNode *P = TLI.ExpandOperationResult(N, DAG)) {
-      // Everything that once used N now uses P.  We are guaranteed that the
-      // result value types of N and the result value types of P match.
-      ReplaceNodeWith(N, P);
-      return;
-    }
-  }
-#endif
-
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
@@ -167,13 +152,6 @@ bool DAGTypeLegalizer::ScalarizeOperand(SDNode *N, unsigned OpNo) {
         cerr << "\n");
   SDOperand Res(0, 0);
 
-  // FIXME: Should we support custom lowering for scalarization?
-#if 0
-  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(0)) ==
-      TargetLowering::Custom)
-    Res = TLI.LowerOperation(SDOperand(N, 0), DAG);
-#endif
-
   if (Res.Val == 0) {
     switch (N->getOpcode()) {
     default:
@@ -252,20 +230,6 @@ SDOperand DAGTypeLegalizer::ScalarizeVecOp_STORE(StoreSDNode *N, unsigned OpNo){
 void DAGTypeLegalizer::SplitResult(SDNode *N, unsigned ResNo) {
   DEBUG(cerr << "Split node result: "; N->dump(&DAG); cerr << "\n");
   SDOperand Lo, Hi;
-
-#if 0
-  // See if the target wants to custom expand this node.
-  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(0)) ==
-      TargetLowering::Custom) {
-    // If the target wants to, allow it to lower this itself.
-    if (SDNode *P = TLI.ExpandOperationResult(N, DAG)) {
-      // Everything that once used N now uses P.  We are guaranteed that the
-      // result value types of N and the result value types of P match.
-      ReplaceNodeWith(N, P);
-      return;
-    }
-  }
-#endif
 
   switch (N->getOpcode()) {
   default:
@@ -572,12 +536,6 @@ void DAGTypeLegalizer::SplitVecRes_FPOWI(SDNode *N, SDOperand &Lo,
 bool DAGTypeLegalizer::SplitOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Split node operand: "; N->dump(&DAG); cerr << "\n");
   SDOperand Res(0, 0);
-
-#if 0
-  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(0)) ==
-      TargetLowering::Custom)
-    Res = TLI.LowerOperation(SDOperand(N, 0), DAG);
-#endif
 
   if (Res.Val == 0) {
     switch (N->getOpcode()) {

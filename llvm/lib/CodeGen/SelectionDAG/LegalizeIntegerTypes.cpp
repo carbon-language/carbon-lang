@@ -34,6 +34,18 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   DEBUG(cerr << "Promote integer result: "; N->dump(&DAG); cerr << "\n");
   SDOperand Result = SDOperand();
 
+  // See if the target wants to custom expand this node.
+  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(ResNo)) ==
+      TargetLowering::Custom) {
+    // If the target wants to, allow it to lower this itself.
+    if (SDNode *P = TLI.ReplaceNodeResults(N, DAG)) {
+      // Everything that once used N now uses P.  We are guaranteed that the
+      // result value types of N and the result value types of P match.
+      ReplaceNodeWith(N, P);
+      return;
+    }
+  }
+
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
@@ -453,41 +465,48 @@ SDOperand DAGTypeLegalizer::PromoteIntRes_VAARG(SDNode *N) {
 /// node may need promotion or expansion as well as the specified one.
 bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Promote integer operand: "; N->dump(&DAG); cerr << "\n");
-  SDOperand Res;
-  switch (N->getOpcode()) {
-    default:
-#ifndef NDEBUG
-    cerr << "PromoteIntegerOperand Op #" << OpNo << ": ";
-    N->dump(&DAG); cerr << "\n";
-#endif
-    assert(0 && "Do not know how to promote this operator's operand!");
-    abort();
+  SDOperand Res(0, 0);
 
-  case ISD::ANY_EXTEND:  Res = PromoteIntOp_ANY_EXTEND(N); break;
-  case ISD::ZERO_EXTEND: Res = PromoteIntOp_ZERO_EXTEND(N); break;
-  case ISD::SIGN_EXTEND: Res = PromoteIntOp_SIGN_EXTEND(N); break;
-  case ISD::TRUNCATE:    Res = PromoteIntOp_TRUNCATE(N); break;
-  case ISD::FP_EXTEND:   Res = PromoteIntOp_FP_EXTEND(N); break;
-  case ISD::FP_ROUND:    Res = PromoteIntOp_FP_ROUND(N); break;
-  case ISD::SINT_TO_FP:
-  case ISD::UINT_TO_FP:  Res = PromoteIntOp_INT_TO_FP(N); break;
-  case ISD::BUILD_PAIR:  Res = PromoteIntOp_BUILD_PAIR(N); break;
+  if (TLI.getOperationAction(N->getOpcode(), N->getOperand(OpNo).getValueType())
+      == TargetLowering::Custom)
+    Res = TLI.LowerOperation(SDOperand(N, OpNo), DAG);
 
-  case ISD::BRCOND:      Res = PromoteIntOp_BRCOND(N, OpNo); break;
-  case ISD::BR_CC:       Res = PromoteIntOp_BR_CC(N, OpNo); break;
-  case ISD::SELECT:      Res = PromoteIntOp_SELECT(N, OpNo); break;
-  case ISD::SELECT_CC:   Res = PromoteIntOp_SELECT_CC(N, OpNo); break;
-  case ISD::SETCC:       Res = PromoteIntOp_SETCC(N, OpNo); break;
+  if (Res.Val == 0) {
+    switch (N->getOpcode()) {
+      default:
+  #ifndef NDEBUG
+      cerr << "PromoteIntegerOperand Op #" << OpNo << ": ";
+      N->dump(&DAG); cerr << "\n";
+  #endif
+      assert(0 && "Do not know how to promote this operator's operand!");
+      abort();
 
-  case ISD::STORE:       Res = PromoteIntOp_STORE(cast<StoreSDNode>(N),
-                                                    OpNo); break;
+    case ISD::ANY_EXTEND:  Res = PromoteIntOp_ANY_EXTEND(N); break;
+    case ISD::ZERO_EXTEND: Res = PromoteIntOp_ZERO_EXTEND(N); break;
+    case ISD::SIGN_EXTEND: Res = PromoteIntOp_SIGN_EXTEND(N); break;
+    case ISD::TRUNCATE:    Res = PromoteIntOp_TRUNCATE(N); break;
+    case ISD::FP_EXTEND:   Res = PromoteIntOp_FP_EXTEND(N); break;
+    case ISD::FP_ROUND:    Res = PromoteIntOp_FP_ROUND(N); break;
+    case ISD::SINT_TO_FP:
+    case ISD::UINT_TO_FP:  Res = PromoteIntOp_INT_TO_FP(N); break;
+    case ISD::BUILD_PAIR:  Res = PromoteIntOp_BUILD_PAIR(N); break;
 
-  case ISD::BUILD_VECTOR: Res = PromoteIntOp_BUILD_VECTOR(N); break;
-  case ISD::INSERT_VECTOR_ELT:
-    Res = PromoteIntOp_INSERT_VECTOR_ELT(N, OpNo);
-    break;
+    case ISD::BRCOND:      Res = PromoteIntOp_BRCOND(N, OpNo); break;
+    case ISD::BR_CC:       Res = PromoteIntOp_BR_CC(N, OpNo); break;
+    case ISD::SELECT:      Res = PromoteIntOp_SELECT(N, OpNo); break;
+    case ISD::SELECT_CC:   Res = PromoteIntOp_SELECT_CC(N, OpNo); break;
+    case ISD::SETCC:       Res = PromoteIntOp_SETCC(N, OpNo); break;
 
-  case ISD::MEMBARRIER:  Res = PromoteIntOp_MEMBARRIER(N); break;
+    case ISD::STORE:       Res = PromoteIntOp_STORE(cast<StoreSDNode>(N),
+                                                      OpNo); break;
+
+    case ISD::BUILD_VECTOR: Res = PromoteIntOp_BUILD_VECTOR(N); break;
+    case ISD::INSERT_VECTOR_ELT:
+      Res = PromoteIntOp_INSERT_VECTOR_ELT(N, OpNo);
+      break;
+
+    case ISD::MEMBARRIER:  Res = PromoteIntOp_MEMBARRIER(N); break;
+    }
   }
 
   // If the result is null, the sub-method took care of registering results etc.
@@ -777,10 +796,10 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
   Lo = Hi = SDOperand();
 
   // See if the target wants to custom expand this node.
-  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(0)) ==
-          TargetLowering::Custom) {
+  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(ResNo)) ==
+      TargetLowering::Custom) {
     // If the target wants to, allow it to lower this itself.
-    if (SDNode *P = TLI.ExpandOperationResult(N, DAG)) {
+    if (SDNode *P = TLI.ReplaceNodeResults(N, DAG)) {
       // Everything that once used N now uses P.  We are guaranteed that the
       // result value types of N and the result value types of P match.
       ReplaceNodeWith(N, P);
@@ -1626,7 +1645,7 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
 
   if (TLI.getOperationAction(N->getOpcode(), N->getOperand(OpNo).getValueType())
       == TargetLowering::Custom)
-    Res = TLI.LowerOperation(SDOperand(N, 0), DAG);
+    Res = TLI.LowerOperation(SDOperand(N, OpNo), DAG);
 
   if (Res.Val == 0) {
     switch (N->getOpcode()) {

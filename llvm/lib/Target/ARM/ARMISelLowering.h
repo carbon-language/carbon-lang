@@ -76,7 +76,7 @@ namespace llvm {
     explicit ARMTargetLowering(TargetMachine &TM);
 
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
-    virtual SDNode *ExpandOperationResult(SDNode *N, SelectionDAG &DAG);
+    virtual SDNode *ReplaceNodeResults(SDNode *N, SelectionDAG &DAG);
         
     virtual SDOperand PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
     

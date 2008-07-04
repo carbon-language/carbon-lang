@@ -48,20 +48,17 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
         cerr << "\n");
   SDOperand R = SDOperand();
 
-  // FIXME: Custom lowering for float-to-int?
-#if 0
-  // See if the target wants to custom convert this node to an integer.
-  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(0)) ==
+  // See if the target wants to custom expand this node.
+  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(ResNo)) ==
       TargetLowering::Custom) {
     // If the target wants to, allow it to lower this itself.
-    if (SDNode *P = TLI.FloatToIntOperationResult(N, DAG)) {
+    if (SDNode *P = TLI.ReplaceNodeResults(N, DAG)) {
       // Everything that once used N now uses P.  We are guaranteed that the
       // result value types of N and the result value types of P match.
       ReplaceNodeWith(N, P);
       return;
     }
   }
-#endif
 
   switch (N->getOpcode()) {
   default:
@@ -315,12 +312,9 @@ bool DAGTypeLegalizer::SoftenFloatOperand(SDNode *N, unsigned OpNo) {
         cerr << "\n");
   SDOperand Res(0, 0);
 
-  // FIXME: Custom lowering for float-to-int?
-#if 0
   if (TLI.getOperationAction(N->getOpcode(), N->getOperand(OpNo).getValueType())
       == TargetLowering::Custom)
-    Res = TLI.LowerOperation(SDOperand(N, 0), DAG);
-#endif
+    Res = TLI.LowerOperation(SDOperand(N, OpNo), DAG);
 
   if (Res.Val == 0) {
     switch (N->getOpcode()) {
@@ -517,10 +511,10 @@ void DAGTypeLegalizer::ExpandFloatResult(SDNode *N, unsigned ResNo) {
   Lo = Hi = SDOperand();
 
   // See if the target wants to custom expand this node.
-  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(0)) ==
-          TargetLowering::Custom) {
+  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(ResNo)) ==
+      TargetLowering::Custom) {
     // If the target wants to, allow it to lower this itself.
-    if (SDNode *P = TLI.ExpandOperationResult(N, DAG)) {
+    if (SDNode *P = TLI.ReplaceNodeResults(N, DAG)) {
       // Everything that once used N now uses P.  We are guaranteed that the
       // result value types of N and the result value types of P match.
       ReplaceNodeWith(N, P);
@@ -742,7 +736,7 @@ bool DAGTypeLegalizer::ExpandFloatOperand(SDNode *N, unsigned OpNo) {
 
   if (TLI.getOperationAction(N->getOpcode(), N->getOperand(OpNo).getValueType())
       == TargetLowering::Custom)
-    Res = TLI.LowerOperation(SDOperand(N, 0), DAG);
+    Res = TLI.LowerOperation(SDOperand(N, OpNo), DAG);
 
   if (Res.Val == 0) {
     switch (N->getOpcode()) {
