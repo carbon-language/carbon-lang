@@ -337,7 +337,7 @@ public:
   void setObjCDeclQualifier(ObjCDeclQualifier DQVal) 
     { objcDeclQualifier = (ObjCDeclQualifier) (objcDeclQualifier | DQVal); }
   
-  const ObjCPropertyAttributeKind getPropertyAttributes() const 
+  ObjCPropertyAttributeKind getPropertyAttributes() const 
     { return ObjCPropertyAttributeKind(PropertyAttributes); }
   void setPropertyAttributes(ObjCPropertyAttributeKind PRVal) { 
     PropertyAttributes = 

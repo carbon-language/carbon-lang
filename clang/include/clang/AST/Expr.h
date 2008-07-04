@@ -177,10 +177,10 @@ public:
   ConstExprIterator& operator++() { ++I; return *this; }
   ConstExprIterator operator+(size_t i) { return I+i; }
   ConstExprIterator operator-(size_t i) { return I-i; }
-  Expr * const operator[](size_t idx) { return cast<Expr>(I[idx]); }
+  Expr * operator[](size_t idx) const { return cast<Expr>(I[idx]); }
   signed operator-(const ConstExprIterator& R) const { return I - R.I; }
-  Expr * const operator*() const { return cast<Expr>(*I); }
-  Expr * const operator->() const { return cast<Expr>(*I); }
+  Expr * operator*() const { return cast<Expr>(*I); }
+  Expr * operator->() const { return cast<Expr>(*I); }
   bool operator==(const ConstExprIterator& R) const { return I == R.I; }
   bool operator!=(const ConstExprIterator& R) const { return I != R.I; }
   bool operator>(const ConstExprIterator& R) const { return I > R.I; }
