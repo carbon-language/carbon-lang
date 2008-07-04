@@ -69,6 +69,16 @@ void CodeGenFunction::GenerateFunction(const Stmt *Body) {
   // Emit the function body.
   EmitStmt(Body);
   
+  // Emit debug descriptor for function end.
+  CGDebugInfo *DI = CGM.getDebugInfo(); 
+  if (DI) {
+    const CompoundStmt* s = dyn_cast<CompoundStmt>(Body);
+    if (s && s->getRBracLoc().isValid()) {
+      DI->setLocation(s->getRBracLoc());
+    }
+    DI->EmitRegionEnd(CurFn, Builder);
+  }
+ 
   // Emit a return for code that falls off the end. If insert point
   // is a dummy block with no predecessors then remove the block itself.
   llvm::BasicBlock *BB = Builder.GetInsertBlock();
@@ -109,6 +119,16 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   
   Builder.SetInsertPoint(EntryBB);
   
+  // Emit subprogram debug descriptor.
+  CGDebugInfo *DI = CGM.getDebugInfo();
+  if (DI) {
+    CompoundStmt* body = dyn_cast<CompoundStmt>(FD->getBody());
+    if (body && body->getLBracLoc().isValid()) {
+      DI->setLocation(body->getLBracLoc());
+    }
+    DI->EmitFunctionStart(FD, CurFn, Builder);
+  }
+
   // Emit allocs for param decls.  Give the LLVM Argument nodes names.
   llvm::Function::arg_iterator AI = CurFn->arg_begin();
   
