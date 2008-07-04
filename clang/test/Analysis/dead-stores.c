@@ -1,5 +1,5 @@
-// RUN: clang -warn-dead-stores -verify %s
-// RUN: clang -checker-simple -warn-dead-stores -verify %s
+// RUN: clang -warn-dead-stores -verify %s &&
+// RUN: clang -checker-simple -warn-dead-stores -verify %s &&
 // RUN: clang -warn-dead-stores -checker-simple -verify %s
 
 
