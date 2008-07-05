@@ -760,8 +760,12 @@ static bool LinkAlias(Module *Dest, const Module *Src,
         return Error(Err, "Alias Collision on '"  + SGA->getName()+
                      "': aliases have different aliasees");
     } else if (GlobalVariable *DGVar = dyn_cast_or_null<GlobalVariable>(DGV)) {
-      // The only allowed way is to link alias with external declaration.
-      if (DGVar->isDeclaration()) {
+      // The only allowed way is to link alias with external declaration or weak
+      // symbol..
+      if (DGVar->isDeclaration() ||
+          DGVar->hasWeakLinkage() ||
+          DGVar->hasLinkOnceLinkage() ||
+          DGVar->hasCommonLinkage()) {
         // But only if aliasee is global too...
         if (!isa<GlobalVariable>(DAliasee))
           return Error(Err, "Global-Alias Collision on '" + SGA->getName() +
@@ -788,8 +792,12 @@ static bool LinkAlias(Module *Dest, const Module *Src,
         return Error(Err, "Global-Alias Collision on '" + SGA->getName() +
                      "': symbol multiple defined");
     } else if (Function *DF = dyn_cast_or_null<Function>(DGV)) {
-      // The only allowed way is to link alias with external declaration.
-      if (DF->isDeclaration()) {
+      // The only allowed way is to link alias with external declaration or weak
+      // symbol...
+      if (DF->isDeclaration() ||
+          DF->hasWeakLinkage() ||
+          DF->hasLinkOnceLinkage() ||
+          DF->hasCommonLinkage()) {
         // But only if aliasee is function too...
         if (!isa<Function>(DAliasee))
           return Error(Err, "Function-Alias Collision on '" + SGA->getName() +
@@ -940,14 +948,19 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       ValueMap[SF] = NewDF;
       continue;
     } else if (GlobalAlias *DGA = dyn_cast<GlobalAlias>(DGV)) {
-      // SF is global, but DF is alias. The only valid mapping is when SF is
-      // external declaration, which is effectively a no-op.
-      if (!SF->isDeclaration())
+      // SF is function, but DF is alias.
+      // The only valid mappings are:
+      // - SF is external declaration, which is effectively a no-op.
+      // - SF is weak, when we just need to throw SF out.
+      if (!SF->isDeclaration() &&
+          !SF->hasWeakLinkage() &&
+          !SF->hasLinkOnceLinkage() &&
+          !SF->hasCommonLinkage())
         return Error(Err, "Function-Alias Collision on '" + SF->getName() +
                      "': symbol multiple defined");
 
       // Make sure to remember this mapping...
-      ValueMap[SF] = DGA;
+      ValueMap[SF] = ConstantExpr::getBitCast(DGA, SF->getType());
       continue;
     }
 
