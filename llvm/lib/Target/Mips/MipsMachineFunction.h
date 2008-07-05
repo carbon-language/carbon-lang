@@ -25,12 +25,12 @@ namespace llvm {
 class MipsFunctionInfo : public MachineFunctionInfo {
 
 private:
-  /// Holds for each function where on the stack 
-  /// the Frame Pointer must be saved
+  /// Holds for each function where on the stack the Frame Pointer must be 
+  /// saved.
   int FPStackOffset;
 
-  /// Holds for each function where on the stack 
-  /// the Return Address must be saved
+  /// Holds for each function where on the stack the Return Address must be 
+  /// saved.
   int RAStackOffset;
 
   /// MipsFIHolder - Holds a FrameIndex and it's Stack Pointer Offset
@@ -43,31 +43,34 @@ private:
       : FI(FrameIndex), SPOffset(StackPointerOffset) {}
   };
 
-  /// When PIC is used the GP must be saved on the stack
-  /// on the function prologue and must be reloaded from this
-  /// stack location after every call. A reference to its stack
-  /// location and frame index must be kept to be used on
-  /// emitPrologue and processFunctionBeforeFrameFinalized.
+  /// When PIC is used the GP must be saved on the stack on the function 
+  /// prologue and must be reloaded from this stack location after every 
+  /// call. A reference to its stack location and frame index must be kept 
+  /// to be used on emitPrologue and processFunctionBeforeFrameFinalized.
   MipsFIHolder GPHolder;
 
-  // On LowerFORMAL_ARGUMENTS the stack size is unknown,
-  // so the Stack Pointer Offset calculation of "not in 
-  // register arguments" must be postponed to emitPrologue. 
+  // On LowerFORMAL_ARGUMENTS the stack size is unknown, so the Stack 
+  // Pointer Offset calculation of "not in register arguments" must be 
+  // postponed to emitPrologue. 
   SmallVector<MipsFIHolder, 16> FnLoadArgs;
   bool HasLoadArgs;
 
-  // When VarArgs, we must write registers back to caller
-  // stack, preserving on register arguments. Since the 
-  // stack size is unknown on LowerFORMAL_ARGUMENTS,
-  // the Stack Pointer Offset calculation must be
+  // When VarArgs, we must write registers back to caller stack, preserving 
+  // on register arguments. Since the stack size is unknown on 
+  // LowerFORMAL_ARGUMENTS, the Stack Pointer Offset calculation must be
   // postponed to emitPrologue. 
   SmallVector<MipsFIHolder, 4> FnStoreVarArgs;
   bool HasStoreVarArgs;
 
+  /// SRetReturnReg - Some subtargets require that sret lowering includes
+  /// returning the value of the returned struct in a register. This field
+  /// holds the virtual register into which the sret argument is passed.
+  unsigned SRetReturnReg;
+
 public:
   MipsFunctionInfo(MachineFunction& MF) 
-  : FPStackOffset(0), RAStackOffset(0), GPHolder(-1,-1),
-    HasLoadArgs(false), HasStoreVarArgs(false)
+  : FPStackOffset(0), RAStackOffset(0), GPHolder(-1,-1), HasLoadArgs(false),
+    HasStoreVarArgs(false), SRetReturnReg(0)
   {}
 
   int getFPStackOffset() const { return FPStackOffset; }
@@ -109,6 +112,8 @@ public:
       MFI->setObjectOffset( FnStoreVarArgs[i].FI, FnStoreVarArgs[i].SPOffset );
   }
 
+  unsigned getSRetReturnReg() const { return SRetReturnReg; }
+  void setSRetReturnReg(unsigned Reg) { SRetReturnReg = Reg; }
 };
 
 } // end of namespace llvm

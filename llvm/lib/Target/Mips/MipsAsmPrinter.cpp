@@ -62,6 +62,8 @@ namespace {
     void printOperand(const MachineInstr *MI, int opNum);
     void printMemOperand(const MachineInstr *MI, int opNum, 
                          const char *Modifier = 0);
+    void printFCCOperand(const MachineInstr *MI, int opNum, 
+                         const char *Modifier = 0);
 
     unsigned int getSavedRegsBitmask(bool isFloat, MachineFunction &MF);
     void printHex32(unsigned int Value);
@@ -426,6 +428,13 @@ printMemOperand(const MachineInstr *MI, int opNum, const char *Modifier)
   O << "(";
   printOperand(MI, opNum+1);
   O << ")";
+}
+
+void MipsAsmPrinter::
+printFCCOperand(const MachineInstr *MI, int opNum, const char *Modifier) 
+{
+  const MachineOperand& MO = MI->getOperand(opNum);
+  O << Mips::MipsFCCToString((Mips::CondCode)MO.getImm()); 
 }
 
 bool MipsAsmPrinter::

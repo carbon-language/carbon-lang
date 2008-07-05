@@ -24,6 +24,45 @@ namespace Mips {
 
   // Mips Condition Codes
   enum CondCode {
+    // To be used with float branch True
+    FCOND_F,
+    FCOND_UN,
+    FCOND_EQ,
+    FCOND_UEQ,
+    FCOND_OLT,
+    FCOND_ULT,
+    FCOND_OLE,
+    FCOND_ULE,
+    FCOND_SF,
+    FCOND_NGLE,
+    FCOND_SEQ,
+    FCOND_NGL,
+    FCOND_LT,
+    FCOND_NGE,
+    FCOND_LE,
+    FCOND_NGT,
+
+    // To be used with float branch False
+    // This conditions have the same mnemonic as the
+    // above ones, but are used with a branch False;
+    FCOND_T,
+    FCOND_OR,
+    FCOND_NEQ,
+    FCOND_OGL,
+    FCOND_UGE,
+    FCOND_OGE,
+    FCOND_UGT,
+    FCOND_OGT,
+    FCOND_ST,
+    FCOND_GLE,
+    FCOND_SNE,
+    FCOND_GL,
+    FCOND_NLT,
+    FCOND_GE,
+    FCOND_NLE,
+    FCOND_GT,
+
+    // Only integer conditions
     COND_E,
     COND_GZ,
     COND_GEZ,
@@ -40,6 +79,45 @@ namespace Mips {
   /// e.g. turning COND_E to COND_NE.
   CondCode GetOppositeBranchCondition(Mips::CondCode CC);
 
+  /// MipsCCToString - Map each FP condition code to its string
+  inline static const char *MipsFCCToString(Mips::CondCode CC) 
+  {
+    switch (CC) {
+      default: assert(0 && "Unknown condition code");
+      case FCOND_F:
+      case FCOND_T:   return "f";
+      case FCOND_UN:
+      case FCOND_OR:  return "un";
+      case FCOND_EQ: 
+      case FCOND_NEQ: return "eq";
+      case FCOND_UEQ:
+      case FCOND_OGL: return "ueq";
+      case FCOND_OLT:
+      case FCOND_UGE: return "olt";
+      case FCOND_ULT:
+      case FCOND_OGE: return "ult";
+      case FCOND_OLE:
+      case FCOND_UGT: return "ole";
+      case FCOND_ULE:
+      case FCOND_OGT: return "ule";
+      case FCOND_SF:
+      case FCOND_ST:  return "sf";
+      case FCOND_NGLE:
+      case FCOND_GLE: return "ngle";
+      case FCOND_SEQ:
+      case FCOND_SNE: return "seq";
+      case FCOND_NGL:
+      case FCOND_GL:  return "ngl";
+      case FCOND_LT:
+      case FCOND_NLT: return "lt";
+      case FCOND_NGE:
+      case FCOND_GE:  return "ge";
+      case FCOND_LE:
+      case FCOND_NLE: return "nle";
+      case FCOND_NGT:
+      case FCOND_GT:  return "gt";
+    }
+  }
 }
 
 class MipsInstrInfo : public TargetInstrInfoImpl {

@@ -17,10 +17,16 @@ include "MipsInstrFormats.td"
 // Mips profiles and nodes
 //===----------------------------------------------------------------------===//
 
+def SDT_MipsRet          : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
+def SDT_MipsJmpLink      : SDTypeProfile<0, 1, [SDTCisVT<0, iPTR>]>;
+def SDT_MipsSelectCC     : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, 
+                                         SDTCisSameAs<1, 2>, SDTCisInt<3>]>;
+def SDT_MipsCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>]>;
+def SDT_MipsCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
+
 // Call
-def SDT_MipsJmpLink : SDTypeProfile<0, 1, [SDTCisVT<0, iPTR>]>;
-def MipsJmpLink     : SDNode<"MipsISD::JmpLink",SDT_MipsJmpLink, [SDNPHasChain,
-                             SDNPOutFlag]>;
+def MipsJmpLink : SDNode<"MipsISD::JmpLink",SDT_MipsJmpLink, [SDNPHasChain,
+                         SDNPOutFlag]>;
 
 // Hi and Lo nodes are used to handle global addresses. Used on 
 // MipsISelLowering to lower stuff like GlobalAddress, ExternalSymbol 
@@ -29,29 +35,22 @@ def MipsHi  : SDNode<"MipsISD::Hi", SDTIntUnaryOp, [SDNPOutFlag]>;
 def MipsLo  : SDNode<"MipsISD::Lo", SDTIntUnaryOp>;
 
 // Return
-def SDT_MipsRet : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
-def MipsRet     : SDNode<"MipsISD::Ret", SDT_MipsRet, [SDNPHasChain,
-                             SDNPOptInFlag]>;
+def MipsRet : SDNode<"MipsISD::Ret", SDT_MipsRet, [SDNPHasChain, 
+                     SDNPOptInFlag]>;
 
 // These are target-independent nodes, but have target-specific formats.
-def SDT_MipsCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>]>;
-def SDT_MipsCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>,
-                                         SDTCisVT<1, i32>]>;
+def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_MipsCallSeqStart,
+                           [SDNPHasChain, SDNPOutFlag]>;
+def callseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_MipsCallSeqEnd,
+                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
-def callseq_start   : SDNode<"ISD::CALLSEQ_START", SDT_MipsCallSeqStart,
-                             [SDNPHasChain, SDNPOutFlag]>;
-def callseq_end     : SDNode<"ISD::CALLSEQ_END", SDT_MipsCallSeqEnd,
-                             [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
-
-// Select CC
-def SDT_MipsSelectCC : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, 
-                                            SDTCisSameAs<1, 2>, SDTCisInt<3>]>;
-def MipsSelectCC : SDNode<"MipsISD::SelectCC", SDT_MipsSelectCC>;
+// Select Condition Code
+def MipsSelectCC  : SDNode<"MipsISD::SelectCC", SDT_MipsSelectCC>;
 
 //===----------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.
 //===----------------------------------------------------------------------===//
-def IsStatic : Predicate<"TM.getRelocationModel() == Reloc::Static">;
+def IsAllegrex : Predicate<"Subtarget.isAllegrex()">;
 
 //===----------------------------------------------------------------------===//
 // Mips Operand, Complex Patterns and Transformations Definitions.
@@ -63,7 +62,6 @@ def calltarget  : Operand<i32>;
 def uimm16      : Operand<i32>;
 def simm16      : Operand<i32>;
 def shamt       : Operand<i32>;
-def addrlabel   : Operand<i32>;
 
 // Address operand
 def mem : Operand<i32> {
@@ -345,6 +343,12 @@ class EffectiveAddress<string instr_asm> :
      instr_asm,
      [(set CPURegs:$dst, addr:$addr)], IIAlu>;
 
+class SignExtInReg<bits<6> func, string instr_asm, ValueType vt>:
+  FR< 0x3f, func, (outs CPURegs:$dst), (ins CPURegs:$src),
+      !strconcat(instr_asm, " $dst, $src"),
+      [(set CPURegs:$dst, (sext_inreg CPURegs:$src, vt))], NoItinerary>;
+
+
 //===----------------------------------------------------------------------===//
 // Pseudo instructions
 //===----------------------------------------------------------------------===//
@@ -352,11 +356,11 @@ class EffectiveAddress<string instr_asm> :
 // As stack alignment is always done with addiu, we need a 16-bit immediate
 let Defs = [SP], Uses = [SP] in {
 def ADJCALLSTACKDOWN : MipsPseudo<(outs), (ins uimm16:$amt),
-                                      "!ADJCALLSTACKDOWN $amt",
-                                      [(callseq_start imm:$amt)]>;
+                                  "!ADJCALLSTACKDOWN $amt",
+                                  [(callseq_start imm:$amt)]>;
 def ADJCALLSTACKUP   : MipsPseudo<(outs), (ins uimm16:$amt1, uimm16:$amt2),
-                                      "!ADJCALLSTACKUP $amt1",
-                                      [(callseq_end imm:$amt1, imm:$amt2)]>;
+                                  "!ADJCALLSTACKUP $amt1",
+                                  [(callseq_end imm:$amt1, imm:$amt2)]>;
 }
 
 // When handling PIC code the assembler needs .cpload and .cprestore
@@ -364,10 +368,10 @@ def ADJCALLSTACKUP   : MipsPseudo<(outs), (ins uimm16:$amt1, uimm16:$amt2),
 // are used, we have the same behavior, but get also a bunch of warnings
 // from the assembler.
 def CPLOAD : MipsPseudo<(outs), (ins CPURegs:$reg),
-                            ".set noreorder\n\t.cpload $reg\n\t.set reorder\n", 
-                            []>;
+                        ".set noreorder\n\t.cpload $reg\n\t.set reorder\n", 
+                        []>;
 def CPRESTORE : MipsPseudo<(outs), (ins uimm16:$loc),
-                               ".cprestore $loc\n", []>;
+                           ".cprestore $loc\n", []>;
 
 // The supported Mips ISAs dont have any instruction close to the SELECT_CC 
 // operation. The solution is to create a Mips pseudo SELECT_CC instruction
@@ -474,19 +478,6 @@ def MFLO    : MoveFromTo<0x12, "mflo">;
 def MTHI    : MoveFromTo<0x11, "mthi">;
 def MTLO    : MoveFromTo<0x13, "mtlo">;
 
-// Count Leading
-// CLO/CLZ are part of the newer MIPS32(tm) instruction
-// set and not older Mips I keep this for future use
-// though. 
-//def CLO     : CountLeading<0x21, "clo">;
-//def CLZ     : CountLeading<0x20, "clz">;
-
-// MADD*/MSUB* are not part of MipsI either.
-//def MADD    : MArithR<0x00, "madd">;
-//def MADDU   : MArithR<0x01, "maddu">;
-//def MSUB    : MArithR<0x04, "msub">;
-//def MSUBU   : MArithR<0x05, "msubu">;
-
 // No operation
 let addr=0 in
 def NOP     : FJ<0, (outs), (ins), "nop", [], IIAlu>;
@@ -505,6 +496,27 @@ let isReturn=1, isTerminator=1, hasDelaySlot=1,
 // add op with mem ComplexPattern is used and the stack address copy
 // can be matched. It's similar to Sparc LEA_ADDRi
 def LEA_ADDiu : EffectiveAddress<"addiu $dst, ${addr:stackloc}">;
+
+// Count Leading
+// CLO/CLZ are part of the newer MIPS32(tm) instruction
+// set and not older Mips I keep this for future use
+// though. 
+//def CLO     : CountLeading<0x21, "clo">;
+//def CLZ     : CountLeading<0x20, "clz">;
+
+// MADD*/MSUB* are not part of MipsI either.
+//def MADD    : MArithR<0x00, "madd">;
+//def MADDU   : MArithR<0x01, "maddu">;
+//def MSUB    : MArithR<0x04, "msub">;
+//def MSUBU   : MArithR<0x05, "msubu">;
+
+let Predicates = [IsAllegrex] in {
+  let shamt = 0x10, rs = 0 in 
+    def SEB : SignExtInReg<0x21, "seb", i8>;
+
+  let shamt = 0x18, rs = 0 in 
+    def SEH : SignExtInReg<0x20, "seh", i16>;
+}
 
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions
@@ -546,7 +558,7 @@ def : Pat<(MipsLo tjumptable:$in), (ADDiu ZERO, tjumptable:$in)>;
 def : Pat<(add CPURegs:$hi, (MipsLo tjumptable:$lo)),
           (ADDiu CPURegs:$hi, tjumptable:$lo)>;
 
-// Mips does not have not, so we increase the operation
+// Mips does not have "not", so we expand our way
 def : Pat<(not CPURegs:$in),
           (NOR CPURegs:$in, ZERO)>;
 
@@ -558,10 +570,7 @@ def : Pat<(i32 (extloadi16 addr:$src)), (LHu addr:$src)>;
 // peepholes
 def : Pat<(store (i32 0), addr:$dst), (SW ZERO, addr:$dst)>;
 
-///
-/// brcond patterns
-///
-
+// brcond patterns
 // direct match equal/notequal zero branches
 def : Pat<(brcond (setne CPURegs:$lhs, 0), bb:$dst),
           (BNE CPURegs:$lhs, ZERO, bb:$dst)>;
@@ -601,12 +610,8 @@ def : Pat<(brcond (setult CPURegs:$lhs, CPURegs:$rhs), bb:$dst),
 def : Pat<(brcond CPURegs:$cond, bb:$dst),
           (BNE CPURegs:$cond, ZERO, bb:$dst)>;
 
-///
 /// setcc patterns, only matched when there
 /// is no brcond following a setcc operation
-///
-
-// setcc 2 register operands
 def : Pat<(setle CPURegs:$lhs, CPURegs:$rhs),
           (XORi (SLT CPURegs:$rhs, CPURegs:$lhs), 1)>;
 def : Pat<(setule CPURegs:$lhs, CPURegs:$rhs),
@@ -630,8 +635,14 @@ def : Pat<(seteq CPURegs:$lhs, CPURegs:$rhs),
           (XORi (OR (SLT CPURegs:$lhs, CPURegs:$rhs),
                     (SLT CPURegs:$rhs, CPURegs:$lhs)), 1)>;
 
-// setcc reg/imm operands
 def : Pat<(setge CPURegs:$lhs, immSExt16:$rhs),
           (XORi (SLTi CPURegs:$lhs, immSExt16:$rhs), 1)>;
 def : Pat<(setuge CPURegs:$lhs, immZExt16:$rhs),
           (XORi (SLTiu CPURegs:$lhs, immZExt16:$rhs), 1)>;
+
+//===----------------------------------------------------------------------===//
+// Floating Point Support
+//===----------------------------------------------------------------------===//
+
+include "MipsInstrFPU.td"
+

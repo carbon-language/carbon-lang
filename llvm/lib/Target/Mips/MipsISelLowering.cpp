@@ -17,6 +17,7 @@
 #include "MipsISelLowering.h"
 #include "MipsMachineFunction.h"
 #include "MipsTargetMachine.h"
+#include "MipsSubtarget.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
@@ -44,6 +45,8 @@ getTargetNodeName(unsigned Opcode) const
     case MipsISD::Lo        : return "MipsISD::Lo";
     case MipsISD::Ret       : return "MipsISD::Ret";
     case MipsISD::SelectCC  : return "MipsISD::SelectCC";
+    case MipsISD::FPBrcond  : return "MipsISD::FPBrcond";
+    case MipsISD::FPCmp     : return "MipsISD::FPCmp";
     default                 : return NULL;
   }
 }
@@ -51,6 +54,8 @@ getTargetNodeName(unsigned Opcode) const
 MipsTargetLowering::
 MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM) 
 {
+  Subtarget = &TM.getSubtarget<MipsSubtarget>();
+
   // Mips does not have i1 type, so use i32 for
   // setcc operations results (slt, sgt, ...). 
   setSetCCResultContents(ZeroOrOneSetCCResult);
@@ -61,12 +66,24 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   // Set up the register classes
   addRegisterClass(MVT::i32, Mips::CPURegsRegisterClass);
 
+  // When dealing with single precision only, use libcalls
+  if (!Subtarget->isSingleFloat()) {
+    addRegisterClass(MVT::f32, Mips::AFGR32RegisterClass);
+    if (!Subtarget->isFP64bit())
+      addRegisterClass(MVT::f64, Mips::AFGR64RegisterClass);
+  } else 
+    addRegisterClass(MVT::f32, Mips::FGR32RegisterClass);
+
   // Custom
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
   setOperationAction(ISD::GlobalTLSAddress, MVT::i32, Custom);
   setOperationAction(ISD::RET, MVT::Other, Custom);
   setOperationAction(ISD::JumpTable, MVT::i32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
+  setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
+
+  if (Subtarget->isSingleFloat()) 
+    setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
 
   // Load extented operations for i1 types must be promoted 
   setLoadXAction(ISD::EXTLOAD,  MVT::i1,  Promote);
@@ -79,6 +96,11 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
   setOperationAction(ISD::SELECT,    MVT::i32,   Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
+
+  if (!Subtarget->isAllegrex()) {
+    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8, Expand);
+    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);
+  }
 
   // Mips not supported intrinsics.
   setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
@@ -323,7 +345,7 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG)
 /// LowerCCCCallTo - functions arguments are copied from virtual
 /// regs to (physical regs)/(stack frame), CALLSEQ_START and
 /// CALLSEQ_END are emitted.
-/// TODO: isVarArg, isTailCall, sret.
+/// TODO: isVarArg, isTailCall.
 SDOperand MipsTargetLowering::
 LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC) 
 {
@@ -351,10 +373,14 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
   Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(NumBytes, 
                                  getPointerTy()));
 
-  SmallVector<std::pair<unsigned, SDOperand>, 8> RegsToPass;
+  // With EABI is it possible to have 16 args on registers.
+  SmallVector<std::pair<unsigned, SDOperand>, 16> RegsToPass;
   SmallVector<SDOperand, 8> MemOpChains;
 
-  int LastStackLoc = 0;
+  // First/LastArgStackLoc contains the first/last 
+  // "at stack" argument location.
+  int LastArgStackLoc = 0;
+  unsigned FirstStackArgLoc = (Subtarget->isABI_EABI() ? 0 : 16);
 
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
@@ -385,14 +411,16 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
       continue;
     }
     
+    // Register cant get to this point...
     assert(VA.isMemLoc());
     
     // Create the frame index object for this incoming parameter
     // This guarantees that when allocating Local Area the firsts
-    // 16 bytes which are alwayes reserved won't be overwritten.
-    LastStackLoc = (16 + VA.getLocMemOffset());
+    // 16 bytes which are alwayes reserved won't be overwritten
+    // if O32 ABI is used. For EABI the first address is zero.
+    LastArgStackLoc = (FirstStackArgLoc + VA.getLocMemOffset());
     int FI = MFI->CreateFixedObject(VA.getValVT().getSizeInBits()/8,
-                                    LastStackLoc);
+                                    LastArgStackLoc);
 
     SDOperand PtrOff = DAG.getFrameIndex(FI,getPointerTy());
 
@@ -401,8 +429,8 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
     MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
   }
 
-  // Transform all store nodes into one single node because
-  // all store nodes are independent of each other.
+  // Transform all store nodes into one single node because all store
+  // nodes are independent of each other.
   if (!MemOpChains.empty())     
     Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, 
                         &MemOpChains[0], MemOpChains.size());
@@ -460,18 +488,18 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
   // emited CALL's to restore GP. 
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
       // Function can have an arbitrary number of calls, so 
-      // hold the LastStackLoc with the biggest offset.
+      // hold the LastArgStackLoc with the biggest offset.
       int FI;
       MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
-      if (LastStackLoc >= MipsFI->getGPStackOffset()) {
-        LastStackLoc = (!LastStackLoc) ? (16) : (LastStackLoc+4);
+      if (LastArgStackLoc >= MipsFI->getGPStackOffset()) {
+        LastArgStackLoc = (!LastArgStackLoc) ? (16) : (LastArgStackLoc+4);
         // Create the frame index only once. SPOffset here can be anything 
         // (this will be fixed on processFunctionBeforeFrameFinalized)
         if (MipsFI->getGPStackOffset() == -1) {
           FI = MFI->CreateFixedObject(4, 0);
           MipsFI->setGPFI(FI);
         }
-        MipsFI->setGPStackOffset(LastStackLoc);
+        MipsFI->setGPStackOffset(LastArgStackLoc);
       }
 
       // Reload GP value.
@@ -543,7 +571,7 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG)
 /// LowerCCCArguments - transform physical registers into
 /// virtual registers and generate load operations for
 /// arguments places on the stack.
-/// TODO: isVarArg, sret
+/// TODO: isVarArg
 SDOperand MipsTargetLowering::
 LowerCCCArguments(SDOperand Op, SelectionDAG &DAG) 
 {
@@ -566,8 +594,10 @@ LowerCCCArguments(SDOperand Op, SelectionDAG &DAG)
   CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
 
   CCInfo.AnalyzeFormalArguments(Op.Val, CC_Mips);
-  SmallVector<SDOperand, 8> ArgValues;
+  SmallVector<SDOperand, 16> ArgValues;
   SDOperand StackPtr;
+
+  unsigned FirstStackArgLoc = (Subtarget->isABI_EABI() ? 0 : 16);
 
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
 
@@ -579,9 +609,17 @@ LowerCCCArguments(SDOperand Op, SelectionDAG &DAG)
       TargetRegisterClass *RC;
             
       if (RegVT == MVT::i32)
-        RC = Mips::CPURegsRegisterClass;
-      else
-        assert(0 && "support only Mips::CPURegsRegisterClass");
+        RC = Mips::CPURegsRegisterClass; 
+      else if (RegVT == MVT::f32) {
+        if (Subtarget->isSingleFloat())
+          RC = Mips::FGR32RegisterClass;
+        else
+          RC = Mips::AFGR32RegisterClass;
+      } else if (RegVT == MVT::f64) {
+        if (!Subtarget->isSingleFloat()) 
+          RC = Mips::AFGR64RegisterClass;
+      } else  
+        assert(0 && "RegVT not supported by FORMAL_ARGUMENTS Lowering");
 
       // Transform the arguments stored on 
       // physical registers into virtual ones
@@ -605,8 +643,7 @@ LowerCCCArguments(SDOperand Op, SelectionDAG &DAG)
 
       // To meet ABI, when VARARGS are passed on registers, the registers
       // must have their values written to the caller stack frame. 
-      if (isVarArg) {
-
+      if ((isVarArg) && (Subtarget->isABI_O32())) {
         if (StackPtr.Val == 0)
           StackPtr = DAG.getRegister(StackReg, getPointerTy());
      
@@ -627,7 +664,8 @@ LowerCCCArguments(SDOperand Op, SelectionDAG &DAG)
         ArgValues.push_back(DAG.getStore(Root, ArgValue, PtrOff, NULL, 0));
       }
 
-    } else {
+    } else { // VA.isRegLoc()
+
       // sanity check
       assert(VA.isMemLoc());
       
@@ -639,14 +677,30 @@ LowerCCCArguments(SDOperand Op, SelectionDAG &DAG)
       // be used on emitPrologue) to avoid mis-calc of the first stack 
       // offset on PEI::calculateFrameObjectOffsets.
       // Arguments are always 32-bit.
-      int FI = MFI->CreateFixedObject(4, 0);
-      MipsFI->recordLoadArgsFI(FI, -(4+(16+VA.getLocMemOffset())));
+      unsigned ArgSize = VA.getLocVT().getSizeInBits()/8;
+      int FI = MFI->CreateFixedObject(ArgSize, 0);
+      MipsFI->recordLoadArgsFI(FI, -(ArgSize+
+        (FirstStackArgLoc + VA.getLocMemOffset())));
 
       // Create load nodes to retrieve arguments from the stack
       SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
       ArgValues.push_back(DAG.getLoad(VA.getValVT(), Root, FIN, NULL, 0));
     }
   }
+
+  // The mips ABIs for returning structs by value requires that we copy
+  // the sret argument into $v0 for the return. Save the argument into
+  // a virtual register so that we can access it from the return points.
+  if (DAG.getMachineFunction().getFunction()->hasStructRetAttr()) {
+    unsigned Reg = MipsFI->getSRetReturnReg();
+    if (!Reg) {
+      Reg = MF.getRegInfo().createVirtualRegister(getRegClassFor(MVT::i32));
+      MipsFI->setSRetReturnReg(Reg);
+    }
+    SDOperand Copy = DAG.getCopyToReg(DAG.getEntryNode(), Reg, ArgValues[0]);
+    Root = DAG.getNode(ISD::TokenFactor, MVT::Other, Copy, Root);
+  }
+
   ArgValues.push_back(Root);
 
   // Return the new list of results.
@@ -699,6 +753,23 @@ LowerRET(SDOperand Op, SelectionDAG &DAG)
     Flag = Chain.getValue(1);
   }
 
+  // The mips ABIs for returning structs by value requires that we copy
+  // the sret argument into $v0 for the return. We saved the argument into
+  // a virtual register in the entry block, so now we copy the value out
+  // and into $v0.
+  if (DAG.getMachineFunction().getFunction()->hasStructRetAttr()) {
+    MachineFunction &MF      = DAG.getMachineFunction();
+    MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+    unsigned Reg = MipsFI->getSRetReturnReg();
+
+    if (!Reg) 
+      assert(0 && "sret virtual register not created in the entry block");
+    SDOperand Val = DAG.getCopyFromReg(Chain, Reg, getPointerTy());
+
+    Chain = DAG.getCopyToReg(Chain, Mips::V0, Val, Flag);
+    Flag = Chain.getValue(1);
+  }
+
   // Return on Mips is always a "jr $ra"
   if (Flag.Val)
     return DAG.getNode(MipsISD::Ret, MVT::Other, 
@@ -717,19 +788,20 @@ LowerRET(SDOperand Op, SelectionDAG &DAG)
 MipsTargetLowering::ConstraintType MipsTargetLowering::
 getConstraintType(const std::string &Constraint) const 
 {
+  // Mips specific constrainy 
+  // GCC config/mips/constraints.md
+  //
+  // 'd' : An address register. Equivalent to r 
+  //       unless generating MIPS16 code. 
+  // 'y' : Equivalent to r; retained for 
+  //       backwards compatibility. 
+  // 'f' : Float Point registers.      
   if (Constraint.size() == 1) {
-    // Mips specific constrainy 
-    // GCC config/mips/constraints.md
-    //
-    // 'd' : An address register. Equivalent to r 
-    //       unless generating MIPS16 code. 
-    // 'y' : Equivalent to r; retained for 
-    //       backwards compatibility. 
-    //
     switch (Constraint[0]) {
       default : break;
       case 'd':     
       case 'y': 
+      case 'f':
         return C_RegisterClass;
         break;
     }
@@ -737,6 +809,9 @@ getConstraintType(const std::string &Constraint) const
   return TargetLowering::getConstraintType(Constraint);
 }
 
+/// getRegClassForInlineAsmConstraint - Given a constraint letter (e.g. "r"),
+/// return a list of registers that can be used to satisfy the constraint.
+/// This should only be used for C_RegisterClass constraints.
 std::pair<unsigned, const TargetRegisterClass*> MipsTargetLowering::
 getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const
 {
@@ -744,12 +819,23 @@ getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const
     switch (Constraint[0]) {
     case 'r':
       return std::make_pair(0U, Mips::CPURegsRegisterClass);
-      break;
+    case 'f':
+      if (VT == MVT::f32)
+        if (Subtarget->isSingleFloat())
+          return std::make_pair(0U, Mips::FGR32RegisterClass);
+        else
+          return std::make_pair(0U, Mips::AFGR32RegisterClass);
+      if (VT == MVT::f64)    
+        if ((!Subtarget->isSingleFloat()) && (!Subtarget->isFP64bit()))
+          return std::make_pair(0U, Mips::AFGR64RegisterClass);
     }
   }
   return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
 }
 
+/// Given a register class constraint, like 'r', if this corresponds directly
+/// to an LLVM register class, return a register of 0 and the register class
+/// pointer.
 std::vector<unsigned> MipsTargetLowering::
 getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                   MVT VT) const
@@ -763,15 +849,29 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
     // GCC Mips Constraint Letters
     case 'd':     
     case 'y': 
-      return make_vector<unsigned>(Mips::V0, Mips::V1, Mips::A0, 
-                                   Mips::A1, Mips::A2, Mips::A3, 
-                                   Mips::T0, Mips::T1, Mips::T2, 
-                                   Mips::T3, Mips::T4, Mips::T5, 
-                                   Mips::T6, Mips::T7, Mips::S0, 
-                                   Mips::S1, Mips::S2, Mips::S3, 
-                                   Mips::S4, Mips::S5, Mips::S6, 
-                                   Mips::S7, Mips::T8, Mips::T9, 0);
-      break;
+      return make_vector<unsigned>(Mips::T0, Mips::T1, Mips::T2, Mips::T3, 
+             Mips::T4, Mips::T5, Mips::T6, Mips::T7, Mips::S0, Mips::S1, 
+             Mips::S2, Mips::S3, Mips::S4, Mips::S5, Mips::S6, Mips::S7, 
+             Mips::T8, 0);
+
+    case 'f':
+      if (VT == MVT::f32)
+        if (Subtarget->isSingleFloat())
+          return make_vector<unsigned>(Mips::F2, Mips::F3, Mips::F4, Mips::F5,
+                 Mips::F6, Mips::F7, Mips::F8, Mips::F9, Mips::F10, Mips::F11,
+                 Mips::F20, Mips::F21, Mips::F22, Mips::F23, Mips::F24,
+                 Mips::F25, Mips::F26, Mips::F27, Mips::F28, Mips::F29,
+                 Mips::F30, Mips::F31, 0);
+        else
+          return make_vector<unsigned>(Mips::F2, Mips::F4, Mips::F6, Mips::F8, 
+                 Mips::F10, Mips::F20, Mips::F22, Mips::F24, Mips::F26, 
+                 Mips::F28, Mips::F30, 0);
+
+      if (VT == MVT::f64)    
+        if ((!Subtarget->isSingleFloat()) && (!Subtarget->isFP64bit()))
+          return make_vector<unsigned>(Mips::D1, Mips::D2, Mips::D3, Mips::D4, 
+                 Mips::D5, Mips::D10, Mips::D11, Mips::D12, Mips::D13, 
+                 Mips::D14, Mips::D15, 0);
   }
   return std::vector<unsigned>();
 }

@@ -34,8 +34,7 @@ createTargetAsmInfo() const
 // On function prologue, the stack is created by decrementing
 // its pointer. Once decremented, all references are done with positive
 // offset from the stack/frame pointer, so StackGrowsUp is used.
-// When using CodeModel::Large the behaviour 
-//
+// Using CodeModel::Large enables different CALL behavior.
 MipsTargetMachine::
 MipsTargetMachine(const Module &M, const std::string &FS, bool isLittle=false):
   Subtarget(*this, M, FS, isLittle), 
@@ -59,21 +58,32 @@ MipselTargetMachine(const Module &M, const std::string &FS) :
 unsigned MipsTargetMachine::
 getModuleMatchQuality(const Module &M) 
 {
-  // We strongly match "mips-*".
+  // We strongly match "mips*-*".
   std::string TT = M.getTargetTriple();
   if (TT.size() >= 5 && std::string(TT.begin(), TT.begin()+5) == "mips-")
     return 20;
   
+  if (TT.size() >= 13 && std::string(TT.begin(), 
+      TT.begin()+13) == "mipsallegrex-")
+    return 20;
+
   return 0;
 }
 
-// return 0 and must specify -march to gen MIPSel code.
+// return 0 and must specify -march to gen MIPSEL code.
 unsigned MipselTargetMachine::
 getModuleMatchQuality(const Module &M) 
 {
-  // We strongly match "mipsel-*".
+  // We strongly match "mips*el-*".
   std::string TT = M.getTargetTriple();
   if (TT.size() >= 7 && std::string(TT.begin(), TT.begin()+7) == "mipsel-")
+    return 20;
+
+  if (TT.size() >= 15 && std::string(TT.begin(), 
+      TT.begin()+15) == "mipsallegrexel-")
+    return 20;
+
+  if (TT.size() == 3 && std::string(TT.begin(), TT.begin()+3) == "psp")
     return 20;
   
   return 0;

@@ -58,13 +58,12 @@ class VISIBILITY_HIDDEN MipsDAGToDAGISel : public SelectionDAGISel {
 
   /// Subtarget - Keep a pointer to the MipsSubtarget around so that we can
   /// make the right decision when generating code for different targets.
-  //TODO: add initialization on constructor
-  //const MipsSubtarget *Subtarget;
+  const MipsSubtarget &Subtarget;
  
 public:
-  MipsDAGToDAGISel(MipsTargetMachine &tm) : 
-        SelectionDAGISel(MipsLowering),
-        TM(tm), MipsLowering(*TM.getTargetLowering()) {}
+  MipsDAGToDAGISel(MipsTargetMachine &tm) : SelectionDAGISel(MipsLowering),
+  TM(tm), MipsLowering(*TM.getTargetLowering()), 
+  Subtarget(tm.getSubtarget<MipsSubtarget>()) {}
   
   virtual void InstructionSelect(SelectionDAG &SD);
 

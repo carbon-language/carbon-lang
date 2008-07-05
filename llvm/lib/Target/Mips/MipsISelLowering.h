@@ -40,6 +40,12 @@ namespace llvm {
       // Select CC Pseudo Instruction
       SelectCC,
 
+      // Float Point Branch Conditional
+      FPBrcond,
+
+      // Float Point Compare
+      FPCmp,
+
       // Return 
       Ret
     };
@@ -69,6 +75,9 @@ namespace llvm {
     MVT getSetCCResultType(const SDOperand &) const;
 
   private:
+    // Subtarget Info
+    const MipsSubtarget *Subtarget;
+
     // Lower Operand helpers
     SDOperand LowerCCCArguments(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC);

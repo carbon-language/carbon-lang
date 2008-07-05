@@ -32,14 +32,12 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
-//#include "MipsSubtarget.h"
 
 using namespace llvm;
 
-// TODO: add subtarget support
 MipsRegisterInfo::MipsRegisterInfo(const TargetInstrInfo &tii)
   : MipsGenRegisterInfo(Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),
-  TII(tii) {}
+    TII(tii) {}
 
 /// getRegisterNumbering - Given the enum value for some register, e.g.
 /// Mips::RA, return the number that it corresponds to (e.g. 31).
@@ -47,38 +45,38 @@ unsigned MipsRegisterInfo::
 getRegisterNumbering(unsigned RegEnum) 
 {
   switch (RegEnum) {
-    case Mips::ZERO : return 0;
-    case Mips::AT   : return 1;
-    case Mips::V0   : return 2;
-    case Mips::V1   : return 3;
-    case Mips::A0   : return 4;
-    case Mips::A1   : return 5;
-    case Mips::A2   : return 6;
-    case Mips::A3   : return 7;
-    case Mips::T0   : return 8;
-    case Mips::T1   : return 9;
-    case Mips::T2   : return 10;
-    case Mips::T3   : return 11;
-    case Mips::T4   : return 12;
-    case Mips::T5   : return 13;
-    case Mips::T6   : return 14;
-    case Mips::T7   : return 15;
-    case Mips::T8   : return 16;
-    case Mips::T9   : return 17;
-    case Mips::S0   : return 18;
-    case Mips::S1   : return 19;
-    case Mips::S2   : return 20;
-    case Mips::S3   : return 21;
-    case Mips::S4   : return 22;
-    case Mips::S5   : return 23;
-    case Mips::S6   : return 24;
-    case Mips::S7   : return 25;
-    case Mips::K0   : return 26;
-    case Mips::K1   : return 27;
-    case Mips::GP   : return 28;
-    case Mips::SP   : return 29;
-    case Mips::FP   : return 30;
-    case Mips::RA   : return 31;
+    case Mips::ZERO : case Mips::F0 : return 0;
+    case Mips::AT   : case Mips::F1 : return 1;
+    case Mips::V0   : case Mips::F2 : return 2;
+    case Mips::V1   : case Mips::F3 : return 3;
+    case Mips::A0   : case Mips::F4 : return 4;
+    case Mips::A1   : case Mips::F5 : return 5;
+    case Mips::A2   : case Mips::F6 : return 6;
+    case Mips::A3   : case Mips::F7 : return 7;
+    case Mips::T0   : case Mips::F8 : return 8;
+    case Mips::T1   : case Mips::F9 : return 9;
+    case Mips::T2   : case Mips::F10: return 10;
+    case Mips::T3   : case Mips::F11: return 11;
+    case Mips::T4   : case Mips::F12: return 12;
+    case Mips::T5   : case Mips::F13: return 13;
+    case Mips::T6   : case Mips::F14: return 14;
+    case Mips::T7   : case Mips::F15: return 15;
+    case Mips::T8   : case Mips::F16: return 16;
+    case Mips::T9   : case Mips::F17: return 17;
+    case Mips::S0   : case Mips::F18: return 18;
+    case Mips::S1   : case Mips::F19: return 19;
+    case Mips::S2   : case Mips::F20: return 20;
+    case Mips::S3   : case Mips::F21: return 21;
+    case Mips::S4   : case Mips::F22: return 22;
+    case Mips::S5   : case Mips::F23: return 23;
+    case Mips::S6   : case Mips::F24: return 24;
+    case Mips::S7   : case Mips::F25: return 25;
+    case Mips::K0   : case Mips::F26: return 26;
+    case Mips::K1   : case Mips::F27: return 27;
+    case Mips::GP   : case Mips::F28: return 28;
+    case Mips::SP   : case Mips::F29: return 29;
+    case Mips::FP   : case Mips::F30: return 30;
+    case Mips::RA   : case Mips::F31: return 31;
     default: assert(0 && "Unknown register number!");
   }    
   return 0; // Not reached
@@ -94,11 +92,12 @@ getRegisterNumbering(unsigned RegEnum)
 const unsigned* MipsRegisterInfo::
 getCalleeSavedRegs(const MachineFunction *MF) const 
 {
-  // Mips calle-save register range is $16-$26(s0-s7)
+  // Mips callee-save register range is $16-$23(s0-s7)
   static const unsigned CalleeSavedRegs[] = {  
     Mips::S0, Mips::S1, Mips::S2, Mips::S3, 
     Mips::S4, Mips::S5, Mips::S6, Mips::S7, 0
   };
+
   return CalleeSavedRegs;
 }
 
@@ -271,6 +270,8 @@ emitPrologue(MachineFunction &MF) const
   int FPOffset, RAOffset;
   
   // Allocate space for saved RA and FP when needed 
+  // FIXME: within 64-bit registers, change hardcoded
+  // sizes for RA and FP offsets.
   if ((hasFP(MF)) && (MFI->hasCalls())) {
     FPOffset = NumBytes;
     RAOffset = (NumBytes+4);
@@ -283,8 +284,7 @@ emitPrologue(MachineFunction &MF) const
     FPOffset = NumBytes;
     RAOffset = 0;
     NumBytes += 4;
-  } else {
-    // No calls and no fp.
+  } else { // No calls and no fp.
     RAOffset = FPOffset = 0;
   }
 
