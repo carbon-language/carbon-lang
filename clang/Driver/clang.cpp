@@ -1051,6 +1051,10 @@ static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
     AddPath("/usr/lib/gcc/powerpc-linux-gnu/4.2.3/include", System,
             false, false, false, Headers);
 
+    // Gentoo x86 stable
+    AddPath("/usr/lib/gcc/i686-pc-linux-gnu/4.1.2/include", System,
+            false, false, false, Headers);
+
     AddPath("/usr/include", System, false, false, false, Headers);
     AddPath("/System/Library/Frameworks", System, true, false, true, Headers);
     AddPath("/Library/Frameworks", System, true, false, true, Headers);
