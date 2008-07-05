@@ -1,4 +1,4 @@
-//===-- llvm/OperandTraits.h - OperandTraits class definition ---------------------*- C++ -*-===//
+//===-- llvm/OperandTraits.h - OperandTraits class definition ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
