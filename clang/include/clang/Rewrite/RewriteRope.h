@@ -116,7 +116,7 @@ namespace clang {
     // end iterator
     RopePieceBTreeIterator() : CurNode(0), CurPiece(0), CurChar(0) {}
     
-    const char operator*() const {
+    char operator*() const {
       return (*CurPiece)[CurChar];
     }
     
