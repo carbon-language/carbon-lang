@@ -6917,19 +6917,12 @@ bool InstCombiner::CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
   switch (I->getOpcode()) {
   case Instruction::Add:
   case Instruction::Sub:
+  case Instruction::Mul:
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
     // These operators can all arbitrarily be extended or truncated.
     return CanEvaluateInDifferentType(I->getOperand(0), Ty, CastOpc,
-                                      NumCastsRemoved) &&
-           CanEvaluateInDifferentType(I->getOperand(1), Ty, CastOpc,
-                                      NumCastsRemoved);
-
-  case Instruction::Mul:
-    // A multiply can be truncated by truncating its operands.
-    return Ty->getBitWidth() < OrigTy->getBitWidth() && 
-           CanEvaluateInDifferentType(I->getOperand(0), Ty, CastOpc,
                                       NumCastsRemoved) &&
            CanEvaluateInDifferentType(I->getOperand(1), Ty, CastOpc,
                                       NumCastsRemoved);
@@ -6970,7 +6963,13 @@ bool InstCombiner::CanEvaluateInDifferentType(Value *V, const IntegerType *Ty,
     if (I->getOpcode() == CastOpc)
       return true;
     break;
-      
+  case Instruction::Select: {
+    SelectInst *SI = cast<SelectInst>(I);
+    return CanEvaluateInDifferentType(SI->getTrueValue(), Ty, CastOpc,
+                                      NumCastsRemoved) &&
+           CanEvaluateInDifferentType(SI->getFalseValue(), Ty, CastOpc,
+                                      NumCastsRemoved);
+  }
   case Instruction::PHI: {
     // We can change a phi if we can change all operands.
     PHINode *PN = cast<PHINode>(I);
@@ -7028,6 +7027,12 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty,
     Res = CastInst::Create(cast<CastInst>(I)->getOpcode(), I->getOperand(0),
                            Ty);
     break;
+  case Instruction::Select: {
+    Value *True = EvaluateInDifferentType(I->getOperand(1), Ty, isSigned);
+    Value *False = EvaluateInDifferentType(I->getOperand(2), Ty, isSigned);
+    Res = SelectInst::Create(I->getOperand(0), True, False);
+    break;
+  }
   case Instruction::PHI: {
     PHINode *OPN = cast<PHINode>(I);
     PHINode *NPN = PHINode::Create(Ty);
