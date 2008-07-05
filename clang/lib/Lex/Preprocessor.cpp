@@ -433,6 +433,11 @@ static void InitializePredefinedMacros(Preprocessor &PP,
   DefineBuiltinMacro(Buf, "__FINITE_MATH_ONLY__=0");
   DefineBuiltinMacro(Buf, "__NO_INLINE__=1");
   DefineBuiltinMacro(Buf, "__PIC__=1");
+
+/* FIXME: this check should be moved to the configure process */
+#ifdef linux
+  DefineBuiltinMacro(Buf, "linux=1");
+#endif
   
   
   if (PP.getLangOptions().CPlusPlus) {
