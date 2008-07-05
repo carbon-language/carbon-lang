@@ -899,21 +899,30 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
   for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
     const Function *SF = I;   // SrcFunction
     
-    Function *DF = 0;
+    GlobalValue *DGV = 0;
     Value *MappedDF;
     
     // If this function is internal or has no name, it doesn't participate in
     // linkage.
     if (SF->hasName() && !SF->hasInternalLinkage()) {
       // Check to see if may have to link the function.
-      DF = Dest->getFunction(SF->getName());
-      if (DF && DF->hasInternalLinkage())
-        DF = 0;
+      DGV = Dest->getFunction(SF->getName());
     }
-    
+
+    // Check to see if may have to link the function with the alias
+    if (!DGV && SF->hasName() && !SF->hasInternalLinkage()) {
+      DGV = Dest->getNamedAlias(SF->getName());
+      if (DGV && DGV->getType() != SF->getType())
+        // If types don't agree due to opaque types, try to resolve them.
+        RecursiveResolveTypes(SF->getType(), DGV->getType());
+    }
+
+    if (DGV && DGV->hasInternalLinkage())
+      DGV = 0;
+
     // If there is no linkage to be performed, just bring over SF without
     // modifying it.
-    if (DF == 0) {
+    if (DGV == 0) {
       // Function does not already exist, simply insert an function signature
       // identical to SF into the dest module.
       Function *NewDF = Function::Create(SF->getFunctionType(),
@@ -930,9 +939,19 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // ... and remember this mapping...
       ValueMap[SF] = NewDF;
       continue;
+    } else if (GlobalAlias *DGA = dyn_cast<GlobalAlias>(DGV)) {
+      // SF is global, but DF is alias. The only valid mapping is when SF is
+      // external declaration, which is effectively a no-op.
+      if (!SF->isDeclaration())
+        return Error(Err, "Function-Alias Collision on '" + SF->getName() +
+                     "': symbol multiple defined");
+
+      // Make sure to remember this mapping...
+      ValueMap[SF] = DGA;
+      continue;
     }
-    
-    
+
+    Function* DF = cast<Function>(DGV);
     // If types don't agree because of opaque, try to resolve them.
     if (SF->getType() != DF->getType())
       RecursiveResolveTypes(SF->getType(), DF->getType());
