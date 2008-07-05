@@ -110,6 +110,15 @@ public:
   void setLinkage(LinkageTypes LT) { Linkage = LT; }
   LinkageTypes getLinkage() const { return Linkage; }
 
+  /// isWeakForLinker - Determines if symbol is weak for linker having weak or
+  /// linkonce or common or extweak LLVM linkage.
+  bool isWeakForLinker() const {
+    return (Linkage == WeakLinkage ||
+            Linkage == LinkOnceLinkage ||
+            Linkage == CommonLinkage ||
+            Linkage == ExternalWeakLinkage);
+  }
+
   /// copyAttributesFrom - copy all additional attributes (those not needed to
   /// create a GlobalValue) from the GlobalValue Src to this one.
   virtual void copyAttributesFrom(const GlobalValue *Src);

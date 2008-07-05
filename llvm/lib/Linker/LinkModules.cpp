@@ -483,11 +483,10 @@ static bool GetLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
             "': can only link appending global with another appending global!");
     LinkFromSrc = true; // Special cased.
     LT = Src->getLinkage();
-  } else if (Src->hasWeakLinkage() || Src->hasLinkOnceLinkage() ||
-             Src->hasCommonLinkage()) {
+  } else if (Src->isWeakForLinker()) {
     // At this point we know that Dest has LinkOnce, External*, Weak, Common,
     // or DLL* linkage.
-    if ((Dest->hasLinkOnceLinkage() && 
+    if ((Dest->hasLinkOnceLinkage() &&
           (Src->hasWeakLinkage() || Src->hasCommonLinkage())) ||
         Dest->hasExternalWeakLinkage()) {
       LinkFromSrc = true;
@@ -496,8 +495,7 @@ static bool GetLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
       LinkFromSrc = false;
       LT = Dest->getLinkage();
     }
-  } else if (Dest->hasWeakLinkage() || Dest->hasLinkOnceLinkage() ||
-             Dest->hasCommonLinkage()) {
+  } else if (Dest->isWeakForLinker()) {
     // At this point we know that Src has External* or DLL* linkage.
     if (Src->hasExternalWeakLinkage()) {
       LinkFromSrc = false;
@@ -762,10 +760,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
     } else if (GlobalVariable *DGVar = dyn_cast_or_null<GlobalVariable>(DGV)) {
       // The only allowed way is to link alias with external declaration or weak
       // symbol..
-      if (DGVar->isDeclaration() ||
-          DGVar->hasWeakLinkage() ||
-          DGVar->hasLinkOnceLinkage() ||
-          DGVar->hasCommonLinkage()) {
+      if (DGVar->isDeclaration() || DGVar->isWeakForLinker()) {
         // But only if aliasee is global too...
         if (!isa<GlobalVariable>(DAliasee))
           return Error(Err, "Global-Alias Collision on '" + SGA->getName() +
@@ -794,10 +789,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
     } else if (Function *DF = dyn_cast_or_null<Function>(DGV)) {
       // The only allowed way is to link alias with external declaration or weak
       // symbol...
-      if (DF->isDeclaration() ||
-          DF->hasWeakLinkage() ||
-          DF->hasLinkOnceLinkage() ||
-          DF->hasCommonLinkage()) {
+      if (DF->isDeclaration() || DF->isWeakForLinker()) {
         // But only if aliasee is function too...
         if (!isa<Function>(DAliasee))
           return Error(Err, "Function-Alias Collision on '" + SGA->getName() +
@@ -874,12 +866,10 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
           if (DGV->getInitializer() != SInit)
             return Error(Err, "Global Variable Collision on '" + SGV->getName() +
                          "': global variables have different initializers");
-        } else if (DGV->hasLinkOnceLinkage() || DGV->hasWeakLinkage() ||
-                   DGV->hasCommonLinkage()) {
+        } else if (DGV->isWeakForLinker()) {
           // Nothing is required, mapped values will take the new global
           // automatically.
-        } else if (SGV->hasLinkOnceLinkage() || SGV->hasWeakLinkage() ||
-                   SGV->hasCommonLinkage()) {
+        } else if (SGV->isWeakForLinker()) {
           // Nothing is required, mapped values will take the new global
           // automatically.
         } else if (DGV->hasAppendingLinkage()) {
@@ -952,10 +942,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // The only valid mappings are:
       // - SF is external declaration, which is effectively a no-op.
       // - SF is weak, when we just need to throw SF out.
-      if (!SF->isDeclaration() &&
-          !SF->hasWeakLinkage() &&
-          !SF->hasLinkOnceLinkage() &&
-          !SF->hasCommonLinkage())
+      if (!SF->isDeclaration() && !SF->isWeakForLinker())
         return Error(Err, "Function-Alias Collision on '" + SF->getName() +
                      "': symbol multiple defined");
 
@@ -1042,21 +1029,19 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
     }
     
     // At this point we know that DF has LinkOnce, Weak, or External* linkage.
-    if (SF->hasWeakLinkage() || SF->hasLinkOnceLinkage() ||
-        SF->hasCommonLinkage()) {
+    if (SF->isWeakForLinker()) {
       ValueMap[SF] = MappedDF;
 
       // Linkonce+Weak = Weak
       // *+External Weak = *
-      if ((DF->hasLinkOnceLinkage() && 
+      if ((DF->hasLinkOnceLinkage() &&
               (SF->hasWeakLinkage() || SF->hasCommonLinkage())) ||
           DF->hasExternalWeakLinkage())
         DF->setLinkage(SF->getLinkage());
       continue;
     }
     
-    if (DF->hasWeakLinkage() || DF->hasLinkOnceLinkage() ||
-        DF->hasCommonLinkage()) {
+    if (DF->isWeakForLinker()) {
       // At this point we know that SF has LinkOnce or External* linkage.
       ValueMap[SF] = MappedDF;
       
