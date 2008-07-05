@@ -48,6 +48,11 @@ public:
     Define(Defs, "__APPLE__");
     Define(Defs, "__MACH__");
 #endif
+
+/* FIXME. we may also need to distinguish between darwin and linux targets */
+#ifdef linux
+    Define(Defs, "linux");
+#endif
     
     if (1) {// -fobjc-gc controls this.
       Define(Defs, "__weak", "");
