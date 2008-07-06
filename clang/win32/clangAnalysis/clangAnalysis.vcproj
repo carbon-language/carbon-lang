@@ -171,6 +171,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\CheckObjCDealloc.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\DeadStores.cpp"
 				>
 			</File>

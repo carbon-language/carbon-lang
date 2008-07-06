@@ -195,6 +195,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\AST\ExprConstant.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\AST\ExprCXX.cpp"
 				>
 			</File>
