@@ -348,7 +348,7 @@ protected:
   explicit FoldingSetBucketIteratorImpl(void **Bucket);
   
   FoldingSetBucketIteratorImpl(void **Bucket, bool)
-    : Ptr(reinterpret_cast<void*>(Bucket)) {}
+    : Ptr(Bucket) {}
 
   void advance() {
     void *Probe = static_cast<FoldingSetNode*>(Ptr)->getNextInBucket();
