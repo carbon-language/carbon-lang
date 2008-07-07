@@ -606,16 +606,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     else
       OS << Reg.getName();
     OS << "\",\t\"";
-    if (!Reg.TheDef->getValueAsString("Name").empty()) {
-      OS << Reg.TheDef->getValueAsString("Name");
-    } else {
-      // Default to "name".
-      if (!Reg.TheDef->getValueAsString("AsmName").empty())
-        OS << Reg.TheDef->getValueAsString("AsmName");
-      else
-        OS << Reg.getName();
-    }
-    OS << "\",\t";
+    OS << Reg.getName() << "\",\t";
     if (RegisterAliases.count(Reg.TheDef))
       OS << Reg.getName() << "_AliasSet,\t";
     else
