@@ -16,8 +16,6 @@
 #ifndef LLVM_CODEGEN_MEMOPERAND_H
 #define LLVM_CODEGEN_MEMOPERAND_H
 
-#include "llvm/Support/MathExtras.h"
-
 namespace llvm {
 
 class Value;
@@ -50,8 +48,7 @@ public:
   /// MachineMemOperand - Construct an MachineMemOperand object with the
   /// specified address Value, flags, offset, size, and alignment.
   MachineMemOperand(const Value *v, unsigned int f, int64_t o, uint64_t s,
-                    unsigned int a)
-    : Offset(o), Size(s), V(v), Flags((f & 7) | ((Log2_32(a) + 1) << 3)) {}
+                    unsigned int a);
 
   /// getValue - Return the base address of the memory access.
   /// Special values are PseudoSourceValue::FPRel, PseudoSourceValue::SPRel,

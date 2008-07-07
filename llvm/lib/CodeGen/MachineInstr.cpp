@@ -23,6 +23,7 @@
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/LeakDetector.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
 #include <ostream>
 using namespace llvm;
@@ -236,6 +237,16 @@ void MachineOperand::print(std::ostream &OS, const TargetMachine *TM) const {
   default:
     assert(0 && "Unrecognized operand type");
   }
+}
+
+//===----------------------------------------------------------------------===//
+// MachineMemOperand Implementation
+//===----------------------------------------------------------------------===//
+
+MachineMemOperand::MachineMemOperand(const Value *v, unsigned int f,
+                                     int64_t o, uint64_t s, unsigned int a)
+  : Offset(o), Size(s), V(v),
+    Flags((f & 7) | ((Log2_32(a) + 1) << 3)) {
 }
 
 //===----------------------------------------------------------------------===//
