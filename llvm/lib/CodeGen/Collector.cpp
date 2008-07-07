@@ -360,7 +360,7 @@ void MachineCodeAnalysis::FindSafePoints(MachineFunction &MF) {
     for (MachineBasicBlock::iterator MI = BBI->begin(),
                                      ME = BBI->end(); MI != ME; ++MI)
       if (MI->getDesc().isCall())
-        VisitCallPoint(*MI);
+        VisitCallPoint(MI);
 }
 
 void MachineCodeAnalysis::FindStackOffsets(MachineFunction &MF) {
