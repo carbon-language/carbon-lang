@@ -25,8 +25,11 @@
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/alist.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
+#include "llvm/Support/Allocator.h"
+#include "llvm/Support/RecyclingAllocator.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 
@@ -40,9 +43,6 @@ class SDNode;
 class CompileUnitDesc;
 template <typename T> struct DenseMapInfo;
 template <typename T> struct simplify_type;
-template <typename T> struct ilist_traits;
-template<typename NodeTy, typename Traits> class iplist;
-template<typename NodeTy> class ilist_iterator;
 
 /// SDVTList - This represents a list of ValueType's that has been intern'd by
 /// a SelectionDAG.  Instances of this simple value class are returned by
@@ -1054,11 +1054,6 @@ private:
   /// Uses - List of uses for this SDNode.
   SDUse *Uses;
 
-  /// Prev/Next pointers - These pointers form the linked list of of the
-  /// AllNodes list in the current DAG.
-  SDNode *Prev, *Next;
-  friend struct ilist_traits<SDNode>;
-
   /// addUse - add SDUse to the list of uses.
   void addUse(SDUse &U) { U.addToList(&Uses); }
 
@@ -1268,7 +1263,6 @@ protected:
     
     ValueList = VTs.VTs;
     NumValues = VTs.NumVTs;
-    Prev = 0; Next = 0;
   }
 
   SDNode(unsigned Opc, SDVTList VTs, const SDUse *Ops, unsigned NumOps)
@@ -1286,7 +1280,6 @@ protected:
     
     ValueList = VTs.VTs;
     NumValues = VTs.NumVTs;
-    Prev = 0; Next = 0;
   }
 
   SDNode(unsigned Opc, SDVTList VTs)
@@ -1296,7 +1289,6 @@ protected:
     OperandList = 0;
     ValueList = VTs.VTs;
     NumValues = VTs.NumVTs;
-    Prev = 0; Next = 0;
   }
   
   /// InitOperands - Initialize the operands list of this node with the
@@ -2234,26 +2226,30 @@ template <> struct GraphTraits<SDNode*> {
   }
 };
 
-template<>
-struct ilist_traits<SDNode> {
-  static SDNode *getPrev(const SDNode *N) { return N->Prev; }
-  static SDNode *getNext(const SDNode *N) { return N->Next; }
-  
-  static void setPrev(SDNode *N, SDNode *Prev) { N->Prev = Prev; }
-  static void setNext(SDNode *N, SDNode *Next) { N->Next = Next; }
-  
-  static SDNode *createSentinel() {
-    return new SDNode(ISD::EntryToken, SDNode::getSDVTList(MVT::Other));
+/// LargestSDNode - The largest SDNode class.
+///
+typedef LoadSDNode LargestSDNode;
+
+// alist_traits specialization for pool-allocating SDNodes.
+template <>
+class alist_traits<SDNode, LargestSDNode> {
+  typedef alist_iterator<SDNode, LargestSDNode> iterator;
+
+public:
+  // Pool-allocate and recycle SDNodes.
+  typedef RecyclingAllocator<BumpPtrAllocator, SDNode, LargestSDNode>
+    AllocatorType;
+
+  // Allocate the allocator immediately inside the traits class.
+  AllocatorType Allocator;
+
+  void addNodeToList(SDNode* N) {}
+  void removeNodeFromList(SDNode* N) {}
+  void transferNodesFromList(alist_traits &, iterator, iterator) {}
+  void deleteNode(SDNode *N) {
+    N->~SDNode();
+    Allocator.Deallocate(N);
   }
-  static void destroySentinel(SDNode *N) { delete N; }
-  //static SDNode *createNode(const SDNode &V) { return new SDNode(V); }
-  
-  
-  void addNodeToList(SDNode *) {}
-  void removeNodeFromList(SDNode *) {}
-  void transferNodesFromList(iplist<SDNode, ilist_traits> &,
-                             const ilist_iterator<SDNode> &,
-                             const ilist_iterator<SDNode> &) {}
 };
 
 namespace ISD {

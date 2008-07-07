@@ -414,9 +414,9 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
   // also creates the initial PHI MachineInstrs, though none of the input
   // operands are populated.
   for (BB = Fn.begin(), EB = Fn.end(); BB != EB; ++BB) {
-    MachineBasicBlock *MBB = new MachineBasicBlock(BB);
+    MachineBasicBlock *MBB = mf.CreateMachineBasicBlock(BB);
     MBBMap[BB] = MBB;
-    MF.getBasicBlockList().push_back(MBB);
+    MF.push_back(MBB);
 
     // Create Machine PHI nodes for LLVM PHI nodes, lowering them as
     // appropriate.
@@ -1432,8 +1432,9 @@ void SelectionDAGLowering::FindMergedConditions(Value *Cond,
   
   //  Create TmpBB after CurBB.
   MachineFunction::iterator BBI = CurBB;
-  MachineBasicBlock *TmpBB = new MachineBasicBlock(CurBB->getBasicBlock());
-  CurBB->getParent()->getBasicBlockList().insert(++BBI, TmpBB);
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineBasicBlock *TmpBB = MF.CreateMachineBasicBlock(CurBB->getBasicBlock());
+  CurBB->getParent()->insert(++BBI, TmpBB);
   
   if (Opc == Instruction::Or) {
     // Codegen X | Y as:
@@ -1554,7 +1555,7 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
       // Okay, we decided not to do this, remove any inserted MBB's and clear
       // SwitchCases.
       for (unsigned i = 1, e = SwitchCases.size(); i != e; ++i)
-        CurMBB->getParent()->getBasicBlockList().erase(SwitchCases[i].ThisBB);
+        CurMBB->getParent()->erase(SwitchCases[i].ThisBB);
       
       SwitchCases.clear();
     }
@@ -1861,8 +1862,8 @@ bool SelectionDAGLowering::handleSmallSwitchRange(CaseRec& CR,
   for (CaseItr I = CR.Range.first, E = CR.Range.second; I != E; ++I) {
     MachineBasicBlock *FallThrough;
     if (I != E-1) {
-      FallThrough = new MachineBasicBlock(CurBlock->getBasicBlock());
-      CurMF->getBasicBlockList().insert(BBI, FallThrough);
+      FallThrough = CurMF->CreateMachineBasicBlock(CurBlock->getBasicBlock());
+      CurMF->insert(BBI, FallThrough);
     } else {
       // If the last case doesn't match, go to the default block.
       FallThrough = Default;
@@ -1945,8 +1946,8 @@ bool SelectionDAGLowering::handleJTSwitchCase(CaseRec& CR,
   // of the jump table, and jumping to it.  Update successor information;
   // we will either branch to the default case for the switch, or the jump
   // table.
-  MachineBasicBlock *JumpTableBB = new MachineBasicBlock(LLVMBB);
-  CurMF->getBasicBlockList().insert(BBI, JumpTableBB);
+  MachineBasicBlock *JumpTableBB = CurMF->CreateMachineBasicBlock(LLVMBB);
+  CurMF->insert(BBI, JumpTableBB);
   CR.CaseBB->addSuccessor(Default);
   CR.CaseBB->addSuccessor(JumpTableBB);
                 
@@ -2083,8 +2084,8 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
       (cast<ConstantInt>(CR.GE)->getSExtValue() + 1LL)) {
     TrueBB = LHSR.first->BB;
   } else {
-    TrueBB = new MachineBasicBlock(LLVMBB);
-    CurMF->getBasicBlockList().insert(BBI, TrueBB);
+    TrueBB = CurMF->CreateMachineBasicBlock(LLVMBB);
+    CurMF->insert(BBI, TrueBB);
     WorkList.push_back(CaseRec(TrueBB, C, CR.GE, LHSR));
   }
   
@@ -2097,8 +2098,8 @@ bool SelectionDAGLowering::handleBTSplitSwitchCase(CaseRec& CR,
       (cast<ConstantInt>(CR.LT)->getSExtValue() - 1LL)) {
     FalseBB = RHSR.first->BB;
   } else {
-    FalseBB = new MachineBasicBlock(LLVMBB);
-    CurMF->getBasicBlockList().insert(BBI, FalseBB);
+    FalseBB = CurMF->CreateMachineBasicBlock(LLVMBB);
+    CurMF->insert(BBI, FalseBB);
     WorkList.push_back(CaseRec(FalseBB,CR.LT,C,RHSR));
   }
 
@@ -2220,8 +2221,8 @@ bool SelectionDAGLowering::handleBitTestsSwitchCase(CaseRec& CR,
     DOUT << "Mask: " << CasesBits[i].Mask << ", Bits: " << CasesBits[i].Bits
          << ", BB: " << CasesBits[i].BB << "\n";
 
-    MachineBasicBlock *CaseBB = new MachineBasicBlock(LLVMBB);
-    CurMF->getBasicBlockList().insert(BBI, CaseBB);
+    MachineBasicBlock *CaseBB = CurMF->CreateMachineBasicBlock(LLVMBB);
+    CurMF->insert(BBI, CaseBB);
     BTC.push_back(SelectionDAGISel::BitTestCase(CasesBits[i].Mask,
                                                 CaseBB,
                                                 CasesBits[i].BB));
@@ -4877,8 +4878,7 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
       // Mark landing pad.
       FuncInfo.MBBMap[Invoke->getSuccessor(1)]->setIsLandingPad();
 
-  for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
-    SelectBasicBlock(I, MF, FuncInfo);
+  SelectAllBasicBlocks(Fn, MF, FuncInfo);
 
   // Add function live-ins to entry block live-in set.
   BasicBlock *EntryBB = &Fn.getEntryBlock();
@@ -5002,10 +5002,11 @@ static void CheckDAGForTailCallsAndFixThem(SelectionDAG &DAG,
  
   // Fix tail call attribute of CALL nodes.
   for (SelectionDAG::allnodes_iterator BE = DAG.allnodes_begin(),
-         BI = prior(DAG.allnodes_end()); BI != BE; --BI) {
+         BI = DAG.allnodes_end(); BI != BE; ) {
+    --BI;
     if (BI->getOpcode() == ISD::CALL) {
       SDOperand OpRet(Ret, 0);
-      SDOperand OpCall(static_cast<SDNode*>(BI), 0);
+      SDOperand OpCall(BI, 0);
       bool isMarkedTailCall = 
         cast<ConstantSDNode>(OpCall.getOperand(3))->getValue() != 0;
       // If CALL node has tail call attribute set to true and the call is not
@@ -5355,12 +5356,26 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   DEBUG(BB->dump());
 }  
 
+void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
+                                            FunctionLoweringInfo &FuncInfo) {
+  // Define AllNodes here so that memory allocation is reused for
+  // each basic block.
+  alist<SDNode, LargestSDNode> AllNodes;
+
+  for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
+    SelectBasicBlock(I, MF, FuncInfo, AllNodes);
+    AllNodes.clear();
+  }
+}
+
 void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
-                                        FunctionLoweringInfo &FuncInfo) {
+                                        FunctionLoweringInfo &FuncInfo,
+                                        alist<SDNode, LargestSDNode> &AllNodes) {
   std::vector<std::pair<MachineInstr*, unsigned> > PHINodesToUpdate;
   {
     SelectionDAG DAG(TLI, MF, FuncInfo, 
-                     getAnalysisToUpdate<MachineModuleInfo>());
+                     getAnalysisToUpdate<MachineModuleInfo>(),
+                     AllNodes);
     CurDAG = &DAG;
   
     // First step, lower LLVM code to some DAG.  This DAG may use operations and
@@ -5395,7 +5410,8 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     // Lower header first, if it wasn't already lowered
     if (!BitTestCases[i].Emitted) {
       SelectionDAG HSDAG(TLI, MF, FuncInfo, 
-                         getAnalysisToUpdate<MachineModuleInfo>());
+                         getAnalysisToUpdate<MachineModuleInfo>(),
+                         AllNodes);
       CurDAG = &HSDAG;
       SelectionDAGLowering HSDL(HSDAG, TLI, *AA, FuncInfo, GCI);
       // Set the current basic block to the mbb we wish to insert the code into
@@ -5409,7 +5425,8 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
 
     for (unsigned j = 0, ej = BitTestCases[i].Cases.size(); j != ej; ++j) {
       SelectionDAG BSDAG(TLI, MF, FuncInfo, 
-                         getAnalysisToUpdate<MachineModuleInfo>());
+                         getAnalysisToUpdate<MachineModuleInfo>(),
+                         AllNodes);
       CurDAG = &BSDAG;
       SelectionDAGLowering BSDL(BSDAG, TLI, *AA, FuncInfo, GCI);
       // Set the current basic block to the mbb we wish to insert the code into
@@ -5467,7 +5484,8 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     // Lower header first, if it wasn't already lowered
     if (!JTCases[i].first.Emitted) {
       SelectionDAG HSDAG(TLI, MF, FuncInfo, 
-                         getAnalysisToUpdate<MachineModuleInfo>());
+                         getAnalysisToUpdate<MachineModuleInfo>(),
+                         AllNodes);
       CurDAG = &HSDAG;
       SelectionDAGLowering HSDL(HSDAG, TLI, *AA, FuncInfo, GCI);
       // Set the current basic block to the mbb we wish to insert the code into
@@ -5480,7 +5498,8 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     }
     
     SelectionDAG JSDAG(TLI, MF, FuncInfo, 
-                       getAnalysisToUpdate<MachineModuleInfo>());
+                       getAnalysisToUpdate<MachineModuleInfo>(),
+                       AllNodes);
     CurDAG = &JSDAG;
     SelectionDAGLowering JSDL(JSDAG, TLI, *AA, FuncInfo, GCI);
     // Set the current basic block to the mbb we wish to insert the code into
@@ -5529,7 +5548,8 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   // additional DAGs necessary.
   for (unsigned i = 0, e = SwitchCases.size(); i != e; ++i) {
     SelectionDAG SDAG(TLI, MF, FuncInfo, 
-                      getAnalysisToUpdate<MachineModuleInfo>());
+                      getAnalysisToUpdate<MachineModuleInfo>(),
+                      AllNodes);
     CurDAG = &SDAG;
     SelectionDAGLowering SDL(SDAG, TLI, *AA, FuncInfo, GCI);
     

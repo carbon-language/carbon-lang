@@ -178,8 +178,11 @@ protected:
                     int64_t DesiredMaskS) const;
   
 private:
+  void SelectAllBasicBlocks(Function &Fn, MachineFunction &MF,
+                            FunctionLoweringInfo &FuncInfo);
   void SelectBasicBlock(BasicBlock *BB, MachineFunction &MF,
-                        FunctionLoweringInfo &FuncInfo);
+                        FunctionLoweringInfo &FuncInfo,
+                        alist<SDNode, LargestSDNode> &AllNodes);
 
   void BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
            std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,

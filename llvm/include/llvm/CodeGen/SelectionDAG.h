@@ -17,7 +17,6 @@
 
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/ilist.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 
 #include <list>
@@ -55,7 +54,7 @@ class SelectionDAG {
   SDOperand Root, EntryNode;
 
   /// AllNodes - A linked list of nodes in the current DAG.
-  ilist<SDNode> AllNodes;
+  alist<SDNode, LargestSDNode> &AllNodes;
 
   /// CSEMap - This structure is used to memoize nodes, automatically performing
   /// CSE with existing nodes with a duplicate is requested.
@@ -63,8 +62,9 @@ class SelectionDAG {
 
 public:
   SelectionDAG(TargetLowering &tli, MachineFunction &mf, 
-               FunctionLoweringInfo &fli, MachineModuleInfo *mmi)
-  : TLI(tli), MF(mf), FLI(fli), MMI(mmi) {
+               FunctionLoweringInfo &fli, MachineModuleInfo *mmi,
+               alist<SDNode, LargestSDNode> &NodePool)
+  : TLI(tli), MF(mf), FLI(fli), MMI(mmi), AllNodes(NodePool) {
     EntryNode = Root = getNode(ISD::EntryToken, MVT::Other);
   }
   ~SelectionDAG();
@@ -99,13 +99,15 @@ public:
   ///
   void setGraphColor(const SDNode *N, const char *Color);
 
-  typedef ilist<SDNode>::const_iterator allnodes_const_iterator;
+  typedef alist<SDNode, LargestSDNode>::const_iterator allnodes_const_iterator;
   allnodes_const_iterator allnodes_begin() const { return AllNodes.begin(); }
   allnodes_const_iterator allnodes_end() const { return AllNodes.end(); }
-  typedef ilist<SDNode>::iterator allnodes_iterator;
+  typedef alist<SDNode, LargestSDNode>::iterator allnodes_iterator;
   allnodes_iterator allnodes_begin() { return AllNodes.begin(); }
   allnodes_iterator allnodes_end() { return AllNodes.end(); }
-  ilist<SDNode>::size_type allnodes_size() const { return AllNodes.size(); }
+  alist<SDNode, LargestSDNode>::size_type allnodes_size() const {
+    return AllNodes.size();
+  }
   
   /// getRoot - Return the root tag of the SelectionDAG.
   ///
@@ -642,6 +644,7 @@ public:
   SDOperand getShuffleScalarElt(const SDNode *N, unsigned Idx);
   
 private:
+  inline alist_traits<SDNode, LargestSDNode>::AllocatorType &getAllocator();
   void RemoveNodeFromCSEMaps(SDNode *N);
   SDNode *AddNonLeafNodeToCSEMaps(SDNode *N);
   SDNode *FindModifiedNodeSlot(SDNode *N, SDOperand Op, void *&InsertPos);
