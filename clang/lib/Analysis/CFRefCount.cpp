@@ -1377,13 +1377,13 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
       SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
       RefBindings B = GetRefBindings(StVals);      
       
-      if (RefBindings::TreeTy* T = B.SlimFind(Sym)) {
-        B = Update(B, Sym, T->getValue().second, GetArgE(Summ, idx), hasErr);
+      if (RefBindings::data_type* T = B.lookup(Sym)) {
+        B = Update(B, Sym, *T, GetArgE(Summ, idx), hasErr);
         SetRefBindings(StVals, B);
         
         if (hasErr) {
           ErrorExpr = *I;
-          ErrorSym = T->getValue().first;
+          ErrorSym = Sym;
           break;
         }
       }
@@ -1431,13 +1431,13 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
       SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
       RefBindings B = GetRefBindings(StVals);      
       
-      if (RefBindings::TreeTy* T = B.SlimFind(Sym)) {
-        B = Update(B, Sym, T->getValue().second, GetReceiverE(Summ), hasErr);
+      if (const RefVal* T = B.lookup(Sym)) {
+        B = Update(B, Sym, *T, GetReceiverE(Summ), hasErr);
         SetRefBindings(StVals, B);
         
         if (hasErr) {
           ErrorExpr = Receiver;
-          ErrorSym = T->getValue().first;
+          ErrorSym = Sym;
         }
       }
     }
@@ -1581,8 +1581,8 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
     if (isa<lval::SymbolVal>(V)) {
       SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
       
-      if (RefBindings::TreeTy* T  = GetRefBindings(*St).SlimFind(Sym)) {
-        QualType Ty = T->getValue().second.getType();
+      if (const RefVal* T  = GetRefBindings(*St).lookup(Sym)) {
+        QualType Ty = T->getType();
         
         if (const PointerType* PT = Ty->getAsPointerType()) {
           QualType PointeeTy = PT->getPointeeType();
@@ -1630,10 +1630,8 @@ void CFRefCount::EvalStore(ExplodedNodeSet<ValueState>& Dst,
     return;
   
   SymbolID Sym = cast<lval::SymbolVal>(Val).getSymbol();
-  RefBindings B = GetRefBindings(*St);
-  RefBindings::TreeTy* T = B.SlimFind(Sym);
   
-  if (!T)
+  if (!GetRefBindings(*St).lookup(Sym))
     return;
   
   // Nuke the binding.  
@@ -1723,17 +1721,17 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<ValueState>& Dst,
   for (ValueStateManager::DeadSymbolsTy::const_iterator
        I=Dead.begin(), E=Dead.end(); I!=E; ++I) {
     
-    RefBindings::TreeTy* T = B.SlimFind(*I);
+    const RefVal* T = B.lookup(*I);
 
     if (!T)
       continue;
     
     bool hasLeak = false;
     
-    St = HandleSymbolDeath(Eng.getStateManager(), St,
-                           *I, T->getValue().second, hasLeak);
+    St = HandleSymbolDeath(Eng.getStateManager(), St, *I, *T, hasLeak);
     
-    if (hasLeak) Leaked.push_back(*I);    
+    if (hasLeak)
+      Leaked.push_back(*I);    
   }
   
   if (Leaked.empty())
@@ -1774,14 +1772,14 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<ValueState>& Dst,
   // Get the reference count binding (if any).
   SymbolID Sym = cast<lval::SymbolVal>(V).getSymbol();
   RefBindings B = GetRefBindings(*St);
-  RefBindings::TreeTy* T = B.SlimFind(Sym);
+  const RefVal* T = B.lookup(Sym);
   
   if (!T)
     return;
   
   // Change the reference count.
   
-  RefVal X = T->getValue().second;  
+  RefVal X = *T;  
   
   switch (X.getKind()) {
       
@@ -2122,14 +2120,14 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<ValueState>* N,
   CFRefCount::RefBindings PrevB = CFRefCount::GetRefBindings(*PrevSt);
   CFRefCount::RefBindings CurrB = CFRefCount::GetRefBindings(*CurrSt);
   
-  CFRefCount::RefBindings::TreeTy* PrevT = PrevB.SlimFind(Sym);
-  CFRefCount::RefBindings::TreeTy* CurrT = CurrB.SlimFind(Sym);
+  const RefVal* PrevT = PrevB.lookup(Sym);
+  const RefVal* CurrT = CurrB.lookup(Sym);
   
   if (!CurrT)
     return NULL;  
   
   const char* Msg = NULL;  
-  RefVal CurrV = CurrB.SlimFind(Sym)->getValue().second;
+  const RefVal& CurrV = *CurrB.lookup(Sym);
 
   if (!PrevT) {
     
@@ -2168,9 +2166,8 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<ValueState>* N,
     return P;    
   }
   
-  // Determine if the typestate has changed.
-  
-  RefVal PrevV = PrevB.SlimFind(Sym)->getValue().second;
+  // Determine if the typestate has changed.  
+  RefVal PrevV = *PrevB.lookup(Sym);
   
   if (PrevV == CurrV)
     return NULL;
@@ -2258,9 +2255,8 @@ GetAllocationSite(ExplodedNode<ValueState>* N, SymbolID Sym) {
   while (N) {
     ValueState* St = N->getState();
     RefBindings B = RefBindings((RefBindings::TreeTy*) St->CheckerState);
-    RefBindings::TreeTy* T = B.SlimFind(Sym);
     
-    if (!T)
+    if (!B.lookup(Sym))
       break;
     
     VarDecl* VD = 0;
@@ -2301,16 +2297,10 @@ PathDiagnosticPiece* CFRefReport::getEndPath(BugReporter& BR,
   typedef CFRefCount::RefBindings RefBindings;
 
   // Get the retain count.
-  unsigned long RetCount = 0;
-  
-  {
-    ValueState* St = EndN->getState();
-    RefBindings B = RefBindings((RefBindings::TreeTy*) St->CheckerState);
-    RefBindings::TreeTy* T = B.SlimFind(Sym);
-    assert (T);
-    RetCount = T->getValue().second.getCount();
-  }
 
+  unsigned long RetCount = 
+    CFRefCount::GetRefBindings(*EndN->getState()).lookup(Sym)->getCount();
+  
   // We are a leak.  Walk up the graph to get to the first node where the
   // symbol appeared, and also get the first VarDecl that tracked object
   // is stored to.

@@ -19,15 +19,15 @@ using namespace clang;
 bool ValueState::isNotEqual(SymbolID sym, const llvm::APSInt& V) const {
 
   // Retrieve the NE-set associated with the given symbol.
-  ConstNotEqTy::TreeTy* T = ConstNotEq.SlimFind(sym);
+  const ConstNotEqTy::data_type* T = ConstNotEq.lookup(sym);
 
   // See if V is present in the NE-set.
-  return T ? T->getValue().second.contains(&V) : false;
+  return T ? T->contains(&V) : false;
 }
 
 const llvm::APSInt* ValueState::getSymVal(SymbolID sym) const {
-  ConstEqTy::TreeTy* T = ConstEq.SlimFind(sym);
-  return T ? T->getValue().second : NULL;  
+  ConstEqTy::data_type* T = ConstEq.lookup(sym);
+  return T ? *T : NULL;  
 }
 
 ValueState*
@@ -170,10 +170,10 @@ RVal ValueStateManager::GetRVal(ValueState* St, LVal LV, QualType T) {
   
   switch (LV.getSubKind()) {
     case lval::DeclValKind: {
-      ValueState::VarBindingsTy::TreeTy* T =
-        St->VarBindings.SlimFind(cast<lval::DeclVal>(LV).getDecl());
+      ValueState::VarBindingsTy::data_type* T =
+        St->VarBindings.lookup(cast<lval::DeclVal>(LV).getDecl());
       
-      return T ? T->getValue().second : UnknownVal();
+      return T ? *T : UnknownVal();
     }
      
       // FIXME: We should limit how far a "ContentsOf" will go...
@@ -233,8 +233,8 @@ ValueState* ValueStateManager::AddNE(ValueState* St, SymbolID sym,
                                      const llvm::APSInt& V) {
 
   // First, retrieve the NE-set associated with the given symbol.
-  ValueState::ConstNotEqTy::TreeTy* T = St->ConstNotEq.SlimFind(sym);  
-  ValueState::IntSetTy S = T ? T->getValue().second : ISetFactory.GetEmptySet();
+  ValueState::ConstNotEqTy::data_type* T = St->ConstNotEq.lookup(sym);  
+  ValueState::IntSetTy S = T ? *T : ISetFactory.GetEmptySet();
   
   // Now add V to the NE set.
   S = ISetFactory.Add(S, &V);
@@ -321,13 +321,13 @@ RVal ValueStateManager::GetRVal(ValueState* St, Expr* E) {
     break;
   }
   
-  ValueState::ExprBindingsTy::TreeTy* T = St->SubExprBindings.SlimFind(E);
+  ValueState::ExprBindingsTy::data_type* T = St->SubExprBindings.lookup(E);
   
   if (T)
-    return T->getValue().second;
+    return *T;
   
-  T = St->BlockExprBindings.SlimFind(E);
-  return T ? T->getValue().second : UnknownVal();
+  T = St->BlockExprBindings.lookup(E);
+  return T ? *T : UnknownVal();
 }
 
 RVal ValueStateManager::GetBlkExprRVal(ValueState* St, Expr* E) {
@@ -345,8 +345,8 @@ RVal ValueStateManager::GetBlkExprRVal(ValueState* St, Expr* E) {
     }
       
     default: {
-      ValueState::ExprBindingsTy::TreeTy* T = St->BlockExprBindings.SlimFind(E);    
-      return T ? T->getValue().second : UnknownVal();
+      ValueState::ExprBindingsTy::data_type* T=St->BlockExprBindings.lookup(E);    
+      return T ? *T : UnknownVal();
     }
   }
 }

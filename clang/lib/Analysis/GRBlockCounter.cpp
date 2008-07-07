@@ -30,8 +30,8 @@ static inline CountMap::Factory& GetFactory(void* F) {
 
 unsigned GRBlockCounter::getNumVisited(unsigned BlockID) const {
   CountMap M = GetMap(Data);
-  CountMap::TreeTy* T = M.SlimFind(BlockID);
-  return T ? T->getValue().second : 0;
+  CountMap::data_type* T = M.lookup(BlockID);
+  return T ? *T : 0;
 }
 
 GRBlockCounter::Factory::Factory(llvm::BumpPtrAllocator& Alloc) {
