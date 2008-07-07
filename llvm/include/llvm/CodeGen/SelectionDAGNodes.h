@@ -2150,8 +2150,10 @@ public:
 ///
 class StoreSDNode : public LSBaseSDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
-    
-  // IsTruncStore - True if the op does a truncation before store.
+
+  // IsTruncStore - True if the op does a truncation before store.  For
+  // integers this is the same as doing a TRUNCATE and storing the result.
+  // For floats, it is the same as doing an FP_ROUND and storing the result.
   bool IsTruncStore;
 protected:
   friend class SelectionDAG;

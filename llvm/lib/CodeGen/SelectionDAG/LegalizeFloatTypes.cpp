@@ -331,6 +331,7 @@ bool DAGTypeLegalizer::SoftenFloatOperand(SDNode *N, unsigned OpNo) {
     case ISD::BR_CC:     Res = SoftenFloatOp_BR_CC(N); break;
     case ISD::SELECT_CC: Res = SoftenFloatOp_SELECT_CC(N); break;
     case ISD::SETCC:     Res = SoftenFloatOp_SETCC(N); break;
+    case ISD::STORE:     Res = SoftenFloatOp_STORE(N, OpNo); break;
     }
   }
 
@@ -494,6 +495,24 @@ SDOperand DAGTypeLegalizer::SoftenFloatOp_SETCC(SDNode *N) {
   // Otherwise, update N to have the operands specified.
   return DAG.UpdateNodeOperands(SDOperand(N, 0), NewLHS, NewRHS,
                                 DAG.getCondCode(CCCode));
+}
+
+SDOperand DAGTypeLegalizer::SoftenFloatOp_STORE(SDNode *N, unsigned OpNo) {
+  assert(ISD::isUNINDEXEDStore(N) && "Indexed store during type legalization!");
+  assert(OpNo == 1 && "Can only soften the stored value!");
+  StoreSDNode *ST = cast<StoreSDNode>(N);
+  SDOperand Val = ST->getValue();
+
+  if (ST->isTruncatingStore())
+    // Do an FP_ROUND followed by a non-truncating store.
+    Val = BitConvertToInteger(DAG.getNode(ISD::FP_ROUND, ST->getMemoryVT(),
+                                          Val, DAG.getIntPtrConstant(0)));
+  else
+    Val = GetSoftenedFloat(Val);
+
+  return DAG.getStore(ST->getChain(), Val, ST->getBasePtr(),
+                      ST->getSrcValue(), ST->getSrcValueOffset(),
+                      ST->isVolatile(), ST->getAlignment());
 }
 
 

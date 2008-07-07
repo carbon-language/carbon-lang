@@ -344,6 +344,7 @@ private:
   SDOperand SoftenFloatOp_BR_CC(SDNode *N);
   SDOperand SoftenFloatOp_SELECT_CC(SDNode *N);
   SDOperand SoftenFloatOp_SETCC(SDNode *N);
+  SDOperand SoftenFloatOp_STORE(SDNode *N, unsigned OpNo);
 
   void SoftenSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
                            ISD::CondCode &CCCode);
