@@ -1737,6 +1737,7 @@ void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
   // live ranges for the IV correctly.
   CondUse->Offset = SE->getMinusSCEV(CondUse->Offset, *CondStride);
   CondUse->isUseOfPostIncrementedValue = true;
+  Changed = true;
 }
 
 bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
@@ -1754,49 +1755,48 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ++I)
     AddUsersIfInteresting(I, L, Processed);
 
-  // If we have nothing to do, return.
-  if (IVUsesByStride.empty()) return false;
+  if (!IVUsesByStride.empty()) {
+    // Optimize induction variables.  Some indvar uses can be transformed to use
+    // strides that will be needed for other purposes.  A common example of this
+    // is the exit test for the loop, which can often be rewritten to use the
+    // computation of some other indvar to decide when to terminate the loop.
+    OptimizeIndvars(L);
 
-  // Optimize induction variables.  Some indvar uses can be transformed to use
-  // strides that will be needed for other purposes.  A common example of this
-  // is the exit test for the loop, which can often be rewritten to use the
-  // computation of some other indvar to decide when to terminate the loop.
-  OptimizeIndvars(L);
+    // FIXME: We can widen subreg IV's here for RISC targets.  e.g. instead of
+    // doing computation in byte values, promote to 32-bit values if safe.
 
+    // FIXME: Attempt to reuse values across multiple IV's.  In particular, we
+    // could have something like "for(i) { foo(i*8); bar(i*16) }", which should
+    // be codegened as "for (j = 0;; j+=8) { foo(j); bar(j+j); }" on X86/PPC.
+    // Need to be careful that IV's are all the same type.  Only works for
+    // intptr_t indvars.
 
-  // FIXME: We can widen subreg IV's here for RISC targets.  e.g. instead of
-  // doing computation in byte values, promote to 32-bit values if safe.
-
-  // FIXME: Attempt to reuse values across multiple IV's.  In particular, we
-  // could have something like "for(i) { foo(i*8); bar(i*16) }", which should be
-  // codegened as "for (j = 0;; j+=8) { foo(j); bar(j+j); }" on X86/PPC.  Need
-  // to be careful that IV's are all the same type.  Only works for intptr_t
-  // indvars.
-
-  // If we only have one stride, we can more aggressively eliminate some things.
-  bool HasOneStride = IVUsesByStride.size() == 1;
+    // If we only have one stride, we can more aggressively eliminate some
+    // things.
+    bool HasOneStride = IVUsesByStride.size() == 1;
 
 #ifndef NDEBUG
-  DOUT << "\nLSR on ";
-  DEBUG(L->dump());
+    DOUT << "\nLSR on ";
+    DEBUG(L->dump());
 #endif
 
-  // IVsByStride keeps IVs for one particular loop.
-  assert(IVsByStride.empty() && "Stale entries in IVsByStride?");
+    // IVsByStride keeps IVs for one particular loop.
+    assert(IVsByStride.empty() && "Stale entries in IVsByStride?");
 
-  // Sort the StrideOrder so we process larger strides first.
-  std::stable_sort(StrideOrder.begin(), StrideOrder.end(), StrideCompare());
+    // Sort the StrideOrder so we process larger strides first.
+    std::stable_sort(StrideOrder.begin(), StrideOrder.end(), StrideCompare());
 
-  // Note: this processes each stride/type pair individually.  All users passed
-  // into StrengthReduceStridedIVUsers have the same type AND stride.  Also,
-  // note that we iterate over IVUsesByStride indirectly by using StrideOrder.
-  // This extra layer of indirection makes the ordering of strides deterministic
-  // - not dependent on map order.
-  for (unsigned Stride = 0, e = StrideOrder.size(); Stride != e; ++Stride) {
-    std::map<SCEVHandle, IVUsersOfOneStride>::iterator SI = 
-      IVUsesByStride.find(StrideOrder[Stride]);
-    assert(SI != IVUsesByStride.end() && "Stride doesn't exist!");
-    StrengthReduceStridedIVUsers(SI->first, SI->second, L, HasOneStride);
+    // Note: this processes each stride/type pair individually.  All users
+    // passed into StrengthReduceStridedIVUsers have the same type AND stride.
+    // Also, note that we iterate over IVUsesByStride indirectly by using
+    // StrideOrder. This extra layer of indirection makes the ordering of
+    // strides deterministic - not dependent on map order.
+    for (unsigned Stride = 0, e = StrideOrder.size(); Stride != e; ++Stride) {
+      std::map<SCEVHandle, IVUsersOfOneStride>::iterator SI = 
+        IVUsesByStride.find(StrideOrder[Stride]);
+      assert(SI != IVUsesByStride.end() && "Stride doesn't exist!");
+      StrengthReduceStridedIVUsers(SI->first, SI->second, L, HasOneStride);
+    }
   }
 
   // We're done analyzing this loop; release all the state we built up for it.
@@ -1839,5 +1839,5 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
     DeleteTriviallyDeadInstructions(DeadInsts);
   }
 
-  return false;
+  return Changed;
 }
