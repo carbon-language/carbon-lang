@@ -41,6 +41,9 @@ public:
 /// allocating memory, and never deletes it until the entire block is dead. This
 /// makes allocation speedy, but must only be used when the trade-off is ok.
 class BumpPtrAllocator {
+  BumpPtrAllocator(const BumpPtrAllocator &); // do not implement
+  void operator=(const BumpPtrAllocator &);   // do not implement
+
   void *TheMemory;
 public:
   BumpPtrAllocator();
