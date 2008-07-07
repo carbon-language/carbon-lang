@@ -154,7 +154,7 @@ namespace {
 
 char MachineLICM::ID = 0;
 static RegisterPass<MachineLICM>
-X("machine-licm", "Machine Loop Invariant Code Motion");
+X("machinelicm", "Machine Loop Invariant Code Motion");
 
 FunctionPass *llvm::createMachineLICMPass() { return new MachineLICM(); }
 
