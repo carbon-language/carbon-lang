@@ -1285,8 +1285,7 @@ const PointerType *DISerializer::getEmptyStructPtrType() {
   if (EmptyStructPtrTy) return EmptyStructPtrTy;
 
   // Construct the pointer to empty structure type.
-  const StructType *EmptyStructTy =
-    StructType::get(std::vector<const Type*>());
+  const StructType *EmptyStructTy = StructType::get(NULL, NULL);
 
   // Construct the pointer to empty structure type.
   EmptyStructPtrTy = PointerType::getUnqual(EmptyStructTy);
@@ -1754,7 +1753,7 @@ void MachineModuleInfo::addCatchTypeInfo(MachineBasicBlock *LandingPad,
 void MachineModuleInfo::addFilterTypeInfo(MachineBasicBlock *LandingPad,
                                         std::vector<GlobalVariable *> &TyInfo) {
   LandingPadInfo &LP = getOrCreateLandingPadInfo(LandingPad);
-  std::vector<unsigned> IdsInFilter (TyInfo.size());
+  std::vector<unsigned> IdsInFilter(TyInfo.size());
   for (unsigned I = 0, E = TyInfo.size(); I != E; ++I)
     IdsInFilter[I] = getTypeIDFor(TyInfo[I]);
   LP.TypeIds.push_back(getFilterIDFor(IdsInFilter));
