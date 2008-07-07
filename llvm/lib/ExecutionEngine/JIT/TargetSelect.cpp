@@ -59,7 +59,7 @@ ExecutionEngine *JIT::createJIT(ModuleProvider *MP, std::string *ErrorStr,
 
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
-  if (MCPU.size() || MAttrs.size()) {
+  if (!MCPU.empty() || !MAttrs.empty()) {
     SubtargetFeatures Features;
     Features.setCPU(MCPU);
     for (unsigned i = 0; i != MAttrs.size(); ++i)
