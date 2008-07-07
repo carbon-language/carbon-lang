@@ -37,6 +37,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/UniqueVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Pass.h"
 
@@ -777,7 +778,7 @@ class DISerializer {
   DenseMap<DebugInfoDesc *, GlobalVariable *> DescGlobals;
 
   // Previously defined strings.
-  DenseMap<const char *, Constant*> StringCache;
+  StringMap<Constant*> StringCache;
 public:
   DISerializer()
     : M(NULL), StrPtrTy(NULL), EmptyStructPtrTy(NULL), TagTypes(),

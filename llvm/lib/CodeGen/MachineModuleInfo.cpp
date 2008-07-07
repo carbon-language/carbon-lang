@@ -1321,7 +1321,7 @@ const StructType *DISerializer::getTagType(DebugInfoDesc *DD) {
 ///
 Constant *DISerializer::getString(const std::string &String) {
   // Check string cache for previous edition.
-  Constant *&Slot = StringCache[String.c_str()];
+  Constant *&Slot = StringCache[String];
 
   // Return Constant if previously defined.
   if (Slot) return Slot;
