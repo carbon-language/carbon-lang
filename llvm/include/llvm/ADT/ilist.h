@@ -256,6 +256,12 @@ class iplist : public Traits {
 
   static bool op_less(NodeTy &L, NodeTy &R) { return L < R; }
   static bool op_equal(NodeTy &L, NodeTy &R) { return L == R; }
+
+  // No fundamental reason why iplist can't by copyable, but the default
+  // copy/copy-assign won't do.
+  iplist(const iplist &);         // do not implement
+  void operator=(const iplist &); // do not implement
+
 public:
   typedef NodeTy *pointer;
   typedef const NodeTy *const_pointer;
