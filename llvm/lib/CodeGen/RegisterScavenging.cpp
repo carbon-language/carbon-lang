@@ -81,7 +81,7 @@ void RegScavenger::setUnused(unsigned Reg, const MachineInstr *MI) {
 }
 
 void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
-  const MachineFunction &MF = *mbb->getParent();
+  MachineFunction &MF = *mbb->getParent();
   const TargetMachine &TM = MF.getTarget();
   TII = TM.getInstrInfo();
   TRI = TM.getRegisterInfo();

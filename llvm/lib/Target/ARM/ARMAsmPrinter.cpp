@@ -694,7 +694,7 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNo) {
     JTEntryDirective = TAI->getData32bitsDirective();
 
   const MachineFunction *MF = MI->getParent()->getParent();
-  MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
+  const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
   bool UseSet= TAI->getSetDirective() && TM.getRelocationModel() == Reloc::PIC_;
