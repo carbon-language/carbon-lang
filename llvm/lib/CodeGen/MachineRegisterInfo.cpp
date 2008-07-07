@@ -27,6 +27,9 @@ MachineRegisterInfo::~MachineRegisterInfo() {
 #ifndef NDEBUG
   for (unsigned i = 0, e = VRegInfo.size(); i != e; ++i)
     assert(VRegInfo[i].second == 0 && "Vreg use list non-empty still?");
+  for (unsigned i = 0, e = UsedPhysRegs.size(); i != e; ++i)
+    assert(!PhysRegUseDefLists[i] &&
+           "PhysRegUseDefLists has entries after all instructions are deleted");
 #endif
   delete [] PhysRegUseDefLists;
 }
