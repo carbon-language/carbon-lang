@@ -214,7 +214,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
                       ((strcmp(Modifier,"subreg16") == 0) ? MVT::i16 :MVT::i8));
         Reg = getX86SubSuperRegister(Reg, VT);
       }
-      O << TRI->getAsmName(Reg);
+      O << TRI->getName(Reg);
     } else
       O << "reg" << MO.getReg();
     return;
@@ -359,7 +359,7 @@ bool X86IntelAsmPrinter::printAsmMRegister(const MachineOperand &MO,
     break;
   }
 
-  O << '%' << TRI->getAsmName(Reg);
+  O << '%' << TRI->getName(Reg);
   return false;
 }
 

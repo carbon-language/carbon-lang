@@ -328,8 +328,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
                     ((strcmp(Modifier+6,"16") == 0) ? MVT::i16 : MVT::i8));
       Reg = getX86SubSuperRegister(Reg, VT);
     }
-    for (const char *Name = TRI->getAsmName(Reg); *Name; ++Name)
-      O << (char)tolower(*Name);
+    O << TRI->getAsmName(Reg);
     return;
   }
 
@@ -680,9 +679,7 @@ bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO,
     break;
   }
 
-  O << '%';
-  for (const char *Name = TRI->getAsmName(Reg); *Name; ++Name)
-    O << (char)tolower(*Name);
+  O << '%'<< TRI->getAsmName(Reg);
   return false;
 }
 
