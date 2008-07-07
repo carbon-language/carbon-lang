@@ -16,6 +16,8 @@
 #ifndef LLVM_CODEGEN_MEMOPERAND_H
 #define LLVM_CODEGEN_MEMOPERAND_H
 
+#include "llvm/Support/MathExtras.h"
+
 namespace llvm {
 
 class Value;
@@ -29,11 +31,10 @@ class Value;
 /// that aren't explicit in the regular LLVM IR.
 ///
 class MachineMemOperand {
-  const Value *V;
-  unsigned int Flags;
   int64_t Offset;
   uint64_t Size;
-  unsigned int Alignment;
+  const Value *V;
+  unsigned int Flags;
 
 public:
   /// Flags values. These may be or'd together.
@@ -50,7 +51,7 @@ public:
   /// specified address Value, flags, offset, size, and alignment.
   MachineMemOperand(const Value *v, unsigned int f, int64_t o, uint64_t s,
                     unsigned int a)
-    : V(v), Flags(f), Offset(o), Size(s), Alignment(a) {}
+    : Offset(o), Size(s), V(v), Flags((f & 7) | ((Log2_32(a) + 1) << 3)) {}
 
   /// getValue - Return the base address of the memory access.
   /// Special values are PseudoSourceValue::FPRel, PseudoSourceValue::SPRel,
@@ -59,7 +60,7 @@ public:
   const Value *getValue() const { return V; }
 
   /// getFlags - Return the raw flags of the source value, \see MemOperandFlags.
-  unsigned int getFlags() const { return Flags; }
+  unsigned int getFlags() const { return Flags & 7; }
 
   /// getOffset - For normal values, this is a byte offset added to the base
   /// address. For PseudoSourceValue::FPRel values, this is the FrameIndex
@@ -71,7 +72,7 @@ public:
 
   /// getAlignment - Return the minimum known alignment in bytes of the
   /// memory reference.
-  unsigned int getAlignment() const { return Alignment; }
+  unsigned int getAlignment() const { return (1u << (Flags >> 3)) >> 1; }
 
   bool isLoad() const { return Flags & MOLoad; }
   bool isStore() const { return Flags & MOStore; }
