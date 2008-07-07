@@ -354,7 +354,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
   }
     
   // Really delete the PHI instruction now!
-  delete MPhi;
+  MF.DeleteMachineInstr(MPhi);
   ++NumAtomic;
 }
 

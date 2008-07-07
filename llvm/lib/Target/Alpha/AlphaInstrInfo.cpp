@@ -194,7 +194,7 @@ void AlphaInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   else
     abort();
   MachineInstrBuilder MIB = 
-    BuildMI(get(Opc)).addReg(SrcReg, false, false, isKill);
+    BuildMI(MF, get(Opc)).addReg(SrcReg, false, false, isKill);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
     if (MO.isRegister())
@@ -239,7 +239,7 @@ void AlphaInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   else
     abort();
   MachineInstrBuilder MIB = 
-    BuildMI(get(Opc), DestReg);
+    BuildMI(MF, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
     if (MO.isRegister())
@@ -272,7 +272,7 @@ MachineInstr *AlphaInstrInfo::foldMemoryOperand(MachineFunction &MF,
          bool isKill = MI->getOperand(1).isKill();
          Opc = (Opc == Alpha::BISr) ? Alpha::STQ : 
            ((Opc == Alpha::CPYSS) ? Alpha::STS : Alpha::STT);
-         NewMI = BuildMI(get(Opc)).addReg(InReg, false, false, isKill)
+         NewMI = BuildMI(MF, get(Opc)).addReg(InReg, false, false, isKill)
            .addFrameIndex(FrameIndex)
            .addReg(Alpha::F31);
        } else {           // load -> move
@@ -280,7 +280,7 @@ MachineInstr *AlphaInstrInfo::foldMemoryOperand(MachineFunction &MF,
          bool isDead = MI->getOperand(0).isDead();
          Opc = (Opc == Alpha::BISr) ? Alpha::LDQ : 
            ((Opc == Alpha::CPYSS) ? Alpha::LDS : Alpha::LDT);
-         NewMI = BuildMI(get(Opc)).addReg(OutReg, true, false, false, isDead)
+         NewMI = BuildMI(MF, get(Opc)).addReg(OutReg, true, false, false, isDead)
            .addFrameIndex(FrameIndex)
            .addReg(Alpha::F31);
        }

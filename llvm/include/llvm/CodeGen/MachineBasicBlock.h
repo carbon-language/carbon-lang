@@ -16,57 +16,38 @@
 
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/ADT/GraphTraits.h"
-#include "llvm/ADT/ilist.h"
 #include "llvm/Support/Streams.h"
 
 namespace llvm {
   class MachineFunction;
 
-// ilist_traits
 template <>
-struct ilist_traits<MachineInstr> {
+struct alist_traits<MachineInstr, MachineInstr> {
 protected:
-  // this is only set by the MachineBasicBlock owning the ilist
+  // this is only set by the MachineBasicBlock owning the LiveList
   friend class MachineBasicBlock;
-  MachineBasicBlock* parent;
+  MachineBasicBlock* Parent;
+
+  typedef alist_iterator<MachineInstr> iterator;
 
 public:
-  ilist_traits<MachineInstr>() : parent(0) { }
+  alist_traits<MachineInstr, MachineInstr>() : Parent(0) { }
 
-  static MachineInstr* getPrev(MachineInstr* N) { return N->Prev; }
-  static MachineInstr* getNext(MachineInstr* N) { return N->Next; }
-
-  static const MachineInstr*
-  getPrev(const MachineInstr* N) { return N->Prev; }
-
-  static const MachineInstr*
-  getNext(const MachineInstr* N) { return N->Next; }
-
-  static void setPrev(MachineInstr* N, MachineInstr* prev) { N->Prev = prev; }
-  static void setNext(MachineInstr* N, MachineInstr* next) { N->Next = next; }
-
-  static MachineInstr* createSentinel();
-  static void destroySentinel(MachineInstr *MI) { delete MI; }
   void addNodeToList(MachineInstr* N);
   void removeNodeFromList(MachineInstr* N);
-  void transferNodesFromList(
-      iplist<MachineInstr, ilist_traits<MachineInstr> >& toList,
-      ilist_iterator<MachineInstr> first,
-      ilist_iterator<MachineInstr> last);
+  void transferNodesFromList(alist_traits &, iterator, iterator);
+  void deleteNode(MachineInstr *N);
 };
 
 class BasicBlock;
 
 class MachineBasicBlock {
-  typedef ilist<MachineInstr> Instructions;
+  typedef alist<MachineInstr> Instructions;
   Instructions Insts;
-  MachineBasicBlock *Prev, *Next;
   const BasicBlock *BB;
   int Number;
   MachineFunction *xParent;
   
-  void setParent(MachineFunction *P) { xParent = P; }
-
   /// Predecessors/Successors - Keep track of the predecessor / successor
   /// basicblocks.
   std::vector<MachineBasicBlock *> Predecessors;
@@ -84,15 +65,14 @@ class MachineBasicBlock {
   /// exception handler.
   bool IsLandingPad;
 
+  explicit MachineBasicBlock(MachineFunction &mf, const BasicBlock *bb);
+
+  ~MachineBasicBlock() {}
+
+  // MachineBasicBlocks are allocated and owned by MachineFunction.
+  friend class MachineFunction;
+
 public:
-  explicit MachineBasicBlock(const BasicBlock *bb = 0)
-    : Prev(0), Next(0), BB(bb), Number(-1), xParent(0),
-      Alignment(0), IsLandingPad(false) {
-    Insts.parent = this;
-  }
-
-  ~MachineBasicBlock();
-
   /// getBasicBlock - Return the LLVM basic block that this instance
   /// corresponded to originally.
   ///
@@ -103,8 +83,8 @@ public:
   const MachineFunction *getParent() const { return xParent; }
   MachineFunction *getParent() { return xParent; }
 
-  typedef ilist<MachineInstr>::iterator                       iterator;
-  typedef ilist<MachineInstr>::const_iterator           const_iterator;
+  typedef Instructions::iterator                              iterator;
+  typedef Instructions::const_iterator                  const_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
   typedef std::reverse_iterator<iterator>             reverse_iterator;
 
@@ -272,6 +252,14 @@ public:
     Insts.splice(where, Other->Insts, From, To);
   }
 
+  /// removeFromParent - This method unlinks 'this' from the containing
+  /// function, and returns it, but does not delete it.
+  MachineBasicBlock *removeFromParent();
+  
+  /// eraseFromParent - This method unlinks 'this' from the containing
+  /// function and deletes it.
+  void eraseFromParent();
+
   /// ReplaceUsesOfBlockWith - Given a machine basic block that branched to
   /// 'Old', change the code and CFG so that it branches to 'New' instead.
   void ReplaceUsesOfBlockWith(MachineBasicBlock *Old, MachineBasicBlock *New);
@@ -299,12 +287,7 @@ public:
   void setNumber(int N) { Number = N; }
 
 private:   // Methods used to maintain doubly linked list of blocks...
-  friend struct ilist_traits<MachineBasicBlock>;
-
-  MachineBasicBlock *getPrev() const { return Prev; }
-  MachineBasicBlock *getNext() const { return Next; }
-  void setPrev(MachineBasicBlock *P) { Prev = P; }
-  void setNext(MachineBasicBlock *N) { Next = N; }
+  friend struct alist_traits<MachineBasicBlock>;
 
   // Machine-CFG mutators
 

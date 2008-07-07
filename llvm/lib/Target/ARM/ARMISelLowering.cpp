@@ -1446,7 +1446,7 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     // destination vreg to set, the condition code register to branch on, the
     // true/false values to select between, and a branch opcode to use.
     const BasicBlock *LLVM_BB = BB->getBasicBlock();
-    ilist<MachineBasicBlock>::iterator It = BB;
+    MachineFunction::iterator It = BB;
     ++It;
 
     //  thisMBB:
@@ -1456,13 +1456,13 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     //   bCC copy1MBB
     //   fallthrough --> copy0MBB
     MachineBasicBlock *thisMBB  = BB;
-    MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
-    MachineBasicBlock *sinkMBB  = new MachineBasicBlock(LLVM_BB);
+    MachineFunction *F = BB->getParent();
+    MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
+    MachineBasicBlock *sinkMBB  = F->CreateMachineBasicBlock(LLVM_BB);
     BuildMI(BB, TII->get(ARM::tBcc)).addMBB(sinkMBB)
       .addImm(MI->getOperand(3).getImm()).addReg(MI->getOperand(4).getReg());
-    MachineFunction *F = BB->getParent();
-    F->getBasicBlockList().insert(It, copy0MBB);
-    F->getBasicBlockList().insert(It, sinkMBB);
+    F->insert(It, copy0MBB);
+    F->insert(It, sinkMBB);
     // Update machine-CFG edges by first adding all successors of the current
     // block to the new block which will contain the Phi node for the select.
     for(MachineBasicBlock::succ_iterator i = BB->succ_begin(),
@@ -1491,7 +1491,7 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
       .addReg(MI->getOperand(1).getReg()).addMBB(copy0MBB)
       .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB);
 
-    delete MI;   // The pseudo instruction is gone now.
+    F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
     return BB;
   }
   }

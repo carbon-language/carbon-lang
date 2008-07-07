@@ -604,7 +604,7 @@ static bool InvalidateRegDef(MachineBasicBlock::iterator I,
     return false;
 
   bool FoundUse = false, Done = false;
-  MachineBasicBlock::iterator E = NewDef;
+  MachineBasicBlock::iterator E = &NewDef;
   ++I; ++E;
   for (; !Done && I != E; ++I) {
     MachineInstr *NMI = I;
@@ -973,7 +973,7 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
         MBB.erase(&MI);
         return true;
       }
-      delete NewMI;
+      MF.DeleteMachineInstr(NewMI);
     }
   }
   return false;
@@ -1032,7 +1032,8 @@ bool LocalSpiller::CommuteToFoldReload(MachineBasicBlock &MBB,
     SmallVector<unsigned, 2> Ops;
     Ops.push_back(NewDstIdx);
     MachineInstr *FoldedMI = TII->foldMemoryOperand(MF, CommutedMI, Ops, SS);
-    delete CommutedMI;  // Not needed since foldMemoryOperand returns new MI.
+    // Not needed since foldMemoryOperand returns new MI.
+    MF.DeleteMachineInstr(CommutedMI);
     if (!FoldedMI)
       return false;
 
@@ -1040,7 +1041,7 @@ bool LocalSpiller::CommuteToFoldReload(MachineBasicBlock &MBB,
     VRM.virtFolded(VirtReg, FoldedMI, VirtRegMap::isRef);
     // Insert new def MI and spill MI.
     const TargetRegisterClass* RC = MF.getRegInfo().getRegClass(VirtReg);
-    TII->storeRegToStackSlot(MBB, MI, NewReg, true, SS, RC);
+    TII->storeRegToStackSlot(MBB, &MI, NewReg, true, SS, RC);
     MII = prior(MII);
     MachineInstr *StoreMI = MII;
     VRM.addSpillSlotUse(SS, StoreMI);
@@ -1341,7 +1342,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         unsigned RReg = SubIdx ? TRI->getSubReg(Phys, SubIdx) : Phys;
         MI.getOperand(i).setReg(RReg);
         if (VRM.isImplicitlyDefined(VirtReg))
-          BuildMI(MBB, MI, TII->get(TargetInstrInfo::IMPLICIT_DEF), RReg);
+          BuildMI(MBB, &MI, TII->get(TargetInstrInfo::IMPLICIT_DEF), RReg);
         continue;
       }
       
@@ -1814,7 +1815,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
   ProcessNextInst:
     DistanceMap.insert(std::make_pair(&MI, Dist++));
     if (!Erased && !BackTracked) {
-      for (MachineBasicBlock::iterator II = MI; II != NextMII; ++II)
+      for (MachineBasicBlock::iterator II = &MI; II != NextMII; ++II)
         UpdateKills(*II, RegKills, KillOps);
     }
     MII = NextMII;

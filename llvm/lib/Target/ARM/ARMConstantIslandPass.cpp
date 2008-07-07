@@ -288,8 +288,8 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
 void ARMConstantIslands::DoInitialPlacement(MachineFunction &Fn,
                                         std::vector<MachineInstr*> &CPEMIs){
   // Create the basic block to hold the CPE's.
-  MachineBasicBlock *BB = new MachineBasicBlock();
-  Fn.getBasicBlockList().push_back(BB);
+  MachineBasicBlock *BB = Fn.CreateMachineBasicBlock();
+  Fn.push_back(BB);
   
   // Add all of the constants from the constant pool to the end block, use an
   // identity mapping of CPI's to CPE's.
@@ -558,11 +558,12 @@ void ARMConstantIslands::UpdateForInsertedWaterBlock(MachineBasicBlock *NewBB) {
 /// account for this change and returns the newly created block.
 MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   MachineBasicBlock *OrigBB = MI->getParent();
+  MachineFunction &MF = *OrigBB->getParent();
 
   // Create a new MBB for the code after the OrigBB.
-  MachineBasicBlock *NewBB = new MachineBasicBlock(OrigBB->getBasicBlock());
+  MachineBasicBlock *NewBB = MF.CreateMachineBasicBlock(OrigBB->getBasicBlock());
   MachineFunction::iterator MBBI = OrigBB; ++MBBI;
-  OrigBB->getParent()->getBasicBlockList().insert(MBBI, NewBB);
+  MF.insert(MBBI, NewBB);
   
   // Splice the instructions starting with MI over to NewBB.
   NewBB->splice(NewBB->end(), OrigBB, MI, OrigBB->end());
@@ -590,7 +591,7 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   // Update internal data structures to account for the newly inserted MBB.
   // This is almost the same as UpdateForInsertedWaterBlock, except that
   // the Water goes after OrigBB, not NewBB.
-  NewBB->getParent()->RenumberBlocks(NewBB);
+  MF.RenumberBlocks(NewBB);
   
   // Insert a size into BBSizes to align it properly with the (newly
   // renumbered) block numbers.
@@ -1031,8 +1032,8 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn,
   }
 
   // Okay, we know we can put an island before NewMBB now, do it!
-  MachineBasicBlock *NewIsland = new MachineBasicBlock();
-  Fn.getBasicBlockList().insert(NewMBB, NewIsland);
+  MachineBasicBlock *NewIsland = Fn.CreateMachineBasicBlock();
+  Fn.insert(NewMBB, NewIsland);
 
   // Update internal data structures to account for the newly inserted MBB.
   UpdateForInsertedWaterBlock(NewIsland);
@@ -1201,7 +1202,7 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
 
   NumCBrFixed++;
   if (BMI != MI) {
-    if (next(MachineBasicBlock::iterator(MI)) == MBB->back() &&
+    if (next(MachineBasicBlock::iterator(MI)) == prior(MBB->end()) &&
         BMI->getOpcode() == Br.UncondBr) {
       // Last MI in the BB is a unconditional branch. Can we simply invert the
       // condition and swap destinations:

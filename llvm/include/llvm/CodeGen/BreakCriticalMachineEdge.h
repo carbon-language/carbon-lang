@@ -22,9 +22,10 @@ namespace llvm {
 
 MachineBasicBlock* SplitCriticalMachineEdge(MachineBasicBlock* src,
                                             MachineBasicBlock* dst) {
+  MachineFunction &MF = *src->getParent();
   const BasicBlock* srcBB = src->getBasicBlock();
 
-  MachineBasicBlock* crit_mbb = new MachineBasicBlock(srcBB);
+  MachineBasicBlock* crit_mbb = MF.CreateMachineBasicBlock(srcBB);
 
   // modify the llvm control flow graph
   src->removeSuccessor(dst);
@@ -32,11 +33,10 @@ MachineBasicBlock* SplitCriticalMachineEdge(MachineBasicBlock* src,
   crit_mbb->addSuccessor(dst);
 
   // insert the new block into the machine function.
-  src->getParent()->getBasicBlockList().insert(src->getParent()->end(),
-                                                 crit_mbb);
+  MF.push_back(crit_mbb);
 
   // insert a unconditional branch linking the new block to dst
-  const TargetMachine& TM = src->getParent()->getTarget();
+  const TargetMachine& TM = MF.getTarget();
   const TargetInstrInfo* TII = TM.getInstrInfo();
   std::vector<MachineOperand> emptyConditions;
   TII->InsertBranch(*crit_mbb, dst, (MachineBasicBlock*)0, 

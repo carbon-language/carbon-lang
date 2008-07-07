@@ -190,7 +190,7 @@ void MipsInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   else 
     assert(0 && "Can't store this register");
 
-  MachineInstrBuilder MIB = BuildMI(get(Opc))
+  MachineInstrBuilder MIB = BuildMI(MF, get(Opc))
     .addReg(SrcReg, false, false, isKill);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
@@ -241,7 +241,7 @@ void MipsInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   else 
     assert(0 && "Can't load this register");
 
-  MachineInstrBuilder MIB = BuildMI(get(Opc), DestReg);
+  MachineInstrBuilder MIB = BuildMI(MF, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
     if (MO.isRegister())
@@ -273,12 +273,12 @@ foldMemoryOperand(MachineFunction &MF,
       if (Ops[0] == 0) {    // COPY -> STORE
         unsigned SrcReg = MI->getOperand(2).getReg();
         bool isKill = MI->getOperand(2).isKill();
-        NewMI = BuildMI(get(Mips::SW)).addFrameIndex(FI)
+        NewMI = BuildMI(MF, get(Mips::SW)).addFrameIndex(FI)
           .addImm(0).addReg(SrcReg, false, false, isKill);
       } else {              // COPY -> LOAD
         unsigned DstReg = MI->getOperand(0).getReg();
         bool isDead = MI->getOperand(0).isDead();
-        NewMI = BuildMI(get(Mips::LW))
+        NewMI = BuildMI(MF, get(Mips::LW))
           .addReg(DstReg, true, false, false, isDead)
           .addImm(0).addFrameIndex(FI);
       }
@@ -304,12 +304,12 @@ foldMemoryOperand(MachineFunction &MF,
       if (Ops[0] == 0) {    // COPY -> STORE
         unsigned SrcReg = MI->getOperand(1).getReg();
         bool isKill = MI->getOperand(1).isKill();
-        NewMI = BuildMI(get(StoreOpc)).addFrameIndex(FI)
+        NewMI = BuildMI(MF, get(StoreOpc)).addFrameIndex(FI)
           .addImm(0).addReg(SrcReg, false, false, isKill);
       } else {              // COPY -> LOAD
         unsigned DstReg = MI->getOperand(0).getReg();
         bool isDead = MI->getOperand(0).isDead();
-        NewMI = BuildMI(get(LoadOpc))
+        NewMI = BuildMI(MF, get(LoadOpc))
           .addReg(DstReg, true, false, false, isDead)
           .addImm(0).addFrameIndex(FI);
       }

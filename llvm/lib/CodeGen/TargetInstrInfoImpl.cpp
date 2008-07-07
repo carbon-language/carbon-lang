@@ -40,7 +40,9 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
     // Create a new instruction.
     unsigned Reg0 = ChangeReg0 ? Reg2 : MI->getOperand(0).getReg();
     bool Reg0IsDead = MI->getOperand(0).isDead();
-    return BuildMI(MI->getDesc()).addReg(Reg0, true, false, false, Reg0IsDead)
+    MachineFunction &MF = *MI->getParent()->getParent();
+    return BuildMI(MF, MI->getDesc())
+      .addReg(Reg0, true, false, false, Reg0IsDead)
       .addReg(Reg2, false, false, Reg2IsKill)
       .addReg(Reg1, false, false, Reg1IsKill);
   }
@@ -104,7 +106,7 @@ void TargetInstrInfoImpl::reMaterialize(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator I,
                                         unsigned DestReg,
                                         const MachineInstr *Orig) const {
-  MachineInstr *MI = Orig->clone();
+  MachineInstr *MI = MBB.getParent()->CloneMachineInstr(Orig);
   MI->getOperand(0).setReg(DestReg);
   MBB.insert(I, MI);
 }

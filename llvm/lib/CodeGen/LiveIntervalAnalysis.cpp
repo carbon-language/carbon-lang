@@ -73,7 +73,7 @@ void LiveIntervals::releaseMemory() {
   // Release VNInfo memroy regions after all VNInfo objects are dtor'd.
   VNInfoAllocator.Reset();
   for (unsigned i = 0, e = ClonedMIs.size(); i != e; ++i)
-    delete ClonedMIs[i];
+    mf_->DeleteMachineInstr(ClonedMIs[i]);
 }
 
 void LiveIntervals::computeNumbering() {
@@ -1562,7 +1562,7 @@ addIntervalsForSpills(const LiveInterval &li,
       ReMatOrigDefs[VN] = ReMatDefMI;
       // Original def may be modified so we have to make a copy here. vrm must
       // delete these!
-      ReMatDefs[VN] = ReMatDefMI = ReMatDefMI->clone();
+      ReMatDefs[VN] = ReMatDefMI = mf_->CloneMachineInstr(ReMatDefMI);
 
       bool CanDelete = true;
       if (VNI->hasPHIKill) {

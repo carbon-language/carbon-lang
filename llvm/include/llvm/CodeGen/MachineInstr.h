@@ -16,6 +16,7 @@
 #ifndef LLVM_CODEGEN_MACHINEINSTR_H
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
+#include "llvm/ADT/alist.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include <vector>
@@ -25,9 +26,7 @@ namespace llvm {
 class TargetInstrDesc;
 class TargetInstrInfo;
 class TargetRegisterInfo;
-
-template <typename T> struct ilist_traits;
-template <typename T> struct ilist;
+class MachineFunction;
 
 //===----------------------------------------------------------------------===//
 /// MachineInstr - Representation of each machine instruction.
@@ -38,21 +37,24 @@ class MachineInstr {
                                         // are determined at construction time).
 
   std::vector<MachineOperand> Operands; // the operands
-  std::vector<MachineMemOperand> MemOperands;// information on memory references
-  MachineInstr *Prev, *Next;            // Links for MBB's intrusive list.
+  alist<MachineMemOperand> MemOperands; // information on memory references
   MachineBasicBlock *Parent;            // Pointer to the owning basic block.
 
   // OperandComplete - Return true if it's illegal to add a new operand
   bool OperandsComplete() const;
 
-  MachineInstr(const MachineInstr&);
+  MachineInstr(const MachineInstr&);   // DO NOT IMPLEMENT
   void operator=(const MachineInstr&); // DO NOT IMPLEMENT
 
   // Intrusive list support
-  friend struct ilist_traits<MachineInstr>;
-  friend struct ilist_traits<MachineBasicBlock>;
+  friend struct alist_traits<MachineInstr>;
+  friend struct alist_traits<MachineBasicBlock>;
   void setParent(MachineBasicBlock *P) { Parent = P; }
-public:
+
+  /// MachineInstr ctor - This constructor creates a copy of the given
+  /// MachineInstr in the given MachineFunction.
+  MachineInstr(MachineFunction &, const MachineInstr &);
+
   /// MachineInstr ctor - This constructor creates a dummy MachineInstr with
   /// TID NULL and no operands.
   MachineInstr();
@@ -70,6 +72,10 @@ public:
 
   ~MachineInstr();
 
+  // MachineInstrs are pool-allocated and owned by MachineFunction.
+  friend class MachineFunction;
+
+public:
   const MachineBasicBlock* getParent() const { return Parent; }
   MachineBasicBlock* getParent() { return Parent; }
   
@@ -99,16 +105,15 @@ public:
   unsigned getNumExplicitOperands() const;
   
   /// Access to memory operands of the instruction
-  unsigned getNumMemOperands() const { return (unsigned)MemOperands.size(); }
-
-  const MachineMemOperand& getMemOperand(unsigned i) const {
-    assert(i < getNumMemOperands() && "getMemOperand() out of range!");
-    return MemOperands[i];
-  }
-  MachineMemOperand& getMemOperand(unsigned i) {
-    assert(i < getNumMemOperands() && "getMemOperand() out of range!");
-    return MemOperands[i];
-  }
+  alist<MachineMemOperand>::iterator memoperands_begin()
+  { return MemOperands.begin(); }
+  alist<MachineMemOperand>::iterator memoperands_end()
+  { return MemOperands.end(); }
+  alist<MachineMemOperand>::const_iterator memoperands_begin() const
+  { return MemOperands.begin(); }
+  alist<MachineMemOperand>::const_iterator memoperands_end() const
+  { return MemOperands.end(); }
+  bool memoperands_empty() const { return MemOperands.empty(); }
 
   /// isIdenticalTo - Return true if this instruction is identical to (same
   /// opcode and same operands as) the specified instruction.
@@ -122,19 +127,13 @@ public:
     return true;
   }
 
-  /// clone - Create a copy of 'this' instruction that is identical in
-  /// all ways except the the instruction has no parent, prev, or next.
-  MachineInstr* clone() const { return new MachineInstr(*this); }
-  
   /// removeFromParent - This method unlinks 'this' from the containing basic
   /// block, and returns it, but does not delete it.
   MachineInstr *removeFromParent();
   
   /// eraseFromParent - This method unlinks 'this' from the containing basic
   /// block and deletes it.
-  void eraseFromParent() {
-    delete removeFromParent();
-  }
+  void eraseFromParent();
 
   /// isLabel - Returns true if the MachineInstr represents a label.
   ///
@@ -270,9 +269,11 @@ public:
 
   /// addMemOperand - Add a MachineMemOperand to the machine instruction,
   /// referencing arbitrary storage.
-  void addMemOperand(const MachineMemOperand &MO) {
-    MemOperands.push_back(MO);
-  }
+  void addMemOperand(MachineFunction &MF,
+                     const MachineMemOperand &MO);
+
+  /// clearMemOperands - Erase all of this MachineInstr's MachineMemOperands.
+  void clearMemOperands(MachineFunction &MF);
 
 private:
   /// getRegInfo - If this instruction is embedded into a MachineFunction,

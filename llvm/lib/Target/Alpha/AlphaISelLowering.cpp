@@ -662,18 +662,18 @@ AlphaTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   //test sc and maybe branck to start
   //exit:
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  ilist<MachineBasicBlock>::iterator It = BB;
+  MachineFunction::iterator It = BB;
   ++It;
   
   MachineBasicBlock *thisMBB = BB;
-  MachineBasicBlock *llscMBB = new MachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
+  MachineFunction *F = BB->getParent();
+  MachineBasicBlock *llscMBB = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *sinkMBB = F->CreateMachineBasicBlock(LLVM_BB);
 
   sinkMBB->transferSuccessors(thisMBB);
 
-  MachineFunction *F = BB->getParent();
-  F->getBasicBlockList().insert(It, llscMBB);
-  F->getBasicBlockList().insert(It, sinkMBB);
+  F->insert(It, llscMBB);
+  F->insert(It, sinkMBB);
 
   BuildMI(thisMBB, TII->get(Alpha::BR)).addMBB(llscMBB);
   
@@ -719,7 +719,7 @@ AlphaTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   thisMBB->addSuccessor(llscMBB);
   llscMBB->addSuccessor(llscMBB);
   llscMBB->addSuccessor(sinkMBB);
-  delete MI;   // The pseudo instruction is gone now.
+  F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
 
   return sinkMBB;
 }

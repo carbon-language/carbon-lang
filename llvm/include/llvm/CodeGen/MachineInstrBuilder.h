@@ -83,27 +83,23 @@ public:
     MI->addOperand(MachineOperand::CreateES(FnName, 0));
     return *this;
   }
-
-  /// addMemOperand - Add a memory operand to the machine instruction.
-  const MachineInstrBuilder &addMemOperand(const MachineMemOperand &MO) const {
-    MI->addMemOperand(MO);
-    return *this;
-  }
 };
 
 /// BuildMI - Builder interface.  Specify how to create the initial instruction
 /// itself.
 ///
-inline MachineInstrBuilder BuildMI(const TargetInstrDesc &TID) {
-  return MachineInstrBuilder(new MachineInstr(TID));
+inline MachineInstrBuilder BuildMI(MachineFunction &MF,
+                                   const TargetInstrDesc &TID) {
+  return MachineInstrBuilder(MF.CreateMachineInstr(TID));
 }
 
 /// BuildMI - This version of the builder sets up the first operand as a
 /// destination virtual register.
 ///
-inline MachineInstrBuilder  BuildMI(const TargetInstrDesc &TID,
+inline MachineInstrBuilder  BuildMI(MachineFunction &MF,
+                                    const TargetInstrDesc &TID,
                                     unsigned DestReg) {
-  return MachineInstrBuilder(new MachineInstr(TID)).addReg(DestReg, true);
+  return MachineInstrBuilder(MF.CreateMachineInstr(TID)).addReg(DestReg, true);
 }
 
 /// BuildMI - This version of the builder inserts the newly-built
@@ -114,7 +110,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I,
                                    const TargetInstrDesc &TID,
                                    unsigned DestReg) {
-  MachineInstr *MI = new MachineInstr(TID);
+  MachineInstr *MI = BB.getParent()->CreateMachineInstr(TID);
   BB.insert(I, MI);
   return MachineInstrBuilder(MI).addReg(DestReg, true);
 }
@@ -126,7 +122,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I,
                                    const TargetInstrDesc &TID) {
-  MachineInstr *MI = new MachineInstr(TID);
+  MachineInstr *MI = BB.getParent()->CreateMachineInstr(TID);
   BB.insert(I, MI);
   return MachineInstrBuilder(MI);
 }

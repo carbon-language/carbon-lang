@@ -162,7 +162,7 @@ void SparcInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     Opc = SP::STDFri;
   else
     assert(0 && "Can't load this register");
-  MachineInstrBuilder MIB = BuildMI(get(Opc));
+  MachineInstrBuilder MIB = BuildMI(MF, get(Opc));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
     if (MO.isRegister())
@@ -206,7 +206,7 @@ void SparcInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     Opc = SP::LDDFri;
   else
     assert(0 && "Can't load this register");
-  MachineInstrBuilder MIB = BuildMI(get(Opc), DestReg);
+  MachineInstrBuilder MIB = BuildMI(MF, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
     if (MO.isReg())
@@ -236,10 +236,10 @@ MachineInstr *SparcInstrInfo::foldMemoryOperand(MachineFunction &MF,
     if (MI->getOperand(1).isRegister() && MI->getOperand(1).getReg() == SP::G0&&
         MI->getOperand(0).isRegister() && MI->getOperand(2).isRegister()) {
       if (OpNum == 0)    // COPY -> STORE
-        NewMI = BuildMI(get(SP::STri)).addFrameIndex(FI).addImm(0)
+        NewMI = BuildMI(MF, get(SP::STri)).addFrameIndex(FI).addImm(0)
                                    .addReg(MI->getOperand(2).getReg());
       else               // COPY -> LOAD
-        NewMI = BuildMI(get(SP::LDri), MI->getOperand(0).getReg())
+        NewMI = BuildMI(MF, get(SP::LDri), MI->getOperand(0).getReg())
                       .addFrameIndex(FI).addImm(0);
     }
     break;
@@ -250,12 +250,12 @@ MachineInstr *SparcInstrInfo::foldMemoryOperand(MachineFunction &MF,
     if (OpNum == 0) { // COPY -> STORE
       unsigned SrcReg = MI->getOperand(1).getReg();
       bool isKill = MI->getOperand(1).isKill();
-      NewMI = BuildMI(get(isFloat ? SP::STFri : SP::STDFri))
+      NewMI = BuildMI(MF, get(isFloat ? SP::STFri : SP::STDFri))
         .addFrameIndex(FI).addImm(0).addReg(SrcReg, false, false, isKill);
     } else {             // COPY -> LOAD
       unsigned DstReg = MI->getOperand(0).getReg();
       bool isDead = MI->getOperand(0).isDead();
-      NewMI = BuildMI(get(isFloat ? SP::LDFri : SP::LDDFri))
+      NewMI = BuildMI(MF, get(isFloat ? SP::LDFri : SP::LDDFri))
         .addReg(DstReg, true, false, false, isDead).addFrameIndex(FI).addImm(0);
     }
     break;

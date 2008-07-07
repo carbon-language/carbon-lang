@@ -29,7 +29,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/GraphWriter.h"
-#include "llvm/Support/LeakDetector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
 #include <fstream>
@@ -104,30 +103,20 @@ FunctionPass *llvm::createMachineCodeDeleter() {
 // MachineFunction implementation
 //===---------------------------------------------------------------------===//
 
-MachineBasicBlock* ilist_traits<MachineBasicBlock>::createSentinel() {
-  MachineBasicBlock* dummy = new MachineBasicBlock();
-  LeakDetector::removeGarbageObject(dummy);
-  return dummy;
-}
-
-void ilist_traits<MachineBasicBlock>::transferNodesFromList(
-            iplist<MachineBasicBlock, ilist_traits<MachineBasicBlock> >& toList,
-            ilist_iterator<MachineBasicBlock> first,
-            ilist_iterator<MachineBasicBlock> last) {
-  // If splicing withing the same function, no change.
-  if (Parent == toList.Parent) return;
-  
-  for (; first != last; ++first)
-    first->setParent(toList.Parent);
+void alist_traits<MachineBasicBlock>::deleteNode(MachineBasicBlock *MBB) {
+  MBB->getParent()->DeleteMachineBasicBlock(MBB);
 }
 
 MachineFunction::MachineFunction(const Function *F,
                                  const TargetMachine &TM)
   : Annotation(MF_AID), Fn(F), Target(TM) {
-  RegInfo = new MachineRegisterInfo(*TM.getRegisterInfo());
+  RegInfo = new (Allocator.Allocate<MachineRegisterInfo>())
+                MachineRegisterInfo(*TM.getRegisterInfo());
   MFInfo = 0;
-  FrameInfo = new MachineFrameInfo(*TM.getFrameInfo());
-  ConstantPool = new MachineConstantPool(TM.getTargetData());
+  FrameInfo = new (Allocator.Allocate<MachineFrameInfo>())
+                  MachineFrameInfo(*TM.getFrameInfo());
+  ConstantPool = new (Allocator.Allocate<MachineConstantPool>())
+                     MachineConstantPool(TM.getTargetData());
   
   // Set up jump table.
   const TargetData &TD = *TM.getTargetData();
@@ -135,18 +124,22 @@ MachineFunction::MachineFunction(const Function *F,
   unsigned EntrySize = IsPic ? 4 : TD.getPointerSize();
   unsigned Alignment = IsPic ? TD.getABITypeAlignment(Type::Int32Ty)
                              : TD.getPointerABIAlignment();
-  JumpTableInfo = new MachineJumpTableInfo(EntrySize, Alignment);
-  
-  BasicBlocks.Parent = this;
+  JumpTableInfo = new (Allocator.Allocate<MachineJumpTableInfo>())
+                      MachineJumpTableInfo(EntrySize, Alignment);
 }
 
 MachineFunction::~MachineFunction() {
   BasicBlocks.clear();
-  delete RegInfo;
-  delete MFInfo;
-  delete FrameInfo;
-  delete ConstantPool;
-  delete JumpTableInfo;
+  InstructionRecycler.clear(Allocator);
+  BasicBlockRecycler.clear(Allocator);
+  MemOperandRecycler.clear(Allocator);
+  RegInfo->~MachineRegisterInfo();        Allocator.Deallocate(RegInfo);
+  if (MFInfo) {
+    MFInfo->~MachineFunctionInfo();       Allocator.Deallocate(MFInfo);
+  }
+  FrameInfo->~MachineFrameInfo();         Allocator.Deallocate(FrameInfo);
+  ConstantPool->~MachineConstantPool();   Allocator.Deallocate(ConstantPool);
+  JumpTableInfo->~MachineJumpTableInfo(); Allocator.Deallocate(JumpTableInfo);
 }
 
 
@@ -192,20 +185,88 @@ void MachineFunction::RenumberBlocks(MachineBasicBlock *MBB) {
   MBBNumbering.resize(BlockNo);
 }
 
+/// CreateMachineInstr - Allocate a new MachineInstr. Use this instead
+/// of `new MachineInstr'.
+///
+MachineInstr *
+MachineFunction::CreateMachineInstr(const TargetInstrDesc &TID, bool NoImp) {
+  return new (InstructionRecycler.Allocate<MachineInstr>(Allocator))
+             MachineInstr(TID, NoImp);
+}
 
-void MachineFunction::dump() const { print(*cerr.stream()); }
+/// CloneMachineInstr - Create a new MachineInstr which is a copy of the
+/// 'Orig' instruction, identical in all ways except the the instruction
+/// has no parent, prev, or next.
+///
+MachineInstr *
+MachineFunction::CloneMachineInstr(const MachineInstr *Orig) {
+  return new (InstructionRecycler.Allocate<MachineInstr>(Allocator))
+             MachineInstr(*this, *Orig);
+}
+
+/// DeleteMachineInstr - Delete the given MachineInstr.
+///
+void
+MachineFunction::DeleteMachineInstr(MachineInstr *MI) {
+  // Clear the instructions memoperands. This must be done manually because
+  // the instruction's parent pointer is now null, so it can't properly
+  // deallocate them on its own.
+  MI->clearMemOperands(*this);
+
+  MI->~MachineInstr();
+  InstructionRecycler.Deallocate(Allocator, MI);
+}
+
+/// CreateMachineBasicBlock - Allocate a new MachineBasicBlock. Use this
+/// instead of `new MachineBasicBlock'.
+///
+MachineBasicBlock *
+MachineFunction::CreateMachineBasicBlock(const BasicBlock *bb) {
+  return new (BasicBlockRecycler.Allocate<MachineBasicBlock>(Allocator))
+             MachineBasicBlock(*this, bb);
+}
+
+/// DeleteMachineBasicBlock - Delete the given MachineBasicBlock.
+///
+void
+MachineFunction::DeleteMachineBasicBlock(MachineBasicBlock *MBB) {
+  assert(MBB->getParent() == this && "MBB parent mismatch!");
+  MBB->~MachineBasicBlock();
+  BasicBlockRecycler.Deallocate(Allocator, MBB);
+}
+
+/// CreateMachineMemOperand - Allocate a new MachineMemOperand. Use this
+/// instead of `new MachineMemOperand'.
+///
+MachineMemOperand *
+MachineFunction::CreateMachineMemOperand(const MachineMemOperand &MMO) {
+  return new (MemOperandRecycler.Allocate<MachineMemOperand>(Allocator))
+             MachineMemOperand(MMO);
+}
+
+/// DeleteMachineMemOperand - Delete the given MachineMemOperand.
+///
+void
+MachineFunction::DeleteMachineMemOperand(MachineMemOperand *MO) {
+  MO->~MachineMemOperand();
+  MemOperandRecycler.Deallocate(Allocator, MO);
+}
+
+void MachineFunction::dump() const {
+  print(*cerr.stream());
+}
 
 void MachineFunction::print(std::ostream &OS) const {
   OS << "# Machine code for " << Fn->getName () << "():\n";
 
   // Print Frame Information
-  getFrameInfo()->print(*this, OS);
+  FrameInfo->print(*this, OS);
   
   // Print JumpTable Information
-  getJumpTableInfo()->print(OS);
+  JumpTableInfo->print(OS);
 
   // Print Constant Pool
-  getConstantPool()->print(OS);
+  ConstantPool->print(OS);
   
   const TargetRegisterInfo *TRI = getTarget().getRegisterInfo();
   

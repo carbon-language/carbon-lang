@@ -127,7 +127,7 @@ void BranchFolder::RemoveDeadBlock(MachineBasicBlock *MBB) {
   }
   
   // Remove the block.
-  MF->getBasicBlockList().erase(MBB);
+  MF->erase(MBB);
 }
 
 /// OptimizeImpDefsBlock - If a basic block is just a bunch of implicit_def
@@ -375,10 +375,12 @@ void BranchFolder::ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
 /// iterator.  This returns the new MBB.
 MachineBasicBlock *BranchFolder::SplitMBBAt(MachineBasicBlock &CurMBB,
                                             MachineBasicBlock::iterator BBI1) {
+  MachineFunction &MF = *CurMBB.getParent();
+
   // Create the fall-through block.
   MachineFunction::iterator MBBI = &CurMBB;
-  MachineBasicBlock *NewMBB = new MachineBasicBlock(CurMBB.getBasicBlock());
-  CurMBB.getParent()->getBasicBlockList().insert(++MBBI, NewMBB);
+  MachineBasicBlock *NewMBB =MF.CreateMachineBasicBlock(CurMBB.getBasicBlock());
+  CurMBB.getParent()->insert(++MBBI, NewMBB);
 
   // Move all the successors of this block to the specified block.
   NewMBB->transferSuccessors(&CurMBB);

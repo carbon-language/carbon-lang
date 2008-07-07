@@ -18,8 +18,11 @@
 #ifndef LLVM_CODEGEN_MACHINEFUNCTION_H
 #define LLVM_CODEGEN_MACHINEFUNCTION_H
 
+#include "llvm/ADT/alist.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/Annotation.h"
+#include "llvm/Support/Allocator.h"
+#include "llvm/Support/Recycler.h"
 
 namespace llvm {
 
@@ -30,40 +33,16 @@ class MachineFrameInfo;
 class MachineConstantPool;
 class MachineJumpTableInfo;
 
-// ilist_traits
 template <>
-class ilist_traits<MachineBasicBlock> {
-  // this is only set by the MachineFunction owning the ilist
-  friend class MachineFunction;
-  MachineFunction* Parent;
-
+class alist_traits<MachineBasicBlock, MachineBasicBlock> {
+  typedef alist_iterator<MachineBasicBlock> iterator;
 public:
-  ilist_traits<MachineBasicBlock>() : Parent(0) { }
-
-  static MachineBasicBlock* getPrev(MachineBasicBlock* N) { return N->Prev; }
-  static MachineBasicBlock* getNext(MachineBasicBlock* N) { return N->Next; }
-
-  static const MachineBasicBlock*
-  getPrev(const MachineBasicBlock* N) { return N->Prev; }
-
-  static const MachineBasicBlock*
-  getNext(const MachineBasicBlock* N) { return N->Next; }
-
-  static void setPrev(MachineBasicBlock* N, MachineBasicBlock* prev) {
-    N->Prev = prev;
-  }
-  static void setNext(MachineBasicBlock* N, MachineBasicBlock* next) {
-    N->Next = next;
-  }
-
-  static MachineBasicBlock* createSentinel();
-  static void destroySentinel(MachineBasicBlock *MBB) { delete MBB; }
-  void addNodeToList(MachineBasicBlock* N);
-  void removeNodeFromList(MachineBasicBlock* N);
-  void transferNodesFromList(iplist<MachineBasicBlock,
-                                    ilist_traits<MachineBasicBlock> > &toList,
-                             ilist_iterator<MachineBasicBlock> first,
-                             ilist_iterator<MachineBasicBlock> last);
+  void addNodeToList(MachineBasicBlock* MBB);
+  void removeNodeFromList(MachineBasicBlock* MBB);
+  void transferNodesFromList(alist_traits<MachineBasicBlock> &,
+                             iterator,
+                             iterator) {}
+  void deleteNode(MachineBasicBlock *MBB);
 };
 
 /// MachineFunctionInfo - This class can be derived from and used by targets to
@@ -77,9 +56,6 @@ struct MachineFunctionInfo {
 class MachineFunction : private Annotation {
   const Function *Fn;
   const TargetMachine &Target;
-
-  // List of machine basic blocks in function
-  ilist<MachineBasicBlock> BasicBlocks;
 
   // RegInfo - Information about each register in use in the function.
   MachineRegisterInfo *RegInfo;
@@ -102,6 +78,22 @@ class MachineFunction : private Annotation {
   // numbered and this vector keeps track of the mapping from ID's to MBB's.
   std::vector<MachineBasicBlock*> MBBNumbering;
 
+  // Pool-allocate MachineFunction-lifetime and IR objects.
+  BumpPtrAllocator Allocator;
+
+  // Allocation management for instructions in function.
+  Recycler<MachineInstr> InstructionRecycler;
+
+  // Allocation management for basic blocks in function.
+  Recycler<MachineBasicBlock> BasicBlockRecycler;
+
+  // Allocation management for memoperands in function.
+  Recycler<MachineMemOperand> MemOperandRecycler;
+
+  // List of machine basic blocks in function
+  typedef alist<MachineBasicBlock> BasicBlockListType;
+  BasicBlockListType BasicBlocks;
+
 public:
   MachineFunction(const Function *Fn, const TargetMachine &TM);
   ~MachineFunction();
@@ -116,31 +108,35 @@ public:
 
   /// getRegInfo - Return information about the registers currently in use.
   ///
-  MachineRegisterInfo &getRegInfo() const { return *RegInfo; }
+  MachineRegisterInfo &getRegInfo() { return *RegInfo; }
+  const MachineRegisterInfo &getRegInfo() const { return *RegInfo; }
 
   /// getFrameInfo - Return the frame info object for the current function.
   /// This object contains information about objects allocated on the stack
   /// frame of the current function in an abstract way.
   ///
-  MachineFrameInfo *getFrameInfo() const { return FrameInfo; }
+  MachineFrameInfo *getFrameInfo() { return FrameInfo; }
+  const MachineFrameInfo *getFrameInfo() const { return FrameInfo; }
 
   /// getJumpTableInfo - Return the jump table info object for the current 
   /// function.  This object contains information about jump tables for switch
   /// instructions in the current function.
   ///
-  MachineJumpTableInfo *getJumpTableInfo() const { return JumpTableInfo; }
+  MachineJumpTableInfo *getJumpTableInfo() { return JumpTableInfo; }
+  const MachineJumpTableInfo *getJumpTableInfo() const { return JumpTableInfo; }
   
   /// getConstantPool - Return the constant pool object for the current
   /// function.
   ///
-  MachineConstantPool *getConstantPool() const { return ConstantPool; }
+  MachineConstantPool *getConstantPool() { return ConstantPool; }
+  const MachineConstantPool *getConstantPool() const { return ConstantPool; }
 
   /// MachineFunctionInfo - Keep track of various per-function pieces of
   /// information for backends that would like to do so.
   ///
   template<typename Ty>
   Ty *getInfo() {
-    if (!MFInfo) MFInfo = new Ty(*this);
+    if (!MFInfo) MFInfo = new (Allocator.Allocate<Ty>()) Ty(*this);
 
     assert((void*)dynamic_cast<Ty*>(MFInfo) == (void*)MFInfo &&
            "Invalid concrete type or multiple inheritence for getInfo");
@@ -215,18 +211,13 @@ public:
   static MachineFunction& get(const Function *F);
 
   // Provide accessors for the MachineBasicBlock list...
-  typedef ilist<MachineBasicBlock> BasicBlockListType;
   typedef BasicBlockListType::iterator iterator;
   typedef BasicBlockListType::const_iterator const_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
   typedef std::reverse_iterator<iterator>             reverse_iterator;
 
-  // Provide accessors for basic blocks...
-  const BasicBlockListType &getBasicBlockList() const { return BasicBlocks; }
-        BasicBlockListType &getBasicBlockList()       { return BasicBlocks; }
-
   //===--------------------------------------------------------------------===//
-  // BasicBlock iterator forwarding functions
+  // BasicBlock accessor functions.
   //
   iterator                 begin()       { return BasicBlocks.begin(); }
   const_iterator           begin() const { return BasicBlocks.begin(); }
@@ -244,6 +235,22 @@ public:
         MachineBasicBlock &front()       { return BasicBlocks.front(); }
   const MachineBasicBlock & back() const { return BasicBlocks.back(); }
         MachineBasicBlock & back()       { return BasicBlocks.back(); }
+
+  void push_back (MachineBasicBlock *MBB) { BasicBlocks.push_back (MBB); }
+  void push_front(MachineBasicBlock *MBB) { BasicBlocks.push_front(MBB); }
+  void insert(iterator MBBI, MachineBasicBlock *MBB) {
+    BasicBlocks.insert(MBBI, MBB);
+  }
+  void splice(iterator InsertPt, iterator MBBI) {
+    BasicBlocks.splice(InsertPt, BasicBlocks, MBBI);
+  }
+
+  void remove(iterator MBBI) {
+    BasicBlocks.remove(MBBI);
+  }
+  void erase(iterator MBBI) {
+    BasicBlocks.erase(MBBI);
+  }
 
   //===--------------------------------------------------------------------===//
   // Internal functions used to automatically number MachineBasicBlocks
@@ -264,6 +271,40 @@ public:
     assert(N < MBBNumbering.size() && "Illegal basic block #");
     MBBNumbering[N] = 0;
   }
+
+  /// CreateMachineInstr - Allocate a new MachineInstr. Use this instead
+  /// of `new MachineInstr'.
+  ///
+  MachineInstr *CreateMachineInstr(const TargetInstrDesc &TID,
+                                   bool NoImp = false);
+
+  /// CloneMachineInstr - Create a new MachineInstr which is a copy of the
+  /// 'Orig' instruction, identical in all ways except the the instruction
+  /// has no parent, prev, or next.
+  ///
+  MachineInstr *CloneMachineInstr(const MachineInstr *Orig);
+
+  /// DeleteMachineInstr - Delete the given MachineInstr.
+  ///
+  void DeleteMachineInstr(MachineInstr *MI);
+
+  /// CreateMachineBasicBlock - Allocate a new MachineBasicBlock. Use this
+  /// instead of `new MachineBasicBlock'.
+  ///
+  MachineBasicBlock *CreateMachineBasicBlock(const BasicBlock *bb = 0);
+
+  /// DeleteMachineBasicBlock - Delete the given MachineBasicBlock.
+  ///
+  void DeleteMachineBasicBlock(MachineBasicBlock *MBB);
+
+  /// CreateMachineMemOperand - Allocate a new MachineMemOperand. Use this
+  /// instead of `new MachineMemOperand'.
+  ///
+  MachineMemOperand *CreateMachineMemOperand(const MachineMemOperand &MMO);
+
+  /// DeleteMachineMemOperand - Delete the given MachineMemOperand.
+  ///
+  void DeleteMachineMemOperand(MachineMemOperand *MMO);
 };
 
 //===--------------------------------------------------------------------===//

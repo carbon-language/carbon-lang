@@ -1134,6 +1134,8 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
 void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
                                         std::vector<MachineOperand> &Cond,
                                         bool IgnoreBr) {
+  MachineFunction &MF = *ToBBI.BB->getParent();
+
   for (MachineBasicBlock::iterator I = FromBBI.BB->begin(),
          E = FromBBI.BB->end(); I != E; ++I) {
     const TargetInstrDesc &TID = I->getDesc();
@@ -1142,7 +1144,7 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
     if (IgnoreBr && !isPredicated && TID.isBranch())
       break;
 
-    MachineInstr *MI = I->clone();
+    MachineInstr *MI = MF.CloneMachineInstr(I);
     ToBBI.BB->insert(ToBBI.BB->end(), MI);
     ToBBI.NonPredSize++;
 

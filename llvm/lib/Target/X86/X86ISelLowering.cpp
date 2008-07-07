@@ -5955,16 +5955,16 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
   //     fallthrough -->nextMBB
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   const BasicBlock *LLVM_BB = MBB->getBasicBlock();
-  ilist<MachineBasicBlock>::iterator MBBIter = MBB;
+  MachineFunction::iterator MBBIter = MBB;
   ++MBBIter;
   
   /// First build the CFG
   MachineFunction *F = MBB->getParent();
   MachineBasicBlock *thisMBB = MBB;
-  MachineBasicBlock *newMBB = new MachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *nextMBB = new MachineBasicBlock(LLVM_BB);
-  F->getBasicBlockList().insert(MBBIter, newMBB);
-  F->getBasicBlockList().insert(MBBIter, nextMBB);
+  MachineBasicBlock *newMBB = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *nextMBB = F->CreateMachineBasicBlock(LLVM_BB);
+  F->insert(MBBIter, newMBB);
+  F->insert(MBBIter, nextMBB);
   
   // Move all successors to thisMBB to nextMBB
   nextMBB->transferSuccessors(thisMBB);
@@ -6024,7 +6024,7 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
   // insert branch
   BuildMI(newMBB, TII->get(X86::JNE)).addMBB(newMBB);
 
-  delete bInstr;   // The pseudo instruction is gone now.
+  F->DeleteMachineInstr(bInstr);   // The pseudo instruction is gone now.
   return nextMBB;
 }
 
@@ -6047,16 +6047,16 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
   //
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   const BasicBlock *LLVM_BB = MBB->getBasicBlock();
-  ilist<MachineBasicBlock>::iterator MBBIter = MBB;
+  MachineFunction::iterator MBBIter = MBB;
   ++MBBIter;
   
   /// First build the CFG
   MachineFunction *F = MBB->getParent();
   MachineBasicBlock *thisMBB = MBB;
-  MachineBasicBlock *newMBB = new MachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *nextMBB = new MachineBasicBlock(LLVM_BB);
-  F->getBasicBlockList().insert(MBBIter, newMBB);
-  F->getBasicBlockList().insert(MBBIter, nextMBB);
+  MachineBasicBlock *newMBB = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *nextMBB = F->CreateMachineBasicBlock(LLVM_BB);
+  F->insert(MBBIter, newMBB);
+  F->insert(MBBIter, nextMBB);
   
   // Move all successors to thisMBB to nextMBB
   nextMBB->transferSuccessors(thisMBB);
@@ -6121,7 +6121,7 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
   // insert branch
   BuildMI(newMBB, TII->get(X86::JNE)).addMBB(newMBB);
 
-  delete mInstr;   // The pseudo instruction is gone now.
+  F->DeleteMachineInstr(mInstr);   // The pseudo instruction is gone now.
   return nextMBB;
 }
 
@@ -6142,7 +6142,7 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     // destination vreg to set, the condition code register to branch on, the
     // true/false values to select between, and a branch opcode to use.
     const BasicBlock *LLVM_BB = BB->getBasicBlock();
-    ilist<MachineBasicBlock>::iterator It = BB;
+    MachineFunction::iterator It = BB;
     ++It;
 
     //  thisMBB:
@@ -6152,14 +6152,14 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     //   bCC copy1MBB
     //   fallthrough --> copy0MBB
     MachineBasicBlock *thisMBB = BB;
-    MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
-    MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
+    MachineFunction *F = BB->getParent();
+    MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
+    MachineBasicBlock *sinkMBB = F->CreateMachineBasicBlock(LLVM_BB);
     unsigned Opc =
       X86::GetCondBranchFromCond((X86::CondCode)MI->getOperand(3).getImm());
     BuildMI(BB, TII->get(Opc)).addMBB(sinkMBB);
-    MachineFunction *F = BB->getParent();
-    F->getBasicBlockList().insert(It, copy0MBB);
-    F->getBasicBlockList().insert(It, sinkMBB);
+    F->insert(It, copy0MBB);
+    F->insert(It, sinkMBB);
     // Update machine-CFG edges by transferring all successors of the current
     // block to the new block which will contain the Phi node for the select.
     sinkMBB->transferSuccessors(BB);
@@ -6184,7 +6184,7 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
       .addReg(MI->getOperand(1).getReg()).addMBB(copy0MBB)
       .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB);
 
-    delete MI;   // The pseudo instruction is gone now.
+    F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
     return BB;
   }
 
@@ -6261,7 +6261,7 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     // Reload the original control word now.
     addFrameReference(BuildMI(BB, TII->get(X86::FLDCW16m)), CWFrameIdx);
 
-    delete MI;   // The pseudo instruction is gone now.
+    F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
     return BB;
   }
   case X86::ATOMAND32:

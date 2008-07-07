@@ -183,8 +183,8 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
       return CalleeSavedRegs64Bit;
   } else {
     if (MF) {
-        MachineFrameInfo *MFI = MF->getFrameInfo();
-        MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
+        const MachineFrameInfo *MFI = MF->getFrameInfo();
+        const MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
         if (MMI && MMI->callsEHReturn())
           return CalleeSavedRegs32EHRet;
     }
@@ -222,8 +222,8 @@ X86RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
       return CalleeSavedRegClasses64Bit;
   } else {
     if (MF) {
-        MachineFrameInfo *MFI = MF->getFrameInfo();
-        MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
+        const MachineFrameInfo *MFI = MF->getFrameInfo();
+        const MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
         if (MMI && MMI->callsEHReturn())
           return CalleeSavedRegClasses32EHRet;
     }
@@ -269,8 +269,8 @@ static unsigned calculateMaxStackAlignment(const MachineFrameInfo *FFI) {
 // if frame pointer elimination is disabled.
 //
 bool X86RegisterInfo::hasFP(const MachineFunction &MF) const {
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
 
   return (NoFramePointerElim ||
           needsStackRealignment(MF) ||
@@ -280,7 +280,7 @@ bool X86RegisterInfo::hasFP(const MachineFunction &MF) const {
 }
 
 bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
-  MachineFrameInfo *MFI = MF.getFrameInfo();;
+  const MachineFrameInfo *MFI = MF.getFrameInfo();;
 
   // FIXME: Currently we don't support stack realignment for functions with
   // variable-sized allocas
@@ -343,7 +343,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       MachineInstr *New = 0;
       if (Old->getOpcode() == X86::ADJCALLSTACKDOWN) {
-        New=BuildMI(TII.get(Is64Bit ? X86::SUB64ri32 : X86::SUB32ri), StackPtr)
+        New=BuildMI(MF, TII.get(Is64Bit ? X86::SUB64ri32 : X86::SUB32ri), StackPtr)
           .addReg(StackPtr).addImm(Amount);
       } else {
         assert(Old->getOpcode() == X86::ADJCALLSTACKUP);
@@ -354,7 +354,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
           unsigned Opc = (Amount < 128) ?
             (Is64Bit ? X86::ADD64ri8 : X86::ADD32ri8) :
             (Is64Bit ? X86::ADD64ri32 : X86::ADD32ri);
-          New = BuildMI(TII.get(Opc), StackPtr).addReg(StackPtr).addImm(Amount);
+          New = BuildMI(MF, TII.get(Opc), StackPtr).addReg(StackPtr).addImm(Amount);
         }
       }
 
@@ -370,7 +370,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
         (Is64Bit ? X86::SUB64ri8 : X86::SUB32ri8) :
         (Is64Bit ? X86::SUB64ri32 : X86::SUB32ri);
       MachineInstr *New =
-        BuildMI(TII.get(Opc), StackPtr).addReg(StackPtr).addImm(CalleeAmt);
+        BuildMI(MF, TII.get(Opc), StackPtr).addReg(StackPtr).addImm(CalleeAmt);
       MBB.insert(I, New);
     }
   }
@@ -749,7 +749,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
         BuildMI(MBB, MBBI, TII.get(X86::CALLpcrel32))
           .addExternalSymbol("_alloca");
         // Restore EAX
-        MachineInstr *MI = addRegOffset(BuildMI(TII.get(X86::MOV32rm),X86::EAX),
+        MachineInstr *MI = addRegOffset(BuildMI(MF, TII.get(X86::MOV32rm),X86::EAX),
                                         StackPtr, false, NumBytes-4);
         MBB.insert(MBBI, MI);
       }
@@ -845,7 +845,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   } else if (MFI->hasVarSizedObjects()) {
     if (CSSize) {
       unsigned Opc = Is64Bit ? X86::LEA64r : X86::LEA32r;
-      MachineInstr *MI = addRegOffset(BuildMI(TII.get(Opc), StackPtr),
+      MachineInstr *MI = addRegOffset(BuildMI(MF, TII.get(Opc), StackPtr),
                                       FramePtr, false, -CSSize);
       MBB.insert(MBBI, MI);
     } else

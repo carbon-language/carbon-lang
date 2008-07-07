@@ -414,9 +414,10 @@ public:
   virtual unsigned GetInstSizeInBytes(const MachineInstr *MI) const;
 
 private:
-  MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                    unsigned OpNum,
-                                    SmallVector<MachineOperand,4> &MOs) const;
+  MachineInstr* foldMemoryOperand(MachineFunction &MF,
+                                  MachineInstr* MI,
+                                  unsigned OpNum,
+                                  SmallVector<MachineOperand,4> &MOs) const;
 };
 
 } // End llvm namespace

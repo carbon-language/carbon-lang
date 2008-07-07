@@ -103,7 +103,7 @@ BitVector AlphaRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 // if frame pointer elimination is disabled.
 //
 bool AlphaRegisterInfo::hasFP(const MachineFunction &MF) const {
-  MachineFrameInfo *MFI = MF.getFrameInfo();
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
   return MFI->hasVarSizedObjects();
 }
 
@@ -125,11 +125,11 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       MachineInstr *New;
       if (Old->getOpcode() == Alpha::ADJUSTSTACKDOWN) {
-        New=BuildMI(TII.get(Alpha::LDA), Alpha::R30)
+        New=BuildMI(MF, TII.get(Alpha::LDA), Alpha::R30)
           .addImm(-Amount).addReg(Alpha::R30);
       } else {
          assert(Old->getOpcode() == Alpha::ADJUSTSTACKUP);
-         New=BuildMI(TII.get(Alpha::LDA), Alpha::R30)
+         New=BuildMI(MF, TII.get(Alpha::LDA), Alpha::R30)
           .addImm(Amount).addReg(Alpha::R30);
       }
 
@@ -188,7 +188,7 @@ void AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     MI.getOperand(i + 1).ChangeToRegister(Alpha::R28, false);
     MI.getOperand(i).ChangeToImmediate(getLower16(Offset));
     //insert the new
-    MachineInstr* nMI=BuildMI(TII.get(Alpha::LDAH), Alpha::R28)
+    MachineInstr* nMI=BuildMI(MF, TII.get(Alpha::LDAH), Alpha::R28)
       .addImm(getUpper16(Offset)).addReg(FP ? Alpha::R15 : Alpha::R30);
     MBB.insert(II, nMI);
   } else {

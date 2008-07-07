@@ -670,7 +670,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
 }
 
 void ScheduleDAG::AddMemOperand(MachineInstr *MI, const MachineMemOperand &MO) {
-  MI->addMemOperand(MO);
+  MI->addMemOperand(*MF, MO);
 }
 
 /// getSubRegisterRegClass - Returns the register class of specified register
@@ -726,7 +726,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
     unsigned SubIdx = cast<ConstantSDNode>(Node->getOperand(1))->getValue();
 
     // Create the extract_subreg machine instruction.
-    MachineInstr *MI = BuildMI(TII->get(TargetInstrInfo::EXTRACT_SUBREG));
+    MachineInstr *MI = BuildMI(*MF, TII->get(TargetInstrInfo::EXTRACT_SUBREG));
 
     // Figure out the register class to create for the destreg.
     unsigned VReg = getVR(Node->getOperand(0), VRBaseMap);
@@ -772,7 +772,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
     }
     
     // Create the insert_subreg or subreg_to_reg machine instruction.
-    MachineInstr *MI = BuildMI(TII->get(Opc));
+    MachineInstr *MI = BuildMI(*MF, TII->get(Opc));
     MI->addOperand(MachineOperand::CreateReg(VRBase, true));
     
     // If creating a subreg_to_reg, then the first input operand
@@ -829,7 +829,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, bool IsClone,
 #endif
 
     // Create the new machine instruction.
-    MachineInstr *MI = BuildMI(II);
+    MachineInstr *MI = BuildMI(*MF, II);
     
     // Add result register values for things that are defined by this
     // instruction.
@@ -853,7 +853,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, bool IsClone,
       else {
         DOUT << "Sched: COMMUTED TO: " << *NewMI;
         if (MI != NewMI) {
-          delete MI;
+          MF->DeleteMachineInstr(MI);
           MI = NewMI;
         }
         ++NumCommutes;
@@ -928,7 +928,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, bool IsClone,
       --NumOps;  // Ignore the flag operand.
       
     // Create the inline asm machine instruction.
-    MachineInstr *MI = BuildMI(TII->get(TargetInstrInfo::INLINEASM));
+    MachineInstr *MI = BuildMI(*MF, TII->get(TargetInstrInfo::INLINEASM));
 
     // Add the asm string as an external symbol operand.
     const char *AsmStr =

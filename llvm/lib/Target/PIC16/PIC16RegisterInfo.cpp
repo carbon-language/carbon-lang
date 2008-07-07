@@ -61,7 +61,7 @@ void PIC16RegisterInfo::reMaterialize(MachineBasicBlock &MBB,
                                       unsigned DestReg, 
                                       const MachineInstr *Orig) const 
 {
-  MachineInstr *MI = Orig->clone();
+  MachineInstr *MI = MBB.getParent()->CloneMachineInstr(Orig);
   MI->getOperand(0).setReg(DestReg);
   MBB.insert(I, MI);
 }

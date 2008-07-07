@@ -291,7 +291,7 @@ void SPUInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
       assert(0 && "Unknown regclass!");
       abort();
     }
-    MachineInstrBuilder MIB = BuildMI(get(Opc))
+    MachineInstrBuilder MIB = BuildMI(MF, get(Opc))
       .addReg(SrcReg, false, false, isKill);
     for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
       MachineOperand &MO = Addr[i];
@@ -378,7 +378,7 @@ void SPUInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
       assert(0 && "Unknown regclass!");
       abort();
     }
-    MachineInstrBuilder MIB = BuildMI(get(Opc), DestReg);
+    MachineInstrBuilder MIB = BuildMI(MF, get(Opc), DestReg);
     for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
       MachineOperand &MO = Addr[i];
       if (MO.isRegister())
@@ -414,7 +414,7 @@ SPUInstrInfo::foldMemoryOperand(MachineFunction &MF,
       unsigned InReg = MI->getOperand(1).getReg();
       bool isKill = MI->getOperand(1).isKill();
       if (FrameIndex < SPUFrameInfo::maxFrameOffset()) {
-        NewMI = addFrameReference(BuildMI(TII.get(SPU::STQDr32))
+        NewMI = addFrameReference(BuildMI(MF, TII.get(SPU::STQDr32))
                                   .addReg(InReg, false, false, isKill),
                                   FrameIndex);
       }
@@ -423,7 +423,7 @@ SPUInstrInfo::foldMemoryOperand(MachineFunction &MF,
       bool isDead = MI->getOperand(0).isDead();
       Opc = (FrameIndex < SPUFrameInfo::maxFrameOffset())
         ? SPU::STQDr32 : SPU::STQXr32;
-      NewMI = addFrameReference(BuildMI(TII.get(Opc))
+      NewMI = addFrameReference(BuildMI(MF, TII.get(Opc))
                        .addReg(OutReg, true, false, false, isDead), FrameIndex);
     }
   }

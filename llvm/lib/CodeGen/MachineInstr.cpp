@@ -22,7 +22,6 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
 #include <ostream>
@@ -257,8 +256,6 @@ MachineMemOperand::MachineMemOperand(const Value *v, unsigned int f,
 /// TID NULL and no operands.
 MachineInstr::MachineInstr()
   : TID(0), NumImplicitOps(0), Parent(0) {
-  // Make sure that we get added to a machine basicblock
-  LeakDetector::addGarbageObject(this);
 }
 
 void MachineInstr::addImplicitDefUseOperands() {
@@ -285,8 +282,6 @@ MachineInstr::MachineInstr(const TargetInstrDesc &tid, bool NoImp)
   Operands.reserve(NumImplicitOps + TID->getNumOperands());
   if (!NoImp)
     addImplicitDefUseOperands();
-  // Make sure that we get added to a machine basicblock
-  LeakDetector::addGarbageObject(this);
 }
 
 /// MachineInstr ctor - Work exactly the same as the ctor above, except that the
@@ -304,18 +299,15 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB,
       NumImplicitOps++;
   Operands.reserve(NumImplicitOps + TID->getNumOperands());
   addImplicitDefUseOperands();
-  // Make sure that we get added to a machine basicblock
-  LeakDetector::addGarbageObject(this);
   MBB->push_back(this);  // Add instruction to end of basic block!
 }
 
 /// MachineInstr ctor - Copies MachineInstr arg exactly
 ///
-MachineInstr::MachineInstr(const MachineInstr &MI) {
+MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI) {
   TID = &MI.getDesc();
   NumImplicitOps = MI.NumImplicitOps;
   Operands.reserve(MI.getNumOperands());
-  MemOperands = MI.MemOperands;
 
   // Add operands
   for (unsigned i = 0; i != MI.getNumOperands(); ++i) {
@@ -323,15 +315,18 @@ MachineInstr::MachineInstr(const MachineInstr &MI) {
     Operands.back().ParentMI = this;
   }
 
-  // Set parent, next, and prev to null
+  // Add memory operands.
+  for (alist<MachineMemOperand>::const_iterator i = MI.memoperands_begin(),
+       j = MI.memoperands_end(); i != j; ++i)
+    addMemOperand(MF, *i);
+
+  // Set parent to null.
   Parent = 0;
-  Prev = 0;
-  Next = 0;
 }
 
-
 MachineInstr::~MachineInstr() {
-  LeakDetector::removeGarbageObject(this);
+  assert(MemOperands.empty() &&
+         "MachineInstr being deleted with live memoperands!");
 #ifndef NDEBUG
   for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
     assert(Operands[i].ParentMI == this && "ParentMI mismatch!");
@@ -499,6 +494,19 @@ void MachineInstr::RemoveOperand(unsigned OpNo) {
   }
 }
 
+/// addMemOperand - Add a MachineMemOperand to the machine instruction,
+/// referencing arbitrary storage.
+void MachineInstr::addMemOperand(MachineFunction &MF,
+                                 const MachineMemOperand &MO) {
+  MemOperands.push_back(MF.CreateMachineMemOperand(MO));
+}
+
+/// clearMemOperands - Erase all of this MachineInstr's MachineMemOperands.
+void MachineInstr::clearMemOperands(MachineFunction &MF) {
+  while (!MemOperands.empty())
+    MF.DeleteMachineMemOperand(MemOperands.remove(MemOperands.begin()));
+}
+
 
 /// removeFromParent - This method unlinks 'this' from the containing basic
 /// block, and returns it, but does not delete it.
@@ -506,6 +514,14 @@ MachineInstr *MachineInstr::removeFromParent() {
   assert(getParent() && "Not embedded in a basic block!");
   getParent()->remove(this);
   return this;
+}
+
+
+/// eraseFromParent - This method unlinks 'this' from the containing basic
+/// block, and deletes it.
+void MachineInstr::eraseFromParent() {
+  assert(getParent() && "Not embedded in a basic block!");
+  getParent()->erase(this);
 }
 
 
@@ -710,10 +726,11 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
     getOperand(i).print(OS, TM);
   }
 
-  if (getNumMemOperands() > 0) {
+  if (!memoperands_empty()) {
     OS << ", Mem:";
-    for (unsigned i = 0; i < getNumMemOperands(); i++) {
-      const MachineMemOperand &MRO = getMemOperand(i);
+    for (alist<MachineMemOperand>::const_iterator i = memoperands_begin(),
+         e = memoperands_end(); i != e; ++i) {
+      const MachineMemOperand &MRO = *i;
       const Value *V = MRO.getValue();
 
       assert((MRO.isLoad() || MRO.isStore()) &&
