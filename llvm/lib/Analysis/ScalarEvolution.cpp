@@ -1742,12 +1742,14 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
     }
     break;
   case Instruction::Xor:
-    // If the RHS of the xor is a signbit, then this is just an add.
-    // Instcombine turns add of signbit into xor as a strength reduction step.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(U->getOperand(1))) {
+      // If the RHS of the xor is a signbit, then this is just an add.
+      // Instcombine turns add of signbit into xor as a strength reduction step.
       if (CI->getValue().isSignBit())
         return SE.getAddExpr(getSCEV(U->getOperand(0)),
                              getSCEV(U->getOperand(1)));
+
+      // If the RHS of xor is -1, then this is a not operation.
       else if (CI->isAllOnesValue())
         return SE.getNotSCEV(getSCEV(U->getOperand(0)));
     }
@@ -1760,6 +1762,16 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
       Constant *X = ConstantInt::get(
         APInt(BitWidth, 1).shl(SA->getLimitedValue(BitWidth)));
       return SE.getMulExpr(getSCEV(U->getOperand(0)), getSCEV(X));
+    }
+    break;
+
+  case Instruction::LShr:
+    // Turn logical shift right of a constant into a unsigned divide.
+    if (ConstantInt *SA = dyn_cast<ConstantInt>(U->getOperand(1))) {
+      uint32_t BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
+      Constant *X = ConstantInt::get(
+        APInt(BitWidth, 1).shl(SA->getLimitedValue(BitWidth)));
+      return SE.getUDivExpr(getSCEV(U->getOperand(0)), getSCEV(X));
     }
     break;
 
