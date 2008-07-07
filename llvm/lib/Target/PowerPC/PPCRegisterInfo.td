@@ -22,10 +22,9 @@ class GPR<bits<5> num, string n> : PPCReg<n> {
 }
 
 // GP8 - One of the 32 64-bit general-purpose registers
-class GP8<GPR SubReg, string n> : PPCReg<SubReg.AsmName> {
+class GP8<GPR SubReg, string n> : PPCReg<n> {
   field bits<5> Num = SubReg.Num;
   let SubRegs = [SubReg];
-  let Name = n;
 }
 
 // SPR - One of the 32-bit special-purpose registers
@@ -89,38 +88,38 @@ def R30 : GPR<30, "r30">, DwarfRegNum<[30]>;
 def R31 : GPR<31, "r31">, DwarfRegNum<[31]>;
 
 // 64-bit General-purpose registers
-def X0  : GP8< R0,  "x0">, DwarfRegNum<[0]>;
-def X1  : GP8< R1,  "x1">, DwarfRegNum<[1]>;
-def X2  : GP8< R2,  "x2">, DwarfRegNum<[2]>;
-def X3  : GP8< R3,  "x3">, DwarfRegNum<[3]>;
-def X4  : GP8< R4,  "x4">, DwarfRegNum<[4]>;
-def X5  : GP8< R5,  "x5">, DwarfRegNum<[5]>;
-def X6  : GP8< R6,  "x6">, DwarfRegNum<[6]>;
-def X7  : GP8< R7,  "x7">, DwarfRegNum<[7]>;
-def X8  : GP8< R8,  "x8">, DwarfRegNum<[8]>;
-def X9  : GP8< R9,  "x9">, DwarfRegNum<[9]>;
-def X10 : GP8<R10, "x10">, DwarfRegNum<[10]>;
-def X11 : GP8<R11, "x11">, DwarfRegNum<[11]>;
-def X12 : GP8<R12, "x12">, DwarfRegNum<[12]>;
-def X13 : GP8<R13, "x13">, DwarfRegNum<[13]>;
-def X14 : GP8<R14, "x14">, DwarfRegNum<[14]>;
-def X15 : GP8<R15, "x15">, DwarfRegNum<[15]>;
-def X16 : GP8<R16, "x16">, DwarfRegNum<[16]>;
-def X17 : GP8<R17, "x17">, DwarfRegNum<[17]>;
-def X18 : GP8<R18, "x18">, DwarfRegNum<[18]>;
-def X19 : GP8<R19, "x19">, DwarfRegNum<[19]>;
-def X20 : GP8<R20, "x20">, DwarfRegNum<[20]>;
-def X21 : GP8<R21, "x21">, DwarfRegNum<[21]>;
-def X22 : GP8<R22, "x22">, DwarfRegNum<[22]>;
-def X23 : GP8<R23, "x23">, DwarfRegNum<[23]>;
-def X24 : GP8<R24, "x24">, DwarfRegNum<[24]>;
-def X25 : GP8<R25, "x25">, DwarfRegNum<[25]>;
-def X26 : GP8<R26, "x26">, DwarfRegNum<[26]>;
-def X27 : GP8<R27, "x27">, DwarfRegNum<[27]>;
-def X28 : GP8<R28, "x28">, DwarfRegNum<[28]>;
-def X29 : GP8<R29, "x29">, DwarfRegNum<[29]>;
-def X30 : GP8<R30, "x30">, DwarfRegNum<[30]>;
-def X31 : GP8<R31, "x31">, DwarfRegNum<[31]>;
+def X0  : GP8< R0,  "r0">, DwarfRegNum<[0]>;
+def X1  : GP8< R1,  "r1">, DwarfRegNum<[1]>;
+def X2  : GP8< R2,  "r2">, DwarfRegNum<[2]>;
+def X3  : GP8< R3,  "r3">, DwarfRegNum<[3]>;
+def X4  : GP8< R4,  "r4">, DwarfRegNum<[4]>;
+def X5  : GP8< R5,  "r5">, DwarfRegNum<[5]>;
+def X6  : GP8< R6,  "r6">, DwarfRegNum<[6]>;
+def X7  : GP8< R7,  "r7">, DwarfRegNum<[7]>;
+def X8  : GP8< R8,  "r8">, DwarfRegNum<[8]>;
+def X9  : GP8< R9,  "r9">, DwarfRegNum<[9]>;
+def X10 : GP8<R10, "r10">, DwarfRegNum<[10]>;
+def X11 : GP8<R11, "r11">, DwarfRegNum<[11]>;
+def X12 : GP8<R12, "r12">, DwarfRegNum<[12]>;
+def X13 : GP8<R13, "r13">, DwarfRegNum<[13]>;
+def X14 : GP8<R14, "r14">, DwarfRegNum<[14]>;
+def X15 : GP8<R15, "r15">, DwarfRegNum<[15]>;
+def X16 : GP8<R16, "r16">, DwarfRegNum<[16]>;
+def X17 : GP8<R17, "r17">, DwarfRegNum<[17]>;
+def X18 : GP8<R18, "r18">, DwarfRegNum<[18]>;
+def X19 : GP8<R19, "r19">, DwarfRegNum<[19]>;
+def X20 : GP8<R20, "r20">, DwarfRegNum<[20]>;
+def X21 : GP8<R21, "r21">, DwarfRegNum<[21]>;
+def X22 : GP8<R22, "r22">, DwarfRegNum<[22]>;
+def X23 : GP8<R23, "r23">, DwarfRegNum<[23]>;
+def X24 : GP8<R24, "r24">, DwarfRegNum<[24]>;
+def X25 : GP8<R25, "r25">, DwarfRegNum<[25]>;
+def X26 : GP8<R26, "r26">, DwarfRegNum<[26]>;
+def X27 : GP8<R27, "r27">, DwarfRegNum<[27]>;
+def X28 : GP8<R28, "r28">, DwarfRegNum<[28]>;
+def X29 : GP8<R29, "r29">, DwarfRegNum<[29]>;
+def X30 : GP8<R30, "r30">, DwarfRegNum<[30]>;
+def X31 : GP8<R31, "r31">, DwarfRegNum<[31]>;
 
 // Floating-point registers
 def F0  : FPR< 0,  "f0">, DwarfRegNum<[32]>;
