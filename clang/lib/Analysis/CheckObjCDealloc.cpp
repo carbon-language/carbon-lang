@@ -48,11 +48,27 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
   
   ASTContext& Ctx = BR.getContext();
   ObjCInterfaceDecl* ID = D->getClassInterface();
+    
+  // Does the class contain any ivars that are pointers (or id<...>)?
+  // If not, skip the check entirely.
+  // NOTE: This is motivated by PR 2517:
+  //        http://llvm.org/bugs/show_bug.cgi?id=2517
   
-  // Does the class contain any ivars?  If not, skip the check entirely.
+  bool containsPointerIvar = false;
   
-  if (ID->ivar_empty())
-    return;  
+  for (ObjCInterfaceDecl::ivar_iterator I=ID->ivar_begin(), E=ID->ivar_end();
+       I!=E; ++I) {
+    
+    QualType T = (*I)->getType();
+    
+    if (T->isPointerType() || T->isObjCQualifiedIdType()) {
+      containsPointerIvar = true;
+      break;
+    }
+  }
+  
+  if (!containsPointerIvar)
+    return;
   
   // Determine if the class subclasses NSObject.
   IdentifierInfo* NSObjectII = &Ctx.Idents.get("NSObject");
