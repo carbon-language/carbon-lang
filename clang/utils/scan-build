@@ -437,7 +437,7 @@ print OUT <<ENDTEXT;
 <h3>Reports</h3>
 <table class="sortable">
 <tr>
-  <td>Bug Type</td>
+  <td class="sorttable_sorted">Bug Type<span id="sorttable_sortfwdind">&nbsp;&#x25BE;</span>
   <td>File</td>
   <td>Line</td>
   <td>Path Length</td>
