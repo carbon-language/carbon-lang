@@ -549,6 +549,7 @@ namespace X86 {
     { { "cl", "ch", "ecx", "rcx" }, "cx" },
     { { "dl", "dh", "edx", "rdx" }, "dx" },
     { { "esi", "rsi" }, "si" },
+    { { "edi", "rdi" }, "di" },
     { { "esp", "rsp" }, "sp" },
     { { "ebp", "rbp" }, "bp" },
   };
