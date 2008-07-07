@@ -18,6 +18,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
 #include <algorithm>
+#include <deque>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -1033,229 +1034,235 @@ public:
       }
 
       unsigned ResNo = TmpNo++;
-      if (!isRoot || InputHasChain || NodeHasChain || NodeHasOutFlag ||
-          NodeHasOptInFlag || HasImpResults) {
-        std::string Code;
-        std::string Code2;
-        std::string NodeName;
-        if (!isRoot) {
-          NodeName = "Tmp" + utostr(ResNo);
-          Code2 = "SDOperand " + NodeName + "(";
-        } else {
-          NodeName = "ResNode";
-          if (!ResNodeDecled) {
-            Code2 = "SDNode *" + NodeName + " = ";
-            ResNodeDecled = true;
-          } else
-            Code2 = NodeName + " = ";
-        }
 
-        Code += "CurDAG->getTargetNode(Opc" + utostr(OpcNo);
-        unsigned OpsNo = OpcNo;
-        emitOpcode(II.Namespace + "::" + II.TheDef->getName());
-
-        // Output order: results, chain, flags
-        // Result types.
-        if (NumResults > 0 && N->getTypeNum(0) != MVT::isVoid) {
-          Code += ", VT" + utostr(VTNo);
-          emitVT(getEnumName(N->getTypeNum(0)));
-        }
-        // Add types for implicit results in physical registers, scheduler will
-        // care of adding copyfromreg nodes.
-        for (unsigned i = 0; i < NumDstRegs; i++) {
-          Record *RR = DstRegs[i];
-          if (RR->isSubClassOf("Register")) {
-            MVT::SimpleValueType RVT = getRegisterValueType(RR, CGT);
-            Code += ", " + getEnumName(RVT);
-          }
-        }
-        if (NodeHasChain)
-          Code += ", MVT::Other";
-        if (NodeHasOutFlag)
-          Code += ", MVT::Flag";
-
-        // Inputs.
-        if (IsVariadic) {
-          for (unsigned i = 0, e = AllOps.size(); i != e; ++i)
-            emitCode("Ops" + utostr(OpsNo) + ".push_back(" + AllOps[i] + ");");
-          AllOps.clear();
-
-          // Figure out whether any operands at the end of the op list are not
-          // part of the variable section.
-          std::string EndAdjust;
-          if (NodeHasInFlag || HasImpInputs)
-            EndAdjust = "-1";  // Always has one flag.
-          else if (NodeHasOptInFlag)
-            EndAdjust = "-(HasInFlag?1:0)"; // May have a flag.
-
-          emitCode("for (unsigned i = NumInputRootOps + " + utostr(NodeHasChain) +
-                   ", e = N.getNumOperands()" + EndAdjust + "; i != e; ++i) {");
-
-          emitCode("  AddToISelQueue(N.getOperand(i));");
-          emitCode("  Ops" + utostr(OpsNo) + ".push_back(N.getOperand(i));");
-          emitCode("}");
-        }
-
-        // Generate MemOperandSDNodes nodes for each memory accesses covered by 
-        // this pattern.
-        if (II.isSimpleLoad | II.mayLoad | II.mayStore) {
-          std::vector<std::string>::const_iterator mi, mie;
-          for (mi = LSI.begin(), mie = LSI.end(); mi != mie; ++mi) {
-            emitCode("SDOperand LSI_" + *mi + " = "
-                     "CurDAG->getMemOperand(cast<MemSDNode>(" +
-                     *mi + ")->getMemOperand());");
-            if (IsVariadic)
-              emitCode("Ops" + utostr(OpsNo) + ".push_back(LSI_" + *mi + ");");
-            else
-              AllOps.push_back("LSI_" + *mi);
-          }
-        }
-
-        if (NodeHasChain) {
-          if (IsVariadic)
-            emitCode("Ops" + utostr(OpsNo) + ".push_back(" + ChainName + ");");
-          else
-            AllOps.push_back(ChainName);
-        }
-
-        if (IsVariadic) {
-          if (NodeHasInFlag || HasImpInputs)
-            emitCode("Ops" + utostr(OpsNo) + ".push_back(InFlag);");
-          else if (NodeHasOptInFlag) {
-            emitCode("if (HasInFlag)");
-            emitCode("  Ops" + utostr(OpsNo) + ".push_back(InFlag);");
-          }
-          Code += ", &Ops" + utostr(OpsNo) + "[0], Ops" + utostr(OpsNo) +
-            ".size()";
-        } else if (NodeHasInFlag || NodeHasOptInFlag || HasImpInputs)
-          AllOps.push_back("InFlag");
-
-        unsigned NumOps = AllOps.size();
-        if (NumOps) {
-          if (!NodeHasOptInFlag && NumOps < 4) {
-            for (unsigned i = 0; i != NumOps; ++i)
-              Code += ", " + AllOps[i];
-          } else {
-            std::string OpsCode = "SDOperand Ops" + utostr(OpsNo) + "[] = { ";
-            for (unsigned i = 0; i != NumOps; ++i) {
-              OpsCode += AllOps[i];
-              if (i != NumOps-1)
-                OpsCode += ", ";
-            }
-            emitCode(OpsCode + " };");
-            Code += ", Ops" + utostr(OpsNo) + ", ";
-            if (NodeHasOptInFlag) {
-              Code += "HasInFlag ? ";
-              Code += utostr(NumOps) + " : " + utostr(NumOps-1);
-            } else
-              Code += utostr(NumOps);
-          }
-        }
-            
-        if (!isRoot)
-          Code += "), 0";
-        emitCode(Code2 + Code + ");");
-
-        if (NodeHasChain) {
-          // Remember which op produces the chain.
-          if (!isRoot)
-            emitCode(ChainName + " = SDOperand(" + NodeName +
-                     ".Val, " + utostr(NumResults+NumDstRegs) + ");");
-          else
-            emitCode(ChainName + " = SDOperand(" + NodeName +
-                     ", " + utostr(NumResults+NumDstRegs) + ");");
-        }
-
-        if (!isRoot) {
-          NodeOps.push_back("Tmp" + utostr(ResNo));
-          return NodeOps;
-        }
-
-        bool NeedReplace = false;
-        if (NodeHasOutFlag) {
-          if (!InFlagDecled) {
-            emitCode("SDOperand InFlag(ResNode, " + 
-                   utostr(NumResults+NumDstRegs+(unsigned)NodeHasChain) + ");");
-            InFlagDecled = true;
-          } else
-            emitCode("InFlag = SDOperand(ResNode, " + 
-                   utostr(NumResults+NumDstRegs+(unsigned)NodeHasChain) + ");");
-        }
-
-        if (FoldedChains.size() > 0) {
-          std::string Code;
-          for (unsigned j = 0, e = FoldedChains.size(); j < e; j++)
-            emitCode("ReplaceUses(SDOperand(" +
-                     FoldedChains[j].first + ".Val, " + 
-                     utostr(FoldedChains[j].second) + "), SDOperand(ResNode, " +
-                     utostr(NumResults+NumDstRegs) + "));");
-          NeedReplace = true;
-        }
-
-        if (NodeHasOutFlag) {
-          if (FoldedFlag.first != "") {
-            emitCode("ReplaceUses(SDOperand(" + FoldedFlag.first + ".Val, " +
-                     utostr(FoldedFlag.second) + "), InFlag);");
-          } else {
-            assert(NodeHasProperty(Pattern, SDNPOutFlag, CGP));
-            emitCode("ReplaceUses(SDOperand(N.Val, " +
-                     utostr(NumPatResults + (unsigned)InputHasChain)
-                     +"), InFlag);");
-          }
-          NeedReplace = true;
-        }
-
-        if (NeedReplace && InputHasChain)
-          emitCode("ReplaceUses(SDOperand(N.Val, " + 
-                   utostr(NumPatResults) + "), SDOperand(" + ChainName
-                   + ".Val, " + ChainName + ".ResNo" + "));");
-
-        // User does not expect the instruction would produce a chain!
-        if ((!InputHasChain && NodeHasChain) && NodeHasOutFlag) {
-          ;
-        } else if (InputHasChain && !NodeHasChain) {
-          // One of the inner node produces a chain.
-          if (NodeHasOutFlag)
-            emitCode("ReplaceUses(SDOperand(N.Val, " + utostr(NumPatResults+1) +
-                     "), SDOperand(ResNode, N.ResNo-1));");
-          emitCode("ReplaceUses(SDOperand(N.Val, " + utostr(NumPatResults) +
-                   "), " + ChainName + ");");
-        }
-
-        emitCode("return ResNode;");
+      unsigned OpsNo = OpcNo;
+      std::string CodePrefix;
+      bool ChainAssignmentNeeded = NodeHasChain && !isRoot;
+      std::deque<std::string> After;
+      std::string NodeName;
+      if (!isRoot) {
+        NodeName = "Tmp" + utostr(ResNo);
+        CodePrefix = "SDOperand " + NodeName + "(";
       } else {
-        std::string Code = "return CurDAG->SelectNodeTo(N.Val, Opc" +
-          utostr(OpcNo);
-        if (N->getTypeNum(0) != MVT::isVoid)
-          Code += ", VT" + utostr(VTNo);
-        if (NodeHasOutFlag)
-          Code += ", MVT::Flag";
-
-        if (NodeHasInFlag || NodeHasOptInFlag || HasImpInputs)
-          AllOps.push_back("InFlag");
-
-        unsigned NumOps = AllOps.size();
-        if (NumOps) {
-          if (!NodeHasOptInFlag && NumOps < 4) {
-            for (unsigned i = 0; i != NumOps; ++i)
-              Code += ", " + AllOps[i];
-          } else {
-            std::string OpsCode = "SDOperand Ops" + utostr(OpcNo) + "[] = { ";
-            for (unsigned i = 0; i != NumOps; ++i) {
-              OpsCode += AllOps[i];
-              if (i != NumOps-1)
-                OpsCode += ", ";
-            }
-            emitCode(OpsCode + " };");
-            Code += ", Ops" + utostr(OpcNo) + ", ";
-            Code += utostr(NumOps);
-          }
-        }
-        emitCode(Code + ");");
-        emitOpcode(II.Namespace + "::" + II.TheDef->getName());
-        if (N->getTypeNum(0) != MVT::isVoid)
-          emitVT(getEnumName(N->getTypeNum(0)));
+        NodeName = "ResNode";
+        if (!ResNodeDecled) {
+          CodePrefix = "SDNode *" + NodeName + " = ";
+          ResNodeDecled = true;
+        } else
+          CodePrefix = NodeName + " = ";
       }
+
+      std::string Code = "Opc" + utostr(OpcNo);
+
+      emitOpcode(II.Namespace + "::" + II.TheDef->getName());
+
+      // Output order: results, chain, flags
+      // Result types.
+      if (NumResults > 0 && N->getTypeNum(0) != MVT::isVoid) {
+        Code += ", VT" + utostr(VTNo);
+        emitVT(getEnumName(N->getTypeNum(0)));
+      }
+      // Add types for implicit results in physical registers, scheduler will
+      // care of adding copyfromreg nodes.
+      for (unsigned i = 0; i < NumDstRegs; i++) {
+        Record *RR = DstRegs[i];
+        if (RR->isSubClassOf("Register")) {
+          MVT::SimpleValueType RVT = getRegisterValueType(RR, CGT);
+          Code += ", " + getEnumName(RVT);
+        }
+      }
+      if (NodeHasChain)
+        Code += ", MVT::Other";
+      if (NodeHasOutFlag)
+        Code += ", MVT::Flag";
+
+      // Inputs.
+      if (IsVariadic) {
+        for (unsigned i = 0, e = AllOps.size(); i != e; ++i)
+          emitCode("Ops" + utostr(OpsNo) + ".push_back(" + AllOps[i] + ");");
+        AllOps.clear();
+
+        // Figure out whether any operands at the end of the op list are not
+        // part of the variable section.
+        std::string EndAdjust;
+        if (NodeHasInFlag || HasImpInputs)
+          EndAdjust = "-1";  // Always has one flag.
+        else if (NodeHasOptInFlag)
+          EndAdjust = "-(HasInFlag?1:0)"; // May have a flag.
+
+        emitCode("for (unsigned i = NumInputRootOps + " + utostr(NodeHasChain) +
+                 ", e = N.getNumOperands()" + EndAdjust + "; i != e; ++i) {");
+
+        emitCode("  AddToISelQueue(N.getOperand(i));");
+        emitCode("  Ops" + utostr(OpsNo) + ".push_back(N.getOperand(i));");
+        emitCode("}");
+      }
+
+      // Generate MemOperandSDNodes nodes for each memory accesses covered by 
+      // this pattern.
+      if (II.isSimpleLoad | II.mayLoad | II.mayStore) {
+        std::vector<std::string>::const_iterator mi, mie;
+        for (mi = LSI.begin(), mie = LSI.end(); mi != mie; ++mi) {
+          emitCode("SDOperand LSI_" + *mi + " = "
+                   "CurDAG->getMemOperand(cast<MemSDNode>(" +
+                   *mi + ")->getMemOperand());");
+          if (IsVariadic)
+            emitCode("Ops" + utostr(OpsNo) + ".push_back(LSI_" + *mi + ");");
+          else
+            AllOps.push_back("LSI_" + *mi);
+        }
+      }
+
+      if (NodeHasChain) {
+        if (IsVariadic)
+          emitCode("Ops" + utostr(OpsNo) + ".push_back(" + ChainName + ");");
+        else
+          AllOps.push_back(ChainName);
+      }
+
+      if (IsVariadic) {
+        if (NodeHasInFlag || HasImpInputs)
+          emitCode("Ops" + utostr(OpsNo) + ".push_back(InFlag);");
+        else if (NodeHasOptInFlag) {
+          emitCode("if (HasInFlag)");
+          emitCode("  Ops" + utostr(OpsNo) + ".push_back(InFlag);");
+        }
+        Code += ", &Ops" + utostr(OpsNo) + "[0], Ops" + utostr(OpsNo) +
+          ".size()";
+      } else if (NodeHasInFlag || NodeHasOptInFlag || HasImpInputs)
+        AllOps.push_back("InFlag");
+
+      unsigned NumOps = AllOps.size();
+      if (NumOps) {
+        if (!NodeHasOptInFlag && NumOps < 4) {
+          for (unsigned i = 0; i != NumOps; ++i)
+            Code += ", " + AllOps[i];
+        } else {
+          std::string OpsCode = "SDOperand Ops" + utostr(OpsNo) + "[] = { ";
+          for (unsigned i = 0; i != NumOps; ++i) {
+            OpsCode += AllOps[i];
+            if (i != NumOps-1)
+              OpsCode += ", ";
+          }
+          emitCode(OpsCode + " };");
+          Code += ", Ops" + utostr(OpsNo) + ", ";
+          if (NodeHasOptInFlag) {
+            Code += "HasInFlag ? ";
+            Code += utostr(NumOps) + " : " + utostr(NumOps-1);
+          } else
+            Code += utostr(NumOps);
+        }
+      }
+          
+      if (!isRoot)
+        Code += "), 0";
+
+      bool NeedReplace = false;
+      if (!isRoot) {
+        NodeOps.push_back("Tmp" + utostr(ResNo));
+      } else {
+
+      if (NodeHasOutFlag) {
+        if (!InFlagDecled) {
+          After.push_back("SDOperand InFlag(ResNode, " + 
+                          utostr(NumResults+NumDstRegs+(unsigned)NodeHasChain) +
+                          ");");
+          InFlagDecled = true;
+        } else
+          After.push_back("InFlag = SDOperand(ResNode, " + 
+                          utostr(NumResults+NumDstRegs+(unsigned)NodeHasChain) +
+                          ");");
+      }
+
+      if (FoldedChains.size() > 0) {
+        std::string Code;
+        for (unsigned j = 0, e = FoldedChains.size(); j < e; j++)
+          After.push_back("ReplaceUses(SDOperand(" +
+                          FoldedChains[j].first + ".Val, " + 
+                          utostr(FoldedChains[j].second) +
+                          "), SDOperand(ResNode, " +
+                          utostr(NumResults+NumDstRegs) + "));");
+        NeedReplace = true;
+      }
+
+      if (NodeHasOutFlag) {
+        if (FoldedFlag.first != "") {
+          After.push_back("ReplaceUses(SDOperand(" + FoldedFlag.first +
+                          ".Val, " +
+                          utostr(FoldedFlag.second) + "), InFlag);");
+        } else {
+          assert(NodeHasProperty(Pattern, SDNPOutFlag, CGP));
+          After.push_back("ReplaceUses(SDOperand(N.Val, " +
+                          utostr(NumPatResults + (unsigned)InputHasChain)
+                          +"), InFlag);");
+        }
+        NeedReplace = true;
+      }
+
+      if (NeedReplace && InputHasChain) {
+        After.push_back("ReplaceUses(SDOperand(N.Val, " + 
+                        utostr(NumPatResults) + "), SDOperand(" + ChainName
+                        + ".Val, " + ChainName + ".ResNo" + "));");
+        ChainAssignmentNeeded |= NodeHasChain;
+      }
+
+      // User does not expect the instruction would produce a chain!
+      if ((!InputHasChain && NodeHasChain) && NodeHasOutFlag) {
+        ;
+      } else if (InputHasChain && !NodeHasChain) {
+        // One of the inner node produces a chain.
+        if (NodeHasOutFlag)
+          After.push_back("ReplaceUses(SDOperand(N.Val, " +
+                          utostr(NumPatResults+1) +
+                          "), SDOperand(ResNode, N.ResNo-1));");
+        After.push_back("ReplaceUses(SDOperand(N.Val, " +
+                        utostr(NumPatResults) + "), " + ChainName + ");");
+        NeedReplace = true;
+      }
+      }
+
+      if (ChainAssignmentNeeded) {
+        // Remember which op produces the chain.
+        std::string ChainAssign;
+        if (!isRoot)
+          ChainAssign = ChainName + " = SDOperand(" + NodeName +
+                        ".Val, " + utostr(NumResults+NumDstRegs) + ");";
+        else
+          ChainAssign = ChainName + " = SDOperand(" + NodeName +
+                        ", " + utostr(NumResults+NumDstRegs) + ");";
+
+        After.push_front(ChainAssign);
+      }
+
+      // Use getTargetNode or SelectNodeTo? The safe choice is getTargetNode,
+      // but SelectNodeTo can be faster.
+      //
+      // SelectNodeTo is not safe in a non-root context, or if there is any
+      // replacement of results needed.
+      //
+      // SelectNodeTo is not profitable if it would require a dynamically
+      // allocated operand list in a situation where getTargetNode would be
+      // able to reuse a co-allocated operand list (as in a unary, binary or
+      // ternary SDNode, for example).
+      //
+      if (!isRoot || NeedReplace ||
+          (!IsVariadic && AllOps.size() < 4 &&
+           Pattern->getNumChildren() + InputHasChain + NodeHasInFlag <
+             AllOps.size())) {
+        Code = "CurDAG->getTargetNode(" + Code;
+      } else {
+        Code = "CurDAG->SelectNodeTo(N.Val, " + Code;
+      }
+      if (isRoot) {
+        if (After.empty())
+          CodePrefix = "return ";
+        else
+          After.push_back("return ResNode;");
+      }
+
+      emitCode(CodePrefix + Code + ");");
+      for (unsigned i = 0, e = After.size(); i != e; ++i)
+        emitCode(After[i]);
 
       return NodeOps;
     } else if (Op->isSubClassOf("SDNodeXForm")) {
