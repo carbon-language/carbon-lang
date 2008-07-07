@@ -1197,9 +1197,14 @@ bool Sema::CheckArithmeticConstantExpression(const Expr* Init) {
 }
 
 bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
+  Init = Init->IgnoreParens();
+
   // Look through CXXDefaultArgExprs; they have no meaning in this context.
   if (CXXDefaultArgExpr* DAE = dyn_cast<CXXDefaultArgExpr>(Init))
     return CheckForConstantInitializer(DAE->getExpr(), DclT);
+
+  if (CompoundLiteralExpr *e = dyn_cast<CompoundLiteralExpr>(Init))
+    return CheckForConstantInitializer(e->getInitializer(), DclT);
 
   if (Init->getType()->isReferenceType()) {
     // FIXME: Work out how the heck reference types work
