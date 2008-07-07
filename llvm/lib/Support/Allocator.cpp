@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/Recycler.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Streams.h"
 #include <ostream>
@@ -129,4 +130,10 @@ void BumpPtrAllocator::PrintStats() const {
 
   cerr << "\nNumber of memory regions: " << NumRegions << "\n";
   cerr << "Bytes allocated: " << BytesUsed << "\n";
+}
+
+void llvm::PrintRecyclerStats(size_t LargestTypeSize,
+                              size_t FreeListSize) {
+  cerr << "Recycler element size: " << LargestTypeSize << '\n';
+  cerr << "Number of elements free for recycling: " << FreeListSize << '\n';
 }

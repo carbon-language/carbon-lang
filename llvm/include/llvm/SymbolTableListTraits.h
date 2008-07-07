@@ -57,6 +57,10 @@ public:
     return V->getNext();
   }
 
+  void deleteNode(ValueSubClass *V) {
+    delete V;
+  }
+
   static void setPrev(ValueSubClass *V, ValueSubClass *P) { V->setPrev(P); }
   static void setNext(ValueSubClass *V, ValueSubClass *N) { V->setNext(N); }
 

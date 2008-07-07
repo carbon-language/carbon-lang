@@ -60,6 +60,7 @@ struct ilist_traits {
   static void setNext(NodeTy *N, NodeTy *Next) { N->setNext(Next); }
 
   static NodeTy *createNode(const NodeTy &V) { return new NodeTy(V); }
+  static void deleteNode(NodeTy *V) { delete V; }
 
   static NodeTy *createSentinel() { return new NodeTy(); }
   static void destroySentinel(NodeTy *N) { delete N; }
@@ -121,8 +122,7 @@ public:
     assert(Traits::getNext(NodePtr) != 0 && "Dereferencing end()!");
     return *NodePtr;
   }
-  pointer operator->() { return &operator*(); }
-  const pointer operator->() const { return &operator*(); }
+  pointer operator->() const { return &operator*(); }
 
   // Comparison operators
   bool operator==(const ilist_iterator &RHS) const {
@@ -380,7 +380,7 @@ public:
 
   // erase - remove a node from the controlled sequence... and delete it.
   iterator erase(iterator where) {
-    delete remove(where);
+    deleteNode(remove(where));
     return where;
   }
 
