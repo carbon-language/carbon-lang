@@ -86,7 +86,7 @@ public:
 
     // If this wasn't grown from the inline copy, deallocate the old space.
     if (!isSmall())
-      operator delete(static_cast<void*>(Begin));
+      operator delete(Begin);
   }
   
   typedef size_t size_type;
@@ -362,7 +362,7 @@ void SmallVectorImpl<T>::grow(size_t MinSize) {
   
   // If this wasn't grown from the inline copy, deallocate the old space.
   if (!isSmall())
-    operator delete(static_cast<void*>(Begin));
+    operator delete(Begin);
   
   Begin = NewElts;
   End = NewElts+CurSize;
