@@ -31,7 +31,7 @@ namespace {
 
   template <typename T>
   struct VISIBILITY_HIDDEN LeakDetectorImpl {
-    LeakDetectorImpl(const char* const name) : Cache(0), Name(name) { }
+    explicit LeakDetectorImpl(const char* const name) : Cache(0), Name(name) { }
 
     // Because the most common usage pattern, by far, is to add a
     // garbage object, then remove it immediately, we optimize this

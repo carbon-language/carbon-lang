@@ -40,7 +40,7 @@ namespace {
     IA64TargetLowering IA64Lowering;
     unsigned GlobalBaseReg;
   public:
-    IA64DAGToDAGISel(IA64TargetMachine &TM)
+    explicit IA64DAGToDAGISel(IA64TargetMachine &TM)
       : SelectionDAGISel(IA64Lowering), IA64Lowering(*TM.getTargetLowering()) {}
     
     virtual bool runOnFunction(Function &Fn) {

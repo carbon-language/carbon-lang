@@ -122,8 +122,7 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
   }
 
 public:
-
-  SelectionDAGLegalize(SelectionDAG &DAG);
+  explicit SelectionDAGLegalize(SelectionDAG &DAG);
 
   /// getTypeAction - Return how we should legalize values of this type, either
   /// it is already legal or we need to expand it into multiple registers of

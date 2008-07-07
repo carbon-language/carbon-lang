@@ -44,7 +44,7 @@ class ARMDAGToDAGISel : public SelectionDAGISel {
   const ARMSubtarget *Subtarget;
 
 public:
-  ARMDAGToDAGISel(ARMTargetMachine &TM)
+  explicit ARMDAGToDAGISel(ARMTargetMachine &TM)
     : SelectionDAGISel(Lowering), Lowering(TM),
     Subtarget(&TM.getSubtarget<ARMSubtarget>()) {
   }

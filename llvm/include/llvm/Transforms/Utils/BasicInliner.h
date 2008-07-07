@@ -30,7 +30,7 @@ namespace llvm {
   class BasicInliner {
   public:
     
-    BasicInliner(TargetData *T = NULL);
+    explicit BasicInliner(TargetData *T = NULL);
     ~BasicInliner();
 
     /// addFunction - Add function into the list of functions to process.

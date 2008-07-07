@@ -431,7 +431,7 @@ const Type *Type::LabelTy      = new Type(Type::LabelTyID);
 
 namespace {
   struct BuiltinIntegerType : public IntegerType {
-    BuiltinIntegerType(unsigned W) : IntegerType(W) {}
+    explicit BuiltinIntegerType(unsigned W) : IntegerType(W) {}
   };
 }
 const IntegerType *Type::Int1Ty  = new BuiltinIntegerType(1);

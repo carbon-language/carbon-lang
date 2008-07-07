@@ -57,7 +57,7 @@ class VISIBILITY_HIDDEN PIC16DAGToDAGISel : public SelectionDAGISel {
   PIC16TargetLowering PIC16Lowering;
 
 public:
-  PIC16DAGToDAGISel(PIC16TargetMachine &tm) : 
+  explicit PIC16DAGToDAGISel(PIC16TargetMachine &tm) : 
         SelectionDAGISel(PIC16Lowering),
         TM(tm), PIC16Lowering(*TM.getTargetLowering()) {}
   

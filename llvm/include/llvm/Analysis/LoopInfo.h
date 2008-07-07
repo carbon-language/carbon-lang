@@ -611,7 +611,7 @@ public:
   
 private:
   friend class LoopInfoBase<BlockT>;
-  LoopBase(BlockT *BB) : ParentLoop(0) {
+  explicit LoopBase(BlockT *BB) : ParentLoop(0) {
     Blocks.push_back(BB);
   }
 };

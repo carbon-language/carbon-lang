@@ -35,7 +35,7 @@ class SparcDAGToDAGISel : public SelectionDAGISel {
   /// make the right decision when generating code for different targets.
   const SparcSubtarget &Subtarget;
 public:
-  SparcDAGToDAGISel(TargetMachine &TM)
+  explicit SparcDAGToDAGISel(TargetMachine &TM)
     : SelectionDAGISel(Lowering), Lowering(TM),
       Subtarget(TM.getSubtarget<SparcSubtarget>()) {
   }

@@ -61,7 +61,8 @@ class VISIBILITY_HIDDEN MipsDAGToDAGISel : public SelectionDAGISel {
   const MipsSubtarget &Subtarget;
  
 public:
-  MipsDAGToDAGISel(MipsTargetMachine &tm) : SelectionDAGISel(MipsLowering),
+  explicit MipsDAGToDAGISel(MipsTargetMachine &tm) :
+  SelectionDAGISel(MipsLowering),
   TM(tm), MipsLowering(*TM.getTargetLowering()), 
   Subtarget(tm.getSubtarget<MipsSubtarget>()) {}
   

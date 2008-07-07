@@ -45,7 +45,7 @@ namespace {
     const PPCSubtarget &PPCSubTarget;
     unsigned GlobalBaseReg;
   public:
-    PPCDAGToDAGISel(PPCTargetMachine &tm)
+    explicit PPCDAGToDAGISel(PPCTargetMachine &tm)
       : SelectionDAGISel(PPCLowering), TM(tm),
         PPCLowering(*TM.getTargetLowering()),
         PPCSubTarget(*TM.getSubtargetImpl()) {}

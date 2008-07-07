@@ -151,7 +151,7 @@ public:
 class BitsRecTy : public RecTy {
   unsigned Size;
 public:
-  BitsRecTy(unsigned Sz) : Size(Sz) {}
+  explicit BitsRecTy(unsigned Sz) : Size(Sz) {}
 
   unsigned getNumBits() const { return Size; }
 
@@ -268,7 +268,7 @@ public:
 class ListRecTy : public RecTy {
   RecTy *Ty;
 public:
-  ListRecTy(RecTy *T) : Ty(T) {}
+  explicit ListRecTy(RecTy *T) : Ty(T) {}
 
   RecTy *getElementType() const { return Ty; }
 
@@ -381,7 +381,7 @@ public:
 class RecordRecTy : public RecTy {
   Record *Rec;
 public:
-  RecordRecTy(Record *R) : Rec(R) {}
+  explicit RecordRecTy(Record *R) : Rec(R) {}
 
   Record *getRecord() const { return Rec; }
 
@@ -966,7 +966,7 @@ class Record {
   std::vector<Record*> SuperClasses;
 public:
 
-  Record(const std::string &N) : Name(N) {}
+  explicit Record(const std::string &N) : Name(N) {}
   ~Record() {}
 
   const std::string &getName() const { return Name; }

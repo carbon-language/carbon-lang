@@ -44,7 +44,7 @@ class Timer {
   bool Started;          // Has this time variable ever been started?
   TimerGroup *TG;        // The TimerGroup this Timer is in.
 public:
-  Timer(const std::string &N);
+  explicit Timer(const std::string &N);
   Timer(const std::string &N, TimerGroup &tg);
   Timer(const Timer &T);
   ~Timer();
@@ -116,7 +116,7 @@ class TimeRegion {
   Timer &T;
   TimeRegion(const TimeRegion &); // DO NOT IMPLEMENT
 public:
-  TimeRegion(Timer &t) : T(t) {
+  explicit TimeRegion(Timer &t) : T(t) {
     T.startTimer();
   }
   ~TimeRegion() {
@@ -131,7 +131,7 @@ public:
 /// is primarily used for debugging and for hunting performance problems.
 ///
 struct NamedRegionTimer : public TimeRegion {
-  NamedRegionTimer(const std::string &Name);
+  explicit NamedRegionTimer(const std::string &Name);
 };
 
 
@@ -145,7 +145,7 @@ class TimerGroup {
   unsigned NumTimers;
   std::vector<Timer> TimersToPrint;
 public:
-  TimerGroup(const std::string &name) : Name(name), NumTimers(0) {}
+  explicit TimerGroup(const std::string &name) : Name(name), NumTimers(0) {}
   ~TimerGroup() {
     assert(NumTimers == 0 &&
            "TimerGroup destroyed before all contained timers!");

@@ -284,7 +284,7 @@ namespace {
     public SelectionDAG::DAGUpdateListener {
     DAGTypeLegalizer &DTL;
   public:
-    NodeUpdateListener(DAGTypeLegalizer &dtl) : DTL(dtl) {}
+    explicit NodeUpdateListener(DAGTypeLegalizer &dtl) : DTL(dtl) {}
 
     virtual void NodeDeleted(SDNode *N, SDNode *E) {
       assert(N->getNodeId() != DAGTypeLegalizer::Processed &&

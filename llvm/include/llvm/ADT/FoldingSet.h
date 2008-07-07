@@ -317,7 +317,7 @@ public:
 template<class T>
 class FoldingSetIterator : public FoldingSetIteratorImpl {
 public:
-  FoldingSetIterator(void **Bucket) : FoldingSetIteratorImpl(Bucket) {}
+  explicit FoldingSetIterator(void **Bucket) : FoldingSetIteratorImpl(Bucket) {}
   
   T &operator*() const {
     return *static_cast<T*>(NodePtr);
@@ -345,7 +345,7 @@ class FoldingSetBucketIteratorImpl {
 protected:
   void *Ptr;
 
-  FoldingSetBucketIteratorImpl(void **Bucket);
+  explicit FoldingSetBucketIteratorImpl(void **Bucket);
   
   FoldingSetBucketIteratorImpl(void **Bucket, bool)
     : Ptr(reinterpret_cast<void*>(Bucket)) {}
@@ -369,7 +369,7 @@ public:
 template<class T>
 class FoldingSetBucketIterator : public FoldingSetBucketIteratorImpl {
 public:
-  FoldingSetBucketIterator(void **Bucket) : 
+  explicit FoldingSetBucketIterator(void **Bucket) : 
     FoldingSetBucketIteratorImpl(Bucket) {}
   
   FoldingSetBucketIterator(void **Bucket, bool) : 
@@ -394,7 +394,7 @@ template <typename T>
 class FoldingSetNodeWrapper : public FoldingSetNode {
   T data;
 public:
-  FoldingSetNodeWrapper(const T& x) : data(x) {}
+  explicit FoldingSetNodeWrapper(const T& x) : data(x) {}
   virtual ~FoldingSetNodeWrapper() {}
   
   template<typename A1>

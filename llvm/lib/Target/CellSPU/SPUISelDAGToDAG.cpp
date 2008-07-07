@@ -227,7 +227,7 @@ class SPUDAGToDAGISel :
   unsigned GlobalBaseReg;
 
 public:
-  SPUDAGToDAGISel(SPUTargetMachine &tm) :
+  explicit SPUDAGToDAGISel(SPUTargetMachine &tm) :
     SelectionDAGISel(*tm.getTargetLowering()),
     TM(tm),
     SPUtli(*tm.getTargetLowering())
