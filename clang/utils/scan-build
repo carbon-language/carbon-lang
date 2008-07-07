@@ -420,7 +420,7 @@ print OUT <<ENDTEXT;
 <tr>
   <td>Bug Type</td>
   <td>Quantity</td>
-  <td "sorttable_nosort">Display?</td>
+  <td class="sorttable_nosort">Display?</td>
 </tr>
 ENDTEXT
   
@@ -441,7 +441,7 @@ print OUT <<ENDTEXT;
   <td>File</td>
   <td>Line</td>
   <td>Path Length</td>
-  <td "sorttable_nosort"></td>
+  <td class="sorttable_nosort"></td>
 </tr>
 ENDTEXT
 
