@@ -323,16 +323,26 @@ static void AddNodeIDValueTypes(FoldingSetNodeID &ID, SDVTList VTList) {
 /// AddNodeIDOperands - Various routines for adding operands to the NodeID data.
 ///
 static void AddNodeIDOperands(FoldingSetNodeID &ID,
-                              SDOperandPtr Ops, unsigned NumOps) {
+                              const SDOperand *Ops, unsigned NumOps) {
   for (; NumOps; --NumOps, ++Ops) {
     ID.AddPointer(Ops->Val);
     ID.AddInteger(Ops->ResNo);
   }
 }
 
+/// AddNodeIDOperands - Various routines for adding operands to the NodeID data.
+///
+static void AddNodeIDOperands(FoldingSetNodeID &ID,
+                              const SDUse *Ops, unsigned NumOps) {
+  for (; NumOps; --NumOps, ++Ops) {
+    ID.AddPointer(Ops->getSDOperand().Val);
+    ID.AddInteger(Ops->getSDOperand().ResNo);
+  }
+}
+
 static void AddNodeIDNode(FoldingSetNodeID &ID,
                           unsigned short OpC, SDVTList VTList, 
-                          SDOperandPtr OpList, unsigned N) {
+                          const SDOperand *OpList, unsigned N) {
   AddNodeIDOpcode(ID, OpC);
   AddNodeIDValueTypes(ID, VTList);
   AddNodeIDOperands(ID, OpList, N);
@@ -693,7 +703,7 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
 /// return null, otherwise return a pointer to the slot it would take.  If a
 /// node already exists with these operands, the slot will be non-null.
 SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, 
-                                           SDOperandPtr Ops,unsigned NumOps,
+                                           const SDOperand *Ops,unsigned NumOps,
                                            void *&InsertPos) {
   if (N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
     return 0;    // Never add these nodes.
@@ -759,7 +769,7 @@ SDOperand SelectionDAG::getConstant(const APInt &Val, MVT VT, bool isT) {
 
   unsigned Opc = isT ? ISD::TargetConstant : ISD::Constant;
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opc, getVTList(EltVT), (SDOperand*)0, 0);
+  AddNodeIDNode(ID, Opc, getVTList(EltVT), 0, 0);
   ID.Add(Val);
   void *IP = 0;
   SDNode *N = NULL;
@@ -797,7 +807,7 @@ SDOperand SelectionDAG::getConstantFP(const APFloat& V, MVT VT, bool isTarget) {
   // we don't have issues with SNANs.
   unsigned Opc = isTarget ? ISD::TargetConstantFP : ISD::ConstantFP;
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opc, getVTList(EltVT), (SDOperand*)0, 0);
+  AddNodeIDNode(ID, Opc, getVTList(EltVT), 0, 0);
   ID.Add(V);
   void *IP = 0;
   SDNode *N = NULL;
@@ -846,7 +856,7 @@ SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
     Opc = isTargetGA ? ISD::TargetGlobalAddress : ISD::GlobalAddress;
 
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opc, getVTList(VT), (SDOperand*)0, 0);
+  AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddPointer(GV);
   ID.AddInteger(Offset);
   void *IP = 0;
@@ -861,7 +871,7 @@ SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
 SDOperand SelectionDAG::getFrameIndex(int FI, MVT VT, bool isTarget) {
   unsigned Opc = isTarget ? ISD::TargetFrameIndex : ISD::FrameIndex;
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opc, getVTList(VT), (SDOperand*)0, 0);
+  AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddInteger(FI);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -875,7 +885,7 @@ SDOperand SelectionDAG::getFrameIndex(int FI, MVT VT, bool isTarget) {
 SDOperand SelectionDAG::getJumpTable(int JTI, MVT VT, bool isTarget){
   unsigned Opc = isTarget ? ISD::TargetJumpTable : ISD::JumpTable;
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opc, getVTList(VT), (SDOperand*)0, 0);
+  AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddInteger(JTI);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -891,7 +901,7 @@ SDOperand SelectionDAG::getConstantPool(Constant *C, MVT VT,
                                         bool isTarget) {
   unsigned Opc = isTarget ? ISD::TargetConstantPool : ISD::ConstantPool;
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opc, getVTList(VT), (SDOperand*)0, 0);
+  AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddInteger(Alignment);
   ID.AddInteger(Offset);
   ID.AddPointer(C);
@@ -910,7 +920,7 @@ SDOperand SelectionDAG::getConstantPool(MachineConstantPoolValue *C, MVT VT,
                                         bool isTarget) {
   unsigned Opc = isTarget ? ISD::TargetConstantPool : ISD::ConstantPool;
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opc, getVTList(VT), (SDOperand*)0, 0);
+  AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
   ID.AddInteger(Alignment);
   ID.AddInteger(Offset);
   C->AddSelectionDAGCSEId(ID);
@@ -926,7 +936,7 @@ SDOperand SelectionDAG::getConstantPool(MachineConstantPoolValue *C, MVT VT,
 
 SDOperand SelectionDAG::getBasicBlock(MachineBasicBlock *MBB) {
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::BasicBlock, getVTList(MVT::Other), (SDOperand*)0, 0);
+  AddNodeIDNode(ID, ISD::BasicBlock, getVTList(MVT::Other), 0, 0);
   ID.AddPointer(MBB);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -939,7 +949,7 @@ SDOperand SelectionDAG::getBasicBlock(MachineBasicBlock *MBB) {
 
 SDOperand SelectionDAG::getArgFlags(ISD::ArgFlagsTy Flags) {
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::ARG_FLAGS, getVTList(MVT::Other), (SDOperand*)0, 0);
+  AddNodeIDNode(ID, ISD::ARG_FLAGS, getVTList(MVT::Other), 0, 0);
   ID.AddInteger(Flags.getRawBits());
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -992,7 +1002,7 @@ SDOperand SelectionDAG::getCondCode(ISD::CondCode Cond) {
 
 SDOperand SelectionDAG::getRegister(unsigned RegNo, MVT VT) {
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::Register, getVTList(VT), (SDOperand*)0, 0);
+  AddNodeIDNode(ID, ISD::Register, getVTList(VT), 0, 0);
   ID.AddInteger(RegNo);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
@@ -1042,7 +1052,7 @@ SDOperand SelectionDAG::getSrcValue(const Value *V) {
          "SrcValue is not a pointer?");
 
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::SRCVALUE, getVTList(MVT::Other), (SDOperand*)0, 0);
+  AddNodeIDNode(ID, ISD::SRCVALUE, getVTList(MVT::Other), 0, 0);
   ID.AddPointer(V);
 
   void *IP = 0;
@@ -1061,7 +1071,7 @@ SDOperand SelectionDAG::getMemOperand(const MachineMemOperand &MO) {
          "SrcValue is not a pointer?");
 
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::MEMOPERAND, getVTList(MVT::Other), (SDOperand*)0, 0);
+  AddNodeIDNode(ID, ISD::MEMOPERAND, getVTList(MVT::Other), 0, 0);
   ID.AddPointer(v);
   ID.AddInteger(MO.getFlags());
   ID.AddInteger(MO.getOffset());
@@ -1920,7 +1930,7 @@ SDOperand SelectionDAG::getShuffleScalarElt(const SDNode *N, unsigned i) {
 ///
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT) {
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opcode, getVTList(VT), (SDOperand*)0, 0);
+  AddNodeIDNode(ID, Opcode, getVTList(VT), 0, 0);
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
@@ -3076,7 +3086,7 @@ SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain,
 
 /// getMergeValues - Create a MERGE_VALUES node from the given operands.
 /// Allowed to return something different (and simpler) if Simplify is true.
-SDOperand SelectionDAG::getMergeValues(SDOperandPtr Ops, unsigned NumOps,
+SDOperand SelectionDAG::getMergeValues(const SDOperand *Ops, unsigned NumOps,
                                        bool Simplify) {
   if (Simplify && NumOps == 1)
     return Ops[0];
@@ -3296,7 +3306,28 @@ SDOperand SelectionDAG::getVAArg(MVT VT,
 }
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
-                                SDOperandPtr Ops, unsigned NumOps) {
+                                const SDUse *Ops, unsigned NumOps) {
+  switch (NumOps) {
+  case 0: return getNode(Opcode, VT);
+  case 1: return getNode(Opcode, VT, Ops[0].getSDOperand());
+  case 2: return getNode(Opcode, VT, Ops[0].getSDOperand(),
+                         Ops[1].getSDOperand());
+  case 3: return getNode(Opcode, VT, Ops[0].getSDOperand(),
+                         Ops[1].getSDOperand(), Ops[2].getSDOperand());
+  default: break;
+  }
+
+  // Copy from an SDUse array into an SDOperand array for use with
+  // the regular getNode logic.
+  SmallVector<SDOperand, 8> NewOps;
+  NewOps.reserve(NumOps);
+  for (unsigned i = 0; i != NumOps; ++i)
+    NewOps.push_back(Ops[i].getSDOperand());
+  return getNode(Opcode, VT, Ops, NumOps);
+}
+
+SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
+                                const SDOperand *Ops, unsigned NumOps) {
   switch (NumOps) {
   case 0: return getNode(Opcode, VT);
   case 1: return getNode(Opcode, VT, Ops[0]);
@@ -3345,21 +3376,21 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
 
 SDOperand SelectionDAG::getNode(unsigned Opcode,
                                 std::vector<MVT> &ResultTys,
-                                SDOperandPtr Ops, unsigned NumOps) {
+                                const SDOperand *Ops, unsigned NumOps) {
   return getNode(Opcode, getNodeValueTypes(ResultTys), ResultTys.size(),
                  Ops, NumOps);
 }
 
 SDOperand SelectionDAG::getNode(unsigned Opcode,
                                 const MVT *VTs, unsigned NumVTs,
-                                SDOperandPtr Ops, unsigned NumOps) {
+                                const SDOperand *Ops, unsigned NumOps) {
   if (NumVTs == 1)
     return getNode(Opcode, VTs[0], Ops, NumOps);
   return getNode(Opcode, makeVTList(VTs, NumVTs), Ops, NumOps);
 }  
   
 SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
-                                SDOperandPtr Ops, unsigned NumOps) {
+                                const SDOperand *Ops, unsigned NumOps) {
   if (VTList.NumVTs == 1)
     return getNode(Opcode, VTList.VTs[0], Ops, NumOps);
 
@@ -3418,7 +3449,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
 }
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList) {
-  return getNode(Opcode, VTList, (SDOperand*)0, 0);
+  return getNode(Opcode, VTList, 0, 0);
 }
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
@@ -3605,7 +3636,7 @@ UpdateNodeOperands(SDOperand N, SDOperand Op1, SDOperand Op2,
 }
 
 SDOperand SelectionDAG::
-UpdateNodeOperands(SDOperand InN, SDOperandPtr Ops, unsigned NumOps) {
+UpdateNodeOperands(SDOperand InN, const SDOperand *Ops, unsigned NumOps) {
   SDNode *N = InN.Val;
   assert(N->getNumOperands() == NumOps &&
          "Update with wrong number of operands");
@@ -3650,7 +3681,7 @@ UpdateNodeOperands(SDOperand InN, SDOperandPtr Ops, unsigned NumOps) {
 /// opcode, types, and operands to the specified value.  This should only be
 /// used by the SelectionDAG class.
 void SDNode::MorphNodeTo(unsigned Opc, SDVTList L,
-                         SDOperandPtr Ops, unsigned NumOps) {
+                         const SDOperand *Ops, unsigned NumOps) {
   NodeType = Opc;
   ValueList = L.VTs;
   NumValues = L.NumVTs;
@@ -3693,7 +3724,7 @@ void SDNode::MorphNodeTo(unsigned Opc, SDVTList L,
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                    MVT VT) {
   SDVTList VTs = getVTList(VT);
-  return SelectNodeTo(N, TargetOpc, VTs, (SDOperand*)0, 0);
+  return SelectNodeTo(N, TargetOpc, VTs, 0, 0);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
@@ -3720,14 +3751,14 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
-                                   MVT VT, SDOperandPtr Ops,
+                                   MVT VT, const SDOperand *Ops,
                                    unsigned NumOps) {
   SDVTList VTs = getVTList(VT);
   return SelectNodeTo(N, TargetOpc, VTs, Ops, NumOps);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
-                                   MVT VT1, MVT VT2, SDOperandPtr Ops,
+                                   MVT VT1, MVT VT2, const SDOperand *Ops,
                                    unsigned NumOps) {
   SDVTList VTs = getVTList(VT1, VT2);
   return SelectNodeTo(N, TargetOpc, VTs, Ops, NumOps);
@@ -3740,8 +3771,8 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
-                                   MVT VT1, MVT VT2, MVT VT3, SDOperandPtr Ops,
-                                   unsigned NumOps) {
+                                   MVT VT1, MVT VT2, MVT VT3,
+                                   const SDOperand *Ops, unsigned NumOps) {
   SDVTList VTs = getVTList(VT1, VT2, VT3);
   return SelectNodeTo(N, TargetOpc, VTs, Ops, NumOps);
 }
@@ -3772,7 +3803,7 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
-                                   SDVTList VTs, SDOperandPtr Ops,
+                                   SDVTList VTs, const SDOperand *Ops,
                                    unsigned NumOps) {
   // If an identical node already exists, use it.
   FoldingSetNodeID ID;
@@ -3811,7 +3842,7 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT,
   return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2, Op3).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT,
-                                    SDOperandPtr Ops, unsigned NumOps) {
+                                    const SDOperand *Ops, unsigned NumOps) {
   return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Ops, NumOps).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2) {
@@ -3839,7 +3870,7 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
   return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, 3).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2,
-                                    SDOperandPtr Ops, unsigned NumOps) {
+                                    const SDOperand *Ops, unsigned NumOps) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2);
   return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, NumOps).Val;
 }
@@ -3857,13 +3888,13 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3,
   return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 3, Ops, 3).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3,
-                                    SDOperandPtr Ops, unsigned NumOps) {
+                                    const SDOperand *Ops, unsigned NumOps) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2, VT3);
   return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 3, Ops, NumOps).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
                                     MVT VT2, MVT VT3, MVT VT4,
-                                    SDOperandPtr Ops, unsigned NumOps) {
+                                    const SDOperand *Ops, unsigned NumOps) {
   std::vector<MVT> VTList;
   VTList.push_back(VT1);
   VTList.push_back(VT2);
@@ -3874,7 +3905,7 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode,
                                     std::vector<MVT> &ResultTys,
-                                    SDOperandPtr Ops, unsigned NumOps) {
+                                    const SDOperand *Ops, unsigned NumOps) {
   const MVT *VTs = getNodeValueTypes(ResultTys);
   return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, ResultTys.size(),
                  Ops, NumOps).Val;
@@ -3883,7 +3914,7 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode,
 /// getNodeIfExists - Get the specified node if it's already available, or
 /// else return NULL.
 SDNode *SelectionDAG::getNodeIfExists(unsigned Opcode, SDVTList VTList,
-                                      SDOperandPtr Ops, unsigned NumOps) {
+                                      const SDOperand *Ops, unsigned NumOps) {
   if (VTList.VTs[VTList.NumVTs-1] != MVT::Flag) {
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opcode, VTList, Ops, NumOps);
@@ -3993,7 +4024,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
 /// This version can replace From with any result values.  To must match the
 /// number and types of values returned by From.
 void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
-                                      SDOperandPtr To,
+                                      const SDOperand *To,
                                       DAGUpdateListener *UpdateListener) {
   if (From->getNumValues() == 1)  // Handle the simple case efficiently.
     return ReplaceAllUsesWith(SDOperand(From, 0), To[0], UpdateListener);
@@ -4220,7 +4251,7 @@ void AtomicSDNode::ANCHOR() {}
 
 HandleSDNode::~HandleSDNode() {
   SDVTList VTs = { 0, 0 };
-  MorphNodeTo(ISD::HANDLENODE, VTs, SDOperandPtr(), 0);  // Drops operand uses.
+  MorphNodeTo(ISD::HANDLENODE, VTs, 0, 0);  // Drops operand uses.
 }
 
 GlobalAddressSDNode::GlobalAddressSDNode(bool isTarget, const GlobalValue *GA,

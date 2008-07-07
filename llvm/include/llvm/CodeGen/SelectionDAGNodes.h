@@ -1271,7 +1271,7 @@ protected:
     Prev = 0; Next = 0;
   }
 
-  SDNode(unsigned Opc, SDVTList VTs, SDOperandPtr Ops, unsigned NumOps)
+  SDNode(unsigned Opc, SDVTList VTs, const SDUse *Ops, unsigned NumOps)
     : NodeType(Opc), NodeId(-1), UsesSize(0), Uses(NULL) {
     OperandsNeedDelete = true;
     NumOperands = NumOps;
@@ -1280,8 +1280,8 @@ protected:
     for (unsigned i = 0; i != NumOps; ++i) {
       OperandList[i] = Ops[i];
       OperandList[i].setUser(this);
-      Ops[i].Val->addUse(OperandList[i]);
-      ++Ops[i].Val->UsesSize;
+      Ops[i].getSDOperand().Val->addUse(OperandList[i]);
+      ++Ops[i].getSDOperand().Val->UsesSize;
     }
     
     ValueList = VTs.VTs;
@@ -1320,7 +1320,7 @@ protected:
   /// opcode, types, and operands to the specified value.  This should only be
   /// used by the SelectionDAG class.
   void MorphNodeTo(unsigned Opc, SDVTList L,
-                   SDOperandPtr Ops, unsigned NumOps);
+                   const SDOperand *Ops, unsigned NumOps);
   
   void addUser(unsigned i, SDNode *User) {
     assert(User->OperandList[i].getUser() && "Node without parent");
