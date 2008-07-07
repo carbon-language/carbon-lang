@@ -486,11 +486,25 @@ void SelectionDAG::RemoveDeadNodes() {
     if (I->use_empty())
       DeadNodes.push_back(I);
 
+  RemoveDeadNodes(DeadNodes);
+  
+  // If the root changed (e.g. it was a dead load, update the root).
+  setRoot(Dummy.getValue());
+}
+
+/// RemoveDeadNodes - This method deletes the unreachable nodes in the
+/// given list, and any nodes that become unreachable as a result.
+void SelectionDAG::RemoveDeadNodes(SmallVectorImpl<SDNode *> &DeadNodes,
+                                   DAGUpdateListener *UpdateListener) {
+
   // Process the worklist, deleting the nodes and adding their uses to the
   // worklist.
   while (!DeadNodes.empty()) {
     SDNode *N = DeadNodes.back();
     DeadNodes.pop_back();
+    
+    if (UpdateListener)
+      UpdateListener->NodeDeleted(N, 0);
     
     // Take the node out of the appropriate CSE map.
     RemoveNodeFromCSEMaps(N);
@@ -514,49 +528,12 @@ void SelectionDAG::RemoveDeadNodes() {
     // Finally, remove N itself.
     AllNodes.erase(N);
   }
-  
-  // If the root changed (e.g. it was a dead load, update the root).
-  setRoot(Dummy.getValue());
 }
 
 void SelectionDAG::RemoveDeadNode(SDNode *N, DAGUpdateListener *UpdateListener){
   SmallVector<SDNode*, 16> DeadNodes;
   DeadNodes.push_back(N);
-
-  // Process the worklist, deleting the nodes and adding their uses to the
-  // worklist.
-  while (!DeadNodes.empty()) {
-    SDNode *N = DeadNodes.back();
-    DeadNodes.pop_back();
-    
-    if (UpdateListener)
-      UpdateListener->NodeDeleted(N, 0);
-    
-    // Take the node out of the appropriate CSE map.
-    RemoveNodeFromCSEMaps(N);
-
-    // Next, brutally remove the operand list.  This is safe to do, as there are
-    // no cycles in the graph.
-    unsigned op_num = 0;
-    for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I) {
-      SDNode *Operand = I->getVal();
-      Operand->removeUser(op_num, N);
-      
-      // Now that we removed this operand, see if there are no uses of it left.
-      if (Operand->use_empty())
-        DeadNodes.push_back(Operand);
-      
-      op_num++;
-    }
-    if (N->OperandsNeedDelete) {
-      delete[] N->OperandList;
-    }
-    N->OperandList = 0;
-    N->NumOperands = 0;
-    
-    // Finally, remove N itself.
-    AllNodes.erase(N);
-  }
+  RemoveDeadNodes(DeadNodes, UpdateListener);
 }
 
 void SelectionDAG::DeleteNode(SDNode *N) {
@@ -3681,16 +3658,22 @@ UpdateNodeOperands(SDOperand InN, const SDOperand *Ops, unsigned NumOps) {
 /// opcode, types, and operands to the specified value.  This should only be
 /// used by the SelectionDAG class.
 void SDNode::MorphNodeTo(unsigned Opc, SDVTList L,
-                         const SDOperand *Ops, unsigned NumOps) {
+                         const SDOperand *Ops, unsigned NumOps,
+                         SmallVectorImpl<SDNode *> &DeadNodes) {
   NodeType = Opc;
   ValueList = L.VTs;
   NumValues = L.NumVTs;
   
   // Clear the operands list, updating used nodes to remove this from their
-  // use list.
-  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I)
-    I->getVal()->removeUser(std::distance(op_begin(), I), this);
-  
+  // use list.  Keep track of any operands that become dead as a result.
+  SmallPtrSet<SDNode*, 16> DeadNodeSet;
+  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I) {
+    SDNode *N = I->getVal();
+    N->removeUser(std::distance(op_begin(), I), this);
+    if (N->use_empty())
+      DeadNodeSet.insert(N);
+  }
+
   // If NumOps is larger than the # of operands we currently have, reallocate
   // the operand list.
   if (NumOps > NumOperands) {
@@ -3710,7 +3693,29 @@ void SDNode::MorphNodeTo(unsigned Opc, SDVTList L,
     SDNode *N = OperandList[i].getVal();
     N->addUser(i, this);
     ++N->UsesSize;
+    DeadNodeSet.erase(N);
   }
+
+  // Clean up any nodes that are still dead after adding the uses for the
+  // new operands.
+  for (SmallPtrSet<SDNode *, 16>::iterator I = DeadNodeSet.begin(),
+       E = DeadNodeSet.end(); I != E; ++I)
+    DeadNodes.push_back(*I);
+}
+
+/// DropOperands - Release the operands and set this node to have
+/// zero operands.  This should only be used by HandleSDNode to clear
+/// its operand list.
+void SDNode::DropOperands() {
+  assert(NodeType == ISD::HANDLENODE &&
+         "DropOperands is for HANDLENODE only!");
+
+  // Unlike the code in MorphNodeTo that does this, we don't need to
+  // watch for dead nodes here.
+  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I)
+    I->getVal()->removeUser(std::distance(op_begin(), I), this);
+
+  NumOperands = 0;
 }
 
 /// SelectNodeTo - These are used for target selectors to *mutate* the
@@ -3814,7 +3819,10 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
 
   RemoveNodeFromCSEMaps(N);
 
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, NumOps);
+  SmallVector<SDNode *, 16> DeadNodes;
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, NumOps, DeadNodes);
+  RemoveDeadNodes(DeadNodes);
+
   CSEMap.InsertNode(N, IP);   // Memoize the new node.
   return N;
 }
@@ -4250,8 +4258,7 @@ void StoreSDNode::ANCHOR() {}
 void AtomicSDNode::ANCHOR() {}
 
 HandleSDNode::~HandleSDNode() {
-  SDVTList VTs = { 0, 0 };
-  MorphNodeTo(ISD::HANDLENODE, VTs, 0, 0);  // Drops operand uses.
+  DropOperands();
 }
 
 GlobalAddressSDNode::GlobalAddressSDNode(bool isTarget, const GlobalValue *GA,

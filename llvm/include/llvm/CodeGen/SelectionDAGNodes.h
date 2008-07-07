@@ -1315,12 +1315,18 @@ protected:
       ++Ops[i].getVal()->UsesSize;
     }
   }
+
+  /// DropOperands - Release the operands and set this node to have
+  /// zero operands.  This should only be used by HandleSDNode to clear
+  /// its operand list.
+  void DropOperands();
   
   /// MorphNodeTo - This frees the operands of the current node, resets the
   /// opcode, types, and operands to the specified value.  This should only be
   /// used by the SelectionDAG class.
   void MorphNodeTo(unsigned Opc, SDVTList L,
-                   const SDOperand *Ops, unsigned NumOps);
+                   const SDOperand *Ops, unsigned NumOps,
+                   SmallVectorImpl<SDNode *> &DeadNodes);
   
   void addUser(unsigned i, SDNode *User) {
     assert(User->OperandList[i].getUser() && "Node without parent");

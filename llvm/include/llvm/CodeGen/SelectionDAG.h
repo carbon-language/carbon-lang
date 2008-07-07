@@ -537,6 +537,11 @@ public:
   /// for each node deleted.
   void RemoveDeadNode(SDNode *N, DAGUpdateListener *UpdateListener = 0);
   
+  /// RemoveDeadNodes - This method deletes the unreachable nodes in the
+  /// given list, and any nodes that become unreachable as a result.
+  void RemoveDeadNodes(SmallVectorImpl<SDNode *> &DeadNodes,
+                       DAGUpdateListener *UpdateListener = 0);
+
   /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
   /// This can cause recursive merging of nodes in the DAG.  Use the first
   /// version if 'From' is known to have a single result, use the second
