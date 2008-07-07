@@ -114,7 +114,7 @@ public:
   /// insert - This returns true if the pointer was new to the set, false if it
   /// was already in the set.
   bool insert(const Type *Src, const Type *Dst) {
-    if (!TheMap.insert(std::make_pair(Src, PATypeHolder(Dst))))
+    if (!TheMap.insert(std::make_pair(Src, PATypeHolder(Dst))).second)
       return false;  // Already in map.
     if (Src->isAbstract())
       Src->addAbstractTypeUser(this);

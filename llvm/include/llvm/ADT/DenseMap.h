@@ -147,14 +147,16 @@ public:
     return end();
   }
   
-  bool insert(const std::pair<KeyT, ValueT> &KV) {
+  std::pair<iterator, bool> insert(const std::pair<KeyT, ValueT> &KV) {
     BucketT *TheBucket;
     if (LookupBucketFor(KV.first, TheBucket))
-      return false; // Already in map.
+      return std::make_pair(iterator(TheBucket, Buckets+NumBuckets),
+                            false); // Already in map.
     
     // Otherwise, insert the new element.
-    InsertIntoBucket(KV.first, KV.second, TheBucket);
-    return true;
+    TheBucket = InsertIntoBucket(KV.first, KV.second, TheBucket);
+    return std::make_pair(iterator(TheBucket, Buckets+NumBuckets),
+                          true);
   }
   
   bool erase(const KeyT &Val) {

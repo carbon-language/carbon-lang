@@ -85,7 +85,7 @@ namespace {
     /// AddToWorkList - Add the specified instruction to the worklist if it
     /// isn't already in it.
     void AddToWorkList(Instruction *I) {
-      if (WorklistMap.insert(std::make_pair(I, Worklist.size())))
+      if (WorklistMap.insert(std::make_pair(I, Worklist.size())).second)
         Worklist.push_back(I);
     }
     

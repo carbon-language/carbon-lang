@@ -41,10 +41,6 @@ public:
     return TheMap.count(V);
   }
   
-  bool insert(const ValueT &V) {
-    return TheMap.insert(std::make_pair(V, 0));
-  }
-  
   void erase(const ValueT &V) {
     TheMap.erase(V);
   }
@@ -90,6 +86,10 @@ public:
   
   const_iterator begin() const { return ConstIterator(TheMap.begin()); }
   const_iterator end() const { return ConstIterator(TheMap.end()); }
+
+  std::pair<iterator, bool> insert(const ValueT &V) {
+    return TheMap.insert(std::make_pair(V, 0));
+  }
 };
 
 } // end namespace llvm

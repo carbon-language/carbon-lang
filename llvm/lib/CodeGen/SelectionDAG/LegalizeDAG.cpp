@@ -115,7 +115,7 @@ class VISIBILITY_HIDDEN SelectionDAGLegalize {
       LegalizedNodes.insert(std::make_pair(To, To));
   }
   void AddPromotedOperand(SDOperand From, SDOperand To) {
-    bool isNew = PromotedNodes.insert(std::make_pair(From, To));
+    bool isNew = PromotedNodes.insert(std::make_pair(From, To)).second;
     assert(isNew && "Got into the map somehow?");
     // If someone requests legalization of the new node, return itself.
     LegalizedNodes.insert(std::make_pair(To, To));
@@ -6734,7 +6734,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   }
 
   // Remember in a map if the values will be reused later.
-  bool isNew = ExpandedNodes.insert(std::make_pair(Op, std::make_pair(Lo, Hi)));
+  bool isNew =
+    ExpandedNodes.insert(std::make_pair(Op, std::make_pair(Lo, Hi))).second;
   assert(isNew && "Value already expanded?!?");
 }
 

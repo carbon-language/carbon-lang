@@ -209,11 +209,13 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
   for (unsigned i = 0, e = array_lengthof(OpTbl2Addr); i != e; ++i) {
     unsigned RegOp = OpTbl2Addr[i][0];
     unsigned MemOp = OpTbl2Addr[i][1];
-    if (!RegOp2MemOpTable2Addr.insert(std::make_pair((unsigned*)RegOp, MemOp)))
+    if (!RegOp2MemOpTable2Addr.insert(std::make_pair((unsigned*)RegOp,
+                                                     MemOp)).second)
       assert(false && "Duplicated entries?");
     unsigned AuxInfo = 0 | (1 << 4) | (1 << 5); // Index 0,folded load and store
     if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
-                                                std::make_pair(RegOp, AuxInfo))))
+                                                std::make_pair(RegOp,
+                                                              AuxInfo))).second)
       AmbEntries.push_back(MemOp);
   }
 
@@ -297,14 +299,15 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
   for (unsigned i = 0, e = array_lengthof(OpTbl0); i != e; ++i) {
     unsigned RegOp = OpTbl0[i][0];
     unsigned MemOp = OpTbl0[i][1];
-    if (!RegOp2MemOpTable0.insert(std::make_pair((unsigned*)RegOp, MemOp)))
+    if (!RegOp2MemOpTable0.insert(std::make_pair((unsigned*)RegOp,
+                                                 MemOp)).second)
       assert(false && "Duplicated entries?");
     unsigned FoldedLoad = OpTbl0[i][2];
     // Index 0, folded load or store.
     unsigned AuxInfo = 0 | (FoldedLoad << 4) | ((FoldedLoad^1) << 5);
     if (RegOp != X86::FsMOVAPDrr && RegOp != X86::FsMOVAPSrr)
       if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
-                                               std::make_pair(RegOp, AuxInfo))))
+                                     std::make_pair(RegOp, AuxInfo))).second)
         AmbEntries.push_back(MemOp);
   }
 
@@ -423,12 +426,13 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
   for (unsigned i = 0, e = array_lengthof(OpTbl1); i != e; ++i) {
     unsigned RegOp = OpTbl1[i][0];
     unsigned MemOp = OpTbl1[i][1];
-    if (!RegOp2MemOpTable1.insert(std::make_pair((unsigned*)RegOp, MemOp)))
+    if (!RegOp2MemOpTable1.insert(std::make_pair((unsigned*)RegOp,
+                                                 MemOp)).second)
       assert(false && "Duplicated entries?");
     unsigned AuxInfo = 1 | (1 << 4); // Index 1, folded load
     if (RegOp != X86::FsMOVAPDrr && RegOp != X86::FsMOVAPSrr)
       if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
-                                               std::make_pair(RegOp, AuxInfo))))
+                                     std::make_pair(RegOp, AuxInfo))).second)
         AmbEntries.push_back(MemOp);
   }
 
@@ -629,11 +633,12 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
   for (unsigned i = 0, e = array_lengthof(OpTbl2); i != e; ++i) {
     unsigned RegOp = OpTbl2[i][0];
     unsigned MemOp = OpTbl2[i][1];
-    if (!RegOp2MemOpTable2.insert(std::make_pair((unsigned*)RegOp, MemOp)))
+    if (!RegOp2MemOpTable2.insert(std::make_pair((unsigned*)RegOp,
+                                                 MemOp)).second)
       assert(false && "Duplicated entries?");
     unsigned AuxInfo = 2 | (1 << 4); // Index 1, folded load
     if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
-                                               std::make_pair(RegOp, AuxInfo))))
+                                   std::make_pair(RegOp, AuxInfo))).second)
       AmbEntries.push_back(MemOp);
   }
 
