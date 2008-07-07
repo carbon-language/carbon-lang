@@ -137,8 +137,7 @@ inline ItTy next(ItTy it, Dist n)
 template <typename ItTy>
 inline ItTy next(ItTy it)
 {
-  std::advance(it, 1);
-  return it;
+  return ++it;
 }
 
 template <typename ItTy, typename Dist>
@@ -151,8 +150,7 @@ inline ItTy prior(ItTy it, Dist n)
 template <typename ItTy>
 inline ItTy prior(ItTy it)
 {
-  std::advance(it, -1);
-  return it;
+  return --it;
 }
 
 //===----------------------------------------------------------------------===//
