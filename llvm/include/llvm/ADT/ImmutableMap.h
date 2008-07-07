@@ -194,16 +194,14 @@ public:
   iterator begin() const { return iterator(Root); }
   iterator end() const { return iterator(); }  
   
-  TreeTy* SlimFind(key_type_ref K) const {
+  data_type* lookup(key_type_ref K) const {
     if (Root) {
       TreeTy* T = Root->find(K);
-      if (T) return T;
+      if (T) return &T->getValue().second;
     }
     
-    return NULL;
+    return 0;
   }
-  
-  // FIXME: Add 'find' that returns an iterator instead of a TreeTy*.
   
   //===--------------------------------------------------===//    
   // Utility methods.
