@@ -409,7 +409,6 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   if (PerformTailCallOpt && I->getOpcode() == PPC::ADJCALLSTACKUP) {
     // Add (actually substract) back the amount the callee popped on return.
     if (int CalleeAmt =  I->getOperand(1).getImm()) {
-      MachineInstr * New = NULL;
       bool is64Bit = Subtarget.isPPC64();
       CalleeAmt *= -1;
       unsigned StackReg = is64Bit ? PPC::X1 : PPC::R1;
@@ -420,9 +419,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       unsigned ORIInstr = is64Bit ? PPC::ORI8 : PPC::ORI;
 
       if (isInt16(CalleeAmt)) {
-        New = BuildMI(TII.get(ADDIInstr), StackReg).addReg(StackReg).
+        BuildMI(MBB, I, TII.get(ADDIInstr), StackReg).addReg(StackReg).
           addImm(CalleeAmt);
-        MBB.insert(I, New);
       } else {
         MachineBasicBlock::iterator MBBI = I;
         BuildMI(MBB, MBBI, TII.get(LISInstr), TmpReg)
