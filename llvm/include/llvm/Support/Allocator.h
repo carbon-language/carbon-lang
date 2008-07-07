@@ -55,7 +55,7 @@ public:
     return static_cast<T*>(Allocate(sizeof(T),AlignOf<T>::Alignment));
   }
   
-  void Deallocate(void */*Ptr*/) {}
+  void Deallocate(void * /*Ptr*/) {}
 
   void PrintStats() const;
 };
