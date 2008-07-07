@@ -4743,7 +4743,7 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
         Tmp1 = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp2);
         Tmp2 = SDOperand();
       }
-      LHS = Tmp1;
+      LHS = LegalizeOp(Tmp1);
       RHS = Tmp2;
       return;
     }
