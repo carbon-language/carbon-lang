@@ -257,7 +257,8 @@ void html::AddLineNumbers(Rewriter& R, unsigned FileID) {
   RB.InsertTextAfter(FileEnd - FileBeg, "</table>", strlen("</table>"));
 }
 
-void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
+void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID, 
+                                             const char *title) {
 
   const llvm::MemoryBuffer *Buf = R.getSourceMgr().getBuffer(FileID);
   const char* FileStart = Buf->getBufferStart();
@@ -266,11 +267,14 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
   SourceLocation StartLoc = SourceLocation::getFileLoc(FileID, 0);
   SourceLocation EndLoc = SourceLocation::getFileLoc(FileID, FileEnd-FileStart);
 
-  // Generate header
-  R.InsertCStrBefore(StartLoc,
-      "<!doctype html>\n" // Use HTML 5 doctype
-      "<html>\n<head>\n"
-      "<style type=\"text/css\">\n"
+  std::ostringstream os;
+  os << "<!doctype html>\n" // Use HTML 5 doctype
+        "<html>\n<head>\n";
+  
+  if (title)
+    os << "<title>" << html::EscapeText(title) << "</title>\n";
+  
+  os << "<style type=\"text/css\">\n"
       " body { color:#000000; background-color:#ffffff }\n"
       " body { font-family:Helvetica, sans-serif; font-size:10pt }\n"
       " h1 { font-size:14pt }\n"
@@ -314,8 +318,10 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID) {
       " td.rowname {\n"
       "   text-align:right; font-weight:bold; color:#444444;\n"
       "   padding-right:2ex; }\n"
-      "</style>\n</head>\n<body>");
+      "</style>\n</head>\n<body>";
 
+  // Generate header
+  R.InsertStrBefore(StartLoc, os.str());
   // Generate footer
   
   R.InsertCStrAfter(EndLoc, "</body></html>\n");

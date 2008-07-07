@@ -62,7 +62,8 @@ namespace html {
 
   void AddLineNumbers(Rewriter& R, unsigned FileID);  
   
-  void AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID);
+  void AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID, 
+                                         const char *title = NULL);
 
   /// SyntaxHighlight - Relex the specified FileID and annotate the HTML with
   /// information about keywords, comments, etc.

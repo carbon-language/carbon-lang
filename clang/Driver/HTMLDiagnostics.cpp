@@ -233,7 +233,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
 
   // Add CSS, header, and footer.
   
-  html::AddHeaderFooterInternalBuiltinCSS(R, FileID);
+  html::AddHeaderFooterInternalBuiltinCSS(R, FileID, Entry->getName());
   
   // Get the rewrite buffer.
   const RewriteBuffer *Buf = R.getRewriteBufferFor(FileID);

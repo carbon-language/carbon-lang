@@ -17,6 +17,7 @@
 #include "clang/Rewrite/HTMLRewrite.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/FileManager.h"
 #include "clang/AST/ASTContext.h"
 
 using namespace clang;
@@ -59,8 +60,10 @@ HTMLPrinter::~HTMLPrinter() {
 
   // Format the file.
   unsigned FileID = R.getSourceMgr().getMainFileID();
+  const FileEntry* Entry = R.getSourceMgr().getFileEntryForID(FileID);
+  
   html::AddLineNumbers(R, FileID);
-  html::AddHeaderFooterInternalBuiltinCSS(R, FileID);
+  html::AddHeaderFooterInternalBuiltinCSS(R, FileID, Entry->getName());
 
   // If we have a preprocessor, relex the file and syntax highlight.
   // We might not have a preprocessor if we come from a deserialized AST file,
