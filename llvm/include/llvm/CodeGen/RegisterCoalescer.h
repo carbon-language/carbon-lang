@@ -17,7 +17,6 @@
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Support/Debug.h"
 
 #ifndef LLVM_CODEGEN_REGISTER_COALESCER_H
 #define LLVM_CODEGEN_REGISTER_COALESCER_H

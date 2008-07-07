@@ -23,8 +23,8 @@
 #ifndef LLVM_SUPPORT_GRAPHWRITER_H
 #define LLVM_SUPPORT_GRAPHWRITER_H
 
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/DOTGraphTraits.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/System/Path.h"
 #include <fstream>
