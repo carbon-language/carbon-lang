@@ -82,20 +82,24 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
 
-  if (Subtarget->isSingleFloat()) 
-    setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
-
   // Load extented operations for i1 types must be promoted 
   setLoadXAction(ISD::EXTLOAD,  MVT::i1,  Promote);
   setLoadXAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
   setLoadXAction(ISD::SEXTLOAD, MVT::i1,  Promote);
 
   // Mips does not have these NodeTypes below.
-  setOperationAction(ISD::BR_JT,     MVT::Other, Expand);
-  setOperationAction(ISD::BR_CC,     MVT::Other, Expand);
-  setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
-  setOperationAction(ISD::SELECT,    MVT::i32,   Expand);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
+  setConvertAction(MVT::f64, MVT::f32, Expand);
+
+  setOperationAction(ISD::BR_JT,             MVT::Other, Expand);
+  setOperationAction(ISD::BR_CC,             MVT::Other, Expand);
+  setOperationAction(ISD::SELECT_CC,         MVT::Other, Expand);
+  setOperationAction(ISD::SELECT,            MVT::i32,   Expand);
+  setOperationAction(ISD::UINT_TO_FP,        MVT::i32,   Expand);
+  setOperationAction(ISD::FP_TO_UINT,        MVT::i32,   Expand);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1,    Expand);
+
+  if (Subtarget->isSingleFloat()) 
+    setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
 
   if (!Subtarget->isAllegrex()) {
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8, Expand);

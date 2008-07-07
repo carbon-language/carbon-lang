@@ -291,6 +291,6 @@ let hasDelaySlot = 1, Defs=[FCR31] in {
 //===----------------------------------------------------------------------===//
 def : Pat<(f32 (sint_to_fp CPURegs:$src)), (CVTS_W32 (MTC1 CPURegs:$src))>;
 def : Pat<(f64 (sint_to_fp CPURegs:$src)), (CVTD_W32 (MTC1 CPURegs:$src))>;
-def : Pat<(i32 (fp_to_sint FGR32:$src)), (MFC1 (CVTW_SO32 FGR32:$src))>;
-def : Pat<(i32 (fp_to_sint AFGR32:$src)), (MFC1 (CVTW_AS32 AFGR32:$src))>;
+def : Pat<(i32 (fp_to_sint FGR32:$src)), (MFC1 (TRUNC_W_SO32 FGR32:$src))>;
+def : Pat<(i32 (fp_to_sint AFGR32:$src)), (MFC1 (TRUNC_W_AS32 AFGR32:$src))>;
 
