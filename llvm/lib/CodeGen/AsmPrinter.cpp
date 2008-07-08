@@ -1445,14 +1445,23 @@ void AsmPrinter::printDataDirective(const Type *type) {
   }
 }
 
-void AsmPrinter::printSuffixedName(const char *Name, const char* Suffix) {
+void AsmPrinter::printSuffixedName(const char *Name, const char *Suffix,
+                                   const char *Prefix) {
   if (Name[0]=='\"')
-    O << '\"' << TAI->getPrivateGlobalPrefix() << 
-         Name[1] << Suffix << '\"';
+    O << '\"';
+  O << TAI->getPrivateGlobalPrefix();
+  if (Prefix) O << Prefix;
+  if (Name[0]=='\"')
+    O << '\"';
+  if (Name[0]=='\"')
+    O << Name[1];
   else
-    O << TAI->getPrivateGlobalPrefix() << Name << Suffix;
+    O << Name;
+  O << Suffix;
+  if (Name[0]=='\"')
+    O << '\"';
 }
 
-void AsmPrinter::printSuffixedName(std::string &Name, const char* Suffix) {
+void AsmPrinter::printSuffixedName(const std::string &Name, const char* Suffix) {
   printSuffixedName(Name.c_str(), Suffix);
 }

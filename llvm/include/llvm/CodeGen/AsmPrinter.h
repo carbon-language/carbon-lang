@@ -351,8 +351,9 @@ namespace llvm {
     /// printSuffixedName - This prints a name with preceding 
     /// getPrivateGlobalPrefix and the specified suffix, handling quoted names
     /// correctly.
-    void printSuffixedName(const char *Name, const char* Suffix);
-    void printSuffixedName(std::string &Name, const char* Suffix);
+    void printSuffixedName(const char *Name, const char *Suffix,
+                           const char *Prefix = 0);
+    void printSuffixedName(const std::string &Name, const char* Suffix);
 
   private:
     void EmitLLVMUsedList(Constant *List);
