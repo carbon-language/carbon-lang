@@ -1375,7 +1375,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
   }
 
   if (C1->getType()->isFloatingPoint()) {
-    int Result = -1;
+    int Result = -1;  // -1 = unknown, 0 = known false, 1 = known true.
     switch (evaluateFCmpRelation(C1, C2)) {
     default: assert(0 && "Unknown relation!");
     case FCmpInst::FCMP_UNO:
