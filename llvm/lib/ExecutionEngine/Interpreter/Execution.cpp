@@ -21,6 +21,7 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
@@ -30,6 +31,9 @@ using namespace llvm;
 
 STATISTIC(NumDynamicInsts, "Number of dynamic instructions executed");
 static Interpreter *TheEE = 0;
+
+static cl::opt<bool> PrintVolatile("interpreter-print-volatile", cl::Hidden,
+          cl::desc("make the interpreter print every volatile load and store"));
 
 //===----------------------------------------------------------------------===//
 //                     Various Helper Functions
@@ -830,6 +834,8 @@ void Interpreter::visitLoadInst(LoadInst &I) {
   GenericValue Result;
   LoadValueFromMemory(Result, Ptr, I.getType());
   SetValue(&I, Result, SF);
+  if (I.isVolatile() && PrintVolatile)
+    cerr << "Volatile load " << I;
 }
 
 void Interpreter::visitStoreInst(StoreInst &I) {
@@ -838,6 +844,8 @@ void Interpreter::visitStoreInst(StoreInst &I) {
   GenericValue SRC = getOperandValue(I.getPointerOperand(), SF);
   StoreValueToMemory(Val, (GenericValue *)GVTOP(SRC),
                      I.getOperand(0)->getType());
+  if (I.isVolatile() && PrintVolatile)
+    cerr << "Volatile store: " << I;
 }
 
 //===----------------------------------------------------------------------===//
