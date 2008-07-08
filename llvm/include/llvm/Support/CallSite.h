@@ -133,6 +133,15 @@ public:
     I->setOperand(getArgumentOffset() + ArgNo, newVal);
   }
 
+  /// Given an operand number, returns the argument that corresponds to it.
+  /// OperandNo must be a valid operand number that actually corresponds to an
+  /// argument.
+  unsigned getArgumentNo(unsigned OperandNo) const {
+    assert(OperandNo >= getArgumentOffset() && "Operand number passed was not "
+                                               "a valid argument");
+    return OperandNo - getArgumentOffset();
+  }
+
   /// hasArgument - Returns true if this CallSite passes the given Value* as an
   /// argument to the called function.
   bool hasArgument(const Value *Arg) const;
