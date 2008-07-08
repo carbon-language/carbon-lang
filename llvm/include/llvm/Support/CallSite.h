@@ -130,12 +130,9 @@ public:
   void setArgument(unsigned ArgNo, Value* newVal) {
     assert(I && "Not a call or invoke instruction!");
     assert(arg_begin() + ArgNo < arg_end() && "Argument # out of range!");
-    if (I->getOpcode() == Instruction::Call)
-      I->setOperand(ArgNo+1, newVal); // Skip Function
-    else
-      I->setOperand(ArgNo+3, newVal); // Skip Function, BB, BB
+    I->setOperand(getArgumentOffset() + ArgNo, newVal);
   }
-  
+
   /// hasArgument - Returns true if this CallSite passes the given Value* as an
   /// argument to the called function.
   bool hasArgument(const Value *Arg) const;
@@ -146,20 +143,26 @@ public:
 
   /// arg_begin/arg_end - Return iterators corresponding to the actual argument
   /// list for a call site.
-  ///
   arg_iterator arg_begin() const {
     assert(I && "Not a call or invoke instruction!");
-    if (I->getOpcode() == Instruction::Call)
-      return I->op_begin()+1; // Skip Function
-    else
-      return I->op_begin()+3; // Skip Function, BB, BB
+    return I->op_begin() + getArgumentOffset(); // Skip non-arguments
   }
+
   arg_iterator arg_end() const { return I->op_end(); }
   bool arg_empty() const { return arg_end() == arg_begin(); }
   unsigned arg_size() const { return unsigned(arg_end() - arg_begin()); }
 
   bool operator<(const CallSite &CS) const {
     return getInstruction() < CS.getInstruction();
+  }
+
+private:
+  /// Returns the operand number of the first argument
+  unsigned getArgumentOffset() const {
+    if (I->getOpcode() == Instruction::Call)
+      return 1; // Skip Function
+    else
+      return 3; // Skip Function, BB, BB
   }
 };
 
