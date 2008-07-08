@@ -46,7 +46,7 @@ private:
     ComplexAPFloat() : Real(0.0), Imag(0.0) {}
   };
   
-  struct LValue {
+  struct LV {
     Expr* Base;
     uint64_t Offset;
   };
@@ -77,6 +77,9 @@ public:
   APValue(const APValue &RHS) : Kind(Uninitialized) {
     *this = RHS;
   }
+  APValue(Expr* B, uint64_t O) : Kind(Uninitialized) {
+    MakeLValue(); setLValue(B, O);
+  }
   ~APValue() {
     MakeUninit();
   }
@@ -87,6 +90,7 @@ public:
   bool isFloat() const { return Kind == Float; }
   bool isComplexSInt() const { return Kind == ComplexSInt; }
   bool isComplexFloat() const { return Kind == ComplexFloat; }
+  bool isLValue() const { return Kind == LValue; }
   
   const APSInt &getSInt() const {
     assert(isSInt() && "Invalid accessor");
@@ -112,6 +116,14 @@ public:
     assert(isComplexFloat() && "Invalid accessor");
     return ((const ComplexAPFloat*)(const void*)Data)->Imag;
   }
+  Expr* getLValueBase() const {
+    assert(isLValue() && "Invalid accessor");
+    return ((const LV*)(const void*)Data)->Base;
+  }
+  uint64_t getLValueOffset() const {
+    assert(isLValue() && "Invalid accessor");
+    return ((const LV*)(const void*)Data)->Offset;
+  }
   
   void setSInt(const APSInt &I) {
     assert(isSInt() && "Invalid accessor");
@@ -131,6 +143,11 @@ public:
     ((ComplexAPFloat*)(void*)Data)->Real = R;
     ((ComplexAPFloat*)(void*)Data)->Imag = I;
   }
+  void setLValue(Expr *B, uint64_t O) {
+    assert(isLValue() && "Invalid accessor");
+    ((LV*)(void*)Data)->Base = B;
+    ((LV*)(void*)Data)->Offset = O;
+  }
   
   const APValue &operator=(const APValue &RHS) {
     if (Kind != RHS.Kind) {
@@ -143,6 +160,8 @@ public:
         MakeComplexSInt();
       else if (RHS.isComplexFloat())
         MakeComplexFloat();
+      else if (RHS.isLValue())
+        MakeLValue();
     }
     if (isSInt())
       setSInt(RHS.getSInt());
@@ -152,6 +171,8 @@ public:
       setComplexSInt(RHS.getComplexSIntReal(), RHS.getComplexSIntImag());
     else if (isComplexFloat())
       setComplexFloat(RHS.getComplexFloatReal(), RHS.getComplexFloatImag());
+    else if (isLValue())
+      setLValue(RHS.getLValueBase(), RHS.getLValueOffset());
     return *this;
   }
   
@@ -165,6 +186,9 @@ private:
       ((ComplexAPSInt*)(void*)Data)->~ComplexAPSInt();
     else if (Kind == ComplexFloat)
       ((ComplexAPFloat*)(void*)Data)->~ComplexAPFloat();
+    else if (Kind == LValue) {
+      ((LV*)(void*)Data)->~LV();
+    }
   }
   void MakeSInt() {
     assert(isUninit() && "Bad state change");
@@ -185,6 +209,11 @@ private:
     assert(isUninit() && "Bad state change");
     new ((ComplexAPFloat*)(void*)Data) ComplexAPFloat();
     Kind = ComplexFloat;
+  }
+  void MakeLValue() {
+    assert(isUninit() && "Bad state change");
+    new ((LV*)(void*)Data) LV();
+    Kind = LValue;
   }
 };
 
