@@ -1377,7 +1377,7 @@ void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
     O << ':';
   if (printComment && MBB->getBasicBlock())
     O << '\t' << TAI->getCommentString() << ' '
-      << MBB->getBasicBlock()->getName();
+      << MBB->getBasicBlock()->getNameStart();
 }
 
 /// printPICJumpTableSetLabel - This method prints a set label for the
@@ -1445,10 +1445,14 @@ void AsmPrinter::printDataDirective(const Type *type) {
   }
 }
 
-void AsmPrinter::printSuffixedName(std::string &Name, const char* Suffix) {
+void AsmPrinter::printSuffixedName(const char *Name, const char* Suffix) {
   if (Name[0]=='\"')
     O << '\"' << TAI->getPrivateGlobalPrefix() << 
-         Name.substr(1, Name.length()-2) << Suffix << '\"';
+         Name[1] << Suffix << '\"';
   else
     O << TAI->getPrivateGlobalPrefix() << Name << Suffix;
+}
+
+void AsmPrinter::printSuffixedName(std::string &Name, const char* Suffix) {
+  printSuffixedName(Name.c_str(), Suffix);
 }

@@ -974,6 +974,16 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   EmitGlobalConstant(C);
 }
 
+/// printGVStub - Print stub for a global value.
+///
+void X86ATTAsmPrinter::printGVStub(const char *GV, const char *Prefix) {
+  if (Prefix) O << Prefix;
+  printSuffixedName(GV, "$non_lazy_ptr");
+  O << ":\n\t.indirect_symbol ";
+  if (Prefix) O << Prefix;
+  O << GV << "\n\t.long\t0\n";
+}
+
 
 bool X86ATTAsmPrinter::doFinalization(Module &M) {
   // Print out module-level global variables here.
@@ -1012,7 +1022,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
          i != e; ++i, ++j) {
       SwitchToDataSection("\t.section __IMPORT,__jump_table,symbol_stubs,"
                           "self_modifying_code+pure_instructions,5", 0);
-      std::string p = i->getKeyData();
+      const char *p = i->getKeyData();
       printSuffixedName(p, "$stub");
       O << ":\n"
            "\t.indirect_symbol " << p << "\n"
@@ -1021,28 +1031,32 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
 
     O << '\n';
 
+    // Print global value stubs.
+    bool InStubSection = false;
     if (TAI->doesSupportExceptionHandling() && MMI && !Subtarget->is64Bit()) {
       // Add the (possibly multiple) personalities to the set of global values.
       // Only referenced functions get into the Personalities list.
       const std::vector<Function *>& Personalities = MMI->getPersonalities();
-
       for (std::vector<Function *>::const_iterator I = Personalities.begin(),
-             E = Personalities.end(); I != E; ++I)
-        if (*I) GVStubs.insert('_' + (*I)->getName());
+             E = Personalities.end(); I != E; ++I) {
+        if (!*I)
+          continue;
+        if (!InStubSection) {
+          SwitchToDataSection(
+                     "\t.section __IMPORT,__pointers,non_lazy_symbol_pointers");
+          InStubSection = true;
+        }
+        printGVStub((*I)->getNameStart(), "_");
+      }
     }
 
     // Output stubs for external and common global variables.
-    if (!GVStubs.empty())
+    if (!InStubSection && !GVStubs.empty())
       SwitchToDataSection(
                     "\t.section __IMPORT,__pointers,non_lazy_symbol_pointers");
     for (StringSet<>::iterator i = GVStubs.begin(), e = GVStubs.end();
-         i != e; ++i) {
-      std::string p = i->getKeyData();
-      printSuffixedName(p, "$non_lazy_ptr");
-      O << ":\n"
-           "\t.indirect_symbol " << p << "\n"
-           "\t.long\t0\n";
-    }
+         i != e; ++i)
+      printGVStub(i->getKeyData());
 
     // Emit final debug information.
     DW.EndModule();
