@@ -82,15 +82,18 @@ public:
   GraphWriter(std::ostream &o, const GraphType &g) : O(o), G(g) {}
 
   void writeHeader(const std::string &Name) {
-    if (Name.empty())
-      O << "digraph foo {\n";        // Graph name doesn't matter
-    else
+    std::string GraphName = DOTTraits::getGraphName(G);
+
+    if (!Name.empty())
       O << "digraph " << Name << " {\n";
+    else if (!GraphName.empty())
+      O << "digraph " << GraphName << " {\n";
+    else
+      O << "digraph unnamed {\n";
 
     if (DOTTraits::renderGraphFromBottomUp())
       O << "\trankdir=\"BT\";\n";
 
-    std::string GraphName = DOTTraits::getGraphName(G);
     if (!GraphName.empty())
       O << "\tlabel=\"" << DOT::EscapeString(GraphName) << "\";\n";
     O << DOTTraits::getGraphProperties(G);
