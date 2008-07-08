@@ -66,7 +66,7 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
     cerr << "SoftenFloatResult #" << ResNo << ": ";
     N->dump(&DAG); cerr << "\n";
 #endif
-    assert(0 && "Do not know how to convert the result of this operator!");
+    assert(0 && "Do not know how to soften the result of this operator!");
     abort();
 
     case ISD::BIT_CONVERT: R = SoftenFloatRes_BIT_CONVERT(N); break;
@@ -75,6 +75,8 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
       R = SoftenFloatRes_ConstantFP(cast<ConstantFPSDNode>(N));
       break;
     case ISD::FCOPYSIGN:   R = SoftenFloatRes_FCOPYSIGN(N); break;
+    case ISD::FP_EXTEND:   R = SoftenFloatRes_FP_EXTEND(N); break;
+    case ISD::FP_ROUND:    R = SoftenFloatRes_FP_ROUND(N); break;
     case ISD::LOAD:        R = SoftenFloatRes_LOAD(N); break;
     case ISD::SINT_TO_FP:
     case ISD::UINT_TO_FP:  R = SoftenFloatRes_XINT_TO_FP(N); break;
@@ -167,6 +169,46 @@ SDOperand DAGTypeLegalizer::SoftenFloatRes_FMUL(SDNode *N) {
                                   RTLIB::MUL_F80,
                                   RTLIB::MUL_PPCF128),
                      NVT, Ops, 2, false);
+}
+
+SDOperand DAGTypeLegalizer::SoftenFloatRes_FP_EXTEND(SDNode *N) {
+  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  SDOperand Op = N->getOperand(0);
+
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+  switch (Op.getValueType().getSimpleVT()) {
+  default:
+    assert(false && "Unsupported FP_EXTEND!");
+  case MVT::f32:
+    switch (N->getValueType(0).getSimpleVT()) {
+    default:
+      assert(false && "Unsupported FP_EXTEND!");
+    case MVT::f64:
+      LC = RTLIB::FPEXT_F32_F64;
+    }
+  }
+
+  return MakeLibCall(LC, NVT, &Op, 1, false);
+}
+
+SDOperand DAGTypeLegalizer::SoftenFloatRes_FP_ROUND(SDNode *N) {
+  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  SDOperand Op = N->getOperand(0);
+
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+  switch (Op.getValueType().getSimpleVT()) {
+  default:
+    assert(false && "Unsupported FP_ROUND!");
+  case MVT::f64:
+    switch (N->getValueType(0).getSimpleVT()) {
+    default:
+      assert(false && "Unsupported FP_ROUND!");
+    case MVT::f32:
+      LC = RTLIB::FPROUND_F64_F32;
+    }
+  }
+
+  return MakeLibCall(LC, NVT, &Op, 1, false);
 }
 
 SDOperand DAGTypeLegalizer::SoftenFloatRes_FSUB(SDNode *N) {
@@ -323,7 +365,7 @@ bool DAGTypeLegalizer::SoftenFloatOperand(SDNode *N, unsigned OpNo) {
       cerr << "SoftenFloatOperand Op #" << OpNo << ": ";
       N->dump(&DAG); cerr << "\n";
 #endif
-      assert(0 && "Do not know how to convert this operator's operand!");
+      assert(0 && "Do not know how to soften this operator's operand!");
       abort();
 
     case ISD::BIT_CONVERT: Res = SoftenFloatOp_BIT_CONVERT(N); break;

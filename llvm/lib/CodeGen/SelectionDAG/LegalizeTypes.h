@@ -334,6 +334,8 @@ private:
   SDOperand SoftenFloatRes_FADD(SDNode *N);
   SDOperand SoftenFloatRes_FCOPYSIGN(SDNode *N);
   SDOperand SoftenFloatRes_FMUL(SDNode *N);
+  SDOperand SoftenFloatRes_FP_EXTEND(SDNode *N);
+  SDOperand SoftenFloatRes_FP_ROUND(SDNode *N);
   SDOperand SoftenFloatRes_FSUB(SDNode *N);
   SDOperand SoftenFloatRes_LOAD(SDNode *N);
   SDOperand SoftenFloatRes_XINT_TO_FP(SDNode *N);
