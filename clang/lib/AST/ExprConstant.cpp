@@ -52,6 +52,32 @@ static bool CalcFakeICEVal(const Expr* Expr,
 }
 
 namespace {
+class VISIBILITY_HIDDEN PointerExprEvaluator
+  : public StmtVisitor<PointerExprEvaluator, APValue> {
+  ASTContext &Ctx;
+
+  PointerExprEvaluator(ASTContext &ctx)
+    : Ctx(ctx) {}
+
+public:
+    static bool Evaluate(const Expr* E, APValue& Result, ASTContext &Ctx) {
+    Result = PointerExprEvaluator(Ctx).Visit(const_cast<Expr*>(E));
+    return Result.isLValue();
+  }
+    
+  APValue VisitStmt(Stmt *S) {
+    // FIXME: Remove this when we support more expressions.
+    printf("Unhandled statement\n");
+    S->dump();  
+    return APValue();
+  }
+
+  APValue VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
+
+};
+}
+
+namespace {
 class VISIBILITY_HIDDEN IntExprEvaluator
   : public StmtVisitor<IntExprEvaluator, APValue> {
   ASTContext &Ctx;
@@ -84,7 +110,7 @@ public:
   APValue VisitBinaryOperator(const BinaryOperator *E) {
     // The LHS of a constant expr is always evaluated and needed.
     llvm::APSInt Result(32);
-    if (!Evaluate(E->getRHS(), Result, Ctx))
+    if (!Evaluate(E->getLHS(), Result, Ctx))
       return APValue(); 
 
     llvm::APSInt RHS(32);
@@ -209,6 +235,57 @@ public:
     Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
     return APValue(Result);    
   }
+    
+  APValue HandleCast(const Expr* SubExpr, QualType DestType) {
+    llvm::APSInt Result(32);
+
+    uint32_t DestWidth = static_cast<uint32_t>(Ctx.getTypeSize(DestType));
+
+    // Handle simple integer->integer casts.
+    if (SubExpr->getType()->isIntegerType()) {
+      if (!Evaluate(SubExpr, Result, Ctx))
+        return APValue();
+      
+      // Figure out if this is a truncate, extend or noop cast.
+      // If the input is signed, do a sign extend, noop, or truncate.
+      if (DestType->isBooleanType()) {
+        // Conversion to bool compares against zero.
+        Result = Result != 0;
+        Result.zextOrTrunc(DestWidth);
+      }
+      else
+        Result.extOrTrunc(DestWidth);
+    } else if (SubExpr->getType()->isPointerType()) {
+      APValue LV;
+      if (!PointerExprEvaluator::Evaluate(SubExpr, LV, Ctx))
+        return APValue();
+      if (LV.getLValueBase())
+        return APValue();
+      
+      Result = llvm::APSInt(DestWidth, LV.getLValueOffset());
+    } else {
+      assert(0 && "Unhandled cast!");
+    }
+    
+    Result.setIsUnsigned(DestType->isUnsignedIntegerType());
+    return APValue(Result); 
+  }
+    
+  APValue VisitImplicitCastExpr(const ImplicitCastExpr *E) {
+    return HandleCast(E->getSubExpr(), E->getType());
+  }
+    
+  APValue VisitCastExpr(const CastExpr *E) { 
+    return HandleCast(E->getSubExpr(), E->getType());
+  }
+  
+  APValue VisitIntegerLiteral(const IntegerLiteral *E) {
+    llvm::APSInt Result(Ctx.getTypeSize(E->getType()));
+
+    Result = E->getValue();
+    return APValue(Result);
+  }
+
 };    
 }
   
