@@ -48,18 +48,6 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
         cerr << "\n");
   SDOperand R = SDOperand();
 
-  // See if the target wants to custom expand this node.
-  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(ResNo)) ==
-      TargetLowering::Custom) {
-    // If the target wants to, allow it to lower this itself.
-    if (SDNode *P = TLI.ReplaceNodeResults(N, DAG)) {
-      // Everything that once used N now uses P.  We are guaranteed that the
-      // result value types of N and the result value types of P match.
-      ReplaceNodeWith(N, P);
-      return;
-    }
-  }
-
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
@@ -78,6 +66,8 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
     case ISD::FP_EXTEND:   R = SoftenFloatRes_FP_EXTEND(N); break;
     case ISD::FP_ROUND:    R = SoftenFloatRes_FP_ROUND(N); break;
     case ISD::LOAD:        R = SoftenFloatRes_LOAD(N); break;
+    case ISD::SELECT:      R = SoftenFloatRes_SELECT(N); break;
+    case ISD::SELECT_CC:   R = SoftenFloatRes_SELECT_CC(N); break;
     case ISD::SINT_TO_FP:
     case ISD::UINT_TO_FP:  R = SoftenFloatRes_XINT_TO_FP(N); break;
 
@@ -244,6 +234,19 @@ SDOperand DAGTypeLegalizer::SoftenFloatRes_LOAD(SDNode *N) {
   return BitConvertToInteger(DAG.getNode(ISD::FP_EXTEND, VT, NL));
 }
 
+SDOperand DAGTypeLegalizer::SoftenFloatRes_SELECT(SDNode *N) {
+  SDOperand LHS = GetSoftenedFloat(N->getOperand(1));
+  SDOperand RHS = GetSoftenedFloat(N->getOperand(2));
+  return DAG.getNode(ISD::SELECT, LHS.getValueType(), N->getOperand(0),LHS,RHS);
+}
+
+SDOperand DAGTypeLegalizer::SoftenFloatRes_SELECT_CC(SDNode *N) {
+  SDOperand LHS = GetSoftenedFloat(N->getOperand(2));
+  SDOperand RHS = GetSoftenedFloat(N->getOperand(3));
+  return DAG.getNode(ISD::SELECT_CC, LHS.getValueType(), N->getOperand(0),
+                     N->getOperand(1), LHS, RHS, N->getOperand(4));
+}
+
 SDOperand DAGTypeLegalizer::SoftenFloatRes_XINT_TO_FP(SDNode *N) {
   bool isSigned = N->getOpcode() == ISD::SINT_TO_FP;
   MVT DestVT = N->getValueType(0);
@@ -352,29 +355,23 @@ SDOperand DAGTypeLegalizer::SoftenFloatRes_XINT_TO_FP(SDNode *N) {
 bool DAGTypeLegalizer::SoftenFloatOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Soften float operand " << OpNo << ": "; N->dump(&DAG);
         cerr << "\n");
-  SDOperand Res(0, 0);
+  SDOperand Res = SDOperand();
 
-  if (TLI.getOperationAction(N->getOpcode(), N->getOperand(OpNo).getValueType())
-      == TargetLowering::Custom)
-    Res = TLI.LowerOperation(SDOperand(N, OpNo), DAG);
-
-  if (Res.Val == 0) {
-    switch (N->getOpcode()) {
-    default:
+  switch (N->getOpcode()) {
+  default:
 #ifndef NDEBUG
-      cerr << "SoftenFloatOperand Op #" << OpNo << ": ";
-      N->dump(&DAG); cerr << "\n";
+    cerr << "SoftenFloatOperand Op #" << OpNo << ": ";
+    N->dump(&DAG); cerr << "\n";
 #endif
-      assert(0 && "Do not know how to soften this operator's operand!");
-      abort();
+    assert(0 && "Do not know how to soften this operator's operand!");
+    abort();
 
-    case ISD::BIT_CONVERT: Res = SoftenFloatOp_BIT_CONVERT(N); break;
+  case ISD::BIT_CONVERT: Res = SoftenFloatOp_BIT_CONVERT(N); break;
 
-    case ISD::BR_CC:     Res = SoftenFloatOp_BR_CC(N); break;
-    case ISD::SELECT_CC: Res = SoftenFloatOp_SELECT_CC(N); break;
-    case ISD::SETCC:     Res = SoftenFloatOp_SETCC(N); break;
-    case ISD::STORE:     Res = SoftenFloatOp_STORE(N, OpNo); break;
-    }
+  case ISD::BR_CC:     Res = SoftenFloatOp_BR_CC(N); break;
+  case ISD::SELECT_CC: Res = SoftenFloatOp_SELECT_CC(N); break;
+  case ISD::SETCC:     Res = SoftenFloatOp_SETCC(N); break;
+  case ISD::STORE:     Res = SoftenFloatOp_STORE(N, OpNo); break;
   }
 
   // If the result is null, the sub-method took care of registering results etc.
@@ -403,8 +400,7 @@ void DAGTypeLegalizer::SoftenSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
                                            ISD::CondCode &CCCode) {
   SDOperand LHSInt = GetSoftenedFloat(NewLHS);
   SDOperand RHSInt = GetSoftenedFloat(NewRHS);
-  MVT VT  = NewLHS.getValueType();
-  MVT NVT = LHSInt.getValueType();
+  MVT VT = NewLHS.getValueType();
 
   assert((VT == MVT::f32 || VT == MVT::f64) && "Unsupported setcc type!");
 
@@ -468,13 +464,13 @@ void DAGTypeLegalizer::SoftenSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
   }
 
   SDOperand Ops[2] = { LHSInt, RHSInt };
-  NewLHS = MakeLibCall(LC1, NVT, Ops, 2, false/*sign irrelevant*/);
-  NewRHS = DAG.getConstant(0, NVT);
+  NewLHS = MakeLibCall(LC1, MVT::i32, Ops, 2, false/*sign irrelevant*/);
+  NewRHS = DAG.getConstant(0, MVT::i32);
+  CCCode = TLI.getCmpLibcallCC(LC1);
   if (LC2 != RTLIB::UNKNOWN_LIBCALL) {
     SDOperand Tmp = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(NewLHS),
-                                NewLHS, NewRHS,
-                                DAG.getCondCode(TLI.getCmpLibcallCC(LC1)));
-    NewLHS = MakeLibCall(LC2, NVT, Ops, 2, false/*sign irrelevant*/);
+                                NewLHS, NewRHS, DAG.getCondCode(CCCode));
+    NewLHS = MakeLibCall(LC2, MVT::i32, Ops, 2, false/*sign irrelevant*/);
     NewLHS = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(NewLHS), NewLHS,
                          NewRHS, DAG.getCondCode(TLI.getCmpLibcallCC(LC2)));
     NewLHS = DAG.getNode(ISD::OR, Tmp.getValueType(), Tmp, NewLHS);
@@ -794,7 +790,7 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDOperand &Lo,
 /// need promotion or expansion as well as the specified one.
 bool DAGTypeLegalizer::ExpandFloatOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Expand float operand: "; N->dump(&DAG); cerr << "\n");
-  SDOperand Res(0, 0);
+  SDOperand Res = SDOperand();
 
   if (TLI.getOperationAction(N->getOpcode(), N->getOperand(OpNo).getValueType())
       == TargetLowering::Custom)

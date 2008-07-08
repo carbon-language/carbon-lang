@@ -150,7 +150,7 @@ SDOperand DAGTypeLegalizer::ScalarizeVecRes_SELECT(SDNode *N) {
 bool DAGTypeLegalizer::ScalarizeOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Scalarize node operand " << OpNo << ": "; N->dump(&DAG);
         cerr << "\n");
-  SDOperand Res(0, 0);
+  SDOperand Res = SDOperand();
 
   if (Res.Val == 0) {
     switch (N->getOpcode()) {
@@ -535,7 +535,7 @@ void DAGTypeLegalizer::SplitVecRes_FPOWI(SDNode *N, SDOperand &Lo,
 /// node may need legalization as well as the specified one.
 bool DAGTypeLegalizer::SplitOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Split node operand: "; N->dump(&DAG); cerr << "\n");
-  SDOperand Res(0, 0);
+  SDOperand Res = SDOperand();
 
   if (Res.Val == 0) {
     switch (N->getOpcode()) {

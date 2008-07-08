@@ -338,6 +338,8 @@ private:
   SDOperand SoftenFloatRes_FP_ROUND(SDNode *N);
   SDOperand SoftenFloatRes_FSUB(SDNode *N);
   SDOperand SoftenFloatRes_LOAD(SDNode *N);
+  SDOperand SoftenFloatRes_SELECT(SDNode *N);
+  SDOperand SoftenFloatRes_SELECT_CC(SDNode *N);
   SDOperand SoftenFloatRes_XINT_TO_FP(SDNode *N);
 
   // Operand Float to Integer Conversion.

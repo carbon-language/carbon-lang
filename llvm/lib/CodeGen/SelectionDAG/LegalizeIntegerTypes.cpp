@@ -465,7 +465,7 @@ SDOperand DAGTypeLegalizer::PromoteIntRes_VAARG(SDNode *N) {
 /// node may need promotion or expansion as well as the specified one.
 bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Promote integer operand: "; N->dump(&DAG); cerr << "\n");
-  SDOperand Res(0, 0);
+  SDOperand Res = SDOperand();
 
   if (TLI.getOperationAction(N->getOpcode(), N->getOperand(OpNo).getValueType())
       == TargetLowering::Custom)
@@ -1641,7 +1641,7 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
 /// node may need promotion or expansion as well as the specified one.
 bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Expand integer operand: "; N->dump(&DAG); cerr << "\n");
-  SDOperand Res(0, 0);
+  SDOperand Res = SDOperand();
 
   if (TLI.getOperationAction(N->getOpcode(), N->getOperand(OpNo).getValueType())
       == TargetLowering::Custom)
