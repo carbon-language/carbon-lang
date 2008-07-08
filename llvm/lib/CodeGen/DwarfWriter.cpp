@@ -2720,8 +2720,6 @@ public:
   /// content.
   void BeginModule(Module *M) {
     this->M = M;
-    
-    if (!ShouldEmitDwarf()) return;
   }
 
   /// EndModule - Emit all Dwarf sections that should come after the content.
