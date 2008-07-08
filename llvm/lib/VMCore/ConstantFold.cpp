@@ -1238,10 +1238,30 @@ static ICmpInst::Predicate evaluateICmpRelation(const Constant *V1,
 Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred, 
                                                const Constant *C1, 
                                                const Constant *C2) {
-
+  // Fold FCMP_FALSE/FCMP_TRUE unconditionally.
+  if (pred == FCmpInst::FCMP_FALSE) {
+    if (const VectorType *VT = dyn_cast<VectorType>(C1->getType()))
+      return Constant::getNullValue(VectorType::getInteger(VT));
+    else
+      return ConstantInt::getFalse();
+  }
+  
+  if (pred == FCmpInst::FCMP_TRUE) {
+    if (const VectorType *VT = dyn_cast<VectorType>(C1->getType()))
+      return Constant::getAllOnesValue(VectorType::getInteger(VT));
+    else
+      return ConstantInt::getTrue();
+  }
+      
   // Handle some degenerate cases first
-  if (isa<UndefValue>(C1) || isa<UndefValue>(C2))
+  if (isa<UndefValue>(C1) || isa<UndefValue>(C2)) {
+    // vicmp/vfcmp -> [vector] undef
+    if (const VectorType *VTy = dyn_cast<VectorType>(C1->getType()))
+      return UndefValue::get(VectorType::getInteger(VTy));
+    
+    // icmp/fcmp -> i1 undef
     return UndefValue::get(Type::Int1Ty);
+  }
 
   // No compile-time operations on this type yet.
   if (C1->getType() == Type::PPC_FP128Ty)
@@ -1355,6 +1375,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
   }
 
   if (C1->getType()->isFloatingPoint()) {
+    int Result = -1;
     switch (evaluateFCmpRelation(C1, C2)) {
     default: assert(0 && "Unknown relation!");
     case FCmpInst::FCMP_UNO:
@@ -1370,44 +1391,57 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     case FCmpInst::BAD_FCMP_PREDICATE:
       break; // Couldn't determine anything about these constants.
     case FCmpInst::FCMP_OEQ: // We know that C1 == C2
-      return ConstantInt::get(Type::Int1Ty,
-          pred == FCmpInst::FCMP_UEQ || pred == FCmpInst::FCMP_OEQ ||
-          pred == FCmpInst::FCMP_ULE || pred == FCmpInst::FCMP_OLE ||
-          pred == FCmpInst::FCMP_UGE || pred == FCmpInst::FCMP_OGE);
+      Result = (pred == FCmpInst::FCMP_UEQ || pred == FCmpInst::FCMP_OEQ ||
+                pred == FCmpInst::FCMP_ULE || pred == FCmpInst::FCMP_OLE ||
+                pred == FCmpInst::FCMP_UGE || pred == FCmpInst::FCMP_OGE);
+      break;
     case FCmpInst::FCMP_OLT: // We know that C1 < C2
-      return ConstantInt::get(Type::Int1Ty,
-          pred == FCmpInst::FCMP_UNE || pred == FCmpInst::FCMP_ONE ||
-          pred == FCmpInst::FCMP_ULT || pred == FCmpInst::FCMP_OLT ||
-          pred == FCmpInst::FCMP_ULE || pred == FCmpInst::FCMP_OLE);
+      Result = (pred == FCmpInst::FCMP_UNE || pred == FCmpInst::FCMP_ONE ||
+                pred == FCmpInst::FCMP_ULT || pred == FCmpInst::FCMP_OLT ||
+                pred == FCmpInst::FCMP_ULE || pred == FCmpInst::FCMP_OLE);
+      break;
     case FCmpInst::FCMP_OGT: // We know that C1 > C2
-      return ConstantInt::get(Type::Int1Ty,
-          pred == FCmpInst::FCMP_UNE || pred == FCmpInst::FCMP_ONE ||
-          pred == FCmpInst::FCMP_UGT || pred == FCmpInst::FCMP_OGT ||
-          pred == FCmpInst::FCMP_UGE || pred == FCmpInst::FCMP_OGE);
+      Result = (pred == FCmpInst::FCMP_UNE || pred == FCmpInst::FCMP_ONE ||
+                pred == FCmpInst::FCMP_UGT || pred == FCmpInst::FCMP_OGT ||
+                pred == FCmpInst::FCMP_UGE || pred == FCmpInst::FCMP_OGE);
+      break;
     case FCmpInst::FCMP_OLE: // We know that C1 <= C2
       // We can only partially decide this relation.
       if (pred == FCmpInst::FCMP_UGT || pred == FCmpInst::FCMP_OGT) 
-        return ConstantInt::getFalse();
-      if (pred == FCmpInst::FCMP_ULT || pred == FCmpInst::FCMP_OLT) 
-        return ConstantInt::getTrue();
+        Result = 0;
+      else if (pred == FCmpInst::FCMP_ULT || pred == FCmpInst::FCMP_OLT) 
+        Result = 1;
       break;
     case FCmpInst::FCMP_OGE: // We known that C1 >= C2
       // We can only partially decide this relation.
       if (pred == FCmpInst::FCMP_ULT || pred == FCmpInst::FCMP_OLT) 
-        return ConstantInt::getFalse();
-      if (pred == FCmpInst::FCMP_UGT || pred == FCmpInst::FCMP_OGT) 
-        return ConstantInt::getTrue();
+        Result = 0;
+      else if (pred == FCmpInst::FCMP_UGT || pred == FCmpInst::FCMP_OGT) 
+        Result = 1;
       break;
     case ICmpInst::ICMP_NE: // We know that C1 != C2
       // We can only partially decide this relation.
       if (pred == FCmpInst::FCMP_OEQ || pred == FCmpInst::FCMP_UEQ) 
-        return ConstantInt::getFalse();
-      if (pred == FCmpInst::FCMP_ONE || pred == FCmpInst::FCMP_UNE) 
-        return ConstantInt::getTrue();
+        Result = 0;
+      else if (pred == FCmpInst::FCMP_ONE || pred == FCmpInst::FCMP_UNE) 
+        Result = 1;
       break;
     }
+    
+    // If we evaluated the result, return it now.
+    if (Result != -1) {
+      if (const VectorType *VT = dyn_cast<VectorType>(C1->getType())) {
+        if (Result == 0)
+          return Constant::getNullValue(VectorType::getInteger(VT));
+        else
+          return Constant::getAllOnesValue(VectorType::getInteger(VT));
+      }
+      return ConstantInt::get(Type::Int1Ty, Result);
+    }
+    
   } else {
     // Evaluate the relation between the two constants, per the predicate.
+    int Result = -1;  // -1 = unknown, 0 = known false, 1 = known true.
     switch (evaluateICmpRelation(C1, C2, CmpInst::isSigned(pred))) {
     default: assert(0 && "Unknown relational!");
     case ICmpInst::BAD_ICMP_PREDICATE:
@@ -1415,69 +1449,80 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     case ICmpInst::ICMP_EQ:   // We know the constants are equal!
       // If we know the constants are equal, we can decide the result of this
       // computation precisely.
-      return ConstantInt::get(Type::Int1Ty, 
-                              pred == ICmpInst::ICMP_EQ  ||
-                              pred == ICmpInst::ICMP_ULE ||
-                              pred == ICmpInst::ICMP_SLE ||
-                              pred == ICmpInst::ICMP_UGE ||
-                              pred == ICmpInst::ICMP_SGE);
+      Result = (pred == ICmpInst::ICMP_EQ  ||
+                pred == ICmpInst::ICMP_ULE ||
+                pred == ICmpInst::ICMP_SLE ||
+                pred == ICmpInst::ICMP_UGE ||
+                pred == ICmpInst::ICMP_SGE);
+      break;
     case ICmpInst::ICMP_ULT:
       // If we know that C1 < C2, we can decide the result of this computation
       // precisely.
-      return ConstantInt::get(Type::Int1Ty, 
-                              pred == ICmpInst::ICMP_ULT ||
-                              pred == ICmpInst::ICMP_NE  ||
-                              pred == ICmpInst::ICMP_ULE);
+      Result = (pred == ICmpInst::ICMP_ULT ||
+                pred == ICmpInst::ICMP_NE  ||
+                pred == ICmpInst::ICMP_ULE);
+      break;
     case ICmpInst::ICMP_SLT:
       // If we know that C1 < C2, we can decide the result of this computation
       // precisely.
-      return ConstantInt::get(Type::Int1Ty,
-                              pred == ICmpInst::ICMP_SLT ||
-                              pred == ICmpInst::ICMP_NE  ||
-                              pred == ICmpInst::ICMP_SLE);
+      Result = (pred == ICmpInst::ICMP_SLT ||
+                pred == ICmpInst::ICMP_NE  ||
+                pred == ICmpInst::ICMP_SLE);
+      break;
     case ICmpInst::ICMP_UGT:
       // If we know that C1 > C2, we can decide the result of this computation
       // precisely.
-      return ConstantInt::get(Type::Int1Ty, 
-                              pred == ICmpInst::ICMP_UGT ||
-                              pred == ICmpInst::ICMP_NE  ||
-                              pred == ICmpInst::ICMP_UGE);
+      Result = (pred == ICmpInst::ICMP_UGT ||
+                pred == ICmpInst::ICMP_NE  ||
+                pred == ICmpInst::ICMP_UGE);
+      break;
     case ICmpInst::ICMP_SGT:
       // If we know that C1 > C2, we can decide the result of this computation
       // precisely.
-      return ConstantInt::get(Type::Int1Ty, 
-                              pred == ICmpInst::ICMP_SGT ||
-                              pred == ICmpInst::ICMP_NE  ||
-                              pred == ICmpInst::ICMP_SGE);
+      Result = (pred == ICmpInst::ICMP_SGT ||
+                pred == ICmpInst::ICMP_NE  ||
+                pred == ICmpInst::ICMP_SGE);
+      break;
     case ICmpInst::ICMP_ULE:
       // If we know that C1 <= C2, we can only partially decide this relation.
-      if (pred == ICmpInst::ICMP_UGT) return ConstantInt::getFalse();
-      if (pred == ICmpInst::ICMP_ULT) return ConstantInt::getTrue();
+      if (pred == ICmpInst::ICMP_UGT) Result = 0;
+      if (pred == ICmpInst::ICMP_ULT) Result = 1;
       break;
     case ICmpInst::ICMP_SLE:
       // If we know that C1 <= C2, we can only partially decide this relation.
-      if (pred == ICmpInst::ICMP_SGT) return ConstantInt::getFalse();
-      if (pred == ICmpInst::ICMP_SLT) return ConstantInt::getTrue();
+      if (pred == ICmpInst::ICMP_SGT) Result = 0;
+      if (pred == ICmpInst::ICMP_SLT) Result = 1;
       break;
 
     case ICmpInst::ICMP_UGE:
       // If we know that C1 >= C2, we can only partially decide this relation.
-      if (pred == ICmpInst::ICMP_ULT) return ConstantInt::getFalse();
-      if (pred == ICmpInst::ICMP_UGT) return ConstantInt::getTrue();
+      if (pred == ICmpInst::ICMP_ULT) Result = 0;
+      if (pred == ICmpInst::ICMP_UGT) Result = 1;
       break;
     case ICmpInst::ICMP_SGE:
       // If we know that C1 >= C2, we can only partially decide this relation.
-      if (pred == ICmpInst::ICMP_SLT) return ConstantInt::getFalse();
-      if (pred == ICmpInst::ICMP_SGT) return ConstantInt::getTrue();
+      if (pred == ICmpInst::ICMP_SLT) Result = 0;
+      if (pred == ICmpInst::ICMP_SGT) Result = 1;
       break;
 
     case ICmpInst::ICMP_NE:
       // If we know that C1 != C2, we can only partially decide this relation.
-      if (pred == ICmpInst::ICMP_EQ) return ConstantInt::getFalse();
-      if (pred == ICmpInst::ICMP_NE) return ConstantInt::getTrue();
+      if (pred == ICmpInst::ICMP_EQ) Result = 0;
+      if (pred == ICmpInst::ICMP_NE) Result = 1;
       break;
     }
-
+    
+    // If we evaluated the result, return it now.
+    if (Result != -1) {
+      if (const VectorType *VT = dyn_cast<VectorType>(C1->getType())) {
+        if (Result == 0)
+          return Constant::getNullValue(VT);
+        else
+          return Constant::getAllOnesValue(VT);
+      }
+      return ConstantInt::get(Type::Int1Ty, Result);
+    }
+    
     if (!isa<ConstantExpr>(C1) && isa<ConstantExpr>(C2)) {
       // If C2 is a constant expr and C1 isn't, flop them around and fold the
       // other way if possible.
