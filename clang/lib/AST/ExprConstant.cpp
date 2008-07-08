@@ -339,7 +339,8 @@ APValue IntExprEvaluator::HandleCast(const Expr* SubExpr, QualType DestType) {
     if (LV.getLValueBase())
       return APValue();
     
-    Result = llvm::APSInt(DestWidth, LV.getLValueOffset());
+    Result.extOrTrunc(DestWidth);
+    Result = LV.getLValueOffset();
   } else {
     assert(0 && "Unhandled cast!");
   }
