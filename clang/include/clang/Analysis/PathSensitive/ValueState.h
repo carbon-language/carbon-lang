@@ -16,6 +16,7 @@
 
 // FIXME: Reduce the number of includes.
 
+#include "clang/Analysis/PathSensitive/Environment.h"
 #include "clang/Analysis/PathSensitive/RValues.h"
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/AST/Expr.h"
@@ -39,6 +40,8 @@
 
 namespace clang {
 
+class ValueStateManager;
+  
 //===----------------------------------------------------------------------===//
 // ValueState- An ImmutableMap type Stmt*/Decl*/Symbols to RVals.
 //===----------------------------------------------------------------------===//
@@ -48,25 +51,22 @@ namespace clang {
 ///  used as a functional object; that is once it is created and made
 ///  "persistent" in a FoldingSet its values will never change.
 class ValueState : public llvm::FoldingSetNode {
-public:
-  
-  // Typedefs.
-  
+public:  
+  // Typedefs.  
   typedef llvm::ImmutableSet<llvm::APSInt*>                IntSetTy;
-  typedef llvm::ImmutableMap<Expr*,RVal>                   ExprBindingsTy;
   typedef llvm::ImmutableMap<VarDecl*,RVal>                VarBindingsTy;  
   typedef llvm::ImmutableMap<SymbolID,IntSetTy>            ConstNotEqTy;
   typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstEqTy;
 
 private:
-
   void operator=(const ValueState& R) const;
   
-  // FIXME: Make these private.
+  friend class ValueStateManager;
+  
+  Environment Env;
 
+  // FIXME: Make these private.
 public:
-  ExprBindingsTy   SubExprBindings;
-  ExprBindingsTy   BlockExprBindings;  
   VarBindingsTy    VarBindings;
   ConstNotEqTy     ConstNotEq;
   ConstEqTy        ConstEq;
@@ -75,10 +75,9 @@ public:
 public:
   
   /// This ctor is used when creating the first ValueState object.
-  ValueState(ExprBindingsTy  EB,  VarBindingsTy VB,
-                 ConstNotEqTy CNE, ConstEqTy  CE)
-    : SubExprBindings(EB), 
-      BlockExprBindings(EB),
+  ValueState(const Environment& env,  VarBindingsTy VB,
+             ConstNotEqTy CNE, ConstEqTy  CE)
+    : Env(env),
       VarBindings(VB),
       ConstNotEq(CNE),
       ConstEq(CE),
@@ -88,18 +87,20 @@ public:
   ///  in FoldingSetNode will also get copied.
   ValueState(const ValueState& RHS)
     : llvm::FoldingSetNode(),
-      SubExprBindings(RHS.SubExprBindings),
-      BlockExprBindings(RHS.BlockExprBindings),
+      Env(RHS.Env),
       VarBindings(RHS.VarBindings),
       ConstNotEq(RHS.ConstNotEq),
       ConstEq(RHS.ConstEq),
       CheckerState(RHS.CheckerState) {} 
   
+  /// getEnvironment - Return the environment associated with this state.
+  ///  The environment is the mapping from expressions to values.
+  const Environment& getEnvironment() const { return Env; }
+  
   /// Profile - Profile the contents of a ValueState object for use
   ///  in a FoldingSet.
   static void Profile(llvm::FoldingSetNodeID& ID, const ValueState* V) {
-    V->SubExprBindings.Profile(ID);
-    V->BlockExprBindings.Profile(ID);
+    V->Env.Profile(ID);
     V->VarBindings.Profile(ID);
     V->ConstNotEq.Profile(ID);
     V->ConstEq.Profile(ID);
@@ -116,20 +117,24 @@ public:
   
   bool isNotEqual(SymbolID sym, const llvm::APSInt& V) const;
   const llvm::APSInt* getSymVal(SymbolID sym) const;
-
+ 
+  RVal LookupExpr(Expr* E) const {
+    return Env.LookupExpr(E);
+  }
+  
   // Iterators.
 
   typedef VarBindingsTy::iterator vb_iterator;
   vb_iterator vb_begin() const { return VarBindings.begin(); }
   vb_iterator vb_end() const { return VarBindings.end(); }
     
-  typedef ExprBindingsTy::iterator seb_iterator;
-  seb_iterator seb_begin() const { return SubExprBindings.begin(); }
-  seb_iterator seb_end() const { return SubExprBindings.end(); }
+  typedef Environment::seb_iterator seb_iterator;
+  seb_iterator seb_begin() const { return Env.seb_begin(); }
+  seb_iterator seb_end() const { return Env.beb_end(); }
   
-  typedef ExprBindingsTy::iterator beb_iterator;
-  beb_iterator beb_begin() const { return BlockExprBindings.begin(); }
-  beb_iterator beb_end() const { return BlockExprBindings.end(); }
+  typedef Environment::beb_iterator beb_iterator;
+  beb_iterator beb_begin() const { return Env.beb_begin(); }
+  beb_iterator beb_end() const { return Env.beb_end(); }
   
   typedef ConstNotEqTy::iterator cne_iterator;
   cne_iterator cne_begin() const { return ConstNotEq.begin(); }
@@ -167,8 +172,8 @@ template<> struct GRTrait<ValueState*> {
   
 class ValueStateManager {
 private:
+  EnvironmentManager                   EnvMgr;
   ValueState::IntSetTy::Factory        ISetFactory;
-  ValueState::ExprBindingsTy::Factory  EXFactory;
   ValueState::VarBindingsTy::Factory   VBFactory;
   ValueState::ConstNotEqTy::Factory    CNEFactory;
   ValueState::ConstEqTy::Factory       CEFactory;
@@ -187,20 +192,16 @@ private:
   llvm::BumpPtrAllocator& Alloc;
   
 private:
+
+  Environment RemoveBlkExpr(const Environment& Env, Expr* E) {
+    return EnvMgr.RemoveBlkExpr(Env, E);
+  }
   
-  ValueState::ExprBindingsTy Remove(ValueState::ExprBindingsTy B, Expr* E) {
-    return EXFactory.Remove(B, E);
-  }    
-    
-  ValueState::VarBindingsTy  Remove(ValueState::VarBindingsTy B, VarDecl* V) {
+  ValueState::VarBindingsTy Remove(ValueState::VarBindingsTy B, VarDecl* V) {
     return VBFactory.Remove(B, V);
   }
-
-  inline ValueState::ExprBindingsTy Remove(const ValueState& V, Expr* E) {
-    return Remove(V.BlockExprBindings, E);
-  }
   
-  inline ValueState::VarBindingsTy Remove(const ValueState& V, VarDecl* D) {
+  ValueState::VarBindingsTy Remove(const ValueState& V, VarDecl* D) {
     return Remove(V.VarBindings, D);
   }
                   
@@ -209,8 +210,8 @@ private:
   
 public:  
   ValueStateManager(ASTContext& Ctx, llvm::BumpPtrAllocator& alloc) 
-    : ISetFactory(alloc), 
-      EXFactory(alloc),
+    : EnvMgr(alloc),
+      ISetFactory(alloc), 
       VBFactory(alloc),
       CNEFactory(alloc),
       CEFactory(alloc),
@@ -228,10 +229,10 @@ public:
   ValueState* RemoveDeadBindings(ValueState* St, Stmt* Loc, 
                                  const LiveVariables& Liveness,
                                  DeadSymbolsTy& DeadSymbols);
-  
+
   ValueState* RemoveSubExprBindings(ValueState* St) {
     ValueState NewSt = *St;
-    NewSt.SubExprBindings = EXFactory.GetEmptyMap();
+    NewSt.Env = EnvMgr.RemoveSubExprBindings(NewSt.Env);
     return getPersistentState(NewSt);    
   }
   

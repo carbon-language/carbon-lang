@@ -49,7 +49,7 @@ ValueStateManager::RemoveDeadBindings(ValueState* St, Stmt* Loc,
   ValueState NewSt = *St;
   
   // Drop bindings for subexpressions.
-  NewSt.SubExprBindings = EXFactory.GetEmptyMap();
+  NewSt.Env = EnvMgr.RemoveSubExprBindings(NewSt.Env);
   
   // Iterate over the block-expr bindings.
 
@@ -76,7 +76,7 @@ ValueStateManager::RemoveDeadBindings(ValueState* St, Stmt* Loc,
       if (X.isUndef() && cast<UndefinedVal>(X).getData())
         continue;
       
-      NewSt.BlockExprBindings = Remove(NewSt, BlkExpr);
+      NewSt.Env = EnvMgr.RemoveBlkExpr(NewSt.Env, BlkExpr);
     }
   }
 
@@ -258,6 +258,7 @@ ValueState* ValueStateManager::AddEQ(ValueState* St, SymbolID sym,
   return getPersistentState(NewSt);
 }
 
+// FIXME: This should all go into the environment.
 RVal ValueStateManager::GetRVal(ValueState* St, Expr* E) {
 
   for (;;) {
@@ -321,13 +322,7 @@ RVal ValueStateManager::GetRVal(ValueState* St, Expr* E) {
     break;
   }
   
-  ValueState::ExprBindingsTy::data_type* T = St->SubExprBindings.lookup(E);
-  
-  if (T)
-    return *T;
-  
-  T = St->BlockExprBindings.lookup(E);
-  return T ? *T : UnknownVal();
+  return St->LookupExpr(E);
 }
 
 RVal ValueStateManager::GetBlkExprRVal(ValueState* St, Expr* E) {
@@ -344,10 +339,8 @@ RVal ValueStateManager::GetBlkExprRVal(ValueState* St, Expr* E) {
       return NonLVal::MakeVal(BasicVals, cast<IntegerLiteral>(E));
     }
       
-    default: {
-      ValueState::ExprBindingsTy::data_type* T=St->BlockExprBindings.lookup(E);    
-      return T ? *T : UnknownVal();
-    }
+    default:
+      return St->getEnvironment().LookupBlkExpr(E);
   }
 }
 
@@ -364,9 +357,9 @@ ValueStateManager::SetRVal(ValueState* St, Expr* E, RVal V,
       ValueState NewSt = *St;
       
       if (isBlkExpr)
-        NewSt.BlockExprBindings = EXFactory.Remove(NewSt.BlockExprBindings, E);
+        NewSt.Env = EnvMgr.RemoveBlkExpr(NewSt.Env, E);
       else
-        NewSt.SubExprBindings = EXFactory.Remove(NewSt.SubExprBindings, E);
+        NewSt.Env = EnvMgr.RemoveSubExpr(NewSt.Env, E);
       
       return getPersistentState(NewSt);
     }
@@ -376,12 +369,10 @@ ValueStateManager::SetRVal(ValueState* St, Expr* E, RVal V,
   
   ValueState NewSt = *St;
   
-  if (isBlkExpr) {
-    NewSt.BlockExprBindings = EXFactory.Add(NewSt.BlockExprBindings, E, V);
-  }
-  else {
-    NewSt.SubExprBindings = EXFactory.Add(NewSt.SubExprBindings, E, V);
-  }
+  if (isBlkExpr)
+    NewSt.Env = EnvMgr.AddBlkExpr(NewSt.Env, E, V);
+  else
+    NewSt.Env = EnvMgr.AddSubExpr(NewSt.Env, E, V);
 
   return getPersistentState(NewSt);
 }
@@ -437,10 +428,10 @@ void ValueStateManager::Unbind(ValueState& StImpl, LVal LV) {
 ValueState* ValueStateManager::getInitialState() {
 
   // Create a state with empty variable bindings.
-  ValueState StateImpl(EXFactory.GetEmptyMap(),
-                           VBFactory.GetEmptyMap(),
-                           CNEFactory.GetEmptyMap(),
-                           CEFactory.GetEmptyMap());
+  ValueState StateImpl(EnvMgr.getInitialEnvironment(),
+                       VBFactory.GetEmptyMap(),
+                       CNEFactory.GetEmptyMap(),
+                       CEFactory.GetEmptyMap());
   
   return getPersistentState(StateImpl);
 }
