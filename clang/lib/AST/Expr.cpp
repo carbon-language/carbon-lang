@@ -670,7 +670,7 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
 /// expression. The generalization of the wording to include any subexpression
 /// that is not evaluated (C99 6.6p3) means that nonconstant subexpressions
 /// can appear as operands to other operators (e.g. &&, ||, ?:). For instance,
-/// "1 || f()" can be treated as a constant expression. In C90 this expression,
+/// "0 || f()" can be treated as a constant expression. In C90 this expression,
 /// occurring in a context requiring a constant, would have been a constraint
 /// violation. FIXME: This routine currently implements C90 semantics.
 /// To properly implement C99 semantics this routine will need to evaluate
