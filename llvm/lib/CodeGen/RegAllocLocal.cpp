@@ -14,7 +14,6 @@
 
 #define DEBUG_TYPE "regalloc"
 #include "llvm/BasicBlock.h"
-#include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -101,6 +100,10 @@ namespace {
     // is no reason to spill it to memory when we need the register back.
     //
     BitVector VirtRegModified;
+    
+    // UsedInMultipleBlocks - Tracks whether a particular register is used in
+    // more than one block.
+    BitVector UsedInMultipleBlocks;
 
     void markVirtRegModified(unsigned Reg, bool Val = true) {
       assert(TargetRegisterInfo::isVirtualRegister(Reg) && "Illegal VirtReg!");
@@ -147,7 +150,6 @@ namespace {
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<LiveVariables>();
       AU.addRequiredID(PHIEliminationID);
       AU.addRequiredID(TwoAddressInstructionPassID);
       MachineFunctionPass::getAnalysisUsage(AU);
@@ -539,6 +541,26 @@ static bool isReadModWriteImplicitDef(MachineInstr *MI, unsigned Reg) {
   return false;
 }
 
+// precedes - Helper function to determine with MachineInstr A
+// precedes MachineInstr B within the same MBB.
+static bool precedes(MachineBasicBlock::iterator A,
+                     MachineBasicBlock::iterator B) {
+  if (A == B)
+    return false;
+  
+  MachineBasicBlock::iterator I = A->getParent()->begin();
+  while (I != A->getParent()->end()) {
+    if (I == A)
+      return true;
+    else if (I == B)
+      return false;
+    
+    ++I;
+  }
+  
+  return false;
+}
+
 void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // loop over each instruction
   MachineBasicBlock::iterator MII = MBB.begin();
@@ -565,6 +587,97 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
         }
       }
     }    
+  }
+  
+  
+  MachineRegisterInfo& MRI = MBB.getParent()->getRegInfo();
+  // Keep track of the most recently seen previous use or def of each reg, 
+  // so that we can update them with dead/kill markers.
+  std::map<unsigned, std::pair<MachineInstr*, unsigned> > LastUseDef;
+  for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
+       I != E; ++I) {
+    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+      MachineOperand& MO = I->getOperand(i);
+      // Uses don't trigger any flags, but we need to save
+      // them for later.  Also, we have to process these
+      // _before_ processing the defs, since an instr
+      // uses regs before it defs them.
+      if (MO.isReg() && MO.getReg() && MO.isUse())
+        LastUseDef[MO.getReg()] = std::make_pair(I, i);
+    }
+    
+    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+      MachineOperand& MO = I->getOperand(i);
+      // Defs others than 2-addr redefs _do_ trigger flag changes:
+      //   - A def followed by a def is dead
+      //   - A use followed by a def is a kill
+      if (MO.isReg() && MO.getReg() && MO.isDef() && 
+         !I->isRegReDefinedByTwoAddr(MO.getReg())) {
+        std::map<unsigned, std::pair<MachineInstr*, unsigned> >::iterator
+          last = LastUseDef.find(MO.getReg());
+        if (last != LastUseDef.end()) {
+          MachineOperand& lastUD =
+                      last->second.first->getOperand(last->second.second);
+          if (lastUD.isDef())
+            lastUD.setIsDead(true);
+          else if (lastUD.isUse())
+            lastUD.setIsKill(true);
+        }
+        
+        LastUseDef[MO.getReg()] = std::make_pair(I, i);
+      }
+    }
+  }
+  
+  // Live-out (of the function) registers contain return values of the function,
+  // so we need to make sure they are alive at return time.
+  if (!MBB.empty() && MBB.back().getDesc().isReturn()) {
+    MachineInstr* Ret = &MBB.back();
+    for (MachineRegisterInfo::liveout_iterator
+         I = MF->getRegInfo().liveout_begin(),
+         E = MF->getRegInfo().liveout_end(); I != E; ++I)
+      if (!Ret->readsRegister(*I)) {
+        Ret->addOperand(MachineOperand::CreateReg(*I, false, true));
+        LastUseDef[*I] = std::make_pair(Ret, Ret->getNumOperands()-1);
+      }
+  }
+  
+  // Finally, loop over the final use/def of each reg 
+  // in the block and determine if it is dead.
+  for (std::map<unsigned, std::pair<MachineInstr*, unsigned> >::iterator
+       I = LastUseDef.begin(), E = LastUseDef.end(); I != E; ++I) {
+    MachineInstr* MI = I->second.first;
+    unsigned idx = I->second.second;
+    MachineOperand& MO = MI->getOperand(idx);
+    
+    bool isPhysReg = TargetRegisterInfo::isPhysicalRegister(MO.getReg());
+    
+    // A crude approximation of "live-out" calculation
+    bool usedOutsideBlock = isPhysReg ? false :   
+          UsedInMultipleBlocks.test(MO.getReg() -  
+                                    TargetRegisterInfo::FirstVirtualRegister);
+    if (!isPhysReg && !usedOutsideBlock)
+      for (MachineRegisterInfo::reg_iterator UI = MRI.reg_begin(MO.getReg()),
+           UE = MRI.reg_end(); UI != UE; ++UI)
+        // Two cases:
+        // - used in another block
+        // - used in the same block before it is defined (loop)
+        if (UI->getParent() != &MBB ||
+            (MO.isDef() && UI.getOperand().isUse() && precedes(*UI, MI))) {
+          UsedInMultipleBlocks.set(MO.getReg() - 
+                                   TargetRegisterInfo::FirstVirtualRegister);
+          usedOutsideBlock = true;
+          break;
+        }
+    
+    // Physical registers and those that are not live-out of the block
+    // are killed/dead at their last use/def within this block.
+    if (isPhysReg || !usedOutsideBlock) {
+      if (MO.isUse())
+        MO.setIsKill(true);
+      else if (MI->getOperand(idx).isDef())
+        MO.setIsDead(true);
+    }
   }
   
   // Otherwise, sequentially allocate each instruction in the MBB.
@@ -802,7 +915,6 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
   PhysRegsUseOrder.clear();
 }
 
-
 /// runOnMachineFunction - Register allocate the whole function
 ///
 bool RALocal::runOnMachineFunction(MachineFunction &Fn) {
@@ -830,7 +942,8 @@ bool RALocal::runOnMachineFunction(MachineFunction &Fn) {
   Virt2PhysRegMap.grow(LastVirtReg);
   Virt2LastUseMap.grow(LastVirtReg);
   VirtRegModified.resize(LastVirtReg+1-TargetRegisterInfo::FirstVirtualRegister);
-
+  UsedInMultipleBlocks.resize(LastVirtReg+1-TargetRegisterInfo::FirstVirtualRegister);
+ 
   // Loop over all of the basic blocks, eliminating virtual register references
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
        MBB != MBBe; ++MBB)
@@ -839,6 +952,7 @@ bool RALocal::runOnMachineFunction(MachineFunction &Fn) {
   StackSlotForVirtReg.clear();
   PhysRegsUsed.clear();
   VirtRegModified.clear();
+  UsedInMultipleBlocks.clear();
   Virt2PhysRegMap.clear();
   Virt2LastUseMap.clear();
   return true;
