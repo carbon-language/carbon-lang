@@ -9354,6 +9354,14 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
     if (LI->getParent() != PN.getIncomingBlock(0) ||
         !isSafeToSinkLoad(LI))
       return 0;
+    
+    // If the PHI is of volatile loads and the load block has multiple
+    // successors, sinking it would remove a load of the volatile value from
+    // the path through the other successor.
+    if (isVolatile &&
+        LI->getParent()->getTerminator()->getNumSuccessors() != 1)
+      return 0;
+    
   } else if (isa<GetElementPtrInst>(FirstInst)) {
     if (FirstInst->getNumOperands() == 2)
       return FoldPHIArgBinOpIntoPHI(PN);
@@ -9380,9 +9388,9 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
           !isSafeToSinkLoad(LI))
         return 0;
       
-      // If the PHI is volatile and its block has multiple successors, sinking
-      // it would remove a load of the volatile value from the path through the
-      // other successor.
+      // If the PHI is of volatile loads and the load block has multiple
+      // successors, sinking it would remove a load of the volatile value from
+      // the path through the other successor.
       if (isVolatile &&
           LI->getParent()->getTerminator()->getNumSuccessors() != 1)
         return 0;
