@@ -232,13 +232,6 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   const Function *F = MF.getFunction();
   unsigned CC = F->getCallingConv();
 
-  if (TAI->doesSupportDebugInformation()) {
-    // Let PassManager know we need debug information and relay
-    // the MachineModuleInfo address on to DwarfWriter.
-    MMI = &getAnalysis<MachineModuleInfo>();
-    DW.SetModuleInfo(MMI);
-  }
-
   SetupMachineFunction(MF);
   O << "\n\n";
 
@@ -751,12 +744,19 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 
 /// doInitialization
 bool X86ATTAsmPrinter::doInitialization(Module &M) {
+
+  bool Result = AsmPrinter::doInitialization(M);
+
   if (TAI->doesSupportDebugInformation()) {
     // Emit initial debug information.
     DW.BeginModule(&M);
+    // Let PassManager know we need debug information and relay
+    // the MachineModuleInfo address on to DwarfWriter.
+    // AsmPrinter::doInitialization should have done this analysis.
+    MMI = getAnalysisToUpdate<MachineModuleInfo>();
+    assert(MMI);
+    DW.SetModuleInfo(MMI);
   }
-
-  bool Result = AsmPrinter::doInitialization(M);
 
   // Darwin wants symbols to be quoted if they have complex names.
   if (Subtarget->isTargetDarwin())

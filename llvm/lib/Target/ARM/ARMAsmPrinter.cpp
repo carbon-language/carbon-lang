@@ -42,11 +42,13 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 namespace {
   struct VISIBILITY_HIDDEN ARMAsmPrinter : public AsmPrinter {
     ARMAsmPrinter(std::ostream &O, TargetMachine &TM, const TargetAsmInfo *T)
-      : AsmPrinter(O, TM, T), DW(O, this, T), AFI(NULL), InCPMode(false) {
+      : AsmPrinter(O, TM, T), DW(O, this, T), MMI(0), AFI(NULL), 
+        InCPMode(false) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
     }
 
     DwarfWriter DW;
+    MachineModuleInfo *MMI;
 
     /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
     /// make the right decision when printing asm code for different targets.
@@ -175,8 +177,6 @@ FunctionPass *llvm::createARMCodePrinterPass(std::ostream &o,
 ///
 bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   AFI = MF.getInfo<ARMFunctionInfo>();
-
-  DW.SetModuleInfo(&getAnalysis<MachineModuleInfo>());
 
   SetupMachineFunction(MF);
   O << "\n";
@@ -799,6 +799,11 @@ bool ARMAsmPrinter::doInitialization(Module &M) {
   DW.BeginModule(&M);
   
   bool Result = AsmPrinter::doInitialization(M);
+
+  // AsmPrinter::doInitialization should have done this analysis.
+  MMI = getAnalysisToUpdate<MachineModuleInfo>();
+  assert(MMI);
+  DW.SetModuleInfo(MMI);
 
   // Darwin wants symbols to be quoted if they have complex names.
   if (Subtarget->isTargetDarwin())
