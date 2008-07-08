@@ -113,16 +113,13 @@ bool Argument::hasStructRetAttr() const {
 
 /// addAttr - Add a ParamAttr to an argument
 void Argument::addAttr(ParameterAttributes attr) {
-  getParent()->setParamAttrs(
-    getParent()->getParamAttrs().addAttr(getArgNo() + 1, attr));
-}
-  
-/// removeAttr - Remove a ParamAttr from an argument
-void Argument::removeAttr(ParameterAttributes attr) {
-  getParent()->setParamAttrs(
-    getParent()->getParamAttrs().removeAttr(getArgNo() + 1, attr));
+  getParent()->addParamAttr(getArgNo() + 1, attr);
 }
 
+/// removeAttr - Remove a ParamAttr from an argument
+void Argument::removeAttr(ParameterAttributes attr) {
+  getParent()->removeParamAttr(getArgNo() + 1, attr);
+}
 
 
 //===----------------------------------------------------------------------===//
@@ -231,18 +228,15 @@ void Function::dropAllReferences() {
   BasicBlocks.clear();    // Delete all basic blocks...
 }
 
-void Function::setDoesNotThrow(bool doesNotThrow) {
-  PAListPtr PAL = getParamAttrs();
-  if (doesNotThrow)
-    PAL = PAL.addAttr(0, ParamAttr::NoUnwind);
-  else
-    PAL = PAL.removeAttr(0, ParamAttr::NoUnwind);
-  setParamAttrs(PAL);
-}
-
 void Function::addParamAttr(unsigned i, ParameterAttributes attr) {
   PAListPtr PAL = getParamAttrs();
   PAL = PAL.addAttr(i, attr);
+  setParamAttrs(PAL);
+}
+
+void Function::removeParamAttr(unsigned i, ParameterAttributes attr) {
+  PAListPtr PAL = getParamAttrs();
+  PAL = PAL.removeAttr(i, attr);
   setParamAttrs(PAL);
 }
 

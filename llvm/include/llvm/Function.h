@@ -174,28 +174,48 @@ public:
   /// addParamAttr - adds the attribute to the list of attributes.
   void addParamAttr(unsigned i, ParameterAttributes attr);
   
+  /// removeParamAttr - removes the attribute from the list of attributes.
+  void removeParamAttr(unsigned i, ParameterAttributes attr);
+
   /// @brief Extract the alignment for a call or parameter (0=unknown).
   unsigned getParamAlignment(unsigned i) const {
     return ParamAttrs.getParamAlignment(i);
-  }
-
-  /// @brief Determine if the function cannot return.
-  bool doesNotReturn() const { return paramHasAttr(0, ParamAttr::NoReturn); }
-  void setDoesNotThrow(bool doesNotThrow = true);
-
-  /// @brief Determine if the function cannot unwind.
-  bool doesNotThrow() const {
-    return paramHasAttr(0, ParamAttr::NoUnwind);
   }
 
   /// @brief Determine if the function does not access memory.
   bool doesNotAccessMemory() const {
     return paramHasAttr(0, ParamAttr::ReadNone);
   }
+  void setDoesNotAccessMemory(bool doesNotAccessMemory = true) {
+    if (doesNotAccessMemory) addParamAttr(0, ParamAttr::ReadNone);
+    else removeParamAttr(0, ParamAttr::ReadNone);
+  }
 
   /// @brief Determine if the function does not access or only reads memory.
   bool onlyReadsMemory() const {
     return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
+  }
+  void setOnlyReadsMemory(bool onlyReadsMemory = true) {
+    if (onlyReadsMemory) addParamAttr(0, ParamAttr::ReadOnly);
+    else removeParamAttr(0, ParamAttr::ReadOnly | ParamAttr::ReadNone);
+  }
+
+  /// @brief Determine if the function cannot return.
+  bool doesNotReturn() const {
+    return paramHasAttr(0, ParamAttr::NoReturn);
+  }
+  void setDoesNotReturn(bool doesNotReturn = true) {
+    if (doesNotReturn) addParamAttr(0, ParamAttr::NoReturn);
+    else removeParamAttr(0, ParamAttr::NoReturn);
+  }
+
+  /// @brief Determine if the function cannot unwind.
+  bool doesNotThrow() const {
+    return paramHasAttr(0, ParamAttr::NoUnwind);
+  }
+  void setDoesNotThrow(bool doesNotThrow = true) {
+    if (doesNotThrow) addParamAttr(0, ParamAttr::NoUnwind);
+    else removeParamAttr(0, ParamAttr::NoUnwind);
   }
 
   /// @brief Determine if the function returns a structure through first 
