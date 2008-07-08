@@ -60,24 +60,27 @@ class VISIBILITY_HIDDEN PointerExprEvaluator
     : Ctx(ctx) {}
 
 public:
-    static bool Evaluate(const Expr* E, APValue& Result, ASTContext &Ctx) {
+  static bool Evaluate(const Expr* E, APValue& Result, ASTContext &Ctx) {
+    if (!E->getType()->isPointerType())
+      return false;
     Result = PointerExprEvaluator(Ctx).Visit(const_cast<Expr*>(E));
     return Result.isLValue();
   }
     
   APValue VisitStmt(Stmt *S) {
     // FIXME: Remove this when we support more expressions.
-    printf("Unhandled statement\n");
+    printf("Unhandled pointer statement\n");
     S->dump();  
     return APValue();
   }
 
   APValue VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
 
-};
-}
+  APValue VisitBinaryOperator(const BinaryOperator *E);
+  APValue VisitCastExpr(const CastExpr* E);
 
-namespace {
+};
+
 class VISIBILITY_HIDDEN IntExprEvaluator
   : public StmtVisitor<IntExprEvaluator, APValue> {
   ASTContext &Ctx;
@@ -86,7 +89,7 @@ class VISIBILITY_HIDDEN IntExprEvaluator
     : Ctx(ctx) {}
 
 public:
-    static bool Evaluate(const Expr* E, llvm::APSInt& Result, ASTContext &Ctx) {
+  static bool Evaluate(const Expr* E, llvm::APSInt& Result, ASTContext &Ctx) {
     APValue Value = IntExprEvaluator(Ctx).Visit(const_cast<Expr*>(E));
     if (!Value.isSInt())
       return false;
@@ -100,7 +103,7 @@ public:
   //===--------------------------------------------------------------------===//
   APValue VisitStmt(Stmt *S) {
     // FIXME: Remove this when we support more expressions.
-    printf("Unhandled statement\n");
+    printf("unhandled int expression");
     S->dump();  
     return APValue();
   }
@@ -111,8 +114,76 @@ public:
   APValue VisitUnaryOperator(const UnaryOperator *E);
 
   APValue HandleCast(const Expr* SubExpr, QualType DestType);
+  APValue VisitCastExpr(const CastExpr* E) {
+    return HandleCast(E->getSubExpr(), E->getType());
+  }
+  APValue VisitImplicitCastExpr(const ImplicitCastExpr* E) {
+    return HandleCast(E->getSubExpr(), E->getType());
+  }
+  APValue VisitSizeOfAlignOfTypeExpr(const SizeOfAlignOfTypeExpr *E);
+ 
+  APValue VisitIntegerLiteral(const IntegerLiteral *E) {
+    llvm::APSInt Result(Ctx.getTypeSize(E->getType()));
+
+    Result = E->getValue();
+    return APValue(Result);
+  }
+
 };
   
+APValue PointerExprEvaluator::VisitBinaryOperator(const BinaryOperator *E)
+{
+  if (E->getOpcode() != BinaryOperator::Add &&
+      E->getOpcode() != BinaryOperator::Sub)
+    return APValue();
+  
+  const Expr *PExp = E->getLHS();
+  const Expr *IExp = E->getRHS();
+  if (IExp->getType()->isPointerType())
+  std::swap(PExp, IExp);
+  
+  APValue ResultLValue;
+  if (!PointerExprEvaluator::Evaluate(PExp, ResultLValue, Ctx))
+    return APValue();
+  llvm::APSInt AdditionalOffset(32);
+  if (!IntExprEvaluator::Evaluate(IExp, AdditionalOffset, Ctx))
+    return APValue();
+
+  uint64_t Offset = ResultLValue.getLValueOffset();
+  if (E->getOpcode() == BinaryOperator::Add)
+    Offset += AdditionalOffset.getZExtValue();
+  else
+    Offset -= AdditionalOffset.getZExtValue();
+    
+  return APValue(ResultLValue.getLValueBase(), Offset);
+}
+  
+
+APValue PointerExprEvaluator::VisitCastExpr(const CastExpr* E)
+{
+  const Expr* SubExpr = E->getSubExpr();
+
+   // Check for pointer->pointer cast
+  if (SubExpr->getType()->isPointerType()) {
+    APValue Result;
+    if (PointerExprEvaluator::Evaluate(SubExpr, Result, Ctx))
+      return Result;
+    else
+      return APValue();
+  }
+  
+  if (SubExpr->getType()->isArithmeticType()) {
+    llvm::APSInt Result(32);
+    if (IntExprEvaluator::Evaluate(SubExpr, Result, Ctx)) {
+      Result.extOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(E->getType())));
+      return APValue(0, Result.getZExtValue());
+    }
+  }
+  
+  assert(0 && "Unhandled cast");
+  return APValue();
+}  
+
 APValue IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   // The LHS of a constant expr is always evaluated and needed.
   llvm::APSInt Result(32);
@@ -275,6 +346,41 @@ APValue IntExprEvaluator::HandleCast(const Expr* SubExpr, QualType DestType) {
   
   Result.setIsUnsigned(DestType->isUnsignedIntegerType());
   return APValue(Result); 
+}
+
+APValue IntExprEvaluator::VisitSizeOfAlignOfTypeExpr
+  (const SizeOfAlignOfTypeExpr *E)
+{
+  llvm::APSInt Result(32);
+
+  // Return the result in the right width.
+  Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(E->getType())));
+
+  // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
+  if (E->getArgumentType()->isVoidType()) {
+    Result = 1;
+    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+    return APValue(Result);
+  }
+
+  // alignof always evaluates to a constant, sizeof does if arg is not VLA.
+  if (E->isSizeOf() && !E->getArgumentType()->isConstantSizeType()) 
+    return APValue();
+
+  // Get information about the size or align.
+  if (E->getArgumentType()->isFunctionType()) {
+    // GCC extension: sizeof(function) = 1.
+    Result = E->isSizeOf() ? 1 : 4;
+  } else { 
+    unsigned CharSize = Ctx.Target.getCharWidth();
+    if (E->isSizeOf())
+      Result = Ctx.getTypeSize(E->getArgumentType()) / CharSize;
+    else
+      Result = Ctx.getTypeAlign(E->getArgumentType()) / CharSize;
+  }
+  
+  Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+  return APValue(Result);
 }
 
 }
