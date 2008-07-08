@@ -395,10 +395,6 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, SDNode *N) {
     ID.AddPointer(DSP->getCompileUnit());
     break;
   }
-  case ISD::DBG_LABEL:
-  case ISD::EH_LABEL:
-    ID.AddInteger(cast<LabelSDNode>(N)->getLabelID());
-    break;
   case ISD::SRCVALUE:
     ID.AddPointer(cast<SrcValueSDNode>(N)->getValue());
     break;
@@ -607,7 +603,11 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   // flag result (which cannot be CSE'd) or is one of the special cases that are
   // not subject to CSE.
   if (!Erased && N->getValueType(N->getNumValues()-1) != MVT::Flag &&
-      !N->isTargetOpcode()) {
+      !N->isTargetOpcode() &&
+      N->getOpcode() != ISD::DBG_LABEL &&
+      N->getOpcode() != ISD::DBG_STOPPOINT &&
+      N->getOpcode() != ISD::EH_LABEL &&
+      N->getOpcode() != ISD::DECLARE) {
     N->dump(this);
     cerr << "\n";
     assert(0 && "Node is not in map!");
@@ -622,8 +622,19 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
 ///
 SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
   assert(N->getNumOperands() && "This is a leaf node!");
-  if (N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
+
+  if (N->getValueType(0) == MVT::Flag)
+    return 0;   // Never CSE anything that produces a flag.
+
+  switch (N->getOpcode()) {
+  default: break;
+  case ISD::HANDLENODE:
+  case ISD::DBG_LABEL:
+  case ISD::DBG_STOPPOINT:
+  case ISD::EH_LABEL:
+  case ISD::DECLARE:
     return 0;    // Never add these nodes.
+  }
   
   // Check that remaining values produced are not flags.
   for (unsigned i = 1, e = N->getNumValues(); i != e; ++i)
@@ -641,8 +652,17 @@ SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
 /// node already exists with these operands, the slot will be non-null.
 SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, SDOperand Op,
                                            void *&InsertPos) {
-  if (N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
+  if (N->getValueType(0) == MVT::Flag)
+    return 0;   // Never CSE anything that produces a flag.
+
+  switch (N->getOpcode()) {
+  default: break;
+  case ISD::HANDLENODE:
+  case ISD::DBG_LABEL:
+  case ISD::DBG_STOPPOINT:
+  case ISD::EH_LABEL:
     return 0;    // Never add these nodes.
+  }
   
   // Check that remaining values produced are not flags.
   for (unsigned i = 1, e = N->getNumValues(); i != e; ++i)
@@ -663,7 +683,6 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
                                            SDOperand Op1, SDOperand Op2,
                                            void *&InsertPos) {
   if (N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
-    return 0;    // Never add these nodes.
   
   // Check that remaining values produced are not flags.
   for (unsigned i = 1, e = N->getNumValues(); i != e; ++i)
@@ -684,8 +703,18 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
 SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, 
                                            const SDOperand *Ops,unsigned NumOps,
                                            void *&InsertPos) {
-  if (N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
+  if (N->getValueType(0) == MVT::Flag)
+    return 0;   // Never CSE anything that produces a flag.
+
+  switch (N->getOpcode()) {
+  default: break;
+  case ISD::HANDLENODE:
+  case ISD::DBG_LABEL:
+  case ISD::DBG_STOPPOINT:
+  case ISD::EH_LABEL:
+  case ISD::DECLARE:
     return 0;    // Never add these nodes.
+  }
   
   // Check that remaining values produced are not flags.
   for (unsigned i = 1, e = N->getNumValues(); i != e; ++i)
@@ -1010,18 +1039,8 @@ SDOperand SelectionDAG::getRegister(unsigned RegNo, MVT VT) {
 SDOperand SelectionDAG::getDbgStopPoint(SDOperand Root,
                                         unsigned Line, unsigned Col,
                                         const CompileUnitDesc *CU) {
-  FoldingSetNodeID ID;
-  SDOperand Ops[] = { Root };
-  AddNodeIDNode(ID, ISD::DBG_STOPPOINT, getVTList(MVT::Other), &Ops[0], 1);
-  ID.AddInteger(Line);
-  ID.AddInteger(Col);
-  ID.AddPointer(CU);
-  void *IP = 0;
-  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
   SDNode *N = getAllocator().Allocate<DbgStopPointSDNode>();
   new (N) DbgStopPointSDNode(Root, Line, Col, CU);
-  CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }

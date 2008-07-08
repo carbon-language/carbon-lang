@@ -1094,12 +1094,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         unsigned Col = DSP->getColumn();
         
         if (useDEBUG_LOC) {
-          SmallVector<SDOperand, 8> Ops;
-          Ops.push_back(Tmp1);  // chain
-          Ops.push_back(DAG.getConstant(Line, MVT::i32));  // line #
-          Ops.push_back(DAG.getConstant(Col, MVT::i32));   // col #
-          Ops.push_back(DAG.getConstant(SrcFile, MVT::i32));  // source file id
-          Result = DAG.getNode(ISD::DEBUG_LOC, MVT::Other, &Ops[0], Ops.size());
+          SDOperand Ops[] = { Tmp1, DAG.getConstant(Line, MVT::i32),
+                              DAG.getConstant(Col, MVT::i32),
+                              DAG.getConstant(SrcFile, MVT::i32) };
+          Result = DAG.getNode(ISD::DEBUG_LOC, MVT::Other, Ops, 4);
         } else {
           unsigned ID = MMI->RecordSourceLine(Line, Col, SrcFile);
           Result = DAG.getLabel(ISD::DBG_LABEL, Tmp1, ID);
@@ -1109,24 +1107,26 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
       break;
     }
-    case TargetLowering::Legal:
-      if (Tmp1 != Node->getOperand(0) ||
-          getTypeAction(Node->getOperand(1).getValueType()) == Promote) {
-        SmallVector<SDOperand, 8> Ops;
-        Ops.push_back(Tmp1);
-        if (getTypeAction(Node->getOperand(1).getValueType()) == Legal) {
-          Ops.push_back(Node->getOperand(1));  // line # must be legal.
-          Ops.push_back(Node->getOperand(2));  // col # must be legal.
-        } else {
-          // Otherwise promote them.
-          Ops.push_back(PromoteOp(Node->getOperand(1)));
-          Ops.push_back(PromoteOp(Node->getOperand(2)));
-        }
-        Ops.push_back(Node->getOperand(3));  // filename must be legal.
-        Ops.push_back(Node->getOperand(4));  // working dir # must be legal.
-        Result = DAG.UpdateNodeOperands(Result, &Ops[0], Ops.size());
+    case TargetLowering::Legal: {
+      LegalizeAction Action = getTypeAction(Node->getOperand(1).getValueType());
+      if (Action == Legal && Tmp1 == Node->getOperand(0))
+        break;
+
+      SmallVector<SDOperand, 8> Ops;
+      Ops.push_back(Tmp1);
+      if (Action == Legal) {
+        Ops.push_back(Node->getOperand(1));  // line # must be legal.
+        Ops.push_back(Node->getOperand(2));  // col # must be legal.
+      } else {
+        // Otherwise promote them.
+        Ops.push_back(PromoteOp(Node->getOperand(1)));
+        Ops.push_back(PromoteOp(Node->getOperand(2)));
       }
+      Ops.push_back(Node->getOperand(3));  // filename must be legal.
+      Ops.push_back(Node->getOperand(4));  // working dir # must be legal.
+      Result = DAG.UpdateNodeOperands(Result, &Ops[0], Ops.size());
       break;
+    }
     }
     break;
 
@@ -1150,13 +1150,23 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     assert(Node->getNumOperands() == 4 && "Invalid DEBUG_LOC node!");
     switch (TLI.getOperationAction(ISD::DEBUG_LOC, MVT::Other)) {
     default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Legal:
+    case TargetLowering::Legal: {
+      LegalizeAction Action = getTypeAction(Node->getOperand(1).getValueType());
       Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-      Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the line #.
-      Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the col #.
-      Tmp4 = LegalizeOp(Node->getOperand(3));  // Legalize the source file id.
+      if (Action == Legal && Tmp1 == Node->getOperand(0))
+        break;
+      if (Action == Legal) {
+        Tmp2 = Node->getOperand(1);
+        Tmp3 = Node->getOperand(2);
+        Tmp4 = Node->getOperand(3);
+      } else {
+        Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the line #.
+        Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the col #.
+        Tmp4 = LegalizeOp(Node->getOperand(3));  // Legalize the source file id.
+      }
       Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3, Tmp4);
       break;
+    }
     }
     break;    
 
