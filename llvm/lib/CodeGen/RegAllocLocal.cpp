@@ -663,7 +663,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
         // - used in another block
         // - used in the same block before it is defined (loop)
         if (UI->getParent() != &MBB ||
-            (MO.isDef() && UI.getOperand().isUse() && precedes(*UI, MI))) {
+            (MO.isDef() && UI.getOperand().isUse() && precedes(&*UI, MI))) {
           UsedInMultipleBlocks.set(MO.getReg() - 
                                    TargetRegisterInfo::FirstVirtualRegister);
           usedOutsideBlock = true;
