@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -constprop | llvm-dis
+; RUN: llvm-as < %s | opt -constprop -disable-output
 ; PR2529
 define <4 x i32> @test1(i32 %argc, i8** %argv) {
 entry:  
