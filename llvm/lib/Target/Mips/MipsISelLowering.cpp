@@ -824,11 +824,12 @@ getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const
     case 'r':
       return std::make_pair(0U, Mips::CPURegsRegisterClass);
     case 'f':
-      if (VT == MVT::f32)
+      if (VT == MVT::f32) {
         if (Subtarget->isSingleFloat())
           return std::make_pair(0U, Mips::FGR32RegisterClass);
         else
           return std::make_pair(0U, Mips::AFGR32RegisterClass);
+      }
       if (VT == MVT::f64)    
         if ((!Subtarget->isSingleFloat()) && (!Subtarget->isFP64bit()))
           return std::make_pair(0U, Mips::AFGR64RegisterClass);
@@ -859,7 +860,7 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
              Mips::T8, 0);
 
     case 'f':
-      if (VT == MVT::f32)
+      if (VT == MVT::f32) {
         if (Subtarget->isSingleFloat())
           return make_vector<unsigned>(Mips::F2, Mips::F3, Mips::F4, Mips::F5,
                  Mips::F6, Mips::F7, Mips::F8, Mips::F9, Mips::F10, Mips::F11,
@@ -870,6 +871,7 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
           return make_vector<unsigned>(Mips::F2, Mips::F4, Mips::F6, Mips::F8, 
                  Mips::F10, Mips::F20, Mips::F22, Mips::F24, Mips::F26, 
                  Mips::F28, Mips::F30, 0);
+      }
 
       if (VT == MVT::f64)    
         if ((!Subtarget->isSingleFloat()) && (!Subtarget->isFP64bit()))
