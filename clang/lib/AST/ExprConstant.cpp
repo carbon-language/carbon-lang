@@ -14,7 +14,7 @@
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
-#include "clang/AST/STmtVisitor.h"
+#include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/Compiler.h"
 
