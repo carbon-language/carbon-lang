@@ -129,6 +129,20 @@ Value *SCEVExpander::visitMulExpr(SCEVMulExpr *S) {
   return V;
 }
 
+Value *SCEVExpander::visitUDivExpr(SCEVUDivExpr *S) {
+  Value *LHS = expand(S->getLHS());
+  if (SCEVConstant *SC = dyn_cast<SCEVConstant>(S->getRHS())) {
+    const APInt &RHS = SC->getValue()->getValue();
+    if (RHS.isPowerOf2())
+      return InsertBinop(Instruction::LShr, LHS,
+                         ConstantInt::get(S->getType(), RHS.logBase2()),
+                         InsertPt);
+  }
+
+  Value *RHS = expand(S->getRHS());
+  return InsertBinop(Instruction::UDiv, LHS, RHS, InsertPt);
+}
+
 Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
   const Type *Ty = S->getType();
   const Loop *L = S->getLoop();
