@@ -72,11 +72,35 @@ bool CallSite::doesNotAccessMemory() const {
   else
     return cast<InvokeInst>(I)->doesNotAccessMemory();
 }
+void CallSite::setDoesNotAccessMemory(bool doesNotAccessMemory) {
+  if (CallInst *CI = dyn_cast<CallInst>(I))
+    CI->setDoesNotAccessMemory(doesNotAccessMemory);
+  else
+    cast<InvokeInst>(I)->setDoesNotAccessMemory(doesNotAccessMemory);
+}
 bool CallSite::onlyReadsMemory() const {
   if (CallInst *CI = dyn_cast<CallInst>(I))
     return CI->onlyReadsMemory();
   else
     return cast<InvokeInst>(I)->onlyReadsMemory();
+}
+void CallSite::setOnlyReadsMemory(bool onlyReadsMemory) {
+  if (CallInst *CI = dyn_cast<CallInst>(I))
+    CI->setOnlyReadsMemory(onlyReadsMemory);
+  else
+    cast<InvokeInst>(I)->setOnlyReadsMemory(onlyReadsMemory);
+}
+bool CallSite::doesNotReturn() const {
+  if (CallInst *CI = dyn_cast<CallInst>(I))
+    return CI->doesNotReturn();
+  else
+    return cast<InvokeInst>(I)->doesNotReturn();
+}
+void CallSite::setDoesNotReturn(bool doesNotReturn) {
+  if (CallInst *CI = dyn_cast<CallInst>(I))
+    CI->setDoesNotReturn(doesNotReturn);
+  else
+    cast<InvokeInst>(I)->setDoesNotReturn(doesNotReturn);
 }
 bool CallSite::doesNotThrow() const {
   if (CallInst *CI = dyn_cast<CallInst>(I))
@@ -384,21 +408,18 @@ void CallInst::addParamAttr(unsigned i, ParameterAttributes attr) {
   setParamAttrs(PAL);
 }
 
+void CallInst::removeParamAttr(unsigned i, ParameterAttributes attr) {
+  PAListPtr PAL = getParamAttrs();
+  PAL = PAL.removeAttr(i, attr);
+  setParamAttrs(PAL);
+}
+
 bool CallInst::paramHasAttr(unsigned i, ParameterAttributes attr) const {
   if (ParamAttrs.paramHasAttr(i, attr))
     return true;
   if (const Function *F = getCalledFunction())
     return F->paramHasAttr(i, attr);
   return false;
-}
-
-void CallInst::setDoesNotThrow(bool doesNotThrow) {
-  PAListPtr PAL = getParamAttrs();
-  if (doesNotThrow)
-    PAL = PAL.addAttr(0, ParamAttr::NoUnwind);
-  else
-    PAL = PAL.removeAttr(0, ParamAttr::NoUnwind);
-  setParamAttrs(PAL);
 }
 
 
@@ -466,12 +487,9 @@ void InvokeInst::addParamAttr(unsigned i, ParameterAttributes attr) {
   setParamAttrs(PAL);
 }
 
-void InvokeInst::setDoesNotThrow(bool doesNotThrow) {
+void InvokeInst::removeParamAttr(unsigned i, ParameterAttributes attr) {
   PAListPtr PAL = getParamAttrs();
-  if (doesNotThrow)
-    PAL = PAL.addAttr(0, ParamAttr::NoUnwind);
-  else
-    PAL = PAL.removeAttr(0, ParamAttr::NoUnwind);
+  PAL = PAL.removeAttr(i, attr);
   setParamAttrs(PAL);
 }
 

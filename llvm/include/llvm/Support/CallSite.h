@@ -75,9 +75,15 @@ public:
 
   /// @brief Determine if the call does not access memory.
   bool doesNotAccessMemory() const;
+  void setDoesNotAccessMemory(bool doesNotAccessMemory = true);
 
   /// @brief Determine if the call does not access or only reads memory.
   bool onlyReadsMemory() const;
+  void setOnlyReadsMemory(bool onlyReadsMemory = true);
+
+  /// @brief Determine if the call cannot return.
+  bool doesNotReturn() const;
+  void setDoesNotReturn(bool doesNotReturn = true);
 
   /// @brief Determine if the call cannot unwind.
   bool doesNotThrow() const;
