@@ -179,6 +179,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\Environment.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\ExplodedGraph.cpp"
 				>
 			</File>
