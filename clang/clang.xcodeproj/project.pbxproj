@@ -21,6 +21,7 @@
 		352712510DAFE54700C76352 /* IdentifierResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352712500DAFE54700C76352 /* IdentifierResolver.cpp */; };
 		352981090CC58344008B5E84 /* SerializationTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352981080CC58344008B5E84 /* SerializationTest.cpp */; };
 		3534A01D0E129849002709B2 /* ParseCXXInlineMethods.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3534A01C0E129849002709B2 /* ParseCXXInlineMethods.cpp */; };
+		3536456B0E23EBF7009C6509 /* Environment.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3536456A0E23EBF7009C6509 /* Environment.cpp */; };
 		356EF9B50C8F7DDF006650F5 /* LiveVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */; };
 		35707EFE0CD0F5CC000B2204 /* SourceLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */; };
 		3574BC2B0D9B531D00DF491A /* HTMLDiagnostics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3574BC2A0D9B531D00DF491A /* HTMLDiagnostics.cpp */; };
@@ -282,6 +283,8 @@
 		352C19DE0CA321C80045DB98 /* CFGStmtVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGStmtVisitor.h; path = clang/Analysis/Visitors/CFGStmtVisitor.h; sourceTree = "<group>"; };
 		352C19DF0CA321C80045DB98 /* CFGVarDeclVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGVarDeclVisitor.h; path = clang/Analysis/Visitors/CFGVarDeclVisitor.h; sourceTree = "<group>"; };
 		3534A01C0E129849002709B2 /* ParseCXXInlineMethods.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ParseCXXInlineMethods.cpp; path = lib/Parse/ParseCXXInlineMethods.cpp; sourceTree = "<group>"; };
+		3536456A0E23EBF7009C6509 /* Environment.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Environment.cpp; path = lib/Analysis/Environment.cpp; sourceTree = "<group>"; };
+		3536457C0E2406B0009C6509 /* Environment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Environment.h; path = clang/Analysis/PathSensitive/Environment.h; sourceTree = "<group>"; };
 		3547129D0C88881300B3E1D5 /* PrettyPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PrettyPrinter.h; path = clang/AST/PrettyPrinter.h; sourceTree = "<group>"; };
 		355CF6820C90A8B600A08AA3 /* LocalCheckers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LocalCheckers.h; path = clang/Analysis/LocalCheckers.h; sourceTree = "<group>"; };
 		356B89760D9BFDC100CBEBE9 /* BasicObjCFoundationChecks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BasicObjCFoundationChecks.h; path = lib/Analysis/BasicObjCFoundationChecks.h; sourceTree = "<group>"; };
@@ -571,6 +574,7 @@
 		356EF9B30C8F7DCA006650F5 /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
+				3536456A0E23EBF7009C6509 /* Environment.cpp */,
 				3595AFB70E1C8D62004CDF09 /* CheckObjCDealloc.cpp */,
 				35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */,
 				359379090DA48ABA0043B19C /* BugReporter.cpp */,
@@ -668,6 +672,7 @@
 		DE4121130D7F1B980080F80A /* PathSensitive */ = {
 			isa = PBXGroup;
 			children = (
+				3536457C0E2406B0009C6509 /* Environment.h */,
 				359378FF0DA486490043B19C /* BugReporter.h */,
 				35F8D0CA0D9B7E8200D91C5E /* GRSimpleAPICheck.h */,
 				35F8D0CB0D9B7E8200D91C5E /* GRAuditor.h */,
@@ -1129,6 +1134,7 @@
 				359DBBD40E1AC9CC00F43FA0 /* AnalysisConsumer.cpp in Sources */,
 				1A32C17F0E1C87AD00A6B483 /* ExprConstant.cpp in Sources */,
 				3595AFB80E1C8D62004CDF09 /* CheckObjCDealloc.cpp in Sources */,
+				3536456B0E23EBF7009C6509 /* Environment.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
