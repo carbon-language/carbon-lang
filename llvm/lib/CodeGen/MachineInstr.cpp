@@ -348,8 +348,7 @@ int MachineInstr::getOpcode() const {
 /// return null.
 MachineRegisterInfo *MachineInstr::getRegInfo() {
   if (MachineBasicBlock *MBB = getParent())
-    if (MachineFunction *MF = MBB->getParent())
-      return &MF->getRegInfo();
+    return &MBB->getParent()->getRegInfo();
   return 0;
 }
 
