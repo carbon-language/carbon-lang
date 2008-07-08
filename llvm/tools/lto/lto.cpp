@@ -237,6 +237,10 @@ lto_codegen_compile(lto_code_gen_t cg, size_t* length)
     return cg->compile(length, sLastErrorString);
 }
 
+
+//
+// Used to pass extra options to the code generator
+//
 extern void
 lto_codegen_debug_options(lto_code_gen_t cg, const char * opt)
 {

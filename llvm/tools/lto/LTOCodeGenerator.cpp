@@ -23,6 +23,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -52,6 +53,8 @@
 
 using namespace llvm;
 
+static cl::opt<bool> DisableInline("disable-inlining",
+  cl::desc("Do not run the inliner pass"));
 
 
 const char* LTOCodeGenerator::getVersionString()
@@ -334,17 +337,10 @@ bool LTOCodeGenerator::generateAssemblyCode(std::ostream& out, std::string& errM
             break;
     }
 
-    for (unsigned opt_index = 0, opt_size = _codegenOptions.size();
-         opt_index < opt_size; ++opt_index) {
-      std::vector<const char *> cgOpts;
-      std::string &optString = _codegenOptions[opt_index];
-      for (std::string Opt = getToken(optString);
-           !Opt.empty(); Opt = getToken(optString))
-        cgOpts.push_back(Opt.c_str());
-     
-      int pseudo_argc = cgOpts.size()-1;
-      cl::ParseCommandLineOptions(pseudo_argc, (char**)&cgOpts[0]);
-     }
+    // if options were requested, set them
+    if ( !_codegenOptions.empty() )
+        cl::ParseCommandLineOptions(_codegenOptions.size(), 
+                                                (char**)&_codegenOptions[0]);
 
     // Instantiate the pass manager to organize the passes.
     PassManager passes;
@@ -375,7 +371,8 @@ bool LTOCodeGenerator::generateAssemblyCode(std::ostream& out, std::string& errM
     // function pointers.  When this happens, we often have to resolve varargs
     // calls, etc, so let instcombine do this.
     passes.add(createInstructionCombiningPass());
-    passes.add(createFunctionInliningPass());     // Inline small functions
+    if (!DisableInline)
+        passes.add(createFunctionInliningPass()); // Inline small functions
     passes.add(createPruneEHPass());              // Remove dead EH info
     passes.add(createGlobalDCEPass());            // Remove dead functions
 
@@ -454,4 +451,15 @@ bool LTOCodeGenerator::generateAssemblyCode(std::ostream& out, std::string& errM
 }
 
 
-
+/// Optimize merged modules using various IPO passes
+void LTOCodeGenerator::setCodeGenDebugOptions(const char* options)
+{
+    std::string ops(options);
+    for (std::string o = getToken(ops); !o.empty(); o = getToken(ops)) {
+        // ParseCommandLineOptions() expects argv[0] to be program name.
+        // Lazily add that.
+        if ( _codegenOptions.empty() ) 
+            _codegenOptions.push_back("libLTO");
+        _codegenOptions.push_back(strdup(o.c_str()));
+    }
+}
