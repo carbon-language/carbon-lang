@@ -741,6 +741,16 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
   return CSEMap.FindNodeOrInsertPos(ID, InsertPos);
 }
 
+/// getMVTAlignment - Compute the default alignment value for the
+/// given type.
+///
+unsigned SelectionDAG::getMVTAlignment(MVT VT) const {
+  const Type *Ty = VT == MVT::iPTR ?
+                   PointerType::get(Type::Int8Ty, 0) :
+                   VT.getTypeForMVT();
+
+  return TLI.getTargetData()->getABITypeAlignment(Ty);
+}
 
 SelectionDAG::~SelectionDAG() {
   while (!AllNodes.empty()) {
@@ -3069,7 +3079,13 @@ SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain,
                                   unsigned Alignment) {
   assert(Opcode == ISD::ATOMIC_CMP_SWAP && "Invalid Atomic Op");
   assert(Cmp.getValueType() == Swp.getValueType() && "Invalid Atomic Op Types");
-  SDVTList VTs = getVTList(Cmp.getValueType(), MVT::Other);
+
+  MVT VT = Cmp.getValueType();
+
+  if (Alignment == 0)  // Ensure that codegen never sees alignment 0
+    Alignment = getMVTAlignment(VT);
+
+  SDVTList VTs = getVTList(VT, MVT::Other);
   FoldingSetNodeID ID;
   SDOperand Ops[] = {Chain, Ptr, Cmp, Swp};
   AddNodeIDNode(ID, Opcode, VTs, Ops, 4);
@@ -3094,7 +3110,13 @@ SDOperand SelectionDAG::getAtomic(unsigned Opcode, SDOperand Chain,
           || Opcode == ISD::ATOMIC_LOAD_MIN || Opcode == ISD::ATOMIC_LOAD_MAX
           || Opcode == ISD::ATOMIC_LOAD_UMIN || Opcode == ISD::ATOMIC_LOAD_UMAX) 
          && "Invalid Atomic Op");
-  SDVTList VTs = getVTList(Val.getValueType(), MVT::Other);
+
+  MVT VT = Val.getValueType();
+
+  if (Alignment == 0)  // Ensure that codegen never sees alignment 0
+    Alignment = getMVTAlignment(VT);
+
+  SDVTList VTs = getVTList(VT, MVT::Other);
   FoldingSetNodeID ID;
   SDOperand Ops[] = {Chain, Ptr, Val};
   AddNodeIDNode(ID, Opcode, VTs, Ops, 3);
@@ -3128,18 +3150,8 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
                       SDOperand Ptr, SDOperand Offset,
                       const Value *SV, int SVOffset, MVT EVT,
                       bool isVolatile, unsigned Alignment) {
-  if (Alignment == 0) { // Ensure that codegen never sees alignment 0
-    const Type *Ty = 0;
-    if (VT != MVT::iPTR) {
-      Ty = VT.getTypeForMVT();
-    } else if (SV) {
-      const PointerType *PT = dyn_cast<PointerType>(SV->getType());
-      assert(PT && "Value for load must be a pointer");
-      Ty = PT->getElementType();
-    }
-    assert(Ty && "Could not get type information for load");
-    Alignment = TLI.getTargetData()->getABITypeAlignment(Ty);
-  }
+  if (Alignment == 0)  // Ensure that codegen never sees alignment 0
+    Alignment = getMVTAlignment(VT);
 
   if (VT == EVT) {
     ExtType = ISD::NON_EXTLOAD;
@@ -3219,18 +3231,9 @@ SDOperand SelectionDAG::getStore(SDOperand Chain, SDOperand Val,
                                  bool isVolatile, unsigned Alignment) {
   MVT VT = Val.getValueType();
 
-  if (Alignment == 0) { // Ensure that codegen never sees alignment 0
-    const Type *Ty = 0;
-    if (VT != MVT::iPTR) {
-      Ty = VT.getTypeForMVT();
-    } else if (SV) {
-      const PointerType *PT = dyn_cast<PointerType>(SV->getType());
-      assert(PT && "Value for store must be a pointer");
-      Ty = PT->getElementType();
-    }
-    assert(Ty && "Could not get type information for store");
-    Alignment = TLI.getTargetData()->getABITypeAlignment(Ty);
-  }
+  if (Alignment == 0)  // Ensure that codegen never sees alignment 0
+    Alignment = getMVTAlignment(VT);
+
   SDVTList VTs = getVTList(MVT::Other);
   SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
   SDOperand Ops[] = { Chain, Val, Ptr, Undef };
@@ -3265,18 +3268,9 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
   assert(VT.isInteger() == SVT.isInteger() &&
          "Can't do FP-INT conversion!");
 
-  if (Alignment == 0) { // Ensure that codegen never sees alignment 0
-    const Type *Ty = 0;
-    if (VT != MVT::iPTR) {
-      Ty = VT.getTypeForMVT();
-    } else if (SV) {
-      const PointerType *PT = dyn_cast<PointerType>(SV->getType());
-      assert(PT && "Value for store must be a pointer");
-      Ty = PT->getElementType();
-    }
-    assert(Ty && "Could not get type information for store");
-    Alignment = TLI.getTargetData()->getABITypeAlignment(Ty);
-  }
+  if (Alignment == 0)  // Ensure that codegen never sees alignment 0
+    Alignment = getMVTAlignment(VT);
+
   SDVTList VTs = getVTList(MVT::Other);
   SDOperand Undef = getNode(ISD::UNDEF, Ptr.getValueType());
   SDOperand Ops[] = { Chain, Val, Ptr, Undef };

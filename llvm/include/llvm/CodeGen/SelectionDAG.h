@@ -654,6 +654,8 @@ private:
                                void *&InsertPos);
 
   void DeleteNodeNotInCSEMaps(SDNode *N);
+
+  unsigned getMVTAlignment(MVT MemoryVT) const;
   
   // List of non-single value types.
   std::list<std::vector<MVT> > VTList;
