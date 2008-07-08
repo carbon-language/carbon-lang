@@ -262,8 +262,11 @@ Module *llvm::SplitFunctionsOutOfModule(Module *M,
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     I->setLinkage(GlobalValue::ExternalLinkage);
   for (Module::global_iterator I = M->global_begin(), E = M->global_end();
-       I != E; ++I)
+       I != E; ++I) {
+    if (I->hasName() && *I->getNameStart() == '\01')
+      I->setName(I->getNameStart()+1, I->getNameLen()-1);
     I->setLinkage(GlobalValue::ExternalLinkage);
+  }
 
   Module *New = CloneModule(M);
 
