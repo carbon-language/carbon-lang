@@ -117,15 +117,6 @@ void SCEV::dump() const {
   print(cerr);
 }
 
-/// getValueRange - Return the tightest constant bounds that this value is
-/// known to have.  This method is only valid on integer SCEV objects.
-ConstantRange SCEV::getValueRange() const {
-  const Type *Ty = getType();
-  assert(Ty->isInteger() && "Can't get range for a non-integer SCEV!");
-  // Default to a full range if no better information is available.
-  return ConstantRange(getBitWidth());
-}
-
 uint32_t SCEV::getBitWidth() const {
   if (const IntegerType* ITy = dyn_cast<IntegerType>(getType()))
     return ITy->getBitWidth();
@@ -192,10 +183,6 @@ SCEVHandle ScalarEvolution::getConstant(const APInt& Val) {
   return getConstant(ConstantInt::get(Val));
 }
 
-ConstantRange SCEVConstant::getValueRange() const {
-  return ConstantRange(V->getValue());
-}
-
 const Type *SCEVConstant::getType() const { return V->getType(); }
 
 void SCEVConstant::print(std::ostream &OS) const {
@@ -220,10 +207,6 @@ SCEVTruncateExpr::~SCEVTruncateExpr() {
   SCEVTruncates->erase(std::make_pair(Op, Ty));
 }
 
-ConstantRange SCEVTruncateExpr::getValueRange() const {
-  return getOperand()->getValueRange().truncate(getBitWidth());
-}
-
 void SCEVTruncateExpr::print(std::ostream &OS) const {
   OS << "(truncate " << *Op << " to " << *Ty << ")";
 }
@@ -246,10 +229,6 @@ SCEVZeroExtendExpr::~SCEVZeroExtendExpr() {
   SCEVZeroExtends->erase(std::make_pair(Op, Ty));
 }
 
-ConstantRange SCEVZeroExtendExpr::getValueRange() const {
-  return getOperand()->getValueRange().zeroExtend(getBitWidth());
-}
-
 void SCEVZeroExtendExpr::print(std::ostream &OS) const {
   OS << "(zeroextend " << *Op << " to " << *Ty << ")";
 }
@@ -270,10 +249,6 @@ SCEVSignExtendExpr::SCEVSignExtendExpr(const SCEVHandle &op, const Type *ty)
 
 SCEVSignExtendExpr::~SCEVSignExtendExpr() {
   SCEVSignExtends->erase(std::make_pair(Op, Ty));
-}
-
-ConstantRange SCEVSignExtendExpr::getValueRange() const {
-  return getOperand()->getValueRange().signExtend(getBitWidth());
 }
 
 void SCEVSignExtendExpr::print(std::ostream &OS) const {
@@ -2905,12 +2880,6 @@ void ScalarEvolution::print(std::ostream &OS, const Module* ) const {
       SCEVHandle SV = getSCEV(&*I);
       SV->print(OS);
       OS << "\t\t";
-
-      if ((*I).getType()->isInteger()) {
-        ConstantRange Bounds = SV->getValueRange();
-        if (!Bounds.isFullSet())
-          OS << "Bounds: " << Bounds << " ";
-      }
 
       if (const Loop *L = LI.getLoopFor((*I).getParent())) {
         OS << "Exits: ";

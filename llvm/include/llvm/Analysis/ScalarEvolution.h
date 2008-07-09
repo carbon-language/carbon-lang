@@ -59,10 +59,6 @@ namespace llvm {
 
     unsigned getSCEVType() const { return SCEVType; }
 
-    /// getValueRange - Return the tightest constant bounds that this value is
-    /// known to have.  This method is only valid on integer SCEV objects.
-    virtual ConstantRange getValueRange() const;
-
     /// isLoopInvariant - Return true if the value of this SCEV is unchanging in
     /// the specified loop.
     virtual bool isLoopInvariant(const Loop *L) const = 0;

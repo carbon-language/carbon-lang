@@ -42,10 +42,6 @@ namespace llvm {
   public:
     ConstantInt *getValue() const { return V; }
 
-    /// getValueRange - Return the tightest constant bounds that this value is
-    /// known to have.  This method is only valid on integer SCEV objects.
-    virtual ConstantRange getValueRange() const;
-
     virtual bool isLoopInvariant(const Loop *L) const {
       return true;
     }
@@ -104,10 +100,6 @@ namespace llvm {
       return SE.getTruncateExpr(H, Ty);
     }
 
-    /// getValueRange - Return the tightest constant bounds that this value is
-    /// known to have.  This method is only valid on integer SCEV objects.
-    virtual ConstantRange getValueRange() const;
-
     virtual void print(std::ostream &OS) const;
     void print(std::ostream *OS) const { if (OS) print(*OS); }
 
@@ -140,10 +132,6 @@ namespace llvm {
     virtual bool hasComputableLoopEvolution(const Loop *L) const {
       return Op->hasComputableLoopEvolution(L);
     }
-
-    /// getValueRange - Return the tightest constant bounds that this value is
-    /// known to have.  This method is only valid on integer SCEV objects.
-    virtual ConstantRange getValueRange() const;
 
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
                                                  const SCEVHandle &Conc,
@@ -186,10 +174,6 @@ namespace llvm {
     virtual bool hasComputableLoopEvolution(const Loop *L) const {
       return Op->hasComputableLoopEvolution(L);
     }
-
-    /// getValueRange - Return the tightest constant bounds that this value is
-    /// known to have.  This method is only valid on integer SCEV objects.
-    virtual ConstantRange getValueRange() const;
 
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
                                                  const SCEVHandle &Conc,
