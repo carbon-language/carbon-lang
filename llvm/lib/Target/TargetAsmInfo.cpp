@@ -240,15 +240,15 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
     // Some lame default implementation
     if (strcmp(name, ".bss") == 0 ||
         strncmp(name, ".bss.", 5) == 0 ||
-        strncmp(name, ".gnu.linkonce.b.", 16) == 0)
+        strncmp(name, ".llvm.linkonce.b.", 17) == 0)
       flags |= SectionFlags::BSS;
     else if (strcmp(name, ".tdata") == 0 ||
              strncmp(name, ".tdata.", 7) == 0 ||
-             strncmp(name, ".gnu.linkonce.td.", 17) == 0)
+             strncmp(name, ".llvm.linkonce.td.", 18) == 0)
       flags |= SectionFlags::TLS;
     else if (strcmp(name, ".tbss") == 0 ||
              strncmp(name, ".tbss.", 6) == 0 ||
-             strncmp(name, ".gnu.linkonce.tb.", 17) == 0)
+             strncmp(name, ".llvm.linkonce.tb.", 18) == 0)
       flags |= SectionFlags::BSS | SectionFlags::TLS;
   }
 
