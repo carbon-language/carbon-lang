@@ -45,22 +45,20 @@ namespace llvm {
   }
 
   namespace SectionFlags {
-    enum Flags {
-      Invalid    = -1UL,
-      None       = 0,
-      Code       = 1 << 0,    ///< Section contains code
-      Writeable  = 1 << 1,    ///< Section is writeable
-      BSS        = 1 << 2,    ///< Section contains only zeroes
-      Mergeable  = 1 << 3,    ///< Section contains mergeable data
-      Strings    = 1 << 4,    ///< Section contains null-terminated strings
-      TLS        = 1 << 5,    ///< Section contains thread-local data
-      Debug      = 1 << 6,    ///< Section contains debug data
-      Linkonce   = 1 << 7,    ///< Section is linkonce
-      TypeFlags  = 0xFF,
-      // Some gap for future flags
-      Named      = 1 << 23,    ///< Section is named
-      EntitySize = 0xFF << 24 ///< Entity size for mergeable sections
-    };
+    const unsigned Invalid    = -1UL;
+    const unsigned None       = 0;
+    const unsigned Code       = 1 << 0;  ///< Section contains code
+    const unsigned Writeable  = 1 << 1;  ///< Section is writeable
+    const unsigned BSS        = 1 << 2;  ///< Section contains only zeroes
+    const unsigned Mergeable  = 1 << 3;  ///< Section contains mergeable data
+    const unsigned Strings    = 1 << 4;  ///< Section contains C-type strings
+    const unsigned TLS        = 1 << 5;  ///< Section contains thread-local data
+    const unsigned Debug      = 1 << 6;  ///< Section contains debug data
+    const unsigned Linkonce   = 1 << 7;  ///< Section is linkonce
+    const unsigned TypeFlags  = 0xFF;
+    // Some gap for future flags
+    const unsigned Named      = 1 << 23; ///< Section is named
+    const unsigned EntitySize = 0xFF << 24; ///< Entity size for mergeable stuff
 
     static inline unsigned getEntitySize(unsigned Flags) {
       return (Flags >> 24) & 0xFF;
