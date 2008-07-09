@@ -323,8 +323,11 @@ X86DarwinTargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
       Type = C->getType();
 
     unsigned Size = TD->getABITypeSize(Type);
-    if (Size > 16)
+    if (Size > 16) {
+      // Too big for mergeable
       Size = 0;
+      Flags &= ~SectionFlags::Mergeable;
+    }
     Flags = SectionFlags::setEntitySize(Flags, Size);
   }
 
@@ -513,8 +516,11 @@ X86ELFTargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
       Type = C->getType();
 
     unsigned Size = TD->getABITypeSize(Type);
-    if (Size > 16)
+    if (Size > 16) {
+      // Too big for mergeable
       Size = 0;
+      Flags &= ~SectionFlags::Mergeable;
+    }
     Flags = SectionFlags::setEntitySize(Flags, Size);
   }
 
