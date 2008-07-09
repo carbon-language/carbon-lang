@@ -85,6 +85,10 @@ Token Preprocessor::LookAhead(unsigned N) {
   // size we new to a multiple of 16 tokens.  If the previous buffer has space
   // left, we can just grow it.  This means we only have to do the new 1/16th as
   // often.
+
+  // Optimized LookAhead(0) case.
+  if (N == 0)
+    return LookNext();
   
   Token *LookaheadTokens = new Token[N+1];
 
@@ -120,6 +124,28 @@ Token Preprocessor::LookAhead(unsigned N) {
   EnterTokenStream(LookaheadTokens, NumTokens, true /*DisableExpansion*/,
                    true /*OwnsTokens*/);
   return Tok;
+}
+
+/// PeekToken - Lexes one token into PeekedToken and pushes CurLexer,
+/// CurLexerToken into the IncludeMacroStack before setting them to null.
+void Preprocessor::PeekToken() {
+  Lex(PeekedToken);
+  // Cache the current Lexer, TokenLexer and set them both to null.
+  // When Lex() is called, PeekedToken will be "consumed".
+  IncludeMacroStack.push_back(IncludeStackInfo(CurLexer, CurDirLookup,
+                                               CurTokenLexer));
+  CurLexer = 0;
+  CurTokenLexer = 0;
+}
+
+/// ConsumedPeekedToken - Called when Lex() is about to return the PeekedToken
+/// and have it "consumed".
+void Preprocessor::ConsumedPeekedToken() {
+  assert(PeekedToken.getLocation().isValid() && "Confused Peeking?");
+  // Restore CurLexer, TokenLexer.
+  RemoveTopOfLexerStack();
+  // Make PeekedToken invalid.
+  PeekedToken.startToken();
 }
 
 

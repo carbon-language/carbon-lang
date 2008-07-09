@@ -138,6 +138,11 @@ class Preprocessor {
   enum { TokenLexerCacheSize = 8 };
   unsigned NumCachedTokenLexers;
   TokenLexer *TokenLexerCache[TokenLexerCacheSize];
+
+  /// PeekedToken - Cache the token that was retrieved through LookNext().
+  /// This is a valid token (its Location is valid) when LookNext() is
+  /// called and gets invalid again when it is "consumed" by Lex().
+  Token PeekedToken;
 public:
   Preprocessor(Diagnostic &diags, const LangOptions &opts, TargetInfo &target,
                SourceManager &SM, HeaderSearch &Headers);
@@ -258,8 +263,13 @@ public:
   void Lex(Token &Result) {
     if (CurLexer)
       CurLexer->Lex(Result);
-    else
+    else if (CurTokenLexer)
       CurTokenLexer->Lex(Result);
+    else {
+      // We have a peeked token that hasn't been consumed yet.
+      Result = PeekedToken;
+      ConsumedPeekedToken();
+    }
   }
   
   /// LexNonComment - Lex a token.  If it's a comment, keep lexing until we get
@@ -294,6 +304,27 @@ public:
   /// code paths if possible!
   ///
   Token LookAhead(unsigned N);
+
+  /// LookNext - Returns the next token that would be returned by Lex() without
+  /// consuming it.
+  const Token &LookNext() {
+    if (PeekedToken.getLocation().isInvalid()) {
+      // We don't have a peeked token that hasn't been consumed yet.
+      // Peek it now.
+      PeekToken();
+    }
+    return PeekedToken;
+  }
+
+private:
+  /// PeekToken - Lexes one token into PeekedToken and pushes CurLexer,
+  /// CurLexerToken into the IncludeMacroStack before setting them to null.
+  void PeekToken();
+
+  /// ConsumedPeekedToken - Called when Lex() is about to return the PeekedToken
+  /// and have it "consumed".
+  void ConsumedPeekedToken();
+public:
   
   /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
   /// the specified Token's location, translating the token's start
