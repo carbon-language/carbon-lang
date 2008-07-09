@@ -320,7 +320,7 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   DataSection_ = getUnnamedSection("\t.data", SectionFlags::Writeable);
   BSSSection_  = getUnnamedSection("\t.bss",
                                    SectionFlags::Writeable | SectionFlags::BSS);
-  ReadOnlySection_ = getUnnamedSection("\t.rodata", SectionFlags::None);
+  ReadOnlySection_ = getNamedSection("\t.rodata", SectionFlags::None);
   TLSDataSection_ = getNamedSection("\t.tdata",
                                     SectionFlags::Writeable | SectionFlags::TLS);
   TLSBSSSection_ = getNamedSection("\t.tbss",
