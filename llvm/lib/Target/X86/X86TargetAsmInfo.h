@@ -33,8 +33,25 @@ namespace llvm {
     virtual std::string PrintSectionFlags(unsigned flags) const;
 
   private:
-    const X86TargetMachine* X86TM;
     bool LowerToBSwap(CallInst *CI) const;
+  protected:
+    const X86TargetMachine* X86TM;
+  };
+
+  struct X86DarwinTargetAsmInfo : public X86TargetAsmInfo {
+    explicit X86DarwinTargetAsmInfo(const X86TargetMachine &TM);
+  };
+
+  struct X86ELFTargetAsmInfo : public X86TargetAsmInfo {
+    explicit X86ELFTargetAsmInfo(const X86TargetMachine &TM);
+  };
+
+  struct X86COFFTargetAsmInfo : public X86TargetAsmInfo {
+    explicit X86COFFTargetAsmInfo(const X86TargetMachine &TM);
+  };
+
+  struct X86WinTargetAsmInfo : public X86TargetAsmInfo {
+    explicit X86WinTargetAsmInfo(const X86TargetMachine &TM);
   };
 } // namespace llvm
 

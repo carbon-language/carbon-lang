@@ -36,7 +36,22 @@ static RegisterTarget<X86_64TargetMachine>
 Y("x86-64", "  64-bit X86: EM64T and AMD64");
 
 const TargetAsmInfo *X86TargetMachine::createTargetAsmInfo() const {
-  return new X86TargetAsmInfo(*this);
+  if (Subtarget.isFlavorIntel())
+    return new X86WinTargetAsmInfo(*this);
+  else
+    switch (Subtarget.TargetType) {
+     case X86Subtarget::isDarwin:
+      return new X86DarwinTargetAsmInfo(*this);
+     case X86Subtarget::isELF:
+      return new X86ELFTargetAsmInfo(*this);
+     case X86Subtarget::isMingw:
+     case X86Subtarget::isCygwin:
+      return new X86COFFTargetAsmInfo(*this);
+     case X86Subtarget::isWindows:
+      return new X86WinTargetAsmInfo(*this);
+     default:
+      return new X86TargetAsmInfo(*this);
+    }
 }
 
 unsigned X86_32TargetMachine::getJITMatchQuality() {

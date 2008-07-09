@@ -41,196 +41,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   X86TM = &TM;
 
-  // FIXME - Should be simplified.
-
   AsmTransCBE = x86_asm_table;
-
-  switch (Subtarget->TargetType) {
-  case X86Subtarget::isDarwin:
-    AlignmentIsInBytes = false;
-    TextAlignFillValue = 0x90;
-    GlobalPrefix = "_";
-    if (!Subtarget->is64Bit())
-      Data64bitsDirective = 0;       // we can't emit a 64-bit unit
-    ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
-    PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
-    BSSSection = 0;                       // no BSS section.
-    ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
-    ConstantPoolSection = "\t.const\n";
-    JumpTableDataSection = "\t.const\n";
-    CStringSection = "\t.cstring";
-    FourByteConstantSection = "\t.literal4\n";
-    EightByteConstantSection = "\t.literal8\n";
-    if (Subtarget->is64Bit())
-      SixteenByteConstantSection = "\t.literal16\n";
-    ReadOnlySection = "\t.const\n";
-    LCOMMDirective = "\t.lcomm\t";
-    SwitchToSectionDirective = "\t.section ";
-    StringConstantPrefix = "\1LC";
-    COMMDirectiveTakesAlignment = false;
-    HasDotTypeDotSizeDirective = false;
-    if (TM.getRelocationModel() == Reloc::Static) {
-      StaticCtorsSection = ".constructor";
-      StaticDtorsSection = ".destructor";
-    } else {
-      StaticCtorsSection = ".mod_init_func";
-      StaticDtorsSection = ".mod_term_func";
-    }
-    if (Subtarget->is64Bit()) {
-      PersonalityPrefix = "";
-      PersonalitySuffix = "+4@GOTPCREL";
-    } else {
-      PersonalityPrefix = "L";
-      PersonalitySuffix = "$non_lazy_ptr";
-    }
-    NeedsIndirectEncoding = true;
-    InlineAsmStart = "## InlineAsm Start";
-    InlineAsmEnd = "## InlineAsm End";
-    CommentString = "##";
-    SetDirective = "\t.set";
-    PCSymbol = ".";
-    UsedDirective = "\t.no_dead_strip\t";
-    WeakDefDirective = "\t.weak_definition ";
-    WeakRefDirective = "\t.weak_reference ";
-    HiddenDirective = "\t.private_extern ";
-    ProtectedDirective = "\t.globl\t";
-
-    // In non-PIC modes, emit a special label before jump tables so that the
-    // linker can perform more accurate dead code stripping.
-    if (TM.getRelocationModel() != Reloc::PIC_) {
-      // Emit a local label that is preserved until the linker runs.
-      JumpTableSpecialLabelPrefix = "l";
-    }
-
-    SupportsDebugInformation = true;
-    NeedsSet = true;
-    DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
-    DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
-    DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";
-    DwarfFrameSection = ".section __DWARF,__debug_frame,regular,debug";
-    DwarfPubNamesSection = ".section __DWARF,__debug_pubnames,regular,debug";
-    DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes,regular,debug";
-    DwarfStrSection = ".section __DWARF,__debug_str,regular,debug";
-    DwarfLocSection = ".section __DWARF,__debug_loc,regular,debug";
-    DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";
-    DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
-    DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
-
-    // Exceptions handling
-    SupportsExceptionHandling = true;
-    GlobalEHDirective = "\t.globl\t";
-    SupportsWeakOmittedEHFrame = false;
-    AbsoluteEHSectionOffsets = false;
-    DwarfEHFrameSection =
-    ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
-    DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
-    break;
-
-  case X86Subtarget::isELF:
-    ReadOnlySection = "\t.section\t.rodata";
-    FourByteConstantSection = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
-    EightByteConstantSection = "\t.section\t.rodata.cst8,\"aM\",@progbits,8";
-    SixteenByteConstantSection = "\t.section\t.rodata.cst16,\"aM\",@progbits,16";
-    CStringSection = "\t.section\t.rodata.str1.1,\"aMS\",@progbits,1";
-    PrivateGlobalPrefix = ".L";
-    WeakRefDirective = "\t.weak\t";
-    SetDirective = "\t.set\t";
-    PCSymbol = ".";
-
-    // Set up DWARF directives
-    HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
-
-    // Debug Information
-    AbsoluteDebugSectionOffsets = true;
-    SupportsDebugInformation = true;
-    DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"\",@progbits";
-    DwarfInfoSection =    "\t.section\t.debug_info,\"\",@progbits";
-    DwarfLineSection =    "\t.section\t.debug_line,\"\",@progbits";
-    DwarfFrameSection =   "\t.section\t.debug_frame,\"\",@progbits";
-    DwarfPubNamesSection ="\t.section\t.debug_pubnames,\"\",@progbits";
-    DwarfPubTypesSection ="\t.section\t.debug_pubtypes,\"\",@progbits";
-    DwarfStrSection =     "\t.section\t.debug_str,\"\",@progbits";
-    DwarfLocSection =     "\t.section\t.debug_loc,\"\",@progbits";
-    DwarfARangesSection = "\t.section\t.debug_aranges,\"\",@progbits";
-    DwarfRangesSection =  "\t.section\t.debug_ranges,\"\",@progbits";
-    DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
-
-    // Exceptions handling
-    if (!Subtarget->is64Bit())
-      SupportsExceptionHandling = true;
-    AbsoluteEHSectionOffsets = false;
-    DwarfEHFrameSection = "\t.section\t.eh_frame,\"aw\",@progbits";
-    DwarfExceptionSection = "\t.section\t.gcc_except_table,\"a\",@progbits";
-    break;
-
-  case X86Subtarget::isCygwin:
-  case X86Subtarget::isMingw:
-    GlobalPrefix = "_";
-    LCOMMDirective = "\t.lcomm\t";
-    COMMDirectiveTakesAlignment = false;
-    HasDotTypeDotSizeDirective = false;
-    StaticCtorsSection = "\t.section .ctors,\"aw\"";
-    StaticDtorsSection = "\t.section .dtors,\"aw\"";
-    HiddenDirective = NULL;
-    PrivateGlobalPrefix = "L";  // Prefix for private global symbols
-    WeakRefDirective = "\t.weak\t";
-    SetDirective = "\t.set\t";
-
-    // Set up DWARF directives
-    HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
-    AbsoluteDebugSectionOffsets = true;
-    AbsoluteEHSectionOffsets = false;
-    SupportsDebugInformation = true;
-    DwarfSectionOffsetDirective = "\t.secrel32\t";
-    DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"dr\"";
-    DwarfInfoSection =    "\t.section\t.debug_info,\"dr\"";
-    DwarfLineSection =    "\t.section\t.debug_line,\"dr\"";
-    DwarfFrameSection =   "\t.section\t.debug_frame,\"dr\"";
-    DwarfPubNamesSection ="\t.section\t.debug_pubnames,\"dr\"";
-    DwarfPubTypesSection ="\t.section\t.debug_pubtypes,\"dr\"";
-    DwarfStrSection =     "\t.section\t.debug_str,\"dr\"";
-    DwarfLocSection =     "\t.section\t.debug_loc,\"dr\"";
-    DwarfARangesSection = "\t.section\t.debug_aranges,\"dr\"";
-    DwarfRangesSection =  "\t.section\t.debug_ranges,\"dr\"";
-    DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"dr\"";
-    break;
-
-  case X86Subtarget::isWindows:
-    GlobalPrefix = "_";
-    HasDotTypeDotSizeDirective = false;
-    break;
-
-  default: break;
-  }
-
-  if (Subtarget->isFlavorIntel()) {
-    GlobalPrefix = "_";
-    CommentString = ";";
-
-    PrivateGlobalPrefix = "$";
-    AlignDirective = "\talign\t";
-    ZeroDirective = "\tdb\t";
-    ZeroDirectiveSuffix = " dup(0)";
-    AsciiDirective = "\tdb\t";
-    AscizDirective = 0;
-    Data8bitsDirective = "\tdb\t";
-    Data16bitsDirective = "\tdw\t";
-    Data32bitsDirective = "\tdd\t";
-    Data64bitsDirective = "\tdq\t";
-    HasDotTypeDotSizeDirective = false;
-
-    TextSection = "_text";
-    DataSection = "_data";
-    JumpTableDataSection = NULL;
-    SwitchToSectionDirective = "";
-    TextSectionStartSuffix = "\tsegment 'CODE'";
-    DataSectionStartSuffix = "\tsegment 'DATA'";
-    SectionEndDirectiveSuffix = "\tends\n";
-  }
-
-  // On Linux we must declare when we can use a non-executable stack.
-  if (Subtarget->isLinux())
-    NonexecutableStackDirective = "\t.section\t.note.GNU-stack,\"\",@progbits";
 
   AssemblerDialect = Subtarget->getAsmFlavor();
 }
@@ -313,6 +124,192 @@ bool X86TargetAsmInfo::ExpandInlineAsm(CallInst *CI) const {
     break;
   }
   return false;
+}
+
+X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
+  X86TargetAsmInfo(TM) {
+  bool is64Bit = X86TM->getSubtarget<X86Subtarget>().is64Bit();
+
+  AlignmentIsInBytes = false;
+  TextAlignFillValue = 0x90;
+  GlobalPrefix = "_";
+  if (!is64Bit)
+    Data64bitsDirective = 0;       // we can't emit a 64-bit unit
+  ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
+  PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
+  BSSSection = 0;                       // no BSS section.
+  ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
+  ConstantPoolSection = "\t.const\n";
+  JumpTableDataSection = "\t.const\n";
+  CStringSection = "\t.cstring";
+  FourByteConstantSection = "\t.literal4\n";
+  EightByteConstantSection = "\t.literal8\n";
+  // FIXME: Why don't always use this section?
+  if (is64Bit)
+    SixteenByteConstantSection = "\t.literal16\n";
+  ReadOnlySection = "\t.const\n";
+  LCOMMDirective = "\t.lcomm\t";
+  SwitchToSectionDirective = "\t.section ";
+  StringConstantPrefix = "\1LC";
+  COMMDirectiveTakesAlignment = false;
+  HasDotTypeDotSizeDirective = false;
+  if (TM.getRelocationModel() == Reloc::Static) {
+    StaticCtorsSection = ".constructor";
+    StaticDtorsSection = ".destructor";
+  } else {
+    StaticCtorsSection = ".mod_init_func";
+    StaticDtorsSection = ".mod_term_func";
+  }
+  if (is64Bit) {
+    PersonalityPrefix = "";
+    PersonalitySuffix = "+4@GOTPCREL";
+  } else {
+    PersonalityPrefix = "L";
+    PersonalitySuffix = "$non_lazy_ptr";
+  }
+  NeedsIndirectEncoding = true;
+  InlineAsmStart = "## InlineAsm Start";
+  InlineAsmEnd = "## InlineAsm End";
+  CommentString = "##";
+  SetDirective = "\t.set";
+  PCSymbol = ".";
+  UsedDirective = "\t.no_dead_strip\t";
+  WeakDefDirective = "\t.weak_definition ";
+  WeakRefDirective = "\t.weak_reference ";
+  HiddenDirective = "\t.private_extern ";
+  ProtectedDirective = "\t.globl\t";
+
+  // In non-PIC modes, emit a special label before jump tables so that the
+  // linker can perform more accurate dead code stripping.
+  if (TM.getRelocationModel() != Reloc::PIC_) {
+    // Emit a local label that is preserved until the linker runs.
+    JumpTableSpecialLabelPrefix = "l";
+  }
+
+  SupportsDebugInformation = true;
+  NeedsSet = true;
+  DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
+  DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
+  DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";
+  DwarfFrameSection = ".section __DWARF,__debug_frame,regular,debug";
+  DwarfPubNamesSection = ".section __DWARF,__debug_pubnames,regular,debug";
+  DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes,regular,debug";
+  DwarfStrSection = ".section __DWARF,__debug_str,regular,debug";
+  DwarfLocSection = ".section __DWARF,__debug_loc,regular,debug";
+  DwarfARangesSection = ".section __DWARF,__debug_aranges,regular,debug";
+  DwarfRangesSection = ".section __DWARF,__debug_ranges,regular,debug";
+  DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
+
+  // Exceptions handling
+  SupportsExceptionHandling = true;
+  GlobalEHDirective = "\t.globl\t";
+  SupportsWeakOmittedEHFrame = false;
+  AbsoluteEHSectionOffsets = false;
+  DwarfEHFrameSection =
+  ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
+  DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
+}
+
+X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
+  X86TargetAsmInfo(TM) {
+  bool is64Bit = X86TM->getSubtarget<X86Subtarget>().is64Bit();
+
+  ReadOnlySection = "\t.section\t.rodata";
+  FourByteConstantSection = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
+  EightByteConstantSection = "\t.section\t.rodata.cst8,\"aM\",@progbits,8";
+  SixteenByteConstantSection = "\t.section\t.rodata.cst16,\"aM\",@progbits,16";
+  CStringSection = "\t.section\t.rodata.str1.1,\"aMS\",@progbits,1";
+  PrivateGlobalPrefix = ".L";
+  WeakRefDirective = "\t.weak\t";
+  SetDirective = "\t.set\t";
+  PCSymbol = ".";
+
+  // Set up DWARF directives
+  HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
+
+  // Debug Information
+  AbsoluteDebugSectionOffsets = true;
+  SupportsDebugInformation = true;
+  DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"\",@progbits";
+  DwarfInfoSection =    "\t.section\t.debug_info,\"\",@progbits";
+  DwarfLineSection =    "\t.section\t.debug_line,\"\",@progbits";
+  DwarfFrameSection =   "\t.section\t.debug_frame,\"\",@progbits";
+  DwarfPubNamesSection ="\t.section\t.debug_pubnames,\"\",@progbits";
+  DwarfPubTypesSection ="\t.section\t.debug_pubtypes,\"\",@progbits";
+  DwarfStrSection =     "\t.section\t.debug_str,\"\",@progbits";
+  DwarfLocSection =     "\t.section\t.debug_loc,\"\",@progbits";
+  DwarfARangesSection = "\t.section\t.debug_aranges,\"\",@progbits";
+  DwarfRangesSection =  "\t.section\t.debug_ranges,\"\",@progbits";
+  DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
+
+  // Exceptions handling
+  if (!is64Bit)
+    SupportsExceptionHandling = true;
+  AbsoluteEHSectionOffsets = false;
+  DwarfEHFrameSection = "\t.section\t.eh_frame,\"aw\",@progbits";
+  DwarfExceptionSection = "\t.section\t.gcc_except_table,\"a\",@progbits";
+
+  // On Linux we must declare when we can use a non-executable stack.
+  if (X86TM->getSubtarget<X86Subtarget>().isLinux())
+    NonexecutableStackDirective = "\t.section\t.note.GNU-stack,\"\",@progbits";
+}
+
+X86COFFTargetAsmInfo::X86COFFTargetAsmInfo(const X86TargetMachine &TM):
+  X86TargetAsmInfo(TM) {
+  GlobalPrefix = "_";
+  LCOMMDirective = "\t.lcomm\t";
+  COMMDirectiveTakesAlignment = false;
+  HasDotTypeDotSizeDirective = false;
+  StaticCtorsSection = "\t.section .ctors,\"aw\"";
+  StaticDtorsSection = "\t.section .dtors,\"aw\"";
+  HiddenDirective = NULL;
+  PrivateGlobalPrefix = "L";  // Prefix for private global symbols
+  WeakRefDirective = "\t.weak\t";
+  SetDirective = "\t.set\t";
+
+  // Set up DWARF directives
+  HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
+  AbsoluteDebugSectionOffsets = true;
+  AbsoluteEHSectionOffsets = false;
+  SupportsDebugInformation = true;
+  DwarfSectionOffsetDirective = "\t.secrel32\t";
+  DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"dr\"";
+  DwarfInfoSection =    "\t.section\t.debug_info,\"dr\"";
+  DwarfLineSection =    "\t.section\t.debug_line,\"dr\"";
+  DwarfFrameSection =   "\t.section\t.debug_frame,\"dr\"";
+  DwarfPubNamesSection ="\t.section\t.debug_pubnames,\"dr\"";
+  DwarfPubTypesSection ="\t.section\t.debug_pubtypes,\"dr\"";
+  DwarfStrSection =     "\t.section\t.debug_str,\"dr\"";
+  DwarfLocSection =     "\t.section\t.debug_loc,\"dr\"";
+  DwarfARangesSection = "\t.section\t.debug_aranges,\"dr\"";
+  DwarfRangesSection =  "\t.section\t.debug_ranges,\"dr\"";
+  DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"dr\"";
+}
+
+X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
+  X86TargetAsmInfo(TM) {
+  GlobalPrefix = "_";
+  CommentString = ";";
+
+  PrivateGlobalPrefix = "$";
+  AlignDirective = "\talign\t";
+  ZeroDirective = "\tdb\t";
+  ZeroDirectiveSuffix = " dup(0)";
+  AsciiDirective = "\tdb\t";
+  AscizDirective = 0;
+  Data8bitsDirective = "\tdb\t";
+  Data16bitsDirective = "\tdw\t";
+  Data32bitsDirective = "\tdd\t";
+  Data64bitsDirective = "\tdq\t";
+  HasDotTypeDotSizeDirective = false;
+
+  TextSection = "_text";
+  DataSection = "_data";
+  JumpTableDataSection = NULL;
+  SwitchToSectionDirective = "";
+  TextSectionStartSuffix = "\tsegment 'CODE'";
+  DataSectionStartSuffix = "\tsegment 'DATA'";
+  SectionEndDirectiveSuffix = "\tends\n";
 }
 
 /// PreferredEHDataFormat - This hook allows the target to select data
