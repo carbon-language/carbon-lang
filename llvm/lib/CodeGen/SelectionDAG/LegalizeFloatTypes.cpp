@@ -380,10 +380,12 @@ bool DAGTypeLegalizer::SoftenFloatOperand(SDNode *N, unsigned OpNo) {
 
   case ISD::BIT_CONVERT: Res = SoftenFloatOp_BIT_CONVERT(N); break;
 
-  case ISD::BR_CC:     Res = SoftenFloatOp_BR_CC(N); break;
-  case ISD::SELECT_CC: Res = SoftenFloatOp_SELECT_CC(N); break;
-  case ISD::SETCC:     Res = SoftenFloatOp_SETCC(N); break;
-  case ISD::STORE:     Res = SoftenFloatOp_STORE(N, OpNo); break;
+  case ISD::BR_CC:      Res = SoftenFloatOp_BR_CC(N); break;
+  case ISD::FP_TO_SINT: Res = SoftenFloatOp_FP_TO_SINT(N); break;
+  case ISD::FP_TO_UINT: Res = SoftenFloatOp_FP_TO_UINT(N); break;
+  case ISD::SELECT_CC:  Res = SoftenFloatOp_SELECT_CC(N); break;
+  case ISD::SETCC:      Res = SoftenFloatOp_SETCC(N); break;
+  case ISD::STORE:      Res = SoftenFloatOp_STORE(N, OpNo); break;
   }
 
   // If the result is null, the sub-method took care of registering results etc.
@@ -512,6 +514,132 @@ SDOperand DAGTypeLegalizer::SoftenFloatOp_BR_CC(SDNode *N) {
   return DAG.UpdateNodeOperands(SDOperand(N, 0), N->getOperand(0),
                                 DAG.getCondCode(CCCode), NewLHS, NewRHS,
                                 N->getOperand(4));
+}
+
+SDOperand DAGTypeLegalizer::SoftenFloatOp_FP_TO_SINT(SDNode *N) {
+  MVT SVT = N->getOperand(0).getValueType();
+  MVT RVT = N->getValueType(0);
+
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+  switch (RVT.getSimpleVT()) {
+  case MVT::i32:
+    switch (SVT.getSimpleVT()) {
+    case MVT::f32:
+      LC = RTLIB::FPTOSINT_F32_I32;
+      break;
+    case MVT::f64:
+      LC = RTLIB::FPTOSINT_F64_I32;
+      break;
+    default:
+      break;
+    }
+    break;
+  case MVT::i64:
+    switch (SVT.getSimpleVT()) {
+    case MVT::f32:
+      LC = RTLIB::FPTOSINT_F32_I64;
+      break;
+    case MVT::f64:
+      LC = RTLIB::FPTOSINT_F64_I64;
+      break;
+    case MVT::f80:
+      LC = RTLIB::FPTOSINT_F80_I64;
+      break;
+    case MVT::ppcf128:
+      LC = RTLIB::FPTOSINT_PPCF128_I64;
+      break;
+    default:
+      break;
+    }
+    break;
+  case MVT::i128:
+    switch (SVT.getSimpleVT()) {
+    case MVT::f32:
+      LC = RTLIB::FPTOSINT_F32_I128;
+      break;
+    case MVT::f64:
+      LC = RTLIB::FPTOSINT_F64_I128;
+      break;
+    case MVT::f80:
+      LC = RTLIB::FPTOSINT_F80_I128;
+      break;
+    case MVT::ppcf128:
+      LC = RTLIB::FPTOSINT_PPCF128_I128;
+      break;
+    default:
+      break;
+    }
+    break;
+  default:
+    break;
+  }
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported FP_TO_SINT!");
+
+  SDOperand Op = GetSoftenedFloat(N->getOperand(0));
+  return MakeLibCall(LC, RVT, &Op, 1, false);
+}
+
+SDOperand DAGTypeLegalizer::SoftenFloatOp_FP_TO_UINT(SDNode *N) {
+  MVT SVT = N->getOperand(0).getValueType();
+  MVT RVT = N->getValueType(0);
+
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+  switch (RVT.getSimpleVT()) {
+  case MVT::i32:
+    switch (SVT.getSimpleVT()) {
+    case MVT::f32:
+      LC = RTLIB::FPTOUINT_F32_I32;
+      break;
+    case MVT::f64:
+      LC = RTLIB::FPTOUINT_F64_I32;
+      break;
+    default:
+      break;
+    }
+    break;
+  case MVT::i64:
+    switch (SVT.getSimpleVT()) {
+    case MVT::f32:
+      LC = RTLIB::FPTOUINT_F32_I64;
+      break;
+    case MVT::f64:
+      LC = RTLIB::FPTOUINT_F64_I64;
+      break;
+    case MVT::f80:
+      LC = RTLIB::FPTOUINT_F80_I64;
+      break;
+    case MVT::ppcf128:
+      LC = RTLIB::FPTOUINT_PPCF128_I64;
+      break;
+    default:
+      break;
+    }
+    break;
+  case MVT::i128:
+    switch (SVT.getSimpleVT()) {
+    case MVT::f32:
+      LC = RTLIB::FPTOUINT_F32_I128;
+      break;
+    case MVT::f64:
+      LC = RTLIB::FPTOUINT_F64_I128;
+      break;
+    case MVT::f80:
+      LC = RTLIB::FPTOUINT_F80_I128;
+      break;
+    case MVT::ppcf128:
+      LC = RTLIB::FPTOUINT_PPCF128_I128;
+      break;
+    default:
+      break;
+    }
+    break;
+  default:
+    break;
+  }
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported FP_TO_UINT!");
+
+  SDOperand Op = GetSoftenedFloat(N->getOperand(0));
+  return MakeLibCall(LC, RVT, &Op, 1, false);
 }
 
 SDOperand DAGTypeLegalizer::SoftenFloatOp_SELECT_CC(SDNode *N) {

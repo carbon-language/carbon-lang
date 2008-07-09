@@ -347,6 +347,8 @@ private:
   bool SoftenFloatOperand(SDNode *N, unsigned OpNo);
   SDOperand SoftenFloatOp_BIT_CONVERT(SDNode *N);
   SDOperand SoftenFloatOp_BR_CC(SDNode *N);
+  SDOperand SoftenFloatOp_FP_TO_SINT(SDNode *N);
+  SDOperand SoftenFloatOp_FP_TO_UINT(SDNode *N);
   SDOperand SoftenFloatOp_SELECT_CC(SDNode *N);
   SDOperand SoftenFloatOp_SETCC(SDNode *N);
   SDOperand SoftenFloatOp_STORE(SDNode *N, unsigned OpNo);
