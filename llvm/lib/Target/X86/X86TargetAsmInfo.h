@@ -34,16 +34,19 @@ namespace llvm {
   };
 
   struct X86DarwinTargetAsmInfo : public X86TargetAsmInfo {
+    const Section* TextCoalSection;
+    const Section* ConstDataCoalSection;
+    const Section* ConstDataSection;
+    const Section* DataCoalSection;
+
     explicit X86DarwinTargetAsmInfo(const X86TargetMachine &TM);
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
-    virtual std::string SelectSectionForGlobal(const GlobalValue *GV) const;
-    virtual unsigned SectionFlagsForGlobal(const GlobalValue *GV,
-                                           const char* name) const;
+    virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
     virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
                                                SectionKind::Kind kind) const;
-    std::string MergeableConstSection(const GlobalVariable *GV) const;
-    std::string MergeableStringSection(const GlobalVariable *GV) const;
+    const Section* MergeableConstSection(const GlobalVariable *GV) const;
+    const Section* MergeableStringSection(const GlobalVariable *GV) const;
   };
 
   struct X86ELFTargetAsmInfo : public X86TargetAsmInfo {
@@ -51,20 +54,16 @@ namespace llvm {
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
 
-    virtual std::string SelectSectionForGlobal(const GlobalValue *GV) const;
-    virtual unsigned SectionFlagsForGlobal(const GlobalValue *GV,
-                                           const char* name) const;
+    virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
     virtual std::string PrintSectionFlags(unsigned flags) const;
-    std::string MergeableConstSection(const GlobalVariable *GV) const;
-    std::string MergeableStringSection(const GlobalVariable *GV) const;
+    const Section* MergeableConstSection(const GlobalVariable *GV) const;
+    const Section* MergeableStringSection(const GlobalVariable *GV) const ;
   };
 
   struct X86COFFTargetAsmInfo : public X86TargetAsmInfo {
     explicit X86COFFTargetAsmInfo(const X86TargetMachine &TM);
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
-    virtual unsigned SectionFlagsForGlobal(const GlobalValue *GV,
-                                           const char* name) const;
     virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
                                                SectionKind::Kind kind) const;
     virtual std::string PrintSectionFlags(unsigned flags) const;

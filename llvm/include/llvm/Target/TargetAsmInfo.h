@@ -16,6 +16,7 @@
 #ifndef LLVM_TARGET_ASM_INFO_H
 #define LLVM_TARGET_ASM_INFO_H
 
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/DataTypes.h"
 #include <string>
 
@@ -45,6 +46,7 @@ namespace llvm {
 
   namespace SectionFlags {
     enum Flags {
+      Invalid    = -1UL,
       None       = 0,
       Code       = 1 << 0,    ///< Section contains code
       Writeable  = 1 << 1,    ///< Section is writeable
@@ -73,40 +75,67 @@ namespace llvm {
   class CallInst;
   class GlobalValue;
 
+  class Section {
+    friend class TargetAsmInfo;
+    friend class StringMapEntry<Section>;
+
+    std::string Name;
+    unsigned Flags;
+
+    explicit Section(unsigned F = SectionFlags::Invalid):Flags(F) { }
+  public:
+    bool isNamed() const { return Flags & SectionFlags::Named; }
+    unsigned getEntitySize() const { return (Flags >> 24) & 0xFF; }
+    const std::string& getName() const { return Name; }
+  };
+
   /// TargetAsmInfo - This class is intended to be used as a base class for asm
   /// properties and features specific to the target.
   class TargetAsmInfo {
+  private:
+    mutable StringMap<Section> Sections;
   protected:
     //===------------------------------------------------------------------===//
     // Properties to be set by the target writer, used to configure asm printer.
     //
-    
+
     /// TextSection - Section directive for standard text.
     ///
     const char *TextSection;              // Defaults to ".text".
-    
+    const Section *TextSection_;
+
     /// DataSection - Section directive for standard data.
     ///
     const char *DataSection;              // Defaults to ".data".
+    const Section *DataSection_;
 
     /// BSSSection - Section directive for uninitialized data.  Null if this
     /// target doesn't support a BSS section.
     ///
     const char *BSSSection;               // Default to ".bss".
+    const Section *BSSSection_;
+
+    /// ReadOnlySection - This is the directive that is emitted to switch to a
+    /// read-only section for constant data (e.g. data declared const,
+    /// jump tables).
+    const char *ReadOnlySection;          // Defaults to NULL
+    const Section *ReadOnlySection_;
 
     /// TLSDataSection - Section directive for Thread Local data.
     ///
     const char *TLSDataSection;// Defaults to ".section .tdata,"awT",@progbits".
+    const Section *TLSDataSection_;
 
     /// TLSBSSSection - Section directive for Thread Local uninitialized data.
     /// Null if this target doesn't support a BSS section.
     ///
     const char *TLSBSSSection;// Default to ".section .tbss,"awT",@nobits".
+    const Section *TLSBSSSection_;
 
     /// ZeroFillDirective - Directive for emitting a global to the ZeroFill
     /// section on this target.  Null if this target doesn't support zerofill.
     const char *ZeroFillDirective;        // Default is null.
-    
+
     /// NonexecutableStackDirective - Directive for declaring to the
     /// linker and beyond that the emitted code does not require stack
     /// memory to be executable.
@@ -274,6 +303,7 @@ namespace llvm {
     /// other null bytes) on this target. This is commonly supported as
     /// ".cstring".
     const char *CStringSection;           // Defaults to NULL
+    const Section *CStringSection_;
 
     /// StaticCtorsSection - This is the directive that is emitted to switch to
     /// a section to emit the static constructor list.
@@ -289,13 +319,11 @@ namespace llvm {
     /// SixteenByteConstantSection - These are special sections where we place
     /// 4-, 8-, and 16- byte constant literals.
     const char *FourByteConstantSection;
+    const Section *FourByteConstantSection_;
     const char *EightByteConstantSection;
+    const Section *EightByteConstantSection_;
     const char *SixteenByteConstantSection;
-
-    /// ReadOnlySection - This is the directive that is emitted to switch to a
-    /// read-only section for constant data (e.g. data declared const,
-    /// jump tables).
-    const char *ReadOnlySection;          // Defaults to NULL
+    const Section *SixteenByteConstantSection_;
 
     //===--- Global Variable Emission Directives --------------------------===//
     
@@ -449,6 +477,11 @@ namespace llvm {
     TargetAsmInfo();
     virtual ~TargetAsmInfo();
 
+    const Section* getNamedSection(const char *Name,
+                                   unsigned Flags = SectionFlags::None) const;
+    const Section* getUnnamedSection(const char *Directive,
+                                     unsigned Flags = SectionFlags::None) const;
+
     /// Measure the specified inline asm to determine an approximation of its
     /// length.
     virtual unsigned getInlineAsmLength(const char *Str) const;
@@ -490,24 +523,45 @@ namespace llvm {
 
     virtual std::string PrintSectionFlags(unsigned flags) const { return ""; }
 
-    virtual std::string SelectSectionForGlobal(const GlobalValue *GV) const;
+    virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
 
     // Accessors.
     //
     const char *getTextSection() const {
       return TextSection;
     }
+    const Section *getTextSection_() const {
+      return TextSection_;
+    }
     const char *getDataSection() const {
       return DataSection;
+    }
+    const Section *getDataSection_() const {
+      return DataSection_;
     }
     const char *getBSSSection() const {
       return BSSSection;
     }
+    const Section *getBSSSection_() const {
+      return BSSSection_;
+    }
+    const char *getReadOnlySection() const {
+      return ReadOnlySection;
+    }
+    const Section *getReadOnlySection_() const {
+      return ReadOnlySection_;
+    }
     const char *getTLSDataSection() const {
       return TLSDataSection;
     }
+    const Section *getTLSDataSection_() const {
+      return TLSDataSection_;
+    }
     const char *getTLSBSSSection() const {
       return TLSBSSSection;
+    }
+    const Section *getTLSBSSSection_() const {
+      return TLSBSSSection_;
     }
     const char *getZeroFillDirective() const {
       return ZeroFillDirective;
@@ -626,6 +680,9 @@ namespace llvm {
     const char *getCStringSection() const {
       return CStringSection;
     }
+    const Section *getCStringSection_() const {
+      return CStringSection_;
+    }
     const char *getStaticCtorsSection() const {
       return StaticCtorsSection;
     }
@@ -635,14 +692,20 @@ namespace llvm {
     const char *getFourByteConstantSection() const {
       return FourByteConstantSection;
     }
+    const Section *getFourByteConstantSection_() const {
+      return FourByteConstantSection_;
+    }
     const char *getEightByteConstantSection() const {
       return EightByteConstantSection;
+    }
+    const Section *getEightByteConstantSection_() const {
+      return EightByteConstantSection_;
     }
     const char *getSixteenByteConstantSection() const {
       return SixteenByteConstantSection;
     }
-    const char *getReadOnlySection() const {
-      return ReadOnlySection;
+    const Section *getSixteenByteConstantSection_() const {
+      return SixteenByteConstantSection_;
     }
     const char *getGlobalDirective() const {
       return GlobalDirective;

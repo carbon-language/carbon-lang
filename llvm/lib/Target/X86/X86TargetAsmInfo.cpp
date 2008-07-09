@@ -142,12 +142,31 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   ConstantPoolSection = "\t.const\n";
   JumpTableDataSection = "\t.const\n";
   CStringSection = "\t.cstring";
+  CStringSection_ = getUnnamedSection("\t.cstring",
+                               SectionFlags::Mergeable | SectionFlags::Strings);
   FourByteConstantSection = "\t.literal4\n";
-  EightByteConstantSection = "\t.literal8\n";
+  FourByteConstantSection_ = getUnnamedSection("\t.literal4\n",
+                                               SectionFlags::Mergeable);
+  EightByteConstantSection_ = getUnnamedSection("\t.literal8\n",
+                                                SectionFlags::Mergeable);
   // FIXME: Why don't always use this section?
-  if (is64Bit)
+  if (is64Bit) {
     SixteenByteConstantSection = "\t.literal16\n";
+    SixteenByteConstantSection_ = getUnnamedSection("\t.literal16\n",
+                                                    SectionFlags::Mergeable);
+  }
   ReadOnlySection = "\t.const\n";
+  ReadOnlySection_ = getUnnamedSection("\t.const\n", SectionFlags::None);
+  TextCoalSection =
+  getUnnamedSection(".section __TEXT,__textcoal_nt,coalesced,pure_instructions",
+                    SectionFlags::Code);
+  ConstDataCoalSection =
+    getUnnamedSection(".section __DATA,__const_coal,coalesced",
+                      SectionFlags::None);
+  ConstDataSection = getUnnamedSection(".const_data", SectionFlags::None);
+  DataCoalSection = getUnnamedSection(".section __DATA,__datacoal_nt,coalesced",
+                                      SectionFlags::Writeable);
+
   LCOMMDirective = "\t.lcomm\t";
   SwitchToSectionDirective = "\t.section ";
   StringConstantPrefix = "\1LC";
@@ -221,7 +240,7 @@ X86DarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
     return DW_EH_PE_absptr;
 }
 
-std::string
+const Section*
 X86DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind Kind = SectionKindForGlobal(GV);
   bool isWeak = GV->isWeakForLinker();
@@ -229,29 +248,19 @@ X86DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   switch (Kind) {
    case SectionKind::Text:
     if (isWeak)
-      return ".section __TEXT,__textcoal_nt,coalesced,pure_instructions";
+      return TextCoalSection;
     else
-      return getTextSection();
+      return getTextSection_();
    case SectionKind::Data:
    case SectionKind::ThreadData:
    case SectionKind::BSS:
    case SectionKind::ThreadBSS:
-    if (cast<GlobalVariable>(GV)->isConstant()) {
-      if (isWeak)
-        return ".section __DATA,__const_coal,coalesced";
-      else
-        return ".const_data";
-    } else {
-      if (isWeak)
-        return ".section __DATA,__datacoal_nt,coalesced";
-      else
-        return getDataSection();
-    }
-   case SectionKind::ROData:
-    if (isWeak)
-      return ".section __DATA,__const_coal,coalesced";
+    if (cast<GlobalVariable>(GV)->isConstant())
+      return (isWeak ? ConstDataCoalSection : ConstDataSection);
     else
-      return getReadOnlySection();
+      return (isWeak ? DataCoalSection : getDataSection_());
+   case SectionKind::ROData:
+    return (isWeak ? ConstDataCoalSection : getReadOnlySection_());
    case SectionKind::RODataMergeStr:
     return MergeableStringSection(cast<GlobalVariable>(GV));
    case SectionKind::RODataMergeConst:
@@ -263,34 +272,37 @@ X86DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   // FIXME: Do we have any extra special weird cases?
 }
 
-std::string
+const Section*
 X86DarwinTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
-  unsigned Flags = SectionFlagsForGlobal(GV, GV->getSection().c_str());
-  unsigned Size = SectionFlags::getEntitySize(Flags);
+  const TargetData *TD = X86TM->getTargetData();
+  Constant *C = cast<GlobalVariable>(GV)->getInitializer();
+  const Type *Type = cast<ConstantArray>(C)->getType()->getElementType();
 
+  unsigned Size = TD->getABITypeSize(Type);
   if (Size) {
     const TargetData *TD = X86TM->getTargetData();
     unsigned Align = TD->getPreferredAlignment(GV);
     if (Align <= 32)
-      return getCStringSection();
+      return getCStringSection_();
   }
 
-  return getReadOnlySection();
+  return getReadOnlySection_();
 }
 
-std::string
+const Section*
 X86DarwinTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
-  unsigned Flags = SectionFlagsForGlobal(GV, GV->getSection().c_str());
-  unsigned Size = SectionFlags::getEntitySize(Flags);
+  const TargetData *TD = X86TM->getTargetData();
+  Constant *C = cast<GlobalVariable>(GV)->getInitializer();
 
+  unsigned Size = TD->getABITypeSize(C->getType());
   if (Size == 4)
-    return FourByteConstantSection;
+    return FourByteConstantSection_;
   else if (Size == 8)
-    return EightByteConstantSection;
+    return EightByteConstantSection_;
   else if (Size == 16 && X86TM->getSubtarget<X86Subtarget>().is64Bit())
-    return SixteenByteConstantSection;
+    return SixteenByteConstantSection_;
 
-  return getReadOnlySection();
+  return getReadOnlySection_();
 }
 
 std::string
@@ -300,43 +312,19 @@ X86DarwinTargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
   return "";
 }
 
-unsigned
-X86DarwinTargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
-                                              const char* name) const {
-  unsigned Flags =
-    TargetAsmInfo::SectionFlagsForGlobal(GV,
-                                         GV->getSection().c_str());
-
-  // If there was decision to put stuff into mergeable section - calculate
-  // entity size
-  if (Flags & SectionFlags::Mergeable) {
-    const TargetData *TD = X86TM->getTargetData();
-    Constant *C = cast<GlobalVariable>(GV)->getInitializer();
-    const Type *Type;
-
-    if (Flags & SectionFlags::Strings) {
-      const ConstantArray *CVA = cast<ConstantArray>(C);
-      Type = CVA->getType()->getElementType();
-    } else
-      Type = C->getType();
-
-    unsigned Size = TD->getABITypeSize(Type);
-    if (Size > 16 ||
-        !(Flags & SectionFlags::Strings ||
-          (Size == 4 || Size == 8 || Size == 16))) {
-      // Not suitable for mergeable
-      Size = 0;
-      Flags &= ~SectionFlags::Mergeable;
-    }
-    Flags = SectionFlags::setEntitySize(Flags, Size);
-  }
-
-  return Flags;
-}
-
 X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   X86TargetAsmInfo(TM) {
   bool is64Bit = X86TM->getSubtarget<X86Subtarget>().is64Bit();
+
+  TextSection_ = getUnnamedSection("\t.text", SectionFlags::Code);
+  DataSection_ = getUnnamedSection("\t.data", SectionFlags::Writeable);
+  BSSSection_  = getUnnamedSection("\t.bss",
+                                   SectionFlags::Writeable | SectionFlags::BSS);
+  ReadOnlySection_ = getUnnamedSection("\t.rodata", SectionFlags::None);
+  TLSDataSection_ = getNamedSection("\t.tdata",
+                                    SectionFlags::Writeable | SectionFlags::TLS);
+  TLSBSSSection_ = getNamedSection("\t.tbss",
+                SectionFlags::Writeable | SectionFlags::TLS | SectionFlags::BSS);
 
   ReadOnlySection = ".rodata";
   FourByteConstantSection = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
@@ -417,9 +405,9 @@ X86ELFTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
   }
 }
 
-std::string
+const Section*
 X86ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
-  SectionKind::Kind kind = SectionKindForGlobal(GV);
+  SectionKind::Kind Kind = SectionKindForGlobal(GV);
 
   if (const Function *F = dyn_cast<Function>(GV)) {
     switch (F->getLinkage()) {
@@ -427,32 +415,36 @@ X86ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
      case Function::InternalLinkage:
      case Function::DLLExportLinkage:
      case Function::ExternalLinkage:
-      return getTextSection();
+      return getTextSection_();
      case Function::WeakLinkage:
      case Function::LinkOnceLinkage:
-      return UniqueSectionForGlobal(F, kind);
+      std::string Name = UniqueSectionForGlobal(GV, Kind);
+      unsigned Flags = SectionFlagsForGlobal(GV, Name.c_str());
+      return getNamedSection(Name.c_str(), Flags);
     }
   } else if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
-    if (GVar->isWeakForLinker())
-      return UniqueSectionForGlobal(GVar, kind);
-    else {
-      switch (kind) {
+    if (GVar->isWeakForLinker()) {
+      std::string Name = UniqueSectionForGlobal(GVar, Kind);
+      unsigned Flags = SectionFlagsForGlobal(GVar, Name.c_str());
+      return getNamedSection(Name.c_str(), Flags);
+    } else {
+      switch (Kind) {
        case SectionKind::Data:
-        return getDataSection();
+        return getDataSection_();
        case SectionKind::BSS:
         // ELF targets usually have BSS sections
-        return getBSSSection();
+        return getBSSSection_();
        case SectionKind::ROData:
-        return getReadOnlySection();
+        return getReadOnlySection_();
        case SectionKind::RODataMergeStr:
         return MergeableStringSection(GVar);
        case SectionKind::RODataMergeConst:
         return MergeableConstSection(GVar);
        case SectionKind::ThreadData:
         // ELF targets usually support TLS stuff
-        return getTLSDataSection();
+        return getTLSDataSection_();
        case SectionKind::ThreadBSS:
-        return getTLSBSSSection();
+        return getTLSBSSSection_();
        default:
         assert(0 && "Unsuported section kind for global");
       }
@@ -461,86 +453,51 @@ X86ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
     assert(0 && "Unsupported global");
 }
 
-std::string
+const Section*
 X86ELFTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
-  unsigned Flags = SectionFlagsForGlobal(GV, GV->getSection().c_str());
-  unsigned Size = SectionFlags::getEntitySize(Flags);
+  const TargetData *TD = X86TM->getTargetData();
+  Constant *C = cast<GlobalVariable>(GV)->getInitializer();
+  const Type *Type = C->getType();
 
   // FIXME: string here is temporary, until stuff will fully land in.
   // We cannot use {Four,Eight,Sixteen}ByteConstantSection here, since it's
   // currently directly used by asmprinter.
-  if (Size == 4 || Size == 8 || Size == 16)
-    return ".rodata.cst" + utostr(Size);
+  unsigned Size = TD->getABITypeSize(Type);
+  if (Size == 4 || Size == 8 || Size == 16) {
+    std::string Name =  ".rodata.cst" + utostr(Size);
 
-  return getReadOnlySection();
+    return getNamedSection(Name.c_str(),
+                           SectionFlags::setEntitySize(SectionFlags::Mergeable,
+                                                       Size));
+  }
+
+  return getReadOnlySection_();
 }
 
-std::string
+const Section*
 X86ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
-  unsigned Flags = SectionFlagsForGlobal(GV, GV->getSection().c_str());
-  unsigned Size = SectionFlags::getEntitySize(Flags);
+  const TargetData *TD = X86TM->getTargetData();
+  Constant *C = cast<GlobalVariable>(GV)->getInitializer();
+  const ConstantArray *CVA = cast<ConstantArray>(C);
+  const Type *Type = CVA->getType()->getElementType();
 
-  if (Size) {
+  unsigned Size = TD->getABITypeSize(Type);
+  if (Size <= 16) {
     // We also need alignment here
     const TargetData *TD = X86TM->getTargetData();
     unsigned Align = TD->getPreferredAlignment(GV);
     if (Align < Size)
       Align = Size;
 
-    return getCStringSection() + utostr(Size) + '.' + utostr(Align);
+    std::string Name = getCStringSection() + utostr(Size) + '.' + utostr(Align);
+    unsigned Flags = SectionFlags::setEntitySize(SectionFlags::Mergeable |
+                                                 SectionFlags::Strings,
+                                                 Size);
+    return getNamedSection(Name.c_str(), Flags);
   }
 
-  return getReadOnlySection();
+  return getReadOnlySection_();
 }
-
-unsigned
-X86ELFTargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
-                                           const char* name) const {
-  unsigned Flags =
-    TargetAsmInfo::SectionFlagsForGlobal(GV,
-                                         GV->getSection().c_str());
-
-  // If there was decision to put stuff into mergeable section - calculate
-  // entity size
-  if (Flags & SectionFlags::Mergeable) {
-    const TargetData *TD = X86TM->getTargetData();
-    Constant *C = cast<GlobalVariable>(GV)->getInitializer();
-    const Type *Type;
-
-    if (Flags & SectionFlags::Strings) {
-      const ConstantArray *CVA = cast<ConstantArray>(C);
-      Type = CVA->getType()->getElementType();
-    } else
-      Type = C->getType();
-
-    unsigned Size = TD->getABITypeSize(Type);
-    // FIXME: size check here ugly, and will hopefully have gone, when we will
-    // have sane interface for attaching flags to sections.
-    if (Size > 16 ||
-        !(Flags & SectionFlags::Strings ||
-          (Size == 4 || Size == 8 || Size == 16))) {
-      // Not suitable for mergeable
-      Size = 0;
-      Flags &= ~SectionFlags::Mergeable;
-    }
-    Flags = SectionFlags::setEntitySize(Flags, Size);
-  }
-
-  // FIXME: This is hacky and will be removed when switching from std::string
-  // sections into 'general' ones
-
-  // Mark section as named, when needed (so, we we will need .section directive
-  // to switch into it).
-  unsigned TypeFlags = Flags & SectionFlags::TypeFlags;
-  if (!TypeFlags /* Read-only section */ ||
-      (TypeFlags & (SectionFlags::Mergeable |
-                    SectionFlags::TLS |
-                    SectionFlags::Linkonce)))
-    Flags |= SectionFlags::Named;
-
-  return Flags;
-}
-
 
 std::string X86ELFTargetAsmInfo::PrintSectionFlags(unsigned flags) const {
   std::string Flags = ",\"";
@@ -661,25 +618,6 @@ X86COFFTargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
    default:
     assert(0 && "Unknown section kind");
   }
-}
-
-unsigned
-X86COFFTargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
-                                            const char* name) const {
-  unsigned Flags =
-    TargetAsmInfo::SectionFlagsForGlobal(GV,
-                                         GV->getSection().c_str());
-
-  // Mark section as named, when needed (so, we we will need .section directive
-  // to switch into it).
-  unsigned TypeFlags = Flags & SectionFlags::TypeFlags;
-  if (!TypeFlags /* Read-only section */ ||
-      (TypeFlags & (SectionFlags::Mergeable |
-                    SectionFlags::TLS |
-                    SectionFlags::Linkonce)))
-    Flags |= SectionFlags::Named;
-
-  return Flags;
 }
 
 std::string X86COFFTargetAsmInfo::PrintSectionFlags(unsigned flags) const {

@@ -27,10 +27,17 @@ using namespace llvm;
 
 TargetAsmInfo::TargetAsmInfo() :
   TextSection("\t.text"),
+  TextSection_(0),
   DataSection("\t.data"),
+  DataSection_(0),
   BSSSection("\t.bss"),
+  BSSSection_(0),
+  ReadOnlySection(0),
+  ReadOnlySection_(0),
   TLSDataSection("\t.section .tdata,\"awT\",@progbits"),
+  TLSDataSection_(0),
   TLSBSSSection("\t.section .tbss,\"awT\",@nobits"),
+  TLSBSSSection_(0),
   ZeroFillDirective(0),
   NonexecutableStackDirective(0),
   NeedsSet(false),
@@ -71,12 +78,15 @@ TargetAsmInfo::TargetAsmInfo() :
   JumpTableDataSection("\t.section .rodata"),
   JumpTableDirective(0),
   CStringSection(0),
+  CStringSection_(0),
   StaticCtorsSection("\t.section .ctors,\"aw\",@progbits"),
   StaticDtorsSection("\t.section .dtors,\"aw\",@progbits"),
   FourByteConstantSection(0),
+  FourByteConstantSection_(0),
   EightByteConstantSection(0),
+  EightByteConstantSection_(0),
   SixteenByteConstantSection(0),
-  ReadOnlySection(0),
+  SixteenByteConstantSection_(0),
   GlobalDirective("\t.globl\t"),
   SetDirective(0),
   LCOMMDirective(0),
@@ -112,6 +122,8 @@ TargetAsmInfo::TargetAsmInfo() :
   DwarfEHFrameSection(".eh_frame"),
   DwarfExceptionSection(".gcc_except_table"),
   AsmTransCBE(0) {
+  TextSection_ = getUnnamedSection(TextSection);
+  DataSection_ = getUnnamedSection(DataSection);
 }
 
 TargetAsmInfo::~TargetAsmInfo() {
@@ -257,51 +269,51 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
 
 std::string
 TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
-  unsigned Flags = SectionFlagsForGlobal(GV, GV->getSection().c_str());
-
-  std::string Name;
-
-  // FIXME: Should we use some hashing based on section name and just check
-  // flags?
-
+  const Section* S;
   // Select section name
   if (GV->hasSection()) {
     // Honour section already set, if any
-    Name = GV->getSection();
+    unsigned Flags = SectionFlagsForGlobal(GV,
+                                           GV->getSection().c_str());
+    S = getNamedSection(GV->getSection().c_str(), Flags);
   } else {
     // Use default section depending on the 'type' of global
-    Name = SelectSectionForGlobal(GV);
+    S = SelectSectionForGlobal(GV);
   }
+
+  std::string Name = S->Name;
 
   // If section is named we need to switch into it via special '.section'
   // directive and also append funky flags. Otherwise - section name is just
   // some magic assembler directive.
-  if (Flags & SectionFlags::Named)
-    Name = getSwitchToSectionDirective() + Name + PrintSectionFlags(Flags);
+  if (S->isNamed())
+    Name = getSwitchToSectionDirective() + Name + PrintSectionFlags(S->Flags);
 
   return Name;
 }
 
 // Lame default implementation. Calculate the section name for global.
-std::string
+const Section*
 TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind Kind = SectionKindForGlobal(GV);
 
-  if (GV->isWeakForLinker())
-    return UniqueSectionForGlobal(GV, Kind);
-  else {
+  if (GV->isWeakForLinker()) {
+    std::string Name = UniqueSectionForGlobal(GV, Kind);
+    unsigned Flags = SectionFlagsForGlobal(GV, Name.c_str());
+    return getNamedSection(Name.c_str(), Flags);
+  } else {
     if (Kind == SectionKind::Text)
-      return getTextSection();
-    else if (Kind == SectionKind::BSS && getBSSSection())
-      return getBSSSection();
-    else if (getReadOnlySection() &&
+      return getTextSection_();
+    else if (Kind == SectionKind::BSS && getBSSSection_())
+      return getBSSSection_();
+    else if (getReadOnlySection_() &&
              (Kind == SectionKind::ROData ||
               Kind == SectionKind::RODataMergeConst ||
               Kind == SectionKind::RODataMergeStr))
-      return getReadOnlySection();
+      return getReadOnlySection_();
   }
 
-  return getDataSection();
+  return getDataSection_();
 }
 
 std::string
@@ -325,4 +337,30 @@ TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
    default:
     assert(0 && "Unknown section kind");
   }
+}
+
+const Section*
+TargetAsmInfo::getNamedSection(const char *Name, unsigned Flags) const {
+  Section& S = Sections[Name];
+
+  // This is newly-created section, set it up properly.
+  if (S.Flags == SectionFlags::Invalid) {
+    S.Flags = Flags | SectionFlags::Named;
+    S.Name = Name;
+  }
+
+  return &S;
+}
+
+const Section*
+TargetAsmInfo::getUnnamedSection(const char *Directive, unsigned Flags) const {
+  Section& S = Sections[Directive];
+
+  // This is newly-created section, set it up properly.
+  if (S.Flags == SectionFlags::Invalid) {
+    S.Flags = Flags & ~SectionFlags::Named;
+    S.Name = Directive;
+  }
+
+  return &S;
 }
