@@ -1437,6 +1437,9 @@ class MemSDNode : public SDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
 
 private:
+  // MemoryVT - VT of in-memory value.
+  MVT MemoryVT;
+
   //! SrcValue - Memory location for alias analysis.
   const Value *SrcValue;
 
@@ -1448,7 +1451,7 @@ private:
   unsigned Flags;
 
 public:
-  MemSDNode(unsigned Opc, SDVTList VTs,
+  MemSDNode(unsigned Opc, SDVTList VTs, MVT MemoryVT,
             const Value *srcValue, int SVOff,
             unsigned alignment, bool isvolatile);
 
@@ -1460,9 +1463,17 @@ public:
   const Value *getSrcValue() const { return SrcValue; }
   int getSrcValueOffset() const { return SVOffset; }
   
+  /// getMemoryVT - Return the type of the in-memory value.
+  MVT getMemoryVT() const { return MemoryVT; }
+    
   /// getMemOperand - Return a MachineMemOperand object describing the memory
   /// reference performed by operation.
-  virtual MachineMemOperand getMemOperand() const = 0;
+  MachineMemOperand getMemOperand() const;
+
+  const SDOperand &getChain() const { return getOperand(0); }
+  const SDOperand &getBasePtr() const {
+    return getOperand(getOpcode() == ISD::STORE ? 2 : 1);
+  }
 
   // Methods to support isa and dyn_cast
   static bool classof(const MemSDNode *) { return true; }
@@ -1501,7 +1512,7 @@ class AtomicSDNode : public MemSDNode {
   AtomicSDNode(unsigned Opc, SDVTList VTL, SDOperand Chain, SDOperand Ptr, 
                SDOperand Cmp, SDOperand Swp, const Value* SrcVal,
                unsigned Align=0)
-    : MemSDNode(Opc, VTL, SrcVal, /*SVOffset=*/0,
+    : MemSDNode(Opc, VTL, Cmp.getValueType(), SrcVal, /*SVOffset=*/0,
                 Align, /*isVolatile=*/true) {
     Ops[0] = Chain;
     Ops[1] = Ptr;
@@ -1511,7 +1522,7 @@ class AtomicSDNode : public MemSDNode {
   }
   AtomicSDNode(unsigned Opc, SDVTList VTL, SDOperand Chain, SDOperand Ptr, 
                SDOperand Val, const Value* SrcVal, unsigned Align=0)
-    : MemSDNode(Opc, VTL, SrcVal, /*SVOffset=*/0,
+    : MemSDNode(Opc, VTL, Val.getValueType(), SrcVal, /*SVOffset=*/0,
                 Align, /*isVolatile=*/true) {
     Ops[0] = Chain;
     Ops[1] = Ptr;
@@ -1519,16 +1530,11 @@ class AtomicSDNode : public MemSDNode {
     InitOperands(Ops, 3);
   }
   
-  const SDOperand &getChain() const { return getOperand(0); }
   const SDOperand &getBasePtr() const { return getOperand(1); }
   const SDOperand &getVal() const { return getOperand(2); }
 
   bool isCompareAndSwap() const { return getOpcode() == ISD::ATOMIC_CMP_SWAP; }
 
-  /// getMemOperand - Return a MachineMemOperand object describing the memory
-  /// reference performed by this atomic load/store.
-  virtual MachineMemOperand getMemOperand() const;
-  
   // Methods to support isa and dyn_cast
   static bool classof(const AtomicSDNode *) { return true; }
   static bool classof(const SDNode *N) {
@@ -2052,9 +2058,6 @@ private:
   // AddrMode - unindexed, pre-indexed, post-indexed.
   ISD::MemIndexedMode AddrMode;
 
-  // MemoryVT - VT of in-memory value.
-  MVT MemoryVT;
-
 protected:
   //! Operand array for load and store
   /*!
@@ -2067,7 +2070,7 @@ public:
   LSBaseSDNode(ISD::NodeType NodeTy, SDOperand *Operands, unsigned numOperands,
                SDVTList VTs, ISD::MemIndexedMode AM, MVT VT,
                const Value *SV, int SVO, unsigned Align, bool Vol)
-    : MemSDNode(NodeTy, VTs, SV, SVO, Align, Vol), AddrMode(AM), MemoryVT(VT) {
+    : MemSDNode(NodeTy, VTs, VT, SV, SVO, Align, Vol), AddrMode(AM) {
     for (unsigned i = 0; i != numOperands; ++i)
       Ops[i] = Operands[i];
     InitOperands(Ops, numOperands);
@@ -2076,16 +2079,10 @@ public:
            "Only indexed loads and stores have a non-undef offset operand");
   }
 
-  const SDOperand &getChain() const { return getOperand(0); }
-  const SDOperand &getBasePtr() const {
-    return getOperand(getOpcode() == ISD::LOAD ? 1 : 2);
-  }
   const SDOperand &getOffset() const {
     return getOperand(getOpcode() == ISD::LOAD ? 2 : 3);
   }
 
-  MVT getMemoryVT() const { return MemoryVT; }
-    
   ISD::MemIndexedMode getAddressingMode() const { return AddrMode; }
 
   /// isIndexed - Return true if this is a pre/post inc/dec load/store.
@@ -2093,10 +2090,6 @@ public:
 
   /// isUnindexed - Return true if this is NOT a pre/post inc/dec load/store.
   bool isUnindexed() const { return AddrMode == ISD::UNINDEXED; }
-
-  /// getMemOperand - Return a MachineMemOperand object describing the memory
-  /// reference performed by this load or store.
-  virtual MachineMemOperand getMemOperand() const;
 
   static bool classof(const LSBaseSDNode *) { return true; }
   static bool classof(const SDNode *N) {

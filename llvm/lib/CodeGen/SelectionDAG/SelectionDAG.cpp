@@ -4331,10 +4331,10 @@ GlobalAddressSDNode::GlobalAddressSDNode(bool isTarget, const GlobalValue *GA,
   TheGlobal = const_cast<GlobalValue*>(GA);
 }
 
-MemSDNode::MemSDNode(unsigned Opc, SDVTList VTs,
+MemSDNode::MemSDNode(unsigned Opc, SDVTList VTs, MVT memvt,
                      const Value *srcValue, int SVO,
                      unsigned alignment, bool vol)
- : SDNode(Opc, VTs), SrcValue(srcValue), SVOffset(SVO),
+ : SDNode(Opc, VTs), MemoryVT(memvt), SrcValue(srcValue), SVOffset(SVO),
    Flags(vol | ((Log2_32(alignment) + 1) << 1)) {
 
   assert(isPowerOf2_32(alignment) && "Alignment is not a power of 2!");
@@ -4343,13 +4343,22 @@ MemSDNode::MemSDNode(unsigned Opc, SDVTList VTs,
 }
 
 /// getMemOperand - Return a MachineMemOperand object describing the memory
-/// reference performed by this atomic.
-MachineMemOperand AtomicSDNode::getMemOperand() const {
-  int Size = (getValueType(0).getSizeInBits() + 7) >> 3;
-  int Flags = MachineMemOperand::MOLoad | MachineMemOperand::MOStore;
+/// reference performed by this memory reference.
+MachineMemOperand MemSDNode::getMemOperand() const {
+  int Flags;
+  if (isa<LoadSDNode>(this))
+    Flags = MachineMemOperand::MOLoad;
+  else if (isa<StoreSDNode>(this))
+    Flags = MachineMemOperand::MOStore;
+  else {
+    assert(isa<AtomicSDNode>(this) && "Unknown MemSDNode opcode!");
+    Flags = MachineMemOperand::MOLoad | MachineMemOperand::MOStore;
+  }
+
+  int Size = (getMemoryVT().getSizeInBits() + 7) >> 3;
   if (isVolatile()) Flags |= MachineMemOperand::MOVolatile;
   
-  // Check if the atomic references a frame index
+  // Check if the memory reference references a frame index
   const FrameIndexSDNode *FI = 
   dyn_cast<const FrameIndexSDNode>(getBasePtr().Val);
   if (!getSrcValue() && FI)
@@ -4358,27 +4367,6 @@ MachineMemOperand AtomicSDNode::getMemOperand() const {
   else
     return MachineMemOperand(getSrcValue(), Flags, getSrcValueOffset(),
                              Size, getAlignment());
-}
-
-/// getMemOperand - Return a MachineMemOperand object describing the memory
-/// reference performed by this load or store.
-MachineMemOperand LSBaseSDNode::getMemOperand() const {
-  int Size = (getMemoryVT().getSizeInBits() + 7) >> 3;
-  int Flags =
-    getOpcode() == ISD::LOAD ? MachineMemOperand::MOLoad :
-                               MachineMemOperand::MOStore;
-  if (isVolatile()) Flags |= MachineMemOperand::MOVolatile;
-
-  // Check if the load references a frame index, and does not have
-  // an SV attached.
-  const FrameIndexSDNode *FI =
-    dyn_cast<const FrameIndexSDNode>(getBasePtr().Val);
-  if (!getSrcValue() && FI)
-    return MachineMemOperand(PseudoSourceValue::getFixedStack(), Flags,
-                             FI->getIndex(), Size, getAlignment());
-  else
-    return MachineMemOperand(getSrcValue(), Flags,
-                             getSrcValueOffset(), Size, getAlignment());
 }
 
 /// Profile - Gather unique data for the node.
