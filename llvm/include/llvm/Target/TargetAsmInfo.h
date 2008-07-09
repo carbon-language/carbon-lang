@@ -45,7 +45,7 @@ namespace llvm {
   }
 
   namespace SectionFlags {
-    const unsigned Invalid    = -1UL;
+    const unsigned Invalid    = -1U;
     const unsigned None       = 0;
     const unsigned Code       = 1 << 0;  ///< Section contains code
     const unsigned Writeable  = 1 << 1;  ///< Section is writeable
