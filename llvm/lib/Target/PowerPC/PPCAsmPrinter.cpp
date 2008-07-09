@@ -790,6 +790,9 @@ std::string DarwinAsmPrinter::getSectionForFunction(const Function &F) const {
 /// method to print assembly for each instruction.
 ///
 bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  // We need this for Personality functions.
+  MMI = &getAnalysis<MachineModuleInfo>();
+  DW.SetModuleInfo(MMI);
 
   SetupMachineFunction(MF);
   O << "\n\n";
@@ -884,12 +887,6 @@ bool DarwinAsmPrinter::doInitialization(Module &M) {
      
   bool Result = AsmPrinter::doInitialization(M);
   
-  // We need this for Personality functions.
-  // AsmPrinter::doInitialization should have done this analysis.
-  MMI = getAnalysisToUpdate<MachineModuleInfo>();
-  assert(MMI);
-  DW.SetModuleInfo(MMI);
-
   // Darwin wants symbols to be quoted if they have complex names.
   Mang->setUseQuotes(true);
   
