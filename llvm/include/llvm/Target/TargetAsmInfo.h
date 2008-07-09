@@ -53,8 +53,9 @@ namespace llvm {
       TLS        = 1 << 5,    ///< Section contains thread-local data
       Debug      = 1 << 6,    ///< Section contains debug data
       Linkonce   = 1 << 7,    ///< Section is linkonce
-      Named      = 1 << 8,    ///< Section is named
+      TypeFlags  = 0xFF,
       // Some gap for future flags
+      Named      = 1 << 23,    ///< Section is named
       EntitySize = 0xFF << 24 ///< Entity size for mergeable sections
     };
 

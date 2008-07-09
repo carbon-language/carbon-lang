@@ -323,8 +323,10 @@ X86DarwinTargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
       Type = C->getType();
 
     unsigned Size = TD->getABITypeSize(Type);
-    if (Size > 16) {
-      // Too big for mergeable
+    if (Size > 16 ||
+        !(Flags & SectionFlags::Strings ||
+          (Size == 4 || Size == 8 || Size == 16))) {
+      // Not suitable for mergeable
       Size = 0;
       Flags &= ~SectionFlags::Mergeable;
     }
@@ -516,8 +518,12 @@ X86ELFTargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
       Type = C->getType();
 
     unsigned Size = TD->getABITypeSize(Type);
-    if (Size > 16) {
-      // Too big for mergeable
+    // FIXME: size check here ugly, and will hopefully have gone, when we will
+    // have sane interface for attaching flags to sections.
+    if (Size > 16 ||
+        !(Flags & SectionFlags::Strings ||
+          (Size == 4 || Size == 8 || Size == 16))) {
+      // Not suitable for mergeable
       Size = 0;
       Flags &= ~SectionFlags::Mergeable;
     }
@@ -529,9 +535,11 @@ X86ELFTargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
 
   // Mark section as named, when needed (so, we we will need .section directive
   // to switch into it).
-  if (Flags & (SectionFlags::Mergeable |
-               SectionFlags::TLS |
-               SectionFlags::Linkonce))
+  unsigned TypeFlags = Flags & SectionFlags::TypeFlags;
+  if (!TypeFlags /* Read-only section */ ||
+      (TypeFlags & (SectionFlags::Mergeable |
+                    SectionFlags::TLS |
+                    SectionFlags::Linkonce)))
     Flags |= SectionFlags::Named;
 
   return Flags;
@@ -668,9 +676,11 @@ X86COFFTargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
 
   // Mark section as named, when needed (so, we we will need .section directive
   // to switch into it).
-  if (Flags & (SectionFlags::Mergeable ||
-               SectionFlags::TLS ||
-               SectionFlags::Linkonce))
+  unsigned TypeFlags = Flags & SectionFlags::TypeFlags;
+  if (!TypeFlags /* Read-only section */ ||
+      (TypeFlags & (SectionFlags::Mergeable |
+                    SectionFlags::TLS |
+                    SectionFlags::Linkonce)))
     Flags |= SectionFlags::Named;
 
   return Flags;
