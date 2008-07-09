@@ -45,15 +45,25 @@ namespace llvm {
   namespace SectionFlags {
     enum Flags {
       None       = 0,
-      Code       = 1 << 0, ///< Section contains code
-      Writeable  = 1 << 1, ///< Section is writeable
-      BSS        = 1 << 2, ///< Section contains only zeroes
-      Mergeable  = 1 << 3, ///< Section contains mergeable data
-      Strings    = 1 << 4, ///< Section contains null-terminated strings
-      TLS        = 1 << 5, ///< Section contains thread-local data
-      Debug      = 1 << 6, ///< Section contains debug data
-      Linkonce   = 1 << 7  ///< Section is linkonce
+      Code       = 1 << 0,    ///< Section contains code
+      Writeable  = 1 << 1,    ///< Section is writeable
+      BSS        = 1 << 2,    ///< Section contains only zeroes
+      Mergeable  = 1 << 3,    ///< Section contains mergeable data
+      Strings    = 1 << 4,    ///< Section contains null-terminated strings
+      TLS        = 1 << 5,    ///< Section contains thread-local data
+      Debug      = 1 << 6,    ///< Section contains debug data
+      Linkonce   = 1 << 7,    ///< Section is linkonce
+      // Some gap for future flags
+      EntitySize = 0xFF << 24 ///< Entity size for mergeable sections
     };
+
+    static inline unsigned getEntitySize(unsigned flags) {
+      return (flags >> 24) & 0xFF;
+    }
+
+    static inline unsigned setEntitySize(unsigned flags, unsigned size) {
+      return ((flags & ~EntitySize) | ((size & 0xFF) << 24));
+    }
   }
 
   class TargetMachine;

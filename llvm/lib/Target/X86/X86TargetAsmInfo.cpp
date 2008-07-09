@@ -337,7 +337,8 @@ std::string X86ELFTargetAsmInfo::PrintSectionFlags(unsigned flags) const {
   else
     Flags += ",@progbits";
 
-  // FIXME: entity size for mergeable sections
+  if (unsigned entitySize = SectionFlags::getEntitySize(flags))
+    Flags += "," + utostr(entitySize);
 
   return Flags;
 }
