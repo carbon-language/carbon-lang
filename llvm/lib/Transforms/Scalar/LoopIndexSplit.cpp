@@ -384,6 +384,19 @@ void LoopIndexSplit::findLoopConditionals() {
     BasicBlock *Preheader = L->getLoopPreheader();
     StartValue = IndVar->getIncomingValueForBlock(Preheader);
   }
+
+  // If start value is more then exit value where induction variable
+  // increments by 1 then we are potentially dealing with an infinite loop.
+  // Do not index split this loop.
+  if (ExitCondition) {
+    ConstantInt *SV = dyn_cast<ConstantInt>(StartValue);
+    ConstantInt *EV = 
+      dyn_cast<ConstantInt>(ExitCondition->getOperand(ExitValueNum));
+    if (SV && EV && SV->getSExtValue() > EV->getSExtValue())
+      ExitCondition = NULL;
+    else if (EV && EV->isZero())
+      ExitCondition = NULL;
+  }
 }
 
 /// Find condition inside a loop that is suitable candidate for index split.

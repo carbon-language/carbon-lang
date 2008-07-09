@@ -24,7 +24,7 @@ bb4.i:		; preds = %bb.i
 	br label %bb6.i
 bb6.i:		; preds = %bb4.i, %bb.i
 	%tmp8.i = add i16 %g_2.tmp.0.i, 1		; <i16> [#uses=3]
-	%tmp11.i = icmp sgt i16 %tmp8.i, 0		; <i1> [#uses=1]
+	%tmp11.i = icmp sgt i16 %tmp8.i, 42		; <i1> [#uses=1]
 	br i1 %tmp11.i, label %bb.i, label %return.loopexit.i
 return.loopexit.i:		; preds = %bb6.i
 	%tmp8.i.lcssa = phi i16 [ %tmp8.i, %bb6.i ]		; <i16> [#uses=1]
