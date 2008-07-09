@@ -293,10 +293,11 @@ namespace {
   struct VISIBILITY_HIDDEN LinuxAsmPrinter : public PPCAsmPrinter {
 
     DwarfWriter DW;
+    MachineModuleInfo *MMI;
 
     LinuxAsmPrinter(std::ostream &O, PPCTargetMachine &TM,
                     const TargetAsmInfo *T)
-      : PPCAsmPrinter(O, TM, T), DW(O, this, T) {
+      : PPCAsmPrinter(O, TM, T), DW(O, this, T), MMI(0) {
     }
 
     virtual const char *getPassName() const {
@@ -631,13 +632,19 @@ bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 bool LinuxAsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
   
+  // Emit initial debug information.
+  DW.BeginModule(&M);
+
+  // AsmPrinter::doInitialization should have done this analysis.
+  MMI = getAnalysisToUpdate<MachineModuleInfo>();
+  assert(MMI);
+  DW.SetModuleInfo(MMI);
+
   // GNU as handles section names wrapped in quotes
   Mang->setUseQuotes(true);
 
   SwitchToTextSection(TAI->getTextSection());
   
-  // Emit initial debug information.
-  DW.BeginModule(&M);
   return Result;
 }
 
