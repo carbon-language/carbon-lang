@@ -239,14 +239,17 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
     // Some lame default implementation
     if (strcmp(name, ".bss") == 0 ||
         strncmp(name, ".bss.", 5) == 0 ||
+        strncmp(name, ".gnu.linkonce.b.", 16) == 0 ||
         strncmp(name, ".llvm.linkonce.b.", 17) == 0)
       flags |= SectionFlags::BSS;
     else if (strcmp(name, ".tdata") == 0 ||
              strncmp(name, ".tdata.", 7) == 0 ||
+             strncmp(name, ".gnu.linkonce.td.", 17) == 0 ||
              strncmp(name, ".llvm.linkonce.td.", 18) == 0)
       flags |= SectionFlags::TLS;
     else if (strcmp(name, ".tbss") == 0 ||
              strncmp(name, ".tbss.", 6) == 0 ||
+             strncmp(name, ".gnu.linkonce.tb.", 17) == 0 ||
              strncmp(name, ".llvm.linkonce.tb.", 18) == 0)
       flags |= SectionFlags::BSS | SectionFlags::TLS;
   }
@@ -305,19 +308,19 @@ TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
                                       SectionKind::Kind kind) const {
   switch (kind) {
    case SectionKind::Text:
-    return ".llvm.linkonce.t." + GV->getName();
+    return ".gnu.linkonce.t." + GV->getName();
    case SectionKind::Data:
-    return ".llvm.linkonce.d." + GV->getName();
+    return ".gnu.linkonce.d." + GV->getName();
    case SectionKind::BSS:
-    return ".llvm.linkonce.b." + GV->getName();
+    return ".gnu.linkonce.b." + GV->getName();
    case SectionKind::ROData:
    case SectionKind::RODataMergeConst:
    case SectionKind::RODataMergeStr:
-    return ".llvm.linkonce.r." + GV->getName();
+    return ".gnu.linkonce.r." + GV->getName();
    case SectionKind::ThreadData:
-    return ".llvm.linkonce.td." + GV->getName();
+    return ".gnu.linkonce.td." + GV->getName();
    case SectionKind::ThreadBSS:
-    return ".llvm.linkonce.tb." + GV->getName();
+    return ".gnu.linkonce.tb." + GV->getName();
    default:
     assert(0 && "Unknown section kind");
   }
