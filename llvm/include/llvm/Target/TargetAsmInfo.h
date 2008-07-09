@@ -469,7 +469,7 @@ namespace llvm {
     /// section flags either for given global or for section.
     unsigned
     SectionFlagsForGlobal(const GlobalValue *GV = NULL,
-                          const char* name = NULL);
+                          const char* name = NULL) const;
 
     // Accessors.
     //

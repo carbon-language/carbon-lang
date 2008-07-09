@@ -194,7 +194,7 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
 
 unsigned
 TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
-                                     const char* name) {
+                                     const char* name) const {
   unsigned flags = SectionFlags::None;
 
   // Decode flags from global itself.
