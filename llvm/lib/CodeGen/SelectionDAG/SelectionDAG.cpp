@@ -2813,7 +2813,7 @@ static SDOperand getMemcpyLoadsAndStores(SelectionDAG &DAG,
       Value = getMemsetStringVal(VT, DAG, TLI, Str, SrcOff);
       Store = DAG.getStore(Chain, Value,
                            getMemBasePlusOffset(Dst, DstOff, DAG),
-                           DstSV, DstSVOff + DstOff);
+                           DstSV, DstSVOff + DstOff, false, DstAlign);
     } else {
       Value = DAG.getLoad(VT, Chain,
                           getMemBasePlusOffset(Src, SrcOff, DAG),
