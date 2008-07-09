@@ -22,6 +22,8 @@
     <li><a href="#stdblocks">Standard Blocks</a></li>
     </ol>
   </li>
+  <li><a href="#wrapper">Bitcode Wrapper Format</a>
+  </li>
   <li><a href="#llvmir">LLVM IR Encoding</a>
     <ol>
     <li><a href="#basics">Basics</a></li>
@@ -65,8 +67,12 @@ Unlike XML, the bitstream format is a binary encoding, and unlike XML it
 provides a mechanism for the file to self-describe "abbreviations", which are
 effectively size optimizations for the content.</p>
 
-<p>This document first describes the LLVM bitstream format, then describes the
-record structure used by LLVM IR files.
+<p>LLVM IR files may be optionally embedded into a <a 
+href="#wrapper">wrapper</a> structure that makes it easy to embed extra data
+along with LLVM IR files.</p>
+
+<p>This document first describes the LLVM bitstream format, describes the
+wrapper format, then describes the record structure used by LLVM IR files.
 </p>
 
 </div>
@@ -543,6 +549,36 @@ corresponding blocks.  It is not safe to skip them.
 </p>
 
 </div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"> <a name="wrapper">Bitcode Wrapper Format</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>Bitcode files for LLVM IR may optionally be wrapped in a simple wrapper
+structure.  This structure contains a simple header that indicates the offset
+and size of the embedded BC file.  This allows additional information to be
+stored alongside the BC file.  The structure of this file header is:
+</p>
+
+<p>
+<pre>
+[Magic<sub>32</sub>,
+ Version<sub>32</sub>,
+ Offset<sub>32</sub>,
+ Size<sub>32</sub>,
+ CPUType<sub>32</sub>]
+</pre></p>
+
+<p>Each of the fields are 32-bit fields stored in little endian form (as with
+the rest of the bitcode file fields).  The Magic number is always
+<tt>0x0B17C0DE</tt> and the version is currently always <tt>0</tt>.  The Offset
+field is the offset in bytes to the start of the bitcode stream in the file, and
+the Size field is a size in bytes of the stream. CPUType is a target-specific
+value that can be used to encode the CPU of the target.
+</div>
+
 
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="llvmir">LLVM IR Encoding</a></div>

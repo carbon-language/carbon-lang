@@ -1273,6 +1273,70 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   Stream.ExitBlock();
 }
 
+/// EmitDarwinBCHeader - If generating a bc file on darwin, we have to emit a
+/// header and trailer to make it compatible with the system archiver.  To do
+/// this we emit the following header, and then emit a trailer that pads the
+/// file out to be a multiple of 16 bytes.
+/// 
+/// struct bc_header {
+///   uint32_t Magic;         // 0x0B17C0DE
+///   uint32_t Version;       // Version, currently always 0.
+///   uint32_t BitcodeOffset; // Offset to traditional bitcode file.
+///   uint32_t BitcodeSize;   // Size of traditional bitcode file.
+///   uint32_t CPUType;       // CPU specifier.
+///   ... potentially more later ...
+/// };
+enum {
+  DarwinBCSizeFieldOffset = 3*4, // Offset to bitcode_size.
+  DarwinBCHeaderSize = 5*4
+};
+
+static void EmitDarwinBCHeader(BitstreamWriter &Stream,
+                               const std::string &TT) {
+  unsigned CPUType = ~0U;
+  
+  // Match x86_64-*, i[3-9]86-*, powerpc-*, powerpc64-*.  The CPUType is a
+  // magic number from /usr/include/mach/machine.h.  It is ok to reproduce the
+  // specific constants here because they are implicitly part of the Darwin ABI.
+  enum {
+    DARWIN_CPU_ARCH_ABI64      = 0x01000000,
+    DARWIN_CPU_TYPE_X86        = 7,
+    DARWIN_CPU_TYPE_POWERPC    = 18
+  };
+  
+  if (TT.find("x86_64-") == 0)
+    CPUType = DARWIN_CPU_TYPE_X86 | DARWIN_CPU_ARCH_ABI64;
+  else if (TT.size() >= 5 && TT[0] == 'i' && TT[2] == '8' && TT[3] == '6' &&
+           TT[4] == '-' && TT[1] - '3' < 6)
+    CPUType = DARWIN_CPU_TYPE_X86;
+  else if (TT.find("powerpc-") == 0)
+    CPUType = DARWIN_CPU_TYPE_POWERPC;
+  else if (TT.find("powerpc64-") == 0)
+    CPUType = DARWIN_CPU_TYPE_POWERPC | DARWIN_CPU_ARCH_ABI64;
+  
+  // Traditional Bitcode starts after header.
+  unsigned BCOffset = DarwinBCHeaderSize;
+  
+  Stream.Emit(0x0B17C0DE, 32);
+  Stream.Emit(0         , 32);  // Version.
+  Stream.Emit(BCOffset  , 32);
+  Stream.Emit(0         , 32);  // Filled in later.
+  Stream.Emit(CPUType   , 32);
+}
+
+/// EmitDarwinBCTrailer - Emit the darwin epilog after the bitcode file and
+/// finalize the header.
+static void EmitDarwinBCTrailer(BitstreamWriter &Stream, unsigned BufferSize) {
+  // Update the size field in the header.
+  Stream.BackpatchWord(DarwinBCSizeFieldOffset, BufferSize-DarwinBCHeaderSize);
+  
+  // If the file is not a multiple of 16 bytes, insert dummy padding.
+  while (BufferSize & 15) {
+    Stream.Emit(0, 8);
+    ++BufferSize;
+  }
+}
+
 
 /// WriteBitcodeToFile - Write the specified module to the specified output
 /// stream.
@@ -1281,6 +1345,11 @@ void llvm::WriteBitcodeToFile(const Module *M, std::ostream &Out) {
   BitstreamWriter Stream(Buffer);
   
   Buffer.reserve(256*1024);
+  
+  // If this is darwin, emit a file header and trailer if needed.
+  bool isDarwin = M->getTargetTriple().find("-darwin") != std::string::npos;
+  if (isDarwin)
+    EmitDarwinBCHeader(Stream, M->getTargetTriple());
   
   // Emit the file header.
   Stream.Emit((unsigned)'B', 8);
@@ -1292,10 +1361,14 @@ void llvm::WriteBitcodeToFile(const Module *M, std::ostream &Out) {
 
   // Emit the module.
   WriteModule(M, Stream);
+
+  if (isDarwin)
+    EmitDarwinBCTrailer(Stream, Buffer.size());
+
   
   // If writing to stdout, set binary mode.
   if (llvm::cout == Out)
-      sys::Program::ChangeStdoutToBinary();
+    sys::Program::ChangeStdoutToBinary();
 
   // Write the generated bitstream to "Out".
   Out.write((char*)&Buffer.front(), Buffer.size());

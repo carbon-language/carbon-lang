@@ -157,6 +157,15 @@ public:
     Emit(Val, CurCodeSize);
   }
   
+  // BackpatchWord - Backpatch a 32-bit word in the output with the specified
+  // value.
+  void BackpatchWord(unsigned ByteNo, unsigned NewWord) {
+    Out[ByteNo++] = (unsigned char)(NewWord >>  0);
+    Out[ByteNo++] = (unsigned char)(NewWord >>  8);
+    Out[ByteNo++] = (unsigned char)(NewWord >> 16);
+    Out[ByteNo  ] = (unsigned char)(NewWord >> 24);
+  }
+  
   //===--------------------------------------------------------------------===//
   // Block Manipulation
   //===--------------------------------------------------------------------===//
@@ -227,10 +236,7 @@ public:
     unsigned ByteNo = B.StartSizeWord*4;
     
     // Update the block size field in the header of this sub-block.
-    Out[ByteNo++] = (unsigned char)(SizeInWords >>  0);
-    Out[ByteNo++] = (unsigned char)(SizeInWords >>  8);
-    Out[ByteNo++] = (unsigned char)(SizeInWords >> 16);
-    Out[ByteNo++] = (unsigned char)(SizeInWords >> 24);
+    BackpatchWord(ByteNo, SizeInWords);
     
     // Restore the inner block's code size and abbrev table.
     CurCodeSize = B.PrevCodeSize;

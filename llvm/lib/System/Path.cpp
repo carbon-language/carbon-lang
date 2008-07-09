@@ -52,10 +52,15 @@ Path::GetLLVMConfigDir() {
 }
 
 LLVMFileType
-sys::IdentifyFileType(const char*magic, unsigned length) {
+sys::IdentifyFileType(const char *magic, unsigned length) {
   assert(magic && "Invalid magic number string");
   assert(length >=4 && "Invalid magic number length");
   switch (magic[0]) {
+    case 0xDE:  // 0x0B17C0DE = BC wraper
+      if (magic[1] == (char)0xC0 && magic[2] == (char)0x17 &&
+          magic[3] == (char)0x0B)
+        return Bitcode_FileType;
+      break;
     case 'B':
       if (magic[1] == 'C' && magic[2] == (char)0xC0 && magic[3] == (char)0xDE)
         return Bitcode_FileType;
