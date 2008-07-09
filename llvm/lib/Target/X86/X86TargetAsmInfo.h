@@ -30,6 +30,7 @@ namespace llvm {
     virtual std::string SectionForGlobal(const GlobalValue *GV) const;
     virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
                                                SectionKind::Kind kind) const;
+    virtual std::string PrintSectionFlags(unsigned flags) const;
 
   private:
     const X86TargetMachine* X86TM;

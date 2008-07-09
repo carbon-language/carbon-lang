@@ -411,7 +411,6 @@ std::string X86TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
 
 
 std::string X86TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
-  const X86Subtarget *Subtarget = &X86TM->getSubtarget<X86Subtarget>();
   SectionKind::Kind kind = SectionKindForGlobal(GV);
   unsigned flags = SectionFlagsForGlobal(GV, GV->getSection().c_str());
   std::string Name;
@@ -471,44 +470,53 @@ std::string X86TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
       assert(0 && "Unsupported global");
   }
 
+  Name += PrintSectionFlags(flags);
+  return Name;
+}
+
+std::string X86TargetAsmInfo::PrintSectionFlags(unsigned flags) const {
+  const X86Subtarget *Subtarget = &X86TM->getSubtarget<X86Subtarget>();
+
+  std::string Flags = "";
+
   // Add all special flags, etc
   switch (Subtarget->TargetType) {
    case X86Subtarget::isELF:
-    Name += ",\"";
+    Flags += ",\"";
 
     if (!(flags & SectionFlags::Debug))
-      Name += 'a';
+      Flags += 'a';
     if (flags & SectionFlags::Code)
-      Name += 'x';
+      Flags += 'x';
     if (flags & SectionFlags::Writeable)
-      Name += 'w';
+      Flags += 'w';
     if (flags & SectionFlags::Mergeable)
-      Name += 'M';
+      Flags += 'M';
     if (flags & SectionFlags::Strings)
-      Name += 'S';
+      Flags += 'S';
     if (flags & SectionFlags::TLS)
-      Name += 'T';
+      Flags += 'T';
 
-    Name += "\"";
+    Flags += "\"";
 
     // FIXME: There can be exceptions here
     if (flags & SectionFlags::BSS)
-      Name += ",@nobits";
+      Flags += ",@nobits";
     else
-      Name += ",@progbits";
+      Flags += ",@progbits";
 
     // FIXME: entity size for mergeable sections
     break;
    case X86Subtarget::isCygwin:
    case X86Subtarget::isMingw:
-    Name += ",\"";
+    Flags += ",\"";
 
     if (flags & SectionFlags::Code)
-      Name += 'x';
+      Flags += 'x';
     if (flags & SectionFlags::Writeable)
-      Name += 'w';
+      Flags += 'w';
 
-    Name += "\"";
+    Flags += "\"";
 
     break;
    case X86Subtarget::isDarwin:
@@ -517,6 +525,5 @@ std::string X86TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
     break;
   }
 
-  return Name;
+  return Flags;
 }
-

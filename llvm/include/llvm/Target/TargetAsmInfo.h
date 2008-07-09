@@ -474,6 +474,8 @@ namespace llvm {
     virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
                                                SectionKind::Kind kind) const;
 
+    virtual std::string PrintSectionFlags(unsigned flags) const { return ""; }
+
     // Accessors.
     //
     const char *getTextSection() const {
