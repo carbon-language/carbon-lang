@@ -565,7 +565,6 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 /// method to print assembly for each instruction.
 ///
 bool LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  DW.SetModuleInfo(&getAnalysis<MachineModuleInfo>());
 
   SetupMachineFunction(MF);
   O << "\n\n";
