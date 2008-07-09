@@ -32,8 +32,6 @@
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
-#include <iostream>
-
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 static std::string getPICLabelString(unsigned FnNum,
