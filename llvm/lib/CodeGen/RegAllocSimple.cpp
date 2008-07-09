@@ -103,10 +103,9 @@ namespace {
 int RegAllocSimple::getStackSpaceFor(unsigned VirtReg,
                                      const TargetRegisterClass *RC) {
   // Find the location VirtReg would belong...
-  std::map<unsigned, int>::iterator I =
-    StackSlotForVirtReg.lower_bound(VirtReg);
+  std::map<unsigned, int>::iterator I = StackSlotForVirtReg.find(VirtReg);
 
-  if (I != StackSlotForVirtReg.end() && I->first == VirtReg)
+  if (I != StackSlotForVirtReg.end())
     return I->second;          // Already has space allocated?
 
   // Allocate a new stack object for this spill location...
