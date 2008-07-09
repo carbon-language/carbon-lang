@@ -99,8 +99,8 @@ static bool isNSType(QualType T) {
 namespace {
 /// ArgEffect is used to summarize a function/method call's effect on a
 /// particular argument.
-enum ArgEffect { IncRef, DecRef, DoNothing, StopTracking, MayEscape,
-                 SelfOwn, Autorelease };
+enum ArgEffect { IncRef, DecRef, DoNothing, DoNothingByRef,
+                 StopTracking, MayEscape, SelfOwn, Autorelease };
 
 /// ArgEffects summarizes the effects of a function/method call on all of
 /// its arguments.
@@ -423,6 +423,10 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   /// NSPanelII - An IdentifierInfo* representing the identifier "NSPanel."
   IdentifierInfo* NSPanelII;
   
+  /// CFDictionaryCreateII - An IdentifierInfo* representing the indentifier
+  ///  "CFDictionaryCreate".
+  IdentifierInfo* CFDictionaryCreateII;
+  
   /// GCEnabled - Records whether or not the analyzed code runs in GC mode.
   const bool GCEnabled;
   
@@ -517,6 +521,7 @@ public:
    : Ctx(ctx),
      NSWindowII(&ctx.Idents.get("NSWindow")),
      NSPanelII(&ctx.Idents.get("NSPanel")),
+     CFDictionaryCreateII(&ctx.Idents.get("CFDictionaryCreate")),
      GCEnabled(gcenabled), StopSummary(0) {
 
     InitializeClassMethodSummaries();
@@ -658,7 +663,7 @@ RetainSummary* RetainSummaryManager::getCFSummary(FunctionDecl* FD,
   
   if (strcmp(FName, "Release") == 0)
     return getUnarySummary(FD, cfrelease);
-
+  
   if (strcmp(FName, "MakeCollectable") == 0)
     return getUnarySummary(FD, cfmakecollectable);
     
@@ -727,10 +732,13 @@ RetainSummary* RetainSummaryManager::getCFSummaryCreateRule(FunctionDecl* FD) {
   if (FT && !isCFRefType(FT->getResultType()))
     return getPersistentSummary(RetEffect::MakeNoRet());
 
-  // FIXME: Add special-cases for functions that retain/release.  For now
-  //  just handle the default case.
-
   assert (ScratchArgs.empty());
+  
+  if (FD->getIdentifier() == CFDictionaryCreateII) {
+    ScratchArgs.push_back(std::make_pair(1, DoNothingByRef));
+    ScratchArgs.push_back(std::make_pair(2, DoNothingByRef));
+  }
+  
   return getPersistentSummary(RetEffect::MakeOwned(true));
 }
 
@@ -1393,17 +1401,30 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
       // Nuke all arguments passed by reference.
       StateMgr.Unbind(StVals, cast<LVal>(V));
 #else
-      if (lval::DeclVal* DV = dyn_cast<lval::DeclVal>(&V)) {      
+      if (lval::DeclVal* DV = dyn_cast<lval::DeclVal>(&V)) {
+
+        if (GetArgE(Summ, idx) == DoNothingByRef)
+          continue;
+        
+        // Invalidate the value of the variable passed by reference.
         
         // FIXME: Either this logic should also be replicated in GRSimpleVals
         //  or should be pulled into a separate "constraint engine."
+        
         // FIXME: We can have collisions on the conjured symbol if the
         //  expression *I also creates conjured symbols.  We probably want
         //  to identify conjured symbols by an expression pair: the enclosing
         //  expression (the context) and the expression itself.  This should
-        //  disambiguate conjured symbols.        
+        //  disambiguate conjured symbols. 
+
+        // Is the invalidated variable something that we were tracking?
+        RVal X = StateMgr.GetRVal(&StVals, *DV);
         
-        // Invalidate the values of all variables passed by reference.
+        if (isa<lval::SymbolVal>(X)) {
+          SymbolID Sym = cast<lval::SymbolVal>(X).getSymbol();
+          SetRefBindings(StVals,RefBFactory.Remove(GetRefBindings(StVals),Sym));
+        }
+
         // Set the value of the variable to be a conjured symbol.
         unsigned Count = Builder.getCurrentBlockCount();
         SymbolID NewSym = Eng.getSymbolManager().getConjuredSymbol(*I, Count);
@@ -1866,6 +1887,7 @@ CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
 
       // Fall-through.
       
+    case DoNothingByRef:
     case DoNothing:
       if (!isGCEnabled() && V.getKind() == RefVal::Released) {
         V = V ^ RefVal::ErrorUseAfterRelease;
