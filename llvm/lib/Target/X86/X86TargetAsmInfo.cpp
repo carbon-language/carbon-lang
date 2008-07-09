@@ -245,6 +245,7 @@ const Section*
 X86DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind Kind = SectionKindForGlobal(GV);
   bool isWeak = GV->isWeakForLinker();
+  bool isNonStatic = (X86TM->getRelocationModel() != Reloc::Static);
 
   switch (Kind) {
    case SectionKind::Text:
@@ -261,7 +262,8 @@ X86DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
     else
       return (isWeak ? DataCoalSection : getDataSection_());
    case SectionKind::ROData:
-    return (isWeak ? ConstDataCoalSection : getReadOnlySection_());
+    return (isWeak ? ConstDataCoalSection :
+            (isNonStatic ? ConstDataSection : getReadOnlySection_()));
    case SectionKind::RODataMergeStr:
     return (isWeak ?
             ConstDataCoalSection :
