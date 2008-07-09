@@ -462,18 +462,19 @@ namespace llvm {
 
     /// SectionKindForGlobal - This hook allows the target to select proper
     /// section kind used for global emission.
-    SectionKind::Kind SectionKindForGlobal(const GlobalValue *GV) const;
+    virtual SectionKind::Kind
+    SectionKindForGlobal(const GlobalValue *GV) const;
 
 
     /// SectionFlagsForGlobal - This hook allows the target to select proper
     /// section flags either for given global or for section.
-    unsigned
+    virtual unsigned
     SectionFlagsForGlobal(const GlobalValue *GV = NULL,
                           const char* name = NULL) const;
 
     /// SectionForGlobal - This hooks returns proper section name for given
     /// global with all necessary flags and marks.
-    const char* SectionForGlobal(const GlobalValue *GV) const;
+    virtual const char* SectionForGlobal(const GlobalValue *GV) const;
 
     // Accessors.
     //
