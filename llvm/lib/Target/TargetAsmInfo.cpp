@@ -254,3 +254,15 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
 
   return flags;
 }
+
+const char*
+TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
+  SectionKind::Kind kind = SectionKindForGlobal(GV);
+
+  if (kind == SectionKind::Text)
+    return getTextSection();
+  else if (kind == SectionKind::BSS && getBSSSection())
+    return getBSSSection();
+
+  return getDataSection();
+}

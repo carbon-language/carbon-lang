@@ -471,6 +471,10 @@ namespace llvm {
     SectionFlagsForGlobal(const GlobalValue *GV = NULL,
                           const char* name = NULL) const;
 
+    /// SectionForGlobal - This hooks returns proper section name for given
+    /// global with all necessary flags and marks.
+    const char* SectionForGlobal(const GlobalValue *GV) const;
+
     // Accessors.
     //
     const char *getTextSection() const {
