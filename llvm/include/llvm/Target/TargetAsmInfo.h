@@ -481,10 +481,13 @@ namespace llvm {
     /// global with all necessary flags and marks.
     virtual std::string SectionForGlobal(const GlobalValue *GV) const;
 
+    // Helper methods for SectionForGlobal
     virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
                                                SectionKind::Kind kind) const;
 
     virtual std::string PrintSectionFlags(unsigned flags) const { return ""; }
+
+    virtual std::string SelectSectionForGlobal(const GlobalValue *GV) const;
 
     // Accessors.
     //

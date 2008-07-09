@@ -257,12 +257,43 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
 
 std::string
 TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
+  unsigned flags = SectionFlagsForGlobal(GV, GV->getSection().c_str());
+
+  std::string Name;
+
+  // Select section name
+  if (GV->hasSection()) {
+    // Honour section already set, if any
+    Name = GV->getSection();
+  } else {
+    // Use default section depending on the 'type' of global
+    Name = SelectSectionForGlobal(GV);
+  }
+
+  Name += PrintSectionFlags(flags);
+  return Name;
+}
+
+// Lame default implementation. Calculate the section name for global.
+std::string
+TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind kind = SectionKindForGlobal(GV);
 
-  if (kind == SectionKind::Text)
-    return getTextSection();
-  else if (kind == SectionKind::BSS && getBSSSection())
-    return getBSSSection();
+  if (GV->hasLinkOnceLinkage() ||
+      GV->hasWeakLinkage() ||
+      GV->hasCommonLinkage())
+    return UniqueSectionForGlobal(GV, kind);
+  else {
+    if (kind == SectionKind::Text)
+      return getTextSection();
+    else if (kind == SectionKind::BSS && getBSSSection())
+      return getBSSSection();
+    else if (getReadOnlySection() &&
+             (kind == SectionKind::ROData ||
+              kind == SectionKind::RODataMergeConst ||
+              kind == SectionKind::RODataMergeStr))
+      return getReadOnlySection();
+  }
 
   return getDataSection();
 }

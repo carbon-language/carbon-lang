@@ -494,7 +494,7 @@ std::string X86TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
        case Function::InternalLinkage:
        case Function::DLLExportLinkage:
        case Function::ExternalLinkage:
-        Name = TextSection;
+        Name = getTextSection();
         break;
        case Function::WeakLinkage:
        case Function::LinkOnceLinkage:
@@ -509,22 +509,22 @@ std::string X86TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
       else {
         switch (kind) {
          case SectionKind::Data:
-          Name = DataSection;
+          Name = getDataSection();
           break;
          case SectionKind::BSS:
-          Name = (BSSSection ? BSSSection : DataSection);
+          Name = (getBSSSection() ? getBSSSection() : getDataSection());
           break;
          case SectionKind::ROData:
          case SectionKind::RODataMergeStr:
          case SectionKind::RODataMergeConst:
           // FIXME: Temporary
-          Name = DataSection;
+          Name = getDataSection();
           break;
          case SectionKind::ThreadData:
-          Name = (TLSDataSection ? TLSDataSection : DataSection);
+          Name = (getTLSDataSection() ? getTLSDataSection() : getDataSection());
           break;
          case SectionKind::ThreadBSS:
-          Name = (TLSBSSSection ? TLSBSSSection : DataSection);
+          Name = (getTLSBSSSection() ? getTLSBSSSection() : getDataSection());
          default:
           assert(0 && "Unsuported section kind for global");
         }
