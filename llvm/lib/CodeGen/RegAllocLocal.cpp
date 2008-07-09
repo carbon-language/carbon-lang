@@ -839,7 +839,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
         getVirtRegLastUse(DestVirtReg) = std::make_pair((MachineInstr*)0, 0);
         DOUT << "  Assigning " << TRI->getName(DestPhysReg)
              << " to %reg" << DestVirtReg << "\n";
-        MI->getOperand(i).setReg(DestPhysReg);  // Assign the output register
+        MO.setReg(DestPhysReg);  // Assign the output register
       }
     }
 

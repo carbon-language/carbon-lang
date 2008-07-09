@@ -188,12 +188,12 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
 
     // Loop over uses, move from memory into registers.
     for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
-      MachineOperand &op = MI->getOperand(i);
+      MachineOperand &MO = MI->getOperand(i);
 
-      if (op.isRegister() && op.getReg() &&
-          TargetRegisterInfo::isVirtualRegister(op.getReg())) {
-        unsigned virtualReg = (unsigned) op.getReg();
-        DOUT << "op: " << op << "\n";
+      if (MO.isRegister() && MO.getReg() &&
+          TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
+        unsigned virtualReg = (unsigned) MO.getReg();
+        DOUT << "op: " << MO << "\n";
         DOUT << "\t inst[" << i << "]: ";
         DEBUG(MI->print(*cerr.stream(), TM));
 
@@ -201,7 +201,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
         // register in any given instruction
         unsigned physReg = Virt2PhysRegMap[virtualReg];
         if (physReg == 0) {
-          if (op.isDef()) {
+          if (MO.isDef()) {
             int TiedOp = Desc.findTiedToSrcOperand(i);
             if (TiedOp == -1) {
               physReg = getFreeReg(virtualReg);
@@ -222,8 +222,8 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
             Virt2PhysRegMap[virtualReg] = physReg;
           }
         }
-        MI->getOperand(i).setReg(physReg);
-        DOUT << "virt: " << virtualReg << ", phys: " << op.getReg() << "\n";
+        MO.setReg(physReg);
+        DOUT << "virt: " << virtualReg << ", phys: " << MO.getReg() << "\n";
       }
     }
     RegClassIdx.clear();
