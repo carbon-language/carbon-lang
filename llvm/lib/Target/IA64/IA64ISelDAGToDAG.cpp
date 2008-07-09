@@ -443,7 +443,8 @@ SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
       SDOperand(CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, 
                                       CurDAG->getRegister(IA64::r1,
                                                           MVT::i64), GA), 0);
-    return CurDAG->getTargetNode(IA64::LD8, MVT::i64, MVT::Other, Tmp);
+    return CurDAG->getTargetNode(IA64::LD8, MVT::i64, MVT::Other, Tmp,
+                                 CurDAG->getEntryNode());
   }
   
 /* XXX
