@@ -255,7 +255,7 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
   return flags;
 }
 
-const char*
+std::string
 TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind kind = SectionKindForGlobal(GV);
 

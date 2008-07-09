@@ -346,8 +346,8 @@ unsigned X86TargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
       else {
         // 64 bit targets encode pointers in 4 bytes iff:
         // - code model is small OR
-        // - code model is medium and we're emitting externally visible symbols or
-        //   any code symbols
+        // - code model is medium and we're emitting externally visible symbols
+        //   or any code symbols
         if (CM == CodeModel::Small ||
             (CM == CodeModel::Medium && (Global ||
                                          Reason != DwarfEncoding::Data)))
@@ -373,5 +373,98 @@ unsigned X86TargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
   default:
    return TargetAsmInfo::PreferredEHDataFormat(Reason, Global);
   }
+}
+
+std::string X86TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
+  const X86Subtarget *Subtarget = &X86TM->getSubtarget<X86Subtarget>();
+  SectionKind::Kind kind = SectionKindForGlobal(GV);
+  unsigned flags = SectionFlagsForGlobal(GV, GV->getSection().c_str());
+  std::string Name;
+
+  // FIXME: Should we use some hashing based on section name and just check
+  // flags?
+
+  // Select section name
+  if (const Function *F = dyn_cast<Function>(GV)) {
+    // Implement here
+  } else if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
+    if (GVar->hasSection()) {
+      // Honour section already set, if any
+      Name = GVar->getSection();
+    } else {
+      // Use default section depending on the 'type' of global
+      // FIXME: Handle linkonce stuff
+      switch (kind) {
+       case SectionKind::Data:
+        Name = DataSection;
+        break;
+       case SectionKind::BSS:
+        Name = (BSSSection ? BSSSection : DataSection);
+        break;
+       case SectionKind::ROData:
+       case SectionKind::RODataMergeStr:
+       case SectionKind::RODataMergeConst:
+        // FIXME: Temporary
+        Name = DataSection;
+        break;
+       case SectionKind::ThreadData:
+        Name = (TLSDataSection ? TLSDataSection : DataSection);
+        break;
+       case SectionKind::ThreadBSS:
+        Name = (TLSBSSSection ? TLSBSSSection : DataSection);
+       default:
+        assert(0 && "Unsuported section kind for global");
+      }
+    }
+  } else
+    assert(0 && "Unsupported global");
+
+  // Add all special flags, etc
+  switch (Subtarget->TargetType) {
+   case X86Subtarget::isELF:
+    Name += ",\"";
+
+    if (!(flags & SectionFlags::Debug))
+      Name += 'a';
+    if (flags & SectionFlags::Code)
+      Name += 'x';
+    if (flags & SectionFlags::Writeable)
+      Name += 'w';
+    if (flags & SectionFlags::Mergeable)
+      Name += 'M';
+    if (flags & SectionFlags::Strings)
+      Name += 'S';
+    if (flags & SectionFlags::TLS)
+      Name += 'T';
+
+    Name += "\"";
+
+    // FIXME: There can be exceptions here
+    if (flags & SectionFlags::BSS)
+      Name += ",@nobits";
+    else
+      Name += ",@progbits";
+
+    // FIXME: entity size for mergeable sections
+    break;
+   case X86Subtarget::isCygwin:
+   case X86Subtarget::isMingw:
+    Name += ",\"";
+
+    if (flags & SectionFlags::Code)
+      Name += 'x';
+    if (flags & SectionFlags::Writeable)
+      Name += 'w';
+
+    Name += "\"";
+
+    break;
+   case X86Subtarget::isDarwin:
+    // Darwin does not use any special flags
+   default:
+    break;
+  }
+
+  return Name;
 }
 

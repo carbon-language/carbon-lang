@@ -23,10 +23,11 @@ namespace llvm {
 
   struct X86TargetAsmInfo : public TargetAsmInfo {
     explicit X86TargetAsmInfo(const X86TargetMachine &TM);
-    
+
     virtual bool ExpandInlineAsm(CallInst *CI) const;
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
+    virtual std::string SectionForGlobal(const GlobalValue *GV) const;
 
   private:
     const X86TargetMachine* X86TM;
