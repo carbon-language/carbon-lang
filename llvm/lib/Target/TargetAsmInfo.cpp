@@ -216,25 +216,17 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
       Flags |= SectionFlags::Code;
       break;
      case SectionKind::ThreadData:
-      Flags |= SectionFlags::TLS;
-      // FALLS THROUGH
-     case SectionKind::Data:
-      Flags |= SectionFlags::Writeable;
-      break;
      case SectionKind::ThreadBSS:
       Flags |= SectionFlags::TLS;
       // FALLS THROUGH
+     case SectionKind::Data:
      case SectionKind::BSS:
-      Flags |= SectionFlags::BSS;
+      Flags |= SectionFlags::Writeable;
       break;
      case SectionKind::ROData:
-      // No additional flags here
-      break;
      case SectionKind::RODataMergeStr:
-      Flags |= SectionFlags::Strings;
-      // FALLS THROUGH
      case SectionKind::RODataMergeConst:
-      Flags |= SectionFlags::Mergeable;
+      // No additional flags here
       break;
      default:
       assert(0 && "Unexpected section kind!");
