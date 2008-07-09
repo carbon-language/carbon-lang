@@ -221,6 +221,15 @@ X86DarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
     return DW_EH_PE_absptr;
 }
 
+std::string
+X86DarwinTargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
+                                               SectionKind::Kind kind) const {
+  if (kind == SectionKind::Text)
+    return "__TEXT,__textcoal_nt,coalesced,pure_instructions";
+  else
+    return "__DATA,__datacoal_nt,coalesced";
+}
+
 X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   X86TargetAsmInfo(TM) {
   bool is64Bit = X86TM->getSubtarget<X86Subtarget>().is64Bit();
@@ -401,40 +410,25 @@ X86COFFTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
   }
 }
 
-std::string X86TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
-                                                SectionKind::Kind kind) const {
-  const X86Subtarget *Subtarget = &X86TM->getSubtarget<X86Subtarget>();
-
-  switch (Subtarget->TargetType) {
-   case X86Subtarget::isDarwin:
-    if (kind == SectionKind::Text)
-      return "__TEXT,__textcoal_nt,coalesced,pure_instructions";
-    else
-      return "__DATA,__datacoal_nt,coalesced";
-   case X86Subtarget::isCygwin:
-   case X86Subtarget::isMingw:
-    switch (kind) {
-     case SectionKind::Text:
-      return ".text$linkonce" + GV->getName();
-     case SectionKind::Data:
-     case SectionKind::BSS:
-     case SectionKind::ThreadData:
-     case SectionKind::ThreadBSS:
-      return ".data$linkonce" + GV->getName();
-     case SectionKind::ROData:
-     case SectionKind::RODataMergeConst:
-     case SectionKind::RODataMergeStr:
-      return ".rdata$linkonce" + GV->getName();
-     default:
-      assert(0 && "Unknown section kind");
-    }
-   case X86Subtarget::isELF:
-    return TargetAsmInfo::UniqueSectionForGlobal(GV, kind);
+std::string
+X86COFFTargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
+                                             SectionKind::Kind kind) const {
+  switch (kind) {
+   case SectionKind::Text:
+    return ".text$linkonce" + GV->getName();
+   case SectionKind::Data:
+   case SectionKind::BSS:
+   case SectionKind::ThreadData:
+   case SectionKind::ThreadBSS:
+    return ".data$linkonce" + GV->getName();
+   case SectionKind::ROData:
+   case SectionKind::RODataMergeConst:
+   case SectionKind::RODataMergeStr:
+    return ".rdata$linkonce" + GV->getName();
    default:
-    return "";
+    assert(0 && "Unknown section kind");
   }
 }
-
 
 std::string X86TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind kind = SectionKindForGlobal(GV);
