@@ -167,7 +167,6 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
   bool isThreadLocal = GVar->isThreadLocal();
   assert(GVar && "Invalid global value for section selection");
 
-  SectionKind::Kind kind;
   if (isSuitableForBSS(GVar)) {
     // Variable can be easily put to BSS section.
     return (isThreadLocal ? SectionKind::ThreadBSS : SectionKind::BSS);
@@ -177,14 +176,14 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
     // note, there is no thread-local r/o section.
     Constant *C = GVar->getInitializer();
     if (C->ContainsRelocations())
-      kind = SectionKind::ROData;
+      return SectionKind::ROData;
     else {
       const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
       // Check, if initializer is a null-terminated string
       if (CVA && CVA->isCString())
-        kind = SectionKind::RODataMergeStr;
+        return SectionKind::RODataMergeStr;
       else
-        kind = SectionKind::RODataMergeConst;
+        return SectionKind::RODataMergeConst;
     }
   }
 

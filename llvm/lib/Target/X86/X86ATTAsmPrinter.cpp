@@ -32,6 +32,8 @@
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
+#include <iostream>
+
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
 static std::string getPICLabelString(unsigned FnNum,
@@ -771,6 +773,9 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   if (!GVar->hasInitializer())
     return;   // External global require no code
+
+  GVar->dump();
+  std::cout << TAI->SectionForGlobal(GVar) << std::endl;
 
   // Check to see if this is a special global used by LLVM, if so, emit it.
   if (EmitSpecialLLVMGlobal(GVar)) {
