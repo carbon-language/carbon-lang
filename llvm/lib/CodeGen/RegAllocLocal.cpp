@@ -239,6 +239,9 @@ namespace {
     MachineInstr *reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
                                 unsigned OpNum);
 
+    /// ComputeLocalLiveness - Computes liveness of registers within a basic
+    /// block, setting the killed/dead flags as appropriate.
+    void ComputeLocalLiveness(MachineBasicBlock& MBB);
 
     void reloadPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
                        unsigned PhysReg);
@@ -558,34 +561,9 @@ static bool precedes(MachineBasicBlock::iterator A,
   return false;
 }
 
-void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
-  // loop over each instruction
-  MachineBasicBlock::iterator MII = MBB.begin();
-  
-  DEBUG(const BasicBlock *LBB = MBB.getBasicBlock();
-        if (LBB) DOUT << "\nStarting RegAlloc of BB: " << LBB->getName());
-
-  // If this is the first basic block in the machine function, add live-in
-  // registers as active.
-  if (&MBB == &*MF->begin() || MBB.isLandingPad()) {
-    for (MachineBasicBlock::livein_iterator I = MBB.livein_begin(),
-         E = MBB.livein_end(); I != E; ++I) {
-      unsigned Reg = *I;
-      MF->getRegInfo().setPhysRegUsed(Reg);
-      PhysRegsUsed[Reg] = 0;            // It is free and reserved now
-      AddToPhysRegsUseOrder(Reg); 
-      for (const unsigned *AliasSet = TRI->getSubRegisters(Reg);
-           *AliasSet; ++AliasSet) {
-        if (PhysRegsUsed[*AliasSet] != -2) {
-          AddToPhysRegsUseOrder(*AliasSet); 
-          PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
-          MF->getRegInfo().setPhysRegUsed(*AliasSet);
-        }
-      }
-    }    
-  }
-  
-  
+/// ComputeLocalLiveness - Computes liveness of registers within a basic
+/// block, setting the killed/dead flags as appropriate.
+void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
   MachineRegisterInfo& MRI = MBB.getParent()->getRegInfo();
   // Keep track of the most recently seen previous use or def of each reg, 
   // so that we can update them with dead/kill markers.
@@ -675,6 +653,36 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
         MO.setIsDead(true);
     }
   }
+}
+
+void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
+  // loop over each instruction
+  MachineBasicBlock::iterator MII = MBB.begin();
+  
+  DEBUG(const BasicBlock *LBB = MBB.getBasicBlock();
+        if (LBB) DOUT << "\nStarting RegAlloc of BB: " << LBB->getName());
+
+  // If this is the first basic block in the machine function, add live-in
+  // registers as active.
+  if (&MBB == &*MF->begin() || MBB.isLandingPad()) {
+    for (MachineBasicBlock::livein_iterator I = MBB.livein_begin(),
+         E = MBB.livein_end(); I != E; ++I) {
+      unsigned Reg = *I;
+      MF->getRegInfo().setPhysRegUsed(Reg);
+      PhysRegsUsed[Reg] = 0;            // It is free and reserved now
+      AddToPhysRegsUseOrder(Reg); 
+      for (const unsigned *AliasSet = TRI->getSubRegisters(Reg);
+           *AliasSet; ++AliasSet) {
+        if (PhysRegsUsed[*AliasSet] != -2) {
+          AddToPhysRegsUseOrder(*AliasSet); 
+          PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
+          MF->getRegInfo().setPhysRegUsed(*AliasSet);
+        }
+      }
+    }    
+  }
+  
+  ComputeLocalLiveness(MBB);
   
   // Otherwise, sequentially allocate each instruction in the MBB.
   while (MII != MBB.end()) {
