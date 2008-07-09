@@ -224,9 +224,7 @@ X86DarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
 std::string
 X86DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind Kind = SectionKindForGlobal(GV);
-  bool isWeak = GV->hasWeakLinkage() ||
-                GV->hasCommonLinkage() ||
-                GV->hasLinkOnceLinkage();
+  bool isWeak = GV->isWeakForLinker();
 
   switch (Kind) {
    case SectionKind::Text:
@@ -435,9 +433,7 @@ X86ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
       return UniqueSectionForGlobal(F, kind);
     }
   } else if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
-    if (GVar->hasCommonLinkage() ||
-        GVar->hasLinkOnceLinkage() ||
-        GVar->hasWeakLinkage())
+    if (GVar->isWeakForLinker()
       return UniqueSectionForGlobal(GVar, kind);
     else {
       switch (kind) {

@@ -228,9 +228,7 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
       assert(0 && "Unexpected section kind!");
     }
 
-    if (GV->hasLinkOnceLinkage() ||
-        GV->hasWeakLinkage() ||
-        GV->hasCommonLinkage())
+    if (GV->isWeakForLinker())
       Flags |= SectionFlags::Linkonce;
   }
 
@@ -289,9 +287,7 @@ std::string
 TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind Kind = SectionKindForGlobal(GV);
 
-  if (GV->hasLinkOnceLinkage() ||
-      GV->hasWeakLinkage() ||
-      GV->hasCommonLinkage())
+  if (GV->isWeakForLinker())
     return UniqueSectionForGlobal(GV, Kind);
   else {
     if (Kind == SectionKind::Text)

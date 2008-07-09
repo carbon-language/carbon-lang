@@ -399,10 +399,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (shouldPrintStub(TM, Subtarget)) {
       // Link-once, declaration, or Weakly-linked global variables need
       // non-lazily-resolved stubs
-      if (GV->isDeclaration() ||
-          GV->hasWeakLinkage() ||
-          GV->hasLinkOnceLinkage() ||
-          GV->hasCommonLinkage()) {
+      if (GV->isDeclaration() || GV->isWeakForLinker()) {
         // Dynamically-resolved functions need a stub for the function.
         if (isCallOp && isa<Function>(GV)) {
           FnStubs.insert(Name);
@@ -802,8 +799,7 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     }
 
     if (!GVar->isThreadLocal() &&
-        (GVar->hasInternalLinkage() || GVar->hasWeakLinkage() ||
-         GVar->hasLinkOnceLinkage() || GVar->hasCommonLinkage())) {
+        (GVar->hasInternalLinkage() || GVar->isWeakForLinker())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
       if (TAI->getLCOMMDirective() != NULL) {
