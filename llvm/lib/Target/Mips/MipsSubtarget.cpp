@@ -20,7 +20,7 @@ using namespace llvm;
 MipsSubtarget::MipsSubtarget(const TargetMachine &TM, const Module &M, 
                              const std::string &FS, bool little) : 
   MipsArchVersion(Mips1), MipsABI(O32), IsLittle(little), IsSingleFloat(false),
-  IsFP64bit(false), IsGP64bit(false), HasAllegrexVFPU(false), IsAllegrex(false)
+  IsFP64bit(false), IsGP64bit(false), HasVFPU(false), HasSEInReg(false)
 {
   std::string CPU = "mips1";
 
@@ -36,7 +36,7 @@ MipsSubtarget::MipsSubtarget(const TargetMachine &TM, const Module &M,
     MipsABI = EABI;
     IsSingleFloat = true;
     MipsArchVersion = Mips2;
-    HasAllegrexVFPU = true; // Enables Allegrex Vector FPU (not supported yet)
-    IsAllegrex = true;
+    HasVFPU = true; // Enables Allegrex Vector FPU (not supported yet)
+    HasSEInReg = true;
   }
 }

@@ -122,7 +122,7 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   if (Subtarget->isSingleFloat()) 
     setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
 
-  if (!Subtarget->isAllegrex()) {
+  if (!Subtarget->hasSEInReg()) {
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8,  Expand);
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);
   }

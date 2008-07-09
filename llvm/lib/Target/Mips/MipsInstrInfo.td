@@ -50,7 +50,7 @@ def MipsSelectCC  : SDNode<"MipsISD::SelectCC", SDT_MipsSelectCC>;
 //===----------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.
 //===----------------------------------------------------------------------===//
-def IsAllegrex : Predicate<"Subtarget.isAllegrex()">;
+def HasSEInReg : Predicate<"Subtarget.hasSEInReg()">;
 
 //===----------------------------------------------------------------------===//
 // Mips Operand, Complex Patterns and Transformations Definitions.
@@ -510,7 +510,7 @@ def LEA_ADDiu : EffectiveAddress<"addiu $dst, ${addr:stackloc}">;
 //def MSUB    : MArithR<0x04, "msub">;
 //def MSUBU   : MArithR<0x05, "msubu">;
 
-let Predicates = [IsAllegrex] in {
+let Predicates = [HasSEInReg] in {
   let shamt = 0x10, rs = 0 in 
     def SEB : SignExtInReg<0x21, "seb", i8>;
 

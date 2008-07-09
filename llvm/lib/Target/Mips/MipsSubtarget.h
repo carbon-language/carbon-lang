@@ -27,7 +27,7 @@ class MipsSubtarget : public TargetSubtarget {
 protected:
 
   enum MipsArchEnum {
-    Mips1, Mips2, Mips3, Mips4, Mips32, Mips32r2
+    Mips1, Mips2, Mips3, Mips4, Mips32, Mips32r2, Mips64, Mips64r2
   };
 
   enum MipsABIEnum {
@@ -54,11 +54,11 @@ protected:
   // IsFP64bit - General-purpose registers are 64 bits wide
   bool IsGP64bit;
 
-  // HasAllegrexVFPU - Allegrex processor has a vector floating point unit.
-  bool HasAllegrexVFPU;
+  // HasVFPU - Processor has a vector floating point unit.
+  bool HasVFPU;
 
-  // IsAllegrex - The target processor is a Allegrex core.
-  bool IsAllegrex;
+  // HasSEInReg - Target has SEB and SEH (signext in register) instructions.
+  bool HasSEInReg;
 
   InstrItineraryData InstrItins;
 
@@ -85,8 +85,8 @@ public:
   bool isGP32bit() const { return !IsGP64bit; };
   bool isSingleFloat() const { return IsSingleFloat; };
   bool isNotSingleFloat() const { return !IsSingleFloat; };
-  bool hasAllegrexVFPU() const { return HasAllegrexVFPU; };
-  bool isAllegrex() const { return IsAllegrex; };
+  bool hasVFPU() const { return HasVFPU; };
+  bool hasSEInReg() const { return HasSEInReg; };
 
 };
 } // End llvm namespace
