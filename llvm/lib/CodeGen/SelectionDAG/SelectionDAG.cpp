@@ -3399,7 +3399,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
 }
 
 SDOperand SelectionDAG::getNode(unsigned Opcode,
-                                std::vector<MVT> &ResultTys,
+                                const std::vector<MVT> &ResultTys,
                                 const SDOperand *Ops, unsigned NumOps) {
   return getNode(Opcode, getNodeValueTypes(ResultTys), ResultTys.size(),
                  Ops, NumOps);
@@ -3969,7 +3969,7 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
   return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 4, Ops, NumOps).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode,
-                                    std::vector<MVT> &ResultTys,
+                                    const std::vector<MVT> &ResultTys,
                                     const SDOperand *Ops, unsigned NumOps) {
   const MVT *VTs = getNodeValueTypes(ResultTys);
   return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, ResultTys.size(),

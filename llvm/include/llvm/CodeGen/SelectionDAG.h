@@ -167,7 +167,7 @@ public:
   const MVT *getNodeValueTypes(MVT VT1, MVT VT2, MVT VT3) {
     return getVTList(VT1, VT2, VT3).VTs;
   }
-  const MVT *getNodeValueTypes(std::vector<MVT> &vtList) {
+  const MVT *getNodeValueTypes(const std::vector<MVT> &vtList) {
     return getVTList(&vtList[0], (unsigned)vtList.size()).VTs;
   }
   
@@ -312,7 +312,7 @@ public:
                     const SDOperand *Ops, unsigned NumOps);
   SDOperand getNode(unsigned Opcode, MVT VT,
                     const SDUse *Ops, unsigned NumOps);
-  SDOperand getNode(unsigned Opcode, std::vector<MVT> &ResultTys,
+  SDOperand getNode(unsigned Opcode, const std::vector<MVT> &ResultTys,
                     const SDOperand *Ops, unsigned NumOps);
   SDOperand getNode(unsigned Opcode, const MVT *VTs, unsigned NumVTs,
                     const SDOperand *Ops, unsigned NumOps);
@@ -511,7 +511,7 @@ public:
                         const SDOperand *Ops, unsigned NumOps);
   SDNode *getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3, MVT VT4,
                         const SDOperand *Ops, unsigned NumOps);
-  SDNode *getTargetNode(unsigned Opcode, std::vector<MVT> &ResultTys,
+  SDNode *getTargetNode(unsigned Opcode, const std::vector<MVT> &ResultTys,
                         const SDOperand *Ops, unsigned NumOps);
 
   /// getNodeIfExists - Get the specified node if it's already available, or
