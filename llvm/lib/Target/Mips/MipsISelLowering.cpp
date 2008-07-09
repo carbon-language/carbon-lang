@@ -615,7 +615,7 @@ LowerCCCArguments(SDOperand Op, SelectionDAG &DAG)
     // Arguments stored on registers
     if (VA.isRegLoc()) {
       MVT RegVT = VA.getLocVT();
-      TargetRegisterClass *RC;
+      TargetRegisterClass *RC = 0;
             
       if (RegVT == MVT::i32)
         RC = Mips::CPURegsRegisterClass; 
