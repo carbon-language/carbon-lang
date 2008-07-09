@@ -56,11 +56,6 @@ namespace llvm {
     };
   }
 
-  struct SectionInfo {
-    SectionKind::Kind   kind;
-    SectionFlags::Flags flags;
-  };
-
   class TargetMachine;
   class CallInst;
   class GlobalValue;
@@ -475,6 +470,9 @@ namespace llvm {
     /// SectionForGlobal - This hooks returns proper section name for given
     /// global with all necessary flags and marks.
     virtual std::string SectionForGlobal(const GlobalValue *GV) const;
+
+    virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
+                                               SectionKind::Kind kind) const;
 
     // Accessors.
     //

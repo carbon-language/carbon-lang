@@ -266,3 +266,26 @@ TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
 
   return getDataSection();
 }
+
+std::string
+TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
+                                      SectionKind::Kind kind) const {
+  switch (kind) {
+   case SectionKind::Text:
+    return ".llvm.linkonce.t." + GV->getName();
+   case SectionKind::Data:
+    return ".llvm.linkonce.d." + GV->getName();
+   case SectionKind::BSS:
+    return ".llvm.linkonce.b." + GV->getName();
+   case SectionKind::ROData:
+   case SectionKind::RODataMergeConst:
+   case SectionKind::RODataMergeStr:
+    return ".llvm.linkonce.r." + GV->getName();
+   case SectionKind::ThreadData:
+    return ".llvm.linkonce.td." + GV->getName();
+   case SectionKind::ThreadBSS:
+    return ".llvm.linkonce.tb." + GV->getName();
+   default:
+    assert(0 && "Unknown section kind");
+  }
+}

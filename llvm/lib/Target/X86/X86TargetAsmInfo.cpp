@@ -375,6 +375,41 @@ unsigned X86TargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
   }
 }
 
+std::string X86TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
+                                                SectionKind::Kind kind) const {
+  const X86Subtarget *Subtarget = &X86TM->getSubtarget<X86Subtarget>();
+
+  switch (Subtarget->TargetType) {
+   case X86Subtarget::isDarwin:
+    if (kind == SectionKind::Text)
+      return "__TEXT,__textcoal_nt,coalesced,pure_instructions";
+    else
+      return "__DATA,__datacoal_nt,coalesced";
+   case X86Subtarget::isCygwin:
+   case X86Subtarget::isMingw:
+    switch (kind) {
+     case SectionKind::Text:
+      return ".text$linkonce" + GV->getName();
+     case SectionKind::Data:
+     case SectionKind::BSS:
+     case SectionKind::ThreadData:
+     case SectionKind::ThreadBSS:
+      return ".data$linkonce" + GV->getName();
+     case SectionKind::ROData:
+     case SectionKind::RODataMergeConst:
+     case SectionKind::RODataMergeStr:
+      return ".rdata$linkonce" + GV->getName();
+     default:
+      assert(0 && "Unknown section kind");
+    }
+   case X86Subtarget::isELF:
+    return TargetAsmInfo::UniqueSectionForGlobal(GV, kind);
+   default:
+    return "";
+  }
+}
+
+
 std::string X86TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
   const X86Subtarget *Subtarget = &X86TM->getSubtarget<X86Subtarget>();
   SectionKind::Kind kind = SectionKindForGlobal(GV);
@@ -383,41 +418,58 @@ std::string X86TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
 
   // FIXME: Should we use some hashing based on section name and just check
   // flags?
+  // FIXME: It seems, that Darwin uses much more sections.
 
   // Select section name
-  if (const Function *F = dyn_cast<Function>(GV)) {
-    // Implement here
-  } else if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
-    if (GVar->hasSection()) {
-      // Honour section already set, if any
-      Name = GVar->getSection();
-    } else {
-      // Use default section depending on the 'type' of global
-      // FIXME: Handle linkonce stuff
-      switch (kind) {
-       case SectionKind::Data:
-        Name = DataSection;
+  if (GV->hasSection()) {
+    // Honour section already set, if any
+    Name = GV->getSection();
+  } else {
+    // Use default section depending on the 'type' of global
+    if (const Function *F = dyn_cast<Function>(GV)) {
+      switch (F->getLinkage()) {
+       default: assert(0 && "Unknown linkage type!");
+       case Function::InternalLinkage:
+       case Function::DLLExportLinkage:
+       case Function::ExternalLinkage:
+        Name = TextSection;
         break;
-       case SectionKind::BSS:
-        Name = (BSSSection ? BSSSection : DataSection);
+       case Function::WeakLinkage:
+       case Function::LinkOnceLinkage:
+        Name = UniqueSectionForGlobal(F, kind);
         break;
-       case SectionKind::ROData:
-       case SectionKind::RODataMergeStr:
-       case SectionKind::RODataMergeConst:
-        // FIXME: Temporary
-        Name = DataSection;
-        break;
-       case SectionKind::ThreadData:
-        Name = (TLSDataSection ? TLSDataSection : DataSection);
-        break;
-       case SectionKind::ThreadBSS:
-        Name = (TLSBSSSection ? TLSBSSSection : DataSection);
-       default:
-        assert(0 && "Unsuported section kind for global");
       }
-    }
-  } else
-    assert(0 && "Unsupported global");
+    } else if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
+      if (GVar->hasCommonLinkage() ||
+          GVar->hasLinkOnceLinkage() ||
+          GVar->hasWeakLinkage())
+        Name = UniqueSectionForGlobal(GVar, kind);
+      else {
+        switch (kind) {
+         case SectionKind::Data:
+          Name = DataSection;
+          break;
+         case SectionKind::BSS:
+          Name = (BSSSection ? BSSSection : DataSection);
+          break;
+         case SectionKind::ROData:
+         case SectionKind::RODataMergeStr:
+         case SectionKind::RODataMergeConst:
+          // FIXME: Temporary
+          Name = DataSection;
+          break;
+         case SectionKind::ThreadData:
+          Name = (TLSDataSection ? TLSDataSection : DataSection);
+          break;
+         case SectionKind::ThreadBSS:
+          Name = (TLSBSSSection ? TLSBSSSection : DataSection);
+         default:
+          assert(0 && "Unsuported section kind for global");
+        }
+      }
+    } else
+      assert(0 && "Unsupported global");
+  }
 
   // Add all special flags, etc
   switch (Subtarget->TargetType) {

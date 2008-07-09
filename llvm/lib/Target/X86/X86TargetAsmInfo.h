@@ -28,6 +28,8 @@ namespace llvm {
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
     virtual std::string SectionForGlobal(const GlobalValue *GV) const;
+    virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
+                                               SectionKind::Kind kind) const;
 
   private:
     const X86TargetMachine* X86TM;
