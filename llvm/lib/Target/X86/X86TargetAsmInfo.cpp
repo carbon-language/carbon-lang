@@ -341,10 +341,11 @@ X86ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
         // ELF targets usually have BSS sections
         return getBSSSection();
        case SectionKind::ROData:
-       case SectionKind::RODataMergeStr:
-       case SectionKind::RODataMergeConst:
-        // FIXME: Temporary
         return getReadOnlySection();
+       case SectionKind::RODataMergeStr:
+        return MergeableStringSection(GVar);
+       case SectionKind::RODataMergeConst:
+        return MergeableConstSection(GVar);
        case SectionKind::ThreadData:
         // ELF targets usually support TLS stuff
         return getTLSDataSection();
@@ -357,6 +358,66 @@ X86ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   } else
     assert(0 && "Unsupported global");
 }
+
+std::string
+X86ELFTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
+  unsigned Flags = SectionFlagsForGlobal(GV, GV->getSection().c_str());
+  unsigned Size = SectionFlags::getEntitySize(Flags);
+
+  // FIXME: string here is temporary, until stuff will fully land in.
+  if (Size)
+    return ".rodata.cst" + utostr(Size);
+  else
+    return getReadOnlySection();
+}
+
+std::string
+X86ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
+  unsigned Flags = SectionFlagsForGlobal(GV, GV->getSection().c_str());
+  unsigned Size = SectionFlags::getEntitySize(Flags);
+
+  if (Size) {
+    // We also need alignment here
+    const TargetData *TD = X86TM->getTargetData();
+    unsigned Align = TD->getPreferredAlignment(GV);
+    if (Align < Size)
+      Align = Size;
+
+    // FIXME: string here is temporary, until stuff will fully land in.
+    return ".rodata.str" + utostr(Size) + ',' + utostr(Align);
+  } else
+    return getReadOnlySection();
+}
+
+unsigned
+X86ELFTargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
+                                           const char* name) const {
+  unsigned Flags =
+    TargetAsmInfo::SectionFlagsForGlobal(GV,
+                                         GV->getSection().c_str());
+
+  // If there was decision to put stuff into mergeable section - calculate
+  // entity size
+  if (Flags & SectionFlags::Mergeable) {
+    const TargetData *TD = X86TM->getTargetData();
+    Constant *C = cast<GlobalVariable>(GV)->getInitializer();
+    const Type *Type;
+
+    if (Flags & SectionFlags::Strings) {
+      const ConstantArray *CVA = cast<ConstantArray>(C);
+      Type = CVA->getType()->getElementType();
+    } else
+      Type = C->getType();
+
+    unsigned Size = TD->getABITypeSize(Type);
+    if (Size > 32)
+      Size = 0;
+    Flags = SectionFlags::setEntitySize(Flags, Size);
+  }
+
+  return Flags;
+}
+
 
 std::string X86ELFTargetAsmInfo::PrintSectionFlags(unsigned flags) const {
   std::string Flags = ",\"";

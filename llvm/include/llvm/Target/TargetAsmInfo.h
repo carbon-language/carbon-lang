@@ -57,12 +57,12 @@ namespace llvm {
       EntitySize = 0xFF << 24 ///< Entity size for mergeable sections
     };
 
-    static inline unsigned getEntitySize(unsigned flags) {
-      return (flags >> 24) & 0xFF;
+    static inline unsigned getEntitySize(unsigned Flags) {
+      return (Flags >> 24) & 0xFF;
     }
 
-    static inline unsigned setEntitySize(unsigned flags, unsigned size) {
-      return ((flags & ~EntitySize) | ((size & 0xFF) << 24));
+    static inline unsigned setEntitySize(unsigned Flags, unsigned Size) {
+      return ((Flags & ~EntitySize) | ((Size & 0xFF) << 24));
     }
   }
 

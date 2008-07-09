@@ -20,6 +20,7 @@ namespace llvm {
 
   // Forward declaration.
   class X86TargetMachine;
+  class GlobalVariable;
 
   struct X86TargetAsmInfo : public TargetAsmInfo {
     explicit X86TargetAsmInfo(const X86TargetMachine &TM);
@@ -47,7 +48,11 @@ namespace llvm {
                                            bool Global) const;
 
     virtual std::string SelectSectionForGlobal(const GlobalValue *GV) const;
+    virtual unsigned SectionFlagsForGlobal(const GlobalValue *GV,
+                                           const char* name) const;
     virtual std::string PrintSectionFlags(unsigned flags) const;
+    std::string MergeableConstSection(const GlobalVariable *GV) const;
+    std::string MergeableStringSection(const GlobalVariable *GV) const;
   };
 
   struct X86COFFTargetAsmInfo : public X86TargetAsmInfo {
