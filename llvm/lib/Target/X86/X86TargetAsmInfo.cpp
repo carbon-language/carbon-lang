@@ -44,7 +44,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
   // FIXME - Should be simplified.
 
   AsmTransCBE = x86_asm_table;
-  
+
   switch (Subtarget->TargetType) {
   case X86Subtarget::isDarwin:
     AlignmentIsInBytes = false;
@@ -94,7 +94,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     WeakRefDirective = "\t.weak_reference ";
     HiddenDirective = "\t.private_extern ";
     ProtectedDirective = "\t.globl\t";
-    
+
     // In non-PIC modes, emit a special label before jump tables so that the
     // linker can perform more accurate dead code stripping.
     if (TM.getRelocationModel() != Reloc::PIC_) {
@@ -202,11 +202,11 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
 
   default: break;
   }
-  
+
   if (Subtarget->isFlavorIntel()) {
     GlobalPrefix = "_";
     CommentString = ";";
-  
+
     PrivateGlobalPrefix = "$";
     AlignDirective = "\talign\t";
     ZeroDirective = "\tdb\t";
@@ -218,7 +218,7 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     Data32bitsDirective = "\tdd\t";
     Data64bitsDirective = "\tdq\t";
     HasDotTypeDotSizeDirective = false;
-    
+
     TextSection = "_text";
     DataSection = "_data";
     JumpTableDataSection = NULL;
@@ -240,25 +240,25 @@ bool X86TargetAsmInfo::LowerToBSwap(CallInst *CI) const {
   // we will turn this bswap into something that will be lowered to logical ops
   // instead of emitting the bswap asm.  For now, we don't support 486 or lower
   // so don't worry about this.
-  
+
   // Verify this is a simple bswap.
   if (CI->getNumOperands() != 2 ||
       CI->getType() != CI->getOperand(1)->getType() ||
       !CI->getType()->isInteger())
     return false;
-  
+
   const IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
   if (!Ty || Ty->getBitWidth() % 16 != 0)
     return false;
-  
+
   // Okay, we can do this xform, do so now.
   const Type *Tys[] = { Ty };
   Module *M = CI->getParent()->getParent()->getParent();
   Constant *Int = Intrinsic::getDeclaration(M, Intrinsic::bswap, Tys, 1);
-  
+
   Value *Op = CI->getOperand(1);
   Op = CallInst::Create(Int, Op, CI->getName(), CI);
-  
+
   CI->replaceAllUsesWith(Op);
   CI->eraseFromParent();
   return true;
@@ -268,22 +268,22 @@ bool X86TargetAsmInfo::LowerToBSwap(CallInst *CI) const {
 bool X86TargetAsmInfo::ExpandInlineAsm(CallInst *CI) const {
   InlineAsm *IA = cast<InlineAsm>(CI->getCalledValue());
   std::vector<InlineAsm::ConstraintInfo> Constraints = IA->ParseConstraints();
-  
+
   std::string AsmStr = IA->getAsmString();
-  
+
   // TODO: should remove alternatives from the asmstring: "foo {a|b}" -> "foo a"
   std::vector<std::string> AsmPieces;
   SplitString(AsmStr, AsmPieces, "\n");  // ; as separator?
-  
+
   switch (AsmPieces.size()) {
-  default: return false;    
+  default: return false;
   case 1:
     AsmStr = AsmPieces[0];
     AsmPieces.clear();
     SplitString(AsmStr, AsmPieces, " \t");  // Split with whitespace.
-    
+
     // bswap $0
-    if (AsmPieces.size() == 2 && 
+    if (AsmPieces.size() == 2 &&
         AsmPieces[0] == "bswap" && AsmPieces[1] == "$0") {
       // No need to check constraints, nothing other than the equivalent of
       // "=r,0" would be valid here.
