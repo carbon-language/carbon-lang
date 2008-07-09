@@ -585,13 +585,24 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
       // Defs others than 2-addr redefs _do_ trigger flag changes:
       //   - A def followed by a def is dead
       //   - A use followed by a def is a kill
-      if (MO.isReg() && MO.getReg() && MO.isDef() && 
-         !I->isRegReDefinedByTwoAddr(MO.getReg())) {
+      if (MO.isReg() && MO.getReg() && MO.isDef()) {
         std::map<unsigned, std::pair<MachineInstr*, unsigned> >::iterator
           last = LastUseDef.find(MO.getReg());
         if (last != LastUseDef.end()) {
+          
+          // If this is a two address instr, then we don't mark the def
+          // as killing the use.
+          if (last->second.first == I &&
+              I->getDesc().getOperandConstraint(last->second.second,
+                                                TOI::TIED_TO) == (signed)i) {
+            LastUseDef[MO.getReg()] = std::make_pair(I, i);
+            continue;
+          }
+            
+          
           MachineOperand& lastUD =
                       last->second.first->getOperand(last->second.second);
+          
           if (lastUD.isDef())
             lastUD.setIsDead(true);
           else if (lastUD.isUse())
