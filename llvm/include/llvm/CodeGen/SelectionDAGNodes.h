@@ -1440,23 +1440,25 @@ private:
   //! SrcValue - Memory location for alias analysis.
   const Value *SrcValue;
 
-  //! Alignment - Alignment of memory location in bytes.
-  unsigned Alignment;
+  //! SVOffset - Memory location offset. Note that base is defined in MemSDNode
+  int SVOffset;
+
+  /// Flags - the low bit indicates whether this is a volatile reference;
+  /// the remainder is a log2 encoding of the alignment in bytes.
+  unsigned Flags;
 
 public:
-  MemSDNode(unsigned Opc, SDVTList VTs, const Value *srcValue,
-            unsigned alignment)
-    : SDNode(Opc, VTs), SrcValue(srcValue), Alignment(alignment) {}
-  
-  virtual ~MemSDNode() {}
+  MemSDNode(unsigned Opc, SDVTList VTs,
+            const Value *srcValue, int SVOff,
+            unsigned alignment, bool isvolatile);
 
   /// Returns alignment and volatility of the memory access
-  unsigned getAlignment() const { return Alignment; }
-  virtual bool isVolatile() const = 0;
+  unsigned getAlignment() const { return (1u << (Flags >> 1)) >> 1; }
+  bool isVolatile() const { return Flags & 1; }
   
   /// Returns the SrcValue and offset that describes the location of the access
   const Value *getSrcValue() const { return SrcValue; }
-  virtual int getSrcValueOffset() const = 0;
+  int getSrcValueOffset() const { return SVOffset; }
   
   /// getMemOperand - Return a MachineMemOperand object describing the memory
   /// reference performed by operation.
@@ -1499,7 +1501,8 @@ class AtomicSDNode : public MemSDNode {
   AtomicSDNode(unsigned Opc, SDVTList VTL, SDOperand Chain, SDOperand Ptr, 
                SDOperand Cmp, SDOperand Swp, const Value* SrcVal,
                unsigned Align=0)
-    : MemSDNode(Opc, VTL, SrcVal, Align) {
+    : MemSDNode(Opc, VTL, SrcVal, /*SVOffset=*/0,
+                Align, /*isVolatile=*/true) {
     Ops[0] = Chain;
     Ops[1] = Ptr;
     Ops[2] = Swp;
@@ -1508,7 +1511,8 @@ class AtomicSDNode : public MemSDNode {
   }
   AtomicSDNode(unsigned Opc, SDVTList VTL, SDOperand Chain, SDOperand Ptr, 
                SDOperand Val, const Value* SrcVal, unsigned Align=0)
-    : MemSDNode(Opc, VTL, SrcVal, Align) {
+    : MemSDNode(Opc, VTL, SrcVal, /*SVOffset=*/0,
+                Align, /*isVolatile=*/true) {
     Ops[0] = Chain;
     Ops[1] = Ptr;
     Ops[2] = Val;
@@ -1521,10 +1525,6 @@ class AtomicSDNode : public MemSDNode {
 
   bool isCompareAndSwap() const { return getOpcode() == ISD::ATOMIC_CMP_SWAP; }
 
-  // Implementation for MemSDNode
-  virtual int getSrcValueOffset() const { return 0; }
-  virtual bool isVolatile() const { return true; }   
-  
   /// getMemOperand - Return a MachineMemOperand object describing the memory
   /// reference performed by this atomic load/store.
   virtual MachineMemOperand getMemOperand() const;
@@ -2055,12 +2055,6 @@ private:
   // MemoryVT - VT of in-memory value.
   MVT MemoryVT;
 
-  //! SVOffset - Memory location offset. Note that base is defined in MemSDNode
-  int SVOffset;
-
-  //! IsVolatile - True if the load/store is volatile.
-  bool IsVolatile;
-
 protected:
   //! Operand array for load and store
   /*!
@@ -2073,8 +2067,7 @@ public:
   LSBaseSDNode(ISD::NodeType NodeTy, SDOperand *Operands, unsigned numOperands,
                SDVTList VTs, ISD::MemIndexedMode AM, MVT VT,
                const Value *SV, int SVO, unsigned Align, bool Vol)
-    : MemSDNode(NodeTy, VTs, SV, Align), AddrMode(AM), MemoryVT(VT),
-      SVOffset(SVO), IsVolatile(Vol) {
+    : MemSDNode(NodeTy, VTs, SV, SVO, Align, Vol), AddrMode(AM), MemoryVT(VT) {
     for (unsigned i = 0; i != numOperands; ++i)
       Ops[i] = Operands[i];
     InitOperands(Ops, numOperands);
@@ -2101,10 +2094,6 @@ public:
   /// isUnindexed - Return true if this is NOT a pre/post inc/dec load/store.
   bool isUnindexed() const { return AddrMode == ISD::UNINDEXED; }
 
-  // Implementation for MemSDNode
-  virtual int getSrcValueOffset() const { return SVOffset; }
-  virtual bool isVolatile() const { return IsVolatile; }  
-  
   /// getMemOperand - Return a MachineMemOperand object describing the memory
   /// reference performed by this load or store.
   virtual MachineMemOperand getMemOperand() const;

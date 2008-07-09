@@ -4331,6 +4331,17 @@ GlobalAddressSDNode::GlobalAddressSDNode(bool isTarget, const GlobalValue *GA,
   TheGlobal = const_cast<GlobalValue*>(GA);
 }
 
+MemSDNode::MemSDNode(unsigned Opc, SDVTList VTs,
+                     const Value *srcValue, int SVO,
+                     unsigned alignment, bool vol)
+ : SDNode(Opc, VTs), SrcValue(srcValue), SVOffset(SVO),
+   Flags(vol | ((Log2_32(alignment) + 1) << 1)) {
+
+  assert(isPowerOf2_32(alignment) && "Alignment is not a power of 2!");
+  assert(getAlignment() == alignment && "Alignment representation error!");
+  assert(isVolatile() == vol && "Volatile representation error!");
+}
+
 /// getMemOperand - Return a MachineMemOperand object describing the memory
 /// reference performed by this atomic.
 MachineMemOperand AtomicSDNode::getMemOperand() const {
