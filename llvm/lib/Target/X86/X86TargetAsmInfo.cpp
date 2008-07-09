@@ -313,6 +313,51 @@ X86ELFTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
   }
 }
 
+std::string
+X86ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
+  SectionKind::Kind kind = SectionKindForGlobal(GV);
+
+  if (const Function *F = dyn_cast<Function>(GV)) {
+    switch (F->getLinkage()) {
+     default: assert(0 && "Unknown linkage type!");
+     case Function::InternalLinkage:
+     case Function::DLLExportLinkage:
+     case Function::ExternalLinkage:
+      return getTextSection();
+     case Function::WeakLinkage:
+     case Function::LinkOnceLinkage:
+      return UniqueSectionForGlobal(F, kind);
+    }
+  } else if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
+    if (GVar->hasCommonLinkage() ||
+        GVar->hasLinkOnceLinkage() ||
+        GVar->hasWeakLinkage())
+      return UniqueSectionForGlobal(GVar, kind);
+    else {
+      switch (kind) {
+       case SectionKind::Data:
+        return getDataSection();
+       case SectionKind::BSS:
+        // ELF targets usually have BSS sections
+        return getBSSSection();
+       case SectionKind::ROData:
+       case SectionKind::RODataMergeStr:
+       case SectionKind::RODataMergeConst:
+        // FIXME: Temporary
+        return getReadOnlySection();
+       case SectionKind::ThreadData:
+        // ELF targets usually support TLS stuff
+        return getTLSDataSection();
+       case SectionKind::ThreadBSS:
+        return getTLSBSSSection();
+       default:
+        assert(0 && "Unsuported section kind for global");
+      }
+    }
+  } else
+    assert(0 && "Unsupported global");
+}
+
 std::string X86ELFTargetAsmInfo::PrintSectionFlags(unsigned flags) const {
   std::string Flags = ",\"";
 
@@ -471,68 +516,4 @@ X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
   TextSectionStartSuffix = "\tsegment 'CODE'";
   DataSectionStartSuffix = "\tsegment 'DATA'";
   SectionEndDirectiveSuffix = "\tends\n";
-}
-
-std::string X86TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
-  SectionKind::Kind kind = SectionKindForGlobal(GV);
-  unsigned flags = SectionFlagsForGlobal(GV, GV->getSection().c_str());
-  std::string Name;
-
-  // FIXME: Should we use some hashing based on section name and just check
-  // flags?
-  // FIXME: It seems, that Darwin uses much more sections.
-
-  // Select section name
-  if (GV->hasSection()) {
-    // Honour section already set, if any
-    Name = GV->getSection();
-  } else {
-    // Use default section depending on the 'type' of global
-    if (const Function *F = dyn_cast<Function>(GV)) {
-      switch (F->getLinkage()) {
-       default: assert(0 && "Unknown linkage type!");
-       case Function::InternalLinkage:
-       case Function::DLLExportLinkage:
-       case Function::ExternalLinkage:
-        Name = getTextSection();
-        break;
-       case Function::WeakLinkage:
-       case Function::LinkOnceLinkage:
-        Name = UniqueSectionForGlobal(F, kind);
-        break;
-      }
-    } else if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
-      if (GVar->hasCommonLinkage() ||
-          GVar->hasLinkOnceLinkage() ||
-          GVar->hasWeakLinkage())
-        Name = UniqueSectionForGlobal(GVar, kind);
-      else {
-        switch (kind) {
-         case SectionKind::Data:
-          Name = getDataSection();
-          break;
-         case SectionKind::BSS:
-          Name = (getBSSSection() ? getBSSSection() : getDataSection());
-          break;
-         case SectionKind::ROData:
-         case SectionKind::RODataMergeStr:
-         case SectionKind::RODataMergeConst:
-          // FIXME: Temporary
-          Name = getDataSection();
-          break;
-         case SectionKind::ThreadData:
-          Name = (getTLSDataSection() ? getTLSDataSection() : getDataSection());
-          break;
-         case SectionKind::ThreadBSS:
-          Name = (getTLSBSSSection() ? getTLSBSSSection() : getDataSection());
-         default:
-          assert(0 && "Unsuported section kind for global");
-        }
-      }
-    } else
-      assert(0 && "Unsupported global");
-  }
-
-  Name += PrintSectionFlags(flags);
-  return Name;
 }

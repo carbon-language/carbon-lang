@@ -261,6 +261,9 @@ TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
 
   std::string Name;
 
+  // FIXME: Should we use some hashing based on section name and just check
+  // flags?
+
   // Select section name
   if (GV->hasSection()) {
     // Honour section already set, if any
