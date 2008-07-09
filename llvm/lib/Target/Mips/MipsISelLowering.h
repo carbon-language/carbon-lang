@@ -92,6 +92,7 @@ namespace llvm {
     SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerConstantPool(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG);
 
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,

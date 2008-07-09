@@ -74,20 +74,21 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   } else 
     addRegisterClass(MVT::f32, Mips::FGR32RegisterClass);
 
-  // Custom
-  setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
-  setOperationAction(ISD::GlobalTLSAddress, MVT::i32, Custom);
-  setOperationAction(ISD::RET, MVT::Other, Custom);
-  setOperationAction(ISD::JumpTable, MVT::i32, Custom);
-  setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
-  setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
-
   // Load extented operations for i1 types must be promoted 
   setLoadXAction(ISD::EXTLOAD,  MVT::i1,  Promote);
   setLoadXAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
   setLoadXAction(ISD::SEXTLOAD, MVT::i1,  Promote);
 
-  // Mips does not have these NodeTypes below.
+  // Mips Custom Operations
+  setOperationAction(ISD::GlobalAddress,    MVT::i32,   Custom);
+  setOperationAction(ISD::GlobalTLSAddress, MVT::i32,   Custom);
+  setOperationAction(ISD::RET,              MVT::Other, Custom);
+  setOperationAction(ISD::JumpTable,        MVT::i32,   Custom);
+  setOperationAction(ISD::ConstantPool,     MVT::f32,   Custom);
+  setOperationAction(ISD::SELECT_CC,        MVT::i32,   Custom);
+  setOperationAction(ISD::SELECT_CC,        MVT::f32,   Custom);
+
+  // Operations not directly supported by Mips.
   setConvertAction(MVT::f64, MVT::f32, Expand);
 
   setOperationAction(ISD::BR_JT,             MVT::Other, Expand);
@@ -97,38 +98,34 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::UINT_TO_FP,        MVT::i32,   Expand);
   setOperationAction(ISD::FP_TO_UINT,        MVT::i32,   Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1,    Expand);
+  setOperationAction(ISD::CTPOP,             MVT::i32,   Expand);
+  setOperationAction(ISD::CTTZ,              MVT::i32,   Expand);
+  setOperationAction(ISD::CTLZ,              MVT::i32,   Expand);
+  setOperationAction(ISD::ROTL,              MVT::i32,   Expand);
+  setOperationAction(ISD::ROTR,              MVT::i32,   Expand);
+  setOperationAction(ISD::BSWAP,             MVT::i32,   Expand);
+  setOperationAction(ISD::SHL_PARTS,         MVT::i32,   Expand);
+  setOperationAction(ISD::SRA_PARTS,         MVT::i32,   Expand);
+  setOperationAction(ISD::SRL_PARTS,         MVT::i32,   Expand);
+
+  // We don't have line number support yet.
+  setOperationAction(ISD::DBG_STOPPOINT,     MVT::Other, Expand);
+  setOperationAction(ISD::DEBUG_LOC,         MVT::Other, Expand);
+  setOperationAction(ISD::DBG_LABEL,         MVT::Other, Expand);
+  setOperationAction(ISD::EH_LABEL,          MVT::Other, Expand);
+
+  // Use the default for now
+  setOperationAction(ISD::STACKSAVE,         MVT::Other, Expand);
+  setOperationAction(ISD::STACKRESTORE,      MVT::Other, Expand);
+  setOperationAction(ISD::MEMBARRIER,        MVT::Other, Expand);
 
   if (Subtarget->isSingleFloat()) 
     setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
 
   if (!Subtarget->isAllegrex()) {
-    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8, Expand);
+    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8,  Expand);
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);
   }
-
-  // Mips not supported intrinsics.
-  setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
-
-  setOperationAction(ISD::CTPOP, MVT::i32, Expand);
-  setOperationAction(ISD::CTTZ , MVT::i32, Expand);
-  setOperationAction(ISD::CTLZ , MVT::i32, Expand);
-  setOperationAction(ISD::ROTL , MVT::i32, Expand);
-  setOperationAction(ISD::ROTR , MVT::i32, Expand);
-  setOperationAction(ISD::BSWAP, MVT::i32, Expand);
-
-  setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
-  setOperationAction(ISD::SRA_PARTS, MVT::i32, Expand);
-  setOperationAction(ISD::SRL_PARTS, MVT::i32, Expand);
-
-  // We don't have line number support yet.
-  setOperationAction(ISD::DBG_STOPPOINT, MVT::Other, Expand);
-  setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
-  setOperationAction(ISD::DBG_LABEL, MVT::Other, Expand);
-  setOperationAction(ISD::EH_LABEL, MVT::Other, Expand);
-
-  // Use the default for now
-  setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
-  setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
 
   setStackPointerRegisterToSaveRestore(Mips::SP);
   computeRegisterProperties();
@@ -151,6 +148,7 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG)
     case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
     case ISD::GlobalTLSAddress: return LowerGlobalTLSAddress(Op, DAG);
     case ISD::JumpTable:        return LowerJumpTable(Op, DAG);
+    case ISD::ConstantPool:     return LowerConstantPool(Op, DAG);
     case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
   }
   return SDOperand();
@@ -311,6 +309,13 @@ LowerJumpTable(SDOperand Op, SelectionDAG &DAG)
   ResNode = DAG.getNode(ISD::ADD, MVT::i32, HiPart, Lo);
 
   return ResNode;
+}
+
+SDOperand MipsTargetLowering::
+LowerConstantPool(SDOperand Op, SelectionDAG &DAG) 
+{
+  assert(0 && "ConstantPool not implemented for MIPS.");
+  return SDOperand(); // Not reached
 }
 
 //===----------------------------------------------------------------------===//
