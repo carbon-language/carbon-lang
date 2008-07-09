@@ -17,6 +17,7 @@
 #define LLVM_TARGET_ASM_INFO_H
 
 #include "llvm/Support/DataTypes.h"
+#include <string>
 
 namespace llvm {
   // DWARF encoding query type
