@@ -235,7 +235,7 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
   }
 
   // Add flags from sections, if any.
-  if (Name) {
+  if (Name && *Name) {
     Flags |= SectionFlags::Named;
 
     // Some lame default implementation based on some magic section names.
@@ -279,7 +279,7 @@ TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
   // directive and also append funky flags. Otherwise - section name is just
   // some magic assembler directive.
   if (Flags & SectionFlags::Named)
-    Name = SwitchToSectionDirective + Name + PrintSectionFlags(Flags);
+    Name = getSwitchToSectionDirective() + Name + PrintSectionFlags(Flags);
 
   return Name;
 }

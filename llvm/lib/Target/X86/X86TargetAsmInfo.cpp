@@ -336,9 +336,9 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   bool is64Bit = X86TM->getSubtarget<X86Subtarget>().is64Bit();
 
   ReadOnlySection = ".rodata";
-  FourByteConstantSection = ".rodata.cst";
-  EightByteConstantSection = ".rodata.cst";
-  SixteenByteConstantSection = ".rodata.cst";
+  FourByteConstantSection = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
+  EightByteConstantSection = "\t.section\t.rodata.cst8,\"aM\",@progbits,8";
+  SixteenByteConstantSection = "\t.section\t.rodata.cst16,\"aM\",@progbits,16";
   CStringSection = ".rodata.str";
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";
@@ -466,12 +466,10 @@ X86ELFTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
   unsigned Size = SectionFlags::getEntitySize(Flags);
 
   // FIXME: string here is temporary, until stuff will fully land in.
-  if (Size == 4)
-    return FourByteConstantSection;
-  else if (Size == 8)
-    return EightByteConstantSection;
-  else if (Size == 16)
-    return SixteenByteConstantSection;
+  // We cannot use {Four,Eight,Sixteen}ByteConstantSection here, since it's
+  // currently directly used by asmprinter.
+  if (Size == 4 || Size == 8 || Size == 16)
+    return ".rodata.cst" + utostr(Size);
 
   return getReadOnlySection();
 }
@@ -525,8 +523,8 @@ X86ELFTargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
 
   // Mark section as named, when needed (so, we we will need .section directive
   // to switch into it).
-  if (Flags & (SectionFlags::Mergeable ||
-               SectionFlags::TLS ||
+  if (Flags & (SectionFlags::Mergeable |
+               SectionFlags::TLS |
                SectionFlags::Linkonce))
     Flags |= SectionFlags::Named;
 
