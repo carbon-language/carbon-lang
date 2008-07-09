@@ -4401,8 +4401,6 @@ bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) const {
 
   SDOperand TheValue(const_cast<SDNode *>(this), Value);
 
-  SmallPtrSet<SDNode*, 32> UsersHandled;
-
   // TODO: Only iterate over uses of a given value of the node
   for (SDNode::use_iterator UI = use_begin(), E = use_end(); UI != E; ++UI) {
     if (*UI == TheValue) {
@@ -4426,17 +4424,9 @@ bool SDNode::hasAnyUseOfValue(unsigned Value) const {
 
   SDOperand TheValue(const_cast<SDNode *>(this), Value);
 
-  SmallPtrSet<SDNode*, 32> UsersHandled;
-
-  for (SDNode::use_iterator UI = use_begin(), E = use_end(); UI != E; ++UI) {
-    SDNode *User = UI->getUser();
-    if (User->getNumOperands() == 1 ||
-        UsersHandled.insert(User))     // First time we've seen this?
-      for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i)
-        if (User->getOperand(i) == TheValue) {
-          return true;
-        }
-  }
+  for (SDNode::use_iterator UI = use_begin(), E = use_end(); UI != E; ++UI)
+    if (UI->getSDOperand() == TheValue)
+      return true;
 
   return false;
 }
