@@ -205,7 +205,8 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
 
   if (BID == Builtin::BI__builtin_va_start ||
       BID == Builtin::BI__builtin_va_copy ||
-      BID == Builtin::BI__builtin_va_end)
+      BID == Builtin::BI__builtin_va_end ||
+      BID == Builtin::BI__builtin_stdarg_start)
     InitBuiltinVaListType();
     
   QualType R = Context.BuiltinInfo.GetBuiltinType(BID, Context);  
