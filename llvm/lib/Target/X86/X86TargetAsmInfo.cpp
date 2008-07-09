@@ -210,6 +210,17 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
 }
 
+unsigned
+X86DarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
+                                              bool Global) const {
+  if (Reason == DwarfEncoding::Functions && Global)
+    return (DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4);
+  else if (Reason == DwarfEncoding::CodeLabels || !Global)
+    return DW_EH_PE_pcrel;
+  else
+    return DW_EH_PE_absptr;
+}
+
 X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   X86TargetAsmInfo(TM) {
   bool is64Bit = X86TM->getSubtarget<X86Subtarget>().is64Bit();
@@ -252,6 +263,45 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   // On Linux we must declare when we can use a non-executable stack.
   if (X86TM->getSubtarget<X86Subtarget>().isLinux())
     NonexecutableStackDirective = "\t.section\t.note.GNU-stack,\"\",@progbits";
+}
+
+unsigned
+X86ELFTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
+                                           bool Global) const {
+  CodeModel::Model CM = X86TM->getCodeModel();
+  bool is64Bit = X86TM->getSubtarget<X86Subtarget>().is64Bit();
+
+  if (X86TM->getRelocationModel() == Reloc::PIC_) {
+    unsigned Format = 0;
+
+    if (!is64Bit)
+      // 32 bit targets always encode pointers as 4 bytes
+      Format = DW_EH_PE_sdata4;
+    else {
+      // 64 bit targets encode pointers in 4 bytes iff:
+      // - code model is small OR
+      // - code model is medium and we're emitting externally visible symbols
+      //   or any code symbols
+      if (CM == CodeModel::Small ||
+          (CM == CodeModel::Medium && (Global ||
+                                       Reason != DwarfEncoding::Data)))
+        Format = DW_EH_PE_sdata4;
+      else
+        Format = DW_EH_PE_sdata8;
+    }
+
+    if (Global)
+      Format |= DW_EH_PE_indirect;
+
+    return (Format | DW_EH_PE_pcrel);
+  } else {
+    if (is64Bit &&
+        (CM == CodeModel::Small ||
+         (CM == CodeModel::Medium && Reason != DwarfEncoding::Data)))
+      return DW_EH_PE_udata4;
+    else
+      return DW_EH_PE_absptr;
+  }
 }
 
 X86COFFTargetAsmInfo::X86COFFTargetAsmInfo(const X86TargetMachine &TM):
@@ -312,63 +362,42 @@ X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
   SectionEndDirectiveSuffix = "\tends\n";
 }
 
-/// PreferredEHDataFormat - This hook allows the target to select data
-/// format used for encoding pointers in exception handling data. Reason is
-/// 0 for data, 1 for code labels, 2 for function pointers. Global is true
-/// if the symbol can be relocated.
-unsigned X86TargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
-                                                 bool Global) const {
-  const X86Subtarget *Subtarget = &X86TM->getSubtarget<X86Subtarget>();
+unsigned
+X86COFFTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
+                                            bool Global) const {
+  CodeModel::Model CM = X86TM->getCodeModel();
+  bool is64Bit = X86TM->getSubtarget<X86Subtarget>().is64Bit();
 
-  switch (Subtarget->TargetType) {
-  case X86Subtarget::isDarwin:
-   if (Reason == DwarfEncoding::Functions && Global)
-     return (DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4);
-   else if (Reason == DwarfEncoding::CodeLabels || !Global)
-     return DW_EH_PE_pcrel;
-   else
-     return DW_EH_PE_absptr;
+  if (X86TM->getRelocationModel() == Reloc::PIC_) {
+    unsigned Format = 0;
 
-  case X86Subtarget::isELF:
-  case X86Subtarget::isCygwin:
-  case X86Subtarget::isMingw: {
-    CodeModel::Model CM = X86TM->getCodeModel();
-
-    if (X86TM->getRelocationModel() == Reloc::PIC_) {
-      unsigned Format = 0;
-
-      if (!Subtarget->is64Bit())
-        // 32 bit targets always encode pointers as 4 bytes
+    if (!is64Bit)
+      // 32 bit targets always encode pointers as 4 bytes
+      Format = DW_EH_PE_sdata4;
+    else {
+      // 64 bit targets encode pointers in 4 bytes iff:
+      // - code model is small OR
+      // - code model is medium and we're emitting externally visible symbols
+      //   or any code symbols
+      if (CM == CodeModel::Small ||
+          (CM == CodeModel::Medium && (Global ||
+                                       Reason != DwarfEncoding::Data)))
         Format = DW_EH_PE_sdata4;
-      else {
-        // 64 bit targets encode pointers in 4 bytes iff:
-        // - code model is small OR
-        // - code model is medium and we're emitting externally visible symbols
-        //   or any code symbols
-        if (CM == CodeModel::Small ||
-            (CM == CodeModel::Medium && (Global ||
-                                         Reason != DwarfEncoding::Data)))
-          Format = DW_EH_PE_sdata4;
-        else
-          Format = DW_EH_PE_sdata8;
-      }
-
-      if (Global)
-        Format |= DW_EH_PE_indirect;
-
-      return (Format | DW_EH_PE_pcrel);
-    } else {
-      if (Subtarget->is64Bit() &&
-          (CM == CodeModel::Small ||
-           (CM == CodeModel::Medium && Reason != DwarfEncoding::Data)))
-        return DW_EH_PE_udata4;
       else
-        return DW_EH_PE_absptr;
+        Format = DW_EH_PE_sdata8;
     }
-  }
 
-  default:
-   return TargetAsmInfo::PreferredEHDataFormat(Reason, Global);
+    if (Global)
+      Format |= DW_EH_PE_indirect;
+
+    return (Format | DW_EH_PE_pcrel);
+  } else {
+    if (is64Bit &&
+        (CM == CodeModel::Small ||
+         (CM == CodeModel::Medium && Reason != DwarfEncoding::Data)))
+      return DW_EH_PE_udata4;
+    else
+      return DW_EH_PE_absptr;
   }
 }
 
