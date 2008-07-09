@@ -147,6 +147,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   FourByteConstantSection = "\t.literal4\n";
   FourByteConstantSection_ = getUnnamedSection("\t.literal4\n",
                                                SectionFlags::Mergeable);
+  EightByteConstantSection = "\t.literal8\n";
   EightByteConstantSection_ = getUnnamedSection("\t.literal8\n",
                                                 SectionFlags::Mergeable);
   // FIXME: Why don't always use this section?
