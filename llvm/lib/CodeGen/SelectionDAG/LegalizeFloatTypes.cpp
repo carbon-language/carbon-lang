@@ -71,9 +71,10 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
     case ISD::SINT_TO_FP:
     case ISD::UINT_TO_FP:  R = SoftenFloatRes_XINT_TO_FP(N); break;
 
-    case ISD::FADD: R = SoftenFloatRes_FADD(N); break;
-    case ISD::FMUL: R = SoftenFloatRes_FMUL(N); break;
-    case ISD::FSUB: R = SoftenFloatRes_FSUB(N); break;
+    case ISD::FADD:  R = SoftenFloatRes_FADD(N); break;
+    case ISD::FMUL:  R = SoftenFloatRes_FMUL(N); break;
+    case ISD::FPOWI: R = SoftenFloatRes_FPOWI(N); break;
+    case ISD::FSUB:  R = SoftenFloatRes_FSUB(N); break;
   }
 
   // If R is null, the sub-method took care of registering the result.
@@ -199,6 +200,17 @@ SDOperand DAGTypeLegalizer::SoftenFloatRes_FP_ROUND(SDNode *N) {
   }
 
   return MakeLibCall(LC, NVT, &Op, 1, false);
+}
+
+SDOperand DAGTypeLegalizer::SoftenFloatRes_FPOWI(SDNode *N) {
+  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  SDOperand Ops[2] = { GetSoftenedFloat(N->getOperand(0)), N->getOperand(1) };
+  return MakeLibCall(GetFPLibCall(N->getValueType(0),
+                                  RTLIB::POWI_F32,
+                                  RTLIB::POWI_F64,
+                                  RTLIB::POWI_F80,
+                                  RTLIB::POWI_PPCF128),
+                     NVT, Ops, 2, false);
 }
 
 SDOperand DAGTypeLegalizer::SoftenFloatRes_FSUB(SDNode *N) {
