@@ -139,9 +139,10 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
   BSSSection = 0;                       // no BSS section.
   ZeroFillDirective = "\t.zerofill\t";  // Uses .zerofill
-  // FIXME: It seems, this should be .const_data if relocation model is not
-  // static.
-  ConstantPoolSection = "\t.const\n";
+  if (X86TM->getRelocationModel() != Reloc::Static)
+    ConstantPoolSection = "\t.const_data";
+  else
+    ConstantPoolSection = "\t.const\n";
   JumpTableDataSection = "\t.const\n";
   CStringSection = "\t.cstring";
   CStringSection_ = getUnnamedSection("\t.cstring",
