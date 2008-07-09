@@ -26,7 +26,6 @@ namespace llvm {
     explicit X86TargetAsmInfo(const X86TargetMachine &TM);
 
     virtual bool ExpandInlineAsm(CallInst *CI) const;
-    virtual std::string SectionForGlobal(const GlobalValue *GV) const;
 
   private:
     bool LowerToBSwap(CallInst *CI) const;
