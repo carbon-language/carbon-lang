@@ -463,14 +463,15 @@ void DAGTypeLegalizer::SoftenSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
     }
   }
 
+  MVT RetVT = MVT::i32; // FIXME: is this the correct return type?
   SDOperand Ops[2] = { LHSInt, RHSInt };
-  NewLHS = MakeLibCall(LC1, MVT::i32, Ops, 2, false/*sign irrelevant*/);
-  NewRHS = DAG.getConstant(0, MVT::i32);
+  NewLHS = MakeLibCall(LC1, RetVT, Ops, 2, false/*sign irrelevant*/);
+  NewRHS = DAG.getConstant(0, RetVT);
   CCCode = TLI.getCmpLibcallCC(LC1);
   if (LC2 != RTLIB::UNKNOWN_LIBCALL) {
     SDOperand Tmp = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(NewLHS),
                                 NewLHS, NewRHS, DAG.getCondCode(CCCode));
-    NewLHS = MakeLibCall(LC2, MVT::i32, Ops, 2, false/*sign irrelevant*/);
+    NewLHS = MakeLibCall(LC2, RetVT, Ops, 2, false/*sign irrelevant*/);
     NewLHS = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(NewLHS), NewLHS,
                          NewRHS, DAG.getCondCode(TLI.getCmpLibcallCC(LC2)));
     NewLHS = DAG.getNode(ISD::OR, Tmp.getValueType(), Tmp, NewLHS);
