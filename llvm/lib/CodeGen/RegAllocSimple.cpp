@@ -46,6 +46,7 @@ namespace {
     MachineFunction *MF;
     const TargetMachine *TM;
     const TargetRegisterInfo *TRI;
+    const TargetInstrInfo *TII;
 
     // StackSlotForVirtReg - Maps SSA Regs => frame index on the stack where
     // these values are spilled
@@ -144,7 +145,6 @@ unsigned RegAllocSimple::reloadVirtReg(MachineBasicBlock &MBB,
 
   // Add move instruction(s)
   ++NumLoads;
-  const TargetInstrInfo* TII = MBB.getParent()->getTarget().getInstrInfo();
   TII->loadRegFromStackSlot(MBB, I, PhysReg, FrameIdx, RC);
   return PhysReg;
 }
@@ -153,7 +153,6 @@ void RegAllocSimple::spillVirtReg(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator I,
                                   unsigned VirtReg, unsigned PhysReg) {
   const TargetRegisterClass* RC = MF->getRegInfo().getRegClass(VirtReg);
-  const TargetInstrInfo* TII = MBB.getParent()->getTarget().getInstrInfo();
   
   int FrameIdx = getStackSpaceFor(VirtReg, RC);
 
@@ -240,6 +239,7 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
   MF = &Fn;
   TM = &MF->getTarget();
   TRI = TM->getRegisterInfo();
+  TII = TM->getInstrInfo();
 
   // Loop over all of the basic blocks, eliminating virtual register references
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();
