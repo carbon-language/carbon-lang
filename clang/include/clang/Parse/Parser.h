@@ -205,6 +205,12 @@ private:
     if (N == 0 || Tok.is(tok::eof)) return Tok;
     return PP.LookAhead(N-1);
   }
+
+  /// NextToken - This peeks ahead one token and returns it without
+  /// consuming it.
+  const Token &NextToken() {
+    return PP.LookNext();
+  }
   
   
   /// MatchRHSPunctuation - For punctuation with a LHS and RHS (e.g. '['/']'),
@@ -369,9 +375,7 @@ private:
   ExprResult ParseConstantExpression();
   ExprResult ParseAssignmentExpression();  // Expr that doesn't include commas.
   
-  ExprResult ParseExpressionWithLeadingIdentifier(const Token &Tok);
   ExprResult ParseExpressionWithLeadingAt(SourceLocation AtLoc);
-  ExprResult ParseAssignmentExprWithLeadingIdentifier(const Token &Tok);
 
   ExprResult ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec);
   ExprResult ParseCastExpression(bool isUnaryExpression);
@@ -453,6 +457,7 @@ private:
   StmtResult ParseStatement() { return ParseStatementOrDeclaration(true); }
   StmtResult ParseStatementOrDeclaration(bool OnlyStatement = false);
   StmtResult ParseIdentifierStatement(bool OnlyStatement);
+  StmtResult ParseLabeledStatement();
   StmtResult ParseCaseStatement();
   StmtResult ParseDefaultStatement();
   StmtResult ParseCompoundStatement(bool isStmtExpr = false);

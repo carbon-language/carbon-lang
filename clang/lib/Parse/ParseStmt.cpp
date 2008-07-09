@@ -79,8 +79,11 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   tok::TokenKind Kind  = Tok.getKind();
   SourceLocation AtLoc;
   switch (Kind) {
-  case tok::identifier:             // C99 6.8.1: labeled-statement
-    // identifier ':' statement
+  case tok::identifier:
+    if (NextToken().is(tok::colon)) { // C99 6.8.1: labeled-statement
+      // identifier ':' statement
+      return ParseLabeledStatement();
+    }
     // declaration                  (if !OnlyStatement)
     // expression[opt] ';'
     return ParseIdentifierStatement(OnlyStatement);
@@ -174,15 +177,44 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   return Res;
 }
 
-/// ParseIdentifierStatement - Because we don't have two-token lookahead, we
-/// have a bit of a quandry here.  Reading the identifier is necessary to see if
-/// there is a ':' after it.  If there is, this is a label, regardless of what
-/// else the identifier can mean.  If not, this is either part of a declaration
-/// (if the identifier is a type-name) or part of an expression.
+/// ParseLabeledStatement - We have an identifier and a ':' after it.
 ///
 ///       labeled-statement:
 ///         identifier ':' statement
 /// [GNU]   identifier ':' attributes[opt] statement
+///
+Parser::StmtResult Parser::ParseLabeledStatement() {
+  assert(Tok.is(tok::identifier) && Tok.getIdentifierInfo() &&
+         "Not an identifier!");
+
+  Token IdentTok = Tok;  // Save the whole token.
+  ConsumeToken();  // eat the identifier.
+
+  assert(Tok.is(tok::colon) && "Not a label!");
+  
+  // identifier ':' statement
+  SourceLocation ColonLoc = ConsumeToken();
+
+  // Read label attributes, if present.
+  DeclTy *AttrList = 0;
+  if (Tok.is(tok::kw___attribute))
+    // TODO: save these somewhere.
+    AttrList = ParseAttributes();
+
+  StmtResult SubStmt = ParseStatement();
+  
+  // Broken substmt shouldn't prevent the label from being added to the AST.
+  if (SubStmt.isInvalid)
+    SubStmt = Actions.ActOnNullStmt(ColonLoc);
+  
+  return Actions.ActOnLabelStmt(IdentTok.getLocation(), 
+                                IdentTok.getIdentifierInfo(),
+                                ColonLoc, SubStmt.Val);
+}
+  
+/// ParseIdentifierStatement - This is either part of a declaration
+/// (if the identifier is a type-name) or part of an expression.
+///
 ///         declaration                  (if !OnlyStatement)
 ///         expression[opt] ';'
 ///
@@ -190,37 +222,16 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
   assert(Tok.is(tok::identifier) && Tok.getIdentifierInfo() &&
          "Not an identifier!");
 
-  Token IdentTok = Tok;  // Save the whole token.
-  ConsumeToken();  // eat the identifier.
-  
-  // identifier ':' statement
-  if (Tok.is(tok::colon)) {
-    SourceLocation ColonLoc = ConsumeToken();
-
-    // Read label attributes, if present.
-    DeclTy *AttrList = 0;
-    if (Tok.is(tok::kw___attribute))
-      // TODO: save these somewhere.
-      AttrList = ParseAttributes();
-
-    StmtResult SubStmt = ParseStatement();
-    
-    // Broken substmt shouldn't prevent the label from being added to the AST.
-    if (SubStmt.isInvalid)
-      SubStmt = Actions.ActOnNullStmt(ColonLoc);
-    
-    return Actions.ActOnLabelStmt(IdentTok.getLocation(), 
-                                  IdentTok.getIdentifierInfo(),
-                                  ColonLoc, SubStmt.Val);
-  }
-  
   // Check to see if this is a declaration.
   void *TypeRep;
   if (!OnlyStatement &&
-      (TypeRep = Actions.isTypeName(*IdentTok.getIdentifierInfo(), CurScope))) {
+      (TypeRep = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope))) {
     // Handle this.  Warn/disable if in middle of block and !C99.
     DeclSpec DS;
     
+    Token IdentTok = Tok;  // Save the whole token.
+    ConsumeToken();  // eat the identifier.
+
     // Add the typedef name to the start of the decl-specs.
     const char *PrevSpec = 0;
     int isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef,
@@ -263,8 +274,8 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
                                  DeclaratorInfo.getSourceRange().getEnd());
   }
   
-  // Otherwise, this is an expression.  Seed it with II and parse it.
-  ExprResult Res = ParseExpressionWithLeadingIdentifier(IdentTok);
+  // Otherwise, this is an expression.
+  ExprResult Res = ParseExpression();
   if (Res.isInvalid) {
     SkipUntil(tok::semi);
     return true;

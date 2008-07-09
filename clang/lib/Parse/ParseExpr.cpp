@@ -228,69 +228,6 @@ Parser::ExprResult Parser::ParseConstantExpression() {
   return ParseRHSOfBinaryExpression(LHS, prec::Conditional);
 }
 
-/// ParseExpressionWithLeadingIdentifier - This special purpose method is used
-/// in contexts where we have already consumed an identifier (which we saved in
-/// 'IdTok'), then discovered that the identifier was really the leading token
-/// of part of an expression.  For example, in "A[1]+B", we consumed "A" (which
-/// is now in 'IdTok') and the current token is "[".
-Parser::ExprResult Parser::
-ParseExpressionWithLeadingIdentifier(const Token &IdTok) {
-  // We know that 'IdTok' must correspond to this production:
-  //   primary-expression: identifier
-  
-  // Let the actions module handle the identifier.
-  ExprResult Res = Actions.ActOnIdentifierExpr(CurScope, IdTok.getLocation(),
-                                               *IdTok.getIdentifierInfo(),
-                                               Tok.is(tok::l_paren));
-  
-  // Because we have to parse an entire cast-expression before starting the
-  // ParseRHSOfBinaryExpression method (which parses any trailing binops), we
-  // need to handle the 'postfix-expression' rules.  We do this by invoking
-  // ParsePostfixExpressionSuffix to consume any postfix-expression suffixes:
-  Res = ParsePostfixExpressionSuffix(Res);
-  if (Res.isInvalid) return Res;
-
-  // At this point, the "A[1]" part of "A[1]+B" has been consumed. Once this is
-  // done, we know we don't have to do anything for cast-expression, because the
-  // only non-postfix-expression production starts with a '(' token, and we know
-  // we have an identifier.  As such, we can invoke ParseRHSOfBinaryExpression
-  // to consume any trailing operators (e.g. "+" in this example) and connected
-  // chunks of the expression.
-  return ParseRHSOfBinaryExpression(Res, prec::Comma);
-}
-
-/// ParseExpressionWithLeadingIdentifier - This special purpose method is used
-/// in contexts where we have already consumed an identifier (which we saved in
-/// 'IdTok'), then discovered that the identifier was really the leading token
-/// of part of an assignment-expression.  For example, in "A[1]+B", we consumed
-/// "A" (which is now in 'IdTok') and the current token is "[".
-Parser::ExprResult Parser::
-ParseAssignmentExprWithLeadingIdentifier(const Token &IdTok) {
-  // We know that 'IdTok' must correspond to this production:
-  //   primary-expression: identifier
-  
-  // Let the actions module handle the identifier.
-  ExprResult Res = Actions.ActOnIdentifierExpr(CurScope, IdTok.getLocation(),
-                                               *IdTok.getIdentifierInfo(),
-                                               Tok.is(tok::l_paren));
-  
-  // Because we have to parse an entire cast-expression before starting the
-  // ParseRHSOfBinaryExpression method (which parses any trailing binops), we
-  // need to handle the 'postfix-expression' rules.  We do this by invoking
-  // ParsePostfixExpressionSuffix to consume any postfix-expression suffixes:
-  Res = ParsePostfixExpressionSuffix(Res);
-  if (Res.isInvalid) return Res;
-  
-  // At this point, the "A[1]" part of "A[1]+B" has been consumed. Once this is
-  // done, we know we don't have to do anything for cast-expression, because the
-  // only non-postfix-expression production starts with a '(' token, and we know
-  // we have an identifier.  As such, we can invoke ParseRHSOfBinaryExpression
-  // to consume any trailing operators (e.g. "+" in this example) and connected
-  // chunks of the expression.
-  return ParseRHSOfBinaryExpression(Res, prec::Assignment);
-}
-
-
 /// ParseRHSOfBinaryExpression - Parse a binary expression that starts with
 /// LHS and has a precedence of at least MinPrec.
 Parser::ExprResult

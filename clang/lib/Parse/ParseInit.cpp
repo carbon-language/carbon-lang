@@ -142,19 +142,18 @@ Parser::ExprResult Parser::ParseInitializerWithPotentialDesignator() {
       // assignment-expression or if it is an old-style structure field
       // designator.
       // TODO: Check that this is the first designator.
-      Token Ident = Tok;
-      ConsumeToken();
       
       // If this is the gross GNU extension, handle it now.
-      if (Tok.is(tok::colon)) {
-        Diag(Ident, diag::ext_gnu_old_style_field_designator);
+      if (NextToken().is(tok::colon)) {
+        Diag(Tok, diag::ext_gnu_old_style_field_designator);
+        ConsumeToken(); // The identifier.
+        assert(Tok.is(tok::colon) && "NextToken() not working properly!");
         ConsumeToken();
         return ParseInitializer();
       }
       
-      // Otherwise, we just consumed the first token of an expression.  Parse
-      // the rest of it now.
-      return ParseAssignmentExprWithLeadingIdentifier(Ident);
+      // Otherwise, parse the assignment-expression.
+      return ParseAssignmentExpression();
     }
     }
   }
