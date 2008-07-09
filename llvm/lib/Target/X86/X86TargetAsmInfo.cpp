@@ -263,9 +263,13 @@ X86DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
    case SectionKind::ROData:
     return (isWeak ? ConstDataCoalSection : getReadOnlySection_());
    case SectionKind::RODataMergeStr:
-    return MergeableStringSection(cast<GlobalVariable>(GV));
+    return (isWeak ?
+            ConstDataCoalSection :
+            MergeableStringSection(cast<GlobalVariable>(GV)));
    case SectionKind::RODataMergeConst:
-    return MergeableConstSection(cast<GlobalVariable>(GV));
+    return (isWeak ?
+            ConstDataCoalSection:
+            MergeableConstSection(cast<GlobalVariable>(GV)));
    default:
     assert(0 && "Unsuported section kind for global");
   }
