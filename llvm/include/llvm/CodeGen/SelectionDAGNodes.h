@@ -1048,9 +1048,6 @@ private:
   /// NumOperands/NumValues - The number of entries in the Operand/Value list.
   unsigned short NumOperands, NumValues;
   
-  /// UsesSize - The size of the uses list.
-  unsigned UsesSize;
-
   /// Uses - List of uses for this SDNode.
   SDUse *Uses;
 
@@ -1075,9 +1072,11 @@ public:
     return NodeType - ISD::BUILTIN_OP_END;
   }
 
-  size_t use_size() const { return UsesSize; }
+  size_t use_size() const { return std::distance(use_begin(), use_end()); }
   bool use_empty() const { return Uses == NULL; }
-  bool hasOneUse() const { return use_size() == 1; }
+  bool hasOneUse() const {
+    return !use_empty() && next(use_begin()) == use_end();
+  }
 
   /// getNodeId - Return the unique node id.
   ///
@@ -1249,7 +1248,7 @@ protected:
   }
 
   SDNode(unsigned Opc, SDVTList VTs, const SDOperand *Ops, unsigned NumOps)
-    : NodeType(Opc), NodeId(-1), UsesSize(0), Uses(NULL) {
+    : NodeType(Opc), NodeId(-1), Uses(NULL) {
     OperandsNeedDelete = true;
     NumOperands = NumOps;
     OperandList = NumOps ? new SDUse[NumOperands] : 0;
@@ -1258,7 +1257,6 @@ protected:
       OperandList[i] = Ops[i];
       OperandList[i].setUser(this);
       Ops[i].Val->addUse(OperandList[i]);
-      ++Ops[i].Val->UsesSize;
     }
     
     ValueList = VTs.VTs;
@@ -1266,7 +1264,7 @@ protected:
   }
 
   SDNode(unsigned Opc, SDVTList VTs, const SDUse *Ops, unsigned NumOps)
-    : NodeType(Opc), NodeId(-1), UsesSize(0), Uses(NULL) {
+    : NodeType(Opc), NodeId(-1), Uses(NULL) {
     OperandsNeedDelete = true;
     NumOperands = NumOps;
     OperandList = NumOps ? new SDUse[NumOperands] : 0;
@@ -1275,7 +1273,6 @@ protected:
       OperandList[i] = Ops[i];
       OperandList[i].setUser(this);
       Ops[i].getSDOperand().Val->addUse(OperandList[i]);
-      ++Ops[i].getSDOperand().Val->UsesSize;
     }
     
     ValueList = VTs.VTs;
@@ -1283,7 +1280,7 @@ protected:
   }
 
   SDNode(unsigned Opc, SDVTList VTs)
-    : NodeType(Opc), NodeId(-1), UsesSize(0), Uses(NULL) {
+    : NodeType(Opc), NodeId(-1), Uses(NULL) {
     OperandsNeedDelete = false;  // Operands set with InitOperands.
     NumOperands = 0;
     OperandList = 0;
@@ -1298,13 +1295,11 @@ protected:
     assert(OperandList == 0 && "Operands already set!");
     NumOperands = NumOps;
     OperandList = Ops;
-    UsesSize = 0;
     Uses = NULL;
     
     for (unsigned i = 0; i != NumOps; ++i) {
       OperandList[i].setUser(this);
       Ops[i].getVal()->addUse(OperandList[i]);
-      ++Ops[i].getVal()->UsesSize;
     }
   }
 
@@ -1323,14 +1318,12 @@ protected:
   void addUser(unsigned i, SDNode *User) {
     assert(User->OperandList[i].getUser() && "Node without parent");
     addUse(User->OperandList[i]);
-    ++UsesSize;
   }
 
   void removeUser(unsigned i, SDNode *User) {
     assert(User->OperandList[i].getUser() && "Node without parent");
     SDUse &Op = User->OperandList[i];
     Op.removeFromList();
-    --UsesSize;
   }
 };
 

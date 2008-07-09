@@ -3749,7 +3749,6 @@ void SDNode::MorphNodeTo(unsigned Opc, SDVTList L,
     OperandList[i].setUser(this);
     SDNode *N = OperandList[i].getVal();
     N->addUser(i, this);
-    ++N->UsesSize;
     DeadNodeSet.erase(N);
   }
 
@@ -4394,16 +4393,9 @@ const MVT *SDNode::getValueTypeList(MVT VT) {
 bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) const {
   assert(Value < getNumValues() && "Bad value!");
 
-  // If there is only one value, this is easy.
-  if (getNumValues() == 1)
-    return use_size() == NUses;
-  if (use_size() < NUses) return false;
-
-  SDOperand TheValue(const_cast<SDNode *>(this), Value);
-
   // TODO: Only iterate over uses of a given value of the node
   for (SDNode::use_iterator UI = use_begin(), E = use_end(); UI != E; ++UI) {
-    if (*UI == TheValue) {
+    if (UI->getSDOperand().ResNo == Value) {
       if (NUses == 0)
         return false;
       --NUses;
@@ -4420,12 +4412,8 @@ bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) const {
 bool SDNode::hasAnyUseOfValue(unsigned Value) const {
   assert(Value < getNumValues() && "Bad value!");
 
-  if (use_empty()) return false;
-
-  SDOperand TheValue(const_cast<SDNode *>(this), Value);
-
   for (SDNode::use_iterator UI = use_begin(), E = use_end(); UI != E; ++UI)
-    if (UI->getSDOperand() == TheValue)
+    if (UI->getSDOperand().ResNo == Value)
       return true;
 
   return false;
