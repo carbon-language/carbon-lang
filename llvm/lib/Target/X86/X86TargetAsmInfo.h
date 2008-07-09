@@ -26,7 +26,6 @@ namespace llvm {
 
     virtual bool ExpandInlineAsm(CallInst *CI) const;
     virtual std::string SectionForGlobal(const GlobalValue *GV) const;
-    virtual std::string PrintSectionFlags(unsigned flags) const;
 
   private:
     bool LowerToBSwap(CallInst *CI) const;
@@ -46,6 +45,7 @@ namespace llvm {
     explicit X86ELFTargetAsmInfo(const X86TargetMachine &TM);
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
+    virtual std::string PrintSectionFlags(unsigned flags) const;
   };
 
   struct X86COFFTargetAsmInfo : public X86TargetAsmInfo {
@@ -54,6 +54,7 @@ namespace llvm {
                                            bool Global) const;
     virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
                                                SectionKind::Kind kind) const;
+    virtual std::string PrintSectionFlags(unsigned flags) const;
   };
 
   struct X86WinTargetAsmInfo : public X86TargetAsmInfo {

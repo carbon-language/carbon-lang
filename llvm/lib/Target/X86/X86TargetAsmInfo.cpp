@@ -313,6 +313,35 @@ X86ELFTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
   }
 }
 
+std::string X86ELFTargetAsmInfo::PrintSectionFlags(unsigned flags) const {
+  std::string Flags = ",\"";
+
+  if (!(flags & SectionFlags::Debug))
+    Flags += 'a';
+  if (flags & SectionFlags::Code)
+    Flags += 'x';
+  if (flags & SectionFlags::Writeable)
+    Flags += 'w';
+  if (flags & SectionFlags::Mergeable)
+    Flags += 'M';
+  if (flags & SectionFlags::Strings)
+    Flags += 'S';
+  if (flags & SectionFlags::TLS)
+    Flags += 'T';
+
+  Flags += "\"";
+
+  // FIXME: There can be exceptions here
+  if (flags & SectionFlags::BSS)
+    Flags += ",@nobits";
+  else
+    Flags += ",@progbits";
+
+  // FIXME: entity size for mergeable sections
+
+  return Flags;
+}
+
 X86COFFTargetAsmInfo::X86COFFTargetAsmInfo(const X86TargetMachine &TM):
   X86TargetAsmInfo(TM) {
   GlobalPrefix = "_";
@@ -343,32 +372,6 @@ X86COFFTargetAsmInfo::X86COFFTargetAsmInfo(const X86TargetMachine &TM):
   DwarfARangesSection = "\t.section\t.debug_aranges,\"dr\"";
   DwarfRangesSection =  "\t.section\t.debug_ranges,\"dr\"";
   DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"dr\"";
-}
-
-X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
-  X86TargetAsmInfo(TM) {
-  GlobalPrefix = "_";
-  CommentString = ";";
-
-  PrivateGlobalPrefix = "$";
-  AlignDirective = "\talign\t";
-  ZeroDirective = "\tdb\t";
-  ZeroDirectiveSuffix = " dup(0)";
-  AsciiDirective = "\tdb\t";
-  AscizDirective = 0;
-  Data8bitsDirective = "\tdb\t";
-  Data16bitsDirective = "\tdw\t";
-  Data32bitsDirective = "\tdd\t";
-  Data64bitsDirective = "\tdq\t";
-  HasDotTypeDotSizeDirective = false;
-
-  TextSection = "_text";
-  DataSection = "_data";
-  JumpTableDataSection = NULL;
-  SwitchToSectionDirective = "";
-  TextSectionStartSuffix = "\tsegment 'CODE'";
-  DataSectionStartSuffix = "\tsegment 'DATA'";
-  SectionEndDirectiveSuffix = "\tends\n";
 }
 
 unsigned
@@ -428,6 +431,45 @@ X86COFFTargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
    default:
     assert(0 && "Unknown section kind");
   }
+}
+
+std::string X86COFFTargetAsmInfo::PrintSectionFlags(unsigned flags) const {
+  std::string Flags = ",\"";
+
+  if (flags & SectionFlags::Code)
+    Flags += 'x';
+  if (flags & SectionFlags::Writeable)
+    Flags += 'w';
+
+  Flags += "\"";
+
+  return Flags;
+}
+
+X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
+  X86TargetAsmInfo(TM) {
+  GlobalPrefix = "_";
+  CommentString = ";";
+
+  PrivateGlobalPrefix = "$";
+  AlignDirective = "\talign\t";
+  ZeroDirective = "\tdb\t";
+  ZeroDirectiveSuffix = " dup(0)";
+  AsciiDirective = "\tdb\t";
+  AscizDirective = 0;
+  Data8bitsDirective = "\tdb\t";
+  Data16bitsDirective = "\tdw\t";
+  Data32bitsDirective = "\tdd\t";
+  Data64bitsDirective = "\tdq\t";
+  HasDotTypeDotSizeDirective = false;
+
+  TextSection = "_text";
+  DataSection = "_data";
+  JumpTableDataSection = NULL;
+  SwitchToSectionDirective = "";
+  TextSectionStartSuffix = "\tsegment 'CODE'";
+  DataSectionStartSuffix = "\tsegment 'DATA'";
+  SectionEndDirectiveSuffix = "\tends\n";
 }
 
 std::string X86TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
@@ -492,58 +534,4 @@ std::string X86TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
 
   Name += PrintSectionFlags(flags);
   return Name;
-}
-
-std::string X86TargetAsmInfo::PrintSectionFlags(unsigned flags) const {
-  const X86Subtarget *Subtarget = &X86TM->getSubtarget<X86Subtarget>();
-
-  std::string Flags = "";
-
-  // Add all special flags, etc
-  switch (Subtarget->TargetType) {
-   case X86Subtarget::isELF:
-    Flags += ",\"";
-
-    if (!(flags & SectionFlags::Debug))
-      Flags += 'a';
-    if (flags & SectionFlags::Code)
-      Flags += 'x';
-    if (flags & SectionFlags::Writeable)
-      Flags += 'w';
-    if (flags & SectionFlags::Mergeable)
-      Flags += 'M';
-    if (flags & SectionFlags::Strings)
-      Flags += 'S';
-    if (flags & SectionFlags::TLS)
-      Flags += 'T';
-
-    Flags += "\"";
-
-    // FIXME: There can be exceptions here
-    if (flags & SectionFlags::BSS)
-      Flags += ",@nobits";
-    else
-      Flags += ",@progbits";
-
-    // FIXME: entity size for mergeable sections
-    break;
-   case X86Subtarget::isCygwin:
-   case X86Subtarget::isMingw:
-    Flags += ",\"";
-
-    if (flags & SectionFlags::Code)
-      Flags += 'x';
-    if (flags & SectionFlags::Writeable)
-      Flags += 'w';
-
-    Flags += "\"";
-
-    break;
-   case X86Subtarget::isDarwin:
-    // Darwin does not use any special flags
-   default:
-    break;
-  }
-
-  return Flags;
 }
