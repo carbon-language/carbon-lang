@@ -230,20 +230,29 @@ SDOperand DAGTypeLegalizer::SoftenFloatRes_LOAD(SDNode *N) {
   MVT VT = N->getValueType(0);
   MVT NVT = TLI.getTypeToTransformTo(VT);
 
-  if (L->getExtensionType() == ISD::NON_EXTLOAD)
-     return DAG.getLoad(L->getAddressingMode(), L->getExtensionType(),
-                        NVT, L->getChain(), L->getBasePtr(), L->getOffset(),
-                        L->getSrcValue(), L->getSrcValueOffset(), NVT,
-                        L->isVolatile(), L->getAlignment());
+  SDOperand NewL;
+  if (L->getExtensionType() == ISD::NON_EXTLOAD) {
+    NewL = DAG.getLoad(L->getAddressingMode(), L->getExtensionType(),
+                       NVT, L->getChain(), L->getBasePtr(), L->getOffset(),
+                       L->getSrcValue(), L->getSrcValueOffset(), NVT,
+                       L->isVolatile(), L->getAlignment());
+    // Legalized the chain result - switch anything that used the old chain to
+    // use the new one.
+    ReplaceValueWith(SDOperand(N, 1), NewL.getValue(1));
+    return NewL;
+  }
 
   // Do a non-extending load followed by FP_EXTEND.
-  SDOperand NL = DAG.getLoad(L->getAddressingMode(), ISD::NON_EXTLOAD,
-                             L->getMemoryVT(), L->getChain(),
-                             L->getBasePtr(), L->getOffset(),
-                             L->getSrcValue(), L->getSrcValueOffset(),
-                             L->getMemoryVT(),
-                             L->isVolatile(), L->getAlignment());
-  return BitConvertToInteger(DAG.getNode(ISD::FP_EXTEND, VT, NL));
+  NewL = DAG.getLoad(L->getAddressingMode(), ISD::NON_EXTLOAD,
+                     L->getMemoryVT(), L->getChain(),
+                     L->getBasePtr(), L->getOffset(),
+                     L->getSrcValue(), L->getSrcValueOffset(),
+                     L->getMemoryVT(),
+                     L->isVolatile(), L->getAlignment());
+  // Legalized the chain result - switch anything that used the old chain to
+  // use the new one.
+  ReplaceValueWith(SDOperand(N, 1), NewL.getValue(1));
+  return BitConvertToInteger(DAG.getNode(ISD::FP_EXTEND, VT, NewL));
 }
 
 SDOperand DAGTypeLegalizer::SoftenFloatRes_SELECT(SDNode *N) {
