@@ -222,12 +222,113 @@ X86DarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
 }
 
 std::string
+X86DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
+  SectionKind::Kind Kind = SectionKindForGlobal(GV);
+  bool isWeak = GV->hasWeakLinkage() ||
+                GV->hasCommonLinkage() ||
+                GV->hasLinkOnceLinkage();
+
+  switch (Kind) {
+   case SectionKind::Text:
+    if (isWeak)
+      return ".section __TEXT,__textcoal_nt,coalesced,pure_instructions";
+    else
+      return getTextSection();
+   case SectionKind::Data:
+   case SectionKind::ThreadData:
+   case SectionKind::BSS:
+   case SectionKind::ThreadBSS:
+    if (cast<GlobalVariable>(GV)->isConstant()) {
+      if (isWeak)
+        return ".section __DATA,__const_coal,coalesced";
+      else
+        return ".const_data";
+    } else {
+      if (isWeak)
+        return ".section __DATA,__datacoal_nt,coalesced";
+      else
+        return getDataSection();
+    }
+   case SectionKind::ROData:
+    if (isWeak)
+      return ".section __DATA,__const_coal,coalesced";
+    else
+      return getReadOnlySection();
+   case SectionKind::RODataMergeStr:
+    return MergeableStringSection(cast<GlobalVariable>(GV));
+   case SectionKind::RODataMergeConst:
+    return MergeableConstSection(cast<GlobalVariable>(GV));
+   default:
+    assert(0 && "Unsuported section kind for global");
+  }
+
+  // FIXME: Do we have any extra special weird cases?
+}
+
+std::string
+X86DarwinTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
+  unsigned Flags = SectionFlagsForGlobal(GV, GV->getSection().c_str());
+  unsigned Size = SectionFlags::getEntitySize(Flags);
+
+  if (Size) {
+    const TargetData *TD = X86TM->getTargetData();
+    unsigned Align = TD->getPreferredAlignment(GV);
+    if (Align <= 32)
+      return getCStringSection();
+  }
+
+  return getReadOnlySection();
+}
+
+std::string
+X86DarwinTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
+  unsigned Flags = SectionFlagsForGlobal(GV, GV->getSection().c_str());
+  unsigned Size = SectionFlags::getEntitySize(Flags);
+
+  if (Size == 4)
+    return FourByteConstantSection;
+  else if (Size == 8)
+    return EightByteConstantSection;
+  else if (Size == 16 && X86TM->getSubtarget<X86Subtarget>().is64Bit())
+    return SixteenByteConstantSection;
+
+  return getReadOnlySection();
+}
+
+std::string
 X86DarwinTargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
                                                SectionKind::Kind kind) const {
-  if (kind == SectionKind::Text)
-    return "__TEXT,__textcoal_nt,coalesced,pure_instructions";
-  else
-    return "__DATA,__datacoal_nt,coalesced";
+  assert(0 && "Darwin does not use unique sections");
+  return "";
+}
+
+unsigned
+X86DarwinTargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
+                                              const char* name) const {
+  unsigned Flags =
+    TargetAsmInfo::SectionFlagsForGlobal(GV,
+                                         GV->getSection().c_str());
+
+  // If there was decision to put stuff into mergeable section - calculate
+  // entity size
+  if (Flags & SectionFlags::Mergeable) {
+    const TargetData *TD = X86TM->getTargetData();
+    Constant *C = cast<GlobalVariable>(GV)->getInitializer();
+    const Type *Type;
+
+    if (Flags & SectionFlags::Strings) {
+      const ConstantArray *CVA = cast<ConstantArray>(C);
+      Type = CVA->getType()->getElementType();
+    } else
+      Type = C->getType();
+
+    unsigned Size = TD->getABITypeSize(Type);
+    if (Size > 16)
+      Size = 0;
+    Flags = SectionFlags::setEntitySize(Flags, Size);
+  }
+
+  return Flags;
 }
 
 X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
@@ -365,10 +466,14 @@ X86ELFTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
   unsigned Size = SectionFlags::getEntitySize(Flags);
 
   // FIXME: string here is temporary, until stuff will fully land in.
-  if (Size)
-    return ".rodata.cst" + utostr(Size);
-  else
-    return getReadOnlySection();
+  if (Size == 4)
+    return FourByteConstantSection;
+  else if (Size == 8)
+    return EightByteConstantSection;
+  else if (Size == 16)
+    return SixteenByteConstantSection;
+
+  return getReadOnlySection();
 }
 
 std::string
@@ -383,10 +488,10 @@ X86ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
     if (Align < Size)
       Align = Size;
 
-    // FIXME: string here is temporary, until stuff will fully land in.
-    return ".rodata.str" + utostr(Size) + ',' + utostr(Align);
-  } else
-    return getReadOnlySection();
+    return getCStringSection() + utostr(Size) + ',' + utostr(Align);
+  }
+
+  return getReadOnlySection();
 }
 
 unsigned
@@ -410,7 +515,7 @@ X86ELFTargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
       Type = C->getType();
 
     unsigned Size = TD->getABITypeSize(Type);
-    if (Size > 32)
+    if (Size > 16)
       Size = 0;
     Flags = SectionFlags::setEntitySize(Flags, Size);
   }

@@ -38,8 +38,13 @@ namespace llvm {
     explicit X86DarwinTargetAsmInfo(const X86TargetMachine &TM);
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
+    virtual std::string SelectSectionForGlobal(const GlobalValue *GV) const;
+    virtual unsigned SectionFlagsForGlobal(const GlobalValue *GV,
+                                           const char* name) const;
     virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
                                                SectionKind::Kind kind) const;
+    std::string MergeableConstSection(const GlobalVariable *GV) const;
+    std::string MergeableStringSection(const GlobalVariable *GV) const;
   };
 
   struct X86ELFTargetAsmInfo : public X86TargetAsmInfo {
