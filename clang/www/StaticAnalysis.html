@@ -27,12 +27,6 @@ analyzer:</p>
 enhancements to improve both the precision and scope of its analysis algorithms
 as well as the kinds bugs it will find.</li>
 
-<li><b>False positives.</b> Static analysis is not perfect. It can falsely flag
-bugs in a program where the code behaves correctly. Because some code checks
-require more analysis precision than others, the frequency of false positives
-can vary widely between different checks. Our eventual goal is to have the
-analyzer have a low false positive rate for most code on all checks.</li>
-
 <li><b>Static analysis can be much slower than compilation.</b> While the
 analyzer is being designed to be as fast and light-weight as possible, please do
 not expect it to be as fast as compiling a program (even with optimizations
@@ -41,8 +35,20 @@ exponential time. The analyzer runs in a reasonable amount of time by both
 bounding the amount of checking work it will do as well as using clever
 algorithms to reduce the amount of work it must do to find bugs.</li>
 
+<li><b>False positives.</b> Static analysis is not perfect. It can falsely flag
+bugs in a program where the code behaves correctly. Because some code checks
+require more analysis precision than others, the frequency of false positives
+can vary widely between different checks. Our eventual goal is to have the
+analyzer have a low false positive rate for most code on all checks.</li>
 </ul>
 
+<p>If you encounter a false positive, <b>please let us know about it</b> by <a
+href="StaticAnalysisUsage.html#filingbugs">filing a bug report</a>. False
+positives cannot be addressed unless we know about them.</p>
+
+<p>Further, if there are specific kinds of bugs you would like the tool to find,
+please feel free to file <a href="StaticAnalysisUsage.html#filingbugs">feature
+requests</a>.</p.>
 
 <!-- Generated from: http://www.spiffycorners.com/index.php -->
 
