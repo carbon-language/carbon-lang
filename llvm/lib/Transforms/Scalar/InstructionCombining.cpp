@@ -3478,7 +3478,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       case Instruction::LShr:
         // (1 << x) & 1 --> zext(x == 0)
         // (1 >> x) & 1 --> zext(x == 0)
-        if (AndRHSMask.getLimitedValue() == 1 && Op0LHS == AndRHS) {
+        if (AndRHSMask == 1 && Op0LHS == AndRHS) {
           Instruction *NewICmp = new ICmpInst(ICmpInst::ICMP_EQ, Op0RHS,
                                            Constant::getNullValue(I.getType()));
           InsertNewInstBefore(NewICmp, I);
