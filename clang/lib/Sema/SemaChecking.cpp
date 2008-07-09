@@ -45,6 +45,7 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCallRaw) {
     if (CheckBuiltinCFStringArgument(TheCall->getArg(0)))
       return true;
     return TheCall.take();
+  case Builtin::BI__builtin_stdarg_start:
   case Builtin::BI__builtin_va_start:
     if (SemaBuiltinVAStart(TheCall.get()))
       return true;
