@@ -20,9 +20,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "LegalizeTypes.h"
-#include "llvm/CodeGen/PseudoSourceValue.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
 using namespace llvm;
 
 /// GetFPLibCall - Return the right libcall for the given floating point type.
@@ -68,8 +65,8 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
     case ISD::LOAD:        R = SoftenFloatRes_LOAD(N); break;
     case ISD::SELECT:      R = SoftenFloatRes_SELECT(N); break;
     case ISD::SELECT_CC:   R = SoftenFloatRes_SELECT_CC(N); break;
-    case ISD::SINT_TO_FP:
-    case ISD::UINT_TO_FP:  R = SoftenFloatRes_XINT_TO_FP(N); break;
+    case ISD::SINT_TO_FP:  R = SoftenFloatRes_SINT_TO_FP(N); break;
+    case ISD::UINT_TO_FP:  R = SoftenFloatRes_UINT_TO_FP(N); break;
 
     case ISD::FADD:  R = SoftenFloatRes_FADD(N); break;
     case ISD::FMUL:  R = SoftenFloatRes_FMUL(N); break;
@@ -268,104 +265,104 @@ SDOperand DAGTypeLegalizer::SoftenFloatRes_SELECT_CC(SDNode *N) {
                      N->getOperand(1), LHS, RHS, N->getOperand(4));
 }
 
-SDOperand DAGTypeLegalizer::SoftenFloatRes_XINT_TO_FP(SDNode *N) {
-  bool isSigned = N->getOpcode() == ISD::SINT_TO_FP;
-  MVT DestVT = N->getValueType(0);
+SDOperand DAGTypeLegalizer::SoftenFloatRes_SINT_TO_FP(SDNode *N) {
   SDOperand Op = N->getOperand(0);
+  MVT RVT = N->getValueType(0);
 
-  if (Op.getValueType() == MVT::i32) {
-    // simple 32-bit [signed|unsigned] integer to float/double expansion
-
-    // Get the stack frame index of a 8 byte buffer.
-    SDOperand StackSlot = DAG.CreateStackTemporary(MVT::f64);
-
-    // word offset constant for Hi/Lo address computation
-    SDOperand Offset =
-      DAG.getConstant(MVT(MVT::i32).getSizeInBits() / 8,
-                      TLI.getPointerTy());
-    // set up Hi and Lo (into buffer) address based on endian
-    SDOperand Hi = StackSlot;
-    SDOperand Lo = DAG.getNode(ISD::ADD, TLI.getPointerTy(), StackSlot, Offset);
-    if (TLI.isLittleEndian())
-      std::swap(Hi, Lo);
-
-    // if signed map to unsigned space
-    SDOperand OpMapped;
-    if (isSigned) {
-      // constant used to invert sign bit (signed to unsigned mapping)
-      SDOperand SignBit = DAG.getConstant(0x80000000u, MVT::i32);
-      OpMapped = DAG.getNode(ISD::XOR, MVT::i32, Op, SignBit);
-    } else {
-      OpMapped = Op;
-    }
-    // store the lo of the constructed double - based on integer input
-    SDOperand Store1 = DAG.getStore(DAG.getEntryNode(),
-                                    OpMapped, Lo, NULL, 0);
-    // initial hi portion of constructed double
-    SDOperand InitialHi = DAG.getConstant(0x43300000u, MVT::i32);
-    // store the hi of the constructed double - biased exponent
-    SDOperand Store2=DAG.getStore(Store1, InitialHi, Hi, NULL, 0);
-    // load the constructed double
-    SDOperand Load = DAG.getLoad(MVT::f64, Store2, StackSlot, NULL, 0);
-    // FP constant to bias correct the final result
-    SDOperand Bias = DAG.getConstantFP(isSigned ?
-                                            BitsToDouble(0x4330000080000000ULL)
-                                          : BitsToDouble(0x4330000000000000ULL),
-                                     MVT::f64);
-    // subtract the bias
-    SDOperand Sub = DAG.getNode(ISD::FSUB, MVT::f64, Load, Bias);
-    // final result
-    SDOperand Result;
-    // handle final rounding
-    if (DestVT == MVT::f64) {
-      // do nothing
-      Result = Sub;
-    } else if (DestVT.bitsLT(MVT::f64)) {
-      Result = DAG.getNode(ISD::FP_ROUND, DestVT, Sub,
-                           DAG.getIntPtrConstant(0));
-    } else if (DestVT.bitsGT(MVT::f64)) {
-      Result = DAG.getNode(ISD::FP_EXTEND, DestVT, Sub);
-    }
-    return BitConvertToInteger(Result);
-  }
-  assert(!isSigned && "Legalize cannot Expand SINT_TO_FP for i64 yet");
-  SDOperand Tmp1 = DAG.getNode(ISD::SINT_TO_FP, DestVT, Op);
-
-  SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultType(Op), Op,
-                                   DAG.getConstant(0, Op.getValueType()),
-                                   ISD::SETLT);
-  SDOperand Zero = DAG.getIntPtrConstant(0), Four = DAG.getIntPtrConstant(4);
-  SDOperand CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
-                                    SignSet, Four, Zero);
-
-  // If the sign bit of the integer is set, the large number will be treated
-  // as a negative number.  To counteract this, the dynamic code adds an
-  // offset depending on the data type.
-  uint64_t FF;
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
   switch (Op.getValueType().getSimpleVT()) {
-  default: assert(0 && "Unsupported integer type!");
-  case MVT::i8 : FF = 0x43800000ULL; break;  // 2^8  (as a float)
-  case MVT::i16: FF = 0x47800000ULL; break;  // 2^16 (as a float)
-  case MVT::i32: FF = 0x4F800000ULL; break;  // 2^32 (as a float)
-  case MVT::i64: FF = 0x5F800000ULL; break;  // 2^64 (as a float)
+  case MVT::i32:
+    switch (RVT.getSimpleVT()) {
+    case MVT::f32:
+      LC = RTLIB::SINTTOFP_I32_F32;
+      break;
+    case MVT::f64:
+      LC = RTLIB::SINTTOFP_I32_F64;
+      break;
+    default:
+      break;
+    }
+    break;
+  case MVT::i64:
+    switch (RVT.getSimpleVT()) {
+    case MVT::f32:
+      LC = RTLIB::SINTTOFP_I64_F32;
+      break;
+    case MVT::f64:
+      LC = RTLIB::SINTTOFP_I64_F64;
+      break;
+    case MVT::f80:
+      LC = RTLIB::SINTTOFP_I64_F80;
+      break;
+    case MVT::ppcf128:
+      LC = RTLIB::SINTTOFP_I64_PPCF128;
+      break;
+    default:
+      break;
+    }
+    break;
+  case MVT::i128:
+    switch (RVT.getSimpleVT()) {
+    case MVT::f32:
+      LC = RTLIB::SINTTOFP_I128_F32;
+      break;
+    case MVT::f64:
+      LC = RTLIB::SINTTOFP_I128_F64;
+      break;
+    case MVT::f80:
+      LC = RTLIB::SINTTOFP_I128_F80;
+      break;
+    case MVT::ppcf128:
+      LC = RTLIB::SINTTOFP_I128_PPCF128;
+      break;
+    default:
+      break;
+    }
+    break;
+  default:
+    break;
   }
-  if (TLI.isLittleEndian()) FF <<= 32;
-  static Constant *FudgeFactor = ConstantInt::get(Type::Int64Ty, FF);
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported SINT_TO_FP!");
 
-  SDOperand CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
-  CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
-  SDOperand FudgeInReg;
-  if (DestVT == MVT::f32)
-    FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx,
-                             PseudoSourceValue::getConstantPool(), 0);
-  else {
-    FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, DestVT,
-                                DAG.getEntryNode(), CPIdx,
-                                PseudoSourceValue::getConstantPool(), 0,
-                                MVT::f32);
+  return MakeLibCall(LC, TLI.getTypeToTransformTo(RVT), &Op, 1, false);
+}
+
+SDOperand DAGTypeLegalizer::SoftenFloatRes_UINT_TO_FP(SDNode *N) {
+  SDOperand Op = N->getOperand(0);
+  MVT RVT = N->getValueType(0);
+
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+  switch (Op.getValueType().getSimpleVT()) {
+  case MVT::i32:
+    switch (RVT.getSimpleVT()) {
+    case MVT::f32:
+      LC = RTLIB::UINTTOFP_I32_F32;
+      break;
+    case MVT::f64:
+      LC = RTLIB::UINTTOFP_I32_F64;
+      break;
+    default:
+      break;
+    }
+    break;
+  case MVT::i64:
+    switch (RVT.getSimpleVT()) {
+    case MVT::f32:
+      LC = RTLIB::UINTTOFP_I64_F32;
+      break;
+    case MVT::f64:
+      LC = RTLIB::UINTTOFP_I64_F64;
+      break;
+    default:
+      break;
+    }
+    break;
+  default:
+    break;
   }
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported UINT_TO_FP!");
 
-  return BitConvertToInteger(DAG.getNode(ISD::FADD, DestVT, Tmp1, FudgeInReg));
+  return MakeLibCall(LC, TLI.getTypeToTransformTo(RVT), &Op, 1, false);
 }
 
 
@@ -539,6 +536,9 @@ SDOperand DAGTypeLegalizer::SoftenFloatOp_FP_TO_SINT(SDNode *N) {
     case MVT::f64:
       LC = RTLIB::FPTOSINT_F64_I32;
       break;
+    case MVT::ppcf128:
+      LC = RTLIB::FPTOSINT_PPCF128_I32;
+      break;
     default:
       break;
     }
@@ -601,6 +601,12 @@ SDOperand DAGTypeLegalizer::SoftenFloatOp_FP_TO_UINT(SDNode *N) {
       break;
     case MVT::f64:
       LC = RTLIB::FPTOUINT_F64_I32;
+      break;
+    case MVT::f80:
+      LC = RTLIB::FPTOUINT_F80_I32;
+      break;
+    case MVT::ppcf128:
+      LC = RTLIB::FPTOUINT_PPCF128_I32;
       break;
     default:
       break;

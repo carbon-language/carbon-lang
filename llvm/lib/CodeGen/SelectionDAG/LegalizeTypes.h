@@ -341,7 +341,8 @@ private:
   SDOperand SoftenFloatRes_LOAD(SDNode *N);
   SDOperand SoftenFloatRes_SELECT(SDNode *N);
   SDOperand SoftenFloatRes_SELECT_CC(SDNode *N);
-  SDOperand SoftenFloatRes_XINT_TO_FP(SDNode *N);
+  SDOperand SoftenFloatRes_SINT_TO_FP(SDNode *N);
+  SDOperand SoftenFloatRes_UINT_TO_FP(SDNode *N);
 
   // Operand Float to Integer Conversion.
   bool SoftenFloatOperand(SDNode *N, unsigned OpNo);
