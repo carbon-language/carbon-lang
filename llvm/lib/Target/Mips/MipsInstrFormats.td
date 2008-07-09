@@ -104,7 +104,7 @@ class FJ<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
 
 //===----------------------------------------------------------------------===//
 //
-//  FLOAT POINT INSTRUCTION FORMATS
+//  FLOATING POINT INSTRUCTION FORMATS
 //
 //  opcode  - operation code.
 //  fs      - src reg.

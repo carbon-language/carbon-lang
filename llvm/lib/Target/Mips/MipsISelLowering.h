@@ -40,10 +40,10 @@ namespace llvm {
       // Select CC Pseudo Instruction
       SelectCC,
 
-      // Float Point Branch Conditional
+      // Floating Point Branch Conditional
       FPBrcond,
 
-      // Float Point Compare
+      // Floating Point Compare
       FPCmp,
 
       // Return 

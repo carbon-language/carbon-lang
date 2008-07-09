@@ -148,7 +148,7 @@ emitMaskDirective(MachineFunction &MF)
   O << "," << Offset << "\n";
 }
 
-/// TODO: Mask Directive for Float Point
+/// TODO: Mask Directive for Floating Point
 void MipsAsmPrinter::
 emitFMaskDirective(MachineFunction &MF)
 {
@@ -191,14 +191,14 @@ emitSetDirective(SetDirectiveFlags Flag)
 }  
 
 // Create a bitmask with all callee saved registers for CPU
-// or Float Point registers. For CPU registers consider RA,
+// or Floating Point registers. For CPU registers consider RA,
 // GP and FP for saving if necessary.
 unsigned int MipsAsmPrinter::
 getSavedRegsBitmask(bool isFloat, MachineFunction &MF)
 {
   const TargetRegisterInfo &RI = *TM.getRegisterInfo();
              
-  // Float Point Registers, TODO
+  // Floating Point Registers, TODO
   if (isFloat)
     return 0;
 

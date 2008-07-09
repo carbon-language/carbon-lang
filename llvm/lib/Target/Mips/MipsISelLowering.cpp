@@ -804,7 +804,7 @@ getConstraintType(const std::string &Constraint) const
   //       unless generating MIPS16 code. 
   // 'y' : Equivalent to r; retained for 
   //       backwards compatibility. 
-  // 'f' : Float Point registers.      
+  // 'f' : Floating Point registers.      
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
       default : break;

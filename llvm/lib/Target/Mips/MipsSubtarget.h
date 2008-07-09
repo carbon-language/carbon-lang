@@ -45,16 +45,16 @@ protected:
 
   // IsSingleFloat - The target only supports single precision float
   // point operations. This enable the target to use all 32 32-bit
-  // float point registers instead of only using even ones.
+  // floating point registers instead of only using even ones.
   bool IsSingleFloat;
 
-  // IsFP64bit - The target processor has 64-bit float point registers.
+  // IsFP64bit - The target processor has 64-bit floating point registers.
   bool IsFP64bit;
 
   // IsFP64bit - General-purpose registers are 64 bits wide
   bool IsGP64bit;
 
-  // HasAllegrexVFPU - Allegrex processor has a vector float point unit.
+  // HasAllegrexVFPU - Allegrex processor has a vector floating point unit.
   bool HasAllegrexVFPU;
 
   // IsAllegrex - The target processor is a Allegrex core.

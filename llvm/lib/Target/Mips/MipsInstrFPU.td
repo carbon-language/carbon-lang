@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-// Float Point Instructions
+// Floating Point Instructions
 // ------------------------
 // * 64bit fp:
 //    - 32 64-bit registers (default mode)
@@ -23,7 +23,7 @@
 //    - 32 32-bit registers (within single-only mode)
 //===----------------------------------------------------------------------===//
 
-// Float Point Compare and Branch
+// Floating Point Compare and Branch
 def SDT_MipsFPBrcond : SDTypeProfile<0, 3, [SDTCisSameAs<0, 2>, SDTCisInt<0>,
                                      SDTCisVT<1, OtherVT>]>;
 def SDT_MipsFPCmp : SDTypeProfile<0, 3, [SDTCisSameAs<0, 1>, SDTCisFP<0>, 
@@ -98,7 +98,8 @@ class FFR1_3<bits<6> funct, bits<5> fmt, RegisterClass RcSrc,
 
 
 multiclass FFR1_4<bits<6> funct, string asmstr, SDNode FOp> {
-  def _SO32 : FFR<0x11, funct, 0x0, (outs FGR32:$fd), (ins FGR32:$fs, FGR32:$ft), 
+  def _SO32 : FFR<0x11, funct, 0x0, (outs FGR32:$fd), 
+                 (ins FGR32:$fs, FGR32:$ft), 
                  !strconcat(asmstr, ".s $fd, $fs, $ft"),
                  [(set FGR32:$fd, (FOp FGR32:$fs, FGR32:$ft))]>,
                  Requires<[IsSingleFloat]>;
@@ -117,7 +118,7 @@ multiclass FFR1_4<bits<6> funct, string asmstr, SDNode FOp> {
 }
 
 //===----------------------------------------------------------------------===//
-// Float Point Instructions
+// Floating Point Instructions
 //===----------------------------------------------------------------------===//
 
 let ft = 0 in {
@@ -199,7 +200,7 @@ let fd = 0 in {
                   "mtc1 $fs, $rt", []>;
 }
 
-/// Float Point Memory Instructions
+/// Floating Point Memory Instructions
 let Predicates = [IsNotSingleFloat] in {
   def LDC1 : FFI<0b110101, (outs AFGR64:$ft), (ins mem:$addr), 
                  "ldc1 $ft, $addr", [(set AFGR64:$ft, (load addr:$addr))]>;
@@ -216,8 +217,8 @@ def SWC1  : FFI<0b111001, (outs), (ins FGR32:$ft, mem:$addr), "swc1 $ft, $addr",
 
 def LWC1A : FFI<0b110001, (outs AFGR32:$ft), (ins mem:$addr), "lwc1 $ft, $addr",
                [(set AFGR32:$ft, (load addr:$addr))]>; 
-def SWC1A : FFI<0b111001, (outs), (ins AFGR32:$ft, mem:$addr), "swc1 $ft, $addr",
-               [(store AFGR32:$ft, addr:$addr)]>; 
+def SWC1A : FFI<0b111001, (outs), (ins AFGR32:$ft, mem:$addr), 
+                "swc1 $ft, $addr", [(store AFGR32:$ft, addr:$addr)]>; 
 
 /// Floating-point Aritmetic
 defm FADD : FFR1_4<0x10, "add", fadd>;
@@ -226,7 +227,7 @@ defm FMUL : FFR1_4<0x02, "mul", fmul>;
 defm FSUB : FFR1_4<0x01, "sub", fsub>;
 
 //===----------------------------------------------------------------------===//
-// Float Point Branch Codes
+// Floating Point Branch Codes
 //===----------------------------------------------------------------------===//
 // Mips branch codes. These correspond to condcode in MipsInstrInfo.h. 
 // They must be kept in synch.
@@ -235,7 +236,7 @@ def MIPS_BRANCH_T  : PatLeaf<(i32 1)>;
 def MIPS_BRANCH_FL : PatLeaf<(i32 2)>;
 def MIPS_BRANCH_TL : PatLeaf<(i32 3)>;
 
-/// Float Point Branch of False/True (Likely)
+/// Floating Point Branch of False/True (Likely)
 let isBranch=1, isTerminator=1, hasDelaySlot=1, base=0x8, Uses=[FCR31] in {
   class FBRANCH<PatLeaf op, string asmstr> : FFI<0x11, (ops), 
         (ins brtarget:$dst), !strconcat(asmstr, " $dst"),
@@ -247,7 +248,7 @@ def BC1FL : FBRANCH<MIPS_BRANCH_FL, "bc1fl">;
 def BC1TL : FBRANCH<MIPS_BRANCH_TL, "bc1tl">;
 
 //===----------------------------------------------------------------------===//
-// Float Point Flag Conditions
+// Floating Point Flag Conditions
 //===----------------------------------------------------------------------===//
 // Mips condition codes. They must correspond to condcode in MipsInstrInfo.h. 
 // They must be kept in synch.
@@ -287,7 +288,7 @@ let hasDelaySlot = 1, Defs=[FCR31] in {
 }
 
 //===----------------------------------------------------------------------===//
-// Float Point Patterns
+// Floating Point Patterns
 //===----------------------------------------------------------------------===//
 def : Pat<(f32 (sint_to_fp CPURegs:$src)), (CVTS_W32 (MTC1 CPURegs:$src))>;
 def : Pat<(f64 (sint_to_fp CPURegs:$src)), (CVTD_W32 (MTC1 CPURegs:$src))>;

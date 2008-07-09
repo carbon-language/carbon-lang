@@ -289,7 +289,8 @@ foldMemoryOperand(MachineFunction &MF,
   case Mips::FMOV_D32:
     if ((MI->getOperand(0).isRegister()) &&
         (MI->getOperand(1).isRegister())) {
-      const TargetRegisterClass *RC = RI.getRegClass(MI->getOperand(0).getReg());
+      const TargetRegisterClass 
+        *RC = RI.getRegClass(MI->getOperand(0).getReg());
       unsigned StoreOpc, LoadOpc;
 
       if (RC == Mips::FGR32RegisterClass) {

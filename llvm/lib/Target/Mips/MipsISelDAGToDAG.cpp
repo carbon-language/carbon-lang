@@ -275,8 +275,8 @@ Select(SDOperand N)
       SDNode *Node = CurDAG->getTargetNode(Op, MVT::Flag, Op1, Op2);
 
       SDOperand InFlag = SDOperand(Node, 0);
-      SDNode *Lo = CurDAG->getTargetNode(Mips::MFLO, MVT::i32, MVT::Flag, InFlag);
-
+      SDNode *Lo = CurDAG->getTargetNode(Mips::MFLO, MVT::i32, 
+                                         MVT::Flag, InFlag);
       InFlag = SDOperand(Lo,1);
       SDNode *Hi = CurDAG->getTargetNode(Mips::MFHI, MVT::i32, InFlag);
 
