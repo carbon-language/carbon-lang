@@ -628,7 +628,7 @@ void PMDataManager::verifyDomInfo(Pass &P, Function &F) {
   OtherDT.getBase().recalculate(F);
   if (DT->compare(OtherDT)) {
     cerr << "Dominator Information for " << F.getNameStart() << "\n";
-    cerr << "Pass " << P.getPassName() << "\n";
+    cerr << "Pass '" << P.getPassName() << "'\n";
     cerr << "----- Valid -----\n";
     OtherDT.dump();
     cerr << "----- Invalid -----\n";
@@ -645,7 +645,7 @@ void PMDataManager::verifyDomInfo(Pass &P, Function &F) {
   OtherDF.calculate(*DT, DT->getNode(DTRoots[0]));
   if (DF->compare(OtherDF)) {
     cerr << "Dominator Information for " << F.getNameStart() << "\n";
-    cerr << "Pass " << P.getPassName() << "\n";
+    cerr << "Pass '" << P.getPassName() << "'\n";
     cerr << "----- Valid -----\n";
     OtherDF.dump();
     cerr << "----- Invalid -----\n";
@@ -672,8 +672,8 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
       AvailableAnalysis.erase(Info);
       if (PassDebugging >= Details) {
         Pass *S = Info->second;
-        cerr << " -- " <<  P->getPassName() << " is not preserving ";
-        cerr << S->getPassName() << "\n";
+        cerr << " -- '" <<  P->getPassName() << "' is not preserving '";
+        cerr << S->getPassName() << "'\n";
       }
     }
   }
@@ -711,8 +711,8 @@ void PMDataManager::removeDeadPasses(Pass *P, const char *Msg,
   TPM->collectLastUses(DeadPasses, P);
 
   if (PassDebugging >= Details && !DeadPasses.empty()) {
-    cerr << " -*- " <<  P->getPassName();
-    cerr << " is the last user of following pass instances.";
+    cerr << " -*- '" <<  P->getPassName();
+    cerr << "' is the last user of following pass instances.";
     cerr << " Free these instances\n";
   }
 
@@ -984,8 +984,8 @@ void PMDataManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
   // checks whether any lower level manager will be able to provide this 
   // analysis info on demand or not.
 #ifndef NDEBUG
-  cerr << "Unable to schedule " << RequiredPass->getPassName();
-  cerr << " required by " << P->getPassName() << "\n";
+  cerr << "Unable to schedule '" << RequiredPass->getPassName();
+  cerr << "' required by '" << P->getPassName() << "'\n";
 #endif
   assert (0 && "Unable to schedule pass");
 }
