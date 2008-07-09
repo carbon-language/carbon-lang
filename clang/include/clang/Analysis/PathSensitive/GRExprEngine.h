@@ -28,7 +28,6 @@ namespace clang {
   class BugType;
   class PathDiagnosticClient;
   class Diagnostic;
-  class ParentMap;
   class BugReporterData;
 
 class GRExprEngine {
@@ -52,9 +51,6 @@ protected:
   
   /// G - the simulation graph.
   GraphTy& G;
-  
-  /// Parents - a lazily created map from Stmt* to parents.
-  ParentMap* Parents;
   
   /// Liveness - live-variables information the ValueDecl* and block-level
   ///  Expr* in the CFG.  Used to prune out dead state.
@@ -218,11 +214,7 @@ public:
   
   GraphTy& getGraph() { return G; }
   const GraphTy& getGraph() const { return G; }
-    
-  /// getParentMap - Return a map from Stmt* to parents for the function/method
-  ///  body being analyzed.  This map is lazily constructed as needed.
-  ParentMap& getParentMap();
-  
+      
   typedef BugTypeSet::iterator bug_type_iterator;
   typedef BugTypeSet::const_iterator const_bug_type_iterator;
   

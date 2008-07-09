@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/AST/ParentMap.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Basic/SourceManager.h"
@@ -43,7 +42,6 @@ GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
                            LiveVariables& L)
   : CoreEngine(cfg, CD, Ctx, *this), 
     G(CoreEngine.getGraph()),
-    Parents(0),
     Liveness(L),
     Builder(NULL),
     StateMgr(G.getContext(), G.getAllocator()),
@@ -67,17 +65,6 @@ GRExprEngine::~GRExprEngine() {
     delete *I;  
   
   delete [] NSExceptionInstanceRaiseSelectors;
-  
-  delete Parents;
-}
-
-ParentMap& GRExprEngine::getParentMap() {
-  if (!Parents) {
-    Stmt* Body = getGraph().getCodeDecl().getCodeBody();
-    Parents = new ParentMap(Body);  
-  }
-  
-  return *Parents;
 }
 
 //===----------------------------------------------------------------------===//
