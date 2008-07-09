@@ -47,7 +47,8 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
       // Extra load is needed for all externally visible.
       if (isDirectCall)
         return false;
-      if (GV->hasInternalLinkage() || GV->hasHiddenVisibility())
+      if (GV->hasInternalLinkage() ||
+          (GV->hasHiddenVisibility() && !GV->isDeclaration()))
         return false;
       return true;
     } else if (isTargetCygMing() || isTargetWindows()) {

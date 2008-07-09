@@ -147,26 +147,9 @@ void X86ATTAsmPrinter::decorateName(std::string &Name,
   }
 }
 
-/// getSectionForFunction - Return the section that we should emit the
-/// specified function body into.
+// Substitute old hook with new one temporary
 std::string X86ATTAsmPrinter::getSectionForFunction(const Function &F) const {
-  switch (F.getLinkage()) {
-  default: assert(0 && "Unknown linkage type!");
-  case Function::InternalLinkage:
-  case Function::DLLExportLinkage:
-  case Function::ExternalLinkage:
-    return TAI->getTextSection();
-  case Function::WeakLinkage:
-  case Function::LinkOnceLinkage:
-    if (Subtarget->isTargetDarwin()) {
-      return ".section __TEXT,__textcoal_nt,coalesced,pure_instructions";
-    } else if (Subtarget->isTargetCygMing()) {
-      return "\t.section\t.text$linkonce." + CurrentFnName + ",\"ax\"";
-    } else {
-      return "\t.section\t.llvm.linkonce.t." + CurrentFnName +
-             ",\"ax\",@progbits";
-    }
-  }
+  return TAI->SectionForGlobal(&F);
 }
 
 void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
@@ -174,7 +157,7 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
 
   decorateName(CurrentFnName, F);
 
-  SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
+  SwitchToTextSection(TAI->SectionForGlobal(F).c_str(), F);
 
   unsigned FnAlign = OptimizeForSize ? 1 : 4;
   switch (F->getLinkage()) {
@@ -774,8 +757,7 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   if (!GVar->hasInitializer())
     return;   // External global require no code
 
-  GVar->dump();
-  std::cout << TAI->SectionForGlobal(GVar) << std::endl;
+  std::string SectionName = TAI->SectionForGlobal(GVar);
 
   // Check to see if this is a special global used by LLVM, if so, emit it.
   if (EmitSpecialLLVMGlobal(GVar)) {
@@ -806,7 +788,10 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   if (Subtarget->isTargetELF())
     O << "\t.type\t" << name << ",@object\n";
 
+  SwitchToDataSection(SectionName.c_str());
+
   if (C->isNullValue() && !GVar->hasSection()) {
+    // FIXME: This seems to be pretty darwin-specific
     if (GVar->hasExternalLinkage()) {
       if (const char *Directive = TAI->getZeroFillDirective()) {
         O << "\t.globl " << name << '\n';
@@ -820,10 +805,7 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
         (GVar->hasInternalLinkage() || GVar->hasWeakLinkage() ||
          GVar->hasLinkOnceLinkage() || GVar->hasCommonLinkage())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-      if (!NoZerosInBSS && TAI->getBSSSection())
-        SwitchToDataSection(TAI->getBSSSection(), GVar);
-      else
-        SwitchToDataSection(TAI->getDataSection(), GVar);
+
       if (TAI->getLCOMMDirective() != NULL) {
         if (GVar->hasInternalLinkage()) {
           O << TAI->getLCOMMDirective() << name << ',' << Size;
@@ -832,7 +814,6 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
         } else if (Subtarget->isTargetDarwin() && !GVar->hasCommonLinkage()) {
           O << "\t.globl " << name << '\n'
             << TAI->getWeakDefDirective() << name << '\n';
-          SwitchToDataSection("\t.section __DATA,__datacoal_nt,coalesced", GVar);
           EmitAlignment(Align, GVar);
           O << name << ":\t\t\t\t" << TAI->getCommentString() << ' ';
           PrintUnmangledNameSafely(GVar, O);
@@ -869,27 +850,10 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     if (Subtarget->isTargetDarwin()) {
       O << "\t.globl " << name << '\n'
         << TAI->getWeakDefDirective() << name << '\n';
-      if (!GVar->isConstant())
-        SwitchToDataSection("\t.section __DATA,__datacoal_nt,coalesced", GVar);
-      else {
-        const ArrayType *AT = dyn_cast<ArrayType>(Type);
-        if (AT && AT->getElementType()==Type::Int8Ty)
-          SwitchToDataSection("\t.section __TEXT,__const_coal,coalesced", GVar);
-        else
-          SwitchToDataSection("\t.section __DATA,__const_coal,coalesced", GVar);
-      }
     } else if (Subtarget->isTargetCygMing()) {
-      std::string SectionName(".section\t.data$linkonce." +
-                              name +
-                              ",\"aw\"");
-      SwitchToDataSection(SectionName.c_str(), GVar);
       O << "\t.globl\t" << name << "\n"
            "\t.linkonce same_size\n";
     } else {
-      std::string SectionName("\t.section\t.llvm.linkonce.d." +
-                              name +
-                              ",\"aw\",@progbits");
-      SwitchToDataSection(SectionName.c_str(), GVar);
       O << "\t.weak\t" << name << '\n';
     }
     break;
@@ -901,64 +865,8 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     // If external or appending, declare as a global symbol
     O << "\t.globl " << name << '\n';
     // FALL THROUGH
-   case GlobalValue::InternalLinkage: {
-     if (GVar->isConstant()) {
-       const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
-       if (TAI->getCStringSection() && CVA && CVA->isCString()) {
-         SwitchToDataSection(TAI->getCStringSection(), GVar);
-         break;
-       }
-     }
-     // FIXME: special handling for ".ctors" & ".dtors" sections
-     if (GVar->hasSection() &&
-         (GVar->getSection() == ".ctors" || GVar->getSection() == ".dtors")) {
-       std::string SectionName = ".section " + GVar->getSection();
-
-       if (Subtarget->isTargetCygMing()) {
-         SectionName += ",\"aw\"";
-       } else {
-         assert(!Subtarget->isTargetDarwin());
-         SectionName += ",\"aw\",@progbits";
-       }
-       SwitchToDataSection(SectionName.c_str());
-     } else if (GVar->hasSection() && Subtarget->isTargetDarwin()) {
-       // Honor all section names on Darwin; ObjC uses this
-       std::string SectionName = ".section " + GVar->getSection();
-       SwitchToDataSection(SectionName.c_str());
-     } else {
-       if (C->isNullValue() && !NoZerosInBSS && TAI->getBSSSection())
-         SwitchToDataSection(GVar->isThreadLocal() ? TAI->getTLSBSSSection() :
-                             TAI->getBSSSection(), GVar);
-       else if (!GVar->isConstant())
-         SwitchToDataSection(GVar->isThreadLocal() ? TAI->getTLSDataSection() :
-                             TAI->getDataSection(), GVar);
-       else if (GVar->isThreadLocal())
-         SwitchToDataSection(TAI->getTLSDataSection());
-       else {
-         // Read-only data.
-         bool HasReloc = C->ContainsRelocations();
-         if (HasReloc &&
-             Subtarget->isTargetDarwin() &&
-             TM.getRelocationModel() != Reloc::Static)
-           SwitchToDataSection("\t.const_data\n");
-         else if (!HasReloc && Size == 4 &&
-                  TAI->getFourByteConstantSection())
-           SwitchToDataSection(TAI->getFourByteConstantSection(), GVar);
-         else if (!HasReloc && Size == 8 &&
-                  TAI->getEightByteConstantSection())
-           SwitchToDataSection(TAI->getEightByteConstantSection(), GVar);
-         else if (!HasReloc && Size == 16 &&
-                  TAI->getSixteenByteConstantSection())
-           SwitchToDataSection(TAI->getSixteenByteConstantSection(), GVar);
-         else if (TAI->getReadOnlySection())
-           SwitchToDataSection(TAI->getReadOnlySection(), GVar);
-         else
-           SwitchToDataSection(TAI->getDataSection(), GVar);
-       }
-     }
-
+   case GlobalValue::InternalLinkage:
      break;
-   }
    default:
     assert(0 && "Unknown linkage type!");
   }
