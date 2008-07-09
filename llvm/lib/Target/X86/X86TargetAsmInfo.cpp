@@ -157,6 +157,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   }
   ReadOnlySection = "\t.const\n";
   ReadOnlySection_ = getUnnamedSection("\t.const\n", SectionFlags::None);
+  // FIXME: These should be named sections, really.
   TextCoalSection =
   getUnnamedSection(".section __TEXT,__textcoal_nt,coalesced,pure_instructions",
                     SectionFlags::Code);
