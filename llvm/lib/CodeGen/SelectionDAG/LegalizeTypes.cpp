@@ -15,10 +15,7 @@
 
 #include "LegalizeTypes.h"
 #include "llvm/CallingConv.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
 #ifndef NDEBUG
