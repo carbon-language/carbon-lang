@@ -3461,6 +3461,17 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         // ((A ^ N) - B) & AndRHS -> (A - B) & AndRHS iff N&AndRHS == 0
         if (Value *V = FoldLogicalPlusAnd(Op0LHS, Op0RHS, AndRHS, true, I))
           return BinaryOperator::CreateAnd(V, AndRHS);
+
+        // (A - N) & AndRHS -> -N & AndRHS where A & AndRHS == 0
+        if (Op0I->hasOneUse() && MaskedValueIsZero(Op0LHS, AndRHSMask)) {
+          ConstantInt *A = dyn_cast<ConstantInt>(Op0LHS);
+          if (!A || !A->isZero()) {
+            Instruction *NewNeg = BinaryOperator::CreateNeg(Op0RHS);
+            InsertNewInstBefore(NewNeg, I);
+            return BinaryOperator::CreateAnd(NewNeg, AndRHS);
+          }
+        }
+
         break;
       }
 
@@ -3780,7 +3791,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
           }
     }
   }
-      
+
   return Changed ? &I : 0;
 }
 
