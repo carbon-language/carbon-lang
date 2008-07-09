@@ -150,6 +150,157 @@ static ConstantInt *getUIntOperand(GlobalVariable *GV, unsigned i) {
 
 //===----------------------------------------------------------------------===//
 
+static unsigned CountFields(DebugInfoDesc *DD) {
+  unsigned Count = 0;
+
+  switch (DD->getTag()) {
+  case DW_TAG_anchor:           // AnchorDesc
+    // Tag
+    // AnchorTag
+    Count = 2;
+    break;
+  case DW_TAG_compile_unit:     // CompileUnitDesc
+    // [DW_TAG_anchor]
+    // if (Version == 0) DebugVersion
+    // Language
+    // FileName
+    // Directory
+    // Producer
+    Count = 6;
+  
+    // Handle cases out of sync with compiler.
+    if (DD->getVersion() == 0)
+      ++Count;
+
+    break;
+  case DW_TAG_variable:         // GlobalVariableDesc
+    // [DW_TAG_anchor]
+    // Context
+    // Name
+    // FullName
+    // LinkageName
+    // File
+    // Line
+    // TyDesc
+    // IsStatic
+    // IsDefinition
+    // Global
+    Count = 12;
+    break;
+  case DW_TAG_subprogram:       // SubprogramDesc
+    // [DW_TAG_anchor]
+    // Context
+    // Name
+    // FullName
+    // LinkageName
+    // File
+    // Line
+    // TyDesc
+    // IsStatic
+    // IsDefinition
+    Count = 11;
+    break;
+  case DW_TAG_lexical_block:    // BlockDesc
+    // Tag
+    // Context
+    Count = 2;
+    break;
+  case DW_TAG_base_type:        // BasicTypeDesc
+    // Tag
+    // Context
+    // Name
+    // File
+    // Line
+    // Size
+    // Align
+    // Offset
+    // if (Version > LLVMDebugVersion4) Flags
+    // Encoding
+    Count = 9;
+
+    if (DD->getVersion() > LLVMDebugVersion4)
+      ++Count;
+
+    break;
+  case DW_TAG_typedef:
+  case DW_TAG_pointer_type:        
+  case DW_TAG_reference_type:
+  case DW_TAG_const_type:
+  case DW_TAG_volatile_type:        
+  case DW_TAG_restrict_type:
+  case DW_TAG_member:
+  case DW_TAG_inheritance:      // DerivedTypeDesc
+    // Tag
+    // Context
+    // Name
+    // File
+    // Line
+    // Size
+    // Align
+    // Offset
+    // if (Version > LLVMDebugVersion4) Flags
+    // FromType
+    Count = 9;
+
+    if (DD->getVersion() > LLVMDebugVersion4)
+      ++Count;
+
+    break;
+  case DW_TAG_array_type:
+  case DW_TAG_structure_type:
+  case DW_TAG_union_type:
+  case DW_TAG_enumeration_type:
+  case DW_TAG_vector_type:
+  case DW_TAG_subroutine_type:  // CompositeTypeDesc
+    // Tag
+    // Context
+    // Name
+    // File
+    // Line
+    // Size
+    // Align
+    // Offset
+    // if (Version > LLVMDebugVersion4) Flags
+    // FromType
+    // Elements
+    Count = 10;
+
+    if (DD->getVersion() > LLVMDebugVersion4)
+      ++Count;
+
+    break;
+  case DW_TAG_subrange_type:    // SubrangeDesc
+    // Tag
+    // Lo
+    // Hi
+    Count = 3;
+    break;
+  case DW_TAG_enumerator:       // EnumeratorDesc
+    // Tag
+    // Name
+    // Value
+    Count = 3;
+    break;
+  case DW_TAG_return_variable:
+  case DW_TAG_arg_variable:
+  case DW_TAG_auto_variable:    // VariableDesc
+    // Tag
+    // Context
+    // Name
+    // File
+    // Line
+    // TyDesc
+    Count = 6;
+    break;
+  default:
+    break;
+  }
+
+  return Count;
+}
+
+//===----------------------------------------------------------------------===//
+
 /// ApplyToFields - Target the visitor to each field of the debug information
 /// descriptor.
 void DIVisitor::ApplyToFields(DebugInfoDesc *DD) {
@@ -157,34 +308,6 @@ void DIVisitor::ApplyToFields(DebugInfoDesc *DD) {
 }
 
 namespace {
-
-//===----------------------------------------------------------------------===//
-/// DICountVisitor - This DIVisitor counts all the fields in the supplied debug
-/// the supplied DebugInfoDesc.
-class DICountVisitor : public DIVisitor {
-private:
-  unsigned Count;                       // Running count of fields.
-  
-public:
-  DICountVisitor() : DIVisitor(), Count(0) {}
-  
-  // Accessors.
-  unsigned getCount() const { return Count; }
-  
-  /// Apply - Count each of the fields.
-  ///
-  virtual void Apply(int &Field)             { ++Count; }
-  virtual void Apply(unsigned &Field)        { ++Count; }
-  virtual void Apply(int64_t &Field)         { ++Count; }
-  virtual void Apply(uint64_t &Field)        { ++Count; }
-  virtual void Apply(bool &Field)            { ++Count; }
-  virtual void Apply(std::string &Field)     { ++Count; }
-  virtual void Apply(DebugInfoDesc *&Field)  { ++Count; }
-  virtual void Apply(GlobalVariable *&Field) { ++Count; }
-  virtual void Apply(std::vector<DebugInfoDesc *> &Field) {
-    ++Count;
-  }
-};
 
 //===----------------------------------------------------------------------===//
 /// DIDeserializeVisitor - This DIVisitor deserializes all the fields in the
@@ -1443,12 +1566,10 @@ bool DIVerifier::Verify(GlobalVariable *GV) {
   
   // Get the field count.
   unsigned &CountSlot = Counts[Tag];
-  if (!CountSlot) {
+
+  if (!CountSlot)
     // Check the operand count to the field count
-    DICountVisitor CTAM;
-    CTAM.ApplyToFields(DD);
-    CountSlot = CTAM.getCount();
-  }
+    CountSlot = CountFields(DD);
   
   // Field count must be at most equal operand count.
   if (CountSlot >  N) {
