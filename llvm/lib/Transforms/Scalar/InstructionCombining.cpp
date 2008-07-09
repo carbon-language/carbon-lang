@@ -3473,6 +3473,18 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         }
 
         break;
+
+      case Instruction::Shl:
+      case Instruction::LShr:
+        // (1 << x) & 1 --> zext(x == 0)
+        // (1 >> x) & 1 --> zext(x == 0)
+        if (AndRHSMask.getLimitedValue() == 1 && Op0LHS == AndRHS) {
+          Instruction *NewICmp = new ICmpInst(ICmpInst::ICMP_EQ, Op0RHS,
+                                           Constant::getNullValue(I.getType()));
+          InsertNewInstBefore(NewICmp, I);
+          return new ZExtInst(NewICmp, I.getType());
+        }
+        break;
       }
 
       if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1)))
