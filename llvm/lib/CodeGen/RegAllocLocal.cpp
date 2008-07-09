@@ -291,8 +291,6 @@ void RALocal::spillVirtReg(MachineBasicBlock &MBB,
   DOUT << "  Spilling register " << TRI->getName(PhysReg)
        << " containing %reg" << VirtReg;
   
-  const TargetInstrInfo* TII = MBB.getParent()->getTarget().getInstrInfo();
-  
   if (!isVirtRegModified(VirtReg)) {
     DOUT << " which has not been modified, so no store necessary!";
     std::pair<MachineInstr*, unsigned> &LastUse = getVirtRegLastUse(VirtReg);
@@ -507,7 +505,6 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
        << TRI->getName(PhysReg) << "\n";
 
   // Add move instruction(s)
-  const TargetInstrInfo* TII = MBB.getParent()->getTarget().getInstrInfo();
   TII->loadRegFromStackSlot(MBB, MI, PhysReg, FrameIndex, RC);
   ++NumLoads;    // Update statistics
 
@@ -564,7 +561,6 @@ static bool precedes(MachineBasicBlock::iterator A,
 void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // loop over each instruction
   MachineBasicBlock::iterator MII = MBB.begin();
-  const TargetInstrInfo &TII = *TM->getInstrInfo();
   
   DEBUG(const BasicBlock *LBB = MBB.getBasicBlock();
         if (LBB) DOUT << "\nStarting RegAlloc of BB: " << LBB->getName());
@@ -882,7 +878,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
     
     // Finally, if this is a noop copy instruction, zap it.
     unsigned SrcReg, DstReg;
-    if (TII.isMoveInstr(*MI, SrcReg, DstReg) && SrcReg == DstReg)
+    if (TII->isMoveInstr(*MI, SrcReg, DstReg) && SrcReg == DstReg)
       MBB.erase(MI);
   }
 
