@@ -592,9 +592,7 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
           
           // If this is a two address instr, then we don't mark the def
           // as killing the use.
-          if (last->second.first == I &&
-              I->getDesc().getOperandConstraint(last->second.second,
-                                                TOI::TIED_TO) == (signed)i) {
+          if (last->second.first == I) {
             LastUseDef[MO.getReg()] = std::make_pair(I, i);
             continue;
           }
