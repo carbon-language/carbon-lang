@@ -489,7 +489,7 @@ X86ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
     if (Align < Size)
       Align = Size;
 
-    return getCStringSection() + utostr(Size) + ',' + utostr(Align);
+    return getCStringSection() + utostr(Size) + '.' + utostr(Align);
   }
 
   return getReadOnlySection();
