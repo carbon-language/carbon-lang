@@ -273,11 +273,13 @@ namespace {
   struct VISIBILITY_HIDDEN LinuxAsmPrinter : public SPUAsmPrinter {
   
     DwarfWriter DW;
+    MachineModuleInfo *MMI;
 
     LinuxAsmPrinter(std::ostream &O, SPUTargetMachine &TM,
                     const TargetAsmInfo *T) :
       SPUAsmPrinter(O, TM, T),
-      DW(O, this, T)
+      DW(O, this, T),
+      MMI(0)
     { }
 
     virtual const char *getPassName() const {
@@ -422,8 +424,6 @@ std::string LinuxAsmPrinter::getSectionForFunction(const Function &F) const {
 bool
 LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF)
 {
-  DW.SetModuleInfo(&getAnalysis<MachineModuleInfo>());
-
   SetupMachineFunction(MF);
   O << "\n\n";
   
@@ -488,6 +488,8 @@ bool LinuxAsmPrinter::doInitialization(Module &M) {
   SwitchToTextSection(TAI->getTextSection());
   // Emit initial debug information.
   DW.BeginModule(&M);
+  MMI = getAnalysisToUpdate<MachineModuleInfo>();
+  DW.SetModuleInfo(MMI);
   return Result;
 }
 
