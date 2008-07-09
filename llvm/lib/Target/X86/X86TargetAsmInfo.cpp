@@ -335,11 +335,11 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   X86TargetAsmInfo(TM) {
   bool is64Bit = X86TM->getSubtarget<X86Subtarget>().is64Bit();
 
-  ReadOnlySection = "\t.section\t.rodata";
-  FourByteConstantSection = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
-  EightByteConstantSection = "\t.section\t.rodata.cst8,\"aM\",@progbits,8";
-  SixteenByteConstantSection = "\t.section\t.rodata.cst16,\"aM\",@progbits,16";
-  CStringSection = "\t.section\t.rodata.str1.1,\"aMS\",@progbits,1";
+  ReadOnlySection = ".rodata";
+  FourByteConstantSection = ".rodata.cst";
+  EightByteConstantSection = ".rodata.cst";
+  SixteenByteConstantSection = ".rodata.cst";
+  CStringSection = ".rodata.str";
   PrivateGlobalPrefix = ".L";
   WeakRefDirective = "\t.weak\t";
   SetDirective = "\t.set\t";
@@ -520,6 +520,16 @@ X86ELFTargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
     Flags = SectionFlags::setEntitySize(Flags, Size);
   }
 
+  // FIXME: This is hacky and will be removed when switching from std::string
+  // sections into 'general' ones
+
+  // Mark section as named, when needed (so, we we will need .section directive
+  // to switch into it).
+  if (Flags & (SectionFlags::Mergeable ||
+               SectionFlags::TLS ||
+               SectionFlags::Linkonce))
+    Flags |= SectionFlags::Named;
+
   return Flags;
 }
 
@@ -643,6 +653,23 @@ X86COFFTargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
    default:
     assert(0 && "Unknown section kind");
   }
+}
+
+unsigned
+X86COFFTargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
+                                            const char* name) const {
+  unsigned Flags =
+    TargetAsmInfo::SectionFlagsForGlobal(GV,
+                                         GV->getSection().c_str());
+
+  // Mark section as named, when needed (so, we we will need .section directive
+  // to switch into it).
+  if (Flags & (SectionFlags::Mergeable ||
+               SectionFlags::TLS ||
+               SectionFlags::Linkonce))
+    Flags |= SectionFlags::Named;
+
+  return Flags;
 }
 
 std::string X86COFFTargetAsmInfo::PrintSectionFlags(unsigned flags) const {

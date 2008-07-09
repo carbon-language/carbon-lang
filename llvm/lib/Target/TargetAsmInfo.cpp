@@ -193,36 +193,36 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
 
 unsigned
 TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
-                                     const char* name) const {
-  unsigned flags = SectionFlags::None;
+                                     const char* Name) const {
+  unsigned Flags = SectionFlags::None;
 
   // Decode flags from global itself.
   if (GV) {
-    SectionKind::Kind kind = SectionKindForGlobal(GV);
-    switch (kind) {
+    SectionKind::Kind Kind = SectionKindForGlobal(GV);
+    switch (Kind) {
      case SectionKind::Text:
-      flags |= SectionFlags::Code;
+      Flags |= SectionFlags::Code;
       break;
      case SectionKind::ThreadData:
-      flags |= SectionFlags::TLS;
+      Flags |= SectionFlags::TLS;
       // FALLS THROUGH
      case SectionKind::Data:
-      flags |= SectionFlags::Writeable;
+      Flags |= SectionFlags::Writeable;
       break;
      case SectionKind::ThreadBSS:
-      flags |= SectionFlags::TLS;
+      Flags |= SectionFlags::TLS;
       // FALLS THROUGH
      case SectionKind::BSS:
-      flags |= SectionFlags::BSS;
+      Flags |= SectionFlags::BSS;
       break;
      case SectionKind::ROData:
       // No additional flags here
       break;
      case SectionKind::RODataMergeStr:
-      flags |= SectionFlags::Strings;
+      Flags |= SectionFlags::Strings;
       // FALLS THROUGH
      case SectionKind::RODataMergeConst:
-      flags |= SectionFlags::Mergeable;
+      Flags |= SectionFlags::Mergeable;
       break;
      default:
       assert(0 && "Unexpected section kind!");
@@ -231,35 +231,35 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
     if (GV->hasLinkOnceLinkage() ||
         GV->hasWeakLinkage() ||
         GV->hasCommonLinkage())
-      flags |= SectionFlags::Linkonce;
+      Flags |= SectionFlags::Linkonce;
   }
 
   // Add flags from sections, if any.
-  if (name) {
-    // Some lame default implementation
-    if (strcmp(name, ".bss") == 0 ||
-        strncmp(name, ".bss.", 5) == 0 ||
-        strncmp(name, ".gnu.linkonce.b.", 16) == 0 ||
-        strncmp(name, ".llvm.linkonce.b.", 17) == 0)
-      flags |= SectionFlags::BSS;
-    else if (strcmp(name, ".tdata") == 0 ||
-             strncmp(name, ".tdata.", 7) == 0 ||
-             strncmp(name, ".gnu.linkonce.td.", 17) == 0 ||
-             strncmp(name, ".llvm.linkonce.td.", 18) == 0)
-      flags |= SectionFlags::TLS;
-    else if (strcmp(name, ".tbss") == 0 ||
-             strncmp(name, ".tbss.", 6) == 0 ||
-             strncmp(name, ".gnu.linkonce.tb.", 17) == 0 ||
-             strncmp(name, ".llvm.linkonce.tb.", 18) == 0)
-      flags |= SectionFlags::BSS | SectionFlags::TLS;
+  if (Name) {
+    Flags |= SectionFlags::Named;
+
+    // Some lame default implementation based on some magic section names.
+    if (strncmp(Name, ".gnu.linkonce.b.", 16) == 0 ||
+        strncmp(Name, ".llvm.linkonce.b.", 17) == 0)
+      Flags |= SectionFlags::BSS;
+    else if (strcmp(Name, ".tdata") == 0 ||
+             strncmp(Name, ".tdata.", 7) == 0 ||
+             strncmp(Name, ".gnu.linkonce.td.", 17) == 0 ||
+             strncmp(Name, ".llvm.linkonce.td.", 18) == 0)
+      Flags |= SectionFlags::TLS;
+    else if (strcmp(Name, ".tbss") == 0 ||
+             strncmp(Name, ".tbss.", 6) == 0 ||
+             strncmp(Name, ".gnu.linkonce.tb.", 17) == 0 ||
+             strncmp(Name, ".llvm.linkonce.tb.", 18) == 0)
+      Flags |= SectionFlags::BSS | SectionFlags::TLS;
   }
 
-  return flags;
+  return Flags;
 }
 
 std::string
 TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
-  unsigned flags = SectionFlagsForGlobal(GV, GV->getSection().c_str());
+  unsigned Flags = SectionFlagsForGlobal(GV, GV->getSection().c_str());
 
   std::string Name;
 
@@ -275,28 +275,33 @@ TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
     Name = SelectSectionForGlobal(GV);
   }
 
-  Name += PrintSectionFlags(flags);
+  // If section is named we need to switch into it via special '.section'
+  // directive and also append funky flags. Otherwise - section name is just
+  // some magic assembler directive.
+  if (Flags & SectionFlags::Named)
+    Name = SwitchToSectionDirective + Name + PrintSectionFlags(Flags);
+
   return Name;
 }
 
 // Lame default implementation. Calculate the section name for global.
 std::string
 TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
-  SectionKind::Kind kind = SectionKindForGlobal(GV);
+  SectionKind::Kind Kind = SectionKindForGlobal(GV);
 
   if (GV->hasLinkOnceLinkage() ||
       GV->hasWeakLinkage() ||
       GV->hasCommonLinkage())
-    return UniqueSectionForGlobal(GV, kind);
+    return UniqueSectionForGlobal(GV, Kind);
   else {
-    if (kind == SectionKind::Text)
+    if (Kind == SectionKind::Text)
       return getTextSection();
-    else if (kind == SectionKind::BSS && getBSSSection())
+    else if (Kind == SectionKind::BSS && getBSSSection())
       return getBSSSection();
     else if (getReadOnlySection() &&
-             (kind == SectionKind::ROData ||
-              kind == SectionKind::RODataMergeConst ||
-              kind == SectionKind::RODataMergeStr))
+             (Kind == SectionKind::ROData ||
+              Kind == SectionKind::RODataMergeConst ||
+              Kind == SectionKind::RODataMergeStr))
       return getReadOnlySection();
   }
 
@@ -305,8 +310,8 @@ TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
 
 std::string
 TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
-                                      SectionKind::Kind kind) const {
-  switch (kind) {
+                                      SectionKind::Kind Kind) const {
+  switch (Kind) {
    case SectionKind::Text:
     return ".gnu.linkonce.t." + GV->getName();
    case SectionKind::Data:
