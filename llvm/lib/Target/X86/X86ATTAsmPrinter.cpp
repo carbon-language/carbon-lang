@@ -154,10 +154,11 @@ std::string X86ATTAsmPrinter::getSectionForFunction(const Function &F) const {
 
 void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   const Function *F = MF.getFunction();
+  std::string SectionName = TAI->SectionForGlobal(F);
 
   decorateName(CurrentFnName, F);
 
-  SwitchToTextSection(TAI->SectionForGlobal(F).c_str(), F);
+  SwitchToTextSection(SectionName.c_str());
 
   unsigned FnAlign = OptimizeForSize ? 1 : 4;
   switch (F->getLinkage()) {

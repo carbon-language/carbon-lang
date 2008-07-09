@@ -433,7 +433,7 @@ X86ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
       return UniqueSectionForGlobal(F, kind);
     }
   } else if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
-    if (GVar->isWeakForLinker()
+    if (GVar->isWeakForLinker())
       return UniqueSectionForGlobal(GVar, kind);
     else {
       switch (kind) {
