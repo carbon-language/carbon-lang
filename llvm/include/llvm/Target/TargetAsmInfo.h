@@ -30,6 +30,7 @@ namespace llvm {
 
   namespace SectionKind {
     enum Kind {
+      Unknown = 0,      ///< Custom section
       Text,             ///< Text section
       Data,             ///< Data section
       BSS,              ///< BSS section
@@ -40,6 +41,25 @@ namespace llvm {
       ThreadBSS         ///< Uninitialized TLS data objects
     };
   }
+
+  namespace SectionFlags {
+    enum Flags {
+      None       = 0,
+      Code       = 1 << 0, ///< Section contains code
+      Writeable  = 1 << 1, ///< Section is writeable
+      BSS        = 1 << 2, ///< Section contains only zeroes
+      Mergeable  = 1 << 3, ///< Section contains mergeable data
+      Strings    = 1 << 4, ///< Section contains null-terminated strings
+      TLS        = 1 << 5, ///< Section contains thread-local data
+      Debug      = 1 << 6, ///< Section contains debug data
+      Linkonce   = 1 << 7  ///< Section is linkonce
+    };
+  }
+
+  struct SectionInfo {
+    SectionKind::Kind   kind;
+    SectionFlags::Flags flags;
+  };
 
   class TargetMachine;
   class CallInst;
@@ -443,6 +463,13 @@ namespace llvm {
     /// SectionKindForGlobal - This hook allows the target to select proper
     /// section kind used for global emission.
     SectionKind::Kind SectionKindForGlobal(const GlobalValue *GV) const;
+
+
+    /// SectionFlagsForGlobal - This hook allows the target to select proper
+    /// section flags either for given global or for section.
+    unsigned
+    SectionFlagsForGlobal(const GlobalValue *GV = NULL,
+                          const char* name = NULL);
 
     // Accessors.
     //

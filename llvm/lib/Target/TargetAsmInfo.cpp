@@ -191,3 +191,66 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
   // Variable is not constant or thread-local - emit to generic data section.
   return (isThreadLocal ? SectionKind::ThreadData : SectionKind::Data);
 }
+
+unsigned
+TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
+                                     const char* name) {
+  unsigned flags = SectionFlags::None;
+
+  // Decode flags from global itself.
+  if (GV) {
+    SectionKind::Kind kind = SectionKindForGlobal(GV);
+    switch (kind) {
+     case SectionKind::Text:
+      flags |= SectionFlags::Code;
+      break;
+     case SectionKind::ThreadData:
+      flags |= SectionFlags::TLS;
+      // FALLS THROUGH
+     case SectionKind::Data:
+      flags |= SectionFlags::Writeable;
+      break;
+     case SectionKind::ThreadBSS:
+      flags |= SectionFlags::TLS;
+      // FALLS THROUGH
+     case SectionKind::BSS:
+      flags |= SectionFlags::BSS;
+      break;
+     case SectionKind::ROData:
+      // No additional flags here
+      break;
+     case SectionKind::RODataMergeStr:
+      flags |= SectionFlags::Strings;
+      // FALLS THROUGH
+     case SectionKind::RODataMergeConst:
+      flags |= SectionFlags::Mergeable;
+      break;
+     default:
+      assert(0 && "Unexpected section kind!");
+    }
+
+    if (GV->hasLinkOnceLinkage() ||
+        GV->hasWeakLinkage() ||
+        GV->hasCommonLinkage())
+      flags |= SectionFlags::Linkonce;
+  }
+
+  // Add flags from sections, if any.
+  if (name) {
+    // Some lame default implementation
+    if (strcmp(name, ".bss") == 0 ||
+        strncmp(name, ".bss.", 5) == 0 ||
+        strncmp(name, ".gnu.linkonce.b.", 16) == 0)
+      flags |= SectionFlags::BSS;
+    else if (strcmp(name, ".tdata") == 0 ||
+             strncmp(name, ".tdata.", 7) == 0 ||
+             strncmp(name, ".gnu.linkonce.td.", 17) == 0)
+      flags |= SectionFlags::TLS;
+    else if (strcmp(name, ".tbss") == 0 ||
+             strncmp(name, ".tbss.", 6) == 0 ||
+             strncmp(name, ".gnu.linkonce.tb.", 17) == 0)
+      flags |= SectionFlags::BSS | SectionFlags::TLS;
+  }
+
+  return flags;
+}
