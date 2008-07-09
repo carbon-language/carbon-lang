@@ -57,6 +57,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     
     return RValue::get(CGM.GetAddrOfConstantCFString(S));
   }
+  case Builtin::BI__builtin_stdarg_start:
   case Builtin::BI__builtin_va_start:
   case Builtin::BI__builtin_va_end: {
     Value *ArgValue = EmitScalarExpr(E->getArg(0));
@@ -66,8 +67,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
       ArgValue = Builder.CreateBitCast(ArgValue, DestType, 
                                        ArgValue->getNameStart());
 
-    Intrinsic::ID inst = (BuiltinID == Builtin::BI__builtin_va_start) ? 
-      Intrinsic::vastart : Intrinsic::vaend;
+    Intrinsic::ID inst = (BuiltinID == Builtin::BI__builtin_va_end) ? 
+      Intrinsic::vaend : Intrinsic::vastart;
     return RValue::get(Builder.CreateCall(CGM.getIntrinsic(inst), ArgValue));
   }
   case Builtin::BI__builtin_va_copy: {
