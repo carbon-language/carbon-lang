@@ -16,6 +16,7 @@
 #include "llvm/Module.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 using namespace llvm;
 
 static char HexDigit(int V) {
@@ -138,7 +139,7 @@ std::string Mangler::getValueName(const GlobalValue *GV, const char * Suffix) {
   // - If V is an intrinsic function, do not change name at all
   // - Otherwise, mangling occurs if global collides with existing name.
   if (isa<Function>(GV) && cast<Function>(GV)->isIntrinsic()) {
-    Name = GV->getName(); // Is an intrinsic function
+    Name = GV->getNameStart(); // Is an intrinsic function
   } else if (!GV->hasName()) {
     // Must mangle the global into a unique ID.
     unsigned TypeUniqueID = getTypeID(GV->getType());
@@ -154,34 +155,35 @@ std::string Mangler::getValueName(const GlobalValue *GV, const char * Suffix) {
   return Name;
 }
 
-void Mangler::InsertName(GlobalValue *GV,
-                         std::map<std::string, GlobalValue*> &Names) {
+static void InsertName(GlobalValue *GV, StringMap<GlobalValue*> &Names,
+                       SmallPtrSet<const GlobalValue*, 16> &MangledGlobals) {
   if (!GV->hasName())   // We must mangle unnamed globals.
     return;
 
   // Figure out if this is already used.
-  GlobalValue *&ExistingValue = Names[GV->getName()];
+  GlobalValue *&ExistingValue = Names[GV->getNameStart()];
   if (!ExistingValue) {
     ExistingValue = GV;
+    return;
+  }
+
+  // If GV is external but the existing one is static, mangle the existing one
+  if ((GV->hasExternalLinkage() || GV->hasDLLImportLinkage()) &&
+      !(ExistingValue->hasExternalLinkage()
+        || ExistingValue->hasDLLImportLinkage())) {
+    MangledGlobals.insert(ExistingValue);
+    ExistingValue = GV;
+  } else if ((GV->hasExternalLinkage() ||
+              GV->hasDLLImportLinkage()) &&
+             (ExistingValue->hasExternalLinkage() ||
+              ExistingValue->hasDLLImportLinkage()) &&
+             GV->isDeclaration() &&
+             ExistingValue->isDeclaration()) {
+    // If the two globals both have external inkage, and are both external,
+    // don't mangle either of them, we just have some silly type mismatch.
   } else {
-    // If GV is external but the existing one is static, mangle the existing one
-    if ((GV->hasExternalLinkage() || GV->hasDLLImportLinkage()) &&
-        !(ExistingValue->hasExternalLinkage()
-          || ExistingValue->hasDLLImportLinkage())) {
-      MangledGlobals.insert(ExistingValue);
-      ExistingValue = GV;
-    } else if ((GV->hasExternalLinkage() ||
-                GV->hasDLLImportLinkage()) &&
-               (ExistingValue->hasExternalLinkage() ||
-                ExistingValue->hasDLLImportLinkage()) &&
-               GV->isDeclaration() &&
-               ExistingValue->isDeclaration()) {
-      // If the two globals both have external inkage, and are both external,
-      // don't mangle either of them, we just have some silly type mismatch.
-    } else {
-      // Otherwise, mangle GV
-      MangledGlobals.insert(GV);
-    }
+    // Otherwise, mangle GV
+    MangledGlobals.insert(GV);
   }
 }
 
@@ -206,11 +208,10 @@ Mangler::Mangler(Module &M, const char *prefix)
     
   // Calculate which global values have names that will collide when we throw
   // away type information.
-  std::map<std::string, GlobalValue*> Names;
+  StringMap<GlobalValue*> Names;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    InsertName(I, Names);
+    InsertName(I, Names, MangledGlobals);
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-       I != E;
-       ++I)
-    InsertName(I, Names);
+       I != E; ++I)
+    InsertName(I, Names, MangledGlobals);
 }

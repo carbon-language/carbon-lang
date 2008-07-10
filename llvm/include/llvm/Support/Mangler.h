@@ -15,8 +15,7 @@
 #define LLVM_SUPPORT_MANGLER_H
 
 #include "llvm/ADT/DenseMap.h"
-#include <map>
-#include <set>
+#include "llvm/ADT/SmallPtrSet.h"
 #include <string>
 
 namespace llvm {
@@ -49,13 +48,13 @@ class Mangler {
   
   /// TypeMap - If the client wants us to unique types, this keeps track of the
   /// current assignments and TypeCounter keeps track of the next id to assign.
-  std::map<const Type*, unsigned> TypeMap;
+  DenseMap<const Type*, unsigned> TypeMap;
   unsigned TypeCounter;
 
   /// This keeps track of which global values have had their names
   /// mangled in the current module.
   ///
-  std::set<const GlobalValue*> MangledGlobals;
+  SmallPtrSet<const GlobalValue*, 16> MangledGlobals;
   
   /// AcceptableChars - This bitfield contains a one for each character that is
   /// allowed to be part of an unmangled name.
@@ -87,10 +86,6 @@ public:
     return (AcceptableChars[X/32] & (1 << (X&31))) != 0;
   }
   
-  /// getTypeID - Return a unique ID for the specified LLVM type.
-  ///
-  unsigned getTypeID(const Type *Ty);
-
   /// getValueName - Returns the mangled name of V, an LLVM Value,
   /// in the current module.
   ///
@@ -105,9 +100,11 @@ public:
   /// from getValueName.
   ///
   std::string makeNameProper(const std::string &x, const char *Prefix = "");
-  
+
 private:
-  void InsertName(GlobalValue *GV, std::map<std::string, GlobalValue*> &Names);
+  /// getTypeID - Return a unique ID for the specified LLVM type.
+  ///
+  unsigned getTypeID(const Type *Ty);
 };
 
 } // End llvm namespace
