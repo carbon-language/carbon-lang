@@ -16,6 +16,7 @@
 #include "LegalizeTypes.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Target/TargetData.h"
 using namespace llvm;
 
 #ifndef NDEBUG
@@ -547,8 +548,11 @@ SDOperand DAGTypeLegalizer::BitConvertToInteger(SDOperand Op) {
 
 SDOperand DAGTypeLegalizer::CreateStackStoreLoad(SDOperand Op,
                                                  MVT DestVT) {
-  // Create the stack frame object.
-  SDOperand FIPtr = DAG.CreateStackTemporary(DestVT);
+  // Create the stack frame object.  Make sure it is aligned for both
+  // the source and destination types.
+  unsigned SrcAlign =
+   TLI.getTargetData()->getPrefTypeAlignment(Op.getValueType().getTypeForMVT());
+  SDOperand FIPtr = DAG.CreateStackTemporary(DestVT, SrcAlign);
 
   // Emit a store to the stack slot.
   SDOperand Store = DAG.getStore(DAG.getEntryNode(), Op, FIPtr, NULL, 0);
