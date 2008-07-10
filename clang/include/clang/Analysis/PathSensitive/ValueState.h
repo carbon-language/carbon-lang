@@ -235,17 +235,37 @@ public:
     NewSt.Env = EnvMgr.RemoveSubExprBindings(NewSt.Env);
     return getPersistentState(NewSt);    
   }
+
+  // Methods that query & manipulate the Environment.
   
-  ValueState* SetRVal(ValueState* St, Expr* E, RVal V, bool isBlkExpr,
-                      bool Invalidate);
+  RVal GetRVal(ValueState* St, Expr* Ex) {
+    return St->getEnvironment().GetRVal(Ex, BasicVals);
+  }
+  
+  RVal GetBlkExprRVal(ValueState* St, Expr* Ex) {
+    return St->getEnvironment().GetBlkExprRVal(Ex, BasicVals);
+  }
+  
+  ValueState* SetRVal(ValueState* St, Expr* Ex, RVal V, bool isBlkExpr,
+                      bool Invalidate) {
+    
+    const Environment& OldEnv = St->getEnvironment();
+    Environment NewEnv = EnvMgr.SetRVal(OldEnv, Ex, V, isBlkExpr, Invalidate);
+    
+    if (NewEnv == OldEnv)
+      return St;
+    
+    ValueState NewSt = *St;
+    NewSt.Env = NewEnv;
+    return getPersistentState(NewSt);
+  }
+
+  // Methods that query & manipulate the Store.
+
+  RVal GetRVal(ValueState* St, LVal LV, QualType T = QualType());    
   
   ValueState* SetRVal(ValueState* St, LVal LV, RVal V);
 
-  RVal GetRVal(ValueState* St, Expr* E);
-  RVal GetRVal(ValueState* St, LVal LV, QualType T = QualType());    
-  
-  RVal GetBlkExprRVal(ValueState* St, Expr* Ex);
-  
   void BindVar(ValueState& StImpl, VarDecl* D, RVal V);
   
   void Unbind(ValueState& StImpl, LVal LV);

@@ -22,6 +22,7 @@
 namespace clang {
 
 class EnvironmentManager;
+class BasicValueFactory;
   
 class Environment : public llvm::FoldingSetNode {
 private:
@@ -65,6 +66,9 @@ public:
     return X ? *X : UnknownVal();
   }
   
+  RVal GetRVal(Expr* Ex, BasicValueFactory& BasicVals) const;
+  RVal GetBlkExprRVal(Expr* Ex, BasicValueFactory& BasicVals) const; 
+  
   /// Profile - Profile the contents of an Environment object for use
   ///  in a FoldingSet.
   static void Profile(llvm::FoldingSetNodeID& ID, const Environment* E) {
@@ -76,7 +80,12 @@ public:
   ///  in a FoldingSet.
   void Profile(llvm::FoldingSetNodeID& ID) const {
     Profile(ID, this);
-  }  
+  }
+  
+  bool operator==(const Environment& RHS) const {
+    return SubExprBindings == RHS.SubExprBindings &&
+           BlkExprBindings == RHS.BlkExprBindings;
+  }
 };
   
 class EnvironmentManager {
@@ -120,6 +129,9 @@ public:
   Environment getInitialEnvironment() {
     return Environment(F.GetEmptyMap(), F.GetEmptyMap());
   }
+  
+  Environment SetRVal(const Environment& Env, Expr* E, RVal V,
+                      bool isBlkExpr, bool Invalidate);
 };
   
 } // end clang namespace
