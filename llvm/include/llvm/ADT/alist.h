@@ -24,9 +24,11 @@ namespace llvm {
 template<class T, class LargestT = T, class ValueT = T,
          class NodeIterT = ilist_iterator<alist_node<T, LargestT> > >
 class alist_iterator : public bidirectional_iterator<ValueT, ptrdiff_t> {
+public:
   typedef bidirectional_iterator<ValueT, ptrdiff_t> super;
   typedef alist_node<T, LargestT> NodeTy;
 
+private:
   /// NodeIter - The underlying iplist iterator that is being wrapped.
   NodeIterT NodeIter;
 
@@ -144,9 +146,9 @@ struct simplify_type<const alist_iterator<V, W, X, Y> > {
 ///
 template<class T, class LargestT = T>
 class alist_traits {
+public:
   typedef alist_iterator<T, LargestT> iterator;
 
-public:
   void addNodeToList(T *) {}
   void removeNodeFromList(T *) {}
   void transferNodesFromList(alist_traits &, iterator, iterator) {}
@@ -159,9 +161,8 @@ public:
 ///
 template<class T, class LargestT = T>
 class alist {
-  typedef alist_node<T, LargestT> NodeTy;
-
 public:
+  typedef alist_node<T, LargestT> NodeTy;
   typedef typename ilist<NodeTy>::size_type size_type;
 
 private:
