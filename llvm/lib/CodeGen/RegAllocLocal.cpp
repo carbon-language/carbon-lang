@@ -25,6 +25,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -561,13 +562,25 @@ static bool precedes(MachineBasicBlock::iterator A,
   return false;
 }
 
+namespace llvm {
+  template<> struct DenseMapInfo<uint32_t> {
+    static inline uint32_t getEmptyKey() { return ~0; }
+    static inline uint32_t getTombstoneKey() { return ~0 - 1; }
+    static unsigned getHashValue(const uint32_t& Val) { return Val * 37; }
+    static bool isPod() { return true; }
+    static bool isEqual(const uint32_t& LHS, const uint32_t& RHS) {
+      return LHS == RHS;
+    }
+  };
+}
+
 /// ComputeLocalLiveness - Computes liveness of registers within a basic
 /// block, setting the killed/dead flags as appropriate.
 void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
   MachineRegisterInfo& MRI = MBB.getParent()->getRegInfo();
   // Keep track of the most recently seen previous use or def of each reg, 
   // so that we can update them with dead/kill markers.
-  std::map<unsigned, std::pair<MachineInstr*, unsigned> > LastUseDef;
+  DenseMap<unsigned, std::pair<MachineInstr*, unsigned> > LastUseDef;
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
        I != E; ++I) {
     for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
@@ -586,7 +599,7 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
       //   - A def followed by a def is dead
       //   - A use followed by a def is a kill
       if (MO.isReg() && MO.getReg() && MO.isDef()) {
-        std::map<unsigned, std::pair<MachineInstr*, unsigned> >::iterator
+        DenseMap<unsigned, std::pair<MachineInstr*, unsigned> >::iterator
           last = LastUseDef.find(MO.getReg());
         if (last != LastUseDef.end()) {
           // Check if this is a two address instruction.  If so, then
@@ -633,7 +646,7 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
   
   // Finally, loop over the final use/def of each reg 
   // in the block and determine if it is dead.
-  for (std::map<unsigned, std::pair<MachineInstr*, unsigned> >::iterator
+  for (DenseMap<unsigned, std::pair<MachineInstr*, unsigned> >::iterator
        I = LastUseDef.begin(), E = LastUseDef.end(); I != E; ++I) {
     MachineInstr* MI = I->second.first;
     unsigned idx = I->second.second;
