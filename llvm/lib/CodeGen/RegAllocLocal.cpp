@@ -31,7 +31,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
-#include <map>
 using namespace llvm;
 
 STATISTIC(NumStores, "Number of stores added");
@@ -45,7 +44,8 @@ namespace {
   class VISIBILITY_HIDDEN RALocal : public MachineFunctionPass {
   public:
     static char ID;
-    RALocal() : MachineFunctionPass((intptr_t)&ID) {}
+    RALocal() : MachineFunctionPass((intptr_t)&ID),
+      StackSlotForVirtReg(-1) {}
   private:
     const TargetMachine *TM;
     MachineFunction *MF;
@@ -54,7 +54,7 @@ namespace {
 
     // StackSlotForVirtReg - Maps virtual regs to the frame index where these
     // values are spilled.
-    std::map<unsigned, int> StackSlotForVirtReg;
+    IndexedMap<int, VirtReg2IndexFunctor> StackSlotForVirtReg;
 
     // Virt2PhysRegMap - This map contains entries for each virtual register
     // that is currently available in a physical register.
@@ -254,17 +254,16 @@ namespace {
 /// to be held on the stack.
 int RALocal::getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC) {
   // Find the location Reg would belong...
-  std::map<unsigned, int>::iterator I = StackSlotForVirtReg.find(VirtReg);
-
-  if (I != StackSlotForVirtReg.end())
-    return I->second;          // Already has space allocated?
+  int SS = StackSlotForVirtReg[VirtReg];
+  if (SS != -1)
+    return SS;          // Already has space allocated?
 
   // Allocate a new stack object for this spill location...
   int FrameIdx = MF->getFrameInfo()->CreateStackObject(RC->getSize(),
                                                        RC->getAlignment());
 
   // Assign the slot...
-  StackSlotForVirtReg.insert(I, std::make_pair(VirtReg, FrameIdx));
+  StackSlotForVirtReg[VirtReg] = FrameIdx;
   return FrameIdx;
 }
 
@@ -961,6 +960,7 @@ bool RALocal::runOnMachineFunction(MachineFunction &Fn) {
   // initialize the virtual->physical register map to have a 'null'
   // mapping for all virtual registers
   unsigned LastVirtReg = MF->getRegInfo().getLastVirtReg();
+  StackSlotForVirtReg.grow(LastVirtReg);
   Virt2PhysRegMap.grow(LastVirtReg);
   Virt2LastUseMap.grow(LastVirtReg);
   VirtRegModified.resize(LastVirtReg+1-TargetRegisterInfo::FirstVirtualRegister);
