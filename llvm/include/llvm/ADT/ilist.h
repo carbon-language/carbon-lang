@@ -83,10 +83,11 @@ struct ilist_traits<const Ty> : public ilist_traits<Ty> {};
 template<typename NodeTy>
 class ilist_iterator
   : public bidirectional_iterator<NodeTy, ptrdiff_t> {
+    
+public:
   typedef ilist_traits<NodeTy> Traits;
   typedef bidirectional_iterator<NodeTy, ptrdiff_t> super;
 
-public:
   typedef size_t size_type;
   typedef typename super::pointer pointer;
   typedef typename super::reference reference;
