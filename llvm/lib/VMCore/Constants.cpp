@@ -1498,16 +1498,26 @@ static ManagedStatic<ValueMap<std::vector<Constant*>, VectorType,
 
 Constant *ConstantVector::get(const VectorType *Ty,
                               const std::vector<Constant*> &V) {
-  // If this is an all-zero vector, return a ConstantAggregateZero object
-  if (!V.empty()) {
-    Constant *C = V[0];
-    if (!C->isNullValue())
-      return VectorConstants->getOrCreate(Ty, V);
+  assert(!V.empty() && "Vectors can't be empty");
+  // If this is an all-undef or alll-zero vector, return a
+  // ConstantAggregateZero or UndefValue.
+  Constant *C = V[0];
+  bool isZero = C->isNullValue();
+  bool isUndef = isa<UndefValue>(C);
+
+  if (isZero || isUndef) {
     for (unsigned i = 1, e = V.size(); i != e; ++i)
-      if (V[i] != C)
-        return VectorConstants->getOrCreate(Ty, V);
+      if (V[i] != C) {
+        isZero = isUndef = false;
+        break;
+      }
   }
-  return ConstantAggregateZero::get(Ty);
+  
+  if (isZero)
+    return ConstantAggregateZero::get(Ty);
+  if (isUndef)
+    return UndefValue::get(Ty);
+  return VectorConstants->getOrCreate(Ty, V);
 }
 
 Constant *ConstantVector::get(const std::vector<Constant*> &V) {
