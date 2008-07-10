@@ -3462,16 +3462,21 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         if (Value *V = FoldLogicalPlusAnd(Op0LHS, Op0RHS, AndRHS, true, I))
           return BinaryOperator::CreateAnd(V, AndRHS);
 
-        // (A - N) & AndRHS -> -N & AndRHS where A & AndRHS == 0
-        if (Op0I->hasOneUse() && MaskedValueIsZero(Op0LHS, AndRHSMask)) {
+        // (A - N) & AndRHS -> -N & AndRHS iff A&AndRHS==0 and AndRHS
+        // has 1's for all bits that the subtraction with A might affect.
+        if (Op0I->hasOneUse()) {
+          uint32_t BitWidth = AndRHSMask.getBitWidth();
+          uint32_t Zeros = AndRHSMask.countLeadingZeros();
+          APInt Mask = APInt::getLowBitsSet(BitWidth, BitWidth - Zeros);
+
           ConstantInt *A = dyn_cast<ConstantInt>(Op0LHS);
-          if (!A || !A->isZero()) {
+          if (!(A && A->isZero()) &&               // avoid infinite recursion.
+              MaskedValueIsZero(Op0LHS, Mask)) {
             Instruction *NewNeg = BinaryOperator::CreateNeg(Op0RHS);
             InsertNewInstBefore(NewNeg, I);
             return BinaryOperator::CreateAnd(NewNeg, AndRHS);
           }
         }
-
         break;
 
       case Instruction::Shl:
