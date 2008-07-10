@@ -15,9 +15,7 @@
 #ifndef LLVM_SUPPORT_RECYCLINGALLOCATOR_H
 #define LLVM_SUPPORT_RECYCLINGALLOCATOR_H
 
-#include <cassert>
 #include "llvm/Support/Recycler.h"
-#include "llvm/ADT/STLExtras.h"
 
 namespace llvm {
 

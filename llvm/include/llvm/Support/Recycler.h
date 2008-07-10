@@ -15,7 +15,6 @@
 #ifndef LLVM_SUPPORT_RECYCLER_H
 #define LLVM_SUPPORT_RECYCLER_H
 
-#include <cassert>
 #include "llvm/ADT/alist_node.h"
 
 namespace llvm {

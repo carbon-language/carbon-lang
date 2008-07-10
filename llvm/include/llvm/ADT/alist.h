@@ -14,7 +14,6 @@
 #ifndef LLVM_ADT_ALIST_H
 #define LLVM_ADT_ALIST_H
 
-#include <cassert>
 #include "llvm/ADT/alist_node.h"
 #include "llvm/ADT/STLExtras.h"
 

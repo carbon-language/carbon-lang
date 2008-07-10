@@ -15,10 +15,10 @@
 #ifndef LLVM_ADT_ALIST_NODE_H
 #define LLVM_ADT_ALIST_NODE_H
 
-#include <cassert>
 #include "llvm/ADT/ilist.h"
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/DataTypes.h"
+#include <cassert>
 
 namespace llvm {
 
