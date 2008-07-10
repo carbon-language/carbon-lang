@@ -155,6 +155,31 @@ ConstantVector *ConstantVector::getAllOnesValue(const VectorType *Ty) {
 }
 
 
+/// getVectorElements - This method, which is only valid on constant of vector
+/// type, returns the elements of the vector in the specified smallvector.
+/// This handles breaking down a vector undef into undef elements, etc.
+void Constant::getVectorElements(SmallVectorImpl<Constant*> &Elts) const {
+  assert(isa<VectorType>(getType()) && "Not a vector constant!");
+  
+  if (const ConstantVector *CV = dyn_cast<ConstantVector>(this)) {
+    for (unsigned i = 0, e = CV->getNumOperands(); i != e; ++i)
+      Elts.push_back(CV->getOperand(i));
+    return;
+  }
+  
+  const VectorType *VT = cast<VectorType>(getType());
+  if (isa<ConstantAggregateZero>(this)) {
+    Elts.assign(VT->getNumElements(), 
+                Constant::getNullValue(VT->getElementType()));
+    return;
+  }
+  
+  assert(isa<UndefValue>(this) && "Unknown vector constant type!");
+  Elts.assign(VT->getNumElements(), UndefValue::get(VT->getElementType()));
+}
+
+
+
 //===----------------------------------------------------------------------===//
 //                                ConstantInt
 //===----------------------------------------------------------------------===//
