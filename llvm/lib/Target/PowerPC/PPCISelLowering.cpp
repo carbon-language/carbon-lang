@@ -3399,8 +3399,10 @@ SDOperand PPCTargetLowering::LowerBUILD_VECTOR(SDOperand Op,
     // If this value is in the range [-32,30] and is even, use:
     //    tmp = VSPLTI[bhw], result = add tmp, tmp
     if (SextVal >= -32 && SextVal <= 30 && (SextVal & 1) == 0) {
-      Op = BuildSplatI(SextVal >> 1, SplatSize, Op.getValueType(), DAG);
-      return DAG.getNode(ISD::ADD, Op.getValueType(), Op, Op);
+      SDOperand Res = BuildSplatI(SextVal >> 1, SplatSize, MVT::Other, DAG);
+      Res = DAG.getNode(ISD::ADD, Res.getValueType(), Res, Res);
+      return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
+
     }
     
     // If this is 0x8000_0000 x 4, turn into vspltisw + vslw.  If it is 
