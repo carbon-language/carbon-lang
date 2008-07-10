@@ -589,20 +589,24 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
         std::map<unsigned, std::pair<MachineInstr*, unsigned> >::iterator
           last = LastUseDef.find(MO.getReg());
         if (last != LastUseDef.end()) {
-          
-          // If this is a two address instr, then we don't mark the def
-          // as killing the use.
-          if (last->second.first == I &&
-              I->getDesc().getOperandConstraint(last->second.second,
-                                                TOI::TIED_TO) == (signed)i) {
-            LastUseDef[MO.getReg()] = std::make_pair(I, i);
-            continue;
+          // Check if this is a two address instruction.  If so, then
+          // the def does not kill the use.
+          if (last->second.first == I) {
+            bool isTwoAddr = false;
+            for (unsigned j = i+1, je = I->getDesc().getNumOperands();
+                j < je; ++j) {
+              const MachineOperand &MO2 = I->getOperand(j);
+              if (MO2.isRegister() && MO2.isUse() &&
+                  MO2.getReg() == MO.getReg() &&
+                  I->getDesc().getOperandConstraint(j, TOI::TIED_TO) == (int)i)
+                isTwoAddr = true;
+            }
+
+            if (isTwoAddr) continue;
           }
-            
           
           MachineOperand& lastUD =
                       last->second.first->getOperand(last->second.second);
-          
           if (lastUD.isDef())
             lastUD.setIsDead(true);
           else if (lastUD.isUse())
