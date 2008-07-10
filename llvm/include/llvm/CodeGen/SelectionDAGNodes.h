@@ -1032,8 +1032,15 @@ private:
   
   /// OperandsNeedDelete - This is true if OperandList was new[]'d.  If true,
   /// then they will be delete[]'d when the node is destroyed.
-  bool OperandsNeedDelete : 1;
+  unsigned short OperandsNeedDelete : 1;
 
+protected:
+  /// SubclassData - This member is defined by this class, but is not used for
+  /// anything.  Subclasses can use it to hold whatever state they find useful.
+  /// This field is initialized to zero by the ctor.
+  unsigned short SubclassData : 15;
+
+private:
   /// NodeId - Unique id per SDNode in the DAG.
   int NodeId;
 
@@ -1248,8 +1255,8 @@ protected:
   }
 
   SDNode(unsigned Opc, SDVTList VTs, const SDOperand *Ops, unsigned NumOps)
-    : NodeType(Opc), NodeId(-1), Uses(NULL) {
-    OperandsNeedDelete = true;
+    : NodeType(Opc), OperandsNeedDelete(true), SubclassData(0),
+      NodeId(-1), Uses(NULL) {
     NumOperands = NumOps;
     OperandList = NumOps ? new SDUse[NumOperands] : 0;
     
@@ -1264,7 +1271,8 @@ protected:
   }
 
   SDNode(unsigned Opc, SDVTList VTs, const SDUse *Ops, unsigned NumOps)
-    : NodeType(Opc), NodeId(-1), Uses(NULL) {
+    : NodeType(Opc), OperandsNeedDelete(true), SubclassData(0),
+      NodeId(-1), Uses(NULL) {
     OperandsNeedDelete = true;
     NumOperands = NumOps;
     OperandList = NumOps ? new SDUse[NumOperands] : 0;
@@ -1279,9 +1287,11 @@ protected:
     NumValues = VTs.NumVTs;
   }
 
+  /// This constructor adds no operands itself; operands can be
+  /// set later with InitOperands.
   SDNode(unsigned Opc, SDVTList VTs)
-    : NodeType(Opc), NodeId(-1), Uses(NULL) {
-    OperandsNeedDelete = false;  // Operands set with InitOperands.
+    : NodeType(Opc), OperandsNeedDelete(false), SubclassData(0),
+      NodeId(-1), Uses(NULL) {
     NumOperands = 0;
     OperandList = 0;
     ValueList = VTs.VTs;
@@ -2047,10 +2057,6 @@ public:
 /// LSBaseSDNode - Base class for LoadSDNode and StoreSDNode
 ///
 class LSBaseSDNode : public MemSDNode {
-private:
-  // AddrMode - unindexed, pre-indexed, post-indexed.
-  ISD::MemIndexedMode AddrMode;
-
 protected:
   //! Operand array for load and store
   /*!
@@ -2063,7 +2069,8 @@ public:
   LSBaseSDNode(ISD::NodeType NodeTy, SDOperand *Operands, unsigned numOperands,
                SDVTList VTs, ISD::MemIndexedMode AM, MVT VT,
                const Value *SV, int SVO, unsigned Align, bool Vol)
-    : MemSDNode(NodeTy, VTs, VT, SV, SVO, Align, Vol), AddrMode(AM) {
+    : MemSDNode(NodeTy, VTs, VT, SV, SVO, Align, Vol) {
+    SubclassData = AM;
     for (unsigned i = 0; i != numOperands; ++i)
       Ops[i] = Operands[i];
     InitOperands(Ops, numOperands);
@@ -2076,13 +2083,17 @@ public:
     return getOperand(getOpcode() == ISD::LOAD ? 2 : 3);
   }
 
-  ISD::MemIndexedMode getAddressingMode() const { return AddrMode; }
+  /// getAddressingMode - Return the addressing mode for this load or store:
+  /// unindexed, pre-inc, pre-dec, post-inc, or post-dec.
+  ISD::MemIndexedMode getAddressingMode() const {
+    return ISD::MemIndexedMode(SubclassData & 7);
+  }
 
   /// isIndexed - Return true if this is a pre/post inc/dec load/store.
-  bool isIndexed() const { return AddrMode != ISD::UNINDEXED; }
+  bool isIndexed() const { return getAddressingMode() != ISD::UNINDEXED; }
 
   /// isUnindexed - Return true if this is NOT a pre/post inc/dec load/store.
-  bool isUnindexed() const { return AddrMode == ISD::UNINDEXED; }
+  bool isUnindexed() const { return getAddressingMode() == ISD::UNINDEXED; }
 
   static bool classof(const LSBaseSDNode *) { return true; }
   static bool classof(const SDNode *N) {
@@ -2095,21 +2106,23 @@ public:
 ///
 class LoadSDNode : public LSBaseSDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
-  
-  // ExtType - non-ext, anyext, sext, zext.
-  ISD::LoadExtType ExtType;
-
 protected:
   friend class SelectionDAG;
   LoadSDNode(SDOperand *ChainPtrOff, SDVTList VTs,
              ISD::MemIndexedMode AM, ISD::LoadExtType ETy, MVT LVT,
              const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
     : LSBaseSDNode(ISD::LOAD, ChainPtrOff, 3,
-                   VTs, AM, LVT, SV, O, Align, Vol),
-      ExtType(ETy) {}
+                   VTs, AM, LVT, SV, O, Align, Vol) {
+    SubclassData |= (unsigned short)ETy << 3;
+  }
 public:
 
-  ISD::LoadExtType getExtensionType() const { return ExtType; }
+  /// getExtensionType - Return whether this is a plain node,
+  /// or one of the varieties of value-extending loads.
+  ISD::LoadExtType getExtensionType() const {
+    return ISD::LoadExtType((SubclassData >> 3) & 3);
+  }
+
   const SDOperand &getBasePtr() const { return getOperand(1); }
   const SDOperand &getOffset() const { return getOperand(2); }
   
@@ -2123,22 +2136,22 @@ public:
 ///
 class StoreSDNode : public LSBaseSDNode {
   virtual void ANCHOR();  // Out-of-line virtual method to give class a home.
-
-  // IsTruncStore - True if the op does a truncation before store.  For
-  // integers this is the same as doing a TRUNCATE and storing the result.
-  // For floats, it is the same as doing an FP_ROUND and storing the result.
-  bool IsTruncStore;
 protected:
   friend class SelectionDAG;
   StoreSDNode(SDOperand *ChainValuePtrOff, SDVTList VTs,
               ISD::MemIndexedMode AM, bool isTrunc, MVT SVT,
               const Value *SV, int O=0, unsigned Align=0, bool Vol=false)
     : LSBaseSDNode(ISD::STORE, ChainValuePtrOff, 4,
-                   VTs, AM, SVT, SV, O, Align, Vol),
-      IsTruncStore(isTrunc) {}
+                   VTs, AM, SVT, SV, O, Align, Vol) {
+    SubclassData |= (unsigned short)isTrunc << 3;
+  }
 public:
 
-  bool isTruncatingStore() const { return IsTruncStore; }
+  /// isTruncatingStore - Return true if the op does a truncation before store.
+  /// For integers this is the same as doing a TRUNCATE and storing the result.
+  /// For floats, it is the same as doing an FP_ROUND and storing the result.
+  bool isTruncatingStore() const { return (SubclassData >> 3) & 1; }
+
   const SDOperand &getValue() const { return getOperand(1); }
   const SDOperand &getBasePtr() const { return getOperand(2); }
   const SDOperand &getOffset() const { return getOperand(3); }
