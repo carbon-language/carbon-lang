@@ -55,7 +55,7 @@ public:
 ///
 /// To support this, the class assigns unique integer identifiers to stack
 /// objects requested clients.  These identifiers are negative integers for
-/// fixed stack objects (such as arguments passed on the stack) or positive
+/// fixed stack objects (such as arguments passed on the stack) or nonnegative
 /// for objects that may be reordered.  Instructions which refer to stack
 /// objects use a special MO_FrameIndex operand to represent these frame
 /// indexes.
@@ -327,7 +327,7 @@ public:
   }
 
   /// CreateStackObject - Create a new statically sized stack object, returning
-  /// a postive identifier to represent it.
+  /// a nonnegative identifier to represent it.
   ///
   int CreateStackObject(uint64_t Size, unsigned Alignment) {
     assert(Size != 0 && "Cannot allocate zero size stack objects!");
