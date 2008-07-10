@@ -444,6 +444,7 @@ SDOperand DAGTypeLegalizer::PromoteIntRes_VAARG(SDNode *N) {
   return Tmp;
 }
 
+
 //===----------------------------------------------------------------------===//
 //  Integer Operand Promotion
 //===----------------------------------------------------------------------===//
@@ -995,7 +996,17 @@ void DAGTypeLegalizer::ExpandIntRes_FP_TO_SINT(SDNode *N, SDOperand &Lo,
   MVT VT = N->getValueType(0);
   SDOperand Op = N->getOperand(0);
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (VT == MVT::i64) {
+
+  if (VT == MVT::i32) {
+    if (Op.getValueType() == MVT::f32)
+      LC = RTLIB::FPTOSINT_F32_I32;
+    else if (Op.getValueType() == MVT::f64)
+      LC = RTLIB::FPTOSINT_F64_I32;
+    else if (Op.getValueType() == MVT::f80)
+      LC = RTLIB::FPTOSINT_F80_I32;
+    else if (Op.getValueType() == MVT::ppcf128)
+      LC = RTLIB::FPTOSINT_PPCF128_I32;
+  } else if (VT == MVT::i64) {
     if (Op.getValueType() == MVT::f32)
       LC = RTLIB::FPTOSINT_F32_I64;
     else if (Op.getValueType() == MVT::f64)
@@ -1013,9 +1024,8 @@ void DAGTypeLegalizer::ExpandIntRes_FP_TO_SINT(SDNode *N, SDOperand &Lo,
       LC = RTLIB::FPTOSINT_F80_I128;
     else if (Op.getValueType() == MVT::ppcf128)
       LC = RTLIB::FPTOSINT_PPCF128_I128;
-  } else {
-    assert(0 && "Unexpected fp-to-sint conversion!");
   }
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unexpected fp-to-sint conversion!");
   SplitInteger(MakeLibCall(LC, VT, &Op, 1, true/*sign irrelevant*/), Lo, Hi);
 }
 
@@ -1024,7 +1034,16 @@ void DAGTypeLegalizer::ExpandIntRes_FP_TO_UINT(SDNode *N, SDOperand &Lo,
   MVT VT = N->getValueType(0);
   SDOperand Op = N->getOperand(0);
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (VT == MVT::i64) {
+  if (VT == MVT::i32) {
+    if (Op.getValueType() == MVT::f32)
+      LC = RTLIB::FPTOUINT_F32_I32;
+    else if (Op.getValueType() == MVT::f64)
+      LC = RTLIB::FPTOUINT_F64_I32;
+    else if (Op.getValueType() == MVT::f80)
+      LC = RTLIB::FPTOUINT_F80_I32;
+    else if (Op.getValueType() == MVT::ppcf128)
+      LC = RTLIB::FPTOUINT_PPCF128_I32;
+  } else if (VT == MVT::i64) {
     if (Op.getValueType() == MVT::f32)
       LC = RTLIB::FPTOUINT_F32_I64;
     else if (Op.getValueType() == MVT::f64)
@@ -1042,9 +1061,8 @@ void DAGTypeLegalizer::ExpandIntRes_FP_TO_UINT(SDNode *N, SDOperand &Lo,
       LC = RTLIB::FPTOUINT_F80_I128;
     else if (Op.getValueType() == MVT::ppcf128)
       LC = RTLIB::FPTOUINT_PPCF128_I128;
-  } else {
-    assert(0 && "Unexpected fp-to-uint conversion!");
   }
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unexpected fp-to-uint conversion!");
   SplitInteger(MakeLibCall(LC, VT, &Op, 1, false/*sign irrelevant*/), Lo, Hi);
 }
 

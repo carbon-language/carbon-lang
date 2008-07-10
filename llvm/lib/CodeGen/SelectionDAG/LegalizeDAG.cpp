@@ -3770,6 +3770,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
             LC = RTLIB::FPTOSINT_F32_I32;
           else if (OVT == MVT::f64)
             LC = RTLIB::FPTOSINT_F64_I32;
+          else if (OVT == MVT::f80)
+            LC = RTLIB::FPTOSINT_F80_I32;
+          else if (OVT == MVT::ppcf128)
+            LC = RTLIB::FPTOSINT_PPCF128_I32;
           else
             assert(0 && "Unexpected i32-to-fp conversion!");
         } else if (VT == MVT::i64) {

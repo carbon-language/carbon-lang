@@ -536,6 +536,9 @@ SDOperand DAGTypeLegalizer::SoftenFloatOp_FP_TO_SINT(SDNode *N) {
     case MVT::f64:
       LC = RTLIB::FPTOSINT_F64_I32;
       break;
+    case MVT::f80:
+      LC = RTLIB::FPTOSINT_F80_I32;
+      break;
     case MVT::ppcf128:
       LC = RTLIB::FPTOSINT_PPCF128_I32;
       break;

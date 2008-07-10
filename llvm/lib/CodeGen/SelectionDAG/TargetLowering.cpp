@@ -95,6 +95,7 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::FPTOSINT_F64_I32] = "__fixdfsi";
   Names[RTLIB::FPTOSINT_F64_I64] = "__fixdfdi";
   Names[RTLIB::FPTOSINT_F64_I128] = "__fixdfti";
+  Names[RTLIB::FPTOSINT_F80_I32] = "__fixxfsi";
   Names[RTLIB::FPTOSINT_F80_I64] = "__fixxfdi";
   Names[RTLIB::FPTOSINT_F80_I128] = "__fixxfti";
   Names[RTLIB::FPTOSINT_PPCF128_I32] = "__fixtfsi";
