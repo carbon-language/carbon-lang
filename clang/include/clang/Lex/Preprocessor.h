@@ -201,6 +201,7 @@ public:
   ///
   void setMacroInfo(IdentifierInfo *II, MacroInfo *MI);
   
+  const std::string &getPredefines() const { return Predefines; }
   /// setPredefines - Set the predefines for this Preprocessor.  These
   /// predefines are automatically injected when parsing the main file.
   void setPredefines(const char *P) { Predefines = P; }
