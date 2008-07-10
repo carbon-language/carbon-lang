@@ -3402,7 +3402,6 @@ SDOperand PPCTargetLowering::LowerBUILD_VECTOR(SDOperand Op,
       SDOperand Res = BuildSplatI(SextVal >> 1, SplatSize, MVT::Other, DAG);
       Res = DAG.getNode(ISD::ADD, Res.getValueType(), Res, Res);
       return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), Res);
-
     }
     
     // If this is 0x8000_0000 x 4, turn into vspltisw + vslw.  If it is 
