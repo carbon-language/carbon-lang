@@ -170,6 +170,7 @@ void DAGTypeLegalizer::ExpandRes_NormalLoad(SDNode *N, SDOperand &Lo,
   ReplaceValueWith(SDOperand(N, 1), Chain);
 }
 
+
 //===--------------------------------------------------------------------===//
 // Generic Operand Expansion.
 //===--------------------------------------------------------------------===//

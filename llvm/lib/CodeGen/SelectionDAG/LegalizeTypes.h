@@ -214,7 +214,6 @@ private:
   SDOperand PromoteIntRes_CTPOP(SDNode *N);
   SDOperand PromoteIntRes_CTTZ(SDNode *N);
   SDOperand PromoteIntRes_EXTRACT_VECTOR_ELT(SDNode *N);
-  SDOperand PromoteIntRes_FP_ROUND(SDNode *N);
   SDOperand PromoteIntRes_FP_TO_XINT(SDNode *N);
   SDOperand PromoteIntRes_INT_EXTEND(SDNode *N);
   SDOperand PromoteIntRes_LOAD(LoadSDNode *N);

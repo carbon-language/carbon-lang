@@ -60,7 +60,6 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::SIGN_EXTEND:
   case ISD::ZERO_EXTEND:
   case ISD::ANY_EXTEND:  Result = PromoteIntRes_INT_EXTEND(N); break;
-  case ISD::FP_ROUND:    Result = PromoteIntRes_FP_ROUND(N); break;
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:  Result = PromoteIntRes_FP_TO_XINT(N); break;
   case ISD::SETCC:    Result = PromoteIntRes_SETCC(N); break;
@@ -167,15 +166,6 @@ SDOperand DAGTypeLegalizer::PromoteIntRes_INT_EXTEND(SDNode *N) {
 
   // Otherwise, just extend the original operand all the way to the larger type.
   return DAG.getNode(N->getOpcode(), NVT, N->getOperand(0));
-}
-
-SDOperand DAGTypeLegalizer::PromoteIntRes_FP_ROUND(SDNode *N) {
-  // NOTE: Assumes input is legal.
-  if (N->getConstantOperandVal(1) == 0)
-    return DAG.getNode(ISD::FP_ROUND_INREG, N->getOperand(0).getValueType(),
-                       N->getOperand(0), DAG.getValueType(N->getValueType(0)));
-  // If the precision discard isn't needed, just return the operand unrounded.
-  return N->getOperand(0);
 }
 
 SDOperand DAGTypeLegalizer::PromoteIntRes_FP_TO_XINT(SDNode *N) {

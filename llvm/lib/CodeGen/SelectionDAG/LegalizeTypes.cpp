@@ -28,7 +28,6 @@ static const bool ViewLegalizeTypesDAGs = 0;
 #endif
 
 
-
 /// run - This is the main entry point for the type legalizer.  This does a
 /// top-down traversal of the dag, legalizing types as it goes.
 void DAGTypeLegalizer::run() {
@@ -353,7 +352,6 @@ void DAGTypeLegalizer::ReplaceNodeWith(SDNode *From, SDNode *To) {
   }
 }
 
-
 /// RemapNode - If the specified value was already legalized to another value,
 /// replace it by that value.
 void DAGTypeLegalizer::RemapNode(SDOperand &N) {
@@ -440,7 +438,6 @@ void DAGTypeLegalizer::ExpungeNode(SDNode *N) {
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i)
     ReplacedNodes.erase(SDOperand(N, i));
 }
-
 
 void DAGTypeLegalizer::SetPromotedInteger(SDOperand Op, SDOperand Result) {
   AnalyzeNewNode(Result.Val);
