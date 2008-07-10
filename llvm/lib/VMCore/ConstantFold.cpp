@@ -1350,27 +1350,40 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     }
   } else if (const ConstantVector *CP1 = dyn_cast<ConstantVector>(C1)) {
     if (const ConstantVector *CP2 = dyn_cast<ConstantVector>(C2)) {
-      if (pred == FCmpInst::FCMP_OEQ || pred == FCmpInst::FCMP_UEQ) {
-        for (unsigned i = 0, e = CP1->getNumOperands(); i != e; ++i) {
-          Constant *C = ConstantExpr::getFCmp(FCmpInst::FCMP_OEQ,
-                                              CP1->getOperand(i),
-                                              CP2->getOperand(i));
-          if (ConstantInt *CB = dyn_cast<ConstantInt>(C))
-            return CB;
+      // If we can constant fold the comparison of each element, constant fold
+      // the whole vector comparison.
+      SmallVector<Constant*, 4> Elts;
+      const Type *InEltTy = CP1->getOperand(0)->getType();
+      bool isFP = InEltTy->isFloatingPoint();
+      const Type *ResEltTy = InEltTy;
+      if (isFP)
+        ResEltTy = IntegerType::get(InEltTy->getPrimitiveSizeInBits());
+      
+      for (unsigned i = 0, e = CP1->getNumOperands(); i != e; ++i) {
+        // Compare the elements, producing an i1 result or constant expr.
+        Constant *C;
+        if (isFP)
+          C = ConstantExpr::getFCmp(pred, CP1->getOperand(i),
+                                    CP2->getOperand(i));
+        else
+          C = ConstantExpr::getICmp(pred, CP1->getOperand(i),
+                                    CP2->getOperand(i));
+
+        // If it is a bool or undef result, convert to the dest type.
+        if (ConstantInt *CI = dyn_cast<ConstantInt>(C)) {
+          if (CI->isZero())
+            Elts.push_back(Constant::getNullValue(ResEltTy));
+          else
+            Elts.push_back(Constant::getAllOnesValue(ResEltTy));
+        } else if (isa<UndefValue>(C)) {
+          Elts.push_back(UndefValue::get(ResEltTy));
+        } else {
+          break;
         }
-        // Otherwise, could not decide from any element pairs.
-        return 0;
-      } else if (pred == ICmpInst::ICMP_EQ) {
-        for (unsigned i = 0, e = CP1->getNumOperands(); i != e; ++i) {
-          Constant *C = ConstantExpr::getICmp(ICmpInst::ICMP_EQ,
-                                              CP1->getOperand(i),
-                                              CP2->getOperand(i));
-          if (ConstantInt *CB = dyn_cast<ConstantInt>(C))
-            return CB;
-        }
-        // Otherwise, could not decide from any element pairs.
-        return 0;
       }
+      
+      if (Elts.size() == CP1->getNumOperands())
+        return ConstantVector::get(&Elts[0], Elts.size());
     }
   }
 

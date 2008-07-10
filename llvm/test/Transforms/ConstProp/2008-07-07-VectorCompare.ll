@@ -6,9 +6,17 @@ entry:
         ret <4 x i32> %foo
 }
 
-define <4 x i32> @main(i32 %argc, i8** %argv) {
+define <4 x i32> @test2(i32 %argc, i8** %argv) {
 entry:  
         %foo = vicmp slt <4 x i32> <i32 undef, i32 undef, i32 undef, i32
 undef>, <i32 undef, i32 undef, i32 undef, i32 undef>
         ret <4 x i32> %foo
 }
+
+
+define <4 x i32> @test3() {
+       %foo = vfcmp ueq <4 x float> <float 0.0, float 0.0, float 0.0, float
+undef>, <float 1.0, float 1.0, float 1.0, float undef>
+	ret <4 x i32> %foo
+}
+
