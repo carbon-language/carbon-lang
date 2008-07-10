@@ -714,9 +714,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
 
       // If types don't agree due to opaque types, try to resolve them.
       if (DGV && DGV->getType() != SGA->getType())
-        if (RecursiveResolveTypes(SGA->getType(), DGV->getType()))
-          return Error(Err, "Alias Collision on '" + SGA->getName()+
-                       "': aliases have different types");
+        RecursiveResolveTypes(SGA->getType(), DGV->getType());
     }
 
     if (!DGV && !SGA->hasInternalLinkage()) {
@@ -724,9 +722,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
 
       // If types don't agree due to opaque types, try to resolve them.
       if (DGV && DGV->getType() != SGA->getType())
-        if (RecursiveResolveTypes(SGA->getType(), DGV->getType()))
-          return Error(Err, "Alias Collision on '" + SGA->getName()+
-                       "': aliases have different types");
+        RecursiveResolveTypes(SGA->getType(), DGV->getType());
     }
 
     if (!DGV && !SGA->hasInternalLinkage()) {
@@ -734,9 +730,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
 
       // If types don't agree due to opaque types, try to resolve them.
       if (DGV && DGV->getType() != SGA->getType())
-        if (RecursiveResolveTypes(SGA->getType(), DGV->getType()))
-          return Error(Err, "Alias Collision on '" + SGA->getName()+
-                       "': aliases have different types");
+        RecursiveResolveTypes(SGA->getType(), DGV->getType());
     }
 
     // No linking to be performed on internal stuff.
