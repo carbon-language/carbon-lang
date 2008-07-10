@@ -119,13 +119,20 @@ bool clang::EmitASTBitcodeFile(const TranslationUnit* TU,
   return TU ? EmitASTBitcodeFile(*TU, Filename) : false;
 }
   
-bool clang::EmitASTBitcodeFile(const TranslationUnit& TU, 
-                               const llvm::sys::Path& Filename) {  
-  
-  // Reserve 256K for bitstream buffer.
-  std::vector<unsigned char> Buffer;
-  Buffer.reserve(256*1024);
-  
+bool clang::EmitASTBitcodeBuffer(const TranslationUnit* TU, 
+                                 std::vector<unsigned char>& Buffer) {
+
+  return TU ? EmitASTBitcodeBuffer(*TU, Buffer) : false;
+}
+
+bool clang::EmitASTBitcodeStream(const TranslationUnit* TU, 
+                                 std::ostream& Stream) {
+
+  return TU ? EmitASTBitcodeStream(*TU, Stream) : false;
+}
+
+bool clang::EmitASTBitcodeBuffer(const TranslationUnit& TU, 
+                                 std::vector<unsigned char>& Buffer) {
   // Create bitstream.
   llvm::BitstreamWriter Stream(Buffer);
   
@@ -145,6 +152,32 @@ bool clang::EmitASTBitcodeFile(const TranslationUnit& TU,
     // Emit the translation unit.
     TU.Emit(Sezr);
   }
+  
+  return true;
+}
+
+bool clang::EmitASTBitcodeStream(const TranslationUnit& TU, 
+                                 std::ostream& Stream) {  
+  
+  // Reserve 256K for bitstream buffer.
+  std::vector<unsigned char> Buffer;
+  Buffer.reserve(256*1024);
+  
+  EmitASTBitcodeBuffer(TU,Buffer);
+  
+  // Write the bits to disk.
+  Stream.write((char*)&Buffer.front(), Buffer.size());
+  return true;
+}
+
+bool clang::EmitASTBitcodeFile(const TranslationUnit& TU, 
+                               const llvm::sys::Path& Filename) {  
+  
+  // Reserve 256K for bitstream buffer.
+  std::vector<unsigned char> Buffer;
+  Buffer.reserve(256*1024);
+  
+  EmitASTBitcodeBuffer(TU,Buffer);
   
   // Write the bits to disk. 
   if (FILE* fp = fopen(Filename.c_str(),"wb")) {
@@ -207,26 +240,17 @@ void TranslationUnit::Emit(llvm::Serializer& Sezr) const {
 }
 
 TranslationUnit*
-clang::ReadASTBitcodeFile(const llvm::sys::Path& Filename, FileManager& FMgr) {
-  
-  // Create the memory buffer that contains the contents of the file.  
-  llvm::OwningPtr<llvm::MemoryBuffer> 
-    MBuffer(llvm::MemoryBuffer::getFile(Filename.c_str()));
-  
-  if (!MBuffer) {
-    // FIXME: Provide diagnostic.
-    return NULL;
-  }
-  
+clang::ReadASTBitcodeBuffer(llvm::MemoryBuffer& MBuffer, FileManager& FMgr) {
+
   // Check if the file is of the proper length.
-  if (MBuffer->getBufferSize() & 0x3) {
+  if (MBuffer.getBufferSize() & 0x3) {
     // FIXME: Provide diagnostic: "Length should be a multiple of 4 bytes."
     return NULL;
   }
   
   // Create the bitstream reader.
-  unsigned char *BufPtr = (unsigned char *) MBuffer->getBufferStart();
-  llvm::BitstreamReader Stream(BufPtr,BufPtr+MBuffer->getBufferSize());
+  unsigned char *BufPtr = (unsigned char *) MBuffer.getBufferStart();
+  llvm::BitstreamReader Stream(BufPtr,BufPtr+MBuffer.getBufferSize());
   
   if (Stream.Read(8) != 'B' ||
       Stream.Read(8) != 'C' ||
@@ -242,6 +266,21 @@ clang::ReadASTBitcodeFile(const llvm::sys::Path& Filename, FileManager& FMgr) {
   llvm::Deserializer Dezr(Stream);
   
   return TranslationUnit::Create(Dezr,FMgr);
+}
+
+TranslationUnit*
+clang::ReadASTBitcodeFile(const llvm::sys::Path& Filename, FileManager& FMgr) {
+  
+  // Create the memory buffer that contains the contents of the file.  
+  llvm::OwningPtr<llvm::MemoryBuffer> 
+    MBuffer(llvm::MemoryBuffer::getFile(Filename.c_str()));
+  
+  if (!MBuffer) {
+    // FIXME: Provide diagnostic.
+    return NULL;
+  }
+  
+  return ReadASTBitcodeBuffer(*MBuffer, FMgr);
 }
 
 TranslationUnit* TranslationUnit::Create(llvm::Deserializer& Dezr,

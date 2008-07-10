@@ -84,9 +84,27 @@ bool EmitASTBitcodeFile(const TranslationUnit& TU,
 bool EmitASTBitcodeFile(const TranslationUnit* TU, 
                         const llvm::sys::Path& Filename);
                      
+/// EmitASTBitcodeStream - Emit a translation unit to a std::ostream.
+bool EmitASTBitcodeStream(const TranslationUnit& TU, 
+                          std::ostream& Stream);
+  
+bool EmitASTBitcodeStream(const TranslationUnit* TU, 
+                          std::ostream& Stream);
+                     
+/// EmitASTBitcodeBuffer - Emit a translation unit to a buffer.
+bool EmitASTBitcodeBuffer(const TranslationUnit& TU, 
+                          std::vector<unsigned char>& Buffer);
+
+bool EmitASTBitcodeBuffer(const TranslationUnit* TU, 
+                          std::vector<unsigned char>& Buffer);
+					
 /// ReadASTBitcodeFile - Reconsitute a translation unit from a bitcode file.
 TranslationUnit* ReadASTBitcodeFile(const llvm::sys::Path& Filename,
                                     FileManager& FMgr); 
+                
+/// ReadASTBitcodeBuffer - Reconsitute a translation unit from a buffer.
+TranslationUnit* ReadASTBitcodeBuffer(llvm::MemoryBuffer& MBuffer,
+                                      FileManager& FMgr); 
                 
 
 } // end namespace clang
