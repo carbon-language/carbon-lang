@@ -407,7 +407,7 @@ private:
   void AddRegOperandToRegInfo(MachineRegisterInfo *RegInfo);
 
   void RemoveRegOperandFromRegInfo() {
-    assert(isOnRegUseList() && "Can only add reg operand to use lists");
+    assert(isOnRegUseList() && "Reg operand is not on a use list");
     // Unlink this from the doubly linked list of operands.
     MachineOperand *NextOp = Contents.Reg.Next;
     *Contents.Reg.Prev = NextOp; 
