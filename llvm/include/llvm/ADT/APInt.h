@@ -997,10 +997,10 @@ public:
     return toString(radix, false);
   }
 
-  /// Considers the APInt to be unsigned and converts it into a string in the
+  /// Considers the APInt to be signed and converts it into a string in the
   /// radix given. The radix can be 2, 8, 10 or 16.
   /// @returns a character interpretation of the APInt
-  /// @brief Convert unsigned APInt to string representation.
+  /// @brief Convert signed APInt to string representation.
   std::string toStringSigned(uint8_t radix = 10) const {
     return toString(radix, true);
   }
