@@ -77,6 +77,7 @@ private:
 // A specialization of ilist_traits for alist_nodes.
 template<class T, class LargestT>
 class ilist_traits<alist_node<T, LargestT> > {
+public:
   typedef alist_node<T, LargestT> NodeTy;
 
 protected:
