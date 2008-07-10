@@ -61,7 +61,7 @@ DynamicLibrary::~DynamicLibrary() {
 
 bool DynamicLibrary::LoadLibraryPermanently(const char *Filename,
                                             std::string *ErrMsg) {
-  void *H = dlopen(Filename, RTLD_LAZY);
+  void *H = dlopen(Filename, RTLD_LAZY|RTLD_GLOBAL);
   if (H == 0) {
     if (ErrMsg)
       *ErrMsg = dlerror();
