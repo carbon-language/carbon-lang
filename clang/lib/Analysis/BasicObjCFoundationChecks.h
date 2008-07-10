@@ -16,7 +16,6 @@
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
 #include "clang/Analysis/PathSensitive/GRSimpleAPICheck.h"
 #include "clang/Analysis/PathSensitive/ValueState.h"
-#include "clang/Analysis/PathSensitive/AnnotatedPath.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ASTContext.h"
