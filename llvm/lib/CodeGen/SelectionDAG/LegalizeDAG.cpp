@@ -547,8 +547,11 @@ SDOperand ExpandFCOPYSIGNToBitwiseOps(SDNode *Node, MVT NVT,
     SignBit = DAG.getNode(ISD::SRL, SrcNVT, SignBit,
                           DAG.getConstant(SizeDiff, TLI.getShiftAmountTy()));
     SignBit = DAG.getNode(ISD::TRUNCATE, NVT, SignBit);
-  } else if (SizeDiff < 0)
-    SignBit = DAG.getNode(ISD::SIGN_EXTEND, NVT, SignBit);
+  } else if (SizeDiff < 0) {
+    SignBit = DAG.getNode(ISD::ZERO_EXTEND, NVT, SignBit);
+    SignBit = DAG.getNode(ISD::SHL, NVT, SignBit,
+                          DAG.getConstant(-SizeDiff, TLI.getShiftAmountTy()));
+  }
 
   // Clear the sign bit of first operand.
   SDOperand Mask2 = (VT == MVT::f64)
