@@ -17,6 +17,7 @@
 #include "llvm/User.h"
 
 namespace llvm {
+  template<typename T> class SmallVectorImpl;
 
 /// This is an important base class in LLVM. It provides the common facilities
 /// of all constant values in an LLVM program. A constant is a value that is
@@ -79,6 +80,11 @@ public:
   void setOperand(unsigned i, Constant *C) {
     User::setOperand(i, C);
   }
+  
+  /// getVectorElements - This method, which is only valid on constant of vector
+  /// type, returns the elements of the vector in the specified smallvector.
+  /// This handles breaking down a vector undef into undef elements, etc.
+  void getVectorElements(SmallVectorImpl<Constant*> &Elts) const;
 
   /// destroyConstant - Called if some element of this constant is no longer
   /// valid.  At this point only other constants may be on the use_list for this
