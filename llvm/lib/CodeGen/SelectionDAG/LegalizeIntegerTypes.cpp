@@ -363,9 +363,9 @@ SDOperand DAGTypeLegalizer::PromoteIntRes_CTTZ(SDNode *N) {
   // The count is the same in the promoted type except if the original
   // value was zero.  This can be handled by setting the bit just off
   // the top of the original type.
-  Op = DAG.getNode(ISD::OR, NVT, Op,
-                   // FIXME: Do this using an APINT constant.
-                   DAG.getConstant(1UL << OVT.getSizeInBits(), NVT));
+  APInt TopBit(NVT.getSizeInBits(), 0);
+  TopBit.set(OVT.getSizeInBits());
+  Op = DAG.getNode(ISD::OR, NVT, Op, DAG.getConstant(TopBit, NVT));
   return DAG.getNode(ISD::CTTZ, NVT, Op);
 }
 
