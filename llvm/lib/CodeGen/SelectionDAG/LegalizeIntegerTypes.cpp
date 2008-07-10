@@ -1077,8 +1077,8 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
 
   MVT VT = N->getValueType(0);
   MVT NVT = TLI.getTypeToTransformTo(VT);
-  SDOperand Ch  = N->getChain();    // Legalize the chain.
-  SDOperand Ptr = N->getBasePtr();  // Legalize the pointer.
+  SDOperand Ch  = N->getChain();
+  SDOperand Ptr = N->getBasePtr();
   ISD::LoadExtType ExtType = N->getExtensionType();
   int SVOffset = N->getSrcValueOffset();
   unsigned Alignment = N->getAlignment();
@@ -1330,14 +1330,14 @@ void DAGTypeLegalizer::ExpandIntRes_MUL(SDNode *N,
   }
 
   // If nothing else, we can make a libcall.
-  RTLIB::Libcall LC;
-  switch (VT.getSimpleVT()) {
-  default:
-    assert(false && "Unsupported MUL!");
-  case MVT::i64:
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+  if (VT == MVT::i32)
+    LC = RTLIB::MUL_I32;
+  else if (VT == MVT::i64)
     LC = RTLIB::MUL_I64;
-    break;
-  }
+  else if (VT == MVT::i128)
+    LC = RTLIB::MUL_I128;
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported MUL!");
 
   SDOperand Ops[2] = { N->getOperand(0), N->getOperand(1) };
   SplitInteger(MakeLibCall(LC, VT, Ops, 2, true/*sign irrelevant*/), Lo, Hi);
@@ -1345,34 +1345,70 @@ void DAGTypeLegalizer::ExpandIntRes_MUL(SDNode *N,
 
 void DAGTypeLegalizer::ExpandIntRes_SDIV(SDNode *N,
                                          SDOperand &Lo, SDOperand &Hi) {
-  assert(N->getValueType(0) == MVT::i64 && "Unsupported sdiv!");
+  MVT VT = N->getValueType(0);
+
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+  if (VT == MVT::i32)
+    LC = RTLIB::SDIV_I32;
+  else if (VT == MVT::i64)
+    LC = RTLIB::SDIV_I64;
+  else if (VT == MVT::i128)
+    LC = RTLIB::SDIV_I128;
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported SDIV!");
+
   SDOperand Ops[2] = { N->getOperand(0), N->getOperand(1) };
-  SplitInteger(MakeLibCall(RTLIB::SDIV_I64, N->getValueType(0), Ops, 2, true),
-               Lo, Hi);
+  SplitInteger(MakeLibCall(LC, VT, Ops, 2, true), Lo, Hi);
 }
 
 void DAGTypeLegalizer::ExpandIntRes_SREM(SDNode *N,
                                          SDOperand &Lo, SDOperand &Hi) {
-  assert(N->getValueType(0) == MVT::i64 && "Unsupported srem!");
+  MVT VT = N->getValueType(0);
+
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+  if (VT == MVT::i32)
+    LC = RTLIB::SREM_I32;
+  else if (VT == MVT::i64)
+    LC = RTLIB::SREM_I64;
+  else if (VT == MVT::i128)
+    LC = RTLIB::SREM_I128;
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported SREM!");
+
   SDOperand Ops[2] = { N->getOperand(0), N->getOperand(1) };
-  SplitInteger(MakeLibCall(RTLIB::SREM_I64, N->getValueType(0), Ops, 2, true),
-               Lo, Hi);
+  SplitInteger(MakeLibCall(LC, VT, Ops, 2, true), Lo, Hi);
 }
 
 void DAGTypeLegalizer::ExpandIntRes_UDIV(SDNode *N,
                                          SDOperand &Lo, SDOperand &Hi) {
-  assert(N->getValueType(0) == MVT::i64 && "Unsupported udiv!");
+  MVT VT = N->getValueType(0);
+
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+  if (VT == MVT::i32)
+    LC = RTLIB::UDIV_I32;
+  else if (VT == MVT::i64)
+    LC = RTLIB::UDIV_I64;
+  else if (VT == MVT::i128)
+    LC = RTLIB::UDIV_I128;
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported UDIV!");
+
   SDOperand Ops[2] = { N->getOperand(0), N->getOperand(1) };
-  SplitInteger(MakeLibCall(RTLIB::UDIV_I64, N->getValueType(0), Ops, 2, false),
-               Lo, Hi);
+  SplitInteger(MakeLibCall(LC, VT, Ops, 2, false), Lo, Hi);
 }
 
 void DAGTypeLegalizer::ExpandIntRes_UREM(SDNode *N,
                                          SDOperand &Lo, SDOperand &Hi) {
-  assert(N->getValueType(0) == MVT::i64 && "Unsupported urem!");
+  MVT VT = N->getValueType(0);
+
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+  if (VT == MVT::i32)
+    LC = RTLIB::UREM_I32;
+  else if (VT == MVT::i64)
+    LC = RTLIB::UREM_I64;
+  else if (VT == MVT::i128)
+    LC = RTLIB::UREM_I128;
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported UREM!");
+
   SDOperand Ops[2] = { N->getOperand(0), N->getOperand(1) };
-  SplitInteger(MakeLibCall(RTLIB::UREM_I64, N->getValueType(0), Ops, 2, false),
-               Lo, Hi);
+  SplitInteger(MakeLibCall(LC, VT, Ops, 2, false), Lo, Hi);
 }
 
 void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
