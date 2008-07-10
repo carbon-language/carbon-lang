@@ -20,3 +20,9 @@ undef>, <float 1.0, float 1.0, float 1.0, float undef>
 	ret <4 x i32> %foo
 }
 
+define <4 x i32> @test4() {
+   %foo = vfcmp ueq <4 x float> <float 0.0, float 0.0, float 0.0, float 0.0>, <float 1.0, float 1.0, float 1.0, float 0.0>
+
+	ret <4 x i32> %foo
+}
+
