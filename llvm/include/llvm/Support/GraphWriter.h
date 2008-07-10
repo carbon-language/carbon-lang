@@ -87,7 +87,7 @@ public:
     if (!Name.empty())
       O << "digraph " << Name << " {\n";
     else if (!GraphName.empty())
-      O << "digraph " << GraphName << " {\n";
+      O << "digraph \"" << DOT::EscapeString(GraphName) << "\" {\n";
     else
       O << "digraph unnamed {\n";
 
