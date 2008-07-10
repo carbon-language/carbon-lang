@@ -242,7 +242,7 @@ bool StackSlotColoring::ColorSlots(MachineFunction &MF) {
 }
 
 bool StackSlotColoring::runOnMachineFunction(MachineFunction &MF) {
-  DOUT << "******** Stack Slot Coloring ********\n";
+  DOUT << "********** Stack Slot Coloring **********\n";
 
   MFI = MF.getFrameInfo();
   LS = &getAnalysis<LiveStacks>();
