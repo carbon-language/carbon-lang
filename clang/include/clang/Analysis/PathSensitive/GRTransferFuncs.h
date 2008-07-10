@@ -82,7 +82,7 @@ public:
                          GRExprEngine& Engine,
                          GRStmtNodeBuilder<ValueState>& Builder,
                          Expr* E, ExplodedNode<ValueState>* Pred,
-                         ValueState* St, RVal TargetLV, RVal Val);
+                         const ValueState* St, RVal TargetLV, RVal Val);
                          
   
   // End-of-path and dead symbol notification.
@@ -96,7 +96,7 @@ public:
                                GRStmtNodeBuilder<ValueState>& Builder,
                                ExplodedNode<ValueState>* Pred,
                                Stmt* S,
-                               ValueState* St,
+                               const ValueState* St,
                                const ValueStateManager::DeadSymbolsTy& Dead) {}
   
   // Return statements.
@@ -109,8 +109,10 @@ public:
 
   // Assumptions.
   
-  virtual ValueState* EvalAssume(GRExprEngine& Engine, ValueState* St,
-                                 RVal Cond, bool Assumption, bool& isFeasible) {
+  virtual const ValueState* EvalAssume(GRExprEngine& Engine,
+                                       const ValueState* St,
+                                       RVal Cond, bool Assumption,
+                                       bool& isFeasible) {
     return St;
   }
 };

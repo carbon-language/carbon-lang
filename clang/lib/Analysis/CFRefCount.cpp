@@ -1135,8 +1135,8 @@ private:
 
 public:
   
-  static RefBindings GetRefBindings(ValueState& StImpl) {
-    return RefBindings((RefBindings::TreeTy*) StImpl.CheckerState);
+  static RefBindings GetRefBindings(const ValueState& StImpl) {
+    return RefBindings((const RefBindings::TreeTy*) StImpl.CheckerState);
   }
 
 private:
@@ -1156,14 +1156,15 @@ private:
                            GRStmtNodeBuilder<ValueState>& Builder,
                            Expr* NodeExpr, Expr* ErrorExpr,                        
                            ExplodedNode<ValueState>* Pred,
-                           ValueState* St,
+                           const ValueState* St,
                            RefVal::Kind hasErr, SymbolID Sym);
   
-  ValueState* HandleSymbolDeath(ValueStateManager& VMgr, ValueState* St,
-                                SymbolID sid, RefVal V, bool& hasLeak);
+  const ValueState* HandleSymbolDeath(ValueStateManager& VMgr,
+                                      const ValueState* St,
+                                      SymbolID sid, RefVal V, bool& hasLeak);
   
-  ValueState* NukeBinding(ValueStateManager& VMgr, ValueState* St,
-                          SymbolID sid);
+  const ValueState* NukeBinding(ValueStateManager& VMgr, const ValueState* St,
+                                SymbolID sid);
   
 public:
   
@@ -1226,7 +1227,7 @@ public:
                          GRExprEngine& Engine,
                          GRStmtNodeBuilder<ValueState>& Builder,
                          Expr* E, ExplodedNode<ValueState>* Pred,
-                         ValueState* St, RVal TargetLV, RVal Val);
+                         const ValueState* St, RVal TargetLV, RVal Val);
   // End-of-path.
   
   virtual void EvalEndPath(GRExprEngine& Engine,
@@ -1237,7 +1238,7 @@ public:
                                GRStmtNodeBuilder<ValueState>& Builder,
                                ExplodedNode<ValueState>* Pred,
                                Stmt* S,
-                               ValueState* St,
+                               const ValueState* St,
                                const ValueStateManager::DeadSymbolsTy& Dead);
   // Return statements.
   
@@ -1249,8 +1250,9 @@ public:
 
   // Assumptions.
 
-  virtual ValueState* EvalAssume(GRExprEngine& Engine, ValueState* St,
-                                 RVal Cond, bool Assumption, bool& isFeasible);
+  virtual const ValueState* EvalAssume(GRExprEngine& Engine,
+                                       const ValueState* St, RVal Cond,
+                                       bool Assumption, bool& isFeasible);
 
   // Error iterators.
 
@@ -1304,7 +1306,7 @@ void CFRefCount::ProcessNonLeakError(ExplodedNodeSet<ValueState>& Dst,
                                      GRStmtNodeBuilder<ValueState>& Builder,
                                      Expr* NodeExpr, Expr* ErrorExpr,                        
                                      ExplodedNode<ValueState>* Pred,
-                                     ValueState* St,
+                                     const ValueState* St,
                                      RefVal::Kind hasErr, SymbolID Sym) {
   Builder.BuildSinks = true;
   GRExprEngine::NodeTy* N  = Builder.MakeNode(Dst, NodeExpr, Pred, St);
@@ -1368,7 +1370,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
   
   // Get the state.
   ValueStateManager& StateMgr = Eng.getStateManager();  
-  ValueState* St = Builder.GetState(Pred);
+  const ValueState* St = Builder.GetState(Pred);
 
   // Evaluate the effect of the arguments.
   ValueState StVals = *St;
@@ -1429,7 +1431,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
         unsigned Count = Builder.getCurrentBlockCount();
         SymbolID NewSym = Eng.getSymbolManager().getConjuredSymbol(*I, Count);
       
-        StateMgr.BindVar(StVals, DV->getDecl(),
+        StateMgr.SetRVal(StVals, *DV,
                          LVal::IsLValType(DV->getDecl()->getType())
                          ? cast<RVal>(lval::SymbolVal(NewSym))
                          : cast<RVal>(nonlval::SymbolVal(NewSym)));
@@ -1596,7 +1598,7 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
 
     // FIXME: Wouldn't it be great if this code could be reduced?  It's just
     // a chain of lookups.
-    ValueState* St = Builder.GetState(Pred);
+    const ValueState* St = Builder.GetState(Pred);
     RVal V = Eng.getStateManager().GetRVal(St, Receiver );
 
     if (isa<lval::SymbolVal>(V)) {
@@ -1630,7 +1632,7 @@ void CFRefCount::EvalStore(ExplodedNodeSet<ValueState>& Dst,
                            GRExprEngine& Eng,
                            GRStmtNodeBuilder<ValueState>& Builder,
                            Expr* E, ExplodedNode<ValueState>* Pred,
-                           ValueState* St, RVal TargetLV, RVal Val) {
+                           const ValueState* St, RVal TargetLV, RVal Val) {
   
   // Check if we have a binding for "Val" and if we are storing it to something
   // we don't understand or otherwise the value "escapes" the function.
@@ -1663,8 +1665,9 @@ void CFRefCount::EvalStore(ExplodedNodeSet<ValueState>& Dst,
 }
 
 
-ValueState* CFRefCount::NukeBinding(ValueStateManager& VMgr, ValueState* St,
-                                    SymbolID sid) {
+const ValueState* CFRefCount::NukeBinding(ValueStateManager& VMgr,
+                                          const ValueState* St,
+                                          SymbolID sid) {
   ValueState StImpl = *St;
   RefBindings B = GetRefBindings(StImpl);
   StImpl.CheckerState = RefBFactory.Remove(B, sid).getRoot();
@@ -1673,8 +1676,8 @@ ValueState* CFRefCount::NukeBinding(ValueStateManager& VMgr, ValueState* St,
 
 // End-of-path.
 
-ValueState* CFRefCount::HandleSymbolDeath(ValueStateManager& VMgr,
-                                          ValueState* St, SymbolID sid,
+const ValueState* CFRefCount::HandleSymbolDeath(ValueStateManager& VMgr,
+                                          const ValueState* St, SymbolID sid,
                                           RefVal V, bool& hasLeak) {
     
   hasLeak = V.isOwned() || 
@@ -1693,7 +1696,7 @@ ValueState* CFRefCount::HandleSymbolDeath(ValueStateManager& VMgr,
 void CFRefCount::EvalEndPath(GRExprEngine& Eng,
                              GREndPathNodeBuilder<ValueState>& Builder) {
   
-  ValueState* St = Builder.getState();
+  const ValueState* St = Builder.getState();
   RefBindings B = GetRefBindings(*St);
   
   llvm::SmallVector<SymbolID, 10> Leaked;
@@ -1731,7 +1734,7 @@ void CFRefCount::EvalDeadSymbols(ExplodedNodeSet<ValueState>& Dst,
                                  GRStmtNodeBuilder<ValueState>& Builder,
                                  ExplodedNode<ValueState>* Pred,
                                  Stmt* S,
-                                 ValueState* St,
+                                 const ValueState* St,
                                  const ValueStateManager::DeadSymbolsTy& Dead) {
     
   // FIXME: a lot of copy-and-paste from EvalEndPath.  Refactor.
@@ -1784,7 +1787,7 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<ValueState>& Dst,
   if (!RetE) return;
   
   ValueStateManager& StateMgr = Eng.getStateManager();
-  ValueState* St = Builder.GetState(Pred);
+  const ValueState* St = Builder.GetState(Pred);
   RVal V = StateMgr.GetRVal(St, RetE);
   
   if (!isa<lval::SymbolVal>(V))
@@ -1831,9 +1834,10 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<ValueState>& Dst,
 
 // Assumptions.
 
-ValueState* CFRefCount::EvalAssume(GRExprEngine& Eng, ValueState* St,
-                                   RVal Cond, bool Assumption,
-                                   bool& isFeasible) {
+const ValueState* CFRefCount::EvalAssume(GRExprEngine& Eng,
+                                         const ValueState* St,
+                                         RVal Cond, bool Assumption,
+                                         bool& isFeasible) {
 
   // FIXME: We may add to the interface of EvalAssume the list of symbols
   //  whose assumptions have changed.  For now we just iterate through the
@@ -2136,8 +2140,8 @@ PathDiagnosticPiece* CFRefReport::VisitNode(ExplodedNode<ValueState>* N,
 
   // Check if the type state has changed.
   
-  ValueState* PrevSt = PrevN->getState();
-  ValueState* CurrSt = N->getState();
+  const ValueState* PrevSt = PrevN->getState();
+  const ValueState* CurrSt = N->getState();
   
   CFRefCount::RefBindings PrevB = CFRefCount::GetRefBindings(*PrevSt);
   CFRefCount::RefBindings CurrB = CFRefCount::GetRefBindings(*CurrSt);
@@ -2275,7 +2279,7 @@ GetAllocationSite(ExplodedNode<ValueState>* N, SymbolID Sym) {
   VarDecl* FirstDecl = 0;
   
   while (N) {
-    ValueState* St = N->getState();
+    const ValueState* St = N->getState();
     RefBindings B = RefBindings((RefBindings::TreeTy*) St->CheckerState);
     
     if (!B.lookup(Sym))

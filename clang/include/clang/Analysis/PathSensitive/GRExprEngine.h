@@ -86,7 +86,7 @@ protected:
 
   /// CleanedState - The state for EntryNode "cleaned" of all dead
   ///  variables and symbols (as determined by a liveness analysis).
-  ValueState* CleanedState;  
+  const ValueState* CleanedState;  
   
   /// CurrentStmt - The current block-level statement.
   Stmt* CurrentStmt;
@@ -210,7 +210,7 @@ public:
   
   /// getInitialState - Return the initial state used for the root vertex
   ///  in the ExplodedGraph.
-  ValueState* getInitialState();
+  const ValueState* getInitialState();
   
   GraphTy& getGraph() { return G; }
   const GraphTy& getGraph() const { return G; }
@@ -370,7 +370,8 @@ public:
   /// ProcessBlockEntrance - Called by GRCoreEngine when start processing
   ///  a CFGBlock.  This method returns true if the analysis should continue
   ///  exploring the given path, and false otherwise.
-  bool ProcessBlockEntrance(CFGBlock* B, ValueState* St, GRBlockCounter BC);
+  bool ProcessBlockEntrance(CFGBlock* B, const ValueState* St,
+                            GRBlockCounter BC);
   
   /// ProcessBranch - Called by GRCoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a branch condition.
@@ -401,7 +402,7 @@ public:
   
 protected:
   
-  ValueState* GetState(NodeTy* N) {
+  const ValueState* GetState(NodeTy* N) {
     return N == EntryNode ? CleanedState : N->getState();
   }
   
@@ -409,35 +410,35 @@ public:
   
   // FIXME: Maybe make these accesible only within the StmtBuilder?
   
-  ValueState* SetRVal(ValueState* St, Expr* Ex, RVal V);
+  const ValueState* SetRVal(const ValueState* St, Expr* Ex, RVal V);
   
-  ValueState* SetRVal(ValueState* St, const Expr* Ex, RVal V) {
+  const ValueState* SetRVal(const ValueState* St, const Expr* Ex, RVal V) {
     return SetRVal(St, const_cast<Expr*>(Ex), V);
   }
   
 protected:
  
-  ValueState* SetBlkExprRVal(ValueState* St, Expr* Ex, RVal V) {
+  const ValueState* SetBlkExprRVal(const ValueState* St, Expr* Ex, RVal V) {
     return StateMgr.SetRVal(St, Ex, V, true, false);
   }
   
-  ValueState* SetRVal(ValueState* St, LVal LV, RVal V) {
+  const ValueState* SetRVal(const ValueState* St, LVal LV, RVal V) {
     return StateMgr.SetRVal(St, LV, V);
   }
   
-  RVal GetRVal(ValueState* St, Expr* Ex) {
+  RVal GetRVal(const ValueState* St, Expr* Ex) {
     return StateMgr.GetRVal(St, Ex);
   }
     
-  RVal GetRVal(ValueState* St, const Expr* Ex) {
+  RVal GetRVal(const ValueState* St, const Expr* Ex) {
     return GetRVal(St, const_cast<Expr*>(Ex));
   }
   
-  RVal GetBlkExprRVal(ValueState* St, Expr* Ex) {
+  RVal GetBlkExprRVal(const ValueState* St, Expr* Ex) {
     return StateMgr.GetBlkExprRVal(St, Ex);
   }  
     
-  RVal GetRVal(ValueState* St, LVal LV, QualType T = QualType()) {    
+  RVal GetRVal(const ValueState* St, LVal LV, QualType T = QualType()) {    
     return StateMgr.GetRVal(St, LV, T);
   }
   
@@ -447,8 +448,8 @@ protected:
   
   /// Assume - Create new state by assuming that a given expression
   ///  is true or false.
-  ValueState* Assume(ValueState* St, RVal Cond, bool Assumption,
-                     bool& isFeasible) {
+  const ValueState* Assume(const ValueState* St, RVal Cond, bool Assumption,
+                           bool& isFeasible) {
     
     if (Cond.isUnknown()) {
       isFeasible = true;
@@ -461,28 +462,28 @@ protected:
       return Assume(St, cast<NonLVal>(Cond), Assumption, isFeasible);
   }
   
-  ValueState* Assume(ValueState* St, LVal Cond, bool Assumption,
-                     bool& isFeasible);
+  const ValueState* Assume(const ValueState* St, LVal Cond, bool Assumption,
+                           bool& isFeasible);
                      
-  ValueState* AssumeAux(ValueState* St, LVal Cond, bool Assumption,
-                        bool& isFeasible);
+  const ValueState* AssumeAux(const ValueState* St, LVal Cond, bool Assumption,
+                              bool& isFeasible);
 
-  ValueState* Assume(ValueState* St, NonLVal Cond, bool Assumption,
-                     bool& isFeasible);
+  const ValueState* Assume(const ValueState* St, NonLVal Cond, bool Assumption,
+                           bool& isFeasible);
   
-  ValueState* AssumeAux(ValueState* St, NonLVal Cond, bool Assumption,
-                        bool& isFeasible);
+  const ValueState* AssumeAux(const ValueState* St, NonLVal Cond,
+                              bool Assumption, bool& isFeasible);
   
-  ValueState* AssumeSymNE(ValueState* St, SymbolID sym, const llvm::APSInt& V,
-                          bool& isFeasible);
+  const ValueState* AssumeSymNE(const ValueState* St, SymbolID sym,
+                                const llvm::APSInt& V, bool& isFeasible);
   
-  ValueState* AssumeSymEQ(ValueState* St, SymbolID sym, const llvm::APSInt& V,
-                          bool& isFeasible);
+  const ValueState* AssumeSymEQ(const ValueState* St, SymbolID sym,
+                                const llvm::APSInt& V, bool& isFeasible);
   
-  ValueState* AssumeSymInt(ValueState* St, bool Assumption,
-                           const SymIntConstraint& C, bool& isFeasible);
+  const ValueState* AssumeSymInt(const ValueState* St, bool Assumption,
+                                 const SymIntConstraint& C, bool& isFeasible);
   
-  NodeTy* MakeNode(NodeSet& Dst, Stmt* S, NodeTy* Pred, ValueState* St) {
+  NodeTy* MakeNode(NodeSet& Dst, Stmt* S, NodeTy* Pred, const ValueState* St) {
     assert (Builder && "GRStmtNodeBuilder not present.");
     return Builder->MakeNode(Dst, S, Pred, St);
   }
@@ -568,7 +569,8 @@ protected:
   void VisitUnaryOperator(UnaryOperator* B, NodeTy* Pred, NodeSet& Dst,
                           bool asLVal);
  
-  bool CheckDivideZero(Expr* Ex, ValueState* St, NodeTy* Pred, RVal Denom);  
+  bool CheckDivideZero(Expr* Ex, const ValueState* St, NodeTy* Pred,
+                       RVal Denom);  
   
   RVal EvalCast(RVal X, QualType CastT) {
     if (X.isUnknownOrUndef())
@@ -634,21 +636,22 @@ protected:
     TF->EvalObjCMessageExpr(Dst, *this, *Builder, ME, Pred);
   }
   
-  void EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred, ValueState* St,
+  void EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred, const ValueState* St,
                  RVal TargetLV, RVal Val);
   
   // FIXME: The "CheckOnly" option exists only because Array and Field
   //  loads aren't fully implemented.  Eventually this option will go away.
   
   void EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
-                ValueState* St, RVal location, bool CheckOnly = false);
+                const ValueState* St, RVal location, bool CheckOnly = false);
   
-  ValueState* EvalLocation(Expr* Ex, NodeTy* Pred,
-                           ValueState* St, RVal location, bool isLoad = false);
+  const ValueState* EvalLocation(Expr* Ex, NodeTy* Pred,
+                                 const ValueState* St, RVal location,
+                                 bool isLoad = false);
   
   void EvalReturn(NodeSet& Dst, ReturnStmt* s, NodeTy* Pred);
   
-  ValueState* MarkBranch(ValueState* St, Stmt* Terminator, bool branchTaken);
+  const ValueState* MarkBranch(const ValueState* St, Stmt* Terminator, bool branchTaken);
 };
   
 } // end clang namespace

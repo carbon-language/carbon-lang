@@ -327,7 +327,7 @@ static void HandleNotableSymbol(ExplodedNode<ValueState>* N, Stmt* S,
                                 PathDiagnostic& PD) {
   
   ExplodedNode<ValueState>* Pred = N->pred_empty() ? 0 : *N->pred_begin();
-  ValueState* PrevSt = Pred ? Pred->getState() : 0;
+  const ValueState* PrevSt = Pred ? Pred->getState() : 0;
   
   if (!PrevSt)
     return;
@@ -335,7 +335,7 @@ static void HandleNotableSymbol(ExplodedNode<ValueState>* N, Stmt* S,
   // Look at the variable bindings of the current state that map to the
   // specified symbol.  Are any of them not in the previous state.
   
-  ValueState* St = N->getState();
+  const ValueState* St = N->getState();
   ValueStateManager& VMgr = cast<GRBugReporter>(BR).getStateManager();
   
   // FIXME: Later generalize for a broader memory model.
@@ -633,7 +633,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
     
     if (const PostStmt* PS = dyn_cast<PostStmt>(&P)) {
       
-      ValueState* St = N->getState();
+      const ValueState* St = N->getState();
       
       // Scan the lval bindings, and see if a "notable" symbol has a new
       // lval binding.

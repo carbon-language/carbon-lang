@@ -255,8 +255,8 @@ void GRCoreEngineImpl::HandlePostStmt(const PostStmt& L, CFGBlock* B,
 
 /// GenerateNode - Utility method to generate nodes, hook up successors,
 ///  and add nodes to the worklist.
-void GRCoreEngineImpl::GenerateNode(const ProgramPoint& Loc, void* State,
-                                ExplodedNodeImpl* Pred) {
+void GRCoreEngineImpl::GenerateNode(const ProgramPoint& Loc, const void* State,
+                                    ExplodedNodeImpl* Pred) {
   
   bool IsNew;
   ExplodedNodeImpl* Node = G->getNodeImpl(Loc, State, &IsNew);
@@ -321,7 +321,7 @@ static inline ProgramPoint GetPostLoc(Stmt* S, ProgramPoint::Kind K) {
 }
 
 ExplodedNodeImpl*
-GRStmtNodeBuilderImpl::generateNodeImpl(Stmt* S, void* State,
+GRStmtNodeBuilderImpl::generateNodeImpl(Stmt* S, const void* State,
                                         ExplodedNodeImpl* Pred,
                                         ProgramPoint::Kind K) {
   
@@ -342,7 +342,7 @@ GRStmtNodeBuilderImpl::generateNodeImpl(Stmt* S, void* State,
   return NULL;  
 }
 
-ExplodedNodeImpl* GRBranchNodeBuilderImpl::generateNodeImpl(void* State,
+ExplodedNodeImpl* GRBranchNodeBuilderImpl::generateNodeImpl(const void* State,
                                                             bool branch) {  
   bool IsNew;
   
@@ -374,7 +374,7 @@ GRBranchNodeBuilderImpl::~GRBranchNodeBuilderImpl() {
 
 ExplodedNodeImpl*
 GRIndirectGotoNodeBuilderImpl::generateNodeImpl(const Iterator& I,
-                                                void* St,
+                                                const void* St,
                                                 bool isSink) {
   bool IsNew;
   
@@ -399,7 +399,8 @@ GRIndirectGotoNodeBuilderImpl::generateNodeImpl(const Iterator& I,
 
 
 ExplodedNodeImpl*
-GRSwitchNodeBuilderImpl::generateCaseStmtNodeImpl(const Iterator& I, void* St) {
+GRSwitchNodeBuilderImpl::generateCaseStmtNodeImpl(const Iterator& I,
+                                                  const void* St) {
 
   bool IsNew;
   
@@ -418,7 +419,8 @@ GRSwitchNodeBuilderImpl::generateCaseStmtNodeImpl(const Iterator& I, void* St) {
 
 
 ExplodedNodeImpl*
-GRSwitchNodeBuilderImpl::generateDefaultCaseNodeImpl(void* St, bool isSink) {
+GRSwitchNodeBuilderImpl::generateDefaultCaseNodeImpl(const void* St,
+                                                     bool isSink) {
   
   // Get the block for the default case.
   assert (Src->succ_rbegin() != Src->succ_rend());
@@ -448,7 +450,7 @@ GREndPathNodeBuilderImpl::~GREndPathNodeBuilderImpl() {
   if (!HasGeneratedNode) generateNodeImpl(Pred->State);
 }
 
-ExplodedNodeImpl* GREndPathNodeBuilderImpl::generateNodeImpl(void* State) {
+ExplodedNodeImpl* GREndPathNodeBuilderImpl::generateNodeImpl(const void* State){
   HasGeneratedNode = true;
     
   bool IsNew;

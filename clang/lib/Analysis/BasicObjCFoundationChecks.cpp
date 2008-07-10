@@ -107,7 +107,7 @@ class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
   typedef std::vector<BugReport*> ErrorsTy;
   ErrorsTy Errors;
       
-  RVal GetRVal(ValueState* St, Expr* E) { return VMgr->GetRVal(St, E); }
+  RVal GetRVal(const ValueState* St, Expr* E) { return VMgr->GetRVal(St, E); }
       
   bool isNSString(ObjCInterfaceType* T, const char* suffix);
   bool AuditNSString(NodeTy* N, ObjCMessageExpr* ME);
@@ -338,8 +338,8 @@ class VISIBILITY_HIDDEN AuditCFNumberCreate : public GRSimpleAPICheck {
   IdentifierInfo* II;
   ValueStateManager* VMgr;
     
-  RVal GetRVal(ValueState* St, Expr* E) { return VMgr->GetRVal(St, E); }
-  RVal GetRVal(ValueState* St, LVal LV) { return VMgr->GetRVal(St, LV); }
+  RVal GetRVal(const ValueState* St, Expr* E) { return VMgr->GetRVal(St, E); }
+  RVal GetRVal(const ValueState* St, LVal LV) { return VMgr->GetRVal(St, LV); }
   
 public:
 

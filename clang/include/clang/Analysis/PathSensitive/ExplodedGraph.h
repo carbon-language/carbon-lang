@@ -95,10 +95,8 @@ protected:
   ///  with this node.
   const ProgramPoint Location;
   
-  /// State - The state associated with this node. Normally this value
-  ///  is immutable, but we anticipate there will be times when algorithms
-  ///  that directly manipulate the analysis graph will need to change it.
-  void* State;
+  /// State - The state associated with this node.
+  const void* State;
   
   /// Preds - The predecessors of this node.
   NodeGroup Preds;
@@ -107,7 +105,7 @@ protected:
   NodeGroup Succs;
   
   /// Construct a ExplodedNodeImpl with the provided location and state.
-  explicit ExplodedNodeImpl(const ProgramPoint& loc, void* state)
+  explicit ExplodedNodeImpl(const ProgramPoint& loc, const void* state)
   : Location(loc), State(state) {}
   
   /// addPredeccessor - Adds a predecessor to the current node, and 
@@ -146,19 +144,19 @@ class ExplodedNode : public ExplodedNodeImpl {
 public:
   /// Construct a ExplodedNodeImpl with the given node ID, program edge,
   ///  and state.
-  explicit ExplodedNode(const ProgramPoint& loc, StateTy* St)
+  explicit ExplodedNode(const ProgramPoint& loc, const StateTy* St)
     : ExplodedNodeImpl(loc, St) {}
   
   /// getState - Returns the state associated with the node.  
-  inline StateTy* getState() const {
-    return static_cast<StateTy*>(State);
+  inline const StateTy* getState() const {
+    return static_cast<const StateTy*>(State);
   }
   
   // Profiling (for FoldingSet).
   
   static inline void Profile(llvm::FoldingSetNodeID& ID,
                              const ProgramPoint& Loc,
-                             StateTy* state) {
+                             const StateTy* state) {
     ID.Add(Loc);
     GRTrait<StateTy>::Profile(ID, state);
   }
@@ -241,7 +239,8 @@ protected:
   /// getNodeImpl - Retrieve the node associated with a (Location,State)
   ///  pair, where 'State' is represented as an opaque void*.  This method
   ///  is intended to be used only by GRCoreEngineImpl.
-  virtual ExplodedNodeImpl* getNodeImpl(const ProgramPoint& L, void* State,
+  virtual ExplodedNodeImpl* getNodeImpl(const ProgramPoint& L,
+                                        const void* State,
                                         bool* IsNew) = 0;
   
   virtual ExplodedGraphImpl* MakeEmptyGraph() const = 0;
@@ -300,9 +299,10 @@ protected:
   
 protected:
   virtual ExplodedNodeImpl* getNodeImpl(const ProgramPoint& L,
-                                        void* State, bool* IsNew) {
+                                        const void* State,
+                                        bool* IsNew) {
     
-    return getNode(L, static_cast<StateTy*>(State), IsNew);
+    return getNode(L, static_cast<const StateTy*>(State), IsNew);
   }
   
   virtual ExplodedGraphImpl* MakeEmptyGraph() const {
@@ -317,7 +317,8 @@ public:
   ///  where the 'Location' is a ProgramPoint in the CFG.  If no node for
   ///  this pair exists, it is created.  IsNew is set to true if
   ///  the node was freshly created.
-  NodeTy* getNode(const ProgramPoint& L, StateTy* State, bool* IsNew = NULL) {
+  NodeTy* getNode(const ProgramPoint& L, const StateTy* State,
+                  bool* IsNew = NULL) {
     
     // Profile 'State' to determine if we already have an existing node.
     llvm::FoldingSetNodeID profile;    

@@ -17,6 +17,7 @@
 // FIXME: Reduce the number of includes.
 
 #include "clang/Analysis/PathSensitive/Environment.h"
+#include "clang/Analysis/PathSensitive/Store.h"
 #include "clang/Analysis/PathSensitive/RValues.h"
 #include "clang/Analysis/PathSensitive/GRCoreEngine.h"
 #include "clang/AST/Expr.h"
@@ -54,7 +55,6 @@ class ValueState : public llvm::FoldingSetNode {
 public:  
   // Typedefs.  
   typedef llvm::ImmutableSet<llvm::APSInt*>                IntSetTy;
-  typedef llvm::ImmutableMap<VarDecl*,RVal>                VarBindingsTy;  
   typedef llvm::ImmutableMap<SymbolID,IntSetTy>            ConstNotEqTy;
   typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstEqTy;
 
@@ -64,10 +64,10 @@ private:
   friend class ValueStateManager;
   
   Environment Env;
+  Store St;
 
   // FIXME: Make these private.
 public:
-  VarBindingsTy    VarBindings;
   ConstNotEqTy     ConstNotEq;
   ConstEqTy        ConstEq;
   void*            CheckerState;
@@ -75,10 +75,10 @@ public:
 public:
   
   /// This ctor is used when creating the first ValueState object.
-  ValueState(const Environment& env,  VarBindingsTy VB,
+  ValueState(const Environment& env,  Store st,
              ConstNotEqTy CNE, ConstEqTy  CE)
     : Env(env),
-      VarBindings(VB),
+      St(st),
       ConstNotEq(CNE),
       ConstEq(CE),
       CheckerState(NULL) {}
@@ -88,7 +88,7 @@ public:
   ValueState(const ValueState& RHS)
     : llvm::FoldingSetNode(),
       Env(RHS.Env),
-      VarBindings(RHS.VarBindings),
+      St(RHS.St),
       ConstNotEq(RHS.ConstNotEq),
       ConstEq(RHS.ConstEq),
       CheckerState(RHS.CheckerState) {} 
@@ -97,11 +97,15 @@ public:
   ///  The environment is the mapping from expressions to values.
   const Environment& getEnvironment() const { return Env; }
   
+  /// getStore - Return the store associated with this state.  The store
+  ///  is a mapping from locations to values.
+  Store getStore() const { return St; }
+  
   /// Profile - Profile the contents of a ValueState object for use
   ///  in a FoldingSet.
   static void Profile(llvm::FoldingSetNodeID& ID, const ValueState* V) {
     V->Env.Profile(ID);
-    V->VarBindings.Profile(ID);
+    ID.AddPointer(V->St);
     V->ConstNotEq.Profile(ID);
     V->ConstEq.Profile(ID);
     ID.AddPointer(V->CheckerState);
@@ -124,9 +128,18 @@ public:
   
   // Iterators.
 
+  // FIXME: We'll be removing the VarBindings iterator very soon.  Right now
+  //  it assumes that Store is a VarBindingsTy.
+  typedef llvm::ImmutableMap<VarDecl*,RVal> VarBindingsTy;
   typedef VarBindingsTy::iterator vb_iterator;
-  vb_iterator vb_begin() const { return VarBindings.begin(); }
-  vb_iterator vb_end() const { return VarBindings.end(); }
+  vb_iterator vb_begin() const {
+    VarBindingsTy B(static_cast<const VarBindingsTy::TreeTy*>(St));
+    return B.begin();
+  }
+  vb_iterator vb_end() const {
+    VarBindingsTy B(static_cast<const VarBindingsTy::TreeTy*>(St));
+    return B.end();
+  }
     
   typedef Environment::seb_iterator seb_iterator;
   seb_iterator seb_begin() const { return Env.seb_begin(); }
@@ -173,8 +186,8 @@ template<> struct GRTrait<ValueState*> {
 class ValueStateManager {
 private:
   EnvironmentManager                   EnvMgr;
+  llvm::OwningPtr<StoreManager>        StMgr;
   ValueState::IntSetTy::Factory        ISetFactory;
-  ValueState::VarBindingsTy::Factory   VBFactory;
   ValueState::ConstNotEqTy::Factory    CNEFactory;
   ValueState::ConstEqTy::Factory       CEFactory;
   
@@ -196,58 +209,53 @@ private:
   Environment RemoveBlkExpr(const Environment& Env, Expr* E) {
     return EnvMgr.RemoveBlkExpr(Env, E);
   }
-  
-  ValueState::VarBindingsTy Remove(ValueState::VarBindingsTy B, VarDecl* V) {
-    return VBFactory.Remove(B, V);
+   
+  // FIXME: Remove when we do lazy initializaton of variable bindings.
+  const ValueState* BindVar(const ValueState* St, VarDecl* D, RVal V) {
+    return SetRVal(St, lval::DeclVal(D), V);
   }
-  
-  ValueState::VarBindingsTy Remove(const ValueState& V, VarDecl* D) {
-    return Remove(V.VarBindings, D);
-  }
-                  
-  ValueState* BindVar(ValueState* St, VarDecl* D, RVal V);
-  ValueState* UnbindVar(ValueState* St, VarDecl* D);  
-  
+    
 public:  
-  ValueStateManager(ASTContext& Ctx, llvm::BumpPtrAllocator& alloc) 
-    : EnvMgr(alloc),
-      ISetFactory(alloc), 
-      VBFactory(alloc),
-      CNEFactory(alloc),
-      CEFactory(alloc),
-      BasicVals(Ctx, alloc),
-      SymMgr(alloc),
-      Alloc(alloc) {}
-  
-  ValueState* getInitialState();
+  ValueStateManager(ASTContext& Ctx, StoreManager* stmgr,
+                    llvm::BumpPtrAllocator& alloc) 
+  : EnvMgr(alloc),
+    StMgr(stmgr),
+    ISetFactory(alloc), 
+    CNEFactory(alloc),
+    CEFactory(alloc),
+    BasicVals(Ctx, alloc),
+    SymMgr(alloc),
+    Alloc(alloc) {}
+
+  const ValueState* getInitialState();
         
   BasicValueFactory& getBasicValueFactory() { return BasicVals; }
   SymbolManager& getSymbolManager() { return SymMgr; }
   
   typedef llvm::DenseSet<SymbolID> DeadSymbolsTy;
   
-  ValueState* RemoveDeadBindings(ValueState* St, Stmt* Loc, 
-                                 const LiveVariables& Liveness,
-                                 DeadSymbolsTy& DeadSymbols);
+  const ValueState* RemoveDeadBindings(const ValueState* St, Stmt* Loc, 
+                                       const LiveVariables& Liveness,
+                                       DeadSymbolsTy& DeadSymbols);
 
-  ValueState* RemoveSubExprBindings(ValueState* St) {
+  const ValueState* RemoveSubExprBindings(const ValueState* St) {
     ValueState NewSt = *St;
     NewSt.Env = EnvMgr.RemoveSubExprBindings(NewSt.Env);
-    return getPersistentState(NewSt);    
+    return getPersistentState(NewSt);
   }
 
   // Methods that query & manipulate the Environment.
   
-  RVal GetRVal(ValueState* St, Expr* Ex) {
+  RVal GetRVal(const ValueState* St, Expr* Ex) {
     return St->getEnvironment().GetRVal(Ex, BasicVals);
   }
   
-  RVal GetBlkExprRVal(ValueState* St, Expr* Ex) {
+  RVal GetBlkExprRVal(const ValueState* St, Expr* Ex) {
     return St->getEnvironment().GetBlkExprRVal(Ex, BasicVals);
   }
   
-  ValueState* SetRVal(ValueState* St, Expr* Ex, RVal V, bool isBlkExpr,
-                      bool Invalidate) {
+  const ValueState* SetRVal(const ValueState* St, Expr* Ex, RVal V,
+                            bool isBlkExpr, bool Invalidate) {
     
     const Environment& OldEnv = St->getEnvironment();
     Environment NewEnv = EnvMgr.SetRVal(OldEnv, Ex, V, isBlkExpr, Invalidate);
@@ -262,18 +270,29 @@ public:
 
   // Methods that query & manipulate the Store.
 
-  RVal GetRVal(ValueState* St, LVal LV, QualType T = QualType());    
+  RVal GetRVal(const ValueState* St, LVal LV, QualType T = QualType()) {
+    return StMgr->GetRVal(St->getStore(), LV, T);
+  }
   
-  ValueState* SetRVal(ValueState* St, LVal LV, RVal V);
+  void SetRVal(ValueState& St, LVal LV, RVal V) {
+    St.St = StMgr->SetRVal(St.St, LV, V);
+  }
+  
+  const ValueState* SetRVal(const ValueState* St, LVal LV, RVal V);  
 
-  void BindVar(ValueState& StImpl, VarDecl* D, RVal V);
+  void Unbind(ValueState& St, LVal LV) {
+    St.St = StMgr->Remove(St.St, LV);
+  }
   
-  void Unbind(ValueState& StImpl, LVal LV);
+  const ValueState* Unbind(const ValueState* St, LVal LV);
   
-  ValueState* getPersistentState(ValueState& Impl);
+  const ValueState* getPersistentState(ValueState& Impl);
   
-  ValueState* AddEQ(ValueState* St, SymbolID sym, const llvm::APSInt& V);
-  ValueState* AddNE(ValueState* St, SymbolID sym, const llvm::APSInt& V);
+  const ValueState* AddEQ(const ValueState* St, SymbolID sym,
+                          const llvm::APSInt& V);
+
+  const ValueState* AddNE(const ValueState* St, SymbolID sym,
+                          const llvm::APSInt& V);
 };
   
 } // end clang namespace

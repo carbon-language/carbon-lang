@@ -265,9 +265,9 @@ namespace {
 
 struct VISIBILITY_HIDDEN FindUndefExpr {
   ValueStateManager& VM;
-  ValueState* St;
+  const ValueState* St;
   
-  FindUndefExpr(ValueStateManager& V, ValueState* S) : VM(V), St(S) {}
+  FindUndefExpr(ValueStateManager& V, const ValueState* S) : VM(V), St(S) {}
   
   Expr* FindExpr(Expr* Ex) {
     
@@ -319,7 +319,7 @@ void UndefBranch::EmitWarnings(BugReporter& BR) {
     ExplodedNode<ValueState> *N = *(*I)->pred_begin();
     ProgramPoint P = N->getLocation();
 
-    ValueState* St = (*I)->getState();
+    const ValueState* St = (*I)->getState();
     
     if (PostStmt* PS = dyn_cast<PostStmt>(&P))
       if (PS->getStmt() == Ex)
@@ -652,7 +652,7 @@ void GRSimpleVals::EvalCall(ExplodedNodeSet<ValueState>& Dst,
                             ExplodedNode<ValueState>* Pred) {
   
   ValueStateManager& StateMgr = Eng.getStateManager();
-  ValueState* St = Builder.GetState(Pred);
+  const ValueState* St = Builder.GetState(Pred);
   
   // Invalidate all arguments passed in by reference (LVals).
 
@@ -700,7 +700,7 @@ void GRSimpleVals::EvalObjCMessageExpr(ExplodedNodeSet<ValueState>& Dst,
   // We just invalidate all arguments passed in by references.
   
   ValueStateManager& StateMgr = Eng.getStateManager();
-  ValueState* St = Builder.GetState(Pred);
+  const ValueState* St = Builder.GetState(Pred);
   
   for (ObjCMessageExpr::arg_iterator I = ME->arg_begin(), E = ME->arg_end();
        I != E; ++I) {

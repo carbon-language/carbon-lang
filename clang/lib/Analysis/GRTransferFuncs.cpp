@@ -23,7 +23,7 @@ void GRTransferFuncs::EvalStore(ExplodedNodeSet<ValueState>& Dst,
                                 GRExprEngine& Eng,
                                 GRStmtNodeBuilder<ValueState>& Builder,
                                 Expr* E, ExplodedNode<ValueState>* Pred,
-                                ValueState* St, RVal TargetLV, RVal Val) {
+                                const ValueState* St, RVal TargetLV, RVal Val) {
   
   // This code basically matches the "safety-net" logic of GRExprEngine:
   //  bind Val to TargetLV, and create a new node.  We replicate it here

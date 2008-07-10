@@ -30,8 +30,8 @@ const llvm::APSInt* ValueState::getSymVal(SymbolID sym) const {
   return T ? *T : NULL;  
 }
 
-ValueState*
-ValueStateManager::RemoveDeadBindings(ValueState* St, Stmt* Loc,
+const ValueState*
+ValueStateManager::RemoveDeadBindings(const ValueState* St, Stmt* Loc,
                                       const LiveVariables& Liveness,
                                       DeadSymbolsTy& DeadSymbols) {  
   
@@ -126,7 +126,7 @@ ValueStateManager::RemoveDeadBindings(ValueState* St, Stmt* Loc,
   
   for (ValueState::vb_iterator I = St->vb_begin(), E = St->vb_end(); I!=E ; ++I)
     if (!Marked.count(I.getKey())) {
-      NewSt.VarBindings = Remove(NewSt, I.getKey());
+      NewSt.St = StMgr->Remove(NewSt.St, lval::DeclVal(I.getKey()));
       
       RVal X = I.getData();
       
@@ -160,77 +160,35 @@ ValueStateManager::RemoveDeadBindings(ValueState* St, Stmt* Loc,
   return getPersistentState(NewSt);
 }
 
-
-RVal ValueStateManager::GetRVal(ValueState* St, LVal LV, QualType T) {
+const ValueState* ValueStateManager::SetRVal(const ValueState* St, LVal LV,
+                                             RVal V) {
   
-  if (isa<UnknownVal>(LV))
-    return UnknownVal();
+  Store OldStore = St->getStore();
+  Store NewStore = StMgr->SetRVal(OldStore, LV, V);
   
-  assert (!isa<UndefinedVal>(LV));
+  if (NewStore == OldStore)
+    return St;
   
-  switch (LV.getSubKind()) {
-    case lval::DeclValKind: {
-      ValueState::VarBindingsTy::data_type* T =
-        St->VarBindings.lookup(cast<lval::DeclVal>(LV).getDecl());
-      
-      return T ? *T : UnknownVal();
-    }
-     
-      // FIXME: We should limit how far a "ContentsOf" will go...
-      
-    case lval::SymbolValKind: {
-      
-      
-      // FIXME: This is a broken representation of memory, and is prone
-      //  to crashing the analyzer when addresses to symbolic values are
-      //  passed through casts.  We need a better representation of symbolic
-      //  memory (or just memory in general); probably we should do this
-      //  as a plugin class (similar to GRTransferFuncs).
-      
-#if 0      
-      const lval::SymbolVal& SV = cast<lval::SymbolVal>(LV);
-      assert (T.getTypePtr());
-      
-      // Punt on "symbolic" function pointers.
-      if (T->isFunctionType())
-        return UnknownVal();      
-
-      if (T->isPointerType())
-        return lval::SymbolVal(SymMgr.getContentsOfSymbol(SV.getSymbol()));
-      else
-        return nonlval::SymbolVal(SymMgr.getContentsOfSymbol(SV.getSymbol()));
-#endif
-      
-      return UnknownVal();
-    }
-    
-    case lval::ConcreteIntKind:
-      // Some clients may call GetRVal with such an option simply because
-      // they are doing a quick scan through their LVals (potentially to
-      // invalidate their bindings).  Just return Undefined.
-      return UndefinedVal();
-      
-    case lval::ArrayOffsetKind:
-    case lval::FieldOffsetKind:
-      return UnknownVal();
-      
-    case lval::FuncValKind:
-      return LV;
-      
-    case lval::StringLiteralValKind:
-      // FIXME: Implement better support for fetching characters from strings.
-      return UnknownVal();
-      
-    default:
-      assert (false && "Invalid LVal.");
-      break;
-  }
-  
-  return UnknownVal();
+  ValueState NewSt = *St;
+  NewSt.St = NewStore;
+  return getPersistentState(NewSt);    
 }
 
-ValueState* ValueStateManager::AddNE(ValueState* St, SymbolID sym,
-                                     const llvm::APSInt& V) {
+const ValueState* ValueStateManager::Unbind(const ValueState* St, LVal LV) {
+  Store OldStore = St->getStore();
+  Store NewStore = StMgr->Remove(OldStore, LV);
+  
+  if (NewStore == OldStore)
+    return St;
+  
+  ValueState NewSt = *St;
+  NewSt.St = NewStore;
+  return getPersistentState(NewSt);    
+}
+
+
+const ValueState* ValueStateManager::AddNE(const ValueState* St, SymbolID sym,
+                                           const llvm::APSInt& V) {
 
   // First, retrieve the NE-set associated with the given symbol.
   ValueState::ConstNotEqTy::data_type* T = St->ConstNotEq.lookup(sym);  
@@ -247,8 +205,8 @@ ValueState* ValueStateManager::AddNE(ValueState* St, SymbolID sym,
   return getPersistentState(NewSt);
 }
 
-ValueState* ValueStateManager::AddEQ(ValueState* St, SymbolID sym,
-                                     const llvm::APSInt& V) {
+const ValueState* ValueStateManager::AddEQ(const ValueState* St, SymbolID sym,
+                                           const llvm::APSInt& V) {
 
   // Create a new state with the old binding replaced.
   ValueState NewSt = *St;
@@ -258,66 +216,17 @@ ValueState* ValueStateManager::AddEQ(ValueState* St, SymbolID sym,
   return getPersistentState(NewSt);
 }
 
+const ValueState* ValueStateManager::getInitialState() {
 
-ValueState* ValueStateManager::SetRVal(ValueState* St, LVal LV, RVal V) {
-  
-  switch (LV.getSubKind()) {
-      
-    case lval::DeclValKind:        
-      return V.isUnknown()
-             ? UnbindVar(St, cast<lval::DeclVal>(LV).getDecl())
-             : BindVar(St, cast<lval::DeclVal>(LV).getDecl(), V);
-      
-    default:
-      assert ("SetRVal for given LVal type not yet implemented.");
-      return St;
-  }
-}
-
-void ValueStateManager::BindVar(ValueState& StImpl, VarDecl* D, RVal V) {
-  StImpl.VarBindings = VBFactory.Add(StImpl.VarBindings, D, V);
-}
-
-ValueState* ValueStateManager::BindVar(ValueState* St, VarDecl* D, RVal V) {
-  
-  // Create a new state with the old binding removed.
-  ValueState NewSt = *St;  
-  NewSt.VarBindings = VBFactory.Add(NewSt.VarBindings, D, V);
-  
-  // Get the persistent copy.
-  return getPersistentState(NewSt);
-}
-
-ValueState* ValueStateManager::UnbindVar(ValueState* St, VarDecl* D) {
-  
-  // Create a new state with the old binding removed.
-  ValueState NewSt = *St;
-  NewSt.VarBindings = VBFactory.Remove(NewSt.VarBindings, D);
-  
-  // Get the persistent copy.
-  return getPersistentState(NewSt);
-}
-
-void ValueStateManager::Unbind(ValueState& StImpl, LVal LV) {
-  
-  if (isa<lval::DeclVal>(LV))
-    StImpl.VarBindings = VBFactory.Remove(StImpl.VarBindings,
-                                          cast<lval::DeclVal>(LV).getDecl());
-  
-}
-
-ValueState* ValueStateManager::getInitialState() {
-
-  // Create a state with empty variable bindings.
   ValueState StateImpl(EnvMgr.getInitialEnvironment(),
-                       VBFactory.GetEmptyMap(),
+                       StMgr->getInitialStore(),
                        CNEFactory.GetEmptyMap(),
                        CEFactory.GetEmptyMap());
   
   return getPersistentState(StateImpl);
 }
 
-ValueState* ValueStateManager::getPersistentState(ValueState& State) {
+const ValueState* ValueStateManager::getPersistentState(ValueState& State) {
   
   llvm::FoldingSetNodeID ID;
   State.Profile(ID);  

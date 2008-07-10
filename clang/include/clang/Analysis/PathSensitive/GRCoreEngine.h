@@ -61,14 +61,14 @@ protected:
   ///   number of times different CFGBlocks have been visited along a path.
   GRBlockCounter::Factory BCounterFactory;
   
-  void GenerateNode(const ProgramPoint& Loc, void* State,
+  void GenerateNode(const ProgramPoint& Loc, const void* State,
                     ExplodedNodeImpl* Pred = NULL);
   
   /// getInitialState - Gets the void* representing the initial 'state'
   ///  of the analysis.  This is simply a wrapper (implemented
   ///  in GRCoreEngine) that performs type erasure on the initial
   ///  state returned by the checker object.
-  virtual void* getInitialState() = 0;
+  virtual const void* getInitialState() = 0;
   
   void HandleBlockEdge(const BlockEdge& E, ExplodedNodeImpl* Pred);
   void HandleBlockEntrance(const BlockEntrance& E, ExplodedNodeImpl* Pred);
@@ -81,7 +81,7 @@ protected:
   
   virtual void ProcessEndPath(GREndPathNodeBuilderImpl& Builder) = 0;  
   
-  virtual bool ProcessBlockEntrance(CFGBlock* Blk, void* State,
+  virtual bool ProcessBlockEntrance(CFGBlock* Blk, const void* State,
                                     GRBlockCounter BC) = 0;
 
   virtual void ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& Builder) = 0;
@@ -142,11 +142,11 @@ public:
   }  
     
   ExplodedNodeImpl*
-  generateNodeImpl(Stmt* S, void* State, ExplodedNodeImpl* Pred,
+  generateNodeImpl(Stmt* S, const void* State, ExplodedNodeImpl* Pred,
                    ProgramPoint::Kind K = ProgramPoint::PostStmtKind);
 
   ExplodedNodeImpl*
-  generateNodeImpl(Stmt* S, void* State,
+  generateNodeImpl(Stmt* S, const void* State,
                    ProgramPoint::Kind K = ProgramPoint::PostStmtKind) {    
     ExplodedNodeImpl* N = getLastNode();
     assert (N && "Predecessor of new node is infeasible.");
@@ -169,7 +169,7 @@ class GRStmtNodeBuilder  {
   typedef ExplodedNode<StateTy>   NodeTy;
   
   GRStmtNodeBuilderImpl& NB;
-  StateTy* CleanedState;
+  const StateTy* CleanedState;
   
   GRAuditor<StateTy> **CallExprAuditBeg, **CallExprAuditEnd;
   GRAuditor<StateTy> **ObjCMsgExprAuditBeg, **ObjCMsgExprAuditEnd;
@@ -201,7 +201,7 @@ public:
   }
   
   NodeTy*
-  generateNode(Stmt* S, StateTy* St, NodeTy* Pred,
+  generateNode(Stmt* S, const StateTy* St, NodeTy* Pred,
                ProgramPoint::Kind K = ProgramPoint::PostStmtKind) {
 
     HasGeneratedNode = true;
@@ -210,7 +210,7 @@ public:
   }
   
   NodeTy*
-  generateNode(Stmt* S, StateTy* St,
+  generateNode(Stmt* S, const StateTy* St,
                ProgramPoint::Kind K = ProgramPoint::PostStmtKind) {
       
     HasGeneratedNode = true;
@@ -226,21 +226,21 @@ public:
     return NB.getCurrentBlockCount();
   }
   
-  StateTy* GetState(NodeTy* Pred) const {
+  const StateTy* GetState(NodeTy* Pred) const {
     if ((ExplodedNodeImpl*) Pred == NB.getBasePredecessor())
       return CleanedState;
     else
       return Pred->getState();
   }
   
-  void SetCleanedState(StateTy* St) {
+  void SetCleanedState(const StateTy* St) {
     CleanedState = St;
   }
   
   NodeTy* MakeNode(ExplodedNodeSet<StateTy>& Dst, Stmt* S,
-                 NodeTy* Pred, StateTy* St) {    
+                   NodeTy* Pred, const StateTy* St) {    
     
-    StateTy* PredState = GetState(Pred);
+    const StateTy* PredState = GetState(Pred);
     
     GRAuditor<StateTy> **AB = NULL, **AE = NULL;
     
@@ -309,7 +309,7 @@ public:
   const ExplodedGraphImpl& getGraph() const { return *Eng.G; }
   GRBlockCounter getBlockCounter() const { return Eng.WList->getBlockCounter();}
     
-  ExplodedNodeImpl* generateNodeImpl(void* State, bool branch);
+  ExplodedNodeImpl* generateNodeImpl(const void* State, bool branch);
   
   CFGBlock* getTargetBlock(bool branch) const {
     return branch ? DstT : DstF;
@@ -340,11 +340,11 @@ public:
     return static_cast<NodeTy*>(NB.getPredecessor());
   }
   
-  StateTy* getState() const {
+  const StateTy* getState() const {
     return getPredecessor()->getState();
   }
 
-  NodeTy* generateNode(StateTy* St, bool branch) {
+  NodeTy* generateNode(const StateTy* St, bool branch) {
     return static_cast<NodeTy*>(NB.generateNodeImpl(St, branch));
   }
   
@@ -396,11 +396,11 @@ public:
   Iterator begin() { return Iterator(DispatchBlock.succ_begin()); }
   Iterator end() { return Iterator(DispatchBlock.succ_end()); }
   
-  ExplodedNodeImpl* generateNodeImpl(const Iterator& I, void* State,
+  ExplodedNodeImpl* generateNodeImpl(const Iterator& I, const void* State,
                                      bool isSink);
   
   Expr* getTarget() const { return E; }
-  void* getState() const { return Pred->State; }
+  const void* getState() const { return Pred->State; }
 };
   
 template<typename STATE>
@@ -421,12 +421,12 @@ public:
   
   Expr* getTarget() const { return NB.getTarget(); }
   
-  NodeTy* generateNode(const iterator& I, StateTy* St, bool isSink=false){    
+  NodeTy* generateNode(const iterator& I, const StateTy* St, bool isSink=false){    
     return static_cast<NodeTy*>(NB.generateNodeImpl(I, St, isSink));
   }
   
-  StateTy* getState() const {
-    return static_cast<StateTy*>(NB.getState());
+  const StateTy* getState() const {
+    return static_cast<const StateTy*>(NB.getState());
   }    
 };
   
@@ -462,11 +462,14 @@ public:
   Iterator begin() { return Iterator(Src->succ_rbegin()+1); }
   Iterator end() { return Iterator(Src->succ_rend()); }
   
-  ExplodedNodeImpl* generateCaseStmtNodeImpl(const Iterator& I, void* State);
-  ExplodedNodeImpl* generateDefaultCaseNodeImpl(void* State, bool isSink);
+  ExplodedNodeImpl* generateCaseStmtNodeImpl(const Iterator& I,
+                                             const void* State);
+  
+  ExplodedNodeImpl* generateDefaultCaseNodeImpl(const void* State,
+                                                bool isSink);
   
   Expr* getCondition() const { return Condition; }
-  void* getState() const { return Pred->State; }
+  const void* getState() const { return Pred->State; }
 };
 
 template<typename STATE>
@@ -487,16 +490,16 @@ public:
   
   Expr* getCondition() const { return NB.getCondition(); }
   
-  NodeTy* generateCaseStmtNode(const iterator& I, StateTy* St) {
+  NodeTy* generateCaseStmtNode(const iterator& I, const StateTy* St) {
     return static_cast<NodeTy*>(NB.generateCaseStmtNodeImpl(I, St));
   }
   
-  NodeTy* generateDefaultCaseNode(StateTy* St, bool isSink = false) {    
+  NodeTy* generateDefaultCaseNode(const StateTy* St, bool isSink = false) {    
     return static_cast<NodeTy*>(NB.generateDefaultCaseNodeImpl(St, isSink));
   }
   
-  StateTy* getState() const {
-    return static_cast<StateTy*>(NB.getState());
+  const StateTy* getState() const {
+    return static_cast<const StateTy*>(NB.getState());
   }    
 };
   
@@ -522,7 +525,7 @@ public:
     return getBlockCounter().getNumVisited(B.getBlockID());
   }  
   
-  ExplodedNodeImpl* generateNodeImpl(void* State);
+  ExplodedNodeImpl* generateNodeImpl(const void* State);
     
   CFGBlock* getBlock() const { return &B; }
 };
@@ -550,11 +553,11 @@ public:
     return NB.getCurrentBlockCount();
   }
   
-  StateTy* getState() const {
+  const StateTy* getState() const {
     return getPredecessor()->getState();
   }
   
-  NodeTy* MakeNode(StateTy* St) {  
+  NodeTy* MakeNode(const StateTy* St) {  
     return static_cast<NodeTy*>(NB.generateNodeImpl(St));
   }
 };
@@ -571,7 +574,7 @@ public:
 protected:
   SubEngineTy& SubEngine;
   
-  virtual void* getInitialState() {
+  virtual const void* getInitialState() {
     return SubEngine.getInitialState();
   }
   
@@ -585,9 +588,11 @@ protected:
     SubEngine.ProcessStmt(S, Builder);
   }
   
-  virtual bool ProcessBlockEntrance(CFGBlock* Blk, void* State,
+  virtual bool ProcessBlockEntrance(CFGBlock* Blk, const void* State,
                                     GRBlockCounter BC) {    
-    return SubEngine.ProcessBlockEntrance(Blk, static_cast<StateTy*>(State),BC);
+    return SubEngine.ProcessBlockEntrance(Blk,
+                                          static_cast<const StateTy*>(State),
+                                          BC);
   }
 
   virtual void ProcessBranch(Expr* Condition, Stmt* Terminator,
