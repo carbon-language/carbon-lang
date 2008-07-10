@@ -22,6 +22,7 @@
 		352981090CC58344008B5E84 /* SerializationTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352981080CC58344008B5E84 /* SerializationTest.cpp */; };
 		3534A01D0E129849002709B2 /* ParseCXXInlineMethods.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3534A01C0E129849002709B2 /* ParseCXXInlineMethods.cpp */; };
 		3536456B0E23EBF7009C6509 /* Environment.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3536456A0E23EBF7009C6509 /* Environment.cpp */; };
+		3558F76D0E267C8300A5B0DF /* BasicStore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3558F76C0E267C8300A5B0DF /* BasicStore.cpp */; };
 		356EF9B50C8F7DDF006650F5 /* LiveVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */; };
 		35707EFE0CD0F5CC000B2204 /* SourceLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */; };
 		3574BC2B0D9B531D00DF491A /* HTMLDiagnostics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3574BC2A0D9B531D00DF491A /* HTMLDiagnostics.cpp */; };
@@ -286,13 +287,15 @@
 		3536456A0E23EBF7009C6509 /* Environment.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Environment.cpp; path = lib/Analysis/Environment.cpp; sourceTree = "<group>"; };
 		3536457C0E2406B0009C6509 /* Environment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Environment.h; path = clang/Analysis/PathSensitive/Environment.h; sourceTree = "<group>"; };
 		3547129D0C88881300B3E1D5 /* PrettyPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PrettyPrinter.h; path = clang/AST/PrettyPrinter.h; sourceTree = "<group>"; };
+		3558F76C0E267C8300A5B0DF /* BasicStore.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BasicStore.cpp; path = lib/Analysis/BasicStore.cpp; sourceTree = "<group>"; };
+		3558F76E0E267C9A00A5B0DF /* BasicStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BasicStore.h; path = clang/Analysis/PathSensitive/BasicStore.h; sourceTree = "<group>"; };
+		3558F76F0E267C9A00A5B0DF /* Store.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Store.h; path = clang/Analysis/PathSensitive/Store.h; sourceTree = "<group>"; };
 		355CF6820C90A8B600A08AA3 /* LocalCheckers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LocalCheckers.h; path = clang/Analysis/LocalCheckers.h; sourceTree = "<group>"; };
 		356B89760D9BFDC100CBEBE9 /* BasicObjCFoundationChecks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BasicObjCFoundationChecks.h; path = lib/Analysis/BasicObjCFoundationChecks.h; sourceTree = "<group>"; };
 		356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LiveVariables.cpp; path = lib/Analysis/LiveVariables.cpp; sourceTree = "<group>"; };
 		35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SourceLocation.cpp; sourceTree = "<group>"; };
 		3574BC290D9B531D00DF491A /* HTMLDiagnostics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTMLDiagnostics.h; path = Driver/HTMLDiagnostics.h; sourceTree = "<group>"; };
 		3574BC2A0D9B531D00DF491A /* HTMLDiagnostics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTMLDiagnostics.cpp; path = Driver/HTMLDiagnostics.cpp; sourceTree = "<group>"; };
-		3574BF280D9B7CC000DF491A /* AnnotatedPath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnnotatedPath.h; path = clang/Analysis/PathSensitive/AnnotatedPath.h; sourceTree = "<group>"; };
 		3580CC0B0D072E5C00C5E4F4 /* LangOptions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LangOptions.cpp; sourceTree = "<group>"; };
 		35839B090CDF845F006ED061 /* StmtSerialization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StmtSerialization.cpp; path = lib/AST/StmtSerialization.cpp; sourceTree = "<group>"; };
 		35839B0A0CDF845F006ED061 /* TypeSerialization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeSerialization.cpp; path = lib/AST/TypeSerialization.cpp; sourceTree = "<group>"; };
@@ -574,6 +577,7 @@
 		356EF9B30C8F7DCA006650F5 /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
+				3558F76C0E267C8300A5B0DF /* BasicStore.cpp */,
 				3536456A0E23EBF7009C6509 /* Environment.cpp */,
 				3595AFB70E1C8D62004CDF09 /* CheckObjCDealloc.cpp */,
 				35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */,
@@ -672,21 +676,22 @@
 		DE4121130D7F1B980080F80A /* PathSensitive */ = {
 			isa = PBXGroup;
 			children = (
+				3558F76E0E267C9A00A5B0DF /* BasicStore.h */,
+				3558F76F0E267C9A00A5B0DF /* Store.h */,
 				3536457C0E2406B0009C6509 /* Environment.h */,
+				DE41211C0D7F1BBE0080F80A /* ValueState.h */,
+				DE4121230D7F1BBE0080F80A /* GRCoreEngine.h */,
+				DE4121210D7F1BBE0080F80A /* GRExprEngine.h */,
+				DE4121220D7F1BBE0080F80A /* GRTransferFuncs.h */,
 				359378FF0DA486490043B19C /* BugReporter.h */,
 				35F8D0CA0D9B7E8200D91C5E /* GRSimpleAPICheck.h */,
 				35F8D0CB0D9B7E8200D91C5E /* GRAuditor.h */,
-				3574BF280D9B7CC000DF491A /* AnnotatedPath.h */,
 				35D55B290D81D8E50092E734 /* BasicValueFactory.h */,
 				DE41211B0D7F1BBE0080F80A /* RValues.h */,
-				DE41211C0D7F1BBE0080F80A /* ValueState.h */,
 				DE41211D0D7F1BBE0080F80A /* GRWorkList.h */,
 				DE41211E0D7F1BBE0080F80A /* SymbolManager.h */,
 				DE41211F0D7F1BBE0080F80A /* GRBlockCounter.h */,
 				DE4121200D7F1BBE0080F80A /* ExplodedGraph.h */,
-				DE4121210D7F1BBE0080F80A /* GRExprEngine.h */,
-				DE4121220D7F1BBE0080F80A /* GRTransferFuncs.h */,
-				DE4121230D7F1BBE0080F80A /* GRCoreEngine.h */,
 			);
 			name = PathSensitive;
 			sourceTree = "<group>";
@@ -1135,6 +1140,7 @@
 				1A32C17F0E1C87AD00A6B483 /* ExprConstant.cpp in Sources */,
 				3595AFB80E1C8D62004CDF09 /* CheckObjCDealloc.cpp in Sources */,
 				3536456B0E23EBF7009C6509 /* Environment.cpp in Sources */,
+				3558F76D0E267C8300A5B0DF /* BasicStore.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
