@@ -79,7 +79,7 @@ public:
   }
 
   template<class SubClass, class AllocatorType>
-  void Deallocate(AllocatorType &Allocator, SubClass* Element) {
+  void Deallocate(AllocatorType & /*Allocator*/, SubClass* Element) {
     NodeTy *N = NodeTy::getNode(Element);
     assert(N->getPrev() == 0);
     assert(N->getNext() == 0);

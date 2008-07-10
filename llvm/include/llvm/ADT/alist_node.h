@@ -100,22 +100,22 @@ public:
   }
 
   void destroySentinel(NodeTy *N) {
-    assert(N == &Sentinel);
+    assert(N == &Sentinel); N = N;
     Sentinel.setPrev(0);
     Sentinel.setNext(0);
   }
 
-  void addNodeToList(NodeTy *N) {}
-  void removeNodeFromList(NodeTy *N) {}
-  void transferNodesFromList(iplist<NodeTy, ilist_traits> &L2,
-                             ilist_iterator<NodeTy> first,
-                             ilist_iterator<NodeTy> last) {}
+  void addNodeToList(NodeTy *) {}
+  void removeNodeFromList(NodeTy *) {}
+  void transferNodesFromList(iplist<NodeTy, ilist_traits> &,
+                             ilist_iterator<NodeTy> /*first*/,
+                             ilist_iterator<NodeTy> /*last*/) {}
 
   // Ideally we wouldn't implement this, but ilist's clear calls it,
   // which is called from ilist's destructor. We won't ever call
   // either of those with a non-empty list, but statically this
   // method needs to exist.
-  void deleteNode(NodeTy *N) { assert(0); }
+  void deleteNode(NodeTy *) { assert(0); }
 
 private:
   static NodeTy *createNode(const NodeTy &V); // do not implement

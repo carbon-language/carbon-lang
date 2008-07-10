@@ -2231,8 +2231,8 @@ public:
   // Allocate the allocator immediately inside the traits class.
   AllocatorType Allocator;
 
-  void addNodeToList(SDNode* N) {}
-  void removeNodeFromList(SDNode* N) {}
+  void addNodeToList(SDNode*) {}
+  void removeNodeFromList(SDNode*) {}
   void transferNodesFromList(alist_traits &, iterator, iterator) {}
   void deleteNode(SDNode *N) {
     N->~SDNode();

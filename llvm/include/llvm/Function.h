@@ -186,8 +186,8 @@ public:
   bool doesNotAccessMemory() const {
     return paramHasAttr(0, ParamAttr::ReadNone);
   }
-  void setDoesNotAccessMemory(bool doesNotAccessMemory = true) {
-    if (doesNotAccessMemory) addParamAttr(0, ParamAttr::ReadNone);
+  void setDoesNotAccessMemory(bool DoesNotAccessMemory = true) {
+    if (DoesNotAccessMemory) addParamAttr(0, ParamAttr::ReadNone);
     else removeParamAttr(0, ParamAttr::ReadNone);
   }
 
@@ -195,8 +195,8 @@ public:
   bool onlyReadsMemory() const {
     return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
   }
-  void setOnlyReadsMemory(bool onlyReadsMemory = true) {
-    if (onlyReadsMemory) addParamAttr(0, ParamAttr::ReadOnly);
+  void setOnlyReadsMemory(bool OnlyReadsMemory = true) {
+    if (OnlyReadsMemory) addParamAttr(0, ParamAttr::ReadOnly);
     else removeParamAttr(0, ParamAttr::ReadOnly | ParamAttr::ReadNone);
   }
 
@@ -204,8 +204,8 @@ public:
   bool doesNotReturn() const {
     return paramHasAttr(0, ParamAttr::NoReturn);
   }
-  void setDoesNotReturn(bool doesNotReturn = true) {
-    if (doesNotReturn) addParamAttr(0, ParamAttr::NoReturn);
+  void setDoesNotReturn(bool DoesNotReturn = true) {
+    if (DoesNotReturn) addParamAttr(0, ParamAttr::NoReturn);
     else removeParamAttr(0, ParamAttr::NoReturn);
   }
 
@@ -213,8 +213,8 @@ public:
   bool doesNotThrow() const {
     return paramHasAttr(0, ParamAttr::NoUnwind);
   }
-  void setDoesNotThrow(bool doesNotThrow = true) {
-    if (doesNotThrow) addParamAttr(0, ParamAttr::NoUnwind);
+  void setDoesNotThrow(bool DoesNotThrow = true) {
+    if (DoesNotThrow) addParamAttr(0, ParamAttr::NoUnwind);
     else removeParamAttr(0, ParamAttr::NoUnwind);
   }
 
