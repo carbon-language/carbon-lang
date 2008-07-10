@@ -83,11 +83,11 @@ void DAGTypeLegalizer::run() {
       case ExpandFloat:
         ExpandFloatResult(N, i);
         goto NodeDone;
-      case Scalarize:
-        ScalarizeResult(N, i);
+      case ScalarizeVector:
+        ScalarizeVectorResult(N, i);
         goto NodeDone;
-      case Split:
-        SplitResult(N, i);
+      case SplitVector:
+        SplitVectorResult(N, i);
         goto NodeDone;
       }
     } while (++i < NumResults);
@@ -116,11 +116,11 @@ void DAGTypeLegalizer::run() {
       case ExpandFloat:
         NeedsRevisit = ExpandFloatOperand(N, i);
         break;
-      case Scalarize:
-        NeedsRevisit = ScalarizeOperand(N, i);
+      case ScalarizeVector:
+        NeedsRevisit = ScalarizeVectorOperand(N, i);
         break;
-      case Split:
-        NeedsRevisit = SplitOperand(N, i);
+      case SplitVector:
+        NeedsRevisit = SplitVectorOperand(N, i);
         break;
       }
       break;

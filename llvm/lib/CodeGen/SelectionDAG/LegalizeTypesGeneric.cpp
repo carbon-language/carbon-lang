@@ -54,7 +54,7 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDOperand &Lo,
       Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Lo);
       Hi = DAG.getNode(ISD::BIT_CONVERT, NVT, Hi);
       return;
-    case Split:
+    case SplitVector:
       // Convert the split parts of the input if it was split in two.
       GetSplitVector(InOp, Lo, Hi);
       if (Lo.getValueType() == Hi.getValueType()) {
@@ -65,7 +65,7 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDOperand &Lo,
         return;
       }
       break;
-    case Scalarize:
+    case ScalarizeVector:
       // Convert the element instead.
       SplitInteger(BitConvertToInteger(GetScalarizedVector(InOp)), Lo, Hi);
       Lo = DAG.getNode(ISD::BIT_CONVERT, NVT, Lo);

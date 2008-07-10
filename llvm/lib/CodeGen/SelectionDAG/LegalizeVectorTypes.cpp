@@ -27,7 +27,7 @@ using namespace llvm;
 //  Result Vector Scalarization: <1 x ty> -> ty.
 //===----------------------------------------------------------------------===//
 
-void DAGTypeLegalizer::ScalarizeResult(SDNode *N, unsigned ResNo) {
+void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
   DEBUG(cerr << "Scalarize node result " << ResNo << ": "; N->dump(&DAG);
         cerr << "\n");
   SDOperand R = SDOperand();
@@ -35,7 +35,7 @@ void DAGTypeLegalizer::ScalarizeResult(SDNode *N, unsigned ResNo) {
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
-    cerr << "ScalarizeResult #" << ResNo << ": ";
+    cerr << "ScalarizeVectorResult #" << ResNo << ": ";
     N->dump(&DAG); cerr << "\n";
 #endif
     assert(0 && "Do not know how to scalarize the result of this operator!");
@@ -147,7 +147,7 @@ SDOperand DAGTypeLegalizer::ScalarizeVecRes_SELECT(SDNode *N) {
 //  Operand Vector Scalarization <1 x ty> -> ty.
 //===----------------------------------------------------------------------===//
 
-bool DAGTypeLegalizer::ScalarizeOperand(SDNode *N, unsigned OpNo) {
+bool DAGTypeLegalizer::ScalarizeVectorOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Scalarize node operand " << OpNo << ": "; N->dump(&DAG);
         cerr << "\n");
   SDOperand Res = SDOperand();
@@ -156,7 +156,7 @@ bool DAGTypeLegalizer::ScalarizeOperand(SDNode *N, unsigned OpNo) {
     switch (N->getOpcode()) {
     default:
 #ifndef NDEBUG
-      cerr << "ScalarizeOperand Op #" << OpNo << ": ";
+      cerr << "ScalarizeVectorOperand Op #" << OpNo << ": ";
       N->dump(&DAG); cerr << "\n";
 #endif
       assert(0 && "Do not know how to scalarize this operator's operand!");
@@ -222,19 +222,19 @@ SDOperand DAGTypeLegalizer::ScalarizeVecOp_STORE(StoreSDNode *N, unsigned OpNo){
 //  Result Vector Splitting
 //===----------------------------------------------------------------------===//
 
-/// SplitResult - This method is called when the specified result of the
+/// SplitVectorResult - This method is called when the specified result of the
 /// specified node is found to need vector splitting.  At this point, the node
 /// may also have invalid operands or may have other results that need
 /// legalization, we just know that (at least) one result needs vector
 /// splitting.
-void DAGTypeLegalizer::SplitResult(SDNode *N, unsigned ResNo) {
+void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   DEBUG(cerr << "Split node result: "; N->dump(&DAG); cerr << "\n");
   SDOperand Lo, Hi;
 
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
-    cerr << "SplitResult #" << ResNo << ": ";
+    cerr << "SplitVectorResult #" << ResNo << ": ";
     N->dump(&DAG); cerr << "\n";
 #endif
     assert(0 && "Do not know how to split the result of this operator!");
@@ -456,7 +456,7 @@ void DAGTypeLegalizer::SplitVecRes_BIT_CONVERT(SDNode *N, SDOperand &Lo,
   case Legal:
   case PromoteInteger:
   case SoftenFloat:
-  case Scalarize:
+  case ScalarizeVector:
     break;
   case ExpandInteger:
   case ExpandFloat:
@@ -472,7 +472,7 @@ void DAGTypeLegalizer::SplitVecRes_BIT_CONVERT(SDNode *N, SDOperand &Lo,
       return;
     }
     break;
-  case Split:
+  case SplitVector:
     // If the input is a vector that needs to be split, convert each split
     // piece of the input now.
     GetSplitVector(InOp, Lo, Hi);
@@ -529,11 +529,11 @@ void DAGTypeLegalizer::SplitVecRes_FPOWI(SDNode *N, SDOperand &Lo,
 //  Operand Vector Splitting
 //===----------------------------------------------------------------------===//
 
-/// SplitOperand - This method is called when the specified operand of the
+/// SplitVectorOperand - This method is called when the specified operand of the
 /// specified node is found to need vector splitting.  At this point, all of the
 /// result types of the node are known to be legal, but other operands of the
 /// node may need legalization as well as the specified one.
-bool DAGTypeLegalizer::SplitOperand(SDNode *N, unsigned OpNo) {
+bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Split node operand: "; N->dump(&DAG); cerr << "\n");
   SDOperand Res = SDOperand();
 
@@ -541,7 +541,7 @@ bool DAGTypeLegalizer::SplitOperand(SDNode *N, unsigned OpNo) {
     switch (N->getOpcode()) {
     default:
 #ifndef NDEBUG
-      cerr << "SplitOperand Op #" << OpNo << ": ";
+      cerr << "SplitVectorOperand Op #" << OpNo << ": ";
       N->dump(&DAG); cerr << "\n";
 #endif
       assert(0 && "Do not know how to split this operator's operand!");

@@ -26,16 +26,10 @@
 namespace llvm {
 
 //===----------------------------------------------------------------------===//
-/// DAGTypeLegalizer - This takes an arbitrary SelectionDAG as input and
-/// hacks on it until the target machine can handle it.  This involves
-/// eliminating value sizes the machine cannot handle (promoting small sizes to
-/// large sizes or splitting up large values into small values) as well as
-/// eliminating operations the machine cannot handle.
-///
-/// This code also does a small amount of optimization and recognition of idioms
-/// as part of its processing.  For example, if a target does not support a
-/// 'setcc' instruction efficiently, but does support 'brcc' instruction, this
-/// will attempt merge setcc and brc instructions into brcc's.
+/// DAGTypeLegalizer - This takes an arbitrary SelectionDAG as input and hacks
+/// on it until only value types the target machine can handle are left.  This
+/// involves promoting small sizes to large sizes or splitting up large values
+/// into small values.
 ///
 class VISIBILITY_HIDDEN DAGTypeLegalizer {
   TargetLowering &TLI;
@@ -59,13 +53,13 @@ public:
   };
 private:
   enum LegalizeAction {
-    Legal,          // The target natively supports this type.
-    PromoteInteger, // Replace this integer type with a larger one.
-    ExpandInteger,  // Split this integer type into two of half the size.
-    SoftenFloat,    // Convert this float type to a same size integer type.
-    ExpandFloat,    // Split this float type into two of half the size.
-    Scalarize,      // Replace this one-element vector type with its element type.
-    Split           // This vector type should be split into smaller vectors.
+    Legal,           // The target natively supports this type.
+    PromoteInteger,  // Replace this integer type with a larger one.
+    ExpandInteger,   // Split this integer type into two of half the size.
+    SoftenFloat,     // Convert this float type to a same size integer type.
+    ExpandFloat,     // Split this float type into two of half the size.
+    ScalarizeVector, // Replace this one-element vector with its element type.
+    SplitVector      // This vector type should be split into smaller vectors.
   };
 
   /// ValueTypeActions - This is a bitvector that contains two bits for each
@@ -76,8 +70,8 @@ private:
   /// getTypeAction - Return how we should legalize values of this type, either
   /// it is already legal, or we need to promote it to a larger integer type, or
   /// we need to expand it into multiple registers of a smaller integer type, or
-  /// we need to scalarize a one-element vector type into the element type, or
-  /// we need to split a vector type into smaller vector types.
+  /// we need to split a vector type into smaller vector types, or we need to
+  /// convert it to a different type of the same size.
   LegalizeAction getTypeAction(MVT VT) const {
     switch (ValueTypeActions.getTypeAction(VT)) {
     default:
@@ -99,9 +93,9 @@ private:
         else
           return ExpandFloat;
       } else if (VT.getVectorNumElements() == 1) {
-        return Scalarize;
+        return ScalarizeVector;
       } else {
-        return Split;
+        return SplitVector;
       }
     }
   }
@@ -400,7 +394,7 @@ private:
   void SetScalarizedVector(SDOperand Op, SDOperand Result);
 
   // Vector Result Scalarization: <1 x ty> -> ty.
-  void ScalarizeResult(SDNode *N, unsigned OpNo);
+  void ScalarizeVectorResult(SDNode *N, unsigned OpNo);
   SDOperand ScalarizeVecRes_BinOp(SDNode *N);
   SDOperand ScalarizeVecRes_UnaryOp(SDNode *N);
 
@@ -413,7 +407,7 @@ private:
   SDOperand ScalarizeVecRes_VECTOR_SHUFFLE(SDNode *N);
 
   // Vector Operand Scalarization: <1 x ty> -> ty.
-  bool ScalarizeOperand(SDNode *N, unsigned OpNo);
+  bool ScalarizeVectorOperand(SDNode *N, unsigned OpNo);
   SDOperand ScalarizeVecOp_BIT_CONVERT(SDNode *N);
   SDOperand ScalarizeVecOp_EXTRACT_VECTOR_ELT(SDNode *N);
   SDOperand ScalarizeVecOp_STORE(StoreSDNode *N, unsigned OpNo);
@@ -426,7 +420,7 @@ private:
   void SetSplitVector(SDOperand Op, SDOperand Lo, SDOperand Hi);
 
   // Vector Result Splitting: <128 x ty> -> 2 x <64 x ty>.
-  void SplitResult(SDNode *N, unsigned OpNo);
+  void SplitVectorResult(SDNode *N, unsigned OpNo);
 
   void SplitVecRes_UNDEF(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void SplitVecRes_LOAD(LoadSDNode *N, SDOperand &Lo, SDOperand &Hi);
@@ -442,7 +436,7 @@ private:
   void SplitVecRes_FPOWI(SDNode *N, SDOperand &Lo, SDOperand &Hi);
 
   // Vector Operand Splitting: <128 x ty> -> 2 x <64 x ty>.
-  bool SplitOperand(SDNode *N, unsigned OpNo);
+  bool SplitVectorOperand(SDNode *N, unsigned OpNo);
 
   SDOperand SplitVecOp_BIT_CONVERT(SDNode *N);
   SDOperand SplitVecOp_EXTRACT_SUBVECTOR(SDNode *N);

@@ -251,11 +251,11 @@ SDOperand DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
   case ExpandInteger:
   case ExpandFloat:
     break;
-  case Scalarize:
+  case ScalarizeVector:
     // Convert the element to an integer and promote it by hand.
     return DAG.getNode(ISD::ANY_EXTEND, OutVT,
                        BitConvertToInteger(GetScalarizedVector(InOp)));
-  case Split:
+  case SplitVector:
     // For example, i32 = BIT_CONVERT v2i16 on alpha.  Convert the split
     // pieces of the input into integers and reassemble in the final type.
     SDOperand Lo, Hi;
