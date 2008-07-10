@@ -50,7 +50,9 @@
 using namespace llvm;
 
 static cl::opt<bool>
-EnableValueProp("enable-value-prop", cl::Hidden, cl::init(false));
+EnableValueProp("enable-value-prop", cl::Hidden);
+static cl::opt<bool>
+EnableLegalizeTypes("enable-legalize-types", cl::Hidden);
 
 
 #ifndef NDEBUG
@@ -5296,10 +5298,11 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   
   // Second step, hack on the DAG until it only uses operations and types that
   // the target supports.
-#if 0  // Enable this some day.
-  DAG.LegalizeTypes();
-  // Someday even later, enable a dag combine pass here.
-#endif
+  if (EnableLegalizeTypes) {// Enable this some day.
+    DAG.LegalizeTypes();
+    // TODO: enable a dag combine pass here.
+  }
+  
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("DAG Legalization");
     DAG.Legalize();
