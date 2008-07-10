@@ -604,25 +604,15 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
         if (last != LastUseDef.end()) {
           // Check if this is a two address instruction.  If so, then
           // the def does not kill the use.
-          if (last->second.first == I) {
-            bool isTwoAddr = false;
-            for (unsigned j = i+1, je = I->getDesc().getNumOperands();
-                j < je; ++j) {
-              const MachineOperand &MO2 = I->getOperand(j);
-              if (MO2.isRegister() && MO2.isUse() &&
-                  MO2.getReg() == MO.getReg() &&
-                  I->getDesc().getOperandConstraint(j, TOI::TIED_TO) == (int)i)
-                isTwoAddr = true;
-            }
-
-            if (isTwoAddr) continue;
-          }
+          if (last->second.first == I &&
+              I->isRegReDefinedByTwoAddr(MO.getReg(), i))
+            continue;
           
           MachineOperand& lastUD =
                       last->second.first->getOperand(last->second.second);
           if (lastUD.isDef())
             lastUD.setIsDead(true);
-          else if (lastUD.isUse())
+          else
             lastUD.setIsKill(true);
         }
         
@@ -677,7 +667,7 @@ void RALocal::ComputeLocalLiveness(MachineBasicBlock& MBB) {
     if (isPhysReg || !usedOutsideBlock) {
       if (MO.isUse())
         MO.setIsKill(true);
-      else if (MI->getOperand(idx).isDef())
+      else
         MO.setIsDead(true);
     }
   }

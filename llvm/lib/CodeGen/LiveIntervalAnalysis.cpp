@@ -298,6 +298,7 @@ void LiveIntervals::printRegName(unsigned reg) const {
 void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
                                              MachineBasicBlock::iterator mi,
                                              unsigned MIIdx, MachineOperand& MO,
+                                             unsigned MOIdx,
                                              LiveInterval &interval) {
   DOUT << "\t\tregister: "; DEBUG(printRegName(interval.reg));
   LiveVariables::VarInfo& vi = lv_->getVarInfo(interval.reg);
@@ -390,7 +391,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // must be due to phi elimination or two addr elimination.  If this is
     // the result of two address elimination, then the vreg is one of the
     // def-and-use register operand.
-    if (mi->isRegReDefinedByTwoAddr(interval.reg)) {
+    if (mi->isRegReDefinedByTwoAddr(interval.reg, MOIdx)) {
       // If this is a two-address definition, then we have already processed
       // the live range.  The only problem is that we didn't realize there
       // are actually two values in the live interval.  Because of this we
@@ -553,9 +554,10 @@ exit:
 void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator MI,
                                       unsigned MIIdx,
-                                      MachineOperand& MO) {
+                                      MachineOperand& MO,
+                                      unsigned MOIdx) {
   if (TargetRegisterInfo::isVirtualRegister(MO.getReg()))
-    handleVirtualRegisterDef(MBB, MI, MIIdx, MO, 
+    handleVirtualRegisterDef(MBB, MI, MIIdx, MO, MOIdx,
                              getOrCreateInterval(MO.getReg()));
   else if (allocatableRegs_[MO.getReg()]) {
     MachineInstr *CopyMI = NULL;
@@ -660,7 +662,7 @@ void LiveIntervals::computeIntervals() {
         MachineOperand &MO = MI->getOperand(i);
         // handle register defs - build intervals
         if (MO.isRegister() && MO.getReg() && MO.isDef())
-          handleRegisterDef(MBB, MI, MIIndex, MO);
+          handleRegisterDef(MBB, MI, MIIndex, MO, i);
       }
       
       MIIndex += InstrSlots::NUM;
