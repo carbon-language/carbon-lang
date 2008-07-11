@@ -32,7 +32,7 @@ class LoopPass : public Pass {
   explicit LoopPass(intptr_t pid) : Pass(pid) {}
 
   // runOnLoop - This method should be implemented by the subclass to perform
-  // whatever action is necessary for the specfied Loop. 
+  // whatever action is necessary for the specified Loop.
   virtual bool runOnLoop (Loop *L, LPPassManager &LPM) = 0;
   virtual bool runOnFunctionBody (Function &F, LPPassManager &LPM) { 
     return false; 
@@ -68,10 +68,10 @@ class LoopPass : public Pass {
   /// SimpleAnalysis - Provides simple interface to update analysis info
   /// maintained by various passes. Note, if required this interface can
   /// be extracted into a separate abstract class but it would require
-  /// additional use of multiple inheritance in Pass class hierarcy, someting
+  /// additional use of multiple inheritance in Pass class hierarcy, something
   /// we are trying to avoid.
 
-  /// Each loop pass can override these simple analysis hookss to update
+  /// Each loop pass can override these simple analysis hooks to update
   /// desired analysis information.
   /// cloneBasicBlockAnalysis - Clone analysis info associated with basic block.
   virtual void cloneBasicBlockAnalysis(BasicBlock *F, BasicBlock *T, Loop *L) {}
@@ -134,7 +134,7 @@ public:
   /// SimpleAnalysis - Provides simple interface to update analysis info
   /// maintained by various passes. Note, if required this interface can
   /// be extracted into a separate abstract class but it would require
-  /// additional use of multiple inheritance in Pass class hierarcy, someting
+  /// additional use of multiple inheritance in Pass class hierarcy, something
   /// we are trying to avoid.
 
   /// cloneBasicBlockSimpleAnalysis - Invoke cloneBasicBlockAnalysis hook for
