@@ -7,8 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines a DeadStores, a flow-sensitive checker that looks for
-//  stores to variables that are no longer live.
+//  This file defines a CheckObjCDealloc, a checker that
+//  analyzes an Objective-C class's implementation to determine if it
+//  correctly implements -dealloc.
 //
 //===----------------------------------------------------------------------===//
 
