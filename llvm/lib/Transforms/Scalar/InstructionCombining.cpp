@@ -5498,6 +5498,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         case Instruction::Mul:
           if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
             // a * Cst icmp eq/ne b * Cst --> a & Mask icmp b & Mask
+            // Mask = -1 >> count-trailing-zeros(Cst).
             if (!CI->isZero() && !CI->isOne()) {
               const APInt &AP = CI->getValue();
               ConstantInt *Mask = ConstantInt::get(
