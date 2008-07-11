@@ -5230,7 +5230,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   // See if we are doing a comparison between a constant and an instruction that
   // can be folded into the comparison.
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
-      Value *A, *B;
+    Value *A, *B;
     
     // (icmp ne/eq (sub A B) 0) -> (icmp ne/eq A, B)
     if (I.isEquality() && CI->isNullValue() &&
@@ -5396,6 +5396,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           return ReplaceInstUsesWith(I, ConstantInt::getTrue());
         if (Min.sgt(RHSVal))
           return ReplaceInstUsesWith(I, ConstantInt::getFalse());
+        if (Max == RHSVal)  // A <s MAX -> A != MAX
+          return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
         break;
       case ICmpInst::ICMP_SGT: 
         if (Min.sgt(RHSVal))
@@ -6300,12 +6302,11 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
     //    %B = icmp ugt short %X, 1330 
     // because %A may have negative value. 
     //
-    // However, it is OK if SrcTy is bool (See cast-set.ll testcase)
-    // OR operation is EQ/NE.
-    if (isSignedExt == isSignedCmp || SrcTy == Type::Int1Ty || ICI.isEquality())
+    // However, we allow this when the compare is EQ/NE, because they are
+    // signless.
+    if (isSignedExt == isSignedCmp || ICI.isEquality())
       return new ICmpInst(ICI.getPredicate(), LHSCIOp, Res1);
-    else
-      return 0;
+    return 0;
   }
 
   // The re-extended constant changed so the constant cannot be represented 
@@ -6343,17 +6344,15 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
 
   // Finally, return the value computed.
   if (ICI.getPredicate() == ICmpInst::ICMP_ULT ||
-      ICI.getPredicate() == ICmpInst::ICMP_SLT) {
+      ICI.getPredicate() == ICmpInst::ICMP_SLT)
     return ReplaceInstUsesWith(ICI, Result);
-  } else {
-    assert((ICI.getPredicate()==ICmpInst::ICMP_UGT || 
-            ICI.getPredicate()==ICmpInst::ICMP_SGT) &&
-           "ICmp should be folded!");
-    if (Constant *CI = dyn_cast<Constant>(Result))
-      return ReplaceInstUsesWith(ICI, ConstantExpr::getNot(CI));
-    else
-      return BinaryOperator::CreateNot(Result);
-  }
+
+  assert((ICI.getPredicate()==ICmpInst::ICMP_UGT || 
+          ICI.getPredicate()==ICmpInst::ICMP_SGT) &&
+         "ICmp should be folded!");
+  if (Constant *CI = dyn_cast<Constant>(Result))
+    return ReplaceInstUsesWith(ICI, ConstantExpr::getNot(CI));
+  return BinaryOperator::CreateNot(Result);
 }
 
 Instruction *InstCombiner::visitShl(BinaryOperator &I) {
