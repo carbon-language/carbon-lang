@@ -51,8 +51,43 @@ static bool CalcFakeICEVal(const Expr *Expr,
   return false;
 }
 
-static bool EvaluatePointer(const Expr *E, APValue &Result, ASTContext &Ctx);
-static bool EvaluateInteger(const Expr *E, APSInt  &Result, ASTContext &Ctx);
+/// EvalInfo - This is a private struct used by the evaluator to capture
+/// information about a subexpression as it is folded.  It retains information
+/// about the AST context, but also maintains information about the folded
+/// expression.
+///
+/// If an expression could be evaluated, it is still possible it is not a C
+/// "integer constant expression" or constant expression.  If not, this struct
+/// captures information about how and why not.
+///
+/// One bit of information passed *into* the request for constant folding
+/// indicates whether the subexpression is "evaluated" or not according to C
+/// rules.  For example, the RHS of (0 && foo()) is not evaluated.  We can
+/// evaluate the expression regardless of what the RHS is, but C only allows
+/// certain things in certain situations.
+struct EvalInfo {
+  ASTContext &Ctx;
+  
+  /// isEvaluated - True if the subexpression is required to be evaluated, false
+  /// if it is short-circuited (according to C rules).
+  bool isEvaluated;
+  
+  /// ICEDiag - If the expression is foldable, but the expression is not an
+  /// integer constant expression, this contains the extension diagnostic to
+  /// emit which describes why it isn't an integer constant expression.  The
+  /// caller can choose to emit this or not, depending on whether they require
+  /// an i-c-e or not.  DiagLoc indicates the caret position for the report.
+  ///
+  /// If ICEDiag is zero, then this expression is an i-c-e.
+  unsigned ICEDiag;
+  SourceLocation DiagLoc;
+
+  EvalInfo(ASTContext &ctx) : Ctx(ctx), isEvaluated(true), ICEDiag(0) {}
+};
+
+
+static bool EvaluatePointer(const Expr *E, APValue &Result, EvalInfo &Info);
+static bool EvaluateInteger(const Expr *E, APSInt  &Result, EvalInfo &Info);
 
 
 //===----------------------------------------------------------------------===//
@@ -62,10 +97,10 @@ static bool EvaluateInteger(const Expr *E, APSInt  &Result, ASTContext &Ctx);
 namespace {
 class VISIBILITY_HIDDEN PointerExprEvaluator
   : public StmtVisitor<PointerExprEvaluator, APValue> {
-  ASTContext &Ctx;
+  EvalInfo &Info;
 public:
     
-  PointerExprEvaluator(ASTContext &ctx) : Ctx(ctx) {}
+  PointerExprEvaluator(EvalInfo &info) : Info(info) {}
 
   APValue VisitStmt(Stmt *S) {
     // FIXME: Remove this when we support more expressions.
@@ -81,10 +116,10 @@ public:
 };
 } // end anonymous namespace
 
-static bool EvaluatePointer(const Expr* E, APValue& Result, ASTContext &Ctx) {
+static bool EvaluatePointer(const Expr* E, APValue& Result, EvalInfo &Info) {
   if (!E->getType()->isPointerType())
     return false;
-  Result = PointerExprEvaluator(Ctx).Visit(const_cast<Expr*>(E));
+  Result = PointerExprEvaluator(Info).Visit(const_cast<Expr*>(E));
   return Result.isLValue();
 }
 
@@ -99,11 +134,11 @@ APValue PointerExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     std::swap(PExp, IExp);
   
   APValue ResultLValue;
-  if (!EvaluatePointer(PExp, ResultLValue, Ctx))
+  if (!EvaluatePointer(PExp, ResultLValue, Info))
     return APValue();
   
   llvm::APSInt AdditionalOffset(32);
-  if (!EvaluateInteger(IExp, AdditionalOffset, Ctx))
+  if (!EvaluateInteger(IExp, AdditionalOffset, Info))
     return APValue();
 
   uint64_t Offset = ResultLValue.getLValueOffset();
@@ -122,15 +157,15 @@ APValue PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
    // Check for pointer->pointer cast
   if (SubExpr->getType()->isPointerType()) {
     APValue Result;
-    if (EvaluatePointer(SubExpr, Result, Ctx))
+    if (EvaluatePointer(SubExpr, Result, Info))
       return Result;
     return APValue();
   }
   
   if (SubExpr->getType()->isArithmeticType()) {
     llvm::APSInt Result(32);
-    if (EvaluateInteger(SubExpr, Result, Ctx)) {
-      Result.extOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(E->getType())));
+    if (EvaluateInteger(SubExpr, Result, Info)) {
+      Result.extOrTrunc((unsigned)Info.Ctx.getTypeSize(E->getType()));
       return APValue(0, Result.getZExtValue());
     }
   }
@@ -147,13 +182,14 @@ APValue PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
 namespace {
 class VISIBILITY_HIDDEN IntExprEvaluator
   : public StmtVisitor<IntExprEvaluator, bool> {
-  ASTContext &Ctx;
+  EvalInfo &Info;
   APSInt &Result;
 public:
-  IntExprEvaluator(ASTContext &ctx, APSInt &result) : Ctx(ctx), Result(result){}
+  IntExprEvaluator(EvalInfo &info, APSInt &result)
+    : Info(info), Result(result) {}
 
   unsigned getIntTypeSizeInBits(QualType T) const {
-    return (unsigned)Ctx.getTypeSize(T);
+    return (unsigned)Info.Ctx.getTypeSize(T);
   }
     
   //===--------------------------------------------------------------------===//
@@ -193,15 +229,15 @@ private:
 };
 } // end anonymous namespace
 
-static bool EvaluateInteger(const Expr* E, APSInt &Result, ASTContext &Ctx) {
-  return IntExprEvaluator(Ctx, Result).Visit(const_cast<Expr*>(E));
+static bool EvaluateInteger(const Expr* E, APSInt &Result, EvalInfo &Info) {
+  return IntExprEvaluator(Info, Result).Visit(const_cast<Expr*>(E));
 }
 
 
 bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   // The LHS of a constant expr is always evaluated and needed.
   llvm::APSInt RHS(32);
-  if (!Visit(E->getLHS()) || !EvaluateInteger(E->getRHS(), RHS, Ctx))
+  if (!Visit(E->getLHS()) || !EvaluateInteger(E->getRHS(), RHS, Info))
     return false;
   
   switch (E->getOpcode()) {
@@ -293,17 +329,17 @@ bool IntExprEvaluator::EvaluateSizeAlignOf(bool isSizeOf, QualType SrcTy,
   }
   
   // Get information about the size or align.
-  unsigned CharSize = Ctx.Target.getCharWidth();
+  unsigned CharSize = Info.Ctx.Target.getCharWidth();
   if (isSizeOf)
     Result = getIntTypeSizeInBits(SrcTy) / CharSize;
   else
-    Result = Ctx.getTypeAlign(SrcTy) / CharSize;
+    Result = Info.Ctx.getTypeAlign(SrcTy) / CharSize;
   return true;
 }
 
 bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
   if (E->isOffsetOfOp()) {
-    Result = E->evaluateOffsetOf(Ctx);
+    Result = E->evaluateOffsetOf(Info.Ctx);
     Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
     return true;
   }
@@ -312,8 +348,8 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
     return EvaluateSizeAlignOf(E->getOpcode() == UnaryOperator::SizeOf,
                                E->getSubExpr()->getType(), E->getType());
   
-  // Get the operand value.
-  if (!EvaluateInteger(E->getSubExpr(), Result, Ctx))
+  // Get the operand value into 'Result'.
+  if (!Visit(E->getSubExpr()))
     return false;
 
   switch (E->getOpcode()) {
@@ -348,7 +384,7 @@ bool IntExprEvaluator::HandleCast(const Expr* SubExpr, QualType DestType) {
 
   // Handle simple integer->integer casts.
   if (SubExpr->getType()->isIntegerType()) {
-    if (!EvaluateInteger(SubExpr, Result, Ctx))
+    if (!EvaluateInteger(SubExpr, Result, Info))
       return false;
     
     // Figure out if this is a truncate, extend or noop cast.
@@ -361,7 +397,7 @@ bool IntExprEvaluator::HandleCast(const Expr* SubExpr, QualType DestType) {
       Result.extOrTrunc(DestWidth);
   } else if (SubExpr->getType()->isPointerType()) {
     APValue LV;
-    if (!EvaluatePointer(SubExpr, LV, Ctx))
+    if (!EvaluatePointer(SubExpr, LV, Info))
       return false;
     if (LV.getLValueBase())
       return false;
@@ -383,8 +419,9 @@ bool IntExprEvaluator::HandleCast(const Expr* SubExpr, QualType DestType) {
 bool Expr::tryEvaluate(APValue &Result, ASTContext &Ctx) const {
   llvm::APSInt sInt(32);
 #if USE_NEW_EVALUATOR
+  EvalInfo Info(Ctx);
   if (getType()->isIntegerType()) {
-    if (EvaluateInteger(this, sInt, Ctx)) {
+    if (EvaluateInteger(this, sInt, Info)) {
       Result = APValue(sInt);
       return true;
     }
