@@ -1727,12 +1727,8 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
 
     case ISD::TRUNCATE:        Res = ExpandIntOp_TRUNCATE(N); break;
 
-    case ISD::SINT_TO_FP:
-      Res = ExpandIntOp_SINT_TO_FP(N->getOperand(0), N->getValueType(0));
-      break;
-    case ISD::UINT_TO_FP:
-      Res = ExpandIntOp_UINT_TO_FP(N->getOperand(0), N->getValueType(0));
-      break;
+    case ISD::SINT_TO_FP:      Res = ExpandIntOp_SINT_TO_FP(N); break;
+    case ISD::UINT_TO_FP:      Res = ExpandIntOp_UINT_TO_FP(N); break;
 
     case ISD::BR_CC:     Res = ExpandIntOp_BR_CC(N); break;
     case ISD::SELECT_CC: Res = ExpandIntOp_SELECT_CC(N); break;
@@ -1770,99 +1766,134 @@ SDOperand DAGTypeLegalizer::ExpandIntOp_TRUNCATE(SDNode *N) {
   return DAG.getNode(ISD::TRUNCATE, N->getValueType(0), InL);
 }
 
-SDOperand DAGTypeLegalizer::ExpandIntOp_SINT_TO_FP(SDOperand Source,
-                                                   MVT DestTy) {
-  // We know the destination is legal, but that the input needs to be expanded.
-  MVT SourceVT = Source.getValueType();
-
-  // Check to see if the target has a custom way to lower this.  If so, use it.
-  // This can trigger when called from ExpandIntOp_UINT_TO_FP.
-  switch (TLI.getOperationAction(ISD::SINT_TO_FP, SourceVT)) {
-  default: assert(0 && "This action not implemented for this operation!");
-  case TargetLowering::Legal:
-  case TargetLowering::Expand:
-    break;   // This case is handled below.
-  case TargetLowering::Custom:
-    SDOperand NV = TLI.LowerOperation(DAG.getNode(ISD::SINT_TO_FP, DestTy,
-                                                  Source), DAG);
-    if (NV.Val) return NV;
-    break;   // The target lowered this.
-  }
+SDOperand DAGTypeLegalizer::ExpandIntOp_SINT_TO_FP(SDNode *N) {
+  SDOperand Op = N->getOperand(0);
+  MVT SrcVT = Op.getValueType();
+  MVT DstVT = N->getValueType(0);
 
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (SourceVT == MVT::i32) {
-    if (DestTy == MVT::f32)
+  if (SrcVT == MVT::i32) {
+    if (DstVT == MVT::f32)
       LC = RTLIB::SINTTOFP_I32_F32;
-    else if (DestTy == MVT::f64)
+    else if (DstVT == MVT::f64)
       LC = RTLIB::SINTTOFP_I32_F64;
-    else if (DestTy == MVT::f80)
+    else if (DstVT == MVT::f80)
       LC = RTLIB::SINTTOFP_I32_F80;
-    else if (DestTy == MVT::ppcf128)
+    else if (DstVT == MVT::ppcf128)
       LC = RTLIB::SINTTOFP_I32_PPCF128;
-  } else if (SourceVT == MVT::i64) {
-    if (DestTy == MVT::f32)
+  } else if (SrcVT == MVT::i64) {
+    if (DstVT == MVT::f32)
       LC = RTLIB::SINTTOFP_I64_F32;
-    else if (DestTy == MVT::f64)
+    else if (DstVT == MVT::f64)
       LC = RTLIB::SINTTOFP_I64_F64;
-    else if (DestTy == MVT::f80)
+    else if (DstVT == MVT::f80)
       LC = RTLIB::SINTTOFP_I64_F80;
-    else if (DestTy == MVT::ppcf128)
+    else if (DstVT == MVT::ppcf128)
       LC = RTLIB::SINTTOFP_I64_PPCF128;
-  } else if (SourceVT == MVT::i128) {
-    if (DestTy == MVT::f32)
+  } else if (SrcVT == MVT::i128) {
+    if (DstVT == MVT::f32)
       LC = RTLIB::SINTTOFP_I128_F32;
-    else if (DestTy == MVT::f64)
+    else if (DstVT == MVT::f64)
       LC = RTLIB::SINTTOFP_I128_F64;
-    else if (DestTy == MVT::f80)
+    else if (DstVT == MVT::f80)
       LC = RTLIB::SINTTOFP_I128_F80;
-    else if (DestTy == MVT::ppcf128)
+    else if (DstVT == MVT::ppcf128)
       LC = RTLIB::SINTTOFP_I128_PPCF128;
   }
   assert(LC != RTLIB::UNKNOWN_LIBCALL &&
          "Don't know how to expand this SINT_TO_FP!");
 
-  return MakeLibCall(LC, DestTy, &Source, 1, true);
+  return MakeLibCall(LC, DstVT, &Op, 1, true);
 }
 
-SDOperand DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDOperand Source,
-                                                     MVT DestTy) {
-  // We know the destination is legal, but that the input needs to be expanded.
-  assert(getTypeAction(Source.getValueType()) == ExpandInteger &&
-         "This is not an expansion!");
+SDOperand DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
+  SDOperand Op = N->getOperand(0);
+  MVT SrcVT = Op.getValueType();
+  MVT DstVT = N->getValueType(0);
 
-  // If this is unsigned, and not supported, first perform the conversion to
-  // signed, then adjust the result if the sign bit is set.
-  SDOperand SignedConv = ExpandIntOp_SINT_TO_FP(Source, DestTy);
+  if (TLI.getOperationAction(ISD::SINT_TO_FP, SrcVT) == TargetLowering::Custom){
+    // Do a signed conversion then adjust the result.
+    SDOperand SignedConv = DAG.getNode(ISD::SINT_TO_FP, DstVT, Op);
+    SignedConv = TLI.LowerOperation(SignedConv, DAG);
 
-  // The 64-bit value loaded will be incorrectly if the 'sign bit' of the
-  // incoming integer is set.  To handle this, we dynamically test to see if
-  // it is set, and, if so, add a fudge factor.
-  SDOperand Lo, Hi;
-  GetExpandedInteger(Source, Lo, Hi);
+    // The result of the signed conversion needs adjusting if the 'sign bit' of
+    // the incoming integer was set.  To handle this, we dynamically test to see
+    // if it is set, and, if so, add a fudge factor.
 
-  SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultType(Hi), Hi,
-                                   DAG.getConstant(0, Hi.getValueType()),
-                                   ISD::SETLT);
-  SDOperand Zero = DAG.getIntPtrConstant(0), Four = DAG.getIntPtrConstant(4);
-  SDOperand CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
-                                    SignSet, Four, Zero);
-  uint64_t FF = 0x5f800000ULL;
-  if (TLI.isLittleEndian()) FF <<= 32;
-  Constant *FudgeFactor = ConstantInt::get((Type*)Type::Int64Ty, FF);
+    const uint64_t F32TwoE32  = 0x4F800000ULL;
+    const uint64_t F32TwoE64  = 0x5F800000ULL;
+    const uint64_t F32TwoE128 = 0x7F800000ULL;
 
-  SDOperand CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
-  CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
-  SDOperand FudgeInReg;
-  if (DestTy == MVT::f32)
-    FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx, NULL, 0);
-  else if (DestTy.bitsGT(MVT::f32))
-    // FIXME: Avoid the extend by construction the right constantpool?
-    FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, DestTy, DAG.getEntryNode(),
-                                CPIdx, NULL, 0, MVT::f32);
-  else
-    assert(0 && "Unexpected conversion");
+    APInt FF(32, 0);
+    if (SrcVT == MVT::i32)
+      FF = APInt(32, F32TwoE32);
+    else if (SrcVT == MVT::i64)
+      FF = APInt(32, F32TwoE64);
+    else if (SrcVT == MVT::i128)
+      FF = APInt(32, F32TwoE128);
+    else
+      assert(false && "Unsupported UINT_TO_FP!");
 
-  return DAG.getNode(ISD::FADD, DestTy, SignedConv, FudgeInReg);
+    // Check whether the sign bit is set.
+    SDOperand Lo, Hi;
+    GetExpandedInteger(Op, Lo, Hi);
+    SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultType(Hi), Hi,
+                                     DAG.getConstant(0, Hi.getValueType()),
+                                     ISD::SETLT);
+
+    // Build a 64 bit pair (0, FF) in the constant pool, with FF in the lo bits.
+    SDOperand FudgePtr = DAG.getConstantPool(ConstantInt::get(FF.zext(64)),
+                                             TLI.getPointerTy());
+
+    // Get a pointer to FF if the sign bit was set, or to 0 otherwise.
+    SDOperand Zero = DAG.getIntPtrConstant(0);
+    SDOperand Four = DAG.getIntPtrConstant(4);
+    if (TLI.isBigEndian()) std::swap(Zero, Four);
+    SDOperand Offset = DAG.getNode(ISD::SELECT, Zero.getValueType(), SignSet,
+                                   Zero, Four);
+    FudgePtr = DAG.getNode(ISD::ADD, TLI.getPointerTy(), FudgePtr, Offset);
+
+    // Load the value out, extending it from f32 to the destination float type.
+    // FIXME: Avoid the extend by constructing the right constant pool?
+    SDOperand Fudge = DAG.getExtLoad(ISD::EXTLOAD, DstVT, DAG.getEntryNode(),
+                                     FudgePtr, NULL, 0, MVT::f32);
+    return DAG.getNode(ISD::FADD, DstVT, SignedConv, Fudge);
+  }
+
+  // Otherwise, use a libcall.
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+  if (SrcVT == MVT::i32) {
+    if (DstVT == MVT::f32)
+      LC = RTLIB::UINTTOFP_I32_F32;
+    else if (DstVT == MVT::f64)
+      LC = RTLIB::UINTTOFP_I32_F64;
+    else if (DstVT == MVT::f80)
+      LC = RTLIB::UINTTOFP_I32_F80;
+    else if (DstVT == MVT::ppcf128)
+      LC = RTLIB::UINTTOFP_I32_PPCF128;
+  } else if (SrcVT == MVT::i64) {
+    if (DstVT == MVT::f32)
+      LC = RTLIB::UINTTOFP_I64_F32;
+    else if (DstVT == MVT::f64)
+      LC = RTLIB::UINTTOFP_I64_F64;
+    else if (DstVT == MVT::f80)
+      LC = RTLIB::UINTTOFP_I64_F80;
+    else if (DstVT == MVT::ppcf128)
+      LC = RTLIB::UINTTOFP_I64_PPCF128;
+  } else if (SrcVT == MVT::i128) {
+    if (DstVT == MVT::f32)
+      LC = RTLIB::UINTTOFP_I128_F32;
+    else if (DstVT == MVT::f64)
+      LC = RTLIB::UINTTOFP_I128_F64;
+    else if (DstVT == MVT::f80)
+      LC = RTLIB::UINTTOFP_I128_F80;
+    else if (DstVT == MVT::ppcf128)
+      LC = RTLIB::UINTTOFP_I128_PPCF128;
+  }
+  assert(LC != RTLIB::UNKNOWN_LIBCALL &&
+         "Don't know how to expand this UINT_TO_FP!");
+
+  return MakeLibCall(LC, DstVT, &Op, 1, true);
 }
 
 SDOperand DAGTypeLegalizer::ExpandIntOp_BR_CC(SDNode *N) {

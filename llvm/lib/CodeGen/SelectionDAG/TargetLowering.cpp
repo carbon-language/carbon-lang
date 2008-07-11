@@ -135,8 +135,16 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::SINTTOFP_I128_PPCF128] = "__floattitf";
   Names[RTLIB::UINTTOFP_I32_F32] = "__floatunsisf";
   Names[RTLIB::UINTTOFP_I32_F64] = "__floatunsidf";
+  Names[RTLIB::UINTTOFP_I32_F80] = "__floatunsixf";
+  Names[RTLIB::UINTTOFP_I32_PPCF128] = "__floatunsitf";
   Names[RTLIB::UINTTOFP_I64_F32] = "__floatundisf";
   Names[RTLIB::UINTTOFP_I64_F64] = "__floatundidf";
+  Names[RTLIB::UINTTOFP_I64_F80] = "__floatundixf";
+  Names[RTLIB::UINTTOFP_I64_PPCF128] = "__floatunditf";
+  Names[RTLIB::UINTTOFP_I128_F32] = "__floatuntisf";
+  Names[RTLIB::UINTTOFP_I128_F64] = "__floatuntidf";
+  Names[RTLIB::UINTTOFP_I128_F80] = "__floatuntixf";
+  Names[RTLIB::UINTTOFP_I128_PPCF128] = "__floatuntitf";
   Names[RTLIB::OEQ_F32] = "__eqsf2";
   Names[RTLIB::OEQ_F64] = "__eqdf2";
   Names[RTLIB::UNE_F32] = "__nesf2";

@@ -299,10 +299,10 @@ private:
   SDOperand ExpandIntOp_EXTRACT_ELEMENT(SDNode *N);
   SDOperand ExpandIntOp_SELECT_CC(SDNode *N);
   SDOperand ExpandIntOp_SETCC(SDNode *N);
-  SDOperand ExpandIntOp_SINT_TO_FP(SDOperand Source, MVT DestTy);
+  SDOperand ExpandIntOp_SINT_TO_FP(SDNode *N);
   SDOperand ExpandIntOp_STORE(StoreSDNode *N, unsigned OpNo);
   SDOperand ExpandIntOp_TRUNCATE(SDNode *N);
-  SDOperand ExpandIntOp_UINT_TO_FP(SDOperand Source, MVT DestTy);
+  SDOperand ExpandIntOp_UINT_TO_FP(SDNode *N);
 
   void IntegerExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
                                   ISD::CondCode &CCCode);
