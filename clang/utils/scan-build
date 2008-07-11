@@ -503,7 +503,10 @@ ENDTEXT
   `chmod 755 $BaseDir`;
   
   my $Num = scalar(@Index);
-  Diag("$Num bugs found.\n")
+  Diag("$Num bugs found.\n");
+  if ($Num > 0 && -r "$Dir/index.html") {
+    Diag("Open '$Dir/index.html' to examine bug reports.\n");
+  }
 }
 
 ##----------------------------------------------------------------------------##
