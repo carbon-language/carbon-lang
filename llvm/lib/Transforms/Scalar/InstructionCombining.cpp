@@ -2964,24 +2964,6 @@ Instruction *InstCombiner::visitFRem(BinaryOperator &I) {
   return commonRemTransforms(I);
 }
 
-// isMaxValueMinusOne - return true if this is Max-1
-static bool isMaxValueMinusOne(const ConstantInt *C, bool isSigned) {
-  uint32_t TypeBits = C->getType()->getPrimitiveSizeInBits();
-  if (!isSigned)
-    return C->getValue() == APInt::getAllOnesValue(TypeBits) - 1;
-  return C->getValue() == APInt::getSignedMaxValue(TypeBits)-1;
-}
-
-// isMinValuePlusOne - return true if this is Min+1
-static bool isMinValuePlusOne(const ConstantInt *C, bool isSigned) {
-  if (!isSigned)
-    return C->getValue() == 1; // unsigned
-    
-  // Calculate 1111111111000000000000
-  uint32_t TypeBits = C->getType()->getPrimitiveSizeInBits();
-  return C->getValue() == APInt::getSignedMinValue(TypeBits)+1;
-}
-
 // isOneBitSet - Return true if there is exactly one bit set in the specified
 // constant.
 static bool isOneBitSet(const ConstantInt *CI) {
@@ -5274,63 +5256,16 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       return new ICmpInst(ICmpInst::ICMP_SGT, Op0, SubOne(CI));
     }
     
-    switch (I.getPredicate()) {
-    default: break;
-    case ICmpInst::ICMP_ULT:                        // A <u MIN -> FALSE
-      if (CI->isMinValue(false))
-        return ReplaceInstUsesWith(I, ConstantInt::getFalse());
-      if (CI->isMaxValue(false))                    // A <u MAX -> A != MAX
-        return new ICmpInst(ICmpInst::ICMP_NE, Op0,Op1);
-      if (isMinValuePlusOne(CI,false))              // A <u MIN+1 -> A == MIN
-        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, SubOne(CI));
-      // (x <u 2147483648) -> (x >s -1)  -> true if sign bit clear
-      if (CI->isMinValue(true))
-        return new ICmpInst(ICmpInst::ICMP_SGT, Op0,
-                            ConstantInt::getAllOnesValue(Op0->getType()));
-          
-      break;
-
-    case ICmpInst::ICMP_SLT:
-      if (CI->isMinValue(true))                    // A <s MIN -> FALSE
-        return ReplaceInstUsesWith(I, ConstantInt::getFalse());
-      if (CI->isMaxValue(true))                    // A <s MAX -> A != MAX
-        return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
-      if (isMinValuePlusOne(CI,true))              // A <s MIN+1 -> A == MIN
-        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, SubOne(CI));
-      break;
-
-    case ICmpInst::ICMP_UGT:
-      if (CI->isMaxValue(false))                  // A >u MAX -> FALSE
-        return ReplaceInstUsesWith(I, ConstantInt::getFalse());
-      if (CI->isMinValue(false))                  // A >u MIN -> A != MIN
-        return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
-      if (isMaxValueMinusOne(CI, false))          // A >u MAX-1 -> A == MAX
-        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, AddOne(CI));
-        
-      // (x >u 2147483647) -> (x <s 0)  -> true if sign bit set
-      if (CI->isMaxValue(true))
-        return new ICmpInst(ICmpInst::ICMP_SLT, Op0,
-                            ConstantInt::getNullValue(Op0->getType()));
-      break;
-
-    case ICmpInst::ICMP_SGT:
-      if (CI->isMaxValue(true))                   // A >s MAX -> FALSE
-        return ReplaceInstUsesWith(I, ConstantInt::getFalse());
-      if (CI->isMinValue(true))                   // A >s MIN -> A != MIN
-        return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
-      if (isMaxValueMinusOne(CI, true))           // A >s MAX-1 -> A == MAX
-        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, AddOne(CI));
-      break;
-    }
-
-    // See if we can fold the comparison based on bits known to be zero or one
-    // in the input.  If this comparison is a normal comparison, it demands all
+    // See if we can fold the comparison based on range information we can get
+    // by checking whether bits are known to be zero or one in the input.
+    uint32_t BitWidth = cast<IntegerType>(Ty)->getBitWidth();
+    APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
+    
+    // If this comparison is a normal comparison, it demands all
     // bits, if it is a sign bit comparison, it only demands the sign bit.
     bool UnusedBit;
     bool isSignBit = isSignBitCheck(I.getPredicate(), CI, UnusedBit);
     
-    uint32_t BitWidth = cast<IntegerType>(Ty)->getBitWidth();
-    APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
     if (SimplifyDemandedBits(Op0, 
                              isSignBit ? APInt::getSignBit(BitWidth)
                                        : APInt::getAllOnesValue(BitWidth),
@@ -5341,12 +5276,22 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     // in.  Compute the Min, Max and RHS values based on the known bits. For the
     // EQ and NE we use unsigned values.
     APInt Min(BitWidth, 0), Max(BitWidth, 0);
-    const APInt& RHSVal = CI->getValue();
     if (ICmpInst::isSignedPredicate(I.getPredicate()))
       ComputeSignedMinMaxValuesFromKnownBits(Ty, KnownZero, KnownOne, Min, Max);
     else
       ComputeUnsignedMinMaxValuesFromKnownBits(Ty, KnownZero, KnownOne,Min,Max);
     
+    // If Min and Max are known to be the same, then SimplifyDemandedBits
+    // figured out that the LHS is a constant.  Just constant fold this now so
+    // that code below can assume that Min != Max.
+    if (Min == Max)
+      return ReplaceInstUsesWith(I, ConstantExpr::getICmp(I.getPredicate(),
+                                                          ConstantInt::get(Min),
+                                                          CI));
+    
+    // Based on the range information we know about the LHS, see if we can
+    // simplify this comparison.  For example, (x&4) < 8  is always true.
+    const APInt &RHSVal = CI->getValue();
     switch (I.getPredicate()) {  // LE/GE have been folded already.
     default: assert(0 && "Unknown icmp opcode!");
     case ICmpInst::ICMP_EQ:
@@ -5358,30 +5303,56 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         return ReplaceInstUsesWith(I, ConstantInt::getTrue());
       break;
     case ICmpInst::ICMP_ULT:
-      if (Max.ult(RHSVal))
+      if (Max.ult(RHSVal))                    // A <u C -> true iff max(A) < C
         return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-      if (Min.uge(RHSVal))
+      if (Min.uge(RHSVal))                    // A <u C -> false iff min(A) >= C
         return ReplaceInstUsesWith(I, ConstantInt::getFalse());
+      if (RHSVal == Max)                      // A <u MAX -> A != MAX
+        return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
+      if (RHSVal == Min+1)                    // A <u MIN+1 -> A == MIN
+        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, SubOne(CI));
+        
+      // (x <u 2147483648) -> (x >s -1)  -> true if sign bit clear
+      if (CI->isMinValue(true))
+        return new ICmpInst(ICmpInst::ICMP_SGT, Op0,
+                            ConstantInt::getAllOnesValue(Op0->getType()));
       break;
     case ICmpInst::ICMP_UGT:
-      if (Min.ugt(RHSVal))
+      if (Min.ugt(RHSVal))                    // A >u C -> true iff min(A) > C
         return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-      if (Max.ule(RHSVal))
+      if (Max.ule(RHSVal))                    // A >u C -> false iff max(A) <= C
         return ReplaceInstUsesWith(I, ConstantInt::getFalse());
+        
+      if (RHSVal == Min)                      // A >u MIN -> A != MIN
+        return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
+      if (RHSVal == Max-1)                    // A >u MAX-1 -> A == MAX
+        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, AddOne(CI));
+      
+      // (x >u 2147483647) -> (x <s 0)  -> true if sign bit set
+      if (CI->isMaxValue(true))
+        return new ICmpInst(ICmpInst::ICMP_SLT, Op0,
+                            ConstantInt::getNullValue(Op0->getType()));
       break;
     case ICmpInst::ICMP_SLT:
-      if (Max.slt(RHSVal))
+      if (Max.slt(RHSVal))                    // A <s C -> true iff max(A) < C
         return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-      if (Min.sgt(RHSVal))
+      if (Min.sgt(RHSVal))                    // A <s C -> false iff min(A) >= C
         return ReplaceInstUsesWith(I, ConstantInt::getFalse());
-      if (Max == RHSVal)  // A <s MAX -> A != MAX
+      if (RHSVal == Max)                      // A <s MAX -> A != MAX
+        return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
+      if (RHSVal == Min-1)                    // A <s MIN+1 -> A == MIN
         return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
       break;
     case ICmpInst::ICMP_SGT: 
-      if (Min.sgt(RHSVal))
+      if (Min.sgt(RHSVal))                    // A >s C -> true iff min(A) > C
         return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-      if (Max.sle(RHSVal))
+      if (Max.sle(RHSVal))                    // A >s C -> false iff max(A) <= C
         return ReplaceInstUsesWith(I, ConstantInt::getFalse());
+        
+      if (RHSVal == Min)                      // A >s MIN -> A != MIN
+        return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
+      if (RHSVal == Max-1)                    // A >s MAX-1 -> A == MAX
+        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, AddOne(CI));
       break;
     }
           
