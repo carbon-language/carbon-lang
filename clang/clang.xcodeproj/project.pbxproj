@@ -16,6 +16,7 @@
 		1A869A700BA2164C008DA07A /* LiteralSupport.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 1A869A6E0BA2164C008DA07A /* LiteralSupport.h */; };
 		1A869AA80BA21ABA008DA07A /* LiteralSupport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */; };
 		1ABC36940C7A4BDC006DB0AB /* CGBuiltin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */; };
+		3507E4C20E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3507E4C10E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp */; };
 		351318600CD14468006B66F7 /* DeclSerialization.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3513185F0CD14468006B66F7 /* DeclSerialization.cpp */; };
 		35260CA50C7F75C000D66CE9 /* ExprCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35260CA40C7F75C000D66CE9 /* ExprCXX.cpp */; };
 		352712510DAFE54700C76352 /* IdentifierResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352712500DAFE54700C76352 /* IdentifierResolver.cpp */; };
@@ -274,6 +275,7 @@
 		1A869A6E0BA2164C008DA07A /* LiteralSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LiteralSupport.h; sourceTree = "<group>"; };
 		1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LiteralSupport.cpp; sourceTree = "<group>"; };
 		1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CGBuiltin.cpp; path = lib/CodeGen/CGBuiltin.cpp; sourceTree = "<group>"; };
+		3507E4C10E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CheckObjCInstMethSignature.cpp; path = lib/Analysis/CheckObjCInstMethSignature.cpp; sourceTree = "<group>"; };
 		3513185F0CD14468006B66F7 /* DeclSerialization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeclSerialization.cpp; path = lib/AST/DeclSerialization.cpp; sourceTree = "<group>"; };
 		35260CA40C7F75C000D66CE9 /* ExprCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ExprCXX.cpp; path = lib/AST/ExprCXX.cpp; sourceTree = "<group>"; };
 		3527124F0DAFE54700C76352 /* IdentifierResolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IdentifierResolver.h; path = lib/Sema/IdentifierResolver.h; sourceTree = "<group>"; };
@@ -400,7 +402,6 @@
 		DE4121290D7F1C1C0080F80A /* UninitializedValues.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UninitializedValues.cpp; path = lib/Analysis/UninitializedValues.cpp; sourceTree = "<group>"; };
 		DE41212A0D7F1C1C0080F80A /* GRCoreEngine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRCoreEngine.cpp; path = lib/Analysis/GRCoreEngine.cpp; sourceTree = "<group>"; };
 		DE41212C0D7F1C1C0080F80A /* GRSimpleVals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRSimpleVals.h; path = lib/Analysis/GRSimpleVals.h; sourceTree = "<group>"; };
-		DE41212D0D7F1C1C0080F80A /* LiveVariables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LiveVariables.cpp; path = lib/Analysis/LiveVariables.cpp; sourceTree = "<group>"; };
 		DE41212E0D7F1C1C0080F80A /* RValues.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RValues.cpp; path = lib/Analysis/RValues.cpp; sourceTree = "<group>"; };
 		DE41212F0D7F1C1C0080F80A /* GRSimpleVals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRSimpleVals.cpp; path = lib/Analysis/GRSimpleVals.cpp; sourceTree = "<group>"; };
 		DE4121300D7F1C1C0080F80A /* GRBlockCounter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRBlockCounter.cpp; path = lib/Analysis/GRBlockCounter.cpp; sourceTree = "<group>"; };
@@ -548,6 +549,58 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		3507E4C30E27FE3800FB7B57 /* Checks */ = {
+			isa = PBXGroup;
+			children = (
+				DE4121260D7F1C1C0080F80A /* DeadStores.cpp */,
+				35D55B250D81D8C60092E734 /* CFRefCount.cpp */,
+				3595AFB70E1C8D62004CDF09 /* CheckObjCDealloc.cpp */,
+				356B89760D9BFDC100CBEBE9 /* BasicObjCFoundationChecks.h */,
+				3507E4C10E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp */,
+				35F8D0D50D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp */,
+				DE4121290D7F1C1C0080F80A /* UninitializedValues.cpp */,
+			);
+			name = Checks;
+			sourceTree = "<group>";
+		};
+		3507E4C60E27FE5500FB7B57 /* Path-Sensitive Core */ = {
+			isa = PBXGroup;
+			children = (
+				3536456A0E23EBF7009C6509 /* Environment.cpp */,
+				3558F76C0E267C8300A5B0DF /* BasicStore.cpp */,
+				35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */,
+				DE41212A0D7F1C1C0080F80A /* GRCoreEngine.cpp */,
+				35D55B240D81D8C60092E734 /* BasicValueFactory.cpp */,
+				DE4121250D7F1C1C0080F80A /* ValueState.cpp */,
+				DE4121270D7F1C1C0080F80A /* SymbolManager.cpp */,
+				DE4121280D7F1C1C0080F80A /* ExplodedGraph.cpp */,
+				DE41212C0D7F1C1C0080F80A /* GRSimpleVals.h */,
+				DE41212F0D7F1C1C0080F80A /* GRSimpleVals.cpp */,
+				DE41212E0D7F1C1C0080F80A /* RValues.cpp */,
+				DE4121300D7F1C1C0080F80A /* GRBlockCounter.cpp */,
+				DE4121310D7F1C1C0080F80A /* GRExprEngine.cpp */,
+				DE4121320D7F1C1C0080F80A /* ProgramPoint.cpp */,
+			);
+			name = "Path-Sensitive Core";
+			sourceTree = "<group>";
+		};
+		3507E4C90E27FE9000FB7B57 /* Bug Reporting */ = {
+			isa = PBXGroup;
+			children = (
+				35A8FCF80D9B4B29001C2F97 /* PathDiagnostic.cpp */,
+				359379090DA48ABA0043B19C /* BugReporter.cpp */,
+			);
+			name = "Bug Reporting";
+			sourceTree = "<group>";
+		};
+		3507E4CC0E27FEB900FB7B57 /* Flow-Sensitive Analyses */ = {
+			isa = PBXGroup;
+			children = (
+				356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */,
+			);
+			name = "Flow-Sensitive Analyses";
+			sourceTree = "<group>";
+		};
 		352C19DB0CA321AC0045DB98 /* Visitors */ = {
 			isa = PBXGroup;
 			children = (
@@ -577,30 +630,10 @@
 		356EF9B30C8F7DCA006650F5 /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
-				3558F76C0E267C8300A5B0DF /* BasicStore.cpp */,
-				3536456A0E23EBF7009C6509 /* Environment.cpp */,
-				3595AFB70E1C8D62004CDF09 /* CheckObjCDealloc.cpp */,
-				35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */,
-				359379090DA48ABA0043B19C /* BugReporter.cpp */,
-				356B89760D9BFDC100CBEBE9 /* BasicObjCFoundationChecks.h */,
-				35F8D0D50D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp */,
-				35A8FCF80D9B4B29001C2F97 /* PathDiagnostic.cpp */,
-				35D55B240D81D8C60092E734 /* BasicValueFactory.cpp */,
-				35D55B250D81D8C60092E734 /* CFRefCount.cpp */,
-				356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */,
-				DE4121250D7F1C1C0080F80A /* ValueState.cpp */,
-				DE4121260D7F1C1C0080F80A /* DeadStores.cpp */,
-				DE4121270D7F1C1C0080F80A /* SymbolManager.cpp */,
-				DE4121280D7F1C1C0080F80A /* ExplodedGraph.cpp */,
-				DE4121290D7F1C1C0080F80A /* UninitializedValues.cpp */,
-				DE41212A0D7F1C1C0080F80A /* GRCoreEngine.cpp */,
-				DE41212C0D7F1C1C0080F80A /* GRSimpleVals.h */,
-				DE41212D0D7F1C1C0080F80A /* LiveVariables.cpp */,
-				DE41212E0D7F1C1C0080F80A /* RValues.cpp */,
-				DE41212F0D7F1C1C0080F80A /* GRSimpleVals.cpp */,
-				DE4121300D7F1C1C0080F80A /* GRBlockCounter.cpp */,
-				DE4121310D7F1C1C0080F80A /* GRExprEngine.cpp */,
-				DE4121320D7F1C1C0080F80A /* ProgramPoint.cpp */,
+				3507E4C30E27FE3800FB7B57 /* Checks */,
+				3507E4CC0E27FEB900FB7B57 /* Flow-Sensitive Analyses */,
+				3507E4C60E27FE5500FB7B57 /* Path-Sensitive Core */,
+				3507E4C90E27FE9000FB7B57 /* Bug Reporting */,
 			);
 			name = Analysis;
 			sourceTree = "<group>";
@@ -1141,6 +1174,7 @@
 				3595AFB80E1C8D62004CDF09 /* CheckObjCDealloc.cpp in Sources */,
 				3536456B0E23EBF7009C6509 /* Environment.cpp in Sources */,
 				3558F76D0E267C8300A5B0DF /* BasicStore.cpp in Sources */,
+				3507E4C20E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
