@@ -1267,11 +1267,14 @@ bool GVN::performPRE(Function& F) {
         Value* op = BI->getOperand(i);
         if (isa<Argument>(op) || isa<Constant>(op) || isa<GlobalValue>(op))
           PREInstr->setOperand(i, op);
-        else if (!lookupNumber(PREPred, VN.lookup(op))) {
-          success = false;
-          break;
-        } else
-          PREInstr->setOperand(i, lookupNumber(PREPred, VN.lookup(op)));
+        else {
+          Value* V = lookupNumber(PREPred, VN.lookup(op));
+          if (!V) {
+            success = false;
+            break;
+          } else
+            PREInstr->setOperand(i, V);
+        }
       }
       
       // Fail out if we encounter an operand that is not available in
