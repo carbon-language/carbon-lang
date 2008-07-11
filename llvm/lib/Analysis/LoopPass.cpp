@@ -32,7 +32,7 @@ LPPassManager::LPPassManager(int Depth)
   CurrentLoop = NULL;
 }
 
-/// Delete loop from the loop queue and loop hierarcy (LoopInfo). 
+/// Delete loop from the loop queue and loop hierarchy (LoopInfo). 
 void LPPassManager::deleteLoopFromQueue(Loop *L) {
 
   if (Loop *ParentLoop = L->getParentLoop()) { // Not a top-level loop.

@@ -68,7 +68,7 @@ class LoopPass : public Pass {
   /// SimpleAnalysis - Provides simple interface to update analysis info
   /// maintained by various passes. Note, if required this interface can
   /// be extracted into a separate abstract class but it would require
-  /// additional use of multiple inheritance in Pass class hierarcy, something
+  /// additional use of multiple inheritance in Pass class hierarchy, something
   /// we are trying to avoid.
 
   /// Each loop pass can override these simple analysis hooks to update
@@ -134,7 +134,7 @@ public:
   /// SimpleAnalysis - Provides simple interface to update analysis info
   /// maintained by various passes. Note, if required this interface can
   /// be extracted into a separate abstract class but it would require
-  /// additional use of multiple inheritance in Pass class hierarcy, something
+  /// additional use of multiple inheritance in Pass class hierarchy, something
   /// we are trying to avoid.
 
   /// cloneBasicBlockSimpleAnalysis - Invoke cloneBasicBlockAnalysis hook for

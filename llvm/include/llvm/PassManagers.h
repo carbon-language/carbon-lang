@@ -28,8 +28,8 @@
 //
 // Pass Manager Infrastructure uses multiple pass managers.  They are
 // PassManager, FunctionPassManager, MPPassManager, FPPassManager, BBPassManager.
-// This class hierarcy uses multiple inheritance but pass managers do not derive
-// from another pass manager.
+// This class hierarchy uses multiple inheritance but pass managers do not
+// derive from another pass manager.
 //
 // PassManager and FunctionPassManager are two top-level pass manager that
 // represents the external interface of this entire pass manager infrastucture.
