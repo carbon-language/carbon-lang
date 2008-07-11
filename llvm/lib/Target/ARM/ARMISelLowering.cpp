@@ -685,6 +685,20 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
       DAG.getMachineFunction().getRegInfo().addLiveOut(ARM::R1);
     }
     break;
+  case 9:  // i128 -> 4 regs
+    Copy = DAG.getCopyToReg(Chain, ARM::R3, Op.getOperand(7), SDOperand());
+    Copy = DAG.getCopyToReg(Copy , ARM::R2, Op.getOperand(5), Copy.getValue(1));
+    Copy = DAG.getCopyToReg(Copy , ARM::R1, Op.getOperand(3), Copy.getValue(1));
+    Copy = DAG.getCopyToReg(Copy , ARM::R0, Op.getOperand(1), Copy.getValue(1));
+    // If we haven't noted the R0+R1 are live out, do so now.
+    if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
+      DAG.getMachineFunction().getRegInfo().addLiveOut(ARM::R0);
+      DAG.getMachineFunction().getRegInfo().addLiveOut(ARM::R1);
+      DAG.getMachineFunction().getRegInfo().addLiveOut(ARM::R2);
+      DAG.getMachineFunction().getRegInfo().addLiveOut(ARM::R3);
+    }
+    break;
+      
   }
 
   //We must use RET_FLAG instead of BRIND because BRIND doesn't have a flag
