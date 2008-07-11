@@ -89,6 +89,14 @@ if [ \! -f Makefile.config ]; then
         || exit 1
 fi
 
+SUBVERSION=`echo $RC_ProjectSourceVersion | sed -e 's/.*\.//'`
+
+if [ "x$SUBVERSION" != "x$RC_ProjectSourceVersion" ]; then
+    LLVM_SUBMIT_SUBVERSION=`printf "%02d" $SUBVERSION`
+    RC_ProjectSourceVersion=`echo $RC_ProjectSourceVersion | sed -e 's/\..*//'`
+    LLVM_SUBMIT_VERSION=$RC_ProjectSourceVersion
+fi
+
 if [ "x$LLVM_SUBMIT_SUBVERSION" = "x00" -o "x$LLVM_SUBMIT_SUBVERSION" = "x0" ]; then
     LLVM_VERSION="$LLVM_SUBMIT_VERSION"
 else
