@@ -23,7 +23,8 @@ enum Analyses {
   WarnUninitVals,
   DisplayLiveVariables,
   CheckerCFRef,
-  CheckerSimple
+  CheckerSimple,
+  CheckObjCMethSigs
 };
   
 ASTConsumer* CreateAnalysisConsumer(Analyses* Beg, Analyses* End,

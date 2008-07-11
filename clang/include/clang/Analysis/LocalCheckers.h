@@ -43,7 +43,8 @@ GRTransferFuncs* MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
   
 void CheckObjCDealloc(ObjCImplementationDecl* D, const LangOptions& L,
                       BugReporter& BR);
-
+  
+void CheckObjCInstMethSignature(ObjCImplementationDecl* ID, BugReporter& BR);
   
 } // end namespace clang
 

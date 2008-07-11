@@ -390,6 +390,13 @@ static void ActionCheckObjCDealloc(AnalysisManager& mgr) {
                    mgr.getLangOptions(), BR);  
 }
 
+static void ActionCheckObjCInstMethSignature(AnalysisManager& mgr) {
+  BugReporter BR(mgr);
+  
+  CheckObjCInstMethSignature(cast<ObjCImplementationDecl>(mgr.getCodeDecl()),
+                             BR);
+}
+
 //===----------------------------------------------------------------------===//
 // AnalysisConsumer creation.
 //===----------------------------------------------------------------------===//
@@ -415,6 +422,10 @@ ASTConsumer* clang::CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
         
       case WarnUninitVals:
         C->addCodeAction(&ActionUninitVals);
+        break;
+        
+      case CheckObjCMethSigs:
+        C->addObjCImplementationAction(&ActionCheckObjCInstMethSignature);
         break;
       
       case DisplayLiveVariables:
@@ -442,8 +453,8 @@ ASTConsumer* clang::CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
   
   // Checks we always perform:
   if (lopts.getGCMode() != LangOptions::GCOnly)
-    C->addObjCImplementationAction(&ActionCheckObjCDealloc);  
-  
+    C->addObjCImplementationAction(&ActionCheckObjCDealloc);
+    
   return C.take();
 }
 
