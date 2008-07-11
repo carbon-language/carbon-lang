@@ -306,6 +306,7 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, unsigned FileID,
       " .msg { float:left }\n"
       " .msg { padding:0.5em 1ex 0.5em 1ex }\n"
       " .msg { margin-top:10px; margin-bottom:10px }\n"
+      " .msg { max-width:60em; word-wrap: break-word; white-space: pre-wrap;}\n"
       " .mrange { background-color:#dfddf3 }\n"
       " .mrange { border-bottom:1px solid #6F9DBE }\n"
       " .PathIndex { font-weight: bold }\n"
