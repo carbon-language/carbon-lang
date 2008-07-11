@@ -13,12 +13,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Analysis/PathSensitive/BasicStore.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Streams.h"
-
-#include "clang/Analysis/PathSensitive/BasicStore.h"
+#include "llvm/ADT/ImmutableList.h"
+#include "llvm/Support/Compiler.h"
 
 #ifndef NDEBUG
 #include "llvm/Support/GraphWriter.h"
@@ -29,6 +30,79 @@ using namespace clang;
 using llvm::dyn_cast;
 using llvm::cast;
 using llvm::APSInt;
+
+//===----------------------------------------------------------------------===//
+// Engine construction and deletion.
+//===----------------------------------------------------------------------===//
+
+namespace {
+
+class VISIBILITY_HIDDEN MappedBatchAuditor : public GRSimpleAPICheck {
+  typedef llvm::ImmutableList<GRSimpleAPICheck*> Checks;
+  typedef llvm::DenseMap<void*,Checks> MapTy;
+  
+  MapTy M;
+  Checks::Factory F;
+
+public:
+  MappedBatchAuditor(llvm::BumpPtrAllocator& Alloc) : F(Alloc) {}
+  
+  virtual ~MappedBatchAuditor() {
+    llvm::DenseSet<GRSimpleAPICheck*> AlreadyVisited;
+    
+    for (MapTy::iterator MI = M.begin(), ME = M.end(); MI != ME; ++MI)
+      for (Checks::iterator I=MI->second.begin(), E=MI->second.end(); I!=E;++I){
+
+        GRSimpleAPICheck* check = *I;
+        
+        if (AlreadyVisited.count(check))
+          continue;
+        
+        AlreadyVisited.insert(check);
+        delete check;
+      }
+  }
+
+  void AddCheck(GRSimpleAPICheck* A, Stmt::StmtClass C) {
+    assert (A && "Check cannot be null.");
+    void* key = reinterpret_cast<void*>((uintptr_t) C);
+    MapTy::iterator I = M.find(key);
+    M[key] = F.Concat(A, I == M.end() ? F.GetEmptyList() : I->second);
+  }
+  
+  virtual void EmitWarnings(BugReporter& BR) {
+    llvm::DenseSet<GRSimpleAPICheck*> AlreadyVisited;
+    
+    for (MapTy::iterator MI = M.begin(), ME = M.end(); MI != ME; ++MI)
+      for (Checks::iterator I=MI->second.begin(), E=MI->second.end(); I!=E;++I){
+        
+        GRSimpleAPICheck* check = *I;
+        
+        if (AlreadyVisited.count(check))
+          continue;
+        
+        check->EmitWarnings(BR);
+      }
+  }
+  
+  virtual bool Audit(NodeTy* N) {
+    Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
+    void* key = reinterpret_cast<void*>((uintptr_t) S->getStmtClass());
+    MapTy::iterator MI = M.find(key);
+
+    if (MI == M.end())
+      return false;
+    
+    bool isSink = false;
+    
+    for (Checks::iterator I=MI->second.begin(), E=MI->second.end(); I!=E; ++I)
+      isSink |= (*I)->Audit(N);
+
+    return isSink;    
+  }
+};
+
+} // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
 // Engine construction and deletion.
@@ -58,14 +132,7 @@ GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
 GRExprEngine::~GRExprEngine() {    
   for (BugTypeSet::iterator I = BugTypes.begin(), E = BugTypes.end(); I!=E; ++I)
     delete *I;
-    
-  for (SimpleChecksTy::iterator I = CallChecks.begin(), E = CallChecks.end();
-       I != E; ++I)
-    delete *I;
-  
-  for (SimpleChecksTy::iterator I=MsgExprChecks.begin(), E=MsgExprChecks.end();
-       I != E; ++I)
-    delete *I;  
+
   
   delete [] NSExceptionInstanceRaiseSelectors;
 }
@@ -104,16 +171,9 @@ void GRExprEngine::EmitWarnings(BugReporterData& BRData) {
     (*I)->EmitWarnings(BR);
   }
   
-  for (SimpleChecksTy::iterator I = CallChecks.begin(), E = CallChecks.end();
-       I != E; ++I) {
+  if (BatchAuditor) {
     GRBugReporter BR(BRData, *this);
-    (*I)->EmitWarnings(BR);
-  }
-  
-  for (SimpleChecksTy::iterator I=MsgExprChecks.begin(), E=MsgExprChecks.end();
-       I != E; ++I) {
-    GRBugReporter BR(BRData, *this);
-    (*I)->EmitWarnings(BR);
+    BatchAuditor->EmitWarnings(BR);
   }
 }
 
@@ -122,12 +182,11 @@ void GRExprEngine::setTransferFunctions(GRTransferFuncs* tf) {
   TF->RegisterChecks(*this);
 }
 
-void GRExprEngine::AddCallCheck(GRSimpleAPICheck* A) {
-  CallChecks.push_back(A);
-}
-
-void GRExprEngine::AddObjCMessageExprCheck(GRSimpleAPICheck* A) {
-  MsgExprChecks.push_back(A);
+void GRExprEngine::AddCheck(GRSimpleAPICheck* A, Stmt::StmtClass C) {
+  if (!BatchAuditor)
+    BatchAuditor.reset(new MappedBatchAuditor(getGraph().getAllocator()));
+  
+  ((MappedBatchAuditor*) BatchAuditor.get())->AddCheck(A, C);
 }
 
 const ValueState* GRExprEngine::getInitialState() {
@@ -186,26 +245,14 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   CurrentStmt = S;
   
   // Set up our simple checks.
+  if (BatchAuditor)
+    Builder->setAuditor(BatchAuditor.get());
   
-  // FIXME: This can probably be installed directly in GRCoreEngine, obviating
-  //  the need to do a copy every time we hit a block-level statement.
-  
-  if (!MsgExprChecks.empty())
-    Builder->setObjCMsgExprAuditors((GRAuditor<ValueState>**) &MsgExprChecks[0],
-         (GRAuditor<ValueState>**) (&MsgExprChecks[0] + MsgExprChecks.size()));
-  
-  
-  if (!CallChecks.empty())
-    Builder->setCallExprAuditors((GRAuditor<ValueState>**) &CallChecks[0],
-         (GRAuditor<ValueState>**) (&CallChecks[0] + CallChecks.size()));
-  
-  // Create the cleaned state.
-  
+  // Create the cleaned state.  
   CleanedState = StateMgr.RemoveDeadBindings(EntryNode->getState(), CurrentStmt,
                                              Liveness, DeadSymbols);
   
   // Process any special transfer function for dead symbols.
-  
   NodeSet Tmp;
   
   if (DeadSymbols.empty())

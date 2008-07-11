@@ -165,36 +165,26 @@ public:
   
 template<typename STATE>
 class GRStmtNodeBuilder  {
+public:
   typedef STATE                   StateTy;
   typedef ExplodedNode<StateTy>   NodeTy;
   
+private:
   GRStmtNodeBuilderImpl& NB;
-  const StateTy* CleanedState;
-  
-  GRAuditor<StateTy> **CallExprAuditBeg, **CallExprAuditEnd;
-  GRAuditor<StateTy> **ObjCMsgExprAuditBeg, **ObjCMsgExprAuditEnd;
+  const StateTy* CleanedState;  
+  GRAuditor<StateTy>* Auditor;
   
 public:
   GRStmtNodeBuilder(GRStmtNodeBuilderImpl& nb) : NB(nb),
-    CallExprAuditBeg(0), CallExprAuditEnd(0),
-    ObjCMsgExprAuditBeg(0), ObjCMsgExprAuditEnd(0),
-    PurgingDeadSymbols(false),
+    Auditor(0), PurgingDeadSymbols(false),
     BuildSinks(false), HasGeneratedNode(false) {
       
     CleanedState = getLastNode()->getState();
   }
-  
-  void setObjCMsgExprAuditors(GRAuditor<StateTy> **B,
-                              GRAuditor<StateTy> **E) {
-    ObjCMsgExprAuditBeg = B;
-    ObjCMsgExprAuditEnd = E;
+
+  void setAuditor(GRAuditor<StateTy>* A) {
+    Auditor = A;
   }
-  
-  void setCallExprAuditors(GRAuditor<StateTy> **B,
-                           GRAuditor<StateTy> **E) {
-    CallExprAuditBeg = B;
-    CallExprAuditEnd = E;
-  }  
     
   NodeTy* getLastNode() const {
     return static_cast<NodeTy*>(NB.getLastNode());
@@ -241,23 +231,9 @@ public:
                    NodeTy* Pred, const StateTy* St) {    
     
     const StateTy* PredState = GetState(Pred);
-    
-    GRAuditor<StateTy> **AB = NULL, **AE = NULL;
-    
-    switch (S->getStmtClass()) {
-      default: break;
-      case Stmt::CallExprClass:
-        AB = CallExprAuditBeg;
-        AE = CallExprAuditEnd;
-        break;
-      case Stmt::ObjCMessageExprClass:
-        AB = ObjCMsgExprAuditBeg;
-        AE = ObjCMsgExprAuditEnd;
-        break;
-    }
-    
+        
     // If the state hasn't changed, don't generate a new node.
-    if (!BuildSinks && St == PredState && AB == NULL) {
+    if (!BuildSinks && St == PredState && Auditor == 0) {
       Dst.Add(Pred);
       return NULL;
     }
@@ -268,9 +244,8 @@ public:
       if (BuildSinks)
         N->markAsSink();
       else {
-        for ( ; AB != AE; ++AB)
-          if ((*AB)->Audit(N))
-            N->markAsSink();
+        if (Auditor && Auditor->Audit(N))
+          N->markAsSink();
         
         Dst.Add(N);
       }

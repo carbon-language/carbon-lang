@@ -98,10 +98,7 @@ protected:
   Selector* NSExceptionInstanceRaiseSelectors;
   Selector RaiseSel;
   
-  typedef llvm::SmallVector<GRSimpleAPICheck*,2> SimpleChecksTy;
-  
-  SimpleChecksTy CallChecks;
-  SimpleChecksTy MsgExprChecks;
+  llvm::OwningPtr<GRSimpleAPICheck> BatchAuditor;
   
 public:
   typedef llvm::SmallPtrSet<NodeTy*,2> UndefBranchesTy;  
@@ -347,21 +344,7 @@ public:
     return UndefReceivers.end();
   }
   
-  typedef SimpleChecksTy::iterator simple_checks_iterator;
-  
-  simple_checks_iterator call_auditors_begin() { return CallChecks.begin(); }
-  simple_checks_iterator call_auditors_end() { return CallChecks.end(); }
-  
-  simple_checks_iterator msgexpr_auditors_begin() {
-    return MsgExprChecks.begin();
-  }
-  simple_checks_iterator msgexpr_auditors_end() {
-    return MsgExprChecks.end();
-  }
-  
-  void AddCallCheck(GRSimpleAPICheck* A);
-  
-  void AddObjCMessageExprCheck(GRSimpleAPICheck* A);
+  void AddCheck(GRSimpleAPICheck* A, Stmt::StmtClass C);
   
   /// ProcessStmt - Called by GRCoreEngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a block-level statement.  

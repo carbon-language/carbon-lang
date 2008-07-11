@@ -354,11 +354,11 @@ void GRSimpleVals::RegisterChecks(GRExprEngine& Eng) {
   ASTContext& Ctx = Eng.getContext();
   ValueStateManager* VMgr = &Eng.getStateManager();
 
-  GRSimpleAPICheck* Check = CreateBasicObjCFoundationChecks(Ctx, VMgr);  
-  Eng.AddObjCMessageExprCheck(Check);
+  GRSimpleAPICheck* Check = CreateBasicObjCFoundationChecks(Ctx, VMgr);
+  Eng.AddCheck(Check, Stmt::ObjCMessageExprClass);
   
-  Check = CreateAuditCFNumberCreate(Ctx, VMgr);  
-  Eng.AddCallCheck(Check);
+  Check = CreateAuditCFNumberCreate(Ctx, VMgr);
+  Eng.AddCheck(Check, Stmt::CallExprClass);
   
 }
 
