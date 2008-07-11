@@ -5251,6 +5251,29 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       return new ICmpInst(I.getPredicate(), A, B);
     }
     
+    // If we have a icmp le or icmp ge instruction, turn it into the appropriate
+    // icmp lt or icmp gt instruction.  This allows us to rely on them being
+    // folded in the code below.
+    switch (I.getPredicate()) {
+    default: break;
+    case ICmpInst::ICMP_ULE:
+      if (CI->isMaxValue(false))                 // A <=u MAX -> TRUE
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
+      return new ICmpInst(ICmpInst::ICMP_ULT, Op0, AddOne(CI));
+    case ICmpInst::ICMP_SLE:
+      if (CI->isMaxValue(true))                  // A <=s MAX -> TRUE
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
+      return new ICmpInst(ICmpInst::ICMP_SLT, Op0, AddOne(CI));
+    case ICmpInst::ICMP_UGE:
+      if (CI->isMinValue(false))                 // A >=u MIN -> TRUE
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
+      return new ICmpInst( ICmpInst::ICMP_UGT, Op0, SubOne(CI));
+    case ICmpInst::ICMP_SGE:
+      if (CI->isMinValue(true))                  // A >=s MIN -> TRUE
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
+      return new ICmpInst(ICmpInst::ICMP_SGT, Op0, SubOne(CI));
+    }
+    
     switch (I.getPredicate()) {
     default: break;
     case ICmpInst::ICMP_ULT:                        // A <u MIN -> FALSE
@@ -5298,64 +5321,11 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       if (isMaxValueMinusOne(CI, true))           // A >s MAX-1 -> A == MAX
         return new ICmpInst(ICmpInst::ICMP_EQ, Op0, AddOne(CI));
       break;
-
-    case ICmpInst::ICMP_ULE:
-      if (CI->isMaxValue(false))                 // A <=u MAX -> TRUE
-        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-      if (CI->isMinValue(false))                 // A <=u MIN -> A == MIN
-        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, Op1);
-      if (isMaxValueMinusOne(CI,false))          // A <=u MAX-1 -> A != MAX
-        return new ICmpInst(ICmpInst::ICMP_NE, Op0, AddOne(CI));
-      break;
-
-    case ICmpInst::ICMP_SLE:
-      if (CI->isMaxValue(true))                  // A <=s MAX -> TRUE
-        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-      if (CI->isMinValue(true))                  // A <=s MIN -> A == MIN
-        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, Op1);
-      if (isMaxValueMinusOne(CI,true))           // A <=s MAX-1 -> A != MAX
-        return new ICmpInst(ICmpInst::ICMP_NE, Op0, AddOne(CI));
-      break;
-
-    case ICmpInst::ICMP_UGE:
-      if (CI->isMinValue(false))                 // A >=u MIN -> TRUE
-        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-      if (CI->isMaxValue(false))                 // A >=u MAX -> A == MAX
-        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, Op1);
-      if (isMinValuePlusOne(CI,false))           // A >=u MIN-1 -> A != MIN
-        return new ICmpInst(ICmpInst::ICMP_NE, Op0, SubOne(CI));
-      break;
-
-    case ICmpInst::ICMP_SGE:
-      if (CI->isMinValue(true))                  // A >=s MIN -> TRUE
-        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-      if (CI->isMaxValue(true))                  // A >=s MAX -> A == MAX
-        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, Op1);
-      if (isMinValuePlusOne(CI,true))            // A >=s MIN-1 -> A != MIN
-        return new ICmpInst(ICmpInst::ICMP_NE, Op0, SubOne(CI));
-      break;
     }
 
-    // If we still have a icmp le or icmp ge instruction, turn it into the
-    // appropriate icmp lt or icmp gt instruction.  Since the border cases have
-    // already been handled above, this requires little checking.
-    //
-    switch (I.getPredicate()) {
-    default: break;
-    case ICmpInst::ICMP_ULE: 
-      return new ICmpInst(ICmpInst::ICMP_ULT, Op0, AddOne(CI));
-    case ICmpInst::ICMP_SLE:
-      return new ICmpInst(ICmpInst::ICMP_SLT, Op0, AddOne(CI));
-    case ICmpInst::ICMP_UGE:
-      return new ICmpInst( ICmpInst::ICMP_UGT, Op0, SubOne(CI));
-    case ICmpInst::ICMP_SGE:
-      return new ICmpInst(ICmpInst::ICMP_SGT, Op0, SubOne(CI));
-    }
-    
     // See if we can fold the comparison based on bits known to be zero or one
     // in the input.  If this comparison is a normal comparison, it demands all
     // bits, if it is a sign bit comparison, it only demands the sign bit.
-    
     bool UnusedBit;
     bool isSignBit = isSignBitCheck(I.getPredicate(), CI, UnusedBit);
     
@@ -5368,56 +5338,51 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       return &I;
         
     // Given the known and unknown bits, compute a range that the LHS could be
-    // in.
-    if ((KnownOne | KnownZero) != 0) {
-      // Compute the Min, Max and RHS values based on the known bits. For the
-      // EQ and NE we use unsigned values.
-      APInt Min(BitWidth, 0), Max(BitWidth, 0);
-      const APInt& RHSVal = CI->getValue();
-      if (ICmpInst::isSignedPredicate(I.getPredicate())) {
-        ComputeSignedMinMaxValuesFromKnownBits(Ty, KnownZero, KnownOne, Min, 
-                                               Max);
-      } else {
-        ComputeUnsignedMinMaxValuesFromKnownBits(Ty, KnownZero, KnownOne, Min, 
-                                                 Max);
-      }
-      switch (I.getPredicate()) {  // LE/GE have been folded already.
-      default: assert(0 && "Unknown icmp opcode!");
-      case ICmpInst::ICMP_EQ:
-        if (Max.ult(RHSVal) || Min.ugt(RHSVal))
-          return ReplaceInstUsesWith(I, ConstantInt::getFalse());
-        break;
-      case ICmpInst::ICMP_NE:
-        if (Max.ult(RHSVal) || Min.ugt(RHSVal))
-          return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-        break;
-      case ICmpInst::ICMP_ULT:
-        if (Max.ult(RHSVal))
-          return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-        if (Min.uge(RHSVal))
-          return ReplaceInstUsesWith(I, ConstantInt::getFalse());
-        break;
-      case ICmpInst::ICMP_UGT:
-        if (Min.ugt(RHSVal))
-          return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-        if (Max.ule(RHSVal))
-          return ReplaceInstUsesWith(I, ConstantInt::getFalse());
-        break;
-      case ICmpInst::ICMP_SLT:
-        if (Max.slt(RHSVal))
-          return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-        if (Min.sgt(RHSVal))
-          return ReplaceInstUsesWith(I, ConstantInt::getFalse());
-        if (Max == RHSVal)  // A <s MAX -> A != MAX
-          return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
-        break;
-      case ICmpInst::ICMP_SGT: 
-        if (Min.sgt(RHSVal))
-          return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-        if (Max.sle(RHSVal))
-          return ReplaceInstUsesWith(I, ConstantInt::getFalse());
-        break;
-      }
+    // in.  Compute the Min, Max and RHS values based on the known bits. For the
+    // EQ and NE we use unsigned values.
+    APInt Min(BitWidth, 0), Max(BitWidth, 0);
+    const APInt& RHSVal = CI->getValue();
+    if (ICmpInst::isSignedPredicate(I.getPredicate()))
+      ComputeSignedMinMaxValuesFromKnownBits(Ty, KnownZero, KnownOne, Min, Max);
+    else
+      ComputeUnsignedMinMaxValuesFromKnownBits(Ty, KnownZero, KnownOne,Min,Max);
+    
+    switch (I.getPredicate()) {  // LE/GE have been folded already.
+    default: assert(0 && "Unknown icmp opcode!");
+    case ICmpInst::ICMP_EQ:
+      if (Max.ult(RHSVal) || Min.ugt(RHSVal))
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse());
+      break;
+    case ICmpInst::ICMP_NE:
+      if (Max.ult(RHSVal) || Min.ugt(RHSVal))
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
+      break;
+    case ICmpInst::ICMP_ULT:
+      if (Max.ult(RHSVal))
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
+      if (Min.uge(RHSVal))
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse());
+      break;
+    case ICmpInst::ICMP_UGT:
+      if (Min.ugt(RHSVal))
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
+      if (Max.ule(RHSVal))
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse());
+      break;
+    case ICmpInst::ICMP_SLT:
+      if (Max.slt(RHSVal))
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
+      if (Min.sgt(RHSVal))
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse());
+      if (Max == RHSVal)  // A <s MAX -> A != MAX
+        return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
+      break;
+    case ICmpInst::ICMP_SGT: 
+      if (Min.sgt(RHSVal))
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue());
+      if (Max.sle(RHSVal))
+        return ReplaceInstUsesWith(I, ConstantInt::getFalse());
+      break;
     }
           
     // Since the RHS is a ConstantInt (CI), if the left hand side is an 
