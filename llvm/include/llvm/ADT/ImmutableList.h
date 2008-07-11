@@ -73,7 +73,7 @@ public:
   // This constructor should normally only be called by ImmutableListFactory<T>.
   // There may be cases, however, when one needs to extract the internal pointer
   // and reconstruct a list object from that pointer.
-  ImmutableList(ImmutableListImpl<T>* x) : X(x) {}
+  ImmutableList(ImmutableListImpl<T>* x = 0) : X(x) {}
 
   ImmutableListImpl<T>* getInternalPointer() const {
     return X;
@@ -88,7 +88,8 @@ public:
     iterator& operator++() { L = L->getTail(); return *this; }
     bool operator==(const iterator& I) const { return L == I.L; }
     bool operator!=(const iterator& I) const { return L != I.L; }
-    ImmutableList operator*() const { return L; }
+    const value_type& operator*() const { return L->getHead(); }    
+    ImmutableList getList() const { return L; }    
   };
 
   /// begin - Returns an iterator referring to the head of the list, or
@@ -184,6 +185,29 @@ public:
   ImmutableList<T> Create(const T& X) {
     return Concat(X, GetEmptyList());
   }
+};
+  
+//===----------------------------------------------------------------------===//  
+// Partially-specialized Traits.
+//===----------------------------------------------------------------------===//  
+  
+template<typename T> struct DenseMapInfo;
+template<typename T> struct DenseMapInfo<ImmutableList<T> > {
+  static inline ImmutableList<T> getEmptyKey() {
+    return reinterpret_cast<ImmutableListImpl<T>*>(-1);
+  }
+  static inline ImmutableList<T> getTombstoneKey() {
+    return reinterpret_cast<ImmutableListImpl<T>*>(-2);
+  }
+  static unsigned getHashValue(ImmutableList<T> X) {
+    uintptr_t PtrVal = reinterpret_cast<uintptr_t>(X.getInternalPointer());
+    return (unsigned((uintptr_t)PtrVal) >> 4) ^ 
+           (unsigned((uintptr_t)PtrVal) >> 9);
+  }
+  static bool isEqual(ImmutableList<T> X1, ImmutableList<T> X2) {
+    return X1 == X2;
+  }
+  static bool isPod() { return true; }
 };
   
 } // end llvm namespace
