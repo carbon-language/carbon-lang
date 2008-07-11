@@ -5341,7 +5341,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       if (RHSVal == Max)                      // A <s MAX -> A != MAX
         return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
       if (RHSVal == Min+1)                    // A <s MIN+1 -> A == MIN
-        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, Op1);
+        return new ICmpInst(ICmpInst::ICMP_EQ, Op0, SubOne(CI));
       break;
     case ICmpInst::ICMP_SGT: 
       if (Min.sgt(RHSVal))                    // A >s C -> true iff min(A) > C
