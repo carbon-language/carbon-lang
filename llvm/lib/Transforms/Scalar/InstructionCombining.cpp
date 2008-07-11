@@ -5497,7 +5497,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
           break;
         case Instruction::Mul:
           if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
-            // a * Cst icmp eq/ne b * Cst --> a & 0x7f icmp b & 0x7f
+            // a * Cst icmp eq/ne b * Cst --> a & Mask icmp b & Mask
             if (!CI->isZero() && !CI->isOne()) {
               const APInt &AP = CI->getValue();
               ConstantInt *Mask = ConstantInt::get(
