@@ -117,9 +117,9 @@ static bool isPathTransparentTo(BasicBlock *CurBlock, BasicBlock *Dom,
 
   // Check whether this block is known transparent or not.
   std::map<BasicBlock*, bool>::iterator TBI =
-    TransparentBlocks.lower_bound(CurBlock);
+    TransparentBlocks.find(CurBlock);
 
-  if (TBI == TransparentBlocks.end() || TBI->first != CurBlock) {
+  if (TBI == TransparentBlocks.end()) {
     // If this basic block can modify the memory location, then the path is not
     // transparent!
     if (AA.canBasicBlockModify(*CurBlock, Ptr, Size)) {

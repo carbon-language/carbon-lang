@@ -823,8 +823,8 @@ public:
     for (typename std::vector<BlockT*>::iterator I = L->Blocks.begin(),
            E = L->Blocks.end(); I != E; ++I) {
       typename std::map<BlockT*, LoopBase<BlockT>*>::iterator BBMI =
-                                                          BBMap.lower_bound(*I);
-      if (BBMI == BBMap.end() || BBMI->first != *I)  // Not in map yet...
+                                                          BBMap.find(*I);
+      if (BBMI == BBMap.end())                       // Not in map yet...
         BBMap.insert(BBMI, std::make_pair(*I, L));   // Must be at this level
     }
 

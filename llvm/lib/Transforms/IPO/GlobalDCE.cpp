@@ -134,10 +134,10 @@ bool GlobalDCE::runOnModule(Module &M) {
 /// MarkGlobalIsNeeded - the specific global value as needed, and
 /// recursively mark anything that it uses as also needed.
 void GlobalDCE::GlobalIsNeeded(GlobalValue *G) {
-  std::set<GlobalValue*>::iterator I = AliveGlobals.lower_bound(G);
+  std::set<GlobalValue*>::iterator I = AliveGlobals.find(G);
 
   // If the global is already in the set, no need to reprocess it.
-  if (I != AliveGlobals.end() && *I == G) return;
+  if (I != AliveGlobals.end()) return;
 
   // Otherwise insert it now, so we do not infinitely recurse
   AliveGlobals.insert(I, G);

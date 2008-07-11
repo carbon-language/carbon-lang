@@ -251,8 +251,8 @@ static std::string getTypeDescription(const Type *Ty,
                                       std::vector<const Type *> &TypeStack) {
   if (isa<OpaqueType>(Ty)) {                     // Base case for the recursion
     std::map<const Type*, std::string>::iterator I =
-      AbstractTypeDescriptions->lower_bound(Ty);
-    if (I != AbstractTypeDescriptions->end() && I->first == Ty)
+      AbstractTypeDescriptions->find(Ty);
+    if (I != AbstractTypeDescriptions->end())
       return I->second;
     std::string Desc = "opaque";
     AbstractTypeDescriptions->insert(std::make_pair(Ty, Desc));
@@ -655,8 +655,8 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
   if (isa<OpaqueType>(Ty))
     return false;  // Two unequal opaque types are never equal
 
-  std::map<const Type*, const Type*>::iterator It = EqTypes.lower_bound(Ty);
-  if (It != EqTypes.end() && It->first == Ty)
+  std::map<const Type*, const Type*>::iterator It = EqTypes.find(Ty);
+  if (It != EqTypes.end())
     return It->second == Ty2;    // Looping back on a type, check for equality
 
   // Otherwise, add the mapping to the table to make sure we don't get

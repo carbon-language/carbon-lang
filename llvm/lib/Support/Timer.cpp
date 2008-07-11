@@ -185,8 +185,8 @@ void Timer::addPeakMemoryMeasurement() {
 static ManagedStatic<std::map<std::string, Timer> > NamedTimers;
 
 static Timer &getNamedRegionTimer(const std::string &Name) {
-  std::map<std::string, Timer>::iterator I = NamedTimers->lower_bound(Name);
-  if (I != NamedTimers->end() && I->first == Name)
+  std::map<std::string, Timer>::iterator I = NamedTimers->find(Name);
+  if (I != NamedTimers->end())
     return I->second;
 
   return NamedTimers->insert(I, std::make_pair(Name, Timer(Name)))->second;

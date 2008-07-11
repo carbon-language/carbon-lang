@@ -1100,9 +1100,9 @@ public:
     /// necessary.
     ConstantClass *getOrCreate(const TypeClass *Ty, const ValType &V) {
       MapKey Lookup(Ty, V);
-      typename MapTy::iterator I = Map.lower_bound(Lookup);
+      typename MapTy::iterator I = Map.find(Lookup);
       // Is it in the map?      
-      if (I != Map.end() && I->first == Lookup)
+      if (I != Map.end())
         return static_cast<ConstantClass *>(I->second);  
 
       // If no preexisting value, create one now...
@@ -1119,10 +1119,9 @@ public:
       // If the type of the constant is abstract, make sure that an entry exists
       // for it in the AbstractTypeMap.
       if (Ty->isAbstract()) {
-        typename AbstractTypeMapTy::iterator TI =
-          AbstractTypeMap.lower_bound(Ty);
+        typename AbstractTypeMapTy::iterator TI = AbstractTypeMap.find(Ty);
 
-        if (TI == AbstractTypeMap.end() || TI->first != Ty) {
+        if (TI == AbstractTypeMap.end()) {
           // Add ourselves to the ATU list of the type.
           cast<DerivedType>(Ty)->addAbstractTypeUser(this);
 
