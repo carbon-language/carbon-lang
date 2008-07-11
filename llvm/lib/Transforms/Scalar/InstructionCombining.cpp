@@ -5196,33 +5196,45 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   if (Ty == Type::Int1Ty) {
     switch (I.getPredicate()) {
     default: assert(0 && "Invalid icmp instruction!");
-    case ICmpInst::ICMP_EQ: {               // icmp eq bool %A, %B -> ~(A^B)
+    case ICmpInst::ICMP_EQ: {               // icmp eq i1 A, B -> ~(A^B)
       Instruction *Xor = BinaryOperator::CreateXor(Op0, Op1, I.getName()+"tmp");
       InsertNewInstBefore(Xor, I);
       return BinaryOperator::CreateNot(Xor);
     }
-    case ICmpInst::ICMP_NE:                  // icmp eq bool %A, %B -> A^B
+    case ICmpInst::ICMP_NE:                  // icmp eq i1 A, B -> A^B
       return BinaryOperator::CreateXor(Op0, Op1);
 
     case ICmpInst::ICMP_UGT:
-    case ICmpInst::ICMP_SGT:
-      std::swap(Op0, Op1);                   // Change icmp gt -> icmp lt
+      std::swap(Op0, Op1);                   // Change icmp ugt -> icmp ult
       // FALL THROUGH
-    case ICmpInst::ICMP_ULT:
-    case ICmpInst::ICMP_SLT: {               // icmp lt bool A, B -> ~X & Y
+    case ICmpInst::ICMP_ULT:{               // icmp ult i1 A, B -> ~A & B
       Instruction *Not = BinaryOperator::CreateNot(Op0, I.getName()+"tmp");
       InsertNewInstBefore(Not, I);
       return BinaryOperator::CreateAnd(Not, Op1);
     }
-    case ICmpInst::ICMP_UGE:
-    case ICmpInst::ICMP_SGE:
-      std::swap(Op0, Op1);                   // Change icmp ge -> icmp le
+    case ICmpInst::ICMP_SGT:
+      std::swap(Op0, Op1);                   // Change icmp sgt -> icmp slt
       // FALL THROUGH
-    case ICmpInst::ICMP_ULE:
-    case ICmpInst::ICMP_SLE: {               //  icmp le bool %A, %B -> ~A | B
+    case ICmpInst::ICMP_SLT: {               // icmp slt i1 A, B -> A & ~B
+      Instruction *Not = BinaryOperator::CreateNot(Op1, I.getName()+"tmp");
+      InsertNewInstBefore(Not, I);
+      return BinaryOperator::CreateAnd(Not, Op0);
+    }
+    case ICmpInst::ICMP_UGE:
+      std::swap(Op0, Op1);                   // Change icmp uge -> icmp ule
+      // FALL THROUGH
+    case ICmpInst::ICMP_ULE: {               //  icmp ule i1 A, B -> ~A | B
       Instruction *Not = BinaryOperator::CreateNot(Op0, I.getName()+"tmp");
       InsertNewInstBefore(Not, I);
       return BinaryOperator::CreateOr(Not, Op1);
+    }
+    case ICmpInst::ICMP_SGE:
+      std::swap(Op0, Op1);                   // Change icmp sge -> icmp sle
+      // FALL THROUGH
+    case ICmpInst::ICMP_SLE: {               //  icmp sle i1 A, B -> A | ~B
+      Instruction *Not = BinaryOperator::CreateNot(Op1, I.getName()+"tmp");
+      InsertNewInstBefore(Not, I);
+      return BinaryOperator::CreateOr(Not, Op0);
     }
     }
   }
