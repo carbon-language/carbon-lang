@@ -1814,12 +1814,11 @@ QualType Sema::TryFixInvalidVariablyModifiedType(QualType T) {
   if (const VariableArrayType* VLATy = dyn_cast<VariableArrayType>(T)) {
     APValue Result;
     if (VLATy->getSizeExpr() &&
-        VLATy->getSizeExpr()->tryEvaluate(Result, Context) && Result.isSInt() &&
-        Result.getSInt() > llvm::APSInt(Result.getSInt().getBitWidth(), 
-                                        Result.getSInt().isUnsigned())) {
-      return Context.getConstantArrayType(VLATy->getElementType(),
-                                          Result.getSInt(), 
-                                          ArrayType::Normal, 0);
+        VLATy->getSizeExpr()->tryEvaluate(Result, Context) && Result.isInt()) {
+      llvm::APSInt &Res = Result.getInt();
+      if (Res > llvm::APSInt(Res.getBitWidth(), Res.isUnsigned()))
+        return Context.getConstantArrayType(VLATy->getElementType(),
+                                            Res, ArrayType::Normal, 0);
     }
   }
   return QualType();

@@ -386,9 +386,9 @@ VisitSizeOfAlignOfTypeExpr(const SizeOfAlignOfTypeExpr *E) {
 //===----------------------------------------------------------------------===//
 
 bool Expr::tryEvaluate(APValue &Result, ASTContext &Ctx) const {
+  llvm::APSInt sInt(32);
 #if USE_NEW_EVALUATOR
   if (getType()->isIntegerType()) {
-    llvm::APSInt sInt(32);
     if (EvaluateInteger(this, sInt, Ctx)) {
       Result = APValue(sInt);
       return true;
