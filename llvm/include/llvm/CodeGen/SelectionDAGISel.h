@@ -18,7 +18,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Constant.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/SelectionDAGNodes.h"
 
 namespace llvm {
   class SelectionDAGLowering;

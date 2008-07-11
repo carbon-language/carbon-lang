@@ -18,6 +18,8 @@
 
 namespace llvm {
 
+class GlobalValue;
+
 namespace PIC16CP {
   enum PIC16CPKind {
     CPValue,

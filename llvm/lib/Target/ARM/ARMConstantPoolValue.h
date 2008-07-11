@@ -18,6 +18,8 @@
 
 namespace llvm {
 
+class GlobalValue;
+
 namespace ARMCP {
   enum ARMCPKind {
     CPValue,

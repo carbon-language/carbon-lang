@@ -16,8 +16,8 @@
 #define LLVM_CODEGEN_MACHINECONSTANTPOOL_H
 
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/Support/Streams.h"
+#include <cassert>
 #include <vector>
 #include <iosfwd>
 
@@ -27,6 +27,7 @@ class AsmPrinter;
 class Constant;
 class TargetData;
 class TargetMachine;
+class Type;
 class MachineConstantPool;
 
 /// Abstract base class for all machine specific constantpool value subclasses.
