@@ -92,30 +92,54 @@ public:
   bool isComplexFloat() const { return Kind == ComplexFloat; }
   bool isLValue() const { return Kind == LValue; }
   
-  const APSInt &getSInt() const {
+  APSInt &getSInt() {
     assert(isSInt() && "Invalid accessor");
-    return *(const APSInt*)(const void*)Data;
+    return *(APSInt*)(void*)Data;
+  }
+  const APSInt &getSInt() const {
+    return const_cast<APValue*>(this)->getSInt();
+  }
+  
+  APFloat &getFloat() {
+    assert(isFloat() && "Invalid accessor");
+    return *(APFloat*)(void*)Data;
   }
   const APFloat &getFloat() const {
-    assert(isFloat() && "Invalid accessor");
-    return *(const APFloat*)(const void*)Data;
+    return const_cast<APValue*>(this)->getFloat();
+  }
+  
+  APSInt &getComplexSIntReal() {
+    assert(isComplexSInt() && "Invalid accessor");
+    return ((ComplexAPSInt*)(void*)Data)->Real;
   }
   const APSInt &getComplexSIntReal() const {
+    return const_cast<APValue*>(this)->getComplexSIntReal();
+  }
+  
+  APSInt &getComplexSIntImag() {
     assert(isComplexSInt() && "Invalid accessor");
-    return ((const ComplexAPSInt*)(const void*)Data)->Real;
+    return ((ComplexAPSInt*)(void*)Data)->Imag;
   }
   const APSInt &getComplexSIntImag() const {
-    assert(isComplexSInt() && "Invalid accessor");
-    return ((const ComplexAPSInt*)(const void*)Data)->Imag;
+    return const_cast<APValue*>(this)->getComplexSIntImag();
+  }
+  
+  APFloat &getComplexFloatReal() {
+    assert(isComplexFloat() && "Invalid accessor");
+    return ((ComplexAPFloat*)(void*)Data)->Real;
   }
   const APFloat &getComplexFloatReal() const {
+    return const_cast<APValue*>(this)->getComplexFloatReal();
+  }
+
+  APFloat &getComplexFloatImag() {
     assert(isComplexFloat() && "Invalid accessor");
-    return ((const ComplexAPFloat*)(const void*)Data)->Real;
+    return ((ComplexAPFloat*)(void*)Data)->Imag;
   }
   const APFloat &getComplexFloatImag() const {
-    assert(isComplexFloat() && "Invalid accessor");
-    return ((const ComplexAPFloat*)(const void*)Data)->Imag;
+    return const_cast<APValue*>(this)->getComplexFloatImag();
   }
+
   Expr* getLValueBase() const {
     assert(isLValue() && "Invalid accessor");
     return ((const LV*)(const void*)Data)->Base;
