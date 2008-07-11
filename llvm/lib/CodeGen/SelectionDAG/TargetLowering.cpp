@@ -123,6 +123,8 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::FPTOUINT_PPCF128_I128] = "__fixunstfti";
   Names[RTLIB::SINTTOFP_I32_F32] = "__floatsisf";
   Names[RTLIB::SINTTOFP_I32_F64] = "__floatsidf";
+  Names[RTLIB::SINTTOFP_I32_F80] = "__floatsixf";
+  Names[RTLIB::SINTTOFP_I32_PPCF128] = "__floatsitf";
   Names[RTLIB::SINTTOFP_I64_F32] = "__floatdisf";
   Names[RTLIB::SINTTOFP_I64_F64] = "__floatdidf";
   Names[RTLIB::SINTTOFP_I64_F80] = "__floatdixf";

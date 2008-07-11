@@ -1771,11 +1771,12 @@ SDOperand DAGTypeLegalizer::ExpandIntOp_TRUNCATE(SDNode *N) {
 }
 
 SDOperand DAGTypeLegalizer::ExpandIntOp_SINT_TO_FP(SDOperand Source,
-                                                     MVT DestTy) {
+                                                   MVT DestTy) {
   // We know the destination is legal, but that the input needs to be expanded.
   MVT SourceVT = Source.getValueType();
 
   // Check to see if the target has a custom way to lower this.  If so, use it.
+  // This can trigger when called from ExpandIntOp_UINT_TO_FP.
   switch (TLI.getOperationAction(ISD::SINT_TO_FP, SourceVT)) {
   default: assert(0 && "This action not implemented for this operation!");
   case TargetLowering::Legal:
@@ -1789,13 +1790,24 @@ SDOperand DAGTypeLegalizer::ExpandIntOp_SINT_TO_FP(SDOperand Source,
   }
 
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (SourceVT == MVT::i64) {
+  if (SourceVT == MVT::i32) {
+    if (DestTy == MVT::f32)
+      LC = RTLIB::SINTTOFP_I32_F32;
+    else if (DestTy == MVT::f64)
+      LC = RTLIB::SINTTOFP_I32_F64;
+    else if (DestTy == MVT::f80)
+      LC = RTLIB::SINTTOFP_I32_F80;
+    else if (DestTy == MVT::ppcf128)
+      LC = RTLIB::SINTTOFP_I32_PPCF128;
+  } else if (SourceVT == MVT::i64) {
     if (DestTy == MVT::f32)
       LC = RTLIB::SINTTOFP_I64_F32;
-    else {
-      assert(DestTy == MVT::f64 && "Unknown fp value type!");
+    else if (DestTy == MVT::f64)
       LC = RTLIB::SINTTOFP_I64_F64;
-    }
+    else if (DestTy == MVT::f80)
+      LC = RTLIB::SINTTOFP_I64_F80;
+    else if (DestTy == MVT::ppcf128)
+      LC = RTLIB::SINTTOFP_I64_PPCF128;
   } else if (SourceVT == MVT::i128) {
     if (DestTy == MVT::f32)
       LC = RTLIB::SINTTOFP_I128_F32;
@@ -1803,16 +1815,12 @@ SDOperand DAGTypeLegalizer::ExpandIntOp_SINT_TO_FP(SDOperand Source,
       LC = RTLIB::SINTTOFP_I128_F64;
     else if (DestTy == MVT::f80)
       LC = RTLIB::SINTTOFP_I128_F80;
-    else {
-      assert(DestTy == MVT::ppcf128 && "Unknown fp value type!");
+    else if (DestTy == MVT::ppcf128)
       LC = RTLIB::SINTTOFP_I128_PPCF128;
-    }
-  } else {
-    assert(0 && "Unknown int value type!");
   }
-
   assert(LC != RTLIB::UNKNOWN_LIBCALL &&
          "Don't know how to expand this SINT_TO_FP!");
+
   return MakeLibCall(LC, DestTy, &Source, 1, true);
 }
 
