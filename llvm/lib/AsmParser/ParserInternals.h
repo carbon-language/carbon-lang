@@ -23,6 +23,7 @@
 #include "llvm/Assembly/Parser.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/APSInt.h"
 namespace llvm { class MemoryBuffer; }
 
 // Global variables exported from the lexer...
@@ -72,16 +73,17 @@ struct InlineAsmDescriptor {
 struct ValID {
   enum {
     LocalID, GlobalID, LocalName, GlobalName,
-    ConstSIntVal, ConstUIntVal, ConstFPVal, ConstNullVal,
+    ConstSIntVal, ConstUIntVal, ConstAPInt, ConstFPVal, ConstNullVal,
     ConstUndefVal, ConstZeroVal, ConstantVal, InlineAsmVal
   } Type;
 
   union {
-    unsigned Num;         // If it's a numeric reference like %1234
+    unsigned Num;            // If it's a numeric reference like %1234
     std::string *Name;    // If it's a named reference.  Memory must be deleted.
-    int64_t  ConstPool64; // Constant pool reference.  This is the value
-    uint64_t UConstPool64;// Unsigned constant pool reference.
-    APFloat *ConstPoolFP; // Floating point constant pool reference
+    int64_t  ConstPool64;    // Constant pool reference.  This is the value
+    uint64_t UConstPool64;   // Unsigned constant pool reference.
+    APSInt *ConstPoolInt;     // Large Integer constant pool reference
+    APFloat *ConstPoolFP;    // Floating point constant pool reference
     Constant *ConstantValue; // Fully resolved constant for ConstantVal case.
     InlineAsmDescriptor *IAD;
  };
@@ -110,7 +112,14 @@ struct ValID {
   static ValID create(APFloat *Val) {
     ValID D; D.Type = ConstFPVal; D.ConstPoolFP = Val; return D;
   }
-
+  
+  static ValID create(const APInt &Val, bool isSigned) {
+    ValID D; D.Type = ConstAPInt;
+    D.ConstPoolInt = new APSInt(Val, !isSigned);
+    return D;
+  }
+  
+  
   static ValID createNull() {
     ValID D; D.Type = ConstNullVal; return D;
   }
@@ -141,11 +150,16 @@ struct ValID {
       delete Name;    // Free this strdup'd memory.
     else if (Type == InlineAsmVal)
       delete IAD;
+    else if (Type == ConstAPInt)
+      delete ConstPoolInt;
   }
 
   inline ValID copy() const {
-    if (Type != LocalName && Type != GlobalName) return *this;
     ValID Result = *this;
+    if (Type == ConstAPInt)
+      Result.ConstPoolInt = new APSInt(*ConstPoolInt);
+    
+    if (Type != LocalName && Type != GlobalName) return Result;
     Result.Name = new std::string(*Name);
     return Result;
   }
@@ -156,6 +170,7 @@ struct ValID {
     case GlobalID      : return '@' + utostr(Num);
     case LocalName     : return *Name;
     case GlobalName    : return *Name;
+    case ConstAPInt    : return ConstPoolInt->toString();
     case ConstFPVal    : return ftostr(*ConstPoolFP);
     case ConstNullVal  : return "null";
     case ConstUndefVal : return "undef";
@@ -182,6 +197,7 @@ struct ValID {
     case GlobalName:    return *Name < *V.Name;
     case ConstSIntVal:  return ConstPool64  < V.ConstPool64;
     case ConstUIntVal:  return UConstPool64 < V.UConstPool64;
+    case ConstAPInt    : return ConstPoolInt->ult(*V.ConstPoolInt);
     case ConstFPVal:    return ConstPoolFP->compare(*V.ConstPoolFP) ==
                                APFloat::cmpLessThan;
     case ConstNullVal:  return false;
@@ -193,24 +209,24 @@ struct ValID {
   }
 
   bool operator==(const ValID &V) const {
-    if (Type == V.Type) {
-      switch (Type) {
-        case LocalID:
-        case GlobalID: return Num == V.Num;
-        case LocalName:
-        case GlobalName: return *Name == *(V.Name);
-        case ConstSIntVal:  return ConstPool64  == V.ConstPool64;
-        case ConstUIntVal:  return UConstPool64 == V.UConstPool64;
-        case ConstFPVal:    return ConstPoolFP->compare(*V.ConstPoolFP) == 
-                                   APFloat::cmpEqual;
-        case ConstantVal:   return ConstantValue == V.ConstantValue;
-        case ConstNullVal:  return true;
-        case ConstUndefVal: return true;
-        case ConstZeroVal:  return true;
-        default:  assert(0 && "Unknown value type!"); return false;
-      }
+    if (Type != V.Type) return false;
+    
+    switch (Type) {
+    default:  assert(0 && "Unknown value type!");
+    case LocalID:
+    case GlobalID: return Num == V.Num;
+    case LocalName:
+    case GlobalName: return *Name == *(V.Name);
+    case ConstSIntVal:  return ConstPool64  == V.ConstPool64;
+    case ConstUIntVal:  return UConstPool64 == V.UConstPool64;
+    case ConstAPInt:    return *ConstPoolInt == *V.ConstPoolInt;
+    case ConstFPVal:    return ConstPoolFP->compare(*V.ConstPoolFP) == 
+                               APFloat::cmpEqual;
+    case ConstantVal:   return ConstantValue == V.ConstantValue;
+    case ConstNullVal:  return true;
+    case ConstUndefVal: return true;
+    case ConstZeroVal:  return true;
     }
-    return false;
   }
 };
 

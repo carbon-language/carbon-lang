@@ -402,6 +402,20 @@ static Value *getExistingVal(const Type *Ty, const ValID &D) {
     // This is really a signed reference.  Transmogrify.
     return ConstantInt::get(Ty, D.ConstPool64, true);
 
+  case ValID::ConstAPInt:     // Is it an unsigned const pool reference?
+    if (!isa<IntegerType>(Ty)) {
+      GenerateError("Integral constant '" + D.getName() +
+                    "' is invalid or out of range for type '" +
+                    Ty->getDescription() + "'");
+      return 0;
+    }
+      
+    {
+      APSInt Tmp = *D.ConstPoolInt;
+      Tmp.extOrTrunc(Ty->getPrimitiveSizeInBits());
+      return ConstantInt::get(Tmp);
+    }
+      
   case ValID::ConstFPVal:        // Is it a floating point const pool reference?
     if (!Ty->isFloatingPoint() ||
         !ConstantFP::isValueValidForType(Ty, *D.ConstPoolFP)) {
@@ -2451,6 +2465,16 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
   }
   | EUINT64VAL {
     $$ = ValID::create($1);
+    CHECK_FOR_ERROR
+  }
+  | ESAPINTVAL {      // arbitrary precision integer constants
+    $$ = ValID::create(*$1, true);
+    delete $1;
+    CHECK_FOR_ERROR
+  }  
+  | EUAPINTVAL {      // arbitrary precision integer constants
+    $$ = ValID::create(*$1, false);
+    delete $1;
     CHECK_FOR_ERROR
   }
   | FPVAL {                     // Perhaps it's an FP constant?
