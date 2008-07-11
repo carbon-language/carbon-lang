@@ -7,9 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This implements a simple two pass scheduler.  The first pass attempts to push
-// backward any lengthy instructions and critical paths.  The second pass packs
-// instructions into semi-optimal time slots.
+// This implements the ScheduleDAG class, which is a base class used by
+// scheduling implementation classes.
 //
 //===----------------------------------------------------------------------===//
 
