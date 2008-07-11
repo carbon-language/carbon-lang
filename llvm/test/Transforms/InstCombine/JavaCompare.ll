@@ -1,8 +1,7 @@
 ; This is the sequence of stuff that the Java front-end expands for a single 
 ; <= comparison.  Check to make sure we turn it into a <= (only)
 
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | \
-; RUN:    grep -v {icmp sle} | not grep #uses
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {%c3 = icmp sle i32 %A, %B}
 
 define i1 @le(i32 %A, i32 %B) {
         %c1 = icmp sgt i32 %A, %B               ; <i1> [#uses=1]
