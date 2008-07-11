@@ -440,7 +440,6 @@ private:
   SDOperand SplitVecOp_BIT_CONVERT(SDNode *N);
   SDOperand SplitVecOp_EXTRACT_SUBVECTOR(SDNode *N);
   SDOperand SplitVecOp_EXTRACT_VECTOR_ELT(SDNode *N);
-  SDOperand SplitVecOp_RET(SDNode *N, unsigned OpNo);
   SDOperand SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo);
   SDOperand SplitVecOp_VECTOR_SHUFFLE(SDNode *N, unsigned OpNo);
 
