@@ -220,6 +220,10 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     break;
   case BinaryOperator::Add: Result += RHS; break;
   case BinaryOperator::Sub: Result -= RHS; break;
+  case BinaryOperator::And: Result &= RHS; break;
+  case BinaryOperator::Xor: Result ^= RHS; break;
+  case BinaryOperator::Or:  Result |= RHS; break;
+      
   case BinaryOperator::Shl:
     Result <<= (unsigned)RHS.getLimitedValue(Result.getBitWidth()-1);
     break;
@@ -227,16 +231,30 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     Result >>= (unsigned)RHS.getLimitedValue(Result.getBitWidth()-1);
     break;
       
-  // FIXME: Need to set the result width?
-  case BinaryOperator::LT:  Result = Result < RHS; break;
-  case BinaryOperator::GT:  Result = Result > RHS; break;
-  case BinaryOperator::LE:  Result = Result <= RHS; break;
-  case BinaryOperator::GE:  Result = Result >= RHS; break;
-  case BinaryOperator::EQ:  Result = Result == RHS; break;
-  case BinaryOperator::NE:  Result = Result != RHS; break;
-  case BinaryOperator::And: Result &= RHS; break;
-  case BinaryOperator::Xor: Result ^= RHS; break;
-  case BinaryOperator::Or:  Result |= RHS; break;
+  case BinaryOperator::LT:
+    Result = Result < RHS;
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+    break;
+  case BinaryOperator::GT:
+    Result = Result > RHS;
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+    break;
+  case BinaryOperator::LE:
+    Result = Result <= RHS;
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+    break;
+  case BinaryOperator::GE:
+    Result = Result >= RHS;
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+    break;
+  case BinaryOperator::EQ:
+    Result = Result == RHS;
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+    break;
+  case BinaryOperator::NE:
+    Result = Result != RHS;
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+    break;
     
   case BinaryOperator::Comma:
     // C99 6.6p3: "shall not contain assignment, ..., or comma operators,
@@ -293,16 +311,15 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
       // See C99 6.6p3.
     default:
       return false;
-    case UnaryOperator::Extension:
-      assert(0 && "Handle UnaryOperator::Extension");
-        return false;
     case UnaryOperator::LNot: {
       bool Val = Result == 0;
       Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
       Result = Val;
       break;
     }
+    case UnaryOperator::Extension:
     case UnaryOperator::Plus:
+      // The result is always just the subexpr
       break;
     case UnaryOperator::Minus:
       Result = -Result;
