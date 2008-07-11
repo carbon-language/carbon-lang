@@ -172,19 +172,23 @@ public:
   bool VisitBinaryOperator(const BinaryOperator *E);
   bool VisitUnaryOperator(const UnaryOperator *E);
 
-  bool HandleCast(const Expr* SubExpr, QualType DestType);
   bool VisitCastExpr(const CastExpr* E) {
     return HandleCast(E->getSubExpr(), E->getType());
   }
   bool VisitImplicitCastExpr(const ImplicitCastExpr* E) {
     return HandleCast(E->getSubExpr(), E->getType());
   }
-  bool VisitSizeOfAlignOfTypeExpr(const SizeOfAlignOfTypeExpr *E);
+  bool VisitSizeOfAlignOfTypeExpr(const SizeOfAlignOfTypeExpr *E) {
+    return EvaluateSizeAlignOf(E->isSizeOf(),E->getArgumentType(),E->getType());
+  }
  
   bool VisitIntegerLiteral(const IntegerLiteral *E) {
     Result = E->getValue();
     return true;
   }
+private:
+  bool HandleCast(const Expr* SubExpr, QualType DestType);
+  bool EvaluateSizeAlignOf(bool isSizeOf, QualType SrcTy, QualType DstTy);
 };
 } // end anonymous namespace
 
@@ -271,36 +275,47 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   return true;
 }
 
+/// EvaluateSizeAlignOf - Evaluate sizeof(SrcTy) or alignof(SrcTy) with a result
+/// as a DstTy type.
+bool IntExprEvaluator::EvaluateSizeAlignOf(bool isSizeOf, QualType SrcTy,
+                                           QualType DstTy) {
+  // Return the result in the right width.
+  Result.zextOrTrunc(getIntTypeSizeInBits(DstTy));
+  Result.setIsUnsigned(DstTy->isUnsignedIntegerType());
+
+  // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
+  if (SrcTy->isVoidType())
+    Result = 1;
+  
+  // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
+  if (!SrcTy->isConstantSizeType()) {
+    // FIXME: Should we attempt to evaluate this?
+    return false;
+  }
+  
+  // GCC extension: sizeof(function) = 1.
+  if (SrcTy->isFunctionType()) {
+    // FIXME: AlignOf shouldn't be unconditionally 4!
+    Result = isSizeOf ? 1 : 4;
+    return true;
+  }
+  
+  // Get information about the size or align.
+  unsigned CharSize = Ctx.Target.getCharWidth();
+  if (isSizeOf)
+    Result = getIntTypeSizeInBits(SrcTy) / CharSize;
+  else
+    Result = Ctx.getTypeAlign(SrcTy) / CharSize;
+  return true;
+}
+
 bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
   if (E->isOffsetOfOp())
     Result = E->evaluateOffsetOf(Ctx);
-  else if (E->isSizeOfAlignOfOp()) {
-    // Return the result in the right width.
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-
-    // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
-    if (E->getSubExpr()->getType()->isVoidType())
-      Result = 1;
-
-    // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
-    if (!E->getSubExpr()->getType()->isConstantSizeType()) {
-      // FIXME: Should we attempt to evaluate this?
-      return false;
-    }
-
-    // Get information about the size or align.
-    if (E->getSubExpr()->getType()->isFunctionType()) {
-      // GCC extension: sizeof(function) = 1.
-      // FIXME: AlignOf shouldn't be unconditionally 4!
-      Result = E->getOpcode() == UnaryOperator::AlignOf ? 4 : 1;
-    } else {
-      unsigned CharSize = Ctx.Target.getCharWidth();
-      if (E->getOpcode() == UnaryOperator::AlignOf)
-        Result = Ctx.getTypeAlign(E->getSubExpr()->getType()) / CharSize;
-      else
-        Result = getIntTypeSizeInBits(E->getSubExpr()->getType()) / CharSize;
-    }
-  } else {
+  else if (E->isSizeOfAlignOfOp())
+    return EvaluateSizeAlignOf(E->getOpcode() == UnaryOperator::SizeOf,
+                               E->getSubExpr()->getType(), E->getType());
+  else {
     // Get the operand value.  If this is sizeof/alignof, do not evalute the
     // operand.  This affects C99 6.6p3.
     if (!EvaluateInteger(E->getSubExpr(), Result, Ctx))
@@ -364,38 +379,6 @@ bool IntExprEvaluator::HandleCast(const Expr* SubExpr, QualType DestType) {
   }
   
   Result.setIsUnsigned(DestType->isUnsignedIntegerType());
-  return true;
-}
-
-bool IntExprEvaluator::
-VisitSizeOfAlignOfTypeExpr(const SizeOfAlignOfTypeExpr *E) {
-  // Return the result in the right width.
-  Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-
-  // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
-  if (E->getArgumentType()->isVoidType()) {
-    Result = 1;
-    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-    return true;
-  }
-
-  // alignof always evaluates to a constant, sizeof does if arg is not VLA.
-  if (E->isSizeOf() && !E->getArgumentType()->isConstantSizeType()) 
-    return false;
-
-  // Get information about the size or align.
-  if (E->getArgumentType()->isFunctionType()) {
-    // GCC extension: sizeof(function) = 1.
-    Result = E->isSizeOf() ? 1 : 4;
-  } else { 
-    unsigned CharSize = Ctx.Target.getCharWidth();
-    if (E->isSizeOf())
-      Result = getIntTypeSizeInBits(E->getArgumentType()) / CharSize;
-    else
-      Result = Ctx.getTypeAlign(E->getArgumentType()) / CharSize;
-  }
-  
-  Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
   return true;
 }
 
