@@ -29,10 +29,13 @@ namespace RTLIB {
     // Integer
     SHL_I32,
     SHL_I64,
+    SHL_I128,
     SRL_I32,
     SRL_I64,
+    SRL_I128,
     SRA_I32,
     SRA_I64,
+    SRA_I128,
     MUL_I32,
     MUL_I64,
     MUL_I128,

@@ -1454,21 +1454,35 @@ void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
   }
 
   // Otherwise, emit a libcall.
-  assert(VT == MVT::i64 && "Unsupported shift!");
-
-  RTLIB::Libcall LC;
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
   bool isSigned;
   if (N->getOpcode() == ISD::SHL) {
-    LC = RTLIB::SHL_I64;
     isSigned = false; /*sign irrelevant*/
+    if (VT == MVT::i32)
+      LC = RTLIB::SHL_I32;
+    else if (VT == MVT::i64)
+      LC = RTLIB::SHL_I64;
+    else if (VT == MVT::i128)
+      LC = RTLIB::SHL_I128;
   } else if (N->getOpcode() == ISD::SRL) {
-    LC = RTLIB::SRL_I64;
     isSigned = false;
+    if (VT == MVT::i32)
+      LC = RTLIB::SRL_I32;
+    else if (VT == MVT::i64)
+      LC = RTLIB::SRL_I64;
+    else if (VT == MVT::i128)
+      LC = RTLIB::SRL_I128;
   } else {
     assert(N->getOpcode() == ISD::SRA && "Unknown shift!");
-    LC = RTLIB::SRA_I64;
     isSigned = true;
+    if (VT == MVT::i32)
+      LC = RTLIB::SRA_I32;
+    else if (VT == MVT::i64)
+      LC = RTLIB::SRA_I64;
+    else if (VT == MVT::i128)
+      LC = RTLIB::SRA_I128;
   }
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported shift!");
 
   SDOperand Ops[2] = { N->getOperand(0), N->getOperand(1) };
   SplitInteger(MakeLibCall(LC, VT, Ops, 2, isSigned), Lo, Hi);
