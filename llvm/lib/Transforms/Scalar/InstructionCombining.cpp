@@ -5480,6 +5480,45 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         return R;
   }
   
+  // See if it's the same type of instruction on the left and right.
+  if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
+    if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1)) {
+      if (Op0I->getOpcode() == Op1I->getOpcode() && Op0I->hasOneUse() &&
+          Op1I->hasOneUse() && Op0I->getOperand(1) == Op1I->getOperand(1) &&
+          I.isEquality()) {
+	switch (Op0I->getOpcode()) {
+        default: break;
+        case Instruction::Add:
+        case Instruction::Sub:
+        case Instruction::Xor:
+          // a+x icmp eq/ne b+x --> a icmp b
+          return new ICmpInst(I.getPredicate(), Op0I->getOperand(0),
+                              Op1I->getOperand(0));
+          break;
+        case Instruction::Mul:
+          if (ConstantInt *CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
+            // a * Cst icmp eq/ne b * Cst --> a & 0x7f icmp b & 0x7f
+            if (!CI->isZero() && !CI->isOne()) {
+              const APInt &AP = CI->getValue();
+              ConstantInt *Mask = ConstantInt::get(
+                                      APInt::getLowBitsSet(AP.getBitWidth(),
+                                                           AP.getBitWidth() -
+                                                      AP.countTrailingZeros()));
+              Instruction *And1 = BinaryOperator::CreateAnd(Op0I->getOperand(0),
+                                                            Mask);
+              Instruction *And2 = BinaryOperator::CreateAnd(Op1I->getOperand(0),
+                                                            Mask);
+              InsertNewInstBefore(And1, I);
+              InsertNewInstBefore(And2, I);
+              return new ICmpInst(I.getPredicate(), And1, And2);
+            }
+          }
+          break;
+        }
+      }
+    }
+  }
+  
   // ~x < ~y --> y < x
   { Value *A, *B;
     if (match(Op0, m_Not(m_Value(A))) &&
