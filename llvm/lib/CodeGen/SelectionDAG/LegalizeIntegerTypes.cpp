@@ -1556,6 +1556,13 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
     } else if (Amt == NVTBits) {
       Lo = DAG.getConstant(0, NVT);
       Hi = InL;
+    } else if (Amt == 1) {
+      // Emit this X << 1 as X+X.
+      SDVTList VTList = DAG.getVTList(NVT, MVT::Flag);
+      SDOperand LoOps[2] = { InL, InL };
+      Lo = DAG.getNode(ISD::ADDC, VTList, LoOps, 2);
+      SDOperand HiOps[3] = { InH, InH, Lo.getValue(1) };
+      Hi = DAG.getNode(ISD::ADDE, VTList, HiOps, 3);
     } else {
       Lo = DAG.getNode(ISD::SHL, NVT, InL, DAG.getConstant(Amt, ShTy));
       Hi = DAG.getNode(ISD::OR, NVT,
