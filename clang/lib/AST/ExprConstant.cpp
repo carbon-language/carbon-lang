@@ -152,9 +152,14 @@ class VISIBILITY_HIDDEN IntExprEvaluator
 public:
   IntExprEvaluator(ASTContext &ctx, APSInt &result) : Ctx(ctx), Result(result){}
 
+  unsigned getIntTypeSizeInBits(QualType T) const {
+    return (unsigned)Ctx.getTypeSize(T);
+  }
+    
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
   //===--------------------------------------------------------------------===//
+    
   bool VisitStmt(Stmt *S) {
     // FIXME: Remove this when we support more expressions.
     printf("unhandled int expression");
@@ -253,7 +258,7 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
     Result = E->evaluateOffsetOf(Ctx);
   else if (E->isSizeOfAlignOfOp()) {
     // Return the result in the right width.
-    Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(E->getType())));
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
 
     // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
     if (E->getSubExpr()->getType()->isVoidType())
@@ -275,7 +280,7 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
       if (E->getOpcode() == UnaryOperator::AlignOf)
         Result = Ctx.getTypeAlign(E->getSubExpr()->getType()) / CharSize;
       else
-        Result = Ctx.getTypeSize(E->getSubExpr()->getType()) / CharSize;
+        Result = getIntTypeSizeInBits(E->getSubExpr()->getType()) / CharSize;
     }
   } else {
     // Get the operand value.  If this is sizeof/alignof, do not evalute the
@@ -293,8 +298,7 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
         return false;
     case UnaryOperator::LNot: {
       bool Val = Result == 0;
-      uint32_t typeSize = Ctx.getTypeSize(E->getType());
-      Result.zextOrTrunc(typeSize);
+      Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
       Result = Val;
       break;
     }
@@ -314,9 +318,7 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
 }
   
 bool IntExprEvaluator::HandleCast(const Expr* SubExpr, QualType DestType) {
-  llvm::APSInt Result(32);
-
-  uint32_t DestWidth = static_cast<uint32_t>(Ctx.getTypeSize(DestType));
+  unsigned DestWidth = getIntTypeSizeInBits(DestType);
 
   // Handle simple integer->integer casts.
   if (SubExpr->getType()->isIntegerType()) {
@@ -329,8 +331,7 @@ bool IntExprEvaluator::HandleCast(const Expr* SubExpr, QualType DestType) {
       // Conversion to bool compares against zero.
       Result = Result != 0;
       Result.zextOrTrunc(DestWidth);
-    }
-    else
+    } else
       Result.extOrTrunc(DestWidth);
   } else if (SubExpr->getType()->isPointerType()) {
     APValue LV;
@@ -352,7 +353,7 @@ bool IntExprEvaluator::HandleCast(const Expr* SubExpr, QualType DestType) {
 bool IntExprEvaluator::
 VisitSizeOfAlignOfTypeExpr(const SizeOfAlignOfTypeExpr *E) {
   // Return the result in the right width.
-  Result.zextOrTrunc(static_cast<uint32_t>(Ctx.getTypeSize(E->getType())));
+  Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
 
   // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
   if (E->getArgumentType()->isVoidType()) {
@@ -372,7 +373,7 @@ VisitSizeOfAlignOfTypeExpr(const SizeOfAlignOfTypeExpr *E) {
   } else { 
     unsigned CharSize = Ctx.Target.getCharWidth();
     if (E->isSizeOf())
-      Result = Ctx.getTypeSize(E->getArgumentType()) / CharSize;
+      Result = getIntTypeSizeInBits(E->getArgumentType()) / CharSize;
     else
       Result = Ctx.getTypeAlign(E->getArgumentType()) / CharSize;
   }
