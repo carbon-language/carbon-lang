@@ -99,10 +99,6 @@ void ScheduleDAGList::Schedule() {
   ListScheduleTopDown();
   
   AvailableQueue->releaseState();
-  
-  DOUT << "*** Final schedule ***\n";
-  DEBUG(dumpSchedule());
-  DOUT << "\n";
 }
 
 //===----------------------------------------------------------------------===//
