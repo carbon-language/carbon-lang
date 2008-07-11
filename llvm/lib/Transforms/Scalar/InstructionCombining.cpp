@@ -5336,7 +5336,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     case ICmpInst::ICMP_SLT:
       if (Max.slt(RHSVal))                    // A <s C -> true iff max(A) < C
         return ReplaceInstUsesWith(I, ConstantInt::getTrue());
-      if (Min.sgt(RHSVal))                    // A <s C -> false iff min(A) >= C
+      if (Min.sge(RHSVal))                    // A <s C -> false iff min(A) >= C
         return ReplaceInstUsesWith(I, ConstantInt::getFalse());
       if (RHSVal == Max)                      // A <s MAX -> A != MAX
         return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
