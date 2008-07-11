@@ -57,7 +57,7 @@ extern void GenerateError(const std::string &message, int LineNo = -1);
 struct InlineAsmDescriptor {
   std::string AsmString, Constraints;
   bool HasSideEffects;
-  
+
   InlineAsmDescriptor(const std::string &as, const std::string &c, bool HSE)
     : AsmString(as), Constraints(c), HasSideEffects(HSE) {}
 };
@@ -79,10 +79,10 @@ struct ValID {
 
   union {
     unsigned Num;            // If it's a numeric reference like %1234
-    std::string *Name;    // If it's a named reference.  Memory must be deleted.
+    std::string *Name;       // If it's a named reference.  Memory must be deleted.
     int64_t  ConstPool64;    // Constant pool reference.  This is the value
     uint64_t UConstPool64;   // Unsigned constant pool reference.
-    APSInt *ConstPoolInt;     // Large Integer constant pool reference
+    APSInt *ConstPoolInt;    // Large Integer constant pool reference
     APFloat *ConstPoolFP;    // Floating point constant pool reference
     Constant *ConstantValue; // Fully resolved constant for ConstantVal case.
     InlineAsmDescriptor *IAD;
@@ -100,7 +100,7 @@ struct ValID {
   static ValID createGlobalName(const std::string &Name) {
     ValID D; D.Type = GlobalName; D.Name = new std::string(Name); return D;
   }
-  
+
   static ValID create(int64_t Val) {
     ValID D; D.Type = ConstSIntVal; D.ConstPool64 = Val; return D;
   }
@@ -112,14 +112,14 @@ struct ValID {
   static ValID create(APFloat *Val) {
     ValID D; D.Type = ConstFPVal; D.ConstPoolFP = Val; return D;
   }
-  
+
   static ValID create(const APInt &Val, bool isSigned) {
     ValID D; D.Type = ConstAPInt;
     D.ConstPoolInt = new APSInt(Val, !isSigned);
     return D;
   }
-  
-  
+
+
   static ValID createNull() {
     ValID D; D.Type = ConstNullVal; return D;
   }
@@ -131,11 +131,11 @@ struct ValID {
   static ValID createZeroInit() {
     ValID D; D.Type = ConstZeroVal; return D;
   }
-  
+
   static ValID create(Constant *Val) {
     ValID D; D.Type = ConstantVal; D.ConstantValue = Val; return D;
   }
-  
+
   static ValID createInlineAsm(const std::string &AsmString,
                                const std::string &Constraints,
                                bool HasSideEffects) {
@@ -158,7 +158,7 @@ struct ValID {
     ValID Result = *this;
     if (Type == ConstAPInt)
       Result.ConstPoolInt = new APSInt(*ConstPoolInt);
-    
+
     if (Type != LocalName && Type != GlobalName) return Result;
     Result.Name = new std::string(*Name);
     return Result;
@@ -197,12 +197,12 @@ struct ValID {
     case GlobalName:    return *Name < *V.Name;
     case ConstSIntVal:  return ConstPool64  < V.ConstPool64;
     case ConstUIntVal:  return UConstPool64 < V.UConstPool64;
-    case ConstAPInt    : return ConstPoolInt->ult(*V.ConstPoolInt);
+    case ConstAPInt:    return ConstPoolInt->ult(*V.ConstPoolInt);
     case ConstFPVal:    return ConstPoolFP->compare(*V.ConstPoolFP) ==
                                APFloat::cmpLessThan;
     case ConstNullVal:  return false;
     case ConstUndefVal: return false;
-    case ConstZeroVal: return false;
+    case ConstZeroVal:  return false;
     case ConstantVal:   return ConstantValue < V.ConstantValue;
     default:  assert(0 && "Unknown value type!"); return false;
     }
@@ -210,17 +210,17 @@ struct ValID {
 
   bool operator==(const ValID &V) const {
     if (Type != V.Type) return false;
-    
+
     switch (Type) {
     default:  assert(0 && "Unknown value type!");
     case LocalID:
-    case GlobalID: return Num == V.Num;
+    case GlobalID:      return Num == V.Num;
     case LocalName:
-    case GlobalName: return *Name == *(V.Name);
+    case GlobalName:    return *Name == *(V.Name);
     case ConstSIntVal:  return ConstPool64  == V.ConstPool64;
     case ConstUIntVal:  return UConstPool64 == V.UConstPool64;
     case ConstAPInt:    return *ConstPoolInt == *V.ConstPoolInt;
-    case ConstFPVal:    return ConstPoolFP->compare(*V.ConstPoolFP) == 
+    case ConstFPVal:    return ConstPoolFP->compare(*V.ConstPoolFP) ==
                                APFloat::cmpEqual;
     case ConstantVal:   return ConstantValue == V.ConstantValue;
     case ConstNullVal:  return true;
@@ -235,7 +235,7 @@ struct TypeWithAttrs {
   ParameterAttributes Attrs;
 };
 
-typedef std::vector<TypeWithAttrs> TypeWithAttrsList; 
+typedef std::vector<TypeWithAttrs> TypeWithAttrsList;
 
 struct ArgListEntry {
   ParameterAttributes Attrs;
