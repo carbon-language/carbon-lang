@@ -4361,8 +4361,8 @@ MachineMemOperand MemSDNode::getMemOperand() const {
   const FrameIndexSDNode *FI = 
   dyn_cast<const FrameIndexSDNode>(getBasePtr().Val);
   if (!getSrcValue() && FI)
-    return MachineMemOperand(PseudoSourceValue::getFixedStack(), Flags,
-                             FI->getIndex(), Size, getAlignment());
+    return MachineMemOperand(PseudoSourceValue::getFixedStack(FI->getIndex()),
+                             Flags, 0, Size, getAlignment());
   else
     return MachineMemOperand(getSrcValue(), Flags, getSrcValueOffset(),
                              Size, getAlignment());

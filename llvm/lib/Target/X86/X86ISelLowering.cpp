@@ -1134,7 +1134,7 @@ SDOperand X86TargetLowering::LowerMemArgument(SDOperand Op, SelectionDAG &DAG,
   if (Flags.isByVal())
     return FIN;
   return DAG.getLoad(VA.getValVT(), Root, FIN,
-                     PseudoSourceValue::getFixedStack(), FI);
+                     PseudoSourceValue::getFixedStack(FI), 0);
 }
 
 SDOperand
@@ -1320,8 +1320,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
         SDOperand Val = DAG.getCopyFromReg(Root, VReg, MVT::i64);
         SDOperand Store =
           DAG.getStore(Val.getValue(1), Val, FIN,
-                       PseudoSourceValue::getFixedStack(),
-                       RegSaveFrameIndex);
+                       PseudoSourceValue::getFixedStack(RegSaveFrameIndex), 0);
         MemOps.push_back(Store);
         FIN = DAG.getNode(ISD::ADD, getPointerTy(), FIN,
                           DAG.getIntPtrConstant(8));
@@ -1336,8 +1335,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
         SDOperand Val = DAG.getCopyFromReg(Root, VReg, MVT::v4f32);
         SDOperand Store =
           DAG.getStore(Val.getValue(1), Val, FIN,
-                       PseudoSourceValue::getFixedStack(),
-                       RegSaveFrameIndex);
+                       PseudoSourceValue::getFixedStack(RegSaveFrameIndex), 0);
         MemOps.push_back(Store);
         FIN = DAG.getNode(ISD::ADD, getPointerTy(), FIN,
                           DAG.getIntPtrConstant(16));
@@ -1435,7 +1433,7 @@ EmitTailCallStoreRetAddr(SelectionDAG & DAG, MachineFunction &MF,
   MVT VT = Is64Bit ? MVT::i64 : MVT::i32;
   SDOperand NewRetAddrFrIdx = DAG.getFrameIndex(NewReturnAddrFI, VT);
   Chain = DAG.getStore(Chain, RetAddrFrIdx, NewRetAddrFrIdx, 
-                       PseudoSourceValue::getFixedStack(), NewReturnAddrFI);
+                       PseudoSourceValue::getFixedStack(NewReturnAddrFI), 0);
   return Chain;
 }
 
@@ -1652,7 +1650,7 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
           // Store relative to framepointer.
           MemOpChains2.push_back(
             DAG.getStore(Chain, Arg, FIN,
-                         PseudoSourceValue::getFixedStack(), FI));
+                         PseudoSourceValue::getFixedStack(FI), 0));
         }            
       }
     }
@@ -4403,8 +4401,7 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
   SDOperand Chain = DAG.getStore(DAG.getEntryNode(), Op.getOperand(0),
                                  StackSlot,
-                                 PseudoSourceValue::getFixedStack(),
-                                 SSFI);
+                                 PseudoSourceValue::getFixedStack(SSFI), 0);
 
   // Build the FILD
   SDVTList Tys;
@@ -4439,7 +4436,7 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
     Ops.push_back(InFlag);
     Chain = DAG.getNode(X86ISD::FST, Tys, &Ops[0], Ops.size());
     Result = DAG.getLoad(Op.getValueType(), Chain, StackSlot,
-                         PseudoSourceValue::getFixedStack(), SSFI);
+                         PseudoSourceValue::getFixedStack(SSFI), 0);
   }
 
   return Result;
@@ -4479,7 +4476,7 @@ FP_TO_SINTHelper(SDOperand Op, SelectionDAG &DAG) {
   if (isScalarFPTypeInSSEReg(Op.getOperand(0).getValueType())) {
     assert(Op.getValueType() == MVT::i64 && "Invalid FP_TO_SINT to lower!");
     Chain = DAG.getStore(Chain, Value, StackSlot,
-                         PseudoSourceValue::getFixedStack(), SSFI);
+                         PseudoSourceValue::getFixedStack(SSFI), 0);
     SDVTList Tys = DAG.getVTList(Op.getOperand(0).getValueType(), MVT::Other);
     SDOperand Ops[] = {
       Chain, StackSlot, DAG.getValueType(Op.getOperand(0).getValueType())

@@ -1943,8 +1943,8 @@ StoreTailCallArgumentsToStackSlot(SelectionDAG &DAG,
     int FI = TailCallArgs[i].FrameIdx;
     // Store relative to framepointer.
     MemOpChains.push_back(DAG.getStore(Chain, Arg, FIN,
-                                       PseudoSourceValue::getFixedStack(),
-                                       FI));
+                                       PseudoSourceValue::getFixedStack(FI),
+                                       0));
   }
 }
 
@@ -1972,10 +1972,10 @@ static SDOperand EmitTailCallStoreFPAndRetAddr(SelectionDAG &DAG,
     MVT VT = isPPC64 ? MVT::i64 : MVT::i32;
     SDOperand NewRetAddrFrIdx = DAG.getFrameIndex(NewRetAddr, VT);
     Chain = DAG.getStore(Chain, OldRetAddr, NewRetAddrFrIdx,
-                         PseudoSourceValue::getFixedStack(), NewRetAddr);
+                         PseudoSourceValue::getFixedStack(NewRetAddr), 0);
     SDOperand NewFramePtrIdx = DAG.getFrameIndex(NewFPIdx, VT);
     Chain = DAG.getStore(Chain, OldFP, NewFramePtrIdx,
-                         PseudoSourceValue::getFixedStack(), NewFPIdx);
+                         PseudoSourceValue::getFixedStack(NewFPIdx), 0);
   }
   return Chain;
 }
@@ -3029,8 +3029,8 @@ SDOperand PPCTargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
                                 Op.getOperand(0));
   
   // STD the extended value into the stack slot.
-  MachineMemOperand MO(PseudoSourceValue::getFixedStack(),
-                       MachineMemOperand::MOStore, FrameIdx, 8, 8);
+  MachineMemOperand MO(PseudoSourceValue::getFixedStack(FrameIdx),
+                       MachineMemOperand::MOStore, 0, 8, 8);
   SDOperand Store = DAG.getNode(PPCISD::STD_32, MVT::Other,
                                 DAG.getEntryNode(), Ext64, FIdx,
                                 DAG.getMemOperand(MO));

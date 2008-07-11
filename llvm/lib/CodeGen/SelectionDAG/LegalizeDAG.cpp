@@ -780,13 +780,11 @@ PerformInsertVectorEltInMemory(SDOperand Vec, SDOperand Val, SDOperand Idx) {
   MVT PtrVT = TLI.getPointerTy();
   SDOperand StackPtr = DAG.CreateStackTemporary(VT);
 
-  FrameIndexSDNode *StackPtrFI = cast<FrameIndexSDNode>(StackPtr.Val);
-  int SPFI = StackPtrFI->getIndex();
+  int SPFI = cast<FrameIndexSDNode>(StackPtr.Val)->getIndex();
 
   // Store the vector.
   SDOperand Ch = DAG.getStore(DAG.getEntryNode(), Tmp1, StackPtr,
-                              PseudoSourceValue::getFixedStack(),
-                              SPFI);
+                              PseudoSourceValue::getFixedStack(SPFI), 0);
 
   // Truncate or zero extend offset to target pointer type.
   unsigned CastOpc = IdxVT.bitsGT(PtrVT) ? ISD::TRUNCATE : ISD::ZERO_EXTEND;
@@ -797,9 +795,10 @@ PerformInsertVectorEltInMemory(SDOperand Vec, SDOperand Val, SDOperand Idx) {
   SDOperand StackPtr2 = DAG.getNode(ISD::ADD, IdxVT, Tmp3, StackPtr);
   // Store the scalar value.
   Ch = DAG.getTruncStore(Ch, Tmp2, StackPtr2,
-                         PseudoSourceValue::getFixedStack(), SPFI, EltVT);
+                         PseudoSourceValue::getFixedStack(SPFI), 0, EltVT);
   // Load the updated vector.
-  return DAG.getLoad(VT, Ch, StackPtr, PseudoSourceValue::getFixedStack(),SPFI);
+  return DAG.getLoad(VT, Ch, StackPtr,
+                     PseudoSourceValue::getFixedStack(SPFI), 0);
 }
 
 /// LegalizeOp - We know that the specified value has a legal type, and
@@ -4906,12 +4905,12 @@ SDOperand SelectionDAGLegalize::EmitStackConvert(SDOperand SrcOp,
   
   if (SrcSize > SlotSize)
     Store = DAG.getTruncStore(DAG.getEntryNode(), SrcOp, FIPtr,
-                              PseudoSourceValue::getFixedStack(), SPFI, SlotVT, 
-                              false, SrcAlign);
+                              PseudoSourceValue::getFixedStack(SPFI), 0,
+                              SlotVT, false, SrcAlign);
   else {
     assert(SrcSize == SlotSize && "Invalid store");
     Store = DAG.getStore(DAG.getEntryNode(), SrcOp, FIPtr,
-                         PseudoSourceValue::getFixedStack(), SPFI,
+                         PseudoSourceValue::getFixedStack(SPFI), 0,
                          false, SrcAlign);
   }
   
@@ -4933,9 +4932,9 @@ SDOperand SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
   int SPFI = StackPtrFI->getIndex();
 
   SDOperand Ch = DAG.getStore(DAG.getEntryNode(), Node->getOperand(0), StackPtr,
-                              PseudoSourceValue::getFixedStack(), SPFI);
+                              PseudoSourceValue::getFixedStack(SPFI), 0);
   return DAG.getLoad(Node->getValueType(0), Ch, StackPtr,
-                     PseudoSourceValue::getFixedStack(), SPFI);
+                     PseudoSourceValue::getFixedStack(SPFI), 0);
 }
 
 
@@ -7017,15 +7016,13 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
       // Lower to a store/load so that it can be split.
       // FIXME: this could be improved probably.
       SDOperand Ptr = DAG.CreateStackTemporary(InOp.getValueType());
-      FrameIndexSDNode *FI = cast<FrameIndexSDNode>(Ptr.Val);
+      int FI = cast<FrameIndexSDNode>(Ptr.Val)->getIndex();
 
       SDOperand St = DAG.getStore(DAG.getEntryNode(),
                                   InOp, Ptr,
-                                  PseudoSourceValue::getFixedStack(),
-                                  FI->getIndex());
+                                  PseudoSourceValue::getFixedStack(FI), 0);
       InOp = DAG.getLoad(Op.getValueType(), St, Ptr,
-                         PseudoSourceValue::getFixedStack(),
-                         FI->getIndex());
+                         PseudoSourceValue::getFixedStack(FI), 0);
     }
     // Split the vector and convert each of the pieces now.
     SplitVectorOp(InOp, Lo, Hi);

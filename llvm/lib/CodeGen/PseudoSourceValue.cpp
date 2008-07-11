@@ -13,28 +13,27 @@
 
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ManagedStatic.h"
+#include <map>
 
 namespace llvm {
-  static ManagedStatic<PseudoSourceValue[5]> PSVs;
+  static ManagedStatic<PseudoSourceValue[4]> PSVs;
 
-  const PseudoSourceValue *PseudoSourceValue::getFixedStack()
-  { return &(*PSVs)[0]; }
   const PseudoSourceValue *PseudoSourceValue::getStack()
-  { return &(*PSVs)[1]; }
+  { return &(*PSVs)[0]; }
   const PseudoSourceValue *PseudoSourceValue::getGOT()
+  { return &(*PSVs)[1]; }
+  const PseudoSourceValue *PseudoSourceValue::getJumpTable()
   { return &(*PSVs)[2]; }
   const PseudoSourceValue *PseudoSourceValue::getConstantPool()
   { return &(*PSVs)[3]; }
-  const PseudoSourceValue *PseudoSourceValue::getJumpTable()
-  { return &(*PSVs)[4]; }
 
   static const char *const PSVNames[] = {
-    "FixedStack",
     "Stack",
     "GOT",
-    "ConstantPool",
     "JumpTable"
+    "ConstantPool"
   };
 
   PseudoSourceValue::PseudoSourceValue() :
@@ -42,5 +41,27 @@ namespace llvm {
 
   void PseudoSourceValue::print(std::ostream &OS) const {
     OS << PSVNames[this - *PSVs];
+  }
+
+  /// FixedStackPseudoSourceValue - A specialized PseudoSourceValue
+  /// for holding FixedStack values, which must include a frame
+  /// index.
+  class VISIBILITY_HIDDEN FixedStackPseudoSourceValue
+    : public PseudoSourceValue {
+    const int FI;
+  public:
+    explicit FixedStackPseudoSourceValue(int fi) : FI(fi) {}
+    virtual void print(std::ostream &OS) const {
+      OS << "FixedStack" << FI;
+    }
+  };
+
+  static ManagedStatic<std::map<int, const PseudoSourceValue *> > FSValues;
+
+  const PseudoSourceValue *PseudoSourceValue::getFixedStack(int FI) {
+    const PseudoSourceValue *&V = (*FSValues)[FI];
+    if (!V)
+      V = new FixedStackPseudoSourceValue(FI);
+    return V;
   }
 }
