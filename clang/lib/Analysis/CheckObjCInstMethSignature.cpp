@@ -56,8 +56,10 @@ static void CompareReturnTypes(ObjCMethodDecl* MethDerived,
        << MethDerived->getSelector().getName()
        << "' whose return type is '"
        << ResDerived.getAsString()
-       << "'.  The same method (same selector) is defined in class 'B' and has "
-          "a return type of '"
+       << "'.  A method with the same name (same selector) is also defined in "
+          "class '"
+       << MethAncestor->getClassInterface()->getName()
+       << "' and has a return type of '"
        << ResAncestor.getAsString()
        << "'.  These two types are incompatible, and may result in undefined "
           "behavior for clients of these classes.";
