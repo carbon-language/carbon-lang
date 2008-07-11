@@ -5348,7 +5348,7 @@ SDOperand X86TargetLowering::LowerFRAMEADDR(SDOperand Op, SelectionDAG &DAG) {
     
   SDOperand RetAddrFI = getReturnAddressFrameIndex(DAG);
   return DAG.getNode(ISD::SUB, getPointerTy(), RetAddrFI, 
-                     DAG.getIntPtrConstant(4));
+                     DAG.getIntPtrConstant(!Subtarget->is64Bit() ? 4 : 8));
 }
 
 SDOperand X86TargetLowering::LowerFRAME_TO_ARGS_OFFSET(SDOperand Op,
