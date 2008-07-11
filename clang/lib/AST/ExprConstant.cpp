@@ -170,6 +170,7 @@ public:
   bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
 
   bool VisitBinaryOperator(const BinaryOperator *E);
+
   bool VisitUnaryOperator(const UnaryOperator *E);
 
   bool VisitCastExpr(const CastExpr* E) {
@@ -199,35 +200,26 @@ static bool EvaluateInteger(const Expr* E, APSInt &Result, ASTContext &Ctx) {
 
 bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   // The LHS of a constant expr is always evaluated and needed.
-  if (!Visit(E->getLHS()))
-    return false; 
-
   llvm::APSInt RHS(32);
-  if (!EvaluateInteger(E->getRHS(), RHS, Ctx))
+  if (!Visit(E->getLHS()) || !EvaluateInteger(E->getRHS(), RHS, Ctx))
     return false;
   
   switch (E->getOpcode()) {
-  default:
-    return false;
-  case BinaryOperator::Mul:
-    Result *= RHS;
-    break;
-  case BinaryOperator::Div:
-    if (RHS == 0)
-      return false;
-    Result /= RHS;
-    break;
-  case BinaryOperator::Rem:
-    if (RHS == 0)
-      return false;
-    Result %= RHS;
-    break;
+  default: return false;
+  case BinaryOperator::Mul: Result *= RHS; break;
   case BinaryOperator::Add: Result += RHS; break;
   case BinaryOperator::Sub: Result -= RHS; break;
   case BinaryOperator::And: Result &= RHS; break;
   case BinaryOperator::Xor: Result ^= RHS; break;
   case BinaryOperator::Or:  Result |= RHS; break;
-      
+  case BinaryOperator::Div:
+    if (RHS == 0) return false;
+    Result /= RHS;
+    break;
+  case BinaryOperator::Rem:
+    if (RHS == 0) return false;
+    Result %= RHS;
+    break;
   case BinaryOperator::Shl:
     Result <<= (unsigned)RHS.getLimitedValue(Result.getBitWidth()-1);
     break;
@@ -310,39 +302,41 @@ bool IntExprEvaluator::EvaluateSizeAlignOf(bool isSizeOf, QualType SrcTy,
 }
 
 bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
-  if (E->isOffsetOfOp())
+  if (E->isOffsetOfOp()) {
     Result = E->evaluateOffsetOf(Ctx);
-  else if (E->isSizeOfAlignOfOp())
+    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+    return true;
+  }
+  
+  if (E->isSizeOfAlignOfOp())
     return EvaluateSizeAlignOf(E->getOpcode() == UnaryOperator::SizeOf,
                                E->getSubExpr()->getType(), E->getType());
-  else {
-    // Get the operand value.  If this is sizeof/alignof, do not evalute the
-    // operand.  This affects C99 6.6p3.
-    if (!EvaluateInteger(E->getSubExpr(), Result, Ctx))
-      return false;
+  
+  // Get the operand value.
+  if (!EvaluateInteger(E->getSubExpr(), Result, Ctx))
+    return false;
 
-    switch (E->getOpcode()) {
-      // Address, indirect, pre/post inc/dec, etc are not valid constant exprs.
-      // See C99 6.6p3.
-    default:
-      return false;
-    case UnaryOperator::LNot: {
-      bool Val = Result == 0;
-      Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-      Result = Val;
-      break;
-    }
-    case UnaryOperator::Extension:
-    case UnaryOperator::Plus:
-      // The result is always just the subexpr
-      break;
-    case UnaryOperator::Minus:
-      Result = -Result;
-      break;
-    case UnaryOperator::Not:
-      Result = ~Result;
-      break;
-    }
+  switch (E->getOpcode()) {
+    // Address, indirect, pre/post inc/dec, etc are not valid constant exprs.
+    // See C99 6.6p3.
+  default:
+    return false;
+  case UnaryOperator::LNot: {
+    bool Val = Result == 0;
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+    Result = Val;
+    break;
+  }
+  case UnaryOperator::Extension:
+  case UnaryOperator::Plus:
+    // The result is always just the subexpr
+    break;
+  case UnaryOperator::Minus:
+    Result = -Result;
+    break;
+  case UnaryOperator::Not:
+    Result = ~Result;
+    break;
   }
 
   Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
