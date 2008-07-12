@@ -93,6 +93,10 @@ public:
   typedef typename super::reference reference;
 private:
   pointer NodePtr;
+
+  // operator[] is not defined. Compile error instead of having a runtime bug.
+  void operator[](unsigned) {}
+  void operator[](unsigned) const {}
 public:
 
   ilist_iterator(pointer NP) : NodePtr(NP) {}
