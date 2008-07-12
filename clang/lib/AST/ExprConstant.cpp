@@ -247,11 +247,11 @@ public:
   bool VisitBinaryOperator(const BinaryOperator *E);
   bool VisitUnaryOperator(const UnaryOperator *E);
 
-  bool VisitCastExpr(const CastExpr* E) {
-    return HandleCast(E->getSubExpr(), E->getType());
+  bool VisitCastExpr(CastExpr* E) {
+    return HandleCast(E->getLParenLoc(), E->getSubExpr(), E->getType());
   }
-  bool VisitImplicitCastExpr(const ImplicitCastExpr* E) {
-    return HandleCast(E->getSubExpr(), E->getType());
+  bool VisitImplicitCastExpr(ImplicitCastExpr* E) {
+    return HandleCast(E->getLocStart(), E->getSubExpr(), E->getType());
   }
   bool VisitSizeOfAlignOfTypeExpr(const SizeOfAlignOfTypeExpr *E) {
     return EvaluateSizeAlignOf(E->isSizeOf(), E->getArgumentType(),
@@ -259,7 +259,7 @@ public:
   }
     
 private:
-  bool HandleCast(const Expr* SubExpr, QualType DestType);
+  bool HandleCast(SourceLocation CastLoc, Expr *SubExpr, QualType DestType);
   bool EvaluateSizeAlignOf(bool isSizeOf, QualType SrcTy, QualType DstTy);
 };
 } // end anonymous namespace
@@ -467,12 +467,15 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
   return true;
 }
   
-bool IntExprEvaluator::HandleCast(const Expr* SubExpr, QualType DestType) {
+/// HandleCast - This is used to evaluate implicit or explicit casts where the
+/// result type is integer.
+bool IntExprEvaluator::HandleCast(SourceLocation CastLoc,
+                                  Expr *SubExpr, QualType DestType) {
   unsigned DestWidth = getIntTypeSizeInBits(DestType);
 
   // Handle simple integer->integer casts.
   if (SubExpr->getType()->isIntegerType()) {
-    if (!EvaluateInteger(SubExpr, Result, Info))
+    if (!Visit(SubExpr))
       return false;
     
     // Figure out if this is a truncate, extend or noop cast.
@@ -483,7 +486,12 @@ bool IntExprEvaluator::HandleCast(const Expr* SubExpr, QualType DestType) {
       Result.zextOrTrunc(DestWidth);
     } else
       Result.extOrTrunc(DestWidth);
-  } else if (SubExpr->getType()->isPointerType()) {
+    Result.setIsUnsigned(DestType->isUnsignedIntegerType());
+    return true;
+  }
+  
+  // FIXME: Clean this up!
+  if (SubExpr->getType()->isPointerType()) {
     APValue LV;
     if (!EvaluatePointer(SubExpr, LV, Info))
       return false;
@@ -492,11 +500,44 @@ bool IntExprEvaluator::HandleCast(const Expr* SubExpr, QualType DestType) {
     
     Result.extOrTrunc(DestWidth);
     Result = LV.getLValueOffset();
-  } else {
-    assert(0 && "Unhandled cast!");
+    Result.setIsUnsigned(DestType->isUnsignedIntegerType());
+    return true;
   }
   
-  Result.setIsUnsigned(DestType->isUnsignedIntegerType());
+  if (!SubExpr->getType()->isRealFloatingType())
+    return Error(CastLoc, diag::err_expr_not_constant);
+
+  // FIXME: Generalize floating point constant folding!  For now we just permit
+  // which is allowed by integer constant expressions.
+  
+  // Allow floating constants that are the immediate operands of casts or that
+  // are parenthesized.
+  const Expr *Operand = SubExpr;
+  while (const ParenExpr *PE = dyn_cast<ParenExpr>(Operand))
+    Operand = PE->getSubExpr();
+  
+  // If this isn't a floating literal, we can't handle it.
+  const FloatingLiteral *FL = dyn_cast<FloatingLiteral>(Operand);
+  if (!FL)
+    return Error(CastLoc, diag::err_expr_not_constant);
+  
+  // If the destination is boolean, compare against zero.
+  if (DestType->isBooleanType()) {
+    Result = !FL->getValue().isZero();
+    Result.zextOrTrunc(DestWidth);
+    Result.setIsUnsigned(DestType->isUnsignedIntegerType());
+    return true;
+  }     
+  
+  // Determine whether we are converting to unsigned or signed.
+  bool DestSigned = DestType->isSignedIntegerType();
+  
+  // FIXME: Warning for overflow.
+  uint64_t Space[4]; 
+  (void)FL->getValue().convertToInteger(Space, DestWidth, DestSigned,
+                                        llvm::APFloat::rmTowardZero);
+  Result = llvm::APInt(DestWidth, 4, Space);
+  Result.setIsUnsigned(!DestSigned);
   return true;
 }
 
