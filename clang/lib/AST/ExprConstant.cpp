@@ -226,8 +226,25 @@ public:
   
   bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
 
+  bool VisitIntegerLiteral(const IntegerLiteral *E) {
+    Result = E->getValue();
+    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+    return true;
+  }
+  bool VisitCharacterLiteral(const CharacterLiteral *E) {
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+    Result = E->getValue();
+    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+    return true;
+  }
+  bool VisitTypesCompatibleExpr(const TypesCompatibleExpr *E) {
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+    Result = Info.Ctx.typesAreCompatible(E->getArgType1(), E->getArgType2());
+    return true;
+  }
+  bool VisitDeclRefExpr(const DeclRefExpr *E);
+  bool VisitCallExpr(const CallExpr *E);
   bool VisitBinaryOperator(const BinaryOperator *E);
-
   bool VisitUnaryOperator(const UnaryOperator *E);
 
   bool VisitCastExpr(const CastExpr* E) {
@@ -240,18 +257,7 @@ public:
     return EvaluateSizeAlignOf(E->isSizeOf(), E->getArgumentType(),
                                E->getType());
   }
- 
-  bool VisitIntegerLiteral(const IntegerLiteral *E) {
-    Result = E->getValue();
-    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-    return true;
-  }
-  bool VisitCharacterLiteral(const CharacterLiteral *E) {
-    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
-    Result = E->getValue();
-    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
-    return true;
-  }
+    
 private:
   bool HandleCast(const Expr* SubExpr, QualType DestType);
   bool EvaluateSizeAlignOf(bool isSizeOf, QualType SrcTy, QualType DstTy);
@@ -262,6 +268,26 @@ static bool EvaluateInteger(const Expr* E, APSInt &Result, EvalInfo &Info) {
   return IntExprEvaluator(Info, Result).Visit(const_cast<Expr*>(E));
 }
 
+bool IntExprEvaluator::VisitDeclRefExpr(const DeclRefExpr *E) {
+  // Enums are integer constant exprs.
+  if (const EnumConstantDecl *D = dyn_cast<EnumConstantDecl>(E->getDecl())) {
+    Result = D->getInitVal();
+    return true;
+  }
+  
+  // Otherwise, random variable references are not constants.
+  return Error(E->getLocStart(), diag::err_expr_not_constant);
+}
+
+
+bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
+  Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+  // __builtin_type_compatible_p is a constant.
+  if (E->isBuiltinClassifyType(Result))
+    return true;
+  
+  return Error(E->getLocStart(), diag::err_expr_not_constant);
+}
 
 bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   // The LHS of a constant expr is always evaluated and needed.
@@ -395,7 +421,10 @@ bool IntExprEvaluator::EvaluateSizeAlignOf(bool isSizeOf, QualType SrcTy,
 }
 
 bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
+  // Special case unary operators that do not need their subexpression
+  // evaluated.  offsetof/sizeof/alignof are all special.
   if (E->isOffsetOfOp()) {
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
     Result = E->evaluateOffsetOf(Info.Ctx);
     Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
     return true;
@@ -410,10 +439,10 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
     return false;
 
   switch (E->getOpcode()) {
+  default:
     // Address, indirect, pre/post inc/dec, etc are not valid constant exprs.
     // See C99 6.6p3.
-  default:
-    return false;
+    return Error(E->getOperatorLoc(), diag::err_expr_not_constant);
   case UnaryOperator::LNot: {
     bool Val = Result == 0;
     Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
@@ -421,8 +450,10 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
     break;
   }
   case UnaryOperator::Extension:
+    // FIXME: Should extension allow i-c-e extension expressions in its scope?
+    // If so, we could clear the diagnostic ID.
   case UnaryOperator::Plus:
-    // The result is always just the subexpr
+    // The result is always just the subexpr. 
     break;
   case UnaryOperator::Minus:
     Result = -Result;
