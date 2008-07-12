@@ -40,8 +40,7 @@ cl::desc("enable preincrement load/store generation on PPC (experimental)"),
                                      cl::Hidden);
 
 PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
-  : TargetLowering(TM), PPCSubTarget(*TM.getSubtargetImpl()),
-    PPCAtomicLabelIndex(0) {
+  : TargetLowering(TM), PPCSubTarget(*TM.getSubtargetImpl()) {
     
   setPow2DivIsCheap();
   
@@ -378,45 +377,47 @@ unsigned PPCTargetLowering::getByValTypeAlignment(const Type *Ty) const {
 const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default: return 0;
-  case PPCISD::FSEL:          return "PPCISD::FSEL";
-  case PPCISD::FCFID:         return "PPCISD::FCFID";
-  case PPCISD::FCTIDZ:        return "PPCISD::FCTIDZ";
-  case PPCISD::FCTIWZ:        return "PPCISD::FCTIWZ";
-  case PPCISD::STFIWX:        return "PPCISD::STFIWX";
-  case PPCISD::VMADDFP:       return "PPCISD::VMADDFP";
-  case PPCISD::VNMSUBFP:      return "PPCISD::VNMSUBFP";
-  case PPCISD::VPERM:         return "PPCISD::VPERM";
-  case PPCISD::Hi:            return "PPCISD::Hi";
-  case PPCISD::Lo:            return "PPCISD::Lo";
-  case PPCISD::DYNALLOC:      return "PPCISD::DYNALLOC";
-  case PPCISD::GlobalBaseReg: return "PPCISD::GlobalBaseReg";
-  case PPCISD::SRL:           return "PPCISD::SRL";
-  case PPCISD::SRA:           return "PPCISD::SRA";
-  case PPCISD::SHL:           return "PPCISD::SHL";
-  case PPCISD::EXTSW_32:      return "PPCISD::EXTSW_32";
-  case PPCISD::STD_32:        return "PPCISD::STD_32";
-  case PPCISD::CALL_ELF:      return "PPCISD::CALL_ELF";
-  case PPCISD::CALL_Macho:    return "PPCISD::CALL_Macho";
-  case PPCISD::MTCTR:         return "PPCISD::MTCTR";
-  case PPCISD::BCTRL_Macho:   return "PPCISD::BCTRL_Macho";
-  case PPCISD::BCTRL_ELF:     return "PPCISD::BCTRL_ELF";
-  case PPCISD::RET_FLAG:      return "PPCISD::RET_FLAG";
-  case PPCISD::MFCR:          return "PPCISD::MFCR";
-  case PPCISD::VCMP:          return "PPCISD::VCMP";
-  case PPCISD::VCMPo:         return "PPCISD::VCMPo";
-  case PPCISD::LBRX:          return "PPCISD::LBRX";
-  case PPCISD::STBRX:         return "PPCISD::STBRX";
-  case PPCISD::LARX:          return "PPCISD::LARX";
-  case PPCISD::STCX:          return "PPCISD::STCX";
-  case PPCISD::CMP_UNRESERVE: return "PPCISD::CMP_UNRESERVE";
-  case PPCISD::COND_BRANCH:   return "PPCISD::COND_BRANCH";
-  case PPCISD::MFFS:          return "PPCISD::MFFS";
-  case PPCISD::MTFSB0:        return "PPCISD::MTFSB0";
-  case PPCISD::MTFSB1:        return "PPCISD::MTFSB1";
-  case PPCISD::FADDRTZ:       return "PPCISD::FADDRTZ";
-  case PPCISD::MTFSF:         return "PPCISD::MTFSF";
-  case PPCISD::TAILCALL:      return "PPCISD::TAILCALL";
-  case PPCISD::TC_RETURN:     return "PPCISD::TC_RETURN";
+  case PPCISD::FSEL:            return "PPCISD::FSEL";
+  case PPCISD::FCFID:           return "PPCISD::FCFID";
+  case PPCISD::FCTIDZ:          return "PPCISD::FCTIDZ";
+  case PPCISD::FCTIWZ:          return "PPCISD::FCTIWZ";
+  case PPCISD::STFIWX:          return "PPCISD::STFIWX";
+  case PPCISD::VMADDFP:         return "PPCISD::VMADDFP";
+  case PPCISD::VNMSUBFP:        return "PPCISD::VNMSUBFP";
+  case PPCISD::VPERM:           return "PPCISD::VPERM";
+  case PPCISD::Hi:              return "PPCISD::Hi";
+  case PPCISD::Lo:              return "PPCISD::Lo";
+  case PPCISD::DYNALLOC:        return "PPCISD::DYNALLOC";
+  case PPCISD::GlobalBaseReg:   return "PPCISD::GlobalBaseReg";
+  case PPCISD::SRL:             return "PPCISD::SRL";
+  case PPCISD::SRA:             return "PPCISD::SRA";
+  case PPCISD::SHL:             return "PPCISD::SHL";
+  case PPCISD::EXTSW_32:        return "PPCISD::EXTSW_32";
+  case PPCISD::STD_32:          return "PPCISD::STD_32";
+  case PPCISD::CALL_ELF:        return "PPCISD::CALL_ELF";
+  case PPCISD::CALL_Macho:      return "PPCISD::CALL_Macho";
+  case PPCISD::MTCTR:           return "PPCISD::MTCTR";
+  case PPCISD::BCTRL_Macho:     return "PPCISD::BCTRL_Macho";
+  case PPCISD::BCTRL_ELF:       return "PPCISD::BCTRL_ELF";
+  case PPCISD::RET_FLAG:        return "PPCISD::RET_FLAG";
+  case PPCISD::MFCR:            return "PPCISD::MFCR";
+  case PPCISD::VCMP:            return "PPCISD::VCMP";
+  case PPCISD::VCMPo:           return "PPCISD::VCMPo";
+  case PPCISD::LBRX:            return "PPCISD::LBRX";
+  case PPCISD::STBRX:           return "PPCISD::STBRX";
+  case PPCISD::ATOMIC_LOAD_ADD: return "PPCISD::ATOMIC_LOAD_ADD";
+  case PPCISD::ATOMIC_CMP_SWAP: return "PPCISD::ATOMIC_CMP_SWAP";
+  case PPCISD::ATOMIC_SWAP:     return "PPCISD::ATOMIC_SWAP";
+  case PPCISD::LARX:            return "PPCISD::LARX";
+  case PPCISD::STCX:            return "PPCISD::STCX";
+  case PPCISD::COND_BRANCH:     return "PPCISD::COND_BRANCH";
+  case PPCISD::MFFS:            return "PPCISD::MFFS";
+  case PPCISD::MTFSB0:          return "PPCISD::MTFSB0";
+  case PPCISD::MTFSB1:          return "PPCISD::MTFSB1";
+  case PPCISD::FADDRTZ:         return "PPCISD::FADDRTZ";
+  case PPCISD::MTFSF:           return "PPCISD::MTFSF";
+  case PPCISD::TAILCALL:        return "PPCISD::TAILCALL";
+  case PPCISD::TC_RETURN:       return "PPCISD::TC_RETURN";
   }
 }
 
@@ -2726,33 +2727,13 @@ SDOperand PPCTargetLowering::LowerAtomicLOAD_ADD(SDOperand Op, SelectionDAG &DAG
   SDOperand Ptr     = Op.getOperand(1);
   SDOperand Incr    = Op.getOperand(2);
 
-  // Issue a "load and reserve".
-  std::vector<MVT> VTs;
-  VTs.push_back(VT);
-  VTs.push_back(MVT::Other);
-
-  SDOperand Label  = DAG.getConstant(PPCAtomicLabelIndex++, MVT::i32);
+  SDVTList VTs = DAG.getVTList(VT, MVT::Other);
   SDOperand Ops[] = {
-    Chain,               // Chain
-    Ptr,                 // Ptr
-    Label,               // Label
+    Chain,
+    Ptr,
+    Incr,
   };
-  SDOperand Load = DAG.getNode(PPCISD::LARX, VTs, Ops, 3);
-  Chain = Load.getValue(1);
-
-  // Compute new value.
-  SDOperand NewVal  = DAG.getNode(ISD::ADD, VT, Load, Incr);
-
-  // Issue a "store and check".
-  SDOperand Ops2[] = {
-    Chain,               // Chain
-    NewVal,              // Value
-    Ptr,                 // Ptr
-    Label,               // Label
-  };
-  SDOperand Store = DAG.getNode(PPCISD::STCX, MVT::Other, Ops2, 4);
-  SDOperand OutOps[] = { Load, Store };
-  return DAG.getMergeValues(OutOps, 2);
+  return DAG.getNode(PPCISD::ATOMIC_LOAD_ADD, VTs, Ops, 3);
 }
 
 SDOperand PPCTargetLowering::LowerAtomicCMP_SWAP(SDOperand Op, SelectionDAG &DAG) {
@@ -2762,39 +2743,14 @@ SDOperand PPCTargetLowering::LowerAtomicCMP_SWAP(SDOperand Op, SelectionDAG &DAG
   SDOperand NewVal  = Op.getOperand(2);
   SDOperand OldVal  = Op.getOperand(3);
 
-  // Issue a "load and reserve".
-  std::vector<MVT> VTs;
-  VTs.push_back(VT);
-  VTs.push_back(MVT::Other);
-
-  SDOperand Label  = DAG.getConstant(PPCAtomicLabelIndex++, MVT::i32);
+  SDVTList VTs = DAG.getVTList(VT, MVT::Other);
   SDOperand Ops[] = {
-    Chain,               // Chain
-    Ptr,                 // Ptr
-    Label,               // Label
+    Chain,
+    Ptr,
+    OldVal,
+    NewVal,
   };
-  SDOperand Load = DAG.getNode(PPCISD::LARX, VTs, Ops, 3);
-  Chain = Load.getValue(1);
-
-  // Compare and unreserve if not equal.
-  SDOperand Ops2[] = {
-    Chain,               // Chain
-    OldVal,              // Old value
-    Load,                // Value in memory
-    Label,               // Label
-  };
-  Chain = DAG.getNode(PPCISD::CMP_UNRESERVE, MVT::Other, Ops2, 4);
-
-  // Issue a "store and check".
-  SDOperand Ops3[] = {
-    Chain,               // Chain
-    NewVal,              // Value
-    Ptr,                 // Ptr
-    Label,               // Label
-  };
-  SDOperand Store = DAG.getNode(PPCISD::STCX, MVT::Other, Ops3, 4);
-  SDOperand OutOps[] = { Load, Store };
-  return DAG.getMergeValues(OutOps, 2);
+  return DAG.getNode(PPCISD::ATOMIC_CMP_SWAP, VTs, Ops, 4);
 }
 
 SDOperand PPCTargetLowering::LowerAtomicSWAP(SDOperand Op, SelectionDAG &DAG) {
@@ -2803,30 +2759,13 @@ SDOperand PPCTargetLowering::LowerAtomicSWAP(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Ptr     = Op.getOperand(1);
   SDOperand NewVal  = Op.getOperand(2);
 
-  // Issue a "load and reserve".
-  std::vector<MVT> VTs;
-  VTs.push_back(VT);
-  VTs.push_back(MVT::Other);
-
-  SDOperand Label  = DAG.getConstant(PPCAtomicLabelIndex++, MVT::i32);
+  SDVTList VTs = DAG.getVTList(VT, MVT::Other);
   SDOperand Ops[] = {
-    Chain,               // Chain
-    Ptr,                 // Ptr
-    Label,               // Label
+    Chain,
+    Ptr,
+    NewVal,
   };
-  SDOperand Load = DAG.getNode(PPCISD::LARX, VTs, Ops, 3);
-  Chain = Load.getValue(1);
-
-  // Issue a "store and check".
-  SDOperand Ops2[] = {
-    Chain,               // Chain
-    NewVal,              // Value
-    Ptr,                 // Ptr
-    Label,               // Label
-  };
-  SDOperand Store = DAG.getNode(PPCISD::STCX, MVT::Other, Ops2, 4);
-  SDOperand OutOps[] = { Load, Store };
-  return DAG.getMergeValues(OutOps, 2);
+  return DAG.getNode(PPCISD::ATOMIC_SWAP, VTs, Ops, 3);
 }
 
 /// LowerSELECT_CC - Lower floating point select_cc's into fsel instruction when
@@ -3981,58 +3920,197 @@ MachineBasicBlock *
 PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB) {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-  assert((MI->getOpcode() == PPC::SELECT_CC_I4 ||
-          MI->getOpcode() == PPC::SELECT_CC_I8 ||
-          MI->getOpcode() == PPC::SELECT_CC_F4 ||
-          MI->getOpcode() == PPC::SELECT_CC_F8 ||
-          MI->getOpcode() == PPC::SELECT_CC_VRRC) &&
-         "Unexpected instr type to insert");
-  
-  // To "insert" a SELECT_CC instruction, we actually have to insert the diamond
-  // control-flow pattern.  The incoming instruction knows the destination vreg
-  // to set, the condition code register to branch on, the true/false values to
-  // select between, and a branch opcode to use.
+
+  // To "insert" these instructions we actually have to insert their
+  // control-flow patterns.
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
   MachineFunction::iterator It = BB;
   ++It;
-  
-  //  thisMBB:
-  //  ...
-  //   TrueVal = ...
-  //   cmpTY ccX, r1, r2
-  //   bCC copy1MBB
-  //   fallthrough --> copy0MBB
-  MachineBasicBlock *thisMBB = BB;
+
   MachineFunction *F = BB->getParent();
-  MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *sinkMBB = F->CreateMachineBasicBlock(LLVM_BB);
-  unsigned SelectPred = MI->getOperand(4).getImm();
-  BuildMI(BB, TII->get(PPC::BCC))
-    .addImm(SelectPred).addReg(MI->getOperand(1).getReg()).addMBB(sinkMBB);
-  F->insert(It, copy0MBB);
-  F->insert(It, sinkMBB);
-  // Update machine-CFG edges by transferring all successors of the current
-  // block to the new block which will contain the Phi node for the select.
-  sinkMBB->transferSuccessors(BB);
-  // Next, add the true and fallthrough blocks as its successors.
-  BB->addSuccessor(copy0MBB);
-  BB->addSuccessor(sinkMBB);
-  
-  //  copy0MBB:
-  //   %FalseValue = ...
-  //   # fallthrough to sinkMBB
-  BB = copy0MBB;
-  
-  // Update machine-CFG edges
-  BB->addSuccessor(sinkMBB);
-  
-  //  sinkMBB:
-  //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
-  //  ...
-  BB = sinkMBB;
-  BuildMI(BB, TII->get(PPC::PHI), MI->getOperand(0).getReg())
-    .addReg(MI->getOperand(3).getReg()).addMBB(copy0MBB)
-    .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB);
+
+  if (MI->getOpcode() == PPC::SELECT_CC_I4 ||
+      MI->getOpcode() == PPC::SELECT_CC_I8 ||
+      MI->getOpcode() == PPC::SELECT_CC_F4 ||
+      MI->getOpcode() == PPC::SELECT_CC_F8 ||
+      MI->getOpcode() == PPC::SELECT_CC_VRRC) {
+
+    // The incoming instruction knows the destination vreg to set, the
+    // condition code register to branch on, the true/false values to
+    // select between, and a branch opcode to use.
+
+    //  thisMBB:
+    //  ...
+    //   TrueVal = ...
+    //   cmpTY ccX, r1, r2
+    //   bCC copy1MBB
+    //   fallthrough --> copy0MBB
+    MachineBasicBlock *thisMBB = BB;
+    MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
+    MachineBasicBlock *sinkMBB = F->CreateMachineBasicBlock(LLVM_BB);
+    unsigned SelectPred = MI->getOperand(4).getImm();
+    BuildMI(BB, TII->get(PPC::BCC))
+      .addImm(SelectPred).addReg(MI->getOperand(1).getReg()).addMBB(sinkMBB);
+    F->insert(It, copy0MBB);
+    F->insert(It, sinkMBB);
+    // Update machine-CFG edges by transferring all successors of the current
+    // block to the new block which will contain the Phi node for the select.
+    sinkMBB->transferSuccessors(BB);
+    // Next, add the true and fallthrough blocks as its successors.
+    BB->addSuccessor(copy0MBB);
+    BB->addSuccessor(sinkMBB);
+    
+    //  copy0MBB:
+    //   %FalseValue = ...
+    //   # fallthrough to sinkMBB
+    BB = copy0MBB;
+    
+    // Update machine-CFG edges
+    BB->addSuccessor(sinkMBB);
+    
+    //  sinkMBB:
+    //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
+    //  ...
+    BB = sinkMBB;
+    BuildMI(BB, TII->get(PPC::PHI), MI->getOperand(0).getReg())
+      .addReg(MI->getOperand(3).getReg()).addMBB(copy0MBB)
+      .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB);
+  }
+  else if (MI->getOpcode() == PPC::ATOMIC_LOAD_ADD_I32 ||
+           MI->getOpcode() == PPC::ATOMIC_LOAD_ADD_I64) {
+    bool is64bit = MI->getOpcode() == PPC::ATOMIC_LOAD_ADD_I64;
+
+    unsigned dest = MI->getOperand(0).getReg();
+    unsigned ptrA = MI->getOperand(1).getReg();
+    unsigned ptrB = MI->getOperand(2).getReg();
+    unsigned incr = MI->getOperand(3).getReg();
+
+    MachineBasicBlock *loopMBB = F->CreateMachineBasicBlock(LLVM_BB);
+    MachineBasicBlock *exitMBB = F->CreateMachineBasicBlock(LLVM_BB);
+    F->insert(It, loopMBB);
+    F->insert(It, exitMBB);
+    exitMBB->transferSuccessors(BB);
+
+    MachineRegisterInfo &RegInfo = F->getRegInfo();
+    unsigned TmpReg = RegInfo.createVirtualRegister(
+      is64bit ? (const TargetRegisterClass *) &PPC::GPRCRegClass :
+                (const TargetRegisterClass *) &PPC::G8RCRegClass);
+
+    //  thisMBB:
+    //   ...
+    //   fallthrough --> loopMBB
+    BB->addSuccessor(loopMBB);
+
+    //  loopMBB:
+    //   l[wd]arx dest, ptr
+    //   add r0, dest, incr
+    //   st[wd]cx. r0, ptr
+    //   bne- loopMBB
+    //   fallthrough --> exitMBB
+    BB = loopMBB;
+    BuildMI(BB, TII->get(is64bit ? PPC::LDARX : PPC::LWARX), dest)
+      .addReg(ptrA).addReg(ptrB);
+    BuildMI(BB, TII->get(is64bit ? PPC::ADD4 : PPC::ADD8), TmpReg)
+      .addReg(incr).addReg(dest);
+    BuildMI(BB, TII->get(is64bit ? PPC::STDCX : PPC::STWCX))
+      .addReg(TmpReg).addReg(ptrA).addReg(ptrB);
+    BuildMI(BB, TII->get(PPC::BCC))
+      .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(loopMBB);    
+    BB->addSuccessor(loopMBB);
+    BB->addSuccessor(exitMBB);
+    
+    //  exitMBB:
+    //   ...
+    BB = exitMBB;
+  }
+  else if (MI->getOpcode() == PPC::ATOMIC_CMP_SWAP_I32 ||
+           MI->getOpcode() == PPC::ATOMIC_CMP_SWAP_I64) {
+    bool is64bit = MI->getOpcode() == PPC::ATOMIC_CMP_SWAP_I64;
+
+    unsigned dest   = MI->getOperand(0).getReg();
+    unsigned ptrA   = MI->getOperand(1).getReg();
+    unsigned ptrB   = MI->getOperand(2).getReg();
+    unsigned oldval = MI->getOperand(3).getReg();
+    unsigned newval = MI->getOperand(4).getReg();
+
+    MachineBasicBlock *loopMBB = F->CreateMachineBasicBlock(LLVM_BB);
+    MachineBasicBlock *exitMBB = F->CreateMachineBasicBlock(LLVM_BB);
+    F->insert(It, loopMBB);
+    F->insert(It, exitMBB);
+    exitMBB->transferSuccessors(BB);
+
+    //  thisMBB:
+    //   ...
+    //   fallthrough --> loopMBB
+    BB->addSuccessor(loopMBB);
+
+    //  loopMBB:
+    //   l[wd]arx dest, ptr
+    //   cmp[wd] dest, oldval
+    //   bne- exitMBB
+    //   st[wd]cx. newval, ptr
+    //   bne- loopMBB
+    //   fallthrough --> exitMBB
+    BB = loopMBB;
+    BuildMI(BB, TII->get(is64bit ? PPC::LDARX : PPC::LWARX), dest)
+      .addReg(ptrA).addReg(ptrB);
+    BuildMI(BB, TII->get(is64bit ? PPC::CMPD : PPC::CMPW), PPC::CR0)
+      .addReg(oldval).addReg(dest);
+    BuildMI(BB, TII->get(PPC::BCC))
+      .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(exitMBB);
+    BuildMI(BB, TII->get(is64bit ? PPC::STDCX : PPC::STWCX))
+      .addReg(newval).addReg(ptrA).addReg(ptrB);
+    BuildMI(BB, TII->get(PPC::BCC))
+      .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(loopMBB);    
+    BB->addSuccessor(loopMBB);
+    BB->addSuccessor(exitMBB);
+    
+    //  exitMBB:
+    //   ...
+    BB = exitMBB;
+  }
+  else if (MI->getOpcode() == PPC::ATOMIC_SWAP_I32 ||
+           MI->getOpcode() == PPC::ATOMIC_SWAP_I64) {
+    bool is64bit = MI->getOpcode() == PPC::ATOMIC_SWAP_I64;
+
+    unsigned dest   = MI->getOperand(0).getReg();
+    unsigned ptrA   = MI->getOperand(1).getReg();
+    unsigned ptrB   = MI->getOperand(2).getReg();
+    unsigned newval = MI->getOperand(3).getReg();
+
+    MachineBasicBlock *loopMBB = F->CreateMachineBasicBlock(LLVM_BB);
+    MachineBasicBlock *exitMBB = F->CreateMachineBasicBlock(LLVM_BB);
+    F->insert(It, loopMBB);
+    F->insert(It, exitMBB);
+    exitMBB->transferSuccessors(BB);
+
+    //  thisMBB:
+    //   ...
+    //   fallthrough --> loopMBB
+    BB->addSuccessor(loopMBB);
+
+    //  loopMBB:
+    //   l[wd]arx dest, ptr
+    //   st[wd]cx. newval, ptr
+    //   bne- loopMBB
+    //   fallthrough --> exitMBB
+    BB = loopMBB;
+    BuildMI(BB, TII->get(is64bit ? PPC::LDARX : PPC::LWARX), dest)
+      .addReg(ptrA).addReg(ptrB);
+    BuildMI(BB, TII->get(is64bit ? PPC::STDCX : PPC::STWCX))
+      .addReg(newval).addReg(ptrA).addReg(ptrB);
+    BuildMI(BB, TII->get(PPC::BCC))
+      .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(loopMBB);    
+    BB->addSuccessor(loopMBB);
+    BB->addSuccessor(exitMBB);
+    
+    //  exitMBB:
+    //   ...
+    BB = exitMBB;
+  }
+  else {
+    assert(0 && "Unexpected instr type to insert");
+  }
 
   F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
   return BB;

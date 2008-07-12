@@ -42,15 +42,21 @@ def SDT_PPCstbrx : SDTypeProfile<0, 4, [
   SDTCisVT<0, i32>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
 ]>;
 
+def SDT_PPCatomic_load_add : SDTypeProfile<1, 2, [
+  SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisInt<2>
+]>;
+def SDT_PPCatomic_cmp_swap : SDTypeProfile<1, 3, [
+  SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisInt<2>, SDTCisInt<3>
+]>;
+def SDT_PPCatomic_swap : SDTypeProfile<1, 2, [
+  SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisInt<2>
+]>;
 
-def SDT_PPClarx : SDTypeProfile<1, 2, [
-  SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisVT<2, i32>
+def SDT_PPClarx : SDTypeProfile<1, 1, [
+  SDTCisInt<0>, SDTCisPtrTy<1>
 ]>;
-def SDT_PPCstcx : SDTypeProfile<0, 3, [
-  SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisVT<2, i32>
-]>;
-def SDT_PPCcmp_unres : SDTypeProfile<0, 3, [
-  SDTCisSameAs<0, 1>, SDTCisInt<1>, SDTCisVT<2, i32>
+def SDT_PPCstcx : SDTypeProfile<0, 2, [
+  SDTCisInt<0>, SDTCisPtrTy<1>
 ]>;
 
 def SDT_PPCTC_ret : SDTypeProfile<0, 2, [
@@ -143,12 +149,22 @@ def PPClbrx       : SDNode<"PPCISD::LBRX", SDT_PPClbrx,
 def PPCstbrx      : SDNode<"PPCISD::STBRX", SDT_PPCstbrx,
                            [SDNPHasChain, SDNPMayStore]>;
 
+// Atomic operations
+def PPCatomic_load_add : SDNode<"PPCISD::ATOMIC_LOAD_ADD",
+                                SDT_PPCatomic_load_add,
+                                [SDNPHasChain, SDNPMayLoad, SDNPMayStore]>;
+def PPCatomic_cmp_swap : SDNode<"PPCISD::ATOMIC_CMP_SWAP",
+                                SDT_PPCatomic_cmp_swap,
+                                [SDNPHasChain, SDNPMayLoad, SDNPMayStore]>;
+def PPCatomic_swap : SDNode<"PPCISD::ATOMIC_SWAP",
+                            SDT_PPCatomic_swap,
+                            [SDNPHasChain, SDNPMayLoad, SDNPMayStore]>;
+
+// Instructions to support atomic operations
 def PPClarx      : SDNode<"PPCISD::LARX", SDT_PPClarx,
                           [SDNPHasChain, SDNPMayLoad]>;
 def PPCstcx      : SDNode<"PPCISD::STCX", SDT_PPCstcx,
                           [SDNPHasChain, SDNPMayStore]>;
-def PPCcmp_unres  : SDNode<"PPCISD::CMP_UNRESERVE", SDT_PPCcmp_unres,
-                           [SDNPHasChain]>;
 
 // Instructions to support dynamic alloca.
 def SDTDynOp  : SDTypeProfile<1, 2, []>;
@@ -530,23 +546,34 @@ def DCBZL  : DCB_Form<1014, 1, (outs), (ins memrr:$dst),
                       "dcbzl $dst", LdStDCBF, [(int_ppc_dcbzl xoaddr:$dst)]>,
                       PPC970_DGroup_Single;
 
-// Atomic operations.
-def LWARX : XForm_1<31,  20, (outs GPRC:$rD), (ins memrr:$ptr, i32imm:$label),
-                   "\nLa${label}_entry:\n\tlwarx $rD, $ptr", LdStLWARX,
-                   [(set GPRC:$rD, (PPClarx xoaddr:$ptr, imm:$label))]>;
-
-let Defs = [CR0] in {
-def STWCX : Pseudo<(outs), (ins GPRC:$rS, memrr:$dst, i32imm:$label),
-                  "stwcx. $rS, $dst\n\tbne- La${label}_entry\nLa${label}_exit:",
-                   [(PPCstcx GPRC:$rS, xoaddr:$dst, imm:$label)]>;
-
-def CMP_UNRESw : Pseudo<(outs), (ins GPRC:$rA, GPRC:$rB, i32imm:$label),
-                         "cmpw $rA, $rB\n\tbne- La${label}_exit",
-                         [(PPCcmp_unres GPRC:$rA, GPRC:$rB, imm:$label)]>;
-def CMP_UNRESwi : Pseudo<(outs), (ins GPRC:$rA, s16imm:$imm, i32imm:$label),
-                         "cmpwi $rA, $imm\n\tbne- La${label}_exit",
-                         [(PPCcmp_unres GPRC:$rA, immSExt16:$imm, imm:$label)]>;
+// Atomic operations
+let usesCustomDAGSchedInserter = 1 in {
+  let Uses = [CR0] in {
+    def ATOMIC_LOAD_ADD_I32 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$incr),
+      "${:comment} ATOMIC_LOAD_ADD_I32 PSEUDO!",
+      [(set GPRC:$dst, (PPCatomic_load_add xoaddr:$ptr, GPRC:$incr))]>;
+    def ATOMIC_CMP_SWAP_I32 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$old, GPRC:$new),
+      "${:comment} ATOMIC_CMP_SWAP_I32 PSEUDO!",
+      [(set GPRC:$dst, (PPCatomic_cmp_swap xoaddr:$ptr, GPRC:$old, GPRC:$new))]>;
+    def ATOMIC_SWAP_I32 : Pseudo<
+      (outs GPRC:$dst), (ins memrr:$ptr, GPRC:$new),
+      "${:comment} ATOMIC_SWAP_I32 PSEUDO!",
+      [(set GPRC:$dst, (PPCatomic_swap xoaddr:$ptr, GPRC:$new))]>;
+  }
 }
+
+// Instructions to support atomic operations
+def LWARX : XForm_1<31,  20, (outs GPRC:$rD), (ins memrr:$src),
+                   "lwarx $rD, $src", LdStLWARX,
+                   [(set GPRC:$rD, (PPClarx xoaddr:$src))]>;
+
+let Defs = [CR0] in
+def STWCX : XForm_1<31, 150, (outs), (ins GPRC:$rS, memrr:$dst),
+                   "stwcx. $rS, $dst", LdStSTWCX,
+                   [(PPCstcx GPRC:$rS, xoaddr:$dst)]>,
+                   isDOT;
 
 //===----------------------------------------------------------------------===//
 // PPC32 Load Instructions.
@@ -1326,10 +1353,6 @@ def : Pat<(extloadf32 iaddr:$src),
           (FMRSD (LFS iaddr:$src))>;
 def : Pat<(extloadf32 xaddr:$src),
           (FMRSD (LFSX xaddr:$src))>;
-
-// Atomic operations
-def : Pat<(PPCcmp_unres immSExt16:$imm, GPRC:$rA, imm:$label),
-          (CMP_UNRESwi GPRC:$rA, immSExt16:$imm, imm:$label)>;
 
 include "PPCInstrAltivec.td"
 include "PPCInstr64Bit.td"

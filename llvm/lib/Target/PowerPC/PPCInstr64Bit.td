@@ -116,23 +116,34 @@ def : Pat<(PPCcall_ELF (i64 tglobaladdr:$dst)),
 def : Pat<(PPCcall_ELF (i64 texternalsym:$dst)),
           (BL8_ELF texternalsym:$dst)>;
 
-// Atomic operations.
-def LDARX : Pseudo<(outs G8RC:$rD), (ins memrr:$ptr, i32imm:$label),
-                   "\nLa${label}_entry:\n\tldarx $rD, $ptr",
-                   [(set G8RC:$rD, (PPClarx xoaddr:$ptr, imm:$label))]>;
-
-let Defs = [CR0] in {
-def STDCX : Pseudo<(outs), (ins G8RC:$rS, memrr:$dst, i32imm:$label),
-                  "stdcx. $rS, $dst\n\tbne- La${label}_entry\nLa${label}_exit:",
-                   [(PPCstcx G8RC:$rS, xoaddr:$dst, imm:$label)]>;
-
-def CMP_UNRESd : Pseudo<(outs), (ins G8RC:$rA, G8RC:$rB, i32imm:$label),
-                         "cmpd $rA, $rB\n\tbne- La${label}_exit",
-                         [(PPCcmp_unres G8RC:$rA, G8RC:$rB, imm:$label)]>;
-def CMP_UNRESdi : Pseudo<(outs), (ins G8RC:$rA, s16imm64:$imm, i32imm:$label),
-                         "cmpdi $rA, $imm\n\tbne- La${label}_exit",
-                         [(PPCcmp_unres G8RC:$rA, immSExt16:$imm, imm:$label)]>;
+// Atomic operations
+let usesCustomDAGSchedInserter = 1 in {
+  let Uses = [CR0] in {
+    def ATOMIC_LOAD_ADD_I64 : Pseudo<
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$incr),
+      "${:comment} ATOMIC_LOAD_ADD_I64 PSEUDO!",
+      [(set G8RC:$dst, (PPCatomic_load_add xoaddr:$ptr, G8RC:$incr))]>;
+    def ATOMIC_CMP_SWAP_I64 : Pseudo<
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$old, G8RC:$new),
+      "${:comment} ATOMIC_CMP_SWAP_I64 PSEUDO!",
+      [(set G8RC:$dst, (PPCatomic_cmp_swap xoaddr:$ptr, G8RC:$old, G8RC:$new))]>;
+    def ATOMIC_SWAP_I64 : Pseudo<
+      (outs G8RC:$dst), (ins memrr:$ptr, G8RC:$new),
+      "${:comment} ATOMIC_SWAP_I64 PSEUDO!",
+      [(set G8RC:$dst, (PPCatomic_swap xoaddr:$ptr, G8RC:$new))]>;
+  }
 }
+
+// Instructions to support atomic operations
+def LDARX : XForm_1<31,  84, (outs G8RC:$rD), (ins memrr:$ptr),
+                   "ldarx $rD, $ptr", LdStLDARX,
+                   [(set G8RC:$rD, (PPClarx xoaddr:$ptr))]>;
+
+let Defs = [CR0] in
+def STDCX : XForm_1<31, 214, (outs), (ins G8RC:$rS, memrr:$dst),
+                   "stdcx. $rS, $dst", LdStSTDCX,
+                   [(PPCstcx G8RC:$rS, xoaddr:$dst)]>,
+                   isDOT;
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
 def TCRETURNdi8 :Pseudo< (outs),

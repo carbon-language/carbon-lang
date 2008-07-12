@@ -152,6 +152,11 @@ namespace llvm {
       /// MTFSF = F8RC, INFLAG - This moves the register into the FPSCR.
       MTFSF,
 
+      /// ATOMIC_LOAD_ADD, ATOMIC_CMP_SWAP, ATOMIC_SWAP - These
+      /// correspond to the llvm.atomic.load.add, llvm.atomic.cmp.swap
+      /// and llvm.atomic.swap intrinsics.
+      ATOMIC_LOAD_ADD, ATOMIC_CMP_SWAP, ATOMIC_SWAP,
+
       /// LARX = This corresponds to PPC l{w|d}arx instrcution: load and
       /// reserve indexed. This is used to implement atomic operations.
       LARX,
@@ -159,10 +164,6 @@ namespace llvm {
       /// STCX = This corresponds to PPC stcx. instrcution: store conditional
       /// indexed. This is used to implement atomic operations.
       STCX,
-
-      /// CMP_UNRESERVE = Test for equality and "unreserve" if not true. This
-      /// is used to implement atomic operations.
-      CMP_UNRESERVE,
 
       /// TAILCALL - Indicates a tail call should be taken.
       TAILCALL,
@@ -325,10 +326,6 @@ namespace llvm {
                                                    SelectionDAG &DAG) const;
 
   private:
-    /// PPCAtomicLabelIndex - Keep track the number of PPC atomic labels.
-    ///
-    unsigned PPCAtomicLabelIndex;
-
     SDOperand getFramePointerFrameIndex(SelectionDAG & DAG) const;
     SDOperand getReturnAddrFrameIndex(SelectionDAG & DAG) const;
 
