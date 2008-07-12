@@ -34,7 +34,11 @@ private:
 
 public:
   typedef size_t size_type;
-  typedef typename super::pointer pointer;
+
+  // FIX for MSVC++.  This should be reviewed more.
+  // typedef typename super::pointer pointer;
+  typedef ValueT* pointer;
+
   typedef typename super::reference reference;
 
   alist_iterator(NodeIterT NI) : NodeIter(NI) {}
