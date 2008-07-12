@@ -2030,14 +2030,10 @@ MachineInstr* X86InstrInfo::foldMemoryOperand(MachineFunction &MF,
   // Check switch flag 
   if (NoFusing) return NULL;
 
+  // Determine the alignment of the load.
   unsigned Alignment = 0;
-  for (alist<MachineMemOperand>::iterator i = LoadMI->memoperands_begin(),
-       e = LoadMI->memoperands_end(); i != e; ++i) {
-    const MachineMemOperand &MRO = *i;
-    unsigned Align = MRO.getAlignment();
-    if (Align > Alignment)
-      Alignment = Align;
-  }
+  if (LoadMI->hasOneMemOperand())
+    Alignment = LoadMI->memoperands_begin()->getAlignment();
 
   // FIXME: Move alignment requirement into tables?
   if (Alignment < 16) {

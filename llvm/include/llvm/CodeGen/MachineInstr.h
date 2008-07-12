@@ -115,6 +115,13 @@ public:
   { return MemOperands.end(); }
   bool memoperands_empty() const { return MemOperands.empty(); }
 
+  /// hasOneMemOperand - Return true if this instruction has exactly one
+  /// MachineMemOperand.
+  bool hasOneMemOperand() const {
+    return !memoperands_empty() &&
+           next(memoperands_begin()) == memoperands_end();
+  }
+
   /// isIdenticalTo - Return true if this instruction is identical to (same
   /// opcode and same operands as) the specified instruction.
   bool isIdenticalTo(const MachineInstr *Other) const {
