@@ -15,6 +15,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/Compiler.h"
 using namespace clang;
@@ -72,13 +73,19 @@ struct EvalInfo {
   /// if it is short-circuited (according to C rules).
   bool isEvaluated;
   
-  /// ICEDiag - If the expression is foldable, but the expression is not an
-  /// integer constant expression, this contains the extension diagnostic to
-  /// emit which describes why it isn't an integer constant expression.  The
-  /// caller can choose to emit this or not, depending on whether they require
-  /// an i-c-e or not.  DiagLoc indicates the caret position for the report.
+  /// ICEDiag - If the expression is unfoldable, then ICEDiag contains the 
+  /// error diagnostic indicating why it is not foldable and DiagLoc indicates a
+  /// caret position for the error.  If it is foldable, but the expression is
+  /// not an integer constant expression, ICEDiag contains the extension
+  /// diagnostic to emit which describes why it isn't an integer constant
+  /// expression.  If this expression *is* an integer-constant-expr, then
+  /// ICEDiag is zero.
   ///
-  /// If ICEDiag is zero, then this expression is an i-c-e.
+  /// The caller can choose to emit this diagnostic or not, depending on whether
+  /// they require an i-c-e or a constant or not.  DiagLoc indicates the caret
+  /// position for the report.
+  ///
+  /// If ICEDiag is zero, then this expression is an i-c-e.  
   unsigned ICEDiag;
   SourceLocation DiagLoc;
 
@@ -189,7 +196,24 @@ public:
     : Info(info), Result(result) {}
 
   unsigned getIntTypeSizeInBits(QualType T) const {
-    return (unsigned)Info.Ctx.getTypeSize(T);
+    return (unsigned)Info.Ctx.getIntWidth(T);
+  }
+  
+  bool Extension(SourceLocation L, diag::kind D) {
+    Info.DiagLoc = L;
+    Info.ICEDiag = D;
+    return true;  // still a constant.
+  }
+    
+  bool Error(SourceLocation L, diag::kind D) {
+    // If this is in an unevaluated portion of the subexpression, ignore the
+    // error.
+    if (!Info.isEvaluated)
+      return true;
+    
+    Info.DiagLoc = L;
+    Info.ICEDiag = D;
+    return false;
   }
     
   //===--------------------------------------------------------------------===//
@@ -197,10 +221,7 @@ public:
   //===--------------------------------------------------------------------===//
     
   bool VisitStmt(Stmt *S) {
-    // FIXME: Remove this when we support more expressions.
-    printf("unhandled int expression");
-    S->dump();  
-    return false;
+    return Error(S->getLocStart(), diag::err_expr_not_constant);
   }
   
   bool VisitParenExpr(ParenExpr *E) { return Visit(E->getSubExpr()); }
@@ -216,11 +237,19 @@ public:
     return HandleCast(E->getSubExpr(), E->getType());
   }
   bool VisitSizeOfAlignOfTypeExpr(const SizeOfAlignOfTypeExpr *E) {
-    return EvaluateSizeAlignOf(E->isSizeOf(),E->getArgumentType(),E->getType());
+    return EvaluateSizeAlignOf(E->isSizeOf(), E->getArgumentType(),
+                               E->getType());
   }
  
   bool VisitIntegerLiteral(const IntegerLiteral *E) {
     Result = E->getValue();
+    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
+    return true;
+  }
+  bool VisitCharacterLiteral(const CharacterLiteral *E) {
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+    Result = E->getValue();
+    Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());
     return true;
   }
 private:
@@ -237,26 +266,41 @@ static bool EvaluateInteger(const Expr* E, APSInt &Result, EvalInfo &Info) {
 bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   // The LHS of a constant expr is always evaluated and needed.
   llvm::APSInt RHS(32);
-  if (!Visit(E->getLHS()) || !EvaluateInteger(E->getRHS(), RHS, Info))
+  if (!Visit(E->getLHS()))
+    return false; // error in subexpression.
+  
+  bool OldEval = Info.isEvaluated;
+
+  // The short-circuiting &&/|| operators don't necessarily evaluate their
+  // RHS.  Make sure to pass isEvaluated down correctly.
+  if ((E->getOpcode() == BinaryOperator::LAnd && Result == 0) ||
+      (E->getOpcode() == BinaryOperator::LOr  && Result != 0))
+    Info.isEvaluated = false;
+  
+  if (!EvaluateInteger(E->getRHS(), RHS, Info))
     return false;
+  Info.isEvaluated = OldEval;
   
   switch (E->getOpcode()) {
-  default: return false;
-  case BinaryOperator::Mul: Result *= RHS; break;
-  case BinaryOperator::Add: Result += RHS; break;
-  case BinaryOperator::Sub: Result -= RHS; break;
-  case BinaryOperator::And: Result &= RHS; break;
-  case BinaryOperator::Xor: Result ^= RHS; break;
-  case BinaryOperator::Or:  Result |= RHS; break;
+  default: return Error(E->getOperatorLoc(), diag::err_expr_not_constant);
+  case BinaryOperator::Mul: Result *= RHS; return true;
+  case BinaryOperator::Add: Result += RHS; return true;
+  case BinaryOperator::Sub: Result -= RHS; return true;
+  case BinaryOperator::And: Result &= RHS; return true;
+  case BinaryOperator::Xor: Result ^= RHS; return true;
+  case BinaryOperator::Or:  Result |= RHS; return true;
   case BinaryOperator::Div:
-    if (RHS == 0) return false;
+    if (RHS == 0)
+      return Error(E->getOperatorLoc(), diag::err_expr_divide_by_zero);
     Result /= RHS;
-    break;
+    return true;
   case BinaryOperator::Rem:
-    if (RHS == 0) return false;
+    if (RHS == 0)
+      return Error(E->getOperatorLoc(), diag::err_expr_divide_by_zero);
     Result %= RHS;
-    break;
+    return true;
   case BinaryOperator::Shl:
+    // FIXME: Warn about out of range shift amounts!
     Result <<= (unsigned)RHS.getLimitedValue(Result.getBitWidth()-1);
     break;
   case BinaryOperator::Shr:
@@ -287,16 +331,29 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     Result = Result != RHS;
     Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
     break;
+  case BinaryOperator::LAnd:
+    Result = Result != 0 && RHS != 0;
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+    break;
+  case BinaryOperator::LOr:
+    Result = Result != 0 || RHS != 0;
+    Result.zextOrTrunc(getIntTypeSizeInBits(E->getType()));
+    break;
+      
     
   case BinaryOperator::Comma:
+    // Result of the comma is just the result of the RHS.
+    Result = RHS;
+
     // C99 6.6p3: "shall not contain assignment, ..., or comma operators,
     // *except* when they are contained within a subexpression that is not
     // evaluated".  Note that Assignment can never happen due to constraints
     // on the LHS subexpr, so we don't need to check it here.
-    // FIXME: Need to come up with an efficient way to deal with the C99
-    // rules on evaluation while still evaluating this.  Maybe a
-    // "evaluated comma" out parameter?
-    return false;
+    if (!Info.isEvaluated)
+      return true;
+      
+    // If the value is evaluated, we can accept it as an extension.
+    return Extension(E->getOperatorLoc(), diag::ext_comma_in_constant_expr);
   }
 
   Result.setIsUnsigned(E->getType()->isUnsignedIntegerType());

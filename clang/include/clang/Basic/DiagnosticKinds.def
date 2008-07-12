@@ -526,6 +526,14 @@ DIAG(err_func_def_no_params, ERROR,
 // Semantic Analysis
 //===----------------------------------------------------------------------===//
 
+// Constant expressions
+DIAG(err_expr_not_constant, ERROR,
+     "expression is invalid in a constant expression")
+DIAG(err_expr_divide_by_zero, ERROR,
+     "division by zero")
+DIAG(ext_comma_in_constant_expr, EXTENSION,
+     "C does not permit evaluated commas in constant expression")
+
 // Semantic analysis of string and character constant literals.
 DIAG(ext_nonstandard_escape, EXTENSION,
      "use of non-standard escape character '\\%0'")
