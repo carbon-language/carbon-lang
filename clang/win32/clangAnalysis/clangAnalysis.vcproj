@@ -159,6 +159,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\BasicStore.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\BasicValueFactory.cpp"
 				>
 			</File>
@@ -172,6 +176,10 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Analysis\CheckObjCDealloc.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\Analysis\CheckObjCInstMethSignature.cpp"
 				>
 			</File>
 			<File
