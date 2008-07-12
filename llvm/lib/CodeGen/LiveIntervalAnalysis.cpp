@@ -1047,6 +1047,18 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
       }
     }
 
+    if (HasUse && !li.liveAt(getUseIndex(index)))
+      // Must be defined by an implicit def. It should not be spilled. Note,
+      // this is for correctness reason. e.g.
+      // 8   %reg1024<def> = IMPLICIT_DEF
+      // 12  %reg1024<def> = INSERT_SUBREG %reg1024<kill>, %reg1025, 2
+      // The live range [12, 14) are not part of the r1024 live interval since
+      // it's defined by an implicit def. It will not conflicts with live
+      // interval of r1025. Now suppose both registers are spilled, you can
+      // easier see a situation where both registers are reloaded before
+      // the INSERT_SUBREG and both target registers that would overlap.
+      HasUse = false;
+
     // Update stack slot spill weight if we are splitting.
     float Weight = getSpillWeight(HasDef, HasUse, loopDepth);
       if (!TrySplit)
@@ -1227,6 +1239,17 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     assert(!O.isImplicit() && "Spilling register that's used as implicit use?");
     unsigned index = getInstructionIndex(MI);
     if (index < start || index >= end)
+      continue;
+    if (O.isUse() && !li.liveAt(getUseIndex(index)))
+      // Must be defined by an implicit def. It should not be spilled. Note,
+      // this is for correctness reason. e.g.
+      // 8   %reg1024<def> = IMPLICIT_DEF
+      // 12  %reg1024<def> = INSERT_SUBREG %reg1024<kill>, %reg1025, 2
+      // The live range [12, 14) are not part of the r1024 live interval since
+      // it's defined by an implicit def. It will not conflicts with live
+      // interval of r1025. Now suppose both registers are spilled, you can
+      // easier see a situation where both registers are reloaded before
+      // the INSERT_SUBREG and both target registers that would overlap.
       continue;
     RewriteMIs.push_back(RewriteInfo(index, MI, O.isUse(), O.isDef()));
   }
