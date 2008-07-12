@@ -79,20 +79,18 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   tok::TokenKind Kind  = Tok.getKind();
   SourceLocation AtLoc;
   switch (Kind) {
-  case tok::identifier:
-    if (NextToken().is(tok::colon)) { // C99 6.8.1: labeled-statement
-      // identifier ':' statement
-      return ParseLabeledStatement();
-    }
-    // declaration                  (if !OnlyStatement)
-    // expression[opt] ';'
-    return ParseIdentifierStatement(OnlyStatement);
-
   case tok::at: // May be a @try or @throw statement
     {
       AtLoc = ConsumeToken();  // consume @
       return ParseObjCAtStatement(AtLoc);
     }
+
+  case tok::identifier:
+    if (NextToken().is(tok::colon)) { // C99 6.8.1: labeled-statement
+      // identifier ':' statement
+      return ParseLabeledStatement();
+    }
+    // PASS THROUGH.
 
   default:
     if (!OnlyStatement && isDeclarationSpecifier()) {
@@ -210,84 +208,6 @@ Parser::StmtResult Parser::ParseLabeledStatement() {
   return Actions.ActOnLabelStmt(IdentTok.getLocation(), 
                                 IdentTok.getIdentifierInfo(),
                                 ColonLoc, SubStmt.Val);
-}
-  
-/// ParseIdentifierStatement - This is either part of a declaration
-/// (if the identifier is a type-name) or part of an expression.
-///
-///         declaration                  (if !OnlyStatement)
-///         expression[opt] ';'
-///
-Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
-  assert(Tok.is(tok::identifier) && Tok.getIdentifierInfo() &&
-         "Not an identifier!");
-
-  // Check to see if this is a declaration.
-  void *TypeRep;
-  if (!OnlyStatement &&
-      (TypeRep = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope))) {
-    // Handle this.  Warn/disable if in middle of block and !C99.
-    DeclSpec DS;
-    
-    Token IdentTok = Tok;  // Save the whole token.
-    ConsumeToken();  // eat the identifier.
-
-    // Add the typedef name to the start of the decl-specs.
-    const char *PrevSpec = 0;
-    int isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef,
-                                       IdentTok.getLocation(), PrevSpec,
-                                       TypeRep);
-    assert(!isInvalid && "First declspec can't be invalid!");
-    SourceLocation endProtoLoc;
-    if (Tok.is(tok::less)) {
-      llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
-      ParseObjCProtocolReferences(ProtocolRefs, endProtoLoc);
-      llvm::SmallVector<DeclTy *, 8> *ProtocolDecl = 
-              new llvm::SmallVector<DeclTy *, 8>;
-      DS.setProtocolQualifiers(ProtocolDecl);
-      Actions.FindProtocolDeclaration(IdentTok.getLocation(), 
-                                      &ProtocolRefs[0], ProtocolRefs.size(),
-                                      *ProtocolDecl);
-    }    
-    
-    // ParseDeclarationSpecifiers will continue from there.
-    ParseDeclarationSpecifiers(DS);
-
-    // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
-    // declaration-specifiers init-declarator-list[opt] ';'
-    if (Tok.is(tok::semi)) {
-      // TODO: emit error on 'int;' or 'const enum foo;'.
-      // if (!DS.isMissingDeclaratorOk()) Diag(...);
-      
-      ConsumeToken();
-      // FIXME: Return this as a type decl.
-      return 0;
-    }
-    
-    // Parse all the declarators.
-    Declarator DeclaratorInfo(DS, Declarator::BlockContext);
-    ParseDeclarator(DeclaratorInfo);
-    
-    DeclTy *Decl = ParseInitDeclaratorListAfterFirstDeclarator(DeclaratorInfo);
-    if (!Decl) return 0;
-    return Actions.ActOnDeclStmt(Decl, DS.getSourceRange().getBegin(),
-                                 DeclaratorInfo.getSourceRange().getEnd());
-  }
-  
-  // Otherwise, this is an expression.
-  ExprResult Res = ParseExpression();
-  if (Res.isInvalid) {
-    SkipUntil(tok::semi);
-    return true;
-  } else if (Tok.isNot(tok::semi)) {
-    Diag(Tok, diag::err_expected_semi_after, "expression");
-    SkipUntil(tok::semi);
-    return true;
-  } else {
-    ConsumeToken();
-    // Convert expr to a stmt.
-    return Actions.ActOnExprStmt(Res.Val);
-  }
 }
 
 /// ParseCaseStatement

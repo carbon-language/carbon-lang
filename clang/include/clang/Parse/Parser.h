@@ -456,7 +456,6 @@ private:
   
   StmtResult ParseStatement() { return ParseStatementOrDeclaration(true); }
   StmtResult ParseStatementOrDeclaration(bool OnlyStatement = false);
-  StmtResult ParseIdentifierStatement(bool OnlyStatement);
   StmtResult ParseLabeledStatement();
   StmtResult ParseCaseStatement();
   StmtResult ParseDefaultStatement();
