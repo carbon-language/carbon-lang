@@ -1055,7 +1055,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
       // The live range [12, 14) are not part of the r1024 live interval since
       // it's defined by an implicit def. It will not conflicts with live
       // interval of r1025. Now suppose both registers are spilled, you can
-      // easier see a situation where both registers are reloaded before
+      // easily see a situation where both registers are reloaded before
       // the INSERT_SUBREG and both target registers that would overlap.
       HasUse = false;
 
@@ -1248,7 +1248,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
       // The live range [12, 14) are not part of the r1024 live interval since
       // it's defined by an implicit def. It will not conflicts with live
       // interval of r1025. Now suppose both registers are spilled, you can
-      // easier see a situation where both registers are reloaded before
+      // easily see a situation where both registers are reloaded before
       // the INSERT_SUBREG and both target registers that would overlap.
       continue;
     RewriteMIs.push_back(RewriteInfo(index, MI, O.isUse(), O.isDef()));
