@@ -1135,11 +1135,6 @@ void ScheduleDAG::dumpSchedule() const {
 ///
 MachineBasicBlock *ScheduleDAG::Run() {
   Schedule();
-  
-  DOUT << "*** Final schedule ***\n";
-  DEBUG(dumpSchedule());
-  DOUT << "\n";
-
   return BB;
 }
 

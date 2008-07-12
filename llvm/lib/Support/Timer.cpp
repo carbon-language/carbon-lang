@@ -182,51 +182,19 @@ void Timer::addPeakMemoryMeasurement() {
 //   NamedRegionTimer Implementation
 //===----------------------------------------------------------------------===//
 
-namespace {
-
-typedef std::map<std::string, Timer> Name2Timer;
-typedef std::map<std::string, std::pair<TimerGroup, Name2Timer> > Name2Pair;
-
-}
-
-static ManagedStatic<Name2Timer> NamedTimers;
-
-static ManagedStatic<Name2Pair> NamedGroupedTimers;
+static ManagedStatic<std::map<std::string, Timer> > NamedTimers;
 
 static Timer &getNamedRegionTimer(const std::string &Name) {
-  Name2Timer::iterator I = NamedTimers->find(Name);
+  std::map<std::string, Timer>::iterator I = NamedTimers->find(Name);
   if (I != NamedTimers->end())
     return I->second;
 
   return NamedTimers->insert(I, std::make_pair(Name, Timer(Name)))->second;
 }
 
-static Timer &getNamedRegionTimer(const std::string &Name,
-                                  const std::string &GroupName) {
-
-  Name2Pair::iterator I = NamedGroupedTimers->find(GroupName);
-  if (I == NamedGroupedTimers->end()) {
-    TimerGroup TG(GroupName);
-    std::pair<TimerGroup, Name2Timer> Pair(TG, Name2Timer());
-    I = NamedGroupedTimers->insert(I, std::make_pair(GroupName, Pair));
-  }
-
-  Name2Timer::iterator J = I->second.second.find(Name);
-  if (J == I->second.second.end())
-    J = I->second.second.insert(J,
-                                std::make_pair(Name,
-                                               Timer(Name,
-                                                     I->second.first)));
-
-  return J->second;
-}
-
 NamedRegionTimer::NamedRegionTimer(const std::string &Name)
   : TimeRegion(getNamedRegionTimer(Name)) {}
 
-NamedRegionTimer::NamedRegionTimer(const std::string &Name,
-                                   const std::string &GroupName)
-  : TimeRegion(getNamedRegionTimer(Name, GroupName)) {}
 
 //===----------------------------------------------------------------------===//
 //   TimerGroup Implementation

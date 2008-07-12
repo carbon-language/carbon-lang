@@ -5284,11 +5284,10 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo(SelectionDAG &DAG) {
 void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   DOUT << "Lowered selection DAG:\n";
   DEBUG(DAG.dump());
-  std::string GroupName = "Instruction Selection and Scheduling";
 
   // Run the DAG combiner in pre-legalize mode.
   if (TimePassesIsEnabled) {
-    NamedRegionTimer T("DAG Combining 1", GroupName);
+    NamedRegionTimer T("DAG Combining 1");
     DAG.Combine(false, *AA);
   } else {
     DAG.Combine(false, *AA);
@@ -5305,7 +5304,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   }
   
   if (TimePassesIsEnabled) {
-    NamedRegionTimer T("DAG Legalization", GroupName);
+    NamedRegionTimer T("DAG Legalization");
     DAG.Legalize();
   } else {
     DAG.Legalize();
@@ -5316,7 +5315,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   
   // Run the DAG combiner in post-legalize mode.
   if (TimePassesIsEnabled) {
-    NamedRegionTimer T("DAG Combining 2", GroupName);
+    NamedRegionTimer T("DAG Combining 2");
     DAG.Combine(true, *AA);
   } else {
     DAG.Combine(true, *AA);
@@ -5333,41 +5332,24 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   // Third, instruction select all of the operations to machine code, adding the
   // code to the MachineBasicBlock.
   if (TimePassesIsEnabled) {
-    NamedRegionTimer T("Instruction Selection", GroupName);
+    NamedRegionTimer T("Instruction Selection");
     InstructionSelect(DAG);
   } else {
     InstructionSelect(DAG);
-  }
-
-  // Schedule machine code.
-  ScheduleDAG *Scheduler;
-  if (TimePassesIsEnabled) {
-    NamedRegionTimer T("Instruction Scheduling", GroupName);
-    Scheduler = Schedule(DAG);
-  } else {
-    Scheduler = Schedule(DAG);
   }
 
   // Emit machine code to BB.  This can change 'BB' to the last block being 
   // inserted into.
   if (TimePassesIsEnabled) {
-    NamedRegionTimer T("Instruction Creation", GroupName);
-    Scheduler->EmitSchedule();
+    NamedRegionTimer T("Instruction Scheduling");
+    ScheduleAndEmitDAG(DAG);
   } else {
-    Scheduler->EmitSchedule();
-  }
-
-  // Free the scheduler state.
-  if (TimePassesIsEnabled) {
-    NamedRegionTimer T("Instruction Scheduling Cleanup", GroupName);
-    delete Scheduler;
-  } else {
-    delete Scheduler;
+    ScheduleAndEmitDAG(DAG);
   }
 
   // Perform target specific isel post processing.
   if (TimePassesIsEnabled) {
-    NamedRegionTimer T("Instruction Selection Post Processing", GroupName);
+    NamedRegionTimer T("Instruction Selection Post Processing");
     InstructionSelectPostProcessing(DAG);
   } else {
     InstructionSelectPostProcessing(DAG);
@@ -5615,10 +5597,10 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
 }
 
 
-/// Schedule - Pick a safe ordering for instructions for each
+//===----------------------------------------------------------------------===//
+/// ScheduleAndEmitDAG - Pick a safe ordering and emit instructions for each
 /// target node in the graph.
-///
-ScheduleDAG *SelectionDAGISel::Schedule(SelectionDAG &DAG) {
+void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &DAG) {
   if (ViewSchedDAGs) DAG.viewGraph();
 
   RegisterScheduler::FunctionPassCtor Ctor = RegisterScheduler::getDefault();
@@ -5628,11 +5610,12 @@ ScheduleDAG *SelectionDAGISel::Schedule(SelectionDAG &DAG) {
     RegisterScheduler::setDefault(Ctor);
   }
   
-  ScheduleDAG *Scheduler = Ctor(this, &DAG, BB, FastISel);
-  BB = Scheduler->Run();
+  ScheduleDAG *SL = Ctor(this, &DAG, BB, FastISel);
+  BB = SL->Run();
 
-  if (ViewSUnitDAGs) Scheduler->viewGraph();
-  return Scheduler;
+  if (ViewSUnitDAGs) SL->viewGraph();
+
+  delete SL;
 }
 
 
