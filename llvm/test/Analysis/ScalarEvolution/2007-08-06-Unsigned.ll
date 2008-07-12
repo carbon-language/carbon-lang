@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -scalar-evolution -analyze | grep {Loop bb: ( -1 + ( -1 \\*  %x) + (( 1 +  %x) umax  %y)) iterations!}
+; RUN: llvm-as < %s | opt -scalar-evolution -analyze | grep {Loop bb: ( -1 + ( -1 \\*  %x) +  %y) iterations!}
 ; PR1597
 
 define i32 @f(i32 %x, i32 %y) {

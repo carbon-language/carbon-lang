@@ -1431,6 +1431,10 @@ namespace {
     SCEVHandle HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L,
                                 bool isSigned);
 
+    /// executesAtLeastOnce - Test whether entry to the loop is protected by
+    /// a conditional between LHS and RHS.
+    bool executesAtLeastOnce(const Loop *L, bool isSigned, SCEV *LHS, SCEV *RHS);
+
     /// getConstantEvolutionLoopExitValue - If we know that the specified Phi is
     /// in the header of its containing loop, we know the loop executes a
     /// constant number of times, and the PHI node is just a recurrence
@@ -2612,6 +2616,70 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToNonZero(SCEV *V, const Loop *L) {
   return UnknownValue;
 }
 
+/// executesAtLeastOnce - Test whether entry to the loop is protected by
+/// a conditional between LHS and RHS.
+bool ScalarEvolutionsImpl::executesAtLeastOnce(const Loop *L, bool isSigned,
+                                               SCEV *LHS, SCEV *RHS) {
+  BasicBlock *Preheader = L->getLoopPreheader();
+  BasicBlock *PreheaderDest = L->getHeader();
+  if (Preheader == 0) return false;
+
+  BranchInst *LoopEntryPredicate =
+    dyn_cast<BranchInst>(Preheader->getTerminator());
+  if (!LoopEntryPredicate) return false;
+
+  // This might be a critical edge broken out.  If the loop preheader ends in
+  // an unconditional branch to the loop, check to see if the preheader has a
+  // single predecessor, and if so, look for its terminator.
+  while (LoopEntryPredicate->isUnconditional()) {
+    PreheaderDest = Preheader;
+    Preheader = Preheader->getSinglePredecessor();
+    if (!Preheader) return false;  // Multiple preds.
+    
+    LoopEntryPredicate =
+      dyn_cast<BranchInst>(Preheader->getTerminator());
+    if (!LoopEntryPredicate) return false;
+  }
+
+  ICmpInst *ICI = dyn_cast<ICmpInst>(LoopEntryPredicate->getCondition());
+  if (!ICI) return false;
+
+  // Now that we found a conditional branch that dominates the loop, check to
+  // see if it is the comparison we are looking for.
+  Value *PreCondLHS = ICI->getOperand(0);
+  Value *PreCondRHS = ICI->getOperand(1);
+  ICmpInst::Predicate Cond;
+  if (LoopEntryPredicate->getSuccessor(0) == PreheaderDest)
+    Cond = ICI->getPredicate();
+  else
+    Cond = ICI->getInversePredicate();
+
+  switch (Cond) {
+  case ICmpInst::ICMP_UGT:
+    if (isSigned) return false;
+    std::swap(PreCondLHS, PreCondRHS);
+    Cond = ICmpInst::ICMP_ULT;
+    break;
+  case ICmpInst::ICMP_SGT:
+    if (!isSigned) return false;
+    std::swap(PreCondLHS, PreCondRHS);
+    Cond = ICmpInst::ICMP_SLT;
+    break;
+  case ICmpInst::ICMP_ULT:
+    if (isSigned) return false;
+    break;
+  case ICmpInst::ICMP_SLT:
+    if (!isSigned) return false;
+    break;
+  default:
+    return false;
+  }
+
+  if (!PreCondLHS->getType()->isInteger()) return false;
+
+  return LHS == getSCEV(PreCondLHS) && RHS == getSCEV(PreCondRHS);
+}
+
 /// HowManyLessThans - Return the number of times a backedge containing the
 /// specified less-than comparison will execute.  If not computable, return
 /// UnknownValue.
@@ -2640,12 +2708,17 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L, bool isSigned) {
 
     // Then, we get the value of the LHS in the first iteration in which the
     // above condition doesn't hold.  This equals to max(m,n).
-    SCEVHandle End = isSigned ? SE.getSMaxExpr(RHS, Start)
-                              : SE.getUMaxExpr(RHS, Start);
+    if (executesAtLeastOnce(L, isSigned,
+                            SE.getMinusSCEV(AddRec->getOperand(0), One), RHS))
+      return SE.getMinusSCEV(RHS, Start);
+    else {
+      SCEVHandle End = isSigned ? SE.getSMaxExpr(RHS, Start)
+                                : SE.getUMaxExpr(RHS, Start);
 
-    // Finally, we subtract these two values to get the number of times the
-    // backedge is executed: max(m,n)-n.
-    return SE.getMinusSCEV(End, Start);
+      // Finally, we subtract these two values to get the number of times the
+      // backedge is executed: max(m,n)-n.
+      return SE.getMinusSCEV(End, Start);
+    }
   }
 
   return UnknownValue;
