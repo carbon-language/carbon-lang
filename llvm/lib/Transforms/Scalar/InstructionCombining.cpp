@@ -1254,6 +1254,9 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     if (ConstantInt *Rem = dyn_cast<ConstantInt>(I->getOperand(1))) {
       APInt RA = Rem->getValue();
       if (RA.isPowerOf2() || (-RA).isPowerOf2()) {
+        if (DemandedMask.ule(RA))    // srem won't affect demanded bits
+          return UpdateValueUsesWith(I, I->getOperand(0));
+
         APInt LowBits = RA.isStrictlyPositive() ? (RA - 1) : ~RA;
         APInt Mask2 = LowBits | APInt::getSignBit(BitWidth);
         if (SimplifyDemandedBits(I->getOperand(0), Mask2,
@@ -1273,21 +1276,6 @@ bool InstCombiner::SimplifyDemandedBits(Value *V, APInt DemandedMask,
     }
     break;
   case Instruction::URem: {
-    if (ConstantInt *Rem = dyn_cast<ConstantInt>(I->getOperand(1))) {
-      APInt RA = Rem->getValue();
-      if (RA.isPowerOf2()) {
-        APInt LowBits = (RA - 1);
-        APInt Mask2 = LowBits & DemandedMask;
-        KnownZero |= ~LowBits & DemandedMask;
-        if (SimplifyDemandedBits(I->getOperand(0), Mask2,
-                                 KnownZero, KnownOne, Depth+1))
-          return true;
-
-        assert((KnownZero & KnownOne) == 0&&"Bits known to be one AND zero?"); 
-        break;
-      }
-    }
-
     APInt KnownZero2(BitWidth, 0), KnownOne2(BitWidth, 0);
     APInt AllOnes = APInt::getAllOnesValue(BitWidth);
     if (SimplifyDemandedBits(I->getOperand(0), AllOnes,
