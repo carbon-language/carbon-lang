@@ -68,11 +68,10 @@ static void AddPredecessorToBlock(BasicBlock *Succ, BasicBlock *NewPred,
          succ_end(ExistPred) && "ExistPred is not a predecessor of Succ!");
   if (!isa<PHINode>(Succ->begin())) return; // Quick exit if nothing to do
   
-  for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
-    PHINode *PN = cast<PHINode>(I);
-    Value *V = PN->getIncomingValueForBlock(ExistPred);
-    PN->addIncoming(V, NewPred);
-  }
+  PHINode *PN;
+  for (BasicBlock::iterator I = Succ->begin();
+       (PN = dyn_cast<PHINode>(I)); ++I)
+    PN->addIncoming(PN->getIncomingValueForBlock(ExistPred), NewPred);
 }
 
 // CanPropagatePredecessorsForPHIs - Return true if we can fold BB, an
@@ -860,7 +859,7 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
       for (unsigned i = 0, e = NewSI->getNumSuccessors(); i != e; ++i)
         if (NewSI->getSuccessor(i) == BB) {
           if (InfLoopBlock == 0) {
-            // Insert it at the end of the loop, because it's either code,
+            // Insert it at the end of the function, because it's either code,
             // or it won't matter if it's hot. :)
             InfLoopBlock = BasicBlock::Create("infloop", BB->getParent());
             BranchInst::Create(InfLoopBlock, InfLoopBlock);
@@ -1430,11 +1429,11 @@ static bool SimplifyCondBranchToTwoReturns(BranchInst *BI) {
 /// setcc into the predecessor and use logical operations to pick the right
 /// destination.
 static bool FoldBranchToCommonDest(BranchInst *BI) {
+  BasicBlock *BB = BI->getParent();
   Instruction *Cond = dyn_cast<Instruction>(BI->getCondition());
   if (Cond == 0) return false;
 
-  BasicBlock *BB = BI->getParent();
-
+  
   // Only allow this if the condition is a simple instruction that can be
   // executed unconditionally.  It must be in the same block as the branch, and
   // must be at the front of the block.
@@ -1456,6 +1455,9 @@ static bool FoldBranchToCommonDest(BranchInst *BI) {
   for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
     BasicBlock *PredBlock = *PI;
     BranchInst *PBI = dyn_cast<BranchInst>(PredBlock->getTerminator());
+    // Check that we have two conditional branches.  If there is a PHI node in
+    // the common successor, verify that the same value flows in from both
+    // blocks.
     if (PBI == 0 || PBI->isUnconditional() ||
         !SafeToMergeTerminators(BI, PBI))
       continue;
@@ -1596,17 +1598,24 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
   // Finally, if everything is ok, fold the branches to logical ops.
   BasicBlock *OtherDest  = BI->getSuccessor(BIOp ^ 1);
   
-  // If OtherDest *is* BB, then this is a basic block with just
-  // a conditional branch in it, where one edge (OtherDesg) goes
-  // back to the block.  We know that the program doesn't get
-  // stuck in the infinite loop, so the condition must be such
-  // that OtherDest isn't branched through. Forward to CommonDest,
-  // and avoid an infinite loop at optimizer time.
-  if (OtherDest == BB)
-    OtherDest = CommonDest;
-  
   DOUT << "FOLDING BRs:" << *PBI->getParent()
        << "AND: " << *BI->getParent();
+  
+  
+  // If OtherDest *is* BB, then BB is a basic block with a single conditional
+  // branch in it, where one edge (OtherDest) goes back to itself but the other
+  // exits.  We don't *know* that the program avoids the infinite loop
+  // (even though that seems likely).  If we do this xform naively, we'll end up
+  // recursively unpeeling the loop.  Since we know that (after the xform is
+  // done) that the block *is* infinite if reached, we just make it an obviously
+  // infinite loop with no cond branch.
+  if (OtherDest == BB) {
+    // Insert it at the end of the function, because it's either code,
+    // or it won't matter if it's hot. :)
+    BasicBlock *InfLoopBlock = BasicBlock::Create("infloop", BB->getParent());
+    BranchInst::Create(InfLoopBlock, InfLoopBlock);
+    OtherDest = InfLoopBlock;
+  }  
   
   DOUT << *PBI->getParent()->getParent();
   
