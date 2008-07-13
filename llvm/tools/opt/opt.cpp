@@ -386,7 +386,7 @@ int main(int argc, char **argv) {
 
     // Create a new optimization pass for each one specified on the command line
     for (unsigned i = 0; i < PassList.size(); ++i) {
-      // Check to see if -std-compile-opts we specified before this option.  If
+      // Check to see if -std-compile-opts was specified before this option.  If
       // so, handle it.
       if (StandardCompileOpts && 
           StandardCompileOpts.getPosition() < PassList.getPosition(i)) {
