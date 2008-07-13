@@ -1473,9 +1473,15 @@ static bool FoldBranchToCommonDest(BranchInst *BI) {
       PBI->setSuccessor(0, OldFalse);
       PBI->setSuccessor(1, OldTrue);
     }
+    
+    Instruction::BinaryOps Opc = Instruction::Shl; // sentinel.
+    
+    if (PBI->getSuccessor(0) == TrueDest && FalseDest != BB)
+      Opc = Instruction::Or;
+    else if (PBI->getSuccessor(1) == FalseDest && TrueDest != BB)
+      Opc = Instruction::And;
 
-    if ((PBI->getSuccessor(0) == TrueDest && FalseDest != BB) ||
-        (PBI->getSuccessor(1) == FalseDest && TrueDest != BB)) {
+    if (Opc != Instruction::Shl) {
       // Clone Cond into the predecessor basic block, and or/and the
       // two conditions together.
       Instruction *New = Cond->clone();
@@ -1483,13 +1489,8 @@ static bool FoldBranchToCommonDest(BranchInst *BI) {
       New->takeName(Cond);
       Cond->setName(New->getName()+".old");
       
-      Value *NewCond;
-      if (PBI->getSuccessor(0) == TrueDest)
-        NewCond = BinaryOperator::CreateOr(PBI->getCondition(), New, "or.cond",
-                                           PBI);
-      else
-        NewCond = BinaryOperator::CreateOr(PBI->getCondition(), New, "and.cond",
-                                           PBI);
+      Value *NewCond = BinaryOperator::Create(Opc, PBI->getCondition(),
+                                              New, "or.cond", PBI);
       PBI->setCondition(NewCond);
       if (PBI->getSuccessor(0) == BB) {
         AddPredecessorToBlock(TrueDest, PredBlock, BB);
