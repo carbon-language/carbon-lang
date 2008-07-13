@@ -32,3 +32,4 @@ This specific diagnostic is implemented, but others should be updated.
 C++ (checker): For iterators, warn of the use of "iterator++" instead
   of "++iterator" when when the value returned by operator++(int) is
   ignored.
+
