@@ -1538,6 +1538,9 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
       PHINode *NewPN = PHINode::Create(Type::Int1Ty,
                                        BI->getCondition()->getName() + ".pr",
                                        BB->begin());
+      // Okay, we're going to insert the PHI node.  Since PBI is not the only
+      // predecessor, compute the PHI'd conditional value for all of the preds.
+      // Any predecessor where the condition is not computable we keep symbolic.
       for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
         if ((PBI = dyn_cast<BranchInst>((*PI)->getTerminator())) &&
             PBI != BI && PBI->isConditional() &&
@@ -1551,7 +1554,6 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
         }
       
       BI->setCondition(NewPN);
-      // This will thread the branch.
       return true;
     }
   }
@@ -1653,7 +1655,7 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
       // them agree.
       for (BasicBlock::iterator II = CommonDest->begin();
            (PN = dyn_cast<PHINode>(II)); ++II) {
-        Value * BIV = PN->getIncomingValueForBlock(BB);
+        Value *BIV = PN->getIncomingValueForBlock(BB);
         unsigned PBBIdx = PN->getBasicBlockIndex(PBI->getParent());
         Value *PBIV = PN->getIncomingValue(PBBIdx);
         if (BIV != PBIV) {
