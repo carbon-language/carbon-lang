@@ -1509,6 +1509,173 @@ static bool FoldBranchToCommonDest(BranchInst *BI) {
   return false;
 }
 
+/// SimplifyCondBranchToCondBranch - If we have a conditional branch as a
+/// predecessor of another block, this function tries to simplify it.  We know
+/// that PBI and BI are both conditional branches, and BI is in one of the
+/// successor blocks of PBI - PBI branches to BI.
+static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
+  assert(PBI->isConditional() && BI->isConditional());
+  BasicBlock *BB = BI->getParent();
+  
+  // If this block ends with a branch instruction, and if there is a
+  // predecessor that ends on a branch of the same condition, make 
+  // this conditional branch redundant.
+  if (PBI->getCondition() == BI->getCondition() &&
+      PBI->getSuccessor(0) != PBI->getSuccessor(1)) {
+    // Okay, the outcome of this conditional branch is statically
+    // knowable.  If this block had a single pred, handle specially.
+    if (BB->getSinglePredecessor()) {
+      // Turn this into a branch on constant.
+      bool CondIsTrue = PBI->getSuccessor(0) == BB;
+      BI->setCondition(ConstantInt::get(Type::Int1Ty, CondIsTrue));
+      return true;  // Nuke the branch on constant.
+    }
+    
+    // Otherwise, if there are multiple predecessors, insert a PHI that merges
+    // in the constant and simplify the block result.  Subsequent passes of
+    // simplifycfg will thread the block.
+    if (BlockIsSimpleEnoughToThreadThrough(BB)) {
+      PHINode *NewPN = PHINode::Create(Type::Int1Ty,
+                                       BI->getCondition()->getName() + ".pr",
+                                       BB->begin());
+      for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+        if ((PBI = dyn_cast<BranchInst>((*PI)->getTerminator())) &&
+            PBI != BI && PBI->isConditional() &&
+            PBI->getCondition() == BI->getCondition() &&
+            PBI->getSuccessor(0) != PBI->getSuccessor(1)) {
+          bool CondIsTrue = PBI->getSuccessor(0) == BB;
+          NewPN->addIncoming(ConstantInt::get(Type::Int1Ty, 
+                                              CondIsTrue), *PI);
+        } else {
+          NewPN->addIncoming(BI->getCondition(), *PI);
+        }
+      
+      BI->setCondition(NewPN);
+      // This will thread the branch.
+      return true;
+    }
+  }
+  
+  // If this is a conditional branch in an empty block, and if any
+  // predecessors is a conditional branch to one of our destinations,
+  // fold the conditions into logical ops and one cond br.
+  if (&BB->front() == BI) {
+    int PBIOp, BIOp;
+    if (PBI->getSuccessor(0) == BI->getSuccessor(0)) {
+      PBIOp = BIOp = 0;
+    } else if (PBI->getSuccessor(0) == BI->getSuccessor(1)) {
+      PBIOp = 0; BIOp = 1;
+    } else if (PBI->getSuccessor(1) == BI->getSuccessor(0)) {
+      PBIOp = 1; BIOp = 0;
+    } else if (PBI->getSuccessor(1) == BI->getSuccessor(1)) {
+      PBIOp = BIOp = 1;
+    } else {
+      PBIOp = BIOp = -1;
+    }
+    
+    // Check to make sure that the other destination of this branch
+    // isn't BB itself.  If so, this is an infinite loop that will
+    // keep getting unwound.
+    if (PBIOp != -1 && PBI->getSuccessor(PBIOp) == BB)
+      PBIOp = BIOp = -1;
+    
+    // Do not perform this transformation if it would require 
+    // insertion of a large number of select instructions. For targets
+    // without predication/cmovs, this is a big pessimization.
+    if (PBIOp != -1) {
+      BasicBlock *CommonDest = PBI->getSuccessor(PBIOp);
+      
+      unsigned NumPhis = 0;
+      for (BasicBlock::iterator II = CommonDest->begin();
+           isa<PHINode>(II); ++II, ++NumPhis) {
+        if (NumPhis > 2) {
+          // Disable this xform.
+          PBIOp = -1;
+          break;
+        }
+      }
+    }
+    
+    // Finally, if everything is ok, fold the branches to logical ops.
+    if (PBIOp != -1) {
+      BasicBlock *CommonDest = PBI->getSuccessor(PBIOp);
+      BasicBlock *OtherDest  = BI->getSuccessor(BIOp ^ 1);
+      
+      // If OtherDest *is* BB, then this is a basic block with just
+      // a conditional branch in it, where one edge (OtherDesg) goes
+      // back to the block.  We know that the program doesn't get
+      // stuck in the infinite loop, so the condition must be such
+      // that OtherDest isn't branched through. Forward to CommonDest,
+      // and avoid an infinite loop at optimizer time.
+      if (OtherDest == BB)
+        OtherDest = CommonDest;
+      
+      DOUT << "FOLDING BRs:" << *PBI->getParent()
+           << "AND: " << *BI->getParent();
+      
+      DOUT << *PBI->getParent()->getParent();
+      
+      // BI may have other predecessors.  Because of this, we leave
+      // it alone, but modify PBI.
+      
+      // Make sure we get to CommonDest on True&True directions.
+      Value *PBICond = PBI->getCondition();
+      if (PBIOp)
+        PBICond = BinaryOperator::CreateNot(PBICond,
+                                            PBICond->getName()+".not",
+                                            PBI);
+      Value *BICond = BI->getCondition();
+      if (BIOp)
+        BICond = BinaryOperator::CreateNot(BICond,
+                                           BICond->getName()+".not",
+                                           PBI);
+      // Merge the conditions.
+      Value *Cond =
+        BinaryOperator::CreateOr(PBICond, BICond, "brmerge", PBI);
+      
+      // Modify PBI to branch on the new condition to the new dests.
+      PBI->setCondition(Cond);
+      PBI->setSuccessor(0, CommonDest);
+      PBI->setSuccessor(1, OtherDest);
+      
+      // OtherDest may have phi nodes.  If so, add an entry from PBI's
+      // block that are identical to the entries for BI's block.
+      PHINode *PN;
+      for (BasicBlock::iterator II = OtherDest->begin();
+           (PN = dyn_cast<PHINode>(II)); ++II) {
+        Value *V = PN->getIncomingValueForBlock(BB);
+        PN->addIncoming(V, PBI->getParent());
+      }
+      
+      // We know that the CommonDest already had an edge from PBI to
+      // it.  If it has PHIs though, the PHIs may have different
+      // entries for BB and PBI's BB.  If so, insert a select to make
+      // them agree.
+      for (BasicBlock::iterator II = CommonDest->begin();
+           (PN = dyn_cast<PHINode>(II)); ++II) {
+        Value * BIV = PN->getIncomingValueForBlock(BB);
+        unsigned PBBIdx = PN->getBasicBlockIndex(PBI->getParent());
+        Value *PBIV = PN->getIncomingValue(PBBIdx);
+        if (BIV != PBIV) {
+          // Insert a select in PBI to pick the right value.
+          Value *NV = SelectInst::Create(PBICond, PBIV, BIV,
+                                         PBIV->getName()+".mux", PBI);
+          PN->setIncomingValue(PBBIdx, NV);
+        }
+      }
+      
+      DOUT << "INTO: " << *PBI->getParent();
+      
+      DOUT << *PBI->getParent()->getParent();
+      
+      // This basic block is probably dead.  We know it has at least
+      // one fewer predecessor.
+      return true;
+    }
+  }
+  return false;
+}
+
 
 namespace {
   /// ConstantIntOrdering - This class implements a stable ordering of constant
@@ -1745,163 +1912,13 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       if (FoldBranchToCommonDest(BI))
         return SimplifyCFG(BB) | 1;
 
-      // Scan predessor blocks for conditional branches.
+
+      // Scan predecessor blocks for conditional branches.
       for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
         if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
-          if (PBI != BI && PBI->isConditional()) {
-              
-            // If this block ends with a branch instruction, and if there is a
-            // predecessor that ends on a branch of the same condition, make 
-            // this conditional branch redundant.
-            if (PBI->getCondition() == BI->getCondition() &&
-                PBI->getSuccessor(0) != PBI->getSuccessor(1)) {
-              // Okay, the outcome of this conditional branch is statically
-              // knowable.  If this block had a single pred, handle specially.
-              if (BB->getSinglePredecessor()) {
-                // Turn this into a branch on constant.
-                bool CondIsTrue = PBI->getSuccessor(0) == BB;
-                BI->setCondition(ConstantInt::get(Type::Int1Ty, CondIsTrue));
-                return SimplifyCFG(BB);  // Nuke the branch on constant.
-              }
-              
-              // Otherwise, if there are multiple predecessors, insert a PHI 
-              // that merges in the constant and simplify the block result.
-              if (BlockIsSimpleEnoughToThreadThrough(BB)) {
-                PHINode *NewPN = PHINode::Create(Type::Int1Ty,
-                                                 BI->getCondition()->getName()
-                                                 + ".pr", BB->begin());
-                for (PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
-                  if ((PBI = dyn_cast<BranchInst>((*PI)->getTerminator())) &&
-                      PBI != BI && PBI->isConditional() &&
-                      PBI->getCondition() == BI->getCondition() &&
-                      PBI->getSuccessor(0) != PBI->getSuccessor(1)) {
-                    bool CondIsTrue = PBI->getSuccessor(0) == BB;
-                    NewPN->addIncoming(ConstantInt::get(Type::Int1Ty, 
-                                                        CondIsTrue), *PI);
-                  } else {
-                    NewPN->addIncoming(BI->getCondition(), *PI);
-                  }
-                
-                BI->setCondition(NewPN);
-                // This will thread the branch.
-                return SimplifyCFG(BB) | true;
-              }
-            }
-            
-            // If this is a conditional branch in an empty block, and if any
-            // predecessors is a conditional branch to one of our destinations,
-            // fold the conditions into logical ops and one cond br.
-            if (&BB->front() == BI) {
-              int PBIOp, BIOp;
-              if (PBI->getSuccessor(0) == BI->getSuccessor(0)) {
-                PBIOp = BIOp = 0;
-              } else if (PBI->getSuccessor(0) == BI->getSuccessor(1)) {
-                PBIOp = 0; BIOp = 1;
-              } else if (PBI->getSuccessor(1) == BI->getSuccessor(0)) {
-                PBIOp = 1; BIOp = 0;
-              } else if (PBI->getSuccessor(1) == BI->getSuccessor(1)) {
-                PBIOp = BIOp = 1;
-              } else {
-                PBIOp = BIOp = -1;
-              }
-              
-              // Check to make sure that the other destination of this branch
-              // isn't BB itself.  If so, this is an infinite loop that will
-              // keep getting unwound.
-              if (PBIOp != -1 && PBI->getSuccessor(PBIOp) == BB)
-                PBIOp = BIOp = -1;
-              
-              // Do not perform this transformation if it would require 
-              // insertion of a large number of select instructions. For targets
-              // without predication/cmovs, this is a big pessimization.
-              if (PBIOp != -1) {
-                BasicBlock *CommonDest = PBI->getSuccessor(PBIOp);
-           
-                unsigned NumPhis = 0;
-                for (BasicBlock::iterator II = CommonDest->begin();
-                     isa<PHINode>(II); ++II, ++NumPhis) {
-                  if (NumPhis > 2) {
-                    // Disable this xform.
-                    PBIOp = -1;
-                    break;
-                  }
-                }
-              }
-
-              // Finally, if everything is ok, fold the branches to logical ops.
-              if (PBIOp != -1) {
-                BasicBlock *CommonDest = PBI->getSuccessor(PBIOp);
-                BasicBlock *OtherDest  = BI->getSuccessor(BIOp ^ 1);
-
-                // If OtherDest *is* BB, then this is a basic block with just
-                // a conditional branch in it, where one edge (OtherDesg) goes
-                // back to the block.  We know that the program doesn't get
-                // stuck in the infinite loop, so the condition must be such
-                // that OtherDest isn't branched through. Forward to CommonDest,
-                // and avoid an infinite loop at optimizer time.
-                if (OtherDest == BB)
-                  OtherDest = CommonDest;
-                
-                DOUT << "FOLDING BRs:" << *PBI->getParent()
-                     << "AND: " << *BI->getParent();
-
-                // BI may have other predecessors.  Because of this, we leave
-                // it alone, but modify PBI.
-                
-                // Make sure we get to CommonDest on True&True directions.
-                Value *PBICond = PBI->getCondition();
-                if (PBIOp)
-                  PBICond = BinaryOperator::CreateNot(PBICond,
-                                                      PBICond->getName()+".not",
-                                                      PBI);
-                Value *BICond = BI->getCondition();
-                if (BIOp)
-                  BICond = BinaryOperator::CreateNot(BICond,
-                                                     BICond->getName()+".not",
-                                                     PBI);
-                // Merge the conditions.
-                Value *Cond =
-                  BinaryOperator::CreateOr(PBICond, BICond, "brmerge", PBI);
-                
-                // Modify PBI to branch on the new condition to the new dests.
-                PBI->setCondition(Cond);
-                PBI->setSuccessor(0, CommonDest);
-                PBI->setSuccessor(1, OtherDest);
-
-                // OtherDest may have phi nodes.  If so, add an entry from PBI's
-                // block that are identical to the entries for BI's block.
-                PHINode *PN;
-                for (BasicBlock::iterator II = OtherDest->begin();
-                     (PN = dyn_cast<PHINode>(II)); ++II) {
-                  Value *V = PN->getIncomingValueForBlock(BB);
-                  PN->addIncoming(V, PBI->getParent());
-                }
-                
-                // We know that the CommonDest already had an edge from PBI to
-                // it.  If it has PHIs though, the PHIs may have different
-                // entries for BB and PBI's BB.  If so, insert a select to make
-                // them agree.
-                for (BasicBlock::iterator II = CommonDest->begin();
-                     (PN = dyn_cast<PHINode>(II)); ++II) {
-                  Value * BIV = PN->getIncomingValueForBlock(BB);
-                  unsigned PBBIdx = PN->getBasicBlockIndex(PBI->getParent());
-                  Value *PBIV = PN->getIncomingValue(PBBIdx);
-                  if (BIV != PBIV) {
-                    // Insert a select in PBI to pick the right value.
-                    Value *NV = SelectInst::Create(PBICond, PBIV, BIV,
-                                                   PBIV->getName()+".mux", PBI);
-                    PN->setIncomingValue(PBBIdx, NV);
-                  }
-                }
-
-                DOUT << "INTO: " << *PBI->getParent();
-
-                // This basic block is probably dead.  We know it has at least
-                // one fewer predecessor.
-                return SimplifyCFG(BB) | true;
-              }
-            }
-          }
+          if (PBI != BI && PBI->isConditional())
+            if (SimplifyCondBranchToCondBranch(PBI, BI))
+              return SimplifyCFG(BB) | true;
     }
   } else if (isa<UnreachableInst>(BB->getTerminator())) {
     // If there are any instructions immediately before the unreachable that can
