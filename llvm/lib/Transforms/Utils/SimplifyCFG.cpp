@@ -1460,13 +1460,25 @@ static bool FoldBranchToCommonDest(BranchInst *BI) {
         !SafeToMergeTerminators(BI, PBI))
       continue;
     
-    // Canonicalize the predecessors condition (inverting it) if needed to allow
-    // this xform to trigger.
-    if (PBI->getSuccessor(0) == FalseDest ||
-        PBI->getSuccessor(1) == TrueDest) {
+    Instruction::BinaryOps Opc;
+    bool InvertPredCond = false;
+
+    if (PBI->getSuccessor(0) == TrueDest)
+      Opc = Instruction::Or;
+    else if (PBI->getSuccessor(1) == FalseDest)
+      Opc = Instruction::And;
+    else if (PBI->getSuccessor(0) == FalseDest)
+      Opc = Instruction::And, InvertPredCond = true;
+    else if (PBI->getSuccessor(1) == TrueDest)
+      Opc = Instruction::Or, InvertPredCond = true;
+    else
+      continue;
+
+    // If we need to invert the condition in the pred block to match, do so now.
+    if (InvertPredCond) {
       Value *NewCond =
         BinaryOperator::CreateNot(PBI->getCondition(),
-                        PBI->getCondition()->getName()+".not", PBI);
+                                  PBI->getCondition()->getName()+".not", PBI);
       PBI->setCondition(NewCond);
       BasicBlock *OldTrue = PBI->getSuccessor(0);
       BasicBlock *OldFalse = PBI->getSuccessor(1);
@@ -1474,34 +1486,25 @@ static bool FoldBranchToCommonDest(BranchInst *BI) {
       PBI->setSuccessor(1, OldTrue);
     }
     
-    Instruction::BinaryOps Opc = Instruction::Shl; // sentinel.
+    // Clone Cond into the predecessor basic block, and or/and the
+    // two conditions together.
+    Instruction *New = Cond->clone();
+    PredBlock->getInstList().insert(PBI, New);
+    New->takeName(Cond);
+    Cond->setName(New->getName()+".old");
     
-    if (PBI->getSuccessor(0) == TrueDest && FalseDest != BB)
-      Opc = Instruction::Or;
-    else if (PBI->getSuccessor(1) == FalseDest && TrueDest != BB)
-      Opc = Instruction::And;
-
-    if (Opc != Instruction::Shl) {
-      // Clone Cond into the predecessor basic block, and or/and the
-      // two conditions together.
-      Instruction *New = Cond->clone();
-      PredBlock->getInstList().insert(PBI, New);
-      New->takeName(Cond);
-      Cond->setName(New->getName()+".old");
-      
-      Value *NewCond = BinaryOperator::Create(Opc, PBI->getCondition(),
-                                              New, "or.cond", PBI);
-      PBI->setCondition(NewCond);
-      if (PBI->getSuccessor(0) == BB) {
-        AddPredecessorToBlock(TrueDest, PredBlock, BB);
-        PBI->setSuccessor(0, TrueDest);
-      }
-      if (PBI->getSuccessor(1) == BB) {
-        AddPredecessorToBlock(FalseDest, PredBlock, BB);
-        PBI->setSuccessor(1, FalseDest);
-      }
-      return true;
+    Value *NewCond = BinaryOperator::Create(Opc, PBI->getCondition(),
+                                            New, "or.cond", PBI);
+    PBI->setCondition(NewCond);
+    if (PBI->getSuccessor(0) == BB) {
+      AddPredecessorToBlock(TrueDest, PredBlock, BB);
+      PBI->setSuccessor(0, TrueDest);
     }
+    if (PBI->getSuccessor(1) == BB) {
+      AddPredecessorToBlock(FalseDest, PredBlock, BB);
+      PBI->setSuccessor(1, FalseDest);
+    }
+    return true;
   }
   return false;
 }
@@ -1741,7 +1744,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       // predecessor and use logical operations to pick the right destination.
       if (FoldBranchToCommonDest(BI))
         return SimplifyCFG(BB) | 1;
-
 
       // Scan predessor blocks for conditional branches.
       for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
