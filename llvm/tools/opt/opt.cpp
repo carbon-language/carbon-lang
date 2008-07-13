@@ -379,18 +379,21 @@ int main(int argc, char **argv) {
     // Add an appropriate TargetData instance for this module...
     Passes.add(new TargetData(M.get()));
 
-    // If -std-compile-opts is given, add in all the standard compilation 
-    // optimizations first. This will handle -strip-debug, -disable-inline,
-    // and -disable-opt as well.
-    if (StandardCompileOpts)
-      AddStandardCompilePasses(Passes);
-
-    // otherwise if the -strip-debug command line option was specified, add it.
-    else if (StripDebug)
+    // If the -strip-debug command line option was specified, add it.  If
+    // -std-compile-opts was also specified, it will handle StripDebug.
+    if (StripDebug && !StandardCompileOpts)
       addPass(Passes, createStripSymbolsPass(true));
 
     // Create a new optimization pass for each one specified on the command line
     for (unsigned i = 0; i < PassList.size(); ++i) {
+      // Check to see if -std-compile-opts we specified before this option.  If
+      // so, handle it.
+      if (StandardCompileOpts && 
+          StandardCompileOpts.getPosition() < PassList.getPosition(i)) {
+        AddStandardCompilePasses(Passes);
+        StandardCompileOpts = false;
+      }
+      
       const PassInfo *PassInf = PassList[i];
       Pass *P = 0;
       if (PassInf->getNormalCtor())
@@ -418,6 +421,12 @@ int main(int argc, char **argv) {
       if (PrintEachXForm)
         Passes.add(new PrintModulePass(&cerr));
     }
+    
+    // If -std-compile-opts was specified at the end of the pass list, add them.
+    if (StandardCompileOpts) {
+      AddStandardCompilePasses(Passes);
+      StandardCompileOpts = false;
+    }    
 
     // Check that the module is well formed on completion of optimization
     if (!NoVerify && !VerifyEach)
