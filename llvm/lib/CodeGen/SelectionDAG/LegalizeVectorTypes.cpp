@@ -248,7 +248,6 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::LOAD:
     SplitVecRes_LOAD(cast<LoadSDNode>(N), Lo, Hi);
     break;
-  case ISD::BUILD_PAIR:       SplitVecRes_BUILD_PAIR(N, Lo, Hi); break;
   case ISD::INSERT_VECTOR_ELT:SplitVecRes_INSERT_VECTOR_ELT(N, Lo, Hi); break;
   case ISD::VECTOR_SHUFFLE:   SplitVecRes_VECTOR_SHUFFLE(N, Lo, Hi); break;
   case ISD::BUILD_VECTOR:     SplitVecRes_BUILD_VECTOR(N, Lo, Hi); break;
@@ -327,17 +326,6 @@ void DAGTypeLegalizer::SplitVecRes_LOAD(LoadSDNode *LD, SDOperand &Lo,
   // Legalized the chain result - switch anything that used the old chain to
   // use the new one.
   ReplaceValueWith(SDOperand(LD, 1), Ch);
-}
-
-void DAGTypeLegalizer::SplitVecRes_BUILD_PAIR(SDNode *N, SDOperand &Lo,
-                                              SDOperand &Hi) {
-#ifndef NDEBUG
-  MVT LoVT, HiVT;
-  GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
-  assert(LoVT == HiVT && "Non-power-of-two vectors not supported!");
-#endif
-  Lo = N->getOperand(0);
-  Hi = N->getOperand(1);
 }
 
 void DAGTypeLegalizer::SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDOperand &Lo,
