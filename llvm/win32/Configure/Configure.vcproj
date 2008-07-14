@@ -192,9 +192,9 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						Description="Generating $(SolutionDir)llvm\Config\config.h"
-						CommandLine="copy &quot;$(InputPath)&quot;+&quot;$(SolutionDir)config.h&quot;  &quot;$(ProjectDir)..\llvm\Config\config.h&quot;&#x0D;&#x0A;"
-						AdditionalDependencies="&quot;$(SolutionDir)config.h&quot;"
+						Description="Generating $(ProjectDir)..\llvm\Config\config.h"
+						CommandLine="copy &quot;$(InputPath)&quot;+&quot;$(ProjectDir)..\config.h&quot;  &quot;$(ProjectDir)..\llvm\Config\config.h&quot;&#x0D;&#x0A;"
+						AdditionalDependencies="&quot;$(ProjectDir)..\config.h&quot;"
 						Outputs="&quot;$(ProjectDir)..\llvm\Config\config.h&quot;"
 					/>
 				</FileConfiguration>
@@ -203,9 +203,9 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						Description="Generating $(SolutionDir)llvm\Config\config.h"
-						CommandLine="copy &quot;$(InputPath)&quot;+&quot;$(SolutionDir)config.h&quot;  &quot;$(ProjectDir)..\llvm\Config\config.h&quot;&#x0D;&#x0A;"
-						AdditionalDependencies="&quot;$(SolutionDir)config.h&quot;"
+						Description="Generating $(ProjectDir)..\llvm\Config\config.h"
+						CommandLine="copy &quot;$(InputPath)&quot;+&quot;$(ProjectDir)..\config.h&quot;  &quot;$(ProjectDir)..\llvm\Config\config.h&quot;&#x0D;&#x0A;"
+						AdditionalDependencies="&quot;$(ProjectDir)..\config.h&quot;"
 						Outputs="&quot;$(ProjectDir)..\llvm\Config\config.h&quot;"
 					/>
 				</FileConfiguration>
@@ -218,7 +218,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						Description="Generating $(SolutionDir)llvm\Support\DataTypes.h"
+						Description="Generating $(ProjectDir)..\llvm\Support\DataTypes.h"
 						CommandLine="copy &quot;$(InputPath)&quot; &quot;$(ProjectDir)..\llvm\Support\DataTypes.h&quot;&#x0D;&#x0A;"
 						Outputs="&quot;$(ProjectDir)..\llvm\Support\DataTypes.h&quot;"
 					/>
@@ -228,7 +228,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						Description="Generating $(SolutionDir)llvm\Support\DataTypes.h"
+						Description="Generating $(ProjectDir)..\llvm\Support\DataTypes.h"
 						CommandLine="copy &quot;$(InputPath)&quot; &quot;$(ProjectDir)..\llvm\Support\DataTypes.h&quot;&#x0D;&#x0A;"
 						Outputs="&quot;$(ProjectDir)..\llvm\Support\DataTypes.h&quot;"
 					/>
@@ -242,7 +242,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						Description="Generating $(SolutionDir)llvm\ADT\hash_map.h"
+						Description="Generating $(ProjectDir)..\llvm\ADT\hash_map.h"
 						CommandLine="copy &quot;$(InputPath)&quot; &quot;$(ProjectDir)..\llvm\ADT\hash_map.h&quot;&#x0D;&#x0A;"
 						Outputs="&quot;$(ProjectDir)..\llvm\ADT\hash_map.h&quot;"
 					/>
@@ -252,7 +252,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						Description="Generating $(SolutionDir)llvm\ADT\hash_map.h"
+						Description="Generating $(ProjectDir)..\llvm\ADT\hash_map.h"
 						CommandLine="copy &quot;$(InputPath)&quot; &quot;$(ProjectDir)..\llvm\ADT\hash_map.h&quot;&#x0D;&#x0A;"
 						Outputs="&quot;$(ProjectDir)..\llvm\ADT\hash_map.h&quot;"
 					/>
@@ -266,7 +266,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						Description="Generating $(SolutionDir)llvm\ADT\hash_set.h"
+						Description="Generating $(ProjectDir)..\llvm\ADT\hash_set.h"
 						CommandLine="copy &quot;$(InputPath)&quot; &quot;$(ProjectDir)..\llvm\ADT\hash_set.h&quot;&#x0D;&#x0A;"
 						Outputs="&quot;$(ProjectDir)..\llvm\ADT\hash_set.h&quot;"
 					/>
@@ -276,7 +276,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						Description="Generating $(SolutionDir)llvm\ADT\hash_set.h"
+						Description="Generating $(ProjectDir)..\llvm\ADT\hash_set.h"
 						CommandLine="copy &quot;$(InputPath)&quot; &quot;$(ProjectDir)..\llvm\ADT\hash_set.h&quot;&#x0D;&#x0A;"
 						Outputs="&quot;$(ProjectDir)..\llvm\ADT\hash_set.h&quot;"
 					/>
@@ -290,7 +290,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						Description="Generating $(SolutionDir)llvm\ADT\iterator.h"
+						Description="Generating $(ProjectDir)..\llvm\ADT\iterator.h"
 						CommandLine="copy &quot;$(InputPath)&quot; &quot;$(ProjectDir)..\llvm\ADT\iterator.h&quot;&#x0D;&#x0A;"
 						Outputs="&quot;$(ProjectDir)..\llvm\ADT\iterator.h&quot;"
 					/>
@@ -300,7 +300,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						Description="Generating $(SolutionDir)llvm\ADT\iterator.h"
+						Description="Generating $(ProjectDir)..\llvm\ADT\iterator.h"
 						CommandLine="copy &quot;$(InputPath)&quot; &quot;$(ProjectDir)..\llvm\ADT\iterator.h&quot;&#x0D;&#x0A;"
 						Outputs="&quot;$(ProjectDir)..\llvm\ADT\iterator.h&quot;"
 					/>

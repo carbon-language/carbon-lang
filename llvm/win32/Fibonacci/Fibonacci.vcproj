@@ -20,7 +20,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)..\bin\$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;..\common.vsprops"
@@ -71,7 +71,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="$(SolutionDir)X86\$(IntDir)\X86TargetMachine.obj"
+				AdditionalDependencies="$(ProjectDir)..\X86\$(IntDir)\X86TargetMachine.obj"
 				OutputFile="$(OutDir)/Fibonacci.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -107,7 +107,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)..\bin\$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;..\common.vsprops"
@@ -154,7 +154,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="$(SolutionDir)X86\$(IntDir)\X86TargetMachine.obj"
+				AdditionalDependencies="$(ProjectDir)..\X86\$(IntDir)\X86TargetMachine.obj"
 				OutputFile="$(OutDir)/Fibonacci.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
@@ -190,7 +190,7 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)..\bin\$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
@@ -242,7 +242,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="$(SolutionDir)X86\$(IntDir)\X86TargetMachine.obj"
+				AdditionalDependencies="$(ProjectDir)..\X86\$(IntDir)\X86TargetMachine.obj"
 				OutputFile="$(OutDir)/Fibonacci.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -278,7 +278,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)..\bin\$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
@@ -326,7 +326,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="$(SolutionDir)X86\$(IntDir)\X86TargetMachine.obj"
+				AdditionalDependencies="$(ProjectDir)..\X86\$(IntDir)\X86TargetMachine.obj"
 				OutputFile="$(OutDir)/Fibonacci.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
