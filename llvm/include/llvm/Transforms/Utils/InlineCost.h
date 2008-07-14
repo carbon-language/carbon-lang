@@ -38,35 +38,36 @@ namespace llvm {
     // FunctionInfo - For each function, calculate the size of it in blocks and
     // instructions.
     struct FunctionInfo {
-      // NumInsts, NumBlocks - Keep track of how large each function is, which is
-      // used to estimate the code size cost of inlining it.
+      /// NumInsts, NumBlocks - Keep track of how large each function is, which
+      /// is used to estimate the code size cost of inlining it.
       unsigned NumInsts, NumBlocks;
 
-      // NumVectorInsts - Keep track how many instrctions produce vector values.
-      // The inliner is being more aggressive with inlining vector kernels.
+      /// NumVectorInsts - Keep track how many instrctions produce vector
+      /// values.  The inliner is being more aggressive with inlining vector
+      /// kernels.
       unsigned NumVectorInsts;
       
-      // ArgumentWeights - Each formal argument of the function is inspected to
-      // see if it is used in any contexts where making it a constant or alloca
-      // would reduce the code size.  If so, we add some value to the argument
-      // entry here.
+      /// ArgumentWeights - Each formal argument of the function is inspected to
+      /// see if it is used in any contexts where making it a constant or alloca
+      /// would reduce the code size.  If so, we add some value to the argument
+      /// entry here.
       std::vector<ArgInfo> ArgumentWeights;
       
       FunctionInfo() : NumInsts(0), NumBlocks(0), NumVectorInsts(0) {}
       
-      /// analyzeFunction - Fill in the current structure with information gleaned
-      /// from the specified function.
+      /// analyzeFunction - Fill in the current structure with information
+      /// gleaned from the specified function.
       void analyzeFunction(Function *F);
 
-      // CountCodeReductionForConstant - Figure out an approximation for how many
-      // instructions will be constant folded if the specified value is constant.
-      //
+      /// CountCodeReductionForConstant - Figure out an approximation for how
+      /// many instructions will be constant folded if the specified value is
+      /// constant.
       unsigned CountCodeReductionForConstant(Value *V);
       
-      // CountCodeReductionForAlloca - Figure out an approximation of how much smaller
-      // the function will be if it is inlined into a context where an argument
-      // becomes an alloca.
-      //
+      /// CountCodeReductionForAlloca - Figure out an approximation of how much
+      /// smaller the function will be if it is inlined into a context where an
+      /// argument becomes an alloca.
+      ///
       unsigned CountCodeReductionForAlloca(Value *V);
     };
 
@@ -74,14 +75,14 @@ namespace llvm {
 
   public:
 
-    // getInlineCost - The heuristic used to determine if we should inline the
-    // function call or not.
-    //
+    /// getInlineCost - The heuristic used to determine if we should inline the
+    /// function call or not.
+    ///
     int getInlineCost(CallSite CS,
                       SmallPtrSet<const Function *, 16> &NeverInline);
 
-    // getInlineFudgeFactor - Return a > 1.0 factor if the inliner should use a
-    // higher threshold to determine if the function call should be inlined.
+    /// getInlineFudgeFactor - Return a > 1.0 factor if the inliner should use a
+    /// higher threshold to determine if the function call should be inlined.
     float getInlineFudgeFactor(CallSite CS);
   };
 }
