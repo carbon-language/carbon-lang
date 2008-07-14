@@ -138,7 +138,7 @@ def main(args):
   if analysis_type is not None:
     analysis_type = "-" + analysis_type
   else:
-    analysis_type = "-warn-dead-stores -checker-cfref -warn-objc-methodsigs"
+    analysis_type = "-warn-dead-stores -checker-cfref -warn-objc-methodsigs -warn-objc-missing-dealloc"
 
   # Determine the level of verbosity.
   if os.environ.get('CCC_ANALYZER_VERBOSE') is not None:
