@@ -1370,24 +1370,19 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     return Incompatible;
   }
 
-  if (isa<VectorType>(lhsType) || isa<VectorType>(rhsType)) {
+  if (lhsType->isVectorType() || rhsType->isVectorType()) {
     // For ExtVector, allow vector splats; float -> <n x float>
-    if (const ExtVectorType *LV = dyn_cast<ExtVectorType>(lhsType)) {
-      if (LV->getElementType().getTypePtr() == rhsType.getTypePtr())
+    if (const ExtVectorType *LV = lhsType->getAsExtVectorType())
+      if (LV->getElementType() == rhsType)
         return Compatible;
-    }
 
-    // If LHS and RHS are both vectors of integer or both vectors of floating
-    // point types, and the total vector length is the same, allow the
-    // conversion.  This is a bitcast; no bits are changed but the result type
-    // is different.
+    // If we are allowing lax vector conversions, and LHS and RHS are both
+    // vectors, the total size only needs to be the same. This is a bitcast; 
+    // no bits are changed but the result type is different.
     if (getLangOptions().LaxVectorConversions &&
         lhsType->isVectorType() && rhsType->isVectorType()) {
-      if ((lhsType->isIntegerType() && rhsType->isIntegerType()) ||
-          (lhsType->isRealFloatingType() && rhsType->isRealFloatingType())) {
-        if (Context.getTypeSize(lhsType) == Context.getTypeSize(rhsType))
-          return Compatible;
-      }
+      if (Context.getTypeSize(lhsType) == Context.getTypeSize(rhsType))
+        return Compatible;
     }
     return Incompatible;
   }      
@@ -1472,25 +1467,40 @@ inline QualType Sema::CheckVectorOperands(SourceLocation loc, Expr *&lex,
   QualType lhsType = lex->getType().getCanonicalType().getUnqualifiedType();
   QualType rhsType = rex->getType().getCanonicalType().getUnqualifiedType();
   
-  // make sure the vector types are identical. 
+  // If the vector types are identical, return.
   if (lhsType == rhsType)
     return lhsType;
 
-  // if the lhs is an extended vector and the rhs is a scalar of the same type,
-  // promote the rhs to the vector type.
+  // Handle the case of a vector & extvector type of the same size and element
+  // type.  It would be nice if we only had one vector type someday.
+  if (getLangOptions().LaxVectorConversions)
+    if (const VectorType *LV = lhsType->getAsVectorType())
+      if (const VectorType *RV = rhsType->getAsVectorType())
+        if (LV->getElementType() == RV->getElementType() &&
+            LV->getNumElements() == RV->getNumElements())
+          return lhsType->isExtVectorType() ? lhsType : rhsType;
+
+  // If the lhs is an extended vector and the rhs is a scalar of the same type
+  // or a literal, promote the rhs to the vector type.
   if (const ExtVectorType *V = lhsType->getAsExtVectorType()) {
-    if (V->getElementType().getCanonicalType().getTypePtr()
-        == rhsType.getCanonicalType().getTypePtr()) {
+    QualType eltType = V->getElementType();
+    
+    if ((eltType->getAsBuiltinType() == rhsType->getAsBuiltinType()) || 
+        (eltType->isIntegerType() && isa<IntegerLiteral>(rex)) ||
+        (eltType->isFloatingType() && isa<FloatingLiteral>(rex))) {
       ImpCastExprToType(rex, lhsType);
       return lhsType;
     }
   }
 
-  // if the rhs is an extended vector and the lhs is a scalar of the same type,
+  // If the rhs is an extended vector and the lhs is a scalar of the same type,
   // promote the lhs to the vector type.
   if (const ExtVectorType *V = rhsType->getAsExtVectorType()) {
-    if (V->getElementType().getCanonicalType().getTypePtr()
-        == lhsType.getCanonicalType().getTypePtr()) {
+    QualType eltType = V->getElementType();
+
+    if ((eltType->getAsBuiltinType() == lhsType->getAsBuiltinType()) || 
+        (eltType->isIntegerType() && isa<IntegerLiteral>(lex)) ||
+        (eltType->isFloatingType() && isa<FloatingLiteral>(lex))) {
       ImpCastExprToType(lex, rhsType);
       return rhsType;
     }
@@ -1656,6 +1666,9 @@ QualType Sema::CheckShiftOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
 // C99 6.5.8
 QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
                                     bool isRelational) {
+  if (lex->getType()->isVectorType() || rex->getType()->isVectorType())
+    return CheckVectorCompareOperands(lex, rex, loc, isRelational);
+  
   // C99 6.5.8p3 / C99 6.5.9p4
   if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
     UsualArithmeticConversions(lex, rex);
@@ -1738,6 +1751,55 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
     return Context.IntTy;
   }
   return InvalidOperands(loc, lex, rex);
+}
+
+/// CheckVectorCompareOperands - vector comparisons are a clang extension that
+/// operates on extended vector types.  Instead of producing an IntTy result, 
+/// like a scalar comparison, a vector comparison produces a vector of integer
+/// types.
+QualType Sema::CheckVectorCompareOperands(Expr *&lex, Expr *&rex,
+                                          SourceLocation loc,
+                                          bool isRelational) {
+  // Check to make sure we're operating on vectors of the same type and width,
+  // Allowing one side to be a scalar of element type.
+  QualType vType = CheckVectorOperands(loc, lex, rex);
+  if (vType.isNull())
+    return vType;
+  
+  QualType lType = lex->getType();
+  QualType rType = rex->getType();
+  
+  // For non-floating point types, check for self-comparisons of the form
+  // x == x, x != x, x < x, etc.  These always evaluate to a constant, and
+  // often indicate logic errors in the program.
+  if (!lType->isFloatingType()) {
+    if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(lex->IgnoreParens()))
+      if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(rex->IgnoreParens()))
+        if (DRL->getDecl() == DRR->getDecl())
+          Diag(loc, diag::warn_selfcomparison);      
+  }
+  
+  // Check for comparisons of floating point operands using != and ==.
+  if (!isRelational && lType->isFloatingType()) {
+    assert (rType->isFloatingType());
+    CheckFloatComparison(loc,lex,rex);
+  }
+  
+  // Return the type for the comparison, which is the same as vector type for
+  // integer vectors, or an integer type of identical size and number of
+  // elements for floating point vectors.
+  if (lType->isIntegerType())
+    return lType;
+  
+  const VectorType *VTy = lType->getAsVectorType();
+
+  // FIXME: need to deal with non-32b int / non-64b long long
+  unsigned TypeSize = Context.getTypeSize(VTy->getElementType());
+  if (TypeSize == 32) {
+    return Context.getExtVectorType(Context.IntTy, VTy->getNumElements());
+  }
+  assert(TypeSize == 64 && "Unhandled vector element size in vector compare");
+  return Context.getExtVectorType(Context.LongLongTy, VTy->getNumElements());
 }
 
 inline QualType Sema::CheckBitwiseOperands(

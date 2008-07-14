@@ -812,7 +812,6 @@ private:
     
   /// type checking binary operators (subroutines of ActOnBinOp).
   inline QualType InvalidOperands(SourceLocation l, Expr *&lex, Expr *&rex);
-  inline QualType CheckVectorOperands(SourceLocation l, Expr *&lex, Expr *&rex);
   inline QualType CheckMultiplyDivideOperands( // C99 6.5.5
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false); 
   inline QualType CheckRemainderOperands( // C99 6.5.5
@@ -838,6 +837,11 @@ private:
     Expr *&lex, Expr *&rex, SourceLocation OpLoc);
   inline QualType CheckConditionalOperands( // C99 6.5.15
     Expr *&cond, Expr *&lhs, Expr *&rhs, SourceLocation questionLoc);
+
+  /// type checking for vector binary operators.
+  inline QualType CheckVectorOperands(SourceLocation l, Expr *&lex, Expr *&rex);
+  inline QualType CheckVectorCompareOperands(Expr *&lex, Expr *&rx,
+                                             SourceLocation l, bool isRel);
   
   /// type checking unary operators (subroutines of ActOnUnaryOp).
   /// C99 6.5.3.1, 6.5.3.2, 6.5.3.4
