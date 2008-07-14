@@ -172,6 +172,7 @@ namespace {
     Instruction *visitURem(BinaryOperator &I);
     Instruction *visitSRem(BinaryOperator &I);
     Instruction *visitFRem(BinaryOperator &I);
+    bool SimplifyDivRemOfSelect(BinaryOperator &I);
     Instruction *commonRemTransforms(BinaryOperator &I);
     Instruction *commonIRemTransforms(BinaryOperator &I);
     Instruction *commonDivTransforms(BinaryOperator &I);
@@ -2566,6 +2567,78 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   return Changed ? &I : 0;
 }
 
+/// SimplifyDivRemOfSelect - Try to fold a divide or remainder of a select
+/// instruction.
+bool InstCombiner::SimplifyDivRemOfSelect(BinaryOperator &I) {
+  SelectInst *SI = cast<SelectInst>(I.getOperand(1));
+  
+  // div/rem X, (Cond ? 0 : Y) -> div/rem X, Y
+  int NonNullOperand = -1;
+  if (Constant *ST = dyn_cast<Constant>(SI->getOperand(1)))
+    if (ST->isNullValue())
+      NonNullOperand = 2;
+  // div/rem X, (Cond ? Y : 0) -> div/rem X, Y
+  if (Constant *ST = dyn_cast<Constant>(SI->getOperand(2)))
+    if (ST->isNullValue())
+      NonNullOperand = 1;
+  
+  if (NonNullOperand == -1)
+    return false;
+  
+  Value *SelectCond = SI->getOperand(0);
+  
+  // Change the div/rem to use 'Y' instead of the select.
+  I.setOperand(1, SI->getOperand(NonNullOperand));
+  
+  // Okay, we know we replace the operand of the div/rem with 'Y' with no
+  // problem.  However, the select, or the condition of the select may have
+  // multiple uses.  Based on our knowledge that the operand must be non-zero,
+  // propagate the known value for the select into other uses of it, and
+  // propagate a known value of the condition into its other users.
+  
+  // If the select and condition only have a single use, don't bother with this,
+  // early exit.
+  if (SI->use_empty() && SelectCond->hasOneUse())
+    return true;
+  
+  // Scan the current block backward, looking for other uses of SI.
+  BasicBlock::iterator BBI = &I, BBFront = I.getParent()->begin();
+  
+  while (BBI != BBFront) {
+    --BBI;
+    // If we found a call to a function, we can't assume it will return, so
+    // information from below it cannot be propagated above it.
+    if (isa<CallInst>(BBI) && !isa<IntrinsicInst>(BBI))
+      break;
+    
+    // Replace uses of the select or its condition with the known values.
+    for (Instruction::op_iterator I = BBI->op_begin(), E = BBI->op_end();
+         I != E; ++I) {
+      if (*I == SI) {
+        *I = SI->getOperand(NonNullOperand);
+        AddToWorkList(BBI);
+      } else if (*I == SelectCond) {
+        *I = NonNullOperand == 1 ? ConstantInt::getTrue() :
+                                   ConstantInt::getFalse();
+        AddToWorkList(BBI);
+      }
+    }
+    
+    // If we past the instruction, quit looking for it.
+    if (&*BBI == SI)
+      SI = 0;
+    if (&*BBI == SelectCond)
+      SelectCond = 0;
+    
+    // If we ran out of things to eliminate, break out of the loop.
+    if (SelectCond == 0 && SI == 0)
+      break;
+    
+  }
+  return true;
+}
+
+
 /// This function implements the transforms on div instructions that work
 /// regardless of the kind of div instruction it is (udiv, sdiv, or fdiv). It is
 /// used by the visitors to those instructions.
@@ -2584,40 +2657,6 @@ Instruction *InstCombiner::commonDivTransforms(BinaryOperator &I) {
   // X / undef -> undef
   if (isa<UndefValue>(Op1))
     return ReplaceInstUsesWith(I, Op1);
-
-  // Handle cases involving: [su]div X, (select Cond, Y, Z)
-  // This does not apply for fdiv.
-  if (SelectInst *SI = dyn_cast<SelectInst>(Op1)) {
-    // [su]div X, (Cond ? 0 : Y) -> div X, Y.  If the div and the select are in
-    // the same basic block, then we replace the select with Y, and the
-    // condition of the select with false (if the cond value is in the same BB).
-    // If the select has uses other than the div, this allows them to be
-    // simplified also. Note that div X, Y is just as good as div X, 0 (undef)
-    if (ConstantInt *ST = dyn_cast<ConstantInt>(SI->getOperand(1)))
-      if (ST->isNullValue()) {
-        Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
-        if (CondI && CondI->getParent() == I.getParent())
-          UpdateValueUsesWith(CondI, ConstantInt::getFalse());
-        else if (I.getParent() != SI->getParent() || SI->hasOneUse())
-          I.setOperand(1, SI->getOperand(2));
-        else
-          UpdateValueUsesWith(SI, SI->getOperand(2));
-        return &I;
-      }
-
-    // Likewise for: [su]div X, (Cond ? Y : 0) -> div X, Y
-    if (ConstantInt *ST = dyn_cast<ConstantInt>(SI->getOperand(2)))
-      if (ST->isNullValue()) {
-        Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
-        if (CondI && CondI->getParent() == I.getParent())
-          UpdateValueUsesWith(CondI, ConstantInt::getTrue());
-        else if (I.getParent() != SI->getParent() || SI->hasOneUse())
-          I.setOperand(1, SI->getOperand(1));
-        else
-          UpdateValueUsesWith(SI, SI->getOperand(1));
-        return &I;
-      }
-  }
 
   return 0;
 }
@@ -2643,6 +2682,11 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
   
   if (Instruction *Common = commonDivTransforms(I))
     return Common;
+  
+  // Handle cases involving: [su]div X, (select Cond, Y, Z)
+  // This does not apply for fdiv.
+  if (isa<SelectInst>(Op1) && SimplifyDivRemOfSelect(I))
+    return &I;
 
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
     // div X, 1 == X
@@ -2798,36 +2842,8 @@ Instruction *InstCombiner::commonRemTransforms(BinaryOperator &I) {
     return ReplaceInstUsesWith(I, Op1);  // X % undef -> undef
 
   // Handle cases involving: rem X, (select Cond, Y, Z)
-  if (SelectInst *SI = dyn_cast<SelectInst>(Op1)) {
-    // rem X, (Cond ? 0 : Y) -> rem X, Y.  If the rem and the select are in
-    // the same basic block, then we replace the select with Y, and the
-    // condition of the select with false (if the cond value is in the same
-    // BB).  If the select has uses other than the div, this allows them to be
-    // simplified also.
-    if (Constant *ST = dyn_cast<Constant>(SI->getOperand(1)))
-      if (ST->isNullValue()) {
-        Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
-        if (CondI && CondI->getParent() == I.getParent())
-          UpdateValueUsesWith(CondI, ConstantInt::getFalse());
-        else if (I.getParent() != SI->getParent() || SI->hasOneUse())
-          I.setOperand(1, SI->getOperand(2));
-        else
-          UpdateValueUsesWith(SI, SI->getOperand(2));
-        return &I;
-      }
-    // Likewise for: rem X, (Cond ? Y : 0) -> rem X, Y
-    if (Constant *ST = dyn_cast<Constant>(SI->getOperand(2)))
-      if (ST->isNullValue()) {
-        Instruction *CondI = dyn_cast<Instruction>(SI->getOperand(0));
-        if (CondI && CondI->getParent() == I.getParent())
-          UpdateValueUsesWith(CondI, ConstantInt::getTrue());
-        else if (I.getParent() != SI->getParent() || SI->hasOneUse())
-          I.setOperand(1, SI->getOperand(1));
-        else
-          UpdateValueUsesWith(SI, SI->getOperand(1));
-        return &I;
-      }
-  }
+  if (isa<SelectInst>(Op1) && SimplifyDivRemOfSelect(I))
+    return &I;
 
   return 0;
 }
