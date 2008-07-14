@@ -1082,7 +1082,7 @@ void ScheduleDAG::EmitLiveInCopies(MachineBasicBlock *MBB) {
 }
 
 /// EmitSchedule - Emit the machine code in scheduled order.
-void ScheduleDAG::EmitSchedule() {
+MachineBasicBlock *ScheduleDAG::EmitSchedule() {
   bool isEntryBB = &MF->front() == BB;
 
   if (isEntryBB && !SchedLiveInCopies) {
@@ -1118,6 +1118,8 @@ void ScheduleDAG::EmitSchedule() {
 
   if (isEntryBB && SchedLiveInCopies)
     EmitLiveInCopies(MF->begin());
+
+  return BB;
 }
 
 /// dump - dump the schedule.
@@ -1133,9 +1135,12 @@ void ScheduleDAG::dumpSchedule() const {
 
 /// Run - perform scheduling.
 ///
-MachineBasicBlock *ScheduleDAG::Run() {
+void ScheduleDAG::Run() {
   Schedule();
-  return BB;
+  
+  DOUT << "*** Final schedule ***\n";
+  DEBUG(dumpSchedule());
+  DOUT << "\n";
 }
 
 /// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or

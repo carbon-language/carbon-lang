@@ -204,13 +204,6 @@ void ScheduleDAGRRList::Schedule() {
 
   if (!Fast)
     CommuteNodesToReducePressure();
-  
-  DOUT << "*** Final schedule ***\n";
-  DEBUG(dumpSchedule());
-  DOUT << "\n";
-  
-  // Emit in scheduled order
-  EmitSchedule();
 }
 
 /// CommuteNodesToReducePressure - If a node is two-address and commutable, and

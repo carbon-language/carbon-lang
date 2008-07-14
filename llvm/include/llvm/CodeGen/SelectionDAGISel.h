@@ -30,6 +30,7 @@ namespace llvm {
   class FunctionLoweringInfo;
   class HazardRecognizer;
   class CollectorMetadata;
+  class ScheduleDAG;
  
 /// SelectionDAGISel - This is the common base class used for SelectionDAG-based
 /// pattern-matching instruction selectors.
@@ -191,9 +192,9 @@ private:
   
   void ComputeLiveOutVRegInfo(SelectionDAG &DAG);
 
-  /// Pick a safe ordering and emit instructions for each target node in the
+  /// Pick a safe ordering for instructions for each target node in the
   /// graph.
-  void ScheduleAndEmitDAG(SelectionDAG &DAG);
+  ScheduleDAG *Schedule(SelectionDAG &DAG);
 
   /// SwitchCases - Vector of CaseBlock structures used to communicate
   /// SwitchInst code generation information.

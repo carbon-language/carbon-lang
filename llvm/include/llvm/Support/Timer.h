@@ -132,6 +132,8 @@ public:
 ///
 struct NamedRegionTimer : public TimeRegion {
   explicit NamedRegionTimer(const std::string &Name);
+  explicit NamedRegionTimer(const std::string &Name,
+                            const std::string &GroupName);
 };
 
 

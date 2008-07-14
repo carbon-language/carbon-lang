@@ -265,7 +265,7 @@ namespace llvm {
   
     /// Run - perform scheduling.
     ///
-    MachineBasicBlock *Run();
+    void Run();
 
     /// isPassiveNode - Return true if the node is a non-scheduled leaf.
     ///
@@ -336,7 +336,7 @@ namespace llvm {
     ///
     void EmitNoop();
 
-    void EmitSchedule();
+    MachineBasicBlock *EmitSchedule();
 
     void dumpSchedule() const;
 
