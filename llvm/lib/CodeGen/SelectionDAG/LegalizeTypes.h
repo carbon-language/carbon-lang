@@ -105,6 +105,11 @@ private:
     return ValueTypeActions.getTypeAction(VT) == TargetLowering::Legal;
   }
 
+  /// IgnoreNodeResults - Pretend all of this node's results are legal.
+  bool IgnoreNodeResults(SDNode *N) const {
+    return N->getOpcode() == ISD::TargetConstant;
+  }
+
   /// PromotedIntegers - For integer nodes that are below legal width, this map
   /// indicates what promoted value to use.
   DenseMap<SDOperand, SDOperand> PromotedIntegers;

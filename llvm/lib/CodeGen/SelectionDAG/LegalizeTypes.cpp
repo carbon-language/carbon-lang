@@ -60,11 +60,12 @@ void DAGTypeLegalizer::run() {
     assert(N->getNodeId() == ReadyToProcess &&
            "Node should be ready if on worklist!");
 
+    if (IgnoreNodeResults(N))
+      goto ScanOperands;
+
     // Scan the values produced by the node, checking to see if any result
     // types are illegal.
-    unsigned i = 0;
-    unsigned NumResults = N->getNumValues();
-    do {
+    for (unsigned i = 0, NumResults = N->getNumValues(); i < NumResults; ++i) {
       MVT ResultVT = N->getValueType(i);
       switch (getTypeAction(ResultVT)) {
       default:
@@ -90,14 +91,19 @@ void DAGTypeLegalizer::run() {
         SplitVectorResult(N, i);
         goto NodeDone;
       }
-    } while (++i < NumResults);
+    }
 
+ScanOperands:
     // Scan the operand list for the node, handling any nodes with operands that
     // are illegal.
     {
     unsigned NumOperands = N->getNumOperands();
     bool NeedsRevisit = false;
+    unsigned i;
     for (i = 0; i != NumOperands; ++i) {
+      if (IgnoreNodeResults(N->getOperand(i).Val))
+        continue;
+
       MVT OpVT = N->getOperand(i).getValueType();
       switch (getTypeAction(OpVT)) {
       default:
@@ -187,15 +193,17 @@ NodeDone:
     bool Failed = false;
 
     // Check that all result types are legal.
-    for (unsigned i = 0, NumVals = I->getNumValues(); i < NumVals; ++i)
-      if (!isTypeLegal(I->getValueType(i))) {
-        cerr << "Result type " << i << " illegal!\n";
-        Failed = true;
-      }
+    if (!IgnoreNodeResults(I))
+      for (unsigned i = 0, NumVals = I->getNumValues(); i < NumVals; ++i)
+        if (!isTypeLegal(I->getValueType(i))) {
+          cerr << "Result type " << i << " illegal!\n";
+          Failed = true;
+        }
 
     // Check that all operand types are legal.
     for (unsigned i = 0, NumOps = I->getNumOperands(); i < NumOps; ++i)
-      if (!isTypeLegal(I->getOperand(i).getValueType())) {
+      if (!IgnoreNodeResults(I->getOperand(i).Val) &&
+          !isTypeLegal(I->getOperand(i).getValueType())) {
         cerr << "Operand type " << i << " illegal!\n";
         Failed = true;
       }
