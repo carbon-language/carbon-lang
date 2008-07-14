@@ -784,3 +784,15 @@ int test(int x_offs) {
 }
 
 //===---------------------------------------------------------------------===//
+
+Reassociate should turn things like:
+
+int factorial(int X) {
+ return X*X*X*X*X*X*X*X;
+}
+
+into llvm.powi calls, allowing the code generator to produce balanced
+multiplication trees.
+
+//===---------------------------------------------------------------------===//
+
