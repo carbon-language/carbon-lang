@@ -534,27 +534,23 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
                         std::map<const Value*, Value*> &ValueMap,
                     std::multimap<std::string, GlobalVariable *> &AppendingVars,
                         std::string *Err) {
+  ValueSymbolTable &DestSymTab = Dest->getValueSymbolTable();
+  
   // Loop over all of the globals in the src module, mapping them over as we go
   for (Module::const_global_iterator I = Src->global_begin(),
        E = Src->global_end(); I != E; ++I) {
     const GlobalVariable *SGV = I;
     GlobalValue *DGV = 0;
 
-    // Check to see if may have to link the global with the global
-    if (SGV->hasName() && !SGV->hasInternalLinkage()) {
-      DGV = Dest->getGlobalVariable(SGV->getName());
-      if (DGV && DGV->getType() != SGV->getType())
-        // If types don't agree due to opaque types, try to resolve them.
-        RecursiveResolveTypes(SGV->getType(), DGV->getType());
-    }
-
-    // Check to see if may have to link the global with the alias
-    if (!DGV && SGV->hasName() && !SGV->hasInternalLinkage()) {
-      DGV = Dest->getNamedAlias(SGV->getName());
-      if (DGV && DGV->getType() != SGV->getType())
-        // If types don't agree due to opaque types, try to resolve them.
-        RecursiveResolveTypes(SGV->getType(), DGV->getType());
-    }
+    // Check to see if may have to link the global with the global, alias or
+    // function.
+    if (SGV->hasName() && !SGV->hasInternalLinkage())
+      DGV = cast_or_null<GlobalValue>(DestSymTab.lookup(SGV->getNameStart(),
+                                                        SGV->getNameEnd()));
+    
+    // If types don't agree due to opaque types, try to resolve them.
+    if (DGV && DGV->getType() != SGV->getType())
+      RecursiveResolveTypes(SGV->getType(), DGV->getType());
 
     if (DGV && DGV->hasInternalLinkage())
       DGV = 0;
@@ -571,7 +567,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
     if (!DGV) {
       // No linking to be performed, simply create an identical version of the
       // symbol over in the dest module... the initializer will be filled in
-      // later by LinkGlobalInits...
+      // later by LinkGlobalInits.
       GlobalVariable *NewDGV =
         new GlobalVariable(SGV->getType()->getElementType(),
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
@@ -589,8 +585,8 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // Make sure to remember this mapping...
       ValueMap[SGV] = NewDGV;
 
+      // Keep track that this is an appending variable.
       if (SGV->hasAppendingLinkage())
-        // Keep track that this is an appending variable...
         AppendingVars.insert(std::make_pair(SGV->getName(), NewDGV));
     } else if (DGV->hasAppendingLinkage()) {
       // No linking is performed yet.  Just insert a new copy of the global, and
@@ -617,61 +613,64 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // SGV is global, but DGV is alias. The only valid mapping is when SGV is
       // external declaration, which is effectively a no-op. Also make sure
       // linkage calculation was correct.
-      if (SGV->isDeclaration() && !LinkFromSrc) {
-        // Make sure to remember this mapping...
-        ValueMap[SGV] = DGA;
-      } else
+      if (!SGV->isDeclaration() || LinkFromSrc)
         return Error(Err, "Global-Alias Collision on '" + SGV->getName() +
                      "': symbol multiple defined");
-    } else if (GlobalVariable *DGVar = dyn_cast<GlobalVariable>(DGV)) {
-      // Otherwise, perform the global-global mapping as instructed by
-      // GetLinkageResult.
-      if (LinkFromSrc) {
-        // Propagate alignment, section, and visibility info.
-        CopyGVAttributes(DGVar, SGV);
 
-        // If the types don't match, and if we are to link from the source, nuke
-        // DGV and create a new one of the appropriate type.
-        if (SGV->getType() != DGVar->getType()) {
-          GlobalVariable *NewDGV =
-            new GlobalVariable(SGV->getType()->getElementType(),
-                               DGVar->isConstant(), DGVar->getLinkage(),
-                               /*init*/0, DGVar->getName(), Dest, false,
-                               SGV->getType()->getAddressSpace());
-          CopyGVAttributes(NewDGV, DGVar);
-          DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewDGV,
-                                                           DGVar->getType()));
-          // DGVar will conflict with NewDGV because they both had the same
-          // name. We must erase this now so ForceRenaming doesn't assert
-          // because DGV might not have internal linkage.
-          DGVar->eraseFromParent();
+      // Make sure to remember this mapping.
+      ValueMap[SGV] = DGA;
+    } else if (LinkFromSrc) {
+      // If the types don't match, and if we are to link from the source, nuke
+      // DGV and create a new one of the appropriate type.  Note that the thing
+      // we are replacing may be a function (if a prototype, weak, etc) or a
+      // global variable.
+      GlobalVariable *NewDGV =
+        new GlobalVariable(SGV->getType()->getElementType(),
+                           SGV->isConstant(), SGV->getLinkage(),
+                           /*init*/0, DGV->getName(), Dest, false,
+                           SGV->getType()->getAddressSpace());
+      
+      // Propagate alignment, section, and visibility info.
+      CopyGVAttributes(NewDGV, SGV);
+      DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewDGV, DGV->getType()));
+      
+      // DGV will conflict with NewDGV because they both had the same
+      // name. We must erase this now so ForceRenaming doesn't assert
+      // because DGV might not have internal linkage.
+      if (GlobalVariable *Var = dyn_cast<GlobalVariable>(DGV))
+        Var->eraseFromParent();
+      else
+        cast<Function>(DGV)->eraseFromParent();
+      DGV = NewDGV;
 
-          // If the symbol table renamed the global, but it is an externally
-          // visible symbol, DGV must be an existing global with internal
-          // linkage. Rename it.
-          if (NewDGV->getName() != SGV->getName() &&
-              !NewDGV->hasInternalLinkage())
-            ForceRenaming(NewDGV, SGV->getName());
-
-          DGVar = NewDGV;
-        }
-
-        // Inherit const as appropriate
-        DGVar->setConstant(SGV->isConstant());
-
-        // Set initializer to zero, so we can link the stuff later
-        DGVar->setInitializer(0);
-      } else {
-        // Special case for const propagation
+      // If the symbol table renamed the global, but it is an externally visible
+      // symbol, DGV must be an existing global with internal linkage.  Rename.
+      if (NewDGV->getValueName() != SGV->getValueName() &&
+          !NewDGV->hasInternalLinkage())
+        ForceRenaming(NewDGV, SGV->getName());
+      
+      // Inherit const as appropriate
+      NewDGV->setConstant(SGV->isConstant());
+      
+      // Set calculated linkage
+      NewDGV->setLinkage(NewLinkage);
+      
+      // Make sure to remember this mapping...
+      ValueMap[SGV] = ConstantExpr::getBitCast(NewDGV, SGV->getType());
+    } else {
+      // Not "link from source", keep the one in the DestModule and remap the
+      // input onto it.
+      
+      // Special case for const propagation.
+      if (GlobalVariable *DGVar = dyn_cast<GlobalVariable>(DGV))
         if (DGVar->isDeclaration() && SGV->isConstant() && !DGVar->isConstant())
           DGVar->setConstant(true);
-      }
-
+      
       // Set calculated linkage
-      DGVar->setLinkage(NewLinkage);
-
+      DGV->setLinkage(NewLinkage);
+      
       // Make sure to remember this mapping...
-      ValueMap[SGV] = ConstantExpr::getBitCast(DGVar, SGV->getType());
+      ValueMap[SGV] = ConstantExpr::getBitCast(DGV, SGV->getType());
     }
   }
   return false;
@@ -844,7 +843,6 @@ static bool LinkAlias(Module *Dest, const Module *Src,
 static bool LinkGlobalInits(Module *Dest, const Module *Src,
                             std::map<const Value*, Value*> &ValueMap,
                             std::string *Err) {
-
   // Loop over all of the globals in the src module, mapping them over as we go
   for (Module::const_global_iterator I = Src->global_begin(),
        E = Src->global_end(); I != E; ++I) {
@@ -889,27 +887,23 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
 static bool LinkFunctionProtos(Module *Dest, const Module *Src,
                                std::map<const Value*, Value*> &ValueMap,
                                std::string *Err) {
+  ValueSymbolTable &DestSymTab = Dest->getValueSymbolTable();
+  
   // Loop over all of the functions in the src module, mapping them over
   for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
     const Function *SF = I;   // SrcFunction
-    
     GlobalValue *DGV = 0;
     Value *MappedDF;
     
-    // If this function is internal or has no name, it doesn't participate in
-    // linkage.
-    if (SF->hasName() && !SF->hasInternalLinkage()) {
-      // Check to see if may have to link the function.
-      DGV = Dest->getFunction(SF->getName());
-    }
-
-    // Check to see if may have to link the function with the alias
-    if (!DGV && SF->hasName() && !SF->hasInternalLinkage()) {
-      DGV = Dest->getNamedAlias(SF->getName());
-      if (DGV && DGV->getType() != SF->getType())
-        // If types don't agree due to opaque types, try to resolve them.
-        RecursiveResolveTypes(SF->getType(), DGV->getType());
-    }
+    // Check to see if may have to link the function with the global, alias or
+    // function.
+    if (SF->hasName() && !SF->hasInternalLinkage())
+      DGV = cast_or_null<GlobalValue>(DestSymTab.lookup(SF->getNameStart(),
+                                                        SF->getNameEnd()));
+    
+    // If types don't agree due to opaque types, try to resolve them.
+    if (DGV && DGV->getType() != SF->getType())
+      RecursiveResolveTypes(SF->getType(), DGV->getType());
 
     if (DGV && DGV->hasInternalLinkage())
       DGV = 0;
