@@ -157,7 +157,8 @@ ConstantVector *ConstantVector::getAllOnesValue(const VectorType *Ty) {
 
 /// getVectorElements - This method, which is only valid on constant of vector
 /// type, returns the elements of the vector in the specified smallvector.
-/// This handles breaking down a vector undef into undef elements, etc.
+/// This handles breaking down a vector undef into undef elements, etc.  For
+/// constant exprs and other cases we can't handle, we return an empty vector.
 void Constant::getVectorElements(SmallVectorImpl<Constant*> &Elts) const {
   assert(isa<VectorType>(getType()) && "Not a vector constant!");
   
@@ -174,8 +175,12 @@ void Constant::getVectorElements(SmallVectorImpl<Constant*> &Elts) const {
     return;
   }
   
-  assert(isa<UndefValue>(this) && "Unknown vector constant type!");
-  Elts.assign(VT->getNumElements(), UndefValue::get(VT->getElementType()));
+  if (isa<UndefValue>(this)) {
+    Elts.assign(VT->getNumElements(), UndefValue::get(VT->getElementType()));
+    return;
+  }
+  
+  // Unknown type, must be constant expr etc.
 }
 
 
@@ -2206,16 +2211,19 @@ ConstantExpr::getVICmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   const Type *EltTy = VTy->getElementType();
   unsigned NumElts = VTy->getNumElements();
 
-  SmallVector<Constant *, 8> Elts;
+  SmallVector<Constant *, 16> Elts;
   for (unsigned i = 0; i != NumElts; ++i) {
     Constant *FC = ConstantFoldCompareInstruction(pred, LHS->getOperand(i),
-                                                        RHS->getOperand(i));
-    if (FC) {
-      uint64_t Val = cast<ConstantInt>(FC)->getZExtValue();
-      if (Val != 0ULL)
+                                                  RHS->getOperand(i));
+    if (ConstantInt *FCI = dyn_cast_or_null<ConstantInt>(FC)) {
+      if (FCI->getZExtValue())
         Elts.push_back(ConstantInt::getAllOnesValue(EltTy));
       else
         Elts.push_back(ConstantInt::get(EltTy, 0ULL));
+    } else if (FC && isa<UndefValue>(FC)) {
+      Elts.push_back(UndefValue::get(EltTy));
+    } else {
+      break;
     }
   }
   if (Elts.size() == NumElts)
@@ -2243,16 +2251,19 @@ ConstantExpr::getVFCmp(unsigned short pred, Constant* LHS, Constant* RHS) {
   const Type *REltTy = IntegerType::get(EltTy->getPrimitiveSizeInBits());
   const Type *ResultTy = VectorType::get(REltTy, NumElts);
 
-  SmallVector<Constant *, 8> Elts;
+  SmallVector<Constant *, 16> Elts;
   for (unsigned i = 0; i != NumElts; ++i) {
     Constant *FC = ConstantFoldCompareInstruction(pred, LHS->getOperand(i),
                                                         RHS->getOperand(i));
-    if (FC) {
-      uint64_t Val = cast<ConstantInt>(FC)->getZExtValue();
-      if (Val != 0ULL)
+    if (ConstantInt *FCI = dyn_cast_or_null<ConstantInt>(FC)) {
+      if (FCI->getZExtValue())
         Elts.push_back(ConstantInt::getAllOnesValue(REltTy));
       else
         Elts.push_back(ConstantInt::get(REltTy, 0ULL));
+    } else if (FC && isa<UndefValue>(FC)) {
+      Elts.push_back(UndefValue::get(REltTy));
+    } else {
+      break;
     }
   }
   if (Elts.size() == NumElts)
