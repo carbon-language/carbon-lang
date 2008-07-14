@@ -276,6 +276,7 @@
 		1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CGBuiltin.cpp; path = lib/CodeGen/CGBuiltin.cpp; sourceTree = "<group>"; };
 		3507E4C10E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CheckObjCInstMethSignature.cpp; path = lib/Analysis/CheckObjCInstMethSignature.cpp; sourceTree = "<group>"; };
 		3513185F0CD14468006B66F7 /* DeclSerialization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeclSerialization.cpp; path = lib/AST/DeclSerialization.cpp; sourceTree = "<group>"; };
+		352028460E2C16820096ADE0 /* Analyses.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Analyses.def; path = Driver/Analyses.def; sourceTree = "<group>"; };
 		35260CA40C7F75C000D66CE9 /* ExprCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ExprCXX.cpp; path = lib/AST/ExprCXX.cpp; sourceTree = "<group>"; };
 		3527124F0DAFE54700C76352 /* IdentifierResolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IdentifierResolver.h; path = lib/Sema/IdentifierResolver.h; sourceTree = "<group>"; };
 		352712500DAFE54700C76352 /* IdentifierResolver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IdentifierResolver.cpp; path = lib/Sema/IdentifierResolver.cpp; sourceTree = "<group>"; };
@@ -801,6 +802,7 @@
 				DE5932CE0AD60FF400BC794C /* clang.h */,
 				359DBBE20E1ACD4700F43FA0 /* AnalysisConsumer.h */,
 				359DBBD30E1AC9CC00F43FA0 /* AnalysisConsumer.cpp */,
+				352028460E2C16820096ADE0 /* Analyses.def */,
 				DE3985780CB8ADC800223765 /* ASTConsumers.h */,
 				DE39857A0CB8ADCB00223765 /* ASTConsumers.cpp */,
 				DE38CF150D8C9DE000A273B6 /* DiagChecker.cpp */,
