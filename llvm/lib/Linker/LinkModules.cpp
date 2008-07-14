@@ -340,6 +340,7 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
   return false;
 }
 
+#ifndef NDEBUG
 static void PrintMap(const std::map<const Value*, Value*> &M) {
   for (std::map<const Value*, Value*>::const_iterator I = M.begin(), E =M.end();
        I != E; ++I) {
@@ -350,6 +351,7 @@ static void PrintMap(const std::map<const Value*, Value*> &M) {
     cerr << "\n";
   }
 }
+#endif
 
 
 // RemapOperand - Use ValueMap to convert constants from one module to another.
@@ -388,9 +390,8 @@ static Value *RemapOperand(const Value *In,
       for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i)
         Ops.push_back(cast<Constant>(RemapOperand(CE->getOperand(i),ValueMap)));
       Result = CE->getWithOperands(Ops);
-    } else if (isa<GlobalValue>(CPV)) {
-      assert(0 && "Unmapped global?");
     } else {
+      assert(!isa<GlobalValue>(CPV) && "Unmapped global?");
       assert(0 && "Unknown type of derived type constant value!");
     }
   } else if (isa<InlineAsm>(In)) {
@@ -403,12 +404,13 @@ static Value *RemapOperand(const Value *In,
     return Result;
   }
   
-
+#ifndef NDEBUG
   cerr << "LinkModules ValueMap: \n";
   PrintMap(ValueMap);
 
   cerr << "Couldn't remap value: " << (void*)In << " " << *In << "\n";
   assert(0 && "Couldn't remap value!");
+#endif
   return 0;
 }
 
@@ -533,8 +535,8 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
                     std::multimap<std::string, GlobalVariable *> &AppendingVars,
                         std::string *Err) {
   // Loop over all of the globals in the src module, mapping them over as we go
-  for (Module::const_global_iterator I = Src->global_begin(), E = Src->global_end();
-       I != E; ++I) {
+  for (Module::const_global_iterator I = Src->global_begin(),
+       E = Src->global_end(); I != E; ++I) {
     const GlobalVariable *SGV = I;
     GlobalValue *DGV = 0;
 
