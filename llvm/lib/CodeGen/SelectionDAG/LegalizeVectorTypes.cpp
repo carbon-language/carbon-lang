@@ -430,7 +430,7 @@ void DAGTypeLegalizer::SplitVecRes_BUILD_VECTOR(SDNode *N, SDOperand &Lo,
 
 void DAGTypeLegalizer::SplitVecRes_CONCAT_VECTORS(SDNode *N, SDOperand &Lo,
                                                   SDOperand &Hi) {
-  // FIXME: Handle non-power-of-two vectors?
+  assert(!(N->getNumOperands() & 1) && "Unsupported CONCAT_VECTORS");
   unsigned NumSubvectors = N->getNumOperands() / 2;
   if (NumSubvectors == 1) {
     Lo = N->getOperand(0);
@@ -530,7 +530,7 @@ void DAGTypeLegalizer::SplitVecRes_FPOWI(SDNode *N, SDOperand &Lo,
                                          SDOperand &Hi) {
   GetSplitVector(N->getOperand(0), Lo, Hi);
   Lo = DAG.getNode(ISD::FPOWI, Lo.getValueType(), Lo, N->getOperand(1));
-  Hi = DAG.getNode(ISD::FPOWI, Lo.getValueType(), Hi, N->getOperand(1));
+  Hi = DAG.getNode(ISD::FPOWI, Hi.getValueType(), Hi, N->getOperand(1));
 }
 
 
@@ -588,7 +588,7 @@ bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
 }
 
 SDOperand DAGTypeLegalizer::SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo) {
-  assert(ISD::isUNINDEXEDStore(N) && "Indexed store during type legalization!");
+  assert(ISD::isNormalStore(N) && "Truncating store of vector?");
   assert(OpNo == 1 && "Can only split the stored value");
 
   SDOperand Ch  = N->getChain();
