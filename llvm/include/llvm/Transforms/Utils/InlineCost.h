@@ -71,7 +71,7 @@ namespace llvm {
       unsigned CountCodeReductionForAlloca(Value *V);
     };
 
-    std::map<const Function *, FunctionInfo>CachedFunctionInfo;
+    std::map<const Function *, FunctionInfo> CachedFunctionInfo;
 
   public:
 
