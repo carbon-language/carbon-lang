@@ -85,7 +85,7 @@ SDOperand DAGTypeLegalizer::ScalarizeVecRes_UNDEF(SDNode *N) {
 }
 
 SDOperand DAGTypeLegalizer::ScalarizeVecRes_LOAD(LoadSDNode *N) {
-  assert(ISD::isUNINDEXEDLoad(N) && "Indexed load during type legalization!");
+  assert(ISD::isNormalLoad(N) && "Extending load of one-element vector?");
   SDOperand Result = DAG.getLoad(N->getValueType(0).getVectorElementType(),
                                  N->getChain(), N->getBasePtr(),
                                  N->getSrcValue(), N->getSrcValueOffset(),
@@ -118,9 +118,9 @@ SDOperand DAGTypeLegalizer::ScalarizeVecRes_INSERT_VECTOR_ELT(SDNode *N) {
   // so be sure to truncate it to the element type if necessary.
   SDOperand Op = N->getOperand(1);
   MVT EltVT = N->getValueType(0).getVectorElementType();
-  if (Op.getValueType().bitsGT(EltVT))
+  if (Op.getValueType() != EltVT)
+    // FIXME: Can this happen for floating point types?
     Op = DAG.getNode(ISD::TRUNCATE, EltVT, Op);
-  assert(Op.getValueType() == EltVT && "Invalid type for inserted value!");
   return Op;
 }
 
@@ -210,7 +210,7 @@ SDOperand DAGTypeLegalizer::ScalarizeVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
 /// ScalarizeVecOp_STORE - If the value to store is a vector that needs to be
 /// scalarized, it must be <1 x ty>.  Just store the element.
 SDOperand DAGTypeLegalizer::ScalarizeVecOp_STORE(StoreSDNode *N, unsigned OpNo){
-  assert(ISD::isUNINDEXEDStore(N) && "Indexed store during type legalization!");
+  assert(ISD::isNormalStore(N) && "Truncating store of one-element vector?");
   assert(OpNo == 1 && "Do not know how to scalarize this operand!");
   return DAG.getStore(N->getChain(), GetScalarizedVector(N->getOperand(1)),
                       N->getBasePtr(), N->getSrcValue(), N->getSrcValueOffset(),
