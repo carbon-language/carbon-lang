@@ -548,12 +548,14 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       DGV = cast_or_null<GlobalValue>(DestSymTab.lookup(SGV->getNameStart(),
                                                         SGV->getNameEnd()));
     
+    // If we found a global with the same name in the dest module, but it has
+    // internal linkage, we are really not doing any linkage here.
+    if (DGV && DGV->hasInternalLinkage())
+      DGV = 0;
+    
     // If types don't agree due to opaque types, try to resolve them.
     if (DGV && DGV->getType() != SGV->getType())
       RecursiveResolveTypes(SGV->getType(), DGV->getType());
-
-    if (DGV && DGV->hasInternalLinkage())
-      DGV = 0;
 
     assert((SGV->hasInitializer() || SGV->hasExternalWeakLinkage() ||
             SGV->hasExternalLinkage() || SGV->hasDLLImportLinkage()) &&
@@ -901,12 +903,14 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       DGV = cast_or_null<GlobalValue>(DestSymTab.lookup(SF->getNameStart(),
                                                         SF->getNameEnd()));
     
+    // If we found a global with the same name in the dest module, but it has
+    // internal linkage, we are really not doing any linkage here.
+    if (DGV && DGV->hasInternalLinkage())
+      DGV = 0;
+
     // If types don't agree due to opaque types, try to resolve them.
     if (DGV && DGV->getType() != SF->getType())
       RecursiveResolveTypes(SF->getType(), DGV->getType());
-
-    if (DGV && DGV->hasInternalLinkage())
-      DGV = 0;
 
     // If there is no linkage to be performed, just bring over SF without
     // modifying it.
