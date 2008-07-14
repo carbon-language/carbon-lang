@@ -304,21 +304,29 @@ void DAGTypeLegalizer::SplitVecRes_LOAD(LoadSDNode *LD, SDOperand &Lo,
   bool isVolatile = LD->isVolatile();
 
   Lo = DAG.getLoad(LoVT, Ch, Ptr, SV, SVOffset, isVolatile, Alignment);
-  unsigned IncrementSize = LoVT.getSizeInBits()/8;
-  Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
-                    DAG.getIntPtrConstant(IncrementSize));
-  SVOffset += IncrementSize;
-  Alignment = MinAlign(Alignment, IncrementSize);
-  Hi = DAG.getLoad(HiVT, Ch, Ptr, SV, SVOffset, isVolatile, Alignment);
 
-  // Build a factor node to remember that this load is independent of the
-  // other one.
-  SDOperand TF = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo.getValue(1),
-                             Hi.getValue(1));
+  if (LD->getExtensionType() == ISD::NON_EXTLOAD) {
+    unsigned IncrementSize = LoVT.getSizeInBits()/8;
+    Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
+                      DAG.getIntPtrConstant(IncrementSize));
+    SVOffset += IncrementSize;
+    Alignment = MinAlign(Alignment, IncrementSize);
+    Hi = DAG.getLoad(HiVT, Ch, Ptr, SV, SVOffset, isVolatile, Alignment);
+
+    // Build a factor node to remember that this load is independent of the
+    // other one.
+    Ch = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo.getValue(1),
+                     Hi.getValue(1));
+  } else {
+    assert(LD->getExtensionType() == ISD::EXTLOAD &&
+           "Unsupported vector extending load!");
+    Hi = DAG.getNode(ISD::UNDEF, HiVT);
+    Ch = Lo.getValue(1);
+  }
 
   // Legalized the chain result - switch anything that used the old chain to
   // use the new one.
-  ReplaceValueWith(SDOperand(LD, 1), TF);
+  ReplaceValueWith(SDOperand(LD, 1), Ch);
 }
 
 void DAGTypeLegalizer::SplitVecRes_BUILD_PAIR(SDNode *N, SDOperand &Lo,
