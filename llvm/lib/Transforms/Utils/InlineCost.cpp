@@ -100,9 +100,27 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
   for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
     for (BasicBlock::const_iterator II = BB->begin(), E = BB->end();
          II != E; ++II) {
-      if (isa<DbgInfoIntrinsic>(II)) continue;  // Debug intrinsics don't count.
       if (isa<PHINode>(II)) continue;           // PHI nodes don't count.
 
+      // Special handling for calls.
+      if (isa<CallInst>(II) || isa<InvokeInst>(II)) {
+        if (isa<DbgInfoIntrinsic>(II))
+          continue;  // Debug intrinsics don't count as size.
+        
+        CallSite CS = CallSite::get(const_cast<Instruction*>(&*II));
+        
+        // If this function contains a call to setjmp or _setjmp, never inline
+        // it.  This is a hack because we depend on the user marking their local
+        // variables as volatile if they are live across a setjmp call, and they
+        // probably won't do this in callers.
+        if (Function *F = CS.getCalledFunction())
+          if (F->isDeclaration() && 
+              (F->isName("setjmp") || F->isName("_setjmp"))) {
+            NeverInline = true;
+            return;
+          }
+      }
+      
       if (isa<ExtractElementInst>(II) || isa<VectorType>(II->getType()))
         ++NumVectorInsts; 
       
@@ -194,6 +212,10 @@ int InlineCostAnalyzer::getInlineCost(CallSite CS,
   // If we haven't calculated this information yet, do so now.
   if (CalleeFI.NumBlocks == 0)
     CalleeFI.analyzeFunction(Callee);
+  
+  // If we should never inline this, return a huge cost.
+  if (CalleeFI.NeverInline)
+    return 2000000000;
     
   // Add to the inline quality for properties that make the call valuable to
   // inline.  This includes factors that indicate that the result of inlining

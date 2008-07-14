@@ -38,6 +38,10 @@ namespace llvm {
     // FunctionInfo - For each function, calculate the size of it in blocks and
     // instructions.
     struct FunctionInfo {
+      /// NeverInline - True if this callee should never be inlined into a
+      /// caller.
+      bool NeverInline;
+      
       /// NumInsts, NumBlocks - Keep track of how large each function is, which
       /// is used to estimate the code size cost of inlining it.
       unsigned NumInsts, NumBlocks;
@@ -53,7 +57,8 @@ namespace llvm {
       /// entry here.
       std::vector<ArgInfo> ArgumentWeights;
       
-      FunctionInfo() : NumInsts(0), NumBlocks(0), NumVectorInsts(0) {}
+      FunctionInfo() : NeverInline(false), NumInsts(0), NumBlocks(0),
+                       NumVectorInsts(0) {}
       
       /// analyzeFunction - Fill in the current structure with information
       /// gleaned from the specified function.
