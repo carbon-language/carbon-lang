@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "mips-reg-info"
 
 #include "Mips.h"
+#include "MipsSubtarget.h"
 #include "MipsRegisterInfo.h"
 #include "MipsMachineFunction.h"
 #include "llvm/Constants.h"
@@ -35,9 +36,10 @@
 
 using namespace llvm;
 
-MipsRegisterInfo::MipsRegisterInfo(const TargetInstrInfo &tii)
+MipsRegisterInfo::MipsRegisterInfo(const MipsSubtarget &ST, 
+                                   const TargetInstrInfo &tii)
   : MipsGenRegisterInfo(Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),
-    TII(tii) {}
+    Subtarget(ST), TII(tii) {}
 
 /// getRegisterNumbering - Given the enum value for some register, e.g.
 /// Mips::RA, return the number that it corresponds to (e.g. 31).
@@ -82,10 +84,10 @@ getRegisterNumbering(unsigned RegEnum)
   return 0; // Not reached
 }
 
+unsigned MipsRegisterInfo::getPICCallReg(void) { return Mips::T9; }
+
 //===----------------------------------------------------------------------===//
-//
 // Callee Saved Registers methods 
-//
 //===----------------------------------------------------------------------===//
 
 /// Mips Callee Saved Registers
@@ -306,9 +308,12 @@ emitPrologue(MachineFunction &MF) const
   // Update frame info
   MFI->setStackSize(NumBytes);
 
-  // PIC speficic function prologue
-  if (isPIC)
-    BuildMI(MBB, MBBI, TII.get(Mips::CPLOAD)).addReg(Mips::T9);
+  BuildMI(MBB, MBBI, TII.get(Mips::NOREORDER));
+  
+  // TODO: check need from GP here.
+  if (isPIC && Subtarget.isABI_O32()) 
+    BuildMI(MBB, MBBI, TII.get(Mips::CPLOAD)).addReg(getPICCallReg());
+  BuildMI(MBB, MBBI, TII.get(Mips::NOMACRO));
 
   // Adjust stack : addi sp, sp, (-imm)
   BuildMI(MBB, MBBI, TII.get(Mips::ADDiu), Mips::SP)
@@ -334,9 +339,10 @@ emitPrologue(MachineFunction &MF) const
   }
 
   // PIC speficic function prologue
-  if ((isPIC) && (MFI->hasCalls()))
+  if ((isPIC) && (MFI->hasCalls())) {
     BuildMI(MBB, MBBI, TII.get(Mips::CPRESTORE))
       .addImm(MipsFI->getGPStackOffset());
+  }
 }
 
 void MipsRegisterInfo::

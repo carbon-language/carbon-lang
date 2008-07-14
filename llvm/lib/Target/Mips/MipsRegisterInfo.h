@@ -14,22 +14,27 @@
 #ifndef MIPSREGISTERINFO_H
 #define MIPSREGISTERINFO_H
 
+#include "Mips.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "MipsGenRegisterInfo.h.inc"
 
 namespace llvm {
-
+class MipsSubtarget;
 class TargetInstrInfo;
 class Type;
 
 struct MipsRegisterInfo : public MipsGenRegisterInfo {
+  const MipsSubtarget &Subtarget;
   const TargetInstrInfo &TII;
   
-  MipsRegisterInfo(const TargetInstrInfo &tii);
+  MipsRegisterInfo(const MipsSubtarget &Subtarget, const TargetInstrInfo &tii);
 
   /// getRegisterNumbering - Given the enum value for some register, e.g.
   /// Mips::RA, return the number that it corresponds to (e.g. 31).
   static unsigned getRegisterNumbering(unsigned RegEnum);
+
+  /// Get PIC indirect call register
+  static unsigned getPICCallReg(void); 
 
   /// Code Generation virtual methods...
   const unsigned *getCalleeSavedRegs(const MachineFunction* MF = 0) const;

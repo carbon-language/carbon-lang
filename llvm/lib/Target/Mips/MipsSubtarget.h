@@ -24,16 +24,17 @@ class Module;
 
 class MipsSubtarget : public TargetSubtarget {
 
+public:
+  enum MipsABIEnum {
+    O32, O64, N32, N64, EABI
+  }; 
+
 protected:
 
   enum MipsArchEnum {
     Mips1, Mips2, Mips3, Mips4, Mips32, Mips32r2, Mips64, Mips64r2
   };
 
-  enum MipsABIEnum {
-    O32, EABI
-  }; 
-  
   // Mips architecture version 
   MipsArchEnum MipsArchVersion;
 
@@ -60,6 +61,16 @@ protected:
   // HasSEInReg - Target has SEB and SEH (signext in register) instructions.
   bool HasSEInReg;
 
+  // IsABICall - Enable SRV4 code for SVR4-style dynamic objects 
+  bool HasABICall;
+
+  // HasAbsoluteCall - Enable code that is not fully position-independent.
+  // Only works with HasABICall enabled.
+  bool HasAbsoluteCall;
+
+  // isLinux - Target system is Linux. Is false we consider ELFOS for now.
+  bool IsLinux;
+
   InstrItineraryData InstrItins;
 
 public:
@@ -67,6 +78,7 @@ public:
   /// Only O32 and EABI supported right now.
   bool isABI_EABI() const { return MipsABI == EABI; }
   bool isABI_O32() const { return MipsABI == O32; }
+  unsigned getTargetABI() const { return MipsABI; }
 
   /// This constructor initializes the data members to match that
   /// of the specified module.
@@ -87,6 +99,9 @@ public:
   bool isNotSingleFloat() const { return !IsSingleFloat; };
   bool hasVFPU() const { return HasVFPU; };
   bool hasSEInReg() const { return HasSEInReg; };
+  bool hasABICall() const { return HasABICall; };
+  bool hasAbsoluteCall() const { return HasAbsoluteCall; };
+  bool isLinux() const { return IsLinux; };
 
 };
 } // End llvm namespace

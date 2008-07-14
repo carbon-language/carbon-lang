@@ -44,8 +44,12 @@ MipsTargetMachine(const Module &M, const std::string &FS, bool isLittle=false):
   FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0),
   TLInfo(*this) 
 {
-  if (getRelocationModel() != Reloc::Static)
+  // Abicall enables PIC by default
+  if (Subtarget.hasABICall() && (getRelocationModel() != Reloc::Static))
     setRelocationModel(Reloc::PIC_);  
+
+  // TODO: create an option to enable long calls, like -mlong-calls, 
+  // that would be our CodeModel::Large. It must not work with Abicall.
   if (getCodeModel() == CodeModel::Default)
     setCodeModel(CodeModel::Small);
 }

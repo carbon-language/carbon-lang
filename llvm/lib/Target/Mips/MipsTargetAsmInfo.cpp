@@ -17,21 +17,23 @@
 using namespace llvm;
 
 MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM) {
-  AlignmentIsInBytes   = false;
-  Data16bitsDirective  = "\t.half\t";
-  Data32bitsDirective  = "\t.word\t";
-  PrivateGlobalPrefix  = "$";
-  JumpTableDataSection = "\t.rdata";
-  CommentString        = "#";
-  ReadOnlySection      = "\t.rdata";
-  ZeroDirective        = "\t.space\t";
-  BSSSection           = "\t.section\t.bss";
-  LCOMMDirective       = "\t.lcomm\t";
+
+  AlignmentIsInBytes          = false;
+  COMMDirectiveTakesAlignment = true;
+  Data16bitsDirective         = "\t.half\t";
+  Data32bitsDirective         = "\t.word\t";
+  Data64bitsDirective         = NULL;
+  PrivateGlobalPrefix         = "$";
+  JumpTableDataSection        = "\t.rdata";
+  CommentString               = "#";
+  ReadOnlySection             = "\t.rdata";
+  ZeroDirective               = "\t.space\t";
+  BSSSection                  = "\t.section\t.bss";
+  LCOMMDirective              = "\t.lcomm\t";
 
   if (TM.getRelocationModel() == Reloc::Static)
     JumpTableDirective = "\t.word\t";
   else    
     JumpTableDirective = "\t.gpword\t";
 
-  COMMDirectiveTakesAlignment = true;
 }

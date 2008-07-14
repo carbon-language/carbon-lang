@@ -11,8 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Mips.h"
+//#include "Mips.h"
 #include "MipsInstrInfo.h"
+#include "MipsTargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "MipsGenInstrInfo.inc"
@@ -21,7 +22,7 @@ using namespace llvm;
 
 MipsInstrInfo::MipsInstrInfo(MipsTargetMachine &tm)
   : TargetInstrInfoImpl(MipsInsts, array_lengthof(MipsInsts)),
-    TM(tm), RI(*this) {}
+    TM(tm), RI(*TM.getSubtargetImpl(), *this) {}
 
 static bool isZeroImm(const MachineOperand &op) {
   return op.isImmediate() && op.getImm() == 0;
