@@ -41,11 +41,9 @@ using namespace clang;
 // Basic type definitions.
 //===----------------------------------------------------------------------===//
 
-namespace {
-  
+namespace {  
   class AnalysisManager;
-  typedef void (*CodeAction)(AnalysisManager& Mgr);    
-
+  typedef void (*CodeAction)(AnalysisManager& Mgr);
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
@@ -287,14 +285,14 @@ void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions actions) {
 // Analyses
 //===----------------------------------------------------------------------===//
 
-static void ActionDeadStores(AnalysisManager& mgr) {
+static void ActionWarnDeadStores(AnalysisManager& mgr) {
   if (LiveVariables* L = mgr.getLiveVariables()) {
     BugReporter BR(mgr);
     CheckDeadStores(*L, BR);
   }
 }
 
-static void ActionUninitVals(AnalysisManager& mgr) {
+static void ActionWarnUninitVals(AnalysisManager& mgr) {
   if (CFG* c = mgr.getCFG())
     CheckUninitializedValues(*c, mgr.getContext(), mgr.getDiagnostic());
 }
@@ -327,7 +325,7 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf) {
     Eng.ViewGraph(mgr.shouldTrimGraph());
 }
 
-static void ActionRefLeakCheckerAux(AnalysisManager& mgr, bool GCEnabled,
+static void ActionCheckerCFRefAux(AnalysisManager& mgr, bool GCEnabled,
                                     bool StandardWarnings) {
 
   GRTransferFuncs* TF = MakeCFRefCountTF(mgr.getContext(),
@@ -338,31 +336,31 @@ static void ActionRefLeakCheckerAux(AnalysisManager& mgr, bool GCEnabled,
   ActionGRExprEngine(mgr, TF);
 }
 
-static void ActionRefLeakChecker(AnalysisManager& mgr) {
+static void ActionCheckerCFRef(AnalysisManager& mgr) {
      
  switch (mgr.getLangOptions().getGCMode()) {
    default:
      assert (false && "Invalid GC mode.");
    case LangOptions::NonGC:
-     ActionRefLeakCheckerAux(mgr, false, true);
+     ActionCheckerCFRefAux(mgr, false, true);
      break;
     
    case LangOptions::GCOnly:
-     ActionRefLeakCheckerAux(mgr, true, true);
+     ActionCheckerCFRefAux(mgr, true, true);
      break;
      
    case LangOptions::HybridGC:
-     ActionRefLeakCheckerAux(mgr, false, true);
-     ActionRefLeakCheckerAux(mgr, true, false);
+     ActionCheckerCFRefAux(mgr, false, true);
+     ActionCheckerCFRefAux(mgr, true, false);
      break;
  }
 }
 
-static void ActionSimpleChecks(AnalysisManager& mgr) {
+static void ActionCheckerSimple(AnalysisManager& mgr) {
   ActionGRExprEngine(mgr, MakeGRSimpleValsTF());
 }
 
-static void ActionLiveness(AnalysisManager& mgr) {
+static void ActionDisplayLiveVariables(AnalysisManager& mgr) {
   if (LiveVariables* L = mgr.getLiveVariables()) {
     mgr.DisplayFunction();  
     L->dumpBlockLiveness(mgr.getSourceManager());
@@ -383,14 +381,14 @@ static void ActionCFGView(AnalysisManager& mgr) {
   }
 }
 
-static void ActionCheckObjCDealloc(AnalysisManager& mgr) {
+static void ActionWarnObjCDealloc(AnalysisManager& mgr) {
   BugReporter BR(mgr);
   
   CheckObjCDealloc(cast<ObjCImplementationDecl>(mgr.getCodeDecl()), 
                    mgr.getLangOptions(), BR);  
 }
 
-static void ActionCheckObjCInstMethSignature(AnalysisManager& mgr) {
+static void ActionWarnObjCMethSigs(AnalysisManager& mgr) {
   BugReporter BR(mgr);
   
   CheckObjCInstMethSignature(cast<ObjCImplementationDecl>(mgr.getCodeDecl()),
@@ -416,45 +414,14 @@ ASTConsumer* clang::CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
   
   for ( ; Beg != End ; ++Beg)
     switch (*Beg) {
-      case WarnDeadStores:
-        C->addCodeAction(&ActionDeadStores);
+#define ANALYSIS(NAME, CMD, DESC)\
+      case NAME:\
+        C->addCodeAction(&Action ## NAME);\
         break;
-        
-      case WarnUninitVals:
-        C->addCodeAction(&ActionUninitVals);
-        break;
-        
-      case CheckObjCMethSigs:
-        C->addObjCImplementationAction(&ActionCheckObjCInstMethSignature);
-        break;
-      
-      case DisplayLiveVariables:
-        C->addCodeAction(&ActionLiveness);
-        break;
-        
-      case CheckerCFRef:
-        C->addCodeAction(&ActionRefLeakChecker);
-        break;
-        
-      case CheckerSimple:
-        C->addCodeAction(&ActionSimpleChecks);
-        break;
-        
-      case CFGDump:
-        C->addCodeAction(&ActionCFGDump);
-        break;
-        
-      case CFGView:
-        C->addCodeAction(&ActionCFGView);
-        break;
-        
+#include "Analyses.def"
       default: break;
     }
   
-  // Checks we always perform:
-  if (lopts.getGCMode() != LangOptions::GCOnly)
-    C->addObjCImplementationAction(&ActionCheckObjCDealloc);
-    
   return C.take();
 }
 

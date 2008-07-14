@@ -17,16 +17,11 @@
 namespace clang {
 
 enum Analyses {
-  CFGDump,
-  CFGView,
-  WarnDeadStores,
-  WarnUninitVals,
-  DisplayLiveVariables,
-  CheckerCFRef,
-  CheckerSimple,
-  CheckObjCMethSigs
+#define ANALYSIS(NAME, CMDFLAG, DESC) NAME,
+#include "Analyses.def"
+NumAnalyses
 };
-  
+
 ASTConsumer* CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
                                     Diagnostic &diags, Preprocessor* pp,
                                     PreprocessorFactory* ppf,

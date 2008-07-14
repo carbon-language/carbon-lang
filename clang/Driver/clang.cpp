@@ -162,21 +162,10 @@ AnalyzeAll("checker-opt-analyze-headers",
 static llvm::cl::list<Analyses>
 AnalysisList(llvm::cl::desc("Available Source Code Analyses:"),
 llvm::cl::values(
-clEnumValN(CFGDump, "cfg-dump", "Display Control-Flow Graphs"),
-clEnumValN(CFGView, "cfg-view", "View Control-Flow Graphs using GraphViz"),
-clEnumValN(DisplayLiveVariables, "dump-live-variables",
-           "Print results of live variable analysis"),
-clEnumValN(WarnDeadStores, "warn-dead-stores",
-           "Flag warnings of stores to dead variables"),
-clEnumValN(WarnUninitVals, "warn-uninit-values",
-           "Flag warnings of uses of unitialized variables"),
-clEnumValN(CheckObjCMethSigs, "check-objc-methodsigs",
-      "Check the Objective-C method signatures for type incompatibilities."),
-clEnumValN(CheckerSimple, "checker-simple",
-           "Perform simple path-sensitive checks."),
-clEnumValN(CheckerCFRef, "checker-cfref",
-           "Run the [Core] Foundation reference count checker"),   
-clEnumValEnd));          
+#define ANALYSIS(NAME, CMDFLAG, DESC)\
+clEnumValN(NAME, CMDFLAG, DESC),
+#include "Analyses.def"
+clEnumValEnd));
 
 //===----------------------------------------------------------------------===//
 // Language Options
