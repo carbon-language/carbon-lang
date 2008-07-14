@@ -32,7 +32,7 @@ namespace llvm {
   static const char *const PSVNames[] = {
     "Stack",
     "GOT",
-    "JumpTable"
+    "JumpTable",
     "ConstantPool"
   };
 
