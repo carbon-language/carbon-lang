@@ -103,8 +103,7 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
       if (isa<DbgInfoIntrinsic>(II)) continue;  // Debug intrinsics don't count.
       if (isa<PHINode>(II)) continue;           // PHI nodes don't count.
 
-      if (isa<InsertElementInst>(II) || isa<ExtractElementInst>(II) ||
-          isa<ShuffleVectorInst>(II) || isa<VectorType>(II->getType()))
+      if (isa<ExtractElementInst>(II) || isa<VectorType>(II->getType()))
         ++NumVectorInsts; 
       
       // Noop casts, including ptr <-> int,  don't count.
