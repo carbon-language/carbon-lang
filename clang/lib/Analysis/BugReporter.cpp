@@ -767,14 +767,15 @@ void BugReporter::EmitWarning(BugReport& R) {
 
 void
 BugReporter::EmitBasicReport(const char* name, const char* str,
-                             SourceLocation Loc) {
+                             SourceLocation Loc,
+                             SourceRange* RBeg, unsigned NumRanges) {
   
   SimpleBugType BT(name);
   DiagCollector C(BT);
   Diagnostic& Diag = getDiagnostic();
   Diag.Report(&C, getContext().getFullLoc(Loc),
               Diag.getCustomDiagID(Diagnostic::Warning, str),
-              0, 0, 0, 0);
+              0, 0, RBeg, NumRanges);
   
   for (DiagCollector::iterator I = C.begin(), E = C.end(); I != E; ++I)
     EmitWarning(*I);

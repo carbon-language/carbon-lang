@@ -28,27 +28,25 @@ namespace {
 
 class VISIBILITY_HIDDEN DeadStoreObs : public LiveVariables::ObserverTy {
   ASTContext &Ctx;
-  Diagnostic &Diags;
-  DiagnosticClient &Client;
+  BugReporter& BR;
   ParentMap& Parents;
     
 public:
-  DeadStoreObs(ASTContext &ctx, Diagnostic &diags, DiagnosticClient &client,
-               ParentMap& parents)
-    : Ctx(ctx), Diags(diags), Client(client), Parents(parents) {}
+  DeadStoreObs(ASTContext &ctx, BugReporter& br, ParentMap& parents)
+    : Ctx(ctx), BR(br), Parents(parents) {}
   
   virtual ~DeadStoreObs() {}
   
-  unsigned GetDiag(VarDecl* VD, bool inEnclosing = false) {    
-    std::string name(VD->getName());
-    
+  void Report(VarDecl* V, bool inEnclosing, SourceLocation L, SourceRange R) {
+
+    std::string name(V->getName());    
     std::string msg = inEnclosing
       ? "Although the value stored to '" + name +
         "' is used in the enclosing expression, the value is never actually"
         " read from '" + name + "'"
       : "Value stored to '" + name + "' is never read";
     
-    return Diags.getCustomDiagID(Diagnostic::Warning, msg.c_str());                               
+    BR.EmitBasicReport("dead store", msg.c_str(), L, R);    
   }
   
   void CheckVarDecl(VarDecl* VD, Expr* Ex, Expr* Val,
@@ -56,12 +54,9 @@ public:
                     const LiveVariables::AnalysisDataTy& AD,
                     const LiveVariables::ValTy& Live) {
 
-    if (VD->hasLocalStorage() && !Live(VD, AD)) {
-      SourceRange R = Val->getSourceRange();        
-      Diags.Report(&Client,
-                   Ctx.getFullLoc(Ex->getSourceRange().getBegin()),
-                   GetDiag(VD, hasEnclosing), 0, 0, &R, 1);
-    }
+    if (VD->hasLocalStorage() && !Live(VD, AD))
+      Report(VD, hasEnclosing, Ex->getSourceRange().getBegin(),
+             Val->getSourceRange());      
   }
   
   void CheckDeclRef(DeclRefExpr* DR, Expr* Val,
@@ -119,7 +114,7 @@ public:
         if (!V) continue;
         
         if (V->hasLocalStorage())
-          if (Expr* E = V->getInit()) {
+          if (Expr* E = V->getInit())
             if (!Live(V, AD)) {
               // Special case: check for initializations with constants.
               //
@@ -128,15 +123,9 @@ public:
               // If x is EVER assigned a new value later, don't issue
               // a warning.  This is because such initialization can be
               // due to defensive programming.
-              if (!E->isConstantExpr(Ctx,NULL)) {
-                // Flag a warning.
-                SourceRange R = E->getSourceRange();
-                Diags.Report(&Client,
-                             Ctx.getFullLoc(V->getLocation()),
-                             GetDiag(V), 0, 0, &R, 1);
-              }
+              if (!E->isConstantExpr(Ctx,NULL))
+                Report(V, false, V->getLocation(), E->getSourceRange());
             }
-          }
       }
   }
 };
@@ -148,16 +137,6 @@ public:
 //===----------------------------------------------------------------------===//
 
 void clang::CheckDeadStores(LiveVariables& L, BugReporter& BR) {  
-
-  SimpleBugType BT("dead store");
-  DiagCollector C(BT);  
-
-  DeadStoreObs A(BR.getContext(), BR.getDiagnostic(), C, BR.getParentMap());
+  DeadStoreObs A(BR.getContext(), BR, BR.getParentMap());
   L.runOnAllBlocks(*BR.getCFG(), &A);
-  
-  // Emit the bug reports.
-  
-  for (DiagCollector::iterator I = C.begin(), E = C.end(); I != E; ++I)
-    BR.EmitWarning(*I);  
 }
-

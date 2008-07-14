@@ -190,7 +190,18 @@ public:
   void EmitWarning(BugReport& R);
   
   void EmitBasicReport(const char* BugName, const char* BugStr,
-                       SourceLocation Loc);
+                       SourceLocation Loc,
+                       SourceRange* RangeBeg, unsigned NumRanges);
+
+  void EmitBasicReport(const char* BugName, const char* BugStr,
+                       SourceLocation Loc) {
+    EmitBasicReport(BugName, BugStr, Loc, 0, 0);
+  }
+  
+  void EmitBasicReport(const char* BugName, const char* BugStr,
+                       SourceLocation Loc, SourceRange R) {
+    EmitBasicReport(BugName, BugStr, Loc, &R, 1);
+  }
   
   static bool classof(const BugReporter* R) { return true; }
 };
