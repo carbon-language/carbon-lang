@@ -37,14 +37,6 @@ static inline bool Error(std::string *E, const std::string &Message) {
   return true;
 }
 
-// ToStr - Simple wrapper function to convert a type to a string.
-static std::string ToStr(const Type *Ty, const Module *M) {
-  std::ostringstream OS;
-  WriteTypeSymbolic(OS, Ty, M);
-  return OS.str();
-}
-
-//
 // Function: ResolveTypes()
 //
 // Description:
@@ -566,7 +558,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
     if (GetLinkageResult(DGV, SGV, NewLinkage, LinkFromSrc, Err))
       return true;
 
-    if (!DGV) {
+    if (DGV == 0) {
       // No linking to be performed, simply create an identical version of the
       // symbol over in the dest module... the initializer will be filled in
       // later by LinkGlobalInits.
@@ -581,16 +573,24 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // If the LLVM runtime renamed the global, but it is an externally visible
       // symbol, DGV must be an existing global with internal linkage.  Rename
       // it.
-      if (NewDGV->getName() != SGV->getName() && !NewDGV->hasInternalLinkage())
+      if (!NewDGV->hasInternalLinkage() && NewDGV->getName() != SGV->getName())
         ForceRenaming(NewDGV, SGV->getName());
 
-      // Make sure to remember this mapping...
+      // Make sure to remember this mapping.
       ValueMap[SGV] = NewDGV;
 
       // Keep track that this is an appending variable.
       if (SGV->hasAppendingLinkage())
         AppendingVars.insert(std::make_pair(SGV->getName(), NewDGV));
-    } else if (DGV->hasAppendingLinkage()) {
+      continue;
+    }
+    
+    // If the visibilities of the symbols disagree and the destination is a
+    // prototype, take the visibility of its input.
+    if (DGV->isDeclaration())
+      DGV->setVisibility(SGV->getVisibility());
+    
+    if (DGV->hasAppendingLinkage()) {
       // No linking is performed yet.  Just insert a new copy of the global, and
       // keep track of the fact that it is an appending variable in the
       // AppendingVars map.  The name is cleared out so that no linkage is
@@ -611,25 +611,21 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
 
       // Keep track that this is an appending variable...
       AppendingVars.insert(std::make_pair(SGV->getName(), NewDGV));
-    } else if (GlobalAlias *DGA = dyn_cast<GlobalAlias>(DGV)) {
-      // SGV is global, but DGV is alias. The only valid mapping is when SGV is
-      // external declaration, which is effectively a no-op. Also make sure
-      // linkage calculation was correct.
-      if (!SGV->isDeclaration() || LinkFromSrc)
+      continue;
+    }
+    
+    if (LinkFromSrc) {
+      if (isa<GlobalAlias>(DGV))
         return Error(Err, "Global-Alias Collision on '" + SGV->getName() +
                      "': symbol multiple defined");
-
-      // Make sure to remember this mapping.
-      ValueMap[SGV] = DGA;
-    } else if (LinkFromSrc) {
+      
       // If the types don't match, and if we are to link from the source, nuke
       // DGV and create a new one of the appropriate type.  Note that the thing
       // we are replacing may be a function (if a prototype, weak, etc) or a
       // global variable.
       GlobalVariable *NewDGV =
-        new GlobalVariable(SGV->getType()->getElementType(),
-                           SGV->isConstant(), SGV->getLinkage(),
-                           /*init*/0, DGV->getName(), Dest, false,
+        new GlobalVariable(SGV->getType()->getElementType(), SGV->isConstant(),
+                           NewLinkage, /*init*/0, DGV->getName(), Dest, false,
                            SGV->getType()->getAddressSpace());
       
       // Propagate alignment, section, and visibility info.
@@ -647,33 +643,37 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
 
       // If the symbol table renamed the global, but it is an externally visible
       // symbol, DGV must be an existing global with internal linkage.  Rename.
-      if (NewDGV->getValueName() != SGV->getValueName() &&
-          !NewDGV->hasInternalLinkage())
+      if (NewDGV->getName() != SGV->getName() && !NewDGV->hasInternalLinkage())
         ForceRenaming(NewDGV, SGV->getName());
       
-      // Inherit const as appropriate
+      // Inherit const as appropriate.
       NewDGV->setConstant(SGV->isConstant());
       
-      // Set calculated linkage
-      NewDGV->setLinkage(NewLinkage);
-      
-      // Make sure to remember this mapping...
-      ValueMap[SGV] = ConstantExpr::getBitCast(NewDGV, SGV->getType());
-    } else {
-      // Not "link from source", keep the one in the DestModule and remap the
-      // input onto it.
-      
-      // Special case for const propagation.
-      if (GlobalVariable *DGVar = dyn_cast<GlobalVariable>(DGV))
-        if (DGVar->isDeclaration() && SGV->isConstant() && !DGVar->isConstant())
-          DGVar->setConstant(true);
-      
-      // Set calculated linkage
-      DGV->setLinkage(NewLinkage);
-      
-      // Make sure to remember this mapping...
-      ValueMap[SGV] = ConstantExpr::getBitCast(DGV, SGV->getType());
+      // Make sure to remember this mapping.
+      ValueMap[SGV] = NewDGV;
+      continue;
     }
+    
+    // Not "link from source", keep the one in the DestModule and remap the
+    // input onto it.
+    
+    // Special case for const propagation.
+    if (GlobalVariable *DGVar = dyn_cast<GlobalVariable>(DGV))
+      if (DGVar->isDeclaration() && SGV->isConstant() && !DGVar->isConstant())
+        DGVar->setConstant(true);
+
+    // SGV is global, but DGV is alias. The only valid mapping is when SGV is
+    // external declaration, which is effectively a no-op. Also make sure
+    // linkage calculation was correct.
+    if (isa<GlobalAlias>(DGV) && !SGV->isDeclaration())
+      return Error(Err, "Global-Alias Collision on '" + SGV->getName() +
+                   "': symbol multiple defined");
+    
+    // Set calculated linkage
+    DGV->setLinkage(NewLinkage);
+    
+    // Make sure to remember this mapping...
+    ValueMap[SGV] = ConstantExpr::getBitCast(DGV, SGV->getType());
   }
   return false;
 }
@@ -895,7 +895,6 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
   for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
     const Function *SF = I;   // SrcFunction
     GlobalValue *DGV = 0;
-    Value *MappedDF;
     
     // Check to see if may have to link the function with the global, alias or
     // function.
@@ -912,6 +911,11 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
     if (DGV && DGV->getType() != SF->getType())
       RecursiveResolveTypes(SF->getType(), DGV->getType());
 
+    GlobalValue::LinkageTypes NewLinkage = GlobalValue::InternalLinkage;
+    bool LinkFromSrc = false;
+    if (GetLinkageResult(DGV, SF, NewLinkage, LinkFromSrc, Err))
+      return true;
+    
     // If there is no linkage to be performed, just bring over SF without
     // modifying it.
     if (DGV == 0) {
@@ -931,134 +935,65 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // ... and remember this mapping...
       ValueMap[SF] = NewDF;
       continue;
-    } else if (GlobalAlias *DGA = dyn_cast<GlobalAlias>(DGV)) {
-      // SF is function, but DF is alias.
+    }
+    
+    // If the visibilities of the symbols disagree and the destination is a
+    // prototype, take the visibility of its input.
+    if (DGV->isDeclaration())
+      DGV->setVisibility(SF->getVisibility());
+    
+    if (LinkFromSrc) {
+      if (isa<GlobalAlias>(DGV))
+        return Error(Err, "Function-Alias Collision on '" + SF->getName() +
+                     "': symbol multiple defined");
+      
+      // We have a definition of the same name but different type in the
+      // source module. Copy the prototype to the destination and replace
+      // uses of the destination's prototype with the new prototype.
+      Function *NewDF = Function::Create(SF->getFunctionType(), NewLinkage,
+                                         SF->getName(), Dest);
+      CopyGVAttributes(NewDF, SF);
+      
+      // Any uses of DF need to change to NewDF, with cast
+      DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewDF, DGV->getType()));
+      
+      // DF will conflict with NewDF because they both had the same. We must
+      // erase this now so ForceRenaming doesn't assert because DF might
+      // not have internal linkage. 
+      if (GlobalVariable *Var = dyn_cast<GlobalVariable>(DGV))
+        Var->eraseFromParent();
+      else
+        cast<Function>(DGV)->eraseFromParent();
+      
+      // If the symbol table renamed the function, but it is an externally
+      // visible symbol, DF must be an existing function with internal 
+      // linkage.  Rename it.
+      if (NewDF->getName() != SF->getName() && !NewDF->hasInternalLinkage())
+        ForceRenaming(NewDF, SF->getName());
+      
+      // Remember this mapping so uses in the source module get remapped
+      // later by RemapOperand.
+      ValueMap[SF] = NewDF;
+      continue;
+    }
+    
+    // Not "link from source", keep the one in the DestModule and remap the
+    // input onto it.
+    
+    if (isa<GlobalAlias>(DGV)) {
       // The only valid mappings are:
       // - SF is external declaration, which is effectively a no-op.
       // - SF is weak, when we just need to throw SF out.
-      if (!SF->isDeclaration() && !SF->isWeakForLinker())
+      if (!SF->isDeclaration())
         return Error(Err, "Function-Alias Collision on '" + SF->getName() +
                      "': symbol multiple defined");
-
-      // Make sure to remember this mapping...
-      ValueMap[SF] = ConstantExpr::getBitCast(DGA, SF->getType());
-      continue;
     }
 
-    Function* DF = cast<Function>(DGV);
-    // If types don't agree because of opaque, try to resolve them.
-    if (SF->getType() != DF->getType())
-      RecursiveResolveTypes(SF->getType(), DF->getType());
-    
-    // Check visibility, merging if a definition overrides a prototype.
-    if (SF->getVisibility() != DF->getVisibility()) {
-      // If one is a prototype, ignore its visibility.  Prototypes are always
-      // overridden by the definition.
-      if (!SF->isDeclaration() && !DF->isDeclaration())
-        return Error(Err, "Linking functions named '" + SF->getName() +
-                     "': symbols have different visibilities!");
-      
-      // Otherwise, replace the visibility of DF if DF is a prototype.
-      if (DF->isDeclaration())
-        DF->setVisibility(SF->getVisibility());
-    }
-    
-    if (DF->getType() != SF->getType()) {
-      if (DF->isDeclaration() && !SF->isDeclaration()) {
-        // We have a definition of the same name but different type in the
-        // source module. Copy the prototype to the destination and replace
-        // uses of the destination's prototype with the new prototype.
-        Function *NewDF = Function::Create(SF->getFunctionType(),
-                                           SF->getLinkage(),
-                                           SF->getName(), Dest);
-        CopyGVAttributes(NewDF, SF);
+    // Set calculated linkage
+    DGV->setLinkage(NewLinkage);
 
-        // Any uses of DF need to change to NewDF, with cast
-        DF->replaceAllUsesWith(ConstantExpr::getBitCast(NewDF, DF->getType()));
-
-        // DF will conflict with NewDF because they both had the same. We must
-        // erase this now so ForceRenaming doesn't assert because DF might
-        // not have internal linkage. 
-        DF->eraseFromParent();
-
-        // If the symbol table renamed the function, but it is an externally
-        // visible symbol, DF must be an existing function with internal 
-        // linkage.  Rename it.
-        if (NewDF->getName() != SF->getName() && !NewDF->hasInternalLinkage())
-          ForceRenaming(NewDF, SF->getName());
-
-        // Remember this mapping so uses in the source module get remapped
-        // later by RemapOperand.
-        ValueMap[SF] = NewDF;
-        continue;
-      } else {
-        // We have two functions of the same name but different type. Any use
-        // of the source must be mapped to the destination, with a cast. 
-        MappedDF = ConstantExpr::getBitCast(DF, SF->getType());
-      }
-    } else {
-       MappedDF = DF;
-    }
-    
-    if (SF->isDeclaration()) {
-      // If SF is a declaration or if both SF & DF are declarations, just link 
-      // the declarations, we aren't adding anything.
-      if (SF->hasDLLImportLinkage()) {
-        if (DF->isDeclaration()) {
-          ValueMap[SF] = MappedDF;
-          DF->setLinkage(SF->getLinkage());          
-        }
-      } else {
-        ValueMap[SF] = MappedDF;
-      }
-      continue;
-    }
-    
-    // If DF is external but SF is not, link the external functions, update
-    // linkage qualifiers.
-    if (DF->isDeclaration() && !DF->hasDLLImportLinkage()) {
-      ValueMap.insert(std::make_pair(SF, MappedDF));
-      DF->setLinkage(SF->getLinkage());
-      continue;
-    }
-    
-    // At this point we know that DF has LinkOnce, Weak, or External* linkage.
-    if (SF->isWeakForLinker()) {
-      ValueMap[SF] = MappedDF;
-
-      // Linkonce+Weak = Weak
-      // *+External Weak = *
-      if ((DF->hasLinkOnceLinkage() &&
-              (SF->hasWeakLinkage() || SF->hasCommonLinkage())) ||
-          DF->hasExternalWeakLinkage())
-        DF->setLinkage(SF->getLinkage());
-      continue;
-    }
-    
-    if (DF->isWeakForLinker()) {
-      // At this point we know that SF has LinkOnce or External* linkage.
-      ValueMap[SF] = MappedDF;
-      
-      // If the source function has stronger linkage than the destination, 
-      // its body and linkage should override ours.
-      if (!SF->hasLinkOnceLinkage() && !SF->hasExternalWeakLinkage()) {
-        // Don't inherit linkonce & external weak linkage.
-        DF->setLinkage(SF->getLinkage());
-        DF->deleteBody();
-      }
-      continue;
-    }
-    
-    if (SF->getLinkage() != DF->getLinkage())
-      return Error(Err, "Functions named '" + SF->getName() +
-                   "' have different linkage specifiers!");
-
-    // The function is defined identically in both modules!
-    if (SF->hasExternalLinkage())
-      return Error(Err, "Function '" +
-                   ToStr(SF->getFunctionType(), Src) + "':\"" +
-                   SF->getName() + "\" - Function is already defined!");
-    assert(0 && "Unknown linkage configuration found!");
+    // Make sure to remember this mapping.
+    ValueMap[SF] = ConstantExpr::getBitCast(DGV, SF->getType());
   }
   return false;
 }

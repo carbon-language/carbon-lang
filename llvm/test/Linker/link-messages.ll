@@ -4,7 +4,7 @@
 ; RUN: llvm-as %s -o %t.two.bc -f
 ; RUN: not llvm-ld -disable-opt -link-as-library %t.one.bc %t.two.bc \
 ; RUN:   -o %t.bc 2>%t.err 
-; RUN: grep "Function is already defined" %t.err
+; RUN: grep "symbol multiply defined" %t.err
 
 define i32 @bar() {
 	ret i32 0
