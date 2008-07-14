@@ -83,8 +83,7 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
   
   // Get the "dealloc" selector.
   IdentifierInfo* II = &Ctx.Idents.get("dealloc");
-  Selector S = Ctx.Selectors.getSelector(0, &II);
-  
+  Selector S = Ctx.Selectors.getSelector(0, &II);  
   ObjCMethodDecl* MD = 0;
   
   // Scan the instance methods for "dealloc".
@@ -99,52 +98,32 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
   
   if (!MD) { // No dealloc found.
     
-    // FIXME: This code should be reduced to three lines if possible (Refactor).
-    SimpleBugType BT(LOpts.getGCMode() == LangOptions::NonGC 
-                     ? "missing -dealloc" 
-                     : "missing -dealloc (Hybrid MM, non-GC)");
-    
-    DiagCollector C(BT);
+    const char* name = LOpts.getGCMode() == LangOptions::NonGC 
+                       ? "missing -dealloc" 
+                       : "missing -dealloc (Hybrid MM, non-GC)";
     
     std::ostringstream os;
     os << "Objective-C class '" << D->getName()
        << "' lacks a 'dealloc' instance method";
     
-    Diagnostic& Diag = BR.getDiagnostic();    
-    Diag.Report(&C,
-                Ctx.getFullLoc(D->getLocStart()),
-                Diag.getCustomDiagID(Diagnostic::Warning, os.str().c_str()),
-                NULL, 0, NULL, 0);
-        
-    for (DiagCollector::iterator I = C.begin(), E = C.end(); I != E; ++I)
-      BR.EmitWarning(*I);
-    
+    BR.EmitBasicReport(name, os.str().c_str(), D->getLocStart());
     return;
   }
   
   // dealloc found.  Scan for missing [super dealloc].
   if (MD->getBody() && !scan_dealloc(MD->getBody(), S)) {
     
-    // FIXME: This code should be reduced to three lines if possible (Refactor).
-    SimpleBugType BT(LOpts.getGCMode() == LangOptions::NonGC
-                     ? "missing [super dealloc]"
-                     : "missing [super dealloc] (Hybrid MM, non-GC)");
-                     
-    DiagCollector C(BT);
+    const char* name = LOpts.getGCMode() == LangOptions::NonGC
+                       ? "missing [super dealloc]"
+                       : "missing [super dealloc] (Hybrid MM, non-GC)";
     
     std::ostringstream os;
     os << "The 'dealloc' instance method in Objective-C class '" << D->getName()
        << "' does not send a 'dealloc' message to its super class"
            " (missing [super dealloc])";
     
-    Diagnostic& Diag = BR.getDiagnostic();    
-    Diag.Report(&C,
-                Ctx.getFullLoc(MD->getLocStart()),
-                Diag.getCustomDiagID(Diagnostic::Warning, os.str().c_str()),
-                NULL, 0, NULL, 0);
-    
-    for (DiagCollector::iterator I = C.begin(), E = C.end(); I != E; ++I)
-      BR.EmitWarning(*I);
-  }    
+    BR.EmitBasicReport(name, os.str().c_str(), D->getLocStart());
+    return;
+  }   
 }
 

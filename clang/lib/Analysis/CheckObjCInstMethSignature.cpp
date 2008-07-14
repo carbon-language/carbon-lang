@@ -64,16 +64,8 @@ static void CompareReturnTypes(ObjCMethodDecl* MethDerived,
        << "'.  These two types are incompatible, and may result in undefined "
           "behavior for clients of these classes.";
     
-    // Refactor.
-    SimpleBugType BT("incompatible instance method return type");
-    DiagCollector C(BT);
-    Diagnostic& Diag = BR.getDiagnostic();    
-    Diag.Report(&C, Ctx.getFullLoc(MethDerived->getLocStart()),
-                Diag.getCustomDiagID(Diagnostic::Warning, os.str().c_str()),
-                NULL, 0, NULL, 0);
-    
-    for (DiagCollector::iterator I = C.begin(), E = C.end(); I != E; ++I)
-      BR.EmitWarning(*I);
+    BR.EmitBasicReport("incompatible instance method return type",
+                       os.str().c_str(), MethDerived->getLocStart());
   }
 }
 

@@ -731,12 +731,12 @@ void BugReporter::EmitWarning(BugReport& R) {
   // Determine the range.
   
   const SourceRange *Beg, *End;
-  
+
   if (!D->empty()) {
     Beg = D->back()->ranges_begin();
     End = D->back()->ranges_end();
   }
-  else  
+  else
     R.getRanges(*this, Beg, End);
 
   if (PD) {
@@ -745,18 +745,18 @@ void BugReporter::EmitWarning(BugReport& R) {
     for ( ; Beg != End; ++Beg)
       piece->addRange(*Beg);
 
-    D->push_back(piece);    
+    D->push_back(piece);
     PD->HandlePathDiagnostic(D.take());
   }
   else {
-    std::ostringstream os;  
-    
+    std::ostringstream os;
+
     if (D->empty())
       os << R.getDescription();
     else
       os << D->back()->getString();
-    
-    
+
+
     Diagnostic& Diag = getDiagnostic();
     unsigned ErrorDiag = Diag.getCustomDiagID(Diagnostic::Warning,
                                               os.str().c_str());
@@ -764,3 +764,19 @@ void BugReporter::EmitWarning(BugReport& R) {
     Diag.Report(L, ErrorDiag, NULL, 0, Beg, End - Beg);
   }
 }
+
+void
+BugReporter::EmitBasicReport(const char* name, const char* str,
+                             SourceLocation Loc) {
+  
+  SimpleBugType BT(name);
+  DiagCollector C(BT);
+  Diagnostic& Diag = getDiagnostic();
+  Diag.Report(&C, getContext().getFullLoc(Loc),
+              Diag.getCustomDiagID(Diagnostic::Warning, str),
+              0, 0, 0, 0);
+  
+  for (DiagCollector::iterator I = C.begin(), E = C.end(); I != E; ++I)
+    EmitWarning(*I);
+}
+                                  

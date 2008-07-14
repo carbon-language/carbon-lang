@@ -189,6 +189,9 @@ public:
 
   void EmitWarning(BugReport& R);
   
+  void EmitBasicReport(const char* BugName, const char* BugStr,
+                       SourceLocation Loc);
+  
   static bool classof(const BugReporter* R) { return true; }
 };
   
