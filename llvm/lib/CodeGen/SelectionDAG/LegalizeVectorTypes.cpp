@@ -360,13 +360,14 @@ void DAGTypeLegalizer::SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDOperand &Lo,
 
   // Spill the vector to the stack.
   MVT VecVT = Vec.getValueType();
+  MVT EltVT = VecVT.getVectorElementType();
   SDOperand StackPtr = DAG.CreateStackTemporary(VecVT);
   SDOperand Store = DAG.getStore(DAG.getEntryNode(), Vec, StackPtr, NULL, 0);
 
-  // Store the new element.
-  SDOperand EltPtr = GetVectorElementPointer(StackPtr,
-                                             VecVT.getVectorElementType(), Idx);
-  Store = DAG.getStore(Store, Elt, EltPtr, NULL, 0);
+  // Store the new element.  This may be larger than the vector element type,
+  // so use a truncating store.
+  SDOperand EltPtr = GetVectorElementPointer(StackPtr, EltVT, Idx);
+  Store = DAG.getTruncStore(Store, Elt, EltPtr, NULL, 0, EltVT);
 
   // Reload the vector from the stack.
   SDOperand Load = DAG.getLoad(VecVT, Store, StackPtr, NULL, 0);
