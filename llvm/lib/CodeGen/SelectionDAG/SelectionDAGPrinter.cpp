@@ -155,10 +155,13 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
     else
       Op += "<null>";
   } else if (const MemOperandSDNode *M = dyn_cast<MemOperandSDNode>(Node)) {
-    if (M->MO.getValue())
-      Op += "<" + M->MO.getValue()->getName() + ":" + itostr(M->MO.getOffset()) + ">";
-    else
-      Op += "<null:" + itostr(M->MO.getOffset()) + ">";
+    if (M->MO.getValue()) {
+      std::ostringstream SS;
+      M->MO.getValue()->print(SS);
+      Op += "<" + SS.str() + "+" + itostr(M->MO.getOffset()) + ">";
+    } else {
+      Op += "<(unknown)+" + itostr(M->MO.getOffset()) + ">";
+    }
   } else if (const ARG_FLAGSSDNode *N = dyn_cast<ARG_FLAGSSDNode>(Node)) {
     Op = Op + " AF=" + N->getArgFlags().getArgFlagsString();
   } else if (const VTSDNode *N = dyn_cast<VTSDNode>(Node)) {
