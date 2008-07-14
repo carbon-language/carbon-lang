@@ -1747,6 +1747,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
   SE = &getAnalysis<ScalarEvolution>();
   TD = &getAnalysis<TargetData>();
   UIntPtrTy = TD->getIntPtrType();
+  Changed = false;
 
   // Find all uses of induction variables in this loop, and catagorize
   // them by stride.  Start by finding all of the PHI nodes in the header for
@@ -1831,6 +1832,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
             SE->deleteValueFromRecords(PN);
             PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
             DeadInsts.insert(PN);
+            Changed = true;
             break;
           }
         }
