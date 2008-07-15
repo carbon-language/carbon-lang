@@ -2675,7 +2675,7 @@ bool ScalarEvolutionsImpl::executesAtLeastOnce(const Loop *L, bool isSigned,
     return false;
   }
 
-  if (PreCondLHS->getType()->isInteger()) return false;
+  if (!PreCondLHS->getType()->isInteger()) return false;
 
   return LHS == getSCEV(PreCondLHS) && RHS == getSCEV(PreCondRHS);
 }
