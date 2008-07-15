@@ -133,6 +133,7 @@ namespace {
     void MarkValue(const RetOrArg &RA, Liveness L,
                    const UseVector &MaybeLiveUses);
     void MarkLive(RetOrArg RA);
+    void MarkLive(const Function &F);
     bool RemoveDeadStuffFromFunction(Function *F);
     bool DeleteDeadVarargs(Function &Fn);
   };
@@ -397,7 +398,6 @@ DAE::Liveness DAE::SurveyUses(Value *V, UseVector &MaybeLiveUses) {
 // well as arguments to functions which have their "address taken".
 //
 void DAE::SurveyFunction(Function &F) {
-  bool FunctionIntrinsicallyLive = false;
   unsigned RetCount = NumRetVals(&F);
   // Assume all return values are dead
   typedef SmallVector<Liveness, 5> RetVals;
@@ -414,14 +414,15 @@ void DAE::SurveyFunction(Function &F) {
       if (RI->getNumOperands() != 0 && RI->getOperand(0)->getType()
           != F.getFunctionType()->getReturnType()) {
         // We don't support old style multiple return values.
-        FunctionIntrinsicallyLive = true;
-        break;
+        MarkLive(F);
+        return;
       }
 
-  if (!F.hasInternalLinkage() && (!ShouldHackArguments() || F.isIntrinsic()))
-    FunctionIntrinsicallyLive = true;
+  if (!F.hasInternalLinkage() && (!ShouldHackArguments() || F.isIntrinsic())) {
+    MarkLive(F);
+    return;
+  }
 
-  if (!FunctionIntrinsicallyLive) {
     DOUT << "DAE - Inspecting callers for fn: " << F.getName() << "\n";
     // Keep track of the number of live retvals, so we can skip checks once all
     // of them turn out to be live.
@@ -432,16 +433,16 @@ void DAE::SurveyFunction(Function &F) {
       // If the function is PASSED IN as an argument, its address has been
       // taken.
       if (I.getOperandNo() != 0) {
-        FunctionIntrinsicallyLive = true;
-        break;
+        MarkLive(F);
+        return;
       }
 
       // If this use is anything other than a call site, the function is alive.
       CallSite CS = CallSite::get(*I);
       Instruction *TheCall = CS.getInstruction();
       if (!TheCall) {   // Not a direct call site?
-        FunctionIntrinsicallyLive = true;
-        break;
+        MarkLive(F);
+        return;
       }
 
       // If we end up here, we are looking at a direct call to our function.
@@ -480,19 +481,6 @@ void DAE::SurveyFunction(Function &F) {
         }
       }
     }
-  }
-  if (FunctionIntrinsicallyLive) {
-    DOUT << "DAE - Intrinsically live fn: " << F.getName() << "\n";
-    // Mark all arguments as live.
-    unsigned i = 0;
-    for (unsigned i = 0, e = F.arg_size(); i != e; ++i)
-      MarkLive(CreateArg(&F, i));
-    // Mark all return values as live.
-    i = 0;
-    for (unsigned i = 0; i != RetCount; ++i)
-      MarkLive(CreateRet(&F, i));
-    return;
-  }
 
   // Now we've inspected all callers, record the liveness of our return values.
   for (unsigned i = 0; i != RetCount; ++i)
@@ -533,6 +521,20 @@ void DAE::MarkValue(const RetOrArg &RA, Liveness L,
       break;
     }
   }
+}
+
+/// MarkLive - Mark the given Function as alive, meaning that it cannot be
+/// changed in any way. Additionally,
+/// mark any values that are used as this function's parameters or by its return
+/// values (according to Uses) live as well.
+void DAE::MarkLive(const Function &F) {
+    DOUT << "DAE - Intrinsically live fn: " << F.getName() << "\n";
+    // Mark all arguments as live.
+    for (unsigned i = 0, e = F.arg_size(); i != e; ++i)
+      MarkLive(CreateArg(&F, i));
+    // Mark all return values as live.
+    for (unsigned i = 0, e = NumRetVals(&F); i != e; ++i)
+      MarkLive(CreateRet(&F, i));
 }
 
 /// MarkLive - Mark the given return value or argument as live. Additionally,
