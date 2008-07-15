@@ -60,9 +60,11 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
   for (ObjCInterfaceDecl::ivar_iterator I=ID->ivar_begin(), E=ID->ivar_end();
        I!=E; ++I) {
     
-    QualType T = (*I)->getType();
+    ObjCIvarDecl* ID = *I;
+    QualType T = ID->getType();
     
-    if (T->isPointerType() || T->isObjCQualifiedIdType()) {
+    if ((T->isPointerType() || T->isObjCQualifiedIdType()) &&
+        ID->getAttr<IBOutletAttr>() == 0) { // Skip IBOutlets.
       containsPointerIvar = true;
       break;
     }
