@@ -47,14 +47,12 @@ namespace {
 
     /// Struct that represents (part of) either a return value or a function
     /// argument.  Used so that arguments and return values can be used
-    /// interchangably. Idx == -1 means the entire return value, while other
-    /// indices mean the corresponding element in the struct return type (if
-    /// any).
+    /// interchangably.
     struct RetOrArg {
-      RetOrArg(const Function* F, signed Idx, bool IsArg) : F(F), Idx(Idx),
+      RetOrArg(const Function* F, unsigned Idx, bool IsArg) : F(F), Idx(Idx),
                IsArg(IsArg) {}
       const Function *F;
-      signed Idx;
+      unsigned Idx;
       bool IsArg;
 
       /// Make RetOrArg comparable, so we can put it into a map.
@@ -73,10 +71,8 @@ namespace {
       }
 
       std::string getDescription() const {
-        return std::string((!IsArg && Idx != -1 ? "partial " : "")) 
-               + (IsArg ? "argument #" : "return value") 
-               + (!IsArg && Idx == -1 ? "" : " #" + utostr(Idx)) 
-               + " of function " + F->getName();
+        return std::string((IsArg ? "Argument #" : "Return value #")) 
+               + utostr(Idx) + " of function " + F->getName();
       }
     };
 
@@ -88,11 +84,11 @@ namespace {
     enum Liveness { Live, MaybeLive };
 
     /// Convenience wrapper
-    RetOrArg CreateRet(const Function *F, signed Idx) {
+    RetOrArg CreateRet(const Function *F, unsigned Idx) {
       return RetOrArg(F, Idx, false);
     }
     /// Convenience wrapper
-    RetOrArg CreateArg(const Function *F, signed Idx) {
+    RetOrArg CreateArg(const Function *F, unsigned Idx) {
       return RetOrArg(F, Idx, true);
     }
 
@@ -133,7 +129,7 @@ namespace {
   private:
     Liveness MarkIfNotLive(RetOrArg Use, UseVector &MaybeLiveUses);
     Liveness SurveyUse(Value::use_iterator U, UseVector &MaybeLiveUses,
-                       signed RetValNum = -1);
+                       unsigned RetValNum = 0);
     Liveness SurveyUses(Value *V, UseVector &MaybeLiveUses);
 
     void SurveyFunction(Function &F);
@@ -282,6 +278,18 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   return true;
 }
 
+/// Convenience function that returns the number of return values. It returns 0
+/// for void functions and 1 for functions not returning a struct. It returns
+/// the number of struct elements for functions returning a struct.
+static unsigned NumRetVals(const Function *F) {
+  if (F->getReturnType() == Type::VoidTy)
+    return 0;
+  else if (const StructType *STy = dyn_cast<StructType>(F->getReturnType()))
+    return STy->getNumElements();
+  else
+    return 1;
+}
+
 /// MarkIfNotLive - This checks Use for liveness in LiveValues. If Use is not
 /// live, it adds Use to the MaybeLiveUses argument. Returns the determined
 /// liveness of Use.
@@ -296,15 +304,16 @@ DAE::Liveness DAE::MarkIfNotLive(RetOrArg Use, UseVector &MaybeLiveUses) {
   return MaybeLive;
 }
 
+
 /// SurveyUse - This looks at a single use of an argument or return value
 /// and determines if it should be alive or not. Adds this use to MaybeLiveUses
 /// if it causes the used value to become MaybeAlive.
 ///
 /// RetValNum is the return value number to use when this use is used in a
 /// return instruction. This is used in the recursion, you should always leave
-/// it at -1.
+/// it at 0.
 DAE::Liveness DAE::SurveyUse(Value::use_iterator U, UseVector &MaybeLiveUses,
-                             signed RetValNum) {
+                             unsigned RetValNum) {
     Value *V = *U;
     if (ReturnInst *RI = dyn_cast<ReturnInst>(V)) {
       // The value is returned from a function. It's only live when the
@@ -393,23 +402,16 @@ DAE::Liveness DAE::SurveyUses(Value *V, UseVector &MaybeLiveUses) {
 // well as arguments to functions which have their "address taken".
 //
 void DAE::SurveyFunction(Function &F) {
-  const StructType *STy = dyn_cast<StructType>(F.getFunctionType()->getReturnType());
-  // Store the number of partial return values, which we only have if the return
-  // type is a struct.
-  unsigned PartialRetVals = (STy ? STy->getNumElements() : 0);
+  unsigned RetCount = NumRetVals(&F);
   // Assume all return values are dead
   typedef SmallVector<Liveness, 5> RetVals;
-  // Allocate one slot for the entire return value (index 0) and one for each
-  // partial return value.
-  RetVals RetValLiveness(PartialRetVals + 1, MaybeLive);
+  RetVals RetValLiveness(RetCount, MaybeLive);
 
   typedef SmallVector<UseVector, 5> RetUses;
   // These vectors map each return value to the uses that make it MaybeLive, so
   // we can add those to the Uses map if the return value really turns out to be
-  // MaybeLive. 
-  // Allocate one slot for the entire return value (index 0) and one for each
-  // partial return value.
-  RetUses MaybeLiveRetUses(PartialRetVals + 1);
+  // MaybeLive. Initialized to a list of RetCount empty lists.
+  RetUses MaybeLiveRetUses(RetCount);
 
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator()))
@@ -426,6 +428,10 @@ void DAE::SurveyFunction(Function &F) {
   }
 
   DOUT << "DAE - Inspecting callers for fn: " << F.getName() << "\n";
+  // Keep track of the number of live retvals, so we can skip checks once all
+  // of them turn out to be live.
+  unsigned NumLiveRetVals = 0;
+  const Type *STy = dyn_cast<StructType>(F.getReturnType());
   // Loop all uses of the function.
   for (Value::use_iterator I = F.use_begin(), E = F.use_end(); I != E; ++I) {
     // If the function is PASSED IN as an argument, its address has been
@@ -446,42 +452,43 @@ void DAE::SurveyFunction(Function &F) {
     // If we end up here, we are looking at a direct call to our function.
 
     // Now, check how our return value(s) is/are used in this caller. Don't
-    // bother checking return values if the entire value is live already.
-    if (RetValLiveness[0] != Live) {
-      // Check all uses of the return value.
-      for (Value::use_iterator I = TheCall->use_begin(),
-           E = TheCall->use_end(); I != E; ++I) {
-        ExtractValueInst *Ext = dyn_cast<ExtractValueInst>(*I);
-        if (Ext && Ext->hasIndices()) {
-          // This use uses a part of our return value, survey the uses of
-          // that part and store the results for this index only.
-          unsigned Idx = *Ext->idx_begin();
-          // + 1 to skip the "entire retval" index (0)
-          Liveness &IsLive = RetValLiveness[Idx + 1];
-          if (IsLive != Live) {
-            // Don't bother checking if this retval was already live
-            // Survey all uses of the extractvalue
-            // + 1 to skip the "entire retval" index (0)
-            IsLive = SurveyUses(Ext, MaybeLiveRetUses[Idx + 1]);
-          }
-        } else {
-          // Survey this use
-          RetValLiveness[0] = SurveyUse(I, MaybeLiveRetUses[0]);
-          if (RetValLiveness[0] == Live)
+    // bother checking return values if all of them are live already.
+    if (NumLiveRetVals != RetCount) {
+      if (STy) {
+        // Check all uses of the return value.
+        for (Value::use_iterator I = TheCall->use_begin(),
+             E = TheCall->use_end(); I != E; ++I) {
+          ExtractValueInst *Ext = dyn_cast<ExtractValueInst>(*I);
+          if (Ext && Ext->hasIndices()) {
+            // This use uses a part of our return value, survey the uses of
+            // that part and store the results for this index only.
+            unsigned Idx = *Ext->idx_begin();
+            if (RetValLiveness[Idx] != Live) {
+              RetValLiveness[Idx] = SurveyUses(Ext, MaybeLiveRetUses[Idx]);
+              if (RetValLiveness[Idx] == Live)
+                NumLiveRetVals++;
+            }
+          } else {
+            // Used by something else than extractvalue. Mark all return
+            // values as live.
+            for (unsigned i = 0; i != RetCount; ++i )
+              RetValLiveness[i] = Live;
+            NumLiveRetVals = RetCount;
             break;
+          }
         }
+      } else {
+        // Single return value
+        RetValLiveness[0] = SurveyUses(TheCall, MaybeLiveRetUses[0]);
+        if (RetValLiveness[0] == Live)
+          NumLiveRetVals = RetCount;
       }
     }
   }
 
   // Now we've inspected all callers, record the liveness of our return values.
-  MarkValue(CreateRet(&F, -1), RetValLiveness[0], MaybeLiveRetUses[0]);
-  if (RetValLiveness[0] != Live)
-    // If the entire retval (0) is Live, MarkValue will have marked all other retvals live
-    // as well, so we can skip this.
-    for (unsigned i = 0; i != PartialRetVals; ++i)
-      // + 1 to skip the "entire retval" index (0)
-      MarkValue(CreateRet(&F, i), RetValLiveness[i + 1], MaybeLiveRetUses[i + 1]);
+  for (unsigned i = 0; i != RetCount; ++i)
+    MarkValue(CreateRet(&F, i), RetValLiveness[i], MaybeLiveRetUses[i]);
 
   DOUT << "DAE - Inspecting args for fn: " << F.getName() << "\n";
 
@@ -532,11 +539,8 @@ void DAE::MarkLive(const Function &F) {
     for (unsigned i = 0, e = F.arg_size(); i != e; ++i)
       PropagateLiveness(CreateArg(&F, i));
     // Mark all return values as live.
-    const Type *RTy = F.getFunctionType()->getReturnType();
-    if (const StructType *STy = dyn_cast<StructType>(RTy))
-      for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
-        PropagateLiveness(CreateRet(&F, i));
-    PropagateLiveness(CreateRet(&F, -1));
+    for (unsigned i = 0, e = NumRetVals(&F); i != e; ++i)
+      PropagateLiveness(CreateRet(&F, i));
 }
 
 /// MarkLive - Mark the given return value or argument as live. Additionally,
@@ -551,16 +555,6 @@ void DAE::MarkLive(const RetOrArg &RA) {
 
   DOUT << "DAE - Marking " << RA.getDescription() << " live\n";
   PropagateLiveness(RA);
-
-  if (!RA.IsArg && RA.Idx == -1) {
-    // Entire return value live? 
-    const Type *RTy = RA.F->getFunctionType()->getReturnType();
-    if (const StructType *STy = dyn_cast<StructType>(RTy))
-      // And the function returns a struct?
-      for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
-        // Mark all partial return values live as well then
-        MarkLive(CreateRet(RA.F, i));
-  }
 }
 
 /// PropagateLiveness - Given that RA is a live value, propagate it's liveness
@@ -605,20 +599,20 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   // Find out the new return value.
 
   const Type *RetTy = FTy->getReturnType();
-  const StructType *STy = dyn_cast<StructType>(RetTy);
-  const unsigned PartialRetVals = (STy ? STy->getNumElements() : 0);
   const Type *NRetTy = NULL;
-  // -1 means unused, other numbers are the new index. Initialized to -1 for
-  // every partial return value we have.
-  SmallVector<int, 5> NewRetIdxs(PartialRetVals, -1);
+  unsigned RetCount = NumRetVals(F);
+  // Explicitly track if anything changed, for debugging.
+  bool Changed = false;
+  // -1 means unused, other numbers are the new index
+  SmallVector<int, 5> NewRetIdxs(RetCount, -1);
   std::vector<const Type*> RetTypes;
-  if (LiveValues.count(CreateRet(F, -1))) {
-    // If the entire return value is live, leave it unchanged.
-    NRetTy = RetTy;
+  if (RetTy == Type::VoidTy) {
+    NRetTy = Type::VoidTy;
   } else {
-    if (STy) {
-      // Look at each of the partial return values individually.
-      for (unsigned i = 0; i != PartialRetVals; ++i) {
+    const StructType *STy = dyn_cast<StructType>(RetTy);
+    if (STy)
+      // Look at each of the original return values individually.
+      for (unsigned i = 0; i != RetCount; ++i) {
         RetOrArg Ret = CreateRet(F, i);
         if (LiveValues.erase(Ret)) {
           RetTypes.push_back(STy->getElementType(i));
@@ -627,20 +621,25 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
           ++NumRetValsEliminated;
           DOUT << "DAE - Removing return value " << i << " from "
                << F->getNameStart() << "\n";
-          // We remove the value by not adding anything to RetTypes.
+          Changed = true;
         }
       }
-    } else if (RetTy != Type::VoidTy) {
-      // We used to return a single value, which is now dead (already checked in
-      // the if above)
-      DOUT << "DAE - Removing return value from " << F->getNameStart()
-           << "\n";
-      ++NumRetValsEliminated;
-      // We remove the value by not adding anything to RetTypes.
-    }
-
-    if (RetTypes.size() > 1)
-      // More than one return type? Return a struct with them. 
+    else
+      // We used to return a single value.
+      if (LiveValues.erase(CreateRet(F, 0))) {
+        RetTypes.push_back(RetTy);
+        NewRetIdxs[0] = 0;
+      } else {
+        DOUT << "DAE - Removing return value from " << F->getNameStart()
+             << "\n";
+        ++NumRetValsEliminated;
+        Changed = true;
+      }
+    if (RetTypes.size() > 1 || (STy && STy->getNumElements()==RetTypes.size()))
+      // More than one return type? Return a struct with them. Also, if we used
+      // to return a struct and didn't change the number of return values,
+      // return a struct again. This prevents changing {something} into
+      // something and {} into void.
       // Make the new struct packed if we used to return a packed struct
       // already.
       NRetTy = StructType::get(RetTypes, STy->isPacked());
@@ -649,7 +648,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       // return a struct with that simple value before.
       NRetTy = RetTypes.front();
     else if (RetTypes.size() == 0)
-      // No return types? Make it void.
+      // No return types? Make it void, but only if we didn't use to return {}.
       NRetTy = Type::VoidTy;
   }
 
@@ -689,6 +688,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       ++NumArgumentsEliminated;
       DOUT << "DAE - Removing argument " << i << " (" << I->getNameStart()
            << ") from " << F->getNameStart() << "\n";
+      Changed = true;
     }
   }
 
@@ -713,6 +713,11 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   // No change?
   if (NFTy == FTy)
     return false;
+
+  // The function type is only allowed to be different if we actually left out
+  // an argument or return value.
+  assert(Changed && "Function type changed while no arguments or return values"
+                    "were removed!");
 
   // Create the new function body and insert it into the module...
   Function *NF = Function::Create(NFTy, F->getLinkage());
@@ -794,15 +799,16 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         // Replace by null for now.
         Call->replaceAllUsesWith(Constant::getNullValue(Call->getType()));
       } else {
-        assert(STy && "Return type changed, but not into a void. The old "
-                      "return type must have been a struct!");
+        assert(isa<StructType>(RetTy) && "Return type changed, but not into a"
+                                         "void. The old return type must have"
+                                         "been a struct!");
         // We used to return a struct. Instead of doing smart stuff with all the
         // uses of this struct, we will just rebuild it using
         // extract/insertvalue chaining and let instcombine clean that up.
         //
         // Start out building up our return value from undef
         Value *RetVal = llvm::UndefValue::get(RetTy);
-        for (unsigned i = 0; i != PartialRetVals; ++i)
+        for (unsigned i = 0; i != RetCount; ++i)
           if (NewRetIdxs[i] != -1) {
             Value *V;
             if (RetTypes.size() > 1)
@@ -868,7 +874,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
           Value *OldRet = RI->getOperand(0);
           // Start out building up our return value from undef
           RetVal = llvm::UndefValue::get(NRetTy);
-          for (unsigned i = 0; i != PartialRetVals; ++i)
+          for (unsigned i = 0; i != RetCount; ++i)
             if (NewRetIdxs[i] != -1) {
               ExtractValueInst *EV = ExtractValueInst::Create(OldRet, i,
                                                               "oldret", RI);
