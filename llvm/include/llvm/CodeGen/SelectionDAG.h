@@ -565,10 +565,6 @@ public:
   void ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
                                  DAGUpdateListener *UpdateListener = 0);
 
-  /// AssignNodeIds - Assign a unique node id for each node in the DAG based on
-  /// their allnodes order. It returns the maximum id.
-  unsigned AssignNodeIds();
-
   /// AssignTopologicalOrder - Assign a unique node id for each node in the DAG
   /// based on their topological order. It returns the maximum id and a vector
   /// of the SDNodes* in assigned order by reference.
