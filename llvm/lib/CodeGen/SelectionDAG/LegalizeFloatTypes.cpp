@@ -759,6 +759,7 @@ void DAGTypeLegalizer::ExpandFloatResult(SDNode *N, unsigned ResNo) {
   case ISD::EXTRACT_VECTOR_ELT: ExpandRes_EXTRACT_VECTOR_ELT(N, Lo, Hi); break;
 
   case ISD::ConstantFP: ExpandFloatRes_ConstantFP(N, Lo, Hi); break;
+  case ISD::FABS:       ExpandFloatRes_FABS(N, Lo, Hi); break;
   case ISD::FADD:       ExpandFloatRes_FADD(N, Lo, Hi); break;
   case ISD::FDIV:       ExpandFloatRes_FDIV(N, Lo, Hi); break;
   case ISD::FMUL:       ExpandFloatRes_FMUL(N, Lo, Hi); break;
@@ -797,6 +798,19 @@ void DAGTypeLegalizer::ExpandFloatRes_FADD(SDNode *N, SDOperand &Lo,
                                false);
   assert(Call.Val->getOpcode() == ISD::BUILD_PAIR && "Call lowered wrongly!");
   Lo = Call.getOperand(0); Hi = Call.getOperand(1);
+}
+
+void DAGTypeLegalizer::ExpandFloatRes_FABS(SDNode *N, SDOperand &Lo,
+                                           SDOperand &Hi) {
+  assert(N->getValueType(0) == MVT::ppcf128 &&
+         "Logic only correct for ppcf128!");
+  SDOperand Tmp;
+  GetExpandedFloat(N->getOperand(0), Lo, Tmp);
+  Hi = DAG.getNode(ISD::FABS, Tmp.getValueType(), Tmp);
+  // Lo = Hi==fabs(Hi) ? Lo : -Lo;
+  Lo = DAG.getNode(ISD::SELECT_CC, Lo.getValueType(), Tmp, Hi, Lo,
+                   DAG.getNode(ISD::FNEG, Lo.getValueType(), Lo),
+                   DAG.getCondCode(ISD::SETEQ));
 }
 
 void DAGTypeLegalizer::ExpandFloatRes_FDIV(SDNode *N, SDOperand &Lo,

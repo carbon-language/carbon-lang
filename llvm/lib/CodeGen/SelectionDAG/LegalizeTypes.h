@@ -367,6 +367,7 @@ private:
   // Float Result Expansion.
   void ExpandFloatResult(SDNode *N, unsigned ResNo);
   void ExpandFloatRes_ConstantFP(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandFloatRes_FABS      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandFloatRes_FADD      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandFloatRes_FDIV      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandFloatRes_FMUL      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
