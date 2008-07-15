@@ -1,4 +1,4 @@
-// RUN: clang -check-objc-methodsigs -verify %s
+// RUN: clang -warn-objc-methodsigs -verify %s
 
 #include <stdio.h>
 

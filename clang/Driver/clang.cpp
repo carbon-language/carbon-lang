@@ -162,7 +162,7 @@ AnalyzeAll("checker-opt-analyze-headers",
 static llvm::cl::list<Analyses>
 AnalysisList(llvm::cl::desc("Available Source Code Analyses:"),
 llvm::cl::values(
-#define ANALYSIS(NAME, CMDFLAG, DESC)\
+#define ANALYSIS(NAME, CMDFLAG, DESC, SCOPE)\
 clEnumValN(NAME, CMDFLAG, DESC),
 #include "Analyses.def"
 clEnumValEnd));

@@ -12,30 +12,32 @@
 //===----------------------------------------------------------------------===//
 
 ANALYSIS(CFGDump, "cfg-dump",
-         "Display Control-Flow Graphs")
+         "Display Control-Flow Graphs", Code)
 
 ANALYSIS(CFGView, "cfg-view",
-         "View Control-Flow Graphs using GraphViz")
+         "View Control-Flow Graphs using GraphViz", Code)
 
 ANALYSIS(DisplayLiveVariables, "dump-live-variables",
-         "Print results of live variable analysis")
+         "Print results of live variable analysis", Code)
 
 ANALYSIS(WarnDeadStores, "warn-dead-stores",
-         "Warn about stores to dead variables")
+         "Warn about stores to dead variables", Code)
 
 ANALYSIS(WarnUninitVals, "warn-uninit-values",
-         "Warn about uses of uninitialized variables")
+         "Warn about uses of uninitialized variables", Code)
 
 ANALYSIS(WarnObjCMethSigs, "warn-objc-methodsigs",
-"Warn about Objective-C method signatures with type incompatibilities")
+ "Warn about Objective-C method signatures with type incompatibilities",
+ ObjCImplementation)
 
 ANALYSIS(WarnObjCDealloc, "warn-objc-missing-dealloc",
-"Warn about Objective-C classes that lack a correct implementation of -dealloc")
+ "Warn about Objective-C classes that lack a correct implementation of -dealloc",
+ ObjCImplementation)
 
 ANALYSIS(CheckerSimple, "checker-simple",
-         "Perform simple path-sensitive checks.")
+         "Perform simple path-sensitive checks.", Code)
 
 ANALYSIS(CheckerCFRef, "checker-cfref",
-         "Run the [Core] Foundation reference count checker")   
+         "Run the [Core] Foundation reference count checker", Code)
 
 #undef ANALYSIS

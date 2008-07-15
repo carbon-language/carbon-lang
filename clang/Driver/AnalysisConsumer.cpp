@@ -414,9 +414,9 @@ ASTConsumer* clang::CreateAnalysisConsumer(Analyses* Beg, Analyses* End,
   
   for ( ; Beg != End ; ++Beg)
     switch (*Beg) {
-#define ANALYSIS(NAME, CMD, DESC)\
+#define ANALYSIS(NAME, CMD, DESC, SCOPE)\
       case NAME:\
-        C->addCodeAction(&Action ## NAME);\
+        C->add ## SCOPE ## Action(&Action ## NAME);\
         break;
 #include "Analyses.def"
       default: break;

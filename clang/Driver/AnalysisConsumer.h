@@ -17,7 +17,7 @@
 namespace clang {
 
 enum Analyses {
-#define ANALYSIS(NAME, CMDFLAG, DESC) NAME,
+#define ANALYSIS(NAME, CMDFLAG, DESC, SCOPE) NAME,
 #include "Analyses.def"
 NumAnalyses
 };
