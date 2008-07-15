@@ -135,10 +135,8 @@ def main(args):
   # Set the analyzer flag.
   analysis_type = os.environ.get('CCC_ANALYZER_ANALYSIS')
   
-  if analysis_type is not None:
-    analysis_type = "-" + analysis_type
-  else:
-    analysis_type = "-warn-dead-stores -checker-cfref -warn-objc-methodsigs"
+  if analysis_type is None:
+    analysis_type = "-checker-cfref"
 
   # Determine the level of verbosity.
   if os.environ.get('CCC_ANALYZER_VERBOSE') is not None:

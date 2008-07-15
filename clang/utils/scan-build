@@ -99,7 +99,8 @@ close (PIPE);
 my %AnalysesDefaultEnabled = (
   '-warn-dead-stores' => 1,
   '-checker-cfref' => 1,
-  '-warn-objc-methodsigs' => 1
+  '-warn-objc-methodsigs' => 1,
+  '-warn-objc-missing-dealloc' => 1
 );
 
 ##----------------------------------------------------------------------------##
@@ -827,9 +828,13 @@ if ($Verbose >= 3) {
   $ENV{'CCC_ANALYZER_LOG'} = 1;
 }
 
-if (scalar(@AnalysesToRun)) {
-  $ENV{'CCC_ANALYZER_ANALYSIS'} = join ' ',@AnalysesToRun;
+if (scalar(@AnalysesToRun) == 0) {
+  foreach my $key (keys %AnalysesDefaultEnabled) {
+    push @AnalysesToRun,$key;
+  }
 }
+
+$ENV{'CCC_ANALYZER_ANALYSIS'} = join ' ',@AnalysesToRun;
 
 # Run the build.
 
