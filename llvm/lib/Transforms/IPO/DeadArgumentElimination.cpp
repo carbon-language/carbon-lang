@@ -110,9 +110,12 @@ namespace {
     UseMap Uses;
 
     typedef std::set<RetOrArg> LiveSet;
+    typedef std::set<const Function*> LiveFuncSet;
 
     /// This set contains all values that have been determined to be live.
     LiveSet LiveValues;
+    /// This set contains all values that are cannot be changed in any way.
+    LiveFuncSet LiveFunctions;
 
     typedef SmallVector<RetOrArg, 5> UseVector;
 
@@ -291,8 +294,8 @@ static unsigned NumRetVals(const Function *F) {
 /// live, it adds Use to the MaybeLiveUses argument. Returns the determined
 /// liveness of Use.
 DAE::Liveness DAE::MarkIfNotLive(RetOrArg Use, UseVector &MaybeLiveUses) {
-  // We're live if our use is already marked as live.
-  if (LiveValues.count(Use))
+  // We're live if our use or its Function is already marked as live.
+  if (LiveFunctions.count(Use.F) || LiveValues.count(Use))
     return Live;
 
   // We're maybe live otherwise, but remember that we must become live if
@@ -530,18 +533,23 @@ void DAE::MarkValue(const RetOrArg &RA, Liveness L,
 /// values (according to Uses) live as well.
 void DAE::MarkLive(const Function &F) {
     DOUT << "DAE - Intrinsically live fn: " << F.getName() << "\n";
+    // Mark the function as live.
+    LiveFunctions.insert(&F);
     // Mark all arguments as live.
     for (unsigned i = 0, e = F.arg_size(); i != e; ++i)
-      MarkLive(CreateArg(&F, i));
+      PropagateLiveness(CreateArg(&F, i));
     // Mark all return values as live.
     for (unsigned i = 0, e = NumRetVals(&F); i != e; ++i)
-      MarkLive(CreateRet(&F, i));
+      PropagateLiveness(CreateRet(&F, i));
 }
 
 /// MarkLive - Mark the given return value or argument as live. Additionally,
 /// mark any values that are used by this value (according to Uses) live as
 /// well.
 void DAE::MarkLive(const RetOrArg &RA) {
+  if (LiveFunctions.count(RA.F))
+    return; // Function was already marked Live.
+
   if (!LiveValues.insert(RA).second)
     return; // We were already marked Live.
 
@@ -571,8 +579,8 @@ void DAE::PropagateLiveness(const RetOrArg &RA) {
 // the function to not have these arguments and return values.
 //
 bool DAE::RemoveDeadStuffFromFunction(Function *F) {
-  // Quick exit path for external functions
-  if (!F->hasInternalLinkage() && (!ShouldHackArguments() || F->isIntrinsic()))
+  // Don't modify fully live functions
+  if (LiveFunctions.count(F))
     return false;
 
   // Start by computing a new prototype for the function, which is the same as
