@@ -622,7 +622,7 @@ sub RunBuildCommand {
     $ENV{'LDPLUSPLUS'} = $LDPLUSPLUS;    
   }
   
-  system(@$Args);
+  return system(@$Args);
 }
 
 ##----------------------------------------------------------------------------##
@@ -818,7 +818,7 @@ if (scalar(@AnalysesToRun)) {
 
 # Run the build.
 
-RunBuildCommand(\@ARGV, $IgnoreErrors, $Cmd);
+my $ExitStatus = RunBuildCommand(\@ARGV, $IgnoreErrors, $Cmd);
 
 # Postprocess the HTML directory.
 
@@ -829,3 +829,6 @@ if ($ViewResults and -r "$HtmlDir/index.html") {
   print "Viewing analysis results: '$HtmlDir/index.html'\n";
   `open $HtmlDir/index.html`
 }
+
+exit $ExitStatus;
+
