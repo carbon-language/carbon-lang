@@ -73,6 +73,29 @@ static bool isCFRefType(QualType T) {
   return true;
 }
 
+static bool isCGRefType(QualType T) {
+  
+  if (!T->isPointerType())
+    return false;
+  
+  // Check the typedef for the name "CG" and the substring "Ref".  
+  TypedefType* TD = dyn_cast<TypedefType>(T.getTypePtr());
+  
+  if (!TD)
+    return false;
+  
+  const char* TDName = TD->getDecl()->getIdentifier()->getName();
+  assert (TDName);
+  
+  if (TDName[0] != 'C' || TDName[1] != 'G')
+    return false;
+  
+  if (strstr(TDName, "Ref") == 0)
+    return false;
+  
+  return true;
+}
+
 static bool isNSType(QualType T) {
   
   if (!T->isPointerType())
@@ -468,9 +491,11 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   
   RetainSummary* getNSSummary(FunctionDecl* FD, const char* FName);
   RetainSummary* getCFSummary(FunctionDecl* FD, const char* FName);
+  RetainSummary* getCGSummary(FunctionDecl* FD, const char* FName);
   
   RetainSummary* getCFSummaryCreateRule(FunctionDecl* FD);
   RetainSummary* getCFSummaryGetRule(FunctionDecl* FD);  
+  RetainSummary* getCFCreateGetRuleSummary(FunctionDecl* FD, const char* FName);  
   
   RetainSummary* getPersistentSummary(ArgEffects* AE, RetEffect RetEff,
                                       ArgEffect ReceiverEff = DoNothing,
@@ -630,13 +655,29 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
   RetainSummary *S = 0;
   
   FunctionType* FT = dyn_cast<FunctionType>(FD->getType());
-  
-  if (FT && isCFRefType(FT->getResultType()))
-    S = getCFSummary(FD, FName);          
-  else if (FName[0] == 'C' && FName[1] == 'F')
-    S = getCFSummary(FD, FName);  
-  else if (FName[0] == 'N' && FName[1] == 'S')
-    S = getNSSummary(FD, FName);
+
+  do {
+    if (FT) {
+      
+      QualType T = FT->getResultType();
+      
+      if (isCFRefType(T)) {
+        S = getCFSummary(FD, FName);
+        break;
+      }
+      
+      if (isCGRefType(T)) {
+        S = getCGSummary(FD, FName );
+        break;
+      }
+    }
+
+    if (FName[0] == 'C' && FName[1] == 'F')
+      S = getCFSummary(FD, FName);  
+    else if (FName[0] == 'N' && FName[1] == 'S')
+      S = getNSSummary(FD, FName);
+  }
+  while (0);
 
   FuncSummaries[FD] = S;
   return S;  
@@ -651,25 +692,55 @@ RetainSummary* RetainSummaryManager::getNSSummary(FunctionDecl* FD,
 
   return 0;  
 }
-  
+
+static bool isRetain(FunctionDecl* FD, const char* FName) {
+  return (strstr(FName, "Retain") != 0);
+}
+
+static bool isRelease(FunctionDecl* FD, const char* FName) {
+  return (strstr(FName, "Release") != 0);
+}
+
 RetainSummary* RetainSummaryManager::getCFSummary(FunctionDecl* FD,
                                                   const char* FName) {
 
   if (FName[0] == 'C' && FName[1] == 'F')
     FName += 2;
 
-  if (strcmp(FName, "Retain") == 0)
+  if (isRetain(FD, FName))
     return getUnarySummary(FD, cfretain);
   
-  if (strcmp(FName, "Release") == 0)
+  if (isRelease(FD, FName))
     return getUnarySummary(FD, cfrelease);
   
   if (strcmp(FName, "MakeCollectable") == 0)
     return getUnarySummary(FD, cfmakecollectable);
-    
+
+  return getCFCreateGetRuleSummary(FD, FName);
+}
+
+RetainSummary* RetainSummaryManager::getCGSummary(FunctionDecl* FD,
+                                                  const char* FName) {
+  
+  if (FName[0] == 'C' && FName[1] == 'G')
+    FName += 2;
+  
+  if (isRelease(FD, FName))
+    return getUnarySummary(FD, cfrelease);
+  
+  if (isRetain(FD, FName))
+    return getUnarySummary(FD, cfretain);
+  
+  return getCFCreateGetRuleSummary(FD, FName);
+}
+
+RetainSummary*
+RetainSummaryManager::getCFCreateGetRuleSummary(FunctionDecl* FD,
+                                                const char* FName) {
+  
   if (strstr(FName, "Create") || strstr(FName, "Copy"))
     return getCFSummaryCreateRule(FD);
-
+  
   if (strstr(FName, "Get"))
     return getCFSummaryGetRule(FD);
   
