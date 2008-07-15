@@ -54,6 +54,7 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
     assert(0 && "Do not know how to promote this operator!");
     abort();
   case ISD::BIT_CONVERT: Result = PromoteIntRes_BIT_CONVERT(N); break;
+  case ISD::BSWAP:       Result = PromoteIntRes_BSWAP(N); break;
   case ISD::BUILD_PAIR:  Result = PromoteIntRes_BUILD_PAIR(N); break;
   case ISD::Constant:    Result = PromoteIntRes_Constant(N); break;
   case ISD::CTLZ:        Result = PromoteIntRes_CTLZ(N); break;
@@ -148,6 +149,16 @@ SDOperand DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
   // promote the load.
   SDOperand Op = CreateStackStoreLoad(InOp, N->getValueType(0));
   return PromoteIntRes_LOAD(cast<LoadSDNode>(Op.Val));
+}
+
+SDOperand DAGTypeLegalizer::PromoteIntRes_BSWAP(SDNode *N) {
+  SDOperand Op = GetPromotedInteger(N->getOperand(0));
+  MVT OVT = N->getValueType(0);
+  MVT NVT = Op.getValueType();
+
+  unsigned DiffBits = NVT.getSizeInBits() - OVT.getSizeInBits();
+  return DAG.getNode(ISD::SRL, NVT, DAG.getNode(ISD::BSWAP, NVT, Op),
+                     DAG.getConstant(DiffBits, TLI.getShiftAmountTy()));
 }
 
 SDOperand DAGTypeLegalizer::PromoteIntRes_BUILD_PAIR(SDNode *N) {

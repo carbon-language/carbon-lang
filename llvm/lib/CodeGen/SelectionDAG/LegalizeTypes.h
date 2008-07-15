@@ -213,6 +213,7 @@ private:
   // Integer Result Promotion.
   void PromoteIntegerResult(SDNode *N, unsigned ResNo);
   SDOperand PromoteIntRes_BIT_CONVERT(SDNode *N);
+  SDOperand PromoteIntRes_BSWAP(SDNode *N);
   SDOperand PromoteIntRes_BUILD_PAIR(SDNode *N);
   SDOperand PromoteIntRes_Constant(SDNode *N);
   SDOperand PromoteIntRes_CTLZ(SDNode *N);
