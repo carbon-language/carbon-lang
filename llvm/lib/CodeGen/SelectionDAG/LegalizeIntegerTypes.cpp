@@ -66,6 +66,8 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::SELECT_CC:   Result = PromoteIntRes_SELECT_CC(N); break;
   case ISD::SETCC:       Result = PromoteIntRes_SETCC(N); break;
   case ISD::SHL:         Result = PromoteIntRes_SHL(N); break;
+  case ISD::SIGN_EXTEND_INREG:
+                         Result = PromoteIntRes_SIGN_EXTEND_INREG(N); break;
   case ISD::SRA:         Result = PromoteIntRes_SRA(N); break;
   case ISD::SRL:         Result = PromoteIntRes_SRL(N); break;
   case ISD::TRUNCATE:    Result = PromoteIntRes_TRUNCATE(N); break;
@@ -342,6 +344,12 @@ SDOperand DAGTypeLegalizer::PromoteIntRes_SETCC(SDNode *N) {
 SDOperand DAGTypeLegalizer::PromoteIntRes_SHL(SDNode *N) {
   return DAG.getNode(ISD::SHL, TLI.getTypeToTransformTo(N->getValueType(0)),
                      GetPromotedInteger(N->getOperand(0)), N->getOperand(1));
+}
+
+SDOperand DAGTypeLegalizer::PromoteIntRes_SIGN_EXTEND_INREG(SDNode *N) {
+  SDOperand Op = GetPromotedInteger(N->getOperand(0));
+  return DAG.getNode(ISD::SIGN_EXTEND_INREG, Op.getValueType(), Op,
+                     N->getOperand(1));
 }
 
 SDOperand DAGTypeLegalizer::PromoteIntRes_SimpleIntBinOp(SDNode *N) {

@@ -228,6 +228,7 @@ private:
   SDOperand PromoteIntRes_SETCC(SDNode *N);
   SDOperand PromoteIntRes_SHL(SDNode *N);
   SDOperand PromoteIntRes_SimpleIntBinOp(SDNode *N);
+  SDOperand PromoteIntRes_SIGN_EXTEND_INREG(SDNode *N);
   SDOperand PromoteIntRes_SRA(SDNode *N);
   SDOperand PromoteIntRes_SRL(SDNode *N);
   SDOperand PromoteIntRes_TRUNCATE(SDNode *N);
