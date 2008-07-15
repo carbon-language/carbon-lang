@@ -70,7 +70,7 @@ namespace {
         return F == O.F && Idx == O.Idx && IsArg == O.IsArg;
       }
 
-      std::string getDescription() {
+      std::string getDescription() const {
         return std::string((IsArg ? "Argument #" : "Return value #")) 
                + utostr(Idx) + " of function " + F->getName();
       }
@@ -132,7 +132,7 @@ namespace {
     void SurveyFunction(Function &F);
     void MarkValue(const RetOrArg &RA, Liveness L,
                    const UseVector &MaybeLiveUses);
-    void MarkLive(RetOrArg RA);
+    void MarkLive(const RetOrArg &RA);
     void MarkLive(const Function &F);
     bool RemoveDeadStuffFromFunction(Function *F);
     bool DeleteDeadVarargs(Function &Fn);
@@ -540,7 +540,7 @@ void DAE::MarkLive(const Function &F) {
 /// MarkLive - Mark the given return value or argument as live. Additionally,
 /// mark any values that are used by this value (according to Uses) live as
 /// well.
-void DAE::MarkLive(RetOrArg RA) {
+void DAE::MarkLive(const RetOrArg &RA) {
   if (!LiveValues.insert(RA).second)
     return; // We were already marked Live.
 
