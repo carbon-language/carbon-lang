@@ -52,6 +52,7 @@ public:
     AT_ext_vector_type,
     AT_fastcall,
     AT_format,
+    AT_IBOutlet,          // Clang-specific.
     AT_malloc,
     AT_mode,
     AT_noinline,

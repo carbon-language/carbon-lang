@@ -37,7 +37,9 @@ public:
     Visibility,
     FastCall,
     StdCall,
-    TransparentUnion
+    TransparentUnion,
+    IBOutletKind // Clang-specific.  Use "Kind" suffix to not conflict with
+                 // the IBOutlet macro.
   };
     
 private:
@@ -119,6 +121,17 @@ public:
 
   static bool classof(const Attr *A) { return A->getKind() == Alias; }
   static bool classof(const AliasAttr *A) { return true; }
+};
+  
+class IBOutletAttr : public Attr {
+public:
+  IBOutletAttr() : Attr(IBOutletKind) {}
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) {
+    return A->getKind() == IBOutletKind;
+  }
+  static bool classof(const IBOutletAttr *A) { return true; }
 };
 
 class NoReturnAttr : public Attr {

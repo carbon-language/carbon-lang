@@ -217,6 +217,22 @@ static void HandlePackedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
            Attr.getName()->getName());
 }
 
+static void HandleIBOutletAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() > 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("0"));
+    return;
+  }
+  
+  // The IBOutlet attribute only applies to instance variables of Objective-C
+  // classes.
+  if (ObjCIvarDecl *ID = dyn_cast<ObjCIvarDecl>(d))
+    ID->addAttr(new IBOutletAttr());
+  else
+    S.Diag(Attr.getLoc(), diag::err_attribute_iboutlet_non_ivar);
+}
+
 static void HandleAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
@@ -746,6 +762,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_annotate:    HandleAnnotateAttr  (D, Attr, S); break;
   case AttributeList::AT_noreturn:    HandleNoReturnAttr  (D, Attr, S); break;
   case AttributeList::AT_format:      HandleFormatAttr    (D, Attr, S); break;
+  case AttributeList::AT_IBOutlet:    HandleIBOutletAttr  (D, Attr, S); break;    
   case AttributeList::AT_transparent_union:
     HandleTransparentUnionAttr(D, Attr, S);
     break;

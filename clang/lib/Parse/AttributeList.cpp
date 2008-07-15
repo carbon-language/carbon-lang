@@ -49,7 +49,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     Str += 2;
     Len -= 4;
   }
-
+  
   switch (Len) {
   case 4:
     if (!memcmp(Str, "weak", 4)) return AT_weak;
@@ -76,6 +76,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     if (!memcmp(Str, "noreturn", 8)) return AT_noreturn;
     if (!memcmp(Str, "noinline", 8)) return AT_noinline;
     if (!memcmp(Str, "fastcall", 8)) return AT_fastcall;
+    if (!memcmp(Str, "IBOutlet", 8)) return AT_IBOutlet;
     break;
   case 9:
     if (!memcmp(Str, "dllimport", 9)) return AT_dllimport;
