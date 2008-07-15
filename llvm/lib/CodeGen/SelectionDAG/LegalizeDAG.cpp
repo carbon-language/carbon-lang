@@ -7015,7 +7015,9 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
       // The input is a scalar or single-element vector.
       // Lower to a store/load so that it can be split.
       // FIXME: this could be improved probably.
-      SDOperand Ptr = DAG.CreateStackTemporary(InOp.getValueType());
+      unsigned LdAlign = TLI.getTargetData()->getPrefTypeAlignment(
+                                            Op.getValueType().getTypeForMVT());
+      SDOperand Ptr = DAG.CreateStackTemporary(InOp.getValueType(), LdAlign);
       int FI = cast<FrameIndexSDNode>(Ptr.Val)->getIndex();
 
       SDOperand St = DAG.getStore(DAG.getEntryNode(),
