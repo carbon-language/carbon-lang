@@ -4,7 +4,7 @@ void f1()
 {
 	int i;
 	
-	int j = i ? : 1; // expected-warning{{use of uninitialized variable}} //expected-warning{{Value stored to 'j' is never read}}
+	int j = i ? : 1; // expected-warning{{use of uninitialized variable}} //expected-warning{{Value stored to 'j' during its initialization is never read}}
 }
 
 void *f2(int *i)

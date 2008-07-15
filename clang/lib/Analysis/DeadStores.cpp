@@ -37,16 +37,26 @@ public:
   
   virtual ~DeadStoreObs() {}
   
-  void Report(VarDecl* V, bool inEnclosing, SourceLocation L, SourceRange R) {
+  void Report(VarDecl* V, bool inEnclosing, SourceLocation L, SourceRange R,
+              bool isInitialization = false) {
 
-    std::string name(V->getName());    
-    std::string msg = inEnclosing
-      ? "Although the value stored to '" + name +
-        "' is used in the enclosing expression, the value is never actually"
-        " read from '" + name + "'"
-      : "Value stored to '" + name + "' is never read";
+    std::string name(V->getName());
     
-    BR.EmitBasicReport("dead store", msg.c_str(), L, R);    
+    if (isInitialization) {
+      std::string msg = "Value stored to '" + name +
+        "' during its initialization is never read";
+      
+      BR.EmitBasicReport("dead initialization", msg.c_str(), L, R);      
+    }
+    else {
+      std::string msg = inEnclosing
+        ? "Although the value stored to '" + name +
+          "' is used in the enclosing expression, the value is never actually"
+          " read from '" + name + "'"
+        : "Value stored to '" + name + "' is never read";
+    
+      BR.EmitBasicReport("dead store", msg.c_str(), L, R);
+    }
   }
   
   void CheckVarDecl(VarDecl* VD, Expr* Ex, Expr* Val,
@@ -124,7 +134,7 @@ public:
               // a warning.  This is because such initialization can be
               // due to defensive programming.
               if (!E->isConstantExpr(Ctx,NULL))
-                Report(V, false, V->getLocation(), E->getSourceRange());
+                Report(V, false, V->getLocation(), E->getSourceRange(), true);
             }
       }
   }
