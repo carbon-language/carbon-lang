@@ -377,6 +377,10 @@ RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, NonLVal X, QualType T) {
   if (!isa<nonlval::ConcreteInt>(X))
     return UnknownVal();
 
+  // Only handle casts from integers to integers.
+  if (!T->isIntegerType())
+    return UnknownVal();
+  
   BasicValueFactory& BasicVals = Eng.getBasicVals();
   
   llvm::APSInt V = cast<nonlval::ConcreteInt>(X).getValue();
