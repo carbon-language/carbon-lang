@@ -55,7 +55,7 @@ def analyze(clang, args,language,output,files,verbose,htmldir,file,analysis_type
     args = command + files + [ target ]
   else:
     command = clang.split() + analysis_type.split()
-    args = command + args;
+    args = command + "-DIBOutlet=__attribute__((iboutlet))".split() + args;
     RunAnalyzer = 1
 
   print_args = []
