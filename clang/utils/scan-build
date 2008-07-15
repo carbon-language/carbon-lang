@@ -364,7 +364,7 @@ sub Postprocess {
   
   if (! -d $Dir) {
     Diag("No bugs found.\n");
-    return;
+    return 0;
   }
   
   opendir(DIR, $Dir);
@@ -379,7 +379,7 @@ sub Postprocess {
     system ("rm", "-f", $BaseDir);
     
     Diag("No bugs found.\n");
-    return;
+    return 0;
   }
   
   # Scan each report file and build an index.
@@ -558,6 +558,8 @@ ENDTEXT
   if ($Num > 0 && -r "$Dir/index.html") {
     Diag("Open '$Dir/index.html' to examine bug reports.\n");
   }
+  
+  return $Num;
 }
 
 ##----------------------------------------------------------------------------##
@@ -643,35 +645,40 @@ ENDTEXT
 print <<ENDTEXT;
 OPTIONS:
 
-  -o            - Target directory for HTML report files.  Subdirectories
+ -o             - Target directory for HTML report files.  Subdirectories
                   will be created as needed to represent separate "runs" of
                   the analyzer.  If this option is not specified, a directory
                   is created in /tmp to store the reports.
 
-  -h            - Display this message.
-  --help
+ -h             - Display this message.
+ --help
 
-  -k            - Add a "keep on going" option to the specified build command.
-  --keep-going    This option currently supports make and xcodebuild.
+ -k             - Add a "keep on going" option to the specified build command.
+ --keep-going     This option currently supports make and xcodebuild.
                   This is a convenience option; one can specify this
                   behavior directly using build options.
 
-  -v            - Verbose output from $Prog and the analyzer.
-                  A second "-v" increases verbosity.
+ --status-bugs  - By default, the exit status of $Prog is the same as the
+                  executed build command.  Specifying this option causes the
+                  exit status of $Prog to be 1 if it found potential bugs
+                  and 0 otherwise.
 
-  -V            - View analysis results in a web browser when the build
-  --view          completes.
+ -v             - Verbose output from $Prog and the analyzer.
+                  A second and third "-v" increases verbosity.
+
+ -V             - View analysis results in a web browser when the build
+ --view           completes.
 
 ENDTEXT
 
-  print "  Available Source Code Analyses (multiple analyses may be specified):\n\n";
+  print " Available Source Code Analyses (multiple analyses may be specified):\n\n";
 
   foreach my $Analysis (sort keys %AvailableAnalyses) {
     if (defined($AnalysesDefaultEnabled{$Analysis})) {
-      print "  (+)";
+      print " (+)";
     }
     else {
-      print "     ";
+      print "    ";
     }
     
     print " $Analysis  $AvailableAnalyses{$Analysis}\n";
@@ -679,21 +686,21 @@ ENDTEXT
   
 print <<ENDTEXT
 
-  (+) == analysis enabled by default unless one
-         or more analysis options are specified
+ NOTE: "(+)" indicates that an analysis is enabled by default unless one
+       or more analysis options are specified
 
 BUILD OPTIONS
 
-  You can specify any build option acceptable to the build command.
+ You can specify any build option acceptable to the build command.
 
 EXAMPLE
 
-    $Prog -o /tmp/myhtmldir make -j4
+ $Prog -o /tmp/myhtmldir make -j4
      
-  The above example causes analysis reports to be deposited into
-  a subdirectory of "/tmp/myhtmldir" and to run "make" with the "-j4" option.
-  A different subdirectory is created each time $Prog analyzes a project.
-  The analyzer should support most parallel builds, but not distributed builds.
+ The above example causes analysis reports to be deposited into
+ a subdirectory of "/tmp/myhtmldir" and to run "make" with the "-j4" option.
+ A different subdirectory is created each time $Prog analyzes a project.
+ The analyzer should support most parallel builds, but not distributed builds.
 
 ENDTEXT
 }
@@ -705,7 +712,9 @@ ENDTEXT
 my $HtmlDir;           # Parent directory to store HTML files.
 my $IgnoreErrors = 0;  # Ignore build errors.
 my $ViewResults  = 0;  # View results when the build terminates.
+my $ExitStatusFoundBugs = 0; # Exit status reflects whether bugs were found
 my @AnalysesToRun;
+
 
 if (!@ARGV) {
   DisplayHelp();
@@ -755,6 +764,12 @@ while (@ARGV) {
   if ($arg eq "-V" or $arg eq "--view") {
     shift @ARGV;
     $ViewResults = 1;    
+    next;
+  }
+  
+  if ($arg eq "--status-bugs") {
+    shift @ARGV;
+    $ExitStatusFoundBugs = 1;
     next;
   }
   
@@ -822,12 +837,17 @@ my $ExitStatus = RunBuildCommand(\@ARGV, $IgnoreErrors, $Cmd);
 
 # Postprocess the HTML directory.
 
-Postprocess($HtmlDir, $BaseDir);
+my $NumBugs = Postprocess($HtmlDir, $BaseDir);
 
 if ($ViewResults and -r "$HtmlDir/index.html") {
   # Only works on Mac OS X (for now).
   print "Viewing analysis results: '$HtmlDir/index.html'\n";
   system("open", "$HtmlDir/index.html");
+}
+
+if ($ExitStatusFoundBugs) {
+  exit 1 if ($NumBugs > 0);
+  exit 0;
 }
 
 exit $ExitStatus;
