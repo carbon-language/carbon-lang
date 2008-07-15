@@ -2675,7 +2675,7 @@ bool ScalarEvolutionsImpl::executesAtLeastOnce(const Loop *L, bool isSigned,
     return false;
   }
 
-  if (!PreCondLHS->getType()->isInteger()) return false;
+  if (PreCondLHS->getType()->isInteger()) return false;
 
   return LHS == getSCEV(PreCondLHS) && RHS == getSCEV(PreCondRHS);
 }
@@ -2706,12 +2706,14 @@ HowManyLessThans(SCEV *LHS, SCEV *RHS, const Loop *L, bool isSigned) {
     // First, we get the value of the LHS in the first iteration: n
     SCEVHandle Start = AddRec->getOperand(0);
 
-    // Then, we get the value of the LHS in the first iteration in which the
-    // above condition doesn't hold.  This equals to max(m,n).
     if (executesAtLeastOnce(L, isSigned,
-                            SE.getMinusSCEV(AddRec->getOperand(0), One), RHS))
+                            SE.getMinusSCEV(AddRec->getOperand(0), One), RHS)) {
+      // Since we know that the condition is true in order to enter the loop,
+      // we know that it will run exactly m-n times.
       return SE.getMinusSCEV(RHS, Start);
-    else {
+    } else {
+      // Then, we get the value of the LHS in the first iteration in which the
+      // above condition doesn't hold.  This equals to max(m,n).
       SCEVHandle End = isSigned ? SE.getSMaxExpr(RHS, Start)
                                 : SE.getUMaxExpr(RHS, Start);
 
