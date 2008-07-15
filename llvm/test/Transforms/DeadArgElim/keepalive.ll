@@ -5,7 +5,7 @@
 
 ; Check if the pass doesn't modify anything that doesn't need changing. We feed
 ; an unused argument to each function to lure it into changing _something_ about
-; the function and then changing to much.
+; the function and then changing too much.
 
 
 ; This checks if the struct retval isn't changed into a void
