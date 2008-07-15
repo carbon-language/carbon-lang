@@ -4973,16 +4973,12 @@ static void DumpNodes(const SDNode *N, unsigned indent, const SelectionDAG *G) {
 
 void SelectionDAG::dump() const {
   cerr << "SelectionDAG has " << AllNodes.size() << " nodes:";
-  std::vector<const SDNode*> Nodes;
-  for (allnodes_const_iterator I = allnodes_begin(), E = allnodes_end();
-       I != E; ++I)
-    Nodes.push_back(I);
   
-  std::sort(Nodes.begin(), Nodes.end());
-
-  for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
-    if (!Nodes[i]->hasOneUse() && Nodes[i] != getRoot().Val)
-      DumpNodes(Nodes[i], 2, this);
+  for (allnodes_const_iterator I = allnodes_begin(), E = allnodes_end();
+       I != E; ++I) {
+    const SDNode *N = I;
+    if (!N->hasOneUse() && N != getRoot().Val)
+      DumpNodes(N, 2, this);
   }
 
   if (getRoot().Val) DumpNodes(getRoot().Val, 2, this);
