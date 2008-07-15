@@ -38,6 +38,14 @@ define internal {i32, i32, i16} @test5() {
         ret {i32, i32, i16} %C
 }
 
+; Nested return values
+define internal {{i32}, {i16, i16}} @test6() {
+        %A = insertvalue {{i32}, {i16, i16}} undef, i32 1, 0, 0
+        %B = insertvalue {{i32}, {i16, i16}} %A, i16 2, 1, 0
+        %C = insertvalue {{i32}, {i16, i16}} %B, i16 3, 1, 1
+        ret {{i32}, {i16, i16}} %C
+}
+
 define i32 @main() {
         %ret = call {i32, i16} @test2()                ; <i32> [#uses=1]
         %LIVE = extractvalue {i32, i16} %ret, 0
@@ -51,5 +59,10 @@ define i32 @main() {
         %DEAD2 = extractvalue { i32, i32, i16} %ret1, 2
         %V = add i32 %LIVE3, %LIVE4
         %W = add i32 %Z, %V
-        ret i32 %W
+        %ret2 = call { { i32 }, { i16, i16 } } @test6 ()
+        %LIVE5 = extractvalue { { i32 }, { i16, i16 } } %ret2, 0, 0
+        %DEAD3 = extractvalue { { i32 }, { i16, i16 } } %ret2, 1, 0
+        %DEAD4 = extractvalue { { i32 }, { i16, i16 } } %ret2, 1, 1
+        %Q = add i32 %W, %LIVE5
+        ret i32 %Q
 }

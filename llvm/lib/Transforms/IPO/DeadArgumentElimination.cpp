@@ -796,45 +796,28 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       } else {
         assert(STy && "Return type changed, but not into a void. The old "
                       "return type must have been a struct!");
-        // The original return value was a struct, update all uses (which are
-        // all extractvalue instructions, or uses that are unused themselves).
-        for (Value::use_iterator I = Call->use_begin(), E = Call->use_end();
-             I != E;) {
-          if (ExtractValueInst *EV = dyn_cast<ExtractValueInst>(*I)) {
-            // Increment now, since we're about to throw away this use.
-            ++I;
-            assert(EV->hasIndices() && "Return value used by extractvalue without"
-                                       "indices?");
-            unsigned Idx = *EV->idx_begin();
-            if (NewRetIdxs[Idx] != -1) {
-              if (RetTypes.size() > 1) {
-                // We're still returning a struct, create a new extractvalue
-                // instruction with the first index updated
-                std::vector<unsigned> NewIdxs(EV->idx_begin(), EV->idx_end());
-                NewIdxs[0] = NewRetIdxs[Idx];
-                Value *NEV = ExtractValueInst::Create(New, NewIdxs.begin(),
-                                                      NewIdxs.end(), "retval",
-                                                      EV);
-                EV->replaceAllUsesWith(NEV);
-                EV->eraseFromParent();
-              } else {
-                // We are now only returning a simple value, remove the
-                // extractvalue.
-                EV->replaceAllUsesWith(New);
-                EV->eraseFromParent();
-              }
-            } else {
-              // Value unused, replace uses by null for now, they will get removed
-              // later on.
-              EV->replaceAllUsesWith(Constant::getNullValue(EV->getType()));
-              EV->eraseFromParent();
-            }
-          } else {
-            // Not an extractvalue, so this use will become dead soon. Just
-            // replace it with null.
-            I.getUse().set(Constant::getNullValue(I.getUse().get()->getType()));
+        // We used to return a struct. Instead of doing smart stuff with all the
+        // uses of this struct, we will just rebuild it using
+        // extract/insertvalue chaining and let instcombine clean that up.
+        //
+        // Start out building up our return value from undef
+        Value *RetVal = llvm::UndefValue::get(RetTy);
+        for (unsigned i = 0; i != PartialRetVals; ++i)
+          if (NewRetIdxs[i] != -1) {
+            Value *V;
+            if (RetTypes.size() > 1)
+              // We are still returning a struct, so extract the value from our
+              // return value
+              V = ExtractValueInst::Create(New, NewRetIdxs[i], "newret", Call);
+            else
+              // We are now returning a single element, so just insert that
+              V = New;
+            // Insert the value at the old position
+            RetVal = InsertValueInst::Create(RetVal, V, i, "oldret", Call);
           }
-        }
+        // Now, replace all uses of the old call instruction with the return
+        // struct we built
+        Call->replaceAllUsesWith(RetVal);
         New->takeName(Call);
       }
     }
