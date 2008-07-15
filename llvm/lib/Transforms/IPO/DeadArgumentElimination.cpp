@@ -544,12 +544,7 @@ void DAE::MarkLive(RetOrArg RA) {
   if (!LiveValues.insert(RA).second)
     return; // We were already marked Live.
 
-  if (RA.IsArg)
-    DOUT << "DAE - Marking argument " << RA.Idx << " to function "
-         << RA.F->getNameStart() << " live\n";
-  else
-    DOUT << "DAE - Marking return value " << RA.Idx << " of function "
-         << RA.F->getNameStart() << " live\n";
+  DOUT << "DAE - Marking " << RA.getDescription() << " live\n";
 
   // We don't use upper_bound (or equal_range) here, because our recursive call
   // to ourselves is likely to cause the upper_bound (which is the first value
