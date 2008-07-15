@@ -269,7 +269,7 @@ sub UpdateInFilePath {
   
   close (ROUT);
   close (RIN);
-  `mv $fname.tmp $fname`;
+  `mv "$fname.tmp" "$fname"`;
 }
 
 ##----------------------------------------------------------------------------##
@@ -294,14 +294,14 @@ sub ScanFile {
 
   if (defined($AlreadyScanned{$digest})) {
     # Redundant file.  Remove it.
-    `rm -f $Dir/$FName`;
+    `rm -f "$Dir/$FName"`;
     return;
   }
   
   $AlreadyScanned{$digest} = 1;
   
   # At this point the report file is not world readable.  Make it happen.
-  `chmod 644 $Dir/$FName`;
+  `chmod 644 "$Dir/$FName"`;
   
   # Scan the report file for tags.
   open(IN, "$Dir/$FName") or DieDiag("Cannot open '$Dir/$FName'\n");
@@ -344,7 +344,7 @@ sub CopyJS {
   DieDiag("Cannot find 'sorttable.js'.\n")
     if (! -r "$RealBin/sorttable.js");  
 
-  `cp $RealBin/sorttable.js $Dir`;
+  `cp "$RealBin/sorttable.js" "$Dir"`;
 
   DieDiag("Could not copy 'sorttable.js' to '$Dir'.\n")
     if (! -r "$Dir/sorttable.js");
@@ -373,10 +373,10 @@ sub Postprocess {
 
   if (scalar(@files) == 0) {
     Diag("Removing directory '$Dir' because it contains no reports.\n");
-    `rm -fR $Dir`;
+    `rm -fR "$Dir"`;
     
     # Remove the base directory if it contains no files (don't use '-R').
-    `rm -f $BaseDir`;
+    `rm -f "$BaseDir"`;
     
     Diag("No bugs found.\n");
     return;
@@ -550,8 +550,8 @@ ENDTEXT
   CopyJS($Dir);
   
   # Make sure $Dir and $BaseDir is world readable/executable.
-  `chmod 755 $Dir`;
-  `chmod 755 $BaseDir`;
+  `chmod 755 "$Dir"`;
+  `chmod 755 "$BaseDir"`;
   
   my $Num = scalar(@Index);
   Diag("$Num bugs found.\n");
@@ -827,7 +827,7 @@ Postprocess($HtmlDir, $BaseDir);
 if ($ViewResults and -r "$HtmlDir/index.html") {
   # Only works on Mac OS X (for now).
   print "Viewing analysis results: '$HtmlDir/index.html'\n";
-  `open $HtmlDir/index.html`
+  `open "$HtmlDir/index.html"`
 }
 
 exit $ExitStatus;
