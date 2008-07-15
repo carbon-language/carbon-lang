@@ -3,6 +3,7 @@
 ; run instcombine to fold insert/extractvalue chains and we run dce to clean up
 ; any remaining dead stuff.
 ; RUN: llvm-as < %s | opt -deadargelim -instcombine -dce | llvm-dis | not grep i16
+; XFAIL: *
 
 define internal {i16, i32} @test(i16 %DEADARG) {
         %A = insertvalue {i16,i32} undef, i16 1, 0
