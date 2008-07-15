@@ -273,15 +273,13 @@ TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
     S = SelectSectionForGlobal(GV);
   }
 
-  std::string Name = S->Name;
+  if (!S->isNamed())
+    return S->Name;
 
   // If section is named we need to switch into it via special '.section'
   // directive and also append funky flags. Otherwise - section name is just
   // some magic assembler directive.
-  if (S->isNamed())
-    Name = getSwitchToSectionDirective() + Name + PrintSectionFlags(S->Flags);
-
-  return Name;
+  return getSwitchToSectionDirective() + S->Name + PrintSectionFlags(S->Flags);
 }
 
 // Lame default implementation. Calculate the section name for global.
