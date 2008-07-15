@@ -794,9 +794,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         // Replace by null for now.
         Call->replaceAllUsesWith(Constant::getNullValue(Call->getType()));
       } else {
-        assert(isa<StructType>(RetTy) && "Return type changed, but not into a"
-                                         "void. The old return type must have"
-                                         "been a struct!");
+        assert(STy && "Return type changed, but not into a void. The old "
+                      "return type must have been a struct!");
         // The original return value was a struct, update all uses (which are
         // all extractvalue instructions, or uses that are unused themselves).
         for (Value::use_iterator I = Call->use_begin(), E = Call->use_end();
