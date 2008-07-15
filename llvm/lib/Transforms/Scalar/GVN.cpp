@@ -44,7 +44,7 @@ STATISTIC(NumGVNPRE, "Number of instructions PRE'd");
 STATISTIC(NumGVNBlocks, "Number of blocks merged");
 
 static cl::opt<bool> EnablePRE("enable-pre",
-                               cl::init(true), cl::Hidden);
+                               cl::init(false), cl::Hidden);
 
 //===----------------------------------------------------------------------===//
 //                         ValueTable Class
