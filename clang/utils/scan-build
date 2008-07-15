@@ -29,6 +29,10 @@ my $BuildDate;
 my $UseColor = ((($ENV{'TERM'} eq 'xterm-color') and -t STDOUT)
                 and defined($ENV{'SCAN_BUILD_COLOR'}));
 
+##----------------------------------------------------------------------------##
+# Diagnostics
+##----------------------------------------------------------------------------##
+
 sub Diag {
   if ($UseColor) {
     print BOLD, MAGENTA "$Prog: @_";
@@ -50,6 +54,53 @@ sub DieDiag {
   }
   exit(0);
 }
+
+##----------------------------------------------------------------------------##
+# Some initial preprocessing of Clang options.
+##----------------------------------------------------------------------------##
+
+my $ClangSB = "$RealBin/clang";
+my $Clang = $ClangSB;
+
+if (! -x $ClangSB) {
+  $Clang = "clang";
+}
+
+my %AvailableAnalyses;
+
+# Query clang for analysis options.
+open(PIPE, "$Clang --help |") or
+  DieDiag("Cannot execute '$Clang'");
+  
+my $FoundAnalysis = 0;
+
+while(<PIPE>) {
+  if ($FoundAnalysis == 0) {
+    if (/Available Source Code Analyses/) {
+      $FoundAnalysis = 1;
+    }
+    
+    next;
+  }
+    
+  if (/^\s\s\s\s([^\s]+)\s(.+)$/) {
+    next if ($1 =~ /-dump/ or $1 =~ /-view/ 
+             or $1 =~ /-checker-simple/ or $1 =~ /-warn-uninit/);
+             
+    $AvailableAnalyses{$1} = $2;
+    next;
+  }
+  
+  last;
+}
+
+close (PIPE);
+
+my %AnalysesDefaultEnabled = (
+  '-warn-dead-stores' => 1,
+  '-checker-cfref' => 1,
+  '-warn-objc-methodsigs' => 1
+);
 
 ##----------------------------------------------------------------------------##
 # GetHTMLRunDir - Construct an HTML directory name for the current run.
@@ -592,9 +643,6 @@ ENDTEXT
 print <<ENDTEXT;
 OPTIONS:
 
-  -a            - The analysis to run.  The default is 'checker-cfref'.
-                  Valid options are: 'checker-cfref', 'fsyntax-only'
-
   -o            - Target directory for HTML report files.  Subdirectories
                   will be created as needed to represent separate "runs" of
                   the analyzer.  If this option is not specified, a directory
@@ -613,6 +661,26 @@ OPTIONS:
 
   -V            - View analysis results in a web browser when the build
   --view          completes.
+
+ENDTEXT
+
+  print "  Available Source Code Analyses (multiple analyses may be specified):\n\n";
+
+  foreach my $Analysis (sort keys %AvailableAnalyses) {
+    if (defined($AnalysesDefaultEnabled{$Analysis})) {
+      print "  (+)";
+    }
+    else {
+      print "     ";
+    }
+    
+    print " $Analysis  $AvailableAnalyses{$Analysis}\n";
+  }
+  
+print <<ENDTEXT
+
+  (+) == analysis enabled by default unless one
+         or more analysis options are specified
 
 BUILD OPTIONS
 
@@ -637,7 +705,7 @@ ENDTEXT
 my $HtmlDir;           # Parent directory to store HTML files.
 my $IgnoreErrors = 0;  # Ignore build errors.
 my $ViewResults  = 0;  # View results when the build terminates.
-my $Analysis;
+my @AnalysesToRun;
 
 if (!@ARGV) {
   DisplayHelp();
@@ -655,19 +723,9 @@ while (@ARGV) {
     exit 0;
   }
   
-  if ($arg eq "-a") {
+  if (defined($AvailableAnalyses{$arg})) {
     shift @ARGV;
-
-    if (!@ARGV) {
-      DieDiag("'-a' option requires an analysis type.\n");
-    }
-    
-    $Analysis = shift @ARGV;
-    
-    if (!($Analysis eq "checker-cfref" or $Analysis eq "fsyntax-only")) {
-      DieDiag("Invalid argument '$Analysis' to -a.\n");
-    }
-    
+    push @AnalysesToRun, $arg;
     next;
   }
   
@@ -737,12 +795,10 @@ my $Cmd = "$RealBin/ccc-analyzer";
 
 DieDiag("Executable 'ccc-analyzer' does not exist at '$Cmd'\n")
   if (! -x $Cmd);
-  
-my $Clang = "$RealBin/clang";
 
-if (! -x $Clang) {
-  Diag("'clang' executable not found in '$RealBin'.  Using 'clang' from path.\n");
-  $Clang = "clang";
+if (! -x $ClangSB) {
+  Diag("'clang' executable not found in '$RealBin'.\n");
+  Diag("Using 'clang' from path.\n");
 }
 
 $ENV{'CC'} = $Cmd;
@@ -756,8 +812,8 @@ if ($Verbose >= 3) {
   $ENV{'CCC_ANALYZER_LOG'} = 1;
 }
 
-if (defined($Analysis)) {
-  $ENV{'CCC_ANALYZER_ANALYSIS'} = $Analysis;
+if (scalar(@AnalysesToRun)) {
+  $ENV{'CCC_ANALYZER_ANALYSIS'} = join ' ',@AnalysesToRun;
 }
 
 # Run the build.
