@@ -31,7 +31,7 @@ MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM) {
   BSSSection                  = "\t.section\t.bss";
   LCOMMDirective              = "\t.lcomm\t";
 
-  if (TM.getRelocationModel() == Reloc::Static)
+  if (!TM.getSubtarget<MipsSubtarget>().hasABICall())
     JumpTableDirective = "\t.word\t";
   else    
     JumpTableDirective = "\t.gpword\t";

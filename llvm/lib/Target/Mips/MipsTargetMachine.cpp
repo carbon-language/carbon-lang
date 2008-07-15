@@ -38,8 +38,8 @@ createTargetAsmInfo() const
 MipsTargetMachine::
 MipsTargetMachine(const Module &M, const std::string &FS, bool isLittle=false):
   Subtarget(*this, M, FS, isLittle), 
-  DataLayout(isLittle ? std::string("e-p:32:32:32") :
-                        std::string("E-p:32:32:32")), 
+  DataLayout(isLittle ? std::string("e-p:32:32:32-i8:8:32-i16:16:32") :
+                        std::string("E-p:32:32:32-i8:8:32-i16:16:32")), 
   InstrInfo(*this), 
   FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0),
   TLInfo(*this) 

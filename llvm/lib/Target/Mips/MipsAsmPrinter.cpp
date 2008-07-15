@@ -486,9 +486,24 @@ doFinalization(Module &M)
       
       O << "\n\n";
       std::string name = Mang->getValueName(I);
-      Constant *C      = I->getInitializer();
-      unsigned Size    = TD->getABITypeSize(C->getType());
-      unsigned Align   = TD->getPreferredAlignmentLog(I);
+      Constant *C = I->getInitializer();
+      const Type *CTy = C->getType();
+      unsigned Size = TD->getABITypeSize(CTy);
+      bool printSizeAndType = true;
+
+      // A data structure or array is aligned in memory to the largest 
+      // alignment boundary required by any data type inside it (this matches
+      // the Preferred Type Alignment). For integral types, the alignment is 
+      // the type size. 
+      //unsigned Align = TD->getPreferredAlignmentLog(I);
+      //unsigned Align = TD->getPrefTypeAlignment(C->getType());
+      unsigned Align;
+      if (CTy->getTypeID() == Type::IntegerTyID || 
+          CTy->getTypeID() == Type::VoidTyID) {
+        assert(!(Size & (Size-1)) && "Alignment is not a power of two!");
+        Align = Log2_32(Size);
+      } else
+        Align = TD->getPreferredTypeAlignmentShift(CTy);
 
       // Is this correct ?
       if (C->isNullValue() && (I->hasLinkOnceLinkage() || 
@@ -549,10 +564,20 @@ doFinalization(Module &M)
               else if (!I->isConstant())
                 SwitchToDataSection(TAI->getDataSection(), I);
               else {
-                // Read-only data.
-                if (TAI->getReadOnlySection())
+                // Read-only data. We have two possible scenary here
+                // 1) Readonly section for strings (char arrays).
+                // 2) for other types.
+                if (TAI->getReadOnlySection()) {
+                  const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
+                  if (CVA && CVA->isString()) {
+                      std::string SectionName = "\t.section\t.rodata.str1.4,"
+                                                "\"aMS\",@progbits,1";
+                      SwitchToDataSection(SectionName.c_str());
+                      printSizeAndType = false;
+                      break;
+                  }
                   SwitchToDataSection(TAI->getReadOnlySection(), I);
-                else
+                } else
                   SwitchToDataSection(TAI->getDataSection(), I);
               }
             }
@@ -568,17 +593,18 @@ doFinalization(Module &M)
             abort();
           default:
             assert(0 && "Unknown linkage type!");          
-        }
+        } 
 
-        O << "\t.align " << Align << "\n";
+        if (Align)
+          O << "\t.align " << Align << "\n";
 
-        if (TAI->hasDotTypeDotSizeDirective()) {
+        if (TAI->hasDotTypeDotSizeDirective() && printSizeAndType) {
           O << "\t.type " << name << ",@object\n";
           O << "\t.size " << name << "," << Size << "\n";
         }
         O << name << ":\n";
         EmitGlobalConstant(C);
-    }
+    } 
   }
 
   O << "\n";

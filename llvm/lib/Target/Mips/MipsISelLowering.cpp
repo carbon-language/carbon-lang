@@ -370,10 +370,12 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
 
-  // To meet ABI, Mips must always allocate 16 bytes on
+  // To meet O32 ABI, Mips must always allocate 16 bytes on
   // the stack (even if less than 4 are used as arguments)
-  int VTsize = MVT(MVT::i32).getSizeInBits()/8;
-  MFI->CreateFixedObject(VTsize, (VTsize*3));
+  if (Subtarget->isABI_O32()) {
+    int VTsize = MVT(MVT::i32).getSizeInBits()/8;
+    MFI->CreateFixedObject(VTsize, (VTsize*3));
+  }
 
   CCInfo.AnalyzeCallOperands(Op.Val, CC_Mips);
   

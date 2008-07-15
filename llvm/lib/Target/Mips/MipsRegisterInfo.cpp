@@ -267,7 +267,7 @@ emitPrologue(MachineFunction &MF) const
   #endif
 
   // No need to allocate space on the stack.
-  if (NumBytes == 0) return;
+  if (NumBytes == 0 && !MFI->hasCalls()) return;
 
   int FPOffset, RAOffset;
   
@@ -389,7 +389,8 @@ void MipsRegisterInfo::
 processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
   // Set the SPOffset on the FI where GP must be saved/loaded.
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  if (MFI->hasCalls()) { 
+  bool isPIC = (MF.getTarget().getRelocationModel() == Reloc::PIC_);
+  if (MFI->hasCalls() && isPIC) { 
     MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
     #ifndef NDEBUG
     DOUT << "processFunctionBeforeFrameFinalized\n";
