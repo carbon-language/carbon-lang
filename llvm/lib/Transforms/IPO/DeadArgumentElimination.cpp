@@ -423,64 +423,64 @@ void DAE::SurveyFunction(Function &F) {
     return;
   }
 
-    DOUT << "DAE - Inspecting callers for fn: " << F.getName() << "\n";
-    // Keep track of the number of live retvals, so we can skip checks once all
-    // of them turn out to be live.
-    unsigned NumLiveRetVals = 0;
-    const Type *STy = dyn_cast<StructType>(F.getReturnType());
-    // Loop all uses of the function.
-    for (Value::use_iterator I = F.use_begin(), E = F.use_end(); I != E; ++I) {
-      // If the function is PASSED IN as an argument, its address has been
-      // taken.
-      if (I.getOperandNo() != 0) {
-        MarkLive(F);
-        return;
-      }
+  DOUT << "DAE - Inspecting callers for fn: " << F.getName() << "\n";
+  // Keep track of the number of live retvals, so we can skip checks once all
+  // of them turn out to be live.
+  unsigned NumLiveRetVals = 0;
+  const Type *STy = dyn_cast<StructType>(F.getReturnType());
+  // Loop all uses of the function.
+  for (Value::use_iterator I = F.use_begin(), E = F.use_end(); I != E; ++I) {
+    // If the function is PASSED IN as an argument, its address has been
+    // taken.
+    if (I.getOperandNo() != 0) {
+      MarkLive(F);
+      return;
+    }
 
-      // If this use is anything other than a call site, the function is alive.
-      CallSite CS = CallSite::get(*I);
-      Instruction *TheCall = CS.getInstruction();
-      if (!TheCall) {   // Not a direct call site?
-        MarkLive(F);
-        return;
-      }
+    // If this use is anything other than a call site, the function is alive.
+    CallSite CS = CallSite::get(*I);
+    Instruction *TheCall = CS.getInstruction();
+    if (!TheCall) {   // Not a direct call site?
+      MarkLive(F);
+      return;
+    }
 
-      // If we end up here, we are looking at a direct call to our function.
+    // If we end up here, we are looking at a direct call to our function.
 
-      // Now, check how our return value(s) is/are used in this caller. Don't
-      // bother checking return values if all of them are live already.
-      if (NumLiveRetVals != RetCount) {
-        if (STy) {
-          // Check all uses of the return value.
-          for (Value::use_iterator I = TheCall->use_begin(),
-               E = TheCall->use_end(); I != E; ++I) {
-            ExtractValueInst *Ext = dyn_cast<ExtractValueInst>(*I);
-            if (Ext && Ext->hasIndices()) {
-              // This use uses a part of our return value, survey the uses of
-              // that part and store the results for this index only.
-              unsigned Idx = *Ext->idx_begin();
-              if (RetValLiveness[Idx] != Live) {
-                RetValLiveness[Idx] = SurveyUses(Ext, MaybeLiveRetUses[Idx]);
-                if (RetValLiveness[Idx] == Live)
-                  NumLiveRetVals++;
-              }
-            } else {
-              // Used by something else than extractvalue. Mark all return
-              // values as live.
-              for (unsigned i = 0; i != RetCount; ++i )
-                RetValLiveness[i] = Live;
-              NumLiveRetVals = RetCount;
-              break;
+    // Now, check how our return value(s) is/are used in this caller. Don't
+    // bother checking return values if all of them are live already.
+    if (NumLiveRetVals != RetCount) {
+      if (STy) {
+        // Check all uses of the return value.
+        for (Value::use_iterator I = TheCall->use_begin(),
+             E = TheCall->use_end(); I != E; ++I) {
+          ExtractValueInst *Ext = dyn_cast<ExtractValueInst>(*I);
+          if (Ext && Ext->hasIndices()) {
+            // This use uses a part of our return value, survey the uses of
+            // that part and store the results for this index only.
+            unsigned Idx = *Ext->idx_begin();
+            if (RetValLiveness[Idx] != Live) {
+              RetValLiveness[Idx] = SurveyUses(Ext, MaybeLiveRetUses[Idx]);
+              if (RetValLiveness[Idx] == Live)
+                NumLiveRetVals++;
             }
-          }
-        } else {
-          // Single return value
-          RetValLiveness[0] = SurveyUses(TheCall, MaybeLiveRetUses[0]);
-          if (RetValLiveness[0] == Live)
+          } else {
+            // Used by something else than extractvalue. Mark all return
+            // values as live.
+            for (unsigned i = 0; i != RetCount; ++i )
+              RetValLiveness[i] = Live;
             NumLiveRetVals = RetCount;
+            break;
+          }
         }
+      } else {
+        // Single return value
+        RetValLiveness[0] = SurveyUses(TheCall, MaybeLiveRetUses[0]);
+        if (RetValLiveness[0] == Live)
+          NumLiveRetVals = RetCount;
       }
     }
+  }
 
   // Now we've inspected all callers, record the liveness of our return values.
   for (unsigned i = 0; i != RetCount; ++i)
