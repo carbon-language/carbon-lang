@@ -694,11 +694,13 @@ RetainSummary* RetainSummaryManager::getNSSummary(FunctionDecl* FD,
 }
 
 static bool isRetain(FunctionDecl* FD, const char* FName) {
-  return (strstr(FName, "Retain") != 0);
+  const char* loc = strstr(FName, "Retain");
+  return loc && loc[sizeof("Retain")-1] == '\0';
 }
 
 static bool isRelease(FunctionDecl* FD, const char* FName) {
-  return (strstr(FName, "Release") != 0);
+  const char* loc = strstr(FName, "Release");
+  return loc && loc[sizeof("Release")-1] == '\0';
 }
 
 RetainSummary* RetainSummaryManager::getCFSummary(FunctionDecl* FD,
