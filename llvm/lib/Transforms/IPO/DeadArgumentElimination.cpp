@@ -134,6 +134,7 @@ namespace {
                    const UseVector &MaybeLiveUses);
     void MarkLive(const RetOrArg &RA);
     void MarkLive(const Function &F);
+    void PropagateLiveness(const RetOrArg &RA);
     bool RemoveDeadStuffFromFunction(Function *F);
     bool DeleteDeadVarargs(Function &Fn);
   };
@@ -545,7 +546,12 @@ void DAE::MarkLive(const RetOrArg &RA) {
     return; // We were already marked Live.
 
   DOUT << "DAE - Marking " << RA.getDescription() << " live\n";
+  PropagateLiveness(RA);
+}
 
+/// PropagateLiveness - Given that RA is a live value, propagate it's liveness
+/// to any other values it uses (according to Uses).
+void DAE::PropagateLiveness(const RetOrArg &RA) {
   // We don't use upper_bound (or equal_range) here, because our recursive call
   // to ourselves is likely to cause the upper_bound (which is the first value
   // not belonging to RA) to become erased and the iterator invalidated.
