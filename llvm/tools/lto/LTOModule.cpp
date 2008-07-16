@@ -329,7 +329,7 @@ void LTOModule::lazyParseSymbols()
           if (pend == std::string::npos)
             break;
 
-          asmSymbolName.assign(inlineAsm, pbegin, pbegin-pend);
+          asmSymbolName.assign(inlineAsm, pbegin, pend - pbegin);
           addAsmGlobalSymbol(asmSymbolName.c_str());
 
           // search next .globl
