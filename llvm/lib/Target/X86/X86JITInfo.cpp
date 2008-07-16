@@ -18,6 +18,7 @@
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Config/alloca.h"
+#include "llvm/Support/Compiler.h"
 #include <cstdlib>
 #include <cstring>
 using namespace llvm;
@@ -315,7 +316,8 @@ extern "C" {
 /// function stub when we did not know the real target of a call.  This function
 /// must locate the start of the stub or call site and pass it into the JIT
 /// compiler function.
-extern "C" void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
+extern "C" void ATTRIBUTE_USED
+X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
   intptr_t *RetAddrLoc = &StackPtr[1];
   assert(*RetAddrLoc == RetAddr &&
          "Could not find return address on the stack!");

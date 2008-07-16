@@ -23,6 +23,11 @@
 #define VISIBILITY_HIDDEN
 #endif
 
+#if (__GNUC__ >= 4)
+#define ATTRIBUTE_USED __attribute__((__used__))
+#else
+#define ATTRIBUTE_USED
+#endif
 
 // C++ doesn't support 'extern template' of template specializations.  GCC does,
 // but requires __extension__ before it.  In the header, use this:
