@@ -1120,19 +1120,17 @@ SDNode *X86DAGToDAGISel::getTruncate(SDOperand N0, MVT VT) {
       // Ensure that the source register has an 8-bit subreg on 32-bit targets
       if (!Subtarget->is64Bit()) { 
         unsigned Opc;
-        MVT VT;
-        switch (N0.getValueType().getSimpleVT()) {
+        MVT N0VT = N0.getValueType();
+        switch (N0VT.getSimpleVT()) {
         default: assert(0 && "Unknown truncate!");
         case MVT::i16:
           Opc = X86::MOV16to16_;
-          VT = MVT::i16;
           break;
         case MVT::i32:
           Opc = X86::MOV32to32_;
-          VT = MVT::i32;
           break;
         }
-        N0 = SDOperand(CurDAG->getTargetNode(Opc, VT, MVT::Flag, N0), 0);
+        N0 = SDOperand(CurDAG->getTargetNode(Opc, N0VT, MVT::Flag, N0), 0);
         return CurDAG->getTargetNode(X86::EXTRACT_SUBREG,
                                      VT, N0, SRIdx, N0.getValue(1));
       }
