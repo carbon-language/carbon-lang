@@ -53,6 +53,8 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
 #endif
     assert(0 && "Do not know how to promote this operator!");
     abort();
+  case ISD::AssertSext:  Result = PromoteIntRes_AssertSext(N); break;
+  case ISD::AssertZext:  Result = PromoteIntRes_AssertZext(N); break;
   case ISD::BIT_CONVERT: Result = PromoteIntRes_BIT_CONVERT(N); break;
   case ISD::BSWAP:       Result = PromoteIntRes_BSWAP(N); break;
   case ISD::BUILD_PAIR:  Result = PromoteIntRes_BUILD_PAIR(N); break;
@@ -99,6 +101,23 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   // If Result is null, the sub-method took care of registering the result.
   if (Result.Val)
     SetPromotedInteger(SDOperand(N, ResNo), Result);
+}
+
+SDOperand DAGTypeLegalizer::PromoteIntRes_AssertSext(SDNode *N) {
+  // Sign-extend the new bits, and continue the assertion.
+  MVT OldVT = N->getValueType(0);
+  SDOperand Op = GetPromotedInteger(N->getOperand(0));
+  return DAG.getNode(ISD::AssertSext, Op.getValueType(),
+                     DAG.getNode(ISD::SIGN_EXTEND_INREG, Op.getValueType(), Op,
+                                 DAG.getValueType(OldVT)), N->getOperand(1));
+}
+
+SDOperand DAGTypeLegalizer::PromoteIntRes_AssertZext(SDNode *N) {
+  // Zero the new bits, and continue the assertion.
+  MVT OldVT = N->getValueType(0);
+  SDOperand Op = GetPromotedInteger(N->getOperand(0));
+  return DAG.getNode(ISD::AssertZext, Op.getValueType(),
+                     DAG.getZeroExtendInReg(Op, OldVT), N->getOperand(1));
 }
 
 SDOperand DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
@@ -827,6 +846,7 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::EXTRACT_VECTOR_ELT: ExpandRes_EXTRACT_VECTOR_ELT(N, Lo, Hi); break;
 
   case ISD::ANY_EXTEND:  ExpandIntRes_ANY_EXTEND(N, Lo, Hi); break;
+  case ISD::AssertSext:  ExpandIntRes_AssertSext(N, Lo, Hi); break;
   case ISD::AssertZext:  ExpandIntRes_AssertZext(N, Lo, Hi); break;
   case ISD::BSWAP:       ExpandIntRes_BSWAP(N, Lo, Hi); break;
   case ISD::Constant:    ExpandIntRes_Constant(N, Lo, Hi); break;
@@ -1112,6 +1132,25 @@ void DAGTypeLegalizer::ExpandIntRes_ANY_EXTEND(SDNode *N,
            "Operand over promoted?");
     // Split the promoted operand.  This will simplify when it is expanded.
     SplitInteger(Res, Lo, Hi);
+  }
+}
+
+void DAGTypeLegalizer::ExpandIntRes_AssertSext(SDNode *N,
+                                               SDOperand &Lo, SDOperand &Hi) {
+  GetExpandedInteger(N->getOperand(0), Lo, Hi);
+  MVT NVT = Lo.getValueType();
+  MVT EVT = cast<VTSDNode>(N->getOperand(1))->getVT();
+  unsigned NVTBits = NVT.getSizeInBits();
+  unsigned EVTBits = EVT.getSizeInBits();
+
+  if (NVTBits < EVTBits) {
+    Hi = DAG.getNode(ISD::AssertSext, NVT, Hi,
+                     DAG.getValueType(MVT::getIntegerVT(EVTBits - NVTBits)));
+  } else {
+    Lo = DAG.getNode(ISD::AssertSext, NVT, Lo, DAG.getValueType(EVT));
+    // The high part replicates the sign bit of Lo, make it explicit.
+    Hi = DAG.getNode(ISD::SRA, NVT, Lo,
+                     DAG.getConstant(NVTBits-1, TLI.getShiftAmountTy()));
   }
 }
 

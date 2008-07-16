@@ -212,6 +212,8 @@ private:
 
   // Integer Result Promotion.
   void PromoteIntegerResult(SDNode *N, unsigned ResNo);
+  SDOperand PromoteIntRes_AssertSext(SDNode *N);
+  SDOperand PromoteIntRes_AssertZext(SDNode *N);
   SDOperand PromoteIntRes_BIT_CONVERT(SDNode *N);
   SDOperand PromoteIntRes_BSWAP(SDNode *N);
   SDOperand PromoteIntRes_BUILD_PAIR(SDNode *N);
@@ -269,6 +271,7 @@ private:
   // Integer Result Expansion.
   void ExpandIntegerResult(SDNode *N, unsigned ResNo);
   void ExpandIntRes_ANY_EXTEND        (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandIntRes_AssertSext        (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_AssertZext        (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_Constant          (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandIntRes_CTLZ              (SDNode *N, SDOperand &Lo, SDOperand &Hi);
