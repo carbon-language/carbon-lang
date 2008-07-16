@@ -48,3 +48,5 @@ void bar3() {
 }
 
 enum E e2;
+
+enum E2 { E2 };

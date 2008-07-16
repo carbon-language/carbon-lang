@@ -2121,7 +2121,12 @@ Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,
   // Verify that there isn't already something declared with this name in this
   // scope.
   if (Decl *PrevDecl = LookupDecl(Id, Decl::IDNS_Ordinary, S)) {
-    if (IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
+    // When in C++, we may get a TagDecl with the same name; in this case the
+    // enum constant will 'hide' the tag.
+    assert((getLangOptions().CPlusPlus || !isa<TagDecl>(PrevDecl)) &&
+           "Received TagDecl when not in C++!");
+    if (!isa<TagDecl>(PrevDecl) &&
+        IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
       if (isa<EnumConstantDecl>(PrevDecl))
         Diag(IdLoc, diag::err_redefinition_of_enumerator, Id->getName());
       else
