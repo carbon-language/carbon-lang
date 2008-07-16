@@ -5070,9 +5070,8 @@ SDOperand DAGCombiner::XformToShuffleWithZero(SDNode *N) {
                                 &IdxOps[0], IdxOps.size()));
       SDOperand Result = DAG.getNode(ISD::VECTOR_SHUFFLE, VT,
                                      &Ops[0], Ops.size());
-      if (VT != LHS.getValueType()) {
-        Result = DAG.getNode(ISD::BIT_CONVERT, LHS.getValueType(), Result);
-      }
+      if (VT != N->getValueType(0))
+        Result = DAG.getNode(ISD::BIT_CONVERT, N->getValueType(0), Result);
       return Result;
     }
   }
