@@ -317,7 +317,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 
   // Start at the beginning of the local area.
   // The Offset is the distance from the stack top in the direction
-  // of stack growth -- so it's always positive.
+  // of stack growth -- so it's always nonnegative.
   int64_t Offset = TFI.getOffsetOfLocalArea();
   if (StackGrowsDown)
     Offset = -Offset;
