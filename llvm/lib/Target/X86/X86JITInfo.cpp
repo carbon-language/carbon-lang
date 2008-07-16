@@ -463,7 +463,11 @@ void *X86JITInfo::emitFunctionStub(const Function* F, void *Fn,
 /// getPICJumpTableEntry - Returns the value of the jumptable entry for the
 /// specific basic block.
 intptr_t X86JITInfo::getPICJumpTableEntry(intptr_t BB, intptr_t Entry) {
+#if defined(X86_64_JIT)
+  return BB - Entry;
+#else
   return BB - PICBase;
+#endif
 }
 
 /// relocate - Before the JIT can run a block of code that has been emitted,
