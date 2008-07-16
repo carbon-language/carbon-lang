@@ -1294,8 +1294,11 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   buf = "}\nelse {\n";
   buf += "  _rethrow = objc_exception_extract(&_stack);\n";
   buf += "  if (!_rethrow) objc_exception_try_exit(&_stack);\n";
-  // FIXME: This must be objc_sync_exit(syncExpr);
-  buf += "  objc_sync_exit();\n";
+  buf += "  objc_sync_exit(";
+  std::ostringstream syncExprBuf;
+  S->getSynchExpr()->printPretty(syncExprBuf);
+  buf += syncExprBuf.str();
+  buf += ");\n";
   buf += "  if (_rethrow) objc_exception_throw(_rethrow);\n";
   buf += "}\n";
   buf += "}";
