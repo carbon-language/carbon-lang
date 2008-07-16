@@ -14,6 +14,10 @@ namespace B {} // expected-error {{error: redefinition of 'B' as different kind 
 void C(); // expected-error {{error: previous definition is here}}
 namespace C {} // expected-error {{error: redefinition of 'C' as different kind of symbol}}
 
+namespace D {
+  class D {};
+}
+
 namespace S1 {
   int x;
 

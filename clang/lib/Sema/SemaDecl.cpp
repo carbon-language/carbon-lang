@@ -1733,11 +1733,14 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
       // scope, e.g. "struct foo; void bar() { struct foo; }", just create a new
       // type.
     } else {
-      // The tag name clashes with a namespace name, issue an error and recover
-      // by making this tag be anonymous.
-      Diag(NameLoc, diag::err_redefinition_different_kind, Name->getName());
-      Diag(PrevDecl->getLocation(), diag::err_previous_definition);
-      Name = 0;
+      // PrevDecl is a namespace.
+      if (IdResolver.isDeclInScope(PrevDecl, CurContext, S)) {
+        // The tag name clashes with a namespace name, issue an error and recover
+        // by making this tag be anonymous.
+        Diag(NameLoc, diag::err_redefinition_different_kind, Name->getName());
+        Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+        Name = 0;
+      }
     }
   }
   
