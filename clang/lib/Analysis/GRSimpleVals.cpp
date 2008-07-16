@@ -377,8 +377,10 @@ RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, NonLVal X, QualType T) {
   if (!isa<nonlval::ConcreteInt>(X))
     return UnknownVal();
 
+  bool isLValType = LVal::IsLValType(T);
+  
   // Only handle casts from integers to integers.
-  if (!T->isIntegerType())
+  if (!isLValType && !T->isIntegerType())
     return UnknownVal();
   
   BasicValueFactory& BasicVals = Eng.getBasicVals();
@@ -387,7 +389,7 @@ RVal GRSimpleVals::EvalCast(GRExprEngine& Eng, NonLVal X, QualType T) {
   V.setIsUnsigned(T->isUnsignedIntegerType() || LVal::IsLValType(T));
   V.extOrTrunc(Eng.getContext().getTypeSize(T));
   
-  if (LVal::IsLValType(T))
+  if (isLValType)
     return lval::ConcreteInt(BasicVals.getValue(V));
   else
     return nonlval::ConcreteInt(BasicVals.getValue(V));
