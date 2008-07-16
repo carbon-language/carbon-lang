@@ -376,6 +376,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 /// [C++]   'dynamic_cast' '<' type-name '>' '(' expression ')'     [C++ 5.2p1]
 /// [C++]   'reinterpret_cast' '<' type-name '>' '(' expression ')' [C++ 5.2p1]
 /// [C++]   'static_cast' '<' type-name '>' '(' expression ')'      [C++ 5.2p1]
+/// [C++]   'this'          [C++ 9.3.2]
 ///
 ///       constant: [C99 6.4.4]
 ///         integer-constant
