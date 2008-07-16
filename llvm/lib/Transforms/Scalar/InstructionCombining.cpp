@@ -10649,12 +10649,87 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
 }
 
 Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
-  // See if we are trying to extract a known value. If so, use that instead.
-  if (Value *Elt = FindInsertedValue(EV.getOperand(0), EV.idx_begin(),
-                                     EV.idx_end(), &EV))
-    return ReplaceInstUsesWith(EV, Elt);
+  Value *Agg = EV.getAggregateOperand();
 
-  // No changes
+  if (!EV.hasIndices())
+    return ReplaceInstUsesWith(EV, Agg);
+
+  if (Constant *C = dyn_cast<Constant>(Agg)) {
+    if (isa<UndefValue>(C))
+      return ReplaceInstUsesWith(EV, UndefValue::get(EV.getType()));
+      
+    if (isa<ConstantAggregateZero>(C))
+      return ReplaceInstUsesWith(EV, Constant::getNullValue(EV.getType()));
+
+    if (isa<ConstantArray>(C) || isa<ConstantStruct>(C)) {
+      // Extract the element indexed by the first index out of the constant
+      Value *V = C->getOperand(*EV.idx_begin());
+      if (EV.getNumIndices() > 1)
+        // Extract the remaining indices out of the constant indexed by the
+        // first index
+        return ExtractValueInst::Create(V, EV.idx_begin() + 1, EV.idx_end());
+      else
+        return ReplaceInstUsesWith(EV, V);
+    }
+    return 0; // Can't handle other constants
+  } 
+  if (InsertValueInst *IV = dyn_cast<InsertValueInst>(Agg)) {
+    // We're extracting from an insertvalue instruction, compare the indices
+    const unsigned *exti, *exte, *insi, *inse;
+    for (exti = EV.idx_begin(), insi = IV->idx_begin(),
+         exte = EV.idx_end(), inse = IV->idx_end();
+         exti != exte && insi != inse;
+         ++exti, ++insi) {
+      if (*insi != *exti)
+        // The insert and extract both reference distinctly different elements.
+        // This means the extract is not influenced by the insert, and we can
+        // replace the aggregate operand of the extract with the aggregate
+        // operand of the insert. i.e., replace
+        // %I = insertvalue { i32, { i32 } } %A, { i32 } { i32 42 }, 1
+        // %E = extractvalue { i32, { i32 } } %I, 0
+        // with
+        // %E = extractvalue { i32, { i32 } } %A, 0
+        return ExtractValueInst::Create(IV->getAggregateOperand(),
+                                        EV.idx_begin(), EV.idx_end());
+    }
+    if (exti == exte && insi == inse)
+      // Both iterators are at the end: Index lists are identical. Replace
+      // %B = insertvalue { i32, { i32 } } %A, i32 42, 1, 0
+      // %C = extractvalue { i32, { i32 } } %B, 1, 0
+      // with "i32 42"
+      return ReplaceInstUsesWith(EV, IV->getInsertedValueOperand());
+    if (exti == exte) {
+      // The extract list is a prefix of the insert list. i.e. replace
+      // %I = insertvalue { i32, { i32 } } %A, i32 42, 1, 0
+      // %E = extractvalue { i32, { i32 } } %I, 1
+      // with
+      // %X = extractvalue { i32, { i32 } } %A, 1
+      // %E = insertvalue { i32 } %X, i32 42, 0
+      // by switching the order of the insert and extract (though the
+      // insertvalue should be left in, since it may have other uses).
+      Value *NewEV = InsertNewInstBefore(
+        ExtractValueInst::Create(IV->getAggregateOperand(),
+                                 EV.idx_begin(), EV.idx_end()),
+        EV);
+      return InsertValueInst::Create(NewEV, IV->getInsertedValueOperand(),
+                                     insi, inse);
+    }
+    if (insi == inse)
+      // The insert list is a prefix of the extract list
+      // We can simply remove the common indices from the extract and make it
+      // operate on the inserted value instead of the insertvalue result.
+      // i.e., replace
+      // %I = insertvalue { i32, { i32 } } %A, { i32 } { i32 42 }, 1
+      // %E = extractvalue { i32, { i32 } } %I, 1, 0
+      // with
+      // %E extractvalue { i32 } { i32 42 }, 0
+      return ExtractValueInst::Create(IV->getInsertedValueOperand(), 
+                                      exti, exte);
+  }
+  // Can't simplify extracts from other values. Note that nested extracts are
+  // already simplified implicitely by the above (extract ( extract (insert) )
+  // will be translated into extract ( insert ( extract ) ) first and then just
+  // the value inserted, if appropriate).
   return 0;
 }
 
