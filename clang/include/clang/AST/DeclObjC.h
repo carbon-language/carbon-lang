@@ -451,12 +451,12 @@ public:
 ///   }
 ///
 class ObjCIvarDecl : public FieldDecl {
-  ObjCIvarDecl(SourceLocation L, IdentifierInfo *Id, QualType T)
-    : FieldDecl(ObjCIvar, L, Id, T) {}
+  ObjCIvarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Expr *BW)
+    : FieldDecl(ObjCIvar, L, Id, T, BW) {}
 public:
   static ObjCIvarDecl *Create(ASTContext &C, SourceLocation L,
-                              IdentifierInfo *Id, QualType T);
-    
+                              IdentifierInfo *Id, QualType T, Expr *BW = NULL);
+  
   enum AccessControl {
     None, Private, Protected, Public, Package
   };

@@ -2779,13 +2779,19 @@ void RewriteObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
 void RewriteObjC::SynthesizeIvarOffsetComputation(ObjCImplementationDecl *IDecl, 
                                                   ObjCIvarDecl *ivar, 
                                                   std::string &Result) {
-  Result += "__OFFSETOFIVAR__(struct ";
-  Result += IDecl->getName();
-  if (LangOpts.Microsoft)
-    Result += "_IMPL";
-  Result += ", ";
-  Result += ivar->getName();
-  Result += ")";
+  if (ivar->isBitField()) {
+    // FIXME: The hack below doesn't work for bitfields. For now, we simply
+    // place all bitfields at offset 0.
+    Result += "0";
+  } else {
+    Result += "__OFFSETOFIVAR__(struct ";
+    Result += IDecl->getName();
+    if (LangOpts.Microsoft)
+      Result += "_IMPL";
+    Result += ", ";
+    Result += ivar->getName();
+    Result += ")";
+  }
 }
 
 //===----------------------------------------------------------------------===//

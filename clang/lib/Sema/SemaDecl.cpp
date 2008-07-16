@@ -1946,7 +1946,8 @@ Sema::DeclTy *Sema::ActOnIvar(Scope *S,
     InvalidDecl = true;
   }
   
-  ObjCIvarDecl *NewID = ObjCIvarDecl::Create(Context, Loc, II, T);
+  ObjCIvarDecl *NewID = ObjCIvarDecl::Create(Context, Loc, II, T,
+                                             (Expr *)BitfieldWidth);
   
   ProcessDeclAttributes(NewID, D);
   
