@@ -337,6 +337,9 @@ void RewriteObjC::Initialize(ASTContext &context) {
   Preamble += "__OBJC_RW_EXTERN struct objc_object *objc_exception_extract(void *);\n";
   Preamble += "__OBJC_RW_EXTERN int objc_exception_match";
   Preamble += "(struct objc_class *, struct objc_object *);\n";
+  // @synchronized hooks.
+  Preamble += "__OBJC_RW_EXTERN void objc_sync_enter(struct objc_object *);\n";
+  Preamble += "__OBJC_RW_EXTERN void objc_sync_exit(struct objc_object *);\n";
   Preamble += "__OBJC_RW_EXTERN Protocol *objc_getProtocol(const char *);\n";
   Preamble += "#ifndef __FASTENUMERATIONSTATE\n";
   Preamble += "struct __objcFastEnumerationState {\n\t";
