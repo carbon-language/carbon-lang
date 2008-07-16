@@ -76,6 +76,7 @@ private:
                                                         llvm::Mangler &mangler);
     void                    addDefinedDataSymbol(llvm::GlobalValue* v, 
                                                         llvm::Mangler &mangler);
+    void                    addAsmGlobalSymbol(const char *);
     static bool             isTargetMatch(llvm::MemoryBuffer* memBuffer, 
                                                     const char* triplePrefix);
     

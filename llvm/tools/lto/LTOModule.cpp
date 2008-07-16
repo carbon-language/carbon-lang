@@ -238,6 +238,19 @@ void LTOModule::addDefinedSymbol(GlobalValue* def, Mangler &mangler,
     _defines[info.name] = 1;
 }
 
+void LTOModule::addAsmGlobalSymbol(const char *name) {
+  // string is owned by _defines
+  const char *symbolName = ::strdup(name);
+  uint32_t attr = LTO_SYMBOL_DEFINITION_REGULAR;
+  attr |= LTO_SYMBOL_SCOPE_DEFAULT;
+
+  // add to table of symbols
+  NameAndAttributes info;
+  info.name = symbolName;
+  info.attributes = (lto_symbol_attributes)attr;
+  _symbols.push_back(info);
+  _defines[info.name] = 1;
+}
 
 void LTOModule::addPotentialUndefinedSymbol(GlobalValue* decl, Mangler &mangler)
 {   
@@ -295,6 +308,32 @@ void LTOModule::lazyParseSymbols()
                 addPotentialUndefinedSymbol(v, mangler);
             else 
                 addDefinedDataSymbol(v, mangler);
+        }
+
+        // add asm globals
+        const std::string &inlineAsm = _module->getModuleInlineAsm();
+        const std::string glbl = ".globl";
+        std::string asmSymbolName;
+        std::string::size_type pos = inlineAsm.find(glbl, 0);
+        while (pos != std::string::npos) {
+          // eat .globl
+          pos = pos + 6;
+
+          // skip white space between .globl and symbol name
+          std::string::size_type pbegin = inlineAsm.find_first_not_of(' ', pos);
+          if (pbegin == std::string::npos)
+            break;
+
+          // find end-of-line
+          std::string::size_type pend = inlineAsm.find_first_of('\n', pbegin);
+          if (pend == std::string::npos)
+            break;
+
+          asmSymbolName.assign(inlineAsm, pbegin, pbegin-pend);
+          addAsmGlobalSymbol(asmSymbolName.c_str());
+
+          // search next .globl
+          pos = inlineAsm.find(glbl, pend);
         }
 
         // make symbols for all undefines
