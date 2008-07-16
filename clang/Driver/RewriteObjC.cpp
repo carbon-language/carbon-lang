@@ -1323,22 +1323,22 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
   startBuf = SM->getCharacterData(startLoc);
 
   assert((*startBuf == '}') && "bogus @try block");
-
+  
   SourceLocation lastCurlyLoc = startLoc;
-  
-  startLoc = startLoc.getFileLocWithOffset(1);
-  buf = " /* @catch begin */ else {\n";
-  buf += " id _caught = objc_exception_extract(&_stack);\n";
-  buf += " objc_exception_try_enter (&_stack);\n";
-  buf += " if (_setjmp(_stack.buf))\n";
-  buf += "   _rethrow = objc_exception_extract(&_stack);\n";
-  buf += " else { /* @catch continue */";
-  
-  InsertText(startLoc, buf.c_str(), buf.size());
-  
+  ObjCAtCatchStmt *catchList = S->getCatchStmts();
+  if (catchList) {
+    startLoc = startLoc.getFileLocWithOffset(1);
+    buf = " /* @catch begin */ else {\n";
+    buf += " id _caught = objc_exception_extract(&_stack);\n";
+    buf += " objc_exception_try_enter (&_stack);\n";
+    buf += " if (_setjmp(_stack.buf))\n";
+    buf += "   _rethrow = objc_exception_extract(&_stack);\n";
+    buf += " else { /* @catch continue */";
+    
+    InsertText(startLoc, buf.c_str(), buf.size());
+  }
   bool sawIdTypedCatch = false;
   Stmt *lastCatchBody = 0;
-  ObjCAtCatchStmt *catchList = S->getCatchStmts();
   while (catchList) {
     Stmt *catchStmt = catchList->getCatchParamStmt();
 

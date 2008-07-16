@@ -11,13 +11,17 @@ void foo() {
 int main()
 {
 
-@try  {
-   MYTRY();
-}
+  @try  {
+     MYTRY();
+  }
 
-@catch (Foo* localException) {
-   MYCATCH();
-   @throw;
-}
+  @catch (Foo* localException) {
+     MYCATCH();
+     @throw;
+  }
+  
+  // no catch clause
+  @try { } 
+  @finally { }
 }
 
