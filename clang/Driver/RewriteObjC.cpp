@@ -2061,7 +2061,10 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
       
       InitExprs.push_back(
         new CastExpr(Context->getObjCIdType(), 
-                     recExpr, SourceLocation())); // set the 'receiver'.
+                     new DeclRefExpr(CurMethodDecl->getSelfDecl(), 
+                                     Context->getObjCIdType(),
+                                     SourceLocation()), 
+                     SourceLocation())); // set the 'receiver'.
       
       llvm::SmallVector<Expr*, 8> ClsExprs;
       QualType argType = Context->getPointerType(Context->CharTy);
