@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements bottom-up inlining of functions into callees.
+// This file implements heuristics for inlining decisions.
 //
 //===----------------------------------------------------------------------===//
 
