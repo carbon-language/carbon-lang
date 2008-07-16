@@ -37,7 +37,8 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
                                        bool isDirectCall) const
 {
   // FIXME: PIC
-  if (TM.getRelocationModel() != Reloc::Static) {
+  if (TM.getRelocationModel() != Reloc::Static &&
+      TM.getCodeModel() != CodeModel::Large) {
     if (isTargetDarwin()) {
       return (!isDirectCall &&
               (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||

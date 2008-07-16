@@ -1677,15 +1677,11 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     // We should use extra load for direct calls to dllimported functions in
     // non-JIT mode.
-    if ((IsTailCall || !Is64Bit ||
-         getTargetMachine().getCodeModel() != CodeModel::Large)
-        && !Subtarget->GVRequiresExtraLoad(G->getGlobal(),
-                                           getTargetMachine(), true))
+    if (!Subtarget->GVRequiresExtraLoad(G->getGlobal(),
+                                        getTargetMachine(), true))
       Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
-    if (IsTailCall || !Is64Bit ||
-        getTargetMachine().getCodeModel() != CodeModel::Large)
-      Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
+    Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
   } else if (IsTailCall) {
     unsigned Opc = Is64Bit ? X86::R9 : X86::ECX;
 
