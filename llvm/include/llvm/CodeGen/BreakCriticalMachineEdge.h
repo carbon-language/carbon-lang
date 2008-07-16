@@ -11,8 +11,8 @@
 //
 //===---------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_ASMPRINTER_H
-#define LLVM_CODEGEN_ASMPRINTER_H
+#ifndef LLVM_CODEGEN_BREAKCRITICALMACHINEEDGES_H
+#define LLVM_CODEGEN_BREAKCRITICALMACHINEEDGES_H
 
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
