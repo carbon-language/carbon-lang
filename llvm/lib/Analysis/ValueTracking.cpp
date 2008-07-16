@@ -864,7 +864,7 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
   else if (Constant *C = dyn_cast<Constant>(V)) {
     if (isa<ConstantArray>(C) || isa<ConstantStruct>(C))
       // Recursively process this constant
-      return FindInsertedValue(C->getOperand(*idx_begin), ++idx_begin, idx_end,
+      return FindInsertedValue(C->getOperand(*idx_begin), idx_begin + 1, idx_end,
                                InsertBefore);
   } else if (InsertValueInst *I = dyn_cast<InsertValueInst>(V)) {
     // Loop the indices for the insertvalue instruction in parallel with the
