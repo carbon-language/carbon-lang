@@ -667,10 +667,22 @@ void RewriteObjC::RewriteForwardProtocolDecl(ObjCForwardProtocolDecl *PDecl) {
 
 void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD, 
                                         std::string &ResultStr) {
+  const FunctionType *FPRetType = 0;
   ResultStr += "\nstatic ";
   if (OMD->getResultType()->isObjCQualifiedIdType())
     ResultStr += "id";
-  else
+  else if (OMD->getResultType()->isFunctionPointerType()) {
+    // needs special handling, since pointer-to-functions have special
+    // syntax (where a decaration models use).
+    QualType retType = OMD->getResultType();
+    if (const PointerType* PT = retType->getAsPointerType()) {
+      QualType PointeeTy = PT->getPointeeType();
+      if ((FPRetType = PointeeTy->getAsFunctionType())) {
+        ResultStr += FPRetType->getResultType().getAsString();
+        ResultStr += "(*";
+      }
+    }
+  } else
     ResultStr += OMD->getResultType().getAsString();
   ResultStr += " ";
   
@@ -745,6 +757,26 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
     ResultStr += ", ...";
   ResultStr += ") ";
   
+  if (FPRetType) {
+    ResultStr += ")"; // close the precedence "scope" for "*".
+    
+    // Now, emit the argument types (if any).
+    if (const FunctionTypeProto *FT = dyn_cast<FunctionTypeProto>(FPRetType)) {
+      ResultStr += "(";
+      for (unsigned i = 0, e = FT->getNumArgs(); i != e; ++i) {
+        if (i) ResultStr += ", ";
+        std::string ParamStr = FT->getArgType(i).getAsString();
+        ResultStr += ParamStr;
+      }
+      if (FT->isVariadic()) {
+        if (FT->getNumArgs()) ResultStr += ", ";
+        ResultStr += "...";
+      }
+      ResultStr += ")";
+    } else {
+      ResultStr += "()";
+    }
+  }
 }
 void RewriteObjC::RewriteImplementationDecl(NamedDecl *OID) {
   ObjCImplementationDecl *IMD = dyn_cast<ObjCImplementationDecl>(OID);
