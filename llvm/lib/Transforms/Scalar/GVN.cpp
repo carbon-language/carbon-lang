@@ -727,7 +727,6 @@ namespace {
       
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<AliasAnalysis>();
-      AU.addPreserved<MemoryDependenceAnalysis>();
     }
   
     // Helper fuctions
@@ -1121,10 +1120,21 @@ bool GVN::runOnFunction(Function& F) {
   bool changed = false;
   bool shouldContinue = true;
   
+  // Merge unconditional branches, allowing PRE to catch more
+  // optimization opportunities.
+  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ) {
+    BasicBlock* BB = FI;
+    ++FI;
+    changed |= mergeBlockIntoPredecessor(BB);
+  }
+  
   while (shouldContinue) {
     shouldContinue = iterateOnFunction(F);
     changed |= shouldContinue;
   }
+  
+  if (EnablePRE)
+    changed |= performPRE(F);
   
   return changed;
 }
@@ -1382,15 +1392,6 @@ bool GVN::iterateOnFunction(Function &F) {
   VN.clear();
   phiMap.clear();
   
-  // Merge unconditional branches, allowing PRE to catch more
-  // optimization opportunities.
-  bool mergedBlocks = false;
-  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ) {
-    BasicBlock* BB = FI;
-    ++FI;
-    mergedBlocks |= mergeBlockIntoPredecessor(BB);
-  }
-  
   for (DenseMap<BasicBlock*, ValueNumberScope*>::iterator
        I = localAvail.begin(), E = localAvail.end(); I != E; ++I)
     delete I->second;
@@ -1404,8 +1405,5 @@ bool GVN::iterateOnFunction(Function &F) {
        DE = df_end(DT.getRootNode()); DI != DE; ++DI)
     changed |= processBlock(*DI);
   
-  if (EnablePRE)
-    changed |= performPRE(F);
-  
-  return changed || mergedBlocks;
+  return changed;
 }
