@@ -35,7 +35,7 @@ namespace CallingConv {
     // prototype exactly match.
 
     /// Fast - This calling convention attempts to make calls as fast as 
-    /// possible /// (e.g. by passing things in registers).
+    /// possible (e.g. by passing things in registers).
     Fast = 8,
 
     // Cold - This calling convention attempts to make code in the caller as
