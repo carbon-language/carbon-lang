@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file describes the target machine instructions to the code generator.
+// This file describes the target machine instruction set to the code generator.
 //
 //===----------------------------------------------------------------------===//
 
@@ -30,7 +30,7 @@ template<class T> class SmallVectorImpl;
 
 //---------------------------------------------------------------------------
 ///
-/// TargetInstrInfo - Interface to description of machine instructions
+/// TargetInstrInfo - Interface to description of machine instruction set
 ///
 class TargetInstrInfo {
   const TargetInstrDesc *Descriptors; // Raw array to allow static init'n
