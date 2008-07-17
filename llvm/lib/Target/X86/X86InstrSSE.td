@@ -3577,7 +3577,7 @@ let Constraints = "$src1 = $dst" in {
   }
 }
 
-defm PCMPGTQ      : SS41I_binop_rm_int<0x37, "pcmpgtq", int_x86_sse42_pcmpgtq>;
+defm PCMPGTQ      : SS42I_binop_rm_int<0x37, "pcmpgtq", int_x86_sse42_pcmpgtq>;
 
 def : Pat<(v2i64 (X86pcmpgtq VR128:$src1, VR128:$src2)),
           (PCMPGTQrr VR128:$src1, VR128:$src2)>;
