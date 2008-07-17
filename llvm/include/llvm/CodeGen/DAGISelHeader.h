@@ -176,9 +176,9 @@ SDOperand SelectRoot(SDOperand Root) {
     // If after the replacement this node is not used any more,
     // remove this dead node.
     if (Node->use_empty()) { // Don't delete EntryToken, etc.
-          ISelQueueUpdater ISQU(ISelQueue);
-          CurDAG->RemoveDeadNode(Node, &ISQU);
-          UpdateQueue(ISQU);
+      ISelQueueUpdater ISQU(ISelQueue);
+      CurDAG->RemoveDeadNode(Node, &ISQU);
+      UpdateQueue(ISQU);
     }
   }
 
