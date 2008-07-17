@@ -111,58 +111,70 @@ void IdentifierResolver::RemoveDecl(NamedDecl *D) {
   return toIdDeclInfo(Ptr)->RemoveDecl(D);
 }
 
-/// begin - Returns an iterator for all decls, starting at the given
-/// declaration context.
+/// begin - Returns an iterator for decls of identifier 'II', starting at
+/// declaration context 'Ctx'. If 'LookInParentCtx' is true, it will walk the
+/// decls of parent declaration contexts too.
 IdentifierResolver::iterator
-IdentifierResolver::begin(const IdentifierInfo *II, DeclContext *Ctx) {
+IdentifierResolver::begin(const IdentifierInfo *II, DeclContext *Ctx,
+                          bool LookInParentCtx) {
   assert(Ctx && "null param passed");
 
   void *Ptr = II->getFETokenInfo<void>();
-  if (!Ptr) return end(II);
+  if (!Ptr) return end();
 
   LookupContext LC(Ctx);
 
   if (isDeclPtr(Ptr)) {
     NamedDecl *D = static_cast<NamedDecl*>(Ptr);
+    LookupContext DC(D);
 
-    if (LC.isEqOrContainedBy(LookupContext(D)))
+    if (( LookInParentCtx && LC.isEqOrContainedBy(DC)) ||
+        (!LookInParentCtx && LC == DC))
       return iterator(D);
     else
-      return end(II);
-
+      return end();
   }
-  
+
   IdDeclInfo *IDI = toIdDeclInfo(Ptr);
-  return iterator(IDI->FindContext(LC));
+
+  IdDeclInfo::DeclsTy::iterator I;
+  if (LookInParentCtx)
+    I = IDI->FindContext(LC);
+  else {
+    for (I = IDI->decls_end(); I != IDI->decls_begin(); --I)
+      if (LookupContext(*(I-1)) == LC)
+        break;
+  }
+
+  if (I != IDI->decls_begin())
+    return iterator(I-1, LookInParentCtx);
+  else // No decls found.
+    return end();
 }
 
-/// ctx_begin - Returns an iterator for only decls that belong to the given
-/// declaration context.
-IdentifierResolver::ctx_iterator
-IdentifierResolver::ctx_begin(const IdentifierInfo *II, DeclContext *Ctx) {
-  assert(Ctx && "null param passed");
+/// PreIncIter - Do a preincrement when 'Ptr' is a BaseIter.
+void IdentifierResolver::iterator::PreIncIter() {
+  NamedDecl *D = **this;
+  LookupContext Ctx(D);
+  void *InfoPtr = D->getIdentifier()->getFETokenInfo<void>();
+  assert(!isDeclPtr(InfoPtr) && "Decl with wrong id ?");
+  IdDeclInfo *Info = toIdDeclInfo(InfoPtr);
 
-  void *Ptr = II->getFETokenInfo<void>();
-  if (!Ptr) return ctx_end(II);
-
-  LookupContext LC(Ctx);
-
-  if (isDeclPtr(Ptr)) {
-    NamedDecl *D = static_cast<NamedDecl*>(Ptr);
-
-    if (LC == LookupContext(D))
-      return ctx_iterator(D);
-    else
-      return ctx_end(II);
-
+  BaseIter I = getIterator();
+  if (LookInParentCtx())
+    I = Info->FindContext(Ctx, I);
+  else {
+    if (I != Info->decls_begin() && LookupContext(*(I-1)) != Ctx) {
+      // The next decl is in different declaration context.
+      // Skip remaining decls and set the iterator to the end.
+      I = Info->decls_begin();
+    }
   }
-  
-  IdDeclInfo *IDI = toIdDeclInfo(Ptr);
-  IdDeclInfo::DeclsTy::iterator I = IDI->FindContext(LookupContext(Ctx));
-  if (I != IDI->decls_begin() && LC != LookupContext(*(I-1)))
-    I = IDI->decls_begin();
 
-  return ctx_iterator(I);
+  if (I != Info->decls_begin())
+    *this = iterator(I-1, LookInParentCtx());
+  else // No more decls.
+    *this = end();
 }
 
 

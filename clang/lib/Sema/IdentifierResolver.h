@@ -134,75 +134,6 @@ class IdentifierResolver {
       return Decls.begin();
     }
 
-    /// iterator - Iterate over the decls by walking their parent contexts too.
-    class iterator {
-    public:
-      typedef DeclsTy::iterator BaseIter;
-
-      iterator(const BaseIter &DeclIt) : DI(DeclIt) {}
-      const BaseIter &getBase() { return DI; }
-
-      NamedDecl *&operator*() const {
-        return *(DI-1);
-      }
-      
-      bool operator==(const iterator &RHS) const {
-        return DI == RHS.DI;
-      }
-      bool operator!=(const iterator &RHS) const {
-        return DI != RHS.DI;
-      }
-      
-      // Preincrement.
-      iterator& operator++() {
-        NamedDecl *D = **this;
-        void *Ptr = D->getIdentifier()->getFETokenInfo<void>();
-        assert(!isDeclPtr(Ptr) && "Decl with wrong id ?");
-        DI = toIdDeclInfo(Ptr)->FindContext(LookupContext(D), DI-1);
-        return *this;
-      }
-
-    private:
-      BaseIter DI;
-    };
-
-    /// ctx_iterator - Iterator over the decls of a specific context only.
-    class ctx_iterator {
-    public:
-      typedef DeclsTy::iterator BaseIter;
-
-      ctx_iterator(const BaseIter &DeclIt) : DI(DeclIt) {}
-      const BaseIter &getBase() { return DI; }
-
-      NamedDecl *&operator*() const {
-        return *(DI-1);
-      }
-      
-      bool operator==(const ctx_iterator &RHS) const {
-        return DI == RHS.DI;
-      }
-      bool operator!=(const ctx_iterator &RHS) const {
-        return DI != RHS.DI;
-      }
-      
-      // Preincrement.
-      ctx_iterator& operator++() {
-        NamedDecl *D = **this;
-        void *Ptr = D->getIdentifier()->getFETokenInfo<void>();
-        assert(!isDeclPtr(Ptr) && "Decl with wrong id ?");
-        IdDeclInfo *Info = toIdDeclInfo(Ptr);
-        
-        --DI;
-        if (DI != Info->Decls.begin() &&
-            LookupContext(D) != LookupContext(**this))
-          DI = Info->Decls.begin();
-        return *this;
-      }
-
-    private:
-      BaseIter DI;
-    };
-
     void AddDecl(NamedDecl *D) {
       Decls.insert(FindContext(LookupContext(D)), D);
     }
@@ -242,28 +173,47 @@ class IdentifierResolver {
     DeclsTy Decls;
   };
 
-  /// SwizzledIterator - Can be instantiated either with a single NamedDecl*
-  /// (the common case where only one decl is associated with an identifier) or
-  /// with an 'Iter' iterator, when there are more than one decls to lookup.
-  template<typename Iter>
-  class SwizzledIterator {
-    uintptr_t Ptr;
+public:
 
-    SwizzledIterator() : Ptr(0) {}
-    SwizzledIterator(NamedDecl *D) {
+  /// iterator - Iterate over the decls of a specified identifier.
+  /// It will walk or not the parent declaration contexts depending on how
+  /// it was instantiated.
+  class iterator {
+    /// Ptr - There are 3 forms that 'Ptr' represents:
+    /// 1) A single NamedDecl. (Ptr & 0x1 == 0)
+    /// 2) A IdDeclInfo::DeclsTy::iterator that traverses only the decls of the
+    ///    same declaration context. (Ptr & 0x3 == 0x1)
+    /// 3) A IdDeclInfo::DeclsTy::iterator that traverses the decls of parent
+    ///    declaration contexts too. (Ptr & 0x3 == 0x3)
+    uintptr_t Ptr;
+    typedef IdDeclInfo::DeclsTy::iterator BaseIter;
+
+    iterator() : Ptr(0) {}
+    /// A single NamedDecl. (Ptr & 0x1 == 0)
+    iterator(NamedDecl *D) {
       Ptr = reinterpret_cast<uintptr_t>(D);
+      assert((Ptr & 0x1) == 0 && "Invalid Ptr!");
     }
-    SwizzledIterator(Iter I) {
-      Ptr = reinterpret_cast<uintptr_t>(I.getBase()) | 0x1;
+    /// A IdDeclInfo::DeclsTy::iterator that walks or not the parent declaration
+    /// contexts depending on 'LookInParentCtx'.
+    iterator(BaseIter I, bool LookInParentCtx) {
+      Ptr = reinterpret_cast<uintptr_t>(I) | 0x1;
+      assert((Ptr & 0x2) == 0 && "Invalid Ptr!");
+      if (LookInParentCtx) Ptr |= 0x2;
     }
 
     bool isIterator() const { return (Ptr & 0x1); }
 
-    Iter getIterator() const {
-      assert(isIterator() && "Ptr not an iterator.");
-      return reinterpret_cast<typename Iter::BaseIter>(Ptr & ~0x1);
+    bool LookInParentCtx() const {
+      assert(isIterator() && "Ptr not an iterator!");
+      return (Ptr & 0x2) != 0;
     }
 
+    BaseIter getIterator() const {
+      assert(isIterator() && "Ptr not an iterator!");
+      return reinterpret_cast<BaseIter>(Ptr & ~0x3);
+    }
+    
     friend class IdentifierResolver;
   public:
     NamedDecl *operator*() const {
@@ -273,56 +223,36 @@ class IdentifierResolver {
         return reinterpret_cast<NamedDecl*>(Ptr);
     }
     
-    bool operator==(const SwizzledIterator &RHS) const {
+    bool operator==(const iterator &RHS) const {
       return Ptr == RHS.Ptr;
     }
-    bool operator!=(const SwizzledIterator &RHS) const {
+    bool operator!=(const iterator &RHS) const {
       return Ptr != RHS.Ptr;
     }
-
+    
     // Preincrement.
-    SwizzledIterator& operator++() {
-      if (isIterator()) {
-        Iter I = getIterator();
-        ++I;
-        Ptr = reinterpret_cast<uintptr_t>(I.getBase()) | 0x1;
-      }
-      else  // This is a single NamedDecl*.
+    iterator& operator++() {
+      if (!isIterator()) // common case.
         Ptr = 0;
-
+      else
+        PreIncIter();
       return *this;
     }
+
+  private:
+    void PreIncIter();
   };
 
-public:
+  /// begin - Returns an iterator for decls of identifier 'II', starting at
+  /// declaration context 'Ctx'. If 'LookInParentCtx' is true, it will walk the
+  /// decls of parent declaration contexts too.
+  /// Default for 'LookInParentCtx is true.
+  static iterator begin(const IdentifierInfo *II, DeclContext *Ctx,
+                        bool LookInParentCtx = true);
 
-  typedef SwizzledIterator<IdDeclInfo::iterator> iterator;
-  typedef SwizzledIterator<IdDeclInfo::ctx_iterator> ctx_iterator;
-
-  /// begin - Returns an iterator for all decls, starting at the given
-  /// declaration context.
-  static iterator begin(const IdentifierInfo *II, DeclContext *Ctx);
-
-  static iterator end(const IdentifierInfo *II) {
-    void *Ptr = II->getFETokenInfo<void>();
-    if (!Ptr || isDeclPtr(Ptr))
-      return iterator();
-
-    IdDeclInfo *IDI = toIdDeclInfo(Ptr);
-    return iterator(IDI->decls_begin());
-  }
-
-  /// ctx_begin - Returns an iterator for only decls that belong to the given
-  /// declaration context.
-  static ctx_iterator ctx_begin(const IdentifierInfo *II, DeclContext *Ctx);
-
-  static ctx_iterator ctx_end(const IdentifierInfo *II) {
-    void *Ptr = II->getFETokenInfo<void>();
-    if (!Ptr || isDeclPtr(Ptr))
-      return ctx_iterator();
-
-    IdDeclInfo *IDI = toIdDeclInfo(Ptr);
-    return ctx_iterator(IDI->decls_begin());
+  /// end - Returns an iterator that has 'finished'.
+  static iterator end() {
+    return iterator();
   }
 
   /// isDeclInScope - If 'Ctx' is a function/method, isDeclInScope returns true

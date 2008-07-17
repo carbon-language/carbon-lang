@@ -91,15 +91,16 @@ void Sema::PushOnScopeChains(NamedDecl *D, Scope *S) {
   //   in this case the class name or enumeration name is hidden.
   if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
     // We are pushing the name of a tag (enum or class).
-    IdentifierResolver::ctx_iterator
-      CIT = IdResolver.ctx_begin(TD->getIdentifier(), TD->getDeclContext());
-    if (CIT != IdResolver.ctx_end(TD->getIdentifier()) &&
-        IdResolver.isDeclInScope(*CIT, TD->getDeclContext(), S)) {
+    IdentifierResolver::iterator
+        I = IdResolver.begin(TD->getIdentifier(),
+                             TD->getDeclContext(), false/*LookInParentCtx*/);
+    if (I != IdResolver.end() &&
+        IdResolver.isDeclInScope(*I, TD->getDeclContext(), S)) {
       // There is already a declaration with the same name in the same
       // scope. It must be found before we find the new declaration,
       // so swap the order on the shadowed declaration chain.
 
-      IdResolver.AddShadowedDecl(TD, *CIT);
+      IdResolver.AddShadowedDecl(TD, *I);
       return;
     }
   }
@@ -158,7 +159,7 @@ Decl *Sema::LookupDecl(const IdentifierInfo *II, unsigned NSI,
   // that is in the appropriate namespace.  This search should not take long, as
   // shadowing of names is uncommon, and deep shadowing is extremely uncommon.
   for (IdentifierResolver::iterator
-       I = IdResolver.begin(II, CurContext), E = IdResolver.end(II); I != E; ++I)
+       I = IdResolver.begin(II, CurContext), E = IdResolver.end(); I != E; ++I)
     if ((*I)->getIdentifierNamespace() & NS)
       return *I;
 
