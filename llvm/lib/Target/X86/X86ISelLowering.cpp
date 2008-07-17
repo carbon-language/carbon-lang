@@ -6010,7 +6010,9 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
   for (int i=0; i <= lastAddrIndx; ++i)
     (*MIB).addOperand(*argOpers[i]);
   MIB.addReg(t2);
-  
+  assert(bInstr->hasOneMemOperand() && "Unexpected number of memoperand");
+  (*MIB).addMemOperand(*F, *bInstr->memoperands_begin());
+
   MIB = BuildMI(newMBB, TII->get(X86::MOV32rr), destOper.getReg());
   MIB.addReg(X86::EAX);
   
@@ -6107,6 +6109,8 @@ X86TargetLowering::EmitAtomicMinMaxWithCustomInserter(MachineInstr *mInstr,
   for (int i=0; i <= lastAddrIndx; ++i)
     (*MIB).addOperand(*argOpers[i]);
   MIB.addReg(t3);
+  assert(mInstr->hasOneMemOperand() && "Unexpected number of memoperand");
+  (*MIB).addMemOperand(*F, *mInstr->memoperands_begin());
   
   MIB = BuildMI(newMBB, TII->get(X86::MOV32rr), destOper.getReg());
   MIB.addReg(X86::EAX);
