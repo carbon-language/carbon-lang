@@ -67,7 +67,7 @@ class MachineBasicBlock {
 
   explicit MachineBasicBlock(MachineFunction &mf, const BasicBlock *bb);
 
-  ~MachineBasicBlock() {}
+  ~MachineBasicBlock();
 
   // MachineBasicBlocks are allocated and owned by MachineFunction.
   friend class MachineFunction;

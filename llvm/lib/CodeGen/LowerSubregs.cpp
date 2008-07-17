@@ -80,7 +80,7 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
    }
 
    DOUT << "\n";
-   MBB->remove(MI);
+   MBB->erase(MI);
    return true;
 }
 
@@ -119,7 +119,7 @@ bool LowerSubregsInstructionPass::LowerSubregToReg(MachineInstr *MI) {
 #endif
 
   DOUT << "\n";
-  MBB->remove(MI);
+  MBB->erase(MI);
   return true;                    
 }
 
@@ -164,7 +164,7 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
   }
 
   DOUT << "\n";
-  MBB->remove(MI);
+  MBB->erase(MI);
   return true;                    
 }
 

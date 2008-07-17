@@ -18,12 +18,17 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/LeakDetector.h"
 #include <algorithm>
 using namespace llvm;
 
 MachineBasicBlock::MachineBasicBlock(MachineFunction &mf, const BasicBlock *bb)
   : BB(bb), Number(-1), xParent(&mf), Alignment(0), IsLandingPad(false) {
   Insts.getTraits().Parent = this;
+}
+
+MachineBasicBlock::~MachineBasicBlock() {
+  LeakDetector::removeGarbageObject(this);
 }
 
 std::ostream& llvm::operator<<(std::ostream &OS, const MachineBasicBlock &MBB) {
@@ -46,11 +51,14 @@ void alist_traits<MachineBasicBlock>::addNodeToList(MachineBasicBlock* N) {
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
   for (MachineBasicBlock::iterator I = N->begin(), E = N->end(); I != E; ++I)
     I->AddRegOperandsToUseLists(RegInfo);
+
+  LeakDetector::removeGarbageObject(N);
 }
 
 void alist_traits<MachineBasicBlock>::removeNodeFromList(MachineBasicBlock* N) {
   N->getParent()->removeFromMBBNumbering(N->Number);
   N->Number = -1;
+  LeakDetector::addGarbageObject(N);
 }
 
 
@@ -65,6 +73,8 @@ void alist_traits<MachineInstr>::addNodeToList(MachineInstr* N) {
   // use/def lists.
   MachineFunction *MF = Parent->getParent();
   N->AddRegOperandsToUseLists(MF->getRegInfo());
+
+  LeakDetector::removeGarbageObject(N);
 }
 
 /// removeNodeFromList (MI) - When we remove an instruction from a basic block
@@ -77,6 +87,8 @@ void alist_traits<MachineInstr>::removeNodeFromList(MachineInstr* N) {
   N->RemoveRegOperandsFromUseLists();
   
   N->setParent(0);
+
+  LeakDetector::addGarbageObject(N);
 }
 
 /// transferNodesFromList (MI) - When moving a range of instructions from one

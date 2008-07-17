@@ -21,6 +21,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
 #include <ostream>
@@ -257,6 +258,8 @@ MachineMemOperand::MachineMemOperand(const Value *v, unsigned int f,
 /// TID NULL and no operands.
 MachineInstr::MachineInstr()
   : TID(0), NumImplicitOps(0), Parent(0) {
+  // Make sure that we get added to a machine basicblock
+  LeakDetector::addGarbageObject(this);
 }
 
 void MachineInstr::addImplicitDefUseOperands() {
@@ -283,6 +286,8 @@ MachineInstr::MachineInstr(const TargetInstrDesc &tid, bool NoImp)
   Operands.reserve(NumImplicitOps + TID->getNumOperands());
   if (!NoImp)
     addImplicitDefUseOperands();
+  // Make sure that we get added to a machine basicblock
+  LeakDetector::addGarbageObject(this);
 }
 
 /// MachineInstr ctor - Work exactly the same as the ctor above, except that the
@@ -300,6 +305,8 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB,
       NumImplicitOps++;
   Operands.reserve(NumImplicitOps + TID->getNumOperands());
   addImplicitDefUseOperands();
+  // Make sure that we get added to a machine basicblock
+  LeakDetector::addGarbageObject(this);
   MBB->push_back(this);  // Add instruction to end of basic block!
 }
 
@@ -326,6 +333,7 @@ MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI) {
 }
 
 MachineInstr::~MachineInstr() {
+  LeakDetector::removeGarbageObject(this);
   assert(MemOperands.empty() &&
          "MachineInstr being deleted with live memoperands!");
 #ifndef NDEBUG

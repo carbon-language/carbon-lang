@@ -1585,9 +1585,9 @@ addIntervalsForSpills(const LiveInterval &li,
     if (ReMatDefMI && isReMaterializable(li, VNI, ReMatDefMI, dummy)) {
       // Remember how to remat the def of this val#.
       ReMatOrigDefs[VN] = ReMatDefMI;
-      // Original def may be modified so we have to make a copy here. vrm must
-      // delete these!
-      ReMatDefs[VN] = ReMatDefMI = mf_->CloneMachineInstr(ReMatDefMI);
+      // Original def may be modified so we have to make a copy here.
+      // FIXME: This is a memory leak. vrm should delete these!
+      ReMatDefs[VN] = mf_->CloneMachineInstr(ReMatDefMI);
 
       bool CanDelete = true;
       if (VNI->hasPHIKill) {
