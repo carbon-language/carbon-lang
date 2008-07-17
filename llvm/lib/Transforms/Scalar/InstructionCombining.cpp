@@ -2255,7 +2255,8 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (Op0 == Op1)         // sub X, X  -> 0
+  if (Op0 == Op1 &&                        // sub X, X  -> 0
+      !I.getType()->isFPOrFPVector())
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
   // If this is a 'B = x-(-A)', change to B = x+A...
