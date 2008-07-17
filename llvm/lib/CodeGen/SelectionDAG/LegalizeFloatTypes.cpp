@@ -531,6 +531,8 @@ void DAGTypeLegalizer::ExpandFloatResult(SDNode *N, unsigned ResNo) {
   case ISD::FADD:       ExpandFloatRes_FADD(N, Lo, Hi); break;
   case ISD::FDIV:       ExpandFloatRes_FDIV(N, Lo, Hi); break;
   case ISD::FMUL:       ExpandFloatRes_FMUL(N, Lo, Hi); break;
+  case ISD::FNEG:       ExpandFloatRes_FNEG(N, Lo, Hi); break;
+  case ISD::FP_EXTEND:  ExpandFloatRes_FP_EXTEND(N, Lo, Hi); break;
   case ISD::FSUB:       ExpandFloatRes_FSUB(N, Lo, Hi); break;
   case ISD::LOAD:       ExpandFloatRes_LOAD(N, Lo, Hi); break;
   case ISD::SINT_TO_FP:
@@ -607,6 +609,20 @@ void DAGTypeLegalizer::ExpandFloatRes_FMUL(SDNode *N, SDOperand &Lo,
                                false);
   assert(Call.Val->getOpcode() == ISD::BUILD_PAIR && "Call lowered wrongly!");
   Lo = Call.getOperand(0); Hi = Call.getOperand(1);
+}
+
+void DAGTypeLegalizer::ExpandFloatRes_FNEG(SDNode *N, SDOperand &Lo,
+                                           SDOperand &Hi) {
+  GetExpandedFloat(N->getOperand(0), Lo, Hi);
+  Lo = DAG.getNode(ISD::FNEG, Lo.getValueType(), Lo);
+  Hi = DAG.getNode(ISD::FNEG, Hi.getValueType(), Hi);
+}
+
+void DAGTypeLegalizer::ExpandFloatRes_FP_EXTEND(SDNode *N, SDOperand &Lo,
+                                                SDOperand &Hi) {
+  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  Hi = DAG.getNode(ISD::FP_EXTEND, NVT, N->getOperand(0));
+  Lo = DAG.getConstantFP(APFloat(APInt(NVT.getSizeInBits(), 0)), NVT);
 }
 
 void DAGTypeLegalizer::ExpandFloatRes_FSUB(SDNode *N, SDOperand &Lo,

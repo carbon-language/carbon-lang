@@ -374,6 +374,8 @@ private:
   void ExpandFloatRes_FADD      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandFloatRes_FDIV      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandFloatRes_FMUL      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandFloatRes_FNEG      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandFloatRes_FP_EXTEND (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandFloatRes_FSUB      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandFloatRes_LOAD      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandFloatRes_XINT_TO_FP(SDNode *N, SDOperand &Lo, SDOperand &Hi);
