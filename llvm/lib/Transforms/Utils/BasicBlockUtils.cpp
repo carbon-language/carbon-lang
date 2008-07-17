@@ -26,15 +26,30 @@ using namespace llvm;
 /// MergeBlockIntoPredecessor - Attempts to merge a block into its predecessor,
 /// if possible.  The return value indicates success or failure.
 bool llvm::MergeBlockIntoPredecessor(BasicBlock* BB, Pass* P) {
+  pred_iterator PI(pred_begin(BB)), PE(pred_end(BB));
   // Can't merge the entry block.
   if (pred_begin(BB) == pred_end(BB)) return false;
-  // Can't merge if there are multiple preds.
-  if (++pred_begin(BB) != pred_end(BB)) return false;
   
-  BasicBlock* PredBB = *pred_begin(BB);
+  BasicBlock *PredBB = *PI++;
+  for (; PI != PE; ++PI)  // Search all predecessors, see if they are all same
+    if (*PI != PredBB) {
+      PredBB = 0;       // There are multiple different predecessors...
+      break;
+    }
   
-  // Can't merge if the edge is critical.
-  if (PredBB->getTerminator()->getNumSuccessors() != 1) return false;
+  // Can't merge if there are multiple predecessors.
+  if (!PredBB) return false;
+  
+  succ_iterator SI(succ_begin(PredBB)), SE(succ_end(PredBB));
+  BasicBlock* OnlySucc = BB;
+  for (; SI != SE; ++SI)
+    if (*SI != OnlySucc) {
+      OnlySucc = 0;     // There are multiple distinct successors!
+      break;
+    }
+  
+  // Can't merge if there are multiple successors.
+  if (!OnlySucc) return false;
   
   // Begin by getting rid of unneeded PHIs.
   while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
@@ -51,6 +66,10 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock* BB, Pass* P) {
   // Make all PHI nodes that referred to BB now refer to Pred as their
   // source...
   BB->replaceAllUsesWith(PredBB);
+  
+  // Inherit predecessors name if it exists.
+  if (!PredBB->hasName())
+    PredBB->takeName(BB);
   
   // Finally, erase the old block and update dominator info.
   if (P) {

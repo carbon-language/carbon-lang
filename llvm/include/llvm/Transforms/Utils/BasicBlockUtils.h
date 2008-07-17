@@ -27,7 +27,7 @@ class Pass;
 
 /// MergeBlockIntoPredecessor - Attempts to merge a block into its predecessor,
 /// if possible.  The return value indicates success or failure.
-bool MergeBlockIntoPredecessor(BasicBlock* BB, Pass* P);
+bool MergeBlockIntoPredecessor(BasicBlock* BB, Pass* P = 0);
 
 // ReplaceInstWithValue - Replace all uses of an instruction (specified by BI)
 // with a value, then remove and delete the original instruction.
