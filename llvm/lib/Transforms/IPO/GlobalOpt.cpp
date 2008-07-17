@@ -486,7 +486,8 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD) {
                                                GlobalVariable::InternalLinkage,
                                                In, GV->getName()+"."+utostr(i),
                                                (Module *)NULL,
-                                               GV->isThreadLocal());
+                                               GV->isThreadLocal(),
+                                               GV->getType()->getAddressSpace());
       Globals.insert(GV, NGV);
       NewGlobals.push_back(NGV);
       
@@ -520,7 +521,8 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD) {
                                                GlobalVariable::InternalLinkage,
                                                In, GV->getName()+"."+utostr(i),
                                                (Module *)NULL,
-                                               GV->isThreadLocal());
+                                               GV->isThreadLocal(),
+                                               GV->getType()->getAddressSpace());
       Globals.insert(GV, NGV);
       NewGlobals.push_back(NGV);
       
