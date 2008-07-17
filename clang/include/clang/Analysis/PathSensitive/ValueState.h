@@ -41,6 +41,7 @@
 namespace clang {
 
 class ValueStateManager;
+class GRTransferFuncs;
   
 //===----------------------------------------------------------------------===//
 // ValueState- An ImmutableMap type Stmt*/Decl*/Symbols to RVals.
@@ -217,6 +218,10 @@ private:
   
   /// cfg - The CFG for the analyzed function/method.
   CFG& cfg;
+    
+  /// TF - Object that represents a bundle of transfer functions
+  ///  for manipulating and creating RVals.
+  GRTransferFuncs* TF;
   
 private:
 
@@ -322,6 +327,44 @@ public:
 
   const ValueState* AddNE(const ValueState* St, SymbolID sym,
                           const llvm::APSInt& V);
+  
+  // Assumption logic.
+  const ValueState* Assume(const ValueState* St, RVal Cond, bool Assumption,
+                           bool& isFeasible) {
+    
+    if (Cond.isUnknown()) {
+      isFeasible = true;
+      return St;
+    }
+    
+    if (isa<LVal>(Cond))
+      return Assume(St, cast<LVal>(Cond), Assumption, isFeasible);
+    else
+      return Assume(St, cast<NonLVal>(Cond), Assumption, isFeasible);
+  }
+  
+  const ValueState* Assume(const ValueState* St, LVal Cond, bool Assumption,
+                           bool& isFeasible);
+
+  const ValueState* Assume(const ValueState* St, NonLVal Cond, bool Assumption,
+                           bool& isFeasible);
+
+private:  
+  const ValueState* AssumeAux(const ValueState* St, LVal Cond, bool Assumption,
+                              bool& isFeasible);
+  
+  
+  const ValueState* AssumeAux(const ValueState* St, NonLVal Cond,
+                              bool Assumption, bool& isFeasible);
+  
+  const ValueState* AssumeSymNE(const ValueState* St, SymbolID sym,
+                                const llvm::APSInt& V, bool& isFeasible);
+  
+  const ValueState* AssumeSymEQ(const ValueState* St, SymbolID sym,
+                                const llvm::APSInt& V, bool& isFeasible);
+  
+  const ValueState* AssumeSymInt(const ValueState* St, bool Assumption,
+                                 const SymIntConstraint& C, bool& isFeasible);
 };
   
 } // end clang namespace

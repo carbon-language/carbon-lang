@@ -70,10 +70,6 @@ protected:
   /// ValueMgr - Object that manages the data for all created RVals.
   BasicValueFactory& BasicVals;
   
-  /// TF - Object that represents a bundle of transfer functions
-  ///  for manipulating and creating RVals.
-  GRTransferFuncs* TF;
-  
   /// BugTypes - Objects used for reporting bugs.
   typedef std::vector<BugType*> BugTypeSet;
   BugTypeSet BugTypes;
@@ -186,6 +182,8 @@ public:
   
   /// getCFG - Returns the CFG associated with this analysis.
   CFG& getCFG() { return G.getCFG(); }
+  
+  GRTransferFuncs& getTF() { return *StateMgr.TF; }
   
   /// setTransferFunctions
   void setTransferFunctions(GRTransferFuncs* tf);
@@ -371,7 +369,7 @@ public:
   /// ProcessEndPath - Called by GRCoreEngine.  Used to generate end-of-path
   ///  nodes when the control reaches the end of a function.
   void ProcessEndPath(EndPathNodeBuilder& builder) {
-    TF->EvalEndPath(*this, builder);
+    getTF().EvalEndPath(*this, builder);
   }
   
   ValueStateManager& getStateManager() { return StateMgr; }
@@ -433,39 +431,14 @@ protected:
   ///  is true or false.
   const ValueState* Assume(const ValueState* St, RVal Cond, bool Assumption,
                            bool& isFeasible) {
-    
-    if (Cond.isUnknown()) {
-      isFeasible = true;
-      return St;
-    }
-    
-    if (isa<LVal>(Cond))
-      return Assume(St, cast<LVal>(Cond), Assumption, isFeasible);
-    else
-      return Assume(St, cast<NonLVal>(Cond), Assumption, isFeasible);
+    return StateMgr.Assume(St, Cond, Assumption, isFeasible);
   }
   
   const ValueState* Assume(const ValueState* St, LVal Cond, bool Assumption,
-                           bool& isFeasible);
-                     
-  const ValueState* AssumeAux(const ValueState* St, LVal Cond, bool Assumption,
-                              bool& isFeasible);
+                           bool& isFeasible) {
+    return StateMgr.Assume(St, Cond, Assumption, isFeasible);
+  }
 
-  const ValueState* Assume(const ValueState* St, NonLVal Cond, bool Assumption,
-                           bool& isFeasible);
-  
-  const ValueState* AssumeAux(const ValueState* St, NonLVal Cond,
-                              bool Assumption, bool& isFeasible);
-  
-  const ValueState* AssumeSymNE(const ValueState* St, SymbolID sym,
-                                const llvm::APSInt& V, bool& isFeasible);
-  
-  const ValueState* AssumeSymEQ(const ValueState* St, SymbolID sym,
-                                const llvm::APSInt& V, bool& isFeasible);
-  
-  const ValueState* AssumeSymInt(const ValueState* St, bool Assumption,
-                                 const SymIntConstraint& C, bool& isFeasible);
-  
   NodeTy* MakeNode(NodeSet& Dst, Stmt* S, NodeTy* Pred, const ValueState* St) {
     assert (Builder && "GRStmtNodeBuilder not present.");
     return Builder->MakeNode(Dst, S, Pred, St);
@@ -560,25 +533,25 @@ protected:
       return X;
     
     if (isa<LVal>(X))
-      return TF->EvalCast(*this, cast<LVal>(X), CastT);
+      return getTF().EvalCast(*this, cast<LVal>(X), CastT);
     else
-      return TF->EvalCast(*this, cast<NonLVal>(X), CastT);
+      return getTF().EvalCast(*this, cast<NonLVal>(X), CastT);
   }
   
   RVal EvalMinus(UnaryOperator* U, RVal X) {
-    return X.isValid() ? TF->EvalMinus(*this, U, cast<NonLVal>(X)) : X;
+    return X.isValid() ? getTF().EvalMinus(*this, U, cast<NonLVal>(X)) : X;
   }
   
   RVal EvalComplement(RVal X) {
-    return X.isValid() ? TF->EvalComplement(*this, cast<NonLVal>(X)) : X;
+    return X.isValid() ? getTF().EvalComplement(*this, cast<NonLVal>(X)) : X;
   }
 
   RVal EvalBinOp(BinaryOperator::Opcode Op, NonLVal L, RVal R) {
-    return R.isValid() ? TF->EvalBinOp(*this, Op, L, cast<NonLVal>(R)) : R;
+    return R.isValid() ? getTF().EvalBinOp(*this, Op, L, cast<NonLVal>(R)) : R;
   }
   
   RVal EvalBinOp(BinaryOperator::Opcode Op, NonLVal L, NonLVal R) {
-    return R.isValid() ? TF->EvalBinOp(*this, Op, L, R) : R;
+    return R.isValid() ? getTF().EvalBinOp(*this, Op, L, R) : R;
   }
   
   RVal EvalBinOp(BinaryOperator::Opcode Op, RVal L, RVal R) {
@@ -591,9 +564,9 @@ protected:
 
     if (isa<LVal>(L)) {
       if (isa<LVal>(R))
-        return TF->EvalBinOp(*this, Op, cast<LVal>(L), cast<LVal>(R));
+        return getTF().EvalBinOp(*this, Op, cast<LVal>(L), cast<LVal>(R));
       else
-        return TF->EvalBinOp(*this, Op, cast<LVal>(L), cast<NonLVal>(R));
+        return getTF().EvalBinOp(*this, Op, cast<LVal>(L), cast<NonLVal>(R));
     }
 
     if (isa<LVal>(R)) {
@@ -603,10 +576,10 @@ protected:
       assert (Op == BinaryOperator::Add || Op == BinaryOperator::Sub);
 
       // Commute the operands.
-      return TF->EvalBinOp(*this, Op, cast<LVal>(R), cast<NonLVal>(L));
+      return getTF().EvalBinOp(*this, Op, cast<LVal>(R), cast<NonLVal>(L));
     }
     else
-      return TF->EvalBinOp(*this, Op, cast<NonLVal>(L), cast<NonLVal>(R));
+      return getTF().EvalBinOp(*this, Op, cast<NonLVal>(L), cast<NonLVal>(R));
   }
   
   void EvalBinOp(ExplodedNodeSet<ValueState>& Dst, Expr* E,
@@ -615,12 +588,12 @@ protected:
   
   void EvalCall(NodeSet& Dst, CallExpr* CE, RVal L, NodeTy* Pred) {
     assert (Builder && "GRStmtNodeBuilder must be defined.");
-    TF->EvalCall(Dst, *this, *Builder, CE, L, Pred);
+    getTF().EvalCall(Dst, *this, *Builder, CE, L, Pred);
   }
   
   void EvalObjCMessageExpr(NodeSet& Dst, ObjCMessageExpr* ME, NodeTy* Pred) {
     assert (Builder && "GRStmtNodeBuilder must be defined.");
-    TF->EvalObjCMessageExpr(Dst, *this, *Builder, ME, Pred);
+    getTF().EvalObjCMessageExpr(Dst, *this, *Builder, ME, Pred);
   }
   
   void EvalStore(NodeSet& Dst, Expr* E, NodeTy* Pred, const ValueState* St,

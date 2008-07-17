@@ -13,6 +13,7 @@
 
 #include "clang/Analysis/PathSensitive/ValueState.h"
 #include "llvm/ADT/SmallSet.h"
+#include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
 
 using namespace clang;
 
@@ -293,4 +294,175 @@ void ValueState::print(std::ostream& Out, CheckerStatePrinter* P,
   
   if (P && CheckerState)
     P->PrintCheckerState(Out, CheckerState, nl, sep);
+}
+
+//===----------------------------------------------------------------------===//
+// "Assume" logic.
+//===----------------------------------------------------------------------===//
+
+const ValueState* ValueStateManager::Assume(const ValueState* St, LVal Cond,
+                                            bool Assumption, bool& isFeasible) {
+  
+  St = AssumeAux(St, Cond, Assumption, isFeasible);
+  
+  return isFeasible ? TF->EvalAssume(*this, St, Cond, Assumption, isFeasible)
+                    : St;
+}
+
+const ValueState* ValueStateManager::AssumeAux(const ValueState* St, LVal Cond,
+                                          bool Assumption, bool& isFeasible) {
+  
+  switch (Cond.getSubKind()) {
+    default:
+      assert (false && "'Assume' not implemented for this LVal.");
+      return St;
+      
+    case lval::SymbolValKind:
+      if (Assumption)
+        return AssumeSymNE(St, cast<lval::SymbolVal>(Cond).getSymbol(),
+                           BasicVals.getZeroWithPtrWidth(), isFeasible);
+      else
+        return AssumeSymEQ(St, cast<lval::SymbolVal>(Cond).getSymbol(),
+                           BasicVals.getZeroWithPtrWidth(), isFeasible);
+      
+      
+    case lval::DeclValKind:
+    case lval::FuncValKind:
+    case lval::GotoLabelKind:
+    case lval::StringLiteralValKind:
+      isFeasible = Assumption;
+      return St;
+      
+    case lval::FieldOffsetKind:
+      return AssumeAux(St, cast<lval::FieldOffset>(Cond).getBase(),
+                       Assumption, isFeasible);
+      
+    case lval::ArrayOffsetKind:
+      return AssumeAux(St, cast<lval::ArrayOffset>(Cond).getBase(),
+                       Assumption, isFeasible);
+      
+    case lval::ConcreteIntKind: {
+      bool b = cast<lval::ConcreteInt>(Cond).getValue() != 0;
+      isFeasible = b ? Assumption : !Assumption;      
+      return St;
+    }
+  }
+}
+
+const ValueState* ValueStateManager::Assume(const ValueState* St, NonLVal Cond,
+                                       bool Assumption, bool& isFeasible) {
+  
+  St = AssumeAux(St, Cond, Assumption, isFeasible);
+  
+  return isFeasible ? TF->EvalAssume(*this, St, Cond, Assumption, isFeasible)
+  : St;
+}
+
+const ValueState* ValueStateManager::AssumeAux(const ValueState* St, NonLVal Cond,
+                                          bool Assumption, bool& isFeasible) {  
+  switch (Cond.getSubKind()) {
+    default:
+      assert (false && "'Assume' not implemented for this NonLVal.");
+      return St;
+      
+      
+    case nonlval::SymbolValKind: {
+      nonlval::SymbolVal& SV = cast<nonlval::SymbolVal>(Cond);
+      SymbolID sym = SV.getSymbol();
+      
+      if (Assumption)
+        return AssumeSymNE(St, sym, BasicVals.getValue(0, SymMgr.getType(sym)),
+                           isFeasible);
+      else
+        return AssumeSymEQ(St, sym, BasicVals.getValue(0, SymMgr.getType(sym)),
+                           isFeasible);
+    }
+      
+    case nonlval::SymIntConstraintValKind:
+      return
+      AssumeSymInt(St, Assumption,
+                   cast<nonlval::SymIntConstraintVal>(Cond).getConstraint(),
+                   isFeasible);
+      
+    case nonlval::ConcreteIntKind: {
+      bool b = cast<nonlval::ConcreteInt>(Cond).getValue() != 0;
+      isFeasible = b ? Assumption : !Assumption;      
+      return St;
+    }
+      
+    case nonlval::LValAsIntegerKind: {
+      return AssumeAux(St, cast<nonlval::LValAsInteger>(Cond).getLVal(),
+                       Assumption, isFeasible);
+    }
+  }
+}
+
+const ValueState* ValueStateManager::AssumeSymNE(const ValueState* St,
+                                            SymbolID sym, const llvm::APSInt& V,
+                                            bool& isFeasible) {
+  
+  // First, determine if sym == X, where X != V.
+  if (const llvm::APSInt* X = St->getSymVal(sym)) {
+    isFeasible = *X != V;
+    return St;
+  }
+  
+  // Second, determine if sym != V.
+  if (St->isNotEqual(sym, V)) {
+    isFeasible = true;
+    return St;
+  }
+  
+  // If we reach here, sym is not a constant and we don't know if it is != V.
+  // Make that assumption.
+  
+  isFeasible = true;
+  return AddNE(St, sym, V);
+}
+
+const ValueState* ValueStateManager::AssumeSymEQ(const ValueState* St, SymbolID sym,
+                                            const llvm::APSInt& V, bool& isFeasible) {
+  
+  // First, determine if sym == X, where X != V.
+  if (const llvm::APSInt* X = St->getSymVal(sym)) {
+    isFeasible = *X == V;
+    return St;
+  }
+  
+  // Second, determine if sym != V.
+  if (St->isNotEqual(sym, V)) {
+    isFeasible = false;
+    return St;
+  }
+  
+  // If we reach here, sym is not a constant and we don't know if it is == V.
+  // Make that assumption.
+  
+  isFeasible = true;
+  return AddEQ(St, sym, V);
+}
+
+const ValueState* ValueStateManager::AssumeSymInt(const ValueState* St,
+                                             bool Assumption,
+                                             const SymIntConstraint& C,
+                                             bool& isFeasible) {
+  
+  switch (C.getOpcode()) {
+    default:
+      // No logic yet for other operators.
+      isFeasible = true;
+      return St;
+      
+    case BinaryOperator::EQ:
+      if (Assumption)
+        return AssumeSymEQ(St, C.getSymbol(), C.getInt(), isFeasible);
+      else
+        return AssumeSymNE(St, C.getSymbol(), C.getInt(), isFeasible);
+      
+    case BinaryOperator::NE:
+      if (Assumption)
+        return AssumeSymNE(St, C.getSymbol(), C.getInt(), isFeasible);
+      else
+        return AssumeSymEQ(St, C.getSymbol(), C.getInt(), isFeasible);
+  }
 }

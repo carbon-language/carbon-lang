@@ -108,8 +108,7 @@ public:
                                const ValueState* St,
                                const ValueStateManager::DeadSymbolsTy& Dead) {}
   
-  // Return statements.
-  
+  // Return statements.  
   virtual void EvalReturn(ExplodedNodeSet<ValueState>& Dst,
                           GRExprEngine& Engine,
                           GRStmtNodeBuilder<ValueState>& Builder,
@@ -118,7 +117,7 @@ public:
 
   // Assumptions.
   
-  virtual const ValueState* EvalAssume(GRExprEngine& Engine,
+  virtual const ValueState* EvalAssume(ValueStateManager& VMgr,
                                        const ValueState* St,
                                        RVal Cond, bool Assumption,
                                        bool& isFeasible) {
