@@ -937,9 +937,16 @@ public:
   bool isAdditiveOp() const { return Opc == Add || Opc == Sub; }
   bool isShiftOp() const { return Opc == Shl || Opc == Shr; }
   bool isBitwiseOp() const { return Opc >= And && Opc <= Or; }
-  bool isRelationalOp() const { return Opc >= LT && Opc <= GE; }
-  bool isEqualityOp() const { return Opc == EQ || Opc == NE; }
-  bool isLogicalOp() const { return Opc == LAnd || Opc == LOr; }
+
+  static bool isRelationalOp(Opcode Opc) { return Opc >= LT && Opc <= GE; }
+  bool isRelationalOp() const { return isRelationalOp(Opc); }
+
+  static bool isEqualityOp(Opcode Opc) { return Opc == EQ || Opc == NE; }  
+  bool isEqualityOp() const { return isEqualityOp(Opc); }
+  
+  static bool isLogicalOp(Opcode Opc) { return Opc == LAnd || Opc == LOr; }
+  bool isLogicalOp() const { return isLogicalOp(Opc); }
+
   bool isAssignmentOp() const { return Opc >= Assign && Opc <= OrAssign; }
   bool isCompoundAssignmentOp() const { return Opc > Assign && Opc <= OrAssign;}
   bool isShiftAssignOp() const { return Opc == ShlAssign || Opc == ShrAssign; }
