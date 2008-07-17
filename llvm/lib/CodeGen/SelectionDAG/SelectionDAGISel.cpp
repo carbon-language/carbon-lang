@@ -52,7 +52,7 @@ using namespace llvm;
 static cl::opt<bool>
 EnableValueProp("enable-value-prop", cl::Hidden);
 static cl::opt<bool>
-DisableLegalizeTypes("disable-legalize-types", cl::Hidden);
+EnableLegalizeTypes("enable-legalize-types", cl::Hidden);
 
 
 #ifndef NDEBUG
@@ -5296,16 +5296,14 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   
   DOUT << "Optimized lowered selection DAG:\n";
   DEBUG(DAG.dump());
-
+  
   // Second step, hack on the DAG until it only uses operations and types that
   // the target supports.
-  if (!DisableLegalizeTypes) {// Remove this some day.
+  if (EnableLegalizeTypes) {// Enable this some day.
     DAG.LegalizeTypes();
-    DOUT << "Type legalized selection DAG:\n";
-    DEBUG(DAG.dump());
     // TODO: enable a dag combine pass here.
   }
-
+  
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("DAG Legalization", GroupName);
     DAG.Legalize();
