@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/GraphWriter.h"
@@ -155,13 +156,19 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
     else
       Op += "<null>";
   } else if (const MemOperandSDNode *M = dyn_cast<MemOperandSDNode>(Node)) {
-    if (M->MO.getValue()) {
+    const Value *V = M->MO.getValue();
+    Op += '<';
+    if (!V) {
+      Op += "(unknown)";
+    } else if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V)) {
+      // PseudoSourceValues don't have names, so use their print method.
       std::ostringstream SS;
       M->MO.getValue()->print(SS);
-      Op += "<" + SS.str() + "+" + itostr(M->MO.getOffset()) + ">";
+      Op += SS.str();
     } else {
-      Op += "<(unknown)+" + itostr(M->MO.getOffset()) + ">";
+      Op += V->getName();
     }
+    Op += '+' + itostr(M->MO.getOffset()) + '>';
   } else if (const ARG_FLAGSSDNode *N = dyn_cast<ARG_FLAGSSDNode>(Node)) {
     Op = Op + " AF=" + N->getArgFlags().getArgFlagsString();
   } else if (const VTSDNode *N = dyn_cast<VTSDNode>(Node)) {
