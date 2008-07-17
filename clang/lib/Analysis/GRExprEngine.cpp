@@ -217,21 +217,6 @@ const ValueState* GRExprEngine::getInitialState() {
   }
   
   return StateMgr.getPersistentState(StateImpl);
-}      
-      
-const ValueState* GRExprEngine::SetRVal(const ValueState* St, Expr* Ex,
-                                        RVal V) {
-
-  bool isBlkExpr = false;
-    
-  if (Ex == CurrentStmt) {
-    isBlkExpr = getCFG().isBlkExpr(Ex);
-    
-    if (!isBlkExpr)
-      return St;
-  }
-
-  return StateMgr.SetRVal(St, Ex, V, isBlkExpr, true);
 }
 
 //===----------------------------------------------------------------------===//

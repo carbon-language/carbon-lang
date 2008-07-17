@@ -391,9 +391,9 @@ protected:
   
 public:
   
-  // FIXME: Maybe make these accesible only within the StmtBuilder?
-  
-  const ValueState* SetRVal(const ValueState* St, Expr* Ex, RVal V);
+  const ValueState* SetRVal(const ValueState* St, Expr* Ex, RVal V) {
+    return StateMgr.SetRVal(St, Ex, V);
+  }
   
   const ValueState* SetRVal(const ValueState* St, const Expr* Ex, RVal V) {
     return SetRVal(St, const_cast<Expr*>(Ex), V);
