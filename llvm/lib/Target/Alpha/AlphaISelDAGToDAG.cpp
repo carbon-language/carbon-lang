@@ -244,8 +244,7 @@ void AlphaDAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
 // target-specific node if it hasn't already been changed.
 SDNode *AlphaDAGToDAGISel::Select(SDOperand Op) {
   SDNode *N = Op.Val;
-  if (N->getOpcode() >= ISD::BUILTIN_OP_END &&
-      N->getOpcode() < AlphaISD::FIRST_NUMBER) {
+  if (N->isMachineOpcode()) {
     return NULL;   // Already selected.
   }
 

@@ -216,7 +216,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
     SUnit *SU = Sequence[i];
     if (!SU || !SU->Node) continue;
     if (SU->isCommutable) {
-      unsigned Opc = SU->Node->getTargetOpcode();
+      unsigned Opc = SU->Node->getMachineOpcode();
       const TargetInstrDesc &TID = TII->get(Opc);
       unsigned NumRes = TID.getNumDefs();
       unsigned NumOps = TID.getNumOperands() - NumRes;
@@ -678,7 +678,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     assert(N->getNodeId() == -1 && "Node already inserted!");
     N->setNodeId(NewSU->NodeNum);
       
-    const TargetInstrDesc &TID = TII->get(N->getTargetOpcode());
+    const TargetInstrDesc &TID = TII->get(N->getMachineOpcode());
     for (unsigned i = 0; i != TID.getNumOperands(); ++i) {
       if (TID.getOperandConstraint(i, TOI::TIED_TO) != -1) {
         NewSU->isTwoAddress = true;
@@ -872,7 +872,7 @@ void ScheduleDAGRRList::InsertCCCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
 /// FIXME: Move to SelectionDAG?
 static MVT getPhysicalRegisterVT(SDNode *N, unsigned Reg,
                                  const TargetInstrInfo *TII) {
-  const TargetInstrDesc &TID = TII->get(N->getTargetOpcode());
+  const TargetInstrDesc &TID = TII->get(N->getMachineOpcode());
   assert(TID.ImplicitDefs && "Physical reg def must be in implicit def list!");
   unsigned NumRes = TID.getNumDefs();
   for (const unsigned *ImpDef = TID.getImplicitDefs(); *ImpDef; ++ImpDef) {
@@ -913,9 +913,9 @@ bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU,
 
   for (unsigned i = 0, e = SU->FlaggedNodes.size()+1; i != e; ++i) {
     SDNode *Node = (i == 0) ? SU->Node : SU->FlaggedNodes[i-1];
-    if (!Node || !Node->isTargetOpcode())
+    if (!Node || !Node->isMachineOpcode())
       continue;
-    const TargetInstrDesc &TID = TII->get(Node->getTargetOpcode());
+    const TargetInstrDesc &TID = TII->get(Node->getMachineOpcode());
     if (!TID.ImplicitDefs)
       continue;
     for (const unsigned *Reg = TID.ImplicitDefs; *Reg; ++Reg) {
@@ -1673,7 +1673,7 @@ bu_ls_rr_fast_sort::operator()(const SUnit *left, const SUnit *right) const {
 bool
 BURegReductionPriorityQueue::canClobber(const SUnit *SU, const SUnit *Op) {
   if (SU->isTwoAddress) {
-    unsigned Opc = SU->Node->getTargetOpcode();
+    unsigned Opc = SU->Node->getMachineOpcode();
     const TargetInstrDesc &TID = TII->get(Opc);
     unsigned NumRes = TID.getNumDefs();
     unsigned NumOps = TID.getNumOperands() - NumRes;
@@ -1709,11 +1709,11 @@ static bool canClobberPhysRegDefs(SUnit *SuccSU, SUnit *SU,
                                   const TargetInstrInfo *TII,
                                   const TargetRegisterInfo *TRI) {
   SDNode *N = SuccSU->Node;
-  unsigned NumDefs = TII->get(N->getTargetOpcode()).getNumDefs();
-  const unsigned *ImpDefs = TII->get(N->getTargetOpcode()).getImplicitDefs();
+  unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
+  const unsigned *ImpDefs = TII->get(N->getMachineOpcode()).getImplicitDefs();
   assert(ImpDefs && "Caller should check hasPhysRegDefs");
   const unsigned *SUImpDefs =
-    TII->get(SU->Node->getTargetOpcode()).getImplicitDefs();
+    TII->get(SU->Node->getMachineOpcode()).getImplicitDefs();
   if (!SUImpDefs)
     return false;
   for (unsigned i = NumDefs, e = N->getNumValues(); i != e; ++i) {
@@ -1744,10 +1744,10 @@ void BURegReductionPriorityQueue::AddPseudoTwoAddrDeps() {
       continue;
 
     SDNode *Node = SU->Node;
-    if (!Node || !Node->isTargetOpcode() || SU->FlaggedNodes.size() > 0)
+    if (!Node || !Node->isMachineOpcode() || SU->FlaggedNodes.size() > 0)
       continue;
 
-    unsigned Opc = Node->getTargetOpcode();
+    unsigned Opc = Node->getMachineOpcode();
     const TargetInstrDesc &TID = TII->get(Opc);
     unsigned NumRes = TID.getNumDefs();
     unsigned NumOps = TID.getNumOperands() - NumRes;
@@ -1768,7 +1768,7 @@ void BURegReductionPriorityQueue::AddPseudoTwoAddrDeps() {
           // depth and height.
           if (SuccSU->Height < SU->Height && (SU->Height - SuccSU->Height) > 1)
             continue;
-          if (!SuccSU->Node || !SuccSU->Node->isTargetOpcode())
+          if (!SuccSU->Node || !SuccSU->Node->isMachineOpcode())
             continue;
           // Don't constrain nodes with physical register defs if the
           // predecessor can clobber them.
@@ -1778,7 +1778,7 @@ void BURegReductionPriorityQueue::AddPseudoTwoAddrDeps() {
           }
           // Don't constraint extract_subreg / insert_subreg these may be
           // coalesced away. We don't them close to their uses.
-          unsigned SuccOpc = SuccSU->Node->getTargetOpcode();
+          unsigned SuccOpc = SuccSU->Node->getMachineOpcode();
           if (SuccOpc == TargetInstrInfo::EXTRACT_SUBREG ||
               SuccOpc == TargetInstrInfo::INSERT_SUBREG)
             continue;
@@ -1836,8 +1836,8 @@ static unsigned LimitedSumOfUnscheduledPredsOfSuccs(const SUnit *SU,
 bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   unsigned LPriority = SPQ->getNodePriority(left);
   unsigned RPriority = SPQ->getNodePriority(right);
-  bool LIsTarget = left->Node && left->Node->isTargetOpcode();
-  bool RIsTarget = right->Node && right->Node->isTargetOpcode();
+  bool LIsTarget = left->Node && left->Node->isMachineOpcode();
+  bool RIsTarget = right->Node && right->Node->isMachineOpcode();
   bool LIsFloater = LIsTarget && left->NumPreds == 0;
   bool RIsFloater = RIsTarget && right->NumPreds == 0;
   unsigned LBonus = (LimitedSumOfUnscheduledPredsOfSuccs(left,1) == 1) ? 2 : 0;

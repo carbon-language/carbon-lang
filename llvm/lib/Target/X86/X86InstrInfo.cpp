@@ -2239,11 +2239,11 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
 bool
 X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
                                      SmallVectorImpl<SDNode*> &NewNodes) const {
-  if (!N->isTargetOpcode())
+  if (!N->isMachineOpcode())
     return false;
 
   DenseMap<unsigned*, std::pair<unsigned,unsigned> >::iterator I =
-    MemOp2RegOpTable.find((unsigned*)N->getTargetOpcode());
+    MemOp2RegOpTable.find((unsigned*)N->getMachineOpcode());
   if (I == MemOp2RegOpTable.end())
     return false;
   unsigned Opc = I->second.first;

@@ -1157,7 +1157,8 @@ public:
       if (!isRoot)
         Code += "), 0";
 
-      bool NeedReplace = false;
+      std::vector<std::string> ReplaceFroms;
+      std::vector<std::string> ReplaceTos;
       if (!isRoot) {
         NodeOps.push_back("Tmp" + utostr(ResNo));
       } else {
@@ -1176,33 +1177,35 @@ public:
 
       if (FoldedChains.size() > 0) {
         std::string Code;
-        for (unsigned j = 0, e = FoldedChains.size(); j < e; j++)
-          After.push_back("ReplaceUses(SDOperand(" +
-                          FoldedChains[j].first + ".Val, " + 
-                          utostr(FoldedChains[j].second) +
-                          "), SDOperand(ResNode, " +
-                          utostr(NumResults+NumDstRegs) + "));");
-        NeedReplace = true;
+        for (unsigned j = 0, e = FoldedChains.size(); j < e; j++) {
+          ReplaceFroms.push_back("SDOperand(" +
+                                 FoldedChains[j].first + ".Val, " +
+                                 utostr(FoldedChains[j].second) +
+                                 ")");
+          ReplaceTos.push_back("SDOperand(ResNode, " +
+                               utostr(NumResults+NumDstRegs) + ")");
+        }
       }
 
       if (NodeHasOutFlag) {
         if (FoldedFlag.first != "") {
-          After.push_back("ReplaceUses(SDOperand(" + FoldedFlag.first +
-                          ".Val, " +
-                          utostr(FoldedFlag.second) + "), InFlag);");
+          ReplaceFroms.push_back("SDOperand(" + FoldedFlag.first + ".Val, " +
+                                 utostr(FoldedFlag.second) + ")");
+          ReplaceTos.push_back("InFlag");
         } else {
           assert(NodeHasProperty(Pattern, SDNPOutFlag, CGP));
-          After.push_back("ReplaceUses(SDOperand(N.Val, " +
-                          utostr(NumPatResults + (unsigned)InputHasChain)
-                          +"), InFlag);");
+          ReplaceFroms.push_back("SDOperand(N.Val, " +
+                                 utostr(NumPatResults + (unsigned)InputHasChain)
+                                 + ")");
+          ReplaceTos.push_back("InFlag");
         }
-        NeedReplace = true;
       }
 
-      if (NeedReplace && InputHasChain) {
-        After.push_back("ReplaceUses(SDOperand(N.Val, " + 
-                        utostr(NumPatResults) + "), SDOperand(" + ChainName
-                        + ".Val, " + ChainName + ".ResNo" + "));");
+      if (!ReplaceFroms.empty() && InputHasChain) {
+        ReplaceFroms.push_back("SDOperand(N.Val, " +
+                               utostr(NumPatResults) + ")");
+        ReplaceTos.push_back("SDOperand(" + ChainName + ".Val, " +
+                             ChainName + ".ResNo" + ")");
         ChainAssignmentNeeded |= NodeHasChain;
       }
 
@@ -1211,13 +1214,15 @@ public:
         ;
       } else if (InputHasChain && !NodeHasChain) {
         // One of the inner node produces a chain.
-        if (NodeHasOutFlag)
-          After.push_back("ReplaceUses(SDOperand(N.Val, " +
-                          utostr(NumPatResults+1) +
-                          "), SDOperand(ResNode, N.ResNo-1));");
-        After.push_back("ReplaceUses(SDOperand(N.Val, " +
-                        utostr(NumPatResults) + "), " + ChainName + ");");
-        NeedReplace = true;
+        if (NodeHasOutFlag) {
+          ReplaceFroms.push_back("SDOperand(N.Val, " +
+                                 utostr(NumPatResults+1) +
+                                 ")");
+          ReplaceTos.push_back("SDOperand(ResNode, N.ResNo-1)");
+        }
+        ReplaceFroms.push_back("SDOperand(N.Val, " +
+                               utostr(NumPatResults) + ")");
+        ReplaceTos.push_back(ChainName);
       }
       }
 
@@ -1234,21 +1239,31 @@ public:
         After.push_front(ChainAssign);
       }
 
-      // Use getTargetNode or SelectNodeTo? The safe choice is getTargetNode,
-      // but SelectNodeTo can be faster.
+      if (ReplaceFroms.size() == 1) {
+        After.push_back("ReplaceUses(" + ReplaceFroms[0] + ", " +
+                        ReplaceTos[0] + ");");
+      } else if (!ReplaceFroms.empty()) {
+        After.push_back("const SDOperand Froms[] = {");
+        for (unsigned i = 0, e = ReplaceFroms.size(); i != e; ++i)
+          After.push_back("  " + ReplaceFroms[i] + (i + 1 != e ? "," : ""));
+        After.push_back("};");
+        After.push_back("const SDOperand Tos[] = {");
+        for (unsigned i = 0, e = ReplaceFroms.size(); i != e; ++i)
+          After.push_back("  " + ReplaceTos[i] + (i + 1 != e ? "," : ""));
+        After.push_back("};");
+        After.push_back("ReplaceUses(Froms, Tos, " +
+                        itostr(ReplaceFroms.size()) + ");");
+      }
+
+      // We prefer to use SelectNodeTo since it avoids allocation when
+      // possible and it avoids CSE map recalculation for the node's
+      // users, however it's tricky to use in a non-root context.
       //
-      // SelectNodeTo is not safe in a non-root context, or if there is any
-      // replacement of results needed.
+      // We also don't use if the pattern replacement is being used to
+      // jettison a chain result, since morphing the node in place
+      // would leave users of the chain dangling.
       //
-      // SelectNodeTo is not profitable if it would require a dynamically
-      // allocated operand list in a situation where getTargetNode would be
-      // able to reuse a co-allocated operand list (as in a unary, binary or
-      // ternary SDNode, for example).
-      //
-      if (!isRoot || NeedReplace ||
-          (!IsVariadic && AllOps.size() < 4 &&
-           Pattern->getNumChildren() + InputHasChain + NodeHasInFlag <
-             AllOps.size())) {
+      if (!isRoot || (InputHasChain && !NodeHasChain)) {
         Code = "CurDAG->getTargetNode(" + Code;
       } else {
         Code = "CurDAG->SelectNodeTo(N.Val, " + Code;
@@ -1952,9 +1967,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
 
   OS << "// The main instruction selector code.\n"
      << "SDNode *SelectCode(SDOperand N) {\n"
-     << "  if (N.getOpcode() >= ISD::BUILTIN_OP_END &&\n"
-     << "      N.getOpcode() < (ISD::BUILTIN_OP_END+" << InstNS
-     << "INSTRUCTION_LIST_END)) {\n"
+     << "  if (N.isMachineOpcode()) {\n"
      << "    return NULL;   // Already selected.\n"
      << "  }\n\n"
      << "  MVT::SimpleValueType NVT = N.Val->getValueType(0).getSimpleVT();\n"

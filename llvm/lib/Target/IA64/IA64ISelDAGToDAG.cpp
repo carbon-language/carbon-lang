@@ -305,8 +305,7 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
 // target-specific node if it hasn't already been changed.
 SDNode *IA64DAGToDAGISel::Select(SDOperand Op) {
   SDNode *N = Op.Val;
-  if (N->getOpcode() >= ISD::BUILTIN_OP_END &&
-      N->getOpcode() < IA64ISD::FIRST_NUMBER)
+  if (N->isMachineOpcode())
     return NULL;   // Already selected.
 
   switch (N->getOpcode()) {

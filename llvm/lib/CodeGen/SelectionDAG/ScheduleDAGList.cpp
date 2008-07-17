@@ -206,7 +206,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
       // If this is a pseudo op, like copyfromreg, look to see if there is a
       // real target node flagged to it.  If so, use the target node.
       for (unsigned i = 0, e = CurSUnit->FlaggedNodes.size(); 
-           FoundNode->getOpcode() < ISD::BUILTIN_OP_END && i != e; ++i)
+           !FoundNode->isMachineOpcode() && i != e; ++i)
         FoundNode = CurSUnit->FlaggedNodes[i];
       
       HazardRecognizer::HazardType HT = HazardRec->getHazardType(FoundNode);

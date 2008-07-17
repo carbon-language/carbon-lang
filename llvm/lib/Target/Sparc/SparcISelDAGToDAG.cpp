@@ -137,8 +137,7 @@ bool SparcDAGToDAGISel::SelectADDRrr(SDOperand Op, SDOperand Addr,
 
 SDNode *SparcDAGToDAGISel::Select(SDOperand Op) {
   SDNode *N = Op.Val;
-  if (N->getOpcode() >= ISD::BUILTIN_OP_END &&
-      N->getOpcode() < SPISD::FIRST_NUMBER)
+  if (N->isMachineOpcode())
     return NULL;   // Already selected.
 
   switch (N->getOpcode()) {

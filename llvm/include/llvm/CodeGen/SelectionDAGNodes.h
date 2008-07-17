@@ -846,7 +846,8 @@ public:
   inline const SDOperand &getOperand(unsigned i) const;
   inline uint64_t getConstantOperandVal(unsigned i) const;
   inline bool isTargetOpcode() const;
-  inline unsigned getTargetOpcode() const;
+  inline bool isMachineOpcode() const;
+  inline unsigned getMachineOpcode() const;
 
   
   /// reachesChainWithoutSideEffects - Return true if this operand (which must
@@ -1028,7 +1029,7 @@ class SDNode : public FoldingSetNode {
 private:
   /// NodeType - The operation that this node performs.
   ///
-  unsigned short NodeType;
+  short NodeType;
   
   /// OperandsNeedDelete - This is true if OperandList was new[]'d.  If true,
   /// then they will be delete[]'d when the node is destroyed.
@@ -1072,11 +1073,27 @@ public:
   //===--------------------------------------------------------------------===//
   //  Accessors
   //
-  unsigned getOpcode()  const { return NodeType; }
+
+  /// getOpcode - Return the SelectionDAG opcode value for this node. For
+  /// pre-isel nodes (those for which isMachineOpcode returns false), these
+  /// are the opcode values in the ISD and <target>ISD namespaces. For
+  /// post-isel opcodes, see getMachineOpcode.
+  unsigned getOpcode()  const { return (unsigned short)NodeType; }
+
+  /// isTargetOpcode - Test if this node has a target-specific opcode (in the
+  /// <target>ISD namespace).
   bool isTargetOpcode() const { return NodeType >= ISD::BUILTIN_OP_END; }
-  unsigned getTargetOpcode() const {
-    assert(isTargetOpcode() && "Not a target opcode!");
-    return NodeType - ISD::BUILTIN_OP_END;
+
+  /// isMachineOpcode - Test if this node has a post-isel opcode, directly
+  /// corresponding to a MachineInstr opcode.
+  bool isMachineOpcode() const { return NodeType < 0; }
+
+  /// getMachineOpcode - This may only be called if isMachineOpcode returns
+  /// true. It returns the MachineInstr opcode value that the node's opcode
+  /// corresponds to.
+  unsigned getMachineOpcode() const {
+    assert(isMachineOpcode() && "Not a target opcode!");
+    return ~NodeType;
   }
 
   size_t use_size() const { return std::distance(use_begin(), use_end()); }
@@ -1314,16 +1331,8 @@ protected:
   }
 
   /// DropOperands - Release the operands and set this node to have
-  /// zero operands.  This should only be used by HandleSDNode to clear
-  /// its operand list.
+  /// zero operands.
   void DropOperands();
-  
-  /// MorphNodeTo - This frees the operands of the current node, resets the
-  /// opcode, types, and operands to the specified value.  This should only be
-  /// used by the SelectionDAG class.
-  void MorphNodeTo(unsigned Opc, SDVTList L,
-                   const SDOperand *Ops, unsigned NumOps,
-                   SmallVectorImpl<SDNode *> &DeadNodes);
   
   void addUser(unsigned i, SDNode *User) {
     assert(User->OperandList[i].getUser() && "Node without parent");
@@ -1358,8 +1367,11 @@ inline uint64_t SDOperand::getConstantOperandVal(unsigned i) const {
 inline bool SDOperand::isTargetOpcode() const {
   return Val->isTargetOpcode();
 }
-inline unsigned SDOperand::getTargetOpcode() const {
-  return Val->getTargetOpcode();
+inline bool SDOperand::isMachineOpcode() const {
+  return Val->isMachineOpcode();
+}
+inline unsigned SDOperand::getMachineOpcode() const {
+  return Val->getMachineOpcode();
 }
 inline bool SDOperand::hasOneUse() const {
   return Val->hasNUsesOfValue(1, ResNo);

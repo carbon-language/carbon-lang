@@ -1159,7 +1159,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
   Indent += 2;
 #endif
 
-  if (Opcode >= ISD::BUILTIN_OP_END && Opcode < X86ISD::FIRST_NUMBER) {
+  if (Node->isMachineOpcode()) {
 #ifndef NDEBUG
     DOUT << std::string(Indent-2, ' ') << "== ";
     DEBUG(Node->dump(CurDAG));

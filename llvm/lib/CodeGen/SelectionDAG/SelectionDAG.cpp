@@ -197,8 +197,8 @@ bool ISD::isDebugLabel(const SDNode *N) {
   SDOperand Zero;
   if (N->getOpcode() == ISD::DBG_LABEL)
     return true;
-  if (N->isTargetOpcode() &&
-      N->getTargetOpcode() == TargetInstrInfo::DBG_LABEL)
+  if (N->isMachineOpcode() &&
+      N->getMachineOpcode() == TargetInstrInfo::DBG_LABEL)
     return true;
   return false;
 }
@@ -532,8 +532,7 @@ void SelectionDAG::RemoveDeadNodes(SmallVectorImpl<SDNode *> &DeadNodes,
 }
 
 void SelectionDAG::RemoveDeadNode(SDNode *N, DAGUpdateListener *UpdateListener){
-  SmallVector<SDNode*, 16> DeadNodes;
-  DeadNodes.push_back(N);
+  SmallVector<SDNode*, 16> DeadNodes(1, N);
   RemoveDeadNodes(DeadNodes, UpdateListener);
 }
 
@@ -3523,31 +3522,33 @@ SDVTList SelectionDAG::getVTList(MVT VT) {
 }
 
 SDVTList SelectionDAG::getVTList(MVT VT1, MVT VT2) {
-  for (std::list<std::vector<MVT> >::iterator I = VTList.begin(),
-       E = VTList.end(); I != E; ++I) {
-    if (I->size() == 2 && (*I)[0] == VT1 && (*I)[1] == VT2)
-      return makeVTList(&(*I)[0], 2);
-  }
-  std::vector<MVT> V;
-  V.push_back(VT1);
-  V.push_back(VT2);
-  VTList.push_front(V);
-  return makeVTList(&(*VTList.begin())[0], 2);
+  for (std::vector<SDVTList>::reverse_iterator I = VTList.rbegin(),
+       E = VTList.rend(); I != E; ++I)
+    if (I->NumVTs == 2 && I->VTs[0] == VT1 && I->VTs[1] == VT2)
+      return *I;
+
+  MVT *Array = Allocator.Allocate<MVT>(2);
+  Array[0] = VT1;
+  Array[1] = VT2;
+  SDVTList Result = makeVTList(Array, 2);
+  VTList.push_back(Result);
+  return Result;
 }
-SDVTList SelectionDAG::getVTList(MVT VT1, MVT VT2,
-                                 MVT VT3) {
-  for (std::list<std::vector<MVT> >::iterator I = VTList.begin(),
-       E = VTList.end(); I != E; ++I) {
-    if (I->size() == 3 && (*I)[0] == VT1 && (*I)[1] == VT2 &&
-        (*I)[2] == VT3)
-      return makeVTList(&(*I)[0], 3);
-  }
-  std::vector<MVT> V;
-  V.push_back(VT1);
-  V.push_back(VT2);
-  V.push_back(VT3);
-  VTList.push_front(V);
-  return makeVTList(&(*VTList.begin())[0], 3);
+
+SDVTList SelectionDAG::getVTList(MVT VT1, MVT VT2, MVT VT3) {
+  for (std::vector<SDVTList>::reverse_iterator I = VTList.rbegin(),
+       E = VTList.rend(); I != E; ++I)
+    if (I->NumVTs == 3 && I->VTs[0] == VT1 && I->VTs[1] == VT2 &&
+                          I->VTs[2] == VT3)
+      return *I;
+
+  MVT *Array = Allocator.Allocate<MVT>(3);
+  Array[0] = VT1;
+  Array[1] = VT2;
+  Array[2] = VT3;
+  SDVTList Result = makeVTList(Array, 3);
+  VTList.push_back(Result);
+  return Result;
 }
 
 SDVTList SelectionDAG::getVTList(const MVT *VTs, unsigned NumVTs) {
@@ -3559,22 +3560,26 @@ SDVTList SelectionDAG::getVTList(const MVT *VTs, unsigned NumVTs) {
     default: break;
   }
 
-  for (std::list<std::vector<MVT> >::iterator I = VTList.begin(),
-       E = VTList.end(); I != E; ++I) {
-    if (I->size() != NumVTs || VTs[0] != (*I)[0] || VTs[1] != (*I)[1]) continue;
+  for (std::vector<SDVTList>::reverse_iterator I = VTList.rbegin(),
+       E = VTList.rend(); I != E; ++I) {
+    if (I->NumVTs != NumVTs || VTs[0] != I->VTs[0] || VTs[1] != I->VTs[1])
+      continue;
    
     bool NoMatch = false;
     for (unsigned i = 2; i != NumVTs; ++i)
-      if (VTs[i] != (*I)[i]) {
+      if (VTs[i] != I->VTs[i]) {
         NoMatch = true;
         break;
       }
     if (!NoMatch)
-      return makeVTList(&*I->begin(), NumVTs);
+      return *I;
   }
   
-  VTList.push_front(std::vector<MVT>(VTs, VTs+NumVTs));
-  return makeVTList(&*VTList.begin()->begin(), NumVTs);
+  MVT *Array = Allocator.Allocate<MVT>(NumVTs);
+  std::copy(VTs, VTs+NumVTs, Array);
+  SDVTList Result = makeVTList(Array, NumVTs);
+  VTList.push_back(Result);
+  return Result;
 }
 
 
@@ -3711,61 +3716,9 @@ UpdateNodeOperands(SDOperand InN, const SDOperand *Ops, unsigned NumOps) {
   return InN;
 }
 
-/// MorphNodeTo - This frees the operands of the current node, resets the
-/// opcode, types, and operands to the specified value.  This should only be
-/// used by the SelectionDAG class.
-void SDNode::MorphNodeTo(unsigned Opc, SDVTList L,
-                         const SDOperand *Ops, unsigned NumOps,
-                         SmallVectorImpl<SDNode *> &DeadNodes) {
-  NodeType = Opc;
-  ValueList = L.VTs;
-  NumValues = L.NumVTs;
-  
-  // Clear the operands list, updating used nodes to remove this from their
-  // use list.  Keep track of any operands that become dead as a result.
-  SmallPtrSet<SDNode*, 16> DeadNodeSet;
-  for (op_iterator I = op_begin(), E = op_end(); I != E; ++I) {
-    SDNode *N = I->getVal();
-    N->removeUser(std::distance(op_begin(), I), this);
-    if (N->use_empty())
-      DeadNodeSet.insert(N);
-  }
-
-  // If NumOps is larger than the # of operands we currently have, reallocate
-  // the operand list.
-  if (NumOps > NumOperands) {
-    if (OperandsNeedDelete) {
-      delete [] OperandList;
-    }
-    OperandList = new SDUse[NumOps];
-    OperandsNeedDelete = true;
-  }
-  
-  // Assign the new operands.
-  NumOperands = NumOps;
-  
-  for (unsigned i = 0, e = NumOps; i != e; ++i) {
-    OperandList[i] = Ops[i];
-    OperandList[i].setUser(this);
-    SDNode *N = OperandList[i].getVal();
-    N->addUser(i, this);
-    DeadNodeSet.erase(N);
-  }
-
-  // Clean up any nodes that are still dead after adding the uses for the
-  // new operands.
-  for (SmallPtrSet<SDNode *, 16>::iterator I = DeadNodeSet.begin(),
-       E = DeadNodeSet.end(); I != E; ++I)
-    DeadNodes.push_back(*I);
-}
-
 /// DropOperands - Release the operands and set this node to have
-/// zero operands.  This should only be used by HandleSDNode to clear
-/// its operand list.
+/// zero operands.
 void SDNode::DropOperands() {
-  assert(NodeType == ISD::HANDLENODE &&
-         "DropOperands is for HANDLENODE only!");
-
   // Unlike the code in MorphNodeTo that does this, we don't need to
   // watch for dead nodes here.
   for (op_iterator I = op_begin(), E = op_end(); I != E; ++I)
@@ -3774,112 +3727,257 @@ void SDNode::DropOperands() {
   NumOperands = 0;
 }
 
-/// SelectNodeTo - These are used for target selectors to *mutate* the
-/// specified node to have the specified return type, Target opcode, and
-/// operands.  Note that target opcodes are stored as
-/// ISD::BUILTIN_OP_END+TargetOpcode in the node opcode field.
+/// SelectNodeTo - These are wrappers around MorphNodeTo that accept a
+/// machine opcode.
 ///
-/// Note that SelectNodeTo returns the resultant node.  If there is already a
-/// node of the specified opcode and operands, it returns that node instead of
-/// the current one.
-SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    MVT VT) {
   SDVTList VTs = getVTList(VT);
-  return SelectNodeTo(N, TargetOpc, VTs, 0, 0);
+  return SelectNodeTo(N, MachineOpc, VTs, 0, 0);
 }
 
-SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    MVT VT, SDOperand Op1) {
   SDVTList VTs = getVTList(VT);
   SDOperand Ops[] = { Op1 };
-  return SelectNodeTo(N, TargetOpc, VTs, Ops, 1);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops, 1);
 }
 
-SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    MVT VT, SDOperand Op1,
                                    SDOperand Op2) {
   SDVTList VTs = getVTList(VT);
   SDOperand Ops[] = { Op1, Op2 };
-  return SelectNodeTo(N, TargetOpc, VTs, Ops, 2);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops, 2);
 }
 
-SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    MVT VT, SDOperand Op1,
                                    SDOperand Op2, SDOperand Op3) {
   SDVTList VTs = getVTList(VT);
   SDOperand Ops[] = { Op1, Op2, Op3 };
-  return SelectNodeTo(N, TargetOpc, VTs, Ops, 3);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops, 3);
 }
 
-SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    MVT VT, const SDOperand *Ops,
                                    unsigned NumOps) {
   SDVTList VTs = getVTList(VT);
-  return SelectNodeTo(N, TargetOpc, VTs, Ops, NumOps);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops, NumOps);
 }
 
-SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    MVT VT1, MVT VT2, const SDOperand *Ops,
                                    unsigned NumOps) {
   SDVTList VTs = getVTList(VT1, VT2);
-  return SelectNodeTo(N, TargetOpc, VTs, Ops, NumOps);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops, NumOps);
 }
 
-SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    MVT VT1, MVT VT2) {
   SDVTList VTs = getVTList(VT1, VT2);
-  return SelectNodeTo(N, TargetOpc, VTs, (SDOperand *)0, 0);
+  return SelectNodeTo(N, MachineOpc, VTs, (SDOperand *)0, 0);
 }
 
-SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    MVT VT1, MVT VT2, MVT VT3,
                                    const SDOperand *Ops, unsigned NumOps) {
   SDVTList VTs = getVTList(VT1, VT2, VT3);
-  return SelectNodeTo(N, TargetOpc, VTs, Ops, NumOps);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops, NumOps);
 }
 
-SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc, 
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc, 
                                    MVT VT1, MVT VT2,
                                    SDOperand Op1) {
   SDVTList VTs = getVTList(VT1, VT2);
   SDOperand Ops[] = { Op1 };
-  return SelectNodeTo(N, TargetOpc, VTs, Ops, 1);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops, 1);
 }
 
-SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc, 
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc, 
                                    MVT VT1, MVT VT2,
                                    SDOperand Op1, SDOperand Op2) {
   SDVTList VTs = getVTList(VT1, VT2);
   SDOperand Ops[] = { Op1, Op2 };
-  return SelectNodeTo(N, TargetOpc, VTs, Ops, 2);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops, 2);
 }
 
-SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    MVT VT1, MVT VT2,
                                    SDOperand Op1, SDOperand Op2, 
                                    SDOperand Op3) {
   SDVTList VTs = getVTList(VT1, VT2);
   SDOperand Ops[] = { Op1, Op2, Op3 };
-  return SelectNodeTo(N, TargetOpc, VTs, Ops, 3);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops, 3);
 }
 
-SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    SDVTList VTs, const SDOperand *Ops,
                                    unsigned NumOps) {
+  return MorphNodeTo(N, ~MachineOpc, VTs, Ops, NumOps);
+}
+
+SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
+                                  MVT VT) {
+  SDVTList VTs = getVTList(VT);
+  return MorphNodeTo(N, Opc, VTs, 0, 0);
+}
+
+SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
+                                  MVT VT, SDOperand Op1) {
+  SDVTList VTs = getVTList(VT);
+  SDOperand Ops[] = { Op1 };
+  return MorphNodeTo(N, Opc, VTs, Ops, 1);
+}
+
+SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
+                                  MVT VT, SDOperand Op1,
+                                  SDOperand Op2) {
+  SDVTList VTs = getVTList(VT);
+  SDOperand Ops[] = { Op1, Op2 };
+  return MorphNodeTo(N, Opc, VTs, Ops, 2);
+}
+
+SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
+                                  MVT VT, SDOperand Op1,
+                                  SDOperand Op2, SDOperand Op3) {
+  SDVTList VTs = getVTList(VT);
+  SDOperand Ops[] = { Op1, Op2, Op3 };
+  return MorphNodeTo(N, Opc, VTs, Ops, 3);
+}
+
+SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
+                                  MVT VT, const SDOperand *Ops,
+                                  unsigned NumOps) {
+  SDVTList VTs = getVTList(VT);
+  return MorphNodeTo(N, Opc, VTs, Ops, NumOps);
+}
+
+SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
+                                  MVT VT1, MVT VT2, const SDOperand *Ops,
+                                  unsigned NumOps) {
+  SDVTList VTs = getVTList(VT1, VT2);
+  return MorphNodeTo(N, Opc, VTs, Ops, NumOps);
+}
+
+SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
+                                  MVT VT1, MVT VT2) {
+  SDVTList VTs = getVTList(VT1, VT2);
+  return MorphNodeTo(N, Opc, VTs, (SDOperand *)0, 0);
+}
+
+SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
+                                  MVT VT1, MVT VT2, MVT VT3,
+                                  const SDOperand *Ops, unsigned NumOps) {
+  SDVTList VTs = getVTList(VT1, VT2, VT3);
+  return MorphNodeTo(N, Opc, VTs, Ops, NumOps);
+}
+
+SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc, 
+                                  MVT VT1, MVT VT2,
+                                  SDOperand Op1) {
+  SDVTList VTs = getVTList(VT1, VT2);
+  SDOperand Ops[] = { Op1 };
+  return MorphNodeTo(N, Opc, VTs, Ops, 1);
+}
+
+SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc, 
+                                  MVT VT1, MVT VT2,
+                                  SDOperand Op1, SDOperand Op2) {
+  SDVTList VTs = getVTList(VT1, VT2);
+  SDOperand Ops[] = { Op1, Op2 };
+  return MorphNodeTo(N, Opc, VTs, Ops, 2);
+}
+
+SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
+                                  MVT VT1, MVT VT2,
+                                  SDOperand Op1, SDOperand Op2, 
+                                  SDOperand Op3) {
+  SDVTList VTs = getVTList(VT1, VT2);
+  SDOperand Ops[] = { Op1, Op2, Op3 };
+  return MorphNodeTo(N, Opc, VTs, Ops, 3);
+}
+
+/// MorphNodeTo - These *mutate* the specified node to have the specified
+/// return type, opcode, and operands.
+///
+/// Note that MorphNodeTo returns the resultant node.  If there is already a
+/// node of the specified opcode and operands, it returns that node instead of
+/// the current one.
+///
+/// Using MorphNodeTo is faster than creating a new node and swapping it in
+/// with ReplaceAllUsesWith both because it often avoids allocating a new
+/// node, and because it doesn't require CSE recalulation for any of
+/// the node's users.
+///
+SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
+                                  SDVTList VTs, const SDOperand *Ops,
+                                  unsigned NumOps) {
   // If an identical node already exists, use it.
-  FoldingSetNodeID ID;
-  AddNodeIDNode(ID, ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, NumOps);
   void *IP = 0;
-  if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return ON;
+  if (VTs.VTs[VTs.NumVTs-1] != MVT::Flag) {
+    FoldingSetNodeID ID;
+    AddNodeIDNode(ID, Opc, VTs, Ops, NumOps);
+    if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
+      return ON;
+  }
 
   RemoveNodeFromCSEMaps(N);
 
+  // Start the morphing.
+  N->NodeType = Opc;
+  N->ValueList = VTs.VTs;
+  N->NumValues = VTs.NumVTs;
+  
+  // Clear the operands list, updating used nodes to remove this from their
+  // use list.  Keep track of any operands that become dead as a result.
+  SmallPtrSet<SDNode*, 16> DeadNodeSet;
+  for (SDNode::op_iterator B = N->op_begin(), I = B, E = N->op_end();
+       I != E; ++I) {
+    SDNode *Used = I->getVal();
+    Used->removeUser(std::distance(B, I), N);
+    if (Used->use_empty())
+      DeadNodeSet.insert(Used);
+  }
+
+  // If NumOps is larger than the # of operands we currently have, reallocate
+  // the operand list.
+  if (NumOps > N->NumOperands) {
+    if (N->OperandsNeedDelete)
+      delete[] N->OperandList;
+    if (N->isMachineOpcode()) {
+      // We're creating a final node that will live unmorphed for the
+      // remainder of this SelectionDAG's duration, so we can allocate the
+      // operands directly out of the pool with no recycling metadata.
+      N->OperandList = Allocator.Allocate<SDUse>(NumOps);
+      N->OperandsNeedDelete = false;
+    } else {
+      N->OperandList = new SDUse[NumOps];
+      N->OperandsNeedDelete = true;
+    }
+  }
+  
+  // Assign the new operands.
+  N->NumOperands = NumOps;
+  for (unsigned i = 0, e = NumOps; i != e; ++i) {
+    N->OperandList[i] = Ops[i];
+    N->OperandList[i].setUser(N);
+    SDNode *ToUse = N->OperandList[i].getVal();
+    ToUse->addUser(i, N);
+    DeadNodeSet.erase(ToUse);
+  }
+
+  // Delete any nodes that are still dead after adding the uses for the
+  // new operands.
   SmallVector<SDNode *, 16> DeadNodes;
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc, VTs, Ops, NumOps, DeadNodes);
+  for (SmallPtrSet<SDNode *, 16>::iterator I = DeadNodeSet.begin(),
+       E = DeadNodeSet.end(); I != E; ++I)
+    if ((*I)->use_empty())
+      DeadNodes.push_back(*I);
   RemoveDeadNodes(DeadNodes);
 
-  CSEMap.InsertNode(N, IP);   // Memoize the new node.
+  if (IP)
+    CSEMap.InsertNode(N, IP);   // Memoize the new node.
   return N;
 }
 
@@ -3891,70 +3989,70 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
 /// node of the specified opcode and operands, it returns that node instead of
 /// the current one.
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT) {
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VT).Val;
+  return getNode(~Opcode, VT).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT, SDOperand Op1) {
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1).Val;
+  return getNode(~Opcode, VT, Op1).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT,
                                     SDOperand Op1, SDOperand Op2) {
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2).Val;
+  return getNode(~Opcode, VT, Op1, Op2).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT,
                                     SDOperand Op1, SDOperand Op2,
                                     SDOperand Op3) {
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2, Op3).Val;
+  return getNode(~Opcode, VT, Op1, Op2, Op3).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT,
                                     const SDOperand *Ops, unsigned NumOps) {
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Ops, NumOps).Val;
+  return getNode(~Opcode, VT, Ops, NumOps).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2);
   SDOperand Op;
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, &Op, 0).Val;
+  return getNode(~Opcode, VTs, 2, &Op, 0).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
                                     MVT VT2, SDOperand Op1) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2);
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, &Op1, 1).Val;
+  return getNode(~Opcode, VTs, 2, &Op1, 1).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
                                     MVT VT2, SDOperand Op1,
                                     SDOperand Op2) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2);
   SDOperand Ops[] = { Op1, Op2 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, 2).Val;
+  return getNode(~Opcode, VTs, 2, Ops, 2).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
                                     MVT VT2, SDOperand Op1,
                                     SDOperand Op2, SDOperand Op3) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2);
   SDOperand Ops[] = { Op1, Op2, Op3 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, 3).Val;
+  return getNode(~Opcode, VTs, 2, Ops, 3).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2,
                                     const SDOperand *Ops, unsigned NumOps) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2);
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, Ops, NumOps).Val;
+  return getNode(~Opcode, VTs, 2, Ops, NumOps).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3,
                                     SDOperand Op1, SDOperand Op2) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2, VT3);
   SDOperand Ops[] = { Op1, Op2 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 3, Ops, 2).Val;
+  return getNode(~Opcode, VTs, 3, Ops, 2).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3,
                                     SDOperand Op1, SDOperand Op2,
                                     SDOperand Op3) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2, VT3);
   SDOperand Ops[] = { Op1, Op2, Op3 };
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 3, Ops, 3).Val;
+  return getNode(~Opcode, VTs, 3, Ops, 3).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1, MVT VT2, MVT VT3,
                                     const SDOperand *Ops, unsigned NumOps) {
   const MVT *VTs = getNodeValueTypes(VT1, VT2, VT3);
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 3, Ops, NumOps).Val;
+  return getNode(~Opcode, VTs, 3, Ops, NumOps).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
                                     MVT VT2, MVT VT3, MVT VT4,
@@ -3965,13 +4063,13 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT VT1,
   VTList.push_back(VT3);
   VTList.push_back(VT4);
   const MVT *VTs = getNodeValueTypes(VTList);
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 4, Ops, NumOps).Val;
+  return getNode(~Opcode, VTs, 4, Ops, NumOps).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode,
                                     const std::vector<MVT> &ResultTys,
                                     const SDOperand *Ops, unsigned NumOps) {
   const MVT *VTs = getNodeValueTypes(ResultTys);
-  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, ResultTys.size(),
+  return getNode(~Opcode, VTs, ResultTys.size(),
                  Ops, NumOps).Val;
 }
 
@@ -4043,13 +4141,14 @@ void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand To,
 ///
 void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
                                       DAGUpdateListener *UpdateListener) {
-  assert(From != To && "Cannot replace uses of with self");
-  assert(From->getNumValues() == To->getNumValues() &&
+  assert(From->getVTList().VTs == To->getVTList().VTs &&
+         From->getNumValues() == To->getNumValues() &&
          "Cannot use this version of ReplaceAllUsesWith!");
-  if (From->getNumValues() == 1)   // If possible, use the faster version.
-    return ReplaceAllUsesWith(SDOperand(From, 0), SDOperand(To, 0),
-                              UpdateListener);
-  
+
+  // Handle the trivial case.
+  if (From == To)
+    return;
+
   while (!From->use_empty()) {
     SDNode::use_iterator UI = From->use_begin();
     SDNode *U = UI->getUser();
@@ -4127,36 +4226,14 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
   }
 }
 
-namespace {
-  /// ChainedSetUpdaterListener - This class is a DAGUpdateListener that removes
-  /// any deleted nodes from the set passed into its constructor and recursively
-  /// notifies another update listener if specified.
-  class ChainedSetUpdaterListener : 
-  public SelectionDAG::DAGUpdateListener {
-    SmallSetVector<SDNode*, 16> &Set;
-    SelectionDAG::DAGUpdateListener *Chain;
-  public:
-    ChainedSetUpdaterListener(SmallSetVector<SDNode*, 16> &set,
-                              SelectionDAG::DAGUpdateListener *chain)
-      : Set(set), Chain(chain) {}
- 
-    virtual void NodeDeleted(SDNode *N, SDNode *E) {
-      Set.remove(N);
-      if (Chain) Chain->NodeDeleted(N, E);
-    }
-    virtual void NodeUpdated(SDNode *N) {
-      if (Chain) Chain->NodeUpdated(N);
-    }
-  };
-}
-
 /// ReplaceAllUsesOfValueWith - Replace any uses of From with To, leaving
 /// uses of other values produced by From.Val alone.  The Deleted vector is
 /// handled the same way as for ReplaceAllUsesWith.
 void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
                                              DAGUpdateListener *UpdateListener){
-  assert(From != To && "Cannot replace a value with itself");
-  
+  // Handle the really simple, really trivial case efficiently.
+  if (From == To) return;
+
   // Handle the simple, trivial, case efficiently.
   if (From.Val->getNumValues() == 1) {
     ReplaceAllUsesWith(From, To, UpdateListener);
@@ -4174,11 +4251,6 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
     Users.insert(User);
   }
 
-  // When one of the recursive merges deletes nodes from the graph, we need to
-  // make sure that UpdateListener is notified *and* that the node is removed
-  // from Users if present.  CSUL does this.
-  ChainedSetUpdaterListener CSUL(Users, UpdateListener);
-  
   while (!Users.empty()) {
     // We know that this user uses some value of From.  If it is the right
     // value, update it.
@@ -4217,10 +4289,74 @@ void SelectionDAG::ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
     
     // If there was already an existing matching node, use ReplaceAllUsesWith
     // to replace the dead one with the existing one.  This can cause
-    // recursive merging of other unrelated nodes down the line.  The merging
-    // can cause deletion of nodes that used the old value.  To handle this, we
-    // use CSUL to remove them from the Users set.
-    ReplaceAllUsesWith(User, Existing, &CSUL);
+    // recursive merging of other unrelated nodes down the line.
+    ReplaceAllUsesWith(User, Existing, UpdateListener);
+    
+    // User is now dead.  Notify a listener if present.
+    if (UpdateListener) UpdateListener->NodeDeleted(User, Existing);
+    DeleteNodeNotInCSEMaps(User);
+  }
+}
+
+/// ReplaceAllUsesOfValuesWith - Replace any uses of From with To, leaving
+/// uses of other values produced by From.Val alone.  The same value may
+/// appear in both the From and To list.  The Deleted vector is
+/// handled the same way as for ReplaceAllUsesWith.
+void SelectionDAG::ReplaceAllUsesOfValuesWith(const SDOperand *From,
+                                              const SDOperand *To,
+                                              unsigned Num,
+                                              DAGUpdateListener *UpdateListener){
+  // Handle the simple, trivial case efficiently.
+  if (Num == 1)
+    return ReplaceAllUsesOfValueWith(*From, *To, UpdateListener);
+
+  SmallVector<std::pair<SDNode *, unsigned>, 16> Users;
+  for (unsigned i = 0; i != Num; ++i)
+    for (SDNode::use_iterator UI = From[i].Val->use_begin(), 
+         E = From[i].Val->use_end(); UI != E; ++UI)
+      Users.push_back(std::make_pair(UI->getUser(), i));
+
+  while (!Users.empty()) {
+    // We know that this user uses some value of From.  If it is the right
+    // value, update it.
+    SDNode *User = Users.back().first;
+    unsigned i = Users.back().second;
+    Users.pop_back();
+    
+    // Scan for an operand that matches From.
+    SDNode::op_iterator Op = User->op_begin(), E = User->op_end();
+    for (; Op != E; ++Op)
+      if (*Op == From[i]) break;
+    
+    // If there are no matches, the user must use some other result of From.
+    if (Op == E) continue;
+      
+    // Okay, we know this user needs to be updated.  Remove its old self
+    // from the CSE maps.
+    RemoveNodeFromCSEMaps(User);
+    
+    // Update all operands that match "From" in case there are multiple uses.
+    for (; Op != E; ++Op) {
+      if (*Op == From[i]) {
+        From[i].Val->removeUser(Op-User->op_begin(), User);
+        *Op = To[i];
+        Op->setUser(User);
+        To[i].Val->addUser(Op-User->op_begin(), User);
+      }
+    }
+               
+    // Now that we have modified User, add it back to the CSE maps.  If it
+    // already exists there, recursively merge the results together.
+    SDNode *Existing = AddNonLeafNodeToCSEMaps(User);
+    if (!Existing) {
+      if (UpdateListener) UpdateListener->NodeUpdated(User);
+      continue;  // Continue on to next user.
+    }
+    
+    // If there was already an existing matching node, use ReplaceAllUsesWith
+    // to replace the dead one with the existing one.  This can cause
+    // recursive merging of other unrelated nodes down the line.
+    ReplaceAllUsesWith(User, Existing, UpdateListener);
     
     // User is now dead.  Notify a listener if present.
     if (UpdateListener) UpdateListener->NodeDeleted(User, Existing);
@@ -4507,21 +4643,25 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   default:
     if (getOpcode() < ISD::BUILTIN_OP_END)
       return "<<Unknown DAG Node>>";
-    else {
-      if (G) {
+    if (isMachineOpcode()) {
+      if (G)
         if (const TargetInstrInfo *TII = G->getTarget().getInstrInfo())
-          if (getOpcode()-ISD::BUILTIN_OP_END < TII->getNumOpcodes())
-            return TII->get(getOpcode()-ISD::BUILTIN_OP_END).getName();
-
-        TargetLowering &TLI = G->getTargetLoweringInfo();
-        const char *Name =
-          TLI.getTargetNodeName(getOpcode());
-        if (Name) return Name;
-      }
-
+          if (getMachineOpcode() < TII->getNumOpcodes())
+            return TII->get(getMachineOpcode()).getName();
+      return "<<Unknown Machine Node>>";
+    }
+    if (G) {
+      TargetLowering &TLI = G->getTargetLoweringInfo();
+      const char *Name = TLI.getTargetNodeName(getOpcode());
+      if (Name) return Name;
       return "<<Unknown Target Node>>";
     }
+    return "<<Unknown Node>>";
    
+#ifndef NDEBUG
+  case ISD::DELETED_NODE:
+    return "<<Deleted Node!>>";
+#endif
   case ISD::PREFETCH:      return "Prefetch";
   case ISD::MEMBARRIER:    return "MemBarrier";
   case ISD::ATOMIC_CMP_SWAP:  return "AtomicCmpSwap";

@@ -60,6 +60,10 @@ class SelectionDAG {
   /// CSE with existing nodes with a duplicate is requested.
   FoldingSet<SDNode> CSEMap;
 
+  /// Allocator - Pool allocation for misc. objects that are created once per
+  /// SelectionDAG.
+  BumpPtrAllocator Allocator;
+
 public:
   SelectionDAG(TargetLowering &tli, MachineFunction &mf, 
                FunctionLoweringInfo &fli, MachineModuleInfo *mmi,
@@ -457,8 +461,7 @@ public:
   /// SelectNodeTo - These are used for target selectors to *mutate* the
   /// specified node to have the specified return type, Target opcode, and
   /// operands.  Note that target opcodes are stored as
-  /// ISD::BUILTIN_OP_END+TargetOpcode in the node opcode field.  The 0th value
-  /// of the resultant node is returned.
+  /// ~TargetOpcode in the node opcode field.  The resultant node is returned.
   SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT VT);
   SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT VT, SDOperand Op1);
   SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT VT,
@@ -481,6 +484,29 @@ public:
   SDNode *SelectNodeTo(SDNode *N, unsigned TargetOpc, SDVTList VTs,
                        const SDOperand *Ops, unsigned NumOps);
 
+  /// MorphNodeTo - These *mutate* the specified node to have the specified
+  /// return type, opcode, and operands.
+  SDNode *MorphNodeTo(SDNode *N, unsigned Opc, MVT VT);
+  SDNode *MorphNodeTo(SDNode *N, unsigned Opc, MVT VT, SDOperand Op1);
+  SDNode *MorphNodeTo(SDNode *N, unsigned Opc, MVT VT,
+                      SDOperand Op1, SDOperand Op2);
+  SDNode *MorphNodeTo(SDNode *N, unsigned Opc, MVT VT,
+                      SDOperand Op1, SDOperand Op2, SDOperand Op3);
+  SDNode *MorphNodeTo(SDNode *N, unsigned Opc, MVT VT,
+                      const SDOperand *Ops, unsigned NumOps);
+  SDNode *MorphNodeTo(SDNode *N, unsigned Opc, MVT VT1, MVT VT2);
+  SDNode *MorphNodeTo(SDNode *N, unsigned Opc, MVT VT1,
+                      MVT VT2, const SDOperand *Ops, unsigned NumOps);
+  SDNode *MorphNodeTo(SDNode *N, unsigned Opc, MVT VT1,
+                      MVT VT2, MVT VT3, const SDOperand *Ops, unsigned NumOps);
+  SDNode *MorphNodeTo(SDNode *N, unsigned Opc, MVT VT1,
+                      MVT VT2, SDOperand Op1);
+  SDNode *MorphNodeTo(SDNode *N, unsigned Opc, MVT VT1,
+                      MVT VT2, SDOperand Op1, SDOperand Op2);
+  SDNode *MorphNodeTo(SDNode *N, unsigned Opc, MVT VT1,
+                      MVT VT2, SDOperand Op1, SDOperand Op2, SDOperand Op3);
+  SDNode *MorphNodeTo(SDNode *N, unsigned Opc, SDVTList VTs,
+                      const SDOperand *Ops, unsigned NumOps);
 
   /// getTargetNode - These are used for target selectors to create a new node
   /// with specified return type(s), target opcode, and operands.
@@ -564,6 +590,13 @@ public:
   /// uses of other values produced by From.Val alone.
   void ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
                                  DAGUpdateListener *UpdateListener = 0);
+
+  /// ReplaceAllUsesOfValuesWith - Like ReplaceAllUsesOfValueWith, but
+  /// for multiple values at once. This correctly handles the case where
+  /// there is an overlap between the From values and the To values.
+  void ReplaceAllUsesOfValuesWith(const SDOperand *From, const SDOperand *To,
+                                  unsigned Num,
+                                  DAGUpdateListener *UpdateListener = 0);
 
   /// AssignTopologicalOrder - Assign a unique node id for each node in the DAG
   /// based on their topological order. It returns the maximum id and a vector
@@ -654,7 +687,7 @@ private:
   unsigned getMVTAlignment(MVT MemoryVT) const;
   
   // List of non-single value types.
-  std::list<std::vector<MVT> > VTList;
+  std::vector<SDVTList> VTList;
   
   // Maps to auto-CSE operations.
   std::vector<CondCodeSDNode*> CondCodeNodes;

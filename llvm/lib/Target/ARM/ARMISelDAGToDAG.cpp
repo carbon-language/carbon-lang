@@ -530,9 +530,8 @@ static inline SDOperand getAL(SelectionDAG *CurDAG) {
 
 SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
   SDNode *N = Op.Val;
-  unsigned Opcode = N->getOpcode();
 
-  if (Opcode >= ISD::BUILTIN_OP_END && Opcode < ARMISD::FIRST_NUMBER)
+  if (N->isMachineOpcode())
     return NULL;   // Already selected.
 
   switch (N->getOpcode()) {

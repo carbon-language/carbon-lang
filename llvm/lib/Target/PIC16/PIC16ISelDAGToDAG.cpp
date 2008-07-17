@@ -239,7 +239,7 @@ SDNode* PIC16DAGToDAGISel::Select(SDOperand N)
 #endif
 
   // If we have a custom node, we already have selected!
-  if (Opcode >= ISD::BUILTIN_OP_END && Opcode < PIC16ISD::FIRST_NUMBER) {
+  if (Node->isMachineOpcode()) {
 #ifndef NDEBUG
     DOUT << std::string(Indent-2, ' ') << "== ";
     DEBUG(Node->dump(CurDAG));

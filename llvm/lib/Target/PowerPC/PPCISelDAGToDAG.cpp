@@ -775,8 +775,7 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
 // target-specific node if it hasn't already been changed.
 SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
   SDNode *N = Op.Val;
-  if (N->getOpcode() >= ISD::BUILTIN_OP_END &&
-      N->getOpcode() < PPCISD::FIRST_NUMBER)
+  if (N->isMachineOpcode())
     return NULL;   // Already selected.
 
   switch (N->getOpcode()) {
@@ -962,7 +961,8 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
       AddToISelQueue(Offset);
       SDOperand Ops[] = { Offset, Base, Chain };
       // FIXME: PPC64
-      return CurDAG->getTargetNode(Opcode, MVT::i32, MVT::i32,
+      return CurDAG->getTargetNode(Opcode, LD->getValueType(0),
+                                   PPCLowering.getPointerTy(),
                                    MVT::Other, Ops, 3);
     } else {
       assert(0 && "R+R preindex loads not supported yet!");

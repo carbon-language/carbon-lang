@@ -63,8 +63,8 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *Use, unsigned Op,
     return;
 
   unsigned ResNo = Use->getOperand(2).ResNo;
-  if (Def->isTargetOpcode()) {
-    const TargetInstrDesc &II = TII->get(Def->getTargetOpcode());
+  if (Def->isMachineOpcode()) {
+    const TargetInstrDesc &II = TII->get(Def->getMachineOpcode());
     if (ResNo >= II.getNumDefs() &&
         II.ImplicitDefs[ResNo - II.getNumDefs()] == Reg) {
       PhysReg = Reg;
@@ -167,8 +167,8 @@ void ScheduleDAG::BuildSchedUnits() {
     SUnit *SU = &SUnits[su];
     SDNode *MainNode = SU->Node;
     
-    if (MainNode->isTargetOpcode()) {
-      unsigned Opc = MainNode->getTargetOpcode();
+    if (MainNode->isMachineOpcode()) {
+      unsigned Opc = MainNode->getMachineOpcode();
       const TargetInstrDesc &TID = TII->get(Opc);
       for (unsigned i = 0; i != TID.getNumOperands(); ++i) {
         if (TID.getOperandConstraint(i, TOI::TIED_TO) != -1) {
@@ -186,9 +186,9 @@ void ScheduleDAG::BuildSchedUnits() {
     
     for (unsigned n = 0, e = SU->FlaggedNodes.size(); n != e; ++n) {
       SDNode *N = SU->FlaggedNodes[n];
-      if (N->isTargetOpcode() &&
-          TII->get(N->getTargetOpcode()).getImplicitDefs() &&
-          CountResults(N) > TII->get(N->getTargetOpcode()).getNumDefs())
+      if (N->isMachineOpcode() &&
+          TII->get(N->getMachineOpcode()).getImplicitDefs() &&
+          CountResults(N) > TII->get(N->getMachineOpcode()).getNumDefs())
         SU->hasPhysRegDefs = true;
       
       for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
@@ -227,8 +227,8 @@ void ScheduleDAG::ComputeLatency(SUnit *SU) {
   }
 
   SU->Latency = 0;
-  if (SU->Node->isTargetOpcode()) {
-    unsigned SchedClass = TII->get(SU->Node->getTargetOpcode()).getSchedClass();
+  if (SU->Node->isMachineOpcode()) {
+    unsigned SchedClass = TII->get(SU->Node->getMachineOpcode()).getSchedClass();
     const InstrStage *S = InstrItins.begin(SchedClass);
     const InstrStage *E = InstrItins.end(SchedClass);
     for (; S != E; ++S)
@@ -236,8 +236,8 @@ void ScheduleDAG::ComputeLatency(SUnit *SU) {
   }
   for (unsigned i = 0, e = SU->FlaggedNodes.size(); i != e; ++i) {
     SDNode *FNode = SU->FlaggedNodes[i];
-    if (FNode->isTargetOpcode()) {
-      unsigned SchedClass = TII->get(FNode->getTargetOpcode()).getSchedClass();
+    if (FNode->isMachineOpcode()) {
+      unsigned SchedClass = TII->get(FNode->getMachineOpcode()).getSchedClass();
       const InstrStage *S = InstrItins.begin(SchedClass);
       const InstrStage *E = InstrItins.end(SchedClass);
       for (; S != E; ++S)
@@ -501,7 +501,7 @@ unsigned ScheduleDAG::getDstOfOnlyCopyToRegUse(SDNode *Node,
 void ScheduleDAG::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
                                  const TargetInstrDesc &II,
                                  DenseMap<SDOperand, unsigned> &VRBaseMap) {
-  assert(Node->getTargetOpcode() != TargetInstrInfo::IMPLICIT_DEF &&
+  assert(Node->getMachineOpcode() != TargetInstrInfo::IMPLICIT_DEF &&
          "IMPLICIT_DEF should have been handled as a special case elsewhere!");
 
   for (unsigned i = 0; i < II.getNumDefs(); ++i) {
@@ -544,8 +544,8 @@ void ScheduleDAG::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
 /// of the specified node.
 unsigned ScheduleDAG::getVR(SDOperand Op,
                             DenseMap<SDOperand, unsigned> &VRBaseMap) {
-  if (Op.isTargetOpcode() &&
-      Op.getTargetOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
+  if (Op.isMachineOpcode() &&
+      Op.getMachineOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
     // Add an IMPLICIT_DEF instruction before every use.
     unsigned VReg = getDstOfOnlyCopyToRegUse(Op.Val, Op.ResNo);
     // IMPLICIT_DEF can produce any type of result so its TargetInstrDesc
@@ -572,7 +572,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
                              unsigned IIOpNum,
                              const TargetInstrDesc *II,
                              DenseMap<SDOperand, unsigned> &VRBaseMap) {
-  if (Op.isTargetOpcode()) {
+  if (Op.isMachineOpcode()) {
     // Note that this case is redundant with the final else block, but we
     // include it because it is the most common and it makes the logic
     // simpler here.
@@ -704,7 +704,7 @@ getSuperRegisterRegClass(const TargetRegisterClass *TRC,
 void ScheduleDAG::EmitSubregNode(SDNode *Node, 
                            DenseMap<SDOperand, unsigned> &VRBaseMap) {
   unsigned VRBase = 0;
-  unsigned Opc = Node->getTargetOpcode();
+  unsigned Opc = Node->getMachineOpcode();
   
   // If the node is only used by a CopyToReg and the dest reg is a vreg, use
   // the CopyToReg'd destination register instead of creating a new vreg.
@@ -799,8 +799,8 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
 void ScheduleDAG::EmitNode(SDNode *Node, bool IsClone,
                            DenseMap<SDOperand, unsigned> &VRBaseMap) {
   // If machine instruction
-  if (Node->isTargetOpcode()) {
-    unsigned Opc = Node->getTargetOpcode();
+  if (Node->isMachineOpcode()) {
+    unsigned Opc = Node->getMachineOpcode();
     
     // Handle subreg insert/extract specially
     if (Opc == TargetInstrInfo::EXTRACT_SUBREG || 

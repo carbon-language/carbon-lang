@@ -587,7 +587,7 @@ SPUDAGToDAGISel::Select(SDOperand Op) {
   MVT OpVT = Op.getValueType();
   SDOperand Ops[8];
 
-  if (Opc >= ISD::BUILTIN_OP_END && Opc < SPUISD::FIRST_NUMBER) {
+  if (N->isMachineOpcode()) {
     return NULL;   // Already selected.
   } else if (Opc == ISD::FrameIndex) {
     // Selects to (add $sp, FI * stackSlotSize)

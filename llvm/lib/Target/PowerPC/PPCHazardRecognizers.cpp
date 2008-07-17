@@ -64,11 +64,11 @@ PPCHazardRecognizer970::GetInstrType(unsigned Opcode,
                                      bool &isFirst, bool &isSingle,
                                      bool &isCracked,
                                      bool &isLoad, bool &isStore) {
-  if (Opcode < ISD::BUILTIN_OP_END) {
+  if ((int)Opcode >= 0) {
     isFirst = isSingle = isCracked = isLoad = isStore = false;
     return PPCII::PPC970_Pseudo;
   }
-  Opcode -= ISD::BUILTIN_OP_END;
+  Opcode = ~Opcode;
   
   const TargetInstrDesc &TID = TII.get(Opcode);
   
@@ -125,7 +125,7 @@ getHazardType(SDNode *Node) {
     GetInstrType(Node->getOpcode(), isFirst, isSingle, isCracked,
                  isLoad, isStore);
   if (InstrType == PPCII::PPC970_Pseudo) return NoHazard;  
-  unsigned Opcode = Node->getOpcode()-ISD::BUILTIN_OP_END;
+  unsigned Opcode = Node->getMachineOpcode();
 
   // We can only issue a PPC970_First/PPC970_Single instruction (such as
   // crand/mtspr/etc) if this is the first cycle of the dispatch group.
@@ -223,7 +223,7 @@ void PPCHazardRecognizer970::EmitInstruction(SDNode *Node) {
     GetInstrType(Node->getOpcode(), isFirst, isSingle, isCracked,
                  isLoad, isStore);
   if (InstrType == PPCII::PPC970_Pseudo) return;  
-  unsigned Opcode = Node->getOpcode()-ISD::BUILTIN_OP_END;
+  unsigned Opcode = Node->getMachineOpcode();
 
   // Update structural hazard information.
   if (Opcode == PPC::MTCTR) HasCTRSet = true;

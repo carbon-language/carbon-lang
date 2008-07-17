@@ -58,6 +58,11 @@ public:
     return static_cast<T*>(Allocate(sizeof(T),AlignOf<T>::Alignment));
   }
   
+  template <typename T>
+  T *Allocate(size_t Num) { 
+    return static_cast<T*>(Allocate(Num * sizeof(T), AlignOf<T>::Alignment));
+  }
+  
   void Deallocate(void * /*Ptr*/) {}
 
   void PrintStats() const;

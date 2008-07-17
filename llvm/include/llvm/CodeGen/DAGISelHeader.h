@@ -124,6 +124,17 @@ void ReplaceUses(SDOperand F, SDOperand T) DISABLE_INLINE {
   UpdateQueue(ISQU);
 }
 
+/// ReplaceUses - replace all uses of the old nodes F with the use
+/// of the new nodes T.
+void ReplaceUses(const SDOperand *F, const SDOperand *T,
+                 unsigned Num) DISABLE_INLINE {
+  ISelQueueUpdater ISQU(ISelQueue);
+  CurDAG->ReplaceAllUsesOfValuesWith(F, T, Num, &ISQU);
+  for (unsigned i = 0; i != Num; ++i)
+    setSelected(F[i].Val->getNodeId());
+  UpdateQueue(ISQU);
+}
+
 /// ReplaceUses - replace all uses of the old node F with the use
 /// of the new node T.
 void ReplaceUses(SDNode *F, SDNode *T) DISABLE_INLINE {
