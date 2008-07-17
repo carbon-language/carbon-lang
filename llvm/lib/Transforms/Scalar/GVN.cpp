@@ -1125,7 +1125,10 @@ bool GVN::runOnFunction(Function& F) {
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ) {
     BasicBlock* BB = FI;
     ++FI;
-    changed |= mergeBlockIntoPredecessor(BB);
+    bool removedBlock = MergeBlockIntoPredecessor(BB, this);
+    if (removedBlock) NumGVNBlocks++;
+    
+    changed |= removedBlock;
   }
   
   while (shouldContinue) {
@@ -1334,56 +1337,6 @@ bool GVN::performPRE(Function& F) {
     SplitCriticalEdge(I->first, I->second, this);
   
   return changed;
-}
-
-// mergeBlockIntoPredecessor - If this block is the only successor
-// of its predecessor, and the edge is non-critical, 
-// fold it into that predecessor.
-bool GVN::mergeBlockIntoPredecessor(BasicBlock* BB) {
-  // Can't merge the entry block.
-  if (pred_begin(BB) == pred_end(BB)) return false;
-  // Can't merge if there are multiple preds.
-  if (++pred_begin(BB) != pred_end(BB)) return false;
-  
-  BasicBlock* PredBB = *pred_begin(BB);
-  
-  // Can't merge if the edge is critical.
-  if (PredBB->getTerminator()->getNumSuccessors() != 1) return false;
-  
-  // Begin by getting rid of unneeded PHIs.
-  while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
-    PN->replaceAllUsesWith(PN->getIncomingValue(0));
-    BB->getInstList().pop_front();  // Delete the phi node...
-  }
-  
-  // Delete the unconditional branch from the predecessor...
-  PredBB->getInstList().pop_back();
-  
-  // Move all definitions in the successor to the predecessor...
-  PredBB->getInstList().splice(PredBB->end(), BB->getInstList());
-  
-  // Make all PHI nodes that referred to BB now refer to Pred as their
-  // source...
-  BB->replaceAllUsesWith(PredBB);
-  
-  // Finally, erase the old block and update dominator info.
-  DominatorTree& DT = getAnalysis<DominatorTree>();
-  DomTreeNode* DTN = DT[BB];
-  DomTreeNode* PredDTN = DT[PredBB];
-  
-  if (DTN) {
-    SmallPtrSet<DomTreeNode*, 8> Children(DTN->begin(), DTN->end());
-    for (SmallPtrSet<DomTreeNode*, 8>::iterator DI = Children.begin(),
-         DE = Children.end(); DI != DE; ++DI)
-      DT.changeImmediateDominator(*DI, PredDTN);
-
-    DT.eraseNode(BB);
-  }
-  
-  BB->eraseFromParent();
-  
-  NumGVNBlocks++;
-  return true;
 }
 
 // iterateOnFunction - Executes one iteration of GVN

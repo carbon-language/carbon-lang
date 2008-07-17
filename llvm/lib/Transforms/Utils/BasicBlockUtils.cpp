@@ -23,6 +23,58 @@
 #include <algorithm>
 using namespace llvm;
 
+/// MergeBlockIntoPredecessor - Attempts to merge a block into its predecessor,
+/// if possible.  The return value indicates success or failure.
+bool llvm::MergeBlockIntoPredecessor(BasicBlock* BB, Pass* P) {
+  // Can't merge the entry block.
+  if (pred_begin(BB) == pred_end(BB)) return false;
+  // Can't merge if there are multiple preds.
+  if (++pred_begin(BB) != pred_end(BB)) return false;
+  
+  BasicBlock* PredBB = *pred_begin(BB);
+  
+  // Can't merge if the edge is critical.
+  if (PredBB->getTerminator()->getNumSuccessors() != 1) return false;
+  
+  // Begin by getting rid of unneeded PHIs.
+  while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
+    PN->replaceAllUsesWith(PN->getIncomingValue(0));
+    BB->getInstList().pop_front();  // Delete the phi node...
+  }
+  
+  // Delete the unconditional branch from the predecessor...
+  PredBB->getInstList().pop_back();
+  
+  // Move all definitions in the successor to the predecessor...
+  PredBB->getInstList().splice(PredBB->end(), BB->getInstList());
+  
+  // Make all PHI nodes that referred to BB now refer to Pred as their
+  // source...
+  BB->replaceAllUsesWith(PredBB);
+  
+  // Finally, erase the old block and update dominator info.
+  if (P) {
+    if (DominatorTree* DT = P->getAnalysisToUpdate<DominatorTree>()) {
+      DomTreeNode* DTN = DT->getNode(BB);
+      DomTreeNode* PredDTN = DT->getNode(PredBB);
+  
+      if (DTN) {
+        SmallPtrSet<DomTreeNode*, 8> Children(DTN->begin(), DTN->end());
+        for (SmallPtrSet<DomTreeNode*, 8>::iterator DI = Children.begin(),
+             DE = Children.end(); DI != DE; ++DI)
+          DT->changeImmediateDominator(*DI, PredDTN);
+
+        DT->eraseNode(BB);
+      }
+    }
+  }
+  
+  BB->eraseFromParent();
+  
+  
+  return true;
+}
+
 /// ReplaceInstWithValue - Replace all uses of an instruction (specified by BI)
 /// with a value, then remove and delete the original instruction.
 ///
