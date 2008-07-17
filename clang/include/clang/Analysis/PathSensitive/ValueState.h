@@ -185,6 +185,7 @@ template<> struct GRTrait<ValueState*> {
   
   
 class ValueStateManager {
+  friend class GRExprEngine;
   
 private:
   EnvironmentManager                   EnvMgr;
@@ -210,6 +211,13 @@ private:
   ///  This vector is persistent because it is reused over and over.
   StoreManager::DeclRootsTy DRoots;
   
+  /// CurrentStmt - The block-level statement currently being visited.  This
+  ///  is set by GRExprEngine.
+  Stmt* CurrentStmt;
+  
+  /// cfg - The CFG for the analyzed function/method.
+  CFG& cfg;
+  
 private:
 
   Environment RemoveBlkExpr(const Environment& Env, Expr* E) {
@@ -223,7 +231,7 @@ private:
     
 public:  
   ValueStateManager(ASTContext& Ctx, StoreManager* stmgr,
-                    llvm::BumpPtrAllocator& alloc) 
+                    llvm::BumpPtrAllocator& alloc, CFG& c) 
   : EnvMgr(alloc),
     StMgr(stmgr),
     ISetFactory(alloc), 
@@ -231,7 +239,8 @@ public:
     CEFactory(alloc),
     BasicVals(Ctx, alloc),
     SymMgr(alloc),
-    Alloc(alloc) {}
+    Alloc(alloc),
+    cfg(c) {}
 
   const ValueState* getInitialState();
         
@@ -272,6 +281,20 @@ public:
     ValueState NewSt = *St;
     NewSt.Env = NewEnv;
     return getPersistentState(NewSt);
+  }
+  
+  const ValueState* SetRVal(const ValueState* St, Expr* Ex, RVal V) {
+    
+    bool isBlkExpr = false;
+    
+    if (Ex == CurrentStmt) {
+      isBlkExpr = cfg.isBlkExpr(Ex);
+      
+      if (!isBlkExpr)
+        return St;
+    }
+    
+    return SetRVal(St, Ex, V, isBlkExpr, true);
   }
 
   // Methods that query & manipulate the Store.

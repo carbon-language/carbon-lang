@@ -49,7 +49,16 @@ public:
   // Binary Operators.
   
   virtual RVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
-                         NonLVal L, NonLVal R) = 0;
+                         NonLVal L, NonLVal R) {
+    return UnknownVal();
+  }
+  
+  virtual void EvalBinOpNN(ExplodedNodeSet<ValueState>& Dst,
+                           GRExprEngine& Engine,
+                           GRStmtNodeBuilder<ValueState>& Builder,
+                           BinaryOperator::Opcode Op, Expr* Ex,
+                           NonLVal L, NonLVal R,
+                           ExplodedNode<ValueState>* Pred);
   
   virtual RVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
                          LVal L, LVal R) = 0;

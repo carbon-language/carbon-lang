@@ -609,6 +609,10 @@ protected:
       return TF->EvalBinOp(*this, Op, cast<NonLVal>(L), cast<NonLVal>(R));
   }
   
+  void EvalBinOp(ExplodedNodeSet<ValueState>& Dst, Expr* E,
+                 BinaryOperator::Opcode Op,
+                 NonLVal L, NonLVal R, ExplodedNode<ValueState>* Pred);
+  
   void EvalCall(NodeSet& Dst, CallExpr* CE, RVal L, NodeTy* Pred) {
     assert (Builder && "GRStmtNodeBuilder must be defined.");
     TF->EvalCall(Dst, *this, *Builder, CE, L, Pred);

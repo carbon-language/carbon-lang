@@ -121,7 +121,7 @@ GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
     Liveness(L),
     Builder(NULL),
     StateMgr(G.getContext(), CreateBasicStoreManager(G.getAllocator()),
-             G.getAllocator()),
+             G.getAllocator(), G.getCFG()),
     BasicVals(StateMgr.getBasicValueFactory()),
     TF(NULL), // FIXME
     SymMgr(StateMgr.getSymbolManager()),
@@ -242,7 +242,10 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   
   Builder = &builder;
   EntryNode = builder.getLastNode();
+  
+  // FIXME: Consolidate.
   CurrentStmt = S;
+  StateMgr.CurrentStmt = S;
   
   // Set up our simple checks.
   if (BatchAuditor)
@@ -296,7 +299,11 @@ void GRExprEngine::ProcessStmt(Stmt* S, StmtNodeBuilder& builder) {
   // NULL out these variables to cleanup.
   CleanedState = NULL;
   EntryNode = NULL;
-  CurrentStmt = NULL;
+
+  // FIXME: Consolidate.
+  StateMgr.CurrentStmt = 0;
+  CurrentStmt = 0;
+  
   Builder = NULL;
 }
 
@@ -1802,8 +1809,13 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
             }
             else {
               nonlval::ConcreteInt X(BasicVals.getValue(0, Ex->getType()));
+#if 0            
               RVal Result = EvalBinOp(BinaryOperator::EQ, cast<NonLVal>(V), X);
               St = SetRVal(St, U, Result);
+#else
+              EvalBinOp(Dst, U, BinaryOperator::EQ, cast<NonLVal>(V), X, *I);
+              continue;
+#endif
             }
             
             break;
@@ -2223,6 +2235,31 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
       }
     }
   }
+}
+
+//===----------------------------------------------------------------------===//
+// Transfer-function Helpers.
+//===----------------------------------------------------------------------===//
+
+void GRExprEngine::EvalBinOp(ExplodedNodeSet<ValueState>& Dst, Expr* Ex,
+                             BinaryOperator::Opcode Op,
+                             NonLVal L, NonLVal R,
+                             ExplodedNode<ValueState>* Pred) {
+  
+  if (!R.isValid()) {
+    MakeNode(Dst, Ex, Pred, SetRVal(GetState(Pred), Ex, R));
+    return;
+  }
+  
+  assert (Builder && "GRStmtNodeBuilder must be defined.");    
+  unsigned size = Dst.size();
+  SaveOr OldHasGen(Builder->HasGeneratedNode);
+  
+  TF->EvalBinOpNN(Dst, *this, *Builder, Op, Ex, L, R, Pred);
+  
+  if (!Builder->BuildSinks && Dst.size() == size &&
+      !Builder->HasGeneratedNode)
+    MakeNode(Dst, Ex, Pred, GetState(Pred));
 }
 
 //===----------------------------------------------------------------------===//

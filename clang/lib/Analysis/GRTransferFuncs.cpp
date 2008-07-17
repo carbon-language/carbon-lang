@@ -37,3 +37,18 @@ void GRTransferFuncs::EvalStore(ExplodedNodeSet<ValueState>& Dst,
     Builder.MakeNode(Dst, E, Pred,
                 Eng.getStateManager().SetRVal(St, cast<LVal>(TargetLV), Val));    
 }
+
+void GRTransferFuncs::EvalBinOpNN(ExplodedNodeSet<ValueState>& Dst,
+                                  GRExprEngine& Engine,
+                                  GRStmtNodeBuilder<ValueState>& Builder,
+                                  BinaryOperator::Opcode Op,
+                                  Expr* Ex,
+                                  NonLVal L, NonLVal R,
+                                  ExplodedNode<ValueState>* Pred) {
+
+  ValueStateManager& StateMgr = Engine.getStateManager();
+  const ValueState* St = Builder.GetState(Pred);
+  
+  RVal Result = EvalBinOp(Engine, Op, L, R);
+  Builder.MakeNode(Dst, Ex, Pred, StateMgr.SetRVal(St, Ex, Result));
+}
