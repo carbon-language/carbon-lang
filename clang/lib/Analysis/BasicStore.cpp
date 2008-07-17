@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/PathSensitive/BasicStore.h"
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/Support/Compiler.h"
@@ -34,6 +35,15 @@ public:
   virtual Store getInitialStore() {
     return VBFactory.GetEmptyMap().getRoot();
   }
+  
+  virtual Store RemoveDeadBindings(Store store, Stmt* Loc,
+                                   const LiveVariables& Live,
+                                   DeclRootsTy& DRoots, LiveSymbolsTy& LSymbols,
+                                   DeadSymbolsTy& DSymbols);
+  
+  static inline VarBindingsTy GetVarBindings(Store store) {
+    return VarBindingsTy(static_cast<const VarBindingsTy::TreeTy*>(store));
+  }  
 };  
   
 } // end anonymous namespace
@@ -108,34 +118,85 @@ RVal BasicStoreManager::GetRVal(Store St, LVal LV, QualType T) {
   return UnknownVal();
 }
 
-Store BasicStoreManager::SetRVal(Store St, LVal LV, RVal V) {    
-  
-  VarBindingsTy B(static_cast<const VarBindingsTy::TreeTy*>(St));
-  
-  switch (LV.getSubKind()) {
-      
-    case lval::DeclValKind:        
+Store BasicStoreManager::SetRVal(Store store, LVal LV, RVal V) {    
+  switch (LV.getSubKind()) {      
+    case lval::DeclValKind: {
+      VarBindingsTy B = GetVarBindings(store);
       return V.isUnknown()
         ? VBFactory.Remove(B,cast<lval::DeclVal>(LV).getDecl()).getRoot()
         : VBFactory.Add(B, cast<lval::DeclVal>(LV).getDecl(), V).getRoot();
-      
+    }
     default:
       assert ("SetRVal for given LVal type not yet implemented.");
-      return St;
+      return store;
   }
 }
 
-Store BasicStoreManager::Remove(Store St, LVal LV) {
-  
-  VarBindingsTy B(static_cast<const VarBindingsTy::TreeTy*>(St));
-  
+Store BasicStoreManager::Remove(Store store, LVal LV) {
   switch (LV.getSubKind()) {
-      
-    case lval::DeclValKind:
+    case lval::DeclValKind: {
+      VarBindingsTy B = GetVarBindings(store);
       return VBFactory.Remove(B,cast<lval::DeclVal>(LV).getDecl()).getRoot();
-
+    }
     default:
       assert ("Remove for given LVal type not yet implemented.");
-      return St;
+      return store;
   }
+}
+
+Store BasicStoreManager::RemoveDeadBindings(Store store,
+                                            Stmt* Loc,
+                                            const LiveVariables& Liveness,
+                                            DeclRootsTy& DRoots,
+                                            LiveSymbolsTy& LSymbols,
+                                            DeadSymbolsTy& DSymbols) {
+  
+  VarBindingsTy B = GetVarBindings(store);
+  typedef RVal::symbol_iterator symbol_iterator;
+  
+  // Iterate over the variable bindings.
+  for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I)
+    if (Liveness.isLive(Loc, I.getKey())) {
+      DRoots.push_back(I.getKey());      
+      RVal X = I.getData();
+      
+      for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
+        LSymbols.insert(*SI);
+    }
+  
+  // Scan for live variables and live symbols.
+  llvm::SmallPtrSet<ValueDecl*, 10> Marked;
+  
+  while (!DRoots.empty()) {
+    ValueDecl* V = DRoots.back();
+    DRoots.pop_back();
+    
+    if (Marked.count(V))
+      continue;
+    
+    Marked.insert(V);
+    
+    RVal X = GetRVal(store, lval::DeclVal(cast<VarDecl>(V)), QualType());      
+    
+    for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
+      LSymbols.insert(*SI);
+    
+    if (!isa<lval::DeclVal>(X))
+      continue;
+    
+    const lval::DeclVal& LVD = cast<lval::DeclVal>(X);
+    DRoots.push_back(LVD.getDecl());
+  }
+  
+  // Remove dead variable bindings.  
+  for (VarBindingsTy::iterator I=B.begin(), E=B.end(); I!=E ; ++I)
+    if (!Marked.count(I.getKey())) {
+      store = Remove(store, lval::DeclVal(I.getKey()));
+      RVal X = I.getData();
+      
+      for (symbol_iterator SI=X.symbol_begin(), SE=X.symbol_end(); SI!=SE; ++SI)
+        if (!LSymbols.count(*SI)) DSymbols.insert(*SI);
+    }
+
+  return store;
 }

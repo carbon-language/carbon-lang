@@ -33,20 +33,21 @@ const llvm::APSInt* ValueState::getSymVal(SymbolID sym) const {
 const ValueState*
 ValueStateManager::RemoveDeadBindings(const ValueState* St, Stmt* Loc,
                                       const LiveVariables& Liveness,
-                                      DeadSymbolsTy& DeadSymbols) {  
+                                      DeadSymbolsTy& DSymbols) {  
   
   // This code essentially performs a "mark-and-sweep" of the VariableBindings.
   // The roots are any Block-level exprs and Decls that our liveness algorithm
   // tells us are live.  We then see what Decls they may reference, and keep
   // those around.  This code more than likely can be made faster, and the
   // frequency of which this method is called should be experimented with
-  // for optimum performance.
-  
-  llvm::SmallVector<ValueDecl*, 10> WList;
-  llvm::SmallPtrSet<ValueDecl*, 10> Marked;  
-  llvm::SmallSet<SymbolID, 20> MarkedSymbols;
+  // for optimum performance.  
+  DRoots.clear();
+  StoreManager::LiveSymbolsTy LSymbols;
   
   ValueState NewSt = *St;
+
+  // FIXME: Put this in environment.
+  // Clean up the environment.
   
   // Drop bindings for subexpressions.
   NewSt.Env = EnvMgr.RemoveSubExprBindings(NewSt.Env);
@@ -62,12 +63,12 @@ ValueStateManager::RemoveDeadBindings(const ValueState* St, Stmt* Loc,
       
       if (isa<lval::DeclVal>(X)) {
         lval::DeclVal LV = cast<lval::DeclVal>(X);
-        WList.push_back(LV.getDecl());
+        DRoots.push_back(LV.getDecl());
       }
       
       for (RVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end(); 
                                                         SI != SE; ++SI) {        
-        MarkedSymbols.insert(*SI);
+        LSymbols.insert(*SI);
       }
     }
     else {
@@ -80,69 +81,18 @@ ValueStateManager::RemoveDeadBindings(const ValueState* St, Stmt* Loc,
     }
   }
 
-  // Iterate over the variable bindings.
-
-  for (ValueState::vb_iterator I = St->vb_begin(), E = St->vb_end(); I!=E ; ++I)
-    if (Liveness.isLive(Loc, I.getKey())) {
-      WList.push_back(I.getKey());
-      
-      RVal X = I.getData();
-      
-      for (RVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end(); 
-           SI != SE; ++SI) {        
-        MarkedSymbols.insert(*SI);
-      }
-    }
-
-  // Perform the mark-and-sweep.
-
-  while (!WList.empty()) {
-    
-    ValueDecl* V = WList.back();
-    WList.pop_back();
-    
-    if (Marked.count(V))
-      continue;
-    
-    Marked.insert(V);
-    
-    RVal X = GetRVal(St, lval::DeclVal(cast<VarDecl>(V)));      
-      
-    for (RVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end();
-                                                       SI != SE; ++SI) {
-      MarkedSymbols.insert(*SI);
-    }
-      
-    if (!isa<lval::DeclVal>(X))
-      continue;
-      
-    const lval::DeclVal& LVD = cast<lval::DeclVal>(X);
-    WList.push_back(LVD.getDecl());
-  }
+  // Clean up the store.
+  DSymbols.clear();
+  NewSt.St = StMgr->RemoveDeadBindings(St->getStore(), Loc, Liveness, DRoots,
+                                       LSymbols, DSymbols);
   
-  // Remove dead variable bindings.
-  
-  DeadSymbols.clear();
-  
-  for (ValueState::vb_iterator I = St->vb_begin(), E = St->vb_end(); I!=E ; ++I)
-    if (!Marked.count(I.getKey())) {
-      NewSt.St = StMgr->Remove(NewSt.St, lval::DeclVal(I.getKey()));
-      
-      RVal X = I.getData();
-      
-      for (RVal::symbol_iterator SI = X.symbol_begin(), SE = X.symbol_end(); 
-           SI != SE; ++SI)
-        if (!MarkedSymbols.count(*SI)) DeadSymbols.insert(*SI);
-    }      
-  
-  // Remove dead symbols.
-
+  // Remove the dead symbols from the symbol tracker.
   for (ValueState::ce_iterator I = St->ce_begin(), E=St->ce_end(); I!=E; ++I) {
 
     SymbolID sym = I.getKey();    
     
-    if (!MarkedSymbols.count(sym)) {
-      DeadSymbols.insert(sym);
+    if (!LSymbols.count(sym)) {
+      DSymbols.insert(sym);
       NewSt.ConstEq = CEFactory.Remove(NewSt.ConstEq, sym);
     }
   }
@@ -151,8 +101,8 @@ ValueStateManager::RemoveDeadBindings(const ValueState* St, Stmt* Loc,
     
     SymbolID sym = I.getKey();
     
-    if (!MarkedSymbols.count(sym)) {
-      DeadSymbols.insert(sym);
+    if (!LSymbols.count(sym)) {
+      DSymbols.insert(sym);
       NewSt.ConstNotEq = CNEFactory.Remove(NewSt.ConstNotEq, sym);
     }
   }

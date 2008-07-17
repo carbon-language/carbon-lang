@@ -15,18 +15,33 @@
 #define LLVM_CLANG_ANALYSIS_STORE_H
 
 #include "clang/Analysis/PathSensitive/RValues.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/DenseSet.h"
+#include <vector>
 
 namespace clang {
   
 typedef const void* Store;
+class LiveVariables;
+class Stmt;
   
 class StoreManager {
 public:
+  typedef llvm::SmallSet<SymbolID, 20>      LiveSymbolsTy;
+  typedef llvm::DenseSet<SymbolID>          DeadSymbolsTy;
+  typedef std::vector<ValueDecl*>           DeclRootsTy;
+  
   virtual ~StoreManager() {}
-  virtual RVal GetRVal(Store St, LVal LV, QualType T) = 0;
+  virtual RVal GetRVal(Store St, LVal LV, QualType T = QualType()) = 0;
   virtual Store SetRVal(Store St, LVal LV, RVal V) = 0;
   virtual Store Remove(Store St, LVal LV) = 0;
   virtual Store getInitialStore() = 0;
+  
+  virtual Store RemoveDeadBindings(Store store, Stmt* Loc,
+                                   const LiveVariables& Live,
+                                   DeclRootsTy& DRoots, LiveSymbolsTy& LSymbols,
+                                   DeadSymbolsTy& DSymbols) = 0;
 };
   
 } // end clang namespace

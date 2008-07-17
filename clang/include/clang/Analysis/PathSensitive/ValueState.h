@@ -31,7 +31,6 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Compiler.h"
@@ -57,7 +56,7 @@ public:
   typedef llvm::ImmutableSet<llvm::APSInt*>                IntSetTy;
   typedef llvm::ImmutableMap<SymbolID,IntSetTy>            ConstNotEqTy;
   typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstEqTy;
-
+  
 private:
   void operator=(const ValueState& R) const;
   
@@ -128,6 +127,7 @@ public:
   
   // Iterators.
 
+
   // FIXME: We'll be removing the VarBindings iterator very soon.  Right now
   //  it assumes that Store is a VarBindingsTy.
   typedef llvm::ImmutableMap<VarDecl*,RVal> VarBindingsTy;
@@ -140,6 +140,7 @@ public:
     VarBindingsTy B(static_cast<const VarBindingsTy::TreeTy*>(St));
     return B.end();
   }
+
     
   typedef Environment::seb_iterator seb_iterator;
   seb_iterator seb_begin() const { return Env.seb_begin(); }
@@ -184,6 +185,7 @@ template<> struct GRTrait<ValueState*> {
   
   
 class ValueStateManager {
+  
 private:
   EnvironmentManager                   EnvMgr;
   llvm::OwningPtr<StoreManager>        StMgr;
@@ -203,6 +205,10 @@ private:
 
   /// Alloc - A BumpPtrAllocator to allocate states.
   llvm::BumpPtrAllocator& Alloc;
+  
+  /// DRoots - A vector to hold of worklist used by RemoveDeadSymbols.
+  ///  This vector is persistent because it is reused over and over.
+  StoreManager::DeclRootsTy DRoots;
   
 private:
 
@@ -232,11 +238,11 @@ public:
   BasicValueFactory& getBasicValueFactory() { return BasicVals; }
   SymbolManager& getSymbolManager() { return SymMgr; }
   
-  typedef llvm::DenseSet<SymbolID> DeadSymbolsTy;
+  typedef StoreManager::DeadSymbolsTy DeadSymbolsTy;
   
   const ValueState* RemoveDeadBindings(const ValueState* St, Stmt* Loc, 
                                        const LiveVariables& Liveness,
-                                       DeadSymbolsTy& DeadSymbols);
+                                       DeadSymbolsTy& DeadSyms);
 
   const ValueState* RemoveSubExprBindings(const ValueState* St) {
     ValueState NewSt = *St;
