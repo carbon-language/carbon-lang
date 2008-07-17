@@ -1323,7 +1323,7 @@ public:
 
   // Assumptions.
 
-  virtual const ValueState* EvalAssume(GRExprEngine& Engine,
+  virtual const ValueState* EvalAssume(ValueStateManager& VMgr,
                                        const ValueState* St, RVal Cond,
                                        bool Assumption, bool& isFeasible);
 
@@ -1907,7 +1907,7 @@ void CFRefCount::EvalReturn(ExplodedNodeSet<ValueState>& Dst,
 
 // Assumptions.
 
-const ValueState* CFRefCount::EvalAssume(GRExprEngine& Eng,
+const ValueState* CFRefCount::EvalAssume(ValueStateManager& VMgr,
                                          const ValueState* St,
                                          RVal Cond, bool Assumption,
                                          bool& isFeasible) {
@@ -1942,7 +1942,7 @@ const ValueState* CFRefCount::EvalAssume(GRExprEngine& Eng,
   
   ValueState StImpl = *St;
   StImpl.CheckerState = B.getRoot();
-  return Eng.getStateManager().getPersistentState(StImpl);
+  return VMgr.getPersistentState(StImpl);
 }
 
 CFRefCount::RefBindings CFRefCount::Update(RefBindings B, SymbolID sym,
