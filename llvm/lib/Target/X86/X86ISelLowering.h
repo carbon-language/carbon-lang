@@ -208,7 +208,14 @@ namespace llvm {
       VZEXT_LOAD,
 
       // VSHL, VSRL - Vector logical left / right shift.
-      VSHL, VSRL
+      VSHL, VSRL,
+      
+      // CMPPD, CMPPS - Vector double/float comparison.
+      CMPPD, CMPPS,
+      
+      // PCMP* - Vector integer comparisons.
+      PCMPEQB, PCMPEQW, PCMPEQD, PCMPEQQ,
+      PCMPGTB, PCMPGTW, PCMPGTD, PCMPGTQ
     };
   }
 
@@ -521,6 +528,7 @@ namespace llvm {
     SDOperand LowerFNEG(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerSETCC(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerVSETCC(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerSELECT(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerBRCOND(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerMEMSET(SDOperand Op, SelectionDAG &DAG);

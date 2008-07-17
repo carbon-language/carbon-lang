@@ -744,6 +744,9 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse41_pcmpeqq         : GCCBuiltin<"__builtin_ia32_pcmpeqq">,
               Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty, llvm_v2i64_ty],
                         [IntrNoMem, Commutative]>;
+  def int_x86_sse42_pcmpgtq         : GCCBuiltin<"__builtin_ia32_pcmpgtq">,
+              Intrinsic<[llvm_v2i64_ty, llvm_v2i64_ty, llvm_v2i64_ty],
+                        [IntrNoMem]>;
   def int_x86_sse41_pmaxsb          : GCCBuiltin<"__builtin_ia32_pmaxsb128">,
               Intrinsic<[llvm_v16i8_ty, llvm_v16i8_ty, llvm_v16i8_ty],
                         [IntrNoMem, Commutative]>;

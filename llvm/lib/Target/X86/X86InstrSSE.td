@@ -20,6 +20,8 @@
 
 def SDTX86FPShiftOp : SDTypeProfile<1, 2, [ SDTCisSameAs<0, 1>,
                                             SDTCisFP<0>, SDTCisInt<2> ]>;
+def SDTX86VFCMP : SDTypeProfile<1, 3, [SDTCisInt<0>, SDTCisSameAs<1, 2>,
+                                       SDTCisFP<1>, SDTCisVT<3, i8>]>;
 
 def X86fmin    : SDNode<"X86ISD::FMIN",      SDTFPBinOp>;
 def X86fmax    : SDNode<"X86ISD::FMAX",      SDTFPBinOp>;
@@ -53,6 +55,16 @@ def X86vzload  : SDNode<"X86ISD::VZEXT_LOAD", SDTLoad,
                         [SDNPHasChain, SDNPMayLoad]>;
 def X86vshl    : SDNode<"X86ISD::VSHL",      SDTIntShiftOp>;
 def X86vshr    : SDNode<"X86ISD::VSRL",      SDTIntShiftOp>;
+def X86cmpps   : SDNode<"X86ISD::CMPPS",     SDTX86VFCMP>;
+def X86cmppd   : SDNode<"X86ISD::CMPPD",     SDTX86VFCMP>;
+def X86pcmpeqb : SDNode<"X86ISD::PCMPEQB", SDTIntBinOp, [SDNPCommutative]>;
+def X86pcmpeqw : SDNode<"X86ISD::PCMPEQW", SDTIntBinOp, [SDNPCommutative]>;
+def X86pcmpeqd : SDNode<"X86ISD::PCMPEQD", SDTIntBinOp, [SDNPCommutative]>;
+def X86pcmpeqq : SDNode<"X86ISD::PCMPEQQ", SDTIntBinOp, [SDNPCommutative]>;
+def X86pcmpgtb : SDNode<"X86ISD::PCMPGTB", SDTIntBinOp>;
+def X86pcmpgtw : SDNode<"X86ISD::PCMPGTW", SDTIntBinOp>;
+def X86pcmpgtd : SDNode<"X86ISD::PCMPGTD", SDTIntBinOp>;
+def X86pcmpgtq : SDNode<"X86ISD::PCMPGTQ", SDTIntBinOp>;
 
 //===----------------------------------------------------------------------===//
 // SSE Complex Patterns
@@ -161,22 +173,6 @@ def fp32imm0 : PatLeaf<(f32 fpimm), [{
 def PSxLDQ_imm  : SDNodeXForm<imm, [{
   // Transformation function: imm >> 3
   return getI32Imm(N->getValue() >> 3);
-}]>;
-
-def SSE_CC_imm  : SDNodeXForm<cond, [{
-  unsigned Val;
-  switch (N->get()) {
-  default: Val = 0; assert(0 && "Unexpected CondCode"); break;
-  case ISD::SETOEQ: Val = 0; break;
-  case ISD::SETOLT: Val = 1; break;
-  case ISD::SETOLE: Val = 2; break;
-  case ISD::SETUO:  Val = 3; break;
-  case ISD::SETONE: Val = 4; break;
-  case ISD::SETOGE: Val = 5; break;
-  case ISD::SETOGT: Val = 6; break;
-  case ISD::SETO:   Val = 7; break;
-  }
-  return getI8Imm(Val);
 }]>;
 
 // SHUFFLE_get_shuf_imm xform function: convert vector_shuffle mask to PSHUF*,
@@ -896,10 +892,10 @@ let Constraints = "$src1 = $dst" in {
                   [(set VR128:$dst, (int_x86_sse_cmp_ps VR128:$src1,
                                             (memop addr:$src), imm:$cc))]>;
 }
-def : Pat<(v4i32 (vsetcc (v4f32 VR128:$src1), VR128:$src2, cond:$cc)),
-          (CMPPSrri VR128:$src1, VR128:$src2, (SSE_CC_imm cond:$cc))>;
-def : Pat<(v4i32 (vsetcc (v4f32 VR128:$src1), (memop addr:$src2), cond:$cc)),
-          (CMPPSrmi VR128:$src1, addr:$src2, (SSE_CC_imm cond:$cc))>;
+def : Pat<(v4i32 (X86cmpps (v4f32 VR128:$src1), VR128:$src2, imm:$cc)),
+          (CMPPSrri VR128:$src1, VR128:$src2, imm:$cc)>;
+def : Pat<(v4i32 (X86cmpps (v4f32 VR128:$src1), (memop addr:$src2), imm:$cc)),
+          (CMPPSrmi VR128:$src1, addr:$src2, imm:$cc)>;
 
 // Shuffle and unpack instructions
 let Constraints = "$src1 = $dst" in {
@@ -1725,10 +1721,10 @@ let Constraints = "$src1 = $dst" in {
                   [(set VR128:$dst, (int_x86_sse2_cmp_pd VR128:$src1,
                                                  (memop addr:$src), imm:$cc))]>;
 }
-def : Pat<(v2i64 (vsetcc (v2f64 VR128:$src1), VR128:$src2, cond:$cc)),
-          (CMPPDrri VR128:$src1, VR128:$src2, (SSE_CC_imm cond:$cc))>;
-def : Pat<(v2i64 (vsetcc (v2f64 VR128:$src1), (memop addr:$src2), cond:$cc)),
-          (CMPPDrmi VR128:$src1, addr:$src2, (SSE_CC_imm cond:$cc))>;
+def : Pat<(v2i64 (X86cmppd VR128:$src1, VR128:$src2, imm:$cc)),
+          (CMPPDrri VR128:$src1, VR128:$src2, imm:$cc)>;
+def : Pat<(v2i64 (X86cmppd VR128:$src1, (memop addr:$src2), imm:$cc)),
+          (CMPPDrmi VR128:$src1, addr:$src2, imm:$cc)>;
 
 // Shuffle and unpack instructions
 let Constraints = "$src1 = $dst" in {
@@ -1994,30 +1990,30 @@ defm PCMPGTB  : PDI_binop_rm_int<0x64, "pcmpgtb", int_x86_sse2_pcmpgt_b>;
 defm PCMPGTW  : PDI_binop_rm_int<0x65, "pcmpgtw", int_x86_sse2_pcmpgt_w>;
 defm PCMPGTD  : PDI_binop_rm_int<0x66, "pcmpgtd", int_x86_sse2_pcmpgt_d>;
 
-def : Pat<(v16i8 (vsetcc (v16i8 VR128:$src1), VR128:$src2, SETEQ)),
+def : Pat<(v16i8 (X86pcmpeqb VR128:$src1, VR128:$src2)),
           (PCMPEQBrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v16i8 (vsetcc (v16i8 VR128:$src1), (memop addr:$src2), SETEQ)),
+def : Pat<(v16i8 (X86pcmpeqb VR128:$src1, (memop addr:$src2))),
           (PCMPEQBrm VR128:$src1, addr:$src2)>;
-def : Pat<(v8i16 (vsetcc (v8i16 VR128:$src1), VR128:$src2, SETEQ)),
+def : Pat<(v8i16 (X86pcmpeqw VR128:$src1, VR128:$src2)),
           (PCMPEQWrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v8i16 (vsetcc (v8i16 VR128:$src1), (memop addr:$src2), SETEQ)),
+def : Pat<(v8i16 (X86pcmpeqw VR128:$src1, (memop addr:$src2))),
           (PCMPEQWrm VR128:$src1, addr:$src2)>;
-def : Pat<(v4i32 (vsetcc (v4i32 VR128:$src1), VR128:$src2, SETEQ)),
+def : Pat<(v4i32 (X86pcmpeqd VR128:$src1, VR128:$src2)),
           (PCMPEQDrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v4i32 (vsetcc (v4i32 VR128:$src1), (memop addr:$src2), SETEQ)),
+def : Pat<(v4i32 (X86pcmpeqd VR128:$src1, (memop addr:$src2))),
           (PCMPEQDrm VR128:$src1, addr:$src2)>;
 
-def : Pat<(v16i8 (vsetcc (v16i8 VR128:$src1), VR128:$src2, SETGT)),
+def : Pat<(v16i8 (X86pcmpgtb VR128:$src1, VR128:$src2)),
           (PCMPGTBrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v16i8 (vsetcc (v16i8 VR128:$src1), (memop addr:$src2), SETGT)),
+def : Pat<(v16i8 (X86pcmpgtb VR128:$src1, (memop addr:$src2))),
           (PCMPGTBrm VR128:$src1, addr:$src2)>;
-def : Pat<(v8i16 (vsetcc (v8i16 VR128:$src1), VR128:$src2, SETGT)),
+def : Pat<(v8i16 (X86pcmpgtw VR128:$src1, VR128:$src2)),
           (PCMPGTWrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v8i16 (vsetcc (v8i16 VR128:$src1), (memop addr:$src2), SETGT)),
+def : Pat<(v8i16 (X86pcmpgtw VR128:$src1, (memop addr:$src2))),
           (PCMPGTWrm VR128:$src1, addr:$src2)>;
-def : Pat<(v4i32 (vsetcc (v4i32 VR128:$src1), VR128:$src2, SETGT)),
+def : Pat<(v4i32 (X86pcmpgtd VR128:$src1, VR128:$src2)),
           (PCMPGTDrr VR128:$src1, VR128:$src2)>;
-def : Pat<(v4i32 (vsetcc (v4i32 VR128:$src1), (memop addr:$src2), SETGT)),
+def : Pat<(v4i32 (X86pcmpgtd VR128:$src1, (memop addr:$src2))),
           (PCMPGTDrm VR128:$src1, addr:$src2)>;
 
 
@@ -3258,6 +3254,11 @@ defm PMAXUD       : SS41I_binop_rm_int<0x3F, "pmaxud",
 defm PMAXUW       : SS41I_binop_rm_int<0x3E, "pmaxuw",
                                        int_x86_sse41_pmaxuw, 1>;
 
+def : Pat<(v2i64 (X86pcmpeqq VR128:$src1, VR128:$src2)),
+          (PCMPEQQrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v2i64 (X86pcmpeqq VR128:$src1, (memop addr:$src2))),
+          (PCMPEQQrm VR128:$src1, addr:$src2)>;
+
 
 /// SS41I_binop_rm_int - Simple SSE 4.1 binary operator
 let Constraints = "$src1 = $dst" in {
@@ -3555,3 +3556,30 @@ def PTESTrm : SS48I<0x17, MRMSrcMem, (outs), (ins VR128:$src1, i128mem:$src2),
 def MOVNTDQArm : SS48I<0x2A, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                        "movntdqa\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst, (int_x86_sse41_movntdqa addr:$src))]>;
+
+/// SS42I_binop_rm_int - Simple SSE 4.2 binary operator
+let Constraints = "$src1 = $dst" in {
+  multiclass SS42I_binop_rm_int<bits<8> opc, string OpcodeStr,
+                                Intrinsic IntId128, bit Commutable = 0> {
+    def rr : SS428I<opc, MRMSrcReg, (outs VR128:$dst),
+                   (ins VR128:$src1, VR128:$src2),
+                   !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                   [(set VR128:$dst, (IntId128 VR128:$src1, VR128:$src2))]>,
+                   OpSize {
+      let isCommutable = Commutable;
+    }
+    def rm : SS428I<opc, MRMSrcMem, (outs VR128:$dst),
+                   (ins VR128:$src1, i128mem:$src2),
+                   !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+                   [(set VR128:$dst,
+                     (IntId128 VR128:$src1,
+                      (bitconvert (memopv16i8 addr:$src2))))]>, OpSize;
+  }
+}
+
+defm PCMPGTQ      : SS41I_binop_rm_int<0x37, "pcmpgtq", int_x86_sse42_pcmpgtq>;
+
+def : Pat<(v2i64 (X86pcmpgtq VR128:$src1, VR128:$src2)),
+          (PCMPGTQrr VR128:$src1, VR128:$src2)>;
+def : Pat<(v2i64 (X86pcmpgtq VR128:$src1, (memop addr:$src2))),
+          (PCMPGTQrm VR128:$src1, addr:$src2)>;

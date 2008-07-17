@@ -215,6 +215,12 @@ class SS4AIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern>
       : Ii8<o, F, outs, ins, asm, pattern>, TA, Requires<[HasSSE41]>;
 
+// SSE4.2 Instruction Templates:
+// 
+//   SS428I - SSE 4.2 instructions with T8 prefix.
+class SS428I<bits<8> o, Format F, dag outs, dag ins, string asm,
+             list<dag> pattern>
+      : I<o, F, outs, ins, asm, pattern>, T8, Requires<[HasSSE42]>;
 
 // X86-64 Instruction templates...
 //

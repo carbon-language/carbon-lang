@@ -620,7 +620,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v4f32, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Custom);
     setOperationAction(ISD::SELECT,             MVT::v4f32, Custom);
-    setOperationAction(ISD::VSETCC,             MVT::v4f32, Legal);
+    setOperationAction(ISD::VSETCC,             MVT::v4f32, Custom);
   }
 
   if (Subtarget->hasSSE2()) {
@@ -646,11 +646,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FSQRT,              MVT::v2f64, Legal);
     setOperationAction(ISD::FNEG,               MVT::v2f64, Custom);
 
-    setOperationAction(ISD::VSETCC,             MVT::v2f64, Legal);
-    setOperationAction(ISD::VSETCC,             MVT::v16i8, Legal);
-    setOperationAction(ISD::VSETCC,             MVT::v8i16, Legal);
-    setOperationAction(ISD::VSETCC,             MVT::v4i32, Legal);
-    setOperationAction(ISD::VSETCC,             MVT::v2i64, Legal);
+    setOperationAction(ISD::VSETCC,             MVT::v2f64, Custom);
+    setOperationAction(ISD::VSETCC,             MVT::v16i8, Custom);
+    setOperationAction(ISD::VSETCC,             MVT::v8i16, Custom);
+    setOperationAction(ISD::VSETCC,             MVT::v4i32, Custom);
 
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v16i8, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v8i16, Custom);
@@ -728,6 +727,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     }
   }
 
+  if (Subtarget->hasSSE42()) {
+    setOperationAction(ISD::VSETCC,             MVT::v2i64, Custom);
+  }
+  
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
@@ -4685,6 +4688,113 @@ SDOperand X86TargetLowering::LowerSETCC(SDOperand Op, SelectionDAG &DAG) {
   }
 }
 
+SDOperand X86TargetLowering::LowerVSETCC(SDOperand Op, SelectionDAG &DAG) {
+  SDOperand Cond;
+  SDOperand Op0 = Op.getOperand(0);
+  SDOperand Op1 = Op.getOperand(1);
+  SDOperand CC = Op.getOperand(2);
+  MVT VT = Op.getValueType();
+  ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
+  bool isFP = Op.getOperand(1).getValueType().isFloatingPoint();
+
+  if (isFP) {
+    unsigned SSECC = 8;
+    unsigned Opc = Op0.getValueType() == MVT::v4f32 ? X86ISD::CMPPS :
+                                                      X86ISD::CMPPD;
+    bool Swap = false;
+
+    switch (SetCCOpcode) {
+    default: break;
+    case ISD::SETEQ:  SSECC = 0; break;
+    case ISD::SETOGT: 
+    case ISD::SETGT: Swap = true; // Fallthrough
+    case ISD::SETLT:
+    case ISD::SETOLT: SSECC = 1; break;
+    case ISD::SETOGE:
+    case ISD::SETGE: Swap = true; // Fallthrough
+    case ISD::SETLE:
+    case ISD::SETOLE: SSECC = 2; break;
+    case ISD::SETUO:  SSECC = 3; break;
+    case ISD::SETONE:
+    case ISD::SETNE:  SSECC = 4; break;
+    case ISD::SETULE: Swap = true;
+    case ISD::SETUGE: SSECC = 5; break;
+    case ISD::SETULT: Swap = true;
+    case ISD::SETUGT: SSECC = 6; break;
+    case ISD::SETO:   SSECC = 7; break;
+    }
+    if (Swap)
+      std::swap(Op0, Op1);
+
+    // In the one special case we can't handle, emit two comparisons.
+    if (SSECC == 8) {
+      SDOperand UNORD, EQ;
+
+      assert(SetCCOpcode == ISD::SETUEQ && "Illegal FP comparison");
+      
+      UNORD = DAG.getNode(Opc, VT, Op0, Op1, DAG.getConstant(3, MVT::i8));
+      EQ = DAG.getNode(Opc, VT, Op0, Op1, DAG.getConstant(0, MVT::i8));
+      return DAG.getNode(ISD::OR, VT, UNORD, EQ);
+    }
+    // Handle all other FP comparisons here.
+    return DAG.getNode(Opc, VT, Op0, Op1, DAG.getConstant(SSECC, MVT::i8));
+  }
+  
+  // We are handling one of the integer comparisons here.  Since SSE only has
+  // GT and EQ comparisons for integer, swapping operands and multiple
+  // operations may be required for some comparisons.
+  unsigned Opc = 0, EQOpc = 0, GTOpc = 0;
+  bool Swap = false, Invert = false, FlipSigns = false;
+  
+  switch (VT.getSimpleVT()) {
+  default: break;
+  case MVT::v16i8: EQOpc = X86ISD::PCMPEQB; GTOpc = X86ISD::PCMPGTB; break;
+  case MVT::v8i16: EQOpc = X86ISD::PCMPEQW; GTOpc = X86ISD::PCMPGTW; break;
+  case MVT::v4i32: EQOpc = X86ISD::PCMPEQD; GTOpc = X86ISD::PCMPGTD; break;
+  case MVT::v2i64: EQOpc = X86ISD::PCMPEQQ; GTOpc = X86ISD::PCMPGTQ; break;
+  }
+  
+  switch (SetCCOpcode) {
+  default: break;
+  case ISD::SETNE:  Invert = true;
+  case ISD::SETEQ:  Opc = EQOpc; break;
+  case ISD::SETLT:  Swap = true;
+  case ISD::SETGT:  Opc = GTOpc; break;
+  case ISD::SETGE:  Swap = true;
+  case ISD::SETLE:  Opc = GTOpc; Invert = true; break;
+  case ISD::SETULT: Swap = true;
+  case ISD::SETUGT: Opc = GTOpc; FlipSigns = true; break;
+  case ISD::SETUGE: Swap = true;
+  case ISD::SETULE: Opc = GTOpc; FlipSigns = true; Invert = true; break;
+  }
+  if (Swap)
+    std::swap(Op0, Op1);
+  
+  // Since SSE has no unsigned integer comparisons, we need to flip  the sign
+  // bits of the inputs before performing those operations.
+  if (FlipSigns) {
+    MVT EltVT = VT.getVectorElementType();
+    SDOperand SignBit = DAG.getConstant(EltVT.getIntegerVTSignBit(), EltVT);
+    std::vector<SDOperand> SignBits(VT.getVectorNumElements(), SignBit);
+    SDOperand SignVec = DAG.getNode(ISD::BUILD_VECTOR, VT, &SignBits[0],
+                                    SignBits.size());
+    Op0 = DAG.getNode(ISD::XOR, VT, Op0, SignVec);
+    Op1 = DAG.getNode(ISD::XOR, VT, Op1, SignVec);
+  }
+  
+  SDOperand Result = DAG.getNode(Opc, VT, Op0, Op1);
+
+  // If the logical-not of the result is required, perform that now.
+  if (Invert) {
+    MVT EltVT = VT.getVectorElementType();
+    SDOperand NegOne = DAG.getConstant(EltVT.getIntegerVTBitMask(), EltVT);
+    std::vector<SDOperand> NegOnes(VT.getVectorNumElements(), NegOne);
+    SDOperand NegOneV = DAG.getNode(ISD::BUILD_VECTOR, VT, &NegOnes[0],
+                                    NegOnes.size());
+    Result = DAG.getNode(ISD::XOR, VT, Result, NegOneV);
+  }
+  return Result;
+}
 
 SDOperand X86TargetLowering::LowerSELECT(SDOperand Op, SelectionDAG &DAG) {
   bool addTest = true;
@@ -5728,6 +5838,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::FNEG:               return LowerFNEG(Op, DAG);
   case ISD::FCOPYSIGN:          return LowerFCOPYSIGN(Op, DAG);
   case ISD::SETCC:              return LowerSETCC(Op, DAG);
+  case ISD::VSETCC:             return LowerVSETCC(Op, DAG);
   case ISD::SELECT:             return LowerSELECT(Op, DAG);
   case ISD::BRCOND:             return LowerBRCOND(Op, DAG);
   case ISD::JumpTable:          return LowerJumpTable(Op, DAG);
@@ -5819,6 +5930,16 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VZEXT_LOAD:         return "X86ISD::VZEXT_LOAD";
   case X86ISD::VSHL:               return "X86ISD::VSHL";
   case X86ISD::VSRL:               return "X86ISD::VSRL";
+  case X86ISD::CMPPD:              return "X86ISD::CMPPD";
+  case X86ISD::CMPPS:              return "X86ISD::CMPPS";
+  case X86ISD::PCMPEQB:            return "X86ISD::PCMPEQB";
+  case X86ISD::PCMPEQW:            return "X86ISD::PCMPEQW";
+  case X86ISD::PCMPEQD:            return "X86ISD::PCMPEQD";
+  case X86ISD::PCMPEQQ:            return "X86ISD::PCMPEQQ";
+  case X86ISD::PCMPGTB:            return "X86ISD::PCMPGTB";
+  case X86ISD::PCMPGTW:            return "X86ISD::PCMPGTW";
+  case X86ISD::PCMPGTD:            return "X86ISD::PCMPGTD";
+  case X86ISD::PCMPGTQ:            return "X86ISD::PCMPGTQ";
   }
 }
 
