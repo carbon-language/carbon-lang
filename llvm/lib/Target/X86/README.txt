@@ -1707,12 +1707,3 @@ _test:
 	ret
 
 it would be better to codegen as: x+~y  (notl+addl)
-
-//===---------------------------------------------------------------------===//
-
-We should consider using __i686.get_pc_thunk.bx for MOVPC32r (used for PIC)
-on targets that support it, such as Linux and similar targets, in place of
-the call-a-label trick. It's said to be friendlier to branch-prediction
-hardware because it pairs a ret with the call.
-
-//===---------------------------------------------------------------------===//
