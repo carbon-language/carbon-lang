@@ -5046,9 +5046,9 @@ SDOperand DAGCombiner::XformToShuffleWithZero(SDNode *N) {
         if (!isa<ConstantSDNode>(Elt))
           return SDOperand();
         else if (cast<ConstantSDNode>(Elt)->isAllOnesValue())
-          IdxOps.push_back(DAG.getConstant(i, EVT));
+          IdxOps.push_back(DAG.getConstant(i, TLI.getPointerTy()));
         else if (cast<ConstantSDNode>(Elt)->isNullValue())
-          IdxOps.push_back(DAG.getConstant(NumElts, EVT));
+          IdxOps.push_back(DAG.getConstant(NumElts, TLI.getPointerTy()));
         else
           return SDOperand();
       }
@@ -5066,7 +5066,8 @@ SDOperand DAGCombiner::XformToShuffleWithZero(SDNode *N) {
       std::vector<SDOperand> ZeroOps(NumElts, DAG.getConstant(0, EVT));
       Ops.push_back(DAG.getNode(ISD::BUILD_VECTOR, VT,
                                 &ZeroOps[0], ZeroOps.size()));
-      Ops.push_back(DAG.getNode(ISD::BUILD_VECTOR, VT,
+      Ops.push_back(DAG.getNode(ISD::BUILD_VECTOR,
+                                MVT::getVectorVT(TLI.getPointerTy(), NumElts),
                                 &IdxOps[0], IdxOps.size()));
       SDOperand Result = DAG.getNode(ISD::VECTOR_SHUFFLE, VT,
                                      &Ops[0], Ops.size());
