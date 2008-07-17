@@ -119,6 +119,11 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
             NeverInline = true;
             return;
           }
+        
+        // Calls often compile into many machine instructions.  Bump up their
+        // cost to reflect this.
+        if (!isa<IntrinsicInst>(II))
+          NumInsts += 5;
       }
       
       if (isa<ExtractElementInst>(II) || isa<VectorType>(II->getType()))
