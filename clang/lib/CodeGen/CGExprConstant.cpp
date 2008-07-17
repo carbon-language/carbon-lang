@@ -145,6 +145,13 @@ public:
     while (offset < (fieldOffset & -8))
       offset += CGM.getTypes().getTargetData().getTypeStoreSizeInBits(Elts[i++]->getType());
 
+    // Promote the size of V if necessary
+    // FIXME: This should never occur, but currently it can because
+    // initializer constants are cast to bool, and because clang is
+    // not enforcing bitfield width limits.
+    if (bitFieldInfo.Size > V.getBitWidth())
+      V.zext(bitFieldInfo.Size);
+
     // Insert the bits into the struct
     // FIXME: This algorthm is only correct on X86!
     // FIXME: THis algorthm assumes bit-fields only have byte-size elements!
