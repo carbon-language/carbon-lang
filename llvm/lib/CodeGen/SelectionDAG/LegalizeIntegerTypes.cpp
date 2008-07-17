@@ -1238,36 +1238,7 @@ void DAGTypeLegalizer::ExpandIntRes_FP_TO_SINT(SDNode *N, SDOperand &Lo,
                                                SDOperand &Hi) {
   MVT VT = N->getValueType(0);
   SDOperand Op = N->getOperand(0);
-  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-
-  if (VT == MVT::i32) {
-    if (Op.getValueType() == MVT::f32)
-      LC = RTLIB::FPTOSINT_F32_I32;
-    else if (Op.getValueType() == MVT::f64)
-      LC = RTLIB::FPTOSINT_F64_I32;
-    else if (Op.getValueType() == MVT::f80)
-      LC = RTLIB::FPTOSINT_F80_I32;
-    else if (Op.getValueType() == MVT::ppcf128)
-      LC = RTLIB::FPTOSINT_PPCF128_I32;
-  } else if (VT == MVT::i64) {
-    if (Op.getValueType() == MVT::f32)
-      LC = RTLIB::FPTOSINT_F32_I64;
-    else if (Op.getValueType() == MVT::f64)
-      LC = RTLIB::FPTOSINT_F64_I64;
-    else if (Op.getValueType() == MVT::f80)
-      LC = RTLIB::FPTOSINT_F80_I64;
-    else if (Op.getValueType() == MVT::ppcf128)
-      LC = RTLIB::FPTOSINT_PPCF128_I64;
-  } else if (VT == MVT::i128) {
-    if (Op.getValueType() == MVT::f32)
-      LC = RTLIB::FPTOSINT_F32_I128;
-    else if (Op.getValueType() == MVT::f64)
-      LC = RTLIB::FPTOSINT_F64_I128;
-    else if (Op.getValueType() == MVT::f80)
-      LC = RTLIB::FPTOSINT_F80_I128;
-    else if (Op.getValueType() == MVT::ppcf128)
-      LC = RTLIB::FPTOSINT_PPCF128_I128;
-  }
+  RTLIB::Libcall LC = RTLIB::getFPTOSINT(Op.getValueType(), VT);
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unexpected fp-to-sint conversion!");
   SplitInteger(MakeLibCall(LC, VT, &Op, 1, true/*sign irrelevant*/), Lo, Hi);
 }
@@ -1276,35 +1247,7 @@ void DAGTypeLegalizer::ExpandIntRes_FP_TO_UINT(SDNode *N, SDOperand &Lo,
                                                SDOperand &Hi) {
   MVT VT = N->getValueType(0);
   SDOperand Op = N->getOperand(0);
-  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (VT == MVT::i32) {
-    if (Op.getValueType() == MVT::f32)
-      LC = RTLIB::FPTOUINT_F32_I32;
-    else if (Op.getValueType() == MVT::f64)
-      LC = RTLIB::FPTOUINT_F64_I32;
-    else if (Op.getValueType() == MVT::f80)
-      LC = RTLIB::FPTOUINT_F80_I32;
-    else if (Op.getValueType() == MVT::ppcf128)
-      LC = RTLIB::FPTOUINT_PPCF128_I32;
-  } else if (VT == MVT::i64) {
-    if (Op.getValueType() == MVT::f32)
-      LC = RTLIB::FPTOUINT_F32_I64;
-    else if (Op.getValueType() == MVT::f64)
-      LC = RTLIB::FPTOUINT_F64_I64;
-    else if (Op.getValueType() == MVT::f80)
-      LC = RTLIB::FPTOUINT_F80_I64;
-    else if (Op.getValueType() == MVT::ppcf128)
-      LC = RTLIB::FPTOUINT_PPCF128_I64;
-  } else if (VT == MVT::i128) {
-    if (Op.getValueType() == MVT::f32)
-      LC = RTLIB::FPTOUINT_F32_I128;
-    else if (Op.getValueType() == MVT::f64)
-      LC = RTLIB::FPTOUINT_F64_I128;
-    else if (Op.getValueType() == MVT::f80)
-      LC = RTLIB::FPTOUINT_F80_I128;
-    else if (Op.getValueType() == MVT::ppcf128)
-      LC = RTLIB::FPTOUINT_PPCF128_I128;
-  }
+  RTLIB::Libcall LC = RTLIB::getFPTOUINT(Op.getValueType(), VT);
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unexpected fp-to-uint conversion!");
   SplitInteger(MakeLibCall(LC, VT, &Op, 1, false/*sign irrelevant*/), Lo, Hi);
 }
@@ -1961,41 +1904,10 @@ SDOperand DAGTypeLegalizer::ExpandIntOp_SETCC(SDNode *N) {
 
 SDOperand DAGTypeLegalizer::ExpandIntOp_SINT_TO_FP(SDNode *N) {
   SDOperand Op = N->getOperand(0);
-  MVT SrcVT = Op.getValueType();
   MVT DstVT = N->getValueType(0);
-
-  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (SrcVT == MVT::i32) {
-    if (DstVT == MVT::f32)
-      LC = RTLIB::SINTTOFP_I32_F32;
-    else if (DstVT == MVT::f64)
-      LC = RTLIB::SINTTOFP_I32_F64;
-    else if (DstVT == MVT::f80)
-      LC = RTLIB::SINTTOFP_I32_F80;
-    else if (DstVT == MVT::ppcf128)
-      LC = RTLIB::SINTTOFP_I32_PPCF128;
-  } else if (SrcVT == MVT::i64) {
-    if (DstVT == MVT::f32)
-      LC = RTLIB::SINTTOFP_I64_F32;
-    else if (DstVT == MVT::f64)
-      LC = RTLIB::SINTTOFP_I64_F64;
-    else if (DstVT == MVT::f80)
-      LC = RTLIB::SINTTOFP_I64_F80;
-    else if (DstVT == MVT::ppcf128)
-      LC = RTLIB::SINTTOFP_I64_PPCF128;
-  } else if (SrcVT == MVT::i128) {
-    if (DstVT == MVT::f32)
-      LC = RTLIB::SINTTOFP_I128_F32;
-    else if (DstVT == MVT::f64)
-      LC = RTLIB::SINTTOFP_I128_F64;
-    else if (DstVT == MVT::f80)
-      LC = RTLIB::SINTTOFP_I128_F80;
-    else if (DstVT == MVT::ppcf128)
-      LC = RTLIB::SINTTOFP_I128_PPCF128;
-  }
+  RTLIB::Libcall LC = RTLIB::getSINTTOFP(Op.getValueType(), DstVT);
   assert(LC != RTLIB::UNKNOWN_LIBCALL &&
          "Don't know how to expand this SINT_TO_FP!");
-
   return MakeLibCall(LC, DstVT, &Op, 1, true);
 }
 
@@ -2140,37 +2052,8 @@ SDOperand DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
   }
 
   // Otherwise, use a libcall.
-  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  if (SrcVT == MVT::i32) {
-    if (DstVT == MVT::f32)
-      LC = RTLIB::UINTTOFP_I32_F32;
-    else if (DstVT == MVT::f64)
-      LC = RTLIB::UINTTOFP_I32_F64;
-    else if (DstVT == MVT::f80)
-      LC = RTLIB::UINTTOFP_I32_F80;
-    else if (DstVT == MVT::ppcf128)
-      LC = RTLIB::UINTTOFP_I32_PPCF128;
-  } else if (SrcVT == MVT::i64) {
-    if (DstVT == MVT::f32)
-      LC = RTLIB::UINTTOFP_I64_F32;
-    else if (DstVT == MVT::f64)
-      LC = RTLIB::UINTTOFP_I64_F64;
-    else if (DstVT == MVT::f80)
-      LC = RTLIB::UINTTOFP_I64_F80;
-    else if (DstVT == MVT::ppcf128)
-      LC = RTLIB::UINTTOFP_I64_PPCF128;
-  } else if (SrcVT == MVT::i128) {
-    if (DstVT == MVT::f32)
-      LC = RTLIB::UINTTOFP_I128_F32;
-    else if (DstVT == MVT::f64)
-      LC = RTLIB::UINTTOFP_I128_F64;
-    else if (DstVT == MVT::f80)
-      LC = RTLIB::UINTTOFP_I128_F80;
-    else if (DstVT == MVT::ppcf128)
-      LC = RTLIB::UINTTOFP_I128_PPCF128;
-  }
+  RTLIB::Libcall LC = RTLIB::getUINTTOFP(SrcVT, DstVT);
   assert(LC != RTLIB::UNKNOWN_LIBCALL &&
          "Don't know how to expand this UINT_TO_FP!");
-
   return MakeLibCall(LC, DstVT, &Op, 1, true);
 }

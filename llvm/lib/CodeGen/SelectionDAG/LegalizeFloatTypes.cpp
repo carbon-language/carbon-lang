@@ -161,40 +161,16 @@ SDOperand DAGTypeLegalizer::SoftenFloatRes_FMUL(SDNode *N) {
 SDOperand DAGTypeLegalizer::SoftenFloatRes_FP_EXTEND(SDNode *N) {
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   SDOperand Op = N->getOperand(0);
-
-  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  switch (Op.getValueType().getSimpleVT()) {
-  default:
-    assert(false && "Unsupported FP_EXTEND!");
-  case MVT::f32:
-    switch (N->getValueType(0).getSimpleVT()) {
-    default:
-      assert(false && "Unsupported FP_EXTEND!");
-    case MVT::f64:
-      LC = RTLIB::FPEXT_F32_F64;
-    }
-  }
-
+  RTLIB::Libcall LC = RTLIB::getFPEXT(Op.getValueType(), N->getValueType(0));
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported FP_EXTEND!");
   return MakeLibCall(LC, NVT, &Op, 1, false);
 }
 
 SDOperand DAGTypeLegalizer::SoftenFloatRes_FP_ROUND(SDNode *N) {
   MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   SDOperand Op = N->getOperand(0);
-
-  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  switch (Op.getValueType().getSimpleVT()) {
-  default:
-    assert(false && "Unsupported FP_ROUND!");
-  case MVT::f64:
-    switch (N->getValueType(0).getSimpleVT()) {
-    default:
-      assert(false && "Unsupported FP_ROUND!");
-    case MVT::f32:
-      LC = RTLIB::FPROUND_F64_F32;
-    }
-  }
-
+  RTLIB::Libcall LC = RTLIB::getFPROUND(Op.getValueType(), N->getValueType(0));
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported FP_ROUND!");
   return MakeLibCall(LC, NVT, &Op, 1, false);
 }
 
@@ -267,100 +243,16 @@ SDOperand DAGTypeLegalizer::SoftenFloatRes_SELECT_CC(SDNode *N) {
 SDOperand DAGTypeLegalizer::SoftenFloatRes_SINT_TO_FP(SDNode *N) {
   SDOperand Op = N->getOperand(0);
   MVT RVT = N->getValueType(0);
-
-  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  switch (Op.getValueType().getSimpleVT()) {
-  case MVT::i32:
-    switch (RVT.getSimpleVT()) {
-    case MVT::f32:
-      LC = RTLIB::SINTTOFP_I32_F32;
-      break;
-    case MVT::f64:
-      LC = RTLIB::SINTTOFP_I32_F64;
-      break;
-    default:
-      break;
-    }
-    break;
-  case MVT::i64:
-    switch (RVT.getSimpleVT()) {
-    case MVT::f32:
-      LC = RTLIB::SINTTOFP_I64_F32;
-      break;
-    case MVT::f64:
-      LC = RTLIB::SINTTOFP_I64_F64;
-      break;
-    case MVT::f80:
-      LC = RTLIB::SINTTOFP_I64_F80;
-      break;
-    case MVT::ppcf128:
-      LC = RTLIB::SINTTOFP_I64_PPCF128;
-      break;
-    default:
-      break;
-    }
-    break;
-  case MVT::i128:
-    switch (RVT.getSimpleVT()) {
-    case MVT::f32:
-      LC = RTLIB::SINTTOFP_I128_F32;
-      break;
-    case MVT::f64:
-      LC = RTLIB::SINTTOFP_I128_F64;
-      break;
-    case MVT::f80:
-      LC = RTLIB::SINTTOFP_I128_F80;
-      break;
-    case MVT::ppcf128:
-      LC = RTLIB::SINTTOFP_I128_PPCF128;
-      break;
-    default:
-      break;
-    }
-    break;
-  default:
-    break;
-  }
+  RTLIB::Libcall LC = RTLIB::getSINTTOFP(Op.getValueType(), RVT);
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported SINT_TO_FP!");
-
   return MakeLibCall(LC, TLI.getTypeToTransformTo(RVT), &Op, 1, false);
 }
 
 SDOperand DAGTypeLegalizer::SoftenFloatRes_UINT_TO_FP(SDNode *N) {
   SDOperand Op = N->getOperand(0);
   MVT RVT = N->getValueType(0);
-
-  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  switch (Op.getValueType().getSimpleVT()) {
-  case MVT::i32:
-    switch (RVT.getSimpleVT()) {
-    case MVT::f32:
-      LC = RTLIB::UINTTOFP_I32_F32;
-      break;
-    case MVT::f64:
-      LC = RTLIB::UINTTOFP_I32_F64;
-      break;
-    default:
-      break;
-    }
-    break;
-  case MVT::i64:
-    switch (RVT.getSimpleVT()) {
-    case MVT::f32:
-      LC = RTLIB::UINTTOFP_I64_F32;
-      break;
-    case MVT::f64:
-      LC = RTLIB::UINTTOFP_I64_F64;
-      break;
-    default:
-      break;
-    }
-    break;
-  default:
-    break;
-  }
+  RTLIB::Libcall LC = RTLIB::getUINTTOFP(Op.getValueType(), RVT);
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported UINT_TO_FP!");
-
   return MakeLibCall(LC, TLI.getTypeToTransformTo(RVT), &Op, 1, false);
 }
 
@@ -521,139 +413,17 @@ SDOperand DAGTypeLegalizer::SoftenFloatOp_BR_CC(SDNode *N) {
 }
 
 SDOperand DAGTypeLegalizer::SoftenFloatOp_FP_TO_SINT(SDNode *N) {
-  MVT SVT = N->getOperand(0).getValueType();
   MVT RVT = N->getValueType(0);
-
-  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  switch (RVT.getSimpleVT()) {
-  case MVT::i32:
-    switch (SVT.getSimpleVT()) {
-    case MVT::f32:
-      LC = RTLIB::FPTOSINT_F32_I32;
-      break;
-    case MVT::f64:
-      LC = RTLIB::FPTOSINT_F64_I32;
-      break;
-    case MVT::f80:
-      LC = RTLIB::FPTOSINT_F80_I32;
-      break;
-    case MVT::ppcf128:
-      LC = RTLIB::FPTOSINT_PPCF128_I32;
-      break;
-    default:
-      break;
-    }
-    break;
-  case MVT::i64:
-    switch (SVT.getSimpleVT()) {
-    case MVT::f32:
-      LC = RTLIB::FPTOSINT_F32_I64;
-      break;
-    case MVT::f64:
-      LC = RTLIB::FPTOSINT_F64_I64;
-      break;
-    case MVT::f80:
-      LC = RTLIB::FPTOSINT_F80_I64;
-      break;
-    case MVT::ppcf128:
-      LC = RTLIB::FPTOSINT_PPCF128_I64;
-      break;
-    default:
-      break;
-    }
-    break;
-  case MVT::i128:
-    switch (SVT.getSimpleVT()) {
-    case MVT::f32:
-      LC = RTLIB::FPTOSINT_F32_I128;
-      break;
-    case MVT::f64:
-      LC = RTLIB::FPTOSINT_F64_I128;
-      break;
-    case MVT::f80:
-      LC = RTLIB::FPTOSINT_F80_I128;
-      break;
-    case MVT::ppcf128:
-      LC = RTLIB::FPTOSINT_PPCF128_I128;
-      break;
-    default:
-      break;
-    }
-    break;
-  default:
-    break;
-  }
+  RTLIB::Libcall LC = RTLIB::getFPTOSINT(N->getOperand(0).getValueType(), RVT);
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported FP_TO_SINT!");
-
   SDOperand Op = GetSoftenedFloat(N->getOperand(0));
   return MakeLibCall(LC, RVT, &Op, 1, false);
 }
 
 SDOperand DAGTypeLegalizer::SoftenFloatOp_FP_TO_UINT(SDNode *N) {
-  MVT SVT = N->getOperand(0).getValueType();
   MVT RVT = N->getValueType(0);
-
-  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  switch (RVT.getSimpleVT()) {
-  case MVT::i32:
-    switch (SVT.getSimpleVT()) {
-    case MVT::f32:
-      LC = RTLIB::FPTOUINT_F32_I32;
-      break;
-    case MVT::f64:
-      LC = RTLIB::FPTOUINT_F64_I32;
-      break;
-    case MVT::f80:
-      LC = RTLIB::FPTOUINT_F80_I32;
-      break;
-    case MVT::ppcf128:
-      LC = RTLIB::FPTOUINT_PPCF128_I32;
-      break;
-    default:
-      break;
-    }
-    break;
-  case MVT::i64:
-    switch (SVT.getSimpleVT()) {
-    case MVT::f32:
-      LC = RTLIB::FPTOUINT_F32_I64;
-      break;
-    case MVT::f64:
-      LC = RTLIB::FPTOUINT_F64_I64;
-      break;
-    case MVT::f80:
-      LC = RTLIB::FPTOUINT_F80_I64;
-      break;
-    case MVT::ppcf128:
-      LC = RTLIB::FPTOUINT_PPCF128_I64;
-      break;
-    default:
-      break;
-    }
-    break;
-  case MVT::i128:
-    switch (SVT.getSimpleVT()) {
-    case MVT::f32:
-      LC = RTLIB::FPTOUINT_F32_I128;
-      break;
-    case MVT::f64:
-      LC = RTLIB::FPTOUINT_F64_I128;
-      break;
-    case MVT::f80:
-      LC = RTLIB::FPTOUINT_F80_I128;
-      break;
-    case MVT::ppcf128:
-      LC = RTLIB::FPTOUINT_PPCF128_I128;
-      break;
-    default:
-      break;
-    }
-    break;
-  default:
-    break;
-  }
+  RTLIB::Libcall LC = RTLIB::getFPTOUINT(N->getOperand(0).getValueType(), RVT);
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported FP_TO_UINT!");
-
   SDOperand Op = GetSoftenedFloat(N->getOperand(0));
   return MakeLibCall(LC, RVT, &Op, 1, false);
 }
@@ -1067,45 +837,16 @@ SDOperand DAGTypeLegalizer::ExpandFloatOp_FP_ROUND(SDNode *N) {
 }
 
 SDOperand DAGTypeLegalizer::ExpandFloatOp_FP_TO_SINT(SDNode *N) {
-  assert(N->getOperand(0).getValueType() == MVT::ppcf128 &&
-         "Unsupported FP_TO_SINT!");
-
-  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  switch (N->getValueType(0).getSimpleVT()) {
-  default:
-    assert(false && "Unsupported FP_TO_SINT!");
-  case MVT::i32:
-    LC = RTLIB::FPTOSINT_PPCF128_I32;
-  case MVT::i64:
-    LC = RTLIB::FPTOSINT_PPCF128_I64;
-    break;
-  case MVT::i128:
-    LC = RTLIB::FPTOSINT_PPCF128_I64;
-    break;
-  }
-
-  return MakeLibCall(LC, N->getValueType(0), &N->getOperand(0), 1, false);
+  MVT RVT = N->getValueType(0);
+  RTLIB::Libcall LC = RTLIB::getFPTOSINT(N->getOperand(0).getValueType(), RVT);
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported FP_TO_SINT!");
+  return MakeLibCall(LC, RVT, &N->getOperand(0), 1, false);
 }
 
 SDOperand DAGTypeLegalizer::ExpandFloatOp_FP_TO_UINT(SDNode *N) {
-  assert(N->getOperand(0).getValueType() == MVT::ppcf128 &&
-         "Unsupported FP_TO_UINT!");
-
-  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
-  switch (N->getValueType(0).getSimpleVT()) {
-  default:
-    assert(false && "Unsupported FP_TO_UINT!");
-  case MVT::i32:
-    LC = RTLIB::FPTOUINT_PPCF128_I32;
-    break;
-  case MVT::i64:
-    LC = RTLIB::FPTOUINT_PPCF128_I64;
-    break;
-  case MVT::i128:
-    LC = RTLIB::FPTOUINT_PPCF128_I128;
-    break;
-  }
-
+  MVT RVT = N->getValueType(0);
+  RTLIB::Libcall LC = RTLIB::getFPTOUINT(N->getOperand(0).getValueType(), RVT);
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported FP_TO_UINT!");
   return MakeLibCall(LC, N->getValueType(0), &N->getOperand(0), 1, false);
 }
 

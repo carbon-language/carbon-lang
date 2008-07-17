@@ -163,6 +163,164 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::O_F64] = "__unorddf2";
 }
 
+/// getFPEXT - Return the FPEXT_*_* value for the given types, or
+/// UNKNOWN_LIBCALL if there is none.
+RTLIB::Libcall RTLIB::getFPEXT(MVT OpVT, MVT RetVT) {
+  if (OpVT == MVT::f32) {
+    if (RetVT == MVT::f64)
+      return FPEXT_F32_F64;
+  }
+  return UNKNOWN_LIBCALL;
+}
+
+/// getFPROUND - Return the FPROUND_*_* value for the given types, or
+/// UNKNOWN_LIBCALL if there is none.
+RTLIB::Libcall RTLIB::getFPROUND(MVT OpVT, MVT RetVT) {
+  if (OpVT == MVT::f64) {
+    if (RetVT == MVT::f32)
+      return FPROUND_F64_F32;
+  }
+  return UNKNOWN_LIBCALL;
+}
+
+/// getFPTOSINT - Return the FPTOSINT_*_* value for the given types, or
+/// UNKNOWN_LIBCALL if there is none.
+RTLIB::Libcall RTLIB::getFPTOSINT(MVT OpVT, MVT RetVT) {
+  if (OpVT == MVT::f32) {
+    if (RetVT == MVT::i32)
+      return FPTOSINT_F32_I32;
+    if (RetVT == MVT::i64)
+      return FPTOSINT_F32_I64;
+    if (RetVT == MVT::i128)
+      return FPTOSINT_F32_I128;
+  } else if (OpVT == MVT::f64) {
+    if (RetVT == MVT::i32)
+      return FPTOSINT_F64_I32;
+    if (RetVT == MVT::i64)
+      return FPTOSINT_F64_I64;
+    if (RetVT == MVT::i128)
+      return FPTOSINT_F64_I128;
+  } else if (OpVT == MVT::f80) {
+    if (RetVT == MVT::i32)
+      return FPTOSINT_F80_I32;
+    if (RetVT == MVT::i64)
+      return FPTOSINT_F80_I64;
+    if (RetVT == MVT::i128)
+      return FPTOSINT_F80_I128;
+  } else if (OpVT == MVT::ppcf128) {
+    if (RetVT == MVT::i32)
+      return FPTOSINT_PPCF128_I32;
+    if (RetVT == MVT::i64)
+      return FPTOSINT_PPCF128_I64;
+    if (RetVT == MVT::i128)
+      return FPTOSINT_PPCF128_I128;
+  }
+  return UNKNOWN_LIBCALL;
+}
+
+/// getFPTOUINT - Return the FPTOUINT_*_* value for the given types, or
+/// UNKNOWN_LIBCALL if there is none.
+RTLIB::Libcall RTLIB::getFPTOUINT(MVT OpVT, MVT RetVT) {
+  if (OpVT == MVT::f32) {
+    if (RetVT == MVT::i32)
+      return FPTOUINT_F32_I32;
+    if (RetVT == MVT::i64)
+      return FPTOUINT_F32_I64;
+    if (RetVT == MVT::i128)
+      return FPTOUINT_F32_I128;
+  } else if (OpVT == MVT::f64) {
+    if (RetVT == MVT::i32)
+      return FPTOUINT_F64_I32;
+    if (RetVT == MVT::i64)
+      return FPTOUINT_F64_I64;
+    if (RetVT == MVT::i128)
+      return FPTOUINT_F64_I128;
+  } else if (OpVT == MVT::f80) {
+    if (RetVT == MVT::i32)
+      return FPTOUINT_F80_I32;
+    if (RetVT == MVT::i64)
+      return FPTOUINT_F80_I64;
+    if (RetVT == MVT::i128)
+      return FPTOUINT_F80_I128;
+  } else if (OpVT == MVT::ppcf128) {
+    if (RetVT == MVT::i32)
+      return FPTOUINT_PPCF128_I32;
+    if (RetVT == MVT::i64)
+      return FPTOUINT_PPCF128_I64;
+    if (RetVT == MVT::i128)
+      return FPTOUINT_PPCF128_I128;
+  }
+  return UNKNOWN_LIBCALL;
+}
+
+/// getSINTTOFP - Return the SINTTOFP_*_* value for the given types, or
+/// UNKNOWN_LIBCALL if there is none.
+RTLIB::Libcall RTLIB::getSINTTOFP(MVT OpVT, MVT RetVT) {
+  if (OpVT == MVT::i32) {
+    if (RetVT == MVT::f32)
+      return SINTTOFP_I32_F32;
+    else if (RetVT == MVT::f64)
+      return SINTTOFP_I32_F64;
+    else if (RetVT == MVT::f80)
+      return SINTTOFP_I32_F80;
+    else if (RetVT == MVT::ppcf128)
+      return SINTTOFP_I32_PPCF128;
+  } else if (OpVT == MVT::i64) {
+    if (RetVT == MVT::f32)
+      return SINTTOFP_I64_F32;
+    else if (RetVT == MVT::f64)
+      return SINTTOFP_I64_F64;
+    else if (RetVT == MVT::f80)
+      return SINTTOFP_I64_F80;
+    else if (RetVT == MVT::ppcf128)
+      return SINTTOFP_I64_PPCF128;
+  } else if (OpVT == MVT::i128) {
+    if (RetVT == MVT::f32)
+      return SINTTOFP_I128_F32;
+    else if (RetVT == MVT::f64)
+      return SINTTOFP_I128_F64;
+    else if (RetVT == MVT::f80)
+      return SINTTOFP_I128_F80;
+    else if (RetVT == MVT::ppcf128)
+      return SINTTOFP_I128_PPCF128;
+  }
+  return UNKNOWN_LIBCALL;
+}
+
+/// getUINTTOFP - Return the UINTTOFP_*_* value for the given types, or
+/// UNKNOWN_LIBCALL if there is none.
+RTLIB::Libcall RTLIB::getUINTTOFP(MVT OpVT, MVT RetVT) {
+  if (OpVT == MVT::i32) {
+    if (RetVT == MVT::f32)
+      return UINTTOFP_I32_F32;
+    else if (RetVT == MVT::f64)
+      return UINTTOFP_I32_F64;
+    else if (RetVT == MVT::f80)
+      return UINTTOFP_I32_F80;
+    else if (RetVT == MVT::ppcf128)
+      return UINTTOFP_I32_PPCF128;
+  } else if (OpVT == MVT::i64) {
+    if (RetVT == MVT::f32)
+      return UINTTOFP_I64_F32;
+    else if (RetVT == MVT::f64)
+      return UINTTOFP_I64_F64;
+    else if (RetVT == MVT::f80)
+      return UINTTOFP_I64_F80;
+    else if (RetVT == MVT::ppcf128)
+      return UINTTOFP_I64_PPCF128;
+  } else if (OpVT == MVT::i128) {
+    if (RetVT == MVT::f32)
+      return UINTTOFP_I128_F32;
+    else if (RetVT == MVT::f64)
+      return UINTTOFP_I128_F64;
+    else if (RetVT == MVT::f80)
+      return UINTTOFP_I128_F80;
+    else if (RetVT == MVT::ppcf128)
+      return UINTTOFP_I128_PPCF128;
+  }
+  return UNKNOWN_LIBCALL;
+}
+
 /// InitCmpLibcallCCs - Set default comparison libcall CC.
 ///
 static void InitCmpLibcallCCs(ISD::CondCode *CCs) {

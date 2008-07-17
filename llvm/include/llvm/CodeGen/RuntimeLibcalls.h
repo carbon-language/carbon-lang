@@ -8,12 +8,14 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines the enum representing the list of runtime library calls
-// the backend may emit during code generation.
+// the backend may emit during code generation, and also some helper functions.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_RUNTIMELIBCALLS_H
 #define LLVM_CODEGEN_RUNTIMELIBCALLS_H
+
+#include "llvm/CodeGen/ValueTypes.h"
 
 namespace llvm {
 namespace RTLIB {
@@ -168,6 +170,30 @@ namespace RTLIB {
 
     UNKNOWN_LIBCALL
   };
+
+  /// getFPEXT - Return the FPEXT_*_* value for the given types, or
+  /// UNKNOWN_LIBCALL if there is none.
+  Libcall getFPEXT(MVT OpVT, MVT RetVT);
+
+  /// getFPROUND - Return the FPROUND_*_* value for the given types, or
+  /// UNKNOWN_LIBCALL if there is none.
+  Libcall getFPROUND(MVT OpVT, MVT RetVT);
+
+  /// getFPTOSINT - Return the FPTOSINT_*_* value for the given types, or
+  /// UNKNOWN_LIBCALL if there is none.
+  Libcall getFPTOSINT(MVT OpVT, MVT RetVT);
+
+  /// getFPTOUINT - Return the FPTOUINT_*_* value for the given types, or
+  /// UNKNOWN_LIBCALL if there is none.
+  Libcall getFPTOUINT(MVT OpVT, MVT RetVT);
+
+  /// getSINTTOFP - Return the SINTTOFP_*_* value for the given types, or
+  /// UNKNOWN_LIBCALL if there is none.
+  Libcall getSINTTOFP(MVT OpVT, MVT RetVT);
+
+  /// getUINTTOFP - Return the UINTTOFP_*_* value for the given types, or
+  /// UNKNOWN_LIBCALL if there is none.
+  Libcall getUINTTOFP(MVT OpVT, MVT RetVT);
 }
 }
 
