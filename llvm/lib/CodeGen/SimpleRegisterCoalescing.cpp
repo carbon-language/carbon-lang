@@ -1327,7 +1327,7 @@ bool SimpleRegisterCoalescing::RangeIsDefinedByCopyFromReg(LiveInterval &li,
     // Re-compute it.
     MachineInstr *DefMI = li_->getInstructionFromIndex(LR->start);
     unsigned SrcReg, DstReg;
-    if (tii_->isMoveInstr(*DefMI, SrcReg, DstReg) &&
+    if (DefMI && tii_->isMoveInstr(*DefMI, SrcReg, DstReg) &&
         DstReg == li.reg && SrcReg == Reg) {
       // Cache computed info.
       LR->valno->def  = LR->start;
