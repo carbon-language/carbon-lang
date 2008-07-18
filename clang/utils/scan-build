@@ -69,7 +69,7 @@ if (! -x $ClangSB) {
 my %AvailableAnalyses;
 
 # Query clang for analysis options.
-open(PIPE, "$Clang --help |") or
+open(PIPE, "'$Clang's --help |") or
   DieDiag("Cannot execute '$Clang'");
   
 my $FoundAnalysis = 0;
