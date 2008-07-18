@@ -1136,8 +1136,11 @@ bool GVN::runOnFunction(Function& F) {
     changed |= shouldContinue;
   }
   
-  if (EnablePRE)
-    changed |= performPRE(F);
+  if (EnablePRE) {
+    bool PREChanged = false;
+    while (PREChanged = performPRE(F))
+      changed |= PREChanged;
+  }
   
   return changed;
 }
@@ -1336,7 +1339,7 @@ bool GVN::performPRE(Function& F) {
        I = toSplit.begin(), E = toSplit.end(); I != E; ++I)
     SplitCriticalEdge(I->first, I->second, this);
   
-  return changed;
+  return changed || toSplit.size();
 }
 
 // iterateOnFunction - Executes one iteration of GVN
