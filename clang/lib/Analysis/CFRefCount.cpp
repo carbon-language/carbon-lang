@@ -265,15 +265,16 @@ public:
   
   static void Profile(llvm::FoldingSetNodeID& ID, ArgEffects* A,
                       RetEffect RetEff, ArgEffect DefaultEff,
-                      ArgEffect ReceiverEff) {
+                      ArgEffect ReceiverEff, bool EndPath) {
     ID.AddPointer(A);
     ID.Add(RetEff);
     ID.AddInteger((unsigned) DefaultEff);
     ID.AddInteger((unsigned) ReceiverEff);
+    ID.AddInteger((unsigned) EndPath);
   }
       
   void Profile(llvm::FoldingSetNodeID& ID) const {
-    Profile(ID, Args, Ret, DefaultArgEffect, Receiver);
+    Profile(ID, Args, Ret, DefaultArgEffect, Receiver, EndPath);
   }
 };
 } // end anonymous namespace
@@ -643,7 +644,8 @@ RetainSummaryManager::getPersistentSummary(ArgEffects* AE, RetEffect RetEff,
   
   // Generate a profile for the summary.
   llvm::FoldingSetNodeID profile;
-  RetainSummary::Profile(profile, AE, RetEff, DefaultEff, ReceiverEff);
+  RetainSummary::Profile(profile, AE, RetEff, DefaultEff, ReceiverEff,
+                         isEndPath);
   
   // Look up the uniqued summary, or create one if it doesn't exist.
   void* InsertPos;  
@@ -1010,7 +1012,7 @@ void RetainSummaryManager::InitializeMethodSummaries() {
     getPersistentSummary(RetEffect::MakeReceiverAlias(), SelfOwn);
 
   // Create the "initWithContentRect:styleMask:backing:defer:" selector.
-  llvm::SmallVector<IdentifierInfo*, 5> II;
+  llvm::SmallVector<IdentifierInfo*, 10> II;
   II.push_back(&Ctx.Idents.get("initWithContentRect"));
   II.push_back(&Ctx.Idents.get("styleMask"));
   II.push_back(&Ctx.Idents.get("backing"));
