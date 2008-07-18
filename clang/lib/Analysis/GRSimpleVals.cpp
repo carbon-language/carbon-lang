@@ -450,6 +450,15 @@ RVal GRSimpleVals::EvalComplement(GRExprEngine& Eng, NonLVal X) {
 
 // Binary operators.
 
+static unsigned char LNotOpMap[] = {
+  (unsigned char) BinaryOperator::GE,  /* LT => GE */
+  (unsigned char) BinaryOperator::LE,  /* GT => LE */
+  (unsigned char) BinaryOperator::GT,  /* LE => GT */
+  (unsigned char) BinaryOperator::LT,  /* GE => LT */
+  (unsigned char) BinaryOperator::NE,  /* EQ => NE */
+  (unsigned char) BinaryOperator::EQ   /* NE => EQ */
+};
+
 RVal GRSimpleVals::DetermEvalBinOpNN(ValueStateManager& StateMgr,
                                      BinaryOperator::Opcode Op,
                                      NonLVal L, NonLVal R)  {
@@ -461,6 +470,31 @@ RVal GRSimpleVals::DetermEvalBinOpNN(ValueStateManager& StateMgr,
     switch (L.getSubKind()) {
       default:
         return UnknownVal();
+        
+      case nonlval::SymIntConstraintValKind: {
+        const SymIntConstraint& C =
+          cast<nonlval::SymIntConstraintVal>(L).getConstraint();
+        
+        BinaryOperator::Opcode Opc = C.getOpcode();
+
+        if (Opc < BinaryOperator::LT || Opc > BinaryOperator::NE)
+          return UnknownVal();
+
+        // For comparison operators, translate the constraint by
+        // changing the opcode.
+        
+        int idx = (unsigned) Opc - (unsigned) BinaryOperator::LT;
+        
+        assert (idx >= 0 && 
+                (unsigned) idx < sizeof(LNotOpMap)/sizeof(unsigned char));
+        
+        Opc = (BinaryOperator::Opcode) LNotOpMap[idx];
+        
+        const SymIntConstraint& CNew =
+          BasicVals.getConstraint(C.getSymbol(), Opc, C.getInt());
+        
+        return nonlval::SymIntConstraintVal(CNew);
+      }
         
       case nonlval::ConcreteIntKind:
         
