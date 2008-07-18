@@ -550,9 +550,10 @@ protected:
     return R.isValid() ? getTF().EvalBinOp(*this, Op, L, cast<NonLVal>(R)) : R;
   }
   
-  RVal EvalBinOp(BinaryOperator::Opcode Op, NonLVal L, NonLVal R) {
-    return R.isValid() ? getTF().EvalBinOp(*this, Op, L, R) : R;
-  }
+  void EvalBinOp(ExplodedNodeSet<ValueState>& Dst, Expr* E,
+                 BinaryOperator::Opcode Op, NonLVal L, NonLVal R,
+                 ExplodedNode<ValueState>* Pred);
+  
   
   RVal EvalBinOp(BinaryOperator::Opcode Op, RVal L, RVal R) {
 
@@ -582,9 +583,6 @@ protected:
       return getTF().EvalBinOp(*this, Op, cast<NonLVal>(L), cast<NonLVal>(R));
   }
   
-  void EvalBinOp(ExplodedNodeSet<ValueState>& Dst, Expr* E,
-                 BinaryOperator::Opcode Op,
-                 NonLVal L, NonLVal R, ExplodedNode<ValueState>* Pred);
   
   void EvalCall(NodeSet& Dst, CallExpr* CE, RVal L, NodeTy* Pred) {
     assert (Builder && "GRStmtNodeBuilder must be defined.");
