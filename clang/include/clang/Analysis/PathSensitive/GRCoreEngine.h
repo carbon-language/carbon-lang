@@ -254,6 +254,15 @@ public:
     return N;
   }
   
+  NodeTy* MakeSinkNode(ExplodedNodeSet<StateTy>& Dst, Stmt* S,
+                       NodeTy* Pred, const StateTy* St) { 
+    bool Tmp = BuildSinks;
+    BuildSinks = true;
+    NodeTy* N = MakeNode(Dst, S, Pred, St);
+    BuildSinks = Tmp;
+    return N;
+  }
+  
   bool PurgingDeadSymbols;
   bool BuildSinks;
   bool HasGeneratedNode;

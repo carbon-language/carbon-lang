@@ -208,11 +208,16 @@ class VISIBILITY_HIDDEN RetainSummary : public llvm::FoldingSetNode {
   ///  alias of one of the arguments in the call, and so on.
   RetEffect   Ret;
   
+  /// EndPath - Indicates that execution of this method/function should
+  ///  terminate the simulation of a path.
+  bool EndPath;
+  
 public:
   
   RetainSummary(ArgEffects* A, RetEffect R, ArgEffect defaultEff,
-                ArgEffect ReceiverEff)
-    : Args(A), DefaultArgEffect(defaultEff), Receiver(ReceiverEff), Ret(R) {}  
+                ArgEffect ReceiverEff, bool endpath = false)
+    : Args(A), DefaultArgEffect(defaultEff), Receiver(ReceiverEff), Ret(R),
+      EndPath(endpath) {}  
   
   /// getArg - Return the argument effect on the argument specified by
   ///  idx (starting from 0).
@@ -242,6 +247,10 @@ public:
   RetEffect getRetEffect() const {
     return Ret;
   }
+  
+  /// isEndPath - Returns true if executing the given method/function should
+  ///  terminate the path.
+  bool isEndPath() const { return EndPath; }
   
   /// getReceiverEffect - Returns the effect on the receiver of the call.
   ///  This is only meaningful if the summary applies to an ObjCMessageExpr*.
@@ -446,6 +455,10 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   /// NSPanelII - An IdentifierInfo* representing the identifier "NSPanel."
   IdentifierInfo* NSPanelII;
   
+  /// NSAssertionHandlerII - An IdentifierInfo* representing the identifier
+  //  "NSAssertionHandler".
+  IdentifierInfo* NSAssertionHandlerII;
+  
   /// CFDictionaryCreateII - An IdentifierInfo* representing the indentifier
   ///  "CFDictionaryCreate".
   IdentifierInfo* CFDictionaryCreateII;
@@ -499,7 +512,8 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
   
   RetainSummary* getPersistentSummary(ArgEffects* AE, RetEffect RetEff,
                                       ArgEffect ReceiverEff = DoNothing,
-                                      ArgEffect DefaultEff = MayEscape);
+                                      ArgEffect DefaultEff = MayEscape,
+                                      bool isEndPath = false);
                  
 
   RetainSummary* getPersistentSummary(RetEffect RE,
@@ -523,7 +537,12 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
 
   void InitializeClassMethodSummaries();
   void InitializeMethodSummaries();
-    
+      
+  void addClsMethSummary(IdentifierInfo* ClsII, Selector S,
+                         RetainSummary* Summ) {
+    ObjCClassMethodSummaries[ObjCSummaryKey(ClsII, S)] = Summ;
+  }
+  
   void addNSObjectClsMethSummary(Selector S, RetainSummary *Summ) {
     ObjCClassMethodSummaries[S] = Summ;
   }
@@ -540,12 +559,20 @@ class VISIBILITY_HIDDEN RetainSummaryManager {
     ObjCMethodSummaries[ObjCSummaryKey(NSPanelII, S)] = Summ;
   }
   
+  void addPanicSummary(IdentifierInfo* ClsII, Selector S) {
+    RetainSummary* Summ = getPersistentSummary(0, RetEffect::MakeNoRet(),
+                                               DoNothing,  DoNothing, true);
+    
+    ObjCMethodSummaries[ObjCSummaryKey(ClsII, S)] = Summ;
+  }
+  
 public:
   
   RetainSummaryManager(ASTContext& ctx, bool gcenabled)
    : Ctx(ctx),
      NSWindowII(&ctx.Idents.get("NSWindow")),
      NSPanelII(&ctx.Idents.get("NSPanel")),
+     NSAssertionHandlerII(&ctx.Idents.get("NSAssertionHandler")),
      CFDictionaryCreateII(&ctx.Idents.get("CFDictionaryCreate")),
      GCEnabled(gcenabled), StopSummary(0) {
 
@@ -611,7 +638,8 @@ ArgEffects* RetainSummaryManager::getArgEffects() {
 RetainSummary*
 RetainSummaryManager::getPersistentSummary(ArgEffects* AE, RetEffect RetEff,
                                            ArgEffect ReceiverEff,
-                                           ArgEffect DefaultEff) {
+                                           ArgEffect DefaultEff,
+                                           bool isEndPath) {
   
   // Generate a profile for the summary.
   llvm::FoldingSetNodeID profile;
@@ -626,7 +654,7 @@ RetainSummaryManager::getPersistentSummary(ArgEffects* AE, RetEffect RetEff,
   
   // Create the summary and return it.
   Summ = (RetainSummary*) BPAlloc.Allocate<RetainSummary>();
-  new (Summ) RetainSummary(AE, RetEff, DefaultEff, ReceiverEff);
+  new (Summ) RetainSummary(AE, RetEff, DefaultEff, ReceiverEff, isEndPath);
   SummarySet.InsertNode(Summ, InsertPos);
   
   return Summ;
@@ -929,6 +957,11 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
   addNSObjectClsMethSummary(GetNullarySelector("alloc", Ctx), Summ);
   addNSObjectClsMethSummary(GetNullarySelector("new", Ctx), Summ);
   addNSObjectClsMethSummary(GetUnarySelector("allocWithZone", Ctx), Summ);
+  
+  // Create the [NSAssertionHandler currentHander] summary.  
+  addClsMethSummary(NSAssertionHandlerII,
+                    GetUnarySelector("currentHandler", Ctx),
+                    getPersistentSummary(RetEffect::MakeNotOwned()));  
 }
 
 void RetainSummaryManager::InitializeMethodSummaries() {
@@ -991,6 +1024,23 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   S = Ctx.Selectors.getSelector(II.size(), &II[0]);
   addNSWindowMethSummary(S, NSWindowSumm);
   addNSPanelMethSummary(S, InitSumm);
+  
+  // Create NSAssertionHandler summaries.
+  II.clear();
+  II.push_back(&Ctx.Idents.get("handleFailureInFunction"));
+  II.push_back(&Ctx.Idents.get("file"));
+  II.push_back(&Ctx.Idents.get("lineNumber"));
+  II.push_back(&Ctx.Idents.get("description"));
+  S = Ctx.Selectors.getSelector(II.size(), &II[0]);
+  addPanicSummary(NSAssertionHandlerII, S);
+  
+  II.clear();
+  II.push_back(&Ctx.Idents.get("handleFailureInMethod"));
+  II.push_back(&Ctx.Idents.get("file"));
+  II.push_back(&Ctx.Idents.get("lineNumber"));
+  II.push_back(&Ctx.Idents.get("description"));
+  S = Ctx.Selectors.getSelector(II.size(), &II[0]);
+  addPanicSummary(NSAssertionHandlerII, S);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1375,6 +1425,10 @@ static inline ArgEffect GetReceiverE(RetainSummary* Summ) {
   return Summ ? Summ->getReceiverEffect() : DoNothing;
 }
 
+static inline bool IsEndPath(RetainSummary* Summ) {
+  return Summ ? Summ->isEndPath() : false;
+}
+
 void CFRefCount::ProcessNonLeakError(ExplodedNodeSet<ValueState>& Dst,
                                      GRStmtNodeBuilder<ValueState>& Builder,
                                      Expr* NodeExpr, Expr* ErrorExpr,                        
@@ -1549,7 +1603,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
     return;
   }
   
-  // Finally, consult the summary for the return value.  
+  // Consult the summary for the return value.  
   RetEffect RE = GetRetEffect(Summ);
   
   switch (RE.getKind()) {
@@ -1630,7 +1684,11 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<ValueState>& Dst,
     }
   }
   
-  Builder.MakeNode(Dst, Ex, Pred, St);
+  // Is this a sink?
+  if (IsEndPath(Summ))
+    Builder.MakeSinkNode(Dst, Ex, Pred, St);
+  else
+    Builder.MakeNode(Dst, Ex, Pred, St);
 }
 
 
