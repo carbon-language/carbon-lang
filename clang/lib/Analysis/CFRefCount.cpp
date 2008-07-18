@@ -962,7 +962,7 @@ void RetainSummaryManager::InitializeClassMethodSummaries() {
   
   // Create the [NSAssertionHandler currentHander] summary.  
   addClsMethSummary(NSAssertionHandlerII,
-                    GetUnarySelector("currentHandler", Ctx),
+                    GetNullarySelector("currentHandler", Ctx),
                     getPersistentSummary(RetEffect::MakeNotOwned()));  
 }
 
