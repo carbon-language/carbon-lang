@@ -1285,6 +1285,12 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     ParseAST(PP, Consumer, Stats);
   }
 
+  // Don't emit code when the input had errors.
+  if (CodeGenModule && PP.getDiagnostics().hasErrorOccurred()) {
+    delete CodeGenModule;
+    CodeGenModule = 0;
+  }
+
   // If running the code generator, finish up now.
   if (CodeGenModule) {
     std::ostream *Out;
