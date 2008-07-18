@@ -1239,7 +1239,7 @@ void Verifier::visitInstruction(Instruction &I) {
         }
 
         // Definition must dominate use unless use is unreachable!
-        Assert2(DT->dominates(Op, &I) ||
+        Assert2(InstsInThisBlock.count(Op) || DT->dominates(Op, &I) ||
                 !DT->dominates(&BB->getParent()->getEntryBlock(), BB),
                 "Instruction does not dominate all uses!", Op, &I);
       } else {
