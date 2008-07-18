@@ -67,9 +67,6 @@ protected:
   /// StateMgr - Object that manages the data for all created states.
   ValueStateManager StateMgr;
   
-  /// ValueMgr - Object that manages the data for all created RVals.
-  BasicValueFactory& BasicVals;
-  
   /// BugTypes - Objects used for reporting bugs.
   typedef std::vector<BugType*> BugTypeSet;
   BugTypeSet BugTypes;
@@ -375,8 +372,12 @@ public:
   ValueStateManager& getStateManager() { return StateMgr; }
   const ValueStateManager& getStateManger() const { return StateMgr; }
   
-  BasicValueFactory& getBasicVals() { return BasicVals; }
-  const BasicValueFactory& getBasicVals() const { return BasicVals; }
+  BasicValueFactory& getBasicVals() {
+    return StateMgr.getBasicVals();
+  }
+  const BasicValueFactory& getBasicVals() const {
+    return StateMgr.getBasicVals();
+  }
   
   SymbolManager& getSymbolManager() { return SymMgr; }
   const SymbolManager& getSymbolManager() const { return SymMgr; }
@@ -424,7 +425,7 @@ protected:
   }
   
   inline NonLVal MakeConstantVal(uint64_t X, Expr* Ex) {
-    return NonLVal::MakeVal(BasicVals, X, Ex->getType());
+    return NonLVal::MakeVal(getBasicVals(), X, Ex->getType());
   }
   
   /// Assume - Create new state by assuming that a given expression
@@ -545,15 +546,22 @@ protected:
   RVal EvalComplement(RVal X) {
     return X.isValid() ? getTF().EvalComplement(*this, cast<NonLVal>(X)) : X;
   }
+  
+  RVal EvalBinOp(BinaryOperator::Opcode Op, NonLVal L, NonLVal R) {
+    return R.isValid() ? getTF().EvalBinOp(getStateManager(), Op, L, R) : R;
+  }
 
   RVal EvalBinOp(BinaryOperator::Opcode Op, NonLVal L, RVal R) {
-    return R.isValid() ? getTF().EvalBinOp(*this, Op, L, cast<NonLVal>(R)) : R;
+    return R.isValid() ? getTF().EvalBinOp(getStateManager(), Op, L,
+                                           cast<NonLVal>(R)) : R;
   }
   
-  void EvalBinOp(ExplodedNodeSet<ValueState>& Dst, Expr* E,
+  void EvalBinOp(ExplodedNodeSet<ValueState>& Dst, Expr* Ex,
                  BinaryOperator::Opcode Op, NonLVal L, NonLVal R,
                  ExplodedNode<ValueState>* Pred);
   
+  void EvalBinOp(ValueStateSet& OStates, const ValueState* St, Expr* Ex,
+                 BinaryOperator::Opcode Op, NonLVal L, NonLVal R);  
   
   RVal EvalBinOp(BinaryOperator::Opcode Op, RVal L, RVal R) {
 
@@ -577,10 +585,12 @@ protected:
       assert (Op == BinaryOperator::Add || Op == BinaryOperator::Sub);
 
       // Commute the operands.
-      return getTF().EvalBinOp(*this, Op, cast<LVal>(R), cast<NonLVal>(L));
+      return getTF().EvalBinOp(*this, Op, cast<LVal>(R),
+                               cast<NonLVal>(L));
     }
     else
-      return getTF().EvalBinOp(*this, Op, cast<NonLVal>(L), cast<NonLVal>(R));
+      return getTF().EvalBinOp(getStateManager(), Op, cast<NonLVal>(L),
+                               cast<NonLVal>(R));
   }
   
   

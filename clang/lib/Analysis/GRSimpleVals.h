@@ -44,7 +44,7 @@ public:
   
   // Binary Operators.
   
-  virtual RVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
+  virtual RVal EvalBinOp(ValueStateManager& StateMgr, BinaryOperator::Opcode Op,
                          NonLVal L, NonLVal R);
   
   virtual RVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,

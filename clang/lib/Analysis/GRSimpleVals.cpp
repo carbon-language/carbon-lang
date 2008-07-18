@@ -450,10 +450,10 @@ RVal GRSimpleVals::EvalComplement(GRExprEngine& Eng, NonLVal X) {
 
 // Binary operators.
 
-RVal GRSimpleVals::EvalBinOp(GRExprEngine& Eng, BinaryOperator::Opcode Op,
-                             NonLVal L, NonLVal R)  {
+RVal GRSimpleVals::EvalBinOp(ValueStateManager& StateMgr,
+                             BinaryOperator::Opcode Op, NonLVal L, NonLVal R)  {
   
-  BasicValueFactory& BasicVals = Eng.getBasicVals();
+  BasicValueFactory& BasicVals = StateMgr.getBasicVals();
   
   while (1) {
     

@@ -184,6 +184,38 @@ template<> struct GRTrait<ValueState*> {
   }
 };
   
+class ValueStateSet {
+  typedef llvm::SmallPtrSet<const ValueState*,5> ImplTy;
+  ImplTy Impl;  
+public:
+  ValueStateSet() {}
+
+  inline void Add(const ValueState* St) {
+    Impl.insert(St);
+  }
+  
+  typedef ImplTy::const_iterator iterator;
+  
+  inline unsigned size() const { return Impl.size();  }
+  inline bool empty()    const { return Impl.empty(); }
+  
+  inline iterator begin() const { return Impl.begin(); }
+  inline iterator end() const { return Impl.end();   }
+  
+  class AutoPopulate {
+    ValueStateSet& S;
+    unsigned StartSize;
+    const ValueState* St;
+  public:
+    AutoPopulate(ValueStateSet& s, const ValueState* st) 
+      : S(s), StartSize(S.size()), St(st) {}
+    
+    ~AutoPopulate() {
+      if (StartSize == S.size())
+        S.Add(St);
+    }
+  };
+};
   
 class ValueStateManager {
   friend class GRExprEngine;
@@ -249,7 +281,8 @@ public:
 
   const ValueState* getInitialState();
         
-  BasicValueFactory& getBasicValueFactory() { return BasicVals; }
+  BasicValueFactory& getBasicVals() { return BasicVals; }
+  const BasicValueFactory& getBasicVals() const { return BasicVals; }
   SymbolManager& getSymbolManager() { return SymMgr; }
   
   typedef StoreManager::DeadSymbolsTy DeadSymbolsTy;

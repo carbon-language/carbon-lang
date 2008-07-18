@@ -122,7 +122,6 @@ GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
     Builder(NULL),
     StateMgr(G.getContext(), CreateBasicStoreManager(G.getAllocator()),
              G.getAllocator(), G.getCFG()),
-    BasicVals(StateMgr.getBasicValueFactory()),
     SymMgr(StateMgr.getSymbolManager()),
     CurrentStmt(NULL),
   NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
@@ -707,7 +706,7 @@ void GRExprEngine::ProcessSwitch(SwitchNodeBuilder& builder) {
     //  This should be easy once we have "ranges" for NonLVals.
         
     do {
-      nonlval::ConcreteInt CaseVal(BasicVals.getValue(V1));
+      nonlval::ConcreteInt CaseVal(getBasicVals().getValue(V1));
       
       RVal Res = EvalBinOp(BinaryOperator::EQ, CondV, CaseVal);
       
@@ -823,7 +822,7 @@ void GRExprEngine::VisitDeclRefExpr(DeclRefExpr* D, NodeTy* Pred, NodeSet& Dst,
                                     bool asLVal) {
   
   const ValueState* St = GetState(Pred);
-  RVal X = RVal::MakeVal(BasicVals, D);
+  RVal X = RVal::MakeVal(getBasicVals(), D);
   
   if (asLVal)
     MakeNode(Dst, D, Pred, SetRVal(St, D, cast<LVal>(X)));
@@ -869,7 +868,7 @@ void GRExprEngine::VisitArraySubscriptExpr(ArraySubscriptExpr* A, NodeTy* Pred,
       if (nonlval::ConcreteInt* IdxInt = dyn_cast<nonlval::ConcreteInt>(&IdxV))        
         useBase = IdxInt->getValue() == 0;
       
-      RVal V = useBase ? BaseV : lval::ArrayOffset::Make(BasicVals, BaseV,IdxV);
+      RVal V = useBase ? BaseV : lval::ArrayOffset::Make(getBasicVals(), BaseV,IdxV);
 
       if (asLVal)
         MakeNode(Dst, A, *I2, SetRVal(St, A, V));
@@ -900,7 +899,7 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, NodeTy* Pred,
       const ValueState* St = GetState(*I);
       RVal BaseV = GetRVal(St, Base);      
       
-      RVal V = lval::FieldOffset::Make(BasicVals, GetRVal(St, Base),
+      RVal V = lval::FieldOffset::Make(getBasicVals(), GetRVal(St, Base),
                                        M->getMemberDecl());
       
       MakeNode(Dst, M, *I, SetRVal(St, M, V));
@@ -922,7 +921,7 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, NodeTy* Pred,
     
       assert (M->isArrow());
       
-      RVal V = lval::FieldOffset::Make(BasicVals, GetRVal(St, Base),
+      RVal V = lval::FieldOffset::Make(getBasicVals(), GetRVal(St, Base),
                                        M->getMemberDecl());
     
       EvalLoad(Dst, M, *I, St, V);
@@ -1461,7 +1460,7 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
       // equal or exceeds the number of bits to store the pointer value.
       // If not, flag an error.
       
-      V = nonlval::LValAsInteger::Make(BasicVals, cast<LVal>(V), bits);
+      V = nonlval::LValAsInteger::Make(getBasicVals(), cast<LVal>(V), bits);
       MakeNode(Dst, CastE, N, SetRVal(St, CastE, V));
       continue;
     }
@@ -1548,10 +1547,10 @@ void GRExprEngine::VisitDeclStmtAux(DeclStmt* DS, ScopedDecl* D,
         
         if (LVal::IsLValType(T))
           St = SetRVal(St, lval::DeclVal(VD),
-                       lval::ConcreteInt(BasicVals.getValue(0, T)));
+                       lval::ConcreteInt(getBasicVals().getValue(0, T)));
         else if (T->isIntegerType())
           St = SetRVal(St, lval::DeclVal(VD),
-                       nonlval::ConcreteInt(BasicVals.getValue(0, T)));          
+                       nonlval::ConcreteInt(getBasicVals().getValue(0, T)));          
           
         // FIXME: Handle structs.  Now we treat them as unknown.  What
         //  we need to do is treat their members as unknown.
@@ -1626,7 +1625,7 @@ void GRExprEngine::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr* Ex,
   
   MakeNode(Dst, Ex, Pred,
            SetRVal(GetState(Pred), Ex,
-                   NonLVal::MakeVal(BasicVals, amt, Ex->getType())));  
+                   NonLVal::MakeVal(getBasicVals(), amt, Ex->getType())));  
 }
 
 
@@ -1699,7 +1698,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
         // For all other types, UnaryOperator::Float returns 0.
         assert (Ex->getType()->isIntegerType());
         const ValueState* St = GetState(*I);
-        RVal X = NonLVal::MakeVal(BasicVals, 0, Ex->getType());
+        RVal X = NonLVal::MakeVal(getBasicVals(), 0, Ex->getType());
         MakeNode(Dst, U, *I, SetRVal(St, U, X));
       }
       
@@ -1787,12 +1786,12 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
             //    transfer functions as "0 == E".
             
             if (isa<LVal>(V)) {
-              lval::ConcreteInt X(BasicVals.getZeroWithPtrWidth());
+              lval::ConcreteInt X(getBasicVals().getZeroWithPtrWidth());
               RVal Result = EvalBinOp(BinaryOperator::EQ, cast<LVal>(V), X);
               St = SetRVal(St, U, Result);
             }
             else {
-              nonlval::ConcreteInt X(BasicVals.getValue(0, Ex->getType()));
+              nonlval::ConcreteInt X(getBasicVals().getValue(0, Ex->getType()));
 #if 0            
               RVal Result = EvalBinOp(BinaryOperator::EQ, cast<NonLVal>(V), X);
               St = SetRVal(St, U, Result);
@@ -1822,7 +1821,7 @@ void GRExprEngine::VisitUnaryOperator(UnaryOperator* U, NodeTy* Pred,
         
       uint64_t size = getContext().getTypeSize(T) / 8;                
       const ValueState* St = GetState(Pred);
-      St = SetRVal(St, U, NonLVal::MakeVal(BasicVals, size, U->getType()));
+      St = SetRVal(St, U, NonLVal::MakeVal(getBasicVals(), size, U->getType()));
         
       MakeNode(Dst, U, Pred, St);
       return;
@@ -2229,21 +2228,20 @@ void GRExprEngine::EvalBinOp(ExplodedNodeSet<ValueState>& Dst, Expr* Ex,
                              BinaryOperator::Opcode Op,
                              NonLVal L, NonLVal R,
                              ExplodedNode<ValueState>* Pred) {
+
+  ValueStateSet OStates;
+  EvalBinOp(OStates, GetState(Pred), Ex, Op, L, R);
+
+  for (ValueStateSet::iterator I=OStates.begin(), E=OStates.end(); I!=E; ++I)
+    MakeNode(Dst, Ex, Pred, *I);
+}
+
+void GRExprEngine::EvalBinOp(ValueStateSet& OStates, const ValueState* St,
+                             Expr* Ex, BinaryOperator::Opcode Op,
+                             NonLVal L, NonLVal R) {
   
-  if (!R.isValid()) {
-    MakeNode(Dst, Ex, Pred, SetRVal(GetState(Pred), Ex, R));
-    return;
-  }
-  
-  assert (Builder && "GRStmtNodeBuilder must be defined.");    
-  unsigned size = Dst.size();
-  SaveOr OldHasGen(Builder->HasGeneratedNode);
-  
-  getTF().EvalBinOpNN(Dst, *this, *Builder, Op, Ex, L, R, Pred);
-  
-  if (!Builder->BuildSinks && Dst.size() == size &&
-      !Builder->HasGeneratedNode)
-    MakeNode(Dst, Ex, Pred, GetState(Pred));
+  ValueStateSet::AutoPopulate AP(OStates, St);
+  if (R.isValid()) getTF().EvalBinOpNN(OStates, StateMgr, St, Ex, Op, L, R);
 }
 
 //===----------------------------------------------------------------------===//
