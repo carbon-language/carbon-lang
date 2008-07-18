@@ -61,6 +61,7 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
       break;
     case ISD::FADD:        R = SoftenFloatRes_FADD(N); break;
     case ISD::FCOPYSIGN:   R = SoftenFloatRes_FCOPYSIGN(N); break;
+    case ISD::FDIV:        R = SoftenFloatRes_FDIV(N); break;
     case ISD::FMUL:        R = SoftenFloatRes_FMUL(N); break;
     case ISD::FP_EXTEND:   R = SoftenFloatRes_FP_EXTEND(N); break;
     case ISD::FP_ROUND:    R = SoftenFloatRes_FP_ROUND(N); break;
@@ -144,6 +145,18 @@ SDOperand DAGTypeLegalizer::SoftenFloatRes_FCOPYSIGN(SDNode *N) {
 
   // Or the value with the sign bit.
   return DAG.getNode(ISD::OR, LVT, LHS, SignBit);
+}
+
+SDOperand DAGTypeLegalizer::SoftenFloatRes_FDIV(SDNode *N) {
+  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  SDOperand Ops[2] = { GetSoftenedFloat(N->getOperand(0)),
+                       GetSoftenedFloat(N->getOperand(1)) };
+  return MakeLibCall(GetFPLibCall(N->getValueType(0),
+                                  RTLIB::DIV_F32,
+                                  RTLIB::DIV_F64,
+                                  RTLIB::DIV_F80,
+                                  RTLIB::DIV_PPCF128),
+                     NVT, Ops, 2, false);
 }
 
 SDOperand DAGTypeLegalizer::SoftenFloatRes_FMUL(SDNode *N) {

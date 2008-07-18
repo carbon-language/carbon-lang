@@ -336,6 +336,7 @@ private:
   SDOperand SoftenFloatRes_ConstantFP(ConstantFPSDNode *N);
   SDOperand SoftenFloatRes_FADD(SDNode *N);
   SDOperand SoftenFloatRes_FCOPYSIGN(SDNode *N);
+  SDOperand SoftenFloatRes_FDIV(SDNode *N);
   SDOperand SoftenFloatRes_FMUL(SDNode *N);
   SDOperand SoftenFloatRes_FP_EXTEND(SDNode *N);
   SDOperand SoftenFloatRes_FP_ROUND(SDNode *N);
