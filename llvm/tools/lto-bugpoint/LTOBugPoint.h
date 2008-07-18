@@ -21,10 +21,22 @@ class LTOBugPoint {
 
   LTOBugPoint(std::istream &args, std::istream &ins);
 
+  /// findTroubleMakers - Find minimum set of input files that causes error
+  /// identified by the script.
+  bool findTroubleMakers(llvm::SmallVector<std::string, 4> &TroubleMakers,
+			std::string &Script);
  private:
   /// LinkerInputFiles - This is a list of linker input files. Once populated
   /// this list is not modified.
   llvm::SmallVector<std::string, 16> LinkerInputFiles;
+
+  /// LinkerOptions - List of linker command line options.
   llvm::SmallVector<std::string, 16> LinkerOptions;
+
+  /// NativeInputFiles - This is a list of input files that are not llvm
+  /// bitcode files. The order in this list is important. The a file
+  /// in LinkerInputFiles at index 4 is a llvm bitcode file then the file
+  /// at index 4 in NativeInputFiles is corresponding native object file.
+  llvm::SmallVector<std::string, 16> NativeInputFiles;
 
 };

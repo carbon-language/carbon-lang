@@ -10,6 +10,8 @@ LEVEL = ../..
 
 TOOLNAME = lto-bugpoint
 
+LINK_COMPONENTS := system
+
 REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common

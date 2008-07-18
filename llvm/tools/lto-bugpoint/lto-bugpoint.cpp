@@ -47,15 +47,12 @@ int main(int argc, char **argv) {
 
     // Third argument is absolute path to the validation script. This
     // script is used to validate LTO error under investigation.
-    std::istream *ValidationScriptFile = new std::ifstream(argv[3], input_mode);
-    if (!ValidationScriptFile->good()) {
-      std::cerr << argv[0] << ": error opening " << argv[3] << "!\n";
-      delete LinkerArgsFile;
-      delete LinkerInputsFile;
-      return 1;
-    }
-
+    std::string ValidationScript = argv[3];
     LTOBugPoint bugFinder(*LinkerArgsFile, *LinkerInputsFile);
+
+    llvm::SmallVector<std::string, 4> TroubleMakers;
+    if (!bugFinder.findTroubleMakers(TroubleMakers, ValidationScript))
+      return 1;
 
     return 0;
   } catch (const std::string& msg) {
