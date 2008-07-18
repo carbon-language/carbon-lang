@@ -1116,6 +1116,13 @@ bool CWriter::printConstExprCast(const ConstantExpr* CE) {
   const Type *Ty = CE->getOperand(0)->getType();
   bool TypeIsSigned = false;
   switch (CE->getOpcode()) {
+  case Instruction::Add:
+  case Instruction::Sub:
+  case Instruction::Mul:
+    // We need to cast integer arithmetic so that it is always performed
+    // as unsigned, to avoid undefined behavior on overflow.
+    if (!Ty->isIntOrIntVector()) break;
+    // FALL THROUGH
   case Instruction::LShr:
   case Instruction::URem: 
   case Instruction::UDiv: NeedsExplicitCast = true; break;
@@ -1174,6 +1181,13 @@ void CWriter::printConstantWithCast(Constant* CPV, unsigned Opcode) {
     default:
       // for most instructions, it doesn't matter
       break; 
+    case Instruction::Add:
+    case Instruction::Sub:
+    case Instruction::Mul:
+      // We need to cast integer arithmetic so that it is always performed
+      // as unsigned, to avoid undefined behavior on overflow.
+      if (!OpTy->isIntOrIntVector()) break;
+      // FALL THROUGH
     case Instruction::LShr:
     case Instruction::UDiv:
     case Instruction::URem:
@@ -1294,6 +1308,13 @@ void CWriter::writeOperand(Value *Operand) {
 bool CWriter::writeInstructionCast(const Instruction &I) {
   const Type *Ty = I.getOperand(0)->getType();
   switch (I.getOpcode()) {
+  case Instruction::Add:
+  case Instruction::Sub:
+  case Instruction::Mul:
+    // We need to cast integer arithmetic so that it is always performed
+    // as unsigned, to avoid undefined behavior on overflow.
+    if (!Ty->isIntOrIntVector()) break;
+    // FALL THROUGH
   case Instruction::LShr:
   case Instruction::URem: 
   case Instruction::UDiv: 
@@ -1334,6 +1355,13 @@ void CWriter::writeOperandWithCast(Value* Operand, unsigned Opcode) {
     default:
       // for most instructions, it doesn't matter
       break; 
+    case Instruction::Add:
+    case Instruction::Sub:
+    case Instruction::Mul:
+      // We need to cast integer arithmetic so that it is always performed
+      // as unsigned, to avoid undefined behavior on overflow.
+      if (!OpTy->isIntOrIntVector()) break;
+      // FALL THROUGH
     case Instruction::LShr:
     case Instruction::UDiv:
     case Instruction::URem: // Cast to unsigned first
