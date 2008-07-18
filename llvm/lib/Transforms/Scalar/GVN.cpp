@@ -1138,7 +1138,7 @@ bool GVN::runOnFunction(Function& F) {
   
   if (EnablePRE) {
     bool PREChanged = false;
-    while (PREChanged = performPRE(F))
+    while ((PREChanged = performPRE(F)))
       changed |= PREChanged;
   }
   
