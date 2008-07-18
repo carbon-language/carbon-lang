@@ -72,18 +72,18 @@ bool RVal::isZeroConstant() const {
 // Transfer function dispatch for Non-LVals.
 //===----------------------------------------------------------------------===//
 
-RVal
-nonlval::ConcreteInt::EvalBinOp(BasicValueFactory& BasicVals, BinaryOperator::Opcode Op,
-                                const nonlval::ConcreteInt& R) const {
+RVal nonlval::ConcreteInt::EvalBinOp(BasicValueFactory& BasicVals,
+                                     BinaryOperator::Opcode Op,
+                                     const nonlval::ConcreteInt& R) const {
   
-  const llvm::APSInt* X = BasicVals.EvaluateAPSInt(Op, getValue(), R.getValue());
+  const llvm::APSInt* X =
+    BasicVals.EvaluateAPSInt(Op, getValue(), R.getValue());
   
   if (X)
     return nonlval::ConcreteInt(*X);
   else
     return UndefinedVal();
 }
-
 
   // Bitwise-Complement.
 
