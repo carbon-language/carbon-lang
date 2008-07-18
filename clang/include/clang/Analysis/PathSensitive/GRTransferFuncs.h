@@ -25,6 +25,19 @@ namespace clang {
   class ObjCMessageExpr;
   
 class GRTransferFuncs {
+  
+  friend class GRExprEngine;
+  
+protected:
+  
+  
+  virtual RVal DetermEvalBinOpNN(ValueStateManager& StateMgr,
+                                 BinaryOperator::Opcode Op,
+                                 NonLVal L, NonLVal R) {
+    return UnknownVal();
+  }
+  
+  
 public:
   GRTransferFuncs() {}
   virtual ~GRTransferFuncs() {}
@@ -47,12 +60,6 @@ public:
   virtual RVal EvalComplement(GRExprEngine& Engine, NonLVal X) = 0;
 
   // Binary Operators.
-  
-  virtual RVal EvalBinOp(ValueStateManager& StateMgr, BinaryOperator::Opcode Op,
-                         NonLVal L, NonLVal R) {
-    return UnknownVal();
-  }
-  
   virtual void EvalBinOpNN(ValueStateSet& OStates, ValueStateManager& StateMgr,
                            const ValueState* St, Expr* Ex,
                            BinaryOperator::Opcode Op, NonLVal L, NonLVal R);

@@ -548,12 +548,13 @@ protected:
   }
   
   RVal EvalBinOp(BinaryOperator::Opcode Op, NonLVal L, NonLVal R) {
-    return R.isValid() ? getTF().EvalBinOp(getStateManager(), Op, L, R) : R;
+    return R.isValid() ? getTF().DetermEvalBinOpNN(getStateManager(), Op, L, R)
+                       : R;
   }
 
   RVal EvalBinOp(BinaryOperator::Opcode Op, NonLVal L, RVal R) {
-    return R.isValid() ? getTF().EvalBinOp(getStateManager(), Op, L,
-                                           cast<NonLVal>(R)) : R;
+    return R.isValid() ? getTF().DetermEvalBinOpNN(getStateManager(), Op, L,
+                                                   cast<NonLVal>(R)) : R;
   }
   
   void EvalBinOp(ExplodedNodeSet<ValueState>& Dst, Expr* Ex,
@@ -589,8 +590,8 @@ protected:
                                cast<NonLVal>(L));
     }
     else
-      return getTF().EvalBinOp(getStateManager(), Op, cast<NonLVal>(L),
-                               cast<NonLVal>(R));
+      return getTF().DetermEvalBinOpNN(getStateManager(), Op, cast<NonLVal>(L),
+                                       cast<NonLVal>(R));
   }
   
   

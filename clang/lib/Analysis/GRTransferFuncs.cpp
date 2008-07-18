@@ -44,5 +44,5 @@ void GRTransferFuncs::EvalBinOpNN(ValueStateSet& OStates,
                                   BinaryOperator::Opcode Op,
                                   NonLVal L, NonLVal R) {
   
-  OStates.Add(StateMgr.SetRVal(St, Ex, EvalBinOp(StateMgr, Op, L, R)));
+  OStates.Add(StateMgr.SetRVal(St, Ex, DetermEvalBinOpNN(StateMgr, Op, L, R)));
 }

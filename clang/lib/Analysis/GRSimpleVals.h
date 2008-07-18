@@ -25,6 +25,12 @@ class PathDiagnostic;
 class ASTContext;
   
 class GRSimpleVals : public GRTransferFuncs {
+protected:
+  
+  virtual RVal DetermEvalBinOpNN(ValueStateManager& StateMgr,
+                                 BinaryOperator::Opcode Op,
+                                 NonLVal L, NonLVal R);
+  
 public:
   GRSimpleVals() {}
   virtual ~GRSimpleVals() {}
@@ -43,9 +49,6 @@ public:
   virtual RVal EvalComplement(GRExprEngine& Engine, NonLVal X);
   
   // Binary Operators.
-  
-  virtual RVal EvalBinOp(ValueStateManager& StateMgr, BinaryOperator::Opcode Op,
-                         NonLVal L, NonLVal R);
   
   virtual RVal EvalBinOp(GRExprEngine& Engine, BinaryOperator::Opcode Op,
                          LVal L, LVal R);
