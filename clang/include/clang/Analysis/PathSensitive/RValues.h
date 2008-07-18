@@ -83,6 +83,8 @@ public:
     return getRawKind() > UnknownKind;
   }
   
+  bool isZeroConstant() const;
+  
   void print(std::ostream& OS) const;
   void printStdErr() const;
   

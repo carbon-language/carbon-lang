@@ -55,6 +55,20 @@ RVal::symbol_iterator RVal::symbol_end() const {
 }
 
 //===----------------------------------------------------------------------===//
+// Useful predicates.
+//===----------------------------------------------------------------------===//
+
+bool RVal::isZeroConstant() const {
+  if (isa<lval::ConcreteInt>(*this))
+    return cast<lval::ConcreteInt>(*this).getValue() == 0;
+  else if (isa<nonlval::ConcreteInt>(*this))
+    return cast<nonlval::ConcreteInt>(*this).getValue() == 0;
+  else
+    return false;
+}
+
+
+//===----------------------------------------------------------------------===//
 // Transfer function dispatch for Non-LVals.
 //===----------------------------------------------------------------------===//
 

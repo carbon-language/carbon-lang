@@ -472,11 +472,16 @@ RVal GRSimpleVals::DetermEvalBinOpNN(ValueStateManager& StateMgr,
         return UnknownVal();
         
       case nonlval::SymIntConstraintValKind: {
+        
+        // Logical not?        
+        if (!(Op == BinaryOperator::EQ && R.isZeroConstant()))
+          return UnknownVal();
+        
         const SymIntConstraint& C =
           cast<nonlval::SymIntConstraintVal>(L).getConstraint();
         
         BinaryOperator::Opcode Opc = C.getOpcode();
-
+        
         if (Opc < BinaryOperator::LT || Opc > BinaryOperator::NE)
           return UnknownVal();
 
