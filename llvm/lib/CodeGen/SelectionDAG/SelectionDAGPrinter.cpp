@@ -160,7 +160,7 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
     Op += '<';
     if (!V) {
       Op += "(unknown)";
-    } else if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V)) {
+    } else if (isa<PseudoSourceValue>(V)) {
       // PseudoSourceValues don't have names, so use their print method.
       std::ostringstream SS;
       M->MO.getValue()->print(SS);
