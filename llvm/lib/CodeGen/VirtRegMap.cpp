@@ -971,6 +971,7 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
         InvalidateKills(MI, RegKills, KillOps);
         VRM.RemoveMachineInstrFromMaps(&MI);
         MBB.erase(&MI);
+        MF.DeleteMachineInstr(NewMI);
         return true;
       }
       MF.DeleteMachineInstr(NewMI);
