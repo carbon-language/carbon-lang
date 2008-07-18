@@ -2036,12 +2036,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   // pred, and if there is only one distinct successor of the predecessor, and
   // if there are no PHI nodes.
   //
-  if (MergeBlockIntoPredecessor(BB))
-    return true;
-
-  // Otherwise, if this block only has a single predecessor, and if that block
-  // is a conditional branch, see if we can hoist any code from this block up
-  // into our predecessor.
   pred_iterator PI(pred_begin(BB)), PE(pred_end(BB));
   BasicBlock *OnlyPred = *PI++;
   for (; PI != PE; ++PI)  // Search all predecessors, see if they are all same
@@ -2049,7 +2043,57 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       OnlyPred = 0;       // There are multiple different predecessors...
       break;
     }
-  
+
+  BasicBlock *OnlySucc = 0;
+  if (OnlyPred && OnlyPred != BB &&    // Don't break self loops
+      OnlyPred->getTerminator()->getOpcode() != Instruction::Invoke) {
+    // Check to see if there is only one distinct successor...
+    succ_iterator SI(succ_begin(OnlyPred)), SE(succ_end(OnlyPred));
+    OnlySucc = BB;
+    for (; SI != SE; ++SI)
+      if (*SI != OnlySucc) {
+        OnlySucc = 0;     // There are multiple distinct successors!
+        break;
+      }
+  }
+
+  if (OnlySucc) {
+    DOUT << "Merging: " << *BB << "into: " << *OnlyPred;
+
+    // Resolve any PHI nodes at the start of the block.  They are all
+    // guaranteed to have exactly one entry if they exist, unless there are
+    // multiple duplicate (but guaranteed to be equal) entries for the
+    // incoming edges.  This occurs when there are multiple edges from
+    // OnlyPred to OnlySucc.
+    //
+    while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
+      PN->replaceAllUsesWith(PN->getIncomingValue(0));
+      BB->getInstList().pop_front();  // Delete the phi node.
+    }
+
+    // Delete the unconditional branch from the predecessor.
+    OnlyPred->getInstList().pop_back();
+
+    // Move all definitions in the successor to the predecessor.
+    OnlyPred->getInstList().splice(OnlyPred->end(), BB->getInstList());
+
+    // Make all PHI nodes that referred to BB now refer to Pred as their
+    // source.
+    BB->replaceAllUsesWith(OnlyPred);
+
+    // Inherit predecessors name if it exists.
+    if (!OnlyPred->hasName())
+      OnlyPred->takeName(BB);
+    
+    // Erase basic block from the function.
+    M->getBasicBlockList().erase(BB);
+
+    return true;
+  }
+
+  // Otherwise, if this block only has a single predecessor, and if that block
+  // is a conditional branch, see if we can hoist any code from this block up
+  // into our predecessor.
   if (OnlyPred)
     if (BranchInst *BI = dyn_cast<BranchInst>(OnlyPred->getTerminator()))
       if (BI->isConditional()) {
@@ -2057,7 +2101,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
         BasicBlock *OtherBB = BI->getSuccessor(BI->getSuccessor(0) == BB);
         PI = pred_begin(OtherBB);
         ++PI;
-        
         if (PI == pred_end(OtherBB)) {
           // We have a conditional branch to two blocks that are only reachable
           // from the condbr.  We know that the condbr dominates the two blocks,
@@ -2065,7 +2108,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           // blocks.  If so, we can hoist it up to the branching block.
           Changed |= HoistThenElseCodeToIf(BI);
         } else {
-          BasicBlock* OnlySucc = NULL;
+          OnlySucc = NULL;
           for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB);
                SI != SE; ++SI) {
             if (!OnlySucc)
