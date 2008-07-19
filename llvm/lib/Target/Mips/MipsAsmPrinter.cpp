@@ -138,18 +138,18 @@ emitMaskDirective(MachineFunction &MF)
   int StackSize = MF.getFrameInfo()->getStackSize();
   int Offset    = (!MipsFI->getTopSavedRegOffset()) ? 0 : 
                   (-(StackSize-MipsFI->getTopSavedRegOffset()));
-             
+
   #ifndef NDEBUG
-  DOUT << "--> emitMaskDirective" << "\n";
-  DOUT << "StackSize :  " << StackSize << "\n";
-  DOUT << "getTopSavedReg : " << MipsFI->getTopSavedRegOffset() << "\n";
+  DOUT << "--> emitMaskDirective" << '\n';
+  DOUT << "StackSize :  " << StackSize << '\n';
+  DOUT << "getTopSavedReg : " << MipsFI->getTopSavedRegOffset() << '\n';
   DOUT << "Offset : " << Offset << "\n\n";
   #endif
 
   unsigned int Bitmask = getSavedRegsBitmask(false, MF);
   O << "\t.mask \t"; 
   printHex32(Bitmask);
-  O << "," << Offset << "\n";
+  O << ',' << Offset << '\n';
 }
 
 /// TODO: Mask Directive for Floating Point
@@ -160,7 +160,7 @@ emitFMaskDirective(MachineFunction &MF)
 
   O << "\t.fmask\t";
   printHex32(Bitmask);
-  O << ",0" << "\n";
+  O << ",0" << '\n';
 }
 
 // Create a bitmask with all callee saved registers for CPU
@@ -219,10 +219,10 @@ emitFrameDirective(MachineFunction &MF)
   unsigned stackSize = MF.getFrameInfo()->getStackSize();
 
 
-  O << "\t.frame\t" << "$" << LowercaseString(RI.get(stackReg).AsmName)
-                    << "," << stackSize << ","
-                    << "$" << LowercaseString(RI.get(returnReg).AsmName)
-                    << "\n";
+  O << "\t.frame\t" << '$' << LowercaseString(RI.get(stackReg).AsmName)
+                    << ',' << stackSize << ','
+                    << '$' << LowercaseString(RI.get(returnReg).AsmName)
+                    << '\n';
 }
 
 /// Emit Set directives.
@@ -258,8 +258,8 @@ emitFunctionStart(MachineFunction &MF)
   // 2 bits aligned
   EmitAlignment(2, F);
 
-  O << "\t.globl\t"  << CurrentFnName << "\n";
-  O << "\t.ent\t"    << CurrentFnName << "\n";
+  O << "\t.globl\t"  << CurrentFnName << '\n';
+  O << "\t.ent\t"    << CurrentFnName << '\n';
 
   if ((TAI->hasDotTypeDotSizeDirective()) && Subtarget->isLinux())
     O << "\t.type\t"   << CurrentFnName << ", @function\n";
@@ -270,7 +270,7 @@ emitFunctionStart(MachineFunction &MF)
   emitMaskDirective(MF);
   emitFMaskDirective(MF);
 
-  O << "\n";
+  O << '\n';
 }
 
 /// Emit the directives used by GAS on the end of functions
@@ -283,9 +283,9 @@ emitFunctionEnd(MachineFunction &MF)
   O << "\t.set\tmacro\n"; 
   O << "\t.set\treorder\n"; 
 
-  O << "\t.end\t" << CurrentFnName << "\n";
+  O << "\t.end\t" << CurrentFnName << '\n';
   if (TAI->hasDotTypeDotSizeDirective() && !Subtarget->isLinux())
-    O << "\t.size\t" << CurrentFnName << ", .-" << CurrentFnName << "\n";
+    O << "\t.size\t" << CurrentFnName << ", .-" << CurrentFnName << '\n';
 }
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
@@ -383,9 +383,9 @@ printOperand(const MachineInstr *MI, int opNum)
   {
     case MachineOperand::MO_Register:
       if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
-        O << "$" << LowercaseString (RI.get(MO.getReg()).AsmName);
+        O << '$' << LowercaseString (RI.get(MO.getReg()).AsmName);
       else
-        O << "$" << MO.getReg();
+        O << '$' << MO.getReg();
       break;
 
     case MachineOperand::MO_Immediate:
@@ -460,15 +460,15 @@ doInitialization(Module &M)
   Mang = new Mangler(M);
 
   // Tell the assembler which ABI we are using
-  O << "\t.section .mdebug." << emitCurrentABIString() << "\n";
+  O << "\t.section .mdebug." << emitCurrentABIString() << '\n';
 
   // TODO: handle O64 ABI
   if (Subtarget->isABI_EABI())
     O << "\t.section .gcc_compiled_long" << 
-      (Subtarget->isGP32bit() ? "32" : "64") << "\n";
+      (Subtarget->isGP32bit() ? "32" : "64") << '\n';
 
   // return to previous section
-  O << "\t.previous" << "\n"; 
+  O << "\t.previous" << '\n'; 
 
   return false; // success
 }
@@ -536,14 +536,14 @@ printModuleLevelGV(const GlobalVariable* GVar) {
    case GlobalValue::WeakLinkage:
     // FIXME: Verify correct for weak.
     // Nonnull linkonce -> weak
-    O << "\t.weak " << name << "\n";
+    O << "\t.weak " << name << '\n';
     break;
    case GlobalValue::AppendingLinkage:
     // FIXME: appending linkage variables should go into a section of their name
     // or something.  For now, just emit them as external.
    case GlobalValue::ExternalLinkage:
     // If external or appending, declare as a global symbol
-    O << TAI->getGlobalDirective() << name << "\n";
+    O << TAI->getGlobalDirective() << name << '\n';
     // Fall Through
    case GlobalValue::InternalLinkage:
     break;
@@ -561,11 +561,11 @@ printModuleLevelGV(const GlobalVariable* GVar) {
   }
 
   if (Align)
-    O << "\t.align " << Align << "\n";
+    O << "\t.align " << Align << '\n';
 
   if (TAI->hasDotTypeDotSizeDirective() && printSizeAndType) {
     O << "\t.type " << name << ",@object\n";
-    O << "\t.size " << name << "," << Size << "\n";
+    O << "\t.size " << name << ',' << Size << '\n';
   }
 
   O << name << ":\n";
@@ -580,7 +580,7 @@ doFinalization(Module &M)
          E = M.global_end(); I != E; ++I)
     printModuleLevelGV(I);
 
-  O << "\n";
+  O << '\n';
 
   return AsmPrinter::doFinalization(M);
 }
