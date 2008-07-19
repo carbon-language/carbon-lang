@@ -47,16 +47,12 @@ public:
   template<class SubClass>
   SubClass *getElement(SubClass *) {
     assert(sizeof(SubClass) <= sizeof(LargestT));
-    assert(unsigned(AlignOf<SubClass>::Alignment) <=
-           unsigned(AlignOf<LargestT>::Alignment));
     return reinterpret_cast<SubClass*>(&Storage.Bytes);
   }
 
   template<class SubClass>
   const SubClass *getElement(SubClass *) const {
     assert(sizeof(SubClass) <= sizeof(LargestT));
-    assert(unsigned(AlignOf<SubClass>::Alignment) <=
-           unsigned(AlignOf<LargestT>::Alignment));
     return reinterpret_cast<const SubClass*>(&Storage.Bytes);
   }
 
