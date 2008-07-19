@@ -27,9 +27,9 @@ Y("ppc64", "  PowerPC 64");
 
 const TargetAsmInfo *PPCTargetMachine::createTargetAsmInfo() const {
   if (Subtarget.isDarwin())
-    return new DarwinTargetAsmInfo(*this);
+    return new PPCDarwinTargetAsmInfo(*this);
   else
-    return new LinuxTargetAsmInfo(*this);
+    return new PPCLinuxTargetAsmInfo(*this);
 }
 
 unsigned PPC32TargetMachine::getJITMatchQuality() {

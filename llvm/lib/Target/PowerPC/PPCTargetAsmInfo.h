@@ -25,14 +25,14 @@ namespace llvm {
     explicit PPCTargetAsmInfo(const PPCTargetMachine &TM);
   };
 
-  struct DarwinTargetAsmInfo : public PPCTargetAsmInfo {
-    explicit DarwinTargetAsmInfo(const PPCTargetMachine &TM);
+  struct PPCDarwinTargetAsmInfo : public PPCTargetAsmInfo {
+    explicit PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM);
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
   };
 
-  struct LinuxTargetAsmInfo : public PPCTargetAsmInfo {
-    explicit LinuxTargetAsmInfo(const PPCTargetMachine &TM);
+  struct PPCLinuxTargetAsmInfo : public PPCTargetAsmInfo {
+    explicit PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM);
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
   };

@@ -32,7 +32,7 @@ PPCTargetAsmInfo::PPCTargetAsmInfo(const PPCTargetMachine &TM) {
   AssemblerDialect = TM.getSubtargetImpl()->getAsmFlavor();
 }
 
-DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
+PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM)
 : PPCTargetAsmInfo(TM)
 {
   PCSymbol = ".";
@@ -93,8 +93,9 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
 /// format used for encoding pointers in exception handling data. Reason is
 /// 0 for data, 1 for code labels, 2 for function pointers. Global is true
 /// if the symbol can be relocated.
-unsigned DarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
-                                                    bool Global) const {
+unsigned
+PPCDarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
+                                              bool Global) const {
   if (Reason == DwarfEncoding::Functions && Global)
     return (DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4);
   else if (Reason == DwarfEncoding::CodeLabels || !Global)
@@ -104,7 +105,7 @@ unsigned DarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason
 }
 
 
-LinuxTargetAsmInfo::LinuxTargetAsmInfo(const PPCTargetMachine &TM)
+PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM)
 : PPCTargetAsmInfo(TM)
 {
   CommentString = "#";
@@ -155,8 +156,9 @@ LinuxTargetAsmInfo::LinuxTargetAsmInfo(const PPCTargetMachine &TM)
 /// format used for encoding pointers in exception handling data. Reason is
 /// 0 for data, 1 for code labels, 2 for function pointers. Global is true
 /// if the symbol can be relocated.
-unsigned LinuxTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
-                                                   bool Global) const {
+unsigned
+PPCLinuxTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
+                                             bool Global) const {
   // We really need to write something here.
   return TargetAsmInfo::PreferredEHDataFormat(Reason, Global);
 }
