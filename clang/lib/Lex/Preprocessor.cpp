@@ -172,7 +172,7 @@ void Preprocessor::DumpLocation(SourceLocation Loc) const {
   SourceLocation LogLoc = SourceMgr.getLogicalLoc(Loc);
   llvm::cerr << SourceMgr.getSourceName(LogLoc) << ':'
              << SourceMgr.getLineNumber(LogLoc) << ':'
-             << SourceMgr.getLineNumber(LogLoc);
+             << SourceMgr.getColumnNumber(LogLoc);
   
   SourceLocation PhysLoc = SourceMgr.getPhysicalLoc(Loc);
   if (PhysLoc != LogLoc) {
