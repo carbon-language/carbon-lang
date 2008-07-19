@@ -1,4 +1,5 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution | grep {13 iterations}
+; RUN: llvm-as < %s | opt -analyze -scalar-evolution \
+; RUN:   -scalar-evolution-max-iterations=0 | grep {13 iterations}
 ; PR1706
 
 define i32 @f() {

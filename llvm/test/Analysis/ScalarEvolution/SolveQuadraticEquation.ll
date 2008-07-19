@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution | \
-; RUN:   grep {100 iterations}
+; RUN: llvm-as < %s | opt -analyze -scalar-evolution \
+; RUN:   -scalar-evolution-max-iterations=0 | grep {100 iterations}
 ; PR1101
 
 @A = weak global [1000 x i32] zeroinitializer, align 32         
