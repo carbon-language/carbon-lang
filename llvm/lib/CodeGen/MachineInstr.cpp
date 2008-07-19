@@ -312,16 +312,14 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB,
 
 /// MachineInstr ctor - Copies MachineInstr arg exactly
 ///
-MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI) {
-  TID = &MI.getDesc();
-  NumImplicitOps = MI.NumImplicitOps;
+MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI)
+  : TID(&MI.getDesc()), NumImplicitOps(0), Parent(0) {
   Operands.reserve(MI.getNumOperands());
 
   // Add operands
-  for (unsigned i = 0; i != MI.getNumOperands(); ++i) {
-    Operands.push_back(MI.getOperand(i));
-    Operands.back().ParentMI = this;
-  }
+  for (unsigned i = 0; i != MI.getNumOperands(); ++i)
+    addOperand(MI.getOperand(i));
+  NumImplicitOps = MI.NumImplicitOps;
 
   // Add memory operands.
   for (alist<MachineMemOperand>::const_iterator i = MI.memoperands_begin(),

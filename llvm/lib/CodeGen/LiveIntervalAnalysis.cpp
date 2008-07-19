@@ -72,8 +72,11 @@ void LiveIntervals::releaseMemory() {
   r2iMap_.clear();
   // Release VNInfo memroy regions after all VNInfo objects are dtor'd.
   VNInfoAllocator.Reset();
-  for (unsigned i = 0, e = ClonedMIs.size(); i != e; ++i)
-    mf_->DeleteMachineInstr(ClonedMIs[i]);
+  while (!ClonedMIs.empty()) {
+    MachineInstr *MI = ClonedMIs.back();
+    ClonedMIs.pop_back();
+    mf_->DeleteMachineInstr(MI);
+  }
 }
 
 void LiveIntervals::computeNumbering() {
@@ -1586,8 +1589,9 @@ addIntervalsForSpills(const LiveInterval &li,
       // Remember how to remat the def of this val#.
       ReMatOrigDefs[VN] = ReMatDefMI;
       // Original def may be modified so we have to make a copy here.
-      // FIXME: This is a memory leak. vrm should delete these!
-      ReMatDefs[VN] = mf_->CloneMachineInstr(ReMatDefMI);
+      MachineInstr *Clone = mf_->CloneMachineInstr(ReMatDefMI);
+      ClonedMIs.push_back(Clone);
+      ReMatDefs[VN] = Clone;
 
       bool CanDelete = true;
       if (VNI->hasPHIKill) {
