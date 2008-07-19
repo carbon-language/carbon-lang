@@ -16,7 +16,8 @@
 
 using namespace llvm;
 
-MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM) {
+MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM):
+  ELFTargetAsmInfo(TM) {
 
   AlignmentIsInBytes          = false;
   COMMDirectiveTakesAlignment = true;
@@ -33,7 +34,7 @@ MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM) {
 
   if (!TM.getSubtarget<MipsSubtarget>().hasABICall())
     JumpTableDirective = "\t.word\t";
-  else    
+  else
     JumpTableDirective = "\t.gpword\t";
 
 }

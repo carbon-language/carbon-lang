@@ -32,6 +32,7 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM) {
                                                SectionFlags::Mergeable);
   EightByteConstantSection_ = getUnnamedSection("\t.literal8\n",
                                                 SectionFlags::Mergeable);
+
   // Note: 16-byte constant section is subtarget specific and should be provided
   // there.
 
