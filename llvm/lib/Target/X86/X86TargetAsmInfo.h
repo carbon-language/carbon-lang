@@ -15,6 +15,8 @@
 #define X86TARGETASMINFO_H
 
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/ELFTargetAsmInfo.h"
+#include "llvm/Target/DarwinTargetAsmInfo.h"
 
 namespace llvm {
 
@@ -22,42 +24,27 @@ namespace llvm {
   class X86TargetMachine;
   class GlobalVariable;
 
-  struct X86TargetAsmInfo : public TargetAsmInfo {
+  struct X86TargetAsmInfo : public virtual TargetAsmInfo {
     explicit X86TargetAsmInfo(const X86TargetMachine &TM);
 
     virtual bool ExpandInlineAsm(CallInst *CI) const;
 
   private:
     bool LowerToBSwap(CallInst *CI) const;
-  protected:
-    const X86TargetMachine* X86TM;
   };
 
-  struct X86DarwinTargetAsmInfo : public X86TargetAsmInfo {
-    const Section* TextCoalSection;
-    const Section* ConstDataCoalSection;
-    const Section* ConstDataSection;
-    const Section* DataCoalSection;
-
+  struct X86DarwinTargetAsmInfo : public X86TargetAsmInfo,
+                                  public DarwinTargetAsmInfo {
     explicit X86DarwinTargetAsmInfo(const X86TargetMachine &TM);
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
-    virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
-    virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
-                                               SectionKind::Kind kind) const;
-    const Section* MergeableConstSection(const GlobalVariable *GV) const;
-    const Section* MergeableStringSection(const GlobalVariable *GV) const;
   };
 
-  struct X86ELFTargetAsmInfo : public X86TargetAsmInfo {
+  struct X86ELFTargetAsmInfo : public X86TargetAsmInfo,
+                               public ELFTargetAsmInfo {
     explicit X86ELFTargetAsmInfo(const X86TargetMachine &TM);
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
-
-    virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
-    virtual std::string PrintSectionFlags(unsigned flags) const;
-    const Section* MergeableConstSection(const GlobalVariable *GV) const;
-    const Section* MergeableStringSection(const GlobalVariable *GV) const ;
   };
 
   struct X86COFFTargetAsmInfo : public X86TargetAsmInfo {
@@ -67,6 +54,8 @@ namespace llvm {
     virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
                                                SectionKind::Kind kind) const;
     virtual std::string PrintSectionFlags(unsigned flags) const;
+  protected:
+    const X86TargetMachine *X86TM;
   };
 
   struct X86WinTargetAsmInfo : public X86TargetAsmInfo {

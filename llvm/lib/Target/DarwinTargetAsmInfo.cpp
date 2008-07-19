@@ -24,7 +24,7 @@
 using namespace llvm;
 
 DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM) {
-  ETM = &TM;
+  DTM = &TM;
 
   CStringSection_ = getUnnamedSection("\t.cstring",
                                 SectionFlags::Mergeable | SectionFlags::Strings);
@@ -53,7 +53,7 @@ const Section*
 DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind Kind = SectionKindForGlobal(GV);
   bool isWeak = GV->isWeakForLinker();
-  bool isNonStatic = (ETM->getRelocationModel() != Reloc::Static);
+  bool isNonStatic = (DTM->getRelocationModel() != Reloc::Static);
 
   switch (Kind) {
    case SectionKind::Text:
@@ -89,13 +89,13 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
 
 const Section*
 DarwinTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
-  const TargetData *TD = ETM->getTargetData();
+  const TargetData *TD = DTM->getTargetData();
   Constant *C = cast<GlobalVariable>(GV)->getInitializer();
   const Type *Type = cast<ConstantArray>(C)->getType()->getElementType();
 
   unsigned Size = TD->getABITypeSize(Type);
   if (Size) {
-    const TargetData *TD = ETM->getTargetData();
+    const TargetData *TD = DTM->getTargetData();
     unsigned Align = TD->getPreferredAlignment(GV);
     if (Align <= 32)
       return getCStringSection_();
@@ -106,7 +106,7 @@ DarwinTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
 
 const Section*
 DarwinTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
-  const TargetData *TD = ETM->getTargetData();
+  const TargetData *TD = DTM->getTargetData();
   Constant *C = cast<GlobalVariable>(GV)->getInitializer();
 
   unsigned Size = TD->getABITypeSize(C->getType());
@@ -115,7 +115,7 @@ DarwinTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
   else if (Size == 8)
     return EightByteConstantSection_;
   // FIXME: 64 bit
-  /*else if (Size == 16 && ETM->getSubtarget<X86Subtarget>().is64Bit())
+  /*else if (Size == 16 && DTM->getSubtarget<X86Subtarget>().is64Bit())
     return SixteenByteConstantSection_;*/
 
   return getReadOnlySection_();

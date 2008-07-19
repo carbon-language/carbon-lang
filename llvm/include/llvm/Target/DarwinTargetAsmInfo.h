@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ELF_TARGET_ASM_INFO_H
-#define LLVM_ELF_TARGET_ASM_INFO_H
+#ifndef LLVM_DARWIN_TARGET_ASM_INFO_H
+#define LLVM_DARWIN_TARGET_ASM_INFO_H
 
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -22,7 +22,7 @@ namespace llvm {
   class GlobalValue;
   class GlobalVariable;
 
-  class DarwinTargetAsmInfo: public TargetAsmInfo {
+  struct DarwinTargetAsmInfo: public virtual TargetAsmInfo {
     const Section* TextCoalSection;
     const Section* ConstDataCoalSection;
     const Section* ConstDataSection;
@@ -35,9 +35,9 @@ namespace llvm {
     const Section* MergeableConstSection(const GlobalVariable *GV) const;
     const Section* MergeableStringSection(const GlobalVariable *GV) const;
   protected:
-    const TargetMachine* ETM;
+    const TargetMachine* DTM;
   };
 }
 
 
-#endif // LLVM_ELF_TARGET_ASM_INFO_H
+#endif // LLVM_DARWIN_TARGET_ASM_INFO_H
