@@ -32,9 +32,9 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM) {
                                                SectionFlags::Mergeable);
   EightByteConstantSection_ = getUnnamedSection("\t.literal8\n",
                                                 SectionFlags::Mergeable);
-  // FIXME: Check for 64 bit
-  SixteenByteConstantSection_ = getUnnamedSection("\t.literal16\n",
-                                                  SectionFlags::Mergeable);
+  // Note: 16-byte constant section is subtarget specific and should be provided
+  // there.
+
   ReadOnlySection_ = getUnnamedSection("\t.const\n", SectionFlags::None);
 
   // FIXME: These should be named sections, really.
@@ -114,9 +114,8 @@ DarwinTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
     return FourByteConstantSection_;
   else if (Size == 8)
     return EightByteConstantSection_;
-  // FIXME: 64 bit
-  /*else if (Size == 16 && DTM->getSubtarget<X86Subtarget>().is64Bit())
-    return SixteenByteConstantSection_;*/
+  else if (Size == 16 && SixteenByteConstantSection_)
+    return SixteenByteConstantSection_;
 
   return getReadOnlySection_();
 }

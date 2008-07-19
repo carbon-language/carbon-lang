@@ -148,6 +148,8 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   // FIXME: Why don't always use this section?
   if (is64Bit) {
     SixteenByteConstantSection = "\t.literal16\n";
+    SixteenByteConstantSection_ = getUnnamedSection("\t.literal16\n",
+                                                    SectionFlags::Mergeable);
   }
   ReadOnlySection = "\t.const\n";
 
