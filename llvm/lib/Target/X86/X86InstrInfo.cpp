@@ -1697,7 +1697,7 @@ void X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
 }
 
 static unsigned getStoreRegOpcode(const TargetRegisterClass *RC,
-                                  unsigned StackAlign) {
+                                  bool isStackAligned) {
   unsigned Opc = 0;
   if (RC == &X86::GR64RegClass) {
     Opc = X86::MOV64mr;
@@ -1722,9 +1722,8 @@ static unsigned getStoreRegOpcode(const TargetRegisterClass *RC,
   } else if (RC == &X86::FR64RegClass) {
     Opc = X86::MOVSDmr;
   } else if (RC == &X86::VR128RegClass) {
-    // FIXME: Use movaps once we are capable of selectively
-    // aligning functions that spill SSE registers on 16-byte boundaries.
-    Opc = StackAlign >= 16 ? X86::MOVAPSmr : X86::MOVUPSmr;
+    // If stack is realigned we can use aligned stores.
+    Opc = isStackAligned ? X86::MOVAPSmr : X86::MOVUPSmr;
   } else if (RC == &X86::VR64RegClass) {
     Opc = X86::MMX_MOVQ64mr;
   } else {
@@ -1739,7 +1738,8 @@ void X86InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator MI,
                                        unsigned SrcReg, bool isKill, int FrameIdx,
                                        const TargetRegisterClass *RC) const {
-  unsigned Opc = getStoreRegOpcode(RC, RI.getStackAlignment());
+  const MachineFunction &MF = *MBB.getParent();
+  unsigned Opc = getStoreRegOpcode(RC, RI.needsStackRealignment(MF));
   addFrameReference(BuildMI(MBB, MI, get(Opc)), FrameIdx)
     .addReg(SrcReg, false, false, isKill);
 }
@@ -1749,7 +1749,7 @@ void X86InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
                                   SmallVectorImpl<MachineOperand> &Addr,
                                   const TargetRegisterClass *RC,
                                   SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  unsigned Opc = getStoreRegOpcode(RC, RI.getStackAlignment());
+  unsigned Opc = getStoreRegOpcode(RC, RI.needsStackRealignment(MF));
   MachineInstrBuilder MIB = BuildMI(MF, get(Opc));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB = X86InstrAddOperand(MIB, Addr[i]);
@@ -1758,7 +1758,7 @@ void X86InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
 }
 
 static unsigned getLoadRegOpcode(const TargetRegisterClass *RC,
-                                 unsigned StackAlign) {
+                                 bool isStackAligned) {
   unsigned Opc = 0;
   if (RC == &X86::GR64RegClass) {
     Opc = X86::MOV64rm;
@@ -1783,9 +1783,8 @@ static unsigned getLoadRegOpcode(const TargetRegisterClass *RC,
   } else if (RC == &X86::FR64RegClass) {
     Opc = X86::MOVSDrm;
   } else if (RC == &X86::VR128RegClass) {
-    // FIXME: Use movaps once we are capable of selectively
-    // aligning functions that spill SSE registers on 16-byte boundaries.
-    Opc = StackAlign >= 16 ? X86::MOVAPSrm : X86::MOVUPSrm;
+    // If stack is realigned we can use aligned loads.
+    Opc = isStackAligned ? X86::MOVAPSrm : X86::MOVUPSrm;
   } else if (RC == &X86::VR64RegClass) {
     Opc = X86::MMX_MOVQ64rm;
   } else {
@@ -1797,10 +1796,11 @@ static unsigned getLoadRegOpcode(const TargetRegisterClass *RC,
 }
 
 void X86InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                           MachineBasicBlock::iterator MI,
-                                           unsigned DestReg, int FrameIdx,
-                                           const TargetRegisterClass *RC) const{
-  unsigned Opc = getLoadRegOpcode(RC, RI.getStackAlignment());
+                                        MachineBasicBlock::iterator MI,
+                                        unsigned DestReg, int FrameIdx,
+                                        const TargetRegisterClass *RC) const{
+  const MachineFunction &MF = *MBB.getParent();
+  unsigned Opc = getLoadRegOpcode(RC, RI.needsStackRealignment(MF));
   addFrameReference(BuildMI(MBB, MI, get(Opc), DestReg), FrameIdx);
 }
 
@@ -1808,7 +1808,7 @@ void X86InstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                                  SmallVectorImpl<MachineOperand> &Addr,
                                  const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  unsigned Opc = getLoadRegOpcode(RC, RI.getStackAlignment());
+  unsigned Opc = getLoadRegOpcode(RC, RI.needsStackRealignment(MF));
   MachineInstrBuilder MIB = BuildMI(MF, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB = X86InstrAddOperand(MIB, Addr[i]);
@@ -2272,10 +2272,12 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
 
   // Emit the load instruction.
   SDNode *Load = 0;
+  const MachineFunction &MF = DAG.getMachineFunction();
   if (FoldedLoad) {
     MVT VT = *RC->vt_begin();
-    Load = DAG.getTargetNode(getLoadRegOpcode(RC, RI.getStackAlignment()), VT,
-                             MVT::Other, &AddrOps[0], AddrOps.size());
+    Load = DAG.getTargetNode(getLoadRegOpcode(RC, RI.needsStackRealignment(MF)),
+                             VT, MVT::Other,
+                             &AddrOps[0], AddrOps.size());
     NewNodes.push_back(Load);
   }
 
@@ -2304,8 +2306,10 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
     AddrOps.pop_back();
     AddrOps.push_back(SDOperand(NewNode, 0));
     AddrOps.push_back(Chain);
-    SDNode *Store = DAG.getTargetNode(getStoreRegOpcode(DstRC, RI.getStackAlignment()),
-                                      MVT::Other, &AddrOps[0], AddrOps.size());
+    SDNode *Store =
+      DAG.getTargetNode(getStoreRegOpcode(DstRC,
+                                          RI.needsStackRealignment(MF)),
+                        MVT::Other, &AddrOps[0], AddrOps.size());
     NewNodes.push_back(Store);
   }
 
