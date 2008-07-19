@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env perl
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,278 +7,303 @@
 #
 ##===----------------------------------------------------------------------===##
 #
-# A reduced version of the 'ccc' script that is designed to handle off
-# actual compilation to gcc, but run the code passed to gcc through the
-# static analyzer.
+#  A script designed to interpose between the build system and gcc.  It invokes
+#  both gcc and the static analyzer.
 #
 ##===----------------------------------------------------------------------===##
 
-import sys
-import subprocess
-import os
+use strict;
+use warnings;
+use Cwd;
 
-def error(message):
-  print >> sys.stderr, 'ccc: ' + message
-  sys.exit(1)
+##----------------------------------------------------------------------------##
+#  Running the analyzer.
+##----------------------------------------------------------------------------##
 
-def quote(arg):
-  if '"' in arg:
-    return repr(arg)
-  return arg
+sub Analyze {
+  my ($Clang, $Args, $Lang, $Output, $Verbose, $HtmlDir, $file, $Analyses) = @_;
 
-def run(args):
-  code = subprocess.call(args)
-  if code > 255:
-    code = 1
-  if code:
-    sys.exit(code)
-
-def compile(args):
-  command = 'gcc'.split()
-  run(command + args)
-
-def remove_pch_extension(path):
-  i = path.rfind('.gch')
-  if i < 0:
-    return path
-  return path[:i]
-
-def analyze(clang, args,language,output,files,verbose,htmldir,file,analysis_type):
-  if language.rfind("c++") >= 0:
-    return
-
-  RunAnalyzer = 0;
-
-  if language.find("header") > 0:
-    target = remove_pch_extension(output)
-    command = ['cp']
-    args = command + files + [ target ]
-  else:
-    command = clang.split() + analysis_type.split()
-    args = command + "-DIBOutlet=__attribute__((iboutlet))".split() + args;
-    RunAnalyzer = 1
-
-  print_args = []
+  # Skip anything related to C++.
+  return if ($Lang =~ /c[+][+]/);
   
-  if verbose:
-    # We MUST print to stderr.  Some clients use the stdout output of
-    # gcc for various purposes.
-    print >> sys.stderr, ' '.join(['\n[LOCATION]:', os.getcwd(), '\n' ])
-    i = 0
-    while i < len(args):
-      print_args.append(''.join([ '\'', args[i], '\'' ]))
-      i += 1
-
-  if verbose == 2:
-    print >> sys.stderr, '#SHELL (cd ' + os.getcwd() + ' && ' + ' '.join(print_args) + ')\n'
-
-  if RunAnalyzer and htmldir is not None:
-    args.append('-o')
-    print_args.append('-o')
-    args.append(htmldir)
-    print_args.append(htmldir)
+  my $RunAnalyzer = 0;
+  my $Cmd;
+  my @CmdArgs;
   
-  if verbose == 1: 
+  if ($Lang =~ /header/) {
+    exit 0 if (!defined ($Output));
+    $Cmd = 'cp';
+    push @CmdArgs,$file;
+    # Remove the PCH extension.
+    $Output =~ s/[.]gch$//;
+    push @CmdArgs,$Output;
+  }
+  else {
+    $Cmd = $Clang;
+    push @CmdArgs,(split /\s/,$Analyses);
+    push @CmdArgs,'-DIBOutlet=__attribute__((iboutlet))';
+    push @CmdArgs,@$Args;
+    $RunAnalyzer = 1;
+  }
+  
+  my @PrintArgs;
+  my $dir;
+  
+  if ($Verbose) {
+    $dir = getcwd();
+    print STDERR "\n[LOCATION]: $dir\n";
+    push @PrintArgs,"'$Cmd'";
+    foreach my $arg (@CmdArgs) { push @PrintArgs,"\'$arg\'"; }
+  }
+  
+  if ($Verbose == 1) {
     # We MUST print to stderr.  Some clients use the stdout output of
     # gcc for various purposes. 
-    print >> sys.stderr, ' '.join(print_args)
-    print >> sys.stderr, '\n'
-
-  subprocess.call(args)
-
-def extension(path):
-    return path.split(".")[-1]
-
-def changeextension(path, newext):
-    i = path.rfind('.')
-    if i < 0:
-        return path
-    j = path.rfind('/', 0, i)
-    if j < 0:
-        return path[:i] + "." + newext
-    return path[j+1:i] + "." + newext
-
-def inferlanguage(extension):
-  if extension == "c":
-      return "c"
-  elif extension in ["cpp", "cc"]:
-      return "c++"
-  elif extension == "i":
-      return "c-cpp-output"
-  elif extension == "m":
-      return "objective-c"
-  elif extension == "mi":
-      return "objective-c-cpp-output"
-  elif extension in [ "s", "o", "a", "so" ]:
-      return "skip"
-  else:
-      return "skip"  # Skip files with unknown extensions.  This
-                     # deviates from ccc, but this works very well for
-                     # the analyzer.
-
-def main(args):
-  old_args = args
-  action = 'link'
-  output = ''
-  compile_opts = [ ]
-  link_opts = [ ]
-  files = []
-  save_temps = 0
-  language = ''
+    print STDERR join(' ',@PrintArgs);
+    print STDERR "\n";
+  }
+  elsif ($Verbose == 2) {
+    print STDERR "#SHELL (cd '$dir' && @PrintArgs)\n";
+  }
   
-  verbose = 0
-  clang = "clang"    
+  if ($RunAnalyzer and defined($HtmlDir)) {
+    push @CmdArgs,'-o';
+    push @CmdArgs,$HtmlDir;
+  }
   
-  # Forward to GCC.
-  compile(args)    
-  
-  # Set the analyzer flag.
-  analysis_type = os.environ.get('CCC_ANALYZER_ANALYSIS')
-  
-  if analysis_type is None:
-    analysis_type = "-checker-cfref"
+  system $Cmd,@CmdArgs;
+}
 
-  # Determine the level of verbosity.
-  if os.environ.get('CCC_ANALYZER_VERBOSE') is not None:
-    verbose = 1
+##----------------------------------------------------------------------------##
+#  Lookup tables.
+##----------------------------------------------------------------------------##
+
+my %CompileOptionMap = (
+  '-nostdinc' => 0,
+  '-fobjc-gc-only' => 0,
+  '-fobjc-gc' => 0,  
+  '-include' => 1,
+  '-idirafter' => 1,
+  '-iprefix' => 1,
+  '-iquote' => 1,
+  '-isystem' => 1,
+  '-iwithprefix' => 1,
+  '-iwithprefixbefore' => 1
+);
+
+my %LinkerOptionMap = (
+  '-framework' => 1
+);
+
+my %CompilerLinkerOptionMap = (
+  '-isysroot' => 1,
+  '-arch' => 1,
+  '-v' => 0
+);
+
+my %IgnoredOptionMap = (
+  '-fsyntax-only' => 0,
+  '-save-temps' => 0,
+  '-install_name' => 1,
+  '-exported_symbols_list' => 1,
+  '-current_version' => 1,
+  '-compatibility_version' => 1,
+  '-init' => 1,
+  '-e' => 1,
+  '-seg1addr' => 1,
+  '-bundle_loader' => 1,
+  '-multiply_defined' => 1,
+  '-sectorder' => 3,
+  '--param' => 1,
+  '-u' => 1
+);
+
+my %LangMap = (
+  'c'   => 'c',
+  'cpp' => 'c++',
+  'cc'  => 'c++',
+  'i'   => 'c-cpp-output',
+  'm'   => 'objective-c',
+  'mi'  => 'objective-c-cpp-output'
+);
+
+##----------------------------------------------------------------------------##
+#  Main Logic.
+##----------------------------------------------------------------------------##
+
+my $Action = 'link';
+my @CompileOpts;
+my @LinkOpts;
+my @Files;
+my $Lang;
+my $Output;
+
+# Forward arguments to gcc.
+my $Status = system("gcc",@ARGV);
+if ($Status) { exit($Status); }
+
+# Get the analysis options.
+my $Analyses = $ENV{'CCC_ANALYZER_ANALYSIS'};
+if (!defined($Analyses)) { $Analyses = '-checker-cfref'; }
+
+# Determine the level of verbosity.
+my $Verbose = 0;
+if (defined $ENV{CCC_ANALYZER_VERBOSE}) { $Verbose = 1; }
+if (defined $ENV{CCC_ANALYZER_LOG}) { $Verbose = 2; }
+
+# Determine what clang executable to use.
+my $Clang = $ENV{'CLANG'};
+if (!defined $Clang) { $Clang = 'clang'; }
+
+# Get the HTML output directory.
+my $HtmlDir = $ENV{'CCC_ANALYZER_HTML'};
+
+
+# Process the arguments.
+foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
+  my $Arg = $ARGV[$i];
+  
+  # Modes ccc-analyzer supports
+  if ($Arg eq '-E') { $Action = 'preprocess'; }
+  elsif ($Arg eq '-c') { $Action = 'compile'; }
+  elsif ($Arg =~ /^-print-prog-name/) { exit 0; }
     
-  if os.environ.get('CCC_ANALYZER_LOG') is not None:
-    verbose = 2
-    
-  # Determine what clang executable to use.
-  clang_env = os.environ.get('CLANG') 
+  # Options with possible arguments that should pass through to compiler.
+  if (defined $CompileOptionMap{$Arg}) {
+    my $Cnt = $CompileOptionMap{$Arg};
+    push @CompileOpts,$Arg;
+    while ($Cnt > 0) { ++$i; --$Cnt; push @CompileOpts, $ARGV[$i]; }
+    next;
+  }
+
+  # Options with possible arguments that should pass through to linker.
+  if (defined $LinkerOptionMap{$Arg}) {
+    my $Cnt = $LinkerOptionMap{$Arg};
+    push @LinkOpts,$Arg;
+    while ($Cnt > 0) { ++$i; --$Cnt; push @LinkOpts, $ARGV[$i]; }
+    next;
+  }
+
+  # Options with possible arguments that should pass through to both compiler
+  # and the linker.
+  if (defined $CompilerLinkerOptionMap{$Arg}) {
+    my $Cnt = $CompilerLinkerOptionMap{$Arg};
+    push @CompileOpts,$Arg;    
+    push @LinkOpts,$Arg;
+    while ($Cnt > 0) {
+      ++$i; --$Cnt;
+      push @CompileOpts, $ARGV[$i];
+      push @LinkOpts, $ARGV[$i];
+    }
+    next;
+  }
   
-  if clang_env is not None:
-    clang = clang_env
+  # Ignored options.
+  if (defined $IgnoredOptionMap{$Arg}) {
+    my $Cnt = $IgnoredOptionMap{$Arg};
+    while ($Cnt > 0) {
+      ++$i; --$Cnt;
+    }
+    next;
+  }
   
-  # Get the HTML output directory.
-  htmldir = os.environ.get('CCC_ANALYZER_HTML')
+  # Compile mode flags.
+  if ($Arg =~ /^-[D,I,U](.*)$/) {
+    my $Tmp = $Arg;    
+    if ($1 eq '') {
+      # FIXME: Check if we are going off the end.
+      ++$i;
+      $Tmp = $Arg . $ARGV[$i];
+    }
+    push @CompileOpts,$Tmp;
+    next;
+  }
+  
+  # Language.
+  if ($Arg eq '-x') {
+    $Lang = $ARGV[$i+1];
+    ++$i; next;
+  }
 
-  # Process the arguments.
-  i = 0
-  while i < len(args):
-    arg = args[i]
+  # Output file.
+  if ($Arg eq '-o') {
+    ++$i;
+    $Output = $ARGV[$i];
+    next;
+  }
+  
+  # Get the link mode.
+  if ($Arg =~ /^-[l,L,O]/) {
+    if ($Arg eq '-O') { push @LinkOpts,'-O1'; }
+    elsif ($Arg eq '-Os') { push @LinkOpts,'-O2'; }
+    else { push @LinkOpts,$Arg; }
+    next;
+  }
+  
+  if ($Arg =~ /^-std=/) {
+    push @CompileOpts,$Arg;
+    next;
+  }
+  
+#  if ($Arg =~ /^-f/) {
+#    # FIXME: Not sure if the remaining -fxxxx options have no arguments.
+#    push @CompileOpts,$Arg;
+#    push @LinkOpts,$Arg;  # FIXME: Not sure if these are link opts.
+#  }
+  
+  # Get the compiler/link mode.
+  if ($Arg =~ /^-F(.+)$/) {
+    my $Tmp = $Arg;
+    if ($1 eq '') {
+      # FIXME: Check if we are going off the end.
+      ++$i;
+      $Tmp = $Arg . $ARGV[$i];
+    }
+    push @CompileOpts,$Tmp;
+    push @LinkOpts,$Tmp;
+    next;
+  }
 
-    # Modes ccc supports
-    if arg == '-E':
-        action = 'preprocess'
-    if arg == '-c':
-        action = 'compile'
-    if arg.startswith('-print-prog-name'):
-        action = 'print-prog-name'
-    if arg == '-save-temps':
-        save_temps = 1
+  # Input files.
+  if ($Arg eq '-filelist') {
+    # FIXME: Make sure we aren't walking off the end.
+    open(IN, $ARGV[$i+1]);
+    while (<IN>) { s/\015?\012//; push @Files,$_; }
+    close(IN);
+    ++$i; next;
+  }
+  
+  if (!($Arg =~ /^-/)) {
+    push @Files,$Arg; next;
+  }
+}
 
-    # Options with no arguments that should pass through
-    if arg in ['-v']:
-        compile_opts.append(arg)
-        link_opts.append(arg)
+if ($Action eq 'compile' or $Action eq 'link') {
+  foreach my $file (@Files) {
+    # Determine the language for the file.
+    my $FileLang = $Lang;
+
+    if (!defined($FileLang)) {
+      # Infer the language from the extension.
+      if ($file =~ /[.]([^.]+)$/) {
+        $FileLang = $LangMap{$1};
+      }
+    }
     
-    # Options with one argument that should be ignored
-    if arg in ['--param', '-u']:
-        i += 1
+    next if (!defined $FileLang);
+    
+    my @AnalyzeArgs;
+    
+    if ($FileLang ne 'unknown') {
+      push @AnalyzeArgs,'-x';
+      push @AnalyzeArgs,$FileLang;
+    }
 
-    # Prefix matches for the compile mode
-    if arg[:2] in ['-D', '-I', '-U', '-F' ]:
-        if not arg[2:]:
-            arg += args[i+1]
-            i += 1
-        compile_opts.append(arg)
+    push @AnalyzeArgs,@CompileOpts;
+    push @AnalyzeArgs,$file;
+    
+    Analyze($Clang, \@AnalyzeArgs, $FileLang, $Output,
+            $Verbose, $HtmlDir, $file, $Analyses);
+  }
+}
 
-    if arg[:5] in ['-std=']:
-        compile_opts.append(arg)
-
-    # Options with one argument that should pass through to compiler
-    if arg in [ '-include', '-idirafter', '-iprefix',
-                '-iquote', '-isystem', '-iwithprefix',
-                '-iwithprefixbefore']:
-        compile_opts.append(arg)
-        compile_opts.append(args[i+1])
-        i += 1
-        
-    # Options with no argument that should pass through to compiler
-    if arg in [ '-nostdinc', '-fobjc-gc-only', '-fobjc-gc' ]:
-      compile_opts.append(arg)          
-
-    # Options with one argument that should pass through to linker
-    if arg == '-framework':
-        link_opts.append(arg)
-        link_opts.append(args[i+1])
-        i += 1
-
-    # Options with one argument that should pass through to both
-    if arg in ['-isysroot', '-arch']:
-        compile_opts.append(arg)
-        compile_opts.append(args[i+1])
-        link_opts.append(arg)
-        link_opts.append(args[i+1])
-        i += 1
-
-    # Prefix matches for the link mode
-    if arg[:2] in ['-l', '-L', '-O', '-F']:
-        if arg == '-O': arg = '-O1'
-        if arg == '-Os': arg = '-O2'
-        link_opts.append(arg)
-
-    # Input files
-    if arg == '-filelist':
-        f = open(args[i+1])
-        for line in f:
-            files.append(line.strip())
-        f.close()
-        i += 1
-    if arg == '-x':
-        language = args[i+1]
-        i += 1
-    if arg[0] != '-':
-        files.append(arg)
-
-    # Output file
-    if arg == '-o':
-        output = args[i+1]
-        i += 1
-                
-    # Arguments we currently ignore with one option.
-    if arg in ['-install_name', '-exported_symbols_list', 
-               '-current_version', '-compatibility_version', '-init', '-e',
-               '-seg1addr', '-bundle_loader', '-multiply_defined']:
-      i += 1
-      
-    # Arguments we currently ignore with three options.
-    if arg in ['-sectorder']:
-      i += 3
-
-    i += 1
-
-  if action == 'print-prog-name':
-      # assume we can handle everything
-      print sys.argv[0]
-      return
-
-  if not files:
-      error('no input files')
-
-  if action == 'compile' or save_temps or action == 'link':
-    for i, file in enumerate(files):
-      file_language = language
-      if not language:
-        file_language = inferlanguage(extension(file))
-        if file_language == "skip":
-          continue
-
-      if save_temps and action != "compile":
-        # Need a temporary output file
-        coutput = changeextension(file, "o");
-        files[i] = coutput
-      elif not output:
-        coutput = changeextension(file, "o")
-      else:
-        coutput = output
-      analyze_args = [ file ]
-      if file_language != 'unknown':
-        analyze_args = [ '-x', file_language ] + analyze_args
-      analyze_args = analyze_args + compile_opts
-      analyze(clang, analyze_args, language, output, files, verbose, htmldir, file, analysis_type)
-
-if __name__ == '__main__':
-    main(sys.argv[1:])
