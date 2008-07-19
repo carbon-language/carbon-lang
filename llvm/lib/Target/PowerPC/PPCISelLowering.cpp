@@ -2855,7 +2855,7 @@ SDOperand PPCTargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Src = Op.getOperand(0);
   if (Src.getValueType() == MVT::f32)
     Src = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Src);
-  
+
   SDOperand Tmp;
   switch (Op.getValueType().getSimpleVT()) {
   default: assert(0 && "Unhandled FP_TO_SINT type in custom expander!");
@@ -2866,10 +2866,10 @@ SDOperand PPCTargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
     Tmp = DAG.getNode(PPCISD::FCTIDZ, MVT::f64, Src);
     break;
   }
-  
+
   // Convert the FP value to an int value through memory.
   SDOperand FIPtr = DAG.CreateStackTemporary(MVT::f64);
-  
+
   // Emit a store to the stack slot.
   SDOperand Chain = DAG.getStore(DAG.getEntryNode(), Tmp, FIPtr, NULL, 0);
 
@@ -3907,7 +3907,13 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 SDNode *PPCTargetLowering::ReplaceNodeResults(SDNode *N, SelectionDAG &DAG) {
   switch (N->getOpcode()) {
   default: assert(0 && "Wasn't expecting to be able to lower this!");
-  case ISD::FP_TO_SINT: return LowerFP_TO_SINT(SDOperand(N, 0), DAG).Val;
+  case ISD::FP_TO_SINT: {
+    SDOperand Res = LowerFP_TO_SINT(SDOperand(N, 0), DAG);
+    // Use MERGE_VALUES to drop the chain result value and get a node with one
+    // result.  This requires turning off getMergeValues simplification, since
+    // otherwise it will give us Res back.
+    return DAG.getMergeValues(&Res, 1, false).Val;
+  }
   }
 }
 
