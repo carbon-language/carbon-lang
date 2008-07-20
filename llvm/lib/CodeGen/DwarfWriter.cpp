@@ -2253,12 +2253,28 @@ private:
     }
   }
 
+  /// EmitEndOfLineMatrix - Emit the last address of the section and the end of
+  /// the line matrix.
+  /// 
+  void EmitEndOfLineMatrix(unsigned SectionEnd) {
+    // Define last address of section.
+    Asm->EmitInt8(0); Asm->EOL("Extended Op");
+    Asm->EmitInt8(TD->getPointerSize() + 1); Asm->EOL("Op size");
+    Asm->EmitInt8(DW_LNE_set_address); Asm->EOL("DW_LNE_set_address");
+    EmitReference("section_end", SectionEnd); Asm->EOL("Section end label");
+
+    // Mark end of matrix.
+    Asm->EmitInt8(0); Asm->EOL("DW_LNE_end_sequence");
+    Asm->EmitULEB128Bytes(1); Asm->EOL();
+    Asm->EmitInt8(1); Asm->EOL();
+  }
+
   /// EmitDebugLines - Emit source line information.
   ///
   void EmitDebugLines() {
-    // If there are no lines to emit (such as when we're using .loc directives
-    // to emit .debug_line information) don't emit a .debug_line header.
-    if (SectionSourceLines.empty())
+    // If the target is using .loc/.file, the assembler will be emitting the
+    // .debug_line table automatically.
+    if (TAI->hasDotLocAndDotFile())
       return;
 
     // Minimum line delta, thus ranging from -10..(255-10).
@@ -2330,7 +2346,9 @@ private:
     EmitLabel("line_prolog_end", 0);
     
     // A sequence for each text section.
-    for (unsigned j = 0, M = SectionSourceLines.size(); j < M; ++j) {
+    unsigned SecSrcLinesSize = SectionSourceLines.size();
+
+    for (unsigned j = 0; j < SecSrcLinesSize; ++j) {
       // Isolate current sections line info.
       const std::vector<SourceLineInfo> &LineInfos = SectionSourceLines[j];
 
@@ -2398,17 +2416,14 @@ private:
         }
       }
 
-      // Define last address of section.
-      Asm->EmitInt8(0); Asm->EOL("Extended Op");
-      Asm->EmitInt8(TD->getPointerSize() + 1); Asm->EOL("Op size");
-      Asm->EmitInt8(DW_LNE_set_address); Asm->EOL("DW_LNE_set_address");
-      EmitReference("section_end", j + 1); Asm->EOL("Section end label");
-
-      // Mark end of matrix.
-      Asm->EmitInt8(0); Asm->EOL("DW_LNE_end_sequence");
-      Asm->EmitULEB128Bytes(1); Asm->EOL();
-      Asm->EmitInt8(1); Asm->EOL();
+      EmitEndOfLineMatrix(j + 1);
     }
+
+    if (SecSrcLinesSize == 0)
+      // Because we're emitting a debug_line section, we still need a line
+      // table. The linker and friends expect it to exist. If there's nothing to
+      // put into it, emit an empty table.
+      EmitEndOfLineMatrix(1);
     
     EmitLabel("line_end", 0);
     
