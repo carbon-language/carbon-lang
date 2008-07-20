@@ -1,7 +1,6 @@
 ; RUN: llvm-as < %s | opt -analyze -scalar-evolution \
 ; RUN:   -scalar-evolution-max-iterations=0 | grep {61 iterations}
 ; PR2364
-; XFAIL: *
 
 define i32 @func_6() nounwind  {
 entry:
