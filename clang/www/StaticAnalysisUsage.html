@@ -92,7 +92,7 @@ during a project build.</p>
 </pre>
 
 <p> In the first case <tt>scan-build</tt> analyzes the code of a project built
-with <tt>make</tt>, andin the second case <tt>scan-build</tt> analyzes a project
+with <tt>make</tt>, and in the second case <tt>scan-build</tt> analyzes a project
 built using <tt>xcodebuild</tt>. In general, the format is: </p>
 
 <pre>
@@ -100,7 +100,7 @@ built using <tt>xcodebuild</tt>. In general, the format is: </p>
 </pre>
 
 <p> Operationally, <tt>scan-build</tt> literally runs <command> with all of the
-subsequent options passed to it. For example</p>
+subsequent options passed to it. For example:</p>
 
 <pre>
    $ scan-build make <b>-j4</b>
@@ -225,7 +225,7 @@ what it's doing; two <b>-v</b> options emit more information. Redirecting the
 output of <tt>scan-build</tt> to a text file (make sure to redirect standard
 error) is useful for filing bug reports against <tt>scan-build</tt> or the
 analyzer, as we can see the exact options (and files) passed to the analyzer.
-For more comprehendible logs, don't perform a parallel build.</p>
+For more comprehensible logs, don't perform a parallel build.</p>
 
 <h2 id="Debugging">Debugging the Analyzer</h2>
 
