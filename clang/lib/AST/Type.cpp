@@ -998,11 +998,13 @@ void ObjCQualifiedInterfaceType::getAsStringInternal(
     InnerString = ' ' + InnerString;
   std::string ObjCQIString = getDecl()->getName();
   ObjCQIString += '<';
-  int num = getNumProtocols();
-  for (int i = 0; i < num; i++) {
-    ObjCQIString += getProtocols(i)->getName();
-    if (i < num-1)
+  bool isFirst = true;
+  for (qual_iterator I = qual_begin(), E = qual_end(); I != E; ++I) {
+    if (isFirst)
+      isFirst = false;
+    else
       ObjCQIString += ',';
+    ObjCQIString += (*I)->getName();
   }
   ObjCQIString += '>';
   InnerString = ObjCQIString + InnerString;
