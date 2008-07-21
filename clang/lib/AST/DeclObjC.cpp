@@ -52,13 +52,11 @@ void ObjCMethodDecl::Destroy(ASTContext& C) {
 
 ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
                                              SourceLocation atLoc,
-                                             unsigned numRefProtos,
                                              IdentifierInfo *Id, 
                                              SourceLocation ClassLoc,
                                              bool ForwardDecl, bool isInternal){
   void *Mem = C.getAllocator().Allocate<ObjCInterfaceDecl>();
-  return new (Mem) ObjCInterfaceDecl(atLoc, numRefProtos,
-                                     Id, ClassLoc, ForwardDecl,
+  return new (Mem) ObjCInterfaceDecl(atLoc, Id, ClassLoc, ForwardDecl,
                                      isInternal);
 }
 
@@ -280,6 +278,18 @@ ObjCIvarDecl *
   if (getSuperClass())
     return getSuperClass()->FindIvarDeclaration(IvarId);
   return 0;
+}
+
+/// addReferencedProtocols - Set the list of protocols that this interface
+/// implements.
+void ObjCInterfaceDecl::addReferencedProtocols(ObjCProtocolDecl **OID, 
+                                               unsigned numRefProtos) {
+  assert(NumReferencedProtocols == 0 && "refproto already set!");
+  NumReferencedProtocols = numRefProtos;
+  if (numRefProtos) {
+    ReferencedProtocols = new ObjCProtocolDecl*[numRefProtos];
+    memcpy(ReferencedProtocols, OID, numRefProtos*sizeof(ObjCProtocolDecl*));
+  }
 }
 
 /// ObjCAddInstanceVariablesToClass - Inserts instance variables

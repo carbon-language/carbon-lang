@@ -257,10 +257,8 @@ class ObjCInterfaceDecl : public NamedDecl, public DeclContext {
   SourceLocation EndLoc; // marks the '>', '}', or identifier.
   SourceLocation AtEndLoc; // marks the end of the entire interface.
 
-  ObjCInterfaceDecl(SourceLocation atLoc,
-                    unsigned numRefProtos,
-                    IdentifierInfo *Id, SourceLocation CLoc,
-                    bool FD, bool isInternal)
+  ObjCInterfaceDecl(SourceLocation atLoc, IdentifierInfo *Id,
+                    SourceLocation CLoc, bool FD, bool isInternal)
     : NamedDecl(ObjCInterface, atLoc, Id), DeclContext(ObjCInterface),
       TypeForDecl(0), SuperClass(0),
       ReferencedProtocols(0), NumReferencedProtocols(0), Ivars(0), 
@@ -270,7 +268,6 @@ class ObjCInterfaceDecl : public NamedDecl, public DeclContext {
       CategoryList(0), PropertyDecl(0), NumPropertyDecl(0),
       ForwardDecl(FD), InternalInterface(isInternal),
       ClassLoc(CLoc) {
-        AllocIntfRefProtocols(numRefProtos);
       }
   
   virtual ~ObjCInterfaceDecl();
@@ -282,21 +279,10 @@ public:
 
   static ObjCInterfaceDecl *Create(ASTContext &C,
                                    SourceLocation atLoc,
-                                   unsigned numRefProtos, 
                                    IdentifierInfo *Id, 
                                    SourceLocation ClassLoc = SourceLocation(),
                                    bool ForwardDecl = false,
                                    bool isInternal = false);
-  
-  // This is necessary when converting a forward declaration to a definition.
-  void AllocIntfRefProtocols(unsigned numRefProtos) {
-    if (numRefProtos) {
-      ReferencedProtocols = new ObjCProtocolDecl*[numRefProtos];
-      memset(ReferencedProtocols, '\0',
-             numRefProtos*sizeof(ObjCProtocolDecl*));
-      NumReferencedProtocols = numRefProtos;
-    }
-  }
   
   ObjCProtocolDecl **getReferencedProtocols() const { 
     return ReferencedProtocols; 
@@ -333,7 +319,12 @@ public:
   classmeth_iterator classmeth_end() const {
     return ClassMethods+NumClassMethods;
   }
+
   
+  /// addReferencedProtocols - Set the list of protocols that this interface
+  /// implements.
+  void addReferencedProtocols(ObjCProtocolDecl **OID, unsigned numRefProtos);
+   
   void addInstanceVariablesToClass(ObjCIvarDecl **ivars, unsigned numIvars,
                                    SourceLocation RBracLoc);
 
@@ -357,11 +348,6 @@ public:
   
   bool isForwardDecl() const { return ForwardDecl; }
   void setForwardDecl(bool val) { ForwardDecl = val; }
-  
-  void setIntfRefProtocols(unsigned idx, ObjCProtocolDecl *OID) {
-    assert((idx < NumReferencedProtocols) && "index out of range");
-    ReferencedProtocols[idx] = OID;
-  }
   
   ObjCInterfaceDecl *getSuperClass() const { return SuperClass; }
   void setSuperClass(ObjCInterfaceDecl * superCls) { SuperClass = superCls; }

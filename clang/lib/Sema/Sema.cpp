@@ -53,7 +53,8 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   if (!PP.getLangOptions().ObjC1) return;
   
   // Synthesize "typedef struct objc_selector *SEL;"
-  RecordDecl *SelTag = RecordDecl::Create(Context, TagDecl::TK_struct, CurContext,
+  RecordDecl *SelTag = RecordDecl::Create(Context, TagDecl::TK_struct,
+                                          CurContext,
                                           SourceLocation(), 
                                           &Context.Idents.get("objc_selector"),
                                           0);
@@ -82,7 +83,7 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   Context.setObjCClassType(ClassTypedef);
   // Synthesize "@class Protocol;
   ObjCInterfaceDecl *ProtocolDecl =
-    ObjCInterfaceDecl::Create(Context, SourceLocation(), 0, 
+    ObjCInterfaceDecl::Create(Context, SourceLocation(),
                               &Context.Idents.get("Protocol"), 
                               SourceLocation(), true);
   Context.setObjCProtoType(Context.getObjCInterfaceType(ProtocolDecl));

@@ -92,11 +92,9 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
     else {
       IDecl->setLocation(AtInterfaceLoc);
       IDecl->setForwardDecl(false);
-      IDecl->AllocIntfRefProtocols(NumProtocols);
     }
-  }
-  else {
-    IDecl = ObjCInterfaceDecl::Create(Context, AtInterfaceLoc, NumProtocols,
+  } else {
+    IDecl = ObjCInterfaceDecl::Create(Context, AtInterfaceLoc,
                                       ClassName, ClassLoc);
   
     ObjCInterfaceDecls[ClassName] = IDecl;
@@ -118,10 +116,10 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
       SuperClassEntry = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl); 
                               
       if (!SuperClassEntry || SuperClassEntry->isForwardDecl()) {
-        Diag(AtInterfaceLoc, diag::err_undef_superclass, 
+        Diag(SuperLoc, diag::err_undef_superclass, 
              SuperClassEntry ? SuperClassEntry->getName() 
                              : SuperName->getName(),
-             ClassName->getName()); 
+             ClassName->getName(), SourceRange(AtInterfaceLoc, ClassLoc));
       }
     }
     IDecl->setSuperClass(SuperClassEntry);
@@ -133,14 +131,18 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
   
   /// Check then save referenced protocols
   if (NumProtocols) {
+    llvm::SmallVector<ObjCProtocolDecl*, 8> RefProtos;
     for (unsigned int i = 0; i != NumProtocols; i++) {
       ObjCProtocolDecl* RefPDecl = ObjCProtocols[ProtocolNames[i]];
       if (!RefPDecl || RefPDecl->isForwardDecl())
-        Diag(ClassLoc, diag::warn_undef_protocolref,
+        Diag(EndProtoLoc, diag::warn_undef_protocolref,
              ProtocolNames[i]->getName(),
              ClassName->getName());
-      IDecl->setIntfRefProtocols(i, RefPDecl);
+      else
+        RefProtos.push_back(RefPDecl);
     }
+    if (!RefProtos.empty())
+      IDecl->addReferencedProtocols(&RefProtos[0], RefProtos.size());
     IDecl->setLocEnd(EndProtoLoc);
   }
   return IDecl;
@@ -350,26 +352,23 @@ void
 Sema::MergeProtocolPropertiesIntoClass(ObjCInterfaceDecl *IDecl,
                                        DeclTy *MergeItsProtocols) {
   Decl *ClassDecl = static_cast<Decl *>(MergeItsProtocols);
-  if (ObjCInterfaceDecl *MDecl = 
-      dyn_cast<ObjCInterfaceDecl>(ClassDecl)) {
+  if (ObjCInterfaceDecl *MDecl = dyn_cast<ObjCInterfaceDecl>(ClassDecl)) {
     for (ObjCInterfaceDecl::protocol_iterator P = MDecl->protocol_begin(),
          E = MDecl->protocol_end(); P != E; ++P)
-      MergeOneProtocolPropertiesIntoClass(IDecl, (*P));
       // Merge properties of class (*P) into IDECL's
-      ;
+      MergeOneProtocolPropertiesIntoClass(IDecl, *P);
+    
     // Go thru the list of protocols for this class and recursively merge
     // their properties into this class as well.
     for (ObjCInterfaceDecl::protocol_iterator P = IDecl->protocol_begin(),
          E = IDecl->protocol_end(); P != E; ++P)
-      MergeProtocolPropertiesIntoClass(IDecl, (*P));
-  }
-  else if (ObjCProtocolDecl *MDecl = 
-           dyn_cast<ObjCProtocolDecl>(ClassDecl))
+      MergeProtocolPropertiesIntoClass(IDecl, *P);
+  } else {
+    ObjCProtocolDecl *MDecl = cast<ObjCProtocolDecl>(ClassDecl);
     for (ObjCProtocolDecl::protocol_iterator P = MDecl->protocol_begin(),
          E = MDecl->protocol_end(); P != E; ++P)
       MergeOneProtocolPropertiesIntoClass(IDecl, (*P));
-  else
-    assert(false && "MergeProtocolPropertiesIntoClass - bad object kind");
+  }
 }
 
 /// ActOnForwardProtocolDeclaration - 
@@ -509,7 +508,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
   if (!IDecl) {
     // Legacy case of @implementation with no corresponding @interface.
     // Build, chain & install the interface decl into the identifier.
-    IDecl = ObjCInterfaceDecl::Create(Context, AtClassImplLoc, 0, ClassName, 
+    IDecl = ObjCInterfaceDecl::Create(Context, AtClassImplLoc, ClassName, 
                                       ClassLoc, false, true);
     ObjCInterfaceDecls[ClassName] = IDecl;
     IDecl->setSuperClass(SDecl);
@@ -726,7 +725,7 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     }
     ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl); 
     if (!IDecl) {  // Not already seen?  Make a forward decl.
-      IDecl = ObjCInterfaceDecl::Create(Context, AtClassLoc, 0, IdentList[i],
+      IDecl = ObjCInterfaceDecl::Create(Context, AtClassLoc, IdentList[i],
                                         SourceLocation(), true);
       ObjCInterfaceDecls[IdentList[i]] = IDecl;
 
