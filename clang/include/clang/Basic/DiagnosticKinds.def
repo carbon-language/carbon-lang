@@ -879,8 +879,8 @@ DIAG(err_typecheck_subscript, ERROR,
      "array subscript is not an integer")
 DIAG(err_typecheck_subscript_not_object, ERROR,
      "illegal subscript of non-object type '%0'")
-DIAG(err_typecheck_member_reference_structUnion, ERROR,
-     "member reference is not to a structure or union")
+DIAG(err_typecheck_member_reference_struct_union, ERROR,
+     "member reference base type ('%0') is not a structure or union")
 DIAG(err_typecheck_member_reference_ivar, ERROR,
      "'%0' does not have a member named '%1'")
 DIAG(err_typecheck_member_reference_arrow, ERROR,

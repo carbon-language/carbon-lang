@@ -588,8 +588,8 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     if (const PointerType *PT = BaseType->getAsPointerType())
       BaseType = PT->getPointeeType();
     else
-      return Diag(OpLoc, diag::err_typecheck_member_reference_arrow,
-                  SourceRange(MemberLoc));
+      return Diag(MemberLoc, diag::err_typecheck_member_reference_arrow,
+                  BaseType.getAsString(), BaseExpr->getSourceRange());
   }
   
   // Handle field access to simple records.  This also handles access to fields
@@ -602,8 +602,8 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     // The record definition is complete, now make sure the member is valid.
     FieldDecl *MemberDecl = RDecl->getMember(&Member);
     if (!MemberDecl)
-      return Diag(OpLoc, diag::err_typecheck_no_member, Member.getName(),
-                  SourceRange(MemberLoc));
+      return Diag(MemberLoc, diag::err_typecheck_no_member, Member.getName(),
+                  BaseExpr->getSourceRange());
 
     // Figure out the type of the member; see C99 6.5.2.3p3
     // FIXME: Handle address space modifiers
@@ -622,9 +622,9 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     if (ObjCIvarDecl *IV = IFTy->getDecl()->lookupInstanceVariable(&Member))
       return new ObjCIvarRefExpr(IV, IV->getType(), MemberLoc, BaseExpr, 
                                  OpKind == tok::arrow);
-    return Diag(OpLoc, diag::err_typecheck_member_reference_ivar,
+    return Diag(MemberLoc, diag::err_typecheck_member_reference_ivar,
                 IFTy->getDecl()->getName(), Member.getName(),
-                BaseExpr->getSourceRange(), SourceRange(MemberLoc));
+                BaseExpr->getSourceRange());
   }
   
   // Handle Objective-C property access, which is "Obj.property" where Obj is a
@@ -665,16 +665,16 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     // Component access limited to variables (reject vec4.rg.g).
     if (!isa<DeclRefExpr>(BaseExpr) && !isa<ArraySubscriptExpr>(BaseExpr) &&
         !isa<ExtVectorElementExpr>(BaseExpr))
-      return Diag(OpLoc, diag::err_ext_vector_component_access, 
-                  SourceRange(MemberLoc));
+      return Diag(MemberLoc, diag::err_ext_vector_component_access, 
+                  BaseExpr->getSourceRange());
     QualType ret = CheckExtVectorComponent(BaseType, OpLoc, Member, MemberLoc);
     if (ret.isNull())
       return true;
     return new ExtVectorElementExpr(ret, BaseExpr, Member, MemberLoc);
   }
   
-  return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion,
-              SourceRange(MemberLoc));
+  return Diag(MemberLoc, diag::err_typecheck_member_reference_struct_union,
+              BaseType.getAsString(), BaseExpr->getSourceRange());
 }
 
 /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
