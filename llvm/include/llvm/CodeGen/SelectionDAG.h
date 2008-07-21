@@ -84,7 +84,8 @@ public:
 
   /// viewGraph - Pop up a GraphViz/gv window with the DAG rendered using 'dot'.
   ///
-  void viewGraph();
+  void viewGraph(const std::string &Title);
+  void viewGraph() { return viewGraph(""); }
   
 #ifndef NDEBUG
   std::map<const SDNode *, std::string> NodeGraphAttrs;

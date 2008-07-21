@@ -37,20 +37,6 @@ STATISTIC(PreIndexedNodes , "Number of pre-indexed nodes created");
 STATISTIC(PostIndexedNodes, "Number of post-indexed nodes created");
 
 namespace {
-#ifndef NDEBUG
-  static cl::opt<bool>
-    ViewDAGCombine1("view-dag-combine1-dags", cl::Hidden,
-                    cl::desc("Pop up a window to show dags before the first "
-                             "dag combine pass"));
-  static cl::opt<bool>
-    ViewDAGCombine2("view-dag-combine2-dags", cl::Hidden,
-                    cl::desc("Pop up a window to show dags before the second "
-                             "dag combine pass"));
-#else
-  static const bool ViewDAGCombine1 = false;
-  static const bool ViewDAGCombine2 = false;
-#endif
-  
   static cl::opt<bool>
     CombinerAA("combiner-alias-analysis", cl::Hidden,
                cl::desc("Turn on alias analysis during testing"));
@@ -5662,10 +5648,6 @@ SDOperand DAGCombiner::FindBetterChain(SDNode *N, SDOperand OldChain) {
 // SelectionDAG::Combine - This is the entry point for the file.
 //
 void SelectionDAG::Combine(bool RunningAfterLegalize, AliasAnalysis &AA) {
-  if (!RunningAfterLegalize && ViewDAGCombine1)
-    viewGraph();
-  if (RunningAfterLegalize && ViewDAGCombine2)
-    viewGraph();
   /// run - This is the main entry point to this class.
   ///
   DAGCombiner(*this, AA).Run(RunningAfterLegalize);

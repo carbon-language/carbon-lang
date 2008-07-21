@@ -57,6 +57,20 @@ EnableLegalizeTypes("enable-legalize-types", cl::Hidden);
 
 #ifndef NDEBUG
 static cl::opt<bool>
+ViewDAGCombine1("view-dag-combine1-dags", cl::Hidden,
+          cl::desc("Pop up a window to show dags before the first "
+                   "dag combine pass"));
+static cl::opt<bool>
+ViewLegalizeTypesDAGs("view-legalize-types-dags", cl::Hidden,
+          cl::desc("Pop up a window to show dags before legalize types"));
+static cl::opt<bool>
+ViewLegalizeDAGs("view-legalize-dags", cl::Hidden,
+          cl::desc("Pop up a window to show dags before legalize"));
+static cl::opt<bool>
+ViewDAGCombine2("view-dag-combine2-dags", cl::Hidden,
+          cl::desc("Pop up a window to show dags before the second "
+                   "dag combine pass"));
+static cl::opt<bool>
 ViewISelDAGs("view-isel-dags", cl::Hidden,
           cl::desc("Pop up a window to show isel dags as they are selected"));
 static cl::opt<bool>
@@ -66,7 +80,11 @@ static cl::opt<bool>
 ViewSUnitDAGs("view-sunit-dags", cl::Hidden,
       cl::desc("Pop up a window to show SUnit dags after they are processed"));
 #else
-static const bool ViewISelDAGs = 0, ViewSchedDAGs = 0, ViewSUnitDAGs = 0;
+static const bool ViewDAGCombine1 = false,
+                  ViewLegalizeTypesDAGs = false, ViewLegalizeDAGs = false,
+                  ViewDAGCombine2 = false,
+                  ViewISelDAGs = false, ViewSchedDAGs = false,
+                  ViewSUnitDAGs = false;
 #endif
 
 //===---------------------------------------------------------------------===//
@@ -5282,9 +5300,19 @@ void SelectionDAGISel::ComputeLiveOutVRegInfo(SelectionDAG &DAG) {
 }
 
 void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
-  DOUT << "Lowered selection DAG:\n";
+  std::string GroupName;
+  if (TimePassesIsEnabled)
+    GroupName = "Instruction Selection and Scheduling";
+  std::string BlockName;
+  if (ViewDAGCombine1 || ViewLegalizeTypesDAGs || ViewLegalizeDAGs ||
+      ViewDAGCombine2 || ViewISelDAGs || ViewSchedDAGs || ViewSUnitDAGs)
+    BlockName = DAG.getMachineFunction().getFunction()->getName() + ':' +
+                BB->getBasicBlock()->getName();
+
+  DOUT << "Initial selection DAG:\n";
   DEBUG(DAG.dump());
-  std::string GroupName = "Instruction Selection and Scheduling";
+
+  if (ViewDAGCombine1) DAG.viewGraph("dag-combine1 input for " + BlockName);
 
   // Run the DAG combiner in pre-legalize mode.
   if (TimePassesIsEnabled) {
@@ -5300,10 +5328,24 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   // Second step, hack on the DAG until it only uses operations and types that
   // the target supports.
   if (EnableLegalizeTypes) {// Enable this some day.
-    DAG.LegalizeTypes();
+    if (ViewLegalizeTypesDAGs) DAG.viewGraph("legalize-types input for " +
+                                             BlockName);
+
+    if (TimePassesIsEnabled) {
+      NamedRegionTimer T("Type Legalization", GroupName);
+      DAG.LegalizeTypes();
+    } else {
+      DAG.LegalizeTypes();
+    }
+
+    DOUT << "Type-legalized selection DAG:\n";
+    DEBUG(DAG.dump());
+
     // TODO: enable a dag combine pass here.
   }
   
+  if (ViewLegalizeDAGs) DAG.viewGraph("legalize input for " + BlockName);
+
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("DAG Legalization", GroupName);
     DAG.Legalize();
@@ -5314,6 +5356,8 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   DOUT << "Legalized selection DAG:\n";
   DEBUG(DAG.dump());
   
+  if (ViewDAGCombine2) DAG.viewGraph("dag-combine2 input for " + BlockName);
+
   // Run the DAG combiner in post-legalize mode.
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("DAG Combining 2", GroupName);
@@ -5325,7 +5369,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   DOUT << "Optimized legalized selection DAG:\n";
   DEBUG(DAG.dump());
 
-  if (ViewISelDAGs) DAG.viewGraph();
+  if (ViewISelDAGs) DAG.viewGraph("isel input for " + BlockName);
   
   if (!FastISel && EnableValueProp)
     ComputeLiveOutVRegInfo(DAG);
@@ -5339,6 +5383,11 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
     InstructionSelect(DAG);
   }
 
+  DOUT << "Selected selection DAG:\n";
+  DEBUG(DAG.dump());
+
+  if (ViewSchedDAGs) DAG.viewGraph("scheduler input for " + BlockName);
+
   // Schedule machine code.
   ScheduleDAG *Scheduler;
   if (TimePassesIsEnabled) {
@@ -5347,6 +5396,8 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   } else {
     Scheduler = Schedule(DAG);
   }
+
+  if (ViewSUnitDAGs) Scheduler->viewGraph();
 
   // Emit machine code to BB.  This can change 'BB' to the last block being 
   // inserted into.
@@ -5368,9 +5419,9 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   // Perform target specific isel post processing.
   if (TimePassesIsEnabled) {
     NamedRegionTimer T("Instruction Selection Post Processing", GroupName);
-    InstructionSelectPostProcessing(DAG);
+    InstructionSelectPostProcessing();
   } else {
-    InstructionSelectPostProcessing(DAG);
+    InstructionSelectPostProcessing();
   }
   
   DOUT << "Selected machine code:\n";
@@ -5619,8 +5670,6 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
 /// target node in the graph.
 ///
 ScheduleDAG *SelectionDAGISel::Schedule(SelectionDAG &DAG) {
-  if (ViewSchedDAGs) DAG.viewGraph();
-
   RegisterScheduler::FunctionPassCtor Ctor = RegisterScheduler::getDefault();
   
   if (!Ctor) {
@@ -5631,7 +5680,6 @@ ScheduleDAG *SelectionDAGISel::Schedule(SelectionDAG &DAG) {
   ScheduleDAG *Scheduler = Ctor(this, &DAG, BB, FastISel);
   Scheduler->Run();
 
-  if (ViewSUnitDAGs) Scheduler->viewGraph();
   return Scheduler;
 }
 

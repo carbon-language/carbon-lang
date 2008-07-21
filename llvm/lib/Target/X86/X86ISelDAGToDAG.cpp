@@ -133,7 +133,7 @@ namespace {
 
     /// InstructionSelectPostProcessing - Post processing of selected and
     /// scheduled basic blocks.
-    virtual void InstructionSelectPostProcessing(SelectionDAG &DAG);
+    virtual void InstructionSelectPostProcessing();
 
     virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF);
 
@@ -580,7 +580,7 @@ void X86DAGToDAGISel::InstructionSelect(SelectionDAG &DAG) {
   DAG.RemoveDeadNodes();
 }
 
-void X86DAGToDAGISel::InstructionSelectPostProcessing(SelectionDAG &DAG) {
+void X86DAGToDAGISel::InstructionSelectPostProcessing() {
   // If we are emitting FP stack code, scan the basic block to determine if this
   // block defines any FP values.  If so, put an FP_REG_KILL instruction before
   // the terminator of the block.

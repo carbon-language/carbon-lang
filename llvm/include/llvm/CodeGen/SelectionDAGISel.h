@@ -59,7 +59,7 @@ public:
 
   virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {}
   virtual void InstructionSelect(SelectionDAG &SD) = 0;
-  virtual void InstructionSelectPostProcessing(SelectionDAG &DAG) {}
+  virtual void InstructionSelectPostProcessing() {}
   
   virtual void SelectRootInit() {
     DAGSize = CurDAG->AssignTopologicalOrder(TopOrder);

@@ -215,10 +215,11 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
 /// viewGraph - Pop up a ghostview window with the reachable parts of the DAG
 /// rendered using 'dot'.
 ///
-void SelectionDAG::viewGraph() {
+void SelectionDAG::viewGraph(const std::string &Title) {
 // This code is only for debugging!
 #ifndef NDEBUG
-  ViewGraph(this, "dag." + getMachineFunction().getFunction()->getName());
+  ViewGraph(this, "dag." + getMachineFunction().getFunction()->getName(),
+            Title);
 #else
   cerr << "SelectionDAG::viewGraph is only available in debug builds on "
        << "systems with Graphviz or gv!\n";
@@ -348,7 +349,9 @@ std::string DOTGraphTraits<ScheduleDAG*>::getNodeLabel(const SUnit *SU,
 void ScheduleDAG::viewGraph() {
 // This code is only for debugging!
 #ifndef NDEBUG
-  ViewGraph(this, "dag." + DAG.getMachineFunction().getFunction()->getName());
+  ViewGraph(this, "dag." + MF->getFunction()->getName(),
+            "Scheduling-Units Graph for " + MF->getFunction()->getName() + ':' +
+            BB->getBasicBlock()->getName());
 #else
   cerr << "ScheduleDAG::viewGraph is only available in debug builds on "
        << "systems with Graphviz or gv!\n";

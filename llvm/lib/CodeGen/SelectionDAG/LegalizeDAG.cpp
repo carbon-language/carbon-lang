@@ -35,14 +35,6 @@
 #include <map>
 using namespace llvm;
 
-#ifndef NDEBUG
-static cl::opt<bool>
-ViewLegalizeDAGs("view-legalize-dags", cl::Hidden,
-                 cl::desc("Pop up a window to show dags before legalize"));
-#else
-static const bool ViewLegalizeDAGs = 0;
-#endif
-
 //===----------------------------------------------------------------------===//
 /// SelectionDAGLegalize - This takes an arbitrary SelectionDAG as input and
 /// hacks on it until the target machine can handle it.  This involves
@@ -7039,8 +7031,6 @@ SDOperand SelectionDAGLegalize::ScalarizeVectorOp(SDOperand Op) {
 // SelectionDAG::Legalize - This is the entry point for the file.
 //
 void SelectionDAG::Legalize() {
-  if (ViewLegalizeDAGs) viewGraph();
-
   /// run - This is the main entry point to this class.
   ///
   SelectionDAGLegalize(*this).LegalizeDAG();
