@@ -266,7 +266,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
       Method = InstanceMethodPool[Sel].Method;
     if (!Method) {
       Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
-           SourceRange(lbrac, rbrac));
+           RExpr->getSourceRange());
       returnType = Context.getObjCIdType();
     } else {
       returnType = Method->getResultType();
@@ -295,7 +295,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
     if (!Method)
       Diag(lbrac, diag::warn_method_not_found_in_protocol, 
            std::string("-"), Sel.getName(),
-           SourceRange(lbrac, rbrac));
+           RExpr->getSourceRange());
   } else if (const ObjCInterfaceType *OCIReceiver = 
                 receiverType->getAsPointerToObjCInterfaceType()) {
     // We allow sending a message to a pointer to an interface (an object).
@@ -321,7 +321,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
            SourceRange(lbrac, rbrac));
   } else {
     Diag(lbrac, diag::error_bad_receiver_type,
-         RExpr->getType().getAsString());
+         RExpr->getType().getAsString(), RExpr->getSourceRange());
     return true;
   }
   
