@@ -626,6 +626,8 @@ DIAG(err_attribute_argument_n_not_string, ERROR,
      "'%0' attribute requires parameter %1 to be a string")
 DIAG(err_attribute_argument_out_of_bounds, ERROR,
      "'%0' attribute parameter %1 is out of bounds")
+DIAG(err_nonnull_pointers_only, ERROR,
+    "nonnull attribute only applies to pointer arguments")
 DIAG(err_format_strftime_third_parameter, ERROR,
      "strftime format attribute requires 3rd parameter to be 0")
 DIAG(err_format_attribute_requires_variadic, ERROR,

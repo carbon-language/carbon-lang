@@ -99,6 +99,44 @@ public:
     assert(Arg < NumArgs && "Arg access out of range!");
     return Args[Arg];
   }
+  
+  class arg_iterator {
+    Action::ExprTy** X;
+    unsigned Idx;
+  public:
+    arg_iterator(Action::ExprTy** x, unsigned idx) : X(x), Idx(idx) {}    
+
+    arg_iterator& operator++() {
+      ++Idx;
+      return *this;
+    }
+    
+    bool operator==(const arg_iterator& I) const {
+      assert (X == I.X &&
+              "compared arg_iterators are for different argument lists");
+      return Idx == I.Idx;
+    }
+    
+    bool operator!=(const arg_iterator& I) const {
+      return !operator==(I);
+    }
+    
+    Action::ExprTy* operator*() const {
+      return X[Idx];
+    }
+    
+    unsigned getArgNum() const {
+      return Idx+1;
+    }
+  };
+  
+  arg_iterator arg_begin() const {
+    return arg_iterator(Args, 0);
+  }
+
+  arg_iterator arg_end() const {
+    return arg_iterator(Args, NumArgs);
+  }
 };
 
 }  // end namespace clang

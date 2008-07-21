@@ -233,6 +233,65 @@ static void HandleIBOutletAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::err_attribute_iboutlet_non_ivar);
 }
 
+static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+
+  // GCC ignores the nonnull attribute on K&R style function
+  // prototypes, so we ignore it as well
+  const FunctionTypeProto *proto = getFunctionProto(d);
+  
+  if (!proto) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
+           "nonnull", "function");
+    return;
+  }
+  
+  unsigned NumArgs = proto->getNumArgs();
+
+  // The nonnull attribute only applies to pointers.
+  llvm::SmallVector<unsigned, 10> NonNullArgs;
+  
+  for (AttributeList::arg_iterator I=Attr.arg_begin(),
+                                   E=Attr.arg_end(); I!=E; ++I) {
+    
+    
+    // The argument must be an integer constant expression.
+    Expr *Ex = static_cast<Expr *>(Attr.getArg(0));
+    llvm::APSInt ArgNum(32);
+    if (!Ex->isIntegerConstantExpr(ArgNum, S.Context)) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_int,
+             "nonnull", Ex->getSourceRange());
+      return;
+    }
+    
+    unsigned x = (unsigned) ArgNum.getZExtValue();
+        
+    if (x < 1 || x > NumArgs) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds,
+             "nonnull", Ex->getSourceRange());
+      return;
+    }
+
+    // Is the function argument a pointer type?
+    if (!proto->getArgType(x).getCanonicalType()->isPointerType()) {
+      // FIXME: Should also highlight argument in decl.
+      S.Diag(Attr.getLoc(), diag::err_nonnull_pointers_only,
+             "nonnull", Ex->getSourceRange());
+      return;    
+    }
+    
+    NonNullArgs.push_back(x);
+  }
+  
+  if (!NonNullArgs.empty()) {
+    unsigned* start = &NonNullArgs[0];
+    unsigned size = NonNullArgs.size();
+    std::sort(start, start + size);
+    d->addAttr(new NonNullAttr(start, size));
+  }
+  else
+    d->addAttr(new NonNullAttr());
+}
+
 static void HandleAliasAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
@@ -762,7 +821,8 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_annotate:    HandleAnnotateAttr  (D, Attr, S); break;
   case AttributeList::AT_noreturn:    HandleNoReturnAttr  (D, Attr, S); break;
   case AttributeList::AT_format:      HandleFormatAttr    (D, Attr, S); break;
-  case AttributeList::AT_IBOutlet:    HandleIBOutletAttr  (D, Attr, S); break;    
+  case AttributeList::AT_IBOutlet:    HandleIBOutletAttr  (D, Attr, S); break;
+  case AttributeList::AT_nonnull:     HandleNonNullAttr   (D, Attr, S); break;
   case AttributeList::AT_transparent_union:
     HandleTransparentUnionAttr(D, Attr, S);
     break;
