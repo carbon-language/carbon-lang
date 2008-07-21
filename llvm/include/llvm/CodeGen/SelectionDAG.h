@@ -64,6 +64,9 @@ class SelectionDAG {
   /// SelectionDAG.
   BumpPtrAllocator Allocator;
 
+  /// VerifyNode - Sanity check the given node.  Aborts if it is invalid.
+  void VerifyNode(SDNode *N);
+
 public:
   SelectionDAG(TargetLowering &tli, MachineFunction &mf, 
                FunctionLoweringInfo &fli, MachineModuleInfo *mmi,

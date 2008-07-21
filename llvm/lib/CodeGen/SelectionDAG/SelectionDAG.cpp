@@ -740,6 +740,25 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
   return CSEMap.FindNodeOrInsertPos(ID, InsertPos);
 }
 
+/// VerifyNode - Sanity check the given node.  Aborts if it is invalid.
+void SelectionDAG::VerifyNode(SDNode *N) {
+  switch (N->getOpcode()) {
+  default:
+    break;
+  case ISD::BUILD_VECTOR: {
+    assert(N->getNumValues() == 1 && "Too many results for BUILD_VECTOR!");
+    assert(N->getValueType(0).isVector() && "Wrong BUILD_VECTOR return type!");
+    assert(N->getNumOperands() == N->getValueType(0).getVectorNumElements() &&
+           "Wrong number of BUILD_VECTOR operands!");
+    MVT EltVT = N->getValueType(0).getVectorElementType();
+    for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I)
+      assert(I->getSDOperand().getValueType() == EltVT &&
+             "Wrong BUILD_VECTOR operand type!");
+    break;
+  }
+  }
+}
+
 /// getMVTAlignment - Compute the default alignment value for the
 /// given type.
 ///
@@ -1965,6 +1984,9 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT) {
   CSEMap.InsertNode(N, IP);
   
   AllNodes.push_back(N);
+#ifndef NDEBUG
+  VerifyNode(N);
+#endif
   return SDOperand(N, 0);
 }
 
@@ -2161,11 +2183,13 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT, SDOperand Operand) {
     N = getAllocator().Allocate<UnarySDNode>();
     new (N) UnarySDNode(Opcode, VTs, Operand);
   }
+
   AllNodes.push_back(N);
+#ifndef NDEBUG
+  VerifyNode(N);
+#endif
   return SDOperand(N, 0);
 }
-
-
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
                                 SDOperand N1, SDOperand N2) {
@@ -2515,6 +2539,9 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
   }
 
   AllNodes.push_back(N);
+#ifndef NDEBUG
+  VerifyNode(N);
+#endif
   return SDOperand(N, 0);
 }
 
@@ -2580,6 +2607,9 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
     new (N) TernarySDNode(Opcode, VTs, N1, N2, N3);
   }
   AllNodes.push_back(N);
+#ifndef NDEBUG
+  VerifyNode(N);
+#endif
   return SDOperand(N, 0);
 }
 
@@ -3394,6 +3424,9 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT VT,
     new (N) SDNode(Opcode, VTs, Ops, NumOps);
   }
   AllNodes.push_back(N);
+#ifndef NDEBUG
+  VerifyNode(N);
+#endif
   return SDOperand(N, 0);
 }
 
@@ -3478,6 +3511,9 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
     }
   }
   AllNodes.push_back(N);
+#ifndef NDEBUG
+  VerifyNode(N);
+#endif
   return SDOperand(N, 0);
 }
 

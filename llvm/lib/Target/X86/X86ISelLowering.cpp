@@ -3569,6 +3569,7 @@ SDOperand RewriteAsNarrowerShuffle(SDOperand V1, SDOperand V2,
   unsigned NumElems = PermMask.getNumOperands();
   unsigned NewWidth = (NumElems == 4) ? 2 : 4;
   MVT MaskVT = MVT::getIntVectorWithNumElements(NewWidth);
+  MVT MaskEltVT = MaskVT.getVectorElementType();
   MVT NewVT = MaskVT;
   switch (VT.getSimpleVT()) {
   default: assert(false && "Unexpected!");
@@ -3599,9 +3600,9 @@ SDOperand RewriteAsNarrowerShuffle(SDOperand V1, SDOperand V2,
         return SDOperand();
     }
     if (StartIdx == ~0U)
-      MaskVec.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
+      MaskVec.push_back(DAG.getNode(ISD::UNDEF, MaskEltVT));
     else
-      MaskVec.push_back(DAG.getConstant(StartIdx / Scale, MVT::i32));
+      MaskVec.push_back(DAG.getConstant(StartIdx / Scale, MaskEltVT));
   }
 
   V1 = DAG.getNode(ISD::BIT_CONVERT, NewVT, V1);
@@ -4054,7 +4055,7 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
     // UNPCKHPD the element to the lowest double word, then movsd.
     // Note if the lower 64 bits of the result of the UNPCKHPD is then stored
     // to a f64mem, the whole operation is folded into a single MOVHPDmr.
-    MVT MaskVT = MVT::getIntVectorWithNumElements(4);
+    MVT MaskVT = MVT::getIntVectorWithNumElements(2);
     SmallVector<SDOperand, 8> IdxVec;
     IdxVec.push_back(DAG.getConstant(1, MaskVT.getVectorElementType()));
     IdxVec.

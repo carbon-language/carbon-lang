@@ -186,7 +186,7 @@ private:
   /// scalar (e.g. f32) value.
   SDOperand ScalarizeVectorOp(SDOperand O);
   
-  /// isShuffleLegal - Return true if a vector shuffle is legal with the
+  /// isShuffleLegal - Return non-null if a vector shuffle is legal with the
   /// specified mask and type.  Targets can specify exactly which masks they
   /// support and the code generator is tasked with not creating illegal masks.
   ///
@@ -241,6 +241,7 @@ SDNode *SelectionDAGLegalize::isShuffleLegal(MVT VT, SDOperand Mask) const {
     // If this is promoted to a different type, convert the shuffle mask and
     // ask if it is legal in the promoted type!
     MVT NVT = TLI.getTypeToPromoteTo(ISD::VECTOR_SHUFFLE, VT);
+    MVT EltVT = NVT.getVectorElementType();
 
     // If we changed # elements, change the shuffle mask.
     unsigned NumEltsGrowth =
@@ -253,10 +254,10 @@ SDNode *SelectionDAGLegalize::isShuffleLegal(MVT VT, SDOperand Mask) const {
         SDOperand InOp = Mask.getOperand(i);
         for (unsigned j = 0; j != NumEltsGrowth; ++j) {
           if (InOp.getOpcode() == ISD::UNDEF)
-            Ops.push_back(DAG.getNode(ISD::UNDEF, MVT::i32));
+            Ops.push_back(DAG.getNode(ISD::UNDEF, EltVT));
           else {
             unsigned InEltNo = cast<ConstantSDNode>(InOp)->getValue();
-            Ops.push_back(DAG.getConstant(InEltNo*NumEltsGrowth+j, MVT::i32));
+            Ops.push_back(DAG.getConstant(InEltNo*NumEltsGrowth+j, EltVT));
           }
         }
       }

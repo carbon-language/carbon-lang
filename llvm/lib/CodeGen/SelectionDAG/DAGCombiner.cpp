@@ -5011,7 +5011,8 @@ SDOperand DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
       } else {
         unsigned NewIdx = 
           cast<ConstantSDNode>(ShufMask.getOperand(i))->getValue() - NumElts;
-        MappedOps.push_back(DAG.getConstant(NewIdx, MVT::i32));
+        MappedOps.push_back(DAG.getConstant(NewIdx,
+                                        ShufMask.getOperand(i).getValueType()));
       }
     }
     ShufMask = DAG.getNode(ISD::BUILD_VECTOR, ShufMask.getValueType(),

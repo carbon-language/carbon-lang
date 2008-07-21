@@ -3281,10 +3281,10 @@ static SDOperand BuildVSLDOI(SDOperand LHS, SDOperand RHS, unsigned Amt,
   // Force LHS/RHS to be the right type.
   LHS = DAG.getNode(ISD::BIT_CONVERT, MVT::v16i8, LHS);
   RHS = DAG.getNode(ISD::BIT_CONVERT, MVT::v16i8, RHS);
-  
+
   SDOperand Ops[16];
   for (unsigned i = 0; i != 16; ++i)
-    Ops[i] = DAG.getConstant(i+Amt, MVT::i32);
+    Ops[i] = DAG.getConstant(i+Amt, MVT::i8);
   SDOperand T = DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v16i8, LHS, RHS,
                             DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, Ops,16));
   return DAG.getNode(ISD::BIT_CONVERT, VT, T);
@@ -3529,7 +3529,7 @@ static SDOperand GeneratePerfectShuffle(unsigned PFEntry, SDOperand LHS,
   }
   SDOperand Ops[16];
   for (unsigned i = 0; i != 16; ++i)
-    Ops[i] = DAG.getConstant(ShufIdxs[i], MVT::i32);
+    Ops[i] = DAG.getConstant(ShufIdxs[i], MVT::i8);
   
   return DAG.getNode(ISD::VECTOR_SHUFFLE, OpLHS.getValueType(), OpLHS, OpRHS,
                      DAG.getNode(ISD::BUILD_VECTOR, MVT::v16i8, Ops, 16));
