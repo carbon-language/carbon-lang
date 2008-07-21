@@ -269,12 +269,13 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
           return true;
     }
   } else {
-    bool receiverIsQualId = isa<ObjCQualifiedIdType>(receiverType);
-    // FIXME (snaroff): checking in this code from Patrick. Needs to be
-    // revisited. how do we get the ClassDecl from the receiver expression?
-    if (!receiverIsQualId)
-      while (const PointerType *PTy = receiverType->getAsPointerType())
+    // We allow sending a message to a qualified ID ("id<foo>") to an interface
+    // directly ("[NSNumber foo]") and to a pointer to an interface (an object).
+    if (!isa<ObjCQualifiedIdType>(receiverType) &&
+        !isa<ObjCInterfaceType>(receiverType))
+      if (const PointerType *PTy = receiverType->getAsPointerType())
         receiverType = PTy->getPointeeType();
+      // else error, invalid receiver.
     
     ObjCInterfaceDecl* ClassDecl = 0;
     if (ObjCQualifiedIdType *QIT = 
