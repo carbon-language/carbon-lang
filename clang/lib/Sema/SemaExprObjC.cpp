@@ -359,9 +359,9 @@ static bool ProtocolCompatibleWithProtocol(ObjCProtocolDecl *lProto,
                                            ObjCProtocolDecl *rProto) {
   if (lProto == rProto)
     return true;
-  ObjCProtocolDecl** RefPDecl = rProto->getReferencedProtocols();
-  for (unsigned i = 0; i < rProto->getNumReferencedProtocols(); i++)
-    if (ProtocolCompatibleWithProtocol(lProto, RefPDecl[i]))
+  for (ObjCProtocolDecl::protocol_iterator PI = rProto->protocol_begin(),
+       E = rProto->protocol_end(); PI != E; ++PI)
+    if (ProtocolCompatibleWithProtocol(lProto, *PI))
       return true;
   return false;
 }
@@ -396,11 +396,10 @@ static bool ClassImplementsProtocol(ObjCProtocolDecl *lProto,
   if (lookupCategory)
     for (ObjCCategoryDecl *CDecl = IDecl->getCategoryList(); CDecl;
          CDecl = CDecl->getNextClassCategory()) {
-      ObjCProtocolDecl **protoList = CDecl->getReferencedProtocols();
-      for (unsigned i = 0; i < CDecl->getNumReferencedProtocols(); i++) {
-        if (ProtocolCompatibleWithProtocol(lProto, protoList[i]))
+      for (ObjCCategoryDecl::protocol_iterator PI = CDecl->protocol_begin(),
+           E = CDecl->protocol_end(); PI != E; ++PI)
+        if (ProtocolCompatibleWithProtocol(lProto, *PI))
           return true;
-      }
     }
   
   // 3rd, look up the super class(s)

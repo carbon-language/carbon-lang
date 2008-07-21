@@ -94,14 +94,12 @@ ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, SourceLocation L,
 
 ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C,
                                            SourceLocation L, 
-                                           unsigned numRefProtos,
                                            IdentifierInfo *Id) {
   void *Mem = C.getAllocator().Allocate<ObjCProtocolDecl>();
-  return new (Mem) ObjCProtocolDecl(L, numRefProtos, Id);
+  return new (Mem) ObjCProtocolDecl(L, Id);
 }
 
 ObjCProtocolDecl::~ObjCProtocolDecl() {
-  delete [] ReferencedProtocols;
   delete [] InstanceMethods;
   delete [] ClassMethods;
   delete [] PropertyDecl;
@@ -440,15 +438,6 @@ void ObjCProtocolDecl::addMethods(ObjCMethodDecl **insMethods,
   AtEndLoc = endLoc;
 }
 
-void ObjCCategoryDecl::addReferencedProtocols(ObjCProtocolDecl **List,
-                                              unsigned NumRPs) {
-  assert(NumReferencedProtocols == 0 && "Protocol list already set");
-  if (NumRPs == 0) return;
-  
-  ReferencedProtocols = new ObjCProtocolDecl*[NumRPs];
-  memcpy(ReferencedProtocols, List, NumRPs*sizeof(ObjCProtocolDecl*));
-  NumReferencedProtocols = NumRPs;
-}
 
 
 /// addMethods - Insert instance and methods declarations into
@@ -557,14 +546,11 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupClassMethod(Selector Sel) {
       return MethodDecl;
 
     // Didn't find one yet - look through protocols.
-    const ObjCList<ObjCProtocolDecl> &Protocols =
-      ClassDecl->getReferencedProtocols();
-
-    for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
-         E = Protocols.end(); I != E; ++I) {
+    for (ObjCInterfaceDecl::protocol_iterator I = ClassDecl->protocol_begin(),
+         E = ClassDecl->protocol_end(); I != E; ++I)
       if ((MethodDecl = (*I)->getClassMethod(Sel)))
         return MethodDecl;
-    }
+    
     // Didn't find one yet - now look through categories.
     ObjCCategoryDecl *CatDecl = ClassDecl->getCategoryList();
     while (CatDecl) {
@@ -627,14 +613,9 @@ ObjCMethodDecl *ObjCProtocolDecl::lookupInstanceMethod(Selector Sel) {
   if ((MethodDecl = getInstanceMethod(Sel)))
     return MethodDecl;
     
-  if (getNumReferencedProtocols() > 0) {
-    ObjCProtocolDecl **RefPDecl = getReferencedProtocols();
-    
-    for (unsigned i = 0; i < getNumReferencedProtocols(); i++) {
-      if ((MethodDecl = RefPDecl[i]->getInstanceMethod(Sel)))
-        return MethodDecl;
-    }
-  }
+  for (protocol_iterator I = protocol_begin(), E = protocol_end(); I != E; ++I)
+    if ((MethodDecl = (*I)->getInstanceMethod(Sel)))
+      return MethodDecl;
   return NULL;
 }
 
@@ -646,14 +627,9 @@ ObjCMethodDecl *ObjCProtocolDecl::lookupClassMethod(Selector Sel) {
   if ((MethodDecl = getClassMethod(Sel)))
     return MethodDecl;
     
-  if (getNumReferencedProtocols() > 0) {
-    ObjCProtocolDecl **RefPDecl = getReferencedProtocols();
-    
-    for(unsigned i = 0; i < getNumReferencedProtocols(); i++) {
-      if ((MethodDecl = RefPDecl[i]->getClassMethod(Sel)))
-        return MethodDecl;
-    }
-  }
+  for (protocol_iterator I = protocol_begin(), E = protocol_end(); I != E; ++I)
+    if ((MethodDecl = (*I)->getClassMethod(Sel)))
+      return MethodDecl;
   return NULL;
 }
 

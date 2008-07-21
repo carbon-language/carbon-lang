@@ -209,18 +209,17 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(
     }
     
     PDecl->setForwardDecl(false);
-    PDecl->AllocReferencedProtocols(NumProtoRefs);
   } else {
-    PDecl = ObjCProtocolDecl::Create(Context, AtProtoInterfaceLoc, NumProtoRefs, 
-                                     ProtocolName);
+    PDecl = ObjCProtocolDecl::Create(Context, AtProtoInterfaceLoc,ProtocolName);
     PDecl->setForwardDecl(false);
     ObjCProtocols[ProtocolName] = PDecl;
   }
   
   if (NumProtoRefs) {
     /// Check then save referenced protocols.
+    llvm::SmallVector<ObjCProtocolDecl*, 8> Protocols;
     for (unsigned int i = 0; i != NumProtoRefs; i++) {
-      ObjCProtocolDecl* RefPDecl = ObjCProtocols[ProtoRefNames[i]];
+      ObjCProtocolDecl *RefPDecl = ObjCProtocols[ProtoRefNames[i]];
       if (!RefPDecl)
         Diag(ProtocolLoc, diag::err_undef_protocolref,
              ProtoRefNames[i]->getName(), ProtocolName->getName());
@@ -228,9 +227,11 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(
         if (RefPDecl->isForwardDecl())
           Diag(ProtocolLoc, diag::warn_undef_protocolref,
                ProtoRefNames[i]->getName(), ProtocolName->getName());
-        PDecl->setReferencedProtocols(i, RefPDecl);
+        Protocols.push_back(RefPDecl);
       }
     }
+    if (!Protocols.empty())
+      PDecl->addReferencedProtocols(&Protocols[0], Protocols.size());
     PDecl->setLocEnd(EndProtoLoc);
   }
   return PDecl;
@@ -389,7 +390,7 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
     ObjCProtocolDecl *&PDecl = ObjCProtocols[Ident];
     if (PDecl == 0)  { // Not already seen?
       // FIXME: Pass in the location of the identifier!
-      PDecl = ObjCProtocolDecl::Create(Context, AtProtocolLoc, 0, Ident);
+      PDecl = ObjCProtocolDecl::Create(Context, AtProtocolLoc, Ident);
     }
     
     Protocols.push_back(PDecl);
@@ -627,10 +628,10 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
         method->getImplementationControl() != ObjCMethodDecl::Optional)
       WarnUndefinedMethod(ImpLoc, method, IncompleteImpl);
   }
-  // Check on this protocols's referenced protocols, recursively
-  ObjCProtocolDecl** RefPDecl = PDecl->getReferencedProtocols();
-  for (unsigned i = 0; i < PDecl->getNumReferencedProtocols(); i++)
-    CheckProtocolMethodDefs(ImpLoc, RefPDecl[i], IncompleteImpl, InsMap, ClsMap);
+  // Check on this protocols's referenced protocols, recursively.
+  for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
+       E = PDecl->protocol_end(); PI != E; ++PI)
+    CheckProtocolMethodDefs(ImpLoc, *PI, IncompleteImpl, InsMap, ClsMap);
 }
 
 void Sema::ImplMethodsVsClassMethods(ObjCImplementationDecl* IMPDecl, 
@@ -702,12 +703,10 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjCCategoryImplDecl *CatImplDecl,
   
   // Check the protocol list for unimplemented methods in the @implementation
   // class.
-  ObjCProtocolDecl** protocols = CatClassDecl->getReferencedProtocols();
-  for (unsigned i = 0; i < CatClassDecl->getNumReferencedProtocols(); i++) {
-    ObjCProtocolDecl* PDecl = protocols[i];
-    CheckProtocolMethodDefs(CatImplDecl->getLocation(), PDecl, IncompleteImpl, 
+  for (ObjCCategoryDecl::protocol_iterator PI = CatClassDecl->protocol_begin(),
+       E = CatClassDecl->protocol_end(); PI != E; ++PI)
+    CheckProtocolMethodDefs(CatImplDecl->getLocation(), *PI, IncompleteImpl, 
                             InsMap, ClsMap);
-  }
 }
 
 /// ActOnForwardClassDeclaration - 

@@ -217,8 +217,8 @@ namespace {
                                     const char *ClassName,
                                     std::string &Result);
     
-    void RewriteObjCProtocolsMetaData(ObjCProtocolDecl *const*Protocols,
-                                      int NumProtocols,
+    void RewriteObjCProtocolsMetaData(const ObjCList<ObjCProtocolDecl>
+                                                       &Protocols,
                                       const char *prefix,
                                       const char *ClassName,
                                       std::string &Result);
@@ -2524,14 +2524,14 @@ void RewriteObjC::RewriteObjCMethodsMetaData(instmeth_iterator MethodBegin,
 }
 
 /// RewriteObjCProtocolsMetaData - Rewrite protocols meta-data.
-void RewriteObjC::RewriteObjCProtocolsMetaData(ObjCProtocolDecl*const*Protocols,
-                                               int NumProtocols,
-                                               const char *prefix,
-                                               const char *ClassName,
-                                               std::string &Result) {
+void RewriteObjC::
+RewriteObjCProtocolsMetaData(const ObjCList<ObjCProtocolDecl> &Protocols,
+                             const char *prefix,
+                             const char *ClassName,
+                             std::string &Result) {
   static bool objc_protocol_methods = false;
-  if (NumProtocols > 0) {
-    for (int i = 0; i < NumProtocols; i++) {
+  if (!Protocols.empty()) {
+    for (unsigned i = 0; i != Protocols.size(); i++) {
       ObjCProtocolDecl *PDecl = Protocols[i];
       // Output struct protocol_methods holder of method selector and type.
       if (!objc_protocol_methods && !PDecl->isForwardDecl()) {
@@ -2680,24 +2680,23 @@ void RewriteObjC::RewriteObjCProtocolsMetaData(ObjCProtocolDecl*const*Protocols,
     Result += "\tstruct _objc_protocol_list *next;\n";
     Result += "\tint    protocol_count;\n";
     Result += "\tstruct _objc_protocol *class_protocols[";
-    Result += utostr(NumProtocols);
+    Result += utostr(Protocols.size());
     Result += "];\n} _OBJC_";
     Result += prefix;
     Result += "_PROTOCOLS_";
     Result += ClassName;
     Result += " __attribute__ ((used, section (\"__OBJC, __cat_cls_meth\")))= "
       "{\n\t0, ";
-    Result += utostr(NumProtocols);
+    Result += utostr(Protocols.size());
     Result += "\n";
     
     Result += "\t,{&_OBJC_PROTOCOL_";
     Result += Protocols[0]->getName();
     Result += " \n";
     
-    for (int i = 1; i < NumProtocols; i++) {
-      ObjCProtocolDecl *PDecl = Protocols[i];
+    for (unsigned i = 1; i != Protocols.size(); i++) {
       Result += "\t ,&_OBJC_PROTOCOL_";
-      Result += PDecl->getName();
+      Result += Protocols[i]->getName();
       Result += "\n";
     }
     Result += "\t }\n};\n";
@@ -2733,9 +2732,7 @@ void RewriteObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
   // Protocols referenced in class declaration?
   // Null CDecl is case of a category implementation with no category interface
   if (CDecl)
-    RewriteObjCProtocolsMetaData(CDecl->getReferencedProtocols(),
-                                 CDecl->getNumReferencedProtocols(),
-                                 "CATEGORY",
+    RewriteObjCProtocolsMetaData(CDecl->getReferencedProtocols(), "CATEGORY",
                                  FullCategoryName.c_str(), Result);
   
   /* struct _objc_category {
@@ -2789,7 +2786,7 @@ void RewriteObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
   else
     Result += "\t, 0\n";
   
-  if (CDecl && CDecl->getNumReferencedProtocols() > 0) {
+  if (CDecl && !CDecl->getReferencedProtocols().empty()) {
     Result += "\t, (struct _objc_protocol_list *)&_OBJC_CATEGORY_PROTOCOLS_"; 
     Result += FullCategoryName;
     Result += "\n";
@@ -2915,8 +2912,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
                              false, "", IDecl->getName(), Result);
     
   // Protocols referenced in class declaration?
-  RewriteObjCProtocolsMetaData(CDecl->getReferencedProtocols().begin(), 
-                               CDecl->getReferencedProtocols().size(),
+  RewriteObjCProtocolsMetaData(CDecl->getReferencedProtocols(),
                                "CLASS", CDecl->getName(), Result);
     
   

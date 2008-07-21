@@ -63,7 +63,7 @@ public:
   unsigned size() const { return NumElts; }
   bool empty() const { return NumElts == 0; }
   
-  T* get(unsigned idx) const {
+  T* operator[](unsigned idx) const {
     assert(idx < NumElts && "Invalid access");
     return List[idx];
   }
@@ -356,11 +356,10 @@ public:
     return ClassMethods+NumClassMethods;
   }
 
-  
   /// addReferencedProtocols - Set the list of protocols that this interface
   /// implements.
-  void addReferencedProtocols(ObjCProtocolDecl * const *OID, unsigned NumRPs) {
-    ReferencedProtocols.set(OID, NumRPs);
+  void addReferencedProtocols(ObjCProtocolDecl *const*List, unsigned NumRPs) {
+    ReferencedProtocols.set(List, NumRPs);
   }
    
   void addInstanceVariablesToClass(ObjCIvarDecl **ivars, unsigned numIvars,
@@ -526,9 +525,8 @@ private:
 /// id <NSDraggingInfo> anyObjectThatImplementsNSDraggingInfo;
 ///
 class ObjCProtocolDecl : public NamedDecl {
-  /// referenced protocols
-  ObjCProtocolDecl **ReferencedProtocols;  // Null if none
-  unsigned NumReferencedProtocols;  // 0 if none
+  /// Referenced protocols
+  ObjCList<ObjCProtocolDecl> ReferencedProtocols;
   
   /// protocol instance methods
   ObjCMethodDecl **InstanceMethods;  // Null if not defined
@@ -547,14 +545,12 @@ class ObjCProtocolDecl : public NamedDecl {
   SourceLocation EndLoc; // marks the '>' or identifier.
   SourceLocation AtEndLoc; // marks the end of the entire interface.
   
-  ObjCProtocolDecl(SourceLocation L, unsigned numRefProtos, IdentifierInfo *Id)
+  ObjCProtocolDecl(SourceLocation L, IdentifierInfo *Id)
     : NamedDecl(ObjCProtocol, L, Id), 
-      ReferencedProtocols(0), NumReferencedProtocols(0),
       InstanceMethods(0), NumInstanceMethods(0), 
       ClassMethods(0), NumClassMethods(0),
       PropertyDecl(0), NumPropertyDecl(0),
       isForwardProtoDecl(true) {
-    AllocReferencedProtocols(numRefProtos);
   }
   
   virtual ~ObjCProtocolDecl();
@@ -565,33 +561,23 @@ public:
   virtual void Destroy(ASTContext& C);
   
   static ObjCProtocolDecl *Create(ASTContext &C, SourceLocation L,
-                                  unsigned numRefProtos, IdentifierInfo *Id);
+                                  IdentifierInfo *Id);
 
-  void AllocReferencedProtocols(unsigned numRefProtos) {
-    if (numRefProtos) {
-      ReferencedProtocols = new ObjCProtocolDecl*[numRefProtos];
-      memset(ReferencedProtocols, '\0', 
-             numRefProtos*sizeof(ObjCProtocolDecl*));
-      NumReferencedProtocols = numRefProtos;
-    }    
-  }
   void addMethods(ObjCMethodDecl **insMethods, unsigned numInsMembers,
                   ObjCMethodDecl **clsMethods, unsigned numClsMembers,
                   SourceLocation AtEndLoc);
   
-  void setReferencedProtocols(unsigned idx, ObjCProtocolDecl *OID) {
-    assert((idx < NumReferencedProtocols) && "index out of range");
-    ReferencedProtocols[idx] = OID;
+  const ObjCList<ObjCProtocolDecl> &getReferencedProtocols() const { 
+    return ReferencedProtocols;
   }
-  
-  ObjCProtocolDecl** getReferencedProtocols() const { 
-    return ReferencedProtocols; 
-  }
-  unsigned getNumReferencedProtocols() const { return NumReferencedProtocols; }
   typedef ObjCProtocolDecl * const * protocol_iterator;
-  protocol_iterator protocol_begin() const { return ReferencedProtocols; }
-  protocol_iterator protocol_end() const {
-    return ReferencedProtocols+NumReferencedProtocols;
+  protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}
+  protocol_iterator protocol_end() const { return ReferencedProtocols.end(); }
+  
+  /// addReferencedProtocols - Set the list of protocols that this interface
+  /// implements.
+  void addReferencedProtocols(ObjCProtocolDecl *const*List, unsigned NumRPs) {
+    ReferencedProtocols.set(List, NumRPs);
   }
   
   unsigned getNumInstanceMethods() const { return NumInstanceMethods; }
@@ -783,8 +769,7 @@ class ObjCCategoryDecl : public NamedDecl {
   ObjCInterfaceDecl *ClassInterface;
   
   /// referenced protocols in this category.
-  ObjCProtocolDecl **ReferencedProtocols;  // Null if none
-  unsigned NumReferencedProtocols;  // 0 if none
+  ObjCList<ObjCProtocolDecl> ReferencedProtocols;
   
   /// category instance methods
   ObjCMethodDecl **InstanceMethods;  // Null if not defined
@@ -806,7 +791,7 @@ class ObjCCategoryDecl : public NamedDecl {
   
   ObjCCategoryDecl(SourceLocation L, IdentifierInfo *Id)
     : NamedDecl(ObjCCategory, L, Id),
-      ClassInterface(0), ReferencedProtocols(0), NumReferencedProtocols(0),
+      ClassInterface(0),
       InstanceMethods(0), NumInstanceMethods(0),
       ClassMethods(0), NumClassMethods(0),
       NextClassCategory(0), PropertyDecl(0),  NumPropertyDecl(0) {
@@ -822,12 +807,19 @@ public:
   
   /// addReferencedProtocols - Set the list of protocols that this interface
   /// implements.
-  void addReferencedProtocols(ObjCProtocolDecl **List, unsigned NumRPs);
-  
-  ObjCProtocolDecl **getReferencedProtocols() const { 
-    return ReferencedProtocols; 
+  void addReferencedProtocols(ObjCProtocolDecl *const*List, unsigned NumRPs) {
+    ReferencedProtocols.set(List, NumRPs);
   }
-  unsigned getNumReferencedProtocols() const { return NumReferencedProtocols; }
+  
+  const ObjCList<ObjCProtocolDecl> &getReferencedProtocols() const { 
+    return ReferencedProtocols;
+  }
+  
+  typedef ObjCProtocolDecl * const * protocol_iterator;
+  protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}
+  protocol_iterator protocol_end() const { return ReferencedProtocols.end(); }
+  
+  
   unsigned getNumInstanceMethods() const { return NumInstanceMethods; }
   unsigned getNumClassMethods() const { return NumClassMethods; }
 
