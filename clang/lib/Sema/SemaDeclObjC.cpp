@@ -137,11 +137,12 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
       if (!RefPDecl)
         Diag(EndProtoLoc, diag::err_undef_protocolref,
              ProtocolNames[i]->getName(), ClassName->getName());
-      else if (RefPDecl->isForwardDecl())
-        Diag(EndProtoLoc, diag::warn_undef_protocolref,
-             ProtocolNames[i]->getName(), ClassName->getName());
-      else
+      else {
+        if (RefPDecl->isForwardDecl())
+          Diag(EndProtoLoc, diag::warn_undef_protocolref,
+               ProtocolNames[i]->getName(), ClassName->getName());
         RefProtos.push_back(RefPDecl);
+      }
     }
     if (!RefProtos.empty())
       IDecl->addReferencedProtocols(&RefProtos[0], RefProtos.size());
@@ -223,11 +224,12 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(
       if (!RefPDecl)
         Diag(ProtocolLoc, diag::err_undef_protocolref,
              ProtoRefNames[i]->getName(), ProtocolName->getName());
-      else if (RefPDecl->isForwardDecl())
-        Diag(ProtocolLoc, diag::warn_undef_protocolref,
-             ProtoRefNames[i]->getName(), ProtocolName->getName());
-      
-      PDecl->setReferencedProtocols(i, RefPDecl);
+      else {
+        if (RefPDecl->isForwardDecl())
+          Diag(ProtocolLoc, diag::warn_undef_protocolref,
+               ProtoRefNames[i]->getName(), ProtocolName->getName());
+        PDecl->setReferencedProtocols(i, RefPDecl);
+      }
     }
     PDecl->setLocEnd(EndProtoLoc);
   }
@@ -434,11 +436,12 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(
       if (!RefPDecl)
         Diag(CategoryLoc, diag::err_undef_protocolref,
              ProtoRefNames[i]->getName(), CategoryName->getName());
-      else if (RefPDecl->isForwardDecl())
-        Diag(CategoryLoc, diag::warn_undef_protocolref,
-             ProtoRefNames[i]->getName(), CategoryName->getName());
-      if (RefPDecl)
+      else {
+        if (RefPDecl->isForwardDecl())
+          Diag(CategoryLoc, diag::warn_undef_protocolref,
+               ProtoRefNames[i]->getName(), CategoryName->getName());
         RefProtocols.push_back(RefPDecl);
+      }
     }
     if (!RefProtocols.empty())
       CDecl->addReferencedProtocols(&RefProtocols[0], RefProtocols.size());
