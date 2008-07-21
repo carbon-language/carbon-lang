@@ -364,9 +364,9 @@ Sema::MergeProtocolPropertiesIntoClass(ObjCInterfaceDecl *IDecl,
          E = IDecl->protocol_end(); P != E; ++P)
       MergeProtocolPropertiesIntoClass(IDecl, *P);
   } else {
-    ObjCProtocolDecl *MDecl = cast<ObjCProtocolDecl>(ClassDecl);
-    for (ObjCProtocolDecl::protocol_iterator P = MDecl->protocol_begin(),
-         E = MDecl->protocol_end(); P != E; ++P)
+    ObjCProtocolDecl *MD = cast<ObjCProtocolDecl>(ClassDecl);
+    for (ObjCProtocolDecl::protocol_iterator P = MD->protocol_begin(),
+         E = MD->protocol_end(); P != E; ++P)
       MergeOneProtocolPropertiesIntoClass(IDecl, (*P));
   }
 }
