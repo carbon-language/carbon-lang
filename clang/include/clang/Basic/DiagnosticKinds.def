@@ -884,7 +884,7 @@ DIAG(err_typecheck_member_reference_struct_union, ERROR,
 DIAG(err_typecheck_member_reference_ivar, ERROR,
      "'%0' does not have a member named '%1'")
 DIAG(err_typecheck_member_reference_arrow, ERROR,
-     "member reference is not a pointer")
+     "member reference type '%0' is not a pointer")
 DIAG(err_typecheck_incomplete_tag, ERROR,
      "incomplete definition of type '%0'")
 DIAG(err_typecheck_no_member, ERROR,
