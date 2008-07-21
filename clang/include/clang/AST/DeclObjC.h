@@ -383,8 +383,13 @@ public:
     return false;
   }
   
-  ObjCIvarDecl *lookupInstanceVariable(IdentifierInfo *ivarName,
-                                       ObjCInterfaceDecl *&clsDeclared);
+  ObjCIvarDecl *lookupInstanceVariable(IdentifierInfo *IVarName,
+                                       ObjCInterfaceDecl *&ClassDeclared);
+  ObjCIvarDecl *lookupInstanceVariable(IdentifierInfo *IVarName) {
+    ObjCInterfaceDecl *ClassDeclared;
+    return lookupInstanceVariable(IVarName, ClassDeclared);
+  }
+
                                                                            
   // Get the local instance method declared in this interface.
   ObjCMethodDecl *getInstanceMethod(Selector Sel) {

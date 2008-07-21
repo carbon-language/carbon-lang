@@ -583,6 +583,8 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
   QualType BaseType = BaseExpr->getType();
   assert(!BaseType.isNull() && "no type for member expression");
   
+  // Get the type being accessed in BaseType.  If this is an arrow, the BaseExpr
+  // must have pointer type, and the accessed type is the pointee.
   if (OpKind == tok::arrow) {
     if (const PointerType *PT = BaseType->getAsPointerType())
       BaseType = PT->getPointeeType();
@@ -591,7 +593,8 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                   SourceRange(MemberLoc));
   }
   
-  // Handle field access to simple records.
+  // Handle field access to simple records.  This also handles access to fields
+  // of the ObjC 'id' struct.
   if (const RecordType *RTy = BaseType->getAsRecordType()) {
     RecordDecl *RDecl = RTy->getDecl();
     if (RTy->isIncompleteType())
@@ -610,26 +613,20 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
         MemberType.getCVRQualifiers() | BaseType.getCVRQualifiers();
     MemberType = MemberType.getQualifiedType(combinedQualifiers);
 
-    return new MemberExpr(BaseExpr, OpKind==tok::arrow, MemberDecl,
+    return new MemberExpr(BaseExpr, OpKind == tok::arrow, MemberDecl,
                           MemberLoc, MemberType);
   }
   
   // Handle access to Objective C instance variables, such as "Obj->ivar".
-  if (BaseType->isObjCInterfaceType()) {
-    ObjCInterfaceDecl *IFace;
-    QualType CanonType = BaseType.getCanonicalType();
-    if (isa<ObjCInterfaceType>(CanonType))
-      IFace = dyn_cast<ObjCInterfaceType>(CanonType)->getDecl();
-    else
-      IFace = dyn_cast<ObjCQualifiedInterfaceType>(CanonType)->getDecl();
-    ObjCInterfaceDecl *clsDeclared;
-    if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(&Member, clsDeclared))
+  if (const ObjCInterfaceType *IFTy = BaseType->getAsObjCInterfaceType()) {
+    if (ObjCIvarDecl *IV = IFTy->getDecl()->lookupInstanceVariable(&Member))
       return new ObjCIvarRefExpr(IV, IV->getType(), MemberLoc, BaseExpr, 
                                  OpKind == tok::arrow);
     return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion,
                 SourceRange(MemberLoc));
   }
   
+  // Handle property access.
   if (isObjCObjectPointerType(BaseType)) {
     const PointerType *pointerType = BaseType->getAsPointerType();
     BaseType = pointerType->getPointeeType();
