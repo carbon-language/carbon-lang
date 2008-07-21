@@ -35,13 +35,14 @@ bool Sema::isObjCObjectPointerType(QualType type) const {
   if (!type->isPointerType())
     return false;
   
+  // Check to see if this is 'id' or 'Class', both of which are typedefs for
+  // pointer types.  This looks for the typedef specifically, not for the
+  // underlying type.
   if (type == Context.getObjCIdType() || type == Context.getObjCClassType())
     return true;
   
-  if (type->isPointerType()) {
-    PointerType *pointerType = static_cast<PointerType*>(type.getTypePtr());
-    type = pointerType->getPointeeType();
-  }
+  const PointerType *pointerType = type->getAsPointerType();
+  type = pointerType->getPointeeType();
   return type->isObjCInterfaceType() || type->isObjCQualifiedIdType();
 }
 
