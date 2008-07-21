@@ -268,10 +268,10 @@ public:
   /// purpose.
   int getObjCEncodingTypeSize(QualType t);
     
-  // This setter/getter repreents the ObjC 'id' type. It is setup lazily, by
-  // Sema.
-  void setObjCIdType(TypedefDecl *Decl);
+  /// This setter/getter represents the ObjC 'id' type. It is setup lazily, by
+  /// Sema.  id is always a (typedef for a) pointer type, a pointer to a struct.
   QualType getObjCIdType() const { return ObjCIdType; }
+  void setObjCIdType(TypedefDecl *Decl);
   
   void setObjCSelType(TypedefDecl *Decl);
   QualType getObjCSelType() const { return ObjCSelType; }
@@ -279,8 +279,11 @@ public:
   void setObjCProtoType(QualType QT);
   QualType getObjCProtoType() const { return ObjCProtoType; }
   
-  void setObjCClassType(TypedefDecl *Decl);
+  /// This setter/getter repreents the ObjC 'Class' type. It is setup lazily, by
+  /// Sema.  'Class' is always a (typedef for a) pointer type, a pointer to a
+  /// struct.
   QualType getObjCClassType() const { return ObjCClassType; }
+  void setObjCClassType(TypedefDecl *Decl);
   
   void setBuiltinVaListType(QualType T);
   QualType getBuiltinVaListType() const { return BuiltinVaListType; }
