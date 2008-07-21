@@ -241,7 +241,7 @@ private:
                            SourceLocation KWLoc, IdentifierInfo *Name,
                            SourceLocation NameLoc, AttributeList *Attr);
   virtual void ActOnDefs(Scope *S, SourceLocation DeclStart, IdentifierInfo
-      *ClassName, llvm::SmallVector<DeclTy*, 16> &Decls);
+      *ClassName, llvm::SmallVectorImpl<DeclTy*> &Decls);
   virtual DeclTy *ActOnField(Scope *S, SourceLocation DeclStart,
                              Declarator &D, ExprTy *BitfieldWidth);
   
@@ -615,7 +615,8 @@ public:
                     SourceLocation AtInterafceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
-                    IdentifierInfo **ProtocolNames, unsigned NumProtocols,
+                    const IdentifierLocPair *ProtocolNames,
+                    unsigned NumProtocols,
                     SourceLocation EndProtoLoc, AttributeList *AttrList);
   
   virtual DeclTy *ActOnCompatiblityAlias(
@@ -626,14 +627,16 @@ public:
   virtual DeclTy *ActOnStartProtocolInterface(
                     SourceLocation AtProtoInterfaceLoc,
                     IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
-                    IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs,
+                    const IdentifierLocPair *ProtoRefNames,
+                    unsigned NumProtoRefs,
                     SourceLocation EndProtoLoc);
   
   virtual DeclTy *ActOnStartCategoryInterface(
                     SourceLocation AtInterfaceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
-                    IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs,
+                    const IdentifierLocPair *ProtoRefNames,
+                    unsigned NumProtoRefs,
                     SourceLocation EndProtoLoc);
   
   virtual DeclTy *ActOnStartClassImplementation(
@@ -654,14 +657,13 @@ public:
                                                unsigned NumElts);
   
   virtual DeclTy *ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
-                                                  IdentifierInfo **IdentList,
+                                            const IdentifierLocPair *IdentList,
                                                   unsigned NumElts);
   
   virtual void FindProtocolDeclaration(SourceLocation TypeLoc,
-                                       IdentifierInfo **ProtocolId,
+                                       const IdentifierLocPair *ProtocolId,
                                        unsigned NumProtocols,
-                                       llvm::SmallVector<DeclTy *, 8> & 
-                                       Protocols);
+                                   llvm::SmallVectorImpl<DeclTy *> &Protocols);
   
   void DiagnosePropertyMismatch(ObjCPropertyDecl *Property, 
                                 ObjCPropertyDecl *SuperProperty,

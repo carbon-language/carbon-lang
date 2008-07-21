@@ -68,12 +68,13 @@ void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   }
 }
 
-Sema::DeclTy *Sema::ActOnStartClassInterface(
-                    SourceLocation AtInterfaceLoc,
-                    IdentifierInfo *ClassName, SourceLocation ClassLoc,
-                    IdentifierInfo *SuperName, SourceLocation SuperLoc,
-                    IdentifierInfo **ProtocolNames, unsigned NumProtocols,
-                    SourceLocation EndProtoLoc, AttributeList *AttrList) {
+Sema::DeclTy *Sema::
+ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
+                         IdentifierInfo *ClassName, SourceLocation ClassLoc,
+                         IdentifierInfo *SuperName, SourceLocation SuperLoc,
+                         const IdentifierLocPair *ProtocolNames,
+                         unsigned NumProtocols,
+                         SourceLocation EndProtoLoc, AttributeList *AttrList) {
   assert(ClassName && "Missing class identifier");
   
   // Check for another declaration kind with the same name.
@@ -133,14 +134,14 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
   if (NumProtocols) {
     llvm::SmallVector<ObjCProtocolDecl*, 8> RefProtos;
     for (unsigned int i = 0; i != NumProtocols; i++) {
-      ObjCProtocolDecl* RefPDecl = ObjCProtocols[ProtocolNames[i]];
+      ObjCProtocolDecl* RefPDecl = ObjCProtocols[ProtocolNames[i].first];
       if (!RefPDecl)
-        Diag(EndProtoLoc, diag::err_undef_protocolref,
-             ProtocolNames[i]->getName(), ClassName->getName());
+        Diag(ProtocolNames[i].second, diag::err_undef_protocolref,
+             ProtocolNames[i].first->getName(), ClassName->getName());
       else {
         if (RefPDecl->isForwardDecl())
-          Diag(EndProtoLoc, diag::warn_undef_protocolref,
-               ProtocolNames[i]->getName(), ClassName->getName());
+          Diag(ProtocolNames[i].second, diag::warn_undef_protocolref,
+               ProtocolNames[i].first->getName(), ClassName->getName());
         RefProtos.push_back(RefPDecl);
       }
     }
@@ -194,7 +195,7 @@ Sema::DeclTy *Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
 Sema::DeclTy *Sema::ActOnStartProtocolInterface(
                 SourceLocation AtProtoInterfaceLoc,
                 IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
-                IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs,
+                const IdentifierLocPair *ProtoRefNames, unsigned NumProtoRefs,
                 SourceLocation EndProtoLoc) {
   assert(ProtocolName && "Missing protocol identifier");
   ObjCProtocolDecl *PDecl = ObjCProtocols[ProtocolName];
@@ -219,14 +220,14 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(
     /// Check then save referenced protocols.
     llvm::SmallVector<ObjCProtocolDecl*, 8> Protocols;
     for (unsigned int i = 0; i != NumProtoRefs; i++) {
-      ObjCProtocolDecl *RefPDecl = ObjCProtocols[ProtoRefNames[i]];
+      ObjCProtocolDecl *RefPDecl = ObjCProtocols[ProtoRefNames[i].first];
       if (!RefPDecl)
-        Diag(ProtocolLoc, diag::err_undef_protocolref,
-             ProtoRefNames[i]->getName(), ProtocolName->getName());
+        Diag(ProtoRefNames[i].second, diag::err_undef_protocolref,
+             ProtoRefNames[i].first->getName(), ProtocolName->getName());
       else {
         if (RefPDecl->isForwardDecl())
-          Diag(ProtocolLoc, diag::warn_undef_protocolref,
-               ProtoRefNames[i]->getName(), ProtocolName->getName());
+          Diag(ProtoRefNames[i].second, diag::warn_undef_protocolref,
+               ProtoRefNames[i].first->getName(), ProtocolName->getName());
         Protocols.push_back(RefPDecl);
       }
     }
@@ -242,16 +243,15 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(
 /// declarations in its 'Protocols' argument.
 void
 Sema::FindProtocolDeclaration(SourceLocation TypeLoc,
-                              IdentifierInfo **ProtocolId,
+                              const IdentifierLocPair *ProtocolId,
                               unsigned NumProtocols,
-                              llvm::SmallVector<DeclTy *,8> &Protocols) {
+                              llvm::SmallVectorImpl<DeclTy*> &Protocols) {
   for (unsigned i = 0; i != NumProtocols; ++i) {
-    ObjCProtocolDecl *PDecl = ObjCProtocols[ProtocolId[i]];
-    if (!PDecl)
-      Diag(TypeLoc, diag::err_undeclared_protocol, 
-           ProtocolId[i]->getName());
-    else
+    if (ObjCProtocolDecl *PDecl = ObjCProtocols[ProtocolId[i].first])
       Protocols.push_back(PDecl); 
+    else
+      Diag(ProtocolId[i].second, diag::err_undeclared_protocol, 
+           ProtocolId[i].first->getName());
   }
 }
 
@@ -382,16 +382,15 @@ Sema::MergeProtocolPropertiesIntoClass(ObjCInterfaceDecl *IDecl,
 /// ActOnForwardProtocolDeclaration - 
 Action::DeclTy *
 Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
-        IdentifierInfo **IdentList, unsigned NumElts) {
+                                      const IdentifierLocPair *IdentList,
+                                      unsigned NumElts) {
   llvm::SmallVector<ObjCProtocolDecl*, 32> Protocols;
   
   for (unsigned i = 0; i != NumElts; ++i) {
-    IdentifierInfo *Ident = IdentList[i];
+    IdentifierInfo *Ident = IdentList[i].first;
     ObjCProtocolDecl *&PDecl = ObjCProtocols[Ident];
-    if (PDecl == 0)  { // Not already seen?
-      // FIXME: Pass in the location of the identifier!
-      PDecl = ObjCProtocolDecl::Create(Context, AtProtocolLoc, Ident);
-    }
+    if (PDecl == 0) // Not already seen?
+      PDecl = ObjCProtocolDecl::Create(Context, IdentList[i].second, Ident);
     
     Protocols.push_back(PDecl);
   }
@@ -399,12 +398,14 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
                                          &Protocols[0], Protocols.size());
 }
 
-Sema::DeclTy *Sema::ActOnStartCategoryInterface(
-                      SourceLocation AtInterfaceLoc,
-                      IdentifierInfo *ClassName, SourceLocation ClassLoc,
-                      IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
-                      IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs,
-                      SourceLocation EndProtoLoc) {
+Sema::DeclTy *Sema::
+ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
+                            IdentifierInfo *ClassName, SourceLocation ClassLoc,
+                            IdentifierInfo *CategoryName,
+                            SourceLocation CategoryLoc,
+                            const IdentifierLocPair *ProtoRefNames,
+                            unsigned NumProtoRefs,
+                            SourceLocation EndProtoLoc) {
   ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName);
   
   ObjCCategoryDecl *CDecl = 
@@ -433,14 +434,14 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(
     llvm::SmallVector<ObjCProtocolDecl*, 32> RefProtocols;
     /// Check and then save the referenced protocols.
     for (unsigned int i = 0; i != NumProtoRefs; i++) {
-      ObjCProtocolDecl* RefPDecl = ObjCProtocols[ProtoRefNames[i]];
+      ObjCProtocolDecl* RefPDecl = ObjCProtocols[ProtoRefNames[i].first];
       if (!RefPDecl)
-        Diag(CategoryLoc, diag::err_undef_protocolref,
-             ProtoRefNames[i]->getName(), CategoryName->getName());
+        Diag(ProtoRefNames[i].second, diag::err_undef_protocolref,
+             ProtoRefNames[i].first->getName(), CategoryName->getName());
       else {
         if (RefPDecl->isForwardDecl())
-          Diag(CategoryLoc, diag::warn_undef_protocolref,
-               ProtoRefNames[i]->getName(), CategoryName->getName());
+          Diag(ProtoRefNames[i].second, diag::warn_undef_protocolref,
+               ProtoRefNames[i].first->getName(), CategoryName->getName());
         RefProtocols.push_back(RefPDecl);
       }
     }

@@ -1789,7 +1789,7 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
 /// Collect the instance variables declared in an Objective-C object.  Used in
 /// the creation of structures from objects using the @defs directive.
 static void CollectIvars(ObjCInterfaceDecl *Class,
-                         llvm::SmallVector<Sema::DeclTy*, 16> &ivars) {
+                         llvm::SmallVectorImpl<Sema::DeclTy*> &ivars) {
   if (Class->getSuperClass())
     CollectIvars(Class->getSuperClass(), ivars);
   ivars.append(Class->ivar_begin(), Class->ivar_end());
@@ -1799,7 +1799,7 @@ static void CollectIvars(ObjCInterfaceDecl *Class,
 /// instance variables of ClassName into Decls.
 void Sema::ActOnDefs(Scope *S, SourceLocation DeclStart, 
                      IdentifierInfo *ClassName,
-                     llvm::SmallVector<DeclTy*, 16> &Decls) {
+                     llvm::SmallVectorImpl<DeclTy*> &Decls) {
   // Check that ClassName is a valid class
   ObjCInterfaceDecl *Class = getObjCInterfaceDecl(ClassName);
   if (!Class) {

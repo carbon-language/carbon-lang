@@ -207,7 +207,7 @@ public:
   /// name of the referenced class.   
   virtual void ActOnDefs(Scope *S, SourceLocation DeclStart,
                          IdentifierInfo *ClassName,
-                         llvm::SmallVector<DeclTy*, 16> &Decls) {}
+                         llvm::SmallVectorImpl<DeclTy*> &Decls) {}
   virtual DeclTy *ActOnField(Scope *S, SourceLocation DeclStart,
                              Declarator &D, ExprTy *BitfieldWidth) {
     return 0;
@@ -627,7 +627,7 @@ public:
     SourceLocation ClassLoc,
     IdentifierInfo *SuperName, 
     SourceLocation SuperLoc,
-    IdentifierInfo **ProtocolNames, 
+    const IdentifierLocPair *ProtocolNames, 
     unsigned NumProtocols,
     SourceLocation EndProtoLoc,
     AttributeList *AttrList) {
@@ -649,7 +649,7 @@ public:
     SourceLocation AtProtoInterfaceLoc,
     IdentifierInfo *ProtocolName, 
     SourceLocation ProtocolLoc,
-    IdentifierInfo **ProtoRefNames, 
+    const IdentifierLocPair *ProtoRefNames, 
     unsigned NumProtoRefs,
     SourceLocation EndProtoLoc) {
     return 0;
@@ -662,7 +662,7 @@ public:
     SourceLocation ClassLoc,
     IdentifierInfo *CategoryName, 
     SourceLocation CategoryLoc,
-    IdentifierInfo **ProtoRefNames, 
+    const IdentifierLocPair *ProtoRefNames, 
     unsigned NumProtoRefs,
     SourceLocation EndProtoLoc) {
     return 0;
@@ -768,7 +768,7 @@ public:
   }
   virtual DeclTy *ActOnForwardProtocolDeclaration(
     SourceLocation AtProtocolLoc,
-    IdentifierInfo **IdentList,
+    const IdentifierLocPair*IdentList,
     unsigned NumElts) {
     return 0;
   }
@@ -777,10 +777,9 @@ public:
   /// issues error if they are not declared. It returns list of valid
   /// protocols found.
   virtual void FindProtocolDeclaration(SourceLocation TypeLoc,
-                                       IdentifierInfo **ProtocolId,
+                                       const IdentifierLocPair *ProtocolId,
                                        unsigned NumProtocols,
-                                       llvm::SmallVector<DeclTy *, 8> &
-                                       Protocols) {
+                                    llvm::SmallVectorImpl<DeclTy*> &Protocols) {
   }
 
   //===----------------------- Obj-C Expressions --------------------------===//
@@ -852,7 +851,8 @@ public:
   virtual DeclTy *ActOnStartClassInterface(SourceLocation interLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
-                    IdentifierInfo **ProtocolNames, unsigned NumProtocols,
+                    const IdentifierLocPair *ProtocolNames,
+                                           unsigned NumProtocols,
                     SourceLocation EndProtoLoc, AttributeList *AttrList);
 };
 

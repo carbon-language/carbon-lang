@@ -131,7 +131,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     SourceLocation lparenLoc = ConsumeParen();
     SourceLocation categoryLoc, rparenLoc;
     IdentifierInfo *categoryId = 0;
-    llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
+    llvm::SmallVector<IdentifierLocPair, 8> ProtocolRefs;
     
     // For ObjC2, the category name is optional (not an error).
     if (Tok.is(tok::identifier)) {
@@ -185,7 +185,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     superClassLoc = ConsumeToken();
   }
   // Next, we need to check for any protocol references.
-  llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
+  llvm::SmallVector<IdentifierLocPair, 8> ProtocolRefs;
   SourceLocation endProtoLoc;
   if (Tok.is(tok::less)) {
     if (ParseObjCProtocolReferences(ProtocolRefs, endProtoLoc))
@@ -337,7 +337,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
 ///     copy
 ///     nonatomic
 ///
-void Parser::ParseObjCPropertyAttribute (ObjCDeclSpec &DS) {
+void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
   SourceLocation loc = ConsumeParen(); // consume '('
   while (isObjCPropertyAttribute()) {
     const IdentifierInfo *II = Tok.getIdentifierInfo();
@@ -715,8 +715,9 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
 ///   objc-protocol-refs:
 ///     '<' identifier-list '>'
 ///
-bool Parser::ParseObjCProtocolReferences(
-  llvm::SmallVectorImpl<IdentifierInfo*> &ProtocolRefs, SourceLocation &endLoc){
+bool Parser::
+ParseObjCProtocolReferences(llvm::SmallVectorImpl<IdentifierLocPair> &Protocols,
+                            SourceLocation &endLoc) {
   assert(Tok.is(tok::less) && "expected <");
   
   ConsumeToken(); // the "<"
@@ -727,7 +728,8 @@ bool Parser::ParseObjCProtocolReferences(
       SkipUntil(tok::greater);
       return true;
     }
-    ProtocolRefs.push_back(Tok.getIdentifierInfo());
+    Protocols.push_back(std::make_pair(Tok.getIdentifierInfo(),
+                                          Tok.getLocation()));
     ConsumeToken();
     
     if (Tok.isNot(tok::comma))
@@ -865,15 +867,17 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
   IdentifierInfo *protocolName = Tok.getIdentifierInfo();
   SourceLocation nameLoc = ConsumeToken();
   
-  llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
   if (Tok.is(tok::semi)) { // forward declaration of one protocol.
+    IdentifierLocPair ProtoInfo(protocolName, nameLoc);
     ConsumeToken();
-    ProtocolRefs.push_back(protocolName);
+    return Actions.ActOnForwardProtocolDeclaration(AtLoc, &ProtoInfo, 1);
   }
+  
   if (Tok.is(tok::comma)) { // list of forward declarations.
+    llvm::SmallVector<IdentifierLocPair, 8> ProtocolRefs;
+    ProtocolRefs.push_back(std::make_pair(protocolName, nameLoc));
+
     // Parse the list of forward declarations.
-    ProtocolRefs.push_back(protocolName);
-    
     while (1) {
       ConsumeToken(); // the ','
       if (Tok.isNot(tok::identifier)) {
@@ -881,7 +885,8 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
         SkipUntil(tok::semi);
         return 0;
       }
-      ProtocolRefs.push_back(Tok.getIdentifierInfo());
+      ProtocolRefs.push_back(IdentifierLocPair(Tok.getIdentifierInfo(),
+                                               Tok.getLocation()));
       ConsumeToken(); // the identifier
       
       if (Tok.isNot(tok::comma))
@@ -890,17 +895,19 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
     // Consume the ';'.
     if (ExpectAndConsume(tok::semi, diag::err_expected_semi_after, "@protocol"))
       return 0;
-  }
-  if (!ProtocolRefs.empty())
+    
     return Actions.ActOnForwardProtocolDeclaration(AtLoc,
                                                    &ProtocolRefs[0], 
                                                    ProtocolRefs.size());
+  }
+  
   // Last, and definitely not least, parse a protocol declaration.
   SourceLocation endProtoLoc;
-  if (Tok.is(tok::less)) {
-    if (ParseObjCProtocolReferences(ProtocolRefs, endProtoLoc))
-      return 0;
-  }
+  llvm::SmallVector<IdentifierLocPair, 8> ProtocolRefs;
+
+  if (Tok.is(tok::less) &&
+      ParseObjCProtocolReferences(ProtocolRefs, endProtoLoc))
+    return 0;
   
   DeclTy *ProtoType = Actions.ActOnStartProtocolInterface(AtLoc, 
                                 protocolName, nameLoc,

@@ -413,8 +413,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
           ConsumeToken(); // The identifier
           if (Tok.is(tok::less)) {
             SourceLocation endProtoLoc;
-            llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
+            llvm::SmallVector<IdentifierLocPair, 8> ProtocolRefs;
             ParseObjCProtocolReferences(ProtocolRefs, endProtoLoc);
+            
+            // FIXME: New'ing this here seems wrong, why not have the action do
+            // it?
             llvm::SmallVector<DeclTy *, 8> *ProtocolDecl = 
                     new llvm::SmallVector<DeclTy *, 8>;
             DS.setProtocolQualifiers(ProtocolDecl);
@@ -553,7 +556,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     case tok::less:
       if (!DS.hasTypeSpecifier()) {
         SourceLocation endProtoLoc;
-        llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
+        llvm::SmallVector<IdentifierLocPair, 8> ProtocolRefs;
         ParseObjCProtocolReferences(ProtocolRefs, endProtoLoc);
         llvm::SmallVector<DeclTy *, 8> *ProtocolDecl = 
                 new llvm::SmallVector<DeclTy *, 8>;

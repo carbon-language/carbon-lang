@@ -91,7 +91,8 @@ Action::DeclTy *
 MinimalAction::ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
-                    IdentifierInfo **ProtocolNames, unsigned NumProtocols,
+                    const IdentifierLocPair *ProtocolNames,
+                    unsigned NumProtocols,
                     SourceLocation EndProtoLoc, AttributeList *AttrList) {
   TypeNameInfo *TI =
     new TypeNameInfo(1, ClassName->getFETokenInfo<TypeNameInfo>());

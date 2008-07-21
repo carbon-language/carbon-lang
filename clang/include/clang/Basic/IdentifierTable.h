@@ -29,6 +29,12 @@ namespace llvm {
 namespace clang {
   struct LangOptions;
   class MultiKeywordSelector; // a private class used by Selector.
+  class IdentifierInfo;
+  class SourceLocation;
+  
+  /// IdentifierLocPair - A simple pair of identifier info and location.
+  typedef std::pair<IdentifierInfo*, SourceLocation> IdentifierLocPair;
+  
   
 /// IdentifierInfo - One of these records is kept for each identifier that
 /// is lexed.  This contains information about whether the token was #define'd,
