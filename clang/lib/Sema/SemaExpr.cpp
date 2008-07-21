@@ -590,7 +590,8 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
       return Diag(OpLoc, diag::err_typecheck_member_reference_arrow,
                   SourceRange(MemberLoc));
   }
-  // The base type is either a record or an ExtVectorType.
+  
+  // Handle field access to simple records.
   if (const RecordType *RTy = BaseType->getAsRecordType()) {
     RecordDecl *RDecl = RTy->getDecl();
     if (RTy->isIncompleteType())
@@ -611,17 +612,10 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
 
     return new MemberExpr(BaseExpr, OpKind==tok::arrow, MemberDecl,
                           MemberLoc, MemberType);
-  } else if (BaseType->isExtVectorType() && OpKind == tok::period) {
-    // Component access limited to variables (reject vec4.rg.g).
-    if (!isa<DeclRefExpr>(BaseExpr) && !isa<ArraySubscriptExpr>(BaseExpr) &&
-        !isa<ExtVectorElementExpr>(BaseExpr))
-      return Diag(OpLoc, diag::err_ext_vector_component_access, 
-                  SourceRange(MemberLoc));
-    QualType ret = CheckExtVectorComponent(BaseType, OpLoc, Member, MemberLoc);
-    if (ret.isNull())
-      return true;
-    return new ExtVectorElementExpr(ret, BaseExpr, Member, MemberLoc);
-  } else if (BaseType->isObjCInterfaceType()) {
+  }
+  
+  // Handle access to Objective C instance variables, such as "Obj->ivar".
+  if (BaseType->isObjCInterfaceType()) {
     ObjCInterfaceDecl *IFace;
     QualType CanonType = BaseType.getCanonicalType();
     if (isa<ObjCInterfaceType>(CanonType))
@@ -631,9 +625,13 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     ObjCInterfaceDecl *clsDeclared;
     if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(&Member, clsDeclared))
       return new ObjCIvarRefExpr(IV, IV->getType(), MemberLoc, BaseExpr, 
-                                 OpKind==tok::arrow);
-  } else if (isObjCObjectPointerType(BaseType)) {
-    PointerType *pointerType = static_cast<PointerType*>(BaseType.getTypePtr());
+                                 OpKind == tok::arrow);
+    return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion,
+                SourceRange(MemberLoc));
+  }
+  
+  if (isObjCObjectPointerType(BaseType)) {
+    const PointerType *pointerType = BaseType->getAsPointerType();
     BaseType = pointerType->getPointeeType();
     ObjCInterfaceDecl *IFace;
     QualType CanonType = BaseType.getCanonicalType();
@@ -675,6 +673,20 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
         return new ObjCPropertyRefExpr(PD, PD->getType(), MemberLoc, BaseExpr);
     }
   }
+  
+  // Handle 'field access' to vectors, such as 'V.xx'.
+  if (BaseType->isExtVectorType() && OpKind == tok::period) {
+    // Component access limited to variables (reject vec4.rg.g).
+    if (!isa<DeclRefExpr>(BaseExpr) && !isa<ArraySubscriptExpr>(BaseExpr) &&
+        !isa<ExtVectorElementExpr>(BaseExpr))
+      return Diag(OpLoc, diag::err_ext_vector_component_access, 
+                  SourceRange(MemberLoc));
+    QualType ret = CheckExtVectorComponent(BaseType, OpLoc, Member, MemberLoc);
+    if (ret.isNull())
+      return true;
+    return new ExtVectorElementExpr(ret, BaseExpr, Member, MemberLoc);
+  }
+  
   return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion,
               SourceRange(MemberLoc));
 }
