@@ -622,8 +622,9 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     if (ObjCIvarDecl *IV = IFTy->getDecl()->lookupInstanceVariable(&Member))
       return new ObjCIvarRefExpr(IV, IV->getType(), MemberLoc, BaseExpr, 
                                  OpKind == tok::arrow);
-    return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion,
-                SourceRange(MemberLoc));
+    return Diag(OpLoc, diag::err_typecheck_member_reference_ivar,
+                IFTy->getDecl()->getName(), Member.getName(),
+                BaseExpr->getSourceRange(), SourceRange(MemberLoc));
   }
   
   // Handle property access.

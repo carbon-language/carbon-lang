@@ -881,6 +881,8 @@ DIAG(err_typecheck_subscript_not_object, ERROR,
      "illegal subscript of non-object type '%0'")
 DIAG(err_typecheck_member_reference_structUnion, ERROR,
      "member reference is not to a structure or union")
+DIAG(err_typecheck_member_reference_ivar, ERROR,
+     "'%0' has member named '%1'")
 DIAG(err_typecheck_member_reference_arrow, ERROR,
      "member reference is not a pointer")
 DIAG(err_typecheck_incomplete_tag, ERROR,
