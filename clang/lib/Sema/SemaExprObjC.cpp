@@ -277,24 +277,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
         receiverType = PTy->getPointeeType();
     
     ObjCInterfaceDecl* ClassDecl = 0;
-    if (ObjCQualifiedInterfaceType *QIT = 
-        dyn_cast<ObjCQualifiedInterfaceType>(receiverType)) {
-      ClassDecl = QIT->getDecl();
-      Method = ClassDecl->lookupInstanceMethod(Sel);
-      if (!Method) {
-        // search protocols
-        for (unsigned i = 0; i < QIT->getNumProtocols(); i++) {
-          ObjCProtocolDecl *PDecl = QIT->getProtocol(i);
-          if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
-            break;
-        }
-      }
-      if (!Method)
-        Diag(lbrac, diag::warn_method_not_found_in_protocol, 
-             std::string("-"), Sel.getName(),
-             SourceRange(lbrac, rbrac));
-    }
-    else if (ObjCQualifiedIdType *QIT = 
+    if (ObjCQualifiedIdType *QIT = 
              dyn_cast<ObjCQualifiedIdType>(receiverType)) {
       // search protocols
       for (unsigned i = 0; i < QIT->getNumProtocols(); i++) {
@@ -306,20 +289,35 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
         Diag(lbrac, diag::warn_method_not_found_in_protocol, 
              std::string("-"), Sel.getName(),
              SourceRange(lbrac, rbrac));
-    }
-    else {
+    } else {
       ObjCInterfaceType *OCIReceiver =dyn_cast<ObjCInterfaceType>(receiverType);
       if (OCIReceiver == 0) {
-          Diag(lbrac, diag::error_bad_receiver_type,
-               RExpr->getType().getAsString());
-          return true;
+        Diag(lbrac, diag::error_bad_receiver_type,
+             RExpr->getType().getAsString());
+        return true;
       }
+      
       ClassDecl = OCIReceiver->getDecl();
       // FIXME: consider using InstanceMethodPool, since it will be faster
       // than the following method (which can do *many* linear searches). The
-      // idea is to add class info to InstanceMethodPool...
+      // idea is to add class info to InstanceMethodPool.
       Method = ClassDecl->lookupInstanceMethod(Sel);
+      
+      if (!Method) {
+        // Search protocol qualifiers.
+        for (ObjCQualifiedIdType::qual_iterator QI = OCIReceiver->qual_begin(),
+             E = OCIReceiver->qual_end(); QI != E; ++QI) {
+          if ((Method = (*QI)->lookupInstanceMethod(Sel)))
+            break;
+        }
+      }
+      
+      if (!Method && !OCIReceiver->qual_empty())
+        Diag(lbrac, diag::warn_method_not_found_in_protocol, 
+             std::string("-"), Sel.getName(),
+             SourceRange(lbrac, rbrac));
     }
+    
     if (!Method) {
       // If we have an implementation in scope, check "private" methods.
       if (ClassDecl)
