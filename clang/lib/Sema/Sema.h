@@ -909,6 +909,7 @@ private:
   bool SemaBuiltinUnorderedCompare(CallExpr *TheCall);
   bool SemaBuiltinStackAddress(CallExpr *TheCall);
   Action::ExprResult SemaBuiltinShuffleVector(CallExpr *TheCall);
+  bool SemaBuiltinPrefetch(CallExpr *TheCall); 
   void CheckPrintfArguments(CallExpr *TheCall,
                             bool HasVAListArg, unsigned format_idx);
   void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,

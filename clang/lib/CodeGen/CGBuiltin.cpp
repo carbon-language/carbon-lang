@@ -190,7 +190,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
       Result = Builder.CreateIntCast(Result, ResultType, "cast");
     return RValue::get(Result);
   }
-
   case Builtin::BI__builtin_expect:
     // FIXME: pass expect through to LLVM
     return RValue::get(EmitScalarExpr(E->getArg(0)));
@@ -200,7 +199,22 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     const llvm::Type *ArgType = ArgValue->getType();
     Value *F = CGM.getIntrinsic(Intrinsic::bswap, &ArgType, 1);
     return RValue::get(Builder.CreateCall(F, ArgValue, "tmp"));
+  }    
+  case Builtin::BI__builtin_prefetch: {
+    Value *Locality, *RW, *Address = EmitScalarExpr(E->getArg(0));
+    // FIXME: Technically these constants should of type 'int', yes?
+    RW = (E->getNumArgs() > 1) ? EmitScalarExpr(E->getArg(1)) : 
+      ConstantInt::get(llvm::Type::Int32Ty, 0);
+    Locality = (E->getNumArgs() > 2) ? EmitScalarExpr(E->getArg(2)) : 
+      ConstantInt::get(llvm::Type::Int32Ty, 3);
+    Value *F = CGM.getIntrinsic(Intrinsic::prefetch, 0, 0);
+    return RValue::get(Builder.CreateCall3(F, Address, RW, Locality));
   }
+  case Builtin::BI__builtin_trap: {
+    Value *F = CGM.getIntrinsic(Intrinsic::trap, 0, 0);
+    return RValue::get(Builder.CreateCall(F));
+  }
+
   case Builtin::BI__builtin_huge_val:
   case Builtin::BI__builtin_huge_valf:
   case Builtin::BI__builtin_huge_vall:

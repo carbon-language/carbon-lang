@@ -66,6 +66,10 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCallRaw) {
     return TheCall.take();
   case Builtin::BI__builtin_shufflevector:
     return SemaBuiltinShuffleVector(TheCall.get());
+  case Builtin::BI__builtin_prefetch:
+    if (SemaBuiltinPrefetch(TheCall.get()))
+      return true;
+    return TheCall.take();
   }
   
   // Search the KnownFunctionIDs for the identifier.
@@ -291,6 +295,55 @@ Action::ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
       TheCall->getRParenLoc());
   
   return E;
+}
+
+/// SemaBuiltinPrefetch - Handle __builtin_prefetch.
+// This is declared to take (const void*, ...) and can take two
+// optional constant int args.
+bool Sema::SemaBuiltinPrefetch(CallExpr *TheCall) {
+  unsigned numArgs = TheCall->getNumArgs();
+  bool res = false;
+
+  if (numArgs > 3) {
+    res |= Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_many_args,
+                TheCall->getSourceRange());
+  }
+
+  // Argument 0 is checked for us and the remaining arguments must be
+  // constant integers.
+  for (unsigned i=1; i<numArgs; ++i) {
+    Expr *Arg = TheCall->getArg(i);
+    QualType RWType = Arg->getType();
+
+    const BuiltinType *BT = RWType->getAsBuiltinType();
+    // FIXME: 32 is wrong, needs to be proper width of Int
+    llvm::APSInt Result(32);
+    if (!BT || BT->getKind() != BuiltinType::Int ||
+        !Arg->isIntegerConstantExpr(Result, Context)) {
+      if (Diag(TheCall->getLocStart(), diag::err_prefetch_invalid_argument,
+               SourceRange(Arg->getLocStart(), Arg->getLocEnd()))) {
+        res = true;
+        continue;
+      }
+    }
+    
+    // FIXME: gcc issues a warning and rewrites these to 0. These
+    // seems especially odd for the third argument since the default
+    // is 3.
+    if (i==1) {
+      if (Result.getSExtValue() < 0 || Result.getSExtValue() > 1)
+        res |= Diag(TheCall->getLocStart(), diag::err_prefetch_invalid_range,
+                    "0", "1", 
+                    SourceRange(Arg->getLocStart(), Arg->getLocEnd()));
+    } else {
+      if (Result.getSExtValue() < 0 || Result.getSExtValue() > 3)
+        res |= Diag(TheCall->getLocStart(), diag::err_prefetch_invalid_range,
+                    "0", "3", 
+                    SourceRange(Arg->getLocStart(), Arg->getLocEnd()));
+    }
+  }
+
+  return res;
 }
 
 /// CheckPrintfArguments - Check calls to printf (and similar functions) for
