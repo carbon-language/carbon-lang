@@ -452,8 +452,8 @@ void ObjCProtocolDecl::addMethods(ObjCMethodDecl **insMethods,
   AtEndLoc = endLoc;
 }
 
-void ObjCCategoryDecl::setReferencedProtocolList(ObjCProtocolDecl **List,
-                                                 unsigned NumRPs) {
+void ObjCCategoryDecl::addReferencedProtocols(ObjCProtocolDecl **List,
+                                              unsigned NumRPs) {
   assert(NumReferencedProtocols == 0 && "Protocol list already set");
   if (NumRPs == 0) return;
   

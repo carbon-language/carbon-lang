@@ -435,7 +435,7 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(
         RefProtocols.push_back(RefPDecl);
     }
     if (!RefProtocols.empty())
-      CDecl->setReferencedProtocolList(&RefProtocols[0], RefProtocols.size());
+      CDecl->addReferencedProtocols(&RefProtocols[0], RefProtocols.size());
   }
   CDecl->setLocEnd(EndProtoLoc);
   return CDecl;

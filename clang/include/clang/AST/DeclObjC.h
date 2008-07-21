@@ -782,12 +782,9 @@ public:
   const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   void setClassInterface(ObjCInterfaceDecl *IDecl) { ClassInterface = IDecl; }
   
-  void setReferencedProtocolList(ObjCProtocolDecl **List, unsigned NumRPs);
-  
-  void setCatReferencedProtocols(unsigned idx, ObjCProtocolDecl *OID) {
-    assert((idx < NumReferencedProtocols) && "index out of range");
-    ReferencedProtocols[idx] = OID;
-  }
+  /// addReferencedProtocols - Set the list of protocols that this interface
+  /// implements.
+  void addReferencedProtocols(ObjCProtocolDecl **List, unsigned NumRPs);
   
   ObjCProtocolDecl **getReferencedProtocols() const { 
     return ReferencedProtocols; 
