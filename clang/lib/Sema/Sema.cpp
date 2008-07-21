@@ -26,18 +26,23 @@ bool Sema::isBuiltinObjCType(TypedefDecl *TD) {
          strcmp(typeName, "SEL") == 0 || strcmp(typeName, "Protocol") == 0;
 }
 
+/// isObjCObjectPointerType - Returns true if type is an objective-c pointer
+/// to an object type; such as "id", "Class", Intf*, id<P>, etc.
 bool Sema::isObjCObjectPointerType(QualType type) const {
-  if (!type->isPointerType() && !type->isObjCQualifiedIdType())
+  if (type->isObjCQualifiedIdType())
+    return true;
+  
+  if (!type->isPointerType())
     return false;
-  if (type == Context.getObjCIdType() || type == Context.getObjCClassType() ||
-      type->isObjCQualifiedIdType())
+  
+  if (type == Context.getObjCIdType() || type == Context.getObjCClassType())
     return true;
   
   if (type->isPointerType()) {
     PointerType *pointerType = static_cast<PointerType*>(type.getTypePtr());
     type = pointerType->getPointeeType();
   }
-  return (type->isObjCInterfaceType() || type->isObjCQualifiedIdType());
+  return type->isObjCInterfaceType() || type->isObjCQualifiedIdType();
 }
 
 void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
