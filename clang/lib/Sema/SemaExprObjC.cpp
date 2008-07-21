@@ -375,9 +375,12 @@ static bool ClassImplementsProtocol(ObjCProtocolDecl *lProto,
                                     bool RHSIsQualifiedID = false) {
   
   // 1st, look up the class.
-  ObjCProtocolDecl **protoList = IDecl->getReferencedProtocols();
-  for (unsigned i = 0; i < IDecl->getNumIntfRefProtocols(); i++) {
-    if (ProtocolCompatibleWithProtocol(lProto, protoList[i]))
+  const ObjCList<ObjCProtocolDecl> &Protocols =
+    IDecl->getReferencedProtocols();
+
+  for (ObjCList<ObjCProtocolDecl>::iterator PI = Protocols.begin(),
+       E = Protocols.end(); PI != E; ++PI) {
+    if (ProtocolCompatibleWithProtocol(lProto, *PI))
       return true;
     // This is dubious and is added to be compatible with gcc.
     // In gcc, it is also allowed assigning a protocol-qualified 'id'
@@ -385,8 +388,7 @@ static bool ClassImplementsProtocol(ObjCProtocolDecl *lProto,
     // of protocols in the rhs 'id' object. This IMO, should be a bug.
     // FIXME: Treat this as an extension, and flag this as an error when
     //  GCC extensions are not enabled.
-    else if (RHSIsQualifiedID &&
-             ProtocolCompatibleWithProtocol(protoList[i], lProto))
+    if (RHSIsQualifiedID && ProtocolCompatibleWithProtocol(*PI, lProto))
       return true;
   }
   
@@ -394,7 +396,7 @@ static bool ClassImplementsProtocol(ObjCProtocolDecl *lProto,
   if (lookupCategory)
     for (ObjCCategoryDecl *CDecl = IDecl->getCategoryList(); CDecl;
          CDecl = CDecl->getNextClassCategory()) {
-      protoList = CDecl->getReferencedProtocols();
+      ObjCProtocolDecl **protoList = CDecl->getReferencedProtocols();
       for (unsigned i = 0; i < CDecl->getNumReferencedProtocols(); i++) {
         if (ProtocolCompatibleWithProtocol(lProto, protoList[i]))
           return true;

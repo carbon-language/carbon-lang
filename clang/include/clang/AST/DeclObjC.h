@@ -28,6 +28,48 @@ class ObjCProtocolDecl;
 class ObjCCategoryDecl;
 class ObjCPropertyDecl;
 class ObjCPropertyImplDecl;
+  
+  
+/// ObjCList - This is a simple template class used to hold various lists of
+/// decls etc, which is heavily used by the ObjC front-end.  This only use case
+/// this supports is setting the list all at once and then reading elements out
+/// of it.
+template <typename T>
+class ObjCList {
+  /// List is a new[]'d array of pointers to objects that are not owned by this
+  /// list.
+  T **List;
+  unsigned NumElts;
+  
+  void operator=(const ObjCList &); // DO NOT IMPLEMENT
+  ObjCList(const ObjCList&);        // DO NOT IMPLEMENT
+public:
+  ObjCList() : List(0), NumElts(0) {}
+  ~ObjCList() {
+    delete[] List;
+  }
+
+  void set(T* const* InList, unsigned Elts) {
+    assert(List == 0 && "Elements already set!");
+    List = new T*[Elts];
+    NumElts = Elts;
+    memcpy(List, InList, sizeof(T*)*Elts);
+  }
+  
+  typedef T* const * iterator;
+  iterator begin() const { return List; }
+  iterator end() const { return List+NumElts; }
+  
+  unsigned size() const { return NumElts; }
+  bool empty() const { return NumElts == 0; }
+  
+  T* get(unsigned idx) const {
+    assert(idx < NumElts && "Invalid access");
+    return List[idx];
+  }
+};
+
+  
 
 /// ObjCMethodDecl - Represents an instance or class method declaration.
 /// ObjC methods can be declared within 4 contexts: class interfaces,
@@ -227,8 +269,7 @@ class ObjCInterfaceDecl : public NamedDecl, public DeclContext {
   ObjCInterfaceDecl *SuperClass;
   
   /// Protocols referenced in interface header declaration
-  ObjCProtocolDecl **ReferencedProtocols;  // Null if none
-  unsigned NumReferencedProtocols;  // 0 if none
+  ObjCList<ObjCProtocolDecl> ReferencedProtocols;
   
   /// Ivars/NumIvars - This is a new[]'d array of pointers to Decls.
   ObjCIvarDecl **Ivars;   // Null if not defined.
@@ -261,8 +302,7 @@ class ObjCInterfaceDecl : public NamedDecl, public DeclContext {
                     SourceLocation CLoc, bool FD, bool isInternal)
     : NamedDecl(ObjCInterface, atLoc, Id), DeclContext(ObjCInterface),
       TypeForDecl(0), SuperClass(0),
-      ReferencedProtocols(0), NumReferencedProtocols(0), Ivars(0), 
-      NumIvars(0),
+      Ivars(0), NumIvars(0),
       InstanceMethods(0), NumInstanceMethods(0), 
       ClassMethods(0), NumClassMethods(0),
       CategoryList(0), PropertyDecl(0), NumPropertyDecl(0),
@@ -283,21 +323,17 @@ public:
                                    SourceLocation ClassLoc = SourceLocation(),
                                    bool ForwardDecl = false,
                                    bool isInternal = false);
-  
-  ObjCProtocolDecl **getReferencedProtocols() const { 
+  const ObjCList<ObjCProtocolDecl> &getReferencedProtocols() const { 
     return ReferencedProtocols; 
   }
-  unsigned getNumIntfRefProtocols() const { return NumReferencedProtocols; }
   
   ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
   ObjCCategoryDecl *FindCategoryDeclaration(IdentifierInfo *CategoryId) const;
   ObjCIvarDecl *FindIvarDeclaration(IdentifierInfo *IvarId) const;
-  
-  typedef ObjCProtocolDecl * const * protocol_iterator;
-  protocol_iterator protocol_begin() const { return ReferencedProtocols; }
-  protocol_iterator protocol_end() const {
-    return ReferencedProtocols+NumReferencedProtocols;
-  }
+
+  typedef ObjCList<ObjCProtocolDecl>::iterator protocol_iterator;
+  protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}
+  protocol_iterator protocol_end() const { return ReferencedProtocols.end(); }
   
   typedef ObjCIvarDecl * const *ivar_iterator;
   ivar_iterator ivar_begin() const { return Ivars; }
@@ -323,7 +359,9 @@ public:
   
   /// addReferencedProtocols - Set the list of protocols that this interface
   /// implements.
-  void addReferencedProtocols(ObjCProtocolDecl **OID, unsigned numRefProtos);
+  void addReferencedProtocols(ObjCProtocolDecl * const *OID, unsigned NumRPs) {
+    ReferencedProtocols.set(OID, NumRPs);
+  }
    
   void addInstanceVariablesToClass(ObjCIvarDecl **ivars, unsigned numIvars,
                                    SourceLocation RBracLoc);

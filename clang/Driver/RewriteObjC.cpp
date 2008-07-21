@@ -217,7 +217,7 @@ namespace {
                                     const char *ClassName,
                                     std::string &Result);
     
-    void RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
+    void RewriteObjCProtocolsMetaData(ObjCProtocolDecl *const*Protocols,
                                       int NumProtocols,
                                       const char *prefix,
                                       const char *ClassName,
@@ -2364,7 +2364,7 @@ void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
       const char *endHeader = SM->getCharacterData(L);
       endHeader += Lexer::MeasureTokenLength(L, *SM);
 
-      if (CDecl->getNumIntfRefProtocols()) {
+      if (!CDecl->getReferencedProtocols().empty()) {
         // advance to the end of the referenced protocols.
         while (endHeader < cursor && *endHeader != '>') endHeader++;
         endHeader++;
@@ -2508,7 +2508,7 @@ void RewriteObjC::RewriteObjCMethodsMetaData(instmeth_iterator MethodBegin,
 }
 
 /// RewriteObjCProtocolsMetaData - Rewrite protocols meta-data.
-void RewriteObjC::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
+void RewriteObjC::RewriteObjCProtocolsMetaData(ObjCProtocolDecl*const*Protocols,
                                                int NumProtocols,
                                                const char *prefix,
                                                const char *ClassName,
@@ -2899,8 +2899,8 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
                              false, "", IDecl->getName(), Result);
     
   // Protocols referenced in class declaration?
-  RewriteObjCProtocolsMetaData(CDecl->getReferencedProtocols(), 
-                               CDecl->getNumIntfRefProtocols(),
+  RewriteObjCProtocolsMetaData(CDecl->getReferencedProtocols().begin(), 
+                               CDecl->getReferencedProtocols().size(),
                                "CLASS", CDecl->getName(), Result);
     
   
@@ -2977,7 +2977,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   }
   else
     Result += ", 0\n";
-  if (CDecl->getNumIntfRefProtocols() > 0) {
+  if (!CDecl->getReferencedProtocols().empty()) {
     Result += "\t,0, (struct _objc_protocol_list *)&_OBJC_CLASS_PROTOCOLS_";
     Result += CDecl->getName();
     Result += ",0,0\n";
@@ -3030,7 +3030,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   }
   else
     Result += ",0,0";
-  if (CDecl->getNumIntfRefProtocols() > 0) {
+  if (!CDecl->getReferencedProtocols().empty()) {
     Result += ", (struct _objc_protocol_list*)&_OBJC_CLASS_PROTOCOLS_";
     Result += CDecl->getName();
     Result += ", 0,0\n";

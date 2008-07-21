@@ -248,18 +248,16 @@ void DeclPrinter::PrintObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
     Out << "@interface " << I;
   
   // Protocols?
-  int count = OID->getNumIntfRefProtocols();
-
-  if (count > 0) {
-    ObjCProtocolDecl **refProtocols = OID->getReferencedProtocols();
-    for (int i = 0; i < count; i++)
-      Out << (i == 0 ? '<' : ',') << refProtocols[i]->getName();
+  const ObjCList<ObjCProtocolDecl> &Protocols = OID->getReferencedProtocols();
+  if (!Protocols.empty()) {
+    for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+         E = Protocols.end(); I != E; ++I)
+      Out << (I == Protocols.begin() ? '<' : ',') << (*I)->getName();
   }
   
-  if (count > 0)
-    Out << ">\n";
-  else
-    Out << '\n';
+  if (!Protocols.empty())
+    Out << ">";
+  Out << '\n';
   
   if (OID->ivar_size() > 0) {
     Out << '{';

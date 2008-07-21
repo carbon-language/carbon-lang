@@ -415,9 +415,11 @@ void CodeGenModule::EmitObjCCategoryImpl(const ObjCCategoryImplDecl *OCD) {
 
   // Collect the names of referenced protocols
   llvm::SmallVector<std::string, 16> Protocols;
-  ObjCInterfaceDecl * ClassDecl = (ObjCInterfaceDecl*)OCD->getClassInterface();
-  for (unsigned i=0 ; i<ClassDecl->getNumIntfRefProtocols() ; i++)
-    Protocols.push_back(ClassDecl->getReferencedProtocols()[i]->getName());
+  const ObjCInterfaceDecl *ClassDecl = OCD->getClassInterface();
+  const ObjCList<ObjCProtocolDecl> &Protos =ClassDecl->getReferencedProtocols();
+  for (ObjCList<ObjCProtocolDecl>::iterator I = Protos.begin(),
+       E = Protos.end(); I != E; ++I)
+    Protocols.push_back((*I)->getName());
 
   // Generate the category
   Runtime->GenerateCategory(OCD->getClassInterface()->getName(),
@@ -495,8 +497,10 @@ void CodeGenModule::EmitObjCClassImplementation(
   }
   // Collect the names of referenced protocols
   llvm::SmallVector<std::string, 16> Protocols;
-  for (unsigned i = 0, e = ClassDecl->getNumIntfRefProtocols() ; i < e ; i++)
-    Protocols.push_back(ClassDecl->getReferencedProtocols()[i]->getName());
+  const ObjCList<ObjCProtocolDecl> &Protos =ClassDecl->getReferencedProtocols();
+  for (ObjCList<ObjCProtocolDecl>::iterator I = Protos.begin(),
+       E = Protos.end(); I != E; ++I)
+    Protocols.push_back((*I)->getName());
 
   // Generate the category
   Runtime->GenerateClass(ClassName, SCName, instanceSize, IvarNames, IvarTypes,

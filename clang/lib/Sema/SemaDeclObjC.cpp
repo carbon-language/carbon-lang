@@ -653,9 +653,11 @@ void Sema::ImplMethodsVsClassMethods(ObjCImplementationDecl* IMPDecl,
   
   // Check the protocol list for unimplemented methods in the @implementation
   // class.
-  ObjCProtocolDecl** protocols = IDecl->getReferencedProtocols();
-  for (unsigned i = 0; i < IDecl->getNumIntfRefProtocols(); i++)
-    CheckProtocolMethodDefs(IMPDecl->getLocation(), protocols[i], 
+  const ObjCList<ObjCProtocolDecl> &Protocols =
+    IDecl->getReferencedProtocols();
+  for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+       E = Protocols.end(); I != E; ++I)
+    CheckProtocolMethodDefs(IMPDecl->getLocation(), *I, 
                             IncompleteImpl, InsMap, ClsMap);
 }
 

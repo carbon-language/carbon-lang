@@ -280,18 +280,6 @@ ObjCIvarDecl *
   return 0;
 }
 
-/// addReferencedProtocols - Set the list of protocols that this interface
-/// implements.
-void ObjCInterfaceDecl::addReferencedProtocols(ObjCProtocolDecl **OID, 
-                                               unsigned numRefProtos) {
-  assert(NumReferencedProtocols == 0 && "refproto already set!");
-  NumReferencedProtocols = numRefProtos;
-  if (numRefProtos) {
-    ReferencedProtocols = new ObjCProtocolDecl*[numRefProtos];
-    memcpy(ReferencedProtocols, OID, numRefProtos*sizeof(ObjCProtocolDecl*));
-  }
-}
-
 /// ObjCAddInstanceVariablesToClass - Inserts instance variables
 /// into ObjCInterfaceDecl's fields.
 ///
@@ -539,12 +527,13 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupInstanceMethod(Selector Sel) {
       return MethodDecl;
       
     // Didn't find one yet - look through protocols.
-    ObjCProtocolDecl **protocols = ClassDecl->getReferencedProtocols();
-    int numProtocols = ClassDecl->getNumIntfRefProtocols();
-    for (int pIdx = 0; pIdx < numProtocols; pIdx++) {
-      if ((MethodDecl = protocols[pIdx]->getInstanceMethod(Sel)))
+    const ObjCList<ObjCProtocolDecl> &Protocols =
+      ClassDecl->getReferencedProtocols();
+    for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+         E = Protocols.end(); I != E; ++I)
+      if ((MethodDecl = (*I)->getInstanceMethod(Sel)))
         return MethodDecl;
-    }
+    
     // Didn't find one yet - now look through categories.
     ObjCCategoryDecl *CatDecl = ClassDecl->getCategoryList();
     while (CatDecl) {
@@ -568,10 +557,12 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupClassMethod(Selector Sel) {
       return MethodDecl;
 
     // Didn't find one yet - look through protocols.
-    ObjCProtocolDecl **protocols = ClassDecl->getReferencedProtocols();
-    int numProtocols = ClassDecl->getNumIntfRefProtocols();
-    for (int pIdx = 0; pIdx < numProtocols; pIdx++) {
-      if ((MethodDecl = protocols[pIdx]->getClassMethod(Sel)))
+    const ObjCList<ObjCProtocolDecl> &Protocols =
+      ClassDecl->getReferencedProtocols();
+
+    for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+         E = Protocols.end(); I != E; ++I) {
+      if ((MethodDecl = (*I)->getClassMethod(Sel)))
         return MethodDecl;
     }
     // Didn't find one yet - now look through categories.
