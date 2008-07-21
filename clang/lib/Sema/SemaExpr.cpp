@@ -91,8 +91,7 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
     // name, if the lookup suceeds, we replace it our current decl.
     if (SD == 0 || SD->isDefinedOutsideFunctionOrMethod()) {
       ObjCInterfaceDecl *IFace = getCurMethodDecl()->getClassInterface();
-      ObjCInterfaceDecl *DeclClass;
-      if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(&II, DeclClass)) {
+      if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(&II)) {
         // FIXME: This should use a new expr for a direct reference, don't turn
         // this into Self->ivar, just return a BareIVarExpr or something.
         IdentifierInfo &II = Context.Idents.get("self");
@@ -637,8 +636,7 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
       IFace = dyn_cast<ObjCInterfaceType>(CanonType)->getDecl();
     else
       IFace = dyn_cast<ObjCQualifiedInterfaceType>(CanonType)->getDecl();
-    ObjCInterfaceDecl *clsDeclared;
-    if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(&Member, clsDeclared))
+    if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(&Member))
       return new ObjCIvarRefExpr(IV, IV->getType(), MemberLoc, BaseExpr, 
                                  OpKind==tok::arrow);
     // Check for properties.
