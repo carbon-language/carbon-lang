@@ -1101,7 +1101,12 @@ public:
 
 
   
-  
+/// ObjCInterfaceType - Interfaces are the core concept in Objective-C for
+/// object oriented design.  They basically correspond to C++ classes.  There
+/// are two kinds of interface types, normal interfaces like "NSString" and
+/// qualified interfaces, which are qualified with a protocol list like
+/// "NSString<NSCopyable, NSAmazing>".  Qualified interface types are instances
+/// of ObjCQualifiedInterfaceType, which is a subclass of ObjCInterfaceType.
 class ObjCInterfaceType : public Type {
   ObjCInterfaceDecl *Decl;
 protected:
@@ -1112,8 +1117,25 @@ public:
   
   ObjCInterfaceDecl *getDecl() const { return Decl; }
   
-  virtual void getAsStringInternal(std::string &InnerString) const;
+  /// qual_iterator and friends: this provides access to the (potentially empty)
+  /// list of protocols qualifying this interface.  If this is an instance of
+  /// ObjCQualifiedInterfaceType it returns the list, otherwise it returns an
+  /// empty list if there are no qualifying protocols.
+  typedef llvm::SmallVector<ObjCProtocolDecl*, 8>::const_iterator qual_iterator;
+  inline qual_iterator qual_begin() const;
+  inline qual_iterator qual_end() const;
+  bool qual_empty() const { return getTypeClass() != ObjCQualifiedInterface; }
+
+  /// getNumProtocols - Return the number of qualifying protocols in this
+  /// interface type, or 0 if there are none.
+  inline unsigned getNumProtocols() const;
   
+  /// getProtocols - Return the specified qualifying protocol.
+  inline ObjCProtocolDecl *getProtocols(unsigned i) const;
+
+  
+  
+  virtual void getAsStringInternal(std::string &InnerString) const;
   static bool classof(const Type *T) { 
     return T->getTypeClass() == ObjCInterface ||
            T->getTypeClass() == ObjCQualifiedInterface; 
@@ -1131,7 +1153,7 @@ class ObjCQualifiedInterfaceType : public ObjCInterfaceType,
                                      
   // List of protocols for this protocol conforming object type
   // List is sorted on protocol name. No protocol is enterred more than once.
-  llvm::SmallVector<ObjCProtocolDecl*, 8> Protocols;
+  llvm::SmallVector<ObjCProtocolDecl*, 4> Protocols;
 
   ObjCQualifiedInterfaceType(ObjCInterfaceDecl *D,
                              ObjCProtocolDecl **Protos, unsigned NumP) : 
@@ -1147,7 +1169,6 @@ public:
     return Protocols.size();
   }
 
-  typedef llvm::SmallVector<ObjCProtocolDecl*, 8>::const_iterator qual_iterator;
   qual_iterator qual_begin() const { return Protocols.begin(); }
   qual_iterator qual_end() const   { return Protocols.end(); }
                                      
@@ -1163,6 +1184,35 @@ public:
   }
   static bool classof(const ObjCQualifiedInterfaceType *) { return true; }
 };
+  
+inline ObjCInterfaceType::qual_iterator ObjCInterfaceType::qual_begin() const {
+  if (const ObjCQualifiedInterfaceType *QIT = 
+         dyn_cast<ObjCQualifiedInterfaceType>(this))
+    return QIT->qual_begin();
+  return 0;
+}
+inline ObjCInterfaceType::qual_iterator ObjCInterfaceType::qual_end() const {
+  if (const ObjCQualifiedInterfaceType *QIT = 
+         dyn_cast<ObjCQualifiedInterfaceType>(this))
+    return QIT->qual_end();
+  return 0;
+}
+
+/// getNumProtocols - Return the number of qualifying protocols in this
+/// interface type, or 0 if there are none.
+inline unsigned ObjCInterfaceType::getNumProtocols() const {
+  if (const ObjCQualifiedInterfaceType *QIT = 
+        dyn_cast<ObjCQualifiedInterfaceType>(this))
+    return QIT->getNumProtocols();
+  return 0;
+}
+
+/// getProtocols - Return the specified qualifying protocol.
+inline ObjCProtocolDecl *ObjCInterfaceType::getProtocols(unsigned i) const {
+  return cast<ObjCQualifiedInterfaceType>(this)->getProtocols(i);
+}
+  
+  
 
 /// ObjCQualifiedIdType - to represent id<protocol-list>.
 ///
