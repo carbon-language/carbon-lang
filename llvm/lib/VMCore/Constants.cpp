@@ -857,19 +857,6 @@ ConstantExpr::getWithOperandReplaced(unsigned OpNo, Constant *Op) const {
     Op1 = (OpNo == 1) ? Op : getOperand(1);
     Op2 = (OpNo == 2) ? Op : getOperand(2);
     return ConstantExpr::getShuffleVector(Op0, Op1, Op2);
-  case Instruction::InsertValue: {
-    const SmallVector<unsigned, 4> &Indices = getIndices();
-    Op0 = (OpNo == 0) ? Op : getOperand(0);
-    Op1 = (OpNo == 1) ? Op : getOperand(1);
-    return ConstantExpr::getInsertValue(Op0, Op1,
-                                        &Indices[0], Indices.size());
-  }
-  case Instruction::ExtractValue: {
-    assert(OpNo == 0 && "ExtractaValue has only one operand!");
-    const SmallVector<unsigned, 4> &Indices = getIndices();
-    return
-      ConstantExpr::getExtractValue(Op, &Indices[0], Indices.size());
-  }
   case Instruction::GetElementPtr: {
     SmallVector<Constant*, 8> Ops;
     Ops.resize(getNumOperands()-1);
@@ -925,16 +912,6 @@ getWithOperands(const std::vector<Constant*> &Ops) const {
     return ConstantExpr::getExtractElement(Ops[0], Ops[1]);
   case Instruction::ShuffleVector:
     return ConstantExpr::getShuffleVector(Ops[0], Ops[1], Ops[2]);
-  case Instruction::InsertValue: {
-    const SmallVector<unsigned, 4> &Indices = getIndices();
-    return ConstantExpr::getInsertValue(Ops[0], Ops[1],
-                                        &Indices[0], Indices.size());
-  }
-  case Instruction::ExtractValue: {
-    const SmallVector<unsigned, 4> &Indices = getIndices();
-    return ConstantExpr::getExtractValue(Ops[0],
-                                         &Indices[0], Indices.size());
-  }
   case Instruction::GetElementPtr:
     return ConstantExpr::getGetElementPtr(Ops[0], &Ops[1], Ops.size()-1);
   case Instruction::ICmp:
@@ -2365,15 +2342,9 @@ Constant *ConstantExpr::getInsertValueTy(const Type *ReqTy, Constant *Agg,
          "insertvalue type invalid!");
   assert(Agg->getType()->isFirstClassType() &&
          "Non-first-class type for constant InsertValue expression");
-  if (Constant *FC = ConstantFoldInsertValueInstruction(Agg, Val, Idxs, NumIdx))
-    return FC;          // Fold a few common cases...
-  // Look up the constant in the table first to ensure uniqueness
-  std::vector<Constant*> ArgVec;
-  ArgVec.push_back(Agg);
-  ArgVec.push_back(Val);
-  SmallVector<unsigned, 4> Indices(Idxs, Idxs + NumIdx);
-  const ExprMapKeyType Key(Instruction::InsertValue, ArgVec, 0, Indices);
-  return ExprConstants->getOrCreate(ReqTy, Key);
+  Constant *FC = ConstantFoldInsertValueInstruction(Agg, Val, Idxs, NumIdx);
+  assert(FC && "InsertValue constant expr couldn't be folded!");
+  return FC;
 }
 
 Constant *ConstantExpr::getInsertValue(Constant *Agg, Constant *Val,
@@ -2395,14 +2366,9 @@ Constant *ConstantExpr::getExtractValueTy(const Type *ReqTy, Constant *Agg,
          "extractvalue indices invalid!");
   assert(Agg->getType()->isFirstClassType() &&
          "Non-first-class type for constant extractvalue expression");
-  if (Constant *FC = ConstantFoldExtractValueInstruction(Agg, Idxs, NumIdx))
-    return FC;          // Fold a few common cases...
-  // Look up the constant in the table first to ensure uniqueness
-  std::vector<Constant*> ArgVec;
-  ArgVec.push_back(Agg);
-  SmallVector<unsigned, 4> Indices(Idxs, Idxs + NumIdx);
-  const ExprMapKeyType Key(Instruction::ExtractValue, ArgVec, 0, Indices);
-  return ExprConstants->getOrCreate(ReqTy, Key);
+  Constant *FC = ConstantFoldExtractValueInstruction(Agg, Idxs, NumIdx);
+  assert(FC && "ExtractValue constant expr couldn't be folded!");
+  return FC;
 }
 
 Constant *ConstantExpr::getExtractValue(Constant *Agg,

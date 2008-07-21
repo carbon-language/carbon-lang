@@ -770,47 +770,6 @@ bool BitcodeReader::ParseConstants() {
       V = ConstantExpr::getGetElementPtr(Elts[0], &Elts[1], Elts.size()-1);
       break;
     }
-    case bitc::CST_CODE_CE_EXTRACTVAL: {
-                                    // CE_EXTRACTVAL: [opty, opval, n x indices]
-      const Type *AggTy = getTypeByID(Record[0]);
-      if (!AggTy || !AggTy->isAggregateType())
-        return Error("Invalid CE_EXTRACTVAL record");
-      Constant *Agg = ValueList.getConstantFwdRef(Record[1], AggTy);
-      SmallVector<unsigned, 4> Indices;
-      for (unsigned i = 2, e = Record.size(); i != e; ++i) {
-        uint64_t Index = Record[i];
-        if ((unsigned)Index != Index)
-          return Error("Invalid CE_EXTRACTVAL record");
-        Indices.push_back((unsigned)Index);
-      }
-      if (!ExtractValueInst::getIndexedType(AggTy,
-                                            Indices.begin(), Indices.end()))
-        return Error("Invalid CE_EXTRACTVAL record");
-      V = ConstantExpr::getExtractValue(Agg, &Indices[0], Indices.size());
-      break;
-    }
-    case bitc::CST_CODE_CE_INSERTVAL: {
-                        // CE_INSERTVAL: [opty, opval, opty, opval, n x indices]
-      const Type *AggTy = getTypeByID(Record[0]);
-      if (!AggTy || !AggTy->isAggregateType())
-        return Error("Invalid CE_INSERTVAL record");
-      Constant *Agg = ValueList.getConstantFwdRef(Record[1], AggTy);
-      const Type *ValTy = getTypeByID(Record[2]);
-      Constant *Val = ValueList.getConstantFwdRef(Record[3], ValTy);
-      SmallVector<unsigned, 4> Indices;
-      for (unsigned i = 4, e = Record.size(); i != e; ++i) {
-        uint64_t Index = Record[i];
-        if ((unsigned)Index != Index)
-          return Error("Invalid CE_INSERTVAL record");
-        Indices.push_back((unsigned)Index);
-      }
-      if (ExtractValueInst::getIndexedType(AggTy,
-                                           Indices.begin(),
-                                           Indices.end()) != ValTy)
-        return Error("Invalid CE_INSERTVAL record");
-      V = ConstantExpr::getInsertValue(Agg, Val, &Indices[0], Indices.size());
-      break;
-    }
     case bitc::CST_CODE_CE_SELECT:  // CE_SELECT: [opval#, opval#, opval#]
       if (Record.size() < 3) return Error("Invalid CE_SELECT record");
       V = ConstantExpr::getSelect(ValueList.getConstantFwdRef(Record[0],
