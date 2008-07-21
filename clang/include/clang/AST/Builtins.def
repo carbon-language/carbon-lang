@@ -55,6 +55,8 @@
 
 // Standard libc/libm functions:
 BUILTIN(__builtin_huge_val, "d", "nc")
+BUILTIN(__builtin_huge_valf, "f", "nc")
+BUILTIN(__builtin_huge_vall, "Ld", "nc")
 BUILTIN(__builtin_inf  , "d"   , "nc")
 BUILTIN(__builtin_inff , "f"   , "nc")
 BUILTIN(__builtin_infl , "Ld"  , "nc")
@@ -86,6 +88,15 @@ BUILTIN(__builtin_ctz  , "iUi"  , "nc")
 BUILTIN(__builtin_ctzl , "iULi" , "nc")
 BUILTIN(__builtin_ctzll, "iULLi", "nc")
 // TODO: int ctzimax(uintmax_t)
+BUILTIN(__builtin_ffs  , "iUi"  , "nc")
+BUILTIN(__builtin_ffsl , "iULi" , "nc")
+BUILTIN(__builtin_ffsll, "iULLi", "nc")
+BUILTIN(__builtin_parity  , "iUi"  , "nc")
+BUILTIN(__builtin_parityl , "iULi" , "nc")
+BUILTIN(__builtin_parityll, "iULLi", "nc")
+BUILTIN(__builtin_popcount  , "iUi"  , "nc")
+BUILTIN(__builtin_popcountl , "iULi" , "nc")
+BUILTIN(__builtin_popcountll, "iULLi", "nc")
 
 // FIXME: These type signatures are not correct for targets with int != 32-bits
 // or with ULL != 64-bits.

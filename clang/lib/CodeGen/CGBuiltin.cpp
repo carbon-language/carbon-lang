@@ -140,6 +140,57 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
       Result = Builder.CreateIntCast(Result, ResultType, "cast");
     return RValue::get(Result);
   }
+  case Builtin::BI__builtin_ffs:
+  case Builtin::BI__builtin_ffsl:
+  case Builtin::BI__builtin_ffsll: {
+    // ffs(x) -> x ? cttz(x) + 1 : 0
+    Value *ArgValue = EmitScalarExpr(E->getArg(0));
+    
+    const llvm::Type *ArgType = ArgValue->getType();
+    Value *F = CGM.getIntrinsic(Intrinsic::cttz, &ArgType, 1);
+        
+    const llvm::Type *ResultType = ConvertType(E->getType());
+    Value *Tmp = Builder.CreateAdd(Builder.CreateCall(F, ArgValue, "tmp"), 
+                                   ConstantInt::get(ArgType, 1), "tmp");
+    Value *Zero = llvm::Constant::getNullValue(ArgType);
+    Value *IsZero = Builder.CreateICmpEQ(ArgValue, Zero, "iszero");
+    Value *Result = Builder.CreateSelect(IsZero, Zero, Tmp, "ffs");
+    if (Result->getType() != ResultType)
+      Result = Builder.CreateIntCast(Result, ResultType, "cast");
+    return RValue::get(Result);
+  }
+  case Builtin::BI__builtin_parity:
+  case Builtin::BI__builtin_parityl:
+  case Builtin::BI__builtin_parityll: {
+    // parity(x) -> ctpop(x) & 1
+    Value *ArgValue = EmitScalarExpr(E->getArg(0));
+    
+    const llvm::Type *ArgType = ArgValue->getType();
+    Value *F = CGM.getIntrinsic(Intrinsic::ctpop, &ArgType, 1);
+    
+    const llvm::Type *ResultType = ConvertType(E->getType());
+    Value *Tmp = Builder.CreateCall(F, ArgValue, "tmp");
+    Value *Result = Builder.CreateAnd(Tmp, ConstantInt::get(ArgType, 1), 
+                                      "tmp");
+    if (Result->getType() != ResultType)
+      Result = Builder.CreateIntCast(Result, ResultType, "cast");
+    return RValue::get(Result);
+  }
+  case Builtin::BI__builtin_popcount:
+  case Builtin::BI__builtin_popcountl:
+  case Builtin::BI__builtin_popcountll: {
+    Value *ArgValue = EmitScalarExpr(E->getArg(0));
+    
+    const llvm::Type *ArgType = ArgValue->getType();
+    Value *F = CGM.getIntrinsic(Intrinsic::ctpop, &ArgType, 1);
+    
+    const llvm::Type *ResultType = ConvertType(E->getType());
+    Value *Result = Builder.CreateCall(F, ArgValue, "tmp");
+    if (Result->getType() != ResultType)
+      Result = Builder.CreateIntCast(Result, ResultType, "cast");
+    return RValue::get(Result);
+  }
+
   case Builtin::BI__builtin_expect:
     return RValue::get(EmitScalarExpr(E->getArg(0)));
   case Builtin::BI__builtin_bswap32:
@@ -149,16 +200,18 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     Value *F = CGM.getIntrinsic(Intrinsic::bswap, &ArgType, 1);
     return RValue::get(Builder.CreateCall(F, ArgValue, "tmp"));
   }
-  case Builtin::BI__builtin_inff:
   case Builtin::BI__builtin_huge_val:
+  case Builtin::BI__builtin_huge_valf:
+  case Builtin::BI__builtin_huge_vall:
   case Builtin::BI__builtin_inf:
+  case Builtin::BI__builtin_inff:
   case Builtin::BI__builtin_infl: {
     const llvm::fltSemantics &Sem =
       CGM.getContext().getFloatTypeSemantics(E->getType());
     return RValue::get(ConstantFP::get(APFloat::getInf(Sem)));
   }
-  case Builtin::BI__builtin_nanf:
   case Builtin::BI__builtin_nan:
+  case Builtin::BI__builtin_nanf:
   case Builtin::BI__builtin_nanl: {
     // If this is __builtin_nan("") turn this into a simple nan, otherwise just
     // call libm nan.
