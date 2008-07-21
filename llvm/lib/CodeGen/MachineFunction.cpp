@@ -47,8 +47,8 @@ namespace {
     std::ostream *OS;
     const std::string Banner;
 
-    Printer (std::ostream *_OS, const std::string &_Banner) 
-      : MachineFunctionPass((intptr_t)&ID), OS (_OS), Banner (_Banner) { }
+    Printer (std::ostream *os, const std::string &banner) 
+      : MachineFunctionPass((intptr_t)&ID), OS(os), Banner(banner) {}
 
     const char *getPassName() const { return "MachineFunction Printer"; }
 
