@@ -538,12 +538,20 @@ static SCEVHandle BinomialCoefficient(SCEVHandle It, unsigned K,
 
   assert(K < 9 && "We cannot handle such long AddRecs yet.");
   
+  // FIXME: A temporary hack to remove in future.  Arbitrary precision integers
+  // aren't supported by the code generator yet.  For the dividend, the bitwidth
+  // we use is the smallest power of 2 greater or equal to K*W and less or equal
+  // to 64.  Note that setting the upper bound for bitwidth may still lead to
+  // miscompilation in some cases.
+  unsigned DividendBits = 1U << Log2_32_Ceil(K * It->getBitWidth());
+  if (DividendBits > 64)
+    DividendBits = 64;
+#if 0 // Waiting for the APInt support in the code generator...
   unsigned DividendBits = K * It->getBitWidth();
-  if (DividendBits > 256)
-    return new SCEVCouldNotCompute();
+#endif
 
   const IntegerType *DividendTy = IntegerType::get(DividendBits);
-  const SCEVHandle ExIt = SE.getZeroExtendExpr(It, DividendTy);
+  const SCEVHandle ExIt = SE.getTruncateOrZeroExtend(It, DividendTy);
 
   // The final number of bits we need to perform the division is the maximum of
   // dividend and divisor bitwidths.
@@ -565,7 +573,12 @@ static SCEVHandle BinomialCoefficient(SCEVHandle It, unsigned K,
       Dividend *= N-(K-1);
     if (DividendTy != DivisionTy)
       Dividend = Dividend.zext(DivisionTy->getBitWidth());
-    return SE.getConstant(Dividend.udiv(Divisor).trunc(It->getBitWidth()));
+
+    APInt Result = Dividend.udiv(Divisor);
+    if (Result.getBitWidth() != It->getBitWidth())
+      Result = Result.trunc(It->getBitWidth());
+
+    return SE.getConstant(Result);
   }
   
   SCEVHandle Dividend = ExIt;
@@ -574,10 +587,11 @@ static SCEVHandle BinomialCoefficient(SCEVHandle It, unsigned K,
       SE.getMulExpr(Dividend,
                     SE.getMinusSCEV(ExIt, SE.getIntegerSCEV(i, DividendTy)));
 
-  if (DividendTy != DivisionTy)
-    Dividend = SE.getZeroExtendExpr(Dividend, DivisionTy);
-  return SE.getTruncateExpr(SE.getUDivExpr(Dividend, SE.getConstant(Divisor)),
-                            It->getType());
+  return SE.getTruncateOrZeroExtend(
+             SE.getUDivExpr(
+                 SE.getTruncateOrZeroExtend(Dividend, DivisionTy),
+                 SE.getConstant(Divisor)
+             ), It->getType());
 }
 
 /// evaluateAtIteration - Return the value of this chain of recurrences at
