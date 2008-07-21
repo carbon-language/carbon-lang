@@ -654,13 +654,10 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
       return new ObjCPropertyRefExpr(PD, PD->getType(), MemberLoc, BaseExpr);
     
     // Lastly, check protocols on qualified interfaces.
-    if (const ObjCQualifiedInterfaceType *QIT = 
-          dyn_cast<ObjCQualifiedInterfaceType>(IFTy)) {
-      for (unsigned i = 0; i != QIT->getNumProtocols(); ++i)
-        if (ObjCPropertyDecl *PD =
-              QIT->getProtocols(i)->FindPropertyDeclaration(&Member))
-          return new ObjCPropertyRefExpr(PD, PD->getType(), MemberLoc,BaseExpr);
-    }
+    for (ObjCInterfaceType::qual_iterator I = IFTy->qual_begin(),
+         E = IFTy->qual_end(); I != E; ++I)
+      if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member))
+        return new ObjCPropertyRefExpr(PD, PD->getType(), MemberLoc, BaseExpr);
   }
   
   // Handle 'field access' to vectors, such as 'V.xx'.

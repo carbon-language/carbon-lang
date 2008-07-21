@@ -284,7 +284,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
       if (!Method) {
         // search protocols
         for (unsigned i = 0; i < QIT->getNumProtocols(); i++) {
-          ObjCProtocolDecl *PDecl = QIT->getProtocols(i);
+          ObjCProtocolDecl *PDecl = QIT->getProtocol(i);
           if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
             break;
         }

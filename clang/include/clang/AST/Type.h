@@ -1130,9 +1130,8 @@ public:
   /// interface type, or 0 if there are none.
   inline unsigned getNumProtocols() const;
   
-  /// getProtocols - Return the specified qualifying protocol.
-  inline ObjCProtocolDecl *getProtocols(unsigned i) const;
-
+  /// getProtocol - Return the specified qualifying protocol.
+  inline ObjCProtocolDecl *getProtocol(unsigned i) const;
   
   
   virtual void getAsStringInternal(std::string &InnerString) const;
@@ -1162,7 +1161,7 @@ class ObjCQualifiedInterfaceType : public ObjCInterfaceType,
   friend class ASTContext;  // ASTContext creates these.
 public:
   
-  ObjCProtocolDecl *getProtocols(unsigned i) const {
+  ObjCProtocolDecl *getProtocol(unsigned i) const {
     return Protocols[i];
   }
   unsigned getNumProtocols() const {
@@ -1207,9 +1206,9 @@ inline unsigned ObjCInterfaceType::getNumProtocols() const {
   return 0;
 }
 
-/// getProtocols - Return the specified qualifying protocol.
-inline ObjCProtocolDecl *ObjCInterfaceType::getProtocols(unsigned i) const {
-  return cast<ObjCQualifiedInterfaceType>(this)->getProtocols(i);
+/// getProtocol - Return the specified qualifying protocol.
+inline ObjCProtocolDecl *ObjCInterfaceType::getProtocol(unsigned i) const {
+  return cast<ObjCQualifiedInterfaceType>(this)->getProtocol(i);
 }
   
   
