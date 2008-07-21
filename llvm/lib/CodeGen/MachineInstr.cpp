@@ -328,6 +328,8 @@ MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI)
 
   // Set parent to null.
   Parent = 0;
+
+  LeakDetector::addGarbageObject(this);
 }
 
 MachineInstr::~MachineInstr() {
