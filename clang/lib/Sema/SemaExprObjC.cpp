@@ -225,12 +225,13 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
   
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
   Expr *RExpr = static_cast<Expr *>(receiver);
-  QualType receiverType;
   QualType returnType;
   ObjCMethodDecl *Method = 0;
 
-  receiverType = RExpr->getType().getCanonicalType().getUnqualifiedType();
+  QualType receiverType = 
+    RExpr->getType().getCanonicalType().getUnqualifiedType();
   
+  // Handle messages to id.
   if (receiverType == Context.getObjCIdType().getCanonicalType()) {
     Method = InstanceMethodPool[Sel].Method;
     if (!Method)
@@ -245,13 +246,18 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
         if (CheckMessageArgumentTypes(ArgExprs, Sel.getNumArgs(), Method))
           return true;
     }
-  } else if (receiverType == Context.getObjCClassType().getCanonicalType()) {
+    return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 
+                               ArgExprs, NumArgs);
+  }
+  
+  // Handle messages to Class.
+  if (receiverType == Context.getObjCClassType().getCanonicalType()) {
     if (getCurMethodDecl()) {
       ObjCInterfaceDecl* ClassDecl = getCurMethodDecl()->getClassInterface();
       // If we have an implementation in scope, check "private" methods.
       if (ClassDecl)
         if (ObjCImplementationDecl *ImpDecl = 
-            ObjCImplementations[ClassDecl->getIdentifier()])
+              ObjCImplementations[ClassDecl->getIdentifier()])
           Method = ImpDecl->getClassMethod(Sel);
     }
     if (!Method)
@@ -268,79 +274,82 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
         if (CheckMessageArgumentTypes(ArgExprs, Sel.getNumArgs(), Method))
           return true;
     }
+
+    return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 
+                               ArgExprs, NumArgs);
+  }
+  
+  // We allow sending a message to a qualified ID ("id<foo>") to an interface
+  // directly ("[NSNumber foo]") and to a pointer to an interface (an object).
+  if (!isa<ObjCQualifiedIdType>(receiverType) &&
+      !isa<ObjCInterfaceType>(receiverType))
+    if (const PointerType *PTy = receiverType->getAsPointerType())
+      receiverType = PTy->getPointeeType();
+    // else error, invalid receiver.
+  
+  ObjCInterfaceDecl* ClassDecl = 0;
+  if (ObjCQualifiedIdType *QIT = 
+           dyn_cast<ObjCQualifiedIdType>(receiverType)) {
+    // search protocols
+    for (unsigned i = 0; i < QIT->getNumProtocols(); i++) {
+      ObjCProtocolDecl *PDecl = QIT->getProtocols(i);
+      if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
+        break;
+    }
+    if (!Method)
+      Diag(lbrac, diag::warn_method_not_found_in_protocol, 
+           std::string("-"), Sel.getName(),
+           SourceRange(lbrac, rbrac));
   } else {
-    // We allow sending a message to a qualified ID ("id<foo>") to an interface
-    // directly ("[NSNumber foo]") and to a pointer to an interface (an object).
-    if (!isa<ObjCQualifiedIdType>(receiverType) &&
-        !isa<ObjCInterfaceType>(receiverType))
-      if (const PointerType *PTy = receiverType->getAsPointerType())
-        receiverType = PTy->getPointeeType();
-      // else error, invalid receiver.
+    ObjCInterfaceType *OCIReceiver =dyn_cast<ObjCInterfaceType>(receiverType);
+    if (OCIReceiver == 0) {
+      Diag(lbrac, diag::error_bad_receiver_type,
+           RExpr->getType().getAsString());
+      return true;
+    }
     
-    ObjCInterfaceDecl* ClassDecl = 0;
-    if (ObjCQualifiedIdType *QIT = 
-             dyn_cast<ObjCQualifiedIdType>(receiverType)) {
-      // search protocols
-      for (unsigned i = 0; i < QIT->getNumProtocols(); i++) {
-        ObjCProtocolDecl *PDecl = QIT->getProtocols(i);
-        if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
+    ClassDecl = OCIReceiver->getDecl();
+    // FIXME: consider using InstanceMethodPool, since it will be faster
+    // than the following method (which can do *many* linear searches). The
+    // idea is to add class info to InstanceMethodPool.
+    Method = ClassDecl->lookupInstanceMethod(Sel);
+    
+    if (!Method) {
+      // Search protocol qualifiers.
+      for (ObjCQualifiedIdType::qual_iterator QI = OCIReceiver->qual_begin(),
+           E = OCIReceiver->qual_end(); QI != E; ++QI) {
+        if ((Method = (*QI)->lookupInstanceMethod(Sel)))
           break;
       }
-      if (!Method)
-        Diag(lbrac, diag::warn_method_not_found_in_protocol, 
-             std::string("-"), Sel.getName(),
-             SourceRange(lbrac, rbrac));
-    } else {
-      ObjCInterfaceType *OCIReceiver =dyn_cast<ObjCInterfaceType>(receiverType);
-      if (OCIReceiver == 0) {
-        Diag(lbrac, diag::error_bad_receiver_type,
-             RExpr->getType().getAsString());
-        return true;
-      }
-      
-      ClassDecl = OCIReceiver->getDecl();
-      // FIXME: consider using InstanceMethodPool, since it will be faster
-      // than the following method (which can do *many* linear searches). The
-      // idea is to add class info to InstanceMethodPool.
-      Method = ClassDecl->lookupInstanceMethod(Sel);
-      
-      if (!Method) {
-        // Search protocol qualifiers.
-        for (ObjCQualifiedIdType::qual_iterator QI = OCIReceiver->qual_begin(),
-             E = OCIReceiver->qual_end(); QI != E; ++QI) {
-          if ((Method = (*QI)->lookupInstanceMethod(Sel)))
-            break;
-        }
-      }
-      
-      if (!Method && !OCIReceiver->qual_empty())
-        Diag(lbrac, diag::warn_method_not_found_in_protocol, 
-             std::string("-"), Sel.getName(),
-             SourceRange(lbrac, rbrac));
     }
     
-    if (!Method) {
-      // If we have an implementation in scope, check "private" methods.
-      if (ClassDecl)
-        if (ObjCImplementationDecl *ImpDecl = 
-            ObjCImplementations[ClassDecl->getIdentifier()])
-          Method = ImpDecl->getInstanceMethod(Sel);
-          // If we still haven't found a method, look in the global pool. This
-          // behavior isn't very desirable, however we need it for GCC
-          // compatibility.
-          if (!Method)
-            Method = InstanceMethodPool[Sel].Method;
-    }
-    if (!Method) {
-      Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
+    if (!Method && !OCIReceiver->qual_empty())
+      Diag(lbrac, diag::warn_method_not_found_in_protocol, 
+           std::string("-"), Sel.getName(),
            SourceRange(lbrac, rbrac));
-      returnType = Context.getObjCIdType();
-    } else {
-      returnType = Method->getResultType();
-      if (Sel.getNumArgs())
-        if (CheckMessageArgumentTypes(ArgExprs, Sel.getNumArgs(), Method))
-          return true;
-    }
+  }
+  
+  if (!Method) {
+    // If we have an implementation in scope, check "private" methods.
+    if (ClassDecl)
+      if (ObjCImplementationDecl *ImpDecl = 
+            ObjCImplementations[ClassDecl->getIdentifier()])
+        Method = ImpDecl->getInstanceMethod(Sel);
+        // If we still haven't found a method, look in the global pool. This
+        // behavior isn't very desirable, however we need it for GCC
+        // compatibility.
+        if (!Method)
+          Method = InstanceMethodPool[Sel].Method;
+  }
+  if (!Method) {
+    Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
+         SourceRange(lbrac, rbrac));
+    returnType = Context.getObjCIdType();
+  } else {
+    returnType = Method->getResultType();
+    if (Sel.getNumArgs())
+      if (CheckMessageArgumentTypes(ArgExprs, Sel.getNumArgs(), Method))
+        return true;
   }
   return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 
                              ArgExprs, NumArgs);
