@@ -360,7 +360,11 @@ printOperand(const MachineInstr *MI, int opNum)
     closeP = true;
   } else if ((MI->getOpcode() == Mips::ADDiu) && !MO.isRegister() 
              && !MO.isImmediate()) {
-    O << "%lo(";
+    const MachineOperand &firstMO = MI->getOperand(opNum-1);
+    if (firstMO.getReg() == Mips::GP)
+      O << "%gp_rel(";
+    else
+      O << "%lo(";
     closeP = true;
   } else if ((isPIC) && (MI->getOpcode() == Mips::LW)
              && (!MO.isRegister()) && (!MO.isImmediate())) {
@@ -490,14 +494,13 @@ printModuleLevelGV(const GlobalVariable* GVar) {
   Constant *C = GVar->getInitializer();
   const Type *CTy = C->getType();
   unsigned Size = TD->getABITypeSize(CTy);
+  const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
   bool printSizeAndType = true;
 
   // A data structure or array is aligned in memory to the largest
   // alignment boundary required by any data type inside it (this matches
   // the Preferred Type Alignment). For integral types, the alignment is
   // the type size.
-  //unsigned Align = TD->getPreferredAlignmentLog(I);
-  //unsigned Align = TD->getPrefTypeAlignment(C->getType());
   unsigned Align;
   if (CTy->getTypeID() == Type::IntegerTyID ||
       CTy->getTypeID() == Type::VoidTyID) {
@@ -546,6 +549,8 @@ printModuleLevelGV(const GlobalVariable* GVar) {
     O << TAI->getGlobalDirective() << name << '\n';
     // Fall Through
    case GlobalValue::InternalLinkage:
+    if (CVA && CVA->isCString())
+      printSizeAndType = false;  
     break;
    case GlobalValue::GhostLinkage:
     cerr << "Should not have any unmaterialized functions!\n";

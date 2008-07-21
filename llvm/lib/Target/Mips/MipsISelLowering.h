@@ -37,6 +37,9 @@ namespace llvm {
       // No relation with Mips Lo register
       Lo, 
 
+      // Handle gp_rel (small data/bss sections) relocation.
+      GPRel,
+
       // Select CC Pseudo Instruction
       SelectCC,
 
@@ -83,7 +86,7 @@ namespace llvm {
     SDOperand LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC);
     SDNode *LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode*TheCall,
                             unsigned CallingConv, SelectionDAG &DAG);
-    SDOperand getReturnAddressFrameIndex(SelectionDAG &DAG);
+    bool IsGlobalInSmallSection(GlobalValue *GV); 
 
     // Lower Operand specifics
     SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG);

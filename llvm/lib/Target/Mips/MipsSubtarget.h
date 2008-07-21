@@ -71,6 +71,10 @@ protected:
   // isLinux - Target system is Linux. Is false we consider ELFOS for now.
   bool IsLinux;
 
+  // Put global and static items less than or equal to SSectionThreshold 
+  // bytes into the small data or bss section. The default is 8.
+  unsigned SSectionThreshold;
+
   InstrItineraryData InstrItins;
 
 public:
@@ -102,6 +106,7 @@ public:
   bool hasABICall() const { return HasABICall; };
   bool hasAbsoluteCall() const { return HasAbsoluteCall; };
   bool isLinux() const { return IsLinux; };
+  unsigned getSSectionThreshold() const { return SSectionThreshold; }
 
 };
 } // End llvm namespace

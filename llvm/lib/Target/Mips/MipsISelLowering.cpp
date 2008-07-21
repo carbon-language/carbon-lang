@@ -20,6 +20,7 @@
 #include "MipsSubtarget.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/CallingConv.h"
 #include "llvm/CodeGen/CallingConvLower.h"
@@ -43,6 +44,7 @@ getTargetNodeName(unsigned Opcode) const
     case MipsISD::JmpLink   : return "MipsISD::JmpLink";
     case MipsISD::Hi        : return "MipsISD::Hi";
     case MipsISD::Lo        : return "MipsISD::Lo";
+    case MipsISD::GPRel     : return "MipsISD::GPRel";
     case MipsISD::Ret       : return "MipsISD::Ret";
     case MipsISD::SelectCC  : return "MipsISD::SelectCC";
     case MipsISD::FPBrcond  : return "MipsISD::FPBrcond";
@@ -89,8 +91,6 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::SELECT_CC,        MVT::f32,   Custom);
 
   // Operations not directly supported by Mips.
-  setConvertAction(MVT::f64, MVT::f32, Expand);
-
   setOperationAction(ISD::BR_JT,             MVT::Other, Expand);
   setOperationAction(ISD::BR_CC,             MVT::Other, Expand);
   setOperationAction(ISD::SELECT_CC,         MVT::Other, Expand);
@@ -234,34 +234,71 @@ AddLiveIn(MachineFunction &MF, unsigned PReg, TargetRegisterClass *RC)
   return VReg;
 }
 
+// Discover if this global address can be placed into small data/bss section. 
+// This should happen for globals with size less than small section size 
+// threshold in no abicall environments. Data in this section must be addressed 
+// using gp_rel operator.
+bool MipsTargetLowering::IsGlobalInSmallSection(GlobalValue *GV)
+{
+  const TargetData *TD = getTargetData();
+  const Value *V = dyn_cast<Value>(GV);
+  const GlobalVariable *GVA = dyn_cast<GlobalVariable>(V);
+  
+  //const PointerType *PTy = GV->getType();
+  const Type *Ty = GV->getType()->getElementType();
+  unsigned Size = TD->getABITypeSize(Ty);
+
+  // if this is a internal constant string, there is a special
+  // section for it, but not in small data/bss.
+  if (GVA->hasInitializer() && GV->hasInternalLinkage()) {
+    Constant *C = GVA->getInitializer();
+    const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
+    if (CVA && CVA->isCString()) 
+      return false;
+  }
+
+  if (Size > 0 && (Size <= Subtarget->getSSectionThreshold()))
+    return true;
+
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 //  Misc Lower Operation implementation
 //===----------------------------------------------------------------------===//
 SDOperand MipsTargetLowering::
 LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) 
 {
-  SDOperand ResNode;
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
-  bool isPIC = (getTargetMachine().getRelocationModel() == Reloc::PIC_);
 
-  SDOperand HiPart; 
-  if (!isPIC) {
+  if (!Subtarget->hasABICall()) {
+    if (isa<Function>(GV)) return GA;
     const MVT *VTs = DAG.getNodeValueTypes(MVT::i32);
     SDOperand Ops[] = { GA };
-    HiPart = DAG.getNode(MipsISD::Hi, VTs, 1, Ops, 1);
-  } else // Emit Load from Global Pointer
-    HiPart = DAG.getLoad(MVT::i32, DAG.getEntryNode(), GA, NULL, 0);
 
-  // On functions and global targets not internal linked only
-  // a load from got/GP is necessary for PIC to work.
-  if ((isPIC) && ((!GV->hasInternalLinkage()) || (isa<Function>(GV))))
-    return HiPart;
+    if (IsGlobalInSmallSection(GV)) { // %gp_rel relocation
+      SDOperand GPRelNode = DAG.getNode(MipsISD::GPRel, VTs, 1, Ops, 1);
+      SDOperand GOT = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i32);
+      return DAG.getNode(ISD::ADD, MVT::i32, GOT, GPRelNode); 
+    }
+    // %hi/%lo relocation
+    SDOperand HiPart = DAG.getNode(MipsISD::Hi, VTs, 1, Ops, 1);
+    SDOperand Lo = DAG.getNode(MipsISD::Lo, MVT::i32, GA);
+    return DAG.getNode(ISD::ADD, MVT::i32, HiPart, Lo);
 
-  SDOperand Lo = DAG.getNode(MipsISD::Lo, MVT::i32, GA);
-  ResNode = DAG.getNode(ISD::ADD, MVT::i32, HiPart, Lo);
+  } else { // Abicall relocations, TODO: make this cleaner.
+    SDOperand ResNode = DAG.getLoad(MVT::i32, DAG.getEntryNode(), GA, NULL, 0);
+    // On functions and global targets not internal linked only
+    // a load from got/GP is necessary for PIC to work.
+    if (!GV->hasInternalLinkage() || isa<Function>(GV))
+      return ResNode;
+    SDOperand Lo = DAG.getNode(MipsISD::Lo, MVT::i32, GA);
+    return DAG.getNode(ISD::ADD, MVT::i32, ResNode, Lo);
+  }
 
-  return ResNode;
+  assert(0 && "Dont know how to handle GlobalAddress");
+  return SDOperand(0,0);
 }
 
 SDOperand MipsTargetLowering::
@@ -596,9 +633,8 @@ LowerCCCArguments(SDOperand Op, SelectionDAG &DAG)
 
   unsigned StackReg = MF.getTarget().getRegisterInfo()->getFrameRegister(MF);
 
-  // GP holds the GOT address on PIC calls.
-  if (getTargetMachine().getRelocationModel() == Reloc::PIC_)
-    AddLiveIn(MF, Mips::GP, Mips::CPURegsRegisterClass);
+  // GP must be live into PIC and non-PIC call target.
+  AddLiveIn(MF, Mips::GP, Mips::CPURegsRegisterClass);
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;

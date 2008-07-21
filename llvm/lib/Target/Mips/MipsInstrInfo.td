@@ -31,9 +31,9 @@ def MipsJmpLink : SDNode<"MipsISD::JmpLink",SDT_MipsJmpLink, [SDNPHasChain,
 // Hi and Lo nodes are used to handle global addresses. Used on 
 // MipsISelLowering to lower stuff like GlobalAddress, ExternalSymbol 
 // static model. (nothing to do with Mips Registers Hi and Lo)
-//def MipsHi  : SDNode<"MipsISD::Hi", SDTIntUnaryOp, [SDNPOutFlag]>;
-def MipsHi  : SDNode<"MipsISD::Hi", SDTIntUnaryOp>;
-def MipsLo  : SDNode<"MipsISD::Lo", SDTIntUnaryOp>;
+def MipsHi    : SDNode<"MipsISD::Hi", SDTIntUnaryOp>;
+def MipsLo    : SDNode<"MipsISD::Lo", SDTIntUnaryOp>;
+def MipsGPRel : SDNode<"MipsISD::GPRel", SDTIntUnaryOp>;
 
 // Return
 def MipsRet : SDNode<"MipsISD::Ret", SDT_MipsRet, [SDNPHasChain, 
@@ -555,13 +555,15 @@ def : Pat<(MipsJmpLink CPURegs:$dst),
 
 // GlobalAddress, Constant Pool, ExternalSymbol, and JumpTable
 def : Pat<(MipsHi tglobaladdr:$in), (LUi tglobaladdr:$in)>;
-def : Pat<(MipsLo tglobaladdr:$in), (ADDiu ZERO, tglobaladdr:$in)>;
+//def : Pat<(MipsLo tglobaladdr:$in), (ADDiu ZERO, tglobaladdr:$in)>;
 def : Pat<(add CPURegs:$hi, (MipsLo tglobaladdr:$lo)),
           (ADDiu CPURegs:$hi, tglobaladdr:$lo)>;
 def : Pat<(MipsHi tjumptable:$in), (LUi tjumptable:$in)>;
-def : Pat<(MipsLo tjumptable:$in), (ADDiu ZERO, tjumptable:$in)>;
+//def : Pat<(MipsLo tjumptable:$in), (ADDiu ZERO, tjumptable:$in)>;
 def : Pat<(add CPURegs:$hi, (MipsLo tjumptable:$lo)),
           (ADDiu CPURegs:$hi, tjumptable:$lo)>;
+def : Pat<(add CPURegs:$gp, (MipsGPRel tglobaladdr:$in)), 
+          (ADDiu CPURegs:$gp, tglobaladdr:$in)>;
 
 // Mips does not have "not", so we expand our way
 def : Pat<(not CPURegs:$in),

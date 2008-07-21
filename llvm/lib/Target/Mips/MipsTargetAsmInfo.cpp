@@ -31,6 +31,7 @@ MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM):
   ZeroDirective               = "\t.space\t";
   BSSSection                  = "\t.section\t.bss";
   LCOMMDirective              = "\t.lcomm\t";
+  CStringSection              = ".rodata.str";
 
   if (!TM.getSubtarget<MipsSubtarget>().hasABICall())
     JumpTableDirective = "\t.word\t";
