@@ -1739,7 +1739,9 @@ void X86InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        unsigned SrcReg, bool isKill, int FrameIdx,
                                        const TargetRegisterClass *RC) const {
   const MachineFunction &MF = *MBB.getParent();
-  unsigned Opc = getStoreRegOpcode(RC, RI.needsStackRealignment(MF));
+  bool isAligned = (RI.getStackAlignment() >= 16) ||
+    RI.needsStackRealignment(MF);
+  unsigned Opc = getStoreRegOpcode(RC, isAligned);
   addFrameReference(BuildMI(MBB, MI, get(Opc)), FrameIdx)
     .addReg(SrcReg, false, false, isKill);
 }
@@ -1749,7 +1751,9 @@ void X86InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
                                   SmallVectorImpl<MachineOperand> &Addr,
                                   const TargetRegisterClass *RC,
                                   SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  unsigned Opc = getStoreRegOpcode(RC, RI.needsStackRealignment(MF));
+  bool isAligned = (RI.getStackAlignment() >= 16) ||
+    RI.needsStackRealignment(MF);
+  unsigned Opc = getStoreRegOpcode(RC, isAligned);
   MachineInstrBuilder MIB = BuildMI(MF, get(Opc));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB = X86InstrAddOperand(MIB, Addr[i]);
@@ -1800,7 +1804,9 @@ void X86InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         unsigned DestReg, int FrameIdx,
                                         const TargetRegisterClass *RC) const{
   const MachineFunction &MF = *MBB.getParent();
-  unsigned Opc = getLoadRegOpcode(RC, RI.needsStackRealignment(MF));
+  bool isAligned = (RI.getStackAlignment() >= 16) ||
+    RI.needsStackRealignment(MF);
+  unsigned Opc = getLoadRegOpcode(RC, isAligned);
   addFrameReference(BuildMI(MBB, MI, get(Opc), DestReg), FrameIdx);
 }
 
@@ -1808,7 +1814,9 @@ void X86InstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                                  SmallVectorImpl<MachineOperand> &Addr,
                                  const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  unsigned Opc = getLoadRegOpcode(RC, RI.needsStackRealignment(MF));
+  bool isAligned = (RI.getStackAlignment() >= 16) ||
+    RI.needsStackRealignment(MF);
+  unsigned Opc = getLoadRegOpcode(RC, isAligned);
   MachineInstrBuilder MIB = BuildMI(MF, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB = X86InstrAddOperand(MIB, Addr[i]);
@@ -2275,7 +2283,9 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   const MachineFunction &MF = DAG.getMachineFunction();
   if (FoldedLoad) {
     MVT VT = *RC->vt_begin();
-    Load = DAG.getTargetNode(getLoadRegOpcode(RC, RI.needsStackRealignment(MF)),
+    bool isAligned = (RI.getStackAlignment() >= 16) ||
+      RI.needsStackRealignment(MF);
+    Load = DAG.getTargetNode(getLoadRegOpcode(RC, isAligned),
                              VT, MVT::Other,
                              &AddrOps[0], AddrOps.size());
     NewNodes.push_back(Load);
@@ -2306,10 +2316,10 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
     AddrOps.pop_back();
     AddrOps.push_back(SDOperand(NewNode, 0));
     AddrOps.push_back(Chain);
-    SDNode *Store =
-      DAG.getTargetNode(getStoreRegOpcode(DstRC,
-                                          RI.needsStackRealignment(MF)),
-                        MVT::Other, &AddrOps[0], AddrOps.size());
+    bool isAligned = (RI.getStackAlignment() >= 16) ||
+      RI.needsStackRealignment(MF);
+    SDNode *Store = DAG.getTargetNode(getStoreRegOpcode(DstRC, isAligned),
+                                      MVT::Other, &AddrOps[0], AddrOps.size());
     NewNodes.push_back(Store);
   }
 
