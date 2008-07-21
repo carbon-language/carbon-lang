@@ -70,6 +70,9 @@ BUILTIN(__builtin_fabsl, "LdLd", "ncF")
 BUILTIN(__builtin_copysign, "ddd", "ncF")
 BUILTIN(__builtin_copysignf, "fff", "ncF")
 BUILTIN(__builtin_copysignl, "LdLdLd", "ncF")
+BUILTIN(__builtin_powi , "ddi"  , "nc")
+BUILTIN(__builtin_powif, "ffi"  , "nc")
+BUILTIN(__builtin_powil, "LdLdi", "nc")
 
 // FP Comparisons.
 BUILTIN(__builtin_isgreater     , "i.", "nc")

@@ -192,6 +192,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   }
 
   case Builtin::BI__builtin_expect:
+    // FIXME: pass expect through to LLVM
     return RValue::get(EmitScalarExpr(E->getArg(0)));
   case Builtin::BI__builtin_bswap32:
   case Builtin::BI__builtin_bswap64: {
@@ -226,6 +227,19 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     // Otherwise, call libm 'nan'.
     break;
   }
+  case Builtin::BI__builtin_powi:
+  case Builtin::BI__builtin_powif:
+  case Builtin::BI__builtin_powil: {
+    Value *Base = EmitScalarExpr(E->getArg(0));
+    Value *Exponent = EmitScalarExpr(E->getArg(1));
+    
+    const llvm::Type *ArgType = Base->getType();
+    Value *F = CGM.getIntrinsic(Intrinsic::powi, &ArgType, 1);
+    
+    const llvm::Type *ResultType = ConvertType(E->getType());
+    return RValue::get(Builder.CreateCall2(F, Base, Exponent, "tmp"));
+  }
+
   case Builtin::BI__builtin_isgreater:
   case Builtin::BI__builtin_isgreaterequal:
   case Builtin::BI__builtin_isless:
