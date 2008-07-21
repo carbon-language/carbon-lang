@@ -362,6 +362,10 @@ public:
   const ObjCQualifiedInterfaceType *getAsObjCQualifiedInterfaceType() const;
   const ObjCQualifiedIdType *getAsObjCQualifiedIdType() const;
 
+  /// getAsPointerToObjCInterfaceType - If this is a pointer to an ObjC
+  /// interface, return the interface type, otherwise return null.
+  const ObjCInterfaceType *getAsPointerToObjCInterfaceType() const;
+
   
   /// getDesugaredType - Return the specified type with any "sugar" removed from
   /// the type.  This takes off typedefs, typeof's etc.  If the outer level of
@@ -1289,6 +1293,12 @@ inline unsigned QualType::getAddressSpace() const {
 inline const TypedefType* Type::getAsTypedefType() const {
   return dyn_cast<TypedefType>(this);
 }
+inline const ObjCInterfaceType *Type::getAsPointerToObjCInterfaceType() const {
+  if (const PointerType *PT = getAsPointerType())
+    return PT->getPointeeType()->getAsObjCInterfaceType();
+  return 0;
+}
+  
   
 inline bool Type::isFunctionType() const {
   return isa<FunctionType>(CanonicalType.getUnqualifiedType());

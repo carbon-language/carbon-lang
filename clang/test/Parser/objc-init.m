@@ -11,13 +11,16 @@ void test1() {
 }
 
 void test2(NSNumber x) {
+	id objects[] = {[x METH]}; // expected-error {{bad receiver type}}
+}
+
+void test3(NSNumber *x) {
 	id objects[] = {[x METH]};
-	return 0;
 }
 
 
 // rdar://5977581
-void test3() {
+void test4() {
   unsigned x[] = {[NSNumber METH2]+2};
 }
 

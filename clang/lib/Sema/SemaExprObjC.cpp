@@ -226,14 +226,13 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
   Expr *RExpr = static_cast<Expr *>(receiver);
   QualType returnType;
-  ObjCMethodDecl *Method = 0;
 
   QualType receiverType = 
     RExpr->getType().getCanonicalType().getUnqualifiedType();
   
   // Handle messages to id.
   if (receiverType == Context.getObjCIdType().getCanonicalType()) {
-    Method = InstanceMethodPool[Sel].Method;
+    ObjCMethodDecl *Method = InstanceMethodPool[Sel].Method;
     if (!Method)
       Method = FactoryMethodPool[Sel].Method;
     if (!Method) {
@@ -252,6 +251,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
   
   // Handle messages to Class.
   if (receiverType == Context.getObjCClassType().getCanonicalType()) {
+    ObjCMethodDecl *Method = 0;
     if (getCurMethodDecl()) {
       ObjCInterfaceDecl* ClassDecl = getCurMethodDecl()->getClassInterface();
       // If we have an implementation in scope, check "private" methods.
@@ -279,18 +279,14 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
                                ArgExprs, NumArgs);
   }
   
-  // We allow sending a message to a qualified ID ("id<foo>") to an interface
-  // directly ("[NSNumber foo]") and to a pointer to an interface (an object).
-  if (!isa<ObjCQualifiedIdType>(receiverType) &&
-      !isa<ObjCInterfaceType>(receiverType))
-    if (const PointerType *PTy = receiverType->getAsPointerType())
-      receiverType = PTy->getPointeeType();
-    // else error, invalid receiver.
-  
+  ObjCMethodDecl *Method = 0;
   ObjCInterfaceDecl* ClassDecl = 0;
+  
+  // We allow sending a message to a qualified ID ("id<foo>"), which is ok as 
+  // long as one of the protocols implements the selector (if not, warn).
   if (ObjCQualifiedIdType *QIT = 
            dyn_cast<ObjCQualifiedIdType>(receiverType)) {
-    // search protocols
+    // Search protocols
     for (unsigned i = 0; i < QIT->getNumProtocols(); i++) {
       ObjCProtocolDecl *PDecl = QIT->getProtocols(i);
       if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
@@ -300,13 +296,9 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
       Diag(lbrac, diag::warn_method_not_found_in_protocol, 
            std::string("-"), Sel.getName(),
            SourceRange(lbrac, rbrac));
-  } else {
-    ObjCInterfaceType *OCIReceiver =dyn_cast<ObjCInterfaceType>(receiverType);
-    if (OCIReceiver == 0) {
-      Diag(lbrac, diag::error_bad_receiver_type,
-           RExpr->getType().getAsString());
-      return true;
-    }
+  } else if (const ObjCInterfaceType *OCIReceiver = 
+                receiverType->getAsPointerToObjCInterfaceType()) {
+    // We allow sending a message to a pointer to an interface (an object).
     
     ClassDecl = OCIReceiver->getDecl();
     // FIXME: consider using InstanceMethodPool, since it will be faster
@@ -327,6 +319,10 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
       Diag(lbrac, diag::warn_method_not_found_in_protocol, 
            std::string("-"), Sel.getName(),
            SourceRange(lbrac, rbrac));
+  } else {
+    Diag(lbrac, diag::error_bad_receiver_type,
+         RExpr->getType().getAsString());
+    return true;
   }
   
   if (!Method) {
