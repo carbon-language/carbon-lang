@@ -232,11 +232,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   case Builtin::BI__builtin_powil: {
     Value *Base = EmitScalarExpr(E->getArg(0));
     Value *Exponent = EmitScalarExpr(E->getArg(1));
-    
     const llvm::Type *ArgType = Base->getType();
     Value *F = CGM.getIntrinsic(Intrinsic::powi, &ArgType, 1);
-    
-    const llvm::Type *ResultType = ConvertType(E->getType());
     return RValue::get(Builder.CreateCall2(F, Base, Exponent, "tmp"));
   }
 
