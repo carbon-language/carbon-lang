@@ -85,7 +85,7 @@ public:
     std::string GraphName = DOTTraits::getGraphName(G);
 
     if (!Name.empty())
-      O << "digraph " << Name << " {\n";
+      O << "digraph \"" << DOT::EscapeString(Name) << "\" {\n";
     else if (!GraphName.empty())
       O << "digraph \"" << DOT::EscapeString(GraphName) << "\" {\n";
     else
@@ -94,7 +94,9 @@ public:
     if (DOTTraits::renderGraphFromBottomUp())
       O << "\trankdir=\"BT\";\n";
 
-    if (!GraphName.empty())
+    if (!Name.empty())
+      O << "\tlabel=\"" << DOT::EscapeString(Name) << "\";\n";
+    else if (!GraphName.empty())
       O << "\tlabel=\"" << DOT::EscapeString(GraphName) << "\";\n";
     O << DOTTraits::getGraphProperties(G);
     O << "\n";
@@ -234,12 +236,13 @@ public:
 
 template<typename GraphType>
 std::ostream &WriteGraph(std::ostream &O, const GraphType &G,
-                         const std::string &Name = "") {
+                         const std::string &Name = "",
+                         const std::string &Title = "") {
   // Start the graph emission process...
   GraphWriter<GraphType> W(O, G);
 
   // Output the header for the graph...
-  W.writeHeader(Name);
+  W.writeHeader(Title);
 
   // Emit all of the nodes in the graph...
   W.writeNodes();
@@ -273,24 +276,10 @@ sys::Path WriteGraph(const GraphType &G,
   std::ofstream O(Filename.c_str());
 
   if (O.good()) {
-    // Start the graph emission process...
-    GraphWriter<GraphType> W(O, G);
-
-    // Output the header for the graph...
-    W.writeHeader(Title);
-
-    // Emit all of the nodes in the graph...
-    W.writeNodes();
-
-    // Output any customizations on the graph
-    DOTGraphTraits<GraphType>::addCustomGraphFeatures(G, W);
-
-    // Output the end of the graph
-    W.writeFooter();
+    WriteGraph(O, G, Name, Title);
     cerr << " done. \n";
 
     O.close();
-    
   } else {
     cerr << "error opening file for writing!\n";
     Filename.clear();
