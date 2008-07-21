@@ -1248,9 +1248,25 @@ Stmt *RewriteObjC::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
   buf += elementName;
   buf += " = nil;\n";
   buf += "}\n";
+  
   // Insert all these *after* the statement body.
-  SourceLocation endBodyLoc = OrigEnd.getFileLocWithOffset(1);
-  InsertText(endBodyLoc, buf.c_str(), buf.size());
+  if (isa<CompoundStmt>(S->getBody())) {
+    SourceLocation endBodyLoc = OrigEnd.getFileLocWithOffset(1);
+    InsertText(endBodyLoc, buf.c_str(), buf.size());
+  } else {
+    /* Need to treat single statements specially. For example:
+     *
+     *     for (A *a in b) if (stuff()) break;
+     *     for (A *a in b) xxxyy;
+     *
+     * The following code simply scans ahead to the semi to find the actual end.
+     */
+    const char *stmtBuf = SM->getCharacterData(OrigEnd);
+    const char *semiBuf = strchr(stmtBuf, ';');
+    assert(semiBuf && "Can't find ';'");
+    SourceLocation endBodyLoc = OrigEnd.getFileLocWithOffset(semiBuf-stmtBuf+1);
+    InsertText(endBodyLoc, buf.c_str(), buf.size());
+  }
   Stmts.pop_back();
   ObjCBcLabelNo.pop_back();
   return 0;
