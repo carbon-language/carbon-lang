@@ -3638,7 +3638,7 @@ UpdateNodeOperands(SDOperand InN, SDOperand Op) {
   if (SDNode *Existing = FindModifiedNodeSlot(N, Op, InsertPos))
     return SDOperand(Existing, InN.ResNo);
   
-  // Nope it doesn't.  Remove the node from it's current place in the maps.
+  // Nope it doesn't.  Remove the node from its current place in the maps.
   if (InsertPos)
     RemoveNodeFromCSEMaps(N);
   
@@ -3667,7 +3667,7 @@ UpdateNodeOperands(SDOperand InN, SDOperand Op1, SDOperand Op2) {
   if (SDNode *Existing = FindModifiedNodeSlot(N, Op1, Op2, InsertPos))
     return SDOperand(Existing, InN.ResNo);
   
-  // Nope it doesn't.  Remove the node from it's current place in the maps.
+  // Nope it doesn't.  Remove the node from its current place in the maps.
   if (InsertPos)
     RemoveNodeFromCSEMaps(N);
   
