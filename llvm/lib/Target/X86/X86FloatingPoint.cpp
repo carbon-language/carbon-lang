@@ -300,11 +300,13 @@ namespace {
   };
 }
 
+#ifndef NDEBUG
 static bool TableIsSorted(const TableEntry *Table, unsigned NumEntries) {
   for (unsigned i = 0; i != NumEntries-1; ++i)
     if (!(Table[i] < Table[i+1])) return false;
   return true;
 }
+#endif
 
 static int Lookup(const TableEntry *Table, unsigned N, unsigned Opcode) {
   const TableEntry *I = std::lower_bound(Table, Table+N, Opcode);
@@ -662,8 +664,10 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
 ///
 void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = I;
+#ifndef NDEBUG
   unsigned NumOps = MI->getDesc().getNumOperands();
   assert(NumOps >= 2 && "FPRW instructions must have 2 ops!!");
+#endif
 
   // Is this the last use of the source register?
   unsigned Reg = getFPReg(MI->getOperand(1));
