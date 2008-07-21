@@ -118,7 +118,7 @@ ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
   if (Size <= 16) {
     // We also need alignment here
     const TargetData *TD = ETM->getTargetData();
-    unsigned Align = TD->getPreferredAlignment(GV);
+    unsigned Align = TD->getPrefTypeAlignment(Type);
     if (Align < Size)
       Align = Size;
 
