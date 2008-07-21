@@ -26,24 +26,23 @@ bool Sema::isBuiltinObjCType(TypedefDecl *TD) {
          strcmp(typeName, "SEL") == 0 || strcmp(typeName, "Protocol") == 0;
 }
 
-/// isObjCObjectPointerType - Returns true if type is an objective-c pointer
+/// isObjCObjectPointerType - Returns true if type is an Objective-C pointer
 /// to an object type; such as "id", "Class", Intf*, id<P>, etc.
-bool Sema::isObjCObjectPointerType(QualType type) const {
-  if (type->isObjCQualifiedIdType())
+bool Sema::isObjCObjectPointerType(QualType Ty) const {
+  if (Ty->isObjCQualifiedIdType())
     return true;
   
-  if (!type->isPointerType())
+  if (!Ty->isPointerType())
     return false;
   
   // Check to see if this is 'id' or 'Class', both of which are typedefs for
   // pointer types.  This looks for the typedef specifically, not for the
   // underlying type.
-  if (type == Context.getObjCIdType() || type == Context.getObjCClassType())
+  if (Ty == Context.getObjCIdType() || Ty == Context.getObjCClassType())
     return true;
   
-  const PointerType *pointerType = type->getAsPointerType();
-  type = pointerType->getPointeeType();
-  return type->isObjCInterfaceType() || type->isObjCQualifiedIdType();
+  // If this a pointer to an interface (e.g. NSString*), it is ok.
+  return Ty->getAsPointerType()->getPointeeType()->isObjCInterfaceType();
 }
 
 void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
