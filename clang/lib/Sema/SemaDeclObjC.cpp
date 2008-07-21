@@ -134,10 +134,12 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
     llvm::SmallVector<ObjCProtocolDecl*, 8> RefProtos;
     for (unsigned int i = 0; i != NumProtocols; i++) {
       ObjCProtocolDecl* RefPDecl = ObjCProtocols[ProtocolNames[i]];
-      if (!RefPDecl || RefPDecl->isForwardDecl())
+      if (!RefPDecl)
+        Diag(EndProtoLoc, diag::err_undef_protocolref,
+             ProtocolNames[i]->getName(), ClassName->getName());
+      else if (RefPDecl->isForwardDecl())
         Diag(EndProtoLoc, diag::warn_undef_protocolref,
-             ProtocolNames[i]->getName(),
-             ClassName->getName());
+             ProtocolNames[i]->getName(), ClassName->getName());
       else
         RefProtos.push_back(RefPDecl);
     }
@@ -218,10 +220,13 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(
     /// Check then save referenced protocols.
     for (unsigned int i = 0; i != NumProtoRefs; i++) {
       ObjCProtocolDecl* RefPDecl = ObjCProtocols[ProtoRefNames[i]];
-      if (!RefPDecl || RefPDecl->isForwardDecl())
+      if (!RefPDecl)
+        Diag(ProtocolLoc, diag::err_undef_protocolref,
+             ProtoRefNames[i]->getName(), ProtocolName->getName());
+      else if (RefPDecl->isForwardDecl())
         Diag(ProtocolLoc, diag::warn_undef_protocolref,
-             ProtoRefNames[i]->getName(),
-             ProtocolName->getName());
+             ProtoRefNames[i]->getName(), ProtocolName->getName());
+      
       PDecl->setReferencedProtocols(i, RefPDecl);
     }
     PDecl->setLocEnd(EndProtoLoc);
@@ -426,11 +431,12 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(
     /// Check and then save the referenced protocols.
     for (unsigned int i = 0; i != NumProtoRefs; i++) {
       ObjCProtocolDecl* RefPDecl = ObjCProtocols[ProtoRefNames[i]];
-      if (!RefPDecl || RefPDecl->isForwardDecl()) {
+      if (!RefPDecl)
+        Diag(CategoryLoc, diag::err_undef_protocolref,
+             ProtoRefNames[i]->getName(), CategoryName->getName());
+      else if (RefPDecl->isForwardDecl())
         Diag(CategoryLoc, diag::warn_undef_protocolref,
-             ProtoRefNames[i]->getName(),
-             CategoryName->getName());
-      }
+             ProtoRefNames[i]->getName(), CategoryName->getName());
       if (RefPDecl)
         RefProtocols.push_back(RefPDecl);
     }
