@@ -112,13 +112,13 @@ ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
   const TargetData *TD = ETM->getTargetData();
   Constant *C = cast<GlobalVariable>(GV)->getInitializer();
   const ConstantArray *CVA = cast<ConstantArray>(C);
-  const Type *Type = CVA->getType()->getElementType();
+  const Type *Ty = CVA->getType()->getElementType();
 
-  unsigned Size = TD->getABITypeSize(Type);
+  unsigned Size = TD->getABITypeSize(Ty);
   if (Size <= 16) {
     // We also need alignment here
     const TargetData *TD = ETM->getTargetData();
-    unsigned Align = TD->getPrefTypeAlignment(Type);
+    unsigned Align = TD->getPrefTypeAlignment(Ty);
     if (Align < Size)
       Align = Size;
 
