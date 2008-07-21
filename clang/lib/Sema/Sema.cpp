@@ -27,7 +27,9 @@ bool Sema::isBuiltinObjCType(TypedefDecl *TD) {
 }
 
 /// isObjCObjectPointerType - Returns true if type is an Objective-C pointer
-/// to an object type; such as "id", "Class", Intf*, id<P>, etc.
+/// to an object type.  This includes "id" and "Class" (two 'special' pointers
+/// to struct), Interface* (pointer to ObjCInterfaceType) and id<P> (qualified
+/// ID type).
 bool Sema::isObjCObjectPointerType(QualType Ty) const {
   if (Ty->isObjCQualifiedIdType())
     return true;
