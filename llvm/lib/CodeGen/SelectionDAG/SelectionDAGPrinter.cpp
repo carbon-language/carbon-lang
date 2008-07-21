@@ -32,6 +32,37 @@ using namespace llvm;
 namespace llvm {
   template<>
   struct DOTGraphTraits<SelectionDAG*> : public DefaultDOTGraphTraits {
+    static bool hasEdgeDestLabels() {
+      return true;
+    }
+
+    static unsigned numEdgeDestLabels(const void *Node) {
+      return ((const SDNode *) Node)->getNumValues();
+    }
+
+    static std::string getEdgeDestLabel(const void *Node, unsigned i) {
+      return ((const SDNode *) Node)->getValueType(i).getMVTString();
+    }
+
+    /// edgeTargetsEdgeSource - This method returns true if this outgoing edge
+    /// should actually target another edge source, not a node.  If this method is
+    /// implemented, getEdgeTarget should be implemented.
+    template<typename EdgeIter>
+    static bool edgeTargetsEdgeSource(const void *Node, EdgeIter I) {
+      return true;
+    }
+
+    /// getEdgeTarget - If edgeTargetsEdgeSource returns true, this method is
+    /// called to determine which outgoing edge of Node is the target of this
+    /// edge.
+    template<typename EdgeIter>
+    static EdgeIter getEdgeTarget(const void *Node, EdgeIter I) {
+      SDNode *TargetNode = *I;
+      SDNodeIterator NI = SDNodeIterator::begin(TargetNode);
+      std::advance(NI, I.getNode()->getOperand(I.getOperand()).ResNo);
+      return NI;
+    }
+
     static std::string getGraphName(const SelectionDAG *G) {
       return G->getMachineFunction().getFunction()->getName();
     }
@@ -88,12 +119,6 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
                                                         const SelectionDAG *G) {
   std::string Op = Node->getOperationName(G);
 
-  for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
-    if (Node->getValueType(i) == MVT::Other)
-      Op += ":ch";
-    else
-      Op = Op + ":" + Node->getValueType(i).getMVTString();
-    
   if (const ConstantSDNode *CSDN = dyn_cast<ConstantSDNode>(Node)) {
     Op += ": " + utostr(CSDN->getValue());
   } else if (const ConstantFPSDNode *CSDN = dyn_cast<ConstantFPSDNode>(Node)) {

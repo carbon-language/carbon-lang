@@ -100,6 +100,24 @@ struct DefaultDOTGraphTraits {
     return I;
   }
 
+  /// hasEdgeDestLabels - If this function returns true, the graph is able
+  /// to provide labels for edge destinations.
+  static bool hasEdgeDestLabels() {
+    return false;
+  }
+
+  /// numEdgeDestLabels - If hasEdgeDestLabels, this function returns the
+  /// number of incoming edge labels the given node has.
+  static unsigned numEdgeDestLabels(const void *Node) {
+    return 0;
+  }
+
+  /// getEdgeDestLabel - If hasEdgeDestLabels, this function returns the
+  /// incoming edge label with the given index in the given node.
+  static std::string getEdgeDestLabel(const void *Node, unsigned i) {
+    return "";
+  }
+
   /// addCustomGraphFeatures - If a graph is made up of more than just
   /// straight-forward nodes and edges, this is the place to put all of the
   /// custom stuff necessary.  The GraphWriter object, instantiated with your

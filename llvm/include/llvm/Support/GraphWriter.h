@@ -146,11 +146,11 @@ public:
 
       for (unsigned i = 0; EI != EE && i != 64; ++EI, ++i) {
         if (i) O << "|";
-        O << "<g" << i << ">" << DOTTraits::getEdgeSourceLabel(Node, EI);
+        O << "<s" << i << ">" << DOTTraits::getEdgeSourceLabel(Node, EI);
       }
 
       if (EI != EE)
-        O << "|<g64>truncated...";
+        O << "|<s64>truncated...";
       O << "}";
       if (DOTTraits::renderGraphFromBottomUp()) O << "|";
     }
@@ -161,6 +161,20 @@ public:
       // If we should include the address of the node in the label, do so now.
       if (DOTTraits::hasNodeAddressLabel(Node, G))
         O << "|" << (void*)Node;
+    }
+
+    if (DOTTraits::hasEdgeDestLabels()) {
+      O << "|{";
+
+      unsigned i = 0, e = DOTTraits::numEdgeDestLabels(Node);
+      for (; i != e && i != 64; ++i) {
+        if (i) O << "|";
+        O << "<d" << i << ">" << DOTTraits::getEdgeDestLabel(Node, i);
+      }
+
+      if (i != e)
+        O << "|<d64>truncated...";
+      O << "}";
     }
 
     O << "}\"];\n";   // Finish printing the "node" line
@@ -223,10 +237,10 @@ public:
 
     O << "\tNode" << SrcNodeID;
     if (SrcNodePort >= 0)
-      O << ":g" << SrcNodePort;
+      O << ":s" << SrcNodePort;
     O << " -> Node" << reinterpret_cast<const void*>(DestNodeID);
     if (DestNodePort >= 0)
-      O << ":g" << DestNodePort;
+      O << ":d" << DestNodePort;
 
     if (!Attrs.empty())
       O << "[" << Attrs << "]";
