@@ -616,7 +616,8 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                           MemberLoc, MemberType);
   }
   
-  // Handle access to Objective C instance variables, such as "Obj->ivar".
+  // Handle access to Objective-C instance variables, such as "Obj->ivar" and
+  // (*Obj).ivar.
   if (const ObjCInterfaceType *IFTy = BaseType->getAsObjCInterfaceType()) {
     if (ObjCIvarDecl *IV = IFTy->getDecl()->lookupInstanceVariable(&Member))
       return new ObjCIvarRefExpr(IV, IV->getType(), MemberLoc, BaseExpr, 
@@ -626,47 +627,39 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                 BaseExpr->getSourceRange(), SourceRange(MemberLoc));
   }
   
-  // Handle property access.
-  if (isObjCObjectPointerType(BaseType)) {
-    const PointerType *pointerType = BaseType->getAsPointerType();
-    BaseType = pointerType->getPointeeType();
-    ObjCInterfaceDecl *IFace;
-    QualType CanonType = BaseType.getCanonicalType();
-    if (isa<ObjCInterfaceType>(CanonType))
-      IFace = dyn_cast<ObjCInterfaceType>(CanonType)->getDecl();
-    else
-      IFace = dyn_cast<ObjCQualifiedInterfaceType>(CanonType)->getDecl();
-    if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(&Member))
-      return new ObjCIvarRefExpr(IV, IV->getType(), MemberLoc, BaseExpr, 
-                                 OpKind==tok::arrow);
-    // Check for properties.
-    if (OpKind==tok::period) {
-      // Before we look for explicit property declarations, we check for
-      // nullary methods (which allow '.' notation).
-      Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
-      ObjCMethodDecl *MD = IFace->lookupInstanceMethod(Sel);
-      if (MD) 
-        return new ObjCPropertyRefExpr(MD, MD->getResultType(), 
-                                       MemberLoc, BaseExpr);
-      // FIXME: Need to deal with setter methods that take 1 argument. E.g.:
-      // @interface NSBundle : NSObject {}
-      // - (NSString *)bundlePath;
-      // - (void)setBundlePath:(NSString *)x;
-      // @end
-      // void someMethod() { frameworkBundle.bundlePath = 0; }
-      //
-      ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(&Member);
-      
-      if (!PD) { // Lastly, check protocols on qualified interfaces.
-        if (ObjCQualifiedInterfaceType *QIT = 
-            dyn_cast<ObjCQualifiedInterfaceType>(CanonType)) {
-          for (unsigned i = 0; i < QIT->getNumProtocols(); i++)
-            if ((PD = QIT->getProtocols(i)->FindPropertyDeclaration(&Member)))
-              break;
-        }
-      }
-      if (PD)
-        return new ObjCPropertyRefExpr(PD, PD->getType(), MemberLoc, BaseExpr);
+  // Handle Objective-C property access, which is "Obj.property" where Obj is a
+  // pointer to a (potentially qualified) interface type.
+  const PointerType *PTy;
+  const ObjCInterfaceType *IFTy;
+  if (OpKind == tok::period && (PTy = BaseType->getAsPointerType()) &&
+      (IFTy = PTy->getPointeeType()->getAsObjCInterfaceType())) {
+    ObjCInterfaceDecl *IFace = IFTy->getDecl();
+    
+    // Before we look for explicit property declarations, we check for
+    // nullary methods (which allow '.' notation).
+    Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
+    
+    if (ObjCMethodDecl *MD = IFace->lookupInstanceMethod(Sel))
+      return new ObjCPropertyRefExpr(MD, MD->getResultType(), 
+                                     MemberLoc, BaseExpr);
+    
+    // FIXME: Need to deal with setter methods that take 1 argument. E.g.:
+    // @interface NSBundle : NSObject {}
+    // - (NSString *)bundlePath;
+    // - (void)setBundlePath:(NSString *)x;
+    // @end
+    // void someMethod() { frameworkBundle.bundlePath = 0; }
+    //
+    if (ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(&Member))
+      return new ObjCPropertyRefExpr(PD, PD->getType(), MemberLoc, BaseExpr);
+    
+    // Lastly, check protocols on qualified interfaces.
+    if (const ObjCQualifiedInterfaceType *QIT = 
+          dyn_cast<ObjCQualifiedInterfaceType>(IFTy)) {
+      for (unsigned i = 0; i != QIT->getNumProtocols(); ++i)
+        if (ObjCPropertyDecl *PD =
+              QIT->getProtocols(i)->FindPropertyDeclaration(&Member))
+          return new ObjCPropertyRefExpr(PD, PD->getType(), MemberLoc,BaseExpr);
     }
   }
   
