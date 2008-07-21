@@ -635,13 +635,25 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
       (IFTy = PTy->getPointeeType()->getAsObjCInterfaceType())) {
     ObjCInterfaceDecl *IFace = IFTy->getDecl();
     
+    // FIXME: The logic for looking up nullary and unary selectors should be
+    // shared with the code in ActOnInstanceMessage.
+    
     // Before we look for explicit property declarations, we check for
     // nullary methods (which allow '.' notation).
     Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
-    
     if (ObjCMethodDecl *MD = IFace->lookupInstanceMethod(Sel))
       return new ObjCPropertyRefExpr(MD, MD->getResultType(), 
                                      MemberLoc, BaseExpr);
+    
+    // If this reference is in an @implementation, check for 'private' methods.
+    if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
+      if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
+        if (ObjCImplementationDecl *ImpDecl = 
+              ObjCImplementations[ClassDecl->getIdentifier()])
+          if (ObjCMethodDecl *MD = ImpDecl->getInstanceMethod(Sel))
+            return new ObjCPropertyRefExpr(MD, MD->getResultType(), 
+                                           MemberLoc, BaseExpr);
+    }      
     
     // FIXME: Need to deal with setter methods that take 1 argument. E.g.:
     // @interface NSBundle : NSObject {}

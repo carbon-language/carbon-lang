@@ -251,10 +251,9 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   // Handle messages to Class.
   if (receiverType == Context.getObjCClassType().getCanonicalType()) {
     ObjCMethodDecl *Method = 0;
-    if (getCurMethodDecl()) {
-      ObjCInterfaceDecl* ClassDecl = getCurMethodDecl()->getClassInterface();
+    if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
       // If we have an implementation in scope, check "private" methods.
-      if (ClassDecl)
+      if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
         if (ObjCImplementationDecl *ImpDecl = 
               ObjCImplementations[ClassDecl->getIdentifier()])
           Method = ImpDecl->getClassMethod(Sel);
