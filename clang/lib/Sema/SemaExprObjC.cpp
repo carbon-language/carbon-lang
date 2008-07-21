@@ -217,8 +217,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
 // ActOnInstanceMessage - used for both unary and keyword messages.
 // ArgExprs is optional - if it is present, the number of expressions
 // is obtained from Sel.getNumArgs().
-Sema::ExprResult Sema::ActOnInstanceMessage(
-  ExprTy *receiver, Selector Sel,
+Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   SourceLocation lbrac, SourceLocation rbrac, ExprTy **Args, unsigned NumArgs) 
 {
   assert(receiver && "missing receiver expression");

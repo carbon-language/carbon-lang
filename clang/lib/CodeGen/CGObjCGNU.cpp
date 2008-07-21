@@ -514,8 +514,7 @@ llvm::Constant *CGObjCGNU::GenerateClassStructure(
   Elements.push_back(llvm::ConstantExpr::getBitCast(Protocols, PtrTy));
   Elements.push_back(NullP);
   // Create an instance of the structure
-  return MakeGlobal(ClassTy, Elements,
-                    SymbolNameForClass(Name));
+  return MakeGlobal(ClassTy, Elements, SymbolNameForClass(Name));
 }
 
 llvm::Constant *CGObjCGNU::GenerateProtocolMethodList(
@@ -669,7 +668,7 @@ void CGObjCGNU::GenerateClass(
       IvarOffsets);
   //Generate metaclass for class methods
   llvm::Constant *MetaClassStruct = GenerateClassStructure(NULLPtr,
-      NULLPtr, 0x2L, /*name*/0, 0, Zeros[0], GenerateIvarList(
+      NULLPtr, 0x2L, /*name*/"", 0, Zeros[0], GenerateIvarList(
         empty, empty, empty), ClassMethodList, NULLPtr);
   // Generate the class structure
   llvm::Constant *ClassStruct = GenerateClassStructure(MetaClassStruct,
