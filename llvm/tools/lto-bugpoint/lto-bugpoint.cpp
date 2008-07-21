@@ -51,8 +51,10 @@ int main(int argc, char **argv) {
     LTOBugPoint bugFinder(*LinkerArgsFile, *LinkerInputsFile);
 
     llvm::SmallVector<std::string, 4> TroubleMakers;
-    if (!bugFinder.findTroubleMakers(TroubleMakers, ValidationScript))
+    if (!bugFinder.findTroubleMakers(TroubleMakers, ValidationScript)) {
+      std::cerr << "lto-bugpoint:" << bugFinder.getErrMsg() << "\n";
       return 1;
+    }
 
     return 0;
   } catch (const std::string& msg) {

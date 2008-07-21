@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Module.h"
 #include <string>
 #include <fstream>
 
@@ -25,6 +26,13 @@ class LTOBugPoint {
   /// identified by the script.
   bool findTroubleMakers(llvm::SmallVector<std::string, 4> &TroubleMakers,
 			std::string &Script);
+
+  /// getNativeObjectFile - Generate native object file based from llvm
+  /// bitcode file. Return false in case of an error.
+  bool getNativeObjectFile(std::string &FileName);
+
+  std::string &getErrMsg() { return ErrMsg; }
+
  private:
   /// LinkerInputFiles - This is a list of linker input files. Once populated
   /// this list is not modified.
@@ -39,4 +47,11 @@ class LTOBugPoint {
   /// at index 4 in NativeInputFiles is corresponding native object file.
   llvm::SmallVector<std::string, 16> NativeInputFiles;
 
+  std::string getFeatureString(const char *TargetTriple);
+  std::string ErrMsg;
+
+private:
+  /// assembleBitcode - Generate assembly code from the module. Return false
+  /// in case of an error.
+  bool assembleBitcode(llvm::Module *M, const char *AsmFileName);
 };
