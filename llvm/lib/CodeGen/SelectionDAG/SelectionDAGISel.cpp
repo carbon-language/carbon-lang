@@ -4686,6 +4686,13 @@ void TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
           (Result->getNumValues()+1 == TmpRes.Val->getNumValues() &&
            TmpRes.getValue(Result->getNumValues()).getValueType() == MVT::Flag))
          && "Lowering produced unexpected number of results!");
+
+  // The FORMAL_ARGUMENTS node itself is likely no longer needed.
+  if (Result != TmpRes.Val && Result->use_empty()) {
+    HandleSDNode Dummy(DAG.getRoot());
+    DAG.RemoveDeadNode(Result);
+  }
+
   Result = TmpRes.Val;
   
   unsigned NumArgRegs = Result->getNumValues() - 1;
