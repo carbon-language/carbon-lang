@@ -3645,6 +3645,109 @@ static SDOperand getVZextMovL(MVT VT, MVT OpVT,
                                  DAG.getNode(ISD::BIT_CONVERT, OpVT, SrcOp)));
 }
 
+/// LowerVECTOR_SHUFFLE_4wide - Handle all 4 wide cases with a number of
+/// shuffles.
+static SDOperand
+LowerVECTOR_SHUFFLE_4wide(SDOperand V1, SDOperand V2,
+                          SDOperand PermMask, MVT VT, SelectionDAG &DAG) {
+  MVT MaskVT = PermMask.getValueType();
+  MVT MaskEVT = MaskVT.getVectorElementType();
+  SmallVector<std::pair<int, int>, 8> Locs;
+  Locs.reserve(4);
+  SmallVector<SDOperand, 8> Mask1(4, DAG.getNode(ISD::UNDEF, MaskEVT));
+  SmallVector<SDOperand, 8> Mask2(4, DAG.getNode(ISD::UNDEF, MaskEVT));
+  unsigned NumHi = 0;
+  unsigned NumLo = 0;
+  // If no more than two elements come from either vector. This can be
+  // implemented with two shuffles. First shuffle gather the elements.
+  // The second shuffle, which takes the first shuffle as both of its
+  // vector operands, put the elements into the right order.
+  for (unsigned i = 0; i != 4; ++i) {
+    SDOperand Elt = PermMask.getOperand(i);
+    if (Elt.getOpcode() == ISD::UNDEF) {
+      Locs[i] = std::make_pair(-1, -1);
+    } else {
+      unsigned Val = cast<ConstantSDNode>(Elt)->getValue();
+      if (Val < 4) {
+        Locs[i] = std::make_pair(0, NumLo);
+        Mask1[NumLo] = Elt;
+        NumLo++;
+      } else {
+        Locs[i] = std::make_pair(1, NumHi);
+        if (2+NumHi < 4)
+          Mask1[2+NumHi] = Elt;
+        NumHi++;
+      }
+    }
+  }
+  if (NumLo <= 2 && NumHi <= 2) {
+    V1 = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
+                     DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                                 &Mask1[0], Mask1.size()));
+    for (unsigned i = 0; i != 4; ++i) {
+      if (Locs[i].first == -1)
+        continue;
+      else {
+        unsigned Idx = (i < 2) ? 0 : 4;
+        Idx += Locs[i].first * 2 + Locs[i].second;
+        Mask2[i] = DAG.getConstant(Idx, MaskEVT);
+      }
+    }
+
+    return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V1,
+                       DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                                   &Mask2[0], Mask2.size()));
+  }
+
+  // Break it into (shuffle shuffle_hi, shuffle_lo).
+  Locs.clear();
+  SmallVector<SDOperand,8> LoMask(4, DAG.getNode(ISD::UNDEF, MaskEVT));
+  SmallVector<SDOperand,8> HiMask(4, DAG.getNode(ISD::UNDEF, MaskEVT));
+  SmallVector<SDOperand,8> *MaskPtr = &LoMask;
+  unsigned MaskIdx = 0;
+  unsigned LoIdx = 0;
+  unsigned HiIdx = 2;
+  for (unsigned i = 0; i != 4; ++i) {
+    if (i == 2) {
+      MaskPtr = &HiMask;
+      MaskIdx = 1;
+      LoIdx = 0;
+      HiIdx = 2;
+    }
+    SDOperand Elt = PermMask.getOperand(i);
+    if (Elt.getOpcode() == ISD::UNDEF) {
+      Locs[i] = std::make_pair(-1, -1);
+    } else if (cast<ConstantSDNode>(Elt)->getValue() < 4) {
+      Locs[i] = std::make_pair(MaskIdx, LoIdx);
+      (*MaskPtr)[LoIdx] = Elt;
+      LoIdx++;
+    } else {
+      Locs[i] = std::make_pair(MaskIdx, HiIdx);
+      (*MaskPtr)[HiIdx] = Elt;
+      HiIdx++;
+    }
+  }
+
+  SDOperand LoShuffle = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
+                                    DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                                                &LoMask[0], LoMask.size()));
+  SDOperand HiShuffle = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
+                                    DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                                                &HiMask[0], HiMask.size()));
+  SmallVector<SDOperand, 8> MaskOps;
+  for (unsigned i = 0; i != 4; ++i) {
+    if (Locs[i].first == -1) {
+      MaskOps.push_back(DAG.getNode(ISD::UNDEF, MaskEVT));
+    } else {
+      unsigned Idx = Locs[i].first * 4 + Locs[i].second;
+      MaskOps.push_back(DAG.getConstant(Idx, MaskEVT));
+    }
+  }
+  return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, LoShuffle, HiShuffle,
+                     DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                                 &MaskOps[0], MaskOps.size()));
+}
+
 SDOperand
 X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   SDOperand V1 = Op.getOperand(0);
@@ -3851,110 +3954,9 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
       return NewOp;
   }
 
-  // Handle all 4 wide cases with a number of shuffles.
-  if (NumElems == 4 && !isMMX) {
-    // Don't do this for MMX.
-    MVT MaskVT = PermMask.getValueType();
-    MVT MaskEVT = MaskVT.getVectorElementType();
-    SmallVector<std::pair<int, int>, 8> Locs;
-    Locs.reserve(NumElems);
-    SmallVector<SDOperand, 8> Mask1(NumElems,
-                                    DAG.getNode(ISD::UNDEF, MaskEVT));
-    SmallVector<SDOperand, 8> Mask2(NumElems,
-                                    DAG.getNode(ISD::UNDEF, MaskEVT));
-    unsigned NumHi = 0;
-    unsigned NumLo = 0;
-    // If no more than two elements come from either vector. This can be
-    // implemented with two shuffles. First shuffle gather the elements.
-    // The second shuffle, which takes the first shuffle as both of its
-    // vector operands, put the elements into the right order.
-    for (unsigned i = 0; i != NumElems; ++i) {
-      SDOperand Elt = PermMask.getOperand(i);
-      if (Elt.getOpcode() == ISD::UNDEF) {
-        Locs[i] = std::make_pair(-1, -1);
-      } else {
-        unsigned Val = cast<ConstantSDNode>(Elt)->getValue();
-        if (Val < NumElems) {
-          Locs[i] = std::make_pair(0, NumLo);
-          Mask1[NumLo] = Elt;
-          NumLo++;
-        } else {
-          Locs[i] = std::make_pair(1, NumHi);
-          if (2+NumHi < NumElems)
-            Mask1[2+NumHi] = Elt;
-          NumHi++;
-        }
-      }
-    }
-    if (NumLo <= 2 && NumHi <= 2) {
-      V1 = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
-                       DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
-                                   &Mask1[0], Mask1.size()));
-      for (unsigned i = 0; i != NumElems; ++i) {
-        if (Locs[i].first == -1)
-          continue;
-        else {
-          unsigned Idx = (i < NumElems/2) ? 0 : NumElems;
-          Idx += Locs[i].first * (NumElems/2) + Locs[i].second;
-          Mask2[i] = DAG.getConstant(Idx, MaskEVT);
-        }
-      }
-
-      return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V1,
-                         DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
-                                     &Mask2[0], Mask2.size()));
-    }
-
-    // Break it into (shuffle shuffle_hi, shuffle_lo).
-    Locs.clear();
-    SmallVector<SDOperand,8> LoMask(NumElems, DAG.getNode(ISD::UNDEF, MaskEVT));
-    SmallVector<SDOperand,8> HiMask(NumElems, DAG.getNode(ISD::UNDEF, MaskEVT));
-    SmallVector<SDOperand,8> *MaskPtr = &LoMask;
-    unsigned MaskIdx = 0;
-    unsigned LoIdx = 0;
-    unsigned HiIdx = NumElems/2;
-    for (unsigned i = 0; i != NumElems; ++i) {
-      if (i == NumElems/2) {
-        MaskPtr = &HiMask;
-        MaskIdx = 1;
-        LoIdx = 0;
-        HiIdx = NumElems/2;
-      }
-      SDOperand Elt = PermMask.getOperand(i);
-      if (Elt.getOpcode() == ISD::UNDEF) {
-        Locs[i] = std::make_pair(-1, -1);
-      } else if (cast<ConstantSDNode>(Elt)->getValue() < NumElems) {
-        Locs[i] = std::make_pair(MaskIdx, LoIdx);
-        (*MaskPtr)[LoIdx] = Elt;
-        LoIdx++;
-      } else {
-        Locs[i] = std::make_pair(MaskIdx, HiIdx);
-        (*MaskPtr)[HiIdx] = Elt;
-        HiIdx++;
-      }
-    }
-
-    SDOperand LoShuffle =
-      DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
-                  DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
-                              &LoMask[0], LoMask.size()));
-    SDOperand HiShuffle =
-      DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
-                  DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
-                              &HiMask[0], HiMask.size()));
-    SmallVector<SDOperand, 8> MaskOps;
-    for (unsigned i = 0; i != NumElems; ++i) {
-      if (Locs[i].first == -1) {
-        MaskOps.push_back(DAG.getNode(ISD::UNDEF, MaskEVT));
-      } else {
-        unsigned Idx = Locs[i].first * NumElems + Locs[i].second;
-        MaskOps.push_back(DAG.getConstant(Idx, MaskEVT));
-      }
-    }
-    return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, LoShuffle, HiShuffle,
-                       DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
-                                   &MaskOps[0], MaskOps.size()));
-  }
+  // Handle all 4 wide cases with a number of shuffles except for MMX.
+  if (NumElems == 4 && !isMMX)
+    return LowerVECTOR_SHUFFLE_4wide(V1, V2, PermMask, VT, DAG);
 
   return SDOperand();
 }
