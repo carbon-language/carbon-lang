@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_MEMOPERAND_H
-#define LLVM_CODEGEN_MEMOPERAND_H
+#ifndef LLVM_CODEGEN_MACHINEMEMOPERAND_H
+#define LLVM_CODEGEN_MACHINEMEMOPERAND_H
 
 namespace llvm {
 
