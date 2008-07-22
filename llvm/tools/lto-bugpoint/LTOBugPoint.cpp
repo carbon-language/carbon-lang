@@ -14,7 +14,6 @@
 
 #include "LTOBugPoint.h"
 #include "llvm/PassManager.h"
-#include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/CodeGen/FileWriters.h"
 #include "llvm/Target/SubtargetFeature.h"
@@ -26,7 +25,6 @@
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/System/Path.h"
 #include "llvm/Config/config.h"
 #include <fstream>
 #include <iostream>
@@ -46,6 +44,12 @@ LTOBugPoint::LTOBugPoint(std::istream &args, std::istream &ins) {
   std::string inFile;
   while(getline(ins, inFile))
     LinkerInputFiles.push_back(inFile);
+
+  TempDir = sys::Path::GetTemporaryDirectory();
+}
+
+LTOBugPoint::~LTOBugPoint() {
+  TempDir.eraseFromDisk(true);
 }
 
 /// findTroubleMakers - Find minimum set of input files that causes error
@@ -178,21 +182,27 @@ bool LTOBugPoint::getNativeObjectFile(std::string &FileName) {
   M.reset(ParseBitcodeFile(Buffer, &ErrMsg));
   std::string TargetTriple = M->getTargetTriple();
 
-  sys::Path AsmFile(sys::Path::GetTemporaryDirectory());
+  sys::Path AsmFile(TempDir);
   if(AsmFile.createTemporaryFileOnDisk(false, &ErrMsg))
     return false;
 
-  if (assembleBitcode(M.get(), AsmFile.c_str()) == false)
+  if (assembleBitcode(M.get(), AsmFile.c_str()) == false) {
+    AsmFile.eraseFromDisk();
     return false;
+  }
 
-  sys::Path NativeFile(sys::Path::GetTemporaryDirectory());
-  if(NativeFile.createTemporaryFileOnDisk(false, &ErrMsg))
+  sys::Path NativeFile(TempDir);
+  if(NativeFile.createTemporaryFileOnDisk(false, &ErrMsg)) {
+    AsmFile.eraseFromDisk();
     return false;
+  }
 
   // find compiler driver
   const sys::Path gcc = sys::Program::FindProgramByName("gcc");
   if ( gcc.isEmpty() ) {
     ErrMsg = "can't locate gcc";
+    AsmFile.eraseFromDisk();
+    NativeFile.eraseFromDisk();
     return false;
   }
 
@@ -227,8 +237,12 @@ bool LTOBugPoint::getNativeObjectFile(std::string &FileName) {
   
   // invoke assembler
   if (sys::Program::ExecuteAndWait(gcc, &args[0], 0, 0, 0, 0, &ErrMsg)) {
-    ErrMsg = "error in assembly";    
+    ErrMsg = "error in assembly";
+    AsmFile.eraseFromDisk();
+    NativeFile.eraseFromDisk();
     return false;
   }
+
+  AsmFile.eraseFromDisk();
   return true;
 }

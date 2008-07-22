@@ -14,6 +14,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Module.h"
+#include "llvm/System/Path.h"
 #include <string>
 #include <fstream>
 
@@ -21,6 +22,7 @@ class LTOBugPoint {
  public:
 
   LTOBugPoint(std::istream &args, std::istream &ins);
+  ~LTOBugPoint();
 
   /// findTroubleMakers - Find minimum set of input files that causes error
   /// identified by the script.
@@ -50,6 +52,7 @@ class LTOBugPoint {
   std::string getFeatureString(const char *TargetTriple);
   std::string ErrMsg;
 
+  llvm::sys::Path TempDir;
 private:
   /// assembleBitcode - Generate assembly code from the module. Return false
   /// in case of an error.
