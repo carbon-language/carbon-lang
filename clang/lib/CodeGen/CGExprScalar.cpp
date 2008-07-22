@@ -662,6 +662,7 @@ Value *ScalarExprEmitter::EmitSizeAlignOf(QualType TypeToSize,
 
   // sizeof(void) and __alignof__(void) = 1 as a gcc extension. Also
   // for function types.
+  // FIXME: what is alignof a function type in gcc?
   if (TypeToSize->isVoidType() || TypeToSize->isFunctionType())
     return llvm::ConstantInt::get(llvm::APInt(ResultWidth, 1));
   
