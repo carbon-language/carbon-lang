@@ -14,7 +14,7 @@
 #include "Sema.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Basic/TargetInfo.h"
-#include <sstream>
+#include <llvm/ADT/StringExtras.h>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -267,10 +267,8 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     unsigned x = (unsigned) ArgNum.getZExtValue();
         
     if (x < 1 || x > NumArgs) {
-      std::ostringstream os;
-      os << I.getArgNum();
       S.Diag(Attr.getLoc(), diag::err_attribute_argument_out_of_bounds,
-             "nonnull", os.str(), Ex->getSourceRange());
+             "nonnull", llvm::utostr_32(I.getArgNum()), Ex->getSourceRange());
       return;
     }
     
