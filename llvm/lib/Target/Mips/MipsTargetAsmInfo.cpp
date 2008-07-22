@@ -45,45 +45,29 @@ MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM):
                          SectionFlags::Writeable | SectionFlags::BSS);
 }
 
-static bool isSuitableForBSS(const GlobalVariable *GV) {
-  if (!GV->hasInitializer())
-    return true;
-
-  // Leave constant zeros in readonly constant sections, so they can be shared
-  Constant *C = GV->getInitializer();
-  return (C->isNullValue() && !GV->isConstant() && !NoZerosInBSS);
-}
-
 SectionKind::Kind
 MipsTargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
-  const TargetData *TD = ETM->getTargetData();
-  const GlobalVariable *GVA = dyn_cast<GlobalVariable>(GV);
+  SectionKind::Kind K = ELFTargetAsmInfo::SectionKindForGlobal(GV);
 
-  if (!GVA)
-    return ELFTargetAsmInfo::SectionKindForGlobal(GV);
-  
-  // if this is a internal constant string, there is a special
-  // section for it, but not in small data/bss.
-  if (GVA->hasInitializer() && GV->hasInternalLinkage()) {
-    Constant *C = GVA->getInitializer();
-    const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
-    if (CVA && CVA->isCString()) 
-      return ELFTargetAsmInfo::SectionKindForGlobal(GV);
+  if (K != SectionKind::Data && K != SectionKind::BSS && 
+      K != SectionKind::RODataMergeConst)
+    return K;
+
+  if (isa<GlobalVariable>(GV)) {
+    const TargetData *TD = ETM->getTargetData();
+    unsigned Size = TD->getABITypeSize(GV->getType()->getElementType());
+    unsigned Threshold = 
+      MipsTM->getSubtarget<MipsSubtarget>().getSSectionThreshold();
+     
+    if (Size > 0 && Size <= Threshold) {
+      if (K == SectionKind::BSS)
+        return SectionKind::SmallBSS;
+      else
+        return SectionKind::SmallData;
+    }
   }
 
-  const Type *Ty = GV->getType()->getElementType();
-  unsigned Size = TD->getABITypeSize(Ty);
-  unsigned Threshold = 
-    MipsTM->getSubtarget<MipsSubtarget>().getSSectionThreshold();
-
-  if (Size > 0 && Size <= Threshold) {
-    if (isSuitableForBSS(GVA))
-      return SectionKind::SmallBSS;
-    else
-      return SectionKind::SmallData;
-  }
-
-  return ELFTargetAsmInfo::SectionKindForGlobal(GV);
+  return K;
 }
 
 const Section*
