@@ -291,18 +291,39 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     // FIXME: LLVM IR Should allow alloca with an i64 size!
     Value *Size = EmitScalarExpr(E->getArg(0));
     Size = Builder.CreateIntCast(Size, llvm::Type::Int32Ty, false, "tmp");
-    return RValue::get(Builder.CreateAlloca(llvm::Type::Int8Ty, Size,
-                                            "tmp"));
+    return RValue::get(Builder.CreateAlloca(llvm::Type::Int8Ty, Size, "tmp"));
+  }
+  case Builtin::BI__builtin_bzero: {
+    Value *Address = EmitScalarExpr(E->getArg(0));
+    Builder.CreateCall4(CGM.getMemSetFn(), Address,
+                        llvm::ConstantInt::get(llvm::Type::Int8Ty, 0),
+                        EmitScalarExpr(E->getArg(1)),
+                        llvm::ConstantInt::get(llvm::Type::Int32Ty, 1));
+    return RValue::get(Address);
   }
   case Builtin::BI__builtin_memcpy: {
-    Value* MemCpyOps[4] = {
-      EmitScalarExpr(E->getArg(0)),
-      EmitScalarExpr(E->getArg(1)),
-      EmitScalarExpr(E->getArg(2)),
-      llvm::ConstantInt::get(llvm::Type::Int32Ty, 0)
-    };
-    Builder.CreateCall(CGM.getMemCpyFn(), MemCpyOps, MemCpyOps+4);
-    return RValue::get(MemCpyOps[0]);
+    Value *Address = EmitScalarExpr(E->getArg(0));
+    Builder.CreateCall4(CGM.getMemCpyFn(), Address,
+                        EmitScalarExpr(E->getArg(1)),
+                        EmitScalarExpr(E->getArg(2)),
+                        llvm::ConstantInt::get(llvm::Type::Int32Ty, 1));
+    return RValue::get(Address);
+  }
+  case Builtin::BI__builtin_memmove: {
+    Value *Address = EmitScalarExpr(E->getArg(0));
+    Builder.CreateCall4(CGM.getMemMoveFn(), Address,
+                        EmitScalarExpr(E->getArg(1)),
+                        EmitScalarExpr(E->getArg(2)),
+                        llvm::ConstantInt::get(llvm::Type::Int32Ty, 1));
+    return RValue::get(Address);
+  }
+  case Builtin::BI__builtin_memset: {
+    Value *Address = EmitScalarExpr(E->getArg(0));
+    Builder.CreateCall4(CGM.getMemSetFn(), Address,
+                        EmitScalarExpr(E->getArg(1)),
+                        EmitScalarExpr(E->getArg(2)),
+                        llvm::ConstantInt::get(llvm::Type::Int32Ty, 1));
+    return RValue::get(Address);
   }
   case Builtin::BI__builtin_return_address: {
     Value *F = CGM.getIntrinsic(Intrinsic::returnaddress, 0, 0);
