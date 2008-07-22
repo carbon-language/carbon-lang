@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_ATTR_H
 
 #include <cassert>
+#include <cstring>
 #include <string>
 #include <algorithm>
 
