@@ -418,6 +418,7 @@ private:
   SDOperand ScalarizeVecRes_SELECT(SDNode *N);
   SDOperand ScalarizeVecRes_UNDEF(SDNode *N);
   SDOperand ScalarizeVecRes_VECTOR_SHUFFLE(SDNode *N);
+  SDOperand ScalarizeVecRes_VSETCC(SDNode *N);
 
   // Vector Operand Scalarization: <1 x ty> -> ty.
   bool ScalarizeVectorOperand(SDNode *N, unsigned OpNo);
@@ -434,19 +435,19 @@ private:
 
   // Vector Result Splitting: <128 x ty> -> 2 x <64 x ty>.
   void SplitVectorResult(SDNode *N, unsigned OpNo);
+  void SplitVecRes_BinOp(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_UnOp(SDNode *N, SDOperand &Lo, SDOperand &Hi);
 
-  void SplitVecRes_UNDEF(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void SplitVecRes_LOAD(LoadSDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_BIT_CONVERT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void SplitVecRes_BUILD_PAIR(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void SplitVecRes_VECTOR_SHUFFLE(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-
   void SplitVecRes_BUILD_VECTOR(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void SplitVecRes_CONCAT_VECTORS(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void SplitVecRes_BIT_CONVERT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void SplitVecRes_UnOp(SDNode *N, SDOperand &Lo, SDOperand &Hi);
-  void SplitVecRes_BinOp(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void SplitVecRes_FPOWI(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_LOAD(LoadSDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_UNDEF(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_VECTOR_SHUFFLE(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitVecRes_VSETCC(SDNode *N, SDOperand &Lo, SDOperand &Hi);
 
   // Vector Operand Splitting: <128 x ty> -> 2 x <64 x ty>.
   bool SplitVectorOperand(SDNode *N, unsigned OpNo);

@@ -46,9 +46,10 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::FPOWI:          R = ScalarizeVecRes_FPOWI(N); break;
   case ISD::INSERT_VECTOR_ELT: R = ScalarizeVecRes_INSERT_VECTOR_ELT(N); break;
   case ISD::LOAD:           R = ScalarizeVecRes_LOAD(cast<LoadSDNode>(N));break;
-  case ISD::VECTOR_SHUFFLE: R = ScalarizeVecRes_VECTOR_SHUFFLE(N); break;
   case ISD::SELECT:         R = ScalarizeVecRes_SELECT(N); break;
   case ISD::UNDEF:          R = ScalarizeVecRes_UNDEF(N); break;
+  case ISD::VECTOR_SHUFFLE: R = ScalarizeVecRes_VECTOR_SHUFFLE(N); break;
+  case ISD::VSETCC:         R = ScalarizeVecRes_VSETCC(N); break;
 
   case ISD::ADD:
   case ISD::FADD:
@@ -139,6 +140,19 @@ SDOperand DAGTypeLegalizer::ScalarizeVecRes_VECTOR_SHUFFLE(SDNode *N) {
   SDOperand EltNum = N->getOperand(2).getOperand(0);
   unsigned Op = cast<ConstantSDNode>(EltNum)->getValue() != 0;
   return GetScalarizedVector(N->getOperand(Op));
+}
+
+SDOperand DAGTypeLegalizer::ScalarizeVecRes_VSETCC(SDNode *N) {
+  MVT NewVT = N->getValueType(0).getVectorElementType();
+  SDOperand LHS = GetScalarizedVector(N->getOperand(0));
+  SDOperand RHS = GetScalarizedVector(N->getOperand(1));
+  LHS = DAG.getNode(ISD::SETCC, TLI.getSetCCResultType(LHS), LHS, RHS,
+                    N->getOperand(2));
+  return
+    DAG.getNode(ISD::SELECT, NewVT, LHS,
+                DAG.getConstant(APInt::getAllOnesValue(NewVT.getSizeInBits()),
+                                NewVT),
+                DAG.getConstant(0ULL, NewVT));
 }
 
 
@@ -251,6 +265,7 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::INSERT_VECTOR_ELT: SplitVecRes_INSERT_VECTOR_ELT(N, Lo, Hi); break;
   case ISD::LOAD:           SplitVecRes_LOAD(cast<LoadSDNode>(N), Lo, Hi);break;
   case ISD::VECTOR_SHUFFLE: SplitVecRes_VECTOR_SHUFFLE(N, Lo, Hi); break;
+  case ISD::VSETCC:         SplitVecRes_VSETCC(N, Lo, Hi); break;
 
   case ISD::CTTZ:
   case ISD::CTLZ:
@@ -518,6 +533,19 @@ void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(SDNode *N, SDOperand &Lo,
                               DAG.getIntPtrConstant(Idx)));
   }
   Hi = DAG.getNode(ISD::BUILD_VECTOR, HiVT, &Ops[0], Ops.size());
+}
+
+void DAGTypeLegalizer::SplitVecRes_VSETCC(SDNode *N, SDOperand &Lo,
+                                          SDOperand &Hi) {
+  MVT LoVT, HiVT;
+  GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
+
+  SDOperand LL, LH, RL, RH;
+  GetSplitVector(N->getOperand(0), LL, LH);
+  GetSplitVector(N->getOperand(1), RL, RH);
+
+  Lo = DAG.getNode(ISD::VSETCC, LoVT, LL, RL, N->getOperand(2));
+  Hi = DAG.getNode(ISD::VSETCC, HiVT, LH, RH, N->getOperand(2));
 }
 
 
