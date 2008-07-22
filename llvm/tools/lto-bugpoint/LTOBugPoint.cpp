@@ -52,7 +52,7 @@ LTOBugPoint::LTOBugPoint(std::istream &args, std::istream &ins) {
 /// identified by the script.
 bool
 LTOBugPoint::findTroubleMakers(SmallVector<std::string, 4> &TroubleMakers,
-			       std::string &Script) {
+                               std::string &Script) {
 
   // First, build native object files set.
   bool bitcodeFileSeen = false;
@@ -68,7 +68,7 @@ LTOBugPoint::findTroubleMakers(SmallVector<std::string, 4> &TroubleMakers,
     else if (InputFile.isBitcodeFile()) {
       bitcodeFileSeen = true;
       if (getNativeObjectFile(FileName) == false)
-	return false;
+        return false;
     }
     else
       NativeInputFiles.push_back(FileName);
@@ -133,7 +133,7 @@ bool LTOBugPoint::assembleBitcode(llvm::Module *M, const char *AsmFileName) {
   std::ofstream *Out = new std::ofstream(AsmFileName, std::ios::out);
 
   switch (Target->addPassesToEmitFile(*CGPasses, *Out,
-				       TargetMachine::AssemblyFile, true)) {
+                                      TargetMachine::AssemblyFile, true)) {
   case FileModel::MachOFile:
     mce = AddMachOWriter(*CGPasses, *Out, *Target);
     break;
@@ -155,7 +155,7 @@ bool LTOBugPoint::assembleBitcode(llvm::Module *M, const char *AsmFileName) {
 
   CGPasses->doInitialization();
   for (Module::iterator
-	 it = M->begin(), e = M->end(); it != e; ++it)
+         it = M->begin(), e = M->end(); it != e; ++it)
     if (!it->isDeclaration())
       CGPasses->run(*it);
   CGPasses->doFinalization();
