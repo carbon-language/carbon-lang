@@ -57,4 +57,10 @@ private:
   /// assembleBitcode - Generate assembly code from the module. Return false
   /// in case of an error.
   bool assembleBitcode(llvm::Module *M, const char *AsmFileName);
+
+  /// relinkProgram - Relink program. Return false if linking fails.
+  bool relinkProgram(llvm::SmallVector<std::string, 16> &InputFiles);
+
+  /// reproduceProgramError - Validate program using user provided script.
+  bool reproduceProgramError(std::string &Script);
 };

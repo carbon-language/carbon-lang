@@ -58,7 +58,13 @@ bool
 LTOBugPoint::findTroubleMakers(SmallVector<std::string, 4> &TroubleMakers,
                                std::string &Script) {
 
-  // First, build native object files set.
+  // Reproduce original error.
+  if (!relinkProgram(LinkerInputFiles) || !reproduceProgramError(Script)) {
+    ErrMsg += " Unable to reproduce original error!";
+    return false;
+  }
+    
+  // Build native object files set.
   bool bitcodeFileSeen = false;
   unsigned Size = LinkerInputFiles.size();
   for (unsigned I = 0; I < Size; ++I) {
@@ -81,6 +87,17 @@ LTOBugPoint::findTroubleMakers(SmallVector<std::string, 4> &TroubleMakers,
   if (!bitcodeFileSeen) {
     ErrMsg = "Unable to help!";
     ErrMsg += " Need at least one input file that contains llvm bitcode";
+    return false;
+  }
+
+  // Try to reproduce error using native object files first. If the error
+  // occurs then this is not a LTO error.
+  if (!relinkProgram(NativeInputFiles))  {
+    ErrMsg += " Unable to link the program using all native object files!";
+    return false;
+  }
+  if (reproduceProgramError(Script) == true) {
+    ErrMsg += " Unable to fix program error using all native object files!";
     return false;
   }
 
@@ -245,4 +262,66 @@ bool LTOBugPoint::getNativeObjectFile(std::string &FileName) {
 
   AsmFile.eraseFromDisk();
   return true;
+}
+
+/// relinkProgram - Relink program. Return false if linking fails.
+bool LTOBugPoint::relinkProgram(llvm::SmallVector<std::string, 16> &InFiles) {
+  if (InFiles.empty())
+    return false;
+
+  // Atleast three options: linker path, -o and output file name.
+  if (LinkerOptions.size() < 3)
+    return false;
+
+  const sys::Path linker = sys::Program::FindProgramByName(LinkerOptions[0]);
+  if (linker.isEmpty()) {
+    ErrMsg = "can't locate linker";
+    return false;
+  }
+    
+  std::vector<const char*> Args;
+  for (unsigned i = 0, e = LinkerOptions.size(); i < e; ++i)
+    Args.push_back(LinkerOptions[i].c_str());
+
+  for (unsigned i = 0, e = InFiles.size(); i < e; ++i)
+    Args.push_back(InFiles[i].c_str());
+
+  Args.push_back(0);
+  
+  if (sys::Program::ExecuteAndWait(linker, &Args[0], 0, 0, 0, 0, &ErrMsg)) {
+    ErrMsg += "error while linking program";
+    return false;
+  }
+
+  return true;
+}
+
+/// reproduceProgramError - Validate program using user provided script.
+/// Return true if program error is reproduced.
+bool LTOBugPoint::reproduceProgramError(std::string &Script) {
+
+  const sys::Path validator = sys::Program::FindProgramByName(Script);
+  if (validator.isEmpty()) {
+    ErrMsg = "can't locate validation script";
+    return false;
+  }
+    
+  std::vector<const char*> Args;
+  Args.push_back(Script.c_str());
+  Args.push_back(0);
+
+  int result = 
+    sys::Program::ExecuteAndWait(validator, &Args[0], 0, 0, 0, 0, &ErrMsg);
+
+  // Validation scrip returns non-zero if the error is reproduced.
+  if (result > 0) 
+    // Able to reproduce program error.
+    return true;
+
+  else if (result < 0)
+    // error occured while running validation script. ErrMsg contains error
+    // description.
+    return false;
+
+  return false;
 }
