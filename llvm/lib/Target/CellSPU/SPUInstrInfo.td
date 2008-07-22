@@ -3130,12 +3130,12 @@ class SELECTNegCondReg<PatFrag cond, RegisterClass rclass, ValueType inttype,
   Pat<(select (inttype (cond rclass:$rA, rclass:$rB)),
               rclass:$rTrue, rclass:$rFalse),
       (selinstr rclass:$rTrue, rclass:$rFalse,
-		(cmpare rclass:$rA, rclass:$rB))>;
+                (cmpare rclass:$rA, rclass:$rB))>;
 
 class SELECTNegCondImm<PatFrag cond, RegisterClass rclass, ValueType inttype,
                        PatLeaf immpred, SPUInstr selinstr, SPUInstr cmpare>:
   Pat<(select (inttype (cond rclass:$rA, immpred:$imm)),
-	      rclass:$rTrue, rclass:$rFalse),
+              rclass:$rTrue, rclass:$rFalse),
       (selinstr rclass:$rTrue, rclass:$rFalse,
                 (cmpare rclass:$rA, immpred:$imm))>;
 
@@ -3174,7 +3174,7 @@ class SELECTBinOpImm<PatFrag cond, RegisterClass rclass, PatLeaf immpred,
                      SPUInstr selinstr, SPUInstr binop, SPUInstr cmpOp1,
                      SPUInstr cmpOp2>:
     Pat<(select (inttype (cond rclass:$rA, (inttype immpred:$imm))),
-	        rclass:$rTrue, rclass:$rFalse),
+                rclass:$rTrue, rclass:$rFalse),
         (selinstr rclass:$rFalse, rclass:$rTrue,
                   (binop (cmpOp1 rclass:$rA, (inttype immpred:$imm)),
                          (cmpOp2 rclass:$rA, (inttype immpred:$imm))))>;
