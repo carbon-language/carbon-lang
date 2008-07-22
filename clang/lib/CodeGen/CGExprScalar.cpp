@@ -660,8 +660,9 @@ Value *ScalarExprEmitter::EmitSizeAlignOf(QualType TypeToSize,
   uint32_t ResultWidth = 
     static_cast<uint32_t>(CGF.getContext().getTypeSize(RetType));
 
-  // sizeof(void) and __alignof__(void) = 1 as a gcc extension.
-  if (TypeToSize->isVoidType())
+  // sizeof(void) and __alignof__(void) = 1 as a gcc extension. Also
+  // for function types.
+  if (TypeToSize->isVoidType() || TypeToSize->isFunctionType())
     return llvm::ConstantInt::get(llvm::APInt(ResultWidth, 1));
   
   /// FIXME: This doesn't handle VLAs yet!
