@@ -194,7 +194,10 @@ Path::isBitcodeFile() const {
   std::string actualMagic;
   if (!getMagicNumber(actualMagic, 4))
     return false;
-  return actualMagic == "BC\xC0\xDE";
+  LLVMFileType FT =
+    IdentifyFileType(actualMagic.c_str(),
+                     static_cast<unsigned>(actualMagic.length()));
+  return FT == Bitcode_FileType;
 }
 
 bool Path::hasMagicNumber(const std::string &Magic) const {
