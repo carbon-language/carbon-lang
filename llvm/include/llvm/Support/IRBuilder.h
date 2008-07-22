@@ -105,11 +105,6 @@ public:
     return Insert(ReturnInst::Create(retVals, N));
   }
   
-  GetResultInst *CreateGetResult(Value *V, unsigned Index, 
-                                 const char *Name = "") {
-    return Insert(new GetResultInst(V, Index), Name);
-  }
-    
   /// CreateBr - Create an unconditional 'br label X' instruction.
   BranchInst *CreateBr(BasicBlock *Dest) {
     return Insert(BranchInst::Create(Dest));
@@ -571,6 +566,37 @@ public:
         if (Constant *MC = dyn_cast<Constant>(Mask))
           return ConstantExpr::getShuffleVector(V1C, V2C, MC);      
     return Insert(new ShuffleVectorInst(V1, V2, Mask), Name);
+  }
+
+  GetResultInst *CreateGetResult(Value *V, unsigned Index, 
+                                 const char *Name = "") {
+    return Insert(new GetResultInst(V, Index), Name);
+  }
+    
+  ExtractValueInst *CreateExtractValue(Value *Agg, unsigned Idx,
+                                       const char *Name = "") {
+    return Insert(ExtractValueInst::Create(Agg, Idx), Name);
+  }
+
+  template<typename InputIterator>
+  ExtractValueInst *CreateExtractValue(Value *Agg,
+                                       InputIterator IdxBegin,
+                                       InputIterator IdxEnd,
+                                       const char *Name = "") {
+    return Insert(ExtractValueInst::Create(Agg, IdxBegin, IdxEnd), Name);
+  }
+
+  InsertValueInst *CreateInsertValue(Value *Agg, Value *Val, unsigned Idx,
+                                     const char *Name = "") {
+    return Insert(InsertValueInst::Create(Agg, Val, Idx), Name);
+  }
+
+  template<typename InputIterator>
+  InsertValueInst *CreateInsertValue(Value *Agg, Value *Val,
+                                     InputIterator IdxBegin,
+                                     InputIterator IdxEnd,
+                                     const char *Name = "") {
+    return Insert(InsertValueInst::Create(Agg, Val, IdxBegin, IdxEnd), Name);
   }
 };
   
