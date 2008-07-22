@@ -231,6 +231,13 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
      case SectionKind::RODataMergeConst:
       // No additional flags here
       break;
+     case SectionKind::SmallData:
+     case SectionKind::SmallBSS:
+      Flags |= SectionFlags::Writeable;
+      // FALLS THROUGH
+     case SectionKind::SmallROData:
+      Flags |= SectionFlags::Small;
+      break;
      default:
       assert(0 && "Unexpected section kind!");
     }
@@ -245,7 +252,9 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
 
     // Some lame default implementation based on some magic section names.
     if (strncmp(Name, ".gnu.linkonce.b.", 16) == 0 ||
-        strncmp(Name, ".llvm.linkonce.b.", 17) == 0)
+        strncmp(Name, ".llvm.linkonce.b.", 17) == 0 ||
+        strncmp(Name, ".gnu.linkonce.sb.", 17) == 0 ||
+        strncmp(Name, ".llvm.linkonce.sb.", 18) == 0)
       Flags |= SectionFlags::BSS;
     else if (strcmp(Name, ".tdata") == 0 ||
              strncmp(Name, ".tdata.", 7) == 0 ||
@@ -297,12 +306,15 @@ TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   } else {
     if (Kind == SectionKind::Text)
       return getTextSection_();
-    else if (Kind == SectionKind::BSS && getBSSSection_())
+    else if ((Kind == SectionKind::BSS ||
+              Kind == SectionKind::SmallBSS) &&
+             getBSSSection_())
       return getBSSSection_();
     else if (getReadOnlySection_() &&
              (Kind == SectionKind::ROData ||
               Kind == SectionKind::RODataMergeConst ||
-              Kind == SectionKind::RODataMergeStr))
+              Kind == SectionKind::RODataMergeStr ||
+              Kind == SectionKind::SmallROData))
       return getReadOnlySection_();
   }
 
@@ -317,12 +329,18 @@ TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
     return ".gnu.linkonce.t." + GV->getName();
    case SectionKind::Data:
     return ".gnu.linkonce.d." + GV->getName();
+   case SectionKind::SmallData:
+    return ".gnu.linkonce.s." + GV->getName();
    case SectionKind::BSS:
     return ".gnu.linkonce.b." + GV->getName();
+   case SectionKind::SmallBSS:
+    return ".gnu.linkonce.sb." + GV->getName();
    case SectionKind::ROData:
    case SectionKind::RODataMergeConst:
    case SectionKind::RODataMergeStr:
     return ".gnu.linkonce.r." + GV->getName();
+   case SectionKind::SmallROData:
+    return ".gnu.linkonce.s2." + GV->getName();
    case SectionKind::ThreadData:
     return ".gnu.linkonce.td." + GV->getName();
    case SectionKind::ThreadBSS:
