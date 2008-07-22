@@ -39,6 +39,9 @@ namespace llvm {
       ROData,           ///< Readonly data section
       RODataMergeStr,   ///< Readonly data section (mergeable strings)
       RODataMergeConst, ///< Readonly data section (mergeable constants)
+      SmallData,        ///< Small data section
+      SmallBSS,         ///< Small bss section     
+      SmallROData,      ///< Small readonly section     
       ThreadData,       ///< Initialized TLS data objects
       ThreadBSS         ///< Uninitialized TLS data objects
     };
@@ -118,6 +121,21 @@ namespace llvm {
     /// jump tables).
     const char *ReadOnlySection;          // Defaults to NULL
     const Section *ReadOnlySection_;
+
+    /// SmallDataSection - This is the directive that is emitted to switch to a
+    /// small data section.
+    ///
+    const Section *SmallDataSection;      // Defaults to NULL
+
+    /// SmallBSSSection - This is the directive that is emitted to switch to a
+    /// small bss section.
+    ///
+    const Section *SmallBSSSection;       // Defaults to NULL
+
+    /// SmallRODataSection - This is the directive that is emitted to switch to 
+    /// a small read-only data section.
+    ///
+    const Section *SmallRODataSection;    // Defaults to NULL
 
     /// TLSDataSection - Section directive for Thread Local data.
     ///
@@ -548,6 +566,15 @@ namespace llvm {
     }
     const Section *getReadOnlySection_() const {
       return ReadOnlySection_;
+    }
+    const Section *getSmallDataSection() const {
+      return SmallDataSection;
+    }
+    const Section *getSmallBSSSection() const {
+      return SmallBSSSection;
+    }
+    const Section *getSmallRODataSection() const {
+      return SmallRODataSection;
     }
     const char *getTLSDataSection() const {
       return TLSDataSection;
