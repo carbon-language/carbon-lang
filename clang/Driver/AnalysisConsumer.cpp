@@ -298,7 +298,8 @@ static void ActionWarnUninitVals(AnalysisManager& mgr) {
 }
 
 
-static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf) {
+static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf,
+                               bool StandardWarnings = true) {
   
   
   llvm::OwningPtr<GRTransferFuncs> TF(tf);
@@ -314,6 +315,11 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf) {
   GRExprEngine Eng(*mgr.getCFG(), *mgr.getCodeDecl(), mgr.getContext(), *L);
   Eng.setTransferFunctions(tf);
   
+  if (StandardWarnings) {
+    Eng.RegisterInternalChecks();
+    RegisterAppleChecks(Eng);
+  }
+  
   // Execute the worklist algorithm.
   Eng.ExecuteWorkList();
   
@@ -326,14 +332,13 @@ static void ActionGRExprEngine(AnalysisManager& mgr, GRTransferFuncs* tf) {
 }
 
 static void ActionCheckerCFRefAux(AnalysisManager& mgr, bool GCEnabled,
-                                    bool StandardWarnings) {
-
+                                  bool StandardWarnings) {
+  
   GRTransferFuncs* TF = MakeCFRefCountTF(mgr.getContext(),
                                          GCEnabled,
-                                         StandardWarnings,
                                          mgr.getLangOptions());
     
-  ActionGRExprEngine(mgr, TF);
+  ActionGRExprEngine(mgr, TF, StandardWarnings);
 }
 
 static void ActionCheckerCFRef(AnalysisManager& mgr) {

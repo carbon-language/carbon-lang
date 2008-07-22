@@ -17,9 +17,12 @@
 
 #include "clang/Analysis/PathSensitive/ExplodedGraph.h"
 #include "clang/Analysis/PathSensitive/GRSimpleAPICheck.h"
+#include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/ValueState.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/PathDiagnostic.h"
+#include "clang/Analysis/LocalCheckers.h"
+
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/ASTContext.h"
@@ -547,3 +550,15 @@ clang::CreateAuditCFNumberCreate(ASTContext& Ctx,
   return new AuditCFNumberCreate(Ctx, VMgr);  
 }
 
+//===----------------------------------------------------------------------===//
+// Check registration.
+
+void clang::RegisterAppleChecks(GRExprEngine& Eng) {
+  ASTContext& Ctx = Eng.getContext();
+  ValueStateManager* VMgr = &Eng.getStateManager();
+
+  Eng.AddCheck(CreateBasicObjCFoundationChecks(Ctx, VMgr),
+               Stmt::ObjCMessageExprClass);
+
+  Eng.AddCheck(CreateAuditCFNumberCreate(Ctx, VMgr), Stmt::CallExprClass);
+}

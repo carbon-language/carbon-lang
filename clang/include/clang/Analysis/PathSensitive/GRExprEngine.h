@@ -220,6 +220,8 @@ public:
     BugTypes.push_back(B);
   }
   
+  void RegisterInternalChecks();
+  
   void EmitWarnings(BugReporterData& BRData);  
   
   bool isRetStackAddr(const NodeTy* N) const {

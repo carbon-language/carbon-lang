@@ -35,8 +35,6 @@ public:
   GRSimpleVals() {}
   virtual ~GRSimpleVals() {}
   
-  virtual void RegisterChecks(GRExprEngine& Eng);
-  
   // Casts.
   
   virtual RVal EvalCast(GRExprEngine& Engine, NonLVal V, QualType CastT);

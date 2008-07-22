@@ -1244,7 +1244,6 @@ private:
   // Instance variables.
   
   RetainSummaryManager Summaries;  
-  const bool           EmitStandardWarnings;  
   const LangOptions&   LOpts;
   RefBFactoryTy        RefBFactory;
      
@@ -1293,10 +1292,8 @@ private:
   
 public:
   
-  CFRefCount(ASTContext& Ctx, bool gcenabled, bool StandardWarnings,
-             const LangOptions& lopts)
+  CFRefCount(ASTContext& Ctx, bool gcenabled, const LangOptions& lopts)
     : Summaries(Ctx, gcenabled),
-      EmitStandardWarnings(StandardWarnings),
       LOpts(lopts),
       RetainSelector(GetNullarySelector("retain", Ctx)),
       ReleaseSelector(GetNullarySelector("release", Ctx)),
@@ -2223,7 +2220,6 @@ namespace {
 } // end anonymous namespace
 
 void CFRefCount::RegisterChecks(GRExprEngine& Eng) {
-  if (EmitStandardWarnings) GRSimpleVals::RegisterChecks(Eng);
   Eng.Register(new UseAfterRelease(*this));
   Eng.Register(new BadRelease(*this));
   Eng.Register(new Leak(*this));
@@ -2593,7 +2589,6 @@ bool Leak::isCached(BugReport& R) {
 //===----------------------------------------------------------------------===//
 
 GRTransferFuncs* clang::MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
-                                         bool StandardWarnings,
                                          const LangOptions& lopts) {
-  return new CFRefCount(Ctx, GCEnabled, StandardWarnings, lopts);
+  return new CFRefCount(Ctx, GCEnabled, lopts);
 }  

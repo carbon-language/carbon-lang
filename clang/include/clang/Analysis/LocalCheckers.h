@@ -30,6 +30,7 @@ class LiveVariables;
 class BugReporter;
 class ObjCImplementationDecl;
 class LangOptions;
+class GRExprEngine;
   
 void CheckDeadStores(LiveVariables& L, BugReporter& BR); 
   
@@ -38,13 +39,14 @@ void CheckUninitializedValues(CFG& cfg, ASTContext& Ctx, Diagnostic& Diags,
   
 GRTransferFuncs* MakeGRSimpleValsTF();
 GRTransferFuncs* MakeCFRefCountTF(ASTContext& Ctx, bool GCEnabled,
-                                  bool StandardWarnings,
                                   const LangOptions& lopts); 
   
 void CheckObjCDealloc(ObjCImplementationDecl* D, const LangOptions& L,
                       BugReporter& BR);
   
 void CheckObjCInstMethSignature(ObjCImplementationDecl* ID, BugReporter& BR);
+  
+void RegisterAppleChecks(GRExprEngine& Eng);
   
 } // end namespace clang
 
