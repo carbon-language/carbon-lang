@@ -1638,8 +1638,8 @@ ExtractValueInst::ExtractValueInst(Value *Agg,
                                    const std::string &Name,
                                    Instruction *InsertBefore)
   : UnaryInstruction(checkType(getIndexedType(Agg->getType(),
-					      IdxBegin, IdxEnd)),
-		     ExtractValue, Agg, InsertBefore) {
+                                              IdxBegin, IdxEnd)),
+                     ExtractValue, Agg, InsertBefore) {
   init(IdxBegin, IdxEnd, Name,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
@@ -1650,8 +1650,8 @@ ExtractValueInst::ExtractValueInst(Value *Agg,
                                    const std::string &Name,
                                    BasicBlock *InsertAtEnd)
   : UnaryInstruction(checkType(getIndexedType(Agg->getType(),
-					      IdxBegin, IdxEnd)),
-		     ExtractValue, Agg, InsertAtEnd) {
+                                              IdxBegin, IdxEnd)),
+                     ExtractValue, Agg, InsertAtEnd) {
   init(IdxBegin, IdxEnd, Name,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
