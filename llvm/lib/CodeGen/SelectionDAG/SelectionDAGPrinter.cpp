@@ -110,7 +110,8 @@ namespace llvm {
                                        GraphWriter<SelectionDAG*> &GW) {
       GW.emitSimpleNode(0, "plaintext=circle", "GraphRoot");
       if (G->getRoot().Val)
-        GW.emitEdge(0, -1, G->getRoot().Val, -1, "");
+        GW.emitEdge(0, -1, G->getRoot().Val, G->getRoot().ResNo,
+                    "color=blue,style=dashed");
     }
   };
 }
