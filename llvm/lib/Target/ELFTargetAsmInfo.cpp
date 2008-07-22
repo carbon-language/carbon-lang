@@ -63,11 +63,14 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
     } else {
       switch (Kind) {
        case SectionKind::Data:
+       case SectionKind::SmallData:
         return getDataSection_();
        case SectionKind::BSS:
+       case SectionKind::SmallBSS:
         // ELF targets usually have BSS sections
         return getBSSSection_();
        case SectionKind::ROData:
+       case SectionKind::SmallROData:
         return getReadOnlySection_();
        case SectionKind::RODataMergeStr:
         return MergeableStringSection(GVar);
@@ -147,6 +150,8 @@ std::string ELFTargetAsmInfo::PrintSectionFlags(unsigned flags) const {
     Flags += 'S';
   if (flags & SectionFlags::TLS)
     Flags += 'T';
+  if (flags & SectionFlags::Small)
+    Flags += 's';
 
   Flags += "\"";
 

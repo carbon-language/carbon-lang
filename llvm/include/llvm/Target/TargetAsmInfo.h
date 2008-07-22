@@ -40,8 +40,8 @@ namespace llvm {
       RODataMergeStr,   ///< Readonly data section (mergeable strings)
       RODataMergeConst, ///< Readonly data section (mergeable constants)
       SmallData,        ///< Small data section
-      SmallBSS,         ///< Small bss section     
-      SmallROData,      ///< Small readonly section     
+      SmallBSS,         ///< Small bss section
+      SmallROData,      ///< Small readonly section
       ThreadData,       ///< Initialized TLS data objects
       ThreadBSS         ///< Uninitialized TLS data objects
     };
@@ -58,6 +58,7 @@ namespace llvm {
     const unsigned TLS        = 1 << 5;  ///< Section contains thread-local data
     const unsigned Debug      = 1 << 6;  ///< Section contains debug data
     const unsigned Linkonce   = 1 << 7;  ///< Section is linkonce
+    const unsigned Small      = 1 << 8;  ///< Section is small
     const unsigned TypeFlags  = 0xFF;
     // Some gap for future flags
     const unsigned Named      = 1 << 23; ///< Section is named
