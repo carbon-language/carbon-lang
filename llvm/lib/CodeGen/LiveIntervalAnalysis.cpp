@@ -87,6 +87,8 @@ void LiveIntervals::computeNumbering() {
   mi2iMap_.clear();
   i2miMap_.clear();
   
+  FunctionSize = 0;
+  
   // Number MachineInstrs and MachineBasicBlocks.
   // Initialize MBB indexes to a sentinal.
   MBB2IdxMap.resize(mf_->getNumBlockIDs(), std::make_pair(~0U,~0U));
@@ -102,6 +104,8 @@ void LiveIntervals::computeNumbering() {
       assert(inserted && "multiple MachineInstr -> index mappings");
       i2miMap_.push_back(I);
       MIIndex += InstrSlots::NUM;
+      
+      FunctionSize++;
     }
     
     if (StartIdx == MIIndex) {
@@ -1789,7 +1793,7 @@ addIntervalsForSpills(const LiveInterval &li,
   for (unsigned i = 0, e = NewLIs.size(); i != e; ++i) {
     LiveInterval *LI = NewLIs[i];
     if (!LI->empty()) {
-      LI->weight /= LI->getSize();
+      LI->weight /= getApproximateInstructionCount(*LI);
       if (!AddedKill.count(LI)) {
         LiveRange *LR = &LI->ranges[LI->ranges.size()-1];
         unsigned LastUseIdx = getBaseIndex(LR->end);

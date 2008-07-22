@@ -851,8 +851,8 @@ SimpleRegisterCoalescing::isProfitableToCoalesceToSubRC(unsigned SrcReg,
   // Then make sure the intervals are *short*.
   LiveInterval &SrcInt = li_->getInterval(SrcReg);
   LiveInterval &DstInt = li_->getInterval(DstReg);
-  unsigned SrcSize = SrcInt.getSize() / InstrSlots::NUM;
-  unsigned DstSize = DstInt.getSize() / InstrSlots::NUM;
+  unsigned SrcSize = li_->getApproximateInstructionCount(SrcInt);
+  unsigned DstSize = li_->getApproximateInstructionCount(DstInt);
   const TargetRegisterClass *RC = mri_->getRegClass(DstReg);
   unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
   return (SrcSize + DstSize) <= Threshold;
@@ -1011,10 +1011,10 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       if (SubIdx) {
         unsigned LargeReg = isExtSubReg ? SrcReg : DstReg;
         unsigned SmallReg = isExtSubReg ? DstReg : SrcReg;
-        unsigned LargeRegSize =
-          li_->getInterval(LargeReg).getSize() / InstrSlots::NUM;
-        unsigned SmallRegSize =
-          li_->getInterval(SmallReg).getSize() / InstrSlots::NUM;
+        unsigned LargeRegSize = 
+          li_->getApproximateInstructionCount(li_->getInterval(LargeReg));
+        unsigned SmallRegSize = 
+          li_->getApproximateInstructionCount(li_->getInterval(SmallReg));
         const TargetRegisterClass *RC = mri_->getRegClass(SmallReg);
         unsigned Threshold = allocatableRCRegs_[RC].count();
         // Be conservative. If both sides are virtual registers, do not coalesce
@@ -1081,7 +1081,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       // If the virtual register live interval is long but it has low use desity,
       // do not join them, instead mark the physical register as its allocation
       // preference.
-      unsigned Length = JoinVInt.getSize() / InstrSlots::NUM;
+      unsigned Length = li_->getApproximateInstructionCount(JoinVInt);
       if (Length > Threshold &&
           (((float)std::distance(mri_->use_begin(JoinVReg),
                               mri_->use_end()) / Length) < (1.0 / Threshold))) {
@@ -2196,7 +2196,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
       // Divide the weight of the interval by its size.  This encourages 
       // spilling of intervals that are large and have few uses, and
       // discourages spilling of small intervals with many uses.
-      LI.weight /= LI.getSize();
+      LI.weight /= li_->getApproximateInstructionCount(LI);
     }
   }
 

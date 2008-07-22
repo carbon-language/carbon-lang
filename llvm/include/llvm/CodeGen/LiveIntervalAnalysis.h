@@ -75,6 +75,9 @@ namespace llvm {
     /// and MBB id.
     std::vector<IdxMBBPair> Idx2MBBMap;
 
+    /// FunctionSize - The number of instructions present in the function
+    uint64_t FunctionSize;
+
     typedef std::map<MachineInstr*, unsigned> Mi2IndexMap;
     Mi2IndexMap mi2iMap_;
 
@@ -169,11 +172,18 @@ namespace llvm {
       return MBB2IdxMap[MBBNo].second;
     }
 
-    /// getIntervalSize - get the size of an interval in "units,"
+    /// getScaledIntervalSize - get the size of an interval in "units,"
     /// where every function is composed of one thousand units.  This
     /// measure scales properly with empty index slots in the function.
-    unsigned getScaledIntervalSize(LiveInterval& I) const {
-      return (1000 / InstrSlots::NUM * I.getSize()) / i2miMap_.size();
+    double getScaledIntervalSize(LiveInterval& I) {
+      return (1000.0 / InstrSlots::NUM * I.getSize()) / i2miMap_.size();
+    }
+    
+    /// getApproximateInstructionCount - computes an estimate of the number
+    /// of instructions in a given LiveInterval.
+    unsigned getApproximateInstructionCount(LiveInterval& I) {
+      double IntervalPercentage = getScaledIntervalSize(I) / 1000.0;
+      return IntervalPercentage * FunctionSize;
     }
 
     /// getMBBFromIndex - given an index in any instruction of an

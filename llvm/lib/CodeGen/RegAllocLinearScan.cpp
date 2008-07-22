@@ -851,7 +851,8 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   if (minWeight == HUGE_VALF) {
     // All registers must have inf weight. Just grab one!
     minReg = BestPhysReg ? BestPhysReg : *RC->allocation_order_begin(*mf_);
-    if (cur->weight == HUGE_VALF || cur->getSize() == 1)
+    if (cur->weight == HUGE_VALF ||
+        li_->getApproximateInstructionCount(*cur) == 1)
       // Spill a physical register around defs and uses.
       li_->spillPhysRegAroundRegDefsUses(*cur, minReg, *vrm_);
   }

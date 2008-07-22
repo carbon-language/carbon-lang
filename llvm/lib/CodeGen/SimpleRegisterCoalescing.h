@@ -126,7 +126,7 @@ namespace llvm {
     unsigned getRepIntervalSize(unsigned Reg) {
       if (!li_->hasInterval(Reg))
         return 0;
-      return li_->getInterval(Reg).getSize();
+      return li_->getApproximateInstructionCount(li_->getInterval(Reg));
     }
 
     /// print - Implement the dump method.
