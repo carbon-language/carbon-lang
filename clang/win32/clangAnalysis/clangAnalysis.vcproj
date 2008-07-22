@@ -207,6 +207,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\GRExprEngineInternalChecks.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\GRSimpleVals.cpp"
 				>
 			</File>
