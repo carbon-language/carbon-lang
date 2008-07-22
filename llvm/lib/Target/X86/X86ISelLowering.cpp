@@ -601,6 +601,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v2i32, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v1i64, Custom);
 
+    setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v2f32, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v8i8,  Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v4i16, Custom);
     setOperationAction(ISD::SCALAR_TO_VECTOR,   MVT::v1i64, Custom);
@@ -4135,6 +4136,12 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
 
 SDOperand
 X86TargetLowering::LowerSCALAR_TO_VECTOR(SDOperand Op, SelectionDAG &DAG) {
+  if (Op.getValueType() == MVT::v2f32)
+    return DAG.getNode(ISD::BIT_CONVERT, MVT::v2f32,
+                       DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v2i32,
+                                   DAG.getNode(ISD::BIT_CONVERT, MVT::i32,
+                                               Op.getOperand(0))));
+
   SDOperand AnyExt = DAG.getNode(ISD::ANY_EXTEND, MVT::i32, Op.getOperand(0));
   MVT VT = MVT::v2i32;
   switch (Op.getValueType().getSimpleVT()) {
