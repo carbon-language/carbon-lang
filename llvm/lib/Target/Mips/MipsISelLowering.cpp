@@ -241,10 +241,11 @@ AddLiveIn(MachineFunction &MF, unsigned PReg, TargetRegisterClass *RC)
 bool MipsTargetLowering::IsGlobalInSmallSection(GlobalValue *GV)
 {
   const TargetData *TD = getTargetData();
-  const Value *V = dyn_cast<Value>(GV);
-  const GlobalVariable *GVA = dyn_cast<GlobalVariable>(V);
+  const GlobalVariable *GVA = dyn_cast<GlobalVariable>(GV);
+
+  if (!GVA)
+    return false;
   
-  //const PointerType *PTy = GV->getType();
   const Type *Ty = GV->getType()->getElementType();
   unsigned Size = TD->getABITypeSize(Ty);
 
