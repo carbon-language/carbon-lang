@@ -3923,8 +3923,7 @@ void DwarfWriter::EndFunction() {
   DD->EndFunction();
   DE->EndFunction();
   
-  if (MachineModuleInfo *MMI = DD->getMMI() ? DD->getMMI() : DE->getMMI()) {
+  if (MachineModuleInfo *MMI = DD->getMMI() ? DD->getMMI() : DE->getMMI())
     // Clear function debug information.
     MMI->EndFunction();
-  }
 }
