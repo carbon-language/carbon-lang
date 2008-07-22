@@ -42,7 +42,7 @@ TargetMachineRegistry::getClosestStaticTargetForModule(const Module &M,
   } else if (UsableTargets.size() == 1)
     return UsableTargets.back().second;
 
-  // Otherwise, take the best target, but make sure we don't have to equally
+  // Otherwise, take the best target, but make sure we don't have two equally
   // good best targets.
   std::sort(UsableTargets.begin(), UsableTargets.end());
   if (UsableTargets.back().first ==UsableTargets[UsableTargets.size()-2].first){
