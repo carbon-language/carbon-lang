@@ -105,19 +105,16 @@ pre-release testing.</li>
     <p>Request all developers to refrain from committing. Offenders get commit
     rights taken away (temporarily).</p></li>
   <li>
-  <p> Create the release branch for <tt>llvm</tt>, <tt>llvm-gcc4.0</tt>, 
-  <tt>llvm-gcc4.2</tt>, and the <tt>test-suite</tt>. The 
-  branch name will be <tt>release_XX</tt>, where <tt>XX</tt> is the major and 
-  minor release numbers. These branches can be created without checking out
-  anything from subversion.
+  <p> Create the release branch for <tt>llvm</tt>, <tt>llvm-gcc4.2</tt>, and
+  the <tt>test-suite</tt>. The branch name will be <tt>release_XX</tt>,
+  where <tt>XX</tt> is the major and minor release numbers. These branches can
+  be created without checking out anything from subversion.
   </p>
   
   <div class="doc_code">
 <pre>
 svn copy https://llvm.org/svn/llvm-project/llvm/trunk \
          https://llvm.org/svn/llvm-project/llvm/branches/release_<i>XX</i>
-svn copy https://llvm.org/svn/llvm-project/llvm-gcc-4.0/trunk \
-         https://llvm.org/svn/llvm-project/llvm-gcc-4.0/branches/release_<i>XX</i>
 svn copy https://llvm.org/svn/llvm-project/llvm-gcc-4.2/trunk \
          https://llvm.org/svn/llvm-project/llvm-gcc-4.2/branches/release_<i>XX</i>
 svn copy https://llvm.org/svn/llvm-project/test-suite/trunk \
@@ -136,7 +133,6 @@ svn copy https://llvm.org/svn/llvm-project/test-suite/trunk \
 <div class="doc_code">
 <pre>
 svn co https://llvm.org/svn/llvm-project/llvm/branches/release_<i>XX</i>
-svn co https://llvm.org/svn/llvm-project/llvm-gcc-4.0/branches/release_<i>XX</i>
 svn co https://llvm.org/svn/llvm-project/llvm-gcc-4.2/branches/release_<i>XX</i>
 svn co https://llvm.org/svn/llvm-project/test-suite/branches/release_<i>XX</i>
 </pre>
@@ -172,12 +168,10 @@ svn co https://llvm.org/svn/llvm-project/test-suite/branches/release_<i>XX</i>
 <div class="doc_code">
 <pre>
 svn export https://llvm.org/svn/llvm-project/llvm/branches/release_<i>XX</i> llvm-X.X
-svn export https://llvm.org/svn/llvm-project/llvm-gcc-4.0/branches/release_<i>XX</i> llvm-gcc4.0-X.X.source
 svn export https://llvm.org/svn/llvm-project/llvm-gcc-4.2/branches/release_<i>XX</i> llvm-gcc4.2-X.X.source
 svn export https://llvm.org/svn/llvm-project/test-suite/branches/release_<i>XX</i> llvm-test-X.X
 tar -cvf - llvm-X.X          | gzip &gt; llvm-X.X.tar.gz
 tar -cvf - llvm-test-X.X     | gzip &gt; llvm-test-X.X.tar.gz
-tar -cvf - llvm-gcc4.0-X.X.source | gzip &gt; llvm-gcc-4.0-X.X.source.tar.gz
 tar -cvf - llvm-gcc4.2-X.X.source | gzip &gt; llvm-gcc-4.2-X.X.source.tar.gz
 </pre>
 </div>
@@ -316,8 +310,6 @@ make rpm  # for binary rpm
 <pre>
 svn copy https://llvm.org/svn/llvm-project/llvm/branches/release_XX \
          https://llvm.org/svn/llvm-project/llvm/tags/RELEASE_<i>XX</i>
-svn copy https://llvm.org/svn/llvm-project/llvm-gcc-4.0/branches/release_XX \
-         https://llvm.org/svn/llvm-project/llvm-gcc-4.0/tags/RELEASE_<i>XX</i>
 svn copy https://llvm.org/svn/llvm-project/llvm-gcc-4.2/branches/release_XX \
          https://llvm.org/svn/llvm-project/llvm-gcc-4.2/tags/RELEASE_<i>XX</i>
 svn copy https://llvm.org/svn/llvm-project/test-suite/branches/release_XX \
