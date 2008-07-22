@@ -19,6 +19,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 
+#include <cassert>
 #include <list>
 #include <vector>
 #include <map>
@@ -127,7 +128,11 @@ public:
 
   /// setRoot - Set the current root tag of the SelectionDAG.
   ///
-  const SDOperand &setRoot(SDOperand N) { return Root = N; }
+  const SDOperand &setRoot(SDOperand N) {
+    assert((!N.Val || N.getValueType() == MVT::Other) &&
+           "DAG root value is not a chain!");
+    return Root = N;
+  }
 
   /// Combine - This iterates over the nodes in the SelectionDAG, folding
   /// certain types of nodes together, or eliminating superfluous nodes.  When
