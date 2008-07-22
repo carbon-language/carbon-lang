@@ -3847,11 +3847,12 @@ void DIE::print(std::ostream &O, unsigned IncIndent) {
   IndentCount += 2;
   for (unsigned i = 0, N = Data.size(); i < N; ++i) {
     O << Indent;
-    if (!isBlock) {
+
+    if (!isBlock)
       O << AttributeString(Data[i].getAttribute());
-    } else {
+    else
       O << "Blk[" << i << "]";
-    }
+
     O <<  "  "
       << FormEncodingString(Data[i].getForm())
       << " ";
