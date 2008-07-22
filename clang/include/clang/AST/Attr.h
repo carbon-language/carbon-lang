@@ -197,7 +197,7 @@ public:
     delete [] ArgNums;
   }
   
-  bool isNonNull(unsigned arg) {
+  bool isNonNull(unsigned arg) const {
     return ArgNums ? std::binary_search(ArgNums, ArgNums+Size, arg) : true;
   }  
 };

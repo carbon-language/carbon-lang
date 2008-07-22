@@ -26,10 +26,11 @@ namespace clang {
 template <typename STATE>
 class GRAuditor {
 public:
-  typedef ExplodedNode<STATE>   NodeTy;
+  typedef ExplodedNode<STATE>       NodeTy;
+  typedef typename STATE::ManagerTy ManagerTy;
   
   virtual ~GRAuditor() {}
-  virtual bool Audit(NodeTy* N) = 0;
+  virtual bool Audit(NodeTy* N, ManagerTy& M) = 0;
 };
   
   

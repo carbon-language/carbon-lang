@@ -335,6 +335,63 @@ void UndefBranch::EmitWarnings(BugReporter& BR) {
   }
 }
 
+//===----------------------------------------------------------------------===//
+// __attribute__(nonnull) checking
+
+class VISIBILITY_HIDDEN CheckAttrNonNull : public GRSimpleAPICheck {
+  SimpleBugType BT;
+  std::list<RangedBugReport> Reports;
+
+public:
+  CheckAttrNonNull() :
+    BT("'nonnull' argument passed null",
+       "Null pointer passed as an argument to a 'nonnull' parameter") {}
+  
+
+  virtual bool Audit(ExplodedNode<ValueState>* N, ValueStateManager& VMgr) {
+    CallExpr* CE = cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
+    const ValueState* state = N->getState();
+    
+    RVal X = VMgr.GetRVal(state, CE->getCallee());
+
+    if (!isa<lval::FuncVal>(X))
+      return false;
+    
+    FunctionDecl* FD = dyn_cast<FunctionDecl>(cast<lval::FuncVal>(X).getDecl());
+    const NonNullAttr* Att = FD->getAttr<NonNullAttr>();
+    
+    if (!Att)
+      return false;
+    
+    // Iterate through the arguments of CE and check them for null.
+    
+    unsigned idx = 0;
+    bool hasError = false;
+    
+    for (CallExpr::arg_iterator I=CE->arg_begin(), E=CE->arg_end(); I!=E;
+         ++I, ++idx) {
+    
+      if (!VMgr.isEqual(state, *I, 0) || !Att->isNonNull(idx))
+        continue;
+      
+      RangedBugReport R(BT, N);
+      R.addRange((*I)->getSourceRange());
+      Reports.push_back(R);
+      hasError = true;
+    }
+    
+    return hasError;
+  }
+  
+  virtual void EmitWarnings(BugReporter& BR) {
+    for (std::list<RangedBugReport>::iterator I=Reports.begin(),
+         E=Reports.end(); I!=E; ++I)
+      BR.EmitWarning(*I);
+  }
+};
+
+//===----------------------------------------------------------------------===//
+// Check registration.
 
 void GRSimpleVals::RegisterChecks(GRExprEngine& Eng) {
   
@@ -360,6 +417,7 @@ void GRSimpleVals::RegisterChecks(GRExprEngine& Eng) {
   Check = CreateAuditCFNumberCreate(Ctx, VMgr);
   Eng.AddCheck(Check, Stmt::CallExprClass);
   
+  Eng.AddCheck(new CheckAttrNonNull(), Stmt::CallExprClass);  
 }
 
 //===----------------------------------------------------------------------===//

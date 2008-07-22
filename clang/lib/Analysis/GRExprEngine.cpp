@@ -85,7 +85,7 @@ public:
       }
   }
   
-  virtual bool Audit(NodeTy* N) {
+  virtual bool Audit(NodeTy* N, ValueStateManager& VMgr) {
     Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
     void* key = reinterpret_cast<void*>((uintptr_t) S->getStmtClass());
     MapTy::iterator MI = M.find(key);
@@ -96,7 +96,7 @@ public:
     bool isSink = false;
     
     for (Checks::iterator I=MI->second.begin(), E=MI->second.end(); I!=E; ++I)
-      isSink |= (*I)->Audit(N);
+      isSink |= (*I)->Audit(N, VMgr);
 
     return isSink;    
   }

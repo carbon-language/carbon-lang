@@ -300,12 +300,14 @@ public:
 };
   
 class SimpleBugType : public BugTypeCacheLocation {
-  const char* name;  
+  const char* name;
+  const char* desc;
 public:
-  SimpleBugType(const char* n) : name(n) {}
+  SimpleBugType(const char* n) : name(n), desc(n) {}
+  SimpleBugType(const char* n, const char* d) : name(n), desc(d) {}
   
   virtual const char* getName() const { return name; }
-  virtual const char* getDescription() const { return name; }
+  virtual const char* getDescription() const { return desc; }
 };
   
 } // end clang namespace

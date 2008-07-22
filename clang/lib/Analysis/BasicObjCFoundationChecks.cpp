@@ -126,7 +126,7 @@ public:
       delete *I;    
   }
   
-  virtual bool Audit(ExplodedNode<ValueState>* N);
+  virtual bool Audit(ExplodedNode<ValueState>* N, ValueStateManager&);
   
   virtual void EmitWarnings(BugReporter& BR);
   
@@ -153,7 +153,8 @@ clang::CreateBasicObjCFoundationChecks(ASTContext& Ctx,
 
 
 
-bool BasicObjCFoundationChecks::Audit(ExplodedNode<ValueState>* N) {
+bool BasicObjCFoundationChecks::Audit(ExplodedNode<ValueState>* N,
+                                      ValueStateManager&) {
   
   ObjCMessageExpr* ME =
     cast<ObjCMessageExpr>(cast<PostStmt>(N->getLocation()).getStmt());
@@ -348,7 +349,7 @@ public:
   
   virtual ~AuditCFNumberCreate() {}
   
-  virtual bool Audit(ExplodedNode<ValueState>* N);
+  virtual bool Audit(ExplodedNode<ValueState>* N, ValueStateManager&);
   
   virtual void EmitWarnings(BugReporter& BR) {
     Desc.EmitWarnings(BR);
@@ -454,7 +455,7 @@ static const char* GetCFNumberTypeStr(uint64_t i) {
 }
 #endif
 
-bool AuditCFNumberCreate::Audit(ExplodedNode<ValueState>* N) {  
+bool AuditCFNumberCreate::Audit(ExplodedNode<ValueState>* N,ValueStateManager&){  
   CallExpr* CE = cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
   Expr* Callee = CE->getCallee();  
   RVal CallV = GetRVal(N->getState(), Callee);  

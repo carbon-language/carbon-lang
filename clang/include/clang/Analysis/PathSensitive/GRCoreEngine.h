@@ -166,17 +166,19 @@ public:
 template<typename STATE>
 class GRStmtNodeBuilder  {
 public:
-  typedef STATE                   StateTy;
-  typedef ExplodedNode<StateTy>   NodeTy;
+  typedef STATE                       StateTy;
+  typedef typename StateTy::ManagerTy StateManagerTy;
+  typedef ExplodedNode<StateTy>       NodeTy;
   
 private:
   GRStmtNodeBuilderImpl& NB;
+  StateManagerTy& Mgr;
   const StateTy* CleanedState;  
   GRAuditor<StateTy>* Auditor;
   
 public:
-  GRStmtNodeBuilder(GRStmtNodeBuilderImpl& nb) : NB(nb),
-    Auditor(0), PurgingDeadSymbols(false),
+  GRStmtNodeBuilder(GRStmtNodeBuilderImpl& nb, StateManagerTy& mgr) :
+    NB(nb), Mgr(mgr), Auditor(0), PurgingDeadSymbols(false),
     BuildSinks(false), HasGeneratedNode(false) {
       
     CleanedState = getLastNode()->getState();
@@ -244,7 +246,7 @@ public:
       if (BuildSinks)
         N->markAsSink();
       else {
-        if (Auditor && Auditor->Audit(N))
+        if (Auditor && Auditor->Audit(N, Mgr))
           N->markAsSink();
         
         Dst.Add(N);
@@ -552,6 +554,7 @@ class GRCoreEngine : public GRCoreEngineImpl {
 public:
   typedef SUBENGINE                              SubEngineTy; 
   typedef typename SubEngineTy::StateTy          StateTy;
+  typedef typename StateTy::ManagerTy            StateManagerTy;
   typedef ExplodedGraph<StateTy>                 GraphTy;
   typedef typename GraphTy::NodeTy               NodeTy;
 
@@ -568,7 +571,7 @@ protected:
   }
   
   virtual void ProcessStmt(Stmt* S, GRStmtNodeBuilderImpl& BuilderImpl) {
-    GRStmtNodeBuilder<StateTy> Builder(BuilderImpl);
+    GRStmtNodeBuilder<StateTy> Builder(BuilderImpl,SubEngine.getStateManager());
     SubEngine.ProcessStmt(S, Builder);
   }
   

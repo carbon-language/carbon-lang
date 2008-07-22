@@ -26,6 +26,15 @@ bool ValueState::isNotEqual(SymbolID sym, const llvm::APSInt& V) const {
   return T ? T->contains(&V) : false;
 }
 
+bool ValueState::isEqual(SymbolID sym, const llvm::APSInt& V) const {
+  
+  // Retrieve the EQ-set associated with the given symbol.
+  const ConstEqTy::data_type* T = ConstEq.lookup(sym);
+  
+  // See if V is present in the EQ-set.
+  return T ? **T == V : false;
+}
+
 const llvm::APSInt* ValueState::getSymVal(SymbolID sym) const {
   ConstEqTy::data_type* T = ConstEq.lookup(sym);
   return T ? *T : NULL;  
@@ -294,6 +303,35 @@ void ValueState::print(std::ostream& Out, CheckerStatePrinter* P,
   
   if (P && CheckerState)
     P->PrintCheckerState(Out, CheckerState, nl, sep);
+}
+
+
+//===----------------------------------------------------------------------===//
+// Queries.
+//===----------------------------------------------------------------------===//
+
+bool ValueStateManager::isEqual(const ValueState* state, Expr* Ex,
+                                const llvm::APSInt& Y) {
+  RVal V = GetRVal(state, Ex);
+  
+  if (lval::ConcreteInt* X = dyn_cast<lval::ConcreteInt>(&V))
+    return X->getValue() == Y;
+
+  if (nonlval::ConcreteInt* X = dyn_cast<nonlval::ConcreteInt>(&V))
+    return X->getValue() == Y;
+    
+  if (nonlval::SymbolVal* X = dyn_cast<nonlval::SymbolVal>(&V))
+    return state->isEqual(X->getSymbol(), Y);
+  
+  if (lval::SymbolVal* X = dyn_cast<lval::SymbolVal>(&V))
+    return state->isEqual(X->getSymbol(), Y);
+  
+  return false;
+}
+  
+bool ValueStateManager::isEqual(const ValueState* state, Expr* Ex,
+                                uint64_t x) {
+  return isEqual(state, Ex, BasicVals.getValue(x, Ex->getType()));
 }
 
 //===----------------------------------------------------------------------===//

@@ -58,6 +58,8 @@ public:
   typedef llvm::ImmutableMap<SymbolID,IntSetTy>            ConstNotEqTy;
   typedef llvm::ImmutableMap<SymbolID,const llvm::APSInt*> ConstEqTy;
   
+  typedef ValueStateManager ManagerTy;
+  
 private:
   void operator=(const ValueState& R) const;
   
@@ -120,6 +122,8 @@ public:
   // Queries.
   
   bool isNotEqual(SymbolID sym, const llvm::APSInt& V) const;
+  bool isEqual(SymbolID sym, const llvm::APSInt& V) const;
+  
   const llvm::APSInt* getSymVal(SymbolID sym) const;
  
   RVal LookupExpr(Expr* E) const {
@@ -360,6 +364,10 @@ public:
 
   const ValueState* AddNE(const ValueState* St, SymbolID sym,
                           const llvm::APSInt& V);
+  
+  
+  bool isEqual(const ValueState* state, Expr* Ex, const llvm::APSInt& V);
+  bool isEqual(const ValueState* state, Expr* Ex, uint64_t);
   
   // Assumption logic.
   const ValueState* Assume(const ValueState* St, RVal Cond, bool Assumption,

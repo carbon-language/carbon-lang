@@ -17,10 +17,10 @@
 #define LLVM_CLANG_ANALYSIS_GRAPICHECKS
 
 #include "clang/Analysis/PathSensitive/GRAuditor.h"
+#include "clang/Analysis/PathSensitive/ValueState.h"
 
 namespace clang {
   
-class ValueState;
 class Diagnostic;
 class BugReporter;
 class ASTContext;
