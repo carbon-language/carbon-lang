@@ -1,6 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep {\$132,} | count 2
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep {\$2,}  | count 2
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep shufps | count 4
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep {\$36,} | count 2
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep shufps | count 2
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep pinsrw | count 1
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movhpd | count 1
 ; RUN: llvm-as < %s | llc -march=x86-64 -mattr=+sse2 | grep unpcklpd | count 1

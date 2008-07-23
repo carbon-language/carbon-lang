@@ -3655,13 +3655,8 @@ LowerVECTOR_SHUFFLE_4wide(SDOperand V1, SDOperand V2,
   SmallVector<std::pair<int, int>, 8> Locs;
   Locs.reserve(4);
   SmallVector<SDOperand, 8> Mask1(4, DAG.getNode(ISD::UNDEF, MaskEVT));
-  SmallVector<SDOperand, 8> Mask2(4, DAG.getNode(ISD::UNDEF, MaskEVT));
   unsigned NumHi = 0;
   unsigned NumLo = 0;
-  // If no more than two elements come from either vector. This can be
-  // implemented with two shuffles. First shuffle gather the elements.
-  // The second shuffle, which takes the first shuffle as both of its
-  // vector operands, put the elements into the right order.
   for (unsigned i = 0; i != 4; ++i) {
     SDOperand Elt = PermMask.getOperand(i);
     if (Elt.getOpcode() == ISD::UNDEF) {
@@ -3680,10 +3675,17 @@ LowerVECTOR_SHUFFLE_4wide(SDOperand V1, SDOperand V2,
       }
     }
   }
+
   if (NumLo <= 2 && NumHi <= 2) {
+    // If no more than two elements come from either vector. This can be
+    // implemented with two shuffles. First shuffle gather the elements.
+    // The second shuffle, which takes the first shuffle as both of its
+    // vector operands, put the elements into the right order.
     V1 = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
                      DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
                                  &Mask1[0], Mask1.size()));
+
+    SmallVector<SDOperand, 8> Mask2(4, DAG.getNode(ISD::UNDEF, MaskEVT));
     for (unsigned i = 0; i != 4; ++i) {
       if (Locs[i].first == -1)
         continue;
@@ -3697,6 +3699,59 @@ LowerVECTOR_SHUFFLE_4wide(SDOperand V1, SDOperand V2,
     return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V1,
                        DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
                                    &Mask2[0], Mask2.size()));
+  } else if (NumLo == 3 || NumHi == 3) {
+    // Otherwise, we must have three elements from one vector, call it X, and
+    // one element from the other, call it Y.  First, use a shufps to build an
+    // intermediate vector with the one element from Y and the element from X
+    // that will be in the same half in the final destination (the indexes don't
+    // matter). Then, use a shufps to build the final vector, taking the half
+    // containing the element from Y from the intermediate, and the other half
+    // from X.
+    if (NumHi == 3) {
+      // Normalize it so the 3 elements come from V1.
+      PermMask = CommuteVectorShuffleMask(PermMask, DAG);
+      std::swap(V1, V2);
+    }
+
+    // Find the element from V2.
+    unsigned HiIndex;
+    for (HiIndex = 0; HiIndex < 3; ++HiIndex) {
+      SDOperand Elt = PermMask.getOperand(HiIndex);
+      if (Elt.getOpcode() == ISD::UNDEF)
+        continue;
+      unsigned Val = cast<ConstantSDNode>(Elt)->getValue();
+      if (Val >= 4)
+        break;
+    }
+
+    Mask1[0] = PermMask.getOperand(HiIndex);
+    Mask1[1] = DAG.getNode(ISD::UNDEF, MaskEVT);
+    Mask1[2] = PermMask.getOperand(HiIndex^1);
+    Mask1[3] = DAG.getNode(ISD::UNDEF, MaskEVT);
+    V2 = DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
+                     DAG.getNode(ISD::BUILD_VECTOR, MaskVT, &Mask1[0], 4));
+
+    if (HiIndex >= 2) {
+      Mask1[0] = PermMask.getOperand(0);
+      Mask1[1] = PermMask.getOperand(1);
+      Mask1[2] = DAG.getConstant(HiIndex & 1 ? 6 : 4, MaskEVT);
+      Mask1[3] = DAG.getConstant(HiIndex & 1 ? 4 : 6, MaskEVT);
+      return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2,
+                         DAG.getNode(ISD::BUILD_VECTOR, MaskVT, &Mask1[0], 4));
+    } else {
+      Mask1[0] = DAG.getConstant(HiIndex & 1 ? 2 : 0, MaskEVT);
+      Mask1[1] = DAG.getConstant(HiIndex & 1 ? 0 : 2, MaskEVT);
+      Mask1[2] = PermMask.getOperand(2);
+      Mask1[3] = PermMask.getOperand(3);
+      if (Mask1[2].getOpcode() != ISD::UNDEF)
+        Mask1[2] = DAG.getConstant(cast<ConstantSDNode>(Mask1[2])->getValue()+4,
+                                   MaskEVT);
+      if (Mask1[3].getOpcode() != ISD::UNDEF)
+        Mask1[3] = DAG.getConstant(cast<ConstantSDNode>(Mask1[3])->getValue()+4,
+                                   MaskEVT);
+      return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V2, V1,
+                         DAG.getNode(ISD::BUILD_VECTOR, MaskVT, &Mask1[0], 4));
+    }
   }
 
   // Break it into (shuffle shuffle_hi, shuffle_lo).
