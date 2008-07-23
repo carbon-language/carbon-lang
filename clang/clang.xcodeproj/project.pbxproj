@@ -48,6 +48,7 @@
 		35EE48B20E0C4CCA00715C54 /* ParentMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35EE48B00E0C4CCA00715C54 /* ParentMap.cpp */; };
 		35EF67700DAD1D2C00B19414 /* SemaDeclCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35EF676F0DAD1D2C00B19414 /* SemaDeclCXX.cpp */; };
 		35EFEFB60DB67ED60020783D /* GRTransferFuncs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */; };
+		35F2A01E0E36AFF100D17527 /* CheckObjCUnusedIVars.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35F2A01D0E36AFF100D17527 /* CheckObjCUnusedIVars.cpp */; };
 		35F8D0D60D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35F8D0D50D9B82CD00D91C5E /* BasicObjCFoundationChecks.cpp */; };
 		35FE6BCF0DF6EE1F00739712 /* DeclBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35FE6BCE0DF6EE1F00739712 /* DeclBase.cpp */; };
 		72D16C1F0D9975C400E6DA4A /* HTMLRewrite.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 72D16C1E0D9975C400E6DA4A /* HTMLRewrite.cpp */; };
@@ -336,6 +337,7 @@
 		35EE48B00E0C4CCA00715C54 /* ParentMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ParentMap.cpp; path = lib/AST/ParentMap.cpp; sourceTree = "<group>"; };
 		35EF676F0DAD1D2C00B19414 /* SemaDeclCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SemaDeclCXX.cpp; path = lib/Sema/SemaDeclCXX.cpp; sourceTree = "<group>"; };
 		35EFEFB50DB67ED60020783D /* GRTransferFuncs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GRTransferFuncs.cpp; path = lib/Analysis/GRTransferFuncs.cpp; sourceTree = "<group>"; };
+		35F2A01D0E36AFF100D17527 /* CheckObjCUnusedIVars.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CheckObjCUnusedIVars.cpp; path = lib/Analysis/CheckObjCUnusedIVars.cpp; sourceTree = "<group>"; };
 		35F2BE7B0DAC2963006E7668 /* HTMLRewrite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTMLRewrite.h; path = clang/Rewrite/HTMLRewrite.h; sourceTree = "<group>"; };
 		35F8D0CA0D9B7E8200D91C5E /* GRSimpleAPICheck.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRSimpleAPICheck.h; path = clang/Analysis/PathSensitive/GRSimpleAPICheck.h; sourceTree = "<group>"; };
 		35F8D0CB0D9B7E8200D91C5E /* GRAuditor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GRAuditor.h; path = clang/Analysis/PathSensitive/GRAuditor.h; sourceTree = "<group>"; };
@@ -558,6 +560,7 @@
 				35862B0C0E3628CB0009F542 /* CheckDeadStores.cpp */,
 				3595AFB70E1C8D62004CDF09 /* CheckObjCDealloc.cpp */,
 				3507E4C10E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp */,
+				35F2A01D0E36AFF100D17527 /* CheckObjCUnusedIVars.cpp */,
 				DE4121290D7F1C1C0080F80A /* UninitializedValues.cpp */,
 			);
 			name = Checks;
@@ -1185,6 +1188,7 @@
 				3507E4C20E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp in Sources */,
 				35862B0D0E3628CB0009F542 /* CheckDeadStores.cpp in Sources */,
 				35862B120E3629850009F542 /* GRExprEngineInternalChecks.cpp in Sources */,
+				35F2A01E0E36AFF100D17527 /* CheckObjCUnusedIVars.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
