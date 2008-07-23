@@ -59,3 +59,17 @@ int f8(int *p) {
   return 0;
 }
 
+int f9() {
+  int x = 4;
+  x = x + 10; // expected-warning{{never read}}
+  return 1;
+}
+
+
+int f10() {
+  int x = 4;
+  x = 10 + x; // expected-warning{{never read}}
+  return 1;
+}
+
+

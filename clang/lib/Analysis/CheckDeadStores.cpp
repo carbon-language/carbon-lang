@@ -30,6 +30,8 @@ class VISIBILITY_HIDDEN DeadStoreObs : public LiveVariables::ObserverTy {
   ASTContext &Ctx;
   BugReporter& BR;
   ParentMap& Parents;
+  
+  enum DeadStoreKind { Standard, Enclosing, DeadIncrement, DeadInit };
     
 public:
   DeadStoreObs(ASTContext &ctx, BugReporter& br, ParentMap& parents)
@@ -37,44 +39,80 @@ public:
   
   virtual ~DeadStoreObs() {}
   
-  void Report(VarDecl* V, bool inEnclosing, SourceLocation L, SourceRange R,
-              bool isInitialization = false) {
+  void Report(VarDecl* V, DeadStoreKind dsk, SourceLocation L, SourceRange R) {
 
     std::string name(V->getName());
     
-    if (isInitialization) {
-      std::string msg = "Value stored to '" + name +
-        "' during its initialization is never read";
-      
-      BR.EmitBasicReport("dead initialization", msg.c_str(), L, R);      
-    }
-    else {
-      std::string msg = inEnclosing
-        ? "Although the value stored to '" + name +
-          "' is used in the enclosing expression, the value is never actually"
-          " read from '" + name + "'"
-        : "Value stored to '" + name + "' is never read";
+    const char* BugType = 0;
+    std::string msg;
     
-      BR.EmitBasicReport("dead store", msg.c_str(), L, R);
+    switch (dsk) {
+      default:
+        assert(false && "Impossible dead store type.");
+        
+      case DeadInit:
+        BugType = "dead initialization";
+        msg = "Value stored to '" + name +
+          "' during its initialization is never read";
+        break;
+        
+      case DeadIncrement:
+        BugType = "dead store (++/--)";
+      case Standard:
+        if (!BugType) BugType = "dead store";
+        msg = "Value stored to '" + name + "' is never read";
+        break;
+        
+      case Enclosing:
+        BugType = "dead store";
+        msg = "Although the value stored to '" + name +
+          "' is used in the enclosing expression, the value is never actually"
+          " read from '" + name + "'";
+        break;
     }
+      
+    BR.EmitBasicReport(BugType, msg.c_str(), L, R);      
   }
   
   void CheckVarDecl(VarDecl* VD, Expr* Ex, Expr* Val,
-                    bool hasEnclosing,
+                    DeadStoreKind dsk,
                     const LiveVariables::AnalysisDataTy& AD,
                     const LiveVariables::ValTy& Live) {
 
     if (VD->hasLocalStorage() && !Live(VD, AD))
-      Report(VD, hasEnclosing, Ex->getSourceRange().getBegin(),
+      Report(VD, dsk, Ex->getSourceRange().getBegin(),
              Val->getSourceRange());      
   }
   
-  void CheckDeclRef(DeclRefExpr* DR, Expr* Val,
+  void CheckDeclRef(DeclRefExpr* DR, Expr* Val, DeadStoreKind dsk,
                     const LiveVariables::AnalysisDataTy& AD,
                     const LiveVariables::ValTy& Live) {
     
     if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))
-      CheckVarDecl(VD, DR, Val, false, AD, Live);
+      CheckVarDecl(VD, DR, Val, dsk, AD, Live);
+  }
+  
+  bool isIncrement(VarDecl* VD, BinaryOperator* B) {
+    if (B->isCompoundAssignmentOp())
+      return true;
+    
+    Expr* RHS = B->getRHS()->IgnoreParenCasts();
+    BinaryOperator* BRHS = dyn_cast<BinaryOperator>(RHS);
+    
+    if (!BRHS)
+      return false;
+    
+    DeclRefExpr *DR;
+    
+    if ((DR = dyn_cast<DeclRefExpr>(BRHS->getLHS()->IgnoreParenCasts())))
+      if (DR->getDecl() == VD)
+        return true;
+    
+    if ((DR = dyn_cast<DeclRefExpr>(BRHS->getRHS()->IgnoreParenCasts())))
+      if (DR->getDecl() == VD)
+        return true;
+    
+    return false;
   }
   
   virtual void ObserveStmt(Stmt* S,
@@ -103,7 +141,12 @@ public:
             if (Result == 0)
               return;
 
-          CheckVarDecl(VD, DR, Val, Parents.isSubExpr(B), AD, Live);
+          DeadStoreKind dsk = 
+            Parents.isSubExpr(B)
+            ? Enclosing 
+            : (isIncrement(VD,B) ? DeadIncrement : Standard);
+          
+          CheckVarDecl(VD, DR, Val, dsk, AD, Live);
         }              
     }
     else if (UnaryOperator* U = dyn_cast<UnaryOperator>(S)) {
@@ -113,7 +156,7 @@ public:
       Expr *Ex = U->getSubExpr()->IgnoreParenCasts();
       
       if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(Ex))
-        CheckDeclRef(DR, U, AD, Live);
+        CheckDeclRef(DR, U, DeadIncrement, AD, Live);
     }    
     else if (DeclStmt* DS = dyn_cast<DeclStmt>(S))
       // Iterate through the decls.  Warn if any initializers are complex
@@ -134,7 +177,7 @@ public:
               // a warning.  This is because such initialization can be
               // due to defensive programming.
               if (!E->isConstantExpr(Ctx,NULL))
-                Report(V, false, V->getLocation(), E->getSourceRange(), true);
+                Report(V, DeadInit, V->getLocation(), E->getSourceRange());
             }
       }
   }
