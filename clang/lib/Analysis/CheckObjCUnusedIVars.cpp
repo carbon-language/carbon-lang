@@ -57,8 +57,9 @@ void clang::CheckObjCUnusedIvar(ObjCImplementationDecl* D, BugReporter& BR) {
     // Ignore ivars that aren't private.
     if (ID->getAccessControl() != ObjCIvarDecl::Private)
       continue;
-    
-    if (ID->getAttr<IBOutletAttr>() == 0)
+
+    // Skip IB Outlets.
+    if (ID->getAttr<IBOutletAttr>())
       continue;
     
     M[ID] = Unused;
@@ -77,8 +78,9 @@ void clang::CheckObjCUnusedIvar(ObjCImplementationDecl* D, BugReporter& BR) {
     if (I->second == Unused) {
       
       std::ostringstream os;
-      os << "Private ivar '" << I->first->getName() << "' is never used.";
-      
+      os << "Instance variable '" << I->first->getName()
+         << "' in class '" << ID->getName() << "' is never used.";
+
       BR.EmitBasicReport("unused ivar",
                          os.str().c_str(), I->first->getLocation());
     }
