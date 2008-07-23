@@ -26,13 +26,13 @@
      ;; Strings
      '("\"[^\"]+\"" . font-lock-string-face)
      ;; Hex constants
-     '("0x[0-9A-Fa-f]+" . font-lock-preprocessor-face)
+     '("\\<0x[0-9A-Fa-f]+\\>" . font-lock-preprocessor-face)
      ;; Binary constants
-     '("0b[01]+" . font-lock-preprocessor-face)
+     '("\\<0b[01]+\\>" . font-lock-preprocessor-face)
      ;; Integer literals
-     '("[-]?[0-9]+" . font-lock-preprocessor-face)
+     '("\\<[-]?[0-9]+\\>" . font-lock-preprocessor-face)
      ;; Floating point constants
-     '("[-+]?[0-9]+\.[0-9]*\([eE][-+]?[0-9]+\)?" . font-lock-preprocessor-face)
+     '("\\<[-+]?[0-9]+\.[0-9]*\([eE][-+]?[0-9]+\)?\\>" . font-lock-preprocessor-face)
 
      '("^[ \t]*\\(@.+\\)" 1 'td-decorators-face)
      ;; Keywords
