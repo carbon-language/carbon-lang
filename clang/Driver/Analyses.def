@@ -33,6 +33,9 @@ ANALYSIS(WarnObjCMethSigs, "warn-objc-methodsigs",
 ANALYSIS(WarnObjCDealloc, "warn-objc-missing-dealloc",
  "Warn about Objective-C classes that lack a correct implementation of -dealloc",
  ObjCImplementation)
+ 
+ANALYSIS(WarnObjCUnusedIvars, "warn-objc-unused-ivars",
+  "Warn about private ivars that are never used", ObjCImplementation)
 
 ANALYSIS(CheckerSimple, "checker-simple",
          "Perform simple path-sensitive checks.", Code)

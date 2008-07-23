@@ -393,6 +393,11 @@ static void ActionWarnObjCDealloc(AnalysisManager& mgr) {
                    mgr.getLangOptions(), BR);  
 }
 
+static void ActionWarnObjCUnusedIvars(AnalysisManager& mgr) {
+  BugReporter BR(mgr);
+  CheckObjCUnusedIvar(cast<ObjCImplementationDecl>(mgr.getCodeDecl()), BR);  
+}
+
 static void ActionWarnObjCMethSigs(AnalysisManager& mgr) {
   BugReporter BR(mgr);
   
