@@ -1021,6 +1021,10 @@ void CWriter::printConstant(Constant *CPV) {
   }
 
   case Type::ArrayTyID:
+    // Use C99 compound expression literal initializer syntax.
+    Out << "(";
+    printType(Out, CPV->getType());
+    Out << ")";
     Out << "{ "; // Arrays are wrapped in struct types.
     if (ConstantArray *CA = dyn_cast<ConstantArray>(CPV)) {
       printConstantArray(CA);
@@ -1064,6 +1068,10 @@ void CWriter::printConstant(Constant *CPV) {
     break;
 
   case Type::StructTyID:
+    // Use C99 compound expression literal initializer syntax.
+    Out << "(";
+    printType(Out, CPV->getType());
+    Out << ")";
     if (isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV)) {
       const StructType *ST = cast<StructType>(CPV->getType());
       Out << '{';
