@@ -442,17 +442,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
     // uses of the returned value.
     if (!TheCall->use_empty()) {
       ReturnInst *R = Returns[0];
-      if (isa<StructType>(TheCall->getType()) &&
-          TheCall->getType() != R->getOperand(0)->getType()) {
-        // Multiple-value return statements.
-        while (!TheCall->use_empty()) {
-          GetResultInst *GR = cast<GetResultInst>(TheCall->use_back());
-          Value *RV = R->getOperand(GR->getIndex());
-          GR->replaceAllUsesWith(RV);
-          GR->eraseFromParent();
-        }
-      } else
-        TheCall->replaceAllUsesWith(R->getReturnValue());
+      TheCall->replaceAllUsesWith(R->getReturnValue());
     }
     // Since we are now done with the Call/Invoke, we can delete it.
     TheCall->eraseFromParent();
@@ -508,63 +498,27 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   // Handle all of the return instructions that we just cloned in, and eliminate
   // any users of the original call/invoke instruction.
   const Type *RTy = CalledFunc->getReturnType();
-  const StructType *STy = dyn_cast<StructType>(RTy);
 
-  // We do special handling for multiple-value return statements. If this is
-  // a plain aggregate return, don't do the special handling.
-  if (!Returns.empty() && Returns[0]->getNumOperands() != 0 &&
-      Returns[0]->getOperand(0)->getType() == STy)
-    STy = 0;
-
-  if (Returns.size() > 1 || STy) {
+  if (Returns.size() > 1) {
     // The PHI node should go at the front of the new basic block to merge all
     // possible incoming values.
-    SmallVector<PHINode *, 4> PHIs;
+    PHINode *PHI = 0;
     if (!TheCall->use_empty()) {
-      if (STy) {
-        unsigned NumRetVals = STy->getNumElements();
-        // Create new phi nodes such that phi node number in the PHIs vector
-        // match corresponding return value operand number.
-        Instruction *InsertPt = AfterCallBB->begin();
-        for (unsigned i = 0; i < NumRetVals; ++i) {
-            PHINode *PHI = PHINode::Create(STy->getElementType(i),
-                                           TheCall->getName() + "." + utostr(i), 
-                                           InsertPt);
-          PHIs.push_back(PHI);
-        }
-        // TheCall results are used by GetResult instructions. 
-        while (!TheCall->use_empty()) {
-          GetResultInst *GR = cast<GetResultInst>(TheCall->use_back());
-          GR->replaceAllUsesWith(PHIs[GR->getIndex()]);
-          GR->eraseFromParent();
-        }
-      } else {
-        PHINode *PHI = PHINode::Create(RTy, TheCall->getName(),
-                                       AfterCallBB->begin());
-        PHIs.push_back(PHI);
-        // Anything that used the result of the function call should now use the
-        // PHI node as their operand.
-        TheCall->replaceAllUsesWith(PHI); 
-      } 
+      PHI = PHINode::Create(RTy, TheCall->getName(),
+                            AfterCallBB->begin());
+      // Anything that used the result of the function call should now use the
+      // PHI node as their operand.
+      TheCall->replaceAllUsesWith(PHI); 
     }
 
     // Loop over all of the return instructions adding entries to the PHI node as
     // appropriate.
-    if (!PHIs.empty()) {
-      // There is atleast one return value.
-      unsigned NumRetVals = 1; 
-      if (STy)
-        NumRetVals = STy->getNumElements();
-      for (unsigned j = 0; j < NumRetVals; ++j) {
-        PHINode *PHI = PHIs[j];
-        // Each PHI node will receive one value from each return instruction.
-        for(unsigned i = 0, e = Returns.size(); i != e; ++i) {
-          ReturnInst *RI = Returns[i];
-          assert(RI->getReturnValue(j)->getType() == PHI->getType() &&
-                 "Ret value not consistent in function!");
-          PHI->addIncoming(RI->getReturnValue(j /*PHI number matches operand number*/), 
-                           RI->getParent());
-        }
+    if (PHI) {
+      for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
+        ReturnInst *RI = Returns[i];
+        assert(RI->getReturnValue()->getType() == PHI->getType() &&
+               "Ret value not consistent in function!");
+        PHI->addIncoming(RI->getReturnValue(), RI->getParent());
       }
     }
 

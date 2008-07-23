@@ -414,31 +414,3 @@ void llvm::UpgradeCallsToIntrinsic(Function* F) {
     }
   }
 }
-
-/// This is an auto-upgrade hook for mutiple-value return statements.
-/// This function auto-upgrades all such return statements in the given
-/// function to use aggregate return values built with insertvalue
-/// instructions.
-void llvm::UpgradeMultipleReturnValues(Function *CurrentFunction) {
-  const Type *ReturnType = CurrentFunction->getReturnType();
-  for (Function::iterator I = CurrentFunction->begin(),
-       E = CurrentFunction->end(); I != E; ++I) {
-    BasicBlock *BB = I;
-    if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
-      unsigned NumVals = RI->getNumOperands();
-      if (NumVals > 1 ||
-          (isa<StructType>(ReturnType) &&
-           (NumVals == 0 || RI->getOperand(0)->getType() != ReturnType))) {
-        std::vector<const Type *> Types(NumVals);
-        for (unsigned i = 0; i != NumVals; ++i)
-          Types[i] = RI->getOperand(i)->getType();
-        const Type *ReturnType = StructType::get(Types);
-        Value *RV = UndefValue::get(ReturnType);
-        for (unsigned i = 0; i != NumVals; ++i)
-          RV = InsertValueInst::Create(RV, RI->getOperand(i), i, "mrv", RI);
-        ReturnInst::Create(RV, RI);
-        RI->eraseFromParent();
-      }
-    }
-  }
-}

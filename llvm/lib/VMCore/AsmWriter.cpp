@@ -1299,9 +1299,6 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeOperand(I.getOperand(op  ), false); Out << ',';
       writeOperand(I.getOperand(op+1), false); Out << " ]";
     }
-  } else if (const GetResultInst *GRI = dyn_cast<GetResultInst>(&I)) {
-    writeOperand(I.getOperand(0), true);
-    Out << ", " << GRI->getIndex();
   } else if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(&I)) {
     writeOperand(I.getOperand(0), true);
     for (const unsigned *i = EVI->idx_begin(), *e = EVI->idx_end(); i != e; ++i)

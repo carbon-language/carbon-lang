@@ -806,8 +806,6 @@ public:
   void visitVAEnd(CallInst &I);
   void visitVACopy(CallInst &I);
 
-  void visitGetResult(GetResultInst &I);
-
   void visitUserOp1(Instruction &I) {
     assert(0 && "UserOp1 should not exist at instruction selection time!");
     abort();
@@ -3685,24 +3683,6 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
     Callee = DAG.getExternalSymbol(RenameFn, TLI.getPointerTy());
 
   LowerCallTo(&I, Callee, I.isTailCall());
-}
-
-
-void SelectionDAGLowering::visitGetResult(GetResultInst &I) {
-  if (isa<UndefValue>(I.getOperand(0))) {
-    SDOperand Undef = DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType()));
-    setValue(&I, Undef);
-    return;
-  }
-  
-  // To add support for individual return values with aggregate types,
-  // we'd need a way to take a getresult index and determine which
-  // values of the Call SDNode are associated with it.
-  assert(TLI.getValueType(I.getType(), true) != MVT::Other &&
-         "Individual return values must not be aggregates!");
-
-  SDOperand Call = getValue(I.getOperand(0));
-  setValue(&I, SDOperand(Call.Val, I.getIndex()));
 }
 
 

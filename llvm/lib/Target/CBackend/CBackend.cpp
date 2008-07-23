@@ -285,7 +285,6 @@ namespace {
     void visitInsertElementInst(InsertElementInst &I);
     void visitExtractElementInst(ExtractElementInst &I);
     void visitShuffleVectorInst(ShuffleVectorInst &SVI);
-    void visitGetResultInst(GetResultInst &GRI);
 
     void visitInsertValueInst(InsertValueInst &I);
     void visitExtractValueInst(ExtractValueInst &I);
@@ -3323,18 +3322,6 @@ void CWriter::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
     }
   }
   Out << "}";
-}
-
-void CWriter::visitGetResultInst(GetResultInst &GRI) {
-  Out << "(";
-  if (isa<UndefValue>(GRI.getOperand(0))) {
-    Out << "(";
-    printType(Out, GRI.getType());
-    Out << ") 0/*UNDEF*/";
-  } else {
-    Out << GetValueName(GRI.getOperand(0)) << ".field" << GRI.getIndex();
-  }
-  Out << ")";
 }
 
 void CWriter::visitInsertValueInst(InsertValueInst &IVI) {

@@ -249,35 +249,11 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
     // create new PHINode for this instruction.
     Instruction *NewHeaderReplacement = NULL;
     if (usedOutsideOriginalHeader(In)) {
-      // FIXME: remove this when we have first-class aggregates.
-      if (isa<StructType>(In->getType())) {
-        // Can't create PHI nodes for this type.  If there are any getResults
-        // not defined in this block, move them back to this block.  PHI
-        // nodes will be created for all getResults later.
-        BasicBlock::iterator InsertPoint;
-        if (InvokeInst *II = dyn_cast<InvokeInst>(In)) {
-          InsertPoint = II->getNormalDest()->getFirstNonPHI();
-        } else {
-          InsertPoint = I;  // call
-          ++InsertPoint;
-        }
-        for (Value::use_iterator UI = In->use_begin(), UE = In->use_end();
-             UI != UE; ++UI) {
-          GetResultInst *InGR = cast<GetResultInst>(UI);
-          if (InGR->getParent() != OrigHeader) {
-            // Move InGR to immediately after the call or in the normal dest of
-            // the invoke.  It will be picked up, cloned and PHI'd on the next
-            // iteration.
-            InGR->moveBefore(InsertPoint);
-          }
-        }
-      } else {
-        PHINode *PN = PHINode::Create(In->getType(), In->getName(),
-                                      NewHeader->begin());
-        PN->addIncoming(In, OrigHeader);
-        PN->addIncoming(C, OrigPreHeader);
-        NewHeaderReplacement = PN;
-      }
+      PHINode *PN = PHINode::Create(In->getType(), In->getName(),
+                                    NewHeader->begin());
+      PN->addIncoming(In, OrigHeader);
+      PN->addIncoming(C, OrigPreHeader);
+      NewHeaderReplacement = PN;
     }
     LoopHeaderInfo.push_back(RenameData(In, C, NewHeaderReplacement));
   }

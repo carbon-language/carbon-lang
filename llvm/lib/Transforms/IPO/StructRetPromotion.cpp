@@ -97,9 +97,6 @@ bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
     dyn_cast<StructType>(FArgType->getElementType());
   assert (STy && "Invalid sret parameter element type");
 
-  if (nestedStructType(STy))
-    return false;
-
   // Check if it is ok to perform this promotion.
   if (isSafeToUpdateAllCallers(F) == false) {
     NumRejectedSRETUses++;
@@ -114,25 +111,13 @@ bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
   NFirstArg->replaceAllUsesWith(TheAlloca);
 
   // [2] Find and replace ret instructions
-  SmallVector<Value *,4> RetVals;
   for (Function::iterator FI = F->begin(), FE = F->end();  FI != FE; ++FI) 
     for(BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE; ) {
       Instruction *I = BI;
       ++BI;
       if (isa<ReturnInst>(I)) {
-        RetVals.clear();
-        for (unsigned idx = 0; idx < STy->getNumElements(); ++idx) {
-          SmallVector<Value*, 2> GEPIdx;
-          GEPIdx.push_back(ConstantInt::get(Type::Int32Ty, 0));
-          GEPIdx.push_back(ConstantInt::get(Type::Int32Ty, idx));
-          Value *NGEPI = GetElementPtrInst::Create(TheAlloca, GEPIdx.begin(),
-                                                   GEPIdx.end(),
-                                                   "mrv.gep", I);
-          Value *NV = new LoadInst(NGEPI, "mrv.ld", I);
-          RetVals.push_back(NV);
-        }
-    
-        ReturnInst *NR = ReturnInst::Create(&RetVals[0], RetVals.size(), I);
+        Value *NV = new LoadInst(TheAlloca, "mrv.ld", I);
+        ReturnInst *NR = ReturnInst::Create(NV);
         I->replaceAllUsesWith(NR);
         I->eraseFromParent();
       }
@@ -315,7 +300,7 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
     ArgAttrsVec.clear();
     New->takeName(Call);
 
-    // Update all users of sret parameter to extract value using getresult.
+    // Update all users of sret parameter to extract value using extractvalue.
     for (Value::use_iterator UI = FirstCArg->use_begin(), 
            UE = FirstCArg->use_end(); UI != UE; ) {
       User *U2 = *UI++;
@@ -325,7 +310,8 @@ void SRETPromotion::updateCallSites(Function *F, Function *NF) {
       else if (GetElementPtrInst *UGEP = dyn_cast<GetElementPtrInst>(U2)) {
         ConstantInt *Idx = dyn_cast<ConstantInt>(UGEP->getOperand(2));
         assert (Idx && "Unexpected getelementptr index!");
-        Value *GR = new GetResultInst(New, Idx->getZExtValue(), "gr", UGEP);
+        Value *GR = ExtractValueInst::Create(New, Idx->getZExtValue(),
+                                             "evi", UGEP);
         for (Value::use_iterator GI = UGEP->use_begin(),
                GE = UGEP->use_end(); GI != GE; ++GI) {
           if (LoadInst *L = dyn_cast<LoadInst>(*GI)) {

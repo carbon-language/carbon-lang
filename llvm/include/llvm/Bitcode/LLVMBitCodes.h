@@ -202,6 +202,7 @@ namespace bitc {
     // this is so information only available in the pointer type (e.g. address
     // spaces) is retained.
     FUNC_CODE_INST_STORE2      = 24, // STORE:      [ptrty,ptr,val, align, vol]
+    // FIXME: Remove GETRESULT in favor of EXTRACTVAL in LLVM 3.0
     FUNC_CODE_INST_GETRESULT   = 25, // GETRESULT:  [ty, opval, n]
     FUNC_CODE_INST_EXTRACTVAL  = 26, // EXTRACTVAL: [n x operands]
     FUNC_CODE_INST_INSERTVAL   = 27  // INSERTVAL:  [n x operands]

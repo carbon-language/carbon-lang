@@ -196,7 +196,6 @@ public:
   RetTy visitExtractElementInst(ExtractElementInst &I) { DELEGATE(Instruction);}
   RetTy visitInsertElementInst(InsertElementInst &I) { DELEGATE(Instruction); }
   RetTy visitShuffleVectorInst(ShuffleVectorInst &I) { DELEGATE(Instruction); }
-  RetTy visitGetResultInst(GetResultInst &I) { DELEGATE(Instruction); }
   RetTy visitExtractValueInst(ExtractValueInst &I)  { DELEGATE(Instruction);}
   RetTy visitInsertValueInst(InsertValueInst &I)    { DELEGATE(Instruction); }
 

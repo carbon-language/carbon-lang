@@ -1357,40 +1357,31 @@ static bool SimplifyCondBranchToTwoReturns(BranchInst *BI) {
     return true;
   }
     
-  // Otherwise, build up the result values for the new return.
-  SmallVector<Value*, 4> TrueResult;
-  SmallVector<Value*, 4> FalseResult;
+  // Otherwise, figure out what the true and false return values are
+  // so we can insert a new select instruction.
+  Value *TrueValue = TrueRet->getReturnValue();
+  Value *FalseValue = FalseRet->getReturnValue();
   
-  for (unsigned i = 0, e = TrueRet->getNumOperands(); i != e; ++i) {
-    // Otherwise, figure out what the true and false return values are
-    // so we can insert a new select instruction.
-    Value *TrueValue = TrueRet->getOperand(i);
-    Value *FalseValue = FalseRet->getOperand(i);
-    
-    // Unwrap any PHI nodes in the return blocks.
-    if (PHINode *TVPN = dyn_cast<PHINode>(TrueValue))
-      if (TVPN->getParent() == TrueSucc)
-        TrueValue = TVPN->getIncomingValueForBlock(BI->getParent());
-    if (PHINode *FVPN = dyn_cast<PHINode>(FalseValue))
-      if (FVPN->getParent() == FalseSucc)
-        FalseValue = FVPN->getIncomingValueForBlock(BI->getParent());
-    
-    // In order for this transformation to be safe, we must be able to
-    // unconditionally execute both operands to the return.  This is
-    // normally the case, but we could have a potentially-trapping
-    // constant expression that prevents this transformation from being
-    // safe.
-    if (ConstantExpr *TCV = dyn_cast<ConstantExpr>(TrueValue))
-      if (TCV->canTrap())
-        return false;
-    if (ConstantExpr *FCV = dyn_cast<ConstantExpr>(FalseValue))
-      if (FCV->canTrap())
-        return false;
-    
-    TrueResult.push_back(TrueValue);
-    FalseResult.push_back(FalseValue);
-  }
-
+  // Unwrap any PHI nodes in the return blocks.
+  if (PHINode *TVPN = dyn_cast_or_null<PHINode>(TrueValue))
+    if (TVPN->getParent() == TrueSucc)
+      TrueValue = TVPN->getIncomingValueForBlock(BI->getParent());
+  if (PHINode *FVPN = dyn_cast_or_null<PHINode>(FalseValue))
+    if (FVPN->getParent() == FalseSucc)
+      FalseValue = FVPN->getIncomingValueForBlock(BI->getParent());
+  
+  // In order for this transformation to be safe, we must be able to
+  // unconditionally execute both operands to the return.  This is
+  // normally the case, but we could have a potentially-trapping
+  // constant expression that prevents this transformation from being
+  // safe.
+  if (ConstantExpr *TCV = dyn_cast_or_null<ConstantExpr>(TrueValue))
+    if (TCV->canTrap())
+      return false;
+  if (ConstantExpr *FCV = dyn_cast_or_null<ConstantExpr>(FalseValue))
+    if (FCV->canTrap())
+      return false;
+  
   // Okay, we collected all the mapped values and checked them for sanity, and
   // defined to really do this transformation.  First, update the CFG.
   TrueSucc->removePredecessor(BI->getParent());
@@ -1398,20 +1389,20 @@ static bool SimplifyCondBranchToTwoReturns(BranchInst *BI) {
   
   // Insert select instructions where needed.
   Value *BrCond = BI->getCondition();
-  for (unsigned i = 0, e = TrueRet->getNumOperands(); i != e; ++i) {
+  if (TrueValue) {
     // Insert a select if the results differ.
-    if (TrueResult[i] == FalseResult[i] || isa<UndefValue>(FalseResult[i]))
-      continue;
-    if (isa<UndefValue>(TrueResult[i])) {
-      TrueResult[i] = FalseResult[i];
-      continue;
+    if (TrueValue == FalseValue || isa<UndefValue>(FalseValue)) {
+    } else if (isa<UndefValue>(TrueValue)) {
+      TrueValue = FalseValue;
+    } else {
+      TrueValue = SelectInst::Create(BrCond, TrueValue,
+                                     FalseValue, "retval", BI);
     }
-    
-    TrueResult[i] = SelectInst::Create(BrCond, TrueResult[i],
-                                       FalseResult[i], "retval", BI);
   }
 
-  Value *RI = ReturnInst::Create(&TrueResult[0], TrueResult.size(), BI);
+  Value *RI = !TrueValue ?
+              ReturnInst::Create(BI) :
+              ReturnInst::Create(TrueValue, BI);
       
   DOUT << "\nCHANGING BRANCH TO TWO RETURNS INTO SELECT:"
        << "\n  " << *BI << "NewRet = " << *RI

@@ -259,7 +259,8 @@ namespace {
     void visitUserOp2(Instruction &I) { visitUserOp1(I); }
     void visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI);
     void visitAllocationInst(AllocationInst &AI);
-    void visitGetResultInst(GetResultInst &GRI);
+    void visitExtractValueInst(ExtractValueInst &EVI);
+    void visitInsertValueInst(InsertValueInst &IVI);
 
     void VerifyCallSite(CallSite CS);
     void VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F,
@@ -1090,18 +1091,23 @@ void Verifier::visitAllocationInst(AllocationInst &AI) {
   visitInstruction(AI);
 }
 
-void Verifier::visitGetResultInst(GetResultInst &GRI) {
-  Assert1(GetResultInst::isValidOperands(GRI.getAggregateValue(),
-                                         GRI.getIndex()),
-          "Invalid GetResultInst operands!", &GRI);
-  Assert1(isa<CallInst>(GRI.getAggregateValue()) ||
-          isa<InvokeInst>(GRI.getAggregateValue()) ||
-          isa<UndefValue>(GRI.getAggregateValue()),
-          "GetResultInst operand must be a call/invoke/undef!", &GRI);
+void Verifier::visitExtractValueInst(ExtractValueInst &EVI) {
+  Assert1(ExtractValueInst::getIndexedType(EVI.getAggregateOperand()->getType(),
+                                           EVI.idx_begin(), EVI.idx_end()) ==
+          EVI.getType(),
+          "Invalid ExtractValueInst operands!", &EVI);
   
-  visitInstruction(GRI);
+  visitInstruction(EVI);
 }
 
+void Verifier::visitInsertValueInst(InsertValueInst &IVI) {
+  Assert1(ExtractValueInst::getIndexedType(IVI.getAggregateOperand()->getType(),
+                                           IVI.idx_begin(), IVI.idx_end()) ==
+          IVI.getOperand(1)->getType(),
+          "Invalid InsertValueInst operands!", &IVI);
+  
+  visitInstruction(IVI);
+}
 
 /// verifyInstruction - Verify that an instruction is well formed.
 ///
@@ -1151,20 +1157,7 @@ void Verifier::visitInstruction(Instruction &I) {
     // Check to make sure that only first-class-values are operands to
     // instructions.
     if (!I.getOperand(i)->getType()->isFirstClassType()) {
-      if (isa<ReturnInst>(I) || isa<GetResultInst>(I))
-        Assert1(isa<StructType>(I.getOperand(i)->getType()),
-                "Invalid ReturnInst operands!", &I);
-      else if (isa<CallInst>(I) || isa<InvokeInst>(I)) {
-        if (const PointerType *PT = dyn_cast<PointerType>
-            (I.getOperand(i)->getType())) {
-          const Type *ETy = PT->getElementType();
-          Assert1(isa<StructType>(ETy), "Invalid CallInst operands!", &I);
-        }
-        else
-          Assert1(0, "Invalid CallInst operands!", &I);
-      }
-      else
-        Assert1(0, "Instruction operands must be first-class values!", &I);
+      Assert1(0, "Instruction operands must be first-class values!", &I);
     }
     
     if (Function *F = dyn_cast<Function>(I.getOperand(i))) {

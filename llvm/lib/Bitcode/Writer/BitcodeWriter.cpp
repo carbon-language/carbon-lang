@@ -768,11 +768,6 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     Vals.push_back(VE.getValueID(I.getOperand(1)));
     Vals.push_back(cast<CmpInst>(I).getPredicate());
     break;
-  case Instruction::GetResult:
-    Code = bitc::FUNC_CODE_INST_GETRESULT;
-    PushValueAndType(I.getOperand(0), InstID, Vals, VE);
-    Vals.push_back(cast<GetResultInst>(I).getIndex());
-    break;
 
   case Instruction::Ret: 
     {

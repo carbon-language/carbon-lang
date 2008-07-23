@@ -604,7 +604,7 @@ int LLLexer::LexIdentifier() {
   INSTKEYWORD("extractelement", OtherOpVal, ExtractElement, EXTRACTELEMENT);
   INSTKEYWORD("insertelement", OtherOpVal, InsertElement, INSERTELEMENT);
   INSTKEYWORD("shufflevector", OtherOpVal, ShuffleVector, SHUFFLEVECTOR);
-  INSTKEYWORD("getresult", OtherOpVal, GetResult, GETRESULT);
+  INSTKEYWORD("getresult", OtherOpVal, ExtractValue, GETRESULT);
   INSTKEYWORD("extractvalue", OtherOpVal, ExtractValue, EXTRACTVALUE);
   INSTKEYWORD("insertvalue", OtherOpVal, InsertValue, INSERTVALUE);
 #undef INSTKEYWORD

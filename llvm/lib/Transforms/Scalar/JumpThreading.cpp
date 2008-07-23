@@ -440,20 +440,7 @@ void JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB,
     
     // We found a use of I outside of BB.  Create a new stack slot to
     // break this inter-block usage pattern.
-    if (!isa<StructType>(I->getType())) {
-      DemoteRegToStack(*I);
-      continue;
-    }
-    
-    // Alternatively, I must be a call or invoke that returns multiple retvals.
-    // We can't use 'DemoteRegToStack' because that will create loads and
-    // stores of aggregates which is not valid yet.  If I is a call, we can just
-    // pull all the getresult instructions up to this block.  If I is an invoke,
-    // we are out of luck.
-    BasicBlock::iterator IP = I; ++IP;
-    for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
-         UI != E; ++UI)
-      cast<GetResultInst>(UI)->moveBefore(IP);
+    DemoteRegToStack(*I);
   }
  
   // We are going to have to map operands from the original BB block to the new

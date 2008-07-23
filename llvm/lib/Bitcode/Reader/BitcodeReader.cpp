@@ -1472,7 +1472,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       Value *Op;
       getValueTypePair(Record, OpNum, NextValueNo, Op);
       unsigned Index = Record[1];
-      I = new GetResultInst(Op, Index);
+      I = ExtractValueInst::Create(Op, Index);
       break;
     }
     
@@ -1482,20 +1482,34 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         if (Size == 0) {
           I = ReturnInst::Create();
           break;
-        } else {
-          unsigned OpNum = 0;
-          SmallVector<Value *,4> Vs;
-          do {
-            Value *Op = NULL;
-            if (getValueTypePair(Record, OpNum, NextValueNo, Op))
-              return Error("Invalid RET record");
-            Vs.push_back(Op);
-          } while(OpNum != Record.size());
+        }
 
-          // SmallVector Vs has at least one element.
-          I = ReturnInst::Create(&Vs[0], Vs.size());
+        unsigned OpNum = 0;
+        SmallVector<Value *,4> Vs;
+        do {
+          Value *Op = NULL;
+          if (getValueTypePair(Record, OpNum, NextValueNo, Op))
+            return Error("Invalid RET record");
+          Vs.push_back(Op);
+        } while(OpNum != Record.size());
+
+        const Type *ReturnType = F->getReturnType();
+        if (Vs.size() > 1 ||
+            (isa<StructType>(ReturnType) &&
+             (Vs.empty() || Vs[0]->getType() != ReturnType))) {
+          Value *RV = UndefValue::get(ReturnType);
+          for (unsigned i = 0, e = Vs.size(); i != e; ++i) {
+            I = InsertValueInst::Create(RV, Vs[i], i, "mrv");
+            CurBB->getInstList().push_back(I);
+            ValueList.AssignValue(I, NextValueNo++);
+            RV = I;
+          }
+          I = ReturnInst::Create(RV);
           break;
         }
+
+        I = ReturnInst::Create(Vs[0]);
+        break;
       }
     case bitc::FUNC_CODE_INST_BR: { // BR: [bb#, bb#, opval] or [bb#]
       if (Record.size() != 1 && Record.size() != 3)

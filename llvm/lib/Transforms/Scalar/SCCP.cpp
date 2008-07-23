@@ -384,7 +384,6 @@ private:
   void visitTerminatorInst(TerminatorInst &TI);
 
   void visitCastInst(CastInst &I);
-  void visitGetResultInst(GetResultInst &GRI);
   void visitSelectInst(SelectInst &I);
   void visitBinaryOperator(Instruction &I);
   void visitCmpInst(CmpInst &I);
@@ -667,41 +666,6 @@ void SCCPSolver::visitCastInst(CastInst &I) {
   else if (VState.isConstant())        // Propagate constant value
     markConstant(&I, ConstantExpr::getCast(I.getOpcode(), 
                                            VState.getConstant(), I.getType()));
-}
-
-void SCCPSolver::visitGetResultInst(GetResultInst &GRI) {
-  Value *Aggr = GRI.getOperand(0);
-
-  // If the operand to the getresult is an undef, the result is undef.
-  if (isa<UndefValue>(Aggr))
-    return;
-  
-  Function *F;
-  if (CallInst *CI = dyn_cast<CallInst>(Aggr))
-    F = CI->getCalledFunction();
-  else
-    F = cast<InvokeInst>(Aggr)->getCalledFunction();
-
-  // TODO: If IPSCCP resolves the callee of this function, we could propagate a
-  // result back!
-  if (F == 0 || TrackedMultipleRetVals.empty()) {
-    markOverdefined(&GRI);
-    return;
-  }
-  
-  // See if we are tracking the result of the callee.
-  std::map<std::pair<Function*, unsigned>, LatticeVal>::iterator
-    It = TrackedMultipleRetVals.find(std::make_pair(F, GRI.getIndex()));
-
-  // If not tracking this function (for example, it is a declaration) just move
-  // to overdefined.
-  if (It == TrackedMultipleRetVals.end()) {
-    markOverdefined(&GRI);
-    return;
-  }
-  
-  // Otherwise, the value will be merged in here as a result of CallSite
-  // handling.
 }
 
 void SCCPSolver::visitExtractValueInst(ExtractValueInst &EVI) {
@@ -1267,11 +1231,6 @@ CallOverdefined:
     // currently handled conservatively.
     for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
          UI != E; ++UI) {
-      if (GetResultInst *GRI = dyn_cast<GetResultInst>(*UI)) {
-        mergeInValue(GRI, 
-                TrackedMultipleRetVals[std::make_pair(F, GRI->getIndex())]);
-        continue;
-      }
       if (ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(*UI)) {
         if (EVI->getNumIndices() == 1) {
           mergeInValue(EVI, 

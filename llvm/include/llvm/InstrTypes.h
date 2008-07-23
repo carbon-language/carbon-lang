@@ -117,7 +117,6 @@ public:
            I->getOpcode() == Instruction::Free ||
            I->getOpcode() == Instruction::Load ||
            I->getOpcode() == Instruction::VAArg ||
-           I->getOpcode() == Instruction::GetResult ||
            I->getOpcode() == Instruction::ExtractValue ||
            (I->getOpcode() >= CastOpsBegin && I->getOpcode() < CastOpsEnd);
   }

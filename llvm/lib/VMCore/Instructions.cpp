@@ -500,75 +500,30 @@ void InvokeInst::removeParamAttr(unsigned i, ParameterAttributes attr) {
 
 ReturnInst::ReturnInst(const ReturnInst &RI)
   : TerminatorInst(Type::VoidTy, Instruction::Ret,
-                   OperandTraits<ReturnInst>::op_end(this)
-                   - RI.getNumOperands(),
+                   OperandTraits<ReturnInst>::op_end(this) -
+                     RI.getNumOperands(),
                    RI.getNumOperands()) {
-  unsigned N = RI.getNumOperands();
-  if (N == 1)
+  if (RI.getNumOperands())
     Op<0>() = RI.Op<0>();
-  else if (N) {
-    Use *OL = OperandList;
-    for (unsigned i = 0; i < N; ++i)
-      OL[i] = RI.getOperand(i);
-  }
 }
 
 ReturnInst::ReturnInst(Value *retVal, Instruction *InsertBefore)
   : TerminatorInst(Type::VoidTy, Instruction::Ret,
-                   OperandTraits<ReturnInst>::op_end(this) - (retVal != 0),
-                   retVal != 0, InsertBefore) {
+                   OperandTraits<ReturnInst>::op_end(this) - !!retVal, !!retVal,
+                   InsertBefore) {
   if (retVal)
-    init(&retVal, 1);
+    Op<0>() = retVal;
 }
 ReturnInst::ReturnInst(Value *retVal, BasicBlock *InsertAtEnd)
   : TerminatorInst(Type::VoidTy, Instruction::Ret,
-                   OperandTraits<ReturnInst>::op_end(this) - (retVal != 0),
-                   retVal != 0, InsertAtEnd) {
+                   OperandTraits<ReturnInst>::op_end(this) - !!retVal, !!retVal,
+                   InsertAtEnd) {
   if (retVal)
-    init(&retVal, 1);
+    Op<0>() = retVal;
 }
 ReturnInst::ReturnInst(BasicBlock *InsertAtEnd)
   : TerminatorInst(Type::VoidTy, Instruction::Ret,
-                   OperandTraits<ReturnInst>::op_end(this),
-                   0, InsertAtEnd) {
-}
-
-ReturnInst::ReturnInst(Value * const* retVals, unsigned N,
-                       Instruction *InsertBefore)
-  : TerminatorInst(Type::VoidTy, Instruction::Ret,
-                   OperandTraits<ReturnInst>::op_end(this) - N,
-                   N, InsertBefore) {
-  if (N != 0)
-    init(retVals, N);
-}
-ReturnInst::ReturnInst(Value * const* retVals, unsigned N,
-                       BasicBlock *InsertAtEnd)
-  : TerminatorInst(Type::VoidTy, Instruction::Ret,
-                   OperandTraits<ReturnInst>::op_end(this) - N,
-                   N, InsertAtEnd) {
-  if (N != 0)
-    init(retVals, N);
-}
-
-void ReturnInst::init(Value * const* retVals, unsigned N) {
-  assert (N > 0 && "Invalid operands numbers in ReturnInst init");
-
-  NumOperands = N;
-  if (NumOperands == 1) {
-    Value *V = *retVals;
-    if (V->getType() == Type::VoidTy)
-      return;
-    Op<0>() = V;
-    return;
-  }
-
-  Use *OL = OperandList;
-  for (unsigned i = 0; i < NumOperands; ++i) {
-    Value *V = *retVals++;
-    assert(!isa<BasicBlock>(V) &&
-           "Cannot return basic block.  Probably using the incorrect ctor");
-    OL[i] = V;
-  }
+                   OperandTraits<ReturnInst>::op_end(this), 0, InsertAtEnd) {
 }
 
 unsigned ReturnInst::getNumSuccessorsV() const {
@@ -2855,43 +2810,6 @@ void SwitchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
   setSuccessor(idx, B);
 }
 
-//===----------------------------------------------------------------------===//
-//                           GetResultInst Implementation
-//===----------------------------------------------------------------------===//
-
-GetResultInst::GetResultInst(Value *Aggregate, unsigned Index,
-                             const std::string &Name,
-                             Instruction *InsertBef)
-  : UnaryInstruction(cast<StructType>(Aggregate->getType())
-                       ->getElementType(Index),
-                     GetResult, Aggregate, InsertBef),
-    Idx(Index) {
-  assert(isValidOperands(Aggregate, Index)
-         && "Invalid GetResultInst operands!");
-  setName(Name);
-}
-
-bool GetResultInst::isValidOperands(const Value *Aggregate, unsigned Index) {
-  if (!Aggregate)
-    return false;
-
-  if (const StructType *STy = dyn_cast<StructType>(Aggregate->getType())) {
-    unsigned NumElements = STy->getNumElements();
-    if (Index >= NumElements || NumElements == 0)
-      return false;
-
-    // getresult aggregate value's element types are restricted to
-    // avoid nested aggregates.
-    for (unsigned i = 0; i < NumElements; ++i)
-      if (!STy->getElementType(i)->isFirstClassType())
-        return false;
-
-    // Otherwise, Aggregate is valid.
-    return true;
-  }
-  return false;
-}
-
 // Define these methods here so vtables don't get emitted into every translation
 // unit that uses these classes.
 
@@ -2972,4 +2890,3 @@ InvokeInst *InvokeInst::clone() const {
 }
 UnwindInst *UnwindInst::clone() const { return new UnwindInst(); }
 UnreachableInst *UnreachableInst::clone() const { return new UnreachableInst();}
-GetResultInst *GetResultInst::clone() const { return new GetResultInst(*this); }

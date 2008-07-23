@@ -102,7 +102,15 @@ public:
   }
 
   ReturnInst *CreateRet(Value * const* retVals, unsigned N) {
-    return Insert(ReturnInst::Create(retVals, N));
+    const Type *RetType = BB->getParent()->getReturnType();
+    if (N == 0 && RetType == Type::VoidTy)
+      return CreateRetVoid();
+    if (N == 1 && retVals[0]->getType() == RetType)
+      return Insert(ReturnInst::Create(retVals[0]));
+    Value *V = UndefValue::get(RetType);
+    for (unsigned i = 0; i != N; ++i)
+      V = CreateInsertValue(V, retVals[i], i, "mrv");
+    return Insert(ReturnInst::Create(V));
   }
   
   /// CreateBr - Create an unconditional 'br label X' instruction.
@@ -568,11 +576,6 @@ public:
     return Insert(new ShuffleVectorInst(V1, V2, Mask), Name);
   }
 
-  GetResultInst *CreateGetResult(Value *V, unsigned Index, 
-                                 const char *Name = "") {
-    return Insert(new GetResultInst(V, Index), Name);
-  }
-    
   Value *CreateExtractValue(Value *Agg, unsigned Idx,
                             const char *Name = "") {
     if (Constant *AggC = dyn_cast<Constant>(Agg))

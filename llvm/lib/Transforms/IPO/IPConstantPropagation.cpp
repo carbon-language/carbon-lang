@@ -255,9 +255,7 @@ bool IPCP::PropagateConstantReturn(Function &F) {
 
       // Find the index of the retval to replace with
       int index = -1;
-      if (GetResultInst *GR = dyn_cast<GetResultInst>(Ins))
-        index = GR->getIndex();
-      else if (ExtractValueInst *EV = dyn_cast<ExtractValueInst>(Ins))
+      if (ExtractValueInst *EV = dyn_cast<ExtractValueInst>(Ins))
         if (EV->hasIndices())
           index = *EV->idx_begin();
 

@@ -110,32 +110,13 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   //
   BasicBlock *NewRetBlock = BasicBlock::Create("UnifiedReturnBlock", &F);
 
-  SmallVector<Value *, 4> Phis;
-  unsigned NumRetVals = ReturningBlocks[0]->getTerminator()->getNumOperands();
-  if (NumRetVals == 0)
+  PHINode *PN = 0;
+  if (F.getReturnType() == Type::VoidTy) {
     ReturnInst::Create(NULL, NewRetBlock);
-  else if (const StructType *STy = dyn_cast<StructType>(F.getReturnType())) {
-    Instruction *InsertPt = NULL;
-    if (NumRetVals == 0)
-      InsertPt = NewRetBlock->getFirstNonPHI();
-    PHINode *PN = NULL;
-    for (unsigned i = 0; i < NumRetVals; ++i) {
-      if (InsertPt)
-        PN = PHINode::Create(STy->getElementType(i), "UnifiedRetVal." 
-                         + utostr(i), InsertPt);
-      else
-        PN = PHINode::Create(STy->getElementType(i), "UnifiedRetVal." 
-                         + utostr(i), NewRetBlock);
-      Phis.push_back(PN);
-      InsertPt = PN;
-    }
-    ReturnInst::Create(&Phis[0], NumRetVals, NewRetBlock);
-  }
-  else {
+  } else {
     // If the function doesn't return void... add a PHI node to the block...
-    PHINode *PN = PHINode::Create(F.getReturnType(), "UnifiedRetVal");
+    PN = PHINode::Create(F.getReturnType(), "UnifiedRetVal");
     NewRetBlock->getInstList().push_back(PN);
-    Phis.push_back(PN);
     ReturnInst::Create(PN, NewRetBlock);
   }
 
@@ -148,11 +129,8 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
 
     // Add an incoming element to the PHI node for every return instruction that
     // is merging into this new block...
-    if (!Phis.empty()) {
-      for (unsigned i = 0; i < NumRetVals; ++i) 
-        cast<PHINode>(Phis[i])->addIncoming(BB->getTerminator()->getOperand(i), 
-                                            BB);
-    }
+    if (PN)
+      PN->addIncoming(BB->getTerminator()->getOperand(0), BB);
 
     BB->getInstList().pop_back();  // Remove the return insn
     BranchInst::Create(NewRetBlock, BB);

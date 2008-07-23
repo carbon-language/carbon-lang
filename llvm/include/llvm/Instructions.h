@@ -2000,7 +2000,6 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(PHINode, Value)
 ///
 class ReturnInst : public TerminatorInst {
   ReturnInst(const ReturnInst &RI);
-  void init(Value * const* retVals, unsigned N);
 
 private:
   // ReturnInst constructors:
@@ -2011,16 +2010,11 @@ private:
   // ReturnInst(Value* X, Inst *I) - 'ret X'    instruction, insert before I
   // ReturnInst(    null, BB *B)   - 'ret void' instruction, insert @ end of B
   // ReturnInst(Value* X, BB *B)   - 'ret X'    instruction, insert @ end of B
-  // ReturnInst(Value* X, N)          - 'ret X,X+1...X+N-1' instruction
-  // ReturnInst(Value* X, N, Inst *I) - 'ret X,X+1...X+N-1', insert before I
-  // ReturnInst(Value* X, N, BB *B)   - 'ret X,X+1...X+N-1', insert @ end of B
   //
   // NOTE: If the Value* passed is of type void then the constructor behaves as
   // if it was passed NULL.
   explicit ReturnInst(Value *retVal = 0, Instruction *InsertBefore = 0);
   ReturnInst(Value *retVal, BasicBlock *InsertAtEnd);
-  ReturnInst(Value * const* retVals, unsigned N, Instruction *InsertBefore = 0);
-  ReturnInst(Value * const* retVals, unsigned N, BasicBlock *InsertAtEnd);
   explicit ReturnInst(BasicBlock *InsertAtEnd);
 public:
   static ReturnInst* Create(Value *retVal = 0, Instruction *InsertBefore = 0) {
@@ -2029,19 +2023,10 @@ public:
   static ReturnInst* Create(Value *retVal, BasicBlock *InsertAtEnd) {
     return new(!!retVal) ReturnInst(retVal, InsertAtEnd);
   }
-  static ReturnInst* Create(Value * const* retVals, unsigned N,
-                            Instruction *InsertBefore = 0) {
-    return new(N) ReturnInst(retVals, N, InsertBefore);
-  }
-  static ReturnInst* Create(Value * const* retVals, unsigned N,
-                            BasicBlock *InsertAtEnd) {
-    return new(N) ReturnInst(retVals, N, InsertAtEnd);
-  }
   static ReturnInst* Create(BasicBlock *InsertAtEnd) {
     return new(0) ReturnInst(InsertAtEnd);
   }
   virtual ~ReturnInst();
-  inline void operator delete(void*);
 
   virtual ReturnInst *clone() const;
 
@@ -2072,16 +2057,10 @@ public:
 };
 
 template <>
-struct OperandTraits<ReturnInst> : VariadicOperandTraits<> {
+struct OperandTraits<ReturnInst> : OptionalOperandTraits<> {
 };
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ReturnInst, Value)
-void ReturnInst::operator delete(void *it) {
-  ReturnInst* me(static_cast<ReturnInst*>(it));
-  Use::zap(OperandTraits<ReturnInst>::op_begin(me),
-           OperandTraits<ReturnInst>::op_end(me),
-           true);
-}
 
 //===----------------------------------------------------------------------===//
 //                               BranchInst Class
@@ -3120,53 +3099,6 @@ public:
   static inline bool classof(const BitCastInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == BitCast;
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Instruction>(V) && classof(cast<Instruction>(V));
-  }
-};
-
-//===----------------------------------------------------------------------===//
-//                             GetResultInst Class
-//===----------------------------------------------------------------------===//
-
-/// GetResultInst - This instruction extracts individual result value from
-/// aggregate value, where aggregate value is returned by CallInst.
-///
-class GetResultInst : public UnaryInstruction {
-  unsigned Idx;
-  GetResultInst(const GetResultInst &GRI) :
-    UnaryInstruction(GRI.getType(), Instruction::GetResult, GRI.getOperand(0)),
-    Idx(GRI.Idx) {
-  }
-
-public:
-  GetResultInst(Value *Aggr, unsigned index,
-                const std::string &Name = "",
-                Instruction *InsertBefore = 0);
-
-  /// isValidOperands - Return true if an getresult instruction can be
-  /// formed with the specified operands.
-  static bool isValidOperands(const Value *Aggr, unsigned index);
-  
-  virtual GetResultInst *clone() const;
-  
-  Value *getAggregateValue() {
-    return getOperand(0);
-  }
-
-  const Value *getAggregateValue() const {
-    return getOperand(0);
-  }
-
-  unsigned getIndex() const {
-    return Idx;
-  }
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const GetResultInst *) { return true; }
-  static inline bool classof(const Instruction *I) {
-    return (I->getOpcode() == Instruction::GetResult);
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
