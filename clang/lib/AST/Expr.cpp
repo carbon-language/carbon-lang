@@ -61,6 +61,16 @@ bool UnaryOperator::isPostfix(Opcode Op) {
   }
 }
 
+bool UnaryOperator::isPrefix(Opcode Op) {
+  switch (Op) {
+    case PreInc:
+    case PreDec:
+      return true;
+    default:
+      return false;
+  }
+}
+
 /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
 /// corresponds to, e.g. "sizeof" or "[pre]++".
 const char *UnaryOperator::getOpcodeStr(Opcode Op) {

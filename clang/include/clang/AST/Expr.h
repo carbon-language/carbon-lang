@@ -481,6 +481,10 @@ public:
   /// isPostfix - Return true if this is a postfix operation, like x++.
   static bool isPostfix(Opcode Op);
 
+  /// isPostfix - Return true if this is a prefix operation, like --x.
+  static bool isPrefix(Opcode Op);
+
+  bool isPrefix() const { return isPrefix(Opc); }
   bool isPostfix() const { return isPostfix(Opc); }
   bool isIncrementOp() const {return Opc==PreInc || Opc==PostInc; }
   bool isIncrementDecrementOp() const { return Opc>=PostInc && Opc<=PreDec; }
