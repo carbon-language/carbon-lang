@@ -2704,7 +2704,20 @@ BBTerminatorInst :
   RET ReturnedVal  { // Return with a result...
     ValueList &VL = *$2;
     assert(!VL.empty() && "Invalid ret operands!");
-    $$ = ReturnInst::Create(&VL[0], VL.size());
+    const Type *ReturnType = CurFun.CurrentFunction->getReturnType();
+    if (VL.size() > 1 ||
+        (isa<StructType>(ReturnType) &&
+         (VL.empty() || VL[0]->getType() != ReturnType))) {
+      Value *RV = UndefValue::get(ReturnType);
+      for (unsigned i = 0, e = VL.size(); i != e; ++i) {
+        Instruction *I = InsertValueInst::Create(RV, VL[i], i, "mrv");
+        ($<BasicBlockVal>-1)->getInstList().push_back(I);
+        RV = I;
+      }
+      $$ = ReturnInst::Create(RV);
+    } else {
+      $$ = ReturnInst::Create(VL[0]);
+    }
     delete $2;
     CHECK_FOR_ERROR
   }
@@ -3309,12 +3322,18 @@ MemoryInst : MALLOC Types OptCAlign {
     delete $5;
   }
   | GETRESULT Types ValueRef ',' EUINT64VAL  {
-  Value *TmpVal = getVal($2->get(), $3);
-  if (!GetResultInst::isValidOperands(TmpVal, $5))
-      GEN_ERROR("Invalid getresult operands");
-    $$ = new GetResultInst(TmpVal, $5);
-    delete $2;
+    if (!UpRefs.empty())
+      GEN_ERROR("Invalid upreference in type: " + (*$2)->getDescription());
+    if (!isa<StructType>($2->get()) && !isa<ArrayType>($2->get()))
+      GEN_ERROR("getresult insn requires an aggregate operand");
+    if (!ExtractValueInst::getIndexedType(*$2, $5))
+      GEN_ERROR("Invalid getresult index for type '" +
+                     (*$2)->getDescription()+ "'");
+
+    Value *tmpVal = getVal(*$2, $3);
     CHECK_FOR_ERROR
+    $$ = ExtractValueInst::Create(tmpVal, $5);
+    delete $2;
   }
   | GETELEMENTPTR Types ValueRef IndexList {
     if (!UpRefs.empty())
