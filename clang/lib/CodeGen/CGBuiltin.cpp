@@ -103,10 +103,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   case Builtin::BI__builtin_abs: {
     Value *ArgValue = EmitScalarExpr(E->getArg(0));   
     
-    llvm::BinaryOperator *NegOp = 
-      Builder.CreateNeg(ArgValue, (ArgValue->getName() + "neg").c_str());
+    Value *NegOp = Builder.CreateNeg(ArgValue, "neg");
     Value *CmpResult = 
-      Builder.CreateICmpSGE(ArgValue, NegOp->getOperand(0), "abscond");
+    Builder.CreateICmpSGE(ArgValue, Constant::getNullValue(ArgValue->getType()),
+                                                            "abscond");
     Value *Result = 
       Builder.CreateSelect(CmpResult, ArgValue, NegOp, "abs");
     
