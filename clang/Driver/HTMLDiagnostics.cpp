@@ -48,10 +48,10 @@ public:
   
   virtual void HandlePathDiagnostic(const PathDiagnostic* D);
   
-  void HandlePiece(Rewriter& R, const PathDiagnosticPiece& P,
-                   unsigned num, unsigned max);
+  void HandlePiece(Rewriter& R, unsigned BugFileID,
+                   const PathDiagnosticPiece& P, unsigned num, unsigned max);
   
-  void HighlightRange(Rewriter& R, SourceRange Range);
+  void HighlightRange(Rewriter& R, unsigned BugFileID, SourceRange Range);
 
   void ReportDiag(const PathDiagnostic& D);
 };
@@ -123,8 +123,52 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   if (noDir)
     return;
   
-  // Create a new rewriter to generate HTML.
   SourceManager& SMgr = D.begin()->getLocation().getManager();
+
+  unsigned FileID = 0;
+  bool FileIDInitialized = false;
+  
+  // Verify that the entire path is from the same FileID.
+  for (PathDiagnostic::const_iterator I=D.begin(), E=D.end(); I != E; ++I) {
+    
+    FullSourceLoc L = I->getLocation();
+    
+    if (!L.isFileID())
+      return; // FIXME: Emit a warning?
+    
+    if (!FileIDInitialized) {
+      FileID = L.getCanonicalFileID();
+      FileIDInitialized = true;
+    }
+    else if (L.getCanonicalFileID() != FileID)
+      return; // FIXME: Emit a warning?
+    
+    // Check the source ranges.
+    for (PathDiagnosticPiece::range_iterator RI=I->ranges_begin(),
+                                             RE=I->ranges_end(); RI!=RE; ++RI) {
+      
+      SourceLocation L = RI->getBegin();
+
+      if (!L.isFileID())
+        return; // FIXME: Emit a warning?      
+      
+      if (SMgr.getCanonicalFileID(L) != FileID)
+        return; // FIXME: Emit a warning?
+      
+      L = RI->getEnd();
+      
+      if (!L.isFileID())
+        return; // FIXME: Emit a warning?      
+      
+      if (SMgr.getCanonicalFileID(L) != FileID)
+        return; // FIXME: Emit a warning?
+    }
+  }
+  
+  if (!FileIDInitialized)
+    return; // FIXME: Emit a warning?
+  
+  // Create a new rewriter to generate HTML.
   Rewriter R(SMgr);
   
   // Process the path.
@@ -135,12 +179,12 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
   for (PathDiagnostic::const_reverse_iterator I=D.rbegin(), E=D.rend();
         I!=E; ++I, --n) {
     
-    HandlePiece(R, *I, n, max);
+    HandlePiece(R, FileID, *I, n, max);
   }
   
   // Add line numbers, header, footer, etc.
   
-  unsigned FileID = R.getSourceMgr().getMainFileID();
+  // unsigned FileID = R.getSourceMgr().getMainFileID();
   html::EscapeText(R, FileID);
   html::AddLineNumbers(R, FileID);
   
@@ -270,7 +314,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
       os << *I;
 }
 
-void HTMLDiagnostics::HandlePiece(Rewriter& R,
+void HTMLDiagnostics::HandlePiece(Rewriter& R, unsigned BugFileID,
                                   const PathDiagnosticPiece& P,
                                   unsigned num, unsigned max) {
   
@@ -288,12 +332,11 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R,
 
   assert (&LPos.getManager() == &SM && "SourceManagers are different!");
   
-  if (!SM.isFromMainFile(LPos.getLocation()))
+  if (LPos.getCanonicalFileID() != BugFileID)
     return;
   
   const llvm::MemoryBuffer *Buf = SM.getBuffer(FileID);
   const char* FileStart = Buf->getBufferStart();  
-
   
   // Compute the column number.  Rewind from the current position to the start
   // of the line.
@@ -360,10 +403,11 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R,
   
   for (const SourceRange *I = P.ranges_begin(), *E = P.ranges_end();
         I != E; ++I)
-    HighlightRange(R, *I);
+    HighlightRange(R, FileID, *I);
 }
 
-void HTMLDiagnostics::HighlightRange(Rewriter& R, SourceRange Range) {
+void HTMLDiagnostics::HighlightRange(Rewriter& R, unsigned BugFileID,
+                                     SourceRange Range) {
   
   SourceManager& SM = R.getSourceMgr();
   
@@ -376,8 +420,8 @@ void HTMLDiagnostics::HighlightRange(Rewriter& R, SourceRange Range) {
   if (EndLineNo < StartLineNo)
     return;
   
-  if (!SM.isFromMainFile(LogicalStart) ||
-      !SM.isFromMainFile(LogicalEnd))
+  if (!SM.getCanonicalFileID(LogicalStart) != BugFileID ||
+      !SM.getCanonicalFileID(LogicalEnd) != BugFileID)
     return;
     
   // Compute the column number of the end.
