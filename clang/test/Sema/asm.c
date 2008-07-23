@@ -25,3 +25,11 @@ clobbers()
   asm ("nop" : : : "-1"); // expected-error {{unknown register name '-1' in asm}}
   asm ("nop" : : : "+1"); // expected-error {{unknown register name '+1' in asm}}
 }
+
+// rdar://6094010
+void test3() {
+  int x;
+  asm(L"foo" : "=r"(x)); // expected-error {{wide string}}
+  asm("foo" : L"=r"(x)); // expected-error {{wide string}}
+}
+

@@ -985,6 +985,8 @@ DIAG(warn_unused_expr, WARNING,
      "expression result unused")
 DIAG(err_pascal_string_too_long, ERROR,
     "Pascal string is too long")
+DIAG(err_asm_wide_character, ERROR,
+    "wide string is invalid in 'asm'")
 DIAG(err_invalid_lvalue_in_asm_output, ERROR,
     "invalid lvalue in asm output")
 DIAG(err_invalid_output_constraint_in_asm, ERROR,
