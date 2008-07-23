@@ -126,7 +126,8 @@ namespace llvm {
     unsigned getRepIntervalSize(unsigned Reg) {
       if (!li_->hasInterval(Reg))
         return 0;
-      return li_->getApproximateInstructionCount(li_->getInterval(Reg));
+      return li_->getApproximateInstructionCount(li_->getInterval(Reg)) *
+             LiveIntervals::InstrSlots::NUM;
     }
 
     /// print - Implement the dump method.

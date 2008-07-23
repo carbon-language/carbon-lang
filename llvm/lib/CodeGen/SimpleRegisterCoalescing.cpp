@@ -2196,7 +2196,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
       // Divide the weight of the interval by its size.  This encourages 
       // spilling of intervals that are large and have few uses, and
       // discourages spilling of small intervals with many uses.
-      LI.weight /= li_->getApproximateInstructionCount(LI);
+      LI.weight /= li_->getApproximateInstructionCount(LI) * InstrSlots::NUM;
     }
   }
 
