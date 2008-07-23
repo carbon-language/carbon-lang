@@ -81,6 +81,7 @@ void LiveIntervals::releaseMemory() {
 
 void LiveIntervals::computeNumbering() {
   Index2MiMap OldI2MI = i2miMap_;
+  std::vector<IdxMBBPair> OldI2MBB = Idx2MBBMap;
   
   Idx2MBBMap.clear();
   MBB2IdxMap.clear();
@@ -98,21 +99,23 @@ void LiveIntervals::computeNumbering() {
        MBB != E; ++MBB) {
     unsigned StartIdx = MIIndex;
 
+    // Insert an empty slot at the beginning of each block.
+    MIIndex += InstrSlots::NUM;
+    i2miMap_.push_back(0);
+
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
          I != E; ++I) {
       bool inserted = mi2iMap_.insert(std::make_pair(I, MIIndex)).second;
       assert(inserted && "multiple MachineInstr -> index mappings");
       i2miMap_.push_back(I);
       MIIndex += InstrSlots::NUM;
-      
       FunctionSize++;
-    }
-    
-    if (StartIdx == MIIndex) {
-      // Empty MBB
+      
+      // Insert an empty slot after every instruction.
       MIIndex += InstrSlots::NUM;
       i2miMap_.push_back(0);
     }
+    
     // Set the MBB2IdxMap entry for this MBB.
     MBB2IdxMap[MBB->getNumber()] = std::make_pair(StartIdx, MIIndex - 1);
     Idx2MBBMap.push_back(std::make_pair(StartIdx, MBB));
@@ -120,90 +123,82 @@ void LiveIntervals::computeNumbering() {
   std::sort(Idx2MBBMap.begin(), Idx2MBBMap.end(), Idx2MBBCompare());
   
   if (!OldI2MI.empty())
-    for (iterator I = begin(), E = end(); I != E; ++I)
-      for (LiveInterval::iterator LI = I->second.begin(), LE = I->second.end();
-           LI != LE; ++LI) {
+    for (iterator OI = begin(), OE = end(); OI != OE; ++OI)
+      for (LiveInterval::iterator LI = OI->second.begin(),
+           LE = OI->second.end(); LI != LE; ++LI) {
         
         // Remap the start index of the live range to the corresponding new
         // number, or our best guess at what it _should_ correspond to if the
         // original instruction has been erased.  This is either the following
         // instruction or its predecessor.
+        unsigned index = LI->start / InstrSlots::NUM;
         unsigned offset = LI->start % InstrSlots::NUM;
-        if (OldI2MI[LI->start / InstrSlots::NUM])
-          LI->start = mi2iMap_[OldI2MI[LI->start / InstrSlots::NUM]] + offset;
-        else {
-          unsigned i = 0;
-          MachineInstr* newInstr = 0;
-          do {
-            newInstr = OldI2MI[LI->start / InstrSlots::NUM + i];
-            i++;
-          } while (!newInstr);
+        if (offset == InstrSlots::LOAD) {
+          std::vector<IdxMBBPair>::const_iterator I =
+                  std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), index);
+          // Take the pair containing the index
+          std::vector<IdxMBBPair>::const_iterator J =
+                    ((I != OldI2MBB.end() && I->first > index) ||
+                    (I == OldI2MBB.end() && OldI2MBB.size()>0)) ? (I-1): I;
           
-          if (mi2iMap_[newInstr] ==
-              MBB2IdxMap[newInstr->getParent()->getNumber()].first)
-            LI->start = mi2iMap_[newInstr];
-          else
-            LI->start = mi2iMap_[newInstr] - InstrSlots::NUM + offset;
+          LI->start = getMBBStartIdx(J->second);
+        } else {
+          LI->start = mi2iMap_[OldI2MI[index]] + offset;
         }
         
         // Remap the ending index in the same way that we remapped the start,
         // except for the final step where we always map to the immediately
         // following instruction.
-        if (LI->end / InstrSlots::NUM < OldI2MI.size()) {
-          offset = LI->end % InstrSlots::NUM;
-          if (OldI2MI[LI->end / InstrSlots::NUM])
-            LI->end = mi2iMap_[OldI2MI[LI->end / InstrSlots::NUM]] + offset;
-          else {
-            unsigned i = 0;
-            MachineInstr* newInstr = 0;
-            do {
-              newInstr = OldI2MI[LI->end / InstrSlots::NUM + i];
-              i++;
-            } while (!newInstr);
-            
-            LI->end = mi2iMap_[newInstr];
-          }
+        index = LI->end / InstrSlots::NUM;
+        offset  = LI->end % InstrSlots::NUM;
+        if (offset == InstrSlots::STORE) {
+          std::vector<IdxMBBPair>::const_iterator I =
+                  std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), index);
+          // Take the pair containing the index
+          std::vector<IdxMBBPair>::const_iterator J =
+                    ((I != OldI2MBB.end() && I->first > index) ||
+                    (I == OldI2MBB.end() && OldI2MBB.size()>0)) ? (I-1): I;
+          
+          LI->end = getMBBEndIdx(J->second) + 1;
         } else {
-          LI->end = i2miMap_.size() * InstrSlots::NUM;
+          LI->end = mi2iMap_[OldI2MI[index]] + offset;
         }
         
         // Remap the VNInfo def index, which works the same as the
         // start indices above.
         VNInfo* vni = LI->valno;
+        index = vni->def / InstrSlots::NUM;
         offset = vni->def % InstrSlots::NUM;
-        if (OldI2MI[vni->def / InstrSlots::NUM])
-          vni->def = mi2iMap_[OldI2MI[vni->def / InstrSlots::NUM]] + offset;
-        else {
-          unsigned i = 0;
-          MachineInstr* newInstr = 0;
-          do {
-            newInstr = OldI2MI[vni->def / InstrSlots::NUM + i];
-            i++;
-          } while (!newInstr);
+        if (offset == InstrSlots::LOAD) {
+          std::vector<IdxMBBPair>::const_iterator I =
+                  std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), index);
+          // Take the pair containing the index
+          std::vector<IdxMBBPair>::const_iterator J =
+                    ((I != OldI2MBB.end() && I->first > index) ||
+                    (I == OldI2MBB.end() && OldI2MBB.size()>0)) ? (I-1): I;
           
-          if (mi2iMap_[newInstr] ==
-              MBB2IdxMap[newInstr->getParent()->getNumber()].first)
-            vni->def = mi2iMap_[newInstr];
-          else
-            vni->def = mi2iMap_[newInstr] - InstrSlots::NUM + offset;
+          vni->def = getMBBStartIdx(J->second);
+          
+        } else {
+          vni->def = mi2iMap_[OldI2MI[index]] + offset;
         }
         
         // Remap the VNInfo kill indices, which works the same as
         // the end indices above.
         for (size_t i = 0; i < vni->kills.size(); ++i) {
+          index = vni->kills[i] / InstrSlots::NUM;
           offset = vni->kills[i] % InstrSlots::NUM;
-          if (OldI2MI[vni->kills[i] / InstrSlots::NUM])
-            vni->kills[i] = mi2iMap_[OldI2MI[vni->kills[i] / InstrSlots::NUM]] +
-                            offset;
-          else {
-            unsigned e = 0;
-            MachineInstr* newInstr = 0;
-            do {
-              newInstr = OldI2MI[vni->kills[i] / InstrSlots::NUM + e];
-              e++;
-            } while (!newInstr);
-            
-            vni->kills[i] = mi2iMap_[newInstr];
+          if (OldI2MI[vni->kills[i] / InstrSlots::NUM]) {
+            std::vector<IdxMBBPair>::const_iterator I =
+                    std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), index);
+            // Take the pair containing the index
+            std::vector<IdxMBBPair>::const_iterator J =
+                      ((I != OldI2MBB.end() && I->first > index) ||
+                      (I == OldI2MBB.end() && OldI2MBB.size()>0)) ? (I-1): I;
+
+            vni->kills[i] = getMBBEndIdx(J->second) + 1;
+          } else {
+            vni->kills[i] = mi2iMap_[OldI2MI[index]] + offset;
           }
         }
       }
@@ -362,9 +357,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // of the defining block, potentially live across some blocks, then is
     // live into some number of blocks, but gets killed.  Start by adding a
     // range that goes from this definition to the end of the defining block.
-    LiveRange NewLR(defIndex,
-                    getInstructionIndex(&mbb->back()) + InstrSlots::NUM,
-                    ValNo);
+    LiveRange NewLR(defIndex, getMBBEndIdx(mbb)+1, ValNo);
     DOUT << " +" << NewLR;
     interval.addRange(NewLR);
 
@@ -484,7 +477,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         CopyMI = mi;
       ValNo = interval.getNextValue(defIndex, CopyMI, VNInfoAllocator);
       
-      unsigned killIndex = getInstructionIndex(&mbb->back()) + InstrSlots::NUM;
+      unsigned killIndex = getMBBEndIdx(mbb) + 1;
       LiveRange LR(defIndex, killIndex, ValNo);
       interval.addRange(LR);
       interval.addKill(ValNo, killIndex);
@@ -522,8 +515,11 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   // If it is not dead on definition, it must be killed by a
   // subsequent instruction. Hence its interval is:
   // [defSlot(def), useSlot(kill)+1)
+  baseIndex += InstrSlots::NUM;
   while (++mi != MBB->end()) {
-    baseIndex += InstrSlots::NUM;
+    while (baseIndex / InstrSlots::NUM < i2miMap_.size() &&
+           getInstructionFromIndex(baseIndex) == 0)
+      baseIndex += InstrSlots::NUM;
     if (mi->killsRegister(interval.reg, tri_)) {
       DOUT << " killed";
       end = getUseIndex(baseIndex) + 1;
@@ -537,6 +533,8 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
       end = getDefIndex(start) + 1;
       goto exit;
     }
+    
+    baseIndex += InstrSlots::NUM;
   }
   
   // The only case we should have a dead physreg here without a killing or
@@ -612,6 +610,9 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
     }
 
     baseIndex += InstrSlots::NUM;
+    while (baseIndex / InstrSlots::NUM < i2miMap_.size() && 
+           getInstructionFromIndex(baseIndex) == 0)
+      baseIndex += InstrSlots::NUM;
     ++mi;
   }
 
@@ -643,6 +644,12 @@ void LiveIntervals::computeIntervals() {
        << ((Value*)mf_->getFunction())->getName() << '\n';
   // Track the index of the current machine instr.
   unsigned MIIndex = 0;
+  
+  // Skip over empty initial indices.
+  while (MIIndex / InstrSlots::NUM < i2miMap_.size() &&
+         getInstructionFromIndex(MIIndex) == 0)
+    MIIndex += InstrSlots::NUM;
+  
   for (MachineFunction::iterator MBBI = mf_->begin(), E = mf_->end();
        MBBI != E; ++MBBI) {
     MachineBasicBlock *MBB = MBBI;
@@ -673,9 +680,12 @@ void LiveIntervals::computeIntervals() {
       }
       
       MIIndex += InstrSlots::NUM;
+      
+      // Skip over empty indices.
+      while (MIIndex / InstrSlots::NUM < i2miMap_.size() &&
+             getInstructionFromIndex(MIIndex) == 0)
+        MIIndex += InstrSlots::NUM;
     }
-    
-    if (MBB->begin() == miEnd) MIIndex += InstrSlots::NUM; // Empty MBB
   }
 }
 
