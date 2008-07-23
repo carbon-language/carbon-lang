@@ -469,7 +469,7 @@ public:
 ///
 ///   @interface IvarExample : NSObject
 ///   {
-///     id defaultToPrivate; // same as C++.
+///     id defaultToProtected;
 ///   @public:
 ///     id canBePublic; // same as C++.
 ///   @protected:
@@ -488,8 +488,14 @@ public:
   enum AccessControl {
     None, Private, Protected, Public, Package
   };
+  
   void setAccessControl(AccessControl ac) { DeclAccess = ac; }
+
   AccessControl getAccessControl() const { return AccessControl(DeclAccess); }
+
+  AccessControl getCanonicalAccessControl() const {
+    return DeclAccess == None ? Protected : AccessControl(DeclAccess);
+  }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ObjCIvar; }
