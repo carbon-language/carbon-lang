@@ -56,11 +56,13 @@ public:
     ranges.push_back(SourceRange(B,E));
   }
   
-  const SourceRange* ranges_begin() const {
+  typedef const SourceRange* range_iterator;
+  
+  range_iterator ranges_begin() const {
     return ranges.empty() ? NULL : &ranges[0];
   }
   
-  const SourceRange* ranges_end() const { 
+  range_iterator ranges_end() const { 
     return ranges_begin() + ranges.size();
   }
     
