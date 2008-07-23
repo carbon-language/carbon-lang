@@ -55,8 +55,7 @@ void clang::CheckObjCUnusedIvar(ObjCImplementationDecl* D, BugReporter& BR) {
     ObjCIvarDecl* ID = *I;
     
     // Ignore ivars that aren't private.
-    ObjCIvarDecl::AccessControl ac = ID->getAccessControl();
-    if (!(ac == ObjCIvarDecl::None || ac == ObjCIvarDecl::Private))
+    if (ID->getAccessControl() != ObjCIvarDecl::Private)
       continue;
     
     if (ID->getAttr<IBOutletAttr>() == 0)
