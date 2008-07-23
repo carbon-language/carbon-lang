@@ -86,7 +86,7 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::GlobalTLSAddress, MVT::i32,   Custom);
   setOperationAction(ISD::RET,              MVT::Other, Custom);
   setOperationAction(ISD::JumpTable,        MVT::i32,   Custom);
-  setOperationAction(ISD::ConstantPool,     MVT::f32,   Custom);
+  setOperationAction(ISD::ConstantPool,     MVT::i32,   Custom);
   setOperationAction(ISD::SELECT_CC,        MVT::i32,   Custom);
   setOperationAction(ISD::SELECT_CC,        MVT::f32,   Custom);
 
@@ -234,10 +234,14 @@ AddLiveIn(MachineFunction &MF, unsigned PReg, TargetRegisterClass *RC)
   return VReg;
 }
 
+// A address must be loaded from a small section if its size is less than the 
+// small section size threshold. Data in this section must be addressed using 
+// gp_rel operator.
+bool MipsTargetLowering::IsInSmallSection(unsigned Size) {
+  return (Size > 0 && (Size <= Subtarget->getSSectionThreshold()));
+}
+
 // Discover if this global address can be placed into small data/bss section. 
-// This should happen for globals with size less than small section size 
-// threshold in no abicall environments. Data in this section must be addressed 
-// using gp_rel operator.
 bool MipsTargetLowering::IsGlobalInSmallSection(GlobalValue *GV)
 {
   const TargetData *TD = getTargetData();
@@ -258,10 +262,7 @@ bool MipsTargetLowering::IsGlobalInSmallSection(GlobalValue *GV)
       return false;
   }
 
-  if (Size > 0 && (Size <= Subtarget->getSSectionThreshold()))
-    return true;
-
-  return false;
+  return IsInSmallSection(Size);
 }
 
 //===----------------------------------------------------------------------===//
@@ -352,8 +353,24 @@ LowerJumpTable(SDOperand Op, SelectionDAG &DAG)
 SDOperand MipsTargetLowering::
 LowerConstantPool(SDOperand Op, SelectionDAG &DAG) 
 {
-  assert(0 && "ConstantPool not implemented for MIPS.");
-  return SDOperand(); // Not reached
+  SDOperand ResNode;
+  ConstantPoolSDNode *N = cast<ConstantPoolSDNode>(Op);
+  Constant *C = N->getConstVal();
+  SDOperand CP = DAG.getTargetConstantPool(C, MVT::i32, N->getAlignment());
+
+  // gp_rel relocation
+  if (!Subtarget->hasABICall() &&  
+      IsInSmallSection(getTargetData()->getABITypeSize(C->getType()))) {
+    SDOperand GPRelNode = DAG.getNode(MipsISD::GPRel, MVT::i32, CP);
+    SDOperand GOT = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, MVT::i32);
+    ResNode = DAG.getNode(ISD::ADD, MVT::i32, GOT, GPRelNode); 
+  } else { // %hi/%lo relocation
+    SDOperand HiPart = DAG.getNode(MipsISD::Hi, MVT::i32, CP);
+    SDOperand Lo = DAG.getNode(MipsISD::Lo, MVT::i32, CP);
+    ResNode = DAG.getNode(ISD::ADD, MVT::i32, HiPart, Lo);
+  }
+
+  return ResNode;
 }
 
 //===----------------------------------------------------------------------===//

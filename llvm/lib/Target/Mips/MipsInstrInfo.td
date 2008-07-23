@@ -553,17 +553,24 @@ def : Pat<(MipsJmpLink (i32 texternalsym:$dst)),
 def : Pat<(MipsJmpLink CPURegs:$dst),
           (JALR CPURegs:$dst)>;
 
-// GlobalAddress, Constant Pool, ExternalSymbol, and JumpTable
+// hi/lo relocs
 def : Pat<(MipsHi tglobaladdr:$in), (LUi tglobaladdr:$in)>;
-//def : Pat<(MipsLo tglobaladdr:$in), (ADDiu ZERO, tglobaladdr:$in)>;
 def : Pat<(add CPURegs:$hi, (MipsLo tglobaladdr:$lo)),
           (ADDiu CPURegs:$hi, tglobaladdr:$lo)>;
+
 def : Pat<(MipsHi tjumptable:$in), (LUi tjumptable:$in)>;
-//def : Pat<(MipsLo tjumptable:$in), (ADDiu ZERO, tjumptable:$in)>;
 def : Pat<(add CPURegs:$hi, (MipsLo tjumptable:$lo)),
           (ADDiu CPURegs:$hi, tjumptable:$lo)>;
+
+def : Pat<(MipsHi tconstpool:$in), (LUi tconstpool:$in)>;
+def : Pat<(add CPURegs:$hi, (MipsLo tconstpool:$lo)),
+          (ADDiu CPURegs:$hi, tconstpool:$lo)>;
+
+// gp_rel relocs
 def : Pat<(add CPURegs:$gp, (MipsGPRel tglobaladdr:$in)), 
           (ADDiu CPURegs:$gp, tglobaladdr:$in)>;
+def : Pat<(add CPURegs:$gp, (MipsGPRel tconstpool:$in)), 
+          (ADDiu CPURegs:$gp, tconstpool:$in)>;
 
 // Mips does not have "not", so we expand our way
 def : Pat<(not CPURegs:$in),

@@ -14,11 +14,12 @@
 #ifndef MIPSTARGETASMINFO_H
 #define MIPSTARGETASMINFO_H
 
-#include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/ELFTargetAsmInfo.h"
+#include "MipsSubtarget.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/ELFTargetAsmInfo.h"
 
 namespace llvm {
 
@@ -36,8 +37,7 @@ namespace llvm {
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
 
     private:
-      const MipsTargetMachine *MipsTM; 
-
+      const MipsSubtarget *Subtarget;
   };
 
 } // namespace llvm

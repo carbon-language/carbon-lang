@@ -61,8 +61,6 @@ namespace llvm {
   {
     // FrameIndex for return slot.
     int ReturnAddrIndex;
-
-    // const MipsSubtarget &MipsSubTarget;
   public:
 
     explicit MipsTargetLowering(MipsTargetMachine &TM);
@@ -87,6 +85,7 @@ namespace llvm {
     SDNode *LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode*TheCall,
                             unsigned CallingConv, SelectionDAG &DAG);
     bool IsGlobalInSmallSection(GlobalValue *GV); 
+    bool IsInSmallSection(unsigned Size); 
 
     // Lower Operand specifics
     SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG);

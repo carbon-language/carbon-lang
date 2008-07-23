@@ -19,7 +19,7 @@ using namespace llvm;
 MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM):
   ELFTargetAsmInfo(TM) {
 
-  MipsTM = &TM;
+  Subtarget = &TM.getSubtarget<MipsSubtarget>();
 
   AlignmentIsInBytes          = false;
   COMMDirectiveTakesAlignment = true;
@@ -34,20 +34,24 @@ MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM):
   BSSSection                  = "\t.section\t.bss";
   LCOMMDirective              = "\t.lcomm\t";
   CStringSection              = ".rodata.str";
+  FourByteConstantSection = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
 
-  if (!TM.getSubtarget<MipsSubtarget>().hasABICall())
+  if (!Subtarget->hasABICall()) {
     JumpTableDirective = "\t.word\t";
-  else
+    SmallDataSection = getNamedSection("\t.sdata", SectionFlags::Writeable);
+    SmallBSSSection = getNamedSection("\t.sbss", SectionFlags::Writeable | 
+                                      SectionFlags::BSS);
+  } else 
     JumpTableDirective = "\t.gpword\t";
-  
-  SmallDataSection = getNamedSection("\t.sdata", SectionFlags::Writeable);
-  SmallBSSSection  = getNamedSection("\t.sbss",
-                         SectionFlags::Writeable | SectionFlags::BSS);
+
 }
 
 SectionKind::Kind
 MipsTargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind K = ELFTargetAsmInfo::SectionKindForGlobal(GV);
+
+  if (Subtarget->hasABICall())
+    return K;
 
   if (K != SectionKind::Data && K != SectionKind::BSS && 
       K != SectionKind::RODataMergeConst)
@@ -56,8 +60,7 @@ MipsTargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
   if (isa<GlobalVariable>(GV)) {
     const TargetData *TD = ETM->getTargetData();
     unsigned Size = TD->getABITypeSize(GV->getType()->getElementType());
-    unsigned Threshold = 
-      MipsTM->getSubtarget<MipsSubtarget>().getSSectionThreshold();
+    unsigned Threshold = Subtarget->getSSectionThreshold();
      
     if (Size > 0 && Size <= Threshold) {
       if (K == SectionKind::BSS)
