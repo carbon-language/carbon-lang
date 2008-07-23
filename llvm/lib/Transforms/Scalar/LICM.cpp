@@ -370,6 +370,11 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
     if (LI->isVolatile())
       return false;        // Don't hoist volatile loads!
 
+    // Loads from constant memory are always safe to move, even if they end up
+    // in the same alias set as something that ends up being modified.
+    if (AA->pointsToConstantMemory(LI->getOperand(0)))
+      return true;
+    
     // Don't hoist loads which have may-aliased stores in loop.
     unsigned Size = 0;
     if (LI->getType()->isSized())
