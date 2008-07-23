@@ -72,4 +72,10 @@ int f10() {
   return 1;
 }
 
+int f11() {
+  int x = 4;
+  return ++x; // no-warning
+}
+
+
 
