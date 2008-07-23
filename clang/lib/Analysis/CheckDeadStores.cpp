@@ -153,6 +153,11 @@ public:
       if (!U->isIncrementOp())
         return;
       
+      // Don't flag dead stores when the result of a preincrement/predecrement
+      // is used in an enclosing expression.
+      if (U->isPrefix() && Parents.isSubExpr(U))
+        return;
+      
       Expr *Ex = U->getSubExpr()->IgnoreParenCasts();
       
       if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(Ex))
@@ -161,7 +166,7 @@ public:
     else if (DeclStmt* DS = dyn_cast<DeclStmt>(S))
       // Iterate through the decls.  Warn if any initializers are complex
       // expressions that are not live (never used).
-      for (ScopedDecl* SD = DS->getDecl(); SD; SD = SD->getNextDeclarator()) {        
+      for (ScopedDecl* SD = DS->getDecl(); SD; SD = SD->getNextDeclarator()) {
         
         VarDecl* V = dyn_cast<VarDecl>(SD);
         if (!V) continue;
