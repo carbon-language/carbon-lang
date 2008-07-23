@@ -487,7 +487,7 @@ public:
 private:
   ObjCIvarDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
                AccessControl ac, Expr *BW)
-    : FieldDecl(ObjCIvar, L, Id, T, BW) {}
+    : FieldDecl(ObjCIvar, L, Id, T, BW), DeclAccess(ac) {}
   
 public:
   static ObjCIvarDecl *Create(ASTContext &C, SourceLocation L,
