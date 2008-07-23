@@ -243,15 +243,22 @@ public:
     return Insert(BinaryOperator::CreateXor(LHS, RHS), Name);
   }
 
-  BinaryOperator *CreateBinOp(Instruction::BinaryOps Opc,
-                              Value *LHS, Value *RHS, const char *Name = "") {
+  Value *CreateBinOp(Instruction::BinaryOps Opc,
+                     Value *LHS, Value *RHS, const char *Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return ConstantExpr::get(Opc, LC, RC);
     return Insert(BinaryOperator::Create(Opc, LHS, RHS), Name);
   }
   
-  BinaryOperator *CreateNeg(Value *V, const char *Name = "") {
+  Value *CreateNeg(Value *V, const char *Name = "") {
+    if (Constant *VC = dyn_cast<Constant>(V))
+      return ConstantExpr::getNeg(VC);
     return Insert(BinaryOperator::CreateNeg(V), Name);
   }
-  BinaryOperator *CreateNot(Value *V, const char *Name = "") {
+  Value *CreateNot(Value *V, const char *Name = "") {
+    if (Constant *VC = dyn_cast<Constant>(V))
+      return ConstantExpr::getNot(VC);
     return Insert(BinaryOperator::CreateNot(V), Name);
   }
   
