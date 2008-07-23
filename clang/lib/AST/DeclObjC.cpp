@@ -87,9 +87,10 @@ void ObjCInterfaceDecl::Destroy(ASTContext& C) {
 
 
 ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, SourceLocation L,
-                                   IdentifierInfo *Id, QualType T, Expr *BW) {
+                                   IdentifierInfo *Id, QualType T, 
+                                   AccessControl ac, Expr *BW) {
   void *Mem = C.getAllocator().Allocate<ObjCIvarDecl>();
-  return new (Mem) ObjCIvarDecl(L, Id, T, BW);
+  return new (Mem) ObjCIvarDecl(L, Id, T, ac, BW);
 }
 
 ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C,

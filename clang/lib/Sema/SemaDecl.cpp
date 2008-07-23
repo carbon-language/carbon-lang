@@ -1947,16 +1947,21 @@ Sema::DeclTy *Sema::ActOnIvar(Scope *S,
     InvalidDecl = true;
   }
   
-  ObjCIvarDecl *NewID = ObjCIvarDecl::Create(Context, Loc, II, T,
+  // Get the visibility (access control) for this ivar.
+  ObjCIvarDecl::AccessControl ac = 
+    Visibility != tok::objc_not_keyword ? TranslateIvarVisibility(Visibility)
+                                        : ObjCIvarDecl::None;
+
+  // Construct the decl.
+  ObjCIvarDecl *NewID = ObjCIvarDecl::Create(Context, Loc, II, T, ac,                                             
                                              (Expr *)BitfieldWidth);
   
+  // Process attributes attached to the ivar.
   ProcessDeclAttributes(NewID, D);
   
   if (D.getInvalidType() || InvalidDecl)
     NewID->setInvalidDecl();
-  // If we have visibility info, make sure the AST is set accordingly.
-  if (Visibility != tok::objc_not_keyword)
-    NewID->setAccessControl(TranslateIvarVisibility(Visibility));
+
   return NewID;
 }
 

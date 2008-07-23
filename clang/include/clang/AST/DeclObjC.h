@@ -479,16 +479,21 @@ public:
 ///   }
 ///
 class ObjCIvarDecl : public FieldDecl {
-  ObjCIvarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, Expr *BW)
-    : FieldDecl(ObjCIvar, L, Id, T, BW) {}
 public:
-  static ObjCIvarDecl *Create(ASTContext &C, SourceLocation L,
-                              IdentifierInfo *Id, QualType T, Expr *BW = NULL);
-  
   enum AccessControl {
     None, Private, Protected, Public, Package
   };
   
+private:
+  ObjCIvarDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
+               AccessControl ac, Expr *BW)
+    : FieldDecl(ObjCIvar, L, Id, T, BW) {}
+  
+public:
+  static ObjCIvarDecl *Create(ASTContext &C, SourceLocation L,
+                              IdentifierInfo *Id, QualType T,
+                              AccessControl ac, Expr *BW = NULL);
+    
   void setAccessControl(AccessControl ac) { DeclAccess = ac; }
 
   AccessControl getAccessControl() const { return AccessControl(DeclAccess); }
