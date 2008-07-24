@@ -420,27 +420,25 @@ void CodeGenFunction::EmitContinueStmt() {
 /// add multiple cases to switch instruction, one for each value within
 /// the range. If range is too big then emit "if" condition check.
 void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
-  assert (S.getRHS() && "Unexpected RHS value in CaseStmt");
+  assert(S.getRHS() && "Expected RHS value in CaseStmt");
 
-  const Expr *L = S.getLHS();
-  const Expr *R = S.getRHS();
-  llvm::ConstantInt *LV = cast<llvm::ConstantInt>(EmitScalarExpr(L));
-  llvm::ConstantInt *RV = cast<llvm::ConstantInt>(EmitScalarExpr(R));
-  llvm::APInt LHS = LV->getValue();
-  const llvm::APInt &RHS = RV->getValue();
+  llvm::APSInt LHS = S.getLHS()->getIntegerConstantExprValue(getContext());
+  llvm::APSInt RHS = S.getRHS()->getIntegerConstantExprValue(getContext());
+
+  // If range is empty, do nothing.
+  if (LHS.isSigned() ? RHS.slt(LHS) : RHS.ult(LHS))
+    return;
 
   llvm::APInt Range = RHS - LHS;
+  // FIXME: parameters such as this should not be hardcoded
   if (Range.ult(llvm::APInt(Range.getBitWidth(), 64))) {
     // Range is small enough to add multiple switch instruction cases.
     StartBlock("sw.bb");
     llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
-    SwitchInsn->addCase(LV, CaseDest);
-    LHS++;
-    while (LHS != RHS) {
+    for (unsigned i = 0, e = Range.getZExtValue() + 1; i != e; ++i) {
       SwitchInsn->addCase(llvm::ConstantInt::get(LHS), CaseDest);
       LHS++;
     }
-    SwitchInsn->addCase(RV, CaseDest);
     EmitStmt(S.getSubStmt());
     return;
   } 
@@ -463,7 +461,8 @@ void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
 
   // Emit range check.
   llvm::Value *Diff = 
-    Builder.CreateSub(SwitchInsn->getCondition(), LV, "tmp");
+    Builder.CreateSub(SwitchInsn->getCondition(), llvm::ConstantInt::get(LHS), 
+                      "tmp");
   llvm::Value *Cond = 
     Builder.CreateICmpULE(Diff, llvm::ConstantInt::get(Range), "tmp");
   Builder.CreateCondBr(Cond, CaseDest, FalseDest);
@@ -481,10 +480,9 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
     
   StartBlock("sw.bb");
   llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
-  llvm::APSInt CaseVal(32);
-  S.getLHS()->isIntegerConstantExpr(CaseVal, getContext());
-  llvm::ConstantInt *LV = llvm::ConstantInt::get(CaseVal);
-  SwitchInsn->addCase(LV, CaseDest);
+  llvm::APSInt CaseVal = S.getLHS()->getIntegerConstantExprValue(getContext());
+  SwitchInsn->addCase(llvm::ConstantInt::get(CaseVal), 
+                      CaseDest);
   EmitStmt(S.getSubStmt());
 }
 
