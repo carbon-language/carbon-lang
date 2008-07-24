@@ -42,7 +42,7 @@ namespace clang {
 /// are not requests that the actions module do the specified action.
 ///
 /// All of the methods here are optional except isTypeName(), which must be
-/// specified in order for the parse to complete accurately.  The EmptyAction
+/// specified in order for the parse to complete accurately.  The MinimalAction
 /// class does this bare-minimum of tracking to implement this functionality.
 class Action {
 public:
