@@ -53,9 +53,9 @@ namespace {
     std::set<unsigned> UsedByAnother;
     
     // RenameSets are the is a map from a PHI-defined register
-    // to the input registers to be coalesced along with the index
-    // of the input registers.
-    std::map<unsigned, std::map<unsigned, unsigned> > RenameSets;
+    // to the input registers to be coalesced along with the 
+    // predecessor block for those input registers.
+    std::map<unsigned, std::map<unsigned, MachineBasicBlock*> > RenameSets;
     
     // PhiValueNumber holds the ID numbers of the VNs for each phi that we're
     // eliminating, indexed by the register defined by that phi.
@@ -131,16 +131,18 @@ namespace {
     void computeDFS(MachineFunction& MF);
     void processBlock(MachineBasicBlock* MBB);
     
-    std::vector<DomForestNode*> computeDomForest(std::map<unsigned, unsigned>& instrs,
+    std::vector<DomForestNode*> computeDomForest(
+                           std::map<unsigned, MachineBasicBlock*>& instrs,
                                                  MachineRegisterInfo& MRI);
     void processPHIUnion(MachineInstr* Inst,
-                         std::map<unsigned, unsigned>& PHIUnion,
+                         std::map<unsigned, MachineBasicBlock*>& PHIUnion,
                          std::vector<StrongPHIElimination::DomForestNode*>& DF,
                          std::vector<std::pair<unsigned, unsigned> >& locals);
     void ScheduleCopies(MachineBasicBlock* MBB, std::set<unsigned>& pushed);
     void InsertCopies(MachineBasicBlock* MBB,
                       SmallPtrSet<MachineBasicBlock*, 16>& v);
-    void mergeLiveIntervals(unsigned primary, unsigned secondary, unsigned VN);
+    void mergeLiveIntervals(unsigned primary, unsigned secondary, 
+                            MachineBasicBlock* pred);
   };
 }
 
@@ -229,7 +231,8 @@ public:
 /// computeDomForest - compute the subforest of the DomTree corresponding
 /// to the defining blocks of the registers in question
 std::vector<StrongPHIElimination::DomForestNode*>
-StrongPHIElimination::computeDomForest(std::map<unsigned, unsigned>& regs, 
+StrongPHIElimination::computeDomForest(
+                  std::map<unsigned, MachineBasicBlock*>& regs, 
                                        MachineRegisterInfo& MRI) {
   // Begin by creating a virtual root node, since the actual results
   // may well be a forest.  Assume this node has maximum DFS-out number.
@@ -239,8 +242,8 @@ StrongPHIElimination::computeDomForest(std::map<unsigned, unsigned>& regs,
   // Populate a worklist with the registers
   std::vector<unsigned> worklist;
   worklist.reserve(regs.size());
-  for (std::map<unsigned, unsigned>::iterator I = regs.begin(), E = regs.end();
-       I != E; ++I)
+  for (std::map<unsigned, MachineBasicBlock*>::iterator I = regs.begin(),
+       E = regs.end(); I != E; ++I)
     worklist.push_back(I->first);
   
   // Sort the registers by the DFS-in number of their defining block
@@ -433,7 +436,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
     // are going to be renames rather than having copies inserted.  This set
     // is refinded over the course of this function.  UnionedBlocks is the set
     // of corresponding MBBs.
-    std::map<unsigned, unsigned> PHIUnion;
+    std::map<unsigned, MachineBasicBlock*> PHIUnion;
     SmallPtrSet<MachineBasicBlock*, 8> UnionedBlocks;
   
     // Iterate over the operands of the PHI node
@@ -467,11 +470,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
         UsedByAnother.insert(SrcReg);
       } else {
         // Otherwise, add it to the renaming set
-        // We need to subtract one from the index because live ranges are open
-        // at the end.
-        unsigned idx = LI.getMBBEndIdx(P->getOperand(i).getMBB()) - 1;
-        
-        PHIUnion.insert(std::make_pair(SrcReg, idx));
+        PHIUnion.insert(std::make_pair(SrcReg,P->getOperand(i).getMBB()));
         UnionedBlocks.insert(MRI.getVRegDef(SrcReg)->getParent());
       }
     }
@@ -491,7 +490,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
     // If one of the inputs is defined in the same block as the current PHI
     // then we need to check for a local interference between that input and
     // the PHI.
-    for (std::map<unsigned, unsigned>::iterator I = PHIUnion.begin(),
+    for (std::map<unsigned, MachineBasicBlock*>::iterator I = PHIUnion.begin(),
          E = PHIUnion.end(); I != E; ++I)
       if (MRI.getVRegDef(I->first)->getParent() == P->getParent())
         localInterferences.push_back(std::make_pair(I->first,
@@ -546,7 +545,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
     
     // Remember which registers are already renamed, so that we don't try to 
     // rename them for another PHI node in this block
-    for (std::map<unsigned, unsigned>::iterator I = PHIUnion.begin(),
+    for (std::map<unsigned, MachineBasicBlock*>::iterator I = PHIUnion.begin(),
          E = PHIUnion.end(); I != E; ++I)
       ProcessedNames.insert(I->first);
     
@@ -559,7 +558,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
 /// that are known to interfere, and flag others that need to be checked for
 /// local interferences.
 void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
-                                        std::map<unsigned, unsigned>& PHIUnion,
+                        std::map<unsigned, MachineBasicBlock*>& PHIUnion,
                         std::vector<StrongPHIElimination::DomForestNode*>& DF,
                         std::vector<std::pair<unsigned, unsigned> >& locals) {
   
@@ -780,7 +779,7 @@ void StrongPHIElimination::InsertCopies(MachineBasicBlock* MBB,
 
 void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
                                               unsigned secondary,
-                                              unsigned secondaryIdx) {
+                                              MachineBasicBlock* pred) {
   
   LiveIntervals& LI = getAnalysis<LiveIntervals>();
   LiveInterval& LHS = LI.getOrCreateInterval(primary);
@@ -788,13 +787,15 @@ void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
   
   LI.computeNumbering();
   
-  const LiveRange* RangeMergingIn = RHS.getLiveRangeContaining(secondaryIdx);
-  VNInfo* NewVN = LHS.getNextValue(secondaryIdx, RangeMergingIn->valno->copy,
-                  LI.getVNInfoAllocator());
+  const LiveRange* RangeMergingIn =
+                   RHS.getLiveRangeContaining(LI.getMBBEndIdx(pred));
+  VNInfo* NewVN = LHS.getNextValue(RangeMergingIn->valno->def,
+                                   RangeMergingIn->valno->copy,
+                                   LI.getVNInfoAllocator());
   NewVN->hasPHIKill = true;
   LiveRange NewRange(RangeMergingIn->start, RangeMergingIn->end, NewVN);
-  LHS.addRange(NewRange);
   RHS.removeRange(RangeMergingIn->start, RangeMergingIn->end, true);
+  LHS.addRange(NewRange);
 }
 
 bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
@@ -815,11 +816,12 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   InsertCopies(Fn.begin(), visited);
   
   // Perform renaming
-  typedef std::map<unsigned, std::map<unsigned, unsigned> > RenameSetType;
+  typedef std::map<unsigned, std::map<unsigned, MachineBasicBlock*> >
+          RenameSetType;
   for (RenameSetType::iterator I = RenameSets.begin(), E = RenameSets.end();
        I != E; ++I)
-    for (std::map<unsigned, unsigned>::iterator SI = I->second.begin(),
-         SE = I->second.end(); SI != SE; ++SI) {
+    for (std::map<unsigned, MachineBasicBlock*>::iterator SI = 
+         I->second.begin(), SE = I->second.end(); SI != SE; ++SI) {
       mergeLiveIntervals(I->first, SI->first, SI->second);
       Fn.getRegInfo().replaceRegWith(SI->first, I->first);
     }
