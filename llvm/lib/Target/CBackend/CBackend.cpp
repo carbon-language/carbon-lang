@@ -153,10 +153,9 @@ namespace {
       }
     }
     
-    void writeOperand(Value *Operand);
-    void writeOperandRaw(Value *Operand);
+    void writeOperand(Value *Operand, bool Static = false);
     void writeInstComputationInline(Instruction &I);
-    void writeOperandInternal(Value *Operand);
+    void writeOperandInternal(Value *Operand, bool Static = false);
     void writeOperandWithCast(Value* Operand, unsigned Opcode);
     void writeOperandWithCast(Value* Operand, const ICmpInst &I);
     bool writeInstructionCast(const Instruction &I);
@@ -180,11 +179,11 @@ namespace {
     void printLoop(Loop *L);
 
     void printCast(unsigned opcode, const Type *SrcTy, const Type *DstTy);
-    void printConstant(Constant *CPV);
+    void printConstant(Constant *CPV, bool Static);
     void printConstantWithCast(Constant *CPV, unsigned Opcode);
-    bool printConstExprCast(const ConstantExpr *CE);
-    void printConstantArray(ConstantArray *CPA);
-    void printConstantVector(ConstantVector *CV);
+    bool printConstExprCast(const ConstantExpr *CE, bool Static);
+    void printConstantArray(ConstantArray *CPA, bool Static);
+    void printConstantVector(ConstantVector *CV, bool Static);
 
     /// isAddressExposed - Return true if the specified value's name needs to
     /// have its address taken in order to get a C value of the correct type.
@@ -304,7 +303,7 @@ namespace {
     void printBranchToBlock(BasicBlock *CurBlock, BasicBlock *SuccBlock,
                             unsigned Indent);
     void printGEPExpression(Value *Ptr, gep_type_iterator I,
-                            gep_type_iterator E);
+                            gep_type_iterator E, bool Static);
 
     std::string GetValueName(const Value *Operand);
   };
@@ -584,7 +583,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
   return Out;
 }
 
-void CWriter::printConstantArray(ConstantArray *CPA) {
+void CWriter::printConstantArray(ConstantArray *CPA, bool Static) {
 
   // As a special case, print the array as a string if it is an array of
   // ubytes or an array of sbytes with positive values.
@@ -642,24 +641,24 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
     Out << '{';
     if (CPA->getNumOperands()) {
       Out << ' ';
-      printConstant(cast<Constant>(CPA->getOperand(0)));
+      printConstant(cast<Constant>(CPA->getOperand(0)), Static);
       for (unsigned i = 1, e = CPA->getNumOperands(); i != e; ++i) {
         Out << ", ";
-        printConstant(cast<Constant>(CPA->getOperand(i)));
+        printConstant(cast<Constant>(CPA->getOperand(i)), Static);
       }
     }
     Out << " }";
   }
 }
 
-void CWriter::printConstantVector(ConstantVector *CP) {
+void CWriter::printConstantVector(ConstantVector *CP, bool Static) {
   Out << '{';
   if (CP->getNumOperands()) {
     Out << ' ';
-    printConstant(cast<Constant>(CP->getOperand(0)));
+    printConstant(cast<Constant>(CP->getOperand(0)), Static);
     for (unsigned i = 1, e = CP->getNumOperands(); i != e; ++i) {
       Out << ", ";
-      printConstant(cast<Constant>(CP->getOperand(i)));
+      printConstant(cast<Constant>(CP->getOperand(i)), Static);
     }
   }
   Out << " }";
@@ -772,7 +771,7 @@ void CWriter::printCast(unsigned opc, const Type *SrcTy, const Type *DstTy) {
 }
 
 // printConstant - The LLVM Constant to C Constant converter.
-void CWriter::printConstant(Constant *CPV) {
+void CWriter::printConstant(Constant *CPV, bool Static) {
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
     switch (CE->getOpcode()) {
     case Instruction::Trunc:
@@ -794,7 +793,7 @@ void CWriter::printConstant(Constant *CPV) {
         // Make sure we really sext from bool here by subtracting from 0
         Out << "0-";
       }
-      printConstant(CE->getOperand(0));
+      printConstant(CE->getOperand(0), Static);
       if (CE->getType() == Type::Int1Ty &&
           (CE->getOpcode() == Instruction::Trunc ||
            CE->getOpcode() == Instruction::FPToUI ||
@@ -809,16 +808,16 @@ void CWriter::printConstant(Constant *CPV) {
     case Instruction::GetElementPtr:
       Out << "(";
       printGEPExpression(CE->getOperand(0), gep_type_begin(CPV),
-                         gep_type_end(CPV));
+                         gep_type_end(CPV), Static);
       Out << ")";
       return;
     case Instruction::Select:
       Out << '(';
-      printConstant(CE->getOperand(0));
+      printConstant(CE->getOperand(0), Static);
       Out << '?';
-      printConstant(CE->getOperand(1));
+      printConstant(CE->getOperand(1), Static);
       Out << ':';
-      printConstant(CE->getOperand(2));
+      printConstant(CE->getOperand(2), Static);
       Out << ')';
       return;
     case Instruction::Add:
@@ -839,7 +838,7 @@ void CWriter::printConstant(Constant *CPV) {
     case Instruction::AShr:
     {
       Out << '(';
-      bool NeedsClosingParens = printConstExprCast(CE); 
+      bool NeedsClosingParens = printConstExprCast(CE, Static); 
       printConstantWithCast(CE->getOperand(0), CE->getOpcode());
       switch (CE->getOpcode()) {
       case Instruction::Add: Out << " + "; break;
@@ -882,7 +881,7 @@ void CWriter::printConstant(Constant *CPV) {
     }
     case Instruction::FCmp: {
       Out << '('; 
-      bool NeedsClosingParens = printConstExprCast(CE); 
+      bool NeedsClosingParens = printConstExprCast(CE, Static); 
       if (CE->getPredicate() == FCmpInst::FCMP_FALSE)
         Out << "0";
       else if (CE->getPredicate() == FCmpInst::FCMP_TRUE)
@@ -1022,12 +1021,14 @@ void CWriter::printConstant(Constant *CPV) {
 
   case Type::ArrayTyID:
     // Use C99 compound expression literal initializer syntax.
-    Out << "(";
-    printType(Out, CPV->getType());
-    Out << ")";
+    if (!Static) {
+      Out << "(";
+      printType(Out, CPV->getType());
+      Out << ")";
+    }
     Out << "{ "; // Arrays are wrapped in struct types.
     if (ConstantArray *CA = dyn_cast<ConstantArray>(CPV)) {
-      printConstantArray(CA);
+      printConstantArray(CA, Static);
     } else {
       assert(isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV));
       const ArrayType *AT = cast<ArrayType>(CPV->getType());
@@ -1035,10 +1036,10 @@ void CWriter::printConstant(Constant *CPV) {
       if (AT->getNumElements()) {
         Out << ' ';
         Constant *CZ = Constant::getNullValue(AT->getElementType());
-        printConstant(CZ);
+        printConstant(CZ, Static);
         for (unsigned i = 1, e = AT->getNumElements(); i != e; ++i) {
           Out << ", ";
-          printConstant(CZ);
+          printConstant(CZ, Static);
         }
       }
       Out << " }";
@@ -1048,20 +1049,22 @@ void CWriter::printConstant(Constant *CPV) {
 
   case Type::VectorTyID:
     // Use C99 compound expression literal initializer syntax.
-    Out << "(";
-    printType(Out, CPV->getType());
-    Out << ")";
+    if (!Static) {
+      Out << "(";
+      printType(Out, CPV->getType());
+      Out << ")";
+    }
     if (ConstantVector *CV = dyn_cast<ConstantVector>(CPV)) {
-      printConstantVector(CV);
+      printConstantVector(CV, Static);
     } else {
       assert(isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV));
       const VectorType *VT = cast<VectorType>(CPV->getType());
       Out << "{ ";
       Constant *CZ = Constant::getNullValue(VT->getElementType());
-      printConstant(CZ);
+      printConstant(CZ, Static);
       for (unsigned i = 1, e = VT->getNumElements(); i != e; ++i) {
         Out << ", ";
-        printConstant(CZ);
+        printConstant(CZ, Static);
       }
       Out << " }";
     }
@@ -1069,18 +1072,20 @@ void CWriter::printConstant(Constant *CPV) {
 
   case Type::StructTyID:
     // Use C99 compound expression literal initializer syntax.
-    Out << "(";
-    printType(Out, CPV->getType());
-    Out << ")";
+    if (!Static) {
+      Out << "(";
+      printType(Out, CPV->getType());
+      Out << ")";
+    }
     if (isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV)) {
       const StructType *ST = cast<StructType>(CPV->getType());
       Out << '{';
       if (ST->getNumElements()) {
         Out << ' ';
-        printConstant(Constant::getNullValue(ST->getElementType(0)));
+        printConstant(Constant::getNullValue(ST->getElementType(0)), Static);
         for (unsigned i = 1, e = ST->getNumElements(); i != e; ++i) {
           Out << ", ";
-          printConstant(Constant::getNullValue(ST->getElementType(i)));
+          printConstant(Constant::getNullValue(ST->getElementType(i)), Static);
         }
       }
       Out << " }";
@@ -1088,10 +1093,10 @@ void CWriter::printConstant(Constant *CPV) {
       Out << '{';
       if (CPV->getNumOperands()) {
         Out << ' ';
-        printConstant(cast<Constant>(CPV->getOperand(0)));
+        printConstant(cast<Constant>(CPV->getOperand(0)), Static);
         for (unsigned i = 1, e = CPV->getNumOperands(); i != e; ++i) {
           Out << ", ";
-          printConstant(cast<Constant>(CPV->getOperand(i)));
+          printConstant(cast<Constant>(CPV->getOperand(i)), Static);
         }
       }
       Out << " }";
@@ -1105,7 +1110,7 @@ void CWriter::printConstant(Constant *CPV) {
       Out << ")/*NULL*/0)";
       break;
     } else if (GlobalValue *GV = dyn_cast<GlobalValue>(CPV)) {
-      writeOperand(GV);
+      writeOperand(GV, Static);
       break;
     }
     // FALL THROUGH
@@ -1118,7 +1123,7 @@ void CWriter::printConstant(Constant *CPV) {
 // Some constant expressions need to be casted back to the original types
 // because their operands were casted to the expected type. This function takes
 // care of detecting that case and printing the cast for the ConstantExpr.
-bool CWriter::printConstExprCast(const ConstantExpr* CE) {
+bool CWriter::printConstExprCast(const ConstantExpr* CE, bool Static) {
   bool NeedsExplicitCast = false;
   const Type *Ty = CE->getOperand(0)->getType();
   bool TypeIsSigned = false;
@@ -1214,10 +1219,10 @@ void CWriter::printConstantWithCast(Constant* CPV, unsigned Opcode) {
     Out << "((";
     printSimpleType(Out, OpTy, typeIsSigned);
     Out << ")";
-    printConstant(CPV);
+    printConstant(CPV, false);
     Out << ")";
   } else 
-    printConstant(CPV);
+    printConstant(CPV, false);
 }
 
 std::string CWriter::GetValueName(const Value *Operand) {
@@ -1270,7 +1275,7 @@ void CWriter::writeInstComputationInline(Instruction &I) {
 }
 
 
-void CWriter::writeOperandInternal(Value *Operand) {
+void CWriter::writeOperandInternal(Value *Operand, bool Static) {
   if (Instruction *I = dyn_cast<Instruction>(Operand))
     // Should we inline this instruction to build a tree?
     if (isInlinableInst(*I) && !isDirectAlloca(I)) {
@@ -1283,26 +1288,17 @@ void CWriter::writeOperandInternal(Value *Operand) {
   Constant* CPV = dyn_cast<Constant>(Operand);
 
   if (CPV && !isa<GlobalValue>(CPV))
-    printConstant(CPV);
+    printConstant(CPV, Static);
   else
     Out << GetValueName(Operand);
 }
 
-void CWriter::writeOperandRaw(Value *Operand) {
-  Constant* CPV = dyn_cast<Constant>(Operand);
-  if (CPV && !isa<GlobalValue>(CPV)) {
-    printConstant(CPV);
-  } else {
-    Out << GetValueName(Operand);
-  }
-}
-
-void CWriter::writeOperand(Value *Operand) {
+void CWriter::writeOperand(Value *Operand, bool Static) {
   bool isAddressImplicit = isAddressExposed(Operand);
   if (isAddressImplicit)
     Out << "(&";  // Global variables are referenced as their addresses by llvm
 
-  writeOperandInternal(Operand);
+  writeOperandInternal(Operand, Static);
 
   if (isAddressImplicit)
     Out << ')';
@@ -1797,7 +1793,7 @@ bool CWriter::doInitialization(Module &M) {
         // FIXME common linkage should avoid this problem.
         if (!I->getInitializer()->isNullValue()) {
           Out << " = " ;
-          writeOperand(I->getInitializer());
+          writeOperand(I->getInitializer(), true);
         } else if (I->hasWeakLinkage()) {
           // We have to specify an initializer, but it doesn't have to be
           // complete.  If the value is an aggregate, print out { 0 }, and let
@@ -1812,7 +1808,7 @@ bool CWriter::doInitialization(Module &M) {
             Out << "{ { 0 } }";
           } else {
             // Just print it out normally.
-            writeOperand(I->getInitializer());
+            writeOperand(I->getInitializer(), true);
           }
         }
         Out << ";\n";
@@ -3122,7 +3118,7 @@ void CWriter::visitFreeInst(FreeInst &I) {
 }
 
 void CWriter::printGEPExpression(Value *Ptr, gep_type_iterator I,
-                                 gep_type_iterator E) {
+                                 gep_type_iterator E, bool Static) {
   
   // If there are no indices, just print out the pointer.
   if (I == E) {
@@ -3164,7 +3160,7 @@ void CWriter::printGEPExpression(Value *Ptr, gep_type_iterator I,
     // Okay, emit the first operand. If Ptr is something that is already address
     // exposed, like a global, avoid emitting (&foo)[0], just emit foo instead.
     if (isAddressExposed(Ptr)) {
-      writeOperandInternal(Ptr);
+      writeOperandInternal(Ptr, Static);
     } else if (I != E && isa<StructType>(*I)) {
       // If we didn't already emit the first operand, see if we can print it as
       // P->f instead of "P[0].f"
@@ -3258,14 +3254,14 @@ void CWriter::visitStoreInst(StoreInst &I) {
   writeOperand(Operand);
   if (BitMask) {
     Out << ") & ";
-    printConstant(BitMask);
+    printConstant(BitMask, false);
     Out << ")"; 
   }
 }
 
 void CWriter::visitGetElementPtrInst(GetElementPtrInst &I) {
   printGEPExpression(I.getPointerOperand(), gep_type_begin(I),
-                     gep_type_end(I));
+                     gep_type_end(I), false);
 }
 
 void CWriter::visitVAArgInst(VAArgInst &I) {
@@ -3325,7 +3321,8 @@ void CWriter::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
         Out << "0";
       } else {
         printConstant(cast<ConstantVector>(Op)->getOperand(SrcVal &
-                                                           (NumElts-1)));
+                                                           (NumElts-1)),
+                      false);
       }
     }
   }
