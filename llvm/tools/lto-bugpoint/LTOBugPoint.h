@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/Module.h"
 #include "llvm/System/Path.h"
 #include <string>
@@ -30,7 +31,8 @@ class LTOBugPoint {
 			std::string &Script);
 
   /// getNativeObjectFile - Generate native object file based from llvm
-  /// bitcode file. Return false in case of an error.
+  /// bitcode file. Return false in case of an error. Generated native
+  /// object file is inserted in to the NativeInputFiles list.
   bool getNativeObjectFile(std::string &FileName);
 
   std::string &getErrMsg() { return ErrMsg; }
@@ -49,10 +51,26 @@ class LTOBugPoint {
   /// at index 4 in NativeInputFiles is corresponding native object file.
   llvm::SmallVector<std::string, 16> NativeInputFiles;
 
+  /// BCFiles - This bit vector tracks input bitcode files.
+  llvm::BitVector BCFiles;
+
+  /// ConfirmedClean - This bit vector tracks input files that are confirmed
+  /// to be clean.
+  llvm::BitVector ConfirmedClean;
+
+  /// ConfirmedGuilty - This bit vector tracks input files that are confirmed
+  /// to contribute to the bug being investigated.
+  llvm::BitVector ConfirmedGuilty;
   std::string getFeatureString(const char *TargetTriple);
   std::string ErrMsg;
 
   llvm::sys::Path TempDir;
+
+  /// findLinkingFailure - If true, investigate link failure bugs when
+  /// one or more linker input files are llvm bitcode files. If false,
+  /// investigate optimization or code generation bugs in LTO mode.
+  bool findLinkingFailure;
+
 private:
   /// assembleBitcode - Generate assembly code from the module. Return false
   /// in case of an error.
@@ -63,4 +81,8 @@ private:
 
   /// reproduceProgramError - Validate program using user provided script.
   bool reproduceProgramError(std::string &Script);
+
+  /// identifyTroubleMakers - Identify set of inputs from the given 
+  /// bitvector that are causing the bug under investigation.
+  void identifyTroubleMakers(llvm::BitVector &In);
 };

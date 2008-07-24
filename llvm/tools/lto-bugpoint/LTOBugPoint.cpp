@@ -31,6 +31,27 @@
 
 using namespace llvm;
 using namespace Reloc;
+
+/// printBitVector - Helper function.
+static void printBitVector(BitVector &BV, const char *Title) {
+  std::cerr << Title;
+  for (unsigned i = 0, e = BV.size(); i < e; i++) {
+    if (BV[i])
+      std::cerr << " " << i;
+  }
+  std::cerr << "\n";
+}
+
+/// printBitVector - Helper function.
+static void printBitVectorFiles(BitVector &BV, const char *Title,
+                                SmallVector<std::string, 16> &InFiles) {
+  std::cerr << Title << "\n";
+  for (unsigned i = 0, e = BV.size(); i < e; i++) {
+    if (BV[i])
+      std::cerr << "\t" << InFiles[i] << "\n";
+  }
+}
+
 /// LTOBugPoint -- Constructor. Popuate list of linker options and
 /// list of linker input files.
 LTOBugPoint::LTOBugPoint(std::istream &args, std::istream &ins) {
@@ -46,6 +67,9 @@ LTOBugPoint::LTOBugPoint(std::istream &args, std::istream &ins) {
     LinkerInputFiles.push_back(inFile);
 
   TempDir = sys::Path::GetTemporaryDirectory();
+
+  // FIXME - Use command line option to set this.
+  findLinkingFailure = true;
 }
 
 LTOBugPoint::~LTOBugPoint() {
@@ -59,48 +83,62 @@ LTOBugPoint::findTroubleMakers(SmallVector<std::string, 4> &TroubleMakers,
                                std::string &Script) {
 
   // Reproduce original error.
-  if (!relinkProgram(LinkerInputFiles) || !reproduceProgramError(Script)) {
-    ErrMsg += " Unable to reproduce original error!";
+  if (!relinkProgram(LinkerInputFiles) && !findLinkingFailure) {
+    ErrMsg = " Unable to reproduce original error!";
+    return false;
+  }
+
+  if (!findLinkingFailure && !reproduceProgramError(Script)) {
+    ErrMsg = " Unable to reproduce original error!";
     return false;
   }
     
   // Build native object files set.
-  bool bitcodeFileSeen = false;
   unsigned Size = LinkerInputFiles.size();
+  BCFiles.resize(Size);
+  ConfirmedClean.resize(Size);
+  ConfirmedGuilty.resize(Size);
   for (unsigned I = 0; I < Size; ++I) {
     std::string &FileName = LinkerInputFiles[I];
     sys::Path InputFile(FileName.c_str());
     if (InputFile.isDynamicLibrary() || InputFile.isArchive()) {
-      ErrMsg = "Unable to handle input file ";
-      ErrMsg += FileName;
+      ErrMsg = "Unable to handle input file " + FileName;
       return false;
     }
     else if (InputFile.isBitcodeFile()) {
-      bitcodeFileSeen = true;
+      BCFiles.set(I);
       if (getNativeObjectFile(FileName) == false)
         return false;
     }
-    else
+    else {
+      // Original native object input files are always clean.
+      ConfirmedClean.set(I);
       NativeInputFiles.push_back(FileName);
+    }
   }
 
-  if (!bitcodeFileSeen) {
+  if (BCFiles.none()) {
     ErrMsg = "Unable to help!";
-    ErrMsg += " Need at least one input file that contains llvm bitcode";
+    ErrMsg = " Need at least one input file that contains llvm bitcode";
     return false;
   }
 
   // Try to reproduce error using native object files first. If the error
   // occurs then this is not a LTO error.
   if (!relinkProgram(NativeInputFiles))  {
-    ErrMsg += " Unable to link the program using all native object files!";
+    ErrMsg = " Unable to link the program using all native object files!";
     return false;
   }
-  if (reproduceProgramError(Script) == true) {
-    ErrMsg += " Unable to fix program error using all native object files!";
+  if (!findLinkingFailure && reproduceProgramError(Script) == true) {
+    ErrMsg = " Unable to fix program error using all native object files!";
     return false;
   }
 
+  printBitVector(BCFiles, "Initial set of llvm bitcode files");
+  identifyTroubleMakers(BCFiles);
+  printBitVectorFiles(ConfirmedGuilty, 
+                      "Identified minimal set of bitcode files!",
+                      LinkerInputFiles);
   return true;
 }
 
@@ -192,8 +230,7 @@ bool LTOBugPoint::getNativeObjectFile(std::string &FileName) {
   MemoryBuffer *Buffer
     = MemoryBuffer::getFile(FileName.c_str(), &ErrMsg);
   if (!Buffer) {
-    ErrMsg = "Unable to read ";
-    ErrMsg += FileName;
+    ErrMsg = "Unable to read " + FileName;
     return false;
   }
   M.reset(ParseBitcodeFile(Buffer, &ErrMsg));
@@ -261,6 +298,7 @@ bool LTOBugPoint::getNativeObjectFile(std::string &FileName) {
   }
 
   AsmFile.eraseFromDisk();
+  NativeInputFiles.push_back(NativeFile.c_str());
   return true;
 }
 
@@ -289,10 +327,9 @@ bool LTOBugPoint::relinkProgram(llvm::SmallVector<std::string, 16> &InFiles) {
   Args.push_back(0);
   
   if (sys::Program::ExecuteAndWait(linker, &Args[0], 0, 0, 0, 0, &ErrMsg)) {
-    ErrMsg += "error while linking program";
-    return false;
+      ErrMsg = "error while linking program";
+      return false;
   }
-
   return true;
 }
 
@@ -324,4 +361,71 @@ bool LTOBugPoint::reproduceProgramError(std::string &Script) {
     return false;
 
   return false;
+}
+
+/// identifyTroubleMakers - Identify set of bit code files that are causing
+/// the error. This is a recursive function.
+void LTOBugPoint::identifyTroubleMakers(llvm::BitVector &In) {
+
+  assert (In.size() == LinkerInputFiles.size() 
+          && "Invalid identifyTroubleMakers input!\n");
+
+  printBitVector(In, "Processing files ");
+  BitVector CandidateVector;
+  CandidateVector.resize(LinkerInputFiles.size());
+
+  // Process first half
+  unsigned count = 0;
+  for (unsigned i = 0, e =  In.size(); i < e; ++i) {
+    if (!ConfirmedClean[i]) {
+      count++;
+      CandidateVector.set(i);
+    }
+    if (count >= In.count()/2)
+      break;
+  }
+
+  if (CandidateVector.none())
+    return;
+
+  printBitVector(CandidateVector, "Candidate vector ");
+
+  // Reproduce the error using native object files for candidate files.
+  SmallVector<std::string, 16> CandidateFiles;
+  for (unsigned i = 0, e = CandidateVector.size(); i < e; ++i) {
+    if (CandidateVector[i] || ConfirmedClean[i])
+      CandidateFiles.push_back(NativeInputFiles[i]);
+    else
+      CandidateFiles.push_back(LinkerInputFiles[i]);
+  }
+
+  bool result = relinkProgram(CandidateFiles);
+  if (findLinkingFailure) {
+    if (result == true) {
+      // Candidate files are suspected.
+      if (CandidateVector.count() == 1) {
+        ConfirmedGuilty.set(CandidateVector.find_first());
+        return;
+      }
+      else
+        identifyTroubleMakers(CandidateVector);
+    } else {
+      // Candidate files are not causing this error.
+      for (unsigned i = 0, e = CandidateVector.size(); i < e; ++i) {
+        if (CandidateVector[i])
+          ConfirmedClean.set(i);
+      }
+    }
+  } else {
+    std::cerr << "FIXME : Not yet implemented!\n";
+  }
+
+  // Process remaining cadidates
+  CandidateVector.clear();
+  CandidateVector.resize(LinkerInputFiles.size());
+  for (unsigned i = 0, e = LinkerInputFiles.size(); i < e; ++i) {
+    if (!ConfirmedClean[i] && !ConfirmedGuilty[i])
+      CandidateVector.set(i);
+  }
+  identifyTroubleMakers(CandidateVector);
 }
