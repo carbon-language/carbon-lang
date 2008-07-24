@@ -746,14 +746,11 @@ Path::makeUnique(bool reuse_current, std::string* ErrMsg) {
   // Append an XXXXXX pattern to the end of the file for use with mkstemp, 
   // mktemp or our own implementation.
   char *FNBuffer = (char*) alloca(path.size()+8);
-  if (isDirectory()) {
-    std::string dirPath = getDirname();
-    strcpy(FNBuffer, dirPath.c_str());
-    strcpy(FNBuffer+dirPath.size(), "XXXXXX");
-  } else {
     path.copy(FNBuffer,path.size());
+  if (isDirectory())
+    strcpy(FNBuffer+path.size(), "/XXXXXX");
+  else
     strcpy(FNBuffer+path.size(), "-XXXXXX");
-  }
 
 #if defined(HAVE_MKSTEMP)
   int TempFD;
