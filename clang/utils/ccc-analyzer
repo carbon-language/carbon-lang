@@ -102,6 +102,9 @@ my %CompilerLinkerOptionMap = (
 );
 
 my %IgnoredOptionMap = (
+  '-MT' => 1,  # Ignore these preprocessor options.
+  '-MF' => 1,
+
   '-fsyntax-only' => 0,
   '-save-temps' => 0,
   '-install_name' => 1,
