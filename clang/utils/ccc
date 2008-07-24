@@ -102,6 +102,10 @@ def main(args):
         if arg in ['--param', '-u']:
             i += 1
 
+        # Preprocessor options with one argument that should be ignored
+        if arg in ['-MT', '-MF']:
+            i += 1
+
         # Prefix matches for the compile mode
         if arg[:2] in ['-D', '-I', '-U', '-F']:
             if not arg[2:]:

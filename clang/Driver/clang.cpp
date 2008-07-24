@@ -977,6 +977,13 @@ static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
       AddPath("/usr/include/c++/4.1.2/backward", System, true, false, false, 
               Headers);
 
+      // Fedora 9
+      AddPath("/usr/include/c++/4.3.0", System, true, false, false, Headers);
+      AddPath("/usr/include/c++/4.3.0/i386-redhat-linux", System, true, false,
+              false, Headers);
+      AddPath("/usr/include/c++/4.3.0/backward", System, true, false, false, 
+              Headers);
+
       // Arch Linux 2008-06-24
       AddPath("/usr/include/c++/4.3.1", System, true, false, false, Headers);
       AddPath("/usr/include/c++/4.3.1/i686-pc-linux-gnu", System, true, false,
@@ -1018,6 +1025,10 @@ static void InitializeIncludePaths(const char *Argv0, HeaderSearch &Headers,
 
     // Fedora 8
     AddPath("/usr/lib/gcc/i386-redhat-linux/4.1.2/include", System,
+            false, false, false, Headers);
+
+    // Fedora 9
+    AddPath("/usr/lib/gcc/i386-redhat-linux/4.3.0/include", System,
             false, false, false, Headers);
 
     //Debian testing/lenny x86
