@@ -74,7 +74,7 @@ int f10() {
 
 int f11() {
   int x = 4;
-  return ++x; // no-warning
+  return ++x; // expected-warning{{never read}}
 }
 
 

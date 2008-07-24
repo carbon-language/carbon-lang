@@ -152,12 +152,7 @@ public:
     else if (UnaryOperator* U = dyn_cast<UnaryOperator>(S)) {
       if (!U->isIncrementOp())
         return;
-      
-      // Don't flag dead stores when the result of a preincrement/predecrement
-      // is used in an enclosing expression.
-      if (U->isPrefix() && Parents.isSubExpr(U))
-        return;
-      
+
       Expr *Ex = U->getSubExpr()->IgnoreParenCasts();
       
       if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(Ex))
