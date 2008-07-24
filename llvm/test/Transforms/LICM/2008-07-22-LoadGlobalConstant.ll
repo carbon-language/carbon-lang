@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -licm | llvm-dis | grep -A 1 entry | grep load.*@a
+; RUN: llvm-as < %s | opt -licm -enable-licm-constant-variables | llvm-dis | grep -A 1 entry | grep load.*@a
 @a = external constant float*
 
 define void @test(i32 %count) {

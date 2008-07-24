@@ -62,6 +62,15 @@ static cl::opt<bool>
 DisablePromotion("disable-licm-promotion", cl::Hidden,
                  cl::desc("Disable memory promotion in LICM pass"));
 
+// This feature is currently disabled by default because CodeGen is not yet capable
+// of rematerializing these constants in PIC mode, so it can lead to degraded
+// performance. Compile test/CodeGen/X86/remat-constant.ll with
+// -relocation-model=pic to see an example of this.
+static cl::opt<bool>
+EnableLICMConstantMotion("enable-licm-constant-variables", cl::Hidden,
+                         cl::desc("Enable hoisting/sinking of constant "
+                                  "global variables"));
+
 namespace {
   struct VISIBILITY_HIDDEN LICM : public LoopPass {
     static char ID; // Pass identification, replacement for typeid
@@ -372,7 +381,8 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
 
     // Loads from constant memory are always safe to move, even if they end up
     // in the same alias set as something that ends up being modified.
-    if (AA->pointsToConstantMemory(LI->getOperand(0)))
+    if (EnableLICMConstantMotion &&
+        AA->pointsToConstantMemory(LI->getOperand(0)))
       return true;
     
     // Don't hoist loads which have may-aliased stores in loop.
