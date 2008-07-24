@@ -95,6 +95,16 @@ public:
   
   bool isNullPointerConstant(ASTContext &Ctx) const;
 
+  /// getIntegerConstantExprValue() - Return the value of an integer
+  /// constant expression. The expression must be a valid integer
+  /// constant expression as determined by isIntegerConstantExpr.
+  llvm::APSInt getIntegerConstantExprValue(ASTContext &Ctx) const {
+    llvm::APSInt X(32);
+    bool success = isIntegerConstantExpr(X, Ctx);
+    assert(success && "Illegal argument to getIntegerConstantExpr");
+    return X;
+  }
+
   /// isIntegerConstantExpr - Return true if this expression is a valid integer
   /// constant expression, and, if so, return its value in Result.  If not a
   /// valid i-c-e, return false and fill in Loc (if specified) with the location
