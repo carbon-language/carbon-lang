@@ -187,6 +187,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\CheckObjCUnusedIVars.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\Environment.cpp"
 				>
 			</File>
