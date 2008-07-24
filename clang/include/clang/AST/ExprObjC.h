@@ -286,6 +286,7 @@ public:
   /// getReceiver - Returns the receiver of the message expression.
   ///  This can be NULL if the message is for class methods.  For
   ///  class methods, use getClassName.
+  /// FIXME: need to handle/detect 'super' usage within a class method.
   Expr *getReceiver() { 
     uintptr_t x = (uintptr_t) SubExprs[RECEIVER];
     return (x & Flags) == IsInstMeth ? (Expr*) x : 0;

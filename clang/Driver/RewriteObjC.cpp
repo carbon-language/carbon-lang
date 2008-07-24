@@ -2000,6 +2000,8 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
   
   // Derive/push the receiver/selector, 2 implicit arguments to objc_msgSend().
   if (clsName) { // class message.
+    // FIXME: We need to fix Sema (and the AST for ObjCMessageExpr) to handle
+    // the 'super' idiom within a class method.
     if (!strcmp(clsName->getName(), "super")) {
       MsgSendFlavor = MsgSendSuperFunctionDecl;
       if (MsgSendStretFlavor)

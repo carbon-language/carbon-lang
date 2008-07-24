@@ -147,7 +147,10 @@ Sema::ExprResult Sema::ActOnClassMessage(
 
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
   ObjCInterfaceDecl* ClassDecl = 0;
+  bool isSuper = false;
+  
   if (!strcmp(receiverName->getName(), "super") && getCurMethodDecl()) {
+    isSuper = true;
     ClassDecl = getCurMethodDecl()->getClassInterface()->getSuperClass();
     if (!ClassDecl)
       return Diag(lbrac, diag::error_no_super_class,
@@ -206,11 +209,14 @@ Sema::ExprResult Sema::ActOnClassMessage(
   // If we have the ObjCInterfaceDecl* for the class that is receiving
   // the message, use that to construct the ObjCMessageExpr.  Otherwise
   // pass on the IdentifierInfo* for the class.
-  if (ClassDecl)
-    return new ObjCMessageExpr(ClassDecl, Sel, returnType, Method,
+  // FIXME: need to do a better job handling 'super' usage within a class 
+  // For now, we simply pass the "super" identifier through (which isn't
+  // consistent with instance methods.
+  if (isSuper || !ClassDecl)
+    return new ObjCMessageExpr(receiverName, Sel, returnType, Method,
                                lbrac, rbrac, ArgExprs, NumArgs);
   else
-    return new ObjCMessageExpr(receiverName, Sel, returnType, Method,
+    return new ObjCMessageExpr(ClassDecl, Sel, returnType, Method,
                                lbrac, rbrac, ArgExprs, NumArgs);
 }
 
