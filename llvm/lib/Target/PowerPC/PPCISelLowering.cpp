@@ -1582,6 +1582,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op,
         ++GPR_idx;
       } else {
         needsLoad = true;
+        ArgSize = PtrByteSize;
       }
       // All int arguments reserve stack space in Macho ABI.
       if (isMachoABI || needsLoad) ArgOffset += 8;
