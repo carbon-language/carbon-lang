@@ -33,14 +33,14 @@ static inline const Type *checkType(const Type *Ty) {
 }
 
 Value::Value(const Type *ty, unsigned scid)
-  : SubclassID(scid), SubclassData(0), Ty(checkType(ty)),
+  : SubclassID(scid), SubclassData(0), VTy(checkType(ty)),
     UseList(0), Name(0) {
   if (isa<CallInst>(this) || isa<InvokeInst>(this))
-    assert((Ty->isFirstClassType() || Ty == Type::VoidTy ||
-            isa<OpaqueType>(ty) || Ty->getTypeID() == Type::StructTyID) &&
+    assert((VTy->isFirstClassType() || VTy == Type::VoidTy ||
+            isa<OpaqueType>(ty) || VTy->getTypeID() == Type::StructTyID) &&
            "invalid CallInst  type!");
   else if (!isa<Constant>(this) && !isa<BasicBlock>(this))
-    assert((Ty->isFirstClassType() || Ty == Type::VoidTy ||
+    assert((VTy->isFirstClassType() || VTy == Type::VoidTy ||
            isa<OpaqueType>(ty)) &&
            "Cannot create non-first-class values except for constants!");
 }
@@ -54,7 +54,7 @@ Value::~Value() {
   // a <badref>
   //
   if (!use_empty()) {
-    DOUT << "While deleting: " << *Ty << " %" << getNameStr() << "\n";
+    DOUT << "While deleting: " << *VTy << " %" << getNameStr() << "\n";
     for (use_iterator I = use_begin(), E = use_end(); I != E; ++I)
       DOUT << "Use still stuck around after Def is destroyed:"
            << **I << "\n";

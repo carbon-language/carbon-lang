@@ -316,15 +316,15 @@ class CastInst : public UnaryInstruction {
 protected:
   /// @brief Constructor with insert-before-instruction semantics for subclasses
   CastInst(const Type *Ty, unsigned iType, Value *S, 
-           const std::string &Name = "", Instruction *InsertBefore = 0)
+           const std::string &NameStr = "", Instruction *InsertBefore = 0)
     : UnaryInstruction(Ty, iType, S, InsertBefore) {
-    setName(Name);
+    setName(NameStr);
   }
   /// @brief Constructor with insert-at-end-of-block semantics for subclasses
   CastInst(const Type *Ty, unsigned iType, Value *S, 
-           const std::string &Name, BasicBlock *InsertAtEnd)
+           const std::string &NameStr, BasicBlock *InsertAtEnd)
     : UnaryInstruction(Ty, iType, S, InsertAtEnd) {
-    setName(Name);
+    setName(NameStr);
   }
 public:
   /// Provides a way to construct any of the CastInst subclasses using an 

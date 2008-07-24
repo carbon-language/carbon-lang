@@ -58,7 +58,7 @@ protected:
   /// This field is initialized to zero by the ctor.
   unsigned short SubclassData;
 private:
-  PATypeHolder Ty;
+  PATypeHolder VTy;
   Use *UseList;
 
   friend class ValueSymbolTable; // Allow ValueSymbolTable to directly mod Name.
@@ -83,7 +83,7 @@ public:
 
   /// All values are typed, get the type of this value.
   ///
-  inline const Type *getType() const { return Ty; }
+  inline const Type *getType() const { return VTy; }
 
   // All values can potentially be named...
   inline bool hasName() const { return Name != 0; }
@@ -222,7 +222,7 @@ public:
 
   /// getRawType - This should only be used to implement the vmcore library.
   ///
-  const Type *getRawType() const { return Ty.getRawType(); }
+  const Type *getRawType() const { return VTy.getRawType(); }
 
   /// stripPointerCasts - This method strips off any unneeded pointer
   /// casts from the specified value, returning the original uncasted value.

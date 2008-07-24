@@ -101,26 +101,26 @@ class MallocInst : public AllocationInst {
   MallocInst(const MallocInst &MI);
 public:
   explicit MallocInst(const Type *Ty, Value *ArraySize = 0,
-                      const std::string &Name = "",
+                      const std::string &NameStr = "",
                       Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, ArraySize, Malloc, 0, Name, InsertBefore) {}
-  MallocInst(const Type *Ty, Value *ArraySize, const std::string &Name,
+    : AllocationInst(Ty, ArraySize, Malloc, 0, NameStr, InsertBefore) {}
+  MallocInst(const Type *Ty, Value *ArraySize, const std::string &NameStr,
              BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, ArraySize, Malloc, 0, Name, InsertAtEnd) {}
+    : AllocationInst(Ty, ArraySize, Malloc, 0, NameStr, InsertAtEnd) {}
 
-  MallocInst(const Type *Ty, const std::string &Name,
+  MallocInst(const Type *Ty, const std::string &NameStr,
              Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, 0, Malloc, 0, Name, InsertBefore) {}
-  MallocInst(const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, 0, Malloc, 0, Name, InsertAtEnd) {}
+    : AllocationInst(Ty, 0, Malloc, 0, NameStr, InsertBefore) {}
+  MallocInst(const Type *Ty, const std::string &NameStr, BasicBlock *InsertAtEnd)
+    : AllocationInst(Ty, 0, Malloc, 0, NameStr, InsertAtEnd) {}
 
   MallocInst(const Type *Ty, Value *ArraySize, unsigned Align,
-             const std::string &Name, BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, ArraySize, Malloc, Align, Name, InsertAtEnd) {}
+             const std::string &NameStr, BasicBlock *InsertAtEnd)
+    : AllocationInst(Ty, ArraySize, Malloc, Align, NameStr, InsertAtEnd) {}
   MallocInst(const Type *Ty, Value *ArraySize, unsigned Align,
-                      const std::string &Name = "",
+                      const std::string &NameStr = "",
                       Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, ArraySize, Malloc, Align, Name, InsertBefore) {}
+    : AllocationInst(Ty, ArraySize, Malloc, Align, NameStr, InsertBefore) {}
 
   virtual MallocInst *clone() const;
 
@@ -145,25 +145,26 @@ class AllocaInst : public AllocationInst {
   AllocaInst(const AllocaInst &);
 public:
   explicit AllocaInst(const Type *Ty, Value *ArraySize = 0,
-                      const std::string &Name = "",
+                      const std::string &NameStr = "",
                       Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, ArraySize, Alloca, 0, Name, InsertBefore) {}
-  AllocaInst(const Type *Ty, Value *ArraySize, const std::string &Name,
+    : AllocationInst(Ty, ArraySize, Alloca, 0, NameStr, InsertBefore) {}
+  AllocaInst(const Type *Ty, Value *ArraySize, const std::string &NameStr,
              BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, ArraySize, Alloca, 0, Name, InsertAtEnd) {}
+    : AllocationInst(Ty, ArraySize, Alloca, 0, NameStr, InsertAtEnd) {}
 
-  AllocaInst(const Type *Ty, const std::string &Name,
+  AllocaInst(const Type *Ty, const std::string &NameStr,
              Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, 0, Alloca, 0, Name, InsertBefore) {}
-  AllocaInst(const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, 0, Alloca, 0, Name, InsertAtEnd) {}
+    : AllocationInst(Ty, 0, Alloca, 0, NameStr, InsertBefore) {}
+  AllocaInst(const Type *Ty, const std::string &NameStr,
+             BasicBlock *InsertAtEnd)
+    : AllocationInst(Ty, 0, Alloca, 0, NameStr, InsertAtEnd) {}
 
   AllocaInst(const Type *Ty, Value *ArraySize, unsigned Align,
-             const std::string &Name = "", Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, ArraySize, Alloca, Align, Name, InsertBefore) {}
+             const std::string &NameStr = "", Instruction *InsertBefore = 0)
+    : AllocationInst(Ty, ArraySize, Alloca, Align, NameStr, InsertBefore) {}
   AllocaInst(const Type *Ty, Value *ArraySize, unsigned Align,
-             const std::string &Name, BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, ArraySize, Alloca, Align, Name, InsertAtEnd) {}
+             const std::string &NameStr, BasicBlock *InsertAtEnd)
+    : AllocationInst(Ty, ArraySize, Alloca, Align, NameStr, InsertAtEnd) {}
 
   virtual AllocaInst *clone() const;
 
@@ -227,22 +228,22 @@ class LoadInst : public UnaryInstruction {
   }
   void AssertOK();
 public:
-  LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBefore);
-  LoadInst(Value *Ptr, const std::string &Name, BasicBlock *InsertAtEnd);
-  LoadInst(Value *Ptr, const std::string &Name, bool isVolatile = false, 
+  LoadInst(Value *Ptr, const std::string &NameStr, Instruction *InsertBefore);
+  LoadInst(Value *Ptr, const std::string &NameStr, BasicBlock *InsertAtEnd);
+  LoadInst(Value *Ptr, const std::string &NameStr, bool isVolatile = false, 
            Instruction *InsertBefore = 0);
-  LoadInst(Value *Ptr, const std::string &Name, bool isVolatile, unsigned Align,
-           Instruction *InsertBefore = 0);
-  LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
+  LoadInst(Value *Ptr, const std::string &NameStr, bool isVolatile,
+           unsigned Align, Instruction *InsertBefore = 0);
+  LoadInst(Value *Ptr, const std::string &NameStr, bool isVolatile,
            BasicBlock *InsertAtEnd);
-  LoadInst(Value *Ptr, const std::string &Name, bool isVolatile, unsigned Align,
-           BasicBlock *InsertAtEnd);
+  LoadInst(Value *Ptr, const std::string &NameStr, bool isVolatile,
+           unsigned Align, BasicBlock *InsertAtEnd);
 
-  LoadInst(Value *Ptr, const char *Name, Instruction *InsertBefore);
-  LoadInst(Value *Ptr, const char *Name, BasicBlock *InsertAtEnd);
-  explicit LoadInst(Value *Ptr, const char *Name = 0, bool isVolatile = false, 
-                    Instruction *InsertBefore = 0);
-  LoadInst(Value *Ptr, const char *Name, bool isVolatile,
+  LoadInst(Value *Ptr, const char *NameStr, Instruction *InsertBefore);
+  LoadInst(Value *Ptr, const char *NameStr, BasicBlock *InsertAtEnd);
+  explicit LoadInst(Value *Ptr, const char *NameStr = 0,
+                    bool isVolatile = false,  Instruction *InsertBefore = 0);
+  LoadInst(Value *Ptr, const char *NameStr, bool isVolatile,
            BasicBlock *InsertAtEnd);
   
   /// isVolatile - Return true if this is a load from a volatile memory
@@ -380,12 +381,12 @@ static inline const Type *checkType(const Type *Ty) {
 class GetElementPtrInst : public Instruction {
   GetElementPtrInst(const GetElementPtrInst &GEPI);
   void init(Value *Ptr, Value* const *Idx, unsigned NumIdx,
-            const std::string &Name);
-  void init(Value *Ptr, Value *Idx, const std::string &Name);
+            const std::string &NameStr);
+  void init(Value *Ptr, Value *Idx, const std::string &NameStr);
 
   template<typename InputIterator>
   void init(Value *Ptr, InputIterator IdxBegin, InputIterator IdxEnd,
-            const std::string &Name,
+            const std::string &NameStr,
             // This argument ensures that we have an iterator we can
             // do arithmetic on in constant time
             std::random_access_iterator_tag) {
@@ -393,11 +394,11 @@ class GetElementPtrInst : public Instruction {
     
     if (NumIdx > 0) {
       // This requires that the iterator points to contiguous memory.
-      init(Ptr, &*IdxBegin, NumIdx, Name); // FIXME: for the general case
+      init(Ptr, &*IdxBegin, NumIdx, NameStr); // FIXME: for the general case
                                      // we have to build an array here
     }
     else {
-      init(Ptr, 0, NumIdx, Name);
+      init(Ptr, 0, NumIdx, NameStr);
     }
   }
 
@@ -435,53 +436,53 @@ class GetElementPtrInst : public Instruction {
   inline GetElementPtrInst(Value *Ptr, InputIterator IdxBegin, 
                            InputIterator IdxEnd,
                            unsigned Values,
-                           const std::string &Name,
+                           const std::string &NameStr,
                            Instruction *InsertBefore);
   template<typename InputIterator>
   inline GetElementPtrInst(Value *Ptr,
                            InputIterator IdxBegin, InputIterator IdxEnd,
                            unsigned Values,
-                           const std::string &Name, BasicBlock *InsertAtEnd);
+                           const std::string &NameStr, BasicBlock *InsertAtEnd);
 
   /// Constructors - These two constructors are convenience methods because one
   /// and two index getelementptr instructions are so common.
-  GetElementPtrInst(Value *Ptr, Value *Idx, const std::string &Name = "",
+  GetElementPtrInst(Value *Ptr, Value *Idx, const std::string &NameStr = "",
                     Instruction *InsertBefore = 0);
   GetElementPtrInst(Value *Ptr, Value *Idx,
-                    const std::string &Name, BasicBlock *InsertAtEnd);
+                    const std::string &NameStr, BasicBlock *InsertAtEnd);
 public:
   template<typename InputIterator>
   static GetElementPtrInst *Create(Value *Ptr, InputIterator IdxBegin, 
                                    InputIterator IdxEnd,
-                                   const std::string &Name = "",
+                                   const std::string &NameStr = "",
                                    Instruction *InsertBefore = 0) {
     typename std::iterator_traits<InputIterator>::difference_type Values = 
       1 + std::distance(IdxBegin, IdxEnd);
     return new(Values)
-      GetElementPtrInst(Ptr, IdxBegin, IdxEnd, Values, Name, InsertBefore);
+      GetElementPtrInst(Ptr, IdxBegin, IdxEnd, Values, NameStr, InsertBefore);
   }
   template<typename InputIterator>
   static GetElementPtrInst *Create(Value *Ptr,
                                    InputIterator IdxBegin, InputIterator IdxEnd,
-                                   const std::string &Name,
+                                   const std::string &NameStr,
                                    BasicBlock *InsertAtEnd) {
     typename std::iterator_traits<InputIterator>::difference_type Values = 
       1 + std::distance(IdxBegin, IdxEnd);
     return new(Values)
-      GetElementPtrInst(Ptr, IdxBegin, IdxEnd, Values, Name, InsertAtEnd);
+      GetElementPtrInst(Ptr, IdxBegin, IdxEnd, Values, NameStr, InsertAtEnd);
   }
 
   /// Constructors - These two creators are convenience methods because one
   /// index getelementptr instructions are so common.
   static GetElementPtrInst *Create(Value *Ptr, Value *Idx,
-                                   const std::string &Name = "",
+                                   const std::string &NameStr = "",
                                    Instruction *InsertBefore = 0) {
-    return new(2) GetElementPtrInst(Ptr, Idx, Name, InsertBefore);
+    return new(2) GetElementPtrInst(Ptr, Idx, NameStr, InsertBefore);
   }
   static GetElementPtrInst *Create(Value *Ptr, Value *Idx,
-                                   const std::string &Name,
+                                   const std::string &NameStr,
                                    BasicBlock *InsertAtEnd) {
-    return new(2) GetElementPtrInst(Ptr, Idx, Name, InsertAtEnd);
+    return new(2) GetElementPtrInst(Ptr, Idx, NameStr, InsertAtEnd);
   }
 
   virtual GetElementPtrInst *clone() const;
@@ -563,7 +564,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr,
                                      InputIterator IdxBegin, 
                                      InputIterator IdxEnd,
                                      unsigned Values,
-                                     const std::string &Name,
+                                     const std::string &NameStr,
                                      Instruction *InsertBefore)
   : Instruction(PointerType::get(checkType(
                                    getIndexedType(Ptr->getType(),
@@ -573,7 +574,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr,
                 GetElementPtr,
                 OperandTraits<GetElementPtrInst>::op_end(this) - Values,
                 Values, InsertBefore) {
-  init(Ptr, IdxBegin, IdxEnd, Name,
+  init(Ptr, IdxBegin, IdxEnd, NameStr,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
 template<typename InputIterator>
@@ -581,7 +582,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr,
                                      InputIterator IdxBegin,
                                      InputIterator IdxEnd,
                                      unsigned Values,
-                                     const std::string &Name,
+                                     const std::string &NameStr,
                                      BasicBlock *InsertAtEnd)
   : Instruction(PointerType::get(checkType(
                                    getIndexedType(Ptr->getType(),
@@ -591,7 +592,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr,
                 GetElementPtr,
                 OperandTraits<GetElementPtrInst>::op_end(this) - Values,
                 Values, InsertAtEnd) {
-  init(Ptr, IdxBegin, IdxEnd, Name,
+  init(Ptr, IdxBegin, IdxEnd, NameStr,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
 
@@ -614,9 +615,9 @@ public:
     Predicate pred,  ///< The predicate to use for the comparison
     Value *LHS,      ///< The left-hand-side of the expression
     Value *RHS,      ///< The right-hand-side of the expression
-    const std::string &Name = "",  ///< Name of the instruction
+    const std::string &NameStr = "",  ///< Name of the instruction
     Instruction *InsertBefore = 0  ///< Where to insert
-  ) : CmpInst(Type::Int1Ty, Instruction::ICmp, pred, LHS, RHS, Name,
+  ) : CmpInst(Type::Int1Ty, Instruction::ICmp, pred, LHS, RHS, NameStr,
               InsertBefore) {
     assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
            pred <= CmpInst::LAST_ICMP_PREDICATE &&
@@ -634,9 +635,9 @@ public:
     Predicate pred, ///< The predicate to use for the comparison
     Value *LHS,     ///< The left-hand-side of the expression
     Value *RHS,     ///< The right-hand-side of the expression
-    const std::string &Name,  ///< Name of the instruction
+    const std::string &NameStr,  ///< Name of the instruction
     BasicBlock *InsertAtEnd   ///< Block to insert into.
-  ) : CmpInst(Type::Int1Ty, Instruction::ICmp, pred, LHS, RHS, Name,
+  ) : CmpInst(Type::Int1Ty, Instruction::ICmp, pred, LHS, RHS, NameStr,
               InsertAtEnd) {
     assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
            pred <= CmpInst::LAST_ICMP_PREDICATE &&
@@ -766,9 +767,9 @@ public:
     Predicate pred,  ///< The predicate to use for the comparison
     Value *LHS,      ///< The left-hand-side of the expression
     Value *RHS,      ///< The right-hand-side of the expression
-    const std::string &Name = "",  ///< Name of the instruction
+    const std::string &NameStr = "",  ///< Name of the instruction
     Instruction *InsertBefore = 0  ///< Where to insert
-  ) : CmpInst(Type::Int1Ty, Instruction::FCmp, pred, LHS, RHS, Name,
+  ) : CmpInst(Type::Int1Ty, Instruction::FCmp, pred, LHS, RHS, NameStr,
               InsertBefore) {
     assert(pred <= FCmpInst::LAST_FCMP_PREDICATE &&
            "Invalid FCmp predicate value");
@@ -784,9 +785,9 @@ public:
     Predicate pred, ///< The predicate to use for the comparison
     Value *LHS,     ///< The left-hand-side of the expression
     Value *RHS,     ///< The right-hand-side of the expression
-    const std::string &Name,  ///< Name of the instruction
+    const std::string &NameStr,  ///< Name of the instruction
     BasicBlock *InsertAtEnd   ///< Block to insert into.
-  ) : CmpInst(Type::Int1Ty, Instruction::FCmp, pred, LHS, RHS, Name,
+  ) : CmpInst(Type::Int1Ty, Instruction::FCmp, pred, LHS, RHS, NameStr,
               InsertAtEnd) {
     assert(pred <= FCmpInst::LAST_FCMP_PREDICATE &&
            "Invalid FCmp predicate value");
@@ -849,9 +850,9 @@ public:
     Predicate pred,  ///< The predicate to use for the comparison
     Value *LHS,      ///< The left-hand-side of the expression
     Value *RHS,      ///< The right-hand-side of the expression
-    const std::string &Name = "",  ///< Name of the instruction
+    const std::string &NameStr = "",  ///< Name of the instruction
     Instruction *InsertBefore = 0  ///< Where to insert
-  ) : CmpInst(LHS->getType(), Instruction::VICmp, pred, LHS, RHS, Name,
+  ) : CmpInst(LHS->getType(), Instruction::VICmp, pred, LHS, RHS, NameStr,
               InsertBefore) {
     assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
            pred <= CmpInst::LAST_ICMP_PREDICATE &&
@@ -865,9 +866,9 @@ public:
     Predicate pred, ///< The predicate to use for the comparison
     Value *LHS,     ///< The left-hand-side of the expression
     Value *RHS,     ///< The right-hand-side of the expression
-    const std::string &Name,  ///< Name of the instruction
+    const std::string &NameStr,  ///< Name of the instruction
     BasicBlock *InsertAtEnd   ///< Block to insert into.
-  ) : CmpInst(LHS->getType(), Instruction::VICmp, pred, LHS, RHS, Name,
+  ) : CmpInst(LHS->getType(), Instruction::VICmp, pred, LHS, RHS, NameStr,
               InsertAtEnd) {
     assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
            pred <= CmpInst::LAST_ICMP_PREDICATE &&
@@ -906,10 +907,10 @@ public:
     Predicate pred,  ///< The predicate to use for the comparison
     Value *LHS,      ///< The left-hand-side of the expression
     Value *RHS,      ///< The right-hand-side of the expression
-    const std::string &Name = "",  ///< Name of the instruction
+    const std::string &NameStr = "",  ///< Name of the instruction
     Instruction *InsertBefore = 0  ///< Where to insert
   ) : CmpInst(VectorType::getInteger(cast<VectorType>(LHS->getType())),
-              Instruction::VFCmp, pred, LHS, RHS, Name, InsertBefore) {
+              Instruction::VFCmp, pred, LHS, RHS, NameStr, InsertBefore) {
     assert(pred <= CmpInst::LAST_FCMP_PREDICATE &&
            "Invalid VFCmp predicate value");
     assert(getOperand(0)->getType() == getOperand(1)->getType() &&
@@ -921,10 +922,10 @@ public:
     Predicate pred, ///< The predicate to use for the comparison
     Value *LHS,     ///< The left-hand-side of the expression
     Value *RHS,     ///< The right-hand-side of the expression
-    const std::string &Name,  ///< Name of the instruction
+    const std::string &NameStr,  ///< Name of the instruction
     BasicBlock *InsertAtEnd   ///< Block to insert into.
   ) : CmpInst(VectorType::getInteger(cast<VectorType>(LHS->getType())),
-              Instruction::VFCmp, pred, LHS, RHS, Name, InsertAtEnd) {
+              Instruction::VFCmp, pred, LHS, RHS, NameStr, InsertAtEnd) {
     assert(pred <= CmpInst::LAST_FCMP_PREDICATE &&
            "Invalid VFCmp predicate value");
     assert(getOperand(0)->getType() == getOperand(1)->getType() &&
@@ -965,7 +966,7 @@ class CallInst : public Instruction {
 
   template<typename InputIterator>
   void init(Value *Func, InputIterator ArgBegin, InputIterator ArgEnd,
-            const std::string &Name,
+            const std::string &NameStr,
             // This argument ensures that we have an iterator we can
             // do arithmetic on in constant time
             std::random_access_iterator_tag) {
@@ -973,7 +974,7 @@ class CallInst : public Instruction {
     
     // This requires that the iterator points to contiguous memory.
     init(Func, NumArgs ? &*ArgBegin : 0, NumArgs);
-    setName(Name);
+    setName(NameStr);
   }
 
   /// Construct a CallInst given a range of arguments.  InputIterator
@@ -984,7 +985,7 @@ class CallInst : public Instruction {
   /// @brief Construct a CallInst from a range of arguments
   template<typename InputIterator>
   CallInst(Value *Func, InputIterator ArgBegin, InputIterator ArgEnd,
-           const std::string &Name, Instruction *InsertBefore);
+           const std::string &NameStr, Instruction *InsertBefore);
 
   /// Construct a CallInst given a range of arguments.  InputIterator
   /// must be a random-access iterator pointing to contiguous storage
@@ -994,46 +995,47 @@ class CallInst : public Instruction {
   /// @brief Construct a CallInst from a range of arguments
   template<typename InputIterator>
   inline CallInst(Value *Func, InputIterator ArgBegin, InputIterator ArgEnd,
-                  const std::string &Name, BasicBlock *InsertAtEnd);
+                  const std::string &NameStr, BasicBlock *InsertAtEnd);
 
-  CallInst(Value *F, Value *Actual, const std::string& Name,
+  CallInst(Value *F, Value *Actual, const std::string& NameStr,
            Instruction *InsertBefore);
-  CallInst(Value *F, Value *Actual, const std::string& Name,
+  CallInst(Value *F, Value *Actual, const std::string& NameStr,
            BasicBlock *InsertAtEnd);
-  explicit CallInst(Value *F, const std::string &Name,
+  explicit CallInst(Value *F, const std::string &NameStr,
                     Instruction *InsertBefore);
-  CallInst(Value *F, const std::string &Name, BasicBlock *InsertAtEnd);
+  CallInst(Value *F, const std::string &NameStr, BasicBlock *InsertAtEnd);
 public:
   template<typename InputIterator>
   static CallInst *Create(Value *Func,
                           InputIterator ArgBegin, InputIterator ArgEnd,
-                          const std::string &Name = "",
+                          const std::string &NameStr = "",
                           Instruction *InsertBefore = 0) {
     return new((unsigned)(ArgEnd - ArgBegin + 1))
-      CallInst(Func, ArgBegin, ArgEnd, Name, InsertBefore);
+      CallInst(Func, ArgBegin, ArgEnd, NameStr, InsertBefore);
   }
   template<typename InputIterator>
   static CallInst *Create(Value *Func,
                           InputIterator ArgBegin, InputIterator ArgEnd,
-                          const std::string &Name, BasicBlock *InsertAtEnd) {
+                          const std::string &NameStr, BasicBlock *InsertAtEnd) {
     return new((unsigned)(ArgEnd - ArgBegin + 1))
-      CallInst(Func, ArgBegin, ArgEnd, Name, InsertAtEnd);
+      CallInst(Func, ArgBegin, ArgEnd, NameStr, InsertAtEnd);
   }
-  static CallInst *Create(Value *F, Value *Actual, const std::string& Name = "",
+  static CallInst *Create(Value *F, Value *Actual,
+                          const std::string& NameStr = "",
                           Instruction *InsertBefore = 0) {
-    return new(2) CallInst(F, Actual, Name, InsertBefore);
+    return new(2) CallInst(F, Actual, NameStr, InsertBefore);
   }
-  static CallInst *Create(Value *F, Value *Actual, const std::string& Name,
+  static CallInst *Create(Value *F, Value *Actual, const std::string& NameStr,
                           BasicBlock *InsertAtEnd) {
-    return new(2) CallInst(F, Actual, Name, InsertAtEnd);
+    return new(2) CallInst(F, Actual, NameStr, InsertAtEnd);
   }
-  static CallInst *Create(Value *F, const std::string &Name = "",
+  static CallInst *Create(Value *F, const std::string &NameStr = "",
                           Instruction *InsertBefore = 0) {
-    return new(1) CallInst(F, Name, InsertBefore);
+    return new(1) CallInst(F, NameStr, InsertBefore);
   }
-  static CallInst *Create(Value *F, const std::string &Name,
+  static CallInst *Create(Value *F, const std::string &NameStr,
                           BasicBlock *InsertAtEnd) {
-    return new(1) CallInst(F, Name, InsertAtEnd);
+    return new(1) CallInst(F, NameStr, InsertAtEnd);
   }
 
   ~CallInst();
@@ -1044,8 +1046,8 @@ public:
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
   
   bool isTailCall() const           { return SubclassData & 1; }
-  void setTailCall(bool isTailCall = true) {
-    SubclassData = (SubclassData & ~1) | unsigned(isTailCall);
+  void setTailCall(bool isTC = true) {
+    SubclassData = (SubclassData & ~1) | unsigned(isTC);
   }
 
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
@@ -1080,8 +1082,8 @@ public:
   bool doesNotAccessMemory() const {
     return paramHasAttr(0, ParamAttr::ReadNone);
   }
-  void setDoesNotAccessMemory(bool doesNotAccessMemory = true) {
-    if (doesNotAccessMemory) addParamAttr(0, ParamAttr::ReadNone);
+  void setDoesNotAccessMemory(bool NotAccessMemory = true) {
+    if (NotAccessMemory) addParamAttr(0, ParamAttr::ReadNone);
     else removeParamAttr(0, ParamAttr::ReadNone);
   }
 
@@ -1089,8 +1091,8 @@ public:
   bool onlyReadsMemory() const {
     return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
   }
-  void setOnlyReadsMemory(bool onlyReadsMemory = true) {
-    if (onlyReadsMemory) addParamAttr(0, ParamAttr::ReadOnly);
+  void setOnlyReadsMemory(bool OnlyReadsMemory = true) {
+    if (OnlyReadsMemory) addParamAttr(0, ParamAttr::ReadOnly);
     else removeParamAttr(0, ParamAttr::ReadOnly | ParamAttr::ReadNone);
   }
 
@@ -1098,8 +1100,8 @@ public:
   bool doesNotReturn() const {
     return paramHasAttr(0, ParamAttr::NoReturn);
   }
-  void setDoesNotReturn(bool doesNotReturn = true) {
-    if (doesNotReturn) addParamAttr(0, ParamAttr::NoReturn);
+  void setDoesNotReturn(bool DoesNotReturn = true) {
+    if (DoesNotReturn) addParamAttr(0, ParamAttr::NoReturn);
     else removeParamAttr(0, ParamAttr::NoReturn);
   }
 
@@ -1107,8 +1109,8 @@ public:
   bool doesNotThrow() const {
     return paramHasAttr(0, ParamAttr::NoUnwind);
   }
-  void setDoesNotThrow(bool doesNotThrow = true) {
-    if (doesNotThrow) addParamAttr(0, ParamAttr::NoUnwind);
+  void setDoesNotThrow(bool DoesNotThrow = true) {
+    if (DoesNotThrow) addParamAttr(0, ParamAttr::NoUnwind);
     else removeParamAttr(0, ParamAttr::NoUnwind);
   }
 
@@ -1152,25 +1154,25 @@ struct OperandTraits<CallInst> : VariadicOperandTraits<1> {
 
 template<typename InputIterator>
 CallInst::CallInst(Value *Func, InputIterator ArgBegin, InputIterator ArgEnd,
-                   const std::string &Name, BasicBlock *InsertAtEnd)
+                   const std::string &NameStr, BasicBlock *InsertAtEnd)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
                 Instruction::Call,
                 OperandTraits<CallInst>::op_end(this) - (ArgEnd - ArgBegin + 1),
                 (unsigned)(ArgEnd - ArgBegin + 1), InsertAtEnd) {
-  init(Func, ArgBegin, ArgEnd, Name,
+  init(Func, ArgBegin, ArgEnd, NameStr,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
 
 template<typename InputIterator>
 CallInst::CallInst(Value *Func, InputIterator ArgBegin, InputIterator ArgEnd,
-                   const std::string &Name, Instruction *InsertBefore)
+                   const std::string &NameStr, Instruction *InsertBefore)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
                 Instruction::Call,
                 OperandTraits<CallInst>::op_end(this) - (ArgEnd - ArgBegin + 1),
                 (unsigned)(ArgEnd - ArgBegin + 1), InsertBefore) {
-  init(Func, ArgBegin, ArgEnd, Name, 
+  init(Func, ArgBegin, ArgEnd, NameStr, 
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
 
@@ -1193,29 +1195,30 @@ class SelectInst : public Instruction {
     : Instruction(SI.getType(), SI.getOpcode(), &Op<0>(), 3) {
     init(SI.Op<0>(), SI.Op<1>(), SI.Op<2>());
   }
-  SelectInst(Value *C, Value *S1, Value *S2, const std::string &Name,
+  SelectInst(Value *C, Value *S1, Value *S2, const std::string &NameStr,
              Instruction *InsertBefore)
     : Instruction(S1->getType(), Instruction::Select,
                   &Op<0>(), 3, InsertBefore) {
     init(C, S1, S2);
-    setName(Name);
+    setName(NameStr);
   }
-  SelectInst(Value *C, Value *S1, Value *S2, const std::string &Name,
+  SelectInst(Value *C, Value *S1, Value *S2, const std::string &NameStr,
              BasicBlock *InsertAtEnd)
     : Instruction(S1->getType(), Instruction::Select,
                   &Op<0>(), 3, InsertAtEnd) {
     init(C, S1, S2);
-    setName(Name);
+    setName(NameStr);
   }
 public:
   static SelectInst *Create(Value *C, Value *S1, Value *S2,
-                            const std::string &Name = "",
+                            const std::string &NameStr = "",
                             Instruction *InsertBefore = 0) {
-    return new(3) SelectInst(C, S1, S2, Name, InsertBefore);
+    return new(3) SelectInst(C, S1, S2, NameStr, InsertBefore);
   }
   static SelectInst *Create(Value *C, Value *S1, Value *S2,
-                            const std::string &Name, BasicBlock *InsertAtEnd) {
-    return new(3) SelectInst(C, S1, S2, Name, InsertAtEnd);
+                            const std::string &NameStr,
+                            BasicBlock *InsertAtEnd) {
+    return new(3) SelectInst(C, S1, S2, NameStr, InsertAtEnd);
   }
 
   Value *getCondition() const { return Op<0>(); }
@@ -1258,15 +1261,15 @@ class VAArgInst : public UnaryInstruction {
   VAArgInst(const VAArgInst &VAA)
     : UnaryInstruction(VAA.getType(), VAArg, VAA.getOperand(0)) {}
 public:
-  VAArgInst(Value *List, const Type *Ty, const std::string &Name = "",
+  VAArgInst(Value *List, const Type *Ty, const std::string &NameStr = "",
              Instruction *InsertBefore = 0)
     : UnaryInstruction(Ty, VAArg, List, InsertBefore) {
-    setName(Name);
+    setName(NameStr);
   }
-  VAArgInst(Value *List, const Type *Ty, const std::string &Name,
+  VAArgInst(Value *List, const Type *Ty, const std::string &NameStr,
             BasicBlock *InsertAtEnd)
     : UnaryInstruction(Ty, VAArg, List, InsertAtEnd) {
-    setName(Name);
+    setName(NameStr);
   }
 
   virtual VAArgInst *clone() const;
@@ -1300,13 +1303,13 @@ public:
   void *operator new(size_t s) {
     return User::operator new(s, 2); // FIXME: "unsigned Idx" forms of ctor?
   }
-  ExtractElementInst(Value *Vec, Value *Idx, const std::string &Name = "",
+  ExtractElementInst(Value *Vec, Value *Idx, const std::string &NameStr = "",
                      Instruction *InsertBefore = 0);
-  ExtractElementInst(Value *Vec, unsigned Idx, const std::string &Name = "",
+  ExtractElementInst(Value *Vec, unsigned Idx, const std::string &NameStr = "",
                      Instruction *InsertBefore = 0);
-  ExtractElementInst(Value *Vec, Value *Idx, const std::string &Name,
+  ExtractElementInst(Value *Vec, Value *Idx, const std::string &NameStr,
                      BasicBlock *InsertAtEnd);
-  ExtractElementInst(Value *Vec, unsigned Idx, const std::string &Name,
+  ExtractElementInst(Value *Vec, unsigned Idx, const std::string &NameStr,
                      BasicBlock *InsertAtEnd);
 
   /// isValidOperands - Return true if an extractelement instruction can be
@@ -1344,36 +1347,36 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ExtractElementInst, Value)
 class InsertElementInst : public Instruction {
   InsertElementInst(const InsertElementInst &IE);
   InsertElementInst(Value *Vec, Value *NewElt, Value *Idx,
-                    const std::string &Name = "",Instruction *InsertBefore = 0);
+                    const std::string &NameStr = "",Instruction *InsertBefore = 0);
   InsertElementInst(Value *Vec, Value *NewElt, unsigned Idx,
-                    const std::string &Name = "",Instruction *InsertBefore = 0);
+                    const std::string &NameStr = "",Instruction *InsertBefore = 0);
   InsertElementInst(Value *Vec, Value *NewElt, Value *Idx,
-                    const std::string &Name, BasicBlock *InsertAtEnd);
+                    const std::string &NameStr, BasicBlock *InsertAtEnd);
   InsertElementInst(Value *Vec, Value *NewElt, unsigned Idx,
-                    const std::string &Name, BasicBlock *InsertAtEnd);
+                    const std::string &NameStr, BasicBlock *InsertAtEnd);
 public:
   static InsertElementInst *Create(const InsertElementInst &IE) {
     return new(IE.getNumOperands()) InsertElementInst(IE);
   }
   static InsertElementInst *Create(Value *Vec, Value *NewElt, Value *Idx,
-                                   const std::string &Name = "",
+                                   const std::string &NameStr = "",
                                    Instruction *InsertBefore = 0) {
-    return new(3) InsertElementInst(Vec, NewElt, Idx, Name, InsertBefore);
+    return new(3) InsertElementInst(Vec, NewElt, Idx, NameStr, InsertBefore);
   }
   static InsertElementInst *Create(Value *Vec, Value *NewElt, unsigned Idx,
-                                   const std::string &Name = "",
+                                   const std::string &NameStr = "",
                                    Instruction *InsertBefore = 0) {
-    return new(3) InsertElementInst(Vec, NewElt, Idx, Name, InsertBefore);
+    return new(3) InsertElementInst(Vec, NewElt, Idx, NameStr, InsertBefore);
   }
   static InsertElementInst *Create(Value *Vec, Value *NewElt, Value *Idx,
-                                   const std::string &Name,
+                                   const std::string &NameStr,
                                    BasicBlock *InsertAtEnd) {
-    return new(3) InsertElementInst(Vec, NewElt, Idx, Name, InsertAtEnd);
+    return new(3) InsertElementInst(Vec, NewElt, Idx, NameStr, InsertAtEnd);
   }
   static InsertElementInst *Create(Value *Vec, Value *NewElt, unsigned Idx,
-                                   const std::string &Name,
+                                   const std::string &NameStr,
                                    BasicBlock *InsertAtEnd) {
-    return new(3) InsertElementInst(Vec, NewElt, Idx, Name, InsertAtEnd);
+    return new(3) InsertElementInst(Vec, NewElt, Idx, NameStr, InsertAtEnd);
   }
 
   /// isValidOperands - Return true if an insertelement instruction can be
@@ -1423,9 +1426,10 @@ public:
     return User::operator new(s, 3);
   }
   ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
-                    const std::string &Name = "", Instruction *InsertBefor = 0);
+                    const std::string &NameStr = "",
+                    Instruction *InsertBefor = 0);
   ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
-                    const std::string &Name, BasicBlock *InsertAtEnd);
+                    const std::string &NameStr, BasicBlock *InsertAtEnd);
 
   /// isValidOperands - Return true if a shufflevector instruction can be
   /// formed with the specified operands.
@@ -1476,12 +1480,12 @@ class ExtractValueInst : public UnaryInstruction {
 
   ExtractValueInst(const ExtractValueInst &EVI);
   void init(const unsigned *Idx, unsigned NumIdx,
-            const std::string &Name);
-  void init(unsigned Idx, const std::string &Name);
+            const std::string &NameStr);
+  void init(unsigned Idx, const std::string &NameStr);
 
   template<typename InputIterator>
   void init(InputIterator IdxBegin, InputIterator IdxEnd,
-            const std::string &Name,
+            const std::string &NameStr,
             // This argument ensures that we have an iterator we can
             // do arithmetic on in constant time
             std::random_access_iterator_tag) {
@@ -1494,7 +1498,7 @@ class ExtractValueInst : public UnaryInstruction {
     assert(NumIdx > 0 && "ExtractValueInst must have at least one index");
 
     // This requires that the iterator points to contiguous memory.
-    init(&*IdxBegin, NumIdx, Name); // FIXME: for the general case
+    init(&*IdxBegin, NumIdx, NameStr); // FIXME: for the general case
                                          // we have to build an array here
   }
 
@@ -1531,12 +1535,12 @@ class ExtractValueInst : public UnaryInstruction {
   template<typename InputIterator>
   inline ExtractValueInst(Value *Agg, InputIterator IdxBegin, 
                           InputIterator IdxEnd,
-                          const std::string &Name,
+                          const std::string &NameStr,
                           Instruction *InsertBefore);
   template<typename InputIterator>
   inline ExtractValueInst(Value *Agg,
                           InputIterator IdxBegin, InputIterator IdxEnd,
-                          const std::string &Name, BasicBlock *InsertAtEnd);
+                          const std::string &NameStr, BasicBlock *InsertAtEnd);
 
   // allocate space for exactly one operand
   void *operator new(size_t s) {
@@ -1547,33 +1551,33 @@ public:
   template<typename InputIterator>
   static ExtractValueInst *Create(Value *Agg, InputIterator IdxBegin, 
                                   InputIterator IdxEnd,
-                                  const std::string &Name = "",
+                                  const std::string &NameStr = "",
                                   Instruction *InsertBefore = 0) {
     return new
-      ExtractValueInst(Agg, IdxBegin, IdxEnd, Name, InsertBefore);
+      ExtractValueInst(Agg, IdxBegin, IdxEnd, NameStr, InsertBefore);
   }
   template<typename InputIterator>
   static ExtractValueInst *Create(Value *Agg,
                                   InputIterator IdxBegin, InputIterator IdxEnd,
-                                  const std::string &Name,
+                                  const std::string &NameStr,
                                   BasicBlock *InsertAtEnd) {
-    return new ExtractValueInst(Agg, IdxBegin, IdxEnd, Name, InsertAtEnd);
+    return new ExtractValueInst(Agg, IdxBegin, IdxEnd, NameStr, InsertAtEnd);
   }
 
   /// Constructors - These two creators are convenience methods because one
   /// index extractvalue instructions are much more common than those with
   /// more than one.
   static ExtractValueInst *Create(Value *Agg, unsigned Idx,
-                                  const std::string &Name = "",
+                                  const std::string &NameStr = "",
                                   Instruction *InsertBefore = 0) {
     unsigned Idxs[1] = { Idx };
-    return new ExtractValueInst(Agg, Idxs, Idxs + 1, Name, InsertBefore);
+    return new ExtractValueInst(Agg, Idxs, Idxs + 1, NameStr, InsertBefore);
   }
   static ExtractValueInst *Create(Value *Agg, unsigned Idx,
-                                  const std::string &Name,
+                                  const std::string &NameStr,
                                   BasicBlock *InsertAtEnd) {
     unsigned Idxs[1] = { Idx };
-    return new ExtractValueInst(Agg, Idxs, Idxs + 1, Name, InsertAtEnd);
+    return new ExtractValueInst(Agg, Idxs, Idxs + 1, NameStr, InsertAtEnd);
   }
 
   virtual ExtractValueInst *clone() const;
@@ -1635,24 +1639,24 @@ template<typename InputIterator>
 ExtractValueInst::ExtractValueInst(Value *Agg,
                                    InputIterator IdxBegin, 
                                    InputIterator IdxEnd,
-                                   const std::string &Name,
+                                   const std::string &NameStr,
                                    Instruction *InsertBefore)
   : UnaryInstruction(checkType(getIndexedType(Agg->getType(),
                                               IdxBegin, IdxEnd)),
                      ExtractValue, Agg, InsertBefore) {
-  init(IdxBegin, IdxEnd, Name,
+  init(IdxBegin, IdxEnd, NameStr,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
 template<typename InputIterator>
 ExtractValueInst::ExtractValueInst(Value *Agg,
                                    InputIterator IdxBegin,
                                    InputIterator IdxEnd,
-                                   const std::string &Name,
+                                   const std::string &NameStr,
                                    BasicBlock *InsertAtEnd)
   : UnaryInstruction(checkType(getIndexedType(Agg->getType(),
                                               IdxBegin, IdxEnd)),
                      ExtractValue, Agg, InsertAtEnd) {
-  init(IdxBegin, IdxEnd, Name,
+  init(IdxBegin, IdxEnd, NameStr,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
 
@@ -1670,13 +1674,13 @@ class InsertValueInst : public Instruction {
   void *operator new(size_t, unsigned); // Do not implement
   InsertValueInst(const InsertValueInst &IVI);
   void init(Value *Agg, Value *Val, const unsigned *Idx, unsigned NumIdx,
-            const std::string &Name);
-  void init(Value *Agg, Value *Val, unsigned Idx, const std::string &Name);
+            const std::string &NameStr);
+  void init(Value *Agg, Value *Val, unsigned Idx, const std::string &NameStr);
 
   template<typename InputIterator>
   void init(Value *Agg, Value *Val,
             InputIterator IdxBegin, InputIterator IdxEnd,
-            const std::string &Name,
+            const std::string &NameStr,
             // This argument ensures that we have an iterator we can
             // do arithmetic on in constant time
             std::random_access_iterator_tag) {
@@ -1689,7 +1693,7 @@ class InsertValueInst : public Instruction {
     assert(NumIdx > 0 && "InsertValueInst must have at least one index");
 
     // This requires that the iterator points to contiguous memory.
-    init(Agg, Val, &*IdxBegin, NumIdx, Name); // FIXME: for the general case
+    init(Agg, Val, &*IdxBegin, NumIdx, NameStr); // FIXME: for the general case
                                               // we have to build an array here
   }
 
@@ -1700,20 +1704,20 @@ class InsertValueInst : public Instruction {
   template<typename InputIterator>
   inline InsertValueInst(Value *Agg, Value *Val, InputIterator IdxBegin, 
                          InputIterator IdxEnd,
-                         const std::string &Name,
+                         const std::string &NameStr,
                          Instruction *InsertBefore);
   template<typename InputIterator>
   inline InsertValueInst(Value *Agg, Value *Val,
                          InputIterator IdxBegin, InputIterator IdxEnd,
-                         const std::string &Name, BasicBlock *InsertAtEnd);
+                         const std::string &NameStr, BasicBlock *InsertAtEnd);
 
   /// Constructors - These two constructors are convenience methods because one
   /// and two index insertvalue instructions are so common.
   InsertValueInst(Value *Agg, Value *Val,
-                  unsigned Idx, const std::string &Name = "",
+                  unsigned Idx, const std::string &NameStr = "",
                   Instruction *InsertBefore = 0);
   InsertValueInst(Value *Agg, Value *Val, unsigned Idx,
-                  const std::string &Name, BasicBlock *InsertAtEnd);
+                  const std::string &NameStr, BasicBlock *InsertAtEnd);
 public:
   // allocate space for exactly two operands
   void *operator new(size_t s) {
@@ -1723,32 +1727,32 @@ public:
   template<typename InputIterator>
   static InsertValueInst *Create(Value *Agg, Value *Val, InputIterator IdxBegin,
                                  InputIterator IdxEnd,
-                                 const std::string &Name = "",
+                                 const std::string &NameStr = "",
                                  Instruction *InsertBefore = 0) {
     return new InsertValueInst(Agg, Val, IdxBegin, IdxEnd,
-                               Name, InsertBefore);
+                               NameStr, InsertBefore);
   }
   template<typename InputIterator>
   static InsertValueInst *Create(Value *Agg, Value *Val,
                                  InputIterator IdxBegin, InputIterator IdxEnd,
-                                 const std::string &Name,
+                                 const std::string &NameStr,
                                  BasicBlock *InsertAtEnd) {
     return new InsertValueInst(Agg, Val, IdxBegin, IdxEnd,
-                               Name, InsertAtEnd);
+                               NameStr, InsertAtEnd);
   }
 
   /// Constructors - These two creators are convenience methods because one
   /// index insertvalue instructions are much more common than those with
   /// more than one.
   static InsertValueInst *Create(Value *Agg, Value *Val, unsigned Idx,
-                                 const std::string &Name = "",
+                                 const std::string &NameStr = "",
                                  Instruction *InsertBefore = 0) {
-    return new InsertValueInst(Agg, Val, Idx, Name, InsertBefore);
+    return new InsertValueInst(Agg, Val, Idx, NameStr, InsertBefore);
   }
   static InsertValueInst *Create(Value *Agg, Value *Val, unsigned Idx,
-                                 const std::string &Name,
+                                 const std::string &NameStr,
                                  BasicBlock *InsertAtEnd) {
-    return new InsertValueInst(Agg, Val, Idx, Name, InsertAtEnd);
+    return new InsertValueInst(Agg, Val, Idx, NameStr, InsertAtEnd);
   }
 
   virtual InsertValueInst *clone() const;
@@ -1812,12 +1816,12 @@ InsertValueInst::InsertValueInst(Value *Agg,
                                  Value *Val,
                                  InputIterator IdxBegin, 
                                  InputIterator IdxEnd,
-                                 const std::string &Name,
+                                 const std::string &NameStr,
                                  Instruction *InsertBefore)
   : Instruction(Agg->getType(), InsertValue,
                 OperandTraits<InsertValueInst>::op_begin(this),
                 2, InsertBefore) {
-  init(Agg, Val, IdxBegin, IdxEnd, Name,
+  init(Agg, Val, IdxBegin, IdxEnd, NameStr,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
 template<typename InputIterator>
@@ -1825,12 +1829,12 @@ InsertValueInst::InsertValueInst(Value *Agg,
                                  Value *Val,
                                  InputIterator IdxBegin,
                                  InputIterator IdxEnd,
-                                 const std::string &Name,
+                                 const std::string &NameStr,
                                  BasicBlock *InsertAtEnd)
   : Instruction(Agg->getType(), InsertValue,
                 OperandTraits<InsertValueInst>::op_begin(this),
                 2, InsertAtEnd) {
-  init(Agg, Val, IdxBegin, IdxEnd, Name,
+  init(Agg, Val, IdxBegin, IdxEnd, NameStr,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
 
@@ -1854,26 +1858,26 @@ class PHINode : public Instruction {
   void *operator new(size_t s) {
     return User::operator new(s, 0);
   }
-  explicit PHINode(const Type *Ty, const std::string &Name = "",
+  explicit PHINode(const Type *Ty, const std::string &NameStr = "",
                    Instruction *InsertBefore = 0)
     : Instruction(Ty, Instruction::PHI, 0, 0, InsertBefore),
       ReservedSpace(0) {
-    setName(Name);
+    setName(NameStr);
   }
 
-  PHINode(const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd)
+  PHINode(const Type *Ty, const std::string &NameStr, BasicBlock *InsertAtEnd)
     : Instruction(Ty, Instruction::PHI, 0, 0, InsertAtEnd),
       ReservedSpace(0) {
-    setName(Name);
+    setName(NameStr);
   }
 public:
-  static PHINode *Create(const Type *Ty, const std::string &Name = "",
+  static PHINode *Create(const Type *Ty, const std::string &NameStr = "",
                          Instruction *InsertBefore = 0) {
-    return new PHINode(Ty, Name, InsertBefore);
+    return new PHINode(Ty, NameStr, InsertBefore);
   }
-  static PHINode *Create(const Type *Ty, const std::string &Name,
+  static PHINode *Create(const Type *Ty, const std::string &NameStr,
                          BasicBlock *InsertAtEnd) {
-    return new PHINode(Ty, Name, InsertAtEnd);
+    return new PHINode(Ty, NameStr, InsertAtEnd);
   }
   ~PHINode();
 
@@ -2341,7 +2345,7 @@ class InvokeInst : public TerminatorInst {
   template<typename InputIterator>
   void init(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
             InputIterator ArgBegin, InputIterator ArgEnd,
-            const std::string &Name,
+            const std::string &NameStr,
             // This argument ensures that we have an iterator we can
             // do arithmetic on in constant time
             std::random_access_iterator_tag) {
@@ -2349,7 +2353,7 @@ class InvokeInst : public TerminatorInst {
     
     // This requires that the iterator points to contiguous memory.
     init(Func, IfNormal, IfException, NumArgs ? &*ArgBegin : 0, NumArgs);
-    setName(Name);
+    setName(NameStr);
   }
 
   /// Construct an InvokeInst given a range of arguments.
@@ -2363,7 +2367,7 @@ class InvokeInst : public TerminatorInst {
   inline InvokeInst(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
                     InputIterator ArgBegin, InputIterator ArgEnd,
                     unsigned Values,
-                    const std::string &Name, Instruction *InsertBefore);
+                    const std::string &NameStr, Instruction *InsertBefore);
 
   /// Construct an InvokeInst given a range of arguments.
   /// InputIterator must be a random-access iterator pointing to
@@ -2376,26 +2380,27 @@ class InvokeInst : public TerminatorInst {
   inline InvokeInst(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
                     InputIterator ArgBegin, InputIterator ArgEnd,
                     unsigned Values,
-                    const std::string &Name, BasicBlock *InsertAtEnd);
+                    const std::string &NameStr, BasicBlock *InsertAtEnd);
 public:
   template<typename InputIterator>
   static InvokeInst *Create(Value *Func,
                             BasicBlock *IfNormal, BasicBlock *IfException,
                             InputIterator ArgBegin, InputIterator ArgEnd,
-                            const std::string &Name = "",
+                            const std::string &NameStr = "",
                             Instruction *InsertBefore = 0) {
     unsigned Values(ArgEnd - ArgBegin + 3);
     return new(Values) InvokeInst(Func, IfNormal, IfException, ArgBegin, ArgEnd,
-                                  Values, Name, InsertBefore);
+                                  Values, NameStr, InsertBefore);
   }
   template<typename InputIterator>
   static InvokeInst *Create(Value *Func,
                             BasicBlock *IfNormal, BasicBlock *IfException,
                             InputIterator ArgBegin, InputIterator ArgEnd,
-                            const std::string &Name, BasicBlock *InsertAtEnd) {
+                            const std::string &NameStr,
+                            BasicBlock *InsertAtEnd) {
     unsigned Values(ArgEnd - ArgBegin + 3);
     return new(Values) InvokeInst(Func, IfNormal, IfException, ArgBegin, ArgEnd,
-                                  Values, Name, InsertAtEnd);
+                                  Values, NameStr, InsertAtEnd);
   }
 
   virtual InvokeInst *clone() const;
@@ -2436,8 +2441,8 @@ public:
   bool doesNotAccessMemory() const {
     return paramHasAttr(0, ParamAttr::ReadNone);
   }
-  void setDoesNotAccessMemory(bool doesNotAccessMemory = true) {
-    if (doesNotAccessMemory) addParamAttr(0, ParamAttr::ReadNone);
+  void setDoesNotAccessMemory(bool NotAccessMemory = true) {
+    if (NotAccessMemory) addParamAttr(0, ParamAttr::ReadNone);
     else removeParamAttr(0, ParamAttr::ReadNone);
   }
 
@@ -2445,8 +2450,8 @@ public:
   bool onlyReadsMemory() const {
     return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
   }
-  void setOnlyReadsMemory(bool onlyReadsMemory = true) {
-    if (onlyReadsMemory) addParamAttr(0, ParamAttr::ReadOnly);
+  void setOnlyReadsMemory(bool OnlyReadsMemory = true) {
+    if (OnlyReadsMemory) addParamAttr(0, ParamAttr::ReadOnly);
     else removeParamAttr(0, ParamAttr::ReadOnly | ParamAttr::ReadNone);
   }
 
@@ -2454,8 +2459,8 @@ public:
   bool doesNotReturn() const {
     return paramHasAttr(0, ParamAttr::NoReturn);
   }
-  void setDoesNotReturn(bool doesNotReturn = true) {
-    if (doesNotReturn) addParamAttr(0, ParamAttr::NoReturn);
+  void setDoesNotReturn(bool DoesNotReturn = true) {
+    if (DoesNotReturn) addParamAttr(0, ParamAttr::NoReturn);
     else removeParamAttr(0, ParamAttr::NoReturn);
   }
 
@@ -2463,8 +2468,8 @@ public:
   bool doesNotThrow() const {
     return paramHasAttr(0, ParamAttr::NoUnwind);
   }
-  void setDoesNotThrow(bool doesNotThrow = true) {
-    if (doesNotThrow) addParamAttr(0, ParamAttr::NoUnwind);
+  void setDoesNotThrow(bool DoesNotThrow = true) {
+    if (DoesNotThrow) addParamAttr(0, ParamAttr::NoUnwind);
     else removeParamAttr(0, ParamAttr::NoUnwind);
   }
 
@@ -2535,13 +2540,13 @@ InvokeInst::InvokeInst(Value *Func,
                        BasicBlock *IfNormal, BasicBlock *IfException,
                        InputIterator ArgBegin, InputIterator ArgEnd,
                        unsigned Values,
-                       const std::string &Name, Instruction *InsertBefore)
+                       const std::string &NameStr, Instruction *InsertBefore)
   : TerminatorInst(cast<FunctionType>(cast<PointerType>(Func->getType())
                                       ->getElementType())->getReturnType(),
                    Instruction::Invoke,
                    OperandTraits<InvokeInst>::op_end(this) - Values,
                    Values, InsertBefore) {
-  init(Func, IfNormal, IfException, ArgBegin, ArgEnd, Name,
+  init(Func, IfNormal, IfException, ArgBegin, ArgEnd, NameStr,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
 template<typename InputIterator>
@@ -2549,13 +2554,13 @@ InvokeInst::InvokeInst(Value *Func,
                        BasicBlock *IfNormal, BasicBlock *IfException,
                        InputIterator ArgBegin, InputIterator ArgEnd,
                        unsigned Values,
-                       const std::string &Name, BasicBlock *InsertAtEnd)
+                       const std::string &NameStr, BasicBlock *InsertAtEnd)
   : TerminatorInst(cast<FunctionType>(cast<PointerType>(Func->getType())
                                       ->getElementType())->getReturnType(),
                    Instruction::Invoke,
                    OperandTraits<InvokeInst>::op_end(this) - Values,
                    Values, InsertAtEnd) {
-  init(Func, IfNormal, IfException, ArgBegin, ArgEnd, Name,
+  init(Func, IfNormal, IfException, ArgBegin, ArgEnd, NameStr,
        typename std::iterator_traits<InputIterator>::iterator_category());
 }
 
@@ -2649,7 +2654,7 @@ public:
   TruncInst(
     Value *S,                     ///< The value to be truncated
     const Type *Ty,               ///< The (smaller) type to truncate to
-    const std::string &Name = "", ///< A name for the new instruction
+    const std::string &NameStr = "", ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -2657,7 +2662,7 @@ public:
   TruncInst(
     Value *S,                     ///< The value to be truncated
     const Type *Ty,               ///< The (smaller) type to truncate to
-    const std::string &Name,      ///< A name for the new instruction
+    const std::string &NameStr,   ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -2689,7 +2694,7 @@ public:
   ZExtInst(
     Value *S,                     ///< The value to be zero extended
     const Type *Ty,               ///< The type to zero extend to
-    const std::string &Name = "", ///< A name for the new instruction
+    const std::string &NameStr = "", ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -2697,7 +2702,7 @@ public:
   ZExtInst(
     Value *S,                     ///< The value to be zero extended
     const Type *Ty,               ///< The type to zero extend to
-    const std::string &Name,      ///< A name for the new instruction
+    const std::string &NameStr,   ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -2729,7 +2734,7 @@ public:
   SExtInst(
     Value *S,                     ///< The value to be sign extended
     const Type *Ty,               ///< The type to sign extend to
-    const std::string &Name = "", ///< A name for the new instruction
+    const std::string &NameStr = "", ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -2737,7 +2742,7 @@ public:
   SExtInst(
     Value *S,                     ///< The value to be sign extended
     const Type *Ty,               ///< The type to sign extend to
-    const std::string &Name,      ///< A name for the new instruction
+    const std::string &NameStr,   ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -2768,7 +2773,7 @@ public:
   FPTruncInst(
     Value *S,                     ///< The value to be truncated
     const Type *Ty,               ///< The type to truncate to
-    const std::string &Name = "", ///< A name for the new instruction
+    const std::string &NameStr = "", ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -2776,7 +2781,7 @@ public:
   FPTruncInst(
     Value *S,                     ///< The value to be truncated
     const Type *Ty,               ///< The type to truncate to
-    const std::string &Name,      ///< A name for the new instruction
+    const std::string &NameStr,   ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -2807,7 +2812,7 @@ public:
   FPExtInst(
     Value *S,                     ///< The value to be extended
     const Type *Ty,               ///< The type to extend to
-    const std::string &Name = "", ///< A name for the new instruction
+    const std::string &NameStr = "", ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -2815,7 +2820,7 @@ public:
   FPExtInst(
     Value *S,                     ///< The value to be extended
     const Type *Ty,               ///< The type to extend to
-    const std::string &Name,      ///< A name for the new instruction
+    const std::string &NameStr,   ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -2846,7 +2851,7 @@ public:
   UIToFPInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const std::string &Name = "", ///< A name for the new instruction
+    const std::string &NameStr = "", ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -2854,7 +2859,7 @@ public:
   UIToFPInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const std::string &Name,      ///< A name for the new instruction
+    const std::string &NameStr,   ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -2885,7 +2890,7 @@ public:
   SIToFPInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const std::string &Name = "", ///< A name for the new instruction
+    const std::string &NameStr = "", ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -2893,7 +2898,7 @@ public:
   SIToFPInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const std::string &Name,      ///< A name for the new instruction
+    const std::string &NameStr,   ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -2924,7 +2929,7 @@ public:
   FPToUIInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const std::string &Name = "", ///< A name for the new instruction
+    const std::string &NameStr = "", ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -2932,7 +2937,7 @@ public:
   FPToUIInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const std::string &Name,      ///< A name for the new instruction
+    const std::string &NameStr,   ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< Where to insert the new instruction
   );
 
@@ -2963,7 +2968,7 @@ public:
   FPToSIInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const std::string &Name = "", ///< A name for the new instruction
+    const std::string &NameStr = "", ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -2971,7 +2976,7 @@ public:
   FPToSIInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const std::string &Name,      ///< A name for the new instruction
+    const std::string &NameStr,   ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -3002,7 +3007,7 @@ public:
   IntToPtrInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const std::string &Name = "", ///< A name for the new instruction
+    const std::string &NameStr = "", ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -3010,7 +3015,7 @@ public:
   IntToPtrInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const std::string &Name,      ///< A name for the new instruction
+    const std::string &NameStr,   ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -3041,7 +3046,7 @@ public:
   PtrToIntInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const std::string &Name = "", ///< A name for the new instruction
+    const std::string &NameStr = "", ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -3049,7 +3054,7 @@ public:
   PtrToIntInst(
     Value *S,                     ///< The value to be converted
     const Type *Ty,               ///< The type to convert to
-    const std::string &Name,      ///< A name for the new instruction
+    const std::string &NameStr,   ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
@@ -3080,7 +3085,7 @@ public:
   BitCastInst(
     Value *S,                     ///< The value to be casted
     const Type *Ty,               ///< The type to casted to
-    const std::string &Name = "", ///< A name for the new instruction
+    const std::string &NameStr = "", ///< A name for the new instruction
     Instruction *InsertBefore = 0 ///< Where to insert the new instruction
   );
 
@@ -3088,7 +3093,7 @@ public:
   BitCastInst(
     Value *S,                     ///< The value to be casted
     const Type *Ty,               ///< The type to casted to
-    const std::string &Name,      ///< A name for the new instruction
+    const std::string &NameStr,      ///< A name for the new instruction
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
