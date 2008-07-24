@@ -1038,6 +1038,7 @@ void RetainSummaryManager::InitializeMethodSummaries() {
   
   II.clear();
   II.push_back(&Ctx.Idents.get("handleFailureInMethod"));
+  II.push_back(&Ctx.Idents.get("object"));
   II.push_back(&Ctx.Idents.get("file"));
   II.push_back(&Ctx.Idents.get("lineNumber"));
   II.push_back(&Ctx.Idents.get("description"));
