@@ -563,14 +563,14 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
         return Diag(D->getLocation(), diag::err_toomany_element_decls);
     } else
       FirstType = static_cast<Expr*>(first)->getType();
-    if (!isObjCObjectPointerType(FirstType))
+    if (!Context.isObjCObjectPointerType(FirstType))
         Diag(ForLoc, diag::err_selector_element_type,
              FirstType.getAsString(), First->getSourceRange());
   }
   if (Second) {
     DefaultFunctionArrayConversion(Second);
     QualType SecondType = Second->getType();
-    if (!isObjCObjectPointerType(SecondType))
+    if (!Context.isObjCObjectPointerType(SecondType))
       Diag(ForLoc, diag::err_collection_expr_type,
            SecondType.getAsString(), Second->getSourceRange());
   }

@@ -344,12 +344,6 @@ private:
   /// isBuiltinObjCType - Returns true of the type is "id", "SEL", "Class"
   /// or "Protocol".
   bool isBuiltinObjCType(TypedefDecl *TD);
-  
-  /// isObjCObjectPointerType - Returns true if type is an Objective-C pointer
-  /// to an object type.  This includes "id" and "Class" (two 'special' pointers
-  /// to struct), Interface* (pointer to ObjCInterfaceType) and id<P> (qualified
-  /// ID type).
-  bool isObjCObjectPointerType(QualType type) const;
 
   /// AddInstanceMethodToGlobalPool - All instance methods in a translation
   /// unit are added to a global pool. This allows us to efficiently associate

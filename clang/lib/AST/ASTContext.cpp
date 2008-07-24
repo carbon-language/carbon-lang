@@ -1500,6 +1500,32 @@ void ASTContext::setObjCConstantStringInterface(ObjCInterfaceDecl *Decl) {
   ObjCConstantStringType = getObjCInterfaceType(Decl);
 }
 
+
+//===----------------------------------------------------------------------===//
+//                        Type Predicates.
+//===----------------------------------------------------------------------===//
+
+/// isObjCObjectPointerType - Returns true if type is an Objective-C pointer
+/// to an object type.  This includes "id" and "Class" (two 'special' pointers
+/// to struct), Interface* (pointer to ObjCInterfaceType) and id<P> (qualified
+/// ID type).
+bool ASTContext::isObjCObjectPointerType(QualType Ty) const {
+  if (Ty->isObjCQualifiedIdType())
+    return true;
+  
+  if (!Ty->isPointerType())
+    return false;
+  
+  // Check to see if this is 'id' or 'Class', both of which are typedefs for
+  // pointer types.  This looks for the typedef specifically, not for the
+  // underlying type.
+  if (Ty == getObjCIdType() || Ty == getObjCClassType())
+    return true;
+  
+  // If this a pointer to an interface (e.g. NSString*), it is ok.
+  return Ty->getAsPointerType()->getPointeeType()->isObjCInterfaceType();
+}
+
 //===----------------------------------------------------------------------===//
 //                        Type Compatibility Testing
 //===----------------------------------------------------------------------===//

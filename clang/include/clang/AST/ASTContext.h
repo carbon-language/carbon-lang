@@ -289,6 +289,16 @@ public:
   QualType getBuiltinVaListType() const { return BuiltinVaListType; }
     
   //===--------------------------------------------------------------------===//
+  //                         Type Predicates.
+  //===--------------------------------------------------------------------===//
+  
+  /// isObjCObjectPointerType - Returns true if type is an Objective-C pointer
+  /// to an object type.  This includes "id" and "Class" (two 'special' pointers
+  /// to struct), Interface* (pointer to ObjCInterfaceType) and id<P> (qualified
+  /// ID type).
+  bool isObjCObjectPointerType(QualType Ty) const;
+    
+  //===--------------------------------------------------------------------===//
   //                         Type Sizing and Analysis
   //===--------------------------------------------------------------------===//
   
