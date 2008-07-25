@@ -47,6 +47,8 @@ static cl::opt<bool> SplitAtBB("split-intervals-at-bb",
 static cl::opt<int> SplitLimit("split-limit",
                                cl::init(-1), cl::Hidden);
 
+static cl::opt<bool> EnableAggressiveRemat("aggressive-remat", cl::Hidden);
+
 STATISTIC(numIntervals, "Number of original intervals");
 STATISTIC(numIntervalsAfter, "Number of intervals after coalescing");
 STATISTIC(numFolds    , "Number of loads/stores folded into instructions");
@@ -797,6 +799,8 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
   // rules.
   if (!MI->getDesc().isRematerializable() ||
       !tii_->isTriviallyReMaterializable(MI)) {
+    if (!EnableAggressiveRemat)
+      return false;
 
     // If the instruction access memory but the memoperands have been lost,
     // we can't analyze it.
