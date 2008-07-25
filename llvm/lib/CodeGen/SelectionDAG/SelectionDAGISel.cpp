@@ -2885,9 +2885,15 @@ void SelectionDAGLowering::visitLoad(LoadInst &I) {
     return;
 
   SDOperand Root;
+  bool ConstantMemory = false;
   if (I.isVolatile())
+    // Serialize volatile loads with other side effects.
     Root = getRoot();
-  else {
+  else if (AA.pointsToConstantMemory(SV)) {
+    // Do not serialize (non-volatile) loads of constant memory with anything.
+    Root = DAG.getEntryNode();
+    ConstantMemory = true;
+  } else {
     // Do not serialize non-volatile loads against each other.
     Root = DAG.getRoot();
   }
@@ -2905,12 +2911,14 @@ void SelectionDAGLowering::visitLoad(LoadInst &I) {
     Chains[i] = L.getValue(1);
   }
   
-  SDOperand Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
-                                &Chains[0], NumValues);
-  if (isVolatile)
-    DAG.setRoot(Chain);
-  else
-    PendingLoads.push_back(Chain);
+  if (!ConstantMemory) {
+    SDOperand Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                                  &Chains[0], NumValues);
+    if (isVolatile)
+      DAG.setRoot(Chain);
+    else
+      PendingLoads.push_back(Chain);
+  }
 
   setValue(&I, DAG.getMergeValues(DAG.getVTList(&ValueVTs[0], NumValues),
                                   &Values[0], NumValues));
