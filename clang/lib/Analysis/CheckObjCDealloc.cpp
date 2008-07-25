@@ -42,13 +42,6 @@ static bool scan_dealloc(Stmt* S, Selector Dealloc) {
   return false;
 }
 
-static bool isSEL(QualType T, IdentifierInfo* SelII) {
-  if (const TypedefType* Ty = T->getAsTypedefType())
-    return Ty->getDecl()->getIdentifier() == SelII;
-  
-  return false;
-}
-
 void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
                              const LangOptions& LOpts, BugReporter& BR) {
 
@@ -63,7 +56,6 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
   //        http://llvm.org/bugs/show_bug.cgi?id=2517
   
   bool containsPointerIvar = false;
-  IdentifierInfo* SelII = &Ctx.Idents.get("SEL");
   
   for (ObjCInterfaceDecl::ivar_iterator I=ID->ivar_begin(), E=ID->ivar_end();
        I!=E; ++I) {
@@ -72,8 +64,7 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
     QualType T = ID->getType();
     
     if (!Ctx.isObjCObjectPointerType(T) ||
-        ID->getAttr<IBOutletAttr>() || // Skip IBOutlets.
-        isSEL(T, SelII)) // Skip SEL ivars.
+        ID->getAttr<IBOutletAttr>()) // Skip IBOutlets.
       continue;
     
     containsPointerIvar = true;
