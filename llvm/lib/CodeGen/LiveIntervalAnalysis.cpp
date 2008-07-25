@@ -141,7 +141,7 @@ void LiveIntervals::computeNumbering() {
         unsigned offset = LI->start % InstrSlots::NUM;
         if (offset == InstrSlots::LOAD) {
           std::vector<IdxMBBPair>::const_iterator I =
-                  std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), index);
+                  std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), LI->start);
           // Take the pair containing the index
           std::vector<IdxMBBPair>::const_iterator J =
                     ((I != OldI2MBB.end() && I->first > index) ||
@@ -155,11 +155,11 @@ void LiveIntervals::computeNumbering() {
         // Remap the ending index in the same way that we remapped the start,
         // except for the final step where we always map to the immediately
         // following instruction.
-        index = LI->end / InstrSlots::NUM;
+        index = (LI->end - 1) / InstrSlots::NUM;
         offset  = LI->end % InstrSlots::NUM;
-        if (offset == InstrSlots::STORE) {
+        if (offset == InstrSlots::USE) {
           std::vector<IdxMBBPair>::const_iterator I =
-                  std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), index);
+                  std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), LI->end);
           // Take the pair containing the index
           std::vector<IdxMBBPair>::const_iterator J =
                     ((I != OldI2MBB.end() && I->first > index) ||
@@ -167,7 +167,9 @@ void LiveIntervals::computeNumbering() {
           
           LI->end = getMBBEndIdx(J->second) + 1;
         } else {
-          LI->end = mi2iMap_[OldI2MI[index]] + offset;
+          unsigned idx = index;
+          while (!OldI2MI[index]) ++index;
+          LI->end = mi2iMap_[OldI2MI[index]] + (idx == index ? offset : 0);
         }
         
         // Remap the VNInfo def index, which works the same as the
@@ -177,7 +179,7 @@ void LiveIntervals::computeNumbering() {
         offset = vni->def % InstrSlots::NUM;
         if (offset == InstrSlots::LOAD) {
           std::vector<IdxMBBPair>::const_iterator I =
-                  std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), index);
+                  std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), vni->def);
           // Take the pair containing the index
           std::vector<IdxMBBPair>::const_iterator J =
                     ((I != OldI2MBB.end() && I->first > index) ||
@@ -192,11 +194,11 @@ void LiveIntervals::computeNumbering() {
         // Remap the VNInfo kill indices, which works the same as
         // the end indices above.
         for (size_t i = 0; i < vni->kills.size(); ++i) {
-          index = vni->kills[i] / InstrSlots::NUM;
+          index = (vni->kills[i]-1) / InstrSlots::NUM;
           offset = vni->kills[i] % InstrSlots::NUM;
-          if (OldI2MI[vni->kills[i] / InstrSlots::NUM]) {
+          if (offset == InstrSlots::USE) {
             std::vector<IdxMBBPair>::const_iterator I =
-                    std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), index);
+             std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), vni->kills[i]);
             // Take the pair containing the index
             std::vector<IdxMBBPair>::const_iterator J =
                       ((I != OldI2MBB.end() && I->first > index) ||
@@ -204,7 +206,10 @@ void LiveIntervals::computeNumbering() {
 
             vni->kills[i] = getMBBEndIdx(J->second) + 1;
           } else {
-            vni->kills[i] = mi2iMap_[OldI2MI[index]] + offset;
+            unsigned idx = index;
+            while (!OldI2MI[index]) ++index;
+            vni->kills[i] = mi2iMap_[OldI2MI[index]] +
+                            (idx == index ? offset : 0);
           }
         }
       }
