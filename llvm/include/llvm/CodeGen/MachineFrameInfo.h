@@ -14,6 +14,7 @@
 #ifndef LLVM_CODEGEN_MACHINEFRAMEINFO_H
 #define LLVM_CODEGEN_MACHINEFRAMEINFO_H
 
+#include "llvm/Support/DataTypes.h"
 #include <cassert>
 #include <vector>
 
