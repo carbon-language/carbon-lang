@@ -71,12 +71,13 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
     ObjCIvarDecl* ID = *I;
     QualType T = ID->getType();
     
-    if ((T->isPointerType() || Ctx.isObjCObjectPointerType(T)) &&
-         (ID->getAttr<IBOutletAttr>() == 0 && // Skip IBOutlets.
-          !isSEL(T, SelII))) { // Skip SEL ivars.
-      containsPointerIvar = true;
-      break;
-    }
+    if (!Ctx.isObjCObjectPointerType(T) ||
+        ID->getAttr<IBOutletAttr>() || // Skip IBOutlets.
+        isSEL(T, SelII)) // Skip SEL ivars.
+      continue;
+    
+    containsPointerIvar = true;
+    break;
   }
   
   if (!containsPointerIvar)
