@@ -332,6 +332,7 @@ void Verifier::visitGlobalValue(GlobalValue &GV) {
           GV.hasExternalLinkage() ||
           GV.hasDLLImportLinkage() ||
           GV.hasExternalWeakLinkage() ||
+          GV.hasGhostLinkage() ||
           (isa<GlobalAlias>(GV) &&
            (GV.hasInternalLinkage() || GV.hasWeakLinkage())),
   "Global is external, but doesn't have external or dllimport or weak linkage!",
@@ -510,7 +511,7 @@ void Verifier::visitFunction(Function &F) {
 
   if (F.isDeclaration()) {
     Assert1(F.hasExternalLinkage() || F.hasDLLImportLinkage() ||
-            F.hasExternalWeakLinkage(),
+            F.hasExternalWeakLinkage() || F.hasGhostLinkage(),
             "invalid linkage type for function declaration", &F);
   } else {
     // Verify that this function (which has a body) is not named "llvm.*".  It
