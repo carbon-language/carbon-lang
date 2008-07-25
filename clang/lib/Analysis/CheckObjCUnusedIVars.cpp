@@ -35,10 +35,24 @@ static void Scan(IvarUsageMap& M, Stmt* S) {
     ObjCIvarDecl* D = Ex->getDecl();
     IvarUsageMap::iterator I = M.find(D);
     if (I != M.end()) I->second = Used;
+    return;
   }
-  else
-    for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I!=E;++I)
-      Scan(M, *I);
+  
+  for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I!=E;++I)
+    Scan(M, *I);
+}
+
+static void Scan(IvarUsageMap& M, ObjCPropertyImplDecl* D) {
+  if (!D)
+    return;
+  
+  ObjCIvarDecl* ID = D->getPropertyIvarDecl();
+
+  if (!ID)
+    return;
+  
+  IvarUsageMap::iterator I = M.find(ID);
+  if (I != M.end()) I->second = Used;
 }
 
 void clang::CheckObjCUnusedIvar(ObjCImplementationDecl* D, BugReporter& BR) {
@@ -73,13 +87,21 @@ void clang::CheckObjCUnusedIvar(ObjCImplementationDecl* D, BugReporter& BR) {
        E = D->instmeth_end(); I!=E; ++I)
     Scan(M, (*I)->getBody());
   
+  // Scan for @synthesized property methods that act as setters/getters
+  // to an ivar.
+  for (ObjCImplementationDecl::propimpl_iterator I = D->propimpl_begin(),
+       E = D->propimpl_end(); I!=E; ++I)
+    Scan(M, *I);  
+  
   // Find ivars that are unused.
   for (IvarUsageMap::iterator I = M.begin(), E = M.end(); I!=E; ++I)
     if (I->second == Unused) {
       
       std::ostringstream os;
       os << "Instance variable '" << I->first->getName()
-         << "' in class '" << ID->getName() << "' is never used.";
+         << "' in class '" << ID->getName() 
+         << "' is never used by the methods in its @implementation "
+            "(although it may be used by category methods).";
 
       BR.EmitBasicReport("unused ivar",
                          os.str().c_str(), I->first->getLocation());
