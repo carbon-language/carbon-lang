@@ -877,6 +877,8 @@ DIAG(err_invalid_decimal_digit, ERROR,
      "invalid digit '%0' in decimal constant")
 DIAG(err_hexconstant_requires_exponent, ERROR,
      "hexadecimal floating constants require an exponent")
+DIAG(ext_hexconstant_invalid, EXTENSION,
+     "hexadecimal floating constants are a C99 feature")
 DIAG(err_typecheck_subscript_value, ERROR,
      "subscripted value is neither array nor pointer")
 DIAG(err_typecheck_subscript, ERROR,

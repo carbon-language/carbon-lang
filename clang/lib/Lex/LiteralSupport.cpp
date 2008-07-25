@@ -354,18 +354,21 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
     }
     // A binary exponent can appear with or with a '.'. If dotted, the
     // binary exponent is required. 
-    if ((*s == 'p' || *s == 'P') && PP.getLangOptions().HexFloats) {
+    if (*s == 'p' || *s == 'P') {
       const char *Exponent = s;
       s++;
       saw_exponent = true;
       if (*s == '+' || *s == '-')  s++; // sign
       const char *first_non_digit = SkipDigits(s);
-      if (first_non_digit != s) {
-        s = first_non_digit;
-      } else {
+      if (first_non_digit == s) {
         Diag(PP.AdvanceToTokenCharacter(TokLoc, Exponent-ThisTokBegin),
              diag::err_exponent_has_no_digits);
+        return;
       }
+      s = first_non_digit;
+      
+      if (!PP.getLangOptions().HexFloats)
+        Diag(TokLoc, diag::ext_hexconstant_invalid);
     } else if (saw_period) {
       Diag(PP.AdvanceToTokenCharacter(TokLoc, s-ThisTokBegin),
            diag::err_hexconstant_requires_exponent);
