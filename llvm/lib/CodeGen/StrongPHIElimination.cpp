@@ -794,7 +794,12 @@ void StrongPHIElimination::mergeLiveIntervals(unsigned primary,
                                    LI.getVNInfoAllocator());
   NewVN->hasPHIKill = true;
   LiveRange NewRange(RangeMergingIn->start, RangeMergingIn->end, NewVN);
-  RHS.removeRange(RangeMergingIn->start, RangeMergingIn->end, true);
+  
+  if (RHS.containsOneValue())
+    LI.removeInterval(RHS.reg);
+  else
+    RHS.removeRange(RangeMergingIn->start, RangeMergingIn->end, true);
+  
   LHS.addRange(NewRange);
 }
 
