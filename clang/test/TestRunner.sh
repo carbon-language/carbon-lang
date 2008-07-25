@@ -41,7 +41,10 @@ grep -q 'RUN:' $FILENAME || (
 )
 
 # Run under valgrind if the VG environment variable has been set.
-CLANG="clang"
+CLANG=$CLANG
+if [ "$CLANG" == "" ]; then
+    CLANG="clang"
+fi
 if [ -n "$VG" ]; then
   rm -f $OUTPUT.vg.*
   CLANG="valgrind --leak-check=full --quiet --log-file=$OUTPUT.vg.%p $CLANG"
