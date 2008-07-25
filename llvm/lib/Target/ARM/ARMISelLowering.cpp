@@ -1598,7 +1598,7 @@ static bool isLegalAddressImmediate(int64_t V, MVT VT,
 /// by AM is legal for this target, for a load/store of the specified type.
 bool ARMTargetLowering::isLegalAddressingMode(const AddrMode &AM, 
                                               const Type *Ty) const {
-  if (!isLegalAddressImmediate(AM.BaseOffs, getValueType(Ty), Subtarget))
+  if (!isLegalAddressImmediate(AM.BaseOffs, getValueType(Ty, true), Subtarget))
     return false;
   
   // Can never fold addr of global into load/store.
