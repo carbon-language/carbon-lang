@@ -164,11 +164,16 @@ public:
       for (ScopedDecl* SD = DS->getDecl(); SD; SD = SD->getNextDeclarator()) {
         
         VarDecl* V = dyn_cast<VarDecl>(SD);
-        if (!V) continue;
+
+        if (!V)
+          continue;
         
         if (V->hasLocalStorage())
-          if (Expr* E = V->getInit())
-            if (!Live(V, AD)) {
+          if (Expr* E = V->getInit()) {
+            // A dead initialization is a variable that is dead after it
+            // is initialized.  We don't flag warnings for those variables
+            // marked 'unused'.
+            if (!Live(V, AD) && V->getAttr<UnusedAttr>() == 0) {
               // Special case: check for initializations with constants.
               //
               //  e.g. : int x = 0;
@@ -179,6 +184,7 @@ public:
               if (!E->isConstantExpr(Ctx,NULL))
                 Report(V, DeadInit, V->getLocation(), E->getSourceRange());
             }
+          }
       }
   }
 };

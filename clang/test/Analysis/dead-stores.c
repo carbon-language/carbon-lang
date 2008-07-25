@@ -77,5 +77,12 @@ int f11() {
   return ++x; // expected-warning{{never read}}
 }
 
-
+int f12a(int y) {
+  int x = y;  // expected-warning{{never read}}
+  return 1;
+}
+int f12b(int y) {
+  int x __attribute__((unused)) = y;  // no-warning
+  return 1;
+}
 
