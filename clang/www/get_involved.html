@@ -116,7 +116,13 @@ things.  I don't think that there is a specific licensing reason to reimplement
 libgcc, but there is a lot of room for improvement in it in many 
 dimensions.</li>
 
-</ul>
+<li><b>Implement an tool to generate code documentation</b>: Clang's
+library-based design allows it to be used by a variety of tools that reason
+about source code. One great application of Clang would be to build an
+auto-documentation system like doxygen that generates code documentation from
+source code. The advantage of using Clang for such a tool is that the tool would
+use the same preprocessor/parser/ASTs as the compiler itself, giving it a very
+rich understanding of the code.</li> </ul>
 
 <p>If you hit a bug with clang, it is very useful for us if you reduce the code
 that demonstrates the problem down to something small.  There are many ways to
