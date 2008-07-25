@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -mattr=+mmx -mtriple=i686-apple-darwin9 -stats -info-output-file - | grep asm-printer | grep punpckldq
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+mmx -mtriple=i686-apple-darwin9 -o - | grep punpckldq
 
 define <2 x i32> @mmx_movzl(<2 x i32> %x) nounwind  {
 entry:
