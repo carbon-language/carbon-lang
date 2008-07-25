@@ -432,9 +432,9 @@ Expr::isLvalueResult Expr::isLvalue() const {
   case ObjCPropertyRefExprClass: // FIXME: check if read-only property.
     return LV_Valid;
   case PreDefinedExprClass:
-    return (cast<PreDefinedExpr>(this)->getIdentType() == PreDefinedExpr::CXXThis
-            ? LV_InvalidExpression
-            : LV_Valid);
+    return (cast<PreDefinedExpr>(this)->getIdentType()
+               == PreDefinedExpr::CXXThis
+            ? LV_InvalidExpression : LV_Valid);
   case CXXDefaultArgExprClass:
     return cast<CXXDefaultArgExpr>(this)->getExpr()->isLvalue();
   default:
