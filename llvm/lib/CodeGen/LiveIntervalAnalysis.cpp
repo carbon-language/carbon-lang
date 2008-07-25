@@ -19,12 +19,14 @@
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "VirtRegMap.h"
 #include "llvm/Value.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -54,6 +56,8 @@ char LiveIntervals::ID = 0;
 static RegisterPass<LiveIntervals> X("liveintervals", "Live Interval Analysis");
 
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<AliasAnalysis>();
+  AU.addPreserved<AliasAnalysis>();
   AU.addPreserved<LiveVariables>();
   AU.addRequired<LiveVariables>();
   AU.addPreservedID(MachineLoopInfoID);
@@ -212,6 +216,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   tm_ = &fn.getTarget();
   tri_ = tm_->getRegisterInfo();
   tii_ = tm_->getInstrInfo();
+  aa_ = &getAnalysis<AliasAnalysis>();
   lv_ = &getAnalysis<LiveVariables>();
   allocatableRegs_ = tri_->getAllocatableSet(fn);
 
@@ -750,7 +755,9 @@ unsigned LiveIntervals::getReMatImplicitUse(const LiveInterval &li,
     assert(!RegOp &&
            "Can't rematerialize instruction with multiple register operand!");
     RegOp = MO.getReg();
+#ifndef NDEBUG
     break;
+#endif
   }
   return RegOp;
 }
@@ -773,7 +780,6 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
   if (DisableReMat)
     return false;
 
-  isLoad = false;
   if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
     return true;
 
@@ -786,27 +792,95 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
     // This is a load from fixed stack slot. It can be rematerialized.
     return true;
 
-  if (tii_->isTriviallyReMaterializable(MI)) {
-    const TargetInstrDesc &TID = MI->getDesc();
-    isLoad = TID.isSimpleLoad();
+  // If the target-specific rules don't identify an instruction as
+  // being trivially rematerializable, use some target-independent
+  // rules.
+  if (!MI->getDesc().isRematerializable() ||
+      !tii_->isTriviallyReMaterializable(MI)) {
 
-    unsigned ImpUse = getReMatImplicitUse(li, MI);
-    if (ImpUse) {
-      const LiveInterval &ImpLi = getInterval(ImpUse);
-      for (MachineRegisterInfo::use_iterator ri = mri_->use_begin(li.reg),
-             re = mri_->use_end(); ri != re; ++ri) {
-        MachineInstr *UseMI = &*ri;
-        unsigned UseIdx = getInstructionIndex(UseMI);
-        if (li.FindLiveRangeContaining(UseIdx)->valno != ValNo)
-          continue;
-        if (!isValNoAvailableAt(ImpLi, MI, UseIdx))
+    // If the instruction access memory but the memoperands have been lost,
+    // we can't analyze it.
+    const TargetInstrDesc &TID = MI->getDesc();
+    if ((TID.mayLoad() || TID.mayStore()) && MI->memoperands_empty())
+      return false;
+
+    // Avoid instructions obviously unsafe for remat.
+    if (TID.hasUnmodeledSideEffects() || TID.isNotDuplicable())
+      return false;
+
+    // If the instruction accesses memory and the memory could be non-constant,
+    // assume the instruction is not rematerializable.
+    for (alist<MachineMemOperand>::const_iterator I = MI->memoperands_begin(),
+         E = MI->memoperands_end(); I != E; ++I) {
+      const MachineMemOperand &MMO = *I;
+      if (MMO.isVolatile() || MMO.isStore())
+        return false;
+      const Value *V = MMO.getValue();
+      if (!V)
+        return false;
+      if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V)) {
+        if (!PSV->isConstant(mf_->getFrameInfo()))
           return false;
+      } else if (!aa_->pointsToConstantMemory(V))
+        return false;
+    }
+
+    // If any of the registers accessed are non-constant, conservatively assume
+    // the instruction is not rematerializable.
+    unsigned ImpUse = 0;
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = MI->getOperand(i);
+      if (MO.isReg()) {
+        unsigned Reg = MO.getReg();
+        if (Reg == 0)
+          continue;
+        if (TargetRegisterInfo::isPhysicalRegister(Reg))
+          return false;
+
+        // Only allow one def, and that in the first operand.
+        if (MO.isDef() != (i == 0))
+          return false;
+
+        // Only allow constant-valued registers.
+        bool IsLiveIn = mri_->isLiveIn(Reg);
+        MachineRegisterInfo::def_iterator I = mri_->def_begin(Reg),
+                                          E = mri_->def_end();
+
+        // For the def, it should be the only def.
+        if (MO.isDef() && (next(I) != E || IsLiveIn))
+          return false;
+
+        if (MO.isUse()) {
+          // Only allow one use other register use, as that's all the
+          // remat mechanisms support currently.
+          if (Reg != li.reg) {
+            if (ImpUse == 0)
+              ImpUse = Reg;
+            else if (Reg != ImpUse)
+              return false;
+          }
+          // For uses, there should be only one associate def.
+          if (I != E && (next(I) != E || IsLiveIn))
+            return false;
+        }
       }
     }
-    return true;
   }
 
-  return false;
+  unsigned ImpUse = getReMatImplicitUse(li, MI);
+  if (ImpUse) {
+    const LiveInterval &ImpLi = getInterval(ImpUse);
+    for (MachineRegisterInfo::use_iterator ri = mri_->use_begin(li.reg),
+           re = mri_->use_end(); ri != re; ++ri) {
+      MachineInstr *UseMI = &*ri;
+      unsigned UseIdx = getInstructionIndex(UseMI);
+      if (li.FindLiveRangeContaining(UseIdx)->valno != ValNo)
+        continue;
+      if (!isValNoAvailableAt(ImpLi, MI, UseIdx))
+        return false;
+    }
+  }
+  return true;
 }
 
 /// isReMaterializable - Returns true if every definition of MI of every

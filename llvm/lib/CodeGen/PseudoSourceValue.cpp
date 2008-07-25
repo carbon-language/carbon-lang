@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/Compiler.h"
@@ -51,6 +52,9 @@ namespace llvm {
     const int FI;
   public:
     explicit FixedStackPseudoSourceValue(int fi) : FI(fi) {}
+
+    virtual bool isConstant(const MachineFrameInfo *MFI) const;
+
     virtual void print(std::ostream &OS) const {
       OS << "FixedStack" << FI;
     }
@@ -63,5 +67,21 @@ namespace llvm {
     if (!V)
       V = new FixedStackPseudoSourceValue(FI);
     return V;
+  }
+
+  bool PseudoSourceValue::isConstant(const MachineFrameInfo *) const {
+    if (this == getStack())
+      return false;
+    if (this == getGOT() ||
+        this == getConstantPool() ||
+        this == getJumpTable())
+      return true;
+    assert(0 && "Unknown PseudoSourceValue!");
+    return false;
+  }
+
+  bool
+  FixedStackPseudoSourceValue::isConstant(const MachineFrameInfo *MFI) const {
+    return MFI && MFI->isImmutableObjectIndex(FI);
   }
 }

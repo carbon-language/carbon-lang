@@ -17,6 +17,8 @@
 #include "llvm/Value.h"
 
 namespace llvm {
+  class MachineFrameInfo;
+
   /// PseudoSourceValue - Special value supplied for machine level alias
   /// analysis. It indicates that the a memory access references the functions
   /// stack frame (e.g., a spill slot), below the stack frame (e.g., argument
@@ -26,6 +28,10 @@ namespace llvm {
     PseudoSourceValue();
 
     virtual void print(std::ostream &OS) const;
+
+    /// isConstant - Test whether this PseudoSourceValue has a constant value.
+    ///
+    virtual bool isConstant(const MachineFrameInfo *) const;
 
     /// classof - Methods for support type inquiry through isa, cast, and
     /// dyn_cast:

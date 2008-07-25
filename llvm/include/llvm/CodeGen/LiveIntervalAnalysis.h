@@ -32,6 +32,7 @@
 
 namespace llvm {
 
+  class AliasAnalysis;
   class LiveVariables;
   class MachineLoopInfo;
   class TargetRegisterInfo;
@@ -61,6 +62,7 @@ namespace llvm {
     const TargetMachine* tm_;
     const TargetRegisterInfo* tri_;
     const TargetInstrInfo* tii_;
+    AliasAnalysis *aa_;
     LiveVariables* lv_;
 
     /// Special pool allocator for VNInfo's (LiveInterval val#).
