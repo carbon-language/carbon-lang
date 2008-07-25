@@ -739,6 +739,8 @@ DIAG(err_non_static_static, ERROR,
      "non-static declaration of '%0' follows static declaration")
 DIAG(err_redefinition_different_kind, ERROR,
      "redefinition of '%0' as different kind of symbol")
+DIAG(err_redefinition_different_typedef, ERROR,
+     "typedef redefinition with different types ('%0' vs '%1')")
 DIAG(err_conflicting_types, ERROR,
      "conflicting types for '%0'")
 DIAG(err_nested_redefinition, ERROR,

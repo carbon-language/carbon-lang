@@ -248,6 +248,18 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
     return New;
   }
   
+  // If the typedef types are not identical, reject them in all languages and
+  // with any extensions enabled.
+  if (Old->getUnderlyingType() != New->getUnderlyingType() && 
+      Context.getCanonicalType(Old->getUnderlyingType()) != 
+      Context.getCanonicalType(New->getUnderlyingType())) {
+    Diag(New->getLocation(), diag::err_redefinition_different_typedef,
+         New->getUnderlyingType().getAsString(),
+         Old->getUnderlyingType().getAsString());
+    Diag(Old->getLocation(), diag::err_previous_definition);
+    return Old;
+  }
+  
   // Allow multiple definitions for ObjC built-in typedefs.
   // FIXME: Verify the underlying types are equivalent!
   if (getLangOptions().ObjC1 && isBuiltinObjCType(New))
