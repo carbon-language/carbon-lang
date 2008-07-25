@@ -415,7 +415,8 @@ Expr::isLvalueResult Expr::isLvalue() const {
       return LV_Valid; // C99 6.5.3p4
 
     if (cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Real ||
-        cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Imag)
+        cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Imag ||
+        cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Extension)
       return cast<UnaryOperator>(this)->getSubExpr()->isLvalue();  // GNU.
     break;
   case ParenExprClass: // C99 6.5.1p5

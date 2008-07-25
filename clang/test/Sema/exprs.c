@@ -9,3 +9,9 @@ _Complex double test2() {
   return 1.0if;    // expected-warning {{imaginary constants are an extension}}
 }
 
+// rdar://6097308
+void test3() {
+  int x;
+  (__extension__ x) = 10;
+}
+
