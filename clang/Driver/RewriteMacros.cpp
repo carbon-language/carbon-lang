@@ -40,14 +40,50 @@ static bool isSameToken(Token &RawTok, Token &PPTok) {
   return false;
 }
 
-static void GetNextRawTok(Lexer &RawLex, Token &RawTok, Preprocessor &PP) {
-  RawLex.LexRawToken(RawTok);
+
+/// GetNextRawTok - Return the next raw token in the stream, skipping over
+/// comments if ReturnComment is false.
+static const Token &GetNextRawTok(const std::vector<Token> &RawTokens,
+                                  unsigned &CurTok, bool ReturnComment) {
+  assert(CurTok < RawTokens.size() && "Overran eof!");
   
-  // If we have an identifier with no identifier info for our raw token, look
-  // up the indentifier info.
-  if (RawTok.is(tok::identifier) && !RawTok.getIdentifierInfo())
-    RawTok.setIdentifierInfo(PP.LookUpIdentifierInfo(RawTok));
+  // If the client doesn't want comments and we have one, skip it.
+  if (!ReturnComment && RawTokens[CurTok].is(tok::comment))
+    ++CurTok;
+  
+  return RawTokens[CurTok++];
 }
+
+
+/// LexRawTokensFromMainFile - Lets all the raw tokens from the main file into
+/// the specified vector.
+static void LexRawTokensFromMainFile(Preprocessor &PP,
+                                     std::vector<Token> &RawTokens) {
+  SourceManager &SM = PP.getSourceManager();
+  std::pair<const char*,const char*> File =SM.getBufferData(SM.getMainFileID());
+  
+  // Create a lexer to lex all the tokens of the main file in raw mode.  Even
+  // though it is in raw mode, it will not return comments.
+  Lexer RawLex(SourceLocation::getFileLoc(SM.getMainFileID(), 0),
+               PP.getLangOptions(), File.first, File.second);
+
+  // Switch on comment lexing because we really do want them.
+  RawLex.SetCommentRetentionState(true);
+  
+  Token RawTok;
+  do {
+    RawLex.LexRawToken(RawTok);
+    
+    // If we have an identifier with no identifier info for our raw token, look
+    // up the indentifier info.  This is important for equality comparison of
+    // identifier tokens.
+    if (RawTok.is(tok::identifier) && !RawTok.getIdentifierInfo())
+      RawTok.setIdentifierInfo(PP.LookUpIdentifierInfo(RawTok));
+    
+    RawTokens.push_back(RawTok);
+  } while (RawTok.isNot(tok::eof));
+}
+
 
 /// RewriteMacrosInInput - Implement -rewrite-macros mode.
 void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
@@ -58,16 +94,11 @@ void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
   Rewrite.setSourceMgr(SM);
   RewriteBuffer &RB = Rewrite.getEditBuffer(SM.getMainFileID());
 
-  const SourceManager &SourceMgr = PP.getSourceManager();
-  std::pair<const char*, const char*> File =
-    SourceMgr.getBufferData(SM.getMainFileID());
-  
-  // Create a lexer to lex all the tokens of the main file in raw mode.  Even
-  // though it is in raw mode, it will not return comments.
-  Lexer RawLex(SourceLocation::getFileLoc(SM.getMainFileID(), 0),
-               PP.getLangOptions(), File.first, File.second);
-  Token RawTok;
-  GetNextRawTok(RawLex, RawTok, PP);
+  std::vector<Token> RawTokens;
+  LexRawTokensFromMainFile(PP, RawTokens);
+  unsigned CurRawTok = 0;
+  Token RawTok = GetNextRawTok(RawTokens, CurRawTok, false);
+
   
   // Get the first preprocessing token.
   PP.EnterMainSourceFile();
@@ -93,9 +124,9 @@ void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
     // in the input file, but we don't want to treat them as such... just ignore
     // them.
     if (RawTok.is(tok::hash) && RawTok.isAtStartOfLine()) {
-      GetNextRawTok(RawLex, RawTok, PP);
+      RawTok = GetNextRawTok(RawTokens, CurRawTok, false);
       while (!RawTok.isAtStartOfLine() && RawTok.isNot(tok::eof))
-        GetNextRawTok(RawLex, RawTok, PP);
+        RawTok = GetNextRawTok(RawTokens, CurRawTok, false);
       continue;
     }
     
@@ -106,7 +137,7 @@ void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
 
     // If the offsets are the same and the token kind is the same, ignore them.
     if (PPOffs == RawOffs && isSameToken(RawTok, PPTok)) {
-      GetNextRawTok(RawLex, RawTok, PP);
+      RawTok = GetNextRawTok(RawTokens, CurRawTok, false);
       PP.Lex(PPTok);
       continue;
     }
@@ -120,28 +151,20 @@ void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
       RB.InsertTextAfter(RawOffs, " /*"+HasSpace, 2+!HasSpace);
       unsigned EndPos;
 
-      // Switch on comment lexing.  If we get a comment, we don't want to
-      // include it as part of our run of tokens, because we don't want to
-      // nest /* */ comments.
-      RawLex.SetCommentRetentionState(true);
-      
       do {
         EndPos = RawOffs+RawTok.getLength();
 
-        GetNextRawTok(RawLex, RawTok, PP);
+        RawTok = GetNextRawTok(RawTokens, CurRawTok, true);
         RawOffs = SM.getFullFilePos(RawTok.getLocation());
         
         if (RawTok.is(tok::comment)) {
-          RawLex.SetCommentRetentionState(false);
           // Skip past the comment.
-          GetNextRawTok(RawLex, RawTok, PP);
+          RawTok = GetNextRawTok(RawTokens, CurRawTok, false);
           break;
         }
         
       } while (RawOffs <= PPOffs && !RawTok.isAtStartOfLine() &&
                (PPOffs != RawOffs || !isSameToken(RawTok, PPTok)));
-      
-      RawLex.SetCommentRetentionState(false);
 
       RB.InsertTextBefore(EndPos, "*/", 2);
       continue;
