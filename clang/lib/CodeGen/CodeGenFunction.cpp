@@ -148,7 +148,7 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
 /// isDummyBlock - Return true if BB is an empty basic block
 /// with no predecessors.
 bool CodeGenFunction::isDummyBlock(const llvm::BasicBlock *BB) {
-  if (BB->empty() && pred_begin(BB) == pred_end(BB)) 
+  if (BB->empty() && pred_begin(BB) == pred_end(BB) && !BB->hasName()) 
     return true;
   return false;
 }

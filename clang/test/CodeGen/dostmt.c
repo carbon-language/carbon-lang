@@ -1,7 +1,7 @@
-// RUN: clang %s -emit-llvm
+// RUN: clang %s -emit-llvm -o -
 
 int bar();
-int foo() {
+int test0() {
   int i;
   i = 1 + 2;
   do {
@@ -12,7 +12,7 @@ int foo() {
 }
 
 
-int foo1() {
+int test1() {
   int i;
   i = 1 + 2;
   do {
@@ -25,7 +25,7 @@ int foo1() {
 }
 
 
-int foo2() {
+int test2() {
   int i;
   i = 1 + 2;
   do {
@@ -38,7 +38,7 @@ int foo2() {
 }
 
 
-int foo3() {
+int test3() {
   int i;
   i = 1 + 2;
   do {
@@ -50,7 +50,7 @@ int foo3() {
 }
 
 
-int foo4() {
+int test4() {
   int i;
   i = 1 + 2;
   do {
@@ -60,3 +60,11 @@ int foo4() {
   } while(0);
   return i;
 }
+
+// rdar://6103124
+void test5() {
+  do { break; } while(0);
+}
+
+ 
+
