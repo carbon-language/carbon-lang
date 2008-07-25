@@ -168,8 +168,12 @@ void LiveIntervals::computeNumbering() {
           LI->end = getMBBEndIdx(J->second) + 1;
         } else {
           unsigned idx = index;
-          while (!OldI2MI[index]) ++index;
-          LI->end = mi2iMap_[OldI2MI[index]] + (idx == index ? offset : 0);
+          while (index < OldI2MI.size() && !OldI2MI[index]) ++index;
+          
+          if (index != OldI2MI.size())
+            LI->end = mi2iMap_[OldI2MI[index]] + (idx == index ? offset : 0);
+          else
+            LI->end = InstrSlots::NUM * i2miMap_.size();
         }
         
         // Remap the VNInfo def index, which works the same as the
@@ -208,8 +212,13 @@ void LiveIntervals::computeNumbering() {
           } else {
             unsigned idx = index;
             while (!OldI2MI[index]) ++index;
-            vni->kills[i] = mi2iMap_[OldI2MI[index]] +
-                            (idx == index ? offset : 0);
+            while (index < OldI2MI.size() && !OldI2MI[index]) ++index;
+            
+            if (index != OldI2MI.size())
+              vni->kills[i] = mi2iMap_[OldI2MI[index]] + 
+                              (idx == index ? offset : 0);
+            else
+              vni->kills[i] = InstrSlots::NUM * i2miMap_.size();
           }
         }
       }
