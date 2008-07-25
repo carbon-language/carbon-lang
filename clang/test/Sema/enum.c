@@ -40,11 +40,11 @@ extern enum some_undefined_enum ve2; // expected-warning {{ISO C forbids forward
 void test4() {
   for (; ve2;) // expected-error {{statement requires expression of scalar type}}
     ;
-  (_Bool)ve2;  // expected-error {{statement requires expression of scalar type}}
+  (_Bool)ve2;  // expected-error {{arithmetic or pointer type is required}}
 
   for (; ;ve2)
     ;
   (void)ve2;
-  ve2;
+  ve2;         // expected-warning {{expression result unused}}
 }
 
