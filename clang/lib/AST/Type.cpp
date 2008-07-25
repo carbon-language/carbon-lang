@@ -1010,8 +1010,7 @@ void ObjCQualifiedInterfaceType::getAsStringInternal(
   InnerString = ObjCQIString + InnerString;
 }
 
-void ObjCQualifiedIdType::getAsStringInternal(
-                                              std::string &InnerString) const {
+void ObjCQualifiedIdType::getAsStringInternal(std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
   std::string ObjCQIString = "id";
