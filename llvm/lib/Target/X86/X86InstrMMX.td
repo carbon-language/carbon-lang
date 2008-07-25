@@ -59,11 +59,6 @@ def MMX_PSHUFW_shuffle_mask : PatLeaf<(build_vector), [{
   return X86::isPSHUFDMask(N);
 }], MMX_SHUFFLE_get_shuf_imm>;
 
-// Patterns for: vector_shuffle v1, v2, <4, 5, 2, 3>; etc.
-def MMX_MOVL_shuffle_mask : PatLeaf<(build_vector), [{
-  return X86::isMOVLMask(N);
-}]>;
-
 //===----------------------------------------------------------------------===//
 // MMX Multiclasses
 //===----------------------------------------------------------------------===//
