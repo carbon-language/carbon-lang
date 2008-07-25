@@ -19,16 +19,6 @@ using namespace clang;
 
 ASTConsumer::~ASTConsumer() {}
 
-void ASTConsumer::HandleTopLevelDeclaration(Decl* d) {
-  if (ScopedDecl* sd = dyn_cast<ScopedDecl>(d))
-    while (sd) {
-      HandleTopLevelDecl(sd);
-      sd = sd->getNextDeclarator();
-    }
-  else
-    HandleTopLevelDecl(d);
-}
-
 void ASTConsumer::InitializeTU(TranslationUnit& TU) {
   Initialize(TU.getContext());
 }

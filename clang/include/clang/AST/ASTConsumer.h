@@ -42,14 +42,6 @@ public:
   ///  translation unit have been parsed.
   virtual void HandleTranslationUnit(TranslationUnit& TU) {}    
   
-  /// HandleTopLevelDeclaration - Handle the specified top-level declaration.
-  ///  This is called only for Decl* that are the head of a chain of
-  ///  Decl's (in the case that the Decl* is a ScopedDecl*).  Subclasses
-  ///  can override its behavior; by default it calls HandleTopLevelDecl
-  ///  for every Decl* in a decl chain.
-  virtual void HandleTopLevelDeclaration(Decl *D);
-
-  
   /// HandleTagDeclDefinition - This callback is invoked each time a TagDecl
   /// (e.g. struct, union, enum, class) is completed.  This allows the client to
   /// hack on the type, which can occur at any point in the file (because these
