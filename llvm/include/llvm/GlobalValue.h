@@ -107,6 +107,7 @@ public:
   bool hasDLLImportLinkage()  const { return Linkage == DLLImportLinkage; }
   bool hasDLLExportLinkage()  const { return Linkage == DLLExportLinkage; }
   bool hasExternalWeakLinkage() const { return Linkage == ExternalWeakLinkage; }
+  bool hasGhostLinkage()      const { return Linkage == GhostLinkage; }
   void setLinkage(LinkageTypes LT) { Linkage = LT; }
   LinkageTypes getLinkage() const { return Linkage; }
 
