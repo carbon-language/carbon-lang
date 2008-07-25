@@ -741,7 +741,7 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
   std::set<unsigned> RegHandled;
   for (SmallVector<std::pair<unsigned, MachineInstr*>, 4>::iterator I =
        InsertedPHIDests.begin(), E = InsertedPHIDests.end(); I != E; ++I)
-    if (!RegHandled.count(I->first))
+    if (!RegHandled.insert(I->first).second)
       LI.addLiveRangeToEndOfBlock(I->first, I->second);
 }
 
