@@ -587,17 +587,20 @@ Action::ExprResult Sema::ActOnParenExpr(SourceLocation L, SourceLocation R,
 /// The UsualUnaryConversions() function is *not* called by this routine.
 /// See C99 6.3.2.1p[2-4] for more details.
 QualType Sema::CheckSizeOfAlignOfOperand(QualType exprType, 
-                                         SourceLocation OpLoc, bool isSizeof) {
+                                         SourceLocation OpLoc,
+                                         const SourceRange &ExprRange,
+                                         bool isSizeof) {
   // C99 6.5.3.4p1:
   if (isa<FunctionType>(exprType) && isSizeof)
     // alignof(function) is allowed.
-    Diag(OpLoc, diag::ext_sizeof_function_type);
+    Diag(OpLoc, diag::ext_sizeof_function_type, ExprRange);
   else if (exprType->isVoidType())
-    Diag(OpLoc, diag::ext_sizeof_void_type, isSizeof ? "sizeof" : "__alignof");
+    Diag(OpLoc, diag::ext_sizeof_void_type, isSizeof ? "sizeof" : "__alignof",
+         ExprRange);
   else if (exprType->isIncompleteType()) {
     Diag(OpLoc, isSizeof ? diag::err_sizeof_incomplete_type : 
                            diag::err_alignof_incomplete_type,
-         exprType.getAsString());
+         exprType.getAsString(), ExprRange);
     return QualType(); // error
   }
   // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
@@ -614,7 +617,8 @@ ActOnSizeOfAlignOfTypeExpr(SourceLocation OpLoc, bool isSizeof,
   // Verify that this is a valid expression.
   QualType ArgTy = QualType::getFromOpaquePtr(Ty);
   
-  QualType resultType = CheckSizeOfAlignOfOperand(ArgTy, OpLoc, isSizeof);
+  QualType resultType =
+    CheckSizeOfAlignOfOperand(ArgTy, OpLoc, SourceRange(LPLoc, RPLoc),isSizeof);
 
   if (resultType.isNull())
     return true;
@@ -2278,10 +2282,12 @@ Action::ExprResult Sema::ActOnUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
     resultType = Context.IntTy;
     break;
   case UnaryOperator::SizeOf:
-    resultType = CheckSizeOfAlignOfOperand(Input->getType(), OpLoc, true);
+    resultType = CheckSizeOfAlignOfOperand(Input->getType(), OpLoc,
+                                           Input->getSourceRange(), true);
     break;
   case UnaryOperator::AlignOf:
-    resultType = CheckSizeOfAlignOfOperand(Input->getType(), OpLoc, false);
+    resultType = CheckSizeOfAlignOfOperand(Input->getType(), OpLoc,
+                                           Input->getSourceRange(), false);
     break;
   case UnaryOperator::Real:
   case UnaryOperator::Imag:

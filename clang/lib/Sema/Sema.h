@@ -846,8 +846,8 @@ private:
   QualType CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc);   
   QualType CheckAddressOfOperand(Expr *op, SourceLocation OpLoc);
   QualType CheckIndirectionOperand(Expr *op, SourceLocation OpLoc);
-  QualType CheckSizeOfAlignOfOperand(QualType type, SourceLocation loc, 
-                                     bool isSizeof);
+  QualType CheckSizeOfAlignOfOperand(QualType type, SourceLocation OpLoc, 
+                                     const SourceRange &R, bool isSizeof);
   QualType CheckRealImagOperand(Expr *&Op, SourceLocation OpLoc);
   
   /// type checking primary expressions.
