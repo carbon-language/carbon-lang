@@ -2003,21 +2003,24 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
 }
 
 Constant *ConstantExpr::getCompareTy(unsigned short predicate,
-                                     Constant *C1, Constant *C2) {
+                                     Constant *C1, Constant *C2,
+                                     bool isVecCmp) {
   switch (predicate) {
     default: assert(0 && "Invalid CmpInst predicate");
-    case FCmpInst::FCMP_FALSE: case FCmpInst::FCMP_OEQ: case FCmpInst::FCMP_OGT:
-    case FCmpInst::FCMP_OGE: case FCmpInst::FCMP_OLT: case FCmpInst::FCMP_OLE:
-    case FCmpInst::FCMP_ONE: case FCmpInst::FCMP_ORD: case FCmpInst::FCMP_UNO:
-    case FCmpInst::FCMP_UEQ: case FCmpInst::FCMP_UGT: case FCmpInst::FCMP_UGE:
-    case FCmpInst::FCMP_ULT: case FCmpInst::FCMP_ULE: case FCmpInst::FCMP_UNE:
-    case FCmpInst::FCMP_TRUE:
-      return getFCmp(predicate, C1, C2);
-    case ICmpInst::ICMP_EQ: case ICmpInst::ICMP_NE: case ICmpInst::ICMP_UGT:
-    case ICmpInst::ICMP_UGE: case ICmpInst::ICMP_ULT: case ICmpInst::ICMP_ULE:
-    case ICmpInst::ICMP_SGT: case ICmpInst::ICMP_SGE: case ICmpInst::ICMP_SLT:
-    case ICmpInst::ICMP_SLE:
-      return getICmp(predicate, C1, C2);
+    case CmpInst::FCMP_FALSE: case CmpInst::FCMP_OEQ: case CmpInst::FCMP_OGT:
+    case CmpInst::FCMP_OGE:   case CmpInst::FCMP_OLT: case CmpInst::FCMP_OLE:
+    case CmpInst::FCMP_ONE:   case CmpInst::FCMP_ORD: case CmpInst::FCMP_UNO:
+    case CmpInst::FCMP_UEQ:   case CmpInst::FCMP_UGT: case CmpInst::FCMP_UGE:
+    case CmpInst::FCMP_ULT:   case CmpInst::FCMP_ULE: case CmpInst::FCMP_UNE:
+    case CmpInst::FCMP_TRUE:
+      return isVecCmp ? getVFCmp(predicate, C1, C2) 
+                      : getFCmp(predicate, C1, C2);
+    case CmpInst::ICMP_EQ:  case CmpInst::ICMP_NE:  case CmpInst::ICMP_UGT:
+    case CmpInst::ICMP_UGE: case CmpInst::ICMP_ULT: case CmpInst::ICMP_ULE:
+    case CmpInst::ICMP_SGT: case CmpInst::ICMP_SGE: case CmpInst::ICMP_SLT:
+    case CmpInst::ICMP_SLE:
+      return isVecCmp ? getVICmp(predicate, C1, C2)
+                      : getICmp(predicate, C1, C2);
   }
 }
 
