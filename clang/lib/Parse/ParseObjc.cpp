@@ -1292,8 +1292,10 @@ Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
   EnterScope(Scope::FnScope|Scope::DeclScope);
   
   // Tell the actions module that we have entered a method definition with the
-  // specified Declarator for the method.
-  Actions.ObjCActOnStartOfMethodDef(CurScope, MDecl);
+  // specified Declarator for the method. If we don't have an MDecl, avoid
+  // calling the actions module.
+  if (MDecl)
+    Actions.ObjCActOnStartOfMethodDef(CurScope, MDecl);
   
   StmtResult FnBody = ParseCompoundStatementBody();
   
@@ -1305,7 +1307,8 @@ Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
   ExitScope();
   
   // TODO: Pass argument information.
-  Actions.ActOnFinishFunctionBody(MDecl, FnBody.Val);
+  if (MDecl)
+    Actions.ActOnFinishFunctionBody(MDecl, FnBody.Val);
   return MDecl;
 }
 
