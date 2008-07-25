@@ -22,8 +22,11 @@ using namespace clang;
 /// and user declared, in the method definition's AST.
 void Sema::ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   assert(getCurMethodDecl() == 0 && "Method parsing confused");
-  ObjCMethodDecl *MDecl = dyn_cast<ObjCMethodDecl>(static_cast<Decl *>(D));
-  assert(MDecl != 0 && "Not a method declarator!");
+  ObjCMethodDecl *MDecl = dyn_cast_or_null<ObjCMethodDecl>((Decl *)D);
+  
+  // If we don't have a valid method decl, simply return.
+  if (!MDecl)
+    return;
 
   // Allow the rest of sema to find private method decl implementations.
   if (MDecl->isInstance())

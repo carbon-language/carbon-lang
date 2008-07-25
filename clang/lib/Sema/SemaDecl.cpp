@@ -1576,12 +1576,13 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
 
 Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtTy *Body) {
   Decl *dcl = static_cast<Decl *>(D);
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(dcl)) {
+  if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(dcl)) {
     FD->setBody((Stmt*)Body);
     assert(FD == getCurFunctionDecl() && "Function parsing confused");
-  } else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(dcl)) {
+  } else if (ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(dcl)) {
     MD->setBody((Stmt*)Body);
-  }  
+  } else
+    return 0;
   PopDeclContext();
   // Verify and clean out per-function state.
   
