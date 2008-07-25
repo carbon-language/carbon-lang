@@ -136,7 +136,13 @@ public:
   ///
   template<typename Ty>
   Ty *getInfo() {
-    if (!MFInfo) MFInfo = new (Allocator.Allocate<Ty>()) Ty(*this);
+    if (!MFInfo) {
+        // This should be just `new (Allocator.Allocate<Ty>()) Ty(*this)', but
+        // that apparently breaks GCC 3.3.
+        Ty *Loc = static_cast<Ty*>(Allocator.Allocate(sizeof(Ty),
+                                                      AlignOf<Ty>::Alignment));
+        MFInfo = new (Loc) Ty(*this);
+    }
 
     assert((void*)dynamic_cast<Ty*>(MFInfo) == (void*)MFInfo &&
            "Invalid concrete type or multiple inheritence for getInfo");
