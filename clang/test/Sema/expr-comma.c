@@ -1,4 +1,4 @@
-// RUN: clang %s -fsyntax-only -verify -std=c99
+// RUN: clang %s -fsyntax-only -verify -std=c89
 // rdar://6095180
 
 #include <assert.h>
@@ -11,8 +11,8 @@ int A[sizeof((foo().c)) == 17 ? 1 : -1];
 int B[sizeof((a.c)) == 17 ? 1 : -1];
 
 
-// comma does array/function promotion in c99.
-int X[sizeof(0, (foo().c)) == sizeof(char*) ? 1 : -1];
-int Y[sizeof(0, (a,b).c) == sizeof(char*) ? 1 : -1];
-int Z[sizeof(0, (a=b).c) == sizeof(char*) ? 1 : -1];
-
+// comma does not promote array/function in c90 unless they are lvalues.
+int W[sizeof(0, a.c) == sizeof(char*) ? 1 : -1];
+int X[sizeof(0, (foo().c)) == 17 ? 1 : -1];
+int Y[sizeof(0, (a,b).c) == 17 ? 1 : -1];
+int Z[sizeof(0, (a=b).c) == 17 ? 1 : -1];

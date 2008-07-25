@@ -58,8 +58,16 @@ void Sema::DefaultFunctionArrayConversion(Expr *&E) {
   }
   if (Ty->isFunctionType())
     ImpCastExprToType(E, Context.getPointerType(Ty));
-  else if (Ty->isArrayType())
-    ImpCastExprToType(E, Context.getArrayDecayedType(Ty));
+  else if (Ty->isArrayType()) {
+    // In C90 mode, arrays only promote to pointers if the array expression is
+    // an lvalue.  The relevant legalese is C90 6.2.2.1p3: "an lvalue that has
+    // type 'array of type' is converted to an expression that has type 'pointer
+    // to type'...".  In C99 this was changed to: C99 6.3.2.1p3: "an expression
+    // that has type 'array of type' ...".  The relevant change is "an lvalue"
+    // (C90) to "an expression" (C99).
+    if (getLangOptions().C99 || E->isLvalue() == Expr::LV_Valid)
+      ImpCastExprToType(E, Context.getArrayDecayedType(Ty));
+  }
 }
 
 /// UsualUnaryConversions - Performs various conversions that are common to most
