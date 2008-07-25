@@ -1493,7 +1493,12 @@ Stmt *RewriteObjC::RewriteObjCThrowStmt(ObjCAtThrowStmt *S) {
     buf = "objc_exception_throw(";
   else // add an implicit argument
     buf = "objc_exception_throw(_caught";
-  ReplaceText(startLoc, 6, buf.c_str(), buf.size());
+  
+  // handle "@  throw" correctly.
+  const char *wBuf = strchr(startBuf, 'w');
+  assert((*wBuf == 'w') && "@throw: can't find 'w'");
+  ReplaceText(startLoc, wBuf-startBuf+1, buf.c_str(), buf.size());
+  
   const char *semiBuf = strchr(startBuf, ';');
   assert((*semiBuf == ';') && "@throw: can't find ';'");
   SourceLocation semiLoc = startLoc.getFileLocWithOffset(semiBuf-startBuf);
