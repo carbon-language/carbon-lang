@@ -169,7 +169,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
   } else
     ClassDecl = getObjCInterfaceDecl(receiverName);
   
-  // ClassDecl is null in the following case.
+  // The following code allows for the following GCC-ism:
   //
   //  typedef XCElementDisplayRect XCElementGraphicsRect;
   //
@@ -178,22 +178,31 @@ Sema::ExprResult Sema::ActOnClassMessage(
   //    _sGraphicsDelegate =[[XCElementGraphicsRect alloc] init];
   //  }
   //
-  // FIXME: Investigate why GCC allows the above.
+  // If necessary, the following lookup could move to getObjCInterfaceDecl().
+  if (!ClassDecl) {
+    Decl *IDecl = LookupDecl(receiverName, Decl::IDNS_Ordinary, 0, false);
+    if (TypedefDecl *OCTD = dyn_cast_or_null<TypedefDecl>(IDecl)) {
+      const ObjCInterfaceType *OCIT;
+      OCIT = OCTD->getUnderlyingType()->getAsObjCInterfaceType();
+      if (OCIT)
+        ClassDecl = OCIT->getDecl();
+    }
+  }
+  assert(ClassDecl && "missing interface declaration");
   ObjCMethodDecl *Method = 0;
   QualType returnType;
-  if (ClassDecl) {
-    Method = ClassDecl->lookupClassMethod(Sel);
-    
-    // If we have an implementation in scope, check "private" methods.
-    if (!Method) {
-      if (ObjCImplementationDecl *ImpDecl = 
-          ObjCImplementations[ClassDecl->getIdentifier()])
-        Method = ImpDecl->getClassMethod(Sel);
-    }
-    // Before we give up, check if the selector is an instance method.
-    if (!Method)
-      Method = ClassDecl->lookupInstanceMethod(Sel);
+  Method = ClassDecl->lookupClassMethod(Sel);
+  
+  // If we have an implementation in scope, check "private" methods.
+  if (!Method) {
+    if (ObjCImplementationDecl *ImpDecl = 
+        ObjCImplementations[ClassDecl->getIdentifier()])
+      Method = ImpDecl->getClassMethod(Sel);
   }
+  // Before we give up, check if the selector is an instance method.
+  if (!Method)
+    Method = ClassDecl->lookupInstanceMethod(Sel);
+
   if (!Method) {
     Diag(lbrac, diag::warn_method_not_found, std::string("+"), Sel.getName(),
          SourceRange(lbrac, rbrac));
@@ -212,7 +221,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
   // FIXME: need to do a better job handling 'super' usage within a class 
   // For now, we simply pass the "super" identifier through (which isn't
   // consistent with instance methods.
-  if (isSuper || !ClassDecl)
+  if (isSuper)
     return new ObjCMessageExpr(receiverName, Sel, returnType, Method,
                                lbrac, rbrac, ArgExprs, NumArgs);
   else

@@ -72,7 +72,7 @@ typedef XCElementDisplayRect XCElementGraphicsRect;
 {
   static XCElementGraphicsRect *_sGraphicsDelegate = ((void *) 0);
   if (!_sGraphicsDelegate) {
-    _sGraphicsDelegate =[[XCElementGraphicsRect alloc] init]; // expected-warning{{method '+alloc' not found (return type defaults to 'id')}}
+    _sGraphicsDelegate =[[XCElementGraphicsRect alloc] init]; 
   }
 }
 @end
