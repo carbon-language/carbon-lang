@@ -1122,33 +1122,34 @@ ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
 
   // C99 6.5.4p2: the cast type needs to be void or scalar and the expression
   // type needs to be scalar.
-  if (!castType->isVoidType()) {  // Cast to void allows any expr type.
-    if (!castType->isScalarType() && !castType->isVectorType()) {
-      // GCC struct/union extension.
-      if (castType == castExpr->getType() &&
-          castType->isStructureType() || castType->isUnionType()) {
-        Diag(LParenLoc, diag::ext_typecheck_cast_nonscalar,
-             SourceRange(LParenLoc, RParenLoc));
-        return new CastExpr(castType, castExpr, LParenLoc);
-      } else
-        return Diag(LParenLoc, diag::err_typecheck_cond_expect_scalar, 
-                    castType.getAsString(), SourceRange(LParenLoc, RParenLoc));
+  if (castType->isVoidType()) {
+    // Cast to void allows any expr type.
+  } else if (!castType->isScalarType() && !castType->isVectorType()) {
+    // GCC struct/union extension: allow cast to self.
+    if (Context.getCanonicalType(castType) !=
+        Context.getCanonicalType(castExpr->getType()) ||
+        (!castType->isStructureType() && !castType->isUnionType())) {
+      // Reject any other conversions to non-scalar types.
+      return Diag(LParenLoc, diag::err_typecheck_cond_expect_scalar, 
+                  castType.getAsString(), castExpr->getSourceRange());
     }
-    if (!castExpr->getType()->isScalarType() && 
-        !castExpr->getType()->isVectorType())
-      return Diag(castExpr->getLocStart(), 
-                  diag::err_typecheck_expect_scalar_operand, 
-                  castExpr->getType().getAsString(),castExpr->getSourceRange());
-
-    if (castExpr->getType()->isVectorType()) {
-      if (CheckVectorCast(SourceRange(LParenLoc, RParenLoc), 
-                          castExpr->getType(), castType))
-        return true;
-    } else if (castType->isVectorType()) {
-      if (CheckVectorCast(SourceRange(LParenLoc, RParenLoc), 
-                          castType, castExpr->getType()))
-        return true;
-    }
+      
+    // accept this, but emit an ext-warn.
+    Diag(LParenLoc, diag::ext_typecheck_cast_nonscalar, 
+         castType.getAsString(), castExpr->getSourceRange());
+  } else if (!castExpr->getType()->isScalarType() && 
+             !castExpr->getType()->isVectorType()) {
+    return Diag(castExpr->getLocStart(), 
+                diag::err_typecheck_expect_scalar_operand, 
+                castExpr->getType().getAsString(),castExpr->getSourceRange());
+  } else if (castExpr->getType()->isVectorType()) {
+    if (CheckVectorCast(SourceRange(LParenLoc, RParenLoc), 
+                        castExpr->getType(), castType))
+      return true;
+  } else if (castType->isVectorType()) {
+    if (CheckVectorCast(SourceRange(LParenLoc, RParenLoc), 
+                        castType, castExpr->getType()))
+      return true;
   }
   return new CastExpr(castType, castExpr, LParenLoc);
 }
