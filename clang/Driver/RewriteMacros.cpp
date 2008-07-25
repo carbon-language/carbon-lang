@@ -121,9 +121,28 @@ void clang::RewriteMacrosInInput(Preprocessor &PP,const std::string &InFileName,
     }
     
     // If the raw file hits a preprocessor directive, they will be extra tokens
-    // in the input file, but we don't want to treat them as such... just ignore
-    // them.
+    // in the raw file that don't exist in the preprocsesed file.  However, we
+    // choose to preserve them in the output file and otherwise handle them
+    // specially.
     if (RawTok.is(tok::hash) && RawTok.isAtStartOfLine()) {
+      // If this is a #warning directive or #pragma mark (GNU extensions),
+      // comment the line out.
+      if (RawTokens[CurRawTok].is(tok::identifier)) {
+        const IdentifierInfo *II = RawTokens[CurRawTok].getIdentifierInfo();
+        if (!strcmp(II->getName(), "warning")) {
+          // Comment out #warning.
+          RB.InsertTextAfter(SM.getFullFilePos(RawTok.getLocation()), "//", 2);
+        } else if (!strcmp(II->getName(), "pragma") &&
+                   RawTokens[CurRawTok+1].is(tok::identifier) &&
+                  !strcmp(RawTokens[CurRawTok+1].getIdentifierInfo()->getName(),
+                          "mark")){
+          // Comment out #pragma mark.
+          RB.InsertTextAfter(SM.getFullFilePos(RawTok.getLocation()), "//", 2);
+        }
+      }
+      
+      // Otherwise, if this is a #include or some other directive, just leave it
+      // in the file by skipping over the line.
       RawTok = GetNextRawTok(RawTokens, CurRawTok, false);
       while (!RawTok.isAtStartOfLine() && RawTok.isNot(tok::eof))
         RawTok = GetNextRawTok(RawTokens, CurRawTok, false);
