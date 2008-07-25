@@ -972,7 +972,7 @@ static unsigned retrieveAddrSpace(const Value *Val) {
 }
 
 void GetElementPtrInst::init(Value *Ptr, Value* const *Idx, unsigned NumIdx,
-			     const std::string &Name) {
+                             const std::string &Name) {
   assert(NumOperands == 1+NumIdx && "NumOperands not initialized?");
   Use *OL = OperandList;
   OL[0] = Ptr;
