@@ -339,6 +339,25 @@ static void HandleNoReturnAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   d->addAttr(new NoReturnAttr());
 }
 
+static void HandleUnusedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.getNumArgs() != 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments,
+           std::string("0"));
+    return;
+  }
+  
+  VarDecl *VD = dyn_cast<VarDecl>(d);
+  
+  if (!VD) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
+           "unused", "variable");
+    return;
+  }
+  
+  d->addAttr(new UnusedAttr());
+}
+
 static void HandleDeprecatedAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 0) {
@@ -826,6 +845,7 @@ static void ProcessDeclAttribute(Decl *D, const AttributeList &Attr, Sema &S) {
   case AttributeList::AT_format:      HandleFormatAttr    (D, Attr, S); break;
   case AttributeList::AT_IBOutlet:    HandleIBOutletAttr  (D, Attr, S); break;
   case AttributeList::AT_nonnull:     HandleNonNullAttr   (D, Attr, S); break;
+  case AttributeList::AT_unused:      HandleUnusedAttr    (D, Attr, S); break;
   case AttributeList::AT_transparent_union:
     HandleTransparentUnionAttr(D, Attr, S);
     break;

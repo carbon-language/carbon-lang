@@ -27,22 +27,22 @@ public:
   enum Kind {
     Alias,
     Aligned,
-    Packed,
     Annotate,
-    NonNull,
-    NoReturn,
     Deprecated,
-    Weak,
     DLLImport,
     DLLExport,
-    NoThrow,
+    FastCall,    
     Format,
-    Visibility,
-    FastCall,
+    IBOutletKind, // Clang-specific.  Use "Kind" suffix to not conflict with
+    NonNull,
+    NoReturn,
+    NoThrow,
+    Packed,
     StdCall,
     TransparentUnion,
-    IBOutletKind // Clang-specific.  Use "Kind" suffix to not conflict with
-                 // the IBOutlet macro.
+    Unused,    
+    Visibility,
+    Weak
   };
     
 private:
@@ -157,6 +157,15 @@ public:
   static bool classof(const DeprecatedAttr *A) { return true; }
 };
 
+class UnusedAttr : public Attr {
+public:
+  UnusedAttr() : Attr(Unused) {}
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) { return A->getKind() == Unused; }  
+  static bool classof(const UnusedAttr *A) { return true; }
+};  
+  
 class WeakAttr : public Attr {
 public:
   WeakAttr() : Attr(Weak) {}
