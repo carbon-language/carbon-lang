@@ -961,6 +961,7 @@ DIAG(err_typecheck_expression_not_modifiable_lvalue, ERROR,
      "expression is not assignable")
 DIAG(err_typecheck_incomplete_type_not_modifiable_lvalue, ERROR,
      "incomplete type '%0' is not assignable")
+
 DIAG(err_typecheck_duplicate_vector_components_not_mlvalue, ERROR,
      "vector is not assignable (contains duplicate components)")
 DIAG(err_typecheck_call_not_function, ERROR,

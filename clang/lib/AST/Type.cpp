@@ -476,7 +476,8 @@ bool Type::isIntegerType() const {
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::LongLong;
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
-    if (TT->getDecl()->isEnum())
+    // Incomplete enum types are not treated as integer types.
+    if (TT->getDecl()->isEnum() && TT->getDecl()->isDefinition())
       return true;
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isIntegerType();
@@ -490,8 +491,8 @@ bool Type::isIntegralType() const {
     return BT->getKind() >= BuiltinType::Bool &&
     BT->getKind() <= BuiltinType::LongLong;
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
-    if (TT->getDecl()->isEnum())
-      return true;
+    if (TT->getDecl()->isEnum() && TT->getDecl()->isDefinition())
+      return true;  // Complete enum types are integral.
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
     return ASQT->getBaseType()->isIntegralType();
   return false;
@@ -593,7 +594,7 @@ bool Type::isRealType() const {
     return BT->getKind() >= BuiltinType::Bool &&
            BT->getKind() <= BuiltinType::LongDouble;
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
-    return TT->getDecl()->isEnum();
+    return TT->getDecl()->isEnum() && TT->getDecl()->isDefinition();
   if (const VectorType *VT = dyn_cast<VectorType>(CanonicalType))
     return VT->getElementType()->isRealType();
   if (const ASQualType *ASQT = dyn_cast<ASQualType>(CanonicalType))
@@ -617,7 +618,9 @@ bool Type::isScalarType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() != BuiltinType::Void;
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType)) {
-    if (TT->getDecl()->isEnum())
+    // Enums are scalar types, but only if they are defined.  Incomplete enums
+    // are not treated as scalar types.
+    if (TT->getDecl()->isEnum() && TT->getDecl()->isDefinition())
       return true;
     return false;
   }

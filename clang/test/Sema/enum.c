@@ -33,3 +33,18 @@ int test2(int i)
 union u0;    // expected-error {{previous use is here}}
 enum u0 { U0A }; // expected-error {{error: use of 'u0' with tag type that does not match previous declaration}}
 
+
+// rdar://6095136
+extern enum some_undefined_enum ve2; // expected-warning {{ISO C forbids forward references to 'enum' types}}
+
+void test4() {
+  for (; ve2;) // expected-error {{statement requires expression of scalar type}}
+    ;
+  (_Bool)ve2;  // expected-error {{statement requires expression of scalar type}}
+
+  for (; ;ve2)
+    ;
+  (void)ve2;
+  ve2;
+}
+

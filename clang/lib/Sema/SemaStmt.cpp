@@ -25,6 +25,12 @@ using namespace clang;
 Sema::StmtResult Sema::ActOnExprStmt(ExprTy *expr) {
   Expr *E = static_cast<Expr*>(expr);
   assert(E && "ActOnExprStmt(): missing expression");
+  
+  // C99 6.8.3p2: The expression in an expression statement is evaluated as a
+  // void expression for its side effects.  Conversion to void allows any
+  // operand, even incomplete types.
+  
+  // Same thing in for stmt first clause (when expr) and third clause.
   return E;
 }
 
@@ -536,7 +542,7 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
     
     if (!SecondType->isScalarType()) // C99 6.8.5p2
       return Diag(ForLoc, diag::err_typecheck_statement_requires_scalar,
-               SecondType.getAsString(), Second->getSourceRange());
+                  SecondType.getAsString(), Second->getSourceRange());
   }
   return new ForStmt(First, Second, Third, Body, ForLoc);
 }
