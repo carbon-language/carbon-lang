@@ -911,12 +911,12 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
                                       unsigned SICmpOpc, unsigned FCmpOpc) {
   Value *Result;
   QualType LHSTy = E->getLHS()->getType();
-  if (!LHSTy->isAnyComplexType()) {
+  if (!LHSTy->isAnyComplexType() && !LHSTy->isVectorType()) {
     Value *LHS = Visit(E->getLHS());
     Value *RHS = Visit(E->getRHS());
     
     if (LHS->getType()->isFloatingPoint()) {
-      Result = Builder.CreateFCmp((llvm::FCmpInst::Predicate)FCmpOpc,
+      Result = Builder.CreateFCmp((llvm::CmpInst::Predicate)FCmpOpc,
                                   LHS, RHS, "cmp");
     } else if (LHSTy->isSignedIntegerType()) {
       Result = Builder.CreateICmp((llvm::ICmpInst::Predicate)SICmpOpc,
@@ -926,6 +926,22 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
       Result = Builder.CreateICmp((llvm::ICmpInst::Predicate)UICmpOpc,
                                   LHS, RHS, "cmp");
     }
+  } else if (LHSTy->isVectorType()) {
+    Value *LHS = Visit(E->getLHS());
+    Value *RHS = Visit(E->getRHS());
+    
+    if (LHS->getType()->isFPOrFPVector()) {
+      Result = Builder.CreateVFCmp((llvm::CmpInst::Predicate)FCmpOpc,
+                                  LHS, RHS, "cmp");
+    } else if (LHSTy->isUnsignedIntegerType()) {
+      Result = Builder.CreateVICmp((llvm::CmpInst::Predicate)UICmpOpc,
+                                  LHS, RHS, "cmp");
+    } else {
+      // Signed integers and pointers.
+      Result = Builder.CreateVICmp((llvm::CmpInst::Predicate)SICmpOpc,
+                                  LHS, RHS, "cmp");
+    }
+    return Result;
   } else {
     // Complex Comparison: can only be an equality comparison.
     CodeGenFunction::ComplexPairTy LHS = CGF.EmitComplexExpr(E->getLHS());
