@@ -127,11 +127,12 @@ class LValue {
     // ExtVector element subset: V.xyx
     llvm::Constant *VectorElts;
     
+    // BitField start bit and size
     struct {
       unsigned short StartBit;
       unsigned short Size;
       bool IsSigned;
-    } BitfieldData;           // BitField start bit and size
+    } BitfieldData;
   };
 
   bool Volatile:1;
