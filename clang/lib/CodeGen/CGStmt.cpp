@@ -120,10 +120,10 @@ void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB) {
   
   if (LastBB->getTerminator()) {
     // If the previous block is already terminated, don't touch it.
-  } else if (LastBB->empty() && LastBB->getValueName() == 0) {
+  } else if (LastBB->empty() && isDummyBlock(LastBB)) {
     // If the last block was an empty placeholder, remove it now.
     // TODO: cache and reuse these.
-    Builder.GetInsertBlock()->eraseFromParent();
+    LastBB->eraseFromParent();
   } else {
     // Otherwise, create a fall-through branch.
     Builder.CreateBr(BB);
@@ -420,44 +420,46 @@ void CodeGenFunction::EmitContinueStmt() {
 /// add multiple cases to switch instruction, one for each value within
 /// the range. If range is too big then emit "if" condition check.
 void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
+  // XXX kill me with param - ddunbar
   assert(S.getRHS() && "Expected RHS value in CaseStmt");
 
   llvm::APSInt LHS = S.getLHS()->getIntegerConstantExprValue(getContext());
   llvm::APSInt RHS = S.getRHS()->getIntegerConstantExprValue(getContext());
+
+  // Emit the code for this case. We do this first to make sure it is
+  // properly chained from our predecessor before generating the
+  // switch machinery to enter this block.
+  StartBlock("sw.bb");
+  llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
+  EmitStmt(S.getSubStmt());
 
   // If range is empty, do nothing.
   if (LHS.isSigned() ? RHS.slt(LHS) : RHS.ult(LHS))
     return;
 
   llvm::APInt Range = RHS - LHS;
-  // FIXME: parameters such as this should not be hardcoded
+  // FIXME: parameters such as this should not be hardcoded.
   if (Range.ult(llvm::APInt(Range.getBitWidth(), 64))) {
     // Range is small enough to add multiple switch instruction cases.
-    StartBlock("sw.bb");
-    llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
     for (unsigned i = 0, e = Range.getZExtValue() + 1; i != e; ++i) {
       SwitchInsn->addCase(llvm::ConstantInt::get(LHS), CaseDest);
       LHS++;
     }
-    EmitStmt(S.getSubStmt());
     return;
   } 
     
-  // The range is too big. Emit "if" condition.
-  llvm::BasicBlock *FalseDest = NULL;
-  llvm::BasicBlock *CaseDest = llvm::BasicBlock::Create("sw.bb");
+  // The range is too big. Emit "if" condition into a new block,
+  // making sure to save and restore the current insertion point.
+  llvm::BasicBlock *RestoreBB = Builder.GetInsertBlock();
 
-  // If we have already seen one case statement range for this switch
-  // instruction then piggy-back otherwise use default block as false
-  // destination.
-  if (CaseRangeBlock)
-    FalseDest = CaseRangeBlock;
-  else 
-    FalseDest = SwitchInsn->getDefaultDest();
+  // Push this test onto the chain of range checks (which terminates
+  // in the default basic block). The switch's default will be changed
+  // to the top of this chain after switch emission is complete.
+  llvm::BasicBlock *FalseDest = CaseRangeBlock;
+  CaseRangeBlock = llvm::BasicBlock::Create("sw.caserange");
 
-  // Start new block to hold case statement range check instructions.
-  StartBlock("case.range");
-  CaseRangeBlock = Builder.GetInsertBlock();
+  CurFn->getBasicBlockList().push_back(CaseRangeBlock);
+  Builder.SetInsertPoint(CaseRangeBlock);
 
   // Emit range check.
   llvm::Value *Diff = 
@@ -467,9 +469,8 @@ void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
     Builder.CreateICmpULE(Diff, llvm::ConstantInt::get(Range), "tmp");
   Builder.CreateCondBr(Cond, CaseDest, FalseDest);
 
-  // Now emit case statement body.
-  EmitBlock(CaseDest);
-  EmitStmt(S.getSubStmt());
+  // Restore the appropriate insertion point.
+  Builder.SetInsertPoint(RestoreBB);
 }
 
 void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
@@ -487,9 +488,9 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
 }
 
 void CodeGenFunction::EmitDefaultStmt(const DefaultStmt &S) {
-  StartBlock("sw.default");
-  // Current insert block is the default destination.
-  SwitchInsn->setSuccessor(0, Builder.GetInsertBlock());
+  llvm::BasicBlock *DefaultBlock = SwitchInsn->getDefaultDest();
+  assert(DefaultBlock->empty() && "EmitDefaultStmt: Default block already defined?");
+  EmitBlock(DefaultBlock);
   EmitStmt(S.getSubStmt());
 }
 
@@ -499,15 +500,18 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   // Handle nested switch statements.
   llvm::SwitchInst *SavedSwitchInsn = SwitchInsn;
   llvm::BasicBlock *SavedCRBlock = CaseRangeBlock;
-  CaseRangeBlock = NULL;
 
-  // Create basic block to hold stuff that comes after switch statement.
-  // Initially use it to hold DefaultStmt.
-  llvm::BasicBlock *NextBlock = llvm::BasicBlock::Create("after.sw");
-  SwitchInsn = Builder.CreateSwitch(CondV, NextBlock);
+  // Create basic block to hold stuff that comes after switch
+  // statement. We also need to create a default block now so that
+  // explicit case ranges tests can have a place to jump to on
+  // failure.
+  llvm::BasicBlock *NextBlock = llvm::BasicBlock::Create("sw.epilog");
+  llvm::BasicBlock *DefaultBlock = llvm::BasicBlock::Create("sw.default");
+  SwitchInsn = Builder.CreateSwitch(CondV, DefaultBlock);
+  CaseRangeBlock = DefaultBlock;
 
   // Create basic block for body of switch
-  StartBlock("body.sw");
+  StartBlock("sw.body");
 
   // All break statements jump to NextBlock. If BreakContinueStack is non empty
   // then reuse last ContinueBlock.
@@ -520,22 +524,20 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   EmitStmt(S.getBody());
   BreakContinueStack.pop_back();
 
-  // If one or more case statement range is seen then use CaseRangeBlock
-  // as the default block. False edge of CaseRangeBlock will lead to 
-  // original default block.
-  if (CaseRangeBlock)
-    SwitchInsn->setSuccessor(0, CaseRangeBlock);
+  // Update the default block in case explicit case range tests have
+  // been chained on top.
+  SwitchInsn->setSuccessor(0, CaseRangeBlock);
   
-  // Prune insert block if it is dummy.
-  llvm::BasicBlock *BB = Builder.GetInsertBlock();
-  if (isDummyBlock(BB))
-    BB->eraseFromParent();
-  else  // Otherwise, branch to continuation.
-    Builder.CreateBr(NextBlock);
+  // If a default was never emitted then reroute any jumps to it and
+  // discard.
+  if (!DefaultBlock->getParent()) {
+    DefaultBlock->replaceAllUsesWith(NextBlock);
+    delete DefaultBlock;
+  }
 
-  // Place NextBlock as the new insert point.
-  CurFn->getBasicBlockList().push_back(NextBlock);
-  Builder.SetInsertPoint(NextBlock);
+  // Emit continuation.
+  EmitBlock(NextBlock);
+
   SwitchInsn = SavedSwitchInsn;
   CaseRangeBlock = SavedCRBlock;
 }
