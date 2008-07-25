@@ -916,6 +916,8 @@ getWithOperands(const std::vector<Constant*> &Ops) const {
     return ConstantExpr::getGetElementPtr(Ops[0], &Ops[1], Ops.size()-1);
   case Instruction::ICmp:
   case Instruction::FCmp:
+  case Instruction::VICmp:
+  case Instruction::VFCmp:
     return ConstantExpr::getCompare(getPredicate(), Ops[0], Ops[1]);
   default:
     assert(getNumOperands() == 2 && "Must be binary operator?");
@@ -2003,8 +2005,8 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
 }
 
 Constant *ConstantExpr::getCompareTy(unsigned short predicate,
-                                     Constant *C1, Constant *C2,
-                                     bool isVecCmp) {
+                                     Constant *C1, Constant *C2) {
+  bool isVectorType = C1->getType()->getTypeID() == Type::VectorTyID;
   switch (predicate) {
     default: assert(0 && "Invalid CmpInst predicate");
     case CmpInst::FCMP_FALSE: case CmpInst::FCMP_OEQ: case CmpInst::FCMP_OGT:
@@ -2013,14 +2015,14 @@ Constant *ConstantExpr::getCompareTy(unsigned short predicate,
     case CmpInst::FCMP_UEQ:   case CmpInst::FCMP_UGT: case CmpInst::FCMP_UGE:
     case CmpInst::FCMP_ULT:   case CmpInst::FCMP_ULE: case CmpInst::FCMP_UNE:
     case CmpInst::FCMP_TRUE:
-      return isVecCmp ? getVFCmp(predicate, C1, C2) 
-                      : getFCmp(predicate, C1, C2);
+      return isVectorType ? getVFCmp(predicate, C1, C2) 
+                          : getFCmp(predicate, C1, C2);
     case CmpInst::ICMP_EQ:  case CmpInst::ICMP_NE:  case CmpInst::ICMP_UGT:
     case CmpInst::ICMP_UGE: case CmpInst::ICMP_ULT: case CmpInst::ICMP_ULE:
     case CmpInst::ICMP_SGT: case CmpInst::ICMP_SGE: case CmpInst::ICMP_SLT:
     case CmpInst::ICMP_SLE:
-      return isVecCmp ? getVICmp(predicate, C1, C2)
-                      : getICmp(predicate, C1, C2);
+      return isVectorType ? getVICmp(predicate, C1, C2)
+                          : getICmp(predicate, C1, C2);
   }
 }
 
