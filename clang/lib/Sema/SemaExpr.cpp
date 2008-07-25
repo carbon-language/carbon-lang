@@ -28,6 +28,228 @@
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
 
+//===----------------------------------------------------------------------===//
+//  Standard Promotions and Conversions
+//===----------------------------------------------------------------------===//
+
+/// DefaultArgumentPromotion (C99 6.5.2.2p6). Used for function calls that
+/// do not have a prototype. Arguments that have type float are promoted to 
+/// double. All other argument types are converted by UsualUnaryConversions().
+void Sema::DefaultArgumentPromotion(Expr *&Expr) {
+  QualType Ty = Expr->getType();
+  assert(!Ty.isNull() && "DefaultArgumentPromotion - missing type");
+
+  // If this is a 'float' (CVR qualified or typedef) promote to double.
+  if (const BuiltinType *BT = Ty->getAsBuiltinType())
+    if (BT->getKind() == BuiltinType::Float)
+      return ImpCastExprToType(Expr, Context.DoubleTy);
+  
+  UsualUnaryConversions(Expr);
+}
+
+/// DefaultFunctionArrayConversion (C99 6.3.2.1p3, C99 6.3.2.1p4).
+void Sema::DefaultFunctionArrayConversion(Expr *&E) {
+  QualType Ty = E->getType();
+  assert(!Ty.isNull() && "DefaultFunctionArrayConversion - missing type");
+
+  if (const ReferenceType *ref = Ty->getAsReferenceType()) {
+    ImpCastExprToType(E, ref->getPointeeType()); // C++ [expr]
+    Ty = E->getType();
+  }
+  if (Ty->isFunctionType())
+    ImpCastExprToType(E, Context.getPointerType(Ty));
+  else if (Ty->isArrayType())
+    ImpCastExprToType(E, Context.getArrayDecayedType(Ty));
+}
+
+/// UsualUnaryConversions - Performs various conversions that are common to most
+/// operators (C99 6.3). The conversions of array and function types are 
+/// sometimes surpressed. For example, the array->pointer conversion doesn't
+/// apply if the array is an argument to the sizeof or address (&) operators.
+/// In these instances, this routine should *not* be called.
+Expr *Sema::UsualUnaryConversions(Expr *&Expr) {
+  QualType Ty = Expr->getType();
+  assert(!Ty.isNull() && "UsualUnaryConversions - missing type");
+  
+  if (const ReferenceType *Ref = Ty->getAsReferenceType()) {
+    ImpCastExprToType(Expr, Ref->getPointeeType()); // C++ [expr]
+    Ty = Expr->getType();
+  }
+  if (Ty->isPromotableIntegerType()) // C99 6.3.1.1p2
+    ImpCastExprToType(Expr, Context.IntTy);
+  else
+    DefaultFunctionArrayConversion(Expr);
+  
+  return Expr;
+}
+
+/// UsualArithmeticConversions - Performs various conversions that are common to
+/// binary operators (C99 6.3.1.8). If both operands aren't arithmetic, this
+/// routine returns the first non-arithmetic type found. The client is 
+/// responsible for emitting appropriate error diagnostics.
+/// FIXME: verify the conversion rules for "complex int" are consistent with
+/// GCC.
+QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
+                                          bool isCompAssign) {
+  if (!isCompAssign) {
+    UsualUnaryConversions(lhsExpr);
+    UsualUnaryConversions(rhsExpr);
+  }
+  // For conversion purposes, we ignore any qualifiers. 
+  // For example, "const float" and "float" are equivalent.
+  QualType lhs = lhsExpr->getType().getCanonicalType().getUnqualifiedType();
+  QualType rhs = rhsExpr->getType().getCanonicalType().getUnqualifiedType();
+  
+  // If both types are identical, no conversion is needed.
+  if (lhs == rhs)
+    return lhs;
+  
+  // If either side is a non-arithmetic type (e.g. a pointer), we are done.
+  // The caller can deal with this (e.g. pointer + int).
+  if (!lhs->isArithmeticType() || !rhs->isArithmeticType())
+    return lhs;
+    
+  // At this point, we have two different arithmetic types. 
+  
+  // Handle complex types first (C99 6.3.1.8p1).
+  if (lhs->isComplexType() || rhs->isComplexType()) {
+    // if we have an integer operand, the result is the complex type.
+    if (rhs->isIntegerType() || rhs->isComplexIntegerType()) { 
+      // convert the rhs to the lhs complex type.
+      if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
+      return lhs;
+    }
+    if (lhs->isIntegerType() || lhs->isComplexIntegerType()) { 
+      // convert the lhs to the rhs complex type.
+      if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs);
+      return rhs;
+    }
+    // This handles complex/complex, complex/float, or float/complex.
+    // When both operands are complex, the shorter operand is converted to the 
+    // type of the longer, and that is the type of the result. This corresponds 
+    // to what is done when combining two real floating-point operands. 
+    // The fun begins when size promotion occur across type domains. 
+    // From H&S 6.3.4: When one operand is complex and the other is a real
+    // floating-point type, the less precise type is converted, within it's 
+    // real or complex domain, to the precision of the other type. For example,
+    // when combining a "long double" with a "double _Complex", the 
+    // "double _Complex" is promoted to "long double _Complex".
+    int result = Context.getFloatingTypeOrder(lhs, rhs);
+    
+    if (result > 0) { // The left side is bigger, convert rhs. 
+      rhs = Context.getFloatingTypeOfSizeWithinDomain(lhs, rhs);
+      if (!isCompAssign)
+        ImpCastExprToType(rhsExpr, rhs);
+    } else if (result < 0) { // The right side is bigger, convert lhs. 
+      lhs = Context.getFloatingTypeOfSizeWithinDomain(rhs, lhs);
+      if (!isCompAssign)
+        ImpCastExprToType(lhsExpr, lhs);
+    } 
+    // At this point, lhs and rhs have the same rank/size. Now, make sure the
+    // domains match. This is a requirement for our implementation, C99
+    // does not require this promotion.
+    if (lhs != rhs) { // Domains don't match, we have complex/float mix.
+      if (lhs->isRealFloatingType()) { // handle "double, _Complex double".
+        if (!isCompAssign)
+          ImpCastExprToType(lhsExpr, rhs);
+        return rhs;
+      } else { // handle "_Complex double, double".
+        if (!isCompAssign)
+          ImpCastExprToType(rhsExpr, lhs);
+        return lhs;
+      }
+    }
+    return lhs; // The domain/size match exactly.
+  }
+  // Now handle "real" floating types (i.e. float, double, long double).
+  if (lhs->isRealFloatingType() || rhs->isRealFloatingType()) {
+    // if we have an integer operand, the result is the real floating type.
+    if (rhs->isIntegerType() || rhs->isComplexIntegerType()) { 
+      // convert rhs to the lhs floating point type.
+      if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
+      return lhs;
+    }
+    if (lhs->isIntegerType() || lhs->isComplexIntegerType()) { 
+      // convert lhs to the rhs floating point type.
+      if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs);
+      return rhs;
+    }
+    // We have two real floating types, float/complex combos were handled above.
+    // Convert the smaller operand to the bigger result.
+    int result = Context.getFloatingTypeOrder(lhs, rhs);
+    
+    if (result > 0) { // convert the rhs
+      if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
+      return lhs;
+    }
+    if (result < 0) { // convert the lhs
+      if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs); // convert the lhs
+      return rhs;
+    }
+    assert(0 && "Sema::UsualArithmeticConversions(): illegal float comparison");
+  }
+  if (lhs->isComplexIntegerType() || rhs->isComplexIntegerType()) {
+    // Handle GCC complex int extension.
+    const ComplexType *lhsComplexInt = lhs->getAsComplexIntegerType();
+    const ComplexType *rhsComplexInt = rhs->getAsComplexIntegerType();
+
+    if (lhsComplexInt && rhsComplexInt) {
+      if (Context.getIntegerTypeOrder(lhsComplexInt->getElementType(), 
+                                      rhsComplexInt->getElementType()) >= 0) {
+        // convert the rhs
+        if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
+        return lhs;
+      }
+      if (!isCompAssign) 
+        ImpCastExprToType(lhsExpr, rhs); // convert the lhs
+      return rhs;
+    } else if (lhsComplexInt && rhs->isIntegerType()) {
+      // convert the rhs to the lhs complex type.
+      if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
+      return lhs;
+    } else if (rhsComplexInt && lhs->isIntegerType()) {
+      // convert the lhs to the rhs complex type.
+      if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs);
+      return rhs;
+    }
+  }
+  // Finally, we have two differing integer types.
+  // The rules for this case are in C99 6.3.1.8
+  int compare = Context.getIntegerTypeOrder(lhs, rhs);
+  bool lhsSigned = lhs->isSignedIntegerType(),
+       rhsSigned = rhs->isSignedIntegerType();
+  QualType destType;
+  if (lhsSigned == rhsSigned) {
+    // Same signedness; use the higher-ranked type
+    destType = compare >= 0 ? lhs : rhs;
+  } else if (compare != (lhsSigned ? 1 : -1)) {
+    // The unsigned type has greater than or equal rank to the
+    // signed type, so use the unsigned type
+    destType = lhsSigned ? rhs : lhs;
+  } else if (Context.getIntWidth(lhs) != Context.getIntWidth(rhs)) {
+    // The two types are different widths; if we are here, that
+    // means the signed type is larger than the unsigned type, so
+    // use the signed type.
+    destType = lhsSigned ? lhs : rhs;
+  } else {
+    // The signed type is higher-ranked than the unsigned type,
+    // but isn't actually any bigger (like unsigned int and long
+    // on most 32-bit systems).  Use the unsigned type corresponding
+    // to the signed type.
+    destType = Context.getCorrespondingUnsignedType(lhsSigned ? lhs : rhs);
+  }
+  if (!isCompAssign) {
+    ImpCastExprToType(lhsExpr, destType);
+    ImpCastExprToType(rhsExpr, destType);
+  }
+  return destType;
+}
+
+//===----------------------------------------------------------------------===//
+//  Semantic Analysis for various Expression Types
+//===----------------------------------------------------------------------===//
+
+
 /// ActOnStringLiteral - The specified tokens were lexed as pasted string
 /// fragments (e.g. "foo" "bar" L"baz").  The result string has to handle string
 /// concatenation ([C99 5.1.1.2, translation phase #6]), so it may come from
@@ -1068,218 +1290,6 @@ Action::ExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
                                  RHSExpr, result);
 }
 
-/// DefaultArgumentPromotion (C99 6.5.2.2p6). Used for function calls that
-/// do not have a prototype. Arguments that have type float are promoted to 
-/// double. All other argument types are converted by UsualUnaryConversions().
-void Sema::DefaultArgumentPromotion(Expr *&Expr) {
-  QualType Ty = Expr->getType();
-  assert(!Ty.isNull() && "DefaultArgumentPromotion - missing type");
-
-  // If this is a 'float' (CVR qualified or typedef) promote to double.
-  if (const BuiltinType *BT = Ty->getAsBuiltinType())
-    if (BT->getKind() == BuiltinType::Float)
-      return ImpCastExprToType(Expr, Context.DoubleTy);
-  
-  UsualUnaryConversions(Expr);
-}
-
-/// DefaultFunctionArrayConversion (C99 6.3.2.1p3, C99 6.3.2.1p4).
-void Sema::DefaultFunctionArrayConversion(Expr *&E) {
-  QualType Ty = E->getType();
-  assert(!Ty.isNull() && "DefaultFunctionArrayConversion - missing type");
-
-  if (const ReferenceType *ref = Ty->getAsReferenceType()) {
-    ImpCastExprToType(E, ref->getPointeeType()); // C++ [expr]
-    Ty = E->getType();
-  }
-  if (Ty->isFunctionType())
-    ImpCastExprToType(E, Context.getPointerType(Ty));
-  else if (Ty->isArrayType())
-    ImpCastExprToType(E, Context.getArrayDecayedType(Ty));
-}
-
-/// UsualUnaryConversions - Performs various conversions that are common to most
-/// operators (C99 6.3). The conversions of array and function types are 
-/// sometimes surpressed. For example, the array->pointer conversion doesn't
-/// apply if the array is an argument to the sizeof or address (&) operators.
-/// In these instances, this routine should *not* be called.
-Expr *Sema::UsualUnaryConversions(Expr *&Expr) {
-  QualType Ty = Expr->getType();
-  assert(!Ty.isNull() && "UsualUnaryConversions - missing type");
-  
-  if (const ReferenceType *Ref = Ty->getAsReferenceType()) {
-    ImpCastExprToType(Expr, Ref->getPointeeType()); // C++ [expr]
-    Ty = Expr->getType();
-  }
-  if (Ty->isPromotableIntegerType()) // C99 6.3.1.1p2
-    ImpCastExprToType(Expr, Context.IntTy);
-  else
-    DefaultFunctionArrayConversion(Expr);
-  
-  return Expr;
-}
-
-/// UsualArithmeticConversions - Performs various conversions that are common to
-/// binary operators (C99 6.3.1.8). If both operands aren't arithmetic, this
-/// routine returns the first non-arithmetic type found. The client is 
-/// responsible for emitting appropriate error diagnostics.
-/// FIXME: verify the conversion rules for "complex int" are consistent with
-/// GCC.
-QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
-                                          bool isCompAssign) {
-  if (!isCompAssign) {
-    UsualUnaryConversions(lhsExpr);
-    UsualUnaryConversions(rhsExpr);
-  }
-  // For conversion purposes, we ignore any qualifiers. 
-  // For example, "const float" and "float" are equivalent.
-  QualType lhs = lhsExpr->getType().getCanonicalType().getUnqualifiedType();
-  QualType rhs = rhsExpr->getType().getCanonicalType().getUnqualifiedType();
-  
-  // If both types are identical, no conversion is needed.
-  if (lhs == rhs)
-    return lhs;
-  
-  // If either side is a non-arithmetic type (e.g. a pointer), we are done.
-  // The caller can deal with this (e.g. pointer + int).
-  if (!lhs->isArithmeticType() || !rhs->isArithmeticType())
-    return lhs;
-    
-  // At this point, we have two different arithmetic types. 
-  
-  // Handle complex types first (C99 6.3.1.8p1).
-  if (lhs->isComplexType() || rhs->isComplexType()) {
-    // if we have an integer operand, the result is the complex type.
-    if (rhs->isIntegerType() || rhs->isComplexIntegerType()) { 
-      // convert the rhs to the lhs complex type.
-      if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
-      return lhs;
-    }
-    if (lhs->isIntegerType() || lhs->isComplexIntegerType()) { 
-      // convert the lhs to the rhs complex type.
-      if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs);
-      return rhs;
-    }
-    // This handles complex/complex, complex/float, or float/complex.
-    // When both operands are complex, the shorter operand is converted to the 
-    // type of the longer, and that is the type of the result. This corresponds 
-    // to what is done when combining two real floating-point operands. 
-    // The fun begins when size promotion occur across type domains. 
-    // From H&S 6.3.4: When one operand is complex and the other is a real
-    // floating-point type, the less precise type is converted, within it's 
-    // real or complex domain, to the precision of the other type. For example,
-    // when combining a "long double" with a "double _Complex", the 
-    // "double _Complex" is promoted to "long double _Complex".
-    int result = Context.getFloatingTypeOrder(lhs, rhs);
-    
-    if (result > 0) { // The left side is bigger, convert rhs. 
-      rhs = Context.getFloatingTypeOfSizeWithinDomain(lhs, rhs);
-      if (!isCompAssign)
-        ImpCastExprToType(rhsExpr, rhs);
-    } else if (result < 0) { // The right side is bigger, convert lhs. 
-      lhs = Context.getFloatingTypeOfSizeWithinDomain(rhs, lhs);
-      if (!isCompAssign)
-        ImpCastExprToType(lhsExpr, lhs);
-    } 
-    // At this point, lhs and rhs have the same rank/size. Now, make sure the
-    // domains match. This is a requirement for our implementation, C99
-    // does not require this promotion.
-    if (lhs != rhs) { // Domains don't match, we have complex/float mix.
-      if (lhs->isRealFloatingType()) { // handle "double, _Complex double".
-        if (!isCompAssign)
-          ImpCastExprToType(lhsExpr, rhs);
-        return rhs;
-      } else { // handle "_Complex double, double".
-        if (!isCompAssign)
-          ImpCastExprToType(rhsExpr, lhs);
-        return lhs;
-      }
-    }
-    return lhs; // The domain/size match exactly.
-  }
-  // Now handle "real" floating types (i.e. float, double, long double).
-  if (lhs->isRealFloatingType() || rhs->isRealFloatingType()) {
-    // if we have an integer operand, the result is the real floating type.
-    if (rhs->isIntegerType() || rhs->isComplexIntegerType()) { 
-      // convert rhs to the lhs floating point type.
-      if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
-      return lhs;
-    }
-    if (lhs->isIntegerType() || lhs->isComplexIntegerType()) { 
-      // convert lhs to the rhs floating point type.
-      if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs);
-      return rhs;
-    }
-    // We have two real floating types, float/complex combos were handled above.
-    // Convert the smaller operand to the bigger result.
-    int result = Context.getFloatingTypeOrder(lhs, rhs);
-    
-    if (result > 0) { // convert the rhs
-      if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
-      return lhs;
-    }
-    if (result < 0) { // convert the lhs
-      if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs); // convert the lhs
-      return rhs;
-    }
-    assert(0 && "Sema::UsualArithmeticConversions(): illegal float comparison");
-  }
-  if (lhs->isComplexIntegerType() || rhs->isComplexIntegerType()) {
-    // Handle GCC complex int extension.
-    const ComplexType *lhsComplexInt = lhs->getAsComplexIntegerType();
-    const ComplexType *rhsComplexInt = rhs->getAsComplexIntegerType();
-
-    if (lhsComplexInt && rhsComplexInt) {
-      if (Context.getIntegerTypeOrder(lhsComplexInt->getElementType(), 
-                                      rhsComplexInt->getElementType()) >= 0) {
-        // convert the rhs
-        if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
-        return lhs;
-      }
-      if (!isCompAssign) 
-        ImpCastExprToType(lhsExpr, rhs); // convert the lhs
-      return rhs;
-    } else if (lhsComplexInt && rhs->isIntegerType()) {
-      // convert the rhs to the lhs complex type.
-      if (!isCompAssign) ImpCastExprToType(rhsExpr, lhs);
-      return lhs;
-    } else if (rhsComplexInt && lhs->isIntegerType()) {
-      // convert the lhs to the rhs complex type.
-      if (!isCompAssign) ImpCastExprToType(lhsExpr, rhs);
-      return rhs;
-    }
-  }
-  // Finally, we have two differing integer types.
-  // The rules for this case are in C99 6.3.1.8
-  int compare = Context.getIntegerTypeOrder(lhs, rhs);
-  bool lhsSigned = lhs->isSignedIntegerType(),
-       rhsSigned = rhs->isSignedIntegerType();
-  QualType destType;
-  if (lhsSigned == rhsSigned) {
-    // Same signedness; use the higher-ranked type
-    destType = compare >= 0 ? lhs : rhs;
-  } else if (compare != (lhsSigned ? 1 : -1)) {
-    // The unsigned type has greater than or equal rank to the
-    // signed type, so use the unsigned type
-    destType = lhsSigned ? rhs : lhs;
-  } else if (Context.getIntWidth(lhs) != Context.getIntWidth(rhs)) {
-    // The two types are different widths; if we are here, that
-    // means the signed type is larger than the unsigned type, so
-    // use the signed type.
-    destType = lhsSigned ? lhs : rhs;
-  } else {
-    // The signed type is higher-ranked than the unsigned type,
-    // but isn't actually any bigger (like unsigned int and long
-    // on most 32-bit systems).  Use the unsigned type corresponding
-    // to the signed type.
-    destType = Context.getCorrespondingUnsignedType(lhsSigned ? lhs : rhs);
-  }
-  if (!isCompAssign) {
-    ImpCastExprToType(lhsExpr, destType);
-    ImpCastExprToType(rhsExpr, destType);
-  }
-  return destType;
-}
 
 // CheckPointerTypesForAssignment - This is a very tricky routine (despite
 // being closely modeled after the C99 spec:-). The odd characteristic of this 
