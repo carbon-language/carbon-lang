@@ -820,9 +820,6 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl,
     
     if (Tok.is(tok::semi)) {
       ConsumeToken();
-    } else if (Tok.is(tok::r_brace)) {
-      Diag(Tok.getLocation(), diag::ext_expected_semi_decl_list);
-      break;
     } else {
       Diag(Tok, diag::err_expected_semi_decl_list);
       // Skip to end of block or statement
