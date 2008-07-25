@@ -3881,14 +3881,15 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
       return V2;
     if (ISD::isBuildVectorAllZeros(V1.Val))
       return getVZextMovL(VT, VT, V2, DAG, Subtarget);
-    return Op;
+    if (!isMMX)
+      return Op;
   }
 
-  if (X86::isMOVSHDUPMask(PermMask.Val) ||
-      X86::isMOVSLDUPMask(PermMask.Val) ||
-      X86::isMOVHLPSMask(PermMask.Val) ||
-      X86::isMOVHPMask(PermMask.Val) ||
-      X86::isMOVLPMask(PermMask.Val))
+  if (!isMMX && (X86::isMOVSHDUPMask(PermMask.Val) ||
+                 X86::isMOVSLDUPMask(PermMask.Val) ||
+                 X86::isMOVHLPSMask(PermMask.Val) ||
+                 X86::isMOVHPMask(PermMask.Val) ||
+                 X86::isMOVLPMask(PermMask.Val)))
     return Op;
 
   if (ShouldXformToMOVHLPS(PermMask.Val) ||
@@ -4772,6 +4773,7 @@ SDOperand X86TargetLowering::LowerVSETCC(SDOperand Op, SelectionDAG &DAG) {
 
     switch (SetCCOpcode) {
     default: break;
+    case ISD::SETOEQ:
     case ISD::SETEQ:  SSECC = 0; break;
     case ISD::SETOGT: 
     case ISD::SETGT: Swap = true; // Fallthrough
@@ -4782,7 +4784,7 @@ SDOperand X86TargetLowering::LowerVSETCC(SDOperand Op, SelectionDAG &DAG) {
     case ISD::SETLE:
     case ISD::SETOLE: SSECC = 2; break;
     case ISD::SETUO:  SSECC = 3; break;
-    case ISD::SETONE:
+    case ISD::SETUNE:
     case ISD::SETNE:  SSECC = 4; break;
     case ISD::SETULE: Swap = true;
     case ISD::SETUGE: SSECC = 5; break;
@@ -4793,15 +4795,21 @@ SDOperand X86TargetLowering::LowerVSETCC(SDOperand Op, SelectionDAG &DAG) {
     if (Swap)
       std::swap(Op0, Op1);
 
-    // In the one special case we can't handle, emit two comparisons.
+    // In the two special cases we can't handle, emit two comparisons.
     if (SSECC == 8) {
-      SDOperand UNORD, EQ;
-
-      assert(SetCCOpcode == ISD::SETUEQ && "Illegal FP comparison");
-      
-      UNORD = DAG.getNode(Opc, VT, Op0, Op1, DAG.getConstant(3, MVT::i8));
-      EQ = DAG.getNode(Opc, VT, Op0, Op1, DAG.getConstant(0, MVT::i8));
-      return DAG.getNode(ISD::OR, VT, UNORD, EQ);
+      if (SetCCOpcode == ISD::SETUEQ) {
+        SDOperand UNORD, EQ;
+        UNORD = DAG.getNode(Opc, VT, Op0, Op1, DAG.getConstant(3, MVT::i8));
+        EQ = DAG.getNode(Opc, VT, Op0, Op1, DAG.getConstant(0, MVT::i8));
+        return DAG.getNode(ISD::OR, VT, UNORD, EQ);
+      }
+      else if (SetCCOpcode == ISD::SETONE) {
+        SDOperand ORD, NEQ;
+        ORD = DAG.getNode(Opc, VT, Op0, Op1, DAG.getConstant(7, MVT::i8));
+        NEQ = DAG.getNode(Opc, VT, Op0, Op1, DAG.getConstant(4, MVT::i8));
+        return DAG.getNode(ISD::AND, VT, ORD, NEQ);
+      }
+      assert(0 && "Illegal FP comparison");
     }
     // Handle all other FP comparisons here.
     return DAG.getNode(Opc, VT, Op0, Op1, DAG.getConstant(SSECC, MVT::i8));
