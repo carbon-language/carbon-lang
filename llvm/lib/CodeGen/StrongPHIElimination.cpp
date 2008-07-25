@@ -741,7 +741,7 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
   std::set<unsigned> RegHandled;
   for (SmallVector<std::pair<unsigned, MachineInstr*>, 4>::iterator I =
        InsertedPHIDests.begin(), E = InsertedPHIDests.end(); I != E; ++I)
-    if (!RegHandled.insert(I->first).second)
+    if (RegHandled.insert(I->first).second)
       LI.addLiveRangeToEndOfBlock(I->first, I->second);
 }
 
@@ -846,6 +846,19 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
        I != E; ) {
     MachineInstr* PInstr = *(I++);
     
+    // Trim live intervals of input registers.  They are no longer live into
+    // this block.
+    for (unsigned i = 1; i < PInstr->getNumOperands(); i += 2) {
+      unsigned reg = PInstr->getOperand(i).getReg();
+      MachineBasicBlock* MBB = PInstr->getOperand(i+1).getMBB();
+      LiveInterval& InputI = LI.getInterval(reg);
+      if (MBB != PInstr->getParent() &&
+          InputI.liveAt(LI.getMBBStartIdx(PInstr->getParent())))
+        InputI.removeRange(LI.getMBBStartIdx(PInstr->getParent()),
+                           LI.getInstructionIndex(PInstr),
+                           true);
+    }
+    
     // If this is a dead PHI node, then remove it from LiveIntervals.
     unsigned DestReg = PInstr->getOperand(0).getReg();
     LiveInterval& PI = LI.getInterval(DestReg);
@@ -860,7 +873,11 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
       // If the PHI is not dead, then the valno defined by the PHI
       // now has an unknown def.
       unsigned idx = LI.getDefIndex(LI.getInstructionIndex(PInstr));
-      PI.getLiveRangeContaining(idx)->valno->def = ~0U;
+      const LiveRange* PLR = PI.getLiveRangeContaining(idx);
+      PLR->valno->def = ~0U;
+      LiveRange R (LI.getMBBStartIdx(PInstr->getParent()),
+                   PLR->start, PLR->valno);
+      PI.addRange(R);
     }
     
     LI.RemoveMachineInstrFromMaps(PInstr);
