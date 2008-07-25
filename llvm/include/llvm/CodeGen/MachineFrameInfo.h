@@ -16,6 +16,7 @@
 
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
+#include <iosfwd>
 #include <vector>
 
 namespace llvm {
