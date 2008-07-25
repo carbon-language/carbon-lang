@@ -506,6 +506,8 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return EmitShuffleVector(Ops[0], Ops[1], 1, 3, "punpckhdq");
   case X86::BI__builtin_ia32_punpckhdq128:
     return EmitShuffleVector(Ops[0], Ops[1], 2, 6, 3, 7, "punpckhdq");
+  case X86::BI__builtin_ia32_punpckhqdq128:
+    return EmitShuffleVector(Ops[0], Ops[1], 1, 3, "punpckhqdq");
   case X86::BI__builtin_ia32_punpcklbw:
     return EmitShuffleVector(Ops[0], Ops[1], 0, 8, 1, 9, 2, 10, 3, 11,
                              "punpcklbw");
@@ -515,6 +517,8 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return EmitShuffleVector(Ops[0], Ops[1], 0, 2, "punpckldq");
   case X86::BI__builtin_ia32_punpckldq128:
     return EmitShuffleVector(Ops[0], Ops[1], 0, 4, 1, 5, "punpckldq");
+  case X86::BI__builtin_ia32_punpcklqdq128:
+    return EmitShuffleVector(Ops[0], Ops[1], 0, 2, "punpcklqdq");
   case X86::BI__builtin_ia32_pslldi128: 
   case X86::BI__builtin_ia32_psllqi128:
   case X86::BI__builtin_ia32_psllwi128: 
@@ -617,38 +621,6 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     case X86::BI__builtin_ia32_psrlwi:
       name = "psrlwi";
       ID = Intrinsic::x86_mmx_psrl_w;
-      break;
-    case X86::BI__builtin_ia32_pslldi128:
-      name = "pslldi";
-      ID = Intrinsic::x86_sse2_psll_d;
-      break;
-    case X86::BI__builtin_ia32_psllqi128:
-      name = "psllqi";
-      ID = Intrinsic::x86_sse2_psll_q;
-      break;
-    case X86::BI__builtin_ia32_psllwi128:
-      name = "psllwi";
-      ID = Intrinsic::x86_sse2_psll_w;
-      break;
-    case X86::BI__builtin_ia32_psradi128:
-      name = "psradi";
-      ID = Intrinsic::x86_sse2_psra_d;
-      break;
-    case X86::BI__builtin_ia32_psrawi128:
-      name = "psrawi";
-      ID = Intrinsic::x86_sse2_psra_w;
-      break;
-    case X86::BI__builtin_ia32_psrldi128:
-      name = "psrldi";
-      ID = Intrinsic::x86_sse2_psrl_d;
-      break;
-    case X86::BI__builtin_ia32_psrlqi128:
-      name = "psrlqi";
-      ID = Intrinsic::x86_sse2_psrl_q;
-      break;
-    case X86::BI__builtin_ia32_psrlwi128:
-      name = "psrlwi";
-      ID = Intrinsic::x86_sse2_psrl_w;
       break;
     }
     llvm::Function *F = CGM.getIntrinsic(ID);
@@ -885,6 +857,12 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return EmitShuffleVector(Ops[0], Ops[1], 2, 6, 3, 7, "unpckhps");
   case X86::BI__builtin_ia32_unpcklps:
     return EmitShuffleVector(Ops[0], Ops[1], 0, 4, 1, 5, "unpcklps");
+  case X86::BI__builtin_ia32_unpckhpd:
+    return EmitShuffleVector(Ops[0], Ops[1], 1, 3, "unpckhpd");
+  case X86::BI__builtin_ia32_unpcklpd:
+    return EmitShuffleVector(Ops[0], Ops[1], 0, 2, "unpcklpd");
+  case X86::BI__builtin_ia32_movsd:
+    return EmitShuffleVector(Ops[0], Ops[1], 2, 1, "movsd");
   case X86::BI__builtin_ia32_movqv4si: {
     llvm::Type *Ty = llvm::VectorType::get(llvm::Type::Int64Ty, 2);
     return Builder.CreateBitCast(Ops[0], Ty);
