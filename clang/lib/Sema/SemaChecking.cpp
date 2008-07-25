@@ -454,14 +454,16 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
           return;
     
     Diag(TheCall->getArg(format_idx)->getLocStart(), 
-         diag::warn_printf_not_string_constant, Fn->getSourceRange());
+         diag::warn_printf_not_string_constant,
+         OrigFormatExpr->getSourceRange());
     return;
   }
 
   // CHECK: is the format string a wide literal?
   if (FExpr->isWide()) {
     Diag(FExpr->getLocStart(),
-         diag::warn_printf_format_string_is_wide_literal, Fn->getSourceRange());
+         diag::warn_printf_format_string_is_wide_literal,
+         OrigFormatExpr->getSourceRange());
     return;
   }
 
@@ -473,7 +475,7 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
   
   if (StrLen == 0) {
     Diag(FExpr->getLocStart(), diag::warn_printf_empty_format_string,
-         Fn->getSourceRange());
+         OrigFormatExpr->getSourceRange());
     return;
   }
 
@@ -513,7 +515,7 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
       // so the presence of a null character is likely an error.
       Diag(PP.AdvanceToTokenCharacter(FExpr->getLocStart(), StrIdx+1),
            diag::warn_printf_format_string_contains_null_char,
-           Fn->getSourceRange());
+           OrigFormatExpr->getSourceRange());
       return;
     }
     
@@ -538,10 +540,10 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
 
         if (Str[StrIdx-1] == '.')
           Diag(Loc, diag::warn_printf_asterisk_precision_missing_arg,
-               Fn->getSourceRange());
+               OrigFormatExpr->getSourceRange());
         else
           Diag(Loc, diag::warn_printf_asterisk_width_missing_arg,
-               Fn->getSourceRange());
+               OrigFormatExpr->getSourceRange());
         
         // Don't do any more checking.  We'll just emit spurious errors.
         return;
@@ -604,7 +606,7 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
       SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
                                                       LastConversionIdx+1);
                                    
-      Diag(Loc, diag::warn_printf_write_back, Fn->getSourceRange());
+      Diag(Loc, diag::warn_printf_write_back, OrigFormatExpr->getSourceRange());
       break;
     }
              
@@ -621,7 +623,7 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
         Diag(Loc, diag::warn_printf_invalid_conversion, 
           std::string(Str+LastConversionIdx, 
           Str+std::min(LastConversionIdx+2, StrLen)),
-          Fn->getSourceRange());
+          OrigFormatExpr->getSourceRange());
       }
       ++numConversions;
       break;
@@ -641,7 +643,7 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
             
         Diag(Loc, diag::warn_printf_invalid_conversion, 
              std::string(Str+LastConversionIdx, Str+StrIdx),
-             Fn->getSourceRange());
+             OrigFormatExpr->getSourceRange());
              
         // This conversion is broken.  Advance to the next format
         // conversion.
@@ -665,7 +667,7 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
     Diag(Loc, diag::warn_printf_invalid_conversion,
          std::string(Str+LastConversionIdx,
                      Str+std::min(LastConversionIdx+2, StrLen)),
-         Fn->getSourceRange());
+         OrigFormatExpr->getSourceRange());
     return;
   }
   
@@ -677,13 +679,14 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
                                                       LastConversionIdx);
                                    
       Diag(Loc, diag::warn_printf_insufficient_data_args,
-           Fn->getSourceRange());
+           OrigFormatExpr->getSourceRange());
     }
     // CHECK: Does the number of data arguments exceed the number of
     //        format conversions in the format string?
     else if (numConversions < numDataArgs)
       Diag(TheCall->getArg(format_idx+numConversions+1)->getLocStart(),
-           diag::warn_printf_too_many_data_args, Fn->getSourceRange());
+           diag::warn_printf_too_many_data_args,
+           OrigFormatExpr->getSourceRange());
   }
 }
 
