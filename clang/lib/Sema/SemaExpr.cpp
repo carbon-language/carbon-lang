@@ -32,21 +32,6 @@ using namespace clang;
 //  Standard Promotions and Conversions
 //===----------------------------------------------------------------------===//
 
-/// DefaultArgumentPromotion (C99 6.5.2.2p6). Used for function calls that
-/// do not have a prototype. Arguments that have type float are promoted to 
-/// double. All other argument types are converted by UsualUnaryConversions().
-void Sema::DefaultArgumentPromotion(Expr *&Expr) {
-  QualType Ty = Expr->getType();
-  assert(!Ty.isNull() && "DefaultArgumentPromotion - missing type");
-
-  // If this is a 'float' (CVR qualified or typedef) promote to double.
-  if (const BuiltinType *BT = Ty->getAsBuiltinType())
-    if (BT->getKind() == BuiltinType::Float)
-      return ImpCastExprToType(Expr, Context.DoubleTy);
-  
-  UsualUnaryConversions(Expr);
-}
-
 /// DefaultFunctionArrayConversion (C99 6.3.2.1p3, C99 6.3.2.1p4).
 void Sema::DefaultFunctionArrayConversion(Expr *&E) {
   QualType Ty = E->getType();
@@ -89,6 +74,21 @@ Expr *Sema::UsualUnaryConversions(Expr *&Expr) {
     DefaultFunctionArrayConversion(Expr);
   
   return Expr;
+}
+
+/// DefaultArgumentPromotion (C99 6.5.2.2p6). Used for function calls that
+/// do not have a prototype. Arguments that have type float are promoted to 
+/// double. All other argument types are converted by UsualUnaryConversions().
+void Sema::DefaultArgumentPromotion(Expr *&Expr) {
+  QualType Ty = Expr->getType();
+  assert(!Ty.isNull() && "DefaultArgumentPromotion - missing type");
+  
+  // If this is a 'float' (CVR qualified or typedef) promote to double.
+  if (const BuiltinType *BT = Ty->getAsBuiltinType())
+    if (BT->getKind() == BuiltinType::Float)
+      return ImpCastExprToType(Expr, Context.DoubleTy);
+  
+  UsualUnaryConversions(Expr);
 }
 
 /// UsualArithmeticConversions - Performs various conversions that are common to
