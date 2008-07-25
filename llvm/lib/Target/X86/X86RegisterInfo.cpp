@@ -849,8 +849,8 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
                                       FramePtr, false, -CSSize);
       MBB.insert(MBBI, MI);
     } else
-      BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),StackPtr).
-        addReg(FramePtr);
+      BuildMI(MBB, MBBI, TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr),
+              StackPtr).addReg(FramePtr);
 
   } else {
     // adjust stack pointer back: ESP += numbytes
