@@ -2261,16 +2261,14 @@ Action::ExprResult Sema::ActOnUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
   case UnaryOperator::Not: // bitwise complement
     UsualUnaryConversions(Input);
     resultType = Input->getType();
-    // C99 6.5.3.3p1. We allow complex as a GCC extension.
-    if (!resultType->isIntegerType()) {
-      if (resultType->isComplexType())
-        // C99 does not support '~' for complex conjugation.
-        Diag(OpLoc, diag::ext_integer_complement_complex,
-                    resultType.getAsString());
-      else
-        return Diag(OpLoc, diag::err_typecheck_unary_expr,
-                    resultType.getAsString());
-    }
+    // C99 6.5.3.3p1. We allow complex int and float as a GCC extension.
+    if (resultType->isComplexType() || resultType->isComplexIntegerType())
+      // C99 does not support '~' for complex conjugation.
+      Diag(OpLoc, diag::ext_integer_complement_complex,
+           resultType.getAsString(), Input->getSourceRange());
+    else if (!resultType->isIntegerType())
+      return Diag(OpLoc, diag::err_typecheck_unary_expr,
+                  resultType.getAsString(), Input->getSourceRange());
     break;
   case UnaryOperator::LNot: // logical negation
     // Unlike +/-/~, integer promotions aren't done here (C99 6.5.3.3p5).
