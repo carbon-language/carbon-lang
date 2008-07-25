@@ -6708,7 +6708,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
       Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, NewEltVT, InVec,
                                 DAG.getConstant(Idx, PtrVT)));
     }
-    Hi = DAG.getNode(ISD::BUILD_VECTOR, NewVT_Lo, &Ops[0], Ops.size());
+    Hi = DAG.getNode(ISD::BUILD_VECTOR, NewVT_Hi, &Ops[0], Ops.size());
     break;
   }
   case ISD::BUILD_VECTOR: {
