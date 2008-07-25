@@ -1894,7 +1894,7 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
 
 inline QualType Sema::CheckCommaOperands( // C99 6.5.17
   Expr *&lex, Expr *&rex, SourceLocation loc) {
-  UsualUnaryConversions(rex);
+  // Comma does not perform unary or binary promotions.
   return rex->getType();
 }
 
