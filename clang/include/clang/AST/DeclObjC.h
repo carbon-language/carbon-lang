@@ -1217,7 +1217,6 @@ public:
 class ObjCPropertyImplDecl : public Decl {
 public:
   enum PropertyImplKind {
-    OBJC_PR_IMPL_None,
     OBJC_PR_IMPL_SYNTHSIZE,
     OBJC_PR_IMPL_DYNAMIC
   };
@@ -1225,16 +1224,19 @@ private:
   SourceLocation AtLoc;   // location of @synthesize or @dynamic
   /// Property declaration being implemented
   ObjCPropertyDecl *PropertyDecl;
-  PropertyImplKind PropertyImplementation;
+
   /// Null for @dynamic. Required for @synthesize.
   ObjCIvarDecl *PropertyIvarDecl;
+
 public:
   ObjCPropertyImplDecl(SourceLocation atLoc, SourceLocation L,
                        ObjCPropertyDecl *property, 
                        PropertyImplKind propertyKind, 
                        ObjCIvarDecl *ivarDecl)
   : Decl(ObjCPropertyImpl, L), AtLoc(atLoc), PropertyDecl(property), 
-    PropertyImplementation(propertyKind), PropertyIvarDecl(ivarDecl){}
+    PropertyIvarDecl(ivarDecl) {
+      assert (propertyKind == OBJC_PR_IMPL_DYNAMIC || PropertyIvarDecl);
+    }
   
   static ObjCPropertyImplDecl *Create(ASTContext &C, SourceLocation atLoc, 
                                       SourceLocation L, 
@@ -1242,17 +1244,17 @@ public:
                                       PropertyImplKind propertyKind, 
                                       ObjCIvarDecl *ivarDecl);
 
-  void setPropertyDecl(ObjCPropertyDecl *property) { PropertyDecl = property; }
-  ObjCPropertyDecl *getPropertyDecl() const { return PropertyDecl; }
+  ObjCPropertyDecl *getPropertyDecl() const {
+    return PropertyDecl;
+  }
   
-  void setImplKind (PropertyImplKind propImplKind) 
-    { PropertyImplementation = propImplKind; }
-  PropertyImplKind getPropertyImplementation() const 
-    { return PropertyImplementation; }
+  PropertyImplKind getPropertyImplementation() const {
+    return PropertyDecl ? OBJC_PR_IMPL_SYNTHSIZE : OBJC_PR_IMPL_DYNAMIC;
+  }
   
-  void setPropertyIvarDecl(ObjCIvarDecl *ivarDecl) 
-    { PropertyIvarDecl = ivarDecl; }
-  ObjCIvarDecl *getPropertyIvarDecl() { return PropertyIvarDecl; }
+  ObjCIvarDecl *getPropertyIvarDecl() {
+    return PropertyIvarDecl;
+  }
   
   static bool classof(const Decl *D) {
     return D->getKind() == ObjCPropertyImpl;
