@@ -131,21 +131,17 @@ options prefix the build command. For example:</p>
    $ scan-build <b>-k -V</b> xcodebuild
 </pre>
 
-<p>Here are a complete list of options:</p>
+<p>Here is a subset of useful options:</p>
 
 <table>
   <thead><tr><td>Option</td><td>Description</td></tr></thead>
-  
-  <tr><td><b>-a</b></td>
-  <td>The analysis to run.  The default analysis is <i>checker-cfref</i>.  Valid options are: <i>checker-cfref</i>, <i>fsyntax-only</i>.  
-    These translate into options passed down to the <tt>clang</tt> executable, and currently this option is mainly used for debugging.</td></tr>
   
   <tr><td><b>-o</b></td><td>Target directory for HTML report files. Subdirectories will be
   created as needed to represent separate "runs" of the analyzer. If this option
 is not specified, a directory is created in <tt>/tmp</tt> to store the
 reports.</td><tr>
 
-  <tr><td><b>-h</b><br><i><nobr>(or no arguments)</nobr></i></td><td>Display <tt>scan-build</tt> options.</td></tr>
+  <tr><td><b>-h</b><br><i><nobr>(or no arguments)</nobr></i></td><td>Display all <tt>scan-build</tt> options.</td></tr>
 
   <tr><td><b>-k</b><br><nobr><b>--keep-going</b></nobr></td><td>Add a "keep on going" option to the
   specified build command. <p>This option currently supports <tt>make</tt> and
@@ -157,26 +153,6 @@ reports.</td><tr>
 
   <tr><td><b>-V</b></td><td>View analysis results in a web browser when the build command completes.</td></tr>
 </table>
-
-<p>These options can also be viewed by running <tt>scan-build</tt> with no
-arguments:</p>
-
-<pre>
-  $ <b>scan-build</b>
-
-  USAGE: scan-build [options] &lt;build command&gt; [build options]
-
-  OPTIONS:
-
-  -a            - The analysis to run.  The default is 'checker-cfref'.
-                  Valid options are: 'checker-cfref', 'fsyntax-only'
-
-  -o            - Target directory for HTML report files.  Subdirectories
-                  will be created as needed to represent separate "runs" of
-                  the analyzer.  If this option is not specified, a directory
-                  is created in /tmp to store the reports.
-  <b>...</b>
-</pre>
 
 <h2 id="Output">Output of the Analyzer</h2>
 
