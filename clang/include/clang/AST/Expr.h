@@ -74,7 +74,7 @@ public:
     LV_DuplicateVectorComponents,
     LV_InvalidExpression
   };
-  isLvalueResult isLvalue() const;
+  isLvalueResult isLvalue(ASTContext &Ctx) const;
   
   /// isModifiableLvalue - C99 6.3.2.1: an lvalue that does not have array type,
   /// does not have an incomplete type, does not have a const-qualified type,
@@ -91,7 +91,7 @@ public:
     MLV_ConstQualified,
     MLV_ArrayType
   };
-  isModifiableLvalueResult isModifiableLvalue() const;
+  isModifiableLvalueResult isModifiableLvalue(ASTContext &Ctx) const;
   
   bool isNullPointerConstant(ASTContext &Ctx) const;
 

@@ -1542,15 +1542,15 @@ bool ASTContext::pointerTypesAreCompatible(QualType lhs, QualType rhs) {
       lhs.getAddressSpace() != rhs.getAddressSpace())
     return false;
     
-  QualType ltype = cast<PointerType>(lhs.getCanonicalType())->getPointeeType();
-  QualType rtype = cast<PointerType>(rhs.getCanonicalType())->getPointeeType();
+  QualType ltype = lhs->getAsPointerType()->getPointeeType();
+  QualType rtype = rhs->getAsPointerType()->getPointeeType();
   
   return typesAreCompatible(ltype, rtype);
 }
 
 bool ASTContext::functionTypesAreCompatible(QualType lhs, QualType rhs) {
-  const FunctionType *lbase = cast<FunctionType>(lhs.getCanonicalType());
-  const FunctionType *rbase = cast<FunctionType>(rhs.getCanonicalType());
+  const FunctionType *lbase = lhs->getAsFunctionType();
+  const FunctionType *rbase = rhs->getAsFunctionType();
   const FunctionTypeProto *lproto = dyn_cast<FunctionTypeProto>(lbase);
   const FunctionTypeProto *rproto = dyn_cast<FunctionTypeProto>(rbase);
 
@@ -1673,8 +1673,8 @@ static bool areCompatObjCInterfaces(const ObjCInterfaceType *LHS,
 /// C99 6.2.7p1: Two types have compatible types if their types are the 
 /// same. See 6.7.[2,3,5] for additional rules.
 bool ASTContext::typesAreCompatible(QualType LHS_NC, QualType RHS_NC) {
-  QualType LHS = LHS_NC.getCanonicalType();
-  QualType RHS = RHS_NC.getCanonicalType();
+  QualType LHS = getCanonicalType(LHS_NC);
+  QualType RHS = getCanonicalType(RHS_NC);
   
   // C++ [expr]: If an expression initially has the type "reference to T", the
   // type is adjusted to "T" prior to any further analysis, the expression

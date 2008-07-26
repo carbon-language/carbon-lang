@@ -712,7 +712,7 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     
     // Check that the output exprs are valid lvalues.
     Expr *OutputExpr = (Expr *)Exprs[i];
-    Expr::isLvalueResult Result = OutputExpr->isLvalue();
+    Expr::isLvalueResult Result = OutputExpr->isLvalue(Context);
     if (Result != Expr::LV_Valid) {
       ParenExpr *PE = cast<ParenExpr>(OutputExpr);
       

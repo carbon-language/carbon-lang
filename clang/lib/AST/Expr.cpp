@@ -387,13 +387,13 @@ bool Expr::hasLocalSideEffect() const {
 ///  - (__real__ e) and (__imag__ e) where e is an lvalue  [GNU extension]
 ///  - reference type [C++ [expr]]
 ///
-Expr::isLvalueResult Expr::isLvalue() const {
+Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
   // first, check the type (C99 6.3.2.1)
   if (TR->isFunctionType()) // from isObjectType()
     return LV_NotObjectType;
 
   // Allow qualified void which is an incomplete type other than void (yuck).
-  if (TR->isVoidType() && !TR.getCanonicalType().getCVRQualifiers())
+  if (TR->isVoidType() && !Ctx.getCanonicalType(TR).getCVRQualifiers())
     return LV_IncompleteVoidType;
 
   if (TR->isReferenceType()) // C++ [expr]
@@ -406,7 +406,7 @@ Expr::isLvalueResult Expr::isLvalue() const {
   case ArraySubscriptExprClass: // C99 6.5.3p4 (e1[e2] == (*((e1)+(e2))))
     // For vectors, make sure base is an lvalue (i.e. not a function call).
     if (cast<ArraySubscriptExpr>(this)->getBase()->getType()->isVectorType())
-      return cast<ArraySubscriptExpr>(this)->getBase()->isLvalue();
+      return cast<ArraySubscriptExpr>(this)->getBase()->isLvalue(Ctx);
     return LV_Valid;
   case DeclRefExprClass: { // C99 6.5.1p2
     const Decl *RefdDecl = cast<DeclRefExpr>(this)->getDecl();
@@ -416,7 +416,7 @@ Expr::isLvalueResult Expr::isLvalue() const {
   }
   case MemberExprClass: { // C99 6.5.2.3p4
     const MemberExpr *m = cast<MemberExpr>(this);
-    return m->isArrow() ? LV_Valid : m->getBase()->isLvalue();
+    return m->isArrow() ? LV_Valid : m->getBase()->isLvalue(Ctx);
   }
   case UnaryOperatorClass:
     if (cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Deref)
@@ -425,10 +425,10 @@ Expr::isLvalueResult Expr::isLvalue() const {
     if (cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Real ||
         cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Imag ||
         cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Extension)
-      return cast<UnaryOperator>(this)->getSubExpr()->isLvalue();  // GNU.
+      return cast<UnaryOperator>(this)->getSubExpr()->isLvalue(Ctx);  // GNU.
     break;
   case ParenExprClass: // C99 6.5.1p5
-    return cast<ParenExpr>(this)->getSubExpr()->isLvalue();
+    return cast<ParenExpr>(this)->getSubExpr()->isLvalue(Ctx);
   case CompoundLiteralExprClass: // C99 6.5.2.5p5
     return LV_Valid;
   case ExtVectorElementExprClass:
@@ -444,7 +444,7 @@ Expr::isLvalueResult Expr::isLvalue() const {
                == PreDefinedExpr::CXXThis
             ? LV_InvalidExpression : LV_Valid);
   case CXXDefaultArgExprClass:
-    return cast<CXXDefaultArgExpr>(this)->getExpr()->isLvalue();
+    return cast<CXXDefaultArgExpr>(this)->getExpr()->isLvalue(Ctx);
   default:
     break;
   }
@@ -456,8 +456,8 @@ Expr::isLvalueResult Expr::isLvalue() const {
 /// if it is a structure or union, does not have any member (including, 
 /// recursively, any member or element of all contained aggregates or unions)
 /// with a const-qualified type.
-Expr::isModifiableLvalueResult Expr::isModifiableLvalue() const {
-  isLvalueResult lvalResult = isLvalue();
+Expr::isModifiableLvalueResult Expr::isModifiableLvalue(ASTContext &Ctx) const {
+  isLvalueResult lvalResult = isLvalue(Ctx);
     
   switch (lvalResult) {
   case LV_Valid: break;
@@ -473,7 +473,7 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue() const {
   if (TR->isIncompleteType())
     return MLV_IncompleteType;
     
-  if (const RecordType *r = dyn_cast<RecordType>(TR.getCanonicalType())) {
+  if (const RecordType *r = TR->getAsRecordType()) {
     if (r->hasConstFields()) 
       return MLV_ConstQualified;
   }

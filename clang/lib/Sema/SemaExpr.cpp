@@ -50,7 +50,7 @@ void Sema::DefaultFunctionArrayConversion(Expr *&E) {
     // to type'...".  In C99 this was changed to: C99 6.3.2.1p3: "an expression
     // that has type 'array of type' ...".  The relevant change is "an lvalue"
     // (C90) to "an expression" (C99).
-    if (getLangOptions().C99 || E->isLvalue() == Expr::LV_Valid)
+    if (getLangOptions().C99 || E->isLvalue(Context) == Expr::LV_Valid)
       ImpCastExprToType(E, Context.getArrayDecayedType(Ty));
   }
 }
@@ -1864,7 +1864,7 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
 {
   QualType lhsType = lex->getType();
   QualType rhsType = compoundType.isNull() ? rex->getType() : compoundType;
-  Expr::isModifiableLvalueResult mlval = lex->isModifiableLvalue(); 
+  Expr::isModifiableLvalueResult mlval = lex->isModifiableLvalue(Context); 
 
   switch (mlval) { // C99 6.5.16p2
   case Expr::MLV_Valid: 
@@ -1952,7 +1952,7 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
   }
   // At this point, we know we have a real, complex or pointer type. 
   // Now make sure the operand is a modifiable lvalue.
-  Expr::isModifiableLvalueResult mlval = op->isModifiableLvalue();
+  Expr::isModifiableLvalueResult mlval = op->isModifiableLvalue(Context);
   if (mlval != Expr::MLV_Valid) {
     // FIXME: emit a more precise diagnostic...
     Diag(OpLoc, diag::err_typecheck_invalid_lvalue_incr_decr,
@@ -2015,7 +2015,7 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
     // expressions here, but the result of one is always an lvalue anyway.
   }
   ValueDecl *dcl = getPrimaryDecl(op);
-  Expr::isLvalueResult lval = op->isLvalue();
+  Expr::isLvalueResult lval = op->isLvalue(Context);
   
   if (lval != Expr::LV_Valid) { // C99 6.5.3.2p1
     if (!dcl || !isa<FunctionDecl>(dcl)) {// allow function designators
