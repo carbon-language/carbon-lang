@@ -1462,8 +1462,7 @@ static QualType GetReturnType(Expr* RetE, ASTContext& Ctx) {
   QualType RetTy = RetE->getType();
 
   // FIXME: We aren't handling id<...>.
-  const PointerType* PT = RetTy.getCanonicalType()->getAsPointerType();
-  
+  const PointerType* PT = RetTy->getAsPointerType();
   if (!PT)
     return RetTy;
     

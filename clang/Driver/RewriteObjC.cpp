@@ -1992,10 +1992,9 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
   FunctionDecl *MsgSendStretFlavor = 0;
   if (ObjCMethodDecl *mDecl = Exp->getMethodDecl()) {
     QualType resultType = mDecl->getResultType();
-    if (resultType.getCanonicalType()->isStructureType() 
-        || resultType.getCanonicalType()->isUnionType())
+    if (resultType->isStructureType() || resultType->isUnionType())
       MsgSendStretFlavor = MsgSendStretFunctionDecl;
-    else if (resultType.getCanonicalType()->isRealFloatingType())
+    else if (resultType->isRealFloatingType())
       MsgSendFlavor = MsgSendFpretFunctionDecl;
   }
   
