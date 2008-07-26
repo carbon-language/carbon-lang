@@ -1024,10 +1024,11 @@ bool Parser::isDeclarationSpecifier() const {
     
     // GNU attributes.
   case tok::kw___attribute:
-  
-    // GNU bizarre protocol extension. FIXME: make an extension?
-  case tok::less:
     return true;
+  
+    // GNU ObjC bizarre protocol extension: <proto1,proto2> with implicit 'id'.
+  case tok::less:
+    return getLang().ObjC1;
     
     // typedef-name
   case tok::identifier:
