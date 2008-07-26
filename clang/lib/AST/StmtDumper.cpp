@@ -258,7 +258,7 @@ void StmtDumper::VisitDeclStmt(DeclStmt *Node) {
 
 void StmtDumper::VisitLabelStmt(LabelStmt *Node) {
   DumpStmt(Node);
-  fprintf(F, " '%s'\n", Node->getName());
+  fprintf(F, " '%s'", Node->getName());
 }
 
 void StmtDumper::VisitGotoStmt(GotoStmt *Node) {
