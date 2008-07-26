@@ -1,5 +1,5 @@
 LEVEL = ../..
-DIRS := lib Driver 
+DIRS := lib Driver docs
 
 include $(LEVEL)/Makefile.common
 
