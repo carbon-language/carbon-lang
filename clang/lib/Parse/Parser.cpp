@@ -36,6 +36,12 @@ void Parser::Diag(SourceLocation Loc, unsigned DiagID,
   Diags.Report(FullSourceLoc(Loc,PP.getSourceManager()), DiagID, &Msg, 1);
 }
 
+void Parser::Diag(SourceLocation Loc, unsigned DiagID, const SourceRange &R) {
+  Diags.Report(FullSourceLoc(Loc,PP.getSourceManager()), DiagID, 0, 0,
+               &R, 1);
+}
+
+
 /// MatchRHSPunctuation - For punctuation with a LHS and RHS (e.g. '['/']'),
 /// this helper function matches and consumes the specified RHS token if
 /// present.  If not present, it emits the specified diagnostic indicating
