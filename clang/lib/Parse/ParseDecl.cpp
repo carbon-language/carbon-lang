@@ -435,12 +435,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       ParseObjCProtocolReferences(ProtocolRefs, EndProtoLoc);
       
       // FIXME: New'ing this here seems wrong, why not have the action do it?
-      llvm::SmallVector<DeclTy *, 8> *ProtocolDecl = 
-              new llvm::SmallVector<DeclTy *, 8>;
-      DS.setProtocolQualifiers(ProtocolDecl);
+      llvm::SmallVector<DeclTy *, 8> ProtocolDecl;
       Actions.FindProtocolDeclaration(Loc, 
                                       &ProtocolRefs[0], ProtocolRefs.size(),
-                                      *ProtocolDecl);
+                                      ProtocolDecl);
+      DS.setProtocolQualifiers(&ProtocolDecl[0], ProtocolDecl.size());
       
       DS.SetRangeEnd(EndProtoLoc);
 
@@ -576,12 +575,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
         SourceLocation EndProtoLoc;
         llvm::SmallVector<IdentifierLocPair, 8> ProtocolRefs;
         ParseObjCProtocolReferences(ProtocolRefs, EndProtoLoc);
-        llvm::SmallVector<DeclTy *, 8> *ProtocolDecl = 
-                new llvm::SmallVector<DeclTy *, 8>;
-        DS.setProtocolQualifiers(ProtocolDecl);
+        llvm::SmallVector<DeclTy *, 8> ProtocolDecl;
         Actions.FindProtocolDeclaration(Loc, 
                                         &ProtocolRefs[0], ProtocolRefs.size(),
-                                        *ProtocolDecl);
+                                        ProtocolDecl);
+        DS.setProtocolQualifiers(&ProtocolDecl[0], ProtocolDecl.size());
         DS.SetRangeEnd(EndProtoLoc);
 
         Diag(Loc, diag::warn_objc_protocol_qualifier_missing_id,

@@ -126,7 +126,8 @@ private:
   // List of protocol qualifiers for objective-c classes.  Used for 
   // protocol-qualified interfaces "NString<foo>" and protocol-qualified id
   // "id<foo>".
-  llvm::SmallVector<Action::DeclTy *, 8> *ProtocolQualifiers;
+  Action::DeclTy * const *ProtocolQualifiers;
+  unsigned NumProtocolQualifiers;
   
   // SourceLocation info.  These are null if the item wasn't specified or if
   // the setting was synthesized.
@@ -143,6 +144,9 @@ private:
   bool BadSpecifier(TSC T, const char *&PrevSpec);
   bool BadSpecifier(TSW T, const char *&PrevSpec);
   bool BadSpecifier(SCS T, const char *&PrevSpec);
+  
+  DeclSpec(const DeclSpec&);       // DO NOT IMPLEMENT
+  void operator=(const DeclSpec&); // DO NOT IMPLEMENT
 public:  
   
   DeclSpec()
@@ -156,11 +160,12 @@ public:
       FS_inline_specified(false),
       TypeRep(0),
       AttrList(0),
-      ProtocolQualifiers(0) {
+      ProtocolQualifiers(0),
+      NumProtocolQualifiers(0) {
   }
   ~DeclSpec() {
     delete AttrList;
-    delete ProtocolQualifiers;
+    delete [] ProtocolQualifiers;
   }
   // storage-class-specifier
   SCS getStorageClassSpec() const { return (SCS)StorageClassSpec; }
@@ -276,15 +281,20 @@ public:
     return AL;
   }
   
-  llvm::SmallVector<Action::DeclTy *, 8> *getProtocolQualifiers() const {
+  typedef Action::DeclTy *const * const ProtocolQualifierListTy;
+  ProtocolQualifierListTy getProtocolQualifiers() const {
     return ProtocolQualifiers;
   }
-  void setProtocolQualifiers(llvm::SmallVector<Action::DeclTy *, 8> *protos) {
-    ProtocolQualifiers = protos;
-  }
   unsigned getNumProtocolQualifiers() const {
-    return ProtocolQualifiers ?  ProtocolQualifiers->size() : 0;
+    return NumProtocolQualifiers;
   }
+  void setProtocolQualifiers(Action::DeclTy* const *Protos, unsigned NumProtos){
+    if (NumProtos == 0) return;
+    ProtocolQualifiers = new Action::DeclTy*[NumProtos];
+    memcpy((void*)ProtocolQualifiers, Protos,sizeof(Action::DeclTy*)*NumProtos);
+    NumProtocolQualifiers = NumProtos;
+  }
+  
   /// Finish - This does final analysis of the declspec, issuing diagnostics for
   /// things like "_Imaginary" (lacking an FP type).  After calling this method,
   /// DeclSpec is guaranteed self-consistent, even if an error occurred.

@@ -44,9 +44,8 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
     break;
   case DeclSpec::TST_unspecified:
     // "<proto1,proto2>" is an objc qualified ID with a missing id.
-    if (llvm::SmallVector<Action::DeclTy *, 8> *PQ=DS.getProtocolQualifiers()) {
-      Action::DeclTy **PPDecl = &(*PQ)[0];
-      Result = Context.getObjCQualifiedIdType((ObjCProtocolDecl**)(PPDecl),
+      if (DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers()) {
+      Result = Context.getObjCQualifiedIdType((ObjCProtocolDecl**)PQ,
                                               DS.getNumProtocolQualifiers());
       break;
     }
@@ -122,28 +121,25 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
     assert(DS.getTypeSpecWidth() == 0 && DS.getTypeSpecComplex() == 0 &&
            DS.getTypeSpecSign() == 0 &&
            "Can't handle qualifiers on typedef names yet!");
+    DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers();      
 
     // FIXME: Adding a TST_objcInterface clause doesn't seem ideal, so
     // we have this "hack" for now... 
     if (ObjCInterfaceDecl *ObjCIntDecl = dyn_cast<ObjCInterfaceDecl>(D)) {
-      if (DS.getProtocolQualifiers() == 0) {
+      if (PQ == 0) {
         Result = Context.getObjCInterfaceType(ObjCIntDecl);
         break;
       }
       
-      Action::DeclTy **PPDecl = &(*DS.getProtocolQualifiers())[0];
       Result = Context.getObjCQualifiedInterfaceType(ObjCIntDecl,
-                                   reinterpret_cast<ObjCProtocolDecl**>(PPDecl),
+                                                     (ObjCProtocolDecl**)PQ,
                                                  DS.getNumProtocolQualifiers());
       break;
     } else if (TypedefDecl *typeDecl = dyn_cast<TypedefDecl>(D)) {
-      if (Context.getObjCIdType() == Context.getTypedefType(typeDecl)
-          && DS.getProtocolQualifiers()) {
-          // id<protocol-list>
-        Action::DeclTy **PPDecl = &(*DS.getProtocolQualifiers())[0];
-        Result = Context.getObjCQualifiedIdType(
-                                 reinterpret_cast<ObjCProtocolDecl**>(PPDecl),
-                                            DS.getNumProtocolQualifiers());
+      if (Context.getObjCIdType() == Context.getTypedefType(typeDecl) && PQ) {
+        // id<protocol-list>
+        Result = Context.getObjCQualifiedIdType((ObjCProtocolDecl**)PQ,
+                                                DS.getNumProtocolQualifiers());
         break;
       }
     }
