@@ -239,7 +239,7 @@ Type* TagType::CreateImpl(ASTContext& Context, Deserializer& D) {
 //===----------------------------------------------------------------------===//
 
 void TypedefType::EmitImpl(Serializer& S) const {
-  S.Emit(QualType((Type*)this,0).getCanonicalType());
+  S.Emit(QualType((Type*)this,0)/*.getCanonicalType()*/);
   S.EmitPtr(Decl);
 }
 
