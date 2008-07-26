@@ -395,47 +395,59 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     SourceLocation Loc = Tok.getLocation();
     
     switch (Tok.getKind()) {
-      // typedef-name
-    case tok::identifier:
-      // This identifier can only be a typedef name if we haven't already seen
-      // a type-specifier.  Without this check we misparse:
-      //  typedef int X; struct Y { short X; };  as 'short int'.
-      if (!DS.hasTypeSpecifier()) {
-        // It has to be available as a typedef too!
-        if (void *TypeRep = Actions.isTypeName(*Tok.getIdentifierInfo(),
-                                               CurScope)) {
-          isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec,
-                                         TypeRep);
-          if (isInvalid)
-            break;
-          // FIXME: restrict this to "id" and ObjC classnames.
-          DS.SetRangeEnd(Tok.getLocation());
-          ConsumeToken(); // The identifier
-          if (Tok.is(tok::less)) {
-            SourceLocation endProtoLoc;
-            llvm::SmallVector<IdentifierLocPair, 8> ProtocolRefs;
-            ParseObjCProtocolReferences(ProtocolRefs, endProtoLoc);
-            
-            // FIXME: New'ing this here seems wrong, why not have the action do
-            // it?
-            llvm::SmallVector<DeclTy *, 8> *ProtocolDecl = 
-                    new llvm::SmallVector<DeclTy *, 8>;
-            DS.setProtocolQualifiers(ProtocolDecl);
-            Actions.FindProtocolDeclaration(Loc, 
-                      &ProtocolRefs[0], ProtocolRefs.size(),
-                      *ProtocolDecl);
-          }
-          continue;
-        }
-      }
-      // FALL THROUGH.
     default:
     DoneWithDeclSpec:
       // If this is not a declaration specifier token, we're done reading decl
       // specifiers.  First verify that DeclSpec's are consistent.
       DS.Finish(Diags, PP.getSourceManager(), getLang());
       return;
-    
+        
+      // typedef-name
+    case tok::identifier: {
+      // This identifier can only be a typedef name if we haven't already seen
+      // a type-specifier.  Without this check we misparse:
+      //  typedef int X; struct Y { short X; };  as 'short int'.
+      if (DS.hasTypeSpecifier())
+        goto DoneWithDeclSpec;
+      
+      // It has to be available as a typedef too!
+      void *TypeRep = Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope);
+      if (TypeRep == 0)
+        goto DoneWithDeclSpec;
+      
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_typedef, Loc, PrevSpec,
+                                     TypeRep);
+      if (isInvalid)
+        break;
+      
+      DS.SetRangeEnd(Tok.getLocation());
+      ConsumeToken(); // The identifier
+
+      // Objective-C supports syntax of the form 'id<proto1,proto2>' where 'id'
+      // is a specific typedef and 'itf<proto1,proto2>' where 'itf' is an
+      // Objective-C interface.  If we don't have Objective-C or a '<', this is
+      // just a normal reference to a typedef name.
+      if (!Tok.is(tok::less) || !getLang().ObjC1)
+        continue;
+      
+      SourceLocation EndProtoLoc;
+      llvm::SmallVector<IdentifierLocPair, 8> ProtocolRefs;
+      ParseObjCProtocolReferences(ProtocolRefs, EndProtoLoc);
+      
+      // FIXME: New'ing this here seems wrong, why not have the action do it?
+      llvm::SmallVector<DeclTy *, 8> *ProtocolDecl = 
+              new llvm::SmallVector<DeclTy *, 8>;
+      DS.setProtocolQualifiers(ProtocolDecl);
+      Actions.FindProtocolDeclaration(Loc, 
+                                      &ProtocolRefs[0], ProtocolRefs.size(),
+                                      *ProtocolDecl);
+      
+      DS.SetRangeEnd(EndProtoLoc);
+
+      // Do not allow any other declspecs after the protocol qualifier list
+      // "<foo,bar>short" is not allowed.
+      goto DoneWithDeclSpec;
+    }
     // GNU attributes support.
     case tok::kw___attribute:
       DS.AddAttributes(ParseAttributes());
@@ -554,10 +566,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       break;
       
     case tok::less:
-      // GCC supports types like "<SomeProtocol>" as a synonym for
+      // GCC ObjC supports types like "<SomeProtocol>" as a synonym for
       // "id<SomeProtocol>".  This is hopelessly old fashioned and dangerous,
       // but we support it.
-      if (DS.hasTypeSpecifier())
+      if (DS.hasTypeSpecifier() || !getLang().ObjC1)
         goto DoneWithDeclSpec;
         
       {
@@ -570,9 +582,13 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
         Actions.FindProtocolDeclaration(Loc, 
                                         &ProtocolRefs[0], ProtocolRefs.size(),
                                         *ProtocolDecl);
+        DS.SetRangeEnd(EndProtoLoc);
+
         Diag(Loc, diag::warn_objc_protocol_qualifier_missing_id,
              SourceRange(Loc, EndProtoLoc));
-        continue;
+        // Do not allow any other declspecs after the protocol qualifier list
+        // "<foo,bar>short" is not allowed.
+        goto DoneWithDeclSpec;
       }
     }
     // If the specifier combination wasn't legal, issue a diagnostic.
