@@ -624,13 +624,14 @@ public:
                     DeclTy * const *ProtoRefNames, unsigned NumProtoRefs,
                     SourceLocation EndProtoLoc);
   
-  virtual DeclTy *ActOnStartCategoryInterface(
-                    SourceLocation AtInterfaceLoc,
-                    IdentifierInfo *ClassName, SourceLocation ClassLoc,
-                    IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
-                    const IdentifierLocPair *ProtoRefNames,
-                    unsigned NumProtoRefs,
-                    SourceLocation EndProtoLoc);
+  virtual DeclTy *ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
+                                              IdentifierInfo *ClassName,
+                                              SourceLocation ClassLoc,
+                                              IdentifierInfo *CategoryName,
+                                              SourceLocation CategoryLoc,
+                                              DeclTy * const *ProtoRefs,
+                                              unsigned NumProtoRefs,
+                                              SourceLocation EndProtoLoc);
   
   virtual DeclTy *ActOnStartClassImplementation(
                     SourceLocation AtClassImplLoc,

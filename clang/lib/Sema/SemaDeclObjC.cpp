@@ -402,7 +402,7 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
                             IdentifierInfo *ClassName, SourceLocation ClassLoc,
                             IdentifierInfo *CategoryName,
                             SourceLocation CategoryLoc,
-                            const IdentifierLocPair *ProtoRefNames,
+                            DeclTy * const *ProtoRefs,
                             unsigned NumProtoRefs,
                             SourceLocation EndProtoLoc) {
   ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName);
@@ -430,24 +430,9 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
   }
 
   if (NumProtoRefs) {
-    llvm::SmallVector<ObjCProtocolDecl*, 32> RefProtocols;
-    /// Check and then save the referenced protocols.
-    for (unsigned int i = 0; i != NumProtoRefs; i++) {
-      ObjCProtocolDecl* RefPDecl = ObjCProtocols[ProtoRefNames[i].first];
-      if (!RefPDecl)
-        Diag(ProtoRefNames[i].second, diag::err_undeclared_protocol,
-             ProtoRefNames[i].first->getName());
-      else {
-        if (RefPDecl->isForwardDecl())
-          Diag(ProtoRefNames[i].second, diag::warn_undef_protocolref,
-               ProtoRefNames[i].first->getName());
-        RefProtocols.push_back(RefPDecl);
-      }
-    }
-    if (!RefProtocols.empty())
-      CDecl->addReferencedProtocols(&RefProtocols[0], RefProtocols.size());
+    CDecl->addReferencedProtocols((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs);
+    CDecl->setLocEnd(EndProtoLoc);
   }
-  CDecl->setLocEnd(EndProtoLoc);
   return CDecl;
 }
 

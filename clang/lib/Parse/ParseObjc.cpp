@@ -131,7 +131,6 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     SourceLocation lparenLoc = ConsumeParen();
     SourceLocation categoryLoc, rparenLoc;
     IdentifierInfo *categoryId = 0;
-    llvm::SmallVector<IdentifierLocPair, 8> ProtocolRefs;
     
     // For ObjC2, the category name is optional (not an error).
     if (Tok.is(tok::identifier)) {
@@ -147,19 +146,21 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
       return 0;
     }
     rparenLoc = ConsumeParen();
-    SourceLocation endProtoLoc;
+    
     // Next, we need to check for any protocol references.
-    if (Tok.is(tok::less)) {
-      if (ParseObjCProtocolReferences(ProtocolRefs, endProtoLoc))
-        return 0;
-    }
+    SourceLocation EndProtoLoc;
+    llvm::SmallVector<DeclTy *, 8> ProtocolRefs;
+    if (Tok.is(tok::less) &&
+        ParseObjCProtocolReferences(ProtocolRefs, true, EndProtoLoc))
+      return 0;
+    
     if (attrList) // categories don't support attributes.
       Diag(Tok, diag::err_objc_no_attributes_on_category);
     
     DeclTy *CategoryType = Actions.ActOnStartCategoryInterface(atLoc, 
                                      nameId, nameLoc, categoryId, categoryLoc,
                                      &ProtocolRefs[0], ProtocolRefs.size(),
-                                     endProtoLoc);
+                                     EndProtoLoc);
     
     ParseObjCInterfaceDeclList(CategoryType, tok::objc_not_keyword);
 

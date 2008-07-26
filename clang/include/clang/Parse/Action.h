@@ -648,22 +648,21 @@ public:
   virtual DeclTy *ActOnStartProtocolInterface(SourceLocation AtProtoLoc,
                                               IdentifierInfo *ProtocolName, 
                                               SourceLocation ProtocolLoc,
-                                              DeclTy * const *ProtoRefNames,
+                                              DeclTy * const *ProtoRefs,
                                               unsigned NumProtoRefs,
                                               SourceLocation EndProtoLoc) {
     return 0;
   }
   // ActOnStartCategoryInterface - this action is called immdiately after
   // parsing the prologue for a category interface.
-  virtual DeclTy *ActOnStartCategoryInterface(
-    SourceLocation AtInterfaceLoc,
-    IdentifierInfo *ClassName, 
-    SourceLocation ClassLoc,
-    IdentifierInfo *CategoryName, 
-    SourceLocation CategoryLoc,
-    const IdentifierLocPair *ProtoRefNames, 
-    unsigned NumProtoRefs,
-    SourceLocation EndProtoLoc) {
+  virtual DeclTy *ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
+                                              IdentifierInfo *ClassName, 
+                                              SourceLocation ClassLoc,
+                                              IdentifierInfo *CategoryName, 
+                                              SourceLocation CategoryLoc,
+                                              DeclTy * const *ProtoRefs,
+                                              unsigned NumProtoRefs,
+                                              SourceLocation EndProtoLoc) {
     return 0;
   }
   // ActOnStartClassImplementation - this action is called immdiately after
