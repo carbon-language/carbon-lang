@@ -404,7 +404,7 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
   if (E->getOpcode() == UnaryOperator::Extension)
     return EmitLValue(E->getSubExpr());
   
-  QualType ExprTy=CGM.getContext().getCanonicalType(E->getSubExpr()->getType());
+  QualType ExprTy = getContext().getCanonicalType(E->getSubExpr()->getType());
   switch (E->getOpcode()) {
   default: assert(0 && "Unknown unary operator lvalue!");
   case UnaryOperator::Deref:
@@ -503,7 +503,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   // size is a VLA.
   if (!E->getType()->isConstantSizeType())
     assert(0 && "VLA idx not implemented");
-  QualType ExprTy = CGM.getContext().getCanonicalType(E->getBase()->getType());
+  QualType ExprTy = getContext().getCanonicalType(E->getBase()->getType());
 
   return LValue::MakeAddr(Builder.CreateGEP(Base, Idx, "arrayidx"),
                           ExprTy->getAsPointerType()->getPointeeType()
@@ -560,7 +560,7 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   if (E->isArrow()) {
     BaseValue = EmitScalarExpr(BaseExpr);
     const PointerType *PTy = 
-      cast<PointerType>(BaseExpr->getType().getCanonicalType());
+      cast<PointerType>(getContext().getCanonicalType(BaseExpr->getType()));
     if (PTy->getPointeeType()->isUnionType())
       isUnion = true;
     CVRQualifiers = PTy->getPointeeType().getCVRQualifiers();
@@ -720,7 +720,7 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, QualType FnType,
   
   // The callee type will always be a pointer to function type, get the function
   // type.
-  FnType = cast<PointerType>(FnType.getCanonicalType())->getPointeeType();
+  FnType = FnType->getAsPointerType()->getPointeeType();
   QualType ResultType = cast<FunctionType>(FnType)->getResultType();
 
   llvm::SmallVector<llvm::Value*, 16> Args;

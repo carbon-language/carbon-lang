@@ -627,8 +627,8 @@ public:
   
   llvm::Constant *EmitConversion(llvm::Constant *Src, QualType SrcType, 
                                  QualType DstType) {
-    SrcType = SrcType.getCanonicalType();
-    DstType = DstType.getCanonicalType();
+    SrcType = CGF->getContext().getCanonicalType(SrcType);
+    DstType = CGF->getContext().getCanonicalType(DstType);
     if (SrcType == DstType) return Src;
     
     // Handle conversions to bool first, they are special: comparisons against 0.
@@ -813,9 +813,8 @@ public:
 
 
 llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
-                                                CodeGenFunction *CGF)
-{
-  QualType type = E->getType().getCanonicalType();
+                                                CodeGenFunction *CGF) {
+  QualType type = Context.getCanonicalType(E->getType());
 
   if (type->isIntegerType()) {
     llvm::APSInt Value(static_cast<uint32_t>(Context.getTypeSize(type)));

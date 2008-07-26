@@ -259,8 +259,8 @@ ComplexPairTy ComplexExprEmitter::EmitComplexToComplexCast(ComplexPairTy Val,
                                                            QualType SrcType,
                                                            QualType DestType) {
   // Get the src/dest element type.
-  SrcType = cast<ComplexType>(SrcType.getCanonicalType())->getElementType();
-  DestType = cast<ComplexType>(DestType.getCanonicalType())->getElementType();
+  SrcType = SrcType->getAsComplexType()->getElementType();
+  DestType = DestType->getAsComplexType()->getElementType();
 
   // C99 6.3.1.6: When a value of complextype is converted to another
   // complex type, both the real and imaginary parts followthe conversion
@@ -282,7 +282,7 @@ ComplexPairTy ComplexExprEmitter::EmitCast(Expr *Op, QualType DestTy) {
   llvm::Value *Elt = CGF.EmitScalarExpr(Op);
 
   // Convert the input element to the element type of the complex.
-  DestTy = cast<ComplexType>(DestTy.getCanonicalType())->getElementType();
+  DestTy = DestTy->getAsComplexType()->getElementType();
   Elt = CGF.EmitScalarConversion(Elt, Op->getType(), DestTy);
   
   // Return (realval, 0).
@@ -437,8 +437,9 @@ EmitCompoundAssign(const CompoundAssignOperator *E,
 }
 
 ComplexPairTy ComplexExprEmitter::VisitBinAssign(const BinaryOperator *E) {
-  assert(E->getLHS()->getType().getCanonicalType() ==
-         E->getRHS()->getType().getCanonicalType() && "Invalid assignment");
+  assert(CGF.getContext().getCanonicalType(E->getLHS()->getType()) ==
+         CGF.getContext().getCanonicalType(E->getRHS()->getType()) &&
+         "Invalid assignment");
   // Emit the RHS.
   ComplexPairTy Val = Visit(E->getRHS());
 

@@ -345,8 +345,8 @@ Value *ScalarExprEmitter::EmitConversionToBool(Value *Src, QualType SrcType) {
 /// specified destination type, both of which are LLVM scalar types.
 Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
                                                QualType DstType) {
-  SrcType = SrcType.getCanonicalType();
-  DstType = DstType.getCanonicalType();
+  SrcType = CGF.getContext().getCanonicalType(SrcType);
+  DstType = CGF.getContext().getCanonicalType(DstType);
   if (SrcType == DstType) return Src;
   
   if (DstType->isVoidType()) return 0;
@@ -421,7 +421,7 @@ Value *ScalarExprEmitter::
 EmitComplexToScalarConversion(CodeGenFunction::ComplexPairTy Src,
                               QualType SrcTy, QualType DstTy) {
   // Get the source element type.
-  SrcTy = cast<ComplexType>(SrcTy.getCanonicalType())->getElementType();
+  SrcTy = SrcTy->getAsComplexType()->getElementType();
   
   // Handle conversions to bool first, they are special: comparisons against 0.
   if (DstTy->isBooleanType()) {
@@ -546,10 +546,6 @@ Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
     return V;
     
   } else if (E->getType()->isReferenceType()) {
-    assert(cast<ReferenceType>(E->getType().getCanonicalType())->
-           getPointeeType() == 
-           Op->getType().getCanonicalType() && "Incompatible types!");
-    
     return EmitLValue(Op).getAddress();
   }
   
@@ -819,7 +815,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
     // Zero or sign extend the pointer value based on whether the index is
     // signed or not.
     const llvm::Type *IdxType = llvm::IntegerType::get(CGF.LLVMPointerWidth);
-    if (IdxExp->getType().getCanonicalType()->isSignedIntegerType())
+    if (IdxExp->getType()->isSignedIntegerType())
       Idx = Builder.CreateSExt(Idx, IdxType, "idx.ext");
     else
       Idx = Builder.CreateZExt(Idx, IdxType, "idx.ext");
@@ -843,7 +839,7 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
     // Zero or sign extend the pointer value based on whether the index is
     // signed or not.
     const llvm::Type *IdxType = llvm::IntegerType::get(CGF.LLVMPointerWidth);
-    if (Ops.E->getRHS()->getType().getCanonicalType()->isSignedIntegerType())
+    if (Ops.E->getRHS()->getType()->isSignedIntegerType())
       Idx = Builder.CreateSExt(Idx, IdxType, "idx.ext");
     else
       Idx = Builder.CreateZExt(Idx, IdxType, "idx.ext");
@@ -862,8 +858,8 @@ Value *ScalarExprEmitter::VisitBinSub(const BinaryOperator *E) {
   Value *LHS = Visit(E->getLHS());
   Value *RHS = Visit(E->getRHS());
   
-  const QualType LHSType = E->getLHS()->getType().getCanonicalType();
-  const QualType LHSElementType = cast<PointerType>(LHSType)->getPointeeType();
+  const QualType LHSType = E->getLHS()->getType();
+  const QualType LHSElementType = LHSType->getAsPointerType()->getPointeeType();
   uint64_t ElementSize = CGF.getContext().getTypeSize(LHSElementType) / 8;
   
   const llvm::Type *ResultType = ConvertType(E->getType());
@@ -948,8 +944,7 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
     CodeGenFunction::ComplexPairTy LHS = CGF.EmitComplexExpr(E->getLHS());
     CodeGenFunction::ComplexPairTy RHS = CGF.EmitComplexExpr(E->getRHS());
     
-    QualType CETy = 
-      cast<ComplexType>(LHSTy.getCanonicalType())->getElementType();
+    QualType CETy = LHSTy->getAsComplexType()->getElementType();
     
     Value *ResultR, *ResultI;
     if (CETy->isRealFloatingType()) {

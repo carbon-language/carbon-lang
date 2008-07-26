@@ -94,16 +94,18 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
 }
 
 const llvm::Type *CodeGenTypes::ConvertTypeRecursive(QualType T) {
+  T = Context.getCanonicalType(T);;
+  
   // See if type is already cached.
   llvm::DenseMap<Type *, llvm::PATypeHolder>::iterator
-    I = TypeCache.find(T.getCanonicalType().getTypePtr());
+    I = TypeCache.find(T.getTypePtr());
   // If type is found in map and this is not a definition for a opaque
   // place holder type then use it. Otherwise, convert type T.
   if (I != TypeCache.end())
     return I->second.get();
 
   const llvm::Type *ResultType = ConvertNewType(T);
-  TypeCache.insert(std::make_pair(T.getCanonicalType().getTypePtr(), 
+  TypeCache.insert(std::make_pair(T.getTypePtr(), 
                                   llvm::PATypeHolder(ResultType)));
   return ResultType;
 }
@@ -184,7 +186,7 @@ static const llvm::Type* getTypeForFormat(const llvm::fltSemantics &format) {
 }
 
 const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
-  const clang::Type &Ty = *T.getCanonicalType();
+  const clang::Type &Ty = *Context.getCanonicalType(T);
   
   switch (Ty.getTypeClass()) {
   case Type::TypeName:        // typedef isn't canonical.

@@ -180,20 +180,15 @@ void AggExprEmitter::EmitAggLoadOfLValue(const Expr *E) {
 //                            Visitor Methods
 //===----------------------------------------------------------------------===//
 
-void AggExprEmitter::VisitImplicitCastExpr(ImplicitCastExpr *E)
-{
-  QualType STy = E->getSubExpr()->getType().getCanonicalType();
-  QualType Ty = E->getType().getCanonicalType();
-
+void AggExprEmitter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   assert(CGF.getContext().typesAreCompatible(
-             STy.getUnqualifiedType(), Ty.getUnqualifiedType())
-         && "Implicit cast types must be compatible");
-  
+                          E->getSubExpr()->getType().getUnqualifiedType(),
+                          E->getType().getUnqualifiedType()) &&
+         "Implicit cast types must be compatible");
   Visit(E->getSubExpr());
 }
 
-void AggExprEmitter::VisitCallExpr(const CallExpr *E)
-{
+void AggExprEmitter::VisitCallExpr(const CallExpr *E) {
   RValue RV = CGF.EmitCallExpr(E);
   assert(RV.isAggregate() && "Return value must be aggregate value!");
   
@@ -204,8 +199,8 @@ void AggExprEmitter::VisitCallExpr(const CallExpr *E)
   
   EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
 }
-void AggExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) 
-{
+
+void AggExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   RValue RV = RValue::getAggregate(CGF.EmitObjCMessageExpr(E));
 
   // If the result is ignored, don't copy from the value.
@@ -215,8 +210,7 @@ void AggExprEmitter::VisitObjCMessageExpr(ObjCMessageExpr *E)
   EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
 }
 
-void AggExprEmitter::VisitOverloadExpr(const OverloadExpr *E)
-{
+void AggExprEmitter::VisitOverloadExpr(const OverloadExpr *E) {
   RValue RV = CGF.EmitCallExpr(E->getFn(), E->arg_begin(),
                                E->arg_end(CGF.getContext()));
   
@@ -230,8 +224,7 @@ void AggExprEmitter::VisitOverloadExpr(const OverloadExpr *E)
   EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
 }
 
-void AggExprEmitter::VisitBinComma(const BinaryOperator *E)
-{
+void AggExprEmitter::VisitBinComma(const BinaryOperator *E) {
   CGF.EmitAnyExpr(E->getLHS());
   CGF.EmitAggExpr(E->getRHS(), DestPtr, false);
 }
@@ -389,17 +382,21 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     
     uint64_t NumInitElements = E->getNumInits();
 
-    if (E->getNumInits() > 0 &&
-        E->getType().getCanonicalType().getUnqualifiedType() == 
-          E->getInit(0)->getType().getCanonicalType().getUnqualifiedType()) {
-      EmitAggLoadOfLValue(E->getInit(0));
-      return;
+    if (E->getNumInits() > 0) {
+      QualType T1 = E->getType();
+      QualType T2 = E->getInit(0)->getType();
+      if (CGF.getContext().getCanonicalType(T1).getUnqualifiedType() == 
+          CGF.getContext().getCanonicalType(T2).getUnqualifiedType()) {
+        EmitAggLoadOfLValue(E->getInit(0));
+        return;
+      }
     }
 
     uint64_t NumArrayElements = AType->getNumElements();
     QualType ElementType = E->getType()->getAsArrayType()->getElementType();
     
-    unsigned CVRqualifier = E->getType().getCanonicalType()->getAsArrayType()
+    unsigned CVRqualifier =
+      CGF.getContext().getCanonicalType(E->getType())->getAsArrayType()
                             ->getElementType().getCVRQualifiers();
 
     for (uint64_t i = 0; i != NumArrayElements; ++i) {
