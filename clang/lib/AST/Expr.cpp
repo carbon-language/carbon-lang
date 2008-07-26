@@ -347,10 +347,18 @@ bool Expr::hasLocalSideEffect() const {
     return true;
   case ObjCMessageExprClass:
     return true;
-  case StmtExprClass:
-    // TODO: check the inside of the statement expression
-    return true;
-
+  case StmtExprClass: {
+    // Statement exprs don't logically have side effects themselves, but are
+    // sometimes used in macros in ways that give them a type that is unused.
+    // For example ({ blah; foo(); }) will end up with a type if foo has a type.
+    // however, if the result of the stmt expr is dead, we don't want to emit a
+    // warning.
+    const CompoundStmt *CS = cast<StmtExpr>(this)->getSubStmt();
+    if (!CS->body_empty())
+      if (const Expr *E = dyn_cast<Expr>(CS->body_back()))
+        return E->hasLocalSideEffect();
+    return false;
+  }
   case CastExprClass:
     // If this is a cast to void, check the operand.  Otherwise, the result of
     // the cast is unused.

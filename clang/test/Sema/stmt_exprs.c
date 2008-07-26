@@ -1,4 +1,4 @@
-// RUN: clang %s -fsyntax-only
+// RUN: clang %s -fsyntax-only -verify
 
 typedef unsigned __uint32_t;
 
@@ -10,3 +10,13 @@ __extension__ ({ register __uint32_t __X = (x); \
 int test(int _x) {
  return (__byte_swap_int_var(_x));
 }
+
+// PR2374
+int test2() { return ({L:5;}); }
+int test3() { return ({ {5;} }); }         // expected-error {{incompatible type returning 'void', expected 'int'}}\
+                                           // expected-warning {{expression result unused}}
+int test4() { return ({ ({5;}); }); }
+int test5() { return ({L1: L2: L3: 5;}); }
+int test6() { return ({5;}); }
+void test7() { ({5;}); }                   // expected-warning {{expression result unused}}
+

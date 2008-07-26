@@ -2334,9 +2334,15 @@ Sema::ExprResult Sema::ActOnStmtExpr(SourceLocation LPLoc, StmtTy *substmt,
   // as the type of the stmtexpr.
   QualType Ty = Context.VoidTy;
   
-  if (!Compound->body_empty())
-    if (Expr *LastExpr = dyn_cast<Expr>(Compound->body_back()))
+  if (!Compound->body_empty()) {
+    Stmt *LastStmt = Compound->body_back();
+    // If LastStmt is a label, skip down through into the body.
+    while (LabelStmt *Label = dyn_cast<LabelStmt>(LastStmt))
+      LastStmt = Label->getSubStmt();
+    
+    if (Expr *LastExpr = dyn_cast<Expr>(LastStmt))
       Ty = LastExpr->getType();
+  }
   
   return new StmtExpr(Compound, Ty, LPLoc, RPLoc);
 }
