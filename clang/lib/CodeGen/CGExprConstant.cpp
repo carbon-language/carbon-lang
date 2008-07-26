@@ -627,8 +627,8 @@ public:
   
   llvm::Constant *EmitConversion(llvm::Constant *Src, QualType SrcType, 
                                  QualType DstType) {
-    SrcType = CGF->getContext().getCanonicalType(SrcType);
-    DstType = CGF->getContext().getCanonicalType(DstType);
+    SrcType = CGM.getContext().getCanonicalType(SrcType);
+    DstType = CGM.getContext().getCanonicalType(DstType);
     if (SrcType == DstType) return Src;
     
     // Handle conversions to bool first, they are special: comparisons against 0.
