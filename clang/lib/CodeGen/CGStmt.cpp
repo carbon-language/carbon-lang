@@ -87,12 +87,11 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
                                          llvm::Value *AggLoc, bool isAggVol) {
   // FIXME: handle vla's etc.
   if (S.body_empty() || !isa<Expr>(S.body_back())) GetLast = false;
-
+  
   CGDebugInfo *DI = CGM.getDebugInfo();
   if (DI) {
-    if (S.getLBracLoc().isValid()) {
+    if (S.getLBracLoc().isValid())
       DI->setLocation(S.getLBracLoc());
-    }
     DI->EmitRegionStart(CurFn, Builder);
   }
 
@@ -101,9 +100,8 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
     EmitStmt(*I);
 
   if (DI) {
-    if (S.getRBracLoc().isValid()) {
+    if (S.getRBracLoc().isValid())
       DI->setLocation(S.getRBracLoc());
-    }
     DI->EmitRegionEnd(CurFn, Builder);
   }
 
@@ -169,9 +167,9 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   if (isDummyBlock(BB)) {
     BB->eraseFromParent();
     Builder.SetInsertPoint(ThenBlock);
-  }
-  else
+  } else {
     Builder.CreateBr(ContBlock);
+  }
   
   // Emit the 'else' code if present.
   if (const Stmt *Else = S.getElse()) {
@@ -181,9 +179,9 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
     if (isDummyBlock(BB)) {
       BB->eraseFromParent();
       Builder.SetInsertPoint(ElseBlock);
-    }
-    else
+    } else {
       Builder.CreateBr(ContBlock);
+    }
   }
   
   // Emit the continuation block for code after the if.
@@ -376,11 +374,9 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   } else if (!hasAggregateLLVMType(RV->getType())) {
     RetValue = EmitScalarExpr(RV);
   } else if (RV->getType()->isAnyComplexType()) {
-    llvm::Value *SRetPtr = CurFn->arg_begin();
-    EmitComplexExprIntoAddr(RV, SRetPtr, false);
+    EmitComplexExprIntoAddr(RV, CurFn->arg_begin(), false);
   } else {
-    llvm::Value *SRetPtr = CurFn->arg_begin();
-    EmitAggExpr(RV, SRetPtr, false);
+    EmitAggExpr(RV, CurFn->arg_begin(), false);
   }
 
   if (RetValue) {
@@ -542,14 +538,10 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   CaseRangeBlock = SavedCRBlock;
 }
 
-static inline std::string ConvertAsmString(const char *Start,
-                                           unsigned NumOperands,
-                                           bool IsSimple)
-{
+static std::string ConvertAsmString(const char *Start, unsigned NumOperands,
+                                    bool IsSimple) {
   static unsigned AsmCounter = 0;
-  
   AsmCounter++;
-  
   std::string Result;
   if (IsSimple) {
     while (*Start) {
@@ -561,7 +553,6 @@ static inline std::string ConvertAsmString(const char *Start,
         Result += "$$";
         break;
       }
-      
       Start++;
     }
     
@@ -588,14 +579,12 @@ static inline std::string ConvertAsmString(const char *Start,
       if (EscapedChar == '%') {
         // Escaped percentage sign.
         Result += '%';
-      }
-      else if (EscapedChar == '=') {
+      } else if (EscapedChar == '=') {
         // Generate an unique ID.
         Result += llvm::utostr(AsmCounter);
       } else if (isdigit(EscapedChar)) {
         // %n - Assembler operand n
         char *End;
-        
         unsigned long n = strtoul(Start, &End, 10);
         if (Start == End) {
           // FIXME: This should be caught during Sema.

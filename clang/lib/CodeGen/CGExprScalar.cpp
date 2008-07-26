@@ -1176,7 +1176,6 @@ Value *CodeGenFunction::EmitComplexToScalarConversion(ComplexPairTy Src,
 Value *CodeGenFunction::EmitShuffleVector(Value* V1, Value *V2, ...) {
   assert(V1->getType() == V2->getType() &&
          "Vector operands must be of the same type");
-  
   unsigned NumElements = 
     cast<llvm::VectorType>(V1->getType())->getNumElements();
   
@@ -1184,13 +1183,10 @@ Value *CodeGenFunction::EmitShuffleVector(Value* V1, Value *V2, ...) {
   va_start(va, V2);
   
   llvm::SmallVector<llvm::Constant*, 16> Args;
-  
   for (unsigned i = 0; i < NumElements; i++) {
     int n = va_arg(va, int);
-    
     assert(n >= 0 && n < (int)NumElements * 2 && 
            "Vector shuffle index out of bounds!");
-    
     Args.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, n));
   }
   
@@ -1203,12 +1199,11 @@ Value *CodeGenFunction::EmitShuffleVector(Value* V1, Value *V2, ...) {
 }
 
 llvm::Value *CodeGenFunction::EmitVector(llvm::Value * const *Vals, 
-                                         unsigned NumVals, bool isSplat)
-{
+                                         unsigned NumVals, bool isSplat) {
   llvm::Value *Vec
-  = llvm::UndefValue::get(llvm::VectorType::get(Vals[0]->getType(), NumVals));
+    = llvm::UndefValue::get(llvm::VectorType::get(Vals[0]->getType(), NumVals));
   
-  for (unsigned i = 0, e = NumVals ; i != e; ++i) {
+  for (unsigned i = 0, e = NumVals; i != e; ++i) {
     llvm::Value *Val = isSplat ? Vals[0] : Vals[i];
     llvm::Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
     Vec = Builder.CreateInsertElement(Vec, Val, Idx, "tmp");
