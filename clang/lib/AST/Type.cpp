@@ -171,6 +171,11 @@ const FunctionType *Type::getAsFunctionType() const {
   return getDesugaredType()->getAsFunctionType();
 }
 
+const FunctionTypeProto *Type::getAsFunctionTypeProto() const {
+  return dyn_cast_or_null<FunctionTypeProto>(getAsFunctionType());
+}
+
+
 const PointerLikeType *Type::getAsPointerLikeType() const {
   // If this is directly a pointer-like type, return it.
   if (const PointerLikeType *PTy = dyn_cast<PointerLikeType>(this))

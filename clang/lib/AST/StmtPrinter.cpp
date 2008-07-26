@@ -569,7 +569,7 @@ void StmtPrinter::VisitIntegerLiteral(IntegerLiteral *Node) {
   OS << Node->getValue().toString(10, isSigned);
   
   // Emit suffixes.  Integer literals are always a builtin integer type.
-  switch (cast<BuiltinType>(Node->getType().getCanonicalType())->getKind()) {
+  switch (Node->getType()->getAsBuiltinType()->getKind()) {
   default: assert(0 && "Unexpected type for integer literal!");
   case BuiltinType::Int:       break; // no suffix.
   case BuiltinType::UInt:      OS << 'U'; break;

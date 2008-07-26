@@ -28,7 +28,6 @@
 #include "clang/AST/ASTContext.h"
 #include "llvm/Support/Compiler.h"
 
-#include <vector>
 #include <sstream>
 
 using namespace clang;
@@ -496,7 +495,7 @@ bool AuditCFNumberCreate::Audit(ExplodedNode<ValueState>* N,ValueStateManager&){
   if (!LV)
     return false;
   
-  QualType T = LV->getDecl()->getType().getCanonicalType();
+  QualType T = Ctx.getCanonicalType(LV->getDecl()->getType());
   
   // FIXME: If the pointee isn't an integer type, should we flag a warning?
   //  People can do weird stuff with pointers.

@@ -727,8 +727,8 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
 /// TODO: Handle protocol list; such as id<p1,p2> in type comparisons
 bool Sema::MatchTwoMethodDeclarations(const ObjCMethodDecl *Method, 
                                       const ObjCMethodDecl *PrevMethod) {
-  if (Method->getResultType().getCanonicalType() !=
-      PrevMethod->getResultType().getCanonicalType())
+  if (Context.getCanonicalType(Method->getResultType()) !=
+      Context.getCanonicalType(PrevMethod->getResultType()))
     return false;
   for (unsigned i = 0, e = Method->getNumParams(); i != e; ++i) {
     ParmVarDecl *ParamDecl = Method->getParamDecl(i);

@@ -233,19 +233,20 @@ Sema::ExprResult Sema::ActOnClassMessage(
 // ArgExprs is optional - if it is present, the number of expressions
 // is obtained from Sel.getNumArgs().
 Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
-  SourceLocation lbrac, SourceLocation rbrac, ExprTy **Args, unsigned NumArgs) 
-{
+                                            SourceLocation lbrac, 
+                                            SourceLocation rbrac,
+                                            ExprTy **Args, unsigned NumArgs) {
   assert(receiver && "missing receiver expression");
   
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
   Expr *RExpr = static_cast<Expr *>(receiver);
   QualType returnType;
 
-  QualType receiverType = 
-    RExpr->getType().getCanonicalType().getUnqualifiedType();
+  QualType ReceiverCType =
+    Context.getCanonicalType(RExpr->getType()).getUnqualifiedType();
   
   // Handle messages to id.
-  if (receiverType == Context.getObjCIdType().getCanonicalType()) {
+  if (ReceiverCType == Context.getCanonicalType(Context.getObjCIdType())) {
     ObjCMethodDecl *Method = InstanceMethodPool[Sel].Method;
     if (!Method)
       Method = FactoryMethodPool[Sel].Method;
@@ -264,7 +265,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   }
   
   // Handle messages to Class.
-  if (receiverType == Context.getObjCClassType().getCanonicalType()) {
+  if (ReceiverCType == Context.getCanonicalType(Context.getObjCClassType())) {
     ObjCMethodDecl *Method = 0;
     if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
       // If we have an implementation in scope, check "private" methods.
@@ -297,8 +298,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   
   // We allow sending a message to a qualified ID ("id<foo>"), which is ok as 
   // long as one of the protocols implements the selector (if not, warn).
-  if (ObjCQualifiedIdType *QIT = 
-           dyn_cast<ObjCQualifiedIdType>(receiverType)) {
+  if (ObjCQualifiedIdType *QIT = dyn_cast<ObjCQualifiedIdType>(ReceiverCType)) {
     // Search protocols
     for (unsigned i = 0; i < QIT->getNumProtocols(); i++) {
       ObjCProtocolDecl *PDecl = QIT->getProtocols(i);
@@ -310,7 +310,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
            std::string("-"), Sel.getName(),
            RExpr->getSourceRange());
   } else if (const ObjCInterfaceType *OCIReceiver = 
-                receiverType->getAsPointerToObjCInterfaceType()) {
+                ReceiverCType->getAsPointerToObjCInterfaceType()) {
     // We allow sending a message to a pointer to an interface (an object).
     
     ClassDecl = OCIReceiver->getDecl();

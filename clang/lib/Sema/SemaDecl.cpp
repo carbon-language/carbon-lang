@@ -384,7 +384,8 @@ Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, bool &Redeclaration) {
 /// We need to check this explicitly as an incomplete array definition is
 /// considered a VariableArrayType, so will not match a complete array 
 /// definition that would be otherwise equivalent.
-static bool areEquivalentArrayTypes(QualType NewQType, QualType OldQType) {
+static bool areEquivalentArrayTypes(QualType NewQType, QualType OldQType,
+                                    ASTContext &Context) {
   const ArrayType *NewAT = NewQType->getAsArrayType();
   const ArrayType *OldAT = OldQType->getAsArrayType();
 
@@ -403,8 +404,8 @@ static bool areEquivalentArrayTypes(QualType NewQType, QualType OldQType) {
   if (NewAT->isIncompleteArrayType() || OldAT->isIncompleteArrayType()) {
     if (NewAT->getIndexTypeQualifier() != OldAT->getIndexTypeQualifier())
       return false;
-    NewQType = NewAT->getElementType().getCanonicalType();
-    OldQType = OldAT->getElementType().getCanonicalType();
+    NewQType = Context.getCanonicalType(NewAT->getElementType());
+    OldQType = Context.getCanonicalType(OldAT->getElementType());
   }
   
   return NewQType == OldQType;
@@ -432,7 +433,8 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   // Verify the types match.
   QualType OldCType = Context.getCanonicalType(Old->getType());
   QualType NewCType = Context.getCanonicalType(New->getType());
-  if (OldCType != NewCType && !areEquivalentArrayTypes(NewCType, OldCType)) {
+  if (OldCType != NewCType &&
+      !areEquivalentArrayTypes(NewCType, OldCType, Context)) {
     Diag(New->getLocation(), diag::err_redefinition, New->getName());
     Diag(Old->getLocation(), diag::err_previous_definition);
     return New;
@@ -1252,7 +1254,8 @@ bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
   if (Init->isNullPointerConstant(Context))
     return false;
   if (Init->getType()->isArithmeticType()) {
-    QualType InitTy = Init->getType().getCanonicalType().getUnqualifiedType();
+    QualType InitTy = Context.getCanonicalType(Init->getType())
+                             .getUnqualifiedType();
     if (InitTy == Context.BoolTy) {
       // Special handling for pointers implicitly cast to bool;
       // (e.g. "_Bool rr = &rr;"). This is only legal at the top level.

@@ -105,8 +105,10 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
   }
   // For conversion purposes, we ignore any qualifiers. 
   // For example, "const float" and "float" are equivalent.
-  QualType lhs = lhsExpr->getType().getCanonicalType().getUnqualifiedType();
-  QualType rhs = rhsExpr->getType().getCanonicalType().getUnqualifiedType();
+  QualType lhs =
+    Context.getCanonicalType(lhsExpr->getType()).getUnqualifiedType();
+  QualType rhs = 
+    Context.getCanonicalType(rhsExpr->getType()).getUnqualifiedType();
   
   // If both types are identical, no conversion is needed.
   if (lhs == rhs)
@@ -1318,8 +1320,8 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   rhptee = rhsType->getAsPointerType()->getPointeeType();
   
   // make sure we operate on the canonical type
-  lhptee = lhptee.getCanonicalType();
-  rhptee = rhptee.getCanonicalType();
+  lhptee = Context.getCanonicalType(lhptee);
+  rhptee = Context.getCanonicalType(rhptee);
 
   AssignConvertType ConvTy = Compatible;
   
@@ -1380,8 +1382,8 @@ Sema::AssignConvertType
 Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   // Get canonical types.  We're not formatting these types, just comparing
   // them.
-  lhsType = lhsType.getCanonicalType().getUnqualifiedType();
-  rhsType = rhsType.getCanonicalType().getUnqualifiedType();
+  lhsType = Context.getCanonicalType(lhsType).getUnqualifiedType();
+  rhsType = Context.getCanonicalType(rhsType).getUnqualifiedType();
 
   if (lhsType == rhsType)
     return Compatible; // Common case: fast path an exact match.
@@ -1497,8 +1499,10 @@ inline QualType Sema::CheckVectorOperands(SourceLocation loc, Expr *&lex,
                                                               Expr *&rex) {
   // For conversion purposes, we ignore any qualifiers. 
   // For example, "const float" and "float" are equivalent.
-  QualType lhsType = lex->getType().getCanonicalType().getUnqualifiedType();
-  QualType rhsType = rex->getType().getCanonicalType().getUnqualifiedType();
+  QualType lhsType =
+    Context.getCanonicalType(lex->getType()).getUnqualifiedType();
+  QualType rhsType =
+    Context.getCanonicalType(rex->getType()).getUnqualifiedType();
   
   // If the vector types are identical, return.
   if (lhsType == rhsType)
@@ -1744,9 +1748,9 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation loc,
   // errors (when -pedantic-errors is enabled).
   if (lType->isPointerType() && rType->isPointerType()) { // C99 6.5.8p2
     QualType LCanPointeeTy =
-      lType->getAsPointerType()->getPointeeType().getCanonicalType();
+      Context.getCanonicalType(lType->getAsPointerType()->getPointeeType());
     QualType RCanPointeeTy =
-      rType->getAsPointerType()->getPointeeType().getCanonicalType();
+      Context.getCanonicalType(rType->getAsPointerType()->getPointeeType());
     
     if (!LHSIsNull && !RHSIsNull &&                       // C99 6.5.9p2
         !LCanPointeeTy->isVoidType() && !RCanPointeeTy->isVoidType() &&
@@ -2459,11 +2463,12 @@ Sema::ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond,
 /// QualTypes that match the QualTypes of the arguments of the FnType.
 /// The number of arguments has already been validated to match the number of
 /// arguments in FnType.
-static bool ExprsMatchFnType(Expr **Args, const FunctionTypeProto *FnType) {
+static bool ExprsMatchFnType(Expr **Args, const FunctionTypeProto *FnType,
+                             ASTContext &Context) {
   unsigned NumParams = FnType->getNumArgs();
   for (unsigned i = 0; i != NumParams; ++i) {
-    QualType ExprTy = Args[i]->getType().getCanonicalType();
-    QualType ParmTy = FnType->getArgType(i).getCanonicalType();
+    QualType ExprTy = Context.getCanonicalType(Args[i]->getType());
+    QualType ParmTy = Context.getCanonicalType(FnType->getArgType(i));
 
     if (ExprTy.getUnqualifiedType() != ParmTy.getUnqualifiedType())
       return false;
@@ -2507,11 +2512,9 @@ Sema::ExprResult Sema::ActOnOverloadExpr(ExprTy **args, unsigned NumArgs,
     // UsualUnaryConversions will convert the function DeclRefExpr into a 
     // pointer to function.
     Expr *Fn = UsualUnaryConversions(Args[i]);
-    FunctionTypeProto *FnType = 0;
-    if (const PointerType *PT = Fn->getType()->getAsPointerType()) {
-      QualType PointeeType = PT->getPointeeType().getCanonicalType();
-      FnType = dyn_cast<FunctionTypeProto>(PointeeType);
-    }
+    const FunctionTypeProto *FnType = 0;
+    if (const PointerType *PT = Fn->getType()->getAsPointerType())
+      FnType = PT->getPointeeType()->getAsFunctionTypeProto();
  
     // The Expr type must be FunctionTypeProto, since FunctionTypeProto has no
     // parameters, and the number of parameters must match the value passed to
@@ -2523,7 +2526,7 @@ Sema::ExprResult Sema::ActOnOverloadExpr(ExprTy **args, unsigned NumArgs,
     // Scan the parameter list for the FunctionType, checking the QualType of
     // each parameter against the QualTypes of the arguments to the builtin.
     // If they match, return a new OverloadExpr.
-    if (ExprsMatchFnType(Args+1, FnType)) {
+    if (ExprsMatchFnType(Args+1, FnType, Context)) {
       if (OE)
         return Diag(Fn->getExprLoc(), diag::err_overload_multiple_match,
                     OE->getFn()->getSourceRange());

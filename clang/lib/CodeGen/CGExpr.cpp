@@ -404,18 +404,20 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
   if (E->getOpcode() == UnaryOperator::Extension)
     return EmitLValue(E->getSubExpr());
   
+  QualType ExprTy=CGM.getContext().getCanonicalType(E->getSubExpr()->getType());
   switch (E->getOpcode()) {
   default: assert(0 && "Unknown unary operator lvalue!");
   case UnaryOperator::Deref:
     return LValue::MakeAddr(EmitScalarExpr(E->getSubExpr()),
-      E->getSubExpr()->getType().getCanonicalType()->getAsPointerType()
-      ->getPointeeType().getCVRQualifiers());
+                            ExprTy->getAsPointerType()->getPointeeType()
+                                    .getCVRQualifiers());
   case UnaryOperator::Real:
   case UnaryOperator::Imag:
     LValue LV = EmitLValue(E->getSubExpr());
     unsigned Idx = E->getOpcode() == UnaryOperator::Imag;
     return LValue::MakeAddr(Builder.CreateStructGEP(LV.getAddress(),
-      Idx, "idx"),E->getSubExpr()->getType().getCVRQualifiers());
+                                                    Idx, "idx"),
+                            ExprTy.getCVRQualifiers());
   }
 }
 
@@ -501,9 +503,11 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   // size is a VLA.
   if (!E->getType()->isConstantSizeType())
     assert(0 && "VLA idx not implemented");
+  QualType ExprTy = CGM.getContext().getCanonicalType(E->getBase()->getType());
+
   return LValue::MakeAddr(Builder.CreateGEP(Base, Idx, "arrayidx"),
-    E->getBase()->getType().getCanonicalType()->getAsPointerType()
-    ->getPointeeType().getCVRQualifiers());
+                          ExprTy->getAsPointerType()->getPointeeType()
+                               .getCVRQualifiers());
 }
 
 static 

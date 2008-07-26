@@ -53,6 +53,7 @@ namespace clang {
   class TagType;
   class TypedefType;
   class FunctionType;
+  class FunctionTypeProto;
   class ExtVectorType;
   class BuiltinType;
   class ObjCInterfaceType;
@@ -342,6 +343,7 @@ public:
   // the best type we can.
   const BuiltinType *getAsBuiltinType() const;   
   const FunctionType *getAsFunctionType() const;   
+  const FunctionTypeProto *getAsFunctionTypeProto() const;   
   const PointerLikeType *getAsPointerLikeType() const; // Pointer or Reference.
   const PointerType *getAsPointerType() const;
   const ReferenceType *getAsReferenceType() const;

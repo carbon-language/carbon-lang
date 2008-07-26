@@ -42,12 +42,11 @@ static const FunctionTypeProto *getFunctionProto(Decl *d) {
 }
 
 static inline bool isNSStringType(QualType T, ASTContext &Ctx) {
-  if (!T->isPointerType())
+  const PointerType *PT = T->getAsPointerType();
+  if (!PT)
     return false;
   
-  T = T->getAsPointerType()->getPointeeType().getCanonicalType();
-  ObjCInterfaceType* ClsT = dyn_cast<ObjCInterfaceType>(T.getTypePtr());
-  
+  const ObjCInterfaceType *ClsT =PT->getPointeeType()->getAsObjCInterfaceType();
   if (!ClsT)
     return false;
   
@@ -86,10 +85,9 @@ static void HandleExtVectorTypeAttr(Decl *d, const AttributeList &Attr,
   }
   // unlike gcc's vector_size attribute, we do not allow vectors to be defined
   // in conjunction with complex types (pointers, arrays, functions, etc.).
-  Type *canonType = curType.getCanonicalType().getTypePtr();
-  if (!(canonType->isIntegerType() || canonType->isRealFloatingType())) {
+  if (!curType->isIntegerType() && !curType->isRealFloatingType()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type,
-           curType.getCanonicalType().getAsString());
+           curType.getAsString());
     return;
   }
   // unlike gcc's vector_size attribute, the size is specified as the 
@@ -144,10 +142,8 @@ static void HandleVectorSizeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
   }
   // navigate to the base type - we need to provide for vector pointers, 
   // vector arrays, and functions returning vectors.
-  Type *canonType = CurType.getCanonicalType().getTypePtr();
-  
-  if (canonType->isPointerType() || canonType->isArrayType() ||
-      canonType->isFunctionType()) {
+  if (CurType->isPointerType() || CurType->isArrayType() ||
+      CurType->isFunctionType()) {
     assert(0 && "HandleVector(): Complex type construction unimplemented");
     /* FIXME: rebuild the type from the inside out, vectorizing the inner type.
      do {
@@ -162,9 +158,9 @@ static void HandleVectorSizeAttr(Decl *D, const AttributeList &Attr, Sema &S) {
      */
   }
   // the base type must be integer or float.
-  if (!(canonType->isIntegerType() || canonType->isRealFloatingType())) {
+  if (!CurType->isIntegerType() && !CurType->isRealFloatingType()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type,
-           CurType.getCanonicalType().getAsString());
+           CurType.getAsString());
     return;
   }
   unsigned typeSize = static_cast<unsigned>(S.Context.getTypeSize(CurType));
@@ -239,7 +235,6 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // GCC ignores the nonnull attribute on K&R style function
   // prototypes, so we ignore it as well
   const FunctionTypeProto *proto = getFunctionProto(d);
-  
   if (!proto) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type,
            "nonnull", "function");
@@ -275,7 +270,7 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     --x;
 
     // Is the function argument a pointer type?
-    if (!proto->getArgType(x).getCanonicalType()->isPointerType()) {
+    if (!proto->getArgType(x)->isPointerType()) {
       // FIXME: Should also highlight argument in decl.
       S.Diag(Attr.getLoc(), diag::err_nonnull_pointers_only,
              "nonnull", Ex->getSourceRange());

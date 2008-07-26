@@ -36,8 +36,7 @@ namespace {
   /// diagnose the use of local variables or parameters within the
   /// default argument expression.
   class VISIBILITY_HIDDEN CheckDefaultArgumentVisitor 
-    : public StmtVisitor<CheckDefaultArgumentVisitor, bool>
-  {
+    : public StmtVisitor<CheckDefaultArgumentVisitor, bool> {
     Expr *DefaultArg;
     Sema *S;
 
@@ -52,11 +51,9 @@ namespace {
   /// VisitExpr - Visit all of the children of this expression.
   bool CheckDefaultArgumentVisitor::VisitExpr(Expr *Node) {
     bool IsInvalid = false;
-    for (Stmt::child_iterator first = Node->child_begin(), 
-           last = Node->child_end();
-         first != last; ++first)
-      IsInvalid |= Visit(*first);
-
+    for (Stmt::child_iterator I = Node->child_begin(), 
+         E = Node->child_end(); I != E; ++I)
+      IsInvalid |= Visit(*I);
     return IsInvalid;
   }
 
@@ -427,13 +424,14 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
     // C++ 9.2p4: A member-declarator can contain a constant-initializer only
     // if it declares a static member of const integral or const enumeration
     // type.
-    if (CXXClassVarDecl *CVD =
-              dyn_cast<CXXClassVarDecl>(Member)) { // ...static member of...
+    if (CXXClassVarDecl *CVD = dyn_cast<CXXClassVarDecl>(Member)) {
+      // ...static member of...
       CVD->setInit(Init);
-      QualType MemberTy = CVD->getType().getCanonicalType();
       // ...const integral or const enumeration type.
-      if (MemberTy.isConstQualified() && MemberTy->isIntegralType()) {
-        if (CheckForConstantInitializer(Init, MemberTy)) // constant-initializer
+      if (Context.getCanonicalType(CVD->getType()).isConstQualified() &&
+          CVD->getType()->isIntegralType()) {
+        // constant-initializer
+        if (CheckForConstantInitializer(Init, CVD->getType()))
           InvalidDecl = true;
 
       } else {
