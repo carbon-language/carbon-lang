@@ -48,3 +48,6 @@ void test4() {
   ve2;         // expected-warning {{expression result unused}}
 }
 
+// PR2416
+enum someenum {};  // expected-warning {{use of empty enum extension}}
+
