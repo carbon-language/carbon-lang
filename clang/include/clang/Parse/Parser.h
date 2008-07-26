@@ -326,8 +326,6 @@ private:
                                           AttributeList *prefixAttrs = 0);
   void ParseObjCClassInstanceVariables(DeclTy *interfaceDecl, 
                                        SourceLocation atLoc);
-  bool ParseObjCProtocolReferences(llvm::SmallVectorImpl<IdentifierLocPair> &,
-                                   SourceLocation &endProtoLoc);
   bool ParseObjCProtocolReferences(llvm::SmallVectorImpl<Action::DeclTy*> &P,
                                    bool WarnOnDeclarations, 
                                    SourceLocation &EndProtoLoc);

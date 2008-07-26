@@ -621,16 +621,15 @@ public:
   // ActOnStartClassInterface - this action is called immediately after parsing
   // the prologue for a class interface (before parsing the instance 
   // variables). Instance variables are processed by ActOnFields().
-  virtual DeclTy *ActOnStartClassInterface(
-    SourceLocation AtInterafceLoc,
-    IdentifierInfo *ClassName, 
-    SourceLocation ClassLoc,
-    IdentifierInfo *SuperName, 
-    SourceLocation SuperLoc,
-    const IdentifierLocPair *ProtocolNames, 
-    unsigned NumProtocols,
-    SourceLocation EndProtoLoc,
-    AttributeList *AttrList) {
+  virtual DeclTy *ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
+                                           IdentifierInfo *ClassName, 
+                                           SourceLocation ClassLoc,
+                                           IdentifierInfo *SuperName, 
+                                           SourceLocation SuperLoc,
+                                           DeclTy * const *ProtoRefs, 
+                                           unsigned NumProtoRefs,
+                                           SourceLocation EndProtoLoc,
+                                           AttributeList *AttrList) {
     return 0;
   }
   
@@ -847,11 +846,14 @@ public:
                                                unsigned NumElts);
   
   virtual DeclTy *ActOnStartClassInterface(SourceLocation interLoc,
-                    IdentifierInfo *ClassName, SourceLocation ClassLoc,
-                    IdentifierInfo *SuperName, SourceLocation SuperLoc,
-                    const IdentifierLocPair *ProtocolNames,
-                                           unsigned NumProtocols,
-                    SourceLocation EndProtoLoc, AttributeList *AttrList);
+                                           IdentifierInfo *ClassName,
+                                           SourceLocation ClassLoc,
+                                           IdentifierInfo *SuperName,
+                                           SourceLocation SuperLoc,
+                                           DeclTy * const *ProtoRefs, 
+                                           unsigned NumProtoRefs,
+                                           SourceLocation EndProtoLoc,
+                                           AttributeList *AttrList);
 };
 
 }  // end namespace clang

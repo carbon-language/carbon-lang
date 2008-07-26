@@ -89,11 +89,14 @@ MinimalAction::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup) {
 
 Action::DeclTy *
 MinimalAction::ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
-                    IdentifierInfo *ClassName, SourceLocation ClassLoc,
-                    IdentifierInfo *SuperName, SourceLocation SuperLoc,
-                    const IdentifierLocPair *ProtocolNames,
-                    unsigned NumProtocols,
-                    SourceLocation EndProtoLoc, AttributeList *AttrList) {
+                                        IdentifierInfo *ClassName,
+                                        SourceLocation ClassLoc,
+                                        IdentifierInfo *SuperName,
+                                        SourceLocation SuperLoc,
+                                        DeclTy * const *ProtoRefs,
+                                        unsigned NumProtocols,
+                                        SourceLocation EndProtoLoc,
+                                        AttributeList *AttrList) {
   TypeNameInfo *TI =
     new TypeNameInfo(1, ClassName->getFETokenInfo<TypeNameInfo>());
 

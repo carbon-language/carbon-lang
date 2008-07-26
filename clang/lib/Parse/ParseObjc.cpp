@@ -186,16 +186,17 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     superClassLoc = ConsumeToken();
   }
   // Next, we need to check for any protocol references.
-  llvm::SmallVector<IdentifierLocPair, 8> ProtocolRefs;
-  SourceLocation endProtoLoc;
-  if (Tok.is(tok::less)) {
-    if (ParseObjCProtocolReferences(ProtocolRefs, endProtoLoc))
-      return 0;
-  }
-  DeclTy *ClsType = Actions.ActOnStartClassInterface(
-                      atLoc, nameId, nameLoc, 
-                      superClassId, superClassLoc, &ProtocolRefs[0], 
-                      ProtocolRefs.size(), endProtoLoc, attrList);
+  llvm::SmallVector<Action::DeclTy*, 8> ProtocolRefs;
+  SourceLocation EndProtoLoc;
+  if (Tok.is(tok::less) &&
+      ParseObjCProtocolReferences(ProtocolRefs, true, EndProtoLoc))
+    return 0;
+  
+  DeclTy *ClsType = 
+    Actions.ActOnStartClassInterface(atLoc, nameId, nameLoc, 
+                                     superClassId, superClassLoc,
+                                     &ProtocolRefs[0], ProtocolRefs.size(),
+                                     EndProtoLoc, attrList);
             
   if (Tok.is(tok::l_brace))
     ParseObjCClassInstanceVariables(ClsType, atLoc);
@@ -711,40 +712,6 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                         &ArgTypeQuals[0], &KeyTypes[0], 
                                         &ArgNames[0], MethodAttrs, 
                                         MethodImplKind, isVariadic);
-}
-
-///   objc-protocol-refs:
-///     '<' identifier-list '>'
-///
-bool Parser::
-ParseObjCProtocolReferences(llvm::SmallVectorImpl<IdentifierLocPair> &Protocols,
-                            SourceLocation &endLoc) {
-  assert(Tok.is(tok::less) && "expected <");
-  
-  ConsumeToken(); // the "<"
-  
-  while (1) {
-    if (Tok.isNot(tok::identifier)) {
-      Diag(Tok, diag::err_expected_ident);
-      SkipUntil(tok::greater);
-      return true;
-    }
-    Protocols.push_back(std::make_pair(Tok.getIdentifierInfo(),
-                                          Tok.getLocation()));
-    ConsumeToken();
-    
-    if (Tok.isNot(tok::comma))
-      break;
-    ConsumeToken();
-  }
-  
-  // Consume the '>'.
-  if (Tok.is(tok::greater)) {
-    endLoc = ConsumeAnyToken();
-    return false;
-  }
-  Diag(Tok, diag::err_expected_greater);
-  return true;
 }
 
 ///   objc-protocol-refs:

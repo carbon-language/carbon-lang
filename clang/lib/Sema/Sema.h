@@ -605,13 +605,15 @@ public:
   
 
   // Objective-C declarations.
-  virtual DeclTy *ActOnStartClassInterface(
-                    SourceLocation AtInterafceLoc,
-                    IdentifierInfo *ClassName, SourceLocation ClassLoc,
-                    IdentifierInfo *SuperName, SourceLocation SuperLoc,
-                    const IdentifierLocPair *ProtocolNames,
-                    unsigned NumProtocols,
-                    SourceLocation EndProtoLoc, AttributeList *AttrList);
+  virtual DeclTy *ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
+                                           IdentifierInfo *ClassName,
+                                           SourceLocation ClassLoc,
+                                           IdentifierInfo *SuperName,
+                                           SourceLocation SuperLoc,
+                                           DeclTy * const *ProtoRefs,
+                                           unsigned NumProtoRefs,
+                                           SourceLocation EndProtoLoc,
+                                           AttributeList *AttrList);
   
   virtual DeclTy *ActOnCompatiblityAlias(
                     SourceLocation AtCompatibilityAliasLoc,

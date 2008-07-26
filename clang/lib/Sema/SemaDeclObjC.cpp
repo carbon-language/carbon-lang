@@ -75,8 +75,7 @@ Sema::DeclTy *Sema::
 ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
                          IdentifierInfo *ClassName, SourceLocation ClassLoc,
                          IdentifierInfo *SuperName, SourceLocation SuperLoc,
-                         const IdentifierLocPair *ProtocolNames,
-                         unsigned NumProtocols,
+                         DeclTy * const *ProtoRefs, unsigned NumProtoRefs,
                          SourceLocation EndProtoLoc, AttributeList *AttrList) {
   assert(ClassName && "Missing class identifier");
   
@@ -134,22 +133,8 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   }
   
   /// Check then save referenced protocols
-  if (NumProtocols) {
-    llvm::SmallVector<ObjCProtocolDecl*, 8> RefProtos;
-    for (unsigned int i = 0; i != NumProtocols; i++) {
-      ObjCProtocolDecl* RefPDecl = ObjCProtocols[ProtocolNames[i].first];
-      if (!RefPDecl)
-        Diag(ProtocolNames[i].second, diag::err_undeclared_protocol,
-             ProtocolNames[i].first->getName());
-      else {
-        if (RefPDecl->isForwardDecl())
-          Diag(ProtocolNames[i].second, diag::warn_undef_protocolref,
-               ProtocolNames[i].first->getName());
-        RefProtos.push_back(RefPDecl);
-      }
-    }
-    if (!RefProtos.empty())
-      IDecl->addReferencedProtocols(&RefProtos[0], RefProtos.size());
+  if (NumProtoRefs) {
+    IDecl->addReferencedProtocols((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs);
     IDecl->setLocEnd(EndProtoLoc);
   }
   return IDecl;
