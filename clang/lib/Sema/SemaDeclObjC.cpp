@@ -139,8 +139,8 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
     for (unsigned int i = 0; i != NumProtocols; i++) {
       ObjCProtocolDecl* RefPDecl = ObjCProtocols[ProtocolNames[i].first];
       if (!RefPDecl)
-        Diag(ProtocolNames[i].second, diag::err_undef_protocolref,
-             ProtocolNames[i].first->getName(), ClassName->getName());
+        Diag(ProtocolNames[i].second, diag::err_undeclared_protocol,
+             ProtocolNames[i].first->getName());
       else {
         if (RefPDecl->isForwardDecl())
           Diag(ProtocolNames[i].second, diag::warn_undef_protocolref,
@@ -225,8 +225,8 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(
     for (unsigned int i = 0; i != NumProtoRefs; i++) {
       ObjCProtocolDecl *RefPDecl = ObjCProtocols[ProtoRefNames[i].first];
       if (!RefPDecl)
-        Diag(ProtoRefNames[i].second, diag::err_undef_protocolref,
-             ProtoRefNames[i].first->getName(), ProtocolName->getName());
+        Diag(ProtoRefNames[i].second, diag::err_undeclared_protocol,
+             ProtoRefNames[i].first->getName());
       else {
         if (RefPDecl->isForwardDecl())
           Diag(ProtoRefNames[i].second, diag::warn_undef_protocolref,
@@ -439,8 +439,8 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
     for (unsigned int i = 0; i != NumProtoRefs; i++) {
       ObjCProtocolDecl* RefPDecl = ObjCProtocols[ProtoRefNames[i].first];
       if (!RefPDecl)
-        Diag(ProtoRefNames[i].second, diag::err_undef_protocolref,
-             ProtoRefNames[i].first->getName(), CategoryName->getName());
+        Diag(ProtoRefNames[i].second, diag::err_undeclared_protocol,
+             ProtoRefNames[i].first->getName());
       else {
         if (RefPDecl->isForwardDecl())
           Diag(ProtoRefNames[i].second, diag::warn_undef_protocolref,
