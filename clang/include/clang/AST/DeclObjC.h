@@ -1175,7 +1175,6 @@ public:
                                   IdentifierInfo *Id, QualType T,
                                   PropertyControl propControl = None);
   QualType getType() const { return DeclType; }
-  QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
   
   PropertyAttributeKind getPropertyAttributes() const {
     return PropertyAttributeKind(PropertyAttributes);

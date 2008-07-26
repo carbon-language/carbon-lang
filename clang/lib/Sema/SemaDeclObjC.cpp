@@ -279,7 +279,8 @@ Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
          Property->getName(), "getter", inheritedName, 
          SourceRange());
   
-  if (Property->getCanonicalType() != SuperProperty->getCanonicalType())
+  if (Context.getCanonicalType(Property->getType()) != 
+          Context.getCanonicalType(SuperProperty->getType()))
     Diag(Property->getLocation(), diag::warn_property_type,
          Property->getType().getAsString(),  
          inheritedName);
@@ -1145,7 +1146,8 @@ Sema::DeclTy *Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
       return 0;
     }
     // Check that type of property and its ivar match. 
-    if (Ivar->getCanonicalType() != property->getCanonicalType()) {
+    if (Context.getCanonicalType(Ivar->getType()) !=
+        Context.getCanonicalType(property->getType())) {
       Diag(PropertyLoc, diag::error_property_ivar_type, property->getName(),
            Ivar->getName());
       return 0;
