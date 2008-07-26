@@ -434,7 +434,6 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       llvm::SmallVector<IdentifierLocPair, 8> ProtocolRefs;
       ParseObjCProtocolReferences(ProtocolRefs, EndProtoLoc);
       
-      // FIXME: New'ing this here seems wrong, why not have the action do it?
       llvm::SmallVector<DeclTy *, 8> ProtocolDecl;
       Actions.FindProtocolDeclaration(Loc, 
                                       &ProtocolRefs[0], ProtocolRefs.size(),
