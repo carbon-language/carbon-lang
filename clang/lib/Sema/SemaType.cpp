@@ -43,6 +43,14 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
     }
     break;
   case DeclSpec::TST_unspecified:
+    // "<proto1,proto2>" is an objc qualified ID with a missing id.
+    if (llvm::SmallVector<Action::DeclTy *, 8> *PQ=DS.getProtocolQualifiers()) {
+      Action::DeclTy **PPDecl = &(*PQ)[0];
+      Result = Context.getObjCQualifiedIdType((ObjCProtocolDecl**)(PPDecl),
+                                              DS.getNumProtocolQualifiers());
+      break;
+    }
+      
     // Unspecified typespec defaults to int in C90.  However, the C90 grammar
     // [C90 6.5] only allows a decl-spec if there was *some* type-specifier,
     // type-qualifier, or storage-class-specifier.  If not, emit an extwarn.
@@ -128,13 +136,12 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS) {
                                    reinterpret_cast<ObjCProtocolDecl**>(PPDecl),
                                                  DS.getNumProtocolQualifiers());
       break;
-    }
-    else if (TypedefDecl *typeDecl = dyn_cast<TypedefDecl>(D)) {
+    } else if (TypedefDecl *typeDecl = dyn_cast<TypedefDecl>(D)) {
       if (Context.getObjCIdType() == Context.getTypedefType(typeDecl)
           && DS.getProtocolQualifiers()) {
           // id<protocol-list>
         Action::DeclTy **PPDecl = &(*DS.getProtocolQualifiers())[0];
-        Result = Context.getObjCQualifiedIdType(typeDecl->getUnderlyingType(),
+        Result = Context.getObjCQualifiedIdType(
                                  reinterpret_cast<ObjCProtocolDecl**>(PPDecl),
                                             DS.getNumProtocolQualifiers());
         break;

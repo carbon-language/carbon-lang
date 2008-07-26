@@ -743,8 +743,8 @@ void ObjCQualifiedInterfaceType::Profile(llvm::FoldingSetNodeID &ID) {
 }
 
 void ObjCQualifiedIdType::Profile(llvm::FoldingSetNodeID &ID,
-                                         ObjCProtocolDecl **protocols, 
-                                         unsigned NumProtocols) {
+                                  ObjCProtocolDecl **protocols, 
+                                  unsigned NumProtocols) {
   for (unsigned i = 0; i != NumProtocols; i++)
     ID.AddPointer(protocols[i]);
 }

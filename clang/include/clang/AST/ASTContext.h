@@ -217,8 +217,7 @@ public:
   
   /// getObjCQualifiedIdType - Return an ObjCQualifiedIdType for a 
   /// given 'id' and conforming protocol list.
-  QualType getObjCQualifiedIdType(QualType idType,
-                                  ObjCProtocolDecl **ProtocolList, 
+  QualType getObjCQualifiedIdType(ObjCProtocolDecl **ProtocolList, 
                                   unsigned NumProtocols);
                                   
 

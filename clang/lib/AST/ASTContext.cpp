@@ -929,8 +929,7 @@ QualType ASTContext::getObjCQualifiedInterfaceType(ObjCInterfaceDecl *Decl,
 
 /// getObjCQualifiedIdType - Return an ObjCQualifiedIdType for the 'id' decl
 /// and the conforming protocol list.
-QualType ASTContext::getObjCQualifiedIdType(QualType idType,
-                                            ObjCProtocolDecl **Protocols, 
+QualType ASTContext::getObjCQualifiedIdType(ObjCProtocolDecl **Protocols, 
                                             unsigned NumProtocols) {
   // Sort the protocol list alphabetically to canonicalize it.
   SortAndUniqueProtocols(Protocols, NumProtocols);
@@ -940,21 +939,11 @@ QualType ASTContext::getObjCQualifiedIdType(QualType idType,
   
   void *InsertPos = 0;
   if (ObjCQualifiedIdType *QT =
-      ObjCQualifiedIdTypes.FindNodeOrInsertPos(ID, InsertPos))
+        ObjCQualifiedIdTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(QT, 0);
   
   // No Match;
-  QualType Canonical;
-  if (!idType->isCanonical()) {
-    Canonical = getObjCQualifiedIdType(getCanonicalType(idType), 
-                                       Protocols, NumProtocols);
-    ObjCQualifiedIdType *NewQT = 
-      ObjCQualifiedIdTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewQT == 0 && "Shouldn't be in the map!");
-  }
-  
-  ObjCQualifiedIdType *QType = 
-    new ObjCQualifiedIdType(Canonical, Protocols, NumProtocols);
+  ObjCQualifiedIdType *QType = new ObjCQualifiedIdType(Protocols, NumProtocols);
   Types.push_back(QType);
   ObjCQualifiedIdTypes.InsertNode(QType, InsertPos);
   return QualType(QType, 0);

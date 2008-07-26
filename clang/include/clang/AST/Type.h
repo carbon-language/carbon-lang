@@ -1227,8 +1227,8 @@ class ObjCQualifiedIdType : public Type,
   // List is sorted on protocol name. No protocol is enterred more than once.
   llvm::SmallVector<ObjCProtocolDecl*, 8> Protocols;
     
-  ObjCQualifiedIdType(QualType can, ObjCProtocolDecl **Protos,  unsigned NumP)
-  : Type(ObjCQualifiedId, can), 
+  ObjCQualifiedIdType(ObjCProtocolDecl **Protos, unsigned NumP)
+    : Type(ObjCQualifiedId, QualType()/*these are always canonical*/), 
   Protocols(Protos, Protos+NumP) { }
   friend class ASTContext;  // ASTContext creates these.
 public:
@@ -1250,7 +1250,7 @@ public:
   virtual void getAsStringInternal(std::string &InnerString) const;
     
   void Profile(llvm::FoldingSetNodeID &ID);
-  static void Profile(llvm::FoldingSetNodeID &ID, 
+  static void Profile(llvm::FoldingSetNodeID &ID,
                       ObjCProtocolDecl **protocols, unsigned NumProtocols);
     
   static bool classof(const Type *T) { 
