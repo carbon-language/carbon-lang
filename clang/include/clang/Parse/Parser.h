@@ -328,6 +328,9 @@ private:
                                        SourceLocation atLoc);
   bool ParseObjCProtocolReferences(llvm::SmallVectorImpl<IdentifierLocPair> &,
                                    SourceLocation &endProtoLoc);
+  bool ParseObjCProtocolReferences(llvm::SmallVectorImpl<Action::DeclTy*> &P,
+                                   bool WarnOnDeclarations, 
+                                   SourceLocation &EndProtoLoc);
   void ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
                                   tok::ObjCKeywordKind contextKey);
   DeclTy *ParseObjCAtProtocolDeclaration(SourceLocation atLoc);

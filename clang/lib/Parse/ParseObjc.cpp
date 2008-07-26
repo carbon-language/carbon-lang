@@ -746,6 +746,48 @@ ParseObjCProtocolReferences(llvm::SmallVectorImpl<IdentifierLocPair> &Protocols,
   return true;
 }
 
+///   objc-protocol-refs:
+///     '<' identifier-list '>'
+///
+bool Parser::
+ParseObjCProtocolReferences(llvm::SmallVectorImpl<Action::DeclTy*> &Protocols,
+                            bool WarnOnDeclarations, SourceLocation &EndLoc) {
+  assert(Tok.is(tok::less) && "expected <");
+  
+  ConsumeToken(); // the "<"
+  
+  llvm::SmallVector<IdentifierLocPair, 8> ProtocolIdents;
+  
+  while (1) {
+    if (Tok.isNot(tok::identifier)) {
+      Diag(Tok, diag::err_expected_ident);
+      SkipUntil(tok::greater);
+      return true;
+    }
+    ProtocolIdents.push_back(std::make_pair(Tok.getIdentifierInfo(),
+                                       Tok.getLocation()));
+    ConsumeToken();
+    
+    if (Tok.isNot(tok::comma))
+      break;
+    ConsumeToken();
+  }
+  
+  // Consume the '>'.
+  if (Tok.isNot(tok::greater)) {
+    Diag(Tok, diag::err_expected_greater);
+    return true;
+  }
+  
+  EndLoc = ConsumeAnyToken();
+  
+  // Convert the list of protocols identifiers into a list of protocol decls.
+  Actions.FindProtocolDeclaration(WarnOnDeclarations,
+                                  &ProtocolIdents[0], ProtocolIdents.size(),
+                                  Protocols);
+  return false;
+}
+
 ///   objc-class-instance-variables:
 ///     '{' objc-instance-variable-decl-list[opt] '}'
 ///
@@ -899,17 +941,17 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
   }
   
   // Last, and definitely not least, parse a protocol declaration.
-  SourceLocation endProtoLoc;
-  llvm::SmallVector<IdentifierLocPair, 8> ProtocolRefs;
+  SourceLocation EndProtoLoc;
 
+  llvm::SmallVector<DeclTy *, 8> ProtocolRefs;
   if (Tok.is(tok::less) &&
-      ParseObjCProtocolReferences(ProtocolRefs, endProtoLoc))
+      ParseObjCProtocolReferences(ProtocolRefs, true, EndProtoLoc))
     return 0;
   
-  DeclTy *ProtoType = Actions.ActOnStartProtocolInterface(AtLoc, 
-                                protocolName, nameLoc,
-                                &ProtocolRefs[0],
-                                ProtocolRefs.size(), endProtoLoc);
+  DeclTy *ProtoType =
+    Actions.ActOnStartProtocolInterface(AtLoc, protocolName, nameLoc,
+                                        &ProtocolRefs[0], ProtocolRefs.size(),
+                                        EndProtoLoc);
   ParseObjCInterfaceDeclList(ProtoType, tok::objc_protocol);
 
   // The @ sign was already consumed by ParseObjCInterfaceDeclList().

@@ -645,13 +645,12 @@ public:
   
   // ActOnStartProtocolInterface - this action is called immdiately after
   // parsing the prologue for a protocol interface.
-  virtual DeclTy *ActOnStartProtocolInterface(
-    SourceLocation AtProtoInterfaceLoc,
-    IdentifierInfo *ProtocolName, 
-    SourceLocation ProtocolLoc,
-    const IdentifierLocPair *ProtoRefNames, 
-    unsigned NumProtoRefs,
-    SourceLocation EndProtoLoc) {
+  virtual DeclTy *ActOnStartProtocolInterface(SourceLocation AtProtoLoc,
+                                              IdentifierInfo *ProtocolName, 
+                                              SourceLocation ProtocolLoc,
+                                              DeclTy * const *ProtoRefNames,
+                                              unsigned NumProtoRefs,
+                                              SourceLocation EndProtoLoc) {
     return 0;
   }
   // ActOnStartCategoryInterface - this action is called immdiately after
@@ -776,8 +775,7 @@ public:
   /// FindProtocolDeclaration - This routine looks up protocols and
   /// issues error if they are not declared. It returns list of valid
   /// protocols found.
-  virtual void FindProtocolDeclaration(SourceLocation TypeLoc,
-                                       bool WarnOnDeclarations,
+  virtual void FindProtocolDeclaration(bool WarnOnDeclarations,
                                        const IdentifierLocPair *ProtocolId,
                                        unsigned NumProtocols,
                                  llvm::SmallVectorImpl<DeclTy*> &ResProtos) {

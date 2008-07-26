@@ -195,11 +195,13 @@ Sema::DeclTy *Sema::ActOnCompatiblityAlias(SourceLocation AtLoc,
   return AliasDecl;
 }
 
-Sema::DeclTy *Sema::ActOnStartProtocolInterface(
-                SourceLocation AtProtoInterfaceLoc,
-                IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
-                const IdentifierLocPair *ProtoRefNames, unsigned NumProtoRefs,
-                SourceLocation EndProtoLoc) {
+Sema::DeclTy *
+Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
+                                  IdentifierInfo *ProtocolName,
+                                  SourceLocation ProtocolLoc,
+                                  DeclTy * const *ProtoRefs,
+                                  unsigned NumProtoRefs,
+                                  SourceLocation EndProtoLoc) {
   assert(ProtocolName && "Missing protocol identifier");
   ObjCProtocolDecl *PDecl = ObjCProtocols[ProtocolName];
   if (PDecl) {
@@ -221,21 +223,7 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(
   
   if (NumProtoRefs) {
     /// Check then save referenced protocols.
-    llvm::SmallVector<ObjCProtocolDecl*, 8> Protocols;
-    for (unsigned int i = 0; i != NumProtoRefs; i++) {
-      ObjCProtocolDecl *RefPDecl = ObjCProtocols[ProtoRefNames[i].first];
-      if (!RefPDecl)
-        Diag(ProtoRefNames[i].second, diag::err_undeclared_protocol,
-             ProtoRefNames[i].first->getName());
-      else {
-        if (RefPDecl->isForwardDecl())
-          Diag(ProtoRefNames[i].second, diag::warn_undef_protocolref,
-               ProtoRefNames[i].first->getName());
-        Protocols.push_back(RefPDecl);
-      }
-    }
-    if (!Protocols.empty())
-      PDecl->addReferencedProtocols(&Protocols[0], Protocols.size());
+    PDecl->addReferencedProtocols((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs);
     PDecl->setLocEnd(EndProtoLoc);
   }
   return PDecl;
@@ -245,7 +233,7 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(
 /// issuer error if they are not declared. It returns list of protocol
 /// declarations in its 'Protocols' argument.
 void
-Sema::FindProtocolDeclaration(SourceLocation TypeLoc, bool WarnOnDeclarations,
+Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
                               const IdentifierLocPair *ProtocolId,
                               unsigned NumProtocols,
                               llvm::SmallVectorImpl<DeclTy*> &Protocols) {

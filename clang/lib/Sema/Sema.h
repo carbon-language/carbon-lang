@@ -621,8 +621,7 @@ public:
   virtual DeclTy *ActOnStartProtocolInterface(
                     SourceLocation AtProtoInterfaceLoc,
                     IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
-                    const IdentifierLocPair *ProtoRefNames,
-                    unsigned NumProtoRefs,
+                    DeclTy * const *ProtoRefNames, unsigned NumProtoRefs,
                     SourceLocation EndProtoLoc);
   
   virtual DeclTy *ActOnStartCategoryInterface(
@@ -654,8 +653,7 @@ public:
                                             const IdentifierLocPair *IdentList,
                                                   unsigned NumElts);
   
-  virtual void FindProtocolDeclaration(SourceLocation TypeLoc,
-                                       bool WarnOnDeclarations,
+  virtual void FindProtocolDeclaration(bool WarnOnDeclarations,
                                        const IdentifierLocPair *ProtocolId,
                                        unsigned NumProtocols,
                                    llvm::SmallVectorImpl<DeclTy *> &Protocols);
