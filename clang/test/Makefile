@@ -1,7 +1,7 @@
 LEVEL = ../../..
 include $(LEVEL)/Makefile.common
 
-TESTDIRS = CodeGen Lexer Preprocessor Parser Sema Analysis Serialization Rewriter
+TESTDIRS = CodeGen Lexer Preprocessor Parser Sema SemaObjC Analysis Serialization Rewriter
 
 # Only run rewriter tests on darwin.
 ifeq ($(OS),Darwin)
