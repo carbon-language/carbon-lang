@@ -359,6 +359,7 @@ public:
   void EmitStmt(const Stmt *S);
   RValue EmitCompoundStmt(const CompoundStmt &S, bool GetLast = false,
                           llvm::Value *AggLoc = 0, bool isAggVol = false);
+  void EmitLabel(const LabelStmt &S); // helper for EmitLabelStmt.
   void EmitLabelStmt(const LabelStmt &S);
   void EmitGotoStmt(const GotoStmt &S);
   void EmitIfStmt(const IfStmt &S);

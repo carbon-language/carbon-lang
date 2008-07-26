@@ -86,8 +86,6 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
 RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
                                          llvm::Value *AggLoc, bool isAggVol) {
   // FIXME: handle vla's etc.
-  if (S.body_empty() || !isa<Expr>(S.body_back())) GetLast = false;
-  
   CGDebugInfo *DI = CGM.getDebugInfo();
   if (DI) {
     if (S.getLBracLoc().isValid())
@@ -108,7 +106,17 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
   if (!GetLast)
     return RValue::get(0);
   
-  return EmitAnyExpr(cast<Expr>(S.body_back()), AggLoc);
+  // We have to special case labels here.  They are statements, but when put at
+  // the end of a statement expression, they yield the value of their
+  // subexpression.  Handle this by walking through all labels we encounter,
+  // emitting them before we evaluate the subexpr.
+  const Stmt *LastStmt = S.body_back();
+  while (const LabelStmt *LS = dyn_cast<LabelStmt>(LastStmt)) {
+    EmitLabel(*LS);
+    LastStmt = LS->getSubStmt();
+  }
+  
+  return EmitAnyExpr(cast<Expr>(LastStmt), AggLoc);
 }
 
 void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB) {
@@ -130,10 +138,14 @@ void CodeGenFunction::EmitBlock(llvm::BasicBlock *BB) {
   Builder.SetInsertPoint(BB);
 }
 
-void CodeGenFunction::EmitLabelStmt(const LabelStmt &S) {
+void CodeGenFunction::EmitLabel(const LabelStmt &S) {
   llvm::BasicBlock *NextBB = getBasicBlockForLabel(&S);
-  
   EmitBlock(NextBB);
+}
+
+
+void CodeGenFunction::EmitLabelStmt(const LabelStmt &S) {
+  EmitLabel(S);
   EmitStmt(S.getSubStmt());
 }
 

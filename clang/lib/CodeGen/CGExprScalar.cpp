@@ -583,7 +583,8 @@ Value *ScalarExprEmitter::EmitCastExpr(const Expr *E, QualType DestTy) {
 }
 
 Value *ScalarExprEmitter::VisitStmtExpr(const StmtExpr *E) {
-  return CGF.EmitCompoundStmt(*E->getSubStmt(), true).getScalarVal();
+  return CGF.EmitCompoundStmt(*E->getSubStmt(),
+                              !E->getType()->isVoidType()).getScalarVal();
 }
 
 
