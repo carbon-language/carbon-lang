@@ -401,6 +401,9 @@ DIAG(err_objc_no_attributes_on_category, ERROR,
      "attributes may not be specified on a category")
 DIAG(err_objc_missing_end, ERROR,
      "missing @end")
+DIAG(warn_objc_protocol_qualifier_missing_id, WARNING,
+     "protocol qualifiers without 'id' is archaic")
+
 DIAG(err_objc_illegal_visibility_spec, ERROR,
      "illegal visibility specification")
 DIAG(err_objc_illegal_interface_qual, ERROR,

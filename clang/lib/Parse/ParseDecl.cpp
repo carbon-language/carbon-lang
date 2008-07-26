@@ -430,6 +430,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       }
       // FALL THROUGH.
     default:
+    DoneWithDeclSpec:
       // If this is not a declaration specifier token, we're done reading decl
       // specifiers.  First verify that DeclSpec's are consistent.
       DS.Finish(Diags, PP.getSourceManager(), getLang());
@@ -552,20 +553,27 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       isInvalid = DS.SetFunctionSpecInline(Loc, PrevSpec);
       break;
       
-    // Gross GCC-ism that we are forced support. FIXME: make an extension?
     case tok::less:
-      if (!DS.hasTypeSpecifier()) {
-        SourceLocation endProtoLoc;
+      // GCC supports types like "<SomeProtocol>" as a synonym for
+      // "id<SomeProtocol>".  This is hopelessly old fashioned and dangerous,
+      // but we support it.
+      if (DS.hasTypeSpecifier())
+        goto DoneWithDeclSpec;
+        
+      {
+        SourceLocation EndProtoLoc;
         llvm::SmallVector<IdentifierLocPair, 8> ProtocolRefs;
-        ParseObjCProtocolReferences(ProtocolRefs, endProtoLoc);
+        ParseObjCProtocolReferences(ProtocolRefs, EndProtoLoc);
         llvm::SmallVector<DeclTy *, 8> *ProtocolDecl = 
                 new llvm::SmallVector<DeclTy *, 8>;
         DS.setProtocolQualifiers(ProtocolDecl);
         Actions.FindProtocolDeclaration(Loc, 
-                  &ProtocolRefs[0], ProtocolRefs.size(),
-                  *ProtocolDecl);
+                                        &ProtocolRefs[0], ProtocolRefs.size(),
+                                        *ProtocolDecl);
+        Diag(Loc, diag::warn_objc_protocol_qualifier_missing_id,
+             SourceRange(Loc, EndProtoLoc));
+        continue;
       }
-      continue;
     }
     // If the specifier combination wasn't legal, issue a diagnostic.
     if (isInvalid) {
