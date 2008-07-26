@@ -14,14 +14,14 @@
 
 @interface I1 <p1> @end
 
-@interface E1 <p2> @end	// expected-warning {{cannot find protocol definition for 'p2', referenced by 'E1'}}
+@interface E1 <p2> @end	// expected-warning {{cannot find protocol definition for 'p2'}}
 
 @protocol p2 @end
 
 
 @interface I2 <p1,p2> @end
 
-@interface E2 <p1,p2,p3> @end  // expected-warning {{cannot find protocol definition for 'p3', referenced by 'E2'}}
+@interface E2 <p1,p2,p3> @end  // expected-warning {{cannot find protocol definition for 'p3'}}
 
 @class U1, U2;
 

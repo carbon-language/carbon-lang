@@ -2,7 +2,7 @@
 
 @protocol SUPER;
 
-@interface SUPER <SUPER> @end // expected-warning {{cannot find protocol definition for 'SUPER', referenced by 'SUPER'}}
+@interface SUPER <SUPER> @end // expected-warning {{cannot find protocol definition for 'SUPER'}}
 
 typedef int INTF; //  expected-error {{previous definition is here}}
 

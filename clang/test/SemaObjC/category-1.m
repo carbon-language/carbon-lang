@@ -4,7 +4,7 @@
 
 @protocol p1,p2,p3;
 
-@interface MyClass1 (Category1)  <p1> // expected-warning {{cannot find protocol definition for 'p1', referenced by 'Category1'}}
+@interface MyClass1 (Category1)  <p1> // expected-warning {{cannot find protocol definition for 'p1'}}
 @end
 
 @interface MyClass1 (Category1)  // expected-warning {{duplicate interface declaration for category 'MyClass1(Category1)'}}
@@ -27,7 +27,7 @@
 
 @protocol p3 @end
 
-@interface MyClass1 (Category) <p2, p3> @end  // expected-warning {{cannot find protocol definition for 'p2', referenced by 'Category'}}
+@interface MyClass1 (Category) <p2, p3> @end  // expected-warning {{cannot find protocol definition for 'p2'}}
 
 @interface MyClass  (Category) @end // expected-error {{cannot find interface declaration for 'MyClass'}}
 

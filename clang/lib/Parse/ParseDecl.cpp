@@ -435,7 +435,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
       ParseObjCProtocolReferences(ProtocolRefs, EndProtoLoc);
       
       llvm::SmallVector<DeclTy *, 8> ProtocolDecl;
-      Actions.FindProtocolDeclaration(Loc, 
+      Actions.FindProtocolDeclaration(Loc, false,
                                       &ProtocolRefs[0], ProtocolRefs.size(),
                                       ProtocolDecl);
       DS.setProtocolQualifiers(&ProtocolDecl[0], ProtocolDecl.size());
@@ -575,7 +575,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
         llvm::SmallVector<IdentifierLocPair, 8> ProtocolRefs;
         ParseObjCProtocolReferences(ProtocolRefs, EndProtoLoc);
         llvm::SmallVector<DeclTy *, 8> ProtocolDecl;
-        Actions.FindProtocolDeclaration(Loc, 
+        Actions.FindProtocolDeclaration(Loc, false,
                                         &ProtocolRefs[0], ProtocolRefs.size(),
                                         ProtocolDecl);
         DS.setProtocolQualifiers(&ProtocolDecl[0], ProtocolDecl.size());

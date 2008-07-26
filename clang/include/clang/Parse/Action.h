@@ -777,9 +777,10 @@ public:
   /// issues error if they are not declared. It returns list of valid
   /// protocols found.
   virtual void FindProtocolDeclaration(SourceLocation TypeLoc,
+                                       bool WarnOnDeclarations,
                                        const IdentifierLocPair *ProtocolId,
                                        unsigned NumProtocols,
-                                    llvm::SmallVectorImpl<DeclTy*> &Protocols) {
+                                 llvm::SmallVectorImpl<DeclTy*> &ResProtos) {
   }
 
   //===----------------------- Obj-C Expressions --------------------------===//

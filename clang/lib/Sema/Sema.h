@@ -655,6 +655,7 @@ public:
                                                   unsigned NumElts);
   
   virtual void FindProtocolDeclaration(SourceLocation TypeLoc,
+                                       bool WarnOnDeclarations,
                                        const IdentifierLocPair *ProtocolId,
                                        unsigned NumProtocols,
                                    llvm::SmallVectorImpl<DeclTy *> &Protocols);

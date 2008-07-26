@@ -144,7 +144,7 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       else {
         if (RefPDecl->isForwardDecl())
           Diag(ProtocolNames[i].second, diag::warn_undef_protocolref,
-               ProtocolNames[i].first->getName(), ClassName->getName());
+               ProtocolNames[i].first->getName());
         RefProtos.push_back(RefPDecl);
       }
     }
@@ -230,7 +230,7 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(
       else {
         if (RefPDecl->isForwardDecl())
           Diag(ProtoRefNames[i].second, diag::warn_undef_protocolref,
-               ProtoRefNames[i].first->getName(), ProtocolName->getName());
+               ProtoRefNames[i].first->getName());
         Protocols.push_back(RefPDecl);
       }
     }
@@ -245,16 +245,24 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(
 /// issuer error if they are not declared. It returns list of protocol
 /// declarations in its 'Protocols' argument.
 void
-Sema::FindProtocolDeclaration(SourceLocation TypeLoc,
+Sema::FindProtocolDeclaration(SourceLocation TypeLoc, bool WarnOnDeclarations,
                               const IdentifierLocPair *ProtocolId,
                               unsigned NumProtocols,
                               llvm::SmallVectorImpl<DeclTy*> &Protocols) {
   for (unsigned i = 0; i != NumProtocols; ++i) {
-    if (ObjCProtocolDecl *PDecl = ObjCProtocols[ProtocolId[i].first])
-      Protocols.push_back(PDecl); 
-    else
+    ObjCProtocolDecl *PDecl = ObjCProtocols[ProtocolId[i].first];
+    if (!PDecl) {
       Diag(ProtocolId[i].second, diag::err_undeclared_protocol, 
            ProtocolId[i].first->getName());
+      continue;
+    }
+
+    // If this is a forward declaration and we are supposed to warn in this
+    // case, do it.
+    if (WarnOnDeclarations && PDecl->isForwardDecl())
+      Diag(ProtocolId[i].second, diag::warn_undef_protocolref,
+           ProtocolId[i].first->getName());
+    Protocols.push_back(PDecl); 
   }
 }
 
@@ -444,7 +452,7 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
       else {
         if (RefPDecl->isForwardDecl())
           Diag(ProtoRefNames[i].second, diag::warn_undef_protocolref,
-               ProtoRefNames[i].first->getName(), CategoryName->getName());
+               ProtoRefNames[i].first->getName());
         RefProtocols.push_back(RefPDecl);
       }
     }

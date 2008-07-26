@@ -425,7 +425,7 @@ DIAG(err_undef_superclass, ERROR,
 DIAG(err_duplicate_class_def, ERROR,
      "duplicate interface declaration for class '%0'")
 DIAG(warn_undef_protocolref, WARNING,
-     "cannot find protocol definition for '%0', referenced by '%1'")
+     "cannot find protocol definition for '%0'")
 DIAG(err_duplicate_protocol_def, ERROR,
      "duplicate protocol declaration of '%0'")
 DIAG(err_undef_interface, ERROR,
