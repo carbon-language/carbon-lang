@@ -346,7 +346,8 @@ namespace llvm {
       GW.emitSimpleNode(0, "plaintext=circle", "GraphRoot");
       const SDNode *N = G->DAG.getRoot().Val;
       if (N && N->getNodeId() != -1)
-        GW.emitEdge(0, -1, &G->SUnits[N->getNodeId()], -1, "");
+        GW.emitEdge(0, -1, &G->SUnits[N->getNodeId()], -1,
+                    "color=blue,style=dashed");
     }
   };
 }
