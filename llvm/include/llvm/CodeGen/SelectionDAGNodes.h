@@ -858,13 +858,15 @@ public:
   bool reachesChainWithoutSideEffects(SDOperand Dest, 
                                       unsigned Depth = 2) const;
   
-  /// hasOneUse - Return true if there is exactly one operation using this
-  /// result value of the defining operator.
-  inline bool hasOneUse() const;
-
-  /// use_empty - Return true if there are no operations using this
-  /// result value of the defining operator.
+  /// use_empty - Return true if there are no nodes using value ResNo
+  /// of node Val.
+  ///
   inline bool use_empty() const;
+
+  /// use_empty - Return true if there is exactly one node using value
+  /// ResNo of node Val.
+  ///
+  inline bool hasOneUse() const;
 };
 
 
@@ -1096,11 +1098,20 @@ public:
     return ~NodeType;
   }
 
-  size_t use_size() const { return std::distance(use_begin(), use_end()); }
+  /// use_empty - Return true if there are no uses of this value.
+  ///
   bool use_empty() const { return Uses == NULL; }
+
+  /// hasOneUse - Return true if there is exactly one use of this value.
+  ///
   bool hasOneUse() const {
     return !use_empty() && next(use_begin()) == use_end();
   }
+
+  /// use_size - Return the number of uses of this value. This method takes
+  /// time proportional to the number of uses.
+  ///
+  size_t use_size() const { return std::distance(use_begin(), use_end()); }
 
   /// getNodeId - Return the unique node id.
   ///
@@ -1373,11 +1384,11 @@ inline bool SDOperand::isMachineOpcode() const {
 inline unsigned SDOperand::getMachineOpcode() const {
   return Val->getMachineOpcode();
 }
-inline bool SDOperand::hasOneUse() const {
-  return Val->hasNUsesOfValue(1, ResNo);
-}
 inline bool SDOperand::use_empty() const {
   return !Val->hasAnyUseOfValue(ResNo);
+}
+inline bool SDOperand::hasOneUse() const {
+  return Val->hasNUsesOfValue(1, ResNo);
 }
 
 /// UnarySDNode - This class is used for single-operand SDNodes.  This is solely
