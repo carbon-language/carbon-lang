@@ -1199,9 +1199,9 @@ public:
   /// value. This method ignores uses of other values defined by this operation.
   bool hasAnyUseOfValue(unsigned Value) const;
 
-  /// isOnlyUseOf - Return true if this node is the only use of N.
+  /// isOnlyUserOf - Return true if this node is the only use of N.
   ///
-  bool isOnlyUseOf(SDNode *N) const;
+  bool isOnlyUserOf(SDNode *N) const;
 
   /// isOperandOf - Return true if this node is an operand of N.
   ///

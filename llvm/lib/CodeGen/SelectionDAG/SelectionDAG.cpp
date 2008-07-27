@@ -4581,9 +4581,9 @@ bool SDNode::hasAnyUseOfValue(unsigned Value) const {
 }
 
 
-/// isOnlyUseOf - Return true if this node is the only use of N.
+/// isOnlyUserOf - Return true if this node is the only use of N.
 ///
-bool SDNode::isOnlyUseOf(SDNode *N) const {
+bool SDNode::isOnlyUserOf(SDNode *N) const {
   bool Seen = false;
   for (SDNode::use_iterator I = N->use_begin(), E = N->use_end(); I != E; ++I) {
     SDNode *User = I->getUser();
