@@ -394,6 +394,7 @@ public:
 private:  
   QualType getCanonicalTypeInternal() const { return CanonicalType; }
   friend class QualType;
+  friend class TypedefType;
 public:
   void dump() const;
   virtual void getAsStringInternal(std::string &InnerString) const = 0;
