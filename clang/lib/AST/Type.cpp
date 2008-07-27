@@ -810,6 +810,17 @@ void QualType::dump(const char *msg) const {
   else
     fprintf(stderr, "%s\n", R.c_str());
 }
+void QualType::dump() const {
+  dump("");
+}
+
+void Type::dump() const {
+  std::string S = "identifier";
+  getAsStringInternal(S);
+  fprintf(stderr, "%s\n", S.c_str());
+}
+
+
 
 static void AppendTypeQualList(std::string &S, unsigned TypeQuals) {
   // Note: funkiness to ensure we get a space only between quals.

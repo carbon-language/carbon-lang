@@ -2052,6 +2052,7 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
     } else 
       assert(0 && "Unknown/unexpected decl type");
   }
+  
   // If the operand has type "type", the result has type "pointer to type".
   return Context.getPointerType(op->getType());
 }

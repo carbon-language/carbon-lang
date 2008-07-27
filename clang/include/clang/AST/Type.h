@@ -161,7 +161,8 @@ public:
   }
   void getAsStringInternal(std::string &Str) const;
   
-  void dump(const char *s = 0) const;
+  void dump(const char *s) const;
+  void dump() const;
   
   void Profile(llvm::FoldingSetNodeID &ID) const {
     ID.AddPointer(getAsOpaquePtr());
@@ -394,6 +395,7 @@ private:
   QualType getCanonicalTypeInternal() const { return CanonicalType; }
   friend class QualType;
 public:
+  void dump() const;
   virtual void getAsStringInternal(std::string &InnerString) const = 0;
   static bool classof(const Type *) { return true; }
   
