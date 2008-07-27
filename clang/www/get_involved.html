@@ -124,6 +124,15 @@ source code. The advantage of using Clang for such a tool is that the tool would
 use the same preprocessor/parser/ASTs as the compiler itself, giving it a very
 rich understanding of the code.</li> </ul>
 
+<li><b>Use clang libraries to implement better versions of existing tools</b>:
+Clang is built as a set of libraries, which means that it is possible to
+implement capabilities similar to other source language tools, improving them
+in various ways.  Two examples are <a href="http://distcc.samba.org/">distcc</a>
+and the <a href="http://delta.tigris.org/">delta testcase reduction tool</a>.
+The former can be improved to scale better and be more efficient.  The later
+could also be faster and more efficient at reducing C-family programs if built
+on the clang preprocessor.</li>
+
 <p>If you hit a bug with clang, it is very useful for us if you reduce the code
 that demonstrates the problem down to something small.  There are many ways to
 do this; ask on cfe-dev for advice.</p>
