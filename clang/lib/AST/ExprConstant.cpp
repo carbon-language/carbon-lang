@@ -169,7 +169,7 @@ APValue PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
     return APValue();
   }
   
-  if (SubExpr->getType()->isArithmeticType()) {
+  if (SubExpr->getType()->isIntegralType()) {
     llvm::APSInt Result(32);
     if (EvaluateInteger(SubExpr, Result, Info)) {
       Result.extOrTrunc((unsigned)Info.Ctx.getTypeSize(E->getType()));
@@ -302,7 +302,12 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   if ((E->getOpcode() == BinaryOperator::LAnd && Result == 0) ||
       (E->getOpcode() == BinaryOperator::LOr  && Result != 0))
     Info.isEvaluated = false;
-  
+
+  // FIXME: Handle pointer subtraction
+
+  // FIXME Maybe we want to succeed even where we can't evaluate the
+  // right side of LAnd/LOr?
+  // For example, see http://llvm.org/bugs/show_bug.cgi?id=2525 
   if (!EvaluateInteger(E->getRHS(), RHS, Info))
     return false;
   Info.isEvaluated = OldEval;
