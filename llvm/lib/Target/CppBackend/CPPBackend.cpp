@@ -28,9 +28,9 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/Config/config.h"
 #include <algorithm>
-#include <iostream>
 #include <set>
 
 using namespace llvm;
@@ -209,7 +209,7 @@ namespace {
   }
 
   void CppWriter::error(const std::string& msg) {
-    std::cerr << progname << ": " << msg << "\n";
+    cerr << progname << ": " << msg << "\n";
     exit(2);
   }
 
