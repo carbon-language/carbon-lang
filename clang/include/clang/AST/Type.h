@@ -167,10 +167,6 @@ public:
     ID.AddPointer(getAsOpaquePtr());
   }
 
-//private:
-  /// getCanonicalType - Return the canonical version of this type, with the
-  /// appropriate type qualifiers on it.
-  inline QualType getCanonicalType() const;
 public:
   
   /// getAddressSpace - Return the address space of this type.
@@ -182,9 +178,7 @@ public:
   /// Read - Deserialize a QualType from Bitcode.
   static QualType ReadVal(llvm::Deserializer& D);
   
-private:
   void ReadBackpatch(llvm::Deserializer& D);
-  friend class FieldDecl;
 };
 
 } // end clang.
@@ -1265,14 +1259,6 @@ public:
 
 // Inline function definitions.
 
-/// getCanonicalType - Return the canonical version of this type, with the
-/// appropriate type qualifiers on it.
-inline QualType QualType::getCanonicalType() const {
-  QualType CanType = getTypePtr()->getCanonicalTypeInternal();
-  return QualType(CanType.getTypePtr(),
-                  getCVRQualifiers() | CanType.getCVRQualifiers());
-}
-
 /// getUnqualifiedType - Return the type without any qualifiers.
 inline QualType QualType::getUnqualifiedType() const {
   Type *TP = getTypePtr();
@@ -1283,11 +1269,12 @@ inline QualType QualType::getUnqualifiedType() const {
 
 /// getAddressSpace - Return the address space of this type.
 inline unsigned QualType::getAddressSpace() const {
-  if (const ArrayType *AT = dyn_cast<ArrayType>(getCanonicalType()))
+  QualType CT = getTypePtr()->getCanonicalTypeInternal();
+  if (const ArrayType *AT = dyn_cast<ArrayType>(CT))
     return AT->getBaseType().getAddressSpace();
-  if (const RecordType *RT = dyn_cast<RecordType>(getCanonicalType()))
+  if (const RecordType *RT = dyn_cast<RecordType>(CT))
     return RT->getAddressSpace();
-  if (const ASQualType *ASQT = dyn_cast<ASQualType>(getCanonicalType()))
+  if (const ASQualType *ASQT = dyn_cast<ASQualType>(CT))
     return ASQT->getAddressSpace();
   return 0;
 }

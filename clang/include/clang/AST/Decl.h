@@ -543,7 +543,6 @@ public:
                            QualType T, Expr *BW = NULL);
 
   QualType getType() const { return DeclType; }
-  QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
   
   bool isBitField() const { return BitWidth != NULL; }
   Expr *getBitWidth() const { return BitWidth; }
