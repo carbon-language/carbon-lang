@@ -125,7 +125,7 @@ public:
   void writeNode(NodeType *Node) {
     std::string NodeAttributes = DOTTraits::getNodeAttributes(Node, G);
 
-    O << "\tNode" << reinterpret_cast<const void*>(Node) << " [shape=record,";
+    O << "\tNode" << static_cast<const void*>(Node) << " [shape=record,";
     if (!NodeAttributes.empty()) O << NodeAttributes << ",";
     O << "label=\"{";
 
@@ -199,8 +199,8 @@ public:
         DestPort = static_cast<int>(Offset);
       }
 
-      emitEdge(reinterpret_cast<const void*>(Node), edgeidx,
-               reinterpret_cast<const void*>(TargetNode), DestPort,
+      emitEdge(static_cast<const void*>(Node), edgeidx,
+               static_cast<const void*>(TargetNode), DestPort,
                DOTTraits::getEdgeAttributes(Node, EI));
     }
   }
@@ -238,7 +238,7 @@ public:
     O << "\tNode" << SrcNodeID;
     if (SrcNodePort >= 0)
       O << ":s" << SrcNodePort;
-    O << " -> Node" << reinterpret_cast<const void*>(DestNodeID);
+    O << " -> Node" << DestNodeID;
     if (DestNodePort >= 0)
       O << ":d" << DestNodePort;
 
