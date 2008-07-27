@@ -51,28 +51,35 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::VECTOR_SHUFFLE: R = ScalarizeVecRes_VECTOR_SHUFFLE(N); break;
   case ISD::VSETCC:         R = ScalarizeVecRes_VSETCC(N); break;
 
+  case ISD::CTLZ:
+  case ISD::CTPOP:
+  case ISD::CTTZ:
+  case ISD::FABS:
+  case ISD::FCOS:
+  case ISD::FNEG:
+  case ISD::FP_TO_SINT:
+  case ISD::FP_TO_UINT:
+  case ISD::FSIN:
+  case ISD::FSQRT:
+  case ISD::SINT_TO_FP:
+  case ISD::UINT_TO_FP: R = ScalarizeVecRes_UnaryOp(N); break;
+
   case ISD::ADD:
+  case ISD::AND:
   case ISD::FADD:
-  case ISD::SUB:
+  case ISD::FDIV:
+  case ISD::FMUL:
+  case ISD::FPOW:
+  case ISD::FREM:
   case ISD::FSUB:
   case ISD::MUL:
-  case ISD::FMUL:
-  case ISD::SDIV:
-  case ISD::UDIV:
-  case ISD::FDIV:
-  case ISD::SREM:
-  case ISD::UREM:
-  case ISD::FREM:
-  case ISD::FPOW:
-  case ISD::AND:
   case ISD::OR:
+  case ISD::SDIV:
+  case ISD::SREM:
+  case ISD::SUB:
+  case ISD::UDIV:
+  case ISD::UREM:
   case ISD::XOR:  R = ScalarizeVecRes_BinOp(N); break;
-
-  case ISD::FNEG:
-  case ISD::FABS:
-  case ISD::FSQRT:
-  case ISD::FSIN:
-  case ISD::FCOS:  R = ScalarizeVecRes_UnaryOp(N); break;
   }
 
   // If R is null, the sub-method took care of registering the result.
@@ -121,8 +128,10 @@ SDOperand DAGTypeLegalizer::ScalarizeVecRes_LOAD(LoadSDNode *N) {
 }
 
 SDOperand DAGTypeLegalizer::ScalarizeVecRes_UnaryOp(SDNode *N) {
+  // Get the dest type - it doesn't always match the input type, e.g. int_to_fp.
+  MVT DestVT = TLI.getTypeToTransformTo(N->getValueType(0));
   SDOperand Op = GetScalarizedVector(N->getOperand(0));
-  return DAG.getNode(N->getOpcode(), Op.getValueType(), Op);
+  return DAG.getNode(N->getOpcode(), DestVT, Op);
 }
 
 SDOperand DAGTypeLegalizer::ScalarizeVecRes_UNDEF(SDNode *N) {
@@ -278,7 +287,7 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:
   case ISD::SINT_TO_FP:
-  case ISD::UINT_TO_FP:       SplitVecRes_UnOp(N, Lo, Hi); break;
+  case ISD::UINT_TO_FP: SplitVecRes_UnaryOp(N, Lo, Hi); break;
 
   case ISD::ADD:
   case ISD::SUB:
@@ -295,7 +304,7 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::XOR:
   case ISD::UREM:
   case ISD::SREM:
-  case ISD::FREM:             SplitVecRes_BinOp(N, Lo, Hi); break;
+  case ISD::FREM: SplitVecRes_BinOp(N, Lo, Hi); break;
   }
 
   // If Lo/Hi is null, the sub-method took care of registering results etc.
@@ -484,9 +493,9 @@ void DAGTypeLegalizer::SplitVecRes_LOAD(LoadSDNode *LD, SDOperand &Lo,
   ReplaceValueWith(SDOperand(LD, 1), Ch);
 }
 
-void DAGTypeLegalizer::SplitVecRes_UnOp(SDNode *N, SDOperand &Lo,
-                                        SDOperand &Hi) {
-  // Get the dest types.  This doesn't always match input types, e.g. int_to_fp.
+void DAGTypeLegalizer::SplitVecRes_UnaryOp(SDNode *N, SDOperand &Lo,
+                                           SDOperand &Hi) {
+  // Get the dest types - they may not match the input types, e.g. int_to_fp.
   MVT LoVT, HiVT;
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
 
